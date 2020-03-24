@@ -1,8 +1,7 @@
 import numpy as np
 from scipy.integrate import odeint
 import matplotlib.pyplot as plt
-
-
+beta = 1.75
 # The SIR model differential equations.
 def deriv(y, t, N, alpha, beta, gamma):
     S, E, I, R = y
@@ -20,7 +19,9 @@ def deriv(y, t, N, alpha, beta, gamma):
     dRdt = gamma * I
     return dSdt, dEdt, dIdt, dRdt
 
-# The SIR model differential equations with social distancing.
+# The SEIR model differential equations with social distancing factor rho.
+# with rho = 1 standard seir model (no distancing)
+# with rho = 0 quarantine
 def deriv_social(y, t, N, alpha, beta, gamma, rho):
     S, E, I, R = y
     # change in people susceptible to the disease
@@ -36,6 +37,19 @@ def deriv_social(y, t, N, alpha, beta, gamma, rho):
     # no longer infected: immune or diseased
     dRdt = gamma * I
     return dSdt, dEdt, dIdt, dRdt
+
+def seir_solve(N, S0, E0, I0, R0, t_max, dt, alpha, gamma, rho, t_min=0):
+
+    # Initial conditions vector
+    y0 = S0, E0, I0, R0
+    # A grid of time points (in days)
+    t = np.linspace(t_min, t_max, int( (t_max-t_min) / dt))
+    # Integrate the SIR equations over the time grid, t.
+    ret = odeint(deriv_social, y0, t, args=(N, alpha, beta, gamma, rho))
+    S, E, I, R = ret.T
+    plot_data(N, S, E, I, R, t)
+    print(t_min,t_max)
+    return S, E, I, R
 
 def plot_data(N, S,E,I,R,t):
     # Plot the data on three separate curves for S(t), I(t) and R(t)
@@ -60,10 +74,11 @@ def plot_data(N, S,E,I,R,t):
 def main():
     # Define parameters
     # Total population, N.
-    N = 10000
+    N = 1000
     # Initial number of exposed, infected and recovered individuals, E0, I0 and R0.
     E0, I0, R0 = 1, 0, 3.5
     # Everyone else, S0, is susceptible to infection initially.
+    # Constraint: fixed population
     S0 = N - I0 - R0 - E0
     # Contact rate, beta, and mean recovery rate, gamma, (in 1/days).
     #beta, gamma = 0.34, 1./10
@@ -74,137 +89,108 @@ def main():
     # A grid of time points (in days)
     t = np.linspace(0, t_max, int(t_max / dt))
 
-
-    # A recent study of COVID-19 estimates some of these values for us (Hellewell et al. 2020),
-    # so we can use some of their parameter estimates to get our model off the ground.
-    # Incubation period = 5 days -> alpha = 0.2
-    # This value defines how quickly the disease spreads R0 = beta/gamma
-    # R0 = 3.5
-    # to get 1/gamma value of 2 days, so gamma = 0.5.
-    # Plugging the R0 and gamma values into Equation (6), we get an estimate of beta = 1.75.
-    # https://towardsdatascience.com/social-distancing-to-slow-the-coronavirus-768292f04296
-    # constraint: fixed population
+    # Assume an incubation period of 5 days
+    # Assume infectious period of 2 days
     # alpha is the inverse of the incubation period (1/t_incubation)
     alpha = 0.2
     # gamma is the inverse of the mean infectious period (1/t_infectious)
     gamma = 0.5
     # beta is the average contact rate in the population
     beta = R0 * gamma
-    # Coronavirus with Social Distancing
+    # Parameter for Social Distancing
     # the term this is going to impact is our contact rate, beta.
     # a new value 0 <= rho <= 1 will capture this effect
     # 0 indicates everyone is locked down and quarantined
     # 1 is equivalent to our base case
     # hence we multiply beta with rho in our SEIR model
-    rho = 1.0
+    rho = 0.5
 
-    # Initial conditions vector
-    y0 = S0, E0, I0, R0
-
-    # no party
-    # Integrate the SIR equations over the time grid, t.
-    ret = odeint(deriv_social, y0, t, args=(N, alpha, beta, gamma,rho))
-    S, E, I, R = ret.T
-
-    plot_data(N, S, E, I, R, t)
-
-
-    # if rho is 1, we have the standard model
-    # if rho == 1:
-    #     # Initial conditions vector
-    #     y0 = S0, E0, I0, R0
-    #     # Integrate the SIR equations over the time grid, t.
-    #     ret = odeint(deriv, y0, t, args=(N, alpha, beta, gamma))
-    #     S, E, I, R = ret.T
-    # # with social distancing effect
-    # else:
-    #     # Initial conditions vector
-    #     y0 = S0, E0, I0, R0
-    #     # Integrate the SIR equations over the time grid, t.
-    #     ret = odeint(deriv_social, y0, t, args=(N, alpha, beta, gamma,rho))
-    #     S, E, I, R = ret.T
-    #
-    # plot_data(N, S, E, I, R, t)
+    # solve the SEIR model and plot the results
+    SA,EA,IA,RA = seir_solve(N, S0, E0, I0, R0, t_max, dt, alpha, gamma, rho, t_min=0)
 
     # corona party
     # on day
-    day_party = 30
+    day_party = 50
     # with number of people
-    N_party = 50
-    rho_party = 0
+    N_party = 100
+    # with little social distancing
+    rho_party = 1.0
     # the party lasts one day
-    party_length = 1
-    t_party = np.linspace(day_party, day_party + party_length, int(party_length / dt))
+    length_party = 1
 
-    # first everyone behaves normally
-    t = np.linspace(0, day_party, int(day_party / dt))
-    # Initial conditions vector
-    y0 = S0, E0, I0, R0
-    # Integrate the SIR equations over the time grid, t.
-    ret = odeint(deriv, y0, t, args=(N, alpha, beta, gamma))
-    S, E, I, R = ret.T
+    # solve with whole population until day of party
+    S_till_party, E_till_party, I_till_party, R_till_party = seir_solve(N, S0, E0, I0, R0, day_party, dt, alpha, gamma, rho, t_min=0)
+    print("before party", S_till_party[-1], I_till_party[-1], E_till_party[-1], R_till_party[-1], N)
+
     # then some people have a corona party
     # we suppose equal parts of the population join the party
     party_factor = N_party/N
-    IP0 = I[-1]*party_factor
-    EP0 = E[-1] * party_factor
-    RP0 = I[-1] * party_factor
+    # we get these equal parts from the solution up until this day
+    IP0 = I_till_party[-1] * party_factor
+    EP0 = E_till_party[-1] * party_factor
+    RP0 = R_till_party[-1] * party_factor
+
     SP0 = N_party - IP0 - RP0 - EP0
-    print(SP0, IP0, EP0, RP0, N_party)
 
-    # No social distancing at the party
-    rho_party = 0.1
-    # Initial conditions vector
-    yP0 = SP0, EP0, IP0, RP0
-    # Integrate the SIR equations over the time grid, t_party.
-    ret = odeint(deriv_social, yP0, t_party, args=(N_party, alpha, beta, gamma,rho_party))
-    SP, EP, IP, RP = ret.T
-    plot_data(N_party, SP, EP, IP, RP, t_party)
+    print("before party at party", S_till_party[-1] * party_factor, "=", SP0, IP0, EP0, RP0, N_party)
 
-    # Rest of the world behaves as always
-       # Initial conditions vector
-    E0 = E[-1] - EP0
-    I0 = I[-1] - IP0
-    R0 = R[-1] - RP0
+    # corona party solve
+    S_party, E_party, I_party, R_party = seir_solve(N_party, SP0, EP0, IP0, RP0, day_party + length_party, dt, alpha, gamma, rho_party, t_min=day_party)
+
+    print("after party", S_party[-1], I_party[-1], E_party[-1], R_party[-1], N_party)
+
+
+    # Rest of the world behaves as always with more social distance
+    # We deduce the people attending the party
+    rest_factor = (N-N_party)/N
+    I0 = I_till_party[-1] * rest_factor
+    E0 = E_till_party[-1] * rest_factor
+    R0 = R_till_party[-1] * rest_factor
+   # I0 = I[-1] - IP0
+   # R0 = R[-1] - RP0
     N_rest = N - N_party
     S0 = N_rest - I0 - R0 - E0
-    print(S0, I0, E0, R0, N_rest)
-    y0 = S0, E0, I0, R0
-    # Integrate the SIR equations over the time grid, t_party.
-    ret = odeint(deriv_social, y0, t_party, args=(N_rest, alpha, beta, gamma, rho))
-    SR, ER, IR, RR = ret.T
-    plot_data(N_rest, SR, ER, IR, RR, t_party)
-
+    print("after party rest",S_till_party[-1] * rest_factor, "=", S0, I0, E0, R0, N_rest)
+    # Integrate the SEIR equations over the time grid, t_party.
+    SR, ER, IR, RR = seir_solve(N_rest, S0, E0, I0, R0, day_party + length_party, dt, alpha, gamma, rho,
+                                t_min=day_party)
 
     # now everything goes on as always
-    E0 = ER[-1] + EP[-1];
-    I0 = IR[-1] + IP[-1];
-    R0 = RR[-1] + RP[-1];
+    # people attending the party and rest go together once more
+    E0 = ER[-1] + E_party[-1];
+    I0 = IR[-1] + I_party[-1];
+    R0 = RR[-1] + R_party[-1];
     S0 = N - I0 - R0 - E0
-    after_party = day_party+party_length
-    t = np.linspace(after_party, t_max, int((t_max-after_party) / dt))
-    # Initial conditions vector
-    y0 = S0, E0, I0, R0
-    # Integrate the SIR equations over the time grid, t.
-    ret = odeint(deriv_social, y0, t, args=(N, alpha, beta, gamma, rho))
-    SL, EL, IL, RL = ret.T
+    print("all after party", S0, "=", SR[-1]+S_party[-1], E0,I0,S0, N, ER[-1], E_party[-1])
 
+    SL, EL, IL, RL = seir_solve(N, S0, E0, I0, R0, t_max, dt, alpha, gamma, rho,
+                                t_min=day_party+length_party)
+
+
+    # now put everything together
     t = np.linspace(0, t_max, int(t_max / dt))
-    print(len(S), len(SP + SR), len(SL), len(t))
-    S_final = np.concatenate((S, SP+SR, SL), axis=0) #[S, SP + SR, SL]
-    E_final = np.concatenate((E, EP+ER, EL), axis=0)
-    I_final = np.concatenate((I, IP+IR, IL), axis=0)
-    R_final = np.concatenate((R, RP+RR, RL), axis=0)
+  #  print(len(S), len(SP + SR), len(SL), len(t))
 
-  #S0 = N_rest - I0 - R0 - E0
+    S_final = np.concatenate((S_till_party, S_party+SR, SL), axis=0) #[S, SP + SR, SL]
+    E_final = np.concatenate((E_till_party, E_party+ER, EL), axis=0)
+    I_final = np.concatenate((I_till_party, I_party+IR, IL), axis=0)
+    R_final = np.concatenate((R_till_party, R_party+RR, RL), axis=0)
+
     plot_data(N, S_final, E_final, I_final, R_final, t)
-
-
-
-
-
-
+    print(np.amax(S_final), np.amax(SA))
+    print(np.amax(E_final), np.amax(EA))
+    print(np.amax(I_final), np.amax(IA))
+    print(np.amax(R_final), np.amax(RA))
     plt.show()
+    exit(0)
+
+
+
+
+
+
+
+
 
 
 if __name__ == "__main__":
