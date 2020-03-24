@@ -1,6 +1,8 @@
 import numpy as np
 from scipy.integrate import odeint
 import matplotlib.pyplot as plt
+# contact rate beta
+# basic reproductive number of virus times inverse of mean infectious rate r_0 = 2.68 * gamma = 0.5
 beta = 1.75
 # The SIR model differential equations.
 def deriv(y, t, N, alpha, beta, gamma):
@@ -12,7 +14,7 @@ def deriv(y, t, N, alpha, beta, gamma):
     # grows based on the contact rate and decreases based on the incubation period
     # whereby people then become infected
     dEdt = beta * S * I / N - alpha * E
-    # change in infected people based on the exposed population and the incubation period
+    # change in infected people base2,6d on the exposed population and the incubation period
     # decreases based on the infectious period: the higher gamma is, the more quickly people die/recove
     dIdt = alpha * E - gamma * I
     # no longer infected: immune or diseased
@@ -55,10 +57,11 @@ def plot_data(N, S,E,I,R,t):
     # Plot the data on three separate curves for S(t), I(t) and R(t)
     fig = plt.figure(facecolor='w')
     ax = fig.add_subplot(111, fc='#dddddd', axisbelow=True)
-#    ax.plot(t, S/N, 'm', alpha=0.5, lw=2, label='Susceptible')
+    ax.plot(t, S+E+I+R, 'm', alpha=0.5, lw=2, label='Sum')
+    ax.plot(t, S, 'm', alpha=0.5, lw=2, label='Sum')
     ax.plot(t, E, 'b', alpha=0.5, lw=2, label='Exposed')
     ax.plot(t, I, 'r', alpha=0.5, lw=2, label='Infected')
- #   ax.plot(t, R/N, 'g', alpha=0.5, lw=2, label='Recovered with immunity')
+    ax.plot(t, R, 'g', alpha=0.5, lw=2, label='Recovered with immunity')
     ax.set_xlabel('Days')
     ax.set_ylabel('Population')
     #ax.set_ylim(bottom,top)
@@ -74,14 +77,12 @@ def plot_data(N, S,E,I,R,t):
 def main():
     # Define parameters
     # Total population, N.
-    N = 1000
+    N = 10000
     # Initial number of exposed, infected and recovered individuals, E0, I0 and R0.
-    E0, I0, R0 = 1, 0, 3.5
+    E0, I0, R0 = 1, 0, 0
     # Everyone else, S0, is susceptible to infection initially.
     # Constraint: fixed population
     S0 = N - I0 - R0 - E0
-    # Contact rate, beta, and mean recovery rate, gamma, (in 1/days).
-    #beta, gamma = 0.34, 1./10
     # End of simulation
     t_max = 200
     # time step
@@ -89,14 +90,15 @@ def main():
     # A grid of time points (in days)
     t = np.linspace(0, t_max, int(t_max / dt))
 
-    # Assume an incubation period of 5 days
+    # Assume an incubation period of 5.2 days
     # Assume infectious period of 2 days
     # alpha is the inverse of the incubation period (1/t_incubation)
-    alpha = 0.2
-    # gamma is the inverse of the mean infectious period (1/t_infectious)
-    gamma = 0.5
+    alpha = 1.0/5.2
+    # gamma is the mean recovery rate
+    # inverse of the mean infectious period (1/t_infectious)
+    gamma = 1.0/2.0
     # beta is the average contact rate in the population
-    beta = R0 * gamma
+    # beta = R0 * gamma
     # Parameter for Social Distancing
     # the term this is going to impact is our contact rate, beta.
     # a new value 0 <= rho <= 1 will capture this effect
@@ -114,7 +116,7 @@ def main():
     # with number of people
     N_party = 100
     # with little social distancing
-    rho_party = 1.0
+    rho_party = 0.9
     # the party lasts one day
     length_party = 1
 
@@ -177,20 +179,26 @@ def main():
     R_final = np.concatenate((R_till_party, R_party+RR, RL), axis=0)
 
     plot_data(N, S_final, E_final, I_final, R_final, t)
-    print(np.amax(S_final), np.amax(SA))
-    print(np.amax(E_final), np.amax(EA))
-    print(np.amax(I_final), np.amax(IA))
-    print(np.amax(R_final), np.amax(RA))
-    plt.show()
+  #  plt.show()
+    E_party_max = np.amax(E_final)
+    I_party_max = np.amax(I_final)
+    R_party_max = np.amax(R_final)
+    EA_max = np.amax(EA)
+    IA_max = np.amax(IA)
+    RA_max = np.amax(RA)
+    diff=E_party_max + I_party_max - EA_max - IA_max
+    print("At the worst day in our scenario, ", E_party_max + I_party_max, " people are infected.")
+    print(diff, " people are infected at that day due to the party.")
+    print(R_party_max, "people are either recovered or dead")
+    print("without the party it would have been",  R_party_max-RA_max, "less")
+    print("If other people in Germany go on partying like you")
+    print("There are 83 783 942 people in Germany.")
+    factor = 83783942/N
+    # print("Suppose for each ", N,  "of these people,", N_party, "do not stay at home.")
+
+    print("Then ", diff*factor, "more people are infected than if all those had stayed at home." )
+    print("Assuming a death rate of 2%",  diff*factor*2/100, "people will die.")
     exit(0)
-
-
-
-
-
-
-
-
 
 
 if __name__ == "__main__":
