@@ -20,14 +20,31 @@ def deriv(y, t, N, alpha, beta, gamma):
     dRdt = gamma * I
     return dSdt, dEdt, dIdt, dRdt
 
+# The SIR model differential equations with social distancing.
+def deriv_social(y, t, N, alpha, beta, gamma, rho):
+    S, E, I, R = y
+    # change in people susceptible to the disease
+    # moderated by the number of infected people and their contact with the infected.
+    dSdt = -rho*beta * S * I / N
+    # people who have been exposed to the disease
+    # grows based on the contact rate and decreases based on the incubation period
+    # whereby people then become infected
+    dEdt = rho*beta * S * I / N - alpha * E
+    # change in infected people based on the exposed population and the incubation period
+    # decreases based on the infectious period: the higher gamma is, the more quickly people die/recove
+    dIdt = alpha * E - gamma * I
+    # no longer infected: immune or diseased
+    dRdt = gamma * I
+    return dSdt, dEdt, dIdt, dRdt
+
 def plot_data(N, S,E,I,R,t):
     # Plot the data on three separate curves for S(t), I(t) and R(t)
     fig = plt.figure(facecolor='w')
     ax = fig.add_subplot(111, fc='#dddddd', axisbelow=True)
-    ax.plot(t, S/N, 'm', alpha=0.5, lw=2, label='Susceptible')
+#    ax.plot(t, S/N, 'm', alpha=0.5, lw=2, label='Susceptible')
     ax.plot(t, E/N, 'b', alpha=0.5, lw=2, label='Exposed')
     ax.plot(t, I/N, 'r', alpha=0.5, lw=2, label='Infected')
-    ax.plot(t, R/N, 'g', alpha=0.5, lw=2, label='Recovered with immunity')
+ #   ax.plot(t, R/N, 'g', alpha=0.5, lw=2, label='Recovered with immunity')
     ax.set_xlabel('Days')
     ax.set_ylabel('Population Fraction ')
     #ax.set_ylim(bottom,top)
@@ -51,15 +68,12 @@ def main():
     # Contact rate, beta, and mean recovery rate, gamma, (in 1/days).
     #beta, gamma = 0.34, 1./10
     # End of simulation
-    t_max = 100
+    t_max = 200
     # time step
     dt = 0.1
     # A grid of time points (in days)
     t = np.linspace(0, t_max, int(t_max / dt) + 1)
 
-
-    # one exposed person S_0 = 1–1/N, E_0 = 1/N, I_0 = 0, R_0 = 0
-    #init_vals = 1 - 1 / N, 1 / N, 0, 0
 
     # A recent study of COVID-19 estimates some of these values for us (Hellewell et al. 2020),
     # so we can use some of their parameter estimates to get our model off the ground.
@@ -79,11 +93,32 @@ def main():
 
     # Initial conditions vector
     y0 = S0, E0, I0, R0
-    # Integrate the SIR equations over the time grid, t.
-    ret = odeint(deriv, y0, t, args=(N, alpha, beta, gamma))
-    S, E, I, R = ret.T
 
-    plot_data(N, S,E,I,R,t)
+
+
+    # Coronavirus with Social Distancing
+    # the term this is going to impact is our contact rate, beta.
+    # a new value 0 <= rho <= 1 will capture this effect
+    # 0 indicates everyone is locked down and quarantined
+    # 1 is equivalent to our base case
+    # hence we multiply beta with rho in our SEIR model
+    rho = 0.8
+    # if rho is 1, we have the standard model
+    if rho == 1:
+        # Initial conditions vector
+        y0 = S0, E0, I0, R0
+        # Integrate the SIR equations over the time grid, t.
+        ret = odeint(deriv, y0, t, args=(N, alpha, beta, gamma))
+        S, E, I, R = ret.T
+    # with social distancing effect
+    else:
+        # Initial conditions vector
+        y0 = S0, E0, I0, R0
+        # Integrate the SIR equations over the time grid, t.
+        ret = odeint(deriv_social, y0, t, args=(N, alpha, beta, gamma,rho))
+        S, E, I, R = ret.T
+
+    plot_data(N, S, E, I, R, t)
 
 if __name__ == "__main__":
     main()
