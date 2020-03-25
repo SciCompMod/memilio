@@ -111,9 +111,9 @@ def main():
 
     # corona party
     # on day
-    day_party = 50
+    day_party = 100
     # with number of people
-    N_party = 100
+    N_party = 50
     # with little social distancing
     rho_party = 0.9
     # the party lasts one day
@@ -178,7 +178,7 @@ def main():
     R_final = np.concatenate((R_till_party, R_party+RR, RL), axis=0)
 
     plot_data(N, S_final, E_final, I_final, R_final, t)
-    # plt.show()
+    plt.show()
     E_party_max = np.amax(E_final)
     I_party_max = np.amax(I_final)
     R_party_max = np.amax(R_final)
@@ -186,8 +186,9 @@ def main():
     IA_max = np.amax(IA)
     RA_max = np.amax(RA)
     diff=E_party_max + I_party_max - EA_max - IA_max
+    # people who had contact with Corona, last day
     r1 = R_final[-1]-RA[-1]
-
+    print("Poulation:", N, "Day of party:", day_party, "Party people:", N_party, "Death rate assumption: 2%")
     print("At the worst day in our scenario, ", int(E_party_max + I_party_max), " people are infected.")
     print("A the end of the crisis", int(R_party_max), "people have been infected,")
     print("without the party it would have been",  round(r1,3), "less.")
