@@ -49,11 +49,10 @@ def seir_solve(N, S0, E0, I0, R0, t_max, dt, alpha, gamma, rho, t_min=0):
     # Integrate the SIR equations over the time grid, t.
     ret = odeint(deriv_social, y0, t, args=(N, alpha, beta, gamma, rho))
     S, E, I, R = ret.T
-    plot_data(N, S, E, I, R, t)
-    print(t_min,t_max)
+    #plot_data(N, S, E, I, R, t)
     return S, E, I, R
 
-def plot_data(N, S,E,I,R,t):
+def plot_data(N, S, E, I, R, t):
     # Plot the data on three separate curves for S(t), I(t) and R(t)
     fig = plt.figure(facecolor='w')
     ax = fig.add_subplot(111, fc='#dddddd', axisbelow=True)
@@ -122,7 +121,7 @@ def main():
 
     # solve with whole population until day of party
     S_till_party, E_till_party, I_till_party, R_till_party = seir_solve(N, S0, E0, I0, R0, day_party, dt, alpha, gamma, rho, t_min=0)
-    print("before party", S_till_party[-1], I_till_party[-1], E_till_party[-1], R_till_party[-1], N)
+    # print("before party", S_till_party[-1], I_till_party[-1], E_till_party[-1], R_till_party[-1], N)
 
     # then some people have a corona party
     # we suppose equal parts of the population join the party
@@ -134,12 +133,12 @@ def main():
 
     SP0 = N_party - IP0 - RP0 - EP0
 
-    print("before party at party", S_till_party[-1] * party_factor, "=", SP0, IP0, EP0, RP0, N_party)
+    # print("before party at party", S_till_party[-1] * party_factor, "=", SP0, IP0, EP0, RP0, N_party)
 
     # corona party solve
     S_party, E_party, I_party, R_party = seir_solve(N_party, SP0, EP0, IP0, RP0, day_party + length_party, dt, alpha, gamma, rho_party, t_min=day_party)
 
-    print("after party", S_party[-1], I_party[-1], E_party[-1], R_party[-1], N_party)
+    # print("after party", S_party[-1], I_party[-1], E_party[-1], R_party[-1], N_party)
 
 
     # Rest of the world behaves as always with more social distance
@@ -152,7 +151,7 @@ def main():
    # R0 = R[-1] - RP0
     N_rest = N - N_party
     S0 = N_rest - I0 - R0 - E0
-    print("after party rest",S_till_party[-1] * rest_factor, "=", S0, I0, E0, R0, N_rest)
+    # print("after party rest",S_till_party[-1] * rest_factor, "=", S0, I0, E0, R0, N_rest)
     # Integrate the SEIR equations over the time grid, t_party.
     SR, ER, IR, RR = seir_solve(N_rest, S0, E0, I0, R0, day_party + length_party, dt, alpha, gamma, rho,
                                 t_min=day_party)
@@ -163,7 +162,7 @@ def main():
     I0 = IR[-1] + I_party[-1];
     R0 = RR[-1] + R_party[-1];
     S0 = N - I0 - R0 - E0
-    print("all after party", S0, "=", SR[-1]+S_party[-1], E0,I0,S0, N, ER[-1], E_party[-1])
+    # print("all after party", S0, "=", SR[-1]+S_party[-1], E0,I0,S0, N, ER[-1], E_party[-1])
 
     SL, EL, IL, RL = seir_solve(N, S0, E0, I0, R0, t_max, dt, alpha, gamma, rho,
                                 t_min=day_party+length_party)
@@ -171,7 +170,7 @@ def main():
 
     # now put everything together
     t = np.linspace(0, t_max, int(t_max / dt))
-  #  print(len(S), len(SP + SR), len(SL), len(t))
+    # print(len(S), len(SP + SR), len(SL), len(t))
 
     S_final = np.concatenate((S_till_party, S_party+SR, SL), axis=0) #[S, SP + SR, SL]
     E_final = np.concatenate((E_till_party, E_party+ER, EL), axis=0)
@@ -179,7 +178,7 @@ def main():
     R_final = np.concatenate((R_till_party, R_party+RR, RL), axis=0)
 
     plot_data(N, S_final, E_final, I_final, R_final, t)
-  #  plt.show()
+    # plt.show()
     E_party_max = np.amax(E_final)
     I_party_max = np.amax(I_final)
     R_party_max = np.amax(R_final)
@@ -187,17 +186,16 @@ def main():
     IA_max = np.amax(IA)
     RA_max = np.amax(RA)
     diff=E_party_max + I_party_max - EA_max - IA_max
-    print("At the worst day in our scenario, ", E_party_max + I_party_max, " people are infected.")
-    print(diff, " people are infected at that day due to the party.")
-    print(R_party_max, "people are either recovered or dead")
-    print("without the party it would have been",  R_party_max-RA_max, "less")
-    print("If other people in Germany go on partying like you")
-    print("There are 83 783 942 people in Germany.")
-    factor = 83783942/N
-    # print("Suppose for each ", N,  "of these people,", N_party, "do not stay at home.")
+    r1 = R_final[-1]-RA[-1]
 
-    print("Then ", diff*factor, "more people are infected than if all those had stayed at home." )
-    print("Assuming a death rate of 2%",  diff*factor*2/100, "people will die.")
+    print("At the worst day in our scenario, ", int(E_party_max + I_party_max), " people are infected.")
+    print("A the end of the crisis", int(R_party_max), "people have been infected,")
+    print("without the party it would have been",  round(r1,3), "less.")
+    print("You think that this does not make a difference?")
+    # Population of Germany 83 783 942
+    factor = 83783942/N
+    print("In all of Germany this makes a difference of", int(r1 * factor), "people who are infected.")
+    print(int(r1*factor*2/100), "people will have died due to the parties.")
     exit(0)
 
 
