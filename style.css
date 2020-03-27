@@ -1,0 +1,71 @@
+h1 { 	font-family: 'Exo 2', sans-serif;
+	font-size:14pt;
+	color:#111111;
+	font-weight:bold;
+	font-style:normal;
+				 }
+
+h2 { 	font-family: 'Exo 2', sans-serif;
+	font-size:13pt;
+	color:#111111;
+	font-weight:bold;
+	font-style:normal;
+				 }
+
+h3 { 	font-family: 'Exo 2', sans-serif;
+	font-size:12pt;
+	color:#111111;
+	font-weight:bold;
+	font-style:normal;
+				 }
+
+
+a:link { 
+		font-family: 'Exo 2', sans-serif;
+		color:#111111;
+		text-decoration:none;
+		font-style:italic;
+		font-size:12pt;
+						}
+						
+a:visited { 
+		font-family: 'Exo 2', sans-serif;
+		color:#111111;
+		text-decoration:none;
+		font-style:italic;
+		font-size:12pt;			}
+	
+
+a:active { 
+		font-family: 'Exo 2', sans-serif;
+		color:#111111;
+		text-decoration:none;
+		font-style:bold;
+		font-size:12pt;
+		
+						}
+					
+
+a:hover { 
+		font-family: 'Exo 2', sans-serif;
+		color:#00BEE0;
+		text-decoration:none;
+		font-size:12pt;
+						}
+
+						
+
+html {
+	height: 100%;
+	width: 100%;
+	}
+
+body {
+	font-family: 'Exo 2', sans-serif;
+	font-size:12pt;
+	color: #111111;
+	font-weight: normal;
+	margin:0px;
+	padding:0px;
+	height: 100%;
+	}
