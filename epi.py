@@ -1,5 +1,23 @@
-import numpy as np
-from scipy.integrate import odeint
+transpile = False
+
+from integrators import euler
+
+if transpile:
+    from org.transcrypt.stubs.browser import *
+    from org.transcrypt.stubs.browser import __main__, __envir__, __pragma__
+
+# Imports for Transcrypt, skipped runtime by CPython
+    if __envir__.executor_name == __envir__.transpiler_name:
+        import numscrypt as np
+
+else:
+
+    # Imports for CPython, skipped compile time by Transcrypt
+    #__pragma__ ('skip')
+    import numpy as np
+    from scipy.integrate import odeint
+    #__pragma__ ('noskip')
+
 
 # contact rate beta
 # basic reproductive number of virus times inverse of mean infectious rate r_0 = 2.68 * gamma = 0.5
@@ -50,13 +68,32 @@ def deriv_social(y, t, N, alpha, beta, gamma, rho):
     return dSdt, dEdt, dIdt, dRdt
 
 
+def my_odeint(func, y0, t, args=()):
+    """
+    Alternative to scipy odeint
+    """
+
+    t_min = t[0]
+    t_max = t[-1]
+    dt = t[1] - t[0]
+
+    def fun_helper(t, y):
+        return func(y, t, *args)
+
+    tp, vals = euler(fun_helper, y0, (t_min, t_max), dt)
+
+    return vals[:, 0:t.shape[0]].T
+
 def seir_solve(N, S0, E0, I0, R0, t_max, dt, alpha, gamma, rho, t_min=0):
     # Initial conditions vector
     y0 = S0, E0, I0, R0
     # A grid of time points (in days)
+
     t = np.linspace(t_min, t_max, int((t_max - t_min) / dt))
     # Integrate the SEIR equations over the time grid, t.
-    ret = odeint(deriv_social, y0, t, args=(N, alpha, beta, gamma, rho))
+    # ret2 = odeint(deriv_social, y0, t, args=(N, alpha, beta, gamma, rho))
+    ret = my_odeint(deriv_social, y0, t, args=(N, alpha, beta, gamma, rho))
+
     S, E, I, R = ret.T
     # plot_data(N, S, E, I, R, t)
     return S, E, I, R
