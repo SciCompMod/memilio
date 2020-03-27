@@ -1,4 +1,4 @@
-transpile = False
+transpile = True
 
 from integrators import euler
 

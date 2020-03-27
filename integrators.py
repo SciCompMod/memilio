@@ -1,4 +1,4 @@
-transpile = False
+transpile = True
 
 if transpile:
     from org.transcrypt.stubs.browser import *
