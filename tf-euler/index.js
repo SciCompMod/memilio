@@ -5,10 +5,7 @@ async function run() {
 
   var result = integration_test();
 
-
-
-  // Use the model to do inference on a data point the model hasn't seen.
-  // Should print approximately 39.
+  // Now print the resulting array of ones on screen by overwriting the div
   document.getElementById('micro-out-div').innerText = result.dataSync();
 }
 
