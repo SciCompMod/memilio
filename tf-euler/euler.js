@@ -31,9 +31,8 @@ function euler(df, y0, t) {
   }
   
   
-  function integration_test() {
+  function integration_test(n) {
   
-    var n  = 1000;
     const x = tf.linspace(0., 3.14159265 * 2, n);
     const y = tf.cos(x);
     const ref = tf.sin(x);

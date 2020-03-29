@@ -18,15 +18,15 @@ function plot_data(curve_data) {
 
 }
 
-
-
-// Tiny TFJS train / predict example.
-async function run() {
-
-  var result = integration_test();
-
+function update_plot(n_steps)
+{
+  var result = integration_test(n_steps);
   plot_data(result);
-
 }
 
-run();
+window.on_slider_change = function(value)
+{
+  update_plot(value);
+}
+
+update_plot(10);
