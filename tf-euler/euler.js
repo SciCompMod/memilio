@@ -10,7 +10,7 @@ export {
  * @param {*} t
  */
 function euler(df, y0, t) {
-    var y = y0;
+    var y = y0.slice();
     var t_data = t.dataSync();
   
     var dt = (t_data[1] - t_data[0])
@@ -19,11 +19,11 @@ function euler(df, y0, t) {
 
     var y_vals = [];
     for (var i = 0; i < count; ++i) {
-      y_vals.push(y);
+      y_vals.push(y.slice());
 
       var dy = df(t_data[i], y);
       for (var dim = 0; dim < n_dims; ++dim) {
-        y[dim] += dt * dy[dim];
+        y[dim] = y[dim] + dt * dy[dim];
       }
     }
 
@@ -48,10 +48,9 @@ function euler(df, y0, t) {
     sine.print();
     cosine.print();
    
-   //TODO: plot both curves
-  
-    // in theory this must be one
-    var result = tf.div(tf.sum(tf.add(sine.pow(2), cosine.pow(2))), n);
-    return result;
+    return {
+      x: x.arraySync(),
+      y: sine.arraySync()[0]
+    };
   }
   

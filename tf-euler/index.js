@@ -1,12 +1,32 @@
 import { integration_test } from './euler.js';
 
+function plot_data(curve_data) {
+
+  var xdata = curve_data.x;
+  var ydata = curve_data.y;
+
+	var placeholder = document.getElementById('chart1');
+  Plotly.newPlot( placeholder,
+    [{
+      x: xdata,
+      y: ydata
+    }],
+    {
+      margin: { t: 0 } 
+    } 
+  ); 
+
+}
+
+
+
 // Tiny TFJS train / predict example.
 async function run() {
 
   var result = integration_test();
 
-  // Now print the resulting array of ones on screen by overwriting the div
-  document.getElementById('micro-out-div').innerText = result.dataSync();
+  plot_data(result);
+
 }
 
 run();
