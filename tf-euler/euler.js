@@ -10,27 +10,31 @@ export {
  * @param {*} t
  */
 function euler(df, y0, t) {
-    var y = tf.tensor1d(y0);
+    var y = y0;
     var t_data = t.dataSync();
   
-    var dt = tf.scalar(t_data[1] - t_data[0])
+    var dt = (t_data[1] - t_data[0])
     var count = t.shape[0];
-  
+    var n_dims = y0.length;
+
     var y_vals = [];
     for (var i = 0; i < count; ++i) {
-      y_vals.push(y.dataSync());
-  
-      var dy = tf.tensor1d(df(t_data[i], y));
-      y = tf.add(y, tf.mul(dt, dy));
+      y_vals.push(y);
+
+      var dy = df(t_data[i], y);
+      for (var dim = 0; dim < n_dims; ++dim) {
+        y[dim] += dt * dy[dim];
+      }
     }
-  
+
     return tf.tensor2d(y_vals).transpose();
   }
   
   
   function integration_test() {
   
-    const x = tf.linspace(0., 3.14159265 * 2, 20);
+    var n  = 1000;
+    const x = tf.linspace(0., 3.14159265 * 2, n);
     const y = tf.cos(x);
     const ref = tf.sin(x);
   
@@ -47,7 +51,7 @@ function euler(df, y0, t) {
    //TODO: plot both curves
   
     // in theory this must be one
-    var result = tf.add(sine.pow(2), cosine.pow(2));
+    var result = tf.div(tf.sum(tf.add(sine.pow(2), cosine.pow(2))), n);
     return result;
   }
   
