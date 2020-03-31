@@ -1,0 +1,15 @@
+
+<html>
+  <head>
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@latest"> </script>
+    <script src="https://cdn.plot.ly/plotly-1.2.0.min.js"></script>
+  </head>
+  <body>
+    <h4>A euler integration with tensorflow<hr/></h4>
+    <div class="slidecontainer">
+      Number of time slices: <input type="range" min="6" max="30" value="10" class="slider" id="myRange" onchange="window.on_slider_change(this.value)">
+    </div>
+    <div id="chart1"></div>
+    <script type="module" src="./index.js"> </script>
+  </body>
+</html>
