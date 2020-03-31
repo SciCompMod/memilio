@@ -1,79 +1,162 @@
 <!DOCTYPE html>
 <HTML lang="de">
-<HEAD>
-<TITLE>....</TITLE>
-<meta name="description" content="....">
-<meta name="keywords" content="...">
-<meta name="HandheldFriendly" content="true">
-<meta name="google-site-verification" content="BEq7yWqksTB4rBtUzG6qVYfhCm40JNbNWjpS537OnWo">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<meta charset="utf-8" >
-<link href='https://fonts.googleapis.com/css?family=Exo+2:light,regular,medium,thin,italic,mediumitalic,bold' rel='stylesheet' type='text/css'>
-<link rel="stylesheet" type="text/css" href="style.css">
-<script src="https://d3js.org/d3.v5.js"></script>
-<script type="module">import * as epi from './__target__/epi.js';</script>
 
+<HEAD>
+    <TITLE>....</TITLE>
+    <meta name="description" content="....">
+    <meta name="keywords" content="...">
+    <meta name="HandheldFriendly" content="true">
+    <meta name="google-site-verification" content="BEq7yWqksTB4rBtUzG6qVYfhCm40JNbNWjpS537OnWo">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta charset="utf-8">
+    <link href='https://fonts.googleapis.com/css?family=Exo+2:light,regular,medium,thin,italic,mediumitalic,bold' rel='stylesheet' type='text/css'>
+    <link rel="stylesheet" type="text/css" href="style.css">
+    <script src="https://d3js.org/d3.v4.min.js"></script>
+
+    <script>
+        // Week number according to the ISO-8601 standard
+        Date.prototype.getWeek = function() {
+            var target = new Date(this.valueOf());
+            var dayNr = (this.getDay() + 6) % 7;
+            target.setDate(target.getDate() - dayNr + 3);
+            var firstThursday = target.valueOf();
+            target.setMonth(0, 1);
+            if (target.getDay() != 4) {
+                target.setMonth(0, 1 + ((4 - target.getDay()) + 7) % 7);
+            }
+            return 1 + Math.ceil((firstThursday - target) / 604800000);
+        }
+
+        function showFirstActionInterval(target) {
+            var elem_div = document.getElementById("action" + target);
+            var elem_input = document.getElementById("input_action" + target);
+
+            //  + "
+
+            if (elem_input.checked) {
+                show("action" + target, 0);
+            } else {
+                hideAll("action" + target + "_");
+            }
+        }
+
+
+        function show(target_name, number) {
+
+            var elem = document.getElementById(target_name + "_" + number);
+
+            if (elem.style.display == "none") {
+                elem.style.display = "block";
+            }
+        }
+
+        function hideAll(target_name) {
+
+            for (var i = 0; i < 4; i++) {
+                var elem = document.getElementById(target_name + "" + i);
+
+                elem.style.display = "none";
+            }
+
+        }
+
+        var actions = new Array("HomeOffice Empfehlung", "HomeOffice Anordnung", "Schlie&szlig;ung von Restaurant und Bars", "Schlie&szlig;ung von Gesch&auml;ften",
+            "Schulschlie&szlig;ungen", "Kontaktverbot", "Ausgangssperre", "Einreiseverbote", "Systematisierung von Tests");
+
+        function init() {
+            document.getElementById('button').addEventListener('click', changeHTMLContent);
+        }
+
+        function changeHTMLContent() {
+            var neu = "neuer <b>fetter</b> Text";
+            document.getElementById('absatz').innerHTML = neu;
+        }
+    </script>
 
 </HEAD>
 
-<body style="background-color:#FFFFFF" onload="draw()">
-<script src="js/app.js"></script>
+<body style="background-color:#FFFFFF">
 
-<div style="width:80%; padding:10%">
+    <div style="width:100%; padding:3%">
 
-    
-<div style="width:33%; position:relative; float:left;">
-    
 
-<div id="actions" style="width:100%; position:relative; float:left;">
+        <!-- <div style="width:33%; position:relative; float:left;"> -->
 
-<script>
+        <div style="width:300; position:relative; float:left;">
 
-var d = new Date();
+            <svg id='locations' style="border:1px #cdcdcd solid; border-radius:10px; margin-right:10px;" width="300" height="615"></svg>
 
-var content = '<h3>Ma&szlig;nahmen</h3>';
-for(var i=0;i<actions.length;i++)
-{
-    //   <input type='checkbox' name='action[]' value='2'><br>
-      content += "<div id='action" + i + "'>";
-      content += "<input id='input_action" + i + "' onClick='showFirstActionInterval(" + i + ")' type='checkbox' name='action[]' value='"+ i + "'> " + actions[i];
-      for(var j=0;j<4;j++)
-      {
-            content += "<div id='action" + i + "_" + j + "' style='display:none;'>";
-            content += "von KW <input id='action" + i + "_" + j + "_start' size='6'";
-            if(j==0){ 
-                content += "value='" + d.getFullYear() + ":" +  d.getWeek() + "''"; 
-            }else{
-                content += "value='" + d.getFullYear() + ":'";
-            }
-            content +="> bis KW <input id='action" + i + "_" + j + "_end' size='6'";
-            if(j==0){ 
-                content += "value='" + d.getFullYear() + ":" +  (d.getWeek()+2) + "''"; 
-            }else{
-                content += "value='" + d.getFullYear() + ":'";
-            }            
-            content += "></div>";
-      }
-      content += "</div>";
-}
-document.getElementById("actions").innerHTML = content;
-</script>
-</div>
+        </div>
 
-<div id="parameters" style="width:100%; position:relative; float:left;">
-<h3>Parameter</h3>
+        <div style="width:300; position:relative; float:left;">
 
-</div>
-</div>
+            <svg id='actions' style="border:1px #cdcdcd solid; border-radius:10px; margin-right:10px; margin-bottom:10px;" width="300" height="300"></svg><br>
 
-<div style="width:67%; position:relative; float:left;">
+            <svg id='parameters' style="border:1px #cdcdcd solid; border-radius:10px; margin-right:10px;" width="300" height="300"></svg>
 
-    <canvas id="canvas" style="width:100%;"></canvas>
+        </div>
 
-</div>
+        <div style="width:300; position:relative; float:left;">
 
-</div>
+            <svg id='graphs' style="border:1px #cdcdcd solid; border-radius:10px;" width="930" height="615"></svg>
 
+        </div>
+
+
+        <button onclick="read_and_visualize('covid19_ger.csv',false)">Deutschland</button>
+        <button onclick="read_and_visualize('covid19_ger_rand.csv',false)">Zufallsland</button>
+
+        <div id="actions" style="width:100%; position:relative; float:left;">
+
+            <script>
+                var d = new Date();
+
+                var content = '<h3>Ma&szlig;nahmen</h3>';
+                for (var i = 0; i < actions.length; i++) {
+                    //   <input type='checkbox' name='action[]' value='2'><br>
+                    content += "<div id='action" + i + "'>";
+                    content += "<input id='input_action" + i + "' onClick='showFirstActionInterval(" + i + ")' type='checkbox' name='action[]' value='" + i + "'> " + actions[i];
+                    for (var j = 0; j < 4; j++) {
+                        content += "<div id='action" + i + "_" + j + "' style='display:none;'>";
+                        content += "von KW <input id='action" + i + "_" + j + "_start' size='6'";
+                        if (j == 0) {
+                            content += "value='" + d.getFullYear() + ":" + d.getWeek() + "''";
+                        } else {
+                            content += "value='" + d.getFullYear() + ":'";
+                        }
+                        content += "> bis KW <input id='action" + i + "_" + j + "_end' size='6'";
+                        if (j == 0) {
+                            content += "value='" + d.getFullYear() + ":" + (d.getWeek() + 2) + "''";
+                        } else {
+                            content += "value='" + d.getFullYear() + ":'";
+                        }
+                        content += "></div>";
+                    }
+                    content += "</div>";
+                }
+                document.getElementById("actions").innerHTML = content;
+            </script>
+        </div>
+
+        <div id="parameters" style="width:100%; position:relative; float:left;">
+            <!-- <h3>Parameter</h3> -->
+
+        </div>
+
+        <!-- </div> -->
+
+        <!-- <div style="width:67%; position:relative; float:left;"> -->
+
+
+        <!-- </div> -->
+
+    </div>
+
+
+
+
+    <script src="index.js"></script>
 
 </body>
+
 </HTML>
