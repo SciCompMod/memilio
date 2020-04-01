@@ -11,6 +11,27 @@ var selectLine;
 var selectLineTooltip = [];
 var selectLineCircle = [];
 
+// var div_locations = d3.select("#locations").style("overflow", "hidden");
+
+// div_locations.append('div')
+//     .style("width", "100%")
+//     .style("height", "26px")
+//     .style("padding", "7px")
+//     .style("padding-left", "15px")
+//     .style("background-color", "#73B0FF")
+//     .html("Orte")
+//     .style("font-weight", "bold");
+
+
+// div_locations.append("svg")
+//     .attr("width", 200)
+//     .attr("height", 200)
+//     .append("button")
+//     .html("asdasd")
+//     .attr("x", 100)
+//     .attr("y", 100);
+
+
 var svg_locations = d3.select("#locations");
 
 svg_locations.append('rect')
@@ -25,31 +46,64 @@ svg_locations.append('text')
     .attr("font-weight", "bold");
 
 
-var svg_locations = d3.select("#actions");
+var loc = ["D&uuml;sseldorf", "K&ouml;ln", "Aachen", "Bonn"];
+var loc_length = [10, 4, 6, 4]
+var loc_ref = ["data_01", "data_02", "data_03", "data_04"];
+var loc_pos = [
+    [150, 175],
+    [200, 350],
+    [75, 475],
+    [225, 525]
+];
 
-svg_locations.append('rect')
-    .attr("width", "100%")
-    .attr("height", "40")
-    .style("fill", "#73B0FF");
+var data_chosen;
 
-svg_locations.append('text')
-    .html("Maßnahmen")
-    .attr("x", "20")
-    .attr("y", "25")
-    .attr("font-weight", "bold");
+for (var i = 0; i < loc.length; i++) {
+    svg_locations.append("circle")
+        .attr("class", "button")
+        .attr("r", 50)
+        .attr("cx", loc_pos[i][0])
+        .attr("cy", loc_pos[i][1])
+        .attr("fill", "#cdcdcd")
+        .attr("alt", loc_ref[i])
+        .on("click", onButtonMouseClick) //Add listener for the click event
+        .on("mouseover", onButtonMouseOver) //Add listener for the mouseover event 
+        .on("mouseout", onButtonMouseOut); //Add listener for the mouseout event 
 
-var svg_locations = d3.select("#parameters");
+    svg_locations.append("text")
+        .attr("x", loc_pos[i][0] - 4 * loc_length[i])
+        .attr("y", loc_pos[i][1] + 5)
+        .attr("alt", loc_ref[i])
+        .on("click", onButtonMouseClick) //Add listener for the click event
+        .on("mouseover", onTextMouseOver)
+        .html(loc[i])
+        .attr("font-weight", 600);
+}
 
-svg_locations.append('rect')
-    .attr("width", "100%")
-    .attr("height", "40")
-    .style("fill", "#73B0FF");
+// alert(loc[1].length)
 
-svg_locations.append('text')
-    .html("Parameter")
-    .attr("x", "20")
-    .attr("y", "25")
-    .attr("font-weight", "bold");
+
+// var div_actions = d3.select("#actions").style("overflow", "hidden");
+
+// div_actions.append('div')
+//     .style("width", "100%")
+//     .style("height", "26px")
+//     .style("padding", "7px")
+//     .style("padding-left", "15px")
+//     .style("background-color", "#73B0FF")
+//     .html("Maßnahmen")
+//     .style("font-weight", "bold");
+
+// var div_parameters = d3.select("#parameters").style("overflow", "hidden");
+
+// div_parameters.append('div')
+//     .style("width", "100%")
+//     .style("height", "26px")
+//     .style("padding", "7px")
+//     .style("padding-left", "15px")
+//     .style("background-color", "#73B0FF")
+//     .html("Parameter")
+//     .style("font-weight", "bold");
 
 
 
@@ -173,6 +227,7 @@ function read_and_visualize(filename, log_scale) {
 
 
     g[0] = svg_graphs.append("g")
+        .attr("id", "main_graph")
         // .attr("width", width) // ist wohl nicht noetig.. mouse events werden auch so durch das rect oben gefangen und nicht durch das g welches ein dimensionsloser Container ist
         // .attr("height", height)
         // .attr('fill', 'none')
@@ -180,16 +235,18 @@ function read_and_visualize(filename, log_scale) {
 
 
     g[1] = svg_graphs.append("g")
+        .attr("id", "mini_graph")
         .attr("transform", "translate(" + 0.5 * margin_horizontal + "," + (margin_top - 1.5 * heightMini) + ")");
 
 
     overlay_mini = g[1].append("rect")
+        .attr("id", "gray_overlay")
         .style("opacity", 0.2)
         .on("mousemove", onMouseMoveMini) //Add listener for the mouseover event
         .on("mousedown", onMouseDownMini) //Add listener for the down event 
         .on("mouseup", onMouseReleaseMini) //Add listener for the release event 
-        .attr("x", 0)
-        .attr("width", 0)
+        .attr("x", begin_interval_x)
+        .attr("width", end_interval_x - begin_interval_x)
         .attr("height", heightMini); // linker ausgegrauter Bereich
 
 
@@ -202,13 +259,20 @@ function read_and_visualize(filename, log_scale) {
                 throw error;
             }
 
-            filteredData = data.filter(function(d) { return d.day < data[end_interval_i].day });
-
             data_read.push(data);
-            data_read.push(filteredData);
 
-            xScale.domain(d3.extent(filteredData, function(d) { return d.day; }));
-            yScale.domain([0, max_fact * d3.max(filteredData, function(d) { return d.cases[0]; })]);
+            if (begin_interval_i == 0 && end_interval_i == 60) {
+                filteredData = data.filter(function(d) { return d.day < data[end_interval_i].day });
+                data_read.push(filteredData);
+            } else {
+                data_read.push(data.slice(begin_interval_i, end_interval_i));
+            }
+
+            console.log(data_read[1]);
+
+
+            xScale.domain(d3.extent(data_read[1], function(d) { return d.day; }));
+            yScale.domain([0, max_fact * d3.max(data_read[1], function(d) { return d.cases[0]; })]);
 
 
             g[0].append("g")
@@ -226,18 +290,22 @@ function read_and_visualize(filename, log_scale) {
                 .attr("id", "yaxis")
                 .call(d3.axisLeft(yScale).ticks(4));
 
-            for (var i = 0; i < data_read[0][0].cases.length; i++) {
+            if (begin_interval_i == 0 && end_interval_i == 60) {
+                for (var i = 0; i < data_read[0][0].cases.length; i++) {
 
-                g[0].append("path")
-                    .datum(filteredData)
-                    .attr("fill", "none")
-                    .attr("stroke", colors[i])
-                    .attr("stroke-width", 1.5)
-                    .attr("d", d3.line()
-                        .x(function(d) { return xScale(d.day) })
-                        .y(function(d) { return yScale(d.cases[i]) })
-                    )
+                    g[0].append("path")
+                        .datum(filteredData)
+                        .attr("fill", "none")
+                        .attr("stroke", colors[i])
+                        .attr("stroke-width", 1.5)
+                        .attr("d", d3.line()
+                            .x(function(d) { return xScale(d.day) })
+                            .y(function(d) { return yScale(d.cases[i]) })
+                        )
 
+                }
+            } else {
+                update_graph();
             }
 
             // define bars in graphic
@@ -257,8 +325,7 @@ function read_and_visualize(filename, log_scale) {
             xScaleMini.domain(d3.extent(data_read[0].map(function(d) { return d.day; })));
             yScaleMini.domain([1, max_fact * d3.max(data_read[0], function(d) { return d.cases[0]; })]);
 
-            end_interval_x = yScaleMini(end_interval_x);
-            overlay_mini.attr("width", end_interval_x);
+            overlay_mini.attr("width", end_interval_x - begin_interval_x);
 
             g[1].append("g")
                 .call(d3.axisLeft(yScaleMini).tickFormat(function(d) {
@@ -524,24 +591,48 @@ function onMouseReleaseMini() {
 // }
 
 
+function onButtonMouseClick() {
 
-// function onMouseOver(d) {
-//     d3.select(this).attr('class', 'highlight');
+    d3.select(".button_active").attr("class", "button")
 
-//     d3.select("svg")
-//         .append('g')
-//         .append("text")
-//         .text("Datum");
-//     // .attr('x', function() {
-//     //     return x(d.day);
-//     // })
-//     //     .attr('y', function() {
-//     //         return y(d.cases);
-//     //     })
-//     //     .text(function() {
-//     //         return d.cases; // Value of the text
-//     //     });
-// }
+    var activeElem = d3.select(this);
+
+    read_and_visualize(activeElem.attr("alt") + ".csv", false);
+
+    data_chosen = d3.select(this).attr("alt");
+    if (activeElem.node().tagName == "circle") {
+        activeElem.attr("class", "button_active")
+    }
+
+
+    d3.selectAll(".button").transition(200)
+        .attr('fill', '#cdcdcd');
+
+}
+
+function onButtonMouseOver() {
+    d3.select(this)
+        .transition(400)
+        .attr('fill', '#73B0FF');
+
+    d3.select(this).style("cursor", "pointer");
+}
+
+function onTextMouseOver() {
+    d3.select(this).style("cursor", "pointer");
+}
+
+
+function onButtonMouseOut() {
+
+    if (data_chosen != d3.select(this).attr("alt")) {
+
+        d3.select(this)
+            .transition(200)
+            .attr('fill', '#cdcdcd');
+    }
+
+}
 
 // //mouseout event handler function
 // function onMouseOut(d) {
