@@ -31,9 +31,13 @@ function plot_data(seir_data) {
     ],
     {
       margin: { t: 0 },
+      xaxis: {
+        title: "#Days since t0"
+      },
       yaxis: {
         type: plot_type,
-        autorange: true
+        autorange: true,
+        title: 'Number',
       }
     } 
   ); 
