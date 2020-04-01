@@ -14,6 +14,8 @@
     <script src="https://d3js.org/d3.v4.min.js"></script>
 
     <script>
+        var formatTime = d3.timeFormat("%d.%m.%Y"); // this is actually a function... formatTime(d)
+
         // Week number according to the ISO-8601 standard
         Date.prototype.getWeek = function() {
             var target = new Date(this.valueOf());
@@ -129,10 +131,12 @@
                                     }
                                     content += " type='checkbox'><input id='action" + i + "_" + j + "_start' size='8'";
                                     // von
-                                    content += "value='" + d.getFullYear() + ":KW" + (d.getWeek() + 2 * j) + "''";
+                                    // content += "value='" + d.getFullYear() + ":KW" + (d.getWeek() + 2 * j) + "''";
+                                    content += "value='" + formatTime(new Date(d.getTime() + 7 * 4 * j * 24 * 60 * 60 * 1000)) + "'";
                                     content += ">-<input id='action" + i + "_" + j + "_end' size='8'";
                                     // bis
-                                    content += "value='" + d.getFullYear() + ":KW" + (d.getWeek() + 2 * (j + 1)) + "''";
+                                    // content += "value='" + d.getFullYear() + ":KW" + (d.getWeek() + 2 * (j + 1)) + "''";
+                                    content += "value='" + formatTime(new Date(d.getTime() + 7 * 4 * (j + 1) * 24 * 60 * 60 * 1000)) + "'";
                                     content += "></div>";
                                 }
                                 content += "</div>";
@@ -199,9 +203,9 @@
 
             </div>
 
-            <button onclick="read_and_visualize('covid19_ger_rand.csv',false)">K&ouml;ln</button>
+            <!-- <button onclick="read_and_visualize('covid19_ger_rand.csv',false)">K&ouml;ln</button>
 
-            <button onclick="read_and_visualize('covid19_ger.csv',false)">K&ouml;ln</button>
+            <button onclick="read_and_visualize('covid19_ger.csv',false)">K&ouml;ln</button> -->
             <!-- <div id="actions" style="width:100%; position:relative; float:left;">
 
                 <script>

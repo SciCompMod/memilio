@@ -72,6 +72,14 @@ body {
     fill: #73B0FF;
 }
 
+.bar_cat2 {
+    fill: rgb(0, 150, 12);
+}
+
+.bar_cat3 {
+    fill: rgb(135, 0, 212);
+}
+
 .barMini_cat1 {
     fill: #73B0FF;
 }
@@ -95,22 +103,6 @@ div.tooltip {
 }
 
 button {
-    display: inline-block;
-    padding: 10px;
-    border: 1px solid #FFFFFF;
-    border-radius: 10px;
-    margin: 0 0 0 0;
-    font-family: 'Exo 2', sans-serif;
-    font-size: 12pt;
-    text-decoration: none;
-    font-weight: 400;
-    color: black;
-    background-color: #73B0FF;
-    text-align: center;
-    transition: all 0.2s;
-}
-
-.button:hover {
     display: inline-block;
     padding: 10px;
     border: 1px solid #FFFFFF;

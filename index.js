@@ -120,8 +120,6 @@ var svg_graphs = d3.select("#graphs"),
 var coeffs_critical = [0.2, 0.1, 0.05];
 var colors = ["#73B0FF", "orange", "red", "black"];
 
-var formatTime = d3.timeFormat("%d.%m.%Y"); // this is actually a function... formatTime(d)
-
 var overlay_mini = [];
 
 var begin_interval_i = 0,
@@ -367,9 +365,69 @@ function read_and_visualize(filename, log_scale) {
             // Add the line
             g[2].append("rect")
                 .attr("class", "bar_cat1")
-                .attr("x", function(d) { return 10; })
+                .attr("x", function(d) { return 40; })
+                .attr("y", function(d) { return 2 * heightMini - 50; })
+                .attr("width", 50)
+                .attr("height", function(d) { return 10; });
+
+            g[2].append("rect")
+                .attr("class", "bar_cat1")
+                .attr("x", function(d) { return 200; })
+                .attr("y", function(d) { return 2 * heightMini - 50; })
+                .attr("width", 60)
+                .attr("height", function(d) { return 10; });
+
+            g[2].append("rect")
+                .attr("class", "bar_cat1")
+                .attr("x", function(d) { return 400; })
+                .attr("y", function(d) { return 2 * heightMini - 50; })
+                .attr("width", 30)
+                .attr("height", function(d) { return 10; });
+
+
+            // Add the line
+            g[2].append("rect")
+                .attr("class", "bar_cat2")
+                .attr("x", function(d) { return 80; })
+                .attr("y", function(d) { return 2 * heightMini - 30; })
+                .attr("width", 50)
+                .attr("height", function(d) { return 10; });
+
+            g[2].append("rect")
+                .attr("class", "bar_cat2")
+                .attr("x", function(d) { return 170; })
+                .attr("y", function(d) { return 2 * heightMini - 30; })
+                .attr("width", 60)
+                .attr("height", function(d) { return 10; });
+
+            g[2].append("rect")
+                .attr("class", "bar_cat2")
+                .attr("x", function(d) { return 320; })
+                .attr("y", function(d) { return 2 * heightMini - 30; })
+                .attr("width", 30)
+                .attr("height", function(d) { return 10; });
+
+
+            // Add the line
+            g[2].append("rect")
+                .attr("class", "bar_cat3")
+                .attr("x", function(d) { return 80; })
                 .attr("y", function(d) { return 2 * heightMini - 10; })
-                .attr("width", 10)
+                .attr("width", 50)
+                .attr("height", function(d) { return 10; });
+
+            g[2].append("rect")
+                .attr("class", "bar_cat3")
+                .attr("x", function(d) { return 250; })
+                .attr("y", function(d) { return 2 * heightMini - 10; })
+                .attr("width", 40)
+                .attr("height", function(d) { return 10; });
+
+            g[2].append("rect")
+                .attr("class", "bar_cat3")
+                .attr("x", function(d) { return 550; })
+                .attr("y", function(d) { return 2 * heightMini - 10; })
+                .attr("width", 60)
                 .attr("height", function(d) { return 10; });
 
 
