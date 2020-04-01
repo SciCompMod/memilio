@@ -110,6 +110,22 @@ button {
     transition: all 0.2s;
 }
 
+.button:hover {
+    display: inline-block;
+    padding: 10px;
+    border: 1px solid #FFFFFF;
+    border-radius: 10px;
+    margin: 0 0 0 0;
+    font-family: 'Exo 2', sans-serif;
+    font-size: 12pt;
+    text-decoration: none;
+    font-weight: 400;
+    color: black;
+    background-color: #73B0FF;
+    text-align: center;
+    transition: all 0.2s;
+}
+
 button:hover {
     color: #000000;
     background-color: rgb(0, 131, 219);
