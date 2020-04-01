@@ -3,6 +3,7 @@ import {simulate_seir, makeSeirParam} from './seir.js'
 
 function plot_data(seir_data) {
 
+  var plot_type = use_log_scale() ? "log" : "linear";
 
 	var placeholder = document.getElementById('chart1');
   Plotly.newPlot( placeholder,
@@ -29,7 +30,11 @@ function plot_data(seir_data) {
       }
     ],
     {
-      margin: { t: 0 } 
+      margin: { t: 0 },
+      yaxis: {
+        type: plot_type,
+        autorange: true
+      }
     } 
   ); 
 
@@ -44,20 +49,32 @@ function update_plot(beta)
   plot_data(result);
 }
 
-function on_slider_change(value)
-{
-  var beta = value / 1000.;
-  document.getElementById('contact_rate_id').innerHTML = beta.toString();
 
-  update_plot(beta);
+function beta() {
+  var beta_slider = document.getElementById('beta_slider');
+  return beta_slider.value / 1000.;
+}
+
+function use_log_scale()
+{
+  var cb_log = document.getElementById('cb_log_id');
+  return cb_log.checked;
 }
 
 function main()
 {
   var beta_slider = document.getElementById('beta_slider');
   beta_slider.oninput = function() {
-    on_slider_change(this.value);
+    var v = beta();
+    document.getElementById('contact_rate_id').innerHTML = beta.toString();
+    update_plot(b);
   };
+
+  var cb_log = document.getElementById('cb_log_id');
+  cb_log.onclick = function() {
+    update_plot(beta());
+    console.log(use_log_scale());
+  }
 
   update_plot(1.5);
 }
