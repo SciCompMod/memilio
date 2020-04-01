@@ -1,16 +1,33 @@
-import { integration_test } from './euler.js';
+import { integration_test, euler } from './euler.js';
+import {simulate_seir, makeSeirParam} from './seir.js'
 
-function plot_data(curve_data) {
+function plot_data(seir_data) {
 
-  var xdata = curve_data.x;
-  var ydata = curve_data.y;
 
 	var placeholder = document.getElementById('chart1');
   Plotly.newPlot( placeholder,
-    [{
-      x: xdata,
-      y: ydata
-    }],
+    [
+      {
+        x: seir_data.t,
+        y: seir_data.S,
+        name: "susceptible"
+      },
+      {
+        x: seir_data.t,
+        y: seir_data.E,
+        name: "exposed"
+      },
+      {
+        x: seir_data.t,
+        y: seir_data.I,
+        name: "infections"
+      },
+      {
+        x: seir_data.t,
+        y: seir_data.R,
+        name: "immune / recovered"
+      }
+    ],
     {
       margin: { t: 0 } 
     } 
@@ -18,15 +35,33 @@ function plot_data(curve_data) {
 
 }
 
-function update_plot(n_steps)
+function update_plot(beta)
 {
-  var result = integration_test(n_steps);
+  var p = makeSeirParam();
+  p.b = beta;
+
+  var result = simulate_seir(0., 400., 0.1, p);
   plot_data(result);
 }
 
-window.on_slider_change = function(value)
+function on_slider_change(value)
 {
-  update_plot(value);
+  var beta = value / 1000.;
+  document.getElementById('contact_rate_id').innerHTML = beta.toString();
+
+  update_plot(beta);
 }
 
-update_plot(10);
+function main()
+{
+  var beta_slider = document.getElementById('beta_slider');
+  beta_slider.oninput = function() {
+    on_slider_change(this.value);
+  };
+
+  update_plot(1.5);
+}
+
+main();
+
+
