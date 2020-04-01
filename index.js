@@ -5,6 +5,8 @@
 
 var data_read = [];
 
+var logscale = false;
+
 var xScale, yScale, xScaleMini, yScaleMini;
 
 var selectLine;
@@ -60,13 +62,13 @@ var data_chosen;
 
 for (var i = 0; i < loc.length; i++) {
     svg_locations.append("circle")
-        .attr("class", "button")
+        .attr("class", "button_loc")
         .attr("r", 50)
         .attr("cx", loc_pos[i][0])
         .attr("cy", loc_pos[i][1])
         .attr("fill", "#cdcdcd")
         .attr("alt", loc_ref[i])
-        .on("click", onButtonMouseClick) //Add listener for the click event
+        .on("click", onButtonLocMouseClick) //Add listener for the click event
         .on("mouseover", onButtonMouseOver) //Add listener for the mouseover event 
         .on("mouseout", onButtonMouseOut); //Add listener for the mouseout event 
 
@@ -74,7 +76,7 @@ for (var i = 0; i < loc.length; i++) {
         .attr("x", loc_pos[i][0] - 4 * loc_length[i])
         .attr("y", loc_pos[i][1] + 5)
         .attr("alt", loc_ref[i])
-        .on("click", onButtonMouseClick) //Add listener for the click event
+        .on("click", onButtonLocMouseClick) //Add listener for the click event
         .on("mouseover", onTextMouseOver)
         .html(loc[i])
         .attr("font-weight", 600);
@@ -142,9 +144,8 @@ svg_graphs.append('text')
     .attr("font-weight", "bold");
 
 
-function read_and_visualize(filename, log_scale) {
+function read_and_visualize(filename) {
 
-    logscale = log_scale;
     max_fact = 1;
 
     svg_graphs.selectAll("*").remove();
@@ -154,6 +155,62 @@ function read_and_visualize(filename, log_scale) {
         data_read = [];
     }
 
+    svg_graphs.append("rect")
+        .attr("class", "button_rescale")
+        .attr("id", "button_lin")
+        .attr("rx", 6)
+        .attr("ry", 6)
+        .attr("width", 80)
+        .attr("height", 35)
+        .attr("fill", "#cdcdcd")
+        .attr("x", 730)
+        .attr("y", 50)
+        .attr("alt", "asd")
+        .on("click", onButtonRescaleMouseClick) //Add listener for the click event
+        .on("mouseover", onButtonMouseOver) //Add listener for the mouseover event 
+        .on("mouseout", onButtonMouseOut); //Add listener for the mouseout event 
+
+    svg_graphs.append("text")
+        .attr("x", 740)
+        .attr("y", 72)
+        .attr("alt", "asd")
+        .on("click", onButtonRescaleMouseClick) //Add listener for the click event
+        .on("mouseover", onTextMouseOver)
+        .html("y-linear")
+        .attr("font-weight", 400);
+
+
+    svg_graphs.append("rect")
+        .attr("class", "button_rescale")
+        .attr("id", "button_log")
+        .attr("rx", 6)
+        .attr("ry", 6)
+        .attr("width", 80)
+        .attr("height", 35)
+        .attr("fill", "#cdcdcd")
+        .attr("x", 830)
+        .attr("y", 50)
+        .attr("alt", "asd")
+        .on("click", onButtonRescaleMouseClick) //Add listener for the click event
+        .on("mouseover", onButtonMouseOver) //Add listener for the mouseover event 
+        .on("mouseout", onButtonMouseOut); //Add listener for the mouseout event 
+
+    svg_graphs.append("text")
+        .attr("x", 850)
+        .attr("y", 72)
+        .attr("alt", "asd")
+        .on("click", onButtonRescaleMouseClick) //Add listener for the click event
+        .on("mouseover", onTextMouseOver)
+        .html("y-log")
+        .attr("font-weight", 400);
+
+    if (logscale) {
+        d3.select("#button_log").attr("class", "button_rescale_active")
+            .attr("fill", "#73B0FF")
+    } else {
+        d3.select("#button_lin").attr("class", "button_rescale_active")
+            .attr("fill", "#73B0FF")
+    }
     svg_graphs.append('rect')
         .attr("width", "100%")
         .attr("height", "40")
@@ -288,6 +345,9 @@ function read_and_visualize(filename, log_scale) {
                 .attr("id", "yaxis")
                 .call(d3.axisLeft(yScale).ticks(4));
 
+
+            var update = false;
+
             if (begin_interval_i == 0 && end_interval_i == 60) {
                 for (var i = 0; i < data_read[0][0].cases.length; i++) {
 
@@ -303,7 +363,7 @@ function read_and_visualize(filename, log_scale) {
 
                 }
             } else {
-                update_graph();
+                update = true;
             }
 
             // define bars in graphic
@@ -326,6 +386,7 @@ function read_and_visualize(filename, log_scale) {
             overlay_mini.attr("width", end_interval_x - begin_interval_x);
 
             g[1].append("g")
+                .attr("id", "yaxis")
                 .call(d3.axisLeft(yScaleMini).tickFormat(function(d) {
                     return d;
                 }).ticks(4));
@@ -338,18 +399,24 @@ function read_and_visualize(filename, log_scale) {
                     .ticks(6)
                     .tickFormat(d3.timeFormat("%d.%m.%Y")));
 
-            // Add the line
-            for (var i = 0; i < data_read[0][0].cases.length; i++) {
-                g[1].append("path")
-                    .datum(data_read[0])
-                    .attr("fill", "none")
-                    .attr("stroke", colors[i])
-                    .attr("stroke-width", 1.5)
-                    .attr("d", d3.line()
-                        .x(function(d) { return xScaleMini(d.day) })
-                        .y(function(d) { return yScaleMini(d.cases[i]) })
-                    )
+
+            if (!update) {
+                // Add the line
+                for (var i = 0; i < data_read[0][0].cases.length; i++) {
+                    g[1].append("path")
+                        .datum(data_read[0])
+                        .attr("fill", "none")
+                        .attr("stroke", colors[i])
+                        .attr("stroke-width", 1.5)
+                        .attr("d", d3.line()
+                            .x(function(d) { return xScaleMini(d.day) })
+                            .y(function(d) { return yScaleMini(d.cases[i]) })
+                        )
+                }
+            } else {
+                update_graph();
             }
+
 
 
             // actions
@@ -489,15 +556,27 @@ function read_and_visualize(filename, log_scale) {
 
 
 
-function update_graph(log_scale) {
+function update_graph() {
 
     g[0].selectAll("path").remove();
     g[0].select("#xaxis").remove();
     g[0].select("#yaxis").remove();
 
+    if (logscale) {
+        yScale = d3.scaleLog().range([height, 0]);
+        max_fact = 5;
+    } else {
+        yScale = d3.scaleLinear().range([height, 0]);
+    }
+
+    if (logscale) {
+        yScaleMini = d3.scaleLog().range([heightMini, 0]);
+    } else {
+        yScaleMini = d3.scaleLinear().range([heightMini, 0]); // inverted.....
+    }
+
     xScale.domain(d3.extent(data_read[1], function(d) { return d.day; }));
     yScale.domain([0, max_fact * d3.max(data_read[1], function(d) { return d.cases[0]; })]);
-
 
     g[0].append("g")
         .attr("id", "xaxis")
@@ -527,6 +606,32 @@ function update_graph(log_scale) {
             )
 
     }
+
+    g[1].selectAll("path").remove();
+    g[1].select("#yaxis").remove();
+
+    g[1].append("g")
+        .attr("id", "yaxis")
+        .call(d3.axisLeft(yScaleMini).tickFormat(function(d) {
+            return d;
+        }).ticks(4));
+
+
+    yScaleMini.domain([1, max_fact * d3.max(data_read[0], function(d) { return d.cases[0]; })]);
+
+    // Add the line
+    for (var i = 0; i < data_read[0][0].cases.length; i++) {
+        g[1].append("path")
+            .datum(data_read[0])
+            .attr("fill", "none")
+            .attr("stroke", colors[i])
+            .attr("stroke-width", 1.5)
+            .attr("d", d3.line()
+                .x(function(d) { return xScaleMini(d.day) })
+                .y(function(d) { return yScaleMini(d.cases[i]) })
+            )
+    }
+
 }
 
 
@@ -649,21 +754,21 @@ function onMouseReleaseMini() {
 // }
 
 
-function onButtonMouseClick() {
+function onButtonLocMouseClick() {
 
-    d3.select(".button_active").attr("class", "button")
+    d3.select(".button_loc_active").attr("class", "button_loc")
 
     var activeElem = d3.select(this);
 
-    read_and_visualize(activeElem.attr("alt") + ".csv", false);
+    read_and_visualize(activeElem.attr("alt") + ".csv");
 
     data_chosen = d3.select(this).attr("alt");
     if (activeElem.node().tagName == "circle") {
-        activeElem.attr("class", "button_active")
+        activeElem.attr("class", "button_loc_active")
     }
 
 
-    d3.selectAll(".button").transition(200)
+    d3.selectAll(".button_loc").transition(200)
         .attr('fill', '#cdcdcd');
 
 }
@@ -689,6 +794,27 @@ function onButtonMouseOut() {
             .transition(200)
             .attr('fill', '#cdcdcd');
     }
+
+}
+
+
+function onButtonRescaleMouseClick() {
+
+    d3.select(".button_rescale_active").attr("class", "button_rescale")
+
+    var activeElem = d3.select(this);
+
+    data_chosen = d3.select(this).attr("alt");
+    if (activeElem.node().tagName == "rectangle") {
+        activeElem.attr("class", "button_rescale_active")
+    }
+
+
+    d3.selectAll(".button_rescale").transition(200)
+        .attr('fill', '#cdcdcd');
+
+    logscale = true;
+    update_graph();
 
 }
 
