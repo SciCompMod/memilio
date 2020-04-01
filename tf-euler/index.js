@@ -65,8 +65,8 @@ function main()
 {
   var beta_slider = document.getElementById('beta_slider');
   beta_slider.oninput = function() {
-    var v = beta();
-    document.getElementById('contact_rate_id').innerHTML = beta.toString();
+    var b = beta();
+    document.getElementById('contact_rate_id').innerHTML = b.toString();
     update_plot(b);
   };
 
