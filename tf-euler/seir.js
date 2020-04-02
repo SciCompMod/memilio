@@ -8,8 +8,8 @@ import { euler } from './euler.js';
 
 class SeirParam {
     constructor() {
-      // Assume an incubation period of 5.2 days
-      this.a = 0.0192;
+      // Assume an incubation period of 5.2 days, a = 1/t_incubation
+      this.a = 0.192;
       // contact rate beta
       this.b = 1.75;
       // Assume infectious period of 2 days
