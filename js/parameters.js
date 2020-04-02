@@ -1,13 +1,21 @@
 function Parameters($form) {
     let listeners = [];
 
+    function buildParameters() {
+        let serialized = $form.serializeArray();
+        let parameters = {};
+        serialized.forEach(s => {
+            parameters[s.name] = s.value;
+        });
+        return parameters;
+    }
 
     $form
-        .submit(function(event){
+        .on('change', 'input', function(event){
             event.preventDefault();
             event.stopPropagation();
             
-            let serialized = $form.serializeArray();
+            let parameters = buildParameters();
 
             listeners
                 .forEach(l => {
@@ -16,8 +24,11 @@ function Parameters($form) {
         });
 
     return {
-        onsubmit: function(listener) {
+        onchange: function(listener) {
             listeners.push(listener);
+        },
+        getParameters: function() {
+            return buildParameters();
         }
     }
 }

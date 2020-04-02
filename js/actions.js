@@ -1,9 +1,10 @@
 function Actions(selector, actions) {
     let $container = $(selector);
     let actionMap = new Map();
+    let formatTime = d3.timeFormat("%d.%m.%Y"); // this is actually a function... formatTime(d)
+    let listeners = [];
 
     function addIntervalTo(action) {
-        console.log(action)
         let number_of_intervals = action.intervals.length;
         if(number_of_intervals > 3) {
             return;
@@ -11,8 +12,8 @@ function Actions(selector, actions) {
 
         let $intervals = action.node.find('.intervals');
         let now = new Date();
-        let start = new Date(now.getTime() + 7 * 4 * number_of_intervals * 24 * 60 * 60 * 1000);
-        let end = new Date(now.getTime() + 7 * 4 * (number_of_intervals + 1) * 24 * 60 * 60 * 1000);
+        let start = formatTime(new Date(now.getTime() + 7 * 4 * number_of_intervals * 24 * 60 * 60 * 1000));
+        let end = formatTime(new Date(now.getTime() + 7 * 4 * (number_of_intervals + 1) * 24 * 60 * 60 * 1000));
 
         action.counter++;
 
@@ -22,11 +23,11 @@ function Actions(selector, actions) {
 
         $interval
             .find('input.start')
-            .val(formatTime(start));
+            .val(start);
 
         $interval
             .find('input.end')
-            .val(formatTime(end))
+            .val(end);
 
         action.intervals.push({
             id: action.id + '-' + action.counter,
@@ -49,6 +50,19 @@ function Actions(selector, actions) {
         action.intervals.filter(i => i.id === id)[0].active = true;
     }
 
+    function notify() {
+        let data = [];
+        actionMap.forEach((v, k, m) => {
+            if(v.active) {
+                data.push(JSON.parse(JSON.stringify(v)));
+            }
+        });
+        console.log(data);
+        listeners.forEach(l => {
+            l(data);
+        });
+    }
+
     $container
         .on('change', '.action > :checkbox', function() {
             let action = actionMap.get($(this).parent().attr('action'));
@@ -56,9 +70,12 @@ function Actions(selector, actions) {
             if (!this.checked) {
                 action.intervals = [];
                 action.node.find('.intervals').empty();
+                action.active = false;
             } else {
+                action.active = true;
                 addIntervalTo(action);
             }
+            notify();
         });
 
     $container
@@ -66,13 +83,14 @@ function Actions(selector, actions) {
             let action = actionMap.get($(this).closest('.action').attr('action'));
             if (!this.checked) {
                 removeIntervalFrom(action, this);
-                if(action.intervals.length < 3) {
+                /*if(action.intervals.length < 3) {
                     addIntervalTo(action); 
-                }
+                }*/
             } else {
                 addIntervalTo(action);
                 activateIntervalOn(action, this);
             }
+            notify();
         });
 
     let $template = $($('#template-action').html());
@@ -83,6 +101,7 @@ function Actions(selector, actions) {
 
         actionMap.set('action-' + i, {
             id: 'action-' + i,
+            active: false,
             name: actions[i],
             node: $el,
             intervals: [],
@@ -90,5 +109,11 @@ function Actions(selector, actions) {
         });
 
         $container.append($el);
+    }
+
+    return {
+        onchange: function(listener) {
+            listeners.push(listener);
+        }
     }
 }

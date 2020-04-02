@@ -1,4 +1,5 @@
 function Graphs(selector) {
+    let formatTime = d3.timeFormat("%d.%m.%Y"); // this is actually a function... formatTime(d)
     var data_read = [];
 
     var logscale = false;
@@ -712,10 +713,11 @@ function Graphs(selector) {
     function updateActions(actions) {
         actions
             .forEach(action => {
+                console.log(action.name);
                 action.intervals
                     .forEach(interval => {
-                        console.log(interval.start); // Date Objekte
-                        console.log(interval.end); // Date Objekt
+                        console.log(interval.start);
+                        console.log(interval.end); 
                     });
             });
     }

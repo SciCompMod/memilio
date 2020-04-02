@@ -20,8 +20,7 @@
     <script src=js/graphs.js type=text/javascript></script>
 
     <script>
-        var formatTime = d3.timeFormat("%d.%m.%Y"); // this is actually a function... formatTime(d)
-
+        
         // Week number according to the ISO-8601 standard
         Date.prototype.getWeek = function () {
             var target = new Date(this.valueOf());
@@ -104,6 +103,19 @@
             locations.onselect((arg) => {
                 graphs.visualize(arg);
             });
+
+            actions.onchange((actions) => {
+                graphs.updateActions(actions);
+            });
+
+            $('button.refresh')
+                .click(function(event) {
+                    event.preventDefault();
+                    event.stopPropagation();
+
+                    let p = parameters.getParameters();
+                    console.log(p);
+                });
         });
     </script>
 
@@ -281,7 +293,6 @@
                             <td><input size="4" value="36" name=pz></td>
                         </tr>
                     </table>
-                    <button type=submit>Aktualisieren</button>
                     </form>
                 </div>
             </div>
@@ -290,8 +301,9 @@
         <div class="box graphs">
             <div class=heading>Verlauf</div>
             <div class=buttons>
-                <button>y-linear</button>
-                <button>y-log</button>
+                <button class='refresh'>Aktualisieren</button>
+                <button class='y-linear'>y-linear</button>
+                <button class='y-log'>y-log</button>
             </div>
             <div class=content>
                 <svg id=graphs></svg>
