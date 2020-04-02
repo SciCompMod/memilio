@@ -15,3 +15,5 @@ www:
     - build
   script:
     - cp -r dist/* /var/www/html
+  only:
+    - master
