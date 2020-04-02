@@ -6,54 +6,73 @@ class Locations {
 
     constructor(selector) {
         this.listeners = [];
-        this.data_chosen;
+        this.selected = null;
+
 
         let self = this;
-        var svg_locations = d3.select(selector);
+        this.svg_locations = d3.select(selector);
 
-        var loc = ["D&uuml;sseldorf", "K&ouml;ln", "Aachen", "Bonn"];
-        var loc_length = [10, 4, 6, 4]
-        var loc_ref = ["data_01", "data_02", "data_03", "data_04"];
-        var loc_pos = [
-            [150, 125],
+        this.loc = [{
+            name: "K&ouml;ln",
+            population: 10000,
+        }, {
+            name: "D&uuml;sseldorf",
+            population: 10000,
+        }, {
+            name: "Aachen",
+            population: 10000
+        }, {
+            name: "Bonn",
+            population: 10000
+        }];
+
+        this.loc_length = [4, 10, 6, 4];
+        this.loc_pos = [
             [200, 300],
+            [150, 125],
             [75, 425],
             [225, 475]
         ];
 
 
-        for (var i = 0; i < loc.length; i++) {
-            svg_locations.append("circle")
+        for (var i = 0; i < this.loc.length; i++) {
+            this.loc[i]['id'] = i;
+            this.svg_locations.append("circle")
+                .attr("id", "name"+i)
                 .attr("class", "button_loc")
                 .attr("r", 50)
-                .attr("cx", loc_pos[i][0])
-                .attr("cy", loc_pos[i][1])
+                .attr("cx", this.loc_pos[i][0])
+                .attr("cy", this.loc_pos[i][1])
                 .attr("fill", "#cdcdcd")
-                .attr("alt", loc_ref[i])
+                .attr("alt", i)
                 .on("click", onButtonLocMouseClick) //Add listener for the click event
                 .on("mouseover", onButtonMouseOver) //Add listener for the mouseover event 
                 .on("mouseout", onButtonMouseOut); //Add listener for the mouseout event 
 
-            svg_locations.append("text")
-                .attr("x", loc_pos[i][0] - 4 * loc_length[i])
-                .attr("y", loc_pos[i][1] + 5)
-                .attr("alt", loc_ref[i])
+                this.svg_locations.append("text")
+                .attr("x", this.loc_pos[i][0] - 4 * this.loc_length[i])
+                .attr("y", this.loc_pos[i][1] + 5)
+                .attr("alt", i)
                 .on("click", onButtonLocMouseClick) //Add listener for the click event
                 .on("mouseover", onTextMouseOver)
-                .html(loc[i])
+                .html(this.loc[i].name)
                 .attr("font-weight", 600);
+
         }
-    
+
+        this.selected = this.loc[0];
+        this.svg_locations.select('circle#name0')
+                .attr("class", "button_loc_active")
+                .attr('fill', '#73B0FF');
+
         function onButtonLocMouseClick() {
 
             d3.select(".button_loc_active").attr("class", "button_loc")
 
             var activeElem = d3.select(this);
 
-            //read_and_visualize(activeElem.attr("alt") + ".csv");
-            self.select(activeElem.attr("alt") + ".csv");
+            self.selected = self.loc[parseFloat(activeElem.attr("alt"))];
 
-            self.data_chosen = d3.select(this).attr("alt");
             if (activeElem.node().tagName == "circle") {
                 activeElem.attr("class", "button_loc_active")
             }
@@ -62,6 +81,7 @@ class Locations {
             d3.selectAll(".button_loc").transition(200)
                 .attr('fill', '#cdcdcd');
 
+            self.notify();
         }
 
         function onButtonMouseOver() {
@@ -79,7 +99,7 @@ class Locations {
 
         function onButtonMouseOut() {
 
-            if (self.data_chosen != d3.select(this).attr("alt")) {
+            if (self.selected.id != d3.select(this).attr("alt")) {
 
                 d3.select(this)
                     .transition(200)
@@ -89,10 +109,16 @@ class Locations {
         }
     }
     
-    select(arg) {
+    notify() {
         this.listeners
-            .forEach(l => l(arg))
+            .forEach(l => {
+                l(this.selected);
+            });
     }
+
+    getPopulation() {
+        return this.selected.population;
+    }    
 
     onselect(listener) {
         this.listeners.push(listener);

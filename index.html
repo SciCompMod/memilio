@@ -116,6 +116,10 @@
             border-top: 1px solid #cdcdcd;
         }
 
+        .wrapper #days {
+            width: 70px;
+        }
+
     </style>
 
 </HEAD>
@@ -162,40 +166,20 @@
                     <form id=parameters name=parameters>
                     <table>
                         <tr>
-                            <td>R0</td>
-                            <td><input size="4" value="2.7" name=r0></td>
+                            <td>Kontaktrate</td>
+                            <td><input value="2.7" name=contact_rate></td>
+                        </tr>
+                        <tr>
+                            <td>Anzahl Infizierte</td>
+                            <td><input value="10000" name=exposed></td>
                         </tr>
                         <tr>
                             <td>Inkubationszeit</td>
-                            <td><input size="4" value="5" name=incubation></td>
+                            <td><input value="5" name=incubation></td>
                         </tr>
                         <tr>
                             <td>Infektionszeit</td>
-                            <td><input size="4" value="4" name=infection></td>
-                        </tr>
-                        <tr>
-                            <td>Behandlungsdauer</td>
-                            <td><input size="4" value="4" name=treatment></td>
-                        </tr>
-                        <tr>
-                            <td>Beatmungsdauer</td>
-                            <td><input size="4" value="10" name=respiration></td>
-                        </tr>
-                        <tr>
-                            <td>Anzahl Intensivbetten</td>
-                            <td><input size="4" value="10000" name=beds></td>
-                        </tr>
-                        <tr>
-                            <td>Parameter X</td>
-                            <td><input size="4" value="12" name=px></td>
-                        </tr>
-                        <tr>
-                            <td>Parameter Y</td>
-                            <td><input size="4" value="24" name=py></td>
-                        </tr>
-                        <tr>
-                            <td>Parameter Z</td>
-                            <td><input size="4" value="36" name=pz></td>
+                            <td><input value="4" name=infection></td>
                         </tr>
                     </table>
                     </form>
@@ -206,7 +190,10 @@
         <div class="box graphs">
             <div class=heading>Verlauf</div>
             <div class=buttons>
-                <button class='refresh'>Aktualisieren</button>
+                <span style="float: left">
+                    <input type=text id=days value=30> Tage
+                    <button class='simulate'>Simulieren</button>
+                </span>
                 <button class='y-linear'>y-linear</button>
                 <button class='y-log'>y-log</button>
             </div>

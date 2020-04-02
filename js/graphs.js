@@ -287,10 +287,10 @@ class Graphs {
             return {
                 day: d3.timeParse("%d.%m.%Y")(d.day),
                 cases: [
-                    parseInt(d.cases),
-                    parseInt(this.coeffs_critical[0] * d.cases),
-                    parseInt(this.coeffs_critical[1] * d.cases),
-                    parseInt(this.coeffs_critical[2] * d.cases)
+                    parseInt(d.cases), // s
+                    parseInt(this.coeffs_critical[0] * d.cases), // e
+                    parseInt(this.coeffs_critical[1] * d.cases), // i
+                    parseInt(this.coeffs_critical[2] * d.cases) // r
                 ]
             }
         }, (error, data) => {

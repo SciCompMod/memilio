@@ -23,11 +23,9 @@ function main() {
         let locations = new Locations("#locations");
         let parameters = new Parameters($('#parameters'));
         let actions = new Actions($container, [
-            "HomeOffice",
-            "Schlie&szlig;ung von XYZ",
+            "75% Home-Office",
             "Schulschlie&szlig;ungen",
-            "Kontaktverbot",
-            "Ausgangssperre"
+            "Kontaktverbot"
         ]);
 
         $('svg#graphs')
@@ -44,13 +42,22 @@ function main() {
             graphs.updateActions(actions);
         });
 
-        $('button.refresh')
+        $('button.simulate')
             .click(function (event) {
                 event.preventDefault();
                 event.stopPropagation();
 
+                let days = parseFloat($("#days").val());
                 let p = parameters.getParameters();
-                console.log(p);
+                let seir_params = makeSeirParam();
+
+                seir_params.a = 1 / p.incubation;
+                seir_params.b = p.contact_rate;
+                seir_params.g = 1 / p.infection;
+                seir_params.E0 = p.exposed;
+                seir_params.N = locations.getPopulation();
+
+                console.log(simulate_seir(0, days, 0.1, seir_params));
             });
     });
 }
