@@ -7,6 +7,8 @@ class Graphs {
         this.formatTime = d3.timeFormat("%d.%m.%Y"); // this is actually a function... formatTime(d)
         this.data_read = [];
 
+        this.damping = [];
+
         this.logscale = false;
 
         this.xScale = null;
@@ -46,10 +48,11 @@ class Graphs {
 
     visualize(filename) {
         let self = this;
+
         function onMouseMove() {
             // get coordinates
             var x0_pos = d3.mouse(this)[0];
-            var bisectDate = d3.bisector(function (d) { return d.day; }).left;
+            var bisectDate = d3.bisector(function(d) { return d.day; }).left;
             var i = bisectDate(self.data_read[1], self.xScale.invert(x0_pos))
             var selectedData = self.data_read[1][i - 1]
             x0_pos = self.xScale.invert(x0_pos + 0.5 * self.margin_horizontal);
@@ -91,7 +94,7 @@ class Graphs {
         function onMouseDownMini() {
             // get coordinates
             var x0_pos = d3.mouse(this)[0];
-            var bisectDate = d3.bisector(function (d) { return d.day; }).left;
+            var bisectDate = d3.bisector(function(d) { return d.day; }).left;
             var i = bisectDate(self.data_read[0], self.xScaleMini.invert(x0_pos));
 
             self.begin_interval_i = i - 1;
@@ -122,7 +125,7 @@ class Graphs {
             if (self.end_interval_x - self.begin_interval_x > 0) {
                 self.overlay_mini.attr("width", self.end_interval_x - self.begin_interval_x);
 
-                var bisectDate = d3.bisector(function (d) { return d.day; }).left;
+                var bisectDate = d3.bisector(function(d) { return d.day; }).left;
                 var i = bisectDate(self.data_read[0], self.xScaleMini.invert(self.end_interval_x));
 
                 self.end_interval_i = i - 1;
@@ -182,8 +185,8 @@ class Graphs {
 
         this.svg_graphs.selectAll("*").remove();
         if (this.data_read.length > 0) { // how to delete data?
-            delete (this.data_read[0]);
-            delete (this.data_read[1]);
+            delete(this.data_read[0]);
+            delete(this.data_read[1]);
             this.data_read = [];
         }
 
@@ -238,7 +241,7 @@ class Graphs {
             .attr("pointer-events", "all")
             // .on("mouseover", onMouseOver) //Add listener for the mouseover event
             .on("mousemove", onMouseMove) //Add listener for the mouseout event 
-        // .on("mouseout", onMouseOut); //Add listener for the mouseout event 
+            // .on("mouseout", onMouseOut); //Add listener for the mouseout event 
 
 
         this.g[1] = this.svg_graphs.append("rect")
@@ -251,7 +254,7 @@ class Graphs {
             .on("mousedown", onMouseDownMini) //Add listener for the down event 
             // .on("mouseleave", onMouseLeaveMini) //Add listener for the down event 
             .on("mouseup", onMouseReleaseMini) //Add listener for the release event 
-        // .on("mouseout", onMouseOutMini); //Add listener for the mouseout event 
+            // .on("mouseout", onMouseOutMini); //Add listener for the mouseout event 
 
 
         this.g[0] = this.svg_graphs.append("g")
@@ -306,8 +309,8 @@ class Graphs {
             }
 
 
-            this.xScale.domain(d3.extent(this.data_read[1], function (d) { return d.day; }));
-            this.yScale.domain([0, this.max_fact * d3.max(this.data_read[1], function (d) { return d.cases[0]; })]);
+            this.xScale.domain(d3.extent(this.data_read[1], function(d) { return d.day; }));
+            this.yScale.domain([0, this.max_fact * d3.max(this.data_read[1], function(d) { return d.cases[0]; })]);
 
 
             this.g[0].append("g")
@@ -360,14 +363,14 @@ class Graphs {
             // .attr("height", function(d) { return height - yScale(d.cases); });
 
             // mini graph
-            this.xScaleMini.domain(d3.extent(this.data_read[0].map(function (d) { return d.day; })));
-            this.yScaleMini.domain([1, this.max_fact * d3.max(this.data_read[0], function (d) { return d.cases[0]; })]);
+            this.xScaleMini.domain(d3.extent(this.data_read[0].map(function(d) { return d.day; })));
+            this.yScaleMini.domain([1, this.max_fact * d3.max(this.data_read[0], function(d) { return d.cases[0]; })]);
 
             this.overlay_mini.attr("width", this.end_interval_x - this.begin_interval_x);
 
             this.g[1].append("g")
                 .attr("id", "yaxis")
-                .call(d3.axisLeft(this.yScaleMini).tickFormat(function (d) {
+                .call(d3.axisLeft(this.yScaleMini).tickFormat(function(d) {
                     return d;
                 }).ticks(4));
             // .attr("transform", "translate(0," + (-margin + 10) + ")");
@@ -399,7 +402,7 @@ class Graphs {
 
 
 
-            // actions
+            // actions x-axis
             this.g[2].append("g")
                 .attr("transform", "translate(0," + 2 * this.heightMini + ")")
                 .call(d3.axisBottom(this.xScaleMini)
@@ -465,8 +468,8 @@ class Graphs {
             this.yScaleMini = d3.scaleLinear().range([this.heightMini, 0]); // inverted.....
         }
 
-        this.xScale.domain(d3.extent(this.data_read[1], function (d) { return d.day; }));
-        this.yScale.domain([0, this.max_fact * d3.max(this.data_read[1], function (d) { return d.cases[0]; })]);
+        this.xScale.domain(d3.extent(this.data_read[1], function(d) { return d.day; }));
+        this.yScale.domain([0, this.max_fact * d3.max(this.data_read[1], function(d) { return d.cases[0]; })]);
 
         this.g[0].append("g")
             .attr("id", "xaxis")
@@ -502,12 +505,12 @@ class Graphs {
 
         this.g[1].append("g")
             .attr("id", "yaxis")
-            .call(d3.axisLeft(this.yScaleMini).tickFormat(function (d) {
+            .call(d3.axisLeft(this.yScaleMini).tickFormat(function(d) {
                 return d;
             }).ticks(4));
 
 
-        this.yScaleMini.domain([1, this.max_fact * d3.max(this.data_read[0], function (d) { return d.cases[0]; })]);
+        this.yScaleMini.domain([1, this.max_fact * d3.max(this.data_read[0], function(d) { return d.cases[0]; })]);
 
         // Add the line
         for (var i = 0; i < this.data_read[0][0].cases.length; i++) {
@@ -531,24 +534,39 @@ class Graphs {
     }
 
     updateActions(actions) {
+
+        this.g[2].selectAll("*").remove();
+
+        this.g[2].append("g")
+            .attr("transform", "translate(0," + 2 * this.heightMini + ")")
+            .call(d3.axisBottom(this.xScaleMini)
+                .ticks(6)
+                .tickFormat(d3.timeFormat("%d.%m.%Y")));
+
+
+        var dummy_start_x = 0,
+            dummy_end_x = 0;
+
         actions
-            .forEach(action => {
+            .forEach((action, index_i) => {
                 console.log(action.name);
                 action.intervals
-                    .forEach(interval => {
+                    .forEach((interval, index_j) => {
                         console.log(interval.start);
                         console.log(interval.end);
 
-                        // this.g[2].selectAll("class", "#" + action.id).remove();
+                        dummy_start_x = this.xScaleMini(new Date(interval.start.substr(6, 4), interval.start.substr(3, 2), interval.start.substr(0, 2)));
+                        dummy_end_x = this.xScaleMini(new Date(interval.end.substr(6, 4), interval.end.substr(3, 2), interval.end.substr(0, 2)));
 
-                        // if (action.intervals[0].active == false) {
-                        //     this.g[2].append("rect")
-                        //         .attr("class", action.id)
-                        //         .attr("x", d => { return 40; })
-                        //         .attr("y", d => { return 2 * this.heightMini - 50; })
-                        //         .attr("width", 50)
-                        //         .attr("height", d => { return 10; });
-                        // }
+                        if (interval.active == true) {
+                            this.g[2].append("rect")
+                                .attr("class", action.id)
+                                .attr("x", d => { return dummy_start_x; })
+                                .attr("y", d => { return 30 + this.heightMini + 15 * index_i; })
+                                .attr("fill", this.colors_actions[index_i])
+                                .attr("width", dummy_end_x - dummy_start_x)
+                                .attr("height", d => { return 10; });
+                        }
                     });
             });
     }
