@@ -2,7 +2,7 @@ import { Locations } from './locations.js'
 import { Actions } from './actions.js'
 import { Parameters } from './parameters.js'
 import { Graphs } from './graphs.js'
-import { simulate_seir, makeSeirParam } from './seir.js'
+import { simulate_seir, makeSeirParam, Damping } from './seir.js'
 
 function main() {
     // Week number according to the ISO-8601 standard
@@ -48,6 +48,13 @@ function main() {
             seir_params.g = 1 / p.infection;
             seir_params.E0 = p.e0;
             seir_params.N = locations.getPopulation();
+
+            // TODO: replace by the actual logic
+            seir_params.dampings = [
+                new Damping(0 /* the day */ , 1. /* the damping factor */),
+                new Damping(10, 0.5),
+                new Damping(15, 0.1)
+            ];
 
             let data = simulate_seir(0, days, step_size, seir_params);
 

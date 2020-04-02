@@ -1,10 +1,83 @@
 export {
     makeSeirParam,
     SeirParam,
-    simulate_seir
+    simulate_seir,
+    Damping
 };
 
 import { euler } from './euler.js';
+
+/**
+ * This defined a damping factor for a 
+ * mitigation strategy for one point in time.
+ */
+class Damping {
+  constructor(day, factor) {
+    this.day = day;
+    this.factor = factor;
+  }
+}
+
+/**
+ *  find index i such that  dampings[idx].day <= t < dampings[idx+1].day 
+ * 
+ *  We are using a bracketing approach
+ */
+function bracket(data_array, value, get_value_function)
+{
+    // we assume, that the xvalues are ordered in ascending order
+    let ilow = 0.;
+    let ihigh = data_array.length-1;
+
+    // check extrapolation cases
+    if (value < get_value_function(data_array[ilow])) {
+        return ilow;
+    }
+
+    if (value >= get_value_function(data_array[ihigh])) {
+        return ihigh;
+    }
+
+    // now do the search
+    while (ilow < ihigh - 1) {
+        let imid = Math.floor((ilow + ihigh)/2);
+        if (get_value_function(data_array[ilow])<= value && value < get_value_function(data_array[imid])) {
+            ihigh = imid;
+        }
+        else if(get_value_function(data_array[imid]) <= value && value < get_value_function(data_array[ihigh])) {
+            ilow = imid;
+        }
+        else {
+            // this case can only occur, if
+            // input data are not ordered
+            return data_array.length;
+        }
+    }
+
+    return ilow;
+}
+
+/**
+ * Returns the damping factor rho(t)
+ * 
+ * @param {*} damping_array Array of dampings
+ * @param {*} t Current day
+ */
+function getDampingFactor(damping_array, t) {
+  if (damping_array.length == 0) {
+    return 1.;
+  }
+  else if (damping_array.length == 1) {
+    return t  < damping_array[0].day ? 1. : damping_array[0].factor;
+  }
+
+  // find index i such that  dampings[idx].day <= t < dampings[idx+1].day
+  let idx = bracket(damping_array, t, function(damping) {
+    return damping.day;
+  });
+
+  return damping_array[idx].factor;
+}
 
 class SeirParam {
     constructor() {
@@ -18,6 +91,10 @@ class SeirParam {
       this.N = 10000;
       // Initial Number of exposed
       this.E0 = 1000.;
+
+      // List of "Damping" objects / rhos that can be used
+      // to model social distancing
+      this.dampings =[];
     }
   }
   
@@ -30,14 +107,17 @@ class SeirParam {
   /**
    * Computes the current time-derivative of the seir model
    * @param {} y Current SEIR values at t
+   * @param {} t Time / Current day
    * @param {*} params SEIR Model parameters, created by seir_param
    */
-  function seir(y, params) {
+  function seir(y, t, params) {
     const [S,E,I,R] = y;
     
+    var b_eff = params.b * getDampingFactor(params.dampings, t);
+
     var dydt = [
-      -params.b*S*I/params.N,
-       params.b*S*I/params.N - params.a*E,
+      -b_eff*S*I/params.N,
+       b_eff*S*I/params.N - params.a*E,
        params.a*E - params.g*I,
        params.g*I
   
@@ -63,7 +143,7 @@ class SeirParam {
   
     // Euler integration - might switch to RK4 though
     var res = euler(function(t, y) {
-      return seir(y, params);
+      return seir(y, t, params);
     }, seir_0, t);
     const [S, E, I, R] = tf.split(res, 4, 0);
   
