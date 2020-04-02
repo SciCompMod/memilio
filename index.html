@@ -9,15 +9,20 @@
     <meta name="google-site-verification" content="BEq7yWqksTB4rBtUzG6qVYfhCm40JNbNWjpS537OnWo">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta charset="utf-8">
-    <link href='https://fonts.googleapis.com/css?family=Exo+2:light,regular,medium,thin,italic,mediumitalic,bold' rel='stylesheet' type='text/css'>
+    <link href='https://fonts.googleapis.com/css?family=Exo+2:light,regular,medium,thin,italic,mediumitalic,bold'
+        rel='stylesheet' type='text/css'>
     <link rel="stylesheet" type="text/css" href="style.css">
-    <script src="https://d3js.org/d3.v4.min.js"></script>
+    <script src="https://d3js.org/d3.v4.min.js" type=text/javascript></script>
+    <script src=https://code.jquery.com/jquery-3.4.1.min.js type=text/javascript></script>
+    <script src=js/locations.js type=text/javascript></script>
+    <script src=js/actions.js type=text/javascript></script>
+    <script src=js/graphs.js type=text/javascript></script>
 
     <script>
         var formatTime = d3.timeFormat("%d.%m.%Y"); // this is actually a function... formatTime(d)
 
         // Week number according to the ISO-8601 standard
-        Date.prototype.getWeek = function() {
+        Date.prototype.getWeek = function () {
             var target = new Date(this.valueOf());
             var dayNr = (this.getDay() + 6) % 7;
             target.setDate(target.getDate() - dayNr + 3);
@@ -64,7 +69,7 @@
         // var actions = new Array("HomeOffice Empfehlung", "HomeOffice Anordnung", "Schlie&szlig;ung von Restaurant und Bars", "Schlie&szlig;ung von Gesch&auml;ften",
         //     "Schulschlie&szlig;ungen", "Kontaktverbot", "Ausgangssperre", "Einreiseverbote", "Systematisierung von Tests");
 
-        var actions = new Array("HomeOffice", "Schlie&szlig;ung von XYZ", "Schulschlie&szlig;ungen", "Kontaktverbot", "Ausgangssperre");
+        var actions = new Array();
 
         function init() {
             document.getElementById('button').addEventListener('click', changeHTMLContent);
@@ -74,139 +79,322 @@
             var neu = "neuer <b>fetter</b> Text";
             document.getElementById('absatz').innerHTML = neu;
         }
+
+        
+
+        $(function(){
+            let $container = $('.actions .content');
+            let locations = new Locations();
+
+            let actions = new Actions($container, [
+                "HomeOffice", 
+                "Schlie&szlig;ung von XYZ", 
+                "Schulschlie&szlig;ungen", 
+                "Kontaktverbot", 
+                "Ausgangssperre"
+            ]);
+
+            $('svg#graphs')
+                .attr($('svg#graphs').css(['width', 'height']));
+
+            let graphs = new Graphs("svg#graphs");
+
+            locations.onselect((arg) => {
+                graphs.visualize(arg);
+            });
+        });
     </script>
+
+    <style type=text/css>
+        body {
+            background-color: #FFFFFF
+        }
+
+        .wrapper {
+            width: 90%;
+            padding: 3%
+        }
+
+        .wrapper .box {
+            position: relative;
+            border: 1px #cdcdcd solid;
+            border-radius: 10px;
+            margin-right: 10px;
+            overflow: hidden;
+            margin-bottom: 10px;
+        }
+
+        .wrapper>div {
+            float: left;
+        }
+
+        .wrapper .settings,
+        .wrapper .locations {
+            width: 300px;
+        }
+
+        .wrapper .graphs {
+            width: 930px;
+        }
+
+        .wrapper .locations,
+        .wrapper .graphs {
+            height: 610px
+        }
+
+        .wrapper .actions,
+        .wrapper .parameters {
+            height: 300px;
+        }
+
+        .wrapper .actions .content,
+        .wrapper .parameters .content {
+            padding: 10px;
+        }
+
+        .wrapper .box .heading {
+            padding: 7px 7px 7px 15px;
+            height: 26px;
+            font-weight: bold;
+            background-color: rgb(115, 176, 255);
+            vertical-align: middle;
+            line-height: 22px;
+        }
+
+        .wrapper .box .content {
+            position: relative;
+        }
+
+        .wrapper .box .buttons {
+            text-align: right;
+            padding: 5px 15px 5px;
+            height: 40px;
+        }
+
+        .wrapper .locations svg {
+            height: 570px;
+            width: 300px;
+        }
+
+        .wrapper .graphs svg {
+            width: 930px;
+            height: 520px;
+            border-top: 1px solid #cdcdcd;
+        }
+
+    </style>
 
 </HEAD>
 
-<body style="background-color:#FFFFFF">
+<body>
 
-    <div style="width:90%; padding:3%">
+    <template id=template-action>
+        <div class=action>
+            <input type='checkbox'>
+            <span class=name>actions[i]</span>
+            <ul class=intervals></ul>
+        </div>
+    </template>
+
+    <template id=template-time-interval>
+        <li class=time-interval>
+            <input type='checkbox'>
+            <input class=start size=8 value="">
+            -
+            <input class=end size=8 value="">
+        </li>
+    </template>
+
+    <div class=wrapper>
+
+        <div class="box locations">
+            <div class=heading>Orte</div>
+            <div class=content>
+                <svg id=locations></svg>
+            </div>
+        </div>
+
+        <div class=settings>
+            <div class="box actions">
+                <div class=heading>Maßnahmen</div>
+                <div class=content>
+
+                </div>
+            </div>
+
+            <div class="box parameters">
+                <div class=heading>Parameter</div>
+                <div class=content>
+                    <table>
+                        <tr>
+                            <td>R0</td>
+                            <td><input size="4" value="2.7"></td>
+                        </tr>
+                        <tr>
+                            <td>Inkubationszeit</td>
+                            <td><input size="4" value="5"></td>
+                        </tr>
+                        <tr>
+                            <td>Infektionszeit</td>
+                            <td><input size="4" value="4"></td>
+                        </tr>
+                        <tr>
+                            <td>Behandlungsdauer</td>
+                            <td><input size="4" value="4"></td>
+                        </tr>
+                        <tr>
+                            <td>Beatmungsdauer</td>
+                            <td><input size="4" value="10"></td>
+                        </tr>
+                        <tr>
+                            <td>Anzahl Intensivbetten</td>
+                            <td><input size="4" value="10000"></td>
+                        </tr>
+                        <tr>
+                            <td>Parameter X</td>
+                            <td><input size="4" value="12"></td>
+                        </tr>
+                        <tr>
+                            <td>Parameter Y</td>
+                            <td><input size="4" value="24"></td>
+                        </tr>
+                        <tr>
+                            <td>Parameter Z</td>
+                            <td><input size="4" value="36"></td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div class="box graphs">
+            <div class=heading>Verlauf</div>
+            <div class=buttons>
+                <button>y-linear</button>
+                <button>y-log</button>
+            </div>
+            <div class=content>
+                <svg id=graphs></svg>
+            </div>
+        </div>
+
+    </div>
+
+    <div style="width:300; position:relative; float:left;">
+
+        <svg id='locations'
+            style="border:1px #cdcdcd solid; border-radius:10px; margin-right:10px; height:610px; width:300px;  position:relative; float:left; overflow:hidden;">
+
+        </svg>
+
+        <div style="width:300px; position:relative; float:left; margin-right:10px;">
+
+            <div id='actions'
+                style="border:1px #cdcdcd solid; border-radius:10px; margin-right:10px; height:300px; width:300px; position:relative; float:left; overflow:hidden;">
+
+                <div
+                    style="padding: 7px 7px 7px 15px; width: 100%; height: 26px; font-weight: bold; background-color: rgb(115, 176, 255);">
+                    Maßnahmen</div>
 
 
-        <!-- <div style="width:33%; position:relative; float:left;"> -->
+                <div id='actions_listed' style="padding:10%; padding-top:5%">
 
-        <div style="width:300; position:relative; float:left;">
+                    <script>
+                        var d = new Date();
+                        var content = '';
+                        for (var i = 0; i < actions.length; i++) {
+                            //   <input type='checkbox' name='action[]' value='2'><br>
+                            content += "<div style='padding-top:5px;'  id='action" + i + "'>";
+                            content += "<input id='input_action" + i + "' onClick='showFirstActionInterval(" + i + ")' type='checkbox' name='action[]' value='" + i + "'> " + actions[i];
+                            for (var j = 0; j < 4; j++) {
+                                content += "<div id='action" + i + "_" + j + "' style='display:none; padding-left:5px;'>";
 
-            <svg id='locations' style="border:1px #cdcdcd solid; border-radius:10px; margin-right:10px; height:610px; width:300px;  position:relative; float:left; overflow:hidden;">
+                                content += "<input id='action" + i + "_" + j + "'";
 
-                <!-- <div style="padding: 7px 7px 7px 15px; width: 100%; height: 26px; font-weight: bold; background-color: rgb(115, 176, 255);">Orte</div> -->
-
-                <!-- <div style="padding: 20%; width: 100%;"> -->
-
-                <!-- <button onclick="read_and_visualize('covid19_ger_rand.csv',false)">Gelsenkirchen</button>
-                    <p></p>
-                    <button onclick="read_and_visualize('covid19_ger.csv',false)">D&uuml;sseldorf</button>
-                    <p></p>
-                    <button onclick="read_and_visualize('covid19_ger_rand.csv',false)">K&ouml;ln</button>
-                    <p></p>
-                    <button onclick="read_and_visualize('covid19_ger.csv',false)">Bonn</button> -->
-
-                <!-- </div> -->
-
-            </svg>
-
-            <div style="width:300px; position:relative; float:left; margin-right:10px;">
-
-                <div id='actions' style="border:1px #cdcdcd solid; border-radius:10px; margin-right:10px; height:300px; width:300px; position:relative; float:left; overflow:hidden;">
-
-                    <div style="padding: 7px 7px 7px 15px; width: 100%; height: 26px; font-weight: bold; background-color: rgb(115, 176, 255);">Maßnahmen</div>
-
-
-                    <div id='actions_listed' style="padding:10%; padding-top:5%">
-
-                        <script>
-                            var d = new Date();
-                            var content = '';
-                            for (var i = 0; i < actions.length; i++) {
-                                //   <input type='checkbox' name='action[]' value='2'><br>
-                                content += "<div style='padding-top:5px;'  id='action" + i + "'>";
-                                content += "<input id='input_action" + i + "' onClick='showFirstActionInterval(" + i + ")' type='checkbox' name='action[]' value='" + i + "'> " + actions[i];
-                                for (var j = 0; j < 4; j++) {
-                                    content += "<div id='action" + i + "_" + j + "' style='display:none; padding-left:5px;'>";
-
-                                    content += "<input id='action" + i + "_" + j + "'";
-
-                                    if (j < 3) {
-                                        content += "onClick = \"showInterval('action" + i + "'," + (j + 1) + ")\"";
-                                    }
-                                    content += " type='checkbox'><input id='action" + i + "_" + j + "_start' size='8'";
-                                    // von
-                                    // content += "value='" + d.getFullYear() + ":KW" + (d.getWeek() + 2 * j) + "''";
-                                    content += "value='" + formatTime(new Date(d.getTime() + 7 * 4 * j * 24 * 60 * 60 * 1000)) + "'";
-                                    content += ">-<input id='action" + i + "_" + j + "_end' size='8'";
-                                    // bis
-                                    // content += "value='" + d.getFullYear() + ":KW" + (d.getWeek() + 2 * (j + 1)) + "''";
-                                    content += "value='" + formatTime(new Date(d.getTime() + 7 * 4 * (j + 1) * 24 * 60 * 60 * 1000)) + "'";
-                                    content += "></div>";
+                                if (j < 3) {
+                                    content += "onClick = \"showInterval('action" + i + "'," + (j + 1) + ")\"";
                                 }
-                                content += "</div>";
+                                content += " type='checkbox'><input id='action" + i + "_" + j + "_start' size='8'";
+                                // von
+                                // content += "value='" + d.getFullYear() + ":KW" + (d.getWeek() + 2 * j) + "''";
+                                content += "value='" + formatTime(new Date(d.getTime() + 7 * 4 * j * 24 * 60 * 60 * 1000)) + "'";
+                                content += ">-<input id='action" + i + "_" + j + "_end' size='8'";
+                                // bis
+                                // content += "value='" + d.getFullYear() + ":KW" + (d.getWeek() + 2 * (j + 1)) + "''";
+                                content += "value='" + formatTime(new Date(d.getTime() + 7 * 4 * (j + 1) * 24 * 60 * 60 * 1000)) + "'";
+                                content += "></div>";
                             }
-                            document.getElementById("actions_listed").innerHTML = content;
-                        </script>
-
-                    </div>
-
-                </div>
-
-                <div id='parameters' style="border:1px #cdcdcd solid; border-radius:10px; margin-right:10px; margin-top:10px; height:300px; width:300px;  position:relative; float:left; overflow:hidden;">
-
-                    <div style="padding: 7px 7px 7px 15px; width: 100%; height: 26px; font-weight: bold; background-color: rgb(115, 176, 255);">Parameter</div>
-
-                    <div style="padding:10%; padding-top:5%">
-                        <table>
-                            <tr>
-                                <td>R0</td>
-                                <td><input size="4" value="2.7"></td>
-                            </tr>
-                            <tr>
-                                <td>Inkubationszeit</td>
-                                <td><input size="4" value="5"></td>
-                            </tr>
-                            <tr>
-                                <td>Infektionszeit</td>
-                                <td><input size="4" value="4"></td>
-                            </tr>
-                            <tr>
-                                <td>Behandlungsdauer</td>
-                                <td><input size="4" value="4"></td>
-                            </tr>
-                            <tr>
-                                <td>Beatmungsdauer</td>
-                                <td><input size="4" value="10"></td>
-                            </tr>
-                            <tr>
-                                <td>Anzahl Intensivbetten</td>
-                                <td><input size="4" value="10000"></td>
-                            </tr>
-                            <tr>
-                                <td>Parameter X</td>
-                                <td><input size="4" value="12"></td>
-                            </tr>
-                            <tr>
-                                <td>Parameter Y</td>
-                                <td><input size="4" value="24"></td>
-                            </tr>
-                            <tr>
-                                <td>Parameter Z</td>
-                                <td><input size="4" value="36"></td>
-                            </tr>
-                        </table>
-                    </div>
+                            content += "</div>";
+                        }
+                        document.getElementById("actions_listed").innerHTML = content;
+                    </script>
 
                 </div>
 
             </div>
 
-            <div style="width:930px; margin-right:10px;  position:relative; float:left;">
+            <div id='parameters'
+                style="border:1px #cdcdcd solid; border-radius:10px; margin-right:10px; margin-top:10px; height:300px; width:300px;  position:relative; float:left; overflow:hidden;">
 
-                <svg id='graphs' style="border:1px #cdcdcd solid; border-radius:10px;" width="930" height="610"></svg>
+                <div
+                    style="padding: 7px 7px 7px 15px; width: 100%; height: 26px; font-weight: bold; background-color: rgb(115, 176, 255);">
+                    Parameter</div>
+
+                <div style="padding:10%; padding-top:5%">
+                    <table>
+                        <tr>
+                            <td>R0</td>
+                            <td><input size="4" value="2.7"></td>
+                        </tr>
+                        <tr>
+                            <td>Inkubationszeit</td>
+                            <td><input size="4" value="5"></td>
+                        </tr>
+                        <tr>
+                            <td>Infektionszeit</td>
+                            <td><input size="4" value="4"></td>
+                        </tr>
+                        <tr>
+                            <td>Behandlungsdauer</td>
+                            <td><input size="4" value="4"></td>
+                        </tr>
+                        <tr>
+                            <td>Beatmungsdauer</td>
+                            <td><input size="4" value="10"></td>
+                        </tr>
+                        <tr>
+                            <td>Anzahl Intensivbetten</td>
+                            <td><input size="4" value="10000"></td>
+                        </tr>
+                        <tr>
+                            <td>Parameter X</td>
+                            <td><input size="4" value="12"></td>
+                        </tr>
+                        <tr>
+                            <td>Parameter Y</td>
+                            <td><input size="4" value="24"></td>
+                        </tr>
+                        <tr>
+                            <td>Parameter Z</td>
+                            <td><input size="4" value="36"></td>
+                        </tr>
+                    </table>
+                </div>
 
             </div>
 
-            <!-- <button onclick="read_and_visualize('covid19_ger_rand.csv',false)">K&ouml;ln</button>
+        </div>
+
+        <div style="width:930px; margin-right:10px;  position:relative; float:left;">
+
+            <svg id='graphs' style="border:1px #cdcdcd solid; border-radius:10px;" width="930" height="610"></svg>
+
+        </div>
+
+        <!-- <button onclick="read_and_visualize('covid19_ger_rand.csv',false)">K&ouml;ln</button>
 
             <button onclick="read_and_visualize('covid19_ger.csv',false)">K&ouml;ln</button> -->
-            <!-- <div id="actions" style="width:100%; position:relative; float:left;">
+        <!-- <div id="actions" style="width:100%; position:relative; float:left;">
 
                 <script>
                     var d = new Date();
@@ -238,20 +426,16 @@
                 </script>
             </div> -->
 
-            <!-- </div> -->
+        <!-- </div> -->
 
-            <!-- <div style="width:67%; position:relative; float:left;"> -->
+        <!-- <div style="width:67%; position:relative; float:left;"> -->
 
 
-            <!-- </div> -->
-
-        </div>
+        <!-- </div> -->
 
     </div>
 
-
-
-    <script src="index.js"></script>
+    </div>
 
 </body>
 
