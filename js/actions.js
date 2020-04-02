@@ -9,9 +9,13 @@ class Actions {
         this.formatTime = d3.timeFormat("%d.%m.%Y"); // this is actually a function... formatTime(d)
         this.listeners = [];
 
+        this.damping_factors = [0.7, 0.8, 0.4];
+
+        this.base_date = new Date(2020, 2, 24);
+
         let self = this;
         this.$container
-            .on('change', '.action > :checkbox', function () {
+            .on('change', '.action > :checkbox', function() {
                 let action = self.actionMap.get($(this).parent().attr('action'));
 
                 if (!this.checked) {
@@ -26,7 +30,7 @@ class Actions {
             });
 
         this.$container
-            .on('change', '.intervals :checkbox', function () {
+            .on('change', '.intervals :checkbox', function() {
                 let action = self.actionMap.get($(this).closest('.action').attr('action'));
                 if (!this.checked) {
                     self.removeIntervalFrom(action, this);
@@ -105,6 +109,42 @@ class Actions {
     activateIntervalOn(action, checkbox) {
         let id = $(checkbox).parent().attr('id');
         action.intervals.filter(i => i.id === id)[0].active = true;
+    }
+
+    getCurrentActions(actions, days_simu) {
+
+        var dummy_start_i = 0,
+            dummy_end_i = 0;
+
+        var start = 0,
+            end = 0;
+
+        var damping = new Array(days_simu).fill(0);
+
+        actions
+            .forEach((action, index_i) => {
+                console.log(action.name);
+                action.intervals
+                    .forEach((interval) => {
+
+                        dummy_start_i = new Date(interval.start.substr(6, 4), interval.start.substr(3, 2), interval.start.substr(0, 2));
+                        dummy_end_i = new Date(interval.end.substr(6, 4), interval.end.substr(3, 2), interval.end.substr(0, 2));
+
+                        start = Math.floor((dummy_start_i - this.base_date) / (1000 * 60 * 60 * 24));
+                        end = Math.max(days_simu, Math.floor((dummy_end_i - this.base_date) / (1000 * 60 * 60 * 24)));
+
+                        for (var i = start; i < end; i++) {
+
+                            if (this.damping_factors[index_i] < damping[i]) {
+
+                                damping[i] = this.damping_factors[index_i];
+
+                            }
+                        }
+                    });
+            });
+
+        return damping;
     }
 
     notify() {
