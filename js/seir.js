@@ -19,13 +19,15 @@ class Damping {
 }
 
 /**
- *  find index i such that  dampings[idx].day <= t < dampings[idx+1].day 
+ *  Finds index idx such that
+ *    
+ *    get_value_function(data_array[idx]) <= t < get_value_function(data_array[idx+1])
  * 
  *  We are using a bracketing approach
  */
 function bracket(data_array, value, get_value_function)
 {
-    // we assume, that the xvalues are ordered in ascending order
+    // we assume, that the data_array is ordered in ascending order
     let ilow = 0.;
     let ihigh = data_array.length-1;
 
