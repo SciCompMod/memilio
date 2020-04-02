@@ -24,6 +24,8 @@ function Graphs(selector) {
     var coeffs_critical = [0.2, 0.1, 0.05];
     var colors = ["#73B0FF", "orange", "red", "black"];
 
+    var colors_actions = ["#3393ff", "#8333ff ", "#770031", "#00bd1d", "#007765"];
+
     var overlay_mini = [];
 
     var begin_interval_i = 0,
@@ -53,8 +55,8 @@ function Graphs(selector) {
 
         svg_graphs.selectAll("*").remove();
         if (data_read.length > 0) { // how to delete data?
-            delete (data_read[0]);
-            delete (data_read[1]);
+            delete(data_read[0]);
+            delete(data_read[1]);
             data_read = [];
         }
 
@@ -171,7 +173,7 @@ function Graphs(selector) {
             .attr("pointer-events", "all")
             // .on("mouseover", onMouseOver) //Add listener for the mouseover event
             .on("mousemove", onMouseMove) //Add listener for the mouseout event 
-        // .on("mouseout", onMouseOut); //Add listener for the mouseout event 
+            // .on("mouseout", onMouseOut); //Add listener for the mouseout event 
 
 
         g[1] = svg_graphs.append("rect")
@@ -184,7 +186,7 @@ function Graphs(selector) {
             .on("mousedown", onMouseDownMini) //Add listener for the down event 
             // .on("mouseleave", onMouseLeaveMini) //Add listener for the down event 
             .on("mouseup", onMouseReleaseMini) //Add listener for the release event 
-        // .on("mouseout", onMouseOutMini); //Add listener for the mouseout event 
+            // .on("mouseout", onMouseOutMini); //Add listener for the mouseout event 
 
 
         g[0] = svg_graphs.append("g")
@@ -199,6 +201,9 @@ function Graphs(selector) {
             .attr("id", "mini_graph")
             .attr("transform", "translate(" + 0.5 * margin_horizontal + "," + (margin_top - 1.5 * heightMini) + ")");
 
+        g[2] = svg_graphs.append("g")
+            .attr("transform", "translate(" + 0.5 * margin_horizontal + "," + 10 + ")");
+
 
         overlay_mini = g[1].append("rect")
             .attr("id", "gray_overlay")
@@ -210,11 +215,11 @@ function Graphs(selector) {
             .attr("width", end_interval_x - begin_interval_x)
             .attr("height", heightMini); // linker ausgegrauter Bereich
 
-        d3.csv(filename, function (d) {
-            return { day: d3.timeParse("%d.%m.%Y")(d.day), cases: [parseInt(d.cases), parseInt(coeffs_critical[0] * d.cases), parseInt(coeffs_critical[1] * d.cases), parseInt(coeffs_critical[2] * d.cases)] }
-        },
+        d3.csv(filename, function(d) {
+                return { day: d3.timeParse("%d.%m.%Y")(d.day), cases: [parseInt(d.cases), parseInt(coeffs_critical[0] * d.cases), parseInt(coeffs_critical[1] * d.cases), parseInt(coeffs_critical[2] * d.cases)] }
+            },
 
-            function (error, data) {
+            function(error, data) {
                 if (error) {
                     console.log(error)
                     throw error;
@@ -223,15 +228,15 @@ function Graphs(selector) {
                 data_read.push(data);
 
                 if (begin_interval_i == 0 && end_interval_i == 60) {
-                    filteredData = data.filter(function (d) { return d.day < data[end_interval_i].day });
+                    filteredData = data.filter(function(d) { return d.day < data[end_interval_i].day });
                     data_read.push(filteredData);
                 } else {
                     data_read.push(data.slice(begin_interval_i, end_interval_i));
                 }
 
 
-                xScale.domain(d3.extent(data_read[1], function (d) { return d.day; }));
-                yScale.domain([0, max_fact * d3.max(data_read[1], function (d) { return d.cases[0]; })]);
+                xScale.domain(d3.extent(data_read[1], function(d) { return d.day; }));
+                yScale.domain([0, max_fact * d3.max(data_read[1], function(d) { return d.cases[0]; })]);
 
 
                 g[0].append("g")
@@ -261,8 +266,8 @@ function Graphs(selector) {
                             .attr("stroke", colors[i])
                             .attr("stroke-width", 1.5)
                             .attr("d", d3.line()
-                                .x(function (d) { return xScale(d.day) })
-                                .y(function (d) { return yScale(d.cases[i]) })
+                                .x(function(d) { return xScale(d.day) })
+                                .y(function(d) { return yScale(d.cases[i]) })
                             )
 
                     }
@@ -284,14 +289,14 @@ function Graphs(selector) {
                 // .attr("height", function(d) { return height - yScale(d.cases); });
 
                 // mini graph
-                xScaleMini.domain(d3.extent(data_read[0].map(function (d) { return d.day; })));
-                yScaleMini.domain([1, max_fact * d3.max(data_read[0], function (d) { return d.cases[0]; })]);
+                xScaleMini.domain(d3.extent(data_read[0].map(function(d) { return d.day; })));
+                yScaleMini.domain([1, max_fact * d3.max(data_read[0], function(d) { return d.cases[0]; })]);
 
                 overlay_mini.attr("width", end_interval_x - begin_interval_x);
 
                 g[1].append("g")
                     .attr("id", "yaxis")
-                    .call(d3.axisLeft(yScaleMini).tickFormat(function (d) {
+                    .call(d3.axisLeft(yScaleMini).tickFormat(function(d) {
                         return d;
                     }).ticks(4));
                 // .attr("transform", "translate(0," + (-margin + 10) + ")");
@@ -313,8 +318,8 @@ function Graphs(selector) {
                             .attr("stroke", colors[i])
                             .attr("stroke-width", 1.5)
                             .attr("d", d3.line()
-                                .x(function (d) { return xScaleMini(d.day) })
-                                .y(function (d) { return yScaleMini(d.cases[i]) })
+                                .x(function(d) { return xScaleMini(d.day) })
+                                .y(function(d) { return yScaleMini(d.cases[i]) })
                             )
                     }
                 } else {
@@ -324,89 +329,18 @@ function Graphs(selector) {
 
 
                 // actions
-                g[2] = svg_graphs.append("g")
-                    .attr("transform", "translate(" + 0.5 * margin_horizontal + "," + 10 + ")");
-
                 g[2].append("g")
                     .attr("transform", "translate(0," + 2 * heightMini + ")")
                     .call(d3.axisBottom(xScaleMini)
                         .ticks(6)
                         .tickFormat(d3.timeFormat("%d.%m.%Y")));
 
-                // Add the line
-                g[2].append("rect")
-                    .attr("class", "bar_cat1")
-                    .attr("x", function (d) { return 40; })
-                    .attr("y", function (d) { return 2 * heightMini - 50; })
-                    .attr("width", 50)
-                    .attr("height", function (d) { return 10; });
-
-                g[2].append("rect")
-                    .attr("class", "bar_cat1")
-                    .attr("x", function (d) { return 200; })
-                    .attr("y", function (d) { return 2 * heightMini - 50; })
-                    .attr("width", 60)
-                    .attr("height", function (d) { return 10; });
-
-                g[2].append("rect")
-                    .attr("class", "bar_cat1")
-                    .attr("x", function (d) { return 400; })
-                    .attr("y", function (d) { return 2 * heightMini - 50; })
-                    .attr("width", 30)
-                    .attr("height", function (d) { return 10; });
-
-
-                // Add the line
-                g[2].append("rect")
-                    .attr("class", "bar_cat2")
-                    .attr("x", function (d) { return 80; })
-                    .attr("y", function (d) { return 2 * heightMini - 30; })
-                    .attr("width", 50)
-                    .attr("height", function (d) { return 10; });
-
-                g[2].append("rect")
-                    .attr("class", "bar_cat2")
-                    .attr("x", function (d) { return 170; })
-                    .attr("y", function (d) { return 2 * heightMini - 30; })
-                    .attr("width", 60)
-                    .attr("height", function (d) { return 10; });
-
-                g[2].append("rect")
-                    .attr("class", "bar_cat2")
-                    .attr("x", function (d) { return 320; })
-                    .attr("y", function (d) { return 2 * heightMini - 30; })
-                    .attr("width", 30)
-                    .attr("height", function (d) { return 10; });
-
-
-                // Add the line
-                g[2].append("rect")
-                    .attr("class", "bar_cat3")
-                    .attr("x", function (d) { return 80; })
-                    .attr("y", function (d) { return 2 * heightMini - 10; })
-                    .attr("width", 50)
-                    .attr("height", function (d) { return 10; });
-
-                g[2].append("rect")
-                    .attr("class", "bar_cat3")
-                    .attr("x", function (d) { return 250; })
-                    .attr("y", function (d) { return 2 * heightMini - 10; })
-                    .attr("width", 40)
-                    .attr("height", function (d) { return 10; });
-
-                g[2].append("rect")
-                    .attr("class", "bar_cat3")
-                    .attr("x", function (d) { return 550; })
-                    .attr("y", function (d) { return 2 * heightMini - 10; })
-                    .attr("width", 60)
-                    .attr("height", function (d) { return 10; });
-
 
                 // cursor on main graph
                 selectLine = svg_graphs.append("rect")
                     .style("opacity", 0)
                     .attr("width", 2)
-                    .attr("height", function (d) { return height; })
+                    .attr("height", function(d) { return height; })
                     .attr("x", 0.75 * margin_horizontal)
                     .attr("y", margin_top);
 
@@ -477,8 +411,8 @@ function Graphs(selector) {
             yScaleMini = d3.scaleLinear().range([heightMini, 0]); // inverted.....
         }
 
-        xScale.domain(d3.extent(data_read[1], function (d) { return d.day; }));
-        yScale.domain([0, max_fact * d3.max(data_read[1], function (d) { return d.cases[0]; })]);
+        xScale.domain(d3.extent(data_read[1], function(d) { return d.day; }));
+        yScale.domain([0, max_fact * d3.max(data_read[1], function(d) { return d.cases[0]; })]);
 
         g[0].append("g")
             .attr("id", "xaxis")
@@ -503,8 +437,8 @@ function Graphs(selector) {
                 .attr("stroke", colors[i])
                 .attr("stroke-width", 1.5)
                 .attr("d", d3.line()
-                    .x(function (d) { return xScale(d.day) })
-                    .y(function (d) { return yScale(d.cases[i]) })
+                    .x(function(d) { return xScale(d.day) })
+                    .y(function(d) { return yScale(d.cases[i]) })
                 )
 
         }
@@ -514,12 +448,12 @@ function Graphs(selector) {
 
         g[1].append("g")
             .attr("id", "yaxis")
-            .call(d3.axisLeft(yScaleMini).tickFormat(function (d) {
+            .call(d3.axisLeft(yScaleMini).tickFormat(function(d) {
                 return d;
             }).ticks(4));
 
 
-        yScaleMini.domain([1, max_fact * d3.max(data_read[0], function (d) { return d.cases[0]; })]);
+        yScaleMini.domain([1, max_fact * d3.max(data_read[0], function(d) { return d.cases[0]; })]);
 
         // Add the line
         for (var i = 0; i < data_read[0][0].cases.length; i++) {
@@ -529,8 +463,8 @@ function Graphs(selector) {
                 .attr("stroke", colors[i])
                 .attr("stroke-width", 1.5)
                 .attr("d", d3.line()
-                    .x(function (d) { return xScaleMini(d.day) })
-                    .y(function (d) { return yScaleMini(d.cases[i]) })
+                    .x(function(d) { return xScaleMini(d.day) })
+                    .y(function(d) { return yScaleMini(d.cases[i]) })
                 )
         }
 
@@ -539,7 +473,7 @@ function Graphs(selector) {
 
     function subsample_data() {
 
-        delete (data_read[1]);
+        delete(data_read[1]);
 
         data_read[1] = data_read[0].slice(begin_interval_i, end_interval_i);
 
@@ -553,7 +487,7 @@ function Graphs(selector) {
     function onMouseMove() {
         // get coordinates
         var x0_pos = d3.mouse(this)[0];
-        var bisectDate = d3.bisector(function (d) { return d.day; }).left;
+        var bisectDate = d3.bisector(function(d) { return d.day; }).left;
         var i = bisectDate(data_read[1], xScale.invert(x0_pos))
         var selectedData = data_read[1][i - 1]
         x0_pos = xScale.invert(x0_pos + 0.5 * margin_horizontal);
@@ -595,7 +529,7 @@ function Graphs(selector) {
     function onMouseDownMini() {
         // get coordinates
         var x0_pos = d3.mouse(this)[0];
-        var bisectDate = d3.bisector(function (d) { return d.day; }).left;
+        var bisectDate = d3.bisector(function(d) { return d.day; }).left;
         var i = bisectDate(data_read[0], xScaleMini.invert(x0_pos));
 
         begin_interval_i = i - 1;
@@ -626,7 +560,7 @@ function Graphs(selector) {
         if (end_interval_x - begin_interval_x > 0) {
             overlay_mini.attr("width", end_interval_x - begin_interval_x);
 
-            var bisectDate = d3.bisector(function (d) { return d.day; }).left;
+            var bisectDate = d3.bisector(function(d) { return d.day; }).left;
             var i = bisectDate(data_read[0], xScaleMini.invert(end_interval_x));
 
             end_interval_i = i - 1;
@@ -717,7 +651,18 @@ function Graphs(selector) {
                 action.intervals
                     .forEach(interval => {
                         console.log(interval.start);
-                        console.log(interval.end); 
+                        console.log(interval.end);
+
+                        // g[2].selectAll("class", "#" + action.id).remove();
+
+                        // if (action.intervals[0].active == false) {
+                        //     g[2].append("rect")
+                        //         .attr("class", action.id)
+                        //         .attr("x", function(d) { return 40; })
+                        //         .attr("y", function(d) { return 2 * heightMini - 50; })
+                        //         .attr("width", 50)
+                        //         .attr("height", function(d) { return 10; });
+                        // }
                     });
             });
     }

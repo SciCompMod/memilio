@@ -68,20 +68,8 @@ body {
     height: 100%;
 }
 
-.bar_cat1 {
-    fill: #73B0FF;
-}
-
-.bar_cat2 {
-    fill: rgb(0, 150, 12);
-}
-
-.bar_cat3 {
-    fill: rgb(135, 0, 212);
-}
-
-.barMini_cat1 {
-    fill: #73B0FF;
+.bar_cat {
+    fill: #cdcdcd;
 }
 
 .highlight {
