@@ -49,7 +49,7 @@ function update_plot(beta)
   var p = makeSeirParam();
   p.b = beta;
 
-  var result = simulate_seir(0., 400., 0.1, p);
+  var result = simulate_seir(0., 100., 0.1, p);
   plot_data(result);
 }
 

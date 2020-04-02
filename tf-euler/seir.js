@@ -59,6 +59,8 @@ class SeirParam {
     const seir_0 = [params.N-params.E0, params.E0, 0.0, 0.0];
   
     const n = Math.ceil((tmax-t0) / dt);
+    
+    tmax = t0 + n*dt;
     const t = tf.linspace(t0, tmax, n);
   
     // Euler integration - might switch to RK4 though
