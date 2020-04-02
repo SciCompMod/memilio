@@ -9,8 +9,6 @@ function Graphs(selector) {
     var selectLineTooltip = [];
     var selectLineCircle = [];
 
-
-
     var svg_graphs = d3.select(selector),
         margin_top = 300,
         margin_bottom = 50,
@@ -19,6 +17,8 @@ function Graphs(selector) {
         width = svg_graphs.attr("width") - margin_horizontal,
         height = svg_graphs.attr("height") - margin_vertical,
         heightMini = margin_top / 4;
+
+    console.log(width, height, heightMini);
 
     var coeffs_critical = [0.2, 0.1, 0.05];
     var colors = ["#73B0FF", "orange", "red", "black"];
@@ -209,8 +209,7 @@ function Graphs(selector) {
             .attr("width", end_interval_x - begin_interval_x)
             .attr("height", heightMini); // linker ausgegrauter Bereich
 
-        console.log('/' + filename);
-        d3.csv('/' + filename, function (d) {
+        d3.csv(filename, function (d) {
             return { day: d3.timeParse("%d.%m.%Y")(d.day), cases: [parseInt(d.cases), parseInt(coeffs_critical[0] * d.cases), parseInt(coeffs_critical[1] * d.cases), parseInt(coeffs_critical[2] * d.cases)] }
         },
 
@@ -228,8 +227,6 @@ function Graphs(selector) {
                 } else {
                     data_read.push(data.slice(begin_interval_i, end_interval_i));
                 }
-
-                console.log(data_read[1]);
 
 
                 xScale.domain(d3.extent(data_read[1], function (d) { return d.day; }));
@@ -450,8 +447,6 @@ function Graphs(selector) {
                 // .attr("height", function(d) { return height; })
                 // .style("left", 0.75 * margin + 10)
                 // .style("top", height - 0.5 * margin + 10);
-
-                console.log(data);
 
                 // how to delete data?
                 // delete(data);

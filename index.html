@@ -15,6 +15,7 @@
     <script src="https://d3js.org/d3.v4.min.js" type=text/javascript></script>
     <script src=https://code.jquery.com/jquery-3.4.1.min.js type=text/javascript></script>
     <script src=js/locations.js type=text/javascript></script>
+    <script src=js/parameters.js type=text/javascript></script>
     <script src=js/actions.js type=text/javascript></script>
     <script src=js/graphs.js type=text/javascript></script>
 
@@ -84,8 +85,8 @@
 
         $(function(){
             let $container = $('.actions .content');
-            let locations = new Locations();
-
+            let locations = new Locations("#locations");
+            let parameters = new Parameters($('#parameters'));
             let actions = new Actions($container, [
                 "HomeOffice", 
                 "Schlie&szlig;ung von XYZ", 
@@ -95,7 +96,8 @@
             ]);
 
             $('svg#graphs')
-                .attr($('svg#graphs').css(['width', 'height']));
+                .attr('width', $('svg#graphs').width())
+                .attr('height', $('svg#graphs').height());
 
             let graphs = new Graphs("svg#graphs");
 
@@ -113,6 +115,21 @@
         .wrapper {
             width: 90%;
             padding: 3%
+        }
+
+        .wrapper ul {
+            margin: 0;
+            padding: 0;
+            text-decoration: none;
+            list-style: none;
+        }
+
+        .wrapper ul li {
+            margin: 5px 5px 5px 10px;
+        }
+
+        .wrapper ul li:last-child {
+            margin-bottom: 10px !important;
         }
 
         .wrapper .box {
@@ -225,44 +242,47 @@
             <div class="box parameters">
                 <div class=heading>Parameter</div>
                 <div class=content>
+                    <form id=parameters name=parameters>
                     <table>
                         <tr>
                             <td>R0</td>
-                            <td><input size="4" value="2.7"></td>
+                            <td><input size="4" value="2.7" name=r0></td>
                         </tr>
                         <tr>
                             <td>Inkubationszeit</td>
-                            <td><input size="4" value="5"></td>
+                            <td><input size="4" value="5" name=incubation></td>
                         </tr>
                         <tr>
                             <td>Infektionszeit</td>
-                            <td><input size="4" value="4"></td>
+                            <td><input size="4" value="4" name=infection></td>
                         </tr>
                         <tr>
                             <td>Behandlungsdauer</td>
-                            <td><input size="4" value="4"></td>
+                            <td><input size="4" value="4" name=treatment></td>
                         </tr>
                         <tr>
                             <td>Beatmungsdauer</td>
-                            <td><input size="4" value="10"></td>
+                            <td><input size="4" value="10" name=respiration></td>
                         </tr>
                         <tr>
                             <td>Anzahl Intensivbetten</td>
-                            <td><input size="4" value="10000"></td>
+                            <td><input size="4" value="10000" name=beds></td>
                         </tr>
                         <tr>
                             <td>Parameter X</td>
-                            <td><input size="4" value="12"></td>
+                            <td><input size="4" value="12" name=px></td>
                         </tr>
                         <tr>
                             <td>Parameter Y</td>
-                            <td><input size="4" value="24"></td>
+                            <td><input size="4" value="24" name=py></td>
                         </tr>
                         <tr>
                             <td>Parameter Z</td>
-                            <td><input size="4" value="36"></td>
+                            <td><input size="4" value="36" name=pz></td>
                         </tr>
                     </table>
+                    <button type=submit>Aktualisieren</button>
+                    </form>
                 </div>
             </div>
         </div>
@@ -279,117 +299,6 @@
         </div>
 
     </div>
-
-    <div style="width:300; position:relative; float:left;">
-
-        <svg id='locations'
-            style="border:1px #cdcdcd solid; border-radius:10px; margin-right:10px; height:610px; width:300px;  position:relative; float:left; overflow:hidden;">
-
-        </svg>
-
-        <div style="width:300px; position:relative; float:left; margin-right:10px;">
-
-            <div id='actions'
-                style="border:1px #cdcdcd solid; border-radius:10px; margin-right:10px; height:300px; width:300px; position:relative; float:left; overflow:hidden;">
-
-                <div
-                    style="padding: 7px 7px 7px 15px; width: 100%; height: 26px; font-weight: bold; background-color: rgb(115, 176, 255);">
-                    Maßnahmen</div>
-
-
-                <div id='actions_listed' style="padding:10%; padding-top:5%">
-
-                    <script>
-                        var d = new Date();
-                        var content = '';
-                        for (var i = 0; i < actions.length; i++) {
-                            //   <input type='checkbox' name='action[]' value='2'><br>
-                            content += "<div style='padding-top:5px;'  id='action" + i + "'>";
-                            content += "<input id='input_action" + i + "' onClick='showFirstActionInterval(" + i + ")' type='checkbox' name='action[]' value='" + i + "'> " + actions[i];
-                            for (var j = 0; j < 4; j++) {
-                                content += "<div id='action" + i + "_" + j + "' style='display:none; padding-left:5px;'>";
-
-                                content += "<input id='action" + i + "_" + j + "'";
-
-                                if (j < 3) {
-                                    content += "onClick = \"showInterval('action" + i + "'," + (j + 1) + ")\"";
-                                }
-                                content += " type='checkbox'><input id='action" + i + "_" + j + "_start' size='8'";
-                                // von
-                                // content += "value='" + d.getFullYear() + ":KW" + (d.getWeek() + 2 * j) + "''";
-                                content += "value='" + formatTime(new Date(d.getTime() + 7 * 4 * j * 24 * 60 * 60 * 1000)) + "'";
-                                content += ">-<input id='action" + i + "_" + j + "_end' size='8'";
-                                // bis
-                                // content += "value='" + d.getFullYear() + ":KW" + (d.getWeek() + 2 * (j + 1)) + "''";
-                                content += "value='" + formatTime(new Date(d.getTime() + 7 * 4 * (j + 1) * 24 * 60 * 60 * 1000)) + "'";
-                                content += "></div>";
-                            }
-                            content += "</div>";
-                        }
-                        document.getElementById("actions_listed").innerHTML = content;
-                    </script>
-
-                </div>
-
-            </div>
-
-            <div id='parameters'
-                style="border:1px #cdcdcd solid; border-radius:10px; margin-right:10px; margin-top:10px; height:300px; width:300px;  position:relative; float:left; overflow:hidden;">
-
-                <div
-                    style="padding: 7px 7px 7px 15px; width: 100%; height: 26px; font-weight: bold; background-color: rgb(115, 176, 255);">
-                    Parameter</div>
-
-                <div style="padding:10%; padding-top:5%">
-                    <table>
-                        <tr>
-                            <td>R0</td>
-                            <td><input size="4" value="2.7"></td>
-                        </tr>
-                        <tr>
-                            <td>Inkubationszeit</td>
-                            <td><input size="4" value="5"></td>
-                        </tr>
-                        <tr>
-                            <td>Infektionszeit</td>
-                            <td><input size="4" value="4"></td>
-                        </tr>
-                        <tr>
-                            <td>Behandlungsdauer</td>
-                            <td><input size="4" value="4"></td>
-                        </tr>
-                        <tr>
-                            <td>Beatmungsdauer</td>
-                            <td><input size="4" value="10"></td>
-                        </tr>
-                        <tr>
-                            <td>Anzahl Intensivbetten</td>
-                            <td><input size="4" value="10000"></td>
-                        </tr>
-                        <tr>
-                            <td>Parameter X</td>
-                            <td><input size="4" value="12"></td>
-                        </tr>
-                        <tr>
-                            <td>Parameter Y</td>
-                            <td><input size="4" value="24"></td>
-                        </tr>
-                        <tr>
-                            <td>Parameter Z</td>
-                            <td><input size="4" value="36"></td>
-                        </tr>
-                    </table>
-                </div>
-
-            </div>
-
-        </div>
-
-        <div style="width:930px; margin-right:10px;  position:relative; float:left;">
-
-            <svg id='graphs' style="border:1px #cdcdcd solid; border-radius:10px;" width="930" height="610"></svg>
-
-        </div>
 
         <!-- <button onclick="read_and_visualize('covid19_ger_rand.csv',false)">K&ouml;ln</button>
 
@@ -427,15 +336,6 @@
             </div> -->
 
         <!-- </div> -->
-
-        <!-- <div style="width:67%; position:relative; float:left;"> -->
-
-
-        <!-- </div> -->
-
-    </div>
-
-    </div>
 
 </body>
 

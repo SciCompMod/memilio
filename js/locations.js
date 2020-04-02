@@ -1,54 +1,5 @@
-function Locations() {
-    // function init_graph() {
-
-
-    // }
-
-    var data_read = [];
-
-    var logscale = false;
-
-    var xScale, yScale, xScaleMini, yScaleMini;
-
-    var selectLine;
-    var selectLineTooltip = [];
-    var selectLineCircle = [];
-
-    // var div_locations = d3.select("#locations").style("overflow", "hidden");
-
-    // div_locations.append('div')
-    //     .style("width", "100%")
-    //     .style("height", "26px")
-    //     .style("padding", "7px")
-    //     .style("padding-left", "15px")
-    //     .style("background-color", "#73B0FF")
-    //     .html("Orte")
-    //     .style("font-weight", "bold");
-
-
-    // div_locations.append("svg")
-    //     .attr("width", 200)
-    //     .attr("height", 200)
-    //     .append("button")
-    //     .html("asdasd")
-    //     .attr("x", 100)
-    //     .attr("y", 100);
-
-
-    var svg_locations = d3.select("#locations");
-
-    /*
-    svg_locations.append('rect')
-        .attr("width", "100%")
-        .attr("height", "40")
-        .style("fill", "#73B0FF");
-    
-    svg_locations.append('text')
-        .html("Orte")
-        .attr("x", "20")
-        .attr("y", "25")
-        .attr("font-weight", "bold");
-    */
+function Locations(selector) {
+    var svg_locations = d3.select(selector);
 
     var loc = ["D&uuml;sseldorf", "K&ouml;ln", "Aachen", "Bonn"];
     var loc_length = [10, 4, 6, 4]
@@ -83,35 +34,7 @@ function Locations() {
             .html(loc[i])
             .attr("font-weight", 600);
     }
-
-    // alert(loc[1].length)
-
-
-    // var div_actions = d3.select("#actions").style("overflow", "hidden");
-
-    // div_actions.append('div')
-    //     .style("width", "100%")
-    //     .style("height", "26px")
-    //     .style("padding", "7px")
-    //     .style("padding-left", "15px")
-    //     .style("background-color", "#73B0FF")
-    //     .html("Maßnahmen")
-    //     .style("font-weight", "bold");
-
-    // var div_parameters = d3.select("#parameters").style("overflow", "hidden");
-
-    // div_parameters.append('div')
-    //     .style("width", "100%")
-    //     .style("height", "26px")
-    //     .style("padding", "7px")
-    //     .style("padding-left", "15px")
-    //     .style("background-color", "#73B0FF")
-    //     .html("Parameter")
-    //     .style("font-weight", "bold");
-
-
-
-
+ 
     function onButtonLocMouseClick() {
 
         d3.select(".button_loc_active").attr("class", "button_loc")
