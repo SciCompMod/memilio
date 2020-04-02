@@ -709,7 +709,19 @@ function Graphs(selector) {
     //         .remove()
     // }
 
+    function updateActions(actions) {
+        actions
+            .forEach(action => {
+                action.intervals
+                    .forEach(interval => {
+                        console.log(interval.start); // Date Objekte
+                        console.log(interval.end); // Date Objekt
+                    });
+            });
+    }
+
     return {
-        'visualize': read_and_visualize
+        'visualize': read_and_visualize,
+        'updateActions': updateActions
     }
 }
