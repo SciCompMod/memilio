@@ -80,7 +80,7 @@ class Graphs {
                     .attr("alignment-baseline", "middle")
                     .attr("x", (self.xScale(x0_pos) + 10))
                     .attr("y", self.margin_top + self.yScale(selectedData.cases[i]))
-                    .html(selectedData.cases[i]);
+                    .html(parseInt(selectedData.cases[i]));
 
                 self.selectLineCircle[i]
                     .style("opacity", 1)
