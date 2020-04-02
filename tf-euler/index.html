@@ -1,13 +1,15 @@
-
-<html>
+<!doctype html>
+<html lang="en-US">
   <head>
     <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@latest"> </script>
     <script src="https://cdn.plot.ly/plotly-1.2.0.min.js"></script>
   </head>
   <body>
-    <h4>A euler integration with tensorflow<hr/></h4>
+    <h1>A simple SEIR model</h1>
     <div class="slidecontainer">
-      Number of time slices: <input type="range" min="6" max="30" value="10" class="slider" id="myRange" onchange="window.on_slider_change(this.value)">
+      Contact rate: <input type="range" min="1" max="4000" value="1500" class="slider" id="beta_slider">
+      <div id="contact_rate_id">1.5</div>
+      Log-Plot: <input type="checkbox" id="cb_log_id">
     </div>
     <div id="chart1"></div>
     <script type="module" src="./index.js"> </script>

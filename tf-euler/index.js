@@ -1,32 +1,88 @@
-import { integration_test } from './euler.js';
+import { integration_test, euler } from './euler.js';
+import {simulate_seir, makeSeirParam} from './seir.js'
 
-function plot_data(curve_data) {
+function plot_data(seir_data) {
 
-  var xdata = curve_data.x;
-  var ydata = curve_data.y;
+  var plot_type = use_log_scale() ? "log" : "linear";
 
 	var placeholder = document.getElementById('chart1');
   Plotly.newPlot( placeholder,
-    [{
-      x: xdata,
-      y: ydata
-    }],
+    [
+      {
+        x: seir_data.t,
+        y: seir_data.S,
+        name: "susceptible"
+      },
+      {
+        x: seir_data.t,
+        y: seir_data.E,
+        name: "exposed"
+      },
+      {
+        x: seir_data.t,
+        y: seir_data.I,
+        name: "infections"
+      },
+      {
+        x: seir_data.t,
+        y: seir_data.R,
+        name: "immune / recovered"
+      }
+    ],
     {
-      margin: { t: 0 } 
+      margin: { t: 0 },
+      xaxis: {
+        title: "#Days since t0"
+      },
+      yaxis: {
+        type: plot_type,
+        autorange: true,
+        title: 'Number',
+      }
     } 
   ); 
 
 }
 
-function update_plot(n_steps)
+function update_plot(beta)
 {
-  var result = integration_test(n_steps);
+  var p = makeSeirParam();
+  p.b = beta;
+
+  var result = simulate_seir(0., 400., 0.1, p);
   plot_data(result);
 }
 
-window.on_slider_change = function(value)
-{
-  update_plot(value);
+
+function beta() {
+  var beta_slider = document.getElementById('beta_slider');
+  return beta_slider.value / 1000.;
 }
 
-update_plot(10);
+function use_log_scale()
+{
+  var cb_log = document.getElementById('cb_log_id');
+  return cb_log.checked;
+}
+
+function main()
+{
+  var beta_slider = document.getElementById('beta_slider');
+  beta_slider.oninput = function() {
+    var b = beta();
+    document.getElementById('contact_rate_id').innerHTML = b.toString();
+    update_plot(b);
+  };
+
+  var cb_log = document.getElementById('cb_log_id');
+  cb_log.onclick = function() {
+    update_plot(beta());
+    console.log(use_log_scale());
+  }
+
+  update_plot(1.5);
+}
+
+main();
+
+
