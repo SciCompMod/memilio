@@ -15,7 +15,7 @@ class Parameters {
 
                 let parameters = self.buildParameters();
 
-                listeners
+                self.listeners
                     .forEach(l => {
                         l(parameters);
                     });
@@ -26,7 +26,7 @@ class Parameters {
         let serialized = this.$form.serializeArray();
         let parameters = {};
         serialized.forEach(s => {
-            parameters[s.name] = s.value;
+            parameters[s.name] = parseFloat(s.value);
         });
         return parameters;
     }

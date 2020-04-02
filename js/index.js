@@ -2,7 +2,7 @@ import { Locations } from './locations.js'
 import { Actions } from './actions.js'
 import { Parameters } from './parameters.js'
 import { Graphs } from './graphs.js'
-import {simulate_seir, makeSeirParam} from './seir.js'
+import { simulate_seir, makeSeirParam } from './seir.js'
 
 function main() {
     // Week number according to the ISO-8601 standard
@@ -34,31 +34,70 @@ function main() {
 
         let graphs = new Graphs("svg#graphs");
 
+        function simulate() {
+            let step_size = 0.1;
+            let x = parseInt(1 / step_size, 10);
+            let days = parseFloat($("#days").val());
+            let p = parameters.getParameters();
+            let seir_params = makeSeirParam();
+
+            //let current_actions = actions.getCurrentAction();
+
+            seir_params.a = 1.0 / p.incubation;
+            seir_params.b = p.contact_rate;
+            seir_params.g = 1 / p.infection;
+            seir_params.E0 = p.e0;
+            seir_params.N = locations.getPopulation();
+
+            let data = simulate_seir(0, days, step_size, seir_params);
+
+            // select only values of the days 
+            Object.keys(data)
+                .forEach(key => {
+                    data[key] = data[key].filter((v, i) => i % x == 0);
+                });
+
+            let startDate = d3.timeParse("%d.%m.%Y")("24.02.2020");
+            let result = [];
+            // restruct data
+            for (let i = 0; i < days; i++) {
+                result.push({
+                    day: new Date(startDate.getTime() + (i * 24 * 60 * 60 * 1000)),
+                    cases: [
+                        data.S[i],
+                        data.E[i],
+                        data.I[i],
+                        data.R[i]
+                    ]
+                })
+            }
+
+
+            graphs.visualize(result, actions.getActions());
+        }
+
         locations.onselect((arg) => {
-            graphs.visualize(arg);
+            simulate();
         });
 
         actions.onchange((actions) => {
-            graphs.updateActions(actions);
+            simulate();
         });
+
+        parameters.onchange(parameters => {
+            simulate();
+        });
+
 
         $('button.simulate')
             .click(function (event) {
                 event.preventDefault();
                 event.stopPropagation();
 
-                let days = parseFloat($("#days").val());
-                let p = parameters.getParameters();
-                let seir_params = makeSeirParam();
-
-                seir_params.a = 1 / p.incubation;
-                seir_params.b = p.contact_rate;
-                seir_params.g = 1 / p.infection;
-                seir_params.E0 = p.exposed;
-                seir_params.N = locations.getPopulation();
-
-                console.log(simulate_seir(0, days, 0.1, seir_params));
+                simulate();
             });
+
+        simulate();
     });
 }
 

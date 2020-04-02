@@ -166,24 +166,36 @@
                 <div class=heading>Parameter</div>
                 <div class=content>
                     <form id=parameters name=parameters>
-                        <table>
-                            <tr>
-                                <td>Kontaktrate</td>
-                                <td><input value="2.7" name=contact_rate></td>
-                            </tr>
-                            <tr>
-                                <td>Anzahl Infizierte</td>
-                                <td><input value="10000" name=exposed></td>
-                            </tr>
-                            <tr>
-                                <td>Inkubationszeit</td>
-                                <td><input value="5" name=incubation></td>
-                            </tr>
-                            <tr>
-                                <td>Infektionszeit</td>
-                                <td><input value="4" name=infection></td>
-                            </tr>
-                        </table>
+                    <table>
+                        <tr>
+                            <td>Kontaktrate</td>
+                            <td><input value="2.7" name=contact_rate></td>
+                        </tr>
+                        <!--
+                        <tr>
+                            <td>"Exposed" Personen</td>
+                            <td><input value="10000" name=e0></td>
+                        </tr>
+                        -->
+                        <tr>
+                            <td>Infizierte Personen</td>
+                            <td><input value="10000" name=e0></td>
+                        </tr>
+                        <!--
+                        <tr>
+                            <td>Genesene Personen</td>
+                            <td><input value="10000" name=r0></td>
+                        </tr>
+                        -->
+                        <tr>
+                            <td>Inkubationszeit</td>
+                            <td><input value="5.2" name=incubation></td>
+                        </tr>
+                        <tr>
+                            <td>Infektionszeit</td>
+                            <td><input value="2" name=infection></td>
+                        </tr>
+                    </table>
                     </form>
                 </div>
             </div>
@@ -193,7 +205,7 @@
             <div class=heading>Verlauf</div>
             <div class=buttons>
                 <span style="float: left">
-                    <input type=text id=days value=30> Tage
+                    <input type=text id=days value=200> Tage
                     <button class='simulate'>Simulieren</button>
                 </span>
                 <button class='y-linear'>y-linear</button>

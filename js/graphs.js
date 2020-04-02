@@ -46,7 +46,7 @@ class Graphs {
         this.g = [];
     }
 
-    visualize(filename) {
+    visualize(data, actions) {
         let self = this;
 
         function onMouseMove() {
@@ -283,170 +283,156 @@ class Graphs {
             .attr("width", this.end_interval_x - this.begin_interval_x)
             .attr("height", this.heightMini); // linker ausgegrauter Bereich
 
-        d3.csv(filename, (d) => {
-            return {
-                day: d3.timeParse("%d.%m.%Y")(d.day),
-                cases: [
-                    parseInt(d.cases), // s
-                    parseInt(this.coeffs_critical[0] * d.cases), // e
-                    parseInt(this.coeffs_critical[1] * d.cases), // i
-                    parseInt(this.coeffs_critical[2] * d.cases) // r
-                ]
-            }
-        }, (error, data) => {
-            if (error) {
-                console.log(error)
-                throw error;
-            }
 
-            this.data_read.push(data);
+        this.data_read.push(data);
 
-            if (this.begin_interval_i == 0 && this.end_interval_i == 60) {
-                this.filteredData = data.filter((d) => { return d.day < data[this.end_interval_i].day });
-                this.data_read.push(this.filteredData);
-            } else {
-                this.data_read.push(data.slice(this.begin_interval_i, this.end_interval_i));
-            }
+        if (this.begin_interval_i == 0 && this.end_interval_i == 60) {
+            this.filteredData = data.filter((d) => { return d.day < data[this.end_interval_i].day });
+            this.data_read.push(this.filteredData);
+        } else {
+            this.data_read.push(data.slice(this.begin_interval_i, this.end_interval_i));
+        }
 
 
-            this.xScale.domain(d3.extent(this.data_read[1], function(d) { return d.day; }));
-            this.yScale.domain([0, this.max_fact * d3.max(this.data_read[1], function(d) { return d.cases[0]; })]);
+        this.xScale.domain(d3.extent(this.data_read[1], function(d) { return d.day; }));
+        this.yScale.domain([0, this.max_fact * d3.max(this.data_read[1], function(d) { return d.cases[0]; })]);
 
 
-            this.g[0].append("g")
-                .attr("id", "xaxis")
-                .attr("transform", "translate(0," + this.height + ")")
-                .call(d3.axisBottom(this.xScale).tickFormat(d3.timeFormat("%d.%m.%Y")).ticks(6));
-            // .tickFormat(d3.timeFormat("%Y-%m-%d")))
-            // .selectAll("text")
-            // .style("text-anchor", "end")
-            // .attr("dx", "-.8em")
-            // .attr("dy", ".15em")
-            // .attr("transform", "rotate(-65)");
+        this.g[0].append("g")
+            .attr("id", "xaxis")
+            .attr("transform", "translate(0," + this.height + ")")
+            .call(d3.axisBottom(this.xScale).tickFormat(d3.timeFormat("%d.%m.%Y")).ticks(6));
+        // .tickFormat(d3.timeFormat("%Y-%m-%d")))
+        // .selectAll("text")
+        // .style("text-anchor", "end")
+        // .attr("dx", "-.8em")
+        // .attr("dy", ".15em")
+        // .attr("transform", "rotate(-65)");
 
-            this.g[0].append("g")
-                .attr("id", "yaxis")
-                .call(d3.axisLeft(this.yScale).ticks(4));
-
-
-            var update = false;
-
-            if (this.begin_interval_i == 0 && this.end_interval_i == 60) {
-                for (var i = 0; i < this.data_read[0][0].cases.length; i++) {
-
-                    this.g[0].append("path")
-                        .datum(this.filteredData)
-                        .attr("fill", "none")
-                        .attr("stroke", this.colors[i])
-                        .attr("stroke-width", 1.5)
-                        .attr("d", d3.line()
-                            .x(d => this.xScale(d.day))
-                            .y(d => this.yScale(d.cases[i]))
-                        )
-
-                }
-            } else {
-                update = true;
-            }
-
-            // define bars in graphic
-            // g.selectAll(".bar_cat1")
-            //     .data(filteredData)
-            //     .enter();
-            // .append("rect")
-            // .attr("class", "bar_cat1")
-            // .on("mouseover", onMouseOver) //Add listener for the mouseover event
-            // .on("mouseout", onMouseOut) //Add listener for the mouseout event       
-            // .attr("x", function(d) { return xScale(d.day); })
-            // .attr("y", function(d) { return yScale(d.cases); })
-            // .attr("width", xScale.bandwidth())
-            // .attr("height", function(d) { return height - yScale(d.cases); });
-
-            // mini graph
-            this.xScaleMini.domain(d3.extent(this.data_read[0].map(function(d) { return d.day; })));
-            this.yScaleMini.domain([1, this.max_fact * d3.max(this.data_read[0], function(d) { return d.cases[0]; })]);
-
-            this.overlay_mini.attr("width", this.end_interval_x - this.begin_interval_x);
-
-            this.g[1].append("g")
-                .attr("id", "yaxis")
-                .call(d3.axisLeft(this.yScaleMini).tickFormat(function(d) {
-                    return d;
-                }).ticks(4));
-            // .attr("transform", "translate(0," + (-margin + 10) + ")");
+        this.g[0].append("g")
+            .attr("id", "yaxis")
+            .call(d3.axisLeft(this.yScale).ticks(4));
 
 
-            this.g[1].append("g")
-                .attr("transform", "translate(0," + this.heightMini + ")")
-                .call(d3.axisBottom(this.xScaleMini)
-                    .ticks(6)
-                    .tickFormat(d3.timeFormat("%d.%m.%Y")));
+        var update = false;
 
-
-            if (!update) {
-                // Add the line
-                for (var i = 0; i < this.data_read[0][0].cases.length; i++) {
-                    this.g[1].append("path")
-                        .datum(this.data_read[0])
-                        .attr("fill", "none")
-                        .attr("stroke", this.colors[i])
-                        .attr("stroke-width", 1.5)
-                        .attr("d", d3.line()
-                            .x(d => this.xScaleMini(d.day))
-                            .y(d => this.yScaleMini(d.cases[i]))
-                        )
-                }
-            } else {
-                this.update_graph();
-            }
-
-
-
-            // actions x-axis
-            this.g[2].append("g")
-                .attr("transform", "translate(0," + 2 * this.heightMini + ")")
-                .call(d3.axisBottom(this.xScaleMini)
-                    .ticks(6)
-                    .tickFormat(d3.timeFormat("%d.%m.%Y")));
-
-
-            // cursor on main graph
-            this.selectLine = this.svg_graphs.append("rect")
-                .style("opacity", 0)
-                .attr("width", 2)
-                .attr("height", (d) => { return this.height; })
-                .attr("x", 0.75 * this.margin_horizontal)
-                .attr("y", this.margin_top);
-
-
+        if (this.begin_interval_i == 0 && this.end_interval_i == 60) {
             for (var i = 0; i < this.data_read[0][0].cases.length; i++) {
-                this.selectLineCircle[i] = this.svg_graphs.append('g')
-                    .append('circle')
-                    .style("opacity", 0)
-                    .attr('r', 4)
-                    .style("fill", this.colors[i])
-                    .attr("cx", 0.75 * this.margin_horizontal)
-                    .attr("cy", this.margin_top);
-                // .append('circle')
-                // .style("opacity", 0)
-                // .attr('r', 4)
-                // .attr('color', colors[i])
-                // .attr("text-anchor", "left")
-                // .attr("alignment-baseline", "middle")
-                // .attr("x", 0.75 * margin)
-                // .attr("y", height - 0.5 * margin);
-            }
 
-            for (var i = 0; i < this.data_read[0][0].cases.length + 1; i++) {
-                this.selectLineTooltip[i] = this.svg_graphs.append('g')
-                    .append('text')
-                    .style("opacity", 0)
-                    .attr("text-anchor", "left")
-                    .attr("alignment-baseline", "middle")
-                    .attr("x", 0.5 * this.margin_horizontal)
-                    .attr("y", this.margin_top);
+                this.g[0].append("path")
+                    .datum(this.filteredData)
+                    .attr("fill", "none")
+                    .attr("stroke", this.colors[i])
+                    .attr("stroke-width", 1.5)
+                    .attr("d", d3.line()
+                        .x(d => this.xScale(d.day))
+                        .y(d => this.yScale(d.cases[i]))
+                    )
+
             }
-        });
+        } else {
+            update = true;
+        }
+
+        // define bars in graphic
+        // g.selectAll(".bar_cat1")
+        //     .data(filteredData)
+        //     .enter();
+        // .append("rect")
+        // .attr("class", "bar_cat1")
+        // .on("mouseover", onMouseOver) //Add listener for the mouseover event
+        // .on("mouseout", onMouseOut) //Add listener for the mouseout event       
+        // .attr("x", function(d) { return xScale(d.day); })
+        // .attr("y", function(d) { return yScale(d.cases); })
+        // .attr("width", xScale.bandwidth())
+        // .attr("height", function(d) { return height - yScale(d.cases); });
+
+        // mini graph
+        this.xScaleMini.domain(d3.extent(this.data_read[0].map(function(d) { return d.day; })));
+        this.yScaleMini.domain([1, this.max_fact * d3.max(this.data_read[0], function(d) { return d.cases[0]; })]);
+
+        this.overlay_mini.attr("width", this.end_interval_x - this.begin_interval_x);
+
+        this.g[1].append("g")
+            .attr("id", "yaxis")
+            .call(d3.axisLeft(this.yScaleMini).tickFormat(function(d) {
+                return d;
+            }).ticks(4));
+        // .attr("transform", "translate(0," + (-margin + 10) + ")");
+
+
+        this.g[1].append("g")
+            .attr("transform", "translate(0," + this.heightMini + ")")
+            .call(d3.axisBottom(this.xScaleMini)
+                .ticks(6)
+                .tickFormat(d3.timeFormat("%d.%m.%Y")));
+
+
+        if (!update) {
+            // Add the line
+            for (var i = 0; i < this.data_read[0][0].cases.length; i++) {
+                this.g[1].append("path")
+                    .datum(this.data_read[0])
+                    .attr("fill", "none")
+                    .attr("stroke", this.colors[i])
+                    .attr("stroke-width", 1.5)
+                    .attr("d", d3.line()
+                        .x(d => this.xScaleMini(d.day))
+                        .y(d => this.yScaleMini(d.cases[i]))
+                    )
+            }
+        } else {
+            this.update_graph();
+        }
+
+
+
+        // actions x-axis
+        this.g[2].append("g")
+            .attr("transform", "translate(0," + 2 * this.heightMini + ")")
+            .call(d3.axisBottom(this.xScaleMini)
+                .ticks(6)
+                .tickFormat(d3.timeFormat("%d.%m.%Y")));
+
+
+        // cursor on main graph
+        this.selectLine = this.svg_graphs.append("rect")
+            .style("opacity", 0)
+            .attr("width", 2)
+            .attr("height", (d) => { return this.height; })
+            .attr("x", 0.75 * this.margin_horizontal)
+            .attr("y", this.margin_top);
+
+
+        for (var i = 0; i < this.data_read[0][0].cases.length; i++) {
+            this.selectLineCircle[i] = this.svg_graphs.append('g')
+                .append('circle')
+                .style("opacity", 0)
+                .attr('r', 4)
+                .style("fill", this.colors[i])
+                .attr("cx", 0.75 * this.margin_horizontal)
+                .attr("cy", this.margin_top);
+            // .append('circle')
+            // .style("opacity", 0)
+            // .attr('r', 4)
+            // .attr('color', colors[i])
+            // .attr("text-anchor", "left")
+            // .attr("alignment-baseline", "middle")
+            // .attr("x", 0.75 * margin)
+            // .attr("y", height - 0.5 * margin);
+        }
+
+        for (var i = 0; i < this.data_read[0][0].cases.length + 1; i++) {
+            this.selectLineTooltip[i] = this.svg_graphs.append('g')
+                .append('text')
+                .style("opacity", 0)
+                .attr("text-anchor", "left")
+                .attr("alignment-baseline", "middle")
+                .attr("x", 0.5 * this.margin_horizontal)
+                .attr("y", this.margin_top);
+        }
+
+        this.updateActions(actions);
     }
 
     update_graph() {
@@ -549,21 +535,17 @@ class Graphs {
 
         actions
             .forEach((action, index_i) => {
-                console.log(action.name);
                 action.intervals
                     .forEach((interval, index_j) => {
-                        console.log(interval.start);
-                        console.log(interval.end);
-
                         dummy_start_x = this.xScaleMini(new Date(interval.start.substr(6, 4), interval.start.substr(3, 2), interval.start.substr(0, 2)));
                         dummy_end_x = this.xScaleMini(new Date(interval.end.substr(6, 4), interval.end.substr(3, 2), interval.end.substr(0, 2)));
-
+                        console.log(action);
                         if (interval.active == true) {
                             this.g[2].append("rect")
                                 .attr("class", action.id)
                                 .attr("x", d => { return dummy_start_x; })
                                 .attr("y", d => { return 30 + this.heightMini + 15 * index_i; })
-                                .attr("fill", this.colors_actions[index_i])
+                                .attr("fill", this.colors_actions[parseInt(action.id[7])])
                                 .attr("width", dummy_end_x - dummy_start_x)
                                 .attr("height", d => { return 10; });
                         }

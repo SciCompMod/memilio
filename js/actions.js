@@ -44,6 +44,12 @@ class Actions {
                 self.notify();
             });
 
+            /*
+        this.$container
+            .on('change', 'input.start, input.end', () => {
+
+            });
+*/
         let $template = $($('#template-action').html());
 
         for (let i = 0; i < actions.length; i++) {
@@ -111,20 +117,26 @@ class Actions {
         action.intervals.filter(i => i.id === id)[0].active = true;
     }
 
-    getCurrentActions(days_simu) {
-        let actions = this.actionMap.forEach((v, k, m) => {
+    getActions() {
+        let actions = [];
+        this.actionMap.forEach((v, k, m) => {
             if (v.active) {
-                data.push(JSON.parse(JSON.stringify(v)));
+                actions.push(JSON.parse(JSON.stringify(v)));
             }
         });
-        
+        return actions;
+    }
+
+    getCurrentActions(days) {
+        let actions = this.getActions();
+
         var dummy_start_i = 0,
             dummy_end_i = 0;
 
         var start = 0,
             end = 0;
 
-        var damping = new Array(days_simu).fill(0);
+        var damping = new Array(days).fill(0);
 
         actions
             .forEach((action, index_i) => {
@@ -136,7 +148,7 @@ class Actions {
                         dummy_end_i = new Date(interval.end.substr(6, 4), interval.end.substr(3, 2), interval.end.substr(0, 2));
 
                         start = Math.floor((dummy_start_i - this.base_date) / (1000 * 60 * 60 * 24));
-                        end = Math.max(days_simu, Math.floor((dummy_end_i - this.base_date) / (1000 * 60 * 60 * 24)));
+                        end = Math.max(days, Math.floor((dummy_end_i - this.base_date) / (1000 * 60 * 60 * 24)));
 
                         for (var i = start; i < end; i++) {
 
@@ -153,13 +165,7 @@ class Actions {
     }
 
     notify() {
-        let data = [];
-        this.actionMap.forEach((v, k, m) => {
-            if (v.active) {
-                data.push(JSON.parse(JSON.stringify(v)));
-            }
-        });
-        console.log(data);
+        let data = this.getActions();
         this.listeners.forEach(l => {
             l(data);
         });

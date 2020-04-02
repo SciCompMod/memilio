@@ -14,16 +14,16 @@ class Locations {
 
         this.loc = [{
             name: "K&ouml;ln",
-            population: 10000,
+            population: 1061000,
         }, {
             name: "D&uuml;sseldorf",
-            population: 10000,
+            population: 612178,
         }, {
             name: "Aachen",
-            population: 10000
+            population: 245885
         }, {
             name: "Bonn",
-            population: 10000
+            population: 318809
         }];
 
         this.loc_length = [4, 10, 6, 4];
