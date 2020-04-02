@@ -1,8 +1,29 @@
-function Parameters($form) {
-    let listeners = [];
+export {
+    Parameters
+}
 
-    function buildParameters() {
-        let serialized = $form.serializeArray();
+class Parameters {
+    constructor($form) {
+        this.listeners = [];
+        this.$form = $form;
+        let self = this;
+
+        $form
+            .on('change', 'input', function (event) {
+                event.preventDefault();
+                event.stopPropagation();
+
+                let parameters = self.buildParameters();
+
+                listeners
+                    .forEach(l => {
+                        l(parameters);
+                    });
+            });
+    }
+
+    buildParameters() {
+        let serialized = this.$form.serializeArray();
         let parameters = {};
         serialized.forEach(s => {
             parameters[s.name] = s.value;
@@ -10,25 +31,10 @@ function Parameters($form) {
         return parameters;
     }
 
-    $form
-        .on('change', 'input', function(event){
-            event.preventDefault();
-            event.stopPropagation();
-            
-            let parameters = buildParameters();
-
-            listeners
-                .forEach(l => {
-                    l(serialized);
-                });
-        });
-
-    return {
-        onchange: function(listener) {
-            listeners.push(listener);
-        },
-        getParameters: function() {
-            return buildParameters();
-        }
+    onchange(listener) {
+        this.listeners.push(listener);
+    }
+    getParameters() {
+        return this.buildParameters();
     }
 }
