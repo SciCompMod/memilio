@@ -1,0 +1,17 @@
+build:
+  stage: build
+  before_script:
+     - npm install
+  script:
+    - grunt
+  artifacts:
+    paths:
+      - dist/
+
+
+www:
+  stage: deploy
+  dependencies:
+    - build
+  script:
+    - cp -r dist/* /var/www/html
