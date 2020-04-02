@@ -111,8 +111,13 @@ class Actions {
         action.intervals.filter(i => i.id === id)[0].active = true;
     }
 
-    getCurrentActions(actions, days_simu) {
-
+    getCurrentActions(days_simu) {
+        let actions = this.actionMap.forEach((v, k, m) => {
+            if (v.active) {
+                data.push(JSON.parse(JSON.stringify(v)));
+            }
+        });
+        
         var dummy_start_i = 0,
             dummy_end_i = 0;
 
