@@ -22,11 +22,16 @@ function main() {
         let $container = $('.actions .content');
         let locations = new Locations("#locations");
         let parameters = new Parameters($('#parameters'));
-        let actions = new Actions($container, [
-            "75% Home-Office",
-            "Schulschlie&szlig;ungen",
-            "Kontaktverbot"
-        ]);
+        let actions = new Actions($container, [{
+            label: "75% Home-Office",
+            damping: 0.7
+        }, {
+            label: "Schulschlie&szlig;ungen",
+            damping: 0.8,
+        }, {
+            label: "Kontaktverbot",
+            damping: 0.4,
+        }]);
 
         $('svg#graphs')
             .attr('width', $('svg#graphs').width())
@@ -41,23 +46,24 @@ function main() {
             let p = parameters.getParameters();
             let seir_params = makeSeirParam();
 
-            //let current_actions = actions.getCurrentAction();
-
+            
             seir_params.a = 1.0 / p.incubation;
             seir_params.b = p.contact_rate;
             seir_params.g = 1 / p.infection;
             seir_params.E0 = p.e0;
             seir_params.N = locations.getPopulation();
-
+            
             // TODO: replace by the actual logic
-            seir_params.dampings = [
-                new Damping(0 /* the day */ , 1. /* the damping factor */),
-                new Damping(10, 0.5),
-                new Damping(15, 0.1)
-            ];
+            let action_damping = actions.getActionsDamping(days);
+            if(action_damping == null) {
+                action_damping = new Array(days).fill(1);
+            }
+            //console.log(action_damping);
+            seir_params.dampings = action_damping.map((v, i) => new Damping(i, v));
+            //console.log(seir_params);
 
             let data = simulate_seir(0, days, step_size, seir_params);
-
+            //console.log(data);
             // select only values of the days 
             Object.keys(data)
                 .forEach(key => {

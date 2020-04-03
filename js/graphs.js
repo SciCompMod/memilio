@@ -1,3 +1,5 @@
+import {parseTime} from "./utils.js"
+
 export {
     Graphs
 }
@@ -48,6 +50,8 @@ class Graphs {
 
     visualize(data, actions) {
         let self = this;
+
+        //console.log(actions);
 
         function onMouseMove() {
             // get coordinates
@@ -520,6 +524,10 @@ class Graphs {
     }
 
     updateActions(actions) {
+        if(actions == null) {
+            return;
+        }
+
 
         this.g[2].selectAll("*").remove();
 
@@ -529,26 +537,20 @@ class Graphs {
                 .ticks(6)
                 .tickFormat(d3.timeFormat("%d.%m.%Y")));
 
-
-        var dummy_start_x = 0,
-            dummy_end_x = 0;
-
         actions
             .forEach((action, index_i) => {
                 action.intervals
                     .forEach((interval, index_j) => {
-                        dummy_start_x = this.xScaleMini(new Date(interval.start.substr(6, 4), interval.start.substr(3, 2), interval.start.substr(0, 2)));
-                        dummy_end_x = this.xScaleMini(new Date(interval.end.substr(6, 4), interval.end.substr(3, 2), interval.end.substr(0, 2)));
-                        console.log(action);
-                        if (interval.active == true) {
-                            this.g[2].append("rect")
-                                .attr("class", action.id)
-                                .attr("x", d => { return dummy_start_x; })
-                                .attr("y", d => { return 30 + this.heightMini + 15 * index_i; })
-                                .attr("fill", this.colors_actions[parseInt(action.id[7])])
-                                .attr("width", dummy_end_x - dummy_start_x)
-                                .attr("height", d => { return 10; });
-                        }
+                        let start = this.xScaleMini(parseTime(interval.start));
+                        let end = this.xScaleMini(parseTime(interval.end));
+                        
+                        this.g[2].append("rect")
+                            .attr("class", action.id)
+                            .attr("x", d => { return start; })
+                            .attr("y", d => { return 30 + this.heightMini + 15 * index_i; })
+                            .attr("fill", this.colors_actions[parseInt(action.id[7])])
+                            .attr("width", end - start)
+                            .attr("height", d => { return 10; });
                     });
             });
     }
