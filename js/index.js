@@ -58,12 +58,11 @@ function main() {
             if(action_damping == null) {
                 action_damping = new Array(days).fill(1);
             }
-            //console.log(action_damping);
+            
             seir_params.dampings = action_damping.map((v, i) => new Damping(i, v));
-            //console.log(seir_params);
-
+            
             let data = simulate_seir(0, days, step_size, seir_params);
-            //console.log(data);
+            
             // select only values of the days 
             Object.keys(data)
                 .forEach(key => {

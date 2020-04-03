@@ -136,8 +136,6 @@ class Actions {
     activateIntervalOn(action, checkbox) {
         let id = $(checkbox).parent().attr('id');
         action.intervals.filter(i => i.id === id)[0].active = true;
-        console.log(id, JSON.stringify(action.intervals));
-        //console.log(action, this, id, action.intervals.filter(i => i.id === id));
     }
 
     getActions() {
@@ -165,7 +163,6 @@ class Actions {
             .forEach((action, index_i) => {
                 action.intervals
                     .forEach((interval) => {
-                        console.log();
                         let start_date = parseTime(interval.start);
                         let end_date = parseTime(interval.end);
 
