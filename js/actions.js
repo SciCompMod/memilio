@@ -167,20 +167,36 @@ class Actions {
                         let end_date = parseTime(interval.end);
 
                         let start = Math.floor((start_date - this.base_date) / (1000 * 60 * 60 * 24));
-                        let end = Math.max(days, Math.floor((end_date - this.base_date) / (1000 * 60 * 60 * 24)));
+                        let end = Math.min(days, Math.floor((end_date - this.base_date) / (1000 * 60 * 60 * 24)));
 
                         for (var i = start; i < end; i++) {
-
                             if (actions[index_i].damping < damping[i]) {
-
                                 damping[i] = actions[index_i].damping;
-
                             }
                         }
                     });
             });
 
-        return damping;
+        // reduce to day where damping changes
+        let reduced = [];
+        for(let i = 0; i < days; i++) {
+            if(reduced.length == 0) {
+                reduced.push({
+                    day: 0,
+                    damping: damping[i]
+                });
+                continue;
+            }
+
+            if(damping[i] != reduced[reduced.length - 1].damping) {
+                reduced.push({
+                    day: i,
+                    damping: damping[i]
+                });
+            }
+        }
+
+        return reduced;
     }
 
     notify() {
