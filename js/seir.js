@@ -92,8 +92,11 @@ class SeirParam {
       // Initial Population size
       this.N = 10000;
       // Initial Number of exposed
-      this.E0 = 1000.;
-
+      this.E0 = 10000.0;
+      // Intial Number of infected
+      this.I0 = 10000.0;
+      // Initial Number of recovered
+      this.R0 = 10000.0;
       // List of "Damping" objects / rhos that can be used
       // to model social distancing
       this.dampings =[];
@@ -138,8 +141,9 @@ class SeirParam {
    */
   function simulate_seir(t0, tmax, dt, params)
   {
-    const seir_0 = [params.N-params.E0, params.E0, 0.0, 0.0];
-  
+    //initial conditions
+    const seir_0 = [params.N-params.E0-params.I0-params.R0, params.E0, params.I0, params.R0];
+
     const n = Math.ceil((tmax-t0) / dt);
     const t = tf.linspace(t0, tmax, n);
   

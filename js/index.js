@@ -51,7 +51,10 @@ function main() {
             seir_params.b = p.contact_rate;
             seir_params.g = 1 / p.infection;
             seir_params.E0 = p.e0;
+            seir_params.I0 = p.i0;
+            seir_params.R0 = p.r0;
             seir_params.N = locations.getPopulation();
+
             
             // TODO: replace by the actual logic
             let action_damping = actions.getActionsDamping(days);
