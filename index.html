@@ -112,6 +112,32 @@
             background-color: #eee;
         }
         
+        .wrapper .locations svg .tooltip {
+            font-size: 20;
+            text-anchor: start;
+            stroke-width: 1;
+        }
+
+        .wrapper .locations svg .land,
+        .wrapper .locations svg .kreis {
+            fill: white;
+            stroke: black;
+        }
+
+        .wrapper .locations svg .land:hover,
+        .wrapper .locations svg .kreis:hover {
+            fill: #dedede !important;
+        }
+
+        .wrapper .locations svg .kreis.hidden {
+            opacity: 0;
+            visibility: hidden;
+        }
+
+        .wrapper .locations svg .land.off {
+            fill: #555;
+        }
+
         .wrapper .graphs svg {
             width: 730px;
             height: 520px;

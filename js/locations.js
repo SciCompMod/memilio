@@ -5,8 +5,9 @@ export {
 class Locations {
 
     constructor(selector) {
-        // get actual with and heigt
-        
+        this.listener = [];
+
+        // get actual with and height
         this.width = $(selector).width();
         this.height = $(selector).height();
         
@@ -18,11 +19,8 @@ class Locations {
         this.svg = d3.select(selector);
         this.bundeslaender = this.svg.append("g");
         this.landkreise = this.svg.append("g");
-        this.tooltip = this.svg.append("text")
-                                .attr("font-size", 20)
-                                .attr("text-anchor", "start")
-                                .attr("stroke-width", 1);
-        
+        this.tooltip = this.svg.append("text").classed("tooltip", true);
+
         const self = this;
         const path = d3.geoPath();
         
@@ -49,22 +47,21 @@ class Locations {
         
         function hide(selection) {
             return selection
-                .classed("hidden", true)
                 .transition()
-                    .style("opacity", 0)
-                    .duration(750)
-                    .on("end", function(d, i) {
-                        d3.select(this).attr("visibility", "hidden");
-                    });
+                .style("opacity", 0)
+                .duration(400)
+                .on("end", function(d, i) {
+                    d3.select(this).classed("hidden", true);
+                });
         }
         
         function show(selection) {
             return selection
-                .attr("visibility", "visible")
+                .style("opacity", 0)
                 .classed("hidden", false)
                 .transition()
                 .style("opacity", 1)
-                    .duration(750);
+                    .duration(400);
         }
 
         const zoom = d3.zoom()
@@ -74,7 +71,7 @@ class Locations {
         this.svg
             .on('click', function() {
                 hide(self.landkreise.selectAll("path:not(.hidden)"));
-                //hide(self.landkreise.selectAll("text:not(.hidden)"));
+                self.bundeslaender.selectAll(".off").classed('off', false);
                 zoomTo(self.land);
             })
             .call(d3.zoom()
@@ -102,23 +99,28 @@ class Locations {
                 .enter()
                 .append("path")
                 .attr("d", path)
-                .attr("fill", "white")
-                .attr("stroke", "black")
+                .classed('land', true)
                 .on("click", function(d, i){
                     d3.event.stopPropagation();
                     let visible_path = self.landkreise.selectAll("path:not(hidden)");
-                    //let visible_text = self.landkreise.selectAll("text:not(hidden)");
                     let hidden_path = self.landkreise.selectAll("path.hidden");
-                   // let hidden_text = self.landkreise.selectAll("text.hidden");
-
+                    
                     hide(visible_path);
-                    //hide(visible_text);
                     zoomTo(d);
                     show(hidden_path.filter((a, b) => a.properties.RS.startsWith(d.properties.RS)));
+
+                    self.bundeslaender
+                            .selectAll(".land")
+                            .classed("off", false)
+                            .filter(x => x.properties.RS !== d.properties.RS)
+                            .classed("off", true);
+
+                    //let visible_text = self.landkreise.selectAll("text:not(hidden)");
+                    //let hidden_text = self.landkreise.selectAll("text.hidden");
+                    //hide(visible_text);
                     //show(hidden_text.filter((a, b) => a.properties.RS.startsWith(d.properties.RS)));
                 })
                 .on("mouseenter", function(d, i) {
-                    d3.select(this).attr("fill", "#dedede");
                     self.tooltip.text(x => `${d.properties.GEN}`);
                 })
                 .on("mousemove", function(d, i) {
@@ -127,7 +129,6 @@ class Locations {
                         .attr("y", (d3.event.layerY + 20));
                 })
                 .on("mouseleave", function(d, i){
-                    d3.select(this).attr("fill", "white");
                     self.tooltip.text(null);
                 })
                 .append("title")
@@ -156,16 +157,12 @@ class Locations {
                 .enter()
                 .append("path")
                 .attr("d", path)
-                .attr("fill", "white")
-                .attr("stroke", "black")
-                .attr("opacity", 0)
-                .attr("visibility", 'hidden')
                 .classed('hidden', true)
+                .classed('kreis', true)
                 .on('click', function(d, i) {
                     d3.event.stopPropagation();
                 })
                 .on("mouseover", function(d, i) {
-                    d3.select(this).attr("fill", "#dedede");
                     self.tooltip.text(x => `${d.properties.GEN}`);
                 })
                 .on("mousemove", function(d, i) {
@@ -174,7 +171,6 @@ class Locations {
                         .attr("y", (d3.event.layerY + 20));
                 })
                 .on("mouseout", function(d, i){
-                    d3.select(this).attr("fill", "white");
                     self.tooltip.text(null);
                 })
                 .append("title")
@@ -200,161 +196,6 @@ class Locations {
             */
             zoomTo(this.land);
         });
-
-        /*
-        $.getJSON('/assets/de_topo.json')
-            .then(topo => {
-                //let t = topojson.feature(topo, topo.objects.vg2500_krs)
-                //projection.fitSize([500, 570], topo);
-                
-                context.beginPath();
-                path(topojson.mesh(topo));
-                context.stroke();
-
-                //console.log(topo);
-                /*this.svg_locations.append("g")
-                    .selectAll("path")
-                    .data(t.features)
-                    .enter()
-                    .append("path")
-                    .attr("d", path)
-                    .attr("fill", "white")
-                    .attr("stroke", "black");*/
-                //.append("title");
-                //.text(d => `${d.properties.name}, ${states.get(d.id.slice(0, 2)).name}`)
-            
-
-                /*
-                let arcs = json.arcs;
-                let geometries = json.objects.vg2500_krs.geometries;
-
-                geometries.forEach(o => {
-                    console.log(JSON.stringify(o.arcs));
-                    //let paths = o.arcs.map(a => arcs[a]);
-                    //console.log(paths);
-                    /*this.svg_locations
-                    .selectAll('path')
-                    .data(paths)
-                    .enter()
-                    .append('path')
-                    .style('fill', 'white')
-                    .style('stroke', 'black');*
-                });*/
-
-                //console.log(Object.keys(json));
-                /*json.features = json.features.filter(f => f.geometry.type === 'MultiPolygon');
-                
-                this.topojson = json;
-
-
-                let u = this.svg_locations
-                    .selectAll('path')
-                    .data(this.geojson.features)
-                    .enter()
-                    .append('path')
-                    .style('fill', 'white')
-                    .style('stroke', 'black')
-                    .attr('d', geoGenerator); */
-            //});
-            
-
-        this.loc = [{
-            name: "K&ouml;ln",
-            population: 1061000,
-        }, {
-            name: "D&uuml;sseldorf",
-            population: 612178,
-        }, {
-            name: "Aachen",
-            population: 245885
-        }, {
-            name: "Bonn",
-            population: 318809
-        }];
-
-        this.loc_length = [4, 10, 6, 4];
-        this.loc_pos = [
-            [200, 300],
-            [150, 125],
-            [75, 425],
-            [225, 475]
-        ];
-
-        /*
-        for (var i = 0; i < this.loc.length; i++) {
-            this.loc[i]['id'] = i;
-            this.svg_locations.append("circle")
-                .attr("id", "name"+i)
-                .attr("class", "button_loc")
-                .attr("r", 50)
-                .attr("cx", this.loc_pos[i][0])
-                .attr("cy", this.loc_pos[i][1])
-                .attr("fill", "#cdcdcd")
-                .attr("alt", i)
-                .on("click", onButtonLocMouseClick) //Add listener for the click event
-                .on("mouseover", onButtonMouseOver) //Add listener for the mouseover event 
-                .on("mouseout", onButtonMouseOut); //Add listener for the mouseout event 
-
-                this.svg_locations.append("text")
-                .attr("x", this.loc_pos[i][0] - 4 * this.loc_length[i])
-                .attr("y", this.loc_pos[i][1] + 5)
-                .attr("alt", i)
-                .on("click", onButtonLocMouseClick) //Add listener for the click event
-                .on("mouseover", onTextMouseOver)
-                .html(this.loc[i].name)
-                .attr("font-weight", 600);
-
-        }*/
-
-        this.selected = this.loc[0];
-        /*
-        this.svg_locations.select('circle#name0')
-                .attr("class", "button_loc_active")
-                .attr('fill', '#73B0FF');
-
-        function onButtonLocMouseClick() {
-
-            d3.select(".button_loc_active").attr("class", "button_loc")
-
-            var activeElem = d3.select(this);
-
-            self.selected = self.loc[parseFloat(activeElem.attr("alt"))];
-
-            if (activeElem.node().tagName == "circle") {
-                activeElem.attr("class", "button_loc_active")
-            }
-
-
-            d3.selectAll(".button_loc").transition(200)
-                .attr('fill', '#cdcdcd');
-
-            self.notify();
-        }
-
-        function onButtonMouseOver() {
-            d3.select(this)
-                .transition(400)
-                .attr('fill', '#73B0FF');
-
-            d3.select(this).style("cursor", "pointer");
-        }
-
-        function onTextMouseOver() {
-            d3.select(this).style("cursor", "pointer");
-        }
-
-
-        function onButtonMouseOut() {
-
-            if (self.selected.id != d3.select(this).attr("alt")) {
-
-                d3.select(this)
-                    .transition(200)
-                    .attr('fill', '#cdcdcd');
-            }
-
-        }
-        */
     }
     
     notify() {
@@ -363,10 +204,6 @@ class Locations {
                 l(this.selected);
             });
     }
-
-    getPopulation() {
-        return this.selected.population;
-    }    
 
     onselect(listener) {
         this.listeners.push(listener);
