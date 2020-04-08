@@ -51,8 +51,8 @@ function main() {
             seir_params.b = p.contact_rate;
             seir_params.g = 1 / p.infection;
             seir_params.E0 = p.e0;
-            seir_params.N = locations.getPopulation();
-            
+            seir_params.N = 1000000; //locations.getPopulation();
+        
             // TODO: replace by the actual logic
             let action_damping = actions.getActionsDamping(days);
             if(action_damping == null) {
@@ -88,9 +88,9 @@ function main() {
             graphs.visualize(result, actions.getActions());
         }
 
-        locations.onselect((arg) => {
+        /*locations.onselect((arg) => {
             simulate();
-        });
+        });*/
 
         actions.onchange((actions) => {
             simulate();

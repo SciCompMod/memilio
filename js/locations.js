@@ -5,103 +5,200 @@ export {
 class Locations {
 
     constructor(selector) {
-        this.listeners = [];
-        this.selected = null;
+        // get actual with and heigt
+        
+        this.width = $(selector).width();
+        this.height = $(selector).height();
+        
+        $(selector)
+            .attr('width', this.width)
+            .attr('height', this.height);
 
-        let self = this;
-        this.svg_locations = d3.select(selector);
+        this.showNames = false;
         this.svg = d3.select(selector);
         this.bundeslaender = this.svg.append("g");
         this.landkreise = this.svg.append("g");
+        this.tooltip = this.svg.append("text")
+                                .attr("font-size", 20)
+                                .attr("text-anchor", "start")
+                                .attr("stroke-width", 1);
         
-        this.svg.call(d3.zoom()
-            .extent([[0, 0], [300, 570]])
-            .scaleExtent([0.1, 3])
-            .wheelDelta(() => {
+        const self = this;
+        const path = d3.geoPath();
+        
+        function zoomTo(d) {
+            const [[x0, y0], [x1, y1]] = path.bounds(d);
+            return self.svg.transition()
+                .duration(750)
+                .call(
+                    zoom.transform,
+                    d3.zoomIdentity
+                        .translate(self.width / 2, self.height / 2)
+                        .scale(Math.min(8, 0.9 / Math.max((x1 - x0) / self.width, (y1 - y0) / self.height)))
+                        .translate(-(x0 + x1) / 2, -(y0 + y1) / 2)
+                );
+        }
 
-                console.log(-d3.event.deltaY * (d3.event.deltaMode === 1 ? 0.05 : d3.event.deltaMode ? 1 : 0.002));
-                return -d3.event.deltaY * (d3.event.deltaMode === 1 ? 0.05 : d3.event.deltaMode ? 1 : 0.002);
-            })
-            .on("zoom", function(d, i) {
-                self.bundeslaender.attr("transform", d3.event.transform);
-                //this.landkreise.selectAll("path").attr("display", "none");
-            }));
-
-        let path = d3.geoPath();
-
-        function zoomed(e) {
+        function zoomed() {
             const {transform} = d3.event;
             self.bundeslaender.attr("transform", transform);
-            self.bundeslaender.attr("stroke-width", 1 / transform.k);
+            //self.bundeslaender.attr("stroke-width", 1 / transform.k);
             self.landkreise.attr("transform", transform);
-            self.landkreise.attr("stroke-width", 1 / transform.k);
-          }
+            //self.landkreise.attr("stroke-width", 1 / transform.k);
+        }
+        
+        function hide(selection) {
+            return selection
+                .classed("hidden", true)
+                .transition()
+                    .style("opacity", 0)
+                    .duration(750)
+                    .on("end", function(d, i) {
+                        d3.select(this).attr("visibility", "hidden");
+                    });
+        }
+        
+        function show(selection) {
+            return selection
+                .attr("visibility", "visible")
+                .classed("hidden", false)
+                .transition()
+                .style("opacity", 1)
+                    .duration(750);
+        }
 
         const zoom = d3.zoom()
-                .scaleExtent([1, 8])
-                .on("zoom", zoomed);
+            .scaleExtent([1, 8])
+            .on("zoom", zoomed);
+
+        this.svg
+            .on('click', function() {
+                hide(self.landkreise.selectAll("path:not(.hidden)"));
+                //hide(self.landkreise.selectAll("text:not(.hidden)"));
+                zoomTo(self.land);
+            })
+            .call(d3.zoom()
+                .extent([[0, 0], [300, 570]])
+                .scaleExtent([0.1, 3])
+                .wheelDelta(() => {
+                    return -d3.event.deltaY * (d3.event.deltaMode === 1 ? 0.05 : d3.event.deltaMode ? 1 : 0.002);
+                })
+                .on("zoom", function(d, i) {
+                    self.bundeslaender.attr("transform", d3.event.transform);
+                    self.landkreise.attr("transform", d3.event.transform);
+                })
+            );
+
 
         d3.json("assets/de_topo.json", (error, topo) => {
             if (error) throw error;
             
-            let land = topojson.feature(topo, topo.objects.vg2500_lan);
-            let kreis = topojson.feature(topo, topo.objects.vg2500_krs);
+            this.land = topojson.feature(topo, topo.objects.vg2500_lan);
+            this.kreis = topojson.feature(topo, topo.objects.vg2500_krs);
 
             this.bundeslaender
                 .selectAll("path")
-                .data(land.features)
+                .data(this.land.features)
                 .enter()
                 .append("path")
                 .attr("d", path)
                 .attr("fill", "white")
                 .attr("stroke", "black")
                 .on("click", function(d, i){
-                    console.log(path.bounds(d));
-
-                    const [[x0, y0], [x1, y1]] = path.bounds(d);
                     d3.event.stopPropagation();
-                    self.svg.transition().duration(750).call(
-                    zoom.transform,
-                    d3.zoomIdentity
-                        .translate(300 / 2, 570 / 2)
-                        .scale(Math.min(8, 0.9 / Math.max((x1 - x0) / 300, (y1 - y0) / 570)))
-                        .translate(-(x0 + x1) / 2, -(y0 + y1) / 2),
-                        d3.mouse(self.svg.node())
-                    );
-                    
-                    //self.bundeslaender.attr("display", "none");
-                    self.landkreise
-                        .selectAll("path")
-                        .attr("display", "none")
-                        .filter((a, b) => a.properties.RS.startsWith(d.properties.RS))
-                        .attr("display", null);
+                    let visible_path = self.landkreise.selectAll("path:not(hidden)");
+                    //let visible_text = self.landkreise.selectAll("text:not(hidden)");
+                    let hidden_path = self.landkreise.selectAll("path.hidden");
+                   // let hidden_text = self.landkreise.selectAll("text.hidden");
+
+                    hide(visible_path);
+                    //hide(visible_text);
+                    zoomTo(d);
+                    show(hidden_path.filter((a, b) => a.properties.RS.startsWith(d.properties.RS)));
+                    //show(hidden_text.filter((a, b) => a.properties.RS.startsWith(d.properties.RS)));
                 })
-                .on("mouseover", function(d, i) {
+                .on("mouseenter", function(d, i) {
                     d3.select(this).attr("fill", "#dedede");
+                    self.tooltip.text(x => `${d.properties.GEN}`);
                 })
-                .on("mouseout", function(d, i){
+                .on("mousemove", function(d, i) {
+                    self.tooltip
+                        .attr("x", (d3.event.layerX + 15))
+                        .attr("y", (d3.event.layerY + 20));
+                })
+                .on("mouseleave", function(d, i){
                     d3.select(this).attr("fill", "white");
+                    self.tooltip.text(null);
                 })
                 .append("title")
                     .text(d => `${d.properties.GEN}`);
+            
+            if (this.showNames) {
+                this.bundeslaender
+                    .selectAll("text")
+                    .data(this.land.features)
+                    .enter()
+                    .append("text")
+                    .attr("x", function(d) {
+                        return path.centroid(d)[0];
+                    })
+                    .attr("y", function(d) {
+                        return path.centroid(d)[1];
+                    })
+                    .attr("text-anchor", "middle")
+                    .attr("font-size", "20px")
+                    .text(d => `${d.properties.GEN}`);
+            }
 
             this.landkreise
                 .selectAll("path")
-                .data(kreis.features)
+                .data(this.kreis.features)
                 .enter()
                 .append("path")
                 .attr("d", path)
                 .attr("fill", "white")
                 .attr("stroke", "black")
-                .attr("display", "none")
+                .attr("opacity", 0)
+                .attr("visibility", 'hidden')
+                .classed('hidden', true)
+                .on('click', function(d, i) {
+                    d3.event.stopPropagation();
+                })
                 .on("mouseover", function(d, i) {
                     d3.select(this).attr("fill", "#dedede");
+                    self.tooltip.text(x => `${d.properties.GEN}`);
+                })
+                .on("mousemove", function(d, i) {
+                    self.tooltip
+                        .attr("x", (d3.event.layerX + 15))
+                        .attr("y", (d3.event.layerY + 20));
                 })
                 .on("mouseout", function(d, i){
                     d3.select(this).attr("fill", "white");
+                    self.tooltip.text(null);
                 })
                 .append("title")
                     .text(d => `${d.properties.GEN}`);
+            /*
+            this.landkreise
+                .selectAll("text")
+                .data(this.kreis.features)
+                .enter()
+                .append("text")
+                .attr("opacity", 0)
+                .attr("visibility", 'hidden')
+                .classed('hidden', true)
+                .attr("x", function(d) {
+                    return path.centroid(d)[0];
+                })
+                .attr("y", function(d) {
+                    return path.centroid(d)[1];
+                })
+                .attr("text-anchor", "middle")
+                .attr("font-size", "8px")
+                .text(d => `${d.properties.GEN}`);
+            */
+            zoomTo(this.land);
         });
 
         /*
