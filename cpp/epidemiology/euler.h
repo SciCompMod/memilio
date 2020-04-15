@@ -1,5 +1,6 @@
-#include <stdio.h>
-#include <stdlib.h>
+#ifndef EULER_H
+#define EULER_H
+
 #include <vector>
 
 /**
@@ -19,3 +20,5 @@ void explicit_euler(std::vector<T> const &yt, const T dt, std::vector<T> const &
   }
 
 }
+
+#endif // EULER_H
