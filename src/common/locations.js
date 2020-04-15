@@ -1,16 +1,16 @@
 export {
-    Map
+    Locations
 }
 
-class Map {
+class Locations {
 
-    constructor(node) {
+    constructor(selector) {
         this.listeners = [];
         this.selected = null;
 
 
         let self = this;
-        this.svg_locations = d3.select(node);
+        this.svg_locations = d3.select(selector);
 
         this.loc = [{
             name: "K&ouml;ln",
