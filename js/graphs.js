@@ -300,7 +300,7 @@ class Graphs {
 
 
         this.xScale.domain(d3.extent(this.data_read[1], function(d) { return d.day; }));
-        this.yScale.domain([0, this.max_fact * d3.max(this.data_read[1], function(d) { return d.cases[0]; })]);
+        this.yScale.domain([0, this.max_fact * d3.max(this.data_read[1], function(d) { return Math.max(d.cases[0], d.cases[1], d.cases[2], d.cases[3]); })]);
 
 
         this.g[0].append("g")
