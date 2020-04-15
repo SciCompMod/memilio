@@ -109,9 +109,34 @@ def main(get_data, plot_data):
    plt.tight_layout()
    plt.show()
 
+   # print(df.columns)
+
+   # NeuerFall: Infected (incl. recovered) over "Meldedatum" for every state ("Bundesland"):
+   gbNFst = df[df.NeuerFall >= 0].groupby( ['IdBundesland', 'Bundesland', dateToUse]).sum()
+
+   gbNFstcumsum = gbNFst.AnzahlFall.cumsum().reset_index()
+   # print(gbNFst)
+   print(gbNFstcumsum)
+
+   # output json
+   gbNFstcumsum.to_json("gbNF_state.json", orient='records')
+
+   # output nested json
+   gbNFstcumsum.groupby(['IdBundesland', 'Bundesland'], as_index=False) \
+               .apply(lambda x: x[[dateToUse,'AnzahlFall']].to_dict('r')) \
+               .reset_index().rename(columns={0:'Dates'})\
+               .to_json("gbNF_state_nested.json", orient='records')
+
+
+   #gbNFstcumsum.plot( title = 'COVID-19 infections per state',x='AnzahlFall',y='dateToUse', grid = True,
+   #                            style = '-o' )
+   #plt.tight_layout()
+   #plt.show()
+
+
    # Dead over "Meldedatum":
    gbNT = df[df.NeuerTodesfall >= 0].groupby( dateToUse ).sum()
-   gbNT.AnzahlTodesfall.cumsum().plot( title = 'COVID-19 deads', grid = True, 
+   gbNT.AnzahlTodesfall.cumsum().plot( title = 'COVID-19 deads', grid = True,
                                     style = '-o' )
    plt.tight_layout()
    plt.show()

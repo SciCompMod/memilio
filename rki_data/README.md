@@ -7,6 +7,8 @@ The full data set is stored in a json.
 Different statistic is plotted.
 One statistic is as an example also outputted as json (This could be easily done for every statistic we need and than plotted with javascript)
 
+While running the code close one window to get the next one.
+
 
 Call python3 getGeoJsonIntoPandasDataFrame_for_RKI.py PLOT_DATA=True
 
