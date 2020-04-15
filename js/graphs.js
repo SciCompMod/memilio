@@ -444,7 +444,7 @@ class Graphs {
             // add legends
             this.legend = this.svg_graphs.append("g")
                 .attr("class", "legend")
-                .attr("transform", 'translate(700, 20)');
+                .attr("transform", 'translate(500, 20)');
 
             this.legends.forEach((l, i) => {
                 this.legend.append("text")
