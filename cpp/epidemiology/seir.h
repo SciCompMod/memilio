@@ -34,11 +34,11 @@ struct damping {
  * @param[in] t Current day
  */
 template <typename T>
-T getDampingFactor(std::vector<struct damping<T> > const &damping_array, T day)
+T getDampingFactor(std::vector<struct damping<T> > const& damping_array, T day)
 {
     // we assume, that the data_array is ordered in ascending order
     size_t ilow = 0;
-    size_t ihigh = damping_array.size()-1;
+    size_t ihigh = damping_array.size() - 1;
 
     // check extrapolation cases
     if (day < damping_array[ilow].day) {
@@ -51,7 +51,7 @@ T getDampingFactor(std::vector<struct damping<T> > const &damping_array, T day)
 
     // now do the search
     while (ilow < ihigh - 1) {
-        size_t imid = (ilow + ihigh)/2;
+        size_t imid = (ilow + ihigh) / 2;
         if (damping_array[ilow].day <= day && day < damping_array[imid].day) {
             ihigh = imid;
         }
@@ -65,7 +65,7 @@ T getDampingFactor(std::vector<struct damping<T> > const &damping_array, T day)
         }
     }
 
-    assert(damping_array[ilow].day <= day && day < damping_array[ilow+1].day);
+    assert(damping_array[ilow].day <= day && day < damping_array[ilow + 1].day);
     return damping_array[ilow].factor;
 }
 
@@ -73,12 +73,13 @@ T getDampingFactor(std::vector<struct damping<T> > const &damping_array, T day)
 template <typename T>
 struct seirParam {
 
-    T a,b,g,N,E0,I0,R0;
+    T a, b, g, N, E0, I0, R0;
 
     // This defines a damping factor for a mitigation strategy for different points in time.
     std::vector<damping<T> > dampings;
 
-    seirParam() {
+    seirParam()
+    {
         // Assume an incubation period of 5.2 days, a = 1/t_incubation
         a = 0.192;
         // contact rate beta
@@ -94,11 +95,12 @@ struct seirParam {
         // Initial Number of recovered
         R0 = 0.0;
         // List of damping initially empty
-        dampings.push_back(damping<T>(0,1.0));
+        dampings.push_back(damping<T>(0, 1.0));
     }
 
 
-    seirParam(T a_in, T b_in, T g_in, T N_in, T E0_in, T I0_in, T R0_in) {
+    seirParam(T a_in, T b_in, T g_in, T N_in, T E0_in, T I0_in, T R0_in)
+    {
         // Assume an incubation period of t_incubation = 1/a_in
         a = a_in;
         // contact rate beta
@@ -114,7 +116,7 @@ struct seirParam {
         // Initial Number of recovered
         R0 = R0_in;
         // List of damping initially
-        dampings.push_back(damping<T>(0,1.0));
+        dampings.push_back(damping<T>(0, 1.0));
     }
 
     ~seirParam()
@@ -129,7 +131,7 @@ struct seirParam {
  * @param[in] params the seirParam parameter object
  */
 template <typename T>
-void printSeirParams(struct seirParam<T> const &params)
+void printSeirParams(struct seirParam<T> const& params)
 {
     printf("\n Parameters set:\n\t a:\t %.4f \n\t b:\t %.4f \n\t g:\t %.4f \n\t N:\t %d \n\t E0:\t %d \n\t I0:\t %d \n\t R0:\t %d\n", params.a, params.b, params.g, (int)params.N, (int)params.E0, (int)params.I0, (int)params.R0);
 }
@@ -144,11 +146,11 @@ void printSeirParams(struct seirParam<T> const &params)
  * @param[out] dydt the values of the time derivatices of S, E, I, and R
  */
 template <typename T>
-void seir_getDerivatives(std::vector<T> const &y, struct seirParam<T> const &params, const T t, std::vector<T> &dydt)
+void seir_getDerivatives(std::vector<T> const& y, struct seirParam<T> const& params, const T t, std::vector<T>& dydt)
 {
 
     T b_eff = params.b * getDampingFactor(params.dampings, t);
-    T divN = 1.0/params.N;
+    T divN = 1.0 / params.N;
 
     dydt[0] = -b_eff * y[0] * y[2] * divN;
     dydt[1] =  b_eff * y[0] * y[2] * divN - params.a * y[1];
@@ -168,9 +170,9 @@ void seir_getDerivatives(std::vector<T> const &y, struct seirParam<T> const &par
  * @param[inout] y the vector of  S, E, I, and R values from 0 to t, yet empty for t+1 to n
  */
 template <typename T>
-void seir_integrate(std::vector<T> const &dydt, struct seirParam<T> const &params, const T dt, const size_t i, std::vector<std::vector<T> > &y)
+void seir_integrate(std::vector<T> const& dydt, struct seirParam<T> const& params, const T dt, const size_t i, std::vector<std::vector<T> >& y)
 {
-    explicit_euler(y[i], dt, dydt, y[i+1]);
+    explicit_euler(y[i], dt, dydt, y[i + 1]);
 }
 
 
@@ -184,24 +186,23 @@ void seir_integrate(std::vector<T> const &dydt, struct seirParam<T> const &param
  * @param[in] params SEIR model parameters
  */
 template <typename T>
-void simulate_seir(const double t0, const double tmax, const T dt, struct seirParam<T> const &params, std::vector<std::vector<T> > &seir)
+void simulate_seir(const double t0, const double tmax, const T dt, struct seirParam<T> const& params, std::vector<std::vector<T> >& seir)
 {
-    size_t nb_steps = (int)(ceil((tmax-t0) / dt)); // estimated number of time steps (if equidistant)
+    size_t nb_steps = (int)(ceil((tmax - t0) / dt)); // estimated number of time steps (if equidistant)
 
-    seir = std::vector<std::vector<T> >(nb_steps+1, std::vector<T>(4,(T)0)); // prepare memory for equidistant step size
+    seir = std::vector<std::vector<T> >(nb_steps + 1, std::vector<T>(4, (T)0)); // prepare memory for equidistant step size
 
     //initial conditions
-    seir[0][0] = params.N-params.E0-params.I0-params.R0;
-  seir[0][1] = params.E0;
-  seir[0][2] = params.I0;
-  seir[0][3] = params.R0;
+    seir[0][0] = params.N - params.E0 - params.I0 - params.R0;
+    seir[0][1] = params.E0;
+    seir[0][2] = params.I0;
+    seir[0][3] = params.R0;
 
-    std::vector<T> dydt(4,0);
+    std::vector<T> dydt(4, 0);
 
     T t = t0;
     size_t i = 0;
-    while(tmax-t > 1e-7)
-    {
+    while(tmax - t > 1e-7) {
 
         // printf("%d\t", (int)seir[i][0]);
 
@@ -214,8 +215,7 @@ void simulate_seir(const double t0, const double tmax, const T dt, struct seirPa
     }
 
     // cut empty elements (makes more sense for adaptive time step size)
-    if(seir.size() > i)
-    {
+    if(seir.size() > i) {
         seir.resize(i);
     }
 
