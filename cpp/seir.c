@@ -4,25 +4,65 @@
 #include <math.h> 
 #include "euler.h"
 
+
 /**
- * Returns the damping factor rho(t)
+ * This defined a damping factor for a 
+ * mitigation strategy for one point in time.
+ */
+template <typename T>
+struct damping {
+  int day;
+  T factor;
+
+  damping(int day_in, T factor_in)
+  {
+
+    day = day_in;
+    factor = factor_in;
+
+  }
+};
+
+
+/**
+ * Returns the damping factor
  * 
- * @tparam T the datatype of the cases
- * @param[in] damping_map Hash map of dampings
+ * @param[in] damping_array Array of dampings
  * @param[in] t Current day
  */
 template <typename T>
-T getDampingFactor(std::unordered_map<int, T> const &damping_map, int const &t) {
+T getDampingFactor(std::vector<struct damping<T> > const &damping_array, int day)
+{
+    // we assume, that the data_array is ordered in ascending order
+    size_t ilow = 0.;
+    size_t ihigh = damping_array.size()-1;
 
-  typename std::unordered_map<int, T>::const_iterator map_iter = damping_map.find(t); 
+    // check extrapolation cases
+    if (day < damping_array[ilow].day) {
+        return damping_array[ilow].factor;
+    }
 
-  if(map_iter == damping_map.end())
-  {
-    return 1;
-  }else{
-    return (*map_iter).second;
-  }
+    if (day >= damping_array[ihigh].day) {
+        return damping_array[ihigh].factor;
+    }
 
+    // now do the search
+    while (ilow < ihigh - 1) {
+        size_t imid = (size_t)(0.5*(ilow + ihigh));
+        if (damping_array[ilow].day <= day && day < damping_array[imid].day) {
+            ihigh = imid;
+        }
+        else if(damping_array[imid].day <= day && day < damping_array[ihigh].day) {
+            ilow = imid;
+        }
+        else {
+            // this case can only occur, if
+            // input data are not ordered
+            return 1e16;
+        }
+    }
+
+    return damping_array[ilow].factor;
 }
 
 
@@ -32,7 +72,7 @@ struct seirParam {
   T a,b,g,N,E0,I0,R0;
 
   // This defines a damping factor for a mitigation strategy for different points in time.
-  std::unordered_map<int, T> dampings;
+  std::vector<damping<T> > dampings;
 
   seirParam() {
     // Assume an incubation period of 5.2 days, a = 1/t_incubation
@@ -50,7 +90,7 @@ struct seirParam {
     // Initial Number of recovered
     R0 = 0.0;
     // List of damping initially empty
-    // ...
+    dampings.push_back(damping<T>(0,1.0));
   }
 
 
@@ -69,8 +109,8 @@ struct seirParam {
     I0 = I0_in;
     // Initial Number of recovered
     R0 = R0_in;
-    // List of damping initially empty
-    // ...
+    // List of damping initially
+    dampings.push_back(damping<T>(0,1.0));
   }
 
   ~seirParam()
@@ -161,7 +201,7 @@ void simulate_seir(const double t0, const double tmax, const T dt, struct seirPa
   while(tmax-t > 1e-7)
   {
 
-    printf("%d\t", (int)seir[i][0]);
+    // printf("%d\t", (int)seir[i][0]);
 
     seir_getDerivatives(seir[i], params, t, dydt);
 
