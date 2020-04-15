@@ -1,3 +1,13 @@
+Get RKI data
+============
+
+First of all create an virtual environment by calling
+
+.. code:: sh
+
+   source setup_venv.sh
+
+
 This script (without plotting instead with outputting) could be used as a cronjob to get data from rki and get every statistic we need
  
 Call python3 getGeoJsonIntoPandasDataFrame_for_RKI.py
@@ -13,6 +23,9 @@ While running the code close one window to get the next one.
 Call python3 getGeoJsonIntoPandasDataFrame_for_RKI.py PLOT_DATA=True
 
 To use stored data to not download it all the time.
+
+Dependencies
+------------
 
 Needed python packages:
 - pandas
