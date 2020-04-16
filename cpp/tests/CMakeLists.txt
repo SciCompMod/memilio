@@ -13,7 +13,10 @@ include(AddGoogleTest)
 
 set(TESTSOURCES
   testmain.cpp
+  test_seir_js_compare.cpp
 )
+
+file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/data DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
 
 add_executable(runUnitTests ${TESTSOURCES})
 target_link_libraries(runUnitTests PRIVATE epidemiology gtest_main)

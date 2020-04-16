@@ -170,9 +170,9 @@ void seir_getDerivatives(std::vector<T> const& y, struct seirParam<T> const& par
  * @param[inout] y the vector of  S, E, I, and R values from 0 to t, yet empty for t+1 to n
  */
 template <typename T>
-void seir_integrate(std::vector<T> const& dydt, struct seirParam<T> const& params, const T dt, const size_t i, std::vector<std::vector<T> >& y)
+void seir_integrate(std::vector<T> const& dydt, struct seirParam<T> const& params, const T dt, const std::vector<T>& y, std::vector<T>& result)
 {
-    explicit_euler(y[i], dt, dydt, y[i + 1]);
+    explicit_euler(y, dt, dydt, result);
 }
 
 
@@ -186,11 +186,11 @@ void seir_integrate(std::vector<T> const& dydt, struct seirParam<T> const& param
  * @param[in] params SEIR model parameters
  */
 template <typename T>
-void simulate_seir(const double t0, const double tmax, const T dt, struct seirParam<T> const& params, std::vector<std::vector<T> >& seir)
+void simulate_seir(const T t0, const T tmax, const T dt, struct seirParam<T> const& params, std::vector<std::vector<T> >& seir)
 {
     size_t nb_steps = (int)(ceil((tmax - t0) / dt)); // estimated number of time steps (if equidistant)
 
-    seir = std::vector<std::vector<T> >(nb_steps + 1, std::vector<T>(4, (T)0)); // prepare memory for equidistant step size
+    seir = std::vector<std::vector<T> >(nb_steps, std::vector<T>(4, (T)0)); // prepare memory for equidistant step size
 
     //initial conditions
     seir[0][0] = params.N - params.E0 - params.I0 - params.R0;
@@ -201,25 +201,14 @@ void simulate_seir(const double t0, const double tmax, const T dt, struct seirPa
     std::vector<T> dydt(4, 0);
 
     T t = t0;
-    size_t i = 0;
-    while(tmax - t > 1e-7) {
+    for (size_t i = 0; i < nb_steps - 1; ++i) {
 
-        // printf("%d\t", (int)seir[i][0]);
+        t = t0 + i*dt;
 
         seir_getDerivatives(seir[i], params, t, dydt);
 
-        seir_integrate(dydt, params, dt, i, seir);
-
-        t += dt;
-        i++;
+        seir_integrate(dydt, params, dt, seir[i], seir[i+1]);
     }
-
-    // cut empty elements (makes more sense for adaptive time step size)
-    if(seir.size() > i) {
-        seir.resize(i);
-    }
-
-
 }
 
 #endif // SEIR_H
