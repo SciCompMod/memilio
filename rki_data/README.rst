@@ -69,8 +69,8 @@ When speaking about infected, means always infected inclusive the already recove
 Following data is written
 
 
-| Files | Data descritpion|
-|-------|------|
+| Files | Data descritpion |
+| ------- | ------ |
 | infected.json | Numbers of infected over "Meldedatum" for whole Germany |
 | deaths.json | Numbers of deaths over "Meldedatum" for whole Germany |
 | infected_state.json | infected over "Meldedatum" for different states (Bundesländer) |
