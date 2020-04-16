@@ -5,7 +5,8 @@ import pandas
 import matplotlib.pyplot as plt
 
 GET_DATA = True
-PLOT_DATA = False
+READ_DATA = False
+MAKE_PLOT = True
 
 def loadGeojson( itemId, apiUrl = 'https://opendata.arcgis.com/datasets/', 
                  extension = 'geojson' ):
@@ -57,7 +58,7 @@ def loadCsv( itemId, apiUrl = 'https://opendata.arcgis.com/datasets/',
 
     return df
 
-def main(get_data, plot_data):
+def main(get_data, read_data, make_plot):
 
    if(get_data):
 
@@ -73,21 +74,19 @@ def main(get_data, plot_data):
       # Get data:
       df = load['csv'](itemId)
 
-      # Correct Timestampes:
-      # for col in [ 'Meldedatum', 'Refdatum' ]:
-      #   df[col] = df[col].astype( 'datetime64' ).dt.tz_localize('Europe/Berlin')
-
       # convert "Datenstand" to real date:
       df.Datenstand = pandas.to_datetime( df.Datenstand, format='%d.%m.%Y, %H:%M Uhr').dt.tz_localize('Europe/Berlin')  
 
       # output data to not always download it
       df.to_json(r"FullData.json")
 
-   elif(plot_data):
+   elif(read_data):
+      # if once dowloaded just read json file
       df = pandas.read_json("FullData.json")
-      # read json file
 
    # Preperation for plotting/output:
+
+   print("Available columns:", df.columns)
 
    # Correct Timestampes:
    for col in [ 'Meldedatum', 'Refdatum' ]:
@@ -100,53 +99,162 @@ def main(get_data, plot_data):
    dateToUse = 'Meldedatum'
    df.sort_values( dateToUse, inplace = True )
 
-   # NeuerFall: Infected (incl. recovered) over "Meldedatum":
+   # Manipulate data to get rid of conditions: df.NeuerFall >= 0, df.NeuerTodesfall >= 0, df.NeuGenesen >=0
+   # There might be a better way
+
+   dfF = df
+
+   dfF.loc[dfF.NeuerFall<0, ['AnzahlFall']] = 0
+   dfF.loc[dfF.NeuerTodesfall<0, ['AnzahlTodesfall']] = 0
+   dfF.loc[dfF.NeuGenesen<0, ['AnzahlGenesen']] = 0
+
+
+   ######## Data for whole Germany all ages ##########
+
+   # NeuerFall: Infected (incl. recovered) over "dateToUse":
+
+   # make sum for one "dateToUse"
    gbNF = df[df.NeuerFall >= 0].groupby( dateToUse ).sum()
-   gbNFcumsum = gbNF.AnzahlFall.cumsum()
-   gbNFcumsum.to_json("gbNF.json")
-   gbNFcumsum.plot( title = 'COVID-19 infections', grid = True, 
+
+   # make cumulative sum of "AnzahlFall" for "dateToUse"
+   gbNF_cs = gbNF.AnzahlFall.cumsum()
+
+   # outout to json file
+   gbNF_cs.to_json("infected.json")
+
+   if(make_plot == True):
+      # make plot
+      gbNF_cs.plot( title = 'COVID-19 infections', grid = True, 
                                style = '-o' )
-   plt.tight_layout()
-   plt.show()
+      plt.tight_layout()
+      plt.show()
 
-   # print(df.columns)
+   # Dead over "Meldedatum":
+   gbNT = df[df.NeuerTodesfall >= 0].groupby( dateToUse ).sum()
+   gbNT_cs = gbNT.AnzahlTodesfall.cumsum()
 
-   # NeuerFall: Infected (incl. recovered) over "Meldedatum" for every state ("Bundesland"):
-   gbNFst = df[df.NeuerFall >= 0].groupby( ['IdBundesland', 'Bundesland', dateToUse]).sum()
+   gbNT_cs.to_json("deaths.json")
 
-   gbNFstcumsum = gbNFst.AnzahlFall.cumsum().reset_index()
+   if(make_plot == True):
+      gbNT_cs.plot( title = 'COVID-19 deaths', grid = True,
+                                    style = '-o' )
+      plt.tight_layout()
+      plt.show()
+
+      dfF.agg({"AnzahlFall": sum, "AnzahlTodesfall": sum, "AnzahlGenesen": sum}) \
+         .plot( title = 'COVID-19 infections, deaths, recovered', grid = True,
+                             kind = 'bar' )
+      plt.tight_layout()
+      plt.show()
+
+
+   ############## Data for states all ages ################
+   
+   # NeuerFall: Infected (incl. recovered) over "dateToUse" for every state ("Bundesland"):
+   gbNFst = df[df.NeuerFall >= 0].groupby( ['IdBundesland', 'Bundesland', dateToUse]).AnzahlFall.sum()
+
+   gbNFst_cs = gbNFst.groupby(level=1).cumsum().reset_index()
+  
    # print(gbNFst)
-   print(gbNFstcumsum)
+   # print(gbNFst_cs)
 
    # output json
-   gbNFstcumsum.to_json("gbNF_state.json", orient='records')
+   gbNFst_cs.to_json("infected_state.json", orient='records')
 
    # output nested json
-   gbNFstcumsum.groupby(['IdBundesland', 'Bundesland'], as_index=False) \
+   gbNFst_cs.groupby(['IdBundesland', 'Bundesland'], as_index=False) \
                .apply(lambda x: x[[dateToUse,'AnzahlFall']].to_dict('r')) \
                .reset_index().rename(columns={0:'Dates'})\
                .to_json("gbNF_state_nested.json", orient='records')
 
 
-   #gbNFstcumsum.plot( title = 'COVID-19 infections per state',x='AnzahlFall',y='dateToUse', grid = True,
-   #                            style = '-o' )
-   #plt.tight_layout()
-   #plt.show()
+   # infected (incl recovered), deaths and recovered together 
+
+   gbAllSt = dfF.groupby( ['IdBundesland', 'Bundesland', dateToUse]).agg({"AnzahlFall": sum, "AnzahlTodesfall": sum, "AnzahlGenesen": sum})
+   gbAllSt_cs = gbAllSt.groupby(level=1).cumsum().reset_index()
+
+   # print(gbAllSt)
+   # print(gbAllSt_cs)
+ 
+   # output json
+   gbAllSt_cs.to_json("all_state.json", orient='records')
 
 
-   # Dead over "Meldedatum":
-   gbNT = df[df.NeuerTodesfall >= 0].groupby( dateToUse ).sum()
-   gbNT.AnzahlTodesfall.cumsum().plot( title = 'COVID-19 deads', grid = True,
-                                    style = '-o' )
-   plt.tight_layout()
-   plt.show()
+   ############# Data for counties all ages ######################
 
-   # Dead by "Altersgruppe":
-   gbNTAG = df[df.NeuerTodesfall >= 0].groupby( 'Altersgruppe' ).sum()
-   gbNTAG.AnzahlTodesfall.plot( title = 'COVID-19 deads', grid = True, 
+   # NeuerFall: Infected (incl. recovered) over "dateToUse" for every county ("Landkreis"):
+   gbNFc = df[df.NeuerFall >= 0].groupby( ['IdLandkreis', 'Landkreis', dateToUse]).sum()
+
+   gbNFc_cs = gbNFc.groupby(level=1).AnzahlFall.cumsum().reset_index()
+   
+   #print(gbNFc)
+   #print(gbNFc_cs)
+
+   # output json
+   gbNFc_cs.to_json("infected_county.json", orient='records')
+
+   # infected (incl recovered), deaths and recovered together 
+
+   gbAllC = dfF.groupby( ['IdLandkreis', 'Landkreis', dateToUse]).agg({"AnzahlFall": sum, "AnzahlTodesfall": sum, "AnzahlGenesen": sum})
+   gbAllC_cs = gbAllC.groupby(level=1).cumsum().reset_index()
+
+   #print(gbAllC)
+   #print(gbAllC_cs)
+
+   # output json
+   gbAllC_cs.to_json("all_county.json", orient='records')
+   
+
+   ######### Data whole Germany different gender ##################
+
+   # infected (incl recovered), deaths and recovered together 
+
+   gbAllG = dfF.groupby( ['Geschlecht', dateToUse]).agg({"AnzahlFall": sum, "AnzahlTodesfall": sum, "AnzahlGenesen": sum})
+   gbAllG_cs = gbAllG.groupby(level=0).cumsum().reset_index()
+
+   print(gbAllG)
+   print(gbAllG_cs)
+
+   # output json
+   gbAllG_cs.to_json("all_gender.json", orient='records') 
+
+   if(make_plot == True):
+      dfF.groupby( 'Geschlecht' ) \
+         .agg({"AnzahlFall": sum, "AnzahlTodesfall": sum, "AnzahlGenesen": sum}) \
+         . plot( title = 'COVID-19 infections, deaths, recovered', grid = True,
                              kind = 'bar' )
-   plt.tight_layout()
-   plt.show()
+      plt.tight_layout()
+      plt.show()
+
+  
+   ######### Data whole Germany different ages ####################
+
+   # infected (incl recovered), deaths and recovered together 
+
+   gbAllA = dfF.groupby( ['Altersgruppe', dateToUse]).agg({"AnzahlFall": sum, "AnzahlTodesfall": sum, "AnzahlGenesen": sum})
+   gbAllA_cs = gbAllA.groupby(level=0).cumsum().reset_index()
+
+   print(gbAllA)
+   print(gbAllA_cs)
+
+   # output json
+   gbAllA_cs.to_json("all_age.json", orient='records')
+
+   if(make_plot == True):
+      dfF.groupby( 'Altersgruppe' ) \
+         .agg({"AnzahlFall": sum, "AnzahlTodesfall": sum, "AnzahlGenesen": sum}) \
+         .plot( title = 'COVID-19 infections, deaths, recovered for diff ages', grid = True,
+                             kind = 'bar' )
+      plt.tight_layout()
+      plt.show()
+
+
+      # Dead by "Altersgruppe":
+      gbNTAG = df[df.NeuerTodesfall >= 0].groupby( 'Altersgruppe' ).sum()
+      gbNTAG.AnzahlTodesfall.plot( title = 'COVID-19 deaths', grid = True, 
+                             kind = 'bar' )
+      plt.tight_layout()
+      plt.show()
 
 
 if __name__ == "__main__":
@@ -167,13 +275,23 @@ if __name__ == "__main__":
              else:
                  pass
 
-          elif "PLOT_DATA" in arg:
+          elif "READ_DATA" in arg:
 
              arg_split = arg.split("=")
              if len(arg_split) == 2:
-                 PLOT_DATA = arg_split[1]
+                 READ_DATA = arg_split[1]
                  GET_DATA=False
              else:
                  pass
 
-   main(GET_DATA, PLOT_DATA)
+          elif "MAKE_PLOT" in arg:
+
+             arg_split = arg.split("=")
+             if len(arg_split) == 2:
+                 MAKE_PLOT = arg_split[1]
+             else:
+                 pass
+          else:
+             print("Warning: your argument:", arg, "is ignored.")
+
+   main(GET_DATA, READ_DATA, MAKE_PLOT)
