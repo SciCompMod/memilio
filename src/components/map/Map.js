@@ -1,23 +1,24 @@
 import React, { Component } from 'react';
 import { connect } from 'react-redux';
 
+import InteractiveMap from '../../common/interactive_map';
+
 import './Map.scss';
 
 class Map extends Component {
 
-    constructor(props){
+    constructor(props) {
         super(props);
         this.node = React.createRef();
     }
 
     componentDidMount() {
-        console.log(this.node.current);
-        console.log(this.node.current.clientWidth, this.node.current.clientHeight);
+        this.map = new InteractiveMap(this.node.current);
     }
 
     render() {
         return (
-            <div className="map-container">
+            <div className="map">
                 <svg ref={this.node}></svg>
             </div>
         )

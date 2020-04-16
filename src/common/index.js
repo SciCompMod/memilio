@@ -1,4 +1,4 @@
-import { Locations } from './locations.js'
+//import { Map } from './maps.js'
 import { Actions } from './actions.js'
 import { Parameters } from './parameters.js'
 import { Graphs } from './graphs.js'
@@ -20,7 +20,7 @@ function main() {
 
     $(function () {
         let $container = $('.actions .content');
-        let locations = new Locations("#locations");
+        //let locations = new Locations("#locations");
         let parameters = new Parameters($('#parameters'));
         let actions = new Actions($container, [{
             label: "75% Home-Office",
@@ -51,11 +51,8 @@ function main() {
             seir_params.b = p.contact_rate;
             seir_params.g = 1 / p.infection;
             seir_params.E0 = p.e0;
-            seir_params.I0 = p.i0;
-            seir_params.R0 = p.r0;
-            seir_params.N = locations.getPopulation();
-
-            
+            seir_params.N = 1000000; //locations.getPopulation();
+        
             // TODO: replace by the actual logic
             let action_damping = actions.getActionsDamping(days);
             if(action_damping == null) {
@@ -91,9 +88,9 @@ function main() {
             graphs.visualize(result, actions.getActions());
         }
 
-        locations.onselect((arg) => {
+        /*locations.onselect((arg) => {
             simulate();
-        });
+        });*/
 
         actions.onchange((actions) => {
             simulate();
@@ -115,5 +112,3 @@ function main() {
         simulate();
     });
 }
-
-main()

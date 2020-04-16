@@ -7,13 +7,19 @@
     "@testing-library/react": "^9.5.0",
     "@testing-library/user-event": "^7.2.1",
     "bootstrap": "^4.4.1",
+    "d3": "^5.15.1",
     "font-awesome": "^4.7.0",
+    "i18next": "^19.4.2",
+    "i18next-browser-languagedetector": "^4.0.2",
+    "i18next-http-backend": "^1.0.3",
     "react": "^16.13.1",
     "react-dom": "^16.13.1",
+    "react-i18next": "^11.3.4",
     "react-redux": "^7.2.0",
     "react-scripts": "3.4.1",
     "react-thunk": "^1.0.0",
-    "reactstrap": "^8.4.1"
+    "reactstrap": "^8.4.1",
+    "topojson-client": "^3.1.0"
   },
   "devDependencies": {
     "grunt": "^1.1.0",

@@ -1,0 +1,17 @@
+{
+    "measures": {
+        "title": "Maßnahmen",
+        "homeoffice": "75% Home-Office",
+        "schoolclosing": "Schulschließungen",
+        "socialdistancing": "Kontaktverbot"
+    },
+    "parameters": {
+        "title": "Parameter",
+        "contactrate": "Kontaktrate (Tage)",
+        "incubation": "Inkubationszeit (Tage)",
+        "infection": "Infektionszeit (Tage)",
+        "recovered": "Genesene Personen",
+        "exposed": "Gefährdete Personen",
+        "i0": "Infizierte Personen"
+    }
+}
