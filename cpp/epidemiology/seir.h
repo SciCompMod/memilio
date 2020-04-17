@@ -4,6 +4,7 @@
 #include <vector>
 #include <cmath>
 #include <cassert>
+#include <cstdio>
 
 #include <epidemiology/euler.h>
 
