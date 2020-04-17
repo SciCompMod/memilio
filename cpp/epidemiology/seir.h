@@ -17,7 +17,7 @@ struct damping {
     T day;
     T factor;
 
-    damping(int day_in, T factor_in)
+    damping(T day_in, T factor_in)
     {
 
         day = day_in;
