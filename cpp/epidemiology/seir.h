@@ -14,7 +14,7 @@
  */
 template <typename T>
 struct damping {
-    int day;
+    T day;
     T factor;
 
     damping(int day_in, T factor_in)
