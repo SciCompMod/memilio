@@ -1,4 +1,28 @@
-build:
+build-cpp:
+  stage: build
+  script:
+    - cd cpp
+    - mkdir build && cd build
+    - cmake ..
+    - cmake --build .
+  artifacts:
+    expire_in: 2 hrs
+    paths:
+      - cpp/build/
+
+# run tests using the binary built before
+test-cpp:
+  stage: test
+  dependencies:
+    - build-cpp
+  script:
+    - cd cpp/build/tests
+    - ./runUnitTests --gtest_output="xml:report.xml"
+  artifacts:
+    reports:
+      junit: cpp/build/tests/report.xml
+
+build-js:
   stage: build
   before_script:
      - npm install
@@ -8,11 +32,10 @@ build:
     paths:
       - dist/
 
-
 www:
   stage: deploy
   dependencies:
-    - build
+    - build-js
   script:
     - cp -r dist/* /var/www/html
   only:
