@@ -4,6 +4,7 @@
 #include <vector>
 #include <cmath>
 #include <cassert>
+#include <cstdio>
 
 #include <epidemiology/euler.h>
 
@@ -139,14 +140,14 @@ void printSeirParams(struct seirParam<T> const& params)
 
 /**
  * Computes the current time-derivative of S, E, I, and R in the SEIR model
+ * @param[in] params SEIR Model parameters, created by seir_param
  * @tparam T the datatype of the cases
  * @param[in] y current  S, E, I, and R values at t; y: [0:S, 1:E, 2:I, 3:R]
- * @param[in] params SEIR Model parameters, created by seir_param
  * @param[in] t time / current day
  * @param[out] dydt the values of the time derivatices of S, E, I, and R
  */
 template <typename T>
-void seir_getDerivatives(std::vector<T> const& y, struct seirParam<T> const& params, const T t, std::vector<T>& dydt)
+void seir_getDerivatives(struct seirParam<T> const& params, std::vector<T> const& y, const T t, std::vector<T>& dydt)
 {
 
     T b_eff = params.b * getDampingFactor(params.dampings, t);
@@ -163,17 +164,18 @@ void seir_getDerivatives(std::vector<T> const& y, struct seirParam<T> const& par
  * Computes the values of S, E, I, and R at the current time step in the SEIR model
  * by using a numerical integration scheme (only explicit Euler at the moment)
  * @tparam T the datatype of the cases
- * @param[out] dydt the values of the time derivatices of S, E, I, and R
+ * @param[in] dydt the values of the time derivatives of S, E, I, and R
  * @param[in] dt the current time step
  * @param[in] params SEIR Model parameters, created by seir_param
- * @param[in] i the position of y(t) in y[0...n]
- * @param[inout] y the vector of  S, E, I, and R values from 0 to t, yet empty for t+1 to n
+ * @param[in] y the vector of  S, E, I, and R values at t
+ * @param[out] result the result vector of  S, E, I, and R values at t+1
  */
 template <typename T>
-void seir_integrate(std::vector<T> const& dydt, struct seirParam<T> const& params, const T dt, const std::vector<T>& y, std::vector<T>& result)
+void integrate_euler(const std::vector<T>& y, std::vector<T> const& dydt, const T dt, std::vector<T>& result)
 {
-    explicit_euler(y, dt, dydt, result);
+    explicit_euler(y, dydt, dt, result);
 }
+
 
 
 
@@ -205,9 +207,9 @@ void simulate_seir(const T t0, const T tmax, const T dt, struct seirParam<T> con
 
         t = t0 + i*dt;
 
-        seir_getDerivatives(seir[i], params, t, dydt);
+        seir_getDerivatives(params, seir[i], t, dydt);
 
-        seir_integrate(dydt, params, dt, seir[i], seir[i+1]);
+        integrate_euler(seir[i], dydt, dt, seir[i+1]);
     }
 }
 
