@@ -7,15 +7,14 @@ import * as serviceWorker from './serviceWorker';
 
 import './i18n';
 
-
 import './index.css';
 
 ReactDOM.render(
   <Provider store={store}>
-      <Suspense fallback="loading">
-        <App />
-      </Suspense>
-    </Provider>,
+    <Suspense fallback="loading">
+      <App />
+    </Suspense>
+  </Provider>,
   document.getElementById('root')
 );
 

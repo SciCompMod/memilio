@@ -1,40 +1,36 @@
 .map {
-    height: 100%;
-}
+  height: 100%;
 
-.map svg {
+  svg {
     height: 100%;
     width: 100%;
-}
-
-.map svg {
     background-color: #eee;
-}
+    .title {
+      font-size: 20px;
+      text-anchor: start;
+      stroke-width: 1;
+      stroke: black;
+      z-index: 1000;
+    }
 
-.map svg .title {
-    font-size: 20px;
-    text-anchor: start;
-    stroke-width: 1;
-    stroke: black;
-    z-index: 1000;
-}
+    .land,
+    .kreis {
+      fill: white;
+      stroke: black;
+    }
 
-.map svg .land,
-.map svg .kreis {
-    fill: white;
-    stroke: black;
-}
+    .land:hover,
+    .kreis:hover {
+      fill: #dedede !important;
+    }
 
-.map svg .land:hover,
-.map svg .kreis:hover {
-    fill: #dedede !important;
-}
+    .kreis.hidden {
+      opacity: 0;
+      visibility: hidden;
+    }
 
-.map svg .kreis.hidden {
-    opacity: 0;
-    visibility: hidden;
-}
-
-.map svg .land.off {
-    fill: #555;
+    .land.off {
+      fill: #555;
+    }
+  }
 }

@@ -8,5 +8,5 @@ export default configureStore({
     measures: measureReducer,
     parameters: parameterReducer,
     app: appReducer
-  },
+  }
 });
