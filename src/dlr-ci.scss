@@ -1,0 +1,49 @@
+@import "~bootstrap/scss/functions.scss";
+@import "~bootstrap/scss/mixins.scss";
+@import "~bootstrap/scss/variables.scss";
+
+$dlr-black: #000000;
+$dlr-gray: #666666;
+$dlr-midgray: rgb(123, 123, 123);
+$dlr-lightgray: rgb(177, 177, 176);
+$dlr-white: #ffffff;
+
+$dlr-blue: rgb(0, 117, 187);
+$dlr-blue-light: rgb(104, 152, 209);
+$dlr-blue-lighter: rgb(172, 194, 230);
+
+$dlr-green: rgb(129, 148, 89);
+$dlr-green-light: rgb(164, 176, 133);
+$dlr-green-lighter: rgb(203, 208, 183);
+
+$dlr-yellow: rgb(234, 184, 24);
+$dlr-yellow-light: rgb(241, 205, 104);
+$dlr-yellow-lighter: rgb(247, 226, 172);
+
+$dlr-red: rgb(179, 63, 61);
+$dlr-red-light: rgb(199, 122, 109);
+$dlr-red-lighter: rgb(223, 180, 168);
+
+$theme-colors: (
+    "primary": $dlr-gray,
+    "danger": $dlr-red,
+    "success": $dlr-green,
+    "blue": $dlr-blue,
+    "blue-light": $dlr-blue-light,
+    "blue-lighter": $dlr-blue-lighter,
+
+    "green": $dlr-green,
+    "green-light": $dlr-green-light,
+    "green-lighter": $dlr-green-lighter,
+
+    "yellow": $dlr-yellow,
+    "yellow-light": $dlr-yellow-light,
+    "yellow-lighter": $dlr-yellow-lighter,
+
+    "red": $dlr-red,
+    "red-light": $dlr-red-light,
+    "red-lighter": $dlr-red-lighter
+);
+
+@import "~bootstrap/scss/bootstrap.scss";
+@import "~font-awesome/css/font-awesome.css";

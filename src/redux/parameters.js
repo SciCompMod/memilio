@@ -1,5 +1,5 @@
 import { createSlice } from '@reduxjs/toolkit';
-import {init} from './app';
+import { init } from './app';
 
 function clone(object) {
     return Object.assign({}, object);
@@ -11,12 +11,19 @@ const slice = createSlice({
         defaults: [],
         parameters: []
     },
-    reducers: {},
+    reducers: {
+        updateParameter: (state, action) => {
+            const parameter = state.parameters.find(p => p.name == action.payload.name);
+            if (parameter) {
+                parameter.value = action.payload.value;
+            }
+        }
+    },
     extraReducers: {
         [init]: (state, action) => {
-            if(action.payload.parameters) {
-                const defaults = clone({defaults: action.payload.parameters});
-                const parameters = clone({parameters: action.payload.parameters});
+            if (action.payload.parameters) {
+                const defaults = clone({ defaults: action.payload.parameters });
+                const parameters = clone({ parameters: action.payload.parameters });
                 return Object.assign({}, state, defaults, parameters);
             }
             return state;
@@ -24,5 +31,6 @@ const slice = createSlice({
     }
 });
 
+export const { updateParameter } = slice.actions;
 
 export default slice.reducer;

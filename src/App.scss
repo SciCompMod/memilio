@@ -1,29 +1,26 @@
-@import "~bootstrap/scss/bootstrap.scss";
-@import "~bootstrap/scss/_variables.scss";
-
-@import "~font-awesome/css/font-awesome.css";
+@import "./dlr-ci.scss";
 
 .wrapper {
     padding: 0;
     height: 100vh;
     overflow: auto;
     background-color: #dedede;
-
+    
     header {
         padding: 10px 20px 20px 20px;
         border-bottom: 1px solid #aaa;
-
+        
         .logo {
             position: relative;
             margin: 0;
         }
-
+        
         .logo > img {
             width: 62px;
             float: left;
             margin: 0 10px 10px 0;
         }
-
+        
         .logo .logo-text {
             line-height: 17px;
             font-size: .875rem;
@@ -33,7 +30,7 @@
             font-weight: 400;
         }
     }
-
+    
     .main-panel {
         height: calc(100vh - 6.5em);
         margin: .5em;
@@ -45,11 +42,11 @@
         border: 1px solid #aaa;
         background-color: white;
     }
-
+    
     .graphs-container {
         height: 100%;
         border: 1px solid #aaa;
         background-color: white;
     }
-
+    
 }

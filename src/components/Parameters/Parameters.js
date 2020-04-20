@@ -1,23 +1,45 @@
 import React, { Component } from 'react';
 import { connect } from 'react-redux';
 import { withTranslation } from 'react-i18next';
+import { updateParameter } from '../../redux/parameters';
+import { Label, Input, CustomInput, FormGroup, Col } from 'reactstrap';
 
 import './Parameters.scss';
-import { Label, Input, CustomInput, FormGroup, Row, Col } from 'reactstrap';
 
 class Parameter extends Component {
     constructor(props) {
         super(props);
+        this.timeout = null;
         this.state = {
             value: this.props.parameter.default
         };
     }
+
+    update(value) {
+        this.setState({
+            value
+        });
+
+
+        if(this.timeout) {
+            clearTimeout(this.timeout);
+        }
+
+        this.timeout = setTimeout(() => {
+            this.timeout = null;
+            this.props.updateParameter({
+                ...this.props.paramter,
+                value: this.state.value
+            });
+        }, 300);
+    }
+
     renderInput() {
         const { parameter } = this.props;
         switch (parameter.type) {
             case "slider":
-                return (<FormGroup row  className="m-0 mb-2">
-                    <Col xs="2" className="p-0 pr-1"> 
+                return (<FormGroup row className="m-0 mb-2">
+                    <Col xs="2" className="p-0 pr-1">
                         <div className="border border-dark rounded-lg p-1 text-center">{this.state.value}</div>
                     </Col>
                     <Col xs="10" className="p-0 pl-1">
@@ -29,7 +51,7 @@ class Parameter extends Component {
                             min={parameter.min || 0}
                             max={parameter.max || 10}
                             step={parameter.step || 1}
-                            onChange={(event) => this.setState({ value: parseFloat(event.target.value) })}
+                            onChange={(event) => this.update(parseFloat(event.target.value))}
                             tooltip="off"
                             size="sm"
                         />
@@ -40,7 +62,7 @@ class Parameter extends Component {
                     <Input
                         value={this.state.value}
                         name={parameter.name}
-                        onChange={(event) => this.setState({ value: parseFloat(event.target.value) })}
+                        onChange={(event) => this.update(parseFloat(event.target.value))}
                     />
                 </FormGroup>)
         }
@@ -55,7 +77,7 @@ class Parameter extends Component {
     }
 }
 
-const TransletedParameter = withTranslation()(Parameter);
+const TransletedParameter = connect(null, { updateParameter })(withTranslation()(Parameter));
 
 class Parameters extends Component {
 

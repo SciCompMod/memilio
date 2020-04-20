@@ -11,13 +11,11 @@ import './i18n';
 import './index.css';
 
 ReactDOM.render(
-  <React.StrictMode>
-    <Provider store={store}>
+  <Provider store={store}>
       <Suspense fallback="loading">
         <App />
       </Suspense>
-    </Provider>
-  </React.StrictMode>,
+    </Provider>,
   document.getElementById('root')
 );
 

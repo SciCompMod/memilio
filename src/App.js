@@ -39,7 +39,7 @@ class App extends Component {
           </span>
         </header>
         <Row className="main-panel">
-          <Col xl="4" lg="4" md="12" sm="12" xs="12">
+          <Col xl="5" lg="5" md="12" sm="12" xs="12">
             <Row className="mb-1 h-100">
               <Col className="map-container p-0">
                 <Map />
@@ -81,8 +81,8 @@ class App extends Component {
               </Col>
             </Row>
           </Col>
-          <Col xl="8" lg="8" md="12" sm="12" xs="12" className="px-1">
-            <div className="graphs-container">
+          <Col xl="7" lg="7" md="12" sm="12" xs="12" className="px-1">
+            <div className="graphs-container bg-primary">
 
             </div>
           </Col>

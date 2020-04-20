@@ -1,4 +1,8 @@
 {
+    "new": "Neu",
+    "add": "Hinzufügen",
+    "delete": "Löschen",
+    "Cancel": "Abbrechen",
     "measures": {
         "title": "Maßnahmen",
         "homeoffice": "75% Home-Office",
@@ -13,5 +17,6 @@
         "recovered": "Genesene Personen",
         "exposed": "Gefährdete Personen",
         "i0": "Infizierte Personen"
-    }
+    },
+    "dateFormat": "dd.MM.yyyy"
 }
