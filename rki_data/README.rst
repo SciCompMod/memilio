@@ -16,48 +16,54 @@ Dependencies
 ------------
 
 Needed python packages:
-- pandas
-- matplotlib
+
+* pandas
+
+* matplotlib
+
+* tables
 
 
 Running the Program
 -------------------
 
-First of all create an virtual environment by calling
+First of all create an virtual environment by calling.
 
 .. code:: sh
 
    source setup_venv.sh
 
+The needed packages will be installed
 
-Call 
+
+Afterwards the program can be executed, by do 
 
 .. code:: sh
 
    python3 getGeoJsonIntoPandasDataFrame_for_RKI.py
 
 than data is downloaded and analysed.
-The full data set is stored in a json.
-Different statistic is plotted and outputtes to json files.
+The full data set is stored in a json-file.
+Different statistic is plotted and outputted to json files.
 
 
-While running the program close one window to get the next one.
+While running the program close one figure-window to get the next one.
 
-Call
+
+Run options
+~~~~~~~~~~~~~~~~~~~
+
+There are several optional run options:
+
+READ_DATA [default = False]: Defines if data is downloaded (False) or just the written json-file with the full data is read and used (True).
+MAKE_PLOT [default = True]: Defines if plots are shown (True) or not (False).   
+
+As an example
 
 .. code:: sh
 
    python3 getGeoJsonIntoPandasDataFrame_for_RKI.py READ_DATA=True
 
-To use stored data and not download it all the time.
-
-Use 
-
-.. code:: sh
-
-   python3 getGeoJsonIntoPandasDataFrame_for_RKI.py MAKE_PLOT=False (READ_DATA=True)
-
-to not see the plots just get the files.
 
 Results
 -------
@@ -76,10 +82,14 @@ Following data is written
 | infected_state.json | infected over "Meldedatum" for different states (Bundesländer) |
 | gbNF_state_nested.json | same data as above but different output |
 | all_state.json | infected, deaths, recovered over "Meldedatum" for different states (Bundesländer)  |
+| all_state.h5 | infected, deaths, recovered over "Meldedatum" for different states (Bundesländer), same as above but different output format |
 | infected_county.json | infected over "Meldedatum" for different counties (Landkreise) |
 | all_county.json |  infected, deaths, recovered over "Meldedatum" for different counties (Landkreise)  |
 | all_gender.json |  infected, deaths, recovered over "Meldedatum" for different genders |
 | all_age.json |  infected, deaths, recovered over "Meldedatum" for different age ranges |
-
+| all_state_age.json |  infected, deaths, recovered over "Meldedatum" for different age ranges and states |
+| all_state_gender.json |  infected, deaths, recovered over "Meldedatum" for different genders and states|
+| all_county_age.json |  infected, deaths, recovered over "Meldedatum" for different age ranges and counties|
+| all_county_gender.json |  infected, deaths, recovered over "Meldedatum" for different genders counties|
 
 

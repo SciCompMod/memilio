@@ -4,10 +4,6 @@ import json
 import pandas
 import matplotlib.pyplot as plt
 
-GET_DATA = True
-READ_DATA = False
-MAKE_PLOT = True
-
 def loadGeojson( itemId, apiUrl = 'https://opendata.arcgis.com/datasets/', 
                  extension = 'geojson' ):
     """ Loads ArcGIS data sets in GeoJSON format. (pandas DataFrame)
@@ -155,8 +151,8 @@ def main(get_data, read_data, make_plot):
 
    gbNFst_cs = gbNFst.groupby(level=1).cumsum().reset_index()
   
-   # print(gbNFst)
-   # print(gbNFst_cs)
+   #print(gbNFst)
+   #print(gbNFst_cs)
 
    # output json
    gbNFst_cs.to_json("infected_state.json", orient='records')
@@ -173,11 +169,12 @@ def main(get_data, read_data, make_plot):
    gbAllSt = dfF.groupby( ['IdBundesland', 'Bundesland', dateToUse]).agg({"AnzahlFall": sum, "AnzahlTodesfall": sum, "AnzahlGenesen": sum})
    gbAllSt_cs = gbAllSt.groupby(level=1).cumsum().reset_index()
 
-   # print(gbAllSt)
-   # print(gbAllSt_cs)
+   #print(gbAllSt)
+   #print(gbAllSt.reset_index()[ (gbAllSt.reset_index().IdBundesland==16) ])
  
    # output json
    gbAllSt_cs.to_json("all_state.json", orient='records')
+   gbAllSt_cs.to_hdf("all_state.h5", key="gbAllSt_cs")
 
 
    ############# Data for counties all ages ######################
@@ -212,8 +209,8 @@ def main(get_data, read_data, make_plot):
    gbAllG = dfF.groupby( ['Geschlecht', dateToUse]).agg({"AnzahlFall": sum, "AnzahlTodesfall": sum, "AnzahlGenesen": sum})
    gbAllG_cs = gbAllG.groupby(level=0).cumsum().reset_index()
 
-   print(gbAllG)
-   print(gbAllG_cs)
+   # print(gbAllG)
+   # print(gbAllG_cs)
 
    # output json
    gbAllG_cs.to_json("all_gender.json", orient='records') 
@@ -226,6 +223,30 @@ def main(get_data, read_data, make_plot):
       plt.tight_layout()
       plt.show()
 
+
+   ############################# Gender and State ###################################################### 
+
+   # infected (incl recovered), deaths and recovered together 
+
+   gbAllGState = dfF.groupby( ['IdBundesland', 'Bundesland', 'Geschlecht', dateToUse]).agg({"AnzahlFall": sum, "AnzahlTodesfall": sum, "AnzahlGenesen": sum})
+   gbAllGState_cs = gbAllGState.groupby(level=[1,2]).cumsum().reset_index()
+
+   #print(gbAllGState)
+   #print(gbAllGState_cs)
+
+   # output json
+   gbAllGState_cs.to_json("all_state_gender.json", orient='records')
+
+   ############# Gender and County #####################
+
+   gbAllGCounty = dfF.groupby( ['IdLandkreis', 'Landkreis', 'Geschlecht', dateToUse]).agg({"AnzahlFall": sum, "AnzahlTodesfall": sum, "AnzahlGenesen": sum})
+   gbAllGCounty_cs = gbAllGCounty.groupby(level=[1,2]).cumsum().reset_index()
+
+   #print(gbAllGCounty)
+   #print(gbAllGCounty_cs)
+
+   # output json
+   gbAllGCounty_cs.to_json("all_county_gender.json", orient='records')
   
    ######### Data whole Germany different ages ####################
 
@@ -234,8 +255,8 @@ def main(get_data, read_data, make_plot):
    gbAllA = dfF.groupby( ['Altersgruppe', dateToUse]).agg({"AnzahlFall": sum, "AnzahlTodesfall": sum, "AnzahlGenesen": sum})
    gbAllA_cs = gbAllA.groupby(level=0).cumsum().reset_index()
 
-   print(gbAllA)
-   print(gbAllA_cs)
+   #print(gbAllA)
+   #print(gbAllA_cs)
 
    # output json
    gbAllA_cs.to_json("all_age.json", orient='records')
@@ -251,14 +272,46 @@ def main(get_data, read_data, make_plot):
 
       # Dead by "Altersgruppe":
       gbNTAG = df[df.NeuerTodesfall >= 0].groupby( 'Altersgruppe' ).sum()
+
       gbNTAG.AnzahlTodesfall.plot( title = 'COVID-19 deaths', grid = True, 
                              kind = 'bar' )
       plt.tight_layout()
       plt.show()
 
+   ############################# Age and State ###################################################### 
+
+   # infected (incl recovered), deaths and recovered together 
+
+   gbAllAState = dfF.groupby( ['IdBundesland', 'Bundesland', 'Altersgruppe', dateToUse]).agg({"AnzahlFall": sum, "AnzahlTodesfall": sum, "AnzahlGenesen": sum})
+   gbAllAState_cs = gbAllAState.groupby(level=[1,2]).cumsum().reset_index()
+
+   #print(gbAllAState.reset_index()[ (gbAllAState.reset_index().IdBundesland == 1) &  (gbAllAState.reset_index().Altersgruppe == "A00-A04") ])
+   #print(gbAllAState_cs)
+   #print(gbAllAState_cs[gbAllAState_cs.Altersgruppe == "A00-A04"])
+   #print(gbAllAState_cs[gbAllAState_cs.IdBundesland == 1])
+   #print(gbAllAState.reset_index()[ (gbAllAState.reset_index().IdBundesland == 16) & (gbAllAState_cs.Meldedatum == "2020-03-24 00:00:00+01:00") ].agg({"AnzahlFall": sum, "AnzahlTodesfall": sum, "AnzahlGenesen": sum}))
+   #print(gbAllAState_cs[ (gbAllAState_cs.IdBundesland == 1) & (gbAllAState_cs.Altersgruppe == "A00-A04") ])
+
+   # output json
+   gbAllAState_cs.to_json("all_state_age.json", orient='records')
+
+   ############# Age and County #####################
+
+   gbAllACounty = dfF.groupby( ['IdLandkreis', 'Landkreis', 'Altersgruppe', dateToUse]).agg({"AnzahlFall": sum, "AnzahlTodesfall": sum, "AnzahlGenesen": sum})
+   gbAllACounty_cs = gbAllACounty.groupby(level=[1,2]).cumsum().reset_index()
+
+   #print(gbAllACounty)
+   #print(gbAllACounty_cs)
+
+   # output json
+   gbAllACounty_cs.to_json("all_county_age.json", orient='records')
+
 
 if __name__ == "__main__":
 
+   GET_DATA = True
+   READ_DATA = False
+   MAKE_PLOT = True
 
    largv = len(sys.argv)
 
@@ -267,22 +320,14 @@ if __name__ == "__main__":
 
           arg = sys.argv[i]
 
-          if "GET_DATA" in arg:
-
-             arg_split = arg.split("=")
-             if len(arg_split) == 2:
-                 GET_DATA = arg_split[1]
-             else:
-                 pass
-
-          elif "READ_DATA" in arg:
+          if "READ_DATA" in arg:
 
              arg_split = arg.split("=")
              if len(arg_split) == 2:
                  READ_DATA = arg_split[1]
                  GET_DATA=False
              else:
-                 pass
+                 print("Warning: your argument:", arg, "is ignored. It has to be in the form as: READ_DATA=True")
 
           elif "MAKE_PLOT" in arg:
 
@@ -290,7 +335,7 @@ if __name__ == "__main__":
              if len(arg_split) == 2:
                  MAKE_PLOT = arg_split[1]
              else:
-                 pass
+                 print("Warning: your argument:", arg, "is ignored. It has to be in the form as: MAKE_PLOT=False")
           else:
              print("Warning: your argument:", arg, "is ignored.")
 
