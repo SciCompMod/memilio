@@ -58,17 +58,6 @@ struct tableau{
     entries[4][0] = 0.5;       entries[4][1] = -8/27.0;     entries[4][2] = 2.0;               entries[4][3] = -3544/2565.0;  entries[4][4] = 1859/4104.0;    entries[4][5] = -11/40.0;
     
   }
-
-  // destroy all entries
-  ~tableau()
-  {
-    for(size_t i=0;i<entries.size();i++)
-    {
-      entries.at(i).resize(0);
-    }
-    entries.resize(0);
-  }
-
 };
 
 /*
@@ -94,13 +83,6 @@ struct tableau_final{
 
     entries_low[0] = 25/216.0;  entries_low[1] = 0.0;  entries_low[2] = 1408/2565.0;  entries_low[3] = 2197/4104.0;   entries_low[4] = -0.2;  entries_low[5] = 0.0;
     entries_high[0] = 16/135.0;  entries_high[1] = 0.0;  entries_high[2] = 6656/12825.0;  entries_high[3] = 28561/56430.0;   entries_high[4] = -9/50.0;  entries_high[5] = 2/55.0;
-  }
-
-  // destroy all coeffs
-  ~tableau_final()
-  {
-    entries_low.resize(0);
-    entries_high.resize(0);    
   }
 };
  
