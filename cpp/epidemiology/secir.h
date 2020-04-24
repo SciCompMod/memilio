@@ -8,7 +8,7 @@
 
 // #include <epidemiology/euler.h>
 #include <epidemiology/adapt_rk.h>
-// #include <epidemiology/seirParam.h>
+#include <epidemiology/seirParam.h>
 
 
 /**
@@ -146,39 +146,6 @@ void integrate_euler(const std::vector<T>& y, std::vector<T> const& dydt, const 
 
 
 /**
- * Computes the values of S, E, I, and R at the current time step in the SEIR model
- * by using an adaptive time stepping numerical integration scheme 
- * @tparam T the datatype of the cases
- * @param[in] tab the upper part of the Butcher teableau for the adaptive scheme
- * @param[in] tab_final the final row(s) (two rows) for the two different integration schemes of different order
- * @param[in] params SEIR Model parameters, created by seir_param
- * @param[in] y the vector of  S, E, I, and R values at t
- * @param[in] f the values of the time derivatives of S, E, I, and R
- * @param[in] tol_abs the required absolute tolerance for the comparison with the Fehlberg approximation
- * @param[in] tol_rel the required relative tolerance for the comparison with the Fehlberg approximation
- * @param[in] dtmin the minimum step size
- * @param[in] dtmax the maximum step size
- * @param[inout] t current time step h=dt
- * @param[inout] dt current time step h=dt
- * @param[out] result the result vector of  S, E, I, and R values at t+1
- */
-template <typename T, typename rhsDerivatives>
-bool integrate_ark(struct tableau<T> const &tab, struct tableau_final<T> const &tab_final, struct seirParam<T> const& params, const std::vector<T>& y, rhsDerivatives const &f, const T tol_abs, const T tol_rel, const T dtmin, const T dtmax, T &t, T &dt, std::vector<T>& result)
-{
-  bool failed_step_size_adapt = false;
-
-  RKIntegrator<T> rk;
-  rk.set_tableaus(tab, tab_final);
-  rk.set_abs_tolerance(tol_abs);
-  rk.set_rel_tolerance(tol_rel);
-
-  failed_step_size_adapt = rk.step(params, y, f, dtmin, dtmax, t, dt, result);
-
-  return failed_step_size_adapt;
-}
-
-
-/**
  * Computes the seir curve by integration
  * @param[in] seir_0 Initial S, E, I, and R values at t0
  * @param[in] t0 start time of simulation
@@ -191,23 +158,21 @@ void simulate(const double t0, const double tmax, T dt, struct seirParam<T> cons
 {
   size_t nb_steps = (int)(ceil((tmax-t0) / dt)); // estimated number of time steps (if equidistant)
 
-  std::vector<T> dydt;  
+  std::vector<T> dydt;
+
+  size_t n_params = params.model == 0 ? 4 : 8;
+  seir = std::vector<std::vector<T>>(nb_steps+1, std::vector<T>(n_params,(T)0)); // prepare memory for equidistant step size
+  dydt = std::vector<T>(n_params,0);
 
   if(params.model == 0)
   {
-    seir = std::vector<std::vector<T>>(nb_steps+1, std::vector<T>(4,(T)0)); // prepare memory for equidistant step size
-    
     //initial conditions
     seir[0][0] = params.nb_sus_t0;  
     seir[0][1] = params.nb_exp_t0; 
     seir[0][2] = params.nb_inf_t0; 
     seir[0][3] = params.nb_rec_t0;
-    
-    dydt = std::vector<T>(4,0);
-
-  }else{
-    seir = std::vector<std::vector<T>>(nb_steps+1, std::vector<T>(8,(T)0)); // prepare memory for equidistant step size
-    
+  }
+  else{
     //initial conditions
     seir[0][0] = params.nb_sus_t0;
     seir[0][1] = params.nb_exp_t0; 
@@ -217,17 +182,18 @@ void simulate(const double t0, const double tmax, T dt, struct seirParam<T> cons
     seir[0][5] = params.nb_icu_t0;
     seir[0][6] = params.nb_rec_t0;
     seir[0][7] = params.nb_dead_t0;
-    
-    dydt = std::vector<T>(8,0);
   }
 
+  auto secir_fun = [&params](std::vector<T> const &y, const T t, std::vector<T> &dydt) {
+      return secir_getDerivatives<T>(params, y, t, dydt);
+  };
+
   #ifdef ARK_H
-  tableau<double> rkf45_tableau = tableau<double>();
-  tableau_final<double> rkf45_tableau_final = tableau_final<double>();
-  double tol_abs = 1e-1;
-  double tol_rel = 1e-4;
-  double dtmin = 1e-3;
-  double dtmax = 1;  
+  T dtmin = 1e-3;
+  T dtmax = 1.;
+  RKIntegrator<T> rkf45(secir_fun, dtmin, dtmax);
+  rkf45.set_abs_tolerance(1e-1);
+  rkf45.set_rel_tolerance(1e-4);
   bool failed_step_size_adapt = false;
   #endif
 
@@ -252,37 +218,17 @@ void simulate(const double t0, const double tmax, T dt, struct seirParam<T> cons
 
     // printf("%d\t", (int)seir[i][0]);
     #ifdef EULER_H
-    if(params.model == 0)
-    {
-      seir_getDerivatives(params, seir[i], t, dydt);
-    }else{
       secir_getDerivatives(params, seir[i], t, dydt);
-    }
     #endif
 
     #ifdef ARK_H
-      bool failed_step_size_adapt_dummy = false;
-      if(params.model == 0)
-      {
-        if(i+1 >= seir.size())
-        {
-            std::vector<std::vector<T>> vecAppend(20, std::vector<T>(4,(T)0));
-            seir.insert(seir.end(), vecAppend.begin(), vecAppend.end());
-        }
-        failed_step_size_adapt_dummy = integrate_ark(rkf45_tableau, rkf45_tableau_final, params, seir[i], seir_getDerivatives<T>, tol_abs, tol_rel, dtmin, dtmax, t, dt, seir[i+1]);
-      }else{
-        if(i+1 >= seir.size())
-        {
-            std::vector<std::vector<T>> vecAppend(20, std::vector<T>(8,(T)0));
-            seir.insert(seir.end(), vecAppend.begin(), vecAppend.end());
-        }
-        failed_step_size_adapt_dummy = integrate_ark(rkf45_tableau, rkf45_tableau_final, params, seir[i], secir_getDerivatives<T>, tol_abs, tol_rel, dtmin, dtmax, t, dt, seir[i+1]);
-      }
-      if(failed_step_size_adapt_dummy)
-      {
-        failed_step_size_adapt = true;
-      }
-    #elif EULER_H
+    if(i+1 >= seir.size())
+    {
+        std::vector<std::vector<T>> vecAppend(20, std::vector<T>(n_params,(T)0));
+        seir.insert(seir.end(), vecAppend.begin(), vecAppend.end());
+    }
+      failed_step_size_adapt = rkf45.step(seir[i], t, dt, seir[i+1]);
+    #elif defined EULER_H
       integrate_euler(seir[i], dydt, dt, seir[i+1]);
       t += dt;
     #endif

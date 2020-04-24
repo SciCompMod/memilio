@@ -8,7 +8,7 @@
 #include <ios>
 #include <cmath>
 
-void getDerivatives(struct seirParam<double> const &params, std::vector<double> const &y, const double t, std::vector<double> &dydt)
+void sin_deriv(std::vector<double> const &y, const double t, std::vector<double> &dydt)
 {
     dydt[0] = std::cos(t);
 }
@@ -38,7 +38,7 @@ public:
 };
 
 
-TEST_F(TestVerifyNumericalIntegrator, euler)
+TEST_F(TestVerifyNumericalIntegrator, euler_sine)
 {
     n = 1000;
     dt = (tmax-t)/n;
@@ -72,7 +72,7 @@ TEST_F(TestVerifyNumericalIntegrator, euler)
 
 
 
-TEST_F(TestVerifyNumericalIntegrator, runge_kutta_fehlberg45)
+TEST_F(TestVerifyNumericalIntegrator, runge_kutta_fehlberg45_sine)
 {
 
     n = 10;
@@ -80,12 +80,9 @@ TEST_F(TestVerifyNumericalIntegrator, runge_kutta_fehlberg45)
     y = std::vector<std::vector<double>>(n, std::vector<double>(1, 0));
     sol = std::vector<std::vector<double>>(n, std::vector<double>(1, 0));
 
-
-    RKIntegrator<double> rkf45;
+    RKIntegrator<double> rkf45(sin_deriv, 1e-3, 1.0);
     rkf45.set_abs_tolerance(1e-7);
     rkf45.set_rel_tolerance(1e-7);
-
-    seirParam<double> params = seirParam<double>();
 
     sol[0][0] = std::sin(0);
 
@@ -102,7 +99,7 @@ TEST_F(TestVerifyNumericalIntegrator, runge_kutta_fehlberg45)
 
         double dt_old = dt;
 
-        rkf45.step(params, y[i], getDerivatives, 1e-3, 1.0, t_eval, dt, y[i + 1]); //
+        rkf45.step(y[i], t_eval, dt, y[i + 1]); //
 
         sol[i + 1][0] = std::sin(t_eval);
 

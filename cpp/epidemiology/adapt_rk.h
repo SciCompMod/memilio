@@ -3,6 +3,7 @@
 
 #include <cstdio>
 #include <vector>
+#include <functional>
 
 #include <epidemiology/seirParam.h>
 
@@ -112,6 +113,12 @@ struct tableau_final {
 
 
 /**
+ * Function template to be integrated
+ */
+template <typename T>
+using DerivFunction = std::function<void(std::vector<T> const &y, const T t, std::vector<T> &dydt)>;
+
+/**
  * @brief
  * Two scheme Runge-Kutta numerical integrator with adaptive step width
  * This method integrates a system of ODEs
@@ -120,8 +127,14 @@ template <typename T>
 class RKIntegrator
 {
 public:
-    RKIntegrator()
-        : m_abs_tol(1e-10), m_rel_tol(1e-5)
+    /**
+     * @brief Setting up the integrator
+     * @param func The right hand side of the ODE
+     * @param dt_min Mininum time step
+     * @param dt_max Maximum time step
+     */
+    RKIntegrator(DerivFunction<T> func, T dt_min, T dt_max)
+        : f(func), m_abs_tol(1e-10), m_rel_tol(1e-5), m_dt_min(dt_min), m_dt_max(dt_max)
     {}
 
     /// @param tol_abs the required absolute tolerance for the comparison with the Fehlberg approximation
@@ -146,7 +159,6 @@ public:
     /**
     * Adaptive step width of the integration
     * This method integrates a system of ODEs
-    * @param[in] params the params in the SEIR model
     * @param[in] yt value of y at t, y(t)
     * @param[in] f right hand side of ODE f(t,y)
     * @param[in] dtmin the minimum step size
@@ -155,8 +167,7 @@ public:
     * @param[inout] dt current time step h=dt
     * @param[out] ytp1 approximated value y(t+1)
     */
-    template <typename rhsDerivatives>
-    bool step(struct seirParam<T> const& params, std::vector<T> const& yt, rhsDerivatives f, const T dtmin, const T dtmax, T& t, T& dt, std::vector<T>& ytp1) const
+    bool step(std::vector<T> const& yt, T& t, T& dt, std::vector<T>& ytp1) const
     {
 
         T max_err = 1e10;
@@ -178,7 +189,7 @@ public:
                 kt_values[i].resize(yt.size()); // note: yt contains more than one variable since we solve a system of ODEs
 
                 if(i == 0) { // for i==0, we have kt_i=f(t,y(t))
-                    f(params, yt, t, kt_values[i]);
+                    f(yt, t, kt_values[i]);
                     // printf("\n\n t = %.4f\t kn1 = %.4f", t, kt_values[i][0]);
                 }
                 else {
@@ -201,7 +212,7 @@ public:
                     }
 
                     // get the derivatives, i.e., compute kt_i for all y at yt_eval: kt_i = f(t_eval, yt_eval)
-                    f(params, yt_eval, t_eval, kt_values[i]);
+                    f(yt_eval, t_eval, kt_values[i]);
 
                     // printf("\t kn%d = %.4f", i+1, kt_values[i][0]);
 
@@ -241,19 +252,19 @@ public:
             // sleep(1);
             conv_crit = m_abs_tol + max_val * m_rel_tol;
 
-            if(max_err <= conv_crit || dt < 2 * dtmin + 1e-6) {
+            if(max_err <= conv_crit || dt < 2 * m_dt_min + 1e-6) {
                 // if sufficiently exact, take 4th order approximation (do not take 5th order : Higher order is not always higher accuracy!)
                 for (size_t i = 0; i < yt.size(); i++) {
                     ytp1[i] = ytp1_low[i];
                 }
 
-                if(dt < 2 * dtmin + 1e-6) {
+                if(dt < 2 * m_dt_min + 1e-6) {
                     failed_step_size_adapt = true;
                 }
 
                 t += dt; // this is the t where ytp1 belongs to
 
-                if(max_err <= 0.03 * conv_crit && 2 * dt < dtmax) { // error of doubled step size is about 32 times as large
+                if(max_err <= 0.03 * conv_crit && 2 * dt < m_dt_max) { // error of doubled step size is about 32 times as large
                     dt = 2 * dt;
                 }
 
@@ -266,9 +277,11 @@ public:
     }
 
 private:
+    DerivFunction<T> f;
     tableau<T> m_tab;
     tableau_final<T> m_tab_final;
     T m_abs_tol, m_rel_tol;
+    T m_dt_min, m_dt_max;
 };
 
 #endif // ARK_H

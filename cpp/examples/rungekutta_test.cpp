@@ -15,32 +15,27 @@ void init_vectors(std::vector<std::vector<T> > &y, std::vector<std::vector<T> > 
 }
 
 
-/**
- * dummy function in style of  secir model-taylored adapt_rk
- * @tparam T the datatype of the cases
- */
-template <typename T>
-void getDerivatives(struct seirParam<T> const &params, std::vector<T> const &y, const T t, std::vector<T> &dydt)
-{
-  dydt[0] = std::cos(t);
-}
-
 // Test for y'(t) = cos(t)
 template <typename T>
 void integration_test(std::vector<std::vector<T> > &y, std::vector<std::vector<T> > &sol, size_t &n, T t, T dt, const T tmax, T& err)
 {
+    auto sine_deriv = [](std::vector<T> const &y, const T t, std::vector<T> &dydt)
+    {
+        dydt[0] = std::cos(t);
+    };
 
-    RKIntegrator<double> rkf45;
+    RKIntegrator<double> rkf45(sine_deriv, 1e-3, 1.0);
     rkf45.set_abs_tolerance(1e-7);
     rkf45.set_rel_tolerance(1e-7);
-    seirParam<double> params = seirParam<double>();
 
     sol[0][0] = std::sin(0);
+
 
     std::vector<T> f = std::vector<T>(1, 0);
     size_t i = 0; 
     double t_eval = t;
     // printf("\n t: %.8f\t sol %.8f\t rkf %.8f", t, sol[0][0], y[0][0]);
+
     while(t_eval-tmax < 1e-10) {
 
         if(i+1 >= sol.size())
@@ -51,7 +46,7 @@ void integration_test(std::vector<std::vector<T> > &y, std::vector<std::vector<T
 
         double dt_old = dt;
 
-        rkf45.step(params, y[i], getDerivatives<T>, 1e-3, 1.0, t_eval, dt, y[i + 1]); //
+        rkf45.step(y[i], t_eval, dt, y[i + 1]); //
 
         sol[i + 1][0] = std::sin(t_eval);
 
@@ -63,7 +58,6 @@ void integration_test(std::vector<std::vector<T> > &y, std::vector<std::vector<T
     }
 
     n=i;
-
 }
 
 int main()

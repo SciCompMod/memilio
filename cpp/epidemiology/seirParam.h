@@ -1,3 +1,6 @@
+#ifndef SEIR_PARAM
+#define SEIR_PARAM
+
 /**
  * This defined a damping factor for a
  * mitigation strategy for one point in time.
@@ -166,3 +169,5 @@ struct seirParam {
   }
     
 };
+
+#endif SEIR_PARAM
