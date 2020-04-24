@@ -30,8 +30,9 @@ template <typename T>
 void integration_test(std::vector<std::vector<T> > &y, std::vector<std::vector<T> > &sol, size_t &n, T t, T dt, const T tmax, T& err)
 {
 
-    tableau<double> rkf45_tableau = tableau<double>();
-    tableau_final<double> rkf45_tableau_final = tableau_final<double>();
+    RKIntegrator<double> rkf45;
+    rkf45.set_abs_tolerance(1e-7);
+    rkf45.set_rel_tolerance(1e-7);
     seirParam<double> params = seirParam<double>();
 
     sol[0][0] = std::sin(0);
@@ -50,7 +51,7 @@ void integration_test(std::vector<std::vector<T> > &y, std::vector<std::vector<T
 
         double dt_old = dt;
 
-        adapt_rk(rkf45_tableau, rkf45_tableau_final, params, y[i], getDerivatives<T>, 1e-7, 1e-7, 1e-3, 1.0, t_eval, dt, y[i + 1]); //     
+        rkf45.step(params, y[i], getDerivatives<T>, 1e-3, 1.0, t_eval, dt, y[i + 1]); //
 
         sol[i + 1][0] = std::sin(t_eval);
 

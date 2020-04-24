@@ -86,142 +86,177 @@ struct tableau_final{
   }
 };
  
- /**
+
+/**
+ * @brief
  * Two scheme Runge-Kutta numerical integrator with adaptive step width
  * This method integrates a system of ODEs
- * @param[in] tab Butcher tableau 
- * @param[in] tab_final coefficients for combination of k_{ni} in low and high order method (final row)
+ */
+template <typename T>
+class RKIntegrator
+{
+public:
+    RKIntegrator()
+        : m_abs_tol(1e-10), m_rel_tol(1e-5)
+    {}
+
+    /// @param tol_abs the required absolute tolerance for the comparison with the Fehlberg approximation
+    void set_abs_tolerance(T tol)
+    {
+        m_abs_tol = tol;
+    }
+
+    /// @param tol_rel the required relative tolerance for the comparison with the Fehlberg approximation
+    void set_rel_tolerance(T tol)
+    {
+        m_rel_tol = tol;
+    }
+
+    // Allow setting different RK tablea schemes
+    void set_tableaus(const tableau<T>& tab, const tableau_final<T>& final_tab)
+    {
+        m_tab = tab;
+        m_tab_final = final_tab;
+    }
+
+ /**
+ * Adaptive step width of the integration
+ * This method integrates a system of ODEs
  * @param[in] params the params in the SEIR model
  * @param[in] yt value of y at t, y(t)
  * @param[in] f right hand side of ODE f(t,y)
- * @param[in] tol_abs the required absolute tolerance for the comparison with the Fehlberg approximation
- * @param[in] tol_rel the required relative tolerance for the comparison with the Fehlberg approximation
  * @param[in] dtmin the minimum step size
  * @param[in] dtmax the maximum step size
  * @param[inout] t current time step h=dt
  * @param[inout] dt current time step h=dt
  * @param[out] ytp1 approximated value y(t+1)
  */
-template <typename T, typename rhsDerivatives>
-bool adapt_rk(struct tableau<T> const &tab, struct tableau_final<T> const &tab_final, struct seirParam<T> const& params, std::vector<T> const &yt, rhsDerivatives f, const T tol_abs, const T tol_rel, const T dtmin, const T dtmax, T &t, T &dt, std::vector<T> &ytp1) 
-{
-
-  T max_err = 1e10;
-  T conv_crit = 1e9;
-
-  std::vector<std::vector<T>> kt_values;
-
-  bool failed_step_size_adapt = false;
-
-  dt = 2*dt;
-
-  while(max_err > conv_crit && !failed_step_size_adapt)
-  {
-    dt = 0.5*dt;
-
-    kt_values.resize(0); // remove data from previous loop
-    kt_values.resize(tab_final.entries_low.size()); // these are the k_ni per y_t, used to compute y_t+1
-
-    for(size_t i=0;i<kt_values.size();i++) // we first compute k_n1 for each y_j, then k_n2 for each y_j, etc.
-    {
-      kt_values[i].resize(yt.size()); // note: yt contains more than one variable since we solve a system of ODEs
-
-      if(i==0) // for i==0, we have kt_i=f(t,y(t))
-      {
-          f(params, yt, t, kt_values[i]);
-          // printf("\n\n t = %.4f\t kn1 = %.4f", t, kt_values[i][0]);
-      }else{
-        
-        double t_eval = t;
-
-        t_eval += tab.entries[i-1][0] * dt; // t_eval = t + c_i * h // note: line zero of Butcher tableau not stored in array !
-
-        // printf("\n t = %.4f", t_eval);
-
-        std::vector<T> yt_eval(yt);
-
-        // go through the variables of the system: S, E, I, ....
-        for(size_t j=0;j<yt_eval.size();j++)
-        {
-          // go through the different kt_1, kt_2, ..., kt_i-1 and add them onto yt: y_eval = yt + h * \sum_{j=1}^{i-1} a_{i,j} kt_j
-          for(size_t k=1;k<tab.entries[i-1].size()-1;k++)
-          {
-            yt_eval[j] +=( dt * tab.entries[i-1][k] * kt_values[k-1][j] ); // note the shift in k and k-1 since the first column of 'tab' corresponds to 'b_i' and 'a_ij' starts with the second column
-          }
-            
-        }
-
-        // get the derivatives, i.e., compute kt_i for all y at yt_eval: kt_i = f(t_eval, yt_eval)
-        f(params, yt_eval, t_eval, kt_values[i]);
-
-        // printf("\t kn%d = %.4f", i+1, kt_values[i][0]);
-
-      }
-    
-    }
-
-    // copy actual yt to compare both new iterates
-    std::vector<T> ytp1_low(yt); // lower order approximation (e.g., order 4)
-    std::vector<T> ytp1_high(yt); // higher order approximation (e.g., order 5)
-
-    std::vector<T> err(yt.size(),0);
-    double max_val = 0;
-    max_err = 0;
-
-    for (size_t i=0;i<yt.size();i++) 
+    template <typename rhsDerivatives>
+    bool step(struct seirParam<T> const& params, std::vector<T> const &yt, rhsDerivatives f, const T dtmin, const T dtmax, T &t, T &dt, std::vector<T> &ytp1) const
     {
 
-        for(size_t j=0;j<kt_values.size();j++) // we first compute k_n1 for each y_j, then k_n2 for each y_j, etc.
-        {
-          ytp1_low[i] += (dt * tab_final.entries_low[j] * kt_values[j][i]);
-          ytp1_high[i] += (dt * tab_final.entries_high[j] * kt_values[j][i]);
-        }
+        T max_err = 1e10;
+        T conv_crit = 1e9;
 
+        std::vector<std::vector<T>> kt_values;
 
-      err[i] = 1/dt*std::abs(ytp1_low[i] - ytp1_high[i]); // divide by h=dt since the local error is one order higher than the global one
-      
-      // printf("\n i: %lu,\t err_abs %e, err_rel %e\n", i,  err[i], max_val);
-      if(err[i] > max_err)
-      {
-        max_err = err[i];
-      }
-      if(max_val < ytp1_low[i])
-      {
-        max_val = ytp1_low[i];
-      }
+        bool failed_step_size_adapt = false;
 
-    }
-
-    // printf("\n low %.8f\t high %.8f\t max_err: %.8f,\t val: %.8f,\t crit: %.8f,\t %d t: %.8f\t dt: %.8f ", ytp1_low[0], ytp1_high[0], max_err, max_val, tol_abs + max_val*tol_rel, max_err <= (tol_abs + max_val*tol_rel), t, dt);
-    // sleep(1);
-    conv_crit = tol_abs + max_val*tol_rel;
-
-    if(max_err <= conv_crit || dt < 2*dtmin + 1e-6)
-    {
-      // if sufficiently exact, take 4th order approximation (do not take 5th order : Higher order is not always higher accuracy!)
-      for (size_t i=0;i<yt.size();i++) 
-      {
-        ytp1[i] = ytp1_low[i];
-      } 
-
-      if(dt < 2*dtmin + 1e-6)
-      {
-        failed_step_size_adapt = true;
-      }
-
-      t += dt; // this is the t where ytp1 belongs to
-      
-      if(max_err <= 0.03*conv_crit && 2*dt < dtmax) // error of doubled step size is about 32 times as large
-      {
         dt = 2*dt;
-      }
+
+        while(max_err > conv_crit && !failed_step_size_adapt)
+        {
+            dt = 0.5*dt;
+
+            kt_values.resize(0); // remove data from previous loop
+            kt_values.resize(m_tab_final.entries_low.size()); // these are the k_ni per y_t, used to compute y_t+1
+
+            for(size_t i=0;i<kt_values.size();i++) // we first compute k_n1 for each y_j, then k_n2 for each y_j, etc.
+            {
+                kt_values[i].resize(yt.size()); // note: yt contains more than one variable since we solve a system of ODEs
+
+                if(i==0) // for i==0, we have kt_i=f(t,y(t))
+                {
+                    f(params, yt, t, kt_values[i]);
+                    // printf("\n\n t = %.4f\t kn1 = %.4f", t, kt_values[i][0]);
+                }else{
+
+                    double t_eval = t;
+
+                    t_eval += m_tab.entries[i-1][0] * dt; // t_eval = t + c_i * h // note: line zero of Butcher tableau not stored in array !
+
+                    // printf("\n t = %.4f", t_eval);
+
+                    std::vector<T> yt_eval(yt);
+
+                    // go through the variables of the system: S, E, I, ....
+                    for(size_t j=0;j<yt_eval.size();j++)
+                    {
+                        // go through the different kt_1, kt_2, ..., kt_i-1 and add them onto yt: y_eval = yt + h * \sum_{j=1}^{i-1} a_{i,j} kt_j
+                        for(size_t k=1;k<m_tab.entries[i-1].size()-1;k++)
+                        {
+                            yt_eval[j] +=( dt * m_tab.entries[i-1][k] * kt_values[k-1][j] ); // note the shift in k and k-1 since the first column of 'tab' corresponds to 'b_i' and 'a_ij' starts with the second column
+                        }
+
+                    }
+
+                    // get the derivatives, i.e., compute kt_i for all y at yt_eval: kt_i = f(t_eval, yt_eval)
+                    f(params, yt_eval, t_eval, kt_values[i]);
+
+                    // printf("\t kn%d = %.4f", i+1, kt_values[i][0]);
+
+                }
+
+            }
+
+            // copy actual yt to compare both new iterates
+            std::vector<T> ytp1_low(yt); // lower order approximation (e.g., order 4)
+            std::vector<T> ytp1_high(yt); // higher order approximation (e.g., order 5)
+
+            std::vector<T> err(yt.size(),0);
+            double max_val = 0;
+            max_err = 0;
+
+            for (size_t i=0;i<yt.size();i++)
+    {
+
+                for(size_t j=0;j<kt_values.size();j++) // we first compute k_n1 for each y_j, then k_n2 for each y_j, etc.
+                {
+                    ytp1_low[i] += (dt * m_tab_final.entries_low[j] * kt_values[j][i]);
+                    ytp1_high[i] += (dt * m_tab_final.entries_high[j] * kt_values[j][i]);
+                }
+
+
+                err[i] = 1/dt*std::abs(ytp1_low[i] - ytp1_high[i]); // divide by h=dt since the local error is one order higher than the global one
+
+                // printf("\n i: %lu,\t err_abs %e, err_rel %e\n", i,  err[i], max_val);
+                if(err[i] > max_err)
+                {
+                    max_err = err[i];
+                }
+                if(max_val < ytp1_low[i])
+                {
+                    max_val = ytp1_low[i];
+                }
+
+            }
+
+            // printf("\n low %.8f\t high %.8f\t max_err: %.8f,\t val: %.8f,\t crit: %.8f,\t %d t: %.8f\t dt: %.8f ", ytp1_low[0], ytp1_high[0], max_err, max_val, m_abs_tol + max_val*tol_rel, max_err <= (m_abs_tol + max_val*m_rel_tol), t, dt);
+            // sleep(1);
+            conv_crit = m_abs_tol + max_val*m_rel_tol;
+
+            if(max_err <= conv_crit || dt < 2*dtmin + 1e-6)
+            {
+                // if sufficiently exact, take 4th order approximation (do not take 5th order : Higher order is not always higher accuracy!)
+                for (size_t i=0;i<yt.size();i++)
+                {
+                    ytp1[i] = ytp1_low[i];
+                }
+
+                if(dt < 2*dtmin + 1e-6)
+                {
+                    failed_step_size_adapt = true;
+                }
+
+                t += dt; // this is the t where ytp1 belongs to
+
+                if(max_err <= 0.03*conv_crit && 2*dt < dtmax) // error of doubled step size is about 32 times as large
+                {
+                    dt = 2*dt;
+                }
+
+            }
+
+        }
+
+        return failed_step_size_adapt;
 
     }
 
-  }
-   
-  return failed_step_size_adapt;
-
-}
+private:
+    tableau<T> m_tab;
+    tableau_final<T> m_tab_final;
+    T m_abs_tol, m_rel_tol;
+};
 
 #endif // ARK_H

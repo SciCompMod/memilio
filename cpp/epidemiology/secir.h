@@ -166,8 +166,13 @@ template <typename T, typename rhsDerivatives>
 bool integrate_ark(struct tableau<T> const &tab, struct tableau_final<T> const &tab_final, struct seirParam<T> const& params, const std::vector<T>& y, rhsDerivatives const &f, const T tol_abs, const T tol_rel, const T dtmin, const T dtmax, T &t, T &dt, std::vector<T>& result)
 {
   bool failed_step_size_adapt = false;
-    
-  failed_step_size_adapt = adapt_rk(tab, tab_final, params, y, f, tol_abs, tol_rel, dtmin, dtmax, t, dt, result);
+
+  RKIntegrator<T> rk;
+  rk.set_tableaus(tab, tab_final);
+  rk.set_abs_tolerance(tol_abs);
+  rk.set_rel_tolerance(tol_rel);
+
+  failed_step_size_adapt = rk.step(params, y, f, dtmin, dtmax, t, dt, result);
 
   return failed_step_size_adapt;
 }
