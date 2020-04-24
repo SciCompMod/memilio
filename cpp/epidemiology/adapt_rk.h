@@ -1,10 +1,8 @@
 #ifndef ARK_H
 #define ARK_H
 
-#include <stdio.h>
-#include <stdlib.h>
+#include <cstdio>
 #include <vector>
-#include <unistd.h>
 
 #include <epidemiology/seirParam.h>
 
