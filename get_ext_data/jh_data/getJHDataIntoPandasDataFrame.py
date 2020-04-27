@@ -53,15 +53,12 @@ def main(get_data, read_data, make_plot):
    ########### Coutries ##########################
 
    gb = df.groupby( ['CountryRegion', 'Date']).agg({"Confirmed": sum, "Recovered": sum, "Deaths": sum})
-   gb_cs = gb.groupby(level=0).cumsum().reset_index()
 
-   #print(df)
+   #print(df[df.CountryRegion == "Germany"])
    #print(gb)
-   #print(gb_cs)
-   #print(gb.reset_index()[gb.reset_index().CountryRegion == "Afghanistan"])
-   #print(gb_cs[gb_cs.CountryRegion == "Afghanistan"])
+   #print(gb.reset_index()[gb.reset_index().CountryRegion == "Germany"])
 
-   gb_cs.to_json("all_countries.json", orient='records')
+   gb.reset_index().to_json("all_countries.json", orient='records', date_format='iso')
 
    # Check what about external provinces. Should they be added?
 
@@ -71,13 +68,11 @@ def main(get_data, read_data, make_plot):
    dfD = df[~df["ProvinceState"].isnull()]
 
    gb = dfD.groupby( ['CountryRegion', 'ProvinceState', 'Date']).agg({"Confirmed": sum, "Recovered": sum, "Deaths": sum})
-   gb_cs = gb.groupby(level=1).cumsum().reset_index()
 
-   gb_cs.to_json("all_provincestate.json", orient='records')
+   gb.reset_index().to_json("all_provincestate.json", orient='records', date_format='iso')
 
    #print(dfD[dfD.ProvinceState=="Saskatchewan"])
    #print(gb.reset_index()[gb.reset_index().ProvinceState=="Saskatchewan"])
-   #print(gb_cs[gb_cs.ProvinceState=="Saskatchewan"])
 
    # TODO: How to handle empty values which become NaN in the beginnin but after woking on the data its just 0.0
    # One solution is to preserve them with : df['b'] = df['b'].astype(str)
