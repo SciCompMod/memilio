@@ -3,9 +3,8 @@
 
 #include <cstdio>
 #include <vector>
-#include <functional>
 
-#include <epidemiology/seirParam.h>
+#include <epidemiology/integrator.h>
 
 /**
  * Two scheme Runge-Kutta numerical integrator with adaptive step width
@@ -113,12 +112,6 @@ struct tableau_final {
 
 
 /**
- * Function template to be integrated
- */
-template <typename T>
-using DerivFunction = std::function<void(std::vector<T> const &y, const T t, std::vector<T> &dydt)>;
-
-/**
  * @brief
  * Two scheme Runge-Kutta numerical integrator with adaptive step width
  * This method integrates a system of ODEs
@@ -160,9 +153,6 @@ public:
     * Adaptive step width of the integration
     * This method integrates a system of ODEs
     * @param[in] yt value of y at t, y(t)
-    * @param[in] f right hand side of ODE f(t,y)
-    * @param[in] dtmin the minimum step size
-    * @param[in] dtmax the maximum step size
     * @param[inout] t current time step h=dt
     * @param[inout] dt current time step h=dt
     * @param[out] ytp1 approximated value y(t+1)
@@ -272,7 +262,7 @@ public:
 
         }
 
-        return failed_step_size_adapt;
+        return !failed_step_size_adapt;
 
     }
 

@@ -170,4 +170,4 @@ struct seirParam {
     
 };
 
-#endif SEIR_PARAM
+#endif // SEIR_PARAM
