@@ -5,8 +5,9 @@
 #include <cmath>
 #include <cassert>
 #include <cstdio>
+#include <algorithm>
 
-// #include <epidemiology/euler.h>
+//#include <epidemiology/euler.h>
 #include <epidemiology/adapt_rk.h>
 #include <epidemiology/seirParam.h>
 
@@ -129,20 +130,6 @@ void secir_getDerivatives(struct seirParam<T> const &params, std::vector<T> cons
 
 }
   
-/**
- * Computes the values of S, E, I, and R at the current time step in the SEIR model
- * by using a numerical integration scheme (only explicit Euler at the moment)
- * @tparam T the datatype of the cases
- * @param[in] dydt the values of the time derivatives of S, E, I, and R
- * @param[in] dt the current time step
- * @param[in] y the vector of  S, E, I, and R values at t
- * @param[out] result the result vector of  S, E, I, and R values at t+1
- */
-template <typename T>
-void integrate_euler(const std::vector<T>& y, std::vector<T> const& dydt, const T dt, std::vector<T>& result)
-{
-    explicit_euler(y, dydt, dt, result);
-}
 
 
 /**
@@ -188,14 +175,20 @@ void simulate(const double t0, const double tmax, T dt, struct seirParam<T> cons
       return secir_getDerivatives<T>(params, y, t, dydt);
   };
 
-  #ifdef ARK_H
+#ifdef ARK_H
   T dtmin = 1e-3;
   T dtmax = 1.;
-  RKIntegrator<T> rkf45(secir_fun, dtmin, dtmax);
-  rkf45.set_abs_tolerance(1e-1);
-  rkf45.set_rel_tolerance(1e-4);
-  bool failed_step_size_adapt = false;
-  #endif
+  RKIntegrator<T> integrator(secir_fun, dtmin, dtmax);
+  integrator.set_abs_tolerance(1e-1);
+  integrator.set_rel_tolerance(1e-4);
+#endif
+#ifdef EULER_H
+  T dtmin = dt;
+  T dtmax = dt;
+  EulerIntegrator<T> integrator(secir_fun);
+#endif
+
+  bool step_okay = true;
 
   T t = t0;
   T t_prev = t0;
@@ -211,28 +204,17 @@ void simulate(const double t0, const double tmax, T dt, struct seirParam<T> cons
       }
     }
     t_prev = t;
-    if(t > tmax) // possible for adaptive step size
-    {
-      t = tmax;
-    }
+    t = std::min(t, tmax); // possible for adaptive step size
 
     // printf("%d\t", (int)seir[i][0]);
-    #ifdef EULER_H
-      secir_getDerivatives(params, seir[i], t, dydt);
-    #endif
 
-    #ifdef ARK_H
     if(i+1 >= seir.size())
     {
         std::vector<std::vector<T>> vecAppend(20, std::vector<T>(n_params,(T)0));
         seir.insert(seir.end(), vecAppend.begin(), vecAppend.end());
     }
-      failed_step_size_adapt = rkf45.step(seir[i], t, dt, seir[i+1]);
-    #elif defined EULER_H
-      integrate_euler(seir[i], dydt, dt, seir[i+1]);
-      t += dt;
-    #endif
-    
+    step_okay = integrator.step(seir[i], t, dt, seir[i+1]);
+
     i++;
   }
 
@@ -242,7 +224,7 @@ void simulate(const double t0, const double tmax, T dt, struct seirParam<T> cons
     seir.resize(i);
   }
 
-  if(!failed_step_size_adapt)
+  if(step_okay)
   {
     printf("\n Adaptive step sizing successful to tolerances.\n");
   }else{

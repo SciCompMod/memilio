@@ -50,13 +50,14 @@ TEST_F(TestVerifyNumericalIntegrator, euler_sine)
     sol[0][0] = std::sin(0);
     sol[n - 1][0] = std::sin((n - 1) * dt);
 
+    EulerIntegrator<double> euler([](std::vector<double> const &y, const double t, std::vector<double> &dydt) {
+        dydt[0] = std::cos(t);
+    });
 
     for(size_t i = 0; i < n - 1; i++) {
         sol[i + 1][0] = std::sin((i + 1) * dt);
 
-        f[0] = std::cos(i * dt);
-
-        explicit_euler(y[i], f, dt, y[i + 1]); //
+        euler.step(y[i], t, dt, y[i+1]);
 
         // printf("\n %.8f\t %.8f ", y[i + 1][0], sol[i + 1][0]);
 

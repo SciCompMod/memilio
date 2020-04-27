@@ -22,14 +22,15 @@ void integration_test(std::vector<std::vector<T> > &y, std::vector<std::vector<T
 
     sol[0][0] = std::sin(0);
     sol[n - 1][0] = std::sin((n - 1) * dt);
+    EulerIntegrator<T> euler([](std::vector<T> const &y, const T t, std::vector<T> &dydt) {
+        dydt[0] = std::cos(t);
+    });
 
-
+    T t = 0.;
     for(size_t i = 0; i < n - 1; i++) {
         sol[i + 1][0] = std::sin((i + 1) * dt);
 
-        f[0] = std::cos(i * dt);
-
-        explicit_euler(y[i], f, dt, y[i + 1]); //
+        euler.step(y[i], t, dt, y[i+1]);
 
 printf("\n %.8f\t %.8f", y[i + 1][0], sol[i + 1][0]);
         // printf("\n approx: %.4e, sol: %.4e, error %.4e", y[i+1][0], sol[i+1][0], err);

@@ -160,24 +160,6 @@ void seir_getDerivatives(struct seirParam<T> const& params, std::vector<T> const
 
 }
 
-/**
- * Computes the values of S, E, I, and R at the current time step in the SEIR model
- * by using a numerical integration scheme (only explicit Euler at the moment)
- * @tparam T the datatype of the cases
- * @param[in] dydt the values of the time derivatives of S, E, I, and R
- * @param[in] dt the current time step
- * @param[in] params SEIR Model parameters, created by seir_param
- * @param[in] y the vector of  S, E, I, and R values at t
- * @param[out] result the result vector of  S, E, I, and R values at t+1
- */
-template <typename T>
-void integrate_euler(const std::vector<T>& y, std::vector<T> const& dydt, const T dt, std::vector<T>& result)
-{
-    explicit_euler(y, dydt, dt, result);
-}
-
-
-
 
 /**
  * Computes the seir curve by integration
@@ -202,14 +184,14 @@ void simulate_seir(const T t0, const T tmax, const T dt, struct seirParam<T> con
 
     std::vector<T> dydt(4, 0);
 
+    EulerIntegrator<T> euler([&params](std::vector<T> const& y, const T t, std::vector<T>& dydt) {
+        return seir_getDerivatives(params, y, t, dydt);
+    });
+
     T t = t0;
+    T dt_temp = dt;
     for (size_t i = 0; i < nb_steps - 1; ++i) {
-
-        t = t0 + i*dt;
-
-        seir_getDerivatives(params, seir[i], t, dydt);
-
-        integrate_euler(seir[i], dydt, dt, seir[i+1]);
+        euler.step(seir[i], t, dt_temp, seir[i+1]);
     }
 }
 
