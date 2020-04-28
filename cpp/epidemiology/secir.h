@@ -197,6 +197,7 @@ std::vector<T> simulate(const double t0, const double tmax, T dt, struct seirPar
     {
         std::vector<std::vector<T>> vecAppend(20, std::vector<T>(n_params,(T)0));
         seir.insert(seir.end(), vecAppend.begin(), vecAppend.end());
+        vec_times.resize(vec_times.size() + 20, 0.);
     }
     step_okay = integrator.step(seir[i], t, dt, seir[i+1]);
     vec_times[i+1] = t;
