@@ -54,26 +54,6 @@ T getDampingFactor(std::vector<struct damping<T> > const& damping_array, T day)
     return damping_array[ilow].factor;
 }
 
-/**
- * prints given parameters
- * @param[in] params the seirParam parameter object
- */
-template <typename T>
-void printSeirParams(struct seirParam<T> const &params)
-{
-  if(params.model == 0)
-  {
-    printf("\n SEIR model set.\n Parameters:\n\t Time incubation:\t %.4f \n\t Time infectious:\t %.4f \n\t b:\t %.4f \n\t N:\t %d \n\t E0:\t %d \n\t I0:\t %d \n\t R0:\t %d\n", 
-          1.0/params.tinc_inv, 1.0/params.tinfmild_inv, params.b, (int)params.nb_total_t0, (int)params.nb_exp_t0, (int)params.nb_inf_t0, (int)params.nb_rec_t0);
-  }else{
-    printf("\n SECIR (SECIHURD) model set.\n Parameters:\n\t Time incubation:\t %.4f \n\t Time infectious (mild):\t %.4f \n\t Serial interval:\t %.4f \n\t Time hosp.->home:\t %.4f \n\t Time home->hosp.:\t %.4f \n\t Time hosp.->icu:\t %.4f \n\t Time infectious (asymp.):\t %.4f \n\t Time icu->death:\t\t %.4f\n\t contact freq.:\t %.4f \n\t alpha:\t %.4f \n\t beta:\t %.4f \n\t delta:\t %.4f \n\t rho:\t %.4f \n\t theta:\t %.4f \n\t N0:\t %d \n\t E0:\t %d \n\t C0:\t %d\n\t I0:\t %d \n\t H0:\t %d \n\t U0:\t %d \n\t R0:\t %d \n\t D0:\t %d\n\t Calculated R_0: %.4f\n",
-            1.0/params.tinc_inv, 1.0/params.tinfmild_inv, 1.0/params.tserint_inv,  1.0/params.thosp2home_inv, 1.0/params.thome2hosp_inv, 1.0/params.thosp2icu_inv, 1.0/params.tinfasy_inv, 1.0/params.ticu2death_inv, 
-            params.cont_freq, params.alpha, params.beta, params.delta, params.rho, params.theta, 
-            (int)params.nb_total_t0, (int)params.nb_exp_t0, (int)params.nb_car_t0, (int)params.nb_inf_t0, (int)params.nb_hosp_t0, (int)params.nb_icu_t0, (int)params.nb_rec_t0,  (int)params.nb_dead_t0,
-            params.base_reprod);
-  }
-}
-  
 
 /**
  * Computes the current time-derivative of S, E, I, and R in the SEIR model
@@ -139,9 +119,11 @@ void secir_getDerivatives(struct seirParam<T> const &params, std::vector<T> cons
  * @param[in] tmax end time of simulation
  * @param[in] dt initial time step
  * @param[in] params SEIR model parameters
+ *
+ * @returns Vector of times t
  */
 template <typename T>
-void simulate(const double t0, const double tmax, T dt, struct seirParam<T> const &params, std::vector<std::vector<T> > &seir)
+std::vector<T> simulate(const double t0, const double tmax, T dt, struct seirParam<T> const &params, std::vector<std::vector<T> > &seir)
 {
   size_t nb_steps = (int)(ceil((tmax-t0) / dt)); // estimated number of time steps (if equidistant)
 
@@ -149,6 +131,8 @@ void simulate(const double t0, const double tmax, T dt, struct seirParam<T> cons
 
   size_t n_params = params.model == 0 ? 4 : 8;
   seir = std::vector<std::vector<T>>(nb_steps+1, std::vector<T>(n_params,(T)0)); // prepare memory for equidistant step size
+  std::vector<T> vec_times(nb_steps+1, 0.);
+
   dydt = std::vector<T>(n_params,0);
 
   if(params.model == 0)
@@ -193,6 +177,7 @@ void simulate(const double t0, const double tmax, T dt, struct seirParam<T> cons
   T t = t0;
   T t_prev = t0;
   size_t i = 0;
+  vec_times[0] = t0;
   while(t_prev < tmax)
   {
     if(t > tmax) // possible for adaptive step size
@@ -214,6 +199,7 @@ void simulate(const double t0, const double tmax, T dt, struct seirParam<T> cons
         seir.insert(seir.end(), vecAppend.begin(), vecAppend.end());
     }
     step_okay = integrator.step(seir[i], t, dt, seir[i+1]);
+    vec_times[i+1] = t;
 
     i++;
   }
@@ -222,6 +208,7 @@ void simulate(const double t0, const double tmax, T dt, struct seirParam<T> cons
   if(seir.size() > i)
   {
     seir.resize(i);
+    vec_times.resize(i);
   }
 
   if(step_okay)
@@ -230,6 +217,8 @@ void simulate(const double t0, const double tmax, T dt, struct seirParam<T> cons
   }else{
     printf("\n Adaptive step sizing failed.");
   }
+
+  return vec_times;
 
 }
 #endif // SECIR_H

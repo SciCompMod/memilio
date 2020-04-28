@@ -307,8 +307,7 @@ def main(get_data, read_data, make_plot):
    gbAllACounty_cs.to_json("all_county_age.json", orient='records')
 
 
-if __name__ == "__main__":
-
+def cli():
    GET_DATA = True
    READ_DATA = False
    MAKE_PLOT = True
@@ -340,3 +339,6 @@ if __name__ == "__main__":
              print("Warning: your argument:", arg, "is ignored.")
 
    main(GET_DATA, READ_DATA, MAKE_PLOT)
+
+if __name__ == "__main__":
+    cli()
