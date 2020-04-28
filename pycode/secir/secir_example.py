@@ -40,6 +40,11 @@ def plot_secir():
                        cont_freq, alpha, beta, delta, rho, theta,
                        nb_total_t0, nb_exp_t0, nb_car_t0, nb_inf_t0, nb_hosp_t0, nb_icu_t0, nb_rec_t0, nb_dead_t0)
 
+    # emulate some mitigations
+    params.add_damping(Damping(23., 0.8))
+    params.add_damping(Damping(25., 0.75))
+    params.add_damping(Damping(27., 0.7))
+
     print_seir_params(params)
 
     # run the simulation
