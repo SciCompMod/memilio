@@ -8,25 +8,21 @@
 
 #include <epidemiology/euler.h>
 
-
 /**
  * This defined a damping factor for a
  * mitigation strategy for one point in time.
  */
-template <typename T>
-struct damping {
+template <typename T> struct damping {
     T day;
     T factor;
 
     damping(T day_in, T factor_in)
     {
 
-        day = day_in;
+        day    = day_in;
         factor = factor_in;
-
     }
 };
-
 
 /**
  * Returns the damping factor
@@ -34,11 +30,10 @@ struct damping {
  * @param[in] damping_array Array of dampings
  * @param[in] t Current day
  */
-template <typename T>
-T getDampingFactor(std::vector<struct damping<T> > const& damping_array, T day)
+template <typename T> T getDampingFactor(std::vector<struct damping<T>> const& damping_array, T day)
 {
     // we assume, that the data_array is ordered in ascending order
-    size_t ilow = 0;
+    size_t ilow  = 0;
     size_t ihigh = damping_array.size() - 1;
 
     // check extrapolation cases
@@ -56,7 +51,7 @@ T getDampingFactor(std::vector<struct damping<T> > const& damping_array, T day)
         if (damping_array[ilow].day <= day && day < damping_array[imid].day) {
             ihigh = imid;
         }
-        else if(damping_array[imid].day <= day && day < damping_array[ihigh].day) {
+        else if (damping_array[imid].day <= day && day < damping_array[ihigh].day) {
             ilow = imid;
         }
         else {
@@ -70,14 +65,12 @@ T getDampingFactor(std::vector<struct damping<T> > const& damping_array, T day)
     return damping_array[ilow].factor;
 }
 
-
-template <typename T>
-struct seirParam {
+template <typename T> struct seirParam {
 
     T a, b, g, N, E0, I0, R0;
 
     // This defines a damping factor for a mitigation strategy for different points in time.
-    std::vector<damping<T> > dampings;
+    std::vector<damping<T>> dampings;
 
     seirParam()
     {
@@ -98,7 +91,6 @@ struct seirParam {
         // List of damping initially empty
         dampings.push_back(damping<T>(0, 1.0));
     }
-
 
     seirParam(T a_in, T b_in, T g_in, T N_in, T E0_in, T I0_in, T R0_in)
     {
@@ -124,19 +116,18 @@ struct seirParam {
     {
         dampings.clear();
     }
-
 };
 
 /**
  * prints given parameters
  * @param[in] params the seirParam parameter object
  */
-template <typename T>
-void printSeirParams(struct seirParam<T> const& params)
+template <typename T> void printSeirParams(struct seirParam<T> const& params)
 {
-    printf("\n Parameters set:\n\t a:\t %.4f \n\t b:\t %.4f \n\t g:\t %.4f \n\t N:\t %d \n\t E0:\t %d \n\t I0:\t %d \n\t R0:\t %d\n", params.a, params.b, params.g, (int)params.N, (int)params.E0, (int)params.I0, (int)params.R0);
+    printf("\n Parameters set:\n\t a:\t %.4f \n\t b:\t %.4f \n\t g:\t %.4f \n\t N:\t %d \n\t E0:\t %d \n\t I0:\t %d "
+           "\n\t R0:\t %d\n",
+           params.a, params.b, params.g, (int)params.N, (int)params.E0, (int)params.I0, (int)params.R0);
 }
-
 
 /**
  * Computes the current time-derivative of S, E, I, and R in the SEIR model
@@ -151,15 +142,13 @@ void seir_getDerivatives(struct seirParam<T> const& params, std::vector<T> const
 {
 
     T b_eff = params.b * getDampingFactor(params.dampings, t);
-    T divN = 1.0 / params.N;
+    T divN  = 1.0 / params.N;
 
     dydt[0] = -b_eff * y[0] * y[2] * divN;
-    dydt[1] =  b_eff * y[0] * y[2] * divN - params.a * y[1];
-    dydt[2] =  params.a * y[1] - params.g * y[2];
-    dydt[3] =  params.g * y[2];
-
+    dydt[1] = b_eff * y[0] * y[2] * divN - params.a * y[1];
+    dydt[2] = params.a * y[1] - params.g * y[2];
+    dydt[3] = params.g * y[2];
 }
-
 
 /**
  * Computes the seir curve by integration
@@ -170,11 +159,12 @@ void seir_getDerivatives(struct seirParam<T> const& params, std::vector<T> const
  * @param[in] params SEIR model parameters
  */
 template <typename T>
-void simulate_seir(const T t0, const T tmax, const T dt, struct seirParam<T> const& params, std::vector<std::vector<T> >& seir)
+void simulate_seir(const T t0, const T tmax, const T dt, struct seirParam<T> const& params,
+                   std::vector<std::vector<T>>& seir)
 {
     size_t nb_steps = (int)(ceil((tmax - t0) / dt)); // estimated number of time steps (if equidistant)
 
-    seir = std::vector<std::vector<T> >(nb_steps, std::vector<T>(4, (T)0)); // prepare memory for equidistant step size
+    seir = std::vector<std::vector<T>>(nb_steps, std::vector<T>(4, (T)0)); // prepare memory for equidistant step size
 
     //initial conditions
     seir[0][0] = params.N - params.E0 - params.I0 - params.R0;
@@ -184,11 +174,11 @@ void simulate_seir(const T t0, const T tmax, const T dt, struct seirParam<T> con
 
     std::vector<T> dydt(4, 0);
 
-    EulerIntegrator<T> euler([&params](std::vector<T> const & y, const T t, std::vector<T>& dydt) {
+    EulerIntegrator<T> euler([&params](std::vector<T> const& y, const T t, std::vector<T>& dydt) {
         return seir_getDerivatives(params, y, t, dydt);
     });
 
-    T t = t0;
+    T t       = t0;
     T dt_temp = dt;
     for (size_t i = 0; i < nb_steps - 1; ++i) {
         euler.step(seir[i], t, dt_temp, seir[i + 1]);

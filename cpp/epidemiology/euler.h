@@ -7,8 +7,7 @@
 /**
  * @brief Simple explicit euler integration y(t+1) = y(t) + h*f(t,y) for ODE y'(t) = f(t,y)
  */
-template <typename T>
-class EulerIntegrator
+template <typename T> class EulerIntegrator
 {
 public:
     /**
@@ -17,7 +16,8 @@ public:
      */
     EulerIntegrator(DerivFunction<T> func)
         : f(func)
-    {}
+    {
+    }
 
     /**
     * Adaptive step width of the integration

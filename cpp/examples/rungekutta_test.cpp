@@ -6,22 +6,18 @@
 #include <epidemiology/euler.h>
 #include <epidemiology/adapt_rk.h>
 
-
-template <typename T>
-void init_vectors(std::vector<std::vector<T> >& y, std::vector<std::vector<T> >& sol, size_t n)
+template <typename T> void init_vectors(std::vector<std::vector<T>>& y, std::vector<std::vector<T>>& sol, size_t n)
 {
-    y = std::vector<std::vector<T> >(n, std::vector<T>(1, 0));
-    sol = std::vector<std::vector<T> >(n, std::vector<T>(1, 0));
+    y   = std::vector<std::vector<T>>(n, std::vector<T>(1, 0));
+    sol = std::vector<std::vector<T>>(n, std::vector<T>(1, 0));
 }
-
 
 // Test for y'(t) = cos(t)
 template <typename T>
-void integration_test(std::vector<std::vector<T> >& y, std::vector<std::vector<T> >& sol, size_t& n, T t, T dt, const T tmax, T& err)
+void integration_test(std::vector<std::vector<T>>& y, std::vector<std::vector<T>>& sol, size_t& n, T t, T dt,
+                      const T tmax, T& err)
 {
-    auto sine_deriv = [](std::vector<T> const & y, const T t, std::vector<T>& dydt) {
-        dydt[0] = std::cos(t);
-    };
+    auto sine_deriv = [](std::vector<T> const& y, const T t, std::vector<T>& dydt) { dydt[0] = std::cos(t); };
 
     RKIntegrator<double> rkf45(sine_deriv, 1e-3, 1.0);
     rkf45.set_abs_tolerance(1e-7);
@@ -29,15 +25,14 @@ void integration_test(std::vector<std::vector<T> >& y, std::vector<std::vector<T
 
     sol[0][0] = std::sin(0);
 
-
     std::vector<T> f = std::vector<T>(1, 0);
-    size_t i = 0;
-    double t_eval = t;
+    size_t i         = 0;
+    double t_eval    = t;
     // printf("\n t: %.8f\t sol %.8f\t rkf %.8f", t, sol[0][0], y[0][0]);
 
-    while(t_eval - tmax < 1e-10) {
+    while (t_eval - tmax < 1e-10) {
 
-        if(i + 1 >= sol.size()) {
+        if (i + 1 >= sol.size()) {
             sol.push_back(std::vector<T>(1, 0));
             y.push_back(std::vector<T>(1, 0));
         }
@@ -60,16 +55,16 @@ void integration_test(std::vector<std::vector<T> >& y, std::vector<std::vector<T
 
 int main()
 {
-    std::vector<std::vector<double> > y;
-    std::vector<std::vector<double> > sol;
+    std::vector<std::vector<double>> y;
+    std::vector<std::vector<double>> sol;
 
     const double pi = std::acos(-1);
 
-    size_t n = 10;
-    double t0 = 0;
+    size_t n    = 10;
+    double t0   = 0;
     double tmax = 2 * pi;
-    double dt = (tmax - t0) / n;
-    double err = 0;
+    double dt   = (tmax - t0) / n;
+    double err  = 0;
 
     init_vectors(y, sol, n);
 

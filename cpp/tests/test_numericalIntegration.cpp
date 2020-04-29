@@ -16,45 +16,40 @@ void sin_deriv(std::vector<double> const& y, const double t, std::vector<double>
 class TestVerifyNumericalIntegrator : public testing::Test
 {
 protected:
-
     void SetUp() override
     {
-        t = 0.;
+        t    = 0.;
         tmax = 2 * std::acos(-1); // 2PI
-        err = 0;
+        err  = 0;
     }
 
 public:
-
-    std::vector<std::vector<double> > y;
-    std::vector<std::vector<double> > sol;
+    std::vector<std::vector<double>> y;
+    std::vector<std::vector<double>> sol;
 
     double t;
     double tmax;
     size_t n;
     double dt;
     double err;
-
 };
-
 
 TEST_F(TestVerifyNumericalIntegrator, euler_sine)
 {
-    n = 1000;
-    dt = (tmax - t) / n;
-    y = std::vector<std::vector<double>>(n, std::vector<double>(1, 0));
+    n   = 1000;
+    dt  = (tmax - t) / n;
+    y   = std::vector<std::vector<double>>(n, std::vector<double>(1, 0));
     sol = std::vector<std::vector<double>>(n, std::vector<double>(1, 0));
 
     std::vector<double> f = std::vector<double>(1, 0);
 
-    sol[0][0] = std::sin(0);
+    sol[0][0]     = std::sin(0);
     sol[n - 1][0] = std::sin((n - 1) * dt);
 
-    EulerIntegrator<double> euler([](std::vector<double> const & y, const double t, std::vector<double>& dydt) {
-        dydt[0] = std::cos(t);
-    });
+    EulerIntegrator<double> euler(
+        [](std::vector<double> const& y, const double t, std::vector<double>& dydt) { dydt[0] = std::cos(t); });
 
-    for(size_t i = 0; i < n - 1; i++) {
+    for (size_t i = 0; i < n - 1; i++) {
         sol[i + 1][0] = std::sin((i + 1) * dt);
 
         euler.step(y[i], t, dt, y[i + 1]);
@@ -62,23 +57,19 @@ TEST_F(TestVerifyNumericalIntegrator, euler_sine)
         // printf("\n %.8f\t %.8f ", y[i + 1][0], sol[i + 1][0]);
 
         err += std::pow(std::abs(y[i + 1][0] - sol[i + 1][0]), 2.0);
-
     }
 
     err = std::sqrt(err) / n;
 
     EXPECT_NEAR(err, 0.0, 1e-3);
-
 }
-
-
 
 TEST_F(TestVerifyNumericalIntegrator, runge_kutta_fehlberg45_sine)
 {
 
-    n = 10;
-    dt = (tmax - t) / n;
-    y = std::vector<std::vector<double>>(n, std::vector<double>(1, 0));
+    n   = 10;
+    dt  = (tmax - t) / n;
+    y   = std::vector<std::vector<double>>(n, std::vector<double>(1, 0));
     sol = std::vector<std::vector<double>>(n, std::vector<double>(1, 0));
 
     RKIntegrator<double> rkf45(sin_deriv, 1e-3, 1.0);
@@ -87,12 +78,12 @@ TEST_F(TestVerifyNumericalIntegrator, runge_kutta_fehlberg45_sine)
 
     sol[0][0] = std::sin(0);
 
-    size_t i = 0;
+    size_t i      = 0;
     double t_eval = t;
     // printf("\n t: %.8f\t sol %.8f\t rkf %.8f", t, sol[0][0], y[0][0]);
-    while(t_eval - tmax < 1e-10) {
+    while (t_eval - tmax < 1e-10) {
 
-        if(i + 1 >= sol.size()) {
+        if (i + 1 >= sol.size()) {
             sol.push_back(std::vector<double>(1, 0));
             y.push_back(std::vector<double>(1, 0));
         }
@@ -115,5 +106,4 @@ TEST_F(TestVerifyNumericalIntegrator, runge_kutta_fehlberg45_sine)
     err = std::sqrt(err) / n;
 
     EXPECT_NEAR(err, 0.0, 1e-7);
-
 }
