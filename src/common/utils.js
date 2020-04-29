@@ -1,9 +1,12 @@
-import * as d3 from 'd3';
+export const groupBy = (list, key) => {
+  return list.reduce(function (groups, item) {
+    const val = item[key];
+    groups[val] = groups[val] || [];
+    groups[val].push(item);
+    return groups;
+  }, {});
+};
 
-const timeParser = d3.timeParse('%d.%m.%Y');
-
-function parseTime(date_string) {
-  return timeParser(date_string);
-}
-
-export { parseTime };
+export const reduceBy = (list, key) => {
+  return;
+};

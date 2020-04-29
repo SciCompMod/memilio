@@ -4,12 +4,19 @@ body {
     sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  overflow: hidden;
 }
 
 code {
   font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
     monospace;
+}
+
+.loading-spinner {
+  font-size: 5rem;
+  position: absolute;
+  top: 50vh;
+  left: 50vw;
+  margin: -2.5rem 0 0 -2.5rem;
 }
 
 @font-face {

@@ -14,9 +14,10 @@
     "contactrate": "Kontaktrate (Tage)",
     "incubation": "Inkubationszeit (Tage)",
     "infection": "Infektionszeit (Tage)",
+    "i0": "Infizierte Personen",
     "recovered": "Genesene Personen",
     "exposed": "Gefährdete Personen",
-    "i0": "Infizierte Personen"
+    "infected": "Infizierte Personen"
   },
   "dateFormat": "dd.MM.yyyy"
 }

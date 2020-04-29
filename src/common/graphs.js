@@ -2,7 +2,6 @@ import * as d3 from 'd3';
 
 class Graphs {
   constructor(node) {
-    //console.log(node.clientWidth, node.clientHeight);
     this.formatTime = d3.timeFormat('%d.%m.%Y'); // this is actually a function... formatTime(d)
     this.data_read = [];
 
@@ -19,7 +18,7 @@ class Graphs {
     this.selectLineTooltip = [];
     this.selectLineCircle = [];
 
-    this.margin_top = 300;
+    this.margin_top = 350;
     this.margin_bottom = 50;
     this.margin_vertical = this.margin_top + this.margin_bottom;
     this.margin_horizontal = 200;
@@ -29,8 +28,6 @@ class Graphs {
     this.svg_graphs = d3.select(node);
 
     this.svg_graphs.attr('width', this.width).attr('height', this.height);
-
-    console.log(this.width, this.height);
 
     this.heightMini = this.margin_top / 4;
 
@@ -667,7 +664,7 @@ class Graphs {
       action.intervals.forEach((interval, index_j) => {
         let start = this.xScaleMini(new Date(interval.start));
         let end = this.xScaleMini(new Date(interval.end));
-        console.log(start, end);
+
         this.g[2]
           .append('rect')
           .attr('class', action.id)

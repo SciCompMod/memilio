@@ -1,61 +1,29 @@
 import React, { Component } from 'react';
 import { connect } from 'react-redux';
-import {
-  Container,
-  Row,
-  Col,
-  TabContent,
-  TabPane,
-  Nav,
-  NavLink,
-  NavItem
-} from 'reactstrap';
 import { withTranslation } from 'react-i18next';
-import axios from 'axios';
 
-import Map from './components/Map/Map';
-import Measures from './components/Measures/Measures';
-import Parameters from './components/Parameters/Parameters';
-import Graphs from './components/Graphs/Graphs';
+import GridLayout from './components/GridLayout';
 
-import { initializeState } from './redux/app';
+import { initializeApp, fetchData } from './redux/app';
 
 import './App.scss';
 
 class App extends Component {
   constructor(props) {
     super(props);
-    this.state = {
-      active: this.props.active || 1
-    };
-
-    this.data = {};
+    this.state = {};
   }
 
   componentDidMount() {
-    this.props.initializeState();
-
-    /*
-    axios.all([
-      axios.get("assets/all_state.json"),
-      axios.get("assets/all_county.json")
-
-    ])
-    
-      .then(response => {
-        const {data} = response;
-        console.log(data);
-      });
-      */
-  }
-
-  toggle(tab) {
-    this.setState({
-      active: tab
-    });
+    this.props.initializeApp();
+    //this.props.fetchData();
   }
 
   render() {
+    return <GridLayout />;
+  }
+
+  /* render() {
     const { t } = this.props;
     return (
       <Container fluid className="wrapper">
@@ -133,7 +101,9 @@ class App extends Component {
         </Row>
       </Container>
     );
-  }
+  } */
 }
 
-export default connect(null, { initializeState })(withTranslation()(App));
+export default connect(null, { initializeApp, fetchData })(
+  withTranslation()(App)
+);

@@ -5,13 +5,15 @@ import App from './App';
 import store from './redux/store';
 import * as serviceWorker from './serviceWorker';
 
+import { Spinner } from 'reactstrap';
+
 import './i18n';
 
 import './index.css';
 
 ReactDOM.render(
   <Provider store={store}>
-    <Suspense fallback="loading">
+    <Suspense fallback={<Spinner color="white" className="loading-spinner" />}>
       <App />
     </Suspense>
   </Provider>,
