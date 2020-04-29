@@ -121,7 +121,7 @@ public:
      * @param dt_min Mininum time step
      * @param dt_max Maximum time step
      */
-    RKIntegrator(DerivFunction<T> func, T dt_min, T dt_max)
+    RKIntegrator(DerivFunction func, T dt_min, T dt_max)
         : f(func)
         , m_abs_tol(1e-10)
         , m_rel_tol(1e-5)
@@ -272,7 +272,7 @@ public:
     }
 
 private:
-    DerivFunction<T> f;
+    DerivFunction f;
     tableau<T> m_tab;
     tableau_final<T> m_tab_final;
     T m_abs_tol, m_rel_tol;

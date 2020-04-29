@@ -4,17 +4,20 @@
 #include <vector>
 #include <epidemiology/integrator.h>
 
+namespace epi
+{
+
 /**
  * @brief Simple explicit euler integration y(t+1) = y(t) + h*f(t,y) for ODE y'(t) = f(t,y)
  */
-template <typename T> class EulerIntegrator
+class EulerIntegrator
 {
 public:
     /**
      * @brief Setting up the integrator
      * @param func The right hand side of the ODE
      */
-    EulerIntegrator(DerivFunction<T> func)
+    EulerIntegrator(DerivFunction func)
         : f(func)
     {
     }
@@ -27,19 +30,12 @@ public:
     * @param[inout] dt current time step h=dt
     * @param[out] ytp1 approximated value y(t+1)
     */
-    bool step(std::vector<T> const& yt, T& t, T& dt, std::vector<T>& ytp1) const
-    {
-        // we are misusing the next step y as temporary space to store the derivative
-        f(yt, t, ytp1);
-        for (size_t i = 0; i < yt.size(); i++) {
-            ytp1[i] = yt[i] + dt * ytp1[i];
-        }
-        t += dt;
-        return true;
-    }
+    bool step(std::vector<double> const& yt, double& t, double& dt, std::vector<double>& ytp1) const;
 
 private:
-    DerivFunction<T> f;
+    DerivFunction f;
 };
+
+} // namespace epi
 
 #endif // EULER_H

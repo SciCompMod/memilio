@@ -46,7 +46,7 @@ TEST_F(TestVerifyNumericalIntegrator, euler_sine)
     sol[0][0]     = std::sin(0);
     sol[n - 1][0] = std::sin((n - 1) * dt);
 
-    EulerIntegrator<double> euler(
+    epi::EulerIntegrator euler(
         [](std::vector<double> const& y, const double t, std::vector<double>& dydt) { dydt[0] = std::cos(t); });
 
     for (size_t i = 0; i < n - 1; i++) {

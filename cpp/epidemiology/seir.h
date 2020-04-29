@@ -174,7 +174,7 @@ void simulate_seir(const T t0, const T tmax, const T dt, struct seirParam<T> con
 
     std::vector<T> dydt(4, 0);
 
-    EulerIntegrator<T> euler([&params](std::vector<T> const& y, const T t, std::vector<T>& dydt) {
+    epi::EulerIntegrator euler([&params](std::vector<T> const& y, const T t, std::vector<T>& dydt) {
         return seir_getDerivatives(params, y, t, dydt);
     });
 

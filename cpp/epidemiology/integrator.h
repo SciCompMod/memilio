@@ -7,7 +7,6 @@
 /**
  * Function template to be integrated
  */
-template <typename T>
-using DerivFunction = std::function<void(std::vector<T> const& y, const T t, std::vector<T>& dydt)>;
+using DerivFunction = std::function<void(std::vector<double> const& y, const double t, std::vector<double>& dydt)>;
 
 #endif // INTEGRATOR_H
