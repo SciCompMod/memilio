@@ -199,7 +199,7 @@ class Measure extends Component {
     const t = this.props.t;
     const dateformat = t('dateFormat');
     return (
-      <div className="measure px-3 mb-2">
+      <div className="measure ">
         <CustomInput
           type="switch"
           id={m.label}
@@ -207,7 +207,7 @@ class Measure extends Component {
           onChange={(event) => this.toggle(event)}
           className="d-inline"
         />
-        <span className="h6 ml-0">{t(m.label)}</span>
+        <span className="h3 ml-0">{t(m.label)}</span>
         {this.state.active ? (
           <Button
             onClick={() => this.newInterval()}
@@ -225,7 +225,7 @@ class Measure extends Component {
             {m.intervals.map((interval, i) => {
               return (
                 <div className="interval" key={interval.id}>
-                  <span className="h6">
+                  <span className="h4">
                     {format(interval.start, dateformat)} -{' '}
                     {format(interval.end, dateformat)}
                   </span>
@@ -258,12 +258,12 @@ class Measures extends Component {
     const { t } = this.props;
     return (
       <div className="measures">
-        <h5 className="p-2 border-bottom border-secondary">
-          {t('measures.title')}
-        </h5>
-        {this.props.measures.map((m, i) => {
-          return <TranslatedMeasure key={i} data={m} />;
-        })}
+        <div className="header">{t('measures.title')}</div>
+        <div className="content">
+          {this.props.measures.map((m, i) => {
+            return <TranslatedMeasure key={i} data={m} />;
+          })}
+        </div>
       </div>
     );
   }

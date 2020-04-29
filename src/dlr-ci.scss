@@ -49,3 +49,33 @@ $theme-colors: (
 
 @import '~bootstrap/scss/bootstrap.scss';
 @import '~@fortawesome/fontawesome-free/css/all.min.css';
+
+h1,
+.h1 {
+  font-size: 1.5rem;
+}
+
+h2,
+.h2 {
+  font-size: 1.25rem;
+}
+
+h3,
+.h3 {
+  font-size: 1rem;
+}
+
+h4,
+.h4 {
+  font-size: 0.75rem;
+}
+
+h5,
+.h5 {
+  font-size: 0.5rem;
+}
+
+h6,
+.h6 {
+  font-size: 0.25rem;
+}

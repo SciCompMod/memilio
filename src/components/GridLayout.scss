@@ -1,6 +1,6 @@
-@import '../dlr-ci.scss';
 @import '~bootstrap/scss/bootstrap.scss';
-@import '~@fortawesome/fontawesome-free/scss/fontawesome.scss';
+@import '../dlr-ci.scss';
+//@import '~@fortawesome/fontawesome-free/scss/fontawesome.scss';
 
 body {
   @extend .bg-gray-light;
@@ -46,8 +46,28 @@ header {
 
 .grid-box {
   @extend .bg-white;
-  overflow: auto;
   position: relative;
+  overflow: hidden;
+  height: 100%;
+
+  .header {
+    @extend .h2;
+    @extend .p-2;
+    @extend .border-bottom;
+    @extend .border-primary;
+  }
+
+  .content {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    width: 100%;
+    overflow: auto;
+    margin-top: 2.6em;
+    margin-bottom: 10px;
+    @extend .border-bottom;
+    @extend .border-gray-light;
+  }
 
   .grid-draggable-handle {
     position: absolute;

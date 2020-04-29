@@ -6,6 +6,10 @@ import axios from 'axios';
 const slice = createSlice({
   name: 'app',
   initialState: {
+    selected: {
+      dataset: 'states.all',
+      entry: 'Bayern'
+    },
     states: {
       all: [],
       gender: [],
@@ -24,7 +28,7 @@ const slice = createSlice({
     setStateData: (state, action) => {
       const [all, age, gender] = action.payload;
       state.states = { all, gender, age };
-      console.log(groupBy(age, 'Altersgruppe'));
+      //console.log(groupBy(age, 'Altersgruppe'));
     },
     setCountyData: (state, action) => {
       const [all, age, gender] = action.payload;
@@ -62,6 +66,13 @@ export const fetchData = () => async (dispatch) => {
   ]);
 
   dispatch(setCountyData(county));
+};
+
+export const getSelectedData = (state) => {
+  const { selected, ...s } = state.app;
+  const [a, b] = selected.dataset.split('.');
+
+  return s[a][b].filter((e) => selected.entry == e.Bundesland);
 };
 
 export default slice.reducer;

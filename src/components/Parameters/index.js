@@ -48,7 +48,7 @@ class Parameter extends Component {
         return (
           <FormGroup row className="m-0 mb-2">
             <Col xs="2" className="p-0 pr-1">
-              <div className="border border-dark rounded-lg p-1 text-center">
+              <div className="h4 border border-dark rounded-lg p-1 text-center">
                 {this.state.value}
               </div>
             </Col>
@@ -87,7 +87,7 @@ class Parameter extends Component {
     const { t } = this.props;
     return (
       <div className="parameter">
-        <Label className="h6 m-0">{t(this.props.parameter.label)}</Label>
+        <Label className="h3 m-0">{t(this.props.parameter.label)}</Label>
         {this.renderInput()}
       </div>
     );
@@ -126,14 +126,14 @@ class Parameters extends Component {
     const { t } = this.props;
     return (
       <div className="parameters">
-        <h5 className="p-2 border-bottom border-secondary">
-          {t('parameters.title')}
-        </h5>
-        <form className="parameter" onSubmit={this.handleSubmit}>
-          {this.state.parameters.map((p) => {
-            return <TransletedParameter key={p.name} parameter={p} />;
-          })}
-        </form>
+        <div className="header">{t('parameters.title')}</div>
+        <div className="content">
+          <form className="parameter" onSubmit={this.handleSubmit}>
+            {this.state.parameters.map((p) => {
+              return <TransletedParameter key={p.name} parameter={p} />;
+            })}
+          </form>
+        </div>
       </div>
     );
   }

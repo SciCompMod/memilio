@@ -3,17 +3,43 @@ import { connect } from 'react-redux';
 import { withTranslation } from 'react-i18next';
 import { scaleTime } from 'd3-scale';
 import { timeFormat } from 'd3-time-format';
+import * as d3_time from 'd3-time';
+import * as d3_scale from 'd3-scale';
+
+import * as moment from 'moment';
 
 import ResponsiveXYFrame from 'semiotic/lib/ResponsiveXYFrame';
 import XYFrame from 'semiotic/lib/XYFrame';
 
+import {
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  Legend,
+  Brush
+} from 'recharts';
+
 import './SEIRChart.scss';
+
+const keyMap = {
+  date: 'Meldedatum',
+  I: 'AnzahlFall',
+  D: 'AnzahlTodesfall',
+  R: 'AnzahlGenesen'
+};
 
 const translationMap = {
   E: 'parameters.exposed',
   R: 'parameters.recovered',
   I: 'parameters.infected',
-  S: 'parameters.sus'
+  S: 'parameters.sus',
+  E: 'parameters.exposed',
+  AnzahlGenesen: 'parameters.recovered',
+  AnzahlFall: 'parameters.infected',
+  AnzahlTodesfall: 'parameters.deaths'
 };
 
 const theme = [
@@ -29,204 +55,81 @@ const theme = [
   '#3f4482'
 ];
 
-const tooltipStyles = {
-  header: {
-    fontWeight: 'bold',
-    borderBottom: 'thin solid black',
-    marginBottom: '10px',
-    textAlign: 'center'
-  },
-  lineItem: { position: 'relative', display: 'block', textAlign: 'left' },
-  title: { display: 'inline-block', margin: '0 5px 0 15px' },
-  value: { display: 'inline-block', fontWeight: 'bold', margin: '0' },
-  wrapper: {
-    background: 'rgba(255,255,255,0.8)',
-    minWidth: 'max-content',
-    whiteSpace: 'nowrap'
-  }
+const lineProps = {
+  type: 'monotone',
+  dot: false,
+  strokeWidth: '3'
 };
 
-const plotProps = {
-  size: [500, 300],
-  margin: { left: 80, bottom: 90, right: 10, top: 100 },
-  xScaleType: scaleTime(),
-  xAccessor: (d) => new Date(d.date),
-  yAccessor: (d) => d.value,
-  yExtent: [0],
-  responsiveWidth: true,
-  pointStyle: { fill: 'none', stroke: 'black', strokeWidth: '1.5px' },
-  className: 'sharedTooltip',
-  axes: [
-    {
-      orient: 'left',
-      label: 'Personen',
-      tickFormat: function (e) {
-        if (e > 1000) {
-          return e / 1000 + 'k';
-        }
-        return e;
-      }
-    },
-    {
-      orient: 'bottom',
-      ticks: 6,
-      tickFormat: (d) => timeFormat('%d.%m')(d),
-      label: { name: 'Zeit', locationDistance: 55 }
-    }
-  ],
-  lineStyle: (d, i) => ({
-    stroke: theme[i],
-    strokeWidth: 2,
-    fill: 'none'
-  }),
-  hoverAnnotation: [
-    { type: 'x', disable: ['connector', 'note'] },
-    { type: 'frame-hover' }
-  ],
-  annotations: [],
-  annotationSettings: {
-    layout: {
-      type: 'marginalia',
-      orient: 'top',
-      marginOffset: 20,
-      padding: 10,
-      lineHeight: 15,
-      characterWidth: 12
-    }
-  }
+const rkiLineProps = {
+  strokeDasharray: '5 5',
+  strokeWidth: '2'
+};
+
+const dateFormat = (time) => {
+  return moment(time).format('DD. MMM');
 };
 
 class SEIRChart extends Component {
   static defaultProps = {
-    S: [],
-    E: [],
-    I: [],
-    R: [],
+    simulation: {
+      S: [],
+      E: [],
+      I: [],
+      R: []
+    },
+    rki: [],
     measures: []
   };
 
-  state = { extend: null };
-
-  prepareProps() {
+  translate(label) {
     const { t } = this.props;
-    const lines = ['S', 'E', 'I', 'R'].map((k) => {
-      return {
-        title: t(translationMap[k]),
-        coordinates: this.props[k]
-      };
-    });
-
-    const annotations = this.props.measures
-      .map((m, i) => {
-        return m.intervals.map((interval) => ({
-          className: `measure measure-${i}`,
-          type: 'bounds',
-          bounds: [
-            { date: new Date(interval.start) },
-            { date: new Date(interval.end) }
-          ],
-          label: t(m.label)
-        }));
-      })
-      .flat();
-
-    return {
-      ...plotProps,
-      lines,
-      annotations,
-      tooltipContent: (d) => {
-        const points = lines.map((line, index) => {
-          return {
-            color: theme[index],
-            title: line.title,
-            ...line.coordinates.find((i) => {
-              // Search the lines for a similar x value for vertical shared tooltip
-              // Can implement a 'close enough' conditional here too (fuzzy equality)
-              return i.date === d.x.getTime();
-            })
-          };
-        });
-
-        const returnArray = [
-          <div key={'header_multi'} style={tooltipStyles.header}>
-            {`${timeFormat('%d.%m.%Y')(new Date(d.x))}`}
-          </div>
-        ];
-
-        points.forEach((point, i) => {
-          const title = point.title;
-          const valString = `${point.value}`;
-
-          returnArray.push([
-            <div key={`tooltip_line_${i}`} style={tooltipStyles.lineItem}>
-              <p
-                key={`tooltip_color_${i}`}
-                style={{
-                  width: '10px',
-                  height: '10px',
-                  backgroundColor: point.color,
-                  display: 'inline-block',
-                  position: 'absolute',
-                  top: '8px',
-                  left: '0',
-                  margin: '0'
-                }}
-              />
-              <p
-                key={`tooltip_p_${i}`}
-                style={tooltipStyles.title}
-              >{`${title}:`}</p>
-              <p key={`tooltip_p_val_${i}`} style={tooltipStyles.value}>
-                {valString}
-              </p>
-            </div>
-          ]);
-        });
-
-        return (
-          <div className="tooltip-content" style={tooltipStyles.wrapper}>
-            {returnArray}
-          </div>
-        );
-      }
-    };
+    return t(translationMap[label]);
   }
 
-  renderFrame() {
-    if (this.props.E.length > 0) {
-      const props = this.prepareProps();
-      const { annotations, annotationSettings, ...brushProps } = props;
-
-      brushProps.size = [500, 200];
-      brushProps.margin = { ...brushProps.margin, top: 0, bottom: 10 };
-
-      return (
-        <>
-          <div className="plot">
-            <ResponsiveXYFrame {...props} />
-          </div>
-          <div className="brush">
-            <ResponsiveXYFrame
-              {...brushProps}
-              interaction={{
-                end: (e) => {
-                  console.log(e);
-                  this.setState({ extent: e });
-                },
-                brush: 'xBrush',
-                extent: this.state.extent
-              }}
-            />
-          </div>
-        </>
-      );
-    }
-
-    return <></>;
+  prepareData() {
+    return this.props.rki;
   }
 
   render() {
-    return this.renderFrame();
+    const { t } = this.props;
+    const data = this.prepareData();
+    return (
+      <LineChart
+        width={600}
+        height={300}
+        data={data}
+        margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
+      >
+        <XAxis dataKey="Meldedatum" tickFormatter={dateFormat} />
+        <YAxis />
+        <CartesianGrid strokeDasharray="3 3" />
+        <Tooltip
+          labelFormatter={dateFormat}
+          formatter={(value, name, index) => [value, this.translate(name)]}
+        />
+        <Legend formatter={this.translate.bind(this)} />
+        <Line
+          dataKey="AnzahlFall"
+          stroke={theme[0]}
+          {...lineProps}
+          {...rkiLineProps}
+        />
+        <Line
+          dataKey="AnzahlTodesfall"
+          stroke={theme[1]}
+          {...lineProps}
+          {...rkiLineProps}
+        />
+        <Line
+          dataKey="AnzahlGenesen"
+          stroke={theme[2]}
+          {...lineProps}
+          {...rkiLineProps}
+        />
+        <Brush data={data} dataKey="Meldedatum" tickFormatter={dateFormat} />
+      </LineChart>
+    );
   }
 }
 

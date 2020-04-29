@@ -16,7 +16,7 @@ class App extends Component {
 
   componentDidMount() {
     this.props.initializeApp();
-    //this.props.fetchData();
+    this.props.fetchData();
   }
 
   render() {

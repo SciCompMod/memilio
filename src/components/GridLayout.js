@@ -5,7 +5,7 @@ import Simulation from './Simulation';
 import Map from './Map';
 import Parameters from './Parameters';
 import Measures from './Measures';
-import SEIRChart from './Graphs/SEIRChart';
+import Results from './Results';
 
 import { getActiveMeasures } from '../redux/measures';
 
@@ -38,23 +38,24 @@ class ResponsiveGrid extends Component {
         <ResponsiveGridLayout
           className="layout position-relative"
           breakpoints={{ lg: 1200, md: 996, sm: 768, xs: 480, xxs: 0 }}
-          cols={{ lg: 12, md: 10, sm: 6, xs: 4, xxs: 2 }}
+          cols={{ lg: 20, md: 10, sm: 6, xs: 4, xxs: 2 }}
           rowHeight={100}
           containerPadding={[10, 10]}
           margin={[5, 5]}
+          autoSize={true}
           draggableHandle=".grid-draggable-handle"
         >
           <div
-            key="map"
-            data-grid={{ x: 0, y: 0, w: 5, h: 4 }}
             className="grid-box"
+            key="map"
+            data-grid={{ x: 0, y: 0, w: 10, h: 4 }}
           >
             <i className="fas fa-arrows-alt grid-draggable-handle"></i>
             <Map />
           </div>
           <div
             key="measures"
-            data-grid={{ x: 0, y: 4, w: 3, h: 4 }}
+            data-grid={{ x: 0, y: 4, w: 6, h: 4 }}
             className="grid-box"
           >
             <i className="fas fa-arrows-alt grid-draggable-handle"></i>
@@ -62,20 +63,19 @@ class ResponsiveGrid extends Component {
           </div>
           <div
             key="parameters"
-            data-grid={{ x: 3, y: 4, w: 2, h: 4 }}
+            data-grid={{ x: 6, y: 4, w: 4, h: 4 }}
             className="grid-box"
           >
             <i className="fas fa-arrows-alt grid-draggable-handle"></i>
             <Parameters />
-            <Simulation />
           </div>
           <div
-            key="seir-chart"
-            data-grid={{ x: 5, y: 0, w: 7, h: 5 }}
+            key="results"
+            data-grid={{ x: 10, y: 0, w: 10, h: 5 }}
             className="grid-box"
           >
             <i className="fas fa-arrows-alt grid-draggable-handle"></i>
-            <SEIRChart {...this.props.seir} measures={this.props.measures} />
+            <Results />
           </div>
         </ResponsiveGridLayout>
       </>
@@ -83,11 +83,4 @@ class ResponsiveGrid extends Component {
   }
 }
 
-const mapState = (state) => {
-  return {
-    seir: state.seir,
-    measures: getActiveMeasures(state.measures)
-  };
-};
-
-export default connect(mapState, {})(ResponsiveGrid);
+export default ResponsiveGrid;

@@ -25,6 +25,10 @@ circle.frame-hover {
     stroke: none;
   }
 
+  .annotation-note-label {
+    font-size: 14px;
+  }
+
   &.measure-0 {
     .annotation-note path,
     .annotation-note text,

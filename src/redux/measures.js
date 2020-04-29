@@ -15,6 +15,53 @@ const sortByDate = (list) => {
   });
 };
 
+const today = () => {
+  const d = new Date();
+  d.setHours(0);
+  d.setMinutes(0);
+  d.setSeconds(0);
+  d.setMilliseconds(0);
+  return d.getTime();
+};
+
+const endOfYear = () => {
+  const d = new Date();
+  d.setHours(0);
+  d.setMinutes(0);
+  d.setSeconds(0);
+  d.setMilliseconds(0);
+  d.setMonth(11);
+  d.setDate(31);
+  return d.getTime();
+};
+
+const sanitizeInterval = (interval) => {
+  // check start date
+  if (!interval.start) {
+    // if start date is undefined, null or 0, use current day
+    interval.start = today();
+  } else if (typeof interval.start === 'string') {
+    // if start date is a string, convert it to milliseconds
+    interval.start = Date.parse(interval.start);
+  } else if (typeof interval.start === 'number') {
+    // if start date is a number, assume it already is in milliseconds
+    // do nothing
+  }
+
+  // check end date
+  if (!interval.end) {
+    // if end date is undefined, null or 0, use end of year
+    interval.end = endOfYear();
+  } else if (typeof interval.end === 'string') {
+    // if end date is a string, convert it to milliseconds
+    interval.end = Date.parse(interval.end);
+  } else if (typeof interval.end === 'number') {
+    // if end date is a number, assume it already is in milliseconds
+    // do nothing
+  }
+  return interval;
+};
+
 const slice = createSlice({
   name: 'measures',
   initialState: [],
@@ -68,13 +115,13 @@ const slice = createSlice({
     [init]: (state, action) => {
       if (action.payload.measures) {
         return action.payload.measures.map((m, i) => {
-          if (m.intervals) {
-            m.intervals = m.intervals.map((i) => ({
-              ...i,
-              id: uuid(),
-              active: true
-            }));
+          if (m.intervals && m.intervals.length > 0) {
+            m.intervals = m.intervals.map((i) => {
+              const interval = sanitizeInterval(i);
+              return { ...interval, id: uuid(), active: true };
+            });
             m.active = true;
+            console.log(m.intervals);
           }
           return Object.assign(
             {
