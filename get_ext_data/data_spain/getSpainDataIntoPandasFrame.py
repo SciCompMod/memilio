@@ -1,3 +1,10 @@
+############################################################################################################
+#                                                                                                          #
+#        IMPORTANT NOTE: WHEN USING THIS DATA, WE HAVE TO CITE https://github.com/datadista/datasets       #
+#                                                                                                          #
+############################################################################################################
+
+
 import sys
 from urllib.request import urlopen
 import json
