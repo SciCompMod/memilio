@@ -41,84 +41,88 @@ def main(get_data, read_data, make_plot, out_form):
   
       # Get data:
       # https://raw.githubusercontent.com/datadista/datasets/master/COVID%2019/nacional_covid19_rango_edad.csv
-      df = loadCsv(CSVfile  = 'nacional_covid19_rango_edad')
+      df_age = loadCsv(CSVfile  = 'nacional_covid19_rango_edad')
       
-      if df.empty != True:
+      if df_age.empty != True:
          # standardization of column titles from Spanish to English
-         df.rename({'fecha': 'date', 'rango_edad': 'age', 'sexo': 'gender', 'casos_confirmados': 'confirmed', 
+         df_age.rename({'fecha': 'date', 'rango_edad': 'age', 'sexo': 'gender', 'casos_confirmados': 'confirmed', 
                'hospitalizados': 'hospitalized', 'ingresos_uci': 'icu', 'fallecidos' : 'deaths'}, axis=1, inplace=True)
 
-         print("Read Spanish age data from online. Available columns:", df.columns)
+         print("Read Spanish age data from online. Available columns:", df_age.columns)
 
          # translate column gender from Spanish to English
-         df.loc[df.gender=='ambos', ['gender']] = 'both'
-         df.loc[df.gender=='mujeres', ['gender']] = 'female'
-         df.loc[df.gender=='hombres', ['gender']] = 'male'
+         df_age.loc[df_age.gender=='ambos', ['gender']] = 'both'
+         df_age.loc[df_age.gender=='mujeres', ['gender']] = 'female'
+         df_age.loc[df_age.gender=='hombres', ['gender']] = 'male'
+
+         # Correct Timestamps:
+         df_age['date'] = df_age['date'].astype( 'datetime64[ns]' ).dt.tz_localize('Europe/Berlin')
 
          # output data to not always download it
-         df.to_json(AgesJSONData)
+         df_age.to_json(AgesJSONData)
 
       # Get data:
       # https://raw.githubusercontent.com/datadista/datasets/master/COVID%2019/ccaa_covid19_datos_isciii.csv
-      df = loadCsv(CSVfile  = 'ccaa_covid19_datos_isciii')
+      df_state = loadCsv(CSVfile  = 'ccaa_covid19_datos_isciii')
       
-      if df.empty != True:
+      if df_state.empty != True:
          # standardization of column titles from Spanish to English
-         df.rename({'Fecha': 'date', 'cod_ine': 'id_state', 'CCAA': 'state', 'Casos': 'confirmed_total', 'PCR+': 'confirmed_pcr', 
+         df_state.rename({'Fecha': 'date', 'cod_ine': 'id_state', 'CCAA': 'state', 'Casos': 'confirmed_total', 'PCR+': 'confirmed_pcr', 
                'TestAc+': 'confirmed_anti', 'Hospitalizados': 'hospitalized', 'UCI': 'icu', 'Fallecidos' : 'deaths', 'Recuperados' : 'recovered'}, axis=1, inplace=True)
 
-         print("Read Spanish states data from online. Available columns:", df.columns)
+         print("Read Spanish states data from online. Available columns:", df_state.columns)
+
+         # Correct Timestamps:
+         df_state['date'] = df_state['date'].astype( 'datetime64[ns]' ).dt.tz_localize('Europe/Berlin')
 
          # output data to not always download it
-         df.to_json(StatJSONData)
-
+         df_state.to_json(StatJSONData)
          
 
-   if(read_data):
+   elif(read_data):
       # if once dowloaded just read json file
 
       #### ages' data
-      df = pandas.read_json(AgesJSONData)
+      df_age = pandas.read_json(AgesJSONData)
 
-      print("Read from local. Available columns:", df.columns)
-
-      # Preparation for plotting/output:
-
-      # Correct Timestampes:
-      df['date'] = df['date'].astype( 'datetime64[ns]' ).dt.tz_localize('Europe/Berlin')
-
-      # translate from Spanish to English
-      df.loc[df.gender=='ambos', ['gender']] = 'both'
-      df.loc[df.gender=='mujeres', ['gender']] = 'female'
-      df.loc[df.gender=='hombres', ['gender']] = 'male'
-      df.loc[df.age=='80 y +', ['age']] = '80+'
-      df.loc[df.age=='Total', ['age']] = 'all'
-
-      # only consider men AND women (through information on gender away)
-      df = df.loc[df.gender=='both']
-
-      # write file for all age groups summed together
-      df_agesum = df.loc[df.age=='all']
-         # call to df_ageall.to_json("all_age.json", orient='records')
-      getattr(df_agesum, od.outForm[out_form][0])("spain" + od.outForm[out_form][1], **od.outForm[out_form][2])
-
-
-      # write file with information on all age groups separately
-      # age_groups = ['0-9','10-19','20-29','30-39','40-49','50-59','60-69','70-79','80+']
-      df_agesep = df.loc[df.age!='all']
-         # call to df_ageall.to_json("all_age.json", orient='records')
-      getattr(df_agesep, od.outForm[out_form][0])("spain_all_age" + od.outForm[out_form][1], **od.outForm[out_form][2])
-
+      print("Read from local. Available columns:", df_age.columns)
 
       #### states' data
-      df = pandas.read_json(StatJSONData)
+      df_state = pandas.read_json(StatJSONData)
 
-      print("Read from local. Available columns:", df.columns)
+      print("Read from local. Available columns:", df_state.columns)
+
+
+
+   # Preparation for plotting/output:
+
+   # translate from Spanish to English
+   df_age.loc[df_age.gender=='ambos', ['gender']] = 'both'
+   df_age.loc[df_age.gender=='mujeres', ['gender']] = 'female'
+   df_age.loc[df_age.gender=='hombres', ['gender']] = 'male'
+   df_age.loc[df_age.age=='80 y +', ['age']] = '80+'
+   df_age.loc[df_age.age=='Total', ['age']] = 'all'
+
+   # only consider men AND women (through information on gender away)
+   df_age = df_age.loc[df.gender=='both']
+
+   # write file for all age groups summed together
+   df_agesum = df_age.loc[df_age.age=='all']
+      # call to df_ageall.to_json("all_age.json", orient='records')
+   getattr(df_agesum, od.outForm[out_form][0])("spain" + od.outForm[out_form][1], **od.outForm[out_form][2])
+
+
+   # write file with information on all age groups separately
+   # age_groups = ['0-9','10-19','20-29','30-39','40-49','50-59','60-69','70-79','80+']
+   df_agesep = df_age.loc[df_age.age!='all']
+      # call to df_ageall.to_json("all_age.json", orient='records')
+   getattr(df_agesep, od.outForm[out_form][0])("spain_all_age" + od.outForm[out_form][1], **od.outForm[out_form][2])
+
+
 
       # Preparation for plotting/output:
 
-      # Correct Timestampes:
-      df['date'] = df['date'].astype( 'datetime64[ns]' ).dt.tz_localize('Europe/Berlin')
+
 
 
 
