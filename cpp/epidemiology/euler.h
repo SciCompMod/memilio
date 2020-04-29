@@ -16,7 +16,7 @@ public:
      * @param func The right hand side of the ODE
      */
     EulerIntegrator(DerivFunction<T> func)
-    : f(func)
+        : f(func)
     {}
 
     /**

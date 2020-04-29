@@ -8,7 +8,7 @@
 #include <ios>
 #include <cmath>
 
-void sin_deriv(std::vector<double> const &y, const double t, std::vector<double> &dydt)
+void sin_deriv(std::vector<double> const& y, const double t, std::vector<double>& dydt)
 {
     dydt[0] = std::cos(t);
 }
@@ -28,7 +28,7 @@ public:
 
     std::vector<std::vector<double> > y;
     std::vector<std::vector<double> > sol;
-   
+
     double t;
     double tmax;
     size_t n;
@@ -41,23 +41,23 @@ public:
 TEST_F(TestVerifyNumericalIntegrator, euler_sine)
 {
     n = 1000;
-    dt = (tmax-t)/n;
+    dt = (tmax - t) / n;
     y = std::vector<std::vector<double>>(n, std::vector<double>(1, 0));
     sol = std::vector<std::vector<double>>(n, std::vector<double>(1, 0));
-    
+
     std::vector<double> f = std::vector<double>(1, 0);
 
     sol[0][0] = std::sin(0);
     sol[n - 1][0] = std::sin((n - 1) * dt);
 
-    EulerIntegrator<double> euler([](std::vector<double> const &y, const double t, std::vector<double> &dydt) {
+    EulerIntegrator<double> euler([](std::vector<double> const & y, const double t, std::vector<double>& dydt) {
         dydt[0] = std::cos(t);
     });
 
     for(size_t i = 0; i < n - 1; i++) {
         sol[i + 1][0] = std::sin((i + 1) * dt);
 
-        euler.step(y[i], t, dt, y[i+1]);
+        euler.step(y[i], t, dt, y[i + 1]);
 
         // printf("\n %.8f\t %.8f ", y[i + 1][0], sol[i + 1][0]);
 
@@ -77,7 +77,7 @@ TEST_F(TestVerifyNumericalIntegrator, runge_kutta_fehlberg45_sine)
 {
 
     n = 10;
-    dt = (tmax-t)/n;
+    dt = (tmax - t) / n;
     y = std::vector<std::vector<double>>(n, std::vector<double>(1, 0));
     sol = std::vector<std::vector<double>>(n, std::vector<double>(1, 0));
 
@@ -87,13 +87,12 @@ TEST_F(TestVerifyNumericalIntegrator, runge_kutta_fehlberg45_sine)
 
     sol[0][0] = std::sin(0);
 
-    size_t i = 0; 
+    size_t i = 0;
     double t_eval = t;
     // printf("\n t: %.8f\t sol %.8f\t rkf %.8f", t, sol[0][0], y[0][0]);
-    while(t_eval-tmax < 1e-10) {
+    while(t_eval - tmax < 1e-10) {
 
-        if(i+1 >= sol.size())
-        {
+        if(i + 1 >= sol.size()) {
             sol.push_back(std::vector<double>(1, 0));
             y.push_back(std::vector<double>(1, 0));
         }
@@ -111,7 +110,7 @@ TEST_F(TestVerifyNumericalIntegrator, runge_kutta_fehlberg45_sine)
         i++;
     }
 
-    n=i;
+    n = i;
 
     err = std::sqrt(err) / n;
 

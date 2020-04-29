@@ -8,7 +8,7 @@
 
 
 template <typename T>
-void init_vectors(std::vector<std::vector<T> > &y, std::vector<std::vector<T> > &sol, size_t n)
+void init_vectors(std::vector<std::vector<T> >& y, std::vector<std::vector<T> >& sol, size_t n)
 {
     y = std::vector<std::vector<T> >(n, std::vector<T>(1, 0));
     sol = std::vector<std::vector<T> >(n, std::vector<T>(1, 0));
@@ -17,10 +17,9 @@ void init_vectors(std::vector<std::vector<T> > &y, std::vector<std::vector<T> > 
 
 // Test for y'(t) = cos(t)
 template <typename T>
-void integration_test(std::vector<std::vector<T> > &y, std::vector<std::vector<T> > &sol, size_t &n, T t, T dt, const T tmax, T& err)
+void integration_test(std::vector<std::vector<T> >& y, std::vector<std::vector<T> >& sol, size_t& n, T t, T dt, const T tmax, T& err)
 {
-    auto sine_deriv = [](std::vector<T> const &y, const T t, std::vector<T> &dydt)
-    {
+    auto sine_deriv = [](std::vector<T> const & y, const T t, std::vector<T>& dydt) {
         dydt[0] = std::cos(t);
     };
 
@@ -32,14 +31,13 @@ void integration_test(std::vector<std::vector<T> > &y, std::vector<std::vector<T
 
 
     std::vector<T> f = std::vector<T>(1, 0);
-    size_t i = 0; 
+    size_t i = 0;
     double t_eval = t;
     // printf("\n t: %.8f\t sol %.8f\t rkf %.8f", t, sol[0][0], y[0][0]);
 
-    while(t_eval-tmax < 1e-10) {
+    while(t_eval - tmax < 1e-10) {
 
-        if(i+1 >= sol.size())
-        {
+        if(i + 1 >= sol.size()) {
             sol.push_back(std::vector<T>(1, 0));
             y.push_back(std::vector<T>(1, 0));
         }
@@ -57,7 +55,7 @@ void integration_test(std::vector<std::vector<T> > &y, std::vector<std::vector<T
         i++;
     }
 
-    n=i;
+    n = i;
 }
 
 int main()
@@ -70,7 +68,7 @@ int main()
     size_t n = 10;
     double t0 = 0;
     double tmax = 2 * pi;
-    double dt = (tmax-t0)/n;
+    double dt = (tmax - t0) / n;
     double err = 0;
 
     init_vectors(y, sol, n);

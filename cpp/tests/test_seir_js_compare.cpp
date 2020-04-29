@@ -50,8 +50,9 @@ std::vector<std::vector<real> > loadCSV(const std::string& filename)
             row.push_back(atof(word.c_str()));
         }
 
-        if (row.size() == 5)
+        if (row.size() == 5) {
             data.push_back(row);
+        }
 
     }
 

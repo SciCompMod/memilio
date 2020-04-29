@@ -46,7 +46,7 @@ struct tableau {
     tableau()
     {
         entries.resize(5);
-        for(size_t i = 0; i < entries.size(); i++) {
+        for (size_t i = 0; i < entries.size(); i++) {
             entries.at(i).resize(i + 2);
         }
 
@@ -169,16 +169,16 @@ public:
 
         dt = 2 * dt;
 
-        while(max_err > conv_crit && !failed_step_size_adapt) {
+        while (max_err > conv_crit && !failed_step_size_adapt) {
             dt = 0.5 * dt;
 
             kt_values.resize(0); // remove data from previous loop
             kt_values.resize(m_tab_final.entries_low.size()); // these are the k_ni per y_t, used to compute y_t+1
 
-            for(size_t i = 0; i < kt_values.size(); i++) { // we first compute k_n1 for each y_j, then k_n2 for each y_j, etc.
+            for (size_t i = 0; i < kt_values.size(); i++) { // we first compute k_n1 for each y_j, then k_n2 for each y_j, etc.
                 kt_values[i].resize(yt.size()); // note: yt contains more than one variable since we solve a system of ODEs
 
-                if(i == 0) { // for i==0, we have kt_i=f(t,y(t))
+                if (i == 0) { // for i==0, we have kt_i=f(t,y(t))
                     f(yt, t, kt_values[i]);
                     // printf("\n\n t = %.4f\t kn1 = %.4f", t, kt_values[i][0]);
                 }
@@ -193,9 +193,9 @@ public:
                     std::vector<T> yt_eval(yt);
 
                     // go through the variables of the system: S, E, I, ....
-                    for(size_t j = 0; j < yt_eval.size(); j++) {
+                    for (size_t j = 0; j < yt_eval.size(); j++) {
                         // go through the different kt_1, kt_2, ..., kt_i-1 and add them onto yt: y_eval = yt + h * \sum_{j=1}^{i-1} a_{i,j} kt_j
-                        for(size_t k = 1; k < m_tab.entries[i - 1].size() - 1; k++) {
+                        for (size_t k = 1; k < m_tab.entries[i - 1].size() - 1; k++) {
                             yt_eval[j] += ( dt * m_tab.entries[i - 1][k] * kt_values[k - 1][j] ); // note the shift in k and k-1 since the first column of 'tab' corresponds to 'b_i' and 'a_ij' starts with the second column
                         }
 
@@ -220,7 +220,7 @@ public:
 
             for (size_t i = 0; i < yt.size(); i++) {
 
-                for(size_t j = 0; j < kt_values.size(); j++) { // we first compute k_n1 for each y_j, then k_n2 for each y_j, etc.
+                for (size_t j = 0; j < kt_values.size(); j++) { // we first compute k_n1 for each y_j, then k_n2 for each y_j, etc.
                     ytp1_low[i] += (dt * m_tab_final.entries_low[j] * kt_values[j][i]);
                     ytp1_high[i] += (dt * m_tab_final.entries_high[j] * kt_values[j][i]);
                 }
@@ -229,10 +229,10 @@ public:
                 err[i] = 1 / dt * std::abs(ytp1_low[i] - ytp1_high[i]); // divide by h=dt since the local error is one order higher than the global one
 
                 // printf("\n i: %lu,\t err_abs %e, err_rel %e\n", i,  err[i], max_val);
-                if(err[i] > max_err) {
+                if (err[i] > max_err) {
                     max_err = err[i];
                 }
-                if(max_val < ytp1_low[i]) {
+                if (max_val < ytp1_low[i]) {
                     max_val = ytp1_low[i];
                 }
 
@@ -242,19 +242,19 @@ public:
             // sleep(1);
             conv_crit = m_abs_tol + max_val * m_rel_tol;
 
-            if(max_err <= conv_crit || dt < 2 * m_dt_min + 1e-6) {
+            if (max_err <= conv_crit || dt < 2 * m_dt_min + 1e-6) {
                 // if sufficiently exact, take 4th order approximation (do not take 5th order : Higher order is not always higher accuracy!)
                 for (size_t i = 0; i < yt.size(); i++) {
                     ytp1[i] = ytp1_low[i];
                 }
 
-                if(dt < 2 * m_dt_min + 1e-6) {
+                if (dt < 2 * m_dt_min + 1e-6) {
                     failed_step_size_adapt = true;
                 }
 
                 t += dt; // this is the t where ytp1 belongs to
 
-                if(max_err <= 0.03 * conv_crit && 2 * dt < m_dt_max) { // error of doubled step size is about 32 times as large
+                if (max_err <= 0.03 * conv_crit && 2 * dt < m_dt_max) { // error of doubled step size is about 32 times as large
                     dt = 2 * dt;
                 }
 

@@ -184,14 +184,14 @@ void simulate_seir(const T t0, const T tmax, const T dt, struct seirParam<T> con
 
     std::vector<T> dydt(4, 0);
 
-    EulerIntegrator<T> euler([&params](std::vector<T> const& y, const T t, std::vector<T>& dydt) {
+    EulerIntegrator<T> euler([&params](std::vector<T> const & y, const T t, std::vector<T>& dydt) {
         return seir_getDerivatives(params, y, t, dydt);
     });
 
     T t = t0;
     T dt_temp = dt;
     for (size_t i = 0; i < nb_steps - 1; ++i) {
-        euler.step(seir[i], t, dt_temp, seir[i+1]);
+        euler.step(seir[i], t, dt_temp, seir[i + 1]);
     }
 }
 
