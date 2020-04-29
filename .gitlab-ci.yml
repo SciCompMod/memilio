@@ -10,6 +10,17 @@ build-cpp:
     paths:
       - cpp/build/
 
+build-py:
+  stage: build
+  script:
+    - cd pycode
+    - virtualenv venv
+    - source venv/bin/activate
+    - python3 setup.py bdist_wheel
+  artifacts:
+    paths:
+      - pycode/dist/*.whl
+
 # run tests using the binary built before
 test-cpp:
   stage: test

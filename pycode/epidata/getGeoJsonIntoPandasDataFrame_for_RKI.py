@@ -3,6 +3,7 @@ from urllib.request import urlopen
 import json
 import pandas
 import matplotlib.pyplot as plt
+import argparse
 
 def loadGeojson( itemId, apiUrl = 'https://opendata.arcgis.com/datasets/', 
                  extension = 'geojson' ):
@@ -307,36 +308,17 @@ def main(get_data, read_data, make_plot):
    gbAllACounty_cs.to_json("all_county_age.json", orient='records')
 
 
-if __name__ == "__main__":
+def cli():
+   parser = argparse.ArgumentParser(description='Downloads data from RKI')
+   parser.add_argument('-r',  '--read-from-disk', help='Reads the data from file "FullData.json" instead of downloading it.', action='store_true')
+   parser.add_argument('-p', '--plot', help='Plots the data.', action='store_true')
+   args = parser.parse_args()
 
-   GET_DATA = True
-   READ_DATA = False
-   MAKE_PLOT = True
-
-   largv = len(sys.argv)
-
-   if largv > 1:
-      for i in range(1,largv):
-
-          arg = sys.argv[i]
-
-          if "READ_DATA" in arg:
-
-             arg_split = arg.split("=")
-             if len(arg_split) == 2:
-                 READ_DATA = arg_split[1]
-                 GET_DATA=False
-             else:
-                 print("Warning: your argument:", arg, "is ignored. It has to be in the form as: READ_DATA=True")
-
-          elif "MAKE_PLOT" in arg:
-
-             arg_split = arg.split("=")
-             if len(arg_split) == 2:
-                 MAKE_PLOT = arg_split[1]
-             else:
-                 print("Warning: your argument:", arg, "is ignored. It has to be in the form as: MAKE_PLOT=False")
-          else:
-             print("Warning: your argument:", arg, "is ignored.")
+   GET_DATA = False if args.read_from_disk else True
+   READ_DATA = args.read_from_disk
+   MAKE_PLOT = args.plot
 
    main(GET_DATA, READ_DATA, MAKE_PLOT)
+
+if __name__ == "__main__":
+    cli()
