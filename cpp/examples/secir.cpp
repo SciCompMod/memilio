@@ -1,10 +1,16 @@
 #include <epidemiology/secir.h>
 
+#include <epidemiology/logging.h>
+
 int main()
 {
+    epi::set_log_level(epi::LogLevel::debug);
+
     double t0   = 0;
     double tmax = 1;
     double dt   = 0.1;
+
+    epi::log_info("Simulating t={} ... {} with dt = {}.", t0, tmax, dt);
 
     int model = 1;
 
@@ -32,9 +38,10 @@ int main()
 
         double tinfasy2 = 1.0 / (0.5 / (tinfmild - tserint) + 0.5 / tinfmild);
         if (fabs(tinfasy2 - tinfasy) > 0) {
-            printf("\n ----> TODO / To consider: In the HZI paper, tinfasy (the asymptomatic infectious time) or "
-                   "R9^(-1)=R_3^(-1)+0.5*R_4^(-1) is directly given by R_3 and R_4 and maybe should not be an "
-                   "'additional parameter'\n");
+            epi::log_warning(
+                "----> TODO / To consider: In the HZI paper, tinfasy (the asymptomatic infectious time) or "
+                "R9^(-1)=R_3^(-1)+0.5*R_4^(-1) is directly given by R_3 and R_4 and maybe should not be an "
+                "'additional parameter'");
         }
 
         double cont_freq = 0.5, // 0.2-0.75

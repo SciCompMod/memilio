@@ -4,6 +4,8 @@ project(epidemiology VERSION 0.1.0)
 
 set(CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake" ${CMAKE_MODULE_PATH})
 
+add_subdirectory(thirdparty)
+
 add_library(epidemiology INTERFACE
 )
 target_include_directories(epidemiology INTERFACE
@@ -12,6 +14,7 @@ target_include_directories(epidemiology INTERFACE
 )
 
 target_compile_features(epidemiology INTERFACE cxx_std_11)
+target_link_libraries(epidemiology INTERFACE spdlog::spdlog)
 
 include(GNUInstallDirs)
 
@@ -19,7 +22,7 @@ add_subdirectory(examples)
 add_subdirectory(tests)
 # add_subdirectory(docs)
 
-install(TARGETS epidemiology 
+install(TARGETS epidemiology spdlog
         EXPORT epidemiology-targets
         INCLUDES DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
 )
