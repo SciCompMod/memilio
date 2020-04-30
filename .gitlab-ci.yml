@@ -12,10 +12,12 @@ build-cpp:
 
 build-py:
   stage: build
-  script:
+  before_script:
     - cd pycode
-    - virtualenv venv
+    - python3 -m venv venv
     - source venv/bin/activate
+    - pip install scikit-build
+  script:
     - python3 setup.py bdist_wheel
   artifacts:
     paths:

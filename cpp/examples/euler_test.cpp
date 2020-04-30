@@ -22,7 +22,7 @@ void integration_test(std::vector<std::vector<T>>& y, std::vector<std::vector<T>
 
     sol[0][0]     = std::sin(0);
     sol[n - 1][0] = std::sin((n - 1) * dt);
-    EulerIntegrator<T> euler([](std::vector<T> const& y, const T t, std::vector<T>& dydt) { dydt[0] = std::cos(t); });
+    epi::EulerIntegrator euler([](std::vector<T> const& y, const T t, std::vector<T>& dydt) { dydt[0] = std::cos(t); });
 
     T t = 0.;
     for (size_t i = 0; i < n - 1; i++) {

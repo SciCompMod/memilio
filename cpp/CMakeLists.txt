@@ -6,18 +6,27 @@ option(EPI_USE_BUNDLED_SPDLOG "Use spdlog bundled with epi" ON)
 mark_as_advanced(EPI_USE_BUNDLED_SPDLOG)
 
 set(CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake" ${CMAKE_MODULE_PATH})
+set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
 add_subdirectory(thirdparty)
 
-add_library(epidemiology INTERFACE
+
+add_library(epidemiology
+    epidemiology/euler.cpp
+    epidemiology/euler.h
+    epidemiology/secir.cpp
+    epidemiology/secir.h
+    epidemiology/adapt_rk.cpp
+    epidemiology/adapt_rk.h
+    epidemiology/integrator.h
 )
-target_include_directories(epidemiology INTERFACE
+target_include_directories(epidemiology PUBLIC
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
     $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
 )
 
-target_compile_features(epidemiology INTERFACE cxx_std_11)
-target_link_libraries(epidemiology INTERFACE spdlog::spdlog)
+target_compile_features(epidemiology PRIVATE cxx_std_14)
+target_link_libraries(epidemiology PUBLIC spdlog::spdlog)
 
 include(GNUInstallDirs)
 
@@ -28,6 +37,9 @@ add_subdirectory(tests)
 install(TARGETS epidemiology
         EXPORT epidemiology-targets
         INCLUDES DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
+        RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+        LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+        ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
 )
 
 install(DIRECTORY epidemiology DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})

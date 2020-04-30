@@ -19,3 +19,4 @@ AllowShortFunctionsOnASingleLine: false
 NamespaceIndentation: Inner
 BreakConstructorInitializersBeforeComma: true
 AlwaysBreakTemplateDeclarations: Yes
+AllowShortLambdasOnASingleLine: Empty

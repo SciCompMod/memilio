@@ -17,9 +17,11 @@ template <typename T>
 void integration_test(std::vector<std::vector<T>>& y, std::vector<std::vector<T>>& sol, size_t& n, T t, T dt,
                       const T tmax, T& err)
 {
-    auto sine_deriv = [](std::vector<T> const& y, const T t, std::vector<T>& dydt) { dydt[0] = std::cos(t); };
+    auto sine_deriv = [](std::vector<T> const& y, const T t, std::vector<T>& dydt) {
+        dydt[0] = std::cos(t);
+    };
 
-    RKIntegrator<double> rkf45(sine_deriv, 1e-3, 1.0);
+    epi::RKIntegrator rkf45(sine_deriv, 1e-3, 1.0);
     rkf45.set_abs_tolerance(1e-7);
     rkf45.set_rel_tolerance(1e-7);
 
