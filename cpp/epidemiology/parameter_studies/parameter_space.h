@@ -4,6 +4,23 @@
 #include <vector>
 #include <string>
 
+namespace epi
+{
+
+/* TODO: Add more distributions here. */
+typedef enum
+{
+    DIST_UNIFORM
+} parameter_distribution;
+
+struct parameter_info
+{
+    std::string name; /*< The name of this parameter */
+    double min_value; /*< The minumum value of this parameter */
+    double max_value; /*< The maximum value of this parameter */
+    parameter_distribution dist; /*< The statistical distribution of this parameter */
+};
+
 /* The class parameter_space_t stores ranges of parameters
  * together with information on step sizes,
  * a start and end time as well as an initial time step.
