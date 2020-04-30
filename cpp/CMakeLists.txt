@@ -17,7 +17,7 @@ target_include_directories(epidemiology INTERFACE
 )
 
 target_compile_features(epidemiology INTERFACE cxx_std_11)
-target_link_libraries(epidemiology INTERFACE spdlog::spdlog_header_only)
+target_link_libraries(epidemiology INTERFACE spdlog::spdlog)
 
 include(GNUInstallDirs)
 

@@ -14,7 +14,7 @@ if(EPI_USE_BUNDLED_SPDLOG)
                          QUIET
         )
 
-        add_subdirectory(${spdlog_SOURCE_DIR} ${spdlog_SOURCE_DIR} )
+        add_subdirectory(${spdlog_SOURCE_DIR} ${spdlog_SOURCE_DIR} EXCLUDE_FROM_ALL)
     else()
         include(FetchContent)
         FetchContent_Declare(
@@ -25,7 +25,7 @@ if(EPI_USE_BUNDLED_SPDLOG)
         FetchContent_GetProperties(spdlog)
         if(NOT spdlog_POPULATED)
           FetchContent_Populate(spdlog)
-          add_subdirectory(${spdlog_SOURCE_DIR} ${spdlog_BINARY_DIR} )
+          add_subdirectory(${spdlog_SOURCE_DIR} ${spdlog_BINARY_DIR} EXCLUDE_FROM_ALL)
         endif()
     endif()
 else()
