@@ -20,6 +20,7 @@ set(TESTSOURCES
   test_migration.cpp
   test_eigen_util.cpp
   test_secir_ageres.cpp
+  test_parameter_space.cpp
 )
 
 add_executable(runUnitTests ${TESTSOURCES})
