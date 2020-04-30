@@ -157,18 +157,6 @@ void SecirParams::add_damping(const Damping& d)
     dampings.push_back(d);
 }
 
-void seir_getDerivatives(const SecirParams& params, const std::vector<double>& y, double t, std::vector<double>& dydt)
-{
-
-    double b_eff = params.b * getDampingFactor(params.dampings, t);
-    double divN  = 1.0 / params.nb_total_t0;
-
-    dydt[0] = -b_eff * y[0] * y[2] * divN;
-    dydt[1] = b_eff * y[0] * y[2] * divN - params.tinc_inv * y[1];
-    dydt[2] = params.tinc_inv * y[1] - params.tinfmild_inv * y[2];
-    dydt[3] = params.tinfmild_inv * y[2];
-}
-
 double getDampingFactor(const std::vector<Damping>& damping_array, double day)
 {
     // we assume, that the data_array is ordered in ascending order

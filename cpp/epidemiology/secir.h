@@ -121,16 +121,6 @@ double getDampingFactor(std::vector<Damping> const& damping_array, double day);
 
 /**
  * Computes the current time-derivative of S, E, I, and R in the SEIR model
- * @tparam T the datatype of the cases
- * @param[in] params SEIR Model parameters, created by seir_param
- * @param[in] y current  S, E, I, and R values at t; y: [0:S, 1:E, 2:I, 3:R]
- * @param[in] t time / current day
- * @param[out] dydt the values of the time derivatices of S, E, I, and R
- */
-void seir_getDerivatives(SecirParams const& params, std::vector<double> const& y, double t, std::vector<double>& dydt);
-
-/**
- * Computes the current time-derivative of S, E, I, and R in the SEIR model
  * @param[in] params SEIR Model parameters, created by seir_param
  * @tparam T the datatype of the cases
  * @param[in] y current  S, E, I, and R values at t; y: [0:S, 1:E, 2:I, 3:R]
