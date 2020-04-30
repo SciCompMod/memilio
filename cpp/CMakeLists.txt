@@ -6,6 +6,7 @@ option(EPI_USE_BUNDLED_SPDLOG "Use spdlog bundled with epi" ON)
 mark_as_advanced(EPI_USE_BUNDLED_SPDLOG)
 
 set(CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake" ${CMAKE_MODULE_PATH})
+set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
 add_subdirectory(thirdparty)
 
