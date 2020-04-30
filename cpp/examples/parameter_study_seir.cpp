@@ -1,10 +1,13 @@
-#include <epidemiology/seir.h>
-#include <parameter_studies/parameter_studies.h>
+//#include <epidemiology/seir.h>
+#include <epidemiology/parameter_studies/parameter_studies.h>
 
 int main (int argc, char *argv[])
 {
     std::string input_filename;
 
+    struct seirParam<double> params;
+    epi::parameter_space_t parameter_space(params, 0.1);
+#if 0
     if (argc > 1) {
         // If provided, the first argument is the input file
         input_filename = argv[1];
@@ -15,13 +18,10 @@ int main (int argc, char *argv[])
     }
 
     // Create parameter study
-    parameter_study_t<simulate_seir> parameter_study(input_filename);
+    parameter_study_t parameter_study(input_filename);
 
     // Run parameter study
     parameter_study.run();
-
-    // Gather output
-    parameter_study.gather_output();
-
+#endif
     return 0;
 }
