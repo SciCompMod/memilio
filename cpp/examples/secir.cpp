@@ -18,7 +18,7 @@ int main()
 
         SecirParams params;
 
-        printSecirParams(params);
+        print_secir_params(params);
 
         std::vector<std::vector<double>> seir(0);
 
@@ -60,7 +60,7 @@ int main()
 
         params.add_damping(Damping(30., 0.3));
 
-        printSecirParams(params);
+        print_secir_params(params);
 
         std::vector<std::vector<double>> seir(0);
 

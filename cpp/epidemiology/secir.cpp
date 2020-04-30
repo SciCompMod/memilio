@@ -14,7 +14,13 @@ Damping::Damping(double day_in, double factor_in)
 {
 }
 
-void printSecirParams(const SecirParams& params)
+template <typename T, typename Pred>
+typename std::vector<T>::iterator insert_sorted(std::vector<T>& vec, T const& item, Pred pred)
+{
+    return vec.insert(std::upper_bound(vec.begin(), vec.end(), item, pred), item);
+}
+
+void print_secir_params(const SecirParams& params)
 {
     if (params.model == 0) {
         printf("\n SEIR model set.\n Parameters:\n\t Time incubation:\t %.4f \n\t Time infectious:\t %.4f \n\t b:\t "
@@ -154,31 +160,34 @@ SecirParams::SecirParams(double tinc, double tinfmild, double tserint, double th
 
 void SecirParams::add_damping(const Damping& d)
 {
-    dampings.push_back(d);
+    // make sure, the damping array is sorted
+    insert_sorted(dampings, d, [](const Damping& d1, const Damping& d2) {
+        return d1.day < d2.day;
+    });
 }
 
-double getDampingFactor(const std::vector<Damping>& damping_array, double day)
+double SecirParams::get_damping_factor(double day) const
 {
     // we assume, that the data_array is ordered in ascending order
     size_t ilow  = 0;
-    size_t ihigh = damping_array.size() - 1;
+    size_t ihigh = dampings.size() - 1;
 
     // check extrapolation cases
-    if (day < damping_array[ilow].day) {
-        return damping_array[ilow].factor;
+    if (day < dampings[ilow].day) {
+        return dampings[ilow].factor;
     }
 
-    if (day >= damping_array[ihigh].day) {
-        return damping_array[ihigh].factor;
+    if (day >= dampings[ihigh].day) {
+        return dampings[ihigh].factor;
     }
 
     // now do the search
     while (ilow < ihigh - 1) {
         size_t imid = (ilow + ihigh) / 2;
-        if (damping_array[ilow].day <= day && day < damping_array[imid].day) {
+        if (dampings[ilow].day <= day && day < dampings[imid].day) {
             ihigh = imid;
         }
-        else if (damping_array[imid].day <= day && day < damping_array[ihigh].day) {
+        else if (dampings[imid].day <= day && day < dampings[ihigh].day) {
             ilow = imid;
         }
         else {
@@ -188,15 +197,15 @@ double getDampingFactor(const std::vector<Damping>& damping_array, double day)
         }
     }
 
-    assert(damping_array[ilow].day <= day && day < damping_array[ilow + 1].day);
-    return damping_array[ilow].factor;
+    assert(dampings[ilow].day <= day && day < dampings[ilow + 1].day);
+    return dampings[ilow].factor;
 }
 
 void secir_getDerivatives(const SecirParams& params, const std::vector<double>& y, double t, std::vector<double>& dydt)
 {
 
     // 0: S,      1: E,     2: C,     3: I,     4: H,     5: U,     6: R,     7: D
-    double cont_freq_eff = params.cont_freq * getDampingFactor(params.dampings, t);
+    double cont_freq_eff = params.cont_freq * params.get_damping_factor(t);
     double divN          = 1.0 / params.nb_total_t0;
 
     double dummy_S = cont_freq_eff * y[0] * divN * (y[2] + params.beta * y[3]);

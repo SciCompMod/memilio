@@ -103,21 +103,20 @@ public:
      * @param d The damping, which is a factor and day from which the mitigation acts
      */
     void add_damping(const Damping& d);
+
+    /**
+     * Returns the damping factor
+     *
+     * @param[in] day Current day
+     */
+    double get_damping_factor(double day) const;
 };
 
 /**
  * prints given parameters
  * @param[in] params the SeirParams parameter object
  */
-void printSecirParams(SecirParams const& params);
-
-/**
- * Returns the damping factor
- *
- * @param[in] damping_array Array of dampings
- * @param[in] day Current day
- */
-double getDampingFactor(std::vector<Damping> const& damping_array, double day);
+void print_secir_params(SecirParams const& params);
 
 /**
  * Computes the current time-derivative of S, E, I, and R in the SEIR model
