@@ -13,8 +13,6 @@ add_subdirectory(thirdparty)
 add_library(epidemiology
     epidemiology/euler.cpp
     epidemiology/euler.h
-    epidemiology/seir_param.cpp
-    epidemiology/seir_param.h
     epidemiology/secir.cpp
     epidemiology/secir.h
     epidemiology/adapt_rk.cpp
