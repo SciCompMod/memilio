@@ -19,7 +19,7 @@ void integration_test(std::vector<std::vector<T>>& y, std::vector<std::vector<T>
 {
     auto sine_deriv = [](std::vector<T> const& y, const T t, std::vector<T>& dydt) { dydt[0] = std::cos(t); };
 
-    RKIntegrator<double> rkf45(sine_deriv, 1e-3, 1.0);
+    RKIntegrator rkf45(sine_deriv, 1e-3, 1.0);
     rkf45.set_abs_tolerance(1e-7);
     rkf45.set_rel_tolerance(1e-7);
 

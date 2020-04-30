@@ -17,6 +17,8 @@ add_library(epidemiology
     epidemiology/seir_param.h
     epidemiology/secir.cpp
     epidemiology/secir.h
+    epidemiology/adapt_rk.cpp
+    epidemiology/adapt_rk.h
 )
 target_include_directories(epidemiology PUBLIC
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>

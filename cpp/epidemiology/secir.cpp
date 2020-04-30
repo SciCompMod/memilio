@@ -121,7 +121,7 @@ std::vector<double> simulate(double t0, double tmax, double dt, const SeirParams
 #ifdef ARK_H
     double dtmin = 1e-3;
     double dtmax = 1.;
-    RKIntegrator<double> integrator(secir_fun, dtmin, dtmax);
+    RKIntegrator integrator(secir_fun, dtmin, dtmax);
     integrator.set_abs_tolerance(1e-1);
     integrator.set_rel_tolerance(1e-4);
 #endif
