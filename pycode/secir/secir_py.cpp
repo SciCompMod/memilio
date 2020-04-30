@@ -69,10 +69,10 @@ SecirResult simulate_secir(double t0, double tmax, double dt, const seirParam<do
 }
 
 PYBIND11_MODULE(_secir, m) {
-    py::class_<damping<double>>(m, "Damping")
+    py::class_<Damping>(m, "Damping")
         .def(py::init<double, double>(), py::arg("day"), py::arg("factor"))
-        .def_readwrite("day", &damping<double>::day)
-        .def_readwrite("factor", &damping<double>::factor);
+        .def_readwrite("day", &Damping::day)
+        .def_readwrite("factor", &Damping::factor);
 
     py::class_<SecirResult>(m, "SecirResult")
         .def_readonly("t", &SecirResult::t)

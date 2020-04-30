@@ -7,11 +7,13 @@
  * This defined a damping factor for a
  * mitigation strategy for one point in time.
  */
-template <typename T> struct damping {
-    T day;
-    T factor;
+class Damping
+{
+public:
+    double day;
+    double factor;
 
-    damping(T day_in, T factor_in)
+    Damping(double day_in, double factor_in)
     {
 
         day    = day_in;
@@ -52,7 +54,7 @@ template <typename T> struct seirParam {
     T nb_total_t0, nb_sus_t0, nb_exp_t0, nb_car_t0, nb_inf_t0, nb_hosp_t0, nb_icu_t0, nb_rec_t0, nb_dead_t0;
 
     // This defines a damping factor for a mitigation strategy for different points in time.
-    std::vector<damping<T>> dampings;
+    std::vector<Damping> dampings;
 
     seirParam()
     {
@@ -85,7 +87,7 @@ template <typename T> struct seirParam {
         nb_icu_t0  = 0;
         nb_dead_t0 = 0;
         // List of damping initially empty
-        dampings.push_back(damping<T>(0.0, 1.0));
+        dampings.push_back(Damping(0.0, 1.0));
     }
 
     seirParam(T tinc, T tinfmild, T base_reprod_in, T nb_total_t0_in, T nb_exp_t0_in, T nb_inf_t0_in, T nb_rec_t0_in)
@@ -154,7 +156,7 @@ template <typename T> struct seirParam {
         // Initial Number of deaths
         nb_dead_t0 = nb_dead_t0_in;
         // List of damping initially empty
-        dampings.push_back(damping<T>(0.0, 1.0));
+        dampings.push_back(Damping(0.0, 1.0));
 
         T dummy_R3 = 0.5 / (tinfmild - tserint);
 
@@ -167,7 +169,7 @@ template <typename T> struct seirParam {
             nb_sus_t0 / nb_total_t0;
     }
 
-    void add_damping(const damping<T>& d)
+    void add_damping(const Damping& d)
     {
         dampings.push_back(d);
     }

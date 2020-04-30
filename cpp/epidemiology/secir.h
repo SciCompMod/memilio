@@ -17,7 +17,7 @@
  * @param[in] damping_array Array of dampings
  * @param[in] t Current day
  */
-template <typename T> T getDampingFactor(std::vector<struct damping<T>> const& damping_array, T day)
+template <typename T> T getDampingFactor(std::vector<Damping> const& damping_array, T day)
 {
     // we assume, that the data_array is ordered in ascending order
     size_t ilow  = 0;
