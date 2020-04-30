@@ -201,7 +201,7 @@ double SecirParams::get_damping_factor(double day) const
     return dampings[ilow].factor;
 }
 
-void secir_getDerivatives(const SecirParams& params, const std::vector<double>& y, double t, std::vector<double>& dydt)
+void secir_get_derivatives(const SecirParams& params, const std::vector<double>& y, double t, std::vector<double>& dydt)
 {
 
     // 0: S,      1: E,     2: C,     3: I,     4: H,     5: U,     6: R,     7: D
@@ -261,7 +261,7 @@ std::vector<double> simulate(double t0, double tmax, double dt, const SecirParam
     }
 
     auto secir_fun = [&params](std::vector<double> const& y, const double t, std::vector<double>& dydt) {
-        return secir_getDerivatives(params, y, t, dydt);
+        return secir_get_derivatives(params, y, t, dydt);
     };
 
 #ifdef ARK_H

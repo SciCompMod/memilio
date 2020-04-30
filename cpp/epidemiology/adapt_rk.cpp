@@ -1,6 +1,6 @@
 #include <epidemiology/adapt_rk.h>
 
-tableau_final::tableau_final()
+TableauFinal::TableauFinal()
 {
     entries_low.resize(6);
     entries_high.resize(6);
@@ -19,7 +19,7 @@ tableau_final::tableau_final()
     entries_high[5] = 2 / 55.0;
 }
 
-tableau::tableau()
+Tableau::Tableau()
 {
     entries.resize(5);
     for (size_t i = 0; i < entries.size(); i++) {

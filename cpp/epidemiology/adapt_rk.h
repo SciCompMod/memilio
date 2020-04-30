@@ -37,7 +37,7 @@
  *       | 16/135      0             6656/12825   28561/56430   -9/50       2/55
  *
  */
-class tableau
+class Tableau
 {
 public:
     std::vector<std::vector<double>> entries;
@@ -45,7 +45,7 @@ public:
     /**
      * @brief default is Runge-Kutta-Fehlberg4(5) tableau
      */
-    tableau();
+    Tableau();
 };
 
 /*
@@ -57,7 +57,7 @@ public:
  *       | 16/135      0             6656/12825   28561/56430   -9/50       2/55
  *
  */
-class tableau_final
+class TableauFinal
 {
 public:
     std::vector<double> entries_low;
@@ -66,7 +66,7 @@ public:
     /**
      * @brief default is Runge-Kutta-Fehlberg4(5) tableau
      */
-    tableau_final();
+    TableauFinal();
 };
 
 /**
@@ -105,7 +105,7 @@ public:
     }
 
     // Allow setting different RK tablea schemes
-    void set_tableaus(const tableau& tab, const tableau_final& final_tab)
+    void set_tableaus(const Tableau& tab, const TableauFinal& final_tab)
     {
         m_tab       = tab;
         m_tab_final = final_tab;
@@ -122,8 +122,8 @@ public:
     bool step(std::vector<double> const& yt, double& t, double& dt, std::vector<double>& ytp1) const override;
 
 private:
-    tableau m_tab;
-    tableau_final m_tab_final;
+    Tableau m_tab;
+    TableauFinal m_tab_final;
     double m_abs_tol, m_rel_tol;
     double m_dt_min, m_dt_max;
 };

@@ -126,7 +126,8 @@ void print_secir_params(SecirParams const& params);
  * @param[in] t time / current day
  * @param[out] dydt the values of the time derivatices of S, E, I, and R
  */
-void secir_getDerivatives(SecirParams const& params, std::vector<double> const& y, double t, std::vector<double>& dydt);
+void secir_get_derivatives(SecirParams const& params, std::vector<double> const& y, double t,
+                           std::vector<double>& dydt);
 
 /**
  * Computes the seir curve by integration
