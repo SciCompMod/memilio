@@ -54,6 +54,11 @@ private:
     std::vector<struct parameter_info> parameters;
 };
 
+parameter_space_t::parameter_space_t (std::string &parameter_filename)
+{
+    // TODO: implement
+    assert (0 && "This function is not implemented yet.");
+}
 
 parameter_space_t::parameter_space_t(const struct seirParam<double> &seir, double eps)
 {
