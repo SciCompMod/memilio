@@ -16,7 +16,7 @@ int main()
 
     if (model == 0) {
 
-        seirParam<double> params = seirParam<double>();
+        seirParam params;
 
         printSeirParams(params);
 
@@ -54,10 +54,9 @@ int main()
         double nb_total_t0 = 10000, nb_exp_t0 = 100, nb_inf_t0 = 50, nb_car_t0 = 50, nb_hosp_t0 = 20, nb_icu_t0 = 10,
                nb_rec_t0 = 10, nb_dead_t0 = 0;
 
-        seirParam<double> params =
-            seirParam<double>(tinc, tinfmild, tserint, thosp2home, thome2hosp, thosp2icu, ticu2home, tinfasy,
-                              ticu2death, cont_freq, alpha, beta, delta, rho, theta, nb_total_t0, nb_exp_t0, nb_car_t0,
-                              nb_inf_t0, nb_hosp_t0, nb_icu_t0, nb_rec_t0, nb_dead_t0);
+        seirParam params(tinc, tinfmild, tserint, thosp2home, thome2hosp, thosp2icu, ticu2home, tinfasy, ticu2death,
+                         cont_freq, alpha, beta, delta, rho, theta, nb_total_t0, nb_exp_t0, nb_car_t0, nb_inf_t0,
+                         nb_hosp_t0, nb_icu_t0, nb_rec_t0, nb_dead_t0);
 
         params.add_damping(Damping(30., 0.3));
 
