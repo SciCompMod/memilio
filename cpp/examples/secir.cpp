@@ -18,7 +18,7 @@ int main()
 
         SeirParams params;
 
-        printSeirParamss(params);
+        printSeirParams(params);
 
         std::vector<std::vector<double>> seir(0);
 
@@ -55,12 +55,12 @@ int main()
                nb_rec_t0 = 10, nb_dead_t0 = 0;
 
         SeirParams params(tinc, tinfmild, tserint, thosp2home, thome2hosp, thosp2icu, ticu2home, tinfasy, ticu2death,
-                         cont_freq, alpha, beta, delta, rho, theta, nb_total_t0, nb_exp_t0, nb_car_t0, nb_inf_t0,
-                         nb_hosp_t0, nb_icu_t0, nb_rec_t0, nb_dead_t0);
+                          cont_freq, alpha, beta, delta, rho, theta, nb_total_t0, nb_exp_t0, nb_car_t0, nb_inf_t0,
+                          nb_hosp_t0, nb_icu_t0, nb_rec_t0, nb_dead_t0);
 
         params.add_damping(Damping(30., 0.3));
 
-        printSeirParamss(params);
+        printSeirParams(params);
 
         std::vector<std::vector<double>> seir(0);
 

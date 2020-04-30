@@ -99,7 +99,7 @@ PYBIND11_MODULE(_secir, m) {
                       py::arg("nb_hosp_t0_in"), py::arg("nb_icu_t0_in"), py::arg("nb_rec_t0_in"), py::arg("nb_dead_t0_in"))
         .def("add_damping", &SeirParams::add_damping);
 
-    m.def("print_seir_params", &printSeirParamss);
+    m.def("print_seir_params", &printSeirParams);
     m.def("simulate", &simulate_secir, "Simulates the SECIR model from t0 to tmax.",
         py::arg("t0"), py::arg("tmax"), py::arg("dt"), py::arg("params"));
 

@@ -6,7 +6,7 @@ Damping::Damping(double day_in, double factor_in)
 {
 }
 
-void printSeirParamss(const SeirParams& params)
+void printSeirParams(const SeirParams& params)
 {
     if (params.model == 0) {
         printf("\n SEIR model set.\n Parameters:\n\t Time incubation:\t %.4f \n\t Time infectious:\t %.4f \n\t b:\t "

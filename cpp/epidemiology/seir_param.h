@@ -109,6 +109,6 @@ public:
  * prints given parameters
  * @param[in] params the SeirParams parameter object
  */
-void printSeirParamss(SeirParams const& params);
+void printSeirParams(SeirParams const& params);
 
 #endif // SEIR_PARAM
