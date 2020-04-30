@@ -24,7 +24,7 @@ target_include_directories(epidemiology PUBLIC
     $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
 )
 
-target_compile_features(epidemiology INTERFACE cxx_std_11)
+target_compile_features(epidemiology PRIVATE cxx_std_14)
 target_link_libraries(epidemiology PUBLIC spdlog::spdlog)
 
 include(GNUInstallDirs)

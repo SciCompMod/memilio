@@ -46,8 +46,9 @@ TEST_F(TestVerifyNumericalIntegrator, euler_sine)
     sol[0][0]     = std::sin(0);
     sol[n - 1][0] = std::sin((n - 1) * dt);
 
-    epi::EulerIntegrator euler(
-        [](std::vector<double> const& y, const double t, std::vector<double>& dydt) { dydt[0] = std::cos(t); });
+    epi::EulerIntegrator euler([](std::vector<double> const& y, const double t, std::vector<double>& dydt) {
+        dydt[0] = std::cos(t);
+    });
 
     for (size_t i = 0; i < n - 1; i++) {
         sol[i + 1][0] = std::sin((i + 1) * dt);
@@ -72,7 +73,7 @@ TEST_F(TestVerifyNumericalIntegrator, runge_kutta_fehlberg45_sine)
     y   = std::vector<std::vector<double>>(n, std::vector<double>(1, 0));
     sol = std::vector<std::vector<double>>(n, std::vector<double>(1, 0));
 
-    RKIntegrator rkf45(sin_deriv, 1e-3, 1.0);
+    epi::RKIntegrator rkf45(sin_deriv, 1e-3, 1.0);
     rkf45.set_abs_tolerance(1e-7);
     rkf45.set_rel_tolerance(1e-7);
 

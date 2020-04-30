@@ -3,6 +3,9 @@
 
 #include <vector>
 
+namespace epi
+{
+
 /**
  * This defined a damping factor for a
  * mitigation strategy for one point in time.
@@ -141,4 +144,7 @@ void secir_get_derivatives(SecirParams const& params, std::vector<double> const&
  */
 std::vector<double> simulate(double t0, double tmax, double dt, SecirParams const& params,
                              std::vector<std::vector<double>>& seir);
+
+} // namespace epi
+
 #endif // SECIR_H

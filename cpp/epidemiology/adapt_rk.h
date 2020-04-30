@@ -6,6 +6,9 @@
 
 #include <epidemiology/integrator.h>
 
+namespace epi
+{
+
 /**
  * Two scheme Runge-Kutta numerical integrator with adaptive step width
  * for ODE y'(t) = f(t,y) which is given by
@@ -127,5 +130,7 @@ private:
     double m_abs_tol, m_rel_tol;
     double m_dt_min, m_dt_max;
 };
+
+} // namespace epi
 
 #endif // ARK_H

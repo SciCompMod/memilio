@@ -8,6 +8,9 @@
 #include <cstdio>
 #include <algorithm>
 
+namespace epi
+{
+
 Damping::Damping(double day_in, double factor_in)
     : day(day_in)
     , factor(factor_in)
@@ -321,3 +324,5 @@ std::vector<double> simulate(double t0, double tmax, double dt, const SecirParam
 
     return vec_times;
 }
+
+} // namespace epi

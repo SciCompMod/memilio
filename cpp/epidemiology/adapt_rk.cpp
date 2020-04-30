@@ -1,5 +1,8 @@
 #include <epidemiology/adapt_rk.h>
 
+namespace epi
+{
+
 TableauFinal::TableauFinal()
 {
     entries_low.resize(6);
@@ -159,3 +162,5 @@ bool RKIntegrator::step(const std::vector<double>& yt, double& t, double& dt, st
 
     return !failed_step_size_adapt;
 }
+
+} // namespace epi

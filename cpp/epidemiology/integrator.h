@@ -4,6 +4,9 @@
 #include <vector>
 #include <functional>
 
+namespace epi
+{
+
 /**
  * Function template to be integrated
  */
@@ -30,5 +33,7 @@ public:
 protected:
     DerivFunction f;
 };
+
+} // namespace epi
 
 #endif // INTEGRATOR_H
