@@ -61,7 +61,7 @@ template <typename T> T getDampingFactor(std::vector<Damping> const& damping_arr
  * @param[out] dydt the values of the time derivatices of S, E, I, and R
  */
 template <typename T>
-void seir_getDerivatives(seirParam const& params, std::vector<T> const& y, const T t, std::vector<T>& dydt)
+void seir_getDerivatives(SeirParams const& params, std::vector<T> const& y, const T t, std::vector<T>& dydt)
 {
 
     T b_eff = params.b * getDampingFactor(params.dampings, t);
@@ -82,7 +82,7 @@ void seir_getDerivatives(seirParam const& params, std::vector<T> const& y, const
  * @param[out] dydt the values of the time derivatices of S, E, I, and R
  */
 template <typename T>
-void secir_getDerivatives(seirParam const& params, std::vector<T> const& y, const T t, std::vector<T>& dydt)
+void secir_getDerivatives(SeirParams const& params, std::vector<T> const& y, const T t, std::vector<T>& dydt)
 {
 
     // 0: S,      1: E,     2: C,     3: I,     4: H,     5: U,     6: R,     7: D
@@ -119,7 +119,7 @@ void secir_getDerivatives(seirParam const& params, std::vector<T> const& y, cons
  * @returns Vector of times t
  */
 template <typename T>
-std::vector<T> simulate(const double t0, const double tmax, T dt, seirParam const& params,
+std::vector<T> simulate(const double t0, const double tmax, T dt, SeirParams const& params,
                         std::vector<std::vector<T>>& seir)
 {
     size_t nb_steps = (int)(ceil((tmax - t0) / dt)); // estimated number of time steps (if equidistant)

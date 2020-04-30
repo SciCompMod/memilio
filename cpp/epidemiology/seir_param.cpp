@@ -6,7 +6,7 @@ Damping::Damping(double day_in, double factor_in)
 {
 }
 
-void printSeirParams(const seirParam& params)
+void printSeirParamss(const SeirParams& params)
 {
     if (params.model == 0) {
         printf("\n SEIR model set.\n Parameters:\n\t Time incubation:\t %.4f \n\t Time infectious:\t %.4f \n\t b:\t "
@@ -30,7 +30,7 @@ void printSeirParams(const seirParam& params)
     }
 }
 
-seirParam::seirParam()
+SeirParams::SeirParams()
 {
     // assume an incubation period of 5.2 days;
     // an infectious period of (nonhospitalized) people (after disease) of 6 days
@@ -64,8 +64,8 @@ seirParam::seirParam()
     dampings.push_back(Damping(0.0, 1.0));
 }
 
-seirParam::seirParam(double tinc, double tinfmild, double base_reprod_in, double nb_total_t0_in, double nb_exp_t0_in,
-                     double nb_inf_t0_in, double nb_rec_t0_in)
+SeirParams::SeirParams(double tinc, double tinfmild, double base_reprod_in, double nb_total_t0_in, double nb_exp_t0_in,
+                       double nb_inf_t0_in, double nb_rec_t0_in)
 {
     tinc_inv     = 1.0 / tinc;
     tinfmild_inv = 1.0 / tinfmild;
@@ -88,11 +88,11 @@ seirParam::seirParam(double tinc, double tinfmild, double base_reprod_in, double
     dampings.push_back(Damping(0.0, 1.0));
 }
 
-seirParam::seirParam(double tinc, double tinfmild, double tserint, double thosp2home, double thome2hosp,
-                     double thosp2icu, double ticu2home, double tinfasy, double ticu2death, double cont_freq_in,
-                     double alpha_in, double beta_in, double delta_in, double rho_in, double theta_in,
-                     double nb_total_t0_in, double nb_exp_t0_in, double nb_car_t0_in, double nb_inf_t0_in,
-                     double nb_hosp_t0_in, double nb_icu_t0_in, double nb_rec_t0_in, double nb_dead_t0_in)
+SeirParams::SeirParams(double tinc, double tinfmild, double tserint, double thosp2home, double thome2hosp,
+                       double thosp2icu, double ticu2home, double tinfasy, double ticu2death, double cont_freq_in,
+                       double alpha_in, double beta_in, double delta_in, double rho_in, double theta_in,
+                       double nb_total_t0_in, double nb_exp_t0_in, double nb_car_t0_in, double nb_inf_t0_in,
+                       double nb_hosp_t0_in, double nb_icu_t0_in, double nb_rec_t0_in, double nb_dead_t0_in)
 {
 
     tinc_inv       = 1.0 / tinc; // inverse incubation period
@@ -144,7 +144,7 @@ seirParam::seirParam(double tinc, double tinfmild, double tserint, double thosp2
                   nb_sus_t0 / nb_total_t0;
 }
 
-void seirParam::add_damping(const Damping& d)
+void SeirParams::add_damping(const Damping& d)
 {
     dampings.push_back(d);
 }

@@ -39,7 +39,7 @@ public:
 
 };
 
-SecirResult simulate_secir(double t0, double tmax, double dt, const seirParam& params)
+SecirResult simulate_secir(double t0, double tmax, double dt, const SeirParams& params)
 {
     std::vector<std::vector<double> > seir(0);
     std::vector<double> times = simulate(t0, tmax, dt, params, seir);
@@ -88,7 +88,7 @@ PYBIND11_MODULE(_secir, m) {
     // T tinc, T tinfmild, T tserint, T thosp2home, T thome2hosp, T thosp2icu, T ticu2home, T tinfasy, T ticu2death,
     // T cont_freq_in, T alpha_in, T beta_in, T delta_in, T rho_in, T theta_in, 
     //  T nb_total_t0_in, T nb_exp_t0_in, T nb_car_t0_in, T nb_inf_t0_in, T nb_hosp_t0_in, T nb_icu_t0_in, T nb_rec_t0_in, T nb_dead_t0_in) 
-    py::class_<seirParam>(m, "SeirParam")
+    py::class_<SeirParams>(m, "SeirParams")
         .def(py::init<double, double, double, double, double, double, double, double, double,
                       double, double, double, double, double, double,
                       double, double, double, double, double, double, double, double>(),
@@ -97,9 +97,9 @@ PYBIND11_MODULE(_secir, m) {
                       py::arg("cont_freq_in"), py::arg("alpha_in"), py::arg("beta_in"), py::arg("delta_in"), py::arg("rho_in"), py::arg("theta_in"),
                       py::arg("nb_total_t0_in"), py::arg("nb_exp_t0_in"), py::arg("nb_car_t0_in"), py::arg("nb_inf_t0_in"),
                       py::arg("nb_hosp_t0_in"), py::arg("nb_icu_t0_in"), py::arg("nb_rec_t0_in"), py::arg("nb_dead_t0_in"))
-        .def("add_damping", &seirParam::add_damping);
+        .def("add_damping", &SeirParams::add_damping);
 
-    m.def("print_seir_params", &printSeirParams);
+    m.def("print_seir_params", &printSeirParamss);
     m.def("simulate", &simulate_secir, "Simulates the SECIR model from t0 to tmax.",
         py::arg("t0"), py::arg("tmax"), py::arg("dt"), py::arg("params"));
 

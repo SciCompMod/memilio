@@ -36,7 +36,7 @@ public:
  * theta: U/H; intensive care units per hospitalized
  * delta: D/U; deaths per intensive care units
 **/
-class seirParam
+class SeirParams
 {
 public:
     int model;
@@ -55,13 +55,13 @@ public:
     /**
      * @brief Initializes a SEIR model with some default parameters
      */
-    seirParam();
+    SeirParams();
 
     /**
      * @brief Initializes a SEIR model with given parameters
      */
-    seirParam(double tinc, double tinfmild, double base_reprod_in, double nb_total_t0_in, double nb_exp_t0_in,
-              double nb_inf_t0_in, double nb_rec_t0_in);
+    SeirParams(double tinc, double tinfmild, double base_reprod_in, double nb_total_t0_in, double nb_exp_t0_in,
+               double nb_inf_t0_in, double nb_rec_t0_in);
 
     /**
      * @brief Initializes a SECIR model
@@ -92,11 +92,11 @@ public:
      * @param nb_rec_t0_in
      * @param nb_dead_t0_in
      */
-    seirParam(double tinc, double tinfmild, double tserint, double thosp2home, double thome2hosp, double thosp2icu,
-              double ticu2home, double tinfasy, double ticu2death, double cont_freq_in, double alpha_in, double beta_in,
-              double delta_in, double rho_in, double theta_in, double nb_total_t0_in, double nb_exp_t0_in,
-              double nb_car_t0_in, double nb_inf_t0_in, double nb_hosp_t0_in, double nb_icu_t0_in, double nb_rec_t0_in,
-              double nb_dead_t0_in);
+    SeirParams(double tinc, double tinfmild, double tserint, double thosp2home, double thome2hosp, double thosp2icu,
+               double ticu2home, double tinfasy, double ticu2death, double cont_freq_in, double alpha_in,
+               double beta_in, double delta_in, double rho_in, double theta_in, double nb_total_t0_in,
+               double nb_exp_t0_in, double nb_car_t0_in, double nb_inf_t0_in, double nb_hosp_t0_in, double nb_icu_t0_in,
+               double nb_rec_t0_in, double nb_dead_t0_in);
 
     /**
      * @brief Adds a damping to the current model
@@ -107,8 +107,8 @@ public:
 
 /**
  * prints given parameters
- * @param[in] params the seirParam parameter object
+ * @param[in] params the SeirParams parameter object
  */
-void printSeirParams(seirParam const& params);
+void printSeirParamss(SeirParams const& params);
 
 #endif // SEIR_PARAM

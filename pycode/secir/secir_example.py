@@ -1,4 +1,4 @@
-from epidemiology.secir import Damping, SeirParam, print_seir_params, simulate, SecirResult
+from epidemiology.secir import Damping, SeirParams, print_seir_params, simulate, SecirResult
 from matplotlib import pyplot as plt
 
 
@@ -36,9 +36,9 @@ def plot_secir():
     nb_dead_t0 = 0
 
     # set the params required for the simulation
-    params = SeirParam(tinc, tinfmild, tserint, thosp2home, thome2hosp, thosp2icu, ticu2home, tinfasy, ticu2death,
-                       cont_freq, alpha, beta, delta, rho, theta,
-                       nb_total_t0, nb_exp_t0, nb_car_t0, nb_inf_t0, nb_hosp_t0, nb_icu_t0, nb_rec_t0, nb_dead_t0)
+    params = SeirParams(tinc, tinfmild, tserint, thosp2home, thome2hosp, thosp2icu, ticu2home, tinfasy, ticu2death,
+                        cont_freq, alpha, beta, delta, rho, theta,
+                        nb_total_t0, nb_exp_t0, nb_car_t0, nb_inf_t0, nb_hosp_t0, nb_icu_t0, nb_rec_t0, nb_dead_t0)
 
     # emulate some mitigations
     params.add_damping(Damping(23., 0.8))
