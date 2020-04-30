@@ -32,16 +32,12 @@ struct parameter_info
 class parameter_space_t
 {
 public:
-    using ConstIterator = int; // TODO: placeholder. Replace with correct iterator once it is implemented
-
     /* Constructor
      * \param [in] paramter_filename filename of a file storing ranges of input parameters.
      * Reads parameter names and values from an input file.
      */
     parameter_space_t (std::string &parameter_filename);
 
-    // Return an iterator that starts at the first parameter set
-    ConstIterator Begin();
 private:
     // The names of all stored parameters
     std::vector<std::string> parameter_names;
