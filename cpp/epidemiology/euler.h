@@ -10,7 +10,7 @@ namespace epi
 /**
  * @brief Simple explicit euler integration y(t+1) = y(t) + h*f(t,y) for ODE y'(t) = f(t,y)
  */
-class EulerIntegrator
+class EulerIntegrator : public IntegratorBase
 {
 public:
     /**
@@ -18,22 +18,19 @@ public:
      * @param func The right hand side of the ODE
      */
     EulerIntegrator(DerivFunction func)
-        : f(func)
+        : IntegratorBase(func)
     {
     }
 
     /**
-    * Adaptive step width of the integration
-    * This method integrates a system of ODEs
-    * @param[in] yt value of y at t, y(t)
-    * @param[inout] t current time step h=dt
-    * @param[inout] dt current time step h=dt
-    * @param[out] ytp1 approximated value y(t+1)
-    */
-    bool step(std::vector<double> const& yt, double& t, double& dt, std::vector<double>& ytp1) const;
-
-private:
-    DerivFunction f;
+     * @brief Fixed step width of the integration
+     *
+     * @param[in] yt value of y at t, y(t)
+     * @param[in,out] t current time step h=dt
+     * @param[in,out] dt current time step h=dt
+     * @param[out] ytp1 approximated value y(t+1)
+     */
+    bool step(std::vector<double> const& yt, double& t, double& dt, std::vector<double>& ytp1) const override;
 };
 
 } // namespace epi

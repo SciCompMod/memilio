@@ -74,7 +74,7 @@ public:
  *
  * This method integrates a system of ODEs
  */
-class RKIntegrator
+class RKIntegrator : public IntegratorBase
 {
 public:
     /**
@@ -84,7 +84,7 @@ public:
      * @param dt_max Maximum time step
      */
     RKIntegrator(DerivFunction func, double dt_min, double dt_max)
-        : f(func)
+        : IntegratorBase(func)
         , m_abs_tol(1e-10)
         , m_rel_tol(1e-5)
         , m_dt_min(dt_min)
@@ -119,10 +119,9 @@ public:
     * @param[in,out] dt current time step h=dt
     * @param[out] ytp1 approximated value y(t+1)
     */
-    bool step(std::vector<double> const& yt, double& t, double& dt, std::vector<double>& ytp1) const;
+    bool step(std::vector<double> const& yt, double& t, double& dt, std::vector<double>& ytp1) const override;
 
 private:
-    DerivFunction f;
     tableau m_tab;
     tableau_final m_tab_final;
     double m_abs_tol, m_rel_tol;
