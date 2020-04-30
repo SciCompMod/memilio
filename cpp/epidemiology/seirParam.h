@@ -1,6 +1,8 @@
 #ifndef SEIR_PARAM
 #define SEIR_PARAM
 
+#include <vector>
+
 /**
  * This defined a damping factor for a
  * mitigation strategy for one point in time.
