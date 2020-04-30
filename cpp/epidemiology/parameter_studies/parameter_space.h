@@ -39,23 +39,9 @@ public:
     parameter_space_t (std::string &parameter_filename);
 
 private:
-    // The names of all stored parameters
-    std::vector<std::string> parameter_names;
-    
-    // The start values of the parameters
-    std::vector<double> parameter_start_values;
-    // The end values of the parameters
-    std::vector<double> parameter_end_values;
-    // The step size values of the parameters
-    std::vector<double> parameter_step_values;
-
-    // Start time (should be the same for all simulations)
-    T t0;
-    // End time (should be the same for all simulations)
-    T tmax;
-    // time step (should be the same for all simulations)
-    T dt;
-}
+    // A vector of all parameters with names and min/max values
+    std::vector<struct parameter_info> parameters;
+};
 
 
 #endif // PARAMETER_SPACE_H
