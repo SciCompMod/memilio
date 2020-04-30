@@ -9,7 +9,7 @@
 
 //#include <epidemiology/euler.h>
 #include <epidemiology/adapt_rk.h>
-#include <epidemiology/seirParam.h>
+#include <epidemiology/seir_param.h>
 
 /**
  * Returns the damping factor

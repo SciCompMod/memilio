@@ -1,7 +1,7 @@
 #include <pybind11/pybind11.h>
 #include <pybind11/stl.h>
 
-#include <epidemiology/seirParam.h>
+#include <epidemiology/seir_param.h>
 #include <epidemiology/secir.h>
 #include <vector>
 
