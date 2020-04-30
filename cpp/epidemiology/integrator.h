@@ -3,6 +3,7 @@
 
 #include <vector>
 #include <functional>
+#include <algorithm>
 
 namespace epi
 {
@@ -33,6 +34,21 @@ public:
 protected:
     DerivFunction f;
 };
+
+/**
+ * @brief Integrates an ODE from t0 to tmax with initian step size dt and given Integrator
+ *
+ * y has to be aleady allocated with the initial solution at t0
+ *
+ * @param t0
+ * @param tmax
+ * @param dt
+ * @param integrator
+ * @param y
+ * @return Array of t with same size as y
+ */
+std::vector<double> ode_integrate(double t0, double tmax, double dt, const IntegratorBase& integrator,
+                                  std::vector<std::vector<double>>& y);
 
 } // namespace epi
 

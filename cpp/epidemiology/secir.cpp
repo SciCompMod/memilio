@@ -233,16 +233,8 @@ void secir_get_derivatives(const SecirParams& params, const std::vector<double>&
 std::vector<double> simulate(double t0, double tmax, double dt, const SecirParams& params,
                              std::vector<std::vector<double>>& seir)
 {
-    size_t nb_steps = (int)(ceil((tmax - t0) / dt)); // estimated number of time steps (if equidistant)
-
-    std::vector<double> dydt;
-
     size_t n_params = params.model == 0 ? 4 : 8;
-    seir            = std::vector<std::vector<double>>(
-        nb_steps + 1, std::vector<double>(n_params, 0.)); // prepare memory for equidistant step size
-    std::vector<double> vec_times(nb_steps + 1, 0.);
-
-    dydt = std::vector<double>(n_params, 0);
+    seir            = std::vector<std::vector<double>>(1, std::vector<double>(n_params, 0.));
 
     if (params.model == 0) {
         //initial conditions
@@ -280,49 +272,7 @@ std::vector<double> simulate(double t0, double tmax, double dt, const SecirParam
     EulerIntegrator<double> integrator(secir_fun);
 #endif
 
-    bool step_okay = true;
-
-    double t      = t0;
-    double t_prev = t0;
-    size_t i      = 0;
-    vec_times[0]  = t0;
-    while (t_prev < tmax) {
-        if (t > tmax) { // possible for adaptive step size
-            dt = tmax - t_prev;
-            if (dt < 0.1 * dtmin) {
-                break;
-            }
-        }
-        t_prev = t;
-        t      = std::min(t, tmax); // possible for adaptive step size
-
-        // printf("%d\t", (int)seir[i][0]);
-
-        if (i + 1 >= seir.size()) {
-            std::vector<std::vector<double>> vecAppend(20, std::vector<double>(n_params, 0.));
-            seir.insert(seir.end(), vecAppend.begin(), vecAppend.end());
-            vec_times.resize(vec_times.size() + 20, 0.);
-        }
-        step_okay        = integrator.step(seir[i], t, dt, seir[i + 1]);
-        vec_times[i + 1] = t;
-
-        i++;
-    }
-
-    // cut empty elements (makes more sense for adaptive time step size)
-    if (seir.size() > i) {
-        seir.resize(i);
-        vec_times.resize(i);
-    }
-
-    if (step_okay) {
-        printf("\n Adaptive step sizing successful to tolerances.\n");
-    }
-    else {
-        printf("\n Adaptive step sizing failed.");
-    }
-
-    return vec_times;
+    return ode_integrate(t0, tmax, dt, integrator, seir);
 }
 
 } // namespace epi
