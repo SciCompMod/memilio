@@ -39,7 +39,7 @@ SeirParams::SeirParams()
 
     nb_sus_t0 = nb_total_t0 - nb_exp_t0 - nb_inf_t0 - nb_rec_t0;
     // List of damping initially empty
-    dampings.push_back(Damping(0.0, 1.0));
+    dampings.add(Damping(0.0, 1.0));
 }
 
 SeirParams::SeirParams(double tinc, double tinfmild, double base_reprod_in, double nb_total_t0_in, double nb_exp_t0_in,
@@ -58,57 +58,14 @@ SeirParams::SeirParams(double tinc, double tinfmild, double base_reprod_in, doub
     // Initial Number of recovered
     nb_rec_t0 = nb_rec_t0_in;
     // List of damping initially empty
-    dampings.push_back(Damping(0.0, 1.0));
-}
-
-void SeirParams::add_damping(const Damping& d)
-{
-    // make sure, the damping array is sorted
-    insert_sorted(dampings, d, [](const Damping& d1, const Damping& d2) {
-        return d1.day < d2.day;
-    });
-}
-
-double SeirParams::get_damping_factor(double day) const
-{
-    // we assume, that the data_array is ordered in ascending order
-    size_t ilow  = 0;
-    size_t ihigh = dampings.size() - 1;
-
-    // check extrapolation cases
-    if (day < dampings[ilow].day) {
-        return dampings[ilow].factor;
-    }
-
-    if (day >= dampings[ihigh].day) {
-        return dampings[ihigh].factor;
-    }
-
-    // now do the search
-    while (ilow < ihigh - 1) {
-        size_t imid = (ilow + ihigh) / 2;
-        if (dampings[ilow].day <= day && day < dampings[imid].day) {
-            ihigh = imid;
-        }
-        else if (dampings[imid].day <= day && day < dampings[ihigh].day) {
-            ilow = imid;
-        }
-        else {
-            // this case can only occur, if
-            // input data are not ordered
-            return 1e16;
-        }
-    }
-
-    assert(dampings[ilow].day <= day && day < dampings[ilow + 1].day);
-    return dampings[ilow].factor;
+    dampings.add(Damping(0.0, 1.0));
 }
 
 void seir_get_derivatives(const SeirParams& params, const std::vector<double>& y, double t, std::vector<double>& dydt)
 {
 
     // 0: S,      1: E,       2: I,     3: R
-    double cont_freq_eff = params.cont_freq * params.get_damping_factor(t);
+    double cont_freq_eff = params.cont_freq * params.dampings.get_factor(t);
     double divN          = 1.0 / params.nb_total_t0;
 
     dydt[0] = -cont_freq_eff * y[0] * y[2] * divN;

@@ -42,7 +42,7 @@ int main()
                             cont_freq, alpha, beta, delta, rho, theta, nb_total_t0, nb_exp_t0, nb_car_t0, nb_inf_t0,
                             nb_hosp_t0, nb_icu_t0, nb_rec_t0, nb_dead_t0);
 
-    params.add_damping(epi::Damping(30., 0.3));
+    params.dampings.add(epi::Damping(30., 0.3));
 
     print_secir_params(params);
 

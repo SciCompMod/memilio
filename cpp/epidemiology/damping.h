@@ -1,5 +1,4 @@
 #include <vector>
-#include <algorithm>
 
 namespace epi
 {
@@ -17,10 +16,24 @@ public:
     Damping(double day_in, double factor_in);
 };
 
-template <typename T, typename Pred>
-typename std::vector<T>::iterator insert_sorted(std::vector<T>& vec, T const& item, Pred pred)
+class Dampings
 {
-    return vec.insert(std::upper_bound(vec.begin(), vec.end(), item, pred), item);
-}
+public:
+    /**
+     * @brief Adds a damping to the current model
+     * @param d The damping, which is a factor and day from which the mitigation acts
+     */
+    void add(const Damping& d);
+
+    /**
+     * @brief Returns the damping factor
+     *
+     * @param[in] day Current day
+     */
+    double get_factor(double day) const;
+
+private:
+    std::vector<Damping> m_dampings;
+};
 
 } // namespace epi

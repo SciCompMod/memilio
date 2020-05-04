@@ -69,7 +69,7 @@ SecirParams::SecirParams(double tinc, double tinfmild, double tserint, double th
     // Initial Number of deaths
     nb_dead_t0 = nb_dead_t0_in;
     // List of damping initially empty
-    dampings.push_back(Damping(0.0, 1.0));
+    dampings.add(Damping(0.0, 1.0));
 
     nb_sus_t0 = nb_total_t0 - nb_exp_t0 - nb_car_t0 - nb_inf_t0 - nb_hosp_t0 - nb_icu_t0 - nb_rec_t0 - nb_dead_t0;
 
@@ -80,54 +80,11 @@ SecirParams::SecirParams(double tinc, double tinfmild, double tserint, double th
                   nb_sus_t0 / nb_total_t0;
 }
 
-void SecirParams::add_damping(const Damping& d)
-{
-    // make sure, the damping array is sorted
-    insert_sorted(dampings, d, [](const Damping& d1, const Damping& d2) {
-        return d1.day < d2.day;
-    });
-}
-
-double SecirParams::get_damping_factor(double day) const
-{
-    // we assume, that the data_array is ordered in ascending order
-    size_t ilow  = 0;
-    size_t ihigh = dampings.size() - 1;
-
-    // check extrapolation cases
-    if (day < dampings[ilow].day) {
-        return dampings[ilow].factor;
-    }
-
-    if (day >= dampings[ihigh].day) {
-        return dampings[ihigh].factor;
-    }
-
-    // now do the search
-    while (ilow < ihigh - 1) {
-        size_t imid = (ilow + ihigh) / 2;
-        if (dampings[ilow].day <= day && day < dampings[imid].day) {
-            ihigh = imid;
-        }
-        else if (dampings[imid].day <= day && day < dampings[ihigh].day) {
-            ilow = imid;
-        }
-        else {
-            // this case can only occur, if
-            // input data are not ordered
-            return 1e16;
-        }
-    }
-
-    assert(dampings[ilow].day <= day && day < dampings[ilow + 1].day);
-    return dampings[ilow].factor;
-}
-
 void secir_get_derivatives(const SecirParams& params, const std::vector<double>& y, double t, std::vector<double>& dydt)
 {
 
     // 0: S,      1: E,     2: C,     3: I,     4: H,     5: U,     6: R,     7: D
-    double cont_freq_eff = params.cont_freq * params.get_damping_factor(t);
+    double cont_freq_eff = params.cont_freq * params.dampings.get_factor(t);
     double divN          = 1.0 / params.nb_total_t0;
 
     double dummy_S = cont_freq_eff * y[0] * divN * (y[2] + params.beta * y[3]);

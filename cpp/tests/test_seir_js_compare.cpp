@@ -76,8 +76,8 @@ protected:
         params.tinfmild_inv = 0.5;
 
         // add two dampings
-        params.add_damping(epi::Damping(0., 1.0));
-        params.add_damping(epi::Damping(12., 0.4));
+        params.dampings.add(epi::Damping(0., 1.0));
+        params.dampings.add(epi::Damping(12., 0.4));
     }
 
 public:

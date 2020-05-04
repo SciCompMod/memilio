@@ -27,7 +27,7 @@ public:
     double nb_total_t0, nb_sus_t0, nb_exp_t0, nb_inf_t0, nb_rec_t0;
 
     // This defines a damping factor for a mitigation strategy for different points in time.
-    std::vector<Damping> dampings;
+    Dampings dampings;
 
     /**
      * @brief Initializes a SEIR model with some default parameters
@@ -49,19 +49,6 @@ public:
      */
     SeirParams(double tinc, double tinfmild, double cont_freq_in, double nb_total_t0_in, double nb_exp_t0_in,
                double nb_inf_t0_in, double nb_rec_t0_in);
-
-    /**
-     * @brief Adds a damping to the current model
-     * @param d The damping, which is a factor and day from which the mitigation acts
-     */
-    void add_damping(const Damping& d);
-
-    /**
-     * Returns the damping factor
-     *
-     * @param[in] day Current day
-     */
-    double get_damping_factor(double day) const;
 };
 
 /**
