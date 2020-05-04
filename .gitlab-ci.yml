@@ -1,7 +1,58 @@
-build-js:
+
+build-cpp:
+  stage: build
+  tags:
+   - cpp
+   - hpcagainstcorona
+  script:
+    - cd cpp
+    - mkdir build && cd build
+    - cmake ..
+    - cmake --build .
+  artifacts:
+    expire_in: 2 hrs
+    paths:
+      - cpp/build/
+
+build-py:
+  tags:
+   - cpp
+   - hpcagainstcorona
   stage: build
   before_script:
-    - npm install
+    - apt -qq -y install python3.7-venv python3-venv 
+    - cd pycode
+    - python3 -m venv venv
+    - source venv/bin/activate
+    - pip install scikit-build
+  script:
+    - python3 setup.py bdist_wheel
+  artifacts:
+    paths:
+      - pycode/dist/*.whl
+
+# run tests using the binary built before
+test-cpp:
+  tags:
+   - cpp
+   - hpcagainstcorona
+  stage: test
+  dependencies:
+    - build-cpp
+  script:
+    - cd cpp/build/tests
+    - ./runUnitTests --gtest_output="xml:report.xml"
+  artifacts:
+    reports:
+      junit: cpp/build/tests/report.xml
+
+build-js:
+  tags:
+   - npm
+   - hpcagainstcorona
+  stage: build
+  before_script:
+   - npm install
   script:
     - echo "Building app deployment"
     - npm run build
@@ -11,6 +62,9 @@ build-js:
       - build/
 
 www:
+  tags:
+   - native
+   - hpcagainstcorona
   stage: deploy
   dependencies:
     - build-js
