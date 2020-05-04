@@ -2,6 +2,7 @@
 #include <pybind11/stl.h>
 
 #include <epidemiology/secir.h>
+#include <epidemiology/damping.h>
 #include <vector>
 
 namespace py = pybind11;
@@ -64,10 +65,15 @@ SecirResult simulate_secir(double t0, double tmax, double dt, const epi::SecirPa
 
 PYBIND11_MODULE(_secir, m)
 {
-  py::class_<epi::Damping>(m, "Damping")
+    py::class_<epi::Damping>(m, "Damping")
         .def(py::init<double, double>(), py::arg("day"), py::arg("factor"))
         .def_readwrite("day", &epi::Damping::day)
         .def_readwrite("factor", &epi::Damping::factor);
+
+    py::class_<epi::Dampings>(m, "Dampings")
+        .def(py::init<>())
+        .def("add", &epi::Dampings::add)
+        .def("get_factor", &epi::Dampings::get_factor);
 
     py::class_<SecirResult>(m, "SecirResult")
         .def_readonly("t", &SecirResult::t)
@@ -92,7 +98,7 @@ PYBIND11_MODULE(_secir, m)
              py::arg("theta_in"), py::arg("nb_total_t0_in"), py::arg("nb_exp_t0_in"), py::arg("nb_car_t0_in"),
              py::arg("nb_inf_t0_in"), py::arg("nb_hosp_t0_in"), py::arg("nb_icu_t0_in"), py::arg("nb_rec_t0_in"),
              py::arg("nb_dead_t0_in"))
-        .def("add_damping", &epi::SecirParams::add_damping);
+        .def_readwrite("dampings", &epi::SecirParams::dampings);
 
     m.def("print_secir_params", &epi::print_secir_params);
     m.def("simulate", &simulate_secir, "Simulates the SECIR model from t0 to tmax.", py::arg("t0"), py::arg("tmax"),
