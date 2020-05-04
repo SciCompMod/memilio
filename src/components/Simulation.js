@@ -1,11 +1,13 @@
 import React, { PureComponent } from 'react';
 import { connect } from 'react-redux';
+import { Button } from 'reactstrap';
 import { getActiveMeasures } from '../redux/measures';
 import { getParameterMap } from '../redux/parameters';
-import { Button } from 'reactstrap';
+import { getSelectedData } from '../redux/app';
+import { setData } from '../redux/seir';
 
 import { simulate_seir, makeSeirParam, Damping } from '../common/seir.js';
-import { setData } from '../redux/seir';
+import { calculateDamping } from '../common/utils';
 
 class Simulation extends PureComponent {
   simulate() {
@@ -19,16 +21,22 @@ class Simulation extends PureComponent {
     seir_params.b = p.contact_rate;
     seir_params.g = 1 / p.infection;
     seir_params.E0 = p.e0;
-    seir_params.I0 = 1000; //p.i0;
-    seir_params.R0 = p.r0;
-    seir_params.N = 100000;
+    seir_params.I0 = this.props.start.AnzahlFall; //p.i0;
+    seir_params.R0 = this.props.start.AnzahlGenesen;
+    seir_params.N = this.props.selected.population;
 
     // TODO: replace by the actual logic
-    let action_damping = [{ day: 0, damping: 1 }];
+    let action_damping = calculateDamping(
+      this.props.measures,
+      this.props.start.date,
+      days
+    );
 
     seir_params.dampings = action_damping.map(
       (v, i) => new Damping(v.day, v.damping)
     );
+
+    console.log(seir_params.dampings);
 
     let data = simulate_seir(0, days, step_size, seir_params);
 
@@ -38,29 +46,58 @@ class Simulation extends PureComponent {
       data[key] = data[key].filter((v, i) => i % x === 0);
     });
 
-    const startDate = Date.parse('2020-02-24');
+    const startDate = this.props.start.date;
 
-    Object.keys(data)
-      .filter((k) => k !== 'time')
-      .forEach((k) => {
-        data[k] = data[k].map((value, index) => {
-          return {
-            value: parseInt(value, 10),
-            date: startDate + index * 24 * 60 * 60 * 1000
-          };
-        });
-      });
+    const result = Object.values(
+      Object.keys(data)
+        .filter((k) => k !== 't')
+        .reduce((acc, k) => {
+          data[k].forEach((value, index) => {
+            let date = new Date(startDate + index * 24 * 60 * 60 * 1000);
+            date.setHours(0);
+            date.setMilliseconds(0);
+            date.setMinutes(0);
+            date.setSeconds(0);
 
-    this.props.setData(data);
+            date = date.getTime();
+            if (!acc[date]) {
+              acc[date] = {
+                date
+              };
+            }
+            acc[date] = Object.assign(acc[date], {
+              [k]: parseInt(value)
+            });
+          });
+
+          return acc;
+        }, {})
+    );
+
+    this.props.setData(result);
   }
 
   render() {
-    return <Button onClick={this.simulate.bind(this)}>Simulate</Button>;
+    return (
+      <Button
+        onClick={this.simulate.bind(this)}
+        size="sm"
+        disabled={this.props.selected === null}
+      >
+        Simulate
+      </Button>
+    );
   }
 }
 
 const mapState = (state) => {
+  let start = getSelectedData(state);
+  if (start) {
+    start = start.start;
+  }
   return {
+    start,
+    selected: state.app.selected,
     measures: getActiveMeasures(state.measures),
     parameters: getParameterMap(state.parameters)
   };

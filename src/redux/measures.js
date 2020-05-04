@@ -121,7 +121,6 @@ const slice = createSlice({
               return { ...interval, id: uuid(), active: true };
             });
             m.active = true;
-            console.log(m.intervals);
           }
           return Object.assign(
             {

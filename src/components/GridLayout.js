@@ -1,13 +1,9 @@
 import React, { Component } from 'react';
-import { connect } from 'react-redux';
 import { Responsive, WidthProvider } from 'react-grid-layout';
-import Simulation from './Simulation';
 import Map from './Map';
 import Parameters from './Parameters';
 import Measures from './Measures';
 import Results from './Results';
-
-import { getActiveMeasures } from '../redux/measures';
 
 import './GridLayout.scss';
 

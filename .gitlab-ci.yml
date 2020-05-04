@@ -1,19 +1,24 @@
+stages:
+  - build
+  - deploy
 build:
   stage: build
   before_script:
-     - npm install
+    - npm install
   script:
-    - grunt
+    - echo "Building app deployment"
+    - npm run build
+    - echo "Building done"
   artifacts:
     paths:
-      - dist/
-
-
+      - build/
 www:
   stage: deploy
   dependencies:
     - build
   script:
-    - cp -r dist/* /var/www/html
+    - echo "Deploying to server"
+    - cp -rv build/* /var/www/html
+    - echo "Deployed"
   only:
     - master

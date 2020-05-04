@@ -14,10 +14,22 @@
     "contactrate": "Kontaktrate (Tage)",
     "incubation": "Inkubationszeit (Tage)",
     "infection": "Infektionszeit (Tage)",
+    "deaths": "Verstorbenen Personen",
+    "sus": "Gefährdete Personen",
     "i0": "Infizierte Personen",
     "recovered": "Genesene Personen",
-    "exposed": "Gefährdete Personen",
+    "exposed": "Exponierte Personen",
     "infected": "Infizierte Personen"
   },
+  "rki": {
+    "title": "RKI Daten",
+    "deaths": "RKI Verstorbenen Personen",
+    "sus": "RKI Gefährdete Personen",
+    "i0": "RKI Infizierte Personen",
+    "recovered": "RKI Genesene Personen",
+    "exposed": "RKI Exponierte Personen",
+    "infected": "RKI Infizierte Personen"
+  },
+  "results": "Auswertung",
   "dateFormat": "dd.MM.yyyy"
 }

@@ -2,28 +2,18 @@
   "measures": [
     {
       "label": "measures.homeoffice",
-      "damping": 0.7,
+      "damping": 0.66,
       "intervals": []
     },
     {
       "label": "measures.schoolclosing",
-      "damping": 0.8,
-      "intervals": [
-        {
-          "start": "2020-03-17",
-          "end": "2020-05-04"
-        }
-      ]
+      "damping": 0.85,
+      "intervals": []
     },
     {
       "label": "measures.socialdistancing",
-      "damping": 0.4,
-      "intervals": [
-        {
-          "start": "2020-03-17",
-          "end": null
-        }
-      ]
+      "damping": 0.55,
+      "intervals": []
     }
   ],
   "parameters": [
@@ -57,12 +47,7 @@
     {
       "label": "parameters.exposed",
       "name": "e0",
-      "default": 10000
-    },
-    {
-      "label": "parameters.recovered",
-      "name": "r0",
-      "default": 1000
+      "default": 0
     }
   ]
 }

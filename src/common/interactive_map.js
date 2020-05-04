@@ -1,9 +1,15 @@
 import * as d3 from 'd3';
 import * as topojson from 'topojson-client';
+import { Datasets } from '../redux/app';
 
 class InteractiveMap {
   constructor(node) {
-    this.listener = [];
+    this.listeners = [];
+    this.selected = {
+      dataset: null,
+      id: null,
+      label: null
+    };
 
     // get actual with and height
     this.width = node.clientWidth;
@@ -72,7 +78,14 @@ class InteractiveMap {
       .on('click', function () {
         hide(self.landkreise.selectAll('path:not(.hidden)'));
         self.bundeslaender.selectAll('.off').classed('off', false);
-        zoomTo(self.land);
+        zoomTo(self.land).on('end', (_) => {
+          self.selected = {
+            dataset: null,
+            id: null,
+            label: null
+          };
+          self.notify();
+        });
       })
       .call(
         d3
@@ -111,11 +124,19 @@ class InteractiveMap {
           .classed('land', true)
           .on('click', function (d, i) {
             d3.event.stopPropagation();
+
             let visible_path = self.landkreise.selectAll('path:not(hidden)');
             let hidden_path = self.landkreise.selectAll('path.hidden');
 
             hide(visible_path);
-            zoomTo(d);
+            zoomTo(d).on('end', (_) => {
+              self.selected = {
+                dataset: Datasets.STATES,
+                id: parseInt(d.properties.RS),
+                label: d.properties.GEN
+              };
+              self.notify();
+            });
             show(
               hidden_path.filter((a, b) =>
                 a.properties.RS.startsWith(d.properties.RS)
@@ -127,11 +148,6 @@ class InteractiveMap {
               .classed('off', false)
               .filter((x) => x.properties.RS !== d.properties.RS)
               .classed('off', true);
-
-            //let visible_text = self.landkreise.selectAll("text:not(hidden)");
-            //let hidden_text = self.landkreise.selectAll("text.hidden");
-            //hide(visible_text);
-            //show(hidden_text.filter((a, b) => a.properties.RS.startsWith(d.properties.RS)));
           })
           .on('mouseenter', (d, i) => {
             this.tooltip.text(`${d.properties.GEN}`);
@@ -174,6 +190,13 @@ class InteractiveMap {
           .classed('kreis', true)
           .on('click', function (d, i) {
             d3.event.stopPropagation();
+            console.log(d.properties);
+            self.selected = {
+              dataset: Datasets.COUNTIES,
+              id: parseInt(d.properties.RS),
+              label: d.properties.GEN
+            };
+            self.notify();
           })
           .on('mouseover', function (d, i) {
             self.tooltip.text((x) => `${d.properties.GEN}`);
@@ -188,25 +211,7 @@ class InteractiveMap {
           })
           .append('title')
           .text((d) => `${d.properties.GEN}`);
-        /*
-                this.landkreise
-                .selectAll("text")
-                .data(this.kreis.features)
-                .enter()
-                .append("text")
-                .attr("opacity", 0)
-                .attr("visibility", 'hidden')
-                .classed('hidden', true)
-                .attr("x", function(d) {
-                    return path.centroid(d)[0];
-                })
-                .attr("y", function(d) {
-                    return path.centroid(d)[1];
-                })
-                .attr("text-anchor", "middle")
-                .attr("font-size", "8px")
-                .text(d => `${d.properties.GEN}`);
-                */
+
         zoomTo(this.land);
       });
   }
@@ -217,7 +222,7 @@ class InteractiveMap {
     });
   }
 
-  onselect(listener) {
+  onSelect(listener) {
     this.listeners.push(listener);
   }
 }
