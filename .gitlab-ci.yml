@@ -1,7 +1,4 @@
-stages:
-  - build
-  - deploy
-build:
+build-js:
   stage: build
   before_script:
     - npm install
@@ -12,10 +9,11 @@ build:
   artifacts:
     paths:
       - build/
+
 www:
   stage: deploy
   dependencies:
-    - build
+    - build-js
   script:
     - echo "Deploying to server"
     - cp -rv build/* /var/www/html
