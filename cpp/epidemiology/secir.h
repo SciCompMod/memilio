@@ -1,26 +1,15 @@
 #ifndef SECIR_H
 #define SECIR_H
 
+#include <epidemiology/damping.h>
+
 #include <vector>
 
 namespace epi
 {
 
 /**
- * This defined a damping factor for a
- * mitigation strategy for one point in time.
- */
-class Damping
-{
-public:
-    double day;
-    double factor;
-
-    Damping(double day_in, double factor_in);
-};
-
-/**
- * Paramters of the model(s):
+ * Paramters of the SECIR/SECIHURD model:
  * T_inc (also sigma^(-1) or R_2^(-1)+R_3^(-1)): mean incubation period (default: 5.2);
  *          R_2^(-1) is the first part of the incubation time where the person is not yet infectioous
  *          R_3 is the exchange between asymptomatic carriers and infectious people; R_3^(-1) is the second part of the incubation time where the person is infectious WITHOUT showing symptoms
@@ -32,7 +21,7 @@ public:
  * T_icu2home (also R_8^(-1)): mean time a patient is connected to an ICU before returning home (=INF or R_8=0 in standard SEIR to waive influence of this parameter)
  * T_infasy (also R_9^(-1)): mean time an asymptomatic person remains infective (=INF or R_9=0 in standard SEIR to waive influence of this parameter)
  * T_icu2death (also d; better would be R_10^(-1)): mean time a person needs ICU support before dying (=INF or R_10=0 in standard SEIR to waive influence of this parameter)
- * cont_freq (also R_1: contact frequency
+ * cont_freq (also R_1: contact frequency/rate; called beta in the standard SEIR model)
  * alpha: share of asymptomatic cases
  * beta (Not the beta in SEIR model): risk of infection from the infected symptomatic patients
  * rho: H/I; hospitalized per infected (=0 in standard SEIR)
@@ -42,32 +31,25 @@ public:
 class SecirParams
 {
 public:
-    int model;
-
-    double base_reprod, b, cont_freq;
-    double tinc_inv, tinfmild_inv;
+    double base_reprod;
+    double cont_freq, tinc_inv, tinfmild_inv; // parameters of the standard SEIR model
     double tserint_inv, thosp2home_inv, thome2hosp_inv, thosp2icu_inv, ticu2home_inv, tinfasy_inv, ticu2death_inv;
-    double alpha, beta, rho, theta, delta;
+    double alpha, beta, rho, theta, delta; // probabilities
 
     // double nb_total, nb_exp, nb_car, nb_inf, nb_hosp, nb_icu, nb_rec, nb_dead;
     double nb_total_t0, nb_sus_t0, nb_exp_t0, nb_car_t0, nb_inf_t0, nb_hosp_t0, nb_icu_t0, nb_rec_t0, nb_dead_t0;
 
     // This defines a damping factor for a mitigation strategy for different points in time.
-    std::vector<Damping> dampings;
+    Dampings dampings;
 
     /**
-     * @brief Initializes a SEIR model with some default parameters
+     * @brief Initializes a SECIR/SECIHURD model with some default parameters 
+     * ATTENTION: NOT IMPLEMENTED in secir.cpp !!!!!!!!!!
      */
     SecirParams();
 
     /**
-     * @brief Initializes a SEIR model with given parameters
-     */
-    SecirParams(double tinc, double tinfmild, double base_reprod_in, double nb_total_t0_in, double nb_exp_t0_in,
-                double nb_inf_t0_in, double nb_rec_t0_in);
-
-    /**
-     * @brief Initializes a SECIR model
+     * @brief Initializes a SECIR/SECIHURD model
      *
      * @todo parameter description
      *
@@ -100,45 +82,32 @@ public:
                 double beta_in, double delta_in, double rho_in, double theta_in, double nb_total_t0_in,
                 double nb_exp_t0_in, double nb_car_t0_in, double nb_inf_t0_in, double nb_hosp_t0_in,
                 double nb_icu_t0_in, double nb_rec_t0_in, double nb_dead_t0_in);
-
-    /**
-     * @brief Adds a damping to the current model
-     * @param d The damping, which is a factor and day from which the mitigation acts
-     */
-    void add_damping(const Damping& d);
-
-    /**
-     * Returns the damping factor
-     *
-     * @param[in] day Current day
-     */
-    double get_damping_factor(double day) const;
 };
 
 /**
  * prints given parameters
- * @param[in] params the SeirParams parameter object
+ * @param[in] params the SecirParams parameter object
  */
 void print_secir_params(SecirParams const& params);
 
 /**
- * Computes the current time-derivative of S, E, I, and R in the SEIR model
- * @param[in] params SEIR Model parameters, created by seir_param
+ * Computes the current time-derivative of S, E, C, I, (H, U,) R, (D) in the SECIR/SECIHURD model
+ * @param[in] params SECIR/SECIHURD Model parameters, created by seir_param
  * @tparam T the datatype of the cases
- * @param[in] y current  S, E, I, and R values at t; y: [0:S, 1:E, 2:I, 3:R]
+ * @param[in] y current  S, E, C, I, (H, U,) R, (D) values at t; y: [0:S, 1:E, 2:I, 3:R]
  * @param[in] t time / current day
- * @param[out] dydt the values of the time derivatices of S, E, I, and R
+ * @param[out] dydt the values of the time derivatices of S, E, C, I, (H, U,) R, (D)
  */
 void secir_get_derivatives(SecirParams const& params, std::vector<double> const& y, double t,
                            std::vector<double>& dydt);
 
 /**
  * Computes the seir curve by integration
- * @param[in] seir_0 Initial S, E, I, and R values at t0
+ * @param[in] seir_0 Initial S, E, C, I, (H, U,) R, (D) values at t0
  * @param[in] t0 start time of simulation
  * @param[in] tmax end time of simulation
  * @param[in] dt initial time step
- * @param[in] params SEIR model parameters
+ * @param[in] params SECIR/SECIHURD model parameters
  *
  * @returns Vector of times t
  */

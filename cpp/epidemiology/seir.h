@@ -1,133 +1,61 @@
 #ifndef SEIR_H
 #define SEIR_H
 
+#include <epidemiology/damping.h>
+
 #include <vector>
-#include <cmath>
-#include <cassert>
-#include <cstdio>
 
-#include <epidemiology/euler.h>
-
-/**
- * This defined a damping factor for a
- * mitigation strategy for one point in time.
- */
-template <typename T> struct damping {
-    T day;
-    T factor;
-
-    damping(T day_in, T factor_in)
-    {
-
-        day    = day_in;
-        factor = factor_in;
-    }
-};
-
-/**
- * Returns the damping factor
- *
- * @param[in] damping_array Array of dampings
- * @param[in] t Current day
- */
-template <typename T> T getDampingFactor(std::vector<struct damping<T>> const& damping_array, T day)
+namespace epi
 {
-    // we assume, that the data_array is ordered in ascending order
-    size_t ilow  = 0;
-    size_t ihigh = damping_array.size() - 1;
 
-    // check extrapolation cases
-    if (day < damping_array[ilow].day) {
-        return damping_array[ilow].factor;
-    }
+/**
+ * Paramters of the SEIR model:
+ * T_inc (also sigma^(-1) or, in the SECIR modile, R_2^(-1)+R_3^(-1)): mean incubation period (default: 5.2);
+ *          in SECIR: R_2^(-1) is the first part of the incubation time where the person is not yet infectioous
+ *          in SECIR: R_3 is the exchange between asymptomatic carriers and infectious people; R_3^(-1) is the second part of the incubation time where the person is infectious WITHOUT showing symptoms
+ * T_infmild (also gamma^(-1) or R_4^(-1)): time a person remains infective after disease (if 'hospitalized' is considered a state, it does not apply to them but only to 'mildly infected' people in SECIR)
+ * cont_freq (contact frequency/rate; called beta in the standard SEIR model, also R_1 in the SECIR model)
+ *  NOTE: Here, the contact frequency is not calculated as R_0 * tinf_inv but directly input. This means that the Rt at the beginning (possibly, the R0) is given by Rt=tinf*cont_freq 
+**/
+class SeirParams
+{
+public:
+    double base_reprod;
+    double cont_freq, tinc_inv, tinfmild_inv;
 
-    if (day >= damping_array[ihigh].day) {
-        return damping_array[ihigh].factor;
-    }
-
-    // now do the search
-    while (ilow < ihigh - 1) {
-        size_t imid = (ilow + ihigh) / 2;
-        if (damping_array[ilow].day <= day && day < damping_array[imid].day) {
-            ihigh = imid;
-        }
-        else if (damping_array[imid].day <= day && day < damping_array[ihigh].day) {
-            ilow = imid;
-        }
-        else {
-            // this case can only occur, if
-            // input data are not ordered
-            return 1e16;
-        }
-    }
-
-    assert(damping_array[ilow].day <= day && day < damping_array[ilow + 1].day);
-    return damping_array[ilow].factor;
-}
-
-template <typename T> struct seirParam {
-
-    T a, b, g, N, E0, I0, R0;
+    // double nb_total, nb_exp, nb_car, nb_inf, nb_hosp, nb_icu, nb_rec, nb_dead;
+    double nb_total_t0, nb_sus_t0, nb_exp_t0, nb_inf_t0, nb_rec_t0;
 
     // This defines a damping factor for a mitigation strategy for different points in time.
-    std::vector<damping<T>> dampings;
+    Dampings dampings;
 
-    seirParam()
-    {
-        // Assume an incubation period of 5.2 days, a = 1/t_incubation
-        a = 0.192;
-        // contact rate beta
-        b = 1.75;
-        // Assume infectious period of 2 days
-        g = 0.5;
-        // Initial Population size
-        N = 10000;
-        // Initial Number of exposed
-        E0 = 50.0;
-        // Intial Number of infected
-        I0 = 10.0;
-        // Initial Number of recovered
-        R0 = 0.0;
-        // List of damping initially empty
-        dampings.push_back(damping<T>(0, 1.0));
-    }
+    /**
+     * @brief Initializes a SEIR model with some default parameters
+     */
+    SeirParams();
 
-    seirParam(T a_in, T b_in, T g_in, T N_in, T E0_in, T I0_in, T R0_in)
-    {
-        // Assume an incubation period of t_incubation = 1/a_in
-        a = a_in;
-        // contact rate beta
-        b = b_in;
-        // Assume infectious period of 1/g_in days
-        g = g_in;
-        // Initial Population size
-        N = N_in;
-        // Initial Number of exposed
-        E0 = E0_in;
-        // Intial Number of infected
-        I0 = I0_in;
-        // Initial Number of recovered
-        R0 = R0_in;
-        // List of damping initially
-        dampings.push_back(damping<T>(0, 1.0));
-    }
-
-    ~seirParam()
-    {
-        dampings.clear();
-    }
+    /**
+     * @brief Initializes a SEIR model with given parameters
+     *
+     * @todo parameter description
+     *
+     * @param tinc
+     * @param tinfmild
+     * @param cont_freq_in
+     * @param nb_total_t0_in
+     * @param nb_exp_t0_in
+     * @param nb_inf_t0_in
+     * @param nb_rec_t0_in
+     */
+    SeirParams(double tinc, double tinfmild, double cont_freq_in, double nb_total_t0_in, double nb_exp_t0_in,
+               double nb_inf_t0_in, double nb_rec_t0_in);
 };
 
 /**
  * prints given parameters
- * @param[in] params the seirParam parameter object
+ * @param[in] params the SeirParams parameter object
  */
-template <typename T> void printSeirParams(struct seirParam<T> const& params)
-{
-    printf("\n Parameters set:\n\t a:\t %.4f \n\t b:\t %.4f \n\t g:\t %.4f \n\t N:\t %d \n\t E0:\t %d \n\t I0:\t %d "
-           "\n\t R0:\t %d\n",
-           params.a, params.b, params.g, (int)params.N, (int)params.E0, (int)params.I0, (int)params.R0);
-}
+void print_seir_params(SeirParams const& params);
 
 /**
  * Computes the current time-derivative of S, E, I, and R in the SEIR model
@@ -137,18 +65,7 @@ template <typename T> void printSeirParams(struct seirParam<T> const& params)
  * @param[in] t time / current day
  * @param[out] dydt the values of the time derivatices of S, E, I, and R
  */
-template <typename T>
-void seir_getDerivatives(struct seirParam<T> const& params, std::vector<T> const& y, const T t, std::vector<T>& dydt)
-{
-
-    T b_eff = params.b * getDampingFactor(params.dampings, t);
-    T divN  = 1.0 / params.N;
-
-    dydt[0] = -b_eff * y[0] * y[2] * divN;
-    dydt[1] = b_eff * y[0] * y[2] * divN - params.a * y[1];
-    dydt[2] = params.a * y[1] - params.g * y[2];
-    dydt[3] = params.g * y[2];
-}
+void seir_get_derivatives(SeirParams const& params, std::vector<double> const& y, double t, std::vector<double>& dydt);
 
 /**
  * Computes the seir curve by integration
@@ -157,32 +74,12 @@ void seir_getDerivatives(struct seirParam<T> const& params, std::vector<T> const
  * @param[in] tmax end time of simulation
  * @param[in] dt initial time step
  * @param[in] params SEIR model parameters
+ *
+ * @returns Vector of times t
  */
-template <typename T>
-void simulate_seir(const T t0, const T tmax, const T dt, struct seirParam<T> const& params,
-                   std::vector<std::vector<T>>& seir)
-{
-    size_t nb_steps = (int)(ceil((tmax - t0) / dt)); // estimated number of time steps (if equidistant)
+std::vector<double> simulate(double t0, double tmax, double dt, SeirParams const& params,
+                             std::vector<std::vector<double>>& seir);
 
-    seir = std::vector<std::vector<T>>(nb_steps, std::vector<T>(4, (T)0)); // prepare memory for equidistant step size
-
-    //initial conditions
-    seir[0][0] = params.N - params.E0 - params.I0 - params.R0;
-    seir[0][1] = params.E0;
-    seir[0][2] = params.I0;
-    seir[0][3] = params.R0;
-
-    std::vector<T> dydt(4, 0);
-
-    epi::EulerIntegrator euler([&params](std::vector<T> const& y, const T t, std::vector<T>& dydt) {
-        return seir_getDerivatives(params, y, t, dydt);
-    });
-
-    T t       = t0;
-    T dt_temp = dt;
-    for (size_t i = 0; i < nb_steps - 1; ++i) {
-        euler.step(seir[i], t, dt_temp, seir[i + 1]);
-    }
-}
+} // namespace epi
 
 #endif // SEIR_H
