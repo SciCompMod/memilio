@@ -1,3 +1,6 @@
+#ifndef DAMPING_H
+#define DAMPING_H
+
 #include <vector>
 
 namespace epi
@@ -37,3 +40,5 @@ private:
 };
 
 } // namespace epi
+
+#endif // DAMPING_H
