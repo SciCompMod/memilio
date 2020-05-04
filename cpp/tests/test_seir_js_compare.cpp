@@ -66,18 +66,18 @@ protected:
         tmax    = 50.;
         dt      = 1.002003997564315796e-01;
 
-        params.E0 = 10000;
-        params.I0 = 1000;
-        params.N  = 1061000;
-        params.R0 = 1000;
-        params.a  = 1. / 5.2;
-        params.b  = 2.7;
-        params.g  = 0.5;
+        params.nb_exp_t0    = 10000;
+        params.nb_inf_t0    = 1000;
+        params.nb_total_t0  = 1061000;
+        params.nb_rec_t0    = 1000;
+        params.nb_sus_t0    = params.nb_total_t0 - params.nb_exp_t0 - params.nb_inf_t0 - params.nb_rec_t0;
+        params.tinc_inv     = 1. / 5.2;
+        params.cont_freq    = 2.7;
+        params.tinfmild_inv = 0.5;
 
         // add two dampings
-        damping<real> d1(0, 1.0);
-        damping<real> d2(12, 0.4);
-        params.dampings = {d1, d2};
+        params.add_damping(epi::Damping(0., 1.0));
+        params.add_damping(epi::Damping(12., 0.4));
     }
 
 public:
@@ -85,7 +85,7 @@ public:
     real t0;
     real tmax;
     real dt;
-    seirParam<real> params;
+    epi::SeirParams params;
 };
 
 TEST_F(TestCompareSeirWithJS, integrate)
@@ -94,7 +94,7 @@ TEST_F(TestCompareSeirWithJS, integrate)
 
     std::vector<std::vector<real>> result(0);
 
-    simulate_seir<real>(t0, tmax, dt, params, result);
+    simulate(t0, tmax, dt, params, result);
 
     EXPECT_EQ(500, result.size());
 

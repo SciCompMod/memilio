@@ -1,16 +1,21 @@
 #include <epidemiology/seir.h>
+#include <epidemiology/logging.h>
 
 int main()
 {
+    epi::set_log_level(epi::LogLevel::debug);
+
     double t0   = 0;
-    double tmax = 200;
+    double tmax = 1;
     double dt   = 0.1;
 
-    seirParam<double> params = seirParam<double>();
+    epi::log_info("Simulating SEIR; t={} ... {} with dt = {}.", t0, tmax, dt);
 
-    printSeirParams(params);
+    epi::SeirParams params;
+
+    print_seir_params(params);
 
     std::vector<std::vector<double>> seir(0);
 
-    simulate_seir(t0, tmax, dt, params, seir);
+    simulate(t0, tmax, dt, params, seir);
 }
