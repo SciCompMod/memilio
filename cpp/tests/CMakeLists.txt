@@ -16,6 +16,7 @@ set(TESTSOURCES
   test_seir_js_compare.cpp
   test_numericalIntegration.cpp
   test_damping.cpp
+  test_secir.cpp
 )
 
 file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/data DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
