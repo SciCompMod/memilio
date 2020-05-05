@@ -4,8 +4,7 @@
 TEST(TestDamping, initialDampingIsIdentityEverywhere)
 {
     epi::Dampings dampings;
-    for (auto x : std::vector<double>({ -1e100, -12.35, -1e-23, 0, 1e-76, 5.67, 1e75 }))
-    {
+    for (auto x : {-1e100, -12.35, -1e-23, 0.0, 1e-76, 5.67, 1e75}) {
         EXPECT_EQ(dampings.get_factor(0), 1);
     }
 }
@@ -17,8 +16,7 @@ TEST(TestDamping, dampingContinuesConstantOnBothSides)
 
     epi::Dampings dampings;
     dampings.add({d, v});
-    for (auto x : std::vector<double>({ 1e-76, 5.67, 1e75 }))
-    {
+    for (auto x : {1e-76, 5.67, 1e75}) {
         EXPECT_EQ(dampings.get_factor(0 - x), 1) << "extrapolating before first";
         EXPECT_EQ(dampings.get_factor(d + x), v) << "extrapolating after last";
     }
@@ -31,8 +29,8 @@ TEST(TestDamping, dampingIsConstantBetweenTwoPoints)
     dampings.add({2, 1.5});
 
     double eps = 1e-15;
-    EXPECT_EQ(dampings.get_factor(1 + eps), 3.4);    
-    EXPECT_EQ(dampings.get_factor(2 - eps), 3.4);    
+    EXPECT_EQ(dampings.get_factor(1 + eps), 3.4);
+    EXPECT_EQ(dampings.get_factor(2 - eps), 3.4);
     EXPECT_EQ(dampings.get_factor(1.5565), 3.4);
 }
 
