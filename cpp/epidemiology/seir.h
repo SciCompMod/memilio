@@ -20,11 +20,50 @@ namespace epi
 class SeirParams
 {
 public:
-    double base_reprod;
-    double cont_freq, tinc_inv, tinfmild_inv;
+    // time parameters of scale day or 1/day
+    struct struct_time {
+        double m_cont_freq, m_tinc_inv, m_tinfmild_inv;
+
+        /**
+         * @brief Initializes a time parameters' struct of the SEIR model
+         */
+        struct_time();
+
+        /**
+         * @brief sets the contact frequency of the SEIR model
+         */
+        void setContFreq(double const& cont_freq);
+
+        /**
+         * @brief sets the incubation time of the SEIR model
+         */
+        void setIncubation(double const& tinc);
+
+        /**
+         * @brief sets the infectious time of the SEIR model
+         */
+        void setInfectious(double const& tinfmild);
+
+        /**
+         * @brief sets the contact frequency of the SEIR model
+         */
+        double getContFreq() const;
+
+        /**
+         * @brief gets 1.0 over the incubation time of the SEIR model
+         */
+        double getIncubationInv() const;
+
+        /**
+         * @brief gets 1.0 over the infectious time of the SEIR model
+         */
+        double getInfectiousInv() const;
+    };
+
+    // population parameters of unit scale
+    double nb_total_t0, nb_sus_t0, nb_exp_t0, nb_inf_t0, nb_rec_t0;
 
     // double nb_total, nb_exp, nb_car, nb_inf, nb_hosp, nb_icu, nb_rec, nb_dead;
-    double nb_total_t0, nb_sus_t0, nb_exp_t0, nb_inf_t0, nb_rec_t0;
 
     // This defines a damping factor for a mitigation strategy for different points in time.
     Dampings dampings;

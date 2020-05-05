@@ -19,14 +19,70 @@ void print_seir_params(const SeirParams& params)
            (int)params.nb_exp_t0, (int)params.nb_inf_t0, (int)params.nb_rec_t0);
 }
 
-SeirParams::SeirParams()
+/**
+ * @brief Initializes a time parameters' struct of the SEIR model
+ */
+SeirParams::struct_time::struct_time()
 {
     // assume an incubation period of 5.2 days;
     // an infectious period of (nonhospitalized) people (after disease) of 6 days
     // and a basis reproduction number (R0) of 2.7
-    tinc_inv     = 1.0 / 5.2; // 1.0/5.2 (in JS version)
-    tinfmild_inv = 1.0 / 6.0; // 1.0/2.0 (in JS version)
-    base_reprod  = 2.7; // 3.5 (in JS version)
+    m_tinc_inv     = 1.0 / 5.2; // 1.0/5.2 (in JS version)
+    m_tinfmild_inv = 1.0 / 6.0; // 1.0/2.0 (in JS version)
+    m_cont_freq    = 0.587; // taken from SECIR paper
+    // base_reprod  = 2.7; // 3.5 (in JS version)
+}
+
+/**
+ * @brief sets the contact frequency of the SEIR model
+ */
+void SeirParams::struct_time::setContFreq(double const& cont_freq)
+{
+    m_cont_freq = cont_freq;
+}
+
+/**
+ * @brief sets the incubation time of the SEIR model
+ */
+void SeirParams::struct_time::setIncubation(double const& tinc)
+{
+    m_tinc_inv = 1.0 / tinc;
+}
+
+/**
+ * @brief sets the infectious time of the SEIR model
+ */
+void SeirParams::struct_time::setInfectious(double const& tinfmild)
+{
+    m_tinfmild_inv = 1.0 / tinfmild;
+}
+
+/**
+ * @brief sets the contact frequency of the SEIR model
+ */
+double SeirParams::struct_time::getContFreq() const
+{
+    return m_cont_freq;
+}
+
+/**
+ * @brief gets 1.0 over the incubation time of the SEIR model
+ */
+double SeirParams::struct_time::getIncubationInv() const
+{
+    return m_tinc_inv;
+}
+
+/**
+ * @brief gets 1.0 over the infectious time of the SEIR model
+ */
+double SeirParams::struct_time::getInfectiousInv() const
+{
+    return m_tinfmild_inv;
+}
+
+SeirParams::SeirParams()
+{
 
     // Initial Population size
     nb_total_t0 = 10000;
@@ -61,7 +117,7 @@ void seir_get_derivatives(const SeirParams& params, const std::vector<double>& y
 {
 
     // 0: S,      1: E,       2: I,     3: R
-    double cont_freq_eff = params.cont_freq * params.dampings.get_factor(t);
+    double cont_freq_eff = params.getont_freq * params.dampings.get_factor(t);
     double divN          = 1.0 / params.nb_total_t0;
 
     dydt[0] = -cont_freq_eff * y[0] * y[2] * divN;
