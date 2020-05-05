@@ -1,67 +1,15 @@
+#include "load_test_data.h"
 #include <gtest/gtest.h>
 #include <epidemiology/seir.h>
 
-#include <string>
-#include <vector>
-#include <fstream>
-#include <ios>
-
 using real = double;
-
-std::vector<std::vector<real>> loadCSV(const std::string& filename)
-{
-    // File pointer
-    std::fstream fin;
-
-    // Open an existing file
-    fin.open(filename, std::ios::in);
-
-    // Read the Data from the file
-    // as String Vector
-    std::vector<std::vector<real>> data;
-    std::vector<real> row;
-    std::string line, word, temp;
-    int linecount = 0;
-    while (fin >> temp) {
-
-        row.clear();
-
-        // read an entire row and
-        // store it in a string variable 'line'
-        getline(fin, line);
-        linecount++;
-
-        // ignore comments
-        if (line[0] == '#') {
-            continue;
-        }
-
-        // used for breaking words
-        std::stringstream s(line);
-
-        // read every column data of a row and
-        // store it in a string variable, 'word'
-        while (getline(s, word, ' ')) {
-
-            // add all the column data
-            // of a row to a vector
-            row.push_back(atof(word.c_str()));
-        }
-
-        if (row.size() == 5) {
-            data.push_back(row);
-        }
-    }
-
-    return data;
-}
 
 class TestCompareSeirWithJS : public testing::Test
 {
 protected:
     void SetUp() override
     {
-        refData = loadCSV("data/seir-js-compare.csv");
+        refData = load_test_data_csv<real>("data/seir-js-compare.csv");
         t0      = 0.;
         tmax    = 50.;
         dt      = 1.002003997564315796e-01;

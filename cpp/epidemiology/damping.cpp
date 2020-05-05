@@ -23,6 +23,11 @@ Damping::Damping(double day_in, double factor_in)
 {
 }
 
+Dampings::Dampings()
+    : m_dampings({{0.0, 1.0}})
+{
+}
+
 void Dampings::add(const Damping& d)
 {
     // make sure, the damping array is sorted
