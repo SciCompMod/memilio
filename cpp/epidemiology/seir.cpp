@@ -38,8 +38,6 @@ SeirParams::SeirParams()
     nb_rec_t0 = 0.0;
 
     nb_sus_t0 = nb_total_t0 - nb_exp_t0 - nb_inf_t0 - nb_rec_t0;
-    // List of damping initially empty
-    dampings.add(Damping(0.0, 1.0));
 }
 
 SeirParams::SeirParams(double tinc, double tinfmild, double base_reprod_in, double nb_total_t0_in, double nb_exp_t0_in,
@@ -57,8 +55,6 @@ SeirParams::SeirParams(double tinc, double tinfmild, double base_reprod_in, doub
     nb_inf_t0 = nb_inf_t0_in;
     // Initial Number of recovered
     nb_rec_t0 = nb_rec_t0_in;
-    // List of damping initially empty
-    dampings.add(Damping(0.0, 1.0));
 }
 
 void seir_get_derivatives(const SeirParams& params, const std::vector<double>& y, double t, std::vector<double>& dydt)
