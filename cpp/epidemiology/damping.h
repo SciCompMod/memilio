@@ -23,6 +23,11 @@ class Dampings
 {
 public:
     /**
+     * @brief default constructor, contains constant damping of 1 everywhere.
+     */
+    Dampings();
+
+    /**
      * @brief Adds a damping to the current model
      * @param d The damping, which is a factor and day from which the mitigation acts
      */

@@ -68,8 +68,6 @@ SecirParams::SecirParams(double tinc, double tinfmild, double tserint, double th
     nb_icu_t0 = nb_icu_t0_in;
     // Initial Number of deaths
     nb_dead_t0 = nb_dead_t0_in;
-    // List of damping initially empty
-    dampings.add(Damping(0.0, 1.0));
 
     nb_sus_t0 = nb_total_t0 - nb_exp_t0 - nb_car_t0 - nb_inf_t0 - nb_hosp_t0 - nb_icu_t0 - nb_rec_t0 - nb_dead_t0;
 
