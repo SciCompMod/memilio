@@ -69,3 +69,11 @@ circle.frame-hover {
 .charts {
   height: calc(100% - 3em);
 }
+
+.recharts-legend-item {
+  cursor: pointer;
+
+  &.inactive {
+    opacity: 0.4;
+  }
+}
