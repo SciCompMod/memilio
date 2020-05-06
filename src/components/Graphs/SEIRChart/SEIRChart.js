@@ -1,5 +1,4 @@
 import React, { Component } from 'react';
-import { connect } from 'react-redux';
 import { withTranslation } from 'react-i18next';
 import { merge } from '../../../common/utils';
 
@@ -18,13 +17,6 @@ import {
 } from 'recharts';
 
 import './SEIRChart.scss';
-
-const keyMap = {
-  date: 'Meldedatum',
-  I: 'AnzahlFall',
-  D: 'AnzahlTodesfall',
-  R: 'AnzahlGenesen'
-};
 
 const translationMap = {
   E: 'parameters.exposed',
@@ -95,7 +87,6 @@ class SEIRChart extends Component {
   }
 
   render() {
-    const { t } = this.props;
     const data = this.prepareData();
     return (
       <ResponsiveContainer width="100%" height="80%">

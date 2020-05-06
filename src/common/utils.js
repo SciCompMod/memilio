@@ -1,7 +1,3 @@
-import * as d3 from 'd3';
-
-const timeParser = d3.timeParse('%d.%m.%Y');
-
 export const groupBy = (list, key) => {
   return list.reduce(function (groups, item) {
     const val = item[key];
@@ -98,7 +94,7 @@ export const calculateDamping = (measures, base_date, days) => {
   // reduce to day where damping changes
   let reduced = [];
   for (let i = 0; i < days; i++) {
-    if (reduced.length == 0) {
+    if (reduced.length === 0) {
       reduced.push({
         day: 0,
         damping: damping[i]
@@ -106,7 +102,7 @@ export const calculateDamping = (measures, base_date, days) => {
       continue;
     }
 
-    if (damping[i] != reduced[reduced.length - 1].damping) {
+    if (damping[i] !== reduced[reduced.length - 1].damping) {
       reduced.push({
         day: i,
         damping: damping[i]

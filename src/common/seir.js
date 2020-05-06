@@ -111,7 +111,7 @@ function makeSeirParam() {
  * @param {*} params SEIR Model parameters, created by seir_param
  */
 function seir(y, t, params) {
-  const [S, E, I, R] = y;
+  const [S, E, I] = y;
 
   var b_eff = params.b * getDampingFactor(params.dampings, t);
 

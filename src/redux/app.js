@@ -135,16 +135,6 @@ export const fetchData = () => async (dispatch) => {
   dispatch(setPopulations(populations));
 };
 
-const filter = (list, key, value) => {
-  return list.filter((e) => e[key] === value);
-};
-
-const isNearTo = (a, b, days) => {
-  const lower = b - days * 24 * 60 * 60 * 1000;
-  const upper = b + days * 24 * 60 * 60 * 1000;
-  return lower < a && a < upper;
-};
-
 export const getSelectedData = (state) => {
   const { selected, ...s } = state.app;
 
