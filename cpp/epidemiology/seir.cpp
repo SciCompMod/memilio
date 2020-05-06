@@ -15,14 +15,15 @@ void print_seir_params(const SeirParams& params)
 {
     printf("\n SEIR model set.\n Parameters:\n\t Time incubation:\t %.4f \n\t Time infectious:\t %.4f \n\t contact "
            "rate:\t %.4f \n\t N:\t %d \n\t E0:\t %d \n\t I0:\t %d \n\t R0:\t %d\n",
-           1.0 / params.tinc_inv, 1.0 / params.tinfmild_inv, params.cont_freq, (int)params.nb_total_t0,
-           (int)params.nb_exp_t0, (int)params.nb_inf_t0, (int)params.nb_rec_t0);
+           1.0 / params.times.get_incubation_inv(), 1.0 / params.times.get_infectious_inv(),
+           params.times.get_cont_freq(), (int)params.nb_total_t0, (int)params.nb_exp_t0, (int)params.nb_inf_t0,
+           (int)params.nb_rec_t0);
 }
 
 /**
  * @brief Initializes a time parameters' struct of the SEIR model
  */
-SeirParams::struct_time::struct_time()
+SeirParams::StageTimes::StageTimes()
 {
     // assume an incubation period of 5.2 days;
     // an infectious period of (nonhospitalized) people (after disease) of 6 days
@@ -33,50 +34,32 @@ SeirParams::struct_time::struct_time()
     // base_reprod  = 2.7; // 3.5 (in JS version)
 }
 
-/**
- * @brief sets the contact frequency of the SEIR model
- */
-void SeirParams::struct_time::setContFreq(double const& cont_freq)
+void SeirParams::StageTimes::set_cont_freq(double const& cont_freq)
 {
     m_cont_freq = cont_freq;
 }
 
-/**
- * @brief sets the incubation time of the SEIR model
- */
-void SeirParams::struct_time::setIncubation(double const& tinc)
+void SeirParams::StageTimes::set_incubation(double const& tinc)
 {
     m_tinc_inv = 1.0 / tinc;
 }
 
-/**
- * @brief sets the infectious time of the SEIR model
- */
-void SeirParams::struct_time::setInfectious(double const& tinfmild)
+void SeirParams::StageTimes::set_infectious(double const& tinfmild)
 {
     m_tinfmild_inv = 1.0 / tinfmild;
 }
 
-/**
- * @brief sets the contact frequency of the SEIR model
- */
-double SeirParams::struct_time::getContFreq() const
+double SeirParams::StageTimes::get_cont_freq() const
 {
     return m_cont_freq;
 }
 
-/**
- * @brief gets 1.0 over the incubation time of the SEIR model
- */
-double SeirParams::struct_time::getIncubationInv() const
+double SeirParams::StageTimes::get_incubation_inv() const
 {
     return m_tinc_inv;
 }
 
-/**
- * @brief gets 1.0 over the infectious time of the SEIR model
- */
-double SeirParams::struct_time::getInfectiousInv() const
+double SeirParams::StageTimes::get_infectious_inv() const
 {
     return m_tinfmild_inv;
 }
@@ -96,12 +79,8 @@ SeirParams::SeirParams()
     nb_sus_t0 = nb_total_t0 - nb_exp_t0 - nb_inf_t0 - nb_rec_t0;
 }
 
-SeirParams::SeirParams(double tinc, double tinfmild, double base_reprod_in, double nb_total_t0_in, double nb_exp_t0_in,
-                       double nb_inf_t0_in, double nb_rec_t0_in)
+SeirParams::SeirParams(double nb_total_t0_in, double nb_exp_t0_in, double nb_inf_t0_in, double nb_rec_t0_in)
 {
-    tinc_inv     = 1.0 / tinc;
-    tinfmild_inv = 1.0 / tinfmild;
-    base_reprod  = base_reprod_in; // only for output purposes
 
     // Initial Population size
     nb_total_t0 = nb_total_t0_in;
@@ -117,13 +96,13 @@ void seir_get_derivatives(const SeirParams& params, const std::vector<double>& y
 {
 
     // 0: S,      1: E,       2: I,     3: R
-    double cont_freq_eff = params.getont_freq * params.dampings.get_factor(t);
+    double cont_freq_eff = params.times.get_cont_freq() * params.dampings.get_factor(t);
     double divN          = 1.0 / params.nb_total_t0;
 
     dydt[0] = -cont_freq_eff * y[0] * y[2] * divN;
-    dydt[1] = cont_freq_eff * y[0] * y[2] * divN - params.tinc_inv * y[1];
-    dydt[2] = params.tinc_inv * y[1] - params.tinfmild_inv * y[2];
-    dydt[3] = params.tinfmild_inv * y[2];
+    dydt[1] = cont_freq_eff * y[0] * y[2] * divN - params.times.get_incubation_inv() * y[1];
+    dydt[2] = params.times.get_incubation_inv() * y[1] - params.times.get_infectious_inv() * y[2];
+    dydt[3] = params.times.get_infectious_inv() * y[2];
 }
 
 std::vector<double> simulate(double t0, double tmax, double dt, const SeirParams& params,
