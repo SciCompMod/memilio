@@ -174,8 +174,18 @@ class SEIRChart extends Component {
           <YAxis />
           <CartesianGrid strokeDasharray="3 3" />
           <Tooltip
+            offset={20}
             labelFormatter={dateFormat}
             formatter={(value, name, index) => [value, this.translate(name)]}
+            allowEscapeViewBox={{ x: true, y: false }}
+            active={true}
+            contentStyle={{
+              "background-color": 'rgba(255, 255, 255, 0.8)'
+            }}
+            itemStyle={{
+              margin: 0,
+              padding: 0
+            }}
           />
           {this.state.lines.map(line => {
             return (<Line
