@@ -15,7 +15,7 @@ int main()
 
     print_seir_params(params);
 
-    std::vector<std::vector<double>> seir(0);
+    std::vector<Eigen::VectorXd> seir(0);
 
     simulate(t0, tmax, dt, params, seir);
 }

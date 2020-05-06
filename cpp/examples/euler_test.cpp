@@ -5,26 +5,24 @@
 #include <cmath>
 #include <epidemiology/euler.h>
 
-template <typename T>
-void init_vectors(std::vector<std::vector<T>>& y, std::vector<std::vector<T>>& sol, std::vector<T>& f, size_t n)
+void init_vectors(std::vector<Eigen::VectorXd>& y, std::vector<Eigen::VectorXd>& sol, Eigen::VectorXd& f, size_t n)
 {
-    y   = std::vector<std::vector<T>>(n, std::vector<T>(1, 0));
-    sol = std::vector<std::vector<T>>(n, std::vector<T>(1, 0));
+    y   = std::vector<Eigen::VectorXd>(n, Eigen::VectorXd::Constant(1, 0));
+    sol = std::vector<Eigen::VectorXd>(n, Eigen::VectorXd::Constant(1, 0));
 
-    f = std::vector<T>(1, 0);
+    f = Eigen::VectorXd::Constant(1, 0);
 }
 
 // Test for y'(t) = cos(t)
-template <typename T>
-void integration_test(std::vector<std::vector<T>>& y, std::vector<std::vector<T>>& sol, std::vector<T>& f, size_t n,
-                      T dt, T& err)
+void integration_test(std::vector<Eigen::VectorXd>& y, std::vector<Eigen::VectorXd>& sol, Eigen::VectorXd& f, size_t n,
+                      double dt, double& err)
 {
 
     sol[0][0]     = std::sin(0);
     sol[n - 1][0] = std::sin((n - 1) * dt);
-    epi::EulerIntegrator euler([](std::vector<T> const& y, const T t, std::vector<T>& dydt) { dydt[0] = std::cos(t); });
+    epi::EulerIntegrator euler([](Eigen::VectorXd const& y, const double t, Eigen::VectorXd& dydt) { dydt[0] = std::cos(t); });
 
-    T t = 0.;
+    double t = 0.;
     for (size_t i = 0; i < n - 1; i++) {
         sol[i + 1][0] = std::sin((i + 1) * dt);
 
@@ -39,10 +37,10 @@ void integration_test(std::vector<std::vector<T>>& y, std::vector<std::vector<T>
 
 int main()
 {
-    std::vector<std::vector<double>> y;
-    std::vector<std::vector<double>> sol;
+    std::vector<Eigen::VectorXd> y;
+    std::vector<Eigen::VectorXd> sol;
 
-    std::vector<double> f;
+    Eigen::VectorXd f;
 
     const double pi = std::acos(-1);
 

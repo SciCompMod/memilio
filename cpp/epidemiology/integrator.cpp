@@ -6,13 +6,13 @@ namespace epi
 {
 
 std::vector<double> ode_integrate(double t0, double tmax, double dt, const IntegratorBase& integrator,
-                                  std::vector<std::vector<double>>& y)
+                                  std::vector<Eigen::VectorXd>& y)
 {
 
     size_t n_params = y[0].size();
     size_t nb_steps = (int)(ceil((tmax - t0) / dt)); // estimated number of time steps (if equidistant)
 
-    y.resize(nb_steps + 1, std::vector<double>(n_params, 0.));
+    y.resize(nb_steps + 1, Eigen::VectorXd::Constant(n_params, 0));
     std::vector<double> vec_times(nb_steps + 1, 0.);
 
     //@TODO: get from integrator base
@@ -35,7 +35,7 @@ std::vector<double> ode_integrate(double t0, double tmax, double dt, const Integ
         t      = std::min(t, tmax); // possible for adaptive step size
 
         if (i + 1 >= y.size()) {
-            std::vector<std::vector<double>> vecAppend(20, std::vector<double>(n_params, 0.));
+            std::vector<Eigen::VectorXd> vecAppend(20, Eigen::VectorXd::Constant(n_params, 0));
             y.insert(y.end(), vecAppend.begin(), vecAppend.end());
             vec_times.resize(vec_times.size() + 20, 0.);
         }

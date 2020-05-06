@@ -80,7 +80,7 @@ SecirParams::SecirParams(double tinc, double tinfmild, double tserint, double th
                   nb_sus_t0 / nb_total_t0;
 }
 
-void secir_get_derivatives(const SecirParams& params, const std::vector<double>& y, double t, std::vector<double>& dydt)
+void secir_get_derivatives(const SecirParams& params, const Eigen::VectorXd& y, double t, Eigen::VectorXd& dydt)
 {
 
     // 0: S,      1: E,     2: C,     3: I,     4: H,     5: U,     6: R,     7: D
@@ -107,10 +107,10 @@ void secir_get_derivatives(const SecirParams& params, const std::vector<double>&
 }
 
 std::vector<double> simulate(double t0, double tmax, double dt, const SecirParams& params,
-                             std::vector<std::vector<double>>& secir)
+                             std::vector<Eigen::VectorXd>& secir)
 {
     size_t n_params = 8;
-    secir           = std::vector<std::vector<double>>(1, std::vector<double>(n_params, 0.));
+    secir           = std::vector<Eigen::VectorXd>(1, Eigen::VectorXd::Constant(n_params, 0.));
 
     //initial conditions
     secir[0][0] = params.nb_sus_t0;
@@ -122,7 +122,7 @@ std::vector<double> simulate(double t0, double tmax, double dt, const SecirParam
     secir[0][6] = params.nb_rec_t0;
     secir[0][7] = params.nb_dead_t0;
 
-    auto secir_fun = [&params](std::vector<double> const& y, const double t, std::vector<double>& dydt) {
+    auto secir_fun = [&params](Eigen::VectorXd const& y, const double t, Eigen::VectorXd& dydt) {
         return secir_get_derivatives(params, y, t, dydt);
     };
 

@@ -92,7 +92,7 @@ TEST_F(TestCompareSeirWithJS, integrate)
 {
     EXPECT_EQ(500, refData.size());
 
-    std::vector<std::vector<real>> result(0);
+    std::vector<Eigen::VectorXd> result(0);
 
     simulate(t0, tmax, dt, params, result);
 

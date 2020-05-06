@@ -4,6 +4,7 @@
 #include <epidemiology/damping.h>
 
 #include <vector>
+#include <Eigen/Core>
 
 namespace epi
 {
@@ -98,8 +99,8 @@ void print_secir_params(SecirParams const& params);
  * @param[in] t time / current day
  * @param[out] dydt the values of the time derivatices of S, E, C, I, (H, U,) R, (D)
  */
-void secir_get_derivatives(SecirParams const& params, std::vector<double> const& y, double t,
-                           std::vector<double>& dydt);
+void secir_get_derivatives(SecirParams const& params, Eigen::VectorXd const& y, double t,
+                           Eigen::VectorXd& dydt);
 
 /**
  * Computes the seir curve by integration
@@ -112,7 +113,7 @@ void secir_get_derivatives(SecirParams const& params, std::vector<double> const&
  * @returns Vector of times t
  */
 std::vector<double> simulate(double t0, double tmax, double dt, SecirParams const& params,
-                             std::vector<std::vector<double>>& seir);
+                             std::vector<Eigen::VectorXd>& seir);
 
 } // namespace epi
 

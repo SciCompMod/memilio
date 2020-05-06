@@ -8,7 +8,7 @@
 #include <ios>
 #include <cmath>
 
-void sin_deriv(std::vector<double> const& y, const double t, std::vector<double>& dydt)
+void sin_deriv(Eigen::VectorXd const& y, const double t, Eigen::VectorXd& dydt)
 {
     dydt[0] = std::cos(t);
 }
@@ -24,8 +24,8 @@ protected:
     }
 
 public:
-    std::vector<std::vector<double>> y;
-    std::vector<std::vector<double>> sol;
+    std::vector<Eigen::VectorXd> y;
+    std::vector<Eigen::VectorXd> sol;
 
     double t;
     double tmax;
@@ -38,15 +38,15 @@ TEST_F(TestVerifyNumericalIntegrator, euler_sine)
 {
     n   = 1000;
     dt  = (tmax - t) / n;
-    y   = std::vector<std::vector<double>>(n, std::vector<double>(1, 0));
-    sol = std::vector<std::vector<double>>(n, std::vector<double>(1, 0));
+    y   = std::vector<Eigen::VectorXd>(n, Eigen::VectorXd::Constant(1, 0));
+    sol = std::vector<Eigen::VectorXd>(n, Eigen::VectorXd::Constant(1, 0));
 
-    std::vector<double> f = std::vector<double>(1, 0);
+    Eigen::VectorXd f = Eigen::VectorXd::Constant(1, 0);
 
     sol[0][0]     = std::sin(0);
     sol[n - 1][0] = std::sin((n - 1) * dt);
 
-    epi::EulerIntegrator euler([](std::vector<double> const& y, const double t, std::vector<double>& dydt) {
+    epi::EulerIntegrator euler([](Eigen::VectorXd const& y, const double t, Eigen::VectorXd& dydt) {
         dydt[0] = std::cos(t);
     });
 
@@ -70,8 +70,8 @@ TEST_F(TestVerifyNumericalIntegrator, runge_kutta_fehlberg45_sine)
 
     n   = 10;
     dt  = (tmax - t) / n;
-    y   = std::vector<std::vector<double>>(n, std::vector<double>(1, 0));
-    sol = std::vector<std::vector<double>>(n, std::vector<double>(1, 0));
+    y   = std::vector<Eigen::VectorXd>(n, Eigen::VectorXd::Constant(1, 0));
+    sol = std::vector<Eigen::VectorXd>(n, Eigen::VectorXd::Constant(1, 0));
 
     epi::RKIntegrator rkf45(sin_deriv, 1e-3, 1.0);
     rkf45.set_abs_tolerance(1e-7);
@@ -85,8 +85,8 @@ TEST_F(TestVerifyNumericalIntegrator, runge_kutta_fehlberg45_sine)
     while (t_eval - tmax < 1e-10) {
 
         if (i + 1 >= sol.size()) {
-            sol.push_back(std::vector<double>(1, 0));
-            y.push_back(std::vector<double>(1, 0));
+            sol.push_back(Eigen::VectorXd::Constant(1, 0));
+            y.push_back(Eigen::VectorXd::Constant(1, 0));
         }
 
         double dt_old = dt;
