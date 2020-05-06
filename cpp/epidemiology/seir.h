@@ -20,45 +20,54 @@ namespace epi
 class SeirParams
 {
 public:
-    // time parameters of scale day or 1/day
-    struct struct_time {
-        double m_cont_freq, m_tinc_inv, m_tinfmild_inv;
-
+    // time parameters for the different 'stages' of the disease of scale day or 1/day
+    // 'stages' does not refer to the 'states' of the SEIR model but also includes incubation time or contact frequency
+    class StageTimes
+    {
+    public:
         /**
          * @brief Initializes a time parameters' struct of the SEIR model
          */
-        struct_time();
+        StageTimes();
 
         /**
-         * @brief sets the contact frequency of the SEIR model
+         * @brief sets the contact frequency for the SEIR model
+         * @param cont_freq_in
          */
-        void setContFreq(double const& cont_freq);
+        void set_cont_freq(double const& cont_freq);
 
         /**
-         * @brief sets the incubation time of the SEIR model
+         * @brief sets the incubation time for the SEIR model
+         * @param tinc
          */
-        void setIncubation(double const& tinc);
+        void set_incubation(double const& tinc);
 
         /**
-         * @brief sets the infectious time of the SEIR model
+         * @brief sets the infectious time for the SEIR model
+         * @param tinfmild
          */
-        void setInfectious(double const& tinfmild);
+        void set_infectious(double const& tinfmild);
 
         /**
-         * @brief sets the contact frequency of the SEIR model
+         * @brief returns the contact frequency set for the SEIR model
          */
-        double getContFreq() const;
+        double get_cont_freq() const;
 
         /**
-         * @brief gets 1.0 over the incubation time of the SEIR model
+         * @brief returns 1.0 over the incubation time set for the SEIR model
          */
-        double getIncubationInv() const;
+        double get_incubation_inv() const;
 
         /**
-         * @brief gets 1.0 over the infectious time of the SEIR model
+         * @brief returns 1.0 over the infectious time set for the SEIR model
          */
-        double getInfectiousInv() const;
+        double get_infectious_inv() const;
+
+    private:
+        double m_cont_freq, m_tinc_inv, m_tinfmild_inv;
     };
+
+    StageTimes times;
 
     // population parameters of unit scale
     double nb_total_t0, nb_sus_t0, nb_exp_t0, nb_inf_t0, nb_rec_t0;
@@ -78,16 +87,15 @@ public:
      *
      * @todo parameter description
      *
-     * @param tinc
-     * @param tinfmild
-     * @param cont_freq_in
+
+     * 
+     * 
      * @param nb_total_t0_in
      * @param nb_exp_t0_in
      * @param nb_inf_t0_in
      * @param nb_rec_t0_in
      */
-    SeirParams(double tinc, double tinfmild, double cont_freq_in, double nb_total_t0_in, double nb_exp_t0_in,
-               double nb_inf_t0_in, double nb_rec_t0_in);
+    SeirParams(double nb_total_t0_in, double nb_exp_t0_in, double nb_inf_t0_in, double nb_rec_t0_in);
 };
 
 /**
