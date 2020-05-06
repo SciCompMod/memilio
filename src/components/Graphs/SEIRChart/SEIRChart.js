@@ -18,29 +18,6 @@ import {
 
 import './SEIRChart.scss';
 
-const translationMap = {
-  E: 'parameters.exposed',
-  R: 'parameters.recovered',
-  I: 'parameters.infected',
-  S: 'parameters.sus',
-  AnzahlGenesen: 'rki.recovered',
-  AnzahlFall: 'rki.infected',
-  AnzahlTodesfall: 'rki.deaths'
-};
-
-const theme = [
-  '#ac58e5',
-  '#E0488B',
-  '#9fd0cb',
-  '#e0d33a',
-  '#7566ff',
-  '#533f82',
-  '#7a255d',
-  '#365350',
-  '#a19a11',
-  '#3f4482'
-];
-
 const lineProps = {
   type: 'monotone',
   dot: false,
@@ -51,6 +28,70 @@ const rkiLineProps = {
   strokeDasharray: '5 5',
   strokeWidth: '2'
 };
+
+const lines = [
+  {
+    dataKey: 'E',
+    label: 'parameters.exposed',
+    props: {
+      stroke: '#ac58e5',
+      ...lineProps
+    }
+  },
+  {
+    dataKey: 'R',
+    label: 'parameters.recovered',
+    props: {
+      stroke: '#E0488B',
+      ...lineProps
+    }
+  },
+  {
+    dataKey: 'I',
+    label: 'parameters.infected',
+    props: {
+      stroke: '#9fd0cb',
+      ...lineProps
+    }
+  },
+  {
+    dataKey: 'S',
+    label: 'parameters.sus',
+    props: {
+      stroke: '#e0d33a',
+      ...lineProps
+    }
+  },
+  {
+    dataKey: 'AnzahlGenesen',
+    label: 'rki.recovered',
+    props: {
+      stroke: '#7566ff',
+      ...lineProps,
+      ...rkiLineProps
+    }
+  },
+  {
+    dataKey: 'AnzahlFall',
+    label: 'rki.infected',
+    props: {
+      stroke: '#533f82',
+      ...lineProps,
+      ...rkiLineProps
+    }
+  },
+  {
+    dataKey: 'AnzahlTodesfall',
+    label: 'rki.deaths',
+    props: {
+      stroke: '#7a255d',
+      ...lineProps,
+      ...rkiLineProps
+    }
+  }
+];
+
+
 
 const dateFormat = (time) => {
   return moment(time).format('DD. MMM');
@@ -68,9 +109,32 @@ class SEIRChart extends Component {
     measures: []
   };
 
+  constructor(props) {
+    super(props);
+    this.selectBar = this.selectBar.bind(this);
+    this.state = {
+      lines
+    };
+  }
+
+  selectBar(event) {
+    let updated = [];
+    for (let i = 0; i < this.state.lines.length; i++) {
+      let line = this.state.lines[i];
+      if (line.dataKey !== event.value) {
+        updated.push(line);
+      } else {
+        updated.push({ ...line, inactive: line.inactive === undefined ? true : !line.inactive });
+      }
+    }
+    this.setState({
+      lines: updated
+    });
+  }
+
   translate(label) {
     const { t } = this.props;
-    return t(translationMap[label]);
+    return t(this.state.lines.find(line => line.dataKey === label).label);
   }
 
   prepareData() {
@@ -84,6 +148,18 @@ class SEIRChart extends Component {
     });
 
     return x;
+  }
+
+  payload() {
+    return this.state.lines.map(line => {
+      return {
+        value: line.dataKey,
+        type: 'line',
+        id: line.dataKey,
+        inactive: line.inactive || false,
+        color: line.props.stroke
+      };
+    });
   }
 
   render() {
@@ -101,31 +177,25 @@ class SEIRChart extends Component {
             labelFormatter={dateFormat}
             formatter={(value, name, index) => [value, this.translate(name)]}
           />
-
-          <Line
-            dataKey="AnzahlFall"
-            stroke={theme[0]}
-            {...lineProps}
-            {...rkiLineProps}
-          />
-          <Line
-            dataKey="AnzahlTodesfall"
-            stroke={theme[1]}
-            {...lineProps}
-            {...rkiLineProps}
-          />
-          <Line
-            dataKey="AnzahlGenesen"
-            stroke={theme[2]}
-            {...lineProps}
-            {...rkiLineProps}
-          />
-          <Line dataKey="S" stroke={theme[4]} {...lineProps} />
-          <Line dataKey="E" stroke={theme[3]} {...lineProps} />
-          <Line dataKey="I" stroke={theme[0]} {...lineProps} />
-          <Line dataKey="R" stroke={theme[2]} {...lineProps} />
+          {this.state.lines.map(line => {
+            return (<Line
+              key={line.dataKey}
+              dataKey={line.dataKey + (line.inactive ? " " : "")}
+              {...line.props}
+            />);
+          })}
           <Brush dataKey="date" tickFormatter={dateFormat} />
-          <Legend formatter={this.translate.bind(this)} />
+          <Legend
+            formatter={this.translate.bind(this)}
+            onClick={this.selectBar}
+            payload={this.payload()}
+            layout='vertical'
+            align="right"
+            verticalAlign="top"
+            wrapperStyle={{
+              'padding-left': '1em'
+            }}
+          />
         </LineChart>
       </ResponsiveContainer>
     );
