@@ -47,10 +47,20 @@ TEST(TestDamping, dampingJumpsAreClosedOnTheRightSide)
     EXPECT_EQ(dampings.get_factor(2 - eps), 1);
 }
 
-// TEST(TestDamping, duplicatePointsAreUndefined)
-// {
-//     epi::Dampings dampings;
-//     dampings.add({1, 1.3});
-//     dampings.add({1, 5.6});
-//     //are duplicate points intentionally undefined?
-// }
+TEST(TestDamping, duplicatePointsOverwriteTheOldPoint)
+{
+    epi::Dampings dampings;
+    dampings.add({1, 1.3});
+    dampings.add({1, 0.01});
+    dampings.add({1, 5.6});
+    dampings.add({4, 2.5});
+
+    //old value is overwritten
+    EXPECT_EQ(dampings.get_factor(1), 5.6);
+    EXPECT_EQ(dampings.get_factor(3), 5.6);
+    
+    //other values are unaffected
+    EXPECT_EQ(dampings.get_factor(0.5), 1);
+    EXPECT_EQ(dampings.get_factor(4), 2.5);
+    EXPECT_EQ(dampings.get_factor(4.0341), 2.5);
+}
