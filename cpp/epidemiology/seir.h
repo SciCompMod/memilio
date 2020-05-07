@@ -32,34 +32,34 @@ public:
 
         /**
          * @brief sets the contact frequency for the SEIR model
-         * @param cont_freq_in
+         * @param cont_freq contact rate/frequency in 1/day unit
          */
         void set_cont_freq(double const& cont_freq);
 
         /**
          * @brief sets the incubation time for the SEIR model
-         * @param tinc
+         * @param tinc incubation time in day unit
          */
         void set_incubation(double const& tinc);
 
         /**
          * @brief sets the infectious time for the SEIR model
-         * @param tinfmild
+         * @param tinfmild infectious time in day unit (in a generalized model, only for cases not treated in a hospital)
          */
         void set_infectious(double const& tinfmild);
 
         /**
-         * @brief returns the contact frequency set for the SEIR model
+         * @brief returns the contact frequency set for the SEIR model in 1/day unit
          */
         double get_cont_freq() const;
 
         /**
-         * @brief returns 1.0 over the incubation time set for the SEIR model
+         * @brief returns 1.0 over the incubation time set for the SEIR model in day unit
          */
         double get_incubation_inv() const;
 
         /**
-         * @brief returns 1.0 over the infectious time set for the SEIR model
+         * @brief returns 1.0 over the infectious time set for the SEIR model in day unit
          */
         double get_infectious_inv() const;
 
@@ -67,12 +67,81 @@ public:
         double m_cont_freq, m_tinc_inv, m_tinfmild_inv;
     };
 
+    // population parameters of unit scale
+    class Populations
+    {
+    public:
+        /**
+         * @brief Initializes a time parameters' struct of the SEIR model
+         */
+        Populations();
+
+        /**
+         * @brief sets the number of total people at t0 for the SEIR model
+         * automatically calls set_suscetible_t0() to subtract from the total number
+         * @param nb_total_t0 total number of people at t0
+         */
+        void set_total_t0(double nb_total_t0);
+
+        /**
+         * @brief sets the number of exposed people at t0 for the SEIR model
+         * automatically calls set_suscetible_t0() to subtract from the total number
+         * @param nb_exp_t0 number of exposed people at t0
+         */
+        void set_exposed_t0(double nb_exp_t0);
+
+        /**
+         * @brief sets the number of infectious people at t0 for the SEIR model
+         * automatically calls set_suscetible_t0() to subtract from the total number
+         * @param nb_inf_t0 number of infectious people at t0
+         */
+        void set_infectious_t0(double nb_inf_t0);
+
+        /**
+         * @brief sets the number of recovered people at t0 for the SEIR model
+         * automatically calls set_suscetible_t0() to subtract from the total number
+         * @param nb_rec_t0 number of recovered people at t0
+         */
+        void set_recovered_t0(double nb_rec_t0);
+
+        /**
+         * @brief sets the number of suscetible people at t0 for the SEIR model
+         * only to be called after all other populations have been called
+         */
+        void set_suscetible_t0();
+
+        /**
+         * @brief returns the number of total people at t0 for the SEIR model
+         */
+        double get_total_t0() const;
+
+        /**
+         * @brief returns the number of exposed people at t0 for the SEIR model
+         */
+        double get_exposed_t0() const;
+
+        /**
+         * @brief returns the number of infectious people at t0 for the SEIR model
+         */
+        double get_infectious_t0() const;
+
+        /**
+         * @brief returns the number of recovered people at t0 for the SEIR model
+         */
+        double get_recovered_t0() const;
+
+        /**
+         * @brief returns the number of suscetible people at t0 for the SEIR model
+         */
+        double get_suscetible_t0() const;
+
+    private:
+        double m_nb_total_t0, m_nb_sus_t0, m_nb_exp_t0, m_nb_inf_t0, m_nb_rec_t0;
+    };
+
     StageTimes times;
 
-    // population parameters of unit scale
-    double nb_total_t0, nb_sus_t0, nb_exp_t0, nb_inf_t0, nb_rec_t0;
-
-    // double nb_total, nb_exp, nb_car, nb_inf, nb_hosp, nb_icu, nb_rec, nb_dead;
+    Populations populations;
 
     // This defines a damping factor for a mitigation strategy for different points in time.
     Dampings dampings;
@@ -81,21 +150,6 @@ public:
      * @brief Initializes a SEIR model with some default parameters
      */
     SeirParams();
-
-    /**
-     * @brief Initializes a SEIR model with given parameters
-     *
-     * @todo parameter description
-     *
-
-     * 
-     * 
-     * @param nb_total_t0_in
-     * @param nb_exp_t0_in
-     * @param nb_inf_t0_in
-     * @param nb_rec_t0_in
-     */
-    SeirParams(double nb_total_t0_in, double nb_exp_t0_in, double nb_inf_t0_in, double nb_rec_t0_in);
 };
 
 /**

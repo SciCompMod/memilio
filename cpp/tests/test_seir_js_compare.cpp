@@ -14,14 +14,15 @@ protected:
         tmax    = 50.;
         dt      = 1.002003997564315796e-01;
 
-        params.nb_exp_t0   = 10000;
-        params.nb_inf_t0   = 1000;
-        params.nb_total_t0 = 1061000;
-        params.nb_rec_t0   = 1000;
-        params.nb_sus_t0   = params.nb_total_t0 - params.nb_exp_t0 - params.nb_inf_t0 - params.nb_rec_t0;
+        params.populations.set_exposed_t0(10000);
+        params.populations.set_infectious_t0(1000);
+        params.populations.set_total_t0(1061000);
+        params.populations.set_recovered_t0(1000);
+        // suscetible now set with every other update
+        // params.nb_sus_t0   = params.nb_total_t0 - params.nb_exp_t0 - params.nb_inf_t0 - params.nb_rec_t0;
         params.times.set_incubation(5.2);
         params.times.set_cont_freq(2.7);
-        params.times.set_infectious(0.5);
+        params.times.set_infectious(2);
 
         // add two dampings
         params.dampings.add(epi::Damping(0., 1.0));
