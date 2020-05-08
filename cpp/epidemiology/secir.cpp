@@ -22,16 +22,133 @@ void print_secir_params(const SecirParams& params)
            1.0 / params.tinc_inv, 1.0 / params.tinfmild_inv, 1.0 / params.tserint_inv, 1.0 / params.thosp2home_inv,
            1.0 / params.thome2hosp_inv, 1.0 / params.thosp2icu_inv, 1.0 / params.tinfasy_inv,
            1.0 / params.ticu2death_inv, params.cont_freq, params.alpha, params.beta, params.delta, params.rho,
-           params.theta, (int)params.nb_total_t0, (int)params.nb_exp_t0, (int)params.nb_car_t0, (int)params.nb_inf_t0,
-           (int)params.nb_hosp_t0, (int)params.nb_icu_t0, (int)params.nb_rec_t0, (int)params.nb_dead_t0,
-           params.base_reprod);
+           params.theta, (int)params.populations.get_total_t0(), (int)params.populations.get_exposed_t0(),
+           (int)params.populations.get_carrier_t0(), (int)params.populations.get_infectious_t0(),
+           (int)params.populations.get_hospitalized_t0(), (int)params.populations.get_icu_t0(),
+           (int)params.populations.get_recovered_t0(), (int)params.populations.get_dead_t0(), params.base_reprod);
+}
+
+SecirParams::Populations::Populations()
+{
+    m_nb_total_t0 = 0;
+    m_nb_exp_t0   = 0;
+    m_nb_car_t0   = 0;
+    m_nb_inf_t0   = 0;
+    m_nb_hosp_t0  = 0;
+    m_nb_icu_t0   = 0;
+    m_nb_rec_t0   = 0;
+    m_nb_dead_t0  = 0;
+    m_nb_sus_t0   = 0;
+}
+
+void SecirParams::Populations::set_total_t0(double nb_total_t0)
+{
+    m_nb_total_t0 = nb_total_t0;
+    SecirParams::Populations::set_suscetible_t0();
+}
+
+void SecirParams::Populations::set_exposed_t0(double nb_exp_t0)
+{
+    m_nb_exp_t0 = nb_exp_t0;
+    SecirParams::Populations::set_suscetible_t0();
+}
+
+void SecirParams::Populations::set_carrier_t0(double nb_car_t0)
+{
+    m_nb_car_t0 = nb_car_t0;
+    SecirParams::Populations::set_suscetible_t0();
+}
+
+void SecirParams::Populations::set_infectious_t0(double nb_inf_t0)
+{
+    m_nb_inf_t0 = nb_inf_t0;
+    SecirParams::Populations::set_suscetible_t0();
+}
+
+void SecirParams::Populations::set_hospital_t0(double nb_hosp_t0)
+{
+    m_nb_hosp_t0 = nb_hosp_t0;
+    SecirParams::Populations::set_suscetible_t0();
+}
+
+void SecirParams::Populations::set_icu_t0(double nb_icu_t0)
+{
+    m_nb_icu_t0 = nb_icu_t0;
+    SecirParams::Populations::set_suscetible_t0();
+}
+
+void SecirParams::Populations::set_recovered_t0(double nb_rec_t0)
+{
+    m_nb_rec_t0 = nb_rec_t0;
+    SecirParams::Populations::set_suscetible_t0();
+}
+
+void SecirParams::Populations::set_dead_t0(double nb_dead_t0)
+{
+    m_nb_dead_t0 = nb_dead_t0;
+    SecirParams::Populations::set_suscetible_t0();
+}
+
+void SecirParams::Populations::set_suscetible_t0()
+{
+    m_nb_sus_t0 = m_nb_total_t0 - m_nb_exp_t0 - m_nb_car_t0 - m_nb_inf_t0 - m_nb_hosp_t0 - m_nb_icu_t0 - m_nb_rec_t0 -
+                  m_nb_dead_t0;
+}
+
+double SecirParams::Populations::get_total_t0() const
+{
+    return m_nb_total_t0;
+}
+
+double SecirParams::Populations::get_exposed_t0() const
+{
+    return m_nb_exp_t0;
+}
+
+double SecirParams::Populations::get_carrier_t0() const
+{
+    return m_nb_car_t0;
+}
+
+double SecirParams::Populations::get_infectious_t0() const
+{
+    return m_nb_inf_t0;
+}
+
+double SecirParams::Populations::get_hospitalized_t0() const
+{
+    return m_nb_hosp_t0;
+}
+
+double SecirParams::Populations::get_icu_t0() const
+{
+    return m_nb_icu_t0;
+}
+
+double SecirParams::Populations::get_recovered_t0() const
+{
+    return m_nb_rec_t0;
+}
+
+double SecirParams::Populations::get_dead_t0() const
+{
+    return m_nb_dead_t0;
+}
+
+double SecirParams::Populations::get_suscetible_t0() const
+{
+    return m_nb_sus_t0;
+}
+
+SecirParams::SecirParams()
+    : populations{}
+{
 }
 
 SecirParams::SecirParams(double tinc, double tinfmild, double tserint, double thosp2home, double thome2hosp,
                          double thosp2icu, double ticu2home, double tinfasy, double ticu2death, double cont_freq_in,
-                         double alpha_in, double beta_in, double delta_in, double rho_in, double theta_in,
-                         double nb_total_t0_in, double nb_exp_t0_in, double nb_car_t0_in, double nb_inf_t0_in,
-                         double nb_hosp_t0_in, double nb_icu_t0_in, double nb_rec_t0_in, double nb_dead_t0_in)
+                         double alpha_in, double beta_in, double delta_in, double rho_in, double theta_in)
+    : populations{}
 {
 
     tinc_inv       = 1.0 / tinc; // inverse incubation period
@@ -51,31 +168,11 @@ SecirParams::SecirParams(double tinc, double tinfmild, double tserint, double th
     theta     = theta_in; // icu per hospitalized
     delta     = delta_in; // deaths per ICUs
 
-    // Initial Population size
-    nb_total_t0 = nb_total_t0_in;
-    // Initial Number of exposed
-    nb_exp_t0 = nb_exp_t0_in;
-    // Intial Number of infected
-    nb_inf_t0 = nb_inf_t0_in;
-    // Initial Number of recovered
-    nb_rec_t0 = nb_rec_t0_in;
-
-    // Initial Number of carriers
-    nb_car_t0 = nb_car_t0_in;
-    // Initial Number of hospitalized
-    nb_hosp_t0 = nb_hosp_t0_in;
-    // Initial Number of ICU
-    nb_icu_t0 = nb_icu_t0_in;
-    // Initial Number of deaths
-    nb_dead_t0 = nb_dead_t0_in;
-
-    nb_sus_t0 = nb_total_t0 - nb_exp_t0 - nb_car_t0 - nb_inf_t0 - nb_hosp_t0 - nb_icu_t0 - nb_rec_t0 - nb_dead_t0;
-
     // only for output purposes (not explicitly used as single parameter in SECIR)
     auto dummy_R3 = 0.5 / (tinfmild - tserint);
     base_reprod   = cont_freq * ((1 - rho) * tinfmild_inv + dummy_R3 * beta * (1 - alpha) + rho * thome2hosp) /
                   ((dummy_R3 * (1 - alpha) + alpha * tinfasy_inv) * (tinfmild_inv * (1 - rho) + rho * thome2hosp_inv)) *
-                  nb_sus_t0 / nb_total_t0;
+                  populations.get_suscetible_t0() / populations.get_total_t0();
 }
 
 void secir_get_derivatives(const SecirParams& params, const std::vector<double>& y, double t, std::vector<double>& dydt)
@@ -83,7 +180,7 @@ void secir_get_derivatives(const SecirParams& params, const std::vector<double>&
 
     // 0: S,      1: E,     2: C,     3: I,     4: H,     5: U,     6: R,     7: D
     double cont_freq_eff = params.cont_freq * params.dampings.get_factor(t);
-    double divN          = 1.0 / params.nb_total_t0;
+    double divN          = 1.0 / params.populations.get_total_t0();
 
     double dummy_S = cont_freq_eff * y[0] * divN * (y[2] + params.beta * y[3]);
 
@@ -111,14 +208,14 @@ std::vector<double> simulate(double t0, double tmax, double dt, const SecirParam
     secir           = std::vector<std::vector<double>>(1, std::vector<double>(n_params, 0.));
 
     //initial conditions
-    secir[0][0] = params.nb_sus_t0;
-    secir[0][1] = params.nb_exp_t0;
-    secir[0][2] = params.nb_car_t0;
-    secir[0][3] = params.nb_inf_t0;
-    secir[0][4] = params.nb_hosp_t0;
-    secir[0][5] = params.nb_icu_t0;
-    secir[0][6] = params.nb_rec_t0;
-    secir[0][7] = params.nb_dead_t0;
+    secir[0][0] = params.populations.get_suscetible_t0();
+    secir[0][1] = params.populations.get_exposed_t0();
+    secir[0][2] = params.populations.get_carrier_t0();
+    secir[0][3] = params.populations.get_infectious_t0();
+    secir[0][4] = params.populations.get_hospitalized_t0();
+    secir[0][5] = params.populations.get_icu_t0();
+    secir[0][6] = params.populations.get_recovered_t0();
+    secir[0][7] = params.populations.get_dead_t0();
 
     auto secir_fun = [&params](std::vector<double> const& y, const double t, std::vector<double>& dydt) {
         return secir_get_derivatives(params, y, t, dydt);
