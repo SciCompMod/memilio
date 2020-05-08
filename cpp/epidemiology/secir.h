@@ -32,9 +32,133 @@ class SecirParams
 {
 public:
     double base_reprod;
-    double cont_freq, tinc_inv, tinfmild_inv; // parameters of the standard SEIR model
-    double tserint_inv, thosp2home_inv, thome2hosp_inv, thosp2icu_inv, ticu2home_inv, tinfasy_inv, ticu2death_inv;
     double alpha, beta, rho, theta, delta; // probabilities
+
+    // time parameters for the different 'stages' of the disease of scale day or 1/day
+    // 'stages' does not refer to the 'states' of the SECIR model but also includes incubation time or contact frequency
+    class StageTimes
+    {
+    public:
+        /**
+         * @brief Initializes a time parameters' struct in the SECIR model
+         */
+        StageTimes();
+
+        /**
+         * @brief sets the contact frequency in the SECIR model
+         * @param cont_freq contact rate/frequency in 1/day unit
+         */
+        void set_cont_freq(double const& cont_freq);
+
+        /**
+         * @brief sets the incubation time in the SECIR model
+         * @param tinc incubation time in day unit
+         */
+        void set_incubation(double const& tinc);
+
+        /**
+         * @brief sets the infectious time for symptomatic cases that are infected but who do not need to be hsopitalized in the SECIR model
+         * @param tinfmild infectious time for symptomatic cases (if not hospitalized) in day unit 
+         */
+        void set_infectious_mild(double const& tinfmild);
+
+        /**
+         * @brief sets the serial interval in the SECIR model
+         * @param tserint serial interval in day unit 
+         */
+        void set_serialinterval(double const& tserint);
+
+        /**
+         * @brief sets the time people are 'simply' hospitalized before returning home in the SECIR model
+         * @param thosp2home time people are 'simply' hospitalized before returning home in day unit 
+         */
+        void set_hospitalized_to_home(double const& thosp2home);
+
+        /**
+         * @brief sets the time people are infectious at home before 'simply' hospitalized in the SECIR model
+         * @param thome2hosp time people are infectious at home before 'simply' hospitalized in day unit 
+         */
+        void set_home_to_hospitalized(double const& thome2hosp);
+
+        /**
+         * @brief sets the time people are 'simply' hospitalized before being treated by ICU in the SECIR model
+         * @param thosp2icu time people are 'simply' hospitalized before being treated by ICU in day unit 
+         */
+        void set_hospitalized_to_icu(double const& thosp2icu);
+
+        /**
+         * @brief sets the time people are treated by ICU before returning home in the SECIR model
+         * @param ticu2home time people are treated by ICU before returning home in day unit 
+         */
+        void set_icu_to_home(double const& ticu2home);
+
+        /**
+         * @brief sets the infectious time for asymptomatic cases in the SECIR model
+         * @param tinfasy infectious time for asymptomatic cases in day unit 
+         */
+        void set_infectious_asymp(double const& tinfasy);
+
+        /**
+         * @brief sets the time people are treated by ICU before dying in the SECIR model
+         * @param ticu2death time people are treated by ICU before dying in day unit 
+         */
+        void set_icu_to_death(double const& ticu2death);
+
+        /**
+         * @brief returns the contact frequency set for the SECIR model in 1/day unit
+         */
+        double get_cont_freq() const;
+
+        /**
+         * @brief returns 1.0 over the incubation time set for the SECIR model in day unit
+         */
+        double get_incubation_inv() const;
+
+        /**
+         * @brief returns 1.0 over the infectious time set for the SECIR model in day unit
+         */
+        double get_infectious_mild_inv() const;
+
+        /**
+         * @brief returns 1.0 over the serial interval in the SECIR model
+         */
+        double get_serialinterval_inv() const;
+
+        /**
+         * @brief returns 1.0 over the time people are 'simply' hospitalized before returning home in the SECIR model 
+         */
+        double get_hospitalized_to_home_inv() const;
+
+        /**
+         * @brief returns 1.0 over the time people are infectious at home before 'simply' hospitalized in the SECIR model 
+         */
+        double get_home_to_hospitalized_inv() const;
+
+        /**
+         * @brief returns 1.0 over the time people are 'simply' hospitalized before being treated by ICU in the SECIR model
+         */
+        double get_hospitalized_to_icu_inv() const;
+
+        /**
+         * @brief returns 1.0 over the time people are treated by ICU before returning home in the SECIR model
+         */
+        double get_icu_to_home_inv() const;
+
+        /**
+         * @brief returns 1.0 over the infectious time for asymptomatic cases in the SECIR model
+         */
+        double get_infectious_asymp_inv() const;
+
+        /**
+         * @brief returns 1.0 over the time people are treated by ICU before dying in the SECIR model
+         */
+        double get_icu_to_dead_inv() const;
+
+    private:
+        double m_cont_freq, m_tinc_inv, m_tinfmild_inv; // parameters also available in SEIR
+        double m_tserint_inv, m_thosp2home_inv, m_thome2hosp_inv, m_thosp2icu_inv, m_ticu2home_inv, m_tinfasy_inv,
+            m_ticu2death_inv; // new SECIR params
+    };
 
     // population parameters of unit scale
     class Populations
@@ -157,6 +281,8 @@ public:
             m_nb_rec_t0, m_nb_dead_t0;
     };
 
+    StageTimes times;
+
     Populations populations;
 
     // This defines a damping factor for a mitigation strategy for different points in time.
@@ -196,9 +322,7 @@ public:
      * @param nb_rec_t0_in
      * @param nb_dead_t0_in
      */
-    SecirParams(double tinc, double tinfmild, double tserint, double thosp2home, double thome2hosp, double thosp2icu,
-                double ticu2home, double tinfasy, double ticu2death, double cont_freq_in, double alpha_in,
-                double beta_in, double delta_in, double rho_in, double theta_in);
+    SecirParams(double alpha_in, double beta_in, double delta_in, double rho_in, double theta_in);
 };
 
 /**

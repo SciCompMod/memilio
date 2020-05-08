@@ -16,8 +16,18 @@ TEST(TestSecir, compareWithPreviousRun)
     double nb_total_t0 = 10000, nb_exp_t0 = 100, nb_inf_t0 = 50, nb_car_t0 = 50, nb_hosp_t0 = 20, nb_icu_t0 = 10,
            nb_rec_t0 = 10, nb_dead_t0 = 0;
 
-    epi::SecirParams params(tinc, tinfmild, tserint, thosp2home, thome2hosp, thosp2icu, ticu2home, tinfasy, ticu2death,
-                            cont_freq, alpha, beta, delta, rho, theta);
+    epi::SecirParams params(alpha, beta, delta, rho, theta);
+
+    params.times.set_incubation(tinc);
+    params.times.set_infectious_mild(tinfmild);
+    params.times.set_serialinterval(tserint);
+    params.times.set_hospitalized_to_home(thosp2home);
+    params.times.set_home_to_hospitalized(thome2hosp);
+    params.times.set_hospitalized_to_icu(thosp2icu);
+    params.times.set_icu_to_home(ticu2home);
+    params.times.set_infectious_asymp(tinfasy);
+    params.times.set_icu_to_death(ticu2death);
+    params.times.set_cont_freq(cont_freq);
 
     params.populations.set_total_t0(nb_total_t0);
     params.populations.set_exposed_t0(nb_exp_t0);
