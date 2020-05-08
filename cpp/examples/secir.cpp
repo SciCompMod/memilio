@@ -6,7 +6,7 @@ int main()
     epi::set_log_level(epi::LogLevel::debug);
 
     double t0   = 0;
-    double tmax = 5;
+    double tmax = 100;
     double dt   = 0.1;
 
     epi::log_info("Simulating SECIR; t={} ... {} with dt = {}.", t0, tmax, dt);
@@ -38,8 +38,18 @@ int main()
     double nb_total_t0 = 10000, nb_exp_t0 = 100, nb_inf_t0 = 50, nb_car_t0 = 50, nb_hosp_t0 = 20, nb_icu_t0 = 10,
            nb_rec_t0 = 10, nb_dead_t0 = 0;
 
-    epi::SecirParams params(tinc, tinfmild, tserint, thosp2home, thome2hosp, thosp2icu, ticu2home, tinfasy, ticu2death,
-                            cont_freq, alpha, beta, delta, rho, theta);
+    epi::SecirParams params(alpha, beta, delta, rho, theta);
+
+    params.times.set_incubation(tinc);
+    params.times.set_infectious_mild(tinfmild);
+    params.times.set_serialinterval(tserint);
+    params.times.set_hospitalized_to_home(thosp2home);
+    params.times.set_home_to_hospitalized(thome2hosp);
+    params.times.set_hospitalized_to_icu(thosp2icu);
+    params.times.set_icu_to_home(ticu2home);
+    params.times.set_infectious_asymp(tinfasy);
+    params.times.set_icu_to_death(ticu2death);
+    params.times.set_cont_freq(cont_freq);
 
     params.populations.set_total_t0(nb_total_t0);
     params.populations.set_exposed_t0(nb_exp_t0);
@@ -54,7 +64,12 @@ int main()
 
     print_secir_params(params);
 
-    std::vector<std::vector<double>> seir(0);
+    std::vector<std::vector<double>> secir(0);
 
-    simulate(t0, tmax, dt, params, seir);
+    simulate(t0, tmax, dt, params, secir);
+
+    printf("number total: %f", secir[secir.size() - 1][0] + secir[secir.size() - 1][1] + secir[secir.size() - 1][2] +
+                                   secir[secir.size() - 1][3] + secir[secir.size() - 1][4] +
+                                   secir[secir.size() - 1][5] + secir[secir.size() - 1][6] +
+                                   secir[secir.size() - 1][7]);
 }
