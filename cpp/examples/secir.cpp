@@ -38,7 +38,7 @@ int main()
     double nb_total_t0 = 10000, nb_exp_t0 = 100, nb_inf_t0 = 50, nb_car_t0 = 50, nb_hosp_t0 = 20, nb_icu_t0 = 10,
            nb_rec_t0 = 10, nb_dead_t0 = 0;
 
-    epi::SecirParams params(alpha, beta, delta, rho, theta);
+    epi::SecirParams params{};
 
     params.times.set_incubation(tinc);
     params.times.set_infectious_mild(tinfmild);
@@ -59,6 +59,12 @@ int main()
     params.populations.set_icu_t0(nb_icu_t0);
     params.populations.set_recovered_t0(nb_rec_t0);
     params.populations.set_dead_t0(nb_dead_t0);
+
+    params.probabilities.set_asymp_per_infectious(alpha);
+    params.probabilities.set_risk_from_symptomatic(beta);
+    params.probabilities.set_hospitalized_per_infectious(rho);
+    params.probabilities.set_icu_per_hospitalized(theta);
+    params.probabilities.set_dead_per_icu(delta);
 
     params.dampings.add(epi::Damping(30., 0.3));
 

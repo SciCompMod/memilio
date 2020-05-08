@@ -13,6 +13,11 @@ namespace epi
 
 void print_secir_params(const SecirParams& params)
 {
+    // alpha = alpha_in; // percentage of asymptomatic cases
+    // beta  = beta_in; // risk of infection from the infected symptomatic patients
+    // rho   = rho_in; // hospitalized per infected
+    // theta = theta_in; // icu per hospitalized
+    // delta = delta_in; // deaths per ICUs
     printf("\n SECIR (SECIHURD) model set.\n Parameters:\n\t Time incubation:\t %.4f \n\t Time infectious "
            "(mild):\t %.4f \n\t Serial interval:\t %.4f \n\t Time hosp.->home:\t %.4f \n\t Time home->hosp.:\t "
            "%.4f \n\t Time hosp.->icu:\t %.4f \n\t Time infectious (asymp.):\t %.4f \n\t Time icu->death:\t\t "
@@ -23,7 +28,9 @@ void print_secir_params(const SecirParams& params)
            1.0 / params.times.get_serialinterval_inv(), 1.0 / params.times.get_hospitalized_to_home_inv(),
            1.0 / params.times.get_home_to_hospitalized_inv(), 1.0 / params.times.get_hospitalized_to_icu_inv(),
            1.0 / params.times.get_infectious_asymp_inv(), 1.0 / params.times.get_icu_to_dead_inv(),
-           params.times.get_cont_freq(), params.alpha, params.beta, params.delta, params.rho, params.theta,
+           params.times.get_cont_freq(), params.probabilities.get_asymp_per_infectious(),
+           params.probabilities.get_risk_from_symptomatic(), params.probabilities.get_dead_per_icu(),
+           params.probabilities.get_hospitalized_per_infectious(), params.probabilities.get_icu_per_hospitalized(),
            (int)params.populations.get_total_t0(), (int)params.populations.get_exposed_t0(),
            (int)params.populations.get_carrier_t0(), (int)params.populations.get_infectious_t0(),
            (int)params.populations.get_hospitalized_t0(), (int)params.populations.get_icu_t0(),
@@ -252,30 +259,82 @@ double SecirParams::Populations::get_suscetible_t0() const
     return m_nb_sus_t0;
 }
 
+SecirParams::Probabilities::Probabilities()
+{
+    m_alpha = 0;
+    m_beta  = 0;
+    m_rho   = 0;
+    m_theta = 0;
+    m_delta = 0;
+}
+
+void SecirParams::Probabilities::set_asymp_per_infectious(double const& alpha)
+{
+    m_alpha = alpha;
+}
+
+void SecirParams::Probabilities::set_risk_from_symptomatic(double const& beta)
+{
+    m_beta = beta;
+}
+
+void SecirParams::Probabilities::set_hospitalized_per_infectious(double const& rho)
+{
+    m_rho = rho;
+}
+
+void SecirParams::Probabilities::set_icu_per_hospitalized(double const& theta)
+{
+    m_theta = theta;
+}
+
+void SecirParams::Probabilities::set_dead_per_icu(double const& delta)
+{
+    m_delta = delta;
+}
+
+double SecirParams::Probabilities::get_asymp_per_infectious() const
+{
+    return m_alpha;
+}
+
+double SecirParams::Probabilities::get_risk_from_symptomatic() const
+{
+    return m_beta;
+}
+
+double SecirParams::Probabilities::get_hospitalized_per_infectious() const
+{
+    return m_rho;
+}
+
+double SecirParams::Probabilities::get_icu_per_hospitalized() const
+{
+    return m_theta;
+}
+
+double SecirParams::Probabilities::get_dead_per_icu() const
+{
+    return m_delta;
+}
+
 SecirParams::SecirParams()
     : times{}
     , populations{}
+    , probabilities{}
 {
-}
-
-SecirParams::SecirParams(double alpha_in, double beta_in, double delta_in, double rho_in, double theta_in)
-    : times{}
-    , populations{}
-{
-    alpha = alpha_in; // percentage of asymptomatic cases
-    beta  = beta_in; // risk of infection from the infected symptomatic patients
-    rho   = rho_in; // hospitalized per infected
-    theta = theta_in; // icu per hospitalized
-    delta = delta_in; // deaths per ICUs
-
-    // only for output purposes (not explicitly used as single parameter in SECIR)
+    // (base_)reprod has to be computed time dependently !
     auto dummy_R3 = 0.5 / (1.0 / times.get_infectious_mild_inv() - 1.0 / times.get_serialinterval_inv());
-    base_reprod   = times.get_cont_freq() *
-                  ((1 - rho) * times.get_infectious_mild_inv() + dummy_R3 * beta * (1 - alpha) +
-                   rho * times.get_home_to_hospitalized_inv()) /
-                  ((dummy_R3 * (1 - alpha) + alpha * times.get_infectious_asymp_inv()) *
-                   (times.get_infectious_mild_inv() * (1 - rho) + rho * times.get_home_to_hospitalized_inv())) *
-                  populations.get_suscetible_t0() / populations.get_total_t0();
+    base_reprod =
+        times.get_cont_freq() *
+        ((1 - probabilities.get_hospitalized_per_infectious()) * times.get_infectious_mild_inv() +
+         dummy_R3 * probabilities.get_risk_from_symptomatic() * (1 - probabilities.get_asymp_per_infectious()) +
+         probabilities.get_hospitalized_per_infectious() * times.get_home_to_hospitalized_inv()) /
+        ((dummy_R3 * (1 - probabilities.get_asymp_per_infectious()) +
+          probabilities.get_asymp_per_infectious() * times.get_infectious_asymp_inv()) *
+         (times.get_infectious_mild_inv() * (1 - probabilities.get_hospitalized_per_infectious()) +
+          probabilities.get_hospitalized_per_infectious() * times.get_home_to_hospitalized_inv())) *
+        populations.get_suscetible_t0() / populations.get_total_t0();
 }
 
 void secir_get_derivatives(const SecirParams& params, const std::vector<double>& y, double t, std::vector<double>& dydt)
@@ -285,7 +344,7 @@ void secir_get_derivatives(const SecirParams& params, const std::vector<double>&
     double cont_freq_eff = params.times.get_cont_freq() * params.dampings.get_factor(t);
     double divN          = 1.0 / params.populations.get_total_t0();
 
-    double dummy_S = cont_freq_eff * y[0] * divN * (y[2] + params.beta * y[3]);
+    double dummy_S = cont_freq_eff * y[0] * divN * (y[2] + params.probabilities.get_risk_from_symptomatic() * y[3]);
 
     double dummy_R2 = 1.0 / (2 * (1.0 / params.times.get_serialinterval_inv()) -
                              (1.0 / params.times.get_infectious_mild_inv())); // R2 = 1/(2SI-IP)
@@ -294,24 +353,29 @@ void secir_get_derivatives(const SecirParams& params, const std::vector<double>&
 
     dydt[0] = -dummy_S; // -R1*(C+beta*I)*S/N0
     dydt[1] = dummy_S - dummy_R2 * y[1]; // R1*(C+beta*I)*S/N0-R2*E - R2*E
-    dydt[2] = dummy_R2 * y[1] -
-              ((1 - params.alpha) * dummy_R3 + params.alpha * params.times.get_infectious_asymp_inv()) * y[2];
-    dydt[3] = (1 - params.alpha) * dummy_R3 * y[2] - ((1 - params.rho) * params.times.get_infectious_mild_inv() +
-                                                      params.rho * params.times.get_home_to_hospitalized_inv()) *
-                                                         y[3];
-    dydt[4] = params.rho * params.times.get_home_to_hospitalized_inv() * y[3] -
-              ((1 - params.theta) * params.times.get_hospitalized_to_home_inv() +
-               params.theta * params.times.get_hospitalized_to_icu_inv()) *
-                  y[4];
-    dydt[5] =
-        params.theta * params.times.get_hospitalized_to_icu_inv() * y[4] -
-        ((1 - params.delta) * params.times.get_icu_to_home_inv() + params.delta * params.times.get_icu_to_dead_inv()) *
-            y[5];
-    dydt[6] = params.alpha * params.times.get_infectious_asymp_inv() * y[2] +
-              (1 - params.rho) * params.times.get_infectious_mild_inv() +
-              (1 - params.theta) * params.times.get_hospitalized_to_home_inv() * y[4] +
-              (1 - params.delta) * params.times.get_icu_to_home_inv() * y[5];
-    dydt[7] = params.delta * params.times.get_icu_to_dead_inv() * y[5];
+    dydt[2] =
+        dummy_R2 * y[1] - ((1 - params.probabilities.get_asymp_per_infectious()) * dummy_R3 +
+                           params.probabilities.get_asymp_per_infectious() * params.times.get_infectious_asymp_inv()) *
+                              y[2];
+    dydt[3] = (1 - params.probabilities.get_asymp_per_infectious()) * dummy_R3 * y[2] -
+              ((1 - params.probabilities.get_hospitalized_per_infectious()) * params.times.get_infectious_mild_inv() +
+               params.probabilities.get_hospitalized_per_infectious() * params.times.get_home_to_hospitalized_inv()) *
+                  y[3];
+    dydt[4] =
+        params.probabilities.get_hospitalized_per_infectious() * params.times.get_home_to_hospitalized_inv() * y[3] -
+        ((1 - params.probabilities.get_icu_per_hospitalized()) * params.times.get_hospitalized_to_home_inv() +
+         params.probabilities.get_icu_per_hospitalized() * params.times.get_hospitalized_to_icu_inv()) *
+            y[4];
+    dydt[5] = params.probabilities.get_icu_per_hospitalized() * params.times.get_hospitalized_to_icu_inv() * y[4] -
+              ((1 - params.probabilities.get_dead_per_icu()) * params.times.get_icu_to_home_inv() +
+               params.probabilities.get_dead_per_icu() * params.times.get_icu_to_dead_inv()) *
+                  y[5];
+    dydt[6] =
+        params.probabilities.get_asymp_per_infectious() * params.times.get_infectious_asymp_inv() * y[2] +
+        (1 - params.probabilities.get_hospitalized_per_infectious()) * params.times.get_infectious_mild_inv() +
+        (1 - params.probabilities.get_icu_per_hospitalized()) * params.times.get_hospitalized_to_home_inv() * y[4] +
+        (1 - params.probabilities.get_dead_per_icu()) * params.times.get_icu_to_home_inv() * y[5];
+    dydt[7] = params.probabilities.get_dead_per_icu() * params.times.get_icu_to_dead_inv() * y[5];
 }
 
 std::vector<double> simulate(double t0, double tmax, double dt, const SecirParams& params,

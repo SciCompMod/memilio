@@ -28,11 +28,39 @@ namespace epi
  * theta: U/H; intensive care units per hospitalized
  * delta: D/U; deaths per intensive care units
 **/
+/**
+     * @brief Initializes a SECIR/SECIHURD model
+     *
+     * @todo parameter description
+     *
+     * @param tinc
+     * @param tinfmild
+     * @param tserint
+     * @param thosp2home
+     * @param thome2hosp
+     * @param thosp2icu
+     * @param ticu2home
+     * @param tinfasy
+     * @param ticu2death
+     * @param cont_freq_in
+     * @param alpha_in
+     * @param beta_in
+     * @param delta_in
+     * @param rho_in
+     * @param theta_in
+     * @param nb_total_t0_in
+     * @param nb_exp_t0_in
+     * @param nb_car_t0_in
+     * @param nb_inf_t0_in
+     * @param nb_hosp_t0_in
+     * @param nb_icu_t0_in
+     * @param nb_rec_t0_in
+     * @param nb_dead_t0_in
+     */
 class SecirParams
 {
 public:
     double base_reprod;
-    double alpha, beta, rho, theta, delta; // probabilities
 
     // time parameters for the different 'stages' of the disease of scale day or 1/day
     // 'stages' does not refer to the 'states' of the SECIR model but also includes incubation time or contact frequency
@@ -165,114 +193,114 @@ public:
     {
     public:
         /**
-         * @brief Initializes a time parameters' struct of the SECIR model
+         * @brief Initializes a population parameters' struct in the SECIR model
          */
         Populations();
 
         /**
-         * @brief sets the number of total people at t0 for the SECIR model
+         * @brief sets the number of total people at t0 in the SECIR model
          * automatically calls set_suscetible_t0() to subtract from the total number
          * @param nb_total_t0 total number of people at t0
          */
         void set_total_t0(double nb_total_t0);
 
         /**
-         * @brief sets the number of exposed people at t0 for the SECIR model
+         * @brief sets the number of exposed people at t0 in the SECIR model
          * automatically calls set_suscetible_t0() to subtract from the total number
          * @param nb_exp_t0 number of exposed people at t0
          */
         void set_exposed_t0(double nb_exp_t0);
 
         /**
-         * @brief sets the number of carrier people at t0 for the SECIR model
+         * @brief sets the number of carrier people at t0 in the SECIR model
          * automatically calls set_suscetible_t0() to subtract from the total number
          * @param nb_car_t0 number of recovered people at t0
          */
         void set_carrier_t0(double nb_car_t0);
 
         /**
-         * @brief sets the number of infectious people at t0 for the SECIR model
+         * @brief sets the number of infectious people at t0 in the SECIR model
          * automatically calls set_suscetible_t0() to subtract from the total number
          * @param nb_inf_t0 number of infectious people at t0
          */
         void set_infectious_t0(double nb_inf_t0);
 
         /**
-         * @brief sets the number of hospitalized people at t0 for the SECIR model
+         * @brief sets the number of hospitalized people at t0 in the SECIR model
          * automatically calls set_suscetible_t0() to subtract from the total number
          * @param nb_hosp_t0 number of recovered people at t0
          */
         void set_hospital_t0(double nb_hosp_t0);
 
         /**
-         * @brief sets the number of ICU-treated people at t0 for the SECIR model
+         * @brief sets the number of ICU-treated people at t0 in the SECIR model
          * automatically calls set_suscetible_t0() to subtract from the total number
          * @param nb_icu_t0 number of recovered people at t0
          */
         void set_icu_t0(double nb_icu_t0);
 
         /**
-         * @brief sets the number of recovered people at t0 for the SECIR model
+         * @brief sets the number of recovered people at t0 in the SECIR model
          * automatically calls set_suscetible_t0() to subtract from the total number
          * @param nb_rec_t0 number of recovered people at t0
          */
         void set_recovered_t0(double nb_rec_t0);
 
         /**
-         * @brief sets the number of dead people at t0 for the SECIR model
+         * @brief sets the number of dead people at t0 in the SECIR model
          * automatically calls set_suscetible_t0() to subtract from the total number
          * @param nb_dead_t0 number of recovered people at t0
          */
         void set_dead_t0(double nb_dead_t0);
 
         /**
-         * @brief sets the number of suscetible people at t0 for the SECIR model
+         * @brief sets the number of suscetible people at t0 in the SECIR model
          * only to be called after all other populations have been called
          */
         void set_suscetible_t0();
 
         /**
-         * @brief returns the number of total people at t0 for the SECIR model
+         * @brief returns the number of total people at t0 in the SECIR model
          */
         double get_total_t0() const;
 
         /**
-         * @brief returns the number of exposed people at t0 for the SECIR model
+         * @brief returns the number of exposed people at t0 in the SECIR model
          */
         double get_exposed_t0() const;
 
         /**
-         * @brief returns the number of carrier people at t0 for the SECIR model
+         * @brief returns the number of carrier people at t0 in the SECIR model
          */
         double get_carrier_t0() const;
 
         /**
-         * @brief returns the number of infectious people at t0 for the SECIR model
+         * @brief returns the number of infectious people at t0 in the SECIR model
          */
         double get_infectious_t0() const;
 
         /**
-         * @brief returns the number of hospitalized people at t0 for the SECIR model
+         * @brief returns the number of hospitalized people at t0 in the SECIR model
          */
         double get_hospitalized_t0() const;
 
         /**
-         * @brief returns the number of ICU-treated people at t0 for the SECIR model
+         * @brief returns the number of ICU-treated people at t0 in the SECIR model
          */
         double get_icu_t0() const;
 
         /**
-         * @brief returns the number of recovered people at t0 for the SECIR model
+         * @brief returns the number of recovered people at t0 in the SECIR model
          */
         double get_recovered_t0() const;
 
         /**
-         * @brief returns the number of dead people at t0 for the SECIR model
+         * @brief returns the number of dead people at t0 in the SECIR model
          */
         double get_dead_t0() const;
 
         /**
-         * @brief returns the number of suscetible people at t0 for the SECIR model
+         * @brief returns the number of suscetible people at t0 in the SECIR model
          */
         double get_suscetible_t0() const;
 
@@ -281,9 +309,78 @@ public:
             m_nb_rec_t0, m_nb_dead_t0;
     };
 
+    class Probabilities
+    {
+    public:
+        /**
+         * @brief Initializes a probabilites parameters' struct in the SECIR model
+         */
+        Probabilities();
+
+        /**
+        * @brief sets the percentage of asymptomatic cases in the SECIR model
+        * @param alpha the percentage of asymptomatic cases
+        */
+        void set_asymp_per_infectious(double const& alpha);
+
+        /**
+        * @brief sets the risk of infection from symptomatic cases in the SECIR model
+        * @param beta the risk of infection from symptomatic cases 
+        */
+        void set_risk_from_symptomatic(double const& beta);
+
+        /**
+        * @brief sets the percentage of hospitalized patients per infected patients in the SECIR model
+        * @param rho percentage of hospitalized patients per infected patients
+        */
+        void set_hospitalized_per_infectious(double const& rho);
+
+        /**
+        * @brief sets the percentage of ICU patients per hospitalized patients in the SECIR model
+        * @param theta percentage of ICU patients per hospitalized patients
+        */
+        void set_icu_per_hospitalized(double const& theta);
+
+        /**
+        * @brief sets the percentage of dead patients per ICU patients in the SECIR model
+        * @param delta percentage of dead patients per ICU patients 
+        */
+        void set_dead_per_icu(double const& delta);
+
+        /**
+        * @brief returns the percentage of asymptomatic cases in the SECIR model
+        */
+        double get_asymp_per_infectious() const;
+
+        /**
+        * @brief returns the risk of infection from symptomatic cases in the SECIR model
+        */
+        double get_risk_from_symptomatic() const;
+
+        /**
+        * @brief returns the percentage of hospitalized patients per infected patients in the SECIR model
+        */
+        double get_hospitalized_per_infectious() const;
+
+        /**
+        * @brief returns the percentage of ICU patients per hospitalized patients in the SECIR model
+        */
+        double get_icu_per_hospitalized() const;
+
+        /**
+        * @brief returns the percentage of dead patients per ICU patients in the SECIR model
+        */
+        double get_dead_per_icu() const;
+
+    private:
+        double m_alpha, m_beta, m_rho, m_theta, m_delta; // probabilities
+    };
+
     StageTimes times;
 
     Populations populations;
+
+    Probabilities probabilities;
 
     // This defines a damping factor for a mitigation strategy for different points in time.
     Dampings dampings;
@@ -292,37 +389,6 @@ public:
      * @brief Initializes a SECIR/SECIHURD model without default parameters 
      */
     SecirParams();
-
-    /**
-     * @brief Initializes a SECIR/SECIHURD model
-     *
-     * @todo parameter description
-     *
-     * @param tinc
-     * @param tinfmild
-     * @param tserint
-     * @param thosp2home
-     * @param thome2hosp
-     * @param thosp2icu
-     * @param ticu2home
-     * @param tinfasy
-     * @param ticu2death
-     * @param cont_freq_in
-     * @param alpha_in
-     * @param beta_in
-     * @param delta_in
-     * @param rho_in
-     * @param theta_in
-     * @param nb_total_t0_in
-     * @param nb_exp_t0_in
-     * @param nb_car_t0_in
-     * @param nb_inf_t0_in
-     * @param nb_hosp_t0_in
-     * @param nb_icu_t0_in
-     * @param nb_rec_t0_in
-     * @param nb_dead_t0_in
-     */
-    SecirParams(double alpha_in, double beta_in, double delta_in, double rho_in, double theta_in);
 };
 
 /**
