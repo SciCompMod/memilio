@@ -17,8 +17,16 @@ TEST(TestSecir, compareWithPreviousRun)
            nb_rec_t0 = 10, nb_dead_t0 = 0;
 
     epi::SecirParams params(tinc, tinfmild, tserint, thosp2home, thome2hosp, thosp2icu, ticu2home, tinfasy, ticu2death,
-                            cont_freq, alpha, beta, delta, rho, theta, nb_total_t0, nb_exp_t0, nb_car_t0, nb_inf_t0,
-                            nb_hosp_t0, nb_icu_t0, nb_rec_t0, nb_dead_t0);
+                            cont_freq, alpha, beta, delta, rho, theta);
+
+    params.populations.set_total_t0(nb_total_t0);
+    params.populations.set_exposed_t0(nb_exp_t0);
+    params.populations.set_carrier_t0(nb_car_t0);
+    params.populations.set_infectious_t0(nb_inf_t0);
+    params.populations.set_hospital_t0(nb_hosp_t0);
+    params.populations.set_icu_t0(nb_icu_t0);
+    params.populations.set_recovered_t0(nb_rec_t0);
+    params.populations.set_dead_t0(nb_dead_t0);
 
     params.dampings.add(epi::Damping(30., 0.3));
 
