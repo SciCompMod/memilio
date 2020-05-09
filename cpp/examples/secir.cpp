@@ -6,7 +6,7 @@ int main()
     epi::set_log_level(epi::LogLevel::debug);
 
     double t0   = 0;
-    double tmax = 1;
+    double tmax = 5;
     double dt   = 0.1;
 
     epi::log_info("Simulating SECIR; t={} ... {} with dt = {}.", t0, tmax, dt);

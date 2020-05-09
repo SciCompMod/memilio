@@ -99,7 +99,7 @@ void secir_get_derivatives(const SecirParams& params, const std::vector<double>&
               ((1 - params.theta) * params.thosp2home_inv + params.theta * params.thosp2icu_inv) * y[4];
     dydt[5] = params.theta * params.thosp2icu_inv * y[4] -
               ((1 - params.delta) * params.ticu2home_inv + params.delta * params.ticu2death_inv) * y[5];
-    dydt[6] = params.alpha * params.tinfasy_inv * y[2] + (1 - params.rho) * params.tinfmild_inv +
+    dydt[6] = params.alpha * params.tinfasy_inv * y[2] + (1 - params.rho) * params.tinfmild_inv * y[3] +
               (1 - params.theta) * params.thosp2home_inv * y[4] + (1 - params.delta) * params.ticu2home_inv * y[5];
     dydt[7] = params.delta * params.ticu2death_inv * y[5];
 }
