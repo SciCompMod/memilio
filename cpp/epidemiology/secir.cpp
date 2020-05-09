@@ -1,6 +1,6 @@
 #include <epidemiology/secir.h>
 
-//#include <epidemiology/euler.h>
+// #include <epidemiology/euler.h>
 #include <epidemiology/adapt_rk.h>
 
 #include <cmath>
@@ -339,7 +339,11 @@ SecirParams::SecirParams()
 
 void secir_get_derivatives(const SecirParams& params, const std::vector<double>& y, double t, std::vector<double>& dydt)
 {
-
+    // alpha  // percentage of asymptomatic cases
+    // beta // risk of infection from the infected symptomatic patients
+    // rho   // hospitalized per infectious
+    // theta // icu per hospitalized
+    // delta  // deaths per ICUs
     // 0: S,      1: E,     2: C,     3: I,     4: H,     5: U,     6: R,     7: D
     double cont_freq_eff = params.times.get_cont_freq() * params.dampings.get_factor(t);
     double divN          = 1.0 / params.populations.get_total_t0();
@@ -372,7 +376,7 @@ void secir_get_derivatives(const SecirParams& params, const std::vector<double>&
                   y[5];
     dydt[6] =
         params.probabilities.get_asymp_per_infectious() * params.times.get_infectious_asymp_inv() * y[2] +
-        (1 - params.probabilities.get_hospitalized_per_infectious()) * params.times.get_infectious_mild_inv() +
+        (1 - params.probabilities.get_hospitalized_per_infectious()) * params.times.get_infectious_mild_inv() * y[3] +
         (1 - params.probabilities.get_icu_per_hospitalized()) * params.times.get_hospitalized_to_home_inv() * y[4] +
         (1 - params.probabilities.get_dead_per_icu()) * params.times.get_icu_to_home_inv() * y[5];
     dydt[7] = params.probabilities.get_dead_per_icu() * params.times.get_icu_to_dead_inv() * y[5];
