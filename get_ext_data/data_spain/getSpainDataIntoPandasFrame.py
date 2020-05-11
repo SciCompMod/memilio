@@ -2,7 +2,19 @@
 #                                                                                                          #
 #        IMPORTANT NOTE: WHEN USING THIS DATA, WE HAVE TO CITE https://github.com/datadista/datasets       #
 #                                                                                                          #
+#                                                                                                          #
+#        DO NOT USE DATA FROM THE FOLLOWING REGIONS SINCE THE COLUMNS HOSPITALIZED AND ICU                 #
+#        ARE NOT CORRECTLY SUMMED TO TOTAL NUMBERS ! THE SAME APPLIES TO ALL AGE DATA AT THE MOMENT !      #
+#                                                                                                          #    
+#               HOSPITALIZED                                   ICU                                         #
+#               Castilla La Mancha (until 2020-04-11)          Castilla La Mancha (hasta 2020-04-12)       #
+#               Comunidad Valenciana (hasta 2020-04-08)        Castilla y León (hasta 2020-04-17)          #
+#               Madrid (hasta 2020-04-26)                      Comunidad Valenciana (hasta 2020-04-08)     #
+#               Castilla y León (hasta 2020-04-06)             Galicia (hasta 2020-04-29)                  #
+#               Madrid (hasta 2020-04-26)                                                                  #           
+#                                                                                                          #
 ############################################################################################################
+
 
 
 import sys
@@ -53,7 +65,7 @@ def main(get_data, read_data, make_plot, out_form):
       
       if df_age.empty != True:
          # standardization of column titles from Spanish to English # the stupid character in front of 'fecha' is correct here.. There is a bug in the original file..
-         df_age.rename({'﻿fecha': 'date', 'rango_edad': 'age', 'sexo': 'gender', 'casos_confirmados': 'confirmed', 
+         df_age.rename({'fecha': 'date', 'rango_edad': 'age', 'sexo': 'gender', 'casos_confirmados': 'confirmed', 
                'hospitalizados': 'hospitalized', 'ingresos_uci': 'icu', 'fallecidos' : 'deaths'}, axis=1, inplace=True) 
 
          print("Read Spanish age data from online. Available columns:", df_age.columns)
@@ -63,6 +75,7 @@ def main(get_data, read_data, make_plot, out_form):
          df_age.loc[df_age.gender=='mujeres', ['gender']] = 'female'
          df_age.loc[df_age.gender=='hombres', ['gender']] = 'male'
          df_age.loc[df_age.age=='80 y +', ['age']] = '80+'
+         df_age.loc[df_age.age=='90 y +', ['age']] = '90+'
          df_age.loc[df_age.age=='Total', ['age']] = 'all'
 
          # Correct Timestamps:
@@ -78,7 +91,7 @@ def main(get_data, read_data, make_plot, out_form):
       if df_state.empty != True:
          # standardization of column titles from Spanish to English
          df_state.rename({'Fecha': 'date', 'cod_ine': 'id_state', 'CCAA': 'state', 'Casos': 'confirmed_total', 'PCR+': 'confirmed_pcr', 
-               'TestAc+': 'confirmed_anti', 'Hospitalizados': 'hospitalized', 'UCI': 'icu', 'Fallecidos' : 'deaths', 'Recuperados' : 'recovered'}, axis=1, inplace=True)
+               'TestAc+': 'confirmed_ab', 'Hospitalizados': 'hospitalized', 'UCI': 'icu', 'Fallecidos' : 'deaths', 'Recuperados' : 'recovered'}, axis=1, inplace=True)
 
          print("Read Spanish states data from online. Available columns:", df_state.columns)
 
@@ -137,7 +150,7 @@ def main(get_data, read_data, make_plot, out_form):
 
    # Preparation for plotting/output:
 
-   PCR_ONLY = True # if pcr only is used 
+   PCR_ONLY = False # if pcr only is used 
    # dff = df_state['state'].unique()
 
 
@@ -146,7 +159,7 @@ def main(get_data, read_data, make_plot, out_form):
    if PCR_ONLY:
       df_state.loc[df_state.confirmed_total==0, ['confirmed_total']] = df_state.confirmed_pcr
    else:
-      df_state.loc[df_state.confirmed_total==0, ['confirmed_total']] = df_state.confirmed_pcr + df_state.confirmed_anti
+      df_state.loc[df_state.confirmed_total==0, ['confirmed_total']] = df_state.confirmed_pcr + df_state.confirmed_ab
 
    states_array = df_state.state.unique()
 
@@ -159,7 +172,7 @@ def main(get_data, read_data, make_plot, out_form):
 
 if __name__ == "__main__":
 
-   GET_DATA = False
+   GET_DATA = True
    READ_DATA = True
    MAKE_PLOT = True
    OUT_FORM = "json"
