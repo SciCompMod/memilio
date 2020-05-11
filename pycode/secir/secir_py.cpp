@@ -86,18 +86,69 @@ PYBIND11_MODULE(_secir, m)
         .def_readonly("nb_rec", &SecirResult::nb_rec)
         .def_readonly("nb_dead", &SecirResult::nb_dead);
 
-    // T tinc, T tinfmild, T tserint, T thosp2home, T thome2hosp, T thosp2icu, T ticu2home, T tinfasy, T ticu2death,
-    // T cont_freq_in, T alpha_in, T beta_in, T delta_in, T rho_in, T theta_in,
-    //  T nb_total_t0_in, T nb_exp_t0_in, T nb_car_t0_in, T nb_inf_t0_in, T nb_hosp_t0_in, T nb_icu_t0_in, T nb_rec_t0_in, T nb_dead_t0_in)
+    py::class_<epi::SecirParams::StageTimes>(m, "StageTimes")
+        .def(py::init<>())
+        .def("set_cont_freq", &epi::SecirParams::StageTimes::set_cont_freq)
+        .def("set_incubation", &epi::SecirParams::StageTimes::set_incubation)
+        .def("set_infectious_mild", &epi::SecirParams::StageTimes::set_infectious_mild)
+        .def("set_serialinterval", &epi::SecirParams::StageTimes::set_serialinterval)
+        .def("set_hospitalized_to_home", &epi::SecirParams::StageTimes::set_hospitalized_to_home)
+        .def("set_home_to_hospitalized", &epi::SecirParams::StageTimes::set_home_to_hospitalized)
+        .def("set_hospitalized_to_icu", &epi::SecirParams::StageTimes::set_hospitalized_to_icu)
+        .def("set_icu_to_home", &epi::SecirParams::StageTimes::set_icu_to_home)
+        .def("set_infectious_asymp", &epi::SecirParams::StageTimes::set_infectious_asymp)
+        .def("set_icu_to_death", &epi::SecirParams::StageTimes::set_icu_to_death)
+
+        .def("get_cont_freq", &epi::SecirParams::StageTimes::get_cont_freq)
+        .def("get_incubation_inv", &epi::SecirParams::StageTimes::get_incubation_inv)
+        .def("get_infectious_mild_inv", &epi::SecirParams::StageTimes::get_infectious_mild_inv)
+        .def("get_serialinterval_inv", &epi::SecirParams::StageTimes::get_serialinterval_inv)
+        .def("get_hospitalized_to_home_inv", &epi::SecirParams::StageTimes::get_hospitalized_to_home_inv)
+        .def("get_home_to_hospitalized_inv", &epi::SecirParams::StageTimes::get_home_to_hospitalized_inv)
+        .def("get_hospitalized_to_icu_inv", &epi::SecirParams::StageTimes::get_hospitalized_to_icu_inv)
+        .def("get_icu_to_home_inv", &epi::SecirParams::StageTimes::get_icu_to_home_inv)
+        .def("get_infectious_asymp_inv", &epi::SecirParams::StageTimes::get_infectious_asymp_inv)
+        .def("get_icu_to_dead_inv", &epi::SecirParams::StageTimes::get_icu_to_dead_inv);
+
+    py::class_<epi::SecirParams::Populations>(m, "Populations")
+        .def(py::init<>())
+        .def("set_total_t0", &epi::SecirParams::Populations::set_total_t0)
+        .def("set_exposed_t0", &epi::SecirParams::Populations::set_exposed_t0)
+        .def("set_carrier_t0", &epi::SecirParams::Populations::set_carrier_t0)
+        .def("set_infectious_t0", &epi::SecirParams::Populations::set_infectious_t0)
+        .def("set_hospital_t0", &epi::SecirParams::Populations::set_hospital_t0)
+        .def("set_icu_t0", &epi::SecirParams::Populations::set_icu_t0)
+        .def("set_recovered_t0", &epi::SecirParams::Populations::set_recovered_t0)
+        .def("set_dead_t0", &epi::SecirParams::Populations::set_dead_t0)
+
+        .def("get_total_t0", &epi::SecirParams::Populations::get_total_t0)
+        .def("get_exposed_t0", &epi::SecirParams::Populations::get_exposed_t0)
+        .def("get_carrier_t0", &epi::SecirParams::Populations::get_carrier_t0)
+        .def("get_infectious_t0", &epi::SecirParams::Populations::get_infectious_t0)
+        .def("get_hospitalized_t0", &epi::SecirParams::Populations::get_hospitalized_t0)
+        .def("get_icu_t0", &epi::SecirParams::Populations::get_icu_t0)
+        .def("get_recovered_t0", &epi::SecirParams::Populations::get_recovered_t0)
+        .def("get_dead_t0", &epi::SecirParams::Populations::get_dead_t0);
+
+    py::class_<epi::SecirParams::Probabilities>(m, "Probabilities")
+        .def(py::init<>())
+        .def("set_asymp_per_infectious", &epi::SecirParams::Probabilities::set_asymp_per_infectious)
+        .def("set_risk_from_symptomatic", &epi::SecirParams::Probabilities::set_risk_from_symptomatic)
+        .def("set_hospitalized_per_infectious", &epi::SecirParams::Probabilities::set_hospitalized_per_infectious)
+        .def("set_icu_per_hospitalized", &epi::SecirParams::Probabilities::set_icu_per_hospitalized)
+        .def("set_dead_per_icu", &epi::SecirParams::Probabilities::set_dead_per_icu)
+
+        .def("get_asymp_per_infectious", &epi::SecirParams::Probabilities::get_asymp_per_infectious)
+        .def("get_risk_from_symptomatic", &epi::SecirParams::Probabilities::get_risk_from_symptomatic)
+        .def("get_hospitalized_per_infectious", &epi::SecirParams::Probabilities::get_hospitalized_per_infectious)
+        .def("get_icu_per_hospitalized", &epi::SecirParams::Probabilities::get_icu_per_hospitalized)
+        .def("get_dead_per_icu", &epi::SecirParams::Probabilities::get_dead_per_icu);
+
     py::class_<epi::SecirParams>(m, "SecirParams")
-        .def(py::init<double, double, double, double, double, double, double, double, double, double, double, double,
-                      double, double, double, double, double, double, double, double, double, double, double>(),
-             py::arg("tinc"), py::arg("tinfmild"), py::arg("tserint"), py::arg("thosp2home"), py::arg("thome2hosp"),
-             py::arg("thosp2icu"), py::arg("ticu2home"), py::arg("tinfasy"), py::arg("ticu2death"),
-             py::arg("cont_freq_in"), py::arg("alpha_in"), py::arg("beta_in"), py::arg("delta_in"), py::arg("rho_in"),
-             py::arg("theta_in"), py::arg("nb_total_t0_in"), py::arg("nb_exp_t0_in"), py::arg("nb_car_t0_in"),
-             py::arg("nb_inf_t0_in"), py::arg("nb_hosp_t0_in"), py::arg("nb_icu_t0_in"), py::arg("nb_rec_t0_in"),
-             py::arg("nb_dead_t0_in"))
+        .def(py::init<>())
+        .def_readwrite("times", &epi::SecirParams::times)
+        .def_readwrite("populations", &epi::SecirParams::populations)
+        .def_readwrite("probabilities", &epi::SecirParams::probabilities)
         .def_readwrite("dampings", &epi::SecirParams::dampings);
 
     m.def("print_secir_params", &epi::print_secir_params);
