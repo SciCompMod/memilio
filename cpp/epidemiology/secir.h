@@ -392,6 +392,11 @@ public:
 };
 
 /**
+ * @brief returns the actual, approximated reproduction rate 
+ */
+double get_reprod_rate(SecirParams const& params, double t, std::vector<double> const& yt);
+
+/**
  * prints given parameters
  * @param[in] params the SecirParams parameter object
  */
