@@ -1,4 +1,4 @@
-from epidemiology.secir import Damping, SecirParams, print_secir_params, simulate, SecirResult
+from epidemiology.secir import Damping, SecirParams, print_secir_params, simulate, StageTimes, Probabilities, Populations
 from matplotlib import pyplot as plt
 
 
@@ -8,37 +8,40 @@ def plot_secir():
     and plots the results
     """
 
-    tinc = 5.2 #  R_2^(-1)+R_3^(-1)
-    tinfmild = 6 #  4-14  (=R4^(-1))
-    tserint = 4.2 #  4-4.4 // R_2^(-1)+0.5*R_3^(-1)
-    thosp2home = 12 #  7-16 (=R5^(-1))
-    thome2hosp = 5 #  2.5-7 (=R6^(-1))
-    thosp2icu = 2 #  1-3.5 (=R7^(-1))
-    ticu2home = 8 #  5-16 (=R8^(-1))
-    tinfasy = 6.2 #  (=R9^(-1)=R_3^(-1)+0.5*R_4^(-1))
-    ticu2death = 5 # 3.5-7 (=R5^(-1))
+    times = StageTimes()
+    times.set_incubation(5.2)  # R_2^(-1)+R_3^(-1)
+    times.set_infectious_mild(6.)  # 4-14  (=R4^(-1))
+    times.set_serialinterval(4.2)   # 4-4.4 // R_2^(-1)+0.5*R_3^(-1)
+    times.set_hospitalized_to_home(12.)  # 7-16 (=R5^(-1))
+    times.set_home_to_hospitalized(5.)  # 2.5-7 (=R6^(-1))
+    times.set_hospitalized_to_icu(2.)  # 1-3.5 (=R7^(-1))
+    times.set_icu_to_home(8.)  # 5-16 (=R8^(-1))
+    times.set_infectious_asymp(6.2)  # (=R9^(-1)=R_3^(-1)+0.5*R_4^(-1))
+    times.set_icu_to_death(5.)  # 3.5-7 (=R5^(-1))
+    times.set_cont_freq(0.5)  # 0.2-0.75
 
-    cont_freq = 0.5 #  0.2-0.75
-    alpha = 0.09 #  0.01-0.16
-    beta = 0.25 #  0.05-0.5
-    delta = 0.3 #  0.15-0.77
-    rho = 0.2 #  0.1-0.35
-    theta = 0.25 # 0.15-0.4
+    probs = Probabilities()
+    probs.set_asymp_per_infectious(0.09)  # 0.01-0.16
+    probs.set_risk_from_symptomatic(0.25)  # 0.05-0.5
+    probs.set_hospitalized_per_infectious(0.2)  # 0.1-0.35
+    probs.set_icu_per_hospitalized(0.25)  # 0.15-0.4
+    probs.set_dead_per_icu(0.3)  # 0.15-0.77
 
-
-    nb_total_t0 = 10000
-    nb_exp_t0 = 100
-    nb_inf_t0 = 50
-    nb_car_t0 = 50
-    nb_hosp_t0 = 20
-    nb_icu_t0 = 10
-    nb_rec_t0 = 10
-    nb_dead_t0 = 0
+    people = Populations()
+    people.set_total_t0(10000)
+    people.set_exposed_t0(100)
+    people.set_carrier_t0(50)
+    people.set_infectious_t0(50)
+    people.set_hospital_t0(20)
+    people.set_icu_t0(10)
+    people.set_recovered_t0(10)
+    people.set_dead_t0(0)
 
     # set the params required for the simulation
-    params = SecirParams(tinc, tinfmild, tserint, thosp2home, thome2hosp, thosp2icu, ticu2home, tinfasy, ticu2death,
-                         cont_freq, alpha, beta, delta, rho, theta,
-                         nb_total_t0, nb_exp_t0, nb_car_t0, nb_inf_t0, nb_hosp_t0, nb_icu_t0, nb_rec_t0, nb_dead_t0)
+    params = SecirParams()
+    params.times = times
+    params.probabilities = probs
+    params.populations = people
 
     # emulate some mitigations
     params.dampings.add(Damping(23., 0.8))

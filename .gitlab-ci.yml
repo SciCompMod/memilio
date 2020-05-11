@@ -51,13 +51,14 @@ build-js:
    - hpcagainstcorona
   stage: build
   before_script:
-     - npm install
-     - npm install -g grunt-cli
+   - npm install
   script:
-    - grunt
+    - echo "Building app deployment"
+    - npm run build
+    - echo "Building done"
   artifacts:
     paths:
-      - dist/
+      - build/
 
 www:
   tags:
@@ -67,6 +68,8 @@ www:
   dependencies:
     - build-js
   script:
-    - cp -r dist/* /var/www/html
+    - echo "Deploying to server"
+    - cp -rv build/* /var/www/html
+    - echo "Deployed"
   only:
     - master
