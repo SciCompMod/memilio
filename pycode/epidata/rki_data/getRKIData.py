@@ -3,70 +3,22 @@ from urllib.request import urlopen
 import json
 import pandas
 import matplotlib.pyplot as plt
-import argparse
 
-def loadGeojson( itemId, apiUrl = 'https://opendata.arcgis.com/datasets/', 
-                 extension = 'geojson' ):
-    """ Loads ArcGIS data sets in GeoJSON format. (pandas DataFrame)
+import getDataIntoPandasDataFrame as gd
+import outputDict as od
 
-    This routine loads ArcGIS data sets in GeoJSON format of the given public 
-    data item ID into a pandas DataFrame and returns the DataFrame. Trivial 
-    information gets removed by JSON normalization and dropping of always 
-    constant data fields.
-
-    Keyword arguments:
-    itemId -- ArcGIS public data item ID (string)
-    apiUrl -- ArcGIS data sets API URL (string, default
-              'https://opendata.arcgis.com/datasets/')
-    extension -- Data format extension (string, default 'geojson')
-
-    """
-    url = apiUrl + itemId + '_0.' + extension
-
-    with urlopen( url ) as res:
-        data = json.loads( res.read().decode() )
-
-    # Shape data:
-    df = pandas.json_normalize( data, 'features' )
-
-    # Make-up (removing trivial information):
-    df.drop( columns = ['type', 'geometry'], inplace = True )
-    df.rename( columns = lambda s: s[11:], inplace = True )
-
-    return df
-
-def loadCsv( itemId, apiUrl = 'https://opendata.arcgis.com/datasets/', 
-                 extension = 'csv' ):
-    """ Loads ArcGIS data sets in CSV format. (pandas DataFrame)
-
-    This routine loads ArcGIS data sets in CSV format of the given public data 
-    item ID into a pandas DataFrame and returns the DataFrame. 
-
-    Keyword arguments:
-    itemId -- ArcGIS public data item ID (string)
-    apiUrl -- ArcGIS data sets API URL (string, default
-              'https://opendata.arcgis.com/datasets/')
-    extension -- Data format extension (string, default 'csv')
-
-    """
-    url = apiUrl + itemId + '_0.' + extension
-
-    df = pandas.read_csv( url )
-
-    return df
-
-def main(get_data, read_data, make_plot):
+def main(get_data, read_data, make_plot, out_form):
 
    if(get_data):
 
       # Supported data formats:
       load = { 
-         'csv': loadCsv,
-         'geojson': loadGeojson
+         'csv': gd.loadCsv,
+         'geojson': gd.loadGeojson
        }
 
       # ArcGIS public data item ID:
-      itemId = 'dd4580c810204019a7b8eb3e0b329dd6'
+      itemId = 'dd4580c810204019a7b8eb3e0b329dd6_0'
 
       # Get data:
       df = load['csv'](itemId)
@@ -117,7 +69,8 @@ def main(get_data, read_data, make_plot):
    gbNF_cs = gbNF.AnzahlFall.cumsum()
 
    # outout to json file
-   gbNF_cs.to_json("infected.json")
+   #gbNF_cs.to_json("infected.json")
+   getattr(gbNF_cs, od.outForm[out_form][0])("infected" + od.outForm[out_form][1], **od.outForm[out_form][2])
 
    if(make_plot == True):
       # make plot
@@ -130,7 +83,8 @@ def main(get_data, read_data, make_plot):
    gbNT = df[df.NeuerTodesfall >= 0].groupby( dateToUse ).sum()
    gbNT_cs = gbNT.AnzahlTodesfall.cumsum()
 
-   gbNT_cs.to_json("deaths.json")
+   #gbNT_cs.to_json("deaths.json")
+   getattr(gbNT_cs, od.outForm[out_form][0])("deaths" + od.outForm[out_form][1], **od.outForm[out_form][2])
 
    if(make_plot == True):
       gbNT_cs.plot( title = 'COVID-19 deaths', grid = True,
@@ -156,7 +110,8 @@ def main(get_data, read_data, make_plot):
    #print(gbNFst_cs)
 
    # output json
-   gbNFst_cs.to_json("infected_state.json", orient='records')
+   #gbNFst_cs.to_json("infected_state.json", orient='records')
+   getattr(gbNFst_cs, od.outForm[out_form][0])("infected_state" + od.outForm[out_form][1], **od.outForm[out_form][2])
 
    # output nested json
    gbNFst_cs.groupby(['IdBundesland', 'Bundesland'], as_index=False) \
@@ -174,9 +129,8 @@ def main(get_data, read_data, make_plot):
    #print(gbAllSt.reset_index()[ (gbAllSt.reset_index().IdBundesland==16) ])
  
    # output json
-   gbAllSt_cs.to_json("all_state.json", orient='records')
-   gbAllSt_cs.to_hdf("all_state.h5", key="gbAllSt_cs")
-
+   #gbAllSt_cs.to_json("all_state.json", orient='records')
+   getattr(gbAllSt_cs, od.outForm[out_form][0])("all_state" + od.outForm[out_form][1], **od.outForm[out_form][2])
 
    ############# Data for counties all ages ######################
 
@@ -189,7 +143,8 @@ def main(get_data, read_data, make_plot):
    #print(gbNFc_cs)
 
    # output json
-   gbNFc_cs.to_json("infected_county.json", orient='records')
+   #gbNFc_cs.to_json("infected_county.json", orient='records')
+   getattr(gbNFc_cs, od.outForm[out_form][0])("infected_county" + od.outForm[out_form][1], **od.outForm[out_form][2])
 
    # infected (incl recovered), deaths and recovered together 
 
@@ -200,7 +155,8 @@ def main(get_data, read_data, make_plot):
    #print(gbAllC_cs)
 
    # output json
-   gbAllC_cs.to_json("all_county.json", orient='records')
+   #gbAllC_cs.to_json("all_county.json", orient='records')
+   getattr(gbAllC_cs, od.outForm[out_form][0])("all_county" + od.outForm[out_form][1], **od.outForm[out_form][2])
    
 
    ######### Data whole Germany different gender ##################
@@ -214,7 +170,8 @@ def main(get_data, read_data, make_plot):
    # print(gbAllG_cs)
 
    # output json
-   gbAllG_cs.to_json("all_gender.json", orient='records') 
+   #gbAllG_cs.to_json("all_gender.json", orient='records') 
+   getattr(gbAllG_cs, od.outForm[out_form][0])("all_gender" + od.outForm[out_form][1], **od.outForm[out_form][2])
 
    if(make_plot == True):
       dfF.groupby( 'Geschlecht' ) \
@@ -236,7 +193,8 @@ def main(get_data, read_data, make_plot):
    #print(gbAllGState_cs)
 
    # output json
-   gbAllGState_cs.to_json("all_state_gender.json", orient='records')
+   #gbAllGState_cs.to_json("all_state_gender.json", orient='records')
+   getattr(gbAllGState_cs, od.outForm[out_form][0])("all_state_gender" + od.outForm[out_form][1], **od.outForm[out_form][2])
 
    ############# Gender and County #####################
 
@@ -247,7 +205,8 @@ def main(get_data, read_data, make_plot):
    #print(gbAllGCounty_cs)
 
    # output json
-   gbAllGCounty_cs.to_json("all_county_gender.json", orient='records')
+   #gbAllGCounty_cs.to_json("all_county_gender.json", orient='records')
+   getattr(gbAllGCounty_cs, od.outForm[out_form][0])("all_county_gender" + od.outForm[out_form][1], **od.outForm[out_form][2])
   
    ######### Data whole Germany different ages ####################
 
@@ -260,7 +219,8 @@ def main(get_data, read_data, make_plot):
    #print(gbAllA_cs)
 
    # output json
-   gbAllA_cs.to_json("all_age.json", orient='records')
+   #gbAllA_cs.to_json("all_age.json", orient='records')
+   getattr(gbAllA_cs, od.outForm[out_form][0])("all_age" + od.outForm[out_form][1], **od.outForm[out_form][2])
 
    if(make_plot == True):
       dfF.groupby( 'Altersgruppe' ) \
@@ -294,7 +254,8 @@ def main(get_data, read_data, make_plot):
    #print(gbAllAState_cs[ (gbAllAState_cs.IdBundesland == 1) & (gbAllAState_cs.Altersgruppe == "A00-A04") ])
 
    # output json
-   gbAllAState_cs.to_json("all_state_age.json", orient='records')
+   #gbAllAState_cs.to_json("all_state_age.json", orient='records')
+   getattr(gbAllAState_cs, od.outForm[out_form][0])("all_state_age" + od.outForm[out_form][1], **od.outForm[out_form][2])
 
    ############# Age and County #####################
 
@@ -305,20 +266,54 @@ def main(get_data, read_data, make_plot):
    #print(gbAllACounty_cs)
 
    # output json
-   gbAllACounty_cs.to_json("all_county_age.json", orient='records')
+   #gbAllACounty_cs.to_json("all_county_age.json", orient='records')
+   getattr(gbAllACounty_cs, od.outForm[out_form][0])("all_county_age" + od.outForm[out_form][1], **od.outForm[out_form][2])
 
-
-def cli():
-   parser = argparse.ArgumentParser(description='Downloads data from RKI')
-   parser.add_argument('-r',  '--read-from-disk', help='Reads the data from file "FullData.json" instead of downloading it.', action='store_true')
-   parser.add_argument('-p', '--plot', help='Plots the data.', action='store_true')
-   args = parser.parse_args()
-
-   GET_DATA = False if args.read_from_disk else True
-   READ_DATA = args.read_from_disk
-   MAKE_PLOT = args.plot
-
-   main(GET_DATA, READ_DATA, MAKE_PLOT)
 
 if __name__ == "__main__":
-    cli()
+
+   GET_DATA = True
+   READ_DATA = False
+   MAKE_PLOT = True
+   OUT_FORM = "json"
+
+   largv = len(sys.argv)
+
+   if largv > 1:
+      for i in range(1,largv):
+
+          arg = sys.argv[i]
+
+          if "READ_DATA" in arg:
+
+             arg_split = arg.split("=")
+             if len(arg_split) == 2:
+                 READ_DATA = arg_split[1]
+                 GET_DATA=False
+             else:
+                 print("Warning: your argument:", arg, "is ignored. It has to be in the form as: READ_DATA=True")
+
+          elif "MAKE_PLOT" in arg:
+
+             arg_split = arg.split("=")
+             if len(arg_split) == 2:
+                 MAKE_PLOT = arg_split[1]
+             else:
+                 print("Warning: your argument:", arg, "is ignored. It has to be in the form as: MAKE_PLOT=False")
+
+          elif "OUT_FORM" in arg:
+
+             arg_split = arg.split("=")
+             if len(arg_split) == 2:
+                of = arg_split[1]
+                if of in ["json", "hdf5"]:
+                   OUT_FORM = of
+                else:
+                   print("Warning: your argument:", arg, "for OUT_FORM is ignored. It has to be either hdf5 or json [default]")
+             else:
+                 print("Warning: your argument:", arg, "is ignored. It has to be in the form as: OUT_FORM=hdf5")
+
+          else:
+             print("Warning: your argument:", arg, "is ignored.")
+
+   main(GET_DATA, READ_DATA, MAKE_PLOT, OUT_FORM)
