@@ -52,7 +52,7 @@ TEST(TestSecir, compareWithPreviousRun)
 
     params.dampings.add(epi::Damping(30., 0.3));
 
-    std::vector<std::vector<double>> secihurd(0);
+    std::vector<Eigen::VectorXd> secihurd(0);
     auto t = simulate(t0, tmax, dt, params, secihurd);
 
     auto compare = load_test_data_csv<double>("data/secihurd-compare.csv");

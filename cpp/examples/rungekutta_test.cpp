@@ -6,18 +6,17 @@
 #include <epidemiology/euler.h>
 #include <epidemiology/adapt_rk.h>
 
-template <typename T> void init_vectors(std::vector<std::vector<T>>& y, std::vector<std::vector<T>>& sol, size_t n)
+void init_vectors(std::vector<Eigen::VectorXd>& y, std::vector<Eigen::VectorXd>& sol, size_t n)
 {
-    y   = std::vector<std::vector<T>>(n, std::vector<T>(1, 0));
-    sol = std::vector<std::vector<T>>(n, std::vector<T>(1, 0));
+    y   = std::vector<Eigen::VectorXd>(n, Eigen::VectorXd::Constant(1, 0));
+    sol = std::vector<Eigen::VectorXd>(n, Eigen::VectorXd::Constant(1, 0));
 }
 
 // Test for y'(t) = cos(t)
-template <typename T>
-void integration_test(std::vector<std::vector<T>>& y, std::vector<std::vector<T>>& sol, size_t& n, T t, T dt,
-                      const T tmax, T& err)
+void integration_test(std::vector<Eigen::VectorXd>& y, std::vector<Eigen::VectorXd>& sol, size_t& n, double t, double dt,
+                      const double tmax, double& err)
 {
-    auto sine_deriv = [](std::vector<T> const& y, const T t, std::vector<T>& dydt) {
+    auto sine_deriv = [](Eigen::VectorXd const& y, const double t, Eigen::VectorXd& dydt) {
         dydt[0] = std::cos(t);
     };
 
@@ -27,7 +26,7 @@ void integration_test(std::vector<std::vector<T>>& y, std::vector<std::vector<T>
 
     sol[0][0] = std::sin(0);
 
-    std::vector<T> f = std::vector<T>(1, 0);
+    std::vector<double> f = std::vector<double>(1, 0);
     size_t i         = 0;
     double t_eval    = t;
     // printf("\n t: %.8f\t sol %.8f\t rkf %.8f", t, sol[0][0], y[0][0]);
@@ -35,8 +34,8 @@ void integration_test(std::vector<std::vector<T>>& y, std::vector<std::vector<T>
     while (t_eval - tmax < 1e-10) {
 
         if (i + 1 >= sol.size()) {
-            sol.push_back(std::vector<T>(1, 0));
-            y.push_back(std::vector<T>(1, 0));
+            sol.push_back(Eigen::VectorXd::Constant(1, 0));
+            y.push_back(Eigen::VectorXd::Constant(1, 0));
         }
 
         double dt_old = dt;
@@ -57,8 +56,8 @@ void integration_test(std::vector<std::vector<T>>& y, std::vector<std::vector<T>
 
 int main()
 {
-    std::vector<std::vector<double>> y;
-    std::vector<std::vector<double>> sol;
+    std::vector<Eigen::VectorXd> y;
+    std::vector<Eigen::VectorXd> sol;
 
     const double pi = std::acos(-1);
 

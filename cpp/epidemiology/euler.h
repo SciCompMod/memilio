@@ -30,7 +30,7 @@ public:
      * @param[in,out] dt current time step h=dt
      * @param[out] ytp1 approximated value y(t+1)
      */
-    bool step(std::vector<double> const& yt, double& t, double& dt, std::vector<double>& ytp1) const override;
+    bool step(Eigen::VectorXd const& yt, double& t, double& dt, Eigen::VectorXd& ytp1) const override;
 };
 
 } // namespace epi

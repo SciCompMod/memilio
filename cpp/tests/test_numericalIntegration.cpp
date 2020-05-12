@@ -9,7 +9,7 @@
 #include <ios>
 #include <cmath>
 
-void sin_deriv(std::vector<double> const& y, const double t, std::vector<double>& dydt)
+void sin_deriv(Eigen::VectorXd const& y, const double t, Eigen::VectorXd& dydt)
 {
     dydt[0] = std::cos(t);
 }
@@ -25,8 +25,8 @@ protected:
     }
 
 public:
-    std::vector<std::vector<double>> y;
-    std::vector<std::vector<double>> sol;
+    std::vector<Eigen::VectorXd> y;
+    std::vector<Eigen::VectorXd> sol;
 
     double t;
     double tmax;
@@ -39,15 +39,15 @@ TEST_F(TestVerifyNumericalIntegrator, euler_sine)
 {
     n   = 1000;
     dt  = (tmax - t) / n;
-    y   = std::vector<std::vector<double>>(n, std::vector<double>(1, 0));
-    sol = std::vector<std::vector<double>>(n, std::vector<double>(1, 0));
+    y   = std::vector<Eigen::VectorXd>(n, Eigen::VectorXd::Constant(1, 0));
+    sol = std::vector<Eigen::VectorXd>(n, Eigen::VectorXd::Constant(1, 0));
 
-    std::vector<double> f = std::vector<double>(1, 0);
+    Eigen::VectorXd f = Eigen::VectorXd::Constant(1, 0);
 
     sol[0][0]     = std::sin(0);
     sol[n - 1][0] = std::sin((n - 1) * dt);
 
-    epi::EulerIntegrator euler([](std::vector<double> const& y, const double t, std::vector<double>& dydt) {
+    epi::EulerIntegrator euler([](Eigen::VectorXd const& y, const double t, Eigen::VectorXd& dydt) {
         dydt[0] = std::cos(t);
     });
 
@@ -71,8 +71,8 @@ TEST_F(TestVerifyNumericalIntegrator, runge_kutta_fehlberg45_sine)
 
     n   = 10;
     dt  = (tmax - t) / n;
-    y   = std::vector<std::vector<double>>(n, std::vector<double>(1, 0));
-    sol = std::vector<std::vector<double>>(n, std::vector<double>(1, 0));
+    y   = std::vector<Eigen::VectorXd>(n, Eigen::VectorXd::Constant(1, 0));
+    sol = std::vector<Eigen::VectorXd>(n, Eigen::VectorXd::Constant(1, 0));
 
     epi::RKIntegrator rkf45(sin_deriv, 1e-3, 1.0);
     rkf45.set_abs_tolerance(1e-7);
@@ -86,8 +86,8 @@ TEST_F(TestVerifyNumericalIntegrator, runge_kutta_fehlberg45_sine)
     while (t_eval - tmax < 1e-10) {
 
         if (i + 1 >= sol.size()) {
-            sol.push_back(std::vector<double>(1, 0));
-            y.push_back(std::vector<double>(1, 0));
+            sol.push_back(Eigen::VectorXd::Constant(1, 0));
+            y.push_back(Eigen::VectorXd::Constant(1, 0));
         }
 
         double dt_old = dt;
@@ -115,7 +115,7 @@ class FakeNonAdaptiveIntegrator : public epi::IntegratorBase
     public:
     FakeNonAdaptiveIntegrator(epi::DerivFunction f) : epi::IntegratorBase(f)
     {}
-    virtual bool step(const std::vector<double>& yt, double& t, double& dt, std::vector<double>& ytp1) const override
+    virtual bool step(const Eigen::VectorXd& yt, double& t, double& dt, Eigen::VectorXd& ytp1) const override
     {
         t += dt;
         ytp1 = yt;
@@ -136,7 +136,7 @@ public:
         });
     }
 
-    MOCK_METHOD(bool, step, (const std::vector<double>& yt, double& t, double& dt, std::vector<double>& ytp1), (const));
+    MOCK_METHOD(bool, step, (const Eigen::VectorXd& yt, double& t, double& dt, Eigen::VectorXd& ytp1), (const));
 
 private:
     FakeIntegrator m_fake;
@@ -147,7 +147,7 @@ TEST(TestOdeIntegrate, integratorDoesTheRightNumberOfSteps)
     using testing::_;
     MockIntegrator<FakeNonAdaptiveIntegrator> mockIntegrator([](const auto& y, auto t, auto& dydt) {});
     EXPECT_CALL(mockIntegrator, step(_, _, _, _)).Times(100);
-    std::vector<std::vector<double>> result_x(1, std::vector<double>(1, 0));
+    std::vector<Eigen::VectorXd> result_x(1, Eigen::VectorXd::Constant(1, 0.0));
     auto result_t = epi::ode_integrate(0, 1, 1e-2, mockIntegrator, result_x);
     EXPECT_EQ(result_t.size(), 101);
     EXPECT_EQ(result_x.size(), 101);
@@ -155,7 +155,7 @@ TEST(TestOdeIntegrate, integratorDoesTheRightNumberOfSteps)
 
 TEST(TestOdeIntegrate, integratorStopsAtTMax)
 {
-    std::vector<std::vector<double>> result(1, std::vector<double>(1, 0));
+    std::vector<Eigen::VectorXd> result(1, Eigen::VectorXd::Constant(1, 0));
     auto t =
         epi::ode_integrate(0, 2.34, 0.137, FakeNonAdaptiveIntegrator([](const auto& y, auto t, auto& dydt) {}), result);
     EXPECT_FLOAT_EQ(t.back(), 2.34);

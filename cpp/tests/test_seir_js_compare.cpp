@@ -39,7 +39,7 @@ public:
 
 TEST_F(TestCompareSeirWithJS, integrate)
 {
-    std::vector<std::vector<real>> result_x(0);
+    std::vector<Eigen::VectorXd> result_x(0);
 
     auto result_t = simulate(t0, tmax, dt, params, result_x);
 

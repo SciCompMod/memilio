@@ -5,6 +5,8 @@
 
 #include <vector>
 
+#include "Eigen/Core"
+
 namespace epi
 {
 
@@ -166,7 +168,7 @@ void print_seir_params(SeirParams const& params);
  * @param[in] t time / current day
  * @param[out] dydt the values of the time derivatices of S, E, I, and R
  */
-void seir_get_derivatives(SeirParams const& params, std::vector<double> const& y, double t, std::vector<double>& dydt);
+void seir_get_derivatives(SeirParams const& params, const Eigen::VectorXd& y, double t, Eigen::VectorXd& dydt);
 
 /**
  * Computes the seir curve by integration
@@ -179,7 +181,7 @@ void seir_get_derivatives(SeirParams const& params, std::vector<double> const& y
  * @returns Vector of times t
  */
 std::vector<double> simulate(double t0, double tmax, double dt, SeirParams const& params,
-                             std::vector<std::vector<double>>& seir);
+                             std::vector<Eigen::VectorXd>& seir);
 
 } // namespace epi
 

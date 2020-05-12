@@ -134,9 +134,8 @@ SeirParams::SeirParams()
 {
 }
 
-void seir_get_derivatives(const SeirParams& params, const std::vector<double>& y, double t, std::vector<double>& dydt)
+void seir_get_derivatives(const SeirParams& params, const Eigen::VectorXd& y, double t, Eigen::VectorXd& dydt)
 {
-
     // 0: S,      1: E,       2: I,     3: R
     double cont_freq_eff = params.times.get_cont_freq() * params.dampings.get_factor(t);
     double divN          = 1.0 / params.populations.get_total_t0();
@@ -148,10 +147,10 @@ void seir_get_derivatives(const SeirParams& params, const std::vector<double>& y
 }
 
 std::vector<double> simulate(double t0, double tmax, double dt, const SeirParams& params,
-                             std::vector<std::vector<double>>& seir)
+                             std::vector<Eigen::VectorXd>& seir)
 {
     size_t n_params = 4;
-    seir            = std::vector<std::vector<double>>(1, std::vector<double>(n_params, 0.));
+    seir            = std::vector<Eigen::VectorXd>(1, Eigen::VectorXd::Constant(n_params, 0));
 
     //initial conditions
     seir[0][0] = params.populations.get_suscetible_t0();
@@ -159,7 +158,7 @@ std::vector<double> simulate(double t0, double tmax, double dt, const SeirParams
     seir[0][2] = params.populations.get_infectious_t0();
     seir[0][3] = params.populations.get_recovered_t0();
 
-    auto seir_fun = [&params](std::vector<double> const& y, const double t, std::vector<double>& dydt) {
+    auto seir_fun = [&params](Eigen::VectorXd const& y, const double t, Eigen::VectorXd& dydt) {
         return seir_get_derivatives(params, y, t, dydt);
     };
 

@@ -360,7 +360,7 @@ double get_reprod_rate(SecirParams const& params, double const t, std::vector<do
     return reprod_rate;
 }
 
-void secir_get_derivatives(const SecirParams& params, const std::vector<double>& y, double t, std::vector<double>& dydt)
+void secir_get_derivatives(const SecirParams& params, const Eigen::VectorXd& y, double t, Eigen::VectorXd& dydt)
 {
     // alpha  // percentage of asymptomatic cases
     // beta // risk of infection from the infected symptomatic patients
@@ -406,10 +406,10 @@ void secir_get_derivatives(const SecirParams& params, const std::vector<double>&
 }
 
 std::vector<double> simulate(double t0, double tmax, double dt, const SecirParams& params,
-                             std::vector<std::vector<double>>& secir)
+                             std::vector<Eigen::VectorXd>& secir)
 {
     size_t n_params = 8;
-    secir           = std::vector<std::vector<double>>(1, std::vector<double>(n_params, 0.));
+    secir           = std::vector<Eigen::VectorXd>(1, Eigen::VectorXd::Constant(n_params, 0.));
 
     //initial conditions
     secir[0][0] = params.populations.get_suscetible_t0();
@@ -421,7 +421,7 @@ std::vector<double> simulate(double t0, double tmax, double dt, const SecirParam
     secir[0][6] = params.populations.get_recovered_t0();
     secir[0][7] = params.populations.get_dead_t0();
 
-    auto secir_fun = [&params](std::vector<double> const& y, const double t, std::vector<double>& dydt) {
+    auto secir_fun = [&params](Eigen::VectorXd const& y, const double t, Eigen::VectorXd& dydt) {
         return secir_get_derivatives(params, y, t, dydt);
     };
 

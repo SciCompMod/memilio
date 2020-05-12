@@ -6,7 +6,7 @@ namespace epi
 {
 
 std::vector<double> ode_integrate(double t0, double tmax, double dt, const IntegratorBase& integrator,
-                                  std::vector<std::vector<double>>& y)
+                                  std::vector<Eigen::VectorXd>& y)
 {
     assert(tmax > t0);
 
@@ -27,7 +27,7 @@ std::vector<double> ode_integrate(double t0, double tmax, double dt, const Integ
         //but also unlikely to happen. may need to be reevaluated
 
         dt = std::min(dt, tmax - t);
-        y.emplace_back(ode_dim, 0);
+        y.emplace_back(ode_dim);
         step_okay &= integrator.step(y[i], t, dt, y[i + 1]);
         vec_times.push_back(t);
         i++;

@@ -51,13 +51,13 @@ Tableau::Tableau()
     entries[4][5] = -11 / 40.0;
 }
 
-bool RKIntegrator::step(const std::vector<double>& yt, double& t, double& dt, std::vector<double>& ytp1) const
+bool RKIntegrator::step(const Eigen::VectorXd& yt, double& t, double& dt, Eigen::VectorXd& ytp1) const
 {
 
     double max_err   = 1e10;
     double conv_crit = 1e9;
 
-    std::vector<std::vector<double>> kt_values;
+    std::vector<Eigen::VectorXd> kt_values;
 
     bool failed_step_size_adapt = false;
 
@@ -71,7 +71,7 @@ bool RKIntegrator::step(const std::vector<double>& yt, double& t, double& dt, st
 
         for (size_t i = 0; i < kt_values.size();
              i++) { // we first compute k_n1 for each y_j, then k_n2 for each y_j, etc.
-            kt_values[i].resize(yt.size()); // note: yt contains more than one variable since we solve a system of ODEs
+            kt_values[i].resizeLike(yt); // note: yt contains more than one variable since we solve a system of ODEs
 
             if (i == 0) { // for i==0, we have kt_i=f(t,y(t))
                 f(yt, t, kt_values[i]);
@@ -143,9 +143,7 @@ bool RKIntegrator::step(const std::vector<double>& yt, double& t, double& dt, st
 
         if (max_err <= conv_crit || dt < 2 * m_dt_min + 1e-6) {
             // if sufficiently exact, take 4th order approximation (do not take 5th order : Higher order is not always higher accuracy!)
-            for (size_t i = 0; i < yt.size(); i++) {
-                ytp1[i] = ytp1_low[i];
-            }
+            ytp1 = ytp1_low;
 
             if (dt < 2 * m_dt_min + 1e-6) {
                 failed_step_size_adapt = true;

@@ -3,6 +3,8 @@ build-cpp:
   tags:
    - cpp
    - hpcagainstcorona
+  before_script:
+    - apt -qq -y install libeigen3-dev
   script:
     - cd cpp
     - mkdir build && cd build
@@ -19,7 +21,7 @@ build-py:
    - hpcagainstcorona
   stage: build
   before_script:
-    - apt -qq -y install python3.7-venv python3-venv 
+    - apt -qq -y install python3.7-venv python3-venv libeigen3-dev
     - cd pycode
     - python3 -m venv venv
     - source venv/bin/activate

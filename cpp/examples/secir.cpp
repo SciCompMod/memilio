@@ -70,7 +70,7 @@ int main()
 
     print_secir_params(params);
 
-    std::vector<std::vector<double>> secir(0);
+    std::vector<Eigen::VectorXd> secir(0);
 
     simulate(t0, tmax, dt, params, secir);
 

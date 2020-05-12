@@ -4,6 +4,7 @@
 #include <vector>
 #include <functional>
 #include <algorithm>
+#include <Eigen/Core>
 
 namespace epi
 {
@@ -11,7 +12,7 @@ namespace epi
 /**
  * Function template to be integrated
  */
-using DerivFunction = std::function<void(std::vector<double> const& y, const double t, std::vector<double>& dydt)>;
+using DerivFunction = std::function<void(const Eigen::VectorXd& y, double t, Eigen::VectorXd& dydt)>;
 
 class IntegratorBase
 {
@@ -29,7 +30,7 @@ public:
      * @param[in,out] dt current time step h=dt
      * @param[out] ytp1 approximated value y(t+1)
      */
-    virtual bool step(std::vector<double> const& yt, double& t, double& dt, std::vector<double>& ytp1) const = 0;
+    virtual bool step(const Eigen::VectorXd& yt, double& t, double& dt, Eigen::VectorXd& ytp1) const = 0;
 
 protected:
     DerivFunction f;
@@ -47,8 +48,7 @@ protected:
  * @param y
  * @return Array of t with same size as y
  */
-std::vector<double> ode_integrate(double t0, double tmax, double dt, const IntegratorBase& integrator,
-                                  std::vector<std::vector<double>>& y);
+std::vector<double> ode_integrate(double t0, double tmax, double dt, const IntegratorBase& integrator, std::vector<Eigen::VectorXd>& yt);
 
 } // namespace epi
 

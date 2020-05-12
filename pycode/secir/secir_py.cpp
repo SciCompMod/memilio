@@ -36,8 +36,8 @@ public:
 
 SecirResult simulate_secir(double t0, double tmax, double dt, const epi::SecirParams& params)
 {
-    std::vector<std::vector<double>> seir(0);
-    std::vector<double> times = simulate(t0, tmax, dt, params, seir);
+    std::vector<Eigen::VectorXd> seir(0);
+    auto times = simulate(t0, tmax, dt, params, seir);
 
     SecirResult result;
     if (seir.size() < 1 || seir[0].size() != 8) {
