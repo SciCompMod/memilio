@@ -1,4 +1,5 @@
 #include <gtest/gtest.h>
+#include <gmock/gmock.h>
 #include <epidemiology/euler.h>
 #include <epidemiology/adapt_rk.h>
 
@@ -107,4 +108,55 @@ TEST_F(TestVerifyNumericalIntegrator, runge_kutta_fehlberg45_sine)
     err = std::sqrt(err) / n;
 
     EXPECT_NEAR(err, 0.0, 1e-7);
+}
+
+class FakeNonAdaptiveIntegrator : public epi::IntegratorBase
+{
+    public:
+    FakeNonAdaptiveIntegrator(epi::DerivFunction f) : epi::IntegratorBase(f)
+    {}
+    virtual bool step(const Eigen::VectorXd& yt, double& t, double& dt, Eigen::VectorXd& ytp1) const override
+    {
+        t += dt;
+        ytp1 = yt;
+        return true;
+    }
+};
+
+template <class FakeIntegrator>
+class MockIntegrator : public epi::IntegratorBase
+{
+public:
+    MockIntegrator(epi::DerivFunction f)
+        : epi::IntegratorBase(f)
+        , m_fake(f)
+    {
+        ON_CALL(*this, step).WillByDefault([this](auto&& yt, auto&& t, auto&& dt, auto&& ytp1) {
+            return m_fake.step(yt, t, dt, ytp1);
+        });
+    }
+
+    MOCK_METHOD(bool, step, (const Eigen::VectorXd& yt, double& t, double& dt, Eigen::VectorXd& ytp1), (const));
+
+private:
+    FakeIntegrator m_fake;
+};
+
+TEST(TestOdeIntegrate, integratorDoesTheRightNumberOfSteps)
+{
+    using testing::_;
+    MockIntegrator<FakeNonAdaptiveIntegrator> mockIntegrator([](const auto& y, auto t, auto& dydt) {});
+    EXPECT_CALL(mockIntegrator, step(_, _, _, _)).Times(100);
+    std::vector<Eigen::VectorXd> result_x(1, Eigen::VectorXd::Constant(1, 0.0));
+    auto result_t = epi::ode_integrate(0, 1, 1e-2, mockIntegrator, result_x);
+    EXPECT_EQ(result_t.size(), 101);
+    EXPECT_EQ(result_x.size(), 101);
+}
+
+TEST(TestOdeIntegrate, integratorStopsAtTMax)
+{
+    std::vector<Eigen::VectorXd> result(1, Eigen::VectorXd::Constant(1, 0));
+    auto t =
+        epi::ode_integrate(0, 2.34, 0.137, FakeNonAdaptiveIntegrator([](const auto& y, auto t, auto& dydt) {}), result);
+    EXPECT_FLOAT_EQ(t.back(), 2.34);
 }
