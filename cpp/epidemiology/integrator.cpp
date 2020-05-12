@@ -8,54 +8,37 @@ namespace epi
 std::vector<double> ode_integrate(double t0, double tmax, double dt, const IntegratorBase& integrator,
                                   std::vector<std::vector<double>>& y)
 {
+    assert(tmax > t0);
 
-    size_t n_params = y[0].size();
+    size_t ode_dim = y[0].size();
     size_t nb_steps = (int)(ceil((tmax - t0) / dt)); // estimated number of time steps (if equidistant)
 
-    y.resize(nb_steps + 1, std::vector<double>(n_params, 0.));
-    std::vector<double> vec_times(nb_steps + 1, 0.);
-
-    //@TODO: get from integrator base
-    double dtmin = 1e-3;
+    std::vector<double> vec_times(1, t0);
+    vec_times.reserve(nb_steps + 1);
+    y.reserve(nb_steps + 1);
 
     bool step_okay = true;
 
     double t      = t0;
-    double t_prev = t0;
     size_t i      = 0;
-    vec_times[0]  = t0;
-    while (t_prev < tmax) {
-        if (t > tmax) { // possible for adaptive step size
-            dt = tmax - t_prev;
-            if (dt < 0.1 * dtmin) {
-                break;
-            }
-        }
-        t_prev = t;
-        t      = std::min(t, tmax); // possible for adaptive step size
+    while (std::abs((tmax - t) / (tmax - t0)) > 1e-10) {
+        //we don't make timesteps too small as the error estimator of an adaptive integrator 
+        //may not be able to handle it. this is very conservative and maybe unnecessary, 
+        //but also unlikely to happen. may need to be reevaluated
 
-        if (i + 1 >= y.size()) {
-            std::vector<std::vector<double>> vecAppend(20, std::vector<double>(n_params, 0.));
-            y.insert(y.end(), vecAppend.begin(), vecAppend.end());
-            vec_times.resize(vec_times.size() + 20, 0.);
-        }
-        step_okay        = integrator.step(y[i], t, dt, y[i + 1]);
-        vec_times[i + 1] = t;
-
+        dt = std::min(dt, tmax - t);
+        y.emplace_back(ode_dim, 0);
+        step_okay &= integrator.step(y[i], t, dt, y[i + 1]);
+        vec_times.push_back(t);
         i++;
     }
 
-    // cut empty elements (makes more sense for adaptive time step size)
-    if (y.size() > i) {
-        y.resize(i);
-        vec_times.resize(i);
-    }
-
-    if (step_okay) {
-        epi::log_info("Adaptive step sizing successful to tolerances.");
-    }
-    else {
-        epi::log_info("Adaptive step sizing failed.");
+    if (!step_okay) {
+        log_warning("Adaptive step sizing failed.");
+    } else if (std::abs((tmax - t) / (tmax - t0))  > 1e-15) {
+        log_warning("Last time step too small. Could not reach tmax exactly.");
+    } else {
+        log_info("Adaptive step sizing successful to tolerances.");        
     }
 
     return vec_times;

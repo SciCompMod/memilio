@@ -12,7 +12,7 @@ protected:
         refData = load_test_data_csv<real>("data/seir-js-compare.csv");
         t0      = 0.;
         tmax    = 50.;
-        dt      = 1.002003997564315796e-01;
+        dt      = 0.1002004008016032;
 
         params.populations.set_exposed_t0(10000);
         params.populations.set_infectious_t0(1000);
@@ -26,7 +26,7 @@ protected:
 
         // add two dampings
         params.dampings.add(epi::Damping(0., 1.0));
-        params.dampings.add(epi::Damping(12., 0.4));
+        params.dampings.add(epi::Damping(12.0, 0.4));
     }
 
 public:
@@ -39,22 +39,22 @@ public:
 
 TEST_F(TestCompareSeirWithJS, integrate)
 {
-    EXPECT_EQ(500, refData.size());
+    std::vector<std::vector<real>> result_x(0);
 
-    std::vector<std::vector<real>> result(0);
+    auto result_t = simulate(t0, tmax, dt, params, result_x);
 
-    simulate(t0, tmax, dt, params, result);
+    ASSERT_EQ(refData.size(), result_x.size());
+    ASSERT_EQ(refData.size(), result_t.size());
 
-    EXPECT_EQ(500, result.size());
-
-    for (size_t irow = 0; irow < 500; ++irow) {
+    for (size_t irow = 0; irow < result_x.size(); ++irow) {
         double t = refData[irow][0];
+        ASSERT_FLOAT_EQ(t, result_t[irow]) << "at row " << irow;
         for (size_t icol = 0; icol < 4; ++icol) {
             double ref    = refData[irow][icol + 1];
-            double actual = result[irow][icol];
+            double actual = result_x[irow][icol];
 
             double tol = 1e-6 * ref;
-            EXPECT_NEAR(ref, actual, tol);
+            ASSERT_NEAR(ref, actual, tol)  << "at row " << irow;
         }
     }
 }
