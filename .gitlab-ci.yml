@@ -1,5 +1,10 @@
 build-cpp:
   stage: build
+  tags:
+   - cpp
+   - hpcagainstcorona
+  before_script:
+    - apt -qq -y install libeigen3-dev
   script:
     - cd cpp
     - mkdir build && cd build
@@ -10,8 +15,28 @@ build-cpp:
     paths:
       - cpp/build/
 
+build-py:
+  tags:
+   - cpp
+   - hpcagainstcorona
+  stage: build
+  before_script:
+    - apt -qq -y install python3.7-venv python3-venv libeigen3-dev
+    - cd pycode
+    - python3 -m venv venv
+    - source venv/bin/activate
+    - pip install scikit-build
+  script:
+    - python3 setup.py bdist_wheel
+  artifacts:
+    paths:
+      - pycode/dist/*.whl
+
 # run tests using the binary built before
 test-cpp:
+  tags:
+   - cpp
+   - hpcagainstcorona
   stage: test
   dependencies:
     - build-cpp
@@ -23,20 +48,30 @@ test-cpp:
       junit: cpp/build/tests/report.xml
 
 build-js:
+  tags:
+   - npm
+   - hpcagainstcorona
   stage: build
   before_script:
-     - npm install
+   - npm install
   script:
-    - grunt
+    - echo "Building app deployment"
+    - npm run build
+    - echo "Building done"
   artifacts:
     paths:
-      - dist/
+      - build/
 
 www:
+  tags:
+   - native
+   - hpcagainstcorona
   stage: deploy
   dependencies:
     - build-js
   script:
-    - cp -r dist/* /var/www/html
+    - echo "Deploying to server"
+    - cp -rv build/* /var/www/html
+    - echo "Deployed"
   only:
     - master

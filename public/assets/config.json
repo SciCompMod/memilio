@@ -1,0 +1,53 @@
+{
+  "measures": [
+    {
+      "label": "measures.homeoffice",
+      "damping": 0.66,
+      "intervals": []
+    },
+    {
+      "label": "measures.schoolclosing",
+      "damping": 0.85,
+      "intervals": []
+    },
+    {
+      "label": "measures.socialdistancing",
+      "damping": 0.55,
+      "intervals": []
+    }
+  ],
+  "parameters": [
+    {
+      "label": "parameters.contactrate",
+      "name": "contact_rate",
+      "type": "slider",
+      "min": 0,
+      "max": 10,
+      "step": 0.1,
+      "default": 2.7
+    },
+    {
+      "label": "parameters.incubation",
+      "name": "incubation",
+      "type": "slider",
+      "min": 0,
+      "max": 10,
+      "step": 0.1,
+      "default": 5.2
+    },
+    {
+      "label": "parameters.infection",
+      "name": "infection",
+      "type": "slider",
+      "min": 0,
+      "max": 10,
+      "step": 0.1,
+      "default": 2
+    },
+    {
+      "label": "parameters.exposed",
+      "name": "e0",
+      "default": 0
+    }
+  ]
+}

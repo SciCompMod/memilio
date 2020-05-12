@@ -1,0 +1,36 @@
+.map {
+  height: 100%;
+
+  svg {
+    height: 100%;
+    width: 100%;
+    background-color: #eee;
+    .title {
+      font-size: 20px;
+      text-anchor: start;
+      stroke-width: 1;
+      stroke: black;
+      z-index: 1000;
+    }
+
+    .land,
+    .kreis {
+      fill: white;
+      stroke: black;
+    }
+
+    .land:hover,
+    .kreis:hover {
+      fill: #dedede !important;
+    }
+
+    .kreis.hidden {
+      opacity: 0;
+      visibility: hidden;
+    }
+
+    .land.off {
+      fill: #555;
+    }
+  }
+}

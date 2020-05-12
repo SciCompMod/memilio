@@ -5,49 +5,57 @@
 #include <cmath>
 #include <epidemiology/euler.h>
 
+void init_vectors(std::vector<Eigen::VectorXd>& y, std::vector<Eigen::VectorXd>& sol, Eigen::VectorXd& f, size_t n)
+{
+    y   = std::vector<Eigen::VectorXd>(n, Eigen::VectorXd::Constant(1, 0));
+    sol = std::vector<Eigen::VectorXd>(n, Eigen::VectorXd::Constant(1, 0));
+
+    f = Eigen::VectorXd::Constant(1, 0);
+}
+
 // Test for y'(t) = cos(t)
-template <typename T>
-void integration_test(size_t n, T tmax, T& err)
+void integration_test(std::vector<Eigen::VectorXd>& y, std::vector<Eigen::VectorXd>& sol, Eigen::VectorXd& f, size_t n,
+                      double dt, double& err)
 {
 
-    std::vector<std::vector<T> > y(n, std::vector<T>(1, 0));
-    std::vector<std::vector<T> > sol(n, std::vector<T>(1, 0));
-
-    std::vector<T> f(1, 0);
-
-    T dt =  tmax / n;
-
-    sol[0][0] = std::sin(0);
+    sol[0][0]     = std::sin(0);
     sol[n - 1][0] = std::sin((n - 1) * dt);
+    epi::EulerIntegrator euler([](Eigen::VectorXd const& y, const double t, Eigen::VectorXd& dydt) { dydt[0] = std::cos(t); });
 
-
-    for(size_t i = 0; i < n - 1; i++) {
+    double t = 0.;
+    for (size_t i = 0; i < n - 1; i++) {
         sol[i + 1][0] = std::sin((i + 1) * dt);
 
-        f[0] = std::cos(i * dt);
+        euler.step(y[i], t, dt, y[i + 1]);
 
-        explicit_euler(y[i], dt, f, y[i + 1]); //
-
+        printf("\n %.8f\t %.8f", y[i + 1][0], sol[i + 1][0]);
         // printf("\n approx: %.4e, sol: %.4e, error %.4e", y[i+1][0], sol[i+1][0], err);
 
         err += std::pow(std::abs(y[i + 1][0] - sol[i + 1][0]), 2.0);
-
     }
-
 }
 
 int main()
 {
+    std::vector<Eigen::VectorXd> y;
+    std::vector<Eigen::VectorXd> sol;
+
+    Eigen::VectorXd f;
 
     const double pi = std::acos(-1);
 
-    size_t n = 100000;
+    size_t n    = 10;
+    double t0   = 0;
     double tmax = 2 * pi;
-    double err = 0;
+    double dt   = (tmax - t0) / n;
+    double err  = 0;
 
-    integration_test(n, tmax, err);
+    printf("\n .%.8f. \n", dt);
+
+    init_vectors(y, sol, f, n);
+    integration_test(y, sol, f, n, dt, err);
 
     err = std::sqrt(err) / n;
 
-    printf("For n=%d the error is %.4e\n", (int)n, err);
+    printf("\nFor n=%d the error is %.4e\n", (int)n, err);
 }
