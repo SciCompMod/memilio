@@ -17,3 +17,6 @@ target_link_libraries(seir PRIVATE epidemiology)
 
 add_executable(secir secir.cpp)
 target_link_libraries(secir PRIVATE epidemiology)
+
+add_executable(group_seir group_seir.cpp)
+target_link_libraries(group_seir PRIVATE epidemiology)

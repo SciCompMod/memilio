@@ -1,7 +1,7 @@
 #include <epidemiology/seir.h>
 
 #include <epidemiology/euler.h>
-// #include <epidemiology/adapt_rk.h>
+#include <epidemiology/adapt_rk.h>
 
 #include <cmath>
 #include <cassert>
@@ -162,20 +162,69 @@ std::vector<double> simulate(double t0, double tmax, double dt, const SeirParams
         return seir_get_derivatives(params, y, t, dydt);
     };
 
-#ifdef ARK_H
-    double dtmin = 1e-3;
-    double dtmax = 1.;
-    RKIntegrator integrator(seir_fun, dtmin, dtmax);
-    integrator.set_abs_tolerance(1e-1);
-    integrator.set_rel_tolerance(1e-4);
-#endif
-#ifdef EULER_H
+    // double dtmin = 1e-5;
+    // double dtmax = 1.;
+    // RKIntegrator integrator(seir_fun, dtmin, dtmax);
+    // integrator.set_rel_tolerance(1e-6);
+    // integrator.set_abs_tolerance(0);
+    
     double dtmin = dt;
     double dtmax = dt;
     EulerIntegrator integrator(seir_fun);
-#endif
 
     return ode_integrate(t0, tmax, dt, integrator, seir);
+}
+
+std::vector<double> simulate(double t0, double tmax, double dt, const std::vector<SeirParams>& group_params,
+                             MigrationFunction migration_function, std::vector<Eigen::VectorXd>& result)
+{
+    auto num_groups     = group_params.size();
+    auto num_vars       = 4;
+    auto num_vars_total = num_vars * num_groups;
+    auto num_steps      = static_cast<size_t>(std::ceil(tmax - t0)); //only report once each migration step
+    auto migration      = Eigen::MatrixXd(num_groups, num_groups);
+    result              = std::vector<Eigen::VectorXd>(1, Eigen::VectorXd::Constant(num_vars_total, 0));
+    auto t              = std::vector<double>(1, 0);
+    result.reserve(num_steps);
+    t.reserve(num_steps);
+
+    //for two groups: [S1, S2, E1, E2, I1, I2, R1, R2]
+    for (size_t i = 0; i < num_groups; i++) {
+        result[0][0 * num_groups + i] = group_params[i].populations.get_suscetible_t0();
+        result[0][1 * num_groups + i]     = group_params[i].populations.get_exposed_t0();
+        result[0][2 * num_groups + i]  = group_params[i].populations.get_infectious_t0();
+        result[0][3 * num_groups + i]   = group_params[i].populations.get_recovered_t0();
+    }
+
+    while (t.back() < tmax) {
+        //TODO: avoid copying the results of a single step/group
+        //TODO: use vector slicing
+        //TODO: variable migration interval size
+
+        auto group_seir = Eigen::VectorXd::Zero(num_vars_total).eval();
+
+        for (size_t i = 0; i < num_groups; i++) {
+            auto seir = std::vector<Eigen::VectorXd>(1, Eigen::VectorXd::Constant(4, 0));            
+            for (size_t j = 0; j < num_vars; j++) {
+                seir[0][j] = result.back()[j * num_groups + i];
+            }
+            auto tmpT = simulate(t.back(), std::min(t.back() + 1, tmax), dt, group_params[i], seir);
+            for (size_t j = 0; j < num_vars; j++) {
+                group_seir[j * num_groups + i] = seir.back()[j];
+            }
+        }
+
+        for (size_t i = 0; i < num_vars; i++) {
+            migration_function(static_cast<SeirCompartment>(i), t.back(), migration);
+            auto group_compartment = group_seir.segment(num_groups * i, num_groups);
+            group_compartment      = migration * group_compartment;
+        }
+
+        result.push_back(group_seir);
+        t.push_back(std::min(t.back() + 1, tmax));
+    }
+
+    return t;
 }
 
 } // namespace epi
