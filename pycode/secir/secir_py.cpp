@@ -34,10 +34,11 @@ public:
     std::vector<double> nb_dead;
 };
 
-SecirResult simulate_secir(double t0, double tmax, double dt, const epi::SecirParams& params)
+SecirResult simulate_secir(double t0, double tmax, double dt, const epi::ContactFrequencies& cont_freq_matrix,
+                           std::vector<epi::SecirParams> const& params)
 {
     std::vector<Eigen::VectorXd> seir(0);
-    auto times = simulate(t0, tmax, dt, params, seir);
+    auto times = simulate(t0, tmax, dt, cont_freq_matrix, params, seir);
 
     SecirResult result;
     if (seir.size() < 1 || seir[0].size() != 8) {
@@ -88,7 +89,6 @@ PYBIND11_MODULE(_secir, m)
 
     py::class_<epi::SecirParams::StageTimes>(m, "StageTimes")
         .def(py::init<>())
-        .def("set_cont_freq", &epi::SecirParams::StageTimes::set_cont_freq)
         .def("set_incubation", &epi::SecirParams::StageTimes::set_incubation)
         .def("set_infectious_mild", &epi::SecirParams::StageTimes::set_infectious_mild)
         .def("set_serialinterval", &epi::SecirParams::StageTimes::set_serialinterval)
@@ -99,7 +99,6 @@ PYBIND11_MODULE(_secir, m)
         .def("set_infectious_asymp", &epi::SecirParams::StageTimes::set_infectious_asymp)
         .def("set_icu_to_death", &epi::SecirParams::StageTimes::set_icu_to_death)
 
-        .def("get_cont_freq", &epi::SecirParams::StageTimes::get_cont_freq)
         .def("get_incubation_inv", &epi::SecirParams::StageTimes::get_incubation_inv)
         .def("get_infectious_mild_inv", &epi::SecirParams::StageTimes::get_infectious_mild_inv)
         .def("get_serialinterval_inv", &epi::SecirParams::StageTimes::get_serialinterval_inv)
@@ -151,9 +150,14 @@ PYBIND11_MODULE(_secir, m)
         .def_readwrite("probabilities", &epi::SecirParams::probabilities)
         .def_readwrite("dampings", &epi::SecirParams::dampings);
 
+    py::class_<epi::ContactFrequencies>(m, "ContactFrequencies")
+        .def(py::init<>())
+        .def("set_cont_freq", &epi::ContactFrequencies::set_cont_freq)
+        .def("get_cont_freq", &epi::ContactFrequencies::get_cont_freq);
+
     m.def("print_secir_params", &epi::print_secir_params);
     m.def("simulate", &simulate_secir, "Simulates the SECIR model from t0 to tmax.", py::arg("t0"), py::arg("tmax"),
-          py::arg("dt"), py::arg("params"));
+          py::arg("dt"), py::arg("cont_freq_matrix"), py::arg("params"));
 
     m.attr("__version__") = "dev";
 }

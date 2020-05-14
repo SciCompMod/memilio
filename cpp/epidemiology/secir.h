@@ -10,6 +10,36 @@ namespace epi
 {
 
 /**
+ * @brief Initializes a SECIR/SECIHURD model
+ *
+ * @todo parameter description
+ *
+ * @param m_cont_freq
+ **/
+class ContactFrequencies
+{
+public:
+    /**
+         * @brief Initializes a contact frequencies parameters' struct in the SECIR model
+         */
+    ContactFrequencies();
+
+    /**
+         * @brief sets the contact frequency in the SECIR model
+         * @param cont_freq contact rate/frequency in 1/day unit
+         */
+    void set_cont_freq(double const& cont_freq, int const& self_group, int const& contact_group);
+
+    /**
+         * @brief returns the contact frequency set for the SECIR model in 1/day unit
+         */
+    double get_cont_freq(int const& self_group, int const& contact_group) const;
+
+private:
+    std::vector<std::vector<double>> m_cont_freq;
+};
+
+/**
  * Paramters of the SECIR/SECIHURD model:
  * T_inc (also sigma^(-1) or R_2^(-1)+R_3^(-1)): mean incubation period (default: 5.2);
  *          R_2^(-1) is the first part of the incubation time where the person is not yet infectioous
@@ -43,7 +73,6 @@ namespace epi
      * @param ticu2home
      * @param tinfasy
      * @param ticu2death
-     * @param cont_freq_in
      * @param alpha_in
      * @param beta_in
      * @param delta_in
@@ -366,39 +395,14 @@ public:
         double m_alpha, m_beta, m_rho, m_theta, m_delta; // probabilities
     };
 
-    class ContactFrequencies
-    {
-    public:
-        /**
-         * @brief Initializes a contact frequencies parameters' struct in the SECIR model
-         */
-        ContactFrequencies();
+    StageTimes times;
 
-        /**
-         * @brief sets the contact frequency in the SECIR model
-         * @param cont_freq contact rate/frequency in 1/day unit
-         */
-        void set_cont_freq(double const& cont_freq);
+    Populations populations;
 
-        /**
-         * @brief returns the contact frequency set for the SECIR model in 1/day unit
-         */
-        double get_cont_freq() const;
-
-    private:
-        std::vector<std::vector<double>> m_cont_freq;
-    };
-
-    std::vector<StageTimes> times;
-
-    std::vector<Populations> populations;
-
-    std::vector<Probabilities> probabilities;
-
-    ContactFrequencies contact_freq_matrix;
+    Probabilities probabilities;
 
     // This defines a damping factor for a mitigation strategy for different points in time.
-    std::vector<Dampings> dampings;
+    Dampings dampings;
 
     /**
      * @brief Initializes a SECIR/SECIHURD model without default parameters 
@@ -409,13 +413,14 @@ public:
 /**
  * @brief returns the actual, approximated reproduction rate 
  */
-double get_reprod_rate(SecirParams const& params, double t, std::vector<double> const& yt);
+double get_reprod_rate(ContactFrequencies const& cont_freq_matrix, std::vector<SecirParams> const& params, double t,
+                       std::vector<double> const& yt);
 
 /**
  * prints given parameters
  * @param[in] params the SecirParams parameter object
  */
-void print_secir_params(SecirParams const& params);
+void print_secir_params(std::vector<SecirParams> const& params);
 
 /**
  * Computes the current time-derivative of S, E, C, I, (H, U,) R, (D) in the SECIR/SECIHURD model
@@ -425,7 +430,8 @@ void print_secir_params(SecirParams const& params);
  * @param[in] t time / current day
  * @param[out] dydt the values of the time derivatices of S, E, C, I, (H, U,) R, (D)
  */
-void secir_get_derivatives(SecirParams const& params, Eigen::VectorXd const& y, double t, Eigen::VectorXd& dydt);
+void secir_get_derivatives(ContactFrequencies const& cont_freq_matrix, std::vector<SecirParams> const& params,
+                           Eigen::VectorXd const& y, double t, Eigen::VectorXd& dydt);
 
 /**
  * Computes the SECIR curve by integration
@@ -437,8 +443,8 @@ void secir_get_derivatives(SecirParams const& params, Eigen::VectorXd const& y, 
  *
  * @returns Vector of times t
  */
-std::vector<double> simulate(double t0, double tmax, double dt, SecirParams const& params,
-                             std::vector<Eigen::VectorXd>& secir);
+std::vector<double> simulate(double t0, double tmax, double dt, ContactFrequencies const& cont_freq_matrix,
+                             std::vector<SecirParams> const& params, std::vector<Eigen::VectorXd>& secir);
 
 } // namespace epi
 
