@@ -74,12 +74,6 @@ public:
         StageTimes();
 
         /**
-         * @brief sets the contact frequency in the SECIR model
-         * @param cont_freq contact rate/frequency in 1/day unit
-         */
-        void set_cont_freq(double const& cont_freq);
-
-        /**
          * @brief sets the incubation time in the SECIR model
          * @param tinc incubation time in day unit
          */
@@ -134,11 +128,6 @@ public:
         void set_icu_to_death(double const& ticu2death);
 
         /**
-         * @brief returns the contact frequency set for the SECIR model in 1/day unit
-         */
-        double get_cont_freq() const;
-
-        /**
          * @brief returns 1.0 over the incubation time set for the SECIR model in day unit
          */
         double get_incubation_inv() const;
@@ -184,7 +173,7 @@ public:
         double get_icu_to_dead_inv() const;
 
     private:
-        double m_cont_freq, m_tinc_inv, m_tinfmild_inv; // parameters also available in SEIR
+        double m_tinc_inv, m_tinfmild_inv; // parameters also available in SEIR
         double m_tserint_inv, m_thosp2home_inv, m_thome2hosp_inv, m_thosp2icu_inv, m_ticu2home_inv, m_tinfasy_inv,
             m_ticu2death_inv; // new SECIR params
     };
@@ -377,14 +366,39 @@ public:
         double m_alpha, m_beta, m_rho, m_theta, m_delta; // probabilities
     };
 
-    StageTimes times;
+    class ContactFrequencies
+    {
+    public:
+        /**
+         * @brief Initializes a contact frequencies parameters' struct in the SECIR model
+         */
+        ContactFrequencies();
 
-    Populations populations;
+        /**
+         * @brief sets the contact frequency in the SECIR model
+         * @param cont_freq contact rate/frequency in 1/day unit
+         */
+        void set_cont_freq(double const& cont_freq);
 
-    Probabilities probabilities;
+        /**
+         * @brief returns the contact frequency set for the SECIR model in 1/day unit
+         */
+        double get_cont_freq() const;
+
+    private:
+        std::vector<std::vector<double>> m_cont_freq;
+    };
+
+    std::vector<StageTimes> times;
+
+    std::vector<Populations> populations;
+
+    std::vector<Probabilities> probabilities;
+
+    ContactFrequencies contact_freq_matrix;
 
     // This defines a damping factor for a mitigation strategy for different points in time.
-    Dampings dampings;
+    std::vector<Dampings> dampings;
 
     /**
      * @brief Initializes a SECIR/SECIHURD model without default parameters 
@@ -411,8 +425,7 @@ void print_secir_params(SecirParams const& params);
  * @param[in] t time / current day
  * @param[out] dydt the values of the time derivatices of S, E, C, I, (H, U,) R, (D)
  */
-void secir_get_derivatives(SecirParams const& params, Eigen::VectorXd const& y, double t,
-                           Eigen::VectorXd& dydt);
+void secir_get_derivatives(SecirParams const& params, Eigen::VectorXd const& y, double t, Eigen::VectorXd& dydt);
 
 /**
  * Computes the SECIR curve by integration
