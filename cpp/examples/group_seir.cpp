@@ -24,16 +24,15 @@ int main()
     params_group1.populations.set_exposed_t0(10);
 
     std::vector<Eigen::VectorXd> result_groups;
-    auto migration_function = [](epi::SeirCompartment c, double t, Eigen::MatrixXd& migration) {
-        if (c == epi::SeirCompartment::Infectious) {
-            migration = Eigen::MatrixXd::Identity(2, 2); //no migration of sick people
+    auto migration_function = [](size_t var_idx, double t, Eigen::MatrixXd& migration) {
+        if (var_idx == 2) {
+            migration = Eigen::MatrixXd::Identity(2, 2); //no migration of infectious people
         }
         else {
             migration = Eigen::MatrixXd::Constant(2, 2, 0.5); //complete mixing of everyone else
         }
     };
-    auto t_groups = simulate(0, tmax, dt, std::vector<epi::SeirParams>{params_group1, params_group2},
-                             migration_function, result_groups);
+    auto t_groups = epi::simulate_groups(0, tmax, dt, {params_group1, params_group2}, migration_function, result_groups);
 
     return 0;
 }

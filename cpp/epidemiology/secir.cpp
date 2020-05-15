@@ -405,21 +405,27 @@ void secir_get_derivatives(const SecirParams& params, const Eigen::VectorXd& y, 
     dydt[7] = params.probabilities.get_dead_per_icu() * params.times.get_icu_to_dead_inv() * y[5];
 }
 
+namespace
+{
+    void secir_get_initial_values(const SecirParams& params, Eigen::VectorXd& y)
+    {
+        y[0] = params.populations.get_suscetible_t0();
+        y[1] = params.populations.get_exposed_t0();
+        y[2] = params.populations.get_carrier_t0();
+        y[3] = params.populations.get_infectious_t0();
+        y[4] = params.populations.get_hospitalized_t0();
+        y[5] = params.populations.get_icu_t0();
+        y[6] = params.populations.get_recovered_t0();
+        y[7] = params.populations.get_dead_t0();
+    }
+} // namespace
+
 std::vector<double> simulate(double t0, double tmax, double dt, const SecirParams& params,
                              std::vector<Eigen::VectorXd>& secir)
 {
     size_t n_params = 8;
     secir           = std::vector<Eigen::VectorXd>(1, Eigen::VectorXd::Constant(n_params, 0.));
-
-    //initial conditions
-    secir[0][0] = params.populations.get_suscetible_t0();
-    secir[0][1] = params.populations.get_exposed_t0();
-    secir[0][2] = params.populations.get_carrier_t0();
-    secir[0][3] = params.populations.get_infectious_t0();
-    secir[0][4] = params.populations.get_hospitalized_t0();
-    secir[0][5] = params.populations.get_icu_t0();
-    secir[0][6] = params.populations.get_recovered_t0();
-    secir[0][7] = params.populations.get_dead_t0();
+    secir_get_initial_values(params, secir[0]);
 
     auto secir_fun = [&params](Eigen::VectorXd const& y, const double t, Eigen::VectorXd& dydt) {
         return secir_get_derivatives(params, y, t, dydt);
@@ -439,6 +445,34 @@ std::vector<double> simulate(double t0, double tmax, double dt, const SecirParam
 #endif
 
     return ode_integrate(t0, tmax, dt, integrator, secir);
+}
+
+std::vector<double> simulate_groups(double t0, double tmax, double dt, const std::vector<SecirParams>& group_params,
+                             MigrationFunction migration_function, std::vector<Eigen::VectorXd>& group_secir)
+{
+    auto num_groups     = group_params.size();
+    auto num_vars       = 4;
+    auto num_vars_total = 4 * num_groups;
+    group_secir         = std::vector<Eigen::VectorXd>(1, Eigen::VectorXd(num_vars_total));
+    auto integrators    = std::vector<std::unique_ptr<IntegratorBase>>(num_groups);
+
+    Eigen::VectorXd init_single(num_vars);
+    for (size_t i = 0; i < num_groups; i++) {
+        secir_get_initial_values(group_params[i], init_single);
+        set_interleaved(group_secir[0], i, init_single);
+
+        auto secir_fun = [params = group_params[i]](Eigen::VectorXd const& y, const double t, Eigen::VectorXd& dydt) {
+            return secir_get_derivatives(params, y, t, dydt);
+        };
+        double dtmin    = 1e-5;
+        double dtmax    = 1.;
+        auto integrator = std::make_unique<RKIntegrator>(secir_fun, dtmin, dtmax);
+        integrator->set_rel_tolerance(1e-6);
+        integrator->set_abs_tolerance(0);
+        integrators[i] = std::move(integrator);
+    }
+
+    return ode_integrate_with_migration(t0, tmax, dt, integrators, migration_function, group_secir);
 }
 
 } // namespace epi

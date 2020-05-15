@@ -2,6 +2,7 @@
 #define SECIR_H
 
 #include <epidemiology/damping.h>
+#include <epidemiology/migration.h>
 
 #include <vector>
 #include <Eigen/Core>
@@ -426,6 +427,9 @@ void secir_get_derivatives(SecirParams const& params, Eigen::VectorXd const& y, 
  */
 std::vector<double> simulate(double t0, double tmax, double dt, SecirParams const& params,
                              std::vector<Eigen::VectorXd>& secir);
+
+std::vector<double> simulate_groups(double t0, double tmax, double dt, const std::vector<SecirParams>& group_params,
+                             MigrationFunction migration_function, std::vector<Eigen::VectorXd>& group_secir);
 
 } // namespace epi
 

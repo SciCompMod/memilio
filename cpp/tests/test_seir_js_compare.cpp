@@ -81,13 +81,13 @@ TEST(TestGroupSeir, noMigrationTheSameAsSingleSimulation)
     auto migration_f = [] (auto&& arg1, auto&& arg2, auto&& matrix) { matrix = Eigen::MatrixXd::Identity(2,2); }; //no migration
 
     std::vector<Eigen::VectorXd> result_groups;
-    auto t_groups = simulate(0, tmax, dt, std::vector<epi::SeirParams>{ params_group1, params_group2 }, migration_f, result_groups);
+    auto t_groups = epi::simulate_groups(0, tmax, dt, {params_group1, params_group2}, migration_f, result_groups);
     
     std::vector<Eigen::VectorXd> result_single1;
-    auto t_single1 = simulate(0, tmax, dt, params_group1, result_single1);
+    auto t_single1 = epi::simulate(0, tmax, dt, params_group1, result_single1);
 
     std::vector<Eigen::VectorXd> result_single2;
-    auto t_single2 = simulate(0, tmax, dt, params_group2, result_single2);
+    auto t_single2 = epi::simulate(0, tmax, dt, params_group2, result_single2);
 
     //without migration the groups should be the same when simulated together or apart
     EXPECT_FLOAT_EQ(t_groups.back(), tmax);
@@ -97,7 +97,7 @@ TEST(TestGroupSeir, noMigrationTheSameAsSingleSimulation)
     for (size_t j = 0; j < result_single1.back().size(); j++)
     {
         //TODO: these should be the same but our integrators (even RKF45) are too sensitive to time steps
-        //EXPECT_NEAR(result_single1.back()[j], result_groups.back()[2 * j], result_groups.back()[2 * j] * 1e-2);
-        //EXPECT_NEAR(result_single2.back()[j], result_groups.back()[2 * j + 1], result_groups.back()[2 * j + 1] * 1e-2);
+        // EXPECT_NEAR(result_single1.back()[j], result_groups.back()[2 * j], result_groups.back()[2 * j] * 1e-3);
+        // EXPECT_NEAR(result_single2.back()[j], result_groups.back()[2 * j + 1], result_groups.back()[2 * j + 1] * 1e-3);
     }
 }

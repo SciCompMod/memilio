@@ -25,6 +25,8 @@ add_library(epidemiology
     epidemiology/adapt_rk.h
     epidemiology/integrator.h
     epidemiology/integrator.cpp
+    epidemiology/migration.h
+    epidemiology/migration.cpp
 )
 target_include_directories(epidemiology PUBLIC
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>

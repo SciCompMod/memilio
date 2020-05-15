@@ -146,23 +146,29 @@ void seir_get_derivatives(const SeirParams& params, const Eigen::VectorXd& y, do
     dydt[3] = params.times.get_infectious_inv() * y[2];
 }
 
+namespace
+{
+    void seir_get_initial_values(const SeirParams& params, Eigen::VectorXd& y)
+    {
+        y[0] = params.populations.get_suscetible_t0();
+        y[1] = params.populations.get_exposed_t0();
+        y[2] = params.populations.get_infectious_t0();
+        y[3] = params.populations.get_recovered_t0();
+    }
+} // namespace
+
 std::vector<double> simulate(double t0, double tmax, double dt, const SeirParams& params,
                              std::vector<Eigen::VectorXd>& seir)
 {
     size_t n_params = 4;
     seir            = std::vector<Eigen::VectorXd>(1, Eigen::VectorXd::Constant(n_params, 0));
-
-    //initial conditions
-    seir[0][0] = params.populations.get_suscetible_t0();
-    seir[0][1] = params.populations.get_exposed_t0();
-    seir[0][2] = params.populations.get_infectious_t0();
-    seir[0][3] = params.populations.get_recovered_t0();
+    seir_get_initial_values(params, seir[0]);
 
     auto seir_fun = [&params](Eigen::VectorXd const& y, const double t, Eigen::VectorXd& dydt) {
         return seir_get_derivatives(params, y, t, dydt);
     };
 
-    // double dtmin = 1e-5;
+    // double dtmin = 1e-6;
     // double dtmax = 1.;
     // RKIntegrator integrator(seir_fun, dtmin, dtmax);
     // integrator.set_rel_tolerance(1e-6);
@@ -175,56 +181,32 @@ std::vector<double> simulate(double t0, double tmax, double dt, const SeirParams
     return ode_integrate(t0, tmax, dt, integrator, seir);
 }
 
-std::vector<double> simulate(double t0, double tmax, double dt, const std::vector<SeirParams>& group_params,
-                             MigrationFunction migration_function, std::vector<Eigen::VectorXd>& result)
+std::vector<double> simulate_groups(double t0, double tmax, double dt, const std::vector<SeirParams>& group_params,
+                             MigrationFunction migration_function, std::vector<Eigen::VectorXd>& group_seir)
 {
     auto num_groups     = group_params.size();
     auto num_vars       = 4;
-    auto num_vars_total = num_vars * num_groups;
-    auto num_steps      = static_cast<size_t>(std::ceil(tmax - t0)); //only report once each migration step
-    auto migration      = Eigen::MatrixXd(num_groups, num_groups);
-    result              = std::vector<Eigen::VectorXd>(1, Eigen::VectorXd::Constant(num_vars_total, 0));
-    auto t              = std::vector<double>(1, 0);
-    result.reserve(num_steps);
-    t.reserve(num_steps);
+    auto num_vars_total = 4 * num_groups;
+    group_seir          = std::vector<Eigen::VectorXd>(1, Eigen::VectorXd(num_vars_total));
+    auto integrators    = std::vector<std::unique_ptr<IntegratorBase>>(num_groups);
 
-    //for two groups: [S1, S2, E1, E2, I1, I2, R1, R2]
+    Eigen::VectorXd init_single(num_vars);
     for (size_t i = 0; i < num_groups; i++) {
-        result[0][0 * num_groups + i] = group_params[i].populations.get_suscetible_t0();
-        result[0][1 * num_groups + i]     = group_params[i].populations.get_exposed_t0();
-        result[0][2 * num_groups + i]  = group_params[i].populations.get_infectious_t0();
-        result[0][3 * num_groups + i]   = group_params[i].populations.get_recovered_t0();
+        seir_get_initial_values(group_params[i], init_single);
+        set_interleaved(init_single, i, group_seir[0]);
+
+        auto seir_fun = [params = group_params[i]](Eigen::VectorXd const& y, const double t, Eigen::VectorXd& dydt) {
+            return seir_get_derivatives(params, y, t, dydt);
+        };
+        double dtmin    = 1e-6;
+        double dtmax    = 1.;
+        auto integrator = std::make_unique<RKIntegrator>(seir_fun, dtmin, dtmax);
+        integrator->set_rel_tolerance(1e-6);
+        integrator->set_abs_tolerance(0);
+        integrators[i] = std::move(integrator);
     }
 
-    while (t.back() < tmax) {
-        //TODO: avoid copying the results of a single step/group
-        //TODO: use vector slicing
-        //TODO: variable migration interval size
-
-        auto group_seir = Eigen::VectorXd::Zero(num_vars_total).eval();
-
-        for (size_t i = 0; i < num_groups; i++) {
-            auto seir = std::vector<Eigen::VectorXd>(1, Eigen::VectorXd::Constant(4, 0));            
-            for (size_t j = 0; j < num_vars; j++) {
-                seir[0][j] = result.back()[j * num_groups + i];
-            }
-            auto tmpT = simulate(t.back(), std::min(t.back() + 1, tmax), dt, group_params[i], seir);
-            for (size_t j = 0; j < num_vars; j++) {
-                group_seir[j * num_groups + i] = seir.back()[j];
-            }
-        }
-
-        for (size_t i = 0; i < num_vars; i++) {
-            migration_function(static_cast<SeirCompartment>(i), t.back(), migration);
-            auto group_compartment = group_seir.segment(num_groups * i, num_groups);
-            group_compartment      = migration * group_compartment;
-        }
-
-        result.push_back(group_seir);
-        t.push_back(std::min(t.back() + 1, tmax));
-    }
-
-    return t;
+    return ode_integrate_with_migration(t0, tmax, dt, integrators, migration_function, group_seir);
 }
 
 } // namespace epi
