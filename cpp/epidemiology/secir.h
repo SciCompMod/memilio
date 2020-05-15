@@ -10,34 +10,64 @@ namespace epi
 {
 
 /**
- * @brief Initializes a SECIR/SECIHURD model
+ * @brief Initializes a Contact Frequency matrix for the SECIR/SECIHURD model
  *
  * @todo parameter description
  *
  * @param m_cont_freq
  **/
-class ContactFrequencies
+class ContactFrequencyMatrix
 {
 public:
     /**
-         * @brief Initializes a contact frequencies parameters' struct in the SECIR model
-         */
-    ContactFrequencies();
+     * @brief Initializes a contact frequencies 1x1-matrix in the SECIR model
+     */
+    ContactFrequencyMatrix();
 
     /**
-         * @brief sets the contact frequency in the SECIR model
-         * @param cont_freq contact rate/frequency in 1/day unit
-         */
-    void set_cont_freq(double const& cont_freq, int const& self_group, int const& contact_group);
+     * @brief Initializes a contact frequencies nb_groups x nb_groups-matrix in the SECIR model
+     */
+    ContactFrequencyMatrix(size_t const nb_groups);
 
     /**
-         * @brief returns the contact frequency set for the SECIR model in 1/day unit
+     * @brief sets the contact frequency in the SECIR model; in case of multiple groups, set the contact rate cr_ij=cr_ji=cont_freq
+     * @param cont_freq contact rate/frequency in 1/day unit
+     * @param self_group own group
+     * @param contact_group group which gets in contact with own group
+     */
+    void set_cont_freq(double const cont_freq, int const self_group, int const contact_group);
+
+    /**
+         * @brief returns the contact frequency set for the SECIR model in 1/day unit; in case of multiple groups, returns the contact rate cr_ij=cr_ji
          */
-    double get_cont_freq(int const& self_group, int const& contact_group) const;
+    double get_cont_freq(int const self_group, int const contact_group) const;
+
+    /**
+     * @brief sets the damping in the SECIR model; in case of multiple groups, set the contact rate d_ij=d_ji=cont_freq
+     * @param damping dampings over the whole time line in day unit
+     * @param self_group own group
+     * @param contact_group group which gets in contact with own group
+     */
+    void set_dampings(Dampings& damping, int const self_group, int const contact_group);
+
+    /**
+     * @brief returns the dampings set for the SECIR model in 1/day unit; in case of multiple groups, returns the damping d_ij=d_ji
+     */
+    Dampings get_dampings(int const self_group, int const contact_group) const;
+
+    /**
+     * @brief updates the dampings object by adding a damping
+     * @param damping one damping in day unit
+     * @param self_group own group
+     * @param contact_group group which gets in contact with own group
+     */
+    void update_dampings(Damping&& damping, int const self_group, int const contact_group);
 
 private:
     std::vector<std::vector<double>> m_cont_freq;
-};
+    // This defines a damping factor for a mitigation strategy for different points in time.
+    std::vector<std::vector<Dampings>> dampings;
+}; // namespace epi
 
 /**
  * Paramters of the SECIR/SECIHURD model:
@@ -401,9 +431,6 @@ public:
 
     Probabilities probabilities;
 
-    // This defines a damping factor for a mitigation strategy for different points in time.
-    Dampings dampings;
-
     /**
      * @brief Initializes a SECIR/SECIHURD model without default parameters 
      */
@@ -413,7 +440,7 @@ public:
 /**
  * @brief returns the actual, approximated reproduction rate 
  */
-double get_reprod_rate(ContactFrequencies const& cont_freq_matrix, std::vector<SecirParams> const& params, double t,
+double get_reprod_rate(ContactFrequencyMatrix const& cont_freq_matrix, std::vector<SecirParams> const& params, double t,
                        std::vector<double> const& yt);
 
 /**
@@ -430,7 +457,7 @@ void print_secir_params(std::vector<SecirParams> const& params);
  * @param[in] t time / current day
  * @param[out] dydt the values of the time derivatices of S, E, C, I, (H, U,) R, (D)
  */
-void secir_get_derivatives(ContactFrequencies const& cont_freq_matrix, std::vector<SecirParams> const& params,
+void secir_get_derivatives(ContactFrequencyMatrix const& cont_freq_matrix, std::vector<SecirParams> const& params,
                            Eigen::VectorXd const& y, double t, Eigen::VectorXd& dydt);
 
 /**
@@ -443,7 +470,7 @@ void secir_get_derivatives(ContactFrequencies const& cont_freq_matrix, std::vect
  *
  * @returns Vector of times t
  */
-std::vector<double> simulate(double t0, double tmax, double dt, ContactFrequencies const& cont_freq_matrix,
+std::vector<double> simulate(double t0, double tmax, double dt, ContactFrequencyMatrix const& cont_freq_matrix,
                              std::vector<SecirParams> const& params, std::vector<Eigen::VectorXd>& secir);
 
 } // namespace epi

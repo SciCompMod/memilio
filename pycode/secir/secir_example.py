@@ -49,7 +49,7 @@ def plot_secir():
 
     print_secir_params(params)
 
-    cont_freq_matrix = ContactFrequencies()
+    cont_freq_matrix = ContactFrequencyMatrix()
     cont_freq_matrix.set_cont_freq(0.5, 0, 0)  # 0.2-0.75
 
     # run the simulation

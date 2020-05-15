@@ -17,7 +17,7 @@ TEST(TestSecir, compareWithPreviousRun)
            nb_rec_t0 = 10, nb_dead_t0 = 0;
 
     std::vector<epi::SecirParams> params{epi::SecirParams{}};
-    epi::ContactFrequencies contact_freq_matrix{};
+    epi::ContactFrequencyMatrix contact_freq_matrix{};
 
     // alpha = alpha_in; // percentage of asymptomatic cases
     // beta  = beta_in; // risk of infection from the infected symptomatic patients
@@ -36,6 +36,7 @@ TEST(TestSecir, compareWithPreviousRun)
     params[0].times.set_icu_to_death(ticu2death);
 
     contact_freq_matrix.set_cont_freq(cont_freq, 0, 0);
+    contact_freq_matrix.update_dampings(epi::Damping(30., 0.3), 0, 0);
 
     params[0].populations.set_total_t0(nb_total_t0);
     params[0].populations.set_exposed_t0(nb_exp_t0);
@@ -51,8 +52,6 @@ TEST(TestSecir, compareWithPreviousRun)
     params[0].probabilities.set_hospitalized_per_infectious(rho);
     params[0].probabilities.set_icu_per_hospitalized(theta);
     params[0].probabilities.set_dead_per_icu(delta);
-
-    params[0].dampings.add(epi::Damping(30., 0.3));
 
     std::vector<Eigen::VectorXd> secihurd(0);
     auto t = simulate(t0, tmax, dt, contact_freq_matrix, params, secihurd);

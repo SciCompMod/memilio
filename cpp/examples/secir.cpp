@@ -40,7 +40,7 @@ int main()
 
     std::vector<epi::SecirParams> params{epi::SecirParams{}};
 
-    epi::ContactFrequencies contact_freq_matrix{};
+    epi::ContactFrequencyMatrix contact_freq_matrix{8};
 
     params[0].times.set_incubation(tinc);
     params[0].times.set_infectious_mild(tinfmild);
@@ -53,6 +53,7 @@ int main()
     params[0].times.set_icu_to_death(ticu2death);
 
     contact_freq_matrix.set_cont_freq(cont_freq, 0, 0);
+    contact_freq_matrix.update_dampings(epi::Damping(30., 0.3), 0, 0);
 
     params[0].populations.set_total_t0(nb_total_t0);
     params[0].populations.set_exposed_t0(nb_exp_t0);
@@ -69,7 +70,7 @@ int main()
     params[0].probabilities.set_icu_per_hospitalized(theta);
     params[0].probabilities.set_dead_per_icu(delta);
 
-    params[0].dampings.add(epi::Damping(30., 0.3));
+    // params[0].dampings.add(epi::Damping(30., 0.3));
 
     print_secir_params(params);
 

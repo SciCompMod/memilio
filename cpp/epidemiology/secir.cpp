@@ -321,30 +321,73 @@ double SecirParams::Probabilities::get_dead_per_icu() const
     return m_delta;
 }
 
-ContactFrequencies::ContactFrequencies()
+ContactFrequencyMatrix::ContactFrequencyMatrix()
     : m_cont_freq{{1.0}}
+    , dampings{{Dampings{}}}
 {
 }
 
-void ContactFrequencies::set_cont_freq(double const& cont_freq, int const& self_group, int const& contact_group)
+ContactFrequencyMatrix::ContactFrequencyMatrix(size_t const nb_groups)
+    : m_cont_freq{nb_groups, std::vector<double>(nb_groups, 0)}
+    , dampings{nb_groups, std::vector<Dampings>(nb_groups, Dampings{})}
 {
-    m_cont_freq[self_group][contact_group] = cont_freq;
+    // m_cont_freq.resize(nb_groups);
+    // for (size_t i = 0; i < nb_groups; i++) {
+    //     m_cont_freq[i] = std::vector<double>(8, 0);
+    // }
 }
 
-double ContactFrequencies::get_cont_freq(int const& self_group, int const& contact_group) const
+void ContactFrequencyMatrix::set_cont_freq(double const cont_freq, int const self_group, int const contact_group)
 {
-    return m_cont_freq[self_group][contact_group];
+    if (self_group <= contact_group) {
+        m_cont_freq[self_group][contact_group] = cont_freq;
+    }
+    else {
+        m_cont_freq[contact_group][self_group] = cont_freq;
+    }
+}
+
+double ContactFrequencyMatrix::get_cont_freq(int const self_group, int const contact_group) const
+{
+    // prevent erroneous nonsymmetry
+    return self_group <= contact_group ? m_cont_freq[self_group][contact_group]
+                                       : m_cont_freq[contact_group][self_group];
+}
+
+void ContactFrequencyMatrix::set_dampings(Dampings& damping, int const self_group, int const contact_group)
+{
+    if (self_group <= contact_group) {
+        dampings[self_group][contact_group] = damping;
+    }
+    else {
+        dampings[contact_group][self_group] = damping;
+    }
+}
+
+Dampings ContactFrequencyMatrix::get_dampings(int const self_group, int const contact_group) const
+{
+    // prevent erroneous nonsymmetry
+    return self_group <= contact_group ? dampings[self_group][contact_group] : dampings[contact_group][self_group];
+}
+
+void ContactFrequencyMatrix::update_dampings(Damping&& damping, int const self_group, int const contact_group)
+{
+    if (self_group <= contact_group) {
+        dampings[self_group][contact_group].add(damping);
+    }
+    else {
+        dampings[contact_group][self_group].add(damping);
+    }
 }
 
 SecirParams::SecirParams()
     : times{}
     , populations{}
     , probabilities{}
-    , dampings{}
 {
 }
 
-double get_reprod_rate(ContactFrequencies const& cont_freq_matrix, std::vector<SecirParams> const& params,
+double get_reprod_rate(ContactFrequencyMatrix const& cont_freq_matrix, std::vector<SecirParams> const& params,
                        double const t, std::vector<double> const& yt)
 {
     if (params.size() == 1) {
@@ -352,7 +395,7 @@ double get_reprod_rate(ContactFrequencies const& cont_freq_matrix, std::vector<S
         auto dummy_R3 =
             0.5 / (1.0 / params[0].times.get_infectious_mild_inv() - 1.0 / params[0].times.get_serialinterval_inv());
 
-        double cont_freq_eff = cont_freq_matrix.get_cont_freq(0, 0) * params[0].dampings.get_factor(t);
+        double cont_freq_eff = cont_freq_matrix.get_cont_freq(0, 0) * cont_freq_matrix.get_dampings(0, 0).get_factor(t);
 
         double nb_total = 0;
         for (size_t i = 0; i < yt.size(); i++) {
@@ -382,7 +425,7 @@ double get_reprod_rate(ContactFrequencies const& cont_freq_matrix, std::vector<S
     }
 }
 
-void secir_get_derivatives(ContactFrequencies const& cont_freq_matrix, std::vector<SecirParams> const& params,
+void secir_get_derivatives(ContactFrequencyMatrix const& cont_freq_matrix, std::vector<SecirParams> const& params,
                            const Eigen::VectorXd& y, double t, Eigen::VectorXd& dydt)
 {
     // alpha  // percentage of asymptomatic cases
@@ -394,19 +437,27 @@ void secir_get_derivatives(ContactFrequencies const& cont_freq_matrix, std::vect
     size_t n_agegroups = params.size();
 
     for (size_t i = 0; i < n_agegroups; i++) {
-        double cont_freq_eff = cont_freq_matrix.get_cont_freq(0, 0) * params[i].dampings.get_factor(t);
-        double divN          = 1.0 / params[i].populations.get_total_t0();
+        dydt[0 + 8 * i] = 0;
+        dydt[1 + 8 * i] = 0;
+        for (size_t j = 0; j < n_agegroups; j++) {
+            // efficient contact rate by contact rate between groups i and j and damping j
+            double cont_freq_eff =
+                cont_freq_matrix.get_cont_freq(i, j) * cont_freq_matrix.get_dampings(i, j).get_factor(t);
+            double divN = 1.0 / params[i].populations.get_total_t0();
 
-        double dummy_S = cont_freq_eff * y[0 + 8 * i] * divN *
-                         (y[2 + 8 * i] + params[i].probabilities.get_risk_from_symptomatic() * y[3 + 8 * i]);
+            double dummy_S = cont_freq_eff * y[0 + 8 * i] * divN *
+                             (y[2 + 8 * i] + params[i].probabilities.get_risk_from_symptomatic() * y[3 + 8 * i]);
+
+            dydt[0 + 8 * i] -= dummy_S; // -R1*(C+beta*I)*S/N0
+            dydt[1 + 8 * i] += dummy_S; // R1*(C+beta*I)*S/N0-R2*E
+        }
 
         double dummy_R2 = 1.0 / (2 * (1.0 / params[i].times.get_serialinterval_inv()) -
                                  (1.0 / params[i].times.get_infectious_mild_inv())); // R2 = 1/(2SI-IP)
         double dummy_R3 = 0.5 / ((1.0 / params[i].times.get_infectious_mild_inv()) -
                                  (1.0 / params[i].times.get_serialinterval_inv())); // R3 = 1/(2(IP-SI))
 
-        dydt[0 + 8 * i] = -dummy_S; // -R1*(C+beta*I)*S/N0
-        dydt[1 + 8 * i] = dummy_S - dummy_R2 * y[1 + 8 * i]; // R1*(C+beta*I)*S/N0-R2*E - R2*E
+        dydt[1 + 8 * i] -= dummy_R2 * y[1 + 8 * i]; // only exchange of E and C done here
         dydt[2 + 8 * i] =
             dummy_R2 * y[1 + 8 * i] -
             ((1 - params[i].probabilities.get_asymp_per_infectious()) * dummy_R3 +
@@ -442,7 +493,7 @@ void secir_get_derivatives(ContactFrequencies const& cont_freq_matrix, std::vect
     }
 }
 
-std::vector<double> simulate(double t0, double tmax, double dt, ContactFrequencies const& cont_freq_matrix,
+std::vector<double> simulate(double t0, double tmax, double dt, ContactFrequencyMatrix const& cont_freq_matrix,
                              std::vector<SecirParams> const& params, std::vector<Eigen::VectorXd>& secir)
 {
     size_t n_agegroups = params.size();

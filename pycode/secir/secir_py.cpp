@@ -150,10 +150,10 @@ PYBIND11_MODULE(_secir, m)
         .def_readwrite("probabilities", &epi::SecirParams::probabilities)
         .def_readwrite("dampings", &epi::SecirParams::dampings);
 
-    py::class_<epi::ContactFrequencies>(m, "ContactFrequencies")
+    py::class_<epi::ContactFrequencyMatrix>(m, "ContactFrequencyMatrix")
         .def(py::init<>())
-        .def("set_cont_freq", &epi::ContactFrequencies::set_cont_freq)
-        .def("get_cont_freq", &epi::ContactFrequencies::get_cont_freq);
+        .def("set_cont_freq", &epi::ContactFrequencyMatrix::set_cont_freq)
+        .def("get_cont_freq", &epi::ContactFrequencyMatrix::get_cont_freq);
 
     m.def("print_secir_params", &epi::print_secir_params);
     m.def("simulate", &simulate_secir, "Simulates the SECIR model from t0 to tmax.", py::arg("t0"), py::arg("tmax"),
