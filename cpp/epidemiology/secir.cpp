@@ -364,7 +364,7 @@ void ContactFrequencyMatrix::set_dampings(Dampings const& damping, int self_grou
     }
 }
 
-Dampings ContactFrequencyMatrix::get_dampings(int self_group, int contact_group) const&
+Dampings ContactFrequencyMatrix::get_dampings(int self_group, int contact_group) const
 {
     // prevent erroneous nonsymmetry
     return self_group <= contact_group ? dampings[self_group][contact_group] : dampings[contact_group][self_group];
