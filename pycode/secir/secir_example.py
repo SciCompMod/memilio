@@ -1,4 +1,4 @@
-from epidemiology.secir import ContactFrequencies, Damping, SecirParams, print_secir_params, simulate, StageTimes, Probabilities, Populations
+from epidemiology.secir import ContactFrequencyMatrix, Damping, SecirParams, print_secir_params, simulate, StageTimes, Probabilities, Populations
 from matplotlib import pyplot as plt
 
 
@@ -42,15 +42,15 @@ def plot_secir():
     params[0].probabilities = probs
     params[0].populations = people
 
-    # emulate some mitigations
-    params[0].dampings.add(Damping(23., 0.8))
-    params[0].dampings.add(Damping(25., 0.75))
-    params[0].dampings.add(Damping(27., 0.7))
-
     print_secir_params(params)
 
     cont_freq_matrix = ContactFrequencyMatrix()
     cont_freq_matrix.set_cont_freq(0.5, 0, 0)  # 0.2-0.75
+    
+    # emulate some mitigations
+    cont_freq_matrix.update_dampings(Damping(23., 0.8), 0, 0)
+    cont_freq_matrix.update_dampings(Damping(25., 0.75), 0, 0)
+    cont_freq_matrix.update_dampings(Damping(27., 0.7), 0, 0)
 
     # run the simulation
     result = simulate(t0=0., tmax=100., dt=0.1, cont_freq_matrix=cont_freq_matrix, params=params)

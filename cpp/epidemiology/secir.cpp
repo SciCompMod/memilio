@@ -370,7 +370,7 @@ Dampings ContactFrequencyMatrix::get_dampings(int const self_group, int const co
     return self_group <= contact_group ? dampings[self_group][contact_group] : dampings[contact_group][self_group];
 }
 
-void ContactFrequencyMatrix::update_dampings(Damping&& damping, int const self_group, int const contact_group)
+void ContactFrequencyMatrix::update_dampings(Damping& damping, int const self_group, int const contact_group)
 {
     if (self_group <= contact_group) {
         dampings[self_group][contact_group].add(damping);
@@ -440,13 +440,13 @@ void secir_get_derivatives(ContactFrequencyMatrix const& cont_freq_matrix, std::
         dydt[0 + 8 * i] = 0;
         dydt[1 + 8 * i] = 0;
         for (size_t j = 0; j < n_agegroups; j++) {
-            // efficient contact rate by contact rate between groups i and j and damping j
+            // effective contact rate by contact rate between groups i and j and damping j
             double cont_freq_eff =
-                cont_freq_matrix.get_cont_freq(i, j) * cont_freq_matrix.get_dampings(i, j).get_factor(t);
-            double divN = 1.0 / params[i].populations.get_total_t0();
-
-            double dummy_S = cont_freq_eff * y[0 + 8 * i] * divN *
-                             (y[2 + 8 * i] + params[i].probabilities.get_risk_from_symptomatic() * y[3 + 8 * i]);
+                cont_freq_matrix.get_cont_freq(i, j) *
+                cont_freq_matrix.get_dampings(i, j).get_factor(t); // get effective contact rate between i and j
+            double divN    = 1.0 / params[j].populations.get_total_t0(); // precompute 1.0/Nj
+            double dummy_S = y[0 + 8 * i] * cont_freq_eff * divN *
+                             (y[2 + 8 * j] + params[i].probabilities.get_risk_from_symptomatic() * y[3 + 8 * j]);
 
             dydt[0 + 8 * i] -= dummy_S; // -R1*(C+beta*I)*S/N0
             dydt[1 + 8 * i] += dummy_S; // R1*(C+beta*I)*S/N0-R2*E

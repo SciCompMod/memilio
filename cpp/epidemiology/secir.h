@@ -61,7 +61,7 @@ public:
      * @param self_group own group
      * @param contact_group group which gets in contact with own group
      */
-    void update_dampings(Damping&& damping, int const self_group, int const contact_group);
+    void update_dampings(Damping& damping, int const self_group, int const contact_group);
 
 private:
     std::vector<std::vector<double>> m_cont_freq;

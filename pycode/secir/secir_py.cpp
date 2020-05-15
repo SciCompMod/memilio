@@ -34,7 +34,7 @@ public:
     std::vector<double> nb_dead;
 };
 
-SecirResult simulate_secir(double t0, double tmax, double dt, const epi::ContactFrequencies& cont_freq_matrix,
+SecirResult simulate_secir(double t0, double tmax, double dt, const epi::ContactFrequencyMatrix& cont_freq_matrix,
                            std::vector<epi::SecirParams> const& params)
 {
     std::vector<Eigen::VectorXd> seir(0);
@@ -147,13 +147,15 @@ PYBIND11_MODULE(_secir, m)
         .def(py::init<>())
         .def_readwrite("times", &epi::SecirParams::times)
         .def_readwrite("populations", &epi::SecirParams::populations)
-        .def_readwrite("probabilities", &epi::SecirParams::probabilities)
-        .def_readwrite("dampings", &epi::SecirParams::dampings);
+        .def_readwrite("probabilities", &epi::SecirParams::probabilities);
 
     py::class_<epi::ContactFrequencyMatrix>(m, "ContactFrequencyMatrix")
         .def(py::init<>())
         .def("set_cont_freq", &epi::ContactFrequencyMatrix::set_cont_freq)
-        .def("get_cont_freq", &epi::ContactFrequencyMatrix::get_cont_freq);
+        .def("get_cont_freq", &epi::ContactFrequencyMatrix::get_cont_freq)
+        .def("set_dampings", &epi::ContactFrequencyMatrix::set_dampings)
+        .def("get_dampings", &epi::ContactFrequencyMatrix::get_dampings)
+        .def("update_dampings", &epi::ContactFrequencyMatrix::update_dampings);
 
     m.def("print_secir_params", &epi::print_secir_params);
     m.def("simulate", &simulate_secir, "Simulates the SECIR model from t0 to tmax.", py::arg("t0"), py::arg("tmax"),
