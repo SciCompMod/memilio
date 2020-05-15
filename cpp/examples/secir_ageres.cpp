@@ -84,7 +84,7 @@ int main()
     for (size_t i = 0; i < nb_groups; i++) {
         for (size_t j = i; j < nb_groups; j++) {
             contact_freq_matrix.set_cont_freq(fact * cont_freq, i, j);
-            contact_freq_matrix.update_dampings(dummy, i, j);
+            contact_freq_matrix.add_damping(dummy, i, j);
         }
     }
 

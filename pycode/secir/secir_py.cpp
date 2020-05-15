@@ -155,7 +155,7 @@ PYBIND11_MODULE(_secir, m)
         .def("get_cont_freq", &epi::ContactFrequencyMatrix::get_cont_freq)
         .def("set_dampings", &epi::ContactFrequencyMatrix::set_dampings)
         .def("get_dampings", &epi::ContactFrequencyMatrix::get_dampings)
-        .def("update_dampings", &epi::ContactFrequencyMatrix::update_dampings);
+        .def("add_damping", &epi::ContactFrequencyMatrix::add_damping);
 
     m.def("print_secir_params", &epi::print_secir_params);
     m.def("simulate", &simulate_secir, "Simulates the SECIR model from t0 to tmax.", py::arg("t0"), py::arg("tmax"),

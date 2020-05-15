@@ -53,9 +53,12 @@ int main()
     params[0].times.set_icu_to_death(ticu2death);
 
     contact_freq_matrix.set_cont_freq(cont_freq, 0, 0);
-    epi::Damping dummy(30., 0.3);
-    contact_freq_matrix.update_dampings(dummy, 0, 0);
-
+    // epi::Damping dummy(30., 0.3);
+    // contact_freq_matrix.add_damping(dummy, 0, 0);
+    contact_freq_matrix.get_dampings(0, 0).get_factor(-1);
+    contact_freq_matrix.get_dampings(0, 0).get_factor(29.999);
+    contact_freq_matrix.get_dampings(0, 0).get_factor(30.);
+    contact_freq_matrix.get_dampings(0, 0).get_factor(31.);
     params[0].populations.set_total_t0(nb_total_t0);
     params[0].populations.set_exposed_t0(nb_exp_t0);
     params[0].populations.set_carrier_t0(nb_car_t0);
@@ -77,10 +80,10 @@ int main()
 
     std::vector<Eigen::VectorXd> secir(0);
 
-    simulate(t0, tmax, dt, contact_freq_matrix, params, secir);
+    // simulate(t0, tmax, dt, contact_freq_matrix, params, secir);
 
-    printf("number total: %f", secir[secir.size() - 1][0] + secir[secir.size() - 1][1] + secir[secir.size() - 1][2] +
-                                   secir[secir.size() - 1][3] + secir[secir.size() - 1][4] +
-                                   secir[secir.size() - 1][5] + secir[secir.size() - 1][6] +
-                                   secir[secir.size() - 1][7]);
+    // printf("number total: %f", secir[secir.size() - 1][0] + secir[secir.size() - 1][1] + secir[secir.size() - 1][2] +
+    //    secir[secir.size() - 1][3] + secir[secir.size() - 1][4] +
+    //    secir[secir.size() - 1][5] + secir[secir.size() - 1][6] +
+    //    secir[secir.size() - 1][7]);
 }

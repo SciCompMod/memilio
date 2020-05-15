@@ -35,12 +35,12 @@ public:
      * @param self_group own group
      * @param contact_group group which gets in contact with own group
      */
-    void set_cont_freq(double const cont_freq, int const self_group, int const contact_group);
+    void set_cont_freq(double cont_freq, int self_group, int contact_group);
 
     /**
          * @brief returns the contact frequency set for the SECIR model in 1/day unit; in case of multiple groups, returns the contact rate cr_ij=cr_ji
          */
-    double get_cont_freq(int const self_group, int const contact_group) const;
+    double get_cont_freq(int self_group, int contact_group) const;
 
     /**
      * @brief sets the damping in the SECIR model; in case of multiple groups, set the contact rate d_ij=d_ji=cont_freq
@@ -48,20 +48,20 @@ public:
      * @param self_group own group
      * @param contact_group group which gets in contact with own group
      */
-    void set_dampings(Dampings& damping, int const self_group, int const contact_group);
+    void set_dampings(Dampings const& damping, int self_group, int contact_group);
 
     /**
      * @brief returns the dampings set for the SECIR model in 1/day unit; in case of multiple groups, returns the damping d_ij=d_ji
      */
-    Dampings get_dampings(int const self_group, int const contact_group) const;
+    Dampings get_dampings(int self_group, int contact_group) const&;
 
     /**
-     * @brief updates the dampings object by adding a damping
+     * @brief add damping to the dampings object specified by self_ and contact_group
      * @param damping one damping in day unit
      * @param self_group own group
      * @param contact_group group which gets in contact with own group
      */
-    void update_dampings(Damping& damping, int const self_group, int const contact_group);
+    void add_damping(Damping const& damping, int self_group, int contact_group);
 
 private:
     std::vector<std::vector<double>> m_cont_freq;

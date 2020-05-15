@@ -37,7 +37,7 @@ TEST(TestSecir, compareWithPreviousRun)
 
     contact_freq_matrix.set_cont_freq(cont_freq, 0, 0);
     epi::Damping dummy(30., 0.3);
-    contact_freq_matrix.update_dampings(dummy, 0, 0);
+    contact_freq_matrix.add_damping(dummy, 0, 0);
 
     params[0].populations.set_total_t0(nb_total_t0);
     params[0].populations.set_exposed_t0(nb_exp_t0);

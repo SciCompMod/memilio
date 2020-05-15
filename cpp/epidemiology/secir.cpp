@@ -347,14 +347,14 @@ void ContactFrequencyMatrix::set_cont_freq(double const cont_freq, int const sel
     }
 }
 
-double ContactFrequencyMatrix::get_cont_freq(int const self_group, int const contact_group) const
+double ContactFrequencyMatrix::get_cont_freq(int self_group, int contact_group) const
 {
     // prevent erroneous nonsymmetry
     return self_group <= contact_group ? m_cont_freq[self_group][contact_group]
                                        : m_cont_freq[contact_group][self_group];
 }
 
-void ContactFrequencyMatrix::set_dampings(Dampings& damping, int const self_group, int const contact_group)
+void ContactFrequencyMatrix::set_dampings(Dampings const& damping, int self_group, int contact_group)
 {
     if (self_group <= contact_group) {
         dampings[self_group][contact_group] = damping;
@@ -364,13 +364,13 @@ void ContactFrequencyMatrix::set_dampings(Dampings& damping, int const self_grou
     }
 }
 
-Dampings ContactFrequencyMatrix::get_dampings(int const self_group, int const contact_group) const
+Dampings ContactFrequencyMatrix::get_dampings(int self_group, int contact_group) const&
 {
     // prevent erroneous nonsymmetry
     return self_group <= contact_group ? dampings[self_group][contact_group] : dampings[contact_group][self_group];
 }
 
-void ContactFrequencyMatrix::update_dampings(Damping& damping, int const self_group, int const contact_group)
+void ContactFrequencyMatrix::add_damping(Damping const& damping, int self_group, int contact_group)
 {
     if (self_group <= contact_group) {
         dampings[self_group][contact_group].add(damping);

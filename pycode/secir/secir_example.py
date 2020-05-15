@@ -48,9 +48,9 @@ def plot_secir():
     cont_freq_matrix.set_cont_freq(0.5, 0, 0)  # 0.2-0.75
     
     # emulate some mitigations
-    cont_freq_matrix.update_dampings(Damping(23., 0.8), 0, 0)
-    cont_freq_matrix.update_dampings(Damping(25., 0.75), 0, 0)
-    cont_freq_matrix.update_dampings(Damping(27., 0.7), 0, 0)
+    cont_freq_matrix.add_damping(Damping(23., 0.8), 0, 0)
+    cont_freq_matrix.add_damping(Damping(25., 0.75), 0, 0)
+    cont_freq_matrix.add_damping(Damping(27., 0.7), 0, 0)
 
     # run the simulation
     result = simulate(t0=0., tmax=100., dt=0.1, cont_freq_matrix=cont_freq_matrix, params=params)
