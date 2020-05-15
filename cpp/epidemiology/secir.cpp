@@ -446,7 +446,7 @@ void secir_get_derivatives(ContactFrequencyMatrix const& cont_freq_matrix, std::
                 cont_freq_matrix.get_dampings(i, j).get_factor(t); // get effective contact rate between i and j
             double divN    = 1.0 / params[j].populations.get_total_t0(); // precompute 1.0/Nj
             double dummy_S = y[0 + 8 * i] * cont_freq_eff * divN *
-                             (y[2 + 8 * j] + params[i].probabilities.get_risk_from_symptomatic() * y[3 + 8 * j]);
+                             (y[2 + 8 * j] + params[j].probabilities.get_risk_from_symptomatic() * y[3 + 8 * j]);
 
             dydt[0 + 8 * i] -= dummy_S; // -R1*(C+beta*I)*S/N0
             dydt[1 + 8 * i] += dummy_S; // R1*(C+beta*I)*S/N0-R2*E
