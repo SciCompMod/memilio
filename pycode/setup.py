@@ -1,4 +1,7 @@
 import sys
+import os
+
+BASE_PATH=os.path.dirname(__file__)
 
 try:
     from skbuild import setup
@@ -22,11 +25,14 @@ setup(
     description='The python package for the HPC corona project',
     entry_points={
         'console_scripts': [
-            'getrkidata=epidemiology.epidata.getGeoJsonIntoPandasDataFrame_for_RKI:cli',
+            'getrkidata=rki_data.getRKIData:main',
+            'getpopuldata=rki_data.getPopulationData:main',
+            'getjhdata = jh_data.getJHDataIntoPandasDataFrame:main',
+            'getspaindata = data_spain.getSpainDataIntoPandasFrame:main'
         ],
     },
-    package_dir={'epidemiology.epidata': 'epidata'},
-    packages=['epidemiology.epidata'],
+    package_dir={'': 'epidata'},
+    packages=['rki_data', 'jh_data', 'data_spain'],
     long_description='',
     setup_requires=['cmake'],
     install_requires=requirements

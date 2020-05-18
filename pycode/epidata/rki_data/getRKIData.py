@@ -1,15 +1,28 @@
+import os
 import sys
-from urllib.request import urlopen
 import json
 import pandas
 import matplotlib.pyplot as plt
 
-import getDataIntoPandasDataFrame as gd
-import outputDict as od
+from rki_data import getDataIntoPandasDataFrame as gd
+from rki_data import outputDict as od
 
-def main(get_data, read_data, make_plot, out_form):
+def main():
 
-   if(get_data):
+   [read_data, make_plot, out_form, out_folder] = gd.cli('Downloads data from RKI')
+   filename = os.path.join(out_folder, "FullData.json")
+
+   if(read_data):
+      # if once dowloaded just read json file
+      #filename = os.path.join(out_folder, "FullData.json")
+      
+      try:
+         df = pandas.read_json(filename)
+      except ValueError:
+         exit_string = "Error: The file: " + filename + "does not exist. Call program without -r flag to get it."
+         sys.exit(exit_string)
+
+   else:
 
       # Supported data formats:
       load = { 
@@ -27,13 +40,14 @@ def main(get_data, read_data, make_plot, out_form):
       df.Datenstand = pandas.to_datetime( df.Datenstand, format='%d.%m.%Y, %H:%M Uhr').dt.tz_localize('Europe/Berlin')  
 
       # output data to not always download it
-      df.to_json(r"FullData.json")
+      df.to_json(filename)
 
-   elif(read_data):
-      # if once dowloaded just read json file
-      df = pandas.read_json("FullData.json")
-
+   
    # Preperation for plotting/output:
+
+   outForm = od.outForm[out_form][0]
+   outFormEnd = od.outForm[out_form][1]
+   outFormSpec = od.outForm[out_form][2]
 
    print("Available columns:", df.columns)
 
@@ -70,7 +84,7 @@ def main(get_data, read_data, make_plot, out_form):
 
    # outout to json file
    #gbNF_cs.to_json("infected.json")
-   getattr(gbNF_cs, od.outForm[out_form][0])("infected" + od.outForm[out_form][1], **od.outForm[out_form][2])
+   getattr(gbNF_cs, outForm)(os.path.join(out_folder , "infected" + outFormEnd), **outFormSpec)
 
    if(make_plot == True):
       # make plot
@@ -83,8 +97,8 @@ def main(get_data, read_data, make_plot, out_form):
    gbNT = df[df.NeuerTodesfall >= 0].groupby( dateToUse ).sum()
    gbNT_cs = gbNT.AnzahlTodesfall.cumsum()
 
-   #gbNT_cs.to_json("deaths.json")
-   getattr(gbNT_cs, od.outForm[out_form][0])("deaths" + od.outForm[out_form][1], **od.outForm[out_form][2])
+   # output
+   getattr(gbNF_cs, outForm)(os.path.join(out_folder, "deaths" + outFormEnd), **outFormSpec)
 
    if(make_plot == True):
       gbNT_cs.plot( title = 'COVID-19 deaths', grid = True,
@@ -109,15 +123,14 @@ def main(get_data, read_data, make_plot, out_form):
    #print(gbNFst)
    #print(gbNFst_cs)
 
-   # output json
-   #gbNFst_cs.to_json("infected_state.json", orient='records')
-   getattr(gbNFst_cs, od.outForm[out_form][0])("infected_state" + od.outForm[out_form][1], **od.outForm[out_form][2])
-
+   # output
+   getattr(gbNFst_cs, outForm)(os.path.join(out_folder, "infected_state" + outFormEnd), **outFormSpec)
+   
    # output nested json
    gbNFst_cs.groupby(['IdBundesland', 'Bundesland'], as_index=False) \
                .apply(lambda x: x[[dateToUse,'AnzahlFall']].to_dict('r')) \
                .reset_index().rename(columns={0:'Dates'})\
-               .to_json("gbNF_state_nested.json", orient='records')
+               .to_json(out_folder + "gbNF_state_nested.json", orient='records')
 
 
    # infected (incl recovered), deaths and recovered together 
@@ -128,9 +141,8 @@ def main(get_data, read_data, make_plot, out_form):
    #print(gbAllSt)
    #print(gbAllSt.reset_index()[ (gbAllSt.reset_index().IdBundesland==16) ])
  
-   # output json
-   #gbAllSt_cs.to_json("all_state.json", orient='records')
-   getattr(gbAllSt_cs, od.outForm[out_form][0])("all_state" + od.outForm[out_form][1], **od.outForm[out_form][2])
+   # output
+   getattr(gbAllSt_cs, outForm)(os.path.join(out_folder, "all_state" + outFormEnd), **outFormSpec)
 
    ############# Data for counties all ages ######################
 
@@ -142,9 +154,8 @@ def main(get_data, read_data, make_plot, out_form):
    #print(gbNFc)
    #print(gbNFc_cs)
 
-   # output json
-   #gbNFc_cs.to_json("infected_county.json", orient='records')
-   getattr(gbNFc_cs, od.outForm[out_form][0])("infected_county" + od.outForm[out_form][1], **od.outForm[out_form][2])
+   # output
+   getattr(gbNFc_cs, outForm)( os.path.join(out_folder, "infected_county" + outFormEnd), **outFormSpec)
 
    # infected (incl recovered), deaths and recovered together 
 
@@ -154,9 +165,8 @@ def main(get_data, read_data, make_plot, out_form):
    #print(gbAllC)
    #print(gbAllC_cs)
 
-   # output json
-   #gbAllC_cs.to_json("all_county.json", orient='records')
-   getattr(gbAllC_cs, od.outForm[out_form][0])("all_county" + od.outForm[out_form][1], **od.outForm[out_form][2])
+   # output
+   getattr(gbAllC_cs, outForm)(out_folder + "all_county" + outFormEnd, **outFormSpec)
    
 
    ######### Data whole Germany different gender ##################
@@ -169,9 +179,8 @@ def main(get_data, read_data, make_plot, out_form):
    # print(gbAllG)
    # print(gbAllG_cs)
 
-   # output json
-   #gbAllG_cs.to_json("all_gender.json", orient='records') 
-   getattr(gbAllG_cs, od.outForm[out_form][0])("all_gender" + od.outForm[out_form][1], **od.outForm[out_form][2])
+   # output
+   getattr(gbAllG_cs, outForm)(os.path.join(out_folder, "all_gender" + outFormEnd), **outFormSpec)
 
    if(make_plot == True):
       dfF.groupby( 'Geschlecht' ) \
@@ -192,9 +201,8 @@ def main(get_data, read_data, make_plot, out_form):
    #print(gbAllGState)
    #print(gbAllGState_cs)
 
-   # output json
-   #gbAllGState_cs.to_json("all_state_gender.json", orient='records')
-   getattr(gbAllGState_cs, od.outForm[out_form][0])("all_state_gender" + od.outForm[out_form][1], **od.outForm[out_form][2])
+   # output
+   getattr(gbAllGState_cs, outForm)(os.path.join(out_folder, "all_state_gender" + outFormEnd), **outFormSpec)
 
    ############# Gender and County #####################
 
@@ -204,9 +212,8 @@ def main(get_data, read_data, make_plot, out_form):
    #print(gbAllGCounty)
    #print(gbAllGCounty_cs)
 
-   # output json
-   #gbAllGCounty_cs.to_json("all_county_gender.json", orient='records')
-   getattr(gbAllGCounty_cs, od.outForm[out_form][0])("all_county_gender" + od.outForm[out_form][1], **od.outForm[out_form][2])
+   # output
+   getattr(gbAllGCounty_cs, outForm)(os.path.join(out_folder, "all_county_gender" + outFormEnd), **outFormSpec)
   
    ######### Data whole Germany different ages ####################
 
@@ -218,9 +225,8 @@ def main(get_data, read_data, make_plot, out_form):
    #print(gbAllA)
    #print(gbAllA_cs)
 
-   # output json
-   #gbAllA_cs.to_json("all_age.json", orient='records')
-   getattr(gbAllA_cs, od.outForm[out_form][0])("all_age" + od.outForm[out_form][1], **od.outForm[out_form][2])
+   # output
+   getattr(gbAllA_cs, outForm)(os.path.join(out_folder, "all_age" + outFormEnd), **outFormSpec)
 
    if(make_plot == True):
       dfF.groupby( 'Altersgruppe' ) \
@@ -253,9 +259,8 @@ def main(get_data, read_data, make_plot, out_form):
    #print(gbAllAState.reset_index()[ (gbAllAState.reset_index().IdBundesland == 16) & (gbAllAState_cs.Meldedatum == "2020-03-24 00:00:00+01:00") ].agg({"AnzahlFall": sum, "AnzahlTodesfall": sum, "AnzahlGenesen": sum}))
    #print(gbAllAState_cs[ (gbAllAState_cs.IdBundesland == 1) & (gbAllAState_cs.Altersgruppe == "A00-A04") ])
 
-   # output json
-   #gbAllAState_cs.to_json("all_state_age.json", orient='records')
-   getattr(gbAllAState_cs, od.outForm[out_form][0])("all_state_age" + od.outForm[out_form][1], **od.outForm[out_form][2])
+   # output
+   getattr(gbAllAState_cs, outForm)(os.path.join(out_folder, "all_state_age" + outFormEnd), **outFormSpec)
 
    ############# Age and County #####################
 
@@ -265,55 +270,10 @@ def main(get_data, read_data, make_plot, out_form):
    #print(gbAllACounty)
    #print(gbAllACounty_cs)
 
-   # output json
-   #gbAllACounty_cs.to_json("all_county_age.json", orient='records')
-   getattr(gbAllACounty_cs, od.outForm[out_form][0])("all_county_age" + od.outForm[out_form][1], **od.outForm[out_form][2])
+   # output
+   getattr(gbAllACounty_cs, outForm)(os.path.join(out_folder,  "all_county_age" + outFormEnd), **outFormSpec)
 
 
 if __name__ == "__main__":
 
-   GET_DATA = True
-   READ_DATA = False
-   MAKE_PLOT = True
-   OUT_FORM = "json"
-
-   largv = len(sys.argv)
-
-   if largv > 1:
-      for i in range(1,largv):
-
-          arg = sys.argv[i]
-
-          if "READ_DATA" in arg:
-
-             arg_split = arg.split("=")
-             if len(arg_split) == 2:
-                 READ_DATA = arg_split[1]
-                 GET_DATA=False
-             else:
-                 print("Warning: your argument:", arg, "is ignored. It has to be in the form as: READ_DATA=True")
-
-          elif "MAKE_PLOT" in arg:
-
-             arg_split = arg.split("=")
-             if len(arg_split) == 2:
-                 MAKE_PLOT = arg_split[1]
-             else:
-                 print("Warning: your argument:", arg, "is ignored. It has to be in the form as: MAKE_PLOT=False")
-
-          elif "OUT_FORM" in arg:
-
-             arg_split = arg.split("=")
-             if len(arg_split) == 2:
-                of = arg_split[1]
-                if of in ["json", "hdf5"]:
-                   OUT_FORM = of
-                else:
-                   print("Warning: your argument:", arg, "for OUT_FORM is ignored. It has to be either hdf5 or json [default]")
-             else:
-                 print("Warning: your argument:", arg, "is ignored. It has to be in the form as: OUT_FORM=hdf5")
-
-          else:
-             print("Warning: your argument:", arg, "is ignored.")
-
-   main(GET_DATA, READ_DATA, MAKE_PLOT, OUT_FORM)
+   main()
