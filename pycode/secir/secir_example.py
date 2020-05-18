@@ -1,4 +1,4 @@
-from epidemiology.secir import Damping, SecirParams, print_secir_params, simulate, StageTimes, Probabilities, Populations
+from epidemiology.secir import ContactFrequencyMatrix, Damping, SecirParams, print_secir_params, simulate, StageTimes, Probabilities, Populations
 from matplotlib import pyplot as plt
 
 
@@ -18,7 +18,6 @@ def plot_secir():
     times.set_icu_to_home(8.)  # 5-16 (=R8^(-1))
     times.set_infectious_asymp(6.2)  # (=R9^(-1)=R_3^(-1)+0.5*R_4^(-1))
     times.set_icu_to_death(5.)  # 3.5-7 (=R5^(-1))
-    times.set_cont_freq(0.5)  # 0.2-0.75
 
     probs = Probabilities()
     probs.set_asymp_per_infectious(0.09)  # 0.01-0.16
@@ -38,20 +37,23 @@ def plot_secir():
     people.set_dead_t0(0)
 
     # set the params required for the simulation
-    params = SecirParams()
-    params.times = times
-    params.probabilities = probs
-    params.populations = people
-
-    # emulate some mitigations
-    params.dampings.add(Damping(23., 0.8))
-    params.dampings.add(Damping(25., 0.75))
-    params.dampings.add(Damping(27., 0.7))
+    params = [SecirParams()]
+    params[0].times = times
+    params[0].probabilities = probs
+    params[0].populations = people
 
     print_secir_params(params)
 
+    cont_freq_matrix = ContactFrequencyMatrix()
+    cont_freq_matrix.set_cont_freq(0.5, 0, 0)  # 0.2-0.75
+    
+    # emulate some mitigations
+    cont_freq_matrix.add_damping(Damping(23., 0.8), 0, 0)
+    cont_freq_matrix.add_damping(Damping(25., 0.75), 0, 0)
+    cont_freq_matrix.add_damping(Damping(27., 0.7), 0, 0)
+
     # run the simulation
-    result = simulate(t0=0., tmax=100., dt=0.1, params=params)
+    result = simulate(t0=0., tmax=100., dt=0.1, cont_freq_matrix=cont_freq_matrix, params=params)
 
     plt.plot(result.t, result.nb_sus, label='#Suscepted')
     plt.plot(result.t, result.nb_exp, label='#Exposed')

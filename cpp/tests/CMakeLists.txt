@@ -17,6 +17,7 @@ set(TESTSOURCES
   test_numericalIntegration.cpp
   test_damping.cpp
   test_secir.cpp
+  test_secir_ageres.cpp
 )
 
 file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/data DESTINATION ${CMAKE_CURRENT_BINARY_DIR})

@@ -16,7 +16,8 @@ TEST(TestSecir, compareWithPreviousRun)
     double nb_total_t0 = 10000, nb_exp_t0 = 100, nb_inf_t0 = 50, nb_car_t0 = 50, nb_hosp_t0 = 20, nb_icu_t0 = 10,
            nb_rec_t0 = 10, nb_dead_t0 = 0;
 
-    epi::SecirParams params{};
+    std::vector<epi::SecirParams> params{epi::SecirParams{}};
+    epi::ContactFrequencyMatrix contact_freq_matrix{};
 
     // alpha = alpha_in; // percentage of asymptomatic cases
     // beta  = beta_in; // risk of infection from the infected symptomatic patients
@@ -24,36 +25,37 @@ TEST(TestSecir, compareWithPreviousRun)
     // theta = theta_in; // icu per hospitalized
     // delta = delta_in; // deaths per ICUs
 
-    params.times.set_incubation(tinc);
-    params.times.set_infectious_mild(tinfmild);
-    params.times.set_serialinterval(tserint);
-    params.times.set_hospitalized_to_home(thosp2home);
-    params.times.set_home_to_hospitalized(thome2hosp);
-    params.times.set_hospitalized_to_icu(thosp2icu);
-    params.times.set_icu_to_home(ticu2home);
-    params.times.set_infectious_asymp(tinfasy);
-    params.times.set_icu_to_death(ticu2death);
-    params.times.set_cont_freq(cont_freq);
+    params[0].times.set_incubation(tinc);
+    params[0].times.set_infectious_mild(tinfmild);
+    params[0].times.set_serialinterval(tserint);
+    params[0].times.set_hospitalized_to_home(thosp2home);
+    params[0].times.set_home_to_hospitalized(thome2hosp);
+    params[0].times.set_hospitalized_to_icu(thosp2icu);
+    params[0].times.set_icu_to_home(ticu2home);
+    params[0].times.set_infectious_asymp(tinfasy);
+    params[0].times.set_icu_to_death(ticu2death);
 
-    params.populations.set_total_t0(nb_total_t0);
-    params.populations.set_exposed_t0(nb_exp_t0);
-    params.populations.set_carrier_t0(nb_car_t0);
-    params.populations.set_infectious_t0(nb_inf_t0);
-    params.populations.set_hospital_t0(nb_hosp_t0);
-    params.populations.set_icu_t0(nb_icu_t0);
-    params.populations.set_recovered_t0(nb_rec_t0);
-    params.populations.set_dead_t0(nb_dead_t0);
+    contact_freq_matrix.set_cont_freq(cont_freq, 0, 0);
+    epi::Damping dummy(30., 0.3);
+    contact_freq_matrix.add_damping(dummy, 0, 0);
 
-    params.probabilities.set_asymp_per_infectious(alpha);
-    params.probabilities.set_risk_from_symptomatic(beta);
-    params.probabilities.set_hospitalized_per_infectious(rho);
-    params.probabilities.set_icu_per_hospitalized(theta);
-    params.probabilities.set_dead_per_icu(delta);
+    params[0].populations.set_total_t0(nb_total_t0);
+    params[0].populations.set_exposed_t0(nb_exp_t0);
+    params[0].populations.set_carrier_t0(nb_car_t0);
+    params[0].populations.set_infectious_t0(nb_inf_t0);
+    params[0].populations.set_hospital_t0(nb_hosp_t0);
+    params[0].populations.set_icu_t0(nb_icu_t0);
+    params[0].populations.set_recovered_t0(nb_rec_t0);
+    params[0].populations.set_dead_t0(nb_dead_t0);
 
-    params.dampings.add(epi::Damping(30., 0.3));
+    params[0].probabilities.set_asymp_per_infectious(alpha);
+    params[0].probabilities.set_risk_from_symptomatic(beta);
+    params[0].probabilities.set_hospitalized_per_infectious(rho);
+    params[0].probabilities.set_icu_per_hospitalized(theta);
+    params[0].probabilities.set_dead_per_icu(delta);
 
     std::vector<Eigen::VectorXd> secihurd(0);
-    auto t = simulate(t0, tmax, dt, params, secihurd);
+    auto t = simulate(t0, tmax, dt, contact_freq_matrix, params, secihurd);
 
     auto compare = load_test_data_csv<double>("data/secihurd-compare.csv");
 
