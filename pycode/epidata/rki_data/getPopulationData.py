@@ -1,16 +1,37 @@
+import os
 import sys
 from urllib.request import urlopen
 import json
 import pandas
 import matplotlib.pyplot as plt
+from rki_data import getDataIntoPandasDataFrame as gd
+from rki_data import outputDict as od
 
-import getDataIntoPandasDataFrame as gd
-import outputDict as od
+def main():
 
-def main(get_data, read_data, make_plot, out_form):
+   [read_data, make_plot, out_form, out_folder] = gd.cli('Downloads population data')
+   
+   file1 = os.path.join(out_folder, "FullDataB.json")
+   file2 = os.path.join(out_folder, "FullDataL.json")     
 
+   if(read_data):
+      # if once dowloaded just read json file
+      
+      try:
+         dfB = pandas.read_json(file1)
 
-   if(get_data):
+      except ValueError:
+         exit_string = "Error: The file: " + file1 + "does not exist. Call program without -r flag to get it."
+         sys.exit(exit_string)
+         
+      try:
+         dfL = pandas.read_json(file2)
+
+      except ValueError:
+         exit_string = "Error: The file: " + file2 + "does not exist. Call program without -r flag to get it."
+         sys.exit(exit_string)
+
+   else:
 
       # Supported data formats:
       load = { 
@@ -27,15 +48,15 @@ def main(get_data, read_data, make_plot, out_form):
       dfL = load['csv'](itemIdL)
 
       # output data to not always download it
-      dfB.to_json(r"FullDataB.json")
-      dfL.to_json(r"FullDataL.json")
+      dfB.to_json(file1)
+      dfL.to_json(file2)
 
-   elif(read_data):
-      # if once dowloaded just read json file
-      dfB = pandas.read_json("FullDataB.json")
-      dfL = pandas.read_json("FullDataL.json")
-
+   
    # Preperation for plotting/output:
+
+   outForm = od.outForm[out_form][0]
+   outFormEnd = od.outForm[out_form][1]
+   outFormSpec = od.outForm[out_form][2]
 
    print("Available columns for states:", dfB.columns)
    print("Available columns for counties:", dfL.columns)  
@@ -44,61 +65,15 @@ def main(get_data, read_data, make_plot, out_form):
 
    dfB = dfB.rename(columns={'LAN_ew_GEN': 'Bundesland', 'LAN_ew_EWZ': 'EWZ'})
    dfBo = dfB[['Bundesland','EWZ']]
-   # dfBo.to_json("PopulStates.json", orient='records')
-   getattr(dfBo, od.outForm[out_form][0])("PopulStates" + od.outForm[out_form][1], **od.outForm[out_form][2])
+   getattr(dfBo, outForm)(os.path.join(out_folder,  "PopulStates" + outFormEnd), **outFormSpec)
   
 
    # TODO Counties are less as in RKI data. Compare it!
    dfL = dfL.rename(columns={'GEN': 'Landkreis'})
    dfLo = dfL[['Landkreis','EWZ']]
-   # dfLo.to_json("PopulCounties.json", orient='records')
-   getattr(dfLo, od.outForm[out_form][0])("PopulCounties" + od.outForm[out_form][1], **od.outForm[out_form][2])
+   getattr(dfLo, outForm)(os.path.join(out_folder,  "PopulCounties" + outFormEnd), **outFormSpec)
 
 
 if __name__ == "__main__":
 
-   GET_DATA = True
-   READ_DATA = False
-   MAKE_PLOT = True
-   OUT_FORM = "json"
-
-   largv = len(sys.argv)
-
-   if largv > 1:
-      for i in range(1,largv):
-
-          arg = sys.argv[i]
-
-          if "READ_DATA" in arg:
-
-             arg_split = arg.split("=")
-             if len(arg_split) == 2:
-                 READ_DATA = arg_split[1]
-                 GET_DATA=False
-             else:
-                 print("Warning: your argument:", arg, "is ignored. It has to be in the form as: READ_DATA=True")
-
-          elif "MAKE_PLOT" in arg:
-
-             arg_split = arg.split("=")
-             if len(arg_split) == 2:
-                 MAKE_PLOT = arg_split[1]
-             else:
-                 print("Warning: your argument:", arg, "is ignored. It has to be in the form as: MAKE_PLOT=False")
-
-          elif "OUT_FORM" in arg:
-
-             arg_split = arg.split("=")
-             if len(arg_split) == 2:
-                of = arg_split[1]
-                if of in ["json", "hdf5"]:
-                   OUT_FORM = of
-                else:
-                   print("Warning: your argument:", arg, "for OUT_FORM is ignored. It has to be either hdf5 or json [default]")
-             else:
-                 print("Warning: your argument:", arg, "is ignored. It has to be in the form as: OUT_FORM=hdf5")
-
-          else:
-             print("Warning: your argument:", arg, "is ignored.")
-
-   main(GET_DATA, READ_DATA, MAKE_PLOT, OUT_FORM)
+   main()
