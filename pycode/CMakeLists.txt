@@ -26,9 +26,9 @@ add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/../cpp ${CMAKE_CURRENT_BINARY_DIR}/
 
 # build secir python extension
 pybind11_add_module(_secir MODULE
-  secir/secir_py.cpp
+  epidemiology/secir/secir_py.cpp
 )
 target_link_libraries(_secir PRIVATE epidemiology)
 
 install(TARGETS _secir DESTINATION epidemiology)
-install(FILES secir/secir.py DESTINATION epidemiology)
+install(FILES epidemiology/secir/secir.py DESTINATION epidemiology)
