@@ -64,9 +64,6 @@ test-py:
     - getpopuldata --help
     - getjhdata --help
     - getspaindata --help
-  artifacts:
-    paths:
-      - data/*.json
 
 download-data:
   tags:
@@ -84,6 +81,9 @@ download-data:
     - getpopuldata -o data
     - getjhdata -o data
     - getspaindata -o data
+  artifacts:
+    paths:
+      - data/*.json
   
 
 build-js:
