@@ -17,6 +17,7 @@ set(TESTSOURCES
   test_numericalIntegration.cpp
   test_damping.cpp
   test_secir.cpp
+  test_migration.cpp
   test_eigen_util.cpp
 )
 
