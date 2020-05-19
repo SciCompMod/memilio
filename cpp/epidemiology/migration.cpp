@@ -39,8 +39,8 @@ std::vector<double> ode_integrate_with_migration(double t0, double tmax, double 
             result_single_group.resize(
                 1, slice(init_step, {(Eigen::Index)group_idx, (Eigen::Index)num_vars, (Eigen::Index)num_groups}));
             ode_integrate(t0_step, tmax_step, dt, *integrators[group_idx], result_single_group);
-            slice(result_single_group.back(),
-                  {(Eigen::Index)group_idx, (Eigen::Index)num_vars, (Eigen::Index)num_groups}) = result_step;
+            slice(result_step, {(Eigen::Index)group_idx, (Eigen::Index)num_vars, (Eigen::Index)num_groups}) =
+                result_single_group.back();
         }
 
         //migration for each variable
