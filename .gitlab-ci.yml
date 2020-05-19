@@ -47,6 +47,24 @@ test-cpp:
     reports:
       junit: cpp/build/tests/report.xml
 
+test-py:
+  tags:
+   - cpp
+   - hpcagainstcorona
+  stage: test
+  dependencies:
+    - build-py
+  before_script:
+    - apt -qq -y install python3.7 python3-pip
+    - for pkg in `ls pycode/dist/*.whl`; do python3 -m pip install $pkg; done
+  script:
+    - cd pycode/test
+    - python3 -m unittest
+    - getrkidata --help
+    - getpopuldata --help
+    - getjhdata --help
+    - getspaindata --help
+
 build-js:
   tags:
    - npm

@@ -24,8 +24,8 @@ import pandas
 import matplotlib.pyplot as plt
 import numpy as np
 
-from rki_data import outputDict as od
-from rki_data import getDataIntoPandasDataFrame as gd
+from epidemiology.epidata import outputDict as od
+from epidemiology.epidata import getDataIntoPandasDataFrame as gd
 
 def loadCsv( githubUrl = 'https://raw.githubusercontent.com/datadista/datasets/master/COVID%2019/', 
              CSVfile  = 'nacional_covid19_rango_edad' ):

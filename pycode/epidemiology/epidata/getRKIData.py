@@ -4,8 +4,8 @@ import json
 import pandas
 import matplotlib.pyplot as plt
 
-from rki_data import getDataIntoPandasDataFrame as gd
-from rki_data import outputDict as od
+from epidemiology.epidata import getDataIntoPandasDataFrame as gd
+from epidemiology.epidata import outputDict as od
 
 def main():
 

@@ -5,8 +5,8 @@ import json
 import pandas
 import matplotlib.pyplot as plt
 
-from rki_data import outputDict as od
-from rki_data import getDataIntoPandasDataFrame as gd
+from epidemiology.epidata import outputDict as od
+from epidemiology.epidata import getDataIntoPandasDataFrame as gd
 
 
 def loadCsv( githubUrl = 'https://github.com/datasets/covid-19/tree/master/data/', 
