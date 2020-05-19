@@ -23,19 +23,13 @@ struct Seq {
 };
 
 /**
- * @brief removes ref and cv qualifiers from a type T (part of std from c++17)
- */
-template <class T>
-using remove_cvref = std::remove_reference_t<std::remove_cv_t<T>>;
-
-/**
  * @brief check if Eigen::Matrix type M is a dynamic vector type.
  */
 template <class M>
 struct is_dynamic_vector {
     static constexpr bool value =
-        (remove_cvref<M>::RowsAtCompileTime == Eigen::Dynamic && remove_cvref<M>::ColsAtCompileTime == 1) ||
-        (remove_cvref<M>::RowsAtCompileTime == 1 && remove_cvref<M>::ColsAtCompileTime == Eigen::Dynamic);
+        (std::remove_reference_t<M>::RowsAtCompileTime == Eigen::Dynamic && std::remove_reference_t<M>::ColsAtCompileTime == 1) ||
+        (std::remove_reference_t<M>::RowsAtCompileTime == 1 && std::remove_reference_t<M>::ColsAtCompileTime == Eigen::Dynamic);
 };
 
 /**
@@ -44,7 +38,7 @@ struct is_dynamic_vector {
 template <class M>
 struct is_dynamic_matrix {
     static constexpr bool value =
-        remove_cvref<M>::RowsAtCompileTime == Eigen::Dynamic && remove_cvref<M>::ColsAtCompileTime == Eigen::Dynamic;
+        std::remove_reference_t<M>::RowsAtCompileTime == Eigen::Dynamic && std::remove_reference_t<M>::ColsAtCompileTime == Eigen::Dynamic;
 };
 
 /**
@@ -53,7 +47,7 @@ struct is_dynamic_matrix {
 template <class M>
 Eigen::Index major_size(M&& m)
 {
-    return remove_cvref<M>::IsRowMajor ? m.rows() : m.cols();
+    return std::remove_reference_t<M>::IsRowMajor ? m.rows() : m.cols();
 }
 
 /**
@@ -62,7 +56,7 @@ Eigen::Index major_size(M&& m)
 template <class M>
 Eigen::Index minor_size(M&& m)
 {
-    return remove_cvref<M>::IsRowMajor ? m.cols() : m.rows();
+    return std::remove_reference_t<M>::IsRowMajor ? m.cols() : m.rows();
 }
 
 /**
@@ -77,7 +71,7 @@ Eigen::Index minor_size(M&& m)
 template <class V, std::enable_if_t<is_dynamic_vector<V>::value, int> = 0>
 auto slice(V&& v, Seq<Eigen::Index> elems)
 {
-    return Eigen::Map<remove_cvref<V>, 0, Eigen::Stride<Eigen::Dynamic, Eigen::Dynamic>>(
+    return Eigen::Map<std::remove_reference_t<V>, 0, Eigen::Stride<Eigen::Dynamic, Eigen::Dynamic>>(
         v.data() + elems.start, elems.n, Eigen::Stride<Eigen::Dynamic, Eigen::Dynamic>{1, elems.stride});
 }
 
@@ -94,19 +88,17 @@ auto slice(V&& v, Seq<Eigen::Index> elems)
 template <class M, std::enable_if_t<is_dynamic_matrix<M>::value, int> = 0>
 auto slice(M&& m, Seq<Eigen::Index> rows, Seq<Eigen::Index> cols)
 {
-    using PlainM = remove_cvref<M>;
-    using MapT   = Eigen::Map<PlainM, Eigen::Unaligned, Eigen::Stride<Eigen::Dynamic, Eigen::Dynamic>>;
-
     assert(rows.start + rows.stride * rows.n <= m.rows());
     assert(cols.start + cols.stride * cols.n <= m.rows());
 
-    auto majSpec   = PlainM::IsRowMajor ? rows : cols;
-    auto minSpec   = PlainM::IsRowMajor ? cols : rows;
+    auto majSpec   = std::remove_reference_t<M>::IsRowMajor ? rows : cols;
+    auto minSpec   = std::remove_reference_t<M>::IsRowMajor ? cols : rows;
     auto majStride = majSpec.stride * minor_size(m);
     auto minStride = minSpec.stride;
     auto data      = m.data() + majSpec.start * minor_size(m) + minSpec.start;
 
-    return MapT(data, rows.n, cols.n, {majStride, minStride});
+    return Eigen::Map<std::remove_reference_t<M>, Eigen::Unaligned, Eigen::Stride<Eigen::Dynamic, Eigen::Dynamic>>(
+        data, rows.n, cols.n, {majStride, minStride});
 }
 
 /**
@@ -127,7 +119,7 @@ auto reshape(M&& m, Eigen::Index rows, Eigen::Index cols)
     assert(rows >= 1);
     assert(cols >= 1);
 
-    return Eigen::Map<remove_cvref<M>>(m.data(), rows, cols);
+    return Eigen::Map<std::remove_reference_t<M>>(m.data(), rows, cols);
 }
 
 /**
