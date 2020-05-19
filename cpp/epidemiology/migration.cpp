@@ -22,7 +22,7 @@ std::vector<double> ode_integrate_with_migration(double t0, double tmax, double 
     result.reserve(num_steps);
 
     auto migration     = Eigen::MatrixXd(num_groups, num_groups); //reusable, matrix of migration between groups
-    auto result_single_group = std::vector<Eigen::VectorXd>(1, Eigen::VectorXd(num_vars)); //reusable, result of a single group and migration step
+    auto result_single_group = std::vector<Eigen::VectorXd>(); //reusable, result of a single group and migration step
 
     while (t.back() < tmax) {
         //TODO: avoid copying the results of a single step/group
@@ -32,11 +32,12 @@ std::vector<double> ode_integrate_with_migration(double t0, double tmax, double 
         //simulate the same timestep for every group
         auto t0_step   = t.back();
         auto tmax_step = std::min(t0_step + 1, tmax);
+        t.push_back(tmax_step);
         result.emplace_back(num_vars_total);
         const auto& init_step = result[result.size() - 2];
         auto& result_step     = result[result.size() - 1];
         for (size_t group_idx = 0; group_idx < num_groups; group_idx++) {
-            result_single_group.resize(
+            result_single_group.assign(
                 1, slice(init_step, {(Eigen::Index)group_idx, (Eigen::Index)num_vars, (Eigen::Index)num_groups}));
             ode_integrate(t0_step, tmax_step, dt, *integrators[group_idx], result_single_group);
             slice(result_step, {(Eigen::Index)group_idx, (Eigen::Index)num_vars, (Eigen::Index)num_groups}) =
@@ -45,12 +46,10 @@ std::vector<double> ode_integrate_with_migration(double t0, double tmax, double 
 
         //migration for each variable
         for (size_t var_idx = 0; var_idx < num_vars; var_idx++) {
-            migration_function(var_idx, t.back(), migration);
+            migration_function(var_idx, tmax_step, migration);
             auto one_var_all_groups = result_step.segment(num_groups * var_idx, num_groups);
             one_var_all_groups      = migration * one_var_all_groups;
         }
-
-        t.push_back(tmax_step);
     }
 
     return t;
