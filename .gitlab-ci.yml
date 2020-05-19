@@ -108,6 +108,7 @@ www:
   stage: deploy
   dependencies:
     - build-js
+    - download-data
   script:
     - echo "Deploying to server"
     - cp -rv build/* /var/www/html
