@@ -64,6 +64,27 @@ test-py:
     - getpopuldata --help
     - getjhdata --help
     - getspaindata --help
+  artifacts:
+    paths:
+      - data/*.json
+
+download-data:
+  tags:
+   - cpp
+   - hpcagainstcorona
+  stage: test
+  dependencies:
+    - build-py
+  before_script:
+    - apt -qq -y install python3.7 python3-pip
+    - for pkg in `ls pycode/dist/*.whl`; do python3 -m pip install $pkg; done
+  script:
+    - mkdir data
+    - getrkidata -o data
+    - getpopuldata -o data
+    - getjhdata -o data
+    - getspaindata -o data
+  
 
 build-js:
   tags:
@@ -90,6 +111,7 @@ www:
   script:
     - echo "Deploying to server"
     - cp -rv build/* /var/www/html
+    - cp -v data/*.json /var/www/html/assets
     - echo "Deployed"
   only:
     - master
