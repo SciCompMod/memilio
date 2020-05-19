@@ -44,6 +44,6 @@ setup(
               'epidemiology.epidata'],
     long_description='',
     setup_requires=['cmake'],
-    test_suite='tests',
+    test_suite='test',
     install_requires=INSTALL_REQUIRES
 )
