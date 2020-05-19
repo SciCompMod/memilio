@@ -96,8 +96,8 @@ TEST(TestGroupSeir, noMigrationTheSameAsSingleSimulation)
     EXPECT_EQ(result_groups.back().size(), result_single1.back().size() + result_single2.back().size());
     for (size_t j = 0; j < result_single1.back().size(); j++)
     {
-        //TODO: these should be the same but our integrators (even RKF45) are too sensitive to time steps
-        // EXPECT_NEAR(result_single1.back()[j], result_groups.back()[2 * j], result_groups.back()[2 * j] * 1e-3);
-        // EXPECT_NEAR(result_single2.back()[j], result_groups.back()[2 * j + 1], result_groups.back()[2 * j + 1] * 1e-3);
+        //these only work if seir is modified to use rk45
+        // EXPECT_NEAR(result_single1.back()[j], result_groups.back()[2 * j], result_groups.back()[2 * j] * 1e-5);
+        // EXPECT_NEAR(result_single2.back()[j], result_groups.back()[2 * j + 1], result_groups.back()[2 * j + 1] * 1e-5);
     }
 }
