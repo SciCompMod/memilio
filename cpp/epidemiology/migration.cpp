@@ -1,29 +1,9 @@
-#include "migration.h"
-#include "adapt_rk.h"
+#include "epidemiology/migration.h"
+#include "epidemiology/adapt_rk.h"
+#include "epidemiology/eigen_util.h"
 
 namespace epi
 {
-void set_interleaved(const Eigen::VectorXd& single, size_t group_idx, Eigen::VectorXd& all)
-{
-    assert(all.size() % single.size() == 0);
-    auto num_vars = single.size();
-    auto num_groups = all.size() / num_vars;
-    for (size_t i = 0; i < num_vars; i++)
-    {
-        all[i * num_groups + group_idx] = single[i];
-    }
-}
-
-void get_interleaved(const Eigen::VectorXd& all, size_t group_idx, Eigen::VectorXd& single)
-{
-    assert(all.size() % single.size() == 0);
-    auto num_vars = single.size();
-    auto num_groups = all.size() / num_vars;
-    for (size_t i = 0; i < num_vars; i++)
-    {
-        single[i] = all[i * num_groups + group_idx];
-    }
-}
 
 std::vector<double> ode_integrate_with_migration(double t0, double tmax, double dt,
                                                  const std::vector<std::unique_ptr<IntegratorBase>>& integrators,
@@ -46,21 +26,21 @@ std::vector<double> ode_integrate_with_migration(double t0, double tmax, double 
 
     while (t.back() < tmax) {
         //TODO: avoid copying the results of a single step/group
-        //TODO: use vector slicing
         //TODO: variable migration step size
         //TODO: report all steps, not just once per migration interval
 
         //simulate the same timestep for every group
-        auto t0_step          = t.back();
-        auto tmax_step        = std::min(t0_step + 1, tmax);
+        auto t0_step   = t.back();
+        auto tmax_step = std::min(t0_step + 1, tmax);
         result.emplace_back(num_vars_total);
         const auto& init_step = result[result.size() - 2];
-        auto& result_step = result[result.size() - 1];
+        auto& result_step     = result[result.size() - 1];
         for (size_t group_idx = 0; group_idx < num_groups; group_idx++) {
-            result_single_group.resize(1, Eigen::VectorXd(num_vars));
-            get_interleaved(init_step, group_idx, result_single_group.front());
+            result_single_group.resize(
+                1, slice(init_step, {(Eigen::Index)group_idx, (Eigen::Index)num_vars, (Eigen::Index)num_groups}));
             ode_integrate(t0_step, tmax_step, dt, *integrators[group_idx], result_single_group);
-            set_interleaved(result_single_group.back(), group_idx, result_step);
+            slice(result_single_group.back(),
+                  {(Eigen::Index)group_idx, (Eigen::Index)num_vars, (Eigen::Index)num_groups}) = result_step;
         }
 
         //migration for each variable

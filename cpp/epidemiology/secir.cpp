@@ -2,6 +2,7 @@
 
 // #include <epidemiology/euler.h>
 #include <epidemiology/adapt_rk.h>
+#include <epidemiology/eigen_util.h>
 
 #include <cmath>
 #include <cassert>
@@ -459,7 +460,7 @@ std::vector<double> simulate_groups(double t0, double tmax, double dt, const std
     Eigen::VectorXd init_single(num_vars);
     for (size_t i = 0; i < num_groups; i++) {
         secir_get_initial_values(group_params[i], init_single);
-        set_interleaved(group_secir[0], i, init_single);
+        slice(group_secir[0], { Eigen::Index(i), Eigen::Index(num_vars), Eigen::Index(num_groups) }) = init_single;
 
         auto secir_fun = [params = group_params[i]](Eigen::VectorXd const& y, const double t, Eigen::VectorXd& dydt) {
             return secir_get_derivatives(params, y, t, dydt);
