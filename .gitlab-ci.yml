@@ -8,7 +8,7 @@ build-cpp:
   script:
     - cd cpp
     - mkdir build && cd build
-    - cmake ..
+    - cmake -G Ninja ..
     - cmake --build .
   artifacts:
     expire_in: 2 hrs
