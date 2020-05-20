@@ -2,6 +2,7 @@
 
 // #include <epidemiology/euler.h>
 #include <epidemiology/adapt_rk.h>
+#include <epidemiology/eigen_util.h>
 
 #include <cmath>
 #include <cassert>
@@ -493,6 +494,22 @@ void secir_get_derivatives(ContactFrequencyMatrix const& cont_freq_matrix, std::
     }
 }
 
+namespace
+{
+    template<class Vector>
+    void secir_get_initial_values(const SecirParams& params, Vector&& y)
+    {
+        y[0] = params.populations.get_suscetible_t0();
+        y[1] = params.populations.get_exposed_t0();
+        y[2] = params.populations.get_carrier_t0();
+        y[3] = params.populations.get_infectious_t0();
+        y[4] = params.populations.get_hospitalized_t0();
+        y[5] = params.populations.get_icu_t0();
+        y[6] = params.populations.get_recovered_t0();
+        y[7] = params.populations.get_dead_t0();
+    }
+} // namespace
+
 std::vector<double> simulate(double t0, double tmax, double dt, ContactFrequencyMatrix const& cont_freq_matrix,
                              std::vector<SecirParams> const& params, std::vector<Eigen::VectorXd>& secir)
 {
@@ -501,14 +518,7 @@ std::vector<double> simulate(double t0, double tmax, double dt, ContactFrequency
 
     //initial conditions
     for (size_t i = 0; i < n_agegroups; i++) {
-        secir[0][0 + i * 8] = params[i].populations.get_suscetible_t0();
-        secir[0][1 + i * 8] = params[i].populations.get_exposed_t0();
-        secir[0][2 + i * 8] = params[i].populations.get_carrier_t0();
-        secir[0][3 + i * 8] = params[i].populations.get_infectious_t0();
-        secir[0][4 + i * 8] = params[i].populations.get_hospitalized_t0();
-        secir[0][5 + i * 8] = params[i].populations.get_icu_t0();
-        secir[0][6 + i * 8] = params[i].populations.get_recovered_t0();
-        secir[0][7 + i * 8] = params[i].populations.get_dead_t0();
+        secir_get_initial_values(params[i], slice(secir[0], { (Eigen::Index)i * 8, 8 }));
     }
 
     auto secir_fun = [&cont_freq_matrix, &params](Eigen::VectorXd const& y, const double t, Eigen::VectorXd& dydt) {
@@ -529,6 +539,39 @@ std::vector<double> simulate(double t0, double tmax, double dt, ContactFrequency
 #endif
 
     return ode_integrate(t0, tmax, dt, integrator, secir);
+}
+
+std::vector<double> simulate_groups(double t0, double tmax, double dt,
+                                    const std::vector<ContactFrequencyMatrix>& group_cont_freqs,
+                                    const std::vector<SecirParams>& group_params, MigrationFunction migration_function,
+                                    std::vector<Eigen::VectorXd>& group_secir)
+{
+    assert(group_params.size() == group_cont_freqs.size());
+
+    auto num_groups     = group_params.size();
+    auto num_vars       = 4;
+    auto num_vars_total = 4 * num_groups;
+    group_secir         = std::vector<Eigen::VectorXd>(1, Eigen::VectorXd(num_vars_total));
+    auto integrators    = std::vector<std::unique_ptr<IntegratorBase>>(num_groups);
+
+    Eigen::VectorXd init_single(num_vars);
+    for (size_t i = 0; i < num_groups; i++) {
+        secir_get_initial_values(group_params[i], init_single);
+        slice(group_secir[0], {Eigen::Index(i), Eigen::Index(num_vars), Eigen::Index(num_groups)}) = init_single;
+
+        auto secir_fun = [cont_freq = group_cont_freqs[i],
+                          params = group_params[i]](Eigen::VectorXd const& y, const double t, Eigen::VectorXd& dydt) {
+            return secir_get_derivatives(cont_freq, {1, params}, y, t, dydt);
+        };
+        double dtmin    = 1e-5;
+        double dtmax    = 1.;
+        auto integrator = std::make_unique<RKIntegrator>(secir_fun, dtmin, dtmax);
+        integrator->set_rel_tolerance(1e-6);
+        integrator->set_abs_tolerance(0);
+        integrators[i] = std::move(integrator);
+    }
+
+    return ode_integrate_with_migration(t0, tmax, dt, integrators, migration_function, group_secir);
 }
 
 } // namespace epi
