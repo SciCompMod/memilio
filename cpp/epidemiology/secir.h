@@ -54,7 +54,7 @@ public:
     /**
      * @brief returns the dampings set for the SECIR model in 1/day unit; in case of multiple groups, returns the damping d_ij=d_ji
      */
-    Dampings get_dampings(int self_group, int contact_group) const;
+    const Dampings& get_dampings(int self_group, int contact_group) const;
 
     /**
      * @brief add damping to the dampings object specified by self_ and contact_group
