@@ -173,7 +173,7 @@ std::vector<double> simulate(double t0, double tmax, double dt, const SeirParams
     // double dtmax = 1.;
     // RKIntegrator integrator(seir_fun, dtmin, dtmax);
     // integrator.set_rel_tolerance(1e-6);
-    // integrator.set_abs_tolerance(0);
+    // integrator.set_abs_tolerance(1e-6);
     
     double dtmin = dt;
     double dtmax = dt;
@@ -203,7 +203,7 @@ std::vector<double> simulate_groups(double t0, double tmax, double dt, const std
         double dtmax    = 1.;
         auto integrator = std::make_unique<RKIntegrator>(seir_fun, dtmin, dtmax);
         integrator->set_rel_tolerance(1e-6);
-        integrator->set_abs_tolerance(0);
+        integrator->set_abs_tolerance(1e-6);
         integrators[i] = std::move(integrator);
     }
 
