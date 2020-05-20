@@ -437,10 +437,10 @@ void secir_get_derivatives(ContactFrequencyMatrix const& cont_freq_matrix, std::
     // 0: S,      1: E,     2: C,     3: I,     4: H,     5: U,     6: R,     7: D
     size_t n_agegroups = params.size();
 
-    for (size_t i = 0; i < n_agegroups; i++) {
+    for (int i = 0; i < n_agegroups; i++) {
         dydt[0 + 8 * i] = 0;
         dydt[1 + 8 * i] = 0;
-        for (size_t j = 0; j < n_agegroups; j++) {
+        for (int j = 0; j < n_agegroups; j++) {
             // effective contact rate by contact rate between groups i and j and damping j
             double cont_freq_eff =
                 cont_freq_matrix.get_cont_freq(i, j) *
@@ -496,8 +496,7 @@ void secir_get_derivatives(ContactFrequencyMatrix const& cont_freq_matrix, std::
 
 namespace
 {
-    template<class Vector>
-    void secir_get_initial_values(const SecirParams& params, Vector&& y)
+    template <class Vector> void secir_get_initial_values(const SecirParams& params, Vector&& y)
     {
         y[0] = params.populations.get_suscetible_t0();
         y[1] = params.populations.get_exposed_t0();
@@ -518,7 +517,7 @@ std::vector<double> simulate(double t0, double tmax, double dt, ContactFrequency
 
     //initial conditions
     for (size_t i = 0; i < n_agegroups; i++) {
-        secir_get_initial_values(params[i], slice(secir[0], { (Eigen::Index)i * 8, 8 }));
+        secir_get_initial_values(params[i], slice(secir[0], {(Eigen::Index)i * 8, 8}));
     }
 
     auto secir_fun = [&cont_freq_matrix, &params](Eigen::VectorXd const& y, const double t, Eigen::VectorXd& dydt) {
