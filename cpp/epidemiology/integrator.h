@@ -22,6 +22,8 @@ public:
     {
     }
 
+    virtual ~IntegratorBase() {};
+
     /**
      * @brief Step of the integration with possible adaptive with
      *
