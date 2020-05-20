@@ -17,45 +17,18 @@
 
 
 import os
-import sys
-from urllib.request import urlopen
-import json
 import pandas
-import matplotlib.pyplot as plt
 import numpy as np
 
 from epidemiology.epidata import outputDict as od
 from epidemiology.epidata import getDataIntoPandasDataFrame as gd
-
-def loadCsv( githubUrl = 'https://raw.githubusercontent.com/datadista/datasets/master/COVID%2019/', 
-             CSVfile  = 'nacional_covid19_rango_edad' ):
-    """ Loads data in CSV format from github with Spanish Ministerio de Sanidad 
-    and ISCIII (Instituto de Salud Carlos III) data. (pandas DataFrame)
-
-    This routine loads github data sets in CSV format of the given public 
-    url into a pandas DataFrame and returns the DataFrame. 
-
-    Keyword arguments:
-    githubUrl -- github url
-    CSVfile -- file name
-
-    """
-    url = githubUrl + CSVfile + '.csv'
-    #print(url)
-
-    try:
-        df = pandas.read_csv( url )
-    except OSError as e:
-        print("ERROR: URL " + url + " could not be opened.")
-        df = pandas.DataFrame()
-    
-    
-    return df
+from epidemiology.epidata import defaultDict as dd
 
 
-def main():
-
-   [read_data, make_plot, out_form, out_folder] = gd.cli('Download of spain data')
+def get_spain_data(read_data=dd.defaultDict['read_data'],
+                   make_plot=dd.defaultDict['make_plot'],
+                   out_form=dd.defaultDict['out_form'],
+                   out_folder=dd.defaultDict['out_folder']):
 
    AgesJSONData = os.path.join(out_folder ,'raw_spain_all_age.json')
    StatJSONData = os.path.join(out_folder ,'raw_spain_all_state.json')
@@ -77,7 +50,8 @@ def main():
   
       # Get data:
       # https://raw.githubusercontent.com/datadista/datasets/master/COVID%2019/nacional_covid19_rango_edad.csv
-      df_age = loadCsv(CSVfile  = 'nacional_covid19_rango_edad')
+      df_age = gd.loadCsv('nacional_covid19_rango_edad',
+                          apiUrl='https://raw.githubusercontent.com/datadista/datasets/master/COVID%2019/')
       
       if df_age.empty != True:
          # standardization of column titles from Spanish to English # the stupid character in front of 'fecha' is correct here.. There is a bug in the original file..
@@ -102,7 +76,8 @@ def main():
 
       # Get data:
       # https://raw.githubusercontent.com/datadista/datasets/master/COVID%2019/ccaa_covid19_datos_isciii.csv
-      df_state = loadCsv(CSVfile  = 'ccaa_covid19_datos_isciii')
+      df_state = gd.loadCsv('ccaa_covid19_datos_isciii',
+                            apiUrl='https://raw.githubusercontent.com/datadista/datasets/master/COVID%2019/')
       
       if df_state.empty != True:
          # standardization of column titles from Spanish to English
@@ -111,10 +86,8 @@ def main():
 
          print("Read Spanish states data from online. Available columns:", df_state.columns)
 
-         
          # fill empty cells (nan values) with zero
          df_state.replace(np.nan, 0, inplace=True)
-
 
          # remove special characters
          df_state.loc[df_state.State=="Andalucía", ['State']] = "Andalucia"
@@ -138,15 +111,13 @@ def main():
    # write file for all age groups summed together
    df_agesum = df_age.loc[df_age.Age=='all']
       # call to df_ageall.to_json("all_age.json", orient='records')
-   getattr(df_agesum, od.outForm[out_form][0])(os.path.join(out_folder ,"spain") + od.outForm[out_form][1], **od.outForm[out_form][2])
-
+   getattr(df_agesum, od.outForm[out_form][0])(os.path.join(out_folder, "spain") + od.outForm[out_form][1], **od.outForm[out_form][2])
 
    # write file with information on all age groups separately
    # age_groups = ['0-9','10-19','20-29','30-39','40-49','50-59','60-69','70-79','80+']
    df_agesep = df_age.loc[df_age.Age!='all']
       # call to df_ageall.to_json("all_age.json", orient='records')
    getattr(df_agesep, od.outForm[out_form][0])(os.path.join(out_folder ,"spain_all_age") + od.outForm[out_form][1], **od.outForm[out_form][2])
-
 
    # Preparation for plotting/output:
 
@@ -168,7 +139,12 @@ def main():
    getattr(df_state, od.outForm[out_form][0])(os.path.join(out_folder ,"spain_all_state") + od.outForm[out_form][1], **od.outForm[out_form][2])
 
 
+def main():
+
+    [read_data, make_plot, out_form, out_folder] = gd.cli('Download of spain data')
+    get_spain_data(read_data, make_plot, out_form, out_folder)
+
+
 if __name__ == "__main__":
 
-   main()  
-    
+    main()

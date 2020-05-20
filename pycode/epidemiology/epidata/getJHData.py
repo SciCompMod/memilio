@@ -1,36 +1,16 @@
 import os
 import sys
-from urllib.request import urlopen
-import json
 import pandas
-import matplotlib.pyplot as plt
 
 from epidemiology.epidata import outputDict as od
 from epidemiology.epidata import getDataIntoPandasDataFrame as gd
+from epidemiology.epidata import defaultDict as dd
 
 
-def loadCsv( githubUrl = 'https://github.com/datasets/covid-19/tree/master/data/', 
-             CSVfile  = 'time-series-19-covid-combined.csv' ):
-    """ Loads data in CSV format from John Hopkins github. (pandas DataFrame)
-
-    This routine loads ArcGIS data sets in CSV format of the given public data 
-    item ID into a pandas DataFrame and returns the DataFrame. 
-
-    Keyword arguments:
-    githubUrl -- John Hopkins github url
-    CSVfile -- file name
-
-    """
-    url = githubUrl + CSVfile
-    #print(url)
-
-    df = pandas.read_csv( url )
-
-    return df
-
-def main():
-
-   [read_data, make_plot, out_form, out_folder] = gd.cli('Downloads data from JH')   
+def get_jh_data(read_data=dd.defaultDict['read_data'],
+                make_plot=dd.defaultDict['make_plot'],
+                out_form=dd.defaultDict['out_form'],
+                out_folder=dd.defaultDict['out_folder']):
 
    filename = os.path.join(out_folder, "FullData_JohnHopkins.json")
 
@@ -44,7 +24,8 @@ def main():
    else:
        # Get data:
       # https://raw.githubusercontent.com/datasets/covid-19/master/data/time-series-19-covid-combined.csv
-      df = loadCsv(githubUrl = 'https://raw.githubusercontent.com/datasets/covid-19/master/data/')
+      df = gd.loadCsv('time-series-19-covid-combined',
+                      apiUrl = 'https://raw.githubusercontent.com/datasets/covid-19/master/data/')
 
       # convert "Datenstand" to real date:
       #df.Datenstand = pandas.to_datetime( df.Datenstand, format='%d.%m.%Y, %H:%M Uhr').dt.tz_localize('Europe/Berlin')  
@@ -91,6 +72,13 @@ def main():
    # However, what to do with the cases where after some times values occur? Do those cases exist? 
 
    # TODO: US more detailes 
+
+
+
+def main():
+
+   [read_data, make_plot, out_form, out_folder] = gd.cli('Downloads data from JH')
+   get_jh_data(read_data, make_plot, out_form, out_folder)
 
  
 if __name__ == "__main__":
