@@ -19,6 +19,7 @@ set(TESTSOURCES
   test_secir.cpp
   test_migration.cpp
   test_eigen_util.cpp
+  test_secir_ageres.cpp
 )
 
 file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/data DESTINATION ${CMAKE_CURRENT_BINARY_DIR})

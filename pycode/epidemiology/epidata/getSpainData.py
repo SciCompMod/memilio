@@ -16,7 +16,7 @@
 ############################################################################################################
 
 
-
+import os
 import sys
 from urllib.request import urlopen
 import json
@@ -24,7 +24,8 @@ import pandas
 import matplotlib.pyplot as plt
 import numpy as np
 
-import outputDict as od
+from epidemiology.epidata import outputDict as od
+from epidemiology.epidata import getDataIntoPandasDataFrame as gd
 
 def loadCsv( githubUrl = 'https://raw.githubusercontent.com/datadista/datasets/master/COVID%2019/', 
              CSVfile  = 'nacional_covid19_rango_edad' ):
@@ -52,12 +53,27 @@ def loadCsv( githubUrl = 'https://raw.githubusercontent.com/datadista/datasets/m
     return df
 
 
-def main(read_data, make_plot, out_form):
+def main():
 
-   AgesJSONData = 'raw_spain_all_age.json'
-   StatJSONData = 'raw_spain_all_state.json'
+   [read_data, make_plot, out_form, out_folder] = gd.cli('Download of spain data')
 
-   if(READ_DATA):
+   AgesJSONData = os.path.join(out_folder ,'raw_spain_all_age.json')
+   StatJSONData = os.path.join(out_folder ,'raw_spain_all_state.json')
+
+   if(read_data):
+      # if once dowloaded just read json file
+
+      #### ages' data
+      df_age = pandas.read_json(AgesJSONData)
+
+      print("Read from local. Available columns:", df_age.columns)
+
+      #### states' data
+      df_state = pandas.read_json(StatJSONData)
+
+      print("Read from local. Available columns:", df_state.columns)
+
+   else:
   
       # Get data:
       # https://raw.githubusercontent.com/datadista/datasets/master/COVID%2019/nacional_covid19_rango_edad.csv
@@ -114,21 +130,6 @@ def main(read_data, make_plot, out_form):
          df_state.to_json(StatJSONData)
          
 
-   else:
-      # if once dowloaded just read json file
-
-      #### ages' data
-      df_age = pandas.read_json(AgesJSONData)
-
-      print("Read from local. Available columns:", df_age.columns)
-
-      #### states' data
-      df_state = pandas.read_json(StatJSONData)
-
-      print("Read from local. Available columns:", df_state.columns)
-
-
-
    # Preparation for plotting/output age specific data:
 
    # only consider men AND women (through information on gender away)
@@ -137,15 +138,14 @@ def main(read_data, make_plot, out_form):
    # write file for all age groups summed together
    df_agesum = df_age.loc[df_age.Age=='all']
       # call to df_ageall.to_json("all_age.json", orient='records')
-   getattr(df_agesum, od.outForm[out_form][0])("spain" + od.outForm[out_form][1], **od.outForm[out_form][2])
+   getattr(df_agesum, od.outForm[out_form][0])(os.path.join(out_folder ,"spain") + od.outForm[out_form][1], **od.outForm[out_form][2])
 
 
    # write file with information on all age groups separately
    # age_groups = ['0-9','10-19','20-29','30-39','40-49','50-59','60-69','70-79','80+']
    df_agesep = df_age.loc[df_age.Age!='all']
       # call to df_ageall.to_json("all_age.json", orient='records')
-   getattr(df_agesep, od.outForm[out_form][0])("spain_all_age" + od.outForm[out_form][1], **od.outForm[out_form][2])
-
+   getattr(df_agesep, od.outForm[out_form][0])(os.path.join(out_folder ,"spain_all_age") + od.outForm[out_form][1], **od.outForm[out_form][2])
 
 
    # Preparation for plotting/output:
@@ -165,55 +165,10 @@ def main(read_data, make_plot, out_form):
 
    # output json
    # call df_state.to_json("spain_all_state.json", orient='records'), or to hdf5 alternatively
-   getattr(df_state, od.outForm[out_form][0])("spain_all_state" + od.outForm[out_form][1], **od.outForm[out_form][2])
-
-
+   getattr(df_state, od.outForm[out_form][0])(os.path.join(out_folder ,"spain_all_state") + od.outForm[out_form][1], **od.outForm[out_form][2])
 
 
 if __name__ == "__main__":
 
-   READ_DATA = True
-   MAKE_PLOT = True
-   OUT_FORM = "json"
-
-   largv = len(sys.argv)
-
-   if largv > 1:
-      for i in range(1,largv):
-
-          arg = sys.argv[i]
-
-          if "READ_DATA" in arg:
-
-             arg_split = arg.split("=")
-             if len(arg_split) == 2:
-                 READ_DATA = arg_split[1]
-                 GET_DATA=False
-             else:
-                 print("Warning: your argument:", arg, "is ignored. It has to be in the form as: READ_DATA=True")
-
-          elif "MAKE_PLOT" in arg:
-
-             arg_split = arg.split("=")
-             if len(arg_split) == 2:
-                 MAKE_PLOT = arg_split[1]
-             else:
-                 print("Warning: your argument:", arg, "is ignored. It has to be in the form as: MAKE_PLOT=False")
-
-          elif "OUT_FORM" in arg:
-
-             arg_split = arg.split("=")
-             if len(arg_split) == 2:
-                of = arg_split[1]
-                if of in ["json", "hdf5"]:
-                   OUT_FORM = of
-                else:
-                   print("Warning: your argument:", arg, "for OUT_FORM is ignored. It has to be either hdf5 or json [default]")
-             else:
-                 print("Warning: your argument:", arg, "is ignored. It has to be in the form as: OUT_FORM=hdf5")
-
-          else:
-             print("Warning: your argument:", arg, "is ignored.")
-
-   main(READ_DATA, MAKE_PLOT, OUT_FORM)  
+   main()  
     

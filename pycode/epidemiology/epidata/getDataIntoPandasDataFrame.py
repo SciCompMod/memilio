@@ -2,7 +2,8 @@ import sys
 from urllib.request import urlopen
 import json
 import pandas
-import matplotlib.pyplot as plt
+import argparse
+
 
 def loadGeojson( itemId, apiUrl = 'https://opendata.arcgis.com/datasets/', 
                  extension = 'geojson' ):
@@ -53,4 +54,29 @@ def loadCsv( itemId, apiUrl = 'https://opendata.arcgis.com/datasets/',
     df = pandas.read_csv( url )
 
     return df
+
+def cli(description):
+  
+   out_path_default = ""
+ 
+   parser = argparse.ArgumentParser(description=description)
+   
+   parser.add_argument('-r',  '--read-from-disk',
+                       help='Reads the data from file "json" instead of downloading it.',
+                       action='store_true')
+   parser.add_argument('-p', '--plot', help='Plots the data.',
+                       action='store_true')
+   parser.add_argument('-h5', '--hdf5', help='Changes output format from json to hdf5.',
+                       action='store_true')
+   parser.add_argument('-o', '--out_path', type=str, default=out_path_default, help='Defines folder for output.')
+                       #action='store_true')
+
+   args = parser.parse_args()
+
+   READ_DATA = args.read_from_disk
+   MAKE_PLOT = args.plot
+   OUT_FORM = "hdf5" if args.hdf5 else "json"
+
+   
+   return [READ_DATA, MAKE_PLOT, OUT_FORM, args.out_path]
 
