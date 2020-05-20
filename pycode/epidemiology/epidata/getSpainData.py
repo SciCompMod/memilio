@@ -30,8 +30,13 @@ def get_spain_data(read_data=dd.defaultDict['read_data'],
                    out_form=dd.defaultDict['out_form'],
                    out_folder=dd.defaultDict['out_folder']):
 
-   AgesJSONData = os.path.join(out_folder ,'raw_spain_all_age.json')
-   StatJSONData = os.path.join(out_folder ,'raw_spain_all_state.json')
+   directory = os.path.join(out_folder, 'Spain/')
+
+   if not os.path.exists(directory):
+      os.makedirs(directory)
+
+   AgesJSONData = os.path.join(directory ,'raw_spain_all_age.json')
+   StatJSONData = os.path.join(directory ,'raw_spain_all_state.json')
 
    if(read_data):
       # if once dowloaded just read json file
@@ -54,8 +59,9 @@ def get_spain_data(read_data=dd.defaultDict['read_data'],
                           apiUrl='https://raw.githubusercontent.com/datadista/datasets/master/COVID%2019/')
       
       if df_age.empty != True:
-         # standardization of column titles from Spanish to English # the stupid character in front of 'fecha' is correct here.. There is a bug in the original file..
-         df_age.rename({'fecha': 'Date', 'rango_edad': 'Age', 'sexo': 'Gender', 'casos_confirmados': 'Confirmed', 
+         # standardization of column titles from Spanish to English
+         # the stupid character in front of 'fecha' is correct here. There is a bug in the original file.
+         df_age.rename({'fecha': 'Date', 'rango_edad': 'Age10', 'sexo': 'Gender', 'casos_confirmados': 'Confirmed',
                'hospitalizados': 'Hospitalized', 'ingresos_uci': 'ICU', 'fallecidos' : 'Deaths'}, axis=1, inplace=True) 
 
          print("Read Spanish age data from online. Available columns:", df_age.columns)
@@ -64,9 +70,9 @@ def get_spain_data(read_data=dd.defaultDict['read_data'],
          df_age.loc[df_age.Gender=='ambos', ['Gender']] = 'both'
          df_age.loc[df_age.Gender=='mujeres', ['Gender']] = 'female'
          df_age.loc[df_age.Gender=='hombres', ['Gender']] = 'male'
-         df_age.loc[df_age.Age=='80 y +', ['Age']] = '80+'
-         df_age.loc[df_age.Age=='90 y +', ['Age']] = '90+'
-         df_age.loc[df_age.Age=='Total', ['Age']] = 'all'
+         df_age.loc[df_age.Age10=='80 y +', ['Age10']] = '80+'
+         df_age.loc[df_age.Age10=='90 y +', ['Age10']] = '90+'
+         df_age.loc[df_age.Age10=='Total', ['Age10']] = 'all'
 
          # Correct Timestamps:
          df_age['Date'] = df_age['Date'].astype( 'datetime64[ns]' ).dt.tz_localize('Europe/Berlin')
@@ -105,19 +111,23 @@ def get_spain_data(read_data=dd.defaultDict['read_data'],
 
    # Preparation for plotting/output age specific data:
 
+   outForm = od.outForm[out_form][0]
+   outFormEnd = od.outForm[out_form][1]
+   outFormSpec = od.outForm[out_form][2]
+
    # only consider men AND women (through information on gender away)
    df_age = df_age.loc[df_age.Gender=='both']
 
    # write file for all age groups summed together
-   df_agesum = df_age.loc[df_age.Age=='all']
+   df_agesum = df_age.loc[df_age.Age10=='all']
       # call to df_ageall.to_json("all_age.json", orient='records')
-   getattr(df_agesum, od.outForm[out_form][0])(os.path.join(out_folder, "spain") + od.outForm[out_form][1], **od.outForm[out_form][2])
+   getattr(df_agesum, outForm)(os.path.join(directory, "spain") + outFormEnd, **outFormSpec)
 
    # write file with information on all age groups separately
    # age_groups = ['0-9','10-19','20-29','30-39','40-49','50-59','60-69','70-79','80+']
-   df_agesep = df_age.loc[df_age.Age!='all']
+   df_agesep = df_age.loc[df_age.Age10!='all']
       # call to df_ageall.to_json("all_age.json", orient='records')
-   getattr(df_agesep, od.outForm[out_form][0])(os.path.join(out_folder ,"spain_all_age") + od.outForm[out_form][1], **od.outForm[out_form][2])
+   getattr(df_agesep, outForm)(os.path.join(directory ,"spain_all_age") + outFormEnd, **outFormSpec)
 
    # Preparation for plotting/output:
 
@@ -136,7 +146,7 @@ def get_spain_data(read_data=dd.defaultDict['read_data'],
 
    # output json
    # call df_state.to_json("spain_all_state.json", orient='records'), or to hdf5 alternatively
-   getattr(df_state, od.outForm[out_form][0])(os.path.join(out_folder ,"spain_all_state") + od.outForm[out_form][1], **od.outForm[out_form][2])
+   getattr(df_state, outForm)(os.path.join(directory ,"spain_all_state") + outFormEnd, **outFormSpec)
 
 
 def main():

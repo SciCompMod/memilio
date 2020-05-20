@@ -11,8 +11,13 @@ def get_population_data(read_data=dd.defaultDict['read_data'],
                                 out_form=dd.defaultDict['out_form'],
                                 out_folder=dd.defaultDict['out_folder']):
 
-    file1 = os.path.join(out_folder, "FullDataB.json")
-    file2 = os.path.join(out_folder, "FullDataL.json")      
+    directory = os.path.join(out_folder, 'Germany/')
+
+    if not os.path.exists(directory):
+        os.makedirs(directory)
+
+    file1 = os.path.join(directory, "FullDataB.json")
+    file2 = os.path.join(    directory, "FullDataL.json")
 
     if(read_data):
         # if once dowloaded just read json file
@@ -65,13 +70,12 @@ def get_population_data(read_data=dd.defaultDict['read_data'],
 
     dfB = dfB.rename(columns={'LAN_ew_GEN': 'Bundesland', 'LAN_ew_EWZ': 'EWZ'})
     dfBo = dfB[['Bundesland','EWZ']]
-    getattr(dfBo, outForm)(os.path.join(out_folder,  "PopulStates" + outFormEnd), **outFormSpec)
-  
+    getattr(dfBo, outForm)(os.path.join( directory,  "PopulStates" + outFormEnd), **outFormSpec)
 
     # TODO Counties are less as in RKI data. Compare it!
     dfL = dfL.rename(columns={'GEN': 'Landkreis'})
     dfLo = dfL[['Landkreis','EWZ']]
-    getattr(dfLo, outForm)(os.path.join(out_folder,  "PopulCounties" + outFormEnd), **outFormSpec)
+    getattr(dfLo, outForm)(os.path.join( directory,  "PopulCounties" + outFormEnd), **outFormSpec)
 
 
 def main():
