@@ -64,6 +64,7 @@ test-py:
     - getpopuldata --help
     - getjhdata --help
     - getspaindata --help
+    - getalldata --help
 
 download-data:
   tags:

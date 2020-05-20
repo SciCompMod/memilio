@@ -18,7 +18,7 @@ def loadGeojson( targetFileName, apiUrl = 'https://opendata.arcgis.com/datasets/
 
     Keyword arguments:
     targetFileName -- File name without ending, for ArcGIS: public data item ID (string)
-    apiUrl -- URL to file default: ArcGIS data sets API URL (string, default
+    apiUrl -- URL to file, default: ArcGIS data sets API URL (string, default
               'https://opendata.arcgis.com/datasets/')
     extension -- Data format extension (string, default 'geojson')
 

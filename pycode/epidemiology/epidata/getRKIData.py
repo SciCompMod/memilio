@@ -29,7 +29,7 @@ def get_rki_data(read_data=dd.defaultDict['read_data'],
       try:
          df = pandas.read_json(filename)
       except ValueError:
-         exit_string = "Error: The file: " + filename + "does not exist. Call program without -r flag to get it."
+         exit_string = "Error: The file: " + filename + " does not exist. Call program without -r flag to get it."
          sys.exit(exit_string)
    else:
 
@@ -48,6 +48,20 @@ def get_rki_data(read_data=dd.defaultDict['read_data'],
       # output data to not always download it
       df.to_json(filename)
 
+   # generate Test file:
+   # df.head(100).to_json(os.path.join(directory, "TestDataRKI.json"))
+
+   # store dict values in parameter to not always call dict itself
+   Altersgruppe2 = dd.GerEng['Altersgruppe2']
+   Altersgruppe = dd.GerEng['Altersgruppe']
+   Geschlecht = dd.GerEng['Geschlecht']
+   AnzahlFall = dd.GerEng['AnzahlFall']
+   AnzahlGenesen = dd.GerEng['AnzahlGenesen']
+   AnzahlTodesfall = dd.GerEng['AnzahlTodesfall']
+   IdBundesland = dd.GerEng['IdBundesland']
+   Bundesland = dd.GerEng['Bundesland']
+   IdLandkreis = dd.GerEng['IdLandkreis']
+   Landkreis = dd.GerEng['Landkreis']
 
    # translate column gender from Spanish to English and standardize
    df.loc[df.Geschlecht == 'unbekannt', ['Geschlecht']] = dd.GerEng['unbekannt']
@@ -64,14 +78,14 @@ def get_rki_data(read_data=dd.defaultDict['read_data'],
 
    # Add new column with Age with range 10 as spain data
    conditions = [
-      (df[dd.GerEng['Altersgruppe2']] == '0-4') & (df[dd.GerEng['Altersgruppe2']] == '5-9'),
-      (df[dd.GerEng['Altersgruppe2']] == '10-14') & (df[dd.GerEng['Altersgruppe2']] == '15-19'),
-      (df[dd.GerEng['Altersgruppe2']] == '20-24') & (df[dd.GerEng['Altersgruppe2']] == '25-29'),
-      (df[dd.GerEng['Altersgruppe2']] == '30-34') & (df[dd.GerEng['Altersgruppe2']] == '35-39'),
-      (df[dd.GerEng['Altersgruppe2']] == '40-44') & (df[dd.GerEng['Altersgruppe2']] == '45-49'),
-      (df[dd.GerEng['Altersgruppe2']] == '50-54') & (df[dd.GerEng['Altersgruppe2']] == '55-59'),
-      (df[dd.GerEng['Altersgruppe2']] == '60-64') & (df[dd.GerEng['Altersgruppe2']] == '65-69'),
-      (df[dd.GerEng['Altersgruppe2']] == '70-74') & (df[dd.GerEng['Altersgruppe2']] == '75-79'),
+      (df[Altersgruppe2] == '0-4') & (df[Altersgruppe2] == '5-9'),
+      (df[Altersgruppe2] == '10-14') & (df[Altersgruppe2] == '15-19'),
+      (df[Altersgruppe2] == '20-24') & (df[Altersgruppe2] == '25-29'),
+      (df[Altersgruppe2] == '30-34') & (df[Altersgruppe2] == '35-39'),
+      (df[Altersgruppe2] == '40-44') & (df[Altersgruppe2] == '45-49'),
+      (df[Altersgruppe2] == '50-54') & (df[Altersgruppe2] == '55-59'),
+      (df[Altersgruppe2] == '60-64') & (df[Altersgruppe2] == '65-69'),
+      (df[Altersgruppe2] == '70-74') & (df[Altersgruppe2] == '75-79'),
    ]
 
    choices = ['0-9', '10-19', '20-29', '30-39', '40-49', '50-59', '60-69', '70-79']
@@ -91,14 +105,16 @@ def get_rki_data(read_data=dd.defaultDict['read_data'],
    dateToUse = 'Date'
    df.sort_values( dateToUse, inplace = True )
 
+
+
    # Manipulate data to get rid of conditions: df.NeuerFall >= 0, df.NeuerTodesfall >= 0, df.NeuGenesen >=0
    # There might be a better way
 
    dfF = df
 
-   dfF.loc[dfF.NeuerFall<0, [dd.GerEng['AnzahlFall']]] = 0
-   dfF.loc[dfF.NeuerTodesfall<0, [dd.GerEng['AnzahlTodesfall']]] = 0
-   dfF.loc[dfF.NeuGenesen<0, [dd.GerEng['AnzahlGenesen']]] = 0
+   dfF.loc[dfF.NeuerFall<0, [AnzahlFall]] = 0
+   dfF.loc[dfF.NeuerTodesfall<0, [AnzahlTodesfall]] = 0
+   dfF.loc[dfF.NeuGenesen<0, [AnzahlGenesen]] = 0
 
    print("Available columns:", df.columns)
 
@@ -114,7 +130,7 @@ def get_rki_data(read_data=dd.defaultDict['read_data'],
    # make sum for one "dateToUse"
    # old way:
    # gbNF = df[df.NeuerFall >= 0].groupby( dateToUse ).sum()
-   gbNF = df[df.NeuerFall >= 0].groupby(dateToUse).agg({dd.GerEng["AnzahlFall"]: sum})
+   gbNF = df[df.NeuerFall >= 0].groupby(dateToUse).agg({AnzahlFall: sum})
 
    # make cumulative sum of "AnzahlFall" for "dateToUse"
    # old way
@@ -132,7 +148,7 @@ def get_rki_data(read_data=dd.defaultDict['read_data'],
       plt.show()
 
    # Dead over "Meldedatum":
-   gbNT = df[df.NeuerTodesfall >= 0].groupby( dateToUse ).agg({dd.GerEng["AnzahlTodesfall"]: sum})
+   gbNT = df[df.NeuerTodesfall >= 0].groupby( dateToUse ).agg({AnzahlTodesfall: sum})
    gbNT_cs = gbNT.cumsum()
 
    # output
@@ -155,8 +171,8 @@ def get_rki_data(read_data=dd.defaultDict['read_data'],
    
    # NeuerFall: Infected (incl. recovered) over "dateToUse" for every state ("Bundesland"):
    #gbNFst = df[df.NeuerFall >= 0].groupby( [IdBundesland','Bundesland', dateToUse]).AnzahlFall.sum()
-   gbNFst = df[df.NeuerFall >= 0].groupby( [dd.GerEng['IdBundesland'], dd.GerEng['Bundesland'], dateToUse ])\
-                                 .agg({dd.GerEng["AnzahlFall"]: sum})
+   gbNFst = df[df.NeuerFall >= 0].groupby( [IdBundesland, Bundesland, dateToUse ])\
+                                 .agg({AnzahlFall: sum})
 
    gbNFst_cs = gbNFst.groupby(level=1).cumsum().reset_index()
   
@@ -172,8 +188,8 @@ def get_rki_data(read_data=dd.defaultDict['read_data'],
 
    # infected (incl recovered), deaths and recovered together 
 
-   gbAllSt = dfF.groupby( [dd.GerEng['IdBundesland'], dd.GerEng['Bundesland'], dateToUse])\
-                .agg({dd.GerEng["AnzahlFall"]: sum, dd.GerEng["AnzahlTodesfall"]: sum, dd.GerEng["AnzahlGenesen"]: sum})
+   gbAllSt = dfF.groupby( [IdBundesland, Bundesland, dateToUse])\
+                .agg({AnzahlFall: sum, AnzahlTodesfall: sum, AnzahlGenesen: sum})
    gbAllSt_cs = gbAllSt.groupby(level=1).cumsum().reset_index()
 
    # output
@@ -182,8 +198,8 @@ def get_rki_data(read_data=dd.defaultDict['read_data'],
    ############# Data for counties all ages ######################
 
    # NeuerFall: Infected (incl. recovered) over "dateToUse" for every county ("Landkreis"):
-   gbNFc = df[df.NeuerFall >= 0].groupby([dd.GerEng['IdLandkreis'], dd.GerEng['Landkreis'], dateToUse])\
-                                .agg({dd.GerEng["AnzahlFall"]: sum})
+   gbNFc = df[df.NeuerFall >= 0].groupby([IdLandkreis, Landkreis, dateToUse])\
+                                .agg({AnzahlFall: sum})
 
    gbNFc_cs = gbNFc.groupby(level=1).cumsum().reset_index()
 
@@ -192,8 +208,8 @@ def get_rki_data(read_data=dd.defaultDict['read_data'],
 
    # infected (incl recovered), deaths and recovered together 
 
-   gbAllC = dfF.groupby( [dd.GerEng['IdLandkreis'], dd.GerEng['Landkreis'], dateToUse]).\
-                agg({dd.GerEng["AnzahlFall"]: sum, dd.GerEng["AnzahlTodesfall"]: sum, dd.GerEng["AnzahlGenesen"]: sum})
+   gbAllC = dfF.groupby( [IdLandkreis, Landkreis, dateToUse]).\
+                agg({AnzahlFall: sum, AnzahlTodesfall: sum, AnzahlGenesen: sum})
    gbAllC_cs = gbAllC.groupby(level=1).cumsum().reset_index()
 
    # output
@@ -204,16 +220,16 @@ def get_rki_data(read_data=dd.defaultDict['read_data'],
 
    # infected (incl recovered), deaths and recovered together 
 
-   gbAllG = dfF.groupby( [dd.GerEng['Geschlecht'], dateToUse])\
-               .agg({dd.GerEng["AnzahlFall"]: sum, dd.GerEng["AnzahlTodesfall"]: sum, dd.GerEng["AnzahlGenesen"]: sum})
+   gbAllG = dfF.groupby( [Geschlecht, dateToUse])\
+               .agg({AnzahlFall: sum, AnzahlTodesfall: sum, AnzahlGenesen: sum})
    gbAllG_cs = gbAllG.groupby(level=0).cumsum().reset_index()
 
    # output
    getattr(gbAllG_cs, outForm)(os.path.join(directory, "all_gender_rki" + outFormEnd), **outFormSpec)
 
    if(make_plot == True):
-      dfF.groupby(dd.GerEng['Geschlecht'] ) \
-         .agg({dd.GerEng["AnzahlFall"]: sum, dd.GerEng["AnzahlTodesfall"]: sum, dd.GerEng["AnzahlGenesen"]: sum}) \
+      dfF.groupby(Geschlecht ) \
+         .agg({AnzahlFall: sum, AnzahlTodesfall: sum, AnzahlGenesen: sum}) \
          . plot( title = 'COVID-19 infections, deaths, recovered', grid = True,
                              kind = 'bar' )
       plt.tight_layout()
@@ -224,8 +240,8 @@ def get_rki_data(read_data=dd.defaultDict['read_data'],
 
    # infected (incl recovered), deaths and recovered together 
 
-   gbAllGState = dfF.groupby( [dd.GerEng['IdBundesland'], dd.GerEng['Bundesland'], dd.GerEng['Geschlecht'], dateToUse])\
-                    .agg({dd.GerEng["AnzahlFall"]: sum, dd.GerEng["AnzahlTodesfall"]: sum, dd.GerEng["AnzahlGenesen"]: sum})
+   gbAllGState = dfF.groupby( [IdBundesland, Bundesland, Geschlecht, dateToUse])\
+                    .agg({AnzahlFall: sum, AnzahlTodesfall: sum, AnzahlGenesen: sum})
    gbAllGState_cs = gbAllGState.groupby(level=[1,2]).cumsum().reset_index()
 
    # output
@@ -233,8 +249,8 @@ def get_rki_data(read_data=dd.defaultDict['read_data'],
 
    ############# Gender and County #####################
 
-   gbAllGCounty = dfF.groupby( [dd.GerEng['IdLandkreis'], dd.GerEng['Landkreis'], dd.GerEng['Geschlecht'], dateToUse])\
-                     .agg({dd.GerEng["AnzahlFall"]: sum, dd.GerEng["AnzahlTodesfall"]: sum, dd.GerEng["AnzahlGenesen"]: sum})
+   gbAllGCounty = dfF.groupby( [IdLandkreis, Landkreis, Geschlecht, dateToUse])\
+                     .agg({AnzahlFall: sum, AnzahlTodesfall: sum, AnzahlGenesen: sum})
    gbAllGCounty_cs = gbAllGCounty.groupby(level=[1,2]).cumsum().reset_index()
 
    # output
@@ -244,16 +260,16 @@ def get_rki_data(read_data=dd.defaultDict['read_data'],
 
    # infected (incl recovered), deaths and recovered together 
 
-   gbAllA = dfF.groupby( [dd.GerEng['Altersgruppe'], dateToUse])\
-            .agg({dd.GerEng["AnzahlFall"]: sum, dd.GerEng["AnzahlTodesfall"]: sum, dd.GerEng["AnzahlGenesen"]: sum})
+   gbAllA = dfF.groupby( [Altersgruppe, dateToUse])\
+            .agg({AnzahlFall: sum, AnzahlTodesfall: sum, AnzahlGenesen: sum})
    gbAllA_cs = gbAllA.groupby(level=0).cumsum().reset_index()
 
    # output
    getattr(gbAllA_cs, outForm)(os.path.join(directory, "all_age_rki" + outFormEnd), **outFormSpec)
 
    if(make_plot == True):
-      dfF.groupby( dd.GerEng['Altersgruppe'] ) \
-         .agg({dd.GerEng["AnzahlFall"]: sum, dd.GerEng["AnzahlTodesfall"]: sum, dd.GerEng["AnzahlGenesen"]: sum}) \
+      dfF.groupby( Altersgruppe ) \
+         .agg({AnzahlFall: sum, AnzahlTodesfall: sum, AnzahlGenesen: sum}) \
          .plot( title = 'COVID-19 infections, deaths, recovered for diff ages', grid = True,
                              kind = 'bar' )
       plt.tight_layout()
@@ -261,7 +277,7 @@ def get_rki_data(read_data=dd.defaultDict['read_data'],
 
 
       # Dead by "Altersgruppe":
-      gbNTAG = df[df.NeuerTodesfall >= 0].groupby( dd.GerEng['Altersgruppe'] ).sum()
+      gbNTAG = df[df.NeuerTodesfall >= 0].groupby( Altersgruppe ).sum()
 
       gbNTAG.AnzahlTodesfall.plot( title = 'COVID-19 deaths', grid = True, 
                              kind = 'bar' )
@@ -274,45 +290,63 @@ def get_rki_data(read_data=dd.defaultDict['read_data'],
 
    # infected (incl recovered), deaths and recovered together 
 
-   gbAllAState = dfF.groupby( [dd.GerEng['IdBundesland'], dd.GerEng['Bundesland'], dd.GerEng['Altersgruppe'], dateToUse])\
-                    .agg({dd.GerEng["AnzahlFall"]: sum, dd.GerEng["AnzahlTodesfall"]: sum, dd.GerEng["AnzahlGenesen"]: sum})
-   gbAllAState_cs = gbAllAState.groupby(level=[1,2]).cumsum().reset_index()
+   gbAllAgeState = dfF.groupby( [IdBundesland, Bundesland, Altersgruppe, dateToUse])\
+                    .agg({AnzahlFall: sum, AnzahlTodesfall: sum, AnzahlGenesen: sum})
+   gbAllAgeState_cs = gbAllAgeState.groupby(level=[1,2]).cumsum().reset_index()
 
    # output
-   getattr(gbAllAState_cs, outForm)(os.path.join(directory, "all_state_age_rki" + outFormEnd), **outFormSpec)
+   getattr(gbAllAgeState_cs, outForm)(os.path.join(directory, "all_state_age_rki" + outFormEnd), **outFormSpec)
 
    ##### Age5 and Age10#####
 
    # infected (incl recovered), deaths and recovered together
 
-   gbAllAState = dfF.groupby([dd.GerEng['IdBundesland'], dd.GerEng['Bundesland'], dd.GerEng['Altersgruppe2'], dateToUse]) \
-      .agg({dd.GerEng["AnzahlFall"]: sum, dd.GerEng["AnzahlTodesfall"]: sum, dd.GerEng["AnzahlGenesen"]: sum})
+   gbAllAgeState = dfF.groupby([IdBundesland, Bundesland, dd.GerEng['Altersgruppe2'], dateToUse]) \
+      .agg({AnzahlFall: sum, AnzahlTodesfall: sum, AnzahlGenesen: sum})
 
-   gbAllAState_cs = gbAllAState.groupby(level=[1, 2]).cumsum().reset_index()
+   gbAllAgeState_cs = gbAllAgeState.groupby(level=[1, 2]).cumsum().reset_index()
 
    # output
-   getattr(gbAllAState_cs, outForm)(os.path.join(directory, "all_state_age5_rki" + outFormEnd), **outFormSpec)
+   getattr(gbAllAgeState_cs, outForm)(os.path.join(directory, "all_state_age5_rki" + outFormEnd), **outFormSpec)
 
    ##### Age10 #####
 
-   gbAllAState = dfF.groupby([dd.GerEng['IdBundesland'], dd.GerEng['Bundesland'], 'Age10', dateToUse]) \
-      .agg({dd.GerEng["AnzahlFall"]: sum, dd.GerEng["AnzahlTodesfall"]: sum, dd.GerEng["AnzahlGenesen"]: sum})
+   gbAllAgeState = dfF.groupby([IdBundesland, Bundesland, 'Age10', dateToUse]) \
+      .agg({AnzahlFall: sum, AnzahlTodesfall: sum, AnzahlGenesen: sum})
 
-   gbAllAState_cs = gbAllAState.groupby(level=[1, 2]).cumsum().reset_index()
+   gbAllAgeState_cs = gbAllAgeState.groupby(level=[1, 2]).cumsum().reset_index()
 
    # output
-   getattr(gbAllAState_cs, outForm)(os.path.join(directory, "all_state_age10_rki" + outFormEnd), **outFormSpec)
+   getattr(gbAllAgeState_cs, outForm)(os.path.join(directory, "all_state_age10_rki" + outFormEnd), **outFormSpec)
 
 
 
    ############# Age and County #####################
 
-   gbAllACounty = dfF.groupby( [dd.GerEng['IdLandkreis'], dd.GerEng['Landkreis'], dd.GerEng['Altersgruppe'], dateToUse])\
-                     .agg({dd.GerEng["AnzahlFall"]: sum, dd.GerEng["AnzahlTodesfall"]: sum, dd.GerEng["AnzahlGenesen"]: sum})
-   gbAllACounty_cs = gbAllACounty.groupby(level=[1,2]).cumsum().reset_index()
+   gbAllAgeCounty = dfF.groupby( [IdLandkreis, Landkreis, Altersgruppe, dateToUse])\
+                     .agg({AnzahlFall: sum, AnzahlTodesfall: sum, AnzahlGenesen: sum})
+   gbAllAgeCounty_cs = gbAllAgeCounty.groupby(level=[1,2]).cumsum().reset_index()
 
    # output
-   getattr(gbAllACounty_cs, outForm)(os.path.join(directory,  "all_county_age_rki" + outFormEnd), **outFormSpec)
+   getattr(gbAllAgeCounty_cs, outForm)(os.path.join(directory,  "all_county_age_rki" + outFormEnd), **outFormSpec)
+
+   #### age5 ####
+
+   gbAllAgeCounty = dfF.groupby([IdLandkreis, Landkreis, Altersgruppe2, dateToUse]) \
+      .agg({AnzahlFall: sum, AnzahlTodesfall: sum, AnzahlGenesen: sum})
+   gbAllAgeCounty_cs = gbAllAgeCounty.groupby(level=[1, 2]).cumsum().reset_index()
+
+   # output
+   getattr(gbAllAgeCounty_cs, outForm)(os.path.join(directory, "all_county_age5_rki" + outFormEnd), **outFormSpec)
+
+   #### age10 ####
+
+   gbAllAgeCounty = dfF.groupby( [IdLandkreis, Landkreis, 'Age10', dateToUse])\
+                     .agg({AnzahlFall: sum, AnzahlTodesfall: sum, AnzahlGenesen: sum})
+   gbAllAgeCounty_cs = gbAllAgeCounty.groupby(level=[1,2]).cumsum().reset_index()
+
+   # output
+   getattr(gbAllAgeCounty_cs, outForm)(os.path.join(directory,  "all_county_age10_rki" + outFormEnd), **outFormSpec)
 
 
 def main():
