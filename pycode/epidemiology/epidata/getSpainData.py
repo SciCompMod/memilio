@@ -40,19 +40,18 @@ def get_spain_data(read_data=dd.defaultDict['read_data'],
 
    if(read_data):
       # if once dowloaded just read json file
+      print("Read from local.")
 
       #### ages' data
       df_age = pandas.read_json(AgesJSONData)
 
-      print("Read from local.")
-
       #### states' data
       df_state = pandas.read_json(StatJSONData)
 
-      print("Read from local. Available columns:", df_state.columns)
-
    else:
-  
+
+      print("Read Spanish data from online.")
+
       # Get data:
       # https://raw.githubusercontent.com/datadista/datasets/master/COVID%2019/nacional_covid19_rango_edad.csv
       df_age = gd.loadCsv('nacional_covid19_rango_edad',
@@ -78,17 +77,18 @@ def get_spain_data(read_data=dd.defaultDict['read_data'],
       # the stupid character in front of 'fecha' is correct here. There is a bug in the original file.
       df_age.rename(dd.EsEng, axis=1, inplace=True)
 
-      print("Read Spanish age data from online.")
+      print("Available age columns:", df_age.columns)
 
       # translate column gender from Spanish to English and standardize
       gender = dd.EngEng['gender']
       age10 = dd.EngEng['age10']
-      df_age.loc[df_age.Gender == 'ambos', [gender]] = dd.EngEng['both']
-      df_age.loc[df_age.Gender == 'mujeres', [gender]] = dd.EngEng['female']
-      df_age.loc[df_age.Gender == 'hombres', [gender]] = dd.EngEng['male']
-      df_age.loc[df_age.Age10 == '80 y +', [age10]] = dd.EngEng['80+']
-      df_age.loc[df_age.Age10 == '90 y +', [age10]] = dd.EngEng['90+']
-      df_age.loc[df_age.Age10 == 'Total', [age10]] = dd.EngEng['all']
+      df_age.loc[df_age[gender] == 'ambos', [gender]] = dd.EngEng['both']
+      df_age.loc[df_age[gender] == 'mujeres', [gender]] = dd.EngEng['female']
+      df_age.loc[df_age[gender] == 'mujeres', [gender]] = dd.EngEng['female']
+      df_age.loc[df_age[gender] == 'hombres', [gender]] = dd.EngEng['male']
+      df_age.loc[df_age[age10] == '80 y +', [age10]] = dd.EngEng['80+']
+      df_age.loc[df_age[age10] == '90 y +', [age10]] = dd.EngEng['90+']
+      df_age.loc[df_age[age10] == 'Total', [age10]] = dd.EngEng['all']
 
       # Correct Timestamps:
       date = dd.EngEng['date']
@@ -98,18 +98,18 @@ def get_spain_data(read_data=dd.defaultDict['read_data'],
       # standardization of column titles from Spanish to English
       df_state.rename(dd.EsEng, axis=1, inplace=True)
 
-      print("Available columns:", df_state.columns)
+      print("Available state columns:", df_state.columns)
 
       # fill empty cells (nan values) with zero
       df_state.replace(np.nan, 0, inplace=True)
 
       # remove special characters
       state = dd.EngEng['state']
-      df_state.loc[df_state.State == "Andalucía", [state]] = "Andalucia"
-      df_state.loc[df_state.State == "Castilla y León", [state]] = "Castilla y Leon"
-      df_state.loc[df_state.State == "Cataluña", [state]] = "Cataluna"
-      df_state.loc[df_state.State == "País Vasco", [state]] = "Pais Vasco"
-      df_state.loc[df_state.State == "Aragón", [state]] = "Aragon"
+      df_state.loc[df_state[state] == "Andalucía", [state]] = dd.EsEng["Andalucía"]
+      df_state.loc[df_state[state] == "Castilla y León", [state]] = dd.EsEng["Castilla y León"]
+      df_state.loc[df_state[state] == "Cataluña", [state]] = dd.EsEng["Cataluña"]
+      df_state.loc[df_state[state] == "País Vasco", [state]] = dd.EsEng["País Vasco"]
+      df_state.loc[df_state[state] == "Aragón", [state]] = dd.EsEng["Aragón"]
 
       # Correct Timestamps:
       df_state['Date'] = df_state['Date'].astype('datetime64[ns]').dt.tz_localize('Europe/Berlin')
@@ -121,7 +121,7 @@ def get_spain_data(read_data=dd.defaultDict['read_data'],
    outFormSpec = od.outForm[out_form][2]
 
    # only consider men AND women (through information on gender away)
-   df_age = df_age.loc[df_age.Gender==dd.EngEng['both']]
+   df_age = df_age.loc[ df_age[dd.EngEng["gender"]] == dd.EngEng['both'] ]
 
    # write file for all age groups summed together
    df_agesum = df_age.loc[df_age[dd.EngEng["age10"]] == dd.EngEng['all']]
@@ -142,11 +142,13 @@ def get_spain_data(read_data=dd.defaultDict['read_data'],
    # if PCR only is used, the number of confirmed cases is the number of people being tested positive with PCR test
    # otherwise, the number of positive antibody tests is also taken into account
    if PCR_ONLY:
-      df_state.loc[df_state[dd.EngEng['confirmedTotal']==0], dd.EngEng['confirmedTotal']] = df_state.Confirmed_PCR
+      df_state.loc[df_state[dd.EngEng['confirmedTotal']] == 0, [dd.EngEng['confirmedTotal']]]\
+         = df_state[ dd.EngEng["confirmedPcr"]]
    else:
-      df_state.loc[df_state[dd.EngEng['confirmedTotal']==0], dd.EngEng['confirmedTotal']] = df_state.Confirmed_PCR + df_state.Confirmed_AB
+      df_state.loc[df_state[dd.EngEng['confirmedTotal']] == 0, [dd.EngEng['confirmedTotal']]]\
+         = df_state[ dd.EngEng["confirmedPcr"]] + df_state[dd.EngEng["confirmedAb"]]
 
-   states_array = df_state.State.unique()
+   #states_array = df_state.State.unique()
 
    # output json
    # call df_state.to_json("spain_all_state.json", orient='records'), or to hdf5 alternatively
