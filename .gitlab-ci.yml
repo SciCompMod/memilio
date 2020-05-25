@@ -17,20 +17,21 @@ build-cpp:
 
 build-py:
   tags:
-   - cpp
+   - docker
    - hpcagainstcorona
+  image: quay.io/pypa/manylinux2010_x86_64
   stage: build
   before_script:
-    - apt -qq -y install python3.7-venv python3-venv
+    - yum install ninja-build -qy
     - cd pycode
-    - python3 -m venv venv
-    - source venv/bin/activate
-    - pip install scikit-build
   script:
-    - python3 setup.py bdist_wheel
+    - /opt/python/cp36-cp36m/bin/python setup.py bdist_wheel
+    - /opt/python/cp37-cp37m/bin/python setup.py bdist_wheel
+    - /opt/python/cp38-cp38/bin/python setup.py bdist_wheel
+    - for whl in dist/*.whl; do auditwheel repair "$whl"; done
   artifacts:
     paths:
-      - pycode/dist/*.whl
+      - pycode/wheelhouse/*.whl
 
 # run tests using the binary built before
 test-cpp:
@@ -56,7 +57,8 @@ test-py:
     - build-py
   before_script:
     - apt -qq -y install python3.7 python3-pip
-    - for pkg in `ls pycode/dist/*.whl`; do python3 -m pip install $pkg; done
+    - python3 -m pip install --upgrade pip
+    - for pkg in `ls pycode/wheelhouse/*37*.whl`; do python3 -m pip install $pkg; done
   script:
     - cd pycode/test
     - python3 -m unittest
