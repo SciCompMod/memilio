@@ -90,6 +90,7 @@ def get_rki_data(read_data=dd.defaultDict['read_data'],
 
    choices = ['0-9', '10-19', '20-29', '30-39', '40-49', '50-59', '60-69', '70-79']
    df['Age10'] = np.select(conditions, choices, default=dd.GerEng['unbekannt'])
+
    # convert "Datenstand" to real date:
    df.Datenstand = pandas.to_datetime(df.Datenstand, format='%d.%m.%Y, %H:%M Uhr').dt.tz_localize('Europe/Berlin')
 
@@ -104,8 +105,6 @@ def get_rki_data(read_data=dd.defaultDict['read_data'],
 
    dateToUse = 'Date'
    df.sort_values( dateToUse, inplace = True )
-
-
 
    # Manipulate data to get rid of conditions: df.NeuerFall >= 0, df.NeuerTodesfall >= 0, df.NeuGenesen >=0
    # There might be a better way
@@ -133,7 +132,7 @@ def get_rki_data(read_data=dd.defaultDict['read_data'],
    gbNF = df[df.NeuerFall >= 0].groupby(dateToUse).agg({AnzahlFall: sum})
 
    # make cumulative sum of "AnzahlFall" for "dateToUse"
-   # old way
+   # old way:
    # gbNF_cs = gbNF.AnzahlFall.cumsum()
    gbNF_cs = gbNF.cumsum()
 
@@ -147,7 +146,7 @@ def get_rki_data(read_data=dd.defaultDict['read_data'],
       plt.tight_layout()
       plt.show()
 
-   # Dead over "Meldedatum":
+   # Dead over Date:
    gbNT = df[df.NeuerTodesfall >= 0].groupby( dateToUse ).agg({AnzahlTodesfall: sum})
    gbNT_cs = gbNT.cumsum()
 
