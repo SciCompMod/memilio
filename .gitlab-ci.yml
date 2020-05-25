@@ -18,7 +18,6 @@ build-cpp:
 build-py:
   tags:
    - docker
-   - hpcagainstcorona
   image: quay.io/pypa/manylinux2010_x86_64
   stage: build
   before_script:
@@ -76,7 +75,8 @@ download-data:
     - build-py
   before_script:
     - apt -qq -y install python3.7 python3-pip
-    - for pkg in `ls pycode/dist/*.whl`; do python3 -m pip install $pkg; done
+    - python3 -m pip install --upgrade pip
+    - for pkg in `ls pycode/wheelhouse/*37*.whl`; do python3 -m pip install $pkg; done
   script:
     - mkdir data
     - getrkidata -o data
