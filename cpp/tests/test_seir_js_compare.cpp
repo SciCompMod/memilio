@@ -27,6 +27,8 @@ protected:
         // add two dampings
         params.dampings.add(epi::Damping(0., 1.0));
         params.dampings.add(epi::Damping(12.0, 0.4));
+
+        params.dampings.set_smoothing(false);
     }
 
 public:
