@@ -112,9 +112,11 @@ TEST_F(TestVerifyNumericalIntegrator, runge_kutta_fehlberg45_sine)
 
 class FakeNonAdaptiveIntegrator : public epi::IntegratorBase
 {
-    public:
-    FakeNonAdaptiveIntegrator(epi::DerivFunction f) : epi::IntegratorBase(f)
-    {}
+public:
+    FakeNonAdaptiveIntegrator(epi::DerivFunction f)
+        : epi::IntegratorBase(f)
+    {
+    }
     virtual bool step(const Eigen::VectorXd& yt, double& t, double& dt, Eigen::VectorXd& ytp1) const override
     {
         t += dt;
@@ -123,8 +125,7 @@ class FakeNonAdaptiveIntegrator : public epi::IntegratorBase
     }
 };
 
-template <class FakeIntegrator>
-class MockIntegrator : public epi::IntegratorBase
+template <class FakeIntegrator> class MockIntegrator : public epi::IntegratorBase
 {
 public:
     MockIntegrator(epi::DerivFunction f)
@@ -158,5 +159,5 @@ TEST(TestOdeIntegrate, integratorStopsAtTMax)
     std::vector<Eigen::VectorXd> result(1, Eigen::VectorXd::Constant(1, 0));
     auto t =
         epi::ode_integrate(0, 2.34, 0.137, FakeNonAdaptiveIntegrator([](const auto& y, auto t, auto& dydt) {}), result);
-    EXPECT_FLOAT_EQ(t.back(), 2.34);
+    EXPECT_DOUBLE_EQ(t.back(), 2.34);
 }

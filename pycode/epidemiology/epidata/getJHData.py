@@ -1,8 +1,12 @@
+import os
 import sys
 from urllib.request import urlopen
 import json
 import pandas
 import matplotlib.pyplot as plt
+
+from epidemiology.epidata import outputDict as od
+from epidemiology.epidata import getDataIntoPandasDataFrame as gd
 
 
 def loadCsv( githubUrl = 'https://github.com/datasets/covid-19/tree/master/data/', 
@@ -24,13 +28,21 @@ def loadCsv( githubUrl = 'https://github.com/datasets/covid-19/tree/master/data/
 
     return df
 
-def main(get_data, read_data, make_plot):
+def main():
 
-   FullJSONData = 'FullData_JohnHopkins.json'
+   [read_data, make_plot, out_form, out_folder] = gd.cli('Downloads data from JH')   
 
-   if(get_data):
+   filename = os.path.join(out_folder, "FullData_JohnHopkins.json")
 
-      # Get data:
+   if(read_data):
+      # if once dowloaded just read json file
+      try:
+         df = pandas.read_json(filename)
+      except ValueError:
+         exit_string = "Error: The file: " + filename + "does not exist. Call program without -r flag to get it."
+         sys.exit(exit_string)
+   else:
+       # Get data:
       # https://raw.githubusercontent.com/datasets/covid-19/master/data/time-series-19-covid-combined.csv
       df = loadCsv(githubUrl = 'https://raw.githubusercontent.com/datasets/covid-19/master/data/')
 
@@ -38,13 +50,13 @@ def main(get_data, read_data, make_plot):
       #df.Datenstand = pandas.to_datetime( df.Datenstand, format='%d.%m.%Y, %H:%M Uhr').dt.tz_localize('Europe/Berlin')  
 
       # output data to not always download it
-      df.to_json(FullJSONData)
-
-   elif(read_data):
-      # if once dowloaded just read json file
-      df = pandas.read_json(FullJSONData)
+      df.to_json(filename)
 
    # Preperation for plotting/output:
+
+   outForm = od.outForm[out_form][0]
+   outFormEnd = od.outForm[out_form][1]
+   outFormSpec = od.outForm[out_form][2]
 
    df.rename({'Country/Region': 'CountryRegion', 'Province/State': 'ProvinceState'}, axis=1, inplace=True)
    print("Available columns:", df.columns)
@@ -58,7 +70,7 @@ def main(get_data, read_data, make_plot):
    #print(gb)
    #print(gb.reset_index()[gb.reset_index().CountryRegion == "Germany"])
 
-   gb.reset_index().to_json("all_countries.json", orient='records', date_format='iso')
+   getattr(gb.reset_index(), outForm)(os.path.join(out_folder, "all_countries_jh" + outFormEnd), **outFormSpec)
 
    # Check what about external provinces. Should they be added?
 
@@ -69,7 +81,7 @@ def main(get_data, read_data, make_plot):
 
    gb = dfD.groupby( ['CountryRegion', 'ProvinceState', 'Date']).agg({"Confirmed": sum, "Recovered": sum, "Deaths": sum})
 
-   gb.reset_index().to_json("all_provincestate.json", orient='records', date_format='iso')
+   getattr(gb.reset_index(), outForm)(os.path.join(out_folder, "all_provincestate_jh" + outFormEnd), **outFormSpec)
 
    #print(dfD[dfD.ProvinceState=="Saskatchewan"])
    #print(gb.reset_index()[gb.reset_index().ProvinceState=="Saskatchewan"])
@@ -83,34 +95,5 @@ def main(get_data, read_data, make_plot):
  
 if __name__ == "__main__":
 
-   GET_DATA = True
-   READ_DATA = False
-   MAKE_PLOT = True
+    main()
 
-   largv = len(sys.argv)
-
-   if largv > 1:
-      for i in range(1,largv):
-
-          arg = sys.argv[i]
-
-          if "READ_DATA" in arg:
-
-             arg_split = arg.split("=")
-             if len(arg_split) == 2:
-                 READ_DATA = arg_split[1]
-                 GET_DATA=False
-             else:
-                 print("Warning: your argument:", arg, "is ignored. It has to be in the form as: READ_DATA=True")
-
-          elif "MAKE_PLOT" in arg:
-
-             arg_split = arg.split("=")
-             if len(arg_split) == 2:
-                 MAKE_PLOT = arg_split[1]
-             else:
-                 print("Warning: your argument:", arg, "is ignored. It has to be in the form as: MAKE_PLOT=False")
-          else:
-             print("Warning: your argument:", arg, "is ignored.")
-
-   main(GET_DATA, READ_DATA, MAKE_PLOT)

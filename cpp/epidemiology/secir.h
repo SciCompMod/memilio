@@ -2,6 +2,7 @@
 #define SECIR_H
 
 #include <epidemiology/damping.h>
+#include <epidemiology/migration.h>
 
 #include <vector>
 #include <Eigen/Core>
@@ -53,7 +54,7 @@ public:
     /**
      * @brief returns the dampings set for the SECIR model in 1/day unit; in case of multiple groups, returns the damping d_ij=d_ji
      */
-    Dampings get_dampings(int self_group, int contact_group) const;
+    const Dampings& get_dampings(int self_group, int contact_group) const;
 
     /**
      * @brief add damping to the dampings object specified by self_ and contact_group
@@ -472,6 +473,10 @@ void secir_get_derivatives(ContactFrequencyMatrix const& cont_freq_matrix, std::
  */
 std::vector<double> simulate(double t0, double tmax, double dt, ContactFrequencyMatrix const& cont_freq_matrix,
                              std::vector<SecirParams> const& params, std::vector<Eigen::VectorXd>& secir);
+
+std::vector<double> simulate_groups(double t0, double tmax, double dt, const std::vector<SecirParams>& group_params,
+                                    const std::vector<ContactFrequencyMatrix>& cont_freq_matrix,
+                                    MigrationFunction migration_function, std::vector<Eigen::VectorXd>& group_secir);
 
 } // namespace epi
 

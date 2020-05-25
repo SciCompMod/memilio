@@ -63,9 +63,9 @@ TEST(TestSecir, compareWithPreviousRun)
     ASSERT_EQ(compare.size(), secihurd.size());
     for (size_t i = 0; i < compare.size(); i++) {
         ASSERT_EQ(compare[i].size(), secihurd[i].size() + 1) << "at row " << i;
-        ASSERT_FLOAT_EQ(t[i], compare[i][0]) << "at row " << i;
+        EXPECT_NEAR(t[i], compare[i][0], 1e-10) << "at row " << i;
         for (size_t j = 1; j < compare[i].size(); j++) {
-            EXPECT_FLOAT_EQ(secihurd[i][j - 1], compare[i][j]) << " at row " << i;
+            EXPECT_NEAR(secihurd[i][j - 1], compare[i][j], 1e-10) << " at row " << i;
         }
     }
 }

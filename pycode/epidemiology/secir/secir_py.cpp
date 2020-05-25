@@ -154,7 +154,7 @@ PYBIND11_MODULE(_secir, m)
         .def("set_cont_freq", &epi::ContactFrequencyMatrix::set_cont_freq)
         .def("get_cont_freq", &epi::ContactFrequencyMatrix::get_cont_freq)
         .def("set_dampings", &epi::ContactFrequencyMatrix::set_dampings)
-        .def("get_dampings", &epi::ContactFrequencyMatrix::get_dampings)
+        .def("get_dampings", &epi::ContactFrequencyMatrix::get_dampings, py::return_value_policy::reference_internal)
         .def("add_damping", &epi::ContactFrequencyMatrix::add_damping);
 
     m.def("print_secir_params", &epi::print_secir_params);

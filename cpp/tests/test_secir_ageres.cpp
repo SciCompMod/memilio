@@ -53,8 +53,8 @@ TEST(TestSecir, compareAgeResWithSingleRun)
     }
 
     epi::Damping dummy(30., 0.3);
-    for (size_t i = 0; i < nb_groups; i++) {
-        for (size_t j = i; j < nb_groups; j++) {
+    for (int i = 0; i < nb_groups; i++) {
+        for (int j = i; j < nb_groups; j++) {
             contact_freq_matrix.set_cont_freq(fact * cont_freq, i, j);
             contact_freq_matrix.add_damping(dummy, i, j);
         }
@@ -82,13 +82,13 @@ TEST(TestSecir, compareAgeResWithSingleRun)
     ASSERT_EQ(compare.size(), secihurd.size());
     for (size_t i = 0; i < compare.size(); i++) {
         ASSERT_EQ(compare[i].size() - 1, secihurd[i].size() / nb_groups) << "at row " << i;
-        ASSERT_FLOAT_EQ(t[i], compare[i][0]) << "at row " << i;
+        ASSERT_NEAR(t[i], compare[i][0], 1e-10) << "at row " << i;
         for (size_t j = 1; j < compare[i].size(); j++) {
             double dummy = 0;
             for (size_t k = 0; k < nb_groups; k++) {
                 dummy += secihurd[i][j - 1 + k * 8];
             }
-            EXPECT_FLOAT_EQ(dummy, compare[i][j]) << " at row " << i;
+            EXPECT_NEAR(dummy, compare[i][j], 1e-10) << " at row " << i;
         }
     }
 }

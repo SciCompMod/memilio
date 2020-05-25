@@ -89,9 +89,9 @@ bool RKIntegrator::step(const Eigen::VectorXd& yt, double& t, double& dt, Eigen:
                 auto yt_eval(yt);
 
                 // go through the variables of the system: S, E, I, ....
-                for (size_t j = 0; j < yt_eval.size(); j++) {
+                for (int j = 0; j < yt_eval.size(); j++) {
                     // go through the different kt_1, kt_2, ..., kt_i-1 and add them onto yt: y_eval = yt + h * \sum_{j=1}^{i-1} a_{i,j} kt_j
-                    for (size_t k = 1; k < m_tab.entries[i - 1].size() - 1; k++) {
+                    for (size_t k = 1; k < m_tab.entries[i - 1].size(); k++) {
                         yt_eval[j] +=
                             (dt * m_tab.entries[i - 1][k] *
                              kt_values
@@ -115,7 +115,7 @@ bool RKIntegrator::step(const Eigen::VectorXd& yt, double& t, double& dt, Eigen:
         double max_val = 0;
         max_err        = 0;
 
-        for (size_t i = 0; i < yt.size(); i++) {
+        for (int i = 0; i < yt.size(); i++) {
 
             for (size_t j = 0; j < kt_values.size();
                  j++) { // we first compute k_n1 for each y_j, then k_n2 for each y_j, etc.
@@ -133,7 +133,7 @@ bool RKIntegrator::step(const Eigen::VectorXd& yt, double& t, double& dt, Eigen:
                 max_err = err[i];
             }
             if (max_val < ytp1_low[i]) {
-                max_val = ytp1_low[i];
+                max_val = std::abs(ytp1_low[i]);
             }
         }
 

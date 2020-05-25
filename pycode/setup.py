@@ -1,17 +1,22 @@
 import sys
+import os
+import subprocess
+
 
 try:
     from skbuild import setup
 except ImportError:
-    print('scikit-build is required to build from source.', file=sys.stderr)
-    print('Please run:', file=sys.stderr)
-    print('', file=sys.stderr)
-    print('  python -m pip install scikit-build')
-    sys.exit(1)
+    print('scikit-build is required to build from source.')
+    print('Installation:  python -m pip install scikit-build')
+    subprocess.check_call([sys.executable, "-m", "pip", "install", "scikit-build"])
+    from skbuild import setup
+
 
 __version__ = '0.1.0'
 
-requirements = ['pandas', 'matplotlib', 'tables']
+
+INSTALL_REQUIRES = ['pandas', 'matplotlib', 'tables']
+
 
 setup(
     name='epidemiology',
@@ -22,12 +27,23 @@ setup(
     description='The python package for the HPC corona project',
     entry_points={
         'console_scripts': [
-            'getrkidata=epidemiology.epidata.getGeoJsonIntoPandasDataFrame_for_RKI:cli',
+            'getrkidata=epidemiology.epidata.getRKIData:main',
+            'getpopuldata=epidemiology.epidata.getPopulationData:main',
+            'getjhdata = epidemiology.epidata.getJHData:main',
+            'getspaindata = epidemiology.epidata.getSpainData:main'
         ],
     },
-    package_dir={'epidemiology.epidata': 'epidata'},
-    packages=['epidemiology.epidata'],
+    package_dir={
+       'epidemiology': 'epidemiology',
+       'epidemiology.seir': os.path.join('epidemiology', 'seir'),
+       'epidemiology.secir': os.path.join('epidemiology','secir'),
+       'epidemiology.epidata': os.path.join('epidemiology','epidata')},
+    packages=['epidemiology', 
+              'epidemiology.seir',
+              'epidemiology.secir',
+              'epidemiology.epidata'],
     long_description='',
     setup_requires=['cmake'],
-    install_requires=requirements
+    test_suite='test',
+    install_requires=INSTALL_REQUIRES
 )

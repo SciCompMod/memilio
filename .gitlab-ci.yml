@@ -8,7 +8,7 @@ build-cpp:
   script:
     - cd cpp
     - mkdir build && cd build
-    - cmake ..
+    - cmake -G Ninja ..
     - cmake --build .
   artifacts:
     expire_in: 2 hrs
@@ -47,6 +47,45 @@ test-cpp:
     reports:
       junit: cpp/build/tests/report.xml
 
+test-py:
+  tags:
+   - cpp
+   - hpcagainstcorona
+  stage: test
+  dependencies:
+    - build-py
+  before_script:
+    - apt -qq -y install python3.7 python3-pip
+    - for pkg in `ls pycode/dist/*.whl`; do python3 -m pip install $pkg; done
+  script:
+    - cd pycode/test
+    - python3 -m unittest
+    - getrkidata --help
+    - getpopuldata --help
+    - getjhdata --help
+    - getspaindata --help
+
+download-data:
+  tags:
+   - cpp
+   - hpcagainstcorona
+  stage: test
+  dependencies:
+    - build-py
+  before_script:
+    - apt -qq -y install python3.7 python3-pip
+    - for pkg in `ls pycode/dist/*.whl`; do python3 -m pip install $pkg; done
+  script:
+    - mkdir data
+    - getrkidata -o data
+    - getpopuldata -o data
+    - getjhdata -o data
+    - getspaindata -o data
+  artifacts:
+    paths:
+      - data/*.json
+  
+
 build-js:
   tags:
    - npm
@@ -69,9 +108,11 @@ www:
   stage: deploy
   dependencies:
     - build-js
+    - download-data
   script:
     - echo "Deploying to server"
     - cp -rv build/* /var/www/html
+    - cp -v data/*.json /var/www/html/assets
     - echo "Deployed"
   only:
     - master
