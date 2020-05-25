@@ -7,6 +7,8 @@ import SEIRChart from '../Graphs/SEIRChart';
 import { getSelectedData } from '../../redux/app';
 import { getActiveMeasures } from '../../redux/measures';
 
+import * as numeral from 'numeral';
+
 class Results extends Component {
   _render() {
     if (this.props.rki === null) {
@@ -35,7 +37,9 @@ class Results extends Component {
                 ? this.props.selected.label
                 : 'Keine Auswahl getroffen.'}
               ,&nbsp; Einwohnerzahl:&nbsp;
-              {this.props.selected ? this.props.selected.population : '---'}
+              {this.props.selected && this.props.selected.population
+                ? numeral(this.props.selected.population).format('0,0')
+                : '---'}
             </span>
           </div>
           <div className="charts p-1">{this._render()}</div>

@@ -4,12 +4,22 @@ import { Provider } from 'react-redux';
 import App from './App';
 import store from './redux/store';
 import * as serviceWorker from './serviceWorker';
+import * as numeral from 'numeral';
 
 import { Spinner } from 'reactstrap';
 
 import './i18n';
 
 import './index.css';
+
+// setup number library
+numeral.register('locale', 'de', {
+  delimiters: {
+    thousands: '.',
+    decimal: ','
+  }
+});
+numeral.locale('de');
 
 ReactDOM.render(
   <Provider store={store}>
