@@ -42,16 +42,45 @@ def get_jh_data(read_data=dd.defaultDict['read_data'],
    df.rename({'Country/Region': 'CountryRegion', 'Province/State': 'ProvinceState'}, axis=1, inplace=True)
    print("Available columns:", df.columns)
 
+   # Change "Korea, South" to SouthKorea
+   df.loc[df['CountryRegion'] == "Korea, South", ['CountryRegion']] = 'SouthKorea'
+
+   # Generate folders if needed
+   directory_ger = os.path.join(out_folder, 'Germany/')
+   directory_es = os.path.join(out_folder, 'Spain/')
+   directory_fr = os.path.join(out_folder, 'France/')
+   directory_it = os.path.join(out_folder, 'Italy/')
+   directory_us = os.path.join(out_folder, 'US/')
+   directory_rok = os.path.join(out_folder, 'SouthKorea/')
+   directory_prc = os.path.join(out_folder, 'China/')
+
+   # dictionary of countries
+   countries = {
+      "Germany": directory_ger,
+      "Spain": directory_es,
+      "France": directory_fr,
+      "Italy": directory_it,
+      "US": directory_us,
+      "SouthKorea": directory_rok,
+      "China": directory_prc,
+   }
+
+   for key in countries:
+      dir_here = countries[key]
+      if not os.path.exists(dir_here):
+         os.makedirs(dir_here)
 
    ########### Coutries ##########################
 
    gb = df.groupby( ['CountryRegion', 'Date']).agg({"Confirmed": sum, "Recovered": sum, "Deaths": sum})
 
-   #print(df[df.CountryRegion == "Germany"])
-   #print(gb)
-   #print(gb.reset_index()[gb.reset_index().CountryRegion == "Germany"])
-
    getattr(gb.reset_index(), outForm)(os.path.join(out_folder, "all_countries_jh" + outFormEnd), **outFormSpec)
+
+   for key in countries:
+      # get data for specific countries
+      gb_country = gb.reset_index()[gb.reset_index()["CountryRegion"]==key]
+      dir_country = countries[key]
+      getattr(gb_country, outForm)(os.path.join(dir_country, "whole_country_"+ key +"_jh" + outFormEnd), **outFormSpec)
 
    # Check what about external provinces. Should they be added?
 
