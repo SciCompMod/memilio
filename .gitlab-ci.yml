@@ -8,7 +8,7 @@ build-cpp:
   script:
     - cd cpp
     - mkdir build && cd build
-    - cmake -G Ninja ..
+    - cmake -G Ninja -DEPI_USE_BUNDLED_EIGEN=OFF ..
     - cmake --build .
   artifacts:
     expire_in: 2 hrs
@@ -21,7 +21,7 @@ build-py:
    - hpcagainstcorona
   stage: build
   before_script:
-    - apt -qq -y install python3.7-venv python3-venv libeigen3-dev
+    - apt -qq -y install python3.7-venv python3-venv
     - cd pycode
     - python3 -m venv venv
     - source venv/bin/activate

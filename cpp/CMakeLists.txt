@@ -3,14 +3,14 @@ cmake_minimum_required(VERSION 3.4)
 project(epidemiology VERSION 0.1.0)
 
 option(EPI_USE_BUNDLED_SPDLOG "Use spdlog bundled with epi" ON)
+option(EPI_USE_BUNDLED_EIGEN "Use eigen bundled with epi" ON)
+
 mark_as_advanced(EPI_USE_BUNDLED_SPDLOG)
 
 set(CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake" ${CMAKE_MODULE_PATH})
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
-add_subdirectory(thirdparty)
-find_package(Eigen3 3.3 REQUIRED NO_MODULE)
-
+include(thirdparty/CMakeLists.txt)
 
 add_library(epidemiology
     epidemiology/euler.cpp
