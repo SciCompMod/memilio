@@ -144,7 +144,6 @@ def get_spain_data(read_data=dd.defaultDict['read_data'],
       df_state.loc[df_state[dd.EngEng['confirmedTotal']] == 0, [dd.EngEng['confirmedTotal']]]\
          = df_state[ dd.EngEng["confirmedPcr"]] + df_state[dd.EngEng["confirmedAb"]]
 
-   #states_array = df_state.State.unique()
 
    # output json
    gd.write_dataframe(df_state, directory, "spain_all_state", out_form)
