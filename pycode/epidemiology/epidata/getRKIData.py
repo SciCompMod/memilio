@@ -16,17 +16,18 @@ def get_rki_data(read_data=dd.defaultDict['read_data'],
                  out_folder=dd.defaultDict['out_folder']):
 
    directory = os.path.join(out_folder, 'Germany/')
-
    gd.check_dir(directory)
-   filename = os.path.join(directory, "FullDataRKI.json")
+
+   filename = "FullDataRKI"
 
    if(read_data):
       # if once dowloaded just read json file
-      
+
+      file_in = os.path.join(directory, filename+".json")
       try:
-         df = pandas.read_json(filename)
+         df = pandas.read_json(file_in)
       except ValueError:
-         exit_string = "Error: The file: " + filename + " does not exist. Call program without -r flag to get it."
+         exit_string = "Error: The file: " + file_in + " does not exist. Call program without -r flag to get it."
          sys.exit(exit_string)
    else:
 
@@ -43,7 +44,7 @@ def get_rki_data(read_data=dd.defaultDict['read_data'],
       df = load['csv'](itemId)
 
       # output data to not always download it
-      df.to_json(filename)
+      gd.write_dataframe(df, directory, filename, "json")
 
    # generate Test file:
    # df.head(100).to_json(os.path.join(directory, "TestDataRKI.json"))

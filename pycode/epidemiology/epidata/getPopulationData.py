@@ -13,12 +13,14 @@ def get_population_data(read_data=dd.defaultDict['read_data'],
    directory = os.path.join(out_folder, 'Germany/')
    gd.check_dir(directory)
 
-   file1 = os.path.join(directory, "FullDataB.json")
-   file2 = os.path.join(directory, "FullDataL.json")
+   filename1 = "FullDataB"
+   filename2 = "FullDataL"
 
    if(read_data):
       # if once dowloaded just read json file
-      
+      file1 = os.path.join(directory, filename1+".json")
+      file2 = os.path.join(directory, filename2+".json")
+
       try:
          dfB = pandas.read_json(file1)
 
@@ -50,8 +52,8 @@ def get_population_data(read_data=dd.defaultDict['read_data'],
       dfL = load['csv'](itemIdL)
 
       # output data to not always download it
-      dfB.to_json(file1)
-      dfL.to_json(file2)
+      gd.write_dataframe(dfB, directory, filename1, "json")
+      gd.write_dataframe(dfL, directory, filename2, "json")
 
    print("Available columns for states:", dfB.columns)
    print("Available columns for counties:", dfL.columns)  
@@ -65,7 +67,7 @@ def get_population_data(read_data=dd.defaultDict['read_data'],
    # TODO Counties are less as in RKI data. Compare it!
    dfL = dfL.rename(columns={'GEN': 'Landkreis'})
    dfLo = dfL[['Landkreis','EWZ']]
-   gd.write_dataframe(dfLo, out_folder, "PopulCounties", out_form)
+   gd.write_dataframe(dfLo, directory, "PopulCounties", out_form)
 
 
 def main():

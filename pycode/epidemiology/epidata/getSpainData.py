@@ -32,10 +32,15 @@ def get_spain_data(read_data=dd.defaultDict['read_data'],
    directory = os.path.join(out_folder, 'Spain/')
    gd.check_dir(directory)
 
-   AgesJSONData = os.path.join(directory ,'raw_spain_all_age.json')
-   StatJSONData = os.path.join(directory ,'raw_spain_all_state.json')
+
+   ages_file = 'raw_spain_all_age'
+   stat_file = 'raw_spain_all_state.json'
 
    if(read_data):
+
+      AgesJSONData = os.path.join(directory, ages_file+'.json')
+      StatJSONData = os.path.join(directory, stat_file+'.json')
+
       # if once dowloaded just read json file
       print("Read from local.")
 
@@ -56,7 +61,7 @@ def get_spain_data(read_data=dd.defaultDict['read_data'],
 
       if df_age.empty != True:
          # output data to not always download it
-         df_age.to_json(AgesJSONData)
+         gd.write_dataframe(df_age, directory, ages_file, "json")
 
       # Get data:
       # https://raw.githubusercontent.com/datadista/datasets/master/COVID%2019/ccaa_covid19_datos_isciii.csv
@@ -66,7 +71,7 @@ def get_spain_data(read_data=dd.defaultDict['read_data'],
       if df_state.empty != True:
 
          # output data to not always download it
-         df_state.to_json(StatJSONData)
+         gd.write_dataframe(df_age, directory, stat_file, "json")
          
    # Manipulate data
    if df_age.empty != True:

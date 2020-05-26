@@ -11,14 +11,15 @@ def get_jh_data(read_data=dd.defaultDict['read_data'],
                 out_form=dd.defaultDict['out_form'],
                 out_folder=dd.defaultDict['out_folder']):
 
-   filename = os.path.join(out_folder, "FullData_JohnHopkins.json")
+   filename = "FullData_JohnHopkins"
 
    if(read_data):
+      file_in = os.path.join(out_folder, filename+".json")
       # if once dowloaded just read json file
       try:
-         df = pandas.read_json(filename)
+         df = pandas.read_json(file_in)
       except ValueError:
-         exit_string = "Error: The file: " + filename + "does not exist. Call program without -r flag to get it."
+         exit_string = "Error: The file: " + file_in + "does not exist. Call program without -r flag to get it."
          sys.exit(exit_string)
    else:
        # Get data:
@@ -30,7 +31,7 @@ def get_jh_data(read_data=dd.defaultDict['read_data'],
       #df.Datenstand = pandas.to_datetime( df.Datenstand, format='%d.%m.%Y, %H:%M Uhr').dt.tz_localize('Europe/Berlin')  
 
       # output data to not always download it
-      df.to_json(filename)
+      gd.write_dataframe(df, "", filename, "json")
 
    df.rename({'Country/Region': 'CountryRegion', 'Province/State': 'ProvinceState'}, axis=1, inplace=True)
    print("Available columns:", df.columns)
