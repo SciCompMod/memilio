@@ -57,20 +57,7 @@ TEST(TestSecir, compareWithPreviousRun)
     std::vector<Eigen::VectorXd> secihurd(0);
     auto t = simulate(t0, tmax, dt, contact_freq_matrix, params, secihurd);
 
-    // char vars[] = {'S', 'E', 'C', 'I', 'H', 'U', 'R', 'D'};
-    // for (size_t k = 0; k < 8; k++) {
-    //     printf("%c", vars[k]);
-    // }
-
-    // for (size_t i = 0; i < secihurd.size(); i++) {
-    //     printf(" %.14e", t[i]);
-    //     for (size_t k = 0; k < 8; k++) {
-    //         printf(" %.14e", secihurd[i][k]);
-    //     }
-    //     printf("\n");
-    // }
-
-    auto compare = load_test_data_csv<double>("data/secihurd-compare.csv");
+    auto compare = load_test_data_csv<double>("secihurd-compare.csv");
 
     ASSERT_EQ(compare.size(), t.size());
     ASSERT_EQ(compare.size(), secihurd.size());

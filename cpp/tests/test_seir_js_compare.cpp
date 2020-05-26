@@ -9,7 +9,7 @@ class TestCompareSeirWithJS : public testing::Test
 protected:
     void SetUp() override
     {
-        refData = load_test_data_csv<real>("data/seir-js-compare.csv");
+        refData = load_test_data_csv<real>("seir-js-compare.csv");
         t0      = 0.;
         tmax    = 50.;
         dt      = 0.1002004008016032;

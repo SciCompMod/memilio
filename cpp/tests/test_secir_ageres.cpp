@@ -76,7 +76,7 @@ TEST(TestSecir, compareAgeResWithSingleRun)
     //     printf("\t %c_otal: %.0f\n", vars[k], dummy);
     // }
 
-    auto compare = load_test_data_csv<double>("data/secihurd-compare.csv");
+    auto compare = load_test_data_csv<double>("secihurd-compare.csv");
 
     ASSERT_EQ(compare.size(), t.size());
     ASSERT_EQ(compare.size(), secihurd.size());

@@ -51,9 +51,12 @@ const slice = createSlice({
     setSelected: (state, action) => {
       state.selected = action.payload;
       if (action.payload !== null) {
+        console.log(action.payload);
         const population = state.populations[action.payload.dataset].find(
-          (e) => e[populationKeyMap] === action.payload.name
+          (e) =>
+            e[populationKeyMap[action.payload.dataset]] === action.payload.label
         );
+        console.log(population);
         if (population) {
           state.selected.population = population.EWZ;
         }

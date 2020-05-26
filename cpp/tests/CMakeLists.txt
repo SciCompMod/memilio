@@ -22,8 +22,12 @@ set(TESTSOURCES
   test_secir_ageres.cpp
 )
 
-file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/data DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
-
 add_executable(runUnitTests ${TESTSOURCES})
 target_link_libraries(runUnitTests PRIVATE epidemiology gtest_main)
+
+#make unit tests find the test data files
+file(TO_CMAKE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/data" EPI_TEST_DATA_DIR)
+configure_file(test_data_dir.h.in test_data_dir.h)
+target_include_directories(runUnitTests PRIVATE ${CMAKE_CURRENT_BINARY_DIR})
+
 add_gtest(runUnitTests)
