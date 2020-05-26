@@ -6,7 +6,6 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 from epidemiology.epidata import getDataIntoPandasDataFrame as gd
-from epidemiology.epidata import outputDict as od
 from epidemiology.epidata import defaultDict as dd
 
 
@@ -18,9 +17,7 @@ def get_rki_data(read_data=dd.defaultDict['read_data'],
 
    directory = os.path.join(out_folder, 'Germany/')
 
-   if not os.path.exists(directory):
-      os.makedirs(directory)
-
+   gd.check_dir(directory)
    filename = os.path.join(directory, "FullDataRKI.json")
 
    if(read_data):
@@ -117,11 +114,6 @@ def get_rki_data(read_data=dd.defaultDict['read_data'],
 
    print("Available columns:", df.columns)
 
-   # Preperation for plotting/output:
-   outForm = od.outForm[out_form][0]
-   outFormEnd = od.outForm[out_form][1]
-   outFormSpec = od.outForm[out_form][2]
-
    ######## Data for whole Germany all ages ##########
 
    # NeuerFall: Infected (incl. recovered) over "dateToUse":
@@ -137,7 +129,8 @@ def get_rki_data(read_data=dd.defaultDict['read_data'],
    gbNF_cs = gbNF.cumsum()
 
    # outout to json file
-   getattr(gbNF_cs, outForm)(os.path.join(directory , "infected_rki" + outFormEnd), **outFormSpec)
+   gd.write_dataframe(gbNF_cs, directory, "infected_rki", out_form)
+
 
    if(make_plot == True):
       # make plot
@@ -151,7 +144,7 @@ def get_rki_data(read_data=dd.defaultDict['read_data'],
    gbNT_cs = gbNT.cumsum()
 
    # output
-   getattr(gbNF_cs, outForm)(os.path.join(directory, "deaths_rki" + outFormEnd), **outFormSpec)
+   gd.write_dataframe(gbNT_cs, directory, "deaths_rki", out_form)
 
    if(make_plot == True):
       gbNT_cs.plot( title = 'COVID-19 deaths', grid = True,
@@ -176,7 +169,7 @@ def get_rki_data(read_data=dd.defaultDict['read_data'],
    gbNFst_cs = gbNFst.groupby(level=1).cumsum().reset_index()
   
    # output
-   getattr(gbNFst_cs, outForm)(os.path.join(directory, "infected_state_rki" + outFormEnd), **outFormSpec)
+   gd.write_dataframe(gbNFst_cs, directory, "infected_state_rki", out_form)
    
    # output nested json
    # gbNFst_cs.groupby(['IdBundesland', 'Bundesland'], as_index=False) \
@@ -192,7 +185,7 @@ def get_rki_data(read_data=dd.defaultDict['read_data'],
    gbAllSt_cs = gbAllSt.groupby(level=1).cumsum().reset_index()
 
    # output
-   getattr(gbAllSt_cs, outForm)(os.path.join(directory, "all_state_rki" + outFormEnd), **outFormSpec)
+   gd.write_dataframe(gbAllSt_cs, directory, "all_state_rki", out_form)
 
    ############# Data for counties all ages ######################
 
@@ -203,7 +196,7 @@ def get_rki_data(read_data=dd.defaultDict['read_data'],
    gbNFc_cs = gbNFc.groupby(level=1).cumsum().reset_index()
 
    # output
-   getattr(gbNFc_cs, outForm)( os.path.join(directory, "infected_county_rki" + outFormEnd), **outFormSpec)
+   gd.write_dataframe(gbNFc_cs, directory, "infected_county_rki", out_form)
 
    # infected (incl recovered), deaths and recovered together 
 
@@ -212,7 +205,7 @@ def get_rki_data(read_data=dd.defaultDict['read_data'],
    gbAllC_cs = gbAllC.groupby(level=1).cumsum().reset_index()
 
    # output
-   getattr(gbAllC_cs, outForm)(directory + "all_county_rki" + outFormEnd, **outFormSpec)
+   gd.write_dataframe(gbAllC_cs, directory, "all_county_rki", out_form)
    
 
    ######### Data whole Germany different gender ##################
@@ -224,7 +217,7 @@ def get_rki_data(read_data=dd.defaultDict['read_data'],
    gbAllG_cs = gbAllG.groupby(level=0).cumsum().reset_index()
 
    # output
-   getattr(gbAllG_cs, outForm)(os.path.join(directory, "all_gender_rki" + outFormEnd), **outFormSpec)
+   gd.write_dataframe(gbAllG_cs, directory, "all_gender_rki", out_form)
 
    if(make_plot == True):
       dfF.groupby(Geschlecht ) \
@@ -244,7 +237,7 @@ def get_rki_data(read_data=dd.defaultDict['read_data'],
    gbAllGState_cs = gbAllGState.groupby(level=[1,2]).cumsum().reset_index()
 
    # output
-   getattr(gbAllGState_cs, outForm)(os.path.join(directory, "all_state_gender_rki" + outFormEnd), **outFormSpec)
+   gd.write_dataframe(gbAllGState_cs, directory, "all_state_gender_rki", out_form)
 
    ############# Gender and County #####################
 
@@ -253,7 +246,7 @@ def get_rki_data(read_data=dd.defaultDict['read_data'],
    gbAllGCounty_cs = gbAllGCounty.groupby(level=[1,2]).cumsum().reset_index()
 
    # output
-   getattr(gbAllGCounty_cs, outForm)(os.path.join(directory, "all_county_gender_rki" + outFormEnd), **outFormSpec)
+   gd.write_dataframe(gbAllGCounty_cs, directory, "all_county_gender_rki", out_form)
   
    ######### Data whole Germany different ages ####################
 
@@ -264,7 +257,7 @@ def get_rki_data(read_data=dd.defaultDict['read_data'],
    gbAllA_cs = gbAllA.groupby(level=0).cumsum().reset_index()
 
    # output
-   getattr(gbAllA_cs, outForm)(os.path.join(directory, "all_age_rki" + outFormEnd), **outFormSpec)
+   gd.write_dataframe(gbAllA_cs, directory, "all_age_rki", out_form)
 
    if(make_plot == True):
       dfF.groupby( Altersgruppe ) \
@@ -294,7 +287,7 @@ def get_rki_data(read_data=dd.defaultDict['read_data'],
    gbAllAgeState_cs = gbAllAgeState.groupby(level=[1,2]).cumsum().reset_index()
 
    # output
-   getattr(gbAllAgeState_cs, outForm)(os.path.join(directory, "all_state_age_rki" + outFormEnd), **outFormSpec)
+   gd.write_dataframe(gbAllAgeState_cs, directory, "all_state_age_rki", out_form)
 
    ##### Age5 and Age10#####
 
@@ -306,7 +299,7 @@ def get_rki_data(read_data=dd.defaultDict['read_data'],
    gbAllAgeState_cs = gbAllAgeState.groupby(level=[1, 2]).cumsum().reset_index()
 
    # output
-   getattr(gbAllAgeState_cs, outForm)(os.path.join(directory, "all_state_age5_rki" + outFormEnd), **outFormSpec)
+   gd.write_dataframe(gbAllAgeState_cs, directory, "all_state_age5_rki", out_form)
 
    ##### Age10 #####
 
@@ -316,8 +309,7 @@ def get_rki_data(read_data=dd.defaultDict['read_data'],
    gbAllAgeState_cs = gbAllAgeState.groupby(level=[1, 2]).cumsum().reset_index()
 
    # output
-   getattr(gbAllAgeState_cs, outForm)(os.path.join(directory, "all_state_age10_rki" + outFormEnd), **outFormSpec)
-
+   gd.write_dataframe(gbAllAgeState_cs, directory, "all_state_age10_rki", out_form)
 
 
    ############# Age and County #####################
@@ -327,7 +319,7 @@ def get_rki_data(read_data=dd.defaultDict['read_data'],
    gbAllAgeCounty_cs = gbAllAgeCounty.groupby(level=[1,2]).cumsum().reset_index()
 
    # output
-   getattr(gbAllAgeCounty_cs, outForm)(os.path.join(directory,  "all_county_age_rki" + outFormEnd), **outFormSpec)
+   gd.write_dataframe(gbAllAgeCounty_cs, directory, "all_county_age_rki", out_form)
 
    #### age5 ####
 
@@ -336,7 +328,7 @@ def get_rki_data(read_data=dd.defaultDict['read_data'],
    gbAllAgeCounty_cs = gbAllAgeCounty.groupby(level=[1, 2]).cumsum().reset_index()
 
    # output
-   getattr(gbAllAgeCounty_cs, outForm)(os.path.join(directory, "all_county_age5_rki" + outFormEnd), **outFormSpec)
+   gd.write_dataframe(gbAllAgeCounty_cs, directory, "all_county_age5_rki", out_form)
 
    #### age10 ####
 
@@ -345,7 +337,7 @@ def get_rki_data(read_data=dd.defaultDict['read_data'],
    gbAllAgeCounty_cs = gbAllAgeCounty.groupby(level=[1,2]).cumsum().reset_index()
 
    # output
-   getattr(gbAllAgeCounty_cs, outForm)(os.path.join(directory,  "all_county_age10_rki" + outFormEnd), **outFormSpec)
+   gd.write_dataframe(gbAllAgeCounty_cs, directory, "all_county_age10_rki", out_form)
 
 
 def main():

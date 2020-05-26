@@ -1,3 +1,4 @@
+import os
 import sys
 from urllib.request import urlopen
 import json
@@ -87,3 +88,26 @@ def cli(description):
 
    return [READ_DATA, MAKE_PLOT, OUT_FORM, args.out_path]
 
+def check_dir(directory):
+    # check directory exists or create it
+    if not os.path.exists(directory):
+        os.makedirs(directory)
+
+def write_dataframe(df, directory, file_prefix, file_type):
+
+   outForm = {
+       'json': [".json", {"orient": "records"}],
+       'hdf5': [".h5", {"key": "data"}]
+   }
+
+   try:
+      outFormEnd = outForm[file_type][0]
+      outFormSpec = outForm[file_type][1]
+   except KeyError:
+       exit_string = "Error: The file format: " + file_type + " does not exist. Use another one."
+       sys.exit(exit_string)
+
+   if file_type == "json":
+       df.to_json(os.path.join(directory, file_prefix + outFormEnd), **outFormSpec)
+   elif file_type == "hdf5":
+       df.to_hdf(os.path.join(directory, file_prefix + outFormEnd), **outFormSpec)

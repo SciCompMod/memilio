@@ -20,7 +20,6 @@ import os
 import pandas
 import numpy as np
 
-from epidemiology.epidata import outputDict as od
 from epidemiology.epidata import getDataIntoPandasDataFrame as gd
 from epidemiology.epidata import defaultDict as dd
 
@@ -31,9 +30,7 @@ def get_spain_data(read_data=dd.defaultDict['read_data'],
                    out_folder=dd.defaultDict['out_folder']):
 
    directory = os.path.join(out_folder, 'Spain/')
-
-   if not os.path.exists(directory):
-      os.makedirs(directory)
+   gd.check_dir(directory)
 
    AgesJSONData = os.path.join(directory ,'raw_spain_all_age.json')
    StatJSONData = os.path.join(directory ,'raw_spain_all_state.json')
@@ -114,25 +111,19 @@ def get_spain_data(read_data=dd.defaultDict['read_data'],
       # Correct Timestamps:
       df_state['Date'] = df_state['Date'].astype('datetime64[ns]').dt.tz_localize('Europe/Berlin')
 
-   # Preparation for plotting/output age specific data:
-
-   outForm = od.outForm[out_form][0]
-   outFormEnd = od.outForm[out_form][1]
-   outFormSpec = od.outForm[out_form][2]
-
    # only consider men AND women (through information on gender away)
    df_age = df_age.loc[ df_age[dd.EngEng["gender"]] == dd.EngEng['both'] ]
 
    # write file for all age groups summed together
    df_agesum = df_age.loc[df_age[dd.EngEng["age10"]] == dd.EngEng['all']]
-      # call to df_ageall.to_json("all_age.json", orient='records')
-   getattr(df_agesum, outForm)(os.path.join(directory, "spain") + outFormEnd, **outFormSpec)
+
+   gd.write_dataframe(df_agesum, directory, "spain", out_form)
 
    # write file with information on all age groups separately
    # age_groups = ['0-9','10-19','20-29','30-39','40-49','50-59','60-69','70-79','80+']
    df_agesep = df_age.loc[df_age[dd.EngEng["age10"]] != dd.EngEng['all']]
-      # call to df_ageall.to_json("all_age.json", orient='records')
-   getattr(df_agesep, outForm)(os.path.join(directory ,"spain_all_age") + outFormEnd, **outFormSpec)
+
+   gd.write_dataframe(df_agesep, directory, "spain_all_age", out_form)
 
    # Preparation for plotting/output:
 
@@ -151,8 +142,7 @@ def get_spain_data(read_data=dd.defaultDict['read_data'],
    #states_array = df_state.State.unique()
 
    # output json
-   # call df_state.to_json("spain_all_state.json", orient='records'), or to hdf5 alternatively
-   getattr(df_state, outForm)(os.path.join(directory ,"spain_all_state") + outFormEnd, **outFormSpec)
+   gd.write_dataframe(df_state, directory, "spain_all_state", out_form)
 
 
 def main():

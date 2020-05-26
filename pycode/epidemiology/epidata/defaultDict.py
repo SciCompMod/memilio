@@ -23,7 +23,7 @@ EngEng = {
    'deaths': 'Deaths',
    'idState': 'ID_State',
    'state': 'State',
-   'idCounty': 'Id_County',
+   'idCounty': 'ID_County',
    'county': 'County',
    'ageRKI': 'Age_RKI',
    'age5': 'Age5',

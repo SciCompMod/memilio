@@ -2,7 +2,6 @@ import os
 import sys
 import pandas
 
-from epidemiology.epidata import outputDict as od
 from epidemiology.epidata import getDataIntoPandasDataFrame as gd
 from epidemiology.epidata import defaultDict as dd
 
@@ -33,12 +32,6 @@ def get_jh_data(read_data=dd.defaultDict['read_data'],
       # output data to not always download it
       df.to_json(filename)
 
-   # Preperation for plotting/output:
-
-   outForm = od.outForm[out_form][0]
-   outFormEnd = od.outForm[out_form][1]
-   outFormSpec = od.outForm[out_form][2]
-
    df.rename({'Country/Region': 'CountryRegion', 'Province/State': 'ProvinceState'}, axis=1, inplace=True)
    print("Available columns:", df.columns)
 
@@ -65,22 +58,18 @@ def get_jh_data(read_data=dd.defaultDict['read_data'],
       "China": directory_prc,
    }
 
-   for key in countries:
-      dir_here = countries[key]
-      if not os.path.exists(dir_here):
-         os.makedirs(dir_here)
-
    ########### Coutries ##########################
 
    gb = df.groupby( ['CountryRegion', 'Date']).agg({"Confirmed": sum, "Recovered": sum, "Deaths": sum})
 
-   getattr(gb.reset_index(), outForm)(os.path.join(out_folder, "all_countries_jh" + outFormEnd), **outFormSpec)
+   gd.write_dataframe(gb.reset_index(), out_folder, "all_countries_jh", out_form)
 
    for key in countries:
       # get data for specific countries
       gb_country = gb.reset_index()[gb.reset_index()["CountryRegion"]==key]
       dir_country = countries[key]
-      getattr(gb_country, outForm)(os.path.join(dir_country, "whole_country_"+ key +"_jh" + outFormEnd), **outFormSpec)
+      gd.check_dir(dir_country)
+      gd.write_dataframe(gb_country, dir_country, "whole_country_"+ key +"_jh", out_form)
 
    # Check what about external provinces. Should they be added?
 
@@ -91,7 +80,7 @@ def get_jh_data(read_data=dd.defaultDict['read_data'],
 
    gb = dfD.groupby( ['CountryRegion', 'ProvinceState', 'Date']).agg({"Confirmed": sum, "Recovered": sum, "Deaths": sum})
 
-   getattr(gb.reset_index(), outForm)(os.path.join(out_folder, "all_provincestate_jh" + outFormEnd), **outFormSpec)
+   gd.write_dataframe(gb.reset_index(), out_folder, "all_provincestate_jh", out_form)
 
    #print(dfD[dfD.ProvinceState=="Saskatchewan"])
    #print(gb.reset_index()[gb.reset_index().ProvinceState=="Saskatchewan"])

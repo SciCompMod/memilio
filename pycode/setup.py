@@ -14,7 +14,7 @@ except ImportError:
 __version__ = '0.1.0'
 
 
-INSTALL_REQUIRES = ['pandas', 'matplotlib', 'tables']
+INSTALL_REQUIRES = ['pandas', 'matplotlib', 'tables', 'numpy']
 
 
 setup(
