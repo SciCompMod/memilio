@@ -9,7 +9,7 @@ namespace epi {
 // The function type for the kind of simulation that we want to run
 using seir_simulation_function_t =
     void (*)(const double t0, const double tmax, const double dt,
-             struct seirParam<double> const &params,
+             SecirParams const &params,
              std::vector<std::vector<double>> &seir);
 
 // TODO: document class

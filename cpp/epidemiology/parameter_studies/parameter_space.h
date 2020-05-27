@@ -2,7 +2,7 @@
 #define PARAMETER_SPACE_H
 
 #include <assert.h>
-#include <epidemiology/seirParam.h>
+#include <epidemiology/secir.h>
 #include <string>
 #include <vector>
 
@@ -35,14 +35,14 @@ public:
    */
   parameter_space_t(std::string &parameter_filename);
 
-  /* Constructor from given seirParam. Mainly used for testing.
+  /* Constructor from given SecirParams. Mainly used for testing.
    * \param [in] seir Input parameters
    * \param [in] eps  0 <= \a eps < 1
    * This will construct a parameter space with all parameters in \a seir
    * and for each parameter p in \a seir values in the range
    *  (1-\a eps) * p to (1 + \a eps) * p
    */
-  parameter_space_t(const struct seirParam<double> &seir, double eps);
+  parameter_space_t(const SecirParams &seir, double eps);
 
 private:
   // A vector of all parameters with names and min/max values
@@ -54,7 +54,7 @@ parameter_space_t::parameter_space_t(std::string &parameter_filename) {
   assert(0 && "This function is not implemented yet.");
 }
 
-parameter_space_t::parameter_space_t(const struct seirParam<double> &seir,
+parameter_space_t::parameter_space_t(const SecirParams &seir,
                                      double eps) {
   assert(0 <= eps && eps < 1);
   const double min_factor = 1 - eps;
@@ -64,34 +64,34 @@ parameter_space_t::parameter_space_t(const struct seirParam<double> &seir,
    * Many parameters are stored inverse in seir, so we need to reinvert them. */
   // TODO: Currently we use UNIFORM distribution for all. Change this later when
   // we know more about distributions.
-  parameters.push_back({"T_inc", min_factor * 1. / seir.tinc_inv,
-                        max_factor * 1. / seir.tinc_inv, DIST_UNIFORM});
-  parameters.push_back({"T_serint", min_factor * 1. / seir.tserint_inv,
-                        max_factor * 1. / seir.tserint_inv, DIST_UNIFORM});
-  parameters.push_back({"T_infmild", min_factor * 1. / seir.tinfmild_inv,
-                        max_factor * 1. / seir.tinfmild_inv, DIST_UNIFORM});
-  parameters.push_back({"T_hosp2home", min_factor * 1. / seir.thosp2home_inv,
-                        max_factor * 1. / seir.thosp2home_inv, DIST_UNIFORM});
-  parameters.push_back({"T_home2hosp", min_factor * 1. / seir.thome2hosp_inv,
-                        max_factor * 1. / seir.thome2hosp_inv, DIST_UNIFORM});
-  parameters.push_back({"T_hosp2icu", min_factor * 1. / seir.thosp2icu_inv,
-                        max_factor * 1. / seir.thosp2icu_inv, DIST_UNIFORM});
-  parameters.push_back({"T_icu2home", min_factor * 1. / seir.ticu2home_inv,
-                        max_factor * 1. / seir.ticu2home_inv, DIST_UNIFORM});
-  parameters.push_back({"T_infasy", min_factor * 1. / seir.tinfasy_inv,
-                        max_factor * 1. / seir.tinfasy_inv, DIST_UNIFORM});
-  parameters.push_back({"cont_freq", min_factor * seir.cont_freq,
-                        max_factor * seir.tinfmild_inv, DIST_UNIFORM});
-  parameters.push_back({"alpha", min_factor * seir.alpha,
-                        max_factor * seir.alpha, DIST_UNIFORM});
-  parameters.push_back(
-      {"beta", min_factor * seir.beta, max_factor * seir.beta, DIST_UNIFORM});
-  parameters.push_back(
-      {"rho", min_factor * seir.rho, max_factor * seir.rho, DIST_UNIFORM});
-  parameters.push_back({"theta", min_factor * seir.theta,
-                        max_factor * seir.theta, DIST_UNIFORM});
-  parameters.push_back({"delta", min_factor * seir.delta,
-                        max_factor * seir.delta, DIST_UNIFORM});
+  // times
+  parameters.push_back({"T_inc", min_factor * 1. / seir.times.get_incubation_inv(),
+                        max_factor * 1. / seir.times.get_incubation_inv(), DIST_UNIFORM});
+  parameters.push_back({"T_serint", min_factor * 1. / seir.times.get_serialinterval_inv(),
+                        max_factor * 1. / seir.times.get_serialinterval_inv(), DIST_UNIFORM});
+  parameters.push_back({"T_infmild", min_factor * 1. / seir.times.get_infectious_mild_inv(),
+                        max_factor * 1. / seir.times.get_infectious_mild_inv(), DIST_UNIFORM});
+  parameters.push_back({"T_hosp2home", min_factor * 1. / seir.times.get_hospitalized_to_home_inv(),
+                        max_factor * 1. / seir.times.get_hospitalized_to_home_inv(), DIST_UNIFORM});
+  parameters.push_back({"T_home2hosp", min_factor * 1. / seir.times.get_home_to_hospitalized_inv(),
+                        max_factor * 1. / seir.times.get_home_to_hospitalized_inv(), DIST_UNIFORM});
+  parameters.push_back({"T_hosp2icu", min_factor * 1. / seir.times.get_hospitalized_to_icu_inv(),
+                        max_factor * 1. / seir.times.get_hospitalized_to_icu_inv(), DIST_UNIFORM});
+  parameters.push_back({"T_icu2home", min_factor * 1. / seir.times.get_icu_to_home_inv(),
+                        max_factor * 1. / seir.times.get_icu_to_home_inv(), DIST_UNIFORM});
+  parameters.push_back({"T_infasy", min_factor * 1. / seir.times.get_infectious_asymp_inv(),
+                        max_factor * 1. / seir.times.get_infectious_asymp_inv(), DIST_UNIFORM});
+  // probabilities
+  parameters.push_back({"alpha", min_factor * seir.probabilities.get_asymp_per_infectious(),
+                        max_factor * seir.probabilities.get_asymp_per_infectious(), DIST_UNIFORM});
+  parameters.push_back({"beta", min_factor * seir.probabilities.get_risk_from_symptomatic(),
+                        max_factor * seir.probabilities.get_risk_from_symptomatic(), DIST_UNIFORM});
+  parameters.push_back({"rho", min_factor * seir.probabilities.get_hospitalized_per_infectious(),
+                        max_factor * seir.probabilities.get_hospitalized_per_infectious(), DIST_UNIFORM});
+  parameters.push_back({"theta", min_factor * seir.probabilities.get_icu_per_hospitalized(),
+                        max_factor * seir.probabilities.get_icu_per_hospitalized(), DIST_UNIFORM});
+  parameters.push_back({"delta", min_factor * seir.probabilities.get_dead_per_icu(),
+                        max_factor * seir.probabilities.get_dead_per_icu(), DIST_UNIFORM});
 }
 
 } // namespace epi

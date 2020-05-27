@@ -5,7 +5,7 @@ int main (int argc, char *argv[])
 {
     std::string input_filename;
 
-    struct seirParam<double> params;
+    epi::SecirParams params;
     epi::parameter_space_t parameter_space(params, 0.1);
 #if 0
     if (argc > 1) {
