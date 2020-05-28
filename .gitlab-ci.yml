@@ -64,6 +64,7 @@ test-py:
     - getpopuldata --help
     - getjhdata --help
     - getspaindata --help
+    - getalldata --help
 
 download-data:
   tags:
@@ -84,6 +85,13 @@ download-data:
   artifacts:
     paths:
       - data/*.json
+      - data/Germany/*.json
+      - data/Spain/*.json
+      - data/France/*.json
+      - data/Italy*.json
+      - data/SouthKorea/*.json
+      - data/US/*.json
+      - data/China/*.json
   
 
 build-js:
@@ -112,7 +120,7 @@ www:
   script:
     - echo "Deploying to server"
     - cp -rv build/* /var/www/html
-    - cp -v data/*.json /var/www/html/assets
+    - cp -v data/Germany/*_rki.json /var/www/html/assets
     - echo "Deployed"
   only:
     - master

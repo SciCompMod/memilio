@@ -10,13 +10,13 @@ export const Datasets = {
 };
 
 const dataset2datakey = {
-  [Datasets.STATES]: 'IdBundesland',
-  [Datasets.COUNTIES]: 'IdLandkreis'
+  [Datasets.STATES]: 'ID_State',
+  [Datasets.COUNTIES]: 'ID_County'
 };
 
 const populationKeyMap = {
-  [Datasets.STATES]: 'Bundesland',
-  [Datasets.COUNTIES]: 'Landkreis'
+  [Datasets.STATES]: 'State',
+  [Datasets.COUNTIES]: 'County'
 };
 
 const slice = createSlice({
@@ -101,14 +101,14 @@ export const initializeApp = () => (dispatch) => {
 export const fetchData = () => async (dispatch) => {
   // load state data
   let state = await Promise.all([
-    axios.get('assets/all_state.json').then((response) => response.data),
-    axios.get('assets/all_state_age.json').then((response) => response.data),
-    axios.get('assets/all_state_gender.json').then((response) => response.data)
+    axios.get('assets/all_state_rki.json').then((response) => response.data),
+    axios.get('assets/all_state_age_rki.json').then((response) => response.data),
+    axios.get('assets/all_state_gender_rki.json').then((response) => response.data)
   ]);
 
   state = state.map((s) => {
     return groupBy(
-      renameKey(s, 'Meldedatum', 'date'),
+      renameKey(s, 'Date', 'date'),
       dataset2datakey[Datasets.STATES]
     );
   });
@@ -117,14 +117,14 @@ export const fetchData = () => async (dispatch) => {
 
   // load county data
   let county = await Promise.all([
-    axios.get('assets/all_county.json').then((response) => response.data),
-    axios.get('assets/all_county_age.json').then((response) => response.data),
-    axios.get('assets/all_county_gender.json').then((response) => response.data)
+    axios.get('assets/all_county_rki.json').then((response) => response.data),
+    axios.get('assets/all_county_age_rki.json').then((response) => response.data),
+    axios.get('assets/all_county_gender_rki.json').then((response) => response.data)
   ]);
 
   county = county.map((s) => {
     return groupBy(
-      renameKey(s, 'Meldedatum', 'date'),
+      renameKey(s, 'Date', 'date'),
       dataset2datakey[Datasets.COUNTIES]
     );
   });

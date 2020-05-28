@@ -63,7 +63,7 @@ const lines = [
     }
   },
   {
-    dataKey: 'AnzahlGenesen',
+    dataKey: 'Recovered',
     label: 'rki.recovered',
     props: {
       stroke: '#7566ff',
@@ -72,7 +72,7 @@ const lines = [
     }
   },
   {
-    dataKey: 'AnzahlFall',
+    dataKey: 'Confirmed',
     label: 'rki.infected',
     props: {
       stroke: '#533f82',
@@ -81,7 +81,7 @@ const lines = [
     }
   },
   {
-    dataKey: 'AnzahlTodesfall',
+    dataKey: 'Deaths',
     label: 'rki.deaths',
     props: {
       stroke: '#7a255d',
@@ -90,8 +90,6 @@ const lines = [
     }
   }
 ];
-
-
 
 const dateFormat = (time) => {
   return moment(time).format('DD. MMM');
@@ -124,7 +122,10 @@ class SEIRChart extends Component {
       if (line.dataKey !== event.value) {
         updated.push(line);
       } else {
-        updated.push({ ...line, inactive: line.inactive === undefined ? true : !line.inactive });
+        updated.push({
+          ...line,
+          inactive: line.inactive === undefined ? true : !line.inactive
+        });
       }
     }
     this.setState({
@@ -134,7 +135,7 @@ class SEIRChart extends Component {
 
   translate(label) {
     const { t } = this.props;
-    return t(this.state.lines.find(line => line.dataKey === label).label);
+    return t(this.state.lines.find((line) => line.dataKey === label).label);
   }
 
   prepareData() {
@@ -151,7 +152,7 @@ class SEIRChart extends Component {
   }
 
   payload() {
-    return this.state.lines.map(line => {
+    return this.state.lines.map((line) => {
       return {
         value: line.dataKey,
         type: 'line',
@@ -180,26 +181,28 @@ class SEIRChart extends Component {
             allowEscapeViewBox={{ x: true, y: false }}
             active={true}
             contentStyle={{
-              "background-color": 'rgba(255, 255, 255, 0.8)'
+              backgroundColor: 'rgba(255, 255, 255, 0.8)'
             }}
             itemStyle={{
               margin: 0,
               padding: 0
             }}
           />
-          {this.state.lines.map(line => {
-            return (<Line
-              key={line.dataKey}
-              dataKey={line.dataKey + (line.inactive ? " " : "")}
-              {...line.props}
-            />);
+          {this.state.lines.map((line) => {
+            return (
+              <Line
+                key={line.dataKey}
+                dataKey={line.dataKey + (line.inactive ? ' ' : '')}
+                {...line.props}
+              />
+            );
           })}
           <Brush dataKey="date" tickFormatter={dateFormat} />
           <Legend
             formatter={this.translate.bind(this)}
             onClick={this.selectBar}
             payload={this.payload()}
-            layout='vertical'
+            layout="vertical"
             align="right"
             verticalAlign="top"
             wrapperStyle={{
