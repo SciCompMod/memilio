@@ -46,9 +46,9 @@ class Test_secir_integration(unittest.TestCase):
 
     def test_simulate_simple(self):
       result = simulate(t0=0., tmax=100., dt=0.1, cont_freq_matrix=self.cont_freq_matrix, params=self.params)
-      self.assertAlmostEqual(result.t[0], 0.)
-      self.assertAlmostEqual(result.t[1], 0.1)
-      self.assertAlmostEqual(result.t[-1], 100.)
+      self.assertAlmostEqual(result[0].t[0], 0.)
+      self.assertAlmostEqual(result[0].t[1], 0.1)
+      self.assertAlmostEqual(result[0].t[-1], 100.)
 
 if __name__ == '__main__':
     unittest.main()
