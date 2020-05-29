@@ -67,10 +67,9 @@ double Dampings::get_factor(double day) const
         return ub->factor;
     }
     else {
-        if(m_smoothing)
-        {
+        if (m_smoothing) {
             double descent_area = 1.0; // smoothing of damping of 1 day max
-            double day_upper    = 1e12; // large number; larger than maximum of days to be simulated
+            double day_upper    = 1e100; // large number; larger than maximum of days to be simulated
             if (ub < end(m_dampings)) { // if this is the case, there are at least two dampings in the list before
 
                 day_upper    = (ub)->day;
@@ -94,23 +93,23 @@ double Dampings::get_factor(double day) const
                 if (fac_lower >= fac_upper) {
                     // f(x) = 0.5*(fac_lower - fac_upper)*cos(pi/ descent_area*(x-day_upper_min))+0.5*(fac_lower + fac_upper)
                     ret = 0.5 * (fac_lower - fac_upper) *
-                            std::cos(3.14159265358979323846 / descent_area * (day - day_upper_min)) +
-                        0.5 * (fac_lower + fac_upper);
+                              std::cos(3.14159265358979323846 / descent_area * (day - day_upper_min)) +
+                          0.5 * (fac_lower + fac_upper);
                 }
                 else {
                     ret = 0.5 * (fac_upper - fac_lower) *
-                            std::cos(3.14159265358979323846 / descent_area * (descent_area + (day - day_upper_min))) +
-                        0.5 * (fac_lower + fac_upper);
+                              std::cos(3.14159265358979323846 / descent_area * (descent_area + (day - day_upper_min))) +
+                          0.5 * (fac_lower + fac_upper);
                 }
 
                 // printf("\n\n in descent.. day %.6f factor %.6f ", day, ret);
 
                 return ret;
             }
-        }else{
+        }
+        else {
             return (ub - 1)->factor;
         }
-
     }
 }
 
