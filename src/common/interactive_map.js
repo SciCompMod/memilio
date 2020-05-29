@@ -190,7 +190,7 @@ class InteractiveMap {
           .classed('kreis', true)
           .on('click', function (d, i) {
             d3.event.stopPropagation();
-            console.log(d.properties);
+
             self.selected = {
               dataset: Datasets.COUNTIES,
               id: parseInt(d.properties.RS),
