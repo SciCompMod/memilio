@@ -20,7 +20,7 @@ set(TESTSOURCES
   test_migration.cpp
   test_eigen_util.cpp
   test_secir_ageres.cpp
-  gtest_helpers.h
+  test_stl_util.cpp
 )
 
 add_executable(runUnitTests ${TESTSOURCES})
