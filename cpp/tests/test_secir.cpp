@@ -5,7 +5,7 @@
 TEST(TestSecir, compareWithPreviousRun)
 {
     double t0   = 0;
-    double tmax = 5;
+    double tmax = 50;
     double dt   = 0.1;
 
     double tinc = 5.2, tinfmild = 6, tserint = 4.2, thosp2home = 12, thome2hosp = 5, thosp2icu = 2, ticu2home = 8,
