@@ -265,11 +265,17 @@ double SecirParams::Populations::get_suscetible_t0() const
 
 SecirParams::Probabilities::Probabilities()
 {
-    m_alpha = 0;
-    m_beta  = 0;
-    m_rho   = 0;
-    m_theta = 0;
-    m_delta = 0;
+    m_infprob = 1;
+    m_alpha   = 0;
+    m_beta    = 0;
+    m_rho     = 0;
+    m_theta   = 0;
+    m_delta   = 0;
+}
+
+void SecirParams::Probabilities::set_infection_from_contact(double const& infprob)
+{
+    m_infprob = infprob;
 }
 
 void SecirParams::Probabilities::set_asymp_per_infectious(double const& alpha)
@@ -295,6 +301,11 @@ void SecirParams::Probabilities::set_icu_per_hospitalized(double const& theta)
 void SecirParams::Probabilities::set_dead_per_icu(double const& delta)
 {
     m_delta = delta;
+}
+
+double SecirParams::Probabilities::get_infection_from_contact() const
+{
+    return m_infprob;
 }
 
 double SecirParams::Probabilities::get_asymp_per_infectious() const
@@ -447,6 +458,7 @@ void secir_get_derivatives(ContactFrequencyMatrix const& cont_freq_matrix, std::
                 cont_freq_matrix.get_dampings(i, j).get_factor(t); // get effective contact rate between i and j
             double divN    = 1.0 / params[j].populations.get_total_t0(); // precompute 1.0/Nj
             double dummy_S = y[0 + 8 * i] * cont_freq_eff * divN *
+                             params[i].probabilities.get_infection_from_contact() *
                              (y[2 + 8 * j] + params[j].probabilities.get_risk_from_symptomatic() * y[3 + 8 * j]);
 
             dydt[0 + 8 * i] -= dummy_S; // -R1*(C+beta*I)*S/N0
@@ -496,7 +508,8 @@ void secir_get_derivatives(ContactFrequencyMatrix const& cont_freq_matrix, std::
 
 namespace
 {
-    template <class Vector> void secir_get_initial_values(const SecirParams& params, Vector&& y)
+    template <class Vector>
+    void secir_get_initial_values(const SecirParams& params, Vector&& y)
     {
         y[0] = params.populations.get_suscetible_t0();
         y[1] = params.populations.get_exposed_t0();
