@@ -15,8 +15,8 @@ const dataset2datakey = {
 };
 
 const populationKeyMap = {
-  [Datasets.STATES]: 'State',
-  [Datasets.COUNTIES]: 'County'
+  [Datasets.STATES]: 'Bundesland',
+  [Datasets.COUNTIES]: 'Landkreis'
 };
 
 const slice = createSlice({
@@ -51,12 +51,11 @@ const slice = createSlice({
     setSelected: (state, action) => {
       state.selected = action.payload;
       if (action.payload !== null) {
-        console.log(action.payload);
         const population = state.populations[action.payload.dataset].find(
           (e) =>
             e[populationKeyMap[action.payload.dataset]] === action.payload.label
         );
-        console.log(population);
+
         if (population) {
           state.selected.population = population.EWZ;
         }
@@ -102,8 +101,12 @@ export const fetchData = () => async (dispatch) => {
   // load state data
   let state = await Promise.all([
     axios.get('assets/all_state_rki.json').then((response) => response.data),
-    axios.get('assets/all_state_age_rki.json').then((response) => response.data),
-    axios.get('assets/all_state_gender_rki.json').then((response) => response.data)
+    axios
+      .get('assets/all_state_age_rki.json')
+      .then((response) => response.data),
+    axios
+      .get('assets/all_state_gender_rki.json')
+      .then((response) => response.data)
   ]);
 
   state = state.map((s) => {
@@ -118,8 +121,12 @@ export const fetchData = () => async (dispatch) => {
   // load county data
   let county = await Promise.all([
     axios.get('assets/all_county_rki.json').then((response) => response.data),
-    axios.get('assets/all_county_age_rki.json').then((response) => response.data),
-    axios.get('assets/all_county_gender_rki.json').then((response) => response.data)
+    axios
+      .get('assets/all_county_age_rki.json')
+      .then((response) => response.data),
+    axios
+      .get('assets/all_county_gender_rki.json')
+      .then((response) => response.data)
   ]);
 
   county = county.map((s) => {
@@ -144,13 +151,25 @@ export const getSelectedData = (state) => {
   if (selected === null) {
     return null;
   }
-
   const dataset = s[selected.dataset];
+
+  if (!dataset) {
+    return null;
+  }
+
+  if (
+    ![dataset.all, dataset.age, dataset.gender].every((d) =>
+      d.hasOwnProperty(`${selected.id}`)
+    )
+  ) {
+    return null;
+  }
+
   const result = {
-    all: dataset.all[selected.id],
-    age: dataset.age[selected.id],
-    gender: dataset.gender[selected.id],
-    start: dataset.all[selected.id][0]
+    all: dataset.all[`${selected.id}`],
+    age: dataset.age[`${selected.id}`],
+    gender: dataset.gender[`${selected.id}`],
+    start: dataset.all[`${selected.id}`][0]
   };
 
   return result;
