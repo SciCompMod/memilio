@@ -9,39 +9,74 @@
 #include <cstdio>
 #include <algorithm>
 
+#include <iostream>
+#include <fstream>
+
 namespace epi
 {
 
-void print_secir_params(std::vector<SecirParams> const& params)
+void print_secir_params(std::vector<SecirParams> const& params, ContactFrequencyMatrix const& cont_freq)
 {
     // alpha = alpha_in; // percentage of asymptomatic cases
     // beta  = beta_in; // risk of infection from the infected symptomatic patients
     // rho   = rho_in; // hospitalized per infected
     // theta = theta_in; // icu per hospitalized
     // delta = delta_in; // deaths per ICUs
-    if (params.size() == 1) {
-        printf("\n SECIR (SECIHURD) model set.\n Parameters:\n\t Time incubation:\t %.4f \n\t Time infectious "
-               "(mild):\t %.4f \n\t Serial interval:\t %.4f \n\t Time hosp.->home:\t %.4f \n\t Time home->hosp.:\t "
-               "%.4f \n\t Time hosp.->icu:\t %.4f \n\t Time infectious (asymp.):\t %.4f \n\t Time icu->death:\t\t "
-               "%.4f\n\t alpha:\t %.4f \n\t beta:\t %.4f \n\t delta:\t %.4f \n\t rho:\t "
-               "%.4f \n\t theta:\t %.4f \n\t Total at t0:\t %d \n\t Exposed at t0:\t %d \n\t Carrier at t0:\t %d\n\t "
-               "Infectious at t0:\t %d \n\t Hospitalized at t0:\t %d \n\t "
-               "ICU at t0:\t %d \n\t Recovered at t0:\t %d \n\t Dead at t0:\t %d\n",
-               1.0 / params[0].times.get_incubation_inv(), 1.0 / params[0].times.get_infectious_mild_inv(),
-               1.0 / params[0].times.get_serialinterval_inv(), 1.0 / params[0].times.get_hospitalized_to_home_inv(),
-               1.0 / params[0].times.get_home_to_hospitalized_inv(),
-               1.0 / params[0].times.get_hospitalized_to_icu_inv(), 1.0 / params[0].times.get_infectious_asymp_inv(),
-               1.0 / params[0].times.get_icu_to_dead_inv(), params[0].probabilities.get_asymp_per_infectious(),
-               params[0].probabilities.get_risk_from_symptomatic(), params[0].probabilities.get_dead_per_icu(),
-               params[0].probabilities.get_hospitalized_per_infectious(),
-               params[0].probabilities.get_icu_per_hospitalized(), (int)params[0].populations.get_total_t0(),
-               (int)params[0].populations.get_exposed_t0(), (int)params[0].populations.get_carrier_t0(),
-               (int)params[0].populations.get_infectious_t0(), (int)params[0].populations.get_hospitalized_t0(),
-               (int)params[0].populations.get_icu_t0(), (int)params[0].populations.get_recovered_t0(),
-               (int)params[0].populations.get_dead_t0());
-    }
-    else {
-        printf("\n More than a single class used; no output to console.");
+    printf("\n SECIR model set. ");
+
+    char output_file[35] = "output_secir_params_and_contacts";
+    std::ofstream myfile(output_file);
+    if (myfile.is_open()) {
+        printf("Writing to file %s ", output_file);
+        myfile << "Considering " << params.size() << " age groups.\n";
+        for (size_t i = 0; i < params.size(); i++) {
+            myfile << "\nParameters of Group " << i + 1 << "\n";
+            myfile << "\t People at t0 \n";
+            myfile << "\t\t Total: " << (int)params[i].populations.get_total_t0() << "\n";
+            myfile << "\t\t Susceptible: " << (int)params[i].populations.get_suscetible_t0() << "\n";
+            myfile << "\t\t Exposed: " << (int)params[i].populations.get_exposed_t0() << "\n";
+            myfile << "\t\t Carrier: " << (int)params[i].populations.get_carrier_t0() << "\n";
+            myfile << "\t\t Infectious: " << (int)params[i].populations.get_infectious_t0() << "\n";
+            myfile << "\t\t Hospitalized: " << (int)params[i].populations.get_hospitalized_t0() << "\n";
+            myfile << "\t\t ICU: " << (int)params[i].populations.get_icu_t0() << "\n";
+            myfile << "\t\t Recovered: " << (int)params[i].populations.get_recovered_t0() << "\n";
+            myfile << "\t\t Dead: " << (int)params[i].populations.get_dead_t0() << "\n";
+
+            myfile << "\t Duration parameters \n";
+            myfile << "\t\t Incubation time: \t" << 1.0 / params[i].times.get_incubation_inv() << "\n";
+            myfile << "\t\t Infectious (mild) time: \t" << 1.0 / params[i].times.get_infectious_mild_inv() << "\n";
+            myfile << "\t\t\t Serial Interval: \t" << 1.0 / params[i].times.get_serialinterval_inv() << "\n";
+            myfile << "\t\t Hospitalized->Home time: \t" << 1.0 / params[i].times.get_hospitalized_to_home_inv()
+                   << "\n";
+            myfile << "\t\t Home->Hospitalized time: \t" << 1.0 / params[i].times.get_home_to_hospitalized_inv()
+                   << "\n";
+            myfile << "\t\t Infectious (asymp.) time: \t" << 1.0 / params[i].times.get_infectious_asymp_inv() << "\n";
+            myfile << "\t\t Hospitalized->ICU time: \t" << 1.0 / params[i].times.get_hospitalized_to_icu_inv() << "\n";
+            myfile << "\t\t ICU->Death time: \t" << 1.0 / params[i].times.get_icu_to_dead_inv() << "\n";
+
+            myfile << "\t Probabilities \n";
+            myfile << "\t\t Infect from contact: \t" << params[i].probabilities.get_infection_from_contact() << "\n";
+            myfile << "\t\t Asymptomatic infections: \t" << params[i].probabilities.get_asymp_per_infectious() << "\n";
+            myfile << "\t\t Risk of symptomatic contact: \t" << params[i].probabilities.get_risk_from_symptomatic()
+                   << "\n";
+            myfile << "\t\t Deaths per ICU care: \t" << params[i].probabilities.get_dead_per_icu() << "\n";
+            myfile << "\t\t Hospitalized per Infection: \t" << params[i].probabilities.get_hospitalized_per_infectious()
+                   << "\n";
+            myfile << "\t\t ICU per Hospitalized: \t" << params[i].probabilities.get_icu_per_hospitalized() << "\n";
+        }
+
+        myfile << "\nContact frequency matrix \n\t";
+        for (size_t i = 0; i < params.size(); i++) {
+            myfile << "\t\t G" << i;
+        }
+        for (size_t i = 0; i < params.size(); i++) {
+            myfile << "\n\t\t G" << i;
+            for (size_t j = 0; j < params.size(); j++) {
+                myfile << "\t" << cont_freq.get_cont_freq(i, j);
+            }
+        }
+
+        myfile.close();
     }
 }
 

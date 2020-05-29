@@ -77,7 +77,7 @@ int main()
 
     // params[0].dampings.add(epi::Damping(30., 0.3));
 
-    print_secir_params(params);
+    print_secir_params(params, contact_freq_matrix);
 
     std::vector<Eigen::VectorXd> secir(0);
 
