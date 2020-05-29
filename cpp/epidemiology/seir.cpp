@@ -184,31 +184,4 @@ Eigen::VectorXd& SeirSimulation::advance(double tmax)
     return m_integrator.advance(tmax);
 }
 
-std::vector<double> simulate_groups(double t0, double tmax, double dt, const std::vector<SeirParams>& group_params,
-                                    MigrationFunction migration_function, std::vector<Eigen::VectorXd>& group_seir)
-{
-    auto num_groups     = group_params.size();
-    auto num_vars       = 4;
-    auto num_vars_total = 4 * num_groups;
-    group_seir          = std::vector<Eigen::VectorXd>(1, Eigen::VectorXd(num_vars_total));
-    auto fs             = std::vector<DerivFunction>(num_groups);
-
-    Eigen::VectorXd init_single(num_vars);
-    for (size_t i = 0; i < num_groups; i++) {
-        slice(group_seir[0], {Eigen::Index(i), Eigen::Index(num_vars), Eigen::Index(num_groups)}) = 
-            seir_get_initial_values(group_params[i]);
-
-        fs[i] = [params = group_params[i]](Eigen::VectorXd const& y, const double t, Eigen::VectorXd& dydt) {
-            return seir_get_derivatives(params, y, t, dydt);
-        };
-    }
-    double dtmin    = 1e-6;
-    double dtmax    = 1.;
-    auto integrator = std::make_shared<RKIntegratorCore>(dtmin, dtmax);
-    integrator->set_rel_tolerance(1e-6);
-    integrator->set_abs_tolerance(1e-6);
-
-    return ode_integrate_with_migration(t0, tmax, dt, fs, integrator, migration_function, group_seir);
-}
-
 } // namespace epi

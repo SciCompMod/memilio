@@ -2,7 +2,6 @@
 #define SECIR_H
 
 #include <epidemiology/damping.h>
-#include <epidemiology/migration.h>
 #include <epidemiology/adapt_rk.h>
 
 #include <vector>
@@ -529,10 +528,6 @@ private:
  */
 std::vector<double> simulate(double t0, double tmax, double dt, ContactFrequencyMatrix const& cont_freq_matrix,
                              std::vector<SecirParams> const& params, std::vector<Eigen::VectorXd>& secir);
-
-std::vector<double> simulate_groups(double t0, double tmax, double dt, const std::vector<SecirParams>& group_params,
-                                    const std::vector<ContactFrequencyMatrix>& cont_freq_matrix,
-                                    MigrationFunction migration_function, std::vector<Eigen::VectorXd>& group_secir);
 
 } // namespace epi
 

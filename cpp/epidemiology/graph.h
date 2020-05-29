@@ -2,8 +2,6 @@
 #define GRAPH_H
 
 #include <epidemiology/stl_util.h>
-#include <epidemiology/seir.h>
-#include <epidemiology/secir.h>
 #include <iostream>
 
 namespace epi

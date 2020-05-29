@@ -2,7 +2,6 @@
 #define SEIR_H
 
 #include <epidemiology/damping.h>
-#include <epidemiology/migration.h>
 
 #include <vector>
 
@@ -197,12 +196,6 @@ private:
  */
 std::vector<double> simulate(double t0, double tmax, double dt, SeirParams const& params,
                              std::vector<Eigen::VectorXd>& seir);
-
-/**
- * Simulate the SEIR model for multiple groups with migration between the groups.
- */
-std::vector<double> simulate_groups(double t0, double tmax, double dt, const std::vector<SeirParams>& group_params,
-                                    MigrationFunction migration_function, std::vector<Eigen::VectorXd>& group_seir);
 
 } // namespace epi
 
