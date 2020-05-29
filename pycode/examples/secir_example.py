@@ -35,6 +35,7 @@ def plot_secir():
     times.set_icu_to_death(5.)  # 3.5-7 (=R5^(-1))
 
     probs = Probabilities()
+    probs.set_infection_from_contact(1.0)  # 0.01-0.16
     probs.set_asymp_per_infectious(0.09)  # 0.01-0.16
     probs.set_risk_from_symptomatic(0.25)  # 0.05-0.5
     probs.set_hospitalized_per_infectious(0.2)  # 0.1-0.35
