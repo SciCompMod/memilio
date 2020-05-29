@@ -21,6 +21,7 @@ set(TESTSOURCES
   test_eigen_util.cpp
   test_secir_ageres.cpp
   test_stl_util.cpp
+  test_graph.cpp
 )
 
 add_executable(runUnitTests ${TESTSOURCES})

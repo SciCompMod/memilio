@@ -4,6 +4,7 @@
 #include <vector>
 #include <algorithm>
 #include <utility>
+#include <iostream>
 #include <cassert>
 
 namespace epi
@@ -36,6 +37,95 @@ typename std::vector<T>::iterator insert_sorted_replace(std::vector<T>& vec, T c
 {
     return insert_sorted_replace(vec, item, std::less<T>());
 }
+
+/**
+ * @brief immutable random access range, e.g. a piece of a vector, represented by a pair of iterators
+ * immutable means no elements can be added or removed. the elements themselves 
+ * can be modified if the iterators that make up the range allow it.
+ */
+template <class IterPair>
+class Range
+{
+public:
+    using iterator       = typename IterPair::first_type;
+    using const_iterator = typename IterPair::first_type;
+    using value_type     = typename std::iterator_traits<iterator>::value_type;
+    using reference      = typename std::iterator_traits<iterator>::reference;
+
+    Range(IterPair iter_pair)
+        : m_iter_pair(iter_pair)
+    {
+    }
+
+    /** @brief index operator.
+     * constant complexity if random access iterator, linear otherwise
+     */
+    reference operator[](size_t idx) const
+    {
+        auto it = begin();
+        std::advance(it, idx);
+        return *it;
+    }
+
+    typename std::iterator_traits<iterator>::difference_type size() const
+    {
+        return std::distance(begin(), end());
+    }
+
+    auto begin() const
+    {
+        return m_iter_pair.first;
+    }
+
+    auto end() const
+    {
+        return m_iter_pair.second;
+    }
+
+private:
+    IterPair m_iter_pair;
+};
+
+/**
+ * @brief factories for template argument deduction
+ */
+template <class IterPair>
+auto make_range(IterPair&& p)
+{
+    return Range<std::remove_reference_t<std::remove_cv_t<IterPair>>>{p};
+}
+
+template <class Iter1, class Iter2>
+auto make_range(Iter1&& iter1, Iter2&& iter2)
+{
+    return make_range(std::make_pair(iter1, iter2));
+}
+
+/**
+ * template meta programming helper type 
+ */
+template <class... Ts>
+using void_t = void;
+
+/**
+ * meta function to check type T for an existing stream output operator "<<"
+ */
+template <class T, class = void>
+struct has_ostream_op : std::false_type {
+};
+template <class T>
+struct has_ostream_op<T, void_t<decltype(std::declval<std::ostream&>() << std::declval<T>())>> : std::true_type {
+};
+
+/**
+ * meta function to check type T for an existing equality comparison operator
+ */
+template <class T, class = void>
+struct has_eq_op : std::false_type {
+};
+template <class T>
+struct has_eq_op<T, void_t<decltype(std::declval<T>() == std::declval<T>())>> : std::true_type {
+};
 
 }
 
