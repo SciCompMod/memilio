@@ -32,6 +32,10 @@ public:
      */
     void set_smoothing(bool smoothing);
 
+    /**
+     * @brief returns the vector of dampings
+     */
+    std::vector<Damping> const& get_dampings_vector() const;
 
     /**
      * @brief Adds a damping to the current model

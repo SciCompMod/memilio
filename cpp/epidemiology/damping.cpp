@@ -41,6 +41,11 @@ Dampings::Dampings()
 {
 }
 
+std::vector<Damping> const& Dampings::get_dampings_vector() const
+{
+    return m_dampings;
+}
+
 void Dampings::set_smoothing(bool smoothing)
 {
     m_smoothing = smoothing;

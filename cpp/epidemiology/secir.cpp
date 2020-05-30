@@ -76,6 +76,18 @@ void print_secir_params(std::vector<SecirParams> const& params, ContactFrequency
             }
         }
 
+        myfile << "\n Dampings: \n\t";
+        for (size_t i = 0; i < params.size(); i++) {
+            myfile << "\n\t G" << i;
+            for (size_t j = 0; j < params.size(); j++) {
+                myfile << "\n\t\t G" << j;
+                for (size_t k = 0; k < cont_freq.get_dampings(i, j).get_dampings_vector().size(); k++) {
+                    myfile << "\t day: " << cont_freq.get_dampings(i, j).get_dampings_vector().at(k).day
+                           << " fac: " << cont_freq.get_dampings(i, j).get_dampings_vector().at(k).factor;
+                }
+            }
+        }
+
         myfile.close();
     }
 }
