@@ -5,6 +5,8 @@ import App from './App';
 import store from './redux/store';
 import * as serviceWorker from './serviceWorker';
 import * as numeral from 'numeral';
+import * as moment from 'moment';
+import 'moment/locale/de';
 
 import { Spinner } from 'reactstrap';
 
@@ -20,6 +22,8 @@ numeral.register('locale', 'de', {
   }
 });
 numeral.locale('de');
+
+moment.locale('de');
 
 ReactDOM.render(
   <Provider store={store}>

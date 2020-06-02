@@ -10,7 +10,7 @@ import {
   ModalFooter,
   ModalHeader
 } from 'reactstrap';
-import { format } from 'date-fns';
+
 import DateRangePicker from 'react-daterange-picker';
 
 import Moment from 'moment';
@@ -27,6 +27,10 @@ import 'react-daterange-picker/dist/css/react-calendar.css';
 import './Measures.scss';
 
 const moment = extendMoment(Moment);
+
+const format = (format) => {
+  return (time) => moment(time).format(format);
+};
 
 const State = Object.freeze({
   NEW: Symbol('new'),
@@ -197,9 +201,9 @@ class Measure extends Component {
   render() {
     const m = this.props.data;
     const t = this.props.t;
-    const dateformat = t('dateFormat');
+    const dateformat = t('dateformat.date');
     return (
-      <div className="measure ">
+      <div className="measure">
         <CustomInput
           type="switch"
           id={m.label}
@@ -226,8 +230,8 @@ class Measure extends Component {
               return (
                 <div className="interval" key={interval.id}>
                   <span className="h4">
-                    {format(interval.start, dateformat)} -{' '}
-                    {format(interval.end, dateformat)}
+                    {format(dateformat)(interval.start)} -{' '}
+                    {format(dateformat)(interval.end)}
                   </span>
                   <Button
                     color="warning"

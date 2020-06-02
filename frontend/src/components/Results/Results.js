@@ -32,11 +32,11 @@ class Results extends Component {
           <div className="top-bar p-1">
             <Simulation />
             <span className="ml-2">
-              Auswahl:&nbsp;
+              {t('selection')} &nbsp;
               {this.props.selected
                 ? this.props.selected.label
-                : 'Keine Auswahl getroffen.'}
-              ,&nbsp; Einwohnerzahl:&nbsp;
+                : t('no-selection')}
+              ,&nbsp; {t('population')}:&nbsp;
               {this.props.selected && this.props.selected.population
                 ? numeral(this.props.selected.population).format('0,0')
                 : '---'}
