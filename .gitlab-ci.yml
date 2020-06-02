@@ -1,8 +1,8 @@
 build-cpp:
   stage: build
   tags:
-   - cpp
-   - hpcagainstcorona
+    - cpp
+    - hpcagainstcorona
   before_script:
     - apt -qq -y install libeigen3-dev
   script:
@@ -17,8 +17,8 @@ build-cpp:
 
 build-py:
   tags:
-   - cpp
-   - hpcagainstcorona
+    - cpp
+    - hpcagainstcorona
   stage: build
   before_script:
     - apt -qq -y install python3.7-venv python3-venv
@@ -35,8 +35,8 @@ build-py:
 # run tests using the binary built before
 test-cpp:
   tags:
-   - cpp
-   - hpcagainstcorona
+    - cpp
+    - hpcagainstcorona
   stage: test
   dependencies:
     - build-cpp
@@ -49,8 +49,8 @@ test-cpp:
 
 test-py:
   tags:
-   - cpp
-   - hpcagainstcorona
+    - cpp
+    - hpcagainstcorona
   stage: test
   dependencies:
     - build-py
@@ -68,8 +68,8 @@ test-py:
 
 download-data:
   tags:
-   - cpp
-   - hpcagainstcorona
+    - cpp
+    - hpcagainstcorona
   stage: test
   dependencies:
     - build-py
@@ -92,15 +92,15 @@ download-data:
       - data/SouthKorea/*.json
       - data/US/*.json
       - data/China/*.json
-  
 
 build-js:
   tags:
-   - npm
-   - hpcagainstcorona
+    - npm
+    - hpcagainstcorona
   stage: build
   before_script:
-   - npm install
+    - cd frontend
+    - npm install
   script:
     - echo "Building app deployment"
     - npm run build
@@ -111,8 +111,8 @@ build-js:
 
 www:
   tags:
-   - native
-   - hpcagainstcorona
+    - native
+    - hpcagainstcorona
   stage: deploy
   dependencies:
     - build-js
