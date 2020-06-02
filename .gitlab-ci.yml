@@ -107,7 +107,7 @@ build-js:
     - echo "Building done"
   artifacts:
     paths:
-      - build/
+      - frontend/build/
 
 www:
   tags:
