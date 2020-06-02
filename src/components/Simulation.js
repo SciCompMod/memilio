@@ -21,8 +21,8 @@ class Simulation extends PureComponent {
     seir_params.b = p.contact_rate;
     seir_params.g = 1 / p.infection;
     seir_params.E0 = p.e0;
-    seir_params.I0 = this.props.start.AnzahlFall; //p.i0;
-    seir_params.R0 = this.props.start.AnzahlGenesen;
+    seir_params.I0 = this.props.start.Confirmed; //p.i0;
+    seir_params.R0 = this.props.start.Recovered;
     seir_params.N = this.props.selected.population;
 
     // TODO: replace by the actual logic
@@ -36,7 +36,7 @@ class Simulation extends PureComponent {
       (v, i) => new Damping(v.day, v.damping)
     );
 
-    console.log(seir_params.dampings);
+    console.log(seir_params);
 
     let data = simulate_seir(0, days, step_size, seir_params);
 

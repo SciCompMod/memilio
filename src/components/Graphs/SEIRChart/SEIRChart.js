@@ -3,6 +3,7 @@ import { withTranslation } from 'react-i18next';
 import { merge } from '../../../common/utils';
 
 import * as moment from 'moment';
+import * as numeral from 'numeral';
 
 import {
   LineChart,
@@ -91,8 +92,12 @@ const lines = [
   }
 ];
 
-const dateFormat = (time) => {
-  return moment(time).format('DD. MMM');
+const dateFormat = (format) => {
+  return (time) => moment(time).format(format);
+};
+
+const numberFormat = (number) => {
+  return numeral(number).format('0,0');
 };
 
 class SEIRChart extends Component {
@@ -165,19 +170,34 @@ class SEIRChart extends Component {
 
   render() {
     const data = this.prepareData();
+    const { t } = this.props;
     return (
       <ResponsiveContainer width="100%" height="80%">
         <LineChart
           data={data}
-          margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
+          margin={{ top: 30, right: 30, left: 20, bottom: 5 }}
         >
-          <XAxis dataKey="date" tickFormatter={dateFormat} />
-          <YAxis />
+          <XAxis
+            dataKey="date"
+            tickFormatter={dateFormat(t('dateformat.short'))}
+          />
+          <YAxis
+            label={{
+              value: t('population'),
+              angle: 0,
+              position: 'top',
+              offset: 15
+            }}
+            tickFormatter={numberFormat}
+          />
           <CartesianGrid strokeDasharray="3 3" />
           <Tooltip
             offset={20}
-            labelFormatter={dateFormat}
-            formatter={(value, name, index) => [value, this.translate(name)]}
+            labelFormatter={dateFormat(t('dateformat.full'))}
+            formatter={(value, name, index) => [
+              numberFormat(value),
+              this.translate(name)
+            ]}
             allowEscapeViewBox={{ x: true, y: false }}
             active={true}
             contentStyle={{

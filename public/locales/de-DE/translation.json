@@ -31,5 +31,14 @@
     "infected": "RKI Infizierte Personen"
   },
   "results": "Auswertung",
-  "dateFormat": "dd.MM.yyyy"
+  "dateformat": {
+    "date": "DD.MM.YYYY",
+    "full": "DD. MMMM YYYY",
+    "short": "DD. MMM"
+  },
+  "population": "Einwohnerzahl",
+  "state": "Bundesland",
+  "county": "Landkreis",
+  "selection": "Auswahl",
+  "no-selection": "Keine Auswahl getroffen!"
 }
