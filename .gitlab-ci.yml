@@ -119,7 +119,7 @@ www:
     - download-data
   script:
     - echo "Deploying to server"
-    - cp -rv build/* /var/www/html
+    - cp -rv frontend/build/* /var/www/html
     - cp -v data/Germany/*_rki.json /var/www/html/assets
     - echo "Deployed"
   only:
