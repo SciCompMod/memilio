@@ -513,9 +513,9 @@ void secir_get_derivatives(ContactFrequencyMatrix const& cont_freq_matrix, std::
         }
 
         double dummy_R2 = 1.0 / (2 * (1.0 / params[i].times.get_serialinterval_inv()) -
-                                 (1.0 / params[i].times.get_infectious_mild_inv())); // R2 = 1/(2SI-IP)
-        double dummy_R3 = 0.5 / ((1.0 / params[i].times.get_infectious_mild_inv()) -
-                                 (1.0 / params[i].times.get_serialinterval_inv())); // R3 = 1/(2(IP-SI))
+                                 (1.0 / params[i].times.get_incubation_inv())); // R2 = 1/(2SI-TINC)
+        double dummy_R3 = 0.5 / ((1.0 / params[i].times.get_incubation_inv()) -
+                                 (1.0 / params[i].times.get_serialinterval_inv())); // R3 = 1/(2(TINC-SI))
 
         dydt[1 + 8 * i] -= dummy_R2 * y[1 + 8 * i]; // only exchange of E and C done here
         dydt[2 + 8 * i] =
