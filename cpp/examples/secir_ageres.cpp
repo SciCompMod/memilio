@@ -73,6 +73,7 @@ int main()
         params[i].populations.set_recovered_t0(fact * nb_rec_t0);
         params[i].populations.set_dead_t0(fact * nb_dead_t0);
 
+        params[i].probabilities.set_infection_from_contact(1.0);
         params[i].probabilities.set_asymp_per_infectious(alpha);
         params[i].probabilities.set_risk_from_symptomatic(beta);
         params[i].probabilities.set_hospitalized_per_infectious(rho);

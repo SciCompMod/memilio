@@ -8,6 +8,7 @@ This package collects the python modules for the corona project. Currently, it c
       getpopuldata
       getjhdata
       getspaindata
+      getalldata
 
  - ``epidemiology.secir``: Contains a python/pybind11 wrapper to the C++ code. An example is provided
 

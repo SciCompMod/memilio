@@ -1,8 +1,8 @@
 build-cpp:
   stage: build
   tags:
-   - cpp
-   - hpcagainstcorona
+    - cpp
+    - hpcagainstcorona
   before_script:
     - apt -qq -y install libeigen3-dev
   script:
@@ -35,8 +35,8 @@ build-py:
 # run tests using the binary built before
 test-cpp:
   tags:
-   - cpp
-   - hpcagainstcorona
+    - cpp
+    - hpcagainstcorona
   stage: test
   dependencies:
     - build-cpp
@@ -49,8 +49,8 @@ test-cpp:
 
 test-py:
   tags:
-   - cpp
-   - hpcagainstcorona
+    - cpp
+    - hpcagainstcorona
   stage: test
   dependencies:
     - build-py
@@ -65,11 +65,12 @@ test-py:
     - getpopuldata --help
     - getjhdata --help
     - getspaindata --help
+    - getalldata --help
 
 download-data:
   tags:
-   - cpp
-   - hpcagainstcorona
+    - cpp
+    - hpcagainstcorona
   stage: test
   dependencies:
     - build-py
@@ -86,35 +87,42 @@ download-data:
   artifacts:
     paths:
       - data/*.json
-  
+      - data/Germany/*.json
+      - data/Spain/*.json
+      - data/France/*.json
+      - data/Italy*.json
+      - data/SouthKorea/*.json
+      - data/US/*.json
+      - data/China/*.json
 
 build-js:
   tags:
-   - npm
-   - hpcagainstcorona
+    - npm
+    - hpcagainstcorona
   stage: build
   before_script:
-   - npm install
+    - cd frontend
+    - npm install
   script:
     - echo "Building app deployment"
     - npm run build
     - echo "Building done"
   artifacts:
     paths:
-      - build/
+      - frontend/build/
 
 www:
   tags:
-   - native
-   - hpcagainstcorona
+    - native
+    - hpcagainstcorona
   stage: deploy
   dependencies:
     - build-js
     - download-data
   script:
     - echo "Deploying to server"
-    - cp -rv build/* /var/www/html
-    - cp -v data/*.json /var/www/html/assets
+    - cp -rv frontend/build/* /var/www/html
+    - cp -v data/Germany/*_rki.json /var/www/html/assets
     - echo "Deployed"
   only:
     - master

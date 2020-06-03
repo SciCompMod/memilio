@@ -5,7 +5,7 @@
 TEST(TestSecir, compareWithPreviousRun)
 {
     double t0   = 0;
-    double tmax = 5;
+    double tmax = 50;
     double dt   = 0.1;
 
     double tinc = 5.2, tinfmild = 6, tserint = 4.2, thosp2home = 12, thome2hosp = 5, thosp2icu = 2, ticu2home = 8,
@@ -57,7 +57,7 @@ TEST(TestSecir, compareWithPreviousRun)
     std::vector<Eigen::VectorXd> secihurd(0);
     auto t = simulate(t0, tmax, dt, contact_freq_matrix, params, secihurd);
 
-    auto compare = load_test_data_csv<double>("data/secihurd-compare.csv");
+    auto compare = load_test_data_csv<double>("secihurd-compare.csv");
 
     ASSERT_EQ(compare.size(), t.size());
     ASSERT_EQ(compare.size(), secihurd.size());
