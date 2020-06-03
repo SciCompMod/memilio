@@ -6,7 +6,7 @@ int main()
     epi::set_log_level(epi::LogLevel::debug);
 
     double t0   = 0;
-    double tmax = 100;
+    double tmax = 50;
     double dt   = 0.1;
 
     epi::log_info("Simulating SECIR; t={} ... {} with dt = {}.", t0, tmax, dt);
@@ -53,12 +53,9 @@ int main()
     params[0].times.set_icu_to_death(ticu2death);
 
     contact_freq_matrix.set_cont_freq(cont_freq, 0, 0);
-    // epi::Damping dummy(30., 0.3);
-    // contact_freq_matrix.add_damping(dummy, 0, 0);
-    contact_freq_matrix.get_dampings(0, 0).get_factor(-1);
-    contact_freq_matrix.get_dampings(0, 0).get_factor(29.999);
-    contact_freq_matrix.get_dampings(0, 0).get_factor(30.);
-    contact_freq_matrix.get_dampings(0, 0).get_factor(31.);
+    epi::Damping dummy(30., 0.3);
+    contact_freq_matrix.add_damping(dummy, 0, 0);
+
     params[0].populations.set_total_t0(nb_total_t0);
     params[0].populations.set_exposed_t0(nb_exp_t0);
     params[0].populations.set_carrier_t0(nb_car_t0);
@@ -81,7 +78,19 @@ int main()
 
     std::vector<Eigen::VectorXd> secir(0);
 
-    // simulate(t0, tmax, dt, contact_freq_matrix, params, secir);
+    simulate(t0, tmax, dt, contact_freq_matrix, params, secir);
+
+    // char vars[] = {'S', 'E', 'C', 'I', 'H', 'U', 'R', 'D'};
+    // printf("\n # t");
+    // for (size_t k = 0; k < 8; k++) {
+    //     printf(" %c", vars[k]);
+    // }
+    // for (size_t i = 0; i < secir.size(); i++) {
+    //     printf("\n ");
+    //     for (size_t j = 0; j < 8; j++) {
+    //         printf(" %.14f", secir[i][j]);
+    //     }
+    // }
 
     // printf("number total: %f", secir[secir.size() - 1][0] + secir[secir.size() - 1][1] + secir[secir.size() - 1][2] +
     //    secir[secir.size() - 1][3] + secir[secir.size() - 1][4] +
