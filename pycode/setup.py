@@ -30,6 +30,7 @@ setup(
             'getpopuldata=epidemiology.epidata.getPopulationData:main',
             'getjhdata = epidemiology.epidata.getJHData:main',
             'getspaindata = epidemiology.epidata.getSpainData:main',
+            'getdividata = epidemiology.epidata.getDiviData:main',
             'getalldata = epidemiology.epidata.getAllData:main'
         ],
     },

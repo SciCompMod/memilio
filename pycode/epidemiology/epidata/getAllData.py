@@ -4,6 +4,7 @@ from epidemiology.epidata import getSpainData
 from epidemiology.epidata import getJHData
 from epidemiology.epidata import getPopulationData
 from epidemiology.epidata import getRKIData
+from epidemiology.epidata import getDIVIData
 
 
 def get_all_data(read_data=dd.defaultDict['read_data'],
@@ -15,6 +16,7 @@ def get_all_data(read_data=dd.defaultDict['read_data'],
     getSpainData.get_spain_data(read_data, make_plot, out_form, out_folder)
     getPopulationData.get_population_data(read_data, make_plot, out_form, out_folder)
     getJHData.get_jh_data(read_data, make_plot, out_form, out_folder)
+    getDIVIData.get_divi_data(read_data, make_plot, out_form, out_folder)
 
 
 def main():
