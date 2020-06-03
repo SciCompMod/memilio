@@ -111,6 +111,23 @@ build-js:
     paths:
       - frontend/build/
 
+build-js-bindings:
+  stage: build
+  tags:
+   - docker
+  image: alpine:3.9
+  before_script:
+    - apk add emscripten cmake make --repository=http://dl-cdn.alpinelinux.org/alpine/edge/testing
+  script:
+  - cd frontend
+  - mkdir build && cd build
+  - emcmake cmake ..
+  - cmake --build .
+  artifacts:
+    paths:
+    - frontend/build/secir.js
+    - frontend/build/secir.wasm
+
 www:
   tags:
     - native
