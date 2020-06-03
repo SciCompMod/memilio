@@ -123,8 +123,8 @@ build-js-bindings:
   - cmake --build .
   artifacts:
     paths:
-    - frontend/build/secir.js
-    - frontend/build/secir.wasm
+    - frontend/build/secirjs.js
+    - frontend/build/secirjs.wasm
 
 www:
   tags:
