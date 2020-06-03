@@ -459,7 +459,7 @@ double get_reprod_rate(ContactFrequencyMatrix const& cont_freq_matrix, std::vect
  * prints given parameters
  * @param[in] params the SecirParams parameter object
  */
-void print_secir_params(std::vector<SecirParams> const& params);
+void print_secir_params(std::vector<SecirParams> const& params, ContactFrequencyMatrix const& cont_freq);
 
 /**
  * Computes the current time-derivative of S, E, C, I, (H, U,) R, (D) in the SECIR/SECIHURD model
