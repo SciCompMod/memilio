@@ -22,6 +22,10 @@ class ParameterDistribution
 {
 public:
     ParameterDistribution()
+        : m_name{""}
+        , m_lower_bound{0}
+        , m_upper_bound{0}
+        , m_dist{DIST_UNIFORM}
     {
         std::random_device random_device;
         m_random_generator = std::mt19937{random_device()};
@@ -92,6 +96,30 @@ protected:
 class ParameterDistributionNormal : ParameterDistribution
 {
 public:
+    ParameterDistributionNormal()
+        : ParameterDistribution()
+    {
+        m_dist         = DIST_NORMAL;
+        m_mean         = 0;
+        m_standard_dev = 1;
+    }
+
+    ParameterDistributionNormal(double mean, double standard_dev)
+        : ParameterDistribution()
+    {
+        m_dist = DIST_NORMAL;
+        m_mean = mean;
+        set_standard_dev(standard_dev);
+    }
+
+    ParameterDistributionNormal(std::string name, double lower_bound, double upper_bound, double mean,
+                                double standard_dev)
+        : ParameterDistribution(name, lower_bound, upper_bound, DIST_NORMAL)
+    {
+        m_mean = mean;
+        set_standard_dev(standard_dev);
+    }
+
     void set_mean(double mean)
     {
         m_mean = mean;
@@ -99,6 +127,16 @@ public:
 
     void set_standard_dev(double standard_dev)
     {
+        standard_dev = std::fabs(standard_dev);
+        // ensure that 0.95 % of the distribution are within lower bound and upper bound
+        if (m_mean + standard_dev * m_quartile_0975 > m_upper_bound) {
+            standard_dev = (m_upper_bound - m_mean) / m_quartile_0975;
+            log_warning("Standard deviation reduced to fit 95% of the distribution within [lowerbound,upperbound].");
+        }
+        if (m_mean - standard_dev * m_quartile_0975 < m_lower_bound) {
+            standard_dev = (m_mean - m_lower_bound) / m_quartile_0975;
+            log_warning("Standard deviation reduced to fit 95% of the distribution within [lowerbound,upperbound].");
+        }
         m_standard_dev = standard_dev;
     }
 
@@ -143,12 +181,23 @@ public:
 private:
     double m_mean; // the mean value of the normal distribution
     double m_standard_dev; // the standard deviation of the normal distribution
+    constexpr static double m_quartile_0975 = 1.96; // 0.975 quartile
     std::normal_distribution<double> m_distribution;
 };
 
 class ParameterDistributionUniform : ParameterDistribution
 {
 public:
+    ParameterDistributionUniform()
+        : ParameterDistribution()
+    {
+    }
+
+    ParameterDistributionUniform(std::string name, double lower_bound, double upper_bound)
+        : ParameterDistribution(name, lower_bound, upper_bound, DIST_UNIFORM)
+    {
+    }
+
     /*
      * @brief gets a sample of a uniformly distributed variable
      */
