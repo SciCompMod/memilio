@@ -1,3 +1,5 @@
+#include <gtest_helpers.h>
+
 #include <gtest/gtest.h>
 #include <gmock/gmock.h>
 #include <epidemiology/euler.h>
@@ -42,19 +44,18 @@ TEST_F(TestVerifyNumericalIntegrator, euler_sine)
     y   = std::vector<Eigen::VectorXd>(n, Eigen::VectorXd::Constant(1, 0));
     sol = std::vector<Eigen::VectorXd>(n, Eigen::VectorXd::Constant(1, 0));
 
-    Eigen::VectorXd f = Eigen::VectorXd::Constant(1, 0);
-
     sol[0][0]     = std::sin(0);
     sol[n - 1][0] = std::sin((n - 1) * dt);
 
-    epi::EulerIntegrator euler([](Eigen::VectorXd const& y, const double t, Eigen::VectorXd& dydt) {
+    auto f = [](Eigen::VectorXd const& y, const double t, Eigen::VectorXd& dydt) {
         dydt[0] = std::cos(t);
-    });
+    };
+    epi::EulerIntegratorCore euler;
 
     for (size_t i = 0; i < n - 1; i++) {
         sol[i + 1][0] = std::sin((i + 1) * dt);
 
-        euler.step(y[i], t, dt, y[i + 1]);
+        euler.step(f, y[i], t, dt, y[i + 1]);
 
         // printf("\n %.8f\t %.8f ", y[i + 1][0], sol[i + 1][0]);
 
@@ -74,7 +75,7 @@ TEST_F(TestVerifyNumericalIntegrator, runge_kutta_fehlberg45_sine)
     y   = std::vector<Eigen::VectorXd>(n, Eigen::VectorXd::Constant(1, 0));
     sol = std::vector<Eigen::VectorXd>(n, Eigen::VectorXd::Constant(1, 0));
 
-    epi::RKIntegrator rkf45(sin_deriv, 1e-3, 1.0);
+    epi::RKIntegratorCore rkf45(1e-3, 1.0);
     rkf45.set_abs_tolerance(1e-7);
     rkf45.set_rel_tolerance(1e-7);
 
@@ -92,7 +93,7 @@ TEST_F(TestVerifyNumericalIntegrator, runge_kutta_fehlberg45_sine)
 
         double dt_old = dt;
 
-        rkf45.step(y[i], t_eval, dt, y[i + 1]); //
+        rkf45.step(&sin_deriv, y[i], t_eval, dt, y[i + 1]); //
 
         sol[i + 1][0] = std::sin(t_eval);
 
@@ -110,54 +111,73 @@ TEST_F(TestVerifyNumericalIntegrator, runge_kutta_fehlberg45_sine)
     EXPECT_NEAR(err, 0.0, 1e-7);
 }
 
-class FakeNonAdaptiveIntegrator : public epi::IntegratorBase
+auto DoStep()
 {
-public:
-    FakeNonAdaptiveIntegrator(epi::DerivFunction f)
-        : epi::IntegratorBase(f)
-    {
-    }
-    virtual bool step(const Eigen::VectorXd& yt, double& t, double& dt, Eigen::VectorXd& ytp1) const override
-    {
-        t += dt;
-        ytp1 = yt;
-        return true;
-    }
-};
-
-template <class FakeIntegrator> class MockIntegrator : public epi::IntegratorBase
-{
-public:
-    MockIntegrator(epi::DerivFunction f)
-        : epi::IntegratorBase(f)
-        , m_fake(f)
-    {
-        ON_CALL(*this, step).WillByDefault([this](auto&& yt, auto&& t, auto&& dt, auto&& ytp1) {
-            return m_fake.step(yt, t, dt, ytp1);
-        });
-    }
-
-    MOCK_METHOD(bool, step, (const Eigen::VectorXd& yt, double& t, double& dt, Eigen::VectorXd& ytp1), (const));
-
-private:
-    FakeIntegrator m_fake;
-};
-
-TEST(TestOdeIntegrate, integratorDoesTheRightNumberOfSteps)
-{
-    using testing::_;
-    MockIntegrator<FakeNonAdaptiveIntegrator> mockIntegrator([](const auto& y, auto t, auto& dydt) {});
-    EXPECT_CALL(mockIntegrator, step(_, _, _, _)).Times(100);
-    std::vector<Eigen::VectorXd> result_x(1, Eigen::VectorXd::Constant(1, 0.0));
-    auto result_t = epi::ode_integrate(0, 1, 1e-2, mockIntegrator, result_x);
-    EXPECT_EQ(result_t.size(), 101);
-    EXPECT_EQ(result_x.size(), 101);
+    return testing::DoAll(
+        testing::WithArgs<2, 3>(AddAssign()),
+        testing::WithArgs<4, 1>(Assign()),
+        testing::Return(true));
 }
 
-TEST(TestOdeIntegrate, integratorStopsAtTMax)
+class MockIntegratorCore : public epi::IntegratorCore
 {
-    std::vector<Eigen::VectorXd> result(1, Eigen::VectorXd::Constant(1, 0));
-    auto t =
-        epi::ode_integrate(0, 2.34, 0.137, FakeNonAdaptiveIntegrator([](const auto& y, auto t, auto& dydt) {}), result);
-    EXPECT_DOUBLE_EQ(t.back(), 2.34);
+public:
+    MockIntegratorCore()
+    {
+        ON_CALL(*this, step).WillByDefault(DoStep());
+    }
+    MOCK_METHOD(bool, step, (const epi::DerivFunction& f, const Eigen::VectorXd& yt, double& t, double& dt, Eigen::VectorXd& ytp1), (const));
+};
+
+TEST(TestOdeIntegrator, integratorDoesTheRightNumberOfSteps)
+{
+    using testing::_;
+    auto mock_core = std::make_shared<MockIntegratorCore>();
+    EXPECT_CALL(*mock_core, step).Times(100);
+
+    auto f = [](const auto& y, auto t, auto& dydt) {};
+    auto integrator = epi::OdeIntegrator(f, 0, Eigen::VectorXd::Constant(1, 0.0), 1e-2, mock_core);
+    integrator.advance(1);
+    EXPECT_EQ(integrator.get_t().size(), 101);
+    EXPECT_EQ(integrator.get_y().size(), 101);
+}
+
+TEST(TestOdeIntegrator, integratorStopsAtTMax)
+{
+    auto f          = [](const auto& y, auto t, auto& dydt) {};
+    auto integrator = epi::OdeIntegrator(f, 0, Eigen::VectorXd::Constant(1, 0.0), 0.137,
+                                         std::make_shared<testing::NiceMock<MockIntegratorCore>>());
+    integrator.advance(2.34);
+    EXPECT_DOUBLE_EQ(integrator.get_t().back(), 2.34);
+}
+
+auto DoStepAndSetStepsize(double new_dt)
+{
+    return testing::DoAll(
+        testing::WithArgs<2, 3>(AddAssign()),
+        testing::WithArgs<4, 1>(Assign()),
+        testing::SetArgReferee<3>(new_dt),
+        testing::Return(true));
+}
+
+TEST(TestOdeIntegrator, integratorUpdatesStepsize)
+{
+    using testing::_;
+    using testing::Eq;
+
+    auto mock_core = std::make_shared<MockIntegratorCore>();
+
+    //double on each call
+    EXPECT_CALL(*mock_core, step(_, _, _, Eq(1), _)).Times(1).WillOnce(DoStepAndSetStepsize(2.));
+    EXPECT_CALL(*mock_core, step(_, _, _, Eq(2), _)).Times(1).WillOnce(DoStepAndSetStepsize(4.));
+    EXPECT_CALL(*mock_core, step(_, _, _, Eq(4), _)).Times(1).WillOnce(DoStepAndSetStepsize(8.));
+    //last step of each advance call is smaller
+    EXPECT_CALL(*mock_core, step(_, _, _, Eq(3), _)).Times(2).WillRepeatedly(DoStepAndSetStepsize(6.));
+    //continue on the second advance call with updated step size, but last step of first advance is ignored
+    EXPECT_CALL(*mock_core, step(_, _, _, Eq(8), _)).Times(1).WillOnce(DoStepAndSetStepsize(16.));
+
+    auto f          = [](auto&& y, auto&& t, auto&& dydt) {};
+    auto integrator = epi::OdeIntegrator(f, 0, Eigen::VectorXd::Constant(1, 0), 1.0, mock_core);
+    integrator.advance(10.0);
+    integrator.advance(21.0);
 }

@@ -6,14 +6,15 @@ namespace epi
 {
 
 std::vector<double> ode_integrate_with_migration(double t0, double tmax, double dt,
-                                                 const std::vector<std::unique_ptr<IntegratorBase>>& integrators,
+                                                 const std::vector<DerivFunction>& fs,
+                                                 const std::shared_ptr<IntegratorCore>& core,
                                                  MigrationFunction migration_function,
                                                  std::vector<Eigen::VectorXd>& result)
 {
-    assert(!integrators.empty());
+    assert(!fs.empty());
     assert(result.size() == 1);
 
-    auto num_groups     = integrators.size();
+    auto num_groups     = fs.size();
     auto num_vars_total = result[0].size();
     auto num_vars       = num_vars_total / num_groups;
     auto num_steps      = static_cast<size_t>(std::ceil(tmax - t0));
@@ -21,8 +22,15 @@ std::vector<double> ode_integrate_with_migration(double t0, double tmax, double 
     t.reserve(num_steps);
     result.reserve(num_steps);
 
-    auto migration     = Eigen::MatrixXd(num_groups, num_groups); //reusable, matrix of migration between groups
+    auto migration           = Eigen::MatrixXd(num_groups, num_groups); //reusable, matrix of migration between groups
     auto result_single_group = std::vector<Eigen::VectorXd>(); //reusable, result of a single group and migration step
+
+    std::vector<OdeIntegrator> groups;
+    for (size_t i = 0; i < num_groups; i++) {
+        groups.emplace_back(
+            fs[i], t0, slice(result.back(), {(Eigen::Index)i, (Eigen::Index)num_vars, (Eigen::Index)num_groups}), dt,
+            core);
+    }
 
     while (t.back() < tmax) {
         //TODO: avoid copying the results of a single step/group
@@ -34,14 +42,11 @@ std::vector<double> ode_integrate_with_migration(double t0, double tmax, double 
         auto tmax_step = std::min(t0_step + 1, tmax);
         t.push_back(tmax_step);
         result.emplace_back(num_vars_total);
-        const auto& init_step = result[result.size() - 2];
-        auto& result_step     = result[result.size() - 1];
+        auto& result_step = result[result.size() - 1];
         for (size_t group_idx = 0; group_idx < num_groups; group_idx++) {
-            result_single_group.assign(
-                1, slice(init_step, {(Eigen::Index)group_idx, (Eigen::Index)num_vars, (Eigen::Index)num_groups}));
-            ode_integrate(t0_step, tmax_step, dt, *integrators[group_idx], result_single_group);
+            groups[group_idx].advance(tmax_step);
             slice(result_step, {(Eigen::Index)group_idx, (Eigen::Index)num_vars, (Eigen::Index)num_groups}) =
-                result_single_group.back();
+                groups[group_idx].get_y().back();
         }
 
         //migration for each variable
