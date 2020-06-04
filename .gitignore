@@ -259,4 +259,9 @@ dmypy.json
 # Pyre type checker
 .pyre/
 
+# Data output
+pycode/**/*.json
+pycode/**/*.h5
+epi_venv/
+
 # End of https://www.gitignore.io/api/c++,node,python

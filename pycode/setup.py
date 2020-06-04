@@ -11,11 +11,10 @@ except ImportError:
     subprocess.check_call([sys.executable, "-m", "pip", "install", "scikit-build"])
     from skbuild import setup
 
-
 __version__ = '0.1.0'
 
 
-INSTALL_REQUIRES = ['pandas', 'matplotlib', 'tables']
+INSTALL_REQUIRES = ['pandas', 'matplotlib', 'tables', 'numpy']
 
 
 setup(
@@ -30,7 +29,8 @@ setup(
             'getrkidata=epidemiology.epidata.getRKIData:main',
             'getpopuldata=epidemiology.epidata.getPopulationData:main',
             'getjhdata = epidemiology.epidata.getJHData:main',
-            'getspaindata = epidemiology.epidata.getSpainData:main'
+            'getspaindata = epidemiology.epidata.getSpainData:main',
+            'getalldata = epidemiology.epidata.getAllData:main'
         ],
     },
     package_dir={

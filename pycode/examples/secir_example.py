@@ -57,6 +57,7 @@ def plot_secir():
 
 
 
+
     sus_ORs=np.array([0.34, 0.67, 1.00, 1.00, 1.00, 1.00, 1.24, 1.47, 1.47]) # Odds ratios for relative susceptibility -- from https://science.sciencemag.org/content/early/2020/05/04/science.abb8001; 10-20 and 60-70 bins are the average across the ORs
     trans_ORs=np.array([1.00, 1.00, 1.00, 1.00, 1.00, 1.00, 1.00, 1.00, 1.00]) # Odds ratios for relative transmissibility -- no evidence of differences
     comorbidities=np.array([1.00, 1.00, 1.00, 1.00, 1.00, 1.00, 1.00, 1.00, 1.00]) # Comorbidities by age -- set to 1 by default since already included in disease progression rates
@@ -66,6 +67,7 @@ def plot_secir():
     death_probs=np.array([0.00002, 0.00006, 0.00030, 0.00080, 0.00150, 0.00600, 0.02200, 0.05100, 0.09300]) # Overall probability of dying (https://www.imperial.ac.uk/media/imperial-college/medicine/sph/ide/gida-fellowships/Imperial-College-COVID19-NPI-modelling-16-03-2020.pdf)
 
     '''probs = Probabilities()
+
     probs.set_asymp_per_infectious(0.09)  # 0.01-0.16
     probs.set_risk_from_symptomatic(0.25)  # 0.05-0.5
     probs.set_hospitalized_per_infectious(0.2)  # 0.1-0.35
@@ -122,10 +124,10 @@ def plot_secir():
             if use_dampings:
                 for d in range(dampings.shape[2]):
                     cont_freq_matrix.add_damping(Damping(d, dampings[i,j,d]), i, j)
-                #cont_freq_matrix.add_damping(Damping(25., damp_work[i,j]), i, j)
-                #cont_freq_matrix.add_damping(Damping(35., damp_home[i,j]), i, j)
-                #cont_freq_matrix.add_damping(Damping(40., damp_school[i,j]), i, j)
-                #cont_freq_matrix.add_damping(Damping(50., damp_other[i,j]), i, j)
+                                # cont_freq_matrix.add_damping(Damping(25., damp_work[i,j]), i, j)
+                # cont_freq_matrix.add_damping(Damping(35., damp_home[i,j]), i, j)
+                # cont_freq_matrix.add_damping(Damping(40., damp_school[i,j]), i, j)
+                # cont_freq_matrix.add_damping(Damping(50., damp_other[i,j]), i, j)
 
                 #cont_freq_matrix.add_damping(Damping(10., 0.8), i, j)
                 #cont_freq_matrix.add_damping(Damping(20., 0.9), i, j)

@@ -3,6 +3,7 @@
 set(SPDLOG_INSTALL ON)
 
 if(EPI_USE_BUNDLED_SPDLOG)
+    message(STATUS "Downloading Spdlog library")
     if(CMAKE_VERSION VERSION_LESS 3.11)
         set(UPDATE_DISCONNECTED_IF_AVAILABLE "UPDATE_DISCONNECTED 1")
 
@@ -30,4 +31,33 @@ if(EPI_USE_BUNDLED_SPDLOG)
     endif()
 else()
     find_package(spdlog REQUIRED)
+endif()
+
+if(EPI_USE_BUNDLED_EIGEN)
+    message(STATUS "Downloading Eigen library")
+    if(CMAKE_VERSION VERSION_LESS 3.11)
+        set(UPDATE_DISCONNECTED_IF_AVAILABLE "UPDATE_DISCONNECTED 1")
+
+        include(DownloadProject)
+        download_project(PROJ                eigen
+                         URL                 http://gitlab.com/libeigen/eigen/-/archive/3.3.0/eigen-3.3.0.tar.gz
+                         UPDATE_DISCONNECTED 1
+                         QUIET
+        )
+    else()
+        include(FetchContent)
+        FetchContent_Declare(
+          eigen
+          URL http://gitlab.com/libeigen/eigen/-/archive/3.3.0/eigen-3.3.0.tar.gz
+        )
+        FetchContent_GetProperties(eigen)
+        if(NOT eigen_POPULATED)
+          FetchContent_Populate(eigen)
+        endif()
+    endif()
+    add_library(eigen INTERFACE)
+    target_include_directories(eigen INTERFACE ${eigen_SOURCE_DIR})
+    add_library(Eigen3::Eigen ALIAS eigen)
+else()
+    find_package(Eigen3 3.3 REQUIRED NO_MODULE)
 endif()

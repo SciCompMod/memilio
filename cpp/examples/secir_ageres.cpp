@@ -6,7 +6,7 @@ int main()
     epi::set_log_level(epi::LogLevel::debug);
 
     double t0   = 0;
-    double tmax = 100;
+    double tmax = 50;
     double dt   = 0.1;
 
     epi::log_info("Simulating SECIR; t={} ... {} with dt = {}.", t0, tmax, dt);
@@ -73,6 +73,7 @@ int main()
         params[i].populations.set_recovered_t0(fact * nb_rec_t0);
         params[i].populations.set_dead_t0(fact * nb_dead_t0);
 
+        params[i].probabilities.set_infection_from_contact(1.0);
         params[i].probabilities.set_asymp_per_infectious(alpha);
         params[i].probabilities.set_risk_from_symptomatic(beta);
         params[i].probabilities.set_hospitalized_per_infectious(rho);
@@ -88,11 +89,12 @@ int main()
         }
     }
 
-    print_secir_params(params);
+    print_secir_params(params, contact_freq_matrix);
 
     std::vector<Eigen::VectorXd> secir(0);
 
     simulate(t0, tmax, dt, contact_freq_matrix, params, secir);
+
     char vars[] = {'S', 'E', 'C', 'I', 'H', 'U', 'R', 'D'};
     printf("People in\n");
     for (size_t k = 0; k < 8; k++) {

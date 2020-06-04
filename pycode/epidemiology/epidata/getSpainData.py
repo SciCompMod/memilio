@@ -17,158 +17,144 @@
 
 
 import os
-import sys
-from urllib.request import urlopen
-import json
 import pandas
-import matplotlib.pyplot as plt
 import numpy as np
 
-from epidemiology.epidata import outputDict as od
 from epidemiology.epidata import getDataIntoPandasDataFrame as gd
-
-def loadCsv( githubUrl = 'https://raw.githubusercontent.com/datadista/datasets/master/COVID%2019/', 
-             CSVfile  = 'nacional_covid19_rango_edad' ):
-    """ Loads data in CSV format from github with Spanish Ministerio de Sanidad 
-    and ISCIII (Instituto de Salud Carlos III) data. (pandas DataFrame)
-
-    This routine loads github data sets in CSV format of the given public 
-    url into a pandas DataFrame and returns the DataFrame. 
-
-    Keyword arguments:
-    githubUrl -- github url
-    CSVfile -- file name
-
-    """
-    url = githubUrl + CSVfile + '.csv'
-    #print(url)
-
-    try:
-        df = pandas.read_csv( url )
-    except OSError as e:
-        print("ERROR: URL " + url + " could not be opened.")
-        df = pandas.DataFrame()
-    
-    
-    return df
+from epidemiology.epidata import defaultDict as dd
 
 
-def main():
+def get_spain_data(read_data=dd.defaultDict['read_data'],
+                   make_plot=dd.defaultDict['make_plot'],
+                   out_form=dd.defaultDict['out_form'],
+                   out_folder=dd.defaultDict['out_folder']):
 
-   [read_data, make_plot, out_form, out_folder] = gd.cli('Download of spain data')
+   directory = os.path.join(out_folder, 'Spain/')
+   gd.check_dir(directory)
 
-   AgesJSONData = os.path.join(out_folder ,'raw_spain_all_age.json')
-   StatJSONData = os.path.join(out_folder ,'raw_spain_all_state.json')
+
+   ages_file = 'raw_spain_all_age'
+   stat_file = 'raw_spain_all_state.json'
 
    if(read_data):
+
+      AgesJSONData = os.path.join(directory, ages_file+'.json')
+      StatJSONData = os.path.join(directory, stat_file+'.json')
+
       # if once dowloaded just read json file
+      print("Read from local.")
 
       #### ages' data
       df_age = pandas.read_json(AgesJSONData)
 
-      print("Read from local. Available columns:", df_age.columns)
-
       #### states' data
       df_state = pandas.read_json(StatJSONData)
 
-      print("Read from local. Available columns:", df_state.columns)
-
    else:
-  
+
+      print("Read Spanish data from online.")
+
       # Get data:
       # https://raw.githubusercontent.com/datadista/datasets/master/COVID%2019/nacional_covid19_rango_edad.csv
-      df_age = loadCsv(CSVfile  = 'nacional_covid19_rango_edad')
-      
+      df_age = gd.loadCsv('nacional_covid19_rango_edad',
+                          apiUrl='https://raw.githubusercontent.com/datadista/datasets/master/COVID%2019/')
+
       if df_age.empty != True:
-         # standardization of column titles from Spanish to English # the stupid character in front of 'fecha' is correct here.. There is a bug in the original file..
-         df_age.rename({'fecha': 'Date', 'rango_edad': 'Age', 'sexo': 'Gender', 'casos_confirmados': 'Confirmed', 
-               'hospitalizados': 'Hospitalized', 'ingresos_uci': 'ICU', 'fallecidos' : 'Deaths'}, axis=1, inplace=True) 
-
-         print("Read Spanish age data from online. Available columns:", df_age.columns)
-
-         # translate column gender from Spanish to English and standardize
-         df_age.loc[df_age.Gender=='ambos', ['Gender']] = 'both'
-         df_age.loc[df_age.Gender=='mujeres', ['Gender']] = 'female'
-         df_age.loc[df_age.Gender=='hombres', ['Gender']] = 'male'
-         df_age.loc[df_age.Age=='80 y +', ['Age']] = '80+'
-         df_age.loc[df_age.Age=='90 y +', ['Age']] = '90+'
-         df_age.loc[df_age.Age=='Total', ['Age']] = 'all'
-
-         # Correct Timestamps:
-         df_age['Date'] = df_age['Date'].astype( 'datetime64[ns]' ).dt.tz_localize('Europe/Berlin')
-
          # output data to not always download it
-         df_age.to_json(AgesJSONData)
+         gd.write_dataframe(df_age, directory, ages_file, "json")
 
       # Get data:
       # https://raw.githubusercontent.com/datadista/datasets/master/COVID%2019/ccaa_covid19_datos_isciii.csv
-      df_state = loadCsv(CSVfile  = 'ccaa_covid19_datos_isciii')
+      df_state = gd.loadCsv('ccaa_covid19_datos_isciii',
+                            apiUrl='https://raw.githubusercontent.com/datadista/datasets/master/COVID%2019/')
       
       if df_state.empty != True:
-         # standardization of column titles from Spanish to English
-         df_state.rename({'Fecha': 'Date', 'cod_ine': 'ID_State', 'CCAA': 'State', 'Casos': 'Confirmed_total', 'PCR+': 'Confirmed_PCR', 
-               'TestAc+': 'Confirmed_AB', 'Hospitalizados': 'Hospitalized', 'UCI': 'ICU', 'Fallecidos' : 'Deaths', 'Recuperados' : 'Recovered'}, axis=1, inplace=True)
-
-         print("Read Spanish states data from online. Available columns:", df_state.columns)
-
-         
-         # fill empty cells (nan values) with zero
-         df_state.replace(np.nan, 0, inplace=True)
-
-
-         # remove special characters
-         df_state.loc[df_state.State=="Andalucía", ['State']] = "Andalucia"
-         df_state.loc[df_state.State=="Castilla y León", ['State']] = "Castilla y Leon"
-         df_state.loc[df_state.State=="Cataluña", ['State']] = "Cataluna"
-         df_state.loc[df_state.State=="País Vasco", ['State']] = "Pais Vasco"
-         df_state.loc[df_state.State=="Aragón", ['State']] = "Aragon"
-
-         # Correct Timestamps:
-         df_state['Date'] = df_state['Date'].astype( 'datetime64[ns]' ).dt.tz_localize('Europe/Berlin')
 
          # output data to not always download it
-         df_state.to_json(StatJSONData)
+         gd.write_dataframe(df_age, directory, stat_file, "json")
          
+   # Manipulate data
+   if df_age.empty != True:
+      # standardization of column titles from Spanish to English
+      # the stupid character in front of 'fecha' is correct here. There is a bug in the original file.
+      df_age.rename(dd.EsEng, axis=1, inplace=True)
 
-   # Preparation for plotting/output age specific data:
+      print("Available age columns:", df_age.columns)
+
+      # translate column gender from Spanish to English and standardize
+      gender = dd.EngEng['gender']
+      age10 = dd.EngEng['age10']
+      df_age.loc[df_age[gender] == 'ambos', [gender]] = dd.EngEng['both']
+      df_age.loc[df_age[gender] == 'mujeres', [gender]] = dd.EngEng['female']
+      df_age.loc[df_age[gender] == 'mujeres', [gender]] = dd.EngEng['female']
+      df_age.loc[df_age[gender] == 'hombres', [gender]] = dd.EngEng['male']
+      df_age.loc[df_age[age10] == '80 y +', [age10]] = dd.EngEng['80+']
+      df_age.loc[df_age[age10] == '90 y +', [age10]] = dd.EngEng['90+']
+      df_age.loc[df_age[age10] == 'Total', [age10]] = dd.EngEng['all']
+
+      # Correct Timestamps:
+      date = dd.EngEng['date']
+      df_age[date] = df_age[date].astype('datetime64[ns]').dt.tz_localize('Europe/Berlin')
+
+   if df_state.empty != True:
+      # standardization of column titles from Spanish to English
+      df_state.rename(dd.EsEng, axis=1, inplace=True)
+
+      print("Available state columns:", df_state.columns)
+
+      # fill empty cells (nan values) with zero
+      df_state.replace(np.nan, 0, inplace=True)
+
+      # remove special characters
+      state = dd.EngEng['state']
+      df_state.loc[df_state[state] == "Andalucía", [state]] = dd.EsEng["Andalucía"]
+      df_state.loc[df_state[state] == "Castilla y León", [state]] = dd.EsEng["Castilla y León"]
+      df_state.loc[df_state[state] == "Cataluña", [state]] = dd.EsEng["Cataluña"]
+      df_state.loc[df_state[state] == "País Vasco", [state]] = dd.EsEng["País Vasco"]
+      df_state.loc[df_state[state] == "Aragón", [state]] = dd.EsEng["Aragón"]
+
+      # Correct Timestamps:
+      df_state['Date'] = df_state['Date'].astype('datetime64[ns]').dt.tz_localize('Europe/Berlin')
 
    # only consider men AND women (through information on gender away)
-   df_age = df_age.loc[df_age.Gender=='both']
+   df_age = df_age.loc[ df_age[dd.EngEng["gender"]] == dd.EngEng['both'] ]
 
    # write file for all age groups summed together
-   df_agesum = df_age.loc[df_age.Age=='all']
-      # call to df_ageall.to_json("all_age.json", orient='records')
-   getattr(df_agesum, od.outForm[out_form][0])(os.path.join(out_folder ,"spain") + od.outForm[out_form][1], **od.outForm[out_form][2])
+   df_agesum = df_age.loc[df_age[dd.EngEng["age10"]] == dd.EngEng['all']]
 
+   gd.write_dataframe(df_agesum, directory, "spain", out_form)
 
    # write file with information on all age groups separately
    # age_groups = ['0-9','10-19','20-29','30-39','40-49','50-59','60-69','70-79','80+']
-   df_agesep = df_age.loc[df_age.Age!='all']
-      # call to df_ageall.to_json("all_age.json", orient='records')
-   getattr(df_agesep, od.outForm[out_form][0])(os.path.join(out_folder ,"spain_all_age") + od.outForm[out_form][1], **od.outForm[out_form][2])
+   df_agesep = df_age.loc[df_age[dd.EngEng["age10"]] != dd.EngEng['all']]
 
+   gd.write_dataframe(df_agesep, directory, "spain_all_age", out_form)
 
    # Preparation for plotting/output:
 
    PCR_ONLY = False # if pcr only is used 
    # dff = df_state['state'].unique()
 
-
    # if PCR only is used, the number of confirmed cases is the number of people being tested positive with PCR test
    # otherwise, the number of positive antibody tests is also taken into account
    if PCR_ONLY:
-      df_state.loc[df_state.Confirmed_total==0, ['Confirmed_total']] = df_state.Confirmed_PCR
+      df_state.loc[df_state[dd.EngEng['confirmedTotal']] == 0, [dd.EngEng['confirmedTotal']]]\
+         = df_state[ dd.EngEng["confirmedPcr"]]
    else:
-      df_state.loc[df_state.Confirmed_total==0, ['Confirmed_total']] = df_state.Confirmed_PCR + df_state.Confirmed_AB
+      df_state.loc[df_state[dd.EngEng['confirmedTotal']] == 0, [dd.EngEng['confirmedTotal']]]\
+         = df_state[ dd.EngEng["confirmedPcr"]] + df_state[dd.EngEng["confirmedAb"]]
 
-   states_array = df_state.State.unique()
 
    # output json
-   # call df_state.to_json("spain_all_state.json", orient='records'), or to hdf5 alternatively
-   getattr(df_state, od.outForm[out_form][0])(os.path.join(out_folder ,"spain_all_state") + od.outForm[out_form][1], **od.outForm[out_form][2])
+   gd.write_dataframe(df_state, directory, "spain_all_state", out_form)
+
+
+def main():
+
+    [read_data, make_plot, out_form, out_folder] = gd.cli('Download of spain data')
+    get_spain_data(read_data, make_plot, out_form, out_folder)
 
 
 if __name__ == "__main__":
 
-   main()  
-    
+    main()

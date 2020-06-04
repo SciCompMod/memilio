@@ -28,6 +28,16 @@ public:
     Dampings();
 
     /**
+     * @brief activates or deactivates smoothing between two distinct discrete dampings
+     */
+    void set_smoothing(bool smoothing);
+
+    /**
+     * @brief returns the vector of dampings
+     */
+    std::vector<Damping> const& get_dampings_vector() const;
+
+    /**
      * @brief Adds a damping to the current model
      * @param d The damping, which is a factor and day from which the mitigation acts
      */
@@ -37,11 +47,13 @@ public:
      * @brief Returns the damping factor
      *
      * @param[in] day Current day
+     * @param[in] smooth smoothing dampings by cosine curve to avoid stepping function
      */
     double get_factor(double day) const;
 
 private:
     std::vector<Damping> m_dampings;
+    bool m_smoothing;
 };
 
 } // namespace epi

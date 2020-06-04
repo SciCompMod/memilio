@@ -368,6 +368,12 @@ public:
         Probabilities();
 
         /**
+        * @brief sets probability of getting infected from a contact
+        * @param infprob the probability of getting infected from a contact
+        */
+        void set_infection_from_contact(double const& infprob);
+
+        /**
         * @brief sets the percentage of asymptomatic cases in the SECIR model
         * @param alpha the percentage of asymptomatic cases
         */
@@ -398,6 +404,11 @@ public:
         void set_dead_per_icu(double const& delta);
 
         /**
+        * @brief gets probability of getting infected from a contact
+        */
+        double get_infection_from_contact() const;
+
+        /**
         * @brief returns the percentage of asymptomatic cases in the SECIR model
         */
         double get_asymp_per_infectious() const;
@@ -423,7 +434,7 @@ public:
         double get_dead_per_icu() const;
 
     private:
-        double m_alpha, m_beta, m_rho, m_theta, m_delta; // probabilities
+        double m_infprob, m_alpha, m_beta, m_rho, m_theta, m_delta; // probabilities
     };
 
     StageTimes times;
@@ -448,7 +459,7 @@ double get_reprod_rate(ContactFrequencyMatrix const& cont_freq_matrix, std::vect
  * prints given parameters
  * @param[in] params the SecirParams parameter object
  */
-void print_secir_params(std::vector<SecirParams> const& params);
+void print_secir_params(std::vector<SecirParams> const& params, ContactFrequencyMatrix const& cont_freq);
 
 /**
  * Computes the current time-derivative of S, E, C, I, (H, U,) R, (D) in the SECIR/SECIHURD model

@@ -1,14 +1,14 @@
 build-cpp:
   stage: build
   tags:
-   - cpp
-   - hpcagainstcorona
+    - cpp
+    - hpcagainstcorona
   before_script:
     - apt -qq -y install libeigen3-dev
   script:
     - cd cpp
     - mkdir build && cd build
-    - cmake -G Ninja ..
+    - cmake -G Ninja -DEPI_USE_BUNDLED_EIGEN=OFF ..
     - cmake --build .
   artifacts:
     expire_in: 2 hrs
@@ -17,26 +17,26 @@ build-cpp:
 
 build-py:
   tags:
-   - cpp
-   - hpcagainstcorona
+   - docker
+  image: quay.io/pypa/manylinux2010_x86_64
   stage: build
   before_script:
-    - apt -qq -y install python3.7-venv python3-venv libeigen3-dev
+    - yum install ninja-build -qy
     - cd pycode
-    - python3 -m venv venv
-    - source venv/bin/activate
-    - pip install scikit-build
   script:
-    - python3 setup.py bdist_wheel
+    - /opt/python/cp36-cp36m/bin/python setup.py bdist_wheel
+    - /opt/python/cp37-cp37m/bin/python setup.py bdist_wheel
+    - /opt/python/cp38-cp38/bin/python setup.py bdist_wheel
+    - for whl in dist/*.whl; do auditwheel repair "$whl"; done
   artifacts:
     paths:
-      - pycode/dist/*.whl
+      - pycode/wheelhouse/*.whl
 
 # run tests using the binary built before
 test-cpp:
   tags:
-   - cpp
-   - hpcagainstcorona
+    - cpp
+    - hpcagainstcorona
   stage: test
   dependencies:
     - build-cpp
@@ -49,14 +49,15 @@ test-cpp:
 
 test-py:
   tags:
-   - cpp
-   - hpcagainstcorona
+    - cpp
+    - hpcagainstcorona
   stage: test
   dependencies:
     - build-py
   before_script:
     - apt -qq -y install python3.7 python3-pip
-    - for pkg in `ls pycode/dist/*.whl`; do python3 -m pip install $pkg; done
+    - python3 -m pip install --upgrade pip
+    - for pkg in `ls pycode/wheelhouse/*37*.whl`; do python3 -m pip install $pkg; done
   script:
     - cd pycode/test
     - python3 -m unittest
@@ -64,17 +65,19 @@ test-py:
     - getpopuldata --help
     - getjhdata --help
     - getspaindata --help
+    - getalldata --help
 
 download-data:
   tags:
-   - cpp
-   - hpcagainstcorona
+    - cpp
+    - hpcagainstcorona
   stage: test
   dependencies:
     - build-py
   before_script:
     - apt -qq -y install python3.7 python3-pip
-    - for pkg in `ls pycode/dist/*.whl`; do python3 -m pip install $pkg; done
+    - python3 -m pip install --upgrade pip
+    - for pkg in `ls pycode/wheelhouse/*37*.whl`; do python3 -m pip install $pkg; done
   script:
     - mkdir data
     - getrkidata -o data
@@ -84,35 +87,42 @@ download-data:
   artifacts:
     paths:
       - data/*.json
-  
+      - data/Germany/*.json
+      - data/Spain/*.json
+      - data/France/*.json
+      - data/Italy*.json
+      - data/SouthKorea/*.json
+      - data/US/*.json
+      - data/China/*.json
 
 build-js:
   tags:
-   - npm
-   - hpcagainstcorona
+    - npm
+    - hpcagainstcorona
   stage: build
   before_script:
-   - npm install
+    - cd frontend
+    - npm install
   script:
     - echo "Building app deployment"
     - npm run build
     - echo "Building done"
   artifacts:
     paths:
-      - build/
+      - frontend/build/
 
 www:
   tags:
-   - native
-   - hpcagainstcorona
+    - native
+    - hpcagainstcorona
   stage: deploy
   dependencies:
     - build-js
     - download-data
   script:
     - echo "Deploying to server"
-    - cp -rv build/* /var/www/html
-    - cp -v data/*.json /var/www/html/assets
+    - cp -rv frontend/build/* /var/www/html
+    - cp -v data/Germany/*_rki.json /var/www/html/assets
     - echo "Deployed"
   only:
     - master
