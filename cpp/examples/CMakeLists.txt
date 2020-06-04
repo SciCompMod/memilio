@@ -23,5 +23,9 @@ target_link_libraries(secir_ageres PRIVATE epidemiology)
 
 add_executable(group_seir group_seir.cpp)
 target_link_libraries(group_seir PRIVATE epidemiology)
+
+add_executable(parameter_sampling parameter_sampling.cpp)
+target_link_libraries(parameter_sampling PRIVATE epidemiology)
+
 add_executable(param_study_seir parameter_study_seir.cpp)
 target_link_libraries(param_study_seir PRIVATE epidemiology)

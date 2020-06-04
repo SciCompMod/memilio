@@ -16,8 +16,13 @@ typedef enum
 {
     DIST_UNIFORM,
     DIST_NORMAL
-} parameter_distribution;
+} distribution;
 
+/*
+ * Parameter Distribution class which contains the name of a variable as string
+ * the lower bound and the upper bound as maximum admissible values and an enum
+ * item with the name of the distribution  
+ */
 class ParameterDistribution
 {
 public:
@@ -31,7 +36,7 @@ public:
         m_random_generator = std::mt19937{random_device()};
     }
 
-    ParameterDistribution(std::string name, double lower_bound, double upper_bound, parameter_distribution dist)
+    ParameterDistribution(std::string name, double lower_bound, double upper_bound, distribution dist)
     {
         std::random_device random_device;
         m_random_generator = std::mt19937{random_device()};
@@ -56,7 +61,7 @@ public:
         m_upper_bound = upper_bound;
     }
 
-    void set_distribution(parameter_distribution dist)
+    void set_distribution(distribution dist)
     {
         m_dist = dist;
     }
@@ -76,7 +81,7 @@ public:
         return m_upper_bound;
     }
 
-    parameter_distribution const& get_distribution() const
+    distribution const& get_distribution() const
     {
         return m_dist;
     }
@@ -89,11 +94,15 @@ protected:
     std::string m_name; /*< The name of this parameter */
     double m_lower_bound; /*< A realistic lower bound on the given parameter */
     double m_upper_bound; /*< A realistic upper bound on the given parameter */
-    parameter_distribution m_dist; /*< The statistical distribution of this parameter */
+    distribution m_dist; /*< The statistical distribution of this parameter */
     std::mt19937 m_random_generator;
 };
 
-class ParameterDistributionNormal : ParameterDistribution
+/*
+ * Child class of Parameter Distribution class which additionally contains
+ * the mean value and the standard deviation for a normal distribution 
+ */
+class ParameterDistributionNormal : public ParameterDistribution
 {
 public:
     ParameterDistributionNormal()
@@ -107,17 +116,18 @@ public:
     ParameterDistributionNormal(double mean, double standard_dev)
         : ParameterDistribution()
     {
-        m_dist = DIST_NORMAL;
-        m_mean = mean;
-        set_standard_dev(standard_dev);
+        m_dist         = DIST_NORMAL;
+        m_standard_dev = standard_dev;
+        check_quantiles();
     }
 
     ParameterDistributionNormal(std::string name, double lower_bound, double upper_bound, double mean,
                                 double standard_dev)
         : ParameterDistribution(name, lower_bound, upper_bound, DIST_NORMAL)
     {
-        m_mean = mean;
-        set_standard_dev(standard_dev);
+        m_mean         = mean;
+        m_standard_dev = standard_dev;
+        check_quantiles();
     }
 
     void set_mean(double mean)
@@ -125,18 +135,37 @@ public:
         m_mean = mean;
     }
 
+    /*
+     * @brief verification that at least 95% of the density
+     * function lie in the interval defined by the boundaries
+     */
+    bool check_quantiles()
+    {
+        bool changed = false;
+        if (m_mean < m_lower_bound || m_mean > m_upper_bound) {
+            m_mean  = 0.5 * (m_upper_bound - m_lower_bound);
+            changed = true;
+        }
+
+        // ensure that 0.95 % of the distribution are within lower bound and upper bound
+        if (m_mean + m_standard_dev * m_quartile_0975 > m_upper_bound) {
+            m_standard_dev = (m_upper_bound - m_mean) / m_quartile_0975;
+            changed        = true;
+        }
+        if (m_mean - m_standard_dev * m_quartile_0975 < m_lower_bound) {
+            m_standard_dev = (m_mean - m_lower_bound) / m_quartile_0975;
+            changed        = true;
+        }
+
+        if (changed && m_log_stddev_change) {
+            log_warning("Standard deviation reduced to fit 95% of the distribution within [lowerbound,upperbound].");
+        }
+
+        return changed;
+    }
+
     void set_standard_dev(double standard_dev)
     {
-        standard_dev = std::fabs(standard_dev);
-        // ensure that 0.95 % of the distribution are within lower bound and upper bound
-        if (m_mean + standard_dev * m_quartile_0975 > m_upper_bound) {
-            standard_dev = (m_upper_bound - m_mean) / m_quartile_0975;
-            log_warning("Standard deviation reduced to fit 95% of the distribution within [lowerbound,upperbound].");
-        }
-        if (m_mean - standard_dev * m_quartile_0975 < m_lower_bound) {
-            standard_dev = (m_mean - m_lower_bound) / m_quartile_0975;
-            log_warning("Standard deviation reduced to fit 95% of the distribution within [lowerbound,upperbound].");
-        }
         m_standard_dev = standard_dev;
     }
 
@@ -150,12 +179,19 @@ public:
         return m_standard_dev;
     }
 
+    void set_log(bool log_stddev_change)
+    {
+        m_log_stddev_change = log_stddev_change;
+    }
+
     /*
      * @brief gets a sample of a normally distributed variable
+     * before sampling, it is verified that at least 95% of the
+     * density function lie in the interval defined by the boundaries
      */
-    double get_sample_point()
+    double get_sample_point() override
     {
-        if (m_distribution.mean() != m_mean || m_distribution.stddev() != m_standard_dev) {
+        if (check_quantiles() || m_distribution.mean() != m_mean || m_distribution.stddev() != m_standard_dev) {
             m_distribution = std::normal_distribution<double>{m_mean, m_standard_dev};
         }
 
@@ -183,9 +219,13 @@ private:
     double m_standard_dev; // the standard deviation of the normal distribution
     constexpr static double m_quartile_0975 = 1.96; // 0.975 quartile
     std::normal_distribution<double> m_distribution;
+    bool m_log_stddev_change = true;
 };
 
-class ParameterDistributionUniform : ParameterDistribution
+/*
+ * Child class of Parameter Distribution class which represents an uniform distribution 
+ */
+class ParameterDistributionUniform : public ParameterDistribution
 {
 public:
     ParameterDistributionUniform()
@@ -201,7 +241,7 @@ public:
     /*
      * @brief gets a sample of a uniformly distributed variable
      */
-    double get_sample_point()
+    double get_sample_point() override
     {
         if (m_distribution.max() != m_upper_bound || m_distribution.min() != m_lower_bound) {
             m_distribution = std::uniform_real_distribution<double>{m_lower_bound, m_upper_bound};
