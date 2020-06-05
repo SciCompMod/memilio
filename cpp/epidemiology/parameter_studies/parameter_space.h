@@ -272,6 +272,57 @@ private:
     std::uniform_real_distribution<double> m_distribution;
 };
 
+/*
+ * class of model element variability
+ * a model element can be a real-valued parameter,
+ * a vector or matrix of related parameters, a
+ * set of both or a combination of all of that
+ */
+class ElementVariability
+{
+public:
+    ElementVariability(std::string name)
+        : m_indep_attr{1}
+        , m_dimensions{1}
+        , m_max_var_per_dim{0}
+    {
+        m_name = name;
+    }
+
+    ElementVariability(std::string name, int indep_attr, std::vector<int> dimensions,
+                       std::vector<double> max_var_per_dim)
+    {
+        m_name            = name;
+        m_indep_attr      = indep_attr;
+        m_dimensions      = dimensions;
+        m_max_var_per_dim = max_var_per_dim;
+    }
+
+private:
+    std::string m_name; // name of the model
+    int m_indep_attr; // number of independent attributes
+    std::vector<int> m_dimensions; // number of related dimensions per attribute
+    std::vector<double>
+        m_max_var_per_dim; // maximum variability in independent attribute (only applies for multivalued attributes)
+};
+
+class RealElementVariability : public ElementVariability
+{
+    RealElementVariability(std::string name)
+        : ElementVariability(name)
+    {
+    }
+};
+
+class MatrixElementVariability : public ElementVariability
+{
+    MatrixElementVariability(std::string name, int indep_attr, std::vector<int> dimensions,
+                             std::vector<double> max_var_per_dim)
+        : ElementVariability(name, indep_attr, dimensions, max_var_per_dim)
+    {
+    }
+};
+
 /* The class parameter_space_t stores ranges of parameters
  * together with information on step sizes,
  * a start and end time as well as an initial time step.
