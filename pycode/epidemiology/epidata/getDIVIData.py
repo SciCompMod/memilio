@@ -26,10 +26,19 @@ def get_divi_data(read_data=dd.defaultDict['read_data'],
 
    else:
       # Get data:
+      #https://www.divi.de/divi-intensivregister-tagesreport-archiv/1676-divi-intensivregister-tagesreport-2020-06-05/file
+      #https://www.divi.de/divi-intensivregister-tagesreport-archiv/1674-divi-intensivregister-tagesreport-2020-06-04/file
       # https://www.divi.de/images/Dokumente/Tagesdaten_Intensivregister_CSV/DIVI-Intensivregister_2020-06-03_09-15.csv
-      df = gd.loadCsv('DIVI-Intensivregister_2020-06-03_09-15',
-                      apiUrl = 'https://www.divi.de/images/Dokumente/Tagesdaten_Intensivregister_CSV/')
-      # output data to not always download it
+      #DIVI-Intensivregister_2020-06-03_09-15.csv
+      #TODO: Add loop for dates and for finding the correct number of the folder and extend pandas dataframe
+      try:
+         df = gd.loadCsv('file',
+                      extension='',
+                      apiUrl = 'https://www.divi.de/divi-intensivregister-tagesreport-archiv/'
+                               '1670-divi-intensivregister-tagesreport-2020-06-03/')
+         # output data to not always download it
+      except:
+         print("Error: URL not knwon")
       gd.write_dataframe(df, directory, filename, "json")
 
    # change column names
