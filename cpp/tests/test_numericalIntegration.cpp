@@ -132,7 +132,7 @@ public:
 TEST(TestOdeIntegrator, integratorDoesTheRightNumberOfSteps)
 {
     using testing::_;
-    auto mock_core = std::make_shared<MockIntegratorCore>();
+    auto mock_core = std::make_shared<testing::StrictMock<MockIntegratorCore>>();
     EXPECT_CALL(*mock_core, step).Times(100);
 
     auto f = [](const auto& y, auto t, auto& dydt) {};
@@ -151,13 +151,24 @@ TEST(TestOdeIntegrator, integratorStopsAtTMax)
     EXPECT_DOUBLE_EQ(integrator.get_t().back(), 2.34);
 }
 
-auto DoStepAndSetStepsize(double new_dt)
+auto DoStepAndIncreaseStepsize(double new_dt)
 {
     return testing::DoAll(
         testing::WithArgs<2, 3>(AddAssign()),
         testing::WithArgs<4, 1>(Assign()),
         testing::SetArgReferee<3>(new_dt),
-        testing::Return(true));
+        testing::Return(true)
+    );
+}
+
+auto DoStepAndReduceStepsize(double new_dt)
+{
+    return testing::DoAll(
+        testing::WithArgs<2>(AddAssign(new_dt)),
+        testing::WithArgs<4, 1>(Assign()),
+        testing::SetArgReferee<3>(new_dt),
+        testing::Return(true)
+    );
 }
 
 TEST(TestOdeIntegrator, integratorUpdatesStepsize)
@@ -165,19 +176,25 @@ TEST(TestOdeIntegrator, integratorUpdatesStepsize)
     using testing::_;
     using testing::Eq;
 
-    auto mock_core = std::make_shared<MockIntegratorCore>();
+    auto mock_core = std::make_shared<testing::StrictMock<MockIntegratorCore>>();
 
-    //double on each call
-    EXPECT_CALL(*mock_core, step(_, _, _, Eq(1), _)).Times(1).WillOnce(DoStepAndSetStepsize(2.));
-    EXPECT_CALL(*mock_core, step(_, _, _, Eq(2), _)).Times(1).WillOnce(DoStepAndSetStepsize(4.));
-    EXPECT_CALL(*mock_core, step(_, _, _, Eq(4), _)).Times(1).WillOnce(DoStepAndSetStepsize(8.));
-    //last step of each advance call is smaller
-    EXPECT_CALL(*mock_core, step(_, _, _, Eq(3), _)).Times(2).WillRepeatedly(DoStepAndSetStepsize(6.));
-    //continue on the second advance call with updated step size, but last step of first advance is ignored
-    EXPECT_CALL(*mock_core, step(_, _, _, Eq(8), _)).Times(1).WillOnce(DoStepAndSetStepsize(16.));
+    {
+        testing::InSequence seq;
+        
+        EXPECT_CALL(*mock_core, step(_, _, _, Eq(1), _)).Times(1).WillOnce(DoStepAndIncreaseStepsize(2.));
+        EXPECT_CALL(*mock_core, step(_, _, _, Eq(2), _)).Times(1).WillOnce(DoStepAndIncreaseStepsize(4.));
+        EXPECT_CALL(*mock_core, step(_, _, _, Eq(4), _)).Times(1).WillOnce(DoStepAndIncreaseStepsize(8.));
+        //last step of first advance call
+        EXPECT_CALL(*mock_core, step(_, _, _, Eq(3), _)).Times(1).WillRepeatedly(DoStepAndIncreaseStepsize(6.)); //this stepsize should not be stored!
+        //continue on the second advance call with correct stepsize
+        EXPECT_CALL(*mock_core, step(_, _, _, Eq(8), _)).Times(1).WillOnce(DoStepAndReduceStepsize(3.5));
+        EXPECT_CALL(*mock_core, step(_, _, _, Eq(3.5), _)).Times(1).WillOnce(DoStepAndIncreaseStepsize(8));
+        //last step of second advance call
+        EXPECT_CALL(*mock_core, step(_, _, _, Eq(6), _)).Times(1);
+    }
 
     auto f          = [](auto&& y, auto&& t, auto&& dydt) {};
     auto integrator = epi::OdeIntegrator(f, 0, Eigen::VectorXd::Constant(1, 0), 1.0, mock_core);
     integrator.advance(10.0);
-    integrator.advance(21.0);
+    integrator.advance(23.0);
 }
