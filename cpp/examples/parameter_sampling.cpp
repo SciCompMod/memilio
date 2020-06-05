@@ -10,7 +10,7 @@ int main()
     double min    = 1;
     double max    = 10;
     // check if full argument constructor works correctly
-    epi::ParameterDistributionNormal parameter_dist_normal("dummy", min, max, mean, stddev);
+    epi::ParameterDistributionNormal parameter_dist_normal(min, max, mean, stddev);
 
     printf("\n N(%.0f,%.0f)-distribution with sampling only in [%.0f,%.0f]", mean, stddev, min, max);
     int counter[10] = {0};
@@ -29,7 +29,7 @@ int main()
 
     // check if full argument constructor works correctly
     printf("\n U(%.0f,%.0f)-distribution", min, max);
-    epi::ParameterDistributionUniform parameter_dist_unif("dummy", 1.0, 10.0);
+    epi::ParameterDistributionUniform parameter_dist_unif(1.0, 10.0);
 
     double counter_unif[10] = {0};
     for (int i = 0; i < 1000; i++) {

@@ -6,7 +6,7 @@
 TEST(ParameterStudies, init_from_seir_params)
 {
     epi::SecirParams params;
-    epi::parameter_space_t parameter_space(params, 0.1);
+    // epi::parameter_space_t parameter_space(params, 0.1);
 }
 
 TEST(ParameterStudies, test_normal_distribution)
@@ -25,8 +25,7 @@ TEST(ParameterStudies, test_normal_distribution)
     EXPECT_GE(std_dev_demanded, parameter_dist_normal_1.get_standard_dev());
 
     // check if full argument constructor works correctly
-    epi::ParameterDistributionNormal parameter_dist_normal_2("dummy", -1.0, 1.0, 0,
-                                                             parameter_dist_normal_1.get_standard_dev());
+    epi::ParameterDistributionNormal parameter_dist_normal_2(-1.0, 1.0, 0, parameter_dist_normal_1.get_standard_dev());
 
     EXPECT_EQ(parameter_dist_normal_1.get_lower_bound(), parameter_dist_normal_2.get_lower_bound());
     EXPECT_EQ(parameter_dist_normal_1.get_upper_bound(), parameter_dist_normal_2.get_upper_bound());
@@ -56,7 +55,7 @@ TEST(ParameterStudies, test_uniform_distribution)
 {
 
     // check if full argument constructor works correctly
-    epi::ParameterDistributionUniform parameter_dist_unif("dummy", 1.0, 10.0);
+    epi::ParameterDistributionUniform parameter_dist_unif(1.0, 10.0);
 
     EXPECT_EQ(parameter_dist_unif.get_lower_bound(), 1.0);
     EXPECT_EQ(parameter_dist_unif.get_upper_bound(), 10.0);

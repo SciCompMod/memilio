@@ -1,12 +1,12 @@
 //#include <epidemiology/seir.h>
 #include <epidemiology/parameter_studies/parameter_studies.h>
 
-int main (int argc, char *argv[])
+int main(int argc, char* argv[])
 {
     std::string input_filename;
 
     epi::SecirParams params;
-    epi::parameter_space_t parameter_space(params, 0.1);
+    // epi::parameter_space_t parameter_space(params, 0.1);
 #if 0
     if (argc > 1) {
         // If provided, the first argument is the input file

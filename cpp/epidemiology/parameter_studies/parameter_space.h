@@ -27,8 +27,7 @@ class ParameterDistribution
 {
 public:
     ParameterDistribution()
-        : m_name{""}
-        , m_lower_bound{0}
+        : m_lower_bound{0}
         , m_upper_bound{0}
         , m_dist{DIST_UNIFORM}
     {
@@ -36,21 +35,14 @@ public:
         m_random_generator = std::mt19937{random_device()};
     }
 
-    ParameterDistribution(std::string name, double lower_bound, double upper_bound, distribution dist)
+    ParameterDistribution(double lower_bound, double upper_bound, distribution dist)
     {
         std::random_device random_device;
         m_random_generator = std::mt19937{random_device()};
-        m_name             = name;
         m_lower_bound      = lower_bound;
         m_upper_bound      = upper_bound;
         m_dist             = dist;
     }
-
-    void set_name(std::string name)
-    {
-        m_name = name;
-    }
-
     void set_lower_bound(double lower_bound)
     {
         m_lower_bound = lower_bound;
@@ -66,9 +58,14 @@ public:
         m_dist = dist;
     }
 
-    std::string const& get_name() const
+    void add_predefined_sample(double sample)
     {
-        return m_name;
+        m_predefined_samples.push_back(sample);
+    }
+
+    void remove_predefined_samples()
+    {
+        m_predefined_samples.resize(0);
     }
 
     double get_lower_bound() const
@@ -86,16 +83,36 @@ public:
         return m_dist;
     }
 
+    /*
+     * @brief returns a value for the given parameter distribution
+     * in case some predefined samples are set, these values are taken
+     * first, in case the vector of predefined values is empty, a real 
+     * sample is taken
+     */
+    double get_value()
+    {
+        if (m_predefined_samples.size() > 0) {
+            double rnumb = m_predefined_samples[0];
+            m_predefined_samples.erase(m_predefined_samples.begin());
+            return rnumb;
+        }
+        else {
+            return get_sample_point();
+        }
+    }
+
     virtual double get_sample_point()
     {
+        return 0.0;
     }
 
 protected:
-    std::string m_name; /*< The name of this parameter */
     double m_lower_bound; /*< A realistic lower bound on the given parameter */
     double m_upper_bound; /*< A realistic upper bound on the given parameter */
     distribution m_dist; /*< The statistical distribution of this parameter */
     std::mt19937 m_random_generator;
+    std::vector<double>
+        m_predefined_samples; // if these values are set; no real sample will occur but these values will be taken
 };
 
 /*
@@ -121,9 +138,8 @@ public:
         check_quantiles();
     }
 
-    ParameterDistributionNormal(std::string name, double lower_bound, double upper_bound, double mean,
-                                double standard_dev)
-        : ParameterDistribution(name, lower_bound, upper_bound, DIST_NORMAL)
+    ParameterDistributionNormal(double lower_bound, double upper_bound, double mean, double standard_dev)
+        : ParameterDistribution(lower_bound, upper_bound, DIST_NORMAL)
     {
         m_mean         = mean;
         m_standard_dev = standard_dev;
@@ -186,11 +202,13 @@ public:
 
     /*
      * @brief gets a sample of a normally distributed variable
-     * before sampling, it is verified that at least 95% of the
+     * before sampling, it is verified that at least 99% of the
      * density function lie in the interval defined by the boundaries
+     * otherwise the normal distribution is adapted
      */
     double get_sample_point() override
     {
+
         if (check_quantiles() || m_distribution.mean() != m_mean || m_distribution.stddev() != m_standard_dev) {
             m_distribution = std::normal_distribution<double>{m_mean, m_standard_dev};
         }
@@ -233,8 +251,8 @@ public:
     {
     }
 
-    ParameterDistributionUniform(std::string name, double lower_bound, double upper_bound)
-        : ParameterDistribution(name, lower_bound, upper_bound, DIST_UNIFORM)
+    ParameterDistributionUniform(double lower_bound, double upper_bound)
+        : ParameterDistribution(lower_bound, upper_bound, DIST_UNIFORM)
     {
     }
 
@@ -278,7 +296,7 @@ public:
    * and for each parameter p in \a seir values in the range
    *  (1-\a eps) * p to (1 + \a eps) * p
    */
-    parameter_space_t(const SecirParams& seir, double eps);
+    parameter_space_t(ContactFrequencyMatrix const& cont_freq_matrix, std::vector<SecirParams> const& params);
 
 private:
     // A vector of all parameters with names and min/max values
@@ -291,11 +309,9 @@ parameter_space_t::parameter_space_t(std::string& parameter_filename)
     assert(0 && "This function is not implemented yet.");
 }
 
-parameter_space_t::parameter_space_t(const SecirParams& seir, double eps)
+parameter_space_t::parameter_space_t(ContactFrequencyMatrix const& cont_freq_matrix,
+                                     std::vector<SecirParams> const& params)
 {
-    assert(0 <= eps && eps < 1);
-    const double min_factor = 1 - eps;
-    const double max_factor = 1 + eps;
 
     /* Read all the parameters from seir and store them in our parameters list.
    * Many parameters are stored inverse in seir, so we need to reinvert them. */

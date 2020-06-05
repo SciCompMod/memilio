@@ -9,8 +9,8 @@ namespace epi
 {
 
 // The function type for the kind of simulation that we want to run
-using seir_simulation_function_t = void (*)(const double t0, const double tmax, const double dt,
-                                            SecirParams const& params, std::vector<std::vector<double>>& seir);
+using secir_simulation_function_t = void (*)(const double t0, const double tmax, const double dt,
+                                             SecirParams const& params, std::vector<std::vector<double>>& seir);
 
 // TODO: document class
 // TODO: document input file convention
@@ -27,6 +27,25 @@ public:
     // Carry out all simulations in the parameter study.
     void run();
 
+    /*
+     * @brief sets end point in simulation and 
+     * limits the maximum number of dampings by one per 10 days (in the mean)
+     * @param[in] tmax end point in simulation
+     */
+    void set_tmax(double tmax)
+    {
+        m_tmax            = tmax;
+        m_max_nb_dampings = (int)(tmax / 10);
+    }
+
+    /*
+     * @brief returns end point in simulation
+     */
+    double get_tmax() const
+    {
+        return m_tmax;
+    }
+
 private:
     // The path of the file storing the parameter ranges
     std::string parameter_file;
@@ -35,23 +54,21 @@ private:
     parameter_space_t parameter_space;
 
     // The function that carries out our simulation
-    seir_simulation_function_t simulation_function;
+    secir_simulation_function_t simulation_function;
 
     // Start time (should be the same for all simulations)
-    double t0;
+    double m_t0 = 0;
     // End time (should be the same for all simulations)
-    double tmax;
-    // time step (should be the same for all simulations)
-    double dt;
+    double m_tmax = 400;
+    // adaptive time step (will be corrected if too large/small)
+    double dt = 0.1;
+    // maximum number of dampings; to avoid overfitting only allow one damping for every 10 days simulated
+    int m_max_nb_dampings = 40;
 };
 
 parameter_study_t::parameter_study_t(std::string& parameter_filename)
     : parameter_space(parameter_filename)
 {
-    // TODO: Read these from file as well
-    t0   = 0;
-    tmax = 1;
-    dt   = 0.1;
 }
 
 void parameter_study_t::run()
