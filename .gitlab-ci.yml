@@ -111,6 +111,21 @@ build-js:
     paths:
       - frontend/build/
 
+build-js-bindings:
+  stage: build
+  tags:
+   - docker
+  image: trzeci/emscripten
+  script:
+  - cd frontend
+  - mkdir build && cd build
+  - emcmake cmake ..
+  - cmake --build .
+  artifacts:
+    paths:
+    - frontend/build/secirjs.js
+    - frontend/build/secirjs.wasm
+
 www:
   tags:
     - native
