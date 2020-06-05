@@ -136,7 +136,7 @@ public:
     }
 
     /*
-     * @brief verification that at least 95% of the density
+     * @brief verification that at least 99% of the density
      * function lie in the interval defined by the boundaries
      */
     bool check_quantiles()
@@ -147,13 +147,13 @@ public:
             changed = true;
         }
 
-        // ensure that 0.95 % of the distribution are within lower bound and upper bound
-        if (m_mean + m_standard_dev * m_quartile_0975 > m_upper_bound) {
-            m_standard_dev = (m_upper_bound - m_mean) / m_quartile_0975;
+        // ensure that 0.99 % of the distribution are within lower bound and upper bound
+        if (m_mean + m_standard_dev * m_quantile > m_upper_bound) {
+            m_standard_dev = (m_upper_bound - m_mean) / m_quantile;
             changed        = true;
         }
-        if (m_mean - m_standard_dev * m_quartile_0975 < m_lower_bound) {
-            m_standard_dev = (m_mean - m_lower_bound) / m_quartile_0975;
+        if (m_mean - m_standard_dev * m_quantile < m_lower_bound) {
+            m_standard_dev = (m_mean - m_lower_bound) / m_quantile;
             changed        = true;
         }
 
@@ -217,7 +217,7 @@ public:
 private:
     double m_mean; // the mean value of the normal distribution
     double m_standard_dev; // the standard deviation of the normal distribution
-    constexpr static double m_quartile_0975 = 1.96; // 0.975 quartile
+    constexpr static double m_quantile = 2.5758; // 0.995 quartile
     std::normal_distribution<double> m_distribution;
     bool m_log_stddev_change = true;
 };
@@ -282,7 +282,7 @@ public:
 
 private:
     // A vector of all parameters with names and min/max values
-    std::vector<ParameterDistribution> parameters;
+    std::unordered_map<std::string, ParameterDistribution> parameters;
 };
 
 parameter_space_t::parameter_space_t(std::string& parameter_filename)
@@ -302,35 +302,35 @@ parameter_space_t::parameter_space_t(const SecirParams& seir, double eps)
     // TODO: Currently we use UNIFORM distribution for all. Change this later when
     // we know more about distributions.
     // times
-    parameters.push_back({"T_inc", min_factor * 1. / seir.times.get_incubation_inv(),
-                          max_factor * 1. / seir.times.get_incubation_inv(), DIST_UNIFORM});
-    parameters.push_back({"T_serint", min_factor * 1. / seir.times.get_serialinterval_inv(),
-                          max_factor * 1. / seir.times.get_serialinterval_inv(), DIST_UNIFORM});
-    parameters.push_back({"T_infmild", min_factor * 1. / seir.times.get_infectious_mild_inv(),
-                          max_factor * 1. / seir.times.get_infectious_mild_inv(), DIST_UNIFORM});
-    parameters.push_back({"T_hosp2home", min_factor * 1. / seir.times.get_hospitalized_to_home_inv(),
-                          max_factor * 1. / seir.times.get_hospitalized_to_home_inv(), DIST_UNIFORM});
-    parameters.push_back({"T_home2hosp", min_factor * 1. / seir.times.get_home_to_hospitalized_inv(),
-                          max_factor * 1. / seir.times.get_home_to_hospitalized_inv(), DIST_UNIFORM});
-    parameters.push_back({"T_hosp2icu", min_factor * 1. / seir.times.get_hospitalized_to_icu_inv(),
-                          max_factor * 1. / seir.times.get_hospitalized_to_icu_inv(), DIST_UNIFORM});
-    parameters.push_back({"T_icu2home", min_factor * 1. / seir.times.get_icu_to_home_inv(),
-                          max_factor * 1. / seir.times.get_icu_to_home_inv(), DIST_UNIFORM});
-    parameters.push_back({"T_infasy", min_factor * 1. / seir.times.get_infectious_asymp_inv(),
-                          max_factor * 1. / seir.times.get_infectious_asymp_inv(), DIST_UNIFORM});
-    // probabilities
-    parameters.push_back({"infprob", min_factor * seir.probabilities.get_infection_from_contact(),
-                          max_factor * seir.probabilities.get_infection_from_contact(), DIST_UNIFORM});
-    parameters.push_back({"alpha", min_factor * seir.probabilities.get_asymp_per_infectious(),
-                          max_factor * seir.probabilities.get_asymp_per_infectious(), DIST_UNIFORM});
-    parameters.push_back({"beta", min_factor * seir.probabilities.get_risk_from_symptomatic(),
-                          max_factor * seir.probabilities.get_risk_from_symptomatic(), DIST_UNIFORM});
-    parameters.push_back({"rho", min_factor * seir.probabilities.get_hospitalized_per_infectious(),
-                          max_factor * seir.probabilities.get_hospitalized_per_infectious(), DIST_UNIFORM});
-    parameters.push_back({"theta", min_factor * seir.probabilities.get_icu_per_hospitalized(),
-                          max_factor * seir.probabilities.get_icu_per_hospitalized(), DIST_UNIFORM});
-    parameters.push_back({"delta", min_factor * seir.probabilities.get_dead_per_icu(),
-                          max_factor * seir.probabilities.get_dead_per_icu(), DIST_UNIFORM});
+    // parameters.push_back({"T_inc", min_factor * 1. / seir.times.get_incubation_inv(),
+    //                       max_factor * 1. / seir.times.get_incubation_inv(), DIST_UNIFORM});
+    // parameters.push_back({"T_serint", min_factor * 1. / seir.times.get_serialinterval_inv(),
+    //                       max_factor * 1. / seir.times.get_serialinterval_inv(), DIST_UNIFORM});
+    // parameters.push_back({"T_infmild", min_factor * 1. / seir.times.get_infectious_mild_inv(),
+    //                       max_factor * 1. / seir.times.get_infectious_mild_inv(), DIST_UNIFORM});
+    // parameters.push_back({"T_hosp2home", min_factor * 1. / seir.times.get_hospitalized_to_home_inv(),
+    //                       max_factor * 1. / seir.times.get_hospitalized_to_home_inv(), DIST_UNIFORM});
+    // parameters.push_back({"T_home2hosp", min_factor * 1. / seir.times.get_home_to_hospitalized_inv(),
+    //                       max_factor * 1. / seir.times.get_home_to_hospitalized_inv(), DIST_UNIFORM});
+    // parameters.push_back({"T_hosp2icu", min_factor * 1. / seir.times.get_hospitalized_to_icu_inv(),
+    //                       max_factor * 1. / seir.times.get_hospitalized_to_icu_inv(), DIST_UNIFORM});
+    // parameters.push_back({"T_icu2home", min_factor * 1. / seir.times.get_icu_to_home_inv(),
+    //                       max_factor * 1. / seir.times.get_icu_to_home_inv(), DIST_UNIFORM});
+    // parameters.push_back({"T_infasy", min_factor * 1. / seir.times.get_infectious_asymp_inv(),
+    //                       max_factor * 1. / seir.times.get_infectious_asymp_inv(), DIST_UNIFORM});
+    // // probabilities
+    // parameters.push_back({"infprob", min_factor * seir.probabilities.get_infection_from_contact(),
+    //                       max_factor * seir.probabilities.get_infection_from_contact(), DIST_UNIFORM});
+    // parameters.push_back({"alpha", min_factor * seir.probabilities.get_asymp_per_infectious(),
+    //                       max_factor * seir.probabilities.get_asymp_per_infectious(), DIST_UNIFORM});
+    // parameters.push_back({"beta", min_factor * seir.probabilities.get_risk_from_symptomatic(),
+    //                       max_factor * seir.probabilities.get_risk_from_symptomatic(), DIST_UNIFORM});
+    // parameters.push_back({"rho", min_factor * seir.probabilities.get_hospitalized_per_infectious(),
+    //                       max_factor * seir.probabilities.get_hospitalized_per_infectious(), DIST_UNIFORM});
+    // parameters.push_back({"theta", min_factor * seir.probabilities.get_icu_per_hospitalized(),
+    //                       max_factor * seir.probabilities.get_icu_per_hospitalized(), DIST_UNIFORM});
+    // parameters.push_back({"delta", min_factor * seir.probabilities.get_dead_per_icu(),
+    //                       max_factor * seir.probabilities.get_dead_per_icu(), DIST_UNIFORM});
 }
 
 } // namespace epi

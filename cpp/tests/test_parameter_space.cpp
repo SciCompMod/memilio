@@ -33,9 +33,9 @@ TEST(ParameterStudies, test_normal_distribution)
     EXPECT_EQ(parameter_dist_normal_1.get_mean(), parameter_dist_normal_2.get_mean());
     EXPECT_EQ(parameter_dist_normal_1.get_standard_dev(), parameter_dist_normal_2.get_standard_dev());
 
-    // check if std_dev is not changed if boundaries are far enough away such that 95% of the density fits into the interval
+    // check if std_dev is not changed if boundaries are far enough away such that 99% of the density fits into the interval
     parameter_dist_normal_2.set_mean(5);
-    parameter_dist_normal_2.set_standard_dev(2);
+    parameter_dist_normal_2.set_standard_dev(1.5);
     parameter_dist_normal_2.set_lower_bound(1);
     parameter_dist_normal_2.set_upper_bound(10);
     std_dev_demanded = parameter_dist_normal_2.get_standard_dev();

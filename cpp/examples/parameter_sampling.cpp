@@ -6,7 +6,7 @@
 int main()
 {
     double mean   = 5;
-    double stddev = 2;
+    double stddev = 1.5;
     double min    = 1;
     double max    = 10;
     // check if full argument constructor works correctly
