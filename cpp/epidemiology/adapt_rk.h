@@ -77,7 +77,7 @@ public:
  *
  * This method integrates a system of ODEs
  */
-class RKIntegrator : public IntegratorBase
+class RKIntegratorCore : public IntegratorCore
 {
 public:
     /**
@@ -86,9 +86,8 @@ public:
      * @param dt_min Mininum time step
      * @param dt_max Maximum time step
      */
-    RKIntegrator(DerivFunction func, double dt_min, double dt_max)
-        : IntegratorBase(func)
-        , m_abs_tol(1e-10)
+    RKIntegratorCore(double dt_min, double dt_max)
+        : m_abs_tol(1e-10)
         , m_rel_tol(1e-5)
         , m_dt_min(dt_min)
         , m_dt_max(dt_max)
@@ -122,7 +121,7 @@ public:
     * @param[in,out] dt current time step h=dt
     * @param[out] ytp1 approximated value y(t+1)
     */
-    bool step(Eigen::VectorXd const& yt, double& t, double& dt, Eigen::VectorXd& ytp1) const override;
+    bool step(const DerivFunction& f, Eigen::VectorXd const& yt, double& t, double& dt, Eigen::VectorXd& ytp1) const override;
 
 private:
     Tableau m_tab;

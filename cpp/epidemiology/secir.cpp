@@ -555,9 +555,9 @@ void secir_get_derivatives(ContactFrequencyMatrix const& cont_freq_matrix, std::
 
 namespace
 {
-    template <class Vector>
-    void secir_get_initial_values(const SecirParams& params, Vector&& y)
+    Eigen::VectorXd secir_get_initial_values(const SecirParams& params)
     {
+        Eigen::VectorXd y(8);
         y[0] = params.populations.get_suscetible_t0();
         y[1] = params.populations.get_exposed_t0();
         y[2] = params.populations.get_carrier_t0();
@@ -566,38 +566,47 @@ namespace
         y[5] = params.populations.get_icu_t0();
         y[6] = params.populations.get_recovered_t0();
         y[7] = params.populations.get_dead_t0();
+        return y;
+    }
+
+    Eigen::VectorXd secir_get_initial_values(const std::vector<SecirParams>& params, bool interleave)
+    {
+        Eigen::VectorXd y(params.size() * 8);
+        for (size_t i = 0; i < params.size(); i++) {
+            slice(y, interleave
+                         ? Seq<Eigen::Index>{static_cast<Eigen::Index>(i), 8, static_cast<Eigen::Index>(params.size())}
+                         : Seq<Eigen::Index>{static_cast<Eigen::Index>(i) * 8, 8}) =
+                secir_get_initial_values(params[i]);
+        }
+        return y;
     }
 } // namespace
 
 std::vector<double> simulate(double t0, double tmax, double dt, ContactFrequencyMatrix const& cont_freq_matrix,
                              std::vector<SecirParams> const& params, std::vector<Eigen::VectorXd>& secir)
+{    
+    SecirSimulation sim(cont_freq_matrix, params, t0, dt);
+    sim.advance(tmax);
+    secir = sim.get_y();
+    return sim.get_t();
+}
+
+SecirSimulation::SecirSimulation(const ContactFrequencyMatrix& cont_freq_matrix, const std::vector<SecirParams>& params,
+                                 double t0, double dt_init)
+    : m_integratorCore(std::make_shared<RKIntegratorCore>(1e-3, 1.))
+    , m_integrator(
+          [params, cont_freq_matrix](auto&& y, auto&& t, auto&& dydt) {
+              secir_get_derivatives(cont_freq_matrix, params, y, t, dydt);
+          },
+          t0, secir_get_initial_values(params, false), dt_init, m_integratorCore)
 {
-    size_t n_agegroups = params.size();
-    secir              = std::vector<Eigen::VectorXd>(1, Eigen::VectorXd::Constant(n_agegroups * 8, 0.));
+    m_integratorCore->set_rel_tolerance(1e-4);
+    m_integratorCore->set_abs_tolerance(1e-1);
+}
 
-    //initial conditions
-    for (size_t i = 0; i < n_agegroups; i++) {
-        secir_get_initial_values(params[i], slice(secir[0], {(Eigen::Index)i * 8, 8}));
-    }
-
-    auto secir_fun = [&cont_freq_matrix, &params](Eigen::VectorXd const& y, const double t, Eigen::VectorXd& dydt) {
-        return secir_get_derivatives(cont_freq_matrix, params, y, t, dydt);
-    };
-
-#ifdef ARK_H
-    double dtmin = 1e-3;
-    double dtmax = 1.;
-    RKIntegrator integrator(secir_fun, dtmin, dtmax);
-    integrator.set_abs_tolerance(1e-1);
-    integrator.set_rel_tolerance(1e-4);
-#endif
-#ifdef EULER_H
-    double dtmin = dt;
-    double dtmax = dt;
-    EulerIntegrator integrator(secir_fun);
-#endif
-
-    return ode_integrate(t0, tmax, dt, integrator, secir);
+Eigen::VectorXd& SecirSimulation::advance(double tmax)
+{
+    return m_integrator.advance(tmax);
 }
 
 std::vector<double> simulate_groups(double t0, double tmax, double dt,
@@ -610,27 +619,24 @@ std::vector<double> simulate_groups(double t0, double tmax, double dt,
     auto num_groups     = group_params.size();
     auto num_vars       = 4;
     auto num_vars_total = 4 * num_groups;
-    group_secir         = std::vector<Eigen::VectorXd>(1, Eigen::VectorXd(num_vars_total));
-    auto integrators    = std::vector<std::unique_ptr<IntegratorBase>>(num_groups);
+    group_secir         = std::vector<Eigen::VectorXd>(1, secir_get_initial_values(group_params, true));
+    auto fs             = std::vector<DerivFunction>(num_groups);
 
     Eigen::VectorXd init_single(num_vars);
     for (size_t i = 0; i < num_groups; i++) {
-        secir_get_initial_values(group_params[i], init_single);
-        slice(group_secir[0], {Eigen::Index(i), Eigen::Index(num_vars), Eigen::Index(num_groups)}) = init_single;
-
-        auto secir_fun = [cont_freq = group_cont_freqs[i],
-                          params = group_params[i]](Eigen::VectorXd const& y, const double t, Eigen::VectorXd& dydt) {
+        fs[i] = [cont_freq = group_cont_freqs[i],
+                 params    = group_params[i]](Eigen::VectorXd const& y, const double t, Eigen::VectorXd& dydt) {
             return secir_get_derivatives(cont_freq, {1, params}, y, t, dydt);
         };
-        double dtmin    = 1e-5;
-        double dtmax    = 1.;
-        auto integrator = std::make_unique<RKIntegrator>(secir_fun, dtmin, dtmax);
-        integrator->set_rel_tolerance(1e-6);
-        integrator->set_abs_tolerance(0);
-        integrators[i] = std::move(integrator);
     }
 
-    return ode_integrate_with_migration(t0, tmax, dt, integrators, migration_function, group_secir);
+    double dtmin    = 1e-5;
+    double dtmax    = 1.;
+    auto integrator = std::make_shared<RKIntegratorCore>(dtmin, dtmax);
+    integrator->set_rel_tolerance(1e-6);
+    integrator->set_abs_tolerance(0);
+
+    return ode_integrate_with_migration(t0, tmax, dt, fs, integrator, migration_function, group_secir);
 }
 
 } // namespace epi

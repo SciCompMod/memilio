@@ -3,6 +3,7 @@
 
 #include <epidemiology/damping.h>
 #include <epidemiology/migration.h>
+#include <epidemiology/adapt_rk.h>
 
 #include <vector>
 #include <Eigen/Core>
@@ -473,14 +474,58 @@ void secir_get_derivatives(ContactFrequencyMatrix const& cont_freq_matrix, std::
                            Eigen::VectorXd const& y, double t, Eigen::VectorXd& dydt);
 
 /**
- * Computes the SECIR curve by integration
- * @param[in] secir_0 Initial S, E, C, I, (H, U,) R, (D) values at t0
- * @param[in] t0 start time of simulation
- * @param[in] tmax end time of simulation
- * @param[in] dt initial time step
- * @param[in] params SECIR/SECIHURD model parameters
- *
- * @returns Vector of times t
+ * @brief simulate SECIR compartment model.
+ * The simulation supports multiple groups with different parameters interacting with each other.
+ */
+class SecirSimulation
+{
+public:
+    /**
+     * @brief setup the SECIR simulation
+     * @param cont_freq_matrix contact frequencies between groups
+     * @param params parameters of each group
+     * @param t0 start time
+     * @param dt_init initial step size of integration
+     */
+    SecirSimulation(const ContactFrequencyMatrix& cont_freq_matrix, const std::vector<SecirParams>& params,
+                    double t0 = 0., double dt_init = 0.1);
+
+    /**
+     * @brief advance simulation to tmax
+     * must be greater than get_t().back()
+     */
+    Eigen::VectorXd& advance(double tmax);
+
+    /**
+     * @brief the integration time points
+     */
+    const std::vector<double> get_t() const
+    {
+        return m_integrator.get_t();
+    }
+
+    /**
+     * @brief values of compartments at each time point
+     */
+    const std::vector<Eigen::VectorXd> get_y() const
+    {
+        return m_integrator.get_y();
+    }
+
+private:
+    std::shared_ptr<RKIntegratorCore> m_integratorCore;
+    OdeIntegrator m_integrator;
+};
+
+/**
+ * @brief run secir simulation over fixed time
+ * @param cont_freq_matrix contact frequencies between groups
+ * @param params parameters of each group
+ * @param t0 start time
+ * @param tmax end time
+ * @param dt_init initial step size of integration
+ * @param[out] secir value of compartments at each integration time point
+ * @returns integration time points
  */
 std::vector<double> simulate(double t0, double tmax, double dt, ContactFrequencyMatrix const& cont_freq_matrix,
                              std::vector<SecirParams> const& params, std::vector<Eigen::VectorXd>& secir);

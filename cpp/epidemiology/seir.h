@@ -172,6 +172,20 @@ void print_seir_params(SeirParams const& params);
 void seir_get_derivatives(SeirParams const& params, const Eigen::VectorXd& y, double t, Eigen::VectorXd& dydt);
 
 /**
+ * @brief simulate SEIR compartment model
+ */
+class SeirSimulation
+{
+public:
+    SeirSimulation(const SeirParams& params, double t0 = 0., double dt_init = 0.1);
+    Eigen::VectorXd& advance(double tmax);
+    const std::vector<double> get_t() const { return m_integrator.get_t(); }
+    const std::vector<Eigen::VectorXd> get_y() const { return m_integrator.get_y(); }
+private:
+    OdeIntegrator m_integrator;
+};
+
+/**
  * Computes the seir curve by integration
  * @param[in] seir_0 Initial S, E, I, and R values at t0
  * @param[in] t0 start time of simulation
