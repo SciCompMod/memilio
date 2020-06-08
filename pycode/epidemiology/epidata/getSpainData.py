@@ -17,6 +17,7 @@
 
 
 import os
+import sys
 import pandas
 import numpy as np
 
@@ -72,6 +73,9 @@ def get_spain_data(read_data=dd.defaultDict['read_data'],
 
          # output data to not always download it
          gd.write_dataframe(df_age, directory, stat_file, "json")
+      else:
+         exit_string = "Something went wrong, dataframe is empty!"
+         sys.exit(exit_string)
          
    # Manipulate data
    if df_age.empty != True:
