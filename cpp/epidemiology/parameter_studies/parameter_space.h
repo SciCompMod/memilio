@@ -314,6 +314,17 @@ public:
     }
 
     /*
+     * @brief returns the maximum variability in one of the independent attributes of larger dimensions of the VariableElement
+     */
+    std::vector<double> get_sample()
+    {
+        if (m_indep_attr == 1) {
+            // return vector of size 1 with one double valued sample for parameter
+            return {1, m_distributions[0].get_value()};
+        }
+    }
+
+    /*
      * @brief sets the number of independent attributes of the VariableElement
      */
     void set_independent_attributes(int indep_attr)
@@ -375,6 +386,7 @@ public:
     {
         return m_dimensions;
     }
+
     /*
      * @brief returns the maximum variability in one of the independent attributes of larger dimensions of the VariableElement
      */
@@ -434,6 +446,8 @@ parameter_space_t::parameter_space_t(ContactFrequencyMatrix const& cont_freq_mat
 {
 
     VariableElement a{"incubation time", ParameterDistributionNormal(1, 14, 5.2, 3)};
+
+    a.get_sample();
 
     /* Read all the parameters from seir and store them in our parameters list.
    * Many parameters are stored inverse in seir, so we need to reinvert them. */
