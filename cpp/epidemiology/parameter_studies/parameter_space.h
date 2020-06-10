@@ -86,10 +86,10 @@ public:
     /*
      * @brief returns a value for the given parameter distribution
      * in case some predefined samples are set, these values are taken
-     * first, in case the vector of predefined values is empty, a real 
-     * sample is taken
+     * first, in case the vector of predefined values is empty, a 'real' 
+     * random sample is taken
      */
-    double sample_value()
+    double get_sample()
     {
         if (m_predefined_samples.size() > 0) {
             double rnumb = m_predefined_samples[0];
@@ -97,11 +97,11 @@ public:
             return rnumb;
         }
         else {
-            return get_sample_point();
+            return get_rand_sample();
         }
     }
 
-    virtual double get_sample_point()
+    virtual double get_rand_sample()
     {
         return 0.0;
     }
@@ -206,7 +206,7 @@ public:
      * density function lie in the interval defined by the boundaries
      * otherwise the normal distribution is adapted
      */
-    double get_sample_point() override
+    double get_rand_sample() override
     {
 
         if (check_quantiles() || m_distribution.mean() != m_mean || m_distribution.stddev() != m_standard_dev) {
@@ -259,7 +259,7 @@ public:
     /*
      * @brief gets a sample of a uniformly distributed variable
      */
-    double get_sample_point() override
+    double get_rand_sample() override
     {
         if (m_distribution.max() != m_upper_bound || m_distribution.min() != m_lower_bound) {
             m_distribution = std::uniform_real_distribution<double>{m_lower_bound, m_upper_bound};
@@ -339,27 +339,78 @@ public:
         m_distribution = distribution;
     }
 
-    double sample_value()
+    double get_sample()
     {
-        return m_distribution.sample_value();
+        return m_distribution.get_sample();
     }
 
 private:
     ParameterDistribution m_distribution;
 };
 
-class DampingsVariableElement : public VariableElement
+class ContactFrequencyVariableElement : public VariableElement
 {
 public:
-    DampingsVariableElement(ParameterDistribution distribution)
-        : VariableElement("Dampings", 2)
+    /*
+     * @brief Construction of a DampingsVariableElement
+     * @param[in] cont_freq contact frequency matrix
+     * @param[in] nb_dampings uniform distribution on number of dampings
+     * @param[in] day uniform distribution on day where one damping is implemented
+     * @param[in] damp_diag_base uniform distribution on diagonal base value for one damping matrix
+     * @param[in] damp_diag_rel uniform distribution for variation between diagonal values, based on the diagonal base value
+     * @param[in] damp_offdiag_rel uniform distribution for variation between offdiagonal values of one line, based on the diagonal value
+     */
+    ContactFrequencyVariableElement(ContactFrequencyMatrix cont_freq, ParameterDistributionUniform nb_dampings,
+                                    ParameterDistributionUniform day, ParameterDistributionUniform damp_diag_base,
+                                    ParameterDistributionUniform damp_diag_rel,
+                                    ParameterDistributionUniform damp_offdiag_rel)
+        : VariableElement("ContactFrequencyMatrix", 2)
     {
-        m_distribution = distribution;
+        m_cont_freq        = cont_freq;
+        m_nb_dampings      = nb_dampings;
+        m_day              = day;
+        m_damp_diag_base   = damp_diag_base;
+        m_damp_diag_rel    = damp_diag_rel;
+        m_damp_offdiag_rel = damp_offdiag_rel;
+    }
+
+    ContactFrequencyMatrix get_sample()
+    {
+        int nb_dampings = (int)(m_nb_dampings.get_sample() + 0.5);
+        for (int i = 0; i < nb_dampings; i++) {
+
+            double day            = m_day.get_sample();
+            double damp_diag_base = m_damp_diag_base.get_sample();
+
+            // diagonal entries
+            std::vector<double> damp_diag_val(m_cont_freq.get_size(), 0);
+            for (int j = 0; j < m_cont_freq.get_size(); j++) {
+                damp_diag_val[j] = damp_diag_base * m_damp_diag_rel.get_sample();
+                m_cont_freq.add_damping(Damping(day, damp_diag_val[j]), j, j);
+            }
+
+            // offdiagonal entries
+            for (int j = 0; j < m_cont_freq.get_size(); j++) {
+
+                for (int k = j + 1; k < m_cont_freq.get_size(); k++) {
+                    double damp_offdiag_val = 0.5 * damp_diag_val[j] * m_damp_offdiag_rel.get_sample() +
+                                              0.5 * damp_diag_val[k] * m_damp_offdiag_rel.get_sample();
+                    m_cont_freq.add_damping(Damping(day, damp_diag_val[j]), j, k);
+                }
+            }
+        }
+
+        return m_cont_freq;
     }
 
 private:
-    ParameterDistributionUniform m_distr_nb_dampings;
-    ParameterDistributionUniform m_distr_day;
+    ContactFrequencyMatrix m_cont_freq;
+    ParameterDistributionUniform
+        m_nb_dampings; // random number of dampings (one damping is understood as nb_groups^2 many dampings at the same day)
+    ParameterDistributionUniform m_day; // random number of day where to implement damping
+    ParameterDistributionUniform m_damp_diag_base; // random number of base value for the diagonal of the damping matrix
+    ParameterDistributionUniform m_damp_diag_rel; // random number of variation from base value for diagonal
+    ParameterDistributionUniform m_damp_offdiag_rel; // random number of variation from diagonal value for offdiagonal
 };
 
 // /*
@@ -541,14 +592,19 @@ parameter_space_t::parameter_space_t(ContactFrequencyMatrix const& cont_freq_mat
 
     RealVariableElement a{"incubation time", ParameterDistributionNormal(1, 14, 5.2, 3)};
 
-    a.sample_value();
+    a.get_sample();
 
     // maximum number of dampings; to avoid overfitting only allow one damping for every 10 days simulated
-    VariableElement b
-    {"Dampings", 2, {1,cont_freq_matrix.get_size()*cont_freq_matrix.get_size()}, 1,
-                    (int)(tmax-t0)/10, std::vector<ParameterDistribution> distributions,
-                    std::vector<double> max_varibility)
-    }
+    // damping base values are between 0.1 and 1; diagonal values vary lie in the range of 0.6 to 1.4 times the base value
+    // off diagonal values vary between 0.7 to 1.1 of the corresponding diagonal value (symmetrization is conducted)
+    ContactFrequencyVariableElement bbb{cont_freq_matrix,
+                                        ParameterDistributionUniform(1, (tmax - t0) / 10),
+                                        ParameterDistributionUniform(t0, tmax),
+                                        ParameterDistributionUniform(0.1, 1),
+                                        ParameterDistributionUniform(0.6, 1.4),
+                                        ParameterDistributionUniform(0.7, 1.1)};
+
+    bbb.get_sample;
 
     /* Read all the parameters from seir and store them in our parameters list.
    * Many parameters are stored inverse in seir, so we need to reinvert them. */

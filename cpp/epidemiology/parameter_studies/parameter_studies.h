@@ -62,8 +62,6 @@ private:
     double m_tmax = 400;
     // adaptive time step (will be corrected if too large/small)
     double dt = 0.1;
-
-    int m_max_nb_dampings = 40;
 };
 
 parameter_study_t::parameter_study_t(std::string& parameter_filename)
