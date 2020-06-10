@@ -144,12 +144,33 @@ def get_divi_data(read_data=dd.defaultDict['read_data'],
          exit_string = "Something went wrong, dataframe is empty."
          sys.exit(exit_string)
 
+   # TODO: Combine columns 'gemeindeschlüssel' and 'kreis' to one column with ID_County
+   #       'kreis' only exists for the data from 24.4.
+   #       Afterwards the same column has a new name 'gemeindeschluessel'.
+   #       Both encode the county id as defined by the "Amtlicher Gemeindeschlüssel (AGS)"
+   #       which is also used in the RKI data as ID_County
+   #       https://de.wikipedia.org/wiki/Liste_der_Landkreise_in_Deutschland
+
    # change column names
-   # TODO: Should they be translated to english and match column names from other data?
-   df.rename({'anzahl_meldebereiche': 'anzahlMeldebereiche', 'faelle_covid_aktuell': 'faelleCovidAktuell',
-   'faelle_covid_aktuell_beatmet': 'faelleCovidAktuellBeatmet', 'anzahl_standorte': 'anzahlStandorte',
-   'betten_frei': 'bettenFrei', 'betten_belegt': 'bettenBelegt', 'daten_stand': 'datenStand'}, axis=1, inplace=True)
+   df.rename(dd.GerEng, axis=1, inplace=True)
    print("Available columns:", df.columns)
+
+   # TODO: The data from 24.4. until 27.4. has value None as date
+   #       but the date could be added according to the date in the file name
+
+   # TODO: Add column 'bundesland' for the data from 24.4. and 25.4.
+   #       The ID_State are the first to numbers from 'gemeindeschluessel' resp.
+   #       'kreis'
+
+   # The column faelle_covid_im_bundesland exits only in the data from the first day
+
+   # The columns falle_covid_aktuell does not exist for the 24.4.
+   # and faelle_covid_aktuell_beatmet does not exist for the 24.4. and 25.4.
+   # TODO: Check whether they coincide with the data from RKI
+
+   # The 'Unamed: 0' column is produced by the data from 29.4. where the cvs file
+   # accidentally begins with a comma
+   # TODO: delete this column
 
 def main():
 
