@@ -396,6 +396,11 @@ ContactFrequencyMatrix::ContactFrequencyMatrix(size_t const nb_groups)
     // }
 }
 
+int ContactFrequencyMatrix::get_size() const
+{
+    return m_cont_freq.size();
+}
+
 void ContactFrequencyMatrix::set_cont_freq(double const cont_freq, int const self_group, int const contact_group)
 {
     if (self_group <= contact_group) {

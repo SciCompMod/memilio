@@ -31,6 +31,11 @@ public:
     ContactFrequencyMatrix(size_t const nb_groups);
 
     /**
+     * @brief returns the size of the contact frequency matrix
+     */
+    int get_size() const;
+
+    /**
      * @brief sets the contact frequency in the SECIR model; in case of multiple groups, set the contact rate cr_ij=cr_ji=cont_freq
      * @param cont_freq contact rate/frequency in 1/day unit
      * @param self_group own group
@@ -39,8 +44,8 @@ public:
     void set_cont_freq(double cont_freq, int self_group, int contact_group);
 
     /**
-         * @brief returns the contact frequency set for the SECIR model in 1/day unit; in case of multiple groups, returns the contact rate cr_ij=cr_ji
-         */
+     * @brief returns the contact frequency set for the SECIR model in 1/day unit; in case of multiple groups, returns the contact rate cr_ij=cr_ji
+     */
     double get_cont_freq(int self_group, int contact_group) const;
 
     /**

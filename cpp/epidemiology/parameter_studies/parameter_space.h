@@ -89,7 +89,7 @@ public:
      * first, in case the vector of predefined values is empty, a real 
      * sample is taken
      */
-    double get_value()
+    double sample_value()
     {
         if (m_predefined_samples.size() > 0) {
             double rnumb = m_predefined_samples[0];
@@ -273,86 +273,40 @@ private:
 };
 
 /*
- * class of model element variability
- * a model element can be a real-valued parameter,
- * a vector or matrix of related parameters, a
- * set of both or a combination of all of that
+ * base class for variable elements
+ * an element can be a real-valued parameter
+ * or a dampings set 
  */
 class VariableElement
 {
 public:
     /*
-     * @brief initializes a VariableElement with just one attribute of dimension one and distribution
+     * @brief initializes a VariableElement corresponding to a variable real parameter
      * @param[in] name the name of the element
-     * @param[in] distribution the ParameterDistribution of the single attribute of dimension one (i.e., one parameter)
      */
-    VariableElement(std::string name, ParameterDistribution distribution)
-        : m_indep_attr{1}
-        , m_dimensions{1}
-        , m_max_varibility{1}
+    VariableElement(std::string name)
+        : m_nb_attr{1}
     {
-        m_name          = name;
-        m_distributions = {1, distribution};
+        m_name = name;
     }
 
     /*
-     * @brief initializes a VariableElement 
+     * @brief initializes a VariableElement corresponding to a variable real parameter
      * @param[in] name the name of the element
-     * @param[in] indep_attr the number of the independent attributes
-     * @param[in] distributions the vector of ParameterDistribution of the attributes
-     * @param[in] dimensions the dimensions per attribute
-     * @param[in] max_variability the maximum variability between the parameters within a higher dimensional attribute
+     * @param[in] nb_attr number of attributes
      */
-    VariableElement(std::string name, int indep_attr, std::vector<ParameterDistribution> distributions,
-                    std::vector<int> dimensions, std::vector<double> max_varibility)
+    VariableElement(std::string name, size_t nb_attr)
     {
-        m_name           = name;
-        m_indep_attr     = indep_attr;
-        m_distributions  = distributions;
-        m_dimensions     = dimensions;
-        m_max_varibility = max_varibility;
+        m_name    = name;
+        m_nb_attr = nb_attr;
     }
 
     /*
-     * @brief returns the maximum variability in one of the independent attributes of larger dimensions of the VariableElement
+     * @brief sets the number of attributes of the VariableElement
      */
-    std::vector<double> get_sample()
+    void set_nb_attributes(int nb_attr)
     {
-        if (m_indep_attr == 1) {
-            // return vector of size 1 with one double valued sample for parameter
-            return {1, m_distributions[0].get_value()};
-        }
-    }
-
-    /*
-     * @brief sets the number of independent attributes of the VariableElement
-     */
-    void set_independent_attributes(int indep_attr)
-    {
-        m_indep_attr = indep_attr;
-    }
-
-    /*
-     * @brief sets the distributions of the independent attributes of the VariableElement
-     */
-    void set_distributions(std::vector<ParameterDistribution> distributions)
-    {
-        m_distributions = distributions;
-    }
-
-    /*
-     * @brief sets the dimensions of the independent attributes of the VariableElement
-     */
-    void get_dimensions(std::vector<int> dimensions)
-    {
-        m_dimensions = dimensions;
-    }
-    /*
-     * @brief returns the maximum variability in one of the independent attributes of larger dimensions of the VariableElement
-     */
-    void get_max_variability(std::vector<double> max_variability)
-    {
-        m_max_varibility = max_variability;
+        m_nb_attr = nb_attr;
     }
 
     /*
@@ -364,45 +318,184 @@ public:
     }
 
     /*
-     * @brief returns the number of independent attributes of the VariableElement
+     * @brief returns the number of attributes of the VariableElement
      */
-    int get_independent_attributes() const
+    int get_nb_attributes() const
     {
-        return m_indep_attr;
+        return m_nb_attr;
     }
 
-    /*
-     * @brief returns the distributions of the independent attributes of the VariableElement
-     */
-    std::vector<ParameterDistribution> get_distributions() const
+protected:
+    std::string m_name; // name of the model
+    int m_nb_attr; // number of attributes
+};
+
+class RealVariableElement : public VariableElement
+{
+public:
+    RealVariableElement(std::string name, ParameterDistribution distribution)
+        : VariableElement(name)
     {
-        return m_distributions;
+        m_distribution = distribution;
     }
 
-    /*
-     * @brief returns the dimensions of the independent attributes of the VariableElement
-     */
-    std::vector<int> get_dimensions() const
+    double sample_value()
     {
-        return m_dimensions;
-    }
-
-    /*
-     * @brief returns the maximum variability in one of the independent attributes of larger dimensions of the VariableElement
-     */
-    std::vector<double> get_max_variability() const
-    {
-        return m_max_varibility;
+        return m_distribution.sample_value();
     }
 
 private:
-    std::string m_name; // name of the model
-    int m_indep_attr; // number of independent attributes
-    std::vector<ParameterDistribution> m_distributions; // distributions per attribute
-    std::vector<int> m_dimensions; // number of related dimensions per attribute
-    std::vector<double>
-        m_max_varibility; // maximum variability in independent attribute (only applies for multivalued attributes)
+    ParameterDistribution m_distribution;
 };
+
+class DampingsVariableElement : public VariableElement
+{
+public:
+    DampingsVariableElement(ParameterDistribution distribution)
+        : VariableElement("Dampings", 2)
+    {
+        m_distribution = distribution;
+    }
+
+private:
+    ParameterDistributionUniform m_distr_nb_dampings;
+    ParameterDistributionUniform m_distr_day;
+};
+
+// /*
+//  * base class of model element variability
+//  * a model element can be a real-valued parameter,
+//  * a dampings of related parameters, a
+//  * set of both or a combination of all of that
+//  */
+// class VariableElement
+// {
+// public:
+//     /*
+//      * @brief initializes a VariableElement corresponding to a variable real parameter
+//      * @param[in] name the name of the element
+//      * @param[in] distribution the ParameterDistribution of the single attribute of dimension one (i.e., one parameter)
+//      */
+//     VariableElement(std::string name, ParameterDistribution distribution)
+//         : m_attr{1}
+//         , m_attr_expr_eval{1}
+//         , m_dimensions{1}
+//         , m_max_varibility{1}
+//     {
+//         m_name          = name;
+//         m_distributions = {1, distribution};
+//     }
+
+//     /*
+//      * @brief initializes a VariableElement that can have any number of attributes, attribute samples etc.
+//      * @param[in] name the name of the element
+//      * @param[in] attr the number of the attributes
+//      * @param[in] dimensions the dimensions per attribute
+//      * @param[in] distributions the vector of ParameterDistributions of the attributes
+//      * @param[in] attr_min_indep_expr minimum number of independent expression of an attribute
+//      * @param[in] attr_max_indep_expr maximum number of independent expression of an attribute
+//      * @param[in] max_variability the maximum variability between the parameters within a higher dimensional attribute
+//      */
+//     VariableElement(std::string name, int attr, std::vector<int> dimensions, int attr_min_indep_expr,
+//                     int attr_max_indep_expr, std::vector<ParameterDistribution> distributions,
+//                     std::vector<double> max_varibility)
+//     {
+//         m_name = name;
+//         m_attr = attr;
+//         if (attr_max_indep_expr <= 1) {
+//             m_attr_expr_eval = 1;
+//         }
+//         else {
+//             m_attr_expr.set_lower_bound(attr_min_indep_expr);
+//             m_attr_expr.set_upper_bound(attr_max_indep_expr);
+//         }
+
+//         m_distributions  = distributions;
+//         m_dimensions     = dimensions;
+//         m_max_varibility = max_varibility;
+//     }
+
+//     /*
+//      * @brief sets the number of attributes of the VariableElement
+//      */
+//     void set_independent_attributes(int attr)
+//     {
+//         m_attr = attr;
+//     }
+
+//     /*
+//      * @brief sets the distributions of the independent attributes of the VariableElement
+//      */
+//     void set_distributions(std::vector<ParameterDistribution> distributions)
+//     {
+//         m_distributions = distributions;
+//     }
+
+//     /*
+//      * @brief sets the dimensions of the independent attributes of the VariableElement
+//      */
+//     void get_dimensions(std::vector<int> dimensions)
+//     {
+//         m_dimensions = dimensions;
+//     }
+//     /*
+//      * @brief returns the maximum variability in one of the independent attributes of larger dimensions of the VariableElement
+//      */
+//     void get_max_variability(std::vector<double> max_variability)
+//     {
+//         m_max_varibility = max_variability;
+//     }
+
+//     /*
+//      * @brief returns the name of the VariableElement
+//      */
+//     std::string get_name() const
+//     {
+//         return m_name;
+//     }
+
+//     /*
+//      * @brief returns the number of attributes of the VariableElement
+//      */
+//     int get_nb_attributes() const
+//     {
+//         return m_attr;
+//     }
+
+//     /*
+//      * @brief returns the distributions of the independent attributes of the VariableElement
+//      */
+//     std::vector<ParameterDistribution> get_distributions() const
+//     {
+//         return m_distributions;
+//     }
+
+//     /*
+//      * @brief returns the dimensions of the independent attributes of the VariableElement
+//      */
+//     std::vector<int> get_dimensions() const
+//     {
+//         return m_dimensions;
+//     }
+
+//     /*
+//      * @brief returns the maximum variability in one of the independent attributes of larger dimensions of the VariableElement
+//      */
+//     std::vector<double> get_max_variability() const
+//     {
+//         return m_max_varibility;
+//     }
+
+// private:
+//     std::string m_name; // name of the model
+//     int m_attr; // number of attributes
+//     ParameterDistributionUniform m_attr_expr;
+//     int m_attr_expr_eval; // number of expressions per attribute; if an attribute is a matrix, two "expressions" means two matrices
+//     std::vector<int> m_dimensions; // number of dimensions per attribute
+//     std::vector<ParameterDistribution> m_distributions; // distributions per attribute
+//     std::vector<double>
+//         m_max_varibility; // maximum variability in independent attribute (only applies for multivalued attributes)
+// };
 
 /* The class parameter_space_t stores ranges of parameters
  * together with information on step sizes,
@@ -428,7 +521,8 @@ public:
    * and for each parameter p in \a seir values in the range
    *  (1-\a eps) * p to (1 + \a eps) * p
    */
-    parameter_space_t(ContactFrequencyMatrix const& cont_freq_matrix, std::vector<SecirParams> const& params);
+    parameter_space_t(ContactFrequencyMatrix const& cont_freq_matrix, std::vector<SecirParams> const& params, double t0,
+                      double tmax);
 
 private:
     // A vector of all parameters with names and min/max values
@@ -442,12 +536,19 @@ parameter_space_t::parameter_space_t(std::string& parameter_filename)
 }
 
 parameter_space_t::parameter_space_t(ContactFrequencyMatrix const& cont_freq_matrix,
-                                     std::vector<SecirParams> const& params)
+                                     std::vector<SecirParams> const& params, double t0, double tmax)
 {
 
-    VariableElement a{"incubation time", ParameterDistributionNormal(1, 14, 5.2, 3)};
+    RealVariableElement a{"incubation time", ParameterDistributionNormal(1, 14, 5.2, 3)};
 
-    a.get_sample();
+    a.sample_value();
+
+    // maximum number of dampings; to avoid overfitting only allow one damping for every 10 days simulated
+    VariableElement b
+    {"Dampings", 2, {1,cont_freq_matrix.get_size()*cont_freq_matrix.get_size()}, 1,
+                    (int)(tmax-t0)/10, std::vector<ParameterDistribution> distributions,
+                    std::vector<double> max_varibility)
+    }
 
     /* Read all the parameters from seir and store them in our parameters list.
    * Many parameters are stored inverse in seir, so we need to reinvert them. */

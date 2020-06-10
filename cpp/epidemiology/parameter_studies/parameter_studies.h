@@ -10,7 +10,7 @@ namespace epi
 
 // The function type for the kind of simulation that we want to run
 using secir_simulation_function_t = void (*)(const double t0, const double tmax, const double dt,
-                                             SecirParams const& params, std::vector<std::vector<double>>& seir);
+                                             SecirParams const& params, std::vector<std::vector<double>>& secir);
 
 // TODO: document class
 // TODO: document input file convention
@@ -62,7 +62,7 @@ private:
     double m_tmax = 400;
     // adaptive time step (will be corrected if too large/small)
     double dt = 0.1;
-    // maximum number of dampings; to avoid overfitting only allow one damping for every 10 days simulated
+
     int m_max_nb_dampings = 40;
 };
 
