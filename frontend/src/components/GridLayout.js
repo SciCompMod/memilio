@@ -4,6 +4,7 @@ import Map from './Map';
 import Parameters from './Parameters';
 import Measures from './Measures';
 import Results from './Results';
+import Timeline from "./Timeline";
 
 import './GridLayout.scss';
 
@@ -41,6 +42,12 @@ class ResponsiveGrid extends Component {
           autoSize={true}
           draggableHandle=".grid-draggable-handle"
         >
+          <div className="grid-box"
+               key="timeline"
+               data-grid={{x: 0, y: 0, w: 5, h: 1 }}>
+            <i className="fas fa-arrows-alt grid-draggable-handle"/>
+            <Timeline />
+          </div>
           <div
             className="grid-box"
             key="map"
