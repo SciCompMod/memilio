@@ -12,6 +12,10 @@ int main()
     // check if full argument constructor works correctly
     epi::ParameterDistributionNormal parameter_dist_normal(min, max, mean, stddev);
 
+    epi::RealVariableElement some_parameter{
+        "some parameter",
+        std::unique_ptr<epi::ParameterDistribution>(new epi::ParameterDistributionNormal(min, max, mean, stddev))};
+
     printf("\n N(%.0f,%.0f)-distribution with sampling only in [%.0f,%.0f]", mean, stddev, min, max);
     int counter[10] = {0};
     for (int i = 0; i < 1000; i++) {
@@ -31,8 +35,10 @@ int main()
     printf("\n U(%.0f,%.0f)-distribution", min, max);
     epi::ParameterDistributionUniform parameter_dist_unif(1.0, 10.0);
 
+    // epi::RealVariableElement some_other_parameter{"some parameter", parameter_dist_unif};
+
     double counter_unif[10] = {0};
-    for (int i = 0; i < 1000; i++) {
+    for (int i = 0; i < 1; i++) {
         int rounded = (int)(parameter_dist_unif.get_sample() - 1);
         if (rounded >= 0 && rounded < 10) {
             counter_unif[rounded]++;

@@ -7,6 +7,7 @@
 #include <vector>
 #include <random>
 #include <epidemiology/logging.h>
+#include <memory>
 
 namespace epi
 {
@@ -103,6 +104,7 @@ public:
 
     virtual double get_rand_sample()
     {
+        printf("\nMaster func");
         return 0.0;
     }
 
@@ -208,7 +210,7 @@ public:
      */
     double get_rand_sample() override
     {
-
+        printf("\n child func");
         if (check_quantiles() || m_distribution.mean() != m_mean || m_distribution.stddev() != m_standard_dev) {
             m_distribution = std::normal_distribution<double>{m_mean, m_standard_dev};
         }
@@ -261,6 +263,7 @@ public:
      */
     double get_rand_sample() override
     {
+        printf("\n child func");
         if (m_distribution.max() != m_upper_bound || m_distribution.min() != m_lower_bound) {
             m_distribution = std::uniform_real_distribution<double>{m_lower_bound, m_upper_bound};
         }
@@ -333,19 +336,19 @@ protected:
 class RealVariableElement : public VariableElement
 {
 public:
-    RealVariableElement(std::string name, ParameterDistribution distribution)
+    RealVariableElement(std::string name, std::unique_ptr<ParameterDistribution>&& distribution)
         : VariableElement(name)
     {
-        m_distribution = distribution;
+        m_distribution = std::move(distribution);
     }
 
     double get_sample()
     {
-        return m_distribution.get_sample();
+        return m_distribution->get_sample();
     }
 
 private:
-    ParameterDistribution m_distribution;
+    std::unique_ptr<ParameterDistribution> m_distribution;
 };
 
 class ContactFrequencyVariableElement : public VariableElement
@@ -590,7 +593,8 @@ parameter_space_t::parameter_space_t(ContactFrequencyMatrix const& cont_freq_mat
                                      std::vector<SecirParams> const& params, double t0, double tmax)
 {
 
-    RealVariableElement a{"incubation time", ParameterDistributionNormal(1, 14, 5.2, 3)};
+    RealVariableElement a{"incubation time",
+                          std::unique_ptr<ParameterDistribution>(new ParameterDistributionNormal(1, 14, 5.2, 3))};
 
     a.get_sample();
 
