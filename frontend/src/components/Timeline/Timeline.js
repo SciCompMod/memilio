@@ -1,13 +1,11 @@
 import React, {Component} from 'react';
 import {connect} from 'react-redux';
+import {setCurrentTime} from "../../redux/time";
 
 import * as am4core from "@amcharts/amcharts4/core";
 
 import './Timeline.scss';
 
-/**
- *
- */
 class Timeline extends Component {
     /** @type Animation */
     sliderAnimation;
@@ -86,6 +84,8 @@ class Timeline extends Component {
                 day: "2-digit"
             })
         });
+
+        this.props.onTimeChange(time);
     }
 
     play() {
@@ -128,6 +128,14 @@ function mapState(state) {
     }
 }
 
-const ConnectedTimeline = connect(mapState, null)(Timeline);
+function mapDispatch(dispatch) {
+    return {
+        onTimeChange: time => {
+            dispatch(setCurrentTime(time))
+        }
+    }
+}
+
+const ConnectedTimeline = connect(mapState, mapDispatch)(Timeline);
 
 export {ConnectedTimeline as Timeline};
