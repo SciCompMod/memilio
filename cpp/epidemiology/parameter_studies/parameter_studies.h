@@ -34,8 +34,7 @@ public:
      */
     void set_tmax(double tmax)
     {
-        m_tmax            = tmax;
-        m_max_nb_dampings = (int)(tmax / 10);
+        m_tmax = tmax;
     }
 
     /*

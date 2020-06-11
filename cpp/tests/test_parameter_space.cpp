@@ -20,7 +20,7 @@ TEST(ParameterStudies, test_normal_distribution)
     parameter_dist_normal_1.set_log(false); // only avoid warning output in tests
 
     double std_dev_demanded = parameter_dist_normal_1.get_standard_dev();
-    parameter_dist_normal_1.get_sample_point();
+    parameter_dist_normal_1.get_sample();
 
     EXPECT_GE(std_dev_demanded, parameter_dist_normal_1.get_standard_dev());
 
@@ -45,7 +45,7 @@ TEST(ParameterStudies, test_normal_distribution)
     // check that sampling only occurs in boundaries
     int counter[10] = {0};
     for (int i = 0; i < 1000; i++) {
-        double val = parameter_dist_normal_2.get_sample_point();
+        double val = parameter_dist_normal_2.get_sample();
         EXPECT_GE(parameter_dist_normal_2.get_upper_bound() + 1e-10, val);
         EXPECT_LE(parameter_dist_normal_2.get_lower_bound() - 1e-10, val);
     }
@@ -62,7 +62,7 @@ TEST(ParameterStudies, test_uniform_distribution)
 
     // check that sampling only occurs in boundaries
     for (int i = 0; i < 1000; i++) {
-        double val = parameter_dist_unif.get_sample_point();
+        double val = parameter_dist_unif.get_sample();
         EXPECT_GE(parameter_dist_unif.get_upper_bound() + 1e-10, val);
         EXPECT_LE(parameter_dist_unif.get_lower_bound() - 1e-10, val);
     }

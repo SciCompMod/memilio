@@ -604,7 +604,7 @@ parameter_space_t::parameter_space_t(ContactFrequencyMatrix const& cont_freq_mat
                                         ParameterDistributionUniform(0.6, 1.4),
                                         ParameterDistributionUniform(0.7, 1.1)};
 
-    bbb.get_sample;
+    bbb.get_sample();
 
     /* Read all the parameters from seir and store them in our parameters list.
    * Many parameters are stored inverse in seir, so we need to reinvert them. */
