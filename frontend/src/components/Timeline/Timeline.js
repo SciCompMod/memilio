@@ -1,6 +1,6 @@
 import React, {Component} from 'react';
 import {connect} from 'react-redux';
-import {setCurrentTime} from "../../redux/time";
+import {setCurrentDate} from "../../redux/time";
 
 import * as am4core from "@amcharts/amcharts4/core";
 
@@ -30,7 +30,7 @@ class Timeline extends Component {
         /** @type Container */
         let container = am4core.create("timelineDiv", am4core.Container);
         container.width = am4core.percent(100);
-        container.height = am4core.percent(50);
+        container.height = am4core.percent(75);
 
         const sliderContainer = container.createChild(am4core.Container);
 
@@ -73,6 +73,12 @@ class Timeline extends Component {
         });
     }
 
+    componentDidUpdate(prevProps, prevState, snapshot) {
+        if (this.props.startDate !== prevProps.startDate || this.props.endDate !== prevProps.endDate) {
+            this.setTime();
+        }
+    }
+
     setTime() {
         const time = this.props.startDate + ((this.props.endDate - this.props.startDate) * this.slider.start);
         const date = new Date(time);
@@ -85,7 +91,7 @@ class Timeline extends Component {
             })
         });
 
-        this.props.onTimeChange(time);
+        this.props.setCurrentDate(time);
     }
 
     play() {
@@ -106,21 +112,17 @@ class Timeline extends Component {
 
     render(ctx) {
         return (
-            <div>
-                <h3>{this.state.value}</h3>
-                <div id="timelineDiv"/>
+            <div style={{width: "100%", height: "100%"}}>
+                {/*<h3>{this.state.value}</h3>*/}
+                <div id="timelineDiv" style={{width: "100%", height: "100%"}}/>
             </div>
         );
     }
 }
 
 function mapState(state) {
-    const start = state.seir.startDate;
-    let end = start;
-
-    if (state.seir.data !== null && state.seir.data.length > 0) {
-        end = state.seir.data[state.seir.data.length - 1].date
-    }
+    const start = state.time.startDate;
+    let end = state.time.endDate;
 
     return {
         startDate: start,
@@ -128,14 +130,6 @@ function mapState(state) {
     }
 }
 
-function mapDispatch(dispatch) {
-    return {
-        onTimeChange: time => {
-            dispatch(setCurrentTime(time))
-        }
-    }
-}
-
-const ConnectedTimeline = connect(mapState, mapDispatch)(Timeline);
+const ConnectedTimeline = connect(mapState, { setCurrentDate })(Timeline);
 
 export {ConnectedTimeline as Timeline};

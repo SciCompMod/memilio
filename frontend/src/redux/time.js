@@ -1,17 +1,27 @@
 import { createSlice } from '@reduxjs/toolkit';
 
+const START_DATE = Date.parse('2020-02-24T00:00:00');
+
 const slice = createSlice({
     name: 'time',
     initialState: {
-        time: Date.parse('2020-02-24T00:00:00'),
+        startDate: START_DATE,
+        endDate: START_DATE,
+        currentDate: START_DATE
     },
     reducers: {
-        setCurrentTime(state, action) {
-            state.time = action.payload;
+        setStartDate(state, action) {
+            state.startDate = action.payload;
+        },
+        setCurrentDate(state, action) {
+            state.currentDate = action.payload;
+        },
+        setEndDate(state, action) {
+            state.endDate = action.payload
         }
     }
 });
 
-export const { setCurrentTime } = slice.actions;
+export const { setCurrentDate, setStartDate, setEndDate } = slice.actions;
 
 export default slice.reducer;

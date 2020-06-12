@@ -5,6 +5,7 @@ import { getActiveMeasures } from '../redux/measures';
 import { getParameterMap } from '../redux/parameters';
 import { getSelectedData } from '../redux/app';
 import { setData } from '../redux/seir';
+import { setStartDate, setEndDate } from '../redux/time';
 
 import { simulate_seir, makeSeirParam, Damping } from '../common/seir.js';
 import { calculateDamping } from '../common/utils';
@@ -75,6 +76,8 @@ class Simulation extends PureComponent {
     );
 
     this.props.setData(result);
+    this.props.setStartDate(startDate);
+    this.props.setEndDate(result[result.length - 1].date);
   }
 
   render() {
@@ -103,4 +106,4 @@ const mapState = (state) => {
   };
 };
 
-export default connect(mapState, { setData })(Simulation);
+export default connect(mapState, { setData, setStartDate, setEndDate })(Simulation);
