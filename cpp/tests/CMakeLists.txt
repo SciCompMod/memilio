@@ -21,9 +21,11 @@ set(TESTSOURCES
   test_eigen_util.cpp
   test_secir_ageres.cpp
   test_parameter_space.cpp
+  gtest_helpers.h
 )
 
 add_executable(runUnitTests ${TESTSOURCES})
+target_include_directories(runUnitTests PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 target_link_libraries(runUnitTests PRIVATE epidemiology gtest_main)
 
 #make unit tests find the test data files

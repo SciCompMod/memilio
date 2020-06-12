@@ -43,8 +43,18 @@ def get_rki_data(read_data=dd.defaultDict['read_data'],
       # Get data:
       df = load['csv'](itemId)
 
+      if df.empty != True:
       # output data to not always download it
-      gd.write_dataframe(df, directory, filename, "json")
+         gd.write_dataframe(df, directory, filename, "json")
+      else:
+         print("Information: dataframe was empty for csv. Trying geojson.")
+         df = load['geojson'](itemId)
+
+         if df.empty != True:
+            gd.write_dataframe(df, directory, filename, "json")
+         else:
+            exit_string = "Something went wrong, dataframe is empty for csv and geojson!"
+            sys.exit(exit_string)
 
    # generate Test file:
    # df.head(100).to_json(os.path.join(directory, "TestDataRKI.json"))
@@ -61,7 +71,8 @@ def get_rki_data(read_data=dd.defaultDict['read_data'],
    IdLandkreis = dd.GerEng['IdLandkreis']
    Landkreis = dd.GerEng['Landkreis']
 
-   # translate column gender from Spanish to English and standardize
+   # translate column gender from German to English and standardize
+
    df.loc[df.Geschlecht == 'unbekannt', ['Geschlecht']] = dd.GerEng['unbekannt']
    df.loc[df.Geschlecht == 'W', ['Geschlecht']] = dd.GerEng['W']
    df.loc[df.Geschlecht == 'M', ['Geschlecht']] = dd.GerEng['M']

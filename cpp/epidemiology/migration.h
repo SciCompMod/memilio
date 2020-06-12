@@ -19,7 +19,8 @@ using MigrationFunction = std::function<void(size_t, double, Eigen::MatrixXd&)>;
  * @param[in,out] result_groups On entry: initial value. On exit: result at each time step. variables for each model are interleaved e.g. [x11, x12, ..., x21, x22, ...] where xij is the j-th variable of i-th model
  */
 std::vector<double> ode_integrate_with_migration(double t0, double tmax, double dt,
-                                                 const std::vector<std::unique_ptr<IntegratorBase>>& integrators,
+                                                 const std::vector<DerivFunction>& fs,
+                                                 const std::shared_ptr<IntegratorCore>& core,
                                                  MigrationFunction migration_function,
                                                  std::vector<Eigen::VectorXd>& result);
 } // namespace epi
