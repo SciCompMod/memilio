@@ -15,6 +15,7 @@ class GermanyMap extends Component {
   componentDidMount() {
     this.map = new InteractiveMap(this.node.current);
     this.map.onSelect((selected) => {
+      console.log(selected)
       const { dataset, id } = selected;
       if (!dataset || !id) {
         this.props.setSelected(null);

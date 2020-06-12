@@ -3,18 +3,39 @@ import {connect} from "react-redux";
 import React from 'react';
 import * as am4core from "@amcharts/amcharts4/core";
 import * as am4maps from "@amcharts/amcharts4/maps";
-import am4geodata_gerLow from "@amcharts/amcharts4-geodata/germanyLow";
 
 import './TimeMap.scss';
+import {setSelected} from "../../redux/app";
 
-const STATE_METADATA = {
+const STATE_METADATA = [
+  {id: 1, name: "Schleswig-Holstein", fileName: "schleswig-holstein"},
+  {id: 2, name: "Hamburg", fileName: "hamburg"},
+  {id: 3, name: "Niedersachsen", fileName: "niedersachsen"},
+  {id: 4, name: "Bremen", fileName: "bremen"},
+  {id: 5, name: "Nordrhein-Westfalen", fileName: "nordrhein-westfalen"},
+  {id: 6, name: "Hessen", fileName: "hessen"},
+  {id: 7, name: "Rheinland-Pfalz", fileName: "rheinland-pfalz"},
+  {id: 8, name: "Baden-Württemberg", fileName: "baden-wuerttemberg"},
+  {id: 9, name: "Bayern", fileName: "bayern"},
+  {id: 10, name: "Saarland", fileName: "saarland"},
+  {id: 11, name: "Berlin", fileName: "berlin"},
+  {id: 12, name: "Brandenburg", fileName: "brandenburg"},
+  {id: 13, name: "Mecklenburg-Vorpommern", fileName: "mecklenburg-vorpommern"},
+  {id: 14, name: "Sachsen", fileName: "sachsen"},
+  {id: 15, name: "Sachsen-Anhalt", fileName: "sachsen-anhalt"},
+  {id: 16, name: "Thüringen", fileName: "thueringen"}
+]
 
+/**
+ * @param id {number}
+ * @return {{id: number, name: string, fileName: string}}
+ */
+function stateById(id) {
+  return STATE_METADATA.find(s => s.id === id);
 }
 
 class TimeMap extends React.Component {
-  state = {
-
-  };
+  state = {};
 
   /** @type MapChart */
   map = null;
@@ -22,15 +43,18 @@ class TimeMap extends React.Component {
   /** @type MapPolygonSeries */
   stateSeries = null;
 
-  /** @type MapPolygonSeries */
-  countySeries = null;
+  /** @type Map<number, MapPolygonSeries> */
+  countySeries = new Map();
+
+  /** @type number */
+  currentSelected = -1;
 
   componentDidMount() {
     this.map = am4core.create("timeMapDiv", am4maps.MapChart);
     this.map.projection = new am4maps.projections.Mercator();
 
     this.stateSeries = new am4maps.MapPolygonSeries();
-    this.stateSeries.geodata = am4geodata_gerLow;
+    this.stateSeries.geodataSource.url = "assets/german-states.geojson";
     this.stateSeries.useGeodata = true;
     this.map.series.push(this.stateSeries);
 
@@ -43,31 +67,67 @@ class TimeMap extends React.Component {
     const stateHover = statePolygonTemplate.states.create("hover");
     stateHover.properties.fill = am4core.color("#367B25");
 
-    this.countySeries = new am4maps.MapPolygonSeries();
-    this.countySeries.geodataSource.url = "assets/landkreise.geojson"
-    this.countySeries.useGeodata = true;
-    this.countySeries.hidden = true;
-    this.map.series.push(this.countySeries);
+    statePolygonTemplate.events.on("hit", ev => {
+      const item = ev.target.dataItem.dataContext;
+      this.stateSelected(item);
+      this.props.setSelected({
+        dataset: "states",
+        id: item.id,
+        label: item.name,
+        population: item.destatis.population
+      });
+    });
+  }
 
-    const countyPolygonTemplate = this.countySeries.mapPolygons.template;
+  createCountySeries(state) {
+    const newSeries = new am4maps.MapPolygonSeries();
+    newSeries.geodataSource.url = "assets/counties/" + state.fileName + ".geojson";
+    newSeries.useGeodata = true;
+
+    const countyPolygonTemplate = newSeries.mapPolygons.template;
     countyPolygonTemplate.tooltipText = "{id}";
     countyPolygonTemplate.fill = this.map.colors.getIndex(0);
     countyPolygonTemplate.nonScalingStroke = true;
 
-    // Hover state
     const hs = countyPolygonTemplate.states.create("hover");
     hs.properties.fill = am4core.color("#367B25");
+
+    countyPolygonTemplate.events.on("hit", ev => {
+      const item = ev.target.dataItem.dataContext;
+      this.props.setSelected({
+        dataset: "counties",
+        id: parseInt(item.RS, 10),
+        label: item.id,
+        population: item.destatis.population
+      });
+    });
+
+    this.map.series.push(newSeries);
+    this.countySeries.set(state.id, newSeries);
   }
 
-  componentDidUpdate(prevProps, prevState, snapshot) {
-    if (this.props.selection !== prevProps.selection) {
-      if (this.props.selection === null) {
-        this.countySeries.hide();
-      } else {
-        this.countySeries.show();
+  stateSelected(newState) {
+      if (this.currentSelected !== newState.id) {
+        if (this.countySeries.has(this.currentSelected)) {
+          this.countySeries.get(this.currentSelected).hide();
+        }
       }
-    }
+
+      if (newState.id > 0) {
+        if (this.countySeries.has(newState.id)) {
+          this.countySeries.get(newState.id).show();
+        } else {
+          const state = stateById(newState.id);
+          this.createCountySeries(state);
+        }
+        this.currentSelected = newState.id;
+        this.map.zoomToMapObject(this.stateSeries.getPolygonById(newState.id));
+      } else {
+        this.currentSelected = -1;
+        this.map.goHome();
+      }
   }
+
 
   render(ctx) {
     return (
@@ -85,6 +145,6 @@ function mapState(state) {
   }
 }
 
-const ConnectedTimeMap = connect(mapState, null)(TimeMap);
+const ConnectedTimeMap = connect(mapState, {setSelected})(TimeMap);
 
 export {ConnectedTimeMap as TimeMap};
