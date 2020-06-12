@@ -104,7 +104,6 @@ public:
 
     virtual double get_rand_sample()
     {
-        printf("\nMaster func");
         return 0.0;
     }
 
@@ -210,7 +209,6 @@ public:
      */
     double get_rand_sample() override
     {
-        printf("\n child func");
         if (check_quantiles() || m_distribution.mean() != m_mean || m_distribution.stddev() != m_standard_dev) {
             m_distribution = std::normal_distribution<double>{m_mean, m_standard_dev};
         }
@@ -263,7 +261,6 @@ public:
      */
     double get_rand_sample() override
     {
-        printf("\n child func");
         if (m_distribution.max() != m_upper_bound || m_distribution.min() != m_lower_bound) {
             m_distribution = std::uniform_real_distribution<double>{m_lower_bound, m_upper_bound};
         }
@@ -336,10 +333,15 @@ protected:
 class RealVariableElement : public VariableElement
 {
 public:
-    RealVariableElement(std::string name, std::unique_ptr<ParameterDistribution>&& distribution)
+    /*
+     * @brief creates a RealVariableElement from a string name and a NEW distribution via unique_ptr
+     * @param[in] name name of the current element
+     * @param[in] distribution pointer to a *new* distribution
+     */
+    RealVariableElement(std::string name, ParameterDistribution* distribution)
         : VariableElement(name)
     {
-        m_distribution = std::move(distribution);
+        m_distribution = std::unique_ptr<ParameterDistribution>(distribution);
     }
 
     double get_sample()
@@ -363,10 +365,10 @@ public:
      * @param[in] damp_diag_rel uniform distribution for variation between diagonal values, based on the diagonal base value
      * @param[in] damp_offdiag_rel uniform distribution for variation between offdiagonal values of one line, based on the diagonal value
      */
-    ContactFrequencyVariableElement(ContactFrequencyMatrix cont_freq, ParameterDistributionUniform nb_dampings,
-                                    ParameterDistributionUniform day, ParameterDistributionUniform damp_diag_base,
-                                    ParameterDistributionUniform damp_diag_rel,
-                                    ParameterDistributionUniform damp_offdiag_rel)
+    ContactFrequencyVariableElement(ContactFrequencyMatrix cont_freq, ParameterDistributionUniform&& nb_dampings,
+                                    ParameterDistributionUniform&& day, ParameterDistributionUniform&& damp_diag_base,
+                                    ParameterDistributionUniform&& damp_diag_rel,
+                                    ParameterDistributionUniform&& damp_offdiag_rel)
         : VariableElement("ContactFrequencyMatrix", 2)
     {
         m_cont_freq        = cont_freq;
@@ -416,141 +418,6 @@ private:
     ParameterDistributionUniform m_damp_offdiag_rel; // random number of variation from diagonal value for offdiagonal
 };
 
-// /*
-//  * base class of model element variability
-//  * a model element can be a real-valued parameter,
-//  * a dampings of related parameters, a
-//  * set of both or a combination of all of that
-//  */
-// class VariableElement
-// {
-// public:
-//     /*
-//      * @brief initializes a VariableElement corresponding to a variable real parameter
-//      * @param[in] name the name of the element
-//      * @param[in] distribution the ParameterDistribution of the single attribute of dimension one (i.e., one parameter)
-//      */
-//     VariableElement(std::string name, ParameterDistribution distribution)
-//         : m_attr{1}
-//         , m_attr_expr_eval{1}
-//         , m_dimensions{1}
-//         , m_max_varibility{1}
-//     {
-//         m_name          = name;
-//         m_distributions = {1, distribution};
-//     }
-
-//     /*
-//      * @brief initializes a VariableElement that can have any number of attributes, attribute samples etc.
-//      * @param[in] name the name of the element
-//      * @param[in] attr the number of the attributes
-//      * @param[in] dimensions the dimensions per attribute
-//      * @param[in] distributions the vector of ParameterDistributions of the attributes
-//      * @param[in] attr_min_indep_expr minimum number of independent expression of an attribute
-//      * @param[in] attr_max_indep_expr maximum number of independent expression of an attribute
-//      * @param[in] max_variability the maximum variability between the parameters within a higher dimensional attribute
-//      */
-//     VariableElement(std::string name, int attr, std::vector<int> dimensions, int attr_min_indep_expr,
-//                     int attr_max_indep_expr, std::vector<ParameterDistribution> distributions,
-//                     std::vector<double> max_varibility)
-//     {
-//         m_name = name;
-//         m_attr = attr;
-//         if (attr_max_indep_expr <= 1) {
-//             m_attr_expr_eval = 1;
-//         }
-//         else {
-//             m_attr_expr.set_lower_bound(attr_min_indep_expr);
-//             m_attr_expr.set_upper_bound(attr_max_indep_expr);
-//         }
-
-//         m_distributions  = distributions;
-//         m_dimensions     = dimensions;
-//         m_max_varibility = max_varibility;
-//     }
-
-//     /*
-//      * @brief sets the number of attributes of the VariableElement
-//      */
-//     void set_independent_attributes(int attr)
-//     {
-//         m_attr = attr;
-//     }
-
-//     /*
-//      * @brief sets the distributions of the independent attributes of the VariableElement
-//      */
-//     void set_distributions(std::vector<ParameterDistribution> distributions)
-//     {
-//         m_distributions = distributions;
-//     }
-
-//     /*
-//      * @brief sets the dimensions of the independent attributes of the VariableElement
-//      */
-//     void get_dimensions(std::vector<int> dimensions)
-//     {
-//         m_dimensions = dimensions;
-//     }
-//     /*
-//      * @brief returns the maximum variability in one of the independent attributes of larger dimensions of the VariableElement
-//      */
-//     void get_max_variability(std::vector<double> max_variability)
-//     {
-//         m_max_varibility = max_variability;
-//     }
-
-//     /*
-//      * @brief returns the name of the VariableElement
-//      */
-//     std::string get_name() const
-//     {
-//         return m_name;
-//     }
-
-//     /*
-//      * @brief returns the number of attributes of the VariableElement
-//      */
-//     int get_nb_attributes() const
-//     {
-//         return m_attr;
-//     }
-
-//     /*
-//      * @brief returns the distributions of the independent attributes of the VariableElement
-//      */
-//     std::vector<ParameterDistribution> get_distributions() const
-//     {
-//         return m_distributions;
-//     }
-
-//     /*
-//      * @brief returns the dimensions of the independent attributes of the VariableElement
-//      */
-//     std::vector<int> get_dimensions() const
-//     {
-//         return m_dimensions;
-//     }
-
-//     /*
-//      * @brief returns the maximum variability in one of the independent attributes of larger dimensions of the VariableElement
-//      */
-//     std::vector<double> get_max_variability() const
-//     {
-//         return m_max_varibility;
-//     }
-
-// private:
-//     std::string m_name; // name of the model
-//     int m_attr; // number of attributes
-//     ParameterDistributionUniform m_attr_expr;
-//     int m_attr_expr_eval; // number of expressions per attribute; if an attribute is a matrix, two "expressions" means two matrices
-//     std::vector<int> m_dimensions; // number of dimensions per attribute
-//     std::vector<ParameterDistribution> m_distributions; // distributions per attribute
-//     std::vector<double>
-//         m_max_varibility; // maximum variability in independent attribute (only applies for multivalued attributes)
-// };
-
 /* The class parameter_space_t stores ranges of parameters
  * together with information on step sizes,
  * a start and end time as well as an initial time step.
@@ -593,10 +460,11 @@ parameter_space_t::parameter_space_t(ContactFrequencyMatrix const& cont_freq_mat
                                      std::vector<SecirParams> const& params, double t0, double tmax)
 {
 
-    RealVariableElement a{"incubation time",
-                          std::unique_ptr<ParameterDistribution>(new ParameterDistributionNormal(1, 14, 5.2, 3))};
+    RealVariableElement a{"incubation time", new ParameterDistributionNormal(1, 14, 5.2, 3)};
 
     a.get_sample();
+    double ab;
+    std::make_unique<double>(ab);
 
     // maximum number of dampings; to avoid overfitting only allow one damping for every 10 days simulated
     // damping base values are between 0.1 and 1; diagonal values vary lie in the range of 0.6 to 1.4 times the base value
