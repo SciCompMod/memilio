@@ -7,7 +7,15 @@ import am4geodata_gerLow from "@amcharts/amcharts4-geodata/germanyLow";
 
 import './TimeMap.scss';
 
+const STATE_METADATA = {
+
+}
+
 class TimeMap extends React.Component {
+  state = {
+
+  };
+
   /** @type MapChart */
   map = null;
 
@@ -16,11 +24,6 @@ class TimeMap extends React.Component {
 
   /** @type MapPolygonSeries */
   countySeries = null;
-
-  constructor(props) {
-    super(props);
-    this.state = {}
-  }
 
   componentDidMount() {
     this.map = am4core.create("timeMapDiv", am4maps.MapChart);
@@ -43,8 +46,8 @@ class TimeMap extends React.Component {
     this.countySeries = new am4maps.MapPolygonSeries();
     this.countySeries.geodataSource.url = "assets/landkreise.geojson"
     this.countySeries.useGeodata = true;
+    this.countySeries.hidden = true;
     this.map.series.push(this.countySeries);
-    this.countySeries.hide(5000);
 
     const countyPolygonTemplate = this.countySeries.mapPolygons.template;
     countyPolygonTemplate.tooltipText = "{id}";
@@ -54,6 +57,16 @@ class TimeMap extends React.Component {
     // Hover state
     const hs = countyPolygonTemplate.states.create("hover");
     hs.properties.fill = am4core.color("#367B25");
+  }
+
+  componentDidUpdate(prevProps, prevState, snapshot) {
+    if (this.props.selection !== prevProps.selection) {
+      if (this.props.selection === null) {
+        this.countySeries.hide();
+      } else {
+        this.countySeries.show();
+      }
+    }
   }
 
   render(ctx) {
@@ -66,7 +79,10 @@ class TimeMap extends React.Component {
 }
 
 function mapState(state) {
-  return state.time
+  return {
+    selection: state.app.selected,
+    time: state.time
+  }
 }
 
 const ConnectedTimeMap = connect(mapState, null)(TimeMap);

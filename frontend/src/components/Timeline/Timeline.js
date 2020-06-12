@@ -113,7 +113,7 @@ class Timeline extends Component {
     render(ctx) {
         return (
             <div style={{width: "100%", height: "100%"}}>
-                {/*<h3>{this.state.value}</h3>*/}
+                <h3>{this.state.value}</h3>
                 <div id="timelineDiv" style={{width: "100%", height: "100%"}}/>
             </div>
         );
