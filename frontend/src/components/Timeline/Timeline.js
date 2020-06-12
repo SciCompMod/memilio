@@ -79,19 +79,28 @@ class Timeline extends Component {
         }
     }
 
+    /**
+     * @param {number} date
+     * @return {string}
+     */
+    createDateString(date) {
+        return new Date(date).toLocaleDateString("de-DE", {
+            year: "numeric",
+            month: "2-digit",
+            day: "2-digit"
+        });
+    }
+
     setTime() {
-        const time = this.props.startDate + ((this.props.endDate - this.props.startDate) * this.slider.start);
-        const date = new Date(time);
+        const date = this.props.startDate + ((this.props.endDate - this.props.startDate) * this.slider.start);
 
         this.setState({
-            value: date.toLocaleDateString("de-DE", {
-                year: "numeric",
-                month: "2-digit",
-                day: "2-digit"
-            })
+            start: this.createDateString(this.props.startDate),
+            end: this.createDateString(this.props.endDate),
+            value: this.createDateString(date)
         });
 
-        this.props.setCurrentDate(time);
+        this.props.setCurrentDate(date);
     }
 
     play() {
@@ -113,7 +122,7 @@ class Timeline extends Component {
     render(ctx) {
         return (
             <div style={{width: "100%", height: "100%"}}>
-                <h3>{this.state.value}</h3>
+                <h3>Start Date: {this.state.start}, End Date: {this.state.end}, Current Date: {this.state.value}</h3>
                 <div id="timelineDiv" style={{width: "100%", height: "100%"}}/>
             </div>
         );
