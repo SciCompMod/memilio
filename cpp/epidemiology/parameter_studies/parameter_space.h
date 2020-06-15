@@ -438,7 +438,7 @@ public:
                 for (int k = j + 1; k < m_cont_freq.get_size(); k++) {
                     double damp_offdiag_val = 0.5 * damp_diag_val[j] * m_damp_offdiag_rel->get_sample() +
                                               0.5 * damp_diag_val[k] * m_damp_offdiag_rel->get_sample();
-                    m_cont_freq.add_damping(Damping(day, damp_diag_val[j]), j, k);
+                    m_cont_freq.add_damping(Damping(day, damp_offdiag_val), j, k);
                 }
             }
         }

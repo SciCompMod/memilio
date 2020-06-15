@@ -62,7 +62,7 @@ int main()
     }
 
     double t0   = 0;
-    double tmax = 10;
+    double tmax = 100;
     epi::ContactFrequencyVariableElement contact_varel{
         contact_freq_matrix,
         std::make_unique<epi::ParameterDistributionUniform>(epi::ParameterDistributionUniform(1, (tmax - t0) / 10)),
@@ -73,9 +73,23 @@ int main()
 
     epi::ContactFrequencyMatrix cfmat_sample = contact_varel.get_sample();
 
+    printf("\n\n Number of dampings: %lu\n", cfmat_sample.get_dampings(0, 0).get_dampings_vector().size());
+
+    double day0 = cfmat_sample.get_dampings(0, 0).get_dampings_vector()[0].day;
+    printf("\n First damping G(0,0) at %.2f with factor %.2f\n", cfmat_sample.get_dampings(0, 0).get_factor(day0),
+           day0);
+
+    // printout the damping between all groups at day day1_00
+    double day1_00 = cfmat_sample.get_dampings(0, 0).get_dampings_vector()[1].day;
+    printf("\n Damping at day %.2f\n\t", day1_00);
     for (size_t i = 0; i < nb_groups; i++) {
-        for (size_t j = i; i < nb_groups; i++) {
-            cfmat_sample.get_dampings(i, j);
+        printf("G%lu\t", i);
+    }
+    for (size_t i = 0; i < nb_groups; i++) {
+        printf("\n G%lu", i);
+        for (size_t j = 0; j < nb_groups; j++) {
+            printf("\t %.2f", cfmat_sample.get_dampings(i, j).get_factor(day1_00)); // get all the dampings...
         }
     }
+    printf("\n");
 }
