@@ -2,6 +2,12 @@ from epidemiology.secir import ContactFrequencyMatrix, Damping, SecirParams, pri
 from matplotlib import pyplot as plt
 import pandas as pd
 import numpy as np
+import sys
+from datetime import datetime
+import datetime as dt
+
+sys.path.append('../../data/contact_data')
+from dampings import create_dampings
 
 
 def plot_secir():
@@ -12,33 +18,27 @@ def plot_secir():
 
 
     # set propability of infection
-    inf_prob = 13/217
+    # number of infected/number of close contacts -- from https://www.sciencedirect.com/science/article/pii/S1201971220302502#bib0045
+    inf_prob =132/2147
+
+
+    days = 120
+    name = '_contact'
     use_dampings = True
 
     Mio = 1000000
 
     # load contact matrix
-    contact_polymod = pd.read_csv('../epidemiology/contact_data/images/Polymod.csv', index_col=0).values
-
-    damp_work = pd.read_csv('../epidemiology/contact_data/damp_work.csv', index_col=0).values
-    damp_home = pd.read_csv('../epidemiology/contact_data/damp_home.csv', index_col=0).values
-    damp_school = pd.read_csv('../epidemiology/contact_data/damp_school.csv', index_col=0).values
-    damp_other = pd.read_csv('../epidemiology/contact_data/damp_other.csv', index_col=0).values
+    contact_polymod = pd.read_csv('../../data/contact_data/images/Polymod.csv', index_col=0).values
 
 
     contact_polymod = 0.5*(contact_polymod + contact_polymod.T)
-    damp_work = 0.5 * (damp_work + damp_work.T)
-    damp_home = 0.5 * (damp_home + damp_home.T)
-    damp_school = 0.5 * (damp_school + damp_school.T)
-    damp_other = 0.5 * (damp_other + damp_other.T)
 
-    dampings = pd.read_csv('../epidemiology/contact_data/dampings.csv', index_col=0, header=[0, 1]).values
-    #print(dampings)
-    dampings = np.swapaxes(dampings.reshape(8,120,8),1,2)
-    for i in range(120):
+    create_dampings(path='../../data/contact_data/', days=days)
+    dampings = pd.read_csv('../../data/contact_data/dampings.csv', index_col=0, header=[0, 1]).values
+    dampings = np.swapaxes(dampings.reshape(8,days,8),1,2)
+    for i in range(days):
         dampings[:,:,i] = 0.5*(dampings[:,:,i] + dampings[:,:,i].T)
-
-    print(np.array_equal(dampings[:, :, -2], dampings[:,:,-3]))
 
 
     num_groups = contact_polymod.shape[-1]
@@ -58,25 +58,30 @@ def plot_secir():
 
 
 
-    sus_ORs=np.array([0.34, 0.67, 1.00, 1.00, 1.00, 1.00, 1.24, 1.47, 1.47]) # Odds ratios for relative susceptibility -- from https://science.sciencemag.org/content/early/2020/05/04/science.abb8001; 10-20 and 60-70 bins are the average across the ORs
-    trans_ORs=np.array([1.00, 1.00, 1.00, 1.00, 1.00, 1.00, 1.00, 1.00, 1.00]) # Odds ratios for relative transmissibility -- no evidence of differences
-    comorbidities=np.array([1.00, 1.00, 1.00, 1.00, 1.00, 1.00, 1.00, 1.00, 1.00]) # Comorbidities by age -- set to 1 by default since already included in disease progression rates
-    symp_probs=np.array([0.50, 0.55, 0.60, 0.65, 0.70, 0.75, 0.80, 0.85, 0.90])  # Overall probability of developing symptoms (based on https://www.medrxiv.org/content/10.1101/2020.03.24.20043018v1.full.pdf, scaled for overall symptomaticity)
-    severe_probs=np.array([0.00050, 0.00165, 0.00720, 0.02080, 0.03430, 0.07650, 0.13280, 0.20655, 0.24570]) # Overall probability of developing severe symptoms (derived from Table 1 of https://www.imperial.ac.uk/media/imperial-college/medicine/mrc-gida/2020-03-16-COVID19-Report-9.pdf)
-    crit_probs=np.array([0.00003, 0.00008, 0.00036, 0.00104, 0.00216, 0.00933, 0.03639, 0.08923, 0.17420]) # Overall probability of developing critical symptoms (derived from Table 1 of https://www.imperial.ac.uk/media/imperial-college/medicine/mrc-gida/2020-03-16-COVID19-Report-9.pdf)
-    death_probs=np.array([0.00002, 0.00006, 0.00030, 0.00080, 0.00150, 0.00600, 0.02200, 0.05100, 0.09300]) # Overall probability of dying (https://www.imperial.ac.uk/media/imperial-college/medicine/sph/ide/gida-fellowships/Imperial-College-COVID19-NPI-modelling-16-03-2020.pdf)
+    sus_ORs=np.array([0.34, 0.67, 1.00, 1.00, 1.00, 1.00, 1.24, 1.47]) # Odds ratios for relative susceptibility -- from https://science.sciencemag.org/content/early/2020/05/04/science.abb8001; 10-20 and 60-70 bins are the average across the ORs
+    symp_probs=np.array([0.50, 0.55, 0.60, 0.65, 0.70, 0.75, 0.80, (0.85 + 0.90)/2])  # Overall probability of developing symptoms (based on https://www.medrxiv.org/content/10.1101/2020.03.24.20043018v1.full.pdf, scaled for overall symptomaticity)
+    severe_probs=np.array([0.00050, 0.00165, 0.00720, 0.02080, 0.03430, 0.07650, 0.13280, (0.20655 + 0.24570)/2]) # Overall probability of developing severe symptoms (derived from Table 1 of https://www.imperial.ac.uk/media/imperial-college/medicine/mrc-gida/2020-03-16-COVID19-Report-9.pdf)
+    crit_probs=np.array([0.00003, 0.00008, 0.00036, 0.00104, 0.00216, 0.00933, 0.03639, (0.08923 + 0.17420)/2]) # Overall probability of developing critical symptoms (derived from Table 1 of https://www.imperial.ac.uk/media/imperial-college/medicine/mrc-gida/2020-03-16-COVID19-Report-9.pdf)
+    death_probs=np.array([0.00002, 0.00006, 0.00030, 0.00080, 0.00150, 0.00600, 0.02200, (0.05100 + 0.09300)/2]) # Overall probability of dying (https://www.imperial.ac.uk/media/imperial-college/medicine/sph/ide/gida-fellowships/Imperial-College-COVID19-NPI-modelling-16-03-2020.pdf)
+
+    # population numbers were taken from
+    # https://de.statista.com/statistik/daten/studie/1365/umfrage/bevoelkerung-deutschlands-nach-altersgruppen/
+    # https://www.bpb.de/nachschlagen/zahlen-und-fakten/soziale-situation-in-deutschland/61538/altersgruppen
+    num_pop = [3.88, 9.71, 12.53, 9.8, 13.7, 11.69, 9.0, 12.4]
 
     '''probs = Probabilities()
-
+    probs.set_infection_from_contact(1.0)
     probs.set_asymp_per_infectious(0.09)  # 0.01-0.16
     probs.set_risk_from_symptomatic(0.25)  # 0.05-0.5
     probs.set_hospitalized_per_infectious(0.2)  # 0.1-0.35
     probs.set_icu_per_hospitalized(0.25)  # 0.15-0.4
     probs.set_dead_per_icu(0.3)  # 0.15-0.77'''
+
     probs = []
     people = []
     for i in range(num_groups):
         probs.append(Probabilities())
+        probs[i].set_infection_from_contact(sus_ORs[i])
         probs[i].set_asymp_per_infectious(1-symp_probs[i])
         probs[i].set_risk_from_symptomatic(0.25)
         probs[i].set_hospitalized_per_infectious(severe_probs[i])
@@ -84,25 +89,16 @@ def plot_secir():
         probs[i].set_dead_per_icu(death_probs[i]/(crit_probs[i]/severe_probs[i]))
 
         people.append(Populations())
-        people[i].set_exposed_t0(100/num_groups)
-        people[i].set_carrier_t0(50/num_groups)
-        people[i].set_infectious_t0(50/num_groups)
-        people[i].set_hospital_t0(10/num_groups)
-        people[i].set_icu_t0(10/num_groups)
-        people[i].set_recovered_t0(10/num_groups)
+        people[i].set_exposed_t0(100*num_pop[i]/sum(num_pop))
+        people[i].set_carrier_t0(50*num_pop[i]/sum(num_pop))
+        people[i].set_infectious_t0(50*num_pop[i]/sum(num_pop))
+        people[i].set_hospital_t0(10*num_pop[i]/sum(num_pop))
+        people[i].set_icu_t0(10*num_pop[i]/sum(num_pop))
+        people[i].set_recovered_t0(10*num_pop[i]/sum(num_pop))
         people[i].set_dead_t0(0)
 
+        people[i].set_total_t0(num_pop[i] * Mio)
 
-    # population numbers were taken from
-    # https://de.statista.com/statistik/daten/studie/1365/umfrage/bevoelkerung-deutschlands-nach-altersgruppen/
-    people[0].set_total_t0(4.66 * Mio)
-    people[1].set_total_t0(8.93 * Mio)
-    people[2].set_total_t0(11.31 * Mio)
-    people[3].set_total_t0(10.84 * Mio)
-    people[4].set_total_t0(13.9 * Mio)
-    people[5].set_total_t0(10 * Mio)
-    people[6].set_total_t0(9.5 * Mio)
-    people[7].set_total_t0(13.88 * Mio)
 
 
     # set the params required for the simulation
@@ -112,33 +108,35 @@ def plot_secir():
         params[i].times = times
         params[i].probabilities = probs[i]
         params[i].populations = people[i]
-    print_secir_params(params)
 
     cont_freq_matrix = ContactFrequencyMatrix(num_groups)
+
+
 
     
     #  set contact rates and emulate some mitigations
     for i in range(num_groups):
         for j in range(0,num_groups):
             cont_freq_matrix.set_cont_freq(contact_polymod[i,j]*inf_prob, i, j)
+            #cont_freq_matrix.set_cont_freq(0.62*num_pop[i]/sum(num_pop), i, j)
             if use_dampings:
                 for d in range(dampings.shape[2]):
-                    cont_freq_matrix.add_damping(Damping(d, dampings[i,j,d]), i, j)
-                                # cont_freq_matrix.add_damping(Damping(25., damp_work[i,j]), i, j)
+                    cont_freq_matrix.add_damping(Damping(d, dampings[i,j,d]*1.06), i, j)
+                # cont_freq_matrix.add_damping(Damping(25., damp_work[i,j]), i, j)
                 # cont_freq_matrix.add_damping(Damping(35., damp_home[i,j]), i, j)
                 # cont_freq_matrix.add_damping(Damping(40., damp_school[i,j]), i, j)
                 # cont_freq_matrix.add_damping(Damping(50., damp_other[i,j]), i, j)
 
-                #cont_freq_matrix.add_damping(Damping(10., 0.8), i, j)
-                #cont_freq_matrix.add_damping(Damping(20., 0.9), i, j)
-                #cont_freq_matrix.add_damping(Damping(30., 0.45), i, j)
-                #cont_freq_matrix.add_damping(Damping(40., 0.25), i, j)
+                #cont_freq_matrix.add_damping(Damping(25., 0.8), i, j)
+                #cont_freq_matrix.add_damping(Damping(35., 0.9), i, j)
+                #cont_freq_matrix.add_damping(Damping(40., 0.45), i, j)
+                #cont_freq_matrix.add_damping(Damping(50., 0.25), i, j)
                 #cont_freq_matrix.add_damping(Damping(70., 0.35), i, j)
                 #cont_freq_matrix.add_damping(Damping(80., 0.45), i, j)
                 #cont_freq_matrix.add_damping(Damping(100., 0.7), 0, 0)
 
     # run the simulation
-    result = simulate(t0=0., tmax=120., dt=0.1, cont_freq_matrix=cont_freq_matrix, params=params)
+    result = simulate(t0=0., tmax=days, dt=0.1, cont_freq_matrix=cont_freq_matrix, params=params)
 
     # sum over all groups
     group_data = np.zeros((len(result[0].t),8*num_groups))
@@ -162,8 +160,12 @@ def plot_secir():
         data[:, 6] += result[i].nb_rec
         data[:, 7] += result[i].nb_dead
 
+    datelist = np.array(pd.date_range(datetime(2020, 1, 27), periods=days, freq='D').strftime('%m-%d').tolist())
+    datelist2 = np.array(pd.date_range(datetime(2020, 2, 3), periods=days, freq='D').strftime('%m-%d').tolist())
 
-
+    tick_range = (np.arange(int(days / 10) +1 ) * 10)
+    tick_range[-1] -=1
+    print(datelist[[25, 35, 40, 50]])
     fig, ax = plt.subplots()
     #ax.plot(result[0].t, data[:,0], label='#Suscepted')
     ax.plot(result[0].t, data[:,1], label='#Exposed')
@@ -174,21 +176,59 @@ def plot_secir():
     #ax.plot(result[0].t, data[:,6], label='#Recovered')
     ax.plot(result[0].t, data[:,7], label='#Died')
     ax.set_title("SECIR model simulation")
-    ax.set_xlabel("Time [days]")
+    ax.set_xticks(tick_range)
+    ax.set_xticklabels(datelist[tick_range],rotation=45)
     ax.legend()
-    fig.savefig('Secir_Comix_Dampings_all.pdf')
+    fig.tight_layout
+    fig.savefig('Secir_all' + name + '.pdf')
+
+    ind_list = []
+    time = np.array(result[0].t)
+    for i in range(days):
+        ind_list.append(np.argmin(np.abs(time-i)))
+
+    new_sus = []
+    for i in range(1,len(ind_list)):
+        new_sus.append((data[ind_list[i-1],0] - data[ind_list[i], 0])/(time[ind_list[i]]-time[ind_list[i-1]]))
+
+    fig, ax = plt.subplots()
+    ax.plot(range(days-1), new_sus)
+    ax.set_ylabel('Number of new cases')
+    ax.set_title('Number of new Infections')
+    ax.set_xticks(tick_range)
+    ax.set_xticklabels(datelist[tick_range], rotation=45)
+    fig.tight_layout
+    fig.savefig('new_infections' + name + '.pdf')
+
 
     if True:
-        compartiments = ['Suscepted', 'Exposed', 'Carrying', 'Infected', 'Hospitalized', 'ICU', 'Recoverd', 'Dead', 'time']
+        compartiments = ['Suscepted', 'Exposed', 'Carrying', 'Infected', 'Hospitalized', 'ICU', 'Recovered', 'Dead', 'time']
         groups = ['0-4', '5-17', '18-29', '30-39', '40-49', '50-59', '60-69', '70+']
-        fig, ax = plt.subplots(2, 4, figsize=(30, 10))
+        fig, ax = plt.subplots(4, 2, figsize=(12, 15))
         for i, title in zip(range(8), compartiments):
             for j, group in zip(range(num_groups), groups):
-                ax[int(i % 2), int(np.floor(i / 2))].plot(result[j].t, group_data[:,j*num_groups+i], label=group)
-            ax[int(i % 2), int(np.floor(i / 2))].set_title(title)
-            ax[int(i % 2), int(np.floor(i / 2))].legend()
-        fig.tight_layout()
-        fig.savefig('Secir_Comix_Dampings_Groups.pdf')
+                ax[int(np.floor(i / 2)),int(i % 2)].plot(result[j].t, group_data[:,j*num_groups+i], label=group)
+            ax[int(np.floor(i / 2)),int(i % 2)].set_title(title)
+            ax[int(np.floor(i / 2)), int(i % 2)].legend()
+
+            ax[int(np.floor(i / 2)), int(i % 2)].set_xticks(tick_range)
+            ax[int(np.floor(i / 2)), int(i % 2)].set_xticklabels(datelist[tick_range], rotation=45)
+        plt.subplots_adjust(hspace=0.3, bottom=0.05, top=0.95)
+        #fig.tight_layout()
+        fig.savefig('Secir_Groups' + name + '.pdf')
+
+
+        fig, ax = plt.subplots(4, 2, figsize=(12, 15))
+        for i, title in zip(range(8), compartiments):
+            ax[int(np.floor(i / 2)), int(i % 2)].plot(result[j].t, data[:, i])
+            ax[int(np.floor(i / 2)), int(i % 2)].set_title(title)
+
+            ax[int(np.floor(i / 2)), int(i % 2)].set_xticks(tick_range)
+            ax[int(np.floor(i / 2)), int(i % 2)].set_xticklabels(datelist[tick_range], rotation=45)
+        ax[0,0].set_ylim(0, 90 * Mio)
+        plt.subplots_adjust(hspace=0.3, bottom=0.05, top=0.95)
+        # fig.tight_layout()
+        fig.savefig('Secir_all_parts' + name + '.pdf')
     plt.show()
     plt.close()
 
