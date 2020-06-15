@@ -51,7 +51,7 @@ Tableau::Tableau()
     entries[4][5] = -11 / 40.0;
 }
 
-bool RKIntegrator::step(const Eigen::VectorXd& yt, double& t, double& dt, Eigen::VectorXd& ytp1) const
+bool RKIntegratorCore::step(const DerivFunction& f, const Eigen::VectorXd& yt, double& t, double& dt, Eigen::VectorXd& ytp1) const
 {
 
     double max_err   = 1e10;

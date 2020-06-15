@@ -24,10 +24,14 @@ def loadGeojson( targetFileName, apiUrl = 'https://opendata.arcgis.com/datasets/
     extension -- Data format extension (string, default 'geojson')
 
     """
-    url = apiUrl + targetFileName + '_0.' + extension
+    url = apiUrl + targetFileName + '.' + extension
 
-    with urlopen( url ) as res:
-        data = json.loads( res.read().decode() )
+    try:
+       with urlopen( url ) as res:
+          data = json.loads( res.read().decode() )
+    except OSError as e:
+        exit_string = "ERROR: URL " + url + " could not be opened."
+        sys.exit(exit_string)
 
     # Shape data:
     df = pandas.json_normalize( data, 'features' )
