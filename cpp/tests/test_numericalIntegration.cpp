@@ -198,3 +198,37 @@ TEST(TestOdeIntegrator, integratorUpdatesStepsize)
     integrator.advance(10.0);
     integrator.advance(23.0);
 }
+
+auto DoStepAndIncreaseY(const Eigen::VectorXd& dy)
+{
+    return testing::DoAll(
+        testing::WithArgs<2, 3>(AddAssign()),
+        testing::WithArgs<4, 1>(Assign()),
+        testing::WithArgs<4>(AddAssign(dy)),
+        testing::Return(true));
+}
+
+TEST(TestOdeIntegrator, integratorContinuesAtLastState)
+{
+    using testing::_;
+    using testing::Eq;
+
+    double dt = 0.25;
+    auto dy = Eigen::VectorXd::Constant(1, 1);
+    auto y0 = Eigen::VectorXd::Constant(1, 0);
+    auto mock_core = std::make_shared<testing::StrictMock<MockIntegratorCore>>();
+    auto f          = [](const auto& y, auto t, auto& dydt) {};
+    auto integrator = epi::OdeIntegrator(f, 0, y0, dt, mock_core);
+    
+    {
+        testing::InSequence seq;
+        EXPECT_CALL(*mock_core, step(_, Eq(y0), _, _, _)).WillOnce(DoStepAndIncreaseY(dy));
+        EXPECT_CALL(*mock_core, step(_, Eq(y0 + dy), _, _, _)).WillOnce(DoStepAndIncreaseY(dy));
+        EXPECT_CALL(*mock_core, step(_, Eq(y0 + 2 * dy), _, _, _)).WillOnce(DoStepAndIncreaseY(dy));
+        EXPECT_CALL(*mock_core, step(_, Eq(y0 + 3 * dy), _, _, _)).WillOnce(DoStepAndIncreaseY(dy));
+        EXPECT_CALL(*mock_core, step(_, Eq(y0 + 4 * dy), _, _, _)).WillOnce(DoStepAndIncreaseY(dy));
+    }
+
+    integrator.advance(4 * dt);
+    integrator.advance(5 * dt);
+}
