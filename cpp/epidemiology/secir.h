@@ -498,7 +498,7 @@ public:
     /**
      * @brief the integration time points
      */
-    const std::vector<double> get_t() const
+    const std::vector<double>& get_t() const
     {
         return m_integrator.get_t();
     }
@@ -506,7 +506,11 @@ public:
     /**
      * @brief values of compartments at each time point
      */
-    const std::vector<Eigen::VectorXd> get_y() const
+    const std::vector<Eigen::VectorXd>& get_y() const
+    {
+        return m_integrator.get_y();
+    }
+    std::vector<Eigen::VectorXd>& get_y()
     {
         return m_integrator.get_y();
     }
