@@ -25,13 +25,16 @@ int main(int argc, char** argv)
     //infection starts in group 1
     params_group1.populations.set_exposed_t0(10);
     
-    epi::Graph<epi::CompartmentModel<epi::SeirParams>, epi::Migration> g;
-    g.add_node(params_group1);
-    g.add_node(params_group2);
-    g.add_edge(0, 1, 0.01);
-    g.add_edge(1, 0, 0.01);
+    epi::Graph<epi::ModelNode<epi::SeirSimulation>, epi::MigrationEdge> g;
+    g.add_node(params_group1, t0);
+    g.add_node(params_group2, t0);
+    g.add_edge(0, 1, Eigen::VectorXd::Constant(4, 0.01));
+    g.add_edge(1, 0, Eigen::VectorXd::Constant(4, 0.01));
 
-    simulate_migration(t0, tmax, dt, g);
+    auto sim = epi::make_migration_sim(t0, dt, g);
+
+    sim.advance(10);
+
 
     return 0;
 }

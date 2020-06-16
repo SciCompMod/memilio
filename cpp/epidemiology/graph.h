@@ -166,24 +166,6 @@ private:
     std::vector<Edge<EdgePropertyT>> m_edges;
 };
 
-template <class Graph, class EdgeF, class NodeF>
-void simulate_graph(double t0, double tmax, double dt, Graph&& g, NodeF&& node_func, EdgeF&& edge_func)
-{
-    auto t = t0;
-    while (t < tmax) {
-        auto dt_eff = std::min(dt, tmax - t);
-        for (auto& n : g.nodes()) {
-            node_func(t, dt_eff, n);
-        }
-
-        t += dt_eff;
-
-        for (auto& e : g.edges()) {
-            edge_func(t, dt_eff, e.property, g.nodes()[e.start_node_idx], g.nodes()[e.end_node_idx]);
-        }
-    }
-}
-
 template <class T>
 std::enable_if_t<!has_ostream_op<T>::value, void> print_graph_object(std::ostream& os, size_t idx, const T& o)
 {
@@ -217,6 +199,60 @@ void print_graph(std::ostream& os, const Graph& g)
         print_graph_object(os, e.end_node_idx, nodes[e.end_node_idx]);
         os << '\n';
     }
+}
+
+/**
+ * @brief abstract simulation on a graph with alternating node and edge actions
+ */
+template<class Graph, class NodeF, class EdgeF>
+class GraphSimulation
+{
+public:
+    GraphSimulation(double t0, double dt, const Graph& g, const NodeF& node_func, const EdgeF&& edge_func)
+        : m_graph(g), m_t(t0), m_dt(dt), m_node_func(node_func), m_edge_func(edge_func)
+    {
+    }
+
+    void advance(int n_steps = 1)
+    {
+        for (int i = 0; i < n_steps; i++)
+        {
+            for (auto& n : m_graph.nodes()) {
+                m_node_func(m_t, m_dt, n);
+            }
+
+            m_t += m_dt;
+
+            for (auto& e : m_graph.edges()) {
+                m_edge_func(m_t, m_dt, e.property, m_graph.nodes()[e.start_node_idx], m_graph.nodes()[e.end_node_idx]);
+            }
+        }
+    }
+
+    double get_t() const { 
+        return m_t; 
+    }
+
+    Graph& get_graph() {
+        return m_graph;
+    }
+
+    const Graph& get_graph() const {
+        return m_graph;
+    }
+
+private:
+    double m_t;
+    double m_dt;
+    Graph m_graph;
+    NodeF m_node_func;
+    EdgeF m_edge_func;
+};
+
+template<class Graph, class NodeF, class EdgeF>
+auto make_graph_sim(double t0, double dt, Graph&& g, NodeF&& node_func, EdgeF&& edge_func)
+{
+    return GraphSimulation<std::decay_t<Graph>, NodeF, EdgeF>(t0, dt, g, std::forward<NodeF>(node_func), std::forward<EdgeF>(edge_func));
 }
 
 } // namespace epi

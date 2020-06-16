@@ -54,20 +54,21 @@ TEST(TestGraph, ot_edges)
 class MockNodeFunc
 {
 public:
-    MOCK_METHOD(void, invoke, (double t, double dt, int i), ());
+    MOCK_METHOD(void, invoke, (double t, double dt, int& i), ());
     void operator()(double t, double dt, int& i) { invoke(t, dt, i); };
 };
 
 class MockEdgeFunc
 {
 public:
-    MOCK_METHOD(void, invoke, (double t, double dt, int e, int n1, int n2), ());
+    MOCK_METHOD(void, invoke, (double t, double dt, int& e, int& n1, int& n2), ());
     void operator()(double t, double dt, int& e, int& n1, int& n2) { invoke(t, dt, e, n1, n2); };
 };
 
-TEST(TestGraph, simulate)
+TEST(TestGraphSimulation, simulate)
 {
     using testing::_;
+    using testing::Eq;
 
     epi::Graph<int, int> g;
     g.add_node(0);
@@ -86,20 +87,35 @@ TEST(TestGraph, simulate)
     const auto tmax = 3;
     const auto dt = 1;
 
-    for (int t = t0; t < tmax; ++t)
-    {
-        EXPECT_CALL(edge_func, invoke(t + 1, 1, 0, 0, 1)).Times(1);
-        EXPECT_CALL(edge_func, invoke(t + 1, 1, 1, 1, 2)).Times(1);
-        EXPECT_CALL(edge_func, invoke(t + 1, 1, 2, 0, 2)).Times(1);
-        EXPECT_CALL(edge_func, invoke(t + 1, 1, 3, 3, 0)).Times(1);
+    testing::ExpectationSet node_func_calls;
+    
+    node_func_calls += EXPECT_CALL(node_func, invoke(1, 1, Eq(0))).Times(1);
+    node_func_calls += EXPECT_CALL(node_func, invoke(1, 1, Eq(1))).Times(1);
+    node_func_calls += EXPECT_CALL(node_func, invoke(1, 1, Eq(2))).Times(1);
+    node_func_calls += EXPECT_CALL(node_func, invoke(1, 1, Eq(3))).Times(1);
 
-        EXPECT_CALL(node_func, invoke(t, 1, 0)).Times(1);
-        EXPECT_CALL(node_func, invoke(t, 1, 1)).Times(1);
-        EXPECT_CALL(node_func, invoke(t, 1, 2)).Times(1);
-        EXPECT_CALL(node_func, invoke(t, 1, 3)).Times(1);
-    }
+    EXPECT_CALL(edge_func, invoke(2, 1, Eq(0), Eq(0), Eq(1))).Times(1).After(node_func_calls);
+    EXPECT_CALL(edge_func, invoke(2, 1, Eq(2), Eq(0), Eq(2))).Times(1).After(node_func_calls);
+    EXPECT_CALL(edge_func, invoke(2, 1, Eq(1), Eq(1), Eq(2))).Times(1).After(node_func_calls);
+    EXPECT_CALL(edge_func, invoke(2, 1, Eq(3), Eq(3), Eq(0))).Times(1).After(node_func_calls);
+    
+    node_func_calls += EXPECT_CALL(node_func, invoke(2, 1, Eq(0))).Times(1);
+    node_func_calls += EXPECT_CALL(node_func, invoke(2, 1, Eq(1))).Times(1);
+    node_func_calls += EXPECT_CALL(node_func, invoke(2, 1, Eq(2))).Times(1);
+    node_func_calls += EXPECT_CALL(node_func, invoke(2, 1, Eq(3))).Times(1);
+    
+    EXPECT_CALL(edge_func, invoke(3, 1, Eq(0), Eq(0), Eq(1))).Times(1).After(node_func_calls);
+    EXPECT_CALL(edge_func, invoke(3, 1, Eq(2), Eq(0), Eq(2))).Times(1).After(node_func_calls);
+    EXPECT_CALL(edge_func, invoke(3, 1, Eq(1), Eq(1), Eq(2))).Times(1).After(node_func_calls);
+    EXPECT_CALL(edge_func, invoke(3, 1, Eq(3), Eq(3), Eq(0))).Times(1).After(node_func_calls);
 
-    simulate_graph(t0, tmax, dt, g, node_func, edge_func);
+    auto sim = epi::make_graph_sim(t0, dt, g, [&node_func](auto&& t, auto&& dt, auto&& n){ 
+        node_func(t, dt, n); 
+    }, [&edge_func](auto&&t, auto&&dt, auto&& e, auto&& n1, auto&& n2) {
+        edge_func(t, dt, e, n1, n2);
+    });
+
+    sim.advance(2);
 }
 
 TEST(TestGraph, persistentChangesDuringSimulation)
@@ -115,10 +131,12 @@ TEST(TestGraph, persistentChangesDuringSimulation)
     auto node_func = [] (auto&& t, auto&& dt, auto&& n) { ++n; };
     auto edge_func = [] (auto&& t, auto&& dt, auto&& e, auto&& n1, auto&& n2) { ++e; ++n2; };
 
+
+    auto sim = epi::make_graph_sim(0, 1, g, node_func, edge_func);
     int num_steps = 2;
-    simulate_graph(0, num_steps, 1, g, node_func, edge_func);
+    sim.advance(num_steps);
     
-    EXPECT_THAT(g.nodes(), testing::ElementsAre(6 + num_steps, 4 + num_steps + num_steps, 8 + num_steps + 2 * num_steps));
+    EXPECT_THAT(sim.get_graph().nodes(), testing::ElementsAre(6 + num_steps, 4 + num_steps + num_steps, 8 + num_steps + 2 * num_steps));
     std::vector<epi::Edge<int>> v = {{0, 1, 1 + num_steps}, {0, 2, 2 + num_steps}, {1, 2, 3 + num_steps}};
-    EXPECT_THAT(g.edges(), testing::ElementsAreArray(v));
+    EXPECT_THAT(sim.get_graph().edges(), testing::ElementsAreArray(v));
 }
