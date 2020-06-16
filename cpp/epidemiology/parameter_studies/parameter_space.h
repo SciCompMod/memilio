@@ -364,6 +364,44 @@ private:
     std::unique_ptr<ParameterDistribution> m_distribution;
 };
 
+class VectorVariableElement : public VariableElement
+{
+public:
+    /*
+     * @brief creates a RealVariableElement from a string name and a distribution via unique_ptr
+     * @param[in] name name of the current element
+     * @param[in] distribution unique pointer to a distribution
+     */
+    VectorVariableElement(std::string name, std::vector<std::unique_ptr<ParameterDistribution>>& distribution)
+        : VariableElement(name)
+    {
+        m_distribution = std::move(distribution);
+    }
+
+    /*
+     * @brief creates a RealVariableElement from a string name and a distribution via unique_ptr
+     * @param[in] name name of the current element
+     * @param[in] distribution unique pointer to a distribution
+     */
+    VectorVariableElement(std::string name, std::vector<std::unique_ptr<ParameterDistribution>>&& distribution)
+        : VariableElement(name)
+    {
+        m_distribution = std::move(distribution);
+    }
+
+    std::vector<double> get_sample()
+    {
+        std::vector<double> samples(m_distribution.size(), 0);
+        for (size_t i = 0; i < m_distribution.size(); i++) {
+            samples[i] = m_distribution[i]->get_sample()
+        }
+        return samples;
+    }
+
+private:
+    std::vector<std::unique_ptr<ParameterDistribution>> m_distribution;
+};
+
 class ContactFrequencyVariableElement : public VariableElement
 {
 public:
@@ -488,30 +526,111 @@ public:
 
 private:
     // A vector of all parameters with names and min/max values
-    std::unordered_map<std::string, VariableElement> parameters;
+    std::unordered_map<std::string, std::unique_ptr<VariableElement>> parameters;
 };
 
 parameter_space_t::parameter_space_t(std::string& parameter_filename)
 {
     // TODO: implement
-    assert(0 && "This function is not implemented yet.");
+    assert(0 && "This function not implemented yet and needs a file read method.");
 }
 
 parameter_space_t::parameter_space_t(ContactFrequencyMatrix const& cont_freq_matrix,
                                      std::vector<SecirParams> const& params, double t0, double tmax)
 {
 
-    RealVariableElement a{"incubation time",
-                          std::make_unique<ParameterDistributionNormal>(ParameterDistributionNormal(1, 14, 5.2, 3))};
+    size_t nb_agegroups = params.size();
 
-    a.get_sample();
-    double ab;
-    std::make_unique<double>(ab);
+    double stddev_rel = 0.2;
+
+    std::vector<std::unique_ptr<ParameterDistribution>> incubation;
+    std::vector<std::unique_ptr<ParameterDistribution>> inf_mild;
+    std::vector<std::unique_ptr<ParameterDistribution>> serial_int;
+    std::vector<std::unique_ptr<ParameterDistribution>> hosp_to_rec;
+    std::vector<std::unique_ptr<ParameterDistribution>> inf_to_hosp;
+    std::vector<std::unique_ptr<ParameterDistribution>> inf_asymp;
+    std::vector<std::unique_ptr<ParameterDistribution>> hosp_to_icu;
+    std::vector<std::unique_ptr<ParameterDistribution>> icu_to_death;
+
+    for (size_t i = 0; i < nb_agegroups; i++) {
+        // incubation time
+        double value_params = 1.0 / params[i].times.get_incubation_inv();
+        incubation.push_back(std::make_unique<ParameterDistributionNormal>(ParameterDistributionNormal(
+            std::max(0., (1 - stddev_rel * 2.6) * value_params), (1 + stddev_rel * 2.6) * value_params, value_params,
+            stddev_rel * value_params)));
+
+        // infectious time (mild)
+        value_params = 1.0 / params[i].times.get_infectious_mild_inv();
+        inf_mild.push_back(std::make_unique<ParameterDistributionNormal>(ParameterDistributionNormal(
+            std::max(0., (1 - stddev_rel * 2.6) * value_params), (1 + stddev_rel * 2.6) * value_params, value_params,
+            stddev_rel * value_params)));
+
+        // serial interval
+        value_params = 1.0 / params[i].times.get_serialinterval_inv();
+        serial_int.push_back(std::make_unique<ParameterDistributionNormal>(ParameterDistributionNormal(
+            std::max(0., (1 - stddev_rel * 2.6) * value_params), (1 + stddev_rel * 2.6) * value_params, value_params,
+            stddev_rel * value_params)));
+
+        // infectious to recovered (hospitalized to home)
+        value_params = 1.0 / params[i].times.get_hospitalized_to_home_inv();
+        hosp_to_rec.push_back(std::make_unique<ParameterDistributionNormal>(ParameterDistributionNormal(
+            std::max(0., (1 - stddev_rel * 2.6) * value_params), (1 + stddev_rel * 2.6) * value_params, value_params,
+            stddev_rel * value_params)));
+
+        // infectious to hospitalized (home to hospitalized)
+        value_params = 1.0 / params[i].times.get_home_to_hospitalized_inv();
+        inf_to_hosp.push_back(std::make_unique<ParameterDistributionNormal>(ParameterDistributionNormal(
+            std::max(0., (1 - stddev_rel * 2.6) * value_params), (1 + stddev_rel * 2.6) * value_params, value_params,
+            stddev_rel * value_params)));
+
+        // infectious (asymptomatic)
+        value_params = 1.0 / params[i].times.get_infectious_asymp_inv();
+        inf_asymp.push_back(std::make_unique<ParameterDistributionNormal>(ParameterDistributionNormal(
+            std::max(0., (1 - stddev_rel * 2.6) * value_params), (1 + stddev_rel * 2.6) * value_params, value_params,
+            stddev_rel * value_params)));
+
+        // hospitalized to ICU
+        value_params = 1.0 / params[i].times.get_hospitalized_to_icu_inv();
+        hosp_to_icu.push_back(std::make_unique<ParameterDistributionNormal>(ParameterDistributionNormal(
+            std::max(0., (1 - stddev_rel * 2.6) * value_params), (1 + stddev_rel * 2.6) * value_params, value_params,
+            stddev_rel * value_params)));
+
+        // ICU to death
+        value_params = 1.0 / params[i].times.get_icu_to_dead_inv();
+        icu_to_death.push_back(std::make_unique<ParameterDistributionNormal>(ParameterDistributionNormal(
+            std::max(0., (1 - stddev_rel * 2.6) * value_params), (1 + stddev_rel * 2.6) * value_params, value_params,
+            stddev_rel * value_params)));
+    }
+    std::unique_ptr<VectorVariableElement> inc_times =
+        std::make_unique<VectorVariableElement>(VectorVariableElement{"incubation", incubation});
+    std::unique_ptr<VectorVariableElement> inf_mild_times =
+        std::make_unique<VectorVariableElement>(VectorVariableElement{"infectious_mild", inf_mild});
+    std::unique_ptr<VectorVariableElement> serial_int_times =
+        std::make_unique<VectorVariableElement>(VectorVariableElement{"serial_interval", serial_int});
+    std::unique_ptr<VectorVariableElement> hosp_to_rec_times =
+        std::make_unique<VectorVariableElement>(VectorVariableElement{"hosp_to_rec", hosp_to_rec});
+    std::unique_ptr<VectorVariableElement> inf_to_hosp_times =
+        std::make_unique<VectorVariableElement>(VectorVariableElement{"inf_to_hosp", inf_to_hosp});
+    std::unique_ptr<VectorVariableElement> inf_asymp_times =
+        std::make_unique<VectorVariableElement>(VectorVariableElement{"infectious_asymp", inf_asymp});
+    std::unique_ptr<VectorVariableElement> hosp_to_icu_times =
+        std::make_unique<VectorVariableElement>(VectorVariableElement{"hosp_to_icu", hosp_to_icu});
+    std::unique_ptr<VectorVariableElement> icu_to_death_times =
+        std::make_unique<VectorVariableElement>(VectorVariableElement{"hosp_to_icu", icu_to_death});
+
+    parameters.insert(std::make_pair(inc_times->get_name(), inc_times));
+    parameters.insert(std::make_pair(inf_mild_times->get_name(), inf_mild_times));
+    parameters.insert(std::make_pair(serial_int_times->get_name(), serial_int_times));
+    parameters.insert(std::make_pair(hosp_to_rec_times->get_name(), hosp_to_rec_times));
+    parameters.insert(std::make_pair(inf_to_hosp_times->get_name(), inf_to_hosp_times));
+    parameters.insert(std::make_pair(inf_asymp_times->get_name(), inf_asymp_times));
+    parameters.insert(std::make_pair(hosp_to_icu_times->get_name(), hosp_to_icu_times));
+    parameters.insert(std::make_pair(icu_to_death_times->get_name(), icu_to_death_times));
 
     // maximum number of dampings; to avoid overfitting only allow one damping for every 10 days simulated
     // damping base values are between 0.1 and 1; diagonal values vary lie in the range of 0.6 to 1.4 times the base value
     // off diagonal values vary between 0.7 to 1.1 of the corresponding diagonal value (symmetrization is conducted)
-    ContactFrequencyVariableElement bbb{
+    ContactFrequencyVariableElement cont_freq_matr_vari{
         cont_freq_matrix,
         std::make_unique<ParameterDistributionUniform>(ParameterDistributionUniform(1, (tmax - t0) / 10)),
         std::make_unique<ParameterDistributionUniform>(ParameterDistributionUniform(t0, tmax)),
@@ -519,42 +638,14 @@ parameter_space_t::parameter_space_t(ContactFrequencyMatrix const& cont_freq_mat
         std::make_unique<ParameterDistributionUniform>(ParameterDistributionUniform(0.6, 1.4)),
         std::make_unique<ParameterDistributionUniform>(ParameterDistributionUniform(0.7, 1.1))};
 
-    bbb.get_sample();
-
-    /* Read all the parameters from seir and store them in our parameters list.
-   * Many parameters are stored inverse in seir, so we need to reinvert them. */
-    // TODO: Currently we use UNIFORM distribution for all. Change this later when
-    // we know more about distributions.
-    // times
-    // parameters.push_back({"T_inc", min_factor * 1. / seir.times.get_incubation_inv(),
-    //                       max_factor * 1. / seir.times.get_incubation_inv(), DIST_UNIFORM});
-    // parameters.push_back({"T_serint", min_factor * 1. / seir.times.get_serialinterval_inv(),
-    //                       max_factor * 1. / seir.times.get_serialinterval_inv(), DIST_UNIFORM});
-    // parameters.push_back({"T_infmild", min_factor * 1. / seir.times.get_infectious_mild_inv(),
-    //                       max_factor * 1. / seir.times.get_infectious_mild_inv(), DIST_UNIFORM});
-    // parameters.push_back({"T_hosp2home", min_factor * 1. / seir.times.get_hospitalized_to_home_inv(),
-    //                       max_factor * 1. / seir.times.get_hospitalized_to_home_inv(), DIST_UNIFORM});
-    // parameters.push_back({"T_home2hosp", min_factor * 1. / seir.times.get_home_to_hospitalized_inv(),
-    //                       max_factor * 1. / seir.times.get_home_to_hospitalized_inv(), DIST_UNIFORM});
-    // parameters.push_back({"T_hosp2icu", min_factor * 1. / seir.times.get_hospitalized_to_icu_inv(),
-    //                       max_factor * 1. / seir.times.get_hospitalized_to_icu_inv(), DIST_UNIFORM});
-    // parameters.push_back({"T_icu2home", min_factor * 1. / seir.times.get_icu_to_home_inv(),
-    //                       max_factor * 1. / seir.times.get_icu_to_home_inv(), DIST_UNIFORM});
-    // parameters.push_back({"T_infasy", min_factor * 1. / seir.times.get_infectious_asymp_inv(),
-    //                       max_factor * 1. / seir.times.get_infectious_asymp_inv(), DIST_UNIFORM});
-    // // probabilities
-    // parameters.push_back({"infprob", min_factor * seir.probabilities.get_infection_from_contact(),
-    //                       max_factor * seir.probabilities.get_infection_from_contact(), DIST_UNIFORM});
-    // parameters.push_back({"alpha", min_factor * seir.probabilities.get_asymp_per_infectious(),
-    //                       max_factor * seir.probabilities.get_asymp_per_infectious(), DIST_UNIFORM});
-    // parameters.push_back({"beta", min_factor * seir.probabilities.get_risk_from_symptomatic(),
-    //                       max_factor * seir.probabilities.get_risk_from_symptomatic(), DIST_UNIFORM});
-    // parameters.push_back({"rho", min_factor * seir.probabilities.get_hospitalized_per_infectious(),
-    //                       max_factor * seir.probabilities.get_hospitalized_per_infectious(), DIST_UNIFORM});
-    // parameters.push_back({"theta", min_factor * seir.probabilities.get_icu_per_hospitalized(),
-    //                       max_factor * seir.probabilities.get_icu_per_hospitalized(), DIST_UNIFORM});
-    // parameters.push_back({"delta", min_factor * seir.probabilities.get_dead_per_icu(),
-    //                       max_factor * seir.probabilities.get_dead_per_icu(), DIST_UNIFORM});
+    // myfile << "\t Probabilities \n";
+    // myfile << "\t\t Infect from contact: \t" << params[i].probabilities.get_infection_from_contact() << "\n";
+    // myfile << "\t\t Asymptomatic infections: \t" << params[i].probabilities.get_asymp_per_infectious() << "\n";
+    // myfile << "\t\t Risk of symptomatic contact: \t" << params[i].probabilities.get_risk_from_symptomatic() << "\n";
+    // myfile << "\t\t Deaths per ICU care: \t" << params[i].probabilities.get_dead_per_icu() << "\n";
+    // myfile << "\t\t Hospitalized per Infection: \t" << params[i].probabilities.get_hospitalized_per_infectious()
+    //        << "\n";
+    // myfile << "\t\t ICU per Hospitalized: \t" << params[i].probabilities.get_icu_per_hospitalized() << "\n";
 }
 
 } // namespace epi
