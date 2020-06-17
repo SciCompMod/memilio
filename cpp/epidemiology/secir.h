@@ -22,14 +22,35 @@ class ContactFrequencyMatrix
 {
 public:
     /**
-     * @brief Initializes a contact frequencies 1x1-matrix in the SECIR model
+     * @brief Standard constructor of contact frequencies 1x1-matrix in the SECIR model
      */
     ContactFrequencyMatrix();
 
     /**
-     * @brief Initializes a contact frequencies nb_groups x nb_groups-matrix in the SECIR model
+     * @brief Constructor of contact frequencies nb_groups x nb_groups-matrix in the SECIR model
+     * @param[in] nb_groups number of groups in the model
      */
     ContactFrequencyMatrix(size_t const nb_groups);
+
+    /**
+     * @brief Copy constructor of ContactFrequencyMatrix in the SECIR model
+     */
+    ContactFrequencyMatrix(ContactFrequencyMatrix const& cont_freq_matrix);
+
+    /**
+     * @brief Copy assignment constructor of ContactFrequencyMatrix in the SECIR model
+     */
+    ContactFrequencyMatrix& operator=(ContactFrequencyMatrix const& cont_freq_matrix);
+
+    /**
+     * @brief Move constructor of ContactFrequencyMatrix in the SECIR model
+     */
+    ContactFrequencyMatrix(ContactFrequencyMatrix&& cont_freq_matrix);
+
+    /**
+     * @brief Move assignment constructor of ContactFrequencyMatrix in the SECIR model
+     */
+    ContactFrequencyMatrix& operator=(ContactFrequencyMatrix&& cont_freq_matrix);
 
     /**
      * @brief returns the size of the contact frequency matrix
@@ -135,9 +156,29 @@ public:
     {
     public:
         /**
-         * @brief Initializes a time parameters' struct in the SECIR model
+         * @brief Standard constructor of a time parameters' class in the SECIR model
          */
         StageTimes();
+
+        /**
+         * @brief Copy constructor of a time parameters' class in the SECIR model
+         */
+        StageTimes(StageTimes const& stage_times);
+
+        /**
+         * @brief Copy assignment constructor of a time parameters' class in the SECIR model
+         */
+        StageTimes& operator=(StageTimes const& stage_times);
+
+        /**
+         * @brief Move constructor of a time parameters' class in the SECIR model
+         */
+        StageTimes(StageTimes&& stage_times);
+
+        /**
+         * @brief Move assignment constructor of a time parameters' class in the SECIR model
+         */
+        StageTimes& operator=(StageTimes&& stage_times);
 
         /**
          * @brief sets the incubation time in the SECIR model
@@ -249,9 +290,29 @@ public:
     {
     public:
         /**
-         * @brief Initializes a population parameters' struct in the SECIR model
+         * @brief Standard constructor of population parameters' class in the SECIR model
          */
         Populations();
+
+        /**
+         * @brief Copy constructor of population parameters' class in the SECIR model
+         */
+        Populations(Populations const& populations);
+
+        /**
+         * @brief Copy assignment constructor of population parameters' class in the SECIR model
+         */
+        Populations& operator=(Populations const& populations);
+
+        /**
+         * @brief Move constructor of population parameters' class in the SECIR model
+         */
+        Populations(Populations&& populations);
+
+        /**
+         * @brief Move assignment constructor of population parameters' class in the SECIR model
+         */
+        Populations& operator=(Populations&& populations);
 
         /**
          * @brief sets the number of total people at t0 in the SECIR model
@@ -369,9 +430,29 @@ public:
     {
     public:
         /**
-         * @brief Initializes a probabilites parameters' struct in the SECIR model
+         * @brief Standard constructor of probabilites parameters' class in the SECIR model
          */
         Probabilities();
+
+        /**
+         * @brief Copy constructor of probabilites parameters' class in the SECIR model
+         */
+        Probabilities(Probabilities const& probabilities);
+
+        /**
+         * @brief Copy assignment constructor of probabilites parameters' class in the SECIR model
+         */
+        Probabilities& operator=(Probabilities const& probabilities);
+
+        /**
+         * @brief Move constructor of probabilites parameters' class in the SECIR model
+         */
+        Probabilities(Probabilities&& probabilities);
+
+        /**
+         * @brief Move assignment constructor of probabilites parameters' class in the SECIR model
+         */
+        Probabilities& operator=(Probabilities&& probabilities);
 
         /**
         * @brief sets probability of getting infected from a contact
@@ -450,9 +531,29 @@ public:
     Probabilities probabilities;
 
     /**
-     * @brief Initializes a SECIR/SECIHURD model without default parameters 
+     * @brief Standard constructor a SECIR/SECIHURD model parameters object 
      */
     SecirParams();
+
+    /**
+     * @brief Copy constructor of a SECIR/SECIHURD model parameters object 
+     */
+    SecirParams(SecirParams const& params);
+
+    /**
+     * @brief Copy assignment constructor of a SECIR/SECIHURD model parameters object 
+     */
+    SecirParams& operator=(SecirParams const& params);
+
+    /**
+     * @brief Move constructor of a SECIR/SECIHURD model parameters object 
+     */
+    SecirParams(SecirParams&& params);
+
+    /**
+     * @brief Move assignment constructor of a SECIR/SECIHURD model parameters object 
+     */
+    SecirParams& operator=(SecirParams&& params);
 };
 
 /**
