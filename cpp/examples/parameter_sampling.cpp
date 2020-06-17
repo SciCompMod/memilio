@@ -13,9 +13,9 @@ int main()
     double min    = 1;
     double max    = 10;
     // check if constructor works correctly
-    epi::RealVariableElement some_parameter{
-        "some parameter",
-        std::make_unique<epi::ParameterDistributionNormal>(epi::ParameterDistributionNormal(min, max, mean, stddev))};
+    epi::ParameterDistributionNormal some_parameter(min, max, mean, stddev);
+    // "some parameter",
+    // std::make_unique<epi::ParameterDistributionNormal>(epi::ParameterDistributionNormal(min, max, mean, stddev))};
 
     printf("\n N(%.0f,%.0f)-distribution with sampling only in [%.0f,%.0f]", mean, stddev, min, max);
     int counter[10] = {0};
@@ -34,8 +34,7 @@ int main()
 
     // check if constructor works correctly
     printf("\n U(%.0f,%.0f)-distribution", min, max);
-    epi::RealVariableElement some_other_parameter{"some parameter", std::make_unique<epi::ParameterDistributionUniform>(
-                                                                        epi::ParameterDistributionUniform(1.0, 10.0))};
+    epi::ParameterDistributionUniform some_other_parameter(1.0, 10.0);
 
     double counter_unif[10] = {0};
     for (int i = 0; i < 1000; i++) {

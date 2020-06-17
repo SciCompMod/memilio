@@ -18,18 +18,43 @@ using secir_simulation_function_t = void (*)(const double t0, const double tmax,
 class parameter_study_t
 {
 public:
-    /* Constructor
-   * \param [in] paramter_filename filename of a file storing ranges of input
-   * parameters.
-   */
+    /* 
+     * @brief Constructor from file name
+     * @param[in] parameter_filename filename of a file storing ranges of input parameters.
+     */
     parameter_study_t(std::string& parameter_filename);
 
-    // Carry out all simulations in the parameter study.
+    /* 
+     * @brief Constructor from contact frequency matrix and parameter vector
+     * @param[in] parameter_filename filename of a file storing ranges of input parameters.
+     */
+    parameter_study_t(ContactFrequencyMatrix const& cont_freq_matrix, std::vector<SecirParams> const& params, double t0,
+                      double tmax, double dev_rel = 0.2, size_t nb_runs = 1);
+
+    /*
+     * @brief Carry out all simulations in the parameter study.
+     */
     void run();
 
     /*
-     * @brief sets end point in simulation and 
-     * limits the maximum number of dampings by one per 10 days (in the mean)
+     * @brief sets the number of Monte Carlo runs
+     * @param[in] nb_runs number of runs
+     */
+    void set_nb_runs(size_t nb_runs)
+    {
+        m_nb_runs = nb_runs;
+    }
+
+    /*
+     * @brief returns the number of Monte Carlo runs
+     */
+    int get_nb_runs() const
+    {
+        return m_nb_runs;
+    }
+
+    /*
+     * @brief sets end point in simulation
      * @param[in] tmax end point in simulation
      */
     void set_tmax(double tmax)
@@ -55,6 +80,8 @@ private:
     // The function that carries out our simulation
     secir_simulation_function_t simulation_function;
 
+    size_t m_nb_runs = 100;
+
     // Start time (should be the same for all simulations)
     double m_t0 = 0;
     // End time (should be the same for all simulations)
@@ -68,31 +95,39 @@ parameter_study_t::parameter_study_t(std::string& parameter_filename)
 {
 }
 
+parameter_study_t::parameter_study_t(ContactFrequencyMatrix const& cont_freq_matrix,
+                                     std::vector<SecirParams> const& params, double t0, double tmax, double dev_rel,
+                                     size_t nb_runs)
+    : parameter_space(cont_freq_matrix, params, t0, tmax, dev_rel)
+    , m_nb_runs{nb_runs}
+{
+}
+
 void parameter_study_t::run()
 {
-// Iterate over all parameters in the parameter space
-#if 0
-    for(parameter_space_t::ConstIterator param_it = parameter_space.BeginConst(iCell); param_it.IsValid(); ++param_it){
+    // parameter_space.get_parameters().at("incubation time")->
+
+    // Iterate over all parameters in the parameter space
+    for (size_t i = 0; i < (*this).get_nb_runs(); i++) {
         // Get the current parameters
-        const struct seirParam<double> &params = *param_it;
+        // const struct seirParam<double>& params = *param_it;
 
         // Print the parameters if we are in debug mode
         // TODO: Should we get an own debugging mode use it instead of NDEBUG
         // TODO: Replace cout with logging function once we have one.
 #ifndef NDEBUG
         std::cout << "Starting simulation with params:\n" << std::endl;
-        printSeirParams (params);
+        // epi::print_secir_params(params, cont_freq);
 #endif
         // The vector in which we store the result.
         /* TODO: In the current version we do not use the result.
          *       This is of course only temporarily until we have a 
          *       mechanism to collect the results.
          */
-        std::vector<std::vector<T>> result_vector;
+        // std::vector<std::vector<T>> result_vector;
         // Call the simulation function
-        simulation_function (paramter_space.t0, paramter_space.tmax, paramter_space.dt, params, result_vector);
+        // simulation_function(paramter_space.t0, paramter_space.tmax, paramter_space.dt, params, result_vector);
     }
-#endif
 }
 
 } // namespace epi
