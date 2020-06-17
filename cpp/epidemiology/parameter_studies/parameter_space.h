@@ -393,7 +393,7 @@ public:
     {
         std::vector<double> samples(m_distribution.size(), 0);
         for (size_t i = 0; i < m_distribution.size(); i++) {
-            samples[i] = m_distribution[i]->get_sample()
+            samples[i] = m_distribution[i]->get_sample();
         }
         return samples;
     }
@@ -618,14 +618,14 @@ parameter_space_t::parameter_space_t(ContactFrequencyMatrix const& cont_freq_mat
     std::unique_ptr<VectorVariableElement> icu_to_death_times =
         std::make_unique<VectorVariableElement>(VectorVariableElement{"hosp_to_icu", icu_to_death});
 
-    parameters.insert(std::make_pair(inc_times->get_name(), inc_times));
-    parameters.insert(std::make_pair(inf_mild_times->get_name(), inf_mild_times));
-    parameters.insert(std::make_pair(serial_int_times->get_name(), serial_int_times));
-    parameters.insert(std::make_pair(hosp_to_rec_times->get_name(), hosp_to_rec_times));
-    parameters.insert(std::make_pair(inf_to_hosp_times->get_name(), inf_to_hosp_times));
-    parameters.insert(std::make_pair(inf_asymp_times->get_name(), inf_asymp_times));
-    parameters.insert(std::make_pair(hosp_to_icu_times->get_name(), hosp_to_icu_times));
-    parameters.insert(std::make_pair(icu_to_death_times->get_name(), icu_to_death_times));
+    parameters.emplace(std::make_pair(inc_times->get_name(), std::move(inc_times)));
+    parameters.emplace(std::make_pair(inf_mild_times->get_name(), std::move(inf_mild_times)));
+    parameters.emplace(std::make_pair(serial_int_times->get_name(), std::move(serial_int_times)));
+    parameters.emplace(std::make_pair(hosp_to_rec_times->get_name(), std::move(hosp_to_rec_times)));
+    parameters.emplace(std::make_pair(inf_to_hosp_times->get_name(), std::move(inf_to_hosp_times)));
+    parameters.emplace(std::make_pair(inf_asymp_times->get_name(), std::move(inf_asymp_times)));
+    parameters.emplace(std::make_pair(hosp_to_icu_times->get_name(), std::move(hosp_to_icu_times)));
+    parameters.emplace(std::make_pair(icu_to_death_times->get_name(), std::move(icu_to_death_times)));
 
     // maximum number of dampings; to avoid overfitting only allow one damping for every 10 days simulated
     // damping base values are between 0.1 and 1; diagonal values vary lie in the range of 0.6 to 1.4 times the base value
