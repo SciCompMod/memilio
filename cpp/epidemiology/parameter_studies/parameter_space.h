@@ -543,6 +543,7 @@ parameter_space_t::parameter_space_t(ContactFrequencyMatrix const& cont_freq_mat
 
     double stddev_rel = 0.2;
 
+    // times
     std::vector<std::unique_ptr<ParameterDistribution>> incubation;
     std::vector<std::unique_ptr<ParameterDistribution>> inf_mild;
     std::vector<std::unique_ptr<ParameterDistribution>> serial_int;
@@ -627,6 +628,70 @@ parameter_space_t::parameter_space_t(ContactFrequencyMatrix const& cont_freq_mat
     parameters.emplace(std::make_pair(hosp_to_icu_times->get_name(), std::move(hosp_to_icu_times)));
     parameters.emplace(std::make_pair(icu_to_death_times->get_name(), std::move(icu_to_death_times)));
 
+    // probabilities
+    std::vector<std::unique_ptr<ParameterDistribution>> inf_from_cont;
+    std::vector<std::unique_ptr<ParameterDistribution>> asymp_per_inf;
+    std::vector<std::unique_ptr<ParameterDistribution>> risk_from_symp;
+    std::vector<std::unique_ptr<ParameterDistribution>> death_per_icu;
+    std::vector<std::unique_ptr<ParameterDistribution>> hosp_per_inf;
+    std::vector<std::unique_ptr<ParameterDistribution>> icu_per_hosp;
+    for (size_t i = 0; i < nb_agegroups; i++) {
+        // infection from contact
+        double value_params = 1.0 / params[i].probabilities.get_infection_from_contact();
+        inf_from_cont.push_back(std::make_unique<ParameterDistributionNormal>(ParameterDistributionNormal(
+            std::max(0., (1 - stddev_rel * 2.6) * value_params), (1 + stddev_rel * 2.6) * value_params, value_params,
+            stddev_rel * value_params)));
+
+        // asymptomatic per infectious
+        value_params = 1.0 / params[i].probabilities.get_asymp_per_infectious();
+        asymp_per_inf.push_back(std::make_unique<ParameterDistributionNormal>(ParameterDistributionNormal(
+            std::max(0., (1 - stddev_rel * 2.6) * value_params), (1 + stddev_rel * 2.6) * value_params, value_params,
+            stddev_rel * value_params)));
+
+        // risk of infection from infectious
+        value_params = 1.0 / params[i].probabilities.get_risk_from_symptomatic();
+        risk_from_symp.push_back(std::make_unique<ParameterDistributionNormal>(ParameterDistributionNormal(
+            std::max(0., (1 - stddev_rel * 2.6) * value_params), (1 + stddev_rel * 2.6) * value_params, value_params,
+            stddev_rel * value_params)));
+
+        // deaths per icu treatments
+        value_params = 1.0 / params[i].probabilities.get_dead_per_icu();
+        death_per_icu.push_back(std::make_unique<ParameterDistributionNormal>(ParameterDistributionNormal(
+            std::max(0., (1 - stddev_rel * 2.6) * value_params), (1 + stddev_rel * 2.6) * value_params, value_params,
+            stddev_rel * value_params)));
+
+        // hospitalized per infections
+        value_params = 1.0 / params[i].probabilities.get_hospitalized_per_infectious();
+        hosp_per_inf.push_back(std::make_unique<ParameterDistributionNormal>(ParameterDistributionNormal(
+            std::max(0., (1 - stddev_rel * 2.6) * value_params), (1 + stddev_rel * 2.6) * value_params, value_params,
+            stddev_rel * value_params)));
+
+        // icu treatments per hospitalized
+        value_params = 1.0 / params[i].probabilities.get_icu_per_hospitalized();
+        icu_per_hosp.push_back(std::make_unique<ParameterDistributionNormal>(ParameterDistributionNormal(
+            std::max(0., (1 - stddev_rel * 2.6) * value_params), (1 + stddev_rel * 2.6) * value_params, value_params,
+            stddev_rel * value_params)));
+    }
+    std::unique_ptr<VectorVariableElement> inf_from_cont_probs =
+        std::make_unique<VectorVariableElement>(VectorVariableElement{"infection_from_contact", inf_from_cont});
+    std::unique_ptr<VectorVariableElement> asymp_per_inf_probs =
+        std::make_unique<VectorVariableElement>(VectorVariableElement{"asymptomatic_per_infection", asymp_per_inf});
+    std::unique_ptr<VectorVariableElement> risk_from_symp_probs = std::make_unique<VectorVariableElement>(
+        VectorVariableElement{"infection_risk_from_symptomatic", risk_from_symp});
+    std::unique_ptr<VectorVariableElement> death_per_icu_probs =
+        std::make_unique<VectorVariableElement>(VectorVariableElement{"deaths_per_icu", death_per_icu});
+    std::unique_ptr<VectorVariableElement> hosp_per_inf_probs =
+        std::make_unique<VectorVariableElement>(VectorVariableElement{"hospitalized_per_infections", hosp_per_inf});
+    std::unique_ptr<VectorVariableElement> icu_per_hosp_probs =
+        std::make_unique<VectorVariableElement>(VectorVariableElement{"icu_per_hospitalized", icu_per_hosp});
+
+    parameters.emplace(std::make_pair(inf_from_cont_probs->get_name(), std::move(inf_from_cont_probs)));
+    parameters.emplace(std::make_pair(asymp_per_inf_probs->get_name(), std::move(asymp_per_inf_probs)));
+    parameters.emplace(std::make_pair(risk_from_symp_probs->get_name(), std::move(risk_from_symp_probs)));
+    parameters.emplace(std::make_pair(death_per_icu_probs->get_name(), std::move(death_per_icu_probs)));
+    parameters.emplace(std::make_pair(hosp_per_inf_probs->get_name(), std::move(hosp_per_inf_probs)));
+    parameters.emplace(std::make_pair(icu_per_hosp_probs->get_name(), std::move(icu_per_hosp_probs)));
+
     // maximum number of dampings; to avoid overfitting only allow one damping for every 10 days simulated
     // damping base values are between 0.1 and 1; diagonal values vary lie in the range of 0.6 to 1.4 times the base value
     // off diagonal values vary between 0.7 to 1.1 of the corresponding diagonal value (symmetrization is conducted)
@@ -637,15 +702,6 @@ parameter_space_t::parameter_space_t(ContactFrequencyMatrix const& cont_freq_mat
         std::make_unique<ParameterDistributionUniform>(ParameterDistributionUniform(0.1, 1)),
         std::make_unique<ParameterDistributionUniform>(ParameterDistributionUniform(0.6, 1.4)),
         std::make_unique<ParameterDistributionUniform>(ParameterDistributionUniform(0.7, 1.1))};
-
-    // myfile << "\t Probabilities \n";
-    // myfile << "\t\t Infect from contact: \t" << params[i].probabilities.get_infection_from_contact() << "\n";
-    // myfile << "\t\t Asymptomatic infections: \t" << params[i].probabilities.get_asymp_per_infectious() << "\n";
-    // myfile << "\t\t Risk of symptomatic contact: \t" << params[i].probabilities.get_risk_from_symptomatic() << "\n";
-    // myfile << "\t\t Deaths per ICU care: \t" << params[i].probabilities.get_dead_per_icu() << "\n";
-    // myfile << "\t\t Hospitalized per Infection: \t" << params[i].probabilities.get_hospitalized_per_infectious()
-    //        << "\n";
-    // myfile << "\t\t ICU per Hospitalized: \t" << params[i].probabilities.get_icu_per_hospitalized() << "\n";
 }
 
 } // namespace epi
