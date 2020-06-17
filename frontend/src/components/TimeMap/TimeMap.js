@@ -7,6 +7,11 @@ import * as am4maps from "@amcharts/amcharts4/maps";
 import './TimeMap.scss';
 import {setSelected} from "../../redux/app";
 
+class StateMetaData {
+  id; name; fileName;
+}
+
+/** @type {Array<StateMetaData>} */
 const STATE_METADATA = [
   {id: 1, name: "Schleswig-Holstein", fileName: "schleswig-holstein"},
   {id: 2, name: "Hamburg", fileName: "hamburg"},
@@ -28,10 +33,10 @@ const STATE_METADATA = [
 
 /**
  * @param id {number}
- * @return {{id: number, name: string, fileName: string}}
+ * @return {StateMetaData}
  */
 function stateById(id) {
-  return STATE_METADATA.find(s => s.id === id);
+  return STATE_METADATA[id - 1];
 }
 
 class TimeMap extends React.Component {
@@ -79,6 +84,7 @@ class TimeMap extends React.Component {
     });
   }
 
+  /** @param state {StateMetaData} */
   createCountySeries(state) {
     const newSeries = new am4maps.MapPolygonSeries();
     newSeries.geodataSource.url = "assets/counties/" + state.fileName + ".geojson";
@@ -106,6 +112,7 @@ class TimeMap extends React.Component {
     this.countySeries.set(state.id, newSeries);
   }
 
+  /** @param newState {StateMetaData} */
   stateSelected(newState) {
       if (this.currentSelected !== newState.id) {
         if (this.countySeries.has(this.currentSelected)) {
