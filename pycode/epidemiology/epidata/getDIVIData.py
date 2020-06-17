@@ -5,6 +5,28 @@ import pandas
 import getDataIntoPandasDataFrame as gd
 import defaultDict as dd
 
+def adjust_first_data(df, start_date):
+   from datetime import date
+
+   # rename column 'kreis' of first date to match data of following days
+   if start_date == date(2020, 4, 24):
+      df.rename({'kreis': 'gemeindeschluessel'}, axis=1, inplace=True)
+
+   # remove empty column
+   if start_date == date(2020, 4, 29):
+      df.drop(columns = 'Unnamed: 0', inplace=True)
+
+   # add dates for data until 27.4.
+   if start_date <= date(2020, 4, 27):
+      date_str = start_date.strftime("%Y-%m-%d")+" 09:15:00"
+      df.insert(loc = len(df.columns), column = 'daten_stand', value = date_str)
+
+   # add 'bundesland' for data from 25.4.
+   if start_date == date(2020, 4, 25):
+      df = df.assign(bundesland = df['gemeindeschluessel'].floordiv(1000))
+
+   return df
+
 def get_divi_data(read_data=dd.defaultDict['read_data'],
                 make_plot=dd.defaultDict['make_plot'],
                 out_form=dd.defaultDict['out_form'],
@@ -56,6 +78,8 @@ def get_divi_data(read_data=dd.defaultDict['read_data'],
             df2 = gd.loadCsv('file', extension='', apiUrl = call_url)
 
             if (df2.empty != True):
+               # data of first days needs adjustment to following data
+               df2 = adjust_first_data(df2, start_date)
                df = df.append(df2, ignore_index=True)
                print("Success: Data of date " + start_date.strftime("%Y-%m-%d") + " has been included to dataframe")
             else:
@@ -89,6 +113,7 @@ def get_divi_data(read_data=dd.defaultDict['read_data'],
              "2020-05-28": 1658,
              "2020-06-04": 1674,
              "2020-06-10": 1687,
+             "2020-06-13": 1694,
          }
 
          list_call_extension = ["", "-1", "-09-15", "-csv"]
@@ -129,6 +154,8 @@ def get_divi_data(read_data=dd.defaultDict['read_data'],
                      print("Information: URL: ",  call_url, " not knwon")
 
             if (df2.empty != True):
+               # data of first days needs adjustment to following data
+               df2 = adjust_first_data(df2, start_date)
                df = df.append(df2, ignore_index=True)
                print("Success: Data of date " + call_date + " has been included to dataframe")
             else:
@@ -144,33 +171,21 @@ def get_divi_data(read_data=dd.defaultDict['read_data'],
          exit_string = "Something went wrong, dataframe is empty."
          sys.exit(exit_string)
 
-   # TODO: Combine columns 'gemeindeschlüssel' and 'kreis' to one column with ID_County
-   #       'kreis' only exists for the data from 24.4.
-   #       Afterwards the same column has a new name 'gemeindeschluessel'.
-   #       Both encode the county id as defined by the "Amtlicher Gemeindeschlüssel (AGS)"
-   #       which is also used in the RKI data as ID_County
-   #       https://de.wikipedia.org/wiki/Liste_der_Landkreise_in_Deutschland
-
    # change column names
    df.rename(dd.GerEng, axis=1, inplace=True)
    print("Available columns:", df.columns)
 
-   # TODO: The data from 24.4. until 27.4. has value None as date
-   #       but the date could be added according to the date in the file name
+   df.Date = pandas.to_datetime(df.Date, format='%Y-%m-%d %H:%M')
 
-   # TODO: Add column 'bundesland' for the data from 24.4. and 25.4.
-   #       The ID_State are the first to numbers from 'gemeindeschluessel' resp.
-   #       'kreis'
+   # ID_County is as defined by the "Amtlicher Gemeindeschlüssel (AGS)"
+   # which is also used in the RKI data as ID_County
+   # https://de.wikipedia.org/wiki/Liste_der_Landkreise_in_Deutschland
 
    # The column faelle_covid_im_bundesland exits only in the data from the first day
 
    # The columns falle_covid_aktuell does not exist for the 24.4.
    # and faelle_covid_aktuell_beatmet does not exist for the 24.4. and 25.4.
    # TODO: Check whether they coincide with the data from RKI
-
-   # The 'Unamed: 0' column is produced by the data from 29.4. where the cvs file
-   # accidentally begins with a comma
-   # TODO: delete this column
 
 def main():
 
