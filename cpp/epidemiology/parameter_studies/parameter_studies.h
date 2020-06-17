@@ -10,7 +10,9 @@ namespace epi
 
 // The function type for the kind of simulation that we want to run
 using secir_simulation_function_t = void (*)(const double t0, const double tmax, const double dt,
-                                             SecirParams const& params, std::vector<std::vector<double>>& secir);
+                                             ContactFrequencyMatrix const& cont_freq_matrix,
+                                             std::vector<SecirParams> const& params,
+                                             std::vector<Eigen::VectorXd>& secir_result);
 
 // TODO: document class
 // TODO: document input file convention
@@ -34,7 +36,7 @@ public:
     /*
      * @brief Carry out all simulations in the parameter study.
      */
-    void run();
+    std::vector<std::vector<Eigen::VectorXd>> run();
 
     /*
      * @brief sets the number of Monte Carlo runs
@@ -87,7 +89,7 @@ private:
     // End time (should be the same for all simulations)
     double m_tmax = 400;
     // adaptive time step (will be corrected if too large/small)
-    double dt = 0.1;
+    double m_dt = 0.1;
 };
 
 parameter_study_t::parameter_study_t(std::string& parameter_filename)
@@ -103,31 +105,22 @@ parameter_study_t::parameter_study_t(ContactFrequencyMatrix const& cont_freq_mat
 {
 }
 
-void parameter_study_t::run()
+std::vector<std::vector<Eigen::VectorXd>> parameter_study_t::run()
 {
-    // parameter_space.get_parameters().at("incubation time")->
+    std::vector<std::vector<Eigen::VectorXd>> ensemble_result;
 
     // Iterate over all parameters in the parameter space
     for (size_t i = 0; i < (*this).get_nb_runs(); i++) {
-        // Get the current parameters
-        // const struct seirParam<double>& params = *param_it;
 
-        // Print the parameters if we are in debug mode
-        // TODO: Should we get an own debugging mode use it instead of NDEBUG
-        // TODO: Replace cout with logging function once we have one.
-#ifndef NDEBUG
-        std::cout << "Starting simulation with params:\n" << std::endl;
-        // epi::print_secir_params(params, cont_freq);
-#endif
-        // The vector in which we store the result.
-        /* TODO: In the current version we do not use the result.
-         *       This is of course only temporarily until we have a 
-         *       mechanism to collect the results.
-         */
-        // std::vector<std::vector<T>> result_vector;
+        std::vector<Eigen::VectorXd> secir_result;
         // Call the simulation function
-        // simulation_function(paramter_space.t0, paramter_space.tmax, paramter_space.dt, params, result_vector);
+        simulation_function((*this).m_t0, (*this).m_tmax, (*this).m_dt, parameter_space.get_cont_freq_matrix_sample(),
+                            parameter_space.get_secir_params_sample(), secir_result);
+
+        ensemble_result.push_back(std::move(secir_result));
     }
+
+    return ensemble_result;
 }
 
 } // namespace epi
