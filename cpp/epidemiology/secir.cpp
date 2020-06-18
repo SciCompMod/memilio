@@ -105,60 +105,6 @@ SecirParams::StageTimes::StageTimes()
 {
 }
 
-SecirParams::StageTimes::StageTimes(StageTimes const& stage_times)
-    : m_tinc_inv{stage_times.get_incubation_inv()}
-    , m_tinfmild_inv{stage_times.get_infectious_mild_inv()}
-    , m_tserint_inv{stage_times.get_serialinterval_inv()}
-    , m_thosp2home_inv{stage_times.get_hospitalized_to_home_inv()}
-    , m_thome2hosp_inv{stage_times.get_home_to_hospitalized_inv()}
-    , m_thosp2icu_inv{stage_times.get_hospitalized_to_icu_inv()}
-    , m_ticu2home_inv{stage_times.get_icu_to_home_inv()}
-    , m_tinfasy_inv{stage_times.get_infectious_asymp_inv()}
-    , m_ticu2death_inv{stage_times.get_icu_to_dead_inv()}
-{
-}
-
-SecirParams::StageTimes& SecirParams::StageTimes::operator=(StageTimes const& stage_times)
-{
-    (*this).m_tinc_inv       = stage_times.get_incubation_inv();
-    (*this).m_tinfmild_inv   = stage_times.get_infectious_mild_inv();
-    (*this).m_tserint_inv    = stage_times.get_serialinterval_inv();
-    (*this).m_thosp2home_inv = stage_times.get_hospitalized_to_home_inv();
-    (*this).m_thome2hosp_inv = stage_times.get_home_to_hospitalized_inv();
-    (*this).m_thosp2icu_inv  = stage_times.get_hospitalized_to_icu_inv();
-    (*this).m_ticu2home_inv  = stage_times.get_icu_to_home_inv();
-    (*this).m_tinfasy_inv    = stage_times.get_infectious_asymp_inv();
-    (*this).m_ticu2death_inv = stage_times.get_icu_to_dead_inv();
-    return (*this);
-}
-
-SecirParams::StageTimes::StageTimes(StageTimes&& stage_times)
-    : m_tinc_inv{stage_times.get_incubation_inv()}
-    , m_tinfmild_inv{stage_times.get_infectious_mild_inv()}
-    , m_tserint_inv{stage_times.get_serialinterval_inv()}
-    , m_thosp2home_inv{stage_times.get_hospitalized_to_home_inv()}
-    , m_thome2hosp_inv{stage_times.get_home_to_hospitalized_inv()}
-    , m_thosp2icu_inv{stage_times.get_hospitalized_to_icu_inv()}
-    , m_ticu2home_inv{stage_times.get_icu_to_home_inv()}
-    , m_tinfasy_inv{stage_times.get_infectious_asymp_inv()}
-    , m_ticu2death_inv{stage_times.get_icu_to_dead_inv()}
-{
-}
-
-SecirParams::StageTimes& SecirParams::StageTimes::operator=(StageTimes&& stage_times)
-{
-    (*this).m_tinc_inv       = stage_times.get_incubation_inv();
-    (*this).m_tinfmild_inv   = stage_times.get_infectious_mild_inv();
-    (*this).m_tserint_inv    = stage_times.get_serialinterval_inv();
-    (*this).m_thosp2home_inv = stage_times.get_hospitalized_to_home_inv();
-    (*this).m_thome2hosp_inv = stage_times.get_home_to_hospitalized_inv();
-    (*this).m_thosp2icu_inv  = stage_times.get_hospitalized_to_icu_inv();
-    (*this).m_ticu2home_inv  = stage_times.get_icu_to_home_inv();
-    (*this).m_tinfasy_inv    = stage_times.get_infectious_asymp_inv();
-    (*this).m_ticu2death_inv = stage_times.get_icu_to_dead_inv();
-    return (*this);
-}
-
 void SecirParams::StageTimes::set_incubation(double const& tinc)
 {
     m_tinc_inv = 1.0 / tinc;
@@ -260,62 +206,6 @@ SecirParams::Populations::Populations()
     , m_nb_dead_t0{0}
     , m_nb_sus_t0{0}
 {
-}
-
-SecirParams::Populations::Populations(Populations const& populations)
-    : m_nb_total_t0{populations.get_total_t0()}
-    , m_nb_exp_t0{populations.get_exposed_t0()}
-    , m_nb_car_t0{populations.get_carrier_t0()}
-    , m_nb_inf_t0{populations.get_infectious_t0()}
-    , m_nb_hosp_t0{populations.get_hospitalized_t0()}
-    , m_nb_icu_t0{populations.get_icu_t0()}
-    , m_nb_rec_t0{populations.get_recovered_t0()}
-    , m_nb_dead_t0{populations.get_dead_t0()}
-    , m_nb_sus_t0{populations.get_suscetible_t0()}
-{
-}
-
-SecirParams::Populations& SecirParams::Populations::operator=(Populations const& populations)
-{
-    (*this).m_nb_total_t0 = populations.get_total_t0();
-    (*this).m_nb_exp_t0   = populations.get_exposed_t0();
-    (*this).m_nb_car_t0   = populations.get_carrier_t0();
-    (*this).m_nb_inf_t0   = populations.get_infectious_t0();
-    (*this).m_nb_hosp_t0  = populations.get_hospitalized_t0();
-    (*this).m_nb_icu_t0   = populations.get_icu_t0();
-    (*this).m_nb_rec_t0   = populations.get_recovered_t0();
-    (*this).m_nb_dead_t0  = populations.get_dead_t0();
-    (*this).m_nb_sus_t0   = populations.get_suscetible_t0();
-
-    return (*this);
-}
-
-SecirParams::Populations::Populations(Populations&& populations)
-    : m_nb_total_t0{populations.get_total_t0()}
-    , m_nb_exp_t0{populations.get_exposed_t0()}
-    , m_nb_car_t0{populations.get_carrier_t0()}
-    , m_nb_inf_t0{populations.get_infectious_t0()}
-    , m_nb_hosp_t0{populations.get_hospitalized_t0()}
-    , m_nb_icu_t0{populations.get_icu_t0()}
-    , m_nb_rec_t0{populations.get_recovered_t0()}
-    , m_nb_dead_t0{populations.get_dead_t0()}
-    , m_nb_sus_t0{populations.get_suscetible_t0()}
-{
-}
-
-SecirParams::Populations& SecirParams::Populations::operator=(Populations&& populations)
-{
-    (*this).m_nb_total_t0 = populations.get_total_t0();
-    (*this).m_nb_exp_t0   = populations.get_exposed_t0();
-    (*this).m_nb_car_t0   = populations.get_carrier_t0();
-    (*this).m_nb_inf_t0   = populations.get_infectious_t0();
-    (*this).m_nb_hosp_t0  = populations.get_hospitalized_t0();
-    (*this).m_nb_icu_t0   = populations.get_icu_t0();
-    (*this).m_nb_rec_t0   = populations.get_recovered_t0();
-    (*this).m_nb_dead_t0  = populations.get_dead_t0();
-    (*this).m_nb_sus_t0   = populations.get_suscetible_t0();
-
-    return (*this);
 }
 
 void SecirParams::Populations::set_total_t0(double nb_total_t0)
@@ -427,50 +317,6 @@ SecirParams::Probabilities::Probabilities()
 {
 }
 
-SecirParams::Probabilities::Probabilities(Probabilities const& probabilities)
-    : m_infprob{probabilities.get_infection_from_contact()}
-    , m_alpha{probabilities.get_asymp_per_infectious()}
-    , m_beta{probabilities.get_risk_from_symptomatic()}
-    , m_rho{probabilities.get_hospitalized_per_infectious()}
-    , m_theta{probabilities.get_icu_per_hospitalized()}
-    , m_delta{probabilities.get_dead_per_icu()}
-{
-}
-
-SecirParams::Probabilities& SecirParams::Probabilities::operator=(Probabilities const& probabilities)
-{
-    (*this).m_infprob = probabilities.get_infection_from_contact();
-    (*this).m_alpha   = probabilities.get_asymp_per_infectious();
-    (*this).m_beta    = probabilities.get_risk_from_symptomatic();
-    (*this).m_rho     = probabilities.get_hospitalized_per_infectious();
-    (*this).m_theta   = probabilities.get_icu_per_hospitalized();
-    (*this).m_delta   = probabilities.get_dead_per_icu();
-
-    return (*this);
-}
-
-SecirParams::Probabilities::Probabilities(Probabilities&& probabilities)
-    : m_infprob{probabilities.get_infection_from_contact()}
-    , m_alpha{probabilities.get_asymp_per_infectious()}
-    , m_beta{probabilities.get_risk_from_symptomatic()}
-    , m_rho{probabilities.get_hospitalized_per_infectious()}
-    , m_theta{probabilities.get_icu_per_hospitalized()}
-    , m_delta{probabilities.get_dead_per_icu()}
-{
-}
-
-SecirParams::Probabilities& SecirParams::Probabilities::operator=(Probabilities&& probabilities)
-{
-    (*this).m_infprob = probabilities.get_infection_from_contact();
-    (*this).m_alpha   = probabilities.get_asymp_per_infectious();
-    (*this).m_beta    = probabilities.get_risk_from_symptomatic();
-    (*this).m_rho     = probabilities.get_hospitalized_per_infectious();
-    (*this).m_theta   = probabilities.get_icu_per_hospitalized();
-    (*this).m_delta   = probabilities.get_dead_per_icu();
-
-    return (*this);
-}
-
 void SecirParams::Probabilities::set_infection_from_contact(double const& infprob)
 {
     m_infprob = infprob;
@@ -533,29 +379,13 @@ double SecirParams::Probabilities::get_dead_per_icu() const
 
 ContactFrequencyMatrix::ContactFrequencyMatrix()
     : m_cont_freq{{1.0}}
-    , dampings{{Dampings{}}}
+    , m_dampings{{Dampings{}}}
 {
 }
 
 ContactFrequencyMatrix::ContactFrequencyMatrix(size_t const nb_groups)
     : m_cont_freq{nb_groups, std::vector<double>(nb_groups, 0)}
-    , dampings{nb_groups, std::vector<Dampings>(nb_groups, Dampings{})}
-{
-}
-
-ContactFrequencyMatrix::ContactFrequencyMatrix(ContactFrequencyMatrix const& cont_freq_matrix)
-{
-}
-
-ContactFrequencyMatrix& ContactFrequencyMatrix::operator=(ContactFrequencyMatrix const& cont_freq_matrix)
-{
-}
-
-ContactFrequencyMatrix::ContactFrequencyMatrix(ContactFrequencyMatrix&& cont_freq_matrix)
-{
-}
-
-ContactFrequencyMatrix& ContactFrequencyMatrix::operator=(ContactFrequencyMatrix&& cont_freq_matrix)
+    , m_dampings{nb_groups, std::vector<Dampings>(nb_groups, Dampings{})}
 {
 }
 
@@ -584,26 +414,26 @@ double ContactFrequencyMatrix::get_cont_freq(int self_group, int contact_group) 
 void ContactFrequencyMatrix::set_dampings(Dampings const& damping, int self_group, int contact_group)
 {
     if (self_group <= contact_group) {
-        dampings[self_group][contact_group] = damping;
+        m_dampings[self_group][contact_group] = damping;
     }
     else {
-        dampings[contact_group][self_group] = damping;
+        m_dampings[contact_group][self_group] = damping;
     }
 }
 
 const Dampings& ContactFrequencyMatrix::get_dampings(int self_group, int contact_group) const
 {
     // prevent erroneous nonsymmetry
-    return self_group <= contact_group ? dampings[self_group][contact_group] : dampings[contact_group][self_group];
+    return self_group <= contact_group ? m_dampings[self_group][contact_group] : m_dampings[contact_group][self_group];
 }
 
 void ContactFrequencyMatrix::add_damping(Damping const& damping, int self_group, int contact_group)
 {
     if (self_group <= contact_group) {
-        dampings[self_group][contact_group].add(damping);
+        m_dampings[self_group][contact_group].add(damping);
     }
     else {
-        dampings[contact_group][self_group].add(damping);
+        m_dampings[contact_group][self_group].add(damping);
     }
 }
 

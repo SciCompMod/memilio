@@ -42,7 +42,7 @@ int main(int argc, char* argv[])
     // theta = theta_in; // icu per hospitalized
     // delta = delta_in; // deaths per ICUs
 
-    int nb_groups = 3;
+    int nb_groups = 1;
     double fact   = 1.0 / (double)nb_groups;
 
     std::vector<epi::SecirParams> params{epi::SecirParams{}};
@@ -86,7 +86,12 @@ int main(int argc, char* argv[])
         }
     }
 
-    epi::parameter_study_t parameter_study(contact_freq_matrix, params, t0, tmax);
+    epi::parameter_study_t parameter_study(
+        [](double t0, double tmax, double dt, epi::ContactFrequencyMatrix const& contact_freq_matrix,
+           std::vector<epi::SecirParams> const& params, std::vector<Eigen::VectorXd>& secir) {
+            return epi::simulate(t0, tmax, dt, contact_freq_matrix, params, secir);
+        },
+        contact_freq_matrix, params, t0, tmax);
 
     // Run parameter study
     parameter_study.run();

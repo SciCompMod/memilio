@@ -33,26 +33,6 @@ public:
     ContactFrequencyMatrix(size_t const nb_groups);
 
     /**
-     * @brief Copy constructor of ContactFrequencyMatrix in the SECIR model
-     */
-    ContactFrequencyMatrix(ContactFrequencyMatrix const& cont_freq_matrix);
-
-    /**
-     * @brief Copy assignment constructor of ContactFrequencyMatrix in the SECIR model
-     */
-    ContactFrequencyMatrix& operator=(ContactFrequencyMatrix const& cont_freq_matrix);
-
-    /**
-     * @brief Move constructor of ContactFrequencyMatrix in the SECIR model
-     */
-    ContactFrequencyMatrix(ContactFrequencyMatrix&& cont_freq_matrix);
-
-    /**
-     * @brief Move assignment constructor of ContactFrequencyMatrix in the SECIR model
-     */
-    ContactFrequencyMatrix& operator=(ContactFrequencyMatrix&& cont_freq_matrix);
-
-    /**
      * @brief returns the size of the contact frequency matrix
      */
     int get_size() const;
@@ -94,7 +74,7 @@ public:
 private:
     std::vector<std::vector<double>> m_cont_freq;
     // This defines a damping factor for a mitigation strategy for different points in time.
-    std::vector<std::vector<Dampings>> dampings;
+    std::vector<std::vector<Dampings>> m_dampings;
 }; // namespace epi
 
 /**
@@ -159,26 +139,6 @@ public:
          * @brief Standard constructor of a time parameters' class in the SECIR model
          */
         StageTimes();
-
-        /**
-         * @brief Copy constructor of a time parameters' class in the SECIR model
-         */
-        StageTimes(StageTimes const& stage_times);
-
-        /**
-         * @brief Copy assignment constructor of a time parameters' class in the SECIR model
-         */
-        StageTimes& operator=(StageTimes const& stage_times);
-
-        /**
-         * @brief Move constructor of a time parameters' class in the SECIR model
-         */
-        StageTimes(StageTimes&& stage_times);
-
-        /**
-         * @brief Move assignment constructor of a time parameters' class in the SECIR model
-         */
-        StageTimes& operator=(StageTimes&& stage_times);
 
         /**
          * @brief sets the incubation time in the SECIR model
@@ -293,26 +253,6 @@ public:
          * @brief Standard constructor of population parameters' class in the SECIR model
          */
         Populations();
-
-        /**
-         * @brief Copy constructor of population parameters' class in the SECIR model
-         */
-        Populations(Populations const& populations);
-
-        /**
-         * @brief Copy assignment constructor of population parameters' class in the SECIR model
-         */
-        Populations& operator=(Populations const& populations);
-
-        /**
-         * @brief Move constructor of population parameters' class in the SECIR model
-         */
-        Populations(Populations&& populations);
-
-        /**
-         * @brief Move assignment constructor of population parameters' class in the SECIR model
-         */
-        Populations& operator=(Populations&& populations);
 
         /**
          * @brief sets the number of total people at t0 in the SECIR model
@@ -433,26 +373,6 @@ public:
          * @brief Standard constructor of probabilites parameters' class in the SECIR model
          */
         Probabilities();
-
-        /**
-         * @brief Copy constructor of probabilites parameters' class in the SECIR model
-         */
-        Probabilities(Probabilities const& probabilities);
-
-        /**
-         * @brief Copy assignment constructor of probabilites parameters' class in the SECIR model
-         */
-        Probabilities& operator=(Probabilities const& probabilities);
-
-        /**
-         * @brief Move constructor of probabilites parameters' class in the SECIR model
-         */
-        Probabilities(Probabilities&& probabilities);
-
-        /**
-         * @brief Move assignment constructor of probabilites parameters' class in the SECIR model
-         */
-        Probabilities& operator=(Probabilities&& probabilities);
 
         /**
         * @brief sets probability of getting infected from a contact

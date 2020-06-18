@@ -135,8 +135,17 @@ public:
         : ParameterDistribution()
     {
         m_dist         = DIST_NORMAL;
+        m_mean         = mean;
         m_standard_dev = standard_dev;
-        check_quantiles();
+        check_quantiles(m_mean, m_standard_dev);
+    }
+
+    ParameterDistributionNormal(double lower_bound, double upper_bound, double mean)
+        : ParameterDistribution(lower_bound, upper_bound, DIST_NORMAL)
+    {
+        m_mean         = mean;
+        m_standard_dev = upper_bound; // set as to high and adapt then
+        adapt_standard_dev(m_standard_dev);
     }
 
     ParameterDistributionNormal(double lower_bound, double upper_bound, double mean, double standard_dev)
@@ -144,7 +153,7 @@ public:
     {
         m_mean         = mean;
         m_standard_dev = standard_dev;
-        check_quantiles();
+        check_quantiles(m_mean, m_standard_dev);
     }
 
     void set_mean(double mean)
@@ -152,30 +161,51 @@ public:
         m_mean = mean;
     }
 
+    bool check_quantiles()
+    {
+        check_quantiles(m_mean, m_standard_dev);
+    }
+
     /*
      * @brief verification that at least 99% of the density
      * function lie in the interval defined by the boundaries
      */
-    bool check_quantiles()
+    bool check_quantiles(double& mean, double& standard_dev)
     {
         bool changed = false;
-        if (m_mean < m_lower_bound || m_mean > m_upper_bound) {
-            m_mean  = 0.5 * (m_upper_bound - m_lower_bound);
-            changed = true;
-        }
 
-        // ensure that 0.99 % of the distribution are within lower bound and upper bound
-        if (m_mean + m_standard_dev * m_quantile > m_upper_bound) {
-            m_standard_dev = (m_upper_bound - m_mean) / m_quantile;
-            changed        = true;
-        }
-        if (m_mean - m_standard_dev * m_quantile < m_lower_bound) {
-            m_standard_dev = (m_mean - m_lower_bound) / m_quantile;
-            changed        = true;
-        }
+        changed = adapt_mean(mean);
+
+        changed = adapt_standard_dev(standard_dev);
 
         if (changed && m_log_stddev_change) {
-            log_warning("Standard deviation reduced to fit 95% of the distribution within [lowerbound,upperbound].");
+            log_warning("Standard deviation reduced to fit 99% of the distribution within [lowerbound,upperbound].");
+        }
+
+        return changed;
+    }
+
+    bool adapt_mean(double& mean)
+    {
+        bool changed = false;
+        if (mean < m_lower_bound || mean > m_upper_bound) {
+            mean    = 0.5 * (m_upper_bound - m_lower_bound);
+            changed = true;
+        }
+        return changed;
+    }
+
+    // ensure that 0.99 % of the distribution are within lower bound and upper bound
+    bool adapt_standard_dev(double& standard_dev)
+    {
+        bool changed = false;
+        if (m_mean + standard_dev * m_quantile > m_upper_bound) {
+            standard_dev = (m_upper_bound - m_mean) / m_quantile;
+            changed      = true;
+        }
+        if (m_mean - standard_dev * m_quantile < m_lower_bound) {
+            standard_dev = (m_mean - m_lower_bound) / m_quantile;
+            changed      = true;
         }
 
         return changed;
@@ -209,7 +239,8 @@ public:
      */
     double get_rand_sample() override
     {
-        if (check_quantiles() || m_distribution.mean() != m_mean || m_distribution.stddev() != m_standard_dev) {
+        if (check_quantiles(m_mean, m_standard_dev) || m_distribution.mean() != m_mean ||
+            m_distribution.stddev() != m_standard_dev) {
             m_distribution = std::normal_distribution<double>{m_mean, m_standard_dev};
         }
 
@@ -279,15 +310,6 @@ public:
      * @brief creates a ParamsVariableElement from a string name and a distribution via unique_ptr
      * @param[in] distribution unique pointer to a distribution
      */
-    ParamsVariableElement(std::vector<std::unique_ptr<ParameterDistribution>>& distribution)
-    {
-        m_distribution = std::move(distribution);
-    }
-
-    /*
-     * @brief creates a ParamsVariableElement from a string name and a distribution via unique_ptr
-     * @param[in] distribution unique pointer to a distribution
-     */
     ParamsVariableElement(std::vector<std::unique_ptr<ParameterDistribution>>&& distribution)
     {
         m_distribution = std::move(distribution);
@@ -309,30 +331,6 @@ private:
 class ContactFrequencyVariableElement
 {
 public:
-    /*
-     * @brief Construction of a DampingsVariableElement
-     * @param[in] cont_freq contact frequency matrix
-     * @param[in] nb_dampings uniform distribution on number of dampings
-     * @param[in] day uniform distribution on day where one damping is implemented
-     * @param[in] damp_diag_base uniform distribution on diagonal base value for one damping matrix
-     * @param[in] damp_diag_rel uniform distribution for variation between diagonal values, based on the diagonal base value
-     * @param[in] damp_offdiag_rel uniform distribution for variation between offdiagonal values of one line, based on the diagonal value
-     */
-    ContactFrequencyVariableElement(ContactFrequencyMatrix cont_freq,
-                                    std::unique_ptr<ParameterDistributionUniform>& nb_dampings,
-                                    std::unique_ptr<ParameterDistributionUniform>& day,
-                                    std::unique_ptr<ParameterDistributionUniform>& damp_diag_base,
-                                    std::unique_ptr<ParameterDistributionUniform>& damp_diag_rel,
-                                    std::unique_ptr<ParameterDistributionUniform>& damp_offdiag_rel)
-    {
-        m_cont_freq        = cont_freq;
-        m_nb_dampings      = std::move(nb_dampings);
-        m_day              = std::move(day);
-        m_damp_diag_base   = std::move(damp_diag_base);
-        m_damp_diag_rel    = std::move(damp_diag_rel);
-        m_damp_offdiag_rel = std::move(damp_offdiag_rel);
-    }
-
     /*
      * @brief Construction of a DampingsVariableElement
      * @param[in] cont_freq contact frequency matrix
@@ -426,12 +424,12 @@ public:
     parameter_space_t(ContactFrequencyMatrix const& cont_freq_matrix, std::vector<SecirParams> const& params, double t0,
                       double tmax, double dev_rel);
 
-    ContactFrequencyMatrix const& get_cont_freq_matrix_sample()
+    ContactFrequencyMatrix get_cont_freq_matrix_sample()
     {
-        m_cont_freq_matrix_variable->get_sample();
+        return m_cont_freq_matrix_variable->get_sample();
     }
 
-    std::vector<SecirParams> const& get_secir_params_sample()
+    std::vector<SecirParams> get_secir_params_sample()
     {
         std::vector<SecirParams> secir_params_vec_sample;
         for (size_t i = 0; i < m_nb_age_groups; i++) {
@@ -467,6 +465,8 @@ public:
 
             secir_params_vec_sample.push_back(std::move(secir_params_sample));
         }
+
+        return secir_params_vec_sample;
     }
 
 private:
@@ -512,9 +512,9 @@ parameter_space_t::parameter_space_t(std::string& parameter_filename)
 
 parameter_space_t::parameter_space_t(ContactFrequencyMatrix const& cont_freq_matrix,
                                      std::vector<SecirParams> const& params, double t0, double tmax, double dev_rel)
+    : m_nb_age_groups{params.size()}
 {
-
-    size_t m_nb_age_groups = params.size();
+    double min_val = 0.001;
 
     // populations
     for (size_t i = 0; i < m_nb_age_groups; i++) {
@@ -530,25 +530,25 @@ parameter_space_t::parameter_space_t(ContactFrequencyMatrix const& cont_freq_mat
         // exposed
         double value_params = params[i].populations.get_exposed_t0();
         m_exposed.push_back(std::make_unique<ParameterDistributionNormal>(
-            ParameterDistributionNormal(std::max(0., (1 - dev_rel * 2.6) * value_params),
+            ParameterDistributionNormal(std::max(min_val, (1 - dev_rel * 2.6) * value_params),
                                         (1 + dev_rel * 2.6) * value_params, value_params, dev_rel * value_params)));
 
         // carrier
         value_params = params[i].populations.get_carrier_t0();
         m_carrier.push_back(std::make_unique<ParameterDistributionNormal>(
-            ParameterDistributionNormal(std::max(0., (1 - dev_rel * 2.6) * value_params),
+            ParameterDistributionNormal(std::max(min_val, (1 - dev_rel * 2.6) * value_params),
                                         (1 + dev_rel * 2.6) * value_params, value_params, dev_rel * value_params)));
 
         // infectious
         value_params = params[i].populations.get_infectious_t0();
         m_infectious.push_back(std::make_unique<ParameterDistributionNormal>(
-            ParameterDistributionNormal(std::max(0., (1 - dev_rel * 2.6) * value_params),
+            ParameterDistributionNormal(std::max(min_val, (1 - dev_rel * 2.6) * value_params),
                                         (1 + dev_rel * 2.6) * value_params, value_params, dev_rel * value_params)));
 
         // recovered
         value_params = params[i].populations.get_recovered_t0();
         m_recovered.push_back(std::make_unique<ParameterDistributionNormal>(
-            ParameterDistributionNormal(std::max(0., (1 - dev_rel * 2.6) * value_params),
+            ParameterDistributionNormal(std::max(min_val, (1 - dev_rel * 2.6) * value_params),
                                         (1 + dev_rel * 2.6) * value_params, value_params, dev_rel * value_params)));
     }
 
@@ -557,49 +557,49 @@ parameter_space_t::parameter_space_t(ContactFrequencyMatrix const& cont_freq_mat
         // incubation time
         double value_params = 1.0 / params[i].times.get_incubation_inv();
         m_incubation.push_back(std::make_unique<ParameterDistributionNormal>(
-            ParameterDistributionNormal(std::max(0., (1 - dev_rel * 2.6) * value_params),
+            ParameterDistributionNormal(std::max(min_val, (1 - dev_rel * 2.6) * value_params),
                                         (1 + dev_rel * 2.6) * value_params, value_params, dev_rel * value_params)));
 
         // infectious time (mild)
         value_params = 1.0 / params[i].times.get_infectious_mild_inv();
         m_inf_mild.push_back(std::make_unique<ParameterDistributionNormal>(
-            ParameterDistributionNormal(std::max(0., (1 - dev_rel * 2.6) * value_params),
+            ParameterDistributionNormal(std::max(min_val, (1 - dev_rel * 2.6) * value_params),
                                         (1 + dev_rel * 2.6) * value_params, value_params, dev_rel * value_params)));
 
         // serial interval
         value_params = 1.0 / params[i].times.get_serialinterval_inv();
         m_serial_int.push_back(std::make_unique<ParameterDistributionNormal>(
-            ParameterDistributionNormal(std::max(0., (1 - dev_rel * 2.6) * value_params),
+            ParameterDistributionNormal(std::max(min_val, (1 - dev_rel * 2.6) * value_params),
                                         (1 + dev_rel * 2.6) * value_params, value_params, dev_rel * value_params)));
 
         // infectious to recovered (hospitalized to home)
         value_params = 1.0 / params[i].times.get_hospitalized_to_home_inv();
         m_hosp_to_rec.push_back(std::make_unique<ParameterDistributionNormal>(
-            ParameterDistributionNormal(std::max(0., (1 - dev_rel * 2.6) * value_params),
+            ParameterDistributionNormal(std::max(min_val, (1 - dev_rel * 2.6) * value_params),
                                         (1 + dev_rel * 2.6) * value_params, value_params, dev_rel * value_params)));
 
         // infectious to hospitalized (home to hospitalized)
         value_params = 1.0 / params[i].times.get_home_to_hospitalized_inv();
         m_inf_to_hosp.push_back(std::make_unique<ParameterDistributionNormal>(
-            ParameterDistributionNormal(std::max(0., (1 - dev_rel * 2.6) * value_params),
+            ParameterDistributionNormal(std::max(min_val, (1 - dev_rel * 2.6) * value_params),
                                         (1 + dev_rel * 2.6) * value_params, value_params, dev_rel * value_params)));
 
         // infectious (asymptomatic)
         value_params = 1.0 / params[i].times.get_infectious_asymp_inv();
         m_inf_asymp.push_back(std::make_unique<ParameterDistributionNormal>(
-            ParameterDistributionNormal(std::max(0., (1 - dev_rel * 2.6) * value_params),
+            ParameterDistributionNormal(std::max(min_val, (1 - dev_rel * 2.6) * value_params),
                                         (1 + dev_rel * 2.6) * value_params, value_params, dev_rel * value_params)));
 
         // hospitalized to ICU
         value_params = 1.0 / params[i].times.get_hospitalized_to_icu_inv();
         m_hosp_to_icu.push_back(std::make_unique<ParameterDistributionNormal>(
-            ParameterDistributionNormal(std::max(0., (1 - dev_rel * 2.6) * value_params),
+            ParameterDistributionNormal(std::max(min_val, (1 - dev_rel * 2.6) * value_params),
                                         (1 + dev_rel * 2.6) * value_params, value_params, dev_rel * value_params)));
 
         // ICU to death
         value_params = 1.0 / params[i].times.get_icu_to_dead_inv();
         m_icu_to_death.push_back(std::make_unique<ParameterDistributionNormal>(
-            ParameterDistributionNormal(std::max(0., (1 - dev_rel * 2.6) * value_params),
+            ParameterDistributionNormal(std::max(min_val, (1 - dev_rel * 2.6) * value_params),
                                         (1 + dev_rel * 2.6) * value_params, value_params, dev_rel * value_params)));
     }
 
@@ -608,50 +608,51 @@ parameter_space_t::parameter_space_t(ContactFrequencyMatrix const& cont_freq_mat
         // infection from contact
         double value_params = params[i].probabilities.get_infection_from_contact();
         m_inf_from_cont.push_back(std::make_unique<ParameterDistributionNormal>(
-            ParameterDistributionNormal(std::max(0., (1 - dev_rel * 2.6) * value_params),
+            ParameterDistributionNormal(std::max(min_val, (1 - dev_rel * 2.6) * value_params),
                                         (1 + dev_rel * 2.6) * value_params, value_params, dev_rel * value_params)));
 
         // asymptomatic per infectious
         value_params = params[i].probabilities.get_asymp_per_infectious();
         m_asymp_per_inf.push_back(std::make_unique<ParameterDistributionNormal>(
-            ParameterDistributionNormal(std::max(0., (1 - dev_rel * 2.6) * value_params),
+            ParameterDistributionNormal(std::max(min_val, (1 - dev_rel * 2.6) * value_params),
                                         (1 + dev_rel * 2.6) * value_params, value_params, dev_rel * value_params)));
 
         // risk of infection from infectious
         value_params = params[i].probabilities.get_risk_from_symptomatic();
         m_risk_from_symp.push_back(std::make_unique<ParameterDistributionNormal>(
-            ParameterDistributionNormal(std::max(0., (1 - dev_rel * 2.6) * value_params),
+            ParameterDistributionNormal(std::max(min_val, (1 - dev_rel * 2.6) * value_params),
                                         (1 + dev_rel * 2.6) * value_params, value_params, dev_rel * value_params)));
 
         // deaths per icu treatments
         value_params = params[i].probabilities.get_dead_per_icu();
         m_death_per_icu.push_back(std::make_unique<ParameterDistributionNormal>(
-            ParameterDistributionNormal(std::max(0., (1 - dev_rel * 2.6) * value_params),
+            ParameterDistributionNormal(std::max(min_val, (1 - dev_rel * 2.6) * value_params),
                                         (1 + dev_rel * 2.6) * value_params, value_params, dev_rel * value_params)));
 
         // hospitalized per infections
         value_params = params[i].probabilities.get_hospitalized_per_infectious();
         m_hosp_per_inf.push_back(std::make_unique<ParameterDistributionNormal>(
-            ParameterDistributionNormal(std::max(0., (1 - dev_rel * 2.6) * value_params),
+            ParameterDistributionNormal(std::max(min_val, (1 - dev_rel * 2.6) * value_params),
                                         (1 + dev_rel * 2.6) * value_params, value_params, dev_rel * value_params)));
 
         // icu treatments per hospitalized
         value_params = params[i].probabilities.get_icu_per_hospitalized();
         m_icu_per_hosp.push_back(std::make_unique<ParameterDistributionNormal>(
-            ParameterDistributionNormal(std::max(0., (1 - dev_rel * 2.6) * value_params),
+            ParameterDistributionNormal(std::max(min_val, (1 - dev_rel * 2.6) * value_params),
                                         (1 + dev_rel * 2.6) * value_params, value_params, dev_rel * value_params)));
     }
 
     // maximum number of dampings; to avoid overfitting only allow one damping for every 10 days simulated
     // damping base values are between 0.1 and 1; diagonal values vary lie in the range of 0.6 to 1.4 times the base value
     // off diagonal values vary between 0.7 to 1.1 of the corresponding diagonal value (symmetrization is conducted)
-    ContactFrequencyVariableElement cont_freq_matr_vari{
-        cont_freq_matrix,
-        std::make_unique<ParameterDistributionUniform>(ParameterDistributionUniform(1, (tmax - t0) / 10)),
-        std::make_unique<ParameterDistributionUniform>(ParameterDistributionUniform(t0, tmax)),
-        std::make_unique<ParameterDistributionUniform>(ParameterDistributionUniform(0.1, 1)),
-        std::make_unique<ParameterDistributionUniform>(ParameterDistributionUniform(0.6, 1.4)),
-        std::make_unique<ParameterDistributionUniform>(ParameterDistributionUniform(0.7, 1.1))};
+    m_cont_freq_matrix_variable =
+        std::move(std::make_unique<ContactFrequencyVariableElement>(ContactFrequencyVariableElement{
+            cont_freq_matrix,
+            std::make_unique<ParameterDistributionUniform>(ParameterDistributionUniform(1, (tmax - t0) / 10)),
+            std::make_unique<ParameterDistributionUniform>(ParameterDistributionUniform(t0, tmax)),
+            std::make_unique<ParameterDistributionUniform>(ParameterDistributionUniform(0.1, 1)),
+            std::make_unique<ParameterDistributionUniform>(ParameterDistributionUniform(0.6, 1.4)),
+            std::make_unique<ParameterDistributionUniform>(ParameterDistributionUniform(0.7, 1.1))}));
 }
 
 } // namespace epi
