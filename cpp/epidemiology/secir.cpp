@@ -52,6 +52,7 @@ void print_secir_params(std::vector<SecirParams> const& params, ContactFrequency
                    << "\n";
             myfile << "\t\t Infectious (asymp.) time: \t" << 1.0 / params[i].times.get_infectious_asymp_inv() << "\n";
             myfile << "\t\t Hospitalized->ICU time: \t" << 1.0 / params[i].times.get_hospitalized_to_icu_inv() << "\n";
+            myfile << "\t\t ICU->Recovered time: \t" << 1.0 / params[i].times.get_icu_to_home_inv() << "\n";
             myfile << "\t\t ICU->Death time: \t" << 1.0 / params[i].times.get_icu_to_dead_inv() << "\n";
 
             myfile << "\t Probabilities \n";

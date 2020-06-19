@@ -455,6 +455,7 @@ public:
             secir_params_sample.times.set_infectious_asymp(m_inf_asymp[i]->get_sample());
             secir_params_sample.times.set_hospitalized_to_icu(m_hosp_to_icu[i]->get_sample());
             secir_params_sample.times.set_icu_to_death(m_icu_to_death[i]->get_sample());
+            secir_params_sample.times.set_icu_to_home(m_icu_to_rec[i]->get_sample());
 
             secir_params_sample.probabilities.set_infection_from_contact(m_inf_from_cont[i]->get_sample());
             secir_params_sample.probabilities.set_asymp_per_infectious(m_asymp_per_inf[i]->get_sample());
@@ -493,6 +494,7 @@ private:
     std::vector<std::unique_ptr<ParameterDistribution>> m_inf_to_hosp;
     std::vector<std::unique_ptr<ParameterDistribution>> m_inf_asymp;
     std::vector<std::unique_ptr<ParameterDistribution>> m_hosp_to_icu;
+    std::vector<std::unique_ptr<ParameterDistribution>> m_icu_to_rec;
     std::vector<std::unique_ptr<ParameterDistribution>> m_icu_to_death;
 
     // probabilities
@@ -593,6 +595,12 @@ parameter_space_t::parameter_space_t(ContactFrequencyMatrix const& cont_freq_mat
         // hospitalized to ICU
         value_params = 1.0 / params[i].times.get_hospitalized_to_icu_inv();
         m_hosp_to_icu.push_back(std::make_unique<ParameterDistributionNormal>(
+            ParameterDistributionNormal(std::max(min_val, (1 - dev_rel * 2.6) * value_params),
+                                        (1 + dev_rel * 2.6) * value_params, value_params, dev_rel * value_params)));
+
+        // ICU to recovered
+        value_params = 1.0 / params[i].times.get_icu_to_home_inv();
+        m_icu_to_rec.push_back(std::make_unique<ParameterDistributionNormal>(
             ParameterDistributionNormal(std::max(min_val, (1 - dev_rel * 2.6) * value_params),
                                         (1 + dev_rel * 2.6) * value_params, value_params, dev_rel * value_params)));
 
