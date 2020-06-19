@@ -94,7 +94,8 @@ int main(int argc, char* argv[])
         contact_freq_matrix, params, t0, tmax);
 
     // Run parameter study
-    parameter_study.run();
+    parameter_study.set_nb_runs(1);
+    std::vector<std::vector<Eigen::VectorXd>> results = parameter_study.run();
 
 #if 0
     if (argc > 1) {

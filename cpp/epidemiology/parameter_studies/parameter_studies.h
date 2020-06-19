@@ -119,9 +119,9 @@ std::vector<std::vector<Eigen::VectorXd>> parameter_study_t::run()
 
         std::vector<SecirParams> params_sample = std::move(parameter_space.get_secir_params_sample());
         ContactFrequencyMatrix contact_sample  = std::move(parameter_space.get_cont_freq_matrix_sample());
-        // #ifdef DEBUG
-        print_secir_params(params_sample, contact_sample);
-        // #endif
+
+        // print_secir_params(params_sample, contact_sample);
+
         // Call the simulation function
         simulation_function((*this).m_t0, (*this).m_tmax, (*this).m_dt, contact_sample, params_sample, secir_result);
 
