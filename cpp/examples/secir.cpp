@@ -39,27 +39,49 @@ int main()
     // double nb_total_t0 = 10000, nb_exp_t0 = 100, nb_inf_t0 = 50, nb_car_t0 = 50, nb_hosp_t0 = 20, nb_icu_t0 = 10,
     //        nb_rec_t0 = 10, nb_dead_t0 = 0;
 
-    // problem !!!
-    double tinc    = 5.09342, // R_2^(-1)+R_3^(-1)
-        tinfmild   = 5.86642, // 4-14  (=R4^(-1))
-        tserint    = 5.08993, // 4-4.4 // R_2^(-1)+0.5*R_3^(-1)
-        thosp2home = 11.6138, // 7-16 (=R5^(-1))
-        thome2hosp = 4.45361, // 2.5-7 (=R6^(-1))
-        thosp2icu  = 2.15791, // 1-3.5 (=R7^(-1))
-        ticu2home  = 9.16291, // 5-16 (=R8^(-1))
-        tinfasy    = 6.57504, // (=R9^(-1)=R_3^(-1)+0.5*R_4^(-1))
-        ticu2death = 5.90264; // 3.5-7 (=R5^(-1))
+    // // small problem !!!
+    // double tinc    = 5.09342, // R_2^(-1)+R_3^(-1)
+    //     tinfmild   = 5.86642, // 4-14  (=R4^(-1))
+    //     tserint    = 5.08993, // 4-4.4 // R_2^(-1)+0.5*R_3^(-1)
+    //     thosp2home = 11.6138, // 7-16 (=R5^(-1))
+    //     thome2hosp = 4.45361, // 2.5-7 (=R6^(-1))
+    //     thosp2icu  = 2.15791, // 1-3.5 (=R7^(-1))
+    //     ticu2home  = 9.16291, // 5-16 (=R8^(-1))
+    //     tinfasy    = 6.57504, // (=R9^(-1)=R_3^(-1)+0.5*R_4^(-1))
+    //     ticu2death = 5.90264; // 3.5-7 (=R5^(-1))
+
+    // double cont_freq = 0.5, // 0.2-0.75
+    //     infprob      = 0.924519,
+    //        alpha     = 0.124921, // 0.01-0.16
+    //     beta         = 0.190609, // 0.05-0.5
+    //     delta        = 0.245801, // 0.15-0.77
+    //     rho          = 0.183693, // 0.1-0.35
+    //     theta        = 0.185556; // 0.15-0.4
+
+    // double nb_total_t0 = 10000, nb_exp_t0 = 91, nb_inf_t0 = 39, nb_car_t0 = 36, nb_hosp_t0 = 20, nb_icu_t0 = 10,
+    //        nb_rec_t0 = 8, nb_dead_t0 = 0;
+
+    // large problem !!!
+    double tinc    = 4.4912, // R_2^(-1)+R_3^(-1)
+        tinfmild   = 7.47478, // 4-14  (=R4^(-1))
+        tserint    = 4.82975, // 4-4.4 // R_2^(-1)+0.5*R_3^(-1)
+        thosp2home = 10.9656, // 7-16 (=R5^(-1))
+        thome2hosp = 5.23476, // 2.5-7 (=R6^(-1))
+        thosp2icu  = 2.09982, // 1-3.5 (=R7^(-1))
+        ticu2home  = 8.30871, // 5-16 (=R8^(-1))
+        tinfasy    = 5.43563, // (=R9^(-1)=R_3^(-1)+0.5*R_4^(-1))
+        ticu2death = 4.90333; // 3.5-7 (=R5^(-1))
 
     double cont_freq = 0.5, // 0.2-0.75
-        infprob      = 0.924519,
-           alpha     = 0.124921, // 0.01-0.16
-        beta         = 0.190609, // 0.05-0.5
-        delta        = 0.245801, // 0.15-0.77
-        rho          = 0.183693, // 0.1-0.35
-        theta        = 0.185556; // 0.15-0.4
+        infprob      = 1.01802,
+           alpha     = 0.110912, // 0.01-0.16
+        beta         = 0.266166, // 0.05-0.5
+        delta        = 0.308073, // 0.15-0.77
+        rho          = 0.197487, // 0.1-0.35
+        theta        = 0.287514; // 0.15-0.4
 
-    double nb_total_t0 = 10000, nb_exp_t0 = 91, nb_inf_t0 = 39, nb_car_t0 = 36, nb_hosp_t0 = 20, nb_icu_t0 = 10,
-           nb_rec_t0 = 8, nb_dead_t0 = 0;
+    double nb_total_t0 = 10000, nb_exp_t0 = 119, nb_inf_t0 = 55, nb_car_t0 = 53, nb_hosp_t0 = 20, nb_icu_t0 = 10,
+           nb_rec_t0 = 10, nb_dead_t0 = 0;
 
     std::vector<epi::SecirParams> params{epi::SecirParams{}};
 
