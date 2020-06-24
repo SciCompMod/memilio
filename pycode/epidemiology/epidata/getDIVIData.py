@@ -178,9 +178,20 @@ def get_divi_data(read_data=dd.defaultDict['read_data'],
 
    # change column names
    df.rename(dd.GerEng, axis=1, inplace=True)
-   print("Available columns:", df.columns)
 
    df.Date = pandas.to_datetime(df.Date, format='%Y-%m-%d %H:%M')
+   
+   # insert names of  states
+   df.insert(loc=0, column="State", value=df.ID_State)
+   for key, value in dd.State.items():
+      df.loc[df["State"] == key, ["State"]] = value
+   
+   # insert names of counties
+   df.insert(loc=0, column="County", value=df.ID_County)
+   for key, value in dd.County.items():
+      df.loc[df["County"] == key, ["County"]] = value
+   
+   print("Available columns:", df.columns)     
 
    # ID_County and ID_State is as defined by the "Amtlicher Gemeindeschlüssel (AGS)"
    # which is also used in the RKI data as ID_County and ID_State
