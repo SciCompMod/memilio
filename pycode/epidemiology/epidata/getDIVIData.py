@@ -1,9 +1,9 @@
-from epidemiology.epidata import os
-from epidemiology.epidata import sys
-from epidemiology.epidata import pandas
+import os
+import sys
+import pandas
 
-import getDataIntoPandasDataFrame as gd
-import defaultDict as dd
+from epidemiology.epidata import getDataIntoPandasDataFrame as gd
+from epidemiology.epidata import defaultDict as dd
 
 def adjust_first_data(df, start_date):
    from datetime import date
