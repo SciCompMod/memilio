@@ -41,7 +41,7 @@ EngEng = {
    'occupied_ICU': 'occupied_ICU',
    'free_ICU': 'free_ICU',
    'reporting_hospitals': 'reporting_hospitals',
-   'hospitalized_ventilated': 'Hospitalized_ventilated',
+   'ICU_ventilated': 'ICU_ventilated',
 }
 
 GerEng = {
@@ -64,8 +64,8 @@ GerEng = {
    'daten_stand': EngEng['date'],
    'gemeindeschluessel': EngEng['idCounty'],
    'anzahl_standorte': EngEng['reporting_hospitals'],
-   'faelle_covid_aktuell': EngEng['hospitalized'],
-   'faelle_covid_aktuell_beatmet': EngEng['hospitalized_ventilated'],
+   'faelle_covid_aktuell': EngEng['intensive care unit'],
+   'faelle_covid_aktuell_beatmet': EngEng['ICU_ventilated'],
 }
 
 EsEng = {'fecha': EngEng['date'],

@@ -1,6 +1,6 @@
-import os
-import sys
-import pandas
+from epidemiology.epidata import os
+from epidemiology.epidata import sys
+from epidemiology.epidata import pandas
 
 import getDataIntoPandasDataFrame as gd
 import defaultDict as dd
