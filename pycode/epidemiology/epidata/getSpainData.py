@@ -35,7 +35,7 @@ def get_spain_data(read_data=dd.defaultDict['read_data'],
 
 
    ages_file = 'raw_spain_all_age'
-   stat_file = 'raw_spain_all_state.json'
+   stat_file = 'raw_spain_all_state'
 
    if(read_data):
 

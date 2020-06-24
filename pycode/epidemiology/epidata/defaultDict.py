@@ -5,7 +5,7 @@ defaultDict = {
    'read_data':False,
    'make_plot':False,
    'out_form':'json',
-   'out_folder':''
+   'out_folder':'./'
 }
 
 # The following dict EngEng makes sure that for all
