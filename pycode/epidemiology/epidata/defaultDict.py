@@ -40,6 +40,8 @@ EngEng = {
    'all': 'all',
    'occupied_ICU': 'occupied_ICU',
    'free_ICU': 'free_ICU',
+   'reporting_hospitals': 'reporting_hospitals',
+   'hospitalized_ventilated': 'Hospitalized_ventilated',
 }
 
 GerEng = {
@@ -56,13 +58,14 @@ GerEng = {
    'unbekannt': EngEng['unknown'],
    'W' : EngEng['female'],
    'M' : EngEng['male'],
-
    'bundesland': EngEng['idState'],
    'betten_belegt': EngEng['occupied_ICU'],
    'betten_frei': EngEng['free_ICU'],
    'daten_stand': EngEng['date'],
-   'kreis': EngEng['idCounty'],
    'gemeindeschluessel': EngEng['idCounty'],
+   'anzahl_standorte': EngEng['reporting_hospitals'],
+   'faelle_covid_aktuell': EngEng['hospitalized'],
+   'faelle_covid_aktuell_beatmet': EngEng['hospitalized_ventilated'],
 }
 
 EsEng = {'fecha': EngEng['date'],

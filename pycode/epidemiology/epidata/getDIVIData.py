@@ -182,16 +182,20 @@ def get_divi_data(read_data=dd.defaultDict['read_data'],
 
    df.Date = pandas.to_datetime(df.Date, format='%Y-%m-%d %H:%M')
 
-   # ID_County is as defined by the "Amtlicher Gemeindeschlüssel (AGS)"
-   # which is also used in the RKI data as ID_County
+   # ID_County and ID_State is as defined by the "Amtlicher Gemeindeschlüssel (AGS)"
+   # which is also used in the RKI data as ID_County and ID_State
    # https://de.wikipedia.org/wiki/Liste_der_Landkreise_in_Deutschland
 
    # The column faelle_covid_im_bundesland exits only in the data from the first day
-
    # The columns falle_covid_aktuell does not exist for the 24.4.
    # and faelle_covid_aktuell_beatmet does not exist for the 24.4. and 25.4.
-   # TODO: Check whether they coincide with the data from RKI
-
+   
+   # reporting_hospitals number of reporting hospitals
+   # hospitalized is the number of covid patients in reporting hospitals
+   # hospitalized_ventilated is the number of ventilated covid patients in reporting hospitals
+   # free_ICU is the number of free ICUs in reporting hospitals
+   # occupied_ICU is the number of occupied ICUs in in reporting hospitals
+   
 def main():
 
    [read_data, make_plot, out_form, out_folder] = gd.cli('Downloads data from DIVI')
