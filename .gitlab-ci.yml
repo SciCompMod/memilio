@@ -66,6 +66,7 @@ test-py:
     - getjhdata --help
     - getspaindata --help
     - getalldata --help
+    - cleandata --help
 
 download-data:
   tags:

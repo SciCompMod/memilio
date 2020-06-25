@@ -24,12 +24,16 @@ def clean_data(all, rki, john_hopkins, spain, population, hdf5, out_path):
                 continue
 
             for item in files:
-                print("Deleting file ", os.path.join(directory, item))
-                os.remove(os.path.join(directory, item))
+                if item.endswith(".json") or item.endswith(".h5"):
+                    print("Deleting file ", os.path.join(directory, item))
+                    os.remove(os.path.join(directory, item))
 
-            # delete directories
+            # delete directories if empty
+            try:
+                os.rmdir(directory)
+            except OSError:
+                continue
             print("Deleting directory ", directory)
-            os.rmdir(directory)
 
         # delete further jh files
         files = []
@@ -43,110 +47,108 @@ def clean_data(all, rki, john_hopkins, spain, population, hdf5, out_path):
                 print("Deleting file ", os.path.join(out_path, item))
                 os.remove(os.path.join(out_path, item))
 
-    elif(rki):
-        directory = os.path.join(out_path, 'Germany/')
-        files = []
-        try:
-            files = os.listdir(directory)
-        except FileNotFoundError:
-            pass
+    elif rki or john_hopkins or spain or population:
 
-        for item in files:
-            if item.endswith(ending):
-                if "_rki" in item or "RKI" in item:
-                    print("Deleting file ", os.path.join(directory, item))
-                    os.remove(os.path.join(directory, item))
-
-        # delete directory if empty
-        try:
-            os.rmdir(directory)
-        except OSError:
-            return
-
-        print("Deleting directory ", directory)
-
-    elif (population):
-        directory = os.path.join(out_path, 'Germany/')
-        files = []
-        try:
-            files = os.listdir(directory)
-        except FileNotFoundError:
-            pass
-
-        for item in files:
-            if item.endswith(ending):
-                if "Popul" in item or "FullDataB" in item or "FullDataL" in item:
-                    print("Deleting file ", os.path.join(directory, item))
-                    os.remove(os.path.join(directory, item))
-
-        # delete directory if empty
-        try:
-            os.rmdir(directory)
-        except OSError:
-            return
-
-        print("Deleting directory ", directory)
-
-
-    elif (spain):
-        directory = os.path.join(out_path, 'Spain/')
-        files = []
-        try:
-            files = os.listdir(directory)
-        except FileNotFoundError:
-            pass
-
-        for item in files:
-            if item.endswith(ending) and "spain" in item:
-                print("Deleting file ", os.path.join(directory, item))
-                os.remove(os.path.join(directory, item))
-
-        # delete directory if empty
-        try:
-            os.rmdir(directory)
-        except OSError:
-            return;
-
-        print("Deleting directory ", directory)
-
-    elif(john_hopkins):
-        # TODO: make general dictionary with all countries used
-        directories = ['Germany/', 'Spain/', 'France/', 'Italy/', 'US/', 'SouthKorea/', 'China/']
-
-        # delete files in directory
-        for cdir in directories:
-            directory = os.path.join(out_path, cdir)
-
+        if(rki):
+            directory = os.path.join(out_path, 'Germany/')
+            files = []
             try:
                 files = os.listdir(directory)
             except FileNotFoundError:
-                continue
+                pass
 
             for item in files:
-                if item.endswith(ending) and "_jh" in item:
+                if item.endswith(ending):
+                    if "_rki" in item or "RKI" in item:
+                        print("Deleting file ", os.path.join(directory, item))
+                        os.remove(os.path.join(directory, item))
+
+            # delete directory if empty
+            try:
+                os.rmdir(directory)
+                print("Deleting directory ", directory)
+            except OSError:
+                pass
+
+        if (population):
+            directory = os.path.join(out_path, 'Germany/')
+            files = []
+            try:
+                files = os.listdir(directory)
+            except FileNotFoundError:
+                pass
+
+            for item in files:
+                if item.endswith(ending):
+                    if "Popul" in item or "FullDataB" in item or "FullDataL" in item:
+                        print("Deleting file ", os.path.join(directory, item))
+                        os.remove(os.path.join(directory, item))
+
+            # delete directory if empty
+            try:
+                os.rmdir(directory)
+                print("Deleting directory ", directory)
+            except OSError:
+                pass
+
+        if (spain):
+            directory = os.path.join(out_path, 'Spain/')
+            files = []
+            try:
+                files = os.listdir(directory)
+            except FileNotFoundError:
+                pass
+
+            for item in files:
+                if item.endswith(ending) and "spain" in item:
                     print("Deleting file ", os.path.join(directory, item))
                     os.remove(os.path.join(directory, item))
 
-            # delete directories
+            # delete directory if empty
             try:
-               os.rmdir(directory)
+                os.rmdir(directory)
+                print("Deleting directory ", directory)
             except OSError:
-                continue;
+                pass
 
-            print("Deleting directory ", directory)
+        if(john_hopkins):
+            # TODO: make general dictionary with all countries used
+            directories = ['Germany/', 'Spain/', 'France/', 'Italy/', 'US/', 'SouthKorea/', 'China/']
 
-        # delete further jh files
-        files = []
-        try:
-            files = os.listdir(out_path)
-        except FileNotFoundError:
-            pass
+            # delete files in directory
+            for cdir in directories:
+                directory = os.path.join(out_path, cdir)
 
-        for item in files:
-            if item.endswith(ending):
-                if "_jh" in item or "JohnHopkins" in item:
-                    print("Deleting file ", os.path.join(out_path, item))
-                    os.remove(os.path.join(out_path, item))
+                try:
+                    files = os.listdir(directory)
+                except FileNotFoundError:
+                    continue
+
+                for item in files:
+                    if item.endswith(ending) and "_jh" in item:
+                        print("Deleting file ", os.path.join(directory, item))
+                        os.remove(os.path.join(directory, item))
+
+                # delete directories
+                try:
+                   os.rmdir(directory)
+                except OSError:
+                    continue;
+
+                print("Deleting directory ", directory)
+
+            # delete further jh files
+            files = []
+            try:
+                files = os.listdir(out_path)
+            except FileNotFoundError:
+                pass
+
+            for item in files:
+                if item.endswith(ending):
+                    if "_jh" in item or "JohnHopkins" in item:
+                        print("Deleting file ", os.path.join(out_path, item))
+                        os.remove(os.path.join(out_path, item))
 
     else:
         print("Please specify what should be deleted. See --help for details.")
