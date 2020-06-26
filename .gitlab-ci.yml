@@ -5,7 +5,7 @@ build-cpp:
     - hpcagainstcorona
   before_script:
     - apt -qq update
-    - apt -qq -y install libeigen3-dev
+    - apt -qq -y install libeigen3-dev libhdf5-dev
   script:
     - cd cpp
     - mkdir build && cd build
@@ -39,6 +39,9 @@ test-cpp:
     - cpp
     - hpcagainstcorona
   stage: test
+  before_script:
+    - apt -qq update
+    - apt -qq -y install libhdf5
   dependencies:
     - build-cpp
   script:
