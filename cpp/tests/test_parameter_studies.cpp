@@ -225,7 +225,7 @@ TEST(ParameterStudies, check_ensemble_run_result)
         }
     }
 
-    epi::parameter_study_t parameter_study(
+    epi::ParameterStudy parameter_study(
         [](double t0, double tmax, double dt, epi::ContactFrequencyMatrix const& contact_freq_matrix,
            std::vector<epi::SecirParams> const& params, std::vector<Eigen::VectorXd>& secir) {
             return epi::simulate(t0, tmax, dt, contact_freq_matrix, params, secir);

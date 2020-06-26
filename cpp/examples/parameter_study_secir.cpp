@@ -86,7 +86,7 @@ int main(int argc, char* argv[])
         }
     }
 
-    epi::parameter_study_t parameter_study(
+    epi::ParameterStudy parameter_study(
         [](double t0, double tmax, double dt, epi::ContactFrequencyMatrix const& contact_freq_matrix,
            std::vector<epi::SecirParams> const& params, std::vector<Eigen::VectorXd>& secir) {
             return epi::simulate(t0, tmax, dt, contact_freq_matrix, params, secir);
@@ -108,7 +108,7 @@ int main(int argc, char* argv[])
     }
 
     // Create parameter study
-    parameter_study_t parameter_study(input_filename);
+    ParameterStudy parameter_study(input_filename);
 #endif
     return 0;
 }

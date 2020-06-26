@@ -16,20 +16,20 @@ using secir_simulation_function_t = std::function<std::vector<double>(
 // TODO: document class
 // TODO: document input file convention
 
-class parameter_study_t
+class ParameterStudy
 {
 public:
     /* 
      * @brief Constructor from file name
      * @param[in] parameter_filename filename of a file storing ranges of input parameters.
      */
-    parameter_study_t(secir_simulation_function_t const& simu_func, std::string& parameter_filename);
+    ParameterStudy(secir_simulation_function_t const& simu_func, std::string& parameter_filename);
 
     /* 
      * @brief Constructor from contact frequency matrix and parameter vector
      * @param[in] parameter_filename filename of a file storing ranges of input parameters.
      */
-    parameter_study_t(secir_simulation_function_t const& simu_func, ContactFrequencyMatrix const& cont_freq_matrix,
+    ParameterStudy(secir_simulation_function_t const& simu_func, ContactFrequencyMatrix const& cont_freq_matrix,
                       std::vector<SecirParams> const& params, double t0, double tmax, double dev_rel = 0.2,
                       size_t nb_runs = 1);
 
@@ -92,13 +92,13 @@ private:
     double m_dt = 0.1;
 };
 
-parameter_study_t::parameter_study_t(secir_simulation_function_t const& simu_func, std::string& parameter_filename)
+ParameterStudy::ParameterStudy(secir_simulation_function_t const& simu_func, std::string& parameter_filename)
     : simulation_function{simu_func}
     , parameter_space{parameter_filename}
 {
 }
 
-parameter_study_t::parameter_study_t(secir_simulation_function_t const& simu_func,
+ParameterStudy::ParameterStudy(secir_simulation_function_t const& simu_func,
                                      ContactFrequencyMatrix const& cont_freq_matrix,
                                      std::vector<SecirParams> const& params, double t0, double tmax, double dev_rel,
                                      size_t nb_runs)
@@ -108,7 +108,7 @@ parameter_study_t::parameter_study_t(secir_simulation_function_t const& simu_fun
 {
 }
 
-std::vector<std::vector<Eigen::VectorXd>> parameter_study_t::run()
+std::vector<std::vector<Eigen::VectorXd>> ParameterStudy::run()
 {
     std::vector<std::vector<Eigen::VectorXd>> ensemble_result;
 
