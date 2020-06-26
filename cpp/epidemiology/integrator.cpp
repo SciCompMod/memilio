@@ -19,7 +19,7 @@ Eigen::VectorXd& OdeIntegrator::advance(double tmax)
     bool step_okay = true;
 
     double t = t0;
-    size_t i = 0;
+    size_t i = m_t.size() - 1;
     while (std::abs((tmax - t) / (tmax - t0)) > 1e-10) {
         //we don't make timesteps too small as the error estimator of an adaptive integrator
         //may not be able to handle it. this is very conservative and maybe unnecessary,
