@@ -73,7 +73,7 @@ TEST(ParameterStudies, sample_from_secir_params)
         }
     }
 
-    epi::parameter_space_t parameter_space(contact_freq_matrix, params, 0., 100., 0.2);
+    epi::ParameterSpace parameter_space(contact_freq_matrix, params, 0., 100., 0.2);
 
     std::vector<epi::SecirParams> params_sample = parameter_space.get_secir_params_sample();
 

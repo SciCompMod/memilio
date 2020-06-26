@@ -397,7 +397,7 @@ private:
         m_damp_offdiag_rel; // random number of variation from diagonal value for offdiagonal
 };
 
-/* The class parameter_space_t stores ranges of parameters
+/* The class ParameterSpace stores ranges of parameters
  * together with information on step sizes,
  * a start and end time as well as an initial time step.
  * The class provides an iterator that iterates over all
@@ -405,14 +405,14 @@ private:
  *
  * Currently all parameters are of type double.
  */
-class parameter_space_t
+class ParameterSpace
 {
 public:
     /* Constructor
      * @param [in] paramter_filename filename of a file storing ranges of input
      * parameters. Reads parameter names and values from an input file.
      */
-    parameter_space_t(std::string& parameter_filename);
+    ParameterSpace(std::string& parameter_filename);
 
     /* Constructor from given ContactFrequencyMatrix and SecirParams. Mainly used for testing.
      * @param[in] cont_freq_matrix basic contact frequency matrix
@@ -421,7 +421,7 @@ public:
      * @param[in] tmax end time
      * @param[in] dev_rel maximum relative deviation from particular value(s) given in params
      */
-    parameter_space_t(ContactFrequencyMatrix const& cont_freq_matrix, std::vector<SecirParams> const& params, double t0,
+    ParameterSpace(ContactFrequencyMatrix const& cont_freq_matrix, std::vector<SecirParams> const& params, double t0,
                       double tmax, double dev_rel);
 
     ContactFrequencyMatrix get_cont_freq_matrix_sample()
@@ -506,13 +506,13 @@ private:
     std::vector<std::unique_ptr<ParameterDistribution>> m_icu_per_hosp;
 };
 
-parameter_space_t::parameter_space_t(std::string& parameter_filename)
+ParameterSpace::ParameterSpace(std::string& parameter_filename)
 {
     // TODO: implement
     assert(0 && "This function not implemented yet and needs a file read method.");
 }
 
-parameter_space_t::parameter_space_t(ContactFrequencyMatrix const& cont_freq_matrix,
+ParameterSpace::ParameterSpace(ContactFrequencyMatrix const& cont_freq_matrix,
                                      std::vector<SecirParams> const& params, double t0, double tmax, double dev_rel)
     : m_nb_age_groups{params.size()}
 {

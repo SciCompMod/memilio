@@ -77,7 +77,7 @@ private:
     std::string parameter_file;
 
     // Stores the names and ranges of all parameters
-    parameter_space_t parameter_space;
+    ParameterSpace parameter_space;
 
     // The function that carries out our simulation
     secir_simulation_function_t simulation_function;
