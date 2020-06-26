@@ -6,7 +6,7 @@ if (NOT TARGET "epidemiology")
   find_package(epidemiology REQUIRED)
 endif()
 
-set(EPI_EXAMPLES euler_test rungekutta_test seir secir secir_ageres graph)
+set(EPI_EXAMPLES euler_test rungekutta_test seir secir secir_ageres graph parameter_sampling parameter_study_secir)
 
 foreach(EX ${EPI_EXAMPLES})
     add_executable(${EX} ${EX}.cpp)

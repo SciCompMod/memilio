@@ -21,14 +21,20 @@ class ContactFrequencyMatrix
 {
 public:
     /**
-     * @brief Initializes a contact frequencies 1x1-matrix in the SECIR model
+     * @brief Standard constructor of contact frequencies 1x1-matrix in the SECIR model
      */
     ContactFrequencyMatrix();
 
     /**
-     * @brief Initializes a contact frequencies nb_groups x nb_groups-matrix in the SECIR model
+     * @brief Constructor of contact frequencies nb_groups x nb_groups-matrix in the SECIR model
+     * @param[in] nb_groups number of groups in the model
      */
     ContactFrequencyMatrix(size_t const nb_groups);
+
+    /**
+     * @brief returns the size of the contact frequency matrix
+     */
+    int get_size() const;
 
     /**
      * @brief sets the contact frequency in the SECIR model; in case of multiple groups, set the contact rate cr_ij=cr_ji=cont_freq
@@ -39,8 +45,8 @@ public:
     void set_cont_freq(double cont_freq, int self_group, int contact_group);
 
     /**
-         * @brief returns the contact frequency set for the SECIR model in 1/day unit; in case of multiple groups, returns the contact rate cr_ij=cr_ji
-         */
+     * @brief returns the contact frequency set for the SECIR model in 1/day unit; in case of multiple groups, returns the contact rate cr_ij=cr_ji
+     */
     double get_cont_freq(int self_group, int contact_group) const;
 
     /**
@@ -67,7 +73,7 @@ public:
 private:
     std::vector<std::vector<double>> m_cont_freq;
     // This defines a damping factor for a mitigation strategy for different points in time.
-    std::vector<std::vector<Dampings>> dampings;
+    std::vector<std::vector<Dampings>> m_dampings;
 }; // namespace epi
 
 /**
@@ -129,7 +135,7 @@ public:
     {
     public:
         /**
-         * @brief Initializes a time parameters' struct in the SECIR model
+         * @brief Standard constructor of a time parameters' class in the SECIR model
          */
         StageTimes();
 
@@ -243,7 +249,7 @@ public:
     {
     public:
         /**
-         * @brief Initializes a population parameters' struct in the SECIR model
+         * @brief Standard constructor of population parameters' class in the SECIR model
          */
         Populations();
 
@@ -363,7 +369,7 @@ public:
     {
     public:
         /**
-         * @brief Initializes a probabilites parameters' struct in the SECIR model
+         * @brief Standard constructor of probabilites parameters' class in the SECIR model
          */
         Probabilities();
 
@@ -442,11 +448,6 @@ public:
     Populations populations;
 
     Probabilities probabilities;
-
-    /**
-     * @brief Initializes a SECIR/SECIHURD model without default parameters 
-     */
-    SecirParams();
 };
 
 /**

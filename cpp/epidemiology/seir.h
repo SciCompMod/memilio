@@ -148,11 +148,6 @@ public:
 
     // This defines a damping factor for a mitigation strategy for different points in time.
     Dampings dampings;
-
-    /**
-     * @brief Initializes a SEIR model with some default parameters
-     */
-    SeirParams();
 };
 
 /**

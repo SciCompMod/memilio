@@ -129,12 +129,6 @@ double SeirParams::Populations::get_suscetible_t0() const
     return m_nb_sus_t0;
 }
 
-SeirParams::SeirParams()
-    : times{}
-    , populations{}
-{
-}
-
 void seir_get_derivatives(const SeirParams& params, const Eigen::VectorXd& y, double t, Eigen::VectorXd& dydt)
 {
     // 0: S,      1: E,       2: I,     3: R

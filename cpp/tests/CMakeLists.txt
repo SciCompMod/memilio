@@ -22,6 +22,8 @@ set(TESTSOURCES
   test_secir_ageres.cpp
   test_stl_util.cpp
   test_graph.cpp
+  test_parameter_studies.cpp
+  gtest_helpers.h
 )
 
 add_executable(runUnitTests ${TESTSOURCES})
