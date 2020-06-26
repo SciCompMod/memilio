@@ -163,7 +163,7 @@ public:
 
     bool check_quantiles()
     {
-        check_quantiles(m_mean, m_standard_dev);
+        return check_quantiles(m_mean, m_standard_dev);
     }
 
     /*
