@@ -438,45 +438,6 @@ void ContactFrequencyMatrix::add_damping(Damping const& damping, int self_group,
     }
 }
 
-SecirParams::SecirParams()
-    : times{}
-    , populations{}
-    , probabilities{}
-{
-}
-
-SecirParams::SecirParams(SecirParams const& params)
-    : times{params.times}
-    , populations{params.populations}
-    , probabilities{params.probabilities}
-{
-}
-
-SecirParams& SecirParams::operator=(SecirParams const& params)
-{
-    (*this).times         = params.times;
-    (*this).populations   = params.populations;
-    (*this).probabilities = params.probabilities;
-
-    return (*this);
-}
-
-SecirParams::SecirParams(SecirParams&& params)
-    : times{std::move(params.times)}
-    , populations{std::move(params.populations)}
-    , probabilities{std::move(params.probabilities)}
-{
-}
-
-SecirParams& SecirParams::operator=(SecirParams&& params)
-{
-    (*this).times         = std::move(params.times);
-    (*this).populations   = std::move(params.populations);
-    (*this).probabilities = std::move(params.probabilities);
-
-    return (*this);
-}
-
 double get_reprod_rate(ContactFrequencyMatrix const& cont_freq_matrix, std::vector<SecirParams> const& params,
                        double const t, std::vector<double> const& yt)
 {

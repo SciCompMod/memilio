@@ -449,31 +449,6 @@ public:
     Populations populations;
 
     Probabilities probabilities;
-
-    /**
-     * @brief Standard constructor a SECIR/SECIHURD model parameters object 
-     */
-    SecirParams();
-
-    /**
-     * @brief Copy constructor of a SECIR/SECIHURD model parameters object 
-     */
-    SecirParams(SecirParams const& params);
-
-    /**
-     * @brief Copy assignment constructor of a SECIR/SECIHURD model parameters object 
-     */
-    SecirParams& operator=(SecirParams const& params);
-
-    /**
-     * @brief Move constructor of a SECIR/SECIHURD model parameters object 
-     */
-    SecirParams(SecirParams&& params);
-
-    /**
-     * @brief Move assignment constructor of a SECIR/SECIHURD model parameters object 
-     */
-    SecirParams& operator=(SecirParams&& params);
 };
 
 /**
