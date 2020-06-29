@@ -422,7 +422,7 @@ public:
      * @param[in] dev_rel maximum relative deviation from particular value(s) given in params
      */
     ParameterSpace(ContactFrequencyMatrix const& cont_freq_matrix, std::vector<SecirParams> const& params, double t0,
-                      double tmax, double dev_rel);
+                   double tmax, double dev_rel);
 
     ContactFrequencyMatrix get_cont_freq_matrix_sample()
     {
@@ -447,9 +447,12 @@ public:
 
             secir_params_sample.populations.set_suscetible_t0(); // calculated as remaing from total minus other groups
 
-            secir_params_sample.times.set_incubation(m_incubation[i]->get_sample());
+            double inc_dummy    = m_incubation[i]->get_sample();
+            double serint_dummy = inc_dummy - m_serial_int_incub_diff[i]->get_sample();
+
+            secir_params_sample.times.set_incubation(inc_dummy);
             secir_params_sample.times.set_infectious_mild(m_inf_mild[i]->get_sample());
-            secir_params_sample.times.set_serialinterval(m_serial_int[i]->get_sample());
+            secir_params_sample.times.set_serialinterval(serint_dummy);
             secir_params_sample.times.set_hospitalized_to_home(m_hosp_to_rec[i]->get_sample()); // here: home=recovered
             secir_params_sample.times.set_home_to_hospitalized(m_inf_to_hosp[i]->get_sample()); // here: home=infectious
             secir_params_sample.times.set_infectious_asymp(m_inf_asymp[i]->get_sample());
@@ -488,8 +491,8 @@ private:
 
     // times
     std::vector<std::unique_ptr<ParameterDistribution>> m_incubation;
+    std::vector<std::unique_ptr<ParameterDistribution>> m_serial_int_incub_diff;
     std::vector<std::unique_ptr<ParameterDistribution>> m_inf_mild;
-    std::vector<std::unique_ptr<ParameterDistribution>> m_serial_int;
     std::vector<std::unique_ptr<ParameterDistribution>> m_hosp_to_rec;
     std::vector<std::unique_ptr<ParameterDistribution>> m_inf_to_hosp;
     std::vector<std::unique_ptr<ParameterDistribution>> m_inf_asymp;
@@ -512,8 +515,8 @@ ParameterSpace::ParameterSpace(std::string& parameter_filename)
     assert(0 && "This function not implemented yet and needs a file read method.");
 }
 
-ParameterSpace::ParameterSpace(ContactFrequencyMatrix const& cont_freq_matrix,
-                                     std::vector<SecirParams> const& params, double t0, double tmax, double dev_rel)
+ParameterSpace::ParameterSpace(ContactFrequencyMatrix const& cont_freq_matrix, std::vector<SecirParams> const& params,
+                               double t0, double tmax, double dev_rel)
     : m_nb_age_groups{params.size()}
 {
     double min_val = 0.001;
@@ -562,15 +565,15 @@ ParameterSpace::ParameterSpace(ContactFrequencyMatrix const& cont_freq_matrix,
             ParameterDistributionNormal(std::max(min_val, (1 - dev_rel * 2.6) * value_params),
                                         (1 + dev_rel * 2.6) * value_params, value_params, dev_rel * value_params)));
 
-        // infectious time (mild)
-        value_params = 1.0 / params[i].times.get_infectious_mild_inv();
-        m_inf_mild.push_back(std::make_unique<ParameterDistributionNormal>(
+        // serial interval
+        value_params = 1.0 / params[i].times.get_incubation_inv() - 1.0 / params[i].times.get_serialinterval_inv();
+        m_serial_int_incub_diff.push_back(std::make_unique<ParameterDistributionNormal>(
             ParameterDistributionNormal(std::max(min_val, (1 - dev_rel * 2.6) * value_params),
                                         (1 + dev_rel * 2.6) * value_params, value_params, dev_rel * value_params)));
 
-        // serial interval
-        value_params = 1.0 / params[i].times.get_serialinterval_inv();
-        m_serial_int.push_back(std::make_unique<ParameterDistributionNormal>(
+        // infectious time (mild)
+        value_params = 1.0 / params[i].times.get_infectious_mild_inv();
+        m_inf_mild.push_back(std::make_unique<ParameterDistributionNormal>(
             ParameterDistributionNormal(std::max(min_val, (1 - dev_rel * 2.6) * value_params),
                                         (1 + dev_rel * 2.6) * value_params, value_params, dev_rel * value_params)));
 

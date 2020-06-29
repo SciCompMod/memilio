@@ -30,8 +30,8 @@ public:
      * @param[in] parameter_filename filename of a file storing ranges of input parameters.
      */
     ParameterStudy(secir_simulation_function_t const& simu_func, ContactFrequencyMatrix const& cont_freq_matrix,
-                      std::vector<SecirParams> const& params, double t0, double tmax, double dev_rel = 0.2,
-                      size_t nb_runs = 1);
+                   std::vector<SecirParams> const& params, double t0, double tmax, double dev_rel = 0.2,
+                   size_t nb_runs = 1);
 
     /*
      * @brief Carry out all simulations in the parameter study.
@@ -99,9 +99,8 @@ ParameterStudy::ParameterStudy(secir_simulation_function_t const& simu_func, std
 }
 
 ParameterStudy::ParameterStudy(secir_simulation_function_t const& simu_func,
-                                     ContactFrequencyMatrix const& cont_freq_matrix,
-                                     std::vector<SecirParams> const& params, double t0, double tmax, double dev_rel,
-                                     size_t nb_runs)
+                               ContactFrequencyMatrix const& cont_freq_matrix, std::vector<SecirParams> const& params,
+                               double t0, double tmax, double dev_rel, size_t nb_runs)
     : simulation_function{simu_func}
     , parameter_space{cont_freq_matrix, params, t0, tmax, dev_rel}
     , m_nb_runs{nb_runs}
@@ -120,7 +119,7 @@ std::vector<std::vector<Eigen::VectorXd>> ParameterStudy::run()
         std::vector<SecirParams> params_sample = std::move(parameter_space.get_secir_params_sample());
         ContactFrequencyMatrix contact_sample  = std::move(parameter_space.get_cont_freq_matrix_sample());
 
-        print_secir_params(params_sample, contact_sample);
+        // print_secir_params(contact_sample, params_sample);
 
         // Call the simulation function
         simulation_function((*this).m_t0, (*this).m_tmax, (*this).m_dt, contact_sample, params_sample, secir_result);
