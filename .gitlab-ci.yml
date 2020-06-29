@@ -4,6 +4,7 @@ build-cpp:
     - cpp
     - hpcagainstcorona
   before_script:
+    - apt -qq update
     - apt -qq -y install libeigen3-dev
   script:
     - cd cpp
@@ -55,6 +56,7 @@ test-py:
   dependencies:
     - build-py
   before_script:
+    - apt -qq update
     - apt -qq -y install python3.7 python3-pip
     - python3 -m pip install --upgrade pip
     - for pkg in `ls pycode/wheelhouse/*37*.whl`; do python3 -m pip install $pkg; done
@@ -76,6 +78,7 @@ download-data:
   dependencies:
     - build-py
   before_script:
+    - apt -qq update
     - apt -qq -y install python3.7 python3-pip
     - python3 -m pip install --upgrade pip
     - for pkg in `ls pycode/wheelhouse/*37*.whl`; do python3 -m pip install $pkg; done

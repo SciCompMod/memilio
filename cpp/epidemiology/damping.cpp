@@ -1,6 +1,7 @@
 #include <epidemiology/damping.h>
 
 #include <algorithm>
+#include <epidemiology/stl_util.h>
 #include <cassert>
 #include <stdio.h>
 #include <cmath>
@@ -8,21 +9,7 @@
 namespace
 {
 
-template <typename T, typename Pred>
-typename std::vector<T>::iterator insert_sorted_replace(std::vector<T>& vec, T const& item, Pred pred)
-{
-    auto bounds = std::equal_range(begin(vec), end(vec), item, pred);
-    auto lb     = bounds.first;
-    auto ub     = bounds.second;
-    assert(ub - lb <= 1); //input vector contains at most one item that is equal to the new item
-    if (ub - lb == 1) {
-        *lb = item;
-    }
-    else {
-        vec.insert(lb, item);
-    }
-    return lb;
-}
+
 
 } // namespace
 
