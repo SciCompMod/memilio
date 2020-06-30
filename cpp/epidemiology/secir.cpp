@@ -52,6 +52,7 @@ void print_secir_params(std::vector<SecirParams> const& params, ContactFrequency
                    << "\n";
             myfile << "\t\t Infectious (asymp.) time: \t" << 1.0 / params[i].times.get_infectious_asymp_inv() << "\n";
             myfile << "\t\t Hospitalized->ICU time: \t" << 1.0 / params[i].times.get_hospitalized_to_icu_inv() << "\n";
+            myfile << "\t\t ICU->Recovered time: \t" << 1.0 / params[i].times.get_icu_to_home_inv() << "\n";
             myfile << "\t\t ICU->Death time: \t" << 1.0 / params[i].times.get_icu_to_dead_inv() << "\n";
 
             myfile << "\t Probabilities \n";
@@ -92,20 +93,17 @@ void print_secir_params(std::vector<SecirParams> const& params, ContactFrequency
     }
 }
 
-/**
- * @brief Initializes a time parameters' struct of the SECIR model
- */
 SecirParams::StageTimes::StageTimes()
+    : m_tinc_inv{1.0}
+    , m_tinfmild_inv{1.0}
+    , m_tserint_inv{1.0}
+    , m_thosp2home_inv{1.0}
+    , m_thome2hosp_inv{1.0}
+    , m_thosp2icu_inv{1.0}
+    , m_ticu2home_inv{1.0}
+    , m_tinfasy_inv{1.0}
+    , m_ticu2death_inv{1.0}
 {
-    m_tinc_inv       = 1.0;
-    m_tinfmild_inv   = 1.0;
-    m_tserint_inv    = 1.0;
-    m_thosp2home_inv = 1.0;
-    m_thome2hosp_inv = 1.0;
-    m_thosp2icu_inv  = 1.0;
-    m_ticu2home_inv  = 1.0;
-    m_tinfasy_inv    = 1.0;
-    m_ticu2death_inv = 1.0;
 }
 
 void SecirParams::StageTimes::set_incubation(double const& tinc)
@@ -199,16 +197,16 @@ double SecirParams::StageTimes::get_icu_to_dead_inv() const
 }
 
 SecirParams::Populations::Populations()
+    : m_nb_total_t0{0}
+    , m_nb_exp_t0{0}
+    , m_nb_car_t0{0}
+    , m_nb_inf_t0{0}
+    , m_nb_hosp_t0{0}
+    , m_nb_icu_t0{0}
+    , m_nb_rec_t0{0}
+    , m_nb_dead_t0{0}
+    , m_nb_sus_t0{0}
 {
-    m_nb_total_t0 = 0;
-    m_nb_exp_t0   = 0;
-    m_nb_car_t0   = 0;
-    m_nb_inf_t0   = 0;
-    m_nb_hosp_t0  = 0;
-    m_nb_icu_t0   = 0;
-    m_nb_rec_t0   = 0;
-    m_nb_dead_t0  = 0;
-    m_nb_sus_t0   = 0;
 }
 
 void SecirParams::Populations::set_total_t0(double nb_total_t0)
@@ -311,13 +309,13 @@ double SecirParams::Populations::get_suscetible_t0() const
 }
 
 SecirParams::Probabilities::Probabilities()
+    : m_infprob{1}
+    , m_alpha{0}
+    , m_beta{0}
+    , m_rho{0}
+    , m_theta{0}
+    , m_delta{0}
 {
-    m_infprob = 1;
-    m_alpha   = 0;
-    m_beta    = 0;
-    m_rho     = 0;
-    m_theta   = 0;
-    m_delta   = 0;
 }
 
 void SecirParams::Probabilities::set_infection_from_contact(double const& infprob)
@@ -382,18 +380,19 @@ double SecirParams::Probabilities::get_dead_per_icu() const
 
 ContactFrequencyMatrix::ContactFrequencyMatrix()
     : m_cont_freq{{1.0}}
-    , dampings{{Dampings{}}}
+    , m_dampings{{Dampings{}}}
 {
 }
 
 ContactFrequencyMatrix::ContactFrequencyMatrix(size_t const nb_groups)
     : m_cont_freq{nb_groups, std::vector<double>(nb_groups, 0)}
-    , dampings{nb_groups, std::vector<Dampings>(nb_groups, Dampings{})}
+    , m_dampings{nb_groups, std::vector<Dampings>(nb_groups, Dampings{})}
 {
-    // m_cont_freq.resize(nb_groups);
-    // for (size_t i = 0; i < nb_groups; i++) {
-    //     m_cont_freq[i] = std::vector<double>(8, 0);
-    // }
+}
+
+int ContactFrequencyMatrix::get_size() const
+{
+    return m_cont_freq.size();
 }
 
 void ContactFrequencyMatrix::set_cont_freq(double const cont_freq, int const self_group, int const contact_group)
@@ -416,34 +415,27 @@ double ContactFrequencyMatrix::get_cont_freq(int self_group, int contact_group) 
 void ContactFrequencyMatrix::set_dampings(Dampings const& damping, int self_group, int contact_group)
 {
     if (self_group <= contact_group) {
-        dampings[self_group][contact_group] = damping;
+        m_dampings[self_group][contact_group] = damping;
     }
     else {
-        dampings[contact_group][self_group] = damping;
+        m_dampings[contact_group][self_group] = damping;
     }
 }
 
 const Dampings& ContactFrequencyMatrix::get_dampings(int self_group, int contact_group) const
 {
     // prevent erroneous nonsymmetry
-    return self_group <= contact_group ? dampings[self_group][contact_group] : dampings[contact_group][self_group];
+    return self_group <= contact_group ? m_dampings[self_group][contact_group] : m_dampings[contact_group][self_group];
 }
 
 void ContactFrequencyMatrix::add_damping(Damping const& damping, int self_group, int contact_group)
 {
     if (self_group <= contact_group) {
-        dampings[self_group][contact_group].add(damping);
+        m_dampings[self_group][contact_group].add(damping);
     }
     else {
-        dampings[contact_group][self_group].add(damping);
+        m_dampings[contact_group][self_group].add(damping);
     }
-}
-
-SecirParams::SecirParams()
-    : times{}
-    , populations{}
-    , probabilities{}
-{
 }
 
 double get_reprod_rate(ContactFrequencyMatrix const& cont_freq_matrix, std::vector<SecirParams> const& params,
@@ -569,13 +561,11 @@ namespace
         return y;
     }
 
-    Eigen::VectorXd secir_get_initial_values(const std::vector<SecirParams>& params, bool interleave)
+    Eigen::VectorXd secir_get_initial_values(const std::vector<SecirParams>& params)
     {
         Eigen::VectorXd y(params.size() * 8);
         for (size_t i = 0; i < params.size(); i++) {
-            slice(y, interleave
-                         ? Seq<Eigen::Index>{static_cast<Eigen::Index>(i), 8, static_cast<Eigen::Index>(params.size())}
-                         : Seq<Eigen::Index>{static_cast<Eigen::Index>(i) * 8, 8}) =
+            slice(y, Seq<Eigen::Index>{static_cast<Eigen::Index>(i) * 8, 8}) =
                 secir_get_initial_values(params[i]);
         }
         return y;
@@ -584,7 +574,7 @@ namespace
 
 std::vector<double> simulate(double t0, double tmax, double dt, ContactFrequencyMatrix const& cont_freq_matrix,
                              std::vector<SecirParams> const& params, std::vector<Eigen::VectorXd>& secir)
-{    
+{
     SecirSimulation sim(cont_freq_matrix, params, t0, dt);
     sim.advance(tmax);
     secir = sim.get_y();
@@ -598,7 +588,7 @@ SecirSimulation::SecirSimulation(const ContactFrequencyMatrix& cont_freq_matrix,
           [params, cont_freq_matrix](auto&& y, auto&& t, auto&& dydt) {
               secir_get_derivatives(cont_freq_matrix, params, y, t, dydt);
           },
-          t0, secir_get_initial_values(params, false), dt_init, m_integratorCore)
+          t0, secir_get_initial_values(params), dt_init, m_integratorCore)
 {
     m_integratorCore->set_rel_tolerance(1e-4);
     m_integratorCore->set_abs_tolerance(1e-1);
@@ -607,36 +597,6 @@ SecirSimulation::SecirSimulation(const ContactFrequencyMatrix& cont_freq_matrix,
 Eigen::VectorXd& SecirSimulation::advance(double tmax)
 {
     return m_integrator.advance(tmax);
-}
-
-std::vector<double> simulate_groups(double t0, double tmax, double dt,
-                                    const std::vector<ContactFrequencyMatrix>& group_cont_freqs,
-                                    const std::vector<SecirParams>& group_params, MigrationFunction migration_function,
-                                    std::vector<Eigen::VectorXd>& group_secir)
-{
-    assert(group_params.size() == group_cont_freqs.size());
-
-    auto num_groups     = group_params.size();
-    auto num_vars       = 4;
-    auto num_vars_total = 4 * num_groups;
-    group_secir         = std::vector<Eigen::VectorXd>(1, secir_get_initial_values(group_params, true));
-    auto fs             = std::vector<DerivFunction>(num_groups);
-
-    Eigen::VectorXd init_single(num_vars);
-    for (size_t i = 0; i < num_groups; i++) {
-        fs[i] = [cont_freq = group_cont_freqs[i],
-                 params    = group_params[i]](Eigen::VectorXd const& y, const double t, Eigen::VectorXd& dydt) {
-            return secir_get_derivatives(cont_freq, {1, params}, y, t, dydt);
-        };
-    }
-
-    double dtmin    = 1e-5;
-    double dtmax    = 1.;
-    auto integrator = std::make_shared<RKIntegratorCore>(dtmin, dtmax);
-    integrator->set_rel_tolerance(1e-6);
-    integrator->set_abs_tolerance(0);
-
-    return ode_integrate_with_migration(t0, tmax, dt, fs, integrator, migration_function, group_secir);
 }
 
 } // namespace epi
