@@ -1,5 +1,6 @@
 import { createSlice } from '@reduxjs/toolkit';
 import { groupBy, renameKey, sumByKey } from '../common/utils';
+import { setTimeBounds } from "./time";
 
 import axios from 'axios';
 
@@ -117,6 +118,8 @@ export const fetchData = () => async (dispatch) => {
   });
 
   dispatch(setStateData(state));
+  // TODO This is a temporary hack!
+  dispatch(setTimeBounds({start: state[0][9][0].date, end: state[0][9][119].date}))
 
   // load county data
   let county = await Promise.all([

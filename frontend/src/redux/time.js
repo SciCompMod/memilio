@@ -18,10 +18,15 @@ const slice = createSlice({
         },
         setEndDate(state, action) {
             state.endDate = action.payload
+        },
+        setTimeBounds(state, action) {
+            state.startDate = action.payload.start
+            state.currentDate = action.payload.start
+            state.endDate = action.payload.end
         }
     }
 });
 
-export const { setCurrentDate, setStartDate, setEndDate } = slice.actions;
+export const { setCurrentDate, setStartDate, setEndDate, setTimeBounds } = slice.actions;
 
 export default slice.reducer;

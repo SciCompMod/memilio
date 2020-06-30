@@ -54,23 +54,40 @@ class TimeMap extends React.Component {
   /** @type number */
   currentSelected = -1;
 
+  /** @type IHeatRule */
+  stateHeatRule = null;
+
   componentDidMount() {
     this.map = am4core.create("timeMapDiv", am4maps.MapChart);
     this.map.projection = new am4maps.projections.Mercator();
 
     this.stateSeries = new am4maps.MapPolygonSeries();
+
     this.stateSeries.geodataSource.url = "assets/german-states.geojson";
     this.stateSeries.useGeodata = true;
     this.map.series.push(this.stateSeries);
 
+    this.stateSeries.dataFields.value = "value";
+
+    this.stateHeatRule = {
+      property: "fill",
+      target: this.stateSeries.mapPolygons.template,
+      min: am4core.color("#EEE", 1),
+      max: am4core.color("#F00", 1),
+      logarithmic: true,
+      dataField: "value"
+    }
+
+    this.stateSeries.heatRules.push(this.stateHeatRule);
+
     const statePolygonTemplate = this.stateSeries.mapPolygons.template;
-    statePolygonTemplate.tooltipText = "{name}";
-    statePolygonTemplate.fill = this.map.colors.getIndex(0);
+    statePolygonTemplate.tooltipText = "{name}: {value}";
+    // statePolygonTemplate.fill = this.map.colors.getIndex(0);
     statePolygonTemplate.nonScalingStroke = true;
 
     // Hover state
-    const stateHover = statePolygonTemplate.states.create("hover");
-    stateHover.properties.fill = am4core.color("#367B25");
+    // const stateHover = statePolygonTemplate.states.create("hover");
+    // stateHover.properties.stroke = am4core.color("#000");
 
     statePolygonTemplate.events.on("hit", ev => {
       const item = ev.target.dataItem.dataContext;
@@ -81,6 +98,13 @@ class TimeMap extends React.Component {
         label: item.name,
         population: item.destatis.population
       });
+    });
+
+    this.map.events.on("zoomlevelchanged", e => {
+      if (this.map.zoomLevel === 1) {
+        this.props.setSelected(null);
+        this.stateSelected({id: -1});
+      }
     });
   }
 
@@ -129,12 +153,63 @@ class TimeMap extends React.Component {
         }
         this.currentSelected = newState.id;
         this.map.zoomToMapObject(this.stateSeries.getPolygonById(newState.id));
+
+        if (this.stateSeries.heatRules.length > 0) {
+          this.stateSeries.heatRules.clear();
+          this.stateSeries.mapPolygons.template.fill = am4core.color("#FF00FF"); // this.map.colors.getIndex(0);
+          // this.chart.deepInvalidate();
+          this.stateSeries.deepInvalidate();
+        }
       } else {
         this.currentSelected = -1;
         this.map.goHome();
+
+        if (this.stateSeries.heatRules.length === 0) {
+          this.stateSeries.heatRules.push(this.stateHeatRule);
+        }
       }
   }
 
+  calcStateData() {
+    this.state.times = [];
+
+    let lastEntry = null;
+    for (let d = this.props.time.startDate; d < this.props.time.endDate; d += 24 * 60 * 60 * 1000) {
+      let entry = { day: d, states: {} };
+
+      for (let i = 1; i <= 16; i++) {
+        const s = this.props.states.all[i];
+        const value = s.find(e => e.date >= d);
+        if (value) {
+          entry.states[i] = value.Confirmed;
+        } else if (lastEntry !== null) {
+          entry.states[i] = lastEntry.states[i];
+        } else {
+          entry.states[i] = 0;
+        }
+      }
+
+      this.state.times.push(entry);
+      lastEntry = entry;
+    }
+  }
+
+  componentDidUpdate(prevProps, prevState, snapshot) {
+    if ((this.props.states !== prevProps.states || this.state.times.length === 0)) {
+      this.calcStateData();
+    }
+
+    if (prevProps.time.currentDate !== this.props.time.currentDate) {
+      const current = this.state.times.find(t => t.day >= this.props.time.currentDate);
+      if (current) {
+        for (let s of this.stateSeries.data) {
+          s.value = current.states[s.id];
+        }
+      }
+
+      this.stateSeries.invalidateRawData();
+    }
+  }
 
   render(ctx) {
     return (
@@ -148,7 +223,9 @@ class TimeMap extends React.Component {
 function mapState(state) {
   return {
     selection: state.app.selected,
-    time: state.time
+    time: state.time,
+    states: state.app.states,
+    populations: state.app.populations.states
   }
 }
 
