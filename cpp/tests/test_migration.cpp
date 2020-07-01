@@ -1,50 +1,49 @@
 #define _USE_MATH_DEFINES
 
 #include "epidemiology/migration.h"
-#include "epidemiology/integrator.h"
-#include "epidemiology/adapt_rk.h"
+#include "epidemiology/seir.h"
+#include "epidemiology/eigen_util.h"
 #include "gtest/gtest.h"
-
 #include <cmath>
 
 TEST(TestMigration, compareWithSingleIntegration)
 {
-    auto deriv_f1 = [](auto&& y, auto&& t, auto&& ydt) {
-        ydt[0] = cos(t);
-    };
-    auto deriv_f2 = [](auto&& y, auto&& t, auto&& ydt) {
-        ydt[0] = -sin(t);
-    };
-    auto migration_f = [](auto&& idx, auto&& t, auto&& matrix) {
-        matrix = Eigen::MatrixXd::Identity(2, 2);
-    };
+    auto t0 = 0;
+    auto tmax = 5;
+    auto dt = 1;
 
-    auto make_rk_integrator = []() {
-        auto integrator = std::make_shared<epi::RKIntegratorCore>(1e-5, 1);
-        integrator->set_abs_tolerance(1e-5);
-        integrator->set_rel_tolerance(1e-5);
-        return integrator;
-    };
+    auto params1 = epi::SeirParams();
+    params1.populations.set_total_t0(1000);
+    params1.populations.set_exposed_t0(100);
+    params1.populations.set_recovered_t0(0);
+    params1.populations.set_infectious_t0(0);
+    params1.times.set_cont_freq(2.5);
+    params1.times.set_incubation(4);
+    params1.times.set_infectious(10);
 
-    auto t0   = 0.0;
-    auto tmax = 2. * M_PI;
-    auto dt   = 0.1;
+    auto params2 = params1;
+    params2.populations.set_total_t0(500);
 
-    // epi::OdeIntegrator integrator1(deriv_f1, t0, Eigen::VectorXd::Constant(1, 0.0), dt, make_rk_integrator());
-    // integrator1.eval(tmax);
-    
-    // epi::OdeIntegrator integrator2(deriv_f2, t0, Eigen::VectorXd::Constant(1, 1.0), dt, make_rk_integrator());
-    // integrator2.eval(tmax);
+    auto graph_sim = epi::make_migration_sim(t0, dt, epi::Graph<epi::ModelNode<epi::SeirSimulation>, epi::MigrationEdge>());
+    auto& g = graph_sim.get_graph();
+    g.add_node(params1, t0);
+    g.add_node(params2, t0);
+    g.add_edge(0, 1, Eigen::VectorXd::Constant(4, 0)); //no migration along this edge
+    g.add_edge(1, 0, Eigen::VectorXd::Constant(4, 0));
 
-    auto v_group = std::vector<Eigen::VectorXd>(1, (Eigen::VectorXd(2) << 0.0, 1.0).finished());
-    auto t_group = epi::ode_integrate_with_migration(t0, tmax, dt, {deriv_f1, deriv_f2}, make_rk_integrator(), migration_f, v_group);
+    auto single_sim1 = epi::SeirSimulation(params1, t0);
+    auto single_sim2 = epi::SeirSimulation(params2, t0);
 
-    EXPECT_DOUBLE_EQ(t_group.back(), tmax);
+    auto nsteps = int((tmax - t0) / dt);
+    EXPECT_EQ(nsteps, (tmax - t0) / dt);
+    graph_sim.advance(nsteps);
+    single_sim1.advance(tmax);
+    single_sim2.advance(tmax);
 
-    //without migration the groups should be the same when simulated together or apart
-    //check only at end t, intermediate steps will be different because of adaptive steps
-    // for (int j = 0; j < integrator1.get_y().back().size(); j++) {
-    //     EXPECT_NEAR(integrator1.get_y().back()[j], v_group.back()[2 * j], 1e-5);
-    //     EXPECT_NEAR(integrator2.get_y().back()[j], v_group.back()[2 * j + 1], 1e-5);
-    // }
+    EXPECT_FLOAT_EQ(g.nodes()[0].model.get_t().back(), single_sim1.get_t().back());
+    EXPECT_FLOAT_EQ(g.nodes()[1].model.get_t().back(), single_sim2.get_t().back());
+
+    //graph may have different time steps, so we can't expect high accuracy here
+    EXPECT_NEAR((g.nodes()[0].model.get_y().back() - single_sim1.get_y().back()).norm(), 0.0, 1e-6); 
+    EXPECT_NEAR((g.nodes()[1].model.get_y().back() - single_sim2.get_y().back()).norm(), 0.0, 1e-6); 
 }

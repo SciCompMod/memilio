@@ -28,6 +28,8 @@ add_library(epidemiology
     epidemiology/migration.h
     epidemiology/migration.cpp
     epidemiology/eigen_util.h
+    epidemiology/graph.h
+    epidemiology/graph.cpp
 )
 target_include_directories(epidemiology PUBLIC
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>

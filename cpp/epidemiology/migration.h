@@ -1,28 +1,58 @@
 #ifndef MIGRATION_H
 #define MIGRATION_H
 
-#include "epidemiology/integrator.h"
-#include <memory>
+#include <epidemiology/graph.h>
+#include <Eigen/Core>
+#include <vector>
 
 namespace epi
 {
 
-using MigrationFunction = std::function<void(size_t, double, Eigen::MatrixXd&)>;
+template<class Model>
+class ModelNode
+{
+public:
+    template<class... Args>
+    ModelNode(Args&&... args)
+    : model(std::forward<Args>(args)...)
+    { }
+    Model model;
+    Eigen::VectorXd last_state;
+};
 
-/**
- * @brief Integrate ode models for multiple groups with discrete regular migration between the groups.
- * @param t0 Start time of integration.
- * @param tmax End time of integration.
- * @param dt (Initial) step size of integration.
- * @param integrators Integrators for each model to integrate, at least one.
- * @param migration_function Function that defines the migration between groups at a specified time for each variable of the model.
- * @param[in,out] result_groups On entry: initial value. On exit: result at each time step. variables for each model are interleaved e.g. [x11, x12, ..., x21, x22, ...] where xij is the j-th variable of i-th model
- */
-std::vector<double> ode_integrate_with_migration(double t0, double tmax, double dt,
-                                                 const std::vector<DerivFunction>& fs,
-                                                 const std::shared_ptr<IntegratorCore>& core,
-                                                 MigrationFunction migration_function,
-                                                 std::vector<Eigen::VectorXd>& result);
+class MigrationEdge
+{
+public:
+    MigrationEdge(const Eigen::VectorXd& coefficients)
+        : coefficients(coefficients)
+    {
+    }
+    //per group and compartment
+    Eigen::VectorXd coefficients;
+};
+
+template <class Model>
+void evolve_model(double t, double dt, ModelNode<Model>& model)
+{
+    model.model.advance(t + dt);
+    model.last_state = model.model.get_y().back();
+}
+
+template <class Model>
+void apply_migration(double t, double dt, MigrationEdge& migrationEdge, ModelNode<Model>& model1,
+                     ModelNode<Model>& model2)
+{
+    auto migration = (dt * model1.last_state.array() * migrationEdge.coefficients.array()).matrix();
+    model2.model.get_y().back() += migration;
+    model1.model.get_y().back() -= migration;
+}
+
+template <typename Model>
+auto make_migration_sim(double t0, double dt, const Graph<ModelNode<Model>, MigrationEdge>& graph)
+{
+    return make_graph_sim(t0, dt, graph, &evolve_model<Model>, &apply_migration<Model>);
+}
+
 } // namespace epi
 
 #endif //MIGRATION_H

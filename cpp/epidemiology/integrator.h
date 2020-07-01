@@ -63,12 +63,17 @@ public:
      */
     Eigen::VectorXd& advance(double tmax);
 
-    const std::vector<double> get_t() const
+    const std::vector<double>& get_t() const
     {
         return m_t;
     }
 
-    const std::vector<Eigen::VectorXd> get_y() const
+    const std::vector<Eigen::VectorXd>& get_y() const
+    {
+        return m_y;
+    }
+
+    std::vector<Eigen::VectorXd>& get_y()
     {
         return m_y;
     }
