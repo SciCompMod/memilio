@@ -35,7 +35,7 @@ def get_divi_data(read_data=dd.defaultDict['read_data'],
    directory = os.path.join(out_folder, 'Germany/')
    gd.check_dir(directory)
 
-   filename = "Data_Divi"
+   filename = "FullData_DIVI"
 
    if(read_data):
        file_in = os.path.join(directory, filename+".json")
@@ -143,20 +143,21 @@ def get_divi_data(read_data=dd.defaultDict['read_data'],
    # write data for counties to file
    
    df_counties = df[["County","ID_County","ICU","ICU_ventilated","Date"]]
-   filename = "all_county_divi"
+   filename = "county_divi"
    gd.write_dataframe(df_counties, directory, filename, "json")
    
    
    # write data for states to file
    
    df_states = df.groupby(["ID_State","State","Date"]).agg({"ICU": sum, "ICU_ventilated": sum})
-   filename = "all_state_divi"
+   filename = "state_divi"
    gd.write_dataframe(df, directory, filename, "json")
    
    
    # write data for germany to file
+   
    df_ger = df.groupby(["Date"]).agg({"ICU": sum, "ICU_ventilated": sum})
-   filename = "whole_germany_divi"
+   filename = "germany_divi"
    gd.write_dataframe(df, directory, filename, "json")
    
 def main():
