@@ -129,12 +129,6 @@ double SeirParams::Populations::get_suscetible_t0() const
     return m_nb_sus_t0;
 }
 
-SeirParams::SeirParams()
-    : times{}
-    , populations{}
-{
-}
-
 void seir_get_derivatives(const SeirParams& params, const Eigen::VectorXd& y, double t, Eigen::VectorXd& dydt)
 {
     // 0: S,      1: E,       2: I,     3: R
@@ -149,65 +143,39 @@ void seir_get_derivatives(const SeirParams& params, const Eigen::VectorXd& y, do
 
 namespace
 {
-    void seir_get_initial_values(const SeirParams& params, Eigen::VectorXd& y)
+    Eigen::VectorXd seir_get_initial_values(const SeirParams& params)
     {
+        Eigen::VectorXd y(4);
         y[0] = params.populations.get_suscetible_t0();
         y[1] = params.populations.get_exposed_t0();
         y[2] = params.populations.get_infectious_t0();
         y[3] = params.populations.get_recovered_t0();
+        return y;
     }
 } // namespace
 
 std::vector<double> simulate(double t0, double tmax, double dt, const SeirParams& params,
                              std::vector<Eigen::VectorXd>& seir)
 {
-    size_t n_params = 4;
-    seir            = std::vector<Eigen::VectorXd>(1, Eigen::VectorXd::Constant(n_params, 0));
-    seir_get_initial_values(params, seir[0]);
-
-    auto seir_fun = [&params](Eigen::VectorXd const& y, const double t, Eigen::VectorXd& dydt) {
-        return seir_get_derivatives(params, y, t, dydt);
-    };
-
-    // double dtmin = 1e-6;
-    // double dtmax = 1.;
-    // RKIntegrator integrator(seir_fun, dtmin, dtmax);
-    // integrator.set_rel_tolerance(1e-6);
-    // integrator.set_abs_tolerance(1e-6);
-    
-    double dtmin = dt;
-    double dtmax = dt;
-    EulerIntegrator integrator(seir_fun);
-
-    return ode_integrate(t0, tmax, dt, integrator, seir);
+    SeirSimulation sim(params, t0, dt);
+    sim.advance(tmax);
+    seir = sim.get_y();
+    return sim.get_t();
 }
 
-std::vector<double> simulate_groups(double t0, double tmax, double dt, const std::vector<SeirParams>& group_params,
-                             MigrationFunction migration_function, std::vector<Eigen::VectorXd>& group_seir)
+SeirSimulation::SeirSimulation(const SeirParams& params, double t0, double dt_init)
+    : m_integrator(
+          [params](auto&& y, auto&& t, auto&& dydt) {
+              seir_get_derivatives(params, y, t, dydt);
+          },
+          t0, seir_get_initial_values(params), dt_init,
+          std::make_shared<EulerIntegratorCore>() /*std::make_shared<RkIntegratorCore>(1e-6, 1.)*/)
 {
-    auto num_groups     = group_params.size();
-    auto num_vars       = 4;
-    auto num_vars_total = 4 * num_groups;
-    group_seir          = std::vector<Eigen::VectorXd>(1, Eigen::VectorXd(num_vars_total));
-    auto integrators    = std::vector<std::unique_ptr<IntegratorBase>>(num_groups);
+}
 
-    Eigen::VectorXd init_single(num_vars);
-    for (size_t i = 0; i < num_groups; i++) {
-        seir_get_initial_values(group_params[i], init_single);
-        slice(group_seir[0], { Eigen::Index(i), Eigen::Index(num_vars), Eigen::Index(num_groups) }) = init_single;
-
-        auto seir_fun = [params = group_params[i]](Eigen::VectorXd const& y, const double t, Eigen::VectorXd& dydt) {
-            return seir_get_derivatives(params, y, t, dydt);
-        };
-        double dtmin    = 1e-6;
-        double dtmax    = 1.;
-        auto integrator = std::make_unique<RKIntegrator>(seir_fun, dtmin, dtmax);
-        integrator->set_rel_tolerance(1e-6);
-        integrator->set_abs_tolerance(1e-6);
-        integrators[i] = std::move(integrator);
-    }
-
-    return ode_integrate_with_migration(t0, tmax, dt, integrators, migration_function, group_seir);
+Eigen::VectorXd& SeirSimulation::advance(double tmax)
+{
+    return m_integrator.advance(tmax);
 }
 
 } // namespace epi

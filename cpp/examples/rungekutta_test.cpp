@@ -20,7 +20,7 @@ void integration_test(std::vector<Eigen::VectorXd>& y, std::vector<Eigen::Vector
         dydt[0] = std::cos(t);
     };
 
-    epi::RKIntegrator rkf45(sine_deriv, 1e-3, 1.0);
+    epi::RKIntegratorCore rkf45(1e-3, 1.0);
     rkf45.set_abs_tolerance(1e-7);
     rkf45.set_rel_tolerance(1e-7);
 
@@ -40,7 +40,7 @@ void integration_test(std::vector<Eigen::VectorXd>& y, std::vector<Eigen::Vector
 
         double dt_old = dt;
 
-        rkf45.step(y[i], t_eval, dt, y[i + 1]); //
+        rkf45.step(sine_deriv, y[i], t_eval, dt, y[i + 1]); //
 
         sol[i + 1][0] = std::sin(t_eval);
 

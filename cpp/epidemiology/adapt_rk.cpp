@@ -51,7 +51,8 @@ Tableau::Tableau()
     entries[4][5] = -11 / 40.0;
 }
 
-bool RKIntegrator::step(const Eigen::VectorXd& yt, double& t, double& dt, Eigen::VectorXd& ytp1) const
+bool RKIntegratorCore::step(const DerivFunction& f, const Eigen::VectorXd& yt, double& t, double& dt,
+                            Eigen::VectorXd& ytp1) const
 {
 
     double max_err   = 1e10;
@@ -148,6 +149,14 @@ bool RKIntegrator::step(const Eigen::VectorXd& yt, double& t, double& dt, Eigen:
             if (dt < 2 * m_dt_min + 1e-6) {
                 failed_step_size_adapt = true;
             }
+
+            // printf("\n succ: %d t: %.2e dt: %.2e \t ", !failed_step_size_adapt, t, dt);
+            // double sum = 0;
+            // for (size_t kkk = 0; kkk < ytp1.size(); kkk++) {
+            //     printf(" [%lu] %.2e ", kkk, ytp1[kkk]);
+            //     sum += ytp1[kkk];
+            // }
+            // printf(" %.2e ", sum);
 
             t += dt; // this is the t where ytp1 belongs to
 

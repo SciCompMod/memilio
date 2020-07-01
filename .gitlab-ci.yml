@@ -4,6 +4,7 @@ build-cpp:
     - cpp
     - hpcagainstcorona
   before_script:
+    - apt -qq update
     - apt -qq -y install libeigen3-dev
   script:
     - cd cpp
@@ -55,6 +56,7 @@ test-py:
   dependencies:
     - build-py
   before_script:
+    - apt -qq update
     - apt -qq -y install python3.7 python3-pip
     - python3 -m pip install --upgrade pip
     - for pkg in `ls pycode/wheelhouse/*37*.whl`; do python3 -m pip install $pkg; done
@@ -75,25 +77,26 @@ download-data:
   dependencies:
     - build-py
   before_script:
+    - apt -qq update
     - apt -qq -y install python3.7 python3-pip
     - python3 -m pip install --upgrade pip
     - for pkg in `ls pycode/wheelhouse/*37*.whl`; do python3 -m pip install $pkg; done
   script:
-    - mkdir data
-    - getrkidata -o data
-    - getpopuldata -o data
-    - getjhdata -o data
-    - getspaindata -o data
+    - mkdir data_dl
+    - getrkidata -o data_dl
+    - getpopuldata -o data_dl
+    - getjhdata -o data_dl
+    - getspaindata -o data_dl
   artifacts:
     paths:
-      - data/*.json
-      - data/Germany/*.json
-      - data/Spain/*.json
-      - data/France/*.json
-      - data/Italy*.json
-      - data/SouthKorea/*.json
-      - data/US/*.json
-      - data/China/*.json
+      - data_dl/*.json
+      - data_dl/Germany/*.json
+      - data_dl/Spain/*.json
+      - data_dl/France/*.json
+      - data_dl/Italy*.json
+      - data_dl/SouthKorea/*.json
+      - data_dl/US/*.json
+      - data_dl/China/*.json
 
 build-js:
   tags:
@@ -111,6 +114,21 @@ build-js:
     paths:
       - frontend/build/
 
+build-js-bindings:
+  stage: build
+  tags:
+   - docker
+  image: trzeci/emscripten
+  script:
+  - cd frontend
+  - mkdir build && cd build
+  - emcmake cmake ..
+  - cmake --build .
+  artifacts:
+    paths:
+    - frontend/build/secirjs.js
+    - frontend/build/secirjs.wasm
+
 www:
   tags:
     - native
@@ -122,7 +140,7 @@ www:
   script:
     - echo "Deploying to server"
     - cp -rv frontend/build/* /var/www/html
-    - cp -v data/Germany/*_rki.json /var/www/html/assets
+    - cp -v data_dl/Germany/*_rki.json /var/www/html/assets
     - echo "Deployed"
   only:
     - master

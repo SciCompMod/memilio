@@ -6,7 +6,7 @@ int main()
     epi::set_log_level(epi::LogLevel::debug);
 
     double t0   = 0;
-    double tmax = 100;
+    double tmax = 50;
     double dt   = 0.1;
 
     epi::log_info("Simulating SECIR; t={} ... {} with dt = {}.", t0, tmax, dt);
@@ -94,6 +94,7 @@ int main()
     std::vector<Eigen::VectorXd> secir(0);
 
     simulate(t0, tmax, dt, contact_freq_matrix, params, secir);
+
     char vars[] = {'S', 'E', 'C', 'I', 'H', 'U', 'R', 'D'};
     printf("People in\n");
     for (size_t k = 0; k < 8; k++) {

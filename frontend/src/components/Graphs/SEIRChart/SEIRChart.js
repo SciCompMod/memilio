@@ -217,7 +217,10 @@ class SEIRChart extends Component {
               />
             );
           })}
-          <Brush dataKey="date" tickFormatter={dateFormat} />
+          <Brush
+            dataKey="date"
+            tickFormatter={dateFormat(t('dateformat.short'))}
+          />
           <Legend
             formatter={this.translate.bind(this)}
             onClick={this.selectBar}
