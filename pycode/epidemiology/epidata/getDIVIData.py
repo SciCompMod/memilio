@@ -198,12 +198,12 @@ def get_divi_data(read_data=dd.defaultDict['read_data'],
    # https://de.wikipedia.org/wiki/Liste_der_Landkreise_in_Deutschland
 
    # The column faelle_covid_im_bundesland exits only in the data from the first day
-   # The columns falle_covid_aktuell does not exist for the 24.4.
-   # and faelle_covid_aktuell_beatmet does not exist for the 24.4. and 25.4.
+   # The columns ICU does not exist for the 24.4.
+   # and ICU_ventilated does not exist for the 24.4. and 25.4.
    
    # reporting_hospitals number of reporting hospitals
-   # hospitalized is the number of covid patients in reporting hospitals
-   # hospitalized_ventilated is the number of ventilated covid patients in reporting hospitals
+   # ICU is the number of covid patients in reporting hospitals
+   # ICU_ventilated is the number of ventilated covid patients in reporting hospitals
    # free_ICU is the number of free ICUs in reporting hospitals
    # occupied_ICU is the number of occupied ICUs in in reporting hospitals
    
