@@ -143,4 +143,4 @@ www:
     - cp -v data_dl/Germany/*_rki.json /var/www/html/assets
     - echo "Deployed"
   only:
-    - master
+    - /^version-.*$/
