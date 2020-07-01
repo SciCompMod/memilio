@@ -136,6 +136,7 @@ www:
   stage: deploy
   dependencies:
     - build-js
+    - build-js-bindings
     - download-data
   script:
     - echo "Deploying to server"
