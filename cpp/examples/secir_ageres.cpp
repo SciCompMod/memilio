@@ -89,7 +89,7 @@ int main()
         }
     }
 
-    print_secir_params(params, contact_freq_matrix);
+    print_secir_params(contact_freq_matrix, params);
 
     std::vector<Eigen::VectorXd> secir(0);
 

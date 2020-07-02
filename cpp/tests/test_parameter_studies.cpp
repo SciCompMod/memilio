@@ -237,15 +237,16 @@ TEST(ParameterStudies, check_ensemble_run_result)
     std::vector<std::vector<Eigen::VectorXd>> results = parameter_study.run();
 
     // printf("\n %d %d %d %d ", results.size(), results[0].size(), results[0][0].size(), params.size());
-    for (size_t i = 0; i < results[0].size(); i++) {
+    for (size_t i = 0; i < results[0].size(); i++) { // number of time steps
         std::vector<double> total_at_ti(8, 0);
         // printf("\n");
-        for (size_t j = 0; j < results[0][i].size(); j++) {
+        for (size_t j = 0; j < results[0][i].size(); j++) { // number of compartments per time step
             // printf(" %.2e ( %d ) ", results[0][i][j], j % 8);
-            total_at_ti[j % 8] += results[0][i][j];
+            EXPECT_GE(results[0][i][j], -1e-3) << " day " << i << " group " << j;
+            total_at_ti[j / 8] += results[0][i][j];
         }
         for (size_t j = 0; j < params.size(); j++) {
-            // EXPECT_NEAR(total_at_ti[j], params[j].populations.get_total_t0(), 1e-3) << " day " << i << " group " << j;
+            EXPECT_NEAR(total_at_ti[j], params[j].populations.get_total_t0(), 1e-3) << " day " << i << " group " << j;
         }
     }
 }
