@@ -116,8 +116,8 @@ std::vector<std::vector<Eigen::VectorXd>> ParameterStudy::run()
 
         std::vector<Eigen::VectorXd> secir_result;
 
-        std::vector<SecirParams> params_sample = std::move(parameter_space.get_secir_params_sample());
-        ContactFrequencyMatrix contact_sample  = std::move(parameter_space.get_cont_freq_matrix_sample());
+        std::vector<SecirParams> params_sample = parameter_space.get_secir_params_sample();
+        ContactFrequencyMatrix contact_sample  = parameter_space.get_cont_freq_matrix_sample();
 
         // print_secir_params(contact_sample, params_sample);
 
