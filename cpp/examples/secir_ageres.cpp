@@ -1,5 +1,7 @@
 #include <epidemiology/secir.h>
 #include <epidemiology/logging.h>
+#include <epidemiology/save_result.h>
+#include <epidemiology/save_parameters.h>
 
 int main()
 {
@@ -89,11 +91,20 @@ int main()
         }
     }
 
-    print_secir_params(contact_freq_matrix, params);
+    write_parameters(params, contact_freq_matrix, t0, tmax, dt, "Parameters.xml");
+    file parameters = file{read_parameters("Parameters.xml")};
+
+    t0                  = parameters.t0;
+    tmax                = parameters.tmax;
+    dt                  = parameters.dt;
+    params              = parameters.params;
+    contact_freq_matrix = parameters.cont_freq_matrix;
 
     std::vector<Eigen::VectorXd> secir(0);
 
-    simulate(t0, tmax, dt, contact_freq_matrix, params, secir);
+    std::vector<double> time = simulate(t0, tmax, dt, contact_freq_matrix, params, secir);
+
+    save_result(time, secir, "Result.h5");
 
     char vars[] = {'S', 'E', 'C', 'I', 'H', 'U', 'R', 'D'};
     printf("People in\n");

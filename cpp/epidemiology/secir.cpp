@@ -3,7 +3,7 @@
 // #include <epidemiology/euler.h>
 #include <epidemiology/adapt_rk.h>
 #include <epidemiology/eigen_util.h>
-
+#include <epidemiology/save_result.h>
 #include <cmath>
 #include <cassert>
 #include <cstdio>
@@ -577,6 +577,7 @@ std::vector<double> simulate(double t0, double tmax, double dt, ContactFrequency
     SecirSimulation sim(cont_freq_matrix, params, t0, dt);
     sim.advance(tmax);
     secir = sim.get_y();
+
     return sim.get_t();
 }
 
@@ -591,6 +592,7 @@ SecirSimulation::SecirSimulation(const ContactFrequencyMatrix& cont_freq_matrix,
 {
     m_integratorCore->set_rel_tolerance(1e-4);
     m_integratorCore->set_abs_tolerance(1e-1);
+    //print_secir_params(params, cont_freq_matrix);
 }
 
 Eigen::VectorXd& SecirSimulation::advance(double tmax)
