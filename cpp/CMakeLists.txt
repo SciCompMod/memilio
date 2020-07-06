@@ -28,23 +28,31 @@ add_library(epidemiology
     epidemiology/migration.h
     epidemiology/migration.cpp
     epidemiology/eigen_util.h
-    epidemiology/graph.h
-    epidemiology/graph.cpp
-    epidemiology/save_result.cpp
-    epidemiology/save_result.h
-    epidemiology/save_parameters.cpp
-    epidemiology/save_parameters.h
+)
+
+add_library(epidemiology_io
+	epidemiology/save_result.cpp
+	epidemiology/save_result.h
+	epidemiology/save_parameters.cpp
+	epidemiology/save_parameters.h
 )
 target_include_directories(epidemiology PUBLIC
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
     $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
 )
 
+target_include_directories(epidemiology_io PUBLIC
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
+    $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
+)
 target_compile_features(epidemiology PRIVATE cxx_std_14)
 target_link_libraries(epidemiology PUBLIC spdlog::spdlog
-                                          Eigen3::Eigen
-								   PRIVATE hdf5::hdf5_cpp-static
-											tixi3)
+                                          Eigen3::Eigen)
+
+target_link_libraries(epidemiology_io PUBLIC spdlog::spdlog
+											 Eigen3::Eigen
+									  PRIVATE hdf5::hdf5_cpp-static
+											  tixi3)
 
 include(GNUInstallDirs)
 
@@ -59,6 +67,8 @@ install(TARGETS epidemiology
         LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
         ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
 )
+
+
 
 install(DIRECTORY epidemiology DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
 

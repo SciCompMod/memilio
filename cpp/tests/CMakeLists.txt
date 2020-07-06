@@ -5,6 +5,9 @@ if (NOT TARGET "epidemiology")
   find_package(epidemiology REQUIRED)
 endif()
 
+if (NOT TARGET "epidemiology_io")
+  find_package(epidemiology_io REQUIRED)
+endif()
 enable_testing()
 list(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake)
 
@@ -20,15 +23,14 @@ set(TESTSOURCES
   test_migration.cpp
   test_eigen_util.cpp
   test_secir_ageres.cpp
-  test_stl_util.cpp
-  test_graph.cpp
-  test_parameter_studies.cpp
+  test_save_parameters.cpp
+  test_save_results.cpp
   gtest_helpers.h
 )
 
 add_executable(runUnitTests ${TESTSOURCES})
 target_include_directories(runUnitTests PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
-target_link_libraries(runUnitTests PRIVATE epidemiology gtest_main)
+target_link_libraries(runUnitTests PRIVATE epidemiology gtest_main epidemiology_io)
 
 #make unit tests find the test data files
 file(TO_CMAKE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/data" EPI_TEST_DATA_DIR)
