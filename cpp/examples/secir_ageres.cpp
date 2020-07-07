@@ -1,7 +1,10 @@
 #include <epidemiology/secir.h>
 #include <epidemiology/logging.h>
-#include <epidemiology/save_result.h>
-#include <epidemiology/save_parameters.h>
+
+#ifdef HAVE_EPI_IO
+  #include <epidemiology/save_result.h>
+  #include <epidemiology/save_parameters.h>
+#endif
 
 int main()
 {
@@ -92,6 +95,10 @@ int main()
     }
 
 	int runs = 1;
+
+#ifdef HAVE_EPI_IO
+    // TODO: we need a smoother integration between the io and the parameters
+    // Currently, too much code is requried here
 	dist_params dists;
 
 	dists.tinc = {0.01, 10.0, 0.01};
@@ -117,22 +124,22 @@ int main()
 	
 	file parameters = file{ read_parameters("Parameters.xml") };
 
-	
-
 	t0 = parameters.t0;
 	tmax = parameters.tmax;
 	dt = parameters.dt;
 	
 	params = parameters.params[0];
 	contact_freq_matrix = parameters.contact_freq_matrix[0];
+#endif
 	
     std::vector<Eigen::VectorXd> secir(0);
 
     std::vector<double> time = simulate(t0, tmax, dt, contact_freq_matrix, params, secir);
 
 
+#ifdef HAVE_EPI_IO
 	save_result(time, secir, "Result.h5");
-
+#endif
 
     char vars[] = {'S', 'E', 'C', 'I', 'H', 'U', 'R', 'D'};
 	printf("secir.size() - 1:%d\n", secir.size() - 1);
