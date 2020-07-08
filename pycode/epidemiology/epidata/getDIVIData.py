@@ -150,15 +150,19 @@ def get_divi_data(read_data=dd.defaultDict['read_data'],
    # write data for states to file
    
    df_states = df.groupby(["ID_State","State","Date"]).agg({"ICU": sum, "ICU_ventilated": sum})
+   df_states = df_states.reset_index()
+   df_states.sort_index(axis=1, inplace=True)
    filename = "state_divi"
-   gd.write_dataframe(df, directory, filename, "json")
+   gd.write_dataframe(df_states, directory, filename, "json")
    
    
    # write data for germany to file
    
    df_ger = df.groupby(["Date"]).agg({"ICU": sum, "ICU_ventilated": sum})
+   df_ger =df_ger.reset_index()
+   df_ger.sort_index(axis=1, inplace=True)
    filename = "germany_divi"
-   gd.write_dataframe(df, directory, filename, "json")
+   gd.write_dataframe(df_ger, directory, filename, "json")
    
 def main():
 
