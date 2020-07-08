@@ -58,12 +58,14 @@ def get_divi_data(read_data=dd.defaultDict['read_data'],
       data1_end_date = date(2020, 6, 5)
       data2_start_date = date(2020, 6, 12)
       data2_end_date = date(2020, 6, 25)
+      data3_start_date = date(2020, 7, 6)
       # start with empty dataframe
       df = pandas.DataFrame()
       
       # number at end of url
-      call_number = 3906
-
+      call_number1 = 3906
+      call_number2 = 3958
+      
       while start_date <= end_date:
 
          call_date = start_date.strftime("%Y-%m-%d")
@@ -76,12 +78,19 @@ def get_divi_data(read_data=dd.defaultDict['read_data'],
 
          df2 = pandas.DataFrame()
          
-         if start_date < data2_start_date or start_date > data2_end_date:
-            call_url = "https://www.divi.de/divi-intensivregister-tagesreport-archiv-csv/divi-intensivregister-" + call_date + call_time + "/download"
+         # construction of link is different for different time periods
+         if start_date >= data2_start_date and start_date <= data2_end_date:
+             call_url = "https://www.divi.de/divi-intensivregister-tagesreport-archiv-csv/divi-intensivregister-" + call_date + call_time + "-2/viewdocument/" + str(call_number1)
+             # number in url increases every day by 1
+             call_number1 += 1
          else:
-            call_url = "https://www.divi.de/divi-intensivregister-tagesreport-archiv-csv/divi-intensivregister-" + call_date + call_time + "-2/viewdocument/" + str(call_number)
-            # number in url increases every day by 1
-            call_number += 1
+            if start_date >= data3_start_date:
+                call_url = "https://www.divi.de/divi-intensivregister-tagesreport-archiv-csv/divi-intensivregister-" + call_date + call_time + "/viewdocument/" + str(call_number2)
+                # number in url increases every day by 3
+                call_number2 += 3
+            else:
+               call_url = "https://www.divi.de/divi-intensivregister-tagesreport-archiv-csv/divi-intensivregister-" + call_date + call_time + "/download"
+            
 
          try:
             df2 = pandas.read_csv(call_url)
