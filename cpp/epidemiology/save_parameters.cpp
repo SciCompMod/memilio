@@ -8,6 +8,8 @@
 
 #include <tixi.h>
 
+namespace epi
+{
 
 struct dist_params
 {
@@ -29,7 +31,7 @@ struct dist_params
 	std::vector<double> delta;
 };
 
-void write_parameters(std::vector<epi::SecirParams> const& params, epi::ContactFrequencyMatrix const& cont_freq_matrix, double t0, double tmax, double dt, int runs, std::string dist, dist_params dists, std::string filename)
+void write_parameters(std::vector<epi::SecirParams> const& params, epi::ContactFrequencyMatrix const& cont_freq_matrix, double t0, double tmax, double dt, int runs, const std::string& dist, const dist_params& dists, const std::string& filename)
 {
 	char* docString = NULL;
 	double* myFloat = NULL;
@@ -214,11 +216,7 @@ void write_parameters(std::vector<epi::SecirParams> const& params, epi::ContactF
 
 double draw_number(double* values, char* dist)
 {
-	if (strcmp("none", dist) == 0)
-	{
-		return values[0];
-	}
-	else if (strcmp("uniform", dist) == 0)
+    if (strcmp("uniform", dist) == 0)
 	{
 		std::default_random_engine generator;
 		std::uniform_real_distribution<double> distribution(values[1], values[2]);
@@ -241,6 +239,10 @@ double draw_number(double* values, char* dist)
 		}
 		return number;
 	}
+    else
+    {
+        return values[0];
+    }
 }
 
 struct file
@@ -254,7 +256,7 @@ struct file
 	std::vector<epi::ContactFrequencyMatrix> contact_freq_matrix;
 };
 
-file read_parameters(std::string filename)
+file read_parameters(const std::string& filename)
 {
 	TixiDocumentHandle handle = -1;
 	tixiOpenDocument(filename.c_str(), &handle);
@@ -431,4 +433,6 @@ file read_parameters(std::string filename)
 	tixiCloseDocument(handle);
 
 	return { nb_groups, runs, t0, tmax, dt, all_params, all_contact_freq_matrix };
+}
+
 }

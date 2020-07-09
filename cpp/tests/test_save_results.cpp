@@ -66,9 +66,9 @@ TEST(TestSaveResult, compareResultWithH5)
 	std::vector<Eigen::VectorXd> secihurd(0);
 	auto t = simulate(t0, tmax, dt, contact_freq_matrix, params, secihurd);
 
-	save_result(t, secihurd, "test_result.h5");
+	epi::save_result(t, secihurd, "test_result.h5");
 
-	result test_result{ read_result("test_result.h5", nb_groups) };
+	epi::result test_result{ epi::read_result("test_result.h5", nb_groups) };
 
 
 

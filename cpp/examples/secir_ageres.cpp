@@ -92,7 +92,7 @@ int main()
     }
 
 	int runs = 1;
-	dist_params dists;
+	epi::dist_params dists;
 
 	dists.tinc = {0.01, 10.0, 0.01};
 	dists.tinfmild = { 0.01, 10.0, 0.01 };
@@ -113,9 +113,9 @@ int main()
 
 	std::string dist = "uniform";
 
-	write_parameters(params, contact_freq_matrix, t0, tmax, dt, runs, dist, dists, "Parameters.xml");
+	epi::write_parameters(params, contact_freq_matrix, t0, tmax, dt, runs, dist, dists, "Parameters.xml");
 	
-	file parameters = file{ read_parameters("Parameters.xml") };
+	epi::file parameters = epi::file{ epi::read_parameters("Parameters.xml") };
 
 	
 
@@ -131,11 +131,11 @@ int main()
     std::vector<double> time = simulate(t0, tmax, dt, contact_freq_matrix, params, secir);
 
 
-	save_result(time, secir, "Result.h5");
+	epi::save_result(time, secir, "Result.h5");
 
 
     char vars[] = {'S', 'E', 'C', 'I', 'H', 'U', 'R', 'D'};
-	printf("secir.size() - 1:%d\n", secir.size() - 1);
+	printf("secir.size() - 1:%d\n", static_cast<int>(secir.size() - 1));
     printf("People in\n");
 
     for (size_t k = 0; k < 8; k++) {

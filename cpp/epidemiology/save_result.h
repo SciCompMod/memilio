@@ -1,16 +1,24 @@
-#pragma once
+#ifndef SAVE_RESULT_H
+#define SAVE_RESULT_H
+
 #include <vector>
 //#include <epidemiology/secir.h>
 #include <epidemiology/eigen_util.h>
 
-void save_result(std::vector<double> times, std::vector<Eigen::VectorXd> secir, std::string filename);
-
-struct result
+namespace epi
 {
-	std::vector<double> time;
-	std::vector<std::vector<std::vector<double>>> groups;
-	std::vector<std::vector<double>> total;
+
+void save_result(const std::vector<double>& times, const std::vector<Eigen::VectorXd>& secir,
+                 const std::string& filename);
+
+struct result {
+    std::vector<double> time;
+    std::vector<std::vector<std::vector<double>>> groups;
+    std::vector<std::vector<double>> total;
 };
 
-result read_result(std::string filename, int nb_groups);
+result read_result(const std::string& filename, int nb_groups);
 
+} // namespace epi
+
+#endif
