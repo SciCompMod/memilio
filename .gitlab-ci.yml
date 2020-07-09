@@ -136,6 +136,7 @@ www:
   stage: deploy
   dependencies:
     - build-js
+    - build-js-bindings
     - download-data
   script:
     - echo "Deploying to server"
@@ -143,4 +144,4 @@ www:
     - cp -v data_dl/Germany/*_rki.json /var/www/html/assets
     - echo "Deployed"
   only:
-    - master
+    - /^version-.*$/

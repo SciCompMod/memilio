@@ -15,7 +15,7 @@
 namespace epi
 {
 
-void print_secir_params(std::vector<SecirParams> const& params, ContactFrequencyMatrix const& cont_freq)
+void print_secir_params(ContactFrequencyMatrix const& cont_freq, std::vector<SecirParams> const& params)
 {
     // alpha = alpha_in; // percentage of asymptomatic cases
     // beta  = beta_in; // risk of infection from the infected symptomatic patients
@@ -565,8 +565,7 @@ namespace
     {
         Eigen::VectorXd y(params.size() * 8);
         for (size_t i = 0; i < params.size(); i++) {
-            slice(y, Seq<Eigen::Index>{static_cast<Eigen::Index>(i) * 8, 8}) =
-                secir_get_initial_values(params[i]);
+            slice(y, Seq<Eigen::Index>{static_cast<Eigen::Index>(i) * 8, 8}) = secir_get_initial_values(params[i]);
         }
         return y;
     }
