@@ -7,8 +7,8 @@ int main()
 {
     epi::set_log_level(epi::LogLevel::debug);
 	
-	file parameters = file{ read_parameters("Parameters.xml") };
-	dist_params dists;
+	epi::file parameters = epi::file{ epi::read_parameters("Parameters.xml") };
+	epi::dist_params dists;
 
 	
 
@@ -27,8 +27,8 @@ int main()
 		std::vector<double> time = simulate(t0, tmax, dt, contact_freq_matrix, params, secir);
 
 
-		save_result(time, secir, "Results/Result_run" + std::to_string(run) + ".h5");
-		write_parameters(params, contact_freq_matrix, t0, tmax, dt, runs, "none", dists, "Results/Parameters_run" + std::to_string(run) + ".xml");
+		epi::save_result(time, secir, "Results/Result_run" + std::to_string(run) + ".h5");
+		epi::write_parameters(params, contact_freq_matrix, t0, tmax, dt, runs, "none", dists, "Results/Parameters_run" + std::to_string(run) + ".xml");
 	}
 
 }
