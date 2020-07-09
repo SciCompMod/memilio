@@ -1,4 +1,5 @@
 import { createSlice } from '@reduxjs/toolkit';
+import {roundToUTCMidnight} from "../common/utils";
 
 const START_DATE = Date.parse('2020-02-24T00:00:00');
 
@@ -14,7 +15,7 @@ const slice = createSlice({
             state.startDate = action.payload;
         },
         setCurrentDate(state, action) {
-            state.currentDate = action.payload;
+            state.currentDate = roundToUTCMidnight(action.payload);
         },
         setEndDate(state, action) {
             state.endDate = action.payload

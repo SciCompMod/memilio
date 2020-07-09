@@ -5,10 +5,15 @@ import React from 'react';
 import './TimeMap.scss';
 import {setSelected} from "../../redux/app";
 import {InteractiveHeatMap} from "../../common/interactive_heat_map.js";
+import {roundToUTCMidnight} from "../../common/utils";
 
 class TimeMap extends React.Component {
   state = {
-    times: []
+    /** Map<number, Map<number, number>> */
+    stateTimes: new Map(),
+
+    /** Map<number, Map<string, number>> */
+    countyTimes: new Map()
   };
 
   /** @type InteractiveHeatMap */
@@ -42,44 +47,90 @@ class TimeMap extends React.Component {
     };
   }
 
-  calcStateData() {
-    this.state.times = [];
+  /** @private */
+  _calcStateData() {
+    const times = new Map();
 
-    let lastEntry = null;
+    /** @type Map<number, number> | null */
+    let lastStates = null;
     for (let d = this.props.time.startDate; d < this.props.time.endDate; d += 24 * 60 * 60 * 1000) {
-      let entry = { day: d, states: {} };
+      let date = roundToUTCMidnight(d);
+      let states = new Map();
 
       for (let i = 1; i <= 16; i++) {
         const s = this.props.states.all[i];
-        const value = s.find(e => e.date >= d);
+        const value = s.find(e => e.date >= date);
+
         if (value) {
-          entry.states[i] = value.Confirmed;
-        } else if (lastEntry !== null) {
-          entry.states[i] = lastEntry.states[i];
+          states.set(i, value.Confirmed);
+        } else if (lastStates !== null) {
+          states.set(i, lastStates.get(i));
         } else {
-          entry.states[i] = 0;
+          states.set(i, 0);
         }
       }
 
-      this.state.times.push(entry);
-      lastEntry = entry;
+      times.set(date, states);
+      lastStates = states;
+    }
+
+    if (times.size > 0) {
+      this.setState({
+        stateTimes: times
+      });
+    }
+  }
+
+  /** @private */
+  _calcCountyData() {
+    const times = new Map();
+
+    /** @type Map<number, number> | null */
+    let lastCounties = null;
+    for (let d = this.props.time.startDate; d < this.props.time.endDate; d += 24 * 60 * 60 * 1000) {
+      let date = roundToUTCMidnight(d);
+      let counties = new Map();
+
+      for (let [id, c] of Object.entries(this.props.counties.all)) {
+        const value = c.find(e => e.date >= date);
+
+        if (value) {
+          counties.set(id, value.Confirmed);
+        } else if (lastCounties !== null) {
+          counties.set(id, lastCounties.get(id));
+        } else {
+          counties.set(id, 0);
+        }
+      }
+
+      times.set(date, counties);
+      lastCounties = counties;
+    }
+
+    if (times.size > 0) {
+      this.setState({
+        countyTimes: times
+      });
     }
   }
 
   componentDidUpdate(prevProps, prevState, snapshot) {
-    if ((this.props.states !== prevProps.states || this.state.times.length === 0)) {
-      this.calcStateData();
+    if (this.props.states !== prevProps.states || this.state.stateTimes.size === 0) {
+      this._calcStateData();
     }
 
-    if (prevProps.time.currentDate !== this.props.time.currentDate) {
-      const current = this.state.times.find(t => t.day >= this.props.time.currentDate);
-      if (current) {
-        for (let s of this.map.stateSeries.data) {
-          s.value = current.states[s.id];
-        }
-      }
+    if (this.props.counties !== prevProps.counties || this.state.countyTimes.size === 0) {
+      this._calcCountyData();
+    }
 
-      this.map.stateSeries.invalidateRawData();
+    const currDate = this.props.time.currentDate;
+    if (prevProps.time.currentDate !== currDate) {
+      if (this.map.selectedState !== -1 && this.state.countyTimes.has(currDate)) {
+        this.map.setCountyValues(this.state.countyTimes.get(currDate));
+      }
+      if (this.state.stateTimes.has(currDate)) {
+        this.map.setStateValues(this.state.stateTimes.get(currDate));
+      }
     }
   }
 
@@ -97,6 +148,7 @@ function mapState(state) {
     selection: state.app.selected,
     time: state.time,
     states: state.app.states,
+    counties: state.app.counties,
     populations: state.app.populations.states
   }
 }

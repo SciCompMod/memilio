@@ -1,3 +1,5 @@
+import {time} from "@amcharts/amcharts4/core";
+
 export const groupBy = (list, key) => {
   return list.reduce(function (groups, item) {
     const val = item[key];
@@ -112,3 +114,12 @@ export const calculateDamping = (measures, base_date, days) => {
 
   return reduced;
 };
+
+/**
+ * Rounds the timestamp down to UTC Midnight.
+ * @param timestamp {number}
+ * @return {number}
+ */
+export function roundToUTCMidnight(timestamp) {
+  return timestamp - (timestamp % (24 * 60 * 60 * 1000));
+}

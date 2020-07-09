@@ -3,127 +3,157 @@ import * as am4maps from "@amcharts/amcharts4/maps";
 
 
 export class InteractiveHeatMap {
-  /** @type MapChart */
-  map = null;
+  /** @private
+   *  @type MapChart */
+  _map = null;
 
-  /** @type MapPolygonSeries */
-  stateSeries = null;
+  /** @private
+   *  @type MapPolygonSeries */
+  _stateSeries = null;
 
-  /** @type Map<number, MapPolygonSeries> */
-  countySeries = new Map();
+  /** @private
+   *  @type Map<number, MapPolygonSeries> */
+  _countySeries = new Map();
+
+  /** @private
+   *  @type IHeatRule */
+  _stateHeatRule = null;
 
   /** @type number */
-  currentSelected = -1;
+  selectedState = -1;
 
-  /** @type IHeatRule */
-  stateHeatRule = null;
+  /** @type number */
+  selectedCounty = -1;
 
-  /**
-   * @callback StateSelectedCallback
-   * @param newState {StateMetaData}
-   */
+  /** @callback StateSelectedCallback
+   *  @param newState {StateMetaData} */
   onStateSelected = (newState) => {};
 
-  /**
-   * @callback CountySelectedCallback
-   * @param newCounty {any}
-   */
+  /** @callback CountySelectedCallback
+   *  @param newCounty {any} */
   onCountySelected = (newCounty) => {};
 
   constructor(id) {
-    this.map = am4core.create(id, am4maps.MapChart);
-    this.map.projection = new am4maps.projections.Mercator();
-    this.map.hiddenState.transitionDuration = 500;
+    this._map = am4core.create(id, am4maps.MapChart);
+    this._map.projection = new am4maps.projections.Mercator();
+    this._map.hiddenState.transitionDuration = 500;
 
-    this.stateSeries = new am4maps.MapPolygonSeries();
+    this._stateSeries = new am4maps.MapPolygonSeries();
 
-    this.stateSeries.geodataSource.url = "assets/german-states.geojson";
-    this.stateSeries.useGeodata = true;
-    this.map.series.push(this.stateSeries);
+    this._stateSeries.geodataSource.url = "assets/german-states.geojson";
+    this._stateSeries.useGeodata = true;
+    this._map.series.push(this._stateSeries);
 
-    this.stateHeatRule = {
+    this._stateHeatRule = {
       property: "fill",
-      target: this.stateSeries.mapPolygons.template,
+      target: this._stateSeries.mapPolygons.template,
       min: am4core.color("#DDD", 1),
       max: am4core.color("#F00", 1),
       logarithmic: true,
     }
 
-    this.stateSeries.heatRules.push(this.stateHeatRule);
+    this._stateSeries.heatRules.push(this._stateHeatRule);
 
-    const statePolygonTemplate = this.stateSeries.mapPolygons.template;
-    statePolygonTemplate.tooltipText = "{name}: {value} Fälle";
+    const statePolygonTemplate = this._stateSeries.mapPolygons.template;
+    statePolygonTemplate.tooltipText = "{name}: {value}";
     statePolygonTemplate.nonScalingStroke = true;
     statePolygonTemplate.applyOnClones = true;
 
     statePolygonTemplate.events.on("hit", e => {
       const item = e.target.dataItem.dataContext;
-      this.stateSelected(item);
       this.onStateSelected(item);
       this.onCountySelected(null);
+      this.selectedCounty = -1;
+      this._stateSelected(item);
     });
 
-    this.map.events.on("zoomlevelchanged", e => {
-      if (this.map.zoomLevel === 1) {
+    this._map.events.on("zoomlevelchanged", e => {
+      if (this._map.zoomLevel === 1) {
         this.onStateSelected(null);
         this.onCountySelected(null);
-        this.stateSelected({id: -1});
+        this.selectedCounty = -1;
+        this._stateSelected({id: -1});
       }
     });
   }
 
-  /** @param state {StateMetaData} */
-  createCountySeries(state) {
+  /** @param values {Map<number, number>} */
+  setStateValues(values) {
+    for (let stateDatum of this._stateSeries.data) {
+      stateDatum.value = values.get(stateDatum.id);
+    }
+
+    this._stateSeries.invalidateRawData();
+  }
+
+  /** @param values {Map<string, number>} */
+  setCountyValues(values) {
+    if (this._countySeries.has(this.selectedState)) {
+      const series = this._countySeries.get(this.selectedState);
+      for (let countyDatum of series.data) {
+        countyDatum.value = values.get(parseInt(countyDatum.RS, 10).toString());
+      }
+
+      series.invalidateRawData();
+    }
+  }
+
+  /** @private
+   *  @param state {StateMetaData} */
+  _createCountySeries(state) {
     const newSeries = new am4maps.MapPolygonSeries();
     newSeries.geodataSource.url = "assets/counties/" + state.fileName + ".geojson";
     newSeries.useGeodata = true;
 
     const countyPolygonTemplate = newSeries.mapPolygons.template;
-    countyPolygonTemplate.tooltipText = "{id}";
-    countyPolygonTemplate.fill = this.map.colors.getIndex(0);
+    countyPolygonTemplate.tooltipText = "{id}: {value}";
     countyPolygonTemplate.nonScalingStroke = true;
+    countyPolygonTemplate.applyOnClones = true;
 
-    const hs = countyPolygonTemplate.states.create("hover");
-    hs.properties.fill = am4core.color("#367B25");
+    const countyHeatRule = {
+      property: "fill",
+      target: countyPolygonTemplate,
+      min: am4core.color("#DDD", 1),
+      max: am4core.color("#F00", 1),
+      logarithmic: true,
+    }
+
+    newSeries.heatRules.push(countyHeatRule);
 
     countyPolygonTemplate.events.on("hit", e => {
       const item = e.target.dataItem.dataContext;
+      this.selectedCounty = item !== null ? parseInt(item.RS, 10) : -1;
       this.onCountySelected(item);
     });
 
-    this.map.series.push(newSeries);
-    this.countySeries.set(state.id, newSeries);
+    this._map.series.push(newSeries);
+    this._countySeries.set(state.id, newSeries);
   }
 
-  /** @param newState {StateMetaData} */
-  stateSelected(newState) {
-    if (this.currentSelected !== newState.id) {
-      if (this.countySeries.has(this.currentSelected)) {
-        this.countySeries.get(this.currentSelected).hide();
-      }
+  /** @private
+   *  @param newState {StateMetaData} */
+  _stateSelected(newState) {
+    // If a new state is selected hide the old one.
+    if (this.selectedState !== newState.id && this._countySeries.has(this.selectedState)) {
+      this._countySeries.get(this.selectedState).hide();
     }
 
-    if (newState.id > 0) {
-      if (this.countySeries.has(newState.id)) {
-        this.countySeries.get(newState.id).show();
+    if (newState.id > 0) { // A state is selected.
+      // County series will be loaded lazily.
+      if (this._countySeries.has(newState.id)) {
+        this._countySeries.get(newState.id).show();
       } else {
         const state = stateById(newState.id);
-        this.createCountySeries(state);
+        this._createCountySeries(state);
       }
-      this.currentSelected = newState.id;
-      this.map.zoomToMapObject(this.stateSeries.getPolygonById(newState.id));
 
-      if (this.stateSeries.heatRules.length > 0) {
-        this.stateSeries.heatRules.clear();
-        this.stateSeries.mapPolygons.template.fill = am4core.color("#EEE");
-      }
-    } else {
-      this.currentSelected = -1;
-      this.map.goHome();
-
-      if (this.stateSeries.heatRules.length === 0) {
-        this.stateSeries.heatRules.push(this.stateHeatRule);
-      }
+      this.selectedState = newState.id;
+      this._map.zoomToMapObject(this._stateSeries.getPolygonById(newState.id));
+      this._stateSeries.hide();
+    } else { // No state is selected.
+      this.selectedState = -1;
+      this._map.goHome();
+      this._stateSeries.show();
     }
   }
 }
