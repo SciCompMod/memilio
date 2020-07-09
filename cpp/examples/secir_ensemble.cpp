@@ -2,7 +2,6 @@
 #include <epidemiology/logging.h>
 #include <epidemiology/save_result.h>
 #include <epidemiology/save_parameters.h>
-#include <direct.h>
 
 int main()
 {
