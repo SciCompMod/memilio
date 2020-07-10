@@ -73,7 +73,7 @@ void print_secir_params(ContactFrequencyMatrix const& cont_freq, std::vector<Sec
         for (size_t i = 0; i < params.size(); i++) {
             myfile << "\n\t\t G" << i;
             for (size_t j = 0; j < params.size(); j++) {
-                myfile << "\t" << cont_freq.get_cont_freq(i, j);
+                myfile << "\t" << cont_freq.get_cont_freq(static_cast<int>(i), static_cast<int>(j));
             }
         }
 
@@ -82,9 +82,19 @@ void print_secir_params(ContactFrequencyMatrix const& cont_freq, std::vector<Sec
             myfile << "\n\t G" << i;
             for (size_t j = 0; j < params.size(); j++) {
                 myfile << "\n\t\t G" << j;
-                for (size_t k = 0; k < cont_freq.get_dampings(i, j).get_dampings_vector().size(); k++) {
-                    myfile << "\t day: " << cont_freq.get_dampings(i, j).get_dampings_vector().at(k).day
-                           << " fac: " << cont_freq.get_dampings(i, j).get_dampings_vector().at(k).factor;
+                for (size_t k = 0;
+                     k < cont_freq.get_dampings(static_cast<int>(i), static_cast<int>(j)).get_dampings_vector().size();
+                     k++) {
+                    myfile << "\t day: "
+                           << cont_freq.get_dampings(static_cast<int>(i), static_cast<int>(j))
+                                  .get_dampings_vector()
+                                  .at(k)
+                                  .day
+                           << " fac: "
+                           << cont_freq.get_dampings(static_cast<int>(i), static_cast<int>(j))
+                                  .get_dampings_vector()
+                                  .at(k)
+                                  .factor;
                 }
             }
         }
@@ -392,7 +402,7 @@ ContactFrequencyMatrix::ContactFrequencyMatrix(size_t const nb_groups)
 
 int ContactFrequencyMatrix::get_size() const
 {
-    return m_cont_freq.size();
+    return static_cast<int>(m_cont_freq.size());
 }
 
 void ContactFrequencyMatrix::set_cont_freq(double const cont_freq, int const self_group, int const contact_group)

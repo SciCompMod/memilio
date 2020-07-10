@@ -90,8 +90,8 @@ TEST(ParameterStudies, sample_from_secir_params)
 
     for (size_t i = 0; i < params_sample.size(); i++) {
         for (size_t j = 0; j < params_sample.size(); j++) {
-            EXPECT_GE(contact_sample.get_dampings(i, j).get_factor(1.0), 0);
-            EXPECT_GE(contact_sample.get_cont_freq(i, j), 0);
+            EXPECT_GE(contact_sample.get_dampings(static_cast<int>(i), static_cast<int>(j)).get_factor(1.0), 0);
+            EXPECT_GE(contact_sample.get_cont_freq(static_cast<int>(i), static_cast<int>(j)), 0);
         }
     }
 }
@@ -240,7 +240,7 @@ TEST(ParameterStudies, check_ensemble_run_result)
     for (size_t i = 0; i < results[0].size(); i++) { // number of time steps
         std::vector<double> total_at_ti(8, 0);
         // printf("\n");
-        for (size_t j = 0; j < results[0][i].size(); j++) { // number of compartments per time step
+        for (size_t j = 0; j < static_cast<size_t>(results[0][i].size()); j++) { // number of compartments per time step
             // printf(" %.2e ( %d ) ", results[0][i][j], j % 8);
             EXPECT_GE(results[0][i][j], -1e-3) << " day " << i << " group " << j;
             total_at_ti[j / 8] += results[0][i][j];

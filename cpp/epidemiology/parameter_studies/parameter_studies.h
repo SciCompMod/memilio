@@ -52,7 +52,7 @@ public:
      */
     int get_nb_runs() const
     {
-        return m_nb_runs;
+        return static_cast<int>(m_nb_runs);
     }
 
     /*
