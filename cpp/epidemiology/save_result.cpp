@@ -16,7 +16,7 @@ void save_result(const std::vector<double>& times, const std::vector<Eigen::Vect
 	const int	 RANK = 2;
 
 	const int n_data = secir.size();
-	const int n_compart = 8;
+        const int n_compart = 8;
 	const int nb_groups = secir[0].size() / n_compart;	
 
 	H5File file(filename, H5F_ACC_TRUNC);
@@ -104,7 +104,7 @@ result read_result(const std::string& filename, int nb_groups)
 
 		groups.emplace_back(group.size());
         auto& newgroup = groups.back();
-        std::transform(begin(group), end(group), begin(newgroup), [](auto v) {
+        std::transform(begin(group), end(group), begin(newgroup), [nb_compart](auto v) {
             return std::vector<double>(v, v + nb_compart);
         });
 	}
@@ -124,7 +124,7 @@ result read_result(const std::string& filename, int nb_groups)
 	dataset_total.read(total_buf.data(), PredType::NATIVE_DOUBLE, mspace3, filespace);
 
 	std::vector<std::vector<double>> total(total_buf.size());
-    std::transform(begin(total_buf), end(total_buf), begin(total), [](auto v) {
+    std::transform(begin(total_buf), end(total_buf), begin(total), [nb_compart](auto v) {
         return std::vector<double>(v, v + nb_compart);
     });
 
