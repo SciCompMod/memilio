@@ -8,14 +8,15 @@
 namespace epi
 {
 
-template<class Model>
+template <class Model>
 class ModelNode
 {
 public:
-    template<class... Args>
+    template <class... Args, typename = std::enable_if_t<std::is_constructible<Model, Args...>::value, void>>
     ModelNode(Args&&... args)
-    : model(std::forward<Args>(args)...)
-    { }
+        : model(std::forward<Args>(args)...)
+    {
+    }
     Model model;
     Eigen::VectorXd last_state;
 };
