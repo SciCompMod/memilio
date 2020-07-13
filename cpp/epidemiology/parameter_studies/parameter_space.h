@@ -511,8 +511,93 @@ private:
 
 ParameterSpace::ParameterSpace(std::string& parameter_filename)
 {
-    // TODO: implement
-    assert(0 && "This function not implemented yet and needs a file read method.");
+	file global_params = read_global_params(parameter_filename)
+	
+	for (size_t i = 0; i < global_params.nb_groups; i++) {
+
+		std::string name = "Group" + std::to_string(i + 1);
+		std::string path = "/Parameters/" + name;
+		std::string pop_path = path + "/Population";
+		std::string time_path = path + "/StageTimes";
+		std::string prob_path = path + "/Probabilities";
+
+		
+		
+
+        // fixed size groups
+        // total
+        m_total.push_back(read_dist(parameter_filename, pop_path + "/Total"));
+        m_hospitalized.push_back(read_dist(parameter_filename, pop_path + "/Hospitalized"));
+        m_icu.push_back(read_dist(parameter_filename, pop_path + "/ICU"));
+        m_dead.push_back(read_dist(parameter_filename, pop_path + "/Dead"));
+
+        // variably sized groups
+        // exposed
+        m_exposed.push_back(read_dist(parameter_filename, pop_path + "/Exposed"));
+
+        // carrier
+        value_params = params[i].populations.get_carrier_t0();
+        m_carrier.push_back(read_dist(parameter_filename, pop_path + "/Carrier"));
+
+        // infectious
+        m_infectious.push_back(read_dist(parameter_filename, pop_path + "/Infectious"));
+
+        // recovered
+        m_recovered.push_back(read_dist(parameter_filename, pop_path + "/Recovered"));
+		
+		
+		// times
+		// incubation time
+        m_incubation.push_back(read_dist(parameter_filename, time_path + "/Incubation"));
+
+        // infectious time (mild)
+        m_inf_mild.push_back(read_dist(parameter_filename, time_path + "/InfectiousMild"));
+
+        // serial interval
+        m_serial_int.push_back(read_dist(parameter_filename, time_path + "/SerialInterval"));
+
+        // infectious to recovered (hospitalized to home)
+        m_hosp_to_rec.push_back(read_dist(parameter_filename, time_path + "/HospitalizedToHome"));
+
+        // infectious to hospitalized (home to hospitalized)
+        m_inf_to_hosp.push_back(read_dist(parameter_filename, time_path + "/HomeToHospitalized"));
+
+        // infectious (asymptomatic)
+        m_inf_asymp.push_back(read_dist(parameter_filename, time_path + "/InfectiousAsymp"));
+
+        // hospitalized to ICU
+        m_hosp_to_icu.push_back(read_dist(parameter_filename, time_path + "/HospitalizedToICU"));
+
+        // ICU to recovered
+        m_icu_to_rec.push_back(read_dist(parameter_filename, time_path + "/ICUToHome"));
+
+        // ICU to death
+        m_icu_to_death.push_back(read_dist(parameter_filename, time_path + "/ICUToDeath"));
+		
+		
+		// probabilities
+		// infection from contact
+        m_inf_from_cont.push_back(read_dist(parameter_filename, prob_path + "/InfectionFromContact"));
+
+        // asymptomatic per infectious
+        m_asymp_per_inf.push_back(read_dist(parameter_filename, prob_path + "/AsympPerInfection"));
+
+        // risk of infection from infectious
+        m_risk_from_symp.push_back(read_dist(parameter_filename, prob_path + "/RiskFromSymptomatic"));
+
+        // deaths per icu treatments
+        m_death_per_icu.push_back(read_dist(parameter_filename, prob_path + "/DeadPerICU"));
+
+        // hospitalized per infections
+        m_hosp_per_inf.push_back(read_dist(parameter_filename, prob_path + "/HospitalizedPerInfectious"));
+
+        // icu treatments per hospitalized
+        m_icu_per_hosp.push_back(read_dist(parameter_filename, prob_path + "/ICUPerHospitalized"));
+		
+		
+		
+    }
+	m_cont_freq_matrix_variable = read_contact;
 }
 
 ParameterSpace::ParameterSpace(ContactFrequencyMatrix const& cont_freq_matrix, std::vector<SecirParams> const& params,

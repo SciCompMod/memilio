@@ -1,5 +1,6 @@
 #include <epidemiology/secir.h>
 #include <epidemiology/damping.h>
+#include <epidemiology/parameter_studies/parameter_space.h>
 #include <vector>
 
 #include <iostream>
@@ -13,6 +14,42 @@ namespace epi
 
 struct dist_params
 {
+	
+	std::string dist_total = "none";
+	std::string dist_exposed = "none";
+	std::string dist_carrier = "none";
+	std::string dist_infectious = "none";
+	std::string dist_hospital = "none";
+	std::string dist_icu = "none";
+	std::string dist_recovered = "none";
+	std::string dist_dead = "none";
+	
+	std::string dist_tinc = "none";
+	std::string dist_tinfmild = "none";
+	std::string dist_tserint = "none";
+	std::string dist_thosp2home = "none";
+	std::string dist_thome2hosp = "none";
+	std::string dist_thosp2icu = "none";
+	std::string dist_ticu2home = "none";
+	std::string dist_tinfasy = "none";
+	std::string dist_ticu2death = "none";
+	
+	std::string dist_inf_cont = "none";
+	std::string dist_alpha = "none";
+	std::string dist_beta = "none";
+	std::string dist_rho = "none";
+	std::string dist_theta = "none";
+	std::string dist_delta = "none";
+	
+	std::vector<double> total;
+	std::vector<double> exposed;
+	std::vector<double> carrier;
+	std::vector<double> infectious;
+	std::vector<double> hospital;
+	std::vector<double> icu;
+	std::vector<double> recovered;
+	std::vector<double> dead;
+	
 	std::vector<double> tinc;
 	std::vector<double> tinfmild;
 	std::vector<double> tserint;
@@ -31,28 +68,157 @@ struct dist_params
 	std::vector<double> delta;
 };
 
-void write_parameters(std::vector<epi::SecirParams> const& params, epi::ContactFrequencyMatrix const& cont_freq_matrix, double t0, double tmax, double dt, int runs, const std::string& dist, const dist_params& dists, const std::string& filename)
+void write_dist(const TixiDocumentHandle& handle, const std::string& path, const std::string& name, const std::string& dist, double param, const std::vector<double>& dist_param){
+
+	tixiCreateElement(handle, path.c_str(), name.c_str());
+	std::string full_path = path + "/" + name
+	tixiAddTextElement(handle, (full_path).c_str(), "Distribution", dist.c_str());
+	if (strcmp("none", dist) == 0){
+		tixiAddDoubleElement(handle, full_path.c_str(), "Mean", param, "%g")
+	}
+	else if (strcmp("normal", dist) == 0){
+		tixiAddDoubleElement(handle, full_path.c_str(), "Mean", param, "%g");
+		tixiAddDoubleElement(handle, full_path.c_str(), "Deviation", dist_param[2], "%g");
+		tixiAddDoubleElement(handle, full_path.c_str(), "Min", dist_param[0], "%g");
+		tixiAddDoubleElement(handle, full_path.c_str(), "Max", dist_param[1], "%g");
+	}
+	else if (strcmp("uniform", dist) == 0){
+		tixiAddDoubleElement(handle, full_path.c_str(), "Min", dist_param[0], "%g");
+		tixiAddDoubleElement(handle, full_path.c_str(), "Max", dist_param[1], "%g");
+	}
+}	
+
+struct file
+{
+	int nb_groups;
+	int runs;
+	double t0;
+	double tmax;
+	double dt;
+};
+
+
+file read_global_params(const std::string& filename){
+	TixiDocumentHandle handle = -1;
+	tixiOpenDocument(filename.c_str(), &handle);
+	int nb_groups;
+	int runs;
+	double t0;
+	double tmax;
+	double dt;
+
+
+	tixiGetIntegerElement(handle, "/Parameters/NumberOfGroups", &nb_groups);
+	tixiGetIntegerElement(handle, "/Parameters/Runs", &runs);
+	tixiGetTextElement(handle, "/Parameters/Distribution", &dist);
+	tixiGetDoubleElement(handle, "/Parameters/T0", &t0);
+	tixiGetDoubleElement(handle, "/Parameters/TMax", &tmax);
+	tixiGetDoubleElement(handle, "/Parameters/dt", &dt);
+	return {nb_groups, runs, t0, tmax, dt};
+}
+
+
+ParameterDistribution read_dist(const std::string& filename, std::string& path){
+	
+	TixiDocumentHandle handle = -1;
+	tixiOpenDocument(filename.c_str(), &handle);
+	char* dist;
+	tixiGetTextElement(handle, (path + "/Distribution").c_str(), &dist);
+	
+	if (strcmp("none", dist) == 0){
+		double mean;
+		tixiGetDoubleElement(handle, (path + "/Mean").c_str(), &mean);
+		Distribution = std::make_unique<ParameterDistributionNormal>(
+            ParameterDistributionNormal(mean, 0));
+	}
+	else if (strcmp("normal", dist) == 0){
+		double mean;
+		double dev;
+		double min;
+		double max;
+		tixiGetDoubleElement(handle, (path + "/Mean").c_str(), &mean);
+		tixiGetDoubleElement(handle, (path + "/Deviation").c_str(), &dev);
+		tixiGetDoubleElement(handle, (path + "/Min").c_str(), &min);
+		tixiGetDoubleElement(handle, (path + "/Max").c_str(), &max);
+		Distribution = std::make_unique<ParameterDistributionNormal>(
+            ParameterDistributionNormal(min, max, mean, dev));
+	}
+	else if (strcmp("uniform", dist) == 0){
+		double min;
+		double max;
+		tixiGetDoubleElement(handle, (path + "/Min").c_str(), &min);
+		tixiGetDoubleElement(handle, (path + "/Max").c_str(), &max);
+		Distribution = std::make_unique<ParameterDistributionUniform>(
+            ParameterDistributionUniform(min, max));
+	}
+	return Distribution;
+	
+}
+
+ContactFrequencyVariableElement read_contact(const std::string& filename){
+	epi::ContactFrequencyMatrix contact_freq_matrix{ (size_t)nb_groups };
+	
+	for (size_t i = 0; i < nb_groups; i++) {
+		double* contact = new double[nb_groups];
+		tixiGetFloatVector(handle, ("/Parameters/ContactRateGroup" + std::to_string(i + 1)).c_str(), &contact, nb_groups);
+		for (int j = 0; j < nb_groups; ++j)
+		{
+			contact_freq_matrix.set_cont_freq(contact[j], i, j);
+		}
+		delete contact;
+	}
+	
+	
+	TixiDocumentHandle handle = -1;
+	tixiOpenDocument(filename.c_str(), &handle);
+	int nb_damp;
+	tixiGetIntegerElement(handle, "/Parameters/NumberOfDampings", &nb_damp);
+	std::unique_ptr<ContactFrequencyVariableElement> m_cont_freq_matrix_variable;
+	
+	nb_damp_dist = std::make_unique<ParameterDistributionUniform>(ParameterDistributionUniform(1, (tmax - t0) / 10));
+	 day_dist = std::make_unique<ParameterDistributionUniform>(ParameterDistributionUniform(t0, tmax));
+	 damp_diag_base_dist = std::make_unique<ParameterDistributionUniform>(ParameterDistributionUniform(0.1, 1));
+	 damp_diag_rel_dist = std::make_unique<ParameterDistributionUniform>(ParameterDistributionUniform(0.6, 1.4));
+	 damp_offdiag_rel_dist = std::make_unique<ParameterDistributionUniform>(ParameterDistributionUniform(0.7, 1.1));
+	 
+	 nb_damp_dist.add_predefined_sample(nb_damp);
+	 for (int i = 0; i < nb_damp; ++i)
+	 {
+		double day;
+		double damping;
+
+		tixiGetDoubleElement(handle, ("/Parameters/Dampings/Damp" + std::to_string(i + 1) + "/Day").c_str(), &day);
+		day_dist.add_predefined_sample(day);
+		for (int k = 0; k < nb_groups; ++k)
+		{
+			tixiGetDoubleElement(handle, ("/Parameters/Dampings/Damp" + std::to_string(i + 1) + "/Group" + std::to_string(k + 1)).c_str(), &damping);
+			damp_diag_base.add_predefined_sample(damping);
+			damp_diag_rel_dist.add_predefined_sample(1.0);
+			for (int l = k+1; l<nb_groups; ++l)
+				damp_offdiag_rel_dist.add_predefined_sample(1.0);
+		}
+	 }
+	 
+	 
+	// maximum number of dampings; to avoid overfitting only allow one damping for every 10 days simulated
+    // damping base values are between 0.1 and 1; diagonal values vary lie in the range of 0.6 to 1.4 times the base value
+    // off diagonal values vary between 0.7 to 1.1 of the corresponding diagonal value (symmetrization is conducted)
+    m_cont_freq_matrix_variable =
+        std::move(std::make_unique<ContactFrequencyVariableElement>(ContactFrequencyVariableElement{
+            cont_freq_matrix,
+            nb_damp_dist,
+            day_dist,
+            damp_diag_base_dist,
+            damp_diag_rel_dist,
+            damp_offdiag_rel_dist}));
+	return m_cont_freq_matrix_variable;
+}
+	
+
+void write_parameters(std::vector<epi::SecirParams> const& params, epi::ContactFrequencyMatrix const& cont_freq_matrix, double t0, double tmax, double dt, int runs, const dist_params& dists, const std::string& filename)
 {
 	char* docString = NULL;
 	double* myFloat = NULL;
-	int i = 0;
-	int dist_size;
-	if (dist == "none")
-	{
-		dist_size = 0;
-	}
-	else if (dist == "normal")
-	{
-		dist_size = 3;
-	}
-	else if (dist == "uniform")
-	{
-		dist_size = 2;
-	}
-	else
-	{
-		dist_size = 0;
-	}
 	
 	TixiDocumentHandle handle;
 
@@ -64,7 +230,6 @@ void write_parameters(std::vector<epi::SecirParams> const& params, epi::ContactF
 	//create xml doc
 	tixiCreateDocument("Parameters", &handle);
 	tixiAddIntegerElement(handle, "/Parameters", "Runs", runs, "%d");
-	tixiAddTextElement(handle, "/Parameters", "Distribution", dist.c_str());
 	tixiAddIntegerElement(handle, "/Parameters", "NumberOfGroups", nb_groups, "%d");
 	tixiAddDoubleElement(handle, "/Parameters", "T0", t0, "%g");
 	tixiAddDoubleElement(handle, "/Parameters", "TMax", tmax, "%g");
@@ -86,18 +251,16 @@ void write_parameters(std::vector<epi::SecirParams> const& params, epi::ContactF
 
 
 	tixiCreateElement(handle, "/Parameters", "Dampings");
+	double damping;
 	for (int i = 0; i < nb_damp;++i)
 	{
 		tixiCreateElement(handle, "/Parameters/Dampings", ("Damp" + std::to_string(i + 1)).c_str());
 		tixiAddDoubleElement(handle, ("/Parameters/Dampings/Damp" + std::to_string(i + 1)).c_str(), "Day", cont_freq_matrix.get_dampings(0, 0).get_dampings_vector().at(i).day, "%g");
 		for (int k = 0; k < nb_groups;++k)
 		{
-			for (int l = 0; l < nb_groups; ++l)
-			{
-				contact[k][l] = cont_freq_matrix.get_dampings(k, l).get_dampings_vector().at(i).factor;
-			}
+			damping = cont_freq_matrix.get_dampings(k, k).get_dampings_vector().at(i).factor;
 			std::string name = "Group" + std::to_string(k + 1);
-			tixiAddFloatVector(handle, ("/Parameters/Dampings/Damp" + std::to_string(i + 1)).c_str(), name.c_str(), contact[k], nb_groups, "%g");
+			tixiAddDoubleElement(handle, ("/Parameters/Dampings/Damp" + std::to_string(i + 1)).c_str(), name.c_str(), damping, "%g");
 		}
 	}
 
@@ -118,88 +281,33 @@ void write_parameters(std::vector<epi::SecirParams> const& params, epi::ContactF
 		tixiCreateElement(handle, path.c_str(), "Probabilities");
 
 
-
-		tixiAddDoubleElement(handle, pop_path.c_str(), "Total", params[i].populations.get_total_t0(), "%g");
-		tixiAddDoubleElement(handle, pop_path.c_str(), "Exposed", params[i].populations.get_exposed_t0(), "%g");
-		tixiAddDoubleElement(handle, pop_path.c_str(), "Carrier", params[i].populations.get_carrier_t0(), "%g");
-		tixiAddDoubleElement(handle, pop_path.c_str(), "Infectious", params[i].populations.get_infectious_t0(), "%g");
-		tixiAddDoubleElement(handle, pop_path.c_str(), "Hospital", params[i].populations.get_hospitalized_t0(), "%g");
-		tixiAddDoubleElement(handle, pop_path.c_str(), "ICU", params[i].populations.get_icu_t0(), "%g");
-		tixiAddDoubleElement(handle, pop_path.c_str(), "Recovered", params[i].populations.get_recovered_t0(), "%g");
-		tixiAddDoubleElement(handle, pop_path.c_str(), "Dead", params[i].populations.get_dead_t0(), "%g");
-
-
-		double* tinc = new double[dist_size +1];
-		double* tinfmild = new double[dist_size + 1];
-		double* tserint = new double[dist_size + 1];
-		double* thosp2home = new double[dist_size + 1];
-		double* thome2hosp = new double[dist_size + 1];
-		double* thosp2icu = new double[dist_size + 1];
-		double* ticu2home = new double[dist_size + 1];
-		double* tinfasy = new double[dist_size + 1];
-		double* ticu2death = new double[dist_size + 1];
-
-		double* inf_cont = new double[dist_size + 1];
-		double* alpha = new double[dist_size + 1];
-		double* beta = new double[dist_size + 1];
-		double* rho = new double[dist_size + 1];
-		double* theta = new double[dist_size + 1];
-		double* delta = new double[dist_size + 1];
-
-		tinc[0] = 1.0 / params[i].times.get_incubation_inv();
-		tinfmild[0] = 1.0 / params[i].times.get_infectious_mild_inv();
-		tserint[0] = 1.0 / params[i].times.get_serialinterval_inv();
-		thosp2home[0] = 1.0 / params[i].times.get_hospitalized_to_home_inv();
-		thome2hosp[0] = 1.0 / params[i].times.get_home_to_hospitalized_inv();
-		thosp2icu[0] = 1.0 / params[i].times.get_hospitalized_to_icu_inv();
-		ticu2home[0] = 1.0 / params[i].times.get_icu_to_home_inv();
-		tinfasy[0] = 1.0 / params[i].times.get_infectious_asymp_inv();
-		ticu2death[0] = 1.0 / params[i].times.get_icu_to_dead_inv();
-
-		inf_cont[0] = params[i].probabilities.get_infection_from_contact();
-		alpha[0] = params[i].probabilities.get_asymp_per_infectious();
-		beta[0] = params[i].probabilities.get_risk_from_symptomatic();
-		rho[0] = params[i].probabilities.get_hospitalized_per_infectious();
-		theta[0] = params[i].probabilities.get_icu_per_hospitalized();
-		delta[0] = params[i].probabilities.get_dead_per_icu();
-		for (int i = 0; i < dist_size; ++i)
-		{
-			tinc[i + 1] = dists.tinc[i];
-			tinfmild[i + 1] = dists.tinfmild[i];
-			tserint[i + 1] = dists.tserint[i];
-			thosp2home[i + 1] = dists.thosp2home[i];
-			thome2hosp[i + 1] = dists.thome2hosp[i];
-			thosp2icu[i + 1] = dists.thosp2icu[i];
-			ticu2home[i + 1] = dists.ticu2home[i];
-			tinfasy[i + 1] = dists.tinfasy[i];
-			ticu2death[i + 1] = dists.ticu2death[i];
-
-			inf_cont[i + 1] = dists.inf_cont[i];
-			alpha[i + 1] = dists.alpha[i];
-			beta[i + 1] = dists.beta[i];
-			rho[i + 1] = dists.rho[i];
-			theta[i + 1] = dists.theta[i];
-			delta[i + 1] = dists.delta[i];
-		}
+		write_dist(handle, pop_path, "Total", dists.dist_total, params[i].populations.get_total_t0(), dists.total);
+		write_dist(handle, pop_path, "Exposed", dists.dist_exposed, params[i].populations.get_exposed_t0(), dists.exposed);
+		write_dist(handle, pop_path, "Carrier", dists.dist_carrier, params[i].populations.get_carrier_t0(), dists.carrier);
+		write_dist(handle, pop_path, "Infectious", dists.dist_infectious, params[i].populations.get_infectious_t0(), dists.infectious);
+		write_dist(handle, pop_path, "Hospitalized", dists.dist_hospital, params[i].populations.get_hospitalized_t0(), dists.hospital);
+		write_dist(handle, pop_path, "ICU", dists.dist_icu, params[i].populations.get_icu_t0(), dists.icu);
+		write_dist(handle, pop_path, "Recovered", dists.dist_recovered, params[i].populations.get_recovered_t0(), dists.recovered);
+		write_dist(handle, pop_path, "Dead", dists.dist_dead, params[i].populations.get_dead_t0(), dists.dead);
 		
+		write_dist(handle, time_path, "Incubation", dists.dist_tinc, 1.0 / params[i].times.get_incubation_inv(), dists.tinc);
+		write_dist(handle, time_path, "InfectiousMild", dists.dist_tinfmild, 1.0 / params[i].times.get_infectious_mild_inv(), dists.tinfmild);
+		write_dist(handle, time_path, "SerialInterval", dists.dist_tserint, 1.0 / params[i].times.get_serialinterval_inv();, dists.tserint);
+		write_dist(handle, time_path, "HospitalizedToHome", dists.dist_thosp2home, 1.0 / params[i].times.get_hospitalized_to_home_inv(), dists.thosp2home);
+		write_dist(handle, time_path, "HomeToHospitalized", dists.dist_thome2hosp, 1.0 / params[i].times.get_home_to_hospitalized_inv(), dists.thome2hosp);
+		write_dist(handle, time_path, "HospitalizedToICU", dists.dist_thosp2icu, 1.0 / params[i].times.get_hospitalized_to_icu_inv(), dists.thosp2icu);
+		write_dist(handle, time_path, "ICUToHome", dists.dist_ticu2home, 1.0 / params[i].times.get_icu_to_home_inv(), dists.ticu2home);
+		write_dist(handle, time_path, "InfectiousAsymp", dists.dist_tinfasy, 1.0 / params[i].times.get_infectious_asymp_inv(), dists.tinfasy);
+		write_dist(handle, time_path, "ICUToDeath", dists.dist_ticu2death, 1.0 / params[i].times.get_icu_to_dead_inv(), dists.ticu2death);
+		
+		write_dist(handle, prob_path, "InfectionFromContact", dists.inf_cont, params[i].probabilities.get_infection_from_contact(), dists.inf_cont);
+		write_dist(handle, prob_path, "AsympPerInfection", dists.dist_alpha, params[i].probabilities.get_asymp_per_infectious(), dists.alpha);
+		write_dist(handle, prob_path, "RiskFromSymptomatic", dists.dist_beta, params[i].probabilities.get_risk_from_symptomatic(), dists.beta);
+		write_dist(handle, prob_path, "HospitalizedPerInfectious", dists.dist_rho, params[i].probabilities.get_hospitalized_per_infectious(), dists.rho);
+		write_dist(handle, prob_path, "ICUPerHospitalized", dists.dist_theta, params[i].probabilities.get_icu_per_hospitalized(), dists.theta);
+		write_dist(handle, prob_path, "DeadPerICU", dists.dist_delta, params[i].probabilities.get_dead_per_icu(), dists.delta);
 
-
-		tixiAddFloatVector(handle, time_path.c_str(), "Incubation", tinc, dist_size+1, "%g");
-		tixiAddFloatVector(handle, time_path.c_str(), "InfectiousMild", tinfmild, dist_size + 1, "%g");
-		tixiAddFloatVector(handle, time_path.c_str(), "SerialInterval",tserint, dist_size + 1, "%g");
-		tixiAddFloatVector(handle, time_path.c_str(), "HospitalizedToHome", thosp2home, dist_size + 1, "%g");
-		tixiAddFloatVector(handle, time_path.c_str(), "HomeToHospitalized", thome2hosp, dist_size + 1, "%g");
-		tixiAddFloatVector(handle, time_path.c_str(), "HospitalizedToICU", thosp2icu, dist_size + 1, "%g");
-		tixiAddFloatVector(handle, time_path.c_str(), "ICUToHome", ticu2home, dist_size + 1, "%g");
-		tixiAddFloatVector(handle, time_path.c_str(), "InfectiousAsymp", tinfasy, dist_size + 1, "%g");
-		tixiAddFloatVector(handle, time_path.c_str(), "ICUToDeath", ticu2death, dist_size + 1, "%g");
-
-		tixiAddFloatVector(handle, prob_path.c_str(), "InfectionFromContact", inf_cont, dist_size + 1, "%g");
-		tixiAddFloatVector(handle, prob_path.c_str(), "AsympPerInfection", alpha, dist_size + 1, "%g");
-		tixiAddFloatVector(handle, prob_path.c_str(), "RiskFromSymptomatic", beta, dist_size + 1, "%g");
-		tixiAddFloatVector(handle, prob_path.c_str(), "HospitalizedPerInfectious", rho, dist_size + 1, "%g");
-		tixiAddFloatVector(handle, prob_path.c_str(), "ICUPerHospitalized", theta, dist_size + 1, "%g");
-		tixiAddFloatVector(handle, prob_path.c_str(), "DeadPerICU", delta, dist_size + 1, "%g");
+		
 	}
 
 	delete contact;
@@ -245,16 +353,8 @@ double draw_number(double* values, char* dist)
     }
 }
 
-struct file
-{
-	int nb_groups;
-	int runs;
-	double t0;
-	double tmax;
-	double dt;
-	std::vector<std::vector<epi::SecirParams>> params;
-	std::vector<epi::ContactFrequencyMatrix> contact_freq_matrix;
-};
+
+
 
 file read_parameters(const std::string& filename)
 {
@@ -434,5 +534,175 @@ file read_parameters(const std::string& filename)
 
 	return { nb_groups, runs, t0, tmax, dt, all_params, all_contact_freq_matrix };
 }
+
+
+parameter_space_t::parameter_space_t(std::string& parameter_filename)
+{
+	TixiDocumentHandle handle = -1;
+	tixiOpenDocument(filename.c_str(), &handle);
+	int nb_groups;
+	int nb_damp;
+	int runs;
+	double t0;
+	double tmax;
+	double dt;
+
+
+	tixiGetIntegerElement(handle, "/Parameters/NumberOfGroups", &nb_groups);
+	tixiGetIntegerElement(handle, "/Parameters/NumberOfDampings", &nb_damp);
+	tixiGetIntegerElement(handle, "/Parameters/Runs", &runs);
+	tixiGetDoubleElement(handle, "/Parameters/T0", &t0);
+	tixiGetDoubleElement(handle, "/Parameters/TMax", &tmax);
+	tixiGetDoubleElement(handle, "/Parameters/dt", &dt);
+	
+	epi::ContactFrequencyMatrix contact_freq_matrix{ (size_t)nb_groups };
+
+	
+	
+	for (size_t i = 0; i < nb_groups; i++) {
+
+		std::string name = "Group" + std::to_string(i + 1);
+		std::string path = "/Parameters/" + name;
+		std::string pop_path = path + "/Population";
+		std::string time_path = path + "/StageTimes";
+		std::string prob_path = path + "/Probabilities";
+
+		double* contact = new double[nb_groups];
+		tixiGetFloatVector(handle, ("/Parameters/ContactRateGroup" + std::to_string(i + 1)).c_str(), &contact, nb_groups);
+
+		for (int j = 0; j < nb_groups; ++j)
+		{
+			contact_freq_matrix.set_cont_freq(contact[j], i, j);
+		}
+
+        // fixed size groups
+        // total
+		
+		double total_t0;
+		double hosp_t0;
+		double icu_t0;
+		double dead_t0;
+		
+		tixiGetDoubleElement(handle, (pop_path + "/Total/Mean").c_str(), &total_t0);
+		tixiGetDoubleElement(handle, (pop_path + "/Hospitalized/Mean").c_str(), &hosp_t0);
+		tixiGetDoubleElement(handle, (pop_path + "/ICU/Mean").c_str(), &icu_t0);
+		tixiGetDoubleElement(handle, (pop_path + "/Dead/Mean").c_str(), &dead_t0);
+		
+        m_total.push_back(total_t0);
+        m_hospitalized.push_back(hosp_t0);
+        m_icu.push_back(icu_t0);
+        m_dead.push_back(dead_t0);
+
+        // variably sized groups
+        // exposed
+        m_exposed.push_back(read_dist(handle, pop_path + "/Exposed"));
+
+        // carrier
+        value_params = params[i].populations.get_carrier_t0();
+        m_carrier.push_back(read_dist(handle, pop_path + "/Carrier"));
+
+        // infectious
+        m_infectious.push_back(read_dist(handle, pop_path + "/Infectious"));
+
+        // recovered
+        m_recovered.push_back(read_dist(handle, pop_path + "/Recovered"));
+		
+		
+		// times
+		// incubation time
+        m_incubation.push_back(read_dist(handle, time_path + "/Incubation"));
+
+        // infectious time (mild)
+        m_inf_mild.push_back(read_dist(handle, time_path + "/InfectiousMild"));
+
+        // serial interval
+        m_serial_int.push_back(read_dist(handle, time_path + "/SerialInterval"));
+
+        // infectious to recovered (hospitalized to home)
+        m_hosp_to_rec.push_back(read_dist(handle, time_path + "/HospitalizedToHome"));
+
+        // infectious to hospitalized (home to hospitalized)
+        m_inf_to_hosp.push_back(read_dist(handle, time_path + "/HomeToHospitalized"));
+
+        // infectious (asymptomatic)
+        m_inf_asymp.push_back(read_dist(handle, time_path + "/InfectiousAsymp"));
+
+        // hospitalized to ICU
+        m_hosp_to_icu.push_back(read_dist(handle, time_path + "/HospitalizedToICU"));
+
+        // ICU to recovered
+        m_icu_to_rec.push_back(read_dist(handle, time_path + "/ICUToHome"));
+
+        // ICU to death
+        m_icu_to_death.push_back(read_dist(handle, time_path + "/ICUToDeath"));
+		
+		
+		// probabilities
+		// infection from contact
+        m_inf_from_cont.push_back(read_dist(handle, prob_path + "/InfectionFromContact"));
+
+        // asymptomatic per infectious
+        m_asymp_per_inf.push_back(read_dist(handle, prob_path + "/AsympPerInfection"));
+
+        // risk of infection from infectious
+        m_risk_from_symp.push_back(read_dist(handle, prob_path + "/RiskFromSymptomatic"));
+
+        // deaths per icu treatments
+        m_death_per_icu.push_back(read_dist(handle, prob_path + "/DeadPerICU"));
+
+        // hospitalized per infections
+        m_hosp_per_inf.push_back(read_dist(handle, prob_path + "/HospitalizedPerInfectious"));
+
+        // icu treatments per hospitalized
+        m_icu_per_hosp.push_back(read_dist(handle, prob_path + "/ICUPerHospitalized"));
+		
+		for (int j = 0; j < nb_groups; ++j){
+			contact_freq_matrix.set_cont_freq(contact[j], i, j);
+		}
+		
+		
+    }
+	
+
+	 nb_damp_dist = std::make_unique<ParameterDistributionUniform>(ParameterDistributionUniform(1, (tmax - t0) / 10));
+	 day_dist = std::make_unique<ParameterDistributionUniform>(ParameterDistributionUniform(t0, tmax));
+	 damp_diag_base_dist = std::make_unique<ParameterDistributionUniform>(ParameterDistributionUniform(0.1, 1));
+	 damp_diag_rel_dist = std::make_unique<ParameterDistributionUniform>(ParameterDistributionUniform(0.6, 1.4));
+	 damp_offdiag_rel_dist = std::make_unique<ParameterDistributionUniform>(ParameterDistributionUniform(0.7, 1.1));
+	 
+	 nb_damp_dist.add_predefined_sample(nb_damp);
+	 for (int i = 0; i < nb_damp; ++i)
+	 {
+		double day;
+		double damping;
+
+		tixiGetDoubleElement(handle, ("/Parameters/Dampings/Damp" + std::to_string(i + 1) + "/Day").c_str(), &day);
+		day_dist.add_predefined_sample(day);
+		for (int k = 0; k < nb_groups; ++k)
+		{
+			tixiGetDoubleElement(handle, ("/Parameters/Dampings/Damp" + std::to_string(i + 1) + "/Group" + std::to_string(k + 1)).c_str(), &damping);
+			damp_diag_base.add_predefined_sample(damping);
+			damp_diag_rel_dist.add_predefined_sample(1.0);
+			for (int l = k+1; l<nb_groups; ++l)
+				damp_offdiag_rel_dist.add_predefined_sample(1.0);
+		}
+	 }
+	 
+	 
+	// maximum number of dampings; to avoid overfitting only allow one damping for every 10 days simulated
+    // damping base values are between 0.1 and 1; diagonal values vary lie in the range of 0.6 to 1.4 times the base value
+    // off diagonal values vary between 0.7 to 1.1 of the corresponding diagonal value (symmetrization is conducted)
+    m_cont_freq_matrix_variable =
+        std::move(std::make_unique<ContactFrequencyVariableElement>(ContactFrequencyVariableElement{
+            cont_freq_matrix,
+            nb_damp_dist,
+            day_dist,
+            damp_diag_base_dist,
+            damp_diag_rel_dist,
+            damp_offdiag_rel_dist}));
+    // TODO: implement
+    assert(0 && "This function not implemented yet and needs a file read method.");
+}
+
 
 }
