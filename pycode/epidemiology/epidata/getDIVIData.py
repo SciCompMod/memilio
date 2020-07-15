@@ -23,7 +23,7 @@ def adjust_data(df, date_of_data):
 
    # add 'bundesland' for data from 25.4.
    if date_of_data == date(2020, 4, 25):
-      df = df.assign(bundesland = df['gemeindeschluessel'].floordiv(1000))
+      df.insert(loc=0, column='bundesland', value = df['gemeindeschluessel'].floordiv(1000))
 
    return df
 
@@ -109,7 +109,8 @@ def get_divi_data(read_data=dd.defaultDict['read_data'],
 
          if (df2.empty != True):
             # data of first days needs adjustment to following data
-            df2 = adjust_data(df2, start_date)
+            if start_date <= date(2020,4,29):
+               df2 = adjust_data(df2, start_date)
             df = df.append(df2, ignore_index=True)
             print("Success: Data of date " + start_date.strftime("%Y-%m-%d") + " has been included to dataframe")
          else:
