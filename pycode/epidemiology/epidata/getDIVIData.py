@@ -55,23 +55,24 @@ def get_divi_data(read_data=dd.defaultDict['read_data'],
       start_date = date(2020, 4, 24)
       end_date = date.today()
       delta = timedelta(days=1)
-      data1_end_date = date(2020, 6, 5)
+      data1_start_date = date(2020, 4, 30)
+      data1_end_date = date(2020, 5, 5)
+      time_shift_date = date(2020, 6, 5)
       data2_start_date = date(2020, 6, 12)
       data2_end_date = date(2020, 6, 25)
-      data3_start_date = date(2020, 7, 6)
       # start with empty dataframe
       df = pandas.DataFrame()
       
       # number at end of url
-      call_number1 = 3906
-      call_number2 = 3958
+      call_number_data1 = 3980
+      call_number_data2 = 3906
       
       while start_date <= end_date:
 
          call_date = start_date.strftime("%Y-%m-%d")
 
          # first links have different upload time
-         if start_date < data1_end_date:
+         if start_date < time_shift_date:
             call_time = "-09-15"
          else:
             call_time = "-12-15"
@@ -79,15 +80,15 @@ def get_divi_data(read_data=dd.defaultDict['read_data'],
          df2 = pandas.DataFrame()
          
          # construction of link is different for different time periods
-         if start_date >= data2_start_date and start_date <= data2_end_date:
-             call_url = "https://www.divi.de/divi-intensivregister-tagesreport-archiv-csv/divi-intensivregister-" + call_date + call_time + "-2/viewdocument/" + str(call_number1)
-             # number in url increases every day by 1
-             call_number1 += 1
+         if start_date >= data1_start_date and start_date <= data1_end_date:
+            call_url = "https://www.divi.de/divi-intensivregister-tagesreport-archiv-csv/divi-intensivregister-" + call_date + call_time + "/viewdocument/" + str(call_number_data1)
+            # number in url increases every day by 1
+            call_number_data1 += 1
          else:
-            if start_date >= data3_start_date:
-                call_url = "https://www.divi.de/divi-intensivregister-tagesreport-archiv-csv/divi-intensivregister-" + call_date + call_time + "/viewdocument/" + str(call_number2)
-                # number in url increases every day by 3
-                call_number2 += 3
+            if start_date >= data2_start_date and start_date <= data2_end_date:
+               call_url = "https://www.divi.de/divi-intensivregister-tagesreport-archiv-csv/divi-intensivregister-" + call_date + call_time + "-2/viewdocument/" + str(call_number_data2)
+               # number in url increases every day by 1
+               call_number_data2 += 1
             else:
                call_url = "https://www.divi.de/divi-intensivregister-tagesreport-archiv-csv/divi-intensivregister-" + call_date + call_time + "/download"
             
