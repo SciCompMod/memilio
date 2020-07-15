@@ -1,6 +1,6 @@
 import unittest
 from pyfakefs import fake_filesystem_unittest
-from datetime import datetime
+from datetime import date
 
 
 import os
@@ -14,16 +14,6 @@ from unittest.mock import patch, mock_open
 class Test_getDiviData(fake_filesystem_unittest.TestCase):
 
     path = '/home/DiviData'
-
-    test_stringi = ("""\
-bundesland,gemeindeschluessel,anzahl_meldebereiche,faelle_covid_aktuell,faelle_covid_aktuell_beatmet,\
-anzahl_standorte,betten_frei,betten_belegt,daten_stand
-01,01001,2,0,0,2,48,34,2020-07-07 12:15:00
-02,02000,28,7,6,24,396,574,2020-07-07 12:15:00
-03,03101,5,1,1,5,60,96,2020-07-07 12:15:00
-03,03103,1,4,1,1,11,23,2020-07-07 12:15:00
-02,02000,28,7,6,24,397,579,2020-07-08 12:15:00
-03.03101,5,1,1,5,65,91,2020-07-08 12:15:00""")
 
     test_string = ("""[\
 {"ID_State":1,"ID_County":1001,"anzahl_meldebereiche":2,"ICU":0,"ICU_ventilated":0,\
@@ -60,6 +50,39 @@ anzahl_standorte,betten_frei,betten_belegt,daten_stand
 
     def setUp(self):
         self.setUpPyfakefs()
+
+    @patch('getDIVIData.pandas.read_csv')
+    def test_gdd_download_data(self, mock_read_csv):
+
+        mock_read_csv.return_value = pd.read_json(self.test_string)
+
+        [read_data, make_plot, out_form, out_folder] = [False, False, "json", self.path]
+
+        directory = os.path.join(out_folder, 'Germany/')
+        gd.check_dir(directory)
+
+        file = "FullData_DIVI.json"
+
+        file_out1 = "county_divi.json"
+        file_out2 = "state_divi.json"
+        file_out3 = "germany_divi.json"
+
+        gdd.get_divi_data(read_data, make_plot, out_form, out_folder, start_date=date(2020,7,7), end_date=date(2020,7,7))
+
+        self.assertEqual(len(os.listdir(directory)), 4)
+        self.assertEqual(os.listdir(directory).sort(), [file, file_out1, file_out2, file_out3].sort())
+
+        f_path = os.path.join(directory, file_out1)
+        f = open(f_path, "r")
+        self.assertEqual(f.read(), self.test_stringr1)
+
+        f_path = os.path.join(directory, file_out2)
+        f = open(f_path, "r")
+        self.assertEqual(f.read(), self.test_stringr2)
+
+        f_path = os.path.join(directory, file_out3)
+        f = open(f_path, "r")
+        self.assertEqual(f.read(), self.test_stringr3)
 
     def test_gdd_read_data(self):
 

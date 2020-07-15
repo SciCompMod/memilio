@@ -1,28 +1,28 @@
 import os
 import sys
 import pandas
+from datetime import timedelta, date
 
 from epidemiology.epidata import getDataIntoPandasDataFrame as gd
 from epidemiology.epidata import defaultDict as dd
 
-def adjust_first_data(df, start_date):
-   from datetime import date
+def adjust_data(df, date_of_data):
 
    # rename column 'kreis' of first date to match data of following days
-   if start_date == date(2020, 4, 24):
+   if date_of_data == date(2020, 4, 24):
       df.rename({'kreis': 'gemeindeschluessel'}, axis=1, inplace=True)
 
    # remove empty column
-   if start_date == date(2020, 4, 29):
+   if date_of_data == date(2020, 4, 29):
       df.drop(columns = 'Unnamed: 0', inplace=True)
 
    # add dates for data until 27.4.
-   if start_date <= date(2020, 4, 27):
-      date_str = start_date.strftime("%Y-%m-%d")+" 09:15:00"
+   if date_of_data <= date(2020, 4, 27):
+      date_str = date_of_data.strftime("%Y-%m-%d")+" 09:15:00"
       df.insert(loc = len(df.columns), column = 'daten_stand', value = date_str)
 
    # add 'bundesland' for data from 25.4.
-   if start_date == date(2020, 4, 25):
+   if date_of_data == date(2020, 4, 25):
       df = df.assign(bundesland = df['gemeindeschluessel'].floordiv(1000))
 
    return df
@@ -30,7 +30,14 @@ def adjust_first_data(df, start_date):
 def get_divi_data(read_data=dd.defaultDict['read_data'],
                 make_plot=dd.defaultDict['make_plot'],
                 out_form=dd.defaultDict['out_form'],
-                out_folder=dd.defaultDict['out_folder']):
+                out_folder=dd.defaultDict['out_folder'],
+                start_date=date(2020,4,24),
+                end_date=date.today()):
+
+   # First csv data on 24-04-2020
+   if start_date < date(2020,4,24):
+      start_date = date(2020,4,24)
+      print("Warning: First data available on 24-04-2020")
 
    directory = os.path.join(out_folder, 'Germany/')
    gd.check_dir(directory)
@@ -48,12 +55,7 @@ def get_divi_data(read_data=dd.defaultDict['read_data'],
 
    else:
       # Get data:
-      # First csv data on 24-04-2020
 
-      from datetime import timedelta, date
-
-      start_date = date(2020, 4, 24)
-      end_date = date.today()
       delta = timedelta(days=1)
       data1_start_date = date(2020, 4, 30)
       data1_end_date = date(2020, 5, 5)
@@ -103,7 +105,7 @@ def get_divi_data(read_data=dd.defaultDict['read_data'],
 
          if (df2.empty != True):
             # data of first days needs adjustment to following data
-            df2 = adjust_first_data(df2, start_date)
+            df2 = adjust_data(df2, start_date)
             df = df.append(df2, ignore_index=True)
             print("Success: Data of date " + call_date + " has been included to dataframe")
          else:
