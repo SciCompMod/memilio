@@ -5,7 +5,10 @@
 #include <algorithm>
 #include <utility>
 #include <iostream>
+#include <sstream>
+#include <cstring>
 #include <cassert>
+#include <memory>
 
 namespace epi
 {
@@ -126,6 +129,57 @@ struct has_eq_op : std::false_type {
 template <class T>
 struct has_eq_op<T, void_t<decltype(std::declval<T>() == std::declval<T>())>> : std::true_type {
 };
+
+namespace details
+{
+    inline size_t string_length(const char* str)
+    {
+        return std::strlen(str);
+    }
+
+    template <class String>
+    size_t string_length(String&& str)
+    {
+        return str.length();
+    }
+
+    inline void path_join_rec(std::stringstream& ss, bool w)
+    {
+    }
+
+    template <class Head, class... Tail>
+    void path_join_rec(std::stringstream& ss, bool writeSeparator, Head&& head, Tail&&... tail)
+    {
+        if (writeSeparator) {
+            ss << '/';
+        }
+        ss << head;
+        path_join_rec(ss, string_length(head) > 0 && head[string_length(head) - 1] != '/', tail...);
+    }
+
+} // namespace details
+
+template <class String, class... Strings>
+std::string path_join(String&& base, Strings&&... app)
+{
+    std::stringstream ss;
+    details::path_join_rec(ss, false, base, app...);
+    auto path = ss.str();
+    return path;
+}
+
+template <class U, class T>
+std::unique_ptr<U> dynamic_unique_ptr_cast(std::unique_ptr<T>&& base_ptr)
+{
+    auto tmp_base_ptr = std::move(base_ptr);
+    U* tmp = dynamic_cast<U*>(tmp_base_ptr.get());
+    std::unique_ptr<U> derived_ptr;
+    if (tmp != nullptr) {
+        tmp_base_ptr.release();
+        derived_ptr.reset(tmp);
+    }
+    return derived_ptr;
+}
 
 }
 

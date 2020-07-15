@@ -116,3 +116,62 @@ TEST(TestInsertSortedReplace, replace)
 
     EXPECT_THAT(v, testing::ElementsAre(Foo_(1, 2), Foo_(2, 2), Foo_(3, 1)));
 }
+
+TEST(TestPathJoin, joinOne)
+{
+    EXPECT_EQ(epi::path_join("."), ".");
+}
+
+TEST(TestPathJoin, joinTwoMixedClasses)
+{
+    EXPECT_EQ(epi::path_join(".", "dir"), "./dir");
+    EXPECT_EQ(epi::path_join("./", std::string("dir")), "./dir");
+    EXPECT_EQ(epi::path_join(std::string("/"), "dir"), "/dir");
+    EXPECT_EQ(epi::path_join(std::string("."), std::string("dir")), "./dir");
+}
+
+TEST(TestPathJoin, ignoreEmpty)
+{
+    EXPECT_EQ(epi::path_join(""), "");
+    EXPECT_EQ(epi::path_join("", "dir"), "dir");
+    EXPECT_EQ(epi::path_join("", "", "dir"), "dir");
+    EXPECT_EQ(epi::path_join(".", "", "", "dir"), "./dir");
+    EXPECT_EQ(epi::path_join("./", "", "", "dir"), "./dir");
+}
+
+namespace
+{
+class Base
+{
+public:
+    virtual ~Base()
+    {
+    }
+};
+
+class Derived : public Base
+{
+};
+} // namespace
+
+TEST(TestDynamicUniquePtrCast, notNull)
+{
+    std::unique_ptr<Base> upb = std::make_unique<Derived>();
+    auto pb = upb.get();
+    auto upd = epi::dynamic_unique_ptr_cast<Derived>(std::move(upb));
+    EXPECT_EQ(upd.get(), dynamic_cast<Derived*>(pb));
+}
+
+TEST(TestDynamicUniquePtrCast, null)
+{
+    std::unique_ptr<Base> upb;
+    auto upd = epi::dynamic_unique_ptr_cast<Derived>(std::move(upb));
+    EXPECT_EQ(upd.get(), nullptr);
+}
+
+TEST(TestDynamicUniquePtrCast, notDerived)
+{
+    std::unique_ptr<Base> upb = std::make_unique<Base>();
+    auto upd = epi::dynamic_unique_ptr_cast<Derived>(std::move(upb));
+    EXPECT_EQ(upd.get(), nullptr);
+}
