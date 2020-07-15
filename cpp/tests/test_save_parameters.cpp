@@ -67,19 +67,19 @@ TEST(TestSaveParameters, compareSingleRun)
 	auto t = simulate(t0, tmax, dt, contact_freq_matrix, params, secihurd);
 
 	int runs = 1;
-	epi::dist_params dists;
+	// epi::dist_params dists;
 
-	epi::write_parameters(params, contact_freq_matrix, t0, tmax, dt, runs, "none", dists, "TestParameters.xml");
-	epi::file parameters = epi::file{ epi::read_parameters("TestParameters.xml") };
+	// epi::write_parameters(params, contact_freq_matrix, t0, tmax, dt, runs, dists, "TestParameters.xml");
+	// epi::file parameters = epi::file{ epi::read_parameters("TestParameters.xml") };
 
 
 
-	t0 = parameters.t0;
-	tmax = parameters.tmax;
-	dt = parameters.dt;
+	// t0 = parameters.t0;
+	// tmax = parameters.tmax;
+	// dt = parameters.dt;
 
-	params = parameters.params[0];
-	contact_freq_matrix = parameters.contact_freq_matrix[0];
+	// params = parameters.params[0];
+	// contact_freq_matrix = parameters.contact_freq_matrix[0];
 
 	
 

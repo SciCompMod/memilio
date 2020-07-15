@@ -23,7 +23,7 @@ public:
      * @brief Constructor from file name
      * @param[in] parameter_filename filename of a file storing ranges of input parameters.
      */
-    ParameterStudy(secir_simulation_function_t const& simu_func, std::string& parameter_filename);
+    ParameterStudy(secir_simulation_function_t const& simu_func, ParameterSpace&& parameter_space, size_t n_runs);
 
     /* 
      * @brief Constructor from contact frequency matrix and parameter vector
@@ -92,13 +92,14 @@ private:
     double m_dt = 0.1;
 };
 
-ParameterStudy::ParameterStudy(secir_simulation_function_t const& simu_func, std::string& parameter_filename)
-    : simulation_function{simu_func}
-    , parameter_space{parameter_filename}
+inline ParameterStudy::ParameterStudy(const secir_simulation_function_t& simu_func, ParameterSpace&& parameter_space, size_t n_runs)
+    : simulation_function(simu_func)
+    , parameter_space(std::move(parameter_space))
+    , m_nb_runs(n_runs)
 {
 }
 
-ParameterStudy::ParameterStudy(secir_simulation_function_t const& simu_func,
+inline ParameterStudy::ParameterStudy(secir_simulation_function_t const& simu_func,
                                ContactFrequencyMatrix const& cont_freq_matrix, std::vector<SecirParams> const& params,
                                double t0, double tmax, double dev_rel, size_t nb_runs)
     : simulation_function{simu_func}
@@ -107,7 +108,7 @@ ParameterStudy::ParameterStudy(secir_simulation_function_t const& simu_func,
 {
 }
 
-std::vector<std::vector<Eigen::VectorXd>> ParameterStudy::run()
+inline std::vector<std::vector<Eigen::VectorXd>> ParameterStudy::run()
 {
     std::vector<std::vector<Eigen::VectorXd>> ensemble_result;
 

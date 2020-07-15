@@ -1,7 +1,6 @@
 #include "load_test_data.h"
 #include "epidemiology/secir.h"
 #include <epidemiology/save_result.h>
-#include <epidemiology/save_parameters.h>
 #include <gtest/gtest.h>
 
 TEST(TestSaveResult, compareResultWithH5)

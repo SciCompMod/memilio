@@ -96,50 +96,48 @@ int main()
 
 	int runs = 1;
 
-#ifdef HAVE_EPI_IO
-    // TODO: we need a smoother integration between the io and the parameters
-    // Currently, too much code is requried here
-	epi::dist_params dists;
+// #ifdef HAVE_EPI_IO
+//     // TODO: we need a smoother integration between the io and the parameters
+//     // Currently, too much code is requried here
+// 	epi::dist_params dists;
 
-	dists.tinc = {0.01, 10.0, 0.01};
-	dists.tinfmild = { 0.01, 10.0, 0.01 };
-	dists.tserint = { 0.01, 10.0, 0.01 };
-	dists.thosp2home = { 0.01, 15.0, 0.01 };
-	dists.thome2hosp = { 0.01, 10.0, 0.01 };
-	dists.thosp2icu = { 0.01, 10.0, 0.01 };
-	dists.ticu2home = { 0.01, 10.0, 0.01 };
-	dists.tinfasy = { 0.01, 10.0, 0.01 };
-	dists.ticu2death = { 0.01, 10.0, 0.01 };
+// 	dists.tinc = {0.01, 10.0, 0.01};
+// 	dists.tinfmild = { 0.01, 10.0, 0.01 };
+// 	dists.tserint = { 0.01, 10.0, 0.01 };
+// 	dists.thosp2home = { 0.01, 15.0, 0.01 };
+// 	dists.thome2hosp = { 0.01, 10.0, 0.01 };
+// 	dists.thosp2icu = { 0.01, 10.0, 0.01 };
+// 	dists.ticu2home = { 0.01, 10.0, 0.01 };
+// 	dists.tinfasy = { 0.01, 10.0, 0.01 };
+// 	dists.ticu2death = { 0.01, 10.0, 0.01 };
 
-	dists.inf_cont = { 0.01, 1.01, 0.01 };
-	dists.alpha = { 0.01, 0.99, 0.01 };
-	dists.beta = { 0.1, 0.99, 0.01 };
-	dists.rho = { 0.1, 0.99, 0.01 };
-	dists.theta = { 0.1, 0.99, 0.01 };
-	dists.delta = { 0.1, 0.99, 0.01 };
+// 	dists.inf_cont = { 0.01, 1.01, 0.01 };
+// 	dists.alpha = { 0.01, 0.99, 0.01 };
+// 	dists.beta = { 0.1, 0.99, 0.01 };
+// 	dists.rho = { 0.1, 0.99, 0.01 };
+// 	dists.theta = { 0.1, 0.99, 0.01 };
+// 	dists.delta = { 0.1, 0.99, 0.01 };
 
-	std::string dist = "uniform";
-
-	epi::write_parameters(params, contact_freq_matrix, t0, tmax, dt, runs, dist, dists, "Parameters.xml");
+// 	epi::write_parameters(params, contact_freq_matrix, t0, tmax, dt, runs, dists, "Parameters.xml");
 	
-	epi::file parameters = epi::file{ epi::read_parameters("Parameters.xml") };
+// 	epi::file parameters = epi::file{ epi::read_parameters("Parameters.xml") };
 
-	t0 = parameters.t0;
-	tmax = parameters.tmax;
-	dt = parameters.dt;
+// 	t0 = parameters.t0;
+// 	tmax = parameters.tmax;
+// 	dt = parameters.dt;
 	
-	params = parameters.params[0];
-	contact_freq_matrix = parameters.contact_freq_matrix[0];
-#endif
+// 	params = parameters.params[0];
+// 	contact_freq_matrix = parameters.contact_freq_matrix[0];
+// #endif
 	
     std::vector<Eigen::VectorXd> secir(0);
 
     std::vector<double> time = simulate(t0, tmax, dt, contact_freq_matrix, params, secir);
 
 
-#ifdef HAVE_EPI_IO
-	epi::save_result(time, secir, "Result.h5");
-#endif
+// #ifdef HAVE_EPI_IO
+// 	epi::save_result(time, secir, "Result.h5");
+// #endif
 
     char vars[] = {'S', 'E', 'C', 'I', 'H', 'U', 'R', 'D'};
 	printf("secir.size() - 1:%d\n", static_cast<int>(secir.size() - 1));
