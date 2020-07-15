@@ -20,6 +20,9 @@ set(TESTSOURCES
   test_migration.cpp
   test_eigen_util.cpp
   test_secir_ageres.cpp
+  test_parameter_studies.cpp
+  test_graph.cpp
+  test_stl_util.cpp
   gtest_helpers.h
 )
 

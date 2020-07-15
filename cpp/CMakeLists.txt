@@ -28,6 +28,8 @@ add_library(epidemiology
     epidemiology/integrator.cpp
     epidemiology/migration.h
     epidemiology/migration.cpp
+    epidemiology/graph.h
+    epidemiology/graph.cpp
     epidemiology/eigen_util.h
 )
 

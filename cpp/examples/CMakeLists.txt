@@ -21,6 +21,9 @@ target_link_libraries(secir PRIVATE epidemiology)
 add_executable(secir_ageres secir_ageres.cpp)
 target_link_libraries(secir_ageres PRIVATE epidemiology)
 
+add_executable(graph graph.cpp)
+target_link_libraries(graph PRIVATE epidemiology)
+
 if (TARGET "epidemiology_io")
   target_link_libraries(secir_ageres PRIVATE epidemiology_io)
 
