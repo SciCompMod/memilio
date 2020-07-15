@@ -27,6 +27,49 @@ def adjust_data(df, date_of_data):
 
    return df
 
+def download_data_for_one_day(download_date):
+
+   # define time periods where construction of urls is different
+   data1_start_date = date(2020, 4, 30)
+   data1_end_date = date(2020, 5, 5)
+   time_shift_date = date(2020, 6, 5)
+   data2_start_date = date(2020, 6, 12)
+   data2_end_date = date(2020, 6, 25)
+
+   call_date = download_date.strftime("%Y-%m-%d")
+
+   # first links have different upload time
+   if download_date < time_shift_date:
+      call_time = "-09-15"
+   else:
+      call_time = "-12-15"
+
+   # construction of link is different for different time periods
+   if download_date >= data1_start_date and download_date <= data1_end_date:
+      # number in url starts at 3980 and increases every day by 1
+      call_number = (download_date - data1_start_date).days  + 3980
+      call_url = "https://www.divi.de/divi-intensivregister-tagesreport-archiv-csv/divi-intensivregister-" + call_date + call_time + "/viewdocument/" + str(call_number)
+   else:
+      if download_date >= data2_start_date and download_date <= data2_end_date:
+         # number in url starts at 3906 and increases every day by 1
+         call_number = (download_date - data2_start_date).days + 3906
+         call_url = "https://www.divi.de/divi-intensivregister-tagesreport-archiv-csv/divi-intensivregister-" + call_date + call_time + "-2/viewdocument/" + str(call_number)
+
+      else:
+         call_url = "https://www.divi.de/divi-intensivregister-tagesreport-archiv-csv/divi-intensivregister-" + call_date + call_time + "/download"
+
+   df = pandas.DataFrame()
+
+   try:
+      df = pandas.read_csv(call_url)
+   except OSError as e:
+      exit_string = "ERROR: URL " + call_url + " could not be opened."
+      sys.exit(exit_string)
+   except:
+      print("Information: URL: ",  call_url, " not knwon")
+
+   return df
+
 def get_divi_data(read_data=dd.defaultDict['read_data'],
                 make_plot=dd.defaultDict['make_plot'],
                 out_form=dd.defaultDict['out_form'],
@@ -55,61 +98,22 @@ def get_divi_data(read_data=dd.defaultDict['read_data'],
 
    else:
       # Get data:
-
-      delta = timedelta(days=1)
-      data1_start_date = date(2020, 4, 30)
-      data1_end_date = date(2020, 5, 5)
-      time_shift_date = date(2020, 6, 5)
-      data2_start_date = date(2020, 6, 12)
-      data2_end_date = date(2020, 6, 25)
       # start with empty dataframe
       df = pandas.DataFrame()
-      
-      # number at end of url
-      call_number_data1 = 3980
-      call_number_data2 = 3906
-      
+
+      delta = timedelta(days=1)
+
       while start_date <= end_date:
 
-         call_date = start_date.strftime("%Y-%m-%d")
-
-         # first links have different upload time
-         if start_date < time_shift_date:
-            call_time = "-09-15"
-         else:
-            call_time = "-12-15"
-
-         df2 = pandas.DataFrame()
-         
-         # construction of link is different for different time periods
-         if start_date >= data1_start_date and start_date <= data1_end_date:
-            call_url = "https://www.divi.de/divi-intensivregister-tagesreport-archiv-csv/divi-intensivregister-" + call_date + call_time + "/viewdocument/" + str(call_number_data1)
-            # number in url increases every day by 1
-            call_number_data1 += 1
-         else:
-            if start_date >= data2_start_date and start_date <= data2_end_date:
-               call_url = "https://www.divi.de/divi-intensivregister-tagesreport-archiv-csv/divi-intensivregister-" + call_date + call_time + "-2/viewdocument/" + str(call_number_data2)
-               # number in url increases every day by 1
-               call_number_data2 += 1
-            else:
-               call_url = "https://www.divi.de/divi-intensivregister-tagesreport-archiv-csv/divi-intensivregister-" + call_date + call_time + "/download"
-            
-
-         try:
-            df2 = pandas.read_csv(call_url)
-         except OSError as e:
-            exit_string = "ERROR: URL " + url + " could not be opened."
-            sys.exit(exit_string)
-         except:
-            print("Information: URL: ",  call_url, " not knwon")
+         df2 = download_data_for_one_day(start_date)
 
          if (df2.empty != True):
             # data of first days needs adjustment to following data
             df2 = adjust_data(df2, start_date)
             df = df.append(df2, ignore_index=True)
-            print("Success: Data of date " + call_date + " has been included to dataframe")
+            print("Success: Data of date " + start_date.strftime("%Y-%m-%d") + " has been included to dataframe")
          else:
-            print("Warning: Data of date " + call_date + " is not included to dataframe")
+            print("Warning: Data of date " + start_date.strftime("%Y-%m-%d") + " is not included to dataframe")
 
          start_date += delta
 
