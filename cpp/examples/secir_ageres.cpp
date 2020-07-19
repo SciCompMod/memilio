@@ -2,8 +2,8 @@
 #include <epidemiology/logging.h>
 
 #ifdef HAVE_EPI_IO
-  #include <epidemiology/save_result.h>
-  #include <epidemiology/save_parameters.h>
+#include <epidemiology/save_result.h>
+#include <epidemiology/save_parameters.h>
 #endif
 
 int main()
@@ -94,66 +94,22 @@ int main()
         }
     }
 
-	int runs = 1;
-
-// #ifdef HAVE_EPI_IO
-//     // TODO: we need a smoother integration between the io and the parameters
-//     // Currently, too much code is requried here
-// 	epi::dist_params dists;
-
-// 	dists.tinc = {0.01, 10.0, 0.01};
-// 	dists.tinfmild = { 0.01, 10.0, 0.01 };
-// 	dists.tserint = { 0.01, 10.0, 0.01 };
-// 	dists.thosp2home = { 0.01, 15.0, 0.01 };
-// 	dists.thome2hosp = { 0.01, 10.0, 0.01 };
-// 	dists.thosp2icu = { 0.01, 10.0, 0.01 };
-// 	dists.ticu2home = { 0.01, 10.0, 0.01 };
-// 	dists.tinfasy = { 0.01, 10.0, 0.01 };
-// 	dists.ticu2death = { 0.01, 10.0, 0.01 };
-
-// 	dists.inf_cont = { 0.01, 1.01, 0.01 };
-// 	dists.alpha = { 0.01, 0.99, 0.01 };
-// 	dists.beta = { 0.1, 0.99, 0.01 };
-// 	dists.rho = { 0.1, 0.99, 0.01 };
-// 	dists.theta = { 0.1, 0.99, 0.01 };
-// 	dists.delta = { 0.1, 0.99, 0.01 };
-
-// 	epi::write_parameters(params, contact_freq_matrix, t0, tmax, dt, runs, dists, "Parameters.xml");
-	
-// 	epi::file parameters = epi::file{ epi::read_parameters("Parameters.xml") };
-
-// 	t0 = parameters.t0;
-// 	tmax = parameters.tmax;
-// 	dt = parameters.dt;
-	
-// 	params = parameters.params[0];
-// 	contact_freq_matrix = parameters.contact_freq_matrix[0];
-// #endif
-	
     std::vector<Eigen::VectorXd> secir(0);
 
     std::vector<double> time = simulate(t0, tmax, dt, contact_freq_matrix, params, secir);
 
-
-// #ifdef HAVE_EPI_IO
-// 	epi::save_result(time, secir, "Result.h5");
-// #endif
-
     char vars[] = {'S', 'E', 'C', 'I', 'H', 'U', 'R', 'D'};
-	printf("secir.size() - 1:%d\n", static_cast<int>(secir.size() - 1));
+    printf("secir.size() - 1:%d\n", static_cast<int>(secir.size() - 1));
     printf("People in\n");
 
     for (size_t k = 0; k < 8; k++) {
         double dummy = 0;
 
         for (size_t i = 0; i < params.size(); i++) {
-            printf("\t %c[%d]: %.0f", vars[k], (int)i, secir[secir.size() - 1][k + 8*i]);
-            dummy += secir[secir.size() - 1][k +8*i];
+            printf("\t %c[%d]: %.0f", vars[k], (int)i, secir[secir.size() - 1][k + 8 * i]);
+            dummy += secir[secir.size() - 1][k + 8 * i];
         }
 
         printf("\t %c_otal: %.0f\n", vars[k], dummy);
     }
-
-    // printf("People in\n S[0]:\t %.0f\tS[1]:\t %.0f, S_total:\t %.0f", secir[secir.size() - 1][0],
-    //        secir[secir.size() - 1][8], secir[secir.size() - 1][0] + secir[secir.size() - 1][8]);
 }

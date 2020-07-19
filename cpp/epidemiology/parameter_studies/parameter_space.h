@@ -69,7 +69,7 @@ public:
         m_predefined_samples.resize(0);
     }
 
-    const std::vector<double>& get_predefined_samples() const 
+    const std::vector<double>& get_predefined_samples() const
     {
         return m_predefined_samples;
     }
@@ -389,6 +389,36 @@ public:
         return m_cont_freq;
     }
 
+    const ContactFrequencyMatrix get_cont_freq() const
+    {
+        return m_cont_freq;
+    }
+
+    const ParameterDistributionUniform& get_dist_num_dampings() const
+    {
+        return *m_nb_dampings;
+    }
+
+    const ParameterDistributionUniform& get_dist_day() const
+    {
+        return *m_day;
+    }
+
+    const ParameterDistributionUniform& get_dist_damp_diag_base() const
+    {
+        return *m_damp_diag_base;
+    }
+
+    const ParameterDistributionUniform& get_dist_damp_diag_rel() const
+    {
+        return *m_damp_diag_rel;
+    }
+
+    const ParameterDistributionUniform& get_dist_damp_offdiag_rel() const
+    {
+        return *m_damp_offdiag_rel;
+    }
+
 private:
     ContactFrequencyMatrix m_cont_freq;
     std::unique_ptr<ParameterDistributionUniform>
@@ -424,14 +454,11 @@ public:
                    double tmax, double dev_rel);
 
     ParameterSpace(std::unique_ptr<ContactFrequencyVariableElement>&& cont_freq_matrix_variable,
-                   const std::vector<double>& total, 
-                   std::vector<std::unique_ptr<ParameterDistribution>>&& exposed,
+                   const std::vector<double>& total, std::vector<std::unique_ptr<ParameterDistribution>>&& exposed,
                    std::vector<std::unique_ptr<ParameterDistribution>>&& carrier,
-                   std::vector<std::unique_ptr<ParameterDistribution>>&& infectious, 
-                   const std::vector<double>& hospitalized,
-                   const std::vector<double>& icu, 
-                   std::vector<std::unique_ptr<ParameterDistribution>>&& recovered,
-                   const std::vector<double>& dead, 
+                   std::vector<std::unique_ptr<ParameterDistribution>>&& infectious,
+                   const std::vector<double>& hospitalized, const std::vector<double>& icu,
+                   std::vector<std::unique_ptr<ParameterDistribution>>&& recovered, const std::vector<double>& dead,
                    std::vector<std::unique_ptr<ParameterDistribution>>&& incubation,
                    std::vector<std::unique_ptr<ParameterDistribution>>&& serial_int_incub_diff,
                    std::vector<std::unique_ptr<ParameterDistribution>>&& inf_mild,
@@ -473,6 +500,126 @@ public:
         , m_hosp_per_inf(std::move(hosp_per_inf))
         , m_icu_per_hosp(std::move(icu_per_hosp))
     {
+    }
+
+    const std::vector<double>& get_total() const
+    {
+        return m_total;
+    }
+
+    const std::vector<double>& get_hospitalized() const
+    {
+        return m_hospitalized;
+    }
+
+    const std::vector<double>& get_icu() const
+    {
+        return m_icu;
+    }
+
+    const std::vector<double>& get_dead() const
+    {
+        return m_dead;
+    }
+
+    const ParameterDistribution& get_dist_exposed(int group) const
+    {
+        return *m_exposed[group];
+    }
+
+    const ParameterDistribution& get_dist_infectious(int group) const
+    {
+        return *m_infectious[group];
+    }
+
+    const ParameterDistribution& get_dist_carrier(int group) const
+    {
+        return *m_carrier[group];
+    }
+
+    const ParameterDistribution& get_dist_recovered(int group) const
+    {
+        return *m_recovered[group];
+    }
+
+    const ParameterDistribution& get_dist_incubation(int group) const
+    {
+        return *m_incubation[group];
+    }
+
+    const ParameterDistribution& get_dist_serial_int_incub_diff(int group) const
+    {
+        return *m_serial_int_incub_diff[group];
+    }
+
+    const ParameterDistribution& get_dist_inf_mild(int group) const
+    {
+        return *m_inf_mild[group];
+    }
+
+    const ParameterDistribution& get_dist_hosp_to_rec(int group) const
+    {
+        return *m_hosp_to_rec[group];
+    }
+
+    const ParameterDistribution& get_dist_inf_to_hosp(int group) const
+    {
+        return *m_inf_to_hosp[group];
+    }
+
+    const ParameterDistribution& get_dist_inf_asymp(int group) const
+    {
+        return *m_inf_asymp[group];
+    }
+
+    const ParameterDistribution& get_dist_hosp_to_icu(int group) const
+    {
+        return *m_hosp_to_icu[group];
+    }
+
+    const ParameterDistribution& get_dist_icu_to_rec(int group) const
+    {
+        return *m_icu_to_rec[group];
+    }
+
+    const ParameterDistribution& get_dist_icu_to_death(int group) const
+    {
+        return *m_icu_to_death[group];
+    }
+
+    const ParameterDistribution& get_dist_inf_from_cont(int group) const
+    {
+        return *m_inf_from_cont[group];
+    }
+
+    const ParameterDistribution& get_dist_asymp_per_inf(int group) const
+    {
+        return *m_asymp_per_inf[group];
+    }
+
+    const ParameterDistribution& get_dist_risk_from_symp(int group) const
+    {
+        return *m_risk_from_symp[group];
+    }
+
+    const ParameterDistribution& get_dist_death_per_icu(int group) const
+    {
+        return *m_death_per_icu[group];
+    }
+
+    const ParameterDistribution& get_dist_hosp_per_inf(int group) const
+    {
+        return *m_hosp_per_inf[group];
+    }
+
+    const ParameterDistribution& get_dist_icu_per_hosp(int group) const
+    {
+        return *m_icu_per_hosp[group];
+    }
+
+    ContactFrequencyVariableElement& get_cont_freq_matrix_variable() const
+    {
+        return *m_cont_freq_matrix_variable;
     }
 
     ContactFrequencyMatrix get_cont_freq_matrix_sample()
@@ -560,8 +707,8 @@ private:
     std::vector<std::unique_ptr<ParameterDistribution>> m_icu_per_hosp;
 };
 
-inline ParameterSpace::ParameterSpace(ContactFrequencyMatrix const& cont_freq_matrix, std::vector<SecirParams> const& params,
-                               double t0, double tmax, double dev_rel)
+inline ParameterSpace::ParameterSpace(ContactFrequencyMatrix const& cont_freq_matrix,
+                                      std::vector<SecirParams> const& params, double t0, double tmax, double dev_rel)
     : m_nb_age_groups{params.size()}
 {
     double min_val = 0.001;
@@ -701,7 +848,7 @@ inline ParameterSpace::ParameterSpace(ContactFrequencyMatrix const& cont_freq_ma
     // maximum number of dampings; to avoid overfitting only allow one damping for every 10 days simulated
     // damping base values are between 0.1 and 1; diagonal values vary lie in the range of 0.6 to 1.4 times the base value
     // off diagonal values vary between 0.7 to 1.1 of the corresponding diagonal value (symmetrization is conducted)
-    m_cont_freq_matrix_variable = 
+    m_cont_freq_matrix_variable =
         std::move(std::make_unique<ContactFrequencyVariableElement>(ContactFrequencyVariableElement{
             cont_freq_matrix,
             std::make_unique<ParameterDistributionUniform>(ParameterDistributionUniform(1, (tmax - t0) / 10)),

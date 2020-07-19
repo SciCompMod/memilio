@@ -2,11 +2,16 @@
 #define PARAMETER_STUDIES_H
 
 #include <epidemiology/parameter_studies/parameter_space.h>
+//#include <epidemiology/save_parameters.h>
+#include <epidemiology/save_result.h>
 #include <iostream>
+#include <sys/stat.h>
 #include <unordered_map>
 
 namespace epi
 {
+extern void create_document(const std::string& filename, const ContactFrequencyMatrix& cont_freq,
+                            const std::vector<SecirParams>& params, double t0, double tmax);
 
 // The function type for the kind of simulation that we want to run
 using secir_simulation_function_t = std::function<std::vector<double>(
@@ -23,7 +28,8 @@ public:
      * @brief Constructor from file name
      * @param[in] parameter_filename filename of a file storing ranges of input parameters.
      */
-    ParameterStudy(secir_simulation_function_t const& simu_func, ParameterSpace&& parameter_space, size_t n_runs);
+    ParameterStudy(secir_simulation_function_t const& simu_func, ParameterSpace&& parameter_space, size_t n_runs,
+                   double t0, double tmax);
 
     /* 
      * @brief Constructor from contact frequency matrix and parameter vector
@@ -72,6 +78,24 @@ public:
         return m_tmax;
     }
 
+    void set_t0(double t0)
+    {
+        m_t0 = t0;
+    }
+
+    /*
+     * @brief returns start point in simulation
+     */
+    double get_t0() const
+    {
+        return m_t0;
+    }
+
+    const ParameterSpace& get_parameter_space() const
+    {
+        return parameter_space;
+    }
+
 private:
     // The path of the file storing the parameter ranges
     std::string parameter_file;
@@ -92,25 +116,32 @@ private:
     double m_dt = 0.1;
 };
 
-inline ParameterStudy::ParameterStudy(const secir_simulation_function_t& simu_func, ParameterSpace&& parameter_space, size_t n_runs)
+inline ParameterStudy::ParameterStudy(const secir_simulation_function_t& simu_func, ParameterSpace&& parameter_space,
+                                      size_t n_runs, double t0, double tmax)
     : simulation_function(simu_func)
     , parameter_space(std::move(parameter_space))
     , m_nb_runs(n_runs)
+    , m_t0{t0}
+    , m_tmax{tmax}
 {
 }
 
 inline ParameterStudy::ParameterStudy(secir_simulation_function_t const& simu_func,
-                               ContactFrequencyMatrix const& cont_freq_matrix, std::vector<SecirParams> const& params,
-                               double t0, double tmax, double dev_rel, size_t nb_runs)
+                                      ContactFrequencyMatrix const& cont_freq_matrix,
+                                      std::vector<SecirParams> const& params, double t0, double tmax, double dev_rel,
+                                      size_t nb_runs)
     : simulation_function{simu_func}
     , parameter_space{cont_freq_matrix, params, t0, tmax, dev_rel}
     , m_nb_runs{nb_runs}
+    , m_t0{t0}
+    , m_tmax{tmax}
 {
 }
 
 inline std::vector<std::vector<Eigen::VectorXd>> ParameterStudy::run()
 {
     std::vector<std::vector<Eigen::VectorXd>> ensemble_result;
+    int check = mkdir("Results", 0777);
 
     // Iterate over all parameters in the parameter space
     for (size_t i = 0; i < (*this).get_nb_runs(); i++) {
@@ -122,8 +153,14 @@ inline std::vector<std::vector<Eigen::VectorXd>> ParameterStudy::run()
 
         // print_secir_params(contact_sample, params_sample);
 
+        create_document("Results/Parameters_run" + std::to_string(i) + ".xml", contact_sample, params_sample,
+                        (*this).m_t0, (*this).m_tmax);
+
         // Call the simulation function
-        simulation_function((*this).m_t0, (*this).m_tmax, (*this).m_dt, contact_sample, params_sample, secir_result);
+        auto time = simulation_function((*this).m_t0, (*this).m_tmax, (*this).m_dt, contact_sample, params_sample,
+                                        secir_result);
+
+        epi::save_result(time, secir_result, "Results/Result_run" + std::to_string(i) + ".h5");
 
         ensemble_result.push_back(std::move(secir_result));
     }
