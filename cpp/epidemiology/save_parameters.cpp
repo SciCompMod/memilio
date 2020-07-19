@@ -95,8 +95,13 @@ std::unique_ptr<ParameterDistribution> read_dist(TixiDocumentHandle handle, cons
     return distribution;
 }
 
+void write_predef_sample(TixiDocumentHandle handle, const std::string& path, const std::vector<double>& samples)
+{
+    tixiAddFloatVector(handle, path.c_str(), "PredefinedSamples", samples.data(), samples.size(), "%g");
+}
+
 void write_contact(TixiDocumentHandle handle, const std::string& path,
-                   const ContactFrequencyVariableElement& contact_freq_matrix)
+                   const ContactFrequencyVariableElement& contact_freq_matrix, int nb_runs)
 {
     ContactFrequencyMatrix cont_freq = contact_freq_matrix.get_cont_freq();
     int nb_groups                    = cont_freq.get_size();
@@ -115,6 +120,36 @@ void write_contact(TixiDocumentHandle handle, const std::string& path,
     write_dist(handle, contact_path, "DampingDiagBase", contact_freq_matrix.get_dist_damp_diag_base());
     write_dist(handle, contact_path, "DampingDiagRel", contact_freq_matrix.get_dist_damp_diag_rel());
     write_dist(handle, contact_path, "DampingOffdiag", contact_freq_matrix.get_dist_damp_offdiag_rel());
+
+    std::vector<double> predef_num_damp;
+    std::vector<double> predef_day;
+    std::vector<double> predef_diag_base;
+    std::vector<double> predef_diag_rel;
+    std::vector<double> predef_offdiag_rel;
+
+    for (int i = 0; i < nb_runs; i++) {
+        int nb_damp = cont_freq.get_dampings(0, 0).get_dampings_vector().size();
+        predef_num_damp.push_back(nb_damp);
+        for (int j = 0; j < nb_damp; j++) {
+            predef_day.push_back(cont_freq.get_dampings(0, 0).get_dampings_vector().at(j).day);
+            predef_diag_base.push_back(1.0);
+            for (int k = 0; k < nb_groups; k++) {
+                predef_diag_rel.push_back(cont_freq.get_dampings(k, k).get_dampings_vector().at(j).factor);
+                for (int l = k + 1; l < nb_groups; l++) {
+                    predef_offdiag_rel.push_back(cont_freq.get_dampings(k, l).get_dampings_vector().at(j).factor /
+                                                 cont_freq.get_dampings(k, k).get_dampings_vector().at(j).factor);
+                    predef_offdiag_rel.push_back(cont_freq.get_dampings(k, l).get_dampings_vector().at(j).factor /
+                                                 cont_freq.get_dampings(l, l).get_dampings_vector().at(j).factor);
+                }
+            }
+        }
+    }
+
+    write_predef_sample(handle, path_join(contact_path, "NumDampings"), predef_num_damp);
+    write_predef_sample(handle, path_join(contact_path, "DampingDay"), predef_day);
+    write_predef_sample(handle, path_join(contact_path, "DampingDiagBase"), predef_diag_base);
+    write_predef_sample(handle, path_join(contact_path, "DampingDiagRel"), predef_diag_rel);
+    write_predef_sample(handle, path_join(contact_path, "DampingOffdiag"), predef_offdiag_rel);
 }
 
 ContactFrequencyVariableElement read_contact(TixiDocumentHandle handle, const std::string& path)
@@ -165,7 +200,6 @@ ParameterStudy read_parameter_study(TixiDocumentHandle handle, const std::string
     tixiGetIntegerElement(handle, path_join(path, "Runs").c_str(), &n_runs);
     tixiGetDoubleElement(handle, path_join(path, "T0").c_str(), &t0);
     tixiGetDoubleElement(handle, path_join(path, "TMax").c_str(), &tmax);
-    std::cout << tmax << std::endl;
 
     return ParameterStudy(&simulate, read_parameter_space(handle, path), n_runs, t0, tmax);
 }
@@ -268,7 +302,8 @@ ParameterSpace read_parameter_space(TixiDocumentHandle handle, const std::string
         std::move(dist_hosp_per_infectious), std::move(dist_icu_per_hospitalized));
 }
 
-void write_parameter_space(TixiDocumentHandle handle, const std::string& path, const ParameterSpace& parameter_space)
+void write_parameter_space(TixiDocumentHandle handle, const std::string& path, const ParameterSpace& parameter_space,
+                           int nb_runs)
 {
     int nb_groups = parameter_space.get_total().size();
     tixiAddIntegerElement(handle, path.c_str(), "NumberOfGroups", nb_groups, "%d");
@@ -319,7 +354,7 @@ void write_parameter_space(TixiDocumentHandle handle, const std::string& path, c
         write_dist(handle, probabilities_path, "ICUPerHospitalized", parameter_space.get_dist_icu_per_hosp(i));
     }
 
-    write_contact(handle, path, parameter_space.get_cont_freq_matrix_variable());
+    write_contact(handle, path, parameter_space.get_cont_freq_matrix_variable(), nb_runs);
 }
 
 void write_parameter_study(TixiDocumentHandle handle, const std::string& path, const ParameterStudy& parameter_study)
@@ -328,7 +363,7 @@ void write_parameter_study(TixiDocumentHandle handle, const std::string& path, c
     tixiAddDoubleElement(handle, path.c_str(), "T0", parameter_study.get_t0(), "%g");
     tixiAddDoubleElement(handle, path.c_str(), "TMax", parameter_study.get_tmax(), "%g");
 
-    write_parameter_space(handle, path, parameter_study.get_parameter_space());
+    write_parameter_space(handle, path, parameter_study.get_parameter_space(), parameter_study.get_nb_runs());
 }
 
 void create_document(const std::string& filename, const ContactFrequencyMatrix& cont_freq,
