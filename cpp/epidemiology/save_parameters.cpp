@@ -165,6 +165,7 @@ ParameterStudy read_parameter_study(TixiDocumentHandle handle, const std::string
     tixiGetIntegerElement(handle, path_join(path, "Runs").c_str(), &n_runs);
     tixiGetDoubleElement(handle, path_join(path, "T0").c_str(), &t0);
     tixiGetDoubleElement(handle, path_join(path, "TMax").c_str(), &tmax);
+    std::cout << tmax << std::endl;
 
     return ParameterStudy(&simulate, read_parameter_space(handle, path), n_runs, t0, tmax);
 }
@@ -324,8 +325,8 @@ void write_parameter_space(TixiDocumentHandle handle, const std::string& path, c
 void write_parameter_study(TixiDocumentHandle handle, const std::string& path, const ParameterStudy& parameter_study)
 {
     tixiAddIntegerElement(handle, path.c_str(), "Runs", parameter_study.get_nb_runs(), "%d");
-    tixiAddIntegerElement(handle, path.c_str(), "T0", parameter_study.get_t0(), "%d");
-    tixiAddIntegerElement(handle, path.c_str(), "TMax", parameter_study.get_tmax(), "%d");
+    tixiAddDoubleElement(handle, path.c_str(), "T0", parameter_study.get_t0(), "%g");
+    tixiAddDoubleElement(handle, path.c_str(), "TMax", parameter_study.get_tmax(), "%g");
 
     write_parameter_space(handle, path, parameter_study.get_parameter_space());
 }

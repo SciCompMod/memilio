@@ -36,8 +36,8 @@ void check_dist(const epi::ParameterDistribution& dist, const epi::ParameterDist
 
 TEST(TestSaveParameters, compareSingleRun)
 {
-    double t0   = 0;
-    double tmax = 0.2;
+    double t0   = 0.0;
+    double tmax = 50.5;
     double dt   = 0.1;
 
     double tinc = 5.2, tinfmild = 6, tserint = 4.2, thosp2home = 12, thome2hosp = 5, thosp2icu = 2, ticu2home = 8,
