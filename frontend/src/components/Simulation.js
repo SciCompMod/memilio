@@ -3,14 +3,28 @@ import { connect } from 'react-redux';
 import { Button } from 'reactstrap';
 import { getActiveMeasures } from '../redux/measures';
 import { getParameterMap } from '../redux/parameters';
-import { getSelectedData } from '../redux/app';
-import { setData } from '../redux/seir';
+import {getPopulationsOfRegion, getSelectedChildData, getSelectedData} from '../redux/app';
+import {setData, setRegionData} from '../redux/seir';
 
 import { simulate_seir, makeSeirParam, Damping } from '../common/seir.js';
 import { calculateDamping } from '../common/utils';
 
 class Simulation extends PureComponent {
   simulate() {
+    const selectedResult = this.simulateRegion(this.props.start, this.props.selected.population);
+    this.props.setData(selectedResult);
+
+    const regionResults = {};
+    for (let [regionId, region] of Object.entries(this.props.childData.all)) {
+      const start = region[0]
+      const population = this.props.populations[regionId].EWZ;
+      regionResults[regionId] = this.simulateRegion(start, population);
+    }
+
+    this.props.setRegionData(regionResults);
+  }
+
+  simulateRegion(start, population) {
     let step_size = 0.1;
     let x = parseInt(1 / step_size, 10);
     let days = 200;
@@ -21,22 +35,20 @@ class Simulation extends PureComponent {
     seir_params.b = p.contact_rate;
     seir_params.g = 1 / p.infection;
     seir_params.E0 = p.e0;
-    seir_params.I0 = this.props.start.Confirmed; //p.i0;
-    seir_params.R0 = this.props.start.Recovered;
-    seir_params.N = this.props.selected.population;
+    seir_params.I0 = start.Confirmed; //p.i0;
+    seir_params.R0 = start.Recovered;
+    seir_params.N = population;
 
     // TODO: replace by the actual logic
     let action_damping = calculateDamping(
       this.props.measures,
-      this.props.start.date,
+      start.date,
       days
     );
 
     seir_params.dampings = action_damping.map(
       (v, i) => new Damping(v.day, v.damping)
     );
-
-    console.log(seir_params);
 
     let data = simulate_seir(0, days, step_size, seir_params);
 
@@ -46,7 +58,7 @@ class Simulation extends PureComponent {
       data[key] = data[key].filter((v, i) => i % x === 0);
     });
 
-    const startDate = this.props.start.date;
+    const startDate = start.date;
 
     const result = Object.values(
       Object.keys(data)
@@ -74,7 +86,7 @@ class Simulation extends PureComponent {
         }, {})
     );
 
-    this.props.setData(result);
+    return result;
   }
 
   render() {
@@ -97,10 +109,12 @@ const mapState = (state) => {
   }
   return {
     start,
+    childData: getSelectedChildData(state),
+    populations: getPopulationsOfRegion(state, state.app.selected ? state.app.selected.id : 0),
     selected: state.app.selected,
     measures: getActiveMeasures(state.measures),
     parameters: getParameterMap(state.parameters)
   };
 };
 
-export default connect(mapState, { setData })(Simulation);
+export default connect(mapState, { setData, setRegionData })(Simulation);

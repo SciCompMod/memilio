@@ -1,5 +1,5 @@
 import {createSlice} from '@reduxjs/toolkit';
-import {groupBy, renameKey, sumByKey} from '../common/utils';
+import {groupBy, renameKey, sumByKey, filterJSObject, stateIdFromCountyId} from '../common/utils';
 
 import axios from 'axios';
 
@@ -31,12 +31,12 @@ const slice = createSlice({
     germany: {
       all: {},
       gender: {},
-      age: {}
+      age: {},
     },
     states: {
       all: {},
       gender: {},
-      age: {}
+      age: {},
     },
     counties: {
       all: {},
@@ -98,7 +98,8 @@ const slice = createSlice({
         summedData.sort((a, b) => a.date - b.date);
         return summedData;
       }
-      state.germany = {all: sumByState(all), gender: sumByState(gender), age: sumByState(age)};
+
+      state.germany = {...state.germany, all: sumByState(all), gender: sumByState(gender), age: sumByState(age)};
     },
     setCountyData: (state, action) => {
       const [all, age, gender] = action.payload;
@@ -207,5 +208,62 @@ export const getSelectedData = (state) => {
     start: dataset.all[`${selected.id}`][0]
   };
 };
+
+export const getSelectedChildData = state => {
+  const {selected, ...s} = state.app;
+
+  if (selected === null) {
+    return null;
+  }
+
+  if (selected.dataset === "germany") {
+    const dataset = s.states;
+    return {
+      all: dataset.all,
+      age: dataset.age,
+      gender: dataset.gender
+    };
+  }
+
+  // County ids are defined as state id (SS) and three numbers (CCC) => SSCCC. We can check if a county belongs to a
+  // state by comparing the state id to the first two numbers of the county id.
+  const filterByStateId = (stateId, counties) => filterJSObject(counties, (id, county) => stateIdFromCountyId(id) === stateId);
+
+  if (selected.dataset === "states" || selected.dataset === "counties") {
+    const stateId = selected.dataset === "states" ? selected.id : stateIdFromCountyId(selected.id);
+    const dataset = s.counties;
+    return {
+      all: filterByStateId(stateId, dataset.all),
+      age: filterByStateId(stateId, dataset.age),
+      gender: filterByStateId(stateId, dataset.gender),
+    };
+  }
+
+  return null;
+};
+
+export function getPopulationsOfRegion(state, regionId) {
+  if (regionId === 0) {
+    const result = {};
+    for (let stateRegion of state.app.populations.states) {
+      result[stateRegion.Länderschlüssel] = { EWZ: stateRegion.EWZ }
+    }
+    return result;
+  }
+
+  let counties;
+  if (regionId < 100) {
+    counties = state.app.populations.counties.filter(county => stateIdFromCountyId(county.Kreisschlüssel) === regionId);
+  } else {
+    counties = state.app.populations.counties.filter(county => stateIdFromCountyId(county.Kreisschlüssel) === stateIdFromCountyId(regionId));
+  }
+
+  const result = {};
+  for (let county of counties) {
+    result[county.Kreisschlüssel] = { EWZ: county.EWZ }
+  }
+
+  return result;
+}
 
 export default slice.reducer;
