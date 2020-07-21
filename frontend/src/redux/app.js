@@ -1,5 +1,5 @@
-import { createSlice } from '@reduxjs/toolkit';
-import { groupBy, renameKey, sumByKey } from '../common/utils';
+import {createSlice} from '@reduxjs/toolkit';
+import {groupBy, renameKey, sumByKey} from '../common/utils';
 
 import axios from 'axios';
 
@@ -59,6 +59,8 @@ const slice = createSlice({
         if (population) {
           state.selected.population = population.EWZ;
         }
+      } else {
+        state.selected = {dataset: "germany", id: 0, label: "Germany", population: state.populations.total}
       }
     },
     setStateData: (state, action) => {
@@ -69,11 +71,38 @@ const slice = createSlice({
         });
       });
 
-      state.states = { all, gender, age };
+      state.states = {all, gender, age};
+
+      // Generate Germany data from state data by summing it up.
+      function sumByState(stateData) {
+        const summedData = [];
+        for (let stateEntry of Object.values(stateData)) {
+          for (let timeStamp of stateEntry) {
+            const result = summedData.find(entry => entry.date === timeStamp.date);
+            if (result) {
+              result.Confirmed += timeStamp.Confirmed;
+              result.Deaths += timeStamp.Deaths;
+              result.Recovered += timeStamp.Recovered;
+            } else {
+              summedData.push({
+                ID_Country: 0,
+                Country: "Germany",
+                Confirmed: timeStamp.Confirmed,
+                Deaths: timeStamp.Deaths,
+                Recovered: timeStamp.Recovered,
+                date: timeStamp.date
+              });
+            }
+          }
+        }
+        summedData.sort((a, b) => a.date - b.date);
+        return summedData;
+      }
+      state.germany = {all: sumByState(all), gender: sumByState(gender), age: sumByState(age)};
     },
     setCountyData: (state, action) => {
       const [all, age, gender] = action.payload;
-      state.counties = { all, gender, age };
+      state.counties = {all, gender, age};
     },
     setPopulations: (state, action) => {
       state.populations = action.payload;
@@ -143,14 +172,20 @@ export const fetchData = () => async (dispatch) => {
     .then((response) => response.data);
 
   dispatch(setPopulations(populations));
+  dispatch(setSelected(null));
 };
 
 export const getSelectedData = (state) => {
-  const { selected, ...s } = state.app;
+  const {selected, ...s} = state.app;
 
   if (selected === null) {
     return null;
   }
+
+  if (selected.dataset === "germany") {
+    return {...s.germany, start: s.germany.all[0]};
+  }
+
   const dataset = s[selected.dataset];
 
   if (!dataset) {
@@ -165,14 +200,12 @@ export const getSelectedData = (state) => {
     return null;
   }
 
-  const result = {
+  return {
     all: dataset.all[`${selected.id}`],
     age: dataset.age[`${selected.id}`],
     gender: dataset.gender[`${selected.id}`],
     start: dataset.all[`${selected.id}`][0]
   };
-
-  return result;
 };
 
 export default slice.reducer;
