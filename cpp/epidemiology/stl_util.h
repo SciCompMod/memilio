@@ -67,9 +67,9 @@ public:
         return *it;
     }
 
-    typename std::iterator_traits<iterator>::difference_type size() const
+    size_t size() const
     {
-        return std::distance(begin(), end());
+        return static_cast<size_t>(std::distance(begin(), end()));
     }
 
     auto begin() const

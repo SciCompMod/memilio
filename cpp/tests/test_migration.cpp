@@ -40,8 +40,8 @@ TEST(TestMigration, compareWithSingleIntegration)
     single_sim1.advance(tmax);
     single_sim2.advance(tmax);
 
-    EXPECT_FLOAT_EQ(g.nodes()[0].model.get_t().back(), single_sim1.get_t().back());
-    EXPECT_FLOAT_EQ(g.nodes()[1].model.get_t().back(), single_sim2.get_t().back());
+    EXPECT_DOUBLE_EQ(g.nodes()[0].model.get_t().back(), single_sim1.get_t().back());
+    EXPECT_DOUBLE_EQ(g.nodes()[1].model.get_t().back(), single_sim2.get_t().back());
 
     //graph may have different time steps, so we can't expect high accuracy here
     EXPECT_NEAR((g.nodes()[0].model.get_y().back() - single_sim1.get_y().back()).norm(), 0.0, 1e-6); 

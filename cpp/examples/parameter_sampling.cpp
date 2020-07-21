@@ -56,7 +56,7 @@ int main()
     epi::ContactFrequencyMatrix contact_freq_matrix{nb_groups};
     for (size_t i = 0; i < nb_groups; i++) {
         for (size_t j = i; i < nb_groups; i++) {
-            contact_freq_matrix.set_cont_freq(0.5, i, j);
+            contact_freq_matrix.set_cont_freq(0.5, static_cast<int>(i), static_cast<int>(j));
         }
     }
 
@@ -72,7 +72,7 @@ int main()
 
     epi::ContactFrequencyMatrix cfmat_sample = contact_varel.get_sample();
 
-    printf("\n\n Number of dampings: %lu\n", cfmat_sample.get_dampings(0, 0).get_dampings_vector().size());
+    printf("\n\n Number of dampings: %zu\n", cfmat_sample.get_dampings(0, 0).get_dampings_vector().size());
 
     double day0 = cfmat_sample.get_dampings(0, 0).get_dampings_vector()[0].day;
     printf("\n First damping G(0,0) at %.2f with factor %.2f\n", cfmat_sample.get_dampings(0, 0).get_factor(day0),
@@ -82,12 +82,12 @@ int main()
     double day1_00 = cfmat_sample.get_dampings(0, 0).get_dampings_vector()[1].day;
     printf("\n Damping at day %.2f\n\t", day1_00);
     for (size_t i = 0; i < nb_groups; i++) {
-        printf("G%lu\t", i);
+        printf("G%zu\t", i);
     }
     for (size_t i = 0; i < nb_groups; i++) {
-        printf("\n G%lu", i);
+        printf("\n G%zu", i);
         for (size_t j = 0; j < nb_groups; j++) {
-            printf("\t %.2f", cfmat_sample.get_dampings(i, j).get_factor(day1_00)); // get all the dampings...
+            printf("\t %.2f", cfmat_sample.get_dampings(static_cast<int>(i), static_cast<int>(j)).get_factor(day1_00)); // get all the dampings...
         }
     }
     printf("\n");
