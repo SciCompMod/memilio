@@ -36,7 +36,7 @@ export class InteractiveHeatMap {
   constructor(id) {
     this._map = am4core.create(id, am4maps.MapChart);
     this._map.projection = new am4maps.projections.Mercator();
-    this._map.hiddenState.transitionDuration = 500;
+    this._map.hiddenState.transitionDuration = 100;
 
     this._stateSeries = new am4maps.MapPolygonSeries();
 
