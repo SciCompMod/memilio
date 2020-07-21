@@ -38,6 +38,7 @@ EngEng = {
    '90+': '90+',
    'both': 'both',
    'all': 'all',
+   'population': 'Population'
 }
 
 GerEng = {
@@ -54,6 +55,12 @@ GerEng = {
    'unbekannt': EngEng['unknown'],
    'W' : EngEng['female'],
    'M' : EngEng['male'],
+   'LAN_ew_GEN': EngEng['state'],
+   'LAN_ew_EWZ': EngEng['population'],
+   'LAN_ew_RS': EngEng['idState'],
+   'EWZ': EngEng['population'],
+   'GEN': EngEng['county'],
+   'RS': EngEng['idCounty']
 }
 
 EsEng = {'fecha': EngEng['date'],
