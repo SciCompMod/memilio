@@ -8,7 +8,7 @@ import {setData, setRegionData} from '../redux/seir';
 import { setStartDate, setEndDate } from '../redux/time';
 
 import {simulate_seir, makeSeirParam, Damping} from '../common/seir.js';
-import {calculateDamping} from '../common/utils';
+import {calculateDamping, lastElement} from '../common/utils';
 
 /** @typedef {{date: number, S: number, E: number, I: number, R: number}} SEIREntry */
 
@@ -23,7 +23,7 @@ class Simulation extends PureComponent {
     const selectedResult = this.simulateRegion(this.props.start, this.props.selected.population);
     this.props.setData(selectedResult);
     this.props.setStartDate(this.props.start.date);
-    this.props.setEndDate(selectedResult[selectedResult.length - 1].date);
+    this.props.setEndDate(lastElement(selectedResult).date);
 
     /** @type Map<number, Array<SEIREntry>> */
     const regionResults = new Map();

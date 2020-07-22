@@ -1,5 +1,5 @@
 import {createSlice} from '@reduxjs/toolkit';
-import {groupBy, renameKey, sumByKey, filterJSObject, stateIdFromCountyId} from '../common/utils';
+import {groupBy, renameKey, sumByKey, filterJSObject, stateIdFromCountyId, lastElement} from '../common/utils';
 import {setTimeBounds} from "./time";
 
 import axios from 'axios';
@@ -50,6 +50,7 @@ const slice = createSlice({
       //return state;
     },
     setSelected: (state, action) => {
+      state.selected = action.payload;
       if (action.payload !== null) {
         const population = state.populations[action.payload.dataset].find(
           (e) =>
@@ -153,7 +154,7 @@ export const fetchData = () => async (dispatch) => {
   const [all, age, gender] = state;
   const allTransformed = sumByState(all);
   dispatch(setCountryData({all: allTransformed, gender: sumByState(gender), age: sumByState(age)}));
-  dispatch(setTimeBounds({start: allTransformed[0].date, end: allTransformed[allTransformed.length - 1].date}))
+  dispatch(setTimeBounds({start: allTransformed[0].date, end: lastElement(allTransformed).date}))
 
   // load county data
   let county = await Promise.all([

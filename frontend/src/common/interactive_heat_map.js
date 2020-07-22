@@ -91,7 +91,7 @@ export default class InteractiveHeatMap {
     if (this._countySeries.has(this.selectedState)) {
       const series = this._countySeries.get(this.selectedState);
       for (let countyDatum of series.data) {
-        countyDatum.value = values.get(parseInt(countyDatum.RS, 10).toString());
+        countyDatum.value = values.get(parseInt(countyDatum.RS, 10));
       }
 
       series.invalidateRawData();

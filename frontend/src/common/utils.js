@@ -154,3 +154,33 @@ export function filterJSObject(object, filterFn) {
 export function stateIdFromCountyId(countyId) {
   return Math.floor(countyId / 1000);
 }
+
+/**
+ * @param id {number}
+ * @return {boolean}
+ */
+export function isStateId(id) {
+  return (id > 0 && id < 100);
+}
+
+/**
+ * @param id {number}
+ * @return {boolean}
+ */
+export function isCountyId(id) {
+  return id > 999;
+}
+
+/**
+ * Returns the last element of the array.
+ * @param array Array<any>
+ * @throws {RangeError} If the array has no contents an error is thrown.
+ * @return {any}
+ */
+export function lastElement(array) {
+  if (array.length > 0) {
+    return array[array.length - 1];
+  } else {
+    throw RangeError("Can't get the last element of an empty array!");
+  }
+}

@@ -5,15 +5,18 @@ import React from 'react';
 import './TimeMap.scss';
 import { setSelected } from "../../redux/app";
 import InteractiveHeatMap from "../../common/interactive_heat_map";
-import {roundToUTCMidnight} from "../../common/utils";
+import {isStateId, roundToUTCMidnight} from "../../common/utils";
 
 class TimeMap extends React.Component {
   state = {
-    /** Map<number, Map<number, number>> */
+    /** @type Map<number, Map<number, number>> */
     stateTimes: new Map(),
 
-    /** Map<number, Map<string, number>> */
-    countyTimes: new Map()
+    /** @type Map<number, Map<string, number>> */
+    countyTimes: new Map(),
+
+    /** @type Map<number, Map<string, number>> */
+    seirTimes: new Map(),
   };
 
   /** @type InteractiveHeatMap */
@@ -97,11 +100,11 @@ class TimeMap extends React.Component {
         const value = c.find(e => e.date >= date);
 
         if (value) {
-          counties.set(id, value.Confirmed);
+          counties.set(parseInt(id), value.Confirmed);
         } else if (lastCounties !== null) {
-          counties.set(id, lastCounties.get(id));
+          counties.set(parseInt(id), lastCounties.get(parseInt(id)));
         } else {
-          counties.set(id, 0);
+          counties.set(parseInt(id), 0);
         }
       }
 
@@ -116,22 +119,71 @@ class TimeMap extends React.Component {
     }
   }
 
-  componentDidUpdate(prevProps, prevState, snapshot) {
-    if (this.props.states !== prevProps.states || this.state.stateTimes.size === 0) {
-      this._calcStateData();
+  /** @private */
+  _calcSeirData() {
+    const times = new Map();
+
+    /** @type Map<number, number> | null */
+    let lastRegions = null;
+    for (let d = this.props.time.startDate; d < this.props.time.endDate; d += 24 * 60 * 60 * 1000) {
+      let date = roundToUTCMidnight(d);
+      let regions = new Map();
+
+      for (let [id, region] of Object.entries(this.props.seirRegions)) {
+        const value = region.find(e => e.date >= date);
+
+        if (value) {
+          regions.set(parseInt(id), value.I);
+        } else if (lastRegions !== null) {
+          regions.set(parseInt(id), lastRegions.get(parseInt(id)));
+        } else {
+          regions.set(parseInt(id), 0);
+        }
+      }
+
+      times.set(date, regions);
+      lastRegions = regions;
     }
 
-    if (this.props.counties !== prevProps.counties || this.state.countyTimes.size === 0) {
+    if (times.size > 0) {
+      this.setState({
+        seirTimes: times
+      });
+    }
+  }
+
+  componentDidUpdate(prevProps, prevState, snapshot) {
+    if (this.props.states !== prevProps.states || this.state.stateTimes.size === 0 || this.props.time.startDate !== prevProps.time.startDate || this.props.time.endDate !== prevProps.time.endDate) {
+      this._calcStateData();
+      console.log("Recalculating State Data!");
+    }
+
+    if (this.props.counties !== prevProps.counties || this.state.countyTimes.size === 0 || this.props.time.startDate !== prevProps.time.startDate || this.props.time.endDate !== prevProps.time.endDate) {
       this._calcCountyData();
+      console.log("Recalculating County Data!");
+    }
+
+    if (this.props.seirRegions !== null && (this.props.seirRegions !== prevProps.seirRegions || this.state.seirTimes.size === 0) ) {
+      this._calcSeirData();
+      console.log("Recalculating Seir Data!");
     }
 
     const currDate = this.props.time.currentDate;
     if (prevProps.time.currentDate !== currDate) {
-      if (this.map.selectedState !== -1 && this.state.countyTimes.has(currDate)) {
-        this.map.setCountyValues(this.state.countyTimes.get(currDate));
-      }
-      if (this.state.stateTimes.has(currDate)) {
-        this.map.setStateValues(this.state.stateTimes.get(currDate));
+      if (this.props.seirRegions !== null) {
+        if (this.map.selectedState !== -1) {
+          this.map.setCountyValues(this.state.seirTimes.get(currDate));
+        } else {
+          this.map.setStateValues(this.state.seirTimes.get(currDate));
+        }
+      } else {
+        if (this.map.selectedState !== -1 && this.state.countyTimes.has(currDate)) {
+          this.map.setCountyValues(this.state.countyTimes.get(currDate));
+        }
+
+        if (this.state.stateTimes.has(currDate)) {
+          this.map.setStateValues(this.state.stateTimes.get(currDate));
+        }
       }
     }
   }
@@ -151,6 +203,7 @@ function mapState(state) {
     time: state.time,
     states: state.app.states,
     counties: state.app.counties,
+    seirRegions: state.seir.regionData,
     populations: state.app.populations.states
   }
 }
