@@ -29,34 +29,51 @@ def adjust_data(df, date_of_data):
 
 def download_data_for_one_day(download_date):
 
-   # define time periods where construction of urls is different
-   data1_start_date = date(2020, 4, 30)
-   data1_end_date = date(2020, 5, 5)
-   time_shift_date = date(2020, 6, 5)
-   data2_start_date = date(2020, 6, 12)
-   data2_end_date = date(2020, 6, 25)
+   # define call numbers for dates where call number doesn't increase by 1
+   call_number_dict = {date(2020, 4, 24): 3974,
+                       date(2020, 5, 6): 3691,
+                       date(2020, 6, 5): 3842,
+                       date(2020, 6, 12): 3906,
+                       date(2020, 6, 26): 3774,
+                       date(2020, 6, 28): 3777,
+                       date(2020, 6, 29): 3830,
+                       date(2020, 6, 30): 3840,
+                       date(2020, 7, 1): 3928,
+                       date(2020, 7, 2): 3951,
+                       date(2020, 7, 3): 3953,
+                       date(2020, 7, 4): 3955,
+                       date(2020, 7, 6): 3958,
+                       date(2020, 7, 7): 3961,
+                       date(2020, 7, 8): 3964,
+                       date(2020, 7, 9): 3966,
+                      }
 
    call_date = download_date.strftime("%Y-%m-%d")
 
    # first links have different upload time
+   time_shift_date = date(2020, 6, 5)
    if download_date < time_shift_date:
       call_time = "-09-15"
    else:
       call_time = "-12-15"
 
-   # construction of link is different for different time periods
-   if download_date >= data1_start_date and download_date <= data1_end_date:
-      # number in url starts at 3980 and increases every day by 1
-      call_number = (download_date - data1_start_date).days  + 3980
-      call_url = "https://www.divi.de/divi-intensivregister-tagesreport-archiv-csv/divi-intensivregister-" + call_date + call_time + "/viewdocument/" + str(call_number)
-   else:
-      if download_date >= data2_start_date and download_date <= data2_end_date:
-         # number in url starts at 3906 and increases every day by 1
-         call_number = (download_date - data2_start_date).days + 3906
-         call_url = "https://www.divi.de/divi-intensivregister-tagesreport-archiv-csv/divi-intensivregister-" + call_date + call_time + "-2/viewdocument/" + str(call_number)
+   # need extension "-2" for dates between 12.6. and 25.6.
+   ext=""
+   if download_date >= date(2020,6,12) and download_date <= date(2020,6,25):
+      ext="-2"
 
-      else:
-         call_url = "https://www.divi.de/divi-intensivregister-tagesreport-archiv-csv/divi-intensivregister-" + call_date + call_time + "/download"
+   # construction of link is different for different time periods
+   # for the latest dates no call number is needed
+   if download_date < date(2020,7,10):
+      period_begin = download_date
+      delta = timedelta(days=1)
+      while period_begin not in call_number_dict.keys():
+         period_begin-=delta
+      # number in url starts at values in call_number_dict and increases every day by 1
+      call_number = (download_date - period_begin).days  + call_number_dict[period_begin]
+      call_url = "https://www.divi.de/divi-intensivregister-tagesreport-archiv-csv/divi-intensivregister-" + call_date + call_time + ext + "/viewdocument/" + str(call_number)
+   else:
+      call_url = "https://www.divi.de/divi-intensivregister-tagesreport-archiv-csv/divi-intensivregister-" + call_date + call_time + "/download"
 
    df = pandas.DataFrame()
 
