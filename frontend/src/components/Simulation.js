@@ -22,6 +22,8 @@ class Simulation extends PureComponent {
   simulate() {
     const selectedResult = this.simulateRegion(this.props.start, this.props.selected.population);
     this.props.setData(selectedResult);
+    this.props.setStartDate(this.props.start.date);
+    this.props.setEndDate(selectedResult[selectedResult.length - 1].date);
 
     /** @type Map<number, Array<SEIREntry>> */
     const regionResults = new Map();
@@ -34,10 +36,6 @@ class Simulation extends PureComponent {
     }
 
     this.props.setRegionData(Object.fromEntries(regionResults));
-
-    // TODO
-    this.props.setStartDate(startDate);
-    this.props.setEndDate(result[result.length - 1].date);
   }
 
   /**

@@ -3,8 +3,8 @@
   "version": "0.4.0",
   "homepage": "/",
   "dependencies": {
-    "@amcharts/amcharts4": "^4.9.26",
-    "@amcharts/amcharts4-geodata": "^4.1.15",
+    "@amcharts/amcharts4": "^4.9.31",
+    "@amcharts/amcharts4-geodata": "^4.1.16",
     "@fortawesome/fontawesome-free": "5.13.0",
     "@reduxjs/toolkit": "1.4.0",
     "@tensorflow/tfjs": "1.7.2",
@@ -36,7 +36,7 @@
     "grunt": "1.1.0",
     "grunt-contrib-copy": "1.0.0",
     "load-grunt-tasks": "3.5.2",
-    "node-sass": "^4.12.0"
+    "node-sass": "^4.14.1"
   },
   "scripts": {
     "start": "react-scripts start",

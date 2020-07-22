@@ -149,11 +149,16 @@ class SEIRChart extends Component {
       JSON.parse(JSON.stringify(this.props.seir)),
       'date'
     );
-    x.sort(function (a, b) {
-      return a.date - b.date;
-    });
 
-    return x;
+    try {
+      x.sort(function (a, b) {
+        return a.date - b.date;
+      });
+
+      return x;
+    } catch (e) {
+      return [];
+    }
   }
 
   payload() {
