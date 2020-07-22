@@ -1,6 +1,7 @@
 import os
 import sys
 import pandas
+from collections import namedtuple
 from epidemiology.epidata  import getDataIntoPandasDataFrame as gd
 from epidemiology.epidata import defaultDict as dd
 
@@ -10,31 +11,31 @@ def get_population_data(read_data=dd.defaultDict['read_data'],
                         out_form=dd.defaultDict['out_form'],
                         out_folder=dd.defaultDict['out_folder']):
 
+   Data = namedtuple("Data", "filename item columns_wanted filename_out")
+
+   d1 = Data("FullDataB", '5dc2fc92850241c3be3d704aa0945d9c_2', ["LAN_ew_RS", 'LAN_ew_GEN','LAN_ew_EWZ'], "PopulStates")
+   d2 = Data("FullDataL", 'b2e6d8854d9744ca88144d30bef06a76_1', ['RS', 'GEN','EWZ'], "PopulCounties")
+
+   d = [d1, d2]
+
    directory = os.path.join(out_folder, 'Germany/')
    gd.check_dir(directory)
 
-   filename1 = "FullDataB"
-   filename2 = "FullDataL"
+   for i in range(2):
+      get_one_data_set(read_data, out_form, directory, d[i])
+
+def get_one_data_set(read_data, out_form, directory, d):
 
    if(read_data):
       # if once dowloaded just read json file
-      file1 = os.path.join(directory, filename1+".json")
-      file2 = os.path.join(directory, filename2+".json")
+      file = os.path.join(directory, d.filename+".json")
 
       try:
-         dfB = pandas.read_json(file1)
+         df = pandas.read_json(file)
 
       except ValueError:
-         exit_string = "Error: The file: " + file1 + "does not exist. Call program without -r flag to get it."
+         exit_string = "Error: The file: " + file + "does not exist. Call program without -r flag to get it."
          sys.exit(exit_string)
-         
-      try:
-         dfL = pandas.read_json(file2)
-
-      except ValueError:
-         exit_string = "Error: The file: " + file2 + "does not exist. Call program without -r flag to get it."
-         sys.exit(exit_string)
-
    else:
 
       # Supported data formats:
@@ -43,31 +44,18 @@ def get_population_data(read_data=dd.defaultDict['read_data'],
          'geojson': gd.loadGeojson
        }
 
-      # ArcGIS public data item ID:
-      itemIdB = '5dc2fc92850241c3be3d704aa0945d9c_2'
-      itemIdL = 'b2e6d8854d9744ca88144d30bef06a76_1'
-
       # Get data:
-      dfB = load['csv'](itemIdB)
-      dfL = load['csv'](itemIdL)
+      df = load['csv'](d.item)
 
       # output data to not always download it
-      gd.write_dataframe(dfB, directory, filename1, "json")
-      gd.write_dataframe(dfL, directory, filename2, "json")
+      gd.write_dataframe(df, directory, d.filename, "json")
 
-   print("Available columns for states:", dfB.columns)
-   print("Available columns for counties:", dfL.columns)  
+   print("Available columns:", df.columns)
 
    # Filter data for Bundesland/Landkreis and Einwohnerzahl (EWZ)
-
-   dfB = dfB.rename(columns={'LAN_ew_GEN': 'Bundesland', 'LAN_ew_EWZ': 'EWZ'})
-   dfBo = dfB[['Bundesland','EWZ']]
-   gd.write_dataframe(dfBo, directory, "PopulStates", out_form)
-
-   # TODO Counties are less as in RKI data. Compare it!
-   dfL = dfL.rename(columns={'GEN': 'Landkreis'})
-   dfLo = dfL[['Landkreis','EWZ']]
-   gd.write_dataframe(dfLo, directory, "PopulCounties", out_form)
+   dfo = df[d.columns_wanted]
+   dfo = dfo.rename(columns=dd.GerEng)
+   gd.write_dataframe(dfo, directory, d.filename_out, out_form)
 
 
 def main():
