@@ -2,7 +2,7 @@ import * as am4core from "@amcharts/amcharts4/core";
 import * as am4maps from "@amcharts/amcharts4/maps";
 
 
-export class InteractiveHeatMap {
+export default class InteractiveHeatMap {
   /** @private
    *  @type MapChart */
   _map = null;

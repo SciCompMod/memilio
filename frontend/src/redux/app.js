@@ -151,11 +151,9 @@ export const fetchData = () => async (dispatch) => {
   }
 
   const [all, age, gender] = state;
-
-  dispatch(setCountryData({all: sumByState(all), gender: sumByState(gender), age: sumByState(age)}));
-
-  // TODO This is a temporary hack!
-  dispatch(setTimeBounds({start: state[0][9][0].date, end: state[0][9][119].date}))
+  const allTransformed = sumByState(all);
+  dispatch(setCountryData({all: allTransformed, gender: sumByState(gender), age: sumByState(age)}));
+  dispatch(setTimeBounds({start: allTransformed[0].date, end: allTransformed[allTransformed.length - 1].date}))
 
   // load county data
   let county = await Promise.all([

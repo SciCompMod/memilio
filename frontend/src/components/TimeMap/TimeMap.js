@@ -3,8 +3,8 @@ import {connect} from "react-redux";
 import React from 'react';
 
 import './TimeMap.scss';
-import {setSelected} from "../../redux/app";
-import {InteractiveHeatMap} from "../../common/interactive_heat_map.js";
+import { setSelected } from "../../redux/app";
+import InteractiveHeatMap from "../../common/interactive_heat_map";
 import {roundToUTCMidnight} from "../../common/utils";
 
 class TimeMap extends React.Component {
@@ -31,7 +31,9 @@ class TimeMap extends React.Component {
           population: newState.destatis.population
         });
       } else {
-        this.props.setSelected(null);
+        if (this.props.selection !== null) {
+          this.props.setSelected(null);
+        }
       }
     };
 
@@ -153,6 +155,6 @@ function mapState(state) {
   }
 }
 
-const ConnectedTimeMap = connect(mapState, {setSelected})(TimeMap);
+const ConnectedTimeMap = connect(mapState, { setSelected })(TimeMap);
 
 export {ConnectedTimeMap as TimeMap};
