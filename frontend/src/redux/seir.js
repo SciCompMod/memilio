@@ -13,16 +13,10 @@ const slice = createSlice({
       state.startDate = action.payload;
     },
     setData(state, action) {
-      return {
-        ...state,
-        data: action.payload
-      };
+      state.data = action.payload;
     },
     setRegionData(state, action) {
-      return {
-        ...state,
-        regionData: action.payload
-      }
+      state.regionData = action.payload;
     }
   },
   extraReducers: {

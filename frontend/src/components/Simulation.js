@@ -1,29 +1,47 @@
-import React, { PureComponent } from 'react';
-import { connect } from 'react-redux';
-import { Button } from 'reactstrap';
-import { getActiveMeasures } from '../redux/measures';
-import { getParameterMap } from '../redux/parameters';
+import React, {PureComponent} from 'react';
+import {connect} from 'react-redux';
+import {Button} from 'reactstrap';
+import {getActiveMeasures} from '../redux/measures';
+import {getParameterMap} from '../redux/parameters';
 import {getPopulationsOfRegion, getSelectedChildData, getSelectedData} from '../redux/app';
 import {setData, setRegionData} from '../redux/seir';
 
-import { simulate_seir, makeSeirParam, Damping } from '../common/seir.js';
-import { calculateDamping } from '../common/utils';
+import {simulate_seir, makeSeirParam, Damping} from '../common/seir.js';
+import {calculateDamping} from '../common/utils';
+
+/** @typedef {{date: number, S: number, E: number, I: number, R: number}} SEIREntry */
 
 class Simulation extends PureComponent {
+  /**
+   * Runs a SEIR simulation on the selected region and related regions.
+   * If Germany is selected  => Run on Germany and its' federal states.
+   * If a state is selected  => Run on the state and its' counties.
+   * If a county is selected => Run on the county and all other counties in its' parent state.
+   */
   simulate() {
     const selectedResult = this.simulateRegion(this.props.start, this.props.selected.population);
     this.props.setData(selectedResult);
 
-    const regionResults = {};
+    /** @type Map<number, Array<SEIREntry>> */
+    const regionResults = new Map();
     for (let [regionId, region] of Object.entries(this.props.childData.all)) {
-      const start = region[0]
-      const population = this.props.populations[regionId].EWZ;
-      regionResults[regionId] = this.simulateRegion(start, population);
+      const start = region[0];
+      const population = this.props.populations.get(parseInt(regionId));
+
+      const regionResult = this.simulateRegion(start, population);
+      regionResults.set(parseInt(regionId), regionResult);
     }
 
-    this.props.setRegionData(regionResults);
+    this.props.setRegionData(Object.fromEntries(regionResults));
   }
 
+  /**
+   * Runs a simulation over a single region.
+   *
+   * @param start {{Confirmed: number, Recovered: number, date: number}} The starting conditions in the region.
+   * @param population {number} The population of the region
+   * @return {Array<SEIREntry>}
+   */
   simulateRegion(start, population) {
     let step_size = 0.1;
     let x = parseInt(1 / step_size, 10);
@@ -110,6 +128,8 @@ const mapState = (state) => {
   return {
     start,
     childData: getSelectedChildData(state),
+
+    /** @type Map<number, number> */
     populations: getPopulationsOfRegion(state, state.app.selected ? state.app.selected.id : 0),
     selected: state.app.selected,
     measures: getActiveMeasures(state.measures),
@@ -117,4 +137,4 @@ const mapState = (state) => {
   };
 };
 
-export default connect(mapState, { setData, setRegionData })(Simulation);
+export default connect(mapState, {setData, setRegionData})(Simulation);

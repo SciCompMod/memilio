@@ -209,6 +209,12 @@ export const getSelectedData = (state) => {
   };
 };
 
+/**
+ * Returns the RKI data of the selected regions children.
+ *
+ * @param state The application state.
+ * @return {{all: any age: any, gender: any}|null}
+ */
 export const getSelectedChildData = state => {
   const {selected, ...s} = state.app;
 
@@ -225,9 +231,14 @@ export const getSelectedChildData = state => {
     };
   }
 
-  // County ids are defined as state id (SS) and three numbers (CCC) => SSCCC. We can check if a county belongs to a
-  // state by comparing the state id to the first two numbers of the county id.
-  const filterByStateId = (stateId, counties) => filterJSObject(counties, (id, county) => stateIdFromCountyId(id) === stateId);
+  /**
+   * County ids are defined as state id (SS) and three numbers (CCC) => SSCCC. We can check if a county belongs to a
+   * state by comparing the state id to the first two numbers of the county id.
+   * @param stateId {number}
+   * @param counties {{all: any age: any, gender: any}}
+   * @return {{all: any age: any, gender: any}}
+   */
+  const filterByStateId = (stateId, counties) => filterJSObject(counties, (id, _) => stateIdFromCountyId(id) === stateId);
 
   if (selected.dataset === "states" || selected.dataset === "counties") {
     const stateId = selected.dataset === "states" ? selected.id : stateIdFromCountyId(selected.id);
@@ -242,25 +253,37 @@ export const getSelectedChildData = state => {
   return null;
 };
 
+/**
+ * Returns the populations of a regions child regions. E.g. If the regionId is 0 (Germany) the populations of all states
+ * are returned. Possible cases are:
+ *
+ * regionId belongs to germany  => state ids
+ * regionId belongs to a state  => county ids of that state
+ * regionId belongs to a county => county ids of counties in the same state
+ *
+ * @param state Application state.
+ * @param regionId {number} A state or county id.
+ * @return Map<number, number>
+ */
 export function getPopulationsOfRegion(state, regionId) {
   if (regionId === 0) {
-    const result = {};
+    const result = new Map();
     for (let stateRegion of state.app.populations.states) {
-      result[stateRegion.Länderschlüssel] = { EWZ: stateRegion.EWZ }
+      result.set(stateRegion.stateKey, stateRegion.EWZ);
     }
     return result;
   }
 
   let counties;
   if (regionId < 100) {
-    counties = state.app.populations.counties.filter(county => stateIdFromCountyId(county.Kreisschlüssel) === regionId);
+    counties = state.app.populations.counties.filter(county => stateIdFromCountyId(county.countyKey) === regionId);
   } else {
-    counties = state.app.populations.counties.filter(county => stateIdFromCountyId(county.Kreisschlüssel) === stateIdFromCountyId(regionId));
+    counties = state.app.populations.counties.filter(county => stateIdFromCountyId(county.countyKey) === stateIdFromCountyId(regionId));
   }
 
-  const result = {};
+  const result = new Map();
   for (let county of counties) {
-    result[county.Kreisschlüssel] = { EWZ: county.EWZ }
+    result.set(county.countyKey, county.EWZ);
   }
 
   return result;
