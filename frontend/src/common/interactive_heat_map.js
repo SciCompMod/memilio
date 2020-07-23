@@ -79,11 +79,13 @@ export default class InteractiveHeatMap {
 
   /** @param values {Map<number, number>} */
   setStateValues(values) {
-    for (let stateDatum of this._stateSeries.data) {
-      stateDatum.value = values.get(stateDatum.id);
-    }
+    if (values) {
+      for (let stateDatum of this._stateSeries.data) {
+        stateDatum.value = values.get(stateDatum.id);
+      }
 
-    this._stateSeries.invalidateRawData();
+      this._stateSeries.invalidateRawData();
+    }
   }
 
   /** @param values {Map<string, number>} */

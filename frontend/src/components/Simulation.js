@@ -5,9 +5,9 @@ import {getActiveMeasures} from '../redux/measures';
 import {getParameterMap} from '../redux/parameters';
 import {getPopulationsOfRegion, getSelectedChildData, getSelectedData} from '../redux/app';
 import {setData, setRegionData} from '../redux/seir';
-import { setStartDate, setEndDate } from '../redux/time';
+import {setEndDate, setStartDate} from '../redux/time';
 
-import {simulate_seir, makeSeirParam, Damping} from '../common/seir.js';
+import {Damping, makeSeirParam, simulate_seir} from '../common/seir.js';
 import {calculateDamping, lastElement} from '../common/utils';
 
 /** @typedef {{date: number, S: number, E: number, I: number, R: number}} SEIREntry */
@@ -81,7 +81,7 @@ class Simulation extends PureComponent {
 
     const startDate = start.date;
 
-    const result = Object.values(
+    return Object.values(
       Object.keys(data)
         .filter((k) => k !== 't')
         .reduce((acc, k) => {
@@ -106,8 +106,6 @@ class Simulation extends PureComponent {
           return acc;
         }, {})
     );
-
-    return result;
   }
 
   render() {

@@ -65,7 +65,7 @@ class ResponsiveGrid extends Component {
           </div>*/}
           <div
             key="measures"
-            data-grid={{x: 12, y: 4, w: 4, h: 3}}
+            data-grid={{x: 14, y: 4, w: 6, h: 3}}
             className="grid-box"
           >
             <i className="fas fa-arrows-alt grid-draggable-handle"></i>
@@ -73,7 +73,7 @@ class ResponsiveGrid extends Component {
           </div>
           <div
             key="parameters"
-            data-grid={{x: 8, y: 4, w: 4, h: 3}}
+            data-grid={{x: 8, y: 4, w: 6, h: 3}}
             className="grid-box"
           >
             <i className="fas fa-arrows-alt grid-draggable-handle"></i>
@@ -81,7 +81,7 @@ class ResponsiveGrid extends Component {
           </div>
           <div
             key="results"
-            data-grid={{x: 8, y: 0, w: 8, h: 5}}
+            data-grid={{x: 8, y: 0, w: 12, h: 5}}
             className="grid-box"
           >
             <i className="fas fa-arrows-alt grid-draggable-handle"></i>

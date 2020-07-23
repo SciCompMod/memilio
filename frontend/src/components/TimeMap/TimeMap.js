@@ -7,6 +7,14 @@ import { setSelected } from "../../redux/app";
 import InteractiveHeatMap from "../../common/interactive_heat_map";
 import {isStateId, roundToUTCMidnight} from "../../common/utils";
 
+/**
+ * This Component has two major functions:
+ * 1. Select different Regions for the chart.
+ * 2. Display a cloropeth map of the infection data over time.
+ *    Currently the cloropeth map displays either the RKI data, or if available simulated SEIR data of all infected.
+ *    A selection mechanism will be integrated at a later time.
+ *    If the timeline changes the current time the map will update with the values of the selected date.
+ */
 class TimeMap extends React.Component {
   state = {
     /** @type Map<number, Map<number, number>> */
@@ -155,17 +163,14 @@ class TimeMap extends React.Component {
   componentDidUpdate(prevProps, prevState, snapshot) {
     if (this.props.states !== prevProps.states || this.state.stateTimes.size === 0 || this.props.time.startDate !== prevProps.time.startDate || this.props.time.endDate !== prevProps.time.endDate) {
       this._calcStateData();
-      console.log("Recalculating State Data!");
     }
 
     if (this.props.counties !== prevProps.counties || this.state.countyTimes.size === 0 || this.props.time.startDate !== prevProps.time.startDate || this.props.time.endDate !== prevProps.time.endDate) {
       this._calcCountyData();
-      console.log("Recalculating County Data!");
     }
 
     if (this.props.seirRegions !== null && (this.props.seirRegions !== prevProps.seirRegions || this.state.seirTimes.size === 0) ) {
       this._calcSeirData();
-      console.log("Recalculating Seir Data!");
     }
 
     const currDate = this.props.time.currentDate;

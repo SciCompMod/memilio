@@ -1,6 +1,6 @@
-import React, { Component } from 'react';
-import { withTranslation } from 'react-i18next';
-import { merge } from '../../../common/utils';
+import React, {Component} from 'react';
+import {withTranslation} from 'react-i18next';
+import {merge} from '../../../common/utils';
 
 import * as moment from 'moment';
 import * as numeral from 'numeral';
@@ -92,9 +92,17 @@ const lines = [
   }
 ];
 
-const dateFormat = (format) => {
-  return (time) => moment(time).format(format);
-};
+const longDateFormat = time => new Date(time).toLocaleDateString(undefined, {
+  year: "numeric",
+  month: "long",
+  day: "2-digit"
+});
+
+const shortDateFormat = time => new Date(time).toLocaleDateString(undefined, {
+  month: "short",
+  day: "2-digit"
+});
+
 
 const numberFormat = (number) => {
   return numeral(number).format('0,0');
@@ -139,7 +147,7 @@ class SEIRChart extends Component {
   }
 
   translate(label) {
-    const { t } = this.props;
+    const {t} = this.props;
     return t(this.state.lines.find((line) => line.dataKey === label).label);
   }
 
@@ -175,16 +183,16 @@ class SEIRChart extends Component {
 
   render() {
     const data = this.prepareData();
-    const { t } = this.props;
+    const {t} = this.props;
     return (
       <ResponsiveContainer width="100%" height="80%">
         <LineChart
           data={data}
-          margin={{ top: 30, right: 30, left: 20, bottom: 5 }}
+          margin={{top: 30, right: 30, left: 20, bottom: 5}}
         >
           <XAxis
             dataKey="date"
-            tickFormatter={dateFormat(t('dateformat.short'))}
+            tickFormatter={shortDateFormat}
           />
           <YAxis
             label={{
@@ -195,15 +203,15 @@ class SEIRChart extends Component {
             }}
             tickFormatter={numberFormat}
           />
-          <CartesianGrid strokeDasharray="3 3" />
+          <CartesianGrid strokeDasharray="3 3"/>
           <Tooltip
             offset={20}
-            labelFormatter={dateFormat(t('dateformat.full'))}
+            labelFormatter={longDateFormat}
             formatter={(value, name, index) => [
               numberFormat(value),
               this.translate(name)
             ]}
-            allowEscapeViewBox={{ x: true, y: false }}
+            allowEscapeViewBox={{x: true, y: false}}
             active={true}
             contentStyle={{
               backgroundColor: 'rgba(255, 255, 255, 0.8)'
@@ -224,7 +232,7 @@ class SEIRChart extends Component {
           })}
           <Brush
             dataKey="date"
-            tickFormatter={dateFormat(t('dateformat.short'))}
+            tickFormatter={shortDateFormat}
           />
           <Legend
             formatter={this.translate.bind(this)}
@@ -245,4 +253,4 @@ class SEIRChart extends Component {
 
 const TranslatedChart = withTranslation()(SEIRChart);
 
-export { TranslatedChart as SEIRChart };
+export {TranslatedChart as SEIRChart};
