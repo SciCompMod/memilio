@@ -132,21 +132,37 @@ struct has_eq_op<T, void_t<decltype(std::declval<T>() == std::declval<T>())>> : 
 
 namespace details
 {
+    /**
+     * length of a null terminated C string
+     */
     inline size_t string_length(const char* str)
     {
         return std::strlen(str);
     }
 
+    /**
+     * length of a string (e.g std::string)
+     */
     template <class String>
     size_t string_length(String&& str)
     {
         return str.length();
     }
 
+    /**
+     * breaks the recursion of path_join_rec.
+     */
     inline void path_join_rec(std::stringstream& ss, bool w)
     {
     }
 
+    /**
+     * recursive template helper function to join paths
+     * @param ss stream that collects the result
+     * @param writeSeparator add separator before adding the next part of the path
+     * @param head next part of the path to add
+     * @param tail remaining parts of the path
+     */
     template <class Head, class... Tail>
     void path_join_rec(std::stringstream& ss, bool writeSeparator, Head&& head, Tail&&... tail)
     {
@@ -159,6 +175,18 @@ namespace details
 
 } // namespace details
 
+/** join one ore more strings with path separators.
+ * Accepts mixed C strings or std::strings. 
+ * 
+ * example: 
+ * 
+ *     std::string hello("Hello");
+ *     auto p = path_join(hello, "World"); //returns "Hello/World"
+ * 
+ * @param base first string
+ * @param app zero or more other strings
+ * @returns all inputs joined 
+ */
 template <class String, class... Strings>
 std::string path_join(String&& base, Strings&&... app)
 {
@@ -168,6 +196,14 @@ std::string path_join(String&& base, Strings&&... app)
     return path;
 }
 
+/**
+ * converts a unique_ptr<T> to unique_ptr<U>.
+ * behavior is similar to normal dynamic_cast except if the conversion 
+ * is successful, the original unique_ptr<T> is now in a moved-from state and ownership
+ * of the object has been transferred to the returned unique_ptr<U>.
+ * @param base_ptr ptr to object to convert
+ * @returns converted unique_ptr if object can be cast to U, default unique_ptr otherwise
+ */
 template <class U, class T>
 std::unique_ptr<U> dynamic_unique_ptr_cast(std::unique_ptr<T>&& base_ptr)
 {
