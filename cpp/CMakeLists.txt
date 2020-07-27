@@ -45,10 +45,10 @@ target_link_libraries(epidemiology PUBLIC spdlog::spdlog Eigen3::Eigen)
 if (EPI_BUILD_EPI_IO)
     
     add_library(epidemiology_io
-      epidemiology/save_result.cpp
-      epidemiology/save_result.h
-      epidemiology/save_parameters.cpp
-      epidemiology/save_parameters.h
+      epidemiology_io/secir_result_io.cpp
+      epidemiology_io/secir_result_io.h
+      epidemiology_io/secir_parameters_io.cpp
+      epidemiology_io/secir_parameters_io.h
     )
 
     target_include_directories(epidemiology_io PUBLIC

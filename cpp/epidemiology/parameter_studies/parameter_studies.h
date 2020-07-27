@@ -2,8 +2,7 @@
 #define PARAMETER_STUDIES_H
 
 #include <epidemiology/parameter_studies/parameter_space.h>
-//#include <epidemiology/save_parameters.h>
-#include <epidemiology/save_result.h>
+#include <epidemiology_io/secir_result_io.h>
 #include <iostream>
 #include <sys/stat.h>
 #include <unordered_map>

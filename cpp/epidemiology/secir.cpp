@@ -3,7 +3,7 @@
 // #include <epidemiology/euler.h>
 #include <epidemiology/adapt_rk.h>
 #include <epidemiology/eigen_util.h>
-#include <epidemiology/save_result.h>
+#include <epidemiology_io/secir_result_io.h>
 #include <cmath>
 #include <cassert>
 #include <cstdio>

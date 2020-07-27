@@ -1,6 +1,6 @@
 #include "load_test_data.h"
 #include "epidemiology/secir.h"
-#include <epidemiology/save_result.h>
+#include <epidemiology_io/secir_result_io.h>
 #include <gtest/gtest.h>
 
 TEST(TestSaveResult, compareResultWithH5)
@@ -66,21 +66,21 @@ TEST(TestSaveResult, compareResultWithH5)
 
     epi::save_result(t, secihurd, "test_result.h5");
 
-    epi::result test_result{epi::read_result("test_result.h5", nb_groups)};
+    epi::SecirSimulationResult test_result{epi::read_result("test_result.h5", nb_groups)};
 
-    ASSERT_EQ(test_result.time.size(), t.size());
-    ASSERT_EQ(test_result.groups.size(), secihurd.size());
-    for (size_t i = 0; i < test_result.time.size(); i++) {
-        ASSERT_EQ(test_result.groups[i].size(), secihurd[i].size()) << "at row " << i;
-        ASSERT_NEAR(t[i], test_result.time[i], 1e-10) << "at row " << i;
-        for (size_t l = 0; l < test_result.groups[i].size() / nb_groups; l++) {
+    ASSERT_EQ(test_result.get_time_vector().size(), t.size());
+    ASSERT_EQ(test_result.get_groups_vectors().size(), secihurd.size());
+    for (size_t i = 0; i < test_result.get_time_vector().size(); i++) {
+        ASSERT_EQ(test_result.get_groups_vectors()[i].size(), secihurd[i].size()) << "at row " << i;
+        ASSERT_NEAR(t[i], test_result.get_time_vector()[i], 1e-10) << "at row " << i;
+        for (size_t l = 0; l < test_result.get_groups_vectors()[i].size() / nb_groups; l++) {
             double dummy = 0.0;
             for (size_t j = 0; j < nb_groups; j++) {
                 dummy += secihurd[i][j * 8 + l];
-                EXPECT_NEAR(test_result.groups[i][j * 8 + l], secihurd[i][j * 8 + l], 1e-10)
+                EXPECT_NEAR(test_result.get_groups_vectors()[i][j * 8 + l], secihurd[i][j * 8 + l], 1e-10)
                     << " at row " << i << " at row " << l << " at Group " << j;
             }
-            EXPECT_NEAR(test_result.total[i][l], dummy, 1e-10) << " at row " << i << " at row " << l;
+            EXPECT_NEAR(test_result.get_totals_vector()[i][l], dummy, 1e-10) << " at row " << i << " at row " << l;
         }
     }
 }

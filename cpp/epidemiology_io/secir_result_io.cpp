@@ -1,3 +1,4 @@
+#include <epidemiology_io/secir_result_io.h>
 #include <epidemiology/secir.h>
 #include <epidemiology/damping.h>
 #include <epidemiology/eigen_util.h>
@@ -10,6 +11,33 @@ using namespace H5;
 
 namespace epi
 {
+
+SecirSimulationResult::SecirSimulationResult()
+{
+}
+
+SecirSimulationResult::SecirSimulationResult(std::vector<double> time, std::vector<Eigen::VectorXd> groups,
+                                             std::vector<std::vector<double>> total)
+    : m_time{time}
+    , m_groups{groups}
+    , m_total{total}
+{
+}
+
+std::vector<double> SecirSimulationResult::get_time_vector() const&
+{
+    return m_time;
+}
+
+std::vector<Eigen::VectorXd> SecirSimulationResult::get_groups_vectors() const&
+{
+    return m_groups;
+}
+
+std::vector<std::vector<double>> SecirSimulationResult::get_totals_vector() const&
+{
+    return m_total;
+}
 
 void save_result(const std::vector<double>& times, const std::vector<Eigen::VectorXd>& secir,
                  const std::string& filename)
@@ -54,12 +82,6 @@ void save_result(const std::vector<double>& times, const std::vector<Eigen::Vect
             dataset.write(dset.data(), PredType::NATIVE_DOUBLE);
     }
 }
-
-struct SecirSimulationResult {
-    std::vector<double> time;
-    std::vector<Eigen::VectorXd> groups;
-    std::vector<std::vector<double>> total;
-};
 
 SecirSimulationResult read_result(const std::string& filename, int nb_groups)
 {
@@ -128,7 +150,7 @@ SecirSimulationResult read_result(const std::string& filename, int nb_groups)
         return std::vector<double>(v, v + nb_compart);
     });
 
-    return {time, groups, total};
+    return SecirSimulationResult(time, groups, total);
 }
 
 } // namespace epi

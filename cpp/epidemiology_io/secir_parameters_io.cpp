@@ -1,4 +1,4 @@
-#include <epidemiology/save_parameters.h>
+#include <epidemiology_io/secir_parameters_io.h>
 #include <epidemiology/secir.h>
 #include <epidemiology/damping.h>
 #include <epidemiology/stl_util.h>

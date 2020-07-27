@@ -1,6 +1,6 @@
 //#include <epidemiology/seir.h>
 #include <epidemiology/parameter_studies/parameter_studies.h>
-#include <epidemiology/save_parameters.h>
+#include <epidemiology_io/secir_parameters_io.h>
 
 #include <tixi.h>
 

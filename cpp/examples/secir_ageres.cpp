@@ -2,8 +2,8 @@
 #include <epidemiology/logging.h>
 
 #ifdef HAVE_EPI_IO
-#include <epidemiology/save_result.h>
-#include <epidemiology/save_parameters.h>
+#include <epidemiology_io/secir_result_io.h>
+#include <epidemiology_io/secir_parameters_io.h>
 #endif
 
 int main()
