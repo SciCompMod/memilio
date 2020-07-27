@@ -278,7 +278,7 @@ ParameterSpace read_parameter_space(TixiDocumentHandle handle, const std::string
         auto probabilities_path = path_join(group_path, "Probabilities");
 
         dist_infect.emplace_back(read_dist(handle, path_join(probabilities_path, "InfectedFromContact")));
-        dist_asympt.emplace_back(read_dist(handle, path_join(probabilities_path, "Asympt")));
+        dist_asympt.emplace_back(read_dist(handle, path_join(probabilities_path, "AsympPerInfectious")));
         dist_risk_from_sympt.emplace_back(read_dist(handle, path_join(probabilities_path, "RiskFromSymptomatic")));
         dist_dead_per_icu.emplace_back(read_dist(handle, path_join(probabilities_path, "DeadPerICU")));
         dist_hosp_per_infectious.emplace_back(
@@ -347,7 +347,7 @@ void write_parameter_space(TixiDocumentHandle handle, const std::string& path, c
         tixiCreateElement(handle, group_path.c_str(), "Probabilities");
 
         write_dist(handle, probabilities_path, "InfectedFromContact", parameter_space.get_dist_inf_from_cont(i));
-        write_dist(handle, probabilities_path, "Asympt", parameter_space.get_dist_asymp_per_inf(i));
+        write_dist(handle, probabilities_path, "AsympPerInfectious", parameter_space.get_dist_asymp_per_inf(i));
         write_dist(handle, probabilities_path, "RiskFromSymptomatic", parameter_space.get_dist_risk_from_symp(i));
         write_dist(handle, probabilities_path, "DeadPerICU", parameter_space.get_dist_death_per_icu(i));
         write_dist(handle, probabilities_path, "HospitalizedPerInfectious", parameter_space.get_dist_hosp_per_inf(i));
@@ -366,8 +366,8 @@ void write_parameter_study(TixiDocumentHandle handle, const std::string& path, c
     write_parameter_space(handle, path, parameter_study.get_parameter_space(), parameter_study.get_nb_runs());
 }
 
-void create_document(const std::string& filename, const ContactFrequencyMatrix& cont_freq,
-                     const std::vector<SecirParams>& params, double t0, double tmax)
+void write_single_run_params(const std::string& filename, const ContactFrequencyMatrix& cont_freq,
+                             const std::vector<SecirParams>& params, double t0, double tmax)
 {
 
     int nb_runs      = 1;

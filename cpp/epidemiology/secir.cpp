@@ -602,7 +602,6 @@ SecirSimulation::SecirSimulation(const ContactFrequencyMatrix& cont_freq_matrix,
 {
     m_integratorCore->set_rel_tolerance(1e-4);
     m_integratorCore->set_abs_tolerance(1e-1);
-    //print_secir_params(params, cont_freq_matrix);
 }
 
 Eigen::VectorXd& SecirSimulation::advance(double tmax)

@@ -10,8 +10,8 @@
 
 namespace epi
 {
-extern void create_document(const std::string& filename, const ContactFrequencyMatrix& cont_freq,
-                            const std::vector<SecirParams>& params, double t0, double tmax);
+extern void write_single_run_params(const std::string& filename, const ContactFrequencyMatrix& cont_freq,
+                                    const std::vector<SecirParams>& params, double t0, double tmax);
 
 // The function type for the kind of simulation that we want to run
 using secir_simulation_function_t = std::function<std::vector<double>(
@@ -109,9 +109,9 @@ private:
     size_t m_nb_runs = 100;
 
     // Start time (should be the same for all simulations)
-    double m_t0 = 0;
+    double m_t0 = 0.0;
     // End time (should be the same for all simulations)
-    double m_tmax = 400;
+    double m_tmax = 400.0;
     // adaptive time step (will be corrected if too large/small)
     double m_dt = 0.1;
 };
@@ -151,10 +151,8 @@ inline std::vector<std::vector<Eigen::VectorXd>> ParameterStudy::run()
         std::vector<SecirParams> params_sample = std::move(parameter_space.get_secir_params_sample());
         ContactFrequencyMatrix contact_sample  = std::move(parameter_space.get_cont_freq_matrix_sample());
 
-        // print_secir_params(contact_sample, params_sample);
-
-        create_document("Results/Parameters_run" + std::to_string(i) + ".xml", contact_sample, params_sample,
-                        (*this).m_t0, (*this).m_tmax);
+        write_single_run_params("Results/Parameters_run" + std::to_string(i) + ".xml", contact_sample, params_sample,
+                                (*this).m_t0, (*this).m_tmax);
 
         // Call the simulation function
         auto time = simulation_function((*this).m_t0, (*this).m_tmax, (*this).m_dt, contact_sample, params_sample,
