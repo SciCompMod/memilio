@@ -58,7 +58,6 @@ void save_result(const std::vector<double>& times, const std::vector<Eigen::Vect
 struct SecirSimulationResult {
     std::vector<double> time;
     std::vector<Eigen::VectorXd> groups;
-    //std::vector<std::vector<std::vector<double>>> groups;
     std::vector<std::vector<double>> total;
 };
 
@@ -101,7 +100,6 @@ SecirSimulationResult read_result(const std::string& filename, int nb_groups)
         DataSpace mspace2(n_dims_group, dims_group);
 
         auto group = std::vector<double[nb_compart]>(dims_group[0]);
-        //auto group = Eigen::VectorXd(8);
         dataset_group.read(group.data(), PredType::NATIVE_DOUBLE, mspace2, filespace_group);
 
         for (int j = 0; j < dims_group[0]; j++) {
@@ -109,11 +107,6 @@ SecirSimulationResult read_result(const std::string& filename, int nb_groups)
                 groups[j][nb_compart * i + k] = group[j][k];
             }
         }
-        /*groups.emplace_back(group.size());
-        auto& newgroup = groups.back();
-        std::transform(begin(group), end(group), begin(newgroup), [nb_compart](auto v) {
-            return std::vector<double>(v, v + nb_compart);
-        });*/
     }
 
     H5std_string DATASET_NAME_TOTAL("Total");

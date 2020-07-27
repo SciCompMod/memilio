@@ -1,5 +1,8 @@
 //#include <epidemiology/seir.h>
 #include <epidemiology/parameter_studies/parameter_studies.h>
+#include <epidemiology/save_parameters.h>
+
+#include <tixi.h>
 
 int main(int argc, char* argv[])
 {
@@ -94,8 +97,21 @@ int main(int argc, char* argv[])
         contact_freq_matrix, params, t0, tmax);
 
     // Run parameter study
-    parameter_study.set_nb_runs(1);
-    std::vector<std::vector<Eigen::VectorXd>> results = parameter_study.run();
+
+    std::string path = "/Parameters";
+    TixiDocumentHandle handle;
+    tixiCreateDocument("Parameters", &handle);
+
+    epi::write_parameter_study(handle, path, parameter_study);
+    tixiSaveDocument(handle, "Parameters.xml");
+    tixiCloseDocument(handle);
+
+    tixiOpenDocument("Parameters.xml", &handle);
+    epi::ParameterStudy read_study = epi::read_parameter_study(handle, path);
+
+    read_study.set_nb_runs(5);
+
+    std::vector<std::vector<Eigen::VectorXd>> results = read_study.run();
 
 #if 0
     if (argc > 1) {
