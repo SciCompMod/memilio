@@ -1,4 +1,5 @@
 //#include <epidemiology/seir.h>
+#include <epidemiology_io/secir_parameters_io.h>
 #include <epidemiology/parameter_studies/parameter_studies.h>
 #include <epidemiology_io/secir_parameters_io.h>
 
@@ -108,10 +109,13 @@ int main(int argc, char* argv[])
 
     tixiOpenDocument("Parameters.xml", &handle);
     epi::ParameterStudy read_study = epi::read_parameter_study(handle, path);
-
+    int run                        = 0;
     read_study.set_nb_runs(5);
-
-    std::vector<std::vector<Eigen::VectorXd>> results = read_study.run();
+    auto lambda = [&run, t0, tmax](const auto& cont_freq, const auto& params, const auto& time,
+                                   const auto& secir_result) mutable {
+        epi::write_single_run_params(run++, cont_freq, params, t0, tmax, time, secir_result);
+    };
+    std::vector<std::vector<Eigen::VectorXd>> results = read_study.run(lambda);
 
 #if 0
     if (argc > 1) {

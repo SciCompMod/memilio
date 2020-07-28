@@ -1,4 +1,5 @@
 #include <epidemiology_io/secir_parameters_io.h>
+#include <epidemiology_io/secir_result_io.h>
 #include <epidemiology/secir.h>
 #include <epidemiology/damping.h>
 #include <epidemiology/stl_util.h>
@@ -41,7 +42,7 @@ void write_dist(const TixiDocumentHandle& handle, const std::string& path, const
         assert(false && "Unknown distribution.");
         break;
     }
-    tixiAddFloatVector(handle, path.c_str(), "PredefinedSamples", dist.get_predefined_samples().data(),
+    tixiAddFloatVector(handle, element_path.c_str(), "PredefinedSamples", dist.get_predefined_samples().data(),
                        dist.get_predefined_samples().size(), "%g");
 }
 
@@ -97,6 +98,7 @@ std::unique_ptr<ParameterDistribution> read_dist(TixiDocumentHandle handle, cons
 
 void write_predef_sample(TixiDocumentHandle handle, const std::string& path, const std::vector<double>& samples)
 {
+    tixiRemoveElement(handle, path_join(path, "PredefinedSamples").c_str());
     tixiAddFloatVector(handle, path.c_str(), "PredefinedSamples", samples.data(), samples.size(), "%g");
 }
 
@@ -366,8 +368,9 @@ void write_parameter_study(TixiDocumentHandle handle, const std::string& path, c
     write_parameter_space(handle, path, parameter_study.get_parameter_space(), parameter_study.get_nb_runs());
 }
 
-void write_single_run_params(const std::string& filename, const ContactFrequencyMatrix& cont_freq,
-                             const std::vector<SecirParams>& params, double t0, double tmax)
+void write_single_run_params(const int run, const ContactFrequencyMatrix& cont_freq,
+                             const std::vector<SecirParams>& params, double t0, double tmax, std::vector<double> time,
+                             std::vector<Eigen::VectorXd> secir_result)
 {
 
     int nb_runs      = 1;
@@ -378,8 +381,10 @@ void write_single_run_params(const std::string& filename, const ContactFrequency
     ParameterStudy study(simulate, cont_freq, params, t0, tmax, 0.0, nb_runs);
 
     write_parameter_study(handle, path, study);
-    tixiSaveDocument(handle, filename.c_str());
+    tixiSaveDocument(handle, ("Parameters_run" + std::to_string(run) + ".xml").c_str());
     tixiCloseDocument(handle);
+
+    save_result(time, secir_result, ("Results_run" + std::to_string(run) + ".h5"));
 }
 
 } // namespace epi

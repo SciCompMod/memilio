@@ -16,12 +16,6 @@ namespace epi
 void save_result(const std::vector<double>& times, const std::vector<Eigen::VectorXd>& secir,
                  const std::string& filename);
 
-/**
- * @brief strcut which holds secir simulation results
- * @param time Vector of timesteps used during simulation
- * @param groups Simulation Results of individual groups
- * @param total Simulation Results of the sum over all groups
- */
 class SecirSimulationResult
 {
 public:
@@ -32,14 +26,29 @@ public:
 
     /**
      * @brief Constructor of SecirSimulationResult storing time, groups, and total sums of all groups
+     * @param time Vector of timesteps used during simulation
+     * @param groups Simulation Results of individual groups
+     * @param total Simulation Results of the sum over all groups
      */
     SecirSimulationResult(std::vector<double> time, std::vector<Eigen::VectorXd> groups,
                           std::vector<std::vector<double>> total);
 
+    /**
+     * @brief get_time_vector
+     * @return Vector of timesteps used during simulation
+     */
     std::vector<double> get_time_vector() const&;
 
+    /**
+     * @brief get_groups_vectors
+     * @return Simulation Results of individual groups
+     */
     std::vector<Eigen::VectorXd> get_groups_vectors() const&;
 
+    /**
+     * @brief get_totals_vector
+     * @return Simulation Results of the sum over all groups
+     */
     std::vector<std::vector<double>> get_totals_vector() const&;
 
 private:
