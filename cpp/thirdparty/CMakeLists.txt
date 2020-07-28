@@ -61,3 +61,10 @@ if(EPI_USE_BUNDLED_EIGEN)
 else()
     find_package(Eigen3 3.3 REQUIRED NO_MODULE)
 endif()
+
+if (EPI_BUILD_EPI_IO)
+  # TODO: support also HDF5 config mode
+  find_package(HDF5 REQUIRED COMPONENTS CXX)
+
+  find_package(tixi3 REQUIRED CONFIG)
+endif(EPI_BUILD_EPI_IO)

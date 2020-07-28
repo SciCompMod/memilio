@@ -4,12 +4,14 @@ build-cpp:
     - cpp
     - hpcagainstcorona
   before_script:
+    - echo 'deb http://download.opensuse.org/repositories/science:/dlr/xUbuntu_18.04/ /' | tee /etc/apt/sources.list.d/science:dlr.list
+    - wget -O - https://download.opensuse.org/repositories/science:dlr/xUbuntu_18.04/Release.key  | apt-key add -
     - apt -qq update
-    - apt -qq -y install libeigen3-dev
+    - apt -qq -y install libeigen3-dev libhdf5-dev libtixi3-dev
   script:
     - cd cpp
     - mkdir build && cd build
-    - cmake -G Ninja -DEPI_USE_BUNDLED_EIGEN=OFF ..
+    - cmake -G Ninja -DEPI_USE_BUNDLED_EIGEN=OFF -DEPI_BUILD_EPI_IO=ON ..
     - cmake --build .
   artifacts:
     expire_in: 2 hrs
@@ -39,6 +41,11 @@ test-cpp:
     - cpp
     - hpcagainstcorona
   stage: test
+  before_script:
+    - echo 'deb http://download.opensuse.org/repositories/science:/dlr/xUbuntu_18.04/ /' | tee /etc/apt/sources.list.d/science:dlr.list
+    - wget -O - https://download.opensuse.org/repositories/science:dlr/xUbuntu_18.04/Release.key  | apt-key add -
+    - apt -qq update
+    - apt -qq -y install libhdf5-cpp-100 libtixi3
   dependencies:
     - build-cpp
   script:

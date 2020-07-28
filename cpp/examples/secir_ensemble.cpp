@@ -1,14 +1,17 @@
 #include <epidemiology/secir.h>
 #include <epidemiology/logging.h>
+#include <epidemiology/save_result.h>
+#include <epidemiology/save_parameters.h>
+#include <epidemiology/parameter_studies/parameter_studies.h>
 
-#ifdef HAVE_EPI_IO
-#include <epidemiology_io/secir_result_io.h>
-#include <epidemiology_io/secir_parameters_io.h>
-#endif
+#include "tixi.h"
 
 int main()
 {
-    epi::set_log_level(epi::LogLevel::debug);
+    // epi::set_log_level(epi::LogLevel::debug);
+
+    // epi::file parameters = epi::file{ epi::read_parameters("Parameters.xml") };
+    // epi::dist_params dists;
 
     double t0   = 0;
     double tmax = 50;
@@ -94,22 +97,19 @@ int main()
         }
     }
 
-    std::vector<Eigen::VectorXd> secir(0);
+    int nb_runs = 5;
 
-    std::vector<double> time = simulate(t0, tmax, dt, contact_freq_matrix, params, secir);
+    std::string path = "/Parameters";
+    TixiDocumentHandle handle;
+    tixiCreateDocument("Parameters", &handle);
 
-    char vars[] = {'S', 'E', 'C', 'I', 'H', 'U', 'R', 'D'};
-    printf("secir.size() - 1:%d\n", static_cast<int>(secir.size() - 1));
-    printf("People in\n");
+    epi::ParameterStudy study(epi::simulate, contact_freq_matrix, params, t0, tmax, 0.0, nb_runs);
 
-    for (size_t k = 0; k < 8; k++) {
-        double dummy = 0;
+    epi::write_parameter_study(handle, path, study);
+    tixiSaveDocument(handle, "Parameters.xml");
+    tixiCloseDocument(handle);
 
-        for (size_t i = 0; i < params.size(); i++) {
-            printf("\t %c[%d]: %.0f", vars[k], (int)i, secir[secir.size() - 1][k + 8 * i]);
-            dummy += secir[secir.size() - 1][k + 8 * i];
-        }
-
-        printf("\t %c_otal: %.0f\n", vars[k], dummy);
-    }
+    tixiOpenDocument("Parameters.xml", &handle);
+    epi::ParameterStudy read_study = epi::read_parameter_study(handle, path);
+    read_study.run();
 }

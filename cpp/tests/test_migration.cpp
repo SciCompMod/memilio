@@ -1,10 +1,13 @@
 #define _USE_MATH_DEFINES
 
+#include <cmath>
+
+#include <Eigen/Core>
 #include "epidemiology/migration.h"
 #include "epidemiology/seir.h"
 #include "epidemiology/eigen_util.h"
 #include "gtest/gtest.h"
-#include <cmath>
+
 
 TEST(TestMigration, compareWithSingleIntegration)
 {
@@ -45,5 +48,5 @@ TEST(TestMigration, compareWithSingleIntegration)
 
     //graph may have different time steps, so we can't expect high accuracy here
     EXPECT_NEAR((g.nodes()[0].model.get_y().back() - single_sim1.get_y().back()).norm(), 0.0, 1e-6); 
-    EXPECT_NEAR((g.nodes()[1].model.get_y().back() - single_sim2.get_y().back()).norm(), 0.0, 1e-6); 
+    EXPECT_NEAR((g.nodes()[1].model.get_y().back() - single_sim2.get_y().back()).norm(), 0.0, 1e-6);
 }

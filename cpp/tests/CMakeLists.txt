@@ -20,15 +20,26 @@ set(TESTSOURCES
   test_migration.cpp
   test_eigen_util.cpp
   test_secir_ageres.cpp
-  test_stl_util.cpp
-  test_graph.cpp
   test_parameter_studies.cpp
+  test_graph.cpp
+  test_stl_util.cpp
   gtest_helpers.h
 )
+
+if (TARGET epidemiology_io)
+  set(TESTSOURCES ${TESTSOURCES}
+    test_save_parameters.cpp
+    test_save_results.cpp
+  )
+endif()
 
 add_executable(runUnitTests ${TESTSOURCES})
 target_include_directories(runUnitTests PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 target_link_libraries(runUnitTests PRIVATE epidemiology gtest_main)
+
+if (TARGET epidemiology_io)
+  target_link_libraries(runUnitTests PRIVATE epidemiology_io)
+endif()
 
 #make unit tests find the test data files
 file(TO_CMAKE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/data" EPI_TEST_DATA_DIR)

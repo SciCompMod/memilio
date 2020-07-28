@@ -4,6 +4,7 @@ project(epidemiology VERSION 0.1.0)
 
 option(EPI_USE_BUNDLED_SPDLOG "Use spdlog bundled with epi" ON)
 option(EPI_USE_BUNDLED_EIGEN "Use eigen bundled with epi" ON)
+option(EPI_BUILD_EPI_IO "Build epidemiology_io library (requires TiXI and HDF5)" OFF)
 
 mark_as_advanced(EPI_USE_BUNDLED_SPDLOG)
 
@@ -27,18 +28,41 @@ add_library(epidemiology
     epidemiology/integrator.cpp
     epidemiology/migration.h
     epidemiology/migration.cpp
-    epidemiology/eigen_util.h
     epidemiology/graph.h
     epidemiology/graph.cpp
+    epidemiology/eigen_util.h
 )
+
 target_include_directories(epidemiology PUBLIC
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
     $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
 )
 
+
 target_compile_features(epidemiology PRIVATE cxx_std_14)
-target_link_libraries(epidemiology PUBLIC spdlog::spdlog
-                                          Eigen3::Eigen)
+target_link_libraries(epidemiology PUBLIC spdlog::spdlog Eigen3::Eigen)
+
+if (EPI_BUILD_EPI_IO)
+    
+    add_library(epidemiology_io
+      epidemiology_io/secir_result_io.cpp
+      epidemiology_io/secir_result_io.h
+      epidemiology_io/secir_parameters_io.cpp
+      epidemiology_io/secir_parameters_io.h
+    )
+
+    target_include_directories(epidemiology_io PUBLIC
+        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
+        $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
+    )
+
+    target_link_libraries(epidemiology_io PUBLIC epidemiology tixi3
+                          PRIVATE ${HDF5_CXX_LIBRARIES} )
+    target_include_directories(epidemiology_io PRIVATE ${HDF5_INCLUDE_DIRS})
+
+    target_compile_definitions(epidemiology_io PUBLIC "-DHAVE_EPI_IO")
+
+endif(EPI_BUILD_EPI_IO)
 
 include(GNUInstallDirs)
 

@@ -1,9 +1,10 @@
 #ifndef MIGRATION_H
 #define MIGRATION_H
 
-#include <epidemiology/graph.h>
 #include <Eigen/Core>
 #include <vector>
+
+#include <epidemiology/graph.h>
 
 namespace epi
 {
