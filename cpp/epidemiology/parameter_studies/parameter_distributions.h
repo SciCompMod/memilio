@@ -43,6 +43,9 @@ public:
         m_upper_bound      = upper_bound;
         m_dist             = dist;
     }
+
+    virtual ~ParameterDistribution() = default;
+
     void set_lower_bound(double lower_bound)
     {
         m_lower_bound = lower_bound;
