@@ -161,47 +161,92 @@ void SecirParams::StageTimes::set_icu_to_death(double const& ticu2death)
     m_ticu2death_inv = 1.0 / ticu2death;
 }
 
-double SecirParams::StageTimes::get_incubation_inv() const
+const UncertainValue& SecirParams::StageTimes::get_incubation_inv() const
 {
     return m_tinc_inv;
 }
 
-double SecirParams::StageTimes::get_infectious_mild_inv() const
+UncertainValue& SecirParams::StageTimes::get_incubation_inv()
+{
+    return m_tinc_inv;
+}
+
+const UncertainValue& SecirParams::StageTimes::get_infectious_mild_inv() const
 {
     return m_tinfmild_inv;
 }
 
-double SecirParams::StageTimes::get_serialinterval_inv() const
+UncertainValue& SecirParams::StageTimes::get_infectious_mild_inv()
+{
+    return m_tinfmild_inv;
+}
+
+const UncertainValue& SecirParams::StageTimes::get_serialinterval_inv() const
 {
     return m_tserint_inv;
 }
 
-double SecirParams::StageTimes::get_hospitalized_to_home_inv() const
+UncertainValue& SecirParams::StageTimes::get_serialinterval_inv()
+{
+    return m_tserint_inv;
+}
+
+const UncertainValue& SecirParams::StageTimes::get_hospitalized_to_home_inv() const
 {
     return m_thosp2home_inv;
 }
 
-double SecirParams::StageTimes::get_home_to_hospitalized_inv() const
+UncertainValue& SecirParams::StageTimes::get_hospitalized_to_home_inv()
+{
+    return m_thosp2home_inv;
+}
+
+const UncertainValue& SecirParams::StageTimes::get_home_to_hospitalized_inv() const
 {
     return m_thome2hosp_inv;
 }
 
-double SecirParams::StageTimes::get_hospitalized_to_icu_inv() const
+UncertainValue& SecirParams::StageTimes::get_home_to_hospitalized_inv()
+{
+    return m_thome2hosp_inv;
+}
+
+const UncertainValue& SecirParams::StageTimes::get_hospitalized_to_icu_inv() const
 {
     return m_thosp2icu_inv;
 }
 
-double SecirParams::StageTimes::get_icu_to_home_inv() const
+UncertainValue& SecirParams::StageTimes::get_hospitalized_to_icu_inv()
+{
+    return m_thosp2icu_inv;
+}
+
+const UncertainValue& SecirParams::StageTimes::get_icu_to_home_inv() const
 {
     return m_ticu2home_inv;
 }
 
-double SecirParams::StageTimes::get_infectious_asymp_inv() const
+UncertainValue& SecirParams::StageTimes::get_icu_to_home_inv()
+{
+    return m_ticu2home_inv;
+}
+
+const UncertainValue& SecirParams::StageTimes::get_infectious_asymp_inv() const
 {
     return m_tinfasy_inv;
 }
 
-double SecirParams::StageTimes::get_icu_to_dead_inv() const
+UncertainValue& SecirParams::StageTimes::get_infectious_asymp_inv()
+{
+    return m_tinfasy_inv;
+}
+
+const UncertainValue& SecirParams::StageTimes::get_icu_to_dead_inv() const
+{
+    return m_ticu2death_inv;
+}
+
+UncertainValue& SecirParams::StageTimes::get_icu_to_dead_inv()
 {
     return m_ticu2death_inv;
 }

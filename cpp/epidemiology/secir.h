@@ -4,6 +4,7 @@
 #include <epidemiology/populations.h>
 #include <epidemiology/damping.h>
 #include <epidemiology/adapt_rk.h>
+#include <epidemiology/uncertain_value.h>
 
 #include <vector>
 #include <Eigen/Core>
@@ -171,7 +172,8 @@ public:
          * @brief Standard constructor of a time parameters' class in the SECIR model
          */
         StageTimes();
-
+        StageTimes(StageTimes&&)      = default;
+        StageTimes(const StageTimes&) = default;
         /**
          * @brief sets the incubation time in the SECIR model
          * @param tinc incubation time in day unit
@@ -229,51 +231,61 @@ public:
         /**
          * @brief returns 1.0 over the incubation time set for the SECIR model in day unit
          */
-        double get_incubation_inv() const;
+        const UncertainValue& get_incubation_inv() const;
+        UncertainValue& get_incubation_inv();
 
         /**
          * @brief returns 1.0 over the infectious time set for the SECIR model in day unit
          */
-        double get_infectious_mild_inv() const;
+        const UncertainValue& get_infectious_mild_inv() const;
+        UncertainValue& get_infectious_mild_inv();
 
         /**
          * @brief returns 1.0 over the serial interval in the SECIR model
          */
-        double get_serialinterval_inv() const;
+        const UncertainValue& get_serialinterval_inv() const;
+        UncertainValue& get_serialinterval_inv();
 
         /**
          * @brief returns 1.0 over the time people are 'simply' hospitalized before returning home in the SECIR model 
          */
-        double get_hospitalized_to_home_inv() const;
+        const UncertainValue& get_hospitalized_to_home_inv() const;
+        UncertainValue& get_hospitalized_to_home_inv();
 
         /**
          * @brief returns 1.0 over the time people are infectious at home before 'simply' hospitalized in the SECIR model 
          */
-        double get_home_to_hospitalized_inv() const;
+        const UncertainValue& get_home_to_hospitalized_inv() const;
+        UncertainValue& get_home_to_hospitalized_inv();
 
         /**
          * @brief returns 1.0 over the time people are 'simply' hospitalized before being treated by ICU in the SECIR model
          */
-        double get_hospitalized_to_icu_inv() const;
+        const UncertainValue& get_hospitalized_to_icu_inv() const;
+        UncertainValue& get_hospitalized_to_icu_inv();
 
         /**
          * @brief returns 1.0 over the time people are treated by ICU before returning home in the SECIR model
          */
-        double get_icu_to_home_inv() const;
+        const UncertainValue& get_icu_to_home_inv() const;
+        UncertainValue& get_icu_to_home_inv();
 
         /**
          * @brief returns 1.0 over the infectious time for asymptomatic cases in the SECIR model
          */
-        double get_infectious_asymp_inv() const;
+        const UncertainValue& get_infectious_asymp_inv() const;
+        UncertainValue& get_infectious_asymp_inv();
 
         /**
          * @brief returns 1.0 over the time people are treated by ICU before dying in the SECIR model
          */
-        double get_icu_to_dead_inv() const;
+        const UncertainValue& get_icu_to_dead_inv() const;
+        UncertainValue& get_icu_to_dead_inv();
 
     private:
-        double m_tinc_inv, m_tinfmild_inv; // parameters also available in SEIR
-        double m_tserint_inv, m_thosp2home_inv, m_thome2hosp_inv, m_thosp2icu_inv, m_ticu2home_inv, m_tinfasy_inv,
+        UncertainValue m_tinc_inv, m_tinfmild_inv; // parameters also available in SEIR
+        UncertainValue m_tserint_inv, m_thosp2home_inv, m_thome2hosp_inv, m_thosp2icu_inv, m_ticu2home_inv,
+            m_tinfasy_inv,
             m_ticu2death_inv; // new SECIR params
     };
 
@@ -284,6 +296,8 @@ public:
          * @brief Standard constructor of probabilites parameters' class in the SECIR model
          */
         Probabilities();
+        Probabilities(const Probabilities&) = default;
+        Probabilities(Probabilities&&)      = default;
 
         /**
         * @brief sets probability of getting infected from a contact
