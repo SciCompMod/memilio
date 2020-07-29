@@ -24,6 +24,14 @@ namespace epi
 class Populations
 {
 public:
+    /**
+     * @brief Standard constructor of population parameters' class in the SECIR model
+     */
+    Populations();
+    Populations(const Populations&) = default;
+    Populations(Populations&&)      = default;
+    Populations& operator=(const Populations&) = default;
+
     Populations(std::vector<size_t> const& category_sizes);
 
     /**

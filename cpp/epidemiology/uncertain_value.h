@@ -26,6 +26,13 @@ public:
         }
     }
 
+    UncertainValue& operator=(const UncertainValue& other)
+    {
+        UncertainValue tmp(other);
+        std::swap(*this, tmp);
+        return *this;
+    }
+
     operator double() const
     {
         return m_value;

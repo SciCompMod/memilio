@@ -174,6 +174,8 @@ public:
         StageTimes();
         StageTimes(StageTimes&&)      = default;
         StageTimes(const StageTimes&) = default;
+        StageTimes& operator=(const StageTimes&) = default;
+
         /**
          * @brief sets the incubation time in the SECIR model
          * @param tinc incubation time in day unit
@@ -298,6 +300,7 @@ public:
         Probabilities();
         Probabilities(const Probabilities&) = default;
         Probabilities(Probabilities&&)      = default;
+        Probabilities& operator=(const Probabilities&) = default;
 
         /**
         * @brief sets probability of getting infected from a contact
