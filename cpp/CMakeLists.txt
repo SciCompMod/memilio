@@ -51,6 +51,8 @@ if (EPI_BUILD_EPI_IO)
       epidemiology_io/secir_result_io.h
       epidemiology_io/secir_parameters_io.cpp
       epidemiology_io/secir_parameters_io.h
+      epidemiology_io/io.cpp
+      epidemiology_io/io.h
     )
 
     target_include_directories(epidemiology_io PUBLIC

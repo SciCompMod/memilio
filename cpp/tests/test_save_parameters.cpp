@@ -110,6 +110,7 @@ TEST(TestSaveParameters, compareSingleRun)
 
     tixiOpenDocument("TestParameters.xml", &handle);
     epi::ParameterStudy read_study = epi::read_parameter_study(handle, path);
+    tixiCloseDocument(handle);
 
     ASSERT_EQ(study.get_nb_runs(), read_study.get_nb_runs());
     ASSERT_EQ(study.get_t0(), read_study.get_t0());

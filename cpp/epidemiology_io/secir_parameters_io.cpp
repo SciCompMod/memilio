@@ -88,16 +88,12 @@ std::unique_ptr<ParameterDistribution> read_dist(TixiDocumentHandle handle, cons
     auto predef_path = path_join(path, "PredefinedSamples");
     int n_predef;
     tixiGetVectorSize(handle, predef_path.c_str(), &n_predef);
-    auto free = [](double* p) { std::free(p); };
-    std::unique_ptr<double, decltype(free)> predef(
-        [&]() {
-            double* predef = nullptr;
-            tixiGetFloatVector(handle, predef_path.c_str(), &predef, n_predef);
-            return predef;
-        }(),
-        free);
+
+    double* predef = nullptr;
+    tixiGetFloatVector(handle, predef_path.c_str(), &predef, n_predef);
+
     for (int i = 0; i < n_predef; i++) {
-        distribution->add_predefined_sample(predef.get()[i]);
+        distribution->add_predefined_sample(predef[i]);
     }
 
     return distribution;
@@ -167,18 +163,12 @@ ContactFrequencyVariableElement read_contact(TixiDocumentHandle handle, const st
     tixiGetIntegerElement(handle, path_join("/Parameters", "NumberOfGroups").c_str(), &nb_groups);
     epi::ContactFrequencyMatrix contact_freq_matrix{(size_t)nb_groups};
     for (size_t i = 0; i < nb_groups; i++) {
-        auto free = [](double* p) { std::free(p); };
-        std::unique_ptr<double, decltype(free)> row(
-            [&]() {
-                double* row = nullptr;
-                tixiGetFloatVector(handle, path_join(path, "ContactRateGroup" + std::to_string(i + 1)).c_str(), &row,
-                                   nb_groups);
-                return row;
-            }(),
-            free);
+        double* row = nullptr;
+        tixiGetFloatVector(handle, path_join(path, "ContactRateGroup" + std::to_string(i + 1)).c_str(), &row,
+                           nb_groups);
+
         for (int j = 0; j < nb_groups; ++j) {
-            double temp = row.get()[j];
-            contact_freq_matrix.set_cont_freq(row.get()[j], i, j);
+            contact_freq_matrix.set_cont_freq(row[j], i, j);
         }
     }
 
