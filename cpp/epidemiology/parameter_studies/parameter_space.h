@@ -12,12 +12,13 @@
 namespace epi
 {
 
-/* TODO: Add more distributions here. */
-typedef enum
+
+class ParameterDistributionVisitor
 {
-    DIST_UNIFORM,
-    DIST_NORMAL
-} distribution;
+public:
+    virtual void visit(class ParameterDistributionNormal&) = 0;
+    virtual void visit(class ParameterDistributionUniform&) = 0;
+};
 
 /*
  * Parameter Distribution class which contains the name of a variable as string
@@ -30,19 +31,17 @@ public:
     ParameterDistribution()
         : m_lower_bound{0}
         , m_upper_bound{0}
-        , m_dist{DIST_UNIFORM}
     {
         std::random_device random_device;
         m_random_generator = std::mt19937{random_device()};
     }
 
-    ParameterDistribution(double lower_bound, double upper_bound, distribution dist)
+    ParameterDistribution(double lower_bound, double upper_bound)
     {
         std::random_device random_device;
         m_random_generator = std::mt19937{random_device()};
         m_lower_bound      = lower_bound;
         m_upper_bound      = upper_bound;
-        m_dist             = dist;
     }
     void set_lower_bound(double lower_bound)
     {
@@ -52,11 +51,6 @@ public:
     void set_upper_bound(double upper_bound)
     {
         m_upper_bound = upper_bound;
-    }
-
-    void set_distribution(distribution dist)
-    {
-        m_dist = dist;
     }
 
     void add_predefined_sample(double sample)
@@ -84,11 +78,6 @@ public:
         return m_upper_bound;
     }
 
-    distribution const& get_distribution() const
-    {
-        return m_dist;
-    }
-
     /*
      * @brief returns a value for the given parameter distribution
      * in case some predefined samples are set, these values are taken
@@ -112,10 +101,11 @@ public:
         return 0.0;
     }
 
+    virtual void accept(ParameterDistributionVisitor& visitor) = 0;
+
 protected:
     double m_lower_bound; /*< A realistic lower bound on the given parameter */
     double m_upper_bound; /*< A realistic upper bound on the given parameter */
-    distribution m_dist; /*< The statistical distribution of this parameter */
     std::mt19937 m_random_generator;
     std::vector<double>
         m_predefined_samples; // if these values are set; no real sample will occur but these values will be taken
@@ -131,7 +121,6 @@ public:
     ParameterDistributionNormal()
         : ParameterDistribution()
     {
-        m_dist         = DIST_NORMAL;
         m_mean         = 0;
         m_standard_dev = 1;
     }
@@ -139,14 +128,13 @@ public:
     ParameterDistributionNormal(double mean, double standard_dev)
         : ParameterDistribution()
     {
-        m_dist         = DIST_NORMAL;
         m_mean         = mean;
         m_standard_dev = standard_dev;
         check_quantiles(m_mean, m_standard_dev);
     }
 
     ParameterDistributionNormal(double lower_bound, double upper_bound, double mean)
-        : ParameterDistribution(lower_bound, upper_bound, DIST_NORMAL)
+        : ParameterDistribution(lower_bound, upper_bound)
     {
         m_mean         = mean;
         m_standard_dev = upper_bound; // set as to high and adapt then
@@ -154,7 +142,7 @@ public:
     }
 
     ParameterDistributionNormal(double lower_bound, double upper_bound, double mean, double standard_dev)
-        : ParameterDistribution(lower_bound, upper_bound, DIST_NORMAL)
+        : ParameterDistribution(lower_bound, upper_bound)
     {
         m_mean         = mean;
         m_standard_dev = standard_dev;
@@ -268,6 +256,11 @@ public:
         return rnumb;
     }
 
+    void accept(ParameterDistributionVisitor& visitor) override
+    {
+        visitor.visit(*this);
+    }
+
 private:
     double m_mean; // the mean value of the normal distribution
     double m_standard_dev; // the standard deviation of the normal distribution
@@ -288,7 +281,7 @@ public:
     }
 
     ParameterDistributionUniform(double lower_bound, double upper_bound)
-        : ParameterDistribution(lower_bound, upper_bound, DIST_UNIFORM)
+        : ParameterDistribution(lower_bound, upper_bound)
     {
     }
 
@@ -302,6 +295,11 @@ public:
         }
 
         return m_distribution(m_random_generator);
+    }
+
+    void accept(ParameterDistributionVisitor& visitor) override
+    {
+        visitor.visit(*this);
     }
 
 private:

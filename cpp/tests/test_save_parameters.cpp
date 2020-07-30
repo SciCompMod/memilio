@@ -8,30 +8,36 @@
 
 void check_dist(const epi::ParameterDistribution& dist, const epi::ParameterDistribution& dist_read)
 {
-    ASSERT_EQ(dist.get_distribution(), dist_read.get_distribution());
-    switch (dist.get_distribution()) {
-    case epi::DIST_NORMAL: {
 
-        auto& normal_dist      = static_cast<const epi::ParameterDistributionNormal&>(dist);
-        auto& normal_dist_read = static_cast<const epi::ParameterDistributionNormal&>(dist_read);
-        ASSERT_EQ(normal_dist.get_mean(), normal_dist_read.get_mean());
-        ASSERT_EQ(normal_dist.get_standard_dev(), normal_dist_read.get_standard_dev());
-        ASSERT_EQ(normal_dist.get_lower_bound(), normal_dist_read.get_lower_bound());
-        ASSERT_EQ(normal_dist.get_upper_bound(), normal_dist_read.get_upper_bound());
-        break;
-    }
-    case epi::DIST_UNIFORM: {
-        auto& uniform_dist      = static_cast<const epi::ParameterDistributionUniform&>(dist);
-        auto& uniform_dist_read = static_cast<const epi::ParameterDistributionUniform&>(dist_read);
-        ASSERT_EQ(uniform_dist.get_lower_bound(), uniform_dist_read.get_lower_bound());
-        ASSERT_EQ(uniform_dist.get_upper_bound(), uniform_dist_read.get_upper_bound());
-        break;
-    }
-    default:
-        //TODO: true error handling
-        assert(false && "Unknown distribution.");
-        break;
-    }
+    struct CheckDistEqVisitor : public epi::ParameterDistributionVisitor
+    {
+        CheckDistEqVisitor(const epi::ParameterDistribution& other_dist) : other(other_dist) {}
+
+        void visit(epi::ParameterDistributionNormal& self) override
+        {
+            auto p_other_normal_dist = dynamic_cast<const epi::ParameterDistributionNormal*>(&other);
+            ASSERT_TRUE(p_other_normal_dist != nullptr);
+
+            EXPECT_EQ(self.get_mean(), p_other_normal_dist->get_mean());
+            EXPECT_EQ(self.get_standard_dev(), p_other_normal_dist->get_standard_dev());
+            EXPECT_EQ(self.get_lower_bound(), p_other_normal_dist->get_lower_bound());
+            EXPECT_EQ(self.get_upper_bound(), p_other_normal_dist->get_upper_bound());
+
+        }
+        void visit(epi::ParameterDistributionUniform& self) override
+        {
+            auto p_other_uniform_dist = dynamic_cast<const epi::ParameterDistributionUniform*>(&other);
+            ASSERT_TRUE(p_other_uniform_dist != nullptr);
+
+            EXPECT_EQ(self.get_lower_bound(), p_other_uniform_dist->get_lower_bound());
+            EXPECT_EQ(self.get_upper_bound(), p_other_uniform_dist->get_upper_bound());
+
+        }
+        const epi::ParameterDistribution& other;
+    };
+
+    CheckDistEqVisitor visitor(dist_read);
+    const_cast<epi::ParameterDistribution&>(dist).accept(visitor);
 }
 
 TEST(TestSaveParameters, compareSingleRun)
