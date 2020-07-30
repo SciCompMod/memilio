@@ -97,6 +97,8 @@ int main(int argc, char* argv[])
         },
         contact_freq_matrix, params, t0, tmax);
 
+    parameter_study.set_nb_runs(5);
+
     // Run parameter study
 
     std::string path = "/Parameters";
@@ -110,9 +112,8 @@ int main(int argc, char* argv[])
     tixiOpenDocument("Parameters.xml", &handle);
     epi::ParameterStudy read_study = epi::read_parameter_study(handle, path);
     int run                        = 0;
-    read_study.set_nb_runs(5);
-    auto lambda = [&run, t0, tmax](const auto& cont_freq, const auto& params, const auto& time,
-                                   const auto& secir_result) mutable {
+    auto lambda                    = [&run, t0, tmax](const auto& cont_freq, const auto& params, const auto& time,
+                                   const auto& secir_result) {
         epi::write_single_run_params(run++, cont_freq, params, t0, tmax, time, secir_result);
     };
     std::vector<std::vector<Eigen::VectorXd>> results = read_study.run(lambda);

@@ -18,7 +18,7 @@ using secir_simulation_function_t = std::function<std::vector<double>(
     double t0, double tmax, double dt, ContactFrequencyMatrix const& cont_freq_matrix,
     std::vector<SecirParams> const& params, std::vector<Eigen::VectorXd>& secir_result)>;
 
-auto dummy_func = [](const auto& cont_freq, const auto& params, const auto& time, const auto& secir_result) mutable {};
+auto dummy_func = [](const auto& cont_freq, const auto& params, const auto& time, const auto& secir_result) {};
 
 // TODO: document class
 // TODO: document input file convention
