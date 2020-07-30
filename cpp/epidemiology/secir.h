@@ -33,72 +33,6 @@ enum SecirCompartments
 };
 
 /**
- * @brief Initializes a Contact Frequency matrix for the SECIR/SECIHURD model
- *
- * @todo parameter description
- *
- * @param m_cont_freq
- **/
-class ContactFrequencyMatrix
-{
-public:
-    /**
-     * @brief Standard constructor of contact frequencies 1x1-matrix in the SECIR model
-     */
-    ContactFrequencyMatrix();
-
-    /**
-     * @brief Constructor of contact frequencies nb_groups x nb_groups-matrix in the SECIR model
-     * @param[in] nb_groups number of groups in the model
-     */
-    ContactFrequencyMatrix(size_t const nb_groups);
-
-    /**
-     * @brief returns the size of the contact frequency matrix
-     */
-    int get_size() const;
-
-    /**
-     * @brief sets the contact frequency in the SECIR model; in case of multiple groups, set the contact rate cr_ij=cr_ji=cont_freq
-     * @param cont_freq contact rate/frequency in 1/day unit
-     * @param self_group own group
-     * @param contact_group group which gets in contact with own group
-     */
-    void set_cont_freq(double cont_freq, int self_group, int contact_group);
-
-    /**
-     * @brief returns the contact frequency set for the SECIR model in 1/day unit; in case of multiple groups, returns the contact rate cr_ij=cr_ji
-     */
-    double get_cont_freq(int self_group, int contact_group) const;
-
-    /**
-     * @brief sets the damping in the SECIR model; in case of multiple groups, set the contact rate d_ij=d_ji=cont_freq
-     * @param damping dampings over the whole time line in day unit
-     * @param self_group own group
-     * @param contact_group group which gets in contact with own group
-     */
-    void set_dampings(Dampings const& damping, int self_group, int contact_group);
-
-    /**
-     * @brief returns the dampings set for the SECIR model in 1/day unit; in case of multiple groups, returns the damping d_ij=d_ji
-     */
-    const Dampings& get_dampings(int self_group, int contact_group) const;
-
-    /**
-     * @brief add damping to the dampings object specified by self_ and contact_group
-     * @param damping one damping in day unit
-     * @param self_group own group
-     * @param contact_group group which gets in contact with own group
-     */
-    void add_damping(Damping const& damping, int self_group, int contact_group);
-
-private:
-    std::vector<std::vector<double>> m_cont_freq;
-    // This defines a damping factor for a mitigation strategy for different points in time.
-    std::vector<std::vector<Dampings>> m_dampings;
-}; // namespace epi
-
-/**
  * Paramters of the SECIR/SECIHURD model:
  * T_inc (also sigma^(-1) or R_2^(-1)+R_3^(-1)): mean incubation period (default: 5.2);
  *          R_2^(-1) is the first part of the incubation time where the person is not yet infectioous
@@ -369,12 +303,75 @@ public:
         double get_dead_per_icu() const;
 
     private:
-        double m_infprob, m_alpha, m_beta, m_rho, m_theta, m_delta; // probabilities
+        double m_infprob, m_asympinf, m_risksymp, m_hospinf, m_icuhosp, m_deathicu; // probabilities
     };
 
     Populations populations;
     std::vector<StageTimes> times;
     std::vector<Probabilities> probabilities;
+};
+
+/**
+ * @brief Initializes a Contact Frequency matrix for 
+ *        age resolved SECIR models
+ **/
+class ContactFrequencyMatrix
+{
+public:
+    /**
+     * @brief Standard constructor of contact frequencies 1x1-matrix in the SECIR model
+     */
+    ContactFrequencyMatrix();
+
+    /**
+     * @brief Constructor of contact frequencies nb_groups x nb_groups-matrix in the SECIR model
+     * @param[in] nb_groups number of groups in the model
+     */
+    ContactFrequencyMatrix(size_t const nb_groups);
+
+    /**
+     * @brief returns the size of the contact frequency matrix
+     */
+    int get_size() const;
+
+    /**
+     * @brief sets the contact frequency in the SECIR model; in case of multiple groups, set the contact rate cr_ij=cr_ji=cont_freq
+     * @param cont_freq contact rate/frequency in 1/day unit
+     * @param self_group own group
+     * @param contact_group group which gets in contact with own group
+     */
+    void set_cont_freq(double cont_freq, int self_group, int contact_group);
+
+    /**
+     * @brief returns the contact frequency set for the SECIR model in 1/day unit; in case of multiple groups, returns the contact rate cr_ij=cr_ji
+     */
+    double get_cont_freq(int self_group, int contact_group) const;
+
+    /**
+     * @brief sets the damping in the SECIR model; in case of multiple groups, set the contact rate d_ij=d_ji=cont_freq
+     * @param damping dampings over the whole time line in day unit
+     * @param self_group own group
+     * @param contact_group group which gets in contact with own group
+     */
+    void set_dampings(Dampings const& damping, int self_group, int contact_group);
+
+    /**
+     * @brief returns the dampings set for the SECIR model in 1/day unit; in case of multiple groups, returns the damping d_ij=d_ji
+     */
+    const Dampings& get_dampings(int self_group, int contact_group) const;
+
+    /**
+     * @brief add damping to the dampings object specified by self_ and contact_group
+     * @param damping one damping in day unit
+     * @param self_group own group
+     * @param contact_group group which gets in contact with own group
+     */
+    void add_damping(Damping const& damping, int self_group, int contact_group);
+
+private:
+    std::vector<std::vector<double>> m_cont_freq;
+    // This defines a damping factor for a mitigation strategy for different points in time.
+    std::vector<std::vector<Dampings>> m_dampings;
 };
 
 /**

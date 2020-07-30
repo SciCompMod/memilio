@@ -253,11 +253,11 @@ UncertainValue& SecirParams::StageTimes::get_icu_to_dead_inv()
 
 SecirParams::Probabilities::Probabilities()
     : m_infprob{1}
-    , m_alpha{0}
-    , m_beta{0}
-    , m_rho{0}
-    , m_theta{0}
-    , m_delta{0}
+    , m_asympinf{0}
+    , m_risksymp{0}
+    , m_hospinf{0}
+    , m_icuhosp{0}
+    , m_deathicu{0}
 {
 }
 
@@ -266,29 +266,29 @@ void SecirParams::Probabilities::set_infection_from_contact(double const& infpro
     m_infprob = infprob;
 }
 
-void SecirParams::Probabilities::set_asymp_per_infectious(double const& alpha)
+void SecirParams::Probabilities::set_asymp_per_infectious(double const& asympinf)
 {
-    m_alpha = alpha;
+    m_asympinf = asympinf;
 }
 
-void SecirParams::Probabilities::set_risk_from_symptomatic(double const& beta)
+void SecirParams::Probabilities::set_risk_from_symptomatic(double const& risksymp)
 {
-    m_beta = beta;
+    m_risksymp = risksymp;
 }
 
-void SecirParams::Probabilities::set_hospitalized_per_infectious(double const& rho)
+void SecirParams::Probabilities::set_hospitalized_per_infectious(double const& hospinf)
 {
-    m_rho = rho;
+    m_hospinf = hospinf;
 }
 
-void SecirParams::Probabilities::set_icu_per_hospitalized(double const& theta)
+void SecirParams::Probabilities::set_icu_per_hospitalized(double const& icuhosp)
 {
-    m_theta = theta;
+    m_icuhosp = icuhosp;
 }
 
-void SecirParams::Probabilities::set_dead_per_icu(double const& delta)
+void SecirParams::Probabilities::set_dead_per_icu(double const& deathicu)
 {
-    m_delta = delta;
+    m_deathicu = deathicu;
 }
 
 double SecirParams::Probabilities::get_infection_from_contact() const
@@ -298,27 +298,27 @@ double SecirParams::Probabilities::get_infection_from_contact() const
 
 double SecirParams::Probabilities::get_asymp_per_infectious() const
 {
-    return m_alpha;
+    return m_asympinf;
 }
 
 double SecirParams::Probabilities::get_risk_from_symptomatic() const
 {
-    return m_beta;
+    return m_risksymp;
 }
 
 double SecirParams::Probabilities::get_hospitalized_per_infectious() const
 {
-    return m_rho;
+    return m_hospinf;
 }
 
 double SecirParams::Probabilities::get_icu_per_hospitalized() const
 {
-    return m_theta;
+    return m_icuhosp;
 }
 
 double SecirParams::Probabilities::get_dead_per_icu() const
 {
-    return m_delta;
+    return m_deathicu;
 }
 
 ContactFrequencyMatrix::ContactFrequencyMatrix()

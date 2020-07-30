@@ -8,6 +8,16 @@
 namespace epi
 {
 
+/**
+ * @brief The UncertainValue class consists of a 
+ *        scalar double value and a Distribution object
+ * 
+ * The UncertainValue class represents a model parameter that
+ * can take a scalar value but that is subjected to a uncertainty.
+ * The uncertainty is represented by a distribution object of kind
+ * ParameterDistribution and the current scalar value can be 
+ * replaced by drawing a new sample from the the distribution
+ */
 class UncertainValue
 {
 public:
@@ -18,6 +28,10 @@ public:
 
     UncertainValue(UncertainValue&& other) = default;
 
+    /**
+    * @brief Create an UncertainValue by cloning scalar value 
+    *        and distribution of another UncertainValue
+    */
     UncertainValue(const UncertainValue& other)
         : m_value(other.m_value)
     {
@@ -26,6 +40,10 @@ public:
         }
     }
 
+    /**
+    * @brief Set an UncertainValue from another UncertainValue
+    *        containing a double and a distribution
+    */
     UncertainValue& operator=(const UncertainValue& other)
     {
         UncertainValue tmp(other);
@@ -43,6 +61,9 @@ public:
         return m_value;
     }
 
+    /**
+     * @brief Set an UncertainValue from a double, distribution remains unchanged.
+     */
     UncertainValue& operator=(double v)
     {
         m_value = v;
