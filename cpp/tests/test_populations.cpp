@@ -1,4 +1,4 @@
-#include "epidemiology/compartmental_model.h"
+#include "epidemiology/populations.h"
 #include <gtest/gtest.h>
 
 TEST(TestCompartmentalModel, set_population)
@@ -43,7 +43,7 @@ TEST(TestCompartmentalModel, set_population)
     int num_compartments = InfectionTypeCount * AgeGroupCount * ContinentCount;
     ASSERT_EQ(7 * 7 * 8, num_compartments);
 
-    epi::CompartmentalModel m({InfectionTypeCount, AgeGroupCount, ContinentCount});
+    epi::Populations m({InfectionTypeCount, AgeGroupCount, ContinentCount});
 
     ASSERT_EQ(num_compartments, m.get_num_compartments());
     ASSERT_EQ(num_compartments, m.get_compartments().size());

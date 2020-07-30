@@ -8,10 +8,10 @@ namespace epi
 {
 
 /**
- * @brief Base class for compartmental models
+ * @brief A class for compartment populations
  *
  * A compartmental model consists of compartments of a population
- * and migrations between two compartments.
+ * and pairwise flow between compartments.
  *
  * A compartmental model can have several categories, such as
  * infection status, age group or region. Each category can have
@@ -21,10 +21,10 @@ namespace epi
  * This is implemented as a "flat tensor" of compartment populations
  *
  */
-class CompartmentalModel
+class Populations
 {
 public:
-    CompartmentalModel(std::vector<size_t> const& category_sizes);
+    Populations(std::vector<size_t> const& category_sizes);
 
     /**
      * @brief get_num_compartments returns the number of compartments
@@ -52,7 +52,15 @@ public:
      * @param indices an initializer list containing the indices for each category
      * @return the population of compartment
      */
-    double get(std::vector<size_t> const& indices) const;
+    double get(std::initializer_list<size_t> const& indices) const;
+
+    /**
+     * @brief get_group_population returns the total population of a group in one category
+     * @param category_idx index of the category
+     * @param group_idx index of the group
+     * @return total population of the group
+     */
+    double get_group_population(size_t category_idx, size_t group_idx) const;
 
     /**
      * @brief get_total_population returns the total population of all compartments

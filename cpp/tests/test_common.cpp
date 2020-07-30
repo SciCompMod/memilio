@@ -1,6 +1,12 @@
 #include "epidemiology/common.h"
 #include <gtest/gtest.h>
 
+TEST(TestCommon, tensor_dimension_prods)
+{
+    ASSERT_EQ(std::vector<size_t>({4, 12, 24, 24}), epi::tensor_dimension_prods({1, 2, 3, 4}));
+    ASSERT_EQ(std::vector<size_t>({2, 4, 8, 16}), epi::tensor_dimension_prods({2, 2, 2, 2}));
+}
+
 TEST(TestCommon, flatten_index_order_two)
 {
     size_t n = 3;

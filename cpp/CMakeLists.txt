@@ -33,8 +33,8 @@ add_library(epidemiology
     epidemiology/graph.h
     epidemiology/graph.cpp
     epidemiology/eigen_util.h
-    epidemiology/compartmental_model.h
-    epidemiology/compartmental_model.cpp
+    epidemiology/populations.h
+    epidemiology/populations.cpp
 )
 
 target_include_directories(epidemiology PUBLIC
