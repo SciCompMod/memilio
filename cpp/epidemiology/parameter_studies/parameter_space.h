@@ -12,6 +12,11 @@
 namespace epi
 {
 
+/**
+ * @brief This is a visitor class to visit all Parameter Distribution objects
+ *
+ * More information to the visitor pattern is here: https://en.wikipedia.org/wiki/Visitor_pattern
+ */
 class ParameterDistributionVisitor
 {
 public:
@@ -100,6 +105,12 @@ public:
         return 0.0;
     }
 
+    /**
+     * @brief This function implements the visit interface of the visitor pattern
+     *
+     * It can be used for any ways of working with the class to dispatch
+     * the class type. More information here: https://en.wikipedia.org/wiki/Visitor_pattern
+     */
     virtual void accept(ParameterDistributionVisitor& visitor) = 0;
 
 protected:
