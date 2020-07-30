@@ -51,9 +51,9 @@ TEST(TestCompartmentalModel, set_population)
     ASSERT_EQ(category_sizes[0], InfectionTypeCount);
     ASSERT_EQ(category_sizes[1], AgeGroupCount);
     ASSERT_EQ(category_sizes[2], ContinentCount);
-    ASSERT_EQ(0, m.get_total_population());
+    ASSERT_EQ(0, m.get_total());
 
-    m.set_total_populaton(1.);
+    m.set_total(1.);
     for (size_t i = 0; i < InfectionTypeCount; ++i) {
         for (size_t j = 0; j < AgeGroupCount; ++j) {
             for (size_t k = 0; k < ContinentCount; ++k) {
@@ -61,5 +61,5 @@ TEST(TestCompartmentalModel, set_population)
             }
         }
     }
-    ASSERT_NEAR(1., m.get_total_population(), 1e-12);
+    ASSERT_NEAR(1., m.get_total(), 1e-12);
 }

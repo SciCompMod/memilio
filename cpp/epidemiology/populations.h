@@ -54,6 +54,7 @@ public:
      */
     double get(std::initializer_list<size_t> const& indices) const;
 
+#if 0
     /**
      * @brief get_group_population returns the total population of a group in one category
      * @param category_idx index of the category
@@ -61,12 +62,13 @@ public:
      * @return total population of the group
      */
     double get_group_population(size_t category_idx, size_t group_idx) const;
+#endif
 
     /**
-     * @brief get_total_population returns the total population of all compartments
+     * @brief get_total returns the total population of all compartments
      * @return total population
      */
-    double get_total_population() const;
+    double get_total() const;
 
     /**
      * @brief set sets the population of one compartment
@@ -76,7 +78,7 @@ public:
     void set(std::initializer_list<size_t> const& indices, double value);
 
     /**
-     * @brief set_total_populaton sets the total population
+     * @brief set_total sets the total population
      *
      * It rescales all the compartments populations proportionally. If all compartments
      * have zero population, the total population gets distributed equally over all
@@ -84,7 +86,7 @@ public:
      *
      * @param value the new value for the total population
      */
-    void set_total_populaton(double value);
+    void set_total(double value);
 
     // TODO: getters and setters for slices, ranges subsets etc., e.g. for all infected and
     // hospitalized in in the age group 18-25 in Koeln, Bonn and Rhein-Sieg-Kreis

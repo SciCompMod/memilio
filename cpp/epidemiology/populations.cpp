@@ -1,4 +1,4 @@
-#include "populations.h".h "
+#include "populations.h"
 #include "common.h"
 
 namespace epi
@@ -31,12 +31,14 @@ double Populations::get(std::initializer_list<size_t> const& indices) const
     return m_y[flatten_index(indices, m_category_sizes)];
 }
 
+#if 0
 double Populations::get_group_population(size_t category_idx, size_t group_idx) const
 {
     return 0;
 }
+#endif
 
-double Populations::get_total_population() const
+double Populations::get_total() const
 {
     return m_y.sum();
 }
@@ -46,9 +48,9 @@ void Populations::set(std::initializer_list<size_t> const& indices, double value
     m_y[flatten_index(indices, m_category_sizes)] = value;
 }
 
-void Populations::set_total_populaton(double value)
+void Populations::set_total(double value)
 {
-    double current_population = get_total_population();
+    double current_population = get_total();
     if (fabs(current_population) < 1e-12) {
         m_y.fill(value / m_y.size());
     }
