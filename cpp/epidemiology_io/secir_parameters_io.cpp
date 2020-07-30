@@ -14,19 +14,18 @@
 namespace epi
 {
 
-
 void write_dist(const TixiDocumentHandle& handle, const std::string& path, const std::string& element,
                 const ParameterDistribution& dist)
 {
 
-    struct WriteDistVisitor : public ParameterDistributionVisitor
-    {
+    struct WriteDistVisitor : public ParameterDistributionVisitor {
         WriteDistVisitor(const std::string& xml_path, TixiDocumentHandle tixi_handle)
-            : handle(tixi_handle), element_path(xml_path)
-        {}
+            : handle(tixi_handle)
+            , element_path(xml_path)
+        {
+        }
 
-
-        void visit(ParameterDistributionNormal & normal_dist) override
+        void visit(ParameterDistributionNormal& normal_dist) override
         {
             tixiAddTextElement(handle, element_path.c_str(), "Distribution", "Normal");
             tixiAddDoubleElement(handle, element_path.c_str(), "Mean", normal_dist.get_mean(), "%g");
@@ -35,7 +34,7 @@ void write_dist(const TixiDocumentHandle& handle, const std::string& path, const
             tixiAddDoubleElement(handle, element_path.c_str(), "Max", normal_dist.get_upper_bound(), "%g");
         }
 
-        void visit(ParameterDistributionUniform & uniform_dist) override
+        void visit(ParameterDistributionUniform& uniform_dist) override
         {
             tixiAddTextElement(handle, element_path.c_str(), "Distribution", "Uniform");
             tixiAddDoubleElement(handle, element_path.c_str(), "Min", uniform_dist.get_lower_bound(), "%g");
@@ -45,7 +44,6 @@ void write_dist(const TixiDocumentHandle& handle, const std::string& path, const
         TixiDocumentHandle handle;
         std::string element_path;
     };
-
 
     tixiCreateElement(handle, path.c_str(), element.c_str());
     auto element_path = path_join(path, element);

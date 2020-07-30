@@ -9,9 +9,11 @@
 void check_dist(const epi::ParameterDistribution& dist, const epi::ParameterDistribution& dist_read)
 {
 
-    struct CheckDistEqVisitor : public epi::ParameterDistributionVisitor
-    {
-        CheckDistEqVisitor(const epi::ParameterDistribution& other_dist) : other(other_dist) {}
+    struct CheckDistEqVisitor : public epi::ParameterDistributionVisitor {
+        CheckDistEqVisitor(const epi::ParameterDistribution& other_dist)
+            : other(other_dist)
+        {
+        }
 
         void visit(epi::ParameterDistributionNormal& self) override
         {
@@ -22,7 +24,6 @@ void check_dist(const epi::ParameterDistribution& dist, const epi::ParameterDist
             EXPECT_EQ(self.get_standard_dev(), p_other_normal_dist->get_standard_dev());
             EXPECT_EQ(self.get_lower_bound(), p_other_normal_dist->get_lower_bound());
             EXPECT_EQ(self.get_upper_bound(), p_other_normal_dist->get_upper_bound());
-
         }
         void visit(epi::ParameterDistributionUniform& self) override
         {
@@ -31,7 +32,6 @@ void check_dist(const epi::ParameterDistribution& dist, const epi::ParameterDist
 
             EXPECT_EQ(self.get_lower_bound(), p_other_uniform_dist->get_lower_bound());
             EXPECT_EQ(self.get_upper_bound(), p_other_uniform_dist->get_upper_bound());
-
         }
         const epi::ParameterDistribution& other;
     };

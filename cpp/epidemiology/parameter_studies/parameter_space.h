@@ -12,11 +12,10 @@
 namespace epi
 {
 
-
 class ParameterDistributionVisitor
 {
 public:
-    virtual void visit(class ParameterDistributionNormal&) = 0;
+    virtual void visit(class ParameterDistributionNormal&)  = 0;
     virtual void visit(class ParameterDistributionUniform&) = 0;
 };
 
