@@ -1,4 +1,3 @@
-
 This is a common project between the department of Systems Immunology (SIMM) of the he Helmholtz Center for Infection Research (HZI) and the Institute for Software Technology of the German Aerospace Center (DLR). This project will bring cutting edge and compute intensive epidemiological models to a large scale, which enables a precise and high-resolution spatiotemporal pandemic simulation for entire countries.
 
 
@@ -21,6 +20,11 @@ This project is divided into multiple building blocks. The implementation of the
 * Run 
   * an example via ./examples/secir_ageres
   * all unit tests via ./tests/runUnitTests
+* Note: In order to use epidemiology_io libraray 
+  * tixi3 (https://github.com/DLR-SC/tixi) and 
+  * hdf5 (https://www.hdfgroup.org/)
+  need to be installed. Turn on "EPI_BUILD_EPI_IO" with 
+  * -DEPI_BUILD_EPI_IO=ON
 
 *Steps to execute C++ code via python bindings*
 
