@@ -3,6 +3,7 @@
 
 #include <epidemiology/secir.h>
 #include <epidemiology/logging.h>
+#include <epidemiology/visitor.h>
 #include <assert.h>
 #include <string>
 #include <vector>
@@ -17,12 +18,7 @@ namespace epi
  *
  * More information to the visitor pattern is here: https://en.wikipedia.org/wiki/Visitor_pattern
  */
-class ParameterDistributionVisitor
-{
-public:
-    virtual void visit(class ParameterDistributionNormal&)  = 0;
-    virtual void visit(class ParameterDistributionUniform&) = 0;
-};
+using ParameterDistributionVisitor = Visitor<class ParameterDistributionNormal, class ParameterDistributionUniform>;
 
 /*
  * Parameter Distribution class which contains the name of a variable as string
