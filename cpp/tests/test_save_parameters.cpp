@@ -9,13 +9,13 @@
 void check_dist(const epi::ParameterDistribution& dist, const epi::ParameterDistribution& dist_read)
 {
 
-    struct CheckDistEqVisitor : public epi::ParameterDistributionVisitor {
+    struct CheckDistEqVisitor : public epi::ConstParameterDistributionVisitor {
         CheckDistEqVisitor(const epi::ParameterDistribution& other_dist)
             : other(other_dist)
         {
         }
 
-        void visit(epi::ParameterDistributionNormal& self) override
+        void visit(const epi::ParameterDistributionNormal& self) override
         {
             auto p_other_normal_dist = dynamic_cast<const epi::ParameterDistributionNormal*>(&other);
             ASSERT_TRUE(p_other_normal_dist != nullptr);
@@ -25,7 +25,7 @@ void check_dist(const epi::ParameterDistribution& dist, const epi::ParameterDist
             EXPECT_EQ(self.get_lower_bound(), p_other_normal_dist->get_lower_bound());
             EXPECT_EQ(self.get_upper_bound(), p_other_normal_dist->get_upper_bound());
         }
-        void visit(epi::ParameterDistributionUniform& self) override
+        void visit(const epi::ParameterDistributionUniform& self) override
         {
             auto p_other_uniform_dist = dynamic_cast<const epi::ParameterDistributionUniform*>(&other);
             ASSERT_TRUE(p_other_uniform_dist != nullptr);
@@ -37,7 +37,7 @@ void check_dist(const epi::ParameterDistribution& dist, const epi::ParameterDist
     };
 
     CheckDistEqVisitor visitor(dist_read);
-    const_cast<epi::ParameterDistribution&>(dist).accept(visitor);
+    dist.accept(visitor);
 }
 
 TEST(TestSaveParameters, compareSingleRun)

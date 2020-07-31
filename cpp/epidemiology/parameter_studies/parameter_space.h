@@ -19,6 +19,15 @@ namespace epi
  * More information to the visitor pattern is here: https://en.wikipedia.org/wiki/Visitor_pattern
  */
 using ParameterDistributionVisitor = Visitor<class ParameterDistributionNormal, class ParameterDistributionUniform>;
+using ConstParameterDistributionVisitor =
+    ConstVisitor<class ParameterDistributionNormal, class ParameterDistributionUniform>;
+
+template <class Derived>
+struct VisitableParameterDistribution
+    : Visitable<Derived, class ParameterDistribution, ParameterDistributionVisitor, ConstParameterDistributionVisitor> {
+    using Visitable<Derived, class ParameterDistribution, ParameterDistributionVisitor,
+                    ConstParameterDistributionVisitor>::Visitable;
+};
 
 /*
  * Parameter Distribution class which contains the name of a variable as string
@@ -107,7 +116,8 @@ public:
      * It can be used for any ways of working with the class to dispatch
      * the class type. More information here: https://en.wikipedia.org/wiki/Visitor_pattern
      */
-    virtual void accept(ParameterDistributionVisitor& visitor) = 0;
+    virtual void accept(ParameterDistributionVisitor& visitor)            = 0;
+    virtual void accept(ConstParameterDistributionVisitor& visitor) const = 0;
 
 protected:
     double m_lower_bound; /*< A realistic lower bound on the given parameter */
@@ -121,18 +131,18 @@ protected:
  * Child class of Parameter Distribution class which additionally contains
  * the mean value and the standard deviation for a normal distribution 
  */
-class ParameterDistributionNormal : public ParameterDistribution
+class ParameterDistributionNormal : public VisitableParameterDistribution<ParameterDistributionNormal>
 {
 public:
     ParameterDistributionNormal()
-        : ParameterDistribution()
+        : VisitableParameterDistribution<ParameterDistributionNormal>()
     {
         m_mean         = 0;
         m_standard_dev = 1;
     }
 
     ParameterDistributionNormal(double mean, double standard_dev)
-        : ParameterDistribution()
+        : VisitableParameterDistribution<ParameterDistributionNormal>()
     {
         m_mean         = mean;
         m_standard_dev = standard_dev;
@@ -140,7 +150,7 @@ public:
     }
 
     ParameterDistributionNormal(double lower_bound, double upper_bound, double mean)
-        : ParameterDistribution(lower_bound, upper_bound)
+        : VisitableParameterDistribution<ParameterDistributionNormal>(lower_bound, upper_bound)
     {
         m_mean         = mean;
         m_standard_dev = upper_bound; // set as to high and adapt then
@@ -148,7 +158,7 @@ public:
     }
 
     ParameterDistributionNormal(double lower_bound, double upper_bound, double mean, double standard_dev)
-        : ParameterDistribution(lower_bound, upper_bound)
+        : VisitableParameterDistribution<ParameterDistributionNormal>(lower_bound, upper_bound)
     {
         m_mean         = mean;
         m_standard_dev = standard_dev;
@@ -262,11 +272,6 @@ public:
         return rnumb;
     }
 
-    void accept(ParameterDistributionVisitor& visitor) override
-    {
-        visitor.visit(*this);
-    }
-
 private:
     double m_mean; // the mean value of the normal distribution
     double m_standard_dev; // the standard deviation of the normal distribution
@@ -278,16 +283,16 @@ private:
 /*
  * Child class of Parameter Distribution class which represents an uniform distribution 
  */
-class ParameterDistributionUniform : public ParameterDistribution
+class ParameterDistributionUniform : public VisitableParameterDistribution<ParameterDistributionUniform>
 {
 public:
     ParameterDistributionUniform()
-        : ParameterDistribution()
+        : VisitableParameterDistribution<ParameterDistributionUniform>()
     {
     }
 
     ParameterDistributionUniform(double lower_bound, double upper_bound)
-        : ParameterDistribution(lower_bound, upper_bound)
+        : VisitableParameterDistribution<ParameterDistributionUniform>(lower_bound, upper_bound)
     {
     }
 
@@ -301,11 +306,6 @@ public:
         }
 
         return m_distribution(m_random_generator);
-    }
-
-    void accept(ParameterDistributionVisitor& visitor) override
-    {
-        visitor.visit(*this);
     }
 
 private:
