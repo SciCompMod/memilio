@@ -9,15 +9,16 @@ namespace epi
 /**
  * @brief A class for compartment populations
  *
- * A compartmental model consists of compartments of a population
- * and pairwise flow between compartments.
+ * Populations can be split up into different categories, e.g. by
+ * age group, yearly income group, gender etc. Compartmental models
+ * introduce the additional category of infection type. For the SEIR
+ * model these are Susceptible, Exposed, Infected and Removed.
  *
- * A compartmental model can have several categories, such as
- * infection status, age group or region. Each category can have
- * a different number of groups. The total number of comparments
- * is the product of all the numbers of groups of each compartment
+ * This class is a wrapper around a tensor that stores the individual populations
+ * in each category and it provides some helper functions to get and set
+ * the population of subgroups.
  *
- * This is implemented as a "flat tensor" of compartment populations
+ * It is implemented as a "flat tensor" of compartment populations
  *
  */
 class Populations
