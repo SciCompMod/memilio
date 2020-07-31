@@ -101,6 +101,17 @@ std::vector<SecirResult> simulate_secir(double t0, double tmax, double dt,
 
 PYBIND11_MODULE(_secir, m)
 {
+    py::enum_<epi::SecirCompartments>(m, "SecirCompartments")
+            .value("S", epi::SecirCompartments::S)
+            .value("E", epi::SecirCompartments::E)
+            .value("C", epi::SecirCompartments::C)
+            .value("I", epi::SecirCompartments::I)
+            .value("H", epi::SecirCompartments::H)
+            .value("U", epi::SecirCompartments::U)
+            .value("R", epi::SecirCompartments::R)
+            .value("D", epi::SecirCompartments::D)
+            .export_values();
+
     py::class_<epi::Damping>(m, "Damping")
         .def(py::init<double, double>(), py::arg("day"), py::arg("factor"))
         .def_readwrite("day", &epi::Damping::day)
@@ -145,7 +156,7 @@ PYBIND11_MODULE(_secir, m)
         .def("get_icu_to_dead_inv", &epi::SecirParams::StageTimes::get_icu_to_dead_inv);
 
     py::class_<epi::Populations>(m, "Populations")
-        .def(py::init<>(std::vector<size_t>&))
+        .def(py::init<std::vector<size_t>&>())
         .def("get_num_compartments", &epi::Populations::get_num_compartments)
         .def("get_category_sizes", &epi::Populations::get_category_sizes)
         .def("get_compartments", &epi::Populations::get_compartments)
@@ -174,7 +185,7 @@ PYBIND11_MODULE(_secir, m)
         .def("get_dead_per_icu", &epi::SecirParams::Probabilities::get_dead_per_icu);
 
     py::class_<epi::SecirParams>(m, "SecirParams")
-        .def(py::init<>())
+        .def(py::init<size_t>())
         .def_readwrite("times", &epi::SecirParams::times)
         .def_readwrite("populations", &epi::SecirParams::populations)
         .def_readwrite("probabilities", &epi::SecirParams::probabilities);

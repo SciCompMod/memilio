@@ -136,7 +136,7 @@ EMSCRIPTEN_BINDINGS(secirjs)
         .function("get_dead_per_icu", &epi::SecirParams::Probabilities::get_dead_per_icu);
 
     js::class_<epi::SecirParams>("SecirParams")
-        .constructor<>()
+        .constructor<size_t>()
         .property("times", &epi::SecirParams::times)
         .property("populations", &epi::SecirParams::populations)
         .property("probabilities", &epi::SecirParams::probabilities);
