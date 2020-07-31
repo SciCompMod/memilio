@@ -12,6 +12,15 @@
 namespace epi
 {
 
+enum SeirCompartments
+{
+    S,
+    E,
+    I,
+    R,
+    SeirCount
+};
+
 /**
  * Paramters of the SEIR model:
  * T_inc (also sigma^(-1) or, in the SECIR modile, R_2^(-1)+R_3^(-1)): mean incubation period (default: 5.2);
@@ -21,15 +30,6 @@ namespace epi
  * cont_freq (contact frequency/rate; called beta in the standard SEIR model, also R_1 in the SECIR model)
  *  NOTE: Here, the contact frequency is not calculated as R_0 * tinf_inv but directly input. This means that the Rt at the beginning (possibly, the R0) is given by Rt=tinf*cont_freq 
 **/
-enum SeirCompartments
-{
-    S,
-    E,
-    I,
-    R,
-    Count
-};
-
 class SeirParams
 {
 public:
@@ -82,7 +82,7 @@ public:
 
     StageTimes times;
 
-    Populations populations{Populations({Count})};
+    Populations populations{Populations({SeirCount})};
 
     // This defines a damping factor for a mitigation strategy for different points in time.
     Dampings dampings;

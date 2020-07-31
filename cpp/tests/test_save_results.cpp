@@ -20,37 +20,41 @@ TEST(TestSaveResult, compareResultWithH5)
     int nb_groups = 1;
     double fact   = 1.0 / (double)nb_groups;
 
-    std::vector<epi::SecirParams> params{epi::SecirParams{}};
+    epi::SecirParams params(nb_groups);
     epi::ContactFrequencyMatrix contact_freq_matrix{(size_t)nb_groups};
-    for (size_t i = 1; i < nb_groups; i++) {
-        params.push_back(epi::SecirParams{});
-    }
 
     for (size_t i = 0; i < nb_groups; i++) {
-        params[i].times.set_incubation(tinc);
-        params[i].times.set_infectious_mild(tinfmild);
-        params[i].times.set_serialinterval(tserint);
-        params[i].times.set_hospitalized_to_home(thosp2home);
-        params[i].times.set_home_to_hospitalized(thome2hosp);
-        params[i].times.set_hospitalized_to_icu(thosp2icu);
-        params[i].times.set_icu_to_home(ticu2home);
-        params[i].times.set_infectious_asymp(tinfasy);
-        params[i].times.set_icu_to_death(ticu2death);
+        params.times[i].set_incubation(tinc);
+        params.times[i].set_infectious_mild(tinfmild);
+        params.times[i].set_serialinterval(tserint);
+        params.times[i].set_hospitalized_to_home(thosp2home);
+        params.times[i].set_home_to_hospitalized(thome2hosp);
+        params.times[i].set_hospitalized_to_icu(thosp2icu);
+        params.times[i].set_icu_to_home(ticu2home);
+        params.times[i].set_infectious_asymp(tinfasy);
+        params.times[i].set_icu_to_death(ticu2death);
 
-        params[i].populations.set_total_t0(fact * nb_total_t0);
-        params[i].populations.set_exposed_t0(fact * nb_exp_t0);
-        params[i].populations.set_carrier_t0(fact * nb_car_t0);
-        params[i].populations.set_infectious_t0(fact * nb_inf_t0);
-        params[i].populations.set_hospital_t0(fact * nb_hosp_t0);
-        params[i].populations.set_icu_t0(fact * nb_icu_t0);
-        params[i].populations.set_recovered_t0(fact * nb_rec_t0);
-        params[i].populations.set_dead_t0(fact * nb_dead_t0);
+        params.populations.set({i, epi::SecirCompartments::E}, fact * nb_exp_t0);
+        params.populations.set({i, epi::SecirCompartments::C}, fact * nb_car_t0);
+        params.populations.set({i, epi::SecirCompartments::I}, fact * nb_inf_t0);
+        params.populations.set({i, epi::SecirCompartments::H}, fact * nb_hosp_t0);
+        params.populations.set({i, epi::SecirCompartments::U}, fact * nb_icu_t0);
+        params.populations.set({i, epi::SecirCompartments::R}, fact * nb_rec_t0);
+        params.populations.set({i, epi::SecirCompartments::D}, fact * nb_dead_t0);
+        params.populations.set({i, epi::SecirCompartments::S},
+                               fact * nb_total_t0 - params.populations.get({i, epi::SecirCompartments::E}) -
+                                   params.populations.get({i, epi::SecirCompartments::C}) -
+                                   params.populations.get({i, epi::SecirCompartments::I}) -
+                                   params.populations.get({i, epi::SecirCompartments::H}) -
+                                   params.populations.get({i, epi::SecirCompartments::U}) -
+                                   params.populations.get({i, epi::SecirCompartments::R}) -
+                                   params.populations.get({i, epi::SecirCompartments::D}));
 
-        params[i].probabilities.set_asymp_per_infectious(alpha);
-        params[i].probabilities.set_risk_from_symptomatic(beta);
-        params[i].probabilities.set_hospitalized_per_infectious(rho);
-        params[i].probabilities.set_icu_per_hospitalized(theta);
-        params[i].probabilities.set_dead_per_icu(delta);
+        params.probabilities[i].set_asymp_per_infectious(alpha);
+        params.probabilities[i].set_risk_from_symptomatic(beta);
+        params.probabilities[i].set_hospitalized_per_infectious(rho);
+        params.probabilities[i].set_icu_per_hospitalized(theta);
+        params.probabilities[i].set_dead_per_icu(delta);
     }
 
     epi::Damping dummy(30., 0.3);

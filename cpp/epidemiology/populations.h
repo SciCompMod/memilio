@@ -1,7 +1,6 @@
 #pragma once
 
 #include <vector>
-#include <numeric>
 #include "Eigen/Core"
 
 namespace epi
@@ -54,7 +53,6 @@ public:
      */
     double get(std::initializer_list<size_t> const& indices) const;
 
-#if 0
     /**
      * @brief get_group_population returns the total population of a group in one category
      * @param category_idx index of the category
@@ -62,7 +60,6 @@ public:
      * @return total population of the group
      */
     double get_group_population(size_t category_idx, size_t group_idx) const;
-#endif
 
     /**
      * @brief get_total returns the total population of all compartments
@@ -78,6 +75,19 @@ public:
     void set(std::initializer_list<size_t> const& indices, double value);
 
     /**
+     * @brief set_group_population sets the total population for a given group
+     *
+     * It rescales all the compartments populations proportionally. If all compartments
+     * have zero population, the total population gets distributed equally over all
+     * compartments
+     *
+     * @param category_idx The index of the category of the group
+     * @param group_idx The index of the group within the category
+     * @param value the new value for the total population
+     */
+    void set_group_population(size_t category_idx, size_t group_idx, double value);
+
+    /**
      * @brief set_total sets the total population
      *
      * It rescales all the compartments populations proportionally. If all compartments
@@ -88,8 +98,10 @@ public:
      */
     void set_total(double value);
 
-    // TODO: getters and setters for slices, ranges subsets etc., e.g. for all infected and
-    // hospitalized in in the age group 18-25 in Koeln, Bonn and Rhein-Sieg-Kreis
+    // TODO: more getters and setters for slices, ranges subsets etc., e.g. for all infected and
+    // hospitalized in in the age group 18-25 in a specific income group in ...
+
+    size_t get_flat_index(std::initializer_list<size_t> const& indices) const;
 
 private:
     // A vector storying the size of each category

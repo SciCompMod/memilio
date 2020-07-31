@@ -79,14 +79,6 @@ void seir_get_derivatives(const SeirParams& params, const Eigen::VectorXd& y, do
     dydt[SeirCompartments::R] = params.times.get_infectious_inv() * y[SeirCompartments::I];
 }
 
-namespace
-{
-    Eigen::VectorXd seir_get_initial_values(const SeirParams& params)
-    {
-        return params.populations.get_compartments();
-    }
-} // namespace
-
 std::vector<double> simulate(double t0, double tmax, double dt, const SeirParams& params,
                              std::vector<Eigen::VectorXd>& seir)
 {
@@ -98,7 +90,7 @@ std::vector<double> simulate(double t0, double tmax, double dt, const SeirParams
 
 SeirSimulation::SeirSimulation(const SeirParams& params, double t0, double dt_init)
     : m_integrator([params](auto&& y, auto&& t, auto&& dydt) { seir_get_derivatives(params, y, t, dydt); }, t0,
-                   seir_get_initial_values(params), dt_init,
+                   params.populations.get_compartments(), dt_init,
                    std::make_shared<EulerIntegratorCore>() /*std::make_shared<RkIntegratorCore>(1e-6, 1.)*/)
 {
 }

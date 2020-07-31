@@ -1,5 +1,7 @@
 #include "populations.h"
-#include "common.h"
+#include "tensor_helpers.h"
+
+#include <numeric>
 
 namespace epi
 {
@@ -28,15 +30,45 @@ Eigen::VectorXd const& Populations::get_compartments() const
 
 double Populations::get(std::initializer_list<size_t> const& indices) const
 {
+#ifndef NDEBUG
+    assert(indices.size() == m_category_sizes.size());
+    size_t i = 0;
+    for (auto idx : indices) {
+        assert(idx < m_category_sizes[i++]);
+    }
+#endif
     return m_y[flatten_index(indices, m_category_sizes)];
 }
 
-#if 0
 double Populations::get_group_population(size_t category_idx, size_t group_idx) const
 {
-    return 0;
+    //TODO maybe implement an iterator/visitor pattern rather than calculating indices?
+
+    double sum   = 0;
+    auto indices = get_slice_indices(category_idx, group_idx, m_category_sizes);
+    for (auto i : indices) {
+        sum += m_y[i];
+    }
+    return sum;
 }
-#endif
+
+void Populations::set_group_population(size_t category_idx, size_t group_idx, double value)
+{
+    //TODO slice indices are calcualated twice...
+    double current_population = get_group_population(category_idx, group_idx);
+    auto indices              = get_slice_indices(category_idx, group_idx, m_category_sizes);
+
+    if (fabs(current_population) < 1e-12) {
+        for (auto i : indices) {
+            m_y[i] = value / indices.size();
+        }
+    }
+    else {
+        for (auto i : indices) {
+            m_y[i] *= value / current_population;
+        }
+    }
+}
 
 double Populations::get_total() const
 {
@@ -45,7 +77,14 @@ double Populations::get_total() const
 
 void Populations::set(std::initializer_list<size_t> const& indices, double value)
 {
-    m_y[flatten_index(indices, m_category_sizes)] = value;
+#ifndef NDEBUG
+    assert(indices.size() == m_category_sizes.size());
+    size_t i = 0;
+    for (auto idx : indices) {
+        assert(idx < m_category_sizes[i++]);
+    }
+#endif
+    m_y[get_flat_index(indices)] = value;
 }
 
 void Populations::set_total(double value)
@@ -57,6 +96,11 @@ void Populations::set_total(double value)
     else {
         m_y *= value / current_population;
     }
+}
+
+size_t Populations::get_flat_index(std::initializer_list<size_t> const& indices) const
+{
+    return flatten_index(indices, m_category_sizes);
 }
 
 } // namespace epi

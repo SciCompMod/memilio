@@ -79,9 +79,7 @@ std::unique_ptr<ParameterDistribution> read_dist(TixiDocumentHandle handle, cons
     auto predef_path = path_join(path, "PredefinedSamples");
     int n_predef;
     tixiGetVectorSize(handle, predef_path.c_str(), &n_predef);
-    auto free = [](double* p) {
-        std::free(p);
-    };
+    auto free = [](double* p) { std::free(p); };
     std::unique_ptr<double, decltype(free)> predef(
         [&]() {
             double* predef = nullptr;
@@ -160,9 +158,7 @@ ContactFrequencyVariableElement read_contact(TixiDocumentHandle handle, const st
     tixiGetIntegerElement(handle, path_join("/Parameters", "NumberOfGroups").c_str(), &nb_groups);
     epi::ContactFrequencyMatrix contact_freq_matrix{(size_t)nb_groups};
     for (size_t i = 0; i < nb_groups; i++) {
-        auto free = [](double* p) {
-            std::free(p);
-        };
+        auto free = [](double* p) { std::free(p); };
         std::unique_ptr<double, decltype(free)> row(
             [&]() {
                 double* row = nullptr;
@@ -368,8 +364,8 @@ void write_parameter_study(TixiDocumentHandle handle, const std::string& path, c
     write_parameter_space(handle, path, parameter_study.get_parameter_space(), parameter_study.get_nb_runs());
 }
 
-void write_single_run_params(const int run, const ContactFrequencyMatrix& cont_freq,
-                             const std::vector<SecirParams>& params, double t0, double tmax, std::vector<double> time,
+void write_single_run_params(const int run, const ContactFrequencyMatrix& cont_freq, const SecirParams& params,
+                             double t0, double tmax, std::vector<double> time,
                              std::vector<Eigen::VectorXd> secir_result)
 {
 

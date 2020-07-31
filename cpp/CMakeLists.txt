@@ -14,8 +14,8 @@ set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 include(thirdparty/CMakeLists.txt)
 
 add_library(epidemiology
-    epidemiology/common.h
-    epidemiology/common.cpp
+    epidemiology/tensor_helpers.h
+    epidemiology/tensor_helpers.cpp
     epidemiology/euler.cpp
     epidemiology/euler.h
     epidemiology/damping.cpp

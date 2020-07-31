@@ -63,4 +63,34 @@ std::vector<size_t> tensor_dimension_prods(std::vector<size_t> const& dimensions
  */
 std::vector<size_t> unravel_index_given_prods(size_t const index, std::vector<size_t> const& dim_prods);
 
+/**
+ * @brief get_slice_indices returns all the flat indices corresponding to an index into one dimension of a
+ * hypothetical tensor. It is assumed that the tensor is stored in row-major fashion.
+ *
+ * Example: If dimensions=(3, 3), we have a hypothetical 2rd-order tesor of size 3x3. Stored in row-major
+ * fashion the indices are flat indices are
+ *
+ *    0 : (0, 0)
+ *    1 : (0, 1)
+ *    2 : (0, 2)
+ *    3 : (1, 0)
+ *    4 : (1, 1)
+ *    5 : (1, 2)
+ *    6 : (2, 0)
+ *    7 : (2, 1)
+ *    8 : (2, 2)
+ *
+ * `get_slice_indices(0, 1, {3,3})` will return all indices corresponding to the first dimension with index==1,
+ * that is the indices of the second row (3,4,5)
+ *
+ * `get_slice_indices(1, 0, {3,3})` will return the indices (0,3,6) corresponding to the second dimension
+ * with index==0, i.e. the first column.
+ *
+ * @param dimension the dimension of the slice
+ * @param index the index of the slice
+ * @param dimensions a vector of dimension sizes of a hypothetical tensor
+ * @return the flat indices of all elements in the desired slice
+ */
+std::vector<size_t> get_slice_indices(size_t dimension, size_t index, std::vector<size_t> const& dimensions);
+
 } // namespace epi

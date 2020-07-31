@@ -105,39 +105,47 @@ int main()
     double nb_total_t0 = 10000, nb_exp_t0 = 105, nb_inf_t0 = 35, nb_car_t0 = 53, nb_hosp_t0 = 20, nb_icu_t0 = 10,
            nb_rec_t0 = 8, nb_dead_t0 = 0;
 
-    std::vector<epi::SecirParams> params{epi::SecirParams{}};
+    epi::SecirParams params;
 
     epi::ContactFrequencyMatrix contact_freq_matrix{8};
 
-    params[0].times.set_incubation(tinc);
-    params[0].times.set_infectious_mild(tinfmild);
-    params[0].times.set_serialinterval(tserint);
-    params[0].times.set_hospitalized_to_home(thosp2home);
-    params[0].times.set_home_to_hospitalized(thome2hosp);
-    params[0].times.set_hospitalized_to_icu(thosp2icu);
-    params[0].times.set_icu_to_home(ticu2home);
-    params[0].times.set_infectious_asymp(tinfasy);
-    params[0].times.set_icu_to_death(ticu2death);
+    params.times[0].set_incubation(tinc);
+    params.times[0].set_infectious_mild(tinfmild);
+    params.times[0].set_serialinterval(tserint);
+    params.times[0].set_hospitalized_to_home(thosp2home);
+    params.times[0].set_home_to_hospitalized(thome2hosp);
+    params.times[0].set_hospitalized_to_icu(thosp2icu);
+    params.times[0].set_icu_to_home(ticu2home);
+    params.times[0].set_infectious_asymp(tinfasy);
+    params.times[0].set_icu_to_death(ticu2death);
 
     contact_freq_matrix.set_cont_freq(cont_freq, 0, 0);
     epi::Damping dummy(30., 0.3);
     contact_freq_matrix.add_damping(dummy, 0, 0);
 
-    params[0].populations.set_total_t0(nb_total_t0);
-    params[0].populations.set_exposed_t0(nb_exp_t0);
-    params[0].populations.set_carrier_t0(nb_car_t0);
-    params[0].populations.set_infectious_t0(nb_inf_t0);
-    params[0].populations.set_hospital_t0(nb_hosp_t0);
-    params[0].populations.set_icu_t0(nb_icu_t0);
-    params[0].populations.set_recovered_t0(nb_rec_t0);
-    params[0].populations.set_dead_t0(nb_dead_t0);
+    params.populations.set_total(nb_total_t0);
+    params.populations.set({0, epi::SecirCompartments::E}, nb_exp_t0);
+    params.populations.set({0, epi::SecirCompartments::C}, nb_car_t0);
+    params.populations.set({0, epi::SecirCompartments::I}, nb_inf_t0);
+    params.populations.set({0, epi::SecirCompartments::H}, nb_hosp_t0);
+    params.populations.set({0, epi::SecirCompartments::U}, nb_icu_t0);
+    params.populations.set({0, epi::SecirCompartments::R}, nb_rec_t0);
+    params.populations.set({0, epi::SecirCompartments::D}, nb_dead_t0);
+    params.populations.set({0, epi::SecirCompartments::S}, nb_total_t0 -
+                                                               params.populations.get({0, epi::SecirCompartments::E}) -
+                                                               params.populations.get({0, epi::SecirCompartments::C}) -
+                                                               params.populations.get({0, epi::SecirCompartments::I}) -
+                                                               params.populations.get({0, epi::SecirCompartments::H}) -
+                                                               params.populations.get({0, epi::SecirCompartments::U}) -
+                                                               params.populations.get({0, epi::SecirCompartments::R}) -
+                                                               params.populations.get({0, epi::SecirCompartments::D}));
 
-    params[0].probabilities.set_infection_from_contact(1.0);
-    params[0].probabilities.set_asymp_per_infectious(alpha);
-    params[0].probabilities.set_risk_from_symptomatic(beta);
-    params[0].probabilities.set_hospitalized_per_infectious(rho);
-    params[0].probabilities.set_icu_per_hospitalized(theta);
-    params[0].probabilities.set_dead_per_icu(delta);
+    params.probabilities[0].set_infection_from_contact(1.0);
+    params.probabilities[0].set_asymp_per_infectious(alpha);
+    params.probabilities[0].set_risk_from_symptomatic(beta);
+    params.probabilities[0].set_hospitalized_per_infectious(rho);
+    params.probabilities[0].set_icu_per_hospitalized(theta);
+    params.probabilities[0].set_dead_per_icu(delta);
 
     // params[0].dampings.add(epi::Damping(30., 0.3));
 

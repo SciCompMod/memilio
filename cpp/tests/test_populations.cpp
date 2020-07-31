@@ -1,8 +1,9 @@
 #include "epidemiology/populations.h"
 #include <gtest/gtest.h>
 
-TEST(TestCompartmentalModel, set_population)
+TEST(TestPopulations, set_population)
 {
+
     enum InfectionType
     {
         S,
@@ -62,4 +63,27 @@ TEST(TestCompartmentalModel, set_population)
         }
     }
     ASSERT_NEAR(1., m.get_total(), 1e-12);
+
+    ASSERT_NEAR(1. / AgeGroupCount, m.get_group_population(1, FourtyFiveToSixtyFive), 1e-12);
+    m.set_group_population(1, FourtyFiveToSixtyFive, 1.);
+    ASSERT_NEAR(1., m.get_group_population(1, FourtyFiveToSixtyFive), 1e-12);
+    ASSERT_NEAR(2 - 1. / AgeGroupCount, m.get_total(), 1e-12);
+
+    Eigen::VectorXd y = m.get_compartments();
+    size_t idx        = 0;
+    for (size_t i = 0; i < InfectionTypeCount; ++i) {
+        for (size_t j = 0; j < AgeGroupCount; ++j) {
+            for (size_t k = 0; k < ContinentCount; ++k) {
+                ASSERT_EQ(idx, m.get_flat_index({i, j, k}));
+
+                if (j == FourtyFiveToSixtyFive) {
+                    ASSERT_NEAR(y[idx], 1. / (InfectionTypeCount * ContinentCount), 1e-12);
+                }
+                else {
+                    ASSERT_NEAR(y[idx], 1. / num_compartments, 1e-12);
+                }
+                idx++;
+            }
+        }
+    }
 }
