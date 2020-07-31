@@ -398,7 +398,7 @@ void secir_get_derivatives(ContactFrequencyMatrix const& cont_freq_matrix, Secir
 
         dydt[Si] = 0;
         dydt[Ei] = 0;
-        for (int j = 0; j < n_agegroups; j++) {
+        for (size_t j = 0; j < n_agegroups; j++) {
             size_t Cj = params.populations.get_flat_index({j, C});
             size_t Ij = params.populations.get_flat_index({j, I});
             // effective contact rate by contact rate between groups i and j and damping j
