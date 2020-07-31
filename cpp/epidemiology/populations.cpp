@@ -28,7 +28,7 @@ Eigen::VectorXd const& Populations::get_compartments() const
     return m_y;
 }
 
-double Populations::get(std::initializer_list<size_t> const& indices) const
+double Populations::get(std::vector<size_t> const& indices) const
 {
 #ifndef NDEBUG
     assert(indices.size() == m_category_sizes.size());
@@ -75,7 +75,7 @@ double Populations::get_total() const
     return m_y.sum();
 }
 
-void Populations::set(std::initializer_list<size_t> const& indices, double value)
+void Populations::set(std::vector<size_t> const& indices, double value)
 {
 #ifndef NDEBUG
     assert(indices.size() == m_category_sizes.size());
@@ -98,7 +98,7 @@ void Populations::set_total(double value)
     }
 }
 
-size_t Populations::get_flat_index(std::initializer_list<size_t> const& indices) const
+size_t Populations::get_flat_index(std::vector<size_t> const& indices) const
 {
     return flatten_index(indices, m_category_sizes);
 }

@@ -1,5 +1,5 @@
 import unittest
-from epidemiology.secir import ContactFrequencyMatrix, Damping, SecirParams, simulate, StageTimes, Probabilities, Populations
+from epidemiology.secir import ContactFrequencyMatrix, Damping, SecirParams, simulate, StageTimes, Probabilities, Populations, SecirCompartments
 
 class Test_secir_integration(unittest.TestCase):
 

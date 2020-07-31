@@ -52,7 +52,7 @@ public:
      * @param indices an initializer list containing the indices for each category
      * @return the population of compartment
      */
-    double get(std::initializer_list<size_t> const& indices) const;
+    double get(std::vector<size_t> const& indices) const;
 
     /**
      * @brief get_group_population returns the total population of a group in one category
@@ -73,7 +73,7 @@ public:
      * @param indices an initializer list containing the indices for each category
      * @param value the new value for the compartment's population
      */
-    void set(std::initializer_list<size_t> const& indices, double value);
+    void set(std::vector<size_t> const& indices, double value);
 
     /**
      * @brief set_group_population sets the total population for a given group
@@ -102,7 +102,7 @@ public:
     // TODO: more getters and setters for slices, ranges subsets etc., e.g. for all infected and
     // hospitalized in in the age group 18-25 in a specific income group in ...
 
-    size_t get_flat_index(std::initializer_list<size_t> const& indices) const;
+    size_t get_flat_index(std::vector<size_t> const& indices) const;
 
 private:
     // A vector storying the size of each category
