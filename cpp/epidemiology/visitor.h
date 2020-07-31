@@ -1,6 +1,9 @@
 #ifndef VISITOR_H
 #define VISITOR_H
 
+namespace epi
+{
+
 /**
  * @brief A generic visitor inspired by Fedor Pikus
  *
@@ -77,5 +80,7 @@ struct Visitable : public Base {
         visitor.visit(*static_cast<Derived const*>(this));
     }
 };
+
+} // namespace epi
 
 #endif // VISITOR_H
