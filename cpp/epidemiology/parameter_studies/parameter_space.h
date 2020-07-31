@@ -23,11 +23,8 @@ using ConstParameterDistributionVisitor =
     ConstVisitor<class ParameterDistributionNormal, class ParameterDistributionUniform>;
 
 template <class Derived>
-struct VisitableParameterDistribution
-    : Visitable<Derived, class ParameterDistribution, ParameterDistributionVisitor, ConstParameterDistributionVisitor> {
-    using Visitable<Derived, class ParameterDistribution, ParameterDistributionVisitor,
-                    ConstParameterDistributionVisitor>::Visitable;
-};
+using VisitableParameterDistribution =
+    Visitable<Derived, class ParameterDistribution, ParameterDistributionVisitor, ConstParameterDistributionVisitor>;
 
 /*
  * Parameter Distribution class which contains the name of a variable as string
