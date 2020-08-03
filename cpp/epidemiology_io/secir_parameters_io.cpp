@@ -467,7 +467,7 @@ Graph<ModelNode<SecirSimulation>, MigrationEdge> read_graph()
 
         graph.add_node(cont_freq, params, study.get_t0());
 
-        //tixiCloseDocument(node_handle);
+        tixiCloseDocument(node_handle);
     }
 
     for (int edge = 0; edge < nb_edges; edge++) {
