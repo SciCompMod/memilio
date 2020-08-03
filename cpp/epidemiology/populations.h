@@ -99,6 +99,14 @@ public:
      */
     void set_total(double value);
 
+    /**
+     * @brief set_remaining takes a total population as input and sets the compartment
+     * of a given index to have the difference between the total population and the current
+     * population in all other compartments
+     * @param indices the index of the compartment
+     */
+    void set_remaining(std::vector<size_t> const& indices, size_t total_population);
+
     // TODO: more getters and setters for slices, ranges subsets etc., e.g. for all infected and
     // hospitalized in in the age group 18-25 in a specific income group in ...
 

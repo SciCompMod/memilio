@@ -98,6 +98,17 @@ void Populations::set_total(double value)
     }
 }
 
+void Populations::set_remaining(std::vector<size_t> const& indices, size_t total_population)
+{
+    double current_population = get_total();
+    size_t idx                = get_flat_index(indices);
+    current_population -= m_y[idx];
+
+    assert(current_population <= total_population);
+
+    m_y[idx] = total_population - current_population;
+}
+
 size_t Populations::get_flat_index(std::vector<size_t> const& indices) const
 {
     return flatten_index(indices, m_category_sizes);
