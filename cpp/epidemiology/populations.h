@@ -78,7 +78,7 @@ public:
     /**
      * @brief set_group_population sets the total population for a given group
      *
-     * It rescales all the compartments populations proportionally. If all compartments
+     * This function rescales all the compartments populations proportionally. If all compartments
      * have zero population, the total population gets distributed equally over all
      * compartments
      *
@@ -89,9 +89,21 @@ public:
     void set_group_population(size_t category_idx, size_t group_idx, double value);
 
     /**
+     * @brief set_group_population_remaining sets the total population for a given group from a difference
+     *
+     * This function sets the population size 
+     *
+     * @param category_idx The index of the category of the group
+     * @param group_idx The index of the group within the category
+     * @param group_idx The index of the compartment within the group
+     * @param value the new value for the total population
+     */
+    void set_group_population_remaining(size_t category_idx, size_t group_idx, size_t compartment_idx, double value);
+
+    /**
      * @brief set_total sets the total population
      *
-     * It rescales all the compartments populations proportionally. If all compartments
+     * This function rescales all the compartments populations proportionally. If all compartments
      * have zero population, the total population gets distributed equally over all
      * compartments
      *
@@ -100,12 +112,12 @@ public:
     void set_total(double value);
 
     /**
-     * @brief set_remaining takes a total population as input and sets the compartment
+     * @brief set_remaining_population takes a total population as input and sets the compartment
      * of a given index to have the difference between the total population and the current
      * population in all other compartments
      * @param indices the index of the compartment
      */
-    void set_remaining(std::vector<size_t> const& indices, size_t total_population);
+    void set_remaining(std::vector<size_t> const& indices, double total_population);
 
     // TODO: more getters and setters for slices, ranges subsets etc., e.g. for all infected and
     // hospitalized in in the age group 18-25 in a specific income group in ...
