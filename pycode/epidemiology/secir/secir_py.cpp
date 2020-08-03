@@ -110,6 +110,7 @@ PYBIND11_MODULE(_secir, m)
             .value("U", epi::SecirCompartments::U)
             .value("R", epi::SecirCompartments::R)
             .value("D", epi::SecirCompartments::D)
+            .value("SecirCount", epi::SecirCompartments::SecirCount)
             .export_values();
 
     py::class_<epi::Damping>(m, "Damping")

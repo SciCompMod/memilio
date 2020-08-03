@@ -22,7 +22,7 @@ class Test_secir_integration(unittest.TestCase):
         probs.set_icu_per_hospitalized(0.25)  # 0.15-0.4
         probs.set_dead_per_icu(0.3)  # 0.15-0.77
 
-        people = Populations([1])
+        people = Populations([1, SecirCompartments.SecirCount])
         people.set([0, SecirCompartments.S], 7600);
         people.set([0, SecirCompartments.E], 100)
         people.set([0, SecirCompartments.C], 50)
@@ -31,7 +31,6 @@ class Test_secir_integration(unittest.TestCase):
         people.set([0, SecirCompartments.U], 10)
         people.set([0, SecirCompartments.R], 10)
         people.set([0, SecirCompartments.D], 0)
-        self.assertEqual(10000, people.get_total())
 
         # set the params required for the simulation
         params = SecirParams(1)
