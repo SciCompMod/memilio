@@ -11,6 +11,13 @@
 namespace epi
 {
 
+enum SecirCategory
+{
+    AgeGroup,
+    InfectionType,
+    CategoryCount
+};
+
 enum SecirCompartments
 {
     S,

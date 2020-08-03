@@ -83,7 +83,7 @@ TEST(ParameterStudies, sample_from_secir_params)
 
     for (size_t i = 0; i < params_sample.size(); i++) {
 
-        EXPECT_GE(params_sample.populations.get_group_population(0, i), 0);
+        EXPECT_GE(params_sample.populations.get_group_population(epi::SecirCategory::AgeGroup, i), 0);
 
         EXPECT_GE(params_sample.times[i].get_incubation_inv(), 0);
 
@@ -255,7 +255,7 @@ TEST(ParameterStudies, check_ensemble_run_result)
             total_at_ti[j / 8] += results[0][i][j];
         }
         for (size_t j = 0; j < params.size(); j++) {
-            EXPECT_NEAR(total_at_ti[j], params.populations.get_group_population(0, j), 1e-3)
+            EXPECT_NEAR(total_at_ti[j], params.populations.get_group_population(epi::SecirCategory::AgeGroup, j), 1e-3)
                 << " day " << i << " group " << j;
         }
     }

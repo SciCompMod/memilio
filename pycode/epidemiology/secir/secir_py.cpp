@@ -101,6 +101,12 @@ std::vector<SecirResult> simulate_secir(double t0, double tmax, double dt,
 
 PYBIND11_MODULE(_secir, m)
 {
+    py::enum_<epi::SecirCategory>(m, "SecirCategory")
+            .value("S", epi::SecirCategory::InfectionType)
+            .value("E", epi::SecirCategory::AgeGroup)
+            .value("SecirCount", epi::SecirCategory::CategoryCount)
+            .export_values();
+
     py::enum_<epi::SecirCompartments>(m, "SecirCompartments")
             .value("S", epi::SecirCompartments::S)
             .value("E", epi::SecirCompartments::E)

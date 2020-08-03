@@ -723,7 +723,7 @@ inline ParameterSpace::ParameterSpace(ContactFrequencyMatrix const& cont_freq_ma
 
         // fixed size groups
         // total
-        m_total.push_back(params.populations.get_group_population(0, i));
+        m_total.push_back(params.populations.get_group_population(SecirCategory::AgeGroup, i));
         m_hospitalized.push_back(params.populations.get({i, SecirCompartments::H}));
         m_icu.push_back(params.populations.get({i, SecirCompartments::U}));
         m_dead.push_back(params.populations.get({i, SecirCompartments::D}));

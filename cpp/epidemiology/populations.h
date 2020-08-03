@@ -49,7 +49,7 @@ public:
 
     /**
      * @brief get returns the population of one compartment
-     * @param indices an initializer list containing the indices for each category
+     * @param indices a vector containing the indices for each category
      * @return the population of compartment
      */
     double get(std::vector<size_t> const& indices) const;
@@ -70,7 +70,7 @@ public:
 
     /**
      * @brief set sets the population of one compartment
-     * @param indices an initializer list containing the indices for each category
+     * @param indices a vector containing the indices for each category
      * @param value the new value for the compartment's population
      */
     void set(std::vector<size_t> const& indices, double value);
@@ -102,6 +102,12 @@ public:
     // TODO: more getters and setters for slices, ranges subsets etc., e.g. for all infected and
     // hospitalized in in the age group 18-25 in a specific income group in ...
 
+    /**
+     * @brief get_flat_index returns the flat index into the stored population, given the
+     * indices of each category
+     * @param indices a vector of indices
+     * @return a flat index into the data structure storing the compartment populations
+     */
     size_t get_flat_index(std::vector<size_t> const& indices) const;
 
 private:

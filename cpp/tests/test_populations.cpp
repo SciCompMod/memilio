@@ -4,6 +4,13 @@
 TEST(TestPopulations, set_population)
 {
 
+    enum Category
+    {
+        InfectionTypeCategory,
+        AgeGroupCategory,
+        ContinentCategory
+    };
+
     enum InfectionType
     {
         S,
@@ -64,9 +71,9 @@ TEST(TestPopulations, set_population)
     }
     ASSERT_NEAR(1., m.get_total(), 1e-12);
 
-    ASSERT_NEAR(1. / AgeGroupCount, m.get_group_population(1, FourtyFiveToSixtyFive), 1e-12);
-    m.set_group_population(1, FourtyFiveToSixtyFive, 1.);
-    ASSERT_NEAR(1., m.get_group_population(1, FourtyFiveToSixtyFive), 1e-12);
+    ASSERT_NEAR(1. / AgeGroupCount, m.get_group_population(AgeGroupCategory, FourtyFiveToSixtyFive), 1e-12);
+    m.set_group_population(AgeGroupCategory, FourtyFiveToSixtyFive, 1.);
+    ASSERT_NEAR(1., m.get_group_population(AgeGroupCategory, FourtyFiveToSixtyFive), 1e-12);
     ASSERT_NEAR(2 - 1. / AgeGroupCount, m.get_total(), 1e-12);
 
     Eigen::VectorXd y = m.get_compartments();
