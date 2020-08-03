@@ -9,7 +9,7 @@
 
 namespace epi
 {
-using HandleSimulationResultFunction = std::function<void(const epi::ContactFrequencyMatrix&, const epi::SecirParams&,
+using HandleSimulationResultFunction = std::function<void(const ContactFrequencyMatrix&, const epi::SecirParams&,
                                                           std::vector<double>, std::vector<Eigen::VectorXd>)>;
 
 // The function type for the kind of simulation that we want to run
