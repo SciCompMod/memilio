@@ -3,6 +3,7 @@
 
 #include <epidemiology/secir.h>
 #include <epidemiology/logging.h>
+#include <epidemiology/visitor.h>
 #include <assert.h>
 #include <string>
 #include <vector>
@@ -12,12 +13,18 @@
 namespace epi
 {
 
-/* TODO: Add more distributions here. */
-typedef enum
-{
-    DIST_UNIFORM,
-    DIST_NORMAL
-} distribution;
+/**
+ * @brief This is a visitor class to visit all Parameter Distribution objects
+ *
+ * More information to the visitor pattern is here: https://en.wikipedia.org/wiki/Visitor_pattern
+ */
+using ParameterDistributionVisitor = Visitor<class ParameterDistributionNormal, class ParameterDistributionUniform>;
+using ConstParameterDistributionVisitor =
+    ConstVisitor<class ParameterDistributionNormal, class ParameterDistributionUniform>;
+
+template <class Derived>
+using VisitableParameterDistribution =
+    Visitable<Derived, class ParameterDistribution, ParameterDistributionVisitor, ConstParameterDistributionVisitor>;
 
 /*
  * Parameter Distribution class which contains the name of a variable as string
@@ -30,19 +37,17 @@ public:
     ParameterDistribution()
         : m_lower_bound{0}
         , m_upper_bound{0}
-        , m_dist{DIST_UNIFORM}
     {
         std::random_device random_device;
         m_random_generator = std::mt19937{random_device()};
     }
 
-    ParameterDistribution(double lower_bound, double upper_bound, distribution dist)
+    ParameterDistribution(double lower_bound, double upper_bound)
     {
         std::random_device random_device;
         m_random_generator = std::mt19937{random_device()};
         m_lower_bound      = lower_bound;
         m_upper_bound      = upper_bound;
-        m_dist             = dist;
     }
     void set_lower_bound(double lower_bound)
     {
@@ -52,11 +57,6 @@ public:
     void set_upper_bound(double upper_bound)
     {
         m_upper_bound = upper_bound;
-    }
-
-    void set_distribution(distribution dist)
-    {
-        m_dist = dist;
     }
 
     void add_predefined_sample(double sample)
@@ -84,11 +84,6 @@ public:
         return m_upper_bound;
     }
 
-    distribution const& get_distribution() const
-    {
-        return m_dist;
-    }
-
     /*
      * @brief returns a value for the given parameter distribution
      * in case some predefined samples are set, these values are taken
@@ -112,10 +107,18 @@ public:
         return 0.0;
     }
 
+    /**
+     * @brief This function implements the visit interface of the visitor pattern
+     *
+     * It can be used for any ways of working with the class to dispatch
+     * the class type. More information here: https://en.wikipedia.org/wiki/Visitor_pattern
+     */
+    virtual void accept(ParameterDistributionVisitor& visitor)            = 0;
+    virtual void accept(ConstParameterDistributionVisitor& visitor) const = 0;
+
 protected:
     double m_lower_bound; /*< A realistic lower bound on the given parameter */
     double m_upper_bound; /*< A realistic upper bound on the given parameter */
-    distribution m_dist; /*< The statistical distribution of this parameter */
     std::mt19937 m_random_generator;
     std::vector<double>
         m_predefined_samples; // if these values are set; no real sample will occur but these values will be taken
@@ -125,28 +128,26 @@ protected:
  * Child class of Parameter Distribution class which additionally contains
  * the mean value and the standard deviation for a normal distribution 
  */
-class ParameterDistributionNormal : public ParameterDistribution
+class ParameterDistributionNormal : public VisitableParameterDistribution<ParameterDistributionNormal>
 {
 public:
     ParameterDistributionNormal()
-        : ParameterDistribution()
+        : VisitableParameterDistribution<ParameterDistributionNormal>()
     {
-        m_dist         = DIST_NORMAL;
         m_mean         = 0;
         m_standard_dev = 1;
     }
 
     ParameterDistributionNormal(double mean, double standard_dev)
-        : ParameterDistribution()
+        : VisitableParameterDistribution<ParameterDistributionNormal>()
     {
-        m_dist         = DIST_NORMAL;
         m_mean         = mean;
         m_standard_dev = standard_dev;
         check_quantiles(m_mean, m_standard_dev);
     }
 
     ParameterDistributionNormal(double lower_bound, double upper_bound, double mean)
-        : ParameterDistribution(lower_bound, upper_bound, DIST_NORMAL)
+        : VisitableParameterDistribution<ParameterDistributionNormal>(lower_bound, upper_bound)
     {
         m_mean         = mean;
         m_standard_dev = upper_bound; // set as to high and adapt then
@@ -154,7 +155,7 @@ public:
     }
 
     ParameterDistributionNormal(double lower_bound, double upper_bound, double mean, double standard_dev)
-        : ParameterDistribution(lower_bound, upper_bound, DIST_NORMAL)
+        : VisitableParameterDistribution<ParameterDistributionNormal>(lower_bound, upper_bound)
     {
         m_mean         = mean;
         m_standard_dev = standard_dev;
@@ -279,16 +280,16 @@ private:
 /*
  * Child class of Parameter Distribution class which represents an uniform distribution 
  */
-class ParameterDistributionUniform : public ParameterDistribution
+class ParameterDistributionUniform : public VisitableParameterDistribution<ParameterDistributionUniform>
 {
 public:
     ParameterDistributionUniform()
-        : ParameterDistribution()
+        : VisitableParameterDistribution<ParameterDistributionUniform>()
     {
     }
 
     ParameterDistributionUniform(double lower_bound, double upper_bound)
-        : ParameterDistribution(lower_bound, upper_bound, DIST_UNIFORM)
+        : VisitableParameterDistribution<ParameterDistributionUniform>(lower_bound, upper_bound)
     {
     }
 
