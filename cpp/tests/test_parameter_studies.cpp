@@ -1,7 +1,6 @@
 #include <epidemiology/parameter_studies/parameter_space.h>
 #include <epidemiology/parameter_studies/parameter_studies.h>
 #include <epidemiology/secir.h>
-#include <epidemiology_io/secir_parameters_io.h>
 #include <gtest/gtest.h>
 #include <stdio.h>
 
@@ -244,11 +243,7 @@ TEST(ParameterStudies, check_ensemble_run_result)
     // Run parameter study
     int run = 0;
     parameter_study.set_nb_runs(1);
-    auto lambda = [&run, t0, tmax](const auto& cont_freq, const auto& params, const auto& time,
-                                   const auto& secir_result) mutable {
-        epi::write_single_run_params(run++, cont_freq, params, t0, tmax, time, secir_result);
-    };
-    std::vector<std::vector<Eigen::VectorXd>> results = parameter_study.run(lambda);
+    std::vector<std::vector<Eigen::VectorXd>> results = parameter_study.run();
 
     // printf("\n %d %d %d %d ", results.size(), results[0].size(), results[0][0].size(), params.size());
     for (size_t i = 0; i < results[0].size(); i++) { // number of time steps

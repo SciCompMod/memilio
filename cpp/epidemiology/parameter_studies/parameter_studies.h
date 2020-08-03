@@ -17,6 +17,8 @@ using secir_simulation_function_t =
     std::function<std::vector<double>(double t0, double tmax, double dt, ContactFrequencyMatrix const& cont_freq_matrix,
                                       SecirParams const& params, std::vector<Eigen::VectorXd>& secir_result)>;
 
+auto dummy_func = [](const auto& cont_freq, const auto& params, const auto& time, const auto& secir_result) {};
+
 // TODO: document class
 // TODO: document input file convention
 
@@ -40,12 +42,14 @@ public:
     /*
      * @brief Carry out all simulations in the parameter study.
      */
-    std::vector<std::vector<Eigen::VectorXd>> run(HandleSimulationResultFunction simulation_result_function);
+    std::vector<std::vector<Eigen::VectorXd>>
+    run(HandleSimulationResultFunction simulation_result_function = dummy_func);
 
     /*
      * @brief sets the number of Monte Carlo runs
      * @param[in] nb_runs number of runs
      */
+
     void set_nb_runs(size_t nb_runs)
     {
         m_nb_runs = nb_runs;

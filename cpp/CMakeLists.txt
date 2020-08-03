@@ -35,6 +35,8 @@ add_library(epidemiology
     epidemiology/eigen_util.h
     epidemiology/populations.h
     epidemiology/populations.cpp
+    epidemiology/visitor.h
+    epidemiology/parameter_studies/parameter_space.h
 )
 
 target_include_directories(epidemiology PUBLIC

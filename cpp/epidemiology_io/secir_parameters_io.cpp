@@ -17,31 +17,40 @@ namespace epi
 void write_dist(const TixiDocumentHandle& handle, const std::string& path, const std::string& element,
                 const ParameterDistribution& dist)
 {
+
+    struct WriteDistVisitor : public ConstParameterDistributionVisitor {
+        WriteDistVisitor(const std::string& xml_path, TixiDocumentHandle tixi_handle)
+            : handle(tixi_handle)
+            , element_path(xml_path)
+        {
+        }
+
+        void visit(const ParameterDistributionNormal& normal_dist) override
+        {
+            tixiAddTextElement(handle, element_path.c_str(), "Distribution", "Normal");
+            tixiAddDoubleElement(handle, element_path.c_str(), "Mean", normal_dist.get_mean(), "%g");
+            tixiAddDoubleElement(handle, element_path.c_str(), "Deviation", normal_dist.get_standard_dev(), "%g");
+            tixiAddDoubleElement(handle, element_path.c_str(), "Min", normal_dist.get_lower_bound(), "%g");
+            tixiAddDoubleElement(handle, element_path.c_str(), "Max", normal_dist.get_upper_bound(), "%g");
+        }
+
+        void visit(const ParameterDistributionUniform& uniform_dist) override
+        {
+            tixiAddTextElement(handle, element_path.c_str(), "Distribution", "Uniform");
+            tixiAddDoubleElement(handle, element_path.c_str(), "Min", uniform_dist.get_lower_bound(), "%g");
+            tixiAddDoubleElement(handle, element_path.c_str(), "Max", uniform_dist.get_upper_bound(), "%g");
+        }
+
+        TixiDocumentHandle handle;
+        std::string element_path;
+    };
+
     tixiCreateElement(handle, path.c_str(), element.c_str());
     auto element_path = path_join(path, element);
-    switch (dist.get_distribution()) {
-    case DIST_NORMAL: {
 
-        tixiAddTextElement(handle, element_path.c_str(), "Distribution", "Normal");
-        auto& normal_dist = static_cast<const ParameterDistributionNormal&>(dist);
-        tixiAddDoubleElement(handle, element_path.c_str(), "Mean", normal_dist.get_mean(), "%g");
-        tixiAddDoubleElement(handle, element_path.c_str(), "Deviation", normal_dist.get_standard_dev(), "%g");
-        tixiAddDoubleElement(handle, element_path.c_str(), "Min", normal_dist.get_lower_bound(), "%g");
-        tixiAddDoubleElement(handle, element_path.c_str(), "Max", normal_dist.get_upper_bound(), "%g");
-        break;
-    }
-    case DIST_UNIFORM: {
-        tixiAddTextElement(handle, element_path.c_str(), "Distribution", "Uniform");
-        auto& uniform_dist = static_cast<const ParameterDistributionUniform&>(dist);
-        tixiAddDoubleElement(handle, element_path.c_str(), "Min", uniform_dist.get_lower_bound(), "%g");
-        tixiAddDoubleElement(handle, element_path.c_str(), "Max", uniform_dist.get_upper_bound(), "%g");
-        break;
-    }
-    default:
-        //TODO: true error handling
-        assert(false && "Unknown distribution.");
-        break;
-    }
+    WriteDistVisitor visitor(element_path, handle);
+    dist.accept(visitor);
+
     tixiAddFloatVector(handle, element_path.c_str(), "PredefinedSamples", dist.get_predefined_samples().data(),
                        dist.get_predefined_samples().size(), "%g");
 }
