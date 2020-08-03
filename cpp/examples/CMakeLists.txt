@@ -25,6 +25,9 @@ add_executable(graph graph.cpp)
 target_link_libraries(graph PRIVATE epidemiology)
 
 if (TARGET "epidemiology_io")
+  add_executable(read_graph read_graph.cpp)
+  target_link_libraries(read_graph PRIVATE epidemiology epidemiology_io)
+
   target_link_libraries(secir_ageres PRIVATE epidemiology_io)
 
   add_executable(parameter_study_secir parameter_study_secir.cpp)

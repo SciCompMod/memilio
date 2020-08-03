@@ -3,6 +3,8 @@
 #include <epidemiology/secir.h>
 #include <epidemiology/damping.h>
 #include <epidemiology/stl_util.h>
+#include <epidemiology/graph.h>
+#include <epidemiology/migration.h>
 #include <vector>
 
 #include <iostream>
@@ -380,6 +382,114 @@ void write_single_run_params(const int run, const ContactFrequencyMatrix& cont_f
     tixiCloseDocument(handle);
 
     save_result(time, secir_result, ("Results_run" + std::to_string(run) + ".h5"));
+}
+
+void write_graph(const Graph<ModelNode<SecirSimulation>, MigrationEdge>& graph, double t0, double tmax)
+{
+    int nb_nodes   = graph.nodes().size();
+    int nb_edges   = graph.edges().size();
+    int nb_runs    = 1;
+    int nb_groups  = graph.nodes()[0].model.get_cont_freq().get_size();
+    int nb_compart = 8;
+    double dev_rel = 0.0;
+
+    for (int node = 0; node < nb_nodes; node++) {
+        std::string path = "/Parameters";
+        TixiDocumentHandle handle;
+        tixiCreateDocument("Parameters", &handle);
+
+        tixiAddIntegerElement(handle, path.c_str(), "NodeID", node, "%d");
+
+        auto params    = graph.nodes()[node].model.get_params();
+        auto cont_freq = graph.nodes()[node].model.get_cont_freq();
+
+        ParameterStudy study(simulate, cont_freq, params, t0, tmax, dev_rel, nb_runs);
+
+        write_parameter_study(handle, path, study);
+        tixiSaveDocument(handle, ("GraphNode" + std::to_string(node) + ".xml").c_str());
+        tixiCloseDocument(handle);
+    }
+
+    std::string edges_path = "/Edges";
+    TixiDocumentHandle handle;
+    tixiCreateDocument("Edges", &handle);
+
+    tixiAddIntegerElement(handle, edges_path.c_str(), "NumberOfNodes", nb_nodes, "%d");
+    tixiAddIntegerElement(handle, edges_path.c_str(), "NumberOfEdges", nb_edges, "%d");
+    tixiAddIntegerElement(handle, edges_path.c_str(), "NumberOfGroups", nb_groups, "%d");
+
+    for (int edge = 0; edge < nb_edges; edge++) {
+        std::string edge_path = path_join(edges_path, "Edge" + std::to_string(edge));
+        tixiCreateElement(handle, edges_path.c_str(), ("Edge" + std::to_string(edge)).c_str());
+        tixiAddIntegerElement(handle, edge_path.c_str(), "StartNode", graph.edges()[edge].start_node_idx, "%d");
+        tixiAddIntegerElement(handle, edge_path.c_str(), "EndNode", graph.edges()[edge].end_node_idx, "%d");
+        for (int group = 0; group < nb_groups; group++) {
+            std::vector<double> weights;
+            for (int compart = 0; compart < nb_compart; compart++) {
+                weights.push_back(graph.edges()[0].property.coefficients[compart + group * nb_compart]);
+            }
+            tixiAddFloatVector(handle, edge_path.c_str(), ("Group" + std::to_string(group + 1)).c_str(), weights.data(),
+                               nb_compart, "%g");
+        }
+    }
+
+    tixiSaveDocument(handle, "GraphEdges.xml");
+    tixiCloseDocument(handle);
+}
+
+Graph<ModelNode<SecirSimulation>, MigrationEdge> read_graph()
+{
+    TixiDocumentHandle handle;
+    tixiOpenDocument("GraphEdges.xml", &handle);
+
+    std::string edges_path = "/Edges";
+
+    int nb_nodes;
+    int nb_edges;
+    int nb_groups;
+    int nb_compart = 8;
+
+    tixiGetIntegerElement(handle, path_join(edges_path, "NumberOfNodes").c_str(), &nb_nodes);
+    tixiGetIntegerElement(handle, path_join(edges_path, "NumberOfEdges").c_str(), &nb_edges);
+    tixiGetIntegerElement(handle, path_join(edges_path, "NumberOfGroups").c_str(), &nb_groups);
+
+    Graph<ModelNode<SecirSimulation>, MigrationEdge> graph;
+
+    for (int node = 0; node < nb_nodes; node++) {
+        TixiDocumentHandle node_handle;
+        tixiOpenDocument(("GraphNode" + std::to_string(node) + ".xml").c_str(), &node_handle);
+
+        const ParameterStudy& study = read_parameter_study(node_handle, "/Parameters");
+        const ParameterSpace& space = study.get_parameter_space();
+
+        auto cont_freq = space.get_cont_freq_matrix_sample();
+        auto params    = space.get_secir_params_sample();
+
+        graph.add_node(cont_freq, params, study.get_t0());
+
+        //tixiCloseDocument(node_handle);
+    }
+
+    for (int edge = 0; edge < nb_edges; edge++) {
+        std::string edge_path = path_join(edges_path, "Edge" + std::to_string(edge));
+        int start_node;
+        int end_node;
+        tixiGetIntegerElement(handle, path_join(edge_path, "StartNode").c_str(), &start_node);
+        tixiGetIntegerElement(handle, path_join(edge_path, "EndNode").c_str(), &end_node);
+
+        auto all_weights = Eigen::VectorXd(nb_compart * nb_groups);
+        for (int group = 0; group < nb_groups; group++) {
+            double* weights = nullptr;
+            tixiGetFloatVector(handle, path_join(edge_path, "Group" + std::to_string(group + 1)).c_str(), &weights,
+                               nb_compart);
+            for (int compart = 0; compart < nb_compart; compart++) {
+                all_weights(compart + group * nb_compart) = weights[compart];
+            }
+        }
+        graph.add_edge(start_node, end_node, all_weights);
+    }
+    tixiCloseDocument(handle);
+    return graph;
 }
 
 } // namespace epi

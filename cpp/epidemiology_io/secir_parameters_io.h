@@ -3,6 +3,8 @@
 
 #include <epidemiology/eigen_util.h>
 #include <epidemiology/parameter_studies/parameter_studies.h>
+#include <epidemiology/graph.h>
+#include <epidemiology/migration.h>
 #include <tixi.h>
 
 namespace epi
@@ -92,6 +94,10 @@ void write_parameter_study(TixiDocumentHandle handle, const std::string& path, c
 void write_single_run_params(const int run, const ContactFrequencyMatrix& cont_freq, const SecirParams& params,
                              double t0, double tmax, std::vector<double> time,
                              std::vector<Eigen::VectorXd> secir_result);
+
+void write_graph(const Graph<ModelNode<SecirSimulation>, MigrationEdge>& graph, double t0, double tmax);
+
+Graph<ModelNode<SecirSimulation>, MigrationEdge> read_graph();
 
 } // namespace epi
 

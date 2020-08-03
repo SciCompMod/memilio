@@ -623,12 +623,12 @@ public:
         return *m_cont_freq_matrix_variable;
     }
 
-    ContactFrequencyMatrix get_cont_freq_matrix_sample()
+    ContactFrequencyMatrix get_cont_freq_matrix_sample() const
     {
         return m_cont_freq_matrix_variable->get_sample();
     }
 
-    SecirParams get_secir_params_sample()
+    SecirParams get_secir_params_sample() const
     {
         SecirParams secir_params_sample(m_nb_age_groups);
         for (size_t i = 0; i < m_nb_age_groups; i++) {
