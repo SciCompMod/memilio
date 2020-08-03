@@ -40,7 +40,7 @@ void check_dist(const epi::ParameterDistribution& dist, const epi::ParameterDist
     dist.accept(visitor);
 }
 
-TEST(TestSaveParameters, compareSingleRun)
+TEST(TestSaveParameters, compareParameterStudy)
 {
     double t0   = 0.0;
     double tmax = 50.5;
@@ -161,5 +161,167 @@ TEST(TestSaveParameters, compareSingleRun)
         check_dist(contact.get_dist_damp_diag_base(), read_contact.get_dist_damp_diag_base());
         check_dist(contact.get_dist_damp_diag_rel(), read_contact.get_dist_damp_diag_rel());
         check_dist(contact.get_dist_damp_offdiag_rel(), read_contact.get_dist_damp_offdiag_rel());
+    }
+}
+
+TEST(TestSaveParameters, compareGraphs)
+{
+    int nb_compart = 8;
+    double t0      = 0.0;
+    double tmax    = 50.5;
+    double dt      = 0.1;
+
+    double tinc = 5.2, tinfmild = 6, tserint = 4.2, thosp2home = 12, thome2hosp = 5, thosp2icu = 2, ticu2home = 8,
+           tinfasy = 6.2, ticu2death = 5;
+
+    double cont_freq = 0.5, alpha = 0.09, beta = 0.25, delta = 0.3, rho = 0.2, theta = 0.25;
+
+    double nb_total_t0 = 10000, nb_exp_t0 = 100, nb_inf_t0 = 50, nb_car_t0 = 50, nb_hosp_t0 = 20, nb_icu_t0 = 10,
+           nb_rec_t0 = 10, nb_dead_t0 = 0;
+
+    int nb_groups = 2;
+    double fact   = 1.0 / (double)nb_groups;
+
+    std::vector<epi::SecirParams> params{epi::SecirParams{}};
+    epi::ContactFrequencyMatrix contact_freq_matrix{(size_t)nb_groups};
+    for (size_t i = 1; i < nb_groups; i++) {
+        params.push_back(epi::SecirParams{});
+    }
+
+    for (size_t i = 0; i < nb_groups; i++) {
+        params[i].times.set_incubation(tinc);
+        params[i].times.set_infectious_mild(tinfmild);
+        params[i].times.set_serialinterval(tserint);
+        params[i].times.set_hospitalized_to_home(thosp2home);
+        params[i].times.set_home_to_hospitalized(thome2hosp);
+        params[i].times.set_hospitalized_to_icu(thosp2icu);
+        params[i].times.set_icu_to_home(ticu2home);
+        params[i].times.set_infectious_asymp(tinfasy);
+        params[i].times.set_icu_to_death(ticu2death);
+
+        params[i].populations.set_total_t0(fact * nb_total_t0);
+        params[i].populations.set_exposed_t0(fact * nb_exp_t0);
+        params[i].populations.set_carrier_t0(fact * nb_car_t0);
+        params[i].populations.set_infectious_t0(fact * nb_inf_t0);
+        params[i].populations.set_hospital_t0(fact * nb_hosp_t0);
+        params[i].populations.set_icu_t0(fact * nb_icu_t0);
+        params[i].populations.set_recovered_t0(fact * nb_rec_t0);
+        params[i].populations.set_dead_t0(fact * nb_dead_t0);
+
+        params[i].probabilities.set_asymp_per_infectious(alpha);
+        params[i].probabilities.set_risk_from_symptomatic(beta);
+        params[i].probabilities.set_hospitalized_per_infectious(rho);
+        params[i].probabilities.set_icu_per_hospitalized(theta);
+        params[i].probabilities.set_dead_per_icu(delta);
+    }
+
+    epi::Damping dummy(30., 0.3);
+    for (int i = 0; i < nb_groups; i++) {
+        for (int j = i; j < nb_groups; j++) {
+            contact_freq_matrix.set_cont_freq(fact * cont_freq, i, j);
+            contact_freq_matrix.add_damping(dummy, i, j);
+        }
+    }
+
+    epi::Graph<epi::ModelNode<epi::SecirSimulation>, epi::MigrationEdge> graph;
+    graph.add_node(contact_freq_matrix, params, t0);
+    graph.add_node(contact_freq_matrix, params, t0);
+    graph.add_edge(0, 1, Eigen::VectorXd::Constant(nb_compart * nb_groups, 0.01));
+    graph.add_edge(1, 0, Eigen::VectorXd::Constant(nb_compart * nb_groups, 0.01));
+
+    epi::write_graph(graph, t0, tmax);
+
+    epi::Graph<epi::ModelNode<epi::SecirSimulation>, epi::MigrationEdge> graph_read = epi::read_graph();
+
+    int nb_nodes = graph.nodes().size();
+    int nb_edges = graph.edges().size();
+
+    ASSERT_EQ(nb_nodes, graph_read.nodes().size());
+    ASSERT_EQ(nb_edges, graph_read.edges().size());
+
+    for (int node = 0; node < nb_nodes; node++) {
+        std::vector<epi::SecirParams> graph_params  = graph.nodes()[0].model.get_params();
+        epi::ContactFrequencyMatrix graph_cont_freq = graph.nodes()[0].model.get_cont_freq();
+
+        std::vector<epi::SecirParams> graph_read_params  = graph_read.nodes()[0].model.get_params();
+        epi::ContactFrequencyMatrix graph_read_cont_freq = graph_read.nodes()[0].model.get_cont_freq();
+
+        int nb_groups = graph_cont_freq.get_size();
+        ASSERT_EQ(nb_groups, graph_read_cont_freq.get_size());
+
+        int nb_dampings = graph_cont_freq.get_dampings(0, 0).get_dampings_vector().size();
+        ASSERT_EQ(nb_dampings, graph_read_cont_freq.get_dampings(0, 0).get_dampings_vector().size());
+
+        for (int group = 0; group < nb_groups; group++) {
+            ASSERT_EQ(graph_params[group].populations.get_total_t0(),
+                      graph_read_params[group].populations.get_total_t0());
+            ASSERT_EQ(graph_params[group].populations.get_exposed_t0(),
+                      graph_read_params[group].populations.get_exposed_t0());
+            ASSERT_EQ(graph_params[group].populations.get_carrier_t0(),
+                      graph_read_params[group].populations.get_carrier_t0());
+            ASSERT_EQ(graph_params[group].populations.get_infectious_t0(),
+                      graph_read_params[group].populations.get_infectious_t0());
+            ASSERT_EQ(graph_params[group].populations.get_hospitalized_t0(),
+                      graph_read_params[group].populations.get_hospitalized_t0());
+            ASSERT_EQ(graph_params[group].populations.get_icu_t0(), graph_read_params[group].populations.get_icu_t0());
+            ASSERT_EQ(graph_params[group].populations.get_recovered_t0(),
+                      graph_read_params[group].populations.get_recovered_t0());
+            ASSERT_EQ(graph_params[group].populations.get_dead_t0(),
+                      graph_read_params[group].populations.get_dead_t0());
+
+            ASSERT_EQ(graph_params[group].times.get_incubation_inv(),
+                      graph_read_params[group].times.get_incubation_inv());
+            ASSERT_EQ(graph_params[group].times.get_serialinterval_inv(),
+                      graph_read_params[group].times.get_serialinterval_inv());
+            ASSERT_EQ(graph_params[group].times.get_infectious_mild_inv(),
+                      graph_read_params[group].times.get_infectious_mild_inv());
+            ASSERT_EQ(graph_params[group].times.get_hospitalized_to_home_inv(),
+                      graph_read_params[group].times.get_hospitalized_to_home_inv());
+            ASSERT_EQ(graph_params[group].times.get_home_to_hospitalized_inv(),
+                      graph_read_params[group].times.get_home_to_hospitalized_inv());
+            ASSERT_EQ(graph_params[group].times.get_infectious_asymp_inv(),
+                      graph_read_params[group].times.get_infectious_asymp_inv());
+            ASSERT_EQ(graph_params[group].times.get_hospitalized_to_icu_inv(),
+                      graph_read_params[group].times.get_hospitalized_to_icu_inv());
+            ASSERT_EQ(graph_params[group].times.get_icu_to_home_inv(),
+                      graph_read_params[group].times.get_icu_to_home_inv());
+            ASSERT_EQ(graph_params[group].times.get_icu_to_dead_inv(),
+                      graph_read_params[group].times.get_icu_to_dead_inv());
+
+            ASSERT_EQ(graph_params[group].probabilities.get_infection_from_contact(),
+                      graph_read_params[group].probabilities.get_infection_from_contact());
+            ASSERT_EQ(graph_params[group].probabilities.get_asymp_per_infectious(),
+                      graph_read_params[group].probabilities.get_asymp_per_infectious());
+            ASSERT_EQ(graph_params[group].probabilities.get_risk_from_symptomatic(),
+                      graph_read_params[group].probabilities.get_risk_from_symptomatic());
+            ASSERT_EQ(graph_params[group].probabilities.get_dead_per_icu(),
+                      graph_read_params[group].probabilities.get_dead_per_icu());
+            ASSERT_EQ(graph_params[group].probabilities.get_hospitalized_per_infectious(),
+                      graph_read_params[group].probabilities.get_hospitalized_per_infectious());
+            ASSERT_EQ(graph_params[group].probabilities.get_icu_per_hospitalized(),
+                      graph_read_params[group].probabilities.get_icu_per_hospitalized());
+
+            for (int contact_group = 0; contact_group < nb_groups; contact_group++) {
+                ASSERT_EQ(graph_cont_freq.get_cont_freq(group, contact_group),
+                          graph_read_cont_freq.get_cont_freq(group, contact_group));
+                for (int damp = 0; damp < nb_dampings; damp++) {
+                    ASSERT_EQ(
+                        graph_cont_freq.get_dampings(group, contact_group).get_dampings_vector().at(damp).day,
+                        graph_read_cont_freq.get_dampings(group, contact_group).get_dampings_vector().at(damp).day);
+                    ASSERT_EQ(
+                        graph_cont_freq.get_dampings(group, contact_group).get_dampings_vector().at(damp).factor,
+                        graph_read_cont_freq.get_dampings(group, contact_group).get_dampings_vector().at(damp).factor);
+                }
+            }
+        }
+
+        for (int edge = 0; edge < nb_edges; edge++) {
+            ASSERT_EQ(graph.edges()[edge].start_node_idx, graph_read.edges()[edge].start_node_idx);
+            ASSERT_EQ(graph.edges()[edge].end_node_idx, graph_read.edges()[edge].end_node_idx);
+            for (int i = 0; i < nb_compart * nb_groups; i++) {
+                ASSERT_EQ(graph.edges()[edge].property.coefficients[i],
+                          graph_read.edges()[edge].property.coefficients[i]);
+            }
+        }
     }
 }

@@ -95,8 +95,18 @@ void write_single_run_params(const int run, const ContactFrequencyMatrix& cont_f
                              double t0, double tmax, std::vector<double> time,
                              std::vector<Eigen::VectorXd> secir_result);
 
+/**
+ * @brief creates xml files for each node of a Secir simulation graph and one xml file for its edges
+ * @param graph Graph which should be written
+ * @param t0 starting point of simulation
+ * @param tmax end point of simulation
+ */
+//TO-DO: Implement apropriate File System for XML FIles
 void write_graph(const Graph<ModelNode<SecirSimulation>, MigrationEdge>& graph, double t0, double tmax);
 
+/**
+ * @brief reads graph xml files and returns a Secir simulation graph
+ */
 Graph<ModelNode<SecirSimulation>, MigrationEdge> read_graph();
 
 } // namespace epi
