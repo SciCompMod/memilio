@@ -1,4 +1,4 @@
-from epidemiology.secir import ContactFrequencyMatrix, Damping, SecirParams, print_secir_params, simulate, StageTimes, Probabilities, Populations
+from epidemiology.secir import ContactFrequencyMatrix, Damping, SecirParams, print_secir_params, simulate, StageTimes, Probabilities, Populations, SecirCompartments
 from matplotlib import pyplot as plt
 import pandas as pd
 import numpy as np
@@ -55,9 +55,6 @@ def plot_secir():
     times.set_infectious_asymp(6.2)  # (=R9^(-1)=R_3^(-1)+0.5*R_4^(-1))
     times.set_icu_to_death(5.)  # 3.5-7 (=R5^(-1))
 
-
-
-
     sus_ORs=np.array([0.34, 0.67, 1.00, 1.00, 1.00, 1.00, 1.24, 1.47]) # Odds ratios for relative susceptibility -- from https://science.sciencemag.org/content/early/2020/05/04/science.abb8001; 10-20 and 60-70 bins are the average across the ORs
     symp_probs=np.array([0.50, 0.55, 0.60, 0.65, 0.70, 0.75, 0.80, (0.85 + 0.90)/2])  # Overall probability of developing symptoms (based on https://www.medrxiv.org/content/10.1101/2020.03.24.20043018v1.full.pdf, scaled for overall symptomaticity)
     severe_probs=np.array([0.00050, 0.00165, 0.00720, 0.02080, 0.03430, 0.07650, 0.13280, (0.20655 + 0.24570)/2]) # Overall probability of developing severe symptoms (derived from Table 1 of https://www.imperial.ac.uk/media/imperial-college/medicine/mrc-gida/2020-03-16-COVID19-Report-9.pdf)
@@ -77,37 +74,26 @@ def plot_secir():
     probs.set_icu_per_hospitalized(0.25)  # 0.15-0.4
     probs.set_dead_per_icu(0.3)  # 0.15-0.77'''
 
-    probs = []
-    people = []
-    for i in range(num_groups):
-        probs.append(Probabilities())
-        probs[i].set_infection_from_contact(sus_ORs[i])
-        probs[i].set_asymp_per_infectious(1-symp_probs[i])
-        probs[i].set_risk_from_symptomatic(0.25)
-        probs[i].set_hospitalized_per_infectious(severe_probs[i])
-        probs[i].set_icu_per_hospitalized(crit_probs[i]/severe_probs[i])
-        probs[i].set_dead_per_icu(death_probs[i]/(crit_probs[i]/severe_probs[i]))
-
-        people.append(Populations())
-        people[i].set_exposed_t0(100*num_pop[i]/sum(num_pop))
-        people[i].set_carrier_t0(50*num_pop[i]/sum(num_pop))
-        people[i].set_infectious_t0(50*num_pop[i]/sum(num_pop))
-        people[i].set_hospital_t0(10*num_pop[i]/sum(num_pop))
-        people[i].set_icu_t0(10*num_pop[i]/sum(num_pop))
-        people[i].set_recovered_t0(10*num_pop[i]/sum(num_pop))
-        people[i].set_dead_t0(0)
-
-        people[i].set_total_t0(num_pop[i] * Mio)
-
-
-
     # set the params required for the simulation
-    params = []
+    params = SecirParams(num_groups)
     for i in range(num_groups):
-        params.append(SecirParams())
-        params[i].times = times
-        params[i].probabilities = probs[i]
-        params[i].populations = people[i]
+        params.times[i] = times
+        params.probabilities[i].set_infection_from_contact(sus_ORs[i])
+        params.probabilities[i].set_asymp_per_infectious(1-symp_probs[i])
+        params.probabilities[i].set_risk_from_symptomatic(0.25)
+        params.probabilities[i].set_hospitalized_per_infectious(severe_probs[i])
+        params.probabilities[i].set_icu_per_hospitalized(crit_probs[i]/severe_probs[i])
+        params.probabilities[i].set_dead_per_icu(death_probs[i]/(crit_probs[i]/severe_probs[i]))
+
+        params.populations.set([i, SecirCompartments.E], 100*num_pop[i]/sum(num_pop))
+        params.populations.set([i, SecirCompartments.C],  50*num_pop[i]/sum(num_pop))
+        params.populations.set([i, SecirCompartments.I],  50*num_pop[i]/sum(num_pop))
+        params.populations.set([i, SecirCompartments.H],  10*num_pop[i]/sum(num_pop))
+        params.populations.set([i, SecirCompartments.U],  10*num_pop[i]/sum(num_pop))
+        params.populations.set([i, SecirCompartments.R],  10*num_pop[i]/sum(num_pop))
+        params.populations.set([i, SecirCompartments.D],   0*num_pop[i]/sum(num_pop))
+
+    params.populations.set_total(Mio)
 
     cont_freq_matrix = ContactFrequencyMatrix(num_groups)
 
