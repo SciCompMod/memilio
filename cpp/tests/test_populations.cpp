@@ -120,4 +120,56 @@ TEST(TestPopulations, set_difference_from_total)
     m.set_difference_from_total({E, TwentyToThirtyfive, Africa}, 2000);
     ASSERT_NEAR(2000, m.get_total(), 1e-12);
     ASSERT_NEAR(1900, m.get({E, TwentyToThirtyfive, Africa}), 1e-12);
+
+    for (size_t i = 0; i < InfectionTypeCount; ++i) {
+        for (size_t j = 0; j < AgeGroupCount; ++j) {
+            for (size_t k = 0; k < ContinentCount; ++k) {
+                if (i == S && j == TwentyToThirtyfive && k == Africa) {
+                    ASSERT_NEAR(100, m.get({i, j, k}), 1e-12);
+                }
+                else if (i == E && j == TwentyToThirtyfive && k == Africa) {
+                    ASSERT_NEAR(1900, m.get({i, j, k}), 1e-12);
+                }
+                else {
+                    ASSERT_NEAR(0, m.get({i, j, k}), 1e-12);
+                }
+            }
+        }
+    }
+}
+
+TEST(TestPopulations, set_difference_from_group_total)
+{
+    epi::Populations m({InfectionTypeCount, AgeGroupCount, ContinentCount});
+    m.set({S, TwentyToThirtyfive, Africa}, 100);
+    m.set({S, TwentyToThirtyfive, Europe}, 200);
+
+    m.set_difference_from_group_total({E, TwentyToThirtyfive, Africa}, ContinentCategory, Africa, 1000);
+    ASSERT_NEAR(1000, m.get_group_total(ContinentCategory, Africa), 1e-12);
+    ASSERT_NEAR(900, m.get({E, TwentyToThirtyfive, Africa}), 1e-12);
+    ASSERT_NEAR(1200, m.get_total(), 1e-12);
+
+    m.set_difference_from_group_total({E, TwentyToThirtyfive, Africa}, ContinentCategory, Africa, 2000);
+    ASSERT_NEAR(2000, m.get_group_total(ContinentCategory, Africa), 1e-12);
+    ASSERT_NEAR(1900, m.get({E, TwentyToThirtyfive, Africa}), 1e-12);
+    ASSERT_NEAR(2200, m.get_total(), 1e-12);
+
+    for (size_t i = 0; i < InfectionTypeCount; ++i) {
+        for (size_t j = 0; j < AgeGroupCount; ++j) {
+            for (size_t k = 0; k < ContinentCount; ++k) {
+                if (i == S && j == TwentyToThirtyfive && k == Africa) {
+                    ASSERT_NEAR(100, m.get({i, j, k}), 1e-12);
+                }
+                else if (i == E && j == TwentyToThirtyfive && k == Africa) {
+                    ASSERT_NEAR(1900, m.get({i, j, k}), 1e-12);
+                }
+                else if (i == S && j == TwentyToThirtyfive && k == Europe) {
+                    ASSERT_NEAR(200, m.get({i, j, k}), 1e-12);
+                }
+                else {
+                    ASSERT_NEAR(0, m.get({i, j, k}), 1e-12);
+                }
+            }
+        }
+    }
 }
