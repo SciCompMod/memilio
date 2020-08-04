@@ -70,11 +70,14 @@ void Populations::set_group_population(size_t category_idx, size_t group_idx, do
     }
 }
 
-void Populations::set_group_population_remaining(size_t category_idx, size_t group_idx, size_t compartment_idx,
-                                                 double total_group_population)
+void Populations::set_difference_from_group_total(std::vector<size_t> const& indices, size_t category_idx,
+                                                  size_t group_idx, double total_group_population)
 {
+    // is the given index part of the group?
+    assert(indices[category_idx] == group_idx);
+
     double current_population = get_group_population(category_idx, group_idx);
-    size_t idx                = get_flat_index({category_idx, group_idx, compartment_idx});
+    size_t idx                = get_flat_index(indices);
     current_population -= m_y[idx];
 
     assert(current_population <= total_group_population);
@@ -110,7 +113,7 @@ void Populations::set_total(double value)
     }
 }
 
-void Populations::set_remaining(std::vector<size_t> const& indices, double total_population)
+void Populations::set_difference_from_total(std::vector<size_t> const& indices, double total_population)
 {
     double current_population = get_total();
     size_t idx                = get_flat_index(indices);

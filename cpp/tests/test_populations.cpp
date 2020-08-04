@@ -108,16 +108,16 @@ TEST(TestPopulations, group_population)
     }
 }
 
-TEST(TestPopulations, set_remaining)
+TEST(TestPopulations, set_difference_from_total)
 {
     epi::Populations m({InfectionTypeCount, AgeGroupCount, ContinentCount});
     m.set({S, TwentyToThirtyfive, Africa}, 100);
 
-    m.set_remaining({E, TwentyToThirtyfive, Africa}, 1000);
+    m.set_difference_from_total({E, TwentyToThirtyfive, Africa}, 1000);
     ASSERT_NEAR(1000, m.get_total(), 1e-12);
     ASSERT_NEAR(900, m.get({E, TwentyToThirtyfive, Africa}), 1e-12);
 
-    m.set_remaining({E, TwentyToThirtyfive, Africa}, 2000);
+    m.set_difference_from_total({E, TwentyToThirtyfive, Africa}, 2000);
     ASSERT_NEAR(2000, m.get_total(), 1e-12);
     ASSERT_NEAR(1900, m.get({E, TwentyToThirtyfive, Africa}), 1e-12);
 }

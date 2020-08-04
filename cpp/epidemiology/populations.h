@@ -89,16 +89,17 @@ public:
     void set_group_population(size_t category_idx, size_t group_idx, double value);
 
     /**
-     * @brief set_group_population_remaining sets the total population for a given group from a difference
+     * @brief set_difference_from_group_total sets the total population for a given group from a difference
      *
      * This function sets the population size 
      *
+     * @param indices The indices of the compartment
      * @param category_idx The index of the category of the group
      * @param group_idx The index of the group within the category
-     * @param group_idx The index of the compartment within the group
-     * @param value the new value for the total population
+     * @param total_population the new value for the total population
      */
-    void set_group_population_remaining(size_t category_idx, size_t group_idx, size_t compartment_idx, double value);
+    void set_difference_from_group_total(std::vector<size_t> const& indices, size_t category_idx, size_t group_idx,
+                                         double total_population);
 
     /**
      * @brief set_total sets the total population
@@ -112,15 +113,13 @@ public:
     void set_total(double value);
 
     /**
-     * @brief set_remaining_population takes a total population as input and sets the compartment
-     * of a given index to have the difference between the total population and the current
+     * @brief set_difference_from_total takes a total population as input and sets the compartment
+     * of a given index to have the difference between the input total population and the current
      * population in all other compartments
      * @param indices the index of the compartment
+     * @param total_population the new value for the total population
      */
-    void set_remaining(std::vector<size_t> const& indices, double total_population);
-
-    // TODO: more getters and setters for slices, ranges subsets etc., e.g. for all infected and
-    // hospitalized in in the age group 18-25 in a specific income group in ...
+    void set_difference_from_total(std::vector<size_t> const& indices, double total_population);
 
     /**
      * @brief get_flat_index returns the flat index into the stored population, given the

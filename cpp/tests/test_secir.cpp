@@ -46,14 +46,7 @@ TEST(TestSecir, compareWithPreviousRun)
     params.populations.set({0, epi::SecirCompartments::U}, nb_icu_t0);
     params.populations.set({0, epi::SecirCompartments::R}, nb_rec_t0);
     params.populations.set({0, epi::SecirCompartments::D}, nb_dead_t0);
-    params.populations.set({0, epi::SecirCompartments::S}, nb_total_t0 -
-                                                               params.populations.get({0, epi::SecirCompartments::E}) -
-                                                               params.populations.get({0, epi::SecirCompartments::C}) -
-                                                               params.populations.get({0, epi::SecirCompartments::I}) -
-                                                               params.populations.get({0, epi::SecirCompartments::H}) -
-                                                               params.populations.get({0, epi::SecirCompartments::U}) -
-                                                               params.populations.get({0, epi::SecirCompartments::R}) -
-                                                               params.populations.get({0, epi::SecirCompartments::D}));
+    params.populations.set_difference_from_total({0, epi::SecirCompartments::S}, nb_total_t0);
 
     params.probabilities[0].set_asymp_per_infectious(alpha);
     params.probabilities[0].set_risk_from_symptomatic(beta);
@@ -110,14 +103,7 @@ TEST(TestSecir, testParamConstructors)
     params.populations.set({0, epi::SecirCompartments::U}, nb_icu_t0);
     params.populations.set({0, epi::SecirCompartments::R}, nb_rec_t0);
     params.populations.set({0, epi::SecirCompartments::D}, nb_dead_t0);
-    params.populations.set({0, epi::SecirCompartments::S}, nb_total_t0 -
-                                                               params.populations.get({0, epi::SecirCompartments::E}) -
-                                                               params.populations.get({0, epi::SecirCompartments::C}) -
-                                                               params.populations.get({0, epi::SecirCompartments::I}) -
-                                                               params.populations.get({0, epi::SecirCompartments::H}) -
-                                                               params.populations.get({0, epi::SecirCompartments::U}) -
-                                                               params.populations.get({0, epi::SecirCompartments::R}) -
-                                                               params.populations.get({0, epi::SecirCompartments::D}));
+    params.populations.set_difference_from_total({0, epi::SecirCompartments::S}, nb_total_t0);
 
     params.probabilities[0].set_infection_from_contact(inf_cont);
     params.probabilities[0].set_asymp_per_infectious(alpha);
