@@ -13,6 +13,8 @@ include(AddGoogleTest)
 
 set(TESTSOURCES
   testmain.cpp
+  test_tensor_helpers.cpp
+  test_populations.cpp
   test_seir_js_compare.cpp
   test_numericalIntegration.cpp
   test_damping.cpp

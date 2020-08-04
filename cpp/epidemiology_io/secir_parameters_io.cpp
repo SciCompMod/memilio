@@ -363,8 +363,8 @@ void write_parameter_study(TixiDocumentHandle handle, const std::string& path, c
     write_parameter_space(handle, path, parameter_study.get_parameter_space(), parameter_study.get_nb_runs());
 }
 
-void write_single_run_params(const int run, const ContactFrequencyMatrix& cont_freq,
-                             const std::vector<SecirParams>& params, double t0, double tmax, std::vector<double> time,
+void write_single_run_params(const int run, const ContactFrequencyMatrix& cont_freq, const SecirParams& params,
+                             double t0, double tmax, std::vector<double> time,
                              std::vector<Eigen::VectorXd> secir_result)
 {
 

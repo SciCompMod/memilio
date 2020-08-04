@@ -36,7 +36,7 @@ public:
 
 std::vector<SecirResult> simulate_secir(double t0, double tmax, double dt,
                                         const epi::ContactFrequencyMatrix& cont_freq_matrix,
-                                        std::vector<epi::SecirParams> const& params)
+                                        epi::SecirParams const& params)
 {
     std::vector<Eigen::VectorXd> seir(0);
     auto times = simulate(t0, tmax, dt, cont_freq_matrix, params, seir);
@@ -101,6 +101,24 @@ std::vector<SecirResult> simulate_secir(double t0, double tmax, double dt,
 
 PYBIND11_MODULE(_secir, m)
 {
+    py::enum_<epi::SecirCategory>(m, "SecirCategory")
+            .value("S", epi::SecirCategory::InfectionType)
+            .value("E", epi::SecirCategory::AgeGroup)
+            .value("SecirCount", epi::SecirCategory::CategoryCount)
+            .export_values();
+
+    py::enum_<epi::SecirCompartments>(m, "SecirCompartments")
+            .value("S", epi::SecirCompartments::S)
+            .value("E", epi::SecirCompartments::E)
+            .value("C", epi::SecirCompartments::C)
+            .value("I", epi::SecirCompartments::I)
+            .value("H", epi::SecirCompartments::H)
+            .value("U", epi::SecirCompartments::U)
+            .value("R", epi::SecirCompartments::R)
+            .value("D", epi::SecirCompartments::D)
+            .value("SecirCount", epi::SecirCompartments::SecirCount)
+            .export_values();
+
     py::class_<epi::Damping>(m, "Damping")
         .def(py::init<double, double>(), py::arg("day"), py::arg("factor"))
         .def_readwrite("day", &epi::Damping::day)
@@ -144,25 +162,20 @@ PYBIND11_MODULE(_secir, m)
         .def("get_infectious_asymp_inv", &epi::SecirParams::StageTimes::get_infectious_asymp_inv)
         .def("get_icu_to_dead_inv", &epi::SecirParams::StageTimes::get_icu_to_dead_inv);
 
-    py::class_<epi::SecirParams::Populations>(m, "Populations")
-        .def(py::init<>())
-        .def("set_total_t0", &epi::SecirParams::Populations::set_total_t0)
-        .def("set_exposed_t0", &epi::SecirParams::Populations::set_exposed_t0)
-        .def("set_carrier_t0", &epi::SecirParams::Populations::set_carrier_t0)
-        .def("set_infectious_t0", &epi::SecirParams::Populations::set_infectious_t0)
-        .def("set_hospital_t0", &epi::SecirParams::Populations::set_hospital_t0)
-        .def("set_icu_t0", &epi::SecirParams::Populations::set_icu_t0)
-        .def("set_recovered_t0", &epi::SecirParams::Populations::set_recovered_t0)
-        .def("set_dead_t0", &epi::SecirParams::Populations::set_dead_t0)
-
-        .def("get_total_t0", &epi::SecirParams::Populations::get_total_t0)
-        .def("get_exposed_t0", &epi::SecirParams::Populations::get_exposed_t0)
-        .def("get_carrier_t0", &epi::SecirParams::Populations::get_carrier_t0)
-        .def("get_infectious_t0", &epi::SecirParams::Populations::get_infectious_t0)
-        .def("get_hospitalized_t0", &epi::SecirParams::Populations::get_hospitalized_t0)
-        .def("get_icu_t0", &epi::SecirParams::Populations::get_icu_t0)
-        .def("get_recovered_t0", &epi::SecirParams::Populations::get_recovered_t0)
-        .def("get_dead_t0", &epi::SecirParams::Populations::get_dead_t0);
+    py::class_<epi::Populations>(m, "Populations")
+        .def(py::init<std::vector<size_t>&>())
+        .def("get_num_compartments", &epi::Populations::get_num_compartments)
+        .def("get_category_sizes", &epi::Populations::get_category_sizes)
+        .def("get_compartments", &epi::Populations::get_compartments)
+        .def("get", &epi::Populations::get)
+        .def("get_group_total", &epi::Populations::get_group_total)
+        .def("get_total", &epi::Populations::get_total)
+        .def("set", &epi::Populations::set)
+        .def("set_group_total", &epi::Populations::set_group_total)
+        .def("set_total", &epi::Populations::set_total)
+        .def("set_difference_from_total", &epi::Populations::set_difference_from_total)
+        .def("set_difference_from_group_total", &epi::Populations::set_difference_from_group_total)
+        .def("get_flat_index", &epi::Populations::get_flat_index);
 
     py::class_<epi::SecirParams::Probabilities>(m, "Probabilities")
         .def(py::init<>())
@@ -181,7 +194,7 @@ PYBIND11_MODULE(_secir, m)
         .def("get_dead_per_icu", &epi::SecirParams::Probabilities::get_dead_per_icu);
 
     py::class_<epi::SecirParams>(m, "SecirParams")
-        .def(py::init<>())
+        .def(py::init<size_t>())
         .def_readwrite("times", &epi::SecirParams::times)
         .def_readwrite("populations", &epi::SecirParams::populations)
         .def_readwrite("probabilities", &epi::SecirParams::probabilities);

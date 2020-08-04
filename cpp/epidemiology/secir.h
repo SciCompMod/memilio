@@ -1,6 +1,7 @@
 #ifndef SECIR_H
 #define SECIR_H
 
+#include <epidemiology/populations.h>
 #include <epidemiology/damping.h>
 #include <epidemiology/adapt_rk.h>
 
@@ -9,6 +10,26 @@
 
 namespace epi
 {
+
+enum SecirCategory
+{
+    AgeGroup,
+    InfectionType,
+    CategoryCount
+};
+
+enum SecirCompartments
+{
+    S,
+    E,
+    C,
+    I,
+    H,
+    U,
+    R,
+    D,
+    SecirCount
+};
 
 /**
  * @brief Initializes a Contact Frequency matrix for the SECIR/SECIHURD model
@@ -127,6 +148,18 @@ private:
 class SecirParams
 {
 public:
+    SecirParams(size_t n_groups = 1)
+        : populations(Populations({n_groups, SecirCount}))
+    {
+        times         = std::vector<StageTimes>(n_groups, StageTimes());
+        probabilities = std::vector<Probabilities>(n_groups, Probabilities());
+    }
+
+    size_t size() const
+    {
+        return times.size();
+    }
+
     double base_reprod;
 
     // time parameters for the different 'stages' of the disease of scale day or 1/day
@@ -244,127 +277,6 @@ public:
             m_ticu2death_inv; // new SECIR params
     };
 
-    // population parameters of unit scale
-    class Populations
-    {
-    public:
-        /**
-         * @brief Standard constructor of population parameters' class in the SECIR model
-         */
-        Populations();
-
-        /**
-         * @brief sets the number of total people at t0 in the SECIR model
-         * automatically calls set_suscetible_t0() to subtract from the total number
-         * @param nb_total_t0 total number of people at t0
-         */
-        void set_total_t0(double nb_total_t0);
-
-        /**
-         * @brief sets the number of exposed people at t0 in the SECIR model
-         * automatically calls set_suscetible_t0() to subtract from the total number
-         * @param nb_exp_t0 number of exposed people at t0
-         */
-        void set_exposed_t0(double nb_exp_t0);
-
-        /**
-         * @brief sets the number of carrier people at t0 in the SECIR model
-         * automatically calls set_suscetible_t0() to subtract from the total number
-         * @param nb_car_t0 number of recovered people at t0
-         */
-        void set_carrier_t0(double nb_car_t0);
-
-        /**
-         * @brief sets the number of infectious people at t0 in the SECIR model
-         * automatically calls set_suscetible_t0() to subtract from the total number
-         * @param nb_inf_t0 number of infectious people at t0
-         */
-        void set_infectious_t0(double nb_inf_t0);
-
-        /**
-         * @brief sets the number of hospitalized people at t0 in the SECIR model
-         * automatically calls set_suscetible_t0() to subtract from the total number
-         * @param nb_hosp_t0 number of recovered people at t0
-         */
-        void set_hospital_t0(double nb_hosp_t0);
-
-        /**
-         * @brief sets the number of ICU-treated people at t0 in the SECIR model
-         * automatically calls set_suscetible_t0() to subtract from the total number
-         * @param nb_icu_t0 number of recovered people at t0
-         */
-        void set_icu_t0(double nb_icu_t0);
-
-        /**
-         * @brief sets the number of recovered people at t0 in the SECIR model
-         * automatically calls set_suscetible_t0() to subtract from the total number
-         * @param nb_rec_t0 number of recovered people at t0
-         */
-        void set_recovered_t0(double nb_rec_t0);
-
-        /**
-         * @brief sets the number of dead people at t0 in the SECIR model
-         * automatically calls set_suscetible_t0() to subtract from the total number
-         * @param nb_dead_t0 number of recovered people at t0
-         */
-        void set_dead_t0(double nb_dead_t0);
-
-        /**
-         * @brief sets the number of suscetible people at t0 in the SECIR model
-         * only to be called after all other populations have been called
-         */
-        void set_suscetible_t0();
-
-        /**
-         * @brief returns the number of total people at t0 in the SECIR model
-         */
-        double get_total_t0() const;
-
-        /**
-         * @brief returns the number of exposed people at t0 in the SECIR model
-         */
-        double get_exposed_t0() const;
-
-        /**
-         * @brief returns the number of carrier people at t0 in the SECIR model
-         */
-        double get_carrier_t0() const;
-
-        /**
-         * @brief returns the number of infectious people at t0 in the SECIR model
-         */
-        double get_infectious_t0() const;
-
-        /**
-         * @brief returns the number of hospitalized people at t0 in the SECIR model
-         */
-        double get_hospitalized_t0() const;
-
-        /**
-         * @brief returns the number of ICU-treated people at t0 in the SECIR model
-         */
-        double get_icu_t0() const;
-
-        /**
-         * @brief returns the number of recovered people at t0 in the SECIR model
-         */
-        double get_recovered_t0() const;
-
-        /**
-         * @brief returns the number of dead people at t0 in the SECIR model
-         */
-        double get_dead_t0() const;
-
-        /**
-         * @brief returns the number of suscetible people at t0 in the SECIR model
-         */
-        double get_suscetible_t0() const;
-
-    private:
-        double m_nb_total_t0, m_nb_sus_t0, m_nb_exp_t0, m_nb_car_t0, m_nb_inf_t0, m_nb_hosp_t0, m_nb_icu_t0,
-            m_nb_rec_t0, m_nb_dead_t0;
-    };
-
     class Probabilities
     {
     public:
@@ -443,24 +355,22 @@ public:
         double m_infprob, m_alpha, m_beta, m_rho, m_theta, m_delta; // probabilities
     };
 
-    StageTimes times;
-
     Populations populations;
-
-    Probabilities probabilities;
+    std::vector<StageTimes> times;
+    std::vector<Probabilities> probabilities;
 };
 
 /**
  * @brief returns the actual, approximated reproduction rate 
  */
-double get_reprod_rate(ContactFrequencyMatrix const& cont_freq_matrix, std::vector<SecirParams> const& params, double t,
+double get_reprod_rate(ContactFrequencyMatrix const& cont_freq_matrix, SecirParams const& params, double t,
                        std::vector<double> const& yt);
 
 /**
  * prints given parameters
  * @param[in] params the SecirParams parameter object
  */
-void print_secir_params(ContactFrequencyMatrix const& cont_freq, std::vector<SecirParams> const& params);
+void print_secir_params(ContactFrequencyMatrix const& cont_freq, SecirParams const& params);
 
 /**
  * Computes the current time-derivative of S, E, C, I, (H, U,) R, (D) in the SECIR/SECIHURD model
@@ -470,7 +380,7 @@ void print_secir_params(ContactFrequencyMatrix const& cont_freq, std::vector<Sec
  * @param[in] t time / current day
  * @param[out] dydt the values of the time derivatices of S, E, C, I, (H, U,) R, (D)
  */
-void secir_get_derivatives(ContactFrequencyMatrix const& cont_freq_matrix, std::vector<SecirParams> const& params,
+void secir_get_derivatives(ContactFrequencyMatrix const& cont_freq_matrix, SecirParams const& params,
                            Eigen::VectorXd const& y, double t, Eigen::VectorXd& dydt);
 
 /**
@@ -487,8 +397,8 @@ public:
      * @param t0 start time
      * @param dt_init initial step size of integration
      */
-    SecirSimulation(const ContactFrequencyMatrix& cont_freq_matrix, const std::vector<SecirParams>& params,
-                    double t0 = 0., double dt_init = 0.1);
+    SecirSimulation(const ContactFrequencyMatrix& cont_freq_matrix, const SecirParams& params, double t0 = 0.,
+                    double dt_init = 0.1);
 
     /**
      * @brief advance simulation to tmax
@@ -532,7 +442,7 @@ private:
  * @returns integration time points
  */
 std::vector<double> simulate(double t0, double tmax, double dt, ContactFrequencyMatrix const& cont_freq_matrix,
-                             std::vector<SecirParams> const& params, std::vector<Eigen::VectorXd>& secir);
+                             SecirParams const& params, std::vector<Eigen::VectorXd>& secir);
 
 } // namespace epi
 
