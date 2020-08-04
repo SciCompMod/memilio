@@ -73,14 +73,8 @@ int main()
         params.populations.set({i, epi::SecirCompartments::U}, fact * nb_icu_t0);
         params.populations.set({i, epi::SecirCompartments::R}, fact * nb_rec_t0);
         params.populations.set({i, epi::SecirCompartments::D}, fact * nb_dead_t0);
-        params.populations.set({i, epi::SecirCompartments::S},
-                               fact * nb_total_t0 - params.populations.get({i, epi::SecirCompartments::E}) -
-                                   params.populations.get({i, epi::SecirCompartments::C}) -
-                                   params.populations.get({i, epi::SecirCompartments::I}) -
-                                   params.populations.get({i, epi::SecirCompartments::H}) -
-                                   params.populations.get({i, epi::SecirCompartments::U}) -
-                                   params.populations.get({i, epi::SecirCompartments::R}) -
-                                   params.populations.get({i, epi::SecirCompartments::D}));
+        params.populations.set_difference_from_group_total({i, epi::SecirCompartments::S}, epi::SecirCategory::AgeGroup,
+                                                           i, fact * nb_total_t0);
 
         params.probabilities[i].set_infection_from_contact(1.0);
         params.probabilities[i].set_asymp_per_infectious(alpha);
