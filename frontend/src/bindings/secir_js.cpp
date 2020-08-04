@@ -118,7 +118,8 @@ EMSCRIPTEN_BINDINGS(secirjs)
         .function("get_total", &epi::Populations::get_total)
         .function("set", &epi::Populations::set)
         .function("set_group_population", &epi::Populations::set_group_population)
-        .function("set_remaining", &epi::Populations::set_remaining)
+        .function("set_difference_from_total", &epi::Populations::set_difference_from_total)
+        .function("set_difference_from_group_total", &epi::Populations::set_difference_from_group_total)
         .function("set_total", &epi::Populations::set_total)
         .function("get_flat_index", &epi::Populations::get_flat_index);
 

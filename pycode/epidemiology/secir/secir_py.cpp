@@ -173,7 +173,8 @@ PYBIND11_MODULE(_secir, m)
         .def("set", &epi::Populations::set)
         .def("set_group_population", &epi::Populations::set_group_population)
         .def("set_total", &epi::Populations::set_total)
-        .def("set_remaining", &epi::Populations::set_remaining)
+        .def("set_difference_from_total", &epi::Populations::set_difference_from_total)
+        .def("set_difference_from_group_total", &epi::Populations::set_difference_from_group_total)
         .def("get_flat_index", &epi::Populations::get_flat_index);
 
     py::class_<epi::SecirParams::Probabilities>(m, "Probabilities")
