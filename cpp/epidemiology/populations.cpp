@@ -40,7 +40,7 @@ double Populations::get(std::vector<size_t> const& indices) const
     return m_y[flatten_index(indices, m_category_sizes)];
 }
 
-double Populations::get_group_population(size_t category_idx, size_t group_idx) const
+double Populations::get_group_total(size_t category_idx, size_t group_idx) const
 {
     //TODO maybe implement an iterator/visitor pattern rather than calculating indices?
 
@@ -52,10 +52,10 @@ double Populations::get_group_population(size_t category_idx, size_t group_idx) 
     return sum;
 }
 
-void Populations::set_group_population(size_t category_idx, size_t group_idx, double value)
+void Populations::set_group_total(size_t category_idx, size_t group_idx, double value)
 {
     //TODO slice indices are calcualated twice...
-    double current_population = get_group_population(category_idx, group_idx);
+    double current_population = get_group_total(category_idx, group_idx);
     auto indices              = get_slice_indices(category_idx, group_idx, m_category_sizes);
 
     if (fabs(current_population) < 1e-12) {
@@ -76,7 +76,7 @@ void Populations::set_difference_from_group_total(std::vector<size_t> const& ind
     // is the given index part of the group?
     assert(indices[category_idx] == group_idx);
 
-    double current_population = get_group_population(category_idx, group_idx);
+    double current_population = get_group_total(category_idx, group_idx);
     size_t idx                = get_flat_index(indices);
     current_population -= m_y[idx];
 

@@ -84,9 +84,9 @@ TEST(TestPopulations, group_population)
     m.set_total(1.);
     int num_compartments = InfectionTypeCount * AgeGroupCount * ContinentCount;
 
-    ASSERT_NEAR(1. / AgeGroupCount, m.get_group_population(AgeGroupCategory, FourtyFiveToSixtyFive), 1e-12);
-    m.set_group_population(AgeGroupCategory, FourtyFiveToSixtyFive, 1.);
-    ASSERT_NEAR(1., m.get_group_population(AgeGroupCategory, FourtyFiveToSixtyFive), 1e-12);
+    ASSERT_NEAR(1. / AgeGroupCount, m.get_group_total(AgeGroupCategory, FourtyFiveToSixtyFive), 1e-12);
+    m.set_group_total(AgeGroupCategory, FourtyFiveToSixtyFive, 1.);
+    ASSERT_NEAR(1., m.get_group_total(AgeGroupCategory, FourtyFiveToSixtyFive), 1e-12);
     ASSERT_NEAR(2 - 1. / AgeGroupCount, m.get_total(), 1e-12);
 
     Eigen::VectorXd y = m.get_compartments();

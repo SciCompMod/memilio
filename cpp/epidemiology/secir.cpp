@@ -32,8 +32,7 @@ void print_secir_params(ContactFrequencyMatrix const& cont_freq, SecirParams con
         for (size_t i = 0; i < params.size(); i++) {
             myfile << "\nParameters of Group " << i + 1 << "\n";
             myfile << "\t People at t0 \n";
-            myfile << "\t\t Total: " << (int)params.populations.get_group_population(SecirCategory::AgeGroup, i)
-                   << "\n";
+            myfile << "\t\t Total: " << (int)params.populations.get_group_total(SecirCategory::AgeGroup, i) << "\n";
             myfile << "\t\t Susceptible: " << (int)params.populations.get({i, SecirCompartments::S}) << "\n";
             myfile << "\t\t Exposed: " << (int)params.populations.get({i, SecirCompartments::E}) << "\n";
             myfile << "\t\t Carrier: " << (int)params.populations.get({i, SecirCompartments::C}) << "\n";
@@ -406,8 +405,7 @@ void secir_get_derivatives(ContactFrequencyMatrix const& cont_freq_matrix, Secir
             double cont_freq_eff =
                 cont_freq_matrix.get_cont_freq(i, j) *
                 cont_freq_matrix.get_dampings(i, j).get_factor(t); // get effective contact rate between i and j
-            double divN =
-                1.0 / params.populations.get_group_population(SecirCategory::AgeGroup, j); // precompute 1.0/Nj
+            double divN    = 1.0 / params.populations.get_group_total(SecirCategory::AgeGroup, j); // precompute 1.0/Nj
             double dummy_S = y[Si] * cont_freq_eff * divN * params.probabilities[i].get_infection_from_contact() *
                              (y[Cj] + params.probabilities[j].get_risk_from_symptomatic() * y[Ij]);
 

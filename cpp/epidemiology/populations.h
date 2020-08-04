@@ -55,12 +55,12 @@ public:
     double get(std::vector<size_t> const& indices) const;
 
     /**
-     * @brief get_group_population returns the total population of a group in one category
+     * @brief get_group_total returns the total population of a group in one category
      * @param category_idx index of the category
      * @param group_idx index of the group
      * @return total population of the group
      */
-    double get_group_population(size_t category_idx, size_t group_idx) const;
+    double get_group_total(size_t category_idx, size_t group_idx) const;
 
     /**
      * @brief get_total returns the total population of all compartments
@@ -76,7 +76,7 @@ public:
     void set(std::vector<size_t> const& indices, double value);
 
     /**
-     * @brief set_group_population sets the total population for a given group
+     * @brief set_group_total sets the total population for a given group
      *
      * This function rescales all the compartments populations proportionally. If all compartments
      * have zero population, the total population gets distributed equally over all
@@ -86,7 +86,7 @@ public:
      * @param group_idx The index of the group within the category
      * @param value the new value for the total population
      */
-    void set_group_population(size_t category_idx, size_t group_idx, double value);
+    void set_group_total(size_t category_idx, size_t group_idx, double value);
 
     /**
      * @brief set_difference_from_group_total sets the total population for a given group from a difference
