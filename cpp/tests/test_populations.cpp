@@ -1,52 +1,52 @@
 #include "epidemiology/populations.h"
 #include <gtest/gtest.h>
 
-TEST(TestPopulations, set_population)
+enum Category
 {
+    InfectionTypeCategory,
+    AgeGroupCategory,
+    ContinentCategory
+};
 
-    enum Category
-    {
-        InfectionTypeCategory,
-        AgeGroupCategory,
-        ContinentCategory
-    };
+enum InfectionType
+{
+    S,
+    E,
+    C,
+    I,
+    H,
+    U,
+    R,
+    D,
+    InfectionTypeCount
+};
 
-    enum InfectionType
-    {
-        S,
-        E,
-        C,
-        I,
-        H,
-        U,
-        R,
-        D,
-        InfectionTypeCount
-    };
+enum AgeGroup
+{
+    TwelveAndYounger,
+    TwelveToTwenty,
+    TwentyToThirtyfive,
+    ThirtyfiveToFourtyFive,
+    FourtyFiveToSixtyFive,
+    SixtyFiveToSeventyFive,
+    SeventyFiveAndOlder,
+    AgeGroupCount
+};
 
-    enum AgeGroup
-    {
-        TwelveAndYounger,
-        TwelveToTwenty,
-        TwentyToThirtyfive,
-        ThirtyfiveToFourtyFive,
-        FourtyFiveToSixtyFive,
-        SixtyFiveToSeventyFive,
-        SeventyFiveAndOlder,
-        AgeGroupCount
-    };
+enum Continent
+{
+    Europe,
+    Asia,
+    NorthAmerica,
+    SouthAmerica,
+    Australia,
+    Antarctica,
+    Africa,
+    ContinentCount
+};
 
-    enum Continent
-    {
-        Europe,
-        Asia,
-        NorthAmerica,
-        SouthAmerica,
-        Australia,
-        Antarctica,
-        Africa,
-        ContinentCount
-    };
+TEST(TestPopulations, sizes)
+{
 
     int num_compartments = InfectionTypeCount * AgeGroupCount * ContinentCount;
     ASSERT_EQ(7 * 7 * 8, num_compartments);
@@ -60,8 +60,14 @@ TEST(TestPopulations, set_population)
     ASSERT_EQ(category_sizes[1], AgeGroupCount);
     ASSERT_EQ(category_sizes[2], ContinentCount);
     ASSERT_EQ(0, m.get_total());
+}
 
+TEST(TestPopulations, set_population)
+{
+    epi::Populations m({InfectionTypeCount, AgeGroupCount, ContinentCount});
     m.set_total(1.);
+    int num_compartments = InfectionTypeCount * AgeGroupCount * ContinentCount;
+
     for (size_t i = 0; i < InfectionTypeCount; ++i) {
         for (size_t j = 0; j < AgeGroupCount; ++j) {
             for (size_t k = 0; k < ContinentCount; ++k) {
@@ -70,6 +76,13 @@ TEST(TestPopulations, set_population)
         }
     }
     ASSERT_NEAR(1., m.get_total(), 1e-12);
+}
+
+TEST(TestPopulations, group_population)
+{
+    epi::Populations m({InfectionTypeCount, AgeGroupCount, ContinentCount});
+    m.set_total(1.);
+    int num_compartments = InfectionTypeCount * AgeGroupCount * ContinentCount;
 
     ASSERT_NEAR(1. / AgeGroupCount, m.get_group_population(AgeGroupCategory, FourtyFiveToSixtyFive), 1e-12);
     m.set_group_population(AgeGroupCategory, FourtyFiveToSixtyFive, 1.);
@@ -93,4 +106,18 @@ TEST(TestPopulations, set_population)
             }
         }
     }
+}
+
+TEST(TestPopulations, set_remaining)
+{
+    epi::Populations m({InfectionTypeCount, AgeGroupCount, ContinentCount});
+    m.set({S, TwentyToThirtyfive, Africa}, 100);
+
+    m.set_remaining({E, TwentyToThirtyfive, Africa}, 1000);
+    ASSERT_NEAR(1000, m.get_total(), 1e-12);
+    ASSERT_NEAR(900, m.get({E, TwentyToThirtyfive, Africa}), 1e-12);
+
+    m.set_remaining({E, TwentyToThirtyfive, Africa}, 2000);
+    ASSERT_NEAR(2000, m.get_total(), 1e-12);
+    ASSERT_NEAR(1900, m.get({E, TwentyToThirtyfive, Africa}), 1e-12);
 }
