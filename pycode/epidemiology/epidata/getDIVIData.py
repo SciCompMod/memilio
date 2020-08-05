@@ -73,7 +73,7 @@ def download_data_for_one_day(download_date):
       call_number = (download_date - period_begin).days  + call_number_dict[period_begin]
       call_url = "https://www.divi.de/divi-intensivregister-tagesreport-archiv-csv/divi-intensivregister-" + call_date + call_time + ext + "/viewdocument/" + str(call_number)
    else:
-      call_url = "https://www.divi.de/divi-intensivregister-tagesreport-archiv-csv/divi-intensivregister-" + call_date + call_time + "/download"
+      call_url = "https://www.divi.de/divi-intensivregister-tagesreport-archiv-csv/divi-intensivregister-" + call_date + call_time + ext + "/download"
 
    df = pandas.DataFrame()
 

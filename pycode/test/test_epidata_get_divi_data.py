@@ -72,7 +72,6 @@ class Test_getDiviData(fake_filesystem_unittest.TestCase):
     def setUp(self):
         self.setUpPyfakefs()
 
-# TODO: test download data for one day
 
     def test_gdd_adjust_data(self):
 
@@ -93,6 +92,27 @@ class Test_getDiviData(fake_filesystem_unittest.TestCase):
             self.assertTrue((df == df_res).all().all())
 
             start_date += timedelta(days=1)
+
+
+    @patch('epidemiology.epidata.getDIVIData.pandas.read_csv')
+    def test_gdd_download_data_for_one_day(self, mock_read_csv):
+
+        mock_read_csv.return_value = pd.read_json(self.test_string)
+
+        test_url_ending = {date(2020,4,24): "2020-04-24-09-15/viewdocument/3974",
+                           date(2020,5,7): "2020-05-07-09-15/viewdocument/3692",
+                           date(2020,6,4): "2020-06-04-09-15/viewdocument/3720",
+                           date(2020,6,7): "2020-06-07-12-15/viewdocument/3844",
+                           date(2020,6,15): "2020-06-15-12-15-2/viewdocument/3909",
+                           date(2020,7,7): "2020-07-07-12-15/viewdocument/3961",
+                           date(2020,7,15): "2020-07-15-12-15/download",
+                           }
+
+        for test_date in test_url_ending:
+            df = gdd.download_data_for_one_day(test_date)
+            mock_read_csv.assert_called_with("https://www.divi.de/divi-intensivregister-tagesreport-archiv-csv/divi-intensivregister-" + test_url_ending[test_date])
+
+        self.assertTrue((pd.read_json(self.test_string)==df).all().all())
 
 
     @patch('epidemiology.epidata.getDIVIData.pandas.read_csv')
