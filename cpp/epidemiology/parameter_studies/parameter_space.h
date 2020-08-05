@@ -3,7 +3,6 @@
 
 #include <epidemiology/secir.h>
 #include <epidemiology/logging.h>
-#include <epidemiology/visitor.h>
 #include <epidemiology/parameter_studies/parameter_distributions.h>
 #include <assert.h>
 #include <string>
