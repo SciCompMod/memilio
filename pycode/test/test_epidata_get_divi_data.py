@@ -68,6 +68,7 @@ class Test_getDiviData(fake_filesystem_unittest.TestCase):
     dr2829 = {'bundesland': [1, 2],'gemeindeschluessel': [1001, 2000], 'ICU': [0, 7]}
     liste_result = [dr24,dr25,dr26,dr27,dr2829,dr2829]
 
+
     def setUp(self):
         self.setUpPyfakefs()
 
@@ -82,12 +83,10 @@ class Test_getDiviData(fake_filesystem_unittest.TestCase):
 
             # adjust dataframe
             df = gdd.adjust_data(df, start_date)
-            print(df)
             df.sort_index(axis=1, inplace=True)
 
             # construct result
             df_res = pd.DataFrame(self.liste_result[i])
-            print(df_res)
             df_res.sort_index(axis=1, inplace=True)
 
             # check equality
