@@ -112,3 +112,36 @@ export const calculateDamping = (measures, base_date, days) => {
 
   return reduced;
 };
+
+/**
+ * This helper function filters key value pairs from plain JS Objects with the given filter function.
+ *
+ * @param object {Object}
+ * @param filterFn {function(key: string|number, value: any): boolean}
+ * @return {Object}
+ */
+export function filterJSObject(object, filterFn) {
+  const array = Object
+    .entries(object)
+    .filter(([key, value]) => filterFn(key, value))
+
+  const newObj = {};
+  for (let [key, value] of array) {
+    newObj[key] = value;
+  }
+
+  return newObj;
+}
+
+/**
+ * County ids are defined as state id (SS) and three numbers (CCC) => SSCCC. We can get the State id by getting rid of
+ * the last three numbers.
+ *
+ * See: https://en.wikipedia.org/wiki/Community_Identification_Number#Germany
+ *
+ * @param countyId {number} A four or five digit number describing a federal county key.
+ * @return {number} A one or two digit number describing the corresponding federal state key.
+ */
+export function stateIdFromCountyId(countyId) {
+  return Math.floor(countyId / 1000);
+}
