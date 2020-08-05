@@ -96,7 +96,7 @@ class Test_getDiviData(fake_filesystem_unittest.TestCase):
             start_date += timedelta(days=1)
 
 
-    @patch('getDIVIData.pandas.read_csv')
+    @patch('epidemiology.epidata.getDIVIData.pandas.read_csv')
     def test_gdd_download_data(self, mock_read_csv):
 
         mock_read_csv.return_value = pd.read_json(self.test_string)
@@ -128,6 +128,7 @@ class Test_getDiviData(fake_filesystem_unittest.TestCase):
         f_path = os.path.join(directory, file_out3)
         f = open(f_path, "r")
         self.assertEqual(f.read(), self.test_stringr3)
+
 
     def test_gdd_read_data(self):
 
