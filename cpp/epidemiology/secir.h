@@ -431,7 +431,7 @@ public:
         return m_cont_freq;
     }
 
-    const std::vector<SecirParams>& get_params() const
+    const SecirParams& get_params() const
     {
         return m_params;
     }
@@ -440,7 +440,7 @@ private:
     std::shared_ptr<RKIntegratorCore> m_integratorCore;
     OdeIntegrator m_integrator;
     ContactFrequencyMatrix m_cont_freq;
-    std::vector<SecirParams> m_params;
+    SecirParams m_params;
 };
 
 /**

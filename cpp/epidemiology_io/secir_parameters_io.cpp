@@ -390,7 +390,7 @@ void write_graph(const Graph<ModelNode<SecirSimulation>, MigrationEdge>& graph, 
     int nb_edges   = graph.edges().size();
     int nb_runs    = 1;
     int nb_groups  = graph.nodes()[0].model.get_cont_freq().get_size();
-    int nb_compart = 8;
+    int nb_compart = graph.nodes()[0].model.get_params().populations.get_num_compartments() / nb_groups;
     double dev_rel = 0.0;
 
     for (int node = 0; node < nb_nodes; node++) {
@@ -417,6 +417,7 @@ void write_graph(const Graph<ModelNode<SecirSimulation>, MigrationEdge>& graph, 
     tixiAddIntegerElement(handle, edges_path.c_str(), "NumberOfNodes", nb_nodes, "%d");
     tixiAddIntegerElement(handle, edges_path.c_str(), "NumberOfEdges", nb_edges, "%d");
     tixiAddIntegerElement(handle, edges_path.c_str(), "NumberOfGroups", nb_groups, "%d");
+    tixiAddIntegerElement(handle, edges_path.c_str(), "NumberOfCompartiments", nb_compart, "%d");
 
     for (int edge = 0; edge < nb_edges; edge++) {
         std::string edge_path = path_join(edges_path, "Edge" + std::to_string(edge));
@@ -447,11 +448,12 @@ Graph<ModelNode<SecirSimulation>, MigrationEdge> read_graph()
     int nb_nodes;
     int nb_edges;
     int nb_groups;
-    int nb_compart = 8;
+    int nb_compart;
 
     tixiGetIntegerElement(handle, path_join(edges_path, "NumberOfNodes").c_str(), &nb_nodes);
     tixiGetIntegerElement(handle, path_join(edges_path, "NumberOfEdges").c_str(), &nb_edges);
     tixiGetIntegerElement(handle, path_join(edges_path, "NumberOfGroups").c_str(), &nb_groups);
+    tixiGetIntegerElement(handle, path_join(edges_path, "NumberOfCompartiments").c_str(), &nb_compart);
 
     Graph<ModelNode<SecirSimulation>, MigrationEdge> graph;
 
