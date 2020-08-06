@@ -2,7 +2,6 @@ import React, {Component} from 'react';
 import {withTranslation} from 'react-i18next';
 import {merge} from '../../../common/utils';
 
-import * as moment from 'moment';
 import * as numeral from 'numeral';
 
 import {

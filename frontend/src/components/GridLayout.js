@@ -1,6 +1,5 @@
 import React, {Component} from 'react';
 import {Responsive, WidthProvider} from 'react-grid-layout';
-import Map from './Map';
 import Parameters from './Parameters';
 import Measures from './Measures';
 import Results from './Results';

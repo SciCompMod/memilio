@@ -5,7 +5,7 @@ import React from 'react';
 import './TimeMap.scss';
 import { setSelected } from "../../redux/app";
 import InteractiveHeatMap from "../../common/interactive_heat_map";
-import {isStateId, roundToUTCMidnight} from "../../common/utils";
+import { roundToUTCMidnight } from "../../common/utils";
 
 /**
  * This Component has two major functions:
