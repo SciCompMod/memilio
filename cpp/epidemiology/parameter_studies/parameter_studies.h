@@ -98,6 +98,11 @@ public:
         return parameter_space;
     }
 
+    ParameterSpace& get_parameter_space()
+    {
+        return parameter_space;
+    }
+
 private:
     // The path of the file storing the parameter ranges
     std::string parameter_file;

@@ -469,6 +469,8 @@ SecirSimulation::SecirSimulation(const ContactFrequencyMatrix& cont_freq_matrix,
               secir_get_derivatives(cont_freq_matrix, params, y, t, dydt);
           },
           t0, params.populations.get_compartments(), dt_init, m_integratorCore)
+    , m_params(params)
+    , m_cont_freq(cont_freq_matrix)
 {
     m_integratorCore->set_rel_tolerance(1e-4);
     m_integratorCore->set_abs_tolerance(1e-1);

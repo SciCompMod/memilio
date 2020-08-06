@@ -3,6 +3,8 @@
 
 #include <epidemiology/eigen_util.h>
 #include <epidemiology/parameter_studies/parameter_studies.h>
+#include <epidemiology/graph.h>
+#include <epidemiology/migration.h>
 #include <tixi.h>
 
 namespace epi
@@ -92,6 +94,56 @@ void write_parameter_study(TixiDocumentHandle handle, const std::string& path, c
 void write_single_run_params(const int run, const ContactFrequencyMatrix& cont_freq, const SecirParams& params,
                              double t0, double tmax, std::vector<double> time,
                              std::vector<Eigen::VectorXd> secir_result);
+
+/**
+ * @brief Creates xml file containing Parameters of one node of a graph
+ * @param graph Graph which holds the node
+ * @param node Node ID
+ * @param t0 starting point of simulation
+ * @param tmax end point of simulation
+ */
+void write_node(const Graph<ModelNode<SecirSimulation>, MigrationEdge>& graph, int node, double t0, double tmax);
+
+/**
+ * @brief reads parameters of a single node and saves it into the graph
+ * @param graph Graph in which the node is saved
+ * @param node Node ID
+ */
+void read_node(Graph<ModelNode<SecirSimulation>, MigrationEdge>& graph, int node);
+
+/**
+ * @brief Writes the information of a single edge into a xml file
+ * @param handle Tixi Document Handle
+ * @param path Path to document root
+ * @param graph Graph which holds the edge
+ * @param edge Edge ID
+ */
+void write_edge(TixiDocumentHandle handle, const std::string& path,
+                const Graph<ModelNode<SecirSimulation>, MigrationEdge>& graph, int edge);
+
+/**
+ * @brief Reads information of a single edge and saves it into the graph
+ * @param handle Tixi document handle
+ * @param path Path to document root
+ * @param graph Graph to which the edge is added
+ * @param edge Edge ID
+ */
+void read_edge(TixiDocumentHandle handle, const std::string& path,
+               Graph<ModelNode<SecirSimulation>, MigrationEdge>& graph, int edge);
+
+/**
+ * @brief creates xml files for each node of a Secir simulation graph and one xml file for its edges
+ * @param graph Graph which should be written
+ * @param t0 starting point of simulation
+ * @param tmax end point of simulation
+ */
+//TO-DO: Implement apropriate File System for XML FIles
+void write_graph(const Graph<ModelNode<SecirSimulation>, MigrationEdge>& graph, double t0, double tmax);
+
+/**
+ * @brief reads graph xml files and returns a Secir simulation graph
+ */
+Graph<ModelNode<SecirSimulation>, MigrationEdge> read_graph();
 
 } // namespace epi
 
