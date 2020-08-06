@@ -1,3 +1,7 @@
+# Epidemiology #
+
+[![pipeline status](https://gitlab.dlr.de/hpc-against-corona/epidemiology/badges/master/pipeline.svg)](https://gitlab.dlr.de/hpc-against-corona/epidemiology/-/commits/master)
+
 This is a common project between the department of Systems Immunology (SIMM) of the he Helmholtz Center for Infection Research (HZI) and the Institute for Software Technology of the German Aerospace Center (DLR). This project will bring cutting edge and compute intensive epidemiological models to a large scale, which enables a precise and high-resolution spatiotemporal pandemic simulation for entire countries.
 
 
