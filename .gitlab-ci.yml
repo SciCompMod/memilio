@@ -1,8 +1,9 @@
 build-cpp:
   stage: build
   tags:
-    - cpp
+    - docker
     - hpcagainstcorona
+  image: ubuntu_18.04_devel
   before_script:
     - echo 'deb http://download.opensuse.org/repositories/science:/dlr/xUbuntu_18.04/ /' | tee /etc/apt/sources.list.d/science:dlr.list
     - wget -O - https://download.opensuse.org/repositories/science:dlr/xUbuntu_18.04/Release.key  | apt-key add -
@@ -38,14 +39,16 @@ build-py:
 # run tests using the binary built before
 test-cpp:
   tags:
-    - cpp
-    - hpcagainstcorona
+    - docker
+  image: ubuntu:18.04
   stage: test
   before_script:
+    - apt -qq update
+    - apt -qq -y install libhdf5-cpp-100 wget gnupg
     - echo 'deb http://download.opensuse.org/repositories/science:/dlr/xUbuntu_18.04/ /' | tee /etc/apt/sources.list.d/science:dlr.list
     - wget -O - https://download.opensuse.org/repositories/science:dlr/xUbuntu_18.04/Release.key  | apt-key add -
     - apt -qq update
-    - apt -qq -y install libhdf5-cpp-100 libtixi3
+    - apt -qq -y install libtixi3
   dependencies:
     - build-cpp
   script:
@@ -57,16 +60,16 @@ test-cpp:
 
 test-py:
   tags:
-    - cpp
-    - hpcagainstcorona
+    - docker
+  image: ubuntu:18.04
   stage: test
   dependencies:
     - build-py
   before_script:
     - apt -qq update
-    - apt -qq -y install python3.7 python3-pip
-    - python3 -m pip install --upgrade pip
-    - for pkg in `ls pycode/wheelhouse/*37*.whl`; do python3 -m pip install $pkg; done
+    - apt -qq -y install python3-pip gnupg
+    - python3.6 -m pip install --upgrade pip
+    - for pkg in `ls pycode/wheelhouse/*36*.whl`; do python3.6 -m pip install $pkg; done
     - pip install pyfakefs
   script:
     - cd pycode/test
@@ -80,16 +83,16 @@ test-py:
 
 download-data:
   tags:
-    - cpp
-    - hpcagainstcorona
+    - docker
+  image: ubuntu:18.04
   stage: test
   dependencies:
     - build-py
   before_script:
     - apt -qq update
-    - apt -qq -y install python3.7 python3-pip
+    - apt -qq -y install python3-pip
     - python3 -m pip install --upgrade pip
-    - for pkg in `ls pycode/wheelhouse/*37*.whl`; do python3 -m pip install $pkg; done
+    - for pkg in `ls pycode/wheelhouse/*36*.whl`; do python3.6 -m pip install $pkg; done
   script:
     - mkdir data_dl
     - getrkidata -o data_dl
@@ -109,8 +112,8 @@ download-data:
 
 build-js:
   tags:
-    - npm
-    - hpcagainstcorona
+    - docker
+  image: node:12
   stage: build
   before_script:
     - cd frontend
