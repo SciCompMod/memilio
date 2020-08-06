@@ -2,17 +2,15 @@ import unittest
 from pyfakefs import fake_filesystem_unittest
 from datetime import date, timedelta
 
-
 import os
 import pandas as pd
 
 from epidemiology.epidata import getDIVIData as gdd
 from epidemiology.epidata import getDataIntoPandasDataFrame as gd
-from unittest.mock import patch, mock_open
+from unittest.mock import patch
 
 
 class Test_getDiviData(fake_filesystem_unittest.TestCase):
-
     # construct fake directory for testing
     path = '/home/DiviData'
 
@@ -56,26 +54,28 @@ class Test_getDiviData(fake_filesystem_unittest.TestCase):
     # data for test dataframe to test adjust data
     d24 = {'bundesland': [1, 2], 'kreis': [1001, 2000], 'ICU': [0, 7]}
     d25 = {'gemeindeschluessel': [1001, 2000], 'ICU': [0, 7]}
-    d262728 = {'bundesland': [1, 2],'gemeindeschluessel': [1001, 2000], 'ICU': [0, 7]}
-    d29 = {'Unnamed: 0': [0,0],'bundesland': [1, 2],'gemeindeschluessel': [1001, 2000], 'ICU': [0, 7]}
-    liste_input = [d24,d25,d262728,d262728,d262728,d29]
+    d262728 = {'bundesland': [1, 2], 'gemeindeschluessel': [1001, 2000], 'ICU': [0, 7]}
+    d29 = {'Unnamed: 0': [0, 0], 'bundesland': [1, 2], 'gemeindeschluessel': [1001, 2000], 'ICU': [0, 7]}
+    liste_input = [d24, d25, d262728, d262728, d262728, d29]
 
     # data for result dataframe to test adjust data
-    dr24 = {'bundesland': [1, 2],'gemeindeschluessel': [1001, 2000], 'ICU': [0, 7], 'daten_stand':["2020-04-24 09:15:00","2020-04-24 09:15:00"]}
-    dr25 = {'bundesland': [1, 2],'gemeindeschluessel': [1001, 2000], 'ICU': [0, 7], 'daten_stand':["2020-04-25 09:15:00","2020-04-25 09:15:00"]}
-    dr26 = {'bundesland': [1, 2],'gemeindeschluessel': [1001, 2000], 'ICU': [0, 7], 'daten_stand':["2020-04-26 09:15:00","2020-04-26 09:15:00"]}
-    dr27 = {'bundesland': [1, 2],'gemeindeschluessel': [1001, 2000], 'ICU': [0, 7], 'daten_stand':["2020-04-27 09:15:00","2020-04-27 09:15:00"]}
-    dr2829 = {'bundesland': [1, 2],'gemeindeschluessel': [1001, 2000], 'ICU': [0, 7]}
-    liste_result = [dr24,dr25,dr26,dr27,dr2829,dr2829]
-
+    dr24 = {'bundesland': [1, 2], 'gemeindeschluessel': [1001, 2000], 'ICU': [0, 7],
+            'daten_stand': ["2020-04-24 09:15:00", "2020-04-24 09:15:00"]}
+    dr25 = {'bundesland': [1, 2], 'gemeindeschluessel': [1001, 2000], 'ICU': [0, 7],
+            'daten_stand': ["2020-04-25 09:15:00", "2020-04-25 09:15:00"]}
+    dr26 = {'bundesland': [1, 2], 'gemeindeschluessel': [1001, 2000], 'ICU': [0, 7],
+            'daten_stand': ["2020-04-26 09:15:00", "2020-04-26 09:15:00"]}
+    dr27 = {'bundesland': [1, 2], 'gemeindeschluessel': [1001, 2000], 'ICU': [0, 7],
+            'daten_stand': ["2020-04-27 09:15:00", "2020-04-27 09:15:00"]}
+    dr2829 = {'bundesland': [1, 2], 'gemeindeschluessel': [1001, 2000], 'ICU': [0, 7]}
+    liste_result = [dr24, dr25, dr26, dr27, dr2829, dr2829]
 
     def setUp(self):
         self.setUpPyfakefs()
 
-
     def test_gdd_adjust_data(self):
 
-        start_date = date(2020,4,24)
+        start_date = date(2020, 4, 24)
         for i in range(6):
             # construct test dataframe
             df = pd.DataFrame(self.liste_input[i])
@@ -93,27 +93,27 @@ class Test_getDiviData(fake_filesystem_unittest.TestCase):
 
             start_date += timedelta(days=1)
 
-
     @patch('epidemiology.epidata.getDIVIData.pandas.read_csv')
     def test_gdd_download_data_for_one_day(self, mock_read_csv):
 
         mock_read_csv.return_value = pd.read_json(self.test_string)
 
-        test_url_ending = {date(2020,4,24): "2020-04-24-09-15/viewdocument/3974",
-                           date(2020,5,7): "2020-05-07-09-15/viewdocument/3692",
-                           date(2020,6,4): "2020-06-04-09-15/viewdocument/3720",
-                           date(2020,6,7): "2020-06-07-12-15/viewdocument/3844",
-                           date(2020,6,15): "2020-06-15-12-15-2/viewdocument/3909",
-                           date(2020,7,7): "2020-07-07-12-15/viewdocument/3961",
-                           date(2020,7,15): "2020-07-15-12-15/download",
+        test_url_ending = {date(2020, 4, 24): "2020-04-24-09-15/viewdocument/3974",
+                           date(2020, 5, 7): "2020-05-07-09-15/viewdocument/3692",
+                           date(2020, 6, 4): "2020-06-04-09-15/viewdocument/3720",
+                           date(2020, 6, 7): "2020-06-07-12-15/viewdocument/3844",
+                           date(2020, 6, 15): "2020-06-15-12-15-2/viewdocument/3909",
+                           date(2020, 7, 7): "2020-07-07-12-15/viewdocument/3961",
+                           date(2020, 7, 15): "2020-07-15-12-15/download",
                            }
 
         for test_date in test_url_ending:
             df = gdd.download_data_for_one_day(test_date)
-            mock_read_csv.assert_called_with("https://www.divi.de/divi-intensivregister-tagesreport-archiv-csv/divi-intensivregister-" + test_url_ending[test_date])
+            mock_read_csv.assert_called_with(
+                "https://www.divi.de/divi-intensivregister-tagesreport-archiv-csv/divi-intensivregister-" +
+                test_url_ending[test_date])
 
-        self.assertTrue((pd.read_json(self.test_string)==df).all().all())
-
+        self.assertTrue((pd.read_json(self.test_string) == df).all().all())
 
     @patch('epidemiology.epidata.getDIVIData.pandas.read_csv')
     def test_gdd_download_data(self, mock_read_csv):
@@ -131,7 +131,8 @@ class Test_getDiviData(fake_filesystem_unittest.TestCase):
         file_out2 = "state_divi.json"
         file_out3 = "germany_divi.json"
 
-        gdd.get_divi_data(read_data, make_plot, out_form, out_folder, start_date=date(2020,7,7), end_date=date(2020,7,7))
+        gdd.get_divi_data(read_data, make_plot, out_form, out_folder, start_date=date(2020, 7, 7),
+                          end_date=date(2020, 7, 7))
 
         self.assertEqual(len(os.listdir(directory)), 4)
         self.assertEqual(os.listdir(directory).sort(), [file, file_out1, file_out2, file_out3].sort())
@@ -147,7 +148,6 @@ class Test_getDiviData(fake_filesystem_unittest.TestCase):
         f_path = os.path.join(directory, file_out3)
         f = open(f_path, "r")
         self.assertEqual(f.read(), self.test_stringr3)
-
 
     def test_gdd_read_data(self):
 
@@ -177,10 +177,11 @@ class Test_getDiviData(fake_filesystem_unittest.TestCase):
         f_path = os.path.join(directory, file_out2)
         f = open(f_path, "r")
         self.assertEqual(f.read(), self.test_stringr2)
-        
+
         f_path = os.path.join(directory, file_out3)
         f = open(f_path, "r")
         self.assertEqual(f.read(), self.test_stringr3)
+
 
 if __name__ == '__main__':
     unittest.main()
