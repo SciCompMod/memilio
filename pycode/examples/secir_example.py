@@ -6,7 +6,6 @@ import sys
 from datetime import datetime
 import datetime as dt
 
-sys.path.append('../../data/contact_data')
 from dampings import create_dampings
 
 
