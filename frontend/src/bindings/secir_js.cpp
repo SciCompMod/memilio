@@ -98,15 +98,16 @@ EMSCRIPTEN_BINDINGS(secirjs)
         .function("set_infectious_asymp", &epi::SecirParams::StageTimes::set_infectious_asymp)
         .function("set_icu_to_death", &epi::SecirParams::StageTimes::set_icu_to_death)
 
-        .function("get_incubation_inv", &epi::SecirParams::StageTimes::get_incubation_inv)
-        .function("get_infectious_mild_inv", &epi::SecirParams::StageTimes::get_infectious_mild_inv)
-        .function("get_serialinterval_inv", &epi::SecirParams::StageTimes::get_serialinterval_inv)
-        .function("get_hospitalized_to_home_inv", &epi::SecirParams::StageTimes::get_hospitalized_to_home_inv)
-        .function("get_home_to_hospitalized_inv", &epi::SecirParams::StageTimes::get_home_to_hospitalized_inv)
-        .function("get_hospitalized_to_icu_inv", &epi::SecirParams::StageTimes::get_hospitalized_to_icu_inv)
-        .function("get_icu_to_home_inv", &epi::SecirParams::StageTimes::get_icu_to_home_inv)
-        .function("get_infectious_asymp_inv", &epi::SecirParams::StageTimes::get_infectious_asymp_inv)
-        .function("get_icu_to_dead_inv", &epi::SecirParams::StageTimes::get_icu_to_dead_inv);
+        // at the moment, no const getters available in JS
+        .function("get_incubation_inv", js::select_overload<epi::UncertainValue& ()>(&epi::SecirParams::StageTimes::get_incubation_inv))
+        .function("get_infectious_mild_inv", js::select_overload<epi::UncertainValue& ()>(&epi::SecirParams::StageTimes::get_infectious_mild_inv))
+        .function("get_serialinterval_inv", js::select_overload<epi::UncertainValue& ()>(&epi::SecirParams::StageTimes::get_serialinterval_inv))
+        .function("get_hospitalized_to_home_inv", js::select_overload<epi::UncertainValue& ()>(&epi::SecirParams::StageTimes::get_hospitalized_to_home_inv))
+        .function("get_home_to_hospitalized_inv", js::select_overload<epi::UncertainValue& ()>(&epi::SecirParams::StageTimes::get_home_to_hospitalized_inv))
+        .function("get_hospitalized_to_icu_inv", js::select_overload<epi::UncertainValue& ()>(&epi::SecirParams::StageTimes::get_hospitalized_to_icu_inv))
+        .function("get_icu_to_home_inv", js::select_overload<epi::UncertainValue& ()>(&epi::SecirParams::StageTimes::get_icu_to_home_inv))
+        .function("get_infectious_asymp_inv", js::select_overload<epi::UncertainValue& ()>(&epi::SecirParams::StageTimes::get_infectious_asymp_inv))
+        .function("get_icu_to_dead_inv", js::select_overload<epi::UncertainValue& ()>(&epi::SecirParams::StageTimes::get_icu_to_dead_inv));
 
     js::class_<epi::Populations>("Populations")
         .constructor<std::vector<size_t>&>()
