@@ -37,6 +37,16 @@ add_library(epidemiology
     epidemiology/populations.cpp
     epidemiology/visitor.h
     epidemiology/parameter_studies/parameter_space.h
+    epidemiology/abm/node.cpp
+    epidemiology/abm/node.h
+    epidemiology/abm/simulation.cpp
+    epidemiology/abm/simulation.h
+    epidemiology/abm/person.cpp
+    epidemiology/abm/person.h
+    epidemiology/abm/world.cpp
+    epidemiology/abm/world.h
+    epidemiology/abm/state.h
+    epidemiology/abm/node_type.h
 )
 
 target_include_directories(epidemiology PUBLIC
