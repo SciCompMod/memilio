@@ -45,7 +45,7 @@ Eigen::MatrixXi read_twitter(const std::string& filename)
 
     file.open(filename, std::ios::in);
 
-    Eigen::MatrixXi txtMatrix(nb_lines - 1, 3);
+    Eigen::MatrixXi txt_matrix(nb_lines - 1, 3);
     std::vector<int> ids;
 
     std::string tp;
@@ -55,9 +55,9 @@ Eigen::MatrixXi read_twitter(const std::string& filename)
             auto line = split(tp, '\t');
             if (i > 0) {
                 ids.push_back(stoi(line[2]));
-                txtMatrix(i - 1, 0) = std::stoi(line[2]);
-                txtMatrix(i - 1, 1) = std::stoi(line[3]);
-                txtMatrix(i - 1, 2) = std::stoi(line[4]);
+                txt_matrix(i - 1, 0) = std::stoi(line[2]);
+                txt_matrix(i - 1, 1) = std::stoi(line[3]);
+                txt_matrix(i - 1, 2) = std::stoi(line[4]);
             }
             i++;
         }
@@ -76,13 +76,13 @@ Eigen::MatrixXi read_twitter(const std::string& filename)
     for (int k = 0; k < nb_lines - 1; k++) {
         int row_ind = 0;
         int col_ind = 0;
-        while (txtMatrix(k, 0) != ids[row_ind]) {
+        while (txt_matrix(k, 0) != ids[row_ind]) {
             row_ind++;
         }
-        while (txtMatrix(k, 1) != ids[col_ind]) {
+        while (txt_matrix(k, 1) != ids[col_ind]) {
             col_ind++;
         }
-        twitter(row_ind, col_ind) = txtMatrix(k, 2);
+        twitter(row_ind, col_ind) = txt_matrix(k, 2);
     }
     file.close();
 
