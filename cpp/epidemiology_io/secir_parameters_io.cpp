@@ -365,8 +365,7 @@ void write_parameter_study(TixiDocumentHandle handle, const std::string& path, c
     write_parameter_space(handle, path, parameter_study.get_parameter_space(), parameter_study.get_nb_runs());
 }
 
-void write_single_run_params(const int run, const ContactFrequencyMatrix& cont_freq, const SecirParams& params,
-                             double t0, double tmax, std::vector<double> time,
+void write_single_run_params(const int run, const SecirParams& params, double t0, double tmax, std::vector<double> time,
                              std::vector<Eigen::VectorXd> secir_result)
 {
 
@@ -375,7 +374,7 @@ void write_single_run_params(const int run, const ContactFrequencyMatrix& cont_f
     TixiDocumentHandle handle;
     tixiCreateDocument("Parameters", &handle);
 
-    ParameterStudy study(simulate, cont_freq, params, t0, tmax, 0.0, nb_runs);
+    ParameterStudy study(simulate, params, t0, tmax, 0.0, nb_runs);
 
     write_parameter_study(handle, path, study);
     tixiSaveDocument(handle, ("Parameters_run" + std::to_string(run) + ".xml").c_str());
@@ -398,7 +397,7 @@ void write_node(const Graph<ModelNode<SecirSimulation>, MigrationEdge>& graph, i
     auto params    = graph.nodes()[node].model.get_params();
     auto cont_freq = graph.nodes()[node].model.get_cont_freq();
 
-    ParameterStudy study(simulate, cont_freq, params, t0, tmax, dev_rel, nb_runs);
+    ParameterStudy study(simulate, params, t0, tmax, dev_rel, nb_runs);
 
     write_parameter_study(handle, path, study);
     tixiSaveDocument(handle, ("GraphNode" + std::to_string(node) + ".xml").c_str());
@@ -416,7 +415,7 @@ void read_node(Graph<ModelNode<SecirSimulation>, MigrationEdge>& graph, int node
     auto cont_freq = space.get_cont_freq_matrix_sample();
     auto params    = space.get_secir_params_sample();
 
-    graph.add_node(cont_freq, params, study.get_t0());
+    graph.add_node(params, study.get_t0());
 
     tixiCloseDocument(node_handle);
 }
@@ -425,7 +424,7 @@ void write_edge(TixiDocumentHandle handle, const std::string& path,
                 const Graph<ModelNode<SecirSimulation>, MigrationEdge>& graph, int edge)
 {
 
-    int nb_groups  = graph.nodes()[0].model.get_cont_freq().get_size();
+    int nb_groups  = graph.nodes()[0].model.get_params().get_cont_freq().get_size();
     int nb_compart = graph.nodes()[0].model.get_params().populations.get_num_compartments() / nb_groups;
 
     std::string edge_path = path_join(path, "Edge" + std::to_string(edge));
@@ -477,7 +476,7 @@ void write_graph(const Graph<ModelNode<SecirSimulation>, MigrationEdge>& graph, 
 
     int nb_nodes   = graph.nodes().size();
     int nb_edges   = graph.edges().size();
-    int nb_groups  = graph.nodes()[0].model.get_cont_freq().get_size();
+    int nb_groups  = graph.nodes()[0].model.get_params().get_cont_freq().get_size();
     int nb_compart = graph.nodes()[0].model.get_params().populations.get_num_compartments() / nb_groups;
 
     tixiAddIntegerElement(handle, edges_path.c_str(), "NumberOfNodes", nb_nodes, "%d");

@@ -83,11 +83,12 @@ enum SecirCompartments
 class SecirParams
 {
 public:
-    SecirParams(size_t n_groups = 1)
-        : populations(Populations({n_groups, SecirCount}))
+    SecirParams(size_t nb_groups = 1)
+        : cont_freq_matrix(ContactFrequencyMatrix{nb_groups})
+        , populations(Populations({nb_groups, SecirCount}))
     {
-        times         = std::vector<StageTimes>(n_groups, StageTimes());
-        probabilities = std::vector<Probabilities>(n_groups, Probabilities());
+        times         = std::vector<StageTimes>(nb_groups, StageTimes());
+        probabilities = std::vector<Probabilities>(nb_groups, Probabilities());
     }
 
     size_t size() const
@@ -96,6 +97,74 @@ public:
     }
 
     double base_reprod;
+
+    /**
+     * @brief Initializes a Contact Frequency matrix for 
+     *        age resolved SECIR models
+     **/
+    class ContactFrequencyMatrix
+    {
+    public:
+        /**
+         * @brief Standard constructor of contact frequencies 1x1-matrix in the SECIR model
+         */
+        ContactFrequencyMatrix();
+
+        /**
+         * @brief Constructor of contact frequencies nb_groups x nb_groups-matrix in the SECIR model
+         * @param[in] nb_groups number of groups in the model
+         */
+        ContactFrequencyMatrix(size_t const nb_groups);
+
+        /**
+         * @brief returns the size of the contact frequency matrix
+         */
+        int get_size() const;
+
+        /**
+         * @brief sets the contact frequency in the SECIR model; in case of multiple groups, set the contact rate cr_ij=cr_ji=cont_freq
+         * @param cont_freq contact rate/frequency in 1/day unit
+         * @param self_group own group
+         * @param contact_group group which gets in contact with own group
+         */
+        void set_cont_freq(double cont_freq, int self_group, int contact_group);
+
+        /**
+         * @brief returns the contact frequency set for the SECIR model in 1/day unit; in case of multiple groups, returns the contact rate cr_ij=cr_ji
+         */
+        double get_cont_freq(int self_group, int contact_group) const;
+
+        /**
+         * @brief sets the damping in the SECIR model; in case of multiple groups, set the contact rate d_ij=d_ji=cont_freq
+         * @param damping dampings over the whole time line in day unit
+         * @param self_group own group
+         * @param contact_group group which gets in contact with own group
+         */
+        void set_dampings(Dampings const& damping, int self_group, int contact_group);
+
+        /**
+         * @brief returns the dampings set for the SECIR model in 1/day unit; in case of multiple groups, returns the damping d_ij=d_ji
+         */
+        const Dampings& get_dampings(int self_group, int contact_group) const;
+
+        /**
+         * @brief add damping to the dampings object specified by self_ and contact_group
+         * @param damping one damping in day unit
+         * @param self_group own group
+         * @param contact_group group which gets in contact with own group
+         */
+        void add_damping(Damping const& damping, int self_group, int contact_group);
+
+        /**
+         * @brief removes all previously set dampings
+         */
+        void clear_dampings();
+
+    private:
+        std::vector<std::vector<double>> m_cont_freq;
+        // This defines a damping factor for a mitigation strategy for different points in time.
+        std::vector<std::vector<Dampings>> m_dampings;
+    };
 
     // time parameters for the different 'stages' of the disease of scale day or 1/day
     // 'stages' does not refer to the 'states' of the SECIR model but also includes incubation time or contact frequency
@@ -275,127 +344,72 @@ public:
         /**
         * @brief gets probability of getting infected from a contact
         */
-        double get_infection_from_contact() const;
+        const UncertainValue& get_infection_from_contact() const;
+        UncertainValue& get_infection_from_contact();
 
         /**
         * @brief returns the percentage of asymptomatic cases in the SECIR model
         */
-        double get_asymp_per_infectious() const;
+        const UncertainValue& get_asymp_per_infectious() const;
+        UncertainValue& get_asymp_per_infectious();
 
         /**
         * @brief returns the risk of infection from symptomatic cases in the SECIR model
         */
-        double get_risk_from_symptomatic() const;
+        const UncertainValue& get_risk_from_symptomatic() const;
+        UncertainValue& get_risk_from_symptomatic();
 
         /**
         * @brief returns the percentage of hospitalized patients per infected patients in the SECIR model
         */
-        double get_hospitalized_per_infectious() const;
+        const UncertainValue& get_hospitalized_per_infectious() const;
+        UncertainValue& get_hospitalized_per_infectious();
 
         /**
         * @brief returns the percentage of ICU patients per hospitalized patients in the SECIR model
         */
-        double get_icu_per_hospitalized() const;
+        const UncertainValue& get_icu_per_hospitalized() const;
+        UncertainValue& get_icu_per_hospitalized();
 
         /**
         * @brief returns the percentage of dead patients per ICU patients in the SECIR model
         */
-        double get_dead_per_icu() const;
+        const UncertainValue& get_dead_per_icu() const;
+        UncertainValue& get_dead_per_icu();
 
     private:
-        double m_infprob, m_asympinf, m_risksymp, m_hospinf, m_icuhosp, m_deathicu; // probabilities
+        UncertainValue m_infprob, m_asympinf, m_risksymp, m_hospinf, m_icuhosp, m_deathicu; // probabilities
     };
 
+    /**
+     * @brief returns the contact frequency matrix set in UncertainContactMatrix
+     */
+    ContactFrequencyMatrix& get_cont_freq_matrix();
+
+    /**
+     * @brief returns the contact frequency matrix set in UncertainContactMatrix
+     */
+    ContactFrequencyMatrix const& get_cont_freq_matrix() const;    
+
+    UncertainContactMatrix contact_patterns;
     Populations populations;
     std::vector<StageTimes> times;
     std::vector<Probabilities> probabilities;
 };
 
 /**
- * @brief Initializes a Contact Frequency matrix for 
- *        age resolved SECIR models
- **/
-class ContactFrequencyMatrix
-{
-public:
-    /**
-     * @brief Standard constructor of contact frequencies 1x1-matrix in the SECIR model
-     */
-    ContactFrequencyMatrix();
-
-    /**
-     * @brief Constructor of contact frequencies nb_groups x nb_groups-matrix in the SECIR model
-     * @param[in] nb_groups number of groups in the model
-     */
-    ContactFrequencyMatrix(size_t const nb_groups);
-
-    /**
-     * @brief returns the size of the contact frequency matrix
-     */
-    int get_size() const;
-
-    /**
-     * @brief sets the contact frequency in the SECIR model; in case of multiple groups, set the contact rate cr_ij=cr_ji=cont_freq
-     * @param cont_freq contact rate/frequency in 1/day unit
-     * @param self_group own group
-     * @param contact_group group which gets in contact with own group
-     */
-    void set_cont_freq(double cont_freq, int self_group, int contact_group);
-
-    /**
-     * @brief returns the contact frequency set for the SECIR model in 1/day unit; in case of multiple groups, returns the contact rate cr_ij=cr_ji
-     */
-    double get_cont_freq(int self_group, int contact_group) const;
-
-    /**
-     * @brief sets the damping in the SECIR model; in case of multiple groups, set the contact rate d_ij=d_ji=cont_freq
-     * @param damping dampings over the whole time line in day unit
-     * @param self_group own group
-     * @param contact_group group which gets in contact with own group
-     */
-    void set_dampings(Dampings const& damping, int self_group, int contact_group);
-
-    /**
-     * @brief returns the dampings set for the SECIR model in 1/day unit; in case of multiple groups, returns the damping d_ij=d_ji
-     */
-    const Dampings& get_dampings(int self_group, int contact_group) const;
-
-    /**
-     * @brief add damping to the dampings object specified by self_ and contact_group
-     * @param damping one damping in day unit
-     * @param self_group own group
-     * @param contact_group group which gets in contact with own group
-     */
-    void add_damping(Damping const& damping, int self_group, int contact_group);
-
-private:
-    std::vector<std::vector<double>> m_cont_freq;
-    // This defines a damping factor for a mitigation strategy for different points in time.
-    std::vector<std::vector<Dampings>> m_dampings;
-};
-
-/**
- * @brief returns the actual, approximated reproduction rate 
+ * @brief WIP !! TO DO: returns the actual, approximated reproduction rate 
  */
-double get_reprod_rate(ContactFrequencyMatrix const& cont_freq_matrix, SecirParams const& params, double t,
-                       std::vector<double> const& yt);
+double get_reprod_rate(SecirParams const& params, double t, std::vector<double> const& yt);
 
 /**
- * prints given parameters
- * @param[in] params the SecirParams parameter object
- */
-void print_secir_params(ContactFrequencyMatrix const& cont_freq, SecirParams const& params);
-
-/**
- * Computes the current time-derivative of S, E, C, I, (H, U,) R, (D) in the SECIR/SECIHURD model
- * @param[in] params SECIR/SECIHURD Model parameters, created by secir_param
- * @tparam T the datatype of the cases
- * @param[in] y current  S, E, C, I, (H, U,) R, (D) values at t; y: [0:S, 1:E, 2:I, 3:R]
+ * Computes the current time-derivative of the SECIR compartment populations (e.g., S, E, C, I, H, U, R, D)
+ * @param[in]  params SECIR params: contact frequencies, population sizes and epidemiological parameters
+ * @param[in] y current  SECIR compartments' values at t; (e.g., y: [0:S, 1:E, ...])
  * @param[in] t time / current day
- * @param[out] dydt the values of the time derivatices of S, E, C, I, (H, U,) R, (D)
+ * @param[out] dydt the values of the time derivatives of the SECIR compartments (e.g., S, E, C, I, H, U, R, D)
  */
-void secir_get_derivatives(ContactFrequencyMatrix const& cont_freq_matrix, SecirParams const& params,
-                           Eigen::VectorXd const& y, double t, Eigen::VectorXd& dydt);
+void secir_get_derivatives(SecirParams const& params, Eigen::VectorXd const& y, double t, Eigen::VectorXd& dydt);
 
 /**
  * @brief simulate SECIR compartment model.
@@ -405,18 +419,17 @@ class SecirSimulation
 {
 public:
     /**
-     * @brief setup the SECIR simulation
-     * @param cont_freq_matrix contact frequencies between groups
-     * @param params parameters of each group
-     * @param t0 start time
-     * @param dt_init initial step size of integration
+     * @brief setup the SECIR simulation 
+     * @param[in] params SECIR params: contact frequencies, population sizes and epidemiological parameters
+     * @param[in] t0 start time
+     * @param[in] dt initial step size of integration
      */
-    SecirSimulation(const ContactFrequencyMatrix& cont_freq_matrix, const SecirParams& params, double t0 = 0.,
-                    double dt_init = 0.1);
+    SecirSimulation(const SecirParams& params, double t0 = 0., double dt = 0.1);
 
     /**
      * @brief advance simulation to tmax
      * must be greater than get_t().back()
+     * @param tmax next stopping point of simulation
      */
     Eigen::VectorXd& advance(double tmax);
 
@@ -440,11 +453,9 @@ public:
         return m_integrator.get_y();
     }
 
-    const ContactFrequencyMatrix& get_cont_freq() const
-    {
-        return m_cont_freq;
-    }
-
+    /**
+     * @brief returns the SECIR params used in simulation
+     */
     const SecirParams& get_params() const
     {
         return m_params;
@@ -453,22 +464,20 @@ public:
 private:
     std::shared_ptr<RKIntegratorCore> m_integratorCore;
     OdeIntegrator m_integrator;
-    ContactFrequencyMatrix m_cont_freq;
     SecirParams m_params;
 };
 
 /**
  * @brief run secir simulation over fixed time
- * @param cont_freq_matrix contact frequencies between groups
- * @param params parameters of each group
- * @param t0 start time
- * @param tmax end time
- * @param dt_init initial step size of integration
+ * @param[in] t0 start time
+ * @param[in] tmax end time
+ * @param[in] dt initial step size of integration
+ * @param[in] params SECIR params: contact frequencies, population sizes and epidemiological parameters
  * @param[out] secir value of compartments at each integration time point
  * @returns integration time points
  */
-std::vector<double> simulate(double t0, double tmax, double dt, ContactFrequencyMatrix const& cont_freq_matrix,
-                             SecirParams const& params, std::vector<Eigen::VectorXd>& secir);
+std::vector<double> simulate(double t0, double tmax, double dt, SecirParams const& params,
+                             std::vector<Eigen::VectorXd>& secir);
 
 } // namespace epi
 

@@ -21,7 +21,6 @@ TEST(TestSaveResult, compareResultWithH5)
     double fact   = 1.0 / (double)nb_groups;
 
     epi::SecirParams params(nb_groups);
-    epi::ContactFrequencyMatrix contact_freq_matrix{(size_t)nb_groups};
 
     for (size_t i = 0; i < nb_groups; i++) {
         params.times[i].set_incubation(tinc);
@@ -54,8 +53,8 @@ TEST(TestSaveResult, compareResultWithH5)
     epi::Damping dummy(30., 0.3);
     for (int i = 0; i < nb_groups; i++) {
         for (int j = i; j < nb_groups; j++) {
-            contact_freq_matrix.set_cont_freq(fact * cont_freq, i, j);
-            contact_freq_matrix.add_damping(dummy, i, j);
+            params.cont_freq_matrix.set_cont_freq(fact * cont_freq, i, j);
+            params.cont_freq_matrix.add_damping(dummy, i, j);
         }
     }
 

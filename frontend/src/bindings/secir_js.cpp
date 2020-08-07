@@ -126,17 +126,20 @@ EMSCRIPTEN_BINDINGS(secirjs)
 
     js::class_<epi::SecirParams::Probabilities>("Probabilities")
         .constructor<>()
+        .function("set_infection_from_contact", &epi::SecirParams::Probabilities::set_infection_from_contact)
         .function("set_asymp_per_infectious", &epi::SecirParams::Probabilities::set_asymp_per_infectious)
         .function("set_risk_from_symptomatic", &epi::SecirParams::Probabilities::set_risk_from_symptomatic)
         .function("set_hospitalized_per_infectious", &epi::SecirParams::Probabilities::set_hospitalized_per_infectious)
         .function("set_icu_per_hospitalized", &epi::SecirParams::Probabilities::set_icu_per_hospitalized)
         .function("set_dead_per_icu", &epi::SecirParams::Probabilities::set_dead_per_icu)
 
-        .function("get_asymp_per_infectious", &epi::SecirParams::Probabilities::get_asymp_per_infectious)
-        .function("get_risk_from_symptomatic", &epi::SecirParams::Probabilities::get_risk_from_symptomatic)
-        .function("get_hospitalized_per_infectious", &epi::SecirParams::Probabilities::get_hospitalized_per_infectious)
-        .function("get_icu_per_hospitalized", &epi::SecirParams::Probabilities::get_icu_per_hospitalized)
-        .function("get_dead_per_icu", &epi::SecirParams::Probabilities::get_dead_per_icu);
+        // at the moment, no const getters available in JS
+        .function("get_infection_from_contact", js::select_overload<epi::UncertainValue& ()>(&epi::SecirParams::Probabilities::get_infection_from_contact))
+        .function("get_asymp_per_infectious", js::select_overload<epi::UncertainValue& ()>(&epi::SecirParams::Probabilities::get_asymp_per_infectious))
+        .function("get_risk_from_symptomatic", js::select_overload<epi::UncertainValue& ()>(&epi::SecirParams::Probabilities::get_risk_from_symptomatic))
+        .function("get_hospitalized_per_infectious", js::select_overload<epi::UncertainValue& ()>(&epi::SecirParams::Probabilities::get_hospitalized_per_infectious))
+        .function("get_icu_per_hospitalized", js::select_overload<epi::UncertainValue& ()>(&epi::SecirParams::Probabilities::get_icu_per_hospitalized))
+        .function("get_dead_per_icu", js::select_overload<epi::UncertainValue& ()>(&epi::SecirParams::Probabilities::get_dead_per_icu));
 
     js::class_<epi::SecirParams>("SecirParams")
         .constructor<size_t>()

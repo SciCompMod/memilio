@@ -17,7 +17,6 @@ TEST(TestSecir, compareWithPreviousRun)
            nb_rec_t0 = 10, nb_dead_t0 = 0;
 
     epi::SecirParams params;
-    epi::ContactFrequencyMatrix contact_freq_matrix{};
 
     // alpha = alpha_in; // percentage of asymptomatic cases
     // beta  = beta_in; // risk of infection from the infected symptomatic patients
@@ -35,9 +34,9 @@ TEST(TestSecir, compareWithPreviousRun)
     params.times[0].set_infectious_asymp(tinfasy);
     params.times[0].set_icu_to_death(ticu2death);
 
-    contact_freq_matrix.set_cont_freq(cont_freq, 0, 0);
+    params.cont_freq_matrix.set_cont_freq(cont_freq, 0, 0);
     epi::Damping dummy(30., 0.3);
-    contact_freq_matrix.add_damping(dummy, 0, 0);
+    params.cont_freq_matrix.add_damping(dummy, 0, 0);
 
     params.populations.set({0, epi::SecirCompartments::E}, nb_exp_t0);
     params.populations.set({0, epi::SecirCompartments::C}, nb_car_t0);
@@ -55,7 +54,7 @@ TEST(TestSecir, compareWithPreviousRun)
     params.probabilities[0].set_dead_per_icu(delta);
 
     std::vector<Eigen::VectorXd> secihurd(0);
-    auto t = simulate(t0, tmax, dt, contact_freq_matrix, params, secihurd);
+    auto t = simulate(t0, tmax, dt, params, secihurd);
 
     auto compare = load_test_data_csv<double>("secihurd-compare.csv");
 
@@ -272,7 +271,7 @@ TEST(TestSecir, testParamConstructors)
     EXPECT_EQ(params5.probabilities[0].get_icu_per_hospitalized(), params3.probabilities[0].get_icu_per_hospitalized());
     EXPECT_EQ(params5.probabilities[0].get_dead_per_icu(), params3.probabilities[0].get_dead_per_icu());
 
-    epi::ContactFrequencyMatrix contact_freq_matrix{2};
+    epi::SecirParams::ContactFrequencyMatrix contact_freq_matrix{2};
 
     for (int i = 0; i < 2; i++) {
         for (int j = i; j < 2; j++) {
@@ -280,7 +279,7 @@ TEST(TestSecir, testParamConstructors)
         }
     }
 
-    epi::ContactFrequencyMatrix contact_freq_matrix2{contact_freq_matrix};
+    epi::SecirParams::ContactFrequencyMatrix contact_freq_matrix2{contact_freq_matrix};
 
     for (int i = 0; i < 2; i++) {
         for (int j = i; j < 2; j++) {
@@ -288,7 +287,7 @@ TEST(TestSecir, testParamConstructors)
         }
     }
 
-    epi::ContactFrequencyMatrix contact_freq_matrix3{std::move(contact_freq_matrix2)};
+    epi::SecirParams::ContactFrequencyMatrix contact_freq_matrix3{std::move(contact_freq_matrix2)};
 
     for (int i = 0; i < 2; i++) {
         for (int j = i; j < 2; j++) {
@@ -296,7 +295,7 @@ TEST(TestSecir, testParamConstructors)
         }
     }
 
-    epi::ContactFrequencyMatrix contact_freq_matrix4 = std::move(contact_freq_matrix3);
+    epi::SecirParams::ContactFrequencyMatrix contact_freq_matrix4 = std::move(contact_freq_matrix3);
 
     for (int i = 0; i < 2; i++) {
         for (int j = i; j < 2; j++) {

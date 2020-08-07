@@ -238,7 +238,7 @@ public:
         return m_standard_dev;
     }
 
-    void set_log(bool log_stddev_change)
+    void log_stddev_changes(bool log_stddev_change)
     {
         m_log_stddev_change = log_stddev_change;
     }
@@ -323,31 +323,6 @@ public:
 
 private:
     std::uniform_real_distribution<double> m_distribution;
-};
-
-class ParamsVariableElement
-{
-public:
-    /*
-     * @brief creates a ParamsVariableElement from a string name and a distribution via unique_ptr
-     * @param[in] distribution unique pointer to a distribution
-     */
-    ParamsVariableElement(std::vector<std::unique_ptr<ParameterDistribution>>&& distribution)
-    {
-        m_distribution = std::move(distribution);
-    }
-
-    std::vector<double> get_sample()
-    {
-        std::vector<double> samples(m_distribution.size(), 0);
-        for (size_t i = 0; i < m_distribution.size(); i++) {
-            samples[i] = m_distribution[i]->get_sample();
-        }
-        return samples;
-    }
-
-private:
-    std::vector<std::unique_ptr<ParameterDistribution>> m_distribution;
 };
 
 } // namespace epi

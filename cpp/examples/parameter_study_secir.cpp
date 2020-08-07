@@ -50,7 +50,6 @@ int main(int argc, char* argv[])
     double fact   = 1.0 / (double)nb_groups;
 
     epi::SecirParams params(nb_groups);
-    epi::ContactFrequencyMatrix contact_freq_matrix{(size_t)nb_groups};
 
     for (size_t i = 0; i < nb_groups; i++) {
         params.times[i].set_incubation(tinc);
@@ -84,16 +83,15 @@ int main(int argc, char* argv[])
     epi::Damping dummy(30., 0.3);
     for (int i = 0; i < nb_groups; i++) {
         for (int j = i; j < nb_groups; j++) {
-            contact_freq_matrix.set_cont_freq(fact * cont_freq, i, j);
+            params.get_cont_freq_matrix().set_cont_freq(fact * cont_freq, i, j);
         }
     }
 
     epi::ParameterStudy parameter_study(
-        [](double t0, double tmax, double dt, epi::ContactFrequencyMatrix const& contact_freq_matrix,
-           epi::SecirParams const& params, std::vector<Eigen::VectorXd>& secir) {
-            return epi::simulate(t0, tmax, dt, contact_freq_matrix, params, secir);
+        [](double t0, double tmax, double dt, epi::SecirParams const& params, std::vector<Eigen::VectorXd>& secir) {
+            return epi::simulate(t0, tmax, dt, params, secir);
         },
-        contact_freq_matrix, params, t0, tmax);
+        params, t0, tmax);
 
     parameter_study.set_nb_runs(5);
 
@@ -110,9 +108,8 @@ int main(int argc, char* argv[])
     tixiOpenDocument("Parameters.xml", &handle);
     epi::ParameterStudy read_study = epi::read_parameter_study(handle, path);
     int run                        = 0;
-    auto lambda                    = [&run, t0, tmax](const auto& cont_freq, const auto& params, const auto& time,
-                                   const auto& secir_result) {
-        epi::write_single_run_params(run++, cont_freq, params, t0, tmax, time, secir_result);
+    auto lambda                    = [&run, t0, tmax](const auto& params, const auto& time, const auto& secir_result) {
+        epi::write_single_run_params(run++, params, t0, tmax, time, secir_result);
     };
     std::vector<std::vector<Eigen::VectorXd>> results = read_study.run(lambda);
 

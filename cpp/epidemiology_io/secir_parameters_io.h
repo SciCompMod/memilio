@@ -86,13 +86,11 @@ void write_parameter_study(TixiDocumentHandle handle, const std::string& path, c
 /**
  * @brief creates xml file with a single run parameter study with std 0 (used to save parameters of individual runs)
  * @param filename Name of file
- * @param cont_freq Contact frequency Matrix used during run
  * @param params Secir parameters used during run
  * @param t0 starting point of simulation
  * @param tmax end point of simulation
  */
-void write_single_run_params(const int run, const ContactFrequencyMatrix& cont_freq, const SecirParams& params,
-                             double t0, double tmax, std::vector<double> time,
+void write_single_run_params(const int run, const SecirParams& params, double t0, double tmax, std::vector<double> time,
                              std::vector<Eigen::VectorXd> secir_result);
 
 /**

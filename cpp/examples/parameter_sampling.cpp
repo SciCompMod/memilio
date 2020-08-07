@@ -53,7 +53,7 @@ int main()
      * Contact frequency and dampings variable element
      */
     size_t nb_groups = 3;
-    epi::ContactFrequencyMatrix contact_freq_matrix{nb_groups};
+    epi::SecirParams::ContactFrequencyMatrix contact_freq_matrix{nb_groups};
     for (size_t i = 0; i < nb_groups; i++) {
         for (size_t j = i; i < nb_groups; i++) {
             contact_freq_matrix.set_cont_freq(0.5, static_cast<int>(i), static_cast<int>(j));
@@ -70,7 +70,7 @@ int main()
         std::make_unique<epi::ParameterDistributionUniform>(epi::ParameterDistributionUniform(0.6, 1.4)),
         std::make_unique<epi::ParameterDistributionUniform>(epi::ParameterDistributionUniform(0.7, 1.1))};
 
-    epi::ContactFrequencyMatrix cfmat_sample = contact_varel.get_sample();
+    epi::SecirParams::ContactFrequencyMatrix cfmat_sample = contact_varel.get_sample();
 
     printf("\n\n Number of dampings: %zu\n", cfmat_sample.get_dampings(0, 0).get_dampings_vector().size());
 
@@ -87,7 +87,8 @@ int main()
     for (size_t i = 0; i < nb_groups; i++) {
         printf("\n G%zu", i);
         for (size_t j = 0; j < nb_groups; j++) {
-            printf("\t %.2f", cfmat_sample.get_dampings(static_cast<int>(i), static_cast<int>(j)).get_factor(day1_00)); // get all the dampings...
+            printf("\t %.2f", cfmat_sample.get_dampings(static_cast<int>(i), static_cast<int>(j))
+                                  .get_factor(day1_00)); // get all the dampings...
         }
     }
     printf("\n");

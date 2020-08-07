@@ -9,13 +9,12 @@
 
 namespace epi
 {
-using HandleSimulationResultFunction = std::function<void(const ContactFrequencyMatrix&, const SecirParams&,
-                                                          std::vector<double>, std::vector<Eigen::VectorXd>)>;
+using HandleSimulationResultFunction =
+    std::function<void(const SecirParams&, std::vector<double>, std::vector<Eigen::VectorXd>)>;
 
 // The function type for the kind of simulation that we want to run
-using secir_simulation_function_t =
-    std::function<std::vector<double>(double t0, double tmax, double dt, ContactFrequencyMatrix const& cont_freq_matrix,
-                                      SecirParams const& params, std::vector<Eigen::VectorXd>& secir_result)>;
+using secir_simulation_function_t = std::function<std::vector<double>(
+    double t0, double tmax, double dt, SecirParams const& params, std::vector<Eigen::VectorXd>& secir_result)>;
 
 auto dummy_func = [](const auto& cont_freq, const auto& params, const auto& time, const auto& secir_result) {};
 
@@ -36,8 +35,8 @@ public:
      * @brief Constructor from contact frequency matrix and parameter vector
      * @param[in] parameter_filename filename of a file storing ranges of input parameters.
      */
-    ParameterStudy(secir_simulation_function_t const& simu_func, ContactFrequencyMatrix const& cont_freq_matrix,
-                   SecirParams const& params, double t0, double tmax, double dev_rel = 0.2, size_t nb_runs = 1);
+    ParameterStudy(secir_simulation_function_t const& simu_func, SecirParams const& params, double t0, double tmax,
+                   double dev_rel = 0.2, size_t nb_runs = 1);
 
     /*
      * @brief Carry out all simulations in the parameter study.
@@ -133,11 +132,10 @@ inline ParameterStudy::ParameterStudy(const secir_simulation_function_t& simu_fu
 {
 }
 
-inline ParameterStudy::ParameterStudy(secir_simulation_function_t const& simu_func,
-                                      ContactFrequencyMatrix const& cont_freq_matrix, SecirParams const& params,
+inline ParameterStudy::ParameterStudy(secir_simulation_function_t const& simu_func, SecirParams const& params,
                                       double t0, double tmax, double dev_rel, size_t nb_runs)
     : simulation_function{simu_func}
-    , parameter_space{cont_freq_matrix, params, t0, tmax, dev_rel}
+    , parameter_space{params, t0, tmax, dev_rel}
     , m_nb_runs{nb_runs}
     , m_t0{t0}
     , m_tmax{tmax}
@@ -154,13 +152,11 @@ ParameterStudy::run(HandleSimulationResultFunction simulation_result_function)
 
         std::vector<Eigen::VectorXd> secir_result;
 
-        SecirParams params_sample             = parameter_space.get_secir_params_sample();
-        ContactFrequencyMatrix contact_sample = parameter_space.get_cont_freq_matrix_sample();
+        SecirParams params_sample = parameter_space.get_secir_params_sample();
 
         // Call the simulation function
-        auto time = simulation_function((*this).m_t0, (*this).m_tmax, (*this).m_dt, contact_sample, params_sample,
-                                        secir_result);
-        simulation_result_function(contact_sample, params_sample, time, secir_result);
+        auto time = simulation_function((*this).m_t0, (*this).m_tmax, (*this).m_dt, params_sample, secir_result);
+        simulation_result_function(params_sample, time, secir_result);
 
         ensemble_result.push_back(std::move(secir_result));
     }

@@ -13,105 +13,6 @@
 namespace epi
 {
 
-class ContactFrequencyVariableElement
-{
-public:
-    /*
-     * @brief Construction of a DampingsVariableElement
-     * @param[in] cont_freq contact frequency matrix
-     * @param[in] nb_dampings uniform distribution on number of dampings
-     * @param[in] day uniform distribution on day where one damping is implemented
-     * @param[in] damp_diag_base uniform distribution on diagonal base value for one damping matrix
-     * @param[in] damp_diag_rel uniform distribution for variation between diagonal values, based on the diagonal base value
-     * @param[in] damp_offdiag_rel uniform distribution for variation between offdiagonal values of one line, based on the diagonal value
-     */
-    ContactFrequencyVariableElement(ContactFrequencyMatrix cont_freq,
-                                    std::unique_ptr<ParameterDistributionUniform>&& nb_dampings,
-                                    std::unique_ptr<ParameterDistributionUniform>&& day,
-                                    std::unique_ptr<ParameterDistributionUniform>&& damp_diag_base,
-                                    std::unique_ptr<ParameterDistributionUniform>&& damp_diag_rel,
-                                    std::unique_ptr<ParameterDistributionUniform>&& damp_offdiag_rel)
-    {
-        m_cont_freq        = cont_freq;
-        m_nb_dampings      = std::move(nb_dampings);
-        m_day              = std::move(day);
-        m_damp_diag_base   = std::move(damp_diag_base);
-        m_damp_diag_rel    = std::move(damp_diag_rel);
-        m_damp_offdiag_rel = std::move(damp_offdiag_rel);
-    }
-
-    ContactFrequencyMatrix get_sample()
-    {
-        int nb_dampings = (int)(m_nb_dampings->get_sample() + 0.5);
-        for (int i = 0; i < nb_dampings; i++) {
-
-            double day            = m_day->get_sample();
-            double damp_diag_base = m_damp_diag_base->get_sample();
-
-            // diagonal entries
-            std::vector<double> damp_diag_val(m_cont_freq.get_size(), 0);
-            for (int j = 0; j < m_cont_freq.get_size(); j++) {
-                damp_diag_val[j] = damp_diag_base * m_damp_diag_rel->get_sample();
-                m_cont_freq.add_damping(Damping(day, damp_diag_val[j]), j, j);
-            }
-
-            // offdiagonal entries
-            for (int j = 0; j < m_cont_freq.get_size(); j++) {
-
-                for (int k = j + 1; k < m_cont_freq.get_size(); k++) {
-                    double damp_offdiag_val = 0.5 * damp_diag_val[j] * m_damp_offdiag_rel->get_sample() +
-                                              0.5 * damp_diag_val[k] * m_damp_offdiag_rel->get_sample();
-                    m_cont_freq.add_damping(Damping(day, damp_offdiag_val), j, k);
-                }
-            }
-        }
-
-        return m_cont_freq;
-    }
-
-    const ContactFrequencyMatrix get_cont_freq() const
-    {
-        return m_cont_freq;
-    }
-
-    const ParameterDistributionUniform& get_dist_num_dampings() const
-    {
-        return *m_nb_dampings;
-    }
-
-    const ParameterDistributionUniform& get_dist_day() const
-    {
-        return *m_day;
-    }
-
-    const ParameterDistributionUniform& get_dist_damp_diag_base() const
-    {
-        return *m_damp_diag_base;
-    }
-
-    const ParameterDistributionUniform& get_dist_damp_diag_rel() const
-    {
-        return *m_damp_diag_rel;
-    }
-
-    const ParameterDistributionUniform& get_dist_damp_offdiag_rel() const
-    {
-        return *m_damp_offdiag_rel;
-    }
-
-private:
-    ContactFrequencyMatrix m_cont_freq;
-    std::unique_ptr<ParameterDistributionUniform>
-        m_nb_dampings; // random number of dampings (one damping is understood as nb_groups^2 many dampings at the same day)
-    std::unique_ptr<ParameterDistributionUniform> m_day; // random number of day where to implement damping
-    std::unique_ptr<ParameterDistributionUniform>
-        m_damp_diag_base; // random number of base value for the diagonal of the damping matrix
-    std::unique_ptr<ParameterDistributionUniform>
-        m_damp_diag_rel; // random number of variation from base value for diagonal
-    std::unique_ptr<ParameterDistributionUniform>
-        m_damp_offdiag_rel; // random number of variation from diagonal value for offdiagonal
-};
-
 /* The class ParameterSpace stores ranges of parameters
  * together with information on step sizes,
  * a start and end time as well as an initial time step.
@@ -124,63 +25,12 @@ class ParameterSpace
 {
 public:
     /* Constructor from given ContactFrequencyMatrix and SecirParams. Mainly used for testing.
-     * @param[in] cont_freq_matrix basic contact frequency matrix
-     * @param[in] params SecirParams for alle age groups
+     * @param[in] params SecirParams including ContactFrequencyMatrix for alle age groups
      * @param[in] t0 start time
      * @param[in] tmax end time
      * @param[in] dev_rel maximum relative deviation from particular value(s) given in params
      */
-    ParameterSpace(ContactFrequencyMatrix const& cont_freq_matrix, SecirParams const& params, double t0, double tmax,
-                   double dev_rel);
-
-    ParameterSpace(std::unique_ptr<ContactFrequencyVariableElement>&& cont_freq_matrix_variable,
-                   const std::vector<double>& total, std::vector<std::unique_ptr<ParameterDistribution>>&& exposed,
-                   std::vector<std::unique_ptr<ParameterDistribution>>&& carrier,
-                   std::vector<std::unique_ptr<ParameterDistribution>>&& infectious,
-                   const std::vector<double>& hospitalized, const std::vector<double>& icu,
-                   std::vector<std::unique_ptr<ParameterDistribution>>&& recovered, const std::vector<double>& dead,
-                   std::vector<std::unique_ptr<ParameterDistribution>>&& incubation,
-                   std::vector<std::unique_ptr<ParameterDistribution>>&& serial_int_incub_diff,
-                   std::vector<std::unique_ptr<ParameterDistribution>>&& inf_mild,
-                   std::vector<std::unique_ptr<ParameterDistribution>>&& hosp_to_rec,
-                   std::vector<std::unique_ptr<ParameterDistribution>>&& inf_to_hosp,
-                   std::vector<std::unique_ptr<ParameterDistribution>>&& inf_asymp,
-                   std::vector<std::unique_ptr<ParameterDistribution>>&& hosp_to_icu,
-                   std::vector<std::unique_ptr<ParameterDistribution>>&& icu_to_rec,
-                   std::vector<std::unique_ptr<ParameterDistribution>>&& icu_to_death,
-                   std::vector<std::unique_ptr<ParameterDistribution>>&& inf_from_cont,
-                   std::vector<std::unique_ptr<ParameterDistribution>>&& asymp_per_inf,
-                   std::vector<std::unique_ptr<ParameterDistribution>>&& risk_from_symp,
-                   std::vector<std::unique_ptr<ParameterDistribution>>&& death_per_icu,
-                   std::vector<std::unique_ptr<ParameterDistribution>>&& hosp_per_inf,
-                   std::vector<std::unique_ptr<ParameterDistribution>>&& icu_per_hosp)
-        : m_nb_age_groups(total.size())
-        , m_cont_freq_matrix_variable(std::move(cont_freq_matrix_variable))
-        , m_total(std::move(total))
-        , m_exposed(std::move(exposed))
-        , m_carrier(std::move(carrier))
-        , m_infectious(std::move(infectious))
-        , m_hospitalized(std::move(hospitalized))
-        , m_icu(std::move(icu))
-        , m_recovered(std::move(recovered))
-        , m_dead(std::move(dead))
-        , m_incubation(std::move(incubation))
-        , m_serial_int_incub_diff(std::move(serial_int_incub_diff))
-        , m_inf_mild(std::move(inf_mild))
-        , m_hosp_to_rec(std::move(hosp_to_rec))
-        , m_inf_to_hosp(std::move(inf_to_hosp))
-        , m_inf_asymp(std::move(inf_asymp))
-        , m_hosp_to_icu(std::move(hosp_to_icu))
-        , m_icu_to_rec(std::move(icu_to_rec))
-        , m_icu_to_death(std::move(icu_to_death))
-        , m_inf_from_cont(std::move(inf_from_cont))
-        , m_asymp_per_inf(std::move(asymp_per_inf))
-        , m_risk_from_symp(std::move(risk_from_symp))
-        , m_death_per_icu(std::move(death_per_icu))
-        , m_hosp_per_inf(std::move(hosp_per_inf))
-        , m_icu_per_hosp(std::move(icu_per_hosp))
-    {
-    }
+    ParameterSpace(SecirParams const& params, double t0, double tmax, double dev_rel);
 
     const std::vector<double>& get_total() const
     {
@@ -320,14 +170,8 @@ public:
             secir_params_sample.populations.set({i, SecirCompartments::C}, m_carrier[i]->get_sample());
             secir_params_sample.populations.set({i, SecirCompartments::I}, m_infectious[i]->get_sample());
             secir_params_sample.populations.set({i, SecirCompartments::R}, m_recovered[i]->get_sample());
-            secir_params_sample.populations.set(
-                {i, SecirCompartments::S}, m_total[i] - secir_params_sample.populations.get({i, SecirCompartments::E}) -
-                                               secir_params_sample.populations.get({i, SecirCompartments::C}) -
-                                               secir_params_sample.populations.get({i, SecirCompartments::I}) -
-                                               secir_params_sample.populations.get({i, SecirCompartments::H}) -
-                                               secir_params_sample.populations.get({i, SecirCompartments::U}) -
-                                               secir_params_sample.populations.get({i, SecirCompartments::R}) -
-                                               secir_params_sample.populations.get({i, SecirCompartments::D}));
+            secir_params_sample.populations.set_difference_from_group_total(
+                {i, epi::SecirCompartments::S}, epi::SecirCategory::AgeGroup, i, m_total[i]);
 
             double inc_dummy    = m_incubation[i]->get_sample();
             double serint_dummy = inc_dummy - m_serial_int_incub_diff[i]->get_sample();
@@ -354,51 +198,14 @@ public:
 
         return secir_params_sample;
     }
-
-private:
-    size_t m_nb_age_groups;
-
-    // contact frequency matrix
-    std::unique_ptr<ContactFrequencyVariableElement> m_cont_freq_matrix_variable;
-
-    // populations
-    std::vector<double> m_total;
-    std::vector<std::unique_ptr<ParameterDistribution>> m_exposed;
-    std::vector<std::unique_ptr<ParameterDistribution>> m_carrier;
-    std::vector<std::unique_ptr<ParameterDistribution>> m_infectious;
-    std::vector<double> m_hospitalized;
-    std::vector<double> m_icu;
-    std::vector<std::unique_ptr<ParameterDistribution>> m_recovered;
-    std::vector<double> m_dead;
-
-    // times
-    std::vector<std::unique_ptr<ParameterDistribution>> m_incubation;
-    std::vector<std::unique_ptr<ParameterDistribution>> m_serial_int_incub_diff;
-    std::vector<std::unique_ptr<ParameterDistribution>> m_inf_mild;
-    std::vector<std::unique_ptr<ParameterDistribution>> m_hosp_to_rec;
-    std::vector<std::unique_ptr<ParameterDistribution>> m_inf_to_hosp;
-    std::vector<std::unique_ptr<ParameterDistribution>> m_inf_asymp;
-    std::vector<std::unique_ptr<ParameterDistribution>> m_hosp_to_icu;
-    std::vector<std::unique_ptr<ParameterDistribution>> m_icu_to_rec;
-    std::vector<std::unique_ptr<ParameterDistribution>> m_icu_to_death;
-
-    // probabilities
-    std::vector<std::unique_ptr<ParameterDistribution>> m_inf_from_cont;
-    std::vector<std::unique_ptr<ParameterDistribution>> m_asymp_per_inf;
-    std::vector<std::unique_ptr<ParameterDistribution>> m_risk_from_symp;
-    std::vector<std::unique_ptr<ParameterDistribution>> m_death_per_icu;
-    std::vector<std::unique_ptr<ParameterDistribution>> m_hosp_per_inf;
-    std::vector<std::unique_ptr<ParameterDistribution>> m_icu_per_hosp;
 };
 
-inline ParameterSpace::ParameterSpace(ContactFrequencyMatrix const& cont_freq_matrix, SecirParams const& params,
-                                      double t0, double tmax, double dev_rel)
-    : m_nb_age_groups{params.size()}
+inline ParameterSpace::ParameterSpace(SecirParams const& params, double t0, double tmax, double dev_rel)
 {
     double min_val = 0.001;
 
     // populations
-    for (size_t i = 0; i < m_nb_age_groups; i++) {
+    for (size_t i = 0; i < params.size(); i++) {
 
         // fixed size groups
         // total
