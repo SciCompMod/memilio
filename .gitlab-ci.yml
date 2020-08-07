@@ -2,13 +2,12 @@ build-cpp:
   stage: build
   tags:
     - docker
-    - hpcagainstcorona
-  image: ubuntu_18.04_devel
+  image: conanio/gcc72
   before_script:
-    - echo 'deb http://download.opensuse.org/repositories/science:/dlr/xUbuntu_18.04/ /' | tee /etc/apt/sources.list.d/science:dlr.list
-    - wget -O - https://download.opensuse.org/repositories/science:dlr/xUbuntu_18.04/Release.key  | apt-key add -
-    - apt -qq update
-    - apt -qq -y install libeigen3-dev libhdf5-dev libtixi3-dev
+    - echo 'deb http://download.opensuse.org/repositories/science:/dlr/xUbuntu_16.04/ /' | sudo tee /etc/apt/sources.list.d/science:dlr.list
+    - wget -O - https://download.opensuse.org/repositories/science:dlr/xUbuntu_16.04/Release.key  | sudo apt-key add -
+    - sudo apt -qq update
+    - sudo apt -qq -y install libeigen3-dev libhdf5-dev libtixi3-dev
   script:
     - cd cpp
     - mkdir build && cd build
