@@ -20,6 +20,10 @@ export default class InteractiveHeatMap {
   _countySeries = new Map();
 
   /** @private
+   *  @type am4core.Label */
+  _dataSetLabel = null;
+
+  /** @private
    *  @type IHeatRule */
   _stateHeatRule = null;
 
@@ -46,6 +50,13 @@ export default class InteractiveHeatMap {
     this._map.projection = new am4maps.projections.Mercator();
     this._map.hiddenState.transitionDuration = 100;
     this._map.maxPanOut = 0.0;
+
+    this._dataSetLabel = this._map.createChild(am4core.Label);
+    this._dataSetLabel.align = "left";
+    this._dataSetLabel.valign = "top";
+    this._dataSetLabel.marginTop = 20;
+    this._dataSetLabel.marginLeft = 20;
+    this._dataSetLabel.text = "Dataset: RKI";
 
     this._stateBackgroundSeries = new am4maps.MapPolygonSeries();
     this._stateBackgroundSeries.geodataSource.url = "assets/german-states.geojson";
@@ -105,6 +116,10 @@ export default class InteractiveHeatMap {
         zoomOutEvent();
       }
     });
+  }
+
+  setDataSetName(name) {
+    this._dataSetLabel.text = "Dataset: " + name;
   }
 
   /** @param values {Map<number, number>} */

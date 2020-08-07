@@ -176,12 +176,14 @@ class TimeMap extends React.Component {
     const currDate = this.props.time.currentDate;
     if (prevProps.time.currentDate !== currDate) {
       if (this.props.seirRegions !== null) {
+        this.map.setDataSetName("SEIR");
         if (this.map.selectedState !== -1) {
           this.map.setCountyValues(this.state.seirTimes.get(currDate));
         } else {
           this.map.setStateValues(this.state.seirTimes.get(currDate));
         }
       } else {
+        this.map.setDataSetName("RKI");
         if (this.map.selectedState !== -1 && this.state.countyTimes.has(currDate)) {
           this.map.setCountyValues(this.state.countyTimes.get(currDate));
         }
