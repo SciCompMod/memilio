@@ -27,6 +27,9 @@ target_link_libraries(graph PRIVATE epidemiology)
 if (TARGET "epidemiology_io")
   target_link_libraries(secir_ageres PRIVATE epidemiology_io)
 
+  add_executable(twitter twitter.cpp)
+  target_link_libraries(twitter PRIVATE epidemiology epidemiology_io)
+
   add_executable(parameter_study_secir parameter_study_secir.cpp)
   target_link_libraries(parameter_study_secir PRIVATE epidemiology epidemiology_io)
 endif()
