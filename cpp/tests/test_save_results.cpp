@@ -1,8 +1,9 @@
 #include "load_test_data.h"
 #include "epidemiology/secir.h"
+#include <epidemiology_io/secir_result_io.h>
 #include <gtest/gtest.h>
 
-TEST(TestSecir, compareAgeResWithSingleRun)
+TEST(TestSaveResult, compareResultWithH5)
 {
     double t0   = 0;
     double tmax = 50;
@@ -16,7 +17,7 @@ TEST(TestSecir, compareAgeResWithSingleRun)
     double nb_total_t0 = 10000, nb_exp_t0 = 100, nb_inf_t0 = 50, nb_car_t0 = 50, nb_hosp_t0 = 20, nb_icu_t0 = 10,
            nb_rec_t0 = 10, nb_dead_t0 = 0;
 
-    int nb_groups = 3;
+    int nb_groups = 1;
     double fact   = 1.0 / (double)nb_groups;
 
     epi::SecirParams params(nb_groups);
@@ -61,32 +62,23 @@ TEST(TestSecir, compareAgeResWithSingleRun)
     std::vector<Eigen::VectorXd> secihurd(0);
     auto t = simulate(t0, tmax, dt, contact_freq_matrix, params, secihurd);
 
-    // char vars[] = {'S', 'E', 'C', 'I', 'H', 'U', 'R', 'D'};
-    // printf("People in\n");
-    // for (size_t k = 0; k < 8; k++) {
-    //     double dummy = 0;
+    epi::save_result(t, secihurd, "test_result.h5");
 
-    //     for (size_t i = 0; i < params.size(); i++) {
-    //         printf("\t %c[%d]: %.0f", vars[k], (int)i, secir[secir.size() - 1][k]);
-    //         dummy += secir[secir.size() - 1][k];
-    //     }
+    epi::SecirSimulationResult test_result{epi::read_result("test_result.h5", nb_groups)};
 
-    //     printf("\t %c_otal: %.0f\n", vars[k], dummy);
-    // }
-
-    auto compare = load_test_data_csv<double>("secihurd-compare.csv");
-
-    ASSERT_EQ(compare.size(), t.size());
-    ASSERT_EQ(compare.size(), secihurd.size());
-    for (size_t i = 0; i < compare.size(); i++) {
-        ASSERT_EQ(compare[i].size() - 1, secihurd[i].size() / nb_groups) << "at row " << i;
-        ASSERT_NEAR(t[i], compare[i][0], 1e-10) << "at row " << i;
-        for (size_t j = 1; j < compare[i].size(); j++) {
-            double dummy = 0;
-            for (size_t k = 0; k < nb_groups; k++) {
-                dummy += secihurd[i][j - 1 + k * 8];
+    ASSERT_EQ(test_result.get_time_vector().size(), t.size());
+    ASSERT_EQ(test_result.get_groups_vectors().size(), secihurd.size());
+    for (size_t i = 0; i < test_result.get_time_vector().size(); i++) {
+        ASSERT_EQ(test_result.get_groups_vectors()[i].size(), secihurd[i].size()) << "at row " << i;
+        ASSERT_NEAR(t[i], test_result.get_time_vector()[i], 1e-10) << "at row " << i;
+        for (size_t l = 0; l < test_result.get_groups_vectors()[i].size() / nb_groups; l++) {
+            double dummy = 0.0;
+            for (size_t j = 0; j < nb_groups; j++) {
+                dummy += secihurd[i][j * 8 + l];
+                EXPECT_NEAR(test_result.get_groups_vectors()[i][j * 8 + l], secihurd[i][j * 8 + l], 1e-10)
+                    << " at row " << i << " at row " << l << " at Group " << j;
             }
-            EXPECT_NEAR(dummy, compare[i][j], 1e-10) << " at row " << i;
+            EXPECT_NEAR(test_result.get_totals_vector()[i][l], dummy, 1e-10) << " at row " << i << " at row " << l;
         }
     }
 }

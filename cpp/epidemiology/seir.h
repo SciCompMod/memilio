@@ -1,6 +1,7 @@
 #ifndef SEIR_H
 #define SEIR_H
 
+#include <epidemiology/populations.h>
 #include <epidemiology/damping.h>
 #include <epidemiology/integrator.h>
 
@@ -10,6 +11,15 @@
 
 namespace epi
 {
+
+enum SeirCompartments
+{
+    S,
+    E,
+    I,
+    R,
+    SeirCount
+};
 
 /**
  * Paramters of the SEIR model:
@@ -70,81 +80,9 @@ public:
         double m_cont_freq, m_tinc_inv, m_tinfmild_inv;
     };
 
-    // population parameters of unit scale
-    class Populations
-    {
-    public:
-        /**
-         * @brief Initializes a time parameters' struct of the SEIR model
-         */
-        Populations();
-
-        /**
-         * @brief sets the number of total people at t0 for the SEIR model
-         * automatically calls set_suscetible_t0() to subtract from the total number
-         * @param nb_total_t0 total number of people at t0
-         */
-        void set_total_t0(double nb_total_t0);
-
-        /**
-         * @brief sets the number of exposed people at t0 for the SEIR model
-         * automatically calls set_suscetible_t0() to subtract from the total number
-         * @param nb_exp_t0 number of exposed people at t0
-         */
-        void set_exposed_t0(double nb_exp_t0);
-
-        /**
-         * @brief sets the number of infectious people at t0 for the SEIR model
-         * automatically calls set_suscetible_t0() to subtract from the total number
-         * @param nb_inf_t0 number of infectious people at t0
-         */
-        void set_infectious_t0(double nb_inf_t0);
-
-        /**
-         * @brief sets the number of recovered people at t0 for the SEIR model
-         * automatically calls set_suscetible_t0() to subtract from the total number
-         * @param nb_rec_t0 number of recovered people at t0
-         */
-        void set_recovered_t0(double nb_rec_t0);
-
-        /**
-         * @brief sets the number of suscetible people at t0 for the SEIR model
-         * only to be called after all other populations have been called
-         */
-        void set_suscetible_t0();
-
-        /**
-         * @brief returns the number of total people at t0 for the SEIR model
-         */
-        double get_total_t0() const;
-
-        /**
-         * @brief returns the number of exposed people at t0 for the SEIR model
-         */
-        double get_exposed_t0() const;
-
-        /**
-         * @brief returns the number of infectious people at t0 for the SEIR model
-         */
-        double get_infectious_t0() const;
-
-        /**
-         * @brief returns the number of recovered people at t0 for the SEIR model
-         */
-        double get_recovered_t0() const;
-
-        /**
-         * @brief returns the number of suscetible people at t0 for the SEIR model
-         */
-        double get_suscetible_t0() const;
-
-    private:
-        double m_nb_total_t0, m_nb_sus_t0, m_nb_exp_t0, m_nb_inf_t0, m_nb_rec_t0;
-    };
-
     StageTimes times;
 
-    Populations populations;
+    Populations populations{Populations({SeirCount})};
 
     // This defines a damping factor for a mitigation strategy for different points in time.
     Dampings dampings;
@@ -174,9 +112,19 @@ class SeirSimulation
 public:
     SeirSimulation(const SeirParams& params, double t0 = 0., double dt_init = 0.1);
     Eigen::VectorXd& advance(double tmax);
-    const std::vector<double>& get_t() const { return m_integrator.get_t(); }
-    const std::vector<Eigen::VectorXd>& get_y() const { return m_integrator.get_y(); }
-    std::vector<Eigen::VectorXd>& get_y() { return m_integrator.get_y(); }
+    const std::vector<double>& get_t() const
+    {
+        return m_integrator.get_t();
+    }
+    const std::vector<Eigen::VectorXd>& get_y() const
+    {
+        return m_integrator.get_y();
+    }
+    std::vector<Eigen::VectorXd>& get_y()
+    {
+        return m_integrator.get_y();
+    }
+
 private:
     OdeIntegrator m_integrator;
 };

@@ -17,9 +17,9 @@ void print_seir_params(const SeirParams& params)
     printf("\n SEIR model set.\n Parameters:\n\t Time incubation:\t %.4f \n\t Time infectious:\t %.4f \n\t contact "
            "rate:\t %.4f \n\t N:\t %d \n\t E0:\t %d \n\t I0:\t %d \n\t R0:\t %d\n",
            1.0 / params.times.get_incubation_inv(), 1.0 / params.times.get_infectious_inv(),
-           params.times.get_cont_freq(), (int)params.populations.get_total_t0(),
-           (int)params.populations.get_exposed_t0(), (int)params.populations.get_infectious_t0(),
-           (int)params.populations.get_recovered_t0());
+           params.times.get_cont_freq(), (int)params.populations.get_total(),
+           (int)params.populations.get({SeirCompartments::E}), (int)params.populations.get({SeirCompartments::I}),
+           (int)params.populations.get({SeirCompartments::R}));
 }
 
 /**
@@ -66,93 +66,18 @@ double SeirParams::StageTimes::get_infectious_inv() const
     return m_tinfmild_inv;
 }
 
-SeirParams::Populations::Populations()
-{
-    m_nb_total_t0 = 0;
-    m_nb_exp_t0   = 0;
-    m_nb_inf_t0   = 0;
-    m_nb_rec_t0   = 0;
-    m_nb_sus_t0   = 0;
-}
-
-void SeirParams::Populations::set_total_t0(double nb_total_t0)
-{
-    m_nb_total_t0 = nb_total_t0;
-    SeirParams::Populations::set_suscetible_t0();
-}
-
-void SeirParams::Populations::set_exposed_t0(double nb_exp_t0)
-{
-    m_nb_exp_t0 = nb_exp_t0;
-    SeirParams::Populations::set_suscetible_t0();
-}
-
-void SeirParams::Populations::set_infectious_t0(double nb_inf_t0)
-{
-    m_nb_inf_t0 = nb_inf_t0;
-    SeirParams::Populations::set_suscetible_t0();
-}
-
-void SeirParams::Populations::set_recovered_t0(double nb_rec_t0)
-{
-    m_nb_rec_t0 = nb_rec_t0;
-    SeirParams::Populations::set_suscetible_t0();
-}
-
-void SeirParams::Populations::set_suscetible_t0()
-{
-    m_nb_sus_t0 = m_nb_total_t0 - m_nb_exp_t0 - m_nb_inf_t0 - m_nb_rec_t0;
-}
-
-double SeirParams::Populations::get_total_t0() const
-{
-    return m_nb_total_t0;
-}
-
-double SeirParams::Populations::get_exposed_t0() const
-{
-    return m_nb_exp_t0;
-}
-
-double SeirParams::Populations::get_infectious_t0() const
-{
-    return m_nb_inf_t0;
-}
-
-double SeirParams::Populations::get_recovered_t0() const
-{
-    return m_nb_rec_t0;
-}
-
-double SeirParams::Populations::get_suscetible_t0() const
-{
-    return m_nb_sus_t0;
-}
-
 void seir_get_derivatives(const SeirParams& params, const Eigen::VectorXd& y, double t, Eigen::VectorXd& dydt)
 {
-    // 0: S,      1: E,       2: I,     3: R
     double cont_freq_eff = params.times.get_cont_freq() * params.dampings.get_factor(t);
-    double divN          = 1.0 / params.populations.get_total_t0();
+    double divN          = 1.0 / params.populations.get_total();
 
-    dydt[0] = -cont_freq_eff * y[0] * y[2] * divN;
-    dydt[1] = cont_freq_eff * y[0] * y[2] * divN - params.times.get_incubation_inv() * y[1];
-    dydt[2] = params.times.get_incubation_inv() * y[1] - params.times.get_infectious_inv() * y[2];
-    dydt[3] = params.times.get_infectious_inv() * y[2];
+    dydt[SeirCompartments::S] = -cont_freq_eff * y[SeirCompartments::S] * y[SeirCompartments::I] * divN;
+    dydt[SeirCompartments::E] = cont_freq_eff * y[SeirCompartments::S] * y[SeirCompartments::I] * divN -
+                                params.times.get_incubation_inv() * y[SeirCompartments::E];
+    dydt[SeirCompartments::I] = params.times.get_incubation_inv() * y[SeirCompartments::E] -
+                                params.times.get_infectious_inv() * y[SeirCompartments::I];
+    dydt[SeirCompartments::R] = params.times.get_infectious_inv() * y[SeirCompartments::I];
 }
-
-namespace
-{
-    Eigen::VectorXd seir_get_initial_values(const SeirParams& params)
-    {
-        Eigen::VectorXd y(4);
-        y[0] = params.populations.get_suscetible_t0();
-        y[1] = params.populations.get_exposed_t0();
-        y[2] = params.populations.get_infectious_t0();
-        y[3] = params.populations.get_recovered_t0();
-        return y;
-    }
-} // namespace
 
 std::vector<double> simulate(double t0, double tmax, double dt, const SeirParams& params,
                              std::vector<Eigen::VectorXd>& seir)
@@ -164,12 +89,9 @@ std::vector<double> simulate(double t0, double tmax, double dt, const SeirParams
 }
 
 SeirSimulation::SeirSimulation(const SeirParams& params, double t0, double dt_init)
-    : m_integrator(
-          [params](auto&& y, auto&& t, auto&& dydt) {
-              seir_get_derivatives(params, y, t, dydt);
-          },
-          t0, seir_get_initial_values(params), dt_init,
-          std::make_shared<EulerIntegratorCore>() /*std::make_shared<RkIntegratorCore>(1e-6, 1.)*/)
+    : m_integrator([params](auto&& y, auto&& t, auto&& dydt) { seir_get_derivatives(params, y, t, dydt); }, t0,
+                   params.populations.get_compartments(), dt_init,
+                   std::make_shared<EulerIntegratorCore>() /*std::make_shared<RkIntegratorCore>(1e-6, 1.)*/)
 {
 }
 

@@ -1,17 +1,14 @@
+#include <epidemiology/migration.h>
+#include <epidemiology_io/secir_parameters_io.h>
 //#include <epidemiology/seir.h>
-#include <epidemiology_io/secir_parameters_io.h>
-#include <epidemiology/parameter_studies/parameter_studies.h>
-#include <epidemiology_io/secir_parameters_io.h>
+//#include <epidemiology/secir.h>
+#include <iostream>
 
-#include <tixi.h>
-
-int main(int argc, char* argv[])
+int main(int argc, char** argv)
 {
-    epi::set_log_level(epi::LogLevel::debug);
-
-    double t0   = 0;
-    double tmax = 50;
-    double dt   = 0.1;
+    const auto t0   = 0.;
+    const auto tmax = 10.;
+    const auto dt   = 1.; //time step of migration, not integration
 
     double tinc    = 5.2, // R_2^(-1)+R_3^(-1)
         tinfmild   = 6, // 4-14  (=R4^(-1))
@@ -39,12 +36,6 @@ int main(int argc, char* argv[])
 
     double nb_total_t0 = 10000, nb_exp_t0 = 100, nb_inf_t0 = 50, nb_car_t0 = 50, nb_hosp_t0 = 20, nb_icu_t0 = 10,
            nb_rec_t0 = 10, nb_dead_t0 = 0;
-
-    // alpha = alpha_in; // percentage of asymptomatic cases
-    // beta  = beta_in; // risk of infection from the infected symptomatic patients
-    // rho   = rho_in; // hospitalized per infected
-    // theta = theta_in; // icu per hospitalized
-    // delta = delta_in; // deaths per ICUs
 
     int nb_groups = 1;
     double fact   = 1.0 / (double)nb_groups;
@@ -88,46 +79,21 @@ int main(int argc, char* argv[])
         }
     }
 
-    epi::ParameterStudy parameter_study(
-        [](double t0, double tmax, double dt, epi::ContactFrequencyMatrix const& contact_freq_matrix,
-           epi::SecirParams const& params, std::vector<Eigen::VectorXd>& secir) {
-            return epi::simulate(t0, tmax, dt, contact_freq_matrix, params, secir);
-        },
-        contact_freq_matrix, params, t0, tmax);
+    epi::Graph<epi::ModelNode<epi::SecirSimulation>, epi::MigrationEdge> graph;
+    graph.add_node(contact_freq_matrix, params, t0);
+    graph.add_node(contact_freq_matrix, params, t0);
+    graph.add_edge(0, 1, Eigen::VectorXd::Constant(8 * nb_groups, 0.01));
+    graph.add_edge(1, 0, Eigen::VectorXd::Constant(8 * nb_groups, 0.01));
 
-    parameter_study.set_nb_runs(5);
+    epi::write_graph(graph, t0, tmax);
 
-    // Run parameter study
+    epi::Graph<epi::ModelNode<epi::SecirSimulation>, epi::MigrationEdge> graph_read = epi::read_graph();
 
-    std::string path = "/Parameters";
-    TixiDocumentHandle handle;
-    tixiCreateDocument("Parameters", &handle);
+    epi::print_graph(std::cout, graph_read);
 
-    epi::write_parameter_study(handle, path, parameter_study);
-    tixiSaveDocument(handle, "Parameters.xml");
-    tixiCloseDocument(handle);
+    auto sim = epi::make_migration_sim(t0, dt, graph_read);
 
-    tixiOpenDocument("Parameters.xml", &handle);
-    epi::ParameterStudy read_study = epi::read_parameter_study(handle, path);
-    int run                        = 0;
-    auto lambda                    = [&run, t0, tmax](const auto& cont_freq, const auto& params, const auto& time,
-                                   const auto& secir_result) {
-        epi::write_single_run_params(run++, cont_freq, params, t0, tmax, time, secir_result);
-    };
-    std::vector<std::vector<Eigen::VectorXd>> results = read_study.run(lambda);
+    sim.advance(10);
 
-#if 0
-    if (argc > 1) {
-        // If provided, the first argument is the input file
-        input_filename = argv[1];
-    }
-    else {
-        // If not provided, we use a sample input file
-        input_filename = "parameter_studies_example_input.txt";
-    }
-
-    // Create parameter study
-    ParameterStudy parameter_study(input_filename);
-#endif
     return 0;
 }

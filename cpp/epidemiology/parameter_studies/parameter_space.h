@@ -1,23 +1,30 @@
 #ifndef PARAMETER_SPACE_H
 #define PARAMETER_SPACE_H
 
-#include <assert.h>
 #include <epidemiology/secir.h>
+#include <epidemiology/logging.h>
+#include <epidemiology/visitor.h>
+#include <assert.h>
 #include <string>
 #include <vector>
 #include <random>
-#include <epidemiology/logging.h>
 #include <memory>
 
 namespace epi
 {
 
-/* TODO: Add more distributions here. */
-typedef enum
-{
-    DIST_UNIFORM,
-    DIST_NORMAL
-} distribution;
+/**
+ * @brief This is a visitor class to visit all Parameter Distribution objects
+ *
+ * More information to the visitor pattern is here: https://en.wikipedia.org/wiki/Visitor_pattern
+ */
+using ParameterDistributionVisitor = Visitor<class ParameterDistributionNormal, class ParameterDistributionUniform>;
+using ConstParameterDistributionVisitor =
+    ConstVisitor<class ParameterDistributionNormal, class ParameterDistributionUniform>;
+
+template <class Derived>
+using VisitableParameterDistribution =
+    Visitable<Derived, class ParameterDistribution, ParameterDistributionVisitor, ConstParameterDistributionVisitor>;
 
 /*
  * Parameter Distribution class which contains the name of a variable as string
@@ -30,19 +37,17 @@ public:
     ParameterDistribution()
         : m_lower_bound{0}
         , m_upper_bound{0}
-        , m_dist{DIST_UNIFORM}
     {
         std::random_device random_device;
         m_random_generator = std::mt19937{random_device()};
     }
 
-    ParameterDistribution(double lower_bound, double upper_bound, distribution dist)
+    ParameterDistribution(double lower_bound, double upper_bound)
     {
         std::random_device random_device;
         m_random_generator = std::mt19937{random_device()};
         m_lower_bound      = lower_bound;
         m_upper_bound      = upper_bound;
-        m_dist             = dist;
     }
     void set_lower_bound(double lower_bound)
     {
@@ -52,11 +57,6 @@ public:
     void set_upper_bound(double upper_bound)
     {
         m_upper_bound = upper_bound;
-    }
-
-    void set_distribution(distribution dist)
-    {
-        m_dist = dist;
     }
 
     void add_predefined_sample(double sample)
@@ -69,6 +69,11 @@ public:
         m_predefined_samples.resize(0);
     }
 
+    const std::vector<double>& get_predefined_samples() const
+    {
+        return m_predefined_samples;
+    }
+
     double get_lower_bound() const
     {
         return m_lower_bound;
@@ -77,11 +82,6 @@ public:
     double get_upper_bound() const
     {
         return m_upper_bound;
-    }
-
-    distribution const& get_distribution() const
-    {
-        return m_dist;
     }
 
     /*
@@ -107,10 +107,18 @@ public:
         return 0.0;
     }
 
+    /**
+     * @brief This function implements the visit interface of the visitor pattern
+     *
+     * It can be used for any ways of working with the class to dispatch
+     * the class type. More information here: https://en.wikipedia.org/wiki/Visitor_pattern
+     */
+    virtual void accept(ParameterDistributionVisitor& visitor)            = 0;
+    virtual void accept(ConstParameterDistributionVisitor& visitor) const = 0;
+
 protected:
     double m_lower_bound; /*< A realistic lower bound on the given parameter */
     double m_upper_bound; /*< A realistic upper bound on the given parameter */
-    distribution m_dist; /*< The statistical distribution of this parameter */
     std::mt19937 m_random_generator;
     std::vector<double>
         m_predefined_samples; // if these values are set; no real sample will occur but these values will be taken
@@ -120,28 +128,26 @@ protected:
  * Child class of Parameter Distribution class which additionally contains
  * the mean value and the standard deviation for a normal distribution 
  */
-class ParameterDistributionNormal : public ParameterDistribution
+class ParameterDistributionNormal : public VisitableParameterDistribution<ParameterDistributionNormal>
 {
 public:
     ParameterDistributionNormal()
-        : ParameterDistribution()
+        : VisitableParameterDistribution<ParameterDistributionNormal>()
     {
-        m_dist         = DIST_NORMAL;
         m_mean         = 0;
         m_standard_dev = 1;
     }
 
     ParameterDistributionNormal(double mean, double standard_dev)
-        : ParameterDistribution()
+        : VisitableParameterDistribution<ParameterDistributionNormal>()
     {
-        m_dist         = DIST_NORMAL;
         m_mean         = mean;
         m_standard_dev = standard_dev;
         check_quantiles(m_mean, m_standard_dev);
     }
 
     ParameterDistributionNormal(double lower_bound, double upper_bound, double mean)
-        : ParameterDistribution(lower_bound, upper_bound, DIST_NORMAL)
+        : VisitableParameterDistribution<ParameterDistributionNormal>(lower_bound, upper_bound)
     {
         m_mean         = mean;
         m_standard_dev = upper_bound; // set as to high and adapt then
@@ -149,7 +155,7 @@ public:
     }
 
     ParameterDistributionNormal(double lower_bound, double upper_bound, double mean, double standard_dev)
-        : ParameterDistribution(lower_bound, upper_bound, DIST_NORMAL)
+        : VisitableParameterDistribution<ParameterDistributionNormal>(lower_bound, upper_bound)
     {
         m_mean         = mean;
         m_standard_dev = standard_dev;
@@ -274,16 +280,16 @@ private:
 /*
  * Child class of Parameter Distribution class which represents an uniform distribution 
  */
-class ParameterDistributionUniform : public ParameterDistribution
+class ParameterDistributionUniform : public VisitableParameterDistribution<ParameterDistributionUniform>
 {
 public:
     ParameterDistributionUniform()
-        : ParameterDistribution()
+        : VisitableParameterDistribution<ParameterDistributionUniform>()
     {
     }
 
     ParameterDistributionUniform(double lower_bound, double upper_bound)
-        : ParameterDistribution(lower_bound, upper_bound, DIST_UNIFORM)
+        : VisitableParameterDistribution<ParameterDistributionUniform>(lower_bound, upper_bound)
     {
     }
 
@@ -384,6 +390,36 @@ public:
         return m_cont_freq;
     }
 
+    const ContactFrequencyMatrix get_cont_freq() const
+    {
+        return m_cont_freq;
+    }
+
+    const ParameterDistributionUniform& get_dist_num_dampings() const
+    {
+        return *m_nb_dampings;
+    }
+
+    const ParameterDistributionUniform& get_dist_day() const
+    {
+        return *m_day;
+    }
+
+    const ParameterDistributionUniform& get_dist_damp_diag_base() const
+    {
+        return *m_damp_diag_base;
+    }
+
+    const ParameterDistributionUniform& get_dist_damp_diag_rel() const
+    {
+        return *m_damp_diag_rel;
+    }
+
+    const ParameterDistributionUniform& get_dist_damp_offdiag_rel() const
+    {
+        return *m_damp_offdiag_rel;
+    }
+
 private:
     ContactFrequencyMatrix m_cont_freq;
     std::unique_ptr<ParameterDistributionUniform>
@@ -408,12 +444,6 @@ private:
 class ParameterSpace
 {
 public:
-    /* Constructor
-     * @param [in] paramter_filename filename of a file storing ranges of input
-     * parameters. Reads parameter names and values from an input file.
-     */
-    ParameterSpace(std::string& parameter_filename);
-
     /* Constructor from given ContactFrequencyMatrix and SecirParams. Mainly used for testing.
      * @param[in] cont_freq_matrix basic contact frequency matrix
      * @param[in] params SecirParams for alle age groups
@@ -421,56 +451,229 @@ public:
      * @param[in] tmax end time
      * @param[in] dev_rel maximum relative deviation from particular value(s) given in params
      */
-    ParameterSpace(ContactFrequencyMatrix const& cont_freq_matrix, std::vector<SecirParams> const& params, double t0,
-                   double tmax, double dev_rel);
+    ParameterSpace(ContactFrequencyMatrix const& cont_freq_matrix, SecirParams const& params, double t0, double tmax,
+                   double dev_rel);
+
+    ParameterSpace(std::unique_ptr<ContactFrequencyVariableElement>&& cont_freq_matrix_variable,
+                   const std::vector<double>& total, std::vector<std::unique_ptr<ParameterDistribution>>&& exposed,
+                   std::vector<std::unique_ptr<ParameterDistribution>>&& carrier,
+                   std::vector<std::unique_ptr<ParameterDistribution>>&& infectious,
+                   const std::vector<double>& hospitalized, const std::vector<double>& icu,
+                   std::vector<std::unique_ptr<ParameterDistribution>>&& recovered, const std::vector<double>& dead,
+                   std::vector<std::unique_ptr<ParameterDistribution>>&& incubation,
+                   std::vector<std::unique_ptr<ParameterDistribution>>&& serial_int_incub_diff,
+                   std::vector<std::unique_ptr<ParameterDistribution>>&& inf_mild,
+                   std::vector<std::unique_ptr<ParameterDistribution>>&& hosp_to_rec,
+                   std::vector<std::unique_ptr<ParameterDistribution>>&& inf_to_hosp,
+                   std::vector<std::unique_ptr<ParameterDistribution>>&& inf_asymp,
+                   std::vector<std::unique_ptr<ParameterDistribution>>&& hosp_to_icu,
+                   std::vector<std::unique_ptr<ParameterDistribution>>&& icu_to_rec,
+                   std::vector<std::unique_ptr<ParameterDistribution>>&& icu_to_death,
+                   std::vector<std::unique_ptr<ParameterDistribution>>&& inf_from_cont,
+                   std::vector<std::unique_ptr<ParameterDistribution>>&& asymp_per_inf,
+                   std::vector<std::unique_ptr<ParameterDistribution>>&& risk_from_symp,
+                   std::vector<std::unique_ptr<ParameterDistribution>>&& death_per_icu,
+                   std::vector<std::unique_ptr<ParameterDistribution>>&& hosp_per_inf,
+                   std::vector<std::unique_ptr<ParameterDistribution>>&& icu_per_hosp)
+        : m_nb_age_groups(total.size())
+        , m_cont_freq_matrix_variable(std::move(cont_freq_matrix_variable))
+        , m_total(std::move(total))
+        , m_exposed(std::move(exposed))
+        , m_carrier(std::move(carrier))
+        , m_infectious(std::move(infectious))
+        , m_hospitalized(std::move(hospitalized))
+        , m_icu(std::move(icu))
+        , m_recovered(std::move(recovered))
+        , m_dead(std::move(dead))
+        , m_incubation(std::move(incubation))
+        , m_serial_int_incub_diff(std::move(serial_int_incub_diff))
+        , m_inf_mild(std::move(inf_mild))
+        , m_hosp_to_rec(std::move(hosp_to_rec))
+        , m_inf_to_hosp(std::move(inf_to_hosp))
+        , m_inf_asymp(std::move(inf_asymp))
+        , m_hosp_to_icu(std::move(hosp_to_icu))
+        , m_icu_to_rec(std::move(icu_to_rec))
+        , m_icu_to_death(std::move(icu_to_death))
+        , m_inf_from_cont(std::move(inf_from_cont))
+        , m_asymp_per_inf(std::move(asymp_per_inf))
+        , m_risk_from_symp(std::move(risk_from_symp))
+        , m_death_per_icu(std::move(death_per_icu))
+        , m_hosp_per_inf(std::move(hosp_per_inf))
+        , m_icu_per_hosp(std::move(icu_per_hosp))
+    {
+    }
+
+    const std::vector<double>& get_total() const
+    {
+        return m_total;
+    }
+
+    const std::vector<double>& get_hospitalized() const
+    {
+        return m_hospitalized;
+    }
+
+    const std::vector<double>& get_icu() const
+    {
+        return m_icu;
+    }
+
+    const std::vector<double>& get_dead() const
+    {
+        return m_dead;
+    }
+
+    const ParameterDistribution& get_dist_exposed(int group) const
+    {
+        return *m_exposed[group];
+    }
+
+    const ParameterDistribution& get_dist_infectious(int group) const
+    {
+        return *m_infectious[group];
+    }
+
+    const ParameterDistribution& get_dist_carrier(int group) const
+    {
+        return *m_carrier[group];
+    }
+
+    const ParameterDistribution& get_dist_recovered(int group) const
+    {
+        return *m_recovered[group];
+    }
+
+    const ParameterDistribution& get_dist_incubation(int group) const
+    {
+        return *m_incubation[group];
+    }
+
+    const ParameterDistribution& get_dist_serial_int_incub_diff(int group) const
+    {
+        return *m_serial_int_incub_diff[group];
+    }
+
+    const ParameterDistribution& get_dist_inf_mild(int group) const
+    {
+        return *m_inf_mild[group];
+    }
+
+    const ParameterDistribution& get_dist_hosp_to_rec(int group) const
+    {
+        return *m_hosp_to_rec[group];
+    }
+
+    const ParameterDistribution& get_dist_inf_to_hosp(int group) const
+    {
+        return *m_inf_to_hosp[group];
+    }
+
+    const ParameterDistribution& get_dist_inf_asymp(int group) const
+    {
+        return *m_inf_asymp[group];
+    }
+
+    const ParameterDistribution& get_dist_hosp_to_icu(int group) const
+    {
+        return *m_hosp_to_icu[group];
+    }
+
+    const ParameterDistribution& get_dist_icu_to_rec(int group) const
+    {
+        return *m_icu_to_rec[group];
+    }
+
+    const ParameterDistribution& get_dist_icu_to_death(int group) const
+    {
+        return *m_icu_to_death[group];
+    }
+
+    const ParameterDistribution& get_dist_inf_from_cont(int group) const
+    {
+        return *m_inf_from_cont[group];
+    }
+
+    const ParameterDistribution& get_dist_asymp_per_inf(int group) const
+    {
+        return *m_asymp_per_inf[group];
+    }
+
+    const ParameterDistribution& get_dist_risk_from_symp(int group) const
+    {
+        return *m_risk_from_symp[group];
+    }
+
+    const ParameterDistribution& get_dist_death_per_icu(int group) const
+    {
+        return *m_death_per_icu[group];
+    }
+
+    const ParameterDistribution& get_dist_hosp_per_inf(int group) const
+    {
+        return *m_hosp_per_inf[group];
+    }
+
+    const ParameterDistribution& get_dist_icu_per_hosp(int group) const
+    {
+        return *m_icu_per_hosp[group];
+    }
+
+    ContactFrequencyVariableElement& get_cont_freq_matrix_variable() const
+    {
+        return *m_cont_freq_matrix_variable;
+    }
 
     ContactFrequencyMatrix get_cont_freq_matrix_sample()
     {
         return m_cont_freq_matrix_variable->get_sample();
     }
 
-    std::vector<SecirParams> get_secir_params_sample()
+    SecirParams get_secir_params_sample()
     {
-        std::vector<SecirParams> secir_params_vec_sample;
+        SecirParams secir_params_sample(m_nb_age_groups);
         for (size_t i = 0; i < m_nb_age_groups; i++) {
-            SecirParams secir_params_sample;
 
-            secir_params_sample.populations.set_total_t0(m_total[i]);
-            secir_params_sample.populations.set_hospital_t0(m_hospitalized[i]);
-            secir_params_sample.populations.set_icu_t0(m_icu[i]);
-            secir_params_sample.populations.set_dead_t0(m_dead[i]);
+            secir_params_sample.populations.set({i, SecirCompartments::H}, m_hospitalized[i]);
+            secir_params_sample.populations.set({i, SecirCompartments::U}, m_icu[i]);
+            secir_params_sample.populations.set({i, SecirCompartments::D}, m_dead[i]);
 
-            secir_params_sample.populations.set_exposed_t0(m_exposed[i]->get_sample());
-            secir_params_sample.populations.set_carrier_t0(m_carrier[i]->get_sample());
-            secir_params_sample.populations.set_infectious_t0(m_infectious[i]->get_sample());
-            secir_params_sample.populations.set_recovered_t0(m_recovered[i]->get_sample());
-
-            secir_params_sample.populations.set_suscetible_t0(); // calculated as remaing from total minus other groups
+            secir_params_sample.populations.set({i, SecirCompartments::E}, m_exposed[i]->get_sample());
+            secir_params_sample.populations.set({i, SecirCompartments::C}, m_carrier[i]->get_sample());
+            secir_params_sample.populations.set({i, SecirCompartments::I}, m_infectious[i]->get_sample());
+            secir_params_sample.populations.set({i, SecirCompartments::R}, m_recovered[i]->get_sample());
+            secir_params_sample.populations.set(
+                {i, SecirCompartments::S}, m_total[i] - secir_params_sample.populations.get({i, SecirCompartments::E}) -
+                                               secir_params_sample.populations.get({i, SecirCompartments::C}) -
+                                               secir_params_sample.populations.get({i, SecirCompartments::I}) -
+                                               secir_params_sample.populations.get({i, SecirCompartments::H}) -
+                                               secir_params_sample.populations.get({i, SecirCompartments::U}) -
+                                               secir_params_sample.populations.get({i, SecirCompartments::R}) -
+                                               secir_params_sample.populations.get({i, SecirCompartments::D}));
 
             double inc_dummy    = m_incubation[i]->get_sample();
             double serint_dummy = inc_dummy - m_serial_int_incub_diff[i]->get_sample();
 
-            secir_params_sample.times.set_incubation(inc_dummy);
-            secir_params_sample.times.set_infectious_mild(m_inf_mild[i]->get_sample());
-            secir_params_sample.times.set_serialinterval(serint_dummy);
-            secir_params_sample.times.set_hospitalized_to_home(m_hosp_to_rec[i]->get_sample()); // here: home=recovered
-            secir_params_sample.times.set_home_to_hospitalized(m_inf_to_hosp[i]->get_sample()); // here: home=infectious
-            secir_params_sample.times.set_infectious_asymp(m_inf_asymp[i]->get_sample());
-            secir_params_sample.times.set_hospitalized_to_icu(m_hosp_to_icu[i]->get_sample());
-            secir_params_sample.times.set_icu_to_death(m_icu_to_death[i]->get_sample());
-            secir_params_sample.times.set_icu_to_home(m_icu_to_rec[i]->get_sample());
+            secir_params_sample.times[i].set_incubation(inc_dummy);
+            secir_params_sample.times[i].set_infectious_mild(m_inf_mild[i]->get_sample());
+            secir_params_sample.times[i].set_serialinterval(serint_dummy);
+            secir_params_sample.times[i].set_hospitalized_to_home(
+                m_hosp_to_rec[i]->get_sample()); // here: home=recovered
+            secir_params_sample.times[i].set_home_to_hospitalized(
+                m_inf_to_hosp[i]->get_sample()); // here: home=infectious
+            secir_params_sample.times[i].set_infectious_asymp(m_inf_asymp[i]->get_sample());
+            secir_params_sample.times[i].set_hospitalized_to_icu(m_hosp_to_icu[i]->get_sample());
+            secir_params_sample.times[i].set_icu_to_death(m_icu_to_death[i]->get_sample());
+            secir_params_sample.times[i].set_icu_to_home(m_icu_to_rec[i]->get_sample());
 
-            secir_params_sample.probabilities.set_infection_from_contact(m_inf_from_cont[i]->get_sample());
-            secir_params_sample.probabilities.set_asymp_per_infectious(m_asymp_per_inf[i]->get_sample());
-            secir_params_sample.probabilities.set_risk_from_symptomatic(m_risk_from_symp[i]->get_sample());
-            secir_params_sample.probabilities.set_dead_per_icu(m_death_per_icu[i]->get_sample());
-            secir_params_sample.probabilities.set_hospitalized_per_infectious(m_hosp_per_inf[i]->get_sample());
-            secir_params_sample.probabilities.set_icu_per_hospitalized(m_icu_per_hosp[i]->get_sample());
-
-            secir_params_vec_sample.push_back(std::move(secir_params_sample));
+            secir_params_sample.probabilities[i].set_infection_from_contact(m_inf_from_cont[i]->get_sample());
+            secir_params_sample.probabilities[i].set_asymp_per_infectious(m_asymp_per_inf[i]->get_sample());
+            secir_params_sample.probabilities[i].set_risk_from_symptomatic(m_risk_from_symp[i]->get_sample());
+            secir_params_sample.probabilities[i].set_dead_per_icu(m_death_per_icu[i]->get_sample());
+            secir_params_sample.probabilities[i].set_hospitalized_per_infectious(m_hosp_per_inf[i]->get_sample());
+            secir_params_sample.probabilities[i].set_icu_per_hospitalized(m_icu_per_hosp[i]->get_sample());
         }
 
-        return secir_params_vec_sample;
+        return secir_params_sample;
     }
 
 private:
@@ -509,14 +712,8 @@ private:
     std::vector<std::unique_ptr<ParameterDistribution>> m_icu_per_hosp;
 };
 
-ParameterSpace::ParameterSpace(std::string& parameter_filename)
-{
-    // TODO: implement
-    assert(0 && "This function not implemented yet and needs a file read method.");
-}
-
-ParameterSpace::ParameterSpace(ContactFrequencyMatrix const& cont_freq_matrix, std::vector<SecirParams> const& params,
-                               double t0, double tmax, double dev_rel)
+inline ParameterSpace::ParameterSpace(ContactFrequencyMatrix const& cont_freq_matrix, SecirParams const& params,
+                                      double t0, double tmax, double dev_rel)
     : m_nb_age_groups{params.size()}
 {
     double min_val = 0.001;
@@ -526,32 +723,32 @@ ParameterSpace::ParameterSpace(ContactFrequencyMatrix const& cont_freq_matrix, s
 
         // fixed size groups
         // total
-        m_total.push_back(params[i].populations.get_total_t0());
-        m_hospitalized.push_back(params[i].populations.get_hospitalized_t0());
-        m_icu.push_back(params[i].populations.get_icu_t0());
-        m_dead.push_back(params[i].populations.get_dead_t0());
+        m_total.push_back(params.populations.get_group_total(SecirCategory::AgeGroup, i));
+        m_hospitalized.push_back(params.populations.get({i, SecirCompartments::H}));
+        m_icu.push_back(params.populations.get({i, SecirCompartments::U}));
+        m_dead.push_back(params.populations.get({i, SecirCompartments::D}));
 
         // variably sized groups
         // exposed
-        double value_params = params[i].populations.get_exposed_t0();
+        double value_params = params.populations.get({i, SecirCompartments::E});
         m_exposed.push_back(std::make_unique<ParameterDistributionNormal>(
             std::max(min_val, (1 - dev_rel * 2.6) * value_params), (1 + dev_rel * 2.6) * value_params, value_params,
             dev_rel * value_params));
 
         // carrier
-        value_params = params[i].populations.get_carrier_t0();
+        value_params = params.populations.get({i, SecirCompartments::C});
         m_carrier.push_back(std::make_unique<ParameterDistributionNormal>(
             std::max(min_val, (1 - dev_rel * 2.6) * value_params), (1 + dev_rel * 2.6) * value_params, value_params,
             dev_rel * value_params));
 
         // infectious
-        value_params = params[i].populations.get_infectious_t0();
+        value_params = params.populations.get({i, SecirCompartments::I});
         m_infectious.push_back(std::make_unique<ParameterDistributionNormal>(
             std::max(min_val, (1 - dev_rel * 2.6) * value_params), (1 + dev_rel * 2.6) * value_params, value_params,
             dev_rel * value_params));
 
         // recovered
-        value_params = params[i].populations.get_recovered_t0();
+        value_params = params.populations.get({i, SecirCompartments::R});
         m_recovered.push_back(std::make_unique<ParameterDistributionNormal>(
             std::max(min_val, (1 - dev_rel * 2.6) * value_params), (1 + dev_rel * 2.6) * value_params, value_params,
             dev_rel * value_params));
@@ -560,55 +757,55 @@ ParameterSpace::ParameterSpace(ContactFrequencyMatrix const& cont_freq_matrix, s
     // times
     for (size_t i = 0; i < m_nb_age_groups; i++) {
         // incubation time
-        double value_params = 1.0 / params[i].times.get_incubation_inv();
+        double value_params = 1.0 / params.times[i].get_incubation_inv();
         m_incubation.push_back(std::make_unique<ParameterDistributionNormal>(
             std::max(min_val, (1 - dev_rel * 2.6) * value_params), (1 + dev_rel * 2.6) * value_params, value_params,
             dev_rel * value_params));
 
         // serial interval
-        value_params = 1.0 / params[i].times.get_incubation_inv() - 1.0 / params[i].times.get_serialinterval_inv();
+        value_params = 1.0 / params.times[i].get_incubation_inv() - 1.0 / params.times[i].get_serialinterval_inv();
         m_serial_int_incub_diff.push_back(std::make_unique<ParameterDistributionNormal>(
             std::max(min_val, (1 - dev_rel * 2.6) * value_params), (1 + dev_rel * 2.6) * value_params, value_params,
             dev_rel * value_params));
 
         // infectious time (mild)
-        value_params = 1.0 / params[i].times.get_infectious_mild_inv();
+        value_params = 1.0 / params.times[i].get_infectious_mild_inv();
         m_inf_mild.push_back(std::make_unique<ParameterDistributionNormal>(
             std::max(min_val, (1 - dev_rel * 2.6) * value_params), (1 + dev_rel * 2.6) * value_params, value_params,
             dev_rel * value_params));
 
         // infectious to recovered (hospitalized to home)
-        value_params = 1.0 / params[i].times.get_hospitalized_to_home_inv();
+        value_params = 1.0 / params.times[i].get_hospitalized_to_home_inv();
         m_hosp_to_rec.push_back(std::make_unique<ParameterDistributionNormal>(
             std::max(min_val, (1 - dev_rel * 2.6) * value_params), (1 + dev_rel * 2.6) * value_params, value_params,
             dev_rel * value_params));
 
         // infectious to hospitalized (home to hospitalized)
-        value_params = 1.0 / params[i].times.get_home_to_hospitalized_inv();
+        value_params = 1.0 / params.times[i].get_home_to_hospitalized_inv();
         m_inf_to_hosp.push_back(std::make_unique<ParameterDistributionNormal>(
             std::max(min_val, (1 - dev_rel * 2.6) * value_params), (1 + dev_rel * 2.6) * value_params, value_params,
             dev_rel * value_params));
 
         // infectious (asymptomatic)
-        value_params = 1.0 / params[i].times.get_infectious_asymp_inv();
+        value_params = 1.0 / params.times[i].get_infectious_asymp_inv();
         m_inf_asymp.push_back(std::make_unique<ParameterDistributionNormal>(
             std::max(min_val, (1 - dev_rel * 2.6) * value_params), (1 + dev_rel * 2.6) * value_params, value_params,
             dev_rel * value_params));
 
         // hospitalized to ICU
-        value_params = 1.0 / params[i].times.get_hospitalized_to_icu_inv();
+        value_params = 1.0 / params.times[i].get_hospitalized_to_icu_inv();
         m_hosp_to_icu.push_back(std::make_unique<ParameterDistributionNormal>(
             std::max(min_val, (1 - dev_rel * 2.6) * value_params), (1 + dev_rel * 2.6) * value_params, value_params,
             dev_rel * value_params));
 
         // ICU to recovered
-        value_params = 1.0 / params[i].times.get_icu_to_home_inv();
+        value_params = 1.0 / params.times[i].get_icu_to_home_inv();
         m_icu_to_rec.push_back(std::make_unique<ParameterDistributionNormal>(
             std::max(min_val, (1 - dev_rel * 2.6) * value_params), (1 + dev_rel * 2.6) * value_params, value_params,
             dev_rel * value_params));
 
         // ICU to death
-        value_params = 1.0 / params[i].times.get_icu_to_dead_inv();
+        value_params = 1.0 / params.times[i].get_icu_to_dead_inv();
         m_icu_to_death.push_back(std::make_unique<ParameterDistributionNormal>(
             std::max(min_val, (1 - dev_rel * 2.6) * value_params), (1 + dev_rel * 2.6) * value_params, value_params,
             dev_rel * value_params));
@@ -617,37 +814,37 @@ ParameterSpace::ParameterSpace(ContactFrequencyMatrix const& cont_freq_matrix, s
     // probabilities
     for (size_t i = 0; i < m_nb_age_groups; i++) {
         // infection from contact
-        double value_params = params[i].probabilities.get_infection_from_contact();
+        double value_params = params.probabilities[i].get_infection_from_contact();
         m_inf_from_cont.push_back(std::make_unique<ParameterDistributionNormal>(
             std::max(min_val, (1 - dev_rel * 2.6) * value_params), (1 + dev_rel * 2.6) * value_params, value_params,
             dev_rel * value_params));
 
         // asymptomatic per infectious
-        value_params = params[i].probabilities.get_asymp_per_infectious();
+        value_params = params.probabilities[i].get_asymp_per_infectious();
         m_asymp_per_inf.push_back(std::make_unique<ParameterDistributionNormal>(
             std::max(min_val, (1 - dev_rel * 2.6) * value_params), (1 + dev_rel * 2.6) * value_params, value_params,
             dev_rel * value_params));
 
         // risk of infection from infectious
-        value_params = params[i].probabilities.get_risk_from_symptomatic();
+        value_params = params.probabilities[i].get_risk_from_symptomatic();
         m_risk_from_symp.push_back(std::make_unique<ParameterDistributionNormal>(
             std::max(min_val, (1 - dev_rel * 2.6) * value_params), (1 + dev_rel * 2.6) * value_params, value_params,
             dev_rel * value_params));
 
         // deaths per icu treatments
-        value_params = params[i].probabilities.get_dead_per_icu();
+        value_params = params.probabilities[i].get_dead_per_icu();
         m_death_per_icu.push_back(std::make_unique<ParameterDistributionNormal>(
             std::max(min_val, (1 - dev_rel * 2.6) * value_params), (1 + dev_rel * 2.6) * value_params, value_params,
             dev_rel * value_params));
 
         // hospitalized per infections
-        value_params = params[i].probabilities.get_hospitalized_per_infectious();
+        value_params = params.probabilities[i].get_hospitalized_per_infectious();
         m_hosp_per_inf.push_back(std::make_unique<ParameterDistributionNormal>(
             std::max(min_val, (1 - dev_rel * 2.6) * value_params), (1 + dev_rel * 2.6) * value_params, value_params,
             dev_rel * value_params));
 
         // icu treatments per hospitalized
-        value_params = params[i].probabilities.get_icu_per_hospitalized();
+        value_params = params.probabilities[i].get_icu_per_hospitalized();
         m_icu_per_hosp.push_back(std::make_unique<ParameterDistributionNormal>(
             std::max(min_val, (1 - dev_rel * 2.6) * value_params), (1 + dev_rel * 2.6) * value_params, value_params,
             dev_rel * value_params));
