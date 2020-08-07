@@ -1,22 +1,28 @@
 import {createSlice} from '@reduxjs/toolkit';
-import {groupBy, renameKey, sumByKey, filterJSObject, stateIdFromCountyId} from '../common/utils';
+import {
+  groupBy,
+  renameKey,
+  sumByKey,
+  filterJSObject,
+  stateIdFromCountyId,
+} from '../common/utils';
 
 import axios from 'axios';
 
 export const Datasets = {
   STATES: 'states',
   COUNTIES: 'counties',
-  GERMANY: 'germany'
+  GERMANY: 'germany',
 };
 
 const dataset2datakey = {
   [Datasets.STATES]: 'ID_State',
-  [Datasets.COUNTIES]: 'ID_County'
+  [Datasets.COUNTIES]: 'ID_County',
 };
 
 const populationKeyMap = {
   [Datasets.STATES]: 'Bundesland',
-  [Datasets.COUNTIES]: 'Landkreis'
+  [Datasets.COUNTIES]: 'Landkreis',
 };
 
 const slice = createSlice({
@@ -26,7 +32,7 @@ const slice = createSlice({
     populations: {
       states: [],
       counties: [],
-      total: 0
+      total: 0,
     },
     germany: {
       all: {},
@@ -41,8 +47,8 @@ const slice = createSlice({
     counties: {
       all: {},
       gender: {},
-      age: {}
-    }
+      age: {},
+    },
   },
   reducers: {
     init: (state, action) => {
@@ -60,7 +66,12 @@ const slice = createSlice({
           state.selected.population = population.EWZ;
         }
       } else {
-        state.selected = {dataset: "germany", id: 0, label: "Germany", population: state.populations.total}
+        state.selected = {
+          dataset: 'germany',
+          id: 0,
+          label: 'Germany',
+          population: state.populations.total,
+        };
       }
     },
     setStateData: (state, action) => {
@@ -78,7 +89,9 @@ const slice = createSlice({
         const summedData = [];
         for (let stateEntry of Object.values(stateData)) {
           for (let timeStamp of stateEntry) {
-            const result = summedData.find(entry => entry.date === timeStamp.date);
+            const result = summedData.find(
+              (entry) => entry.date === timeStamp.date
+            );
             if (result) {
               result.Confirmed += timeStamp.Confirmed;
               result.Deaths += timeStamp.Deaths;
@@ -86,11 +99,11 @@ const slice = createSlice({
             } else {
               summedData.push({
                 ID_Country: 0,
-                Country: "Germany",
+                Country: 'Germany',
                 Confirmed: timeStamp.Confirmed,
                 Deaths: timeStamp.Deaths,
                 Recovered: timeStamp.Recovered,
-                date: timeStamp.date
+                date: timeStamp.date,
               });
             }
           }
@@ -99,7 +112,12 @@ const slice = createSlice({
         return summedData;
       }
 
-      state.germany = {...state.germany, all: sumByState(all), gender: sumByState(gender), age: sumByState(age)};
+      state.germany = {
+        ...state.germany,
+        all: sumByState(all),
+        gender: sumByState(gender),
+        age: sumByState(age),
+      };
     },
     setCountyData: (state, action) => {
       const [all, age, gender] = action.payload;
@@ -108,8 +126,8 @@ const slice = createSlice({
     setPopulations: (state, action) => {
       state.populations = action.payload;
       state.populations.total = sumByKey(state.populations.states, 'EWZ');
-    }
-  }
+    },
+  },
 });
 
 export const {
@@ -117,7 +135,7 @@ export const {
   setSelected,
   setStateData,
   setCountyData,
-  setPopulations
+  setPopulations,
 } = slice.actions;
 
 export const initializeApp = () => (dispatch) => {
@@ -136,7 +154,7 @@ export const fetchData = () => async (dispatch) => {
       .then((response) => response.data),
     axios
       .get('assets/all_state_gender_rki.json')
-      .then((response) => response.data)
+      .then((response) => response.data),
   ]);
 
   state = state.map((s) => {
@@ -156,7 +174,7 @@ export const fetchData = () => async (dispatch) => {
       .then((response) => response.data),
     axios
       .get('assets/all_county_gender_rki.json')
-      .then((response) => response.data)
+      .then((response) => response.data),
   ]);
 
   county = county.map((s) => {
@@ -183,7 +201,7 @@ export const getSelectedData = (state) => {
     return null;
   }
 
-  if (selected.dataset === "germany") {
+  if (selected.dataset === 'germany') {
     return {...s.germany, start: s.germany.all[0]};
   }
 
@@ -205,7 +223,7 @@ export const getSelectedData = (state) => {
     all: dataset.all[`${selected.id}`],
     age: dataset.age[`${selected.id}`],
     gender: dataset.gender[`${selected.id}`],
-    start: dataset.all[`${selected.id}`][0]
+    start: dataset.all[`${selected.id}`][0],
   };
 };
 
@@ -215,19 +233,19 @@ export const getSelectedData = (state) => {
  * @param state The application state.
  * @return {{all: any age: any, gender: any}|null}
  */
-export const getSelectedChildData = state => {
+export const getSelectedChildData = (state) => {
   const {selected, ...s} = state.app;
 
   if (selected === null) {
     return null;
   }
 
-  if (selected.dataset === "germany") {
+  if (selected.dataset === 'germany') {
     const dataset = s.states;
     return {
       all: dataset.all,
       age: dataset.age,
-      gender: dataset.gender
+      gender: dataset.gender,
     };
   }
 
@@ -238,10 +256,14 @@ export const getSelectedChildData = state => {
    * @param counties {{all: any age: any, gender: any}}
    * @return {{all: any age: any, gender: any}}
    */
-  const filterByStateId = (stateId, counties) => filterJSObject(counties, (id, _) => stateIdFromCountyId(id) === stateId);
+  const filterByStateId = (stateId, counties) =>
+    filterJSObject(counties, (id, _) => stateIdFromCountyId(id) === stateId);
 
-  if (selected.dataset === "states" || selected.dataset === "counties") {
-    const stateId = selected.dataset === "states" ? selected.id : stateIdFromCountyId(selected.id);
+  if (selected.dataset === 'states' || selected.dataset === 'counties') {
+    const stateId =
+      selected.dataset === 'states'
+        ? selected.id
+        : stateIdFromCountyId(selected.id);
     const dataset = s.counties;
     return {
       all: filterByStateId(stateId, dataset.all),
@@ -276,9 +298,14 @@ export function getPopulationsOfRegion(state, regionId) {
 
   let counties;
   if (regionId < 100) {
-    counties = state.app.populations.counties.filter(county => stateIdFromCountyId(county.countyKey) === regionId);
+    counties = state.app.populations.counties.filter(
+      (county) => stateIdFromCountyId(county.countyKey) === regionId
+    );
   } else {
-    counties = state.app.populations.counties.filter(county => stateIdFromCountyId(county.countyKey) === stateIdFromCountyId(regionId));
+    counties = state.app.populations.counties.filter(
+      (county) =>
+        stateIdFromCountyId(county.countyKey) === stateIdFromCountyId(regionId)
+    );
   }
 
   const result = new Map();

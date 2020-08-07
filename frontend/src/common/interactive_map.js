@@ -1,6 +1,6 @@
 import * as d3 from 'd3';
 import * as topojson from 'topojson-client';
-import { Datasets } from '../redux/app';
+import {Datasets} from '../redux/app';
 
 class InteractiveMap {
   constructor(node) {
@@ -8,7 +8,7 @@ class InteractiveMap {
     this.selected = {
       dataset: null,
       id: null,
-      label: null
+      label: null,
     };
 
     // get actual with and height
@@ -46,7 +46,7 @@ class InteractiveMap {
     }
 
     function zoomed() {
-      const { transform } = d3.event;
+      const {transform} = d3.event;
       self.bundeslaender.attr('transform', transform);
       //self.bundeslaender.attr("stroke-width", 1 / transform.k);
       self.landkreise.attr('transform', transform);
@@ -82,7 +82,7 @@ class InteractiveMap {
           self.selected = {
             dataset: null,
             id: null,
-            label: null
+            label: null,
           };
           self.notify();
         });
@@ -92,7 +92,7 @@ class InteractiveMap {
           .zoom()
           .extent([
             [0, 0],
-            [300, 570]
+            [300, 570],
           ])
           .scaleExtent([0.1, 3])
           .wheelDelta(() => {
@@ -133,7 +133,7 @@ class InteractiveMap {
               self.selected = {
                 dataset: Datasets.STATES,
                 id: parseInt(d.properties.RS),
-                label: d.properties.GEN
+                label: d.properties.GEN,
               };
               self.notify();
             });
@@ -194,7 +194,7 @@ class InteractiveMap {
             self.selected = {
               dataset: Datasets.COUNTIES,
               id: parseInt(d.properties.RS),
-              label: d.properties.GEN
+              label: d.properties.GEN,
             };
             self.notify();
           })

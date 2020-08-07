@@ -1,5 +1,5 @@
 import * as tf from '@tensorflow/tfjs';
-import { euler } from './euler.js';
+import {euler} from './euler.js';
 
 /**
  * This defined a damping factor for a
@@ -119,7 +119,7 @@ function seir(y, t, params) {
     (-b_eff * S * I) / params.N,
     (b_eff * S * I) / params.N - params.a * E,
     params.a * E - params.g * I,
-    params.g * I
+    params.g * I,
   ];
   return dydt;
 }
@@ -138,7 +138,7 @@ function simulate_seir(t0, tmax, dt, params) {
     params.N - params.E0 - params.I0 - params.R0,
     params.E0,
     params.I0,
-    params.R0
+    params.R0,
   ];
 
   const n = Math.ceil((tmax - t0) / dt);
@@ -159,8 +159,8 @@ function simulate_seir(t0, tmax, dt, params) {
     S: S.arraySync()[0],
     E: E.arraySync()[0],
     I: I.arraySync()[0],
-    R: R.arraySync()[0]
+    R: R.arraySync()[0],
   };
 }
 
-export { makeSeirParam, SeirParam, simulate_seir, Damping };
+export {makeSeirParam, SeirParam, simulate_seir, Damping};

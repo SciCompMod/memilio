@@ -3,7 +3,11 @@ import {connect} from 'react-redux';
 import {Button} from 'reactstrap';
 import {getActiveMeasures} from '../redux/measures';
 import {getParameterMap} from '../redux/parameters';
-import {getPopulationsOfRegion, getSelectedChildData, getSelectedData} from '../redux/app';
+import {
+  getPopulationsOfRegion,
+  getSelectedChildData,
+  getSelectedData,
+} from '../redux/app';
 import {setData, setRegionData} from '../redux/seir';
 
 import {simulate_seir, makeSeirParam, Damping} from '../common/seir.js';
@@ -19,7 +23,10 @@ class Simulation extends PureComponent {
    * If a county is selected => Run on the county and all other counties in its' parent state.
    */
   simulate() {
-    const selectedResult = this.simulateRegion(this.props.start, this.props.selected.population);
+    const selectedResult = this.simulateRegion(
+      this.props.start,
+      this.props.selected.population
+    );
     this.props.setData(selectedResult);
 
     /** @type Map<number, Array<SEIREntry>> */
@@ -92,11 +99,11 @@ class Simulation extends PureComponent {
             date = date.getTime();
             if (!acc[date]) {
               acc[date] = {
-                date
+                date,
               };
             }
             acc[date] = Object.assign(acc[date], {
-              [k]: parseInt(value)
+              [k]: parseInt(value),
             });
           });
 
@@ -130,10 +137,13 @@ const mapState = (state) => {
     childData: getSelectedChildData(state),
 
     /** @type Map<number, number> */
-    populations: getPopulationsOfRegion(state, state.app.selected ? state.app.selected.id : 0),
+    populations: getPopulationsOfRegion(
+      state,
+      state.app.selected ? state.app.selected.id : 0
+    ),
     selected: state.app.selected,
     measures: getActiveMeasures(state.measures),
-    parameters: getParameterMap(state.parameters)
+    parameters: getParameterMap(state.parameters),
   };
 };
 

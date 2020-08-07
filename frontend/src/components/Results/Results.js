@@ -1,11 +1,11 @@
-import React, { Component } from 'react';
-import { connect } from 'react-redux';
-import { withTranslation } from 'react-i18next';
+import React, {Component} from 'react';
+import {connect} from 'react-redux';
+import {withTranslation} from 'react-i18next';
 import Simulation from '../Simulation';
 import SEIRChart from '../Graphs/SEIRChart';
 
-import { getSelectedData } from '../../redux/app';
-import { getActiveMeasures } from '../../redux/measures';
+import {getSelectedData} from '../../redux/app';
+import {getActiveMeasures} from '../../redux/measures';
 
 import * as numeral from 'numeral';
 
@@ -24,7 +24,7 @@ class Results extends Component {
   }
 
   render() {
-    const { t } = this.props;
+    const {t} = this.props;
     return (
       <>
         <div className="header">{t('results')}</div>
@@ -54,11 +54,11 @@ const mapState = (state) => {
     selected: state.app.selected,
     seir: state.seir.data,
     rki: getSelectedData(state),
-    measures: getActiveMeasures(state.measures)
+    measures: getActiveMeasures(state.measures),
   };
 };
 
 const ResultsTranslated = withTranslation()(Results);
 const ResultsConnected = connect(mapState, {})(ResultsTranslated);
 
-export { ResultsConnected as Results };
+export {ResultsConnected as Results};

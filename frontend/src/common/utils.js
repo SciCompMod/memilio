@@ -50,7 +50,7 @@ export const merge = (a, b, key) => {
   for (let k of uniqueKeys) {
     merged.push({
       ...a.find((e) => e[key[0]] === k),
-      ...b.find((e) => e[key[1]] === k)
+      ...b.find((e) => e[key[1]] === k),
     });
   }
 
@@ -97,7 +97,7 @@ export const calculateDamping = (measures, base_date, days) => {
     if (reduced.length === 0) {
       reduced.push({
         day: 0,
-        damping: damping[i]
+        damping: damping[i],
       });
       continue;
     }
@@ -105,7 +105,7 @@ export const calculateDamping = (measures, base_date, days) => {
     if (damping[i] !== reduced[reduced.length - 1].damping) {
       reduced.push({
         day: i,
-        damping: damping[i]
+        damping: damping[i],
       });
     }
   }
@@ -121,9 +121,9 @@ export const calculateDamping = (measures, base_date, days) => {
  * @return {Object}
  */
 export function filterJSObject(object, filterFn) {
-  const array = Object
-    .entries(object)
-    .filter(([key, value]) => filterFn(key, value))
+  const array = Object.entries(object).filter(([key, value]) =>
+    filterFn(key, value)
+  );
 
   const newObj = {};
   for (let [key, value] of array) {

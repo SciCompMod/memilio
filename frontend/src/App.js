@@ -1,10 +1,10 @@
-import React, { Component } from 'react';
-import { connect } from 'react-redux';
-import { withTranslation } from 'react-i18next';
+import React, {Component} from 'react';
+import {connect} from 'react-redux';
+import {withTranslation} from 'react-i18next';
 
 import GridLayout from './components/GridLayout';
 
-import { initializeApp, fetchData } from './redux/app';
+import {initializeApp, fetchData} from './redux/app';
 
 import './App.scss';
 
@@ -104,6 +104,6 @@ class App extends Component {
   } */
 }
 
-export default connect(null, { initializeApp, fetchData })(
+export default connect(null, {initializeApp, fetchData})(
   withTranslation()(App)
 );

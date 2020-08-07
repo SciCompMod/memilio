@@ -1,8 +1,8 @@
-import React, { Component } from 'react';
-import { connect } from 'react-redux';
-import { withTranslation } from 'react-i18next';
-import { updateParameter } from '../../redux/parameters';
-import { Label, Input, CustomInput, FormGroup, Col } from 'reactstrap';
+import React, {Component} from 'react';
+import {connect} from 'react-redux';
+import {withTranslation} from 'react-i18next';
+import {updateParameter} from '../../redux/parameters';
+import {Label, Input, CustomInput, FormGroup, Col} from 'reactstrap';
 
 import './Parameters.scss';
 
@@ -11,7 +11,7 @@ class Parameter extends Component {
     super(props);
     this.timeout = null;
     this.state = {
-      value: this.props.parameter.default
+      value: this.props.parameter.default,
     };
   }
 
@@ -24,7 +24,7 @@ class Parameter extends Component {
 
   update(value) {
     this.setState({
-      value
+      value,
     });
 
     if (this.timeout) {
@@ -36,13 +36,13 @@ class Parameter extends Component {
 
       this.props.updateParameter({
         ...this.props.parameter,
-        value: this.state.value
+        value: this.state.value,
       });
     }, 300);
   }
 
   renderInput() {
-    const { parameter } = this.props;
+    const {parameter} = this.props;
     switch (parameter.type) {
       case 'slider':
         return (
@@ -84,7 +84,7 @@ class Parameter extends Component {
   }
 
   render() {
-    const { t } = this.props;
+    const {t} = this.props;
     return (
       <div className="parameter">
         <Label className="h3 m-0">{t(this.props.parameter.label)}</Label>
@@ -94,7 +94,7 @@ class Parameter extends Component {
   }
 }
 
-const TransletedParameter = connect(null, { updateParameter })(
+const TransletedParameter = connect(null, {updateParameter})(
   withTranslation()(Parameter)
 );
 
@@ -102,15 +102,15 @@ class Parameters extends Component {
   constructor(props) {
     super(props);
     this.state = {
-      parameters: []
+      parameters: [],
     };
   }
 
   static getDerivedStateFromProps(nextProps, prevState) {
-    const { parameters } = nextProps;
+    const {parameters} = nextProps;
     return {
       ...prevState,
-      parameters
+      parameters,
     };
   }
 
@@ -123,7 +123,7 @@ class Parameters extends Component {
   }
 
   render() {
-    const { t } = this.props;
+    const {t} = this.props;
     return (
       <div className="parameters">
         <div className="header">{t('parameters.title')}</div>
@@ -141,11 +141,11 @@ class Parameters extends Component {
 
 const mapState = (state) => {
   return {
-    parameters: state.parameters.parameters
+    parameters: state.parameters.parameters,
   };
 };
 
 const ParametersTranslated = withTranslation()(Parameters);
 const ParametersConnected = connect(mapState, null)(ParametersTranslated);
 
-export { ParametersConnected as Parameters };
+export {ParametersConnected as Parameters};

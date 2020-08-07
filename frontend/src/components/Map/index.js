@@ -1,2 +1,2 @@
-import { GermanyMap } from './GermanyMap';
+import {GermanyMap} from './GermanyMap';
 export default GermanyMap;

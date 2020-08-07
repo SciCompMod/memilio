@@ -1,6 +1,6 @@
-import React, { Component } from 'react';
-import { connect } from 'react-redux';
-import { withTranslation } from 'react-i18next';
+import React, {Component} from 'react';
+import {connect} from 'react-redux';
+import {withTranslation} from 'react-i18next';
 import {
   Button,
   Collapse,
@@ -8,19 +8,19 @@ import {
   Modal,
   ModalBody,
   ModalFooter,
-  ModalHeader
+  ModalHeader,
 } from 'reactstrap';
 
 import DateRangePicker from 'react-daterange-picker';
 
 import Moment from 'moment';
-import { extendMoment } from 'moment-range';
+import {extendMoment} from 'moment-range';
 
 import {
   addInterval,
   editInterval,
   activateMeasure,
-  deactivateMeasure
+  deactivateMeasure,
 } from '../../redux/measures';
 
 import 'react-daterange-picker/dist/css/react-calendar.css';
@@ -35,14 +35,14 @@ const format = (format) => {
 const State = Object.freeze({
   NEW: Symbol('new'),
   EDIT: Symbol('edit'),
-  CLOSED: Symbol('closed')
+  CLOSED: Symbol('closed'),
 });
 
 class DateRangeModal extends Component {
   constructor(props) {
     super(props);
     this.state = {
-      range: this.sanitize(this.props.interval)
+      range: this.sanitize(this.props.interval),
     };
   }
 
@@ -55,16 +55,16 @@ class DateRangeModal extends Component {
   }
 
   onSelect(range) {
-    this.setState({ range });
+    this.setState({range});
   }
 
   select() {
     if (this.props.onSelect) {
-      const { start, end } = this.state.range;
+      const {start, end} = this.state.range;
       this.props.onSelect({
         ...this.props.interval,
         start: start.toDate().getTime(),
-        end: end.toDate().getTime()
+        end: end.toDate().getTime(),
       });
     }
   }
@@ -76,11 +76,11 @@ class DateRangeModal extends Component {
   }
 
   render() {
-    const { t } = this.props;
+    const {t} = this.props;
     return (
       <Modal
         isOpen={true}
-        modalTransition={{ timeout: 10 }}
+        modalTransition={{timeout: 10}}
         className="date-range"
       >
         <ModalHeader>{t('daterangemodal.header')}</ModalHeader>
@@ -116,7 +116,7 @@ class Measure extends Component {
     this.state = {
       ...this.props.data,
       interval: null,
-      modal: State.CLOSED
+      modal: State.CLOSED,
     };
   }
 
@@ -124,42 +124,42 @@ class Measure extends Component {
     console.log(event.currentTarget);
     const state = this.state;
     this.setState({
-      active: !state.active
+      active: !state.active,
     });
 
-    const { id } = this.props.data;
+    const {id} = this.props.data;
     if (state.active) {
-      this.props.deactivateMeasure({ id });
+      this.props.deactivateMeasure({id});
     } else {
-      this.props.activateMeasure({ id });
+      this.props.activateMeasure({id});
     }
   }
 
   toggleModal() {
     const state = this.state;
     this.setState({
-      modal: !state.modal
+      modal: !state.modal,
     });
   }
 
   newInterval() {
     this.setState({
       modal: State.NEW,
-      interval: null
+      interval: null,
     });
   }
 
   editInterval(interval) {
     this.setState({
       modal: State.EDIT,
-      interval
+      interval,
     });
   }
 
   close() {
     this.setState({
       modal: State.CLOSED,
-      interval: null
+      interval: null,
     });
   }
 
@@ -168,14 +168,14 @@ class Measure extends Component {
       case State.NEW:
         this.props.addInterval({
           measure: this.props.data.id,
-          ...interval
+          ...interval,
         });
         break;
 
       case State.EDIT:
         this.props.editInterval({
           measure: this.props.data.id,
-          ...interval
+          ...interval,
         });
         break;
 
@@ -254,12 +254,12 @@ const TranslatedMeasure = connect(null, {
   addInterval,
   editInterval,
   activateMeasure,
-  deactivateMeasure
+  deactivateMeasure,
 })(withTranslation()(Measure));
 
 class Measures extends Component {
   render() {
-    const { t } = this.props;
+    const {t} = this.props;
     return (
       <div className="measures">
         <div className="header">{t('measures.title')}</div>
@@ -275,11 +275,11 @@ class Measures extends Component {
 
 const mapState = (state) => {
   return {
-    measures: state.measures
+    measures: state.measures,
   };
 };
 
 const MeasuresTranslated = withTranslation()(Measures);
 const MeasuresConnected = connect(mapState, {})(MeasuresTranslated);
 
-export { MeasuresConnected as Measures };
+export {MeasuresConnected as Measures};
