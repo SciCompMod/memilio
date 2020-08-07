@@ -8,11 +8,6 @@ import { initializeApp, fetchData } from './redux/app';
 
 import './App.scss';
 
-import * as am4core from "@amcharts/amcharts4/core";
-import am4themes_animated from "@amcharts/amcharts4/themes/animated";
-
-am4core.useTheme(am4themes_animated);
-
 class App extends Component {
   constructor(props) {
     super(props);
