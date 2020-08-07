@@ -5,9 +5,10 @@ import {getActiveMeasures} from '../redux/measures';
 import {getParameterMap} from '../redux/parameters';
 import {getPopulationsOfRegion, getSelectedChildData, getSelectedData} from '../redux/app';
 import {setData, setRegionData} from '../redux/seir';
+import {setEndDate, setStartDate} from '../redux/time';
 
-import {simulate_seir, makeSeirParam, Damping} from '../common/seir.js';
-import {calculateDamping} from '../common/utils';
+import {Damping, makeSeirParam, simulate_seir} from '../common/seir.js';
+import {calculateDamping, lastElement} from '../common/utils';
 
 /** @typedef {{date: number, S: number, E: number, I: number, R: number}} SEIREntry */
 
@@ -21,6 +22,8 @@ class Simulation extends PureComponent {
   simulate() {
     const selectedResult = this.simulateRegion(this.props.start, this.props.selected.population);
     this.props.setData(selectedResult);
+    this.props.setStartDate(this.props.start.date);
+    this.props.setEndDate(lastElement(selectedResult).date);
 
     /** @type Map<number, Array<SEIREntry>> */
     const regionResults = new Map();
@@ -78,7 +81,7 @@ class Simulation extends PureComponent {
 
     const startDate = start.date;
 
-    const result = Object.values(
+    return Object.values(
       Object.keys(data)
         .filter((k) => k !== 't')
         .reduce((acc, k) => {
@@ -103,8 +106,6 @@ class Simulation extends PureComponent {
           return acc;
         }, {})
     );
-
-    return result;
   }
 
   render() {
@@ -137,4 +138,4 @@ const mapState = (state) => {
   };
 };
 
-export default connect(mapState, {setData, setRegionData})(Simulation);
+export default connect(mapState, {setData, setRegionData, setStartDate, setEndDate})(Simulation);

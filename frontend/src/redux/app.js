@@ -1,5 +1,6 @@
 import {createSlice} from '@reduxjs/toolkit';
-import {groupBy, renameKey, sumByKey, filterJSObject, stateIdFromCountyId} from '../common/utils';
+import {groupBy, renameKey, sumByKey, filterJSObject, stateIdFromCountyId, lastElement} from '../common/utils';
+import {setTimeBounds} from "./time";
 
 import axios from 'axios';
 
@@ -60,8 +61,11 @@ const slice = createSlice({
           state.selected.population = population.EWZ;
         }
       } else {
-        state.selected = {dataset: "germany", id: 0, label: "Germany", population: state.populations.total}
+        state.selected = {dataset: "germany", id: 0, label: "Germany", population: state.populations.total};
       }
+    },
+    setCountryData(state, action) {
+      state.germany = action.payload;
     },
     setStateData: (state, action) => {
       const [all, age, gender] = action.payload;
@@ -72,34 +76,6 @@ const slice = createSlice({
       });
 
       state.states = {all, gender, age};
-
-      // Generate Germany data from state data by summing it up.
-      function sumByState(stateData) {
-        const summedData = [];
-        for (let stateEntry of Object.values(stateData)) {
-          for (let timeStamp of stateEntry) {
-            const result = summedData.find(entry => entry.date === timeStamp.date);
-            if (result) {
-              result.Confirmed += timeStamp.Confirmed;
-              result.Deaths += timeStamp.Deaths;
-              result.Recovered += timeStamp.Recovered;
-            } else {
-              summedData.push({
-                ID_Country: 0,
-                Country: "Germany",
-                Confirmed: timeStamp.Confirmed,
-                Deaths: timeStamp.Deaths,
-                Recovered: timeStamp.Recovered,
-                date: timeStamp.date
-              });
-            }
-          }
-        }
-        summedData.sort((a, b) => a.date - b.date);
-        return summedData;
-      }
-
-      state.germany = {...state.germany, all: sumByState(all), gender: sumByState(gender), age: sumByState(age)};
     },
     setCountyData: (state, action) => {
       const [all, age, gender] = action.payload;
@@ -115,6 +91,7 @@ const slice = createSlice({
 export const {
   init,
   setSelected,
+  setCountryData,
   setStateData,
   setCountyData,
   setPopulations
@@ -147,6 +124,37 @@ export const fetchData = () => async (dispatch) => {
   });
 
   dispatch(setStateData(state));
+
+  // Generate Germany data from state data by summing it up.
+  function sumByState(stateData) {
+    const summedData = [];
+    for (let stateEntry of Object.values(stateData)) {
+      for (let timeStamp of stateEntry) {
+        const result = summedData.find(entry => entry.date === timeStamp.date);
+        if (result) {
+          result.Confirmed += timeStamp.Confirmed;
+          result.Deaths += timeStamp.Deaths;
+          result.Recovered += timeStamp.Recovered;
+        } else {
+          summedData.push({
+            ID_Country: 0,
+            Country: "Germany",
+            Confirmed: timeStamp.Confirmed,
+            Deaths: timeStamp.Deaths,
+            Recovered: timeStamp.Recovered,
+            date: timeStamp.date
+          });
+        }
+      }
+    }
+    summedData.sort((a, b) => a.date - b.date);
+    return summedData;
+  }
+
+  const [all, age, gender] = state;
+  const allTransformed = sumByState(all);
+  dispatch(setCountryData({all: allTransformed, gender: sumByState(gender), age: sumByState(age)}));
+  dispatch(setTimeBounds({start: allTransformed[0].date, end: lastElement(allTransformed).date}))
 
   // load county data
   let county = await Promise.all([

@@ -1,9 +1,10 @@
-import React, { Component } from 'react';
-import { Responsive, WidthProvider } from 'react-grid-layout';
-import Map from './Map';
+import React, {Component} from 'react';
+import {Responsive, WidthProvider} from 'react-grid-layout';
 import Parameters from './Parameters';
 import Measures from './Measures';
 import Results from './Results';
+import Timeline from './Timeline';
+import TimeMap from './TimeMap'
 
 import './GridLayout.scss';
 
@@ -16,7 +17,7 @@ class ResponsiveGrid extends Component {
     return (
       <>
         <div className="earth">
-          <img src="assets/earth.png" alt="Welt" />
+          <img src="assets/earth.png" alt="Welt"/>
         </div>
         <header>
           <span className="logo">
@@ -26,52 +27,64 @@ class ResponsiveGrid extends Component {
             />
             <span className="logo-text">
               Deutsches Zentrum
-              <br />
+              <br/>
               für Luft- und Raumfahrt
             </span>
           </span>
         </header>
         <ResponsiveGridLayout
           className="layout position-relative"
-          breakpoints={{ lg: 1200, md: 996, sm: 768, xs: 480, xxs: 0 }}
-          cols={{ lg: 20, md: 10, sm: 6, xs: 4, xxs: 2 }}
+          breakpoints={{lg: 1200, md: 996, sm: 768, xs: 480, xxs: 0}}
+          cols={{lg: 20, md: 10, sm: 6, xs: 4, xxs: 2}}
           rowHeight={100}
           containerPadding={[10, 10]}
           margin={[5, 5]}
           autoSize={true}
           draggableHandle=".grid-draggable-handle"
         >
-          <div
+          <div className="grid-box"
+               key="timeline"
+               data-grid={{x: 0, y: 0, w: 8, h: 1}}>
+            <i className="fas fa-arrows-alt grid-draggable-handle"/>
+            <Timeline/>
+          </div>
+          <div className="grid-box"
+               key="timeMap"
+               data-grid={{x: 0, y: 1, w: 8, h: 7}}>
+            <i className="fas fa-arrows-alt grid-draggable-handle"/>
+            <TimeMap/>
+          </div>
+          {/*<div
             className="grid-box"
             key="map"
-            data-grid={{ x: 0, y: 0, w: 10, h: 4 }}
+            data-grid={{x: 6, y: 1, w: 6, h: 7}}
           >
             <i className="fas fa-arrows-alt grid-draggable-handle"></i>
-            <Map />
-          </div>
+            <Map/>
+          </div>*/}
           <div
             key="measures"
-            data-grid={{ x: 0, y: 4, w: 6, h: 4 }}
+            data-grid={{x: 14, y: 4, w: 6, h: 3}}
             className="grid-box"
           >
             <i className="fas fa-arrows-alt grid-draggable-handle"></i>
-            <Measures />
+            <Measures/>
           </div>
           <div
             key="parameters"
-            data-grid={{ x: 6, y: 4, w: 4, h: 4 }}
+            data-grid={{x: 8, y: 4, w: 6, h: 3}}
             className="grid-box"
           >
             <i className="fas fa-arrows-alt grid-draggable-handle"></i>
-            <Parameters />
+            <Parameters/>
           </div>
           <div
             key="results"
-            data-grid={{ x: 10, y: 0, w: 10, h: 5 }}
+            data-grid={{x: 8, y: 0, w: 12, h: 5}}
             className="grid-box"
           >
             <i className="fas fa-arrows-alt grid-draggable-handle"></i>
-            <Results />
+            <Results/>
           </div>
         </ResponsiveGridLayout>
       </>
