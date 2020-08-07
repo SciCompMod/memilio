@@ -19,6 +19,10 @@ export default class InteractiveHeatMap {
    *  @type IHeatRule */
   _stateHeatRule = null;
 
+  /** @private
+   *  @type boolean */
+  _seriesHit = false;
+
   /** @type number */
   selectedState = -1;
 
@@ -60,6 +64,7 @@ export default class InteractiveHeatMap {
     statePolygonTemplate.applyOnClones = true;
 
     statePolygonTemplate.events.on("hit", e => {
+      this._seriesHit = true;
       const item = e.target.dataItem.dataContext;
       this.onStateSelected(item);
       this.onCountySelected(null);
@@ -67,7 +72,17 @@ export default class InteractiveHeatMap {
       this._stateSelected(item);
     });
 
-    this._map.events.on("zoomlevelchanged", e => {
+    this._map.events.on("hit", () => {
+      if (!this._seriesHit) {
+        this.onStateSelected(null);
+        this.onCountySelected(null);
+        this.selectedCounty = -1;
+        this._stateSelected({id: -1});
+      }
+      this._seriesHit = false;
+    });
+
+    this._map.events.on("zoomlevelchanged", () => {
       if (this._map.zoomLevel === 1) {
         this.onStateSelected(null);
         this.onCountySelected(null);
@@ -123,6 +138,7 @@ export default class InteractiveHeatMap {
     newSeries.heatRules.push(countyHeatRule);
 
     countyPolygonTemplate.events.on("hit", e => {
+      this._seriesHit = true;
       const item = e.target.dataItem.dataContext;
       this.selectedCounty = item !== null ? parseInt(item.RS, 10) : -1;
       this.onCountySelected(item);

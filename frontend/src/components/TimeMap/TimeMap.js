@@ -10,8 +10,8 @@ import { roundToUTCMidnight } from "../../common/utils";
 /**
  * This Component has two major functions:
  * 1. Select different Regions for the chart.
- * 2. Display a cloropeth map of the infection data over time.
- *    Currently the cloropeth map displays either the RKI data, or if available simulated SEIR data of all infected.
+ * 2. Display a choropleth map of the infection data over time.
+ *    Currently the choropleth map displays either the RKI data, or if available simulated SEIR data of all infected.
  *    A selection mechanism will be integrated at a later time.
  *    If the timeline changes the current time the map will update with the values of the selected date.
  */
