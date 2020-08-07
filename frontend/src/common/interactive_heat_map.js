@@ -9,7 +9,11 @@ export default class InteractiveHeatMap {
 
   /** @private
    *  @type MapPolygonSeries */
-  _stateSeries = null;
+  _stateChoroplethSeries = null;
+
+  /** @private
+   *  @type MapPolygonSeries */
+  _stateBackgroundSeries = null;
 
   /** @private
    *  @type Map<number, MapPolygonSeries> */
@@ -43,52 +47,62 @@ export default class InteractiveHeatMap {
     this._map.hiddenState.transitionDuration = 100;
     this._map.maxPanOut = 0.0;
 
-    this._stateSeries = new am4maps.MapPolygonSeries();
+    this._stateBackgroundSeries = new am4maps.MapPolygonSeries();
+    this._stateBackgroundSeries.geodataSource.url = "assets/german-states.geojson";
+    this._stateBackgroundSeries.useGeodata = true;
+    this._map.series.push(this._stateBackgroundSeries);
+    this._stateBackgroundSeries.mapPolygons.template.fill = am4core.color("#AAA");
+    this._stateBackgroundSeries.mapPolygons.template.tooltipText = "{name}";
+    this._stateBackgroundSeries.hide();
 
-    this._stateSeries.geodataSource.url = "assets/german-states.geojson";
-    this._stateSeries.useGeodata = true;
-    this._map.series.push(this._stateSeries);
+    this._stateChoroplethSeries = new am4maps.MapPolygonSeries();
+    this._stateChoroplethSeries.geodataSource.url = "assets/german-states.geojson";
+    this._stateChoroplethSeries.useGeodata = true;
+    this._map.series.push(this._stateChoroplethSeries);
 
     this._stateHeatRule = {
       property: "fill",
-      target: this._stateSeries.mapPolygons.template,
+      target: this._stateChoroplethSeries.mapPolygons.template,
       min: am4core.color("#DDD", 1),
       max: am4core.color("#F00", 1),
       logarithmic: true,
     }
+    this._stateChoroplethSeries.heatRules.push(this._stateHeatRule);
 
-    this._stateSeries.heatRules.push(this._stateHeatRule);
-
-    const statePolygonTemplate = this._stateSeries.mapPolygons.template;
+    const statePolygonTemplate = this._stateChoroplethSeries.mapPolygons.template;
     statePolygonTemplate.tooltipText = "{name}: {value}";
     statePolygonTemplate.nonScalingStroke = true;
     statePolygonTemplate.applyOnClones = true;
 
-    statePolygonTemplate.events.on("hit", e => {
+    const selectStateEvent = e => {
       this._seriesHit = true;
       const item = e.target.dataItem.dataContext;
       this.onStateSelected(item);
       this.onCountySelected(null);
       this.selectedCounty = -1;
       this._stateSelected(item);
-    });
+    }
+
+    statePolygonTemplate.events.on("hit", selectStateEvent);
+    this._stateBackgroundSeries.mapPolygons.template.events.on("hit", selectStateEvent);
+
+    const zoomOutEvent = () => {
+      this.onStateSelected(null);
+      this.onCountySelected(null);
+      this.selectedCounty = -1;
+      this._stateSelected({id: -1});
+    }
 
     this._map.events.on("hit", () => {
       if (!this._seriesHit) {
-        this.onStateSelected(null);
-        this.onCountySelected(null);
-        this.selectedCounty = -1;
-        this._stateSelected({id: -1});
+        zoomOutEvent();
       }
       this._seriesHit = false;
     });
 
     this._map.events.on("zoomlevelchanged", () => {
       if (this._map.zoomLevel === 1) {
-        this.onStateSelected(null);
-        this.onCountySelected(null);
-        this.selectedCounty = -1;
-        this._stateSelected({id: -1});
+        zoomOutEvent();
       }
     });
   }
@@ -96,11 +110,11 @@ export default class InteractiveHeatMap {
   /** @param values {Map<number, number>} */
   setStateValues(values) {
     if (values) {
-      for (let stateDatum of this._stateSeries.data) {
+      for (let stateDatum of this._stateChoroplethSeries.data) {
         stateDatum.value = values.get(stateDatum.id);
       }
 
-      this._stateSeries.invalidateRawData();
+      this._stateChoroplethSeries.invalidateRawData();
     }
   }
 
@@ -167,12 +181,14 @@ export default class InteractiveHeatMap {
       }
 
       this.selectedState = newState.id;
-      this._map.zoomToMapObject(this._stateSeries.getPolygonById(newState.id));
-      this._stateSeries.hide();
+      this._map.zoomToMapObject(this._stateChoroplethSeries.getPolygonById(newState.id));
+      this._stateChoroplethSeries.hide();
+      this._stateBackgroundSeries.show();
     } else { // No state is selected.
       this.selectedState = -1;
       this._map.goHome();
-      this._stateSeries.show();
+      this._stateChoroplethSeries.show();
+      this._stateBackgroundSeries.hide();
     }
   }
 }
