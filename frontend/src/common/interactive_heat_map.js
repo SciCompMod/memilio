@@ -135,6 +135,10 @@ export default class InteractiveHeatMap {
 
   /** @param values {Map<string, number>} */
   setCountyValues(values) {
+    if (!values) {
+      return;
+    }
+
     if (this._countySeries.has(this.selectedState)) {
       const series = this._countySeries.get(this.selectedState);
       for (let countyDatum of series.data) {
