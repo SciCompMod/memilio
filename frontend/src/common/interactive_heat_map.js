@@ -116,6 +116,12 @@ export default class InteractiveHeatMap {
         zoomOutEvent();
       }
     });
+
+    for (let state of STATE_METADATA) {
+      this._createCountySeries(state);
+    }
+
+    this._map.invalidate();
   }
 
   setDataSetName(name) {
@@ -155,6 +161,7 @@ export default class InteractiveHeatMap {
     const newSeries = new am4maps.MapPolygonSeries();
     newSeries.geodataSource.url = "assets/counties/" + state.fileName + ".geojson";
     newSeries.useGeodata = true;
+    newSeries.hidden = true;
 
     const countyPolygonTemplate = newSeries.mapPolygons.template;
     countyPolygonTemplate.tooltipText = "{id}: {value}";
