@@ -10,13 +10,13 @@
 namespace epi
 {
 using HandleSimulationResultFunction =
-    std::function<void(const SecirParams&, std::vector<double>, std::vector<Eigen::VectorXd>)>;
+    std::function<void(SecirParams&, std::vector<double>, std::vector<Eigen::VectorXd>)>;
 
 // The function type for the kind of simulation that we want to run
 using secir_simulation_function_t = std::function<std::vector<double>(
-    double t0, double tmax, double dt, SecirParams const& params, std::vector<Eigen::VectorXd>& secir_result)>;
+    double t0, double tmax, double dt, SecirParams& params, std::vector<Eigen::VectorXd>& secir_result)>;
 
-auto dummy_func = [](const auto& cont_freq, const auto& params, const auto& time, const auto& secir_result) {};
+auto dummy_func = [](auto& params, const auto& time, const auto& secir_result) {};
 
 // TODO: document class
 // TODO: document input file convention
@@ -35,7 +35,7 @@ public:
      * @brief Constructor from contact frequency matrix and parameter vector
      * @param[in] parameter_filename filename of a file storing ranges of input parameters.
      */
-    ParameterStudy(secir_simulation_function_t const& simu_func, SecirParams const& params, double t0, double tmax,
+    ParameterStudy(secir_simulation_function_t const& simu_func, SecirParams& params, double t0, double tmax,
                    double dev_rel = 0.2, size_t nb_runs = 1);
 
     /*
@@ -132,8 +132,8 @@ inline ParameterStudy::ParameterStudy(const secir_simulation_function_t& simu_fu
 {
 }
 
-inline ParameterStudy::ParameterStudy(secir_simulation_function_t const& simu_func, SecirParams const& params,
-                                      double t0, double tmax, double dev_rel, size_t nb_runs)
+inline ParameterStudy::ParameterStudy(secir_simulation_function_t const& simu_func, SecirParams& params, double t0,
+                                      double tmax, double dev_rel, size_t nb_runs)
     : simulation_function{simu_func}
     , parameter_space{params, t0, tmax, dev_rel}
     , m_nb_runs{nb_runs}
