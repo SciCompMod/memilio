@@ -2,9 +2,9 @@
 #define SECIR_H
 
 #include <epidemiology/populations.h>
-#include <epidemiology/damping.h>
 #include <epidemiology/adapt_rk.h>
 #include <epidemiology/uncertain_value.h>
+#include <epidemiology/uncertain_matrix.h>
 
 #include <vector>
 #include <Eigen/Core>
@@ -84,7 +84,7 @@ class SecirParams
 {
 public:
     SecirParams(size_t nb_groups = 1)
-        : cont_freq_matrix(ContactFrequencyMatrix{nb_groups})
+        : contact_patterns(ContactFrequencyMatrix{nb_groups})
         , populations(Populations({nb_groups, SecirCount}))
     {
         times         = std::vector<StageTimes>(nb_groups, StageTimes());
@@ -97,74 +97,6 @@ public:
     }
 
     double base_reprod;
-
-    /**
-     * @brief Initializes a Contact Frequency matrix for 
-     *        age resolved SECIR models
-     **/
-    class ContactFrequencyMatrix
-    {
-    public:
-        /**
-         * @brief Standard constructor of contact frequencies 1x1-matrix in the SECIR model
-         */
-        ContactFrequencyMatrix();
-
-        /**
-         * @brief Constructor of contact frequencies nb_groups x nb_groups-matrix in the SECIR model
-         * @param[in] nb_groups number of groups in the model
-         */
-        ContactFrequencyMatrix(size_t const nb_groups);
-
-        /**
-         * @brief returns the size of the contact frequency matrix
-         */
-        int get_size() const;
-
-        /**
-         * @brief sets the contact frequency in the SECIR model; in case of multiple groups, set the contact rate cr_ij=cr_ji=cont_freq
-         * @param cont_freq contact rate/frequency in 1/day unit
-         * @param self_group own group
-         * @param contact_group group which gets in contact with own group
-         */
-        void set_cont_freq(double cont_freq, int self_group, int contact_group);
-
-        /**
-         * @brief returns the contact frequency set for the SECIR model in 1/day unit; in case of multiple groups, returns the contact rate cr_ij=cr_ji
-         */
-        double get_cont_freq(int self_group, int contact_group) const;
-
-        /**
-         * @brief sets the damping in the SECIR model; in case of multiple groups, set the contact rate d_ij=d_ji=cont_freq
-         * @param damping dampings over the whole time line in day unit
-         * @param self_group own group
-         * @param contact_group group which gets in contact with own group
-         */
-        void set_dampings(Dampings const& damping, int self_group, int contact_group);
-
-        /**
-         * @brief returns the dampings set for the SECIR model in 1/day unit; in case of multiple groups, returns the damping d_ij=d_ji
-         */
-        const Dampings& get_dampings(int self_group, int contact_group) const;
-
-        /**
-         * @brief add damping to the dampings object specified by self_ and contact_group
-         * @param damping one damping in day unit
-         * @param self_group own group
-         * @param contact_group group which gets in contact with own group
-         */
-        void add_damping(Damping const& damping, int self_group, int contact_group);
-
-        /**
-         * @brief removes all previously set dampings
-         */
-        void clear_dampings();
-
-    private:
-        std::vector<std::vector<double>> m_cont_freq;
-        // This defines a damping factor for a mitigation strategy for different points in time.
-        std::vector<std::vector<Dampings>> m_dampings;
-    };
 
     // time parameters for the different 'stages' of the disease of scale day or 1/day
     // 'stages' does not refer to the 'states' of the SECIR model but also includes incubation time or contact frequency
@@ -389,7 +321,7 @@ public:
     /**
      * @brief returns the contact frequency matrix set in UncertainContactMatrix
      */
-    ContactFrequencyMatrix const& get_cont_freq_matrix() const;    
+    ContactFrequencyMatrix const& get_cont_freq_matrix() const;
 
     UncertainContactMatrix contact_patterns;
     Populations populations;

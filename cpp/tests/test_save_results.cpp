@@ -53,13 +53,13 @@ TEST(TestSaveResult, compareResultWithH5)
     epi::Damping dummy(30., 0.3);
     for (int i = 0; i < nb_groups; i++) {
         for (int j = i; j < nb_groups; j++) {
-            params.cont_freq_matrix.set_cont_freq(fact * cont_freq, i, j);
-            params.cont_freq_matrix.add_damping(dummy, i, j);
+            params.get_cont_freq_matrix().set_cont_freq(fact * cont_freq, i, j);
+            params.get_cont_freq_matrix().add_damping(dummy, i, j);
         }
     }
 
     std::vector<Eigen::VectorXd> secihurd(0);
-    auto t = simulate(t0, tmax, dt, contact_freq_matrix, params, secihurd);
+    auto t = simulate(t0, tmax, dt, params, secihurd);
 
     epi::save_result(t, secihurd, "test_result.h5");
 

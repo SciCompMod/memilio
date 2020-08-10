@@ -15,72 +15,6 @@
 namespace epi
 {
 
-SecirParams::ContactFrequencyMatrix::ContactFrequencyMatrix()
-    : m_cont_freq{{1.0}}
-    , m_dampings{{Dampings{}}}
-{
-}
-
-SecirParams::ContactFrequencyMatrix::ContactFrequencyMatrix(size_t const nb_groups)
-    : m_cont_freq{nb_groups, std::vector<double>(nb_groups, 0)}
-    , m_dampings{nb_groups, std::vector<Dampings>(nb_groups, Dampings{})}
-{
-}
-
-int SecirParams::ContactFrequencyMatrix::get_size() const
-{
-    return static_cast<int>(m_cont_freq.size());
-}
-
-void SecirParams::ContactFrequencyMatrix::set_cont_freq(double const cont_freq, int const self_group,
-                                                        int const contact_group)
-{
-    if (self_group <= contact_group) {
-        m_cont_freq[self_group][contact_group] = cont_freq;
-    }
-    else {
-        m_cont_freq[contact_group][self_group] = cont_freq;
-    }
-}
-
-double SecirParams::ContactFrequencyMatrix::get_cont_freq(int self_group, int contact_group) const
-{
-    // prevent erroneous nonsymmetry
-    return self_group <= contact_group ? m_cont_freq[self_group][contact_group]
-                                       : m_cont_freq[contact_group][self_group];
-}
-
-void SecirParams::ContactFrequencyMatrix::set_dampings(Dampings const& damping, int self_group, int contact_group)
-{
-    if (self_group <= contact_group) {
-        m_dampings[self_group][contact_group] = damping;
-    }
-    else {
-        m_dampings[contact_group][self_group] = damping;
-    }
-}
-
-const Dampings& SecirParams::ContactFrequencyMatrix::get_dampings(int self_group, int contact_group) const
-{
-    // prevent erroneous nonsymmetry
-    return self_group <= contact_group ? m_dampings[self_group][contact_group] : m_dampings[contact_group][self_group];
-}
-
-void SecirParams::ContactFrequencyMatrix::add_damping(Damping const& damping, int self_group, int contact_group)
-{
-    if (self_group <= contact_group) {
-        m_dampings[self_group][contact_group].add(damping);
-    }
-    else {
-        m_dampings[contact_group][self_group].add(damping);
-    }
-}
-
-void SecirParams::ContactFrequencyMatrix::clear_dampings()
-{
-    m_dampings.resize(0);
-}
-
 SecirParams::StageTimes::StageTimes()
     : m_tinc_inv{1.0}
     , m_tinfmild_inv{1.0}
@@ -329,12 +263,12 @@ UncertainValue& SecirParams::Probabilities::get_dead_per_icu()
     return m_deathicu;
 }
 
-SecirParams::ContactFrequencyMatrix& SecirParams::get_cont_freq_matrix()
+ContactFrequencyMatrix& SecirParams::get_cont_freq_matrix()
 {
     return contact_patterns.get_cont_freq_mat();
 }
 
-SecirParams::ContactFrequencyMatrix const& SecirParams::get_cont_freq_matrix() const
+ContactFrequencyMatrix const& SecirParams::get_cont_freq_matrix() const
 {
     return contact_patterns.get_cont_freq_mat();
 }
@@ -346,8 +280,8 @@ double get_reprod_rate(SecirParams const& params, double const t, std::vector<do
         auto dummy_R3 =
             0.5 / (1.0 / params.times[0].get_infectious_mild_inv() - 1.0 / params.times[0].get_serialinterval_inv());
 
-        double cont_freq_eff =
-            params.get_cont_freq_matrix().get_cont_freq(0, 0) * params.get_cont_freq_matrix().get_dampings(0, 0).get_factor(t);
+        double cont_freq_eff = params.get_cont_freq_matrix().get_cont_freq(0, 0) *
+                               params.get_cont_freq_matrix().get_dampings(0, 0).get_factor(t);
 
         double nb_total = 0;
         for (size_t i = 0; i < yt.size(); i++) {
@@ -404,9 +338,9 @@ void secir_get_derivatives(SecirParams const& params, const Eigen::VectorXd& y, 
             size_t Cj = params.populations.get_flat_index({j, C});
             size_t Ij = params.populations.get_flat_index({j, I});
             // effective contact rate by contact rate between groups i and j and damping j
-            double cont_freq_eff =
-                params.get_cont_freq_matrix().get_cont_freq(i, j) *
-                params.get_cont_freq_matrix().get_dampings(i, j).get_factor(t); // get effective contact rate between i and j
+            double cont_freq_eff = params.get_cont_freq_matrix().get_cont_freq(i, j) *
+                                   params.get_cont_freq_matrix().get_dampings(i, j).get_factor(
+                                       t); // get effective contact rate between i and j
             double divN    = 1.0 / params.populations.get_group_total(SecirCategory::AgeGroup, j); // precompute 1.0/Nj
             double dummy_S = y[Si] * cont_freq_eff * divN * params.probabilities[i].get_infection_from_contact() *
                              (y[Cj] + params.probabilities[j].get_risk_from_symptomatic() * y[Ij]);

@@ -90,8 +90,8 @@ TEST(TestSaveParameters, compareParameterStudy)
     epi::Damping dummy(30., 0.3);
     for (int i = 0; i < nb_groups; i++) {
         for (int j = i; j < nb_groups; j++) {
-            params.cont_freq_matrix.set_cont_freq(fact * cont_freq, i, j);
-            params.cont_freq_matrix.add_damping(dummy, i, j);
+            params.get_cont_freq_matrix().set_cont_freq(fact * cont_freq, i, j);
+            params.get_cont_freq_matrix().add_damping(dummy, i, j);
         }
     }
     int nb_runs      = 5;
@@ -181,7 +181,6 @@ TEST(TestSaveParameters, compareGraphs)
     double fact   = 1.0 / (double)nb_groups;
 
     epi::SecirParams params(nb_groups);
-    epi::ContactFrequencyMatrix contact_freq_matrix{(size_t)nb_groups};
 
     for (size_t i = 0; i < nb_groups; i++) {
         params.times[i].set_incubation(tinc);
@@ -215,14 +214,14 @@ TEST(TestSaveParameters, compareGraphs)
     epi::Damping dummy(30., 0.3);
     for (int i = 0; i < nb_groups; i++) {
         for (int j = i; j < nb_groups; j++) {
-            contact_freq_matrix.set_cont_freq(fact * cont_freq, i, j);
-            contact_freq_matrix.add_damping(dummy, i, j);
+            params.get_cont_freq_matrix().set_cont_freq(fact * cont_freq, i, j);
+            params.get_cont_freq_matrix().add_damping(dummy, i, j);
         }
     }
 
     epi::Graph<epi::ModelNode<epi::SecirSimulation>, epi::MigrationEdge> graph;
-    graph.add_node(contact_freq_matrix, params, t0);
-    graph.add_node(contact_freq_matrix, params, t0);
+    graph.add_node(params, t0);
+    graph.add_node(params, t0);
     graph.add_edge(0, 1, Eigen::VectorXd::Constant(params.populations.get_num_compartments(), 0.01));
     graph.add_edge(1, 0, Eigen::VectorXd::Constant(params.populations.get_num_compartments(), 0.01));
 
