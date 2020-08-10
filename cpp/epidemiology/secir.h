@@ -168,62 +168,61 @@ public:
         /**
          * @brief returns 1.0 over the incubation time set for the SECIR model in day unit
          */
-        const UncertainValue& get_incubation_inv() const;
-        UncertainValue& get_incubation_inv();
+        const UncertainValue& get_incubation() const;
+        UncertainValue& get_incubation();
 
         /**
          * @brief returns 1.0 over the infectious time set for the SECIR model in day unit
          */
-        const UncertainValue& get_infectious_mild_inv() const;
-        UncertainValue& get_infectious_mild_inv();
+        const UncertainValue& get_infectious_mild() const;
+        UncertainValue& get_infectious_mild();
 
         /**
          * @brief returns 1.0 over the serial interval in the SECIR model
          */
-        const UncertainValue& get_serialinterval_inv() const;
-        UncertainValue& get_serialinterval_inv();
+        const UncertainValue& get_serialinterval() const;
+        UncertainValue& get_serialinterval();
 
         /**
          * @brief returns 1.0 over the time people are 'simply' hospitalized before returning home in the SECIR model 
          */
-        const UncertainValue& get_hospitalized_to_home_inv() const;
-        UncertainValue& get_hospitalized_to_home_inv();
+        const UncertainValue& get_hospitalized_to_home() const;
+        UncertainValue& get_hospitalized_to_home();
 
         /**
          * @brief returns 1.0 over the time people are infectious at home before 'simply' hospitalized in the SECIR model 
          */
-        const UncertainValue& get_home_to_hospitalized_inv() const;
-        UncertainValue& get_home_to_hospitalized_inv();
+        const UncertainValue& get_home_to_hospitalized() const;
+        UncertainValue& get_home_to_hospitalized();
 
         /**
          * @brief returns 1.0 over the time people are 'simply' hospitalized before being treated by ICU in the SECIR model
          */
-        const UncertainValue& get_hospitalized_to_icu_inv() const;
-        UncertainValue& get_hospitalized_to_icu_inv();
+        const UncertainValue& get_hospitalized_to_icu() const;
+        UncertainValue& get_hospitalized_to_icu();
 
         /**
          * @brief returns 1.0 over the time people are treated by ICU before returning home in the SECIR model
          */
-        const UncertainValue& get_icu_to_home_inv() const;
-        UncertainValue& get_icu_to_home_inv();
+        const UncertainValue& get_icu_to_home() const;
+        UncertainValue& get_icu_to_home();
 
         /**
          * @brief returns 1.0 over the infectious time for asymptomatic cases in the SECIR model
          */
-        const UncertainValue& get_infectious_asymp_inv() const;
-        UncertainValue& get_infectious_asymp_inv();
+        const UncertainValue& get_infectious_asymp() const;
+        UncertainValue& get_infectious_asymp();
 
         /**
          * @brief returns 1.0 over the time people are treated by ICU before dying in the SECIR model
          */
-        const UncertainValue& get_icu_to_dead_inv() const;
-        UncertainValue& get_icu_to_dead_inv();
+        const UncertainValue& get_icu_to_dead() const;
+        UncertainValue& get_icu_to_dead();
 
     private:
-        UncertainValue m_tinc_inv, m_tinfmild_inv; // parameters also available in SEIR
-        UncertainValue m_tserint_inv, m_thosp2home_inv, m_thome2hosp_inv, m_thosp2icu_inv, m_ticu2home_inv,
-            m_tinfasy_inv,
-            m_ticu2death_inv; // new SECIR params
+        UncertainValue m_tinc, m_tinfmild; // parameters also available in SEIR
+        UncertainValue m_tserint, m_thosp2home, m_thome2hosp, m_thosp2icu, m_ticu2home, m_tinfasy,
+            m_ticu2death; // new SECIR params
     };
 
     class Probabilities

@@ -268,24 +268,21 @@ TEST(TestSaveParameters, compareGraphs)
             ASSERT_EQ(graph_params.populations.get({group, epi::SecirCompartments::D}),
                       graph_read_params.populations.get({group, epi::SecirCompartments::D}));
 
-            ASSERT_EQ(graph_params.times[group].get_incubation_inv(),
-                      graph_read_params.times[group].get_incubation_inv());
-            ASSERT_EQ(graph_params.times[group].get_serialinterval_inv(),
-                      graph_read_params.times[group].get_serialinterval_inv());
-            ASSERT_EQ(graph_params.times[group].get_infectious_mild_inv(),
-                      graph_read_params.times[group].get_infectious_mild_inv());
-            ASSERT_EQ(graph_params.times[group].get_hospitalized_to_home_inv(),
-                      graph_read_params.times[group].get_hospitalized_to_home_inv());
-            ASSERT_EQ(graph_params.times[group].get_home_to_hospitalized_inv(),
-                      graph_read_params.times[group].get_home_to_hospitalized_inv());
-            ASSERT_EQ(graph_params.times[group].get_infectious_asymp_inv(),
-                      graph_read_params.times[group].get_infectious_asymp_inv());
-            ASSERT_EQ(graph_params.times[group].get_hospitalized_to_icu_inv(),
-                      graph_read_params.times[group].get_hospitalized_to_icu_inv());
-            ASSERT_EQ(graph_params.times[group].get_icu_to_home_inv(),
-                      graph_read_params.times[group].get_icu_to_home_inv());
-            ASSERT_EQ(graph_params.times[group].get_icu_to_dead_inv(),
-                      graph_read_params.times[group].get_icu_to_dead_inv());
+            ASSERT_EQ(graph_params.times[group].get_incubation(), graph_read_params.times[group].get_incubation());
+            ASSERT_EQ(graph_params.times[group].get_serialinterval(),
+                      graph_read_params.times[group].get_serialinterval());
+            ASSERT_EQ(graph_params.times[group].get_infectious_mild(),
+                      graph_read_params.times[group].get_infectious_mild());
+            ASSERT_EQ(graph_params.times[group].get_hospitalized_to_home(),
+                      graph_read_params.times[group].get_hospitalized_to_home());
+            ASSERT_EQ(graph_params.times[group].get_home_to_hospitalized(),
+                      graph_read_params.times[group].get_home_to_hospitalized());
+            ASSERT_EQ(graph_params.times[group].get_infectious_asymp(),
+                      graph_read_params.times[group].get_infectious_asymp());
+            ASSERT_EQ(graph_params.times[group].get_hospitalized_to_icu(),
+                      graph_read_params.times[group].get_hospitalized_to_icu());
+            ASSERT_EQ(graph_params.times[group].get_icu_to_home(), graph_read_params.times[group].get_icu_to_home());
+            ASSERT_EQ(graph_params.times[group].get_icu_to_dead(), graph_read_params.times[group].get_icu_to_dead());
 
             ASSERT_EQ(graph_params.probabilities[group].get_infection_from_contact(),
                       graph_read_params.probabilities[group].get_infection_from_contact());
