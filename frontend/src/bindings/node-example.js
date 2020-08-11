@@ -51,25 +51,21 @@ secirjs().then(function(secir) {
     params.push_back(param);
     param.delete();
 
-    secir.print_secir_params(params);
-
-    cont_freq_matrix = new secir.ContactFrequencyMatrix()
-    cont_freq_matrix.set_cont_freq(0.5, 0, 0) // 0.2 - 0.75
+    params[0].get_cont_freq_matrix().set_cont_freq(0.5, 0, 0) // 0.2 - 0.75
 
     // emulate some mitigations
     var d1 = new secir.Damping(23., 0.8);
     var d2 = new secir.Damping(25., 0.75);
     var d3 = new secir.Damping(27., 0.7);
-    cont_freq_matrix.add_damping(d1, 0, 0);
-    cont_freq_matrix.add_damping(d2, 0, 0);
-    cont_freq_matrix.add_damping(d3, 0, 0);
+    params[0].get_cont_freq_matrix().add_damping(d1, 0, 0);
+    params[0].get_cont_freq_matrix().add_damping(d2, 0, 0);
+    params[0].get_cont_freq_matrix().add_damping(d3, 0, 0);
     d1.delete();
     d2.delete();
     d3.delete();
 
-    result = secir.simulate(0., 100., 0.1, cont_freq_matrix, params)
+    result = secir.simulate(0., 100., 0.1, params)
     params.delete();
-    cont_freq_matrix.delete();
 
     console.log(toArray(result.t));
 

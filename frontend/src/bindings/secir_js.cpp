@@ -33,11 +33,10 @@ public:
     std::vector<double> nb_dead;
 };
 
-SecirResult simulate_secir(double t0, double tmax, double dt, const epi::ContactFrequencyMatrix& cont_freq_matrix,
-                           epi::SecirParams const& params)
+SecirResult simulate_secir(double t0, double tmax, double dt, epi::SecirParams const& params)
 {
     std::vector<Eigen::VectorXd> seir(0);
-    auto times = simulate(t0, tmax, dt, cont_freq_matrix, params, seir);
+    auto times = simulate(t0, tmax, dt, params, seir);
 
     SecirResult result;
     if (seir.size() < 1 || seir[0].size() != 8) {
@@ -88,26 +87,26 @@ EMSCRIPTEN_BINDINGS(secirjs)
 
     js::class_<epi::SecirParams::StageTimes>("StageTimes")
         .constructor<>()
-        .function("set_incubation", &epi::SecirParams::StageTimes::set_incubation)
-        .function("set_infectious_mild", &epi::SecirParams::StageTimes::set_infectious_mild)
-        .function("set_serialinterval", &epi::SecirParams::StageTimes::set_serialinterval)
-        .function("set_hospitalized_to_home", &epi::SecirParams::StageTimes::set_hospitalized_to_home)
-        .function("set_home_to_hospitalized", &epi::SecirParams::StageTimes::set_home_to_hospitalized)
-        .function("set_hospitalized_to_icu", &epi::SecirParams::StageTimes::set_hospitalized_to_icu)
-        .function("set_icu_to_home", &epi::SecirParams::StageTimes::set_icu_to_home)
-        .function("set_infectious_asymp", &epi::SecirParams::StageTimes::set_infectious_asymp)
-        .function("set_icu_to_death", &epi::SecirParams::StageTimes::set_icu_to_death)
+        .function("set_incubation", js::select_overload<void(double)>(&epi::SecirParams::StageTimes::set_incubation))
+        .function("set_infectious_mild", js::select_overload<void(double)>(&epi::SecirParams::StageTimes::set_infectious_mild))
+        .function("set_serialinterval", js::select_overload<void(double)>(&epi::SecirParams::StageTimes::set_serialinterval))
+        .function("set_hospitalized_to_home", js::select_overload<void(double)>(&epi::SecirParams::StageTimes::set_hospitalized_to_home))
+        .function("set_home_to_hospitalized", js::select_overload<void(double)>(&epi::SecirParams::StageTimes::set_home_to_hospitalized))
+        .function("set_hospitalized_to_icu", js::select_overload<void(double)>(&epi::SecirParams::StageTimes::set_hospitalized_to_icu))
+        .function("set_icu_to_home", js::select_overload<void(double)>(&epi::SecirParams::StageTimes::set_icu_to_home))
+        .function("set_infectious_asymp", js::select_overload<void(double)>(&epi::SecirParams::StageTimes::set_infectious_asymp))
+        .function("set_icu_to_death", js::select_overload<void(double)>(&epi::SecirParams::StageTimes::set_icu_to_death))
 
         // at the moment, no const getters available in JS
-        .function("get_incubation_inv", js::select_overload<epi::UncertainValue& ()>(&epi::SecirParams::StageTimes::get_incubation_inv))
-        .function("get_infectious_mild_inv", js::select_overload<epi::UncertainValue& ()>(&epi::SecirParams::StageTimes::get_infectious_mild_inv))
-        .function("get_serialinterval_inv", js::select_overload<epi::UncertainValue& ()>(&epi::SecirParams::StageTimes::get_serialinterval_inv))
-        .function("get_hospitalized_to_home_inv", js::select_overload<epi::UncertainValue& ()>(&epi::SecirParams::StageTimes::get_hospitalized_to_home_inv))
-        .function("get_home_to_hospitalized_inv", js::select_overload<epi::UncertainValue& ()>(&epi::SecirParams::StageTimes::get_home_to_hospitalized_inv))
-        .function("get_hospitalized_to_icu_inv", js::select_overload<epi::UncertainValue& ()>(&epi::SecirParams::StageTimes::get_hospitalized_to_icu_inv))
-        .function("get_icu_to_home_inv", js::select_overload<epi::UncertainValue& ()>(&epi::SecirParams::StageTimes::get_icu_to_home_inv))
-        .function("get_infectious_asymp_inv", js::select_overload<epi::UncertainValue& ()>(&epi::SecirParams::StageTimes::get_infectious_asymp_inv))
-        .function("get_icu_to_dead_inv", js::select_overload<epi::UncertainValue& ()>(&epi::SecirParams::StageTimes::get_icu_to_dead_inv));
+        .function("get_incubation", js::select_overload<epi::UncertainValue& ()>(&epi::SecirParams::StageTimes::get_incubation))
+        .function("get_infectious_mild", js::select_overload<epi::UncertainValue& ()>(&epi::SecirParams::StageTimes::get_infectious_mild))
+        .function("get_serialinterval", js::select_overload<epi::UncertainValue& ()>(&epi::SecirParams::StageTimes::get_serialinterval))
+        .function("get_hospitalized_to_home", js::select_overload<epi::UncertainValue& ()>(&epi::SecirParams::StageTimes::get_hospitalized_to_home))
+        .function("get_home_to_hospitalized", js::select_overload<epi::UncertainValue& ()>(&epi::SecirParams::StageTimes::get_home_to_hospitalized))
+        .function("get_hospitalized_to_icu", js::select_overload<epi::UncertainValue& ()>(&epi::SecirParams::StageTimes::get_hospitalized_to_icu))
+        .function("get_icu_to_home", js::select_overload<epi::UncertainValue& ()>(&epi::SecirParams::StageTimes::get_icu_to_home))
+        .function("get_infectious_asymp", js::select_overload<epi::UncertainValue& ()>(&epi::SecirParams::StageTimes::get_infectious_asymp))
+        .function("get_icu_to_dead", js::select_overload<epi::UncertainValue& ()>(&epi::SecirParams::StageTimes::get_icu_to_dead));
 
     js::class_<epi::Populations>("Populations")
         .constructor<std::vector<size_t>&>()
@@ -126,12 +125,12 @@ EMSCRIPTEN_BINDINGS(secirjs)
 
     js::class_<epi::SecirParams::Probabilities>("Probabilities")
         .constructor<>()
-        .function("set_infection_from_contact", &epi::SecirParams::Probabilities::set_infection_from_contact)
-        .function("set_asymp_per_infectious", &epi::SecirParams::Probabilities::set_asymp_per_infectious)
-        .function("set_risk_from_symptomatic", &epi::SecirParams::Probabilities::set_risk_from_symptomatic)
-        .function("set_hospitalized_per_infectious", &epi::SecirParams::Probabilities::set_hospitalized_per_infectious)
-        .function("set_icu_per_hospitalized", &epi::SecirParams::Probabilities::set_icu_per_hospitalized)
-        .function("set_dead_per_icu", &epi::SecirParams::Probabilities::set_dead_per_icu)
+        .function("set_infection_from_contact", js::select_overload<void(double)>(&epi::SecirParams::Probabilities::set_infection_from_contact))
+        .function("set_asymp_per_infectious", js::select_overload<void(double)>(&epi::SecirParams::Probabilities::set_asymp_per_infectious))
+        .function("set_risk_from_symptomatic", js::select_overload<void(double)>(&epi::SecirParams::Probabilities::set_risk_from_symptomatic))
+        .function("set_hospitalized_per_infectious", js::select_overload<void(double)>(&epi::SecirParams::Probabilities::set_hospitalized_per_infectious))
+        .function("set_icu_per_hospitalized", js::select_overload<void(double)>(&epi::SecirParams::Probabilities::set_icu_per_hospitalized))
+        .function("set_dead_per_icu", js::select_overload<void(double)>(&epi::SecirParams::Probabilities::set_dead_per_icu))
 
         // at the moment, no const getters available in JS
         .function("get_infection_from_contact", js::select_overload<epi::UncertainValue& ()>(&epi::SecirParams::Probabilities::get_infection_from_contact))
@@ -141,12 +140,6 @@ EMSCRIPTEN_BINDINGS(secirjs)
         .function("get_icu_per_hospitalized", js::select_overload<epi::UncertainValue& ()>(&epi::SecirParams::Probabilities::get_icu_per_hospitalized))
         .function("get_dead_per_icu", js::select_overload<epi::UncertainValue& ()>(&epi::SecirParams::Probabilities::get_dead_per_icu));
 
-    js::class_<epi::SecirParams>("SecirParams")
-        .constructor<size_t>()
-        .property("times", &epi::SecirParams::times)
-        .property("populations", &epi::SecirParams::populations)
-        .property("probabilities", &epi::SecirParams::probabilities);
-
     js::class_<epi::ContactFrequencyMatrix>("ContactFrequencyMatrix")
         .constructor<>()
         .function("set_cont_freq", &epi::ContactFrequencyMatrix::set_cont_freq)
@@ -155,7 +148,13 @@ EMSCRIPTEN_BINDINGS(secirjs)
         .function("get_dampings", &epi::ContactFrequencyMatrix::get_dampings)
         .function("add_damping", &epi::ContactFrequencyMatrix::add_damping);
 
-    js::function("print_secir_params", &epi::print_secir_params);
+    js::class_<epi::SecirParams>("SecirParams")
+        .constructor<size_t>()
+        .property("times", &epi::SecirParams::times)
+        .property("populations", &epi::SecirParams::populations)
+        .property("probabilities", &epi::SecirParams::probabilities)
+        .function("get_cont_freq_matrix", js::select_overload<epi::ContactFrequencyMatrix& ()>(&epi::SecirParams::get_cont_freq_matrix));
+        
     js::function("simulate", &simulate_secir);
 
     js::register_vector<double>("VectorDouble");

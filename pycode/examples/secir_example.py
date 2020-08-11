@@ -1,4 +1,4 @@
-from epidemiology.secir import ContactFrequencyMatrix, Damping, SecirParams, print_secir_params, simulate, StageTimes, Probabilities, Populations, SecirCompartments
+from epidemiology.secir import ContactFrequencyMatrix, Damping, SecirParams, simulate, StageTimes, Probabilities, Populations, SecirCompartments
 from matplotlib import pyplot as plt
 import pandas as pd
 import numpy as np
@@ -28,13 +28,13 @@ def plot_secir():
     Mio = 1000000
 
     # load contact matrix
-    contact_polymod = pd.read_csv('../../data/contact_data/images/Polymod.csv', index_col=0).values
+    contact_polymod = pd.read_csv('../data/contact_data/images/Polymod.csv', index_col=0).values
 
 
     contact_polymod = 0.5*(contact_polymod + contact_polymod.T)
 
-    create_dampings(path='../../data/contact_data/', days=days)
-    dampings = pd.read_csv('../../data/contact_data/dampings.csv', index_col=0, header=[0, 1]).values
+    create_dampings(path='../data/contact_data/', days=days)
+    dampings = pd.read_csv('../data/contact_data/dampings.csv', index_col=0, header=[0, 1]).values
     dampings = np.swapaxes(dampings.reshape(8,days,8),1,2)
     for i in range(days):
         dampings[:,:,i] = 0.5*(dampings[:,:,i] + dampings[:,:,i].T)
@@ -121,7 +121,7 @@ def plot_secir():
                 #cont_freq_matrix.add_damping(Damping(100., 0.7), 0, 0)
 
     # run the simulation
-    result = simulate(t0=0., tmax=days, dt=0.1, cont_freq_matrix=cont_freq_matrix, params=params)
+    result = simulate(t0=0., tmax=days, dt=0.1, params=params)
 
     # sum over all groups
     group_data = np.zeros((len(result[0].t),8*num_groups))

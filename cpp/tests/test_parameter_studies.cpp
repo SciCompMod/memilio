@@ -71,7 +71,7 @@ TEST(ParameterStudies, sample_from_secir_params)
         }
     }
 
-    epi::ParameterSpace parameter_space(contact_freq_matrix, params, 0., 100., 0.2);
+    epi::ParameterSpace parameter_space(params, 0., 100., 0.2);
 
     epi::SecirParams params_sample = parameter_space.get_secir_params_sample();
 
@@ -79,17 +79,18 @@ TEST(ParameterStudies, sample_from_secir_params)
 
         EXPECT_GE(params_sample.populations.get_group_total(epi::SecirCategory::AgeGroup, i), 0);
 
-        EXPECT_GE(params_sample.times[i].get_incubation_inv(), 0);
+        EXPECT_GE(params_sample.times[i].get_incubation(), 0);
 
         EXPECT_GE(params_sample.probabilities[i].get_infection_from_contact(), 0);
     }
 
-    epi::ContactFrequencyMatrix contact_sample = parameter_space.get_cont_freq_matrix_sample();
-
     for (size_t i = 0; i < params_sample.size(); i++) {
         for (size_t j = 0; j < params_sample.size(); j++) {
-            EXPECT_GE(contact_sample.get_dampings(static_cast<int>(i), static_cast<int>(j)).get_factor(1.0), 0);
-            EXPECT_GE(contact_sample.get_cont_freq(static_cast<int>(i), static_cast<int>(j)), 0);
+            EXPECT_GE(params_sample.get_cont_freq_matrix()
+                          .get_dampings(static_cast<int>(i), static_cast<int>(j))
+                          .get_factor(1.0),
+                      0);
+            EXPECT_GE(params_sample.get_cont_freq_matrix().get_cont_freq(static_cast<int>(i), static_cast<int>(j)), 0);
         }
     }
 }
@@ -102,7 +103,7 @@ TEST(ParameterStudies, test_normal_distribution)
     // check if standard deviation is reduced if between too narrow interval [min,max] has to be sampled.
     parameter_dist_normal_1.set_upper_bound(1);
     parameter_dist_normal_1.set_lower_bound(-1);
-    parameter_dist_normal_1.set_log(false); // only avoid warning output in tests
+    parameter_dist_normal_1.log_stddev_changes(false); // only avoid warning output in tests
 
     double std_dev_demanded = parameter_dist_normal_1.get_standard_dev();
     parameter_dist_normal_1.get_sample();
@@ -183,7 +184,6 @@ TEST(ParameterStudies, check_ensemble_run_result)
     double fact   = 1.0 / (double)nb_groups;
 
     epi::SecirParams params(nb_groups);
-    epi::ContactFrequencyMatrix contact_freq_matrix{(size_t)nb_groups};
 
     for (size_t i = 0; i < nb_groups; i++) {
         params.times[i].set_incubation(tinc);
@@ -217,16 +217,15 @@ TEST(ParameterStudies, check_ensemble_run_result)
     epi::Damping dummy(30., 0.3);
     for (int i = 0; i < nb_groups; i++) {
         for (int j = i; j < nb_groups; j++) {
-            contact_freq_matrix.set_cont_freq(fact * cont_freq, i, j);
+            params.contact_patterns.get_cont_freq_mat().set_cont_freq(fact * cont_freq, i, j);
         }
     }
 
     epi::ParameterStudy parameter_study(
-        [](double t0, double tmax, double dt, epi::ContactFrequencyMatrix const& contact_freq_matrix,
-           epi::SecirParams const& params, std::vector<Eigen::VectorXd>& secir) {
-            return epi::simulate(t0, tmax, dt, contact_freq_matrix, params, secir);
+        [](double t0, double tmax, double dt, epi::SecirParams const& params, std::vector<Eigen::VectorXd>& secir) {
+            return epi::simulate(t0, tmax, dt, params, secir);
         },
-        contact_freq_matrix, params, t0, tmax);
+        params, t0, tmax);
 
     // Run parameter study
     int run = 0;
