@@ -340,12 +340,12 @@ UncertainValue& SecirParams::Probabilities::get_dead_per_icu()
 
 UncertainContactMatrix& SecirParams::get_contact_patterns()
 {
-    return contact_patterns;
+    return m_contact_patterns;
 }
 
 UncertainContactMatrix const& SecirParams::get_contact_patterns() const
 {
-    return contact_patterns;
+    return m_contact_patterns;
 }
 
 double get_reprod_rate(SecirParams const& params, double const t, std::vector<double> const& yt)

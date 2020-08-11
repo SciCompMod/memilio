@@ -84,7 +84,7 @@ class SecirParams
 {
 public:
     SecirParams(size_t nb_groups = 1)
-        : contact_patterns(ContactFrequencyMatrix{nb_groups})
+        : m_contact_patterns(ContactFrequencyMatrix{nb_groups})
         , populations(Populations({nb_groups, SecirCount}))
     {
         times         = std::vector<StageTimes>(nb_groups, StageTimes());
@@ -92,7 +92,7 @@ public:
     }
 
     SecirParams(ContactFrequencyMatrix cont_freq_matrix)
-        : contact_patterns(cont_freq_matrix)
+        : m_contact_patterns(cont_freq_matrix)
         , populations(Populations({(size_t)cont_freq_matrix.get_size(), SecirCount}))
     {
         times         = std::vector<StageTimes>(cont_freq_matrix.get_size(), StageTimes());
@@ -422,10 +422,12 @@ public:
      */
     UncertainContactMatrix const& get_contact_patterns() const;
 
-    UncertainContactMatrix contact_patterns;
     Populations populations;
     std::vector<StageTimes> times;
     std::vector<Probabilities> probabilities;
+
+private:
+    UncertainContactMatrix m_contact_patterns;
 };
 
 /**
