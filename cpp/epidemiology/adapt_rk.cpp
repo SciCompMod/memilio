@@ -133,7 +133,7 @@ bool RKIntegratorCore::step(const DerivFunction& f, const Eigen::VectorXd& yt, d
             if (err[i] > max_err) {
                 max_err = err[i];
             }
-            if (max_val < ytp1_low[i]) {
+            if (max_val < std::abs(ytp1_low[i])) {
                 max_val = std::abs(ytp1_low[i]);
             }
         }
