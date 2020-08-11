@@ -30,8 +30,8 @@ In order to use IO of parameters and simulation results (*epidemiology_io* libra
 
 *Making and executing C++ code*
 
-* (Create a build folder and) do cmake .. in epidemiology-cpp/cpp/build
-* Do cmake --build . (without IO library) or cmake -DEPI_BUILD_EPI_IO=ON --build . (with IO library)
+* (Create a build folder and) do cmake .. (without IO library) or cmake -DEPI_BUILD_EPI_IO=ON .. (with IO library) in epidemiology-cpp/cpp/build
+* Do cmake --build . 
 * Run 
   * an example via ./examples/secir_ageres
   * all unit tests via ./tests/runUnitTests
