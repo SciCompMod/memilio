@@ -108,7 +108,7 @@ void write_predef_sample(TixiDocumentHandle handle, const std::string& path, con
 }
 
 void write_contact(TixiDocumentHandle handle, const std::string& path,
-                   const ContactFrequencyVariableElement& contact_freq_matrix, int nb_runs)
+                   const UncertainContactMatrix& contact_pattern, int nb_runs)
 {
     ContactFrequencyMatrix cont_freq = contact_freq_matrix.get_cont_freq();
     int nb_groups                    = cont_freq.get_size();
@@ -159,7 +159,7 @@ void write_contact(TixiDocumentHandle handle, const std::string& path,
     write_predef_sample(handle, path_join(contact_path, "DampingOffdiag"), predef_offdiag_rel);
 }
 
-ContactFrequencyVariableElement read_contact(TixiDocumentHandle handle, const std::string& path)
+UncertainContactMatrix read_contact(TixiDocumentHandle handle, const std::string& path)
 {
     int nb_groups;
     tixiGetIntegerElement(handle, path_join("/Parameters", "NumberOfGroups").c_str(), &nb_groups);

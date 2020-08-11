@@ -34,9 +34,10 @@ TEST(TestSecir, compareWithPreviousRun)
     params.times[0].set_infectious_asymp(tinfasy);
     params.times[0].set_icu_to_death(ticu2death);
 
-    params.get_cont_freq_matrix().set_cont_freq(cont_freq, 0, 0);
+    epi::ContactFrequencyMatrix& cont_freq_matrix = params.get_contact_patterns();
+    cont_freq_matrix.set_cont_freq(cont_freq, 0, 0);
     epi::Damping dummy(30., 0.3);
-    params.get_cont_freq_matrix().add_damping(dummy, 0, 0);
+    cont_freq_matrix.add_damping(dummy, 0, 0);
 
     params.populations.set({0, epi::SecirCompartments::E}, nb_exp_t0);
     params.populations.set({0, epi::SecirCompartments::C}, nb_car_t0);

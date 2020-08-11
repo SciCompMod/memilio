@@ -91,6 +91,14 @@ public:
         probabilities = std::vector<Probabilities>(nb_groups, Probabilities());
     }
 
+    SecirParams(ContactFrequencyMatrix cont_freq_matrix)
+        : contact_patterns(cont_freq_matrix)
+        , populations(Populations({(size_t)cont_freq_matrix.get_size(), SecirCount}))
+    {
+        times         = std::vector<StageTimes>(cont_freq_matrix.get_size(), StageTimes());
+        probabilities = std::vector<Probabilities>(cont_freq_matrix.get_size(), Probabilities());
+    }
+
     size_t size() const
     {
         return times.size();
@@ -407,12 +415,12 @@ public:
     /**
      * @brief returns the contact frequency matrix set in UncertainContactMatrix
      */
-    ContactFrequencyMatrix& get_cont_freq_matrix();
+    UncertainContactMatrix& get_contact_patterns();
 
     /**
      * @brief returns the contact frequency matrix set in UncertainContactMatrix
      */
-    ContactFrequencyMatrix const& get_cont_freq_matrix() const;
+    UncertainContactMatrix const& get_contact_patterns() const;
 
     UncertainContactMatrix contact_patterns;
     Populations populations;

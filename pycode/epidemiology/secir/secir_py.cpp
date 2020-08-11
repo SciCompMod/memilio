@@ -236,8 +236,8 @@ PYBIND11_MODULE(_secir, m)
         .def_readwrite("times", &epi::SecirParams::times)
         .def_readwrite("populations", &epi::SecirParams::populations)
         .def_readwrite("probabilities", &epi::SecirParams::probabilities)
-        .def("get_cont_freq_matrix", py::overload_cast<>(&epi::SecirParams::get_cont_freq_matrix))
-        .def("get_cont_freq_matrix", py::overload_cast<>(&epi::SecirParams::get_cont_freq_matrix, py::const_));        
+        .def("get_contact_patterns", py::overload_cast<>(&epi::SecirParams::get_contact_patterns))
+        .def("get_contact_patterns", py::overload_cast<>(&epi::SecirParams::get_contact_patterns, py::const_));        
 
     m.def("simulate", &simulate_secir, "Simulates the SECIR model from t0 to tmax.", py::arg("t0"), py::arg("tmax"),
           py::arg("dt"), py::arg("params"));

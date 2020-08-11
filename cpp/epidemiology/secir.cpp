@@ -338,14 +338,14 @@ UncertainValue& SecirParams::Probabilities::get_dead_per_icu()
     return m_deathicu;
 }
 
-ContactFrequencyMatrix& SecirParams::get_cont_freq_matrix()
+UncertainContactMatrix& SecirParams::get_contact_patterns()
 {
-    return contact_patterns.get_cont_freq_mat();
+    return contact_patterns;
 }
 
-ContactFrequencyMatrix const& SecirParams::get_cont_freq_matrix() const
+UncertainContactMatrix const& SecirParams::get_contact_patterns() const
 {
-    return contact_patterns.get_cont_freq_mat();
+    return contact_patterns;
 }
 
 double get_reprod_rate(SecirParams const& params, double const t, std::vector<double> const& yt)
@@ -354,8 +354,9 @@ double get_reprod_rate(SecirParams const& params, double const t, std::vector<do
         // (base_)reprod has to be computed time dependently !
         auto dummy_R3 = 0.5 / (params.times[0].get_infectious_mild() - params.times[0].get_serialinterval());
 
-        double cont_freq_eff = params.get_cont_freq_matrix().get_cont_freq(0, 0) *
-                               params.get_cont_freq_matrix().get_dampings(0, 0).get_factor(t);
+        ContactFrequencyMatrix const& cont_freq_matrix = params.get_contact_patterns();
+
+        double cont_freq_eff = cont_freq_matrix.get_cont_freq(0, 0) * cont_freq_matrix.get_dampings(0, 0).get_factor(t);
 
         double nb_total = 0;
         for (size_t i = 0; i < yt.size(); i++) {
@@ -391,6 +392,8 @@ void secir_get_derivatives(SecirParams const& params, const Eigen::VectorXd& y, 
     // 0: S,      1: E,     2: C,     3: I,     4: H,     5: U,     6: R,     7: D
     size_t n_agegroups = params.size();
 
+    ContactFrequencyMatrix const& cont_freq_matrix = params.get_contact_patterns();
+
     for (size_t i = 0; i < n_agegroups; i++) {
 
         size_t Si = params.populations.get_flat_index({i, S});
@@ -408,9 +411,9 @@ void secir_get_derivatives(SecirParams const& params, const Eigen::VectorXd& y, 
             size_t Cj = params.populations.get_flat_index({j, C});
             size_t Ij = params.populations.get_flat_index({j, I});
             // effective contact rate by contact rate between groups i and j and damping j
-            double cont_freq_eff = params.get_cont_freq_matrix().get_cont_freq(i, j) *
-                                   params.get_cont_freq_matrix().get_dampings(i, j).get_factor(
-                                       t); // get effective contact rate between i and j
+            double cont_freq_eff =
+                cont_freq_matrix.get_cont_freq(i, j) *
+                cont_freq_matrix.get_dampings(i, j).get_factor(t); // get effective contact rate between i and j
             double divN    = 1.0 / params.populations.get_group_total(SecirCategory::AgeGroup, j); // precompute 1.0/Nj
             double dummy_S = y[Si] * cont_freq_eff * divN * params.probabilities[i].get_infection_from_contact() *
                              (y[Cj] + params.probabilities[j].get_risk_from_symptomatic() * y[Ij]);

@@ -34,7 +34,6 @@ TEST(ParameterStudies, sample_from_secir_params)
     double fact   = 1.0 / (double)nb_groups;
 
     epi::SecirParams params(nb_groups);
-    epi::ContactFrequencyMatrix contact_freq_matrix{(size_t)nb_groups};
 
     for (size_t i = 0; i < nb_groups; i++) {
         params.times[i].set_incubation(tinc);
@@ -65,9 +64,10 @@ TEST(ParameterStudies, sample_from_secir_params)
         params.probabilities[i].set_dead_per_icu(delta);
     }
 
+    epi::ContactFrequencyMatrix& cont_freq_matrix = params.get_contact_patterns();
     for (int i = 0; i < nb_groups; i++) {
         for (int j = i; j < nb_groups; j++) {
-            contact_freq_matrix.set_cont_freq(fact * cont_freq, i, j);
+            cont_freq_matrix.set_cont_freq(fact * cont_freq, i, j);
         }
     }
 
@@ -84,13 +84,13 @@ TEST(ParameterStudies, sample_from_secir_params)
         EXPECT_GE(params_sample.probabilities[i].get_infection_from_contact(), 0);
     }
 
+    epi::ContactFrequencyMatrix& cont_freq_matrix_sample = params_sample.get_contact_patterns();
+
     for (size_t i = 0; i < params_sample.size(); i++) {
         for (size_t j = 0; j < params_sample.size(); j++) {
-            EXPECT_GE(params_sample.get_cont_freq_matrix()
-                          .get_dampings(static_cast<int>(i), static_cast<int>(j))
-                          .get_factor(1.0),
+            EXPECT_GE(cont_freq_matrix_sample.get_dampings(static_cast<int>(i), static_cast<int>(j)).get_factor(1.0),
                       0);
-            EXPECT_GE(params_sample.get_cont_freq_matrix().get_cont_freq(static_cast<int>(i), static_cast<int>(j)), 0);
+            EXPECT_GE(cont_freq_matrix_sample.get_cont_freq(static_cast<int>(i), static_cast<int>(j)), 0);
         }
     }
 }
@@ -214,10 +214,11 @@ TEST(ParameterStudies, check_ensemble_run_result)
         params.probabilities[i].set_dead_per_icu(delta);
     }
 
+    epi::ContactFrequencyMatrix& cont_freq_matrix = params.get_contact_patterns();
     epi::Damping dummy(30., 0.3);
     for (int i = 0; i < nb_groups; i++) {
         for (int j = i; j < nb_groups; j++) {
-            params.contact_patterns.get_cont_freq_mat().set_cont_freq(fact * cont_freq, i, j);
+            cont_freq_matrix.set_cont_freq(fact * cont_freq, i, j);
         }
     }
 

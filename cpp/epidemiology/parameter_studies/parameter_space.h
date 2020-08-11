@@ -150,8 +150,8 @@ public:
 
     SecirParams get_secir_params_sample()
     {
-        SecirParams secir_params_sample(m_nb_age_groups);
-        for (size_t i = 0; i < m_nb_age_groups; i++) {
+        SecirParams secir_params_sample(m_params.size());
+        for (size_t i = 0; i < m_params.size(); i++) {
 
             secir_params_sample.populations.set({i, SecirCompartments::H}, m_hospitalized[i]);
             secir_params_sample.populations.set({i, SecirCompartments::U}, m_icu[i]);
@@ -195,8 +195,6 @@ public:
     }
 
 private:
-    size_t m_nb_age_groups;
-
     SecirParams m_params;
 
     // populations
@@ -252,97 +250,97 @@ ParameterSpace::ParameterSpace(SecirParams& params, double t0, double tmax, doub
     }
 
     // times
-    for (size_t i = 0; i < m_nb_age_groups; i++) {
+    for (size_t i = 0; i < params.size(); i++) {
         // incubation time
-        double value_params = params.times[i].get_incubation();
-        params.times[i].set_incubation(
+        double value_params = m_params.times[i].get_incubation();
+        m_params.times[i].set_incubation(
             ParameterDistributionNormal(std::max(min_val, (1 - dev_rel * 2.6) * value_params),
                                         (1 + dev_rel * 2.6) * value_params, value_params, dev_rel * value_params));
 
         // serial interval
-        value_params = params.times[i].get_serialinterval();
-        params.times[i].set_serialinterval(
+        value_params = m_params.times[i].get_serialinterval();
+        m_params.times[i].set_serialinterval(
             ParameterDistributionNormal(std::max(min_val, (1 - dev_rel * 2.6) * value_params),
                                         (1 + dev_rel * 2.6) * value_params, value_params, dev_rel * value_params));
 
         // infectious time (mild)
-        value_params = params.times[i].get_infectious_mild();
-        params.times[i].set_infectious_mild(
+        value_params = m_params.times[i].get_infectious_mild();
+        m_params.times[i].set_infectious_mild(
             ParameterDistributionNormal(std::max(min_val, (1 - dev_rel * 2.6) * value_params),
                                         (1 + dev_rel * 2.6) * value_params, value_params, dev_rel * value_params));
 
         // infectious to recovered (hospitalized to home)
-        value_params = params.times[i].get_hospitalized_to_home();
-        params.times[i].set_hospitalized_to_home(
+        value_params = m_params.times[i].get_hospitalized_to_home();
+        m_params.times[i].set_hospitalized_to_home(
             ParameterDistributionNormal(std::max(min_val, (1 - dev_rel * 2.6) * value_params),
                                         (1 + dev_rel * 2.6) * value_params, value_params, dev_rel * value_params));
 
         // infectious to hospitalized (home to hospitalized)
-        value_params = params.times[i].get_home_to_hospitalized();
-        params.times[i].set_home_to_hospitalized(
+        value_params = m_params.times[i].get_home_to_hospitalized();
+        m_params.times[i].set_home_to_hospitalized(
             ParameterDistributionNormal(std::max(min_val, (1 - dev_rel * 2.6) * value_params),
                                         (1 + dev_rel * 2.6) * value_params, value_params, dev_rel * value_params));
 
         // infectious (asymptomatic)
-        value_params = params.times[i].get_infectious_asymp();
-        params.times[i].set_infectious_asymp(
+        value_params = m_params.times[i].get_infectious_asymp();
+        m_params.times[i].set_infectious_asymp(
             ParameterDistributionNormal(std::max(min_val, (1 - dev_rel * 2.6) * value_params),
                                         (1 + dev_rel * 2.6) * value_params, value_params, dev_rel * value_params));
 
         // hospitalized to ICU
-        value_params = params.times[i].get_hospitalized_to_icu();
-        params.times[i].set_hospitalized_to_icu(
+        value_params = m_params.times[i].get_hospitalized_to_icu();
+        m_params.times[i].set_hospitalized_to_icu(
             ParameterDistributionNormal(std::max(min_val, (1 - dev_rel * 2.6) * value_params),
                                         (1 + dev_rel * 2.6) * value_params, value_params, dev_rel * value_params));
 
         // ICU to recovered
-        value_params = params.times[i].get_icu_to_home();
-        params.times[i].set_icu_to_home(
+        value_params = m_params.times[i].get_icu_to_home();
+        m_params.times[i].set_icu_to_home(
             ParameterDistributionNormal(std::max(min_val, (1 - dev_rel * 2.6) * value_params),
                                         (1 + dev_rel * 2.6) * value_params, value_params, dev_rel * value_params));
 
         // ICU to death
-        value_params = params.times[i].get_icu_to_dead();
-        params.times[i].set_icu_to_death(
+        value_params = m_params.times[i].get_icu_to_dead();
+        m_params.times[i].set_icu_to_death(
             ParameterDistributionNormal(std::max(min_val, (1 - dev_rel * 2.6) * value_params),
                                         (1 + dev_rel * 2.6) * value_params, value_params, dev_rel * value_params));
     }
 
     // probabilities
-    for (size_t i = 0; i < m_nb_age_groups; i++) {
+    for (size_t i = 0; i < params.size(); i++) {
         // infection from contact
-        double value_params = params.probabilities[i].get_infection_from_contact();
-        params.probabilities[i].set_infection_from_contact(
+        double value_params = m_params.probabilities[i].get_infection_from_contact();
+        m_params.probabilities[i].set_infection_from_contact(
             ParameterDistributionNormal(std::max(min_val, (1 - dev_rel * 2.6) * value_params),
                                         (1 + dev_rel * 2.6) * value_params, value_params, dev_rel * value_params));
 
         // asymptomatic per infectious
-        value_params = params.probabilities[i].get_asymp_per_infectious();
-        params.probabilities[i].set_asymp_per_infectious(
+        value_params = m_params.probabilities[i].get_asymp_per_infectious();
+        m_params.probabilities[i].set_asymp_per_infectious(
             ParameterDistributionNormal(std::max(min_val, (1 - dev_rel * 2.6) * value_params),
                                         (1 + dev_rel * 2.6) * value_params, value_params, dev_rel * value_params));
 
         // risk of infection from infectious
-        value_params = params.probabilities[i].get_risk_from_symptomatic();
-        params.probabilities[i].set_risk_from_symptomatic(
+        value_params = m_params.probabilities[i].get_risk_from_symptomatic();
+        m_params.probabilities[i].set_risk_from_symptomatic(
             ParameterDistributionNormal(std::max(min_val, (1 - dev_rel * 2.6) * value_params),
                                         (1 + dev_rel * 2.6) * value_params, value_params, dev_rel * value_params));
 
         // deaths per icu treatments
-        value_params = params.probabilities[i].get_dead_per_icu();
-        params.probabilities[i].set_dead_per_icu(
+        value_params = m_params.probabilities[i].get_dead_per_icu();
+        m_params.probabilities[i].set_dead_per_icu(
             ParameterDistributionNormal(std::max(min_val, (1 - dev_rel * 2.6) * value_params),
                                         (1 + dev_rel * 2.6) * value_params, value_params, dev_rel * value_params));
 
         // hospitalized per infections
-        value_params = params.probabilities[i].get_hospitalized_per_infectious();
-        params.probabilities[i].set_hospitalized_per_infectious(
+        value_params = m_params.probabilities[i].get_hospitalized_per_infectious();
+        m_params.probabilities[i].set_hospitalized_per_infectious(
             ParameterDistributionNormal(std::max(min_val, (1 - dev_rel * 2.6) * value_params),
                                         (1 + dev_rel * 2.6) * value_params, value_params, dev_rel * value_params));
 
         // icu treatments per hospitalized
-        value_params = params.probabilities[i].get_icu_per_hospitalized();
-        params.probabilities[i].set_icu_per_hospitalized(
+        value_params = m_params.probabilities[i].get_icu_per_hospitalized();
+        m_params.probabilities[i].set_icu_per_hospitalized(
             ParameterDistributionNormal(std::max(min_val, (1 - dev_rel * 2.6) * value_params),
                                         (1 + dev_rel * 2.6) * value_params, value_params, dev_rel * value_params));
     }
@@ -350,11 +348,11 @@ ParameterSpace::ParameterSpace(SecirParams& params, double t0, double tmax, doub
     // maximum number of dampings; to avoid overfitting only allow one damping for every 10 days simulated
     // damping base values are between 0.1 and 1; diagonal values vary lie in the range of 0.6 to 1.4 times the base value
     // off diagonal values vary between 0.7 to 1.1 of the corresponding diagonal value (symmetrization is conducted)
-    params.contact_patterns.set_dist_damp_nb(ParameterDistributionUniform(1, (tmax - t0) / 10));
-    params.contact_patterns.set_dist_damp_days(ParameterDistributionUniform(t0, tmax));
-    params.contact_patterns.set_dist_damp_diag_base(ParameterDistributionUniform(0.1, 1));
-    params.contact_patterns.set_dist_damp_diag_rel(ParameterDistributionUniform(0.6, 1.4));
-    params.contact_patterns.set_dist_damp_offdiag_rel(ParameterDistributionUniform(0.7, 1.1));
+    m_params.contact_patterns.set_dist_damp_nb(ParameterDistributionUniform(1, (tmax - t0) / 10));
+    m_params.contact_patterns.set_dist_damp_days(ParameterDistributionUniform(t0, tmax));
+    m_params.contact_patterns.set_dist_damp_diag_base(ParameterDistributionUniform(0.1, 1));
+    m_params.contact_patterns.set_dist_damp_diag_rel(ParameterDistributionUniform(0.6, 1.4));
+    m_params.contact_patterns.set_dist_damp_offdiag_rel(ParameterDistributionUniform(0.7, 1.1));
 }
 
 } // namespace epi

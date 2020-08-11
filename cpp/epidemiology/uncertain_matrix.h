@@ -119,6 +119,12 @@ public:
     operator ContactFrequencyMatrix const &() const;
 
     /**
+     * @brief Conversion to ContactFrequencyMatrix reference by returning the 
+     *        ContactFrequencyMatrix contained in UncertainContactMatrix
+     */
+    operator ContactFrequencyMatrix&();
+
+    /**
      * @brief Set an UncertainContactMatrix from a ContactFrequencyMatrix, 
      *        all distributions remain unchanged.
      */

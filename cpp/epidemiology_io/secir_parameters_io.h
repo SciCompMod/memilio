@@ -14,17 +14,17 @@ namespace epi
  * @param handle Tixi Document Handle
  * @param path Path to contact frequency matrix Tree of XML file to read from
  */
-ContactFrequencyVariableElement read_contact(TixiDocumentHandle handle, const std::string& path);
+UncertainContactMatrix read_contact(TixiDocumentHandle handle, const std::string& path);
 
 /**
  * @brief write contact frequency matrix and damping distributions to xml file
  * @param handle Tixi Document Handle
  * @param path Path to contact frequency matrix Tree of XML file
- * @param contact_freq_matrix Contact frequencies and dampings
+ * @param contact_pattern Contact frequencies, dampings, and distributions
  * @param nb_runs Number of runs of parameterstudy (used for predefinied samples of dampings)
  */
 void write_contact(TixiDocumentHandle handle, const std::string& path,
-                   const ContactFrequencyVariableElement& contact_freq_matrix, int nb_runs);
+                   const UncertainContactMatrix& contact_pattern, int nb_runs);
 
 /**
  * @brief read parameter distribution from xml file

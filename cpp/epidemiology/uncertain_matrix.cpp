@@ -114,165 +114,77 @@ UncertainContactMatrix::operator ContactFrequencyMatrix const &() const
     return m_cont_freq;
 }
 
-/**
-     * @brief Set an UncertainContactMatrix from a ContactFrequencyMatrix, 
-     *        all distributions remain unchanged.
-     */
+UncertainContactMatrix::operator ContactFrequencyMatrix&()
+{
+    return m_cont_freq;
+}
+
 UncertainContactMatrix& UncertainContactMatrix::operator=(ContactFrequencyMatrix cont_freq)
 {
     m_cont_freq = cont_freq;
     return *this;
 }
 
-/**
-     * @brief Returns the ContactFrequencyMatrix reference 
-     *        of the UncertainContactMatrix object
-     */
 ContactFrequencyMatrix& UncertainContactMatrix::get_cont_freq_mat()
 {
     return m_cont_freq;
 }
 
-/**
-     * @brief Returns the const ContactFrequencyMatrix reference 
-     *        of the UncertainContactMatrix object
-     */
 ContactFrequencyMatrix const& UncertainContactMatrix::get_cont_freq_mat() const
 {
     return m_cont_freq;
 }
 
-/**
-     * @brief Sets the random distribution for the number of 
-     *        contact pattern changes over time
-     *
-     * The function uses copy semantics, i.e. it copies
-     * the distribution object.
-     */
 void UncertainContactMatrix::set_dist_damp_nb(const ParameterDistribution& dist)
 {
     m_damp_nb.reset(dist.clone());
 }
 
-/**
-     * @brief Sets the random distribution of the actual 
-     *        points in time where the contact pattern changes
-     *
-     * The function uses copy semantics, i.e. it copies
-     * the distribution object.
-     */
 void UncertainContactMatrix::set_dist_damp_days(const ParameterDistribution& dist)
 {
     m_damp_days.reset(dist.clone());
 }
 
-/**
-     * @brief Sets the random distribution for a multiplicative base factor
-     *        (changing the diagonal entries of the ContactFrequencyMatrix)
-     *
-     * The function uses copy semantics, i.e. it copies
-     * the distribution object.
-     */
 void UncertainContactMatrix::set_dist_damp_diag_base(const ParameterDistribution& dist)
 {
     m_damp_diag_base.reset(dist.clone());
 }
 
-/**
-     * @brief Sets the random distribution for the multiplicative factors
-     *        changing each diagonal entry of the ContactFrequencyMatrix
-     *        relative to the base value sampled by the distribution from
-     *        get_dist_damp_diag_base()
-     *
-     * The function uses copy semantics, i.e. it copies
-     * the distribution object.
-     */
 void UncertainContactMatrix::set_dist_damp_diag_rel(const ParameterDistribution& dist)
 {
     m_damp_diag_rel.reset(dist.clone());
 }
 
-/**
-     * @brief Sets the random distribution for the multiplicative factors
-     *        changing each offdiagonal entry of the ContactFrequencyMatrix
-     *        relative to the corresponding diagonal entries by the distribution 
-     *        from get_dist_damp_diag_rel()
-     *
-     * The function uses copy semantics, i.e. it copies
-     * the distribution object.
-     */
 void UncertainContactMatrix::set_dist_damp_offdiag_rel(const ParameterDistribution& dist)
 {
     m_damp_offdiag_rel.reset(dist.clone());
 }
 
-/**
-     * @brief Returns the random distribution for the number of 
-     *        contact pattern changes over time
-     *
-     * If it is not set, a nullptr is returned.
-     */
 observer_ptr<ParameterDistribution> UncertainContactMatrix::get_dist_damp_nb() const
 {
     return m_damp_nb.get();
 }
 
-/**
-     * @brief Returns the random distribution of the actual 
-     *        points in time where the contact pattern changes
-     *
-     * If it is not set, a nullptr is returned.
-     */
 observer_ptr<ParameterDistribution> UncertainContactMatrix::get_dist_damp_days() const
 {
     return m_damp_days.get();
 }
 
-/**
-     * @brief Returns the random distribution for a multiplicative base factor
-     *        (changing the diagonal entries of the ContactFrequencyMatrix)
-     *
-     * If it is not set, a nullptr is returned.
-     */
 observer_ptr<ParameterDistribution> UncertainContactMatrix::get_dist_damp_diag_base() const
 {
     return m_damp_diag_base.get();
 }
 
-/**
-     * @brief Returns the random distribution for the multiplicative factors
-     *        changing each diagonal entry of the ContactFrequencyMatrix
-     *        relative to the base value sampled by the distribution from
-     *        get_dist_damp_diag_base()
-     *
-     * If it is not set, a nullptr is returned.
-     */
 observer_ptr<ParameterDistribution> UncertainContactMatrix::get_dist_damp_diag_rel() const
 {
     return m_damp_diag_rel.get();
 }
 
-/**
-     * @brief Returns the random distribution for the multiplicative factors
-     *        changing each offdiagonal entry of the ContactFrequencyMatrix
-     *        relative to the corresponding diagonal entries by the distribution 
-     *        from get_dist_damp_diag_rel()
-     *        
-     *
-     * If it is not set, a nullptr is returned.
-     */
 observer_ptr<ParameterDistribution> UncertainContactMatrix::get_dist_damp_offdiag_rel() const
 {
     return m_damp_offdiag_rel.get();
 }
 
-/**
-     * @brief Sets the value by sampling from the distributions
-     *
-     * If no distribution is set, the value is not changed.
-     * @param accum accumulating current and newly sampled dampings if true;
-     *              default: false; removing all previously set dampings
-     */
 ContactFrequencyMatrix UncertainContactMatrix::draw_sample(bool accum)
 {
     if (accum) {

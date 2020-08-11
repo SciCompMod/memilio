@@ -153,7 +153,7 @@ EMSCRIPTEN_BINDINGS(secirjs)
         .property("times", &epi::SecirParams::times)
         .property("populations", &epi::SecirParams::populations)
         .property("probabilities", &epi::SecirParams::probabilities)
-        .function("get_cont_freq_matrix", js::select_overload<epi::ContactFrequencyMatrix& ()>(&epi::SecirParams::get_cont_freq_matrix));
+        .function("get_contact_patterns", js::select_overload<epi::UncertainContactMatrix& ()>(&epi::SecirParams::get_contact_patterns));
         
     js::function("simulate", &simulate_secir);
 
