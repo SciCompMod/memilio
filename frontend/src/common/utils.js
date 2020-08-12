@@ -50,7 +50,7 @@ export const merge = (a, b, key) => {
   for (let k of uniqueKeys) {
     merged.push({
       ...a.find((e) => e[key[0]] === k),
-      ...b.find((e) => e[key[1]] === k)
+      ...b.find((e) => e[key[1]] === k),
     });
   }
 
@@ -78,10 +78,7 @@ export const calculateDamping = (measures, base_date, days) => {
       let end_date = interval.end;
 
       let start = Math.floor((start_date - base_date) / (1000 * 60 * 60 * 24));
-      let end = Math.min(
-        days,
-        Math.floor((end_date - base_date) / (1000 * 60 * 60 * 24))
-      );
+      let end = Math.min(days, Math.floor((end_date - base_date) / (1000 * 60 * 60 * 24)));
 
       for (var i = start; i < end; i++) {
         if (measures[index_i].damping < damping[i]) {
@@ -97,7 +94,7 @@ export const calculateDamping = (measures, base_date, days) => {
     if (reduced.length === 0) {
       reduced.push({
         day: 0,
-        damping: damping[i]
+        damping: damping[i],
       });
       continue;
     }
@@ -105,7 +102,7 @@ export const calculateDamping = (measures, base_date, days) => {
     if (damping[i] !== reduced[reduced.length - 1].damping) {
       reduced.push({
         day: i,
-        damping: damping[i]
+        damping: damping[i],
       });
     }
   }
@@ -130,9 +127,7 @@ export function roundToUTCMidnight(timestamp) {
  * @return {Object}
  */
 export function filterJSObject(object, filterFn) {
-  const array = Object
-    .entries(object)
-    .filter(([key, value]) => filterFn(key, value))
+  const array = Object.entries(object).filter(([key, value]) => filterFn(key, value));
 
   const newObj = {};
   for (let [key, value] of array) {
@@ -160,7 +155,7 @@ export function stateIdFromCountyId(countyId) {
  * @return {boolean}
  */
 export function isStateId(id) {
-  return (id > 0 && id < 100);
+  return id > 0 && id < 100;
 }
 
 /**

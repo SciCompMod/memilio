@@ -4,7 +4,7 @@ import Parameters from './Parameters';
 import Measures from './Measures';
 import Results from './Results';
 import Timeline from './Timeline';
-import TimeMap from './TimeMap'
+import TimeMap from './TimeMap';
 
 import './GridLayout.scss';
 
@@ -17,17 +17,14 @@ class ResponsiveGrid extends Component {
     return (
       <>
         <div className="earth">
-          <img src="assets/earth.png" alt="Welt"/>
+          <img src="assets/earth.png" alt="Welt" />
         </div>
         <header>
           <span className="logo">
-            <img
-              src="assets/logo.png"
-              alt="Deutsches Zentrum für Luft- und Raumfahrt (DLR)"
-            />
+            <img src="assets/logo.png" alt="Deutsches Zentrum für Luft- und Raumfahrt (DLR)" />
             <span className="logo-text">
               Deutsches Zentrum
-              <br/>
+              <br />
               für Luft- und Raumfahrt
             </span>
           </span>
@@ -42,17 +39,13 @@ class ResponsiveGrid extends Component {
           autoSize={true}
           draggableHandle=".grid-draggable-handle"
         >
-          <div className="grid-box"
-               key="timeline"
-               data-grid={{x: 0, y: 0, w: 8, h: 1}}>
-            <i className="fas fa-arrows-alt grid-draggable-handle"/>
-            <Timeline/>
+          <div className="grid-box" key="timeline" data-grid={{x: 0, y: 0, w: 8, h: 1}}>
+            <i className="fas fa-arrows-alt grid-draggable-handle" />
+            <Timeline />
           </div>
-          <div className="grid-box"
-               key="timeMap"
-               data-grid={{x: 0, y: 1, w: 8, h: 7}}>
-            <i className="fas fa-arrows-alt grid-draggable-handle"/>
-            <TimeMap/>
+          <div className="grid-box" key="timeMap" data-grid={{x: 0, y: 1, w: 8, h: 7}}>
+            <i className="fas fa-arrows-alt grid-draggable-handle" />
+            <TimeMap />
           </div>
           {/*<div
             className="grid-box"
@@ -62,29 +55,17 @@ class ResponsiveGrid extends Component {
             <i className="fas fa-arrows-alt grid-draggable-handle"></i>
             <Map/>
           </div>*/}
-          <div
-            key="measures"
-            data-grid={{x: 14, y: 4, w: 6, h: 3}}
-            className="grid-box"
-          >
+          <div key="measures" data-grid={{x: 14, y: 4, w: 6, h: 3}} className="grid-box">
             <i className="fas fa-arrows-alt grid-draggable-handle"></i>
-            <Measures/>
+            <Measures />
           </div>
-          <div
-            key="parameters"
-            data-grid={{x: 8, y: 4, w: 6, h: 3}}
-            className="grid-box"
-          >
+          <div key="parameters" data-grid={{x: 8, y: 4, w: 6, h: 3}} className="grid-box">
             <i className="fas fa-arrows-alt grid-draggable-handle"></i>
-            <Parameters/>
+            <Parameters />
           </div>
-          <div
-            key="results"
-            data-grid={{x: 8, y: 0, w: 12, h: 5}}
-            className="grid-box"
-          >
+          <div key="results" data-grid={{x: 8, y: 0, w: 12, h: 5}} className="grid-box">
             <i className="fas fa-arrows-alt grid-draggable-handle"></i>
-            <Results/>
+            <Results />
           </div>
         </ResponsiveGridLayout>
       </>

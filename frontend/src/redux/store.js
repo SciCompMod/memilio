@@ -1,4 +1,4 @@
-import { configureStore } from '@reduxjs/toolkit';
+import {configureStore} from '@reduxjs/toolkit';
 import measureReducer from './measures';
 import appReducer from './app';
 import parameterReducer from './parameters';
@@ -13,7 +13,7 @@ export default configureStore({
     parameters: parameterReducer,
     seir: seirReducer,
     time: timeReducer,
-    app: appReducer
+    app: appReducer,
   },
-  middleware: [thunk]
+  middleware: [thunk],
 });

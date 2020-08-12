@@ -1,2 +1,2 @@
-import { Measures } from './Measures';
+import {Measures} from './Measures';
 export default Measures;

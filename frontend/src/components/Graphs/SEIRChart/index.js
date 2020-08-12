@@ -1,2 +1,2 @@
-import { SEIRChart } from './SEIRChart';
+import {SEIRChart} from './SEIRChart';
 export default SEIRChart;

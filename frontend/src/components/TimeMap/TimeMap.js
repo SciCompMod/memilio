@@ -1,11 +1,11 @@
-import {connect} from "react-redux";
+import {connect} from 'react-redux';
 
 import React from 'react';
 
 import './TimeMap.scss';
-import { setSelected } from "../../redux/app";
-import InteractiveHeatMap from "../../common/interactive_heat_map";
-import { roundToUTCMidnight } from "../../common/utils";
+import {setSelected} from '../../redux/app';
+import InteractiveHeatMap from '../../common/interactive_heat_map';
+import {roundToUTCMidnight} from '../../common/utils';
 
 /**
  * This Component has two major functions:
@@ -31,15 +31,15 @@ class TimeMap extends React.Component {
   map = null;
 
   componentDidMount() {
-    this.map = new InteractiveHeatMap("timeMapDiv");
+    this.map = new InteractiveHeatMap('timeMapDiv');
 
-    this.map.onStateSelected = newState => {
+    this.map.onStateSelected = (newState) => {
       if (newState !== null) {
         this.props.setSelected({
-          dataset: "states",
+          dataset: 'states',
           id: newState.id,
           label: newState.name,
-          population: newState.destatis.population
+          population: newState.destatis.population,
         });
       } else {
         if (this.props.selection !== null) {
@@ -48,13 +48,13 @@ class TimeMap extends React.Component {
       }
     };
 
-    this.map.onCountySelected = newCounty => {
+    this.map.onCountySelected = (newCounty) => {
       if (newCounty !== null) {
         this.props.setSelected({
-          dataset: "counties",
+          dataset: 'counties',
           id: parseInt(newCounty.RS, 10),
           label: newCounty.id,
-          population: newCounty.destatis.population
+          population: newCounty.destatis.population,
         });
       }
     };
@@ -72,7 +72,7 @@ class TimeMap extends React.Component {
 
       for (let i = 1; i <= 16; i++) {
         const s = this.props.states.all[i];
-        const value = s.find(e => e.date >= date);
+        const value = s.find((e) => e.date >= date);
 
         if (value) {
           states.set(i, value.Confirmed);
@@ -89,7 +89,7 @@ class TimeMap extends React.Component {
 
     if (times.size > 0) {
       this.setState({
-        stateTimes: times
+        stateTimes: times,
       });
     }
   }
@@ -105,7 +105,7 @@ class TimeMap extends React.Component {
       let counties = new Map();
 
       for (let [id, c] of Object.entries(this.props.counties.all)) {
-        const value = c.find(e => e.date >= date);
+        const value = c.find((e) => e.date >= date);
 
         if (value) {
           counties.set(parseInt(id), value.Confirmed);
@@ -122,7 +122,7 @@ class TimeMap extends React.Component {
 
     if (times.size > 0) {
       this.setState({
-        countyTimes: times
+        countyTimes: times,
       });
     }
   }
@@ -138,7 +138,7 @@ class TimeMap extends React.Component {
       let regions = new Map();
 
       for (let [id, region] of Object.entries(this.props.seirRegions)) {
-        const value = region.find(e => e.date >= date);
+        const value = region.find((e) => e.date >= date);
 
         if (value) {
           regions.set(parseInt(id), value.I);
@@ -155,35 +155,48 @@ class TimeMap extends React.Component {
 
     if (times.size > 0) {
       this.setState({
-        seirTimes: times
+        seirTimes: times,
       });
     }
   }
 
   componentDidUpdate(prevProps, prevState, snapshot) {
-    if (this.props.states !== prevProps.states || this.state.stateTimes.size === 0 || this.props.time.startDate !== prevProps.time.startDate || this.props.time.endDate !== prevProps.time.endDate) {
+    if (
+      this.props.states !== prevProps.states ||
+      this.state.stateTimes.size === 0 ||
+      this.props.time.startDate !== prevProps.time.startDate ||
+      this.props.time.endDate !== prevProps.time.endDate
+    ) {
       this._calcStateData();
     }
 
-    if (this.props.counties !== prevProps.counties || this.state.countyTimes.size === 0 || this.props.time.startDate !== prevProps.time.startDate || this.props.time.endDate !== prevProps.time.endDate) {
+    if (
+      this.props.counties !== prevProps.counties ||
+      this.state.countyTimes.size === 0 ||
+      this.props.time.startDate !== prevProps.time.startDate ||
+      this.props.time.endDate !== prevProps.time.endDate
+    ) {
       this._calcCountyData();
     }
 
-    if (this.props.seirRegions !== null && (this.props.seirRegions !== prevProps.seirRegions || this.state.seirTimes.size === 0) ) {
+    if (
+      this.props.seirRegions !== null &&
+      (this.props.seirRegions !== prevProps.seirRegions || this.state.seirTimes.size === 0)
+    ) {
       this._calcSeirData();
     }
 
     const currDate = this.props.time.currentDate;
     if (prevProps.time.currentDate !== currDate) {
       if (this.props.seirRegions !== null) {
-        this.map.setDataSetName("SEIR");
+        this.map.setDataSetName('SEIR');
         if (this.map.selectedState !== -1) {
           this.map.setCountyValues(this.state.seirTimes.get(currDate));
         } else {
           this.map.setStateValues(this.state.seirTimes.get(currDate));
         }
       } else {
-        this.map.setDataSetName("RKI");
+        this.map.setDataSetName('RKI');
         if (this.map.selectedState !== -1 && this.state.countyTimes.has(currDate)) {
           this.map.setCountyValues(this.state.countyTimes.get(currDate));
         }
@@ -197,10 +210,10 @@ class TimeMap extends React.Component {
 
   render(ctx) {
     return (
-      <div style={{height: "100%"}}>
-        <div id="timeMapDiv" style={{height: "100%"}}/>
+      <div style={{height: '100%'}}>
+        <div id="timeMapDiv" style={{height: '100%'}} />
       </div>
-    )
+    );
   }
 }
 
@@ -211,10 +224,10 @@ function mapState(state) {
     states: state.app.states,
     counties: state.app.counties,
     seirRegions: state.seir.regionData,
-    populations: state.app.populations.states
-  }
+    populations: state.app.populations.states,
+  };
 }
 
-const ConnectedTimeMap = connect(mapState, { setSelected })(TimeMap);
+const ConnectedTimeMap = connect(mapState, {setSelected})(TimeMap);
 
 export {ConnectedTimeMap as TimeMap};

@@ -1,10 +1,10 @@
-import React, { Component } from 'react';
-import { connect } from 'react-redux';
-import { withTranslation } from 'react-i18next';
-import { Graphs as D3Graphs } from '../../common/graphs';
-import { simulate_seir, makeSeirParam, Damping } from '../../common/seir.js';
-import { getActiveMeasures } from '../../redux/measures';
-import { getParameterMap } from '../../redux/parameters';
+import React, {Component} from 'react';
+import {connect} from 'react-redux';
+import {withTranslation} from 'react-i18next';
+import {Graphs as D3Graphs} from '../../common/graphs';
+import {simulate_seir, makeSeirParam, Damping} from '../../common/seir.js';
+import {getActiveMeasures} from '../../redux/measures';
+import {getParameterMap} from '../../redux/parameters';
 import * as d3 from 'd3';
 
 import './Graphs.scss';
@@ -36,11 +36,9 @@ class OldGraphs extends Component {
     seir_params.N = 100000;
 
     // TODO: replace by the actual logic
-    let action_damping = [{ day: 0, damping: 1 }];
+    let action_damping = [{day: 0, damping: 1}];
 
-    seir_params.dampings = action_damping.map(
-      (v, i) => new Damping(v.day, v.damping)
-    );
+    seir_params.dampings = action_damping.map((v, i) => new Damping(v.day, v.damping));
 
     let data = simulate_seir(0, days, step_size, seir_params);
     console.log(data);
@@ -55,7 +53,7 @@ class OldGraphs extends Component {
     for (let i = 0; i < days; i++) {
       result.push({
         day: new Date(startDate.getTime() + i * 24 * 60 * 60 * 1000),
-        cases: [data.S[i], data.E[i], data.I[i], data.R[i]]
+        cases: [data.S[i], data.E[i], data.I[i], data.R[i]],
       });
     }
 
@@ -65,7 +63,7 @@ class OldGraphs extends Component {
         data[k] = data[k].map((value, index) => {
           return {
             value,
-            date: new Date(startDate.getTime() + index * 24 * 60 * 60 * 1000)
+            date: new Date(startDate.getTime() + index * 24 * 60 * 60 * 1000),
           };
         });
       });
@@ -90,7 +88,7 @@ class OldGraphs extends Component {
 const mapState = (state) => {
   return {
     measures: getActiveMeasures(state.measures),
-    parameters: getParameterMap(state.parameters)
+    parameters: getParameterMap(state.parameters),
   };
 };
 

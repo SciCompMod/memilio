@@ -61,15 +61,9 @@ class Simulation extends PureComponent {
     seir_params.N = population;
 
     // TODO: replace by the actual logic
-    let action_damping = calculateDamping(
-      this.props.measures,
-      start.date,
-      days
-    );
+    let action_damping = calculateDamping(this.props.measures, start.date, days);
 
-    seir_params.dampings = action_damping.map(
-      (v, i) => new Damping(v.day, v.damping)
-    );
+    seir_params.dampings = action_damping.map((v, i) => new Damping(v.day, v.damping));
 
     let data = simulate_seir(0, days, step_size, seir_params);
 
@@ -95,11 +89,11 @@ class Simulation extends PureComponent {
             date = date.getTime();
             if (!acc[date]) {
               acc[date] = {
-                date
+                date,
               };
             }
             acc[date] = Object.assign(acc[date], {
-              [k]: parseInt(value)
+              [k]: parseInt(value),
             });
           });
 
@@ -110,11 +104,7 @@ class Simulation extends PureComponent {
 
   render() {
     return (
-      <Button
-        onClick={this.simulate.bind(this)}
-        size="sm"
-        disabled={this.props.selected === null}
-      >
+      <Button onClick={this.simulate.bind(this)} size="sm" disabled={this.props.selected === null}>
         Simulate
       </Button>
     );
@@ -134,7 +124,7 @@ const mapState = (state) => {
     populations: getPopulationsOfRegion(state, state.app.selected ? state.app.selected.id : 0),
     selected: state.app.selected,
     measures: getActiveMeasures(state.measures),
-    parameters: getParameterMap(state.parameters)
+    parameters: getParameterMap(state.parameters),
   };
 };
 

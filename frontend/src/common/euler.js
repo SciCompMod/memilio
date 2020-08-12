@@ -44,8 +44,8 @@ function integration_test(n) {
 
   return {
     x: x.arraySync(),
-    y: sine.arraySync()[0]
+    y: sine.arraySync()[0],
   };
 }
 
-export { euler, integration_test };
+export {euler, integration_test};
