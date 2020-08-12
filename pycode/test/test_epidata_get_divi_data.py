@@ -120,7 +120,7 @@ class Test_getDiviData(fake_filesystem_unittest.TestCase):
 
         mock_read_csv.return_value = pd.read_json(self.test_string)
 
-        [read_data, make_plot, out_form, out_folder] = [False, False, "json", self.path]
+        [read_data, update_data, make_plot, out_form, out_folder] = [False, False, False, "json", self.path]
 
         directory = os.path.join(out_folder, 'Germany/')
         gd.check_dir(directory)
@@ -151,7 +151,7 @@ class Test_getDiviData(fake_filesystem_unittest.TestCase):
 
     def test_gdd_read_data(self):
 
-        [read_data, make_plot, out_form, out_folder] = [True, False, "json", self.path]
+        [read_data, update_data, make_plot, out_form, out_folder] = [True, False, False, "json", self.path]
 
         directory = os.path.join(out_folder, 'Germany/')
         gd.check_dir(directory)
