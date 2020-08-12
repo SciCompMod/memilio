@@ -92,8 +92,9 @@ def download_data_for_one_day(download_date):
 
 
 def get_divi_data(read_data=dd.defaultDict['read_data'],
+                  update_data=dd.defaultDict['update_data'],
                   make_plot=dd.defaultDict['make_plot'],
-                    out_form=dd.defaultDict['out_form'],
+                  out_form=dd.defaultDict['out_form'],
                   out_folder=dd.defaultDict['out_folder'],
                   start_date=date(2020, 4, 24),
                   end_date=date.today()):
@@ -107,36 +108,18 @@ def get_divi_data(read_data=dd.defaultDict['read_data'],
 
     filename = "FullData_DIVI"
 
-    if read_data:
+    if update_data:
         file_in = os.path.join(directory, filename + ".json")
-        # if once downloaded just read json file
+        # read json file for already downloaded data
         try:
             df = pandas.read_json(file_in)
         except ValueError:
             exit_string = "Error: The file: " + file_in + "does not exist. Call program without -r flag to get it."
             sys.exit(exit_string)
 
-    else:
-        # Get data:
-        # start with empty dataframe
-        df = pandas.DataFrame()
-
-        delta = timedelta(days=1)
-
-        while start_date <= end_date:
-
-            df2 = download_data_for_one_day(start_date)
-
-            if not df2.empty:
-                # data of first days needs adjustment to following data
-                if start_date <= date(2020, 4, 29):
-                    df2 = adjust_data(df2, start_date)
-                df = df.append(df2, ignore_index=True)
-                print("Success: Data of date " + start_date.strftime("%Y-%m-%d") + " has been included to dataframe")
-            else:
-                print("Warning: Data of date " + start_date.strftime("%Y-%m-%d") + " is not included to dataframe")
-
-            start_date += delta
+        # download data from today
+        df2 = gd.loadCsv('DIVI-Intensivregister-Tagesreport', apiUrl = 'https://www.divi.de/')
+        df = df.append(df2, ignore_index=True)
 
         # output data to not always download it
         if not df.empty:
@@ -144,6 +127,45 @@ def get_divi_data(read_data=dd.defaultDict['read_data'],
         else:
             exit_string = "Something went wrong, dataframe is empty."
             sys.exit(exit_string)
+
+    else:
+        if read_data:
+            file_in = os.path.join(directory, filename + ".json")
+            # if once downloaded just read json file
+            try:
+                df = pandas.read_json(file_in)
+            except ValueError:
+                exit_string = "Error: The file: " + file_in + "does not exist. Call program without -r flag to get it."
+                sys.exit(exit_string)
+
+        else:
+            # Get data:
+            # start with empty dataframe
+            df = pandas.DataFrame()
+
+            delta = timedelta(days=1)
+
+            while start_date <= end_date:
+
+                df2 = download_data_for_one_day(start_date)
+
+                if not df2.empty:
+                    # data of first days needs adjustment to following data
+                    if start_date <= date(2020, 4, 29):
+                        df2 = adjust_data(df2, start_date)
+                    df = df.append(df2, ignore_index=True)
+                    print("Success: Data of date " + start_date.strftime("%Y-%m-%d") + " has been included to dataframe")
+                else:
+                    print("Warning: Data of date " + start_date.strftime("%Y-%m-%d") + " is not included to dataframe")
+
+                start_date += delta
+
+            # output data to not always download it
+            if not df.empty:
+                gd.write_dataframe(df, directory, filename, "json")
+            else:
+                exit_string = "Something went wrong, dataframe is empty."
+                sys.exit(exit_string)
 
     # change column names
     df.rename(dd.GerEng, axis=1, inplace=True)
@@ -200,8 +222,8 @@ def get_divi_data(read_data=dd.defaultDict['read_data'],
 
 
 def main():
-    [read_data, make_plot, out_form, out_folder] = gd.cli('Downloads data from DIVI')
-    get_divi_data(read_data, make_plot, out_form, out_folder)
+    [read_data, update_data, make_plot, out_form, out_folder] = gd.cli('Downloads data from DIVI')
+    get_divi_data(read_data, update_data, make_plot, out_form, out_folder)
 
 
 if __name__ == "__main__":
