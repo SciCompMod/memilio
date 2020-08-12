@@ -131,8 +131,8 @@ class Test_getDiviData(fake_filesystem_unittest.TestCase):
         file_out2 = "state_divi.json"
         file_out3 = "germany_divi.json"
 
-        gdd.get_divi_data(read_data, make_plot, out_form, out_folder, start_date=date(2020, 7, 7),
-                          end_date=date(2020, 7, 7))
+        gdd.get_divi_data(read_data, update_data, make_plot, out_form, out_folder,
+                          start_date=date(2020, 7, 7), end_date=date(2020, 7, 7))
 
         self.assertEqual(len(os.listdir(directory)), 4)
         self.assertEqual(os.listdir(directory).sort(), [file, file_out1, file_out2, file_out3].sort())
@@ -165,7 +165,7 @@ class Test_getDiviData(fake_filesystem_unittest.TestCase):
         with open(os.path.join(directory, file), 'w') as f:
             f.write(self.test_string)
 
-        gdd.get_divi_data(read_data, make_plot, out_form, out_folder)
+        gdd.get_divi_data(read_data, update_data, make_plot, out_form, out_folder)
 
         self.assertEqual(len(os.listdir(directory)), 4)
         self.assertEqual(os.listdir(directory).sort(), [file, file_out1, file_out2, file_out3].sort())
