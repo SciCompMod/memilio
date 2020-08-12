@@ -68,6 +68,7 @@ test-py:
     - getpopuldata --help
     - getjhdata --help
     - getspaindata --help
+    - getdividata --help
     - getalldata --help
 
 download-data:
