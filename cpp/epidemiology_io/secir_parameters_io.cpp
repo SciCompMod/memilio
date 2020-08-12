@@ -107,8 +107,8 @@ void write_predef_sample(TixiDocumentHandle handle, const std::string& path, con
     tixiAddFloatVector(handle, path.c_str(), "PredefinedSamples", samples.data(), samples.size(), "%g");
 }
 
-void write_contact(TixiDocumentHandle handle, const std::string& path,
-                   const UncertainContactMatrix& contact_pattern, int nb_runs)
+void write_contact(TixiDocumentHandle handle, const std::string& path, const UncertainContactMatrix& contact_pattern,
+                   int nb_runs)
 {
     ContactFrequencyMatrix cont_freq = contact_freq_matrix.get_cont_freq();
     int nb_groups                    = cont_freq.get_size();
@@ -163,7 +163,7 @@ UncertainContactMatrix read_contact(TixiDocumentHandle handle, const std::string
 {
     int nb_groups;
     tixiGetIntegerElement(handle, path_join("/Parameters", "NumberOfGroups").c_str(), &nb_groups);
-    epi::ContactFrequencyMatrix contact_freq_matrix{(size_t)nb_groups};
+    UncertainContactMatrix contact_patterns{ContactFrequencyMatrix{(size_t)nb_groups}};
     for (size_t i = 0; i < nb_groups; i++) {
         double* row = nullptr;
         tixiGetFloatVector(handle, path_join(path, "ContactRateGroup" + std::to_string(i + 1)).c_str(), &row,
@@ -394,8 +394,7 @@ void write_node(const Graph<ModelNode<SecirSimulation>, MigrationEdge>& graph, i
 
     tixiAddIntegerElement(handle, path.c_str(), "NodeID", node, "%d");
 
-    auto params    = graph.nodes()[node].model.get_params();
-    auto cont_freq = graph.nodes()[node].model.get_cont_freq();
+    auto params = graph.nodes()[node].model.get_params();
 
     ParameterStudy study(simulate, params, t0, tmax, dev_rel, nb_runs);
 

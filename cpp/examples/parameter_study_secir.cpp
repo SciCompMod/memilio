@@ -89,7 +89,7 @@ int main(int argc, char* argv[])
     }
 
     epi::ParameterStudy parameter_study(
-        [](double t0, double tmax, double dt, epi::SecirParams const& params, std::vector<Eigen::VectorXd>& secir) {
+        [](double t0, double tmax, double dt, epi::SecirParams& params, std::vector<Eigen::VectorXd>& secir) {
             return epi::simulate(t0, tmax, dt, params, secir);
         },
         params, t0, tmax);

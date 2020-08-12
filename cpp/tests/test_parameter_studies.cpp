@@ -73,7 +73,7 @@ TEST(ParameterStudies, sample_from_secir_params)
 
     epi::ParameterSpace parameter_space(params, 0., 100., 0.2);
 
-    epi::SecirParams params_sample = parameter_space.get_secir_params_sample();
+    epi::SecirParams params_sample = parameter_space.draw_sample();
 
     for (size_t i = 0; i < params_sample.size(); i++) {
 
@@ -228,6 +228,10 @@ TEST(ParameterStudies, check_ensemble_run_result)
         },
         params, t0, tmax);
 
+    // TODO:
+    printf("\n\n ... group %f total %f \n\n", params.populations.get_group_total(epi::SecirCategory::AgeGroup, 0),
+           params.populations.get_total());
+
     // Run parameter study
     int run = 0;
     parameter_study.set_nb_runs(1);
@@ -235,12 +239,12 @@ TEST(ParameterStudies, check_ensemble_run_result)
 
     // printf("\n %d %d %d %d ", results.size(), results[0].size(), results[0][0].size(), params.size());
     for (size_t i = 0; i < results[0].size(); i++) { // number of time steps
-        std::vector<double> total_at_ti(8, 0);
+        std::vector<double> total_at_ti(epi::SecirCompartments::SecirCount, 0);
         // printf("\n");
         for (size_t j = 0; j < static_cast<size_t>(results[0][i].size()); j++) { // number of compartments per time step
             // printf(" %.2e ( %d ) ", results[0][i][j], j % 8);
             EXPECT_GE(results[0][i][j], -1e-3) << " day " << i << " group " << j;
-            total_at_ti[j / 8] += results[0][i][j];
+            total_at_ti[j / epi::SecirCompartments::SecirCount] += results[0][i][j];
         }
         for (size_t j = 0; j < params.size(); j++) {
             EXPECT_NEAR(total_at_ti[j], params.populations.get_group_total(epi::SecirCategory::AgeGroup, j), 1e-3)

@@ -2,6 +2,7 @@
 
 #include <vector>
 #include "Eigen/Core"
+#include <epidemiology/uncertain_value.h>
 
 namespace epi
 {
@@ -53,14 +54,21 @@ public:
      * @brief get_compartments returns a reference to the vector of populations
      * @return vector of populations
      */
-    Eigen::VectorXd const& get_compartments() const;
+    Eigen::VectorXd get_compartments() const;
 
     /**
      * @brief get returns the population of one compartment
      * @param indices a vector containing the indices for each category
      * @return the population of compartment
      */
-    double get(std::vector<size_t> const& indices) const;
+    UncertainValue const& get(std::vector<size_t> const& indices) const;
+
+    /**
+     * @brief get returns the population of one compartment
+     * @param indices a vector containing the indices for each category
+     * @return the population of compartment
+     */
+    UncertainValue& get(std::vector<size_t> const& indices);
 
     /**
      * @brief get_group_total returns the total population of a group in one category
@@ -77,11 +85,18 @@ public:
     double get_total() const;
 
     /**
-     * @brief set sets the population of one compartment
+     * @brief set sets the scalar value of the population of one compartment
      * @param indices a vector containing the indices for each category
      * @param value the new value for the compartment's population
      */
     void set(std::vector<size_t> const& indices, double value);
+
+    /**
+     * @brief set sets the random distribution of the population of one compartment
+     * @param indices a vector containing the indices for each category
+     * @param value the new random distribution for the compartment's population
+     */
+    void set(std::vector<size_t> const& indices, ParameterDistribution const& dist);
 
     /**
      * @brief set_group_total sets the total population for a given group
@@ -114,7 +129,7 @@ public:
      *
      * This function rescales all the compartments populations proportionally. If all compartments
      * have zero population, the total population gets distributed equally over all
-     * compartments
+     * compartments. 
      *
      * @param value the new value for the total population
      */
@@ -142,7 +157,7 @@ private:
     std::vector<size_t> m_category_sizes;
 
     // A vector containing the population of all compartments
-    Eigen::VectorXd m_y;
+    std::vector<UncertainValue> m_y;
 };
 
 } // namespace epi

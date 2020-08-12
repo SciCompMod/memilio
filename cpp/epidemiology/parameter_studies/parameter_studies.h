@@ -35,7 +35,7 @@ public:
      * @brief Constructor from contact frequency matrix and parameter vector
      * @param[in] parameter_filename filename of a file storing ranges of input parameters.
      */
-    ParameterStudy(secir_simulation_function_t const& simu_func, SecirParams& params, double t0, double tmax,
+    ParameterStudy(secir_simulation_function_t const& simu_func, SecirParams const& params, double t0, double tmax,
                    double dev_rel = 0.2, size_t nb_runs = 1);
 
     /*
@@ -132,8 +132,8 @@ inline ParameterStudy::ParameterStudy(const secir_simulation_function_t& simu_fu
 {
 }
 
-inline ParameterStudy::ParameterStudy(secir_simulation_function_t const& simu_func, SecirParams& params, double t0,
-                                      double tmax, double dev_rel, size_t nb_runs)
+inline ParameterStudy::ParameterStudy(secir_simulation_function_t const& simu_func, SecirParams const& params,
+                                      double t0, double tmax, double dev_rel, size_t nb_runs)
     : simulation_function{simu_func}
     , parameter_space{params, t0, tmax, dev_rel}
     , m_nb_runs{nb_runs}
@@ -152,7 +152,10 @@ ParameterStudy::run(HandleSimulationResultFunction simulation_result_function)
 
         std::vector<Eigen::VectorXd> secir_result;
 
-        SecirParams params_sample = parameter_space.get_secir_params_sample();
+        SecirParams params_sample = parameter_space.draw_sample();
+
+        printf("\n\n serint %f, inc %f\n\n", (double)params_sample.times[0].get_serialinterval(),
+               (double)params_sample.times[0].get_incubation());
 
         // Call the simulation function
         auto time = simulation_function((*this).m_t0, (*this).m_tmax, (*this).m_dt, params_sample, secir_result);
