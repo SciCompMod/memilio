@@ -14,8 +14,8 @@ class Test_getDiviData(fake_filesystem_unittest.TestCase):
     # construct fake directory for testing
     path = '/home/DiviData'
 
-    # string for read and download data
-    test_string = ("""[\
+    # strings for read, download and update data
+    test_string1 = ("""[\
 {"ID_State":1,"ID_County":1001,"anzahl_meldebereiche":2,"ICU":0,"ICU_ventilated":0,\
 "reporting_hospitals":2,"ICU_free":48,"ICU_occupied":34,"Date":"2020-07-07 12:15:00"},\
 {"ID_State":2,"ID_County":2000,"anzahl_meldebereiche":28,"ICU":7,"ICU_ventilated":6,\
@@ -23,11 +23,15 @@ class Test_getDiviData(fake_filesystem_unittest.TestCase):
 {"ID_State":3,"ID_County":3101,"anzahl_meldebereiche":5,"ICU":1,"ICU_ventilated":1,\
 "reporting_hospitals":5,"ICU_free":60,"ICU_occupied":96,"Date":"2020-07-07 12:15:00"},\
 {"ID_State":3,"ID_County":3103,"anzahl_meldebereiche":1,"ICU":4,"ICU_ventilated":1,\
-"reporting_hospitals":1,"ICU_free":11,"ICU_occupied":23,"Date":"2020-07-07 12:15:00"},\
+"reporting_hospitals":1,"ICU_free":11,"ICU_occupied":23,"Date":"2020-07-07 12:15:00"}""")
+    test_string2 = ("""
 {"ID_State":2,"ID_County":2000,"anzahl_meldebereiche":28,"ICU":7,"ICU_ventilated":6,\
 "reporting_hospitals":24,"ICU_free":397,"ICU_occupied":597,"Date":"2020-07-08 12:15:00"},\
 {"ID_State":3,"ID_County":3101,"anzahl_meldebereiche":5,"ICU":1,"ICU_ventilated":1,\
 "reporting_hospitals":5,"ICU_free":65,"ICU_occupied":91,"Date":"2020-07-08 12:15:00"}]""")
+    test_string = test_string1 + "," + test_string2
+    test_string_update1 = test_string1 + "]"
+    test_string_update2 = "[" + test_string2
 
     # result string for counties
     test_stringr1 = ("""[\
@@ -182,6 +186,41 @@ class Test_getDiviData(fake_filesystem_unittest.TestCase):
         f = open(f_path, "r")
         self.assertEqual(f.read(), self.test_stringr3)
 
+    @patch('epidemiology.epidata.getPopulationData.gd.loadCsv')
+    def test_gdd_update_data(self, mock_loadCSV):
+
+        mock_loadCSV.return_value = pd.read_json(self.test_string_update2)
+
+        [read_data, update_data, make_plot, out_form, out_folder] = [False, True, False, "json", self.path]
+
+        directory = os.path.join(out_folder, 'Germany/')
+        gd.check_dir(directory)
+
+        file = "FullData_DIVI.json"
+
+        file_out1 = "county_divi.json"
+        file_out2 = "state_divi.json"
+        file_out3 = "germany_divi.json"
+
+        with open(os.path.join(directory, file), 'w') as f:
+            f.write(self.test_string_update1)
+
+        gdd.get_divi_data(read_data, update_data, make_plot, out_form, out_folder)
+
+        self.assertEqual(len(os.listdir(directory)), 4)
+        self.assertEqual(os.listdir(directory).sort(), [file, file_out1, file_out2, file_out3].sort())
+
+        f_path = os.path.join(directory, file_out1)
+        f = open(f_path, "r")
+        self.assertEqual(f.read(), self.test_stringr1)
+
+        f_path = os.path.join(directory, file_out2)
+        f = open(f_path, "r")
+        self.assertEqual(f.read(), self.test_stringr2)
+
+        f_path = os.path.join(directory, file_out3)
+        f = open(f_path, "r")
+        self.assertEqual(f.read(), self.test_stringr3)
 
 if __name__ == '__main__':
     unittest.main()
