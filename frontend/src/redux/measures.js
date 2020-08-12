@@ -139,12 +139,7 @@ const slice = createSlice({
   },
 });
 
-export const {
-  addInterval,
-  editInterval,
-  activateMeasure,
-  deactivateMeasure,
-} = slice.actions;
+export const {addInterval, editInterval, activateMeasure, deactivateMeasure} = slice.actions;
 
 export const getActiveMeasures = (state) => {
   return state
@@ -155,9 +150,7 @@ export const getActiveMeasures = (state) => {
 
       return {
         ...m,
-        intervals: m.intervals
-          .map((i) => (i.active ? i : null))
-          .filter((i) => i !== null),
+        intervals: m.intervals.map((i) => (i.active ? i : null)).filter((i) => i !== null),
       };
     })
     .filter((m) => m !== null);

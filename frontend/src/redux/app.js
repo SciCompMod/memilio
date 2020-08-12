@@ -1,11 +1,6 @@
 import {createSlice} from '@reduxjs/toolkit';
-import {
-  groupBy,
-  renameKey,
-  sumByKey,
-  filterJSObject,
-  stateIdFromCountyId,
-} from '../common/utils';
+import {groupBy, renameKey, sumByKey, filterJSObject, stateIdFromCountyId, lastElement} from '../common/utils';
+import {setTimeBounds} from './time';
 
 import axios from 'axios';
 
@@ -58,21 +53,18 @@ const slice = createSlice({
       state.selected = action.payload;
       if (action.payload !== null) {
         const population = state.populations[action.payload.dataset].find(
-          (e) =>
-            e[populationKeyMap[action.payload.dataset]] === action.payload.label
+          (e) => e[populationKeyMap[action.payload.dataset]] === action.payload.label
         );
 
         if (population) {
           state.selected.population = population.EWZ;
         }
       } else {
-        state.selected = {
-          dataset: 'germany',
-          id: 0,
-          label: 'Germany',
-          population: state.populations.total,
-        };
+        state.selected = {dataset: 'germany', id: 0, label: 'Germany', population: state.populations.total};
       }
+    },
+    setCountryData(state, action) {
+      state.germany = action.payload;
     },
     setStateData: (state, action) => {
       const [all, age, gender] = action.payload;
@@ -83,41 +75,6 @@ const slice = createSlice({
       });
 
       state.states = {all, gender, age};
-
-      // Generate Germany data from state data by summing it up.
-      function sumByState(stateData) {
-        const summedData = [];
-        for (let stateEntry of Object.values(stateData)) {
-          for (let timeStamp of stateEntry) {
-            const result = summedData.find(
-              (entry) => entry.date === timeStamp.date
-            );
-            if (result) {
-              result.Confirmed += timeStamp.Confirmed;
-              result.Deaths += timeStamp.Deaths;
-              result.Recovered += timeStamp.Recovered;
-            } else {
-              summedData.push({
-                ID_Country: 0,
-                Country: 'Germany',
-                Confirmed: timeStamp.Confirmed,
-                Deaths: timeStamp.Deaths,
-                Recovered: timeStamp.Recovered,
-                date: timeStamp.date,
-              });
-            }
-          }
-        }
-        summedData.sort((a, b) => a.date - b.date);
-        return summedData;
-      }
-
-      state.germany = {
-        ...state.germany,
-        all: sumByState(all),
-        gender: sumByState(gender),
-        age: sumByState(age),
-      };
     },
     setCountyData: (state, action) => {
       const [all, age, gender] = action.payload;
@@ -130,13 +87,7 @@ const slice = createSlice({
   },
 });
 
-export const {
-  init,
-  setSelected,
-  setStateData,
-  setCountyData,
-  setPopulations,
-} = slice.actions;
+export const {init, setSelected, setCountryData, setStateData, setCountyData, setPopulations} = slice.actions;
 
 export const initializeApp = () => (dispatch) => {
   axios
@@ -149,46 +100,61 @@ export const fetchData = () => async (dispatch) => {
   // load state data
   let state = await Promise.all([
     axios.get('assets/all_state_rki.json').then((response) => response.data),
-    axios
-      .get('assets/all_state_age_rki.json')
-      .then((response) => response.data),
-    axios
-      .get('assets/all_state_gender_rki.json')
-      .then((response) => response.data),
+    axios.get('assets/all_state_age_rki.json').then((response) => response.data),
+    axios.get('assets/all_state_gender_rki.json').then((response) => response.data),
   ]);
 
   state = state.map((s) => {
-    return groupBy(
-      renameKey(s, 'Date', 'date'),
-      dataset2datakey[Datasets.STATES]
-    );
+    return groupBy(renameKey(s, 'Date', 'date'), dataset2datakey[Datasets.STATES]);
   });
 
   dispatch(setStateData(state));
 
+  // Generate Germany data from state data by summing it up.
+  function sumByState(stateData) {
+    const summedData = [];
+    for (let stateEntry of Object.values(stateData)) {
+      for (let timeStamp of stateEntry) {
+        const result = summedData.find((entry) => entry.date === timeStamp.date);
+        if (result) {
+          result.Confirmed += timeStamp.Confirmed;
+          result.Deaths += timeStamp.Deaths;
+          result.Recovered += timeStamp.Recovered;
+        } else {
+          summedData.push({
+            ID_Country: 0,
+            Country: 'Germany',
+            Confirmed: timeStamp.Confirmed,
+            Deaths: timeStamp.Deaths,
+            Recovered: timeStamp.Recovered,
+            date: timeStamp.date,
+          });
+        }
+      }
+    }
+    summedData.sort((a, b) => a.date - b.date);
+    return summedData;
+  }
+
+  const [all, age, gender] = state;
+  const allTransformed = sumByState(all);
+  dispatch(setCountryData({all: allTransformed, gender: sumByState(gender), age: sumByState(age)}));
+  dispatch(setTimeBounds({start: allTransformed[0].date, end: lastElement(allTransformed).date}));
+
   // load county data
   let county = await Promise.all([
     axios.get('assets/all_county_rki.json').then((response) => response.data),
-    axios
-      .get('assets/all_county_age_rki.json')
-      .then((response) => response.data),
-    axios
-      .get('assets/all_county_gender_rki.json')
-      .then((response) => response.data),
+    axios.get('assets/all_county_age_rki.json').then((response) => response.data),
+    axios.get('assets/all_county_gender_rki.json').then((response) => response.data),
   ]);
 
   county = county.map((s) => {
-    return groupBy(
-      renameKey(s, 'Date', 'date'),
-      dataset2datakey[Datasets.COUNTIES]
-    );
+    return groupBy(renameKey(s, 'Date', 'date'), dataset2datakey[Datasets.COUNTIES]);
   });
 
   dispatch(setCountyData(county));
 
-  const populations = await axios
-    .get('assets/populations.json')
-    .then((response) => response.data);
+  const populations = await axios.get('assets/populations.json').then((response) => response.data);
 
   dispatch(setPopulations(populations));
   dispatch(setSelected(null));
@@ -211,11 +177,7 @@ export const getSelectedData = (state) => {
     return null;
   }
 
-  if (
-    ![dataset.all, dataset.age, dataset.gender].every((d) =>
-      d.hasOwnProperty(`${selected.id}`)
-    )
-  ) {
+  if (![dataset.all, dataset.age, dataset.gender].every((d) => d.hasOwnProperty(`${selected.id}`))) {
     return null;
   }
 
@@ -260,10 +222,7 @@ export const getSelectedChildData = (state) => {
     filterJSObject(counties, (id, _) => stateIdFromCountyId(id) === stateId);
 
   if (selected.dataset === 'states' || selected.dataset === 'counties') {
-    const stateId =
-      selected.dataset === 'states'
-        ? selected.id
-        : stateIdFromCountyId(selected.id);
+    const stateId = selected.dataset === 'states' ? selected.id : stateIdFromCountyId(selected.id);
     const dataset = s.counties;
     return {
       all: filterByStateId(stateId, dataset.all),
@@ -298,13 +257,10 @@ export function getPopulationsOfRegion(state, regionId) {
 
   let counties;
   if (regionId < 100) {
-    counties = state.app.populations.counties.filter(
-      (county) => stateIdFromCountyId(county.countyKey) === regionId
-    );
+    counties = state.app.populations.counties.filter((county) => stateIdFromCountyId(county.countyKey) === regionId);
   } else {
     counties = state.app.populations.counties.filter(
-      (county) =>
-        stateIdFromCountyId(county.countyKey) === stateIdFromCountyId(regionId)
+      (county) => stateIdFromCountyId(county.countyKey) === stateIdFromCountyId(regionId)
     );
   }
 

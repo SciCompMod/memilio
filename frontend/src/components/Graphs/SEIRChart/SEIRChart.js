@@ -2,20 +2,9 @@ import React, {Component} from 'react';
 import {withTranslation} from 'react-i18next';
 import {merge} from '../../../common/utils';
 
-import * as moment from 'moment';
 import * as numeral from 'numeral';
 
-import {
-  LineChart,
-  Line,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  Legend,
-  Brush,
-  ResponsiveContainer,
-} from 'recharts';
+import {LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, Brush, ResponsiveContainer} from 'recharts';
 
 import './SEIRChart.scss';
 
@@ -92,9 +81,18 @@ const lines = [
   },
 ];
 
-const dateFormat = (format) => {
-  return (time) => moment(time).format(format);
-};
+const longDateFormat = (time) =>
+  new Date(time).toLocaleDateString(undefined, {
+    year: 'numeric',
+    month: 'long',
+    day: '2-digit',
+  });
+
+const shortDateFormat = (time) =>
+  new Date(time).toLocaleDateString(undefined, {
+    month: 'short',
+    day: '2-digit',
+  });
 
 const numberFormat = (number) => {
   return numeral(number).format('0,0');
@@ -144,16 +142,17 @@ class SEIRChart extends Component {
   }
 
   prepareData() {
-    const x = merge(
-      JSON.parse(JSON.stringify(this.props.rki)),
-      JSON.parse(JSON.stringify(this.props.seir)),
-      'date'
-    );
-    x.sort(function (a, b) {
-      return a.date - b.date;
-    });
+    const x = merge(JSON.parse(JSON.stringify(this.props.rki)), JSON.parse(JSON.stringify(this.props.seir)), 'date');
 
-    return x;
+    try {
+      x.sort(function (a, b) {
+        return a.date - b.date;
+      });
+
+      return x;
+    } catch (e) {
+      return [];
+    }
   }
 
   payload() {
@@ -173,14 +172,8 @@ class SEIRChart extends Component {
     const {t} = this.props;
     return (
       <ResponsiveContainer width="100%" height="80%">
-        <LineChart
-          data={data}
-          margin={{top: 30, right: 30, left: 20, bottom: 5}}
-        >
-          <XAxis
-            dataKey="date"
-            tickFormatter={dateFormat(t('dateformat.short'))}
-          />
+        <LineChart data={data} margin={{top: 30, right: 30, left: 20, bottom: 5}}>
+          <XAxis dataKey="date" tickFormatter={shortDateFormat} />
           <YAxis
             label={{
               value: t('population'),
@@ -193,11 +186,8 @@ class SEIRChart extends Component {
           <CartesianGrid strokeDasharray="3 3" />
           <Tooltip
             offset={20}
-            labelFormatter={dateFormat(t('dateformat.full'))}
-            formatter={(value, name, index) => [
-              numberFormat(value),
-              this.translate(name),
-            ]}
+            labelFormatter={longDateFormat}
+            formatter={(value, name, index) => [numberFormat(value), this.translate(name)]}
             allowEscapeViewBox={{x: true, y: false}}
             active={true}
             contentStyle={{
@@ -209,18 +199,9 @@ class SEIRChart extends Component {
             }}
           />
           {this.state.lines.map((line) => {
-            return (
-              <Line
-                key={line.dataKey}
-                dataKey={line.dataKey + (line.inactive ? ' ' : '')}
-                {...line.props}
-              />
-            );
+            return <Line key={line.dataKey} dataKey={line.dataKey + (line.inactive ? ' ' : '')} {...line.props} />;
           })}
-          <Brush
-            dataKey="date"
-            tickFormatter={dateFormat(t('dateformat.short'))}
-          />
+          <Brush dataKey="date" tickFormatter={shortDateFormat} />
           <Legend
             formatter={this.translate.bind(this)}
             onClick={this.selectBar}

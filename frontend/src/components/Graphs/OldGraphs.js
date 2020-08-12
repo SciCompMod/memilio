@@ -38,9 +38,7 @@ class OldGraphs extends Component {
     // TODO: replace by the actual logic
     let action_damping = [{day: 0, damping: 1}];
 
-    seir_params.dampings = action_damping.map(
-      (v, i) => new Damping(v.day, v.damping)
-    );
+    seir_params.dampings = action_damping.map((v, i) => new Damping(v.day, v.damping));
 
     let data = simulate_seir(0, days, step_size, seir_params);
     console.log(data);

@@ -1,0 +1,38 @@
+{
+  "new": "New",
+  "add": "Add",
+  "delete": "Delete",
+  "Cancel": "Cancel",
+  "measures": {
+    "title": "Measures",
+    "homeoffice": "75% Home-Office",
+    "schoolclosing": "School Closing",
+    "socialdistancing": "Social Distancing"
+  },
+  "parameters": {
+    "title": "Parameters",
+    "contactrate": "Contact Rate (Days)",
+    "incubation": "Incubation Time (Days)",
+    "infection": "Infection Time (Days)",
+    "deaths": "Deceased",
+    "sus": "Susceptible persons",
+    "i0": "Infected persons",
+    "recovered": "Recovered persons",
+    "exposed": "Exposed persons",
+    "infected": "Infected persons"
+  },
+  "rki": {
+    "title": "RKI Data",
+    "deaths": "RKI deceased persons ",
+    "sus": "RKI susceptible persons",
+    "i0": "RKI infected persons",
+    "recovered": "RKI recovered persons",
+    "exposed": "RKI exposed persons",
+    "infected": "RKI infected persons"
+  },
+  "results": "Results",
+  "dateFormat": "dd.MM.yyyy",
+  "timeline": {
+    "title": "Timeline"
+  }
+}

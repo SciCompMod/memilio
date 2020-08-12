@@ -13,9 +13,7 @@ const slice = createSlice({
   },
   reducers: {
     updateParameter: (state, action) => {
-      const parameter = state.parameters.find(
-        (p) => p.name === action.payload.name
-      );
+      const parameter = state.parameters.find((p) => p.name === action.payload.name);
       if (parameter) {
         parameter.value = action.payload.value;
       }

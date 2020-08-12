@@ -1,27 +1,14 @@
 import React, {Component} from 'react';
 import {connect} from 'react-redux';
 import {withTranslation} from 'react-i18next';
-import {
-  Button,
-  Collapse,
-  CustomInput,
-  Modal,
-  ModalBody,
-  ModalFooter,
-  ModalHeader,
-} from 'reactstrap';
+import {Button, Collapse, CustomInput, Modal, ModalBody, ModalFooter, ModalHeader} from 'reactstrap';
 
 import DateRangePicker from 'react-daterange-picker';
 
 import Moment from 'moment';
 import {extendMoment} from 'moment-range';
 
-import {
-  addInterval,
-  editInterval,
-  activateMeasure,
-  deactivateMeasure,
-} from '../../redux/measures';
+import {addInterval, editInterval, activateMeasure, deactivateMeasure} from '../../redux/measures';
 
 import 'react-daterange-picker/dist/css/react-calendar.css';
 import './Measures.scss';
@@ -78,25 +65,13 @@ class DateRangeModal extends Component {
   render() {
     const {t} = this.props;
     return (
-      <Modal
-        isOpen={true}
-        modalTransition={{timeout: 10}}
-        className="date-range"
-      >
+      <Modal isOpen={true} modalTransition={{timeout: 10}} className="date-range">
         <ModalHeader>{t('daterangemodal.header')}</ModalHeader>
         <ModalBody>
-          <DateRangePicker
-            onSelect={this.onSelect.bind(this)}
-            value={this.state.range}
-            numberOfCalendars={2}
-          />
+          <DateRangePicker onSelect={this.onSelect.bind(this)} value={this.state.range} numberOfCalendars={2} />
         </ModalBody>
         <ModalFooter>
-          <Button
-            color="success"
-            disabled={this.state.range === null}
-            onClick={this.select.bind(this)}
-          >
+          <Button color="success" disabled={this.state.range === null} onClick={this.select.bind(this)}>
             {t('select')}
           </Button>
           <Button color="danger" onClick={this.cancel.bind(this)}>
@@ -213,12 +188,7 @@ class Measure extends Component {
         />
         <span className="h3 ml-0">{t(m.label)}</span>
         {this.state.active ? (
-          <Button
-            onClick={() => this.newInterval()}
-            size="sm"
-            color="green"
-            className="ml-2 py-0"
-          >
+          <Button onClick={() => this.newInterval()} size="sm" color="green" className="ml-2 py-0">
             {t('new')}
           </Button>
         ) : (
@@ -230,13 +200,9 @@ class Measure extends Component {
               return (
                 <div className="interval" key={interval.id}>
                   <span className="h4">
-                    {format(dateformat)(interval.start)} -{' '}
-                    {format(dateformat)(interval.end)}
+                    {format(dateformat)(interval.start)} - {format(dateformat)(interval.end)}
                   </span>
-                  <Button
-                    color="warning"
-                    onClick={() => this.editInterval(interval)}
-                  >
+                  <Button color="warning" onClick={() => this.editInterval(interval)}>
                     <i className="fa fa-edit"></i>
                   </Button>
                 </div>

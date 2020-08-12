@@ -48,9 +48,7 @@ class Parameter extends Component {
         return (
           <FormGroup row className="m-0 mb-2">
             <Col xs="2" className="p-0 pr-1">
-              <div className="h4 border border-dark rounded-lg p-1 text-center">
-                {this.state.value}
-              </div>
+              <div className="h4 border border-dark rounded-lg p-1 text-center">{this.state.value}</div>
             </Col>
             <Col xs="10" className="p-0 pl-1">
               <CustomInput
@@ -61,9 +59,7 @@ class Parameter extends Component {
                 min={parameter.min || 0}
                 max={parameter.max || 10}
                 step={parameter.step || 1}
-                onChange={(event) =>
-                  this.update(parseFloat(event.target.value))
-                }
+                onChange={(event) => this.update(parseFloat(event.target.value))}
                 tooltip="off"
                 size="sm"
               />
@@ -94,9 +90,7 @@ class Parameter extends Component {
   }
 }
 
-const TransletedParameter = connect(null, {updateParameter})(
-  withTranslation()(Parameter)
-);
+const TransletedParameter = connect(null, {updateParameter})(withTranslation()(Parameter));
 
 class Parameters extends Component {
   constructor(props) {

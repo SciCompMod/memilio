@@ -14,13 +14,7 @@ class Results extends Component {
     if (this.props.rki === null) {
       return <div>Bitte wählen sie ein Bundesland aus!</div>;
     }
-    return (
-      <SEIRChart
-        seir={this.props.seir}
-        rki={this.props.rki.all}
-        measures={this.props.measures}
-      />
-    );
+    return <SEIRChart seir={this.props.seir} rki={this.props.rki.all} measures={this.props.measures} />;
   }
 
   render() {
@@ -33,9 +27,7 @@ class Results extends Component {
             <Simulation />
             <span className="ml-2">
               {t('selection')} &nbsp;
-              {this.props.selected
-                ? this.props.selected.label
-                : t('no-selection')}
+              {this.props.selected ? this.props.selected.label : t('no-selection')}
               ,&nbsp; {t('population')}:&nbsp;
               {this.props.selected && this.props.selected.population
                 ? numeral(this.props.selected.population).format('0,0')
