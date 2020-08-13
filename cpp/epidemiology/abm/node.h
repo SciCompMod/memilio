@@ -3,6 +3,7 @@
 
 #include "epidemiology/abm/state.h"
 #include "epidemiology/abm/node_type.h"
+#include <map>
 
 namespace epi
 {
@@ -16,11 +17,13 @@ public:
     void add_person(Person& person);
     void remove_person(Person& person);
     void end_migration(double dt);
+    void change_subpopulation(State& s, int delta);
+    int get_subpopulation(State& s);
 
 private:
     NodeType m_type;
     int m_num_persons = 0;
-    //markov parameters, ...
+    std::map<State, int> subpopulations;
 };
 } // namespace epi
 
