@@ -19,6 +19,7 @@ public:
     void end_migration(double dt);
     void change_subpopulation(State& s, int delta);
     int get_subpopulation(State& s);
+    void set_subpopulation(State s, int v);
 
 private:
     NodeType m_type;
