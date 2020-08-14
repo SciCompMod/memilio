@@ -200,7 +200,9 @@ ParameterStudy read_parameter_study(TixiDocumentHandle handle, const std::string
     tixiGetDoubleElement(handle, path_join(path, "T0").c_str(), &t0);
     tixiGetDoubleElement(handle, path_join(path, "TMax").c_str(), &tmax);
 
-    return ParameterStudy(&simulate, read_parameter_space(handle, path), n_runs, t0, tmax);
+    return ParameterStudy([](auto&& t0, auto&& tmax, auto&& dt, auto&& cfm, auto&& params) {
+        return simulate(t0, tmax, dt, cfm, params);
+    }, read_parameter_space(handle, path), n_runs, t0, tmax);
 }
 
 ParameterSpace read_parameter_space(TixiDocumentHandle handle, const std::string& path)
@@ -366,8 +368,7 @@ void write_parameter_study(TixiDocumentHandle handle, const std::string& path, c
 }
 
 void write_single_run_params(const int run, const ContactFrequencyMatrix& cont_freq, const SecirParams& params,
-                             double t0, double tmax, std::vector<double> time,
-                             std::vector<Eigen::VectorXd> secir_result)
+                             double t0, double tmax, const TimeSeries<double>& result)
 {
 
     int nb_runs      = 1;
@@ -375,13 +376,15 @@ void write_single_run_params(const int run, const ContactFrequencyMatrix& cont_f
     TixiDocumentHandle handle;
     tixiCreateDocument("Parameters", &handle);
 
-    ParameterStudy study(simulate, cont_freq, params, t0, tmax, 0.0, nb_runs);
+    ParameterStudy study([](auto&& t0, auto&& tmax, auto&& dt, auto&& cfm, auto&& params) {
+        return simulate(t0, tmax, dt, cfm, params);
+    }, cont_freq, params, t0, tmax, 0.0, nb_runs);
 
     write_parameter_study(handle, path, study);
     tixiSaveDocument(handle, ("Parameters_run" + std::to_string(run) + ".xml").c_str());
     tixiCloseDocument(handle);
 
-    save_result(time, secir_result, ("Results_run" + std::to_string(run) + ".h5"));
+    save_result(result, ("Results_run" + std::to_string(run) + ".h5"));
 }
 
 void write_node(const Graph<ModelNode<SecirSimulation>, MigrationEdge>& graph, int node, double t0, double tmax)
@@ -398,7 +401,9 @@ void write_node(const Graph<ModelNode<SecirSimulation>, MigrationEdge>& graph, i
     auto params    = graph.nodes()[node].model.get_params();
     auto cont_freq = graph.nodes()[node].model.get_cont_freq();
 
-    ParameterStudy study(simulate, cont_freq, params, t0, tmax, dev_rel, nb_runs);
+    ParameterStudy study([](auto&& t0, auto&& tmax, auto&& dt, auto&& cfm, auto&& params) {
+        return simulate(t0, tmax, dt, cfm, params);
+    }, cont_freq, params, t0, tmax, dev_rel, nb_runs);
 
     write_parameter_study(handle, path, study);
     tixiSaveDocument(handle, ("GraphNode" + std::to_string(node) + ".xml").c_str());

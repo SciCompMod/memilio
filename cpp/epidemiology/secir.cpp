@@ -451,12 +451,18 @@ void secir_get_derivatives(ContactFrequencyMatrix const& cont_freq_matrix, Secir
     }
 }
 
-std::vector<double> simulate(double t0, double tmax, double dt, ContactFrequencyMatrix const& cont_freq_matrix,
-                             SecirParams const& params, std::vector<Eigen::VectorXd>& secir)
+TimeSeries<double> simulate(double t0, double tmax, double dt, ContactFrequencyMatrix const& cont_freq_matrix,
+                            SecirParams const& params)
 {
     SecirSimulation sim(cont_freq_matrix, params, t0, dt);
     sim.advance(tmax);
-    auto& result = sim.get_result();
+    return sim.get_result();
+}
+
+std::vector<double> simulate(double t0, double tmax, double dt, ContactFrequencyMatrix const& cont_freq_matrix,
+                             SecirParams const& params, std::vector<Eigen::VectorXd>& secir)
+{
+    auto result = simulate(t0, tmax, dt, cont_freq_matrix, params);
     std::vector<double> t(result.get_num_time_points());
     for (Eigen::Index i = 0; i < result.get_num_time_points(); i++)
     {

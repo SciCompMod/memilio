@@ -100,7 +100,9 @@ TEST(TestSaveParameters, compareParameterStudy)
     TixiDocumentHandle handle;
 
     tixiCreateDocument("Parameters", &handle);
-    epi::ParameterStudy study(epi::simulate, contact_freq_matrix, params, t0, tmax, 0.0, nb_runs);
+    epi::ParameterStudy study([](auto&& t0, auto&& tmax, auto&& dt, auto&& cfm, auto&& params) {
+        return epi::simulate(t0, tmax, dt, cfm, params);
+    }, contact_freq_matrix, params, t0, tmax, 0.0, nb_runs);
 
     epi::write_parameter_study(handle, path, study);
     tixiSaveDocument(handle, "TestParameters.xml");

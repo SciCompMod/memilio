@@ -92,8 +92,7 @@ void write_parameter_study(TixiDocumentHandle handle, const std::string& path, c
  * @param tmax end point of simulation
  */
 void write_single_run_params(const int run, const ContactFrequencyMatrix& cont_freq, const SecirParams& params,
-                             double t0, double tmax, std::vector<double> time,
-                             std::vector<Eigen::VectorXd> secir_result);
+                             double t0, double tmax, const TimeSeries<double>& result);
 
 /**
  * @brief Creates xml file containing Parameters of one node of a graph

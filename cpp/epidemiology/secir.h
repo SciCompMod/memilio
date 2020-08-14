@@ -433,7 +433,11 @@ private:
     SecirParams m_params;
 };
 
+TimeSeries<double> simulate(double t0, double tmax, double dt, ContactFrequencyMatrix const& cont_freq_matrix,
+                            SecirParams const& params);
+
 /**
+ * DEPRECATED
  * @brief run secir simulation over fixed time
  * @param cont_freq_matrix contact frequencies between groups
  * @param params parameters of each group

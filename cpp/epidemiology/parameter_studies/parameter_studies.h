@@ -9,15 +9,14 @@
 
 namespace epi
 {
-using HandleSimulationResultFunction = std::function<void(const ContactFrequencyMatrix&, const SecirParams&,
-                                                          std::vector<double>, std::vector<Eigen::VectorXd>)>;
+using HandleSimulationResultFunction =
+    std::function<void(const ContactFrequencyMatrix&, const SecirParams&, const TimeSeries<double>& result)>;
 
 // The function type for the kind of simulation that we want to run
-using secir_simulation_function_t =
-    std::function<std::vector<double>(double t0, double tmax, double dt, ContactFrequencyMatrix const& cont_freq_matrix,
-                                      SecirParams const& params, std::vector<Eigen::VectorXd>& secir_result)>;
+using secir_simulation_function_t = std::function<TimeSeries<double>(
+    double t0, double tmax, double dt, ContactFrequencyMatrix const& cont_freq_matrix, SecirParams const& params)>;
 
-auto dummy_func = [](const auto& cont_freq, const auto& params, const auto& time, const auto& secir_result) {};
+auto dummy_func = [](const auto& cont_freq, const auto& params, const auto& secir_result) {};
 
 // TODO: document class
 // TODO: document input file convention
@@ -42,8 +41,7 @@ public:
     /*
      * @brief Carry out all simulations in the parameter study.
      */
-    std::vector<std::vector<Eigen::VectorXd>>
-    run(HandleSimulationResultFunction simulation_result_function = dummy_func);
+    std::vector<TimeSeries<double>> run(HandleSimulationResultFunction simulation_result_function = dummy_func);
 
     /*
      * @brief sets the number of Monte Carlo runs
@@ -144,25 +142,20 @@ inline ParameterStudy::ParameterStudy(secir_simulation_function_t const& simu_fu
 {
 }
 
-inline std::vector<std::vector<Eigen::VectorXd>>
-ParameterStudy::run(HandleSimulationResultFunction simulation_result_function)
+inline std::vector<TimeSeries<double>> ParameterStudy::run(HandleSimulationResultFunction simulation_result_function)
 {
-    std::vector<std::vector<Eigen::VectorXd>> ensemble_result;
+    std::vector<TimeSeries<double>> ensemble_result;
 
     // Iterate over all parameters in the parameter space
     for (size_t i = 0; i < (*this).get_nb_runs(); i++) {
-
-        std::vector<Eigen::VectorXd> secir_result;
-
         SecirParams params_sample             = parameter_space.get_secir_params_sample();
         ContactFrequencyMatrix contact_sample = parameter_space.get_cont_freq_matrix_sample();
 
         // Call the simulation function
-        auto time = simulation_function((*this).m_t0, (*this).m_tmax, (*this).m_dt, contact_sample, params_sample,
-                                        secir_result);
-        simulation_result_function(contact_sample, params_sample, time, secir_result);
+        auto result = simulation_function((*this).m_t0, (*this).m_tmax, (*this).m_dt, contact_sample, params_sample);
+        simulation_result_function(contact_sample, params_sample, result);
 
-        ensemble_result.push_back(std::move(secir_result));
+        ensemble_result.push_back(result);
     }
 
     return ensemble_result;

@@ -12,41 +12,13 @@ using namespace H5;
 namespace epi
 {
 
-SecirSimulationResult::SecirSimulationResult()
-{
-}
-
-SecirSimulationResult::SecirSimulationResult(std::vector<double> time, std::vector<Eigen::VectorXd> groups,
-                                             std::vector<std::vector<double>> total)
-    : m_time{time}
-    , m_groups{groups}
-    , m_total{total}
-{
-}
-
-std::vector<double> SecirSimulationResult::get_time_vector() const&
-{
-    return m_time;
-}
-
-std::vector<Eigen::VectorXd> SecirSimulationResult::get_groups_vectors() const&
-{
-    return m_groups;
-}
-
-std::vector<std::vector<double>> SecirSimulationResult::get_totals_vector() const&
-{
-    return m_total;
-}
-
-void save_result(const std::vector<double>& times, const std::vector<Eigen::VectorXd>& secir,
-                 const std::string& filename)
+void save_result(const TimeSeries<double>& result, const std::string& filename)
 {
     const int n_dims = 2;
 
-    const int n_data    = secir.size();
+    const int n_data    = result.get_num_time_points();
     const int n_compart = 8;
-    const int nb_groups = secir[0].size() / n_compart;
+    const int nb_groups = result[0].size() / n_compart;
 
     H5File file(filename, H5F_ACC_TRUNC);
 
@@ -55,6 +27,7 @@ void save_result(const std::vector<double>& times, const std::vector<Eigen::Vect
 
     auto DATASET_NAME = "Time";
     auto dataset      = file.createDataSet(DATASET_NAME, PredType::NATIVE_DOUBLE, dataspace);
+    auto times = std::vector<double>(result.get_times().begin(), result.get_times().end());
     dataset.write(times.data(), PredType::NATIVE_DOUBLE);
 
     auto total =
@@ -63,8 +36,9 @@ void save_result(const std::vector<double>& times, const std::vector<Eigen::Vect
     for (int group = 0; group < nb_groups + 1; ++group) {
         auto dset = std::vector<Eigen::Matrix<double, n_compart, 1>>(n_data);
         if (group < nb_groups) {
-            for (size_t irow = 0; irow < secir.size(); ++irow) {
-                auto slice = epi::slice(secir[irow], {group * 8, n_compart});
+            for (size_t irow = 0; irow < result.get_num_time_points(); ++irow) {
+                auto v = result[irow].eval();
+                auto slice = epi::slice(v, {group * 8, n_compart});
                 dset[irow] = slice;
                 total[irow] += slice;
             }
@@ -103,10 +77,12 @@ SecirSimulationResult read_result(const std::string& filename, int nb_groups)
     auto time = std::vector<double>(dims_time[0]);
     dataset_time.read(time.data(), PredType::NATIVE_DOUBLE, mspace1, filespace_time);
 
-    std::vector<Eigen::VectorXd> groups;
+    TimeSeries<double> groups(nb_compart * nb_groups), totals(nb_compart);
+    groups.reserve(dims_time[0]);
+    totals.reserve(dims_time[0]);
     for (int i = 0; i < dims_time[0]; i++) {
-        Eigen::VectorXd group_vector(nb_compart * nb_groups);
-        groups.push_back(group_vector);
+        groups.add_time_point(time[i]);
+        totals.add_time_point(time[i]);
     }
 
     for (int i = 0; i < nb_groups; ++i) {
@@ -142,15 +118,12 @@ SecirSimulationResult read_result(const std::string& filename, int nb_groups)
 
     DataSpace mspace3(n_dims_total, dims_total);
 
-    auto total_buf = std::vector<double[nb_compart]>(dims_total[0]);
+    auto total_buf = std::vector<Eigen::Matrix<double, 8, 1>>(dims_total[0]);
     dataset_total.read(total_buf.data(), PredType::NATIVE_DOUBLE, mspace3, filespace);
 
-    std::vector<std::vector<double>> total(total_buf.size());
-    std::transform(begin(total_buf), end(total_buf), begin(total), [nb_compart](auto v) {
-        return std::vector<double>(v, v + nb_compart);
-    });
+    std::copy(begin(total_buf), end(total_buf), totals.begin());
 
-    return SecirSimulationResult(time, groups, total);
+    return SecirSimulationResult(groups, totals);
 }
 
 } // namespace epi
