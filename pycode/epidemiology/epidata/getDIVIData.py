@@ -116,12 +116,10 @@ def download_data_for_one_day(last_number, download_date):
     sign_dict = {0:1,
                  1:-1}
 
-    check_num_calls = 1
     if download_date in call_number_dict.keys():
 
         call_number = call_number_dict[download_date]
 
-        check_num_calls = check_num_calls + 1
         df = call_call_url(url_prefix, call_number)
 
     else:
@@ -135,8 +133,6 @@ def download_data_for_one_day(last_number, download_date):
                if delta != 1 and delta != 2:
                   call_string = "date(" + download_date.strftime("%Y,%-m,%-d") + "): " + str(call_number) + ","
 
-               print("Number of calls: ", check_num_calls)
-               check_num_calls = check_num_calls + 1
                df = call_call_url(url_prefix, call_number,  call_string)
 
                if not df.empty:
@@ -144,7 +140,6 @@ def download_data_for_one_day(last_number, download_date):
 
             # case with same call_number, which is very unlikely
             call_number = last_number
-            check_num_calls = check_num_calls + 1
             df = call_call_url(url_prefix, call_number)
 
     return [call_number, df]
@@ -179,6 +174,8 @@ def get_divi_data(read_data=dd.defaultDict['read_data'],
             sys.exit(exit_string)
 
         if update_data:
+            # TODO: Check if data is already there.
+            # TODO: Check which dates are missing and add those.
             # download data from today
             df2 = gd.loadCsv('DIVI-Intensivregister-Tagesreport', apiUrl = 'https://www.divi.de/')
             df = df.append(df2, ignore_index=True)
