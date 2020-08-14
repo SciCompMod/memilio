@@ -46,6 +46,13 @@ def download_data_for_one_day(download_date):
                         date(2020, 7, 7): 3961,
                         date(2020, 7, 8): 3964,
                         date(2020, 7, 9): 3966,
+                        date(2020, 7, 10): 3987,
+                        date(2020, 7, 11): 4065,
+                        date(2020, 7, 12): 4069,
+                        date(2020, 7, 13): 4073,
+                        date(2020, 7, 15): 4108,
+                        date(2020, 7, 16): 4110
+
                         }
 
     call_date = download_date.strftime("%Y-%m-%d")
@@ -83,13 +90,125 @@ def download_data_for_one_day(download_date):
     try:
         df = pandas.read_csv(call_url)
     except OSError as e:
-        exit_string = "ERROR: URL " + call_url + " could not be opened."
+        exit_string = "ERROR: URL " + call_url + " could not be opened. Hint: check your internet connection."
         sys.exit(exit_string)
     except:
         print("Information: URL: ", call_url, " not known")
 
+    return [0,df]
+
+def call_call_url(url_prefix, call_number, new_found=""):
+
+    call_url = url_prefix + "/viewdocument/" + str(call_number)
+
+    # empty data frame
+    df = pandas.DataFrame()
+
+    try:
+        df = pandas.read_csv(call_url)
+        # TODO: add a print which can be directly added to the dict.
+        if not new_found == "":
+            print("New cal number found. Please copy the following to call_number_dict to increase runtime: "
+                  + new_found)
+    except OSError as e:
+        exit_string = "ERROR: URL " + call_url + " could not be opened. Hint: check your internet connection."
+        sys.exit(exit_string)
+    except:
+        pass
+        # print("Information: URL: ", call_url, " not known")
+
     return df
 
+
+def get_download_url_for_one_day(last_number, download_date):
+    # define call numbers for dates where call number doesn't increase by 1
+
+    call_number_dict = {date(2020, 4, 24): 3974,
+                        date(2020, 5, 6): 3691,
+                        date(2020, 6, 5): 3842,
+                        date(2020, 6, 12): 3906,
+                        date(2020, 6, 26): 3774,
+                        date(2020, 6, 28): 3777,
+                        date(2020, 6, 29): 3830,
+                        date(2020, 6, 30): 3840,
+                        date(2020, 7, 1): 3928,
+                        date(2020, 7, 2): 3951,
+                        date(2020, 7, 6): 3958,
+                        date(2020, 7, 7): 3961,
+                        date(2020, 7, 8): 3964,
+                        date(2020, 7, 10): 3987,
+                        date(2020, 7, 11): 4065,
+                        date(2020, 7, 12): 4069,
+                        date(2020, 7, 13): 4073,
+                        date(2020, 7, 14): 4081,
+                        date(2020, 7, 15): 4108,
+                        date(2020, 7, 17): 4127,
+                        date(2020, 7, 18): 4143,
+                        date(2020, 7, 20): 4156,
+                        date(2020, 7, 22): 4162,
+                        date(2020, 7, 27): 4173,
+                        date(2020, 7, 28): 4177,
+                        date(2020, 7, 29): 4181,
+                        date(2020, 7, 30): 4184,
+                        date(2020, 8, 3): 4204,
+                        date(2020, 8, 4): 4316,
+                        date(2020, 8, 5): 4319,
+                        date(2020, 8, 6): 4324,
+                        date(2020, 8, 8): 4327,
+                        date(2020, 8, 9): 4330,
+                        date(2020, 8, 11): 4412,
+                        date(2020, 8, 13): 4430,
+                        }
+
+    call_date = download_date.strftime("%Y-%m-%d")
+
+    # first links have different upload time
+    time_shift_date = date(2020, 6, 5)
+    if download_date < time_shift_date:
+        call_time = "-09-15"
+    else:
+        call_time = "-12-15"
+
+    # need extension "-2" for dates between 12.6. and 25.6.
+    ext = ""
+    if date(2020, 6, 12) <= download_date <= date(2020, 6, 25):
+        ext = "-2"
+
+    url_prefix = "https://www.divi.de/divi-intensivregister-tagesreport-archiv-csv/divi-intensivregister-" \
+                 + call_date + call_time + ext
+
+    # construction of link is different for different time periods
+    # for the latest dates no call number is needed
+    # number in url starts at values in call_number_dict and increases every day by 1
+
+    sign_dict = {0:1,
+                 1:-1}
+
+    if download_date in call_number_dict.keys():
+
+        call_number = call_number_dict[download_date]
+
+        df = call_call_url(url_prefix, call_number)
+
+    else:
+        call_string = ""
+
+        # It is most likely that the difference is between 1 and 2
+        for sign in range(2):
+            for delta in range(1,300):
+
+               call_number = last_number + sign_dict[sign]*delta
+               if delta != 1 and delta != 2:
+                  call_string = "date(" + download_date.strftime("%Y,%-m,%-d") + "): " + str(call_number) + ","
+               df = call_call_url(url_prefix, call_number, call_string)
+
+               if not df.empty:
+                   return [call_number, df]
+
+            call_number = last_number
+            df = call_call_url(url_prefix, call_number)
+
+    return [call_number, df]
 
 def get_divi_data(read_data=dd.defaultDict['read_data'],
                   make_plot=dd.defaultDict['make_plot'],
@@ -97,6 +216,7 @@ def get_divi_data(read_data=dd.defaultDict['read_data'],
                   out_folder=dd.defaultDict['out_folder'],
                   start_date=date(2020, 4, 24),
                   end_date=date.today()):
+
     # First csv data on 24-04-2020
     if start_date < date(2020, 4, 24):
         start_date = date(2020, 4, 24)
@@ -111,11 +231,11 @@ def get_divi_data(read_data=dd.defaultDict['read_data'],
         file_in = os.path.join(directory, filename + ".json")
         # if once downloaded just read json file
         try:
+            print("file_in: ", file_in)
             df = pandas.read_json(file_in)
         except ValueError:
             exit_string = "Error: The file: " + file_in + "does not exist. Call program without -r flag to get it."
             sys.exit(exit_string)
-
     else:
         # Get data:
         # start with empty dataframe
@@ -123,9 +243,11 @@ def get_divi_data(read_data=dd.defaultDict['read_data'],
 
         delta = timedelta(days=1)
 
+        last_number = 0
         while start_date <= end_date:
 
-            df2 = download_data_for_one_day(start_date)
+            #[last_number, df2] = download_data_for_one_day(start_date)
+            [last_number, df2] = get_download_url_for_one_day(last_number, start_date)
 
             if not df2.empty:
                 # data of first days needs adjustment to following data
