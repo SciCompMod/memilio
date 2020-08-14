@@ -43,10 +43,10 @@ TEST(TestMigration, compareWithSingleIntegration)
     single_sim1.advance(tmax);
     single_sim2.advance(tmax);
 
-    EXPECT_DOUBLE_EQ(g.nodes()[0].model.get_t().back(), single_sim1.get_t().back());
-    EXPECT_DOUBLE_EQ(g.nodes()[1].model.get_t().back(), single_sim2.get_t().back());
+    EXPECT_DOUBLE_EQ(g.nodes()[0].model.get_result().get_last_time(), single_sim1.get_result().get_last_time());
+    EXPECT_DOUBLE_EQ(g.nodes()[1].model.get_result().get_last_time(), single_sim2.get_result().get_last_time());
 
     //graph may have different time steps, so we can't expect high accuracy here
-    EXPECT_NEAR((g.nodes()[0].model.get_y().back() - single_sim1.get_y().back()).norm(), 0.0, 1e-6);
-    EXPECT_NEAR((g.nodes()[1].model.get_y().back() - single_sim2.get_y().back()).norm(), 0.0, 1e-6);
+    EXPECT_NEAR((g.nodes()[0].model.get_result().get_last_value() - single_sim1.get_result().get_last_value()).norm(), 0.0, 1e-6);
+    EXPECT_NEAR((g.nodes()[1].model.get_result().get_last_value() - single_sim2.get_result().get_last_value()).norm(), 0.0, 1e-6);
 }

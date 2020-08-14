@@ -121,7 +121,7 @@ public:
     * @param[in,out] dt current time step h=dt
     * @param[out] ytp1 approximated value y(t+1)
     */
-    bool step(const DerivFunction& f, Eigen::VectorXd const& yt, double& t, double& dt, Eigen::VectorXd& ytp1) const override;
+    bool step(const DerivFunction& f, Eigen::Ref<Eigen::VectorXd const> yt, double& t, double& dt, Eigen::Ref<Eigen::VectorXd> ytp1) const override;
 
 private:
     Tableau m_tab;

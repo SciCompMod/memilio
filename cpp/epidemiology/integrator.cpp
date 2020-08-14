@@ -5,30 +5,32 @@
 namespace epi
 {
 
-Eigen::VectorXd& OdeIntegrator::advance(double tmax)
+Eigen::Ref<Eigen::VectorXd> OdeIntegrator::advance(double tmax)
 {
-    const double t0 = m_t.back();
-    assert(tmax > m_t.back());
+    const double t0 = m_result.get_time(m_result.get_num_time_points() - 1);
+    assert(tmax > t0);
 
-    const size_t ode_dim  = m_y[0].size();
     const size_t nb_steps = (int)(ceil((tmax - t0) / m_dt)); // estimated number of time steps (if equidistant)
 
-    m_t.reserve(m_t.size() + nb_steps);
-    m_y.reserve(m_y.size() + nb_steps);
+    m_result.reserve(m_result.get_num_time_points() + nb_steps);
+    // m_t.reserve(m_t.size() + nb_steps);
+    // m_y.reserve(m_y.size() + nb_steps);
 
     bool step_okay = true;
 
     double t = t0;
-    size_t i = m_t.size() - 1;
+    size_t i = m_result.get_num_time_points() - 1;
     while (std::abs((tmax - t) / (tmax - t0)) > 1e-10) {
         //we don't make timesteps too small as the error estimator of an adaptive integrator
         //may not be able to handle it. this is very conservative and maybe unnecessary,
         //but also unlikely to happen. may need to be reevaluated
 
         auto dt_eff = std::min(m_dt, tmax - t);
-        m_y.emplace_back(ode_dim);
-        step_okay &= m_core->step(m_f, m_y[i], t, dt_eff, m_y[i + 1]);
-        m_t.push_back(t);
+        m_result.add_time_point();
+        // m_y.emplace_back(ode_dim);
+        step_okay &= m_core->step(m_f, m_result[i], t, dt_eff, m_result[i + 1]);
+        m_result.get_last_time() = t;
+        // m_t.push_back(t);
 
         ++i;
 
@@ -49,7 +51,7 @@ Eigen::VectorXd& OdeIntegrator::advance(double tmax)
         log_info("Adaptive step sizing successful to tolerances.");
     }
 
-    return m_y.back();
+    return m_result.get_last_value();
 }
 
 } // namespace epi

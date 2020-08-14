@@ -375,7 +375,7 @@ double get_reprod_rate(ContactFrequencyMatrix const& cont_freq_matrix, SecirPara
 }
 
 void secir_get_derivatives(ContactFrequencyMatrix const& cont_freq_matrix, SecirParams const& params,
-                           const Eigen::VectorXd& y, double t, Eigen::VectorXd& dydt)
+                           Eigen::Ref<const Eigen::VectorXd> y, double t, Eigen::Ref<Eigen::VectorXd> dydt)
 {
     // alpha  // percentage of asymptomatic cases
     // beta // risk of infection from the infected symptomatic patients
@@ -456,9 +456,16 @@ std::vector<double> simulate(double t0, double tmax, double dt, ContactFrequency
 {
     SecirSimulation sim(cont_freq_matrix, params, t0, dt);
     sim.advance(tmax);
-    secir = sim.get_y();
+    auto& result = sim.get_result();
+    std::vector<double> t(result.get_num_time_points());
+    for (Eigen::Index i = 0; i < result.get_num_time_points(); i++)
+    {
+        t[i] = result.get_time(i);
+    }
 
-    return sim.get_t();
+    std::transform(result.begin(), result.end(), std::back_inserter(secir), [](auto&& v_ref) { return v_ref.eval(); });
+
+    return t;
 }
 
 SecirSimulation::SecirSimulation(const ContactFrequencyMatrix& cont_freq_matrix, const SecirParams& params, double t0,
@@ -476,7 +483,7 @@ SecirSimulation::SecirSimulation(const ContactFrequencyMatrix& cont_freq_matrix,
     m_integratorCore->set_abs_tolerance(1e-1);
 }
 
-Eigen::VectorXd& SecirSimulation::advance(double tmax)
+Eigen::Ref<Eigen::VectorXd> SecirSimulation::advance(double tmax)
 {
     return m_integrator.advance(tmax);
 }
