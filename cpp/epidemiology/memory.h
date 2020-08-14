@@ -35,8 +35,15 @@ public:
     /**
      * @brief Returns a raw pointer to the watched object
      */
-    T* get();
-    const T* get() const;
+    T* get()
+    {
+        return m_raw_ptr;
+    }
+
+    const T* get() const
+    {
+        return m_raw_ptr;
+    }
 
     const T* operator->() const
     {

@@ -164,6 +164,8 @@ public:
         SecirParams secir_params_sample(m_params.size());
         for (size_t i = 0; i < m_params.size(); i++) {
 
+            double group_total = m_params.populations.get_group_total(SecirCategory::AgeGroup, i);
+
             secir_params_sample.populations.set({i, SecirCompartments::E},
                                                 m_params.populations.get({i, SecirCompartments::E}).draw_sample());
             secir_params_sample.populations.set({i, SecirCompartments::C},
@@ -180,17 +182,12 @@ public:
             // no sampling for dead and total numbers
             secir_params_sample.populations.set({i, SecirCompartments::D},
                                                 m_params.populations.get({i, SecirCompartments::D}));
+
+            m_params.populations.set_difference_from_group_total({i, epi::SecirCompartments::S},
+                                                                 epi::SecirCategory::AgeGroup, i, group_total);
             secir_params_sample.populations.set_difference_from_group_total(
                 {i, epi::SecirCompartments::S}, epi::SecirCategory::AgeGroup, i,
                 m_params.populations.get_group_total(SecirCategory::AgeGroup, i));
-
-            // TODO:
-            printf("\n\n sample %f   orig %f \n\n",
-                   secir_params_sample.populations.get_group_total(SecirCategory::AgeGroup, i),
-                   m_params.populations.get_group_total(SecirCategory::AgeGroup, i));
-            printf("\n\n . group %f total %f \n\n",
-                   secir_params_sample.populations.get_group_total(epi::SecirCategory::AgeGroup, i),
-                   secir_params_sample.populations.get_total());
 
             secir_params_sample.times[i].set_incubation(m_params.times[i].get_incubation().draw_sample());
             double serint_dummy = m_params.times[i].get_serialinterval().draw_sample();
@@ -198,7 +195,7 @@ public:
                 serint_dummy = secir_params_sample.times[i].get_incubation() - 1;
                 log_warning("To Do/Discussion: Redesign sample strategy for serial interval.");
             }
-            else if (std::abs(2 * serint_dummy - secir_params_sample.times[i].get_incubation()) < 0.2) {
+            else if (2 * serint_dummy < secir_params_sample.times[i].get_incubation()) {
                 serint_dummy += 0.5;
                 log_warning("To Do/Discussion: Redesign sample strategy for serial interval.");
             }

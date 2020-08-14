@@ -79,6 +79,9 @@ TEST(ParameterStudies, sample_from_secir_params)
 
         EXPECT_GE(params_sample.populations.get_group_total(epi::SecirCategory::AgeGroup, i), 0);
 
+        EXPECT_NEAR(params_sample.populations.get_group_total(epi::SecirCategory::AgeGroup, i), fact * nb_total_t0,
+                    1e-6);
+
         EXPECT_GE(params_sample.times[i].get_incubation(), 0);
 
         EXPECT_GE(params_sample.probabilities[i].get_infection_from_contact(), 0);
@@ -212,6 +215,8 @@ TEST(ParameterStudies, check_ensemble_run_result)
         params.probabilities[i].set_hospitalized_per_infectious(rho);
         params.probabilities[i].set_icu_per_hospitalized(theta);
         params.probabilities[i].set_dead_per_icu(delta);
+
+        params.probabilities[i].get_asymp_per_infectious().get_distribution().get();
     }
 
     epi::ContactFrequencyMatrix& cont_freq_matrix = params.get_contact_patterns();
@@ -227,10 +232,6 @@ TEST(ParameterStudies, check_ensemble_run_result)
             return epi::simulate(t0, tmax, dt, params, secir);
         },
         params, t0, tmax);
-
-    // TODO:
-    printf("\n\n ... group %f total %f \n\n", params.populations.get_group_total(epi::SecirCategory::AgeGroup, 0),
-           params.populations.get_total());
 
     // Run parameter study
     int run = 0;

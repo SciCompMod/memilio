@@ -146,7 +146,7 @@ void Populations::set_total(double value)
     }
     else {
         for (auto i = 0; i < m_y.size(); i++) {
-            m_y[i] *= value;
+            m_y[i] *= value / current_population;
         }
     }
 }

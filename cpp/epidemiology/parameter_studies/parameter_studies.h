@@ -154,9 +154,6 @@ ParameterStudy::run(HandleSimulationResultFunction simulation_result_function)
 
         SecirParams params_sample = parameter_space.draw_sample();
 
-        printf("\n\n serint %f, inc %f\n\n", (double)params_sample.times[0].get_serialinterval(),
-               (double)params_sample.times[0].get_incubation());
-
         // Call the simulation function
         auto time = simulation_function((*this).m_t0, (*this).m_tmax, (*this).m_dt, params_sample, secir_result);
         simulation_result_function(params_sample, time, secir_result);

@@ -112,6 +112,11 @@ TEST(TestSecir, testParamConstructors)
     params.probabilities[0].set_icu_per_hospitalized(theta);
     params.probabilities[0].set_dead_per_icu(delta);
 
+    epi::ContactFrequencyMatrix& cont_freq_matrix = params.get_contact_patterns();
+    cont_freq_matrix.set_cont_freq(cont_freq, 0, 0);
+    epi::Damping dummy(30., 0.3);
+    cont_freq_matrix.add_damping(dummy, 0, 0);
+
     epi::SecirParams params2{params}; // copy constructor
 
     EXPECT_EQ(params.populations.get_total(), params2.populations.get_total());
@@ -141,6 +146,8 @@ TEST(TestSecir, testParamConstructors)
     EXPECT_EQ(params.times[0].get_hospitalized_to_icu(), params2.times[0].get_hospitalized_to_icu());
     EXPECT_EQ(params.times[0].get_icu_to_dead(), params2.times[0].get_icu_to_dead());
     EXPECT_EQ(params.times[0].get_icu_to_home(), params2.times[0].get_icu_to_home());
+    EXPECT_EQ(params.get_contact_patterns().get_cont_freq_mat().get_dampings(0, 0).get_factor(35),
+              params2.get_contact_patterns().get_cont_freq_mat().get_dampings(0, 0).get_factor(35));
 
     EXPECT_EQ(params.probabilities[0].get_infection_from_contact(),
               params2.probabilities[0].get_infection_from_contact());
@@ -151,6 +158,8 @@ TEST(TestSecir, testParamConstructors)
               params2.probabilities[0].get_hospitalized_per_infectious());
     EXPECT_EQ(params.probabilities[0].get_icu_per_hospitalized(), params2.probabilities[0].get_icu_per_hospitalized());
     EXPECT_EQ(params.probabilities[0].get_dead_per_icu(), params2.probabilities[0].get_dead_per_icu());
+    EXPECT_EQ(params.get_contact_patterns().get_cont_freq_mat().get_dampings(0, 0).get_factor(35),
+              params2.get_contact_patterns().get_cont_freq_mat().get_dampings(0, 0).get_factor(35));
 
     epi::SecirParams params3 = std::move(params2); // move constructor
 
@@ -192,6 +201,9 @@ TEST(TestSecir, testParamConstructors)
     EXPECT_EQ(params3.probabilities[0].get_icu_per_hospitalized(), params.probabilities[0].get_icu_per_hospitalized());
     EXPECT_EQ(params3.probabilities[0].get_dead_per_icu(), params.probabilities[0].get_dead_per_icu());
 
+    EXPECT_EQ(params.get_contact_patterns().get_cont_freq_mat().get_dampings(0, 0).get_factor(35),
+              params3.get_contact_patterns().get_cont_freq_mat().get_dampings(0, 0).get_factor(35));
+
     epi::SecirParams params4 = params3; // copy assignment constructor
 
     EXPECT_EQ(params3.populations.get_total(), params4.populations.get_total());
@@ -232,6 +244,9 @@ TEST(TestSecir, testParamConstructors)
     EXPECT_EQ(params3.probabilities[0].get_icu_per_hospitalized(), params4.probabilities[0].get_icu_per_hospitalized());
     EXPECT_EQ(params3.probabilities[0].get_dead_per_icu(), params4.probabilities[0].get_dead_per_icu());
 
+    EXPECT_EQ(params4.get_contact_patterns().get_cont_freq_mat().get_dampings(0, 0).get_factor(35),
+              params3.get_contact_patterns().get_cont_freq_mat().get_dampings(0, 0).get_factor(35));
+
     epi::SecirParams params5 = std::move(params4); // move assignment constructor
 
     EXPECT_EQ(params5.populations.get_total(), params3.populations.get_total());
@@ -271,6 +286,9 @@ TEST(TestSecir, testParamConstructors)
               params3.probabilities[0].get_hospitalized_per_infectious());
     EXPECT_EQ(params5.probabilities[0].get_icu_per_hospitalized(), params3.probabilities[0].get_icu_per_hospitalized());
     EXPECT_EQ(params5.probabilities[0].get_dead_per_icu(), params3.probabilities[0].get_dead_per_icu());
+
+    EXPECT_EQ(params5.get_contact_patterns().get_cont_freq_mat().get_dampings(0, 0).get_factor(35),
+              params3.get_contact_patterns().get_cont_freq_mat().get_dampings(0, 0).get_factor(35));
 
     epi::ContactFrequencyMatrix contact_freq_matrix{2};
 
