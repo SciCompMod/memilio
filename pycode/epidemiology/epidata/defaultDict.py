@@ -1,11 +1,14 @@
 #This dictionary ensures that in case of calling the functions
 # and of calling the console scripts the default values are the same
+import os
+
+default_file_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), '../../../data')
 
 defaultDict = {
    'read_data':False,
    'make_plot':False,
    'out_form':'json',
-   'out_folder':'./'
+   'out_folder':default_file_path,
 }
 
 # The following dict EngEng makes sure that for all
