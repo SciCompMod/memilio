@@ -11,7 +11,7 @@ Node& World::add_node(NodeType type)
     return m_nodes.back();
 }
 
-Person& World::add_person(Node& node, State state)
+Person& World::add_person(Node& node, InfectionState state)
 {
     m_persons.emplace_back(node, state);
     auto& person = m_persons.back();

@@ -6,20 +6,14 @@ namespace epi
 
 Node::Node(NodeType type)
     : m_type(type)
+    , m_subpopulations{}
 {
-//initialize the subpopulations of node
-//TODO: How to iterate over all enum values?
-	set_subpopulation(epi::State::Susceptible,0);
-	set_subpopulation(epi::State::Exposed,0);
-	set_subpopulation(epi::State::Recovered,0);
-	set_subpopulation(epi::State::Infected,0);
-
 }
 
-State Node::next_state(const Person& person, double dt) const
+InfectionState Node::next_infection_state(const Person& person, double dt) const
 {
     //TODO: markov transition
-    return person.get_state();
+    return person.get_infection_state();
 }
 
 void Node::end_migration(double dt)
@@ -30,26 +24,24 @@ void Node::end_migration(double dt)
 void Node::add_person(Person& p)
 {
     ++m_num_persons;
-    State s = p.get_state();
+    InfectionState s = p.get_infection_state();
     change_subpopulation(s, +1);
 }
 
 void Node::remove_person(Person& p)
 {
     --m_num_persons;
-    State s = p.get_state();
+    InfectionState s = p.get_infection_state();
     change_subpopulation(s, -1);
 }
 
-void Node::change_subpopulation(State& s, int delta){
-    subpopulations[s] += delta;
+void Node::change_subpopulation(InfectionState s, int delta)
+{
+    m_subpopulations[size_t(s)] += delta;
 }
 
-void Node::set_subpopulation(State s, int v){
-    subpopulations[s] = v;
-}
-
-int Node::get_subpopulation(State& s){
-    return subpopulations[s];
+int Node::get_subpopulation(InfectionState s)
+{
+    return m_subpopulations[size_t(s)];
 }
 } // namespace epi

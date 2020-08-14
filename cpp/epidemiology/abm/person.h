@@ -12,11 +12,11 @@ class Node;
 class Person
 {
 public:
-    Person(Node& node, State state);
+    Person(Node& node, InfectionState state);
     void interact(double dt);
     void migrate_to(Node& node); //could also be migrate() with the decision made internally
 
-    State get_state() const
+    InfectionState get_infection_state() const
     {
         return m_state;
     }
@@ -31,7 +31,7 @@ private:
         return m_node;
     }
 
-    State m_state;
+    InfectionState m_state;
     std::reference_wrapper<Node> m_node;
     //age, times, ...
 };

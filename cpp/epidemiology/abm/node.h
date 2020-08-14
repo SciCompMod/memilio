@@ -13,18 +13,19 @@ class Node
 {
 public:
     Node(NodeType type);
-    State next_state(const Person& person, double dt) const;
+    InfectionState next_infection_state(const Person& person, double dt) const;
     void add_person(Person& person);
     void remove_person(Person& person);
     void end_migration(double dt);
-    void change_subpopulation(State& s, int delta);
-    int get_subpopulation(State& s);
-    void set_subpopulation(State s, int v);
+    int get_subpopulation(InfectionState s);
+
+private:
+    void change_subpopulation(InfectionState s, int delta);
 
 private:
     NodeType m_type;
     int m_num_persons = 0;
-    std::map<State, int> subpopulations;
+    std::array<int, size_t(InfectionState::Count)> m_subpopulations;
 };
 } // namespace epi
 

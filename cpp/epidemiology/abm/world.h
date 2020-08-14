@@ -14,7 +14,7 @@ class World
 public:
     void evolve(double dt);
     Node& add_node(NodeType type);
-    Person& add_person(Node& node, State state);
+    Person& add_person(Node& node, InfectionState state);
     void end_migration(double dt);
     const std::vector<Person>& get_persons() const;
     const std::vector<Node>& get_nodes() const;

@@ -4,7 +4,7 @@
 namespace epi
 {
 
-Person::Person(Node& node, State state)
+Person::Person(Node& node, InfectionState state)
     : m_node(node)
     , m_state(state)
 {
@@ -12,7 +12,7 @@ Person::Person(Node& node, State state)
 
 void Person::interact(double dt)
 {
-    m_state = get_node().next_state(*this, dt);
+    m_state = get_node().next_infection_state(*this, dt);
 }
 
 void Person::migrate_to(Node& node)

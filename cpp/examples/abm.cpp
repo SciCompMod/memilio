@@ -6,10 +6,10 @@ int main()
     auto& home = world.add_node(epi::NodeType::Home);
     auto& school = world.add_node(epi::NodeType::School);
     auto& work = world.add_node(epi::NodeType::Work);
-    auto& child1 = world.add_person(home, epi::State::Susceptible);
-    auto& child2 = world.add_person(home, epi::State::Susceptible);
-    auto& parent1 = world.add_person(home, epi::State::Exposed);
-    auto& parent2 = world.add_person(home, epi::State::Susceptible);
+    auto& child1 = world.add_person(home, epi::InfectionState::Susceptible);
+    auto& child2 = world.add_person(home, epi::InfectionState::Susceptible);
+    auto& parent1 = world.add_person(home, epi::InfectionState::Exposed);
+    auto& parent2 = world.add_person(home, epi::InfectionState::Susceptible);
 
     auto sim = epi::AbmSimulation(0, world);
 
