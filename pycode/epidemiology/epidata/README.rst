@@ -137,10 +137,10 @@ When speaking about infected, means always infected inclusive the already recove
  MISAN    Spain    spain_all_age            ['Date', 'Age', 'Gender', 'Confirmed', 'Hospitalized', 'ICU', 'Deaths'] for different age ranges
  MISAN    Spain    spain_all_state          ['Date', 'ID_State', 'State', 'Confirmed_total', 'Confirmed_PCR', 'Confirmed_AB', 'Hospitalized', 'ICU', 'Deaths', 'Recovered']
  
- DIVI     Germany  FullData_DIVI            Full data as downloaded from archive
- DIVI     Germany  county_divi              ICU, ICU_ventilated over date for different counties (Landkreise)
- DIVI     Germany  state_divi               ICU, ICU_ventilated over date for different states (Bundesländer)
- DIVI     Germany  germany_divi             ICU, ICU_ventilated over date for whole Germany
+ DIVI     Germany  FullData_DIVI            Full data as downloaded from archive with columns ['County', 'State', 'anzahl_meldebereiche', 'reporting_hospitals', 'occupied_ICU', 'free_ICU', 'ID_State', 'Date', 'ICU', 'ICU_ventilated', 'faelle_covid_aktuell_im_bundesland', 'ID_County']
+ DIVI     Germany  county_divi              ICU, ICU_ventilated over date for different counties (Landkreise) with columns ['County', 'ID_County', 'ICU', 'ICU_ventilated', 'Date']
+ DIVI     Germany  state_divi               ICU, ICU_ventilated over date for different states (Bundesländer) with columns ['Date', 'ICU', 'ICU_ventilated', 'ID_State', 'State']
+ DIVI     Germany  germany_divi             ICU, ICU_ventilated over date for whole Germany with columns ['Date', 'ICU', 'ICU_ventilated']
  ======== ======== ======================== =================
 
 Some more Notes

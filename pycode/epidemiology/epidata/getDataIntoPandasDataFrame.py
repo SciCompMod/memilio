@@ -77,6 +77,9 @@ def cli(description):
    parser.add_argument('-r',  '--read-from-disk',
                        help='Reads the data from file "json" instead of downloading it.',
                        action='store_true')
+   parser.add_argument('-u',  '--update',
+                       help='Reads the data from file "json", downloads and adds data from today.',
+                       action='store_true')
    parser.add_argument('-p', '--plot', help='Plots the data.',
                        action='store_true')
    parser.add_argument('-h5', '--hdf5', help='Changes output format from json to hdf5.',
@@ -87,10 +90,11 @@ def cli(description):
    args = parser.parse_args()
 
    READ_DATA = args.read_from_disk
+   UPDATE_DATA = args.update
    MAKE_PLOT = args.plot
    OUT_FORM = "hdf5" if args.hdf5 else dd.defaultDict['out_form']
 
-   return [READ_DATA, MAKE_PLOT, OUT_FORM, args.out_path]
+   return [READ_DATA, UPDATE_DATA, MAKE_PLOT, OUT_FORM, args.out_path]
 
 def check_dir(directory):
     # check directory exists or create it

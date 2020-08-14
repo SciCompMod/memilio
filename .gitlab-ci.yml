@@ -68,6 +68,7 @@ test-py:
     - getpopuldata --help
     - getjhdata --help
     - getspaindata --help
+    - getdividata --help
     - getalldata --help
 
 download-data:
@@ -88,6 +89,7 @@ download-data:
     - getpopuldata -o data_dl
     - getjhdata -o data_dl
     - getspaindata -o data_dl
+    - getdividata -o data_dl
   artifacts:
     paths:
       - data_dl/*.json
