@@ -338,6 +338,11 @@ UncertainValue& SecirParams::Probabilities::get_dead_per_icu()
     return m_deathicu;
 }
 
+void SecirParams::set_contact_patterns(UncertainContactMatrix contact_patterns)
+{
+    m_contact_patterns = contact_patterns;
+}
+
 UncertainContactMatrix& SecirParams::get_contact_patterns()
 {
     return m_contact_patterns;

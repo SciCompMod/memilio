@@ -413,12 +413,17 @@ public:
     };
 
     /**
-     * @brief returns the contact frequency matrix set in UncertainContactMatrix
+     * @brief sets the UncertainContactMatrix
+     */
+    void set_contact_patterns(UncertainContactMatrix contact_patterns);
+
+    /**
+     * @brief returns the UncertainContactMatrix
      */
     UncertainContactMatrix& get_contact_patterns();
 
     /**
-     * @brief returns the contact frequency matrix set in UncertainContactMatrix
+     * @brief returns the UncertainContactMatrix
      */
     UncertainContactMatrix const& get_contact_patterns() const;
 

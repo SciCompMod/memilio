@@ -23,15 +23,15 @@ UncertainContactMatrix read_contact(TixiDocumentHandle handle, const std::string
  * @param contact_pattern Contact frequencies, dampings, and distributions
  * @param nb_runs Number of runs of parameterstudy (used for predefinied samples of dampings)
  */
-void write_contact(TixiDocumentHandle handle, const std::string& path,
-                   const UncertainContactMatrix& contact_pattern, int nb_runs);
+void write_contact(TixiDocumentHandle handle, const std::string& path, const UncertainContactMatrix& contact_pattern,
+                   int nb_runs);
 
 /**
  * @brief read parameter distribution from xml file
  * @param handle Tixi Document Handle
  * @param path Path to XML Tree of the parameter
  */
-std::unique_ptr<ParameterDistribution> read_dist(TixiDocumentHandle handle, const std::string& path);
+ParameterDistribution* read_dist(TixiDocumentHandle handle, const std::string& path);
 
 /**
  * @brief write parameter distribution to xml file
