@@ -4,6 +4,6 @@
 #include <epidemiology/parameter_studies/parameter_studies.h>
 #include <gtest/gtest.h>
 
-void check_dist(const epi::ParameterDistribution& dist, const epi::ParameterDistribution& dist_read);
+void check_distribution(const epi::ParameterDistribution& dist, const epi::ParameterDistribution& dist_read);
 
 #endif

@@ -163,11 +163,11 @@ ParameterSpace::ParameterSpace(SecirParams const& params, double t0, double tmax
     // maximum number of dampings; to avoid overfitting only allow one damping for every 10 days simulated
     // damping base values are between 0.1 and 1; diagonal values vary lie in the range of 0.6 to 1.4 times the base value
     // off diagonal values vary between 0.7 to 1.1 of the corresponding diagonal value (symmetrization is conducted)
-    m_params.get_contact_patterns().set_dist_damp_nb(ParameterDistributionUniform(1, (tmax - t0) / 10));
-    m_params.get_contact_patterns().set_dist_damp_days(ParameterDistributionUniform(t0, tmax));
-    m_params.get_contact_patterns().set_dist_damp_diag_base(ParameterDistributionUniform(0.1, 1));
-    m_params.get_contact_patterns().set_dist_damp_diag_rel(ParameterDistributionUniform(0.6, 1.4));
-    m_params.get_contact_patterns().set_dist_damp_offdiag_rel(ParameterDistributionUniform(0.7, 1.1));
+    m_params.get_contact_patterns().set_distribution_damp_nb(ParameterDistributionUniform(1, (tmax - t0) / 10));
+    m_params.get_contact_patterns().set_distribution_damp_days(ParameterDistributionUniform(t0, tmax));
+    m_params.get_contact_patterns().set_distribution_damp_diag_base(ParameterDistributionUniform(0.1, 1));
+    m_params.get_contact_patterns().set_distribution_damp_diag_rel(ParameterDistributionUniform(0.6, 1.4));
+    m_params.get_contact_patterns().set_distribution_damp_offdiag_rel(ParameterDistributionUniform(0.7, 1.1));
 }
 
 } // namespace epi

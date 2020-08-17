@@ -94,40 +94,44 @@ TEST(TestSaveParameters, compareParameterStudy)
         ASSERT_EQ(space.get_dead(i), read_space.get_dead(i));
         ASSERT_EQ(space.get_total(i), read_space.get_total(i));
 
-        check_dist(*space.get_dist_exposed(i), *read_space.get_dist_exposed(i));
-        check_dist(*space.get_dist_carrier(i), *read_space.get_dist_carrier(i));
-        check_dist(*space.get_dist_infectious(i), *read_space.get_dist_infectious(i));
-        check_dist(*space.get_dist_hospitalized(i), *read_space.get_dist_hospitalized(i));
-        check_dist(*space.get_dist_icu(i), *read_space.get_dist_icu(i));
-        check_dist(*space.get_dist_recovered(i), *read_space.get_dist_recovered(i));
+        check_distribution(*space.get_distribution_exposed(i), *read_space.get_distribution_exposed(i));
+        check_distribution(*space.get_distribution_carrier(i), *read_space.get_distribution_carrier(i));
+        check_distribution(*space.get_distribution_infectious(i), *read_space.get_distribution_infectious(i));
+        check_distribution(*space.get_distribution_hospitalized(i), *read_space.get_distribution_hospitalized(i));
+        check_distribution(*space.get_distribution_icu(i), *read_space.get_distribution_icu(i));
+        check_distribution(*space.get_distribution_recovered(i), *read_space.get_distribution_recovered(i));
 
-        check_dist(*space.get_dist_incubation(i), *read_space.get_dist_incubation(i));
-        check_dist(*space.get_dist_inf_mild(i), *read_space.get_dist_inf_mild(i));
-        check_dist(*space.get_dist_serial_int(i), *read_space.get_dist_serial_int(i));
-        check_dist(*space.get_dist_hosp_to_rec(i), *read_space.get_dist_hosp_to_rec(i));
-        check_dist(*space.get_dist_inf_to_hosp(i), *read_space.get_dist_inf_to_hosp(i));
-        check_dist(*space.get_dist_inf_asymp(i), *read_space.get_dist_inf_asymp(i));
-        check_dist(*space.get_dist_hosp_to_icu(i), *read_space.get_dist_hosp_to_icu(i));
-        check_dist(*space.get_dist_icu_to_rec(i), *read_space.get_dist_icu_to_rec(i));
-        check_dist(*space.get_dist_icu_to_death(i), *read_space.get_dist_icu_to_death(i));
+        check_distribution(*space.get_distribution_incubation(i), *read_space.get_distribution_incubation(i));
+        check_distribution(*space.get_distribution_inf_mild(i), *read_space.get_distribution_inf_mild(i));
+        check_distribution(*space.get_distribution_serial_int(i), *read_space.get_distribution_serial_int(i));
+        check_distribution(*space.get_distribution_hosp_to_rec(i), *read_space.get_distribution_hosp_to_rec(i));
+        check_distribution(*space.get_distribution_inf_to_hosp(i), *read_space.get_distribution_inf_to_hosp(i));
+        check_distribution(*space.get_distribution_inf_asymp(i), *read_space.get_distribution_inf_asymp(i));
+        check_distribution(*space.get_distribution_hosp_to_icu(i), *read_space.get_distribution_hosp_to_icu(i));
+        check_distribution(*space.get_distribution_icu_to_rec(i), *read_space.get_distribution_icu_to_rec(i));
+        check_distribution(*space.get_distribution_icu_to_death(i), *read_space.get_distribution_icu_to_death(i));
 
-        check_dist(*space.get_dist_inf_from_cont(i), *read_space.get_dist_inf_from_cont(i));
-        check_dist(*space.get_dist_risk_from_symp(i), *read_space.get_dist_risk_from_symp(i));
-        check_dist(*space.get_dist_asymp_per_inf(i), *read_space.get_dist_asymp_per_inf(i));
-        check_dist(*space.get_dist_death_per_icu(i), *read_space.get_dist_death_per_icu(i));
-        check_dist(*space.get_dist_hosp_per_inf(i), *read_space.get_dist_hosp_per_inf(i));
-        check_dist(*space.get_dist_icu_per_hosp(i), *read_space.get_dist_icu_per_hosp(i));
+        check_distribution(*space.get_distribution_inf_from_cont(i), *read_space.get_distribution_inf_from_cont(i));
+        check_distribution(*space.get_distribution_risk_from_symp(i), *read_space.get_distribution_risk_from_symp(i));
+        check_distribution(*space.get_distribution_asymp_per_inf(i), *read_space.get_distribution_asymp_per_inf(i));
+        check_distribution(*space.get_distribution_death_per_icu(i), *read_space.get_distribution_death_per_icu(i));
+        check_distribution(*space.get_distribution_hosp_per_inf(i), *read_space.get_distribution_hosp_per_inf(i));
+        check_distribution(*space.get_distribution_icu_per_hosp(i), *read_space.get_distribution_icu_per_hosp(i));
 
         for (int j = 0; j < num_groups; j++) {
             ASSERT_EQ(contact.get_cont_freq_mat().get_cont_freq(i, j),
                       read_contact.get_cont_freq_mat().get_cont_freq(i, j));
         }
 
-        check_dist(*contact.get_dist_damp_nb().get(), *read_contact.get_dist_damp_nb().get());
-        check_dist(*contact.get_dist_damp_days().get(), *read_contact.get_dist_damp_days().get());
-        check_dist(*contact.get_dist_damp_diag_base().get(), *read_contact.get_dist_damp_diag_base().get());
-        check_dist(*contact.get_dist_damp_diag_rel().get(), *read_contact.get_dist_damp_diag_rel().get());
-        check_dist(*contact.get_dist_damp_offdiag_rel().get(), *read_contact.get_dist_damp_offdiag_rel().get());
+        check_distribution(*contact.get_distribution_damp_nb().get(), *read_contact.get_distribution_damp_nb().get());
+        check_distribution(*contact.get_distribution_damp_days().get(),
+                           *read_contact.get_distribution_damp_days().get());
+        check_distribution(*contact.get_distribution_damp_diag_base().get(),
+                           *read_contact.get_distribution_damp_diag_base().get());
+        check_distribution(*contact.get_distribution_damp_diag_rel().get(),
+                           *read_contact.get_distribution_damp_diag_rel().get());
+        check_distribution(*contact.get_distribution_damp_offdiag_rel().get(),
+                           *read_contact.get_distribution_damp_offdiag_rel().get());
     }
 }
 

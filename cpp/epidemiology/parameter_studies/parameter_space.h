@@ -49,107 +49,107 @@ public:
         return m_params.populations.get({group, SecirCompartments::D});
     }
 
-    const ParameterDistribution* get_dist_exposed(size_t group) const
+    const ParameterDistribution* get_distribution_exposed(size_t group) const
     {
         return m_params.populations.get({group, SecirCompartments::E}).get_distribution().get();
     }
 
-    const ParameterDistribution* get_dist_carrier(size_t group) const
+    const ParameterDistribution* get_distribution_carrier(size_t group) const
     {
         return m_params.populations.get({group, SecirCompartments::C}).get_distribution().get();
     }
 
-    const ParameterDistribution* get_dist_infectious(size_t group) const
+    const ParameterDistribution* get_distribution_infectious(size_t group) const
     {
         return m_params.populations.get({group, SecirCompartments::I}).get_distribution().get();
     }
 
-    const ParameterDistribution* get_dist_hospitalized(size_t group) const
+    const ParameterDistribution* get_distribution_hospitalized(size_t group) const
     {
         return m_params.populations.get({group, SecirCompartments::H}).get_distribution().get();
     }
 
-    const ParameterDistribution* get_dist_icu(size_t group) const
+    const ParameterDistribution* get_distribution_icu(size_t group) const
     {
         return m_params.populations.get({group, SecirCompartments::U}).get_distribution().get();
     }
 
-    const ParameterDistribution* get_dist_recovered(size_t group) const
+    const ParameterDistribution* get_distribution_recovered(size_t group) const
     {
         return m_params.populations.get({group, SecirCompartments::R}).get_distribution().get();
     }
 
-    const ParameterDistribution* get_dist_incubation(int group) const
+    const ParameterDistribution* get_distribution_incubation(int group) const
     {
         return m_params.times[group].get_incubation().get_distribution().get();
     }
 
-    const ParameterDistribution* get_dist_serial_int(int group) const
+    const ParameterDistribution* get_distribution_serial_int(int group) const
     {
         return m_params.times[group].get_serialinterval().get_distribution().get();
     }
 
-    const ParameterDistribution* get_dist_inf_mild(int group) const
+    const ParameterDistribution* get_distribution_inf_mild(int group) const
     {
         return m_params.times[group].get_infectious_mild().get_distribution().get();
     }
 
-    const ParameterDistribution* get_dist_hosp_to_rec(int group) const
+    const ParameterDistribution* get_distribution_hosp_to_rec(int group) const
     {
         return m_params.times[group].get_hospitalized_to_home().get_distribution().get();
     }
 
-    const ParameterDistribution* get_dist_inf_to_hosp(int group) const
+    const ParameterDistribution* get_distribution_inf_to_hosp(int group) const
     {
         return m_params.times[group].get_home_to_hospitalized().get_distribution().get();
     }
 
-    const ParameterDistribution* get_dist_inf_asymp(int group) const
+    const ParameterDistribution* get_distribution_inf_asymp(int group) const
     {
         return m_params.times[group].get_infectious_asymp().get_distribution().get();
     }
 
-    const ParameterDistribution* get_dist_hosp_to_icu(int group) const
+    const ParameterDistribution* get_distribution_hosp_to_icu(int group) const
     {
         return m_params.times[group].get_hospitalized_to_icu().get_distribution().get();
     }
 
-    const ParameterDistribution* get_dist_icu_to_rec(int group) const
+    const ParameterDistribution* get_distribution_icu_to_rec(int group) const
     {
         return m_params.times[group].get_icu_to_home().get_distribution().get();
     }
 
-    const ParameterDistribution* get_dist_icu_to_death(int group) const
+    const ParameterDistribution* get_distribution_icu_to_death(int group) const
     {
         return m_params.times[group].get_icu_to_dead().get_distribution().get();
     }
 
-    const ParameterDistribution* get_dist_inf_from_cont(int group) const
+    const ParameterDistribution* get_distribution_inf_from_cont(int group) const
     {
         return m_params.probabilities[group].get_infection_from_contact().get_distribution().get();
     }
 
-    const ParameterDistribution* get_dist_asymp_per_inf(int group) const
+    const ParameterDistribution* get_distribution_asymp_per_inf(int group) const
     {
         return m_params.probabilities[group].get_asymp_per_infectious().get_distribution().get();
     }
 
-    const ParameterDistribution* get_dist_risk_from_symp(int group) const
+    const ParameterDistribution* get_distribution_risk_from_symp(int group) const
     {
         return m_params.probabilities[group].get_risk_from_symptomatic().get_distribution().get();
     }
 
-    const ParameterDistribution* get_dist_death_per_icu(int group) const
+    const ParameterDistribution* get_distribution_death_per_icu(int group) const
     {
         return m_params.probabilities[group].get_dead_per_icu().get_distribution().get();
     }
 
-    const ParameterDistribution* get_dist_hosp_per_inf(int group) const
+    const ParameterDistribution* get_distribution_hosp_per_inf(int group) const
     {
         return m_params.probabilities[group].get_hospitalized_per_infectious().get_distribution().get();
     }
 
-    const ParameterDistribution* get_dist_icu_per_hosp(int group) const
+    const ParameterDistribution* get_distribution_icu_per_hosp(int group) const
     {
         return m_params.probabilities[group].get_icu_per_hospitalized().get_distribution().get();
     }

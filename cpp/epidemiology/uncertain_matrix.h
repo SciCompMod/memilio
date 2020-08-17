@@ -149,7 +149,7 @@ public:
      * The function uses copy semantics, i.e. it copies
      * the distribution object.
      */
-    void set_dist_damp_nb(const ParameterDistribution& dist);
+    void set_distribution_damp_nb(const ParameterDistribution& dist);
 
     /**
      * @brief Sets the random distribution of the actual 
@@ -158,7 +158,7 @@ public:
      * The function uses copy semantics, i.e. it copies
      * the distribution object.
      */
-    void set_dist_damp_days(const ParameterDistribution& dist);
+    void set_distribution_damp_days(const ParameterDistribution& dist);
 
     /**
      * @brief Sets the random distribution for a multiplicative base factor
@@ -167,29 +167,29 @@ public:
      * The function uses copy semantics, i.e. it copies
      * the distribution object.
      */
-    void set_dist_damp_diag_base(const ParameterDistribution& dist);
+    void set_distribution_damp_diag_base(const ParameterDistribution& dist);
 
     /**
      * @brief Sets the random distribution for the multiplicative factors
      *        changing each diagonal entry of the ContactFrequencyMatrix
      *        relative to the base value sampled by the distribution from
-     *        get_dist_damp_diag_base()
+     *        get_distribution_damp_diag_base()
      *
      * The function uses copy semantics, i.e. it copies
      * the distribution object.
      */
-    void set_dist_damp_diag_rel(const ParameterDistribution& dist);
+    void set_distribution_damp_diag_rel(const ParameterDistribution& dist);
 
     /**
      * @brief Sets the random distribution for the multiplicative factors
      *        changing each offdiagonal entry of the ContactFrequencyMatrix
      *        relative to the corresponding diagonal entries by the distribution 
-     *        from get_dist_damp_diag_rel()
+     *        from get_distribution_damp_diag_rel()
      *
      * The function uses copy semantics, i.e. it copies
      * the distribution object.
      */
-    void set_dist_damp_offdiag_rel(const ParameterDistribution& dist);
+    void set_distribution_damp_offdiag_rel(const ParameterDistribution& dist);
 
     /**
      * @brief Returns the random distribution for the number of 
@@ -197,7 +197,7 @@ public:
      *
      * If it is not set, a nullptr is returned.
      */
-    observer_ptr<ParameterDistribution> get_dist_damp_nb() const;
+    observer_ptr<ParameterDistribution> get_distribution_damp_nb() const;
 
     /**
      * @brief Returns the random distribution of the actual 
@@ -205,7 +205,7 @@ public:
      *
      * If it is not set, a nullptr is returned.
      */
-    observer_ptr<ParameterDistribution> get_dist_damp_days() const;
+    observer_ptr<ParameterDistribution> get_distribution_damp_days() const;
 
     /**
      * @brief Returns the random distribution for a multiplicative base factor
@@ -213,28 +213,28 @@ public:
      *
      * If it is not set, a nullptr is returned.
      */
-    observer_ptr<ParameterDistribution> get_dist_damp_diag_base() const;
+    observer_ptr<ParameterDistribution> get_distribution_damp_diag_base() const;
 
     /**
      * @brief Returns the random distribution for the multiplicative factors
      *        changing each diagonal entry of the ContactFrequencyMatrix
      *        relative to the base value sampled by the distribution from
-     *        get_dist_damp_diag_base()
+     *        get_distribution_damp_diag_base()
      *
      * If it is not set, a nullptr is returned.
      */
-    observer_ptr<ParameterDistribution> get_dist_damp_diag_rel() const;
+    observer_ptr<ParameterDistribution> get_distribution_damp_diag_rel() const;
 
     /**
      * @brief Returns the random distribution for the multiplicative factors
      *        changing each offdiagonal entry of the ContactFrequencyMatrix
      *        relative to the corresponding diagonal entries by the distribution 
-     *        from get_dist_damp_diag_rel()
+     *        from get_distribution_damp_diag_rel()
      *        
      *
      * If it is not set, a nullptr is returned.
      */
-    observer_ptr<ParameterDistribution> get_dist_damp_offdiag_rel() const;
+    observer_ptr<ParameterDistribution> get_distribution_damp_offdiag_rel() const;
 
     /**
      * @brief Sets the value by sampling from the distributions

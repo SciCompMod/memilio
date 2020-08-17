@@ -143,52 +143,52 @@ ContactFrequencyMatrix const& UncertainContactMatrix::get_cont_freq_mat() const
     return m_cont_freq;
 }
 
-void UncertainContactMatrix::set_dist_damp_nb(const ParameterDistribution& dist)
+void UncertainContactMatrix::set_distribution_damp_nb(const ParameterDistribution& dist)
 {
     m_damp_nb.reset(dist.clone());
 }
 
-void UncertainContactMatrix::set_dist_damp_days(const ParameterDistribution& dist)
+void UncertainContactMatrix::set_distribution_damp_days(const ParameterDistribution& dist)
 {
     m_damp_days.reset(dist.clone());
 }
 
-void UncertainContactMatrix::set_dist_damp_diag_base(const ParameterDistribution& dist)
+void UncertainContactMatrix::set_distribution_damp_diag_base(const ParameterDistribution& dist)
 {
     m_damp_diag_base.reset(dist.clone());
 }
 
-void UncertainContactMatrix::set_dist_damp_diag_rel(const ParameterDistribution& dist)
+void UncertainContactMatrix::set_distribution_damp_diag_rel(const ParameterDistribution& dist)
 {
     m_damp_diag_rel.reset(dist.clone());
 }
 
-void UncertainContactMatrix::set_dist_damp_offdiag_rel(const ParameterDistribution& dist)
+void UncertainContactMatrix::set_distribution_damp_offdiag_rel(const ParameterDistribution& dist)
 {
     m_damp_offdiag_rel.reset(dist.clone());
 }
 
-observer_ptr<ParameterDistribution> UncertainContactMatrix::get_dist_damp_nb() const
+observer_ptr<ParameterDistribution> UncertainContactMatrix::get_distribution_damp_nb() const
 {
     return m_damp_nb.get();
 }
 
-observer_ptr<ParameterDistribution> UncertainContactMatrix::get_dist_damp_days() const
+observer_ptr<ParameterDistribution> UncertainContactMatrix::get_distribution_damp_days() const
 {
     return m_damp_days.get();
 }
 
-observer_ptr<ParameterDistribution> UncertainContactMatrix::get_dist_damp_diag_base() const
+observer_ptr<ParameterDistribution> UncertainContactMatrix::get_distribution_damp_diag_base() const
 {
     return m_damp_diag_base.get();
 }
 
-observer_ptr<ParameterDistribution> UncertainContactMatrix::get_dist_damp_diag_rel() const
+observer_ptr<ParameterDistribution> UncertainContactMatrix::get_distribution_damp_diag_rel() const
 {
     return m_damp_diag_rel.get();
 }
 
-observer_ptr<ParameterDistribution> UncertainContactMatrix::get_dist_damp_offdiag_rel() const
+observer_ptr<ParameterDistribution> UncertainContactMatrix::get_distribution_damp_offdiag_rel() const
 {
     return m_damp_offdiag_rel.get();
 }
