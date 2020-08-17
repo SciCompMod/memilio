@@ -31,7 +31,7 @@ void write_contact(TixiDocumentHandle handle, const std::string& path, const Unc
  * @param handle Tixi Document Handle
  * @param path Path to XML Tree of the parameter
  */
-std::unique_ptr<ParameterDistribution> read_dist(TixiDocumentHandle handle, const std::string& path);
+std::unique_ptr<ParameterDistribution> read_distribution(TixiDocumentHandle handle, const std::string& path);
 
 /**
  * @brief write parameter distribution to xml file
@@ -40,8 +40,8 @@ std::unique_ptr<ParameterDistribution> read_dist(TixiDocumentHandle handle, cons
  * @param element Name of parameter
  * @param dist Distribution of parameter
  */
-void write_dist(const TixiDocumentHandle& handle, const std::string& path, const std::string& element,
-                const ParameterDistribution& dist);
+void write_distribution(const TixiDocumentHandle& handle, const std::string& path, const std::string& element,
+                        const ParameterDistribution& dist);
 
 /**
  * @brief write predefined samples to xml file

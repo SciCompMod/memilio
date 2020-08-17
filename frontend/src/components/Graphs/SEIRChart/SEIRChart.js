@@ -1,33 +1,22 @@
-import React, { Component } from 'react';
-import { withTranslation } from 'react-i18next';
-import { merge } from '../../../common/utils';
+import React, {Component} from 'react';
+import {withTranslation} from 'react-i18next';
+import {merge} from '../../../common/utils';
 
-import * as moment from 'moment';
 import * as numeral from 'numeral';
 
-import {
-  LineChart,
-  Line,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  Legend,
-  Brush,
-  ResponsiveContainer
-} from 'recharts';
+import {LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, Brush, ResponsiveContainer} from 'recharts';
 
 import './SEIRChart.scss';
 
 const lineProps = {
   type: 'monotone',
   dot: false,
-  strokeWidth: '3'
+  strokeWidth: '3',
 };
 
 const rkiLineProps = {
   strokeDasharray: '5 5',
-  strokeWidth: '2'
+  strokeWidth: '2',
 };
 
 const lines = [
@@ -36,32 +25,32 @@ const lines = [
     label: 'parameters.exposed',
     props: {
       stroke: '#ac58e5',
-      ...lineProps
-    }
+      ...lineProps,
+    },
   },
   {
     dataKey: 'R',
     label: 'parameters.recovered',
     props: {
       stroke: '#E0488B',
-      ...lineProps
-    }
+      ...lineProps,
+    },
   },
   {
     dataKey: 'I',
     label: 'parameters.infected',
     props: {
       stroke: '#9fd0cb',
-      ...lineProps
-    }
+      ...lineProps,
+    },
   },
   {
     dataKey: 'S',
     label: 'parameters.sus',
     props: {
       stroke: '#e0d33a',
-      ...lineProps
-    }
+      ...lineProps,
+    },
   },
   {
     dataKey: 'Recovered',
@@ -69,8 +58,8 @@ const lines = [
     props: {
       stroke: '#7566ff',
       ...lineProps,
-      ...rkiLineProps
-    }
+      ...rkiLineProps,
+    },
   },
   {
     dataKey: 'Confirmed',
@@ -78,8 +67,8 @@ const lines = [
     props: {
       stroke: '#533f82',
       ...lineProps,
-      ...rkiLineProps
-    }
+      ...rkiLineProps,
+    },
   },
   {
     dataKey: 'Deaths',
@@ -87,14 +76,23 @@ const lines = [
     props: {
       stroke: '#7a255d',
       ...lineProps,
-      ...rkiLineProps
-    }
-  }
+      ...rkiLineProps,
+    },
+  },
 ];
 
-const dateFormat = (format) => {
-  return (time) => moment(time).format(format);
-};
+const longDateFormat = (time) =>
+  new Date(time).toLocaleDateString(undefined, {
+    year: 'numeric',
+    month: 'long',
+    day: '2-digit',
+  });
+
+const shortDateFormat = (time) =>
+  new Date(time).toLocaleDateString(undefined, {
+    month: 'short',
+    day: '2-digit',
+  });
 
 const numberFormat = (number) => {
   return numeral(number).format('0,0');
@@ -106,17 +104,17 @@ class SEIRChart extends Component {
       S: [],
       E: [],
       I: [],
-      R: []
+      R: [],
     },
     rki: [],
-    measures: []
+    measures: [],
   };
 
   constructor(props) {
     super(props);
     this.selectBar = this.selectBar.bind(this);
     this.state = {
-      lines
+      lines,
     };
   }
 
@@ -129,31 +127,32 @@ class SEIRChart extends Component {
       } else {
         updated.push({
           ...line,
-          inactive: line.inactive === undefined ? true : !line.inactive
+          inactive: line.inactive === undefined ? true : !line.inactive,
         });
       }
     }
     this.setState({
-      lines: updated
+      lines: updated,
     });
   }
 
   translate(label) {
-    const { t } = this.props;
+    const {t} = this.props;
     return t(this.state.lines.find((line) => line.dataKey === label).label);
   }
 
   prepareData() {
-    const x = merge(
-      JSON.parse(JSON.stringify(this.props.rki)),
-      JSON.parse(JSON.stringify(this.props.seir)),
-      'date'
-    );
-    x.sort(function (a, b) {
-      return a.date - b.date;
-    });
+    const x = merge(JSON.parse(JSON.stringify(this.props.rki)), JSON.parse(JSON.stringify(this.props.seir)), 'date');
 
-    return x;
+    try {
+      x.sort(function (a, b) {
+        return a.date - b.date;
+      });
+
+      return x;
+    } catch (e) {
+      return [];
+    }
   }
 
   payload() {
@@ -163,64 +162,46 @@ class SEIRChart extends Component {
         type: 'line',
         id: line.dataKey,
         inactive: line.inactive || false,
-        color: line.props.stroke
+        color: line.props.stroke,
       };
     });
   }
 
   render() {
     const data = this.prepareData();
-    const { t } = this.props;
+    const {t} = this.props;
     return (
       <ResponsiveContainer width="100%" height="80%">
-        <LineChart
-          data={data}
-          margin={{ top: 30, right: 30, left: 20, bottom: 5 }}
-        >
-          <XAxis
-            dataKey="date"
-            tickFormatter={dateFormat(t('dateformat.short'))}
-          />
+        <LineChart data={data} margin={{top: 30, right: 30, left: 20, bottom: 5}}>
+          <XAxis dataKey="date" tickFormatter={shortDateFormat} />
           <YAxis
             label={{
               value: t('population'),
               angle: 0,
               position: 'top',
-              offset: 15
+              offset: 15,
             }}
             tickFormatter={numberFormat}
           />
           <CartesianGrid strokeDasharray="3 3" />
           <Tooltip
             offset={20}
-            labelFormatter={dateFormat(t('dateformat.full'))}
-            formatter={(value, name, index) => [
-              numberFormat(value),
-              this.translate(name)
-            ]}
-            allowEscapeViewBox={{ x: true, y: false }}
+            labelFormatter={longDateFormat}
+            formatter={(value, name, index) => [numberFormat(value), this.translate(name)]}
+            allowEscapeViewBox={{x: true, y: false}}
             active={true}
             contentStyle={{
-              backgroundColor: 'rgba(255, 255, 255, 0.8)'
+              backgroundColor: 'rgba(255, 255, 255, 0.8)',
             }}
             itemStyle={{
               margin: 0,
-              padding: 0
+              padding: 0,
             }}
           />
           {this.state.lines.map((line) => {
-            return (
-              <Line
-                key={line.dataKey}
-                dataKey={line.dataKey + (line.inactive ? ' ' : '')}
-                {...line.props}
-              />
-            );
+            return <Line key={line.dataKey} dataKey={line.dataKey + (line.inactive ? ' ' : '')} {...line.props} />;
           })}
-          <Brush
-            dataKey="date"
-            tickFormatter={dateFormat(t('dateformat.short'))}
-          />
+          <Brush dataKey="date" tickFormatter={shortDateFormat} />
           <Legend
             formatter={this.translate.bind(this)}
             onClick={this.selectBar}
@@ -229,7 +210,7 @@ class SEIRChart extends Component {
             align="right"
             verticalAlign="top"
             wrapperStyle={{
-              'padding-left': '1em'
+              'padding-left': '1em',
             }}
           />
         </LineChart>
@@ -240,4 +221,4 @@ class SEIRChart extends Component {
 
 const TranslatedChart = withTranslation()(SEIRChart);
 
-export { TranslatedChart as SEIRChart };
+export {TranslatedChart as SEIRChart};

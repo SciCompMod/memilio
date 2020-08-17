@@ -1,2 +1,2 @@
-import { Parameters } from './Parameters';
+import {Parameters} from './Parameters';
 export default Parameters;
