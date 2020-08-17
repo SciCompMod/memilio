@@ -107,7 +107,13 @@ UncertainContactMatrix::UncertainContactMatrix(UncertainContactMatrix const& oth
 UncertainContactMatrix& UncertainContactMatrix::operator=(const UncertainContactMatrix& other)
 {
     UncertainContactMatrix tmp(other);
-    std::swap(*this, tmp);
+    std::swap(m_cont_freq, tmp.m_cont_freq);
+    std::swap(m_damp_nb, tmp.m_damp_nb);
+    std::swap(m_damp_days, tmp.m_damp_days);
+    std::swap(m_damp_diag_base, tmp.m_damp_diag_base);
+    std::swap(m_damp_diag_rel, tmp.m_damp_diag_rel);
+    std::swap(m_damp_offdiag_rel, tmp.m_damp_offdiag_rel);
+
     return *this;
 }
 

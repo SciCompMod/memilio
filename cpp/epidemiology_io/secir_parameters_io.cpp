@@ -61,9 +61,9 @@ void write_dist(const TixiDocumentHandle& handle, const std::string& path, const
                        dist.get_predefined_samples().size(), "%g");
 }
 
-ParameterDistribution* read_dist(TixiDocumentHandle handle, const std::string& path)
+std::unique_ptr<ParameterDistribution> read_dist(TixiDocumentHandle handle, const std::string& path)
 {
-    ParameterDistribution* distribution;
+    std::unique_ptr<ParameterDistribution> distribution;
 
     char* dist;
     tixiGetTextElement(handle, path_join(path, "Distribution").c_str(), &dist);
@@ -77,14 +77,14 @@ ParameterDistribution* read_dist(TixiDocumentHandle handle, const std::string& p
         tixiGetDoubleElement(handle, path_join(path, "Min").c_str(), &min);
         tixiGetDoubleElement(handle, path_join(path, "Max").c_str(), &max);
 
-        distribution = new ParameterDistributionNormal(min, max, mean, dev);
+        distribution = std::make_unique<ParameterDistributionNormal>(min, max, mean, dev);
     }
     else if (strcmp("Uniform", dist) == 0) {
         double min;
         double max;
         tixiGetDoubleElement(handle, path_join(path, "Min").c_str(), &min);
         tixiGetDoubleElement(handle, path_join(path, "Max").c_str(), &max);
-        distribution = new ParameterDistributionUniform(min, max);
+        distribution = std::make_unique<ParameterDistributionUniform>(min, max);
     }
     else {
         //TODO: true error handling
@@ -170,14 +170,13 @@ UncertainContactMatrix read_contact(TixiDocumentHandle handle, const std::string
     int nb_groups;
     tixiGetIntegerElement(handle, path_join("/Parameters", "NumberOfGroups").c_str(), &nb_groups);
     UncertainContactMatrix contact_patterns{ContactFrequencyMatrix{(size_t)nb_groups}};
-    ContactFrequencyMatrix& contact_freq_matrix = contact_patterns.get_cont_freq_mat();
     for (size_t i = 0; i < nb_groups; i++) {
         double* row = nullptr;
         tixiGetFloatVector(handle, path_join(path, "ContactRateGroup" + std::to_string(i + 1)).c_str(), &row,
                            nb_groups);
 
         for (int j = 0; j < nb_groups; ++j) {
-            contact_freq_matrix.set_cont_freq(row[j], i, j);
+            contact_patterns.get_cont_freq_mat().set_cont_freq(row[j], i, j);
         }
     }
 
@@ -192,15 +191,15 @@ UncertainContactMatrix read_contact(TixiDocumentHandle handle, const std::string
 
 ParameterStudy read_parameter_study(TixiDocumentHandle handle, const std::string& path)
 {
-    int n_runs;
+    int nb_runs;
     double t0;
     double tmax;
 
-    tixiGetIntegerElement(handle, path_join(path, "Runs").c_str(), &n_runs);
+    tixiGetIntegerElement(handle, path_join(path, "Runs").c_str(), &nb_runs);
     tixiGetDoubleElement(handle, path_join(path, "T0").c_str(), &t0);
     tixiGetDoubleElement(handle, path_join(path, "TMax").c_str(), &tmax);
 
-    return ParameterStudy(&simulate, read_parameter_space(handle, path), n_runs, t0, tmax);
+    return ParameterStudy(&simulate, read_parameter_space(handle, path), nb_runs, t0, tmax);
 }
 
 ParameterSpace read_parameter_space(TixiDocumentHandle handle, const std::string& path)

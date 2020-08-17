@@ -28,7 +28,7 @@ public:
      * @brief Constructor from file name
      * @param[in] parameter_filename filename of a file storing ranges of input parameters.
      */
-    ParameterStudy(secir_simulation_function_t const& simu_func, ParameterSpace&& parameter_space, size_t n_runs,
+    ParameterStudy(secir_simulation_function_t const& simu_func, ParameterSpace&& parameter_space, size_t nb_runs,
                    double t0, double tmax);
 
     /* 
@@ -123,10 +123,10 @@ private:
 };
 
 inline ParameterStudy::ParameterStudy(const secir_simulation_function_t& simu_func, ParameterSpace&& parameter_space,
-                                      size_t n_runs, double t0, double tmax)
+                                      size_t nb_runs, double t0, double tmax)
     : simulation_function(simu_func)
     , parameter_space(std::move(parameter_space))
-    , m_nb_runs(n_runs)
+    , m_nb_runs(nb_runs)
     , m_t0{t0}
     , m_tmax{tmax}
 {

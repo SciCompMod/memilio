@@ -47,7 +47,8 @@ public:
     UncertainValue& operator=(const UncertainValue& other)
     {
         UncertainValue tmp(other);
-        std::swap(*this, tmp);
+        m_value = tmp.m_value;
+        std::swap(m_dist, tmp.m_dist);
         return *this;
     }
 
