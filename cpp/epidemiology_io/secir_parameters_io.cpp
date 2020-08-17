@@ -124,9 +124,23 @@ void write_contact(TixiDocumentHandle handle, const std::string& path, const Unc
         for (int j = 0; j < nb_groups; j++) {
             row.emplace_back(contact_freq_matrix.get_cont_freq(i, j));
         }
-        tixiAddFloatVector(handle, contact_path.c_str(), ("ContactRateGroup" + std::to_string(i + 1)).c_str(),
+        tixiAddFloatVector(handle, contact_path.c_str(), ("ContactRateGroup_" + std::to_string(i + 1)).c_str(),
                            row.data(), nb_groups, "%g");
     }
+    for (int i = 0; i < nb_groups; i++) {
+        for (int j = 0; j < nb_groups; j++) {
+            int nb_damp             = contact_freq_matrix.get_dampings(i, j).get_dampings_vector().size();
+            std::vector<double> row = {};
+            for (int k = 0; k < nb_damp; k++) {
+                row.emplace_back(contact_freq_matrix.get_dampings(i, j).get_dampings_vector()[k].day);
+                row.emplace_back(contact_freq_matrix.get_dampings(i, j).get_dampings_vector()[k].factor);
+            }
+            tixiAddFloatVector(handle, contact_path.c_str(),
+                               ("DampingsGroups_" + std::to_string(i + 1) + "_" + std::to_string(j + 1)).c_str(),
+                               row.data(), 2 * nb_damp, "%g");
+        }
+    }
+
     write_distribution(handle, contact_path, "NumDampings", *contact_pattern.get_distribution_damp_nb().get());
     write_distribution(handle, contact_path, "DampingDay", *contact_pattern.get_distribution_damp_days().get());
     write_distribution(handle, contact_path, "DampingDiagBase",
@@ -134,38 +148,6 @@ void write_contact(TixiDocumentHandle handle, const std::string& path, const Unc
     write_distribution(handle, contact_path, "DampingDiagRel", *contact_pattern.get_distribution_damp_diag_rel().get());
     write_distribution(handle, contact_path, "DampingOffdiagRel",
                        *contact_pattern.get_distribution_damp_offdiag_rel().get());
-
-    std::vector<double> predef_num_damp;
-    std::vector<double> predef_day;
-    std::vector<double> predef_diag_base;
-    std::vector<double> predef_diag_rel;
-    std::vector<double> predef_offdiag_rel;
-
-    for (int i = 0; i < nb_runs; i++) {
-        int nb_damp = contact_freq_matrix.get_dampings(0, 0).get_dampings_vector().size();
-        predef_num_damp.push_back(nb_damp);
-        for (int j = 0; j < nb_damp; j++) {
-            predef_day.push_back(contact_freq_matrix.get_dampings(0, 0).get_dampings_vector().at(j).day);
-            predef_diag_base.push_back(1.0);
-            for (int k = 0; k < nb_groups; k++) {
-                predef_diag_rel.push_back(contact_freq_matrix.get_dampings(k, k).get_dampings_vector().at(j).factor);
-                for (int l = k + 1; l < nb_groups; l++) {
-                    predef_offdiag_rel.push_back(
-                        contact_freq_matrix.get_dampings(k, l).get_dampings_vector().at(j).factor /
-                        contact_freq_matrix.get_dampings(k, k).get_dampings_vector().at(j).factor);
-                    predef_offdiag_rel.push_back(
-                        contact_freq_matrix.get_dampings(k, l).get_dampings_vector().at(j).factor /
-                        contact_freq_matrix.get_dampings(l, l).get_dampings_vector().at(j).factor);
-                }
-            }
-        }
-    }
-
-    write_predef_sample(handle, path_join(contact_path, "NumDampings"), predef_num_damp);
-    write_predef_sample(handle, path_join(contact_path, "DampingDay"), predef_day);
-    write_predef_sample(handle, path_join(contact_path, "DampingDiagBase"), predef_diag_base);
-    write_predef_sample(handle, path_join(contact_path, "DampingDiagRel"), predef_diag_rel);
-    write_predef_sample(handle, path_join(contact_path, "DampingOffdiagRel"), predef_offdiag_rel);
 }
 
 UncertainContactMatrix read_contact(TixiDocumentHandle handle, const std::string& path)
@@ -175,11 +157,29 @@ UncertainContactMatrix read_contact(TixiDocumentHandle handle, const std::string
     UncertainContactMatrix contact_patterns{ContactFrequencyMatrix{(size_t)nb_groups}};
     for (size_t i = 0; i < nb_groups; i++) {
         double* row = nullptr;
-        tixiGetFloatVector(handle, path_join(path, "ContactRateGroup" + std::to_string(i + 1)).c_str(), &row,
+        tixiGetFloatVector(handle, path_join(path, "ContactRateGroup_" + std::to_string(i + 1)).c_str(), &row,
                            nb_groups);
 
         for (int j = 0; j < nb_groups; ++j) {
             contact_patterns.get_cont_freq_mat().set_cont_freq(row[j], i, j);
+        }
+    }
+
+    for (int i = 0; i < nb_groups; i++) {
+        for (int j = 0; j < nb_groups; j++) {
+            int nb_dampings;
+            tixiGetVectorSize(
+                handle,
+                path_join(path, ("DampingsGroups_" + std::to_string(i + 1) + "_" + std::to_string(j + 1))).c_str(),
+                &nb_dampings);
+            double* dampings = nullptr;
+            tixiGetFloatVector(
+                handle,
+                path_join(path, ("DampingsGroups_" + std::to_string(i + 1) + "_" + std::to_string(j + 1))).c_str(),
+                &dampings, nb_dampings);
+            for (int k = 0; k < nb_dampings / 2; k++) {
+                contact_patterns.get_cont_freq_mat().add_damping(Damping{dampings[2 * k], dampings[2 * k + 1]}, i, j);
+            }
         }
     }
 
@@ -367,8 +367,7 @@ void write_single_run_params(const int run, const SecirParams& params, double t0
 
 void write_node(const Graph<ModelNode<SecirSimulation>, MigrationEdge>& graph, int node, double t0, double tmax)
 {
-    int nb_runs    = 1;
-    double dev_rel = 0.0;
+    int nb_runs = 1;
 
     std::string path = "/Parameters";
     TixiDocumentHandle handle;
@@ -378,7 +377,7 @@ void write_node(const Graph<ModelNode<SecirSimulation>, MigrationEdge>& graph, i
 
     auto params = graph.nodes()[node].model.get_params();
 
-    ParameterStudy study(simulate, params, t0, tmax, dev_rel, nb_runs);
+    ParameterStudy study(simulate, params, t0, tmax, nb_runs);
 
     write_parameter_study(handle, path, study);
     tixiSaveDocument(handle, ("GraphNode" + std::to_string(node) + ".xml").c_str());
@@ -393,7 +392,7 @@ void read_node(Graph<ModelNode<SecirSimulation>, MigrationEdge>& graph, int node
     ParameterStudy study  = read_parameter_study(node_handle, "/Parameters");
     ParameterSpace& space = study.get_parameter_space();
 
-    auto params = space.draw_sample();
+    auto params = space.get_secir_params();
 
     graph.add_node(params, study.get_t0());
 

@@ -92,7 +92,7 @@ int main(int argc, char* argv[])
         [](double t0, double tmax, double dt, epi::SecirParams& params, std::vector<Eigen::VectorXd>& secir) {
             return epi::simulate(t0, tmax, dt, params, secir);
         },
-        params, t0, tmax);
+        params, t0, tmax, 0.2, 1);
 
     parameter_study.set_nb_runs(5);
 

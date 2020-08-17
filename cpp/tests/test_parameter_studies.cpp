@@ -157,6 +157,31 @@ TEST(ParameterStudies, test_uniform_distribution)
     }
 }
 
+TEST(ParameterStudies, test_predefined_samples)
+{
+    epi::ParameterDistributionUniform parameter_dist_unif(1.0, 10.0);
+
+    epi::ParameterDistributionNormal parameter_dist_normal(-1.0, 1.0, 0, 0.1);
+
+    // set predefined sample (can be out of [min,max]) and get it
+    parameter_dist_unif.add_predefined_sample(2);
+    double var = parameter_dist_unif.get_sample();
+    EXPECT_EQ(var, 2);
+
+    // predefined sample was deleted, get real sample which cannot be 2 due to [min,max]
+    var = parameter_dist_unif.get_sample();
+    EXPECT_NE(var, 2);
+
+    // set predefined sample (can be out of [min,max]) and get it
+    parameter_dist_normal.add_predefined_sample(2);
+    var = parameter_dist_normal.get_sample();
+    EXPECT_EQ(var, 2);
+
+    // predefined sample was deleted, get real sample which cannot be 2 due to [min,max]
+    var = parameter_dist_normal.get_sample();
+    EXPECT_NE(var, 2);
+}
+
 TEST(ParameterStudies, check_ensemble_run_result)
 {
     double t0   = 0;
@@ -231,7 +256,7 @@ TEST(ParameterStudies, check_ensemble_run_result)
         [](double t0, double tmax, double dt, epi::SecirParams const& params, std::vector<Eigen::VectorXd>& secir) {
             return epi::simulate(t0, tmax, dt, params, secir);
         },
-        params, t0, tmax);
+        params, t0, tmax, 0.2, 1);
 
     // Run parameter study
     int run = 0;

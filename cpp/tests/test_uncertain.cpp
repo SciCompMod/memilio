@@ -6,14 +6,18 @@
 #include <distributions_helpers.h>
 #include <gtest/gtest.h>
 
-TEST(TestUncertain, uncertain_value)
+TEST(TestUncertain, uncertain_value_basic)
 {
     epi::UncertainValue val(3.0);
     EXPECT_EQ(val, 3.0);
 
     val = 2.0;
     EXPECT_EQ(val, 2.0);
+}
 
+TEST(TestUncertain, uncertain_value_copy)
+{
+    epi::UncertainValue val(2.0);
     double dev_rel     = 0.2;
     double lower_bound = std::max(1e-6, (1 - dev_rel * 2.6) * val);
     double upper_bound = (1 + dev_rel * 2.6) * val;
@@ -30,19 +34,48 @@ TEST(TestUncertain, uncertain_value)
         EXPECT_GE(val2, lower_bound);
         EXPECT_LE(val2, upper_bound);
     }
+}
+
+TEST(TestUncertain, uncertain_value_assign)
+{
+    epi::UncertainValue val(3.0);
+    double dev_rel     = 0.2;
+    double lower_bound = std::max(1e-6, (1 - dev_rel * 2.6) * val);
+    double upper_bound = (1 + dev_rel * 2.6) * val;
+    val.set_distribution(epi::ParameterDistributionNormal(lower_bound, upper_bound, val, dev_rel * val));
 
     double& dval = val;
     dval         = 4.0;
     EXPECT_EQ(val, 4.0);
 
-    val2 = 4.0;
+    epi::UncertainValue val2 = 4.0;
     EXPECT_EQ(val2, val); // only checks doubles, not dists
 
     epi::UncertainValue val3;
-    val3 = val2;
+    val3 = val;
 
-    EXPECT_EQ(val3, val2);
-    check_distribution(*val3.get_distribution().get(), *val2.get_distribution().get());
+    EXPECT_EQ(val3, val);
+    check_distribution(*val3.get_distribution().get(), *val.get_distribution().get());
+}
+
+TEST(TestUncertain, uncertain_value_predef)
+{
+    epi::UncertainValue val(3.0);
+    double dev_rel     = 0.2;
+    double lower_bound = std::max(1e-6, (1 - dev_rel * 2.6) * val);
+    double upper_bound = (1 + dev_rel * 2.6) * val;
+    val.set_distribution(epi::ParameterDistributionNormal(lower_bound, upper_bound, val, dev_rel * val));
+
+    val.get_distribution().get()->add_predefined_sample(17111.0);
+    epi::UncertainValue val2(val);
+    val.draw_sample();
+    EXPECT_EQ(val, 17111.0);
+
+    val.draw_sample();
+    EXPECT_NE(val, 17111.0);
+
+    val2.draw_sample();
+    EXPECT_EQ(val2, 17111.0);
 }
 
 TEST(TestUncertain, uncertain_matrix)

@@ -61,12 +61,22 @@ TEST(TestSaveParameters, compareParameterStudy)
             cont_freq_matrix.add_damping(dummy, i, j);
         }
     }
+    cont_freq_matrix.add_damping(epi::Damping{35, 0.2}, 0, 0);
     int nb_runs      = 5;
     std::string path = "/Parameters";
     TixiDocumentHandle handle;
 
     tixiCreateDocument("Parameters", &handle);
     epi::ParameterStudy study(epi::simulate, params, t0, tmax, 0.0, nb_runs);
+
+    study.get_parameter_space().get_secir_params().times[0].get_incubation().get_distribution()->add_predefined_sample(
+        4711.0);
+
+    study.get_parameter_space()
+        .get_secir_params()
+        .get_contact_patterns()
+        .get_distribution_damp_days()
+        ->add_predefined_sample(4711.0);
 
     epi::write_parameter_study(handle, path, study);
     tixiSaveDocument(handle, "TestParameters.xml");
@@ -121,6 +131,15 @@ TEST(TestSaveParameters, compareParameterStudy)
         for (int j = 0; j < num_groups; j++) {
             ASSERT_EQ(contact.get_cont_freq_mat().get_cont_freq(i, j),
                       read_contact.get_cont_freq_mat().get_cont_freq(i, j));
+
+            ASSERT_EQ(contact.get_cont_freq_mat().get_dampings(i, j).get_dampings_vector().size(),
+                      read_contact.get_cont_freq_mat().get_dampings(i, j).get_dampings_vector().size());
+            for (int k = 0; k < contact.get_cont_freq_mat().get_dampings(i, j).get_dampings_vector().size(); k++) {
+                ASSERT_EQ(contact.get_cont_freq_mat().get_dampings(i, j).get_dampings_vector()[k].day,
+                          read_contact.get_cont_freq_mat().get_dampings(i, j).get_dampings_vector()[k].day);
+                ASSERT_EQ(contact.get_cont_freq_mat().get_dampings(i, j).get_dampings_vector()[k].factor,
+                          read_contact.get_cont_freq_mat().get_dampings(i, j).get_dampings_vector()[k].factor);
+            }
         }
 
         check_distribution(*contact.get_distribution_damp_nb().get(), *read_contact.get_distribution_damp_nb().get());
@@ -192,11 +211,15 @@ TEST(TestSaveParameters, compareGraphs)
         }
     }
 
+    epi::ParameterSpace param_space(params, t0, tmax, 0.15);
+
     epi::Graph<epi::ModelNode<epi::SecirSimulation>, epi::MigrationEdge> graph;
-    graph.add_node(params, t0);
-    graph.add_node(params, t0);
-    graph.add_edge(0, 1, Eigen::VectorXd::Constant(params.populations.get_num_compartments(), 0.01));
-    graph.add_edge(1, 0, Eigen::VectorXd::Constant(params.populations.get_num_compartments(), 0.01));
+    graph.add_node(param_space.get_secir_params(), t0);
+    graph.add_node(param_space.get_secir_params(), t0);
+    graph.add_edge(0, 1,
+                   Eigen::VectorXd::Constant(param_space.get_secir_params().populations.get_num_compartments(), 0.01));
+    graph.add_edge(1, 0,
+                   Eigen::VectorXd::Constant(param_space.get_secir_params().populations.get_num_compartments(), 0.01));
 
     epi::write_graph(graph, t0, tmax);
 
@@ -224,51 +247,68 @@ TEST(TestSaveParameters, compareGraphs)
         ASSERT_EQ(nb_dampings, graph_read_cont_freq.get_dampings(0, 0).get_dampings_vector().size());
 
         for (size_t group = 0; group < nb_groups; group++) {
-            ASSERT_EQ(graph_params.populations.get({group, epi::SecirCompartments::S}),
-                      graph_read_params.populations.get({group, epi::SecirCompartments::S}));
-            ASSERT_EQ(graph_params.populations.get({group, epi::SecirCompartments::E}),
-                      graph_read_params.populations.get({group, epi::SecirCompartments::E}));
-            ASSERT_EQ(graph_params.populations.get({group, epi::SecirCompartments::C}),
-                      graph_read_params.populations.get({group, epi::SecirCompartments::C}));
-            ASSERT_EQ(graph_params.populations.get({group, epi::SecirCompartments::I}),
-                      graph_read_params.populations.get({group, epi::SecirCompartments::I}));
-            ASSERT_EQ(graph_params.populations.get({group, epi::SecirCompartments::H}),
-                      graph_read_params.populations.get({group, epi::SecirCompartments::H}));
-            ASSERT_EQ(graph_params.populations.get({group, epi::SecirCompartments::U}),
-                      graph_read_params.populations.get({group, epi::SecirCompartments::U}));
-            ASSERT_EQ(graph_params.populations.get({group, epi::SecirCompartments::R}),
-                      graph_read_params.populations.get({group, epi::SecirCompartments::R}));
             ASSERT_EQ(graph_params.populations.get({group, epi::SecirCompartments::D}),
                       graph_read_params.populations.get({group, epi::SecirCompartments::D}));
+            ASSERT_EQ(graph_params.populations.get_total(), graph_read_params.populations.get_total());
+            check_distribution(
+                *graph_params.populations.get({group, epi::SecirCompartments::E}).get_distribution().get(),
+                *graph_read_params.populations.get({group, epi::SecirCompartments::E}).get_distribution().get());
+            check_distribution(
+                *graph_params.populations.get({group, epi::SecirCompartments::C}).get_distribution().get(),
+                *graph_read_params.populations.get({group, epi::SecirCompartments::C}).get_distribution().get());
+            check_distribution(
+                *graph_params.populations.get({group, epi::SecirCompartments::I}).get_distribution().get(),
+                *graph_read_params.populations.get({group, epi::SecirCompartments::I}).get_distribution().get());
+            check_distribution(
+                *graph_params.populations.get({group, epi::SecirCompartments::H}).get_distribution().get(),
+                *graph_read_params.populations.get({group, epi::SecirCompartments::H}).get_distribution().get());
+            check_distribution(
+                *graph_params.populations.get({group, epi::SecirCompartments::U}).get_distribution().get(),
+                *graph_read_params.populations.get({group, epi::SecirCompartments::U}).get_distribution().get());
+            check_distribution(
+                *graph_params.populations.get({group, epi::SecirCompartments::R}).get_distribution().get(),
+                *graph_read_params.populations.get({group, epi::SecirCompartments::R}).get_distribution().get());
+            check_distribution(
+                *graph_params.populations.get({group, epi::SecirCompartments::E}).get_distribution().get(),
+                *graph_read_params.populations.get({group, epi::SecirCompartments::E}).get_distribution().get());
 
-            ASSERT_EQ(graph_params.times[group].get_incubation(), graph_read_params.times[group].get_incubation());
-            ASSERT_EQ(graph_params.times[group].get_serialinterval(),
-                      graph_read_params.times[group].get_serialinterval());
-            ASSERT_EQ(graph_params.times[group].get_infectious_mild(),
-                      graph_read_params.times[group].get_infectious_mild());
-            ASSERT_EQ(graph_params.times[group].get_hospitalized_to_home(),
-                      graph_read_params.times[group].get_hospitalized_to_home());
-            ASSERT_EQ(graph_params.times[group].get_home_to_hospitalized(),
-                      graph_read_params.times[group].get_home_to_hospitalized());
-            ASSERT_EQ(graph_params.times[group].get_infectious_asymp(),
-                      graph_read_params.times[group].get_infectious_asymp());
-            ASSERT_EQ(graph_params.times[group].get_hospitalized_to_icu(),
-                      graph_read_params.times[group].get_hospitalized_to_icu());
-            ASSERT_EQ(graph_params.times[group].get_icu_to_home(), graph_read_params.times[group].get_icu_to_home());
-            ASSERT_EQ(graph_params.times[group].get_icu_to_dead(), graph_read_params.times[group].get_icu_to_dead());
+            // ASSERT_EQ(graph_params.times[group].get_incubation(), graph_read_params.times[group].get_incubation());
+            check_distribution(*graph_params.times[group].get_incubation().get_distribution().get(),
+                               *graph_read_params.times[group].get_incubation().get_distribution().get());
+            check_distribution(*graph_params.times[group].get_serialinterval().get_distribution().get(),
+                               *graph_read_params.times[group].get_serialinterval().get_distribution().get());
+            check_distribution(*graph_params.times[group].get_infectious_mild().get_distribution().get(),
+                               *graph_read_params.times[group].get_infectious_mild().get_distribution().get());
+            check_distribution(*graph_params.times[group].get_hospitalized_to_home().get_distribution().get(),
+                               *graph_read_params.times[group].get_hospitalized_to_home().get_distribution().get());
+            check_distribution(*graph_params.times[group].get_home_to_hospitalized().get_distribution().get(),
+                               *graph_read_params.times[group].get_home_to_hospitalized().get_distribution().get());
+            check_distribution(*graph_params.times[group].get_infectious_asymp().get_distribution().get(),
+                               *graph_read_params.times[group].get_infectious_asymp().get_distribution().get());
+            check_distribution(*graph_params.times[group].get_hospitalized_to_icu().get_distribution().get(),
+                               *graph_read_params.times[group].get_hospitalized_to_icu().get_distribution().get());
+            check_distribution(*graph_params.times[group].get_icu_to_home().get_distribution().get(),
+                               *graph_read_params.times[group].get_icu_to_home().get_distribution().get());
+            check_distribution(*graph_params.times[group].get_icu_to_dead().get_distribution().get(),
+                               *graph_read_params.times[group].get_icu_to_dead().get_distribution().get());
 
-            ASSERT_EQ(graph_params.probabilities[group].get_infection_from_contact(),
-                      graph_read_params.probabilities[group].get_infection_from_contact());
-            ASSERT_EQ(graph_params.probabilities[group].get_asymp_per_infectious(),
-                      graph_read_params.probabilities[group].get_asymp_per_infectious());
-            ASSERT_EQ(graph_params.probabilities[group].get_risk_from_symptomatic(),
-                      graph_read_params.probabilities[group].get_risk_from_symptomatic());
-            ASSERT_EQ(graph_params.probabilities[group].get_dead_per_icu(),
-                      graph_read_params.probabilities[group].get_dead_per_icu());
-            ASSERT_EQ(graph_params.probabilities[group].get_hospitalized_per_infectious(),
-                      graph_read_params.probabilities[group].get_hospitalized_per_infectious());
-            ASSERT_EQ(graph_params.probabilities[group].get_icu_per_hospitalized(),
-                      graph_read_params.probabilities[group].get_icu_per_hospitalized());
+            check_distribution(
+                *graph_params.probabilities[group].get_infection_from_contact().get_distribution().get(),
+                *graph_read_params.probabilities[group].get_infection_from_contact().get_distribution().get());
+            check_distribution(
+                *graph_params.probabilities[group].get_asymp_per_infectious().get_distribution().get(),
+                *graph_read_params.probabilities[group].get_asymp_per_infectious().get_distribution().get());
+            check_distribution(
+                *graph_params.probabilities[group].get_risk_from_symptomatic().get_distribution().get(),
+                *graph_read_params.probabilities[group].get_risk_from_symptomatic().get_distribution().get());
+            check_distribution(*graph_params.probabilities[group].get_dead_per_icu().get_distribution().get(),
+                               *graph_read_params.probabilities[group].get_dead_per_icu().get_distribution().get());
+            check_distribution(
+                *graph_params.probabilities[group].get_hospitalized_per_infectious().get_distribution().get(),
+                *graph_read_params.probabilities[group].get_hospitalized_per_infectious().get_distribution().get());
+            check_distribution(
+                *graph_params.probabilities[group].get_icu_per_hospitalized().get_distribution().get(),
+                *graph_read_params.probabilities[group].get_icu_per_hospitalized().get_distribution().get());
 
             for (int contact_group = 0; contact_group < nb_groups; contact_group++) {
                 ASSERT_EQ(graph_cont_freq.get_cont_freq(group, contact_group),
@@ -282,6 +322,17 @@ TEST(TestSaveParameters, compareGraphs)
                         graph_read_cont_freq.get_dampings(group, contact_group).get_dampings_vector().at(damp).factor);
                 }
             }
+
+            check_distribution(*graph_params.get_contact_patterns().get_distribution_damp_nb().get(),
+                               *graph_read_params.get_contact_patterns().get_distribution_damp_nb().get());
+            check_distribution(*graph_params.get_contact_patterns().get_distribution_damp_days().get(),
+                               *graph_read_params.get_contact_patterns().get_distribution_damp_days().get());
+            check_distribution(*graph_params.get_contact_patterns().get_distribution_damp_diag_base().get(),
+                               *graph_read_params.get_contact_patterns().get_distribution_damp_diag_base().get());
+            check_distribution(*graph_params.get_contact_patterns().get_distribution_damp_diag_rel().get(),
+                               *graph_read_params.get_contact_patterns().get_distribution_damp_diag_rel().get());
+            check_distribution(*graph_params.get_contact_patterns().get_distribution_damp_offdiag_rel().get(),
+                               *graph_read_params.get_contact_patterns().get_distribution_damp_offdiag_rel().get());
         }
 
         for (int edge = 0; edge < nb_edges; edge++) {

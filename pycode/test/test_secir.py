@@ -38,14 +38,12 @@ class Test_secir_integration(unittest.TestCase):
         params.probabilities[0] = probs
         params.populations = people
 
-        cont_freq_matrix = ContactFrequencyMatrix()
-        cont_freq_matrix.set_cont_freq(0.5, 0, 0)  # 0.2-0.75
+        params.get_cont_freq_matrix().set_cont_freq(0.5, 0, 0)
 
         self.params = params
-        self.cont_freq_matrix = cont_freq_matrix    
 
     def test_simulate_simple(self):
-      result = simulate(t0=0., tmax=100., dt=0.1, cont_freq_matrix=self.cont_freq_matrix, params=self.params)
+      result = simulate(t0=0., tmax=100., dt=0.1, params=self.params)
       self.assertAlmostEqual(result[0].t[0], 0.)
       self.assertAlmostEqual(result[0].t[1], 0.1)
       self.assertAlmostEqual(result[0].t[-1], 100.)

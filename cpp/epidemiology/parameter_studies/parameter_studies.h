@@ -36,7 +36,14 @@ public:
      * @param[in] parameter_filename filename of a file storing ranges of input parameters.
      */
     ParameterStudy(secir_simulation_function_t const& simu_func, SecirParams const& params, double t0, double tmax,
-                   double dev_rel = 0.2, size_t nb_runs = 1);
+                   size_t nb_runs);
+
+    /* 
+     * @brief Constructor from contact frequency matrix and parameter vector
+     * @param[in] parameter_filename filename of a file storing ranges of input parameters.
+     */
+    ParameterStudy(secir_simulation_function_t const& simu_func, SecirParams const& params, double t0, double tmax,
+                   double dev_rel, size_t nb_runs);
 
     /*
      * @brief Carry out all simulations in the parameter study.
@@ -127,6 +134,16 @@ inline ParameterStudy::ParameterStudy(const secir_simulation_function_t& simu_fu
     : simulation_function(simu_func)
     , parameter_space(std::move(parameter_space))
     , m_nb_runs(nb_runs)
+    , m_t0{t0}
+    , m_tmax{tmax}
+{
+}
+
+inline ParameterStudy::ParameterStudy(secir_simulation_function_t const& simu_func, SecirParams const& params,
+                                      double t0, double tmax, size_t nb_runs)
+    : simulation_function{simu_func}
+    , parameter_space{params}
+    , m_nb_runs{nb_runs}
     , m_t0{t0}
     , m_tmax{tmax}
 {

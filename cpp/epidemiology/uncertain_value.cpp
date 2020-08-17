@@ -21,14 +21,10 @@ observer_ptr<ParameterDistribution> const UncertainValue::get_distribution() con
 double UncertainValue::draw_sample()
 {
     if (m_dist) {
-        m_value = m_dist->get_rand_sample();
+        m_value = m_dist->get_sample();
     }
 
     return m_value;
-}
-
-UncertainValue::~UncertainValue()
-{
 }
 
 } // namespace epi

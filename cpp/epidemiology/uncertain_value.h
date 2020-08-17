@@ -107,8 +107,6 @@ public:
      */
     double draw_sample();
 
-    ~UncertainValue();
-
 private:
     double m_value;
     std::unique_ptr<ParameterDistribution> m_dist;
