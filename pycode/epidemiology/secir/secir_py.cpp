@@ -233,6 +233,11 @@ PYBIND11_MODULE(_secir, m)
         .def("get_dampings", &epi::ContactFrequencyMatrix::get_dampings, py::return_value_policy::reference_internal)
         .def("add_damping", &epi::ContactFrequencyMatrix::add_damping);
 
+    py::class_<epi::UncertainContactMatrix>(m, "UncertainContactMatrix")
+        .def(py::init<>())
+        .def(py::init<epi::ContactFrequencyMatrix>())
+        .def("get_cont_freq_mat", py::overload_cast<>(&epi::UncertainContactMatrix::get_cont_freq_mat));       
+
     py::class_<epi::SecirParams>(m, "SecirParams")
         .def(py::init<size_t>())
         .def_readwrite("times", &epi::SecirParams::times)

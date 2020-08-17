@@ -1,5 +1,5 @@
 import unittest
-from epidemiology.secir import ContactFrequencyMatrix, Damping, SecirParams, simulate, StageTimes, Probabilities, Populations, SecirCompartments
+from epidemiology.secir import UncertainContactMatrix, ContactFrequencyMatrix, Damping, SecirParams, simulate, StageTimes, Probabilities, Populations, SecirCompartments
 
 class Test_secir_integration(unittest.TestCase):
 
@@ -23,7 +23,7 @@ class Test_secir_integration(unittest.TestCase):
         probs.set_dead_per_icu(0.3)  # 0.15-0.77
 
         people = Populations([1, SecirCompartments.SecirCount])
-        people.set([0, SecirCompartments.S], 7600);
+        people.set([0, SecirCompartments.S], 7600)
         people.set([0, SecirCompartments.E], 100)
         people.set([0, SecirCompartments.C], 50)
         people.set([0, SecirCompartments.I], 50)
@@ -38,7 +38,7 @@ class Test_secir_integration(unittest.TestCase):
         params.probabilities[0] = probs
         params.populations = people
 
-        params.get_cont_freq_matrix().set_cont_freq(0.5, 0, 0)
+        params.get_contact_patterns().get_cont_freq_mat().set_cont_freq(0.5, 0, 0)
 
         self.params = params
 
