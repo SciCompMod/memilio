@@ -1,6 +1,6 @@
-import React, { Suspense } from 'react';
+import React, {Suspense} from 'react';
 import ReactDOM from 'react-dom';
-import { Provider } from 'react-redux';
+import {Provider} from 'react-redux';
 import App from './App';
 import store from './redux/store';
 import * as serviceWorker from './serviceWorker';
@@ -8,7 +8,7 @@ import * as numeral from 'numeral';
 import * as moment from 'moment';
 import 'moment/locale/de';
 
-import { Spinner } from 'reactstrap';
+import {Spinner} from 'reactstrap';
 
 import './i18n';
 
@@ -18,8 +18,8 @@ import './index.css';
 numeral.register('locale', 'de', {
   delimiters: {
     thousands: '.',
-    decimal: ','
-  }
+    decimal: ',',
+  },
 });
 numeral.locale('de');
 

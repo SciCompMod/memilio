@@ -1,6 +1,6 @@
-import React, { Component } from 'react';
-import { connect } from 'react-redux';
-import { withTranslation } from 'react-i18next';
+import React, {Component} from 'react';
+import {connect} from 'react-redux';
+import {withTranslation} from 'react-i18next';
 
 import './AgeChart.scss';
 
@@ -11,7 +11,7 @@ class AgeChart extends Component {
   }
 
   render() {
-    const { t } = this.props;
+    const {t} = this.props;
     return <></>;
   }
 }

@@ -1,6 +1,6 @@
 import * as d3 from 'd3';
 import * as topojson from 'topojson-client';
-import { Datasets } from '../redux/app';
+import {Datasets} from '../redux/app';
 
 class InteractiveMap {
   constructor(node) {
@@ -8,7 +8,7 @@ class InteractiveMap {
     this.selected = {
       dataset: null,
       id: null,
-      label: null
+      label: null,
     };
 
     // get actual with and height
@@ -35,18 +35,13 @@ class InteractiveMap {
           zoom.transform,
           d3.zoomIdentity
             .translate(self.width / 2, self.height / 2)
-            .scale(
-              Math.min(
-                8,
-                0.9 / Math.max((x1 - x0) / self.width, (y1 - y0) / self.height)
-              )
-            )
+            .scale(Math.min(8, 0.9 / Math.max((x1 - x0) / self.width, (y1 - y0) / self.height)))
             .translate(-(x0 + x1) / 2, -(y0 + y1) / 2)
         );
     }
 
     function zoomed() {
-      const { transform } = d3.event;
+      const {transform} = d3.event;
       self.bundeslaender.attr('transform', transform);
       //self.bundeslaender.attr("stroke-width", 1 / transform.k);
       self.landkreise.attr('transform', transform);
@@ -64,12 +59,7 @@ class InteractiveMap {
     }
 
     function show(selection) {
-      return selection
-        .style('opacity', 0)
-        .classed('hidden', false)
-        .transition()
-        .style('opacity', 1)
-        .duration(400);
+      return selection.style('opacity', 0).classed('hidden', false).transition().style('opacity', 1).duration(400);
     }
 
     const zoom = d3.zoom().scaleExtent([1, 8]).on('zoom', zoomed);
@@ -82,7 +72,7 @@ class InteractiveMap {
           self.selected = {
             dataset: null,
             id: null,
-            label: null
+            label: null,
           };
           self.notify();
         });
@@ -92,14 +82,11 @@ class InteractiveMap {
           .zoom()
           .extent([
             [0, 0],
-            [300, 570]
+            [300, 570],
           ])
           .scaleExtent([0.1, 3])
           .wheelDelta(() => {
-            return (
-              -d3.event.deltaY *
-              (d3.event.deltaMode === 1 ? 0.05 : d3.event.deltaMode ? 1 : 0.002)
-            );
+            return -d3.event.deltaY * (d3.event.deltaMode === 1 ? 0.05 : d3.event.deltaMode ? 1 : 0.002);
           })
           .on('zoom', function (d, i) {
             self.bundeslaender.attr('transform', d3.event.transform);
@@ -133,15 +120,11 @@ class InteractiveMap {
               self.selected = {
                 dataset: Datasets.STATES,
                 id: parseInt(d.properties.RS),
-                label: d.properties.GEN
+                label: d.properties.GEN,
               };
               self.notify();
             });
-            show(
-              hidden_path.filter((a, b) =>
-                a.properties.RS.startsWith(d.properties.RS)
-              )
-            );
+            show(hidden_path.filter((a, b) => a.properties.RS.startsWith(d.properties.RS)));
 
             self.bundeslaender
               .selectAll('.land')
@@ -153,9 +136,7 @@ class InteractiveMap {
             this.tooltip.text(`${d.properties.GEN}`);
           })
           .on('mousemove', (d, i) => {
-            this.tooltip
-              .attr('x', d3.event.layerX + 15)
-              .attr('y', d3.event.layerY + 20);
+            this.tooltip.attr('x', d3.event.layerX + 15).attr('y', d3.event.layerY + 20);
           })
           .on('mouseleave', (d, i) => {
             this.tooltip.text(null);
@@ -194,7 +175,7 @@ class InteractiveMap {
             self.selected = {
               dataset: Datasets.COUNTIES,
               id: parseInt(d.properties.RS),
-              label: d.properties.GEN
+              label: d.properties.GEN,
             };
             self.notify();
           })
@@ -202,9 +183,7 @@ class InteractiveMap {
             self.tooltip.text((x) => `${d.properties.GEN}`);
           })
           .on('mousemove', function (d, i) {
-            self.tooltip
-              .attr('x', d3.event.layerX + 15)
-              .attr('y', d3.event.layerY + 20);
+            self.tooltip.attr('x', d3.event.layerX + 15).attr('y', d3.event.layerY + 20);
           })
           .on('mouseout', function (d, i) {
             self.tooltip.text(null);
