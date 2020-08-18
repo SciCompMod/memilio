@@ -153,6 +153,9 @@ def get_divi_data(read_data=dd.defaultDict['read_data'],
                   start_date=date(2020, 4, 24),
                   end_date=date.today()):
 
+    delta = timedelta(days=1)
+    today = date.today()
+
     # First csv data on 24-04-2020
     if start_date < date(2020, 4, 24):
         start_date = date(2020, 4, 24)
@@ -164,50 +167,63 @@ def get_divi_data(read_data=dd.defaultDict['read_data'],
     filename = "FullData_DIVI"
 
     if update_data or read_data:
-        file_in = os.path.join(directory, filename + ".json")
+        print("-u or -r")
         # read json file for already downloaded data
+        file_in = os.path.join(directory, filename + ".json")
+
         try:
-            print("file_in: ", file_in)
             df = pandas.read_json(file_in)
         except ValueError:
             exit_string = "Error: The file: " + file_in + "does not exist. Call program without -r or -u flag to get it."
             sys.exit(exit_string)
 
-        if update_data:
-            # TODO: Check if data is already there.
-            # TODO: Check which dates are missing and add those.
-            # download data from today
-            df2 = gd.loadCsv('DIVI-Intensivregister-Tagesreport', apiUrl = 'https://www.divi.de/')
-            df = df.append(df2, ignore_index=True)
+            # for read_data no data download is needed, while-loop will be skipped
+            start_date = end_date + delta
 
-            # output data to not always download it
-            if not df.empty:
-                gd.write_dataframe(df, directory, filename, "json")
-            else:
-                exit_string = "Something went wrong, dataframe is empty."
-                sys.exit(exit_string)
+        if update_data:
+            print("-u")
+
+            newest_date = pandas.to_datetime(df['daten_stand']).max().date()
+            if date.today() - delta == newest_date:
+                # just todays data is missing
+
+                # download data from today
+                df2 = gd.loadCsv('DIVI-Intensivregister-Tagesreport', apiUrl = 'https://www.divi.de/')
+                df = df.append(df2, ignore_index=True)
+                # download while loop will be skipped
+
+            elif (today - newest_date) > delta:
+                # more than today is missing
+                # start with the oldest missing data
+                start_date = newest_date + delta
     else:
-        # Get data:
+        # Get all data:
         # start with empty dataframe
         df = pandas.DataFrame()
 
-        delta = timedelta(days=1)
+    last_number = 0
+    print("start_date", start_date)
+    while start_date <= end_date:
 
-        last_number = 0
-        while start_date <= end_date:
+        [last_number, df2] = download_data_for_one_day(last_number, start_date)
 
-            [last_number, df2] = download_data_for_one_day(last_number, start_date)
+        if not df2.empty:
+            # data of first days needs adjustment to following data
+            if start_date <= date(2020, 4, 29):
+                df2 = adjust_data(df2, start_date)
+            df = df.append(df2, ignore_index=True)
+            print("Success: Data of date " + start_date.strftime("%Y-%m-%d") + " has been included to dataframe")
+        else:
+            print("Warning: Data of date " + start_date.strftime("%Y-%m-%d") + " is not included to dataframe")
 
-            if not df2.empty:
-                # data of first days needs adjustment to following data
-                if start_date <= date(2020, 4, 29):
-                    df2 = adjust_data(df2, start_date)
-                df = df.append(df2, ignore_index=True)
-                print("Success: Data of date " + start_date.strftime("%Y-%m-%d") + " has been included to dataframe")
-            else:
-                print("Warning: Data of date " + start_date.strftime("%Y-%m-%d") + " is not included to dataframe")
+        start_date += delta
 
-            start_date += delta
+    # output data to not always download it before any changes has been done
+    if not df.empty:
+        gd.write_dataframe(df, directory, filename, "json")
+    else:
+        exit_string = "Something went wrong, dataframe is empty."
+        sys.exit(exit_string)
 
     # change column names
     df.rename(dd.GerEng, axis=1, inplace=True)
