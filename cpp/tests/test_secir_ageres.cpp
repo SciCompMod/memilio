@@ -66,7 +66,7 @@ TEST(TestSecir, compareAgeResWithSingleRun)
     // for (size_t k = 0; k < 8; k++) {
     //     double dummy = 0;
 
-    //     for (size_t i = 0; i < params.size(); i++) {
+    //     for (size_t i = 0; i < params.get_num_groups(); i++) {
     //         printf("\t %c[%d]: %.0f", vars[k], (int)i, secir[secir.size() - 1][k]);
     //         dummy += secir[secir.size() - 1][k];
     //     }

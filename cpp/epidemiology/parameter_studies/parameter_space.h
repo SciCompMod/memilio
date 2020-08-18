@@ -166,8 +166,8 @@ public:
 
     SecirParams draw_sample()
     {
-        SecirParams secir_params_sample(m_params.size());
-        for (size_t i = 0; i < m_params.size(); i++) {
+        SecirParams secir_params_sample(m_params.get_num_groups());
+        for (size_t i = 0; i < m_params.get_num_groups(); i++) {
 
             double group_total = m_params.populations.get_group_total(SecirCategory::AgeGroup, i);
 

@@ -70,7 +70,6 @@ void ContactFrequencyMatrix::add_damping(Damping const& damping, int self_group,
 void ContactFrequencyMatrix::clear_dampings()
 {
     size_t nb_groups = m_dampings.size();
-    m_dampings.resize(0);
     m_dampings = {nb_groups, std::vector<Dampings>(nb_groups, Dampings{})};
 }
 

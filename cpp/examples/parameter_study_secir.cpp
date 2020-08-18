@@ -37,8 +37,8 @@ int main(int argc, char* argv[])
         rho          = 0.2, // 0.1-0.35
         theta        = 0.25; // 0.15-0.4
 
-    double nb_total_t0 = 10000, nb_exp_t0 = 100, nb_inf_t0 = 50, nb_car_t0 = 50, nb_hosp_t0 = 20, nb_icu_t0 = 10,
-           nb_rec_t0 = 10, nb_dead_t0 = 0;
+    double num_total_t0 = 10000, num_exp_t0 = 100, num_inf_t0 = 50, num_car_t0 = 50, num_hosp_t0 = 20, num_icu_t0 = 10,
+           num_rec_t0 = 10, num_dead_t0 = 0;
 
     // alpha = alpha_in; // percentage of asymptomatic cases
     // beta  = beta_in; // risk of infection from the infected symptomatic patients
@@ -46,12 +46,12 @@ int main(int argc, char* argv[])
     // theta = theta_in; // icu per hospitalized
     // delta = delta_in; // deaths per ICUs
 
-    int nb_groups = 1;
-    double fact   = 1.0 / (double)nb_groups;
+    int num_groups = 1;
+    double fact   = 1.0 / (double)num_groups;
 
-    epi::SecirParams params(nb_groups);
+    epi::SecirParams params(num_groups);
 
-    for (size_t i = 0; i < nb_groups; i++) {
+    for (size_t i = 0; i < num_groups; i++) {
         params.times[i].set_incubation(tinc);
         params.times[i].set_infectious_mild(tinfmild);
         params.times[i].set_serialinterval(tserint);
@@ -62,15 +62,15 @@ int main(int argc, char* argv[])
         params.times[i].set_infectious_asymp(tinfasy);
         params.times[i].set_icu_to_death(ticu2death);
 
-        params.populations.set({i, epi::SecirCompartments::E}, fact * nb_exp_t0);
-        params.populations.set({i, epi::SecirCompartments::C}, fact * nb_car_t0);
-        params.populations.set({i, epi::SecirCompartments::I}, fact * nb_inf_t0);
-        params.populations.set({i, epi::SecirCompartments::H}, fact * nb_hosp_t0);
-        params.populations.set({i, epi::SecirCompartments::U}, fact * nb_icu_t0);
-        params.populations.set({i, epi::SecirCompartments::R}, fact * nb_rec_t0);
-        params.populations.set({i, epi::SecirCompartments::D}, fact * nb_dead_t0);
+        params.populations.set({i, epi::SecirCompartments::E}, fact * num_exp_t0);
+        params.populations.set({i, epi::SecirCompartments::C}, fact * num_car_t0);
+        params.populations.set({i, epi::SecirCompartments::I}, fact * num_inf_t0);
+        params.populations.set({i, epi::SecirCompartments::H}, fact * num_hosp_t0);
+        params.populations.set({i, epi::SecirCompartments::U}, fact * num_icu_t0);
+        params.populations.set({i, epi::SecirCompartments::R}, fact * num_rec_t0);
+        params.populations.set({i, epi::SecirCompartments::D}, fact * num_dead_t0);
         params.populations.set_difference_from_group_total({i, epi::SecirCompartments::S}, epi::SecirCategory::AgeGroup,
-                                                           i, fact * nb_total_t0);
+                                                           i, fact * num_total_t0);
 
         params.probabilities[i].set_infection_from_contact(1.0);
         params.probabilities[i].set_asymp_per_infectious(alpha);
@@ -82,8 +82,8 @@ int main(int argc, char* argv[])
 
     epi::ContactFrequencyMatrix& cont_freq_matrix = params.get_contact_patterns();
     epi::Damping dummy(30., 0.3);
-    for (int i = 0; i < nb_groups; i++) {
-        for (int j = i; j < nb_groups; j++) {
+    for (int i = 0; i < num_groups; i++) {
+        for (int j = i; j < num_groups; j++) {
             cont_freq_matrix.set_cont_freq(fact * cont_freq, i, j);
         }
     }
@@ -94,7 +94,7 @@ int main(int argc, char* argv[])
         },
         params, t0, tmax, 0.2, 1);
 
-    parameter_study.set_nb_runs(5);
+    parameter_study.set_num_runs(5);
 
     // Run parameter study
 

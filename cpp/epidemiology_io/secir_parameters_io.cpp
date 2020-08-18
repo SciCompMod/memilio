@@ -113,31 +113,31 @@ void write_predef_sample(TixiDocumentHandle handle, const std::string& path, con
 }
 
 void write_contact(TixiDocumentHandle handle, const std::string& path, const UncertainContactMatrix& contact_pattern,
-                   int nb_runs)
+                   int num_runs)
 {
     ContactFrequencyMatrix const& contact_freq_matrix = contact_pattern.get_cont_freq_mat();
-    int nb_groups                                     = contact_freq_matrix.get_size();
+    int num_groups                                     = contact_freq_matrix.get_size();
     tixiCreateElement(handle, path.c_str(), "ContactFreq");
     auto contact_path = path_join(path, "ContactFreq");
-    for (int i = 0; i < nb_groups; i++) {
+    for (int i = 0; i < num_groups; i++) {
         std::vector<double> row = {};
-        for (int j = 0; j < nb_groups; j++) {
+        for (int j = 0; j < num_groups; j++) {
             row.emplace_back(contact_freq_matrix.get_cont_freq(i, j));
         }
         tixiAddFloatVector(handle, contact_path.c_str(), ("ContactRateGroup_" + std::to_string(i + 1)).c_str(),
-                           row.data(), nb_groups, "%g");
+                           row.data(), num_groups, "%g");
     }
-    for (int i = 0; i < nb_groups; i++) {
-        for (int j = 0; j < nb_groups; j++) {
-            int nb_damp             = contact_freq_matrix.get_dampings(i, j).get_dampings_vector().size();
+    for (int i = 0; i < num_groups; i++) {
+        for (int j = 0; j < num_groups; j++) {
+            int num_damp             = contact_freq_matrix.get_dampings(i, j).get_dampings_vector().size();
             std::vector<double> row = {};
-            for (int k = 0; k < nb_damp; k++) {
+            for (int k = 0; k < num_damp; k++) {
                 row.emplace_back(contact_freq_matrix.get_dampings(i, j).get_dampings_vector()[k].day);
                 row.emplace_back(contact_freq_matrix.get_dampings(i, j).get_dampings_vector()[k].factor);
             }
             tixiAddFloatVector(handle, contact_path.c_str(),
                                ("DampingsGroups_" + std::to_string(i + 1) + "_" + std::to_string(j + 1)).c_str(),
-                               row.data(), 2 * nb_damp, "%g");
+                               row.data(), 2 * num_damp, "%g");
         }
     }
 
@@ -152,32 +152,32 @@ void write_contact(TixiDocumentHandle handle, const std::string& path, const Unc
 
 UncertainContactMatrix read_contact(TixiDocumentHandle handle, const std::string& path)
 {
-    int nb_groups;
-    tixiGetIntegerElement(handle, path_join("/Parameters", "NumberOfGroups").c_str(), &nb_groups);
-    UncertainContactMatrix contact_patterns{ContactFrequencyMatrix{(size_t)nb_groups}};
-    for (size_t i = 0; i < nb_groups; i++) {
+    int num_groups;
+    tixiGetIntegerElement(handle, path_join("/Parameters", "NumberOfGroups").c_str(), &num_groups);
+    UncertainContactMatrix contact_patterns{ContactFrequencyMatrix{(size_t)num_groups}};
+    for (size_t i = 0; i < num_groups; i++) {
         double* row = nullptr;
         tixiGetFloatVector(handle, path_join(path, "ContactRateGroup_" + std::to_string(i + 1)).c_str(), &row,
-                           nb_groups);
+                           num_groups);
 
-        for (int j = 0; j < nb_groups; ++j) {
+        for (int j = 0; j < num_groups; ++j) {
             contact_patterns.get_cont_freq_mat().set_cont_freq(row[j], i, j);
         }
     }
 
-    for (int i = 0; i < nb_groups; i++) {
-        for (int j = 0; j < nb_groups; j++) {
-            int nb_dampings;
+    for (int i = 0; i < num_groups; i++) {
+        for (int j = 0; j < num_groups; j++) {
+            int num_dampings;
             tixiGetVectorSize(
                 handle,
                 path_join(path, ("DampingsGroups_" + std::to_string(i + 1) + "_" + std::to_string(j + 1))).c_str(),
-                &nb_dampings);
+                &num_dampings);
             double* dampings = nullptr;
             tixiGetFloatVector(
                 handle,
                 path_join(path, ("DampingsGroups_" + std::to_string(i + 1) + "_" + std::to_string(j + 1))).c_str(),
-                &dampings, nb_dampings);
-            for (int k = 0; k < nb_dampings / 2; k++) {
+                &dampings, num_dampings);
+            for (int k = 0; k < num_dampings / 2; k++) {
                 contact_patterns.get_cont_freq_mat().add_damping(Damping{dampings[2 * k], dampings[2 * k + 1]}, i, j);
             }
         }
@@ -195,26 +195,26 @@ UncertainContactMatrix read_contact(TixiDocumentHandle handle, const std::string
 
 ParameterStudy read_parameter_study(TixiDocumentHandle handle, const std::string& path)
 {
-    int nb_runs;
+    int num_runs;
     double t0;
     double tmax;
 
-    tixiGetIntegerElement(handle, path_join(path, "Runs").c_str(), &nb_runs);
+    tixiGetIntegerElement(handle, path_join(path, "Runs").c_str(), &num_runs);
     tixiGetDoubleElement(handle, path_join(path, "T0").c_str(), &t0);
     tixiGetDoubleElement(handle, path_join(path, "TMax").c_str(), &tmax);
 
-    return ParameterStudy(&simulate, read_parameter_space(handle, path), nb_runs, t0, tmax);
+    return ParameterStudy(&simulate, read_parameter_space(handle, path), num_runs, t0, tmax);
 }
 
 ParameterSpace read_parameter_space(TixiDocumentHandle handle, const std::string& path)
 {
-    int nb_groups;
-    tixiGetIntegerElement(handle, path_join(path, "NumberOfGroups").c_str(), &nb_groups);
+    int num_groups;
+    tixiGetIntegerElement(handle, path_join(path, "NumberOfGroups").c_str(), &num_groups);
 
-    SecirParams params{(size_t)nb_groups};
+    SecirParams params{(size_t)num_groups};
     params.set_contact_patterns(read_contact(handle, path_join(path, "ContactFreq")));
 
-    for (size_t i = 0; i < nb_groups; i++) {
+    for (size_t i = 0; i < num_groups; i++) {
         auto group_name = "Group" + std::to_string(i + 1);
         auto group_path = path_join(path, group_name);
 
@@ -277,12 +277,12 @@ ParameterSpace read_parameter_space(TixiDocumentHandle handle, const std::string
 }
 
 void write_parameter_space(TixiDocumentHandle handle, const std::string& path, const ParameterSpace& parameter_space,
-                           int nb_runs)
+                           int num_runs)
 {
-    int nb_groups = parameter_space.get_secir_params().size();
-    tixiAddIntegerElement(handle, path.c_str(), "NumberOfGroups", nb_groups, "%d");
+    int num_groups = parameter_space.get_secir_params().get_num_groups();
+    tixiAddIntegerElement(handle, path.c_str(), "NumberOfGroups", num_groups, "%d");
 
-    for (int i = 0; i < nb_groups; i++) {
+    for (int i = 0; i < num_groups; i++) {
         auto group_name = "Group" + std::to_string(i + 1);
         auto group_path = path_join(path, group_name);
 
@@ -335,28 +335,28 @@ void write_parameter_space(TixiDocumentHandle handle, const std::string& path, c
                            *parameter_space.get_distribution_icu_per_hosp(i));
     }
 
-    write_contact(handle, path, parameter_space.get_secir_params().get_contact_patterns(), nb_runs);
+    write_contact(handle, path, parameter_space.get_secir_params().get_contact_patterns(), num_runs);
 }
 
 void write_parameter_study(TixiDocumentHandle handle, const std::string& path, const ParameterStudy& parameter_study)
 {
-    tixiAddIntegerElement(handle, path.c_str(), "Runs", parameter_study.get_nb_runs(), "%d");
+    tixiAddIntegerElement(handle, path.c_str(), "Runs", parameter_study.get_num_runs(), "%d");
     tixiAddDoubleElement(handle, path.c_str(), "T0", parameter_study.get_t0(), "%g");
     tixiAddDoubleElement(handle, path.c_str(), "TMax", parameter_study.get_tmax(), "%g");
 
-    write_parameter_space(handle, path, parameter_study.get_parameter_space(), parameter_study.get_nb_runs());
+    write_parameter_space(handle, path, parameter_study.get_parameter_space(), parameter_study.get_num_runs());
 }
 
 void write_single_run_params(const int run, const SecirParams& params, double t0, double tmax, std::vector<double> time,
                              std::vector<Eigen::VectorXd> secir_result)
 {
 
-    int nb_runs      = 1;
+    int num_runs      = 1;
     std::string path = "/Parameters";
     TixiDocumentHandle handle;
     tixiCreateDocument("Parameters", &handle);
 
-    ParameterStudy study(simulate, params, t0, tmax, 0.0, nb_runs);
+    ParameterStudy study(simulate, params, t0, tmax, 0.0, num_runs);
 
     write_parameter_study(handle, path, study);
     tixiSaveDocument(handle, ("Parameters_run" + std::to_string(run) + ".xml").c_str());
@@ -367,7 +367,7 @@ void write_single_run_params(const int run, const SecirParams& params, double t0
 
 void write_node(const Graph<ModelNode<SecirSimulation>, MigrationEdge>& graph, int node, double t0, double tmax)
 {
-    int nb_runs = 1;
+    int num_runs = 1;
 
     std::string path = "/Parameters";
     TixiDocumentHandle handle;
@@ -377,7 +377,7 @@ void write_node(const Graph<ModelNode<SecirSimulation>, MigrationEdge>& graph, i
 
     auto params = graph.nodes()[node].model.get_params();
 
-    ParameterStudy study(simulate, params, t0, tmax, nb_runs);
+    ParameterStudy study(simulate, params, t0, tmax, num_runs);
 
     write_parameter_study(handle, path, study);
     tixiSaveDocument(handle, ("GraphNode" + std::to_string(node) + ".xml").c_str());
@@ -403,20 +403,20 @@ void write_edge(TixiDocumentHandle handle, const std::string& path,
                 const Graph<ModelNode<SecirSimulation>, MigrationEdge>& graph, int edge)
 {
 
-    int nb_groups  = graph.nodes()[0].model.get_params().get_contact_patterns().get_cont_freq_mat().get_size();
-    int nb_compart = graph.nodes()[0].model.get_params().populations.get_num_compartments() / nb_groups;
+    int num_groups  = graph.nodes()[0].model.get_params().get_num_groups();
+    int num_compart = graph.nodes()[0].model.get_params().populations.get_num_compartments() / num_groups;
 
     std::string edge_path = path_join(path, "Edge" + std::to_string(edge));
     tixiCreateElement(handle, path.c_str(), ("Edge" + std::to_string(edge)).c_str());
     tixiAddIntegerElement(handle, edge_path.c_str(), "StartNode", graph.edges()[edge].start_node_idx, "%d");
     tixiAddIntegerElement(handle, edge_path.c_str(), "EndNode", graph.edges()[edge].end_node_idx, "%d");
-    for (int group = 0; group < nb_groups; group++) {
+    for (int group = 0; group < num_groups; group++) {
         std::vector<double> weights;
-        for (int compart = 0; compart < nb_compart; compart++) {
-            weights.push_back(graph.edges()[0].property.coefficients[compart + group * nb_compart]);
+        for (int compart = 0; compart < num_compart; compart++) {
+            weights.push_back(graph.edges()[0].property.coefficients[compart + group * num_compart]);
         }
         tixiAddFloatVector(handle, edge_path.c_str(), ("Group" + std::to_string(group + 1)).c_str(), weights.data(),
-                           nb_compart, "%g");
+                           num_compart, "%g");
     }
 }
 
@@ -425,23 +425,23 @@ void read_edge(TixiDocumentHandle handle, const std::string& path,
 {
 
     std::string edge_path = path_join(path, "Edge" + std::to_string(edge));
-    int nb_groups;
-    int nb_compart;
+    int num_groups;
+    int num_compart;
     int start_node;
     int end_node;
 
-    tixiGetIntegerElement(handle, path_join(path, "NumberOfGroups").c_str(), &nb_groups);
-    tixiGetIntegerElement(handle, path_join(path, "NumberOfCompartiments").c_str(), &nb_compart);
+    tixiGetIntegerElement(handle, path_join(path, "NumberOfGroups").c_str(), &num_groups);
+    tixiGetIntegerElement(handle, path_join(path, "NumberOfCompartiments").c_str(), &num_compart);
     tixiGetIntegerElement(handle, path_join(edge_path, "StartNode").c_str(), &start_node);
     tixiGetIntegerElement(handle, path_join(edge_path, "EndNode").c_str(), &end_node);
 
-    auto all_weights = Eigen::VectorXd(nb_compart * nb_groups);
-    for (int group = 0; group < nb_groups; group++) {
+    auto all_weights = Eigen::VectorXd(num_compart * num_groups);
+    for (int group = 0; group < num_groups; group++) {
         double* weights = nullptr;
         tixiGetFloatVector(handle, path_join(edge_path, "Group" + std::to_string(group + 1)).c_str(), &weights,
-                           nb_compart);
-        for (int compart = 0; compart < nb_compart; compart++) {
-            all_weights(compart + group * nb_compart) = weights[compart];
+                           num_compart);
+        for (int compart = 0; compart < num_compart; compart++) {
+            all_weights(compart + group * num_compart) = weights[compart];
         }
     }
     graph.add_edge(start_node, end_node, all_weights);
@@ -453,24 +453,24 @@ void write_graph(const Graph<ModelNode<SecirSimulation>, MigrationEdge>& graph, 
     TixiDocumentHandle handle;
     tixiCreateDocument("Edges", &handle);
 
-    int nb_nodes   = graph.nodes().size();
-    int nb_edges   = graph.edges().size();
-    int nb_groups  = graph.nodes()[0].model.get_params().get_contact_patterns().get_cont_freq_mat().get_size();
-    int nb_compart = graph.nodes()[0].model.get_params().populations.get_num_compartments() / nb_groups;
+    int num_nodes   = graph.nodes().size();
+    int num_edges   = graph.edges().size();
+    int num_groups  = graph.nodes()[0].model.get_params().get_contact_patterns().get_cont_freq_mat().get_size();
+    int num_compart = graph.nodes()[0].model.get_params().populations.get_num_compartments() / num_groups;
 
-    tixiAddIntegerElement(handle, edges_path.c_str(), "NumberOfNodes", nb_nodes, "%d");
-    tixiAddIntegerElement(handle, edges_path.c_str(), "NumberOfEdges", nb_edges, "%d");
-    tixiAddIntegerElement(handle, edges_path.c_str(), "NumberOfGroups", nb_groups, "%d");
-    tixiAddIntegerElement(handle, edges_path.c_str(), "NumberOfCompartiments", nb_compart, "%d");
+    tixiAddIntegerElement(handle, edges_path.c_str(), "NumberOfNodes", num_nodes, "%d");
+    tixiAddIntegerElement(handle, edges_path.c_str(), "NumberOfEdges", num_edges, "%d");
+    tixiAddIntegerElement(handle, edges_path.c_str(), "NumberOfGroups", num_groups, "%d");
+    tixiAddIntegerElement(handle, edges_path.c_str(), "NumberOfCompartiments", num_compart, "%d");
 
-    for (int edge = 0; edge < nb_edges; edge++) {
+    for (int edge = 0; edge < num_edges; edge++) {
         write_edge(handle, edges_path, graph, edge);
     }
 
     tixiSaveDocument(handle, "GraphEdges.xml");
     tixiCloseDocument(handle);
 
-    for (int node = 0; node < nb_nodes; node++) {
+    for (int node = 0; node < num_nodes; node++) {
         write_node(graph, node, t0, tmax);
     }
 }
@@ -482,19 +482,19 @@ Graph<ModelNode<SecirSimulation>, MigrationEdge> read_graph()
 
     std::string edges_path = "/Edges";
 
-    int nb_nodes;
-    int nb_edges;
+    int num_nodes;
+    int num_edges;
 
-    tixiGetIntegerElement(handle, path_join(edges_path, "NumberOfNodes").c_str(), &nb_nodes);
-    tixiGetIntegerElement(handle, path_join(edges_path, "NumberOfEdges").c_str(), &nb_edges);
+    tixiGetIntegerElement(handle, path_join(edges_path, "NumberOfNodes").c_str(), &num_nodes);
+    tixiGetIntegerElement(handle, path_join(edges_path, "NumberOfEdges").c_str(), &num_edges);
 
     Graph<ModelNode<SecirSimulation>, MigrationEdge> graph;
 
-    for (int node = 0; node < nb_nodes; node++) {
+    for (int node = 0; node < num_nodes; node++) {
         read_node(graph, node);
     }
 
-    for (int edge = 0; edge < nb_edges; edge++) {
+    for (int edge = 0; edge < num_edges; edge++) {
         read_edge(handle, edges_path, graph, edge);
     }
     tixiCloseDocument(handle);

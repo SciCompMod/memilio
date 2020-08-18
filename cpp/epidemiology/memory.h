@@ -35,24 +35,19 @@ public:
     /**
      * @brief Returns a raw pointer to the watched object
      */
-    T* get()
+    T* get() const
     {
         return m_raw_ptr;
     }
 
-    const T* get() const
+    T* operator->() const
     {
         return m_raw_ptr;
     }
 
-    const T* operator->() const
+    T& operator*()
     {
-        return m_raw_ptr;
-    }
-
-    T* operator->()
-    {
-        return m_raw_ptr;
+        return *m_raw_ptr;
     }
 
     operator bool() const

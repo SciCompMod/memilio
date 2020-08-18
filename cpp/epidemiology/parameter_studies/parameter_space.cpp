@@ -18,7 +18,7 @@ ParameterSpace::ParameterSpace(SecirParams const& params, double t0, double tmax
     double min_val = 0.001;
 
     // populations
-    for (size_t i = 0; i < m_params.size(); i++) {
+    for (size_t i = 0; i < m_params.get_num_groups(); i++) {
 
         // variably sized groups
         // exposed
@@ -65,7 +65,7 @@ ParameterSpace::ParameterSpace(SecirParams const& params, double t0, double tmax
     }
 
     // times
-    for (size_t i = 0; i < m_params.size(); i++) {
+    for (size_t i = 0; i < m_params.get_num_groups(); i++) {
         // incubation time
         double value_params = m_params.times[i].get_incubation();
         m_params.times[i].set_incubation(
@@ -122,7 +122,7 @@ ParameterSpace::ParameterSpace(SecirParams const& params, double t0, double tmax
     }
 
     // probabilities
-    for (size_t i = 0; i < m_params.size(); i++) {
+    for (size_t i = 0; i < m_params.get_num_groups(); i++) {
         // infection from contact
         double value_params = m_params.probabilities[i].get_infection_from_contact();
         m_params.probabilities[i].set_infection_from_contact(

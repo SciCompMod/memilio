@@ -17,15 +17,15 @@ TEST(TestSaveParameters, compareParameterStudy)
 
     double cont_freq = 0.5, alpha = 0.09, beta = 0.25, delta = 0.3, rho = 0.2, theta = 0.25;
 
-    double nb_total_t0 = 10000, nb_exp_t0 = 100, nb_inf_t0 = 50, nb_car_t0 = 50, nb_hosp_t0 = 20, nb_icu_t0 = 10,
-           nb_rec_t0 = 10, nb_dead_t0 = 0;
+    double num_total_t0 = 10000, num_exp_t0 = 100, num_inf_t0 = 50, num_car_t0 = 50, num_hosp_t0 = 20, num_icu_t0 = 10,
+           num_rec_t0 = 10, num_dead_t0 = 0;
 
-    int nb_groups = 2;
-    double fact   = 1.0 / (double)nb_groups;
+    int num_groups = 2;
+    double fact   = 1.0 / (double)num_groups;
 
-    epi::SecirParams params(nb_groups);
+    epi::SecirParams params(num_groups);
 
-    for (size_t i = 0; i < nb_groups; i++) {
+    for (size_t i = 0; i < num_groups; i++) {
         params.times[i].set_incubation(tinc);
         params.times[i].set_infectious_mild(tinfmild);
         params.times[i].set_serialinterval(tserint);
@@ -36,15 +36,15 @@ TEST(TestSaveParameters, compareParameterStudy)
         params.times[i].set_infectious_asymp(tinfasy);
         params.times[i].set_icu_to_death(ticu2death);
 
-        params.populations.set({i, epi::SecirCompartments::E}, fact * nb_exp_t0);
-        params.populations.set({i, epi::SecirCompartments::C}, fact * nb_car_t0);
-        params.populations.set({i, epi::SecirCompartments::I}, fact * nb_inf_t0);
-        params.populations.set({i, epi::SecirCompartments::H}, fact * nb_hosp_t0);
-        params.populations.set({i, epi::SecirCompartments::U}, fact * nb_icu_t0);
-        params.populations.set({i, epi::SecirCompartments::R}, fact * nb_rec_t0);
-        params.populations.set({i, epi::SecirCompartments::D}, fact * nb_dead_t0);
+        params.populations.set({i, epi::SecirCompartments::E}, fact * num_exp_t0);
+        params.populations.set({i, epi::SecirCompartments::C}, fact * num_car_t0);
+        params.populations.set({i, epi::SecirCompartments::I}, fact * num_inf_t0);
+        params.populations.set({i, epi::SecirCompartments::H}, fact * num_hosp_t0);
+        params.populations.set({i, epi::SecirCompartments::U}, fact * num_icu_t0);
+        params.populations.set({i, epi::SecirCompartments::R}, fact * num_rec_t0);
+        params.populations.set({i, epi::SecirCompartments::D}, fact * num_dead_t0);
         params.populations.set_difference_from_group_total({i, epi::SecirCompartments::S}, epi::SecirCategory::AgeGroup,
-                                                           i, fact * nb_total_t0);
+                                                           i, fact * num_total_t0);
 
         params.probabilities[i].set_asymp_per_infectious(alpha);
         params.probabilities[i].set_risk_from_symptomatic(beta);
@@ -55,19 +55,19 @@ TEST(TestSaveParameters, compareParameterStudy)
 
     epi::ContactFrequencyMatrix& cont_freq_matrix = params.get_contact_patterns();
     epi::Damping dummy(30., 0.3);
-    for (int i = 0; i < nb_groups; i++) {
-        for (int j = i; j < nb_groups; j++) {
+    for (int i = 0; i < num_groups; i++) {
+        for (int j = i; j < num_groups; j++) {
             cont_freq_matrix.set_cont_freq(fact * cont_freq, i, j);
             cont_freq_matrix.add_damping(dummy, i, j);
         }
     }
     cont_freq_matrix.add_damping(epi::Damping{35, 0.2}, 0, 0);
-    int nb_runs      = 5;
+    int num_runs      = 5;
     std::string path = "/Parameters";
     TixiDocumentHandle handle;
 
     tixiCreateDocument("Parameters", &handle);
-    epi::ParameterStudy study(epi::simulate, params, t0, tmax, 0.0, nb_runs);
+    epi::ParameterStudy study(epi::simulate, params, t0, tmax, 0.0, num_runs);
 
     study.get_parameter_space().get_secir_params().times[0].get_incubation().get_distribution()->add_predefined_sample(
         4711.0);
@@ -86,7 +86,7 @@ TEST(TestSaveParameters, compareParameterStudy)
     epi::ParameterStudy read_study = epi::read_parameter_study(handle, path);
     tixiCloseDocument(handle);
 
-    ASSERT_EQ(study.get_nb_runs(), read_study.get_nb_runs());
+    ASSERT_EQ(study.get_num_runs(), read_study.get_num_runs());
     ASSERT_EQ(study.get_t0(), read_study.get_t0());
     ASSERT_EQ(study.get_tmax(), read_study.get_tmax());
 
@@ -96,8 +96,8 @@ TEST(TestSaveParameters, compareParameterStudy)
     const epi::UncertainContactMatrix& contact      = space.get_secir_params().get_contact_patterns();
     const epi::UncertainContactMatrix& read_contact = read_space.get_secir_params().get_contact_patterns();
 
-    int num_groups      = space.get_secir_params().size();
-    int num_groups_read = read_space.get_secir_params().size();
+    num_groups      = space.get_secir_params().get_num_groups();
+    int num_groups_read = read_space.get_secir_params().get_num_groups();
     ASSERT_EQ(num_groups, num_groups_read);
 
     for (int i = 0; i < num_groups; i++) {
@@ -165,15 +165,15 @@ TEST(TestSaveParameters, compareGraphs)
 
     double cont_freq = 0.5, alpha = 0.09, beta = 0.25, delta = 0.3, rho = 0.2, theta = 0.25;
 
-    double nb_total_t0 = 10000, nb_exp_t0 = 100, nb_inf_t0 = 50, nb_car_t0 = 50, nb_hosp_t0 = 20, nb_icu_t0 = 10,
-           nb_rec_t0 = 10, nb_dead_t0 = 0;
+    double num_total_t0 = 10000, num_exp_t0 = 100, num_inf_t0 = 50, num_car_t0 = 50, num_hosp_t0 = 20, num_icu_t0 = 10,
+           num_rec_t0 = 10, num_dead_t0 = 0;
 
-    int nb_groups = 2;
-    double fact   = 1.0 / (double)nb_groups;
+    int num_groups = 2;
+    double fact   = 1.0 / (double)num_groups;
 
-    epi::SecirParams params(nb_groups);
+    epi::SecirParams params(num_groups);
 
-    for (size_t i = 0; i < nb_groups; i++) {
+    for (size_t i = 0; i < num_groups; i++) {
         params.times[i].set_incubation(tinc);
         params.times[i].set_infectious_mild(tinfmild);
         params.times[i].set_serialinterval(tserint);
@@ -184,15 +184,15 @@ TEST(TestSaveParameters, compareGraphs)
         params.times[i].set_infectious_asymp(tinfasy);
         params.times[i].set_icu_to_death(ticu2death);
 
-        params.populations.set({i, epi::SecirCompartments::E}, fact * nb_exp_t0);
-        params.populations.set({i, epi::SecirCompartments::C}, fact * nb_car_t0);
-        params.populations.set({i, epi::SecirCompartments::I}, fact * nb_inf_t0);
-        params.populations.set({i, epi::SecirCompartments::H}, fact * nb_hosp_t0);
-        params.populations.set({i, epi::SecirCompartments::U}, fact * nb_icu_t0);
-        params.populations.set({i, epi::SecirCompartments::R}, fact * nb_rec_t0);
-        params.populations.set({i, epi::SecirCompartments::D}, fact * nb_dead_t0);
+        params.populations.set({i, epi::SecirCompartments::E}, fact * num_exp_t0);
+        params.populations.set({i, epi::SecirCompartments::C}, fact * num_car_t0);
+        params.populations.set({i, epi::SecirCompartments::I}, fact * num_inf_t0);
+        params.populations.set({i, epi::SecirCompartments::H}, fact * num_hosp_t0);
+        params.populations.set({i, epi::SecirCompartments::U}, fact * num_icu_t0);
+        params.populations.set({i, epi::SecirCompartments::R}, fact * num_rec_t0);
+        params.populations.set({i, epi::SecirCompartments::D}, fact * num_dead_t0);
         params.populations.set_difference_from_group_total({i, epi::SecirCompartments::S}, epi::SecirCategory::AgeGroup,
-                                                           i, fact * nb_total_t0);
+                                                           i, fact * num_total_t0);
 
         params.probabilities[i].set_infection_from_contact(1.0);
         params.probabilities[i].set_asymp_per_infectious(alpha);
@@ -204,8 +204,8 @@ TEST(TestSaveParameters, compareGraphs)
 
     epi::ContactFrequencyMatrix& cont_freq_matrix = params.get_contact_patterns();
     epi::Damping dummy(30., 0.3);
-    for (int i = 0; i < nb_groups; i++) {
-        for (int j = i; j < nb_groups; j++) {
+    for (int i = 0; i < num_groups; i++) {
+        for (int j = i; j < num_groups; j++) {
             cont_freq_matrix.set_cont_freq(fact * cont_freq, i, j);
             cont_freq_matrix.add_damping(dummy, i, j);
         }
@@ -225,28 +225,28 @@ TEST(TestSaveParameters, compareGraphs)
 
     epi::Graph<epi::ModelNode<epi::SecirSimulation>, epi::MigrationEdge> graph_read = epi::read_graph();
 
-    int nb_nodes = graph.nodes().size();
-    int nb_edges = graph.edges().size();
+    int num_nodes = graph.nodes().size();
+    int num_edges = graph.edges().size();
 
-    ASSERT_EQ(nb_nodes, graph_read.nodes().size());
-    ASSERT_EQ(nb_edges, graph_read.edges().size());
+    ASSERT_EQ(num_nodes, graph_read.nodes().size());
+    ASSERT_EQ(num_edges, graph_read.edges().size());
 
-    for (int node = 0; node < nb_nodes; node++) {
+    for (int node = 0; node < num_nodes; node++) {
         epi::SecirParams graph_params               = graph.nodes()[0].model.get_params();
         epi::ContactFrequencyMatrix graph_cont_freq = graph_params.get_contact_patterns();
 
         epi::SecirParams graph_read_params               = graph_read.nodes()[0].model.get_params();
         epi::ContactFrequencyMatrix graph_read_cont_freq = graph_read_params.get_contact_patterns();
 
-        int nb_compart = graph_params.populations.get_num_compartments() / nb_groups;
-        int nb_groups  = graph_cont_freq.get_size();
-        ASSERT_EQ(nb_groups, graph_read_cont_freq.get_size());
-        ASSERT_EQ(nb_compart, graph_read_params.populations.get_num_compartments() / nb_groups);
+        int num_compart = graph_params.populations.get_num_compartments() / num_groups;
+        int num_groups  = graph_cont_freq.get_size();
+        ASSERT_EQ(num_groups, graph_read_cont_freq.get_size());
+        ASSERT_EQ(num_compart, graph_read_params.populations.get_num_compartments() / num_groups);
 
-        int nb_dampings = graph_cont_freq.get_dampings(0, 0).get_dampings_vector().size();
-        ASSERT_EQ(nb_dampings, graph_read_cont_freq.get_dampings(0, 0).get_dampings_vector().size());
+        int num_dampings = graph_cont_freq.get_dampings(0, 0).get_dampings_vector().size();
+        ASSERT_EQ(num_dampings, graph_read_cont_freq.get_dampings(0, 0).get_dampings_vector().size());
 
-        for (size_t group = 0; group < nb_groups; group++) {
+        for (size_t group = 0; group < num_groups; group++) {
             ASSERT_EQ(graph_params.populations.get({group, epi::SecirCompartments::D}),
                       graph_read_params.populations.get({group, epi::SecirCompartments::D}));
             ASSERT_EQ(graph_params.populations.get_total(), graph_read_params.populations.get_total());
@@ -310,10 +310,10 @@ TEST(TestSaveParameters, compareGraphs)
                 *graph_params.probabilities[group].get_icu_per_hospitalized().get_distribution().get(),
                 *graph_read_params.probabilities[group].get_icu_per_hospitalized().get_distribution().get());
 
-            for (int contact_group = 0; contact_group < nb_groups; contact_group++) {
+            for (int contact_group = 0; contact_group < num_groups; contact_group++) {
                 ASSERT_EQ(graph_cont_freq.get_cont_freq(group, contact_group),
                           graph_read_cont_freq.get_cont_freq(group, contact_group));
-                for (int damp = 0; damp < nb_dampings; damp++) {
+                for (int damp = 0; damp < num_dampings; damp++) {
                     ASSERT_EQ(
                         graph_cont_freq.get_dampings(group, contact_group).get_dampings_vector().at(damp).day,
                         graph_read_cont_freq.get_dampings(group, contact_group).get_dampings_vector().at(damp).day);
@@ -335,10 +335,10 @@ TEST(TestSaveParameters, compareGraphs)
                                *graph_read_params.get_contact_patterns().get_distribution_damp_offdiag_rel().get());
         }
 
-        for (int edge = 0; edge < nb_edges; edge++) {
+        for (int edge = 0; edge < num_edges; edge++) {
             ASSERT_EQ(graph.edges()[edge].start_node_idx, graph_read.edges()[edge].start_node_idx);
             ASSERT_EQ(graph.edges()[edge].end_node_idx, graph_read.edges()[edge].end_node_idx);
-            for (int i = 0; i < nb_compart * nb_groups; i++) {
+            for (int i = 0; i < num_compart * num_groups; i++) {
                 ASSERT_EQ(graph.edges()[edge].property.coefficients[i],
                           graph_read.edges()[edge].property.coefficients[i]);
             }

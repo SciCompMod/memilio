@@ -355,7 +355,7 @@ UncertainContactMatrix const& SecirParams::get_contact_patterns() const
 
 double get_reprod_rate(SecirParams const& params, double const t, std::vector<double> const& yt)
 {
-    if (params.size() == 1) {
+    if (params.get_num_groups() == 1) {
         // (base_)reprod has to be computed time dependently !
         auto dummy_R3 = 0.5 / (params.times[0].get_infectious_mild() - params.times[0].get_serialinterval());
 
@@ -395,7 +395,7 @@ void secir_get_derivatives(SecirParams const& params, const Eigen::VectorXd& y, 
     // theta // icu per hospitalized
     // delta  // deaths per ICUs
     // 0: S,      1: E,     2: C,     3: I,     4: H,     5: U,     6: R,     7: D
-    size_t n_agegroups = params.size();
+    size_t n_agegroups = params.get_num_groups();
 
     ContactFrequencyMatrix const& cont_freq_matrix = params.get_contact_patterns();
 
