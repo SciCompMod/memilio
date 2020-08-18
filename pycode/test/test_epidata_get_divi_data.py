@@ -7,7 +7,7 @@ import pandas as pd
 
 from epidemiology.epidata import getDIVIData as gdd
 from epidemiology.epidata import getDataIntoPandasDataFrame as gd
-from unittest.mock import patch
+from unittest.mock import patch, call
 
 
 class Test_getDiviData(fake_filesystem_unittest.TestCase):
@@ -24,13 +24,17 @@ class Test_getDiviData(fake_filesystem_unittest.TestCase):
 "reporting_hospitals":5,"ICU_free":60,"ICU_occupied":96,"Date":"2020-07-07 12:15:00"},\
 {"ID_State":3,"ID_County":3103,"anzahl_meldebereiche":1,"ICU":4,"ICU_ventilated":1,\
 "reporting_hospitals":1,"ICU_free":11,"ICU_occupied":23,"Date":"2020-07-07 12:15:00"}""")
+
     test_string2 = ("""
 {"ID_State":2,"ID_County":2000,"anzahl_meldebereiche":28,"ICU":7,"ICU_ventilated":6,\
 "reporting_hospitals":24,"ICU_free":397,"ICU_occupied":597,"Date":"2020-07-08 12:15:00"},\
 {"ID_State":3,"ID_County":3101,"anzahl_meldebereiche":5,"ICU":1,"ICU_ventilated":1,\
 "reporting_hospitals":5,"ICU_free":65,"ICU_occupied":91,"Date":"2020-07-08 12:15:00"}]""")
+
     test_string = test_string1 + "," + test_string2
+
     test_string_update1 = test_string1 + "]"
+
     test_string_update2 = "[" + test_string2
 
     # result string for counties
@@ -88,7 +92,7 @@ class Test_getDiviData(fake_filesystem_unittest.TestCase):
             df = gdd.adjust_data(df, start_date)
             df.sort_index(axis=1, inplace=True)
 
-            # construct result
+            # construct correct result
             df_res = pd.DataFrame(self.liste_result[i])
             df_res.sort_index(axis=1, inplace=True)
 
@@ -97,27 +101,110 @@ class Test_getDiviData(fake_filesystem_unittest.TestCase):
 
             start_date += timedelta(days=1)
 
+    # note: patches have to have the right order!
+    @patch('builtins.print')
     @patch('epidemiology.epidata.getDIVIData.pandas.read_csv')
-    def test_gdd_download_data_for_one_day(self, mock_read_csv):
+    def test_gdd_call_call_url(self, mock_read_csv, mock_print):
 
-        mock_read_csv.return_value = pd.read_json(self.test_string)
+        mock_read_csv.return_value = pd.read_json(self.test_string_update1)
 
-        test_url_ending = {date(2020, 4, 24): "2020-04-24-09-15/viewdocument/3974",
-                           date(2020, 5, 7): "2020-05-07-09-15/viewdocument/3692",
-                           date(2020, 6, 4): "2020-06-04-09-15/viewdocument/3720",
-                           date(2020, 6, 7): "2020-06-07-12-15/viewdocument/3844",
-                           date(2020, 6, 15): "2020-06-15-12-15-2/viewdocument/3909",
-                           date(2020, 7, 7): "2020-07-07-12-15/viewdocument/3961",
-                           date(2020, 7, 15): "2020-07-15-12-15/download",
-                           }
+        # test_string1 has data from 7.7.2020
+        download_date = date(2020,7,7)
+        call_date = download_date.strftime("%Y-%m-%d")
+        call_time = "-12-15"
+        ext = ""
 
-        for test_date in test_url_ending:
-            df = gdd.download_data_for_one_day(test_date)
-            mock_read_csv.assert_called_with(
+        url_prefix = "https://www.divi.de/divi-intensivregister-tagesreport-archiv-csv/divi-intensivregister-" \
+                 + call_date + call_time + ext
+
+        call_number = 3961
+        df =  gdd.call_call_url(url_prefix, call_number)
+
+        call_url = "https://www.divi.de/divi-intensivregister-tagesreport-archiv-csv/divi-intensivregister-" +\
+                   "2020-07-07-12-15/viewdocument/3961"
+
+        mock_read_csv.assert_called_with(call_url)
+
+        # check wether the read data is as expected
+        self.assertTrue((pd.read_json(self.test_string_update1) == df).all().all())
+
+        # add an additional print out, which should not change the data
+        input_string = "An additional output."
+        df = gdd.call_call_url(url_prefix, call_number, input_string)
+        # check if the prints are as expected.
+        mock_print.assert_called_with("New cal number found. " +
+                                      "Please copy the following to call_number_dict to increase runtime: " +
+                                      input_string)
+
+        mock_read_csv.assert_called_with(
+            "https://www.divi.de/divi-intensivregister-tagesreport-archiv-csv/divi-intensivregister-" +
+            "2020-07-07-12-15/viewdocument/3961")
+
+        # check wether the read data is as expected
+        self.assertTrue((pd.read_json(self.test_string_update1) == df).all().all())
+
+        # TODO: check exceptions
+        # check exception when OSError is returned
+
+        mock_read_csv.side_effect = OSError
+        #exit_string = "ERROR: URL " + call_url + " could not be opened. " \
+        #             + "Hint: check your internet connection."
+
+
+
+    @patch('epidemiology.epidata.getDIVIData.call_call_url')
+    def test_gdd_download_data_for_one_day(self, mock_ccu):
+
+        mock_ccu.return_value = pd.read_json(self.test_string)
+
+        test_url_in_call_number_dict = {
+            date(2020, 4, 24): ["2020-04-24-09-15", 3974],
+            date(2020, 7, 7): ["2020-07-07-12-15",3961],
+            date(2020, 7, 15): ["2020-07-15-12-15", 4108],
+            }
+
+        test_url_ending_else = {
+            date(2020, 5, 7): ["2020-05-07-09-15", 3692],
+            date(2020, 6, 4): ["2020-06-04-09-15", 3720],
+            date(2020, 6, 7): ["2020-06-07-12-15", 3844],
+            date(2020, 6, 15): ["2020-06-15-12-15-2", 3909],
+        }
+
+        last_number = 0
+
+        # test cases, where date is part of call_number_dict
+        for test_date in test_url_in_call_number_dict.keys():
+
+            df = gdd.download_data_for_one_day(last_number, test_date)
+
+            # cases where date is in call_number_dict
+
+            mock_ccu.assert_called_with(
                 "https://www.divi.de/divi-intensivregister-tagesreport-archiv-csv/divi-intensivregister-" +
-                test_url_ending[test_date])
+                test_url_in_call_number_dict[test_date][0], test_url_in_call_number_dict[test_date][1])
 
-        self.assertTrue((pd.read_json(self.test_string) == df).all().all())
+
+        # test cases, where date has difference 1 to given call_number
+        for test_date in test_url_ending_else.keys():
+
+            df = gdd.download_data_for_one_day(test_url_ending_else[test_date][1]-1, test_date)
+
+            mock_ccu.assert_called_with(
+                "https://www.divi.de/divi-intensivregister-tagesreport-archiv-csv/divi-intensivregister-" +
+                 test_url_ending_else[test_date][0], test_url_ending_else[test_date][1], "")
+
+        # test cases, where date has difference 2 to given call_number
+        for test_date in test_url_ending_else.keys():
+            df = gdd.download_data_for_one_day(test_url_ending_else[test_date][1] - 2, test_date)
+
+            expected_calls = [call.call_call_url("https://www.divi.de/divi-intensivregister-tagesreport-archiv-csv/divi-intensivregister-" +
+                test_url_ending_else[test_date][0], test_url_ending_else[test_date][1]-1, "") ,call.call_call_url("https://www.divi.de/divi-intensivregister-tagesreport-archiv-csv/divi-intensivregister-" +
+                test_url_ending_else[test_date][0], test_url_ending_else[test_date][1], "")]
+
+            # TODO: assert the loop calls when difference is == 2 AND afterwards if it is larger
+            #mock_ccu.assert_has_calls(expected_calls)
+
+        #self.assertTrue((pd.read_json(self.test_string) == df).all().all())
 
     @patch('epidemiology.epidata.getDIVIData.pandas.read_csv')
     def test_gdd_download_data(self, mock_read_csv):
@@ -186,41 +273,41 @@ class Test_getDiviData(fake_filesystem_unittest.TestCase):
         f = open(f_path, "r")
         self.assertEqual(f.read(), self.test_stringr3)
 
-    @patch('epidemiology.epidata.getPopulationData.gd.loadCsv')
-    def test_gdd_update_data(self, mock_loadCSV):
+    #@patch('epidemiology.epidata.getPopulationData.gd.loadCsv')
+    #def test_gdd_update_data(self, mock_loadCSV):
 
-        mock_loadCSV.return_value = pd.read_json(self.test_string_update2)
+     #   mock_loadCSV.return_value = pd.read_json(self.test_string_update2)
 
-        [read_data, update_data, make_plot, out_form, out_folder] = [False, True, False, "json", self.path]
+      #  [read_data, update_data, make_plot, out_form, out_folder] = [False, True, False, "json", self.path]
 
-        directory = os.path.join(out_folder, 'Germany/')
-        gd.check_dir(directory)
+       # directory = os.path.join(out_folder, 'Germany/')
+        #gd.check_dir(directory)
 
-        file = "FullData_DIVI.json"
+        #file = "FullData_DIVI.json"
 
-        file_out1 = "county_divi.json"
-        file_out2 = "state_divi.json"
-        file_out3 = "germany_divi.json"
+        #file_out1 = "county_divi.json"
+        #file_out2 = "state_divi.json"
+        #file_out3 = "germany_divi.json"
 
-        with open(os.path.join(directory, file), 'w') as f:
-            f.write(self.test_string_update1)
+        #with open(os.path.join(directory, file), 'w') as f:
+        #    f.write(self.test_string_update1)
 
-        gdd.get_divi_data(read_data, update_data, make_plot, out_form, out_folder)
+        #gdd.get_divi_data(read_data, update_data, make_plot, out_form, out_folder)
 
-        self.assertEqual(len(os.listdir(directory)), 4)
-        self.assertEqual(os.listdir(directory).sort(), [file, file_out1, file_out2, file_out3].sort())
+        #self.assertEqual(len(os.listdir(directory)), 4)
+        #self.assertEqual(os.listdir(directory).sort(), [file, file_out1, file_out2, file_out3].sort())
 
-        f_path = os.path.join(directory, file_out1)
-        f = open(f_path, "r")
-        self.assertEqual(f.read(), self.test_stringr1)
+        #f_path = os.path.join(directory, file_out1)
+        #f = open(f_path, "r")
+        #self.assertEqual(f.read(), self.test_stringr1)
 
-        f_path = os.path.join(directory, file_out2)
-        f = open(f_path, "r")
-        self.assertEqual(f.read(), self.test_stringr2)
+        #f_path = os.path.join(directory, file_out2)
+        #f = open(f_path, "r")
+        #self.assertEqual(f.read(), self.test_stringr2)
 
-        f_path = os.path.join(directory, file_out3)
-        f = open(f_path, "r")
-        self.assertEqual(f.read(), self.test_stringr3)
+        #f_path = os.path.join(directory, file_out3)
+        #f = open(f_path, "r")
+        #self.assertEqual(f.read(), self.test_stringr3)
 
 if __name__ == '__main__':
     unittest.main()

@@ -7,7 +7,12 @@ from epidemiology.epidata import getDataIntoPandasDataFrame as gd
 from epidemiology.epidata import defaultDict as dd
 
 
+##
+
 def adjust_data(df, date_of_data):
+
+    """! Change data such that all data looks the same."""
+
     # rename column 'kreis' of first date to match data of following days
     if date_of_data == date(2020, 4, 24):
         df.rename({'kreis': 'gemeindeschluessel'}, axis=1, inplace=True)
@@ -150,7 +155,8 @@ def get_divi_data(read_data=dd.defaultDict['read_data'],
                   make_plot=dd.defaultDict['make_plot'],
                   out_form=dd.defaultDict['out_form'],
                   out_folder=dd.defaultDict['out_folder'],
-                  start_date=date(2020, 4, 24),
+                  #start_date=date(2020, 4, 24),
+                  start_date=date(2020, 8, 14),
                   end_date=date.today()):
 
     delta = timedelta(days=1)
@@ -174,28 +180,38 @@ def get_divi_data(read_data=dd.defaultDict['read_data'],
         try:
             df = pandas.read_json(file_in)
         except ValueError:
-            exit_string = "Error: The file: " + file_in + "does not exist. Call program without -r or -u flag to get it."
+            exit_string = "Error: The file: " + file_in + "does not exist." \
+                          "Call program without -r or -u flag to get it."
             sys.exit(exit_string)
 
-            # for read_data no data download is needed, while-loop will be skipped
-            start_date = end_date + delta
+        # for read_data no data download is needed, while-loop will be skipped
+        start_date = end_date + delta
+        print("new start_date", start_date)
 
         if update_data:
             print("-u")
 
             newest_date = pandas.to_datetime(df['daten_stand']).max().date()
-            if date.today() - delta == newest_date:
+
+            if (today - delta) == newest_date:
                 # just todays data is missing
-
                 # download data from today
-                df2 = gd.loadCsv('DIVI-Intensivregister-Tagesreport', apiUrl = 'https://www.divi.de/')
-                df = df.append(df2, ignore_index=True)
                 # download while loop will be skipped
+                df2 = gd.loadCsv('DIVI-Intensivregister-Tagesreport', apiUrl = 'https://www.divi.de/')
+                # test if data is already online
+                download_date = pandas.to_datetime(df2['daten_stand']).max().date()
+                print("download_date:", download_date)
 
-            elif (today - newest_date) > delta:
+                if download_date == today:
+                    if not df2.empty:
+                        df = df.append(df2, ignore_index=True)
+                        print("Success: Data of date " + today.strftime("%Y-%m-%d") + " has been included to dataframe")
+
+            elif (today - newest_date).days > delta:
                 # more than today is missing
                 # start with the oldest missing data
                 start_date = newest_date + delta
+                print("second new start_date:", start_date)
     else:
         # Get all data:
         # start with empty dataframe
