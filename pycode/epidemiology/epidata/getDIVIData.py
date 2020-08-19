@@ -135,6 +135,9 @@ def download_data_for_one_day(last_number, download_date):
             for delta in range(1,300):
 
                call_number = last_number + sign_dict[sign]*delta
+
+               # for delta 1 and 2 the number is not saved in dict,
+               # because it does not take so long to get those nubers
                if delta != 1 and delta != 2:
                   call_string = "date(" + download_date.strftime("%Y,%-m,%-d") + "): " + str(call_number) + ","
 
@@ -143,9 +146,9 @@ def download_data_for_one_day(last_number, download_date):
                if not df.empty:
                    return [call_number, df]
 
-            # case with same call_number, which is very unlikely
-            call_number = last_number
-            df = call_call_url(url_prefix, call_number)
+        # case with same call_number, which is very unlikely
+        call_number = last_number
+        df = call_call_url(url_prefix, call_number)
 
     return [call_number, df]
 
@@ -155,9 +158,9 @@ def get_divi_data(read_data=dd.defaultDict['read_data'],
                   make_plot=dd.defaultDict['make_plot'],
                   out_form=dd.defaultDict['out_form'],
                   out_folder=dd.defaultDict['out_folder'],
-                  #start_date=date(2020, 4, 24),
-                  start_date=date(2020, 8, 14),
-                  end_date=date.today()):
+                  start_date=date(2020, 4, 24),
+                  end_date=date.today()
+                  ):
 
     delta = timedelta(days=1)
     today = date.today()
@@ -186,10 +189,8 @@ def get_divi_data(read_data=dd.defaultDict['read_data'],
 
         # for read_data no data download is needed, while-loop will be skipped
         start_date = end_date + delta
-        print("new start_date", start_date)
 
         if update_data:
-            print("-u")
 
             newest_date = pandas.to_datetime(df['daten_stand']).max().date()
 
@@ -200,7 +201,6 @@ def get_divi_data(read_data=dd.defaultDict['read_data'],
                 df2 = gd.loadCsv('DIVI-Intensivregister-Tagesreport', apiUrl = 'https://www.divi.de/')
                 # test if data is already online
                 download_date = pandas.to_datetime(df2['daten_stand']).max().date()
-                print("download_date:", download_date)
 
                 if download_date == today:
                     if not df2.empty:
@@ -258,6 +258,8 @@ def get_divi_data(read_data=dd.defaultDict['read_data'],
 
     print("Available columns:", df.columns)
 
+
+    # TODO: this comments should be copied to another place, e.g., a description and/or adjust data
     # ID_County and ID_State is as defined by the "Amtlicher Gemeindeschlüssel (AGS)"
     # which is also used in the RKI data as ID_County and ID_State
     # https://de.wikipedia.org/wiki/Liste_der_Landkreise_in_Deutschland
