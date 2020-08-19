@@ -5,6 +5,7 @@
 #include <epidemiology/parameter_studies/parameter_distributions.h>
 #include <distributions_helpers.h>
 #include <gtest/gtest.h>
+#include <gmock/gmock.h>
 
 TEST(TestUncertain, uncertain_value_basic)
 {
@@ -28,12 +29,26 @@ TEST(TestUncertain, uncertain_value_copy)
 
     EXPECT_NE(val.get_distribution().get(), val2.get_distribution().get()); // dists get copied
     check_distribution(*val.get_distribution().get(), *val2.get_distribution().get());
+}
 
-    for (int i = 0; i < 10; i++) {
-        val2.draw_sample();
-        EXPECT_GE(val2, lower_bound);
-        EXPECT_LE(val2, upper_bound);
-    }
+TEST(TestUncertain, random_sample)
+{
+    epi::UncertainValue val(2.0);
+
+    auto mock_dist_ref = MockParameterDistributionRef<testing::StrictMock<MockParameterDistribution>>();
+    EXPECT_CALL(mock_dist_ref.get_mock(), get_rand_sample())
+        .Times(2)
+        .WillOnce(testing::Return(0.5))
+        .WillOnce(testing::Return(1.5));
+    val.set_distribution(mock_dist_ref);
+
+    EXPECT_EQ(val, 2.0);
+    val.draw_sample();
+    EXPECT_EQ(val, 0.5);
+    val = 1.0;
+    EXPECT_EQ(val, 1.0);
+    val.draw_sample();
+    EXPECT_EQ(val, 1.5);
 }
 
 TEST(TestUncertain, uncertain_value_assign)
