@@ -9,7 +9,7 @@ namespace epi
 class AbmSimulation
 {
 public:
-    AbmSimulation(double t, const World& world);
+    AbmSimulation(double t, World&& world);
     void advance(double tmax);
     //results,...
 

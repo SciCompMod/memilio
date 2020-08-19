@@ -3,8 +3,8 @@
 namespace epi
 {
 
-AbmSimulation::AbmSimulation(double t, const World& world)
-    : m_world(world)
+AbmSimulation::AbmSimulation(double t, World&& world)
+    : m_world(std::move(world))
     , m_t(t)
     , m_dt(0.1)
 {

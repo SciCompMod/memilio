@@ -11,7 +11,7 @@ int main()
     auto& parent1 = world.add_person(home, epi::InfectionState::Exposed);
     auto& parent2 = world.add_person(home, epi::InfectionState::Susceptible);
 
-    auto sim = epi::AbmSimulation(0, world);
+    auto sim = epi::AbmSimulation(0, std::move(world));
 
     sim.advance(100);
 }

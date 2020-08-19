@@ -175,3 +175,16 @@ TEST(TestDynamicUniquePtrCast, notDerived)
     auto upd = epi::dynamic_unique_ptr_cast<Derived>(std::move(upb));
     EXPECT_EQ(upd.get(), nullptr);
 }
+
+TEST(TestContains, normalCase)
+{
+    auto v = std::vector<int>{ 4, 1, 3, 6, 9 };
+    ASSERT_TRUE(epi::contains(v.begin(), v.end(), [](auto&& e) { return e == 3; }));
+    ASSERT_FALSE(epi::contains(v.begin(), v.end(), [](auto&& e) { return e == 7; }));
+}
+
+TEST(TestContains, empty)
+{
+    auto v = std::vector<int>();
+    ASSERT_FALSE(epi::contains(v.begin(), v.end(), [](auto&& e) { return true; }));
+}

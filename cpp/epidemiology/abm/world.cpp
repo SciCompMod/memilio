@@ -1,52 +1,64 @@
 #include "epidemiology/abm/world.h"
 #include "epidemiology/abm/person.h"
 #include "epidemiology/abm/node.h"
+#include "epidemiology/abm/rng.h"
+#include "epidemiology/stl_util.h"
 
 namespace epi
 {
 
 Node& World::add_node(NodeType type)
 {
-    m_nodes.emplace_back(type);
-    return m_nodes.back();
+    m_nodes.push_back(std::make_unique<Node>(type));
+    return *m_nodes.back();
 }
 
 Person& World::add_person(Node& node, InfectionState state)
 {
-    m_persons.emplace_back(node, state);
-    auto& person = m_persons.back();
+    m_persons.push_back(std::make_unique<Person>(node, state));
+    auto& person = *m_persons.back();
     node.add_person(person);
-    return m_persons.back();
+    return person;
 }
 
 void World::evolve(double dt)
 {
     interaction(dt);
     migration(dt);
-    end_migration(dt);
+    end_step(dt);
 }
 
 void World::interaction(double dt)
 {
     for (auto&& person : m_persons) {
-        person.interact(dt);
+        person->interact(dt, m_infection_parameters);
     }
 }
 
 void World::migration(double dt)
 {
-    //TODO: variable migration probabilities
-    //TODO: migration by complex rules
-    std::uniform_int_distribution<size_t> random_node_idx(0, m_nodes.size() - 1);
-    for (auto&& person : m_persons) {
-        person.migrate_to(m_nodes[random_node_idx(m_rng)]);
+    //migrate a few times per day to a random different node
+    auto u = std::uniform_real_distribution<double>()(thread_local_rng());
+    if (u < 2 * dt) {
+        for (auto&& person : m_persons) {
+            auto idx_distribution = std::uniform_int_distribution<size_t>(0, m_nodes.size() - 2);
+            auto random_node_idx  = idx_distribution(thread_local_rng());
+            //exclude the current node from the random selection
+            if (contains(m_nodes.begin(), m_nodes.begin() + random_node_idx, [&person](auto& e){ return e.get() == &person->get_node(); }))
+            {
+                ++random_node_idx;
+            }
+            person->migrate_to(*m_nodes[random_node_idx]);
+        }
     }
+    //TODO: more sensible migration probabilities
+    //TODO: migration by complex rules
 }
 
-void World::end_migration(double dt)
+void World::end_step(double dt)
 {
     for (auto&& node : m_nodes) {
-        node.end_migration(dt);
+        node->end_step(dt);
     }
 }
 

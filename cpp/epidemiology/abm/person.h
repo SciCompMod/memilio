@@ -8,12 +8,13 @@ namespace epi
 {
 
 class Node;
+class GlobalInfectionParameters;
 
 class Person
 {
 public:
     Person(Node& node, InfectionState state);
-    void interact(double dt);
+    void interact(double dt, const GlobalInfectionParameters& global_infection_parameters);
     void migrate_to(Node& node); //could also be migrate() with the decision made internally
 
     InfectionState get_infection_state() const
@@ -26,12 +27,8 @@ public:
     }
 
 private:
-    Node& get_node()
-    {
-        return m_node;
-    }
-
     InfectionState m_state;
+    float m_time_until_carrier;
     std::reference_wrapper<Node> m_node;
     //age, times, ...
 };

@@ -1,7 +1,7 @@
 #ifndef EPI_ABM_STATE_H
 #define EPI_ABM_STATE_H
 
-#include <cstddef>
+#include <cstdint>
 
 namespace epi
 {
@@ -10,13 +10,16 @@ namespace epi
  * infection state in ABM.
  * can be used as 0-based index
  */
-enum class InfectionState : std::size_t
+enum class InfectionState : std::uint32_t
 {
-    //TODO: More states
     Susceptible = 0,
     Exposed,
-    Infected,
-    Recovered,
+    Carrier,
+    Infected_Detected,
+    Infected_Undetected,
+    Recovered_Carrier,
+    Recovered_Infected,
+    Dead,
 
     Count //last!!
 };
