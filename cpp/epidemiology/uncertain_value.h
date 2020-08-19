@@ -90,7 +90,7 @@ public:
      *
      * If it is not set, a nullptr is returned.
      */
-    observer_ptr<ParameterDistribution> const get_distribution() const;
+    observer_ptr<const ParameterDistribution> get_distribution() const;
 
     /**
      * @brief Returns the parameter distribution.

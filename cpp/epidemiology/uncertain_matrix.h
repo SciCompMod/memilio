@@ -197,7 +197,15 @@ public:
      *
      * If it is not set, a nullptr is returned.
      */
-    observer_ptr<ParameterDistribution> get_distribution_damp_nb() const;
+    observer_ptr<ParameterDistribution> get_distribution_damp_nb();
+
+    /**
+     * @brief Returns the random distribution for the number of 
+     *        contact pattern changes over time
+     *
+     * If it is not set, a nullptr is returned.
+     */
+    observer_ptr<const ParameterDistribution> get_distribution_damp_nb() const;
 
     /**
      * @brief Returns the random distribution of the actual 
@@ -205,7 +213,15 @@ public:
      *
      * If it is not set, a nullptr is returned.
      */
-    observer_ptr<ParameterDistribution> get_distribution_damp_days() const;
+    observer_ptr<ParameterDistribution> get_distribution_damp_days();
+
+    /**
+     * @brief Returns the random distribution of the actual 
+     *        points in time where the contact pattern changes
+     *
+     * If it is not set, a nullptr is returned.
+     */
+    observer_ptr<const ParameterDistribution> get_distribution_damp_days() const;
 
     /**
      * @brief Returns the random distribution for a multiplicative base factor
@@ -213,7 +229,15 @@ public:
      *
      * If it is not set, a nullptr is returned.
      */
-    observer_ptr<ParameterDistribution> get_distribution_damp_diag_base() const;
+    observer_ptr<ParameterDistribution> get_distribution_damp_diag_base();
+
+    /**
+     * @brief Returns the random distribution for a multiplicative base factor
+     *        (changing the diagonal entries of the ContactFrequencyMatrix)
+     *
+     * If it is not set, a nullptr is returned.
+     */
+    observer_ptr<const ParameterDistribution> get_distribution_damp_diag_base() const;
 
     /**
      * @brief Returns the random distribution for the multiplicative factors
@@ -223,7 +247,17 @@ public:
      *
      * If it is not set, a nullptr is returned.
      */
-    observer_ptr<ParameterDistribution> get_distribution_damp_diag_rel() const;
+    observer_ptr<ParameterDistribution> get_distribution_damp_diag_rel();
+
+    /**
+     * @brief Returns the random distribution for the multiplicative factors
+     *        changing each diagonal entry of the ContactFrequencyMatrix
+     *        relative to the base value sampled by the distribution from
+     *        get_distribution_damp_diag_base()
+     *
+     * If it is not set, a nullptr is returned.
+     */
+    observer_ptr<const ParameterDistribution> get_distribution_damp_diag_rel() const;
 
     /**
      * @brief Returns the random distribution for the multiplicative factors
@@ -234,7 +268,18 @@ public:
      *
      * If it is not set, a nullptr is returned.
      */
-    observer_ptr<ParameterDistribution> get_distribution_damp_offdiag_rel() const;
+    observer_ptr<ParameterDistribution> get_distribution_damp_offdiag_rel();
+
+    /**
+     * @brief Returns the random distribution for the multiplicative factors
+     *        changing each offdiagonal entry of the ContactFrequencyMatrix
+     *        relative to the corresponding diagonal entries by the distribution 
+     *        from get_distribution_damp_diag_rel()
+     *        
+     *
+     * If it is not set, a nullptr is returned.
+     */
+    observer_ptr<const ParameterDistribution> get_distribution_damp_offdiag_rel() const;
 
     /**
      * @brief Sets the value by sampling from the distributions

@@ -45,7 +45,7 @@ public:
         return m_raw_ptr;
     }
 
-    T& operator*()
+    T& operator*() const
     {
         return *m_raw_ptr;
     }

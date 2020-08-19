@@ -13,7 +13,7 @@ observer_ptr<ParameterDistribution> UncertainValue::get_distribution()
     return m_dist.get();
 }
 
-observer_ptr<ParameterDistribution> const UncertainValue::get_distribution() const
+observer_ptr<const ParameterDistribution> UncertainValue::get_distribution() const
 {
     return m_dist.get();
 }
