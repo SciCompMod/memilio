@@ -35,6 +35,7 @@ if (TARGET epidemiology_io)
   set(TESTSOURCES ${TESTSOURCES}
     test_save_parameters.cpp
     test_save_results.cpp
+    test_twitter.cpp
   )
 endif()
 

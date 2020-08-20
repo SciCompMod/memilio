@@ -64,6 +64,8 @@ if (EPI_BUILD_EPI_IO)
       epidemiology_io/secir_parameters_io.h
       epidemiology_io/io.cpp
       epidemiology_io/io.h
+      epidemiology_io/twitter_migration_io.cpp
+      epidemiology_io/twitter_migration_io.h
     )
 
     target_include_directories(epidemiology_io PUBLIC
