@@ -6,12 +6,39 @@ from datetime import timedelta, date
 from epidemiology.epidata import getDataIntoPandasDataFrame as gd
 from epidemiology.epidata import defaultDict as dd
 
+## @package getDIVIData
+# Data of the DIVI - Deutsche interdisziplinäre Vereinigung für Intensiv- und Notfallmedizin about covid is downloaded
+#
+# data explanation:
+# reporting_hospitals number of reporting hospitals
+# ICU is the number of covid patients in reporting hospitals
+# ICU_ventilated is the number of ventilated covid patients in reporting hospitals
+# free_ICU is the number of free ICUs in reporting hospitals
+# occupied_ICU is the number of occupied ICUs in in reporting hospitals
+#
+# ID_County and ID_State is as defined by the "Amtlicher Gemeindeschlüssel (AGS)"
+# which is also used in the RKI data as ID_County and ID_State
+# https://de.wikipedia.org/wiki/Liste_der_Landkreise_in_Deutschland
+#
+# Furtheremore, what might be interesting about the data:
+# The column "faelle_covid_im_bundesland" exits only in the data from the first day (24.4)
+# The column ICU does not exist for the 24.4.
+# and ICU_ventilated does not exist for the 24.4. and 25.4.
 
-##
 
+## Adjusts data such that the data structure looks the same for all dates
+#
+# For the first available dates of year 2020, there are some differences and thus special treatment is needed:
+# - 24.4.: Rename column 'kreis' to 'gemeindeschluessel'
+# - 25.4.: add id bundesland, which es extracted from the given column "gemeindeschluessel"
+# - 24.4.-27.4.: Add date as a column
+# - 29.9. empty column has to be removed
+#
+# @param df A pandas data frame
+# @param date_of_data The date for the data stored in df
+# @return the changed pandas dataframe
+#
 def adjust_data(df, date_of_data):
-
-    """! Change data such that all data looks the same."""
 
     # rename column 'kreis' of first date to match data of following days
     if date_of_data == date(2020, 4, 24):
@@ -32,10 +59,19 @@ def adjust_data(df, date_of_data):
 
     return df
 
-
+## Calls, if possible a url and breaks if it is not possible to call the url, e.g., due to a not working internet connection
+# or returns an empty datafram if url is not the correct one.
+#
+# @param url_prefix Date specific part of the url
+# @param call_number Irregular number which is needed for the url
+# @param new_found [Optional] If number is not part of the date to call_number dictionary
+# and the difference between the actual call_number and the last call number is larger than 2,
+# than a message is printed which helps to add this date to the dict.
+#
 def call_call_url(url_prefix, call_number, new_found=""):
 
-    call_url = url_prefix + "/viewdocument/" + str(call_number)
+    call_url = "https://www.divi.de/divi-intensivregister-tagesreport-archiv-csv/divi-intensivregister-" \
+               + url_prefix + "/viewdocument/" + str(call_number)
 
     # empty data frame
     df = pandas.DataFrame()
@@ -111,8 +147,7 @@ def download_data_for_one_day(last_number, download_date):
     if date(2020, 6, 12) <= download_date <= date(2020, 6, 25):
         ext = "-2"
 
-    url_prefix = "https://www.divi.de/divi-intensivregister-tagesreport-archiv-csv/divi-intensivregister-" \
-                 + call_date + call_time + ext
+    url_prefix = call_date + call_time + ext
 
     # construction of link is different for different time periods
     # for the latest dates no call number is needed
@@ -167,8 +202,9 @@ def get_divi_data(read_data=dd.defaultDict['read_data'],
 
     # First csv data on 24-04-2020
     if start_date < date(2020, 4, 24):
+        print("Warning: First data available on 2020-04-24. "
+              "You asked for " + start_date.strftime("%Y-%m-%d") + ".")
         start_date = date(2020, 4, 24)
-        print("Warning: First data available on 24-04-2020")
 
     directory = os.path.join(out_folder, 'Germany/')
     gd.check_dir(directory)
@@ -176,14 +212,13 @@ def get_divi_data(read_data=dd.defaultDict['read_data'],
     filename = "FullData_DIVI"
 
     if update_data or read_data:
-        print("-u or -r")
         # read json file for already downloaded data
         file_in = os.path.join(directory, filename + ".json")
 
         try:
             df = pandas.read_json(file_in)
         except ValueError:
-            exit_string = "Error: The file: " + file_in + "does not exist." \
+            exit_string = "Error: The file: " + file_in + " does not exist. "\
                           "Call program without -r or -u flag to get it."
             sys.exit(exit_string)
 
@@ -192,33 +227,33 @@ def get_divi_data(read_data=dd.defaultDict['read_data'],
 
         if update_data:
 
-            newest_date = pandas.to_datetime(df['daten_stand']).max().date()
+            if not df.empty:
+                newest_date = pandas.to_datetime(df['daten_stand']).max().date()
 
-            if (today - delta) == newest_date:
-                # just todays data is missing
-                # download data from today
-                # download while loop will be skipped
-                df2 = gd.loadCsv('DIVI-Intensivregister-Tagesreport', apiUrl = 'https://www.divi.de/')
-                # test if data is already online
-                download_date = pandas.to_datetime(df2['daten_stand']).max().date()
+                if (today - delta) == newest_date:
+                    # just todays data is missing
+                    # download data from today
+                    # download while loop will be skipped
+                    df2 = gd.loadCsv('DIVI-Intensivregister-Tagesreport', apiUrl = 'https://www.divi.de/')
+                    # test if online data is already the one of today
+                    download_date = pandas.to_datetime(df2['daten_stand']).max().date()
 
-                if download_date == today:
-                    if not df2.empty:
-                        df = df.append(df2, ignore_index=True)
-                        print("Success: Data of date " + today.strftime("%Y-%m-%d") + " has been included to dataframe")
+                    if download_date == today:
+                        if not df2.empty:
+                            df = df.append(df2, ignore_index=True)
+                            print("Success: Data of date " + today.strftime("%Y-%m-%d") + " has been included to dataframe")
 
-            elif (today - newest_date).days > delta:
-                # more than today is missing
-                # start with the oldest missing data
-                start_date = newest_date + delta
-                print("second new start_date:", start_date)
+                elif (today - newest_date).days > delta.days:
+                    # more than today is missing
+                    # start with the oldest missing data
+                    start_date = newest_date + delta
     else:
         # Get all data:
         # start with empty dataframe
         df = pandas.DataFrame()
 
     last_number = 0
-    print("start_date", start_date)
+
     while start_date <= end_date:
 
         [last_number, df2] = download_data_for_one_day(last_number, start_date)
@@ -256,23 +291,7 @@ def get_divi_data(read_data=dd.defaultDict['read_data'],
     for key, value in dd.County.items():
         df.loc[df["County"] == key, ["County"]] = value
 
-    print("Available columns:", df.columns)
-
-
-    # TODO: this comments should be copied to another place, e.g., a description and/or adjust data
-    # ID_County and ID_State is as defined by the "Amtlicher Gemeindeschlüssel (AGS)"
-    # which is also used in the RKI data as ID_County and ID_State
-    # https://de.wikipedia.org/wiki/Liste_der_Landkreise_in_Deutschland
-
-    # The column faelle_covid_im_bundesland exits only in the data from the first day
-    # The columns ICU does not exist for the 24.4.
-    # and ICU_ventilated does not exist for the 24.4. and 25.4.
-
-    # reporting_hospitals number of reporting hospitals
-    # ICU is the number of covid patients in reporting hospitals
-    # ICU_ventilated is the number of ventilated covid patients in reporting hospitals
-    # free_ICU is the number of free ICUs in reporting hospitals
-    # occupied_ICU is the number of occupied ICUs in in reporting hospitals
+    #print("Available columns:", df.columns)
 
     # write data for counties to file
 
