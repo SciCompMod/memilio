@@ -1,7 +1,6 @@
 import {connect} from 'react-redux';
 
 import React from 'react';
-import _ from 'lodash';
 
 import {setSelected} from '../../redux/app';
 import InteractiveHeatMap from '../../common/interactive_heat_map';
