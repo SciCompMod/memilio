@@ -13,8 +13,6 @@ Eigen::Ref<Eigen::VectorXd> OdeIntegrator::advance(double tmax)
     const size_t nb_steps = (int)(ceil((tmax - t0) / m_dt)); // estimated number of time steps (if equidistant)
 
     m_result.reserve(m_result.get_num_time_points() + nb_steps);
-    // m_t.reserve(m_t.size() + nb_steps);
-    // m_y.reserve(m_y.size() + nb_steps);
 
     bool step_okay = true;
 
@@ -27,10 +25,8 @@ Eigen::Ref<Eigen::VectorXd> OdeIntegrator::advance(double tmax)
 
         auto dt_eff = std::min(m_dt, tmax - t);
         m_result.add_time_point();
-        // m_y.emplace_back(ode_dim);
         step_okay &= m_core->step(m_f, m_result[i], t, dt_eff, m_result[i + 1]);
         m_result.get_last_time() = t;
-        // m_t.push_back(t);
 
         ++i;
 

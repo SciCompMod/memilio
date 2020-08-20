@@ -51,8 +51,6 @@ public:
     template <class F, class Vector>
     OdeIntegrator(F&& f, double t0, Vector&& y0, double dt_init, std::shared_ptr<IntegratorCore> core)
         : m_f(std::forward<F>(f))
-        // , m_t(1, t0)
-        // , m_y(1, std::forward<Vector>(y0))
         , m_result(t0, y0)
         , m_dt(dt_init)
         , m_core(core)
@@ -78,8 +76,6 @@ public:
 private:
     std::shared_ptr<IntegratorCore> m_core;
     double m_dt;
-    // std::vector<double> m_t;
-    // std::vector<Eigen::VectorXd> m_y;
     TimeSeries<double> m_result;
     DerivFunction m_f;
 };
