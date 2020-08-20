@@ -25,6 +25,9 @@ set(TESTSOURCES
   test_parameter_studies.cpp
   test_graph.cpp
   test_stl_util.cpp
+  test_uncertain.cpp
+  distributions_helpers.h
+  distributions_helpers.cpp
   gtest_helpers.h
 )
 

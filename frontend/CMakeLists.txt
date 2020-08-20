@@ -4,7 +4,7 @@ project(epi-frontend VERSION 0.1.0)
 
 
 if (NOT EMSCRIPTEN)
-  message(FATAL_ERROR "This porject must be run with the Emscripten sdk via \"emcmake cmake <cmake_options>\"")
+  message(FATAL_ERROR "This project must be run with the Emscripten sdk via \"emcmake cmake <cmake_options>\"")
 endif(NOT EMSCRIPTEN)
 
 # add in C++ library

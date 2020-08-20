@@ -1,5 +1,5 @@
 import unittest
-from epidemiology.secir import ContactFrequencyMatrix, Damping, SecirParams, simulate, StageTimes, Probabilities, Populations, SecirCompartments
+from epidemiology.secir import UncertainContactMatrix, ContactFrequencyMatrix, Damping, SecirParams, simulate, StageTimes, Probabilities, Populations, SecirCompartments
 
 class Test_secir_integration(unittest.TestCase):
 
@@ -23,7 +23,7 @@ class Test_secir_integration(unittest.TestCase):
         probs.set_dead_per_icu(0.3)  # 0.15-0.77
 
         people = Populations([1, SecirCompartments.SecirCount])
-        people.set([0, SecirCompartments.S], 7600);
+        people.set([0, SecirCompartments.S], 7600)
         people.set([0, SecirCompartments.E], 100)
         people.set([0, SecirCompartments.C], 50)
         people.set([0, SecirCompartments.I], 50)
@@ -38,14 +38,12 @@ class Test_secir_integration(unittest.TestCase):
         params.probabilities[0] = probs
         params.populations = people
 
-        cont_freq_matrix = ContactFrequencyMatrix()
-        cont_freq_matrix.set_cont_freq(0.5, 0, 0)  # 0.2-0.75
+        params.get_contact_patterns().get_cont_freq_mat().set_cont_freq(0.5, 0, 0)
 
         self.params = params
-        self.cont_freq_matrix = cont_freq_matrix    
 
     def test_simulate_simple(self):
-      result = simulate(t0=0., tmax=100., dt=0.1, cont_freq_matrix=self.cont_freq_matrix, params=self.params)
+      result = simulate(t0=0., tmax=100., dt=0.1, params=self.params)
       self.assertAlmostEqual(result[0].t[0], 0.)
       self.assertAlmostEqual(result[0].t[1], 0.1)
       self.assertAlmostEqual(result[0].t[-1], 100.)

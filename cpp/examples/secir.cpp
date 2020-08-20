@@ -12,34 +12,34 @@ int main()
     epi::log_info("Simulating SECIR; t={} ... {} with dt = {}.", t0, tmax, dt);
 
     // working_params
-    // double tinc    = 5.2, // R_2^(-1)+R_3^(-1)
-    //     tinfmild   = 6, // 4-14  (=R4^(-1))
-    //     tserint    = 4.2, // 4-4.4 // R_2^(-1)+0.5*R_3^(-1)
-    //     thosp2home = 12, // 7-16 (=R5^(-1))
-    //     thome2hosp = 5, // 2.5-7 (=R6^(-1))
-    //     thosp2icu  = 2, // 1-3.5 (=R7^(-1))
-    //     ticu2home  = 8, // 5-16 (=R8^(-1))
-    //     tinfasy    = 6.2, // (=R9^(-1)=R_3^(-1)+0.5*R_4^(-1))
-    //     ticu2death = 5; // 3.5-7 (=R5^(-1))
+    double tinc    = 5.2, // R_2^(-1)+R_3^(-1)
+        tinfmild   = 6, // 4-14  (=R4^(-1))
+        tserint    = 4.2, // 4-4.4 // R_2^(-1)+0.5*R_3^(-1)
+        thosp2home = 12, // 7-16 (=R5^(-1))
+        thome2hosp = 5, // 2.5-7 (=R6^(-1))
+        thosp2icu  = 2, // 1-3.5 (=R7^(-1))
+        ticu2home  = 8, // 5-16 (=R8^(-1))
+        tinfasy    = 6.2, // (=R9^(-1)=R_3^(-1)+0.5*R_4^(-1))
+        ticu2death = 5; // 3.5-7 (=R5^(-1))
 
-    // double tinfasy2 = 1.0 / (0.5 / (tinfmild - tserint) + 0.5 / tinfmild);
-    // if (fabs(tinfasy2 - tinfasy) > 0) {
-    //     epi::log_warning("----> TODO / To consider: In the HZI paper, tinfasy (the asymptomatic infectious time) or "
-    //                      "R9^(-1)=R_3^(-1)+0.5*R_4^(-1) is directly given by R_3 and R_4 and maybe should not be an "
-    //                      "'additional parameter'");
-    // }
+    double tinfasy2 = 1.0 / (0.5 / (tinfmild - tserint) + 0.5 / tinfmild);
+    if (fabs(tinfasy2 - tinfasy) > 0) {
+        epi::log_warning("----> TODO / To consider: In the HZI paper, tinfasy (the asymptomatic infectious time) or "
+                         "R9^(-1)=R_3^(-1)+0.5*R_4^(-1) is directly given by R_3 and R_4 and maybe should not be an "
+                         "'additional parameter'");
+    }
 
-    // double cont_freq = 0.5, // 0.2-0.75
-    //     alpha        = 0.09, // 0.01-0.16
-    //     beta         = 0.25, // 0.05-0.5
-    //     delta        = 0.3, // 0.15-0.77
-    //     rho          = 0.2, // 0.1-0.35
-    //     theta        = 0.25; // 0.15-0.4
+    double cont_freq = 0.5, // 0.2-0.75
+        alpha        = 0.09, // 0.01-0.16
+        beta         = 0.25, // 0.05-0.5
+        delta        = 0.3, // 0.15-0.77
+        rho          = 0.2, // 0.1-0.35
+        theta        = 0.25; // 0.15-0.4
 
-    // double nb_total_t0 = 10000, nb_exp_t0 = 100, nb_inf_t0 = 50, nb_car_t0 = 50, nb_hosp_t0 = 20, nb_icu_t0 = 10,
-    //        nb_rec_t0 = 10, nb_dead_t0 = 0;
+    double nb_total_t0 = 10000, nb_exp_t0 = 100, nb_inf_t0 = 50, nb_car_t0 = 50, nb_hosp_t0 = 20, nb_icu_t0 = 10,
+           nb_rec_t0 = 10, nb_dead_t0 = 0;
 
-    // // small problem !!!
+    // // small problem !!! (here one assumption/relation between tinc and tserint becomes problematic)
     // double tinc    = 5.09342, // R_2^(-1)+R_3^(-1)
     //     tinfmild   = 5.86642, // 4-14  (=R4^(-1))
     //     tserint    = 5.08993, // 4-4.4 // R_2^(-1)+0.5*R_3^(-1)
@@ -61,7 +61,7 @@ int main()
     // double nb_total_t0 = 10000, nb_exp_t0 = 91, nb_inf_t0 = 39, nb_car_t0 = 36, nb_hosp_t0 = 20, nb_icu_t0 = 10,
     //        nb_rec_t0 = 8, nb_dead_t0 = 0;
 
-    // // large problem !!!
+    // // large problem !!! (here one assumption/relation between tinc and tserint becomes problematic))
     // double tinc    = 4.4912, // R_2^(-1)+R_3^(-1)
     //     tinfmild   = 7.47478, // 4-14  (=R4^(-1))
     //     tserint    = 4.82975, // 4-4.4 // R_2^(-1)+0.5*R_3^(-1)
@@ -83,31 +83,29 @@ int main()
     // double nb_total_t0 = 10000, nb_exp_t0 = 119, nb_inf_t0 = 55, nb_car_t0 = 53, nb_hosp_t0 = 20, nb_icu_t0 = 10,
     //        nb_rec_t0 = 10, nb_dead_t0 = 0;
 
-    // large problem 2 !!!
-    double tinc    = 5.62793, // R_2^(-1)+R_3^(-1)
-        tinfmild   = 3.34495, // 4-14  (=R4^(-1))
-        tserint    = 2.86676, // 4-4.4 // R_2^(-1)+0.5*R_3^(-1)
-        thosp2home = 11.3265, // 7-16 (=R5^(-1))
-        thome2hosp = 4.85163, // 2.5-7 (=R6^(-1))
-        tinfasy    = 5.56477, // (=R9^(-1)=R_3^(-1)+0.5*R_4^(-1))
-        thosp2icu  = 1.54707, // 1-3.5 (=R7^(-1))
-        ticu2home  = 6.73156, // 5-16 (=R8^(-1))
-        ticu2death = 3.86713; // 3.5-7 (=R5^(-1))
+    // // large problem 2 !!!
+    // double tinc    = 5.62793, // R_2^(-1)+R_3^(-1)
+    //     tinfmild   = 3.34495, // 4-14  (=R4^(-1))
+    //     tserint    = 2.86676, // 4-4.4 // R_2^(-1)+0.5*R_3^(-1)
+    //     thosp2home = 11.3265, // 7-16 (=R5^(-1))
+    //     thome2hosp = 4.85163, // 2.5-7 (=R6^(-1))
+    //     tinfasy    = 5.56477, // (=R9^(-1)=R_3^(-1)+0.5*R_4^(-1))
+    //     thosp2icu  = 1.54707, // 1-3.5 (=R7^(-1))
+    //     ticu2home  = 6.73156, // 5-16 (=R8^(-1))
+    //     ticu2death = 3.86713; // 3.5-7 (=R5^(-1))
 
-    double cont_freq = 0.5, // 0.2-0.75
-        infprob      = 1.05951,
-           alpha     = 0.0851654, // 0.01-0.16
-        beta         = 0.261075, // 0.05-0.5
-        delta        = 0.315015, // 0.15-0.77
-        rho          = 0.141635, // 0.1-0.35
-        theta        = 0.168633; // 0.15-0.4
+    // double cont_freq = 0.5, // 0.2-0.75
+    //     infprob      = 1.05951,
+    //        alpha     = 0.0851654, // 0.01-0.16
+    //     beta         = 0.261075, // 0.05-0.5
+    //     delta        = 0.315015, // 0.15-0.77
+    //     rho          = 0.141635, // 0.1-0.35
+    //     theta        = 0.168633; // 0.15-0.4
 
-    double nb_total_t0 = 10000, nb_exp_t0 = 105, nb_inf_t0 = 35, nb_car_t0 = 53, nb_hosp_t0 = 20, nb_icu_t0 = 10,
-           nb_rec_t0 = 8, nb_dead_t0 = 0;
+    // double nb_total_t0 = 10000, nb_exp_t0 = 105, nb_inf_t0 = 35, nb_car_t0 = 53, nb_hosp_t0 = 20, nb_icu_t0 = 10,
+    //        nb_rec_t0 = 8, nb_dead_t0 = 0;
 
     epi::SecirParams params;
-
-    epi::ContactFrequencyMatrix contact_freq_matrix{8};
 
     params.times[0].set_incubation(tinc);
     params.times[0].set_infectious_mild(tinfmild);
@@ -119,9 +117,10 @@ int main()
     params.times[0].set_infectious_asymp(tinfasy);
     params.times[0].set_icu_to_death(ticu2death);
 
-    contact_freq_matrix.set_cont_freq(cont_freq, 0, 0);
+    epi::ContactFrequencyMatrix& cont_freq_matrix = params.get_contact_patterns();
+    cont_freq_matrix.set_cont_freq(cont_freq, 0, 0);
     epi::Damping dummy(30., 0.3);
-    contact_freq_matrix.add_damping(dummy, 0, 0);
+    cont_freq_matrix.add_damping(dummy, 0, 0);
 
     params.populations.set_total(nb_total_t0);
     params.populations.set({0, epi::SecirCompartments::E}, nb_exp_t0);
@@ -142,11 +141,9 @@ int main()
 
     // params[0].dampings.add(epi::Damping(30., 0.3));
 
-    print_secir_params(contact_freq_matrix, params);
-
     std::vector<Eigen::VectorXd> secir(0);
 
-    simulate(t0, tmax, dt, contact_freq_matrix, params, secir);
+    simulate(t0, tmax, dt, params, secir);
 
     // char vars[] = {'S', 'E', 'C', 'I', 'H', 'U', 'R', 'D'};
     // printf("\n # t");
