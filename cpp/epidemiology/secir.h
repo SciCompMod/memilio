@@ -500,8 +500,6 @@ private:
     SecirParams m_params;
 };
 
-TimeSeries<double> simulate(double t0, double tmax, double dt, SecirParams const& params);
-
 /**
  * @brief DEPRECATED run secir simulation over fixed time
  * @param[in] t0 start time
@@ -513,6 +511,16 @@ TimeSeries<double> simulate(double t0, double tmax, double dt, SecirParams const
  */
 std::vector<double> simulate(double t0, double tmax, double dt, SecirParams const& params,
                              std::vector<Eigen::VectorXd>& secir);
+
+/**
+ * @brief run secir simulation over fixed time
+ * @param[in] t0 start time
+ * @param[in] tmax end time
+ * @param[in] dt initial step size of integration
+ * @param[in] params SECIR params: contact frequencies, population sizes and epidemiological parameters
+ * @returns secir value of compartments at each integration time point
+ */
+TimeSeries<double> simulate(double t0, double tmax, double dt, SecirParams const& params);
 
 } // namespace epi
 
