@@ -4,17 +4,65 @@ import {withTranslation} from 'react-i18next';
 import Simulation from '../Simulation';
 import SEIRChart from '../Graphs/SEIRChart';
 
-import {getSelectedData} from '../../redux/app';
 import {getActiveMeasures} from '../../redux/measures';
+import {RKIDatastore as rki} from '../../common/rki-datastore';
 
 import * as numeral from 'numeral';
 
 class Results extends Component {
-  _render() {
-    if (this.props.rki === null) {
-      return <div>Bitte wählen sie ein Bundesland aus!</div>;
+  state = {
+    rki: null,
+    loading: true,
+  };
+
+  componentDidMount() {
+    console.log('result did mount', this.props.selected);
+    if (this.props.selected && this.props.selected.dataset === 'germany') {
+      rki.getState(this.props.selected.id).then((data) => {
+        console.log('loaded', data);
+        this.setState({
+          loading: false,
+          rki: data,
+        });
+      });
     }
-    return <SEIRChart seir={this.props.seir} rki={this.props.rki.all} measures={this.props.measures} />;
+  }
+
+  componentDidUpdate(prevProps, prevState, snapshot) {
+    if (this.props.selected?.id !== prevProps.selected?.id) {
+      console.log('result did update');
+      console.log(this.props.selected, prevProps.selected);
+      this.setState({
+        loading: true,
+        rki: null,
+      });
+      if (['states', 'germany'].includes(this.props.selected.dataset)) {
+        rki.getState(this.props.selected.id).then((data) => {
+          console.log('loaded', data);
+          this.setState({
+            loading: false,
+            rki: data,
+          });
+        });
+      } else if (this.props.selected.dataset === 'counties') {
+        rki.getCounty(this.props.selected.id).then((data) => {
+          this.setState({
+            loading: false,
+            rki: data,
+          });
+        });
+      }
+    }
+  }
+
+  _render() {
+    if (!this.props.selected) {
+      return <div>Bitte wählen sie ein Bundesland aus!</div>;
+    } else if (this.state.loading) {
+      return <div>Loading...</div>;
+    } else {
+      return <SEIRChart seir={this.props.seir} rki={this.state.rki} measures={this.props.measures} />;
+    }
   }
 
   render() {
@@ -45,7 +93,7 @@ const mapState = (state) => {
   return {
     selected: state.app.selected,
     seir: state.seir.data,
-    rki: getSelectedData(state),
+    rki: null, //getSelectedData(state),
     measures: getActiveMeasures(state.measures),
   };
 };

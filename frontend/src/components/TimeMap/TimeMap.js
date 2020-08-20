@@ -1,12 +1,14 @@
 import {connect} from 'react-redux';
 
 import React from 'react';
+import _ from 'lodash';
 
-import './TimeMap.scss';
 import {setSelected} from '../../redux/app';
 import InteractiveHeatMap from '../../common/interactive_heat_map';
 import {roundToUTCMidnight} from '../../common/utils';
+import {RKIDatastore as rki, Tables} from '../../common/rki-datastore';
 
+import './TimeMap.scss';
 /**
  * This Component has two major functions:
  * 1. Select different Regions for the chart.
@@ -43,7 +45,7 @@ class TimeMap extends React.Component {
         });
       } else {
         if (this.props.selection !== null) {
-          this.props.setSelected(null);
+          //this.props.setSelected(null);
         }
       }
     };
@@ -61,7 +63,7 @@ class TimeMap extends React.Component {
   }
 
   /** @private */
-  _calcStateData() {
+  async _calcStateData() {
     const times = new Map();
 
     /** @type Map<number, number> | null */
@@ -70,18 +72,33 @@ class TimeMap extends React.Component {
       let date = roundToUTCMidnight(d);
       let states = new Map();
 
-      for (let i = 1; i <= 16; i++) {
-        const s = this.props.states.all[i];
-        const value = s.find((e) => e.date >= date);
-
+      const s = await rki.get(Tables.STATES, {start: date, end: date});
+      for (let stateID = 1; stateID <= 16; stateID++) {
+        const value = s.find((e) => e.ID_State === stateID);
         if (value) {
+          states.set(stateID, value.Confirmed - value.Recovered);
+        } else if (lastStates !== null) {
+          states.set(stateID, lastStates.get(stateID));
+        } // else {
+        //  states.set(stateID, 0);
+        //}
+      }
+
+      //for (let i = 1; i <= 16; i++) {
+      // const s = this.props.states.all[i];
+      //const value = s.find((e) => e.date >= date);
+      //const s = await rki.getState(i, {start: date, end: date});
+      //console.log(s);
+      //continue;
+      // const value =
+      /*if (value) {
           states.set(i, value.Confirmed);
         } else if (lastStates !== null) {
           states.set(i, lastStates.get(i));
         } else {
           states.set(i, 0);
-        }
-      }
+        }*/
+      //}
 
       times.set(date, states);
       lastStates = states;
@@ -176,14 +193,14 @@ class TimeMap extends React.Component {
       this.props.time.startDate !== prevProps.time.startDate ||
       this.props.time.endDate !== prevProps.time.endDate
     ) {
-      this._calcCountyData();
+      //this._calcCountyData();
     }
 
     if (
       this.props.seirRegions !== null &&
       (this.props.seirRegions !== prevProps.seirRegions || this.state.seirTimes.size === 0)
     ) {
-      this._calcSeirData();
+      //this._calcSeirData();
     }
 
     const currDate = this.props.time.currentDate;
@@ -221,10 +238,7 @@ function mapState(state) {
   return {
     selection: state.app.selected,
     time: state.time,
-    states: state.app.states,
-    counties: state.app.counties,
     seirRegions: state.seir.regionData,
-    populations: state.app.populations.states,
   };
 }
 
