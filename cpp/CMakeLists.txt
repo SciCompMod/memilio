@@ -37,6 +37,13 @@ add_library(epidemiology
     epidemiology/populations.cpp
     epidemiology/visitor.h
     epidemiology/parameter_studies/parameter_space.h
+    epidemiology/parameter_studies/parameter_space.cpp
+    epidemiology/uncertain_value.cpp
+    epidemiology/uncertain_value.h
+    epidemiology/uncertain_matrix.cpp
+    epidemiology/uncertain_matrix.h    
+    epidemiology/memory.h
+    epidemiology/parameter_studies/parameter_distributions.h
     epidemiology/time_series.h
     epidemiology/time_series.cpp
 )

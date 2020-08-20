@@ -17,7 +17,6 @@ TEST(TestSecir, compareWithPreviousRun)
            nb_rec_t0 = 10, nb_dead_t0 = 0;
 
     epi::SecirParams params;
-    epi::ContactFrequencyMatrix contact_freq_matrix{};
 
     // alpha = alpha_in; // percentage of asymptomatic cases
     // beta  = beta_in; // risk of infection from the infected symptomatic patients
@@ -35,9 +34,10 @@ TEST(TestSecir, compareWithPreviousRun)
     params.times[0].set_infectious_asymp(tinfasy);
     params.times[0].set_icu_to_death(ticu2death);
 
-    contact_freq_matrix.set_cont_freq(cont_freq, 0, 0);
+    epi::ContactFrequencyMatrix& cont_freq_matrix = params.get_contact_patterns();
+    cont_freq_matrix.set_cont_freq(cont_freq, 0, 0);
     epi::Damping dummy(30., 0.3);
-    contact_freq_matrix.add_damping(dummy, 0, 0);
+    cont_freq_matrix.add_damping(dummy, 0, 0);
 
     params.populations.set({0, epi::SecirCompartments::E}, nb_exp_t0);
     params.populations.set({0, epi::SecirCompartments::C}, nb_car_t0);
@@ -55,7 +55,7 @@ TEST(TestSecir, compareWithPreviousRun)
     params.probabilities[0].set_dead_per_icu(delta);
 
     std::vector<Eigen::VectorXd> secihurd(0);
-    auto t = simulate(t0, tmax, dt, contact_freq_matrix, params, secihurd);
+    auto t = simulate(t0, tmax, dt, params, secihurd);
 
     auto compare = load_test_data_csv<double>("secihurd-compare.csv");
 
@@ -112,6 +112,11 @@ TEST(TestSecir, testParamConstructors)
     params.probabilities[0].set_icu_per_hospitalized(theta);
     params.probabilities[0].set_dead_per_icu(delta);
 
+    epi::ContactFrequencyMatrix& cont_freq_matrix = params.get_contact_patterns();
+    cont_freq_matrix.set_cont_freq(cont_freq, 0, 0);
+    epi::Damping dummy(30., 0.3);
+    cont_freq_matrix.add_damping(dummy, 0, 0);
+
     epi::SecirParams params2{params}; // copy constructor
 
     EXPECT_EQ(params.populations.get_total(), params2.populations.get_total());
@@ -132,15 +137,17 @@ TEST(TestSecir, testParamConstructors)
     EXPECT_EQ(params.populations.get({0, epi::SecirCompartments::D}),
               params2.populations.get({0, epi::SecirCompartments::D}));
 
-    EXPECT_EQ(params.times[0].get_incubation_inv(), params2.times[0].get_incubation_inv());
-    EXPECT_EQ(params.times[0].get_serialinterval_inv(), params2.times[0].get_serialinterval_inv());
-    EXPECT_EQ(params.times[0].get_infectious_mild_inv(), params2.times[0].get_infectious_mild_inv());
-    EXPECT_EQ(params.times[0].get_infectious_asymp_inv(), params2.times[0].get_infectious_asymp_inv());
-    EXPECT_EQ(params.times[0].get_home_to_hospitalized_inv(), params2.times[0].get_home_to_hospitalized_inv());
-    EXPECT_EQ(params.times[0].get_hospitalized_to_home_inv(), params2.times[0].get_hospitalized_to_home_inv());
-    EXPECT_EQ(params.times[0].get_hospitalized_to_icu_inv(), params2.times[0].get_hospitalized_to_icu_inv());
-    EXPECT_EQ(params.times[0].get_icu_to_dead_inv(), params2.times[0].get_icu_to_dead_inv());
-    EXPECT_EQ(params.times[0].get_icu_to_home_inv(), params2.times[0].get_icu_to_home_inv());
+    EXPECT_EQ(params.times[0].get_incubation(), params2.times[0].get_incubation());
+    EXPECT_EQ(params.times[0].get_serialinterval(), params2.times[0].get_serialinterval());
+    EXPECT_EQ(params.times[0].get_infectious_mild(), params2.times[0].get_infectious_mild());
+    EXPECT_EQ(params.times[0].get_infectious_asymp(), params2.times[0].get_infectious_asymp());
+    EXPECT_EQ(params.times[0].get_home_to_hospitalized(), params2.times[0].get_home_to_hospitalized());
+    EXPECT_EQ(params.times[0].get_hospitalized_to_home(), params2.times[0].get_hospitalized_to_home());
+    EXPECT_EQ(params.times[0].get_hospitalized_to_icu(), params2.times[0].get_hospitalized_to_icu());
+    EXPECT_EQ(params.times[0].get_icu_to_dead(), params2.times[0].get_icu_to_dead());
+    EXPECT_EQ(params.times[0].get_icu_to_home(), params2.times[0].get_icu_to_home());
+    EXPECT_EQ(params.get_contact_patterns().get_cont_freq_mat().get_dampings(0, 0).get_factor(35),
+              params2.get_contact_patterns().get_cont_freq_mat().get_dampings(0, 0).get_factor(35));
 
     EXPECT_EQ(params.probabilities[0].get_infection_from_contact(),
               params2.probabilities[0].get_infection_from_contact());
@@ -151,6 +158,8 @@ TEST(TestSecir, testParamConstructors)
               params2.probabilities[0].get_hospitalized_per_infectious());
     EXPECT_EQ(params.probabilities[0].get_icu_per_hospitalized(), params2.probabilities[0].get_icu_per_hospitalized());
     EXPECT_EQ(params.probabilities[0].get_dead_per_icu(), params2.probabilities[0].get_dead_per_icu());
+    EXPECT_EQ(params.get_contact_patterns().get_cont_freq_mat().get_dampings(0, 0).get_factor(35),
+              params2.get_contact_patterns().get_cont_freq_mat().get_dampings(0, 0).get_factor(35));
 
     epi::SecirParams params3 = std::move(params2); // move constructor
 
@@ -172,15 +181,15 @@ TEST(TestSecir, testParamConstructors)
     EXPECT_EQ(params3.populations.get({0, epi::SecirCompartments::D}),
               params.populations.get({0, epi::SecirCompartments::D}));
 
-    EXPECT_EQ(params3.times[0].get_incubation_inv(), params.times[0].get_incubation_inv());
-    EXPECT_EQ(params3.times[0].get_serialinterval_inv(), params.times[0].get_serialinterval_inv());
-    EXPECT_EQ(params3.times[0].get_infectious_mild_inv(), params.times[0].get_infectious_mild_inv());
-    EXPECT_EQ(params3.times[0].get_infectious_asymp_inv(), params.times[0].get_infectious_asymp_inv());
-    EXPECT_EQ(params3.times[0].get_home_to_hospitalized_inv(), params.times[0].get_home_to_hospitalized_inv());
-    EXPECT_EQ(params3.times[0].get_hospitalized_to_home_inv(), params.times[0].get_hospitalized_to_home_inv());
-    EXPECT_EQ(params3.times[0].get_hospitalized_to_icu_inv(), params.times[0].get_hospitalized_to_icu_inv());
-    EXPECT_EQ(params3.times[0].get_icu_to_dead_inv(), params.times[0].get_icu_to_dead_inv());
-    EXPECT_EQ(params3.times[0].get_icu_to_home_inv(), params.times[0].get_icu_to_home_inv());
+    EXPECT_EQ(params3.times[0].get_incubation(), params.times[0].get_incubation());
+    EXPECT_EQ(params3.times[0].get_serialinterval(), params.times[0].get_serialinterval());
+    EXPECT_EQ(params3.times[0].get_infectious_mild(), params.times[0].get_infectious_mild());
+    EXPECT_EQ(params3.times[0].get_infectious_asymp(), params.times[0].get_infectious_asymp());
+    EXPECT_EQ(params3.times[0].get_home_to_hospitalized(), params.times[0].get_home_to_hospitalized());
+    EXPECT_EQ(params3.times[0].get_hospitalized_to_home(), params.times[0].get_hospitalized_to_home());
+    EXPECT_EQ(params3.times[0].get_hospitalized_to_icu(), params.times[0].get_hospitalized_to_icu());
+    EXPECT_EQ(params3.times[0].get_icu_to_dead(), params.times[0].get_icu_to_dead());
+    EXPECT_EQ(params3.times[0].get_icu_to_home(), params.times[0].get_icu_to_home());
 
     EXPECT_EQ(params3.probabilities[0].get_infection_from_contact(),
               params.probabilities[0].get_infection_from_contact());
@@ -191,6 +200,9 @@ TEST(TestSecir, testParamConstructors)
               params.probabilities[0].get_hospitalized_per_infectious());
     EXPECT_EQ(params3.probabilities[0].get_icu_per_hospitalized(), params.probabilities[0].get_icu_per_hospitalized());
     EXPECT_EQ(params3.probabilities[0].get_dead_per_icu(), params.probabilities[0].get_dead_per_icu());
+
+    EXPECT_EQ(params.get_contact_patterns().get_cont_freq_mat().get_dampings(0, 0).get_factor(35),
+              params3.get_contact_patterns().get_cont_freq_mat().get_dampings(0, 0).get_factor(35));
 
     epi::SecirParams params4 = params3; // copy assignment constructor
 
@@ -212,15 +224,15 @@ TEST(TestSecir, testParamConstructors)
     EXPECT_EQ(params3.populations.get({0, epi::SecirCompartments::D}),
               params4.populations.get({0, epi::SecirCompartments::D}));
 
-    EXPECT_EQ(params3.times[0].get_incubation_inv(), params4.times[0].get_incubation_inv());
-    EXPECT_EQ(params3.times[0].get_serialinterval_inv(), params4.times[0].get_serialinterval_inv());
-    EXPECT_EQ(params3.times[0].get_infectious_mild_inv(), params4.times[0].get_infectious_mild_inv());
-    EXPECT_EQ(params3.times[0].get_infectious_asymp_inv(), params4.times[0].get_infectious_asymp_inv());
-    EXPECT_EQ(params3.times[0].get_home_to_hospitalized_inv(), params4.times[0].get_home_to_hospitalized_inv());
-    EXPECT_EQ(params3.times[0].get_hospitalized_to_home_inv(), params4.times[0].get_hospitalized_to_home_inv());
-    EXPECT_EQ(params3.times[0].get_hospitalized_to_icu_inv(), params4.times[0].get_hospitalized_to_icu_inv());
-    EXPECT_EQ(params3.times[0].get_icu_to_dead_inv(), params4.times[0].get_icu_to_dead_inv());
-    EXPECT_EQ(params3.times[0].get_icu_to_home_inv(), params4.times[0].get_icu_to_home_inv());
+    EXPECT_EQ(params3.times[0].get_incubation(), params4.times[0].get_incubation());
+    EXPECT_EQ(params3.times[0].get_serialinterval(), params4.times[0].get_serialinterval());
+    EXPECT_EQ(params3.times[0].get_infectious_mild(), params4.times[0].get_infectious_mild());
+    EXPECT_EQ(params3.times[0].get_infectious_asymp(), params4.times[0].get_infectious_asymp());
+    EXPECT_EQ(params3.times[0].get_home_to_hospitalized(), params4.times[0].get_home_to_hospitalized());
+    EXPECT_EQ(params3.times[0].get_hospitalized_to_home(), params4.times[0].get_hospitalized_to_home());
+    EXPECT_EQ(params3.times[0].get_hospitalized_to_icu(), params4.times[0].get_hospitalized_to_icu());
+    EXPECT_EQ(params3.times[0].get_icu_to_dead(), params4.times[0].get_icu_to_dead());
+    EXPECT_EQ(params3.times[0].get_icu_to_home(), params4.times[0].get_icu_to_home());
 
     EXPECT_EQ(params3.probabilities[0].get_infection_from_contact(),
               params4.probabilities[0].get_infection_from_contact());
@@ -231,6 +243,9 @@ TEST(TestSecir, testParamConstructors)
               params4.probabilities[0].get_hospitalized_per_infectious());
     EXPECT_EQ(params3.probabilities[0].get_icu_per_hospitalized(), params4.probabilities[0].get_icu_per_hospitalized());
     EXPECT_EQ(params3.probabilities[0].get_dead_per_icu(), params4.probabilities[0].get_dead_per_icu());
+
+    EXPECT_EQ(params4.get_contact_patterns().get_cont_freq_mat().get_dampings(0, 0).get_factor(35),
+              params3.get_contact_patterns().get_cont_freq_mat().get_dampings(0, 0).get_factor(35));
 
     epi::SecirParams params5 = std::move(params4); // move assignment constructor
 
@@ -252,15 +267,15 @@ TEST(TestSecir, testParamConstructors)
     EXPECT_EQ(params5.populations.get({0, epi::SecirCompartments::D}),
               params3.populations.get({0, epi::SecirCompartments::D}));
 
-    EXPECT_EQ(params5.times[0].get_incubation_inv(), params3.times[0].get_incubation_inv());
-    EXPECT_EQ(params5.times[0].get_serialinterval_inv(), params3.times[0].get_serialinterval_inv());
-    EXPECT_EQ(params5.times[0].get_infectious_mild_inv(), params3.times[0].get_infectious_mild_inv());
-    EXPECT_EQ(params5.times[0].get_infectious_asymp_inv(), params3.times[0].get_infectious_asymp_inv());
-    EXPECT_EQ(params5.times[0].get_home_to_hospitalized_inv(), params3.times[0].get_home_to_hospitalized_inv());
-    EXPECT_EQ(params5.times[0].get_hospitalized_to_home_inv(), params3.times[0].get_hospitalized_to_home_inv());
-    EXPECT_EQ(params5.times[0].get_hospitalized_to_icu_inv(), params3.times[0].get_hospitalized_to_icu_inv());
-    EXPECT_EQ(params5.times[0].get_icu_to_dead_inv(), params3.times[0].get_icu_to_dead_inv());
-    EXPECT_EQ(params5.times[0].get_icu_to_home_inv(), params3.times[0].get_icu_to_home_inv());
+    EXPECT_EQ(params5.times[0].get_incubation(), params3.times[0].get_incubation());
+    EXPECT_EQ(params5.times[0].get_serialinterval(), params3.times[0].get_serialinterval());
+    EXPECT_EQ(params5.times[0].get_infectious_mild(), params3.times[0].get_infectious_mild());
+    EXPECT_EQ(params5.times[0].get_infectious_asymp(), params3.times[0].get_infectious_asymp());
+    EXPECT_EQ(params5.times[0].get_home_to_hospitalized(), params3.times[0].get_home_to_hospitalized());
+    EXPECT_EQ(params5.times[0].get_hospitalized_to_home(), params3.times[0].get_hospitalized_to_home());
+    EXPECT_EQ(params5.times[0].get_hospitalized_to_icu(), params3.times[0].get_hospitalized_to_icu());
+    EXPECT_EQ(params5.times[0].get_icu_to_dead(), params3.times[0].get_icu_to_dead());
+    EXPECT_EQ(params5.times[0].get_icu_to_home(), params3.times[0].get_icu_to_home());
 
     EXPECT_EQ(params5.probabilities[0].get_infection_from_contact(),
               params3.probabilities[0].get_infection_from_contact());
@@ -271,6 +286,9 @@ TEST(TestSecir, testParamConstructors)
               params3.probabilities[0].get_hospitalized_per_infectious());
     EXPECT_EQ(params5.probabilities[0].get_icu_per_hospitalized(), params3.probabilities[0].get_icu_per_hospitalized());
     EXPECT_EQ(params5.probabilities[0].get_dead_per_icu(), params3.probabilities[0].get_dead_per_icu());
+
+    EXPECT_EQ(params5.get_contact_patterns().get_cont_freq_mat().get_dampings(0, 0).get_factor(35),
+              params3.get_contact_patterns().get_cont_freq_mat().get_dampings(0, 0).get_factor(35));
 
     epi::ContactFrequencyMatrix contact_freq_matrix{2};
 

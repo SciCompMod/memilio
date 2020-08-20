@@ -6,13 +6,6 @@
 #include <stdio.h>
 #include <cmath>
 
-namespace
-{
-
-
-
-} // namespace
-
 namespace epi
 {
 

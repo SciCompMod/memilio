@@ -14,24 +14,24 @@ namespace epi
  * @param handle Tixi Document Handle
  * @param path Path to contact frequency matrix Tree of XML file to read from
  */
-ContactFrequencyVariableElement read_contact(TixiDocumentHandle handle, const std::string& path);
+UncertainContactMatrix read_contact(TixiDocumentHandle handle, const std::string& path);
 
 /**
  * @brief write contact frequency matrix and damping distributions to xml file
  * @param handle Tixi Document Handle
  * @param path Path to contact frequency matrix Tree of XML file
- * @param contact_freq_matrix Contact frequencies and dampings
+ * @param contact_pattern Contact frequencies, dampings, and distributions
  * @param nb_runs Number of runs of parameterstudy (used for predefinied samples of dampings)
  */
-void write_contact(TixiDocumentHandle handle, const std::string& path,
-                   const ContactFrequencyVariableElement& contact_freq_matrix, int nb_runs);
+void write_contact(TixiDocumentHandle handle, const std::string& path, const UncertainContactMatrix& contact_pattern,
+                   int nb_runs);
 
 /**
  * @brief read parameter distribution from xml file
  * @param handle Tixi Document Handle
  * @param path Path to XML Tree of the parameter
  */
-std::unique_ptr<ParameterDistribution> read_dist(TixiDocumentHandle handle, const std::string& path);
+std::unique_ptr<ParameterDistribution> read_distribution(TixiDocumentHandle handle, const std::string& path);
 
 /**
  * @brief write parameter distribution to xml file
@@ -40,8 +40,8 @@ std::unique_ptr<ParameterDistribution> read_dist(TixiDocumentHandle handle, cons
  * @param element Name of parameter
  * @param dist Distribution of parameter
  */
-void write_dist(const TixiDocumentHandle& handle, const std::string& path, const std::string& element,
-                const ParameterDistribution& dist);
+void write_distribution(const TixiDocumentHandle& handle, const std::string& path, const std::string& element,
+                        const ParameterDistribution& dist);
 
 /**
  * @brief write predefined samples to xml file
@@ -86,13 +86,12 @@ void write_parameter_study(TixiDocumentHandle handle, const std::string& path, c
 /**
  * @brief creates xml file with a single run parameter study with std 0 (used to save parameters of individual runs)
  * @param filename Name of file
- * @param cont_freq Contact frequency Matrix used during run
  * @param params Secir parameters used during run
  * @param t0 starting point of simulation
  * @param tmax end point of simulation
  */
-void write_single_run_params(const int run, const ContactFrequencyMatrix& cont_freq, const SecirParams& params,
-                             double t0, double tmax, const TimeSeries<double>& result);
+void write_single_run_params(const int run, const SecirParams& params, double t0, double tmax,
+                             const TimeSeries<double>& result);
 
 /**
  * @brief Creates xml file containing Parameters of one node of a graph
