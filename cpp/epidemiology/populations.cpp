@@ -167,4 +167,8 @@ size_t Populations::get_flat_index(std::vector<size_t> const& indices) const
     return flatten_index(indices, m_category_sizes);
 }
 
+void Populations::check_constraints()
+{
+}
+
 } // namespace epi

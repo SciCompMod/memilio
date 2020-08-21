@@ -285,6 +285,8 @@ public:
         const UncertainValue& get_icu_to_dead() const;
         UncertainValue& get_icu_to_dead();
 
+        void check_constraints();
+
     private:
         UncertainValue m_tinc, m_tinfmild; // parameters also available in SEIR
         UncertainValue m_tserint, m_thosp2home, m_thome2hosp, m_thosp2icu, m_ticu2home, m_tinfasy,
@@ -410,9 +412,13 @@ public:
         const UncertainValue& get_dead_per_icu() const;
         UncertainValue& get_dead_per_icu();
 
+        void check_constraints();
+
     private:
         UncertainValue m_infprob, m_asympinf, m_risksymp, m_hospinf, m_icuhosp, m_deathicu; // probabilities
     };
+
+    void check_constraints();
 
     /**
      * @brief sets the UncertainContactMatrix

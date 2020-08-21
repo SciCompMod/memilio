@@ -208,6 +208,39 @@ UncertainValue& SecirParams::StageTimes::get_icu_to_dead()
     return m_ticu2death;
 }
 
+void SecirParams::StageTimes::check_constraints()
+{
+
+    if (m_tinc < 2.0)
+        m_tinc = 2.0;
+
+    if (2 * m_tserint < m_tinc - 1.0)
+        m_tserint = 0.5 * m_tinc + 0.5;
+    else if (m_tserint > m_tinc - 0.5)
+        m_tserint = m_tinc - 0.5;
+
+    if (m_tinfmild < 1.0)
+        m_tinfmild = 1.0;
+
+    if (m_thosp2home < 1.0)
+        m_thosp2home = 1.0;
+
+    if (m_thome2hosp < 1.0)
+        m_thome2hosp = 1.0;
+
+    if (m_thosp2icu < 1.0)
+        m_thosp2icu = 1.0;
+
+    if (m_ticu2home < 1.0)
+        m_ticu2home = 1.0;
+
+    if (m_tinfasy < 1.0)
+        m_tinfasy = 1.0;
+
+    if (m_ticu2death < 1.0)
+        m_ticu2death = 1.0;
+}
+
 SecirParams::Probabilities::Probabilities()
     : m_infprob{1}
     , m_asympinf{0}
@@ -338,6 +371,10 @@ UncertainValue& SecirParams::Probabilities::get_dead_per_icu()
     return m_deathicu;
 }
 
+void SecirParams::Probabilities::check_constraints()
+{
+}
+
 void SecirParams::set_contact_patterns(UncertainContactMatrix contact_patterns)
 {
     m_contact_patterns = contact_patterns;
@@ -351,6 +388,15 @@ UncertainContactMatrix& SecirParams::get_contact_patterns()
 UncertainContactMatrix const& SecirParams::get_contact_patterns() const
 {
     return m_contact_patterns;
+}
+
+void SecirParams::check_constraints()
+{
+    for (int i = 0; i < times.size(); i++) {
+        populations.check_constraints();
+        times[i].check_constraints();
+        probabilities[i].check_constraints();
+    }
 }
 
 double get_reprod_rate(SecirParams const& params, double const t, std::vector<double> const& yt)

@@ -195,16 +195,7 @@ public:
                 m_params.populations.get_group_total(SecirCategory::AgeGroup, i));
 
             secir_params_sample.times[i].set_incubation(m_params.times[i].get_incubation().draw_sample());
-            double serint_dummy = m_params.times[i].get_serialinterval().draw_sample();
-            if (serint_dummy > secir_params_sample.times[i].get_incubation() - 0.2) {
-                serint_dummy = secir_params_sample.times[i].get_incubation() - 1;
-                log_warning("To Do/Discussion: Redesign sample strategy for serial interval.");
-            }
-            else if (2 * serint_dummy < secir_params_sample.times[i].get_incubation()) {
-                serint_dummy += 0.5;
-                log_warning("To Do/Discussion: Redesign sample strategy for serial interval.");
-            }
-            secir_params_sample.times[i].set_serialinterval(serint_dummy);
+            secir_params_sample.times[i].set_serialinterval(m_params.times[i].get_serialinterval().draw_sample());
             secir_params_sample.times[i].set_infectious_mild(m_params.times[i].get_infectious_mild().draw_sample());
             secir_params_sample.times[i].set_hospitalized_to_home(
                 m_params.times[i].get_hospitalized_to_home().draw_sample()); // here: home=recovered
@@ -229,6 +220,8 @@ public:
             secir_params_sample.probabilities[i].set_icu_per_hospitalized(
                 m_params.probabilities[i].get_icu_per_hospitalized().draw_sample());
         }
+
+        secir_params_sample.check_constraints();
 
         return secir_params_sample;
     }
