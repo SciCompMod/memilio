@@ -63,7 +63,7 @@ TEST(TestSecir, compareAgeResWithSingleRun)
 
     // char vars[] = {'S', 'E', 'C', 'I', 'H', 'U', 'R', 'D'};
     // printf("People in\n");
-    // for (size_t k = 0; k < 8; k++) {
+    // for (size_t k = 0; k < epi::SecirCompartments::SecirCount; k++) {
     //     double dummy = 0;
 
     //     for (size_t i = 0; i < params.get_num_groups(); i++) {
@@ -84,7 +84,7 @@ TEST(TestSecir, compareAgeResWithSingleRun)
         for (size_t j = 1; j < compare[i].size(); j++) {
             double dummy = 0;
             for (size_t k = 0; k < nb_groups; k++) {
-                dummy += secihurd[i][j - 1 + k * 8];
+                dummy += secihurd[i][j - 1 + k * epi::SecirCompartments::SecirCount];
             }
             EXPECT_NEAR(dummy, compare[i][j], 1e-10) << " at row " << i;
         }

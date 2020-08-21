@@ -82,8 +82,8 @@ int main(int argc, char** argv)
     epi::Graph<epi::ModelNode<epi::SecirSimulation>, epi::MigrationEdge> graph;
     graph.add_node(params, t0);
     graph.add_node(params, t0);
-    graph.add_edge(0, 1, Eigen::VectorXd::Constant(8 * nb_groups, 0.01));
-    graph.add_edge(1, 0, Eigen::VectorXd::Constant(8 * nb_groups, 0.01));
+    graph.add_edge(0, 1, Eigen::VectorXd::Constant(epi::SecirCompartments::SecirCount * nb_groups, 0.01));
+    graph.add_edge(1, 0, Eigen::VectorXd::Constant(epi::SecirCompartments::SecirCount * nb_groups, 0.01));
 
     epi::write_graph(graph, t0, tmax);
 
