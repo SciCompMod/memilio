@@ -32,17 +32,18 @@ def plot_secir():
 
 
     contact_polymod = 0.5*(contact_polymod + contact_polymod.T)
-
+    
+    num_groups = contact_polymod.shape[-1]
     num_compartments = int(SecirCompartments.SecirCount)
 
     create_dampings(path='../../data/contact_data/', days=days)
     dampings = pd.read_csv('../../data/contact_data/dampings.csv', index_col=0, header=[0, 1]).values
-    dampings = np.swapaxes(dampings.reshape(8,days,8),1,2) # set 8 of compartments to num_compartments
+    dampings = np.swapaxes(dampings.reshape(num_groups,days,num_groups),1,2)
     for i in range(days):
         dampings[:,:,i] = 0.5*(dampings[:,:,i] + dampings[:,:,i].T)
 
 
-    num_groups = contact_polymod.shape[-1]
+    
 
 
     times = StageTimes()
