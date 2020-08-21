@@ -539,6 +539,16 @@ class Test_getDiviData(fake_filesystem_unittest.TestCase):
             f.write(self.test_string1)
 
         # Case where just the date of today is missing
+
+        #case where data is not yet uploaded:
+        mock_loadCSV.return_value = pd.read_json(self.test_string1)
+
+        with self.assertRaises(SystemExit) as cm:
+            gdd.get_divi_data(read_data, update_data, make_plot, out_form, out_folder)
+        self.assertEqual(cm.exception.code, "Data of today = " + date(2020,7,8).strftime("%Y-%m-%d") \
+                                          + " has not yet uploaded. Please, try again later.")
+
+        # case where data exists
         mock_loadCSV.return_value = pd.read_json(self.test_string2)
 
         gdd.get_divi_data(read_data, update_data, make_plot, out_form, out_folder)

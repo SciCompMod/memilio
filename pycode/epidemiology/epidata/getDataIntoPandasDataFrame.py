@@ -94,6 +94,12 @@ def cli(description):
    MAKE_PLOT = args.plot
    OUT_FORM = "hdf5" if args.hdf5 else dd.defaultDict['out_form']
 
+   # TODO: Change arguments such that one argument + parameter can be either read_data or update
+   if READ_DATA and UPDATE_DATA:
+       exit_string = "You caled the programm with '--read-from-disk' and '--update'." \
+                     "Please choose just one. Both together is not possible."
+       sys.exit(exit_string)
+
    return [READ_DATA, UPDATE_DATA, MAKE_PLOT, OUT_FORM, args.out_path]
 
 def check_dir(directory):
