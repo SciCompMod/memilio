@@ -178,16 +178,18 @@ class Test_getPopulationData(fake_filesystem_unittest.TestCase):
 
         gpd.get_population_data(read_data, make_plot, out_form, out_folder)
 
-        self.assertEqual(len(os.listdir(directory)), 4)
-        self.assertEqual(os.listdir(directory), [file1, file2, file_out1, file_out2])
+        #self.assertEqual(len(os.listdir(directory)), 4)
+        self.assertEqual(len(os.listdir(directory)), 3)
+        #self.assertEqual(os.listdir(directory), [file1, file2, file_out1, file_out2])
+        self.assertEqual(os.listdir(directory), [file1, file2, file_out1])
 
         f_path = os.path.join(directory, file_out1)
         f = open(f_path, "r")
         self.assertEqual(f.read(), self.test_string1r)
 
-        f_path = os.path.join(directory, file_out2)
-        f = open(f_path, "r")
-        self.assertEqual(f.read(), self.test_string2r)
+        #f_path = os.path.join(directory, file_out2)
+        #f = open(f_path, "r")
+        #self.assertEqual(f.read(), self.test_string2r)
 
 
 # TODO: How to test hdf5 export?
