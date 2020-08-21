@@ -14,7 +14,7 @@ def get_population_data(read_data=dd.defaultDict['read_data'],
    Data = namedtuple("Data", "filename item columns_wanted filename_out")
 
    d1 = Data("FullDataB", '5dc2fc92850241c3be3d704aa0945d9c_2', ["LAN_ew_RS", 'LAN_ew_GEN','LAN_ew_EWZ'], "PopulStates")
-   d2 = Data("FullDataL", 'b2e6d8854d9744ca88144d30bef06a76_1', ['RS', 'GEN','EWZ'], "PopulCounties")
+   #d2 = Data("FullDataL", 'b2e6d8854d9744ca88144d30bef06a76_1', ['RS', 'GEN','EWZ'], "PopulCounties")
 
    d = [d1, d2]
 
