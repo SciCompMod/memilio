@@ -214,7 +214,7 @@ void SecirParams::StageTimes::check_constraints()
     if (m_tinc < 2.0)
         m_tinc = 2.0;
 
-    if (2 * m_tserint < m_tinc - 1.0)
+    if (2 * m_tserint < m_tinc + 1.0)
         m_tserint = 0.5 * m_tinc + 0.5;
     else if (m_tserint > m_tinc - 0.5)
         m_tserint = m_tinc - 0.5;

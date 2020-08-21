@@ -285,6 +285,9 @@ public:
         const UncertainValue& get_icu_to_dead() const;
         UncertainValue& get_icu_to_dead();
 
+        /**
+         * @brief checks whether the stage times Parameters satisfy their corresponding constraints and adjusts them, if they do not
+         */
         void check_constraints();
 
     private:
@@ -412,12 +415,18 @@ public:
         const UncertainValue& get_dead_per_icu() const;
         UncertainValue& get_dead_per_icu();
 
+        /**
+         * @brief checks whether the probability Parameters satisfy their corresponding constraints and adjusts them, if they do not
+         */
         void check_constraints();
 
     private:
         UncertainValue m_infprob, m_asympinf, m_risksymp, m_hospinf, m_icuhosp, m_deathicu; // probabilities
     };
 
+    /**
+     * @brief checks whether all Parameters satisfy their corresponding constraints and adjusts them, if they do not
+     */
     void check_constraints();
 
     /**
