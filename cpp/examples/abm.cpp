@@ -8,10 +8,18 @@ int main()
     auto& work = world.add_node(epi::NodeType::Work);
     auto& child1 = world.add_person(home, epi::InfectionState::Susceptible);
     auto& child2 = world.add_person(home, epi::InfectionState::Susceptible);
-    auto& parent1 = world.add_person(home, epi::InfectionState::Exposed);
+    auto& parent1 = world.add_person(home, epi::InfectionState::Carrier);
     auto& parent2 = world.add_person(home, epi::InfectionState::Susceptible);
 
-    auto sim = epi::AbmSimulation(0, std::move(world));
+    auto t0 = 0;
+    auto tmax = 100;
+    auto sim = epi::AbmSimulation(t0, std::move(world));
 
-    sim.advance(100);
+    sim.advance(tmax);
+
+    std::cout << "Ran ABM from " << t0 << " to " << 100 << '\n';
+    for (auto &&p : sim.get_result())
+    {
+        std::cout << p.first << " : " << p.second.transpose() << '\n';
+    }
 }

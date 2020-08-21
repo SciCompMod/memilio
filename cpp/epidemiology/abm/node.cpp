@@ -72,7 +72,7 @@ InfectionState Node::interact(const Person& person, double dt) const
     }
 }
 
-void Node::end_step(double dt)
+void Node::begin_step(double dt)
 {
     //cache for next step so it stays constant during the step while subpopulations change
     //otherwise we would have to cache all state changes during a step which uses more memory

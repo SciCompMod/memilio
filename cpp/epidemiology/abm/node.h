@@ -20,9 +20,9 @@ public:
     void add_person(Person& person);
     void remove_person(Person& person);
     void changed_state(const Person& person, InfectionState old_state);
-    void end_step(double dt);
+    void begin_step(double dt);
     int get_subpopulation(InfectionState s) const;
-
+    
 private:
     void change_subpopulation(InfectionState s, int delta);
 

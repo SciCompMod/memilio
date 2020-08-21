@@ -23,9 +23,9 @@ Person& World::add_person(Node& node, InfectionState state)
 
 void World::evolve(double dt)
 {
+    begin_step(dt);
     interaction(dt);
     migration(dt);
-    end_step(dt);
 }
 
 void World::interaction(double dt)
@@ -55,11 +55,21 @@ void World::migration(double dt)
     //TODO: migration by complex rules
 }
 
-void World::end_step(double dt)
+void World::begin_step(double dt)
 {
     for (auto&& node : m_nodes) {
-        node->end_step(dt);
+        node->begin_step(dt);
     }
+}
+
+auto World::get_nodes() const -> Range<std::pair<ConstNodeIterator, ConstNodeIterator>>
+{
+    return std::make_pair(ConstNodeIterator(m_nodes.begin()), ConstNodeIterator(m_nodes.end()));
+}
+
+auto World::get_persons() const -> Range<std::pair<ConstPersonIterator, ConstPersonIterator>>
+{
+    return std::make_pair(ConstPersonIterator(m_persons.begin()), ConstPersonIterator(m_persons.end()));
 }
 
 } // namespace epi

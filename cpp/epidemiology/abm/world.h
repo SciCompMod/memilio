@@ -4,6 +4,8 @@
 #include "epidemiology/abm/parameters.h"
 #include "epidemiology/abm/node.h"
 #include "epidemiology/abm/person.h"
+#include "epidemiology/pointer_dereferencing_iterator.h"
+#include "epidemiology/stl_util.h"
 #include <vector>
 #include <memory>
 
@@ -13,6 +15,11 @@ namespace epi
 class World
 {
 public:
+    using NodeIterator = PointerDereferencingIterator<std::vector<std::unique_ptr<Node>>::iterator>;
+    using ConstNodeIterator = PointerDereferencingIterator<std::vector<std::unique_ptr<Node>>::const_iterator>;
+    using PersonIterator = PointerDereferencingIterator<std::vector<std::unique_ptr<Person>>::iterator>;
+    using ConstPersonIterator = PointerDereferencingIterator<std::vector<std::unique_ptr<Person>>::const_iterator>;
+
     World(const GlobalInfectionParameters& params = {})
         : m_infection_parameters(params)
     {
@@ -24,10 +31,13 @@ public:
     World(const World&) = delete;
     World& operator=(const World&) = delete;
 
+    void begin_step(double dt);
     void evolve(double dt);
     Node& add_node(NodeType type);
     Person& add_person(Node& node, InfectionState state);
-    void end_step(double dt);
+
+    Range<std::pair<ConstNodeIterator, ConstNodeIterator>> get_nodes() const;
+    Range<std::pair<ConstPersonIterator, ConstPersonIterator>> get_persons() const;
 
 private:
     void interaction(double dt);
