@@ -11,6 +11,8 @@ def get_population_data(read_data=dd.defaultDict['read_data'],
                         out_form=dd.defaultDict['out_form'],
                         out_folder=dd.defaultDict['out_folder']):
 
+   print("Warning: getpopulationdata is not working correctly. A bug workaround has been applied.")
+
    Data = namedtuple("Data", "filename item columns_wanted filename_out")
 
    d1 = Data("FullDataB", '5dc2fc92850241c3be3d704aa0945d9c_2', ["LAN_ew_RS", 'LAN_ew_GEN','LAN_ew_EWZ'], "PopulStates")
