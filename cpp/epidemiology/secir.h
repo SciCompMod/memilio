@@ -290,6 +290,7 @@ public:
          * For certain stage time values, the simulation can produce (small) negative population results.
          * To prevent this from happening, mathematical constraints have been derived and implemented here.
          * For further details, see the overleaf discussion chapter.
+         * The constraints are step size-dependent, in the current implementation, we have assumed dt_max = 1.
          */
         void check_constraints();
 

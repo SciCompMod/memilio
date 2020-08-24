@@ -211,34 +211,55 @@ UncertainValue& SecirParams::StageTimes::get_icu_to_dead()
 void SecirParams::StageTimes::check_constraints()
 {
 
-    if (m_tinc < 2.0)
+    if (m_tinc < 2.0) {
+        log_warning("Constraint check: Parameter m_tserint changed from {:.4f} to {:.4f}", m_tinc, 2.0);
         m_tinc = 2.0;
+    }
 
-    if (2 * m_tserint < m_tinc + 1.0)
+    if (2 * m_tserint < m_tinc + 1.0) {
+        log_warning("Constraint check: Parameter m_tserint changed from {:.4f} to {:.4f}", m_tserint,
+                    0.5 * m_tinc + 0.5);
         m_tserint = 0.5 * m_tinc + 0.5;
-    else if (m_tserint > m_tinc - 0.5)
+    }
+    else if (m_tserint > m_tinc - 0.5) {
+        log_warning("Constraint check: Parameter m_tserint changed from {:.4f} to {:.4f}", m_tserint, m_tinc - 0.5);
         m_tserint = m_tinc - 0.5;
+    }
 
-    if (m_tinfmild < 1.0)
+    if (m_tinfmild < 1.0) {
+        log_warning("Constraint check: Parameter m_tinfmild changed from {:.4f} to {:.4f}", m_tinfmild, 1.0);
         m_tinfmild = 1.0;
+    }
 
-    if (m_thosp2home < 1.0)
+    if (m_thosp2home < 1.0) {
+        log_warning("Constraint check: Parameter m_thosp2home changed from {:.4f} to {:.4f}", m_thosp2home, 1.0);
         m_thosp2home = 1.0;
+    }
 
-    if (m_thome2hosp < 1.0)
+    if (m_thome2hosp < 1.0) {
+        log_warning("Constraint check: Parameter m_thome2hosp changed from {:.4f} to {:.4f}", m_thome2hosp, 1.0);
         m_thome2hosp = 1.0;
+    }
 
-    if (m_thosp2icu < 1.0)
+    if (m_thosp2icu < 1.0) {
+        log_warning("Constraint check: Parameter m_thosp2icu changed from {:.4f} to {:.4f}", m_thosp2icu, 1.0);
         m_thosp2icu = 1.0;
+    }
 
-    if (m_ticu2home < 1.0)
+    if (m_ticu2home < 1.0) {
+        log_warning("Constraint check: Parameter m_ticu2home changed from {:.4f} to {:.4f}", m_ticu2home, 1.0);
         m_ticu2home = 1.0;
+    }
 
-    if (m_tinfasy < 1.0)
+    if (m_tinfasy < 1.0) {
+        log_warning("Constraint check: Parameter m_tinfasy changed from {:.4f} to {:.4f}", m_tinfasy, 1.0);
         m_tinfasy = 1.0;
+    }
 
-    if (m_ticu2death < 1.0)
+    if (m_ticu2death < 1.0) {
+        log_warning("Constraint check: Parameter m_ticu2death changed from {:.4f} to {:.4f}", m_ticu2death, 1.0);
         m_ticu2death = 1.0;
+    }
 }
 
 SecirParams::Probabilities::Probabilities()
@@ -373,20 +394,30 @@ UncertainValue& SecirParams::Probabilities::get_dead_per_icu()
 
 void SecirParams::Probabilities::check_constraints()
 {
-    if (m_asympinf < 0.0 || m_asympinf > 1.0)
+    if (m_asympinf < 0.0 || m_asympinf > 1.0) {
+        log_warning("Constraint check: Parameter m_asympinf changed from {:0.4f} to {:d} ", m_asympinf, 0);
         m_asympinf = 0;
+    }
 
-    if (m_risksymp < 0.0 || m_risksymp > 1.0)
+    if (m_risksymp < 0.0 || m_risksymp > 1.0) {
+        log_warning("Constraint check: Parameter m_risksymp changed from {:0.4f} to {:d}", m_risksymp, 0);
         m_risksymp = 0;
+    }
 
-    if (m_hospinf < 0.0 || m_hospinf > 1.0)
+    if (m_hospinf < 0.0 || m_hospinf > 1.0) {
+        log_warning("Constraint check: Parameter m_risksymp changed from {:0.4f} to {:d}", m_hospinf, 0);
         m_hospinf = 0;
+    }
 
-    if (m_icuhosp < 0.0 || m_icuhosp > 1.0)
+    if (m_icuhosp < 0.0 || m_icuhosp > 1.0) {
+        log_warning("Constraint check: Parameter m_risksymp changed from {:0.4f} to {:d}", m_icuhosp, 0);
         m_icuhosp = 0;
+    }
 
-    if (m_deathicu < 0.0 || m_deathicu > 1.0)
+    if (m_deathicu < 0.0 || m_deathicu > 1.0) {
+        log_warning("Constraint check: Parameter m_risksymp changed from {:0.4f} to {:d}", m_deathicu, 0);
         m_deathicu = 0;
+    }
 }
 
 void SecirParams::set_contact_patterns(UncertainContactMatrix contact_patterns)

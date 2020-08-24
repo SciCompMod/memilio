@@ -170,7 +170,10 @@ size_t Populations::get_flat_index(std::vector<size_t> const& indices) const
 void Populations::check_constraints()
 {
     for (auto i = 0; i < m_y.size(); i++) {
-        assert(m_y[i] >= 0);
+        if (m_y[i] < 0) {
+            log_warning("Constraint check: Compartment size {:d} changed from {:.4f} to {:d}", i, m_y[i], 0);
+            m_y[i] = 0;
+        }
     }
 }
 
