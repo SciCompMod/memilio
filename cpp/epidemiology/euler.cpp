@@ -3,7 +3,7 @@
 namespace epi
 {
 
-bool EulerIntegratorCore::step(const DerivFunction& f, const Eigen::VectorXd& yt, double& t, double& dt, Eigen::VectorXd& ytp1) const
+bool EulerIntegratorCore::step(const DerivFunction& f, Eigen::Ref<const Eigen::VectorXd> yt, double& t, double& dt, Eigen::Ref<Eigen::VectorXd> ytp1) const
 {
     // we are misusing the next step y as temporary space to store the derivative
     f(yt, t, ytp1);

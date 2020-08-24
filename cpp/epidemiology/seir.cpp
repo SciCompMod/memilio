@@ -66,7 +66,7 @@ double SeirParams::StageTimes::get_infectious_inv() const
     return m_tinfmild_inv;
 }
 
-void seir_get_derivatives(const SeirParams& params, const Eigen::VectorXd& y, double t, Eigen::VectorXd& dydt)
+void seir_get_derivatives(const SeirParams& params, Eigen::Ref<const Eigen::VectorXd> y, double t, Eigen::Ref<Eigen::VectorXd> dydt)
 {
     double cont_freq_eff = params.times.get_cont_freq() * params.dampings.get_factor(t);
     double divN          = 1.0 / params.populations.get_total();
@@ -84,8 +84,14 @@ std::vector<double> simulate(double t0, double tmax, double dt, const SeirParams
 {
     SeirSimulation sim(params, t0, dt);
     sim.advance(tmax);
-    seir = sim.get_y();
-    return sim.get_t();
+    auto& result = sim.get_result();
+    std::vector<double> t(result.get_num_time_points());
+    for (Eigen::Index i = 0; i < result.get_num_time_points(); i++)
+    {
+        t[i] = result.get_time(i);
+    }
+    std::transform(result.begin(), result.end(), std::back_inserter(seir), [](auto&& v_ref) { return v_ref.eval(); });
+    return t;
 }
 
 SeirSimulation::SeirSimulation(const SeirParams& params, double t0, double dt_init)
@@ -95,7 +101,7 @@ SeirSimulation::SeirSimulation(const SeirParams& params, double t0, double dt_in
 {
 }
 
-Eigen::VectorXd& SeirSimulation::advance(double tmax)
+Eigen::Ref<Eigen::VectorXd> SeirSimulation::advance(double tmax)
 {
     return m_integrator.advance(tmax);
 }

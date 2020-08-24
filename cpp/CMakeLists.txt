@@ -44,6 +44,8 @@ add_library(epidemiology
     epidemiology/uncertain_matrix.h    
     epidemiology/memory.h
     epidemiology/parameter_studies/parameter_distributions.h
+    epidemiology/time_series.h
+    epidemiology/time_series.cpp
 )
 
 target_include_directories(epidemiology PUBLIC

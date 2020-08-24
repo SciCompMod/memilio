@@ -111,18 +111,14 @@ class SeirSimulation
 {
 public:
     SeirSimulation(const SeirParams& params, double t0 = 0., double dt_init = 0.1);
-    Eigen::VectorXd& advance(double tmax);
-    const std::vector<double>& get_t() const
+    Eigen::Ref<Eigen::VectorXd> advance(double tmax);
+    TimeSeries<double>& get_result()
     {
-        return m_integrator.get_t();
+        return m_integrator.get_result();
     }
-    const std::vector<Eigen::VectorXd>& get_y() const
+    const TimeSeries<double>& get_result() const
     {
-        return m_integrator.get_y();
-    }
-    std::vector<Eigen::VectorXd>& get_y()
-    {
-        return m_integrator.get_y();
+        return m_integrator.get_result();
     }
 
 private:

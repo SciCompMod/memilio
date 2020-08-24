@@ -478,7 +478,8 @@ double get_reprod_rate(SecirParams const& params, double const t, std::vector<do
     }
 }
 
-void secir_get_derivatives(SecirParams const& params, const Eigen::VectorXd& y, double t, Eigen::VectorXd& dydt)
+void secir_get_derivatives(SecirParams const& params, Eigen::Ref<const Eigen::VectorXd> y, double t,
+                           Eigen::Ref<Eigen::VectorXd> dydt)
 {
     // alpha  // percentage of asymptomatic cases
     // beta // risk of infection from the infected symptomatic patients
@@ -554,14 +555,21 @@ void secir_get_derivatives(SecirParams const& params, const Eigen::VectorXd& y, 
     }
 }
 
-std::vector<double> simulate(double t0, double tmax, double dt, SecirParams const& params,
-                             std::vector<Eigen::VectorXd>& secir)
+TimeSeries<double> simulate(double t0, double tmax, double dt, SecirParams const& params)
 {
     SecirSimulation sim(params, t0, dt);
     sim.advance(tmax);
-    secir = sim.get_y();
+    return sim.get_result();
+}
 
-    return sim.get_t();
+std::vector<double> simulate(double t0, double tmax, double dt, SecirParams const& params,
+                             std::vector<Eigen::VectorXd>& secir)
+{
+    auto result = simulate(t0, tmax, dt, params);
+    std::vector<double> t(result.get_times().begin(), result.get_times().end());
+    std::transform(result.begin(), result.end(), std::back_inserter(secir), [](auto&& v_ref) { return v_ref.eval(); });
+
+    return t;
 }
 
 SecirSimulation::SecirSimulation(const SecirParams& params, double t0, double dt)
@@ -577,7 +585,7 @@ SecirSimulation::SecirSimulation(const SecirParams& params, double t0, double dt
     m_integratorCore->set_abs_tolerance(1e-1);
 }
 
-Eigen::VectorXd& SecirSimulation::advance(double tmax)
+Eigen::Ref<Eigen::VectorXd> SecirSimulation::advance(double tmax)
 {
     return m_integrator.advance(tmax);
 }

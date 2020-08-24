@@ -59,27 +59,28 @@ TEST(TestSaveResult, compareResultWithH5)
         }
     }
 
-    std::vector<Eigen::VectorXd> secihurd(0);
-    auto t = simulate(t0, tmax, dt, params, secihurd);
+    auto result_from_sim = simulate(t0, tmax, dt, params);
 
-    epi::save_result(t, secihurd, "test_result.h5");
+    epi::save_result(result_from_sim, "test_result.h5");
 
-    epi::SecirSimulationResult test_result{epi::read_result("test_result.h5", nb_groups)};
+    epi::SecirSimulationResult result_from_file{epi::read_result("test_result.h5", nb_groups)};
 
-    ASSERT_EQ(test_result.get_time_vector().size(), t.size());
-    ASSERT_EQ(test_result.get_groups_vectors().size(), secihurd.size());
-    for (size_t i = 0; i < test_result.get_time_vector().size(); i++) {
-        ASSERT_EQ(test_result.get_groups_vectors()[i].size(), secihurd[i].size()) << "at row " << i;
-        ASSERT_NEAR(t[i], test_result.get_time_vector()[i], 1e-10) << "at row " << i;
-        for (size_t l = 0; l < test_result.get_groups_vectors()[i].size() / nb_groups; l++) {
+    ASSERT_EQ(result_from_file.get_groups().get_num_time_points(), result_from_sim.get_num_time_points());
+    ASSERT_EQ(result_from_file.get_totals().get_num_time_points(), result_from_sim.get_num_time_points());
+    for (size_t i = 0; i < result_from_sim.get_num_time_points(); i++) {
+        ASSERT_EQ(result_from_file.get_groups().get_num_elements(), result_from_sim.get_num_elements()) << "at row " << i;
+        ASSERT_EQ(result_from_file.get_totals().get_num_elements(), result_from_sim.get_num_elements() / nb_groups) << "at row " << i;
+        ASSERT_NEAR(result_from_sim.get_time(i), result_from_file.get_groups().get_time(i), 1e-10) << "at row " << i;
+        ASSERT_NEAR(result_from_sim.get_time(i), result_from_file.get_totals().get_time(i), 1e-10) << "at row " << i;
+        for (size_t l = 0; l < result_from_file.get_totals().get_num_elements(); l++) {
             double dummy = 0.0;
             for (size_t j = 0; j < nb_groups; j++) {
-                dummy += secihurd[i][j * epi::SecirCompartments::SecirCount + l];
-                EXPECT_NEAR(test_result.get_groups_vectors()[i][j * epi::SecirCompartments::SecirCount + l],
-                            secihurd[i][j * epi::SecirCompartments::SecirCount + l], 1e-10)
+                dummy += result_from_sim[i][j * epi::SecirCompartments::SecirCount + l];
+                EXPECT_NEAR(result_from_file.get_groups()[i][j * epi::SecirCompartments::SecirCount + l],
+                            result_from_sim[i][j * epi::SecirCompartments::SecirCount + l], 1e-10)
                     << " at row " << i << " at row " << l << " at Group " << j;
             }
-            EXPECT_NEAR(test_result.get_totals_vector()[i][l], dummy, 1e-10) << " at row " << i << " at row " << l;
+            EXPECT_NEAR(result_from_file.get_totals()[i][l], dummy, 1e-10) << " at row " << i << " at row " << l;
         }
     }
 }

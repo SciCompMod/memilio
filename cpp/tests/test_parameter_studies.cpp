@@ -253,18 +253,17 @@ TEST(ParameterStudies, check_ensemble_run_result)
     }
 
     epi::ParameterStudy parameter_study(
-        [](double t0, double tmax, double dt, epi::SecirParams const& params, std::vector<Eigen::VectorXd>& secir) {
-            return epi::simulate(t0, tmax, dt, params, secir);
+        [](double t0, double tmax, double dt, epi::SecirParams const& params) {
+            return epi::simulate(t0, tmax, dt, params);
         },
         params, t0, tmax, 0.2, 1);
 
     // Run parameter study
     int run = 0;
     parameter_study.set_num_runs(1);
-    std::vector<std::vector<Eigen::VectorXd>> results = parameter_study.run();
+    auto results = parameter_study.run();
 
-    // printf("\n %d %d %d %d ", results.size(), results[0].size(), results[0][0].size(), params.size());
-    for (size_t i = 0; i < results[0].size(); i++) { // number of time steps
+    for (size_t i = 0; i < results[0].get_num_time_points(); i++) {
         std::vector<double> total_at_ti(epi::SecirCompartments::SecirCount, 0);
         // printf("\n");
         for (size_t j = 0; j < static_cast<size_t>(results[0][i].size()); j++) { // number of compartments per time step

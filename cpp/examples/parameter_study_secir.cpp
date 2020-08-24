@@ -89,8 +89,8 @@ int main(int argc, char* argv[])
     }
 
     epi::ParameterStudy parameter_study(
-        [](double t0, double tmax, double dt, epi::SecirParams& params, std::vector<Eigen::VectorXd>& secir) {
-            return epi::simulate(t0, tmax, dt, params, secir);
+        [](double t0, double tmax, double dt, epi::SecirParams const& params) {
+            return epi::simulate(t0, tmax, dt, params);
         },
         params, t0, tmax, 0.2, 1);
 
@@ -109,10 +109,10 @@ int main(int argc, char* argv[])
     tixiOpenDocument("Parameters.xml", &handle);
     epi::ParameterStudy read_study = epi::read_parameter_study(handle, path);
     int run                        = 0;
-    auto lambda                    = [&run, t0, tmax](const auto& params, const auto& time, const auto& secir_result) {
-        epi::write_single_run_params(run++, params, t0, tmax, time, secir_result);
+    auto lambda                    = [&run, t0, tmax](const auto& params, const auto& secir_result) {
+        epi::write_single_run_params(run++, params, t0, tmax, secir_result);
     };
-    std::vector<std::vector<Eigen::VectorXd>> results = read_study.run(lambda);
+    auto results = read_study.run(lambda);
 
 #if 0
     if (argc > 1) {

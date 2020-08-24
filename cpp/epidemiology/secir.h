@@ -470,7 +470,8 @@ double get_reprod_rate(SecirParams const& params, double t, std::vector<double> 
  * @param[in] t time / current day
  * @param[out] dydt the values of the time derivatives of the SECIR compartments (e.g., S, E, C, I, H, U, R, D)
  */
-void secir_get_derivatives(SecirParams const& params, Eigen::VectorXd const& y, double t, Eigen::VectorXd& dydt);
+void secir_get_derivatives(SecirParams const& params, Eigen::Ref<const Eigen::VectorXd> y, double t,
+                           Eigen::Ref<Eigen::VectorXd> dydt);
 
 /**
  * @brief simulate SECIR compartment model.
@@ -492,26 +493,16 @@ public:
      * must be greater than get_t().back()
      * @param tmax next stopping point of simulation
      */
-    Eigen::VectorXd& advance(double tmax);
+    Eigen::Ref<Eigen::VectorXd> advance(double tmax);
 
-    /**
-     * @brief the integration time points
-     */
-    const std::vector<double>& get_t() const
+    TimeSeries<double>& get_result()
     {
-        return m_integrator.get_t();
+        return m_integrator.get_result();
     }
 
-    /**
-     * @brief values of compartments at each time point
-     */
-    const std::vector<Eigen::VectorXd>& get_y() const
+    const TimeSeries<double>& get_result() const
     {
-        return m_integrator.get_y();
-    }
-    std::vector<Eigen::VectorXd>& get_y()
-    {
-        return m_integrator.get_y();
+        return m_integrator.get_result();
     }
 
     /**
@@ -529,7 +520,7 @@ private:
 };
 
 /**
- * @brief run secir simulation over fixed time
+ * @brief DEPRECATED run secir simulation over fixed time
  * @param[in] t0 start time
  * @param[in] tmax end time
  * @param[in] dt initial step size of integration
@@ -539,6 +530,16 @@ private:
  */
 std::vector<double> simulate(double t0, double tmax, double dt, SecirParams const& params,
                              std::vector<Eigen::VectorXd>& secir);
+
+/**
+ * @brief run secir simulation over fixed time
+ * @param[in] t0 start time
+ * @param[in] tmax end time
+ * @param[in] dt initial step size of integration
+ * @param[in] params SECIR params: contact frequencies, population sizes and epidemiological parameters
+ * @returns secir value of compartments at each integration time point
+ */
+TimeSeries<double> simulate(double t0, double tmax, double dt, SecirParams const& params);
 
 } // namespace epi
 

@@ -67,7 +67,9 @@ TEST(TestSaveParameters, compareParameterStudy)
     TixiDocumentHandle handle;
 
     tixiCreateDocument("Parameters", &handle);
-    epi::ParameterStudy study(epi::simulate, params, t0, tmax, 0.0, num_runs);
+    epi::ParameterStudy study([](auto&& t0, auto&& tmax, auto&& dt, auto&& params) {
+        return epi::simulate(t0, tmax, dt, params);
+    }, params, t0, tmax, 0.0, num_runs);
 
     study.get_parameter_space().get_secir_params().times[0].get_incubation().get_distribution()->add_predefined_sample(
         4711.0);
