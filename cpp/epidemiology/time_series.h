@@ -13,8 +13,7 @@ namespace epi
 namespace details
 {
     /** round an integer to the nearest greater power of 2 */
-    template <typename T>
-    T next_pow2(T i);
+    inline Eigen::Index next_pow2(Eigen::Index i);
 } // namespace details
 
 template <class FP, bool IsConstant>
@@ -124,7 +123,7 @@ public:
     }
 
     /**
-     * add one uninitilized time point
+     * add one uninitialized time point
      */
     Eigen::Ref<Vector> add_time_point()
     {
@@ -381,8 +380,7 @@ private:
 namespace details
 {
     /** round integer up to the next higher power of 2 */
-    template <typename T>
-    T next_pow2(T i)
+    inline Eigen::Index next_pow2(Eigen::Index i)
     {
         //https://stackoverflow.com/questions/1322510/given-an-integer-how-do-i-find-the-next-largest-power-of-two-using-bit-twiddlin
         --i;
@@ -391,7 +389,7 @@ namespace details
         i |= i >> 4;
         i |= i >> 8;
         i |= i >> 16;
-        if (sizeof(T) == 8) {
+        if (sizeof(Eigen::Index) == 8) {
             i |= i >> 32;
         }
         ++i;
