@@ -11,7 +11,7 @@ from epidemiology.epidata import getDataIntoPandasDataFrame as gd
 from unittest.mock import patch, call
 
 
-class Test_getDiviData(fake_filesystem_unittest.TestCase):
+class TestGetDiviData(fake_filesystem_unittest.TestCase):
     # construct fake directory for testing
     maxDiff = None
 
@@ -43,7 +43,7 @@ class Test_getDiviData(fake_filesystem_unittest.TestCase):
 "daten_stand":"2020-07-06 12:15:00"}""")
 
     test_string_read_fulldata = "[" + test_string1 + "," + test_string2 + "]"
-    test_string_read_fulldata_update = "[" + test_string3 + ","  + test_string1 + "," + test_string2 + "]"
+    test_string_read_fulldata_update = "[" + test_string3 + "," + test_string1 + "," + test_string2 + "]"
 
     test_string1 = "[" + test_string1 + "]"
     test_string2 = "[" + test_string2 + "]"
@@ -147,7 +147,7 @@ class Test_getDiviData(fake_filesystem_unittest.TestCase):
         mock_read_csv.return_value = pd.read_json(self.test_string1)
 
         # test_string1 has data from 7.7.2020
-        download_date = date(2020,7,7)
+        download_date = date(2020, 7, 7)
         call_date = download_date.strftime("%Y-%m-%d")
         call_time = "-12-15"
         ext = ""
@@ -155,9 +155,9 @@ class Test_getDiviData(fake_filesystem_unittest.TestCase):
         url_prefix = call_date + call_time + ext
 
         call_number = 3961
-        df =  gdd.call_call_url(url_prefix, call_number)
+        df = gdd.call_call_url(url_prefix, call_number)
 
-        call_url = "https://www.divi.de/divi-intensivregister-tagesreport-archiv-csv/divi-intensivregister-" +\
+        call_url = "https://www.divi.de/divi-intensivregister-tagesreport-archiv-csv/divi-intensivregister-" + \
                    "2020-07-07-12-15/viewdocument/3961"
 
         mock_read_csv.assert_called_with(call_url)
@@ -187,7 +187,7 @@ class Test_getDiviData(fake_filesystem_unittest.TestCase):
         gdd.call_call_url(url_prefix, call_number, input_string)
 
         exit_string = "ERROR: URL " + call_url + " could not be opened. " \
-                     + "Hint: check your internet connection."
+                      + "Hint: check your internet connection."
 
         mock_sys_error.assert_called_with(exit_string)
 
@@ -199,14 +199,13 @@ class Test_getDiviData(fake_filesystem_unittest.TestCase):
         # df should be empty
         self.assertTrue(df.empty)
 
-
     test_url_in_call_number_dict = {
         date(2020, 4, 24): ["2020-04-24-09-15", 3974],
         date(2020, 7, 7): ["2020-07-07-12-15", 3961],
         date(2020, 7, 15): ["2020-07-15-12-15", 4108],
     }
 
-    # dates wich are not in dict
+    # dates which are not in dict
     test_url_ending_else = {
         date(2020, 5, 7): ["2020-05-07-09-15", 3692],
         date(2020, 6, 4): ["2020-06-04-09-15", 3720],
@@ -219,8 +218,8 @@ class Test_getDiviData(fake_filesystem_unittest.TestCase):
         date_string = url_prefix
 
         if [date_string, call_number] in self.test_url_in_call_number_dict.values():
-             # add this point we do not care about the content, we just need a filled dataframe
-             return pd.read_json(self.test_string1)
+            # add this point we do not care about the content, we just need a filled dataframe
+            return pd.read_json(self.test_string1)
 
         elif [date_string, call_number] in self.test_url_ending_else.values():
 
@@ -231,13 +230,10 @@ class Test_getDiviData(fake_filesystem_unittest.TestCase):
         # this is comparable to call an wrong url
         return pd.DataFrame()
 
-
     def test_fake_call_call_url(self):
 
         df_content = pd.read_json(self.test_string1)
         df_empty = pd.DataFrame()
-
-        #start_string = "https://www.divi.de/divi-intensivregister-tagesreport-archiv-csv/divi-intensivregister-"
 
         # test for test_url_in_call_number_dict
         url_prefix = "2020-04-24-09-15"
@@ -274,7 +270,6 @@ class Test_getDiviData(fake_filesystem_unittest.TestCase):
 
         # test cases, where date is part of call_number_dict
         for test_date in self.test_url_in_call_number_dict.keys():
-
             df = gdd.download_data_for_one_day(last_number, test_date)
 
             # cases where date is in call_number_dict
@@ -284,8 +279,7 @@ class Test_getDiviData(fake_filesystem_unittest.TestCase):
 
         # test cases, where date has difference 1 to given call_number
         for test_date in self.test_url_ending_else.keys():
-
-            df = gdd.download_data_for_one_day(self.test_url_ending_else[test_date][1]-1, test_date)
+            df = gdd.download_data_for_one_day(self.test_url_ending_else[test_date][1] - 1, test_date)
 
             mock_ccu.assert_called_with(
                 self.test_url_ending_else[test_date][0], self.test_url_ending_else[test_date][1], "")
@@ -297,32 +291,30 @@ class Test_getDiviData(fake_filesystem_unittest.TestCase):
 
         df = gdd.download_data_for_one_day(test_call_number - 2, test_date)
 
-        expected_calls = [call.call_call_url(test_date_str, test_call_number - 1, "") ,
+        expected_calls = [call.call_call_url(test_date_str, test_call_number - 1, ""),
                           call.call_call_url(test_date_str, test_call_number, "")]
 
         # check if expected_calls is part from calls
         mock_ccu.assert_has_calls(expected_calls)
         # check if expected calls are the last two calls
-        self.assertTrue(mock_ccu.mock_calls[-2:]==expected_calls)
+        self.assertTrue(mock_ccu.mock_calls[-2:] == expected_calls)
 
-       # test case where given nunber has difference larger than 2 to call_number, namely 4
+        # test case where given nunber has difference larger than 2 to call_number, namely 4
 
-        call_string1 = "date(" + test_date.strftime("%Y,%-m,%-d") + "): " + str(test_call_number-1) + ","
+        call_string1 = "date(" + test_date.strftime("%Y,%-m,%-d") + "): " + str(test_call_number - 1) + ","
         call_string2 = "date(" + test_date.strftime("%Y,%-m,%-d") + "): " + str(test_call_number) + ","
 
         df = gdd.download_data_for_one_day(self.test_url_ending_else[test_date][1] - 4, test_date)
 
         expected_calls = [call.call_call_url(test_date_str, test_call_number - 3, ""),
-                          call.call_call_url(test_date_str , test_call_number - 2, ""),
-                          call.call_call_url(test_date_str , test_call_number - 1, call_string1),
-                          call.call_call_url(test_date_str , test_call_number , call_string2)
-                         ]
+                          call.call_call_url(test_date_str, test_call_number - 2, ""),
+                          call.call_call_url(test_date_str, test_call_number - 1, call_string1),
+                          call.call_call_url(test_date_str, test_call_number, call_string2)]
 
         # check if expected_calls is part from calls
         mock_ccu.assert_has_calls(expected_calls)
         # check if expected calls are the last 4 calls
         self.assertTrue(mock_ccu.mock_calls[-4:] == expected_calls)
-
 
     def fake_download_data_for_one_day(self, last_number, start_date):
         data_dict = {
@@ -341,7 +333,7 @@ class Test_getDiviData(fake_filesystem_unittest.TestCase):
     @patch('epidemiology.epidata.getDIVIData.download_data_for_one_day')
     def test_gdd_download_data(self, mock_ddfod, mock_print):
 
-        mock_ddfod.return_value= [3961, pd.read_json(self.test_string1)]
+        mock_ddfod.return_value = [3961, pd.read_json(self.test_string1)]
 
         # case simple download
         [read_data, update_data, make_plot, out_form, out_folder] = [False, False, False, "json", self.path]
@@ -373,11 +365,11 @@ class Test_getDiviData(fake_filesystem_unittest.TestCase):
         f_path = os.path.join(directory, file_out1)
         f = open(f_path, "r")
         fread = f.read()
-        self.assertEqual(fread, "[" + self.test_stringr1_county+ "]")
+        self.assertEqual(fread, "[" + self.test_stringr1_county + "]")
 
         f_path = os.path.join(directory, file_out2)
         f = open(f_path, "r")
-        self.assertEqual(f.read(), "[" + self.test_stringr1_state+ "]")
+        self.assertEqual(f.read(), "[" + self.test_stringr1_state + "]")
 
         f_path = os.path.join(directory, file_out3)
         f = open(f_path, "r")
@@ -417,11 +409,11 @@ class Test_getDiviData(fake_filesystem_unittest.TestCase):
         self.assertEqual(f.read(), "[" + self.test_stringr1_country + "," + self.test_stringr2_country + "]")
 
         start_string = "Success: Data of date "
-        end_string =  " has been included to dataframe"
-        expected_calls = [ call(start_string + date(2020, 7, 7).strftime("%Y-%m-%d") + end_string),
-                           call(start_string + date(2020, 7, 8).strftime("%Y-%m-%d") + end_string),
-                           call("Warning: Data of date " + date(2020, 7, 9).strftime("%Y-%m-%d")
-                                      + " is not included to dataframe")]
+        end_string = " has been included to dataframe"
+        expected_calls = [call(start_string + date(2020, 7, 7).strftime("%Y-%m-%d") + end_string),
+                          call(start_string + date(2020, 7, 8).strftime("%Y-%m-%d") + end_string),
+                          call("Warning: Data of date " + date(2020, 7, 9).strftime("%Y-%m-%d")
+                               + " is not included to dataframe")]
 
         # check if expected_calls is part from calls
         mock_print.assert_has_calls(expected_calls)
@@ -468,7 +460,7 @@ class Test_getDiviData(fake_filesystem_unittest.TestCase):
         with self.assertRaises(SystemExit) as cm:
             gdd.get_divi_data(read_data, update_data, make_plot, out_form, out_folder)
         self.assertEqual(cm.exception.code, "Error: The file: " + file_with_path + " does not exist. "
-                                            "Call program without -r or -u flag to get it.")
+                                                                                   "Call program without -r or -u flag to get it.")
 
         # Test case with empty file
         with open(file_with_path, 'w') as f:
@@ -505,7 +497,7 @@ class Test_getDiviData(fake_filesystem_unittest.TestCase):
     @patch('epidemiology.epidata.getDIVIData.download_data_for_one_day')
     @patch('builtins.print')
     @patch('epidemiology.epidata.getDIVIData.gd.loadCsv')
-    def test_gdd_update_data(self, mock_loadCSV, mock_print, mock_ddfod):
+    def test_gdd_update_data(self, mock_loadcsv, mock_print, mock_ddfod):
 
         [read_data, update_data, make_plot, out_form, out_folder] = [False, True, False, "json", self.path]
 
@@ -519,12 +511,12 @@ class Test_getDiviData(fake_filesystem_unittest.TestCase):
         file_out2 = "state_divi.json"
         file_out3 = "germany_divi.json"
 
-         # Test case where file does not exist
+        # Test case where file does not exist
 
         with self.assertRaises(SystemExit) as cm:
             gdd.get_divi_data(read_data, update_data, make_plot, out_form, out_folder)
-        self.assertEqual(cm.exception.code, "Error: The file: " + file_with_path + " does not exist. "
-                                                                                   "Call program without -r or -u flag to get it.")
+        self.assertEqual(cm.exception.code, "Error: The file: " + file_with_path + 
+                         " does not exist. Call program without -r or -u flag to get it.")
 
         # Test case with empty file
         with open(file_with_path, 'w') as f:
@@ -540,20 +532,20 @@ class Test_getDiviData(fake_filesystem_unittest.TestCase):
 
         # Case where just the date of today is missing
 
-        #case where data is not yet uploaded:
-        mock_loadCSV.return_value = pd.read_json(self.test_string1)
+        # case where data is not yet uploaded:
+        mock_loadcsv.return_value = pd.read_json(self.test_string1)
 
         with self.assertRaises(SystemExit) as cm:
             gdd.get_divi_data(read_data, update_data, make_plot, out_form, out_folder)
-        self.assertEqual(cm.exception.code, "Data of today = " + date(2020,7,8).strftime("%Y-%m-%d") \
-                                          + " has not yet uploaded. Please, try again later.")
+        self.assertEqual(cm.exception.code, "Data of today = " + date(2020, 7, 8).strftime("%Y-%m-%d")
+                         + " has not yet uploaded. Please, try again later.")
 
         # case where data exists
-        mock_loadCSV.return_value = pd.read_json(self.test_string2)
+        mock_loadcsv.return_value = pd.read_json(self.test_string2)
 
         gdd.get_divi_data(read_data, update_data, make_plot, out_form, out_folder)
 
-        mock_loadCSV.assert_called_with('DIVI-Intensivregister-Tagesreport', apiUrl = 'https://www.divi.de/')
+        mock_loadcsv.assert_called_with('DIVI-Intensivregister-Tagesreport', apiUrl='https://www.divi.de/')
 
         # check content of files
         f = open(file_with_path, "r")
@@ -610,12 +602,14 @@ class Test_getDiviData(fake_filesystem_unittest.TestCase):
 
         f_path = os.path.join(directory, file_out3)
         f = open(f_path, "r")
-        self.assertEqual(f.read(), "[" + self.test_stringr3_country + "," + self.test_stringr1_country + "," + self.test_stringr2_country + "]")
+        self.assertEqual(f.read(),
+                         "[" + self.test_stringr3_country + "," + self.test_stringr1_country + 
+                         "," + self.test_stringr2_country + "]")
 
         start_string = "Success: Data of date "
-        end_string =  " has been included to dataframe"
-        expected_calls = [ call(start_string + date(2020, 7, 7).strftime("%Y-%m-%d") + end_string),
-                           call(start_string + date(2020, 7, 8).strftime("%Y-%m-%d") + end_string)]
+        end_string = " has been included to dataframe"
+        expected_calls = [call(start_string + date(2020, 7, 7).strftime("%Y-%m-%d") + end_string),
+                          call(start_string + date(2020, 7, 8).strftime("%Y-%m-%d") + end_string)]
 
         # check if expected_calls is part from calls
         mock_print.assert_has_calls(expected_calls)

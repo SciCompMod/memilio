@@ -160,7 +160,7 @@ class Test_getPopulationData(fake_filesystem_unittest.TestCase):
 
     def test_gpd_read_data_full(self):
 
-        [read_data, make_plot, out_form, out_folder] = [True, False, "json", self.path]
+        [read_data, update_data, make_plot, out_form, out_folder] = [True, False, False, "json", self.path]
 
         directory = os.path.join(out_folder, 'Germany/')
         gd.check_dir(directory)
@@ -176,7 +176,8 @@ class Test_getPopulationData(fake_filesystem_unittest.TestCase):
         with open(os.path.join(directory, file2), 'w') as f:
             f.write(self.test_string2)
 
-        gpd.get_population_data(read_data, make_plot, out_form, out_folder)
+
+        gpd.get_population_data(read_data, update_data, make_plot, out_form, out_folder)
 
         #self.assertEqual(len(os.listdir(directory)), 4)
         self.assertEqual(len(os.listdir(directory)), 3)

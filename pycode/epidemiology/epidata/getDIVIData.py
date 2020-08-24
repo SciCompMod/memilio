@@ -65,7 +65,7 @@ def adjust_data(df, date_of_data):
 
 ## Calls, if possible a url and breaks if it is not possible to call the url,
 # e.g., due to a not working internet connection
-# or returns an empty datafram if url is not the correct one.
+# or returns an empty dataframe if url is not the correct one.
 #
 # @param url_prefix Date specific part of the url
 # @param call_number Irregular number which is needed for the url
@@ -97,6 +97,7 @@ def call_call_url(url_prefix, call_number, new_found=""):
 
     return df
 
+
 ## Downloads data for given date
 #
 # This function checks if the given date is a key of a dictionary where dates
@@ -107,7 +108,7 @@ def call_call_url(url_prefix, call_number, new_found=""):
 # Than the last_number is successive decreased by one until a difference of 300 is reached.
 # At last the last_number without a change is tried.
 # If data could be downloaded by the function call_call_url and the difference was 1 or 2. The data is simply given back.
-# If the difference is differentan additional message is printed,
+# If the difference is different an additional message is printed,
 # which can be used to copy directly to the call_number_dict to decrease runtime of the program.
 # Furthermore, in this function another specific part of the url, the call_time, is estimated from the given date.
 # If the date is before 2020-6-5 the time "-09-15" and afterwards "-12-15" has to be added to te date.
@@ -179,8 +180,8 @@ def download_data_for_one_day(last_number, download_date):
     # for the latest dates no call number is needed
     # number in url starts at values in call_number_dict and increases every day by 1
 
-    sign_dict = {0:1,
-                 1:-1}
+    sign_dict = {0: 1,
+                 1: -1}
 
     if download_date in call_number_dict.keys():
 
@@ -198,7 +199,7 @@ def download_data_for_one_day(last_number, download_date):
                call_number = last_number + sign_dict[sign]*delta
 
                # for delta 1 and 2 the number is not saved in dict,
-               # because it does not take so long to get those nubers
+               # because it does not take so long to get those numbers
                if sign == 0 and delta != 1 and delta != 2:
                   call_string = "date(" + download_date.strftime("%Y,%-m,%-d") + "): " + str(call_number) + ","
 
@@ -214,6 +215,7 @@ def download_data_for_one_day(last_number, download_date):
 
     return [call_number, df]
 
+
 ## Function to get the divi data.
 #
 # Available data start from 2020-4-24.
@@ -225,7 +227,7 @@ def download_data_for_one_day(last_number, download_date):
 #
 # If update_data == True  the same happens as for read_data == True.
 # Furthermore, if the last date in read data is yesterday the data of today is downloaded.
-# For this download an easier link can be used than the one where we have to find the misterious call_number
+# For this download an easier link can be used than the one where we have to find the mysterious call_number
 # If the data has not yet been uploaded the program is stopped with message to try again later.
 # If there is more data missing than today the parameter start_date is changed to the first missing data
 # and the data is normally downloaded (see below).
@@ -233,7 +235,7 @@ def download_data_for_one_day(last_number, download_date):
 # If data should normally  be downloaded between start_date and end_date we start with an empty pandas dataframe.
 # Afterwards for everyday between start_date and end_date, both included,
 # the function download_data_for_one_day is called.
-# If a given back dataframe is empty a warning is printed, that this date is missing, but theprogram is not stopped.
+# If a given back dataframe is empty a warning is printed, that this date is missing, but the program is not stopped.
 # If start_date is earlier or equal 2020-24-29 the function adjust_data has to be called.
 # If data has been downloaded the dataframe of this one date is added to the dataframe with all dates.
 #
@@ -296,7 +298,7 @@ def get_divi_data(read_data=dd.defaultDict['read_data'],
                     # just todays data is missing
                     # download data from today
                     # download while loop will be skipped
-                    df2 = gd.loadCsv('DIVI-Intensivregister-Tagesreport', apiUrl = 'https://www.divi.de/')
+                    df2 = gd.loadCsv('DIVI-Intensivregister-Tagesreport', apiUrl='https://www.divi.de/')
 
                     if not df2.empty:
                         # test if online data is already the one of today
@@ -359,7 +361,7 @@ def get_divi_data(read_data=dd.defaultDict['read_data'],
     for key, value in dd.County.items():
         df.loc[df["County"] == key, ["County"]] = value
 
-    #print("Available columns:", df.columns)
+    # print("Available columns:", df.columns)
 
     # write data for counties to file
 

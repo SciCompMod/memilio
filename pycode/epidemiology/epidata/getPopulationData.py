@@ -32,13 +32,13 @@ def get_one_data_set(read_data, out_form, directory, d):
 
    if(read_data):
       # if once dowloaded just read json file
-      file = os.path.join(directory, d.filename+".json")
+      file = os.path.join(directory, d.filename + ".json")
 
       try:
          df = pandas.read_json(file)
 
       except ValueError:
-         exit_string = "Error: The file: " + file + "does not exist. Call program without -r flag to get it."
+         exit_string = "Error: The file: " + file + " does not exist. Call program without -r flag to get it."
          sys.exit(exit_string)
    else:
 
