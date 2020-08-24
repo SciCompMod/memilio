@@ -189,9 +189,16 @@ TYPED_TEST(TestTimeSeries, iteratorsRange)
     {
         ASSERT_EQ(epi::print_wrap(v), epi::print_wrap(ts[i]));
         ++i;
+    }    
+    i = 3;
+    for (auto &&v : epi::make_range(ts.rbegin(), ts.rend()))
+    {        
+        ASSERT_EQ(epi::print_wrap(v), epi::print_wrap(ts[i]));
+        --i;
     }
     ASSERT_THAT(ts, testing::ElementsAre(v0, v1, v2, v3));
-    ASSERT_THAT(ts_constref, testing::ElementsAre(v0, v1, v2, v3));
+    ASSERT_THAT(ts_constref, testing::ElementsAre(v0, v1, v2, v3));    
+    ASSERT_THAT(epi::make_range(ts.rbegin(), ts.rend()), testing::ElementsAre(v3, v2, v1, v0));
 }
 
 TYPED_TEST(TestTimeSeries, timeIteratorsRange)
@@ -219,9 +226,16 @@ TYPED_TEST(TestTimeSeries, timeIteratorsRange)
     {        
         ASSERT_EQ(t, ts.get_time(i));
         ++i;
+    }    
+    i = 3;
+    for (auto &&t : ts.get_reverse_times())
+    {        
+        ASSERT_EQ(t, ts.get_time(i));
+        --i;
     }
     ASSERT_THAT(ts.get_times(), testing::ElementsAre(0, 1, 2, 3));
     ASSERT_THAT(ts_constref.get_times(), testing::ElementsAre(0, 1, 2, 3));
+    ASSERT_THAT(ts.get_reverse_times(), testing::ElementsAre(3, 2, 1, 0));
 }
 
 TYPED_TEST(TestTimeSeries, iteratorsRandomAccess)
