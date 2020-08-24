@@ -373,6 +373,20 @@ UncertainValue& SecirParams::Probabilities::get_dead_per_icu()
 
 void SecirParams::Probabilities::check_constraints()
 {
+    if (m_asympinf < 0.0 || m_asympinf > 1.0)
+        m_asympinf = 0;
+
+    if (m_risksymp < 0.0 || m_risksymp > 1.0)
+        m_risksymp = 0;
+
+    if (m_hospinf < 0.0 || m_hospinf > 1.0)
+        m_hospinf = 0;
+
+    if (m_icuhosp < 0.0 || m_icuhosp > 1.0)
+        m_icuhosp = 0;
+
+    if (m_deathicu < 0.0 || m_deathicu > 1.0)
+        m_deathicu = 0;
 }
 
 void SecirParams::set_contact_patterns(UncertainContactMatrix contact_patterns)

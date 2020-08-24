@@ -169,6 +169,9 @@ size_t Populations::get_flat_index(std::vector<size_t> const& indices) const
 
 void Populations::check_constraints()
 {
+    for (auto i = 0; i < m_y.size(); i++) {
+        assert(m_y[i] >= 0);
+    }
 }
 
 } // namespace epi

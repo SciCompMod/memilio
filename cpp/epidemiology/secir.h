@@ -287,6 +287,9 @@ public:
 
         /**
          * @brief checks whether the stage times Parameters satisfy their corresponding constraints and adjusts them, if they do not
+         * For certain stage time values, the simulation can produce (small) negative population results.
+         * To prevent this from happening, mathematical constraints have been derived and implemented here.
+         * For further details, see the overleaf discussion chapter.
          */
         void check_constraints();
 
