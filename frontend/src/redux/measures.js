@@ -1,6 +1,6 @@
-import { createSlice } from '@reduxjs/toolkit';
-import { init } from './app';
-import { v4 as uuid } from 'uuid';
+import {createSlice} from '@reduxjs/toolkit';
+import {init} from './app';
+import {v4 as uuid} from 'uuid';
 
 const findById = (list, id) => {
   return list.find((m) => m.id === id);
@@ -83,12 +83,12 @@ const slice = createSlice({
       const measure = findById(state, action.payload.measure);
       if (measure) {
         const id = uuid();
-        const { start, end } = action.payload;
+        const {start, end} = action.payload;
         measure.intervals.push({
           id,
           start,
           end,
-          active: true
+          active: true,
         });
 
         // reorder by start date and end date
@@ -109,7 +109,7 @@ const slice = createSlice({
         // reorder by start date and end date
         measure.intervals = sortByDate(measure.intervals);
       }
-    }
+    },
   },
   extraReducers: {
     [init]: (state, action) => {
@@ -118,7 +118,7 @@ const slice = createSlice({
           if (m.intervals && m.intervals.length > 0) {
             m.intervals = m.intervals.map((i) => {
               const interval = sanitizeInterval(i);
-              return { ...interval, id: uuid(), active: true };
+              return {...interval, id: uuid(), active: true};
             });
             m.active = true;
           }
@@ -128,23 +128,18 @@ const slice = createSlice({
               intervals: [],
               damping: 0,
               label: '',
-              active: false
+              active: false,
             },
             m
           );
         });
       }
       return state;
-    }
-  }
+    },
+  },
 });
 
-export const {
-  addInterval,
-  editInterval,
-  activateMeasure,
-  deactivateMeasure
-} = slice.actions;
+export const {addInterval, editInterval, activateMeasure, deactivateMeasure} = slice.actions;
 
 export const getActiveMeasures = (state) => {
   return state
@@ -155,9 +150,7 @@ export const getActiveMeasures = (state) => {
 
       return {
         ...m,
-        intervals: m.intervals
-          .map((i) => (i.active ? i : null))
-          .filter((i) => i !== null)
+        intervals: m.intervals.map((i) => (i.active ? i : null)).filter((i) => i !== null),
       };
     })
     .filter((m) => m !== null);

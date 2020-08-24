@@ -1,3 +1,4 @@
+#include <epidemiology/parameter_studies/parameter_distribution.h>
 #include <epidemiology/parameter_studies/parameter_space.h>
 #include <epidemiology/secir.h>
 #include <stdio.h>
@@ -56,23 +57,24 @@ int main()
     epi::ContactFrequencyMatrix contact_freq_matrix{nb_groups};
     for (size_t i = 0; i < nb_groups; i++) {
         for (size_t j = i; i < nb_groups; i++) {
-            contact_freq_matrix.set_cont_freq(0.5, i, j);
+            contact_freq_matrix.set_cont_freq(0.5, static_cast<int>(i), static_cast<int>(j));
         }
     }
 
     double t0   = 0;
     double tmax = 100;
-    epi::ContactFrequencyVariableElement contact_varel{
-        contact_freq_matrix,
-        std::make_unique<epi::ParameterDistributionUniform>(epi::ParameterDistributionUniform(1, (tmax - t0) / 10)),
-        std::make_unique<epi::ParameterDistributionUniform>(epi::ParameterDistributionUniform(t0, tmax)),
-        std::make_unique<epi::ParameterDistributionUniform>(epi::ParameterDistributionUniform(0.1, 1)),
-        std::make_unique<epi::ParameterDistributionUniform>(epi::ParameterDistributionUniform(0.6, 1.4)),
-        std::make_unique<epi::ParameterDistributionUniform>(epi::ParameterDistributionUniform(0.7, 1.1))};
 
-    epi::ContactFrequencyMatrix cfmat_sample = contact_varel.get_sample();
+    epi::SecirParams params(contact_freq_matrix);
+    params.get_contact_patterns().set_dist_damp_nb(ParameterDistributionUniform(1, (tmax - t0) / 10));
+    params.get_contact_patterns().set_dist_damp_days(ParameterDistributionUniform(t0, tmax));
+    params.get_contact_patterns().set_dist_damp_diag_base(ParameterDistributionUniform(0.1, 1));
+    params.get_contact_patterns().set_dist_damp_diag_rel(ParameterDistributionUniform(0.6, 1.4));
+    params.get_contact_patterns().set_dist_damp_offdiag_rel(ParameterDistributionUniform(0.7, 1.1));
 
-    printf("\n\n Number of dampings: %lu\n", cfmat_sample.get_dampings(0, 0).get_dampings_vector().size());
+    epi::ParameterSpace params_space(params, t0, tmax, 0.1);
+    epi::ContactFrequencyMatrix cfmat_sample = params_space.draw_sample().get_contact_patterns().get_cont_freq_mat();
+
+    printf("\n\n Number of dampings: %zu\n", cfmat_sample.get_dampings(0, 0).get_dampings_vector().size());
 
     double day0 = cfmat_sample.get_dampings(0, 0).get_dampings_vector()[0].day;
     printf("\n First damping G(0,0) at %.2f with factor %.2f\n", cfmat_sample.get_dampings(0, 0).get_factor(day0),
@@ -82,12 +84,13 @@ int main()
     double day1_00 = cfmat_sample.get_dampings(0, 0).get_dampings_vector()[1].day;
     printf("\n Damping at day %.2f\n\t", day1_00);
     for (size_t i = 0; i < nb_groups; i++) {
-        printf("G%lu\t", i);
+        printf("G%zu\t", i);
     }
     for (size_t i = 0; i < nb_groups; i++) {
-        printf("\n G%lu", i);
+        printf("\n G%zu", i);
         for (size_t j = 0; j < nb_groups; j++) {
-            printf("\t %.2f", cfmat_sample.get_dampings(i, j).get_factor(day1_00)); // get all the dampings...
+            printf("\t %.2f", cfmat_sample.get_dampings(static_cast<int>(i), static_cast<int>(j))
+                                  .get_factor(day1_00)); // get all the dampings...
         }
     }
     printf("\n");

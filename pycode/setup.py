@@ -31,7 +31,8 @@ setup(
             'getjhdata = epidemiology.epidata.getJHData:main',
             'getspaindata = epidemiology.epidata.getSpainData:main',
             'getdividata = epidemiology.epidata.getDIVIData:main',
-            'getalldata = epidemiology.epidata.getAllData:main'
+            'getalldata = epidemiology.epidata.getAllData:main',
+            'cleandata = epidemiology.epidata.cleanData:main'
         ],
     },
     package_dir={

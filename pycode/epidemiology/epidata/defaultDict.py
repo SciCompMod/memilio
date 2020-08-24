@@ -1,11 +1,14 @@
 #This dictionary ensures that in case of calling the functions
 # and of calling the console scripts the default values are the same
+import os
+
+default_file_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), '../../../data')
 
 defaultDict = {
    'read_data':False,
    'make_plot':False,
    'out_form':'json',
-   'out_folder':'',
+   'out_folder': default_file_path,
    'update_data':False
 }
 
@@ -43,6 +46,7 @@ EngEng = {
    'free_ICU': 'free_ICU',
    'reporting_hospitals': 'reporting_hospitals',
    'ICU_ventilated': 'ICU_ventilated',
+   'population': 'Population'
 }
 
 GerEng = {
@@ -67,6 +71,12 @@ GerEng = {
    'anzahl_standorte': EngEng['reporting_hospitals'],
    'faelle_covid_aktuell': EngEng['intensive care unit'],
    'faelle_covid_aktuell_beatmet': EngEng['ICU_ventilated'],
+   'LAN_ew_GEN': EngEng['state'],
+   'LAN_ew_EWZ': EngEng['population'],
+   'LAN_ew_RS': EngEng['idState'],
+   'EWZ': EngEng['population'],
+   'GEN': EngEng['county'],
+   'RS': EngEng['idCounty']
 }
 
 EsEng = {'fecha': EngEng['date'],

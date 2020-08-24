@@ -71,7 +71,9 @@ def loadCsv( targetFileName, apiUrl = 'https://opendata.arcgis.com/datasets/',
 def cli(description):
   
    out_path_default = dd.defaultDict['out_folder']
- 
+   out_path_default = os.path.join(out_path_default, 'pydata')
+   check_dir(out_path_default)
+
    parser = argparse.ArgumentParser(description=description)
    
    parser.add_argument('-r',  '--read-from-disk',
@@ -84,8 +86,7 @@ def cli(description):
                        action='store_true')
    parser.add_argument('-h5', '--hdf5', help='Changes output format from json to hdf5.',
                        action='store_true')
-   parser.add_argument('-o', '--out_path', type=str, default=out_path_default, help='Defines folder for output.')
-                       #action='store_true')
+   parser.add_argument('-o', '--out-path', type=str, default=out_path_default, help='Defines folder for output.')
 
    args = parser.parse_args()
 

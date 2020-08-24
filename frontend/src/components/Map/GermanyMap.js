@@ -1,8 +1,8 @@
-import React, { Component } from 'react';
-import { connect } from 'react-redux';
+import React, {Component} from 'react';
+import {connect} from 'react-redux';
 
 import InteractiveMap from '../../common/interactive_map';
-import { setSelected } from '../../redux/app';
+import {setSelected} from '../../redux/app';
 
 import './Map.scss';
 
@@ -15,7 +15,8 @@ class GermanyMap extends Component {
   componentDidMount() {
     this.map = new InteractiveMap(this.node.current);
     this.map.onSelect((selected) => {
-      const { dataset, id } = selected;
+      console.log(selected);
+      const {dataset, id} = selected;
       if (!dataset || !id) {
         this.props.setSelected(null);
       } else {
@@ -33,6 +34,6 @@ class GermanyMap extends Component {
   }
 }
 
-const ConnectedMap = connect(null, { setSelected })(GermanyMap);
+const ConnectedMap = connect(null, {setSelected})(GermanyMap);
 
-export { ConnectedMap as GermanyMap };
+export {ConnectedMap as GermanyMap};
