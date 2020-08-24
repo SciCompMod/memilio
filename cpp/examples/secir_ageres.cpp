@@ -100,12 +100,13 @@ int main()
     printf("secir.size() - 1:%d\n", static_cast<int>(secir.size() - 1));
     printf("People in\n");
 
-    for (size_t k = 0; k < 8; k++) {
+    for (size_t k = 0; k < epi::SecirCompartments::SecirCount; k++) {
         double dummy = 0;
 
         for (size_t i = 0; i < params.get_num_groups(); i++) {
-            printf("\t %c[%d]: %.0f", vars[k], (int)i, secir[secir.size() - 1][k + 8 * i]);
-            dummy += secir[secir.size() - 1][k + 8 * i];
+            printf("\t %c[%d]: %.0f", vars[k], (int)i,
+                   secir[secir.size() - 1][k + epi::SecirCompartments::SecirCount * i]);
+            dummy += secir[secir.size() - 1][k + epi::SecirCompartments::SecirCount * i];
         }
 
         printf("\t %c_otal: %.0f\n", vars[k], dummy);

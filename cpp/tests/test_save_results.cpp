@@ -74,8 +74,9 @@ TEST(TestSaveResult, compareResultWithH5)
         for (size_t l = 0; l < test_result.get_groups_vectors()[i].size() / nb_groups; l++) {
             double dummy = 0.0;
             for (size_t j = 0; j < nb_groups; j++) {
-                dummy += secihurd[i][j * 8 + l];
-                EXPECT_NEAR(test_result.get_groups_vectors()[i][j * 8 + l], secihurd[i][j * 8 + l], 1e-10)
+                dummy += secihurd[i][j * epi::SecirCompartments::SecirCount + l];
+                EXPECT_NEAR(test_result.get_groups_vectors()[i][j * epi::SecirCompartments::SecirCount + l],
+                            secihurd[i][j * epi::SecirCompartments::SecirCount + l], 1e-10)
                     << " at row " << i << " at row " << l << " at Group " << j;
             }
             EXPECT_NEAR(test_result.get_totals_vector()[i][l], dummy, 1e-10) << " at row " << i << " at row " << l;
