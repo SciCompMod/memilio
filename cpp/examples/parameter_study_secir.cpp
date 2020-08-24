@@ -47,7 +47,7 @@ int main(int argc, char* argv[])
     // delta = delta_in; // deaths per ICUs
 
     int num_groups = 1;
-    double fact   = 1.0 / (double)num_groups;
+    double fact    = 1.0 / (double)num_groups;
 
     epi::SecirParams params(num_groups);
 
@@ -94,7 +94,7 @@ int main(int argc, char* argv[])
         },
         params, t0, tmax, 0.2, 1);
 
-    parameter_study.set_num_runs(5);
+    parameter_study.set_num_runs(1);
 
     // Run parameter study
 

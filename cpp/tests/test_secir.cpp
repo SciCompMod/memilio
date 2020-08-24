@@ -322,3 +322,72 @@ TEST(TestSecir, testParamConstructors)
         }
     }
 }
+
+TEST(TestSecir, check_constraints)
+{
+    double tinc    = 5.1, // R_2^(-1)+R_3^(-1)
+        tinfmild   = 5.86642, // 4-14  (=R4^(-1))
+        tserint    = 5.08993, // 4-4.4 // R_2^(-1)+0.5*R_3^(-1)
+        thosp2home = 11.6138, // 7-16 (=R5^(-1))
+        thome2hosp = 4.45361, // 2.5-7 (=R6^(-1))
+        thosp2icu  = 2.15791, // 1-3.5 (=R7^(-1))
+        ticu2home  = 9.16291, // 5-16 (=R8^(-1))
+        tinfasy    = 0.57504, // (=R9^(-1)=R_3^(-1)+0.5*R_4^(-1))
+        ticu2death = 5.90264; // 3.5-7 (=R5^(-1))
+
+    double cont_freq = 0.5, // 0.2-0.75
+        infprob      = 0.924519,
+           alpha     = 2.124921, // 0.01-0.16
+        beta         = 0.190609, // 0.05-0.5
+        delta        = 0.245801, // 0.15-0.77
+        rho          = 0.183693, // 0.1-0.35
+        theta        = 0.185556; // 0.15-0.4
+
+    double nb_total_t0 = 10000, nb_exp_t0 = -91, nb_inf_t0 = 39, nb_car_t0 = 36, nb_hosp_t0 = 20, nb_icu_t0 = 10,
+           nb_rec_t0 = 8, nb_dead_t0 = 0;
+
+    epi::SecirParams params;
+
+    // alpha = alpha_in; // percentage of asymptomatic cases
+    // beta  = beta_in; // risk of infection from the infected symptomatic patients
+    // rho   = rho_in; // hospitalized per infected
+    // theta = theta_in; // icu per hospitalized
+    // delta = delta_in; // deaths per ICUs
+
+    params.times[0].set_incubation(tinc);
+    params.times[0].set_infectious_mild(tinfmild);
+    params.times[0].set_serialinterval(tserint);
+    params.times[0].set_hospitalized_to_home(thosp2home);
+    params.times[0].set_home_to_hospitalized(thome2hosp);
+    params.times[0].set_hospitalized_to_icu(thosp2icu);
+    params.times[0].set_icu_to_home(ticu2home);
+    params.times[0].set_infectious_asymp(tinfasy);
+    params.times[0].set_icu_to_death(ticu2death);
+
+    epi::ContactFrequencyMatrix& cont_freq_matrix = params.get_contact_patterns();
+    cont_freq_matrix.set_cont_freq(cont_freq, 0, 0);
+    epi::Damping dummy(30., 0.3);
+    cont_freq_matrix.add_damping(dummy, 0, 0);
+
+    params.populations.set({0, epi::SecirCompartments::E}, nb_exp_t0);
+    params.populations.set({0, epi::SecirCompartments::C}, nb_car_t0);
+    params.populations.set({0, epi::SecirCompartments::I}, nb_inf_t0);
+    params.populations.set({0, epi::SecirCompartments::H}, nb_hosp_t0);
+    params.populations.set({0, epi::SecirCompartments::U}, nb_icu_t0);
+    params.populations.set({0, epi::SecirCompartments::R}, nb_rec_t0);
+    params.populations.set({0, epi::SecirCompartments::D}, nb_dead_t0);
+    params.populations.set_difference_from_total({0, epi::SecirCompartments::S}, nb_total_t0);
+
+    params.probabilities[0].set_asymp_per_infectious(alpha);
+    params.probabilities[0].set_risk_from_symptomatic(beta);
+    params.probabilities[0].set_hospitalized_per_infectious(rho);
+    params.probabilities[0].set_icu_per_hospitalized(theta);
+    params.probabilities[0].set_dead_per_icu(delta);
+
+    epi::set_log_level(epi::LogLevel::off);
+    params.check_constraints();
+
+    EXPECT_EQ(0.0, params.populations.get({0, epi::SecirCompartments::E}));
+    EXPECT_EQ(0.0, params.probabilities[0].get_asymp_per_infectious());
+    EXPECT_NEAR(4.6, params.times[0].get_serialinterval(), 1e-14);
+}

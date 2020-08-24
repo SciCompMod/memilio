@@ -61,50 +61,6 @@ int main()
     // double nb_total_t0 = 10000, nb_exp_t0 = 91, nb_inf_t0 = 39, nb_car_t0 = 36, nb_hosp_t0 = 20, nb_icu_t0 = 10,
     //        nb_rec_t0 = 8, nb_dead_t0 = 0;
 
-    // // large problem !!! (here one assumption/relation between tinc and tserint becomes problematic))
-    // double tinc    = 4.4912, // R_2^(-1)+R_3^(-1)
-    //     tinfmild   = 7.47478, // 4-14  (=R4^(-1))
-    //     tserint    = 4.82975, // 4-4.4 // R_2^(-1)+0.5*R_3^(-1)
-    //     thosp2home = 10.9656, // 7-16 (=R5^(-1))
-    //     thome2hosp = 5.23476, // 2.5-7 (=R6^(-1))
-    //     thosp2icu  = 2.09982, // 1-3.5 (=R7^(-1))
-    //     ticu2home  = 8.30871, // 5-16 (=R8^(-1))
-    //     tinfasy    = 5.43563, // (=R9^(-1)=R_3^(-1)+0.5*R_4^(-1))
-    //     ticu2death = 4.90333; // 3.5-7 (=R5^(-1))
-
-    // double cont_freq = 0.5, // 0.2-0.75
-    //     infprob      = 1.01802,
-    //        alpha     = 0.110912, // 0.01-0.16
-    //     beta         = 0.266166, // 0.05-0.5
-    //     delta        = 0.308073, // 0.15-0.77
-    //     rho          = 0.197487, // 0.1-0.35
-    //     theta        = 0.287514; // 0.15-0.4
-
-    // double nb_total_t0 = 10000, nb_exp_t0 = 119, nb_inf_t0 = 55, nb_car_t0 = 53, nb_hosp_t0 = 20, nb_icu_t0 = 10,
-    //        nb_rec_t0 = 10, nb_dead_t0 = 0;
-
-    // // large problem 2 !!!
-    // double tinc    = 5.62793, // R_2^(-1)+R_3^(-1)
-    //     tinfmild   = 3.34495, // 4-14  (=R4^(-1))
-    //     tserint    = 2.86676, // 4-4.4 // R_2^(-1)+0.5*R_3^(-1)
-    //     thosp2home = 11.3265, // 7-16 (=R5^(-1))
-    //     thome2hosp = 4.85163, // 2.5-7 (=R6^(-1))
-    //     tinfasy    = 5.56477, // (=R9^(-1)=R_3^(-1)+0.5*R_4^(-1))
-    //     thosp2icu  = 1.54707, // 1-3.5 (=R7^(-1))
-    //     ticu2home  = 6.73156, // 5-16 (=R8^(-1))
-    //     ticu2death = 3.86713; // 3.5-7 (=R5^(-1))
-
-    // double cont_freq = 0.5, // 0.2-0.75
-    //     infprob      = 1.05951,
-    //        alpha     = 0.0851654, // 0.01-0.16
-    //     beta         = 0.261075, // 0.05-0.5
-    //     delta        = 0.315015, // 0.15-0.77
-    //     rho          = 0.141635, // 0.1-0.35
-    //     theta        = 0.168633; // 0.15-0.4
-
-    // double nb_total_t0 = 10000, nb_exp_t0 = 105, nb_inf_t0 = 35, nb_car_t0 = 53, nb_hosp_t0 = 20, nb_icu_t0 = 10,
-    //        nb_rec_t0 = 8, nb_dead_t0 = 0;
-
     epi::SecirParams params;
 
     params.times[0].set_incubation(tinc);
@@ -162,3 +118,4 @@ int main()
     //    secir[secir.size() - 1][5] + secir[secir.size() - 1][6] +
     //    secir[secir.size() - 1][7]);
 }
+

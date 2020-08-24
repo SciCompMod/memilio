@@ -152,6 +152,11 @@ public:
      */
     size_t get_flat_index(std::vector<size_t> const& indices) const;
 
+    /**
+     * @brief checks whether the population Parameters satisfy their corresponding constraints
+     */
+    void check_constraints();
+
 private:
     // A vector storying the size of each category
     std::vector<size_t> m_category_sizes;

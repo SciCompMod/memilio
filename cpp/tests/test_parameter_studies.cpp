@@ -269,7 +269,7 @@ TEST(ParameterStudies, check_ensemble_run_result)
         // printf("\n");
         for (size_t j = 0; j < static_cast<size_t>(results[0][i].size()); j++) { // number of compartments per time step
             // printf(" %.2e ( %d ) ", results[0][i][j], j % epi::SecirCompartments::SecirCount);
-            EXPECT_GE(results[0][i][j], -1e-3) << " day " << i << " group " << j;
+            EXPECT_GE(results[0][i][j], 0.0) << " day " << i << " group " << j;
             total_at_ti[j / epi::SecirCompartments::SecirCount] += results[0][i][j];
         }
         for (size_t j = 0; j < params.get_num_groups(); j++) {

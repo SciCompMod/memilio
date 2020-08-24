@@ -285,6 +285,15 @@ public:
         const UncertainValue& get_icu_to_dead() const;
         UncertainValue& get_icu_to_dead();
 
+        /**
+         * @brief checks whether the stage times Parameters satisfy their corresponding constraints and adjusts them, if they do not
+         * For certain stage time values, the simulation can produce (small) negative population results.
+         * To prevent this from happening, mathematical constraints have been derived and implemented here.
+         * For further details, see the overleaf discussion chapter.
+         * The constraints are step size-dependent, in the current implementation, we have assumed dt_max = 1.
+         */
+        void check_constraints();
+
     private:
         UncertainValue m_tinc, m_tinfmild; // parameters also available in SEIR
         UncertainValue m_tserint, m_thosp2home, m_thome2hosp, m_thosp2icu, m_ticu2home, m_tinfasy,
@@ -410,9 +419,19 @@ public:
         const UncertainValue& get_dead_per_icu() const;
         UncertainValue& get_dead_per_icu();
 
+        /**
+         * @brief checks whether the probability Parameters satisfy their corresponding constraints and adjusts them, if they do not
+         */
+        void check_constraints();
+
     private:
         UncertainValue m_infprob, m_asympinf, m_risksymp, m_hospinf, m_icuhosp, m_deathicu; // probabilities
     };
+
+    /**
+     * @brief checks whether all Parameters satisfy their corresponding constraints and adjusts them, if they do not
+     */
+    void check_constraints();
 
     /**
      * @brief sets the UncertainContactMatrix
