@@ -93,7 +93,7 @@ TYPED_TEST(TestTimeSeries, copyEmpty)
     epi::TimeSeries<TypeParam> ts3(1);
     ts3 = ts;
 
-    for (auto&& ts : {&ts2, &ts2}) {
+    for (auto&& ts : {&ts2, &ts3}) {
         ASSERT_EQ(ts->get_num_elements(), 10);
         ASSERT_EQ(ts->get_num_rows(), 11);
         ASSERT_EQ(ts->get_num_time_points(), 0);
