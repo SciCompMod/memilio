@@ -45,7 +45,7 @@ void save_result(const std::vector<double>& times, const std::vector<Eigen::Vect
     const int n_dims = 2;
 
     const int n_data    = secir.size();
-    const int n_compart = 8;
+    const int n_compart = SecirCompartments::SecirCount;
     const int nb_groups = secir[0].size() / n_compart;
 
     H5File file(filename, H5F_ACC_TRUNC);
@@ -64,7 +64,7 @@ void save_result(const std::vector<double>& times, const std::vector<Eigen::Vect
         auto dset = std::vector<Eigen::Matrix<double, n_compart, 1>>(n_data);
         if (group < nb_groups) {
             for (size_t irow = 0; irow < secir.size(); ++irow) {
-                auto slice = epi::slice(secir[irow], {group * 8, n_compart});
+                auto slice = epi::slice(secir[irow], {group * n_compart, n_compart});
                 dset[irow] = slice;
                 total[irow] += slice;
             }
@@ -86,7 +86,7 @@ void save_result(const std::vector<double>& times, const std::vector<Eigen::Vect
 SecirSimulationResult read_result(const std::string& filename, int nb_groups)
 {
     const H5std_string FILE_NAME(filename);
-    const int nb_compart = 8;
+    const int nb_compart = SecirCompartments::SecirCount;
 
     H5File file(FILE_NAME, H5F_ACC_RDONLY);
     H5std_string DATASET_NAME_TIME("Time");
