@@ -147,12 +147,12 @@ int main()
 
     // char vars[] = {'S', 'E', 'C', 'I', 'H', 'U', 'R', 'D'};
     // printf("\n # t");
-    // for (size_t k = 0; k < 8; k++) {
+    // for (size_t k = 0; k < epi::SecirCompartments::SecirCount; k++) {
     //     printf(" %c", vars[k]);
     // }
     // for (size_t i = 0; i < secir.size(); i++) {
     //     printf("\n ");
-    //     for (size_t j = 0; j < 8; j++) {
+    //     for (size_t j = 0; j < epi::SecirCompartments::SecirCount; j++) {
     //         printf(" %.14f", secir[i][j]);
     //     }
     // }

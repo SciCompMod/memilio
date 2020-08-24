@@ -11,17 +11,20 @@ def get_population_data(read_data=dd.defaultDict['read_data'],
                         out_form=dd.defaultDict['out_form'],
                         out_folder=dd.defaultDict['out_folder']):
 
+   print("Warning: getpopulationdata is not working correctly. A bug workaround has been applied.")
+
    Data = namedtuple("Data", "filename item columns_wanted filename_out")
 
    d1 = Data("FullDataB", '5dc2fc92850241c3be3d704aa0945d9c_2', ["LAN_ew_RS", 'LAN_ew_GEN','LAN_ew_EWZ'], "PopulStates")
    d2 = Data("FullDataL", 'b2e6d8854d9744ca88144d30bef06a76_1', ['RS', 'GEN','EWZ'], "PopulCounties")
 
-   d = [d1, d2]
+   #d = [d1, d2]
+   d = [d1]
 
    directory = os.path.join(out_folder, 'Germany/')
    gd.check_dir(directory)
 
-   for i in range(2):
+   for i in range(len(d)):
       get_one_data_set(read_data, out_form, directory, d[i])
 
 def get_one_data_set(read_data, out_form, directory, d):

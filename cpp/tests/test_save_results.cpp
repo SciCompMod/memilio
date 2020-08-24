@@ -75,8 +75,9 @@ TEST(TestSaveResult, compareResultWithH5)
         for (size_t l = 0; l < result_from_file.get_totals().get_num_elements(); l++) {
             double dummy = 0.0;
             for (size_t j = 0; j < nb_groups; j++) {
-                dummy += result_from_sim[i][j * 8 + l];
-                EXPECT_NEAR(result_from_file.get_groups()[i][j * 8 + l], result_from_sim[i][j * 8 + l], 1e-10)
+                dummy += result_from_sim[i][j * epi::SecirCompartments::SecirCount + l];
+                EXPECT_NEAR(result_from_file.get_groups()[i][j * epi::SecirCompartments::SecirCount + l],
+                            result_from_sim[i][j * epi::SecirCompartments::SecirCount + l], 1e-10)
                     << " at row " << i << " at row " << l << " at Group " << j;
             }
             EXPECT_NEAR(result_from_file.get_totals()[i][l], dummy, 1e-10) << " at row " << i << " at row " << l;

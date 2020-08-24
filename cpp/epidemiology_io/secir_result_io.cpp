@@ -17,7 +17,7 @@ void save_result(const TimeSeries<double>& result, const std::string& filename)
     const int n_dims = 2;
 
     const int n_data    = result.get_num_time_points();
-    const int n_compart = 8;
+    const int n_compart = SecirCompartments::SecirCount;
     const int nb_groups = result[0].size() / n_compart;
 
     H5File file(filename, H5F_ACC_TRUNC);
@@ -38,7 +38,7 @@ void save_result(const TimeSeries<double>& result, const std::string& filename)
         if (group < nb_groups) {
             for (size_t irow = 0; irow < result.get_num_time_points(); ++irow) {
                 auto v = result[irow].eval();
-                auto slice = epi::slice(v, {group * 8, n_compart});
+                auto slice = epi::slice(v, {group * n_compart, n_compart});
                 dset[irow] = slice;
                 total[irow] += slice;
             }
@@ -60,7 +60,7 @@ void save_result(const TimeSeries<double>& result, const std::string& filename)
 SecirSimulationResult read_result(const std::string& filename, int nb_groups)
 {
     const H5std_string FILE_NAME(filename);
-    const int nb_compart = 8;
+    const int nb_compart = SecirCompartments::SecirCount;
 
     H5File file(FILE_NAME, H5F_ACC_RDONLY);
     H5std_string DATASET_NAME_TIME("Time");

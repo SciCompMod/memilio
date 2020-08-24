@@ -42,14 +42,14 @@ std::vector<SecirResult> simulate_secir(double t0, double tmax, double dt,
 
     SecirResult result;
     printf("seir size is: %zd, %zd", seir.size(), seir[0].size());
-    if (seir.size() < 1 || seir[0].size() % 8 != 0) {
+    if (seir.size() < 1 || seir[0].size() % epi::SecirCompartments::SecirCount != 0) {
         throw std::runtime_error("Invalid result from secir simulation");
     }
 
     size_t n_data = seir.size();
     result.resize(n_data);
 
-    int nb_groups = seir[0].size() / 8;
+    int nb_groups = seir[0].size() / epi::SecirCompartments::SecirCount;
 
     for (size_t irow = 0; irow < seir.size(); ++irow) {
 
@@ -64,14 +64,14 @@ std::vector<SecirResult> simulate_secir(double t0, double tmax, double dt,
         result.nb_dead[irow] = 0;
         for (size_t groups = 0; groups < nb_groups; ++groups) {
 
-            result.nb_sus[irow] += seir[irow][0 + groups * 8];
-            result.nb_exp[irow] += seir[irow][1 + groups * 8];
-            result.nb_car[irow] += seir[irow][2 + groups * 8];
-            result.nb_inf[irow] += seir[irow][3 + groups * 8];
-            result.nb_hosp[irow] += seir[irow][4 + groups * 8];
-            result.nb_icu[irow] += seir[irow][5 + groups * 8];
-            result.nb_rec[irow] += seir[irow][6 + groups * 8];
-            result.nb_dead[irow] += seir[irow][7 + groups * 8];
+            result.nb_sus[irow] += seir[irow][0 + groups * epi::SecirCompartments::SecirCount];
+            result.nb_exp[irow] += seir[irow][1 + groups * epi::SecirCompartments::SecirCount];
+            result.nb_car[irow] += seir[irow][2 + groups * epi::SecirCompartments::SecirCount];
+            result.nb_inf[irow] += seir[irow][3 + groups * epi::SecirCompartments::SecirCount];
+            result.nb_hosp[irow] += seir[irow][4 + groups * epi::SecirCompartments::SecirCount];
+            result.nb_icu[irow] += seir[irow][5 + groups * epi::SecirCompartments::SecirCount];
+            result.nb_rec[irow] += seir[irow][6 + groups * epi::SecirCompartments::SecirCount];
+            result.nb_dead[irow] += seir[irow][7 + groups * epi::SecirCompartments::SecirCount];
         }
     }
 
@@ -83,14 +83,14 @@ std::vector<SecirResult> simulate_secir(double t0, double tmax, double dt,
         temp_result.resize(n_data);
         for (size_t irow = 0; irow < seir.size(); ++irow) {
             temp_result.t[irow]       = times[irow];
-            temp_result.nb_sus[irow]  = seir[irow][0 + i * 8];
-            temp_result.nb_exp[irow]  = seir[irow][1 + i * 8];
-            temp_result.nb_car[irow]  = seir[irow][2 + i * 8];
-            temp_result.nb_inf[irow]  = seir[irow][3 + i * 8];
-            temp_result.nb_hosp[irow] = seir[irow][4 + i * 8];
-            temp_result.nb_icu[irow]  = seir[irow][5 + i * 8];
-            temp_result.nb_rec[irow]  = seir[irow][6 + i * 8];
-            temp_result.nb_dead[irow] = seir[irow][7 + i * 8];
+            temp_result.nb_sus[irow]  = seir[irow][0 + i * epi::SecirCompartments::SecirCount];
+            temp_result.nb_exp[irow]  = seir[irow][1 + i * epi::SecirCompartments::SecirCount];
+            temp_result.nb_car[irow]  = seir[irow][2 + i * epi::SecirCompartments::SecirCount];
+            temp_result.nb_inf[irow]  = seir[irow][3 + i * epi::SecirCompartments::SecirCount];
+            temp_result.nb_hosp[irow] = seir[irow][4 + i * epi::SecirCompartments::SecirCount];
+            temp_result.nb_icu[irow]  = seir[irow][5 + i * epi::SecirCompartments::SecirCount];
+            temp_result.nb_rec[irow]  = seir[irow][6 + i * epi::SecirCompartments::SecirCount];
+            temp_result.nb_dead[irow] = seir[irow][7 + i * epi::SecirCompartments::SecirCount];
         }
         GroupResult.push_back(temp_result);
     }
@@ -103,7 +103,7 @@ PYBIND11_MODULE(_secir, m)
     py::enum_<epi::SecirCategory>(m, "SecirCategory")
         .value("InfectionType", epi::SecirCategory::InfectionType)
         .value("AgeGroup", epi::SecirCategory::AgeGroup)
-        .value("SecirCount", epi::SecirCategory::CategoryCount)
+        .value("CategoryCount", epi::SecirCategory::CategoryCount)
         .export_values();
 
     py::enum_<epi::SecirCompartments>(m, "SecirCompartments")

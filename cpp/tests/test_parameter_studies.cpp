@@ -31,7 +31,7 @@ TEST(ParameterStudies, sample_from_secir_params)
            num_rec_t0 = 10, num_dead_t0 = 0;
 
     int num_groups = 3;
-    double fact   = 1.0 / (double)num_groups;
+    double fact    = 1.0 / (double)num_groups;
 
     epi::SecirParams params(num_groups);
 
@@ -209,7 +209,7 @@ TEST(ParameterStudies, check_ensemble_run_result)
            num_rec_t0 = 10, num_dead_t0 = 0;
 
     int num_groups = 1;
-    double fact   = 1.0 / (double)num_groups;
+    double fact    = 1.0 / (double)num_groups;
 
     epi::SecirParams params(num_groups);
 
@@ -267,7 +267,7 @@ TEST(ParameterStudies, check_ensemble_run_result)
         std::vector<double> total_at_ti(epi::SecirCompartments::SecirCount, 0);
         // printf("\n");
         for (size_t j = 0; j < static_cast<size_t>(results[0][i].size()); j++) { // number of compartments per time step
-            // printf(" %.2e ( %d ) ", results[0][i][j], j % 8);
+            // printf(" %.2e ( %d ) ", results[0][i][j], j % epi::SecirCompartments::SecirCount);
             EXPECT_GE(results[0][i][j], -1e-3) << " day " << i << " group " << j;
             total_at_ti[j / epi::SecirCompartments::SecirCount] += results[0][i][j];
         }
