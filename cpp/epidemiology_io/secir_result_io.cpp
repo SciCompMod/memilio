@@ -118,7 +118,7 @@ SecirSimulationResult read_result(const std::string& filename, int nb_groups)
 
     DataSpace mspace3(n_dims_total, dims_total);
 
-    auto total_buf = std::vector<Eigen::Matrix<double, 8, 1>>(dims_total[0]);
+    auto total_buf = std::vector<Eigen::Matrix<double, nb_compart, 1>>(dims_total[0]);
     dataset_total.read(total_buf.data(), PredType::NATIVE_DOUBLE, mspace3, filespace);
 
     std::copy(begin(total_buf), end(total_buf), totals.begin());
