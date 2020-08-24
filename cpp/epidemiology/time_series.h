@@ -26,6 +26,8 @@ class TimeSeriesTimeIterator;
  * the value at each time point is a vector.
  * size of the vector is determined at runtime but is equal for all time points.
  * grows efficiently (like std::vector) in time dimension.
+ * Time and values of a single point are stored together in memory: 
+ * {t0, v0[0], v0[1], ...}, {t1, v1[0], v1[1], ...}, {t2, v20, ...
  * @tparam FP any floating point like type accepted by Eigen
  */
 template <class FP>
@@ -240,7 +242,7 @@ public:
     /**
      * raw data storage.
      * at least num_rows * num_time_points scalars.
-     * packed t0, v0[0], v0[1], ..., t1, v1[0], ...
+     * packed {t0, v0[0], v0[1], ...}, {t1, v1[0], v1[1], ...}, ...
      */
     FP* data()
     {
