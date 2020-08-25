@@ -3,9 +3,9 @@
 namespace epi
 {
 
-std::mt19937_64& thread_local_rng()
+Rng& thread_local_rng()
 {
-    static thread_local auto rng = std::mt19937_64(std::random_device()());
+    static thread_local auto rng = Rng{std::mt19937_64(std::random_device()())};
     return rng;
 }
 
