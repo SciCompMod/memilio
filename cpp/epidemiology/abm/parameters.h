@@ -12,8 +12,8 @@ struct GlobalInfectionParameters {
 
 struct LocalInfectionParameters
 {
-    double susceptible_to_carrier_by_carrier = 1;
-    double susceptible_to_carrier_by_infected = 1;
+    double susceptible_to_exposed_by_carrier = 1;
+    double susceptible_to_exposed_by_infected = 1;
     double carrier_to_infected = 1;
     double carrier_to_recovered = 1;
     double infected_to_recovered = 1;

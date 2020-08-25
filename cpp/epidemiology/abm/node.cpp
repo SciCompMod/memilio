@@ -80,8 +80,8 @@ void Node::begin_step(double dt)
     auto num_infected =
         get_subpopulation(InfectionState::Infected_Detected) + get_subpopulation(InfectionState::Infected_Undetected);
     m_cached_exposure_rate = std::min(m_parameters.effective_contacts, double(m_num_persons)) / m_num_persons *
-                             (m_parameters.susceptible_to_carrier_by_carrier * num_carriers +
-                              m_parameters.susceptible_to_carrier_by_infected * num_infected);
+                             (m_parameters.susceptible_to_exposed_by_carrier * num_carriers +
+                              m_parameters.susceptible_to_exposed_by_infected * num_infected);
 }
 
 void Node::add_person(Person& p)
