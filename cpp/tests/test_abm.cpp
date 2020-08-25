@@ -55,6 +55,10 @@ TEST(TestPerson, migrate)
     ASSERT_EQ(node1.get_subpopulation(epi::InfectionState::Recovered_Carrier), 0);
 }
 
+//mocking a rng and using it in e.g. uniform_int_distribution is actually not allowed.
+//the standard requires the generator to be actually random, which the mock is not.
+//the resulting behaviour is undefined, standard compliant implementations may e.g. loop forever
+//possible solution: mock the distribution instead of the generator
 struct MockRng
 {
     MOCK_METHOD(epi::Rng::result_type, invoke, (), ());
