@@ -18,7 +18,7 @@ void Person::interact(double dt, const GlobalInfectionParameters& global_infecti
 
     if (state == InfectionState::Exposed) {
         if (m_time_until_carrier <= 0) {
-            new_state = InfectionState::Exposed;
+            new_state = InfectionState::Carrier;
         }
         m_time_until_carrier -= dt;
     }

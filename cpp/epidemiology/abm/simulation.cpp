@@ -6,7 +6,7 @@ namespace epi
 AbmSimulation::AbmSimulation(double t, World&& world)
     : m_world(std::move(world))
     , m_t(t)
-    , m_dt(0.1)
+    , m_dt(1.0)
     , m_result(Eigen::Index(InfectionState::Count))
 {
     store_result_at(t);
@@ -18,8 +18,8 @@ void AbmSimulation::advance(double tmax)
     while (t < tmax) { //TODO: FP unstable
         auto dt = std::min(m_dt, tmax - t);
         m_world.evolve(dt);
-        store_result_at(t);
         t += m_dt;
+        store_result_at(t);
     }
 }
 
