@@ -10,7 +10,7 @@ Populations::Populations(std::vector<size_t> const& category_sizes)
     : m_category_sizes(category_sizes)
 {
     size_t prod = std::accumulate(category_sizes.begin(), category_sizes.end(), 1, std::multiplies<size_t>());
-    m_y         = Eigen::VectorXd::Zero(prod);
+    m_y         = std::vector<UncertainValue>(prod, 0.0);
 }
 
 size_t Populations::get_num_compartments() const
@@ -23,12 +23,29 @@ std::vector<size_t> const& Populations::get_category_sizes() const
     return m_category_sizes;
 }
 
-Eigen::VectorXd const& Populations::get_compartments() const
+Eigen::VectorXd Populations::get_compartments() const
 {
-    return m_y;
+    Eigen::VectorXd m_y_eigen(m_y.size());
+    for (auto i = 0; i < m_y.size(); i++) {
+        m_y_eigen[i] = m_y[i];
+    }
+
+    return m_y_eigen;
 }
 
-double Populations::get(std::vector<size_t> const& indices) const
+UncertainValue const& Populations::get(std::vector<size_t> const& indices) const
+{
+#ifndef NDEBUG
+    assert(indices.size() == m_category_sizes.size());
+    size_t i = 0;
+    for (auto idx : indices) {
+        assert(idx < m_category_sizes[i++]);
+    }
+#endif
+    return m_y[flatten_index(indices, m_category_sizes)];
+}
+
+UncertainValue& Populations::get(std::vector<size_t> const& indices)
 {
 #ifndef NDEBUG
     assert(indices.size() == m_category_sizes.size());
@@ -87,7 +104,11 @@ void Populations::set_difference_from_group_total(std::vector<size_t> const& ind
 
 double Populations::get_total() const
 {
-    return m_y.sum();
+    double sum = 0;
+    for (auto i = 0; i < m_y.size(); i++) {
+        sum += m_y[i];
+    }
+    return sum;
 }
 
 void Populations::set(std::vector<size_t> const& indices, double value)
@@ -102,14 +123,31 @@ void Populations::set(std::vector<size_t> const& indices, double value)
     m_y[get_flat_index(indices)] = value;
 }
 
+void Populations::set(std::vector<size_t> const& indices, ParameterDistribution const& dist)
+{
+#ifndef NDEBUG
+    assert(indices.size() == m_category_sizes.size());
+    size_t i = 0;
+    for (auto idx : indices) {
+        assert(idx < m_category_sizes[i++]);
+    }
+#endif
+    m_y[get_flat_index(indices)].set_distribution(dist);
+}
+
 void Populations::set_total(double value)
 {
     double current_population = get_total();
     if (fabs(current_population) < 1e-12) {
-        m_y.fill(value / m_y.size());
+        double ysize = m_y.size();
+        for (auto i = 0; i < m_y.size(); i++) {
+            m_y[i] = value / ysize;
+        }
     }
     else {
-        m_y *= value / current_population;
+        for (auto i = 0; i < m_y.size(); i++) {
+            m_y[i] *= value / current_population;
+        }
     }
 }
 
@@ -127,6 +165,16 @@ void Populations::set_difference_from_total(std::vector<size_t> const& indices, 
 size_t Populations::get_flat_index(std::vector<size_t> const& indices) const
 {
     return flatten_index(indices, m_category_sizes);
+}
+
+void Populations::check_constraints()
+{
+    for (auto i = 0; i < m_y.size(); i++) {
+        if (m_y[i] < 0) {
+            log_warning("Constraint check: Compartment size {:d} changed from {:.4f} to {:d}", i, m_y[i], 0);
+            m_y[i] = 0;
+        }
+    }
 }
 
 } // namespace epi

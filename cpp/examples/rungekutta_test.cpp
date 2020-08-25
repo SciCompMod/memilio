@@ -16,7 +16,7 @@ void init_vectors(std::vector<Eigen::VectorXd>& y, std::vector<Eigen::VectorXd>&
 void integration_test(std::vector<Eigen::VectorXd>& y, std::vector<Eigen::VectorXd>& sol, size_t& n, double t, double dt,
                       const double tmax, double& err)
 {
-    auto sine_deriv = [](Eigen::VectorXd const& y, const double t, Eigen::VectorXd& dydt) {
+    auto sine_deriv = [](auto&& y, auto&& t, auto&& dydt) {
         dydt[0] = std::cos(t);
     };
 

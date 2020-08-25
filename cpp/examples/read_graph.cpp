@@ -41,7 +41,6 @@ int main(int argc, char** argv)
     double fact   = 1.0 / (double)nb_groups;
 
     epi::SecirParams params(nb_groups);
-    epi::ContactFrequencyMatrix contact_freq_matrix{(size_t)nb_groups};
 
     for (size_t i = 0; i < nb_groups; i++) {
         params.times[i].set_incubation(tinc);
@@ -72,18 +71,19 @@ int main(int argc, char** argv)
         params.probabilities[i].set_dead_per_icu(delta);
     }
 
+    epi::ContactFrequencyMatrix& cont_freq_matrix = params.get_contact_patterns();
     epi::Damping dummy(30., 0.3);
     for (int i = 0; i < nb_groups; i++) {
         for (int j = i; j < nb_groups; j++) {
-            contact_freq_matrix.set_cont_freq(fact * cont_freq, i, j);
+            cont_freq_matrix.set_cont_freq(fact * cont_freq, i, j);
         }
     }
 
     epi::Graph<epi::ModelNode<epi::SecirSimulation>, epi::MigrationEdge> graph;
-    graph.add_node(contact_freq_matrix, params, t0);
-    graph.add_node(contact_freq_matrix, params, t0);
-    graph.add_edge(0, 1, Eigen::VectorXd::Constant(8 * nb_groups, 0.01));
-    graph.add_edge(1, 0, Eigen::VectorXd::Constant(8 * nb_groups, 0.01));
+    graph.add_node(params, t0);
+    graph.add_node(params, t0);
+    graph.add_edge(0, 1, Eigen::VectorXd::Constant(epi::SecirCompartments::SecirCount * nb_groups, 0.01));
+    graph.add_edge(1, 0, Eigen::VectorXd::Constant(epi::SecirCompartments::SecirCount * nb_groups, 0.01));
 
     epi::write_graph(graph, t0, tmax);
 

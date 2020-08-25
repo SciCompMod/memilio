@@ -51,8 +51,8 @@ Tableau::Tableau()
     entries[4][5] = -11 / 40.0;
 }
 
-bool RKIntegratorCore::step(const DerivFunction& f, const Eigen::VectorXd& yt, double& t, double& dt,
-                            Eigen::VectorXd& ytp1) const
+bool RKIntegratorCore::step(const DerivFunction& f, Eigen::Ref<const Eigen::VectorXd> yt, double& t, double& dt,
+                            Eigen::Ref<Eigen::VectorXd> ytp1) const
 {
 
     double max_err   = 1e10;
@@ -87,7 +87,7 @@ bool RKIntegratorCore::step(const DerivFunction& f, const Eigen::VectorXd& yt, d
 
                 // printf("\n t = %.4f", t_eval);
 
-                auto yt_eval(yt);
+                auto yt_eval = yt.eval();
 
                 // go through the variables of the system: S, E, I, ....
                 for (int j = 0; j < yt_eval.size(); j++) {
@@ -109,8 +109,8 @@ bool RKIntegratorCore::step(const DerivFunction& f, const Eigen::VectorXd& yt, d
         }
 
         // copy actual yt to compare both new iterates
-        auto ytp1_low(yt); // lower order approximation (e.g., order 4)
-        auto ytp1_high(yt); // higher order approximation (e.g., order 5)
+        auto ytp1_low = yt.eval(); // lower order approximation (e.g., order 4)
+        auto ytp1_high = yt.eval(); // higher order approximation (e.g., order 5)
 
         std::vector<double> err(yt.size(), 0);
         double max_val = 0;

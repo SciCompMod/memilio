@@ -1,6 +1,7 @@
 #ifndef INTEGRATOR_H
 #define INTEGRATOR_H
 
+#include <epidemiology/time_series.h>
 #include <memory>
 #include <vector>
 #include <functional>
@@ -13,7 +14,7 @@ namespace epi
 /**
  * Function template to be integrated
  */
-using DerivFunction = std::function<void(const Eigen::VectorXd& y, double t, Eigen::VectorXd& dydt)>;
+using DerivFunction = std::function<void(Eigen::Ref<const Eigen::VectorXd> y, double t, Eigen::Ref<Eigen::VectorXd> dydt)>;
 
 class IntegratorCore
 {
@@ -29,8 +30,8 @@ public:
      * @param[in,out] dt current time step h=dt
      * @param[out] ytp1 approximated value y(t+1)
      */
-    virtual bool step(const DerivFunction& f, const Eigen::VectorXd& yt, double& t, double& dt,
-                      Eigen::VectorXd& ytp1) const = 0;
+    virtual bool step(const DerivFunction& f, Eigen::Ref<const Eigen::VectorXd> yt, double& t, double& dt,
+                      Eigen::Ref<Eigen::VectorXd> ytp1) const = 0;
 };
 
 /**
@@ -50,8 +51,7 @@ public:
     template <class F, class Vector>
     OdeIntegrator(F&& f, double t0, Vector&& y0, double dt_init, std::shared_ptr<IntegratorCore> core)
         : m_f(std::forward<F>(f))
-        , m_t(1, t0)
-        , m_y(1, std::forward<Vector>(y0))
+        , m_result(t0, y0)
         , m_dt(dt_init)
         , m_core(core)
     {
@@ -61,28 +61,22 @@ public:
      * @brief advance the integrator.
      * @param tmax end point. must be greater than get_t().back()
      */
-    Eigen::VectorXd& advance(double tmax);
+    Eigen::Ref<Eigen::VectorXd> advance(double tmax);
 
-    const std::vector<double>& get_t() const
+    TimeSeries<double>& get_result()
     {
-        return m_t;
+        return m_result;
     }
 
-    const std::vector<Eigen::VectorXd>& get_y() const
+    const TimeSeries<double>& get_result() const
     {
-        return m_y;
-    }
-
-    std::vector<Eigen::VectorXd>& get_y()
-    {
-        return m_y;
+        return m_result;
     }
 
 private:
     std::shared_ptr<IntegratorCore> m_core;
     double m_dt;
-    std::vector<double> m_t;
-    std::vector<Eigen::VectorXd> m_y;
+    TimeSeries<double> m_result;
     DerivFunction m_f;
 };
 

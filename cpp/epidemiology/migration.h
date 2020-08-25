@@ -37,7 +37,7 @@ template <class Model>
 void evolve_model(double t, double dt, ModelNode<Model>& model)
 {
     model.model.advance(t + dt);
-    model.last_state = model.model.get_y().back();
+    model.last_state = model.model.get_result().get_last_value();
 }
 
 template <class Model>
@@ -45,8 +45,8 @@ void apply_migration(double t, double dt, MigrationEdge& migrationEdge, ModelNod
                      ModelNode<Model>& model2)
 {
     auto migration = (dt * model1.last_state.array() * migrationEdge.coefficients.array()).matrix();
-    model2.model.get_y().back() += migration;
-    model1.model.get_y().back() -= migration;
+    model2.model.get_result().get_last_value() += migration;
+    model1.model.get_result().get_last_value() -= migration;
 }
 
 template <typename Model>

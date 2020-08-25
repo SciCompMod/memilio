@@ -37,6 +37,15 @@ add_library(epidemiology
     epidemiology/populations.cpp
     epidemiology/visitor.h
     epidemiology/parameter_studies/parameter_space.h
+    epidemiology/parameter_studies/parameter_space.cpp
+    epidemiology/uncertain_value.cpp
+    epidemiology/uncertain_value.h
+    epidemiology/uncertain_matrix.cpp
+    epidemiology/uncertain_matrix.h    
+    epidemiology/memory.h
+    epidemiology/parameter_studies/parameter_distributions.h
+    epidemiology/time_series.h
+    epidemiology/time_series.cpp
     epidemiology/abm/node.cpp
     epidemiology/abm/node.h
     epidemiology/abm/simulation.cpp
@@ -71,6 +80,8 @@ if (EPI_BUILD_EPI_IO)
       epidemiology_io/secir_parameters_io.h
       epidemiology_io/io.cpp
       epidemiology_io/io.h
+      epidemiology_io/twitter_migration_io.cpp
+      epidemiology_io/twitter_migration_io.h
     )
 
     target_include_directories(epidemiology_io PUBLIC

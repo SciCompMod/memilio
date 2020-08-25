@@ -25,6 +25,10 @@ set(TESTSOURCES
   test_parameter_studies.cpp
   test_graph.cpp
   test_stl_util.cpp
+  test_uncertain.cpp
+  test_time_series.cpp
+  distributions_helpers.h
+  distributions_helpers.cpp
   gtest_helpers.h
 )
 
@@ -32,6 +36,7 @@ if (TARGET epidemiology_io)
   set(TESTSOURCES ${TESTSOURCES}
     test_save_parameters.cpp
     test_save_results.cpp
+    test_twitter.cpp
   )
 endif()
 
