@@ -22,6 +22,10 @@ public:
     void changed_state(const Person& person, InfectionState old_state);
     void begin_step(double dt);
     int get_subpopulation(InfectionState s) const;
+    Eigen::Ref<const Eigen::VectorXi> get_subpopulations() const;
+
+    LocalInfectionParameters& get_infection_parameters() { return m_parameters; }
+    const LocalInfectionParameters& get_infection_parameters() const { return m_parameters; }
     
 private:
     void change_subpopulation(InfectionState s, int delta);

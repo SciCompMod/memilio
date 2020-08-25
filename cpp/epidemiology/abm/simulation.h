@@ -2,7 +2,7 @@
 #define EPI_ABM_SIMULATOR_H
 
 #include "epidemiology/abm/world.h"
-#include <Eigen/Core>
+#include "epidemiology/time_series.h"
 
 namespace epi
 {
@@ -14,7 +14,7 @@ public:
     AbmSimulation(double t, World&& world);
     void advance(double tmax);
 
-    auto get_result()
+    const TimeSeries<double>& get_result() const
     {
         return m_result;
     }
@@ -25,7 +25,7 @@ private:
     double m_t;
     double m_dt;
     World m_world;
-    std::vector<std::pair<double, ResultVector>> m_result; //will be replaced with TimeSeries<double>
+    TimeSeries<double> m_result;
 };
 
 } // namespace epi

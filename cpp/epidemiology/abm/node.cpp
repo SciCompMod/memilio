@@ -113,4 +113,9 @@ int Node::get_subpopulation(InfectionState s) const
 {
     return m_subpopulations[size_t(s)];
 }
+
+Eigen::Ref<const Eigen::VectorXi> Node::get_subpopulations() const
+{
+    return Eigen::Map<const Eigen::VectorXi>(m_subpopulations.data(), m_subpopulations.size());
+}
 } // namespace epi

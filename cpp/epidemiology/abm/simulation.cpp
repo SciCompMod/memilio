@@ -7,7 +7,7 @@ AbmSimulation::AbmSimulation(double t, World&& world)
     : m_world(std::move(world))
     , m_t(t)
     , m_dt(0.1)
-    , m_result()
+    , m_result(Eigen::Index(InfectionState::Count))
 {
     store_result_at(t);
 }
@@ -25,13 +25,11 @@ void AbmSimulation::advance(double tmax)
 
 void AbmSimulation::store_result_at(double t)
 {
-    m_result.emplace_back(t, ResultVector::Zero());
+    m_result.add_time_point(t);
+    m_result.get_last_value().setZero();
     for (auto&& node : m_world.get_nodes())
     {
-        for (size_t i = 0; i < size_t(InfectionState::Count); i++)
-        {
-            m_result.back().second[i] += node.get_subpopulation(InfectionState(i));
-        }
+        m_result.get_last_value() += node.get_subpopulations().cast<double>();
     }
 }
 

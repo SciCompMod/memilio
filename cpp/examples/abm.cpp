@@ -18,8 +18,9 @@ int main()
     sim.advance(tmax);
 
     std::cout << "Ran ABM from " << t0 << " to " << 100 << '\n';
-    for (auto &&p : sim.get_result())
+    for (auto &&v : sim.get_result())
     {
-        std::cout << p.first << " : " << p.second.transpose() << '\n';
+        std::cout << v.transpose() << '\n';
     }
+    std::cout << std::endl;
 }
