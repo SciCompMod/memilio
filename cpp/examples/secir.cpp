@@ -39,28 +39,6 @@ int main()
     double nb_total_t0 = 10000, nb_exp_t0 = 100, nb_inf_t0 = 50, nb_car_t0 = 50, nb_hosp_t0 = 20, nb_icu_t0 = 10,
            nb_rec_t0 = 10, nb_dead_t0 = 0;
 
-    // // small problem !!! (here one assumption/relation between tinc and tserint becomes problematic)
-    // double tinc    = 5.09342, // R_2^(-1)+R_3^(-1)
-    //     tinfmild   = 5.86642, // 4-14  (=R4^(-1))
-    //     tserint    = 5.08993, // 4-4.4 // R_2^(-1)+0.5*R_3^(-1)
-    //     thosp2home = 11.6138, // 7-16 (=R5^(-1))
-    //     thome2hosp = 4.45361, // 2.5-7 (=R6^(-1))
-    //     thosp2icu  = 2.15791, // 1-3.5 (=R7^(-1))
-    //     ticu2home  = 9.16291, // 5-16 (=R8^(-1))
-    //     tinfasy    = 6.57504, // (=R9^(-1)=R_3^(-1)+0.5*R_4^(-1))
-    //     ticu2death = 5.90264; // 3.5-7 (=R5^(-1))
-
-    // double cont_freq = 0.5, // 0.2-0.75
-    //     infprob      = 0.924519,
-    //        alpha     = 0.124921, // 0.01-0.16
-    //     beta         = 0.190609, // 0.05-0.5
-    //     delta        = 0.245801, // 0.15-0.77
-    //     rho          = 0.183693, // 0.1-0.35
-    //     theta        = 0.185556; // 0.15-0.4
-
-    // double nb_total_t0 = 10000, nb_exp_t0 = 91, nb_inf_t0 = 39, nb_car_t0 = 36, nb_hosp_t0 = 20, nb_icu_t0 = 10,
-    //        nb_rec_t0 = 8, nb_dead_t0 = 0;
-
     epi::SecirParams params;
 
     params.times[0].set_incubation(tinc);
@@ -101,21 +79,24 @@ int main()
 
     simulate(t0, tmax, dt, params, secir);
 
-    // char vars[] = {'S', 'E', 'C', 'I', 'H', 'U', 'R', 'D'};
-    // printf("\n # t");
-    // for (size_t k = 0; k < epi::SecirCompartments::SecirCount; k++) {
-    //     printf(" %c", vars[k]);
-    // }
-    // for (size_t i = 0; i < secir.size(); i++) {
-    //     printf("\n ");
-    //     for (size_t j = 0; j < epi::SecirCompartments::SecirCount; j++) {
-    //         printf(" %.14f", secir[i][j]);
-    //     }
-    // }
+    bool print_to_terminal = false;
 
-    // printf("number total: %f", secir[secir.size() - 1][0] + secir[secir.size() - 1][1] + secir[secir.size() - 1][2] +
-    //    secir[secir.size() - 1][3] + secir[secir.size() - 1][4] +
-    //    secir[secir.size() - 1][5] + secir[secir.size() - 1][6] +
-    //    secir[secir.size() - 1][7]);
+    if (print_to_terminal) {
+        char vars[] = {'S', 'E', 'C', 'I', 'H', 'U', 'R', 'D'};
+        printf("\n # t");
+        for (size_t k = 0; k < epi::SecirCompartments::SecirCount; k++) {
+            printf(" %c", vars[k]);
+        }
+        for (size_t i = 0; i < secir.size(); i++) {
+            printf("\n ");
+            for (size_t j = 0; j < epi::SecirCompartments::SecirCount; j++) {
+                printf(" %.14f", secir[i][j]);
+            }
+        }
+
+        printf("number total: %f", secir[secir.size() - 1][0] + secir[secir.size() - 1][1] +
+                                       secir[secir.size() - 1][2] + secir[secir.size() - 1][3] +
+                                       secir[secir.size() - 1][4] + secir[secir.size() - 1][5] +
+                                       secir[secir.size() - 1][6] + secir[secir.size() - 1][7]);
+    }
 }
-
