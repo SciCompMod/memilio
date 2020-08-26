@@ -12,6 +12,10 @@
 namespace epi
 {
 
+/**
+ * The world of the simulation.
+ * consists of Nodes (Locations) and Persons (Actors)
+ */
 class World
 {
 public:
@@ -31,9 +35,13 @@ public:
     World(const World&)             = delete;
     World& operator=(const World&) = delete;
 
+    /** prepare the world for the next simulation step */
     void begin_step(double dt);
+    /** evolve the world one discrete time step */
     void evolve(double dt);
+    /** add a node to the world */
     Node& add_node(NodeType type);
+    /** add a person to the world */
     Person& add_person(Node& node, InfectionState state);
 
     Range<std::pair<ConstNodeIterator, ConstNodeIterator>> get_nodes() const;

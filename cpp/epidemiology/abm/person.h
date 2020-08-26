@@ -10,12 +10,17 @@ namespace epi
 class Node;
 class GlobalInfectionParameters;
 
+/**
+ * Actors in the simulated world that can carry and spread the infection.
+ */
 class Person
 {
 public:
     Person(Node& node, InfectionState state);
+    /** interact with the population at its node, might change state */
     void interact(double dt, const GlobalInfectionParameters& global_infection_parameters);
-    void migrate_to(Node& node); //could also be migrate() with the decision made internally
+    /** migrate to a different node */
+    void migrate_to(Node& node); 
 
     InfectionState get_infection_state() const
     {

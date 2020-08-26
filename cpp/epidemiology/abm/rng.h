@@ -7,6 +7,10 @@
 namespace epi
 {
 
+/**
+ * abstract random number generator.
+ * models UniformRandomBitGenerator concept.
+ */
 struct Rng {
     using result_type = std::mt19937_64::result_type;
     static constexpr result_type min()
@@ -24,6 +28,9 @@ struct Rng {
     std::function<result_type()> generator;
 };
 
+/**
+ * get a random number generator that is static and local to this thread.
+ */
 Rng& thread_local_rng();
 
 } // namespace epi

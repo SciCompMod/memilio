@@ -6,10 +6,16 @@
 namespace epi
 {
 
+/**
+ * parameters of the infection that are the same everywhere within the world.
+ */
 struct GlobalInfectionParameters {
     double incubation_time = 1;
 };
 
+/**
+ * parameters of the infection that depend on the location/node.
+ */
 struct LocalInfectionParameters {
     double susceptible_to_exposed_by_carrier  = 1;
     double susceptible_to_exposed_by_infected = 1;

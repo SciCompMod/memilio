@@ -4,6 +4,9 @@
 namespace epi
 {
 
+/**
+ * type of a node.
+ */
 enum class NodeType
 {
     Home,

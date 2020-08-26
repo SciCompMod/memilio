@@ -7,12 +7,16 @@
 namespace epi
 {
 
+/**
+ * run the simulation in discrete steps, evolve the world and report results.
+ */
 class AbmSimulation
 {
     using ResultVector = Eigen::Matrix<int, Eigen::Index(InfectionState::Count), 1>;
 
 public:
     AbmSimulation(double t, World&& world);
+    /** run the simulation from the current time to tmax */
     void advance(double tmax);
 
     const TimeSeries<double>& get_result() const
