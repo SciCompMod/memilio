@@ -505,14 +505,21 @@ void secir_get_derivatives(SecirParams const& params, Eigen::Ref<const Eigen::Ve
         dydt[Si] = 0;
         dydt[Ei] = 0;
         for (size_t j = 0; j < n_agegroups; j++) {
+            size_t Sj = params.populations.get_flat_index({j, S});
+            size_t Ej = params.populations.get_flat_index({j, E});
             size_t Cj = params.populations.get_flat_index({j, C});
             size_t Ij = params.populations.get_flat_index({j, I});
+            size_t Hj = params.populations.get_flat_index({j, H});
+            size_t Uj = params.populations.get_flat_index({j, U});
+            size_t Rj = params.populations.get_flat_index({j, R});
+
             // effective contact rate by contact rate between groups i and j and damping j
             double cont_freq_eff =
                 cont_freq_matrix.get_cont_freq(i, j) *
                 cont_freq_matrix.get_dampings(i, j).get_factor(t); // get effective contact rate between i and j
-            double divN    = 1.0 / params.populations.get_group_total(SecirCategory::AgeGroup, j); // precompute 1.0/Nj
-            double dummy_S = y[Si] * cont_freq_eff * divN * params.probabilities[i].get_infection_from_contact() *
+            double Nj      = y[Sj] + y[Ej] + y[Cj] + y[Ij] + y[Hj] + y[Uj] + y[Rj]; // without died people
+            double divNj   = 1.0 / Nj; // precompute 1.0/Nj
+            double dummy_S = y[Si] * cont_freq_eff * divNj * params.probabilities[i].get_infection_from_contact() *
                              (y[Cj] + params.probabilities[j].get_risk_from_symptomatic() * y[Ij]);
 
             dydt[Si] -= dummy_S; // -R1*(C+beta*I)*S/N0
@@ -567,7 +574,9 @@ std::vector<double> simulate(double t0, double tmax, double dt, SecirParams cons
 {
     auto result = simulate(t0, tmax, dt, params);
     std::vector<double> t(result.get_times().begin(), result.get_times().end());
-    std::transform(result.begin(), result.end(), std::back_inserter(secir), [](auto&& v_ref) { return v_ref.eval(); });
+    std::transform(result.begin(), result.end(), std::back_inserter(secir), [](auto&& v_ref) {
+        return v_ref.eval();
+    });
 
     return t;
 }
