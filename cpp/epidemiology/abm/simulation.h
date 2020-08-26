@@ -10,6 +10,7 @@ namespace epi
 class AbmSimulation
 {
     using ResultVector = Eigen::Matrix<int, Eigen::Index(InfectionState::Count), 1>;
+
 public:
     AbmSimulation(double t, World&& world);
     void advance(double tmax);

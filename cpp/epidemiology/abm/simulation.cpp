@@ -27,8 +27,7 @@ void AbmSimulation::store_result_at(double t)
 {
     m_result.add_time_point(t);
     m_result.get_last_value().setZero();
-    for (auto&& node : m_world.get_nodes())
-    {
+    for (auto&& node : m_world.get_nodes()) {
         m_result.get_last_value() += node.get_subpopulations().cast<double>();
     }
 }

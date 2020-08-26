@@ -24,6 +24,6 @@ enum class InfectionState : std::uint32_t
     Count //last!!
 };
 
-}
+} // namespace epi
 
 #endif

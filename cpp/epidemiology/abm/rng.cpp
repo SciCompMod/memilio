@@ -9,4 +9,4 @@ Rng& thread_local_rng()
     return rng;
 }
 
-}
+} // namespace epi

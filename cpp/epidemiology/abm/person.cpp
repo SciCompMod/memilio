@@ -13,7 +13,7 @@ Person::Person(Node& node, InfectionState state)
 
 void Person::interact(double dt, const GlobalInfectionParameters& global_infection_params)
 {
-    auto state = m_state;
+    auto state     = m_state;
     auto new_state = state;
 
     if (state == InfectionState::Exposed) {

@@ -26,8 +26,7 @@ namespace
                          });
         auto sum = transition_rates_partial_sum[NumTransitions - 1].second;
 
-        if (sum <= 0)
-        {
+        if (sum <= 0) {
             return old_state;
         }
 
@@ -53,17 +52,19 @@ InfectionState Node::interact(const Person& person, double dt) const
     auto state = person.get_infection_state();
     switch (state) {
     case InfectionState::Susceptible:
-        return random_transition(state, dt, {{InfectionState::Exposed, dt * m_cached_exposure_rate}});        
+        return random_transition(state, dt, {{InfectionState::Exposed, dt * m_cached_exposure_rate}});
     case InfectionState::Carrier:
-        return random_transition(state, dt,
+        return random_transition(
+            state, dt,
             {{InfectionState::Infected_Detected, m_parameters.detect_infection * m_parameters.carrier_to_infected},
-             {InfectionState::Infected_Undetected, (1 - m_parameters.detect_infection) * m_parameters.carrier_to_infected},
-             {InfectionState::Recovered_Carrier, m_parameters.carrier_to_recovered}});             
+             {InfectionState::Infected_Undetected,
+              (1 - m_parameters.detect_infection) * m_parameters.carrier_to_infected},
+             {InfectionState::Recovered_Carrier, m_parameters.carrier_to_recovered}});
     case InfectionState::Infected_Detected: //fallthrough!
     case InfectionState::Infected_Undetected:
         return random_transition(state, dt,
-            {{InfectionState::Recovered_Infected, m_parameters.infected_to_recovered},
-             {InfectionState::Dead, m_parameters.infected_to_dead * m_parameters.death_factor}});
+                                 {{InfectionState::Recovered_Infected, m_parameters.infected_to_recovered},
+                                  {InfectionState::Dead, m_parameters.infected_to_dead * m_parameters.death_factor}});
     case InfectionState::Recovered_Carrier: //fallthrough!
     case InfectionState::Recovered_Infected:
         return random_transition(state, dt, {{InfectionState::Susceptible, m_parameters.recovered_to_susceptible}});

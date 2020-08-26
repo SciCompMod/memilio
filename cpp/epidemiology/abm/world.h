@@ -15,9 +15,9 @@ namespace epi
 class World
 {
 public:
-    using NodeIterator = PointerDereferencingIterator<std::vector<std::unique_ptr<Node>>::iterator>;
-    using ConstNodeIterator = PointerDereferencingIterator<std::vector<std::unique_ptr<Node>>::const_iterator>;
-    using PersonIterator = PointerDereferencingIterator<std::vector<std::unique_ptr<Person>>::iterator>;
+    using NodeIterator        = PointerDereferencingIterator<std::vector<std::unique_ptr<Node>>::iterator>;
+    using ConstNodeIterator   = PointerDereferencingIterator<std::vector<std::unique_ptr<Node>>::const_iterator>;
+    using PersonIterator      = PointerDereferencingIterator<std::vector<std::unique_ptr<Person>>::iterator>;
     using ConstPersonIterator = PointerDereferencingIterator<std::vector<std::unique_ptr<Person>>::const_iterator>;
 
     World(const GlobalInfectionParameters& params = {})
@@ -28,7 +28,7 @@ public:
     //move-only for stable references of persons/nodes
     World(World&& other) = default;
     World& operator=(World&& other) = default;
-    World(const World&) = delete;
+    World(const World&)             = delete;
     World& operator=(const World&) = delete;
 
     void begin_step(double dt);

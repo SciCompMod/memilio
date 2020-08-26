@@ -44,8 +44,9 @@ void World::migration(double dt)
             auto idx_distribution = std::uniform_int_distribution<size_t>(0, m_nodes.size() - 2);
             auto random_node_idx  = idx_distribution(thread_local_rng());
             //exclude the current node from the random selection
-            if (contains(m_nodes.begin(), m_nodes.begin() + random_node_idx, [&person](auto& e){ return e.get() == &person->get_node(); }))
-            {
+            if (contains(m_nodes.begin(), m_nodes.begin() + random_node_idx, [&person](auto& e) {
+                    return e.get() == &person->get_node();
+                })) {
                 ++random_node_idx;
             }
             person->migrate_to(*m_nodes[random_node_idx]);
