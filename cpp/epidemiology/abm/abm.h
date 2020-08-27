@@ -10,6 +10,6 @@
 #include "epidemiology/abm/node.h"
 #include "epidemiology/abm/state.h"
 #include "epidemiology/abm/node_type.h"
-#include "epidemiology/abm/rng.h"
+#include "epidemiology/abm/random_number_generator.h"
 
 #endif

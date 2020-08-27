@@ -1,5 +1,5 @@
 #include "epidemiology/abm/abm.h"
-#include "epidemiology/abm/rng.h"
+#include "epidemiology/abm/random_number_generator.h"
 #include "gtest/gtest.h"
 #include "gmock/gmock.h"
 #include <memory>
@@ -61,11 +61,11 @@ TEST(TestPerson, migrate)
 //the resulting behaviour is undefined, standard compliant implementations may e.g. loop forever
 //possible solution: mock the distribution instead of the generator
 struct MockRng {
-    MOCK_METHOD(epi::Rng::result_type, invoke, (), ());
+    MOCK_METHOD(epi::RandomNumberGenerator::result_type, invoke, (), ());
 };
 template <class MockRng = MockRng>
 struct MockRngRef {
-    epi::Rng::result_type operator()()
+    epi::RandomNumberGenerator::result_type operator()()
     {
         return mock->invoke();
     }
@@ -93,13 +93,13 @@ TEST(TestNode, interact)
         auto susceptible = epi::Person(node, epi::InfectionState::Susceptible);
         EXPECT_CALL(*mock_rng.mock, invoke)
             .Times(2)
-            .WillOnce(Return(0.99 * epi::Rng::max()))
-            .WillOnce(Return(0.5 * epi::Rng::max()));
+            .WillOnce(Return(0.99 * epi::RandomNumberGenerator::max()))
+            .WillOnce(Return(0.5 * epi::RandomNumberGenerator::max()));
         EXPECT_EQ(node.interact(susceptible, 0.1), epi::InfectionState::Exposed);
         EXPECT_CALL(*mock_rng.mock, invoke)
             .Times(2)
-            .WillOnce(Return(0.1 * epi::Rng::max()))
-            .WillOnce(Return(0.5 * epi::Rng::max()));
+            .WillOnce(Return(0.1 * epi::RandomNumberGenerator::max()))
+            .WillOnce(Return(0.5 * epi::RandomNumberGenerator::max()));
         EXPECT_EQ(node.interact(susceptible, 0.1), epi::InfectionState::Susceptible);
     }
 
@@ -114,23 +114,23 @@ TEST(TestNode, interact)
 
         EXPECT_CALL(*mock_rng.mock, invoke)
             .Times(2)
-            .WillOnce(Return(0.99 * epi::Rng::max()))
-            .WillOnce(Return(0.2 * epi::Rng::max()));
+            .WillOnce(Return(0.99 * epi::RandomNumberGenerator::max()))
+            .WillOnce(Return(0.2 * epi::RandomNumberGenerator::max()));
         EXPECT_EQ(node.interact(carrier, 0.1), epi::InfectionState::Infected_Detected);
         EXPECT_CALL(*mock_rng.mock, invoke)
             .Times(2)
-            .WillOnce(Return(0.99 * epi::Rng::max()))
-            .WillOnce(Return(0.4 * epi::Rng::max()));
+            .WillOnce(Return(0.99 * epi::RandomNumberGenerator::max()))
+            .WillOnce(Return(0.4 * epi::RandomNumberGenerator::max()));
         EXPECT_EQ(node.interact(carrier, 0.1), epi::InfectionState::Infected_Undetected);
         EXPECT_CALL(*mock_rng.mock, invoke)
             .Times(2)
-            .WillOnce(Return(0.99 * epi::Rng::max()))
-            .WillOnce(Return(0.6 * epi::Rng::max()));
+            .WillOnce(Return(0.99 * epi::RandomNumberGenerator::max()))
+            .WillOnce(Return(0.6 * epi::RandomNumberGenerator::max()));
         EXPECT_EQ(node.interact(carrier, 0.1), epi::InfectionState::Recovered_Carrier);
         EXPECT_CALL(*mock_rng.mock, invoke)
             .Times(2)
-            .WillOnce(Return(0.5 * epi::Rng::max()))
-            .WillOnce(Return(0.5 * epi::Rng::max()));
+            .WillOnce(Return(0.5 * epi::RandomNumberGenerator::max()))
+            .WillOnce(Return(0.5 * epi::RandomNumberGenerator::max()));
         EXPECT_EQ(node.interact(carrier, 0.1), epi::InfectionState::Carrier);
     }
 
@@ -139,18 +139,18 @@ TEST(TestNode, interact)
 
         EXPECT_CALL(*mock_rng.mock, invoke)
             .Times(2)
-            .WillOnce(Return(0.99 * epi::Rng::max()))
-            .WillOnce(Return(0.4 * epi::Rng::max()));
+            .WillOnce(Return(0.99 * epi::RandomNumberGenerator::max()))
+            .WillOnce(Return(0.4 * epi::RandomNumberGenerator::max()));
         EXPECT_EQ(node.interact(infected, 0.1), epi::InfectionState::Recovered_Infected);
         EXPECT_CALL(*mock_rng.mock, invoke)
             .Times(2)
-            .WillOnce(Return(0.99 * epi::Rng::max()))
-            .WillOnce(Return(0.6 * epi::Rng::max()));
+            .WillOnce(Return(0.99 * epi::RandomNumberGenerator::max()))
+            .WillOnce(Return(0.6 * epi::RandomNumberGenerator::max()));
         EXPECT_EQ(node.interact(infected, 0.1), epi::InfectionState::Dead);
         EXPECT_CALL(*mock_rng.mock, invoke)
             .Times(2)
-            .WillOnce(Return(0.5 * epi::Rng::max()))
-            .WillOnce(Return(0.5 * epi::Rng::max()));
+            .WillOnce(Return(0.5 * epi::RandomNumberGenerator::max()))
+            .WillOnce(Return(0.5 * epi::RandomNumberGenerator::max()));
         EXPECT_EQ(node.interact(infected, 0.1), infected_state);
     }
 
@@ -159,13 +159,13 @@ TEST(TestNode, interact)
 
         EXPECT_CALL(*mock_rng.mock, invoke)
             .Times(2)
-            .WillOnce(Return(0.99 * epi::Rng::max()))
-            .WillOnce(Return(0.5 * epi::Rng::max()));
+            .WillOnce(Return(0.99 * epi::RandomNumberGenerator::max()))
+            .WillOnce(Return(0.5 * epi::RandomNumberGenerator::max()));
         EXPECT_EQ(node.interact(recovered, 0.1), epi::InfectionState::Susceptible);
         EXPECT_CALL(*mock_rng.mock, invoke)
             .Times(2)
-            .WillOnce(Return(0.5 * epi::Rng::max()))
-            .WillOnce(Return(0.5 * epi::Rng::max()));
+            .WillOnce(Return(0.5 * epi::RandomNumberGenerator::max()))
+            .WillOnce(Return(0.5 * epi::RandomNumberGenerator::max()));
         EXPECT_EQ(node.interact(recovered, 0.1), recovered_state);
     }
 }
@@ -184,8 +184,8 @@ TEST(TestPerson, interact)
     epi::thread_local_rng().generator = mock_rng;
     EXPECT_CALL(*mock_rng.mock, invoke)
         .Times(2)
-        .WillOnce(Return(0.99 * epi::Rng::max()))
-        .WillOnce(Return(0.4 * epi::Rng::max()));
+        .WillOnce(Return(0.99 * epi::RandomNumberGenerator::max()))
+        .WillOnce(Return(0.4 * epi::RandomNumberGenerator::max()));
 
     auto infection_parameters = epi::GlobalInfectionParameters();
     person.interact(0.1, infection_parameters);
@@ -218,8 +218,8 @@ TEST(TestPerson, interact_exposed)
     epi::thread_local_rng().generator = mock_rng;
     EXPECT_CALL(*mock_rng.mock, invoke)
         .Times(2)
-        .WillOnce(Return(0.99 * epi::Rng::max()))
-        .WillOnce(Return(0.4 * epi::Rng::max()));
+        .WillOnce(Return(0.99 * epi::RandomNumberGenerator::max()))
+        .WillOnce(Return(0.4 * epi::RandomNumberGenerator::max()));
 
     //person becomes a carrier after the incubation time runs out
     person.interact(0.1, infection_parameters);
@@ -294,14 +294,14 @@ TEST(TestWorld, evolve)
     epi::thread_local_rng().generator = mock_rng;
     EXPECT_CALL(*mock_rng.mock, invoke)
         .Times(testing::AtLeast(6))
-        .WillOnce(Return(0.1 * epi::Rng::max())) //don't transition
-        .WillOnce(Return(0.4 * epi::Rng::max()))
-        .WillOnce(Return(0.9 * epi::Rng::max())) //transition to exposed
-        .WillOnce(Return(0.4 * epi::Rng::max()))
-        .WillOnce(Return(0.1 * epi::Rng::max())) //don't transition
-        .WillOnce(Return(0.4 * epi::Rng::max()))
+        .WillOnce(Return(0.1 * epi::RandomNumberGenerator::max())) //don't transition
+        .WillOnce(Return(0.4 * epi::RandomNumberGenerator::max()))
+        .WillOnce(Return(0.9 * epi::RandomNumberGenerator::max())) //transition to exposed
+        .WillOnce(Return(0.4 * epi::RandomNumberGenerator::max()))
+        .WillOnce(Return(0.1 * epi::RandomNumberGenerator::max())) //don't transition
+        .WillOnce(Return(0.4 * epi::RandomNumberGenerator::max()))
         .WillRepeatedly(Return(
-            epi::Rng::max() -
+            epi::RandomNumberGenerator::max() -
             1)); //no migrations (not properly implemented yet); can't return max() because of a bug(?) in the STL
 
     world.evolve(0.5);
@@ -327,7 +327,7 @@ TEST(TestSimulation, advance)
     epi::thread_local_rng().generator = mock_rng;
     EXPECT_CALL(*mock_rng.mock, invoke)
         .Times(testing::AtLeast(40))
-        .WillRepeatedly(testing::Return(epi::Rng::max() - 1));
+        .WillRepeatedly(testing::Return(epi::RandomNumberGenerator::max() - 1));
 
     sim.advance(5);
     ASSERT_EQ(sim.get_result().get_num_time_points(), 6);

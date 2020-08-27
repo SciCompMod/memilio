@@ -56,8 +56,8 @@ add_library(epidemiology
     epidemiology/abm/world.h
     epidemiology/abm/state.h
     epidemiology/abm/node_type.h
-    epidemiology/abm/rng.h
-    epidemiology/abm/rng.cpp
+    epidemiology/abm/random_number_generator.h
+    epidemiology/abm/random_number_generator.cpp
     epidemiology/abm/parameters.h
     epidemiology/abm/parameters.cpp
 )

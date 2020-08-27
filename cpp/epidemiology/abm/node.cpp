@@ -1,6 +1,6 @@
 #include "epidemiology/abm/node.h"
 #include "epidemiology/abm/person.h"
-#include "epidemiology/abm/rng.h"
+#include "epidemiology/abm/random_number_generator.h"
 
 namespace epi
 {

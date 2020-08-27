@@ -1,7 +1,7 @@
 #include "epidemiology/abm/world.h"
 #include "epidemiology/abm/person.h"
 #include "epidemiology/abm/node.h"
-#include "epidemiology/abm/rng.h"
+#include "epidemiology/abm/random_number_generator.h"
 #include "epidemiology/stl_util.h"
 
 namespace epi

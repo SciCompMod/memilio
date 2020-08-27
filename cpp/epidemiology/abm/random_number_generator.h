@@ -1,5 +1,5 @@
-#ifndef EPI_ABM_RNG_H
-#define EPI_ABM_RNG_H
+#ifndef EPI_ABM_RANDOM_NUMBER_GENERATOR_H
+#define EPI_ABM_RANDOM_NUMBER_GENERATOR_H
 
 #include <random>
 #include <functional>
@@ -11,7 +11,7 @@ namespace epi
  * abstract random number generator.
  * models UniformRandomBitGenerator concept.
  */
-struct Rng {
+struct RandomNumberGenerator {
     using result_type = std::mt19937_64::result_type;
     static constexpr result_type min()
     {
@@ -31,7 +31,7 @@ struct Rng {
 /**
  * get a random number generator that is static and local to this thread.
  */
-Rng& thread_local_rng();
+RandomNumberGenerator& thread_local_rng();
 
 } // namespace epi
 
