@@ -21,7 +21,7 @@ TEST(TestSaveParameters, compareParameterStudy)
            num_rec_t0 = 10, num_dead_t0 = 0;
 
     int num_groups = 2;
-    double fact   = 1.0 / (double)num_groups;
+    double fact    = 1.0 / (double)num_groups;
 
     epi::SecirParams params(num_groups);
 
@@ -62,14 +62,16 @@ TEST(TestSaveParameters, compareParameterStudy)
         }
     }
     cont_freq_matrix.add_damping(epi::Damping{35, 0.2}, 0, 0);
-    int num_runs      = 5;
+    int num_runs     = 5;
     std::string path = "/Parameters";
     TixiDocumentHandle handle;
 
     tixiCreateDocument("Parameters", &handle);
-    epi::ParameterStudy study([](auto&& t0, auto&& tmax, auto&& dt, auto&& params) {
-        return epi::simulate(t0, tmax, dt, params);
-    }, params, t0, tmax, 0.0, num_runs);
+    epi::ParameterStudy study(
+        [](auto&& t0, auto&& tmax, auto&& dt, auto&& params) {
+            return epi::simulate(t0, tmax, dt, params);
+        },
+        params, t0, tmax, 0.0, num_runs);
 
     study.get_parameter_space().get_secir_params().times[0].get_incubation().get_distribution()->add_predefined_sample(
         4711.0);
@@ -98,7 +100,7 @@ TEST(TestSaveParameters, compareParameterStudy)
     const epi::UncertainContactMatrix& contact      = space.get_secir_params().get_contact_patterns();
     const epi::UncertainContactMatrix& read_contact = read_space.get_secir_params().get_contact_patterns();
 
-    num_groups      = space.get_secir_params().get_num_groups();
+    num_groups          = space.get_secir_params().get_num_groups();
     int num_groups_read = read_space.get_secir_params().get_num_groups();
     ASSERT_EQ(num_groups, num_groups_read);
 
@@ -156,6 +158,157 @@ TEST(TestSaveParameters, compareParameterStudy)
     }
 }
 
+TEST(TestSaveParameters, compareSingleRun)
+{
+    double t0   = 0.0;
+    double tmax = 50.5;
+    double dt   = 0.1;
+
+    double tinc = 5.2, tinfmild = 6, tserint = 4.2, thosp2home = 12, thome2hosp = 5, thosp2icu = 2, ticu2home = 8,
+           tinfasy = 6.2, ticu2death = 5;
+
+    double cont_freq = 0.5, alpha = 0.09, beta = 0.25, delta = 0.3, rho = 0.2, theta = 0.25;
+
+    double num_total_t0 = 10000, num_exp_t0 = 100, num_inf_t0 = 50, num_car_t0 = 50, num_hosp_t0 = 20, num_icu_t0 = 10,
+           num_rec_t0 = 10, num_dead_t0 = 0;
+
+    int num_groups = 2;
+    double fact    = 1.0 / (double)num_groups;
+
+    epi::SecirParams params(num_groups);
+
+    for (size_t i = 0; i < num_groups; i++) {
+        params.times[i].set_incubation(tinc);
+        params.times[i].set_infectious_mild(tinfmild);
+        params.times[i].set_serialinterval(tserint);
+        params.times[i].set_hospitalized_to_home(thosp2home);
+        params.times[i].set_home_to_hospitalized(thome2hosp);
+        params.times[i].set_hospitalized_to_icu(thosp2icu);
+        params.times[i].set_icu_to_home(ticu2home);
+        params.times[i].set_infectious_asymp(tinfasy);
+        params.times[i].set_icu_to_death(ticu2death);
+
+        params.populations.set({i, epi::SecirCompartments::E}, fact * num_exp_t0);
+        params.populations.set({i, epi::SecirCompartments::C}, fact * num_car_t0);
+        params.populations.set({i, epi::SecirCompartments::I}, fact * num_inf_t0);
+        params.populations.set({i, epi::SecirCompartments::H}, fact * num_hosp_t0);
+        params.populations.set({i, epi::SecirCompartments::U}, fact * num_icu_t0);
+        params.populations.set({i, epi::SecirCompartments::R}, fact * num_rec_t0);
+        params.populations.set({i, epi::SecirCompartments::D}, fact * num_dead_t0);
+        params.populations.set_difference_from_group_total({i, epi::SecirCompartments::S}, epi::SecirCategory::AgeGroup,
+                                                           i, fact * num_total_t0);
+
+        params.probabilities[i].set_asymp_per_infectious(alpha);
+        params.probabilities[i].set_risk_from_symptomatic(beta);
+        params.probabilities[i].set_hospitalized_per_infectious(rho);
+        params.probabilities[i].set_icu_per_hospitalized(theta);
+        params.probabilities[i].set_dead_per_icu(delta);
+    }
+
+    epi::ContactFrequencyMatrix& cont_freq_matrix = params.get_contact_patterns();
+    epi::Damping dummy(30., 0.3);
+    for (int i = 0; i < num_groups; i++) {
+        for (int j = i; j < num_groups; j++) {
+            cont_freq_matrix.set_cont_freq(fact * cont_freq, i, j);
+            cont_freq_matrix.add_damping(dummy, i, j);
+        }
+    }
+    cont_freq_matrix.add_damping(epi::Damping{35, 0.2}, 0, 0);
+    int num_runs     = 5;
+    std::string path = "/Parameters";
+    TixiDocumentHandle handle;
+
+    tixiCreateDocument("Parameters", &handle);
+    epi::ParameterStudy study(
+        [](auto&& t0, auto&& tmax, auto&& dt, auto&& params) {
+            return epi::simulate(t0, tmax, dt, params);
+        },
+        params, t0, tmax, 0.0, num_runs);
+
+    epi::write_parameter_study(handle, path, study, 0);
+    tixiSaveDocument(handle, "TestParameterValues.xml");
+    tixiCloseDocument(handle);
+
+    tixiOpenDocument("TestParameterValues.xml", &handle);
+    epi::ParameterStudy read_study = epi::read_parameter_study(handle, path);
+    tixiCloseDocument(handle);
+
+    ASSERT_EQ(study.get_num_runs(), read_study.get_num_runs());
+    ASSERT_EQ(study.get_t0(), read_study.get_t0());
+    ASSERT_EQ(study.get_tmax(), read_study.get_tmax());
+
+    const epi::ParameterSpace& space      = study.get_parameter_space();
+    const epi::ParameterSpace& read_space = read_study.get_parameter_space();
+
+    const epi::SecirParams& read_params = read_space.get_secir_params();
+
+    const epi::UncertainContactMatrix& contact      = space.get_secir_params().get_contact_patterns();
+    const epi::UncertainContactMatrix& read_contact = read_space.get_secir_params().get_contact_patterns();
+
+    num_groups          = space.get_secir_params().get_num_groups();
+    int num_groups_read = read_space.get_secir_params().get_num_groups();
+    ASSERT_EQ(num_groups, num_groups_read);
+
+    for (size_t i = 0; i < num_groups; i++) {
+        ASSERT_EQ((double)params.populations.get({i, epi::SecirCompartments::D}),
+                  (double)read_params.populations.get({i, epi::SecirCompartments::D}));
+        ASSERT_EQ((double)params.populations.get_group_total(epi::AgeGroup, i),
+                  (double)read_params.populations.get_group_total(epi::AgeGroup, i));
+        ASSERT_EQ((double)params.populations.get({i, epi::SecirCompartments::E}),
+                  (double)read_params.populations.get({i, epi::SecirCompartments::E}));
+        ASSERT_EQ((double)params.populations.get({i, epi::SecirCompartments::C}),
+                  (double)read_params.populations.get({i, epi::SecirCompartments::C}));
+        ASSERT_EQ((double)params.populations.get({i, epi::SecirCompartments::I}),
+                  (double)read_params.populations.get({i, epi::SecirCompartments::I}));
+        ASSERT_EQ((double)params.populations.get({i, epi::SecirCompartments::H}),
+                  (double)read_params.populations.get({i, epi::SecirCompartments::H}));
+        ASSERT_EQ((double)params.populations.get({i, epi::SecirCompartments::U}),
+                  (double)read_params.populations.get({i, epi::SecirCompartments::U}));
+        ASSERT_EQ((double)params.populations.get({i, epi::SecirCompartments::R}),
+                  (double)read_params.populations.get({i, epi::SecirCompartments::R}));
+
+        ASSERT_EQ((double)params.times[i].get_incubation(), (double)read_params.times[i].get_incubation());
+        ASSERT_EQ((double)params.times[i].get_infectious_mild(), (double)read_params.times[i].get_infectious_mild());
+        ASSERT_EQ((double)params.times[i].get_serialinterval(), (double)read_params.times[i].get_serialinterval());
+        ASSERT_EQ((double)params.times[i].get_hospitalized_to_home(),
+                  (double)read_params.times[i].get_hospitalized_to_home());
+        ASSERT_EQ((double)params.times[i].get_home_to_hospitalized(),
+                  (double)read_params.times[i].get_home_to_hospitalized());
+        ASSERT_EQ((double)params.times[i].get_infectious_asymp(), (double)read_params.times[i].get_infectious_asymp());
+        ASSERT_EQ((double)params.times[i].get_hospitalized_to_icu(),
+                  (double)read_params.times[i].get_hospitalized_to_icu());
+        ASSERT_EQ((double)params.times[i].get_icu_to_home(), (double)read_params.times[i].get_icu_to_home());
+        ASSERT_EQ((double)params.times[i].get_icu_to_dead(), (double)read_params.times[i].get_icu_to_dead());
+
+        ASSERT_EQ((double)params.probabilities[i].get_infection_from_contact(),
+                  (double)read_params.probabilities[i].get_infection_from_contact());
+        ASSERT_EQ((double)params.probabilities[i].get_risk_from_symptomatic(),
+                  (double)read_params.probabilities[i].get_risk_from_symptomatic());
+        ASSERT_EQ((double)params.probabilities[i].get_asymp_per_infectious(),
+                  (double)read_params.probabilities[i].get_asymp_per_infectious());
+        ASSERT_EQ((double)params.probabilities[i].get_dead_per_icu(),
+                  (double)read_params.probabilities[i].get_dead_per_icu());
+        ASSERT_EQ((double)params.probabilities[i].get_hospitalized_per_infectious(),
+                  (double)read_params.probabilities[i].get_hospitalized_per_infectious());
+        ASSERT_EQ((double)params.probabilities[i].get_icu_per_hospitalized(),
+                  (double)read_params.probabilities[i].get_icu_per_hospitalized());
+
+        for (int j = 0; j < num_groups; j++) {
+            ASSERT_EQ(contact.get_cont_freq_mat().get_cont_freq(i, j),
+                      read_contact.get_cont_freq_mat().get_cont_freq(i, j));
+
+            ASSERT_EQ(contact.get_cont_freq_mat().get_dampings(i, j).get_dampings_vector().size(),
+                      read_contact.get_cont_freq_mat().get_dampings(i, j).get_dampings_vector().size());
+            for (int k = 0; k < contact.get_cont_freq_mat().get_dampings(i, j).get_dampings_vector().size(); k++) {
+                ASSERT_EQ(contact.get_cont_freq_mat().get_dampings(i, j).get_dampings_vector()[k].day,
+                          read_contact.get_cont_freq_mat().get_dampings(i, j).get_dampings_vector()[k].day);
+                ASSERT_EQ(contact.get_cont_freq_mat().get_dampings(i, j).get_dampings_vector()[k].factor,
+                          read_contact.get_cont_freq_mat().get_dampings(i, j).get_dampings_vector()[k].factor);
+            }
+        }
+    }
+}
+
 TEST(TestSaveParameters, compareGraphs)
 {
     double t0   = 0.0;
@@ -171,7 +324,7 @@ TEST(TestSaveParameters, compareGraphs)
            num_rec_t0 = 10, num_dead_t0 = 0;
 
     int num_groups = 2;
-    double fact   = 1.0 / (double)num_groups;
+    double fact    = 1.0 / (double)num_groups;
 
     epi::SecirParams params(num_groups);
 

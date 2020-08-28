@@ -14,7 +14,7 @@ namespace epi
  * @param handle Tixi Document Handle
  * @param path Path to contact frequency matrix Tree of XML file to read from
  */
-UncertainContactMatrix read_contact(TixiDocumentHandle handle, const std::string& path);
+UncertainContactMatrix read_contact(TixiDocumentHandle handle, const std::string& path, int io_mode = 2);
 
 /**
  * @brief write contact frequency matrix and damping distributions to xml file
@@ -24,7 +24,7 @@ UncertainContactMatrix read_contact(TixiDocumentHandle handle, const std::string
  * @param nb_runs Number of runs of parameterstudy (used for predefinied samples of dampings)
  */
 void write_contact(TixiDocumentHandle handle, const std::string& path, const UncertainContactMatrix& contact_pattern,
-                   int nb_runs);
+                   int io_mode, int nb_runs);
 
 /**
  * @brief read parameter distribution from xml file
@@ -34,14 +34,26 @@ void write_contact(TixiDocumentHandle handle, const std::string& path, const Unc
 std::unique_ptr<ParameterDistribution> read_distribution(TixiDocumentHandle handle, const std::string& path);
 
 /**
- * @brief write parameter distribution to xml file
+ * @brief write parameter distribution and/or value to xml file
  * @param handle Tixi Document Handle
  * @param path Path to XML Tree of the parameter
- * @param element Name of parameter
- * @param dist Distribution of parameter
+ * @param element_name Name of parameter
+ * @param element Uncertain Value of parameter
+ * @param io_mode type of xml file (see write_study)
+ * @param num_runs Number of runs of parameterstudy (used for predefinied samples)
  */
-void write_distribution(const TixiDocumentHandle& handle, const std::string& path, const std::string& element,
-                        const ParameterDistribution& dist);
+void write_element(const TixiDocumentHandle& handle, const std::string& path, const std::string& element_name,
+                   const UncertainValue& element, int io_mode, int num_runs);
+
+/**
+ * @brief write contact matrix distribution and/or value to xml file
+ * @param handle Tixi Document Handle
+ * @param path Path to XML Tree of the parameter
+ * @param element_name Name of parameter
+ * @param distribution distribution of parameter
+ */
+void write_contact_element(const TixiDocumentHandle& handle, const std::string& path, const std::string& element_name,
+                           const ParameterDistribution& distribution);
 
 /**
  * @brief write predefined samples to xml file
@@ -50,6 +62,14 @@ void write_distribution(const TixiDocumentHandle& handle, const std::string& pat
  * @param samples Vector of predefined samples
  */
 void write_predef_sample(TixiDocumentHandle handle, const std::string& path, const std::vector<double>& samples);
+
+/**
+ * @brief read values from xml file (only if io_mode = 0)
+ * @param handle Tixi Document Handle
+ * @param path Path to XML Tree of the parameter
+ * @return
+ */
+SecirParams read_parameter_values(TixiDocumentHandle handle, const std::string& path);
 
 /**
  * @brief read parameter space from xml file
@@ -64,9 +84,10 @@ ParameterSpace read_parameter_space(TixiDocumentHandle handle, const std::string
  * @param path Path to XML Tree of the parameter space
  * @param parameter_space Parameter Space with distributions of all secir parameters
  * @param nb_runs Number of runs of parameterstudy (used for predefinied samples)
+ * @param io_mode type of xml file (see write_study)
  */
-void write_parameter_space(TixiDocumentHandle handle, const std::string& path, const ParameterSpace& parameter_space,
-                           int nb_runs);
+void write_parameter_space(TixiDocumentHandle handle, const std::string& path, const UncertainValue& parameter_space,
+                           int nb_runs, int io_mode);
 
 /**
  * @brief read parameter study from xml file
@@ -80,8 +101,14 @@ ParameterStudy read_parameter_study(TixiDocumentHandle handle, const std::string
  * @param handle Tixi Document Handle
  * @param path Path to XML Tree of the parameter study
  * @param parameter_study Parameter study
+ * @param io_mode type of xml file
+ *        io_mode = 0: only double values are written
+ *        io_mode = 1: only distributions are written
+ *        io_mode = 2: both values and distributions are written
+ *        io_mode = 3: distributions are written and values are saved as predefined samples
  */
-void write_parameter_study(TixiDocumentHandle handle, const std::string& path, const ParameterStudy& parameter_study);
+void write_parameter_study(TixiDocumentHandle handle, const std::string& path, const ParameterStudy& parameter_study,
+                           int io_mode = 2);
 
 /**
  * @brief creates xml file with a single run parameter study with std 0 (used to save parameters of individual runs)
