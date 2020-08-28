@@ -125,6 +125,12 @@ public:
          * @brief sets the incubation time in the SECIR model
          * @param tinc incubation time in day unit
          */
+        void set_incubation(UncertainValue tinc);
+
+        /**
+         * @brief sets the incubation time in the SECIR model
+         * @param tinc incubation time in day unit
+         */
         void set_incubation(double tinc);
 
         /**
@@ -132,6 +138,13 @@ public:
          * @param tinc incubation time in day unit
          */
         void set_incubation(ParameterDistribution const& tinc);
+
+        /**
+         * @brief sets the infectious time for symptomatic cases that are infected but
+         *        who do not need to be hsopitalized in the SECIR model
+         * @param tinfmild infectious time for symptomatic cases (if not hospitalized) in day unit
+         */
+        void set_infectious_mild(UncertainValue tinfmild);
 
         /**
          * @brief sets the infectious time for symptomatic cases that are infected but 
@@ -149,6 +162,12 @@ public:
 
         /**
          * @brief sets the serial interval in the SECIR model
+         * @param tserint serial interval in day unit
+         */
+        void set_serialinterval(UncertainValue tserint);
+
+        /**
+         * @brief sets the serial interval in the SECIR model
          * @param tserint serial interval in day unit 
          */
         void set_serialinterval(double tserint);
@@ -158,6 +177,12 @@ public:
          * @param tserint serial interval in day unit 
          */
         void set_serialinterval(ParameterDistribution const& tserint);
+
+        /**
+         * @brief sets the time people are 'simply' hospitalized before returning home in the SECIR model
+         * @param thosp2home time people are 'simply' hospitalized before returning home in day unit
+         */
+        void set_hospitalized_to_home(UncertainValue thosp2home);
 
         /**
          * @brief sets the time people are 'simply' hospitalized before returning home in the SECIR model
@@ -173,6 +198,12 @@ public:
 
         /**
          * @brief sets the time people are infectious at home before 'simply' hospitalized in the SECIR model
+         * @param thome2hosp time people are infectious at home before 'simply' hospitalized in day unit
+         */
+        void set_home_to_hospitalized(UncertainValue thome2hosp);
+
+        /**
+         * @brief sets the time people are infectious at home before 'simply' hospitalized in the SECIR model
          * @param thome2hosp time people are infectious at home before 'simply' hospitalized in day unit 
          */
         void set_home_to_hospitalized(double thome2hosp);
@@ -182,6 +213,12 @@ public:
          * @param thome2hosp time people are infectious at home before 'simply' hospitalized in day unit 
          */
         void set_home_to_hospitalized(ParameterDistribution const& thome2hosp);
+
+        /**
+         * @brief sets the time people are 'simply' hospitalized before being treated by ICU in the SECIR model
+         * @param thosp2icu time people are 'simply' hospitalized before being treated by ICU in day unit
+         */
+        void set_hospitalized_to_icu(UncertainValue thosp2icu);
 
         /**
          * @brief sets the time people are 'simply' hospitalized before being treated by ICU in the SECIR model
@@ -197,6 +234,12 @@ public:
 
         /**
          * @brief sets the time people are treated by ICU before returning home in the SECIR model
+         * @param ticu2home time people are treated by ICU before returning home in day unit
+         */
+        void set_icu_to_home(UncertainValue ticu2home);
+
+        /**
+         * @brief sets the time people are treated by ICU before returning home in the SECIR model
          * @param ticu2home time people are treated by ICU before returning home in day unit 
          */
         void set_icu_to_home(double ticu2home);
@@ -209,6 +252,12 @@ public:
 
         /**
          * @brief sets the infectious time for asymptomatic cases in the SECIR model
+         * @param tinfasy infectious time for asymptomatic cases in day unit
+         */
+        void set_infectious_asymp(UncertainValue tinfasy);
+
+        /**
+         * @brief sets the infectious time for asymptomatic cases in the SECIR model
          * @param tinfasy infectious time for asymptomatic cases in day unit 
          */
         void set_infectious_asymp(double tinfasy);
@@ -218,6 +267,12 @@ public:
          * @param tinfasy infectious time for asymptomatic cases in day unit 
          */
         void set_infectious_asymp(ParameterDistribution const& tinfasy);
+
+        /**
+         * @brief sets the time people are treated by ICU before dying in the SECIR model
+         * @param ticu2death time people are treated by ICU before dying in day unit
+         */
+        void set_icu_to_death(UncertainValue ticu2death);
 
         /**
          * @brief sets the time people are treated by ICU before dying in the SECIR model
@@ -315,6 +370,12 @@ public:
         * @brief sets probability of getting infected from a contact
         * @param infprob the probability of getting infected from a contact
         */
+        void set_infection_from_contact(UncertainValue infprob);
+
+        /**
+        * @brief sets probability of getting infected from a contact
+        * @param infprob the probability of getting infected from a contact
+        */
         void set_infection_from_contact(double infprob);
 
         /**
@@ -327,6 +388,12 @@ public:
         * @brief sets the percentage of asymptomatic cases in the SECIR model
         * @param alpha the percentage of asymptomatic cases
         */
+        void set_asymp_per_infectious(UncertainValue m_asympinf);
+
+        /**
+        * @brief sets the percentage of asymptomatic cases in the SECIR model
+        * @param alpha the percentage of asymptomatic cases
+        */
         void set_asymp_per_infectious(double m_asympinf);
 
         /**
@@ -334,6 +401,12 @@ public:
         * @param alpha the percentage of asymptomatic cases
         */
         void set_asymp_per_infectious(ParameterDistribution const& m_asympinf);
+
+        /**
+        * @brief sets the risk of infection from symptomatic cases in the SECIR model
+        * @param beta the risk of infection from symptomatic cases
+        */
+        void set_risk_from_symptomatic(UncertainValue m_risksymp);
 
         /**
         * @brief sets the risk of infection from symptomatic cases in the SECIR model
@@ -351,6 +424,12 @@ public:
         * @brief sets the percentage of hospitalized patients per infected patients in the SECIR model
         * @param rho percentage of hospitalized patients per infected patients
         */
+        void set_hospitalized_per_infectious(UncertainValue m_hospinf);
+
+        /**
+        * @brief sets the percentage of hospitalized patients per infected patients in the SECIR model
+        * @param rho percentage of hospitalized patients per infected patients
+        */
         void set_hospitalized_per_infectious(double m_hospinf);
 
         /**
@@ -358,6 +437,12 @@ public:
         * @param rho percentage of hospitalized patients per infected patients
         */
         void set_hospitalized_per_infectious(ParameterDistribution const& m_hospinf);
+
+        /**
+        * @brief sets the percentage of ICU patients per hospitalized patients in the SECIR model
+        * @param theta percentage of ICU patients per hospitalized patients
+        */
+        void set_icu_per_hospitalized(UncertainValue m_icuhosp);
 
         /**
         * @brief sets the percentage of ICU patients per hospitalized patients in the SECIR model
@@ -371,6 +456,11 @@ public:
         */
         void set_icu_per_hospitalized(ParameterDistribution const& m_icuhosp);
 
+        /**
+        * @brief sets the percentage of dead patients per ICU patients in the SECIR model
+        * @param delta percentage of dead patients per ICU patients
+        */
+        void set_dead_per_icu(UncertainValue m_deathicu);
         /**
         * @brief sets the percentage of dead patients per ICU patients in the SECIR model
         * @param delta percentage of dead patients per ICU patients 

@@ -14,7 +14,7 @@ namespace epi
  * @param handle Tixi Document Handle
  * @param path Path to contact frequency matrix Tree of XML file to read from
  */
-UncertainContactMatrix read_contact(TixiDocumentHandle handle, const std::string& path, int io_mode = 2);
+UncertainContactMatrix read_contact(TixiDocumentHandle handle, const std::string& path, int io_mode);
 
 /**
  * @brief write contact frequency matrix and damping distributions to xml file
@@ -25,6 +25,15 @@ UncertainContactMatrix read_contact(TixiDocumentHandle handle, const std::string
  */
 void write_contact(TixiDocumentHandle handle, const std::string& path, const UncertainContactMatrix& contact_pattern,
                    int io_mode, int nb_runs);
+
+/**
+ * @brief reads parameter distribution and/or value from xml file
+ * @param handle Tixi Document Handle
+ * @param path Path to XML Tree of the parameter
+ * @param io_mode type of xml file (see write_study)
+ * @return
+ */
+std::unique_ptr<UncertainValue> read_element(TixiDocumentHandle handle, const std::string& path, int io_mode);
 
 /**
  * @brief read parameter distribution from xml file
@@ -46,14 +55,14 @@ void write_element(const TixiDocumentHandle& handle, const std::string& path, co
                    const UncertainValue& element, int io_mode, int num_runs);
 
 /**
- * @brief write contact matrix distribution and/or value to xml file
+ * @brief write distribution to xml file
  * @param handle Tixi Document Handle
  * @param path Path to XML Tree of the parameter
  * @param element_name Name of parameter
  * @param distribution distribution of parameter
  */
-void write_contact_element(const TixiDocumentHandle& handle, const std::string& path, const std::string& element_name,
-                           const ParameterDistribution& distribution);
+void write_distribution(const TixiDocumentHandle& handle, const std::string& path, const std::string& element_name,
+                        const ParameterDistribution& distribution);
 
 /**
  * @brief write predefined samples to xml file
@@ -64,19 +73,11 @@ void write_contact_element(const TixiDocumentHandle& handle, const std::string& 
 void write_predef_sample(TixiDocumentHandle handle, const std::string& path, const std::vector<double>& samples);
 
 /**
- * @brief read values from xml file (only if io_mode = 0)
- * @param handle Tixi Document Handle
- * @param path Path to XML Tree of the parameter
- * @return
- */
-SecirParams read_parameter_values(TixiDocumentHandle handle, const std::string& path);
-
-/**
  * @brief read parameter space from xml file
  * @param handle Tixi Document Handle
  * @param path Path to XML Tree of the parameter space
  */
-ParameterSpace read_parameter_space(TixiDocumentHandle handle, const std::string& path);
+ParameterSpace read_parameter_space(TixiDocumentHandle handle, const std::string& path, int io_mode);
 
 /**
  * @brief write parameter space to xml file
