@@ -15,10 +15,24 @@ class AbmSimulation
     using ResultVector = Eigen::Matrix<int, Eigen::Index(InfectionState::Count), 1>;
 
 public:
+    /**
+     * create a simulation.
+     * @param t the starting time of the simulation
+     * @param world the world to simulate
+     */
     AbmSimulation(double t, World&& world);
-    /** run the simulation from the current time to tmax */
+
+    /** 
+     * run the simulation from the current time to tmax.
+     * @param tmax time to stop
+     */
     void advance(double tmax);
 
+    /**
+     * get the result of the simulation.
+     * sum over all locations of the number of persons in an infection state.
+     * @return the result of the simulation.
+     */
     const TimeSeries<double>& get_result() const
     {
         return m_result;

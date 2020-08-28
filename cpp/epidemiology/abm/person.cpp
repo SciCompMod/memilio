@@ -1,12 +1,12 @@
 #include "epidemiology/abm/world.h"
 #include "epidemiology/abm/person.h"
-#include "epidemiology/abm/node.h"
+#include "epidemiology/abm/location.h"
 
 namespace epi
 {
 
-Person::Person(Node& node, InfectionState state)
-    : m_node(node)
+Person::Person(Location& location, InfectionState state)
+    : m_location(location)
     , m_state(state)
 {
 }
@@ -23,7 +23,7 @@ void Person::interact(double dt, const GlobalInfectionParameters& global_infecti
         m_time_until_carrier -= dt;
     }
     else {
-        new_state = m_node.get().interact(*this, dt);
+        new_state = m_location.get().interact(*this, dt);
         if (new_state == InfectionState::Exposed) {
             m_time_until_carrier = global_infection_params.incubation_time;
         }
@@ -31,14 +31,14 @@ void Person::interact(double dt, const GlobalInfectionParameters& global_infecti
 
     m_state = new_state;
     if (state != new_state) {
-        m_node.get().changed_state(*this, state);
+        m_location.get().changed_state(*this, state);
     }
 }
 
-void Person::migrate_to(Node& node)
+void Person::migrate_to(Location& location)
 {
-    m_node.get().remove_person(*this);
-    m_node = node;
-    m_node.get().add_person(*this);
+    m_location.get().remove_person(*this);
+    m_location = location;
+    m_location.get().add_person(*this);
 }
 } // namespace epi

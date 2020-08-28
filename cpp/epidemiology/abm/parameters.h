@@ -14,7 +14,7 @@ struct GlobalInfectionParameters {
 };
 
 /**
- * parameters of the infection that depend on the location/node.
+ * parameters of the infection that depend on the location.
  */
 struct LocalInfectionParameters {
     double susceptible_to_exposed_by_carrier  = 1;

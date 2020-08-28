@@ -7,34 +7,58 @@
 namespace epi
 {
 
-class Node;
+class Location;
 class GlobalInfectionParameters;
 
 /**
- * Actors in the simulated world that can carry and spread the infection.
+ * Agents in the simulated world that can carry and spread the infection.
  */
 class Person
 {
 public:
-    Person(Node& node, InfectionState state);
-    /** interact with the population at its node, might change state */
-    void interact(double dt, const GlobalInfectionParameters& global_infection_parameters);
-    /** migrate to a different node */
-    void migrate_to(Node& node); 
+    /**
+     * create a Person.
+     * @param location the initial location of the person
+     * @param state the initial infection state of the person
+     */
+    Person(Location& location, InfectionState state);
 
+    /** 
+     * interact with the population at its current location.
+     * The person might change infection state 
+     * @param dt length of the current simulation time step
+     * @param global_infection_parameters infection parameters that are the same in all locations
+     */
+    void interact(double dt, const GlobalInfectionParameters& global_infection_parameters);
+
+    /** 
+     * migrate to a different location.
+     * @param location the new location of the person.
+     * */
+    void migrate_to(Location& location);
+
+    /**
+     * get the current infection state of the person.
+     * @returns the current infection state of the person
+     */
     InfectionState get_infection_state() const
     {
         return m_state;
     }
-    const Node& get_node() const
+
+    /**
+     * get the current location of the person.
+     * @returns the current location of the person
+     */
+    const Location& get_location() const
     {
-        return m_node;
+        return m_location;
     }
 
 private:
     InfectionState m_state;
     float m_time_until_carrier;
-    std::reference_wrapper<Node> m_node;
+    std::reference_wrapper<Location> m_location;
     //age, times, ...
 };
 

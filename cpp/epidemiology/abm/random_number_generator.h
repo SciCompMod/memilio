@@ -30,6 +30,7 @@ struct RandomNumberGenerator {
 
 /**
  * get a random number generator that is static and local to this thread.
+ * @return a random number generator that is static and local to this thread.
  */
 RandomNumberGenerator& thread_local_rng();
 
