@@ -217,6 +217,15 @@ std::unique_ptr<U> dynamic_unique_ptr_cast(std::unique_ptr<T>&& base_ptr)
     return derived_ptr;
 }
 
+/**
+ * checks if there is an element in this range that matches a predicate
+ */
+template<class Iter, class Pred>
+bool contains(Iter b, Iter e, Pred p)
+{
+    return find_if(b, e, p) != e;
+}
+
 }
 
 #endif //STL_UTIL_H

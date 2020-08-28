@@ -46,6 +46,20 @@ add_library(epidemiology
     epidemiology/parameter_studies/parameter_distributions.h
     epidemiology/time_series.h
     epidemiology/time_series.cpp
+    epidemiology/abm/location.cpp
+    epidemiology/abm/location.h
+    epidemiology/abm/simulation.cpp
+    epidemiology/abm/simulation.h
+    epidemiology/abm/person.cpp
+    epidemiology/abm/person.h
+    epidemiology/abm/world.cpp
+    epidemiology/abm/world.h
+    epidemiology/abm/state.h
+    epidemiology/abm/location_type.h
+    epidemiology/abm/random_number_generator.h
+    epidemiology/abm/random_number_generator.cpp
+    epidemiology/abm/parameters.h
+    epidemiology/abm/parameters.cpp
 )
 
 target_include_directories(epidemiology PUBLIC
