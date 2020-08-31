@@ -1,5 +1,6 @@
 //#include <epidemiology/seir.h>
 #include <epidemiology_io/secir_parameters_io.h>
+#include <epidemiology/parameter_studies/parameter_space.h>
 #include <epidemiology/parameter_studies/parameter_studies.h>
 #include <epidemiology_io/secir_parameters_io.h>
 
@@ -88,11 +89,13 @@ int main(int argc, char* argv[])
         }
     }
 
+    epi::create_param_space_normal(params, t0, tmax, 0.2);
+
     epi::ParameterStudy parameter_study(
         [](double t0, double tmax, double dt, epi::SecirParams const& params) {
             return epi::simulate(t0, tmax, dt, params);
         },
-        params, t0, tmax, 0.2, 1);
+        params, t0, tmax, 1);
 
     parameter_study.set_num_runs(1);
 

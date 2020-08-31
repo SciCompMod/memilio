@@ -270,11 +270,11 @@ ParameterStudy read_parameter_study(TixiDocumentHandle handle, const std::string
         [](auto&& t0, auto&& tmax, auto&& dt, auto&& params) {
             return simulate(t0, tmax, dt, params);
         },
-        read_parameter_space(handle, path, io_mode), num_runs, t0, tmax);
+        read_parameter_space(handle, path, io_mode), t0, tmax, num_runs);
     return study;
 }
 
-ParameterSpace read_parameter_space(TixiDocumentHandle handle, const std::string& path, int io_mode)
+SecirParams read_parameter_space(TixiDocumentHandle handle, const std::string& path, int io_mode)
 {
     int num_groups;
     tixiGetIntegerElement(handle, path_join(path, "NumberOfGroups").c_str(), &num_groups);
@@ -343,7 +343,7 @@ ParameterSpace read_parameter_space(TixiDocumentHandle handle, const std::string
             *read_element(handle, path_join(probabilities_path, "ICUPerHospitalized"), io_mode));
     }
 
-    return ParameterSpace(params);
+    return params;
 }
 
 void write_parameter_space(TixiDocumentHandle handle, const std::string& path, const SecirParams& parameters,
@@ -428,8 +428,7 @@ void write_parameter_study(TixiDocumentHandle handle, const std::string& path, c
     tixiAddDoubleElement(handle, path.c_str(), "T0", parameter_study.get_t0(), "%g");
     tixiAddDoubleElement(handle, path.c_str(), "TMax", parameter_study.get_tmax(), "%g");
 
-    write_parameter_space(handle, path, parameter_study.get_parameter_space().get_secir_params(),
-                          parameter_study.get_num_runs(), io_mode);
+    write_parameter_space(handle, path, parameter_study.get_secir_params(), parameter_study.get_num_runs(), io_mode);
 }
 
 void write_single_run_params(const int run, const SecirParams& params, double t0, double tmax,
@@ -445,7 +444,7 @@ void write_single_run_params(const int run, const SecirParams& params, double t0
         [](auto&& t0, auto&& tmax, auto&& dt, auto&& params) {
             return simulate(t0, tmax, dt, params);
         },
-        params, t0, tmax, 0.0, num_runs);
+        params, t0, tmax, num_runs);
 
     write_parameter_study(handle, path, study, 0);
     tixiSaveDocument(handle, ("Parameters_run" + std::to_string(run) + ".xml").c_str());
@@ -482,10 +481,8 @@ void read_node(Graph<ModelNode<SecirSimulation>, MigrationEdge>& graph, int node
     TixiDocumentHandle node_handle;
     tixiOpenDocument(("GraphNode" + std::to_string(node) + ".xml").c_str(), &node_handle);
 
-    ParameterStudy study  = read_parameter_study(node_handle, "/Parameters");
-    ParameterSpace& space = study.get_parameter_space();
-
-    auto params = space.get_secir_params();
+    ParameterStudy study = read_parameter_study(node_handle, "/Parameters");
+    SecirParams params   = study.get_secir_params();
 
     graph.add_node(params, study.get_t0());
 
