@@ -9,12 +9,12 @@
 
 namespace epi
 {
-using HandleSimulationResultFunction =
-    std::function<void(const SecirParams&, const TimeSeries<double>& result)>;
-auto dummy_func = [](const auto& params, const auto& secir_result) {};
+using HandleSimulationResultFunction = std::function<void(const SecirParams&, const TimeSeries<double>& result)>;
+auto dummy_func                      = [](const auto& params, const auto& secir_result) {};
 
 // The function type for the kind of simulation that we want to run
-using secir_simulation_function_t = std::function<TimeSeries<double>(double t0, double tmax, double dt, SecirParams const& params)>;
+using secir_simulation_function_t =
+    std::function<TimeSeries<double>(double t0, double tmax, double dt, SecirParams const& params)>;
 
 // TODO: document class
 
@@ -155,7 +155,7 @@ inline ParameterStudy::ParameterStudy(secir_simulation_function_t const& simu_fu
 {
 }
 
-inline std::vector<TimeSeries<double>> ParameterStudy::run(HandleSimulationResultFunction simulation_result_function)
+inline std::vector<TimeSeries<double>> ParameterStudy::run(HandleSimulationResultFunction result_processing_function)
 {
     std::vector<TimeSeries<double>> ensemble_result;
 
@@ -165,7 +165,7 @@ inline std::vector<TimeSeries<double>> ParameterStudy::run(HandleSimulationResul
 
         // Call the simulation function
         auto result = simulation_function((*this).m_t0, (*this).m_tmax, (*this).m_dt, params_sample);
-        simulation_result_function(params_sample, result);
+        result_processing_function(params_sample, result);
 
         ensemble_result.push_back(result);
     }

@@ -111,6 +111,18 @@ double Populations::get_total() const
     return sum;
 }
 
+void Populations::set(std::vector<size_t> const& indices, UncertainValue const& value)
+{
+#ifndef NDEBUG
+    assert(indices.size() == m_category_sizes.size());
+    size_t i = 0;
+    for (auto idx : indices) {
+        assert(idx < m_category_sizes[i++]);
+    }
+#endif
+    m_y[get_flat_index(indices)] = value;
+}
+
 void Populations::set(std::vector<size_t> const& indices, double value)
 {
 #ifndef NDEBUG
