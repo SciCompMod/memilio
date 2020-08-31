@@ -102,7 +102,8 @@ int main(int argc, char* argv[])
     TixiDocumentHandle handle;
     tixiCreateDocument("Parameters", &handle);
 
-    epi::write_parameter_study(handle, path, parameter_study);
+    int io_mode = 2;
+    epi::write_parameter_study(handle, path, parameter_study, io_mode);
     tixiSaveDocument(handle, "Parameters.xml");
     tixiCloseDocument(handle);
 
@@ -110,7 +111,7 @@ int main(int argc, char* argv[])
     epi::ParameterStudy read_study = epi::read_parameter_study(handle, path);
     int run                        = 0;
     auto lambda                    = [&run, t0, tmax](const auto& params, const auto& secir_result) {
-        epi::write_single_run_params(run++, params, t0, tmax, secir_result);
+        //epi::write_single_run_params(run++, params, t0, tmax, secir_result);
     };
     auto results = read_study.run(lambda);
 

@@ -89,7 +89,7 @@ public:
      * @param indices a vector containing the indices for each category
      * @param value the new value for the compartment's population
      */
-    void set(std::vector<size_t> const& indices, UncertainValue value);
+    void set(std::vector<size_t> const& indices, UncertainValue const& value);
 
     /**
      * @brief set sets the scalar value of the population of one compartment

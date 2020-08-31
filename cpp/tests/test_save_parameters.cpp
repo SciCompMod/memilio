@@ -250,48 +250,44 @@ TEST(TestSaveParameters, compareSingleRun)
     ASSERT_EQ(num_groups, num_groups_read);
 
     for (size_t i = 0; i < num_groups; i++) {
-        ASSERT_EQ((double)params.populations.get({i, epi::SecirCompartments::D}),
-                  (double)read_params.populations.get({i, epi::SecirCompartments::D}));
-        ASSERT_EQ((double)params.populations.get_group_total(epi::AgeGroup, i),
-                  (double)read_params.populations.get_group_total(epi::AgeGroup, i));
-        ASSERT_EQ((double)params.populations.get({i, epi::SecirCompartments::E}),
-                  (double)read_params.populations.get({i, epi::SecirCompartments::E}));
-        ASSERT_EQ((double)params.populations.get({i, epi::SecirCompartments::C}),
-                  (double)read_params.populations.get({i, epi::SecirCompartments::C}));
-        ASSERT_EQ((double)params.populations.get({i, epi::SecirCompartments::I}),
-                  (double)read_params.populations.get({i, epi::SecirCompartments::I}));
-        ASSERT_EQ((double)params.populations.get({i, epi::SecirCompartments::H}),
-                  (double)read_params.populations.get({i, epi::SecirCompartments::H}));
-        ASSERT_EQ((double)params.populations.get({i, epi::SecirCompartments::U}),
-                  (double)read_params.populations.get({i, epi::SecirCompartments::U}));
-        ASSERT_EQ((double)params.populations.get({i, epi::SecirCompartments::R}),
-                  (double)read_params.populations.get({i, epi::SecirCompartments::R}));
+        ASSERT_EQ(params.populations.get({i, epi::SecirCompartments::D}),
+                  read_params.populations.get({i, epi::SecirCompartments::D}));
+        ASSERT_EQ(params.populations.get_group_total(epi::AgeGroup, i),
+                  read_params.populations.get_group_total(epi::AgeGroup, i));
+        ASSERT_EQ(params.populations.get({i, epi::SecirCompartments::E}),
+                  read_params.populations.get({i, epi::SecirCompartments::E}));
+        ASSERT_EQ(params.populations.get({i, epi::SecirCompartments::C}),
+                  read_params.populations.get({i, epi::SecirCompartments::C}));
+        ASSERT_EQ(params.populations.get({i, epi::SecirCompartments::I}),
+                  read_params.populations.get({i, epi::SecirCompartments::I}));
+        ASSERT_EQ(params.populations.get({i, epi::SecirCompartments::H}),
+                  read_params.populations.get({i, epi::SecirCompartments::H}));
+        ASSERT_EQ(params.populations.get({i, epi::SecirCompartments::U}),
+                  read_params.populations.get({i, epi::SecirCompartments::U}));
+        ASSERT_EQ(params.populations.get({i, epi::SecirCompartments::R}),
+                  read_params.populations.get({i, epi::SecirCompartments::R}));
 
-        ASSERT_EQ((double)params.times[i].get_incubation(), (double)read_params.times[i].get_incubation());
-        ASSERT_EQ((double)params.times[i].get_infectious_mild(), (double)read_params.times[i].get_infectious_mild());
-        ASSERT_EQ((double)params.times[i].get_serialinterval(), (double)read_params.times[i].get_serialinterval());
-        ASSERT_EQ((double)params.times[i].get_hospitalized_to_home(),
-                  (double)read_params.times[i].get_hospitalized_to_home());
-        ASSERT_EQ((double)params.times[i].get_home_to_hospitalized(),
-                  (double)read_params.times[i].get_home_to_hospitalized());
-        ASSERT_EQ((double)params.times[i].get_infectious_asymp(), (double)read_params.times[i].get_infectious_asymp());
-        ASSERT_EQ((double)params.times[i].get_hospitalized_to_icu(),
-                  (double)read_params.times[i].get_hospitalized_to_icu());
-        ASSERT_EQ((double)params.times[i].get_icu_to_home(), (double)read_params.times[i].get_icu_to_home());
-        ASSERT_EQ((double)params.times[i].get_icu_to_dead(), (double)read_params.times[i].get_icu_to_dead());
+        ASSERT_EQ(params.times[i].get_incubation(), read_params.times[i].get_incubation());
+        ASSERT_EQ(params.times[i].get_infectious_mild(), read_params.times[i].get_infectious_mild());
+        ASSERT_EQ(params.times[i].get_serialinterval(), read_params.times[i].get_serialinterval());
+        ASSERT_EQ(params.times[i].get_hospitalized_to_home(), read_params.times[i].get_hospitalized_to_home());
+        ASSERT_EQ(params.times[i].get_home_to_hospitalized(), read_params.times[i].get_home_to_hospitalized());
+        ASSERT_EQ(params.times[i].get_infectious_asymp(), read_params.times[i].get_infectious_asymp());
+        ASSERT_EQ(params.times[i].get_hospitalized_to_icu(), read_params.times[i].get_hospitalized_to_icu());
+        ASSERT_EQ(params.times[i].get_icu_to_home(), read_params.times[i].get_icu_to_home());
+        ASSERT_EQ(params.times[i].get_icu_to_dead(), read_params.times[i].get_icu_to_dead());
 
-        ASSERT_EQ((double)params.probabilities[i].get_infection_from_contact(),
-                  (double)read_params.probabilities[i].get_infection_from_contact());
-        ASSERT_EQ((double)params.probabilities[i].get_risk_from_symptomatic(),
-                  (double)read_params.probabilities[i].get_risk_from_symptomatic());
-        ASSERT_EQ((double)params.probabilities[i].get_asymp_per_infectious(),
-                  (double)read_params.probabilities[i].get_asymp_per_infectious());
-        ASSERT_EQ((double)params.probabilities[i].get_dead_per_icu(),
-                  (double)read_params.probabilities[i].get_dead_per_icu());
-        ASSERT_EQ((double)params.probabilities[i].get_hospitalized_per_infectious(),
-                  (double)read_params.probabilities[i].get_hospitalized_per_infectious());
-        ASSERT_EQ((double)params.probabilities[i].get_icu_per_hospitalized(),
-                  (double)read_params.probabilities[i].get_icu_per_hospitalized());
+        ASSERT_EQ(params.probabilities[i].get_infection_from_contact(),
+                  read_params.probabilities[i].get_infection_from_contact());
+        ASSERT_EQ(params.probabilities[i].get_risk_from_symptomatic(),
+                  read_params.probabilities[i].get_risk_from_symptomatic());
+        ASSERT_EQ(params.probabilities[i].get_asymp_per_infectious(),
+                  read_params.probabilities[i].get_asymp_per_infectious());
+        ASSERT_EQ(params.probabilities[i].get_dead_per_icu(), read_params.probabilities[i].get_dead_per_icu());
+        ASSERT_EQ(params.probabilities[i].get_hospitalized_per_infectious(),
+                  read_params.probabilities[i].get_hospitalized_per_infectious());
+        ASSERT_EQ(params.probabilities[i].get_icu_per_hospitalized(),
+                  read_params.probabilities[i].get_icu_per_hospitalized());
 
         for (int j = 0; j < num_groups; j++) {
             ASSERT_EQ(contact.get_cont_freq_mat().get_cont_freq(i, j),

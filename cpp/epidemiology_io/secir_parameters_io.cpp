@@ -28,14 +28,16 @@ void write_element(const TixiDocumentHandle& handle, const std::string& path, co
     if (io_mode == 0) {
         tixiAddDoubleElement(handle, path.c_str(), element_name.c_str(), (double)element, "%g");
     }
-
-    auto distribution = element.get_distribution().get();
-
-    if (io_mode == 1 || io_mode == 2 || io_mode == 3) {
+    else if (io_mode == 1 || io_mode == 2 || io_mode == 3) {
+        auto distribution = element.get_distribution().get();
         write_distribution(handle, path, element_name, *distribution);
         if (io_mode == 2) {
             tixiAddDoubleElement(handle, element_path.c_str(), "Value", (double)element, "%g");
         }
+    }
+    else {
+        // TODO error handling
+        epi::log_error("Wrong input for io_mode.");
     }
 
     if (io_mode == 3) {
@@ -98,8 +100,7 @@ std::unique_ptr<UncertainValue> read_element(TixiDocumentHandle handle, const st
         tixiGetDoubleElement(handle, path.c_str(), &read_buffer);
         value = std::make_unique<UncertainValue>(read_buffer);
     }
-
-    if (io_mode != 0) {
+    else if (io_mode == 1 || io_mode == 2 || io_mode == 3) {
         std::unique_ptr<ParameterDistribution> distribution = read_distribution(handle, path);
 
         if (io_mode == 2) {
@@ -108,6 +109,10 @@ std::unique_ptr<UncertainValue> read_element(TixiDocumentHandle handle, const st
             value = std::make_unique<UncertainValue>(read_buffer);
         }
         value->set_distribution(*distribution.get());
+    }
+    else {
+        // TODO error handling
+        epi::log_error("Wrong input for io_mode.");
     }
     return value;
 }
@@ -138,7 +143,8 @@ std::unique_ptr<ParameterDistribution> read_distribution(TixiDocumentHandle hand
         distribution = std::make_unique<ParameterDistributionUniform>(min, max);
     }
     else {
-        //TODO: true error handling
+        // TODO: true error handling
+        epi::log_error("Unknown distribution.");
         assert(false && "Unknown distribution.");
     }
 
@@ -208,7 +214,7 @@ UncertainContactMatrix read_contact(TixiDocumentHandle handle, const std::string
     int num_groups;
     tixiGetIntegerElement(handle, path_join("/Parameters", "NumberOfGroups").c_str(), &num_groups);
     UncertainContactMatrix contact_patterns{ContactFrequencyMatrix{(size_t)num_groups}};
-    for (size_t i = 0; i < num_groups; i++) {
+    for (int i = 0; i < num_groups; i++) {
         double* row = nullptr;
         tixiGetFloatVector(handle, path_join(path, "ContactRateGroup_" + std::to_string(i + 1)).c_str(), &row,
                            num_groups);
@@ -236,7 +242,7 @@ UncertainContactMatrix read_contact(TixiDocumentHandle handle, const std::string
         }
     }
 
-    if (io_mode != 0) {
+    if (io_mode == 1 || io_mode == 2 || io_mode == 3) {
         contact_patterns.set_distribution_damp_nb(*read_distribution(handle, path_join(path, "NumDampings")));
         contact_patterns.set_distribution_damp_days(*read_distribution(handle, path_join(path, "DampingDay")));
         contact_patterns.set_distribution_damp_diag_base(

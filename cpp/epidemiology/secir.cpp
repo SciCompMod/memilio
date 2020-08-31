@@ -28,7 +28,7 @@ SecirParams::StageTimes::StageTimes()
 {
 }
 
-void SecirParams::StageTimes::set_incubation(UncertainValue tinc)
+void SecirParams::StageTimes::set_incubation(UncertainValue const& tinc)
 {
     m_tinc = tinc;
 }
@@ -43,7 +43,7 @@ void SecirParams::StageTimes::set_incubation(ParameterDistribution const& tinc)
     m_tinc.set_distribution(tinc);
 }
 
-void SecirParams::StageTimes::set_infectious_mild(UncertainValue tinfmild)
+void SecirParams::StageTimes::set_infectious_mild(UncertainValue const& tinfmild)
 {
     m_tinfmild = tinfmild;
 }
@@ -58,7 +58,7 @@ void SecirParams::StageTimes::set_infectious_mild(ParameterDistribution const& t
     m_tinfmild.set_distribution(tinfmild);
 }
 
-void SecirParams::StageTimes::set_serialinterval(UncertainValue tserint)
+void SecirParams::StageTimes::set_serialinterval(UncertainValue const& tserint)
 {
     m_tserint = tserint;
 }
@@ -73,7 +73,7 @@ void SecirParams::StageTimes::set_serialinterval(ParameterDistribution const& ts
     m_tserint.set_distribution(tserint);
 }
 
-void SecirParams::StageTimes::set_hospitalized_to_home(UncertainValue thosp2home)
+void SecirParams::StageTimes::set_hospitalized_to_home(UncertainValue const& thosp2home)
 {
     m_thosp2home = thosp2home;
 }
@@ -88,7 +88,7 @@ void SecirParams::StageTimes::set_hospitalized_to_home(ParameterDistribution con
     m_thosp2home.set_distribution(thosp2home);
 }
 
-void SecirParams::StageTimes::set_home_to_hospitalized(UncertainValue thome2hosp)
+void SecirParams::StageTimes::set_home_to_hospitalized(UncertainValue const& thome2hosp)
 {
     m_thome2hosp = thome2hosp;
 }
@@ -103,7 +103,7 @@ void SecirParams::StageTimes::set_home_to_hospitalized(ParameterDistribution con
     m_thome2hosp.set_distribution(thome2hosp);
 }
 
-void SecirParams::StageTimes::set_hospitalized_to_icu(UncertainValue thosp2icu)
+void SecirParams::StageTimes::set_hospitalized_to_icu(UncertainValue const& thosp2icu)
 {
     m_thosp2icu = thosp2icu;
 }
@@ -118,7 +118,7 @@ void SecirParams::StageTimes::set_hospitalized_to_icu(ParameterDistribution cons
     m_thosp2icu.set_distribution(thosp2icu);
 }
 
-void SecirParams::StageTimes::set_icu_to_home(UncertainValue ticu2home)
+void SecirParams::StageTimes::set_icu_to_home(UncertainValue const& ticu2home)
 {
     m_ticu2home = ticu2home;
 }
@@ -133,7 +133,7 @@ void SecirParams::StageTimes::set_icu_to_home(ParameterDistribution const& ticu2
     m_ticu2home.set_distribution(ticu2home);
 }
 
-void SecirParams::StageTimes::set_infectious_asymp(UncertainValue tinfasy)
+void SecirParams::StageTimes::set_infectious_asymp(UncertainValue const& tinfasy)
 {
     m_tinfasy = tinfasy;
 }
@@ -148,7 +148,7 @@ void SecirParams::StageTimes::set_infectious_asymp(ParameterDistribution const& 
     m_tinfasy.set_distribution(tinfasy);
 }
 
-void SecirParams::StageTimes::set_icu_to_death(UncertainValue ticu2death)
+void SecirParams::StageTimes::set_icu_to_death(UncertainValue const& ticu2death)
 {
     m_ticu2death = ticu2death;
 }
@@ -317,7 +317,7 @@ SecirParams::Probabilities::Probabilities()
 {
 }
 
-void SecirParams::Probabilities::set_infection_from_contact(UncertainValue infprob)
+void SecirParams::Probabilities::set_infection_from_contact(UncertainValue const& infprob)
 {
     m_infprob = infprob;
 }
@@ -332,7 +332,7 @@ void SecirParams::Probabilities::set_infection_from_contact(ParameterDistributio
     m_infprob.set_distribution(infprob);
 }
 
-void SecirParams::Probabilities::set_asymp_per_infectious(UncertainValue asympinf)
+void SecirParams::Probabilities::set_asymp_per_infectious(UncertainValue const& asympinf)
 {
     m_asympinf = asympinf;
 }
@@ -347,7 +347,7 @@ void SecirParams::Probabilities::set_asymp_per_infectious(ParameterDistribution 
     m_asympinf.set_distribution(asympinf);
 }
 
-void SecirParams::Probabilities::set_risk_from_symptomatic(UncertainValue risksymp)
+void SecirParams::Probabilities::set_risk_from_symptomatic(UncertainValue const& risksymp)
 {
     m_risksymp = risksymp;
 }
@@ -362,7 +362,7 @@ void SecirParams::Probabilities::set_risk_from_symptomatic(ParameterDistribution
     m_risksymp.set_distribution(risksymp);
 }
 
-void SecirParams::Probabilities::set_hospitalized_per_infectious(UncertainValue hospinf)
+void SecirParams::Probabilities::set_hospitalized_per_infectious(UncertainValue const& hospinf)
 {
     m_hospinf = hospinf;
 }
@@ -377,7 +377,7 @@ void SecirParams::Probabilities::set_hospitalized_per_infectious(ParameterDistri
     m_hospinf.set_distribution(hospinf);
 }
 
-void SecirParams::Probabilities::set_icu_per_hospitalized(UncertainValue icuhosp)
+void SecirParams::Probabilities::set_icu_per_hospitalized(UncertainValue const& icuhosp)
 {
     m_icuhosp = icuhosp;
 }
@@ -392,7 +392,7 @@ void SecirParams::Probabilities::set_icu_per_hospitalized(ParameterDistribution 
     m_icuhosp.set_distribution(icuhosp);
 }
 
-void SecirParams::Probabilities::set_dead_per_icu(UncertainValue deathicu)
+void SecirParams::Probabilities::set_dead_per_icu(UncertainValue const& deathicu)
 {
     m_deathicu = deathicu;
 }

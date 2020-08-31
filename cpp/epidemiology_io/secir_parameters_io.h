@@ -13,6 +13,7 @@ namespace epi
  * @brief read contact frequency matrix and damping distributions from xml file
  * @param handle Tixi Document Handle
  * @param path Path to contact frequency matrix Tree of XML file to read from
+ * @param io_mode type of xml input (see epi::write_parameter_study for more details)
  */
 UncertainContactMatrix read_contact(TixiDocumentHandle handle, const std::string& path, int io_mode);
 
@@ -21,6 +22,7 @@ UncertainContactMatrix read_contact(TixiDocumentHandle handle, const std::string
  * @param handle Tixi Document Handle
  * @param path Path to contact frequency matrix Tree of XML file
  * @param contact_pattern Contact frequencies, dampings, and distributions
+ * @param io_mode type of xml ouput (see epi::write_parameter_study for more details)
  * @param nb_runs Number of runs of parameterstudy (used for predefinied samples of dampings)
  */
 void write_contact(TixiDocumentHandle handle, const std::string& path, const UncertainContactMatrix& contact_pattern,
@@ -30,7 +32,7 @@ void write_contact(TixiDocumentHandle handle, const std::string& path, const Unc
  * @brief reads parameter distribution and/or value from xml file
  * @param handle Tixi Document Handle
  * @param path Path to XML Tree of the parameter
- * @param io_mode type of xml file (see write_study)
+ * @param io_mode type of xml input (see epi::write_parameter_study for more details)
  * @return
  */
 std::unique_ptr<UncertainValue> read_element(TixiDocumentHandle handle, const std::string& path, int io_mode);
@@ -48,7 +50,7 @@ std::unique_ptr<ParameterDistribution> read_distribution(TixiDocumentHandle hand
  * @param path Path to XML Tree of the parameter
  * @param element_name Name of parameter
  * @param element Uncertain Value of parameter
- * @param io_mode type of xml file (see write_study)
+ * @param io_mode type of xml output (see epi::write_parameter_study for more details)
  * @param num_runs Number of runs of parameterstudy (used for predefinied samples)
  */
 void write_element(const TixiDocumentHandle& handle, const std::string& path, const std::string& element_name,
@@ -76,6 +78,7 @@ void write_predef_sample(TixiDocumentHandle handle, const std::string& path, con
  * @brief read parameter space from xml file
  * @param handle Tixi Document Handle
  * @param path Path to XML Tree of the parameter space
+ * @param io_mode type of xml input (see epi::write_parameter_study for more details)
  */
 ParameterSpace read_parameter_space(TixiDocumentHandle handle, const std::string& path, int io_mode);
 
@@ -85,7 +88,7 @@ ParameterSpace read_parameter_space(TixiDocumentHandle handle, const std::string
  * @param path Path to XML Tree of the parameter space
  * @param parameter_space Parameter Space with distributions of all secir parameters
  * @param nb_runs Number of runs of parameterstudy (used for predefinied samples)
- * @param io_mode type of xml file (see write_study)
+ * @param io_mode type of xml output (see epi::write_parameter_study for more details)
  */
 void write_parameter_space(TixiDocumentHandle handle, const std::string& path, const UncertainValue& parameter_space,
                            int nb_runs, int io_mode);
@@ -102,10 +105,10 @@ ParameterStudy read_parameter_study(TixiDocumentHandle handle, const std::string
  * @param handle Tixi Document Handle
  * @param path Path to XML Tree of the parameter study
  * @param parameter_study Parameter study
- * @param io_mode type of xml file
- *        io_mode = 0: only double values are written
- *        io_mode = 1: only distributions are written
- *        io_mode = 2: both values and distributions are written
+ * @param io_mode type of xml output
+ *        io_mode = 0: only double values of parameters are written
+ *        io_mode = 1: only distributions of parameters are written
+ *        io_mode = 2: both, values and distributions are written
  *        io_mode = 3: distributions are written and values are saved as predefined samples
  */
 void write_parameter_study(TixiDocumentHandle handle, const std::string& path, const ParameterStudy& parameter_study,

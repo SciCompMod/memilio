@@ -240,8 +240,6 @@ TEST(ParameterStudies, check_ensemble_run_result)
         params.probabilities[i].set_hospitalized_per_infectious(rho);
         params.probabilities[i].set_icu_per_hospitalized(theta);
         params.probabilities[i].set_dead_per_icu(delta);
-
-        params.probabilities[i].get_asymp_per_infectious().get_distribution().get();
     }
 
     epi::ContactFrequencyMatrix& cont_freq_matrix = params.get_contact_patterns();
