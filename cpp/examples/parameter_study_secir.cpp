@@ -91,6 +91,24 @@ int main(int argc, char* argv[])
 
     epi::create_param_space_normal(params, t0, tmax, 0.2);
 
+    // write parameter space without parameter study
+    std::string path2 = "/Parameters2";
+    TixiDocumentHandle handle2;
+    tixiCreateDocument("Parameters2", &handle2);
+    epi::write_parameter_space(handle2, path2, params, 0, 2);
+    tixiSaveDocument(handle2, "Parameters2.xml");
+    tixiCloseDocument(handle2);
+
+    // draw sample and write same parameter space but with different current values
+    epi::draw_sample(params);
+    std::string path3 = "/Parameters3";
+    TixiDocumentHandle handle3;
+    tixiCreateDocument("Parameters3", &handle3);
+    epi::write_parameter_space(handle3, path3, params, 0, 2);
+    tixiSaveDocument(handle3, "Parameters3.xml");
+    tixiCloseDocument(handle3);
+
+    // create study
     epi::ParameterStudy parameter_study(
         [](double t0, double tmax, double dt, epi::SecirParams const& params) {
             return epi::simulate(t0, tmax, dt, params);
@@ -99,8 +117,7 @@ int main(int argc, char* argv[])
 
     parameter_study.set_num_runs(1);
 
-    // Run parameter study
-
+    // write and run study
     std::string path = "/Parameters";
     TixiDocumentHandle handle;
     tixiCreateDocument("Parameters", &handle);

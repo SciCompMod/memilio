@@ -24,10 +24,10 @@ UncertainContactMatrix read_contact(TixiDocumentHandle handle, const std::string
  * @param path Path to contact frequency matrix Tree of XML file
  * @param contact_pattern Contact frequencies, dampings, and distributions
  * @param io_mode type of xml ouput (see epi::write_parameter_study for more details)
- * @param nb_runs Number of runs of parameter study (used for predefinied samples of dampings)
+ * @param num_runs Number of runs of parameter study (used for predefinied samples of dampings)
  */
 void write_contact(TixiDocumentHandle handle, const std::string& path, const UncertainContactMatrix& contact_pattern,
-                   int io_mode, int nb_runs);
+                   int io_mode, int num_runs);
 
 /**
  * @brief reads parameter distribution and/or value from xml file
@@ -89,12 +89,12 @@ SecirParams read_parameter_space(TixiDocumentHandle handle, const std::string& p
  * @brief write parameter space to xml file
  * @param handle Tixi Document Handle
  * @param path Path to XML Tree of the parameter space
- * @param parameter_space Parameter Space with distributions of all secir parameters
- * @param nb_runs Number of runs of parameter study (used for predefinied samples)
+ * @param params SecirParams Parameter Space with distributions of all secir parameters
+ * @param num_runs Number of runs of parameter study (used for predefinied samples)
  * @param io_mode type of xml output (see epi::write_parameter_study for more details)
  */
-void write_parameter_space(TixiDocumentHandle handle, const std::string& path, const UncertainValue& parameter_space,
-                           int nb_runs, int io_mode);
+void write_parameter_space(TixiDocumentHandle handle, const std::string& path, const SecirParams& params,
+                           int num_runs, int io_mode);
 
 /**
  * @brief read parameter study from xml file
