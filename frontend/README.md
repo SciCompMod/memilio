@@ -1,4 +1,4 @@
-# Python packages / bindings for the corona project
+# Frontend Website for Data Analysis
 
 This package contains the frontend website for analyzing simulations.
 
