@@ -28,9 +28,10 @@ public:
      * a person interacts with the population at this location, may change infection state.
      * @param person the person that interacts with the population
      * @param dt length of the current simulation time step
+     * @param global_params global infection parameters
      * @return new infection state of the person
      */
-    InfectionState interact(const Person& person, double dt) const;
+    InfectionState interact(const Person& person, double dt, const GlobalInfectionParameters& global_params) const;
 
     /** 
      * add a person to the population at this location.
@@ -54,8 +55,9 @@ public:
     /** 
      * prepare the location for the next simulation step.
      * @param dt the duration of the simulation step
+     * @param global_params global infection parameters
      */
-    void begin_step(double dt);
+    void begin_step(double dt, const GlobalInfectionParameters& global_params);
 
     /** 
      * number of persons at this location in one infection state.

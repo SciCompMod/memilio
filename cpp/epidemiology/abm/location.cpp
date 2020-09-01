@@ -60,7 +60,7 @@ namespace
     }
 } // namespace
 
-InfectionState Location::interact(const Person& person, double dt) const
+InfectionState Location::interact(const Person& person, double dt, const GlobalInfectionParameters& global_params) const
 {
     auto state = person.get_infection_state();
     switch (state) {
@@ -69,24 +69,24 @@ InfectionState Location::interact(const Person& person, double dt) const
     case InfectionState::Carrier:
         return random_transition(
             state, dt,
-            {{InfectionState::Infected_Detected, m_parameters.detect_infection * m_parameters.carrier_to_infected},
+            {{InfectionState::Infected_Detected, global_params.detect_infection * global_params.carrier_to_infected},
              {InfectionState::Infected_Undetected,
-              (1 - m_parameters.detect_infection) * m_parameters.carrier_to_infected},
-             {InfectionState::Recovered_Carrier, m_parameters.carrier_to_recovered}});
+              (1 - global_params.detect_infection) * global_params.carrier_to_infected},
+             {InfectionState::Recovered_Carrier, global_params.carrier_to_recovered}});
     case InfectionState::Infected_Detected: //fallthrough!
     case InfectionState::Infected_Undetected:
         return random_transition(state, dt,
-                                 {{InfectionState::Recovered_Infected, m_parameters.infected_to_recovered},
-                                  {InfectionState::Dead, m_parameters.infected_to_dead * m_parameters.death_factor}});
+                                 {{InfectionState::Recovered_Infected, global_params.infected_to_recovered},
+                                  {InfectionState::Dead, global_params.infected_to_dead * m_parameters.death_factor}});
     case InfectionState::Recovered_Carrier: //fallthrough!
     case InfectionState::Recovered_Infected:
-        return random_transition(state, dt, {{InfectionState::Susceptible, m_parameters.recovered_to_susceptible}});
+        return random_transition(state, dt, {{InfectionState::Susceptible, global_params.recovered_to_susceptible}});
     default:
         return state; //some states don't transition
     }
 }
 
-void Location::begin_step(double dt)
+void Location::begin_step(double dt, const GlobalInfectionParameters& global_params)
 {
     //cache for next step so it stays constant during the step while subpopulations change
     //otherwise we would have to cache all state changes during a step which uses more memory
@@ -94,8 +94,8 @@ void Location::begin_step(double dt)
     auto num_infected =
         get_subpopulation(InfectionState::Infected_Detected) + get_subpopulation(InfectionState::Infected_Undetected);
     m_cached_exposure_rate = std::min(m_parameters.effective_contacts, double(m_num_persons)) / m_num_persons *
-                             (m_parameters.susceptible_to_exposed_by_carrier * num_carriers +
-                              m_parameters.susceptible_to_exposed_by_infected * num_infected);
+                             (global_params.susceptible_to_exposed_by_carrier * num_carriers +
+                              global_params.susceptible_to_exposed_by_infected * num_infected);
 }
 
 void Location::add_person(const Person& p)

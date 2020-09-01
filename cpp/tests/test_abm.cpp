@@ -83,7 +83,7 @@ TEST(TestLocation, interact)
     location.add_person(infected2);
     auto infected3 = epi::Person(location, epi::InfectionState::Infected_Undetected);
     location.add_person(infected3);
-    location.begin_step(0.1);
+    location.begin_step(0.1, {});
 
     MockRngRef<testing::StrictMock<MockRng>> mock_rng;
     epi::thread_local_rng().generator = mock_rng;
@@ -94,18 +94,18 @@ TEST(TestLocation, interact)
             .Times(2)
             .WillOnce(Return(0.99 * epi::RandomNumberGenerator::max()))
             .WillOnce(Return(0.5 * epi::RandomNumberGenerator::max()));
-        EXPECT_EQ(location.interact(susceptible, 0.1), epi::InfectionState::Exposed);
+        EXPECT_EQ(location.interact(susceptible, 0.1, {}), epi::InfectionState::Exposed);
         EXPECT_CALL(*mock_rng.mock, invoke)
             .Times(2)
             .WillOnce(Return(0.1 * epi::RandomNumberGenerator::max()))
             .WillOnce(Return(0.5 * epi::RandomNumberGenerator::max()));
-        EXPECT_EQ(location.interact(susceptible, 0.1), epi::InfectionState::Susceptible);
+        EXPECT_EQ(location.interact(susceptible, 0.1, {}), epi::InfectionState::Susceptible);
     }
 
     {
         auto exposed = epi::Person(location, epi::InfectionState::Exposed);
         EXPECT_CALL(*mock_rng.mock, invoke).Times(0); //no transitions out of exposed state
-        EXPECT_EQ(location.interact(exposed, 0.1), epi::InfectionState::Exposed);
+        EXPECT_EQ(location.interact(exposed, 0.1, {}), epi::InfectionState::Exposed);
     }
 
     {
@@ -115,22 +115,22 @@ TEST(TestLocation, interact)
             .Times(2)
             .WillOnce(Return(0.99 * epi::RandomNumberGenerator::max()))
             .WillOnce(Return(0.2 * epi::RandomNumberGenerator::max()));
-        EXPECT_EQ(location.interact(carrier, 0.1), epi::InfectionState::Infected_Detected);
+        EXPECT_EQ(location.interact(carrier, 0.1, {}), epi::InfectionState::Infected_Detected);
         EXPECT_CALL(*mock_rng.mock, invoke)
             .Times(2)
             .WillOnce(Return(0.99 * epi::RandomNumberGenerator::max()))
             .WillOnce(Return(0.4 * epi::RandomNumberGenerator::max()));
-        EXPECT_EQ(location.interact(carrier, 0.1), epi::InfectionState::Infected_Undetected);
+        EXPECT_EQ(location.interact(carrier, 0.1, {}), epi::InfectionState::Infected_Undetected);
         EXPECT_CALL(*mock_rng.mock, invoke)
             .Times(2)
             .WillOnce(Return(0.99 * epi::RandomNumberGenerator::max()))
             .WillOnce(Return(0.6 * epi::RandomNumberGenerator::max()));
-        EXPECT_EQ(location.interact(carrier, 0.1), epi::InfectionState::Recovered_Carrier);
+        EXPECT_EQ(location.interact(carrier, 0.1, {}), epi::InfectionState::Recovered_Carrier);
         EXPECT_CALL(*mock_rng.mock, invoke)
             .Times(2)
             .WillOnce(Return(0.5 * epi::RandomNumberGenerator::max()))
             .WillOnce(Return(0.5 * epi::RandomNumberGenerator::max()));
-        EXPECT_EQ(location.interact(carrier, 0.1), epi::InfectionState::Carrier);
+        EXPECT_EQ(location.interact(carrier, 0.1, {}), epi::InfectionState::Carrier);
     }
 
     for (auto&& infected_state : {epi::InfectionState::Infected_Detected, epi::InfectionState::Infected_Undetected}) {
@@ -140,17 +140,17 @@ TEST(TestLocation, interact)
             .Times(2)
             .WillOnce(Return(0.99 * epi::RandomNumberGenerator::max()))
             .WillOnce(Return(0.4 * epi::RandomNumberGenerator::max()));
-        EXPECT_EQ(location.interact(infected, 0.1), epi::InfectionState::Recovered_Infected);
+        EXPECT_EQ(location.interact(infected, 0.1, {}), epi::InfectionState::Recovered_Infected);
         EXPECT_CALL(*mock_rng.mock, invoke)
             .Times(2)
             .WillOnce(Return(0.99 * epi::RandomNumberGenerator::max()))
             .WillOnce(Return(0.6 * epi::RandomNumberGenerator::max()));
-        EXPECT_EQ(location.interact(infected, 0.1), epi::InfectionState::Dead);
+        EXPECT_EQ(location.interact(infected, 0.1, {}), epi::InfectionState::Dead);
         EXPECT_CALL(*mock_rng.mock, invoke)
             .Times(2)
             .WillOnce(Return(0.5 * epi::RandomNumberGenerator::max()))
             .WillOnce(Return(0.5 * epi::RandomNumberGenerator::max()));
-        EXPECT_EQ(location.interact(infected, 0.1), infected_state);
+        EXPECT_EQ(location.interact(infected, 0.1, {}), infected_state);
     }
 
     for (auto&& recovered_state : {epi::InfectionState::Recovered_Carrier, epi::InfectionState::Recovered_Infected}) {
@@ -160,12 +160,12 @@ TEST(TestLocation, interact)
             .Times(2)
             .WillOnce(Return(0.99 * epi::RandomNumberGenerator::max()))
             .WillOnce(Return(0.5 * epi::RandomNumberGenerator::max()));
-        EXPECT_EQ(location.interact(recovered, 0.1), epi::InfectionState::Susceptible);
+        EXPECT_EQ(location.interact(recovered, 0.1, {}), epi::InfectionState::Susceptible);
         EXPECT_CALL(*mock_rng.mock, invoke)
             .Times(2)
             .WillOnce(Return(0.5 * epi::RandomNumberGenerator::max()))
             .WillOnce(Return(0.5 * epi::RandomNumberGenerator::max()));
-        EXPECT_EQ(location.interact(recovered, 0.1), recovered_state);
+        EXPECT_EQ(location.interact(recovered, 0.1, {}), recovered_state);
     }
 }
 
@@ -176,7 +176,7 @@ TEST(TestPerson, interact)
     auto location = epi::Location(epi::LocationType::Home);
     auto person   = epi::Person(location, epi::InfectionState::Infected_Detected);
     location.add_person(person);
-    location.begin_step(0.1);
+    location.begin_step(0.1, {});
 
     //setup rng mock so the person has a state transition
     MockRngRef<testing::StrictMock<MockRng>> mock_rng;
@@ -207,10 +207,10 @@ TEST(TestPerson, interact_exposed)
     location.add_person(infected3);
     auto person = epi::Person(location, epi::InfectionState::Susceptible);
     location.add_person(person);
-    location.begin_step(0.1);
+    location.begin_step(0.1, {});
 
-    auto infection_parameters            = epi::GlobalInfectionParameters();
-    infection_parameters.incubation_time = 2;
+    auto infection_parameters              = epi::GlobalInfectionParameters();
+    infection_parameters.incubation_period = 2;
 
     //setup rng mock so the person becomes exposed
     MockRngRef<testing::StrictMock<MockRng>> mock_rng;
