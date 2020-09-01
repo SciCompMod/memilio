@@ -1,4 +1,5 @@
 import * as am4core from '@amcharts/amcharts4/core';
+import * as am4charts from '@amcharts/amcharts4/charts';
 import * as am4maps from '@amcharts/amcharts4/maps';
 
 export default class InteractiveHeatMap {
@@ -17,6 +18,14 @@ export default class InteractiveHeatMap {
   /** @private
    *  @type Map<number, MapPolygonSeries> */
   _countySeries = new Map();
+
+  /** @private
+   * @type HeatLegend */
+  _stateHeatLegend = null;
+
+  /** @private
+   *  @type Map<number, HeatLegend> */
+  _countyHeatLegends = new Map();
 
   /** @private
    *  @type am4core.Label */
@@ -51,10 +60,10 @@ export default class InteractiveHeatMap {
     this._map.maxPanOut = 0.0;
 
     this._dataSetLabel = this._map.createChild(am4core.Label);
-    this._dataSetLabel.align = 'left';
-    this._dataSetLabel.valign = 'top';
-    this._dataSetLabel.marginTop = 20;
-    this._dataSetLabel.marginLeft = 20;
+    this._dataSetLabel.align = 'right';
+    this._dataSetLabel.valign = 'bottom';
+    this._dataSetLabel.marginBottom = 20;
+    this._dataSetLabel.marginRight = 20;
     this._dataSetLabel.text = 'Dataset: RKI';
 
     this._stateBackgroundSeries = new am4maps.MapPolygonSeries();
@@ -78,6 +87,14 @@ export default class InteractiveHeatMap {
       logarithmic: true,
     };
     this._stateChoroplethSeries.heatRules.push(this._stateHeatRule);
+
+    this._stateHeatLegend = this._map.createChild(am4charts.HeatLegend);
+    this._stateHeatLegend.series = this._stateChoroplethSeries;
+    this._stateHeatLegend.height = am4core.percent(90);
+    this._stateHeatLegend.align = 'left';
+    this._stateHeatLegend.valign = 'middle';
+    this._stateHeatLegend.orientation = 'vertical';
+    this._stateHeatLegend.marginLeft = 20;
 
     const statePolygonTemplate = this._stateChoroplethSeries.mapPolygons.template;
     statePolygonTemplate.tooltipText = '{name}: {value}';
@@ -177,6 +194,14 @@ export default class InteractiveHeatMap {
 
     newSeries.heatRules.push(countyHeatRule);
 
+    const heatLegend = this._map.createChild(am4charts.HeatLegend);
+    heatLegend.series = newSeries;
+    heatLegend.height = am4core.percent(90);
+    heatLegend.align = 'left';
+    heatLegend.valign = 'middle';
+    heatLegend.orientation = 'vertical';
+    heatLegend.marginLeft = 20;
+
     countyPolygonTemplate.events.on('hit', (e) => {
       this._seriesHit = true;
       const item = e.target.dataItem.dataContext;
@@ -186,6 +211,7 @@ export default class InteractiveHeatMap {
 
     this._map.series.push(newSeries);
     this._countySeries.set(state.id, newSeries);
+    this._countyHeatLegends.set(state.id, heatLegend);
   }
 
   /** @private
@@ -194,6 +220,7 @@ export default class InteractiveHeatMap {
     // If a new state is selected hide the old one.
     if (this.selectedState !== newState.id && this._countySeries.has(this.selectedState)) {
       this._countySeries.get(this.selectedState).hide();
+      this._countyHeatLegends.get(this.selectedState).hide();
     }
 
     if (newState.id > 0) {
@@ -201,6 +228,7 @@ export default class InteractiveHeatMap {
       // County series will be loaded lazily.
       if (this._countySeries.has(newState.id)) {
         this._countySeries.get(newState.id).show();
+        this._countyHeatLegends.get(newState.id).show();
       } else {
         const state = stateById(newState.id);
         this._createCountySeries(state);
@@ -208,12 +236,14 @@ export default class InteractiveHeatMap {
 
       this.selectedState = newState.id;
       this._map.zoomToMapObject(this._stateChoroplethSeries.getPolygonById(newState.id));
+      this._stateHeatLegend.hide();
       this._stateChoroplethSeries.hide();
       this._stateBackgroundSeries.show();
     } else {
       // No state is selected.
       this.selectedState = -1;
       this._map.goHome();
+      this._stateHeatLegend.show();
       this._stateChoroplethSeries.show();
       this._stateBackgroundSeries.hide();
     }
