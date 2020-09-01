@@ -25,14 +25,6 @@ public:
      */
     Location(LocationType type);
 
-    /**
-     * get the type of this location.
-     */
-    LocationType get_type() const 
-    {
-        return m_type;
-    }
-
     /** 
      * a person interacts with the population at this location, may change infection state.
      * @param person the person that interacts with the population
@@ -67,6 +59,15 @@ public:
      * @param global_params global infection parameters
      */
     void begin_step(double dt, const GlobalInfectionParameters& global_params);
+
+    /**
+     * get the type of location
+     * @return the type of location
+     */
+    LocationType get_type() const
+    {
+        return m_type;
+    }
 
     /** 
      * number of persons at this location in one infection state.

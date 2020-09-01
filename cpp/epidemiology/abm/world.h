@@ -86,6 +86,7 @@ private:
     std::vector<std::unique_ptr<Person>> m_persons;
     std::vector<std::unique_ptr<Location>> m_locations;
     GlobalInfectionParameters m_infection_parameters;
+    MigrationParameters m_migration_parameters;
 };
 
 } // namespace epi

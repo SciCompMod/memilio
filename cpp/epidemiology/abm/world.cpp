@@ -2,6 +2,7 @@
 #include "epidemiology/abm/person.h"
 #include "epidemiology/abm/location.h"
 #include "epidemiology/abm/random_number_generator.h"
+#include "epidemiology/abm/migration_rules.h"
 #include "epidemiology/utils/stl_util.h"
 
 namespace epi
@@ -37,22 +38,19 @@ void World::interaction(double dt)
 
 void World::migration(double dt)
 {
-    //random migration
-    for (auto&& person : m_persons) {
-        auto u = ExponentialDistribution<double>::get_instance()();
-        if (u < dt) {
-            auto random_location_idx =
-                UniformIntDistribution<size_t>::get_instance()(size_t(0), m_locations.size() - 2);
-            //exclude the current location from the random selection
-            if (contains(m_locations.begin(), m_locations.begin() + random_location_idx, [&person](auto& e) {
-                    return e.get() == &person->get_location();
-                })) {
-                ++random_location_idx;
+    using migration_rule   = LocationType (*)(const Person&, double, double, const MigrationParameters&);
+    migration_rule rules[] = {&random_migration};
+    for (auto& person : m_persons) {
+        for (auto rule : rules) {
+            auto target_type = rule(*person, 0, dt, m_migration_parameters);
+            auto target      = std::find_if(m_locations.begin(), m_locations.end(), [target_type](auto& location) {
+                return location->get_type() == target_type;
+            });
+            if (target != m_locations.end() && target->get() != &person->get_location()) {
+                person->migrate_to(**target);
             }
-            person->migrate_to(*m_locations[random_location_idx]);
         }
     }
-    //TODO: migration by complex rules
 }
 
 void World::begin_step(double dt)

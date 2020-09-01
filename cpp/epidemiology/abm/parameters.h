@@ -111,5 +111,12 @@ struct LocalInfectionParameters {
     double effective_contacts = std::numeric_limits<double>::max();
 };
 
+/**
+ * parameters that govern the migration between locations
+ */
+struct MigrationParameters {
+    double lockdown_date;
+};
+
 } // namespace epi
 #endif
