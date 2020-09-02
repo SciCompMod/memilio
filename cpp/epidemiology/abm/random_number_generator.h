@@ -3,6 +3,7 @@
 
 #include <random>
 #include <functional>
+#include <cassert>
 
 namespace epi
 {
@@ -99,6 +100,209 @@ public:
 private:
     GeneratorFunction m_generator;
 };
+
+/**
+ * a reference to any contigiuous array of objects.
+ */
+template<class T>
+class Span
+{
+public:
+    /**
+     * empty span.
+     */
+    Span() = default;
+
+    /**
+     * construct from a container.
+     * e.g. std::vector or std::array
+     */
+    template<class Cont>
+    Span(const Cont& c)
+        : m_ptr(std::addressof(*c.begin()))
+        , m_size(c.size())
+    {
+    }
+
+    /**
+     * construct from a c array.
+     */
+    template<size_t N>
+    Span(T (&p)[N])
+        : m_ptr(p)
+        , m_size(N)
+    {        
+    }
+
+    /**
+     * get the adress of the beginning of array.
+     */
+    const T* get_ptr() const
+    {
+        return m_ptr;
+    }
+
+    /**
+     * get an iterator to the first element.
+     */
+    const T* begin() const
+    {
+        return m_ptr;
+    }
+
+    /**
+     * get an iterator to one past the last element.
+     */
+    const T* end() const
+    {
+        return m_ptr + m_size;
+    }
+
+    /**
+     * get the number of elements in the array
+     */
+    size_t size() const
+    {
+        return m_size;
+    }
+
+private:
+    const T* m_ptr = nullptr;
+    size_t m_size = 0;
+};
+
+/**
+ * select a random integer in [0, n) with weights [w_0, ..., w_(n-1)]
+ * the probability to pick i is w_i/S where S is the sum of all weights.
+ * similar to std::discrete_distribution but does not allocate.
+ * Models the standard RandomNumberDistribution concept.
+ */
+template<class Int>
+class DiscreteDistributionInPlace
+{
+public:
+    /**
+     * the type returned by the distribution.
+     */
+    using result_type = Int; 
+
+    /**
+     * stores the parameters of the distribution (i.e. the weights).
+     */
+    class param_type
+    {
+    public:
+        using distribution = DiscreteDistributionInPlace;
+
+        param_type(Span<double> weights)
+            : m_weights(weights)
+        {}
+
+        Span<double> weights() const
+        {
+            return m_weights;
+        }
+
+    private:
+        Span<double> m_weights;
+    };
+
+    /**
+     * default distribution has no weights.
+     * always returns 0.
+     */
+    DiscreteDistributionInPlace() = default;
+
+    /**
+     * distribution with specified weights.
+     */
+    DiscreteDistributionInPlace(Span<double> weights)
+        : m_params(weights)
+    {}
+
+    /**
+     * distribution with specified params.
+     */
+    DiscreteDistributionInPlace(param_type params)
+        : m_params(params)
+    {}
+
+    /**
+     * reset internal state.
+     * does nothing, but required by the concept.
+     */
+    void reset() 
+    {
+    }
+
+    /**
+     * get the parameters of the distribution.
+     */
+    param_type param() 
+    {
+        return m_params;
+    }
+
+    /**
+     * set the parameters of the distribution.
+     */
+    void param(param_type p) 
+    {
+        m_params = p;
+    }
+
+    /**
+     * get the weights.
+     */
+    Span<double> weights()
+    {
+        return m_params.weights();
+    }
+
+    /**
+     * draw a random number from the distribution.
+     * @param rng object of a type that that models UniformRandomBitGenerator concept.
+     */
+    template<class RNG>
+    result_type operator()(RNG& rng)
+    {
+        return (*this)(rng, m_params);
+    }
+
+    /**
+     * draw a random number from the distribution with the specified parameters.
+     * @param rng object of a type that that models UniformRandomBitGenerator concept.
+     * @param p parameters of the dstribution.
+     */
+    template<class RNG>
+    result_type operator()(RNG& rng, param_type p)
+    {
+        auto weights = p.weights();        
+        auto sum = std::accumulate(weights.begin(), weights.end(), 0.0);
+        auto u = std::uniform_real_distribution<double>()(rng, std::uniform_real_distribution<double>::param_type{ 0.0, sum });
+        auto intermediate_sum = 0.0;
+        for (size_t i = 0; i < weights.size(); ++i)
+        {
+            intermediate_sum += weights.get_ptr()[i];
+            if (u < intermediate_sum)
+            {
+                return i;
+            }
+        }
+        assert(false && "this should never happen.");
+        return -1;
+    }
+
+private:
+    param_type m_params;
+};
+
+/**
+ * adapted discrete distribution
+ * @see DistributionAdapter
+ */
+template<class Int>
+using DiscreteDistribution = DistributionAdapter<DiscreteDistributionInPlace<Int>>;
 
 /**
  * adapted std::exponential_distribution.

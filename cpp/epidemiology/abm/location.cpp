@@ -28,15 +28,9 @@ namespace
     InfectionState random_transition(InfectionState old_state, double dt,
                                      const std::pair<InfectionState, double> (&transitions)[NumTransitions])
     {
-        std::array<std::pair<InfectionState, double>, NumTransitions> transitions_partial_sum;
-        std::partial_sum(std::begin(transitions), std::end(transitions),
-                         std::begin(transitions_partial_sum), [](auto&& rate_sum, auto&& rate) {
-                             //sum up the rates, but keep the states as they are
-                             auto tmp = rate;
-                             tmp.second += rate_sum.second;
-                             return tmp;
-                         });
-        auto sum = transitions_partial_sum[NumTransitions - 1].second;
+        auto sum = std::accumulate(std::begin(transitions), std::end(transitions), 0.0, [](auto&& sum, auto&& t) {
+            return t.second + sum;
+        });
 
         if (sum <= 0) {
             return old_state;
@@ -45,13 +39,11 @@ namespace
         //time between transitions is exponentially distributed
         auto v = ExponentialDistribution<double>::get_instance()(sum);
         if (v < dt) {
-            //pick a random transition (std::discrete_distribution would be much nicer, but it allocates memory :( )
-            auto u          = UniformDistribution<double>::get_instance()(0.0, 1.0);
-            auto transition = *std::lower_bound(std::begin(transitions_partial_sum), std::end(transitions_partial_sum),
-                                                u * sum, [](auto&& rate, auto&& u) {
-                                                    return rate.second < u;
-                                                });
-            return transition.first;
+            //pick a random transition
+            std::array<double, NumTransitions> rates;
+            std::transform(std::begin(transitions), std::end(transitions), rates.begin(), [](auto&& t) { return t.second; });
+            auto random_idx = DiscreteDistribution<size_t>::get_instance()(rates);
+            return transitions[random_idx].first;
         }
 
         return old_state;

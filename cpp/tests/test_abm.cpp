@@ -127,12 +127,12 @@ TEST(TestLocation, interact)
 
     ScopedMockDistribution<testing::StrictMock<MockDistribution<epi::ExponentialDistribution<double>>>>
         mock_exponential_dist;
-    ScopedMockDistribution<testing::StrictMock<MockDistribution<epi::UniformDistribution<double>>>> mock_uniform_dist;
+    ScopedMockDistribution<testing::StrictMock<MockDistribution<epi::DiscreteDistribution<size_t>>>> mock_discrete_dist;
 
     {
         auto susceptible = epi::Person(location, epi::InfectionState::Susceptible);
         EXPECT_CALL(mock_exponential_dist.get_mock(), invoke).Times(1).WillOnce(Return(0.05));
-        EXPECT_CALL(mock_uniform_dist.get_mock(), invoke).Times(1).WillOnce(Return(0.5));
+        EXPECT_CALL(mock_discrete_dist.get_mock(), invoke).Times(1).WillOnce(Return(0));
         EXPECT_EQ(location.interact(susceptible, 0.1, {}), epi::InfectionState::Exposed);
 
         EXPECT_CALL(mock_exponential_dist.get_mock(), invoke).Times(1).WillOnce(Return(0.15));
@@ -149,15 +149,15 @@ TEST(TestLocation, interact)
         auto carrier = epi::Person(location, epi::InfectionState::Carrier);
 
         EXPECT_CALL(mock_exponential_dist.get_mock(), invoke).Times(1).WillOnce(Return(0.05));
-        EXPECT_CALL(mock_uniform_dist.get_mock(), invoke).Times(1).WillOnce(Return(0.1));
+        EXPECT_CALL(mock_discrete_dist.get_mock(), invoke).Times(1).WillOnce(Return(0));
         EXPECT_EQ(location.interact(carrier, 0.1, {}), epi::InfectionState::Infected_Detected);
 
         EXPECT_CALL(mock_exponential_dist.get_mock(), invoke).Times(1).WillOnce(Return(0.09));
-        EXPECT_CALL(mock_uniform_dist.get_mock(), invoke).Times(1).WillOnce(Return(0.4));
+        EXPECT_CALL(mock_discrete_dist.get_mock(), invoke).Times(1).WillOnce(Return(1));
         EXPECT_EQ(location.interact(carrier, 0.1, {}), epi::InfectionState::Infected_Undetected);
 
         EXPECT_CALL(mock_exponential_dist.get_mock(), invoke).Times(1).WillOnce(Return(0.099));
-        EXPECT_CALL(mock_uniform_dist.get_mock(), invoke).Times(1).WillOnce(Return(0.7));
+        EXPECT_CALL(mock_discrete_dist.get_mock(), invoke).Times(1).WillOnce(Return(2));
         EXPECT_EQ(location.interact(carrier, 0.1, {}), epi::InfectionState::Recovered_Carrier);
 
         EXPECT_CALL(mock_exponential_dist.get_mock(), invoke).Times(1).WillOnce(Return(0.11));
@@ -168,11 +168,11 @@ TEST(TestLocation, interact)
         auto infected = epi::Person(location, infected_state);
 
         EXPECT_CALL(mock_exponential_dist.get_mock(), invoke).Times(1).WillOnce(Return(0.09));
-        EXPECT_CALL(mock_uniform_dist.get_mock(), invoke).Times(1).WillOnce(Return(0.3));
+        EXPECT_CALL(mock_discrete_dist.get_mock(), invoke).Times(1).WillOnce(Return(0));
         EXPECT_EQ(location.interact(infected, 0.1, {}), epi::InfectionState::Recovered_Infected);
 
         EXPECT_CALL(mock_exponential_dist.get_mock(), invoke).Times(1).WillOnce(Return(0.09));
-        EXPECT_CALL(mock_uniform_dist.get_mock(), invoke).Times(1).WillOnce(Return(0.6));
+        EXPECT_CALL(mock_discrete_dist.get_mock(), invoke).Times(1).WillOnce(Return(1));
         EXPECT_EQ(location.interact(infected, 0.1, {}), epi::InfectionState::Dead);
 
         EXPECT_CALL(mock_exponential_dist.get_mock(), invoke).Times(1).WillOnce(Return(0.1001));
@@ -183,7 +183,7 @@ TEST(TestLocation, interact)
         auto recovered = epi::Person(location, recovered_state);
 
         EXPECT_CALL(mock_exponential_dist.get_mock(), invoke).Times(1).WillOnce(Return(0.09));
-        EXPECT_CALL(mock_uniform_dist.get_mock(), invoke).Times(1).WillOnce(Return(0.5));
+        EXPECT_CALL(mock_discrete_dist.get_mock(), invoke).Times(1).WillOnce(Return(0));
         EXPECT_EQ(location.interact(recovered, 0.1, {}), epi::InfectionState::Susceptible);
 
         EXPECT_CALL(mock_exponential_dist.get_mock(), invoke).Times(1).WillOnce(Return(0.11));
@@ -203,9 +203,9 @@ TEST(TestPerson, interact)
     //setup rng mock so the person has a state transition
     ScopedMockDistribution<testing::StrictMock<MockDistribution<epi::ExponentialDistribution<double>>>>
         mock_exponential_dist;
-    ScopedMockDistribution<testing::StrictMock<MockDistribution<epi::UniformDistribution<double>>>> mock_uniform_dist;
+    ScopedMockDistribution<testing::StrictMock<MockDistribution<epi::DiscreteDistribution<size_t>>>> mock_discrete_dist;
     EXPECT_CALL(mock_exponential_dist.get_mock(), invoke).Times(1).WillOnce(Return(0.09));
-    EXPECT_CALL(mock_uniform_dist.get_mock(), invoke).Times(1).WillOnce(Return(0.3));
+    EXPECT_CALL(mock_discrete_dist.get_mock(), invoke).Times(1).WillOnce(Return(0));
 
     auto infection_parameters = epi::GlobalInfectionParameters();
     person.interact(0.1, infection_parameters);
@@ -236,9 +236,9 @@ TEST(TestPerson, interact_exposed)
     //setup rng mock so the person becomes exposed
     ScopedMockDistribution<testing::StrictMock<MockDistribution<epi::ExponentialDistribution<double>>>>
         mock_exponential_dist;
-    ScopedMockDistribution<testing::StrictMock<MockDistribution<epi::UniformDistribution<double>>>> mock_uniform_dist;
+    ScopedMockDistribution<testing::StrictMock<MockDistribution<epi::DiscreteDistribution<size_t>>>> mock_discrete_dist;
     EXPECT_CALL(mock_exponential_dist.get_mock(), invoke).Times(1).WillOnce(Return(0.49));
-    EXPECT_CALL(mock_uniform_dist.get_mock(), invoke).Times(1).WillOnce(Return(0.5));
+    EXPECT_CALL(mock_discrete_dist.get_mock(), invoke).Times(1).WillOnce(Return(0));
 
     //person becomes exposed
     person.interact(0.5, infection_parameters);
@@ -313,14 +313,14 @@ TEST(TestWorld, evolve)
     //setup mock so only p2 transitions
     ScopedMockDistribution<testing::StrictMock<MockDistribution<epi::ExponentialDistribution<double>>>>
         mock_exponential_dist;
-    ScopedMockDistribution<testing::StrictMock<MockDistribution<epi::UniformDistribution<double>>>> mock_uniform_dist;
+    ScopedMockDistribution<testing::StrictMock<MockDistribution<epi::DiscreteDistribution<size_t>>>> mock_discrete_dist;
     EXPECT_CALL(mock_exponential_dist.get_mock(), invoke)
         .Times(testing::AtLeast(3))
         .WillOnce(Return(0.51))
         .WillOnce(Return(0.4))
         .WillOnce(Return(0.6))
         .WillRepeatedly(Return(1e10)); //no random migration, not yet implemented properly
-    EXPECT_CALL(mock_uniform_dist.get_mock(), invoke).Times(1).WillOnce(Return(0.5));
+    EXPECT_CALL(mock_discrete_dist.get_mock(), invoke).Times(1).WillOnce(Return(0));
 
     world.evolve(0.5);
 
