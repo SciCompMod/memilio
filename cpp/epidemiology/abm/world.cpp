@@ -37,12 +37,12 @@ void World::interaction(double dt)
 
 void World::migration(double dt)
 {
-    //migrate a few times per day to a random different location
-    auto u = std::uniform_real_distribution<double>()(thread_local_rng());
-    if (u < 2 * dt) {
-        for (auto&& person : m_persons) {
-            auto idx_distribution    = std::uniform_int_distribution<size_t>(0, m_locations.size() - 2);
-            auto random_location_idx = idx_distribution(thread_local_rng());
+    //random migration
+    for (auto&& person : m_persons) {
+        auto u = ExponentialDistribution<double>::get_instance()();
+        if (u < dt) {
+            auto random_location_idx =
+                UniformIntDistribution<size_t>::get_instance()(size_t(0), m_locations.size() - 2);
             //exclude the current location from the random selection
             if (contains(m_locations.begin(), m_locations.begin() + random_location_idx, [&person](auto& e) {
                     return e.get() == &person->get_location();
@@ -52,7 +52,6 @@ void World::migration(double dt)
             person->migrate_to(*m_locations[random_location_idx]);
         }
     }
-    //TODO: more sensible migration probabilities
     //TODO: migration by complex rules
 }
 

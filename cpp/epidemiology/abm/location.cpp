@@ -21,38 +21,36 @@ namespace
      * input rates don't need to sum up to probability 1, the function performs normalisation.
      * @param old_state previous state
      * @param dt length of the time step
-     * @param transition_rates array of pairs of new states and their rates (probabilities)
+     * @param transitions array of pairs of new states and their rates (probabilities)
      * @return new state if transition happens, old_state otherwise
      */
     template <int NumTransitions>
     InfectionState random_transition(InfectionState old_state, double dt,
-                                     const std::pair<InfectionState, double> (&transition_rates)[NumTransitions])
+                                     const std::pair<InfectionState, double> (&transitions)[NumTransitions])
     {
-        std::pair<InfectionState, double> transition_rates_partial_sum[NumTransitions];
-        std::partial_sum(std::begin(transition_rates), std::end(transition_rates),
-                         std::begin(transition_rates_partial_sum), [](auto&& rate_sum, auto&& rate) {
+        std::array<std::pair<InfectionState, double>, NumTransitions> transitions_partial_sum;
+        std::partial_sum(std::begin(transitions), std::end(transitions),
+                         std::begin(transitions_partial_sum), [](auto&& rate_sum, auto&& rate) {
                              //sum up the rates, but keep the states as they are
                              auto tmp = rate;
                              tmp.second += rate_sum.second;
                              return tmp;
                          });
-        auto sum = transition_rates_partial_sum[NumTransitions - 1].second;
+        auto sum = transitions_partial_sum[NumTransitions - 1].second;
 
         if (sum <= 0) {
             return old_state;
         }
 
-        auto uni_dist = std::uniform_real_distribution<double>(0, 1);
-        auto v        = -std::log(uni_dist(thread_local_rng())) /
-                 sum; //determines if there is a transition in this step (poisson distributed?)
-        auto u = uni_dist(thread_local_rng()); //determines which transition happens
-
+        //time between transitions is exponentially distributed
+        auto v = ExponentialDistribution<double>::get_instance()(sum);
         if (v < dt) {
-            auto transition =
-                *std::lower_bound(std::begin(transition_rates_partial_sum), std::end(transition_rates_partial_sum),
-                                  u * sum, [](auto&& rate, auto&& u) {
-                                      return rate.second < u;
-                                  }); //scaling u to map the transition rates onto uniform distribution in [0, 1)
+            //pick a random transition (std::discrete_distribution would be much nicer, but it allocates memory :( )
+            auto u          = UniformDistribution<double>::get_instance()(0.0, 1.0);
+            auto transition = *std::lower_bound(std::begin(transitions_partial_sum), std::end(transitions_partial_sum),
+                                                u * sum, [](auto&& rate, auto&& u) {
+                                                    return rate.second < u;
+                                                });
             return transition.first;
         }
 
