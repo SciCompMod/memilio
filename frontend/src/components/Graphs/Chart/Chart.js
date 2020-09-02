@@ -5,6 +5,9 @@ import * as am4charts from '@amcharts/amcharts4/charts';
 
 import './Chart.scss';
 
+/**
+ * This component wraps an amChart to display infection related data of RKI and SEIR simulations.
+ */
 class Chart extends Component {
   static defaultProps = {
     seir: {
@@ -43,19 +46,25 @@ class Chart extends Component {
     this._chart.data = [];
 
     const {t} = this.props;
-    this.createSeries(t('rki.infected'), 'rkic');
-    this.createSeries(t('rki.deaths'), 'rkid');
-    this.createSeries(t('rki.recovered'), 'rkir');
+    this._createSeries(t('rki.infected'), 'rkic');
+    this._createSeries(t('rki.deaths'), 'rkid');
+    this._createSeries(t('rki.recovered'), 'rkir');
 
-    this.createSeries(t('parameters.sus'), 'seirs');
-    this.createSeries(t('parameters.exposed'), 'seire');
-    this.createSeries(t('parameters.infected'), 'seiri');
-    this.createSeries(t('parameters.recovered'), 'seirr');
+    this._createSeries(t('parameters.sus'), 'seirs');
+    this._createSeries(t('parameters.exposed'), 'seire');
+    this._createSeries(t('parameters.infected'), 'seiri');
+    this._createSeries(t('parameters.recovered'), 'seirr');
 
-    this.updateData();
+    this._updateData();
   }
 
-  createSeries(name, valueName) {
+  /**
+   * Creates a new series and adds it to the chart.
+   * @private
+   * @param name{string} The name to be displayed.
+   * @param valueName{string} The name of the value field.
+   */
+  _createSeries(name, valueName) {
     const series = this._chart.series.push(new am4charts.LineSeries());
     series.name = name;
     series.dataFields.valueY = valueName;
@@ -79,18 +88,18 @@ class Chart extends Component {
     this._series.set(valueName, series);
   }
 
-  removeSeries(valueName) {
-    this._chart.series.removeValue(this._series.get(valueName));
-    this._series.remove(valueName);
-  }
-
   componentDidUpdate(prevProps, prevState, snapshot) {
     if (prevProps.rki !== this.props.rki || prevProps.seir !== this.props.seir) {
-      this.updateData();
+      this._updateData();
     }
   }
 
-  updateData() {
+  /**
+   * Transforms the incoming data into a format that the chart needs and updates
+   * the chart and series accordingly.
+   * @private
+   */
+  _updateData() {
     const timeMap = new Map();
 
     if (this.props.rki === null || Object.keys(this.props.rki).length === 0) {
