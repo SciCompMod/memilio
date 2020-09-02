@@ -59,7 +59,7 @@ void World::migration(double dt)
 void World::begin_step(double dt)
 {
     for (auto&& location : m_locations) {
-        location->begin_step(dt);
+        location->begin_step(dt, m_infection_parameters);
     }
 }
 
