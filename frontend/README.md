@@ -13,6 +13,9 @@ We recommend using the long time support (LTS) version.
 #### Getting the dependencies
 To download the dependencies you have to run `npm install` or `npm i`.
 This can take a few minutes.
+[In case of any warnings to required peer dependencies of react, 
+add the flag --save-dev react@^VERSION to npm install. Please also report
+the bug to us.]
 
 #### Development
 Run `npm run start` in this folder. 
