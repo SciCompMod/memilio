@@ -23,29 +23,31 @@ class ParameterStudy
 public:
     /* 
      * @brief Constructor from file name
-     * @param[in] parameter_filename filename of a file storing ranges of input parameters.
+     * @param[in] simu_func simulation function for Secir simulation
+     * @param[in] params SecirParams object 
+     * @param[in] t0 start time of simulations
+     * @param[in] tmax end time of simulations
+     * @param[in] num_runs number of runs in ensemble run
      */
-    ParameterStudy(secir_simulation_function_t const& simu_func, ParameterSpace&& parameter_space, size_t num_runs,
-                   double t0, double tmax);
-
-    /* 
-     * @brief Constructor from contact frequency matrix and parameter vector
-     * @param[in] parameter_filename filename of a file storing ranges of input parameters.
-     */
-    ParameterStudy(secir_simulation_function_t const& simu_func, SecirParams const& params, double t0, double tmax,
+    ParameterStudy(secir_simulation_function_t const& simu_func, SecirParams&& params, double t0, double tmax,
                    size_t num_runs);
 
     /* 
      * @brief Constructor from contact frequency matrix and parameter vector
-     * @param[in] parameter_filename filename of a file storing ranges of input parameters.
+     * @param[in] simu_func simulation function for Secir simulation
+     * @param[in] params SecirParams object 
+     * @param[in] t0 start time of simulations
+     * @param[in] tmax end time of simulations
+     * @param[in] num_runs number of runs in ensemble run
      */
     ParameterStudy(secir_simulation_function_t const& simu_func, SecirParams const& params, double t0, double tmax,
-                   double dev_rel, size_t num_runs);
+                   size_t num_runs);
 
     /*
      * @brief Carry out all simulations in the parameter study.
+     * @param[in] result_processing_function Processing function for simulation results, e.g., output function
      */
-    std::vector<TimeSeries<double>> run(HandleSimulationResultFunction simulation_result_function = dummy_func);
+    std::vector<TimeSeries<double>> run(HandleSimulationResultFunction result_processing_function = dummy_func);
 
     /*
      * @brief sets the number of Monte Carlo runs
@@ -95,14 +97,14 @@ public:
         return m_t0;
     }
 
-    const ParameterSpace& get_parameter_space() const
+    const SecirParams& get_secir_params() const
     {
-        return parameter_space;
+        return m_params;
     }
 
-    ParameterSpace& get_parameter_space()
+    SecirParams& get_secir_params()
     {
-        return parameter_space;
+        return m_params;
     }
 
 private:
@@ -110,7 +112,7 @@ private:
     std::string parameter_file;
 
     // Stores the names and ranges of all parameters
-    ParameterSpace parameter_space;
+    SecirParams m_params;
 
     // The function that carries out our simulation
     secir_simulation_function_t simulation_function;
@@ -125,30 +127,20 @@ private:
     double m_dt = 0.1;
 };
 
-inline ParameterStudy::ParameterStudy(const secir_simulation_function_t& simu_func, ParameterSpace&& parameter_space,
-                                      size_t num_runs, double t0, double tmax)
+inline ParameterStudy::ParameterStudy(const secir_simulation_function_t& simu_func, SecirParams&& params, double t0,
+                                      double tmax, size_t num_runs)
     : simulation_function(simu_func)
-    , parameter_space(std::move(parameter_space))
-    , m_num_runs(num_runs)
+    , m_params(std::move(params))
     , m_t0{t0}
     , m_tmax{tmax}
+    , m_num_runs(num_runs)
 {
 }
 
 inline ParameterStudy::ParameterStudy(secir_simulation_function_t const& simu_func, SecirParams const& params,
                                       double t0, double tmax, size_t num_runs)
     : simulation_function{simu_func}
-    , parameter_space{params}
-    , m_num_runs{num_runs}
-    , m_t0{t0}
-    , m_tmax{tmax}
-{
-}
-
-inline ParameterStudy::ParameterStudy(secir_simulation_function_t const& simu_func, SecirParams const& params,
-                                      double t0, double tmax, double dev_rel, size_t num_runs)
-    : simulation_function{simu_func}
-    , parameter_space{params, t0, tmax, dev_rel}
+    , m_params{params}
     , m_num_runs{num_runs}
     , m_t0{t0}
     , m_tmax{tmax}
@@ -161,11 +153,11 @@ inline std::vector<TimeSeries<double>> ParameterStudy::run(HandleSimulationResul
 
     // Iterate over all parameters in the parameter space
     for (size_t i = 0; i < (*this).get_num_runs(); i++) {
-        SecirParams params_sample = parameter_space.draw_sample();
+        draw_sample(m_params);
 
         // Call the simulation function
-        auto result = simulation_function((*this).m_t0, (*this).m_tmax, (*this).m_dt, params_sample);
-        result_processing_function(params_sample, result);
+        auto result = simulation_function((*this).m_t0, (*this).m_tmax, (*this).m_dt, m_params);
+        result_processing_function(m_params, result);
 
         ensemble_result.push_back(result);
     }
