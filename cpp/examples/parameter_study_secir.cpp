@@ -89,7 +89,7 @@ int main(int argc, char* argv[])
         }
     }
 
-    epi::create_param_space_normal(params, t0, tmax, 0.2);
+    epi::set_params_distributions_normal(params, t0, tmax, 0.2);
 
     // write parameter space without parameter study
     std::string path2 = "/Parameters2";

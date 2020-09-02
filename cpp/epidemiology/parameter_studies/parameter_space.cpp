@@ -1,11 +1,11 @@
-#include <epidemiology/parameter_studies/parameter_space.h>
 #include <epidemiology/secir.h>
+#include <epidemiology/parameter_studies/parameter_space.h>
 #include <epidemiology/parameter_studies/parameter_distributions.h>
 
 namespace epi
 {
 
-void create_param_space_normal(SecirParams& params, double t0, double tmax, double dev_rel)
+void set_params_distributions_normal(SecirParams& params, double t0, double tmax, double dev_rel)
 {
     double min_val = 0.001;
 

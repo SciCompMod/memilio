@@ -1,9 +1,10 @@
 #include "load_test_data.h"
 #include "epidemiology/secir.h"
+#include <epidemiology/parameter_studies/parameter_space.h>
+#include <epidemiology/parameter_studies/parameter_studies.h>
 #include <epidemiology_io/secir_result_io.h>
 #include <epidemiology_io/secir_parameters_io.h>
 #include <distributions_helpers.h>
-// #include <epidemiology/parameter_studies/parameter_studies.h>
 #include <gtest/gtest.h>
 
 TEST(TestSaveParameters, compareParameterStudy)
@@ -66,7 +67,7 @@ TEST(TestSaveParameters, compareParameterStudy)
     std::string path = "/Parameters";
     TixiDocumentHandle handle;
 
-    epi::create_param_space_normal(params, t0, tmax, 0.0);
+    epi::set_params_distributions_normal(params, t0, tmax, 0.0);
 
     params.times[0].get_incubation().get_distribution()->add_predefined_sample(4711.0);
 
@@ -285,7 +286,7 @@ TEST(TestSaveParameters, compareSingleRun)
     TixiDocumentHandle handle;
 
     tixiCreateDocument("Parameters", &handle);
-    epi::create_param_space_normal(params, t0, tmax, 0.0);
+    epi::set_params_distributions_normal(params, t0, tmax, 0.0);
     epi::ParameterStudy study(
         [](auto&& t0, auto&& tmax, auto&& dt, auto&& params) {
             return epi::simulate(t0, tmax, dt, params);
@@ -426,7 +427,7 @@ TEST(TestSaveParameters, compareGraphs)
         }
     }
 
-    epi::create_param_space_normal(params, t0, tmax, 0.15);
+    epi::set_params_distributions_normal(params, t0, tmax, 0.15);
 
     epi::Graph<epi::ModelNode<epi::SecirSimulation>, epi::MigrationEdge> graph;
     graph.add_node(params, t0);

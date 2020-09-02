@@ -1,6 +1,6 @@
+#include <epidemiology/secir.h>
 #include <epidemiology/parameter_studies/parameter_space.h>
 #include <epidemiology/parameter_studies/parameter_studies.h>
-#include <epidemiology/secir.h>
 #include <gtest/gtest.h>
 #include <stdio.h>
 
@@ -71,7 +71,7 @@ TEST(ParameterStudies, sample_from_secir_params)
         }
     }
 
-    epi::create_param_space_normal(params, t0, tmax, 0.2);
+    epi::set_params_distributions_normal(params, t0, tmax, 0.2);
 
     draw_sample(params);
 
