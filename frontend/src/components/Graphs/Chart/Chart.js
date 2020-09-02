@@ -5,13 +5,6 @@ import * as am4charts from '@amcharts/amcharts4/charts';
 
 import './Chart.scss';
 
-const longDateFormat = (time) =>
-  new Date(time).toLocaleDateString(undefined, {
-    year: 'numeric',
-    month: 'long',
-    day: '2-digit',
-  });
-
 class Chart extends Component {
   static defaultProps = {
     seir: {
@@ -32,14 +25,10 @@ class Chart extends Component {
    *  @type Map<string, LineSeries> */
   _series = new Map();
 
-  constructor(props) {
-    super(props);
-  }
-
   componentDidMount() {
     this._chart = am4core.create('dataChartDiv', am4charts.XYChart);
-    const dateAxis = this._chart.xAxes.push(new am4charts.DateAxis());
-    const valueAxis = this._chart.yAxes.push(new am4charts.ValueAxis());
+    this._chart.xAxes.push(new am4charts.DateAxis());
+    this._chart.yAxes.push(new am4charts.ValueAxis());
     this._chart.legend = new am4charts.Legend();
     this._chart.cursor = new am4charts.XYCursor();
     this._chart.cursor.maxTooltipDistance = -1;
@@ -53,14 +42,15 @@ class Chart extends Component {
     this._chart.scrollbarX.parent = this._chart.bottomAxesContainer;
     this._chart.data = [];
 
-    this.createSeries('RKI Confirmed', 'rkic');
-    this.createSeries('RKI Deaths', 'rkid');
-    this.createSeries('RKI Recovered', 'rkir');
+    const {t} = this.props;
+    this.createSeries(t('rki.infected'), 'rkic');
+    this.createSeries(t('rki.deaths'), 'rkid');
+    this.createSeries(t('rki.recovered'), 'rkir');
 
-    this.createSeries('SEIR S', 'seirs');
-    this.createSeries('SEIR E', 'seire');
-    this.createSeries('SEIR I', 'seiri');
-    this.createSeries('SEIR R', 'seirr');
+    this.createSeries(t('parameters.sus'), 'seirs');
+    this.createSeries(t('parameters.exposed'), 'seire');
+    this.createSeries(t('parameters.infected'), 'seiri');
+    this.createSeries(t('parameters.recovered'), 'seirr');
 
     this.updateData();
   }
