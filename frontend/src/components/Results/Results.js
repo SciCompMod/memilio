@@ -2,7 +2,7 @@ import React, {Component} from 'react';
 import {connect} from 'react-redux';
 import {withTranslation} from 'react-i18next';
 import Simulation from '../Simulation';
-import SEIRChart from '../Graphs/SEIRChart';
+import Chart from '../Graphs/Chart';
 
 import {getSelectedData} from '../../redux/app';
 import {getActiveMeasures} from '../../redux/measures';
@@ -14,7 +14,9 @@ class Results extends Component {
     if (this.props.rki === null) {
       return <div>Bitte wählen sie ein Bundesland aus!</div>;
     }
-    return <SEIRChart seir={this.props.seir} rki={this.props.rki.all} measures={this.props.measures} />;
+    return (
+      <Chart seir={this.props.seir} rki={this.props.rki.all} measures={this.props.measures} style={{height: '100%'}} />
+    );
   }
 
   render() {
@@ -34,7 +36,9 @@ class Results extends Component {
                 : '---'}
             </span>
           </div>
-          <div className="charts p-1">{this._render()}</div>
+          <div className="charts p-1" style={{height: 'calc(100% - 39px)'}}>
+            {this._render()}
+          </div>
         </div>
       </>
     );
