@@ -360,3 +360,23 @@ TEST(TestSimulation, advance_random)
         ASSERT_EQ(v.sum(), 4);
     }
 }
+
+TEST(TestDiscreteDistribution, generate)
+{
+    using namespace epi;
+    auto distribution = epi::DiscreteDistribution<size_t>();
+
+    std::vector<double> weights;
+    for (size_t i = 0; i < 50; i++) {
+        weights = {};
+        ASSERT_EQ(distribution(weights), 0);
+
+        weights = {0.5};
+        ASSERT_EQ(distribution(weights), 0);
+
+        weights = {0.5, 1.3, 0.1, 0.4, 0.3};
+        auto d  = distribution(weights);
+        ASSERT_GE(d, 0);
+        ASSERT_LE(d, 4);
+    }
+}
