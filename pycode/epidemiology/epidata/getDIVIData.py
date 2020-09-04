@@ -233,7 +233,7 @@ def download_data_for_one_day(last_number, download_date):
 # and the data is normally downloaded (see below).
 #
 # If data should normally  be downloaded between start_date and end_date we start with an empty pandas dataframe.
-# Afterwards for everyday between start_date and end_date, both included,
+# Afterwards, for everyday between start_date and end_date, both included,
 # the function download_data_for_one_day is called.
 # If a given back dataframe is empty a warning is printed, that this date is missing, but the program is not stopped.
 # If start_date is earlier or equal 2020-24-29 the function adjust_data has to be called.
