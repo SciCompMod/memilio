@@ -45,7 +45,7 @@ In order to use IO of parameters and simulation results (*epidemiology_io* libra
    *  python3 setup.py build
    *  python3 setup.py install
    *  execute some example
-
+*  Run the python tests in the pycode/test folder by typing python -m unittest
 
 **Development**
 * [Git workflow and change process](https://gitlab.dlr.de/hpc-against-corona/epidemiology/-/wikis/Git-workflow-and-change-process)
