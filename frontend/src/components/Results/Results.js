@@ -8,14 +8,25 @@ import {getSelectedData} from '../../redux/app';
 import {getActiveMeasures} from '../../redux/measures';
 
 import * as numeral from 'numeral';
+import {CustomInput} from 'reactstrap';
 
 class Results extends Component {
+  state = {
+    logChart: false,
+  };
+
   _render() {
     if (this.props.rki === null) {
       return <div>Bitte wählen sie ein Bundesland aus!</div>;
     }
     return (
-      <Chart seir={this.props.seir} rki={this.props.rki.all} measures={this.props.measures} style={{height: '100%'}} />
+      <Chart
+        seir={this.props.seir}
+        rki={this.props.rki.all}
+        measures={this.props.measures}
+        logChart={this.state.logChart}
+        style={{height: '100%'}}
+      />
     );
   }
 
@@ -35,6 +46,14 @@ class Results extends Component {
                 ? numeral(this.props.selected.population).format('0,0')
                 : '---'}
             </span>
+            <span className="h3 ml-0"> | Logarithmic: </span>
+            <CustomInput
+              type="switch"
+              id="log-scale-graph-switch"
+              checked={this.state.logChart}
+              onChange={() => this.setState({logChart: !this.state.logChart})}
+              className="d-inline"
+            />
           </div>
           <div className="charts p-1" style={{height: 'calc(100% - 39px)'}}>
             {this._render()}
