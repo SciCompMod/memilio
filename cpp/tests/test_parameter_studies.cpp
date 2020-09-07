@@ -1,13 +1,13 @@
+#include <epidemiology/secir.h>
 #include <epidemiology/parameter_studies/parameter_space.h>
 #include <epidemiology/parameter_studies/parameter_studies.h>
-#include <epidemiology/secir.h>
 #include <gtest/gtest.h>
 #include <stdio.h>
 
 TEST(ParameterStudies, sample_from_secir_params)
 {
     double t0   = 0;
-    double tmax = 50;
+    double tmax = 100;
     double dt   = 0.1;
 
     double tinc    = 5.2, // R_2^(-1)+R_3^(-1)
@@ -71,26 +71,25 @@ TEST(ParameterStudies, sample_from_secir_params)
         }
     }
 
-    epi::ParameterSpace parameter_space(params, 0., 100., 0.2);
+    epi::set_params_distributions_normal(params, t0, tmax, 0.2);
 
-    epi::SecirParams params_sample = parameter_space.draw_sample();
+    draw_sample(params);
 
-    for (size_t i = 0; i < params_sample.get_num_groups(); i++) {
+    for (size_t i = 0; i < params.get_num_groups(); i++) {
 
-        EXPECT_GE(params_sample.populations.get_group_total(epi::SecirCategory::AgeGroup, i), 0);
+        EXPECT_GE(params.populations.get_group_total(epi::SecirCategory::AgeGroup, i), 0);
 
-        EXPECT_NEAR(params_sample.populations.get_group_total(epi::SecirCategory::AgeGroup, i), fact * num_total_t0,
-                    1e-6);
+        EXPECT_NEAR(params.populations.get_group_total(epi::SecirCategory::AgeGroup, i), fact * num_total_t0, 1e-6);
 
-        EXPECT_GE(params_sample.times[i].get_incubation(), 0);
+        EXPECT_GE(params.times[i].get_incubation(), 0);
 
-        EXPECT_GE(params_sample.probabilities[i].get_infection_from_contact(), 0);
+        EXPECT_GE(params.probabilities[i].get_infection_from_contact(), 0);
     }
 
-    epi::ContactFrequencyMatrix& cont_freq_matrix_sample = params_sample.get_contact_patterns();
+    epi::ContactFrequencyMatrix& cont_freq_matrix_sample = params.get_contact_patterns();
 
-    for (size_t i = 0; i < params_sample.get_num_groups(); i++) {
-        for (size_t j = 0; j < params_sample.get_num_groups(); j++) {
+    for (size_t i = 0; i < params.get_num_groups(); i++) {
+        for (size_t j = 0; j < params.get_num_groups(); j++) {
             EXPECT_GE(cont_freq_matrix_sample.get_dampings(static_cast<int>(i), static_cast<int>(j)).get_factor(1.0),
                       0);
             EXPECT_GE(cont_freq_matrix_sample.get_cont_freq(static_cast<int>(i), static_cast<int>(j)), 0);
@@ -254,7 +253,7 @@ TEST(ParameterStudies, check_ensemble_run_result)
         [](double t0, double tmax, double dt, epi::SecirParams const& params) {
             return epi::simulate(t0, tmax, dt, params);
         },
-        params, t0, tmax, 0.2, 1);
+        params, t0, tmax, 1);
 
     // Run parameter study
     int run = 0;
