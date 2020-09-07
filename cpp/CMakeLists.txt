@@ -46,6 +46,8 @@ add_library(epidemiology
     epidemiology/parameter_studies/parameter_distributions.h
     epidemiology/time_series.h
     epidemiology/time_series.cpp
+    epidemiology/span.h
+    epidemiology/span.cpp
     epidemiology/abm/location.cpp
     epidemiology/abm/location.h
     epidemiology/abm/simulation.cpp
