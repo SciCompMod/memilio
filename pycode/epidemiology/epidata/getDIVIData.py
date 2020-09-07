@@ -11,7 +11,7 @@ from epidemiology.epidata import defaultDict as dd
 # Deutsche interdisziplinäre Vereinigung für Intensiv- und Notfallmedizin
 # about Sars-CoV2 is downloaded.
 # This data contains the number of Covid19 patients in intensive care
-# and which are additionally ventilated.
+# and the number of those that are additionally ventilated.
 #
 # data explanation:
 # reporting_hospitals number of reporting hospitals
