@@ -8,7 +8,7 @@ defaultDict = {
    'read_data':False,
    'make_plot':False,
    'out_form':'json',
-   'out_folder': default_file_path,
+   'out_folder':default_file_path,
    'update_data':False
 }
 
