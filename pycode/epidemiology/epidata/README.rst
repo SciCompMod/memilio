@@ -143,7 +143,7 @@ When speaking about infected, means always infected inclusive the already recove
  DIVI     Germany  germany_divi             ICU, ICU_ventilated over date for whole Germany with columns ['Date', 'ICU', 'ICU_ventilated']
  ======== ======== ======================== =================
 
-Some more Notes
+Some more notes
 ---------------
 
 When speaking about infected, means always infected inclusive the already recovered persons
