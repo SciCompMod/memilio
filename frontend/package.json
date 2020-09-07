@@ -28,7 +28,6 @@
     "react-scripts": "3.4.1",
     "react-thunk": "1.0.0",
     "reactstrap": "8.4.1",
-    "recharts": "1.8.5",
     "topojson-client": "3.1.0",
     "uuid": "7.0.3"
   },

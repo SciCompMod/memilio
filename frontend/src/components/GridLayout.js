@@ -47,14 +47,6 @@ class ResponsiveGrid extends Component {
             <i className="fas fa-arrows-alt grid-draggable-handle" />
             <TimeMap />
           </div>
-          {/*<div
-            className="grid-box"
-            key="map"
-            data-grid={{x: 6, y: 1, w: 6, h: 7}}
-          >
-            <i className="fas fa-arrows-alt grid-draggable-handle"></i>
-            <Map/>
-          </div>*/}
           <div key="measures" data-grid={{x: 14, y: 4, w: 6, h: 3}} className="grid-box">
             <i className="fas fa-arrows-alt grid-draggable-handle"></i>
             <Measures />
