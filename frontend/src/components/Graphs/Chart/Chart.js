@@ -37,9 +37,6 @@ class Chart extends Component {
     this._chart.xAxes.push(new am4charts.DateAxis());
     this._yAxis = this._chart.yAxes.push(new am4charts.ValueAxis());
 
-    // logarithmic scale can't handle 0 values, so we set them to 0.1, which will be displayed as 0.
-    this._yAxis.treatZeroAs = 0.1;
-
     this._chart.legend = new am4charts.Legend();
     this._chart.cursor = new am4charts.XYCursor();
     this._chart.cursor.maxTooltipDistance = -1;
@@ -103,6 +100,9 @@ class Chart extends Component {
 
     if (prevProps.logChart !== this.props.logChart) {
       this._yAxis.logarithmic = this.props.logChart;
+
+      // logarithmic scale can't handle 0 values, so we set them to 1, which will be displayed as 0.
+      this._yAxis.treatZeroAs = this.props.logChart ? 1 : 0;
     }
   }
 
