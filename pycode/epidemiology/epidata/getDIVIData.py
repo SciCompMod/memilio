@@ -34,7 +34,7 @@ from epidemiology.epidata import defaultDict as dd
 #
 # For the first available dates of year 2020, there are some differences and thus special treatment is needed:
 # - 24.4.: Rename column 'kreis' to 'gemeindeschluessel'
-# - 25.4.: add id bundesland, which es extracted from the given column "gemeindeschluessel"
+# - 25.4.: Add id bundesland, which is extracted from the given column "gemeindeschluessel"
 # - 24.4.-27.4.: Add date as a column
 # - 29.9. empty column has to be removed
 #
