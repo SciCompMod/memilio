@@ -70,6 +70,7 @@ test-py:
     - python3.6 -m pip install --upgrade pip
     - for pkg in `ls pycode/wheelhouse/*36*.whl`; do python3.6 -m pip install $pkg; done
     - pip install pyfakefs
+    - pip install freezegun
   script:
     - cd pycode/test
     - python3 -m unittest
@@ -77,6 +78,7 @@ test-py:
     - getpopuldata --help
     - getjhdata --help
     - getspaindata --help
+    - getdividata --help
     - getalldata --help
     - cleandata --help
 
@@ -98,6 +100,7 @@ download-data:
     - getpopuldata -o data_dl
     - getjhdata -o data_dl
     - getspaindata -o data_dl
+    - getdividata -o data_dl
   artifacts:
     paths:
       - data_dl/*.json

@@ -32,6 +32,8 @@ We want to get data from the Spanish Ministery of Health (MISAN) provided in the
 
 https://github.com/datadista/datasets/tree/master/COVID%2019
 
+Data from DIVI Intensivregister (DIVI)
+
 Dependencies
 ------------
 
@@ -70,6 +72,7 @@ Afterwards for getting RKI data the program can be executed, by calling one of t
       getpopuldata
       getjhdata
       getspaindata
+      getdividata
       getalldata
 
 While running the program close one figure-window to get the next one.
@@ -133,9 +136,14 @@ When speaking about infected, means always infected inclusive the already recove
 
  MISAN    Spain    spain_all_age            ['Date', 'Age', 'Gender', 'Confirmed', 'Hospitalized', 'ICU', 'Deaths'] for different age ranges
  MISAN    Spain    spain_all_state          ['Date', 'ID_State', 'State', 'Confirmed_total', 'Confirmed_PCR', 'Confirmed_AB', 'Hospitalized', 'ICU', 'Deaths', 'Recovered']
+ 
+ DIVI     Germany  FullData_DIVI            Full data as downloaded from archive with columns ['County', 'State', 'anzahl_meldebereiche', 'reporting_hospitals', 'occupied_ICU', 'free_ICU', 'ID_State', 'Date', 'ICU', 'ICU_ventilated', 'faelle_covid_aktuell_im_bundesland', 'ID_County']
+ DIVI     Germany  county_divi              ICU, ICU_ventilated over date for different counties (Landkreise) with columns ['County', 'ID_County', 'ICU', 'ICU_ventilated', 'Date']
+ DIVI     Germany  state_divi               ICU, ICU_ventilated over date for different states (Bundesländer) with columns ['Date', 'ICU', 'ICU_ventilated', 'ID_State', 'State']
+ DIVI     Germany  germany_divi             ICU, ICU_ventilated over date for whole Germany with columns ['Date', 'ICU', 'ICU_ventilated']
  ======== ======== ======================== =================
 
-Some more Notes
+Some more notes
 ---------------
 
 When speaking about infected, means always infected inclusive the already recovered persons
@@ -165,6 +173,14 @@ IMPORTANT NOTE: ONLY USE THIS DATA WITH CARE, WE ARE WAITING FOR AN UPDATE TO CO
 #               Madrid (hasta 2020-04-26)                      Comunidad Valenciana (hasta 2020-04-08)     #
 #               Castilla y León (hasta 2020-04-06)             Galicia (hasta 2020-04-29)                  #
 #               Madrid (hasta 2020-04-26)                                                                  #
+
+For DIVI:
+
+For the 24.4. and 25.4. there is no data for ICU_ventilated and the 24.4. even has no data for ICU but only
+for each state which is not considered in the summarized data for counties, states and whole Germany. (There are
+zero entries for these dates)
+Not every hospital is reporting the number of corona patients in intensive care units (ICU). The number of
+reporting hospitals differs from day to day and is given in FullData_DIVI.
 
 Notes for developers
 --------------------

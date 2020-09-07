@@ -26,6 +26,7 @@ from epidemiology.epidata import defaultDict as dd
 
 
 def get_spain_data(read_data=dd.defaultDict['read_data'],
+                   update_data=dd.defaultDict['update_data'],
                    make_plot=dd.defaultDict['make_plot'],
                    out_form=dd.defaultDict['out_form'],
                    out_folder=dd.defaultDict['out_folder']):
@@ -163,8 +164,8 @@ def get_spain_data(read_data=dd.defaultDict['read_data'],
 
 def main():
 
-    [read_data, make_plot, out_form, out_folder] = gd.cli('Download of spain data')
-    get_spain_data(read_data, make_plot, out_form, out_folder)
+    [read_data, update_data, make_plot, out_form, out_folder] = gd.cli('Download of spain data')
+    get_spain_data(read_data, update_data, make_plot, out_form, out_folder)
 
 
 if __name__ == "__main__":
