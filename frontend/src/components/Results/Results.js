@@ -2,7 +2,7 @@ import React, {Component} from 'react';
 import {connect} from 'react-redux';
 import {withTranslation} from 'react-i18next';
 import Simulation from '../Simulation';
-import Chart from '../Graphs/Chart';
+import InfectionChart from '../Graphs/InfectionChart';
 
 import {getSelectedData} from '../../redux/app';
 import {getActiveMeasures} from '../../redux/measures';
@@ -15,7 +15,12 @@ class Results extends Component {
       return <div>Bitte wählen sie ein Bundesland aus!</div>;
     }
     return (
-      <Chart seir={this.props.seir} rki={this.props.rki.all} measures={this.props.measures} style={{height: '100%'}} />
+      <InfectionChart
+        seir={this.props.seir}
+        rki={this.props.rki.all}
+        measures={this.props.measures}
+        style={{height: '100%'}}
+      />
     );
   }
 
