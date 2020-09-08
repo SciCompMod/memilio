@@ -157,7 +157,15 @@ def download_data_for_one_day(last_number, download_date):
                         date(2020, 8, 9): 4330,
                         date(2020, 8, 11): 4412,
                         date(2020, 8, 13): 4430,
-                        date(2020, 8, 14): 4680
+                        date(2020, 8, 14): 4680,
+                        date(2020, 8, 15): 4909,
+                        date(2020, 8, 17): 4977,
+                        date(2020, 8, 18): 4996,
+                        date(2020, 8, 24): 5008,
+                        date(2020, 8, 25): 5011,
+                        date(2020, 8, 28): 5020,
+                        date(2020, 8, 31): 5026,
+                        date(2020, 9, 5): 5036
                         }
 
     call_date = download_date.strftime("%Y-%m-%d")
