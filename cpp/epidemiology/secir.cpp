@@ -1,6 +1,6 @@
 #include <epidemiology/secir.h>
 
-// #include <epidemiology/euler.h>
+#include <epidemiology/euler.h>
 #include <epidemiology/adapt_rk.h>
 #include <epidemiology/eigen_util.h>
 #include <epidemiology_io/secir_result_io.h>
@@ -656,7 +656,7 @@ std::vector<double> simulate(double t0, double tmax, double dt, SecirParams cons
     return t;
 }
 
-SecirSimulation::SecirSimulation(const SecirParams& params, double t0, double dt)
+SecirSimulation::SecirSimulation(SecirParams const& params, double t0, double dt)
     : m_integratorCore(std::make_shared<RKIntegratorCore>(1e-3, 1.))
     , m_integrator(
           [params](auto&& y, auto&& t, auto&& dydt) {

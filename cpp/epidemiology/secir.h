@@ -1,6 +1,7 @@
 #ifndef SECIR_H
 #define SECIR_H
 
+#include <epidemiology/euler.h>
 #include <epidemiology/populations.h>
 #include <epidemiology/adapt_rk.h>
 #include <epidemiology/uncertain_value.h>
@@ -576,7 +577,7 @@ public:
      * @param[in] t0 start time
      * @param[in] dt initial step size of integration
      */
-    SecirSimulation(const SecirParams& params, double t0 = 0., double dt = 0.1);
+    SecirSimulation(SecirParams const& params, double t0 = 0., double dt = 0.1);
 
     /**
      * @brief advance simulation to tmax
