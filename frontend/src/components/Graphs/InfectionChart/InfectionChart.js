@@ -20,47 +20,44 @@ class InfectionChart extends Component {
     measures: [],
   };
 
-  /** @private
-   *  @type XYChart */
-  _chart = null;
+  /** @type XYChart */
+  #chart = null;
 
-  /** @private
-   *  @type ValueAxis */
-  _yAxis = null;
+  /** @type ValueAxis */
+  #yAxis = null;
 
-  /** @private
-   *  @type Map<string, LineSeries> */
-  _series = new Map();
+  /** @type Map<string, LineSeries> */
+  #series = new Map();
 
   componentDidMount() {
-    this._chart = am4core.create('dataChartDiv', am4charts.XYChart);
-    this._chart.xAxes.push(new am4charts.DateAxis());
-    this._yAxis = this._chart.yAxes.push(new am4charts.ValueAxis());
+    this.#chart = am4core.create('dataChartDiv', am4charts.XYChart);
+    this.#chart.xAxes.push(new am4charts.DateAxis());
+    this.#yAxis = this.#chart.yAxes.push(new am4charts.ValueAxis());
 
-    this._chart.legend = new am4charts.Legend();
-    this._chart.cursor = new am4charts.XYCursor();
-    this._chart.cursor.maxTooltipDistance = -1;
+    this.#chart.legend = new am4charts.Legend();
+    this.#chart.cursor = new am4charts.XYCursor();
+    this.#chart.cursor.maxTooltipDistance = -1;
 
-    this._chart.dateFormatter.dateFormat = {
+    this.#chart.dateFormatter.dateFormat = {
       month: 'short',
       day: '2-digit',
     };
 
-    this._chart.scrollbarX = new am4charts.XYChartScrollbar();
-    this._chart.scrollbarX.parent = this._chart.bottomAxesContainer;
-    this._chart.data = [];
+    this.#chart.scrollbarX = new am4charts.XYChartScrollbar();
+    this.#chart.scrollbarX.parent = this.#chart.bottomAxesContainer;
+    this.#chart.data = [];
 
     const {t} = this.props;
-    this._createSeries(t('rki.infected'), 'rkic');
-    this._createSeries(t('rki.deaths'), 'rkid');
-    this._createSeries(t('rki.recovered'), 'rkir');
+    this.createSeries(t('rki.infected'), 'rkic');
+    this.createSeries(t('rki.deaths'), 'rkid');
+    this.createSeries(t('rki.recovered'), 'rkir');
 
-    this._createSeries(t('parameters.sus'), 'seirs');
-    this._createSeries(t('parameters.exposed'), 'seire');
-    this._createSeries(t('parameters.infected'), 'seiri');
-    this._createSeries(t('parameters.recovered'), 'seirr');
+    this.createSeries(t('parameters.sus'), 'seirs');
+    this.createSeries(t('parameters.exposed'), 'seire');
+    this.createSeries(t('parameters.infected'), 'seiri');
+    this.createSeries(t('parameters.recovered'), 'seirr');
 
-    this._updateData();
+    this.updateData();
   }
 
   /**
@@ -69,8 +66,8 @@ class InfectionChart extends Component {
    * @param name{string} The name to be displayed.
    * @param valueName{string} The name of the value field.
    */
-  _createSeries(name, valueName) {
-    const series = this._chart.series.push(new am4charts.LineSeries());
+  createSeries(name, valueName) {
+    const series = this.#chart.series.push(new am4charts.LineSeries());
     series.name = name;
     series.dataFields.valueY = valueName;
     series.dataFields.dateX = 'date';
@@ -81,7 +78,7 @@ class InfectionChart extends Component {
     series.tooltip.label.fill = am4core.color('#00');
     series.adapter.add('tooltipText', (e) => {
       let text = '[bold]{dateX}[]\n';
-      this._chart.series.each((item) => {
+      this.#chart.series.each((item) => {
         if (item.visible) {
           text += `[${item.stroke.hex}]●[/] ${item.name}: {${item.dataFields.valueY}}\n`;
         }
@@ -89,20 +86,20 @@ class InfectionChart extends Component {
       return text;
     });
 
-    this._chart.scrollbarX.series.push(series);
-    this._series.set(valueName, series);
+    this.#chart.scrollbarX.series.push(series);
+    this.#series.set(valueName, series);
   }
 
   componentDidUpdate(prevProps, prevState, snapshot) {
     if (prevProps.rki !== this.props.rki || prevProps.seir !== this.props.seir) {
-      this._updateData();
+      this.updateData();
     }
 
     if (prevProps.logChart !== this.props.logChart) {
-      this._yAxis.logarithmic = this.props.logChart;
+      this.#yAxis.logarithmic = this.props.logChart;
 
       // logarithmic scale can't handle 0 values, so we set them to 1, which will be displayed as 0.
-      this._yAxis.treatZeroAs = this.props.logChart ? 1 : 0;
+      this.#yAxis.treatZeroAs = this.props.logChart ? 1 : 0;
     }
   }
 
@@ -111,29 +108,29 @@ class InfectionChart extends Component {
    * the chart and series accordingly.
    * @private
    */
-  _updateData() {
+  updateData() {
     const timeMap = new Map();
 
     if (this.props.rki === null || Object.keys(this.props.rki).length === 0) {
-      this._series.get('rkic').hide();
-      this._series.get('rkid').hide();
-      this._series.get('rkir').hide();
+      this.#series.get('rkic').hide();
+      this.#series.get('rkid').hide();
+      this.#series.get('rkir').hide();
     } else {
-      this._series.get('rkic').show();
-      this._series.get('rkid').show();
-      this._series.get('rkir').show();
+      this.#series.get('rkic').show();
+      this.#series.get('rkid').show();
+      this.#series.get('rkir').show();
     }
 
     if (this.props.seir === null || Object.keys(this.props.seir).length === 0) {
-      this._series.get('seirs').hide();
-      this._series.get('seire').hide();
-      this._series.get('seiri').hide();
-      this._series.get('seirr').hide();
+      this.#series.get('seirs').hide();
+      this.#series.get('seire').hide();
+      this.#series.get('seiri').hide();
+      this.#series.get('seirr').hide();
     } else {
-      this._series.get('seirs').show();
-      this._series.get('seire').show();
-      this._series.get('seiri').show();
-      this._series.get('seirr').show();
+      this.#series.get('seirs').show();
+      this.#series.get('seire').show();
+      this.#series.get('seiri').show();
+      this.#series.get('seirr').show();
     }
 
     if (this.props.rki !== null) {
@@ -172,7 +169,7 @@ class InfectionChart extends Component {
     }
 
     data.sort((a, b) => a.date - b.date);
-    this._chart.data = data;
+    this.#chart.data = data;
   }
 
   render() {

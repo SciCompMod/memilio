@@ -28,12 +28,11 @@ class TimeMap extends React.Component {
   };
 
   /** @type InteractiveHeatMap */
-  map = null;
+  #map = null;
 
   componentDidMount() {
-    this.map = new InteractiveHeatMap('timeMapDiv');
-
-    this.map.onStateSelected = (newState) => {
+    this.#map = new InteractiveHeatMap('timeMapDiv');
+    this.#map.onStateSelected = (newState) => {
       if (newState !== null) {
         this.props.setSelected({
           dataset: 'states',
@@ -48,7 +47,7 @@ class TimeMap extends React.Component {
       }
     };
 
-    this.map.onCountySelected = (newCounty) => {
+    this.#map.onCountySelected = (newCounty) => {
       if (newCounty !== null) {
         this.props.setSelected({
           dataset: 'counties',
@@ -61,7 +60,7 @@ class TimeMap extends React.Component {
   }
 
   /** @private */
-  _calcStateData() {
+  calcStateData() {
     const times = new Map();
 
     /** @type Map<number, number> | null */
@@ -95,7 +94,7 @@ class TimeMap extends React.Component {
   }
 
   /** @private */
-  _calcCountyData() {
+  calcCountyData() {
     const times = new Map();
 
     /** @type Map<number, number> | null */
@@ -128,7 +127,7 @@ class TimeMap extends React.Component {
   }
 
   /** @private */
-  _calcSeirData() {
+  calcSeirData() {
     const times = new Map();
 
     /** @type Map<number, number> | null */
@@ -167,7 +166,7 @@ class TimeMap extends React.Component {
       this.props.time.startDate !== prevProps.time.startDate ||
       this.props.time.endDate !== prevProps.time.endDate
     ) {
-      this._calcStateData();
+      this.calcStateData();
     }
 
     if (
@@ -176,33 +175,33 @@ class TimeMap extends React.Component {
       this.props.time.startDate !== prevProps.time.startDate ||
       this.props.time.endDate !== prevProps.time.endDate
     ) {
-      this._calcCountyData();
+      this.calcCountyData();
     }
 
     if (
       this.props.seirRegions !== null &&
       (this.props.seirRegions !== prevProps.seirRegions || this.state.seirTimes.size === 0)
     ) {
-      this._calcSeirData();
+      this.calcSeirData();
     }
 
     const currDate = this.props.time.currentDate;
     if (prevProps.time.currentDate !== currDate) {
       if (this.props.seirRegions !== null) {
-        this.map.setDataSetName('SEIR');
-        if (this.map.selectedState !== -1) {
-          this.map.setCountyValues(this.state.seirTimes.get(currDate));
+        this.#map.setDataSetName('SEIR');
+        if (this.#map.selectedState !== -1) {
+          this.#map.setCountyValues(this.state.seirTimes.get(currDate));
         } else {
-          this.map.setStateValues(this.state.seirTimes.get(currDate));
+          this.#map.setStateValues(this.state.seirTimes.get(currDate));
         }
       } else {
-        this.map.setDataSetName('RKI');
-        if (this.map.selectedState !== -1 && this.state.countyTimes.has(currDate)) {
-          this.map.setCountyValues(this.state.countyTimes.get(currDate));
+        this.#map.setDataSetName('RKI');
+        if (this.#map.selectedState !== -1 && this.state.countyTimes.has(currDate)) {
+          this.#map.setCountyValues(this.state.countyTimes.get(currDate));
         }
 
         if (this.state.stateTimes.has(currDate)) {
-          this.map.setStateValues(this.state.stateTimes.get(currDate));
+          this.#map.setStateValues(this.state.stateTimes.get(currDate));
         }
       }
     }
