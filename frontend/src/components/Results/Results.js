@@ -55,7 +55,7 @@ class Results extends Component {
               className="p-2"
             />
           </div>
-          <div className="charts p-1" style={{height: 'calc(100% - 39px)'}}>
+          <div className="charts p-1" style={{height: 'calc(100% - 40px)'}}>
             {this._render()}
           </div>
         </div>
