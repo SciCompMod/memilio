@@ -25,13 +25,18 @@ class InfectionChart extends Component {
   _chart = null;
 
   /** @private
+   *  @type ValueAxis */
+  _yAxis = null;
+
+  /** @private
    *  @type Map<string, LineSeries> */
   _series = new Map();
 
   componentDidMount() {
     this._chart = am4core.create('dataChartDiv', am4charts.XYChart);
     this._chart.xAxes.push(new am4charts.DateAxis());
-    this._chart.yAxes.push(new am4charts.ValueAxis());
+    this._yAxis = this._chart.yAxes.push(new am4charts.ValueAxis());
+
     this._chart.legend = new am4charts.Legend();
     this._chart.cursor = new am4charts.XYCursor();
     this._chart.cursor.maxTooltipDistance = -1;
@@ -91,6 +96,13 @@ class InfectionChart extends Component {
   componentDidUpdate(prevProps, prevState, snapshot) {
     if (prevProps.rki !== this.props.rki || prevProps.seir !== this.props.seir) {
       this._updateData();
+    }
+
+    if (prevProps.logChart !== this.props.logChart) {
+      this._yAxis.logarithmic = this.props.logChart;
+
+      // logarithmic scale can't handle 0 values, so we set them to 1, which will be displayed as 0.
+      this._yAxis.treatZeroAs = this.props.logChart ? 1 : 0;
     }
   }
 

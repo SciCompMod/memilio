@@ -30,7 +30,10 @@
     "exposed": "RKI Exponierte Personen",
     "infected": "RKI Infizierte Personen"
   },
-  "results": "Auswertung",
+  "results": {
+    "title": "Auswertung",
+    "log": "Logarithmisch"
+  },
   "dateformat": {
     "date": "DD.MM.YYYY",
     "full": "DD. MMMM YYYY",

@@ -30,7 +30,10 @@
     "exposed": "RKI exposed persons",
     "infected": "RKI infected persons"
   },
-  "results": "Results",
+  "results": {
+    "title": "Results",
+    "log": "Logarithmic"
+  },
   "dateFormat": "dd.MM.yyyy",
   "timeline": {
     "title": "Timeline"
