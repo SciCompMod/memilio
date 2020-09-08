@@ -2,7 +2,12 @@
 # and of calling the console scripts the default values are the same
 import os
 
-default_file_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), '../../../data')
+
+default_file_path = os.path.dirname(os.path.abspath(__file__))
+dfp_vec = default_file_path.split("epidemiology")
+if len(dfp_vec) > 0:
+   default_file_path = os.path.join(dfp_vec[0], os.path.join('epidemiology', 'data'))
+
 
 defaultDict = {
    'read_data':False,
