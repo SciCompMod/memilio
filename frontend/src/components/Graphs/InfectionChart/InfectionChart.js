@@ -3,12 +3,12 @@ import {withTranslation} from 'react-i18next';
 import * as am4core from '@amcharts/amcharts4/core';
 import * as am4charts from '@amcharts/amcharts4/charts';
 
-import './Chart.scss';
+import './InfectionChart.scss';
 
 /**
  * This component wraps an amChart to display infection related data of RKI and SEIR simulations.
  */
-class Chart extends Component {
+class InfectionChart extends Component {
   static defaultProps = {
     seir: {
       S: [],
@@ -184,6 +184,6 @@ class Chart extends Component {
   }
 }
 
-const TranslatedChart = withTranslation()(Chart);
+const TranslatedChart = withTranslation()(InfectionChart);
 
-export {TranslatedChart as Chart};
+export {TranslatedChart as InfectionChart};

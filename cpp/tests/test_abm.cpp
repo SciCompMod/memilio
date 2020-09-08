@@ -55,20 +55,60 @@ TEST(TestPerson, migrate)
     ASSERT_EQ(location1.get_subpopulation(epi::InfectionState::Recovered_Carrier), 0);
 }
 
-//mocking a rng and using it in e.g. uniform_int_distribution is actually not allowed.
-//the standard requires the generator to be actually random, which the mock is not.
-//the resulting behaviour is undefined, standard compliant implementations may e.g. loop forever
-//possible solution: mock the distribution instead of the generator
-struct MockRng {
-    MOCK_METHOD(epi::RandomNumberGenerator::result_type, invoke, (), ());
+/**
+ * mock of the generator function of DistributionAdapter<DistT>.
+ * can't be used directly as a generator function because it is not copyable.
+ * see MockDistributionRef
+ */
+template <class DistT>
+struct MockDistribution {
+    using Distribution = DistT;
+    // using invoke() instead of operator() because operators cant be mocked in the GMock framework */
+    MOCK_METHOD(typename Distribution::ResultType, invoke, (const typename Distribution::ParamType&), ());
 };
-template <class MockRng = MockRng>
-struct MockRngRef {
-    epi::RandomNumberGenerator::result_type operator()()
+
+/**
+ * reference wrapper of a MockDistribution object.
+ * Mocks are not copyable but the generator function of a distribution must be copyable.
+ * This wrapper is copyable and all copies redirect invocations to a shared underlying mock
+ * so it can be used as a generator function.
+ */
+template <class MockDistribution>
+struct MockDistributionRef {
+    using Distribution = typename MockDistribution::Distribution;
+    typename Distribution::ResultType operator()(const typename Distribution::ParamType& p)
     {
-        return mock->invoke();
+        return mock->invoke(p);
     }
-    std::shared_ptr<MockRng> mock = std::make_shared<MockRng>();
+    std::shared_ptr<MockDistribution> mock = std::make_shared<MockDistribution>();
+};
+
+/**
+ * Replaces the generator function in the static instance of DistributionAdapter with a mock.
+ * On construction sets the generator and on destruction restores the previous generator.
+ */
+template <class MockDistribution>
+struct ScopedMockDistribution {
+    using Distribution = typename MockDistribution::Distribution;
+    /**
+     * constructor replaces the generator function with a mock
+     */
+    ScopedMockDistribution()
+    {
+        old = Distribution::get_instance().get_generator();
+        Distribution::get_instance().set_generator(mock_ref);
+    }
+    ~ScopedMockDistribution()
+    {
+        Distribution::get_instance().set_generator(old);
+    }
+    MockDistribution& get_mock()
+    {
+        return *mock_ref.mock;
+    }
+
+    MockDistributionRef<MockDistribution> mock_ref;
+    typename Distribution::GeneratorFunction old;
 };
 
 TEST(TestLocation, interact)
@@ -85,86 +125,68 @@ TEST(TestLocation, interact)
     location.add_person(infected3);
     location.begin_step(0.1, {});
 
-    MockRngRef<testing::StrictMock<MockRng>> mock_rng;
-    epi::thread_local_rng().generator = mock_rng;
+    ScopedMockDistribution<testing::StrictMock<MockDistribution<epi::ExponentialDistribution<double>>>>
+        mock_exponential_dist;
+    ScopedMockDistribution<testing::StrictMock<MockDistribution<epi::DiscreteDistribution<size_t>>>> mock_discrete_dist;
 
     {
         auto susceptible = epi::Person(location, epi::InfectionState::Susceptible);
-        EXPECT_CALL(*mock_rng.mock, invoke)
-            .Times(2)
-            .WillOnce(Return(0.99 * epi::RandomNumberGenerator::max()))
-            .WillOnce(Return(0.5 * epi::RandomNumberGenerator::max()));
+        EXPECT_CALL(mock_exponential_dist.get_mock(), invoke).Times(1).WillOnce(Return(0.05));
+        EXPECT_CALL(mock_discrete_dist.get_mock(), invoke).Times(1).WillOnce(Return(0));
         EXPECT_EQ(location.interact(susceptible, 0.1, {}), epi::InfectionState::Exposed);
-        EXPECT_CALL(*mock_rng.mock, invoke)
-            .Times(2)
-            .WillOnce(Return(0.1 * epi::RandomNumberGenerator::max()))
-            .WillOnce(Return(0.5 * epi::RandomNumberGenerator::max()));
+
+        EXPECT_CALL(mock_exponential_dist.get_mock(), invoke).Times(1).WillOnce(Return(0.15));
         EXPECT_EQ(location.interact(susceptible, 0.1, {}), epi::InfectionState::Susceptible);
     }
 
     {
         auto exposed = epi::Person(location, epi::InfectionState::Exposed);
-        EXPECT_CALL(*mock_rng.mock, invoke).Times(0); //no transitions out of exposed state
+        EXPECT_CALL(mock_exponential_dist.get_mock(), invoke).Times(0); //no transitions out of exposed state
         EXPECT_EQ(location.interact(exposed, 0.1, {}), epi::InfectionState::Exposed);
     }
 
     {
         auto carrier = epi::Person(location, epi::InfectionState::Carrier);
 
-        EXPECT_CALL(*mock_rng.mock, invoke)
-            .Times(2)
-            .WillOnce(Return(0.99 * epi::RandomNumberGenerator::max()))
-            .WillOnce(Return(0.2 * epi::RandomNumberGenerator::max()));
+        EXPECT_CALL(mock_exponential_dist.get_mock(), invoke).Times(1).WillOnce(Return(0.05));
+        EXPECT_CALL(mock_discrete_dist.get_mock(), invoke).Times(1).WillOnce(Return(0));
         EXPECT_EQ(location.interact(carrier, 0.1, {}), epi::InfectionState::Infected_Detected);
-        EXPECT_CALL(*mock_rng.mock, invoke)
-            .Times(2)
-            .WillOnce(Return(0.99 * epi::RandomNumberGenerator::max()))
-            .WillOnce(Return(0.4 * epi::RandomNumberGenerator::max()));
+
+        EXPECT_CALL(mock_exponential_dist.get_mock(), invoke).Times(1).WillOnce(Return(0.09));
+        EXPECT_CALL(mock_discrete_dist.get_mock(), invoke).Times(1).WillOnce(Return(1));
         EXPECT_EQ(location.interact(carrier, 0.1, {}), epi::InfectionState::Infected_Undetected);
-        EXPECT_CALL(*mock_rng.mock, invoke)
-            .Times(2)
-            .WillOnce(Return(0.99 * epi::RandomNumberGenerator::max()))
-            .WillOnce(Return(0.6 * epi::RandomNumberGenerator::max()));
+
+        EXPECT_CALL(mock_exponential_dist.get_mock(), invoke).Times(1).WillOnce(Return(0.099));
+        EXPECT_CALL(mock_discrete_dist.get_mock(), invoke).Times(1).WillOnce(Return(2));
         EXPECT_EQ(location.interact(carrier, 0.1, {}), epi::InfectionState::Recovered_Carrier);
-        EXPECT_CALL(*mock_rng.mock, invoke)
-            .Times(2)
-            .WillOnce(Return(0.5 * epi::RandomNumberGenerator::max()))
-            .WillOnce(Return(0.5 * epi::RandomNumberGenerator::max()));
+
+        EXPECT_CALL(mock_exponential_dist.get_mock(), invoke).Times(1).WillOnce(Return(0.11));
         EXPECT_EQ(location.interact(carrier, 0.1, {}), epi::InfectionState::Carrier);
     }
 
     for (auto&& infected_state : {epi::InfectionState::Infected_Detected, epi::InfectionState::Infected_Undetected}) {
         auto infected = epi::Person(location, infected_state);
 
-        EXPECT_CALL(*mock_rng.mock, invoke)
-            .Times(2)
-            .WillOnce(Return(0.99 * epi::RandomNumberGenerator::max()))
-            .WillOnce(Return(0.4 * epi::RandomNumberGenerator::max()));
+        EXPECT_CALL(mock_exponential_dist.get_mock(), invoke).Times(1).WillOnce(Return(0.09));
+        EXPECT_CALL(mock_discrete_dist.get_mock(), invoke).Times(1).WillOnce(Return(0));
         EXPECT_EQ(location.interact(infected, 0.1, {}), epi::InfectionState::Recovered_Infected);
-        EXPECT_CALL(*mock_rng.mock, invoke)
-            .Times(2)
-            .WillOnce(Return(0.99 * epi::RandomNumberGenerator::max()))
-            .WillOnce(Return(0.6 * epi::RandomNumberGenerator::max()));
+
+        EXPECT_CALL(mock_exponential_dist.get_mock(), invoke).Times(1).WillOnce(Return(0.09));
+        EXPECT_CALL(mock_discrete_dist.get_mock(), invoke).Times(1).WillOnce(Return(1));
         EXPECT_EQ(location.interact(infected, 0.1, {}), epi::InfectionState::Dead);
-        EXPECT_CALL(*mock_rng.mock, invoke)
-            .Times(2)
-            .WillOnce(Return(0.5 * epi::RandomNumberGenerator::max()))
-            .WillOnce(Return(0.5 * epi::RandomNumberGenerator::max()));
+
+        EXPECT_CALL(mock_exponential_dist.get_mock(), invoke).Times(1).WillOnce(Return(0.1001));
         EXPECT_EQ(location.interact(infected, 0.1, {}), infected_state);
     }
 
     for (auto&& recovered_state : {epi::InfectionState::Recovered_Carrier, epi::InfectionState::Recovered_Infected}) {
         auto recovered = epi::Person(location, recovered_state);
 
-        EXPECT_CALL(*mock_rng.mock, invoke)
-            .Times(2)
-            .WillOnce(Return(0.99 * epi::RandomNumberGenerator::max()))
-            .WillOnce(Return(0.5 * epi::RandomNumberGenerator::max()));
+        EXPECT_CALL(mock_exponential_dist.get_mock(), invoke).Times(1).WillOnce(Return(0.09));
+        EXPECT_CALL(mock_discrete_dist.get_mock(), invoke).Times(1).WillOnce(Return(0));
         EXPECT_EQ(location.interact(recovered, 0.1, {}), epi::InfectionState::Susceptible);
-        EXPECT_CALL(*mock_rng.mock, invoke)
-            .Times(2)
-            .WillOnce(Return(0.5 * epi::RandomNumberGenerator::max()))
-            .WillOnce(Return(0.5 * epi::RandomNumberGenerator::max()));
+
+        EXPECT_CALL(mock_exponential_dist.get_mock(), invoke).Times(1).WillOnce(Return(0.11));
         EXPECT_EQ(location.interact(recovered, 0.1, {}), recovered_state);
     }
 }
@@ -179,12 +201,11 @@ TEST(TestPerson, interact)
     location.begin_step(0.1, {});
 
     //setup rng mock so the person has a state transition
-    MockRngRef<testing::StrictMock<MockRng>> mock_rng;
-    epi::thread_local_rng().generator = mock_rng;
-    EXPECT_CALL(*mock_rng.mock, invoke)
-        .Times(2)
-        .WillOnce(Return(0.99 * epi::RandomNumberGenerator::max()))
-        .WillOnce(Return(0.4 * epi::RandomNumberGenerator::max()));
+    ScopedMockDistribution<testing::StrictMock<MockDistribution<epi::ExponentialDistribution<double>>>>
+        mock_exponential_dist;
+    ScopedMockDistribution<testing::StrictMock<MockDistribution<epi::DiscreteDistribution<size_t>>>> mock_discrete_dist;
+    EXPECT_CALL(mock_exponential_dist.get_mock(), invoke).Times(1).WillOnce(Return(0.09));
+    EXPECT_CALL(mock_discrete_dist.get_mock(), invoke).Times(1).WillOnce(Return(0));
 
     auto infection_parameters = epi::GlobalInfectionParameters();
     person.interact(0.1, infection_parameters);
@@ -213,21 +234,21 @@ TEST(TestPerson, interact_exposed)
     infection_parameters.incubation_period = 2;
 
     //setup rng mock so the person becomes exposed
-    MockRngRef<testing::StrictMock<MockRng>> mock_rng;
-    epi::thread_local_rng().generator = mock_rng;
-    EXPECT_CALL(*mock_rng.mock, invoke)
-        .Times(2)
-        .WillOnce(Return(0.99 * epi::RandomNumberGenerator::max()))
-        .WillOnce(Return(0.4 * epi::RandomNumberGenerator::max()));
+    ScopedMockDistribution<testing::StrictMock<MockDistribution<epi::ExponentialDistribution<double>>>>
+        mock_exponential_dist;
+    ScopedMockDistribution<testing::StrictMock<MockDistribution<epi::DiscreteDistribution<size_t>>>> mock_discrete_dist;
+    EXPECT_CALL(mock_exponential_dist.get_mock(), invoke).Times(1).WillOnce(Return(0.49));
+    EXPECT_CALL(mock_discrete_dist.get_mock(), invoke).Times(1).WillOnce(Return(0));
 
-    //person becomes a carrier after the incubation time runs out
-    person.interact(0.1, infection_parameters);
+    //person becomes exposed
+    person.interact(0.5, infection_parameters);
     ASSERT_EQ(person.get_infection_state(), epi::InfectionState::Exposed);
     EXPECT_EQ(location.get_subpopulation(epi::InfectionState::Exposed), 1);
     EXPECT_EQ(location.get_subpopulation(epi::InfectionState::Carrier), 1);
     EXPECT_EQ(location.get_subpopulation(epi::InfectionState::Infected_Detected), 1);
     EXPECT_EQ(location.get_subpopulation(epi::InfectionState::Infected_Undetected), 1);
 
+    //person becomes a carrier after the incubation time runs out, not random
     person.interact(0.5, infection_parameters);
     ASSERT_EQ(person.get_infection_state(), epi::InfectionState::Exposed);
 
@@ -289,19 +310,17 @@ TEST(TestWorld, evolve)
     auto& location2 = world.add_location(epi::LocationType::School);
     auto& p3        = world.add_person(location2, epi::InfectionState::Infected_Detected);
 
-    MockRngRef<testing::StrictMock<MockRng>> mock_rng;
-    epi::thread_local_rng().generator = mock_rng;
-    EXPECT_CALL(*mock_rng.mock, invoke)
-        .Times(testing::AtLeast(6))
-        .WillOnce(Return(0.1 * epi::RandomNumberGenerator::max())) //don't transition
-        .WillOnce(Return(0.4 * epi::RandomNumberGenerator::max()))
-        .WillOnce(Return(0.9 * epi::RandomNumberGenerator::max())) //transition to exposed
-        .WillOnce(Return(0.4 * epi::RandomNumberGenerator::max()))
-        .WillOnce(Return(0.1 * epi::RandomNumberGenerator::max())) //don't transition
-        .WillOnce(Return(0.4 * epi::RandomNumberGenerator::max()))
-        .WillRepeatedly(Return(
-            epi::RandomNumberGenerator::max() -
-            1)); //no migrations (not properly implemented yet); can't return max() because of a bug(?) in the STL
+    //setup mock so only p2 transitions
+    ScopedMockDistribution<testing::StrictMock<MockDistribution<epi::ExponentialDistribution<double>>>>
+        mock_exponential_dist;
+    ScopedMockDistribution<testing::StrictMock<MockDistribution<epi::DiscreteDistribution<size_t>>>> mock_discrete_dist;
+    EXPECT_CALL(mock_exponential_dist.get_mock(), invoke)
+        .Times(testing::AtLeast(3))
+        .WillOnce(Return(0.51))
+        .WillOnce(Return(0.4))
+        .WillOnce(Return(0.6))
+        .WillRepeatedly(Return(1e10)); //no random migration, not yet implemented properly
+    EXPECT_CALL(mock_discrete_dist.get_mock(), invoke).Times(1).WillOnce(Return(0));
 
     world.evolve(0.5);
 
@@ -310,7 +329,19 @@ TEST(TestWorld, evolve)
     EXPECT_EQ(world.get_persons()[2].get_infection_state(), epi::InfectionState::Infected_Detected);
 }
 
-TEST(TestSimulation, advance)
+template <class T>
+auto ElementsAreLinspace(T b, T e, size_t num_points)
+{
+    assert(num_points >= 2);
+
+    std::vector<T> values(num_points);
+    for (size_t i = 0; i < num_points; i++) {
+        values[i] = i * (e - b) / (num_points - 1);
+    }
+    return testing::ElementsAreArray(values);
+}
+
+TEST(TestSimulation, advance_random)
 {
     auto world      = epi::World();
     auto& location1 = world.add_location(epi::LocationType::School);
@@ -322,16 +353,30 @@ TEST(TestSimulation, advance)
 
     auto sim = epi::AbmSimulation(0, std::move(world));
 
-    MockRngRef<testing::StrictMock<MockRng>> mock_rng;
-    epi::thread_local_rng().generator = mock_rng;
-    EXPECT_CALL(*mock_rng.mock, invoke)
-        .Times(testing::AtLeast(40))
-        .WillRepeatedly(testing::Return(epi::RandomNumberGenerator::max() - 1));
-
-    sim.advance(5);
-    ASSERT_EQ(sim.get_result().get_num_time_points(), 6);
-    ASSERT_THAT(sim.get_result().get_times(), testing::ElementsAre(0., 1., 2., 3., 4., 5.));
+    sim.advance(50);
+    ASSERT_EQ(sim.get_result().get_num_time_points(), 51);
+    ASSERT_THAT(sim.get_result().get_times(), ElementsAreLinspace(0.0, 50.0, 51));
     for (auto&& v : sim.get_result()) {
         ASSERT_EQ(v.sum(), 4);
+    }
+}
+
+TEST(TestDiscreteDistribution, generate)
+{
+    using namespace epi;
+    auto distribution = epi::DiscreteDistribution<size_t>();
+
+    std::vector<double> weights;
+    for (size_t i = 0; i < 50; i++) {
+        weights = {};
+        ASSERT_EQ(distribution(weights), 0);
+
+        weights = {0.5};
+        ASSERT_EQ(distribution(weights), 0);
+
+        weights = {0.5, 1.3, 0.1, 0.4, 0.3};
+        auto d  = distribution(weights);
+        ASSERT_GE(d, 0);
+        ASSERT_LE(d, 4);
     }
 }
