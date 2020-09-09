@@ -1,7 +1,7 @@
 #include <emscripten/bind.h>
 
-#include <epidemiology/secir.h>
-#include <epidemiology/damping.h>
+#include <epidemiology/secir/secir.h>
+#include <epidemiology/secir/damping.h>
 #include <vector>
 
 namespace js = emscripten;

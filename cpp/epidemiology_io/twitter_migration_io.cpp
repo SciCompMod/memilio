@@ -1,11 +1,10 @@
 #include <epidemiology_io/twitter_migration_io.h>
-#include <epidemiology/logging.h>
+#include <epidemiology/utils/logging.h>
 
+#include <Eigen/Core>
 #include <iostream>
 #include <fstream>
 #include <string>
-
-#include <Eigen/Core>
 #include <vector>
 
 namespace epi

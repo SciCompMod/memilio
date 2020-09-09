@@ -1,6 +1,6 @@
 #include "load_test_data.h"
+#include <epidemiology/secir/seir.h>
 #include <gtest/gtest.h>
-#include <epidemiology/seir.h>
 
 using real = double;
 

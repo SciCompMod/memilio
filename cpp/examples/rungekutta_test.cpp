@@ -1,10 +1,11 @@
+#include <epidemiology/math/euler.h>
+#include <epidemiology/math/adapt_rk.h>
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <vector>
 #include <iostream>
 #include <cmath>
-#include <epidemiology/euler.h>
-#include <epidemiology/adapt_rk.h>
 
 void init_vectors(std::vector<Eigen::VectorXd>& y, std::vector<Eigen::VectorXd>& sol, size_t n)
 {
@@ -13,8 +14,8 @@ void init_vectors(std::vector<Eigen::VectorXd>& y, std::vector<Eigen::VectorXd>&
 }
 
 // Test for y'(t) = cos(t)
-void integration_test(std::vector<Eigen::VectorXd>& y, std::vector<Eigen::VectorXd>& sol, size_t& n, double t, double dt,
-                      const double tmax, double& err)
+void integration_test(std::vector<Eigen::VectorXd>& y, std::vector<Eigen::VectorXd>& sol, size_t& n, double t,
+                      double dt, const double tmax, double& err)
 {
     auto sine_deriv = [](auto&& y, auto&& t, auto&& dydt) {
         dydt[0] = std::cos(t);
@@ -27,8 +28,8 @@ void integration_test(std::vector<Eigen::VectorXd>& y, std::vector<Eigen::Vector
     sol[0][0] = std::sin(0);
 
     std::vector<double> f = std::vector<double>(1, 0);
-    size_t i         = 0;
-    double t_eval    = t;
+    size_t i              = 0;
+    double t_eval         = t;
     // printf("\n t: %.8f\t sol %.8f\t rkf %.8f", t, sol[0][0], y[0][0]);
 
     while (t_eval - tmax < 1e-10) {

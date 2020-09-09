@@ -1,9 +1,8 @@
 #ifndef SAVE_RESULT_H
 #define SAVE_RESULT_H
 
-//#include <epidemiology/secir.h>
-#include <epidemiology/eigen_util.h>
-#include <epidemiology/time_series.h>
+#include <epidemiology/utils/eigen_util.h>
+#include <epidemiology/utils/time_series.h>
 
 namespace epi
 {
@@ -22,8 +21,10 @@ public:
      * @brief Standard constructor of SecirSimulationResult
      */
     SecirSimulationResult(int num_groups, int num_compartments)
-        : m_groups(num_groups * num_compartments), m_totals(num_compartments)
-    {}
+        : m_groups(num_groups * num_compartments)
+        , m_totals(num_compartments)
+    {
+    }
 
     /**
      * @brief Constructor of SecirSimulationResult storing time, groups, and total sums of all groups
@@ -31,9 +32,9 @@ public:
      * @param total Simulation Results of the sum over all groups
      */
     SecirSimulationResult(const TimeSeries<double>& groups, const TimeSeries<double>& totals)
-        : m_groups(groups), m_totals(totals)
+        : m_groups(groups)
+        , m_totals(totals)
     {
-
     }
 
     /**

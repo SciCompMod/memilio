@@ -1,12 +1,13 @@
 #include <epidemiology_io/secir_result_io.h>
-#include <epidemiology/secir.h>
-#include <epidemiology/damping.h>
-#include <epidemiology/eigen_util.h>
-#include <vector>
+#include <epidemiology/utils/eigen_util.h>
+#include <epidemiology/secir/secir.h>
+#include <epidemiology/secir/damping.h>
 
+#include <H5Cpp.h>
+#include <vector>
 #include <iostream>
 #include <string>
-#include <H5Cpp.h>
+
 using namespace H5;
 
 namespace epi
@@ -27,7 +28,7 @@ void save_result(const TimeSeries<double>& result, const std::string& filename)
 
     auto DATASET_NAME = "Time";
     auto dataset      = file.createDataSet(DATASET_NAME, PredType::NATIVE_DOUBLE, dataspace);
-    auto times = std::vector<double>(result.get_times().begin(), result.get_times().end());
+    auto times        = std::vector<double>(result.get_times().begin(), result.get_times().end());
     dataset.write(times.data(), PredType::NATIVE_DOUBLE);
 
     auto total =
@@ -37,7 +38,7 @@ void save_result(const TimeSeries<double>& result, const std::string& filename)
         auto dset = std::vector<Eigen::Matrix<double, n_compart, 1>>(n_data);
         if (group < nb_groups) {
             for (size_t irow = 0; irow < result.get_num_time_points(); ++irow) {
-                auto v = result[irow].eval();
+                auto v     = result[irow].eval();
                 auto slice = epi::slice(v, {group * n_compart, n_compart});
                 dset[irow] = slice;
                 total[irow] += slice;

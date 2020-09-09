@@ -1,7 +1,7 @@
 #ifndef DISTRIBUTIONS_HELPERS_H
 #define DISTRIBUTIONS_HELPERS_H
 
-#include <epidemiology/parameter_studies/parameter_studies.h>
+#include <epidemiology/secir/parameter_studies.h>
 #include <gtest/gtest.h>
 #include <gmock/gmock.h>
 

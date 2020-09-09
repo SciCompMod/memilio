@@ -1,10 +1,11 @@
 #ifndef SAVE_PARAMETERS_H
 #define SAVE_PARAMETERS_H
 
-#include <epidemiology/eigen_util.h>
-#include <epidemiology/parameter_studies/parameter_studies.h>
-#include <epidemiology/graph.h>
-#include <epidemiology/migration.h>
+#include <epidemiology/utils/eigen_util.h>
+#include <epidemiology/utils/graph.h>
+#include <epidemiology/migration/migration.h>
+#include <epidemiology/secir/parameter_studies.h>
+
 #include <tixi.h>
 
 namespace epi
@@ -93,8 +94,8 @@ SecirParams read_parameter_space(TixiDocumentHandle handle, const std::string& p
  * @param num_runs Number of runs of parameter study (used for predefinied samples)
  * @param io_mode type of xml output (see epi::write_parameter_study for more details)
  */
-void write_parameter_space(TixiDocumentHandle handle, const std::string& path, const SecirParams& params,
-                           int num_runs, int io_mode);
+void write_parameter_space(TixiDocumentHandle handle, const std::string& path, const SecirParams& params, int num_runs,
+                           int io_mode);
 
 /**
  * @brief read parameter study from xml file

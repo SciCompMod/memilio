@@ -1,7 +1,6 @@
-#include <epidemiology/migration.h>
+#include <epidemiology/migration/migration.h>
 #include <epidemiology_io/secir_parameters_io.h>
-//#include <epidemiology/seir.h>
-//#include <epidemiology/secir.h>
+
 #include <iostream>
 
 int main(int argc, char** argv)

@@ -1,4 +1,4 @@
-#include "epidemiology/damping.h"
+#include "epidemiology/secir/damping.h"
 #include <gtest/gtest.h>
 
 TEST(TestDamping, initialDampingIsIdentityEverywhere)

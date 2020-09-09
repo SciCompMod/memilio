@@ -1,6 +1,7 @@
-#include <epidemiology/parameter_studies/parameter_distribution.h>
-#include <epidemiology/parameter_studies/parameter_space.h>
-#include <epidemiology/secir.h>
+#include <epidemiology/utils/parameter_distributions.h>
+#include <epidemiology/secir/parameter_space.h>
+#include <epidemiology/secir/secir.h>
+
 #include <stdio.h>
 
 // verify manually that the correct distribution is chosen
@@ -65,14 +66,14 @@ int main()
     double tmax = 100;
 
     epi::SecirParams params(contact_freq_matrix);
-    params.get_contact_patterns().set_dist_damp_nb(ParameterDistributionUniform(1, (tmax - t0) / 10));
-    params.get_contact_patterns().set_dist_damp_days(ParameterDistributionUniform(t0, tmax));
-    params.get_contact_patterns().set_dist_damp_diag_base(ParameterDistributionUniform(0.1, 1));
-    params.get_contact_patterns().set_dist_damp_diag_rel(ParameterDistributionUniform(0.6, 1.4));
-    params.get_contact_patterns().set_dist_damp_offdiag_rel(ParameterDistributionUniform(0.7, 1.1));
+    params.get_contact_patterns().set_distribution_damp_nb(epi::ParameterDistributionUniform(1, (tmax - t0) / 10));
+    params.get_contact_patterns().set_distribution_damp_days(epi::ParameterDistributionUniform(t0, tmax));
+    params.get_contact_patterns().set_distribution_damp_diag_base(epi::ParameterDistributionUniform(0.1, 1));
+    params.get_contact_patterns().set_distribution_damp_diag_rel(epi::ParameterDistributionUniform(0.6, 1.4));
+    params.get_contact_patterns().set_distribution_damp_offdiag_rel(epi::ParameterDistributionUniform(0.7, 1.1));
 
-    epi::ParameterSpace params_space(params, t0, tmax, 0.1);
-    epi::ContactFrequencyMatrix cfmat_sample = params_space.draw_sample().get_contact_patterns().get_cont_freq_mat();
+    draw_sample(params);
+    epi::ContactFrequencyMatrix cfmat_sample = params.get_contact_patterns();
 
     printf("\n\n Number of dampings: %zu\n", cfmat_sample.get_dampings(0, 0).get_dampings_vector().size());
 

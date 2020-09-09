@@ -4,9 +4,10 @@
 #include "epidemiology/abm/parameters.h"
 #include "epidemiology/abm/state.h"
 #include "epidemiology/abm/location_type.h"
+
+#include <Eigen/Core>
 #include <array>
 #include <random>
-#include <Eigen/Core>
 
 namespace epi
 {
