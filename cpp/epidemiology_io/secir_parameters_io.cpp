@@ -1,21 +1,20 @@
 #include <epidemiology_io/secir_parameters_io.h>
 #include <epidemiology_io/secir_result_io.h>
-#include <epidemiology/memory.h>
-#include <epidemiology/populations.h>
-#include <epidemiology/uncertain_value.h>
-#include <epidemiology/uncertain_matrix.h>
-#include <epidemiology/secir.h>
-#include <epidemiology/damping.h>
-#include <epidemiology/stl_util.h>
-#include <epidemiology/graph.h>
-#include <epidemiology/migration.h>
-#include <vector>
+#include <epidemiology/utils/memory.h>
+#include <epidemiology/utils/uncertain_value.h>
+#include <epidemiology/utils/stl_util.h>
+#include <epidemiology/utils/graph.h>
+#include <epidemiology/migration/migration.h>
+#include <epidemiology/secir/damping.h>
+#include <epidemiology/secir/populations.h>
+#include <epidemiology/secir/uncertain_matrix.h>
+#include <epidemiology/secir/secir.h>
 
+#include <tixi.h>
+#include <vector>
 #include <iostream>
 #include <string>
 #include <random>
-
-#include <tixi.h>
 
 namespace epi
 {

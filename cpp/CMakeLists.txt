@@ -14,40 +14,40 @@ set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 include(thirdparty/CMakeLists.txt)
 
 add_library(epidemiology
-    epidemiology/tensor_helpers.h
-    epidemiology/tensor_helpers.cpp
-    epidemiology/euler.cpp
-    epidemiology/euler.h
-    epidemiology/damping.cpp
-    epidemiology/damping.h
-    epidemiology/secir.cpp
-    epidemiology/secir.h
-    epidemiology/seir.cpp
-    epidemiology/seir.h
-    epidemiology/adapt_rk.cpp
-    epidemiology/adapt_rk.h
-    epidemiology/integrator.h
-    epidemiology/integrator.cpp
-    epidemiology/migration.h
-    epidemiology/migration.cpp
-    epidemiology/graph.h
-    epidemiology/graph.cpp
-    epidemiology/eigen_util.h
-    epidemiology/populations.h
-    epidemiology/populations.cpp
-    epidemiology/visitor.h
-    epidemiology/parameter_studies/parameter_space.h
-    epidemiology/parameter_studies/parameter_space.cpp
-    epidemiology/uncertain_value.cpp
-    epidemiology/uncertain_value.h
-    epidemiology/uncertain_matrix.cpp
-    epidemiology/uncertain_matrix.h    
-    epidemiology/memory.h
-    epidemiology/parameter_studies/parameter_distributions.h
-    epidemiology/time_series.h
-    epidemiology/time_series.cpp
-    epidemiology/span.h
-    epidemiology/span.cpp
+    epidemiology/utils/tensor_helpers.h
+    epidemiology/utils/tensor_helpers.cpp
+    epidemiology/math/euler.cpp
+    epidemiology/math/euler.h
+    epidemiology/secir/damping.cpp
+    epidemiology/secir/damping.h
+    epidemiology/secir/secir.cpp
+    epidemiology/secir/secir.h
+    epidemiology/secir/seir.cpp
+    epidemiology/secir/seir.h
+    epidemiology/math/adapt_rk.cpp
+    epidemiology/math/adapt_rk.h
+    epidemiology/math/integrator.h
+    epidemiology/math/integrator.cpp
+    epidemiology/migration/migration.h
+    epidemiology/migration/migration.cpp
+    epidemiology/utils/graph.h
+    epidemiology/utils/graph.cpp
+    epidemiology/utils/eigen_util.h
+    epidemiology/secir/populations.h
+    epidemiology/secir/populations.cpp
+    epidemiology/utils/visitor.h
+    epidemiology/secir/parameter_space.h
+    epidemiology/secir/parameter_space.cpp
+    epidemiology/utils/uncertain_value.cpp
+    epidemiology/utils/uncertain_value.h
+    epidemiology/secir/uncertain_matrix.cpp
+    epidemiology/secir/uncertain_matrix.h    
+    epidemiology/utils/memory.h
+    epidemiology/utils/parameter_distributions.h
+    epidemiology/utils/time_series.h
+    epidemiology/utils/time_series.cpp
+    epidemiology/utils/span.h
+    epidemiology/utils/span.cpp
     epidemiology/abm/location.cpp
     epidemiology/abm/location.h
     epidemiology/abm/simulation.cpp

@@ -1,7 +1,7 @@
 #include "load_test_data.h"
-#include "epidemiology/secir.h"
-#include <epidemiology/parameter_studies/parameter_space.h>
-#include <epidemiology/parameter_studies/parameter_studies.h>
+#include "epidemiology/secir/secir.h"
+#include <epidemiology/secir/parameter_space.h>
+#include <epidemiology/secir/parameter_studies.h>
 #include <epidemiology_io/secir_result_io.h>
 #include <epidemiology_io/secir_parameters_io.h>
 #include <distributions_helpers.h>

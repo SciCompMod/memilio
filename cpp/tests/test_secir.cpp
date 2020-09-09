@@ -1,5 +1,5 @@
 #include "load_test_data.h"
-#include "epidemiology/secir.h"
+#include "epidemiology/secir/secir.h"
 #include <distributions_helpers.h>
 #include <gtest/gtest.h>
 

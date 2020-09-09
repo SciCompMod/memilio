@@ -1,11 +1,10 @@
 #ifndef READ_TWITTER_H
 #define READ_TWITTER_H
 
+#include <Eigen/Core>
 #include <iostream>
 #include <fstream>
 #include <string>
-
-#include <Eigen/Core>
 #include <vector>
 
 namespace epi

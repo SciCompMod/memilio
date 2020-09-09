@@ -1,5 +1,5 @@
-#include <epidemiology/secir.h>
-#include <epidemiology/logging.h>
+#include <epidemiology/secir/secir.h>
+#include <epidemiology/utils/logging.h>
 
 #ifdef HAVE_EPI_IO
 #include <epidemiology_io/secir_result_io.h>

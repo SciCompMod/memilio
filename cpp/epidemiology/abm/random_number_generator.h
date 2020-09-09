@@ -1,7 +1,8 @@
 #ifndef EPI_ABM_RANDOM_NUMBER_GENERATOR_H
 #define EPI_ABM_RANDOM_NUMBER_GENERATOR_H
 
-#include "epidemiology/span.h"
+#include "epidemiology/utils/span.h"
+
 #include <random>
 #include <functional>
 #include <cassert>

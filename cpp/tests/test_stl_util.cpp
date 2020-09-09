@@ -1,4 +1,4 @@
-#include <epidemiology/stl_util.h>
+#include <epidemiology/utils/stl_util.h>
 #include <gtest/gtest.h>
 #include <gmock/gmock.h>
 
@@ -157,8 +157,8 @@ class Derived : public Base
 TEST(TestDynamicUniquePtrCast, notNull)
 {
     std::unique_ptr<Base> upb = std::make_unique<Derived>();
-    auto pb = upb.get();
-    auto upd = epi::dynamic_unique_ptr_cast<Derived>(std::move(upb));
+    auto pb                   = upb.get();
+    auto upd                  = epi::dynamic_unique_ptr_cast<Derived>(std::move(upb));
     EXPECT_EQ(upd.get(), dynamic_cast<Derived*>(pb));
 }
 
@@ -172,19 +172,25 @@ TEST(TestDynamicUniquePtrCast, null)
 TEST(TestDynamicUniquePtrCast, notDerived)
 {
     std::unique_ptr<Base> upb = std::make_unique<Base>();
-    auto upd = epi::dynamic_unique_ptr_cast<Derived>(std::move(upb));
+    auto upd                  = epi::dynamic_unique_ptr_cast<Derived>(std::move(upb));
     EXPECT_EQ(upd.get(), nullptr);
 }
 
 TEST(TestContains, normalCase)
 {
-    auto v = std::vector<int>{ 4, 1, 3, 6, 9 };
-    ASSERT_TRUE(epi::contains(v.begin(), v.end(), [](auto&& e) { return e == 3; }));
-    ASSERT_FALSE(epi::contains(v.begin(), v.end(), [](auto&& e) { return e == 7; }));
+    auto v = std::vector<int>{4, 1, 3, 6, 9};
+    ASSERT_TRUE(epi::contains(v.begin(), v.end(), [](auto&& e) {
+        return e == 3;
+    }));
+    ASSERT_FALSE(epi::contains(v.begin(), v.end(), [](auto&& e) {
+        return e == 7;
+    }));
 }
 
 TEST(TestContains, empty)
 {
     auto v = std::vector<int>();
-    ASSERT_FALSE(epi::contains(v.begin(), v.end(), [](auto&& e) { return true; }));
+    ASSERT_FALSE(epi::contains(v.begin(), v.end(), [](auto&& e) {
+        return true;
+    }));
 }

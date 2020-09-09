@@ -1,6 +1,6 @@
-#include <epidemiology/secir.h>
-#include <epidemiology/parameter_studies/parameter_space.h>
-#include <epidemiology/parameter_studies/parameter_studies.h>
+#include <epidemiology/secir/secir.h>
+#include <epidemiology/secir/parameter_space.h>
+#include <epidemiology/secir/parameter_studies.h>
 #include <gtest/gtest.h>
 #include <stdio.h>
 

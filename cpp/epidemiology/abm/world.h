@@ -4,8 +4,9 @@
 #include "epidemiology/abm/parameters.h"
 #include "epidemiology/abm/location.h"
 #include "epidemiology/abm/person.h"
-#include "epidemiology/pointer_dereferencing_iterator.h"
-#include "epidemiology/stl_util.h"
+#include "epidemiology/utils/pointer_dereferencing_iterator.h"
+#include "epidemiology/utils/stl_util.h"
+
 #include <vector>
 #include <memory>
 

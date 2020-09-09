@@ -1,10 +1,10 @@
-#include <epidemiology/time_series.h>
-#include <epidemiology/stl_util.h>
+#include <epidemiology/utils/time_series.h>
+#include <epidemiology/utils/stl_util.h>
 #include <gtest/gtest.h>
 #include <gmock/gmock.h>
 
 template <class T>
-using TestTimeSeries     = ::testing::Test;
+using TestTimeSeries = ::testing::Test;
 
 using FloatingPointTypes = ::testing::Types<float, double>;
 
@@ -20,7 +20,7 @@ TYPED_TEST(TestTimeSeries, createEmpty)
 }
 
 TYPED_TEST(TestTimeSeries, createInit)
-{    
+{
     auto v = epi::TimeSeries<TypeParam>::Vector::Random(5).eval();
     epi::TimeSeries<TypeParam> ts(0.0, v);
     ASSERT_EQ(ts.get_num_elements(), 5);
@@ -178,26 +178,23 @@ TYPED_TEST(TestTimeSeries, iteratorsRange)
 
     //the range-loops and range-assert check the same condition in different ways
     int i = 0;
-    for (auto &&v : ts)
-    {
+    for (auto&& v : ts) {
         ASSERT_EQ(epi::print_wrap(v), epi::print_wrap(ts[i]));
         ++i;
     }
-    i = 0;
+    i                       = 0;
     const auto& ts_constref = ts;
-    for (auto &&v : ts_constref)
-    {
+    for (auto&& v : ts_constref) {
         ASSERT_EQ(epi::print_wrap(v), epi::print_wrap(ts[i]));
         ++i;
-    }    
+    }
     i = 3;
-    for (auto &&v : epi::make_range(ts.rbegin(), ts.rend()))
-    {        
+    for (auto&& v : epi::make_range(ts.rbegin(), ts.rend())) {
         ASSERT_EQ(epi::print_wrap(v), epi::print_wrap(ts[i]));
         --i;
     }
     ASSERT_THAT(ts, testing::ElementsAre(v0, v1, v2, v3));
-    ASSERT_THAT(ts_constref, testing::ElementsAre(v0, v1, v2, v3));    
+    ASSERT_THAT(ts_constref, testing::ElementsAre(v0, v1, v2, v3));
     ASSERT_THAT(epi::make_range(ts.rbegin(), ts.rend()), testing::ElementsAre(v3, v2, v1, v0));
 }
 
@@ -215,21 +212,18 @@ TYPED_TEST(TestTimeSeries, timeIteratorsRange)
 
     //the range-loops and range-assert check the same condition in different ways
     int i = 0;
-    for (auto &&t : ts.get_times())
-    {
+    for (auto&& t : ts.get_times()) {
         ASSERT_EQ(t, ts.get_time(i));
         ++i;
     }
-    i = 0;
+    i                       = 0;
     const auto& ts_constref = ts;
-    for (auto &&t : ts_constref.get_times())
-    {        
+    for (auto&& t : ts_constref.get_times()) {
         ASSERT_EQ(t, ts.get_time(i));
         ++i;
-    }    
+    }
     i = 3;
-    for (auto &&t : ts.get_reverse_times())
-    {        
+    for (auto&& t : ts.get_reverse_times()) {
         ASSERT_EQ(t, ts.get_time(i));
         --i;
     }
@@ -250,10 +244,10 @@ TYPED_TEST(TestTimeSeries, iteratorsRandomAccess)
     ts.add_time_point(2.0, v2);
     ts.add_time_point(3.0, v3);
 
-    auto it0 = ts.begin();
-    auto it1 = ts.begin() + 1;
-    auto it2 = ts.begin() + 2;
-    auto it3 = ts.begin() + 3;
+    auto it0   = ts.begin();
+    auto it1   = ts.begin() + 1;
+    auto it2   = ts.begin() + 2;
+    auto it3   = ts.begin() + 3;
     auto itEnd = ts.end();
 
     //deref

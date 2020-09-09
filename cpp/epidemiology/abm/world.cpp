@@ -2,7 +2,7 @@
 #include "epidemiology/abm/person.h"
 #include "epidemiology/abm/location.h"
 #include "epidemiology/abm/random_number_generator.h"
-#include "epidemiology/stl_util.h"
+#include "epidemiology/utils/stl_util.h"
 
 namespace epi
 {

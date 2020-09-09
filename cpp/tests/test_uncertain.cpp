@@ -1,11 +1,12 @@
-#include <memory>
-#include <epidemiology/memory.h>
-#include <epidemiology/uncertain_value.h>
-#include <epidemiology/uncertain_matrix.h>
-#include <epidemiology/parameter_studies/parameter_distributions.h>
+#include <epidemiology/utils/memory.h>
+#include <epidemiology/utils/uncertain_value.h>
+#include <epidemiology/secir/uncertain_matrix.h>
+#include <epidemiology/utils/parameter_distributions.h>
 #include <distributions_helpers.h>
 #include <gtest/gtest.h>
 #include <gmock/gmock.h>
+
+#include <memory>
 
 TEST(TestUncertain, uncertain_value_basic)
 {

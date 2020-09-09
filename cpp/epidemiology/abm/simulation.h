@@ -2,7 +2,7 @@
 #define EPI_ABM_SIMULATOR_H
 
 #include "epidemiology/abm/world.h"
-#include "epidemiology/time_series.h"
+#include "epidemiology/utils/time_series.h"
 
 namespace epi
 {

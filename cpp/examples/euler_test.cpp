@@ -1,9 +1,10 @@
+#include <epidemiology/math/euler.h>
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <vector>
 #include <iostream>
 #include <cmath>
-#include <epidemiology/euler.h>
 
 void init_vectors(std::vector<Eigen::VectorXd>& y, std::vector<Eigen::VectorXd>& sol, size_t n)
 {
@@ -12,14 +13,14 @@ void init_vectors(std::vector<Eigen::VectorXd>& y, std::vector<Eigen::VectorXd>&
 }
 
 // Test for y'(t) = cos(t)
-void integration_test(std::vector<Eigen::VectorXd>& y, std::vector<Eigen::VectorXd>& sol, size_t n,
-                      double dt, double& err)
+void integration_test(std::vector<Eigen::VectorXd>& y, std::vector<Eigen::VectorXd>& sol, size_t n, double dt,
+                      double& err)
 {
 
     sol[0][0]     = std::sin(0);
     sol[n - 1][0] = std::sin((n - 1) * dt);
-    auto f = [](auto&& y, auto&& t, auto&& dydt) { 
-        dydt[0] = std::cos(t); 
+    auto f        = [](auto&& y, auto&& t, auto&& dydt) {
+        dydt[0] = std::cos(t);
     };
 
     double t = 0.;

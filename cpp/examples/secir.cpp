@@ -1,5 +1,5 @@
-#include <epidemiology/secir.h>
-#include <epidemiology/logging.h>
+#include <epidemiology/secir/secir.h>
+#include <epidemiology/utils/logging.h>
 
 int main()
 {

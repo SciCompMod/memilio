@@ -1,5 +1,5 @@
 #include <distributions_helpers.h>
-#include <epidemiology/parameter_studies/parameter_studies.h>
+#include <epidemiology/secir/parameter_studies.h>
 #include <gtest/gtest.h>
 
 void check_distribution(const epi::ParameterDistribution& dist, const epi::ParameterDistribution& dist_read)

@@ -1,5 +1,5 @@
 #include "load_test_data.h"
-#include "epidemiology/secir.h"
+#include "epidemiology/secir/secir.h"
 #include <epidemiology_io/secir_result_io.h>
 #include <gtest/gtest.h>
 
@@ -68,8 +68,10 @@ TEST(TestSaveResult, compareResultWithH5)
     ASSERT_EQ(result_from_file.get_groups().get_num_time_points(), result_from_sim.get_num_time_points());
     ASSERT_EQ(result_from_file.get_totals().get_num_time_points(), result_from_sim.get_num_time_points());
     for (size_t i = 0; i < result_from_sim.get_num_time_points(); i++) {
-        ASSERT_EQ(result_from_file.get_groups().get_num_elements(), result_from_sim.get_num_elements()) << "at row " << i;
-        ASSERT_EQ(result_from_file.get_totals().get_num_elements(), result_from_sim.get_num_elements() / nb_groups) << "at row " << i;
+        ASSERT_EQ(result_from_file.get_groups().get_num_elements(), result_from_sim.get_num_elements())
+            << "at row " << i;
+        ASSERT_EQ(result_from_file.get_totals().get_num_elements(), result_from_sim.get_num_elements() / nb_groups)
+            << "at row " << i;
         ASSERT_NEAR(result_from_sim.get_time(i), result_from_file.get_groups().get_time(i), 1e-10) << "at row " << i;
         ASSERT_NEAR(result_from_sim.get_time(i), result_from_file.get_totals().get_time(i), 1e-10) << "at row " << i;
         for (size_t l = 0; l < result_from_file.get_totals().get_num_elements(); l++) {

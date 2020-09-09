@@ -1,5 +1,5 @@
-#include "epidemiology/abm/world.h"
 #include "epidemiology/abm/person.h"
+#include "epidemiology/abm/world.h"
 #include "epidemiology/abm/location.h"
 
 namespace epi

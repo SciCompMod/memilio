@@ -1,12 +1,12 @@
 #include "load_test_data.h"
-#include "epidemiology/secir.h"
-#include "epidemiology/euler.h"
+#include "epidemiology/secir/secir.h"
+#include "epidemiology/math/euler.h"
 #include <gtest/gtest.h>
 
 TEST(TestImplicitEuler, compareOneTimeStep)
 {
-    double t0   = 0;
-    double dt   = 0.1;
+    double t0 = 0;
+    double dt = 0.1;
 
     // working_params
     double tinc    = 5.2, // R_2^(-1)+R_3^(-1)
@@ -68,7 +68,8 @@ TEST(TestImplicitEuler, compareOneTimeStep)
     auto y0 = params.populations.get_compartments();
     Eigen::VectorXd y1(y0.size()); // solution at time t=\Delta t=0.1
 
-    epi::ImplicitEulerIntegratorCore(1e-3, 1., params).step(dummy_f, y0, t0, dt, y1); // just one iteration of implicit Euler scheme
+    epi::ImplicitEulerIntegratorCore(1e-3, 1., params)
+        .step(dummy_f, y0, t0, dt, y1); // just one iteration of implicit Euler scheme
 
     EXPECT_NEAR(y1[0], 9756.897564185243, 1e-10);
     EXPECT_NEAR(y1[1], 99.97811957794602, 1e-10);
@@ -79,5 +80,3 @@ TEST(TestImplicitEuler, compareOneTimeStep)
     EXPECT_NEAR(y1[6], 10.97155161617429, 1e-10);
     EXPECT_NEAR(y1[7], 0.0605937758004278, 1e-10);
 }
-
-

@@ -1,5 +1,5 @@
 #include <epidemiology_io/twitter_migration_io.h>
-#include <epidemiology/logging.h>
+#include <epidemiology/utils/logging.h>
 
 #include <gtest/gtest.h>
 #include <Eigen/Core>
@@ -19,10 +19,10 @@ TEST(TestTwitter, compareWithSimpleFile)
 
     file.open("test_twitter.txt", std::ios::out);
 
-    if (!file)
-    {
+    if (!file) {
         epi::log_error("File was not created");
-    }else{
+    }
+    else {
         file << "from_str\tto_str\tfrom_rs\tto_rs\tcount_abs\n";
         file << "Narnia\tHogwarts\t150\t42\t" + std::to_string(test_matrix(3, 2)) + "\n";
         file << "Middle-Earth\tWesteros\t12\t7\t" + std::to_string(test_matrix(1, 0)) + "\n";

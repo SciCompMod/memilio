@@ -2,6 +2,7 @@
 #define EPI_ABM_PERSON_H
 
 #include "epidemiology/abm/state.h"
+
 #include <functional>
 
 namespace epi
