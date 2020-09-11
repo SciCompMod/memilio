@@ -252,7 +252,7 @@ UncertainValue& SecirParams::StageTimes::get_icu_to_dead()
     return m_ticu2death;
 }
 
-void SecirParams::StageTimes::check_constraints()
+void SecirParams::StageTimes::apply_constraints()
 {
 
     if (m_tinc < 2.0) {
@@ -295,14 +295,59 @@ void SecirParams::StageTimes::check_constraints()
         m_ticu2home = 1.0;
     }
 
-    if (m_tinfasy < 1.0) {
-        log_warning("Constraint check: Parameter m_tinfasy changed from {:.4f} to {:.4f}", m_tinfasy, 1.0);
-        m_tinfasy = 1.0;
+    if (m_tinfasy != 1.0 / (0.5 / (m_tinc - m_tserint) + 0.5 / m_tinfmild)) {
+        log_info("Constraint check: Parameter m_tinfasy set as fully dependent on tinc, tserint and tinfmild. See HZI "
+                 "paper.");
+        m_tinfasy = 1.0 / (0.5 / (m_tinc - m_tserint) + 0.5 / m_tinfmild);
     }
 
     if (m_ticu2death < 1.0) {
         log_warning("Constraint check: Parameter m_ticu2death changed from {:.4f} to {:.4f}", m_ticu2death, 1.0);
         m_ticu2death = 1.0;
+    }
+}
+
+void SecirParams::StageTimes::check_constraints() const
+{
+
+    if (m_tinc < 2.0) {
+        log_error("Constraint check: Parameter m_tinc {:.4f} smaller {:.4f}", m_tinc, 2.0);
+    }
+
+    if (2 * m_tserint < m_tinc + 1.0) {
+        log_error("Constraint check: Parameter m_tserint {:.4f} smaller {:.4f}", m_tserint, 0.5 * m_tinc + 0.5);
+    }
+    else if (m_tserint > m_tinc - 0.5) {
+        log_error("Constraint check: Parameter m_tserint {:.4f} smaller {:.4f}", m_tserint, m_tinc - 0.5);
+    }
+
+    if (m_tinfmild < 1.0) {
+        log_error("Constraint check: Parameter m_tinfmild {:.4f} smaller {:.4f}", m_tinfmild, 1.0);
+    }
+
+    if (m_thosp2home < 1.0) {
+        log_error("Constraint check: Parameter m_thosp2home {:.4f} smaller {:.4f}", m_thosp2home, 1.0);
+    }
+
+    if (m_thome2hosp < 1.0) {
+        log_error("Constraint check: Parameter m_thome2hosp {:.4f} smaller {:.4f}", m_thome2hosp, 1.0);
+    }
+
+    if (m_thosp2icu < 1.0) {
+        log_error("Constraint check: Parameter m_thosp2icu {:.4f} smaller {:.4f}", m_thosp2icu, 1.0);
+    }
+
+    if (m_ticu2home < 1.0) {
+        log_error("Constraint check: Parameter m_ticu2home {:.4f} smaller {:.4f}", m_ticu2home, 1.0);
+    }
+
+    if (m_tinfasy != 1.0 / (0.5 / (m_tinc - m_tserint) + 0.5 / m_tinfmild)) {
+        log_error("Constraint check: Parameter m_tinfasy not set as fully dependent on tinc, tserint and tinfmild. See "
+                  "HZI paper.");
+    }
+
+    if (m_ticu2death < 1.0) {
+        log_error("Constraint check: Parameter m_ticu2death {:.4f} smaller {:.4f}", m_ticu2death, 1.0);
     }
 }
 
@@ -466,7 +511,7 @@ UncertainValue& SecirParams::Probabilities::get_dead_per_icu()
     return m_deathicu;
 }
 
-void SecirParams::Probabilities::check_constraints()
+void SecirParams::Probabilities::apply_constraints()
 {
     if (m_asympinf < 0.0 || m_asympinf > 1.0) {
         log_warning("Constraint check: Parameter m_asympinf changed from {:0.4f} to {:d} ", m_asympinf, 0);
@@ -494,6 +539,34 @@ void SecirParams::Probabilities::check_constraints()
     }
 }
 
+void SecirParams::Probabilities::check_constraints() const
+{
+    if (m_asympinf < 0.0 || m_asympinf > 1.0) {
+        log_warning("Constraint check: Parameter m_asympinf changed from {:0.4f} smaller {:d} or larger {:d}",
+                    m_asympinf, 0, 1);
+    }
+
+    if (m_risksymp < 0.0 || m_risksymp > 1.0) {
+        log_warning("Constraint check: Parameter m_risksymp changed from {:0.4f} smaller {:d} or larger {:d}",
+                    m_risksymp, 0, 1);
+    }
+
+    if (m_hospinf < 0.0 || m_hospinf > 1.0) {
+        log_warning("Constraint check: Parameter m_risksymp changed from {:0.4f} smaller {:d} or larger {:d}",
+                    m_hospinf, 0, 1);
+    }
+
+    if (m_icuhosp < 0.0 || m_icuhosp > 1.0) {
+        log_warning("Constraint check: Parameter m_risksymp changed from {:0.4f} smaller {:d} or larger {:d}",
+                    m_icuhosp, 0, 1);
+    }
+
+    if (m_deathicu < 0.0 || m_deathicu > 1.0) {
+        log_warning("Constraint check: Parameter m_risksymp changed from {:0.4f} smaller {:d} or larger {:d}",
+                    m_deathicu, 0, 1);
+    }
+}
+
 void SecirParams::set_contact_patterns(UncertainContactMatrix contact_patterns)
 {
     m_contact_patterns = contact_patterns;
@@ -509,46 +582,21 @@ UncertainContactMatrix const& SecirParams::get_contact_patterns() const
     return m_contact_patterns;
 }
 
-void SecirParams::check_constraints()
+void SecirParams::apply_constraints()
+{
+    for (int i = 0; i < times.size(); i++) {
+        populations.apply_constraints();
+        times[i].apply_constraints();
+        probabilities[i].apply_constraints();
+    }
+}
+
+void SecirParams::check_constraints() const
 {
     for (int i = 0; i < times.size(); i++) {
         populations.check_constraints();
         times[i].check_constraints();
         probabilities[i].check_constraints();
-    }
-}
-
-double get_reprod_rate(SecirParams const& params, double const t, std::vector<double> const& yt)
-{
-    if (params.get_num_groups() == 1) {
-        // (base_)reprod has to be computed time dependently !
-        auto dummy_R3 = 0.5 / (params.times[0].get_infectious_mild() - params.times[0].get_serialinterval());
-
-        ContactFrequencyMatrix const& cont_freq_matrix = params.get_contact_patterns();
-
-        double cont_freq_eff = cont_freq_matrix.get_cont_freq(0, 0) * cont_freq_matrix.get_dampings(0, 0).get_factor(t);
-
-        double nb_total = 0;
-        for (size_t i = 0; i < yt.size(); i++) {
-            nb_total += yt[0];
-        }
-
-        double reprod_rate =
-            cont_freq_eff *
-            ((1 - params.probabilities[0].get_hospitalized_per_infectious()) / params.times[0].get_infectious_mild() +
-             dummy_R3 * params.probabilities[0].get_risk_from_symptomatic() *
-                 (1 - params.probabilities[0].get_asymp_per_infectious()) +
-             params.probabilities[0].get_hospitalized_per_infectious() / params.times[0].get_home_to_hospitalized()) /
-            ((dummy_R3 * (1 - params.probabilities[0].get_asymp_per_infectious()) +
-              params.probabilities[0].get_asymp_per_infectious() / params.times[0].get_infectious_asymp()) *
-             ((1 - params.probabilities[0].get_hospitalized_per_infectious()) / params.times[0].get_infectious_mild() +
-              params.probabilities[0].get_hospitalized_per_infectious() / params.times[0].get_home_to_hospitalized())) *
-            yt[0] / nb_total;
-
-        return reprod_rate;
-    }
-    else {
-        return -1;
     }
 }
 
@@ -600,10 +648,10 @@ void secir_get_derivatives(SecirParams const& params, Eigen::Ref<const Eigen::Ve
             dydt[Ei] += dummy_S; // R1*(C+beta*I)*S/N0-R2*E
         }
 
-        double dummy_R2 = 1.0 / (2 * (params.times[i].get_serialinterval()) -
-                                 (params.times[i].get_incubation())); // R2 = 1/(2SI-TINC)
+        double dummy_R2 =
+            1.0 / (2 * params.times[i].get_serialinterval() - params.times[i].get_incubation()); // R2 = 1/(2SI-TINC)
         double dummy_R3 =
-            0.5 / ((params.times[i].get_incubation()) - (params.times[i].get_serialinterval())); // R3 = 1/(2(TINC-SI))
+            0.5 / (params.times[i].get_incubation() - params.times[i].get_serialinterval()); // R3 = 1/(2(TINC-SI))
 
         dydt[Ei] -= dummy_R2 * y[Ei]; // only exchange of E and C done here
         dydt[Ci] = dummy_R2 * y[Ei] -
@@ -638,6 +686,7 @@ void secir_get_derivatives(SecirParams const& params, Eigen::Ref<const Eigen::Ve
 
 TimeSeries<double> simulate(double t0, double tmax, double dt, SecirParams const& params)
 {
+    params.check_constraints();
     SecirSimulation sim(params, t0, dt);
     sim.advance(tmax);
     return sim.get_result();

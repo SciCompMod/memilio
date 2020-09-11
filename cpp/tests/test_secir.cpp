@@ -472,6 +472,12 @@ TEST(TestSecir, check_constraints)
     epi::set_log_level(epi::LogLevel::off);
     params.check_constraints();
 
+    EXPECT_EQ(-91, params.populations.get({0, epi::SecirCompartments::E}));
+    EXPECT_EQ(2.124921, params.probabilities[0].get_asymp_per_infectious());
+    EXPECT_NEAR(5.08993, params.times[0].get_serialinterval(), 1e-14);
+
+    params.apply_constraints();
+
     EXPECT_EQ(0.0, params.populations.get({0, epi::SecirCompartments::E}));
     EXPECT_EQ(0.0, params.probabilities[0].get_asymp_per_infectious());
     EXPECT_NEAR(4.6, params.times[0].get_serialinterval(), 1e-14);
