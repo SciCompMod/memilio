@@ -27,45 +27,27 @@ int ContactFrequencyMatrix::get_size() const
 
 void ContactFrequencyMatrix::set_cont_freq(double const cont_freq, int const self_group, int const contact_group)
 {
-    if (self_group <= contact_group) {
-        m_cont_freq[self_group][contact_group] = cont_freq;
-    }
-    else {
-        m_cont_freq[contact_group][self_group] = cont_freq;
-    }
+    m_cont_freq[self_group][contact_group] = cont_freq;
 }
 
 double ContactFrequencyMatrix::get_cont_freq(int self_group, int contact_group) const
 {
-    // prevent erroneous nonsymmetry
-    return self_group <= contact_group ? m_cont_freq[self_group][contact_group]
-                                       : m_cont_freq[contact_group][self_group];
+    return m_cont_freq[self_group][contact_group];
 }
 
 void ContactFrequencyMatrix::set_dampings(Dampings const& damping, int self_group, int contact_group)
 {
-    if (self_group <= contact_group) {
-        m_dampings[self_group][contact_group] = damping;
-    }
-    else {
-        m_dampings[contact_group][self_group] = damping;
-    }
+    m_dampings[self_group][contact_group] = damping;
 }
 
 const Dampings& ContactFrequencyMatrix::get_dampings(int self_group, int contact_group) const
 {
-    // prevent erroneous nonsymmetry
-    return self_group <= contact_group ? m_dampings[self_group][contact_group] : m_dampings[contact_group][self_group];
+    return m_dampings[self_group][contact_group];
 }
 
 void ContactFrequencyMatrix::add_damping(Damping const& damping, int self_group, int contact_group)
 {
-    if (self_group <= contact_group) {
-        m_dampings[self_group][contact_group].add(damping);
-    }
-    else {
-        m_dampings[contact_group][self_group].add(damping);
-    }
+    m_dampings[self_group][contact_group].add(damping);
 }
 
 void ContactFrequencyMatrix::clear_dampings()
@@ -239,13 +221,13 @@ ContactFrequencyMatrix UncertainContactMatrix::draw_sample(bool accum)
                 m_cont_freq.add_damping(Damping(day, damp_diag_val[j]), j, j);
             }
 
-            // offdiagonal entries
+            // offdiagonal entries (scale per row)
             for (int j = 0; j < m_cont_freq.get_size(); j++) {
-
-                for (int k = j + 1; k < m_cont_freq.get_size(); k++) {
-                    double damp_offdiag_val = 0.5 * damp_diag_val[j] * m_damp_offdiag_rel->get_sample() +
-                                              0.5 * damp_diag_val[k] * m_damp_offdiag_rel->get_sample();
-                    m_cont_freq.add_damping(Damping(day, damp_offdiag_val), j, k);
+                for (int k = 0; k < m_cont_freq.get_size(); k++) {
+                    if (j != k) {
+                        double damp_offdiag_val = damp_diag_val[j] * m_damp_offdiag_rel->get_sample();
+                        m_cont_freq.add_damping(Damping(day, damp_offdiag_val), j, k);
+                    }
                 }
             }
         }
