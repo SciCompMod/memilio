@@ -52,7 +52,7 @@ TEST(TestSecir, compareAgeResWithSingleRun)
     epi::ContactFrequencyMatrix& cont_freq_matrix = params.get_contact_patterns();
     epi::Damping dummy(30., 0.3);
     for (int i = 0; i < nb_groups; i++) {
-        for (int j = i; j < nb_groups; j++) {
+        for (int j = 0; j < nb_groups; j++) {
             cont_freq_matrix.set_cont_freq(fact * cont_freq, i, j);
             cont_freq_matrix.add_damping(dummy, i, j);
         }

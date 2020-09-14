@@ -33,7 +33,7 @@ public:
     int get_size() const;
 
     /**
-     * @brief sets the contact frequency in the SECIR model; in case of multiple groups, set the contact rate cr_ij=cr_ji=cont_freq
+     * @brief sets the contact frequency in the SECIR model; in case of multiple groups, set the contact rate cr_ij=cont_freq
      * @param cont_freq contact rate/frequency in 1/day unit
      * @param self_group own group
      * @param contact_group group which gets in contact with own group
@@ -41,12 +41,12 @@ public:
     void set_cont_freq(double cont_freq, int self_group, int contact_group);
 
     /**
-     * @brief returns the contact frequency set for the SECIR model in 1/day unit; in case of multiple groups, returns the contact rate cr_ij=cr_ji
+     * @brief returns the contact frequency set for the SECIR model in 1/day unit; in case of multiple groups, returns the contact rate cr_ij
      */
     double get_cont_freq(int self_group, int contact_group) const;
 
     /**
-     * @brief sets the damping in the SECIR model; in case of multiple groups, set the contact rate d_ij=d_ji=cont_freq
+     * @brief sets the damping in the SECIR model; in case of multiple groups, set the contact rate d_ij=cont_freq
      * @param damping dampings over the whole time line in day unit
      * @param self_group own group
      * @param contact_group group which gets in contact with own group
@@ -54,7 +54,7 @@ public:
     void set_dampings(Dampings const& damping, int self_group, int contact_group);
 
     /**
-     * @brief returns the dampings set for the SECIR model in 1/day unit; in case of multiple groups, returns the damping d_ij=d_ji
+     * @brief returns the dampings set for the SECIR model in 1/day unit; in case of multiple groups, returns the damping d_ij
      */
     const Dampings& get_dampings(int self_group, int contact_group) const;
 

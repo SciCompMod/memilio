@@ -424,6 +424,9 @@ TEST(TestSaveParameters, compareGraphs)
         for (int j = i; j < num_groups; j++) {
             cont_freq_matrix.set_cont_freq(fact * cont_freq, i, j);
             cont_freq_matrix.add_damping(dummy, i, j);
+            if (j > i) {
+                cont_freq_matrix.set_cont_freq(fact * cont_freq, j, i);
+            }
         }
     }
 
@@ -457,9 +460,6 @@ TEST(TestSaveParameters, compareGraphs)
         ASSERT_EQ(num_groups, graph_read_cont_freq.get_size());
         ASSERT_EQ(num_compart, graph_read_params.populations.get_num_compartments() / num_groups);
 
-        int num_dampings = graph_cont_freq.get_dampings(0, 0).get_dampings_vector().size();
-        ASSERT_EQ(num_dampings, graph_read_cont_freq.get_dampings(0, 0).get_dampings_vector().size());
-
         for (size_t group = 0; group < num_groups; group++) {
             ASSERT_EQ(graph_params.populations.get({group, epi::SecirCompartments::D}),
                       graph_read_params.populations.get({group, epi::SecirCompartments::D}));
@@ -486,7 +486,35 @@ TEST(TestSaveParameters, compareGraphs)
                 *graph_params.populations.get({group, epi::SecirCompartments::E}).get_distribution().get(),
                 *graph_read_params.populations.get({group, epi::SecirCompartments::E}).get_distribution().get());
 
-            // ASSERT_EQ(graph_params.times[group].get_incubation(), graph_read_params.times[group].get_incubation());
+            ASSERT_EQ(graph_params.times[group].get_incubation(), graph_read_params.times[group].get_incubation());
+            ASSERT_EQ(graph_params.times[group].get_infectious_mild(),
+                      graph_read_params.times[group].get_infectious_mild());
+            ASSERT_EQ(graph_params.times[group].get_serialinterval(),
+                      graph_read_params.times[group].get_serialinterval());
+            ASSERT_EQ(graph_params.times[group].get_hospitalized_to_home(),
+                      graph_read_params.times[group].get_hospitalized_to_home());
+            ASSERT_EQ(graph_params.times[group].get_home_to_hospitalized(),
+                      graph_read_params.times[group].get_home_to_hospitalized());
+            ASSERT_EQ(graph_params.times[group].get_infectious_asymp(),
+                      graph_read_params.times[group].get_infectious_asymp());
+            ASSERT_EQ(graph_params.times[group].get_hospitalized_to_icu(),
+                      graph_read_params.times[group].get_hospitalized_to_icu());
+            ASSERT_EQ(graph_params.times[group].get_icu_to_home(), graph_read_params.times[group].get_icu_to_home());
+            ASSERT_EQ(graph_params.times[group].get_icu_to_dead(), graph_read_params.times[group].get_icu_to_dead());
+
+            ASSERT_EQ(graph_params.probabilities[group].get_infection_from_contact(),
+                      graph_read_params.probabilities[group].get_infection_from_contact());
+            ASSERT_EQ(graph_params.probabilities[group].get_risk_from_symptomatic(),
+                      graph_read_params.probabilities[group].get_risk_from_symptomatic());
+            ASSERT_EQ(graph_params.probabilities[group].get_asymp_per_infectious(),
+                      graph_read_params.probabilities[group].get_asymp_per_infectious());
+            ASSERT_EQ(graph_params.probabilities[group].get_dead_per_icu(),
+                      graph_read_params.probabilities[group].get_dead_per_icu());
+            ASSERT_EQ(graph_params.probabilities[group].get_hospitalized_per_infectious(),
+                      graph_read_params.probabilities[group].get_hospitalized_per_infectious());
+            ASSERT_EQ(graph_params.probabilities[group].get_icu_per_hospitalized(),
+                      graph_read_params.probabilities[group].get_icu_per_hospitalized());
+
             check_distribution(*graph_params.times[group].get_incubation().get_distribution().get(),
                                *graph_read_params.times[group].get_incubation().get_distribution().get());
             check_distribution(*graph_params.times[group].get_serialinterval().get_distribution().get(),
@@ -527,6 +555,10 @@ TEST(TestSaveParameters, compareGraphs)
             for (int contact_group = 0; contact_group < num_groups; contact_group++) {
                 ASSERT_EQ(graph_cont_freq.get_cont_freq(group, contact_group),
                           graph_read_cont_freq.get_cont_freq(group, contact_group));
+
+                int num_dampings = graph_cont_freq.get_dampings(group, contact_group).get_dampings_vector().size();
+                ASSERT_EQ(num_dampings,
+                          graph_read_cont_freq.get_dampings(group, contact_group).get_dampings_vector().size());
                 for (int damp = 0; damp < num_dampings; damp++) {
                     ASSERT_EQ(
                         graph_cont_freq.get_dampings(group, contact_group).get_dampings_vector().at(damp).day,
