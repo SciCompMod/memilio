@@ -1,6 +1,7 @@
 import os
 import sys
 import pandas
+import numpy as np
 from datetime import timedelta, date
 
 from epidemiology.epidata import getDataIntoPandasDataFrame as gd
@@ -47,6 +48,8 @@ def adjust_data(df, date_of_data):
     # rename column 'kreis' of first date to match data of following days
     if date_of_data == date(2020, 4, 24):
         df.rename({'kreis': 'gemeindeschluessel'}, axis=1, inplace=True)
+        # Add column ICU_ventilated and fill it with Nan
+        df.insert(loc=len(df.columns), column='faelle_covid_aktuell_beatmet', value=np.nan)
 
     # remove empty column
     if date_of_data == date(2020, 4, 29):
@@ -60,6 +63,7 @@ def adjust_data(df, date_of_data):
     # add 'bundesland' for data from 25.4.
     if date_of_data == date(2020, 4, 25):
         df.insert(loc=0, column='bundesland', value=df['gemeindeschluessel'].floordiv(1000))
+        df.insert(loc=len(df.columns), column='faelle_covid_aktuell_beatmet', value=np.nan)
 
     return df
 
@@ -69,12 +73,10 @@ def adjust_data(df, date_of_data):
 #
 # @param url_prefix Date specific part of the url
 # @param call_number Irregular number which is needed for the url
-# @param new_found [Optional] If number is not part of the date to call_number dictionary
-# and the difference between the actual call_number and the last call number is larger than 2,
-# than a message is printed which helps to add this date to the dict.
+#
 # @return pandas dataframe which is either empty or contains requested data
 #
-def call_call_url(url_prefix, call_number, new_found=""):
+def call_call_url(url_prefix, call_number):
 
     call_url = "https://www.divi.de/divi-intensivregister-tagesreport-archiv-csv/divi-intensivregister-" \
                + url_prefix + "/viewdocument/" + str(call_number)
@@ -84,9 +86,6 @@ def call_call_url(url_prefix, call_number, new_found=""):
 
     try:
         df = pandas.read_csv(call_url)
-        if not new_found == "":
-            print("New cal number found. Please copy the following to call_number_dict to increase runtime: "
-                  + new_found)
     except OSError as e:
         exit_string = "ERROR: URL " + call_url + " could not be opened. " \
                       + "Hint: check your internet connection."
@@ -107,7 +106,8 @@ def call_call_url(url_prefix, call_number, new_found=""):
 # First the last_number is successive increased by one until a difference of 300 is reached.
 # Than the last_number is successive decreased by one until a difference of 300 is reached.
 # At last the last_number without a change is tried.
-# If data could be downloaded by the function call_call_url and the difference was 1 or 2. The data is simply given back.
+# If data could be downloaded by the function call_call_url and the difference was 1 or 2.
+# The data is simply given back.
 # If the difference is different an additional message is printed,
 # which can be used to copy directly to the call_number_dict to decrease runtime of the program.
 # Furthermore, in this function another specific part of the url, the call_time, is estimated from the given date.
@@ -118,7 +118,8 @@ def call_call_url(url_prefix, call_number, new_found=""):
 # @param last_number This is the call_number which is needed for the download url
 # of the date 1 day before this one
 # @param download_data The date for which the data should be downloaded
-# @return List of call_number of the download_data and the pandas dataframe
+# @return List of call_number of the download_data, the pandas dataframe, and a string which is either empty or contains
+# what should be added to "call_number_dict"
 def download_data_for_one_day(last_number, download_date):
     # define call numbers for dates where call number doesn't increase by 1
 
@@ -165,7 +166,7 @@ def download_data_for_one_day(last_number, download_date):
                         date(2020, 8, 25): 5011,
                         date(2020, 8, 28): 5020,
                         date(2020, 8, 31): 5026,
-                        date(2020, 9, 5): 5036
+                        date(2020, 9, 5): 5036,
                         }
 
     call_date = download_date.strftime("%Y-%m-%d")
@@ -191,6 +192,8 @@ def download_data_for_one_day(last_number, download_date):
     sign_dict = {0: 1,
                  1: -1}
 
+    call_string = ""
+
     if download_date in call_number_dict.keys():
 
         call_number = call_number_dict[download_date]
@@ -198,8 +201,6 @@ def download_data_for_one_day(last_number, download_date):
         df = call_call_url(url_prefix, call_number)
 
     else:
-        call_string = ""
-
         # It is most likely that the difference is between 1 and 2
         for sign in range(2):
             for delta in range(1,300):
@@ -209,25 +210,25 @@ def download_data_for_one_day(last_number, download_date):
                # for delta 1 and 2 the number is not saved in dict,
                # because it does not take so long to get those numbers
                if sign == 0 and delta != 1 and delta != 2:
-                  call_string = "date(" + download_date.strftime("%Y,%-m,%-d") + "): " + str(call_number) + ","
+                  call_string = "date(" + download_date.strftime("%Y, %-m, %-d") + "): " + str(call_number) + "," + "\n"
 
-               df = call_call_url(url_prefix, call_number,  call_string)
+               df = call_call_url(url_prefix, call_number)
 
                if not df.empty:
-                   return [call_number, df]
+                   return [call_number, df, call_string]
 
         # case with same call_number, which is very unlikely
         call_number = last_number
-        call_string = "date(" + download_date.strftime("%Y,%-m,%-d") + "): " + str(call_number) + ","
-        df = call_call_url(url_prefix, call_number, call_string)
+        call_string = "date(" + download_date.strftime("%Y, %-m, %-d") + "): " + str(call_number) + "," + "\n"
+        df = call_call_url(url_prefix, call_number)
 
-    return [call_number, df]
+    return [call_number, df, call_string]
 
 
 ## Function to get the divi data.
 #
 # Available data start from 2020-4-24.
-# If the given start_dat is earlier it is changed to this data and a warning is printed.
+# If the given start_date is earlier it is changed to this date and a warning is printed.
 # If it does not already exist the folder Germany is generated in the given out_folder.
 # If read_data == True and the file "FullData_DIVI.json" exists the data is read form this file
 # and stored in a pandas dataframe.
@@ -243,22 +244,23 @@ def download_data_for_one_day(last_number, download_date):
 # If data should normally  be downloaded between start_date and end_date we start with an empty pandas dataframe.
 # Afterwards, for everyday between start_date and end_date, both included,
 # the function download_data_for_one_day is called.
-# If a given back dataframe is empty a warning is printed, that this date is missing, but the program is not stopped.
-# If start_date is earlier or equal 2020-24-29 the function adjust_data has to be called.
-# If data has been downloaded the dataframe of this one date is added to the dataframe with all dates.
+# If a given back dataframe is empty, a warning is printed that this date is missing, but the program is not stopped.
+# If start_date is earlier or equal 2020-04-29, the function adjust_data has to be called.
+# If data has been downloaded, the dataframe of this one date is added to the dataframe with all dates.
 #
 # If the dataframe which should contain all data is empty after going through all dates, the program is stopped.
 # Otherwise the dataframe is written to the file filename = "FullData_DIVI".
-# Following the columns are renamed to English and he state and county names are added.
-# Afterwards three kind of structuring of the data is done.
-# We obtain the chronological sequence of ICU and ICU_ventilated for counties stored in file ""county_divi".json",
-# for states stored in the file "state_divi.json" and for whole germany stored in the file "germany_divi.json".
+# Following the columns are renamed to English and the state and county names are added.
+# Afterwards, three kind of structuring of the data are done.
+# We obtain the chronological sequence of ICU and ICU_ventilated
+# stored in the files "county_divi".json", "state_divi.json"and "germany_divi.json"
+# for counties, states and whole Germany, respectively.
 #
-# @param read_data False [Default] or True. Defines if data is read from file or downloaded
-# @param update_date Defines if "True" existing data is updated or "False [Default]" downloaded.
-# @param out_folder Folder where da is written to.
-# @param start_date [Optional] Date to start to download data [Default = 2020.4.24]
-# @param end_date [Optional] Date to stop to download data [Default = today]
+# @param read_data False [Default] or True. Defines if data is read from file or downloaded.
+# @param update_date "True" if existing data is updated or "False [Default]" if it is downloaded.
+# @param out_folder Folder where data is written to.
+# @param start_date [Optional] Date to start to download data [Default = 2020.4.24].
+# @param end_date [Optional] Date to stop to download data [Default = today].
 #
 def get_divi_data(read_data=dd.defaultDict['read_data'],
                   update_data=dd.defaultDict['update_data'],
@@ -266,7 +268,7 @@ def get_divi_data(read_data=dd.defaultDict['read_data'],
                   out_form=dd.defaultDict['out_form'],
                   out_folder=dd.defaultDict['out_folder'],
                   start_date=date(2020, 4, 24),
-                  end_date=date.today()
+                  end_date=date(2020, 9, 5),
                   ):
 
     delta = timedelta(days=1)
@@ -294,7 +296,8 @@ def get_divi_data(read_data=dd.defaultDict['read_data'],
                           "Call program without -r or -u flag to get it."
             sys.exit(exit_string)
 
-        # for read_data no data download is needed, while-loop will be skipped
+        # for read_data no data download is needed;
+        # while-loop will be skipped by setting start_date to larger than end_date
         start_date = end_date + delta
 
         if update_data:
@@ -303,9 +306,9 @@ def get_divi_data(read_data=dd.defaultDict['read_data'],
                 newest_date = pandas.to_datetime(df['daten_stand']).max().date()
 
                 if (today - delta) == newest_date:
-                    # just todays data is missing
+                    # just today's data is missing
                     # download data from today
-                    # download while loop will be skipped
+                    # while loop to download further data will be skipped
                     df2 = gd.loadCsv('DIVI-Intensivregister-Tagesreport', apiUrl='https://www.divi.de/')
 
                     if not df2.empty:
@@ -315,14 +318,14 @@ def get_divi_data(read_data=dd.defaultDict['read_data'],
                         if download_date == today:
                             df = df.append(df2, ignore_index=True)
                             print("Success: Data of date " + today.strftime("%Y-%m-%d")
-                                  + " has been included to dataframe")
+                                  + " has been added to dataframe")
                         else:
                             exit_string = "Data of today = " + today.strftime("%Y-%m-%d") \
                                           + " has not yet uploaded. Please, try again later."
                             sys.exit(exit_string)
 
                 elif (today - newest_date).days > delta.days:
-                    # more than today is missing
+                    # more than today's data is missing
                     # start with the oldest missing data
                     start_date = newest_date + delta
     else:
@@ -332,23 +335,34 @@ def get_divi_data(read_data=dd.defaultDict['read_data'],
 
     last_number = 0
 
+    new_dict_string = ""
     while start_date <= end_date:
 
-        [last_number, df2] = download_data_for_one_day(last_number, start_date)
+        [last_number, df2, new_string] = download_data_for_one_day(last_number, start_date)
 
         if not df2.empty:
-            # data of first days needs adjustment to following data
+
+            new_dict_string = new_dict_string + new_string
+
+            # data of first days needs adjustment
             if start_date <= date(2020, 4, 29):
                 df2 = adjust_data(df2, start_date)
             df = df.append(df2, ignore_index=True)
-            print("Success: Data of date " + start_date.strftime("%Y-%m-%d") + " has been included to dataframe")
+
+            print("Success: Data of date " + start_date.strftime("%Y-%m-%d") + " has been added to dataframe")
         else:
-            print("Warning: Data of date " + start_date.strftime("%Y-%m-%d") + " is not included to dataframe")
+            print("Warning: Data of date " + start_date.strftime("%Y-%m-%d") + " is not added to dataframe")
 
         start_date += delta
 
-    # output data to not always download it before any changes has been done
+    # output data before renaming
     if not df.empty:
+        if not new_dict_string == "":
+            print("New drifting number in link found. "
+                  "To decrease runtime, please copy the following "
+                  "to the dcitionary \"call_number_dict\" in the function \"download_data_for_one_day\": ")
+            print(new_dict_string)
+
         gd.write_dataframe(df, directory, filename, "json")
     else:
         exit_string = "Something went wrong, dataframe is empty."
@@ -369,29 +383,35 @@ def get_divi_data(read_data=dd.defaultDict['read_data'],
     for key, value in dd.County.items():
         df.loc[df["County"] == key, ["County"]] = value
 
-    # print("Available columns:", df.columns)
-
     # write data for counties to file
-
     df_counties = df[["County", "ID_County", "ICU", "ICU_ventilated", "Date"]]
     filename = "county_divi"
     gd.write_dataframe(df_counties, directory, filename, "json")
 
     # write data for states to file
-
     df_states = df.groupby(["ID_State", "State", "Date"]).agg({"ICU": sum, "ICU_ventilated": sum})
     df_states = df_states.reset_index()
     df_states.sort_index(axis=1, inplace=True)
+    # For the sum calculation Nan is used as a 0, thus some zeros have to be changed back to NaN
+    df_states.loc[df_states["Date"] <= "2020-04-25 09:15:00", "ICU_ventilated"] = np.nan
+    # TODO: Fill "faelle_covid_aktuell_im_bundesland" into ICU data
+    #print(df_states.loc[df_states["Date"] == "2020-04-24 09:15:00", "ICU"])
+    #print(df.groupby(["ID_State", "State"]).agg({"faelle_covid_aktuell_im_bundesland": max}).reset_index()[["faelle_covid_aktuell_im_bundesland"]])
+    #df_states.loc[df_states["Date"] == "2020-04-24 09:15:00", "ICU"] = df_states.loc[df_states["Date"] == "2020-04-24 09:15:00", "ICU"].replace(df.groupby(["ID_State", "State"]).agg({"faelle_covid_aktuell_im_bundesland": max})[["faelle_covid_aktuell_im_bundesland"]])
+
     filename = "state_divi"
     gd.write_dataframe(df_states, directory, filename, "json")
 
     # write data for germany to file
-
     df_ger = df.groupby(["Date"]).agg({"ICU": sum, "ICU_ventilated": sum})
     df_ger = df_ger.reset_index()
     df_ger.sort_index(axis=1, inplace=True)
+    df_ger.loc[df_states["Date"] <= "2020-04-25 09:15:00", "ICU_ventilated"] = np.nan
+    # TODO: Use also "faelle_covid_aktuell_im_bundesland" from 25.9.
     filename = "germany_divi"
     gd.write_dataframe(df_ger, directory, filename, "json")
+
+    print("Information: DIVI data has been written to", directory)
 
 
 def main():

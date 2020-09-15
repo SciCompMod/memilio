@@ -104,7 +104,7 @@ def cli(description):
    return [READ_DATA, UPDATE_DATA, MAKE_PLOT, OUT_FORM, args.out_path]
 
 def check_dir(directory):
-    # check directory exists or create it
+    # check if directory exists or create it
     if not os.path.exists(directory):
         os.makedirs(directory)
 

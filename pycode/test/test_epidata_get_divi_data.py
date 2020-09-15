@@ -94,14 +94,14 @@ class TestGetDiviData(fake_filesystem_unittest.TestCase):
     test_stringr3_country = ("""\
 {"Date":1594037700000,"ICU":0,"ICU_ventilated":0}""")
 
-    # data for test dataframe to test adjust data
+    # data for test dataframe to test the function adjust_data
     d24 = {'bundesland': [1, 2], 'kreis': [1001, 2000], 'ICU': [0, 7]}
     d25 = {'gemeindeschluessel': [1001, 2000], 'ICU': [0, 7]}
     d262728 = {'bundesland': [1, 2], 'gemeindeschluessel': [1001, 2000], 'ICU': [0, 7]}
     d29 = {'Unnamed: 0': [0, 0], 'bundesland': [1, 2], 'gemeindeschluessel': [1001, 2000], 'ICU': [0, 7]}
     liste_input = [d24, d25, d262728, d262728, d262728, d29]
 
-    # data for result dataframe to test adjust data
+    # data for result dataframe to test the function adjust_data
     dr24 = {'bundesland': [1, 2], 'gemeindeschluessel': [1001, 2000], 'ICU': [0, 7],
             'daten_stand': ["2020-04-24 09:15:00", "2020-04-24 09:15:00"]}
     dr25 = {'bundesland': [1, 2], 'gemeindeschluessel': [1001, 2000], 'ICU': [0, 7],
@@ -162,7 +162,7 @@ class TestGetDiviData(fake_filesystem_unittest.TestCase):
 
         mock_read_csv.assert_called_with(call_url)
 
-        # check wether the read data is as expected
+        # check whether the read data is as expected
         self.assertTrue((pd.read_json(self.test_string1) == df).all().all())
 
         # add an additional print out, which should not change the data
@@ -177,7 +177,7 @@ class TestGetDiviData(fake_filesystem_unittest.TestCase):
             "https://www.divi.de/divi-intensivregister-tagesreport-archiv-csv/divi-intensivregister-" +
             "2020-07-07-12-15/viewdocument/3961")
 
-        # check wether the read data is as expected
+        # check whether the read data is as expected
         self.assertTrue((pd.read_json(self.test_string1) == df).all().all())
 
         # check exception when OSError is returned
@@ -218,16 +218,16 @@ class TestGetDiviData(fake_filesystem_unittest.TestCase):
         date_string = url_prefix
 
         if [date_string, call_number] in self.test_url_in_call_number_dict.values():
-            # add this point we do not care about the content, we just need a filled dataframe
+            # at this point we do not care about the content, we just need a filled dataframe
             return pd.read_json(self.test_string1)
 
         elif [date_string, call_number] in self.test_url_ending_else.values():
 
-            # add this point we do not care about the content, we just need a filled dataframe
+            # at this point we do not care about the content, we just need a filled dataframe
             return pd.read_json(self.test_string1)
 
         # otherwise return an empty dataframe
-        # this is comparable to call an wrong url
+        # this is comparable to call a wrong url
         return pd.DataFrame()
 
     def test_fake_call_call_url(self):
@@ -294,12 +294,12 @@ class TestGetDiviData(fake_filesystem_unittest.TestCase):
         expected_calls = [call.call_call_url(test_date_str, test_call_number - 1, ""),
                           call.call_call_url(test_date_str, test_call_number, "")]
 
-        # check if expected_calls is part from calls
+        # check if expected_calls is part of calls
         mock_ccu.assert_has_calls(expected_calls)
         # check if expected calls are the last two calls
         self.assertTrue(mock_ccu.mock_calls[-2:] == expected_calls)
 
-        # test case where given nunber has difference larger than 2 to call_number, namely 4
+        # test case where given nunber has a difference larger than 2 to call_number, namely 4
 
         call_string1 = "date(" + test_date.strftime("%Y,%-m,%-d") + "): " + str(test_call_number - 1) + ","
         call_string2 = "date(" + test_date.strftime("%Y,%-m,%-d") + "): " + str(test_call_number) + ","
@@ -311,7 +311,7 @@ class TestGetDiviData(fake_filesystem_unittest.TestCase):
                           call.call_call_url(test_date_str, test_call_number - 1, call_string1),
                           call.call_call_url(test_date_str, test_call_number, call_string2)]
 
-        # check if expected_calls is part from calls
+        # check if expected_calls is part of calls
         mock_ccu.assert_has_calls(expected_calls)
         # check if expected calls are the last 4 calls
         self.assertTrue(mock_ccu.mock_calls[-4:] == expected_calls)
@@ -375,7 +375,7 @@ class TestGetDiviData(fake_filesystem_unittest.TestCase):
         f = open(f_path, "r")
         self.assertEqual(f.read(), "[" + self.test_stringr1_country + "]")
 
-        # test for more than one days
+        # test for more than one day
 
         mock_ddfod.side_effect = self.fake_download_data_for_one_day
 
@@ -409,18 +409,21 @@ class TestGetDiviData(fake_filesystem_unittest.TestCase):
         self.assertEqual(f.read(), "[" + self.test_stringr1_country + "," + self.test_stringr2_country + "]")
 
         start_string = "Success: Data of date "
-        end_string = " has been included to dataframe"
+        end_string = " has been added to dataframe"
         expected_calls = [call(start_string + date(2020, 7, 7).strftime("%Y-%m-%d") + end_string),
                           call(start_string + date(2020, 7, 8).strftime("%Y-%m-%d") + end_string),
                           call("Warning: Data of date " + date(2020, 7, 9).strftime("%Y-%m-%d")
-                               + " is not included to dataframe")]
+                               + " is not added to dataframe")]
 
-        # check if expected_calls is part from calls
+        # check if expected_calls is part of calls
         mock_print.assert_has_calls(expected_calls)
-        # check if expected calls are the last three calls
-        # remember this solution for and output without print()
+
+        # The following lines are commented to remember a solution to write an output without using print()
+        # This is important, because the usage of print would alter the test results
         # import sys
         # sys.stdout.write(str(mock_print.mock_calls[:]))
+
+        # check if expected calls are the last three calls
         self.assertTrue(mock_print.mock_calls[-3:] == expected_calls)
 
         # Check output if whole dataframe is empty
@@ -431,7 +434,6 @@ class TestGetDiviData(fake_filesystem_unittest.TestCase):
         self.assertEqual(cm.exception.code, "Something went wrong, dataframe is empty.")
 
         # Check warning for wrong start_date
-
         with self.assertRaises(SystemExit) as cm:
             gdd.get_divi_data(read_data, update_data, make_plot, out_form, out_folder,
                               start_date=date(2020, 4, 23), end_date=date(2020, 4, 24))
@@ -439,8 +441,10 @@ class TestGetDiviData(fake_filesystem_unittest.TestCase):
 
         expected_call = call("Warning: First data available on 2020-04-24. You asked for 2020-04-23.")
 
-        # check if  second last call is the expected warning
+        # check if second last call is the expected warning
         self.assertTrue(mock_print.mock_calls[-2] == expected_call)
+
+        gdd.get_divi_data(end_date=date(2020, 4, 24))
 
     def test_gdd_read_data(self):
 
@@ -530,7 +534,7 @@ class TestGetDiviData(fake_filesystem_unittest.TestCase):
         with open(file_with_path, 'w') as f:
             f.write(self.test_string1)
 
-        # Case where just the date of today is missing
+        # For the following test cases just the date of today is missing
 
         # case where data is not yet uploaded:
         mock_loadcsv.return_value = pd.read_json(self.test_string1)
@@ -565,14 +569,15 @@ class TestGetDiviData(fake_filesystem_unittest.TestCase):
         self.assertEqual(f.read(), "[" + self.test_stringr1_country + "," + self.test_stringr2_country + "]")
 
         start_string = "Success: Data of date "
-        end_string = " has been included to dataframe"
+        end_string = " has been added to dataframe"
         expected_calls = [call(start_string + date(2020, 7, 8).strftime("%Y-%m-%d") + end_string)]
 
-        # check if expected_calls is part from calls
+        # check if expected_calls is part of calls
         mock_print.assert_has_calls(expected_calls)
         self.assertTrue(mock_print.mock_calls == expected_calls)
 
         # check case where more than today is missing
+
         # write data of 6.7.2020 to FullData_DIVI.json
         with open(file_with_path, 'w') as f:
             f.write(self.test_string3)
@@ -607,12 +612,13 @@ class TestGetDiviData(fake_filesystem_unittest.TestCase):
                          "," + self.test_stringr2_country + "]")
 
         start_string = "Success: Data of date "
-        end_string = " has been included to dataframe"
+        end_string = " has been added to dataframe"
         expected_calls = [call(start_string + date(2020, 7, 7).strftime("%Y-%m-%d") + end_string),
                           call(start_string + date(2020, 7, 8).strftime("%Y-%m-%d") + end_string)]
 
-        # check if expected_calls is part from calls
+        # check if expected_calls is part of calls
         mock_print.assert_has_calls(expected_calls)
+
         # check if expected calls are the last three calls
         self.assertTrue(mock_print.mock_calls[-2:] == expected_calls)
 
