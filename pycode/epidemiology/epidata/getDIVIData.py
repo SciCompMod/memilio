@@ -15,13 +15,13 @@ from epidemiology.epidata import defaultDict as dd
 # and the number of those that are additionally ventilated.
 #
 # data explanation:
-# reporting_hospitals number of reporting hospitals
+# reporting_hospitals is the number of reporting hospitals
 # ICU is the number of covid patients in reporting hospitals
 # ICU_ventilated is the number of ventilated covid patients in reporting hospitals
 # free_ICU is the number of free ICUs in reporting hospitals
 # occupied_ICU is the number of occupied ICUs in in reporting hospitals
 #
-# ID_County and ID_State is as defined by the "Amtlicher Gemeindeschlüssel (AGS)"
+# ID_County and ID_State is defined by the "Amtlicher Gemeindeschlüssel (AGS)"
 # which is also used in the RKI data as ID_County and ID_State
 # https://de.wikipedia.org/wiki/Liste_der_Landkreise_in_Deutschland
 #
@@ -37,7 +37,7 @@ from epidemiology.epidata import defaultDict as dd
 # - 24.4.: Rename column 'kreis' to 'gemeindeschluessel'
 # - 25.4.: Add id bundesland, which is extracted from the given column "gemeindeschluessel"
 # - 24.4.-27.4.: Add date as a column
-# - 29.9. empty column has to be removed
+# - 29.9.: Empty column has to be removed
 #
 # @param df A pandas data frame
 # @param date_of_data The date for the data stored in df
@@ -103,17 +103,16 @@ def call_call_url(url_prefix, call_number):
 # and their corresponding call_numbers are stored.
 # This is stored there if the difference of the call_number to the call_number of the date before is larger than 1 or 2.
 # If the date is not part of the call_number_dict the new call_number is calculated.
-# First the last_number is successive increased by one until a difference of 300 is reached.
-# Than the last_number is successive decreased by one until a difference of 300 is reached.
+# First, the last_number is successively increased by one until a difference of 300 is reached.
+# Then, the last_number is successively decreased by one until a difference of 300 is reached.
 # At last the last_number without a change is tried.
-# If data could be downloaded by the function call_call_url and the difference was 1 or 2.
-# The data is simply given back.
+# If data could be downloaded by the function call_call_url and the difference was 1 or 2, the data is simply given back.
 # If the difference is different an additional message is printed,
 # which can be used to copy directly to the call_number_dict to decrease runtime of the program.
 # Furthermore, in this function another specific part of the url, the call_time, is estimated from the given date.
-# If the date is before 2020-6-5 the time "-09-15" and afterwards "-12-15" has to be added to te date.
-# Moreover got dates in the range [2020-6-12),2020-6-5] an additional "-2" has to be added after the call_time.
-# Thus  the url_prefix = call_date + call_time + ext, which is than given to the call_call_url fct.
+# If the date is before 2020-6-5 the time "-09-15" and afterwards "-12-15" has to be added to the date.
+# Moreover for dates in the range [2020-6-12),2020-6-5], an additional "-2" has to be added after the call_time.
+# Thus, the url_prefix = call_date + call_time + ext and is then given to the call_call_url fct.
 #
 # @param last_number This is the call_number which is needed for the download url
 # of the date 1 day before this one
@@ -228,20 +227,20 @@ def download_data_for_one_day(last_number, download_date):
 ## Function to get the divi data.
 #
 # Available data start from 2020-4-24.
-# If the given start_date is earlier it is changed to this date and a warning is printed.
-# If it does not already exist the folder Germany is generated in the given out_folder.
-# If read_data == True and the file "FullData_DIVI.json" exists the data is read form this file
+# If the given start_dat is earlier, it is changed to this date and a warning is printed.
+# If it does not already exist, the folder Germany is generated in the given out_folder.
+# If read_data == True and the file "FullData_DIVI.json" exists, the data is read form this file
 # and stored in a pandas dataframe.
 # Otherwise the program is stopped.
 #
 # If update_data == True  the same happens as for read_data == True.
-# Furthermore, if the last date in read data is yesterday the data of today is downloaded.
-# For this download an easier link can be used than the one where we have to find the mysterious call_number
-# If the data has not yet been uploaded the program is stopped with message to try again later.
-# If there is more data missing than today the parameter start_date is changed to the first missing data
+# Furthermore, if the last date in read data is yesterday, the data of today is downloaded.
+# For this download an easier link can be used than the one where we have to find the mysterious call_number.
+# If the data has not yet been uploaded, the program is stopped with a message to try again later.
+# If there is more data missing than today, the parameter start_date is changed to the first missing data,
 # and the data is normally downloaded (see below).
 #
-# If data should normally  be downloaded between start_date and end_date we start with an empty pandas dataframe.
+# If data should normally be downloaded between start_date and end_date, we start with an empty pandas dataframe.
 # Afterwards, for everyday between start_date and end_date, both included,
 # the function download_data_for_one_day is called.
 # If a given back dataframe is empty, a warning is printed that this date is missing, but the program is not stopped.
