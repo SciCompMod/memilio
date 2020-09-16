@@ -12,11 +12,17 @@ namespace epi
 /**
  * @brief abstract simulation on a graph with alternating node and edge actions
  */
-template <class Graph, class NodeF, class EdgeF>
+template <class Graph>
 class GraphSimulation
 {
 public:
-    GraphSimulation(double t0, double dt, const Graph& g, const NodeF& node_func, const EdgeF&& edge_func)
+    using node_function = std::function<void(double, double, typename Graph::NodeProperty&)>;
+
+    using edge_function = std::function<void(double, double, typename Graph::EdgeProperty&,
+                                             typename Graph::NodeProperty&, typename Graph::NodeProperty&)>;
+
+    GraphSimulation(double t0, double dt, const Graph& g, const node_function& node_func,
+                    const edge_function&& edge_func)
         : m_graph(g)
         , m_t(t0)
         , m_dt(dt)
@@ -25,17 +31,22 @@ public:
     {
     }
 
-    void advance(int n_steps = 1)
+    void advance(double t_max = 1.0)
     {
-        for (int i = 0; i < n_steps; i++) {
-            for (auto& n : m_graph.nodes()) {
-                m_node_func(m_t, m_dt, n);
+        auto dt = m_dt;
+        while (m_t < t_max) {
+            if (m_t + dt > t_max) {
+                dt = t_max - dt;
             }
 
-            m_t += m_dt;
+            for (auto& n : m_graph.nodes()) {
+                m_node_func(m_t, dt, n);
+            }
+
+            m_t += dt;
 
             for (auto& e : m_graph.edges()) {
-                m_edge_func(m_t, m_dt, e.property, m_graph.nodes()[e.start_node_idx], m_graph.nodes()[e.end_node_idx]);
+                m_edge_func(m_t, dt, e.property, m_graph.nodes()[e.start_node_idx], m_graph.nodes()[e.end_node_idx]);
             }
         }
     }
@@ -59,15 +70,15 @@ private:
     double m_t;
     double m_dt;
     Graph m_graph;
-    NodeF m_node_func;
-    EdgeF m_edge_func;
+    node_function m_node_func;
+    edge_function m_edge_func;
 };
 
 template <class Graph, class NodeF, class EdgeF>
 auto make_graph_sim(double t0, double dt, Graph&& g, NodeF&& node_func, EdgeF&& edge_func)
 {
-    return GraphSimulation<std::decay_t<Graph>, NodeF, EdgeF>(t0, dt, g, std::forward<NodeF>(node_func),
-                                                              std::forward<EdgeF>(edge_func));
+    return GraphSimulation<std::decay_t<Graph>>(t0, dt, g, std::forward<NodeF>(node_func),
+                                                std::forward<EdgeF>(edge_func));
 }
 
 template <class Model>
@@ -111,7 +122,8 @@ void apply_migration(double t, double dt, MigrationEdge& migrationEdge, ModelNod
 }
 
 template <typename Model>
-auto make_migration_sim(double t0, double dt, const Graph<ModelNode<Model>, MigrationEdge>& graph)
+GraphSimulation<Graph<ModelNode<Model>, MigrationEdge>>
+make_migration_sim(double t0, double dt, const Graph<ModelNode<Model>, MigrationEdge>& graph)
 {
     return make_graph_sim(t0, dt, graph, &evolve_model<Model>, &apply_migration<Model>);
 }

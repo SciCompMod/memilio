@@ -1,5 +1,6 @@
 #include <epidemiology/migration/migration.h>
 #include <epidemiology_io/secir_parameters_io.h>
+#include <epidemiology_io/twitter_migration_io.h>
 
 #include <iostream>
 
@@ -78,21 +79,33 @@ int main(int argc, char** argv)
         }
     }
 
-    epi::Graph<epi::ModelNode<epi::SecirSimulation>, epi::MigrationEdge> graph;
-    graph.add_node(params, t0);
-    graph.add_node(params, t0);
-    graph.add_edge(0, 1, Eigen::VectorXd::Constant(epi::SecirCompartments::SecirCount * nb_groups, 0.01));
-    graph.add_edge(1, 0, Eigen::VectorXd::Constant(epi::SecirCompartments::SecirCount * nb_groups, 0.01));
+    std::cout << "Readimg Migration File..." << std::flush;
+    Eigen::MatrixXi twitter_migration_2018 = epi::read_migration("2018_lk_matrix.txt");
+    std::cout << "Done" << std::endl;
 
+    std::cout << "Intializing Graph..." << std::flush;
+    epi::Graph<epi::ModelNode<epi::SecirParams>, epi::MigrationEdge> graph;
+    for (int node = 0; node < twitter_migration_2018.rows(); node++) {
+        graph.add_node(params);
+    }
+    for (int row = 0; row < twitter_migration_2018.rows(); row++) {
+        for (int col = 0; col < twitter_migration_2018.cols(); col++) {
+            graph.add_edge(row, col, Eigen::VectorXd::Constant(8 * nb_groups, twitter_migration_2018(row, col)));
+        }
+    }
+    std::cout << "Done" << std::endl;
+
+    std::cout << "Writing XML Files..." << std::flush;
     epi::write_graph(graph, t0, tmax);
+    std::cout << "Done" << std::endl;
 
-    epi::Graph<epi::ModelNode<epi::SecirSimulation>, epi::MigrationEdge> graph_read = epi::read_graph();
+    std::cout << "Reading XML Files..." << std::flush;
+    epi::Graph<epi::ModelNode<epi::SecirParams>, epi::MigrationEdge> graph_read = epi::read_graph();
+    std::cout << "Done" << std::endl;
 
-    epi::print_graph(std::cout, graph_read);
-
-    auto sim = epi::make_migration_sim(t0, dt, graph_read);
-
-    sim.advance(10);
+    std::cout << "Running Simulations..." << std::flush;
+    auto study = epi::ParameterStudy(epi::make_migration_sim<epi::SecirSimulation>, graph_read, t0, tmax, 2);
+    std::cout << "Done" << std::endl;
 
     return 0;
 }

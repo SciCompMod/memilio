@@ -4,6 +4,7 @@
 #include <epidemiology/secir/parameter_studies.h>
 #include <epidemiology_io/secir_result_io.h>
 #include <epidemiology_io/secir_parameters_io.h>
+#include <epidemiology/migration/migration.h>
 #include <distributions_helpers.h>
 #include <gtest/gtest.h>
 
@@ -67,18 +68,13 @@ TEST(TestSaveParameters, compareParameterStudy)
     std::string path = "/Parameters";
     TixiDocumentHandle handle;
 
-    epi::set_params_distributions_normal(params, t0, tmax, 0.0);
+    epi::set_params_distributions_normal(params, t0, tmax, 0.2);
 
     params.times[0].get_incubation().get_distribution()->add_predefined_sample(4711.0);
 
-    params.get_contact_patterns().get_distribution_damp_days()->add_predefined_sample(4712.0);
-
+    params.get_contact_patterns().get_distribution_damp_days()->add_predefined_sample(4711.0);
     tixiCreateDocument("Parameters", &handle);
-    epi::ParameterStudy study(
-        [](auto&& t0, auto&& tmax, auto&& dt, auto&& params) {
-            return epi::simulate(t0, tmax, dt, params);
-        },
-        params, t0, tmax, num_runs);
+    epi::ParameterStudy study(epi::make_migration_sim<epi::SecirSimulation>, params, t0, tmax, num_runs);
 
     epi::write_parameter_study(handle, path, study);
     tixiSaveDocument(handle, "TestParameters.xml");
@@ -287,11 +283,7 @@ TEST(TestSaveParameters, compareSingleRun)
 
     tixiCreateDocument("Parameters", &handle);
     epi::set_params_distributions_normal(params, t0, tmax, 0.0);
-    epi::ParameterStudy study(
-        [](auto&& t0, auto&& tmax, auto&& dt, auto&& params) {
-            return epi::simulate(t0, tmax, dt, params);
-        },
-        params, t0, tmax, num_runs);
+    epi::ParameterStudy study(epi::make_migration_sim<epi::SecirSimulation>, params, t0, tmax, num_runs);
 
     epi::write_parameter_study(handle, path, study, 0);
     tixiSaveDocument(handle, "TestParameterValues.xml");
@@ -432,15 +424,15 @@ TEST(TestSaveParameters, compareGraphs)
 
     epi::set_params_distributions_normal(params, t0, tmax, 0.15);
 
-    epi::Graph<epi::ModelNode<epi::SecirSimulation>, epi::MigrationEdge> graph;
-    graph.add_node(params, t0);
-    graph.add_node(params, t0);
+    epi::Graph<epi::ModelNode<epi::SecirParams>, epi::MigrationEdge> graph;
+    graph.add_node(params);
+    graph.add_node(params);
     graph.add_edge(0, 1, Eigen::VectorXd::Constant(params.populations.get_num_compartments(), 0.01));
     graph.add_edge(1, 0, Eigen::VectorXd::Constant(params.populations.get_num_compartments(), 0.01));
 
     epi::write_graph(graph, t0, tmax);
 
-    epi::Graph<epi::ModelNode<epi::SecirSimulation>, epi::MigrationEdge> graph_read = epi::read_graph();
+    epi::Graph<epi::ModelNode<epi::SecirParams>, epi::MigrationEdge> graph_read = epi::read_graph();
 
     int num_nodes = graph.nodes().size();
     int num_edges = graph.edges().size();
@@ -448,11 +440,11 @@ TEST(TestSaveParameters, compareGraphs)
     ASSERT_EQ(num_nodes, graph_read.nodes().size());
     ASSERT_EQ(num_edges, graph_read.edges().size());
 
-    for (size_t node = 0; node < num_nodes; node++) {
-        epi::SecirParams graph_params               = graph.nodes()[0].model.get_params();
+    for (int node = 0; node < num_nodes; node++) {
+        epi::SecirParams graph_params               = graph.nodes()[0].model;
         epi::ContactFrequencyMatrix graph_cont_freq = graph_params.get_contact_patterns();
 
-        epi::SecirParams graph_read_params               = graph_read.nodes()[0].model.get_params();
+        epi::SecirParams graph_read_params               = graph_read.nodes()[0].model;
         epi::ContactFrequencyMatrix graph_read_cont_freq = graph_read_params.get_contact_patterns();
 
         int num_compart = graph_params.populations.get_num_compartments() / num_groups;
