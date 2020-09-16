@@ -134,11 +134,15 @@ void SecirParams::StageTimes::set_icu_to_home(ParameterDistribution const& ticu2
 
 void SecirParams::StageTimes::set_infectious_asymp(UncertainValue const& tinfasy)
 {
+    log_warning("The parameter of the asymptomatic infectious period is meant to be defined by the other parameters of "
+                "the system. Do you really want to set it?");
     m_tinfasy = tinfasy;
 }
 
 void SecirParams::StageTimes::set_infectious_asymp(double tinfasy)
 {
+    log_warning("The parameter of the asymptomatic infectious period is meant to be defined by the other parameters of "
+                "the system. Do you really want to set it?");
     m_tinfasy = tinfasy;
 }
 

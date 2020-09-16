@@ -9,7 +9,7 @@ TEST(TestSecir, compareAgeResWithSingleRun)
     double dt   = 0.1;
 
     double tinc = 5.2, tinfmild = 6, tserint = 4.2, thosp2home = 12, thome2hosp = 5, thosp2icu = 2, ticu2home = 8,
-           tinfasy = 6.2, ticu2death = 5;
+           ticu2death = 5;
 
     double cont_freq = 0.5, alpha = 0.09, beta = 0.25, delta = 0.3, rho = 0.2, theta = 0.25;
 
@@ -29,7 +29,6 @@ TEST(TestSecir, compareAgeResWithSingleRun)
         params.times[i].set_home_to_hospitalized(thome2hosp);
         params.times[i].set_hospitalized_to_icu(thosp2icu);
         params.times[i].set_icu_to_home(ticu2home);
-        params.times[i].set_infectious_asymp(tinfasy);
         params.times[i].set_icu_to_death(ticu2death);
 
         params.populations.set({i, epi::SecirCompartments::E}, fact * nb_exp_t0);
@@ -48,6 +47,8 @@ TEST(TestSecir, compareAgeResWithSingleRun)
         params.probabilities[i].set_icu_per_hospitalized(theta);
         params.probabilities[i].set_dead_per_icu(delta);
     }
+
+    params.apply_constraints();
 
     epi::ContactFrequencyMatrix& cont_freq_matrix = params.get_contact_patterns();
     epi::Damping dummy(30., 0.3);

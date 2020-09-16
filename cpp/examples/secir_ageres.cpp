@@ -84,6 +84,8 @@ int main()
         }
     }
 
+    params.apply_constraints();
+
     std::vector<Eigen::VectorXd> secir(0);
 
     std::vector<double> time = simulate(t0, tmax, dt, params, secir);

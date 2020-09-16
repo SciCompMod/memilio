@@ -65,7 +65,7 @@ int main()
     params.probabilities[0].set_icu_per_hospitalized(theta);
     params.probabilities[0].set_dead_per_icu(delta);
 
-    // params[0].dampings.add(epi::Damping(30., 0.3));
+    params.apply_constraints();
 
     std::vector<Eigen::VectorXd> secir(0);
 
