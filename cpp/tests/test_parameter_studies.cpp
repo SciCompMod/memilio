@@ -1,6 +1,8 @@
+
 #include <epidemiology/secir/secir.h>
 #include <epidemiology/secir/parameter_space.h>
 #include <epidemiology/secir/parameter_studies.h>
+#include <epidemiology/migration/migration.h>
 #include <gtest/gtest.h>
 #include <stdio.h>
 
@@ -249,16 +251,18 @@ TEST(ParameterStudies, check_ensemble_run_result)
         }
     }
 
-    epi::ParameterStudy parameter_study(
-        [](double t0, double tmax, double dt, epi::SecirParams const& params) {
-            return epi::simulate(t0, tmax, dt, params);
-        },
-        params, t0, tmax, 1);
+    epi::ParameterStudy parameter_study(epi::make_migration_sim<epi::SecirSimulation>, params, t0, tmax, 0.2, 1);
 
     // Run parameter study
     int run = 0;
     parameter_study.set_num_runs(1);
-    auto results = parameter_study.run();
+    std::vector<epi::Graph<epi::ModelNode<epi::SecirSimulation>, epi::MigrationEdge>> graph_results =
+        parameter_study.run();
+
+    std::vector<epi::TimeSeries<double>> results;
+    for (int i = 0; i < graph_results.size(); i++) {
+        results.push_back(std::move(graph_results[i].nodes()[0].model.get_result()));
+    }
 
     for (size_t i = 0; i < results[0].get_num_time_points(); i++) {
         std::vector<double> total_at_ti(epi::SecirCompartments::SecirCount, 0);

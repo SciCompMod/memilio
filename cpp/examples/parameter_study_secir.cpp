@@ -2,6 +2,7 @@
 #include <epidemiology/secir/parameter_space.h>
 #include <epidemiology/secir/parameter_studies.h>
 #include <epidemiology_io/secir_parameters_io.h>
+#include <epidemiology/migration/migration.h>
 
 #include <tixi.h>
 
@@ -108,11 +109,7 @@ int main(int argc, char* argv[])
     tixiCloseDocument(handle3);
 
     // create study
-    epi::ParameterStudy parameter_study(
-        [](double t0, double tmax, double dt, epi::SecirParams const& params) {
-            return epi::simulate(t0, tmax, dt, params);
-        },
-        params, t0, tmax, 1);
+    epi::ParameterStudy parameter_study(epi::make_migration_sim<epi::SecirSimulation>, params, t0, tmax, 0.2, 1);
 
     parameter_study.set_num_runs(1);
 
@@ -129,8 +126,8 @@ int main(int argc, char* argv[])
     tixiOpenDocument("Parameters.xml", &handle);
     epi::ParameterStudy read_study = epi::read_parameter_study(handle, path);
     int run                        = 0;
-    auto lambda                    = [&run, t0, tmax](const auto& params, const auto& secir_result) {
-        //epi::write_single_run_params(run++, params, t0, tmax, secir_result);
+    auto lambda                    = [&run, t0, tmax](const auto& params, const auto& secir_result, int node) {
+        epi::write_single_run_params(run++, params, t0, tmax, secir_result, node);
     };
     auto results = read_study.run(lambda);
 

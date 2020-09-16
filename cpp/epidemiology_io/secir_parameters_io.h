@@ -126,7 +126,7 @@ void write_parameter_study(TixiDocumentHandle handle, const std::string& path, c
  * @param tmax end point of simulation
  */
 void write_single_run_params(const int run, const SecirParams& params, double t0, double tmax,
-                             const TimeSeries<double>& result);
+                             const TimeSeries<double>& result, int node);
 
 /**
  * @brief Creates xml file containing Parameters of one node of a graph
@@ -135,14 +135,14 @@ void write_single_run_params(const int run, const SecirParams& params, double t0
  * @param t0 starting point of simulation
  * @param tmax end point of simulation
  */
-void write_node(const Graph<ModelNode<SecirSimulation>, MigrationEdge>& graph, int node, double t0, double tmax);
+void write_node(const Graph<ModelNode<SecirParams>, MigrationEdge>& graph, int node, double t0, double tmax);
 
 /**
  * @brief reads parameters of a single node and saves it into the graph
  * @param graph Graph in which the node is saved
  * @param node Node ID
  */
-void read_node(Graph<ModelNode<SecirSimulation>, MigrationEdge>& graph, int node);
+void read_node(Graph<ModelNode<SecirParams>, MigrationEdge>& graph, int node);
 
 /**
  * @brief Writes the information of a single edge into a xml file
@@ -152,7 +152,7 @@ void read_node(Graph<ModelNode<SecirSimulation>, MigrationEdge>& graph, int node
  * @param edge Edge ID
  */
 void write_edge(TixiDocumentHandle handle, const std::string& path,
-                const Graph<ModelNode<SecirSimulation>, MigrationEdge>& graph, int edge);
+                const Graph<ModelNode<SecirParams>, MigrationEdge>& graph, int edge);
 
 /**
  * @brief Reads information of a single edge and saves it into the graph
@@ -161,8 +161,8 @@ void write_edge(TixiDocumentHandle handle, const std::string& path,
  * @param graph Graph to which the edge is added
  * @param edge Edge ID
  */
-void read_edge(TixiDocumentHandle handle, const std::string& path,
-               Graph<ModelNode<SecirSimulation>, MigrationEdge>& graph, int edge);
+void read_edge(TixiDocumentHandle handle, const std::string& path, Graph<ModelNode<SecirParams>, MigrationEdge>& graph,
+               int edge);
 
 /**
  * @brief creates xml files for each node of a Secir simulation graph and one xml file for its edges
@@ -171,12 +171,12 @@ void read_edge(TixiDocumentHandle handle, const std::string& path,
  * @param tmax end point of simulation
  */
 //TO-DO: Implement apropriate File System for XML FIles
-void write_graph(const Graph<ModelNode<SecirSimulation>, MigrationEdge>& graph, double t0, double tmax);
+void write_graph(const Graph<ModelNode<SecirParams>, MigrationEdge>& graph, double t0, double tmax);
 
 /**
  * @brief reads graph xml files and returns a Secir simulation graph
  */
-Graph<ModelNode<SecirSimulation>, MigrationEdge> read_graph();
+Graph<ModelNode<SecirParams>, MigrationEdge> read_graph();
 
 } // namespace epi
 

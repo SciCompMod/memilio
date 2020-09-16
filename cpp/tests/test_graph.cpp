@@ -125,7 +125,7 @@ TEST(TestGraphSimulation, simulate)
             edge_func(t, dt, e, n1, n2);
         });
 
-    sim.advance(2);
+    sim.advance(tmax);
 }
 
 TEST(TestGraph, persistentChangesDuringSimulation)

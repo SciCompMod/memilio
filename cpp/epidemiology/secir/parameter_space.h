@@ -14,7 +14,6 @@
 
 namespace epi
 {
-
 /* Sets alls SecirParams parameters normally distributed, 
 *  using the current value and a given standard deviation
 * @param[inout] params SecirParams including contact patterns for alle age groups
