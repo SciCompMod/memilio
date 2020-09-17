@@ -32,7 +32,6 @@ TEST(TestSecir, compareWithPreviousRun)
     params.times[0].set_home_to_hospitalized(thome2hosp);
     params.times[0].set_hospitalized_to_icu(thosp2icu);
     params.times[0].set_icu_to_home(ticu2home);
-    params.times[0].set_infectious_asymp(tinfasy);
     params.times[0].set_icu_to_death(ticu2death);
 
     epi::ContactFrequencyMatrix& cont_freq_matrix = params.get_contact_patterns();
@@ -54,6 +53,8 @@ TEST(TestSecir, compareWithPreviousRun)
     params.probabilities[0].set_hospitalized_per_infectious(rho);
     params.probabilities[0].set_icu_per_hospitalized(theta);
     params.probabilities[0].set_dead_per_icu(delta);
+
+    params.apply_constraints();
 
     std::vector<Eigen::VectorXd> secihurd(0);
     auto t = simulate(t0, tmax, dt, params, secihurd);
@@ -94,7 +95,6 @@ TEST(TestSecir, testParamConstructors)
     params.times[0].set_home_to_hospitalized(thome2hosp);
     params.times[0].set_hospitalized_to_icu(thosp2icu);
     params.times[0].set_icu_to_home(ticu2home);
-    params.times[0].set_infectious_asymp(tinfasy);
     params.times[0].set_icu_to_death(ticu2death);
 
     params.populations.set({0, epi::SecirCompartments::E}, nb_exp_t0);
@@ -446,7 +446,6 @@ TEST(TestSecir, check_constraints)
     params.times[0].set_home_to_hospitalized(thome2hosp);
     params.times[0].set_hospitalized_to_icu(thosp2icu);
     params.times[0].set_icu_to_home(ticu2home);
-    params.times[0].set_infectious_asymp(tinfasy);
     params.times[0].set_icu_to_death(ticu2death);
 
     epi::ContactFrequencyMatrix& cont_freq_matrix = params.get_contact_patterns();
@@ -471,6 +470,12 @@ TEST(TestSecir, check_constraints)
 
     epi::set_log_level(epi::LogLevel::off);
     params.check_constraints();
+
+    EXPECT_EQ(-91, params.populations.get({0, epi::SecirCompartments::E}));
+    EXPECT_EQ(2.124921, params.probabilities[0].get_asymp_per_infectious());
+    EXPECT_NEAR(5.08993, params.times[0].get_serialinterval(), 1e-14);
+
+    params.apply_constraints();
 
     EXPECT_EQ(0.0, params.populations.get({0, epi::SecirCompartments::E}));
     EXPECT_EQ(0.0, params.probabilities[0].get_asymp_per_infectious());

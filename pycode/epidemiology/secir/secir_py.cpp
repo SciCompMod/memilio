@@ -264,6 +264,9 @@ PYBIND11_MODULE(_secir, m)
         .def_readwrite("times", &epi::SecirParams::times)
         .def_readwrite("populations", &epi::SecirParams::populations)
         .def_readwrite("probabilities", &epi::SecirParams::probabilities)
+        .def_readwrite("probabilities", &epi::SecirParams::probabilities)
+        .def("check_constraints", &epi::SecirParams::check_constraints)
+        .def("apply_constraints", &epi::SecirParams::apply_constraints)
         .def("get_contact_patterns", py::overload_cast<>(&epi::SecirParams::get_contact_patterns))
         .def("get_contact_patterns", py::overload_cast<>(&epi::SecirParams::get_contact_patterns, py::const_));
 

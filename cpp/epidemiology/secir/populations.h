@@ -162,9 +162,14 @@ public:
     size_t get_flat_index(std::vector<size_t> const& indices) const;
 
     /**
+     * @brief checks whether the population Parameters satisfy their corresponding constraints and applys them
+     */
+    void apply_constraints();
+
+    /**
      * @brief checks whether the population Parameters satisfy their corresponding constraints
      */
-    void check_constraints();
+    void check_constraints() const;
 
 private:
     // A vector storying the size of each category

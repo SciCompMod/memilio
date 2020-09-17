@@ -204,7 +204,7 @@ void draw_sample(SecirParams& params)
 
     params.get_contact_patterns().draw_sample();
 
-    params.check_constraints();
+    params.apply_constraints();
 }
 
 } // namespace epi

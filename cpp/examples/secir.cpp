@@ -19,15 +19,8 @@ int main()
         thome2hosp = 5, // 2.5-7 (=R6^(-1))
         thosp2icu  = 2, // 1-3.5 (=R7^(-1))
         ticu2home  = 8, // 5-16 (=R8^(-1))
-        tinfasy    = 6.2, // (=R9^(-1)=R_3^(-1)+0.5*R_4^(-1))
+        // tinfasy    = 6.2, // (=R9^(-1)=R_3^(-1)+0.5*R_4^(-1))
         ticu2death = 5; // 3.5-7 (=R5^(-1))
-
-    double tinfasy2 = 1.0 / (0.5 / (tinfmild - tserint) + 0.5 / tinfmild);
-    if (fabs(tinfasy2 - tinfasy) > 0) {
-        epi::log_warning("----> TODO / To consider: In the HZI paper, tinfasy (the asymptomatic infectious time) or "
-                         "R9^(-1)=R_3^(-1)+0.5*R_4^(-1) is directly given by R_3 and R_4 and maybe should not be an "
-                         "'additional parameter'");
-    }
 
     double cont_freq = 0.5, // 0.2-0.75
         alpha        = 0.09, // 0.01-0.16
@@ -48,7 +41,6 @@ int main()
     params.times[0].set_home_to_hospitalized(thome2hosp);
     params.times[0].set_hospitalized_to_icu(thosp2icu);
     params.times[0].set_icu_to_home(ticu2home);
-    params.times[0].set_infectious_asymp(tinfasy);
     params.times[0].set_icu_to_death(ticu2death);
 
     epi::ContactFrequencyMatrix& cont_freq_matrix = params.get_contact_patterns();
@@ -73,7 +65,7 @@ int main()
     params.probabilities[0].set_icu_per_hospitalized(theta);
     params.probabilities[0].set_dead_per_icu(delta);
 
-    // params[0].dampings.add(epi::Damping(30., 0.3));
+    params.apply_constraints();
 
     std::vector<Eigen::VectorXd> secir(0);
 
