@@ -117,9 +117,6 @@ public:
     }
 
 private:
-    // The path of the file storing the parameter ranges
-    std::string parameter_file;
-
     // Stores Graph with the names and ranges of all parameters
     epi::Graph<epi::ModelNode<epi::SecirParams>, epi::MigrationEdge> m_graph;
 
@@ -132,8 +129,10 @@ private:
     double m_t0 = 0.0;
     // End time (should be the same for all simulations)
     double m_tmax = 400.0;
-    // adaptive time step (will be corrected if too large/small)
-    double m_dt = 0.1;
+    // adaptive time step of the integrator (will be corrected if too large/small)
+    double m_dt_inner = 0.1;
+    // time step of the graph //TODO: make configurable
+    double m_dt_outer = 1.0;
 };
 
 inline ParameterStudy::ParameterStudy(secir_simulation_function_t const& simu_func,
@@ -190,7 +189,7 @@ ParameterStudy::run(HandleSimulationResultFunction simulation_result_function)
         for (auto& node : m_graph.nodes()) {
             SecirParams params_sample = node.model;
             draw_sample(params_sample);
-            sim_graph.add_node(params_sample, m_t0);
+            sim_graph.add_node(params_sample, m_t0, m_dt_inner);
         }
 
         for (auto& edge : m_graph.edges()) {
@@ -198,7 +197,7 @@ ParameterStudy::run(HandleSimulationResultFunction simulation_result_function)
         }
 
         // Call the simulation function
-        auto sim = simulation_function(m_t0, m_dt, sim_graph);
+        auto sim = simulation_function(m_t0, m_dt_outer, sim_graph);
         sim.advance(m_tmax);
 
         auto result = sim.get_graph();
