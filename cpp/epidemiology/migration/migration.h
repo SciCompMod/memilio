@@ -36,7 +36,7 @@ public:
         auto dt = m_dt;
         while (m_t < t_max) {
             if (m_t + dt > t_max) {
-                dt = t_max - dt;
+                dt = t_max - m_t;
             }
 
             for (auto& n : m_graph.nodes()) {

@@ -91,8 +91,8 @@ TEST(TestGraphSimulation, simulate)
     MockNodeFunc node_func;
 
     const auto t0   = 1;
-    const auto tmax = 3;
-    const auto dt   = 1;
+    const auto tmax = 3.0;
+    const auto dt   = 1.0;
 
     testing::ExpectationSet node_func_calls;
 
@@ -126,6 +126,30 @@ TEST(TestGraphSimulation, simulate)
         });
 
     sim.advance(tmax);
+
+    EXPECT_NEAR(sim.get_t(), tmax, 1e-15);
+}
+
+TEST(TestGraphSimulation, stopsAtTmax)
+{
+    using testing::_;
+    using testing::Eq;
+
+    epi::Graph<int, int> g;
+    g.add_node(0);
+    g.add_node(1);
+    g.add_edge(0, 1, 0);
+
+    const auto t0   = 1.0;
+    const auto tmax = 3.123;
+    const auto dt   = 0.076;
+
+    auto sim = epi::make_graph_sim(
+        t0, dt, g, [](auto&& t, auto&& dt, auto&& n) {}, [](auto&& t, auto&& dt, auto&& e, auto&& n1, auto&& n2) {});
+
+    sim.advance(tmax);
+
+    EXPECT_NEAR(sim.get_t(), tmax, 1e-15);
 }
 
 TEST(TestGraph, persistentChangesDuringSimulation)
@@ -146,9 +170,11 @@ TEST(TestGraph, persistentChangesDuringSimulation)
         ++n2;
     };
 
-    auto sim      = epi::make_graph_sim(0, 1, g, node_func, edge_func);
+    auto t0 = 0;
+    auto dt = 1;
+    auto sim      = epi::make_graph_sim(t0, dt, g, node_func, edge_func);
     int num_steps = 2;
-    sim.advance(num_steps);
+    sim.advance(t0 + num_steps * dt);
 
     EXPECT_THAT(sim.get_graph().nodes(),
                 testing::ElementsAre(6 + num_steps, 4 + num_steps + num_steps, 8 + num_steps + 2 * num_steps));
