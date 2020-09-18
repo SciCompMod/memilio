@@ -1,7 +1,7 @@
 import os
 import sys
 import pandas
-import numpy as np
+import bisect
 from datetime import timedelta, date
 
 from epidemiology.epidata import getDataIntoPandasDataFrame as gd
@@ -48,8 +48,8 @@ def adjust_data(df, date_of_data):
     # rename column 'kreis' of first date to match data of following days
     if date_of_data == date(2020, 4, 24):
         df.rename({'kreis': 'gemeindeschluessel'}, axis=1, inplace=True)
-        # Add column ICU_ventilated and fill it with Nan
-        df.insert(loc=len(df.columns), column='faelle_covid_aktuell_beatmet', value=np.nan)
+        # Add empty column ICU_ventilated
+        df.insert(loc=len(df.columns), column='faelle_covid_aktuell_beatmet', value='')
 
     # remove empty column
     if date_of_data == date(2020, 4, 29):
@@ -63,7 +63,7 @@ def adjust_data(df, date_of_data):
     # add 'bundesland' for data from 25.4.
     if date_of_data == date(2020, 4, 25):
         df.insert(loc=0, column='bundesland', value=df['gemeindeschluessel'].floordiv(1000))
-        df.insert(loc=len(df.columns), column='faelle_covid_aktuell_beatmet', value=np.nan)
+        df.insert(loc=len(df.columns), column='faelle_covid_aktuell_beatmet', value='')
 
     return df
 
@@ -96,6 +96,21 @@ def call_call_url(url_prefix, call_number):
 
     return df
 
+## Finds nearest bit earlier date to an given date from a list of dates
+#
+# @param date_list Iterable object with dates
+# @param date_given Single date
+#
+# @return date from date_list which is closest to date_given.
+#
+def nearest_earlier_date(date_list, date_given):
+
+    # should be sorted but for case
+    date_list.sort();
+    # find all dates before date_given
+    index = bisect.bisect(date_list, date_given)
+    # get date which is closest
+    return min(date_list[:index], key=lambda x: abs(x - date_given))
 
 ## Downloads data for given date
 #
@@ -167,6 +182,7 @@ def download_data_for_one_day(last_number, download_date):
                         date(2020, 8, 31): 5026,
                         date(2020, 9, 5): 5036,
                         }
+    start_date_differs = False
 
     call_date = download_date.strftime("%Y-%m-%d")
 
@@ -200,6 +216,14 @@ def download_data_for_one_day(last_number, download_date):
         df = call_call_url(url_prefix, call_number)
 
     else:
+        # case where start_date is not 24-04-2020 and is not in dict
+        # then we search to date which is closest to given date and smaller
+        if last_number == 0:
+            nd = nearest_earlier_date(list(call_number_dict.keys()), download_date)
+            last_number = call_number_dict[nd]
+            # make sure no output about new drifting number is added for this case
+            start_date_differs = True
+
         # It is most likely that the difference is between 1 and 2
         for sign in range(2):
             for delta in range(1,300):
@@ -208,7 +232,7 @@ def download_data_for_one_day(last_number, download_date):
 
                # for delta 1 and 2 the number is not saved in dict,
                # because it does not take so long to get those numbers
-               if sign == 0 and delta != 1 and delta != 2:
+               if sign == 0 and delta != 1 and delta != 2 and not start_date_differs:
                   call_string = "date(" + download_date.strftime("%Y, %-m, %-d") + "): " + str(call_number) + "," + "\n"
 
                df = call_call_url(url_prefix, call_number)
@@ -262,16 +286,16 @@ def download_data_for_one_day(last_number, download_date):
 # @param end_date [Optional] Date to stop to download data [Default = today].
 #
 def get_divi_data(read_data=dd.defaultDict['read_data'],
-                  update_data=dd.defaultDict['update_data'],
-                  make_plot=dd.defaultDict['make_plot'],
                   out_form=dd.defaultDict['out_form'],
                   out_folder=dd.defaultDict['out_folder'],
-                  start_date=date(2020, 4, 24),
-                  end_date=date(2020, 9, 5),
+                  end_date=dd.defaultDict['start_date'],
+                  start_date=dd.defaultDict['end_date'],
+                  update_data=dd.defaultDict['update_data'],
                   ):
 
     delta = timedelta(days=1)
     today = date.today()
+    print(start_date, end_date)
 
     # First csv data on 24-04-2020
     if start_date < date(2020, 4, 24):
@@ -362,7 +386,7 @@ def get_divi_data(read_data=dd.defaultDict['read_data'],
                   "to the dcitionary \"call_number_dict\" in the function \"download_data_for_one_day\": ")
             print(new_dict_string)
 
-        gd.write_dataframe(df, directory, filename, "json")
+        gd.write_dataframe(df, directory, filename, out_form)
     else:
         exit_string = "Something went wrong, dataframe is empty."
         sys.exit(exit_string)
@@ -385,37 +409,44 @@ def get_divi_data(read_data=dd.defaultDict['read_data'],
     # write data for counties to file
     df_counties = df[["County", "ID_County", "ICU", "ICU_ventilated", "Date"]]
     filename = "county_divi"
-    gd.write_dataframe(df_counties, directory, filename, "json")
+    gd.write_dataframe(df_counties, directory, filename, out_form)
 
     # write data for states to file
     df_states = df.groupby(["ID_State", "State", "Date"]).agg({"ICU": sum, "ICU_ventilated": sum})
     df_states = df_states.reset_index()
     df_states.sort_index(axis=1, inplace=True)
     # For the sum calculation Nan is used as a 0, thus some zeros have to be changed back to NaN
-    df_states.loc[df_states["Date"] <= "2020-04-25 09:15:00", "ICU_ventilated"] = np.nan
+    # df_states.loc[df_states["Date"] <= "2020-04-25 09:15:00", "ICU_ventilated"] = np.nan
     # TODO: Fill "faelle_covid_aktuell_im_bundesland" into ICU data
     #print(df_states.loc[df_states["Date"] == "2020-04-24 09:15:00", "ICU"])
     #print(df.groupby(["ID_State", "State"]).agg({"faelle_covid_aktuell_im_bundesland": max}).reset_index()[["faelle_covid_aktuell_im_bundesland"]])
     #df_states.loc[df_states["Date"] == "2020-04-24 09:15:00", "ICU"] = df_states.loc[df_states["Date"] == "2020-04-24 09:15:00", "ICU"].replace(df.groupby(["ID_State", "State"]).agg({"faelle_covid_aktuell_im_bundesland": max})[["faelle_covid_aktuell_im_bundesland"]])
 
     filename = "state_divi"
-    gd.write_dataframe(df_states, directory, filename, "json")
+    gd.write_dataframe(df_states, directory, filename, out_form)
 
     # write data for germany to file
     df_ger = df.groupby(["Date"]).agg({"ICU": sum, "ICU_ventilated": sum})
     df_ger = df_ger.reset_index()
     df_ger.sort_index(axis=1, inplace=True)
-    df_ger.loc[df_states["Date"] <= "2020-04-25 09:15:00", "ICU_ventilated"] = np.nan
+    # for performing sum nan is treated like an zero
+    # However, afterwards ist should be filled with NaN
+    # TODO: should we have this? See issue #205
+    # df_ger.loc[df_states["Date"] <= "2020-04-25 09:15:00", "ICU_ventilated"] = np.nan
     # TODO: Use also "faelle_covid_aktuell_im_bundesland" from 25.9.
     filename = "germany_divi"
-    gd.write_dataframe(df_ger, directory, filename, "json")
+    gd.write_dataframe(df_ger, directory, filename, out_form)
 
     print("Information: DIVI data has been written to", directory)
 
+# TODO: Add test for nearest_earlier_date
+# TODO: Change tests calls for all functions which has been eltered die to change of parser
+# TODO: Test new functionality, that when start_date is not in dict the call_number of closest date is used,
+#  but no output is generated
 
 def main():
-    [read_data, update_data, make_plot, out_form, out_folder] = gd.cli('Downloads data from DIVI')
-    get_divi_data(read_data, update_data, make_plot, out_form, out_folder)
+    [read_data, out_form, out_folder, end_date, start_date, update_data] = gd.cli('divi',)
+    get_divi_data(read_data, out_form, out_folder, end_date, start_date, update_data)
 
 
 if __name__ == "__main__":

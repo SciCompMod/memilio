@@ -1,6 +1,7 @@
 #This dictionary ensures that in case of calling the functions
 # and of calling the console scripts the default values are the same
 import os
+from datetime import date
 
 
 default_file_path = os.path.dirname(os.path.abspath(__file__))
@@ -10,11 +11,14 @@ if len(dfp_vec) > 0:
 
 
 defaultDict = {
-   'read_data':False,
-   'make_plot':False,
-   'out_form':'json',
-   'out_folder':default_file_path,
-   'update_data':False
+   'read_data': False,
+   'make_plot': False,
+   'out_form': 'json',
+   'out_folder': default_file_path,
+   'update_data': False,
+   'start_date': date(2020, 4, 24),
+   'end_date': date.today(),
+
 }
 
 # The following dict EngEng makes sure that for all

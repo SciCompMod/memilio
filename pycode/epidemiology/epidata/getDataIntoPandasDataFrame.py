@@ -4,6 +4,7 @@ from urllib.request import urlopen
 import json
 import pandas
 import argparse
+import datetime
 
 from epidemiology.epidata import defaultDict as dd
 
@@ -67,41 +68,83 @@ def loadCsv( targetFileName, apiUrl = 'https://opendata.arcgis.com/datasets/',
 
     return df
 
+def cli(what):
 
-def cli(description):
-  
+   cli_dict = {"divi": ['Downloads data from DIVI', 'start_date', 'end_date', 'update'],
+               "rki": ['Download data from RKI', 'plot'],
+               "spain": ['Download of spain data'],
+               "population": ['Download population data'],
+               "jh" : ['Downloads data from JH'],
+               "all": ['Download all possible data', 'plot','start_date', 'end_date', 'update']}
+
+   try:
+      what_list = cli_dict[what]
+   except KeyError:
+      exit_string = "Wrong key cor cli_dict"
+      sys.exit(exit_string)
+
    out_path_default = dd.defaultDict['out_folder']
    out_path_default = os.path.join(out_path_default, 'pydata')
    check_dir(out_path_default)
 
-   parser = argparse.ArgumentParser(description=description)
+   parser = argparse.ArgumentParser(description=what_list[0])
    
    parser.add_argument('-r',  '--read-from-disk',
                        help='Reads the data from file "json" instead of downloading it.',
-                       action='store_true')
-   parser.add_argument('-u',  '--update',
-                       help='Reads the data from file "json", downloads and adds data from today.',
-                       action='store_true')
-   parser.add_argument('-p', '--plot', help='Plots the data.',
                        action='store_true')
    parser.add_argument('-h5', '--hdf5', help='Changes output format from json to hdf5.',
                        action='store_true')
    parser.add_argument('-o', '--out-path', type=str, default=out_path_default, help='Defines folder for output.')
 
+   if 'end_date' in what_list:
+       parser.add_argument('-ed', '--end_date',
+                           help='Defines date after which data download is stopped.'
+                                'Should have form: Y-m-d. Default is today',
+                           type=lambda s: datetime.datetime.strptime(s, '%Y-%m-%d').date(),
+                           default=dd.defaultDict['end_date'])
+   if 'plot' in what_list:
+      parser.add_argument('-p', '--plot', help='Plots the data.',
+                          action='store_true')
+   if 'start_date' in what_list:
+      parser.add_argument('-sd',  '--start_date',
+                          help='Defines start date for data download. Should have form: Y-m-d.'
+                               'Default is 2020-04-24',
+                          type=lambda s: datetime.datetime.strptime(s, '%Y-%m-%d').date(),
+                          default = dd.defaultDict['start_date'])
+   if 'update' in what_list:
+      parser.add_argument('-u',  '--update',
+                          help='Reads the data from file "json", downloads and adds data from today.',
+                          action='store_true')
+
    args = parser.parse_args()
 
+   arg_list = []
+
    READ_DATA = args.read_from_disk
-   UPDATE_DATA = args.update
-   MAKE_PLOT = args.plot
+   arg_list.append(READ_DATA)
    OUT_FORM = "hdf5" if args.hdf5 else dd.defaultDict['out_form']
+   arg_list.append(OUT_FORM)
+   arg_list.append(args.out_path)
 
-   # TODO: Change arguments such that one argument + parameter can be either read_data or update
-   if READ_DATA and UPDATE_DATA:
-       exit_string = "You called the program with '--read-from-disk' and '--update'." \
-                     "Please choose just one. Both together is not possible."
-       sys.exit(exit_string)
+   # add additional arguments in alphabetical order
 
-   return [READ_DATA, UPDATE_DATA, MAKE_PLOT, OUT_FORM, args.out_path]
+   if 'end_date' in what_list:
+       arg_list.append(args.end_date)
+   if 'plot' in what_list:
+      arg_list.append(args.plot)
+   if 'start_date' in what_list:
+      arg_list.append(args.start_date)
+   if 'update' in what_list:
+      UPDATE_DATA = args.update
+      arg_list.append(UPDATE_DATA)
+
+      # TODO: Change arguments such that one argument + parameter can be either read_data or update
+      if READ_DATA:
+         exit_string = "You called the program with '--read-from-disk' and '--update'." \
+                       "Please choose just one. Both together is not possible."
+         sys.exit(exit_string)
+
+   return arg_list
 
 def check_dir(directory):
     # check if directory exists or create it
