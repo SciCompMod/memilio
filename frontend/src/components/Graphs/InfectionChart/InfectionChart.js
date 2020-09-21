@@ -52,10 +52,10 @@ class InfectionChart extends Component {
     this.createSeries(t('rki.deaths'), 'rkid');
     this.createSeries(t('rki.recovered'), 'rkir');
 
-    this.createSeries(t('parameters.sus'), 'seirs');
-    this.createSeries(t('parameters.exposed'), 'seire');
-    this.createSeries(t('parameters.infected'), 'seiri');
-    this.createSeries(t('parameters.recovered'), 'seirr');
+    this.createSeries(t('parameters.sus.label'), 'seirs');
+    this.createSeries(t('parameters.exposed.label'), 'seire');
+    this.createSeries(t('parameters.infected.label'), 'seiri');
+    this.createSeries(t('parameters.recovered.label'), 'seirr');
 
     this.updateData();
   }

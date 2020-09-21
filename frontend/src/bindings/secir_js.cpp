@@ -178,16 +178,36 @@ EMSCRIPTEN_BINDINGS(secirjs)
         .function("get_dampings", &epi::ContactFrequencyMatrix::get_dampings)
         .function("add_damping", &epi::ContactFrequencyMatrix::add_damping);
 
+    js::class_<epi::UncertainContactMatrix>("UncertainContactMatrix")
+        .constructor<epi::ContactFrequencyMatrix>()
+        .function("get_cont_freq_mat",
+                  js::select_overload<epi::ContactFrequencyMatrix&()>(&epi::UncertainContactMatrix::get_cont_freq_mat));
+
     js::class_<epi::SecirParams>("SecirParams")
-        .constructor<size_t>()
+        .constructor<epi::ContactFrequencyMatrix&>()
         .property("times", &epi::SecirParams::times)
         .property("populations", &epi::SecirParams::populations)
         .property("probabilities", &epi::SecirParams::probabilities)
         .function("get_contact_patterns",
-                  js::select_overload<epi::UncertainContactMatrix&()>(&epi::SecirParams::get_contact_patterns));
+                  js::select_overload<epi::UncertainContactMatrix&()>(&epi::SecirParams::get_contact_patterns))
+        .function("set_contact_patterns", &epi::SecirParams::set_contact_patterns);
 
     js::function("simulate", &simulate_secir);
 
+    js::enum_<epi::SecirCompartments>("SecirCompartments")
+        .value("E", epi::SecirCompartments::E)
+        .value("S", epi::SecirCompartments::S)
+        .value("C", epi::SecirCompartments::C)
+        .value("I", epi::SecirCompartments::I)
+        .value("H", epi::SecirCompartments::H)
+        .value("U", epi::SecirCompartments::U)
+        .value("R", epi::SecirCompartments::R)
+        .value("D", epi::SecirCompartments::D)
+        .value("SecirCount", epi::SecirCompartments::SecirCount);
+
     js::register_vector<double>("VectorDouble");
+    js::register_vector<size_t>("VectorSizeT");
     js::register_vector<epi::SecirParams>("VectorSecirParams");
+    js::register_vector<epi::SecirParams::Probabilities>("VectorSecirParamsProbabilities");
+    js::register_vector<epi::SecirParams::StageTimes>("VectorSecirParamsStageTimes");
 }

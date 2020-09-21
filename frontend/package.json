@@ -15,6 +15,7 @@
     "i18next": "19.4.2",
     "i18next-browser-languagedetector": "4.0.2",
     "i18next-http-backend": "1.0.3",
+    "ka-table": "^3.7.2",
     "memoize-one": "5.1.1",
     "moment": "2.24.0",
     "moment-range": "4.0.2",

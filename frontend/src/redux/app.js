@@ -47,7 +47,9 @@ const slice = createSlice({
   },
   reducers: {
     init: (state, action) => {
-      //return state;
+      const {ageGroups} = action.payload;
+      state.config = action.payload;
+      state.ageGroups = ageGroups;
     },
     setSelected: (state, action) => {
       state.selected = action.payload;

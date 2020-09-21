@@ -21,9 +21,9 @@ numeral.register('locale', 'de', {
     decimal: ',',
   },
 });
-numeral.locale('de');
+numeral.locale('en');
 
-moment.locale('de');
+moment.locale('en');
 
 ReactDOM.render(
   <Provider store={store}>
