@@ -27,6 +27,7 @@ void World::evolve(double dt)
     begin_step(dt);
     interaction(dt);
     migration(dt);
+    t+=dt;
 }
 
 void World::interaction(double dt)
@@ -51,6 +52,9 @@ void World::migration(double dt)
             }
         }
     }
+
+    //TODO: more sensible migration probabilities
+    //TODO: migration by complex rules
 }
 
 void World::begin_step(double dt)
@@ -68,6 +72,21 @@ auto World::get_locations() const -> Range<std::pair<ConstLocationIterator, Cons
 auto World::get_persons() const -> Range<std::pair<ConstPersonIterator, ConstPersonIterator>>
 {
     return std::make_pair(ConstPersonIterator(m_persons.begin()), ConstPersonIterator(m_persons.end()));
+}
+
+int World::day_of_week()
+{
+    //is assumed that the simulation starts from monday
+    // Monday: 0
+    // Sunday: 6
+    int days = int(t) % 24;
+    return days % 7;
+}
+
+int World::hour_of_day(){
+    //is assumed that the simulation starts from 00:00
+    return (int (t) % 24);
+
 }
 
 } // namespace epi

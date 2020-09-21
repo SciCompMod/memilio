@@ -54,6 +54,16 @@ public:
     void evolve(double dt);
 
     /** 
+    * returns the day of week of current time in world
+    */
+    int day_of_week();
+
+    /** 
+    * returns the hour of day of current time in world
+    */
+    int hour_of_day();
+    
+    /** 
      * add a location to the world.
      * @param type type of location to add
      * @return reference to the newly created location
@@ -87,6 +97,7 @@ private:
     std::vector<std::unique_ptr<Location>> m_locations;
     GlobalInfectionParameters m_infection_parameters;
     MigrationParameters m_migration_parameters;
+    double t;
 };
 
 } // namespace epi
