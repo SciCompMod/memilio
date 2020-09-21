@@ -11,21 +11,99 @@
   },
   "parameters": {
     "title": "Parameter",
-    "contactrate": "Kontaktrate (Tage)",
-    "incubation": "Inkubationszeit (Tage)",
-    "infection": "Infektionszeit (Tage)",
-    "deaths": "Verstorbenen Personen",
-    "sus": "Gefährdete Personen",
-    "i0": "Infizierte Personen",
-    "recovered": "Genesene Personen",
-    "exposed": "Exponierte Personen",
-    "infected": "Infizierte Personen"
+    "contactrate": {
+      "label": "Kontaktrate (Tage)",
+      "info": "Kontaktrate"
+    },
+    "incubation": {
+      "label": "Inkubationszeit (Tage)",
+      "info": "Inkubationszeit"
+    },
+    "infection": {
+      "label": "Infektionszeit (Tage)",
+      "info": "Infektionszeit"
+    },
+    "deaths": {
+      "label": "Verstorbene Personen",
+      "info": "Verstorbene Personen"
+    },
+    "sus": {
+      "label": "Gefährdete Personen",
+      "info": "Gefährdete Personen"
+    },
+    "recovered": {
+      "label": "Genesene Personen",
+      "info": "Genesene Personen"
+    },
+    "exposed": {
+      "label": "Exponierte Personen",
+      "info": "Exponierte Personen"
+    },
+    "infected": {
+      "label": "Infizierte Personen",
+      "info": "Infizierte Personen"
+    },
+    "serint": {
+      "label": "Serielles Intervall",
+      "info": "Zeitlicher Abstand zwischen analogen Phasen einer Erkrankung bei zwei aufeinander folgenden Gliedern einer Infektionskette"
+    },
+    "infmild": {
+      "label": "Infektionszeitraum (milder Verlauf)",
+      "info": "Zeitraum, indem eine Person infektiös ist ohne, dass bzw. bevor eine Hospitalisierung erfolgen muss"
+    },
+    "hosp2home": {
+      "label": "Einfache Hospitalisierungsdauer",
+      "info": "Zeitraum der notwendigen Hospitalisierung eines Patienten, der ohne Intensivpflege wieder gesundet"
+    },
+    "home2hosp": {
+      "label": "home2hosp",
+      "info": "mean time a patient with mild symptoms spends at home before hospital admission due to worsening of the disease condition"
+    },
+    "hosp2icu": {
+      "label": "hosp2icu",
+      "info": "mean time a patient who entered the hospital will be hopistalized without ICU before being connected to an ICU"
+    },
+    "icu2home": {
+      "label": "icu2home",
+      "info": "mean time a patient is connected to an ICU before returning home"
+    },
+    "infasy": {
+      "label": "infasy",
+      "info": "mean time an asymptomatic person remains infective"
+    },
+    "icu2death": {
+      "label": "icu2death",
+      "info": "mean time a person needs ICU support before dying"
+    },
+    "infprob": {
+      "label": "infprob",
+      "info": ""
+    },
+    "alpha": {
+      "label": "alpha",
+      "info": "share of asymptomatic cases"
+    },
+    "beta": {
+      "label": "beta",
+      "info": "risk of infection from the infected symptomatic patients"
+    },
+    "rho": {
+      "label": "rho",
+      "info": "hospitalized per infected"
+    },
+    "theta": {
+      "label": "theta",
+      "info": "intensive care units per hospitalized"
+    },
+    "delta": {
+      "label": "delta",
+      "info": "deaths per intensive care units"
+    }
   },
   "rki": {
     "title": "RKI Daten",
     "deaths": "RKI Verstorbenen Personen",
     "sus": "RKI Gefährdete Personen",
-    "i0": "RKI Infizierte Personen",
     "recovered": "RKI Genesene Personen",
     "exposed": "RKI Exponierte Personen",
     "infected": "RKI Infizierte Personen"
@@ -43,8 +121,5 @@
   "state": "Bundesland",
   "county": "Landkreis",
   "selection": "Auswahl",
-  "no-selection": "Keine Auswahl getroffen!",
-  "timeline" : {
-    "title": "Zeitlinie"
-  }
+  "no-selection": "Keine Auswahl getroffen!"
 }

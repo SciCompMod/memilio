@@ -12,6 +12,9 @@ import {calculateDamping, lastElement} from '../common/utils';
 
 /** @typedef {{date: number, S: number, E: number, I: number, R: number}} SEIREntry */
 
+/**
+ * @deprecated
+ */
 class Simulation extends PureComponent {
   /**
    * Runs a SEIR simulation on the selected region and related regions.
