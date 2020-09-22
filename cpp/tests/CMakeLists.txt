@@ -19,12 +19,18 @@ set(TESTSOURCES
   test_numericalIntegration.cpp
   test_damping.cpp
   test_secir.cpp
+  test_implicit_euler.cpp
   test_migration.cpp
   test_eigen_util.cpp
   test_secir_ageres.cpp
   test_parameter_studies.cpp
   test_graph.cpp
   test_stl_util.cpp
+  test_uncertain.cpp
+  test_time_series.cpp
+  test_abm.cpp
+  distributions_helpers.h
+  distributions_helpers.cpp
   gtest_helpers.h
 )
 
@@ -32,6 +38,7 @@ if (TARGET epidemiology_io)
   set(TESTSOURCES ${TESTSOURCES}
     test_save_parameters.cpp
     test_save_results.cpp
+    test_twitter.cpp
   )
 endif()
 

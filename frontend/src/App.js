@@ -1,6 +1,8 @@
 import React, {Component} from 'react';
 import {connect} from 'react-redux';
 import {withTranslation} from 'react-i18next';
+import am4lang_de_DE from '@amcharts/amcharts4/lang/de_DE';
+import * as am4core from '@amcharts/amcharts4/core';
 
 import {Spinner} from 'reactstrap';
 
@@ -13,6 +15,12 @@ import {RKIDatastore as rki, Tables} from './common/rki-datastore';
 import {PopulationDatastore as population} from './common/population-datastore';
 
 import './App.scss';
+
+// AmCharts defaults to English as a locale and not the browser default,
+// so we have to set it manually.
+if (navigator.language.includes('de')) {
+  am4core.options.defaultLocale = am4lang_de_DE;
+}
 
 class App extends Component {
   constructor(props) {

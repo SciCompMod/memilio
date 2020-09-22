@@ -1,4 +1,4 @@
-#include "epidemiology/populations.h"
+#include "epidemiology/secir/populations.h"
 #include <gtest/gtest.h>
 
 enum Category

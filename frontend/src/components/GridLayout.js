@@ -1,6 +1,6 @@
 import React, {Component} from 'react';
 import {Responsive, WidthProvider} from 'react-grid-layout';
-import Parameters from './Parameters';
+import Simulation from './Simulation/Simulation';
 import Measures from './Measures';
 import Results from './Results';
 import Timeline from './Timeline';
@@ -39,31 +39,23 @@ class ResponsiveGrid extends Component {
           autoSize={true}
           draggableHandle=".grid-draggable-handle"
         >
-          <div className="grid-box" key="timeline" data-grid={{x: 0, y: 0, w: 8, h: 1}}>
+          <div className="grid-box" key="timeline" data-grid={{x: 0, y: 0, w: 6, h: 1}}>
             <i className="fas fa-arrows-alt grid-draggable-handle" />
             <Timeline />
           </div>
-          <div className="grid-box" key="timeMap" data-grid={{x: 0, y: 1, w: 8, h: 7}}>
+          <div className="grid-box" key="timeMap" data-grid={{x: 0, y: 1, w: 6, h: 7}}>
             <i className="fas fa-arrows-alt grid-draggable-handle" />
             <TimeMap />
           </div>
-          {/*<div
-            className="grid-box"
-            key="map"
-            data-grid={{x: 6, y: 1, w: 6, h: 7}}
-          >
-            <i className="fas fa-arrows-alt grid-draggable-handle"></i>
-            <Map/>
-          </div>*/}
-          <div key="measures" data-grid={{x: 14, y: 4, w: 6, h: 3}} className="grid-box">
+          <div key="measures" data-grid={{x: 6, y: 6, w: 5, h: 3}} className="grid-box">
             <i className="fas fa-arrows-alt grid-draggable-handle"></i>
             <Measures />
           </div>
-          <div key="parameters" data-grid={{x: 8, y: 4, w: 6, h: 3}} className="grid-box">
+          <div key="parameters" data-grid={{x: 6, y: 0, w: 5, h: 5}} className="grid-box">
             <i className="fas fa-arrows-alt grid-draggable-handle"></i>
-            <Parameters />
+            <Simulation />
           </div>
-          <div key="results" data-grid={{x: 8, y: 0, w: 12, h: 5}} className="grid-box">
+          <div key="results" data-grid={{x: 11, y: 0, w: 9, h: 8}} className="grid-box">
             <i className="fas fa-arrows-alt grid-draggable-handle"></i>
             <Results />
           </div>

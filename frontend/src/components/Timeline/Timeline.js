@@ -13,13 +13,13 @@ import {withTranslation} from 'react-i18next';
  */
 class Timeline extends Component {
   /** @type Animation */
-  sliderAnimation;
+  #sliderAnimation;
 
   /** @type PlayButton */
-  playButton;
+  #playButton;
 
   /** @type Slider */
-  slider;
+  #slider;
 
   state = {
     /** @type string */
@@ -43,9 +43,9 @@ class Timeline extends Component {
     sliderContainer.padding(0, 50, 0, 50);
     sliderContainer.layout = 'horizontal';
 
-    this.playButton = sliderContainer.createChild(am4core.PlayButton);
-    this.playButton.valign = 'middle';
-    this.playButton.events.on('toggled', (event) => {
+    this.#playButton = sliderContainer.createChild(am4core.PlayButton);
+    this.#playButton.valign = 'middle';
+    this.#playButton.events.on('toggled', (event) => {
       if (event.target.isActive) {
         this.play();
       } else {
@@ -53,33 +53,33 @@ class Timeline extends Component {
       }
     });
 
-    this.slider = sliderContainer.createChild(am4core.Slider);
-    this.slider.valign = 'middle';
-    this.slider.animationDuration = 0;
-    this.slider.margin(0, 0, 0, 0);
-    this.slider.opacity = 1;
-    this.slider.startGrip.background.fill = am4core.color('#6794DC');
-    this.slider.background.opacity = 0.5;
-    this.slider.background.fill = am4core.color('#6794DC');
-    this.slider.marginLeft = 30;
+    this.#slider = sliderContainer.createChild(am4core.Slider);
+    this.#slider.valign = 'middle';
+    this.#slider.animationDuration = 0;
+    this.#slider.margin(0, 0, 0, 0);
+    this.#slider.opacity = 1;
+    this.#slider.startGrip.background.fill = am4core.color('#6794DC');
+    this.#slider.background.opacity = 0.5;
+    this.#slider.background.fill = am4core.color('#6794DC');
+    this.#slider.marginLeft = 30;
 
     const dateLabel = container.createChild(am4core.Label);
     dateLabel.text = '';
     dateLabel.align = 'center';
 
-    this.slider.events.on('rangechanged', () => {
+    this.#slider.events.on('rangechanged', () => {
       this.setTime();
       dateLabel.text = this.state.value;
     });
 
-    this.slider.startGrip.events.on('drag', () => {
+    this.#slider.startGrip.events.on('drag', () => {
       this.stop();
-      this.sliderAnimation.setProgress(this.slider.start);
+      this.#sliderAnimation.setProgress(this.#slider.start);
     });
 
-    this.sliderAnimation = this.slider.animate({property: 'start', to: 1}, 50000, am4core.ease.linear).pause();
-    this.sliderAnimation.events.on('animationended', () => {
-      this.playButton.isActive = false;
+    this.#sliderAnimation = this.#slider.animate({property: 'start', to: 1}, 50000, am4core.ease.linear).pause();
+    this.#sliderAnimation.events.on('animationended', () => {
+      this.#playButton.isActive = false;
     });
   }
 
@@ -91,6 +91,7 @@ class Timeline extends Component {
   }
 
   /**
+   * @private
    * @param {number} date
    * @return {string}
    */
@@ -102,9 +103,9 @@ class Timeline extends Component {
     });
   }
 
+  /** @private */
   setTime() {
-    //console.log('timeline set time', this.props.startDate, this.props.endDate);
-    const date = this.props.startDate + (this.props.endDate - this.props.startDate) * this.slider.start;
+    const date = this.props.startDate + (this.props.endDate - this.props.startDate) * this.#slider.start;
 
     this.setState({
       //start: this.createDateString(this.props.startDate),
@@ -115,20 +116,22 @@ class Timeline extends Component {
     this.props.setCurrentDate(date);
   }
 
+  /** @private */
   play() {
-    if (this.slider) {
-      if (this.slider.start >= 1) {
-        this.slider.start = 0;
-        this.sliderAnimation.start();
+    if (this.#slider) {
+      if (this.#slider.start >= 1) {
+        this.#slider.start = 0;
+        this.#sliderAnimation.start();
       }
-      this.sliderAnimation.resume();
-      this.playButton.isActive = true;
+      this.#sliderAnimation.resume();
+      this.#playButton.isActive = true;
     }
   }
 
+  /** @private */
   stop() {
-    this.sliderAnimation.pause();
-    this.playButton.isActive = false;
+    this.#sliderAnimation.pause();
+    this.#playButton.isActive = false;
   }
 
   render(ctx) {

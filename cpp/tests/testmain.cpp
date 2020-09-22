@@ -1,5 +1,5 @@
+#include <epidemiology/utils/logging.h>
 #include <gtest/gtest.h>
-#include <epidemiology/logging.h>
 
 #if HAVE_EPI_IO
 #include <epidemiology_io/io.h>

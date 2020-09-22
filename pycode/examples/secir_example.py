@@ -1,4 +1,4 @@
-from epidemiology.secir import ContactFrequencyMatrix, Damping, SecirParams, print_secir_params, simulate, StageTimes, Probabilities, Populations, SecirCompartments
+from epidemiology.secir import UncertainContactMatrix, ContactFrequencyMatrix, Damping, SecirParams, simulate, StageTimes, Probabilities, Populations, SecirCompartments
 from matplotlib import pyplot as plt
 import pandas as pd
 import numpy as np
@@ -6,7 +6,6 @@ import sys
 from datetime import datetime
 import datetime as dt
 
-sys.path.append('../../data/contact_data')
 from dampings import create_dampings
 
 
@@ -33,15 +32,18 @@ def plot_secir():
 
 
     contact_polymod = 0.5*(contact_polymod + contact_polymod.T)
+    
+    num_groups = contact_polymod.shape[-1]
+    num_compartments = int(SecirCompartments.SecirCount)
 
     create_dampings(path='../../data/contact_data/', days=days)
     dampings = pd.read_csv('../../data/contact_data/dampings.csv', index_col=0, header=[0, 1]).values
-    dampings = np.swapaxes(dampings.reshape(8,days,8),1,2)
+    dampings = np.swapaxes(dampings.reshape(num_groups,days,num_groups),1,2)
     for i in range(days):
         dampings[:,:,i] = 0.5*(dampings[:,:,i] + dampings[:,:,i].T)
 
 
-    num_groups = contact_polymod.shape[-1]
+    
 
 
     times = StageTimes()
@@ -94,48 +96,43 @@ def plot_secir():
         params.populations.set([i, SecirCompartments.D],   0*num_pop[i]/sum(num_pop))
 
     params.populations.set_total(Mio)
-
-    cont_freq_matrix = ContactFrequencyMatrix(num_groups)
-
-
-
     
     #  set contact rates and emulate some mitigations
     for i in range(num_groups):
         for j in range(0,num_groups):
-            cont_freq_matrix.set_cont_freq(contact_polymod[i,j]*inf_prob, i, j)
-            #cont_freq_matrix.set_cont_freq(0.62*num_pop[i]/sum(num_pop), i, j)
+            params.get_contact_patterns().get_cont_freq_mat().set_cont_freq(contact_polymod[i,j]*inf_prob, i, j)
+            # params.get_contact_patterns().get_cont_freq_mat().set_cont_freq(0.62*num_pop[i]/sum(num_pop), i, j)
             if use_dampings:
                 for d in range(dampings.shape[2]):
-                    cont_freq_matrix.add_damping(Damping(d, dampings[i,j,d]*1.06), i, j)
-                # cont_freq_matrix.add_damping(Damping(25., damp_work[i,j]), i, j)
-                # cont_freq_matrix.add_damping(Damping(35., damp_home[i,j]), i, j)
-                # cont_freq_matrix.add_damping(Damping(40., damp_school[i,j]), i, j)
-                # cont_freq_matrix.add_damping(Damping(50., damp_other[i,j]), i, j)
+                    params.get_contact_patterns().get_cont_freq_mat().add_damping(Damping(d, dampings[i,j,d]*1.06), i, j)
+                #  params.get_contact_patterns().get_cont_freq_mat().add_damping(Damping(25., damp_work[i,j]), i, j)
+                #  params.get_contact_patterns().get_cont_freq_mat().add_damping(Damping(35., damp_home[i,j]), i, j)
+                #  params.get_contact_patterns().get_cont_freq_mat().add_damping(Damping(40., damp_school[i,j]), i, j)
+                #  params.get_contact_patterns().get_cont_freq_mat().add_damping(Damping(50., damp_other[i,j]), i, j)
 
-                #cont_freq_matrix.add_damping(Damping(25., 0.8), i, j)
-                #cont_freq_matrix.add_damping(Damping(35., 0.9), i, j)
-                #cont_freq_matrix.add_damping(Damping(40., 0.45), i, j)
-                #cont_freq_matrix.add_damping(Damping(50., 0.25), i, j)
-                #cont_freq_matrix.add_damping(Damping(70., 0.35), i, j)
-                #cont_freq_matrix.add_damping(Damping(80., 0.45), i, j)
-                #cont_freq_matrix.add_damping(Damping(100., 0.7), 0, 0)
+                # params.get_contact_patterns().get_cont_freq_mat().add_damping(Damping(25., 0.8), i, j)
+                # params.get_contact_patterns().get_cont_freq_mat().add_damping(Damping(35., 0.9), i, j)
+                # params.get_contact_patterns().get_cont_freq_mat().add_damping(Damping(40., 0.45), i, j)
+                # params.get_contact_patterns().get_cont_freq_mat().add_damping(Damping(50., 0.25), i, j)
+                # params.get_contact_patterns().get_cont_freq_mat().add_damping(Damping(70., 0.35), i, j)
+                # params.get_contact_patterns().get_cont_freq_mat().add_damping(Damping(80., 0.45), i, j)
+                # params.get_contact_patterns().get_cont_freq_mat().add_damping(Damping(100., 0.7), 0, 0)
 
     # run the simulation
-    result = simulate(t0=0., tmax=days, dt=0.1, cont_freq_matrix=cont_freq_matrix, params=params)
+    result = simulate(t0=0., tmax=days, dt=0.1, params=params)
 
     # sum over all groups
-    group_data = np.zeros((len(result[0].t),8*num_groups))
+    group_data = np.zeros((len(result[0].t),num_compartments*num_groups))
     data = np.zeros((len(result[0].t),num_groups))
     for i in range(num_groups):
-        group_data[:,0 + i*8] = result[i].nb_sus
-        group_data[:,1 + i*8] = result[i].nb_exp
-        group_data[:,2 + i*8] = result[i].nb_car
-        group_data[:,3 + i*8] = result[i].nb_inf
-        group_data[:,4 + i*8] = result[i].nb_hosp
-        group_data[:,5 + i*8] = result[i].nb_icu
-        group_data[:,6 + i*8] = result[i].nb_rec
-        group_data[:,7 + i*8] = result[i].nb_dead
+        group_data[:,0 + i*num_compartments] = result[i].nb_sus
+        group_data[:,1 + i*num_compartments] = result[i].nb_exp
+        group_data[:,2 + i*num_compartments] = result[i].nb_car
+        group_data[:,3 + i*num_compartments] = result[i].nb_inf
+        group_data[:,4 + i*num_compartments] = result[i].nb_hosp
+        group_data[:,5 + i*num_compartments] = result[i].nb_icu
+        group_data[:,6 + i*num_compartments] = result[i].nb_rec
+        group_data[:,7 + i*num_compartments] = result[i].nb_dead
 
         data[:, 0] += result[i].nb_sus
         data[:, 1] += result[i].nb_exp
@@ -188,10 +185,10 @@ def plot_secir():
 
 
     if True:
-        compartiments = ['Suscepted', 'Exposed', 'Carrying', 'Infected', 'Hospitalized', 'ICU', 'Recovered', 'Dead', 'time']
+        compartments = ['Suscepted', 'Exposed', 'Carrying', 'Infected', 'Hospitalized', 'ICU', 'Recovered', 'Dead', 'time']
         groups = ['0-4', '5-17', '18-29', '30-39', '40-49', '50-59', '60-69', '70+']
         fig, ax = plt.subplots(4, 2, figsize=(12, 15))
-        for i, title in zip(range(8), compartiments):
+        for i, title in zip(range(num_compartments), compartments):
             for j, group in zip(range(num_groups), groups):
                 ax[int(np.floor(i / 2)),int(i % 2)].plot(result[j].t, group_data[:,j*num_groups+i], label=group)
             ax[int(np.floor(i / 2)),int(i % 2)].set_title(title)
@@ -205,7 +202,7 @@ def plot_secir():
 
 
         fig, ax = plt.subplots(4, 2, figsize=(12, 15))
-        for i, title in zip(range(8), compartiments):
+        for i, title in zip(range(num_compartments), compartments):
             ax[int(np.floor(i / 2)), int(i % 2)].plot(result[j].t, data[:, i])
             ax[int(np.floor(i / 2)), int(i % 2)].set_title(title)
 

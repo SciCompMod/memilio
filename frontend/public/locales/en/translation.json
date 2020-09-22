@@ -16,7 +16,6 @@
     "infection": "Infection Time (Days)",
     "deaths": "Deceased",
     "sus": "Susceptible persons",
-    "i0": "Infected persons",
     "recovered": "Recovered persons",
     "exposed": "Exposed persons",
     "infected": "Infected persons"
@@ -25,12 +24,14 @@
     "title": "RKI Data",
     "deaths": "RKI deceased persons ",
     "sus": "RKI susceptible persons",
-    "i0": "RKI infected persons",
     "recovered": "RKI recovered persons",
     "exposed": "RKI exposed persons",
     "infected": "RKI infected persons"
   },
-  "results": "Results",
+  "results": {
+    "title": "Results",
+    "log": "Logarithmic"
+  },
   "dateFormat": "dd.MM.yyyy",
   "timeline": {
     "title": "Timeline"

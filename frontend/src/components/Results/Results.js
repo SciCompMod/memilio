@@ -1,18 +1,24 @@
 import React, {Component} from 'react';
 import {connect} from 'react-redux';
 import {withTranslation} from 'react-i18next';
-import Simulation from '../Simulation';
-import SEIRChart from '../Graphs/SEIRChart';
+import InfectionChart from '../Graphs/InfectionChart';
 
 import {getActiveMeasures} from '../../redux/measures';
 import {RKIDatastore as rki} from '../../common/rki-datastore';
 
 import * as numeral from 'numeral';
+import {CustomInput} from 'reactstrap';
 
+import './Results.scss';
+
+/**
+ * Component for visualising simulation results / rki data
+ */
 class Results extends Component {
   state = {
     rki: null,
     loading: true,
+    logChart: false,
   };
 
   componentDidMount() {
@@ -55,13 +61,35 @@ class Results extends Component {
     }
   }
 
-  _render() {
-    if (!this.props.selected) {
+  /**
+   * Conditional render
+   */
+  conditionalRender() {
+    const {t} = this.props;
+    if (this.props.rki === null) {
       return <div>Bitte wählen sie ein Bundesland aus!</div>;
     } else if (this.state.loading) {
       return <div>Loading...</div>;
     } else {
-      return <SEIRChart seir={this.props.seir} rki={this.state.rki} measures={this.props.measures} />;
+      return (
+        <>
+          <CustomInput
+            type="switch"
+            id="log-scale-graph-switch"
+            label={t('results.log')}
+            checked={this.state.logChart}
+            onChange={() => this.setState({logChart: !this.state.logChart})}
+            className="p-2 log-switch"
+          />
+          <InfectionChart
+            seir={this.props.seir}
+            rki={this.props.rki.all}
+            measures={this.props.measures}
+            logChart={this.state.logChart}
+            style={{height: '100%'}}
+          />
+        </>
+      );
     }
   }
 
@@ -69,10 +97,9 @@ class Results extends Component {
     const {t} = this.props;
     return (
       <>
-        <div className="header">{t('results')}</div>
+        <div className="header">{t('results.title')}</div>
         <div className="content">
           <div className="top-bar p-1">
-            <Simulation />
             <span className="ml-2">
               {t('selection')} &nbsp;
               {this.props.selected ? this.props.selected.label : t('no-selection')}
@@ -82,7 +109,9 @@ class Results extends Component {
                 : '---'}
             </span>
           </div>
-          <div className="charts p-1">{this._render()}</div>
+          <div className="charts p-1" style={{height: 'calc(100% - 40px)'}}>
+            {this.conditionalRender()}
+          </div>
         </div>
       </>
     );

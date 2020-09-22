@@ -1,4 +1,4 @@
-#include "epidemiology/tensor_helpers.h"
+#include "epidemiology/utils/tensor_helpers.h"
 #include <gtest/gtest.h>
 
 TEST(TestTensor, tensor_dimension_prods)

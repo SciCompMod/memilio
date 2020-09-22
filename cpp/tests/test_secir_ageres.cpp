@@ -1,5 +1,5 @@
 #include "load_test_data.h"
-#include "epidemiology/secir.h"
+#include "epidemiology/secir/secir.h"
 #include <gtest/gtest.h>
 
 TEST(TestSecir, compareAgeResWithSingleRun)
@@ -9,7 +9,7 @@ TEST(TestSecir, compareAgeResWithSingleRun)
     double dt   = 0.1;
 
     double tinc = 5.2, tinfmild = 6, tserint = 4.2, thosp2home = 12, thome2hosp = 5, thosp2icu = 2, ticu2home = 8,
-           tinfasy = 6.2, ticu2death = 5;
+           ticu2death = 5;
 
     double cont_freq = 0.5, alpha = 0.09, beta = 0.25, delta = 0.3, rho = 0.2, theta = 0.25;
 
@@ -20,7 +20,6 @@ TEST(TestSecir, compareAgeResWithSingleRun)
     double fact   = 1.0 / (double)nb_groups;
 
     epi::SecirParams params(nb_groups);
-    epi::ContactFrequencyMatrix contact_freq_matrix{(size_t)nb_groups};
 
     for (size_t i = 0; i < nb_groups; i++) {
         params.times[i].set_incubation(tinc);
@@ -30,7 +29,6 @@ TEST(TestSecir, compareAgeResWithSingleRun)
         params.times[i].set_home_to_hospitalized(thome2hosp);
         params.times[i].set_hospitalized_to_icu(thosp2icu);
         params.times[i].set_icu_to_home(ticu2home);
-        params.times[i].set_infectious_asymp(tinfasy);
         params.times[i].set_icu_to_death(ticu2death);
 
         params.populations.set({i, epi::SecirCompartments::E}, fact * nb_exp_t0);
@@ -50,23 +48,26 @@ TEST(TestSecir, compareAgeResWithSingleRun)
         params.probabilities[i].set_dead_per_icu(delta);
     }
 
+    params.apply_constraints();
+
+    epi::ContactFrequencyMatrix& cont_freq_matrix = params.get_contact_patterns();
     epi::Damping dummy(30., 0.3);
     for (int i = 0; i < nb_groups; i++) {
-        for (int j = i; j < nb_groups; j++) {
-            contact_freq_matrix.set_cont_freq(fact * cont_freq, i, j);
-            contact_freq_matrix.add_damping(dummy, i, j);
+        for (int j = 0; j < nb_groups; j++) {
+            cont_freq_matrix.set_cont_freq(fact * cont_freq, i, j);
+            cont_freq_matrix.add_damping(dummy, i, j);
         }
     }
 
     std::vector<Eigen::VectorXd> secihurd(0);
-    auto t = simulate(t0, tmax, dt, contact_freq_matrix, params, secihurd);
+    auto t = simulate(t0, tmax, dt, params, secihurd);
 
     // char vars[] = {'S', 'E', 'C', 'I', 'H', 'U', 'R', 'D'};
     // printf("People in\n");
-    // for (size_t k = 0; k < 8; k++) {
+    // for (size_t k = 0; k < epi::SecirCompartments::SecirCount; k++) {
     //     double dummy = 0;
 
-    //     for (size_t i = 0; i < params.size(); i++) {
+    //     for (size_t i = 0; i < params.get_num_groups(); i++) {
     //         printf("\t %c[%d]: %.0f", vars[k], (int)i, secir[secir.size() - 1][k]);
     //         dummy += secir[secir.size() - 1][k];
     //     }
@@ -84,7 +85,7 @@ TEST(TestSecir, compareAgeResWithSingleRun)
         for (size_t j = 1; j < compare[i].size(); j++) {
             double dummy = 0;
             for (size_t k = 0; k < nb_groups; k++) {
-                dummy += secihurd[i][j - 1 + k * 8];
+                dummy += secihurd[i][j - 1 + k * epi::SecirCompartments::SecirCount];
             }
             EXPECT_NEAR(dummy, compare[i][j], 1e-10) << " at row " << i;
         }

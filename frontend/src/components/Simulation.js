@@ -13,6 +13,9 @@ import {PopulationDatastore as populations} from '../common/population-datastore
 
 /** @typedef {{date: number, S: number, E: number, I: number, R: number}} SEIREntry */
 
+/**
+ * @deprecated
+ */
 class Simulation extends PureComponent {
   populations = null;
 

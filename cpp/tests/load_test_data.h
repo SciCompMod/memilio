@@ -1,11 +1,11 @@
 #include "test_data_dir.h"
-#include <epidemiology/stl_util.h>
+#include <epidemiology/utils/stl_util.h>
 #include <string>
 #include <cstring>
 #include <vector>
 #include <fstream>
 
-template<class String>
+template <class String>
 std::string get_test_data_file_path(String&& filename)
 {
     return epi::path_join(TEST_DATA_DIR, filename);

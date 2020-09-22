@@ -1,0 +1,25 @@
+@import '~bootstrap/scss/bootstrap.scss';
+
+.age-group-parameters {
+  @extend .px-3;
+  @extend .pb-3;
+
+  font-size: 1.25em;
+
+  th,
+  td {
+    padding: 0;
+    text-align: center;
+    font-size: 1.2em !important;
+
+    &:first-child {
+      width: 8em;
+      text-align: left;
+      padding-left: 0.25em;
+    }
+  }
+
+  .ka-cell {
+    line-height: 1.5em !important;
+  }
+}

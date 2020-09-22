@@ -1,17 +1,16 @@
-#include <gtest_helpers.h>
+#include <epidemiology/math/euler.h>
+#include <epidemiology/math/adapt_rk.h>
 
+#include <gtest_helpers.h>
 #include <gtest/gtest.h>
 #include <gmock/gmock.h>
-#include <epidemiology/euler.h>
-#include <epidemiology/adapt_rk.h>
-
 #include <string>
 #include <vector>
 #include <fstream>
 #include <ios>
 #include <cmath>
 
-void sin_deriv(Eigen::VectorXd const& y, const double t, Eigen::VectorXd& dydt)
+void sin_deriv(Eigen::Ref<Eigen::VectorXd const> y, const double t, Eigen::Ref<Eigen::VectorXd> dydt)
 {
     dydt[0] = std::cos(t);
 }
@@ -47,7 +46,7 @@ TEST_F(TestVerifyNumericalIntegrator, euler_sine)
     sol[0][0]     = std::sin(0);
     sol[n - 1][0] = std::sin((n - 1) * dt);
 
-    auto f = [](Eigen::VectorXd const& y, const double t, Eigen::VectorXd& dydt) {
+    auto f = [](auto&& y, auto&& t, auto&& dydt) {
         dydt[0] = std::cos(t);
     };
     epi::EulerIntegratorCore euler;
@@ -113,10 +112,8 @@ TEST_F(TestVerifyNumericalIntegrator, runge_kutta_fehlberg45_sine)
 
 auto DoStep()
 {
-    return testing::DoAll(
-        testing::WithArgs<2, 3>(AddAssign()),
-        testing::WithArgs<4, 1>(Assign()),
-        testing::Return(true));
+    return testing::DoAll(testing::WithArgs<2, 3>(AddAssign()), testing::WithArgs<4, 1>(AssignUnsafe()),
+                          testing::Return(true));
 }
 
 class MockIntegratorCore : public epi::IntegratorCore
@@ -126,7 +123,10 @@ public:
     {
         ON_CALL(*this, step).WillByDefault(DoStep());
     }
-    MOCK_METHOD(bool, step, (const epi::DerivFunction& f, const Eigen::VectorXd& yt, double& t, double& dt, Eigen::VectorXd& ytp1), (const));
+    MOCK_METHOD(bool, step,
+                (const epi::DerivFunction& f, Eigen::Ref<const Eigen::VectorXd> yt, double& t, double& dt,
+                 Eigen::Ref<Eigen::VectorXd> ytp1),
+                (const));
 };
 
 TEST(TestOdeIntegrator, integratorDoesTheRightNumberOfSteps)
@@ -135,40 +135,31 @@ TEST(TestOdeIntegrator, integratorDoesTheRightNumberOfSteps)
     auto mock_core = std::make_shared<testing::StrictMock<MockIntegratorCore>>();
     EXPECT_CALL(*mock_core, step).Times(100);
 
-    auto f = [](const auto& y, auto t, auto& dydt) {};
+    auto f          = [](auto&& y, auto&& t, auto&& dydt) {};
     auto integrator = epi::OdeIntegrator(f, 0, Eigen::VectorXd::Constant(1, 0.0), 1e-2, mock_core);
     integrator.advance(1);
-    EXPECT_EQ(integrator.get_t().size(), 101);
-    EXPECT_EQ(integrator.get_y().size(), 101);
+    EXPECT_EQ(integrator.get_result().get_num_time_points(), 101);
 }
 
 TEST(TestOdeIntegrator, integratorStopsAtTMax)
 {
-    auto f          = [](const auto& y, auto t, auto& dydt) {};
+    auto f          = [](auto&& y, auto&& t, auto&& dydt) {};
     auto integrator = epi::OdeIntegrator(f, 0, Eigen::VectorXd::Constant(1, 0.0), 0.137,
                                          std::make_shared<testing::NiceMock<MockIntegratorCore>>());
     integrator.advance(2.34);
-    EXPECT_DOUBLE_EQ(integrator.get_t().back(), 2.34);
+    EXPECT_DOUBLE_EQ(integrator.get_result().get_last_time(), 2.34);
 }
 
 auto DoStepAndIncreaseStepsize(double new_dt)
 {
-    return testing::DoAll(
-        testing::WithArgs<2, 3>(AddAssign()),
-        testing::WithArgs<4, 1>(Assign()),
-        testing::SetArgReferee<3>(new_dt),
-        testing::Return(true)
-    );
+    return testing::DoAll(testing::WithArgs<2, 3>(AddAssign()), testing::WithArgs<4, 1>(AssignUnsafe()),
+                          testing::SetArgReferee<3>(new_dt), testing::Return(true));
 }
 
 auto DoStepAndReduceStepsize(double new_dt)
 {
-    return testing::DoAll(
-        testing::WithArgs<2>(AddAssign(new_dt)),
-        testing::WithArgs<4, 1>(Assign()),
-        testing::SetArgReferee<3>(new_dt),
-        testing::Return(true)
-    );
+    return testing::DoAll(testing::WithArgs<2>(AddAssign(new_dt)), testing::WithArgs<4, 1>(AssignUnsafe()),
+                          testing::SetArgReferee<3>(new_dt), testing::Return(true));
 }
 
 TEST(TestOdeIntegrator, integratorUpdatesStepsize)
@@ -180,12 +171,14 @@ TEST(TestOdeIntegrator, integratorUpdatesStepsize)
 
     {
         testing::InSequence seq;
-        
+
         EXPECT_CALL(*mock_core, step(_, _, _, Eq(1), _)).Times(1).WillOnce(DoStepAndIncreaseStepsize(2.));
         EXPECT_CALL(*mock_core, step(_, _, _, Eq(2), _)).Times(1).WillOnce(DoStepAndIncreaseStepsize(4.));
         EXPECT_CALL(*mock_core, step(_, _, _, Eq(4), _)).Times(1).WillOnce(DoStepAndIncreaseStepsize(8.));
         //last step of first advance call
-        EXPECT_CALL(*mock_core, step(_, _, _, Eq(3), _)).Times(1).WillRepeatedly(DoStepAndIncreaseStepsize(6.)); //this stepsize should not be stored!
+        EXPECT_CALL(*mock_core, step(_, _, _, Eq(3), _))
+            .Times(1)
+            .WillRepeatedly(DoStepAndIncreaseStepsize(6.)); //this stepsize should not be stored!
         //continue on the second advance call with correct stepsize
         EXPECT_CALL(*mock_core, step(_, _, _, Eq(8), _)).Times(1).WillOnce(DoStepAndReduceStepsize(3.5));
         EXPECT_CALL(*mock_core, step(_, _, _, Eq(3.5), _)).Times(1).WillOnce(DoStepAndIncreaseStepsize(8));
@@ -201,11 +194,8 @@ TEST(TestOdeIntegrator, integratorUpdatesStepsize)
 
 auto DoStepAndIncreaseY(const Eigen::VectorXd& dy)
 {
-    return testing::DoAll(
-        testing::WithArgs<2, 3>(AddAssign()),
-        testing::WithArgs<4, 1>(Assign()),
-        testing::WithArgs<4>(AddAssign(dy)),
-        testing::Return(true));
+    return testing::DoAll(testing::WithArgs<2, 3>(AddAssign()), testing::WithArgs<4, 1>(AssignUnsafe()),
+                          testing::WithArgs<4>(AddAssignUnsafe(dy)), testing::Return(true));
 }
 
 TEST(TestOdeIntegrator, integratorContinuesAtLastState)
@@ -213,13 +203,13 @@ TEST(TestOdeIntegrator, integratorContinuesAtLastState)
     using testing::_;
     using testing::Eq;
 
-    double dt = 0.25;
-    auto dy = Eigen::VectorXd::Constant(1, 1);
-    auto y0 = Eigen::VectorXd::Constant(1, 0);
-    auto mock_core = std::make_shared<testing::StrictMock<MockIntegratorCore>>();
-    auto f          = [](const auto& y, auto t, auto& dydt) {};
+    double dt       = 0.25;
+    auto dy         = Eigen::VectorXd::Constant(1, 1);
+    auto y0         = Eigen::VectorXd::Constant(1, 0);
+    auto mock_core  = std::make_shared<testing::StrictMock<MockIntegratorCore>>();
+    auto f          = [](auto&& y, auto&& t, auto&& dydt) {};
     auto integrator = epi::OdeIntegrator(f, 0, y0, dt, mock_core);
-    
+
     {
         testing::InSequence seq;
         EXPECT_CALL(*mock_core, step(_, Eq(y0), _, _, _)).WillOnce(DoStepAndIncreaseY(dy));

@@ -19,4 +19,9 @@ ACTION(AddAssign) { arg0 += arg1; }
 //assignee is free arguemtn, RHS value is fixed
 ACTION_P(AddAssign, x) { arg0 += x; }
 
+//versions that casts away const, necessary for fancy references like Eigen::Ref<Vector> to be assignable
+//make sure arg0 is not originally defined const, otherwise undefined behaviour
+ACTION_P(AddAssignUnsafe, x) { const_cast<arg0_type&>(arg0) += x; }
+ACTION(AssignUnsafe) { const_cast<arg0_type&>(arg0) = arg1; }
+
 #endif //GTEST_HELPERS_H

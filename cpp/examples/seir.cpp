@@ -1,5 +1,5 @@
-#include <epidemiology/seir.h>
-#include <epidemiology/logging.h>
+#include <epidemiology/secir/seir.h>
+#include <epidemiology/utils/logging.h>
 
 int main()
 {

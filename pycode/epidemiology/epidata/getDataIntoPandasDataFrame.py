@@ -71,7 +71,9 @@ def loadCsv( targetFileName, apiUrl = 'https://opendata.arcgis.com/datasets/',
 def cli(description):
   
    out_path_default = dd.defaultDict['out_folder']
- 
+   out_path_default = os.path.join(out_path_default, 'pydata')
+   check_dir(out_path_default)
+
    parser = argparse.ArgumentParser(description=description)
    
    parser.add_argument('-r',  '--read-from-disk',
