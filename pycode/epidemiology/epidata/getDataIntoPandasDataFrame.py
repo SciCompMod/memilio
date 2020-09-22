@@ -81,6 +81,7 @@ def loadCsv( targetFileName, apiUrl = 'https://opendata.arcgis.com/datasets/',
 def cli(what):
 
    # TODO: may it would be easier to make a dict like the following one together with a function to get key:
+   # TODO: all should automatically do everything
    # cli_dict2 = {"end_date": ['divi'],
    #                "plot": ['rki'],
    #                "start_date": ['divi'],

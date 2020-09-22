@@ -355,7 +355,7 @@ def get_rki_data(read_data=dd.defaultDict['read_data'],
 
 def main():
 
-   [read_data, update_data, make_plot, out_form, out_folder] = gd.cli("rki")
+   [read_data, make_plot, out_form, out_folder] = gd.cli("rki")
 
    get_rki_data(read_data, out_form, out_folder, make_plot)
 
