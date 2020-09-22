@@ -9,7 +9,6 @@ from epidemiology.epidata import getDataIntoPandasDataFrame as gd
 from epidemiology.epidata import defaultDict as dd
 
 
-
 def get_rki_data(read_data=dd.defaultDict['read_data'],
                  out_form=dd.defaultDict['out_form'],
                  out_folder=dd.defaultDict['out_folder'],
@@ -355,7 +354,7 @@ def get_rki_data(read_data=dd.defaultDict['read_data'],
 
 def main():
 
-   [read_data, make_plot, out_form, out_folder] = gd.cli("rki")
+   [read_data, out_form, out_folder, make_plot] = gd.cli("rki")
 
    get_rki_data(read_data, out_form, out_folder, make_plot)
 
