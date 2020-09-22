@@ -68,7 +68,23 @@ def loadCsv( targetFileName, apiUrl = 'https://opendata.arcgis.com/datasets/',
 
     return df
 
+
+# function to return list of keys for any value
+# def get_key(val, my_dict):
+#    key_list = []
+#    for key, value_list in my_dict.items():
+#        if val in value_list:
+#            key_list.append(key)
+
+#    return key_list
+
 def cli(what):
+
+   # TODO: may it would be easier to make a dict like the following one together with a function to get key:
+   # cli_dict2 = {"end_date": ['divi'],
+   #                "plot": ['rki'],
+   #                "start_date": ['divi'],
+   #                "update": ['divi']                 }
 
    cli_dict = {"divi": ['Downloads data from DIVI', 'start_date', 'end_date', 'update'],
                "rki": ['Download data from RKI', 'plot'],
@@ -99,7 +115,7 @@ def cli(what):
    if 'end_date' in what_list:
        parser.add_argument('-ed', '--end_date',
                            help='Defines date after which data download is stopped.'
-                                'Should have form: Y-m-d. Default is today',
+                                'Should have form: YYYY-mm-dd. Default is today',
                            type=lambda s: datetime.datetime.strptime(s, '%Y-%m-%d').date(),
                            default=dd.defaultDict['end_date'])
    if 'plot' in what_list:
@@ -107,7 +123,7 @@ def cli(what):
                           action='store_true')
    if 'start_date' in what_list:
       parser.add_argument('-sd',  '--start_date',
-                          help='Defines start date for data download. Should have form: Y-m-d.'
+                          help='Defines start date for data download. Should have form: YYYY-mm-dd.'
                                'Default is 2020-04-24',
                           type=lambda s: datetime.datetime.strptime(s, '%Y-%m-%d').date(),
                           default = dd.defaultDict['start_date'])
@@ -127,7 +143,7 @@ def cli(what):
    arg_list.append(args.out_path)
 
    # add additional arguments in alphabetical order
-
+   # TODO: check if it is possible to automatically generate this
    if 'end_date' in what_list:
        arg_list.append(args.end_date)
    if 'plot' in what_list:

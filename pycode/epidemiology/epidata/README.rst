@@ -82,15 +82,18 @@ Run options
 
 There are several optional run options
 
-optional arguments:
+optional arguments working for all are:
   -h, --help                         show this help message and exit
   -r, --read-from-disk               Reads the data from file "json" instead of downloading it.
-  -p, --plot                         Plots the data.
   -h5, --hdf5                        Changes output format from json to hdf5.
   -o OUT_PATH, --out_path OUT_PATH   Defines folder for output.
 
+optional arguments working for some are:
+  -p, --plot                         Plots the data. [rki]
+  -sd, --start-date                  Changes date for which data collection is started [divi]
+  -ed, --end-date                    Changes date for which data collection is stopped [divi]
+  -u, -- update                      Just chronological missing data is added, **after** the existing ones
 
-Note: The plot option is at the moment just working for the rki data
 
 Results
 -------
@@ -190,8 +193,13 @@ Notes for developers
 
 We use dictionaries to change the columns name to have all the names the same and are able to easily change them
 If data from with other languages are used please add the dictionary in "defaultDict.py" and use the exsting one.
+
 Note: You should not use the possibilities of pandas the access the columne with dataframe.column but instead use
 datafram[column] and use th dictionaries for the column-name.
 
+When a new script to download data is added please add the functionality to the dictionary cli_dict in the cli function in getDataIntoPandasDataFrame.py
+by adding a name for it a key and adding a list with in the form [comment to print, list of used parser arguments]
 
+If a new parser-argument has to be added, you need to add two if-loops for it to the ci-function in getDataIntoPandasDataFrame.py:
+first make the parser.add_argument(...) and second to append the arg-list.
 

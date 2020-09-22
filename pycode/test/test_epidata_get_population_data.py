@@ -7,7 +7,7 @@ import pandas as pd
 
 from epidemiology.epidata import getPopulationData as gpd
 from epidemiology.epidata import getDataIntoPandasDataFrame as gd
-from unittest.mock import patch, mock_open
+from unittest.mock import patch
 
 
 class Test_getPopulationData(fake_filesystem_unittest.TestCase):
@@ -63,7 +63,7 @@ class Test_getPopulationData(fake_filesystem_unittest.TestCase):
 
         mock_loadCSV.return_value = pd.read_json(self.test_string1)
 
-        [read_data, make_plot, out_form, out_folder] = [False, False, "json", self.path]
+        [read_data, out_form, out_folder] = [False, "json", self.path]
 
         directory = os.path.join(out_folder, 'Germany/')
         gd.check_dir(directory)
@@ -86,7 +86,7 @@ class Test_getPopulationData(fake_filesystem_unittest.TestCase):
 
     def test_gpd_read_data1(self):
 
-        [read_data, make_plot, out_form, out_folder] = [True, False, "json", self.path]
+        [read_data, out_form, out_folder] = [True,  "json", self.path]
 
         directory = os.path.join(out_folder, 'Germany/')
         gd.check_dir(directory)
@@ -111,7 +111,7 @@ class Test_getPopulationData(fake_filesystem_unittest.TestCase):
 
         mock_loadCSV.return_value = pd.read_json(self.test_string2)
 
-        [read_data, make_plot, out_form, out_folder] = [False, False, "json", self.path]
+        [read_data, out_form, out_folder] = [False, "json", self.path]
 
         directory = os.path.join(out_folder, 'Germany/')
         gd.check_dir(directory)
@@ -136,7 +136,7 @@ class Test_getPopulationData(fake_filesystem_unittest.TestCase):
 
     def test_gpd_read_data2(self):
 
-        [read_data, make_plot, out_form, out_folder] = [True, False, "json", self.path]
+        [read_data, out_form, out_folder] = [True, "json", self.path]
 
         directory = os.path.join(out_folder, 'Germany/')
         gd.check_dir(directory)
@@ -160,7 +160,7 @@ class Test_getPopulationData(fake_filesystem_unittest.TestCase):
 
     def test_gpd_read_data_full(self):
 
-        [read_data, update_data, make_plot, out_form, out_folder] = [True, False, False, "json", self.path]
+        [read_data, out_form, out_folder] = [True, "json", self.path]
 
         directory = os.path.join(out_folder, 'Germany/')
         gd.check_dir(directory)
@@ -177,7 +177,7 @@ class Test_getPopulationData(fake_filesystem_unittest.TestCase):
             f.write(self.test_string2)
 
 
-        gpd.get_population_data(read_data, update_data, make_plot, out_form, out_folder)
+        gpd.get_population_data(read_data, out_form, out_folder)
 
         #self.assertEqual(len(os.listdir(directory)), 4)
         self.assertEqual(len(os.listdir(directory)), 3)

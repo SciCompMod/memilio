@@ -96,12 +96,12 @@ def call_call_url(url_prefix, call_number):
 
     return df
 
-## Finds nearest bit earlier date to an given date from a list of dates
+## Finds nearest but earlier date to a given date from a list of dates
 #
 # @param date_list Iterable object with dates
 # @param date_given Single date
 #
-# @return date from date_list which is closest to date_given.
+# @return date from date_list which is closest but earlier to date_given.
 #
 def nearest_earlier_date(date_list, date_given):
 
@@ -288,14 +288,13 @@ def download_data_for_one_day(last_number, download_date):
 def get_divi_data(read_data=dd.defaultDict['read_data'],
                   out_form=dd.defaultDict['out_form'],
                   out_folder=dd.defaultDict['out_folder'],
-                  end_date=dd.defaultDict['start_date'],
-                  start_date=dd.defaultDict['end_date'],
+                  end_date=dd.defaultDict['end_date'],
+                  start_date=dd.defaultDict['start_date'],
                   update_data=dd.defaultDict['update_data'],
                   ):
 
     delta = timedelta(days=1)
     today = date.today()
-    print(start_date, end_date)
 
     # First csv data on 24-04-2020
     if start_date < date(2020, 4, 24):
@@ -439,10 +438,6 @@ def get_divi_data(read_data=dd.defaultDict['read_data'],
 
     print("Information: DIVI data has been written to", directory)
 
-# TODO: Add test for nearest_earlier_date
-# TODO: Change tests calls for all functions which has been eltered die to change of parser
-# TODO: Test new functionality, that when start_date is not in dict the call_number of closest date is used,
-#  but no output is generated
 
 def main():
     [read_data, out_form, out_folder, end_date, start_date, update_data] = gd.cli('divi',)

@@ -5,17 +5,17 @@ from datetime import date, timedelta
 
 import os
 import pandas as pd
-import numpy as np
 
 from epidemiology.epidata import getDIVIData as gdd
 from epidemiology.epidata import getDataIntoPandasDataFrame as gd
+from epidemiology.epidata import defaultDict as dd
 from unittest.mock import patch, call
 
 
 # The following lines are commented to remember a solution to write an output without using print()
 # This is important, because the usage of print would alter the test results
-# import sys
-# sys.stdout.write(str())
+import sys
+#sys.stdout.write(str())
 
 
 class TestGetDiviData(fake_filesystem_unittest.TestCase):
@@ -49,12 +49,24 @@ class TestGetDiviData(fake_filesystem_unittest.TestCase):
 "faelle_covid_aktuell_beatmet":0,"anzahl_standorte":2,"betten_frei":48,"betten_belegt":34,\
 "daten_stand":"2020-07-06 12:15:00"}""")
 
+# The following are the same as test_string3 but with changed dates.
+    test_string4 = ("""{"bundesland":1,"gemeindeschluessel":1001,"anzahl_meldebereiche":2,"faelle_covid_aktuell":0,\
+"faelle_covid_aktuell_beatmet":0,"anzahl_standorte":2,"betten_frei":48,"betten_belegt":34,\
+"daten_stand":"2020-04-27 09:15:00"}""")
+
+    test_string5 = ("""{"bundesland":1,"gemeindeschluessel":1001,"anzahl_meldebereiche":2,"faelle_covid_aktuell":0,\
+"faelle_covid_aktuell_beatmet":0,"anzahl_standorte":2,"betten_frei":48,"betten_belegt":34,\
+"daten_stand":"2020-04-28 09:15:00"}""")
+
     test_string_read_fulldata = "[" + test_string1 + "," + test_string2 + "]"
     test_string_read_fulldata_update = "[" + test_string3 + "," + test_string1 + "," + test_string2 + "]"
+    test_string_read_fulldata_update_nondic = "[" + test_string4 + "," + test_string5 + "]"
 
     test_string1 = "[" + test_string1 + "]"
     test_string2 = "[" + test_string2 + "]"
     test_string3 = "[" + test_string3 + "]"
+    test_string4 = "[" + test_string4 + "]"
+    test_string5 = "[" + test_string5 + "]"
 
     # result string for counties
     test_stringr1_county = ("""\
@@ -69,6 +81,12 @@ class TestGetDiviData(fake_filesystem_unittest.TestCase):
 
     test_stringr3_county = ("""\
 {"County":"SK Flensburg","ID_County":1001,"ICU":0,"ICU_ventilated":0,"Date":1594037700000}""")
+
+    test_stringr4_county = ("""\
+{"County":"SK Flensburg","ID_County":1001,"ICU":0,"ICU_ventilated":0,"Date":1587978900000}""")
+
+    test_stringr5_county = ("""\
+{"County":"SK Flensburg","ID_County":1001,"ICU":0,"ICU_ventilated":0,"Date":1588065300000}""")
 
     # result string for states
     test_stringr1_state = ("""\
@@ -91,6 +109,12 @@ class TestGetDiviData(fake_filesystem_unittest.TestCase):
 {"Date":1594124100000,"ICU":5,"ICU_ventilated":2,"ID_State":3,"State":"Niedersachsen"},\
 {"Date":1594210500000,"ICU":1,"ICU_ventilated":1,"ID_State":3,"State":"Niedersachsen"}""")
 
+    test_stringr4_state = ("""\
+{"Date":1587978900000,"ICU":0,"ICU_ventilated":0,"ID_State":1,"State":"Schleswig-Holstein"}""")
+
+    test_stringr5_state = ("""\
+{"Date":1588065300000,"ICU":0,"ICU_ventilated":0,"ID_State":1,"State":"Schleswig-Holstein"}""")
+
     # result string for germany
     test_stringr1_country = ("""\
 {"Date":1594124100000,"ICU":12,"ICU_ventilated":8}""")
@@ -100,6 +124,12 @@ class TestGetDiviData(fake_filesystem_unittest.TestCase):
 
     test_stringr3_country = ("""\
 {"Date":1594037700000,"ICU":0,"ICU_ventilated":0}""")
+
+    test_stringr4_country = ("""\
+{"Date":1587978900000,"ICU":0,"ICU_ventilated":0}""")
+
+    test_stringr5_country = ("""\
+{"Date":1588065300000,"ICU":0,"ICU_ventilated":0}""")
 
     # data for test dataframe to test the function adjust_data
     d24 = {'bundesland': [1, 2], 'kreis': [1001, 2000], 'ICU': [0, 7]}
@@ -342,6 +372,7 @@ class TestGetDiviData(fake_filesystem_unittest.TestCase):
     def fake_download_data_for_one_day(self, last_number, start_date):
         data_dict = {
             date(2020, 4, 24): [0, pd.DataFrame(), ""],
+            date(2020, 4, 28): [0, pd.read_json(self.test_string5), ""],
             date(2020, 7, 7): [3961, pd.read_json(self.test_string1), ""],
             date(2020, 7, 8): [3964, pd.read_json(self.test_string2), ""],
             date(2020, 7, 9): [0, pd.DataFrame(), ""],
@@ -360,7 +391,8 @@ class TestGetDiviData(fake_filesystem_unittest.TestCase):
         mock_ddfod.return_value = [3961, pd.read_json(self.test_string1), ""]
 
         # case simple download
-        [read_data, update_data, make_plot, out_form, out_folder] = [False, False, False, "json", self.path]
+        [read_data, update_data, make_plot, out_form, out_folder, start_date, end_date]\
+            = [False, False, False, "json", self.path, date(2020, 7, 7), date(2020, 7, 7)]
 
         directory = os.path.join(out_folder, 'Germany/')
 
@@ -370,8 +402,8 @@ class TestGetDiviData(fake_filesystem_unittest.TestCase):
         file_out2 = "state_divi.json"
         file_out3 = "germany_divi.json"
 
-        gdd.get_divi_data(read_data, update_data, make_plot, out_form, out_folder,
-                          start_date=date(2020, 7, 7), end_date=date(2020, 7, 7))
+        gdd.get_divi_data(read_data, out_form, out_folder,
+                          end_date, start_date, update_data)
 
         # check if folder Germany exists now
         self.assertEqual(len(os.listdir(self.path)), 1)
@@ -404,8 +436,11 @@ class TestGetDiviData(fake_filesystem_unittest.TestCase):
 
         mock_ddfod.side_effect = self.fake_download_data_for_one_day
 
-        gdd.get_divi_data(read_data, update_data, make_plot, out_form, out_folder,
-                          start_date=date(2020, 7, 7), end_date=date(2020, 7, 9))
+        start_date = date(2020, 7, 7)
+        end_date = date(2020, 7, 9)
+
+        gdd.get_divi_data(read_data, out_form, out_folder,
+                          end_date, start_date, update_data)
 
         # check if folder Germany exists now
         self.assertEqual(len(os.listdir(self.path)), 1)
@@ -448,14 +483,18 @@ class TestGetDiviData(fake_filesystem_unittest.TestCase):
 
         # Check output if whole dataframe is empty
         with self.assertRaises(SystemExit) as cm:
-            gdd.get_divi_data(read_data, update_data, make_plot, out_form, out_folder,
-                              start_date=date(2020, 7, 9), end_date=date(2020, 7, 9))
+            start_date = date(2020, 7, 9)
+            end_date = date(2020, 7, 9)
+            gdd.get_divi_data(read_data, out_form, out_folder,
+                              end_date, start_date, update_data)
         self.assertEqual(cm.exception.code, "Something went wrong, dataframe is empty.")
 
         # Check warning for wrong start_date
         with self.assertRaises(SystemExit) as cm:
-            gdd.get_divi_data(read_data, update_data, make_plot, out_form, out_folder,
-                              start_date=date(2020, 4, 23), end_date=date(2020, 4, 24))
+            start_date = date(2020, 4, 23)
+            end_date = date(2020, 4, 24)
+            gdd.get_divi_data(read_data, out_form, out_folder,
+                              end_date, start_date, update_data)
         self.assertEqual(cm.exception.code, "Something went wrong, dataframe is empty.")
 
         expected_call = call("Warning: First data available on 2020-04-24. You asked for 2020-04-23.")
@@ -464,8 +503,10 @@ class TestGetDiviData(fake_filesystem_unittest.TestCase):
         self.assertTrue(mock_print.mock_calls[-2] == expected_call)
 
         # check case where call_number has to be searched for and should be saved to call_dict.
-        gdd.get_divi_data(read_data, update_data, make_plot, out_form, out_folder,
-                          start_date=date(2020, 7, 10), end_date=date(2020, 7, 10))
+        start_date = date(2020, 7, 10)
+        end_date = date(2020, 7, 10)
+        gdd.get_divi_data(read_data, out_form, out_folder,
+                          end_date, start_date, update_data)
 
         expected_calls = [call(start_string + date(2020, 7, 10).strftime("%Y-%m-%d") + end_string),
                           call("New drifting number in link found. "
@@ -482,7 +523,8 @@ class TestGetDiviData(fake_filesystem_unittest.TestCase):
 
     def test_gdd_read_data(self):
 
-        [read_data, update_data, make_plot, out_form, out_folder] = [True, False, False, "json", self.path]
+        [read_data, update_data, make_plot, out_form, out_folder, start_date, end_date] \
+            = [True, False, False, "json", self.path, dd.defaultDict['start_date'], dd.defaultDict['end_date']]
 
         directory = os.path.join(out_folder, 'Germany/')
         gd.check_dir(directory)
@@ -496,7 +538,8 @@ class TestGetDiviData(fake_filesystem_unittest.TestCase):
 
         # Test case where file does not exist
         with self.assertRaises(SystemExit) as cm:
-            gdd.get_divi_data(read_data, update_data, make_plot, out_form, out_folder)
+            gdd.get_divi_data(read_data, out_form, out_folder,
+                              end_date, start_date, update_data)
         self.assertEqual(cm.exception.code, "Error: The file: " + file_with_path + " does not exist. "
                                                                                    "Call program without -r or -u flag to get it.")
 
@@ -505,14 +548,16 @@ class TestGetDiviData(fake_filesystem_unittest.TestCase):
             f.write("[]")
 
         with self.assertRaises(SystemExit) as cm:
-            gdd.get_divi_data(read_data, update_data, make_plot, out_form, out_folder)
+            gdd.get_divi_data(read_data, out_form, out_folder,
+                              end_date, start_date, update_data)
         self.assertEqual(cm.exception.code, "Something went wrong, dataframe is empty.")
 
         # Generate data to read in
         with open(file_with_path, 'w') as f:
             f.write(self.test_string_read_fulldata)
 
-        gdd.get_divi_data(read_data, update_data, make_plot, out_form, out_folder)
+        gdd.get_divi_data(read_data, out_form, out_folder,
+                          end_date, start_date, update_data)
 
         self.assertEqual(len(os.listdir(directory)), 4)
         self.assertEqual(os.listdir(directory).sort(), [file, file_out1, file_out2, file_out3].sort())
@@ -537,7 +582,7 @@ class TestGetDiviData(fake_filesystem_unittest.TestCase):
     @patch('epidemiology.epidata.getDIVIData.gd.loadCsv')
     def test_gdd_update_data(self, mock_loadcsv, mock_print, mock_ddfod):
 
-        [read_data, update_data, make_plot, out_form, out_folder] = [False, True, False, "json", self.path]
+        [read_data, out_form, out_folder] = [False, "json", self.path]
 
         directory = os.path.join(out_folder, 'Germany/')
         gd.check_dir(directory)
@@ -551,7 +596,9 @@ class TestGetDiviData(fake_filesystem_unittest.TestCase):
 
         # Test case where file does not exist
         with self.assertRaises(SystemExit) as cm:
-            gdd.get_divi_data(read_data, update_data, make_plot, out_form, out_folder)
+            gdd.get_divi_data(read_data, out_form, out_folder,
+                              end_date=dd.defaultDict['end_date'], start_date=dd.defaultDict['start_date'],
+                              update_data=True)
         self.assertEqual(cm.exception.code, "Error: The file: " + file_with_path + 
                          " does not exist. Call program without -r or -u flag to get it.")
 
@@ -560,7 +607,9 @@ class TestGetDiviData(fake_filesystem_unittest.TestCase):
             f.write("[]")
 
         with self.assertRaises(SystemExit) as cm:
-            gdd.get_divi_data(read_data, update_data, make_plot, out_form, out_folder)
+            gdd.get_divi_data(read_data, out_form, out_folder,
+                              end_date=dd.defaultDict['end_date'], start_date=dd.defaultDict['start_date'],
+                              update_data=True)
         self.assertEqual(cm.exception.code, "Something went wrong, dataframe is empty.")
 
         # write file with data for one day
@@ -573,14 +622,18 @@ class TestGetDiviData(fake_filesystem_unittest.TestCase):
         mock_loadcsv.return_value = pd.read_json(self.test_string1)
 
         with self.assertRaises(SystemExit) as cm:
-            gdd.get_divi_data(read_data, update_data, make_plot, out_form, out_folder)
+            gdd.get_divi_data(read_data, out_form, out_folder,
+                              end_date=dd.defaultDict['end_date'], start_date=dd.defaultDict['start_date'],
+                              update_data=True)
         self.assertEqual(cm.exception.code, "Data of today = " + date(2020, 7, 8).strftime("%Y-%m-%d")
                          + " has not yet uploaded. Please, try again later.")
 
-        # case where data exists
+        # case where data is online and just "today" is missing
         mock_loadcsv.return_value = pd.read_json(self.test_string2)
 
-        gdd.get_divi_data(read_data, update_data, make_plot, out_form, out_folder)
+        gdd.get_divi_data(read_data, out_form, out_folder,
+                          end_date=dd.defaultDict['end_date'], start_date=dd.defaultDict['start_date'],
+                          update_data=True)
 
         mock_loadcsv.assert_called_with('DIVI-Intensivregister-Tagesreport', apiUrl='https://www.divi.de/')
 
@@ -618,7 +671,9 @@ class TestGetDiviData(fake_filesystem_unittest.TestCase):
 
         mock_ddfod.side_effect = self.fake_download_data_for_one_day
 
-        gdd.get_divi_data(read_data, update_data, make_plot, out_form, out_folder, end_date=date.today())
+        gdd.get_divi_data(read_data, out_form, out_folder,
+                          end_date=date.today(), start_date=dd.defaultDict['start_date'],
+                          update_data=True)
 
         # check that four files are generated
         self.assertEqual(len(os.listdir(directory)), 4)
@@ -656,6 +711,74 @@ class TestGetDiviData(fake_filesystem_unittest.TestCase):
 
         # check if expected calls are the last three calls
         self.assertTrue(mock_print.mock_calls[-3:] == expected_calls)
+
+        # Check what happens if end_date (in real today) is not in dict
+        # and the call_number has a difference > 2 to check that no message is printed
+
+        # write data which will be read in
+        with open(file_with_path, 'w') as f:
+            f.write(self.test_string4)
+
+        mock_ddfod.side_effect = self.fake_download_data_for_one_day
+
+        gdd.get_divi_data(read_data, out_form, out_folder,
+                          end_date=date(2020,4,28), start_date=date(2020,4,24),
+                          update_data=True)
+
+        # check that four files are generated
+        self.assertEqual(len(os.listdir(directory)), 4)
+        self.assertEqual(os.listdir(directory).sort(), [file, file_out1, file_out2, file_out3].sort())
+
+        # check content of files
+        f = open(file_with_path, "r")
+        fread = f.read()
+        self.assertEqual(fread, self.test_string_read_fulldata_update_nondic)
+
+        # compare county data
+        f_path = os.path.join(directory, file_out1)
+        f = open(f_path, "r")
+        fread = f.read()
+        self.assertEqual(fread, "[" + self.test_stringr4_county + "," + self.test_stringr5_county + "]")
+
+        # compare state data
+        f_path = os.path.join(directory, file_out2)
+        f = open(f_path, "r")
+        self.assertEqual(f.read(), "[" + self.test_stringr4_state + "," + self.test_stringr5_state + "]")
+
+        # compare country data
+        f_path = os.path.join(directory, file_out3)
+        f = open(f_path, "r")
+        self.assertEqual(f.read(),
+                         "[" + self.test_stringr4_country + "," + self.test_stringr5_country + "]")
+
+        start_string = "Success: Data of date "
+        end_string = " has been added to dataframe"
+        expected_calls = [call(start_string + date(2020, 4, 28).strftime("%Y-%m-%d") + end_string),
+                          call("Information: DIVI data has been written to", directory)]
+
+        # check if expected_calls is part of calls
+        mock_print.assert_has_calls(expected_calls)
+
+        # check if expected calls are the last two calls
+        self.assertTrue(mock_print.mock_calls[-2:] == expected_calls)
+
+
+def test_nearest_earlier_date(self):
+
+    list_of_dates = [date(2020, 4, 24),
+                     date(2020, 5, 6),
+                     date(2020, 6, 5),
+                     date(2020, 6, 12),
+                     date(2020, 6, 26),
+                     date(2020, 6, 28),
+                     date(2020, 6, 29),
+                     date(2020, 6, 30)]
+
+    date_to_search = date(2020, 6, 24)
+
+    date_ce = gdd.nearest_earlier_date(list_of_dates, date_to_search)
+
+    self.assertEqual(date_ce, date(2020, 6, 12))
 
 
 if __name__ == '__main__':

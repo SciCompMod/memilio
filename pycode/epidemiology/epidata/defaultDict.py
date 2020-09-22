@@ -9,7 +9,6 @@ dfp_vec = default_file_path.split("epidemiology")
 if len(dfp_vec) > 0:
    default_file_path = os.path.join(dfp_vec[0], os.path.join('epidemiology', 'data'))
 
-
 defaultDict = {
    'read_data': False,
    'make_plot': False,
@@ -18,7 +17,6 @@ defaultDict = {
    'update_data': False,
    'start_date': date(2020, 4, 24),
    'end_date': date.today(),
-
 }
 
 # The following dict EngEng makes sure that for all
