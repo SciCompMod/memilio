@@ -33,9 +33,9 @@ This builds the C++ extension and copies everything required to you site-package
 Testing
 -------
 
-Following packages have to be installed to run the tests:
+The following packages have to be installed to run the tests:
 
-- pyfakefs (creates fake directory to test, that expected folders are created and data is written)
+- pyfakefs (creates fake directory to test that expected folders are created and data is written)
 - freezegun (freezes the time. Thus, the call today can be changed to a specific date.)
 
 To run the tests make 

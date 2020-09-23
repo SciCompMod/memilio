@@ -15,20 +15,20 @@ from epidemiology.epidata import defaultDict as dd
 # and the number of those that are additionally ventilated.
 #
 # data explanation:
-# reporting_hospitals is the number of reporting hospitals
-# ICU is the number of covid patients in reporting hospitals
-# ICU_ventilated is the number of ventilated covid patients in reporting hospitals
-# free_ICU is the number of free ICUs in reporting hospitals
-# occupied_ICU is the number of occupied ICUs in in reporting hospitals
+# - reporting_hospitals is the number of reporting hospitals
+# - ICU is the number of covid patients in reporting hospitals
+# - ICU_ventilated is the number of ventilated covid patients in reporting hospitals
+# - free_ICU is the number of free ICUs in reporting hospitals
+# - occupied_ICU is the number of occupied ICUs in in reporting hospitals
 #
 # ID_County and ID_State is defined by the "Amtlicher Gemeindeschlüssel (AGS)"
 # which is also used in the RKI data as ID_County and ID_State
-# https://de.wikipedia.org/wiki/Liste_der_Landkreise_in_Deutschland
+# https://de.wikipedia.org/wiki/Liste_der_Landkreise_in_Deutschland.
 #
-# Furthermore, what might be interesting about the data:
+# Specific features about the data:
 # The column "faelle_covid_im_bundesland" exits only in the data from the first day (24.4)
 # The column ICU does not exist for the 24.4.
-# and ICU_ventilated does not exist for the 24.4. and 25.4.
+# ICU_ventilated does not exist for the 24.4. and 25.4.
 
 
 ## Adjusts data such that the data structure looks the same for all dates
@@ -96,7 +96,7 @@ def call_call_url(url_prefix, call_number):
 
     return df
 
-## Finds nearest but earlier date to a given date from a list of dates
+## Finds nearest but earlier date to a given date from a list of dates.
 #
 # @param date_list Iterable object with dates
 # @param date_given Single date
@@ -121,9 +121,11 @@ def nearest_earlier_date(date_list, date_given):
 # First, the last_number is successively increased by one until a difference of 300 is reached.
 # Then, the last_number is successively decreased by one until a difference of 300 is reached.
 # At last the last_number without a change is tried.
-# If data could be downloaded by the function call_call_url and the difference was 1 or 2, the data is simply given back.
-# If the difference is different an additional message is printed,
-# which can be used to copy directly to the call_number_dict to decrease runtime of the program.
+# If data could be downloaded by the function call_call_url and the difference was 1 or 2,
+# the data is simply given back.
+# If the difference is different an additional message is printed in the end of the program,
+# which can be used to copy the date and the corresponding call_number directly into the call_number_dict
+# to decrease runtime of the program.
 # Furthermore, in this function another specific part of the url, the call_time, is estimated from the given date.
 # If the date is before 2020-6-5 the time "-09-15" and afterwards "-12-15" has to be added to the date.
 # Moreover for dates in the range [2020-6-12),2020-6-5], an additional "-2" has to be added after the call_time.
@@ -135,8 +137,8 @@ def nearest_earlier_date(date_list, date_given):
 # @return List of call_number of the download_data, the pandas dataframe, and a string which is either empty or contains
 # what should be added to "call_number_dict"
 def download_data_for_one_day(last_number, download_date):
-    # define call numbers for dates where call number doesn't increase by 1
 
+    # define call numbers for dates where call number doesn't increase by 1
     call_number_dict = {date(2020, 4, 24): 3974,
                         date(2020, 5, 6): 3691,
                         date(2020, 6, 5): 3842,
@@ -274,13 +276,14 @@ def download_data_for_one_day(last_number, download_date):
 # If the dataframe which should contain all data is empty after going through all dates, the program is stopped.
 # Otherwise the dataframe is written to the file filename = "FullData_DIVI".
 # Following the columns are renamed to English and the state and county names are added.
-# Afterwards, three kind of structuring of the data are done.
+# Afterwards, three kinds of structuring of the data are done.
 # We obtain the chronological sequence of ICU and ICU_ventilated
 # stored in the files "county_divi".json", "state_divi.json"and "germany_divi.json"
 # for counties, states and whole Germany, respectively.
 #
 # @param read_data False [Default] or True. Defines if data is read from file or downloaded.
-# @param update_date "True" if existing data is updated or "False [Default]" if it is downloaded.
+# @param update_date "True" if existing data is updated or
+# "False [Default]" if it is downloaded for all dates from start_date to end_date.
 # @param out_folder Folder where data is written to.
 # @param start_date [Optional] Date to start to download data [Default = 2020.4.24].
 # @param end_date [Optional] Date to stop to download data [Default = today].

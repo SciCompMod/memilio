@@ -183,8 +183,8 @@ For everyday there is one file, from which we extract the date.
 However, in the beginning the data was different to the later ones.
 For the first two dates, 24.4. and 25.4., there is no data for ICU_ventilated (faelle_covid_aktuell_beatmet).
 For the 24.4. even has the ICU data only for each state (faelle_covid_aktuell_im_bundesland) but not for every county.
-Thus, it is not considered in the summarized data for counties, states and whole Germany. (There are
-zero entries for these dates)
+Thus, it is not yet considered in the summarized data for counties, states and whole Germany. (There are
+zero entries for these dates).
 Not every hospital is reporting the number of corona patients in intensive care units (ICU). The number of
 reporting hospitals differs from day to day and is given in FullData_DIVI.
 

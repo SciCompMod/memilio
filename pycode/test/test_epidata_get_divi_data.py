@@ -330,7 +330,7 @@ class TestGetDiviData(fake_filesystem_unittest.TestCase):
             mock_ccu.assert_called_with(
                 self.test_url_ending_else[test_date][0], self.test_url_ending_else[test_date][1])
 
-        # test cases, where given call_number hs difference 2 to correct one
+        # test cases, where given call_number has a difference 2 to correct one
         test_date = date(2020, 5, 7)
         test_date_str = self.test_url_ending_else[test_date][0]
         test_call_number = self.test_url_ending_else[test_date][1]
@@ -349,8 +349,7 @@ class TestGetDiviData(fake_filesystem_unittest.TestCase):
         # check if expected calls are the last two calls
         self.assertTrue(mock_ccu.mock_calls[-2:] == expected_calls)
 
-        # test case where given nunber has a difference larger than 2 to call_number, namely 4
-
+        # test case where given number has a difference larger than 2 to call_number, namely 4
         call_string_correct = "date(" + test_date.strftime("%Y, %-m, %-d") + "): " + str(test_call_number) + "," + "\n"
 
         [call_number, df, call_string] = gdd.download_data_for_one_day(self.test_url_ending_else[test_date][1] - 4, test_date)
@@ -616,9 +615,7 @@ class TestGetDiviData(fake_filesystem_unittest.TestCase):
         with open(file_with_path, 'w') as f:
             f.write(self.test_string1)
 
-        # For the following test cases just the date of today is missing
-
-        # case where data is not yet uploaded:
+        # test where "data of today" is missing, but data is not yet uploaded:
         mock_loadcsv.return_value = pd.read_json(self.test_string1)
 
         with self.assertRaises(SystemExit) as cm:
@@ -628,7 +625,7 @@ class TestGetDiviData(fake_filesystem_unittest.TestCase):
         self.assertEqual(cm.exception.code, "Data of today = " + date(2020, 7, 8).strftime("%Y-%m-%d")
                          + " has not yet uploaded. Please, try again later.")
 
-        # case where data is online and just "today" is missing
+        # case where data is online and just data of "today" is missing
         mock_loadcsv.return_value = pd.read_json(self.test_string2)
 
         gdd.get_divi_data(read_data, out_form, out_folder,
