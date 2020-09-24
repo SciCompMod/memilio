@@ -67,11 +67,9 @@ int main()
 
     params.apply_constraints();
 
-    std::vector<Eigen::VectorXd> secir(0);
+    epi::TimeSeries<double> secir = simulate(t0, tmax, dt, params);
 
-    simulate(t0, tmax, dt, params, secir);
-
-    bool print_to_terminal = false;
+    bool print_to_terminal = true;
 
     if (print_to_terminal) {
         char vars[] = {'S', 'E', 'C', 'I', 'H', 'U', 'R', 'D'};
@@ -79,16 +77,17 @@ int main()
         for (size_t k = 0; k < epi::SecirCompartments::SecirCount; k++) {
             printf(" %c", vars[k]);
         }
-        for (size_t i = 0; i < secir.size(); i++) {
-            printf("\n ");
+        int num_points = secir.get_num_time_points();
+        for (size_t i = 0; i < num_points; i++) {
+            printf("\n%.14f ", secir.get_time(i));
+            Eigen::VectorXd res_j = secir.get_value(i);
             for (size_t j = 0; j < epi::SecirCompartments::SecirCount; j++) {
-                printf(" %.14f", secir[i][j]);
+                printf(" %.14f", res_j[j]);
             }
         }
 
-        printf("number total: %f", secir[secir.size() - 1][0] + secir[secir.size() - 1][1] +
-                                       secir[secir.size() - 1][2] + secir[secir.size() - 1][3] +
-                                       secir[secir.size() - 1][4] + secir[secir.size() - 1][5] +
-                                       secir[secir.size() - 1][6] + secir[secir.size() - 1][7]);
+        Eigen::VectorXd res_j = secir.get_last_value();
+        printf("number total: %f",
+               res_j[0] + res_j[1] + res_j[2] + res_j[3] + res_j[4] + res_j[5] + res_j[6] + res_j[7]);
     }
 }

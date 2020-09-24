@@ -202,11 +202,11 @@ observer_ptr<const ParameterDistribution> UncertainContactMatrix::get_distributi
 
 ContactFrequencyMatrix UncertainContactMatrix::draw_sample(bool accum)
 {
-    if (!accum) {
-        m_cont_freq.clear_dampings();
-    }
-
     if (m_damp_nb && m_damp_days && m_damp_diag_base && m_damp_diag_rel && m_damp_offdiag_rel) {
+
+        if (!accum) {
+            m_cont_freq.clear_dampings();
+        }
 
         int nb_dampings = (int)(m_damp_nb->get_sample() + 0.5);
         for (int i = 0; i < nb_dampings; i++) {
