@@ -79,20 +79,11 @@ void seir_get_derivatives(const SeirParams& params, Eigen::Ref<const Eigen::Vect
     dydt[SeirCompartments::R] = params.times.get_infectious_inv() * y[SeirCompartments::I];
 }
 
-std::vector<double> simulate(double t0, double tmax, double dt, const SeirParams& params,
-                             std::vector<Eigen::VectorXd>& seir)
+TimeSeries<double> simulate(double t0, double tmax, double dt, const SeirParams& params)
 {
     SeirSimulation sim(params, t0, dt);
     sim.advance(tmax);
-    auto& result = sim.get_result();
-    std::vector<double> t(result.get_num_time_points());
-    for (Eigen::Index i = 0; i < result.get_num_time_points(); i++) {
-        t[i] = result.get_time(i);
-    }
-    std::transform(result.begin(), result.end(), std::back_inserter(seir), [](auto&& v_ref) {
-        return v_ref.eval();
-    });
-    return t;
+    return sim.get_result();
 }
 
 SeirSimulation::SeirSimulation(const SeirParams& params, double t0, double dt_init)

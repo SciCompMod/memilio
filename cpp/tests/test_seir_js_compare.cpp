@@ -45,19 +45,16 @@ public:
 
 TEST_F(TestCompareSeirWithJS, integrate)
 {
-    std::vector<Eigen::VectorXd> result_x(0);
+    auto result = simulate(t0, tmax, dt, params);
 
-    auto result_t = simulate(t0, tmax, dt, params, result_x);
+    ASSERT_EQ(refData.size(), result.get_num_time_points());
 
-    ASSERT_EQ(refData.size(), result_x.size());
-    ASSERT_EQ(refData.size(), result_t.size());
-
-    for (size_t irow = 0; irow < result_x.size(); ++irow) {
+    for (size_t irow = 0; irow < result.get_num_time_points(); ++irow) {
         double t = refData[irow][0];
-        ASSERT_NEAR(t, result_t[irow], 1e-12) << "at row " << irow;
+        ASSERT_NEAR(t, result.get_times()[irow], 1e-12) << "at row " << irow;
         for (size_t icol = 0; icol < 4; ++icol) {
             double ref    = refData[irow][icol + 1];
-            double actual = result_x[irow][icol];
+            double actual = result[irow][icol];
 
             double tol = 1e-6 * ref;
             ASSERT_NEAR(ref, actual, tol) << "at row " << irow;

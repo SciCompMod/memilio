@@ -35,28 +35,25 @@ public:
 
 SecirResult simulate_secir(double t0, double tmax, double dt, epi::SecirParams const& params)
 {
-    std::vector<Eigen::VectorXd> seir(0);
-    auto times = simulate(t0, tmax, dt, params, seir);
+    auto result_timeseries = simulate(t0, tmax, dt, params);
 
-    SecirResult result;
-    if (seir.size() < 1 || seir[0].size() != epi::SecirCompartments::SecirCount) {
+    if (result_timeseries.get_num_time_points() < 1 || result_timeseries.get_num_elements() != epi::SecirCompartments::SecirCount) {
         throw std::runtime_error("Invalid result from secir simulation");
     }
 
-    size_t n_data = seir.size();
-    result.resize(n_data);
+    SecirResult result;
+    result.resize(result_timeseries.get_num_time_points());
 
-    for (size_t irow = 0; irow < seir.size(); ++irow) {
-
-        result.t[irow]       = times[irow];
-        result.nb_sus[irow]  = seir[irow][0];
-        result.nb_exp[irow]  = seir[irow][1];
-        result.nb_car[irow]  = seir[irow][2];
-        result.nb_inf[irow]  = seir[irow][3];
-        result.nb_hosp[irow] = seir[irow][4];
-        result.nb_icu[irow]  = seir[irow][5];
-        result.nb_rec[irow]  = seir[irow][6];
-        result.nb_dead[irow] = seir[irow][7];
+    for (size_t irow = 0; irow < result_timeseries.get_num_time_points(); ++irow) {
+        result.t[irow]       = result_timeseries.get_times()[irow];
+        result.nb_sus[irow]  = result_timeseries[irow][0];
+        result.nb_exp[irow]  = result_timeseries[irow][1];
+        result.nb_car[irow]  = result_timeseries[irow][2];
+        result.nb_inf[irow]  = result_timeseries[irow][3];
+        result.nb_hosp[irow] = result_timeseries[irow][4];
+        result.nb_icu[irow]  = result_timeseries[irow][5];
+        result.nb_rec[irow]  = result_timeseries[irow][6];
+        result.nb_dead[irow] = result_timeseries[irow][7];
     }
 
     return result;

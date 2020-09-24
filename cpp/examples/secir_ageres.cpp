@@ -1,4 +1,5 @@
 #include <epidemiology/secir/secir.h>
+#include <epidemiology/utils/time_series.h>
 #include <epidemiology/utils/logging.h>
 
 #ifdef HAVE_EPI_IO
@@ -85,13 +86,11 @@ int main()
     }
 
     params.apply_constraints();
-
-    std::vector<Eigen::VectorXd> secir(0);
-
-    std::vector<double> time = simulate(t0, tmax, dt, params, secir);
+    
+    epi::TimeSeries<double> secir = simulate(t0, tmax, dt, params);
 
     char vars[] = {'S', 'E', 'C', 'I', 'H', 'U', 'R', 'D'};
-    printf("secir.size() - 1:%d\n", static_cast<int>(secir.size() - 1));
+    printf("Number of time points :%d\n", static_cast<int>(secir.get_num_time_points()));
     printf("People in\n");
 
     for (size_t k = 0; k < epi::SecirCompartments::SecirCount; k++) {
@@ -99,8 +98,8 @@ int main()
 
         for (size_t i = 0; i < params.get_num_groups(); i++) {
             printf("\t %c[%d]: %.0f", vars[k], (int)i,
-                   secir[secir.size() - 1][k + epi::SecirCompartments::SecirCount * i]);
-            dummy += secir[secir.size() - 1][k + epi::SecirCompartments::SecirCount * i];
+                   secir.get_last_value()[k + epi::SecirCompartments::SecirCount * (int)i]);
+            dummy += secir.get_last_value()[k + epi::SecirCompartments::SecirCount * (int)i];
         }
 
         printf("\t %c_otal: %.0f\n", vars[k], dummy);
