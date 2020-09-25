@@ -55,19 +55,17 @@ TEST(TestSecir, compareWithPreviousRun)
     params.probabilities[0].set_dead_per_icu(delta);
 
     params.apply_constraints();
-
-    std::vector<Eigen::VectorXd> secihurd(0);
-    auto t = simulate(t0, tmax, dt, params, secihurd);
+    
+    epi::TimeSeries<double> secihurd = simulate(t0, tmax, dt, params);
 
     auto compare = load_test_data_csv<double>("secihurd-compare.csv");
 
-    ASSERT_EQ(compare.size(), t.size());
-    ASSERT_EQ(compare.size(), secihurd.size());
+    ASSERT_EQ(compare.size(), secihurd.get_num_time_points());
     for (size_t i = 0; i < compare.size(); i++) {
-        ASSERT_EQ(compare[i].size(), secihurd[i].size() + 1) << "at row " << i;
-        EXPECT_NEAR(t[i], compare[i][0], 1e-10) << "at row " << i;
+        ASSERT_EQ(compare[i].size(), secihurd.get_num_elements() + 1) << "at row " << i;
+        EXPECT_NEAR(secihurd.get_time(i), compare[i][0], 1e-10) << "at row " << i;
         for (size_t j = 1; j < compare[i].size(); j++) {
-            EXPECT_NEAR(secihurd[i][j - 1], compare[i][j], 1e-10) << " at row " << i;
+            EXPECT_NEAR(secihurd.get_value(i)[j - 1], compare[i][j], 1e-10) << " at row " << i;
         }
     }
 }

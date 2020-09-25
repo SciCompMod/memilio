@@ -121,43 +121,30 @@ def plot_secir():
     # run the simulation
     result = simulate(t0=0., tmax=days, dt=0.1, params=params)
 
-    # sum over all groups
-    group_data = np.zeros((len(result[0].t),num_compartments*num_groups))
-    data = np.zeros((len(result[0].t),num_groups))
-    for i in range(num_groups):
-        group_data[:,0 + i*num_compartments] = result[i].nb_sus
-        group_data[:,1 + i*num_compartments] = result[i].nb_exp
-        group_data[:,2 + i*num_compartments] = result[i].nb_car
-        group_data[:,3 + i*num_compartments] = result[i].nb_inf
-        group_data[:,4 + i*num_compartments] = result[i].nb_hosp
-        group_data[:,5 + i*num_compartments] = result[i].nb_icu
-        group_data[:,6 + i*num_compartments] = result[i].nb_rec
-        group_data[:,7 + i*num_compartments] = result[i].nb_dead
+    num_time_points = result.get_num_time_points()
+    result_array = result.as_ndarray()
+    t = result_array[0, :]
+    group_data = np.transpose(result_array[1:, :])
 
-        data[:, 0] += result[i].nb_sus
-        data[:, 1] += result[i].nb_exp
-        data[:, 2] += result[i].nb_car
-        data[:, 3] += result[i].nb_inf
-        data[:, 4] += result[i].nb_hosp
-        data[:, 5] += result[i].nb_icu
-        data[:, 6] += result[i].nb_rec
-        data[:, 7] += result[i].nb_dead
+    #sum over all groups
+    data = np.zeros((num_time_points,num_compartments))
+    for i in range(num_groups):
+        data += group_data[:, i*num_compartments:(i + 1) * num_compartments]
 
     datelist = np.array(pd.date_range(datetime(2020, 1, 27), periods=days, freq='D').strftime('%m-%d').tolist())
     datelist2 = np.array(pd.date_range(datetime(2020, 2, 3), periods=days, freq='D').strftime('%m-%d').tolist())
 
     tick_range = (np.arange(int(days / 10) +1 ) * 10)
     tick_range[-1] -=1
-    print(datelist[[25, 35, 40, 50]])
     fig, ax = plt.subplots()
-    #ax.plot(result[0].t, data[:,0], label='#Suscepted')
-    ax.plot(result[0].t, data[:,1], label='#Exposed')
-    ax.plot(result[0].t, data[:,2], label='#Carrying')
-    ax.plot(result[0].t, data[:,3], label='#Infected')
-    ax.plot(result[0].t, data[:,4], label='#Hospitalzed')
-    ax.plot(result[0].t, data[:,5], label='#In Intensive Care Units')
-    #ax.plot(result[0].t, data[:,6], label='#Recovered')
-    ax.plot(result[0].t, data[:,7], label='#Died')
+    #ax.plot(t, data[:,0], label='#Suscepted')
+    ax.plot(t, data[:,1], label='#Exposed')
+    ax.plot(t, data[:,2], label='#Carrying')
+    ax.plot(t, data[:,3], label='#Infected')
+    ax.plot(t, data[:,4], label='#Hospitalzed')
+    ax.plot(t, data[:,5], label='#In Intensive Care Units')
+    #ax.plot(t, data[:,6], label='#Recovered')
+    ax.plot(t, data[:,7], label='#Died')
     ax.set_title("SECIR model simulation")
     ax.set_xticks(tick_range)
     ax.set_xticklabels(datelist[tick_range],rotation=45)
@@ -166,13 +153,12 @@ def plot_secir():
     fig.savefig('Secir_all' + name + '.pdf')
 
     ind_list = []
-    time = np.array(result[0].t)
     for i in range(days):
-        ind_list.append(np.argmin(np.abs(time-i)))
+        ind_list.append(np.argmin(np.abs(t-i)))
 
     new_sus = []
     for i in range(1,len(ind_list)):
-        new_sus.append((data[ind_list[i-1],0] - data[ind_list[i], 0])/(time[ind_list[i]]-time[ind_list[i-1]]))
+        new_sus.append((data[ind_list[i-1],0] - data[ind_list[i], 0])/(t[ind_list[i]]-t[ind_list[i-1]]))
 
     fig, ax = plt.subplots()
     ax.plot(range(days-1), new_sus)
@@ -190,7 +176,7 @@ def plot_secir():
         fig, ax = plt.subplots(4, 2, figsize=(12, 15))
         for i, title in zip(range(num_compartments), compartments):
             for j, group in zip(range(num_groups), groups):
-                ax[int(np.floor(i / 2)),int(i % 2)].plot(result[j].t, group_data[:,j*num_groups+i], label=group)
+                ax[int(np.floor(i / 2)),int(i % 2)].plot(t, group_data[:,j*num_groups+i], label=group)
             ax[int(np.floor(i / 2)),int(i % 2)].set_title(title)
             ax[int(np.floor(i / 2)), int(i % 2)].legend()
 
@@ -203,7 +189,7 @@ def plot_secir():
 
         fig, ax = plt.subplots(4, 2, figsize=(12, 15))
         for i, title in zip(range(num_compartments), compartments):
-            ax[int(np.floor(i / 2)), int(i % 2)].plot(result[j].t, data[:, i])
+            ax[int(np.floor(i / 2)), int(i % 2)].plot(t, data[:, i])
             ax[int(np.floor(i / 2)), int(i % 2)].set_title(title)
 
             ax[int(np.floor(i / 2)), int(i % 2)].set_xticks(tick_range)

@@ -630,18 +630,6 @@ private:
 };
 
 /**
- * @brief DEPRECATED run secir simulation over fixed time
- * @param[in] t0 start time
- * @param[in] tmax end time
- * @param[in] dt initial step size of integration
- * @param[in] params SECIR params: contact frequencies, population sizes and epidemiological parameters
- * @param[out] secir value of compartments at each integration time point
- * @returns integration time points
- */
-std::vector<double> simulate(double t0, double tmax, double dt, SecirParams const& params,
-                             std::vector<Eigen::VectorXd>& secir);
-
-/**
  * @brief run secir simulation over fixed time
  * @param[in] t0 start time
  * @param[in] tmax end time

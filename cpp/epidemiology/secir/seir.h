@@ -126,16 +126,13 @@ private:
 
 /**
  * Computes the seir curve by integration
- * @param[in] seir_0 Initial S, E, I, and R values at t0
  * @param[in] t0 start time of simulation
  * @param[in] tmax end time of simulation
  * @param[in] dt initial time step
  * @param[in] params SEIR model parameters
- *
- * @returns Vector of times t
+ * @returns compartments at each integration time point
  */
-std::vector<double> simulate(double t0, double tmax, double dt, SeirParams const& params,
-                             std::vector<Eigen::VectorXd>& seir);
+TimeSeries<double> simulate(double t0, double tmax, double dt, SeirParams const& params);
 
 } // namespace epi
 

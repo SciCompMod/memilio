@@ -696,18 +696,6 @@ TimeSeries<double> simulate(double t0, double tmax, double dt, SecirParams const
     return sim.get_result();
 }
 
-std::vector<double> simulate(double t0, double tmax, double dt, SecirParams const& params,
-                             std::vector<Eigen::VectorXd>& secir)
-{
-    auto result = simulate(t0, tmax, dt, params);
-    std::vector<double> t(result.get_times().begin(), result.get_times().end());
-    std::transform(result.begin(), result.end(), std::back_inserter(secir), [](auto&& v_ref) {
-        return v_ref.eval();
-    });
-
-    return t;
-}
-
 SecirSimulation::SecirSimulation(SecirParams const& params, double t0, double dt)
     : m_integratorCore(std::make_shared<RKIntegratorCore>(1e-3, 1.))
     , m_integrator(

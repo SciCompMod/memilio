@@ -12,8 +12,8 @@ target_link_libraries(euler_test PRIVATE epidemiology)
 add_executable(parameter_sampling parameter_sampling.cpp)
 target_link_libraries(parameter_sampling PRIVATE epidemiology)
 
-add_executable(rungekutta_test rungekutta_test.cpp)
-target_link_libraries(rungekutta_test PRIVATE epidemiology)
+add_executable(adapt_rk_test adapt_rk_test.cpp)
+target_link_libraries(adapt_rk_test PRIVATE epidemiology)
 
 add_executable(seir seir.cpp)
 target_link_libraries(seir PRIVATE epidemiology)
