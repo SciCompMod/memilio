@@ -22,10 +22,8 @@ class Results extends Component {
   };
 
   componentDidMount() {
-    console.log('result did mount', this.props.selected);
     if (this.props.selected && this.props.selected.dataset === 'germany') {
       rki.getState(this.props.selected.id).then((data) => {
-        console.log('loaded', data);
         this.setState({
           loading: false,
           rki: data,
@@ -36,15 +34,12 @@ class Results extends Component {
 
   componentDidUpdate(prevProps, prevState, snapshot) {
     if (this.props.selected?.id !== prevProps.selected?.id) {
-      console.log('result did update');
-      console.log(this.props.selected, prevProps.selected);
       this.setState({
         loading: true,
         rki: null,
       });
       if (['states', 'germany'].includes(this.props.selected.dataset)) {
         rki.getState(this.props.selected.id).then((data) => {
-          console.log('loaded', data);
           this.setState({
             loading: false,
             rki: data,

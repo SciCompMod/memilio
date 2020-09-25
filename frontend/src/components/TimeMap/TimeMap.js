@@ -8,6 +8,7 @@ import {roundToUTCMidnight} from '../../common/utils';
 import {RKIDatastore as rki, Tables} from '../../common/rki-datastore';
 
 import './TimeMap.scss';
+
 /**
  * This Component has two major functions:
  * 1. Select different Regions for the chart.
@@ -64,42 +65,28 @@ class TimeMap extends React.Component {
   async calcStateData() {
     const times = new Map();
 
-    /** @type Map<number, number> | null */
-    let lastStates = null;
-    for (let d = this.props.time.startDate; d < this.props.time.endDate; d += 24 * 60 * 60 * 1000) {
-      let date = roundToUTCMidnight(d);
-      let states = new Map();
+    const result = await rki.get(Tables.STATES, {
+      start: this.props.time.startDate,
+      end: this.props.time.endDate,
+      sort: 'date',
+    });
 
-      const s = await rki.get(Tables.STATES, {start: date, end: date});
-      for (let stateID = 1; stateID <= 16; stateID++) {
-        const value = s.find((e) => e.ID_State === stateID);
-        if (value) {
-          states.set(stateID, value.Confirmed - value.Recovered);
-        } else if (lastStates !== null) {
-          states.set(stateID, lastStates.get(stateID));
-        } // else {
-        //  states.set(stateID, 0);
-        //}
+    let currDate = -1;
+    let states = null;
+    let lastStates = null;
+    for (const {ID_State, Confirmed, Recovered, date} of result) {
+      const d = roundToUTCMidnight(date);
+      if (d !== currDate) {
+        times.set(currDate, states);
+        currDate = roundToUTCMidnight(date);
+
+        lastStates = states;
+        states = new Map();
       }
 
-      //for (let i = 1; i <= 16; i++) {
-      // const s = this.props.states.all[i];
-      //const value = s.find((e) => e.date >= date);
-      //const s = await rki.getState(i, {start: date, end: date});
-      //console.log(s);
-      //continue;
-      // const value =
-      /*if (value) {
-          states.set(i, value.Confirmed);
-        } else if (lastStates !== null) {
-          states.set(i, lastStates.get(i));
-        } else {
-          states.set(i, 0);
-        }*/
-      //}
-
-      times.set(date, states);
-      lastStates = states;
+      if (ID_State > 0) {
+        states.set(ID_State, Confirmed - Recovered);
+      }
     }
 
     if (times.size > 0) {
@@ -110,29 +97,29 @@ class TimeMap extends React.Component {
   }
 
   /** @private */
-  calcCountyData() {
+  async calcCountyData() {
     const times = new Map();
 
-    /** @type Map<number, number> | null */
+    const result = await rki.get(Tables.COUNTIES, {
+      start: this.props.time.startDate,
+      end: this.props.time.endDate,
+      sort: 'date',
+    });
+
+    let currDate = -1;
+    let counties = null;
     let lastCounties = null;
-    for (let d = this.props.time.startDate; d < this.props.time.endDate; d += 24 * 60 * 60 * 1000) {
-      let date = roundToUTCMidnight(d);
-      let counties = new Map();
+    for (const {ID_County, Confirmed, Recovered, date} of result) {
+      const d = roundToUTCMidnight(date);
+      if (d !== currDate) {
+        times.set(currDate, counties);
+        currDate = roundToUTCMidnight(date);
 
-      for (let [id, c] of Object.entries(this.props.counties.all)) {
-        const value = c.find((e) => e.date >= date);
-
-        if (value) {
-          counties.set(parseInt(id), value.Confirmed);
-        } else if (lastCounties !== null) {
-          counties.set(parseInt(id), lastCounties.get(parseInt(id)));
-        } else {
-          counties.set(parseInt(id), 0);
-        }
+        lastCounties = counties;
+        counties = new Map();
       }
 
-      times.set(date, counties);
-      lastCounties = counties;
+      counties.set(ID_County, Confirmed - Recovered);
     }
 
     if (times.size > 0) {
@@ -182,7 +169,7 @@ class TimeMap extends React.Component {
       this.props.time.startDate !== prevProps.time.startDate ||
       this.props.time.endDate !== prevProps.time.endDate
     ) {
-      //this.calcStateData();
+      this.calcStateData();
     }
 
     if (
@@ -191,7 +178,7 @@ class TimeMap extends React.Component {
       this.props.time.startDate !== prevProps.time.startDate ||
       this.props.time.endDate !== prevProps.time.endDate
     ) {
-      //this.calcCountyData();
+      this.calcCountyData();
     }
 
     if (

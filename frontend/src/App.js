@@ -12,6 +12,7 @@ import {initializeApp, setSelected} from './redux/app';
 import {setTimeBounds} from './redux/time';
 
 import {RKIDatastore as rki, Tables} from './common/rki-datastore';
+import {SimulationDatastore, SimTables} from './common/simulation-datastore';
 import {PopulationDatastore as population} from './common/population-datastore';
 
 import './App.scss';

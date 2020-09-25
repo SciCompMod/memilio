@@ -32,7 +32,6 @@ class Timeline extends Component {
   }
 
   componentDidMount() {
-    //console.log('timeline did mount', this.props.startDate, this.props.endDate);
     /** @type Container */
     const container = am4core.create('timelineDiv', am4core.Container);
     container.width = am4core.percent(100);
@@ -84,7 +83,6 @@ class Timeline extends Component {
   }
 
   componentDidUpdate(prevProps, prevState, snapshot) {
-    console.log('timeline did update', this.props.startDate, this.props.endDate);
     if (this.props.startDate !== prevProps.startDate || this.props.endDate !== prevProps.endDate) {
       this.setTime();
     }
