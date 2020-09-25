@@ -73,14 +73,11 @@ class TimeMap extends React.Component {
 
     let currDate = -1;
     let states = null;
-    let lastStates = null;
     for (const {ID_State, Confirmed, Recovered, date} of result) {
       const d = roundToUTCMidnight(date);
       if (d !== currDate) {
         times.set(currDate, states);
         currDate = roundToUTCMidnight(date);
-
-        lastStates = states;
         states = new Map();
       }
 
@@ -108,14 +105,11 @@ class TimeMap extends React.Component {
 
     let currDate = -1;
     let counties = null;
-    let lastCounties = null;
     for (const {ID_County, Confirmed, Recovered, date} of result) {
       const d = roundToUTCMidnight(date);
       if (d !== currDate) {
         times.set(currDate, counties);
         currDate = roundToUTCMidnight(date);
-
-        lastCounties = counties;
         counties = new Map();
       }
 
