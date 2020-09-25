@@ -9,6 +9,12 @@
     "schoolclosing": "Schulschließungen",
     "socialdistancing": "Kontaktverbot"
   },
+  "simulation": {
+    "startDate": "Start Datum",
+    "days": "Tage",
+    "model": "Modell",
+    "simulate": "Simulieren"
+  },
   "parameters": {
     "title": "Parameter",
     "contactrate": {

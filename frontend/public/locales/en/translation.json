@@ -9,16 +9,102 @@
     "schoolclosing": "School Closing",
     "socialdistancing": "Social Distancing"
   },
+  "simulation": {
+    "startDate": "Start Date",
+    "days": "Days",
+    "model": "Model",
+    "simulate": "Simulate"
+  },
   "parameters": {
-    "title": "Parameters",
-    "contactrate": "Contact Rate (Days)",
-    "incubation": "Incubation Time (Days)",
-    "infection": "Infection Time (Days)",
-    "deaths": "Deceased",
-    "sus": "Susceptible persons",
-    "recovered": "Recovered persons",
-    "exposed": "Exposed persons",
-    "infected": "Infected persons"
+    "title": "Parameter",
+    "contactrate": {
+      "label": "Contact Rate (Days)",
+      "info": "Contact Rate"
+    },
+    "incubation": {
+      "label": "Incubation Time (Days)",
+      "info": "Incubation Time"
+    },
+    "infection": {
+      "label": "Infection Time (Days)",
+      "info": "Infection Time"
+    },
+    "deaths": {
+      "label": "Deceased",
+      "info": "Deceased"
+    },
+    "sus": {
+      "label": "Susceptible Persons",
+      "info": "Susceptible Persons"
+    },
+    "recovered": {
+      "label": "Recovered Persons",
+      "info": "Recovered Persons"
+    },
+    "exposed": {
+      "label": "Exposed Persons",
+      "info": "Exposed Persons"
+    },
+    "infected": {
+      "label": "Infected Persons",
+      "info": "Infected Persons"
+    },
+    "serint": {
+      "label": "Serial Interval",
+      "info": "TODO: Zeitlicher Abstand zwischen analogen Phasen einer Erkrankung bei zwei aufeinander folgenden Gliedern einer Infektionskette"
+    },
+    "infmild": {
+      "label": "TODO: Infektionszeitraum (milder Verlauf)",
+      "info": "TODO: Zeitraum, indem eine Person infektiös ist ohne, dass bzw. bevor eine Hospitalisierung erfolgen muss"
+    },
+    "hosp2home": {
+      "label": "TODO: Einfache Hospitalisierungsdauer",
+      "info": "Zeitraum der notwendigen Hospitalisierung eines Patienten, der ohne Intensivpflege wieder gesundet"
+    },
+    "home2hosp": {
+      "label": "home2hosp",
+      "info": "Mean time a patient with mild symptoms spends at home before hospital admission due to worsening of the disease condition."
+    },
+    "hosp2icu": {
+      "label": "hosp2icu",
+      "info": "Mean time a patient who entered the hospital will be hospitalized without ICU before being connected to an ICU."
+    },
+    "icu2home": {
+      "label": "icu2home",
+      "info": "Mean time a patient is connected to an ICU before returning home."
+    },
+    "infasy": {
+      "label": "infasy",
+      "info": "Mean time an asymptomatic person remains infective."
+    },
+    "icu2death": {
+      "label": "icu2death",
+      "info": "Mean time a person needs ICU support before dying."
+    },
+    "infprob": {
+      "label": "infprob",
+      "info": ""
+    },
+    "alpha": {
+      "label": "alpha",
+      "info": "share of asymptomatic cases"
+    },
+    "beta": {
+      "label": "beta",
+      "info": "Risk of infection from the infected symptomatic patients."
+    },
+    "rho": {
+      "label": "rho",
+      "info": "hospitalized per infected"
+    },
+    "theta": {
+      "label": "theta",
+      "info": "intensive care units per hospitalized"
+    },
+    "delta": {
+      "label": "delta",
+      "info": "deaths per intensive care units"
+    }
   },
   "rki": {
     "title": "RKI Data",

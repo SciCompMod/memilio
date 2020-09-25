@@ -54,7 +54,7 @@ function createSizeTVector(array) {
 }
 
 /**
- * Component to encaples parameter settings for an simulation
+ * Component to encapsulate parameter settings for an simulation
  */
 class Simulation extends Component {
   constructor(props) {
@@ -320,7 +320,7 @@ class Simulation extends Component {
   /**
    * Event handler updating the state when a new simulation start date is selected.
    *
-   * @param {Date} startDate New start date for the simulation
+   * @param {moment.Moment} startDate New start date for the simulation
    */
   onSelect(startDate) {
     this.setState({startDate});
@@ -377,10 +377,16 @@ class Simulation extends Component {
           <Form onSubmit={this.handleSubmit}>
             <FormGroup row className="mx-0">
               <Label for="model" sm={4}>
-                Start Datum:
+                {t('simulation.startDate')}:
               </Label>
               <Col sm={8} className="text-right">
-                <span className="mr-2">{this.state.startDate.format(t('dateformat.date'))}</span>
+                <span className="mr-2">
+                  {this.state.startDate.toDate().toLocaleDateString({
+                    year: 'numeric',
+                    month: '2-digit',
+                    day: '2-digit',
+                  })}
+                </span>
                 <Button id="startDate" type="button">
                   <i className="fas fa-calendar-day"></i>
                 </Button>
@@ -392,6 +398,7 @@ class Simulation extends Component {
                       maximumDate={new Date()}
                       numberOfCalendars={1}
                       selectionType="single"
+                      locale={navigator.language}
                     />
                   </PopoverBody>
                 </UncontrolledPopover>
@@ -399,7 +406,7 @@ class Simulation extends Component {
             </FormGroup>
             <FormGroup row className="mx-0">
               <Label for="days" sm={4}>
-                Tage:
+                {t('simulation.days')}:
               </Label>
               <Col sm={8}>
                 <Input
@@ -413,7 +420,7 @@ class Simulation extends Component {
             </FormGroup>
             <FormGroup row className="mx-0">
               <Label for="model" sm={4}>
-                Model:
+                {t('simulation.model')}:
               </Label>
               <Col sm={8}>
                 <Input
@@ -445,7 +452,7 @@ class Simulation extends Component {
                   size="sm"
                   disabled={this.state.selected === null || this.props.selected === null}
                 >
-                  Simulate
+                  {t('simulation.simulate')}
                 </Button>
               </Col>
             </FormGroup>
