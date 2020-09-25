@@ -39,7 +39,9 @@ class Results extends Component {
         rki: null,
       });
       if (['states', 'germany'].includes(this.props.selected.dataset)) {
+        console.time('getState');
         rki.getState(this.props.selected.id).then((data) => {
+          console.timeEnd('getState');
           this.setState({
             loading: false,
             rki: data,
@@ -61,7 +63,7 @@ class Results extends Component {
    */
   conditionalRender() {
     const {t} = this.props;
-    if (this.props.rki === null) {
+    if (this.state.rki === null) {
       return <div>Bitte wählen sie ein Bundesland aus!</div>;
     } else if (this.state.loading) {
       return <div>Loading...</div>;
@@ -78,7 +80,7 @@ class Results extends Component {
           />
           <InfectionChart
             seir={this.props.seir}
-            rki={this.props.rki.all}
+            rki={this.state.rki}
             measures={this.props.measures}
             logChart={this.state.logChart}
             style={{height: '100%'}}

@@ -60,6 +60,10 @@ class InfectionChart extends Component {
     this.updateData();
   }
 
+  componentWillUnmount() {
+    // this.#chart.dispose();
+  }
+
   /**
    * Creates a new series and adds it to the chart.
    * @private
