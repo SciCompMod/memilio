@@ -352,12 +352,8 @@ PYBIND11_MODULE(_secir, m)
           py::arg("params"));
 
     py::class_<epi::ParameterStudy>(m, "ParameterStudy")
-        .def(py::init([](const epi::SecirParams& params, double t0, double tmax,
-                         size_t num_runs) { //simplify the constructor by providing the simulation function
-                 return std::make_unique<epi::ParameterStudy>(&epi::make_migration_sim<epi::SecirSimulation>, params,
-                                                              t0, tmax, num_runs);
-             }),
-             py::arg("params"), py::arg("t0"), py::arg("tmax"), py::arg("num_runs"))
+        .def(py::init<const epi::SecirParams&, double, double, size_t>(), py::arg("params"), py::arg("t0"), py::arg("tmax"), py::arg("num_runs"))        
+        .def(py::init<const epi::SecirParams&, double, double, double, size_t>(), py::arg("params"), py::arg("t0"), py::arg("tmax"), py::arg("dev_rel"), py::arg("num_runs"))
         .def_property("num_runs", &epi::ParameterStudy::get_num_runs, &epi::ParameterStudy::set_num_runs)
         .def_property("tmax", &epi::ParameterStudy::get_tmax, &epi::ParameterStudy::set_tmax)
         .def_property("t0", &epi::ParameterStudy::get_t0, &epi::ParameterStudy::set_t0)

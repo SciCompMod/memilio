@@ -110,9 +110,7 @@ int main(int argc, char* argv[])
     tixiCloseDocument(handle3);
 
     // create study
-    epi::ParameterStudy parameter_study(epi::make_migration_sim<epi::SecirSimulation>, params, t0, tmax, 0.2, 1);
-
-    parameter_study.set_num_runs(1);
+    epi::ParameterStudy parameter_study(params, t0, tmax, 0.2, 1);
 
     // write and run study
     std::string path = "/Parameters";

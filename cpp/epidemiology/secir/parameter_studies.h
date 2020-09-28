@@ -8,55 +8,54 @@
 
 namespace epi
 {
+
 using HandleSimulationResultFunction = std::function<void(const SecirParams&, const TimeSeries<double>&, int node)>;
 
-// The function type for the kind of simulation that we want to run
-using secir_simulation_function_t =
-    std::function<GraphSimulation<epi::Graph<epi::ModelNode<epi::SecirSimulation>, epi::MigrationEdge>>(
-        double t0, double dt, epi::Graph<epi::ModelNode<epi::SecirSimulation>, epi::MigrationEdge> sim_graph)>;
+auto DummyHandleResultFunction = [](const SecirParams& params, const TimeSeries<double>&, int node) {};
 
-auto dummy_func = [](auto& params, const TimeSeries<double>&, int node) {};
-
-// TODO: document class
-
+/**
+ * Class that performs multiple simulation runs with randomly sampled parameters.
+ */
 class ParameterStudy
 {
 public:
-    ParameterStudy(secir_simulation_function_t const& simu_func,
-                   epi::Graph<epi::ModelNode<epi::SecirParams>, epi::MigrationEdge> graph, size_t num_runs, double t0,
-                   double tmax);
-
-    /* 
-     * @brief Constructor from file name
-     * @param[in] simu_func simulation function for Secir simulation
-     * @param[in] params SecirParams object 
-     * @param[in] t0 start time of simulations
-     * @param[in] tmax end time of simulations
-     * @param[in] num_runs number of runs in ensemble run
+    /**
+     * create study for graph of compartment models.
+     * @param graph graph of parameters
+     * @param t0 start time of simulations
+     * @param tmax end time of simulations
+     * @param graph_sim_dt time step of graph simulation
+     * @param num_runs number of runs
      */
-    ParameterStudy(secir_simulation_function_t const& simu_func, SecirParams&& params, double t0, double tmax,
-                   size_t num_runs);
+    ParameterStudy(const epi::Graph<epi::SecirParams, epi::MigrationEdge>& graph,
+                   double t0, double tmax, double graph_sim_dt, size_t num_runs);
 
-    /* 
-     * @brief Constructor from contact frequency matrix and parameter vector
-     * @param[in] simu_func simulation function for Secir simulation
-     * @param[in] params SecirParams object 
-     * @param[in] t0 start time of simulations
-     * @param[in] tmax end time of simulations
-     * @param[in] num_runs number of runs in ensemble run
+    /**
+     * @brief Create study for single compartment model.
+     * @param params SecirParams object 
+     * @param t0 start time of simulations
+     * @param tmax end time of simulations
+     * @param num_runs number of runs in ensemble run
      */
-    ParameterStudy(secir_simulation_function_t const& simu_func, SecirParams const& params, double t0, double tmax,
-                   size_t num_runs);
+    ParameterStudy(SecirParams const& params, double t0, double tmax, size_t num_runs);
 
-    ParameterStudy(secir_simulation_function_t const& simu_func, SecirParams const& params, double t0, double tmax,
-                   double dev_rel, size_t num_runs);
+    /**
+     * @brief create study for single compartment model with normal distributions.
+     * Sets all parameters to normal distribution with specified relative deviation.
+     * @param params SecirParams object 
+     * @param t0 start time of simulations
+     * @param tmax end time of simulations
+     * @param dev_rel relative deviation of parameters distributions
+     * @param num_runs number of runs in ensemble run
+     */
+    ParameterStudy(SecirParams const& params, double t0, double tmax, double dev_rel, size_t num_runs);
 
     /*
      * @brief Carry out all simulations in the parameter study.
      * @param[in] result_processing_function Processing function for simulation results, e.g., output function
      */
     std::vector<epi::Graph<epi::ModelNode<epi::SecirSimulation>, epi::MigrationEdge>>
-    run(HandleSimulationResultFunction result_processing_function = dummy_func);
+    run(HandleSimulationResultFunction result_processing_function = DummyHandleResultFunction);
 
     /*
      * @brief sets the number of Monte Carlo runs
@@ -108,73 +107,54 @@ public:
 
     const SecirParams& get_secir_params() const
     {
-        return m_graph.nodes()[0].model;
+        return m_graph.nodes()[0];
     }
 
     SecirParams& get_secir_params()
     {
-        return m_graph.nodes()[0].model;
+        return m_graph.nodes()[0];
     }
 
 private:
     // Stores Graph with the names and ranges of all parameters
-    epi::Graph<epi::ModelNode<epi::SecirParams>, epi::MigrationEdge> m_graph;
+    epi::Graph<epi::SecirParams, epi::MigrationEdge> m_graph;
 
-    // The function that carries out our simulation
-    secir_simulation_function_t simulation_function;
-
-    size_t m_num_runs = 100;
+    size_t m_num_runs;
 
     // Start time (should be the same for all simulations)
-    double m_t0 = 0.0;
+    double m_t0;
     // End time (should be the same for all simulations)
-    double m_tmax = 400.0;
+    double m_tmax;
+    // time step of the graph
+    double m_dt_graph_sim;
     // adaptive time step of the integrator (will be corrected if too large/small)
-    double m_dt_inner = 0.1;
-    // time step of the graph //TODO: make configurable
-    double m_dt_outer = 1.0;
+    double m_dt_integration = 0.1;
 };
 
-inline ParameterStudy::ParameterStudy(secir_simulation_function_t const& simu_func,
-                                      epi::Graph<epi::ModelNode<epi::SecirParams>, epi::MigrationEdge> graph,
-                                      size_t num_runs, double t0, double tmax)
-    : simulation_function(simu_func)
-    , m_graph(std::move(graph))
+inline ParameterStudy::ParameterStudy(const epi::Graph<epi::SecirParams, epi::MigrationEdge>& graph, double t0, double tmax, double graph_sim_dt,
+                                      size_t num_runs)
+    : m_graph(graph)
     , m_num_runs(num_runs)
     , m_t0{t0}
     , m_tmax{tmax}
+    , m_dt_graph_sim(graph_sim_dt)
 {
 }
 
-inline ParameterStudy::ParameterStudy(const secir_simulation_function_t& simu_func, SecirParams&& params, double t0,
-                                      double tmax, size_t num_runs)
-    : simulation_function(simu_func)
-    , m_num_runs(num_runs)
+inline ParameterStudy::ParameterStudy(SecirParams const& params, double t0, double tmax, size_t num_runs)
+    : m_num_runs{num_runs}
     , m_t0{t0}
     , m_tmax{tmax}
+    , m_dt_graph_sim(tmax - t0)
 {
     m_graph.add_node(params);
 }
 
-inline ParameterStudy::ParameterStudy(secir_simulation_function_t const& simu_func, SecirParams const& params,
-                                      double t0, double tmax, size_t num_runs)
-    : simulation_function{simu_func}
-    , m_num_runs{num_runs}
-    , m_t0{t0}
-    , m_tmax{tmax}
+inline ParameterStudy::ParameterStudy(SecirParams const& params, double t0, double tmax, double dev_rel,
+                                      size_t num_runs)
+    : ParameterStudy(params, t0, tmax, num_runs)
 {
-    m_graph.add_node(params);
-}
-
-inline ParameterStudy::ParameterStudy(secir_simulation_function_t const& simu_func, SecirParams const& params,
-                                      double t0, double tmax, double dev_rel, size_t num_runs)
-    : simulation_function{simu_func}
-    , m_num_runs{num_runs}
-    , m_t0{t0}
-    , m_tmax{tmax}
-{
-    m_graph.add_node(params);
-    set_params_distributions_normal(m_graph.nodes()[0].model, t0, tmax, dev_rel);
+    set_params_distributions_normal(m_graph.nodes()[0], t0, tmax, dev_rel);
 }
 
 inline std::vector<epi::Graph<epi::ModelNode<epi::SecirSimulation>, epi::MigrationEdge>>
@@ -186,11 +166,9 @@ ParameterStudy::run(HandleSimulationResultFunction simulation_result_function)
     for (size_t i = 0; i < m_num_runs; i++) {
         epi::Graph<epi::ModelNode<epi::SecirSimulation>, epi::MigrationEdge> sim_graph;
 
-        for (auto& node : m_graph.nodes()) {
-            //draw_sample before copying so the state of the RNG persists and the next run uses new random numbers
-            auto& params_sample = node.model;
-            draw_sample(params_sample);
-            sim_graph.add_node(params_sample, m_t0, m_dt_inner);
+        for (auto& params_node : m_graph.nodes()) {
+            draw_sample(params_node);
+            sim_graph.add_node(params_node, m_t0, m_dt_integration);
         }
 
         for (auto& edge : m_graph.edges()) {
@@ -198,7 +176,7 @@ ParameterStudy::run(HandleSimulationResultFunction simulation_result_function)
         }
 
         // Call the simulation function
-        auto sim = simulation_function(m_t0, m_dt_outer, sim_graph);
+        auto sim = make_migration_sim(m_t0, m_dt_graph_sim, sim_graph);
         sim.advance(m_tmax);
 
         auto result = sim.get_graph();

@@ -76,7 +76,7 @@ TEST(TestSaveParameters, compareParameterStudy)
 
     params.get_contact_patterns().get_distribution_damp_days()->add_predefined_sample(4711.0);
     tixiCreateDocument("Parameters", &handle);
-    epi::ParameterStudy study(epi::make_migration_sim<epi::SecirSimulation>, params, t0, tmax, num_runs);
+    epi::ParameterStudy study(params, t0, tmax, num_runs);
 
     epi::write_parameter_study(handle, path, study);
     tixiSaveDocument(handle, "TestParameters.xml");
@@ -287,7 +287,7 @@ TEST(TestSaveParameters, compareSingleRun)
 
     tixiCreateDocument("Parameters", &handle);
     epi::set_params_distributions_normal(params, t0, tmax, 0.0);
-    epi::ParameterStudy study(epi::make_migration_sim<epi::SecirSimulation>, params, t0, tmax, num_runs);
+    epi::ParameterStudy study(params, t0, tmax, num_runs);
 
     epi::write_parameter_study(handle, path, study, 0);
     tixiSaveDocument(handle, "TestParameterValues.xml");
@@ -429,7 +429,7 @@ TEST(TestSaveParameters, compareGraphs)
 
     epi::set_params_distributions_normal(params, t0, tmax, 0.15);
 
-    epi::Graph<epi::ModelNode<epi::SecirParams>, epi::MigrationEdge> graph;
+    epi::Graph<epi::SecirParams, epi::MigrationEdge> graph;
     graph.add_node(params);
     graph.add_node(params);
     graph.add_edge(0, 1, Eigen::VectorXd::Constant(params.populations.get_num_compartments(), 0.01));
@@ -437,7 +437,7 @@ TEST(TestSaveParameters, compareGraphs)
 
     epi::write_graph(graph, t0, tmax);
 
-    epi::Graph<epi::ModelNode<epi::SecirParams>, epi::MigrationEdge> graph_read = epi::read_graph();
+    epi::Graph<epi::SecirParams, epi::MigrationEdge> graph_read = epi::read_graph();
 
     int num_nodes = graph.nodes().size();
     int num_edges = graph.edges().size();
@@ -446,10 +446,10 @@ TEST(TestSaveParameters, compareGraphs)
     ASSERT_EQ(num_edges, graph_read.edges().size());
 
     for (int node = 0; node < num_nodes; node++) {
-        epi::SecirParams graph_params               = graph.nodes()[0].model;
+        epi::SecirParams graph_params               = graph.nodes()[0];
         epi::ContactFrequencyMatrix graph_cont_freq = graph_params.get_contact_patterns();
 
-        epi::SecirParams graph_read_params               = graph_read.nodes()[0].model;
+        epi::SecirParams graph_read_params               = graph_read.nodes()[0];
         epi::ContactFrequencyMatrix graph_read_cont_freq = graph_read_params.get_contact_patterns();
 
         int num_compart = graph_params.populations.get_num_compartments() / num_groups;
