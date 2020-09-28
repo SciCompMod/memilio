@@ -326,6 +326,8 @@ SecirParams read_parameter_space(TixiDocumentHandle handle, const std::string& p
 
         params.probabilities[i].set_infection_from_contact(
             *read_element(handle, path_join(probabilities_path, "InfectedFromContact"), io_mode));
+        params.probabilities[i].set_carrier_infectability(
+            *read_element(handle, path_join(probabilities_path, "Carrierinfectability"), io_mode));
         params.probabilities[i].set_asymp_per_infectious(
             *read_element(handle, path_join(probabilities_path, "AsympPerInfectious"), io_mode));
         params.probabilities[i].set_risk_from_symptomatic(
@@ -400,6 +402,8 @@ void write_parameter_space(TixiDocumentHandle handle, const std::string& path, c
 
         write_element(handle, probabilities_path, "InfectedFromContact",
                       parameters.probabilities[i].get_infection_from_contact(), io_mode, num_runs);
+        write_element(handle, probabilities_path, "Carrierinfectability",
+                      parameters.probabilities[i].get_carrier_infectability(), io_mode, num_runs);
         write_element(handle, probabilities_path, "AsympPerInfectious",
                       parameters.probabilities[i].get_asymp_per_infectious(), io_mode, num_runs);
         write_element(handle, probabilities_path, "RiskFromSymptomatic",

@@ -25,6 +25,7 @@ def run_secir_simulation():
     params.populations.set_difference_from_total([0, secir.SecirCompartments.S], 10000)
 
     params.probabilities[0].set_infection_from_contact(1.0)
+    params.probabilities[0].set_carrier_infectability(0.67)
     params.probabilities[0].set_asymp_per_infectious(0.09)
     params.probabilities[0].set_risk_from_symptomatic(0.25)
     params.probabilities[0].set_hospitalized_per_infectious(0.2)

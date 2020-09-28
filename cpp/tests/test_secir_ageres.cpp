@@ -41,6 +41,8 @@ TEST(TestSecir, compareAgeResWithSingleRun)
         params.populations.set_difference_from_group_total({i, epi::SecirCompartments::S}, epi::SecirCategory::AgeGroup,
                                                            i, fact * nb_total_t0);
 
+        params.probabilities[i].set_infection_from_contact(1.0);
+        params.probabilities[i].set_carrier_infectability(1.0);
         params.probabilities[i].set_asymp_per_infectious(alpha);
         params.probabilities[i].set_risk_from_symptomatic(beta);
         params.probabilities[i].set_hospitalized_per_infectious(rho);
