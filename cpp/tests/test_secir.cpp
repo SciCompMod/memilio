@@ -55,7 +55,7 @@ TEST(TestSecir, compareWithPreviousRun)
     params.probabilities[0].set_dead_per_icu(delta);
 
     params.apply_constraints();
-    
+
     epi::TimeSeries<double> secihurd = simulate(t0, tmax, dt, params);
 
     auto compare = load_test_data_csv<double>("secihurd-compare.csv");
@@ -105,6 +105,7 @@ TEST(TestSecir, testParamConstructors)
     params.populations.set_difference_from_total({0, epi::SecirCompartments::S}, nb_total_t0);
 
     params.probabilities[0].set_infection_from_contact(inf_cont);
+    params.probabilities[0].set_carrier_infectability(1.0);
     params.probabilities[0].set_asymp_per_infectious(alpha);
     params.probabilities[0].set_risk_from_symptomatic(beta);
     params.probabilities[0].set_hospitalized_per_infectious(rho);
@@ -150,6 +151,8 @@ TEST(TestSecir, testParamConstructors)
 
     EXPECT_EQ(params.probabilities[0].get_infection_from_contact(),
               params2.probabilities[0].get_infection_from_contact());
+    EXPECT_EQ(params.probabilities[0].get_carrier_infectability(),
+              params2.probabilities[0].get_carrier_infectability());
     EXPECT_EQ(params.probabilities[0].get_risk_from_symptomatic(),
               params2.probabilities[0].get_risk_from_symptomatic());
     EXPECT_EQ(params.probabilities[0].get_asymp_per_infectious(), params2.probabilities[0].get_asymp_per_infectious());
@@ -192,6 +195,8 @@ TEST(TestSecir, testParamConstructors)
 
     EXPECT_EQ(params3.probabilities[0].get_infection_from_contact(),
               params.probabilities[0].get_infection_from_contact());
+    EXPECT_EQ(params3.probabilities[0].get_carrier_infectability(),
+              params.probabilities[0].get_carrier_infectability());
     EXPECT_EQ(params3.probabilities[0].get_risk_from_symptomatic(),
               params.probabilities[0].get_risk_from_symptomatic());
     EXPECT_EQ(params3.probabilities[0].get_asymp_per_infectious(), params.probabilities[0].get_asymp_per_infectious());
@@ -235,6 +240,8 @@ TEST(TestSecir, testParamConstructors)
 
     EXPECT_EQ(params3.probabilities[0].get_infection_from_contact(),
               params4.probabilities[0].get_infection_from_contact());
+    EXPECT_EQ(params3.probabilities[0].get_carrier_infectability(),
+              params4.probabilities[0].get_carrier_infectability());
     EXPECT_EQ(params3.probabilities[0].get_risk_from_symptomatic(),
               params4.probabilities[0].get_risk_from_symptomatic());
     EXPECT_EQ(params3.probabilities[0].get_asymp_per_infectious(), params4.probabilities[0].get_asymp_per_infectious());
@@ -278,6 +285,8 @@ TEST(TestSecir, testParamConstructors)
 
     EXPECT_EQ(params5.probabilities[0].get_infection_from_contact(),
               params3.probabilities[0].get_infection_from_contact());
+    EXPECT_EQ(params5.probabilities[0].get_carrier_infectability(),
+              params3.probabilities[0].get_carrier_infectability());
     EXPECT_EQ(params5.probabilities[0].get_risk_from_symptomatic(),
               params3.probabilities[0].get_risk_from_symptomatic());
     EXPECT_EQ(params5.probabilities[0].get_asymp_per_infectious(), params3.probabilities[0].get_asymp_per_infectious());
@@ -359,6 +368,7 @@ TEST(TestSecir, setters_and_getters)
     params.populations.set({0, epi::SecirCompartments::D}, val);
 
     params.probabilities[0].set_infection_from_contact(val);
+    params.probabilities[0].set_carrier_infectability(val);
     params.probabilities[0].set_asymp_per_infectious(val);
     params.probabilities[0].set_risk_from_symptomatic(val);
     params.probabilities[0].set_hospitalized_per_infectious(val);
@@ -384,6 +394,8 @@ TEST(TestSecir, setters_and_getters)
                        *params.populations.get({0, epi::SecirCompartments::D}).get_distribution());
     check_distribution(*params.probabilities[0].get_asymp_per_infectious().get_distribution(),
                        *params.probabilities[0].get_risk_from_symptomatic().get_distribution());
+    check_distribution(*params.probabilities[0].get_risk_from_symptomatic().get_distribution(),
+                       *params.probabilities[0].get_carrier_infectability().get_distribution());
     check_distribution(*params.probabilities[0].get_hospitalized_per_infectious().get_distribution(),
                        *params.probabilities[0].get_icu_per_hospitalized().get_distribution());
     check_distribution(*params.probabilities[0].get_dead_per_icu().get_distribution(),
@@ -404,6 +416,8 @@ TEST(TestSecir, setters_and_getters)
     EXPECT_EQ(params.probabilities[0].get_hospitalized_per_infectious(),
               params.probabilities[0].get_icu_per_hospitalized());
     EXPECT_EQ(params.probabilities[0].get_dead_per_icu(), params.probabilities[0].get_infection_from_contact());
+    EXPECT_EQ(params.probabilities[0].get_carrier_infectability(),
+              params.probabilities[0].get_infection_from_contact());
 }
 
 TEST(TestSecir, check_constraints)
@@ -460,6 +474,8 @@ TEST(TestSecir, check_constraints)
     params.populations.set({0, epi::SecirCompartments::D}, nb_dead_t0);
     params.populations.set_difference_from_total({0, epi::SecirCompartments::S}, nb_total_t0);
 
+    params.probabilities[0].set_infection_from_contact(0.8);
+    params.probabilities[0].set_carrier_infectability(0.8);
     params.probabilities[0].set_asymp_per_infectious(alpha);
     params.probabilities[0].set_risk_from_symptomatic(beta);
     params.probabilities[0].set_hospitalized_per_infectious(rho);

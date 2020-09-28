@@ -395,6 +395,24 @@ public:
         void set_infection_from_contact(ParameterDistribution const& infprob);
 
         /**
+        * @brief sets the relative carrier infectability 
+        * @param carrinf relative carrier infectability
+        */
+        void set_carrier_infectability(UncertainValue const& carrinf);
+
+        /**
+        * @brief sets the relative carrier infectability
+        * @param carrinf relative carrier infectability
+        */
+        void set_carrier_infectability(double carrinf);
+
+        /**
+        * @brief sets the relative carrier infectability
+        * @param carrinf relative carrier infectability
+        */
+        void set_carrier_infectability(ParameterDistribution const& carrinf);
+
+        /**
         * @brief sets the percentage of asymptomatic cases in the SECIR model
         * @param alpha the percentage of asymptomatic cases
         */
@@ -490,6 +508,12 @@ public:
         UncertainValue& get_infection_from_contact();
 
         /**
+        * @brief set the relative carrier infectability
+        */
+        const UncertainValue& get_carrier_infectability() const;
+        UncertainValue& get_carrier_infectability();
+
+        /**
         * @brief returns the percentage of asymptomatic cases in the SECIR model
         */
         const UncertainValue& get_asymp_per_infectious() const;
@@ -530,7 +554,7 @@ public:
         void check_constraints() const;
 
     private:
-        UncertainValue m_infprob, m_asympinf, m_risksymp, m_hospinf, m_icuhosp, m_deathicu; // probabilities
+        UncertainValue m_infprob, m_carrinf, m_asympinf, m_risksymp, m_hospinf, m_icuhosp, m_deathicu; // probabilities
     };
 
     /**
