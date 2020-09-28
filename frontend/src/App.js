@@ -13,6 +13,7 @@ import {setTimeBounds} from './redux/time';
 
 import {RKIDatastore as rki, Tables} from './common/rki-datastore';
 import {PopulationDatastore as population} from './common/population-datastore';
+import './common/rki-sql-store';
 
 import './App.scss';
 

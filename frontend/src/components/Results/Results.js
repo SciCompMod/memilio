@@ -4,7 +4,7 @@ import {withTranslation} from 'react-i18next';
 import InfectionChart from '../Graphs/InfectionChart';
 
 import {getActiveMeasures} from '../../redux/measures';
-import {RKIDatastore as rki} from '../../common/rki-datastore';
+import rki from '../../common/rki-sql-store';
 
 import * as numeral from 'numeral';
 import {CustomInput} from 'reactstrap';
@@ -23,7 +23,7 @@ class Results extends Component {
 
   componentDidMount() {
     if (this.props.selected && this.props.selected.dataset === 'germany') {
-      rki.getState(this.props.selected.id).then((data) => {
+      rki.getAllState(this.props.selected.id).then((data) => {
         this.setState({
           loading: false,
           rki: data,
@@ -40,7 +40,7 @@ class Results extends Component {
       });
       if (['states', 'germany'].includes(this.props.selected.dataset)) {
         console.time('getState');
-        rki.getState(this.props.selected.id).then((data) => {
+        rki.getAllState(this.props.selected.id).then((data) => {
           console.timeEnd('getState');
           this.setState({
             loading: false,
@@ -48,7 +48,7 @@ class Results extends Component {
           });
         });
       } else if (this.props.selected.dataset === 'counties') {
-        rki.getCounty(this.props.selected.id).then((data) => {
+        rki.getAllCounty(this.props.selected.id).then((data) => {
           this.setState({
             loading: false,
             rki: data,

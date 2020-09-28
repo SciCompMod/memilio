@@ -144,9 +144,9 @@ class InfectionChart extends Component {
         }
 
         const curr = timeMap.get(entry.date);
-        curr.rkic = entry.Confirmed;
-        curr.rkid = entry.Deaths;
-        curr.rkir = entry.Recovered;
+        curr.rkic = entry.confirmed;
+        curr.rkid = entry.deaths;
+        curr.rkir = entry.recovered;
       }
     }
 
