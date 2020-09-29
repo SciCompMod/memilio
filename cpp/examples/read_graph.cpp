@@ -84,7 +84,7 @@ int main(int argc, char** argv)
     std::cout << "Done" << std::endl;
 
     std::cout << "Intializing Graph..." << std::flush;
-    epi::Graph<epi::ModelNode<epi::SecirParams>, epi::MigrationEdge> graph;
+    epi::Graph<epi::SecirParams, epi::MigrationEdge> graph;
     for (int node = 0; node < twitter_migration_2018.rows(); node++) {
         graph.add_node(params);
     }
@@ -100,11 +100,11 @@ int main(int argc, char** argv)
     std::cout << "Done" << std::endl;
 
     std::cout << "Reading XML Files..." << std::flush;
-    epi::Graph<epi::ModelNode<epi::SecirParams>, epi::MigrationEdge> graph_read = epi::read_graph();
+    epi::Graph<epi::SecirParams, epi::MigrationEdge> graph_read = epi::read_graph();
     std::cout << "Done" << std::endl;
 
     std::cout << "Running Simulations..." << std::flush;
-    auto study = epi::ParameterStudy(epi::make_migration_sim<epi::SecirSimulation>, graph_read, t0, tmax, 2);
+    auto study = epi::ParameterStudy(graph_read, t0, tmax, 1.0, 2);
     std::cout << "Done" << std::endl;
 
     return 0;

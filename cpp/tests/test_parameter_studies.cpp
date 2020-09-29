@@ -251,7 +251,7 @@ TEST(ParameterStudies, check_ensemble_run_result)
         }
     }
 
-    epi::ParameterStudy parameter_study(epi::make_migration_sim<epi::SecirSimulation>, params, t0, tmax, 0.2, 1);
+    epi::ParameterStudy parameter_study(params, t0, tmax, 0.2, 1);
 
     // Run parameter study
     int run = 0;
