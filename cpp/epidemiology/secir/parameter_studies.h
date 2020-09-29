@@ -187,7 +187,8 @@ ParameterStudy::run(HandleSimulationResultFunction simulation_result_function)
         epi::Graph<epi::ModelNode<epi::SecirSimulation>, epi::MigrationEdge> sim_graph;
 
         for (auto& node : m_graph.nodes()) {
-            SecirParams params_sample = node.model;
+            //draw_sample before copying so the state of the RNG persists and the next run uses new random numbers
+            auto& params_sample = node.model;
             draw_sample(params_sample);
             sim_graph.add_node(params_sample, m_t0, m_dt_inner);
         }
