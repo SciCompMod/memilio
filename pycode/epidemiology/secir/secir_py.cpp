@@ -416,8 +416,11 @@ PYBIND11_MODULE(_secir, m)
     using MigrationGraph = epi::Graph<epi::ModelNode<epi::SecirSimulation>, epi::MigrationEdge>;
     py::class_<MigrationGraph>(m, "MigrationGraph")
         .def(py::init<>())
-        .def("add_node", &MigrationGraph::add_node<const epi::SecirParams&, const double&, const double&>,
-             py::return_value_policy::reference_internal)
+        .def(
+            "add_node", [](MigrationGraph & self, const epi::SecirParams& p, double t0, double dt) -> auto& {
+                return self.add_node(p, t0, dt).model;
+            },
+            py::arg("params"), py::arg("t0") = 0.0, py::arg("dt") = 0.1, py::return_value_policy::reference_internal)
         .def("add_edge", &MigrationGraph::add_edge<const epi::MigrationEdge&>,
              py::return_value_policy::reference_internal)
         .def("add_edge", &MigrationGraph::add_edge<const Eigen::VectorXd&>, py::return_value_policy::reference_internal)
@@ -445,6 +448,16 @@ PYBIND11_MODULE(_secir, m)
                 return self.out_edges(node_idx)[edge_idx];
             },
             py::return_value_policy::reference_internal);
+
+    py::class_<epi::GraphSimulation<MigrationGraph>>(m, "MigrationSimulation")
+        .def(py::init([](const MigrationGraph& graph, double t0, double dt) {
+            return std::make_unique<epi::GraphSimulation<MigrationGraph>>(epi::make_migration_sim(t0, dt, graph));
+        }), py::arg("graph"), py::arg("t0") = 0.0, py::arg("dt") = 1.0)
+        .def_property_readonly("graph",
+                               py::overload_cast<>(&epi::GraphSimulation<MigrationGraph>::get_graph, py::const_),
+                               py::return_value_policy::reference_internal)
+        .def_property_readonly("t", &epi::GraphSimulation<MigrationGraph>::get_t)
+        .def("advance", &epi::GraphSimulation<MigrationGraph>::advance, py::arg("tmax"));
 
     py::class_<epi::ParameterStudy>(m, "ParameterStudy")
         .def(py::init<const epi::SecirParams&, double, double, size_t>(), py::arg("params"), py::arg("t0"),
