@@ -115,6 +115,16 @@ public:
         return m_graph.nodes()[0];
     }
 
+    const Graph<SecirParams, MigrationEdge>& get_secir_params_graph() const
+    {
+        return m_graph;
+    }
+
+    Graph<SecirParams, MigrationEdge>& get_secir_params_graph()
+    {
+        return m_graph;
+    }
+
 private:
     // Stores Graph with the names and ranges of all parameters
     epi::Graph<epi::SecirParams, epi::MigrationEdge> m_graph;

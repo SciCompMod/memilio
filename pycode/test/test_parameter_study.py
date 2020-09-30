@@ -50,11 +50,18 @@ class Test_ParameterStudy(unittest.TestCase):
             self.assertAlmostEqual(result.get_time(0), t0)
             self.assertAlmostEqual(result.get_last_time(), tmax)
             self.assertEqual(node_idx, 0)
-        handle_result_func.c = 0
 
-        study.run(handle_result_func)
+        handle_result_func.c = 0
+        result = study.run(handle_result_func)
 
         self.assertEqual(handle_result_func.c, num_runs)
+        self.assertEqual(len(result), num_runs)
+        
+        handle_result_func.c = 0
+        result = study.run_single(handle_result_func)
+
+        self.assertEqual(handle_result_func.c, num_runs)
+        self.assertEqual(len(result), num_runs)
 
 if __name__ == '__main__':
     unittest.main()
