@@ -51,10 +51,10 @@ std::vector<size_t> unravel_index_given_prods(size_t const index, std::vector<si
     std::vector<size_t> out(dim_prods.size(), 0);
 
     // recursively write out the remainder of the division by the dim_prods entries (in reverse order)
-    int rem = index;
-    int i   = 0;
+    size_t rem = index;
+    size_t i   = 0;
     for (auto p = dim_prods.rbegin() + 1; p != dim_prods.rend(); ++p) {
-        out[i++] = (int)rem / *p;
+        out[i++] = (size_t)rem / *p;
         rem      = rem % *p;
         if (rem == 0) {
             return out;

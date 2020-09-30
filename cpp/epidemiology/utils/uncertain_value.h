@@ -61,6 +61,10 @@ public:
         return m_value;
     }
 
+    double value() const {
+      return m_value;
+    }
+
     /**
      * @brief Conversion to double reference by returning the double contained in UncertainValue
      */

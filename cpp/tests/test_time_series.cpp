@@ -54,7 +54,7 @@ TYPED_TEST(TestTimeSeries, addPoints)
     ASSERT_EQ(ts.get_num_time_points(), 3);
     ASSERT_EQ(ts.get_capacity(), 1 << 2);
 
-    auto i = 3;
+    float i = 3.0f;
     while (i < 7) {
         ts.add_time_point(i);
         ++i;
@@ -118,11 +118,11 @@ TYPED_TEST(TestTimeSeries, constAccess)
     ts.add_time_point(0., epi::TimeSeries<TypeParam>::Vector::Random(1));
     const auto& constref = ts;
     static_assert(
-        std::is_same<decltype(constref[0]), Eigen::Ref<const typename epi::TimeSeries<TypeParam>::Vector>>::value);
+        std::is_same<decltype(constref[0]), Eigen::Ref<const typename epi::TimeSeries<TypeParam>::Vector>>::value, "wrong type");
     static_assert(std::is_same<decltype(constref.get_value(0)),
-                               Eigen::Ref<const typename epi::TimeSeries<TypeParam>::Vector>>::value);
+                               Eigen::Ref<const typename epi::TimeSeries<TypeParam>::Vector>>::value, "wrong type");
     static_assert(std::is_same<decltype(constref.get_last_value()),
-                               Eigen::Ref<const typename epi::TimeSeries<TypeParam>::Vector>>::value);
+                               Eigen::Ref<const typename epi::TimeSeries<TypeParam>::Vector>>::value, "wrong type");
     ASSERT_EQ(epi::print_wrap(ts[0]), epi::print_wrap(constref[0]));
 }
 
@@ -141,7 +141,7 @@ TYPED_TEST(TestTimeSeries, accessInvalidRange)
 {
     epi::TimeSeries<TypeParam> ts(1);
     for (Eigen::Index i = 0; i < 123; i++) {
-        ts.add_time_point(i);
+        ts.add_time_point();
     }
     ASSERT_DEBUG_DEATH(ts.get_value(-1), testing::ContainsRegex(".*"));
     ASSERT_DEBUG_DEATH(ts.get_value(123), testing::ContainsRegex(".*"));
