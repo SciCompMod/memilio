@@ -161,7 +161,8 @@ TYPED_TEST(TestTimeSeries, data)
     ts.add_time_point(3.0, v3);
 
     auto data_range = epi::make_range(ts.data(), ts.data() + 8);
-    ASSERT_THAT(data_range, testing::ElementsAre(0.0, 0.5, 1.0, 1.5, 2.0, 2.5, 3.0, 3.5));
+    ASSERT_THAT(data_range, testing::ElementsAre(TypeParam(0.0), TypeParam(0.5), TypeParam(1.0), TypeParam(1.5),
+                                                 TypeParam(2.0), TypeParam(2.5), TypeParam(3.0), TypeParam(3.5)));
 }
 
 TYPED_TEST(TestTimeSeries, iteratorsRange)
@@ -227,9 +228,9 @@ TYPED_TEST(TestTimeSeries, timeIteratorsRange)
         ASSERT_EQ(t, ts.get_time(i));
         --i;
     }
-    ASSERT_THAT(ts.get_times(), testing::ElementsAre(0, 1, 2, 3));
-    ASSERT_THAT(ts_constref.get_times(), testing::ElementsAre(0, 1, 2, 3));
-    ASSERT_THAT(ts.get_reverse_times(), testing::ElementsAre(3, 2, 1, 0));
+    ASSERT_THAT(ts.get_times(), testing::ElementsAre(TypeParam(0.0), TypeParam(1.0), TypeParam(2.0), TypeParam(3.0)));
+    ASSERT_THAT(ts_constref.get_times(), testing::ElementsAre(TypeParam(0.0), TypeParam(1.0), TypeParam(2.0), TypeParam(3.0)));
+    ASSERT_THAT(ts.get_reverse_times(), testing::ElementsAre(TypeParam(3.0), TypeParam(2.0), TypeParam(1.0), TypeParam(0.0)));
 }
 
 TYPED_TEST(TestTimeSeries, iteratorsRandomAccess)

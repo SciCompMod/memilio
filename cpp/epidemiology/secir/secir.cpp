@@ -679,9 +679,9 @@ void secir_get_derivatives(SecirParams const& params, Eigen::Ref<const Eigen::Ve
             size_t Rj = params.populations.get_flat_index({j, R});
 
             // effective contact rate by contact rate between groups i and j and damping j
-            double cont_freq_eff =
-                cont_freq_matrix.get_cont_freq(i, j) *
-                cont_freq_matrix.get_dampings(i, j).get_factor(t); // get effective contact rate between i and j
+            double cont_freq_eff = // get effective contact rate between i and j
+                cont_freq_matrix.get_cont_freq(static_cast<int>(i), static_cast<int>(j)) *
+                cont_freq_matrix.get_dampings(static_cast<int>(i), static_cast<int>(j)).get_factor(t); 
             double Nj      = y[Sj] + y[Ej] + y[Cj] + y[Ij] + y[Hj] + y[Uj] + y[Rj]; // without died people
             double divNj   = 1.0 / Nj; // precompute 1.0/Nj
             double dummy_S = y[Si] * cont_freq_eff * divNj * params.probabilities[i].get_infection_from_contact() *

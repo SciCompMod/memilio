@@ -22,7 +22,7 @@ TEST(TestSaveParameters, compareParameterStudy)
     double num_total_t0 = 10000, num_exp_t0 = 100, num_inf_t0 = 50, num_car_t0 = 50, num_hosp_t0 = 20, num_icu_t0 = 10,
            num_rec_t0 = 10, num_dead_t0 = 0;
 
-    int num_groups = 2;
+    auto num_groups = size_t(2);
     double fact    = 1.0 / (double)num_groups;
 
     epi::SecirParams params(num_groups);
@@ -96,7 +96,7 @@ TEST(TestSaveParameters, compareParameterStudy)
     const epi::UncertainContactMatrix& read_contact = read_params.get_contact_patterns();
 
     num_groups          = study.get_secir_params().get_num_groups();
-    int num_groups_read = read_params.get_num_groups();
+    size_t num_groups_read = read_params.get_num_groups();
     ASSERT_EQ(num_groups, num_groups_read);
 
     for (size_t i = 0; i < num_groups; i++) {
@@ -184,32 +184,30 @@ TEST(TestSaveParameters, compareParameterStudy)
         check_distribution(*params.probabilities[i].get_icu_per_hospitalized().get_distribution(),
                            *read_params.probabilities[i].get_icu_per_hospitalized().get_distribution());
 
-        for (int j = 0; j < num_groups; j++) {
-            ASSERT_EQ(contact.get_cont_freq_mat().get_cont_freq(i, j),
-                      read_contact.get_cont_freq_mat().get_cont_freq(i, j));
+        for (size_t j = 0; j < num_groups; j++) {
+            ASSERT_EQ(contact.get_cont_freq_mat().get_cont_freq(static_cast<int>(i), static_cast<int>(j)),
+                      read_contact.get_cont_freq_mat().get_cont_freq(static_cast<int>(i), static_cast<int>(j)));
 
-            ASSERT_EQ(contact.get_cont_freq_mat().get_dampings(i, j).get_dampings_vector().size(),
-                      read_contact.get_cont_freq_mat().get_dampings(i, j).get_dampings_vector().size());
-            for (int k = 0; k < contact.get_cont_freq_mat().get_dampings(i, j).get_dampings_vector().size(); k++) {
-                ASSERT_EQ(contact.get_cont_freq_mat().get_dampings(i, j).get_dampings_vector()[k].day,
-                          read_contact.get_cont_freq_mat().get_dampings(i, j).get_dampings_vector()[k].day);
-                ASSERT_EQ(contact.get_cont_freq_mat().get_dampings(i, j).get_dampings_vector()[k].factor,
-                          read_contact.get_cont_freq_mat().get_dampings(i, j).get_dampings_vector()[k].factor);
-            }
+            auto& dampings_vector = contact.get_cont_freq_mat()
+                                        .get_dampings(static_cast<int>(i), static_cast<int>(j))
+                                        .get_dampings_vector();
+            auto& cmp_dampings_vector = read_contact.get_cont_freq_mat()
+                                            .get_dampings(static_cast<int>(i), static_cast<int>(j))
+                                            .get_dampings_vector();
+            ASSERT_THAT(dampings_vector, testing::ContainerEq(cmp_dampings_vector));
         }
 
-        for (int j = 0; j < num_groups; j++) {
-            ASSERT_EQ(contact.get_cont_freq_mat().get_cont_freq(i, j),
-                      read_contact.get_cont_freq_mat().get_cont_freq(i, j));
+        for (size_t j = 0; j < num_groups; j++) {
+            ASSERT_EQ(contact.get_cont_freq_mat().get_cont_freq(static_cast<int>(i), static_cast<int>(j)),
+                      read_contact.get_cont_freq_mat().get_cont_freq(static_cast<int>(i), static_cast<int>(j)));
 
-            ASSERT_EQ(contact.get_cont_freq_mat().get_dampings(i, j).get_dampings_vector().size(),
-                      read_contact.get_cont_freq_mat().get_dampings(i, j).get_dampings_vector().size());
-            for (int k = 0; k < contact.get_cont_freq_mat().get_dampings(i, j).get_dampings_vector().size(); k++) {
-                ASSERT_EQ(contact.get_cont_freq_mat().get_dampings(i, j).get_dampings_vector()[k].day,
-                          read_contact.get_cont_freq_mat().get_dampings(i, j).get_dampings_vector()[k].day);
-                ASSERT_EQ(contact.get_cont_freq_mat().get_dampings(i, j).get_dampings_vector()[k].factor,
-                          read_contact.get_cont_freq_mat().get_dampings(i, j).get_dampings_vector()[k].factor);
-            }
+            auto& dampings_vector = contact.get_cont_freq_mat()
+                                        .get_dampings(static_cast<int>(i), static_cast<int>(j))
+                                        .get_dampings_vector();
+            auto& cmp_dampings_vector = read_contact.get_cont_freq_mat()
+                                            .get_dampings(static_cast<int>(i), static_cast<int>(j))
+                                            .get_dampings_vector();
+            ASSERT_THAT(dampings_vector, testing::ContainerEq(cmp_dampings_vector));
         }
     }
 
@@ -237,7 +235,7 @@ TEST(TestSaveParameters, compareSingleRun)
     double num_total_t0 = 10000, num_exp_t0 = 100, num_inf_t0 = 50, num_car_t0 = 50, num_hosp_t0 = 20, num_icu_t0 = 10,
            num_rec_t0 = 10, num_dead_t0 = 0;
 
-    int num_groups = 2;
+    auto num_groups = size_t(2);
     double fact    = 1.0 / (double)num_groups;
 
     epi::SecirParams params(num_groups);
@@ -274,8 +272,8 @@ TEST(TestSaveParameters, compareSingleRun)
 
     epi::ContactFrequencyMatrix& cont_freq_matrix = params.get_contact_patterns();
     epi::Damping dummy(30., 0.3);
-    for (int i = 0; i < num_groups; i++) {
-        for (int j = i; j < num_groups; j++) {
+    for (int i = 0; i < static_cast<int>(num_groups); i++) {
+        for (int j = i; j < static_cast<int>(num_groups); j++) {
             cont_freq_matrix.set_cont_freq(fact * cont_freq, i, j);
             cont_freq_matrix.add_damping(dummy, i, j);
         }
@@ -307,7 +305,7 @@ TEST(TestSaveParameters, compareSingleRun)
     const epi::UncertainContactMatrix& read_contact = read_params.get_contact_patterns();
 
     num_groups          = study.get_secir_params().get_num_groups();
-    int num_groups_read = read_params.get_num_groups();
+    size_t num_groups_read = read_params.get_num_groups();
     ASSERT_EQ(num_groups, num_groups_read);
 
     for (size_t i = 0; i < num_groups; i++) {
@@ -350,18 +348,17 @@ TEST(TestSaveParameters, compareSingleRun)
         ASSERT_EQ(params.probabilities[i].get_icu_per_hospitalized(),
                   read_params.probabilities[i].get_icu_per_hospitalized());
 
-        for (int j = 0; j < num_groups; j++) {
-            ASSERT_EQ(contact.get_cont_freq_mat().get_cont_freq(i, j),
-                      read_contact.get_cont_freq_mat().get_cont_freq(i, j));
+        for (size_t j = 0; j < num_groups; j++) {
+            ASSERT_EQ(contact.get_cont_freq_mat().get_cont_freq(static_cast<int>(i), static_cast<int>(j)),
+                      read_contact.get_cont_freq_mat().get_cont_freq(static_cast<int>(i), static_cast<int>(j)));
 
-            ASSERT_EQ(contact.get_cont_freq_mat().get_dampings(i, j).get_dampings_vector().size(),
-                      read_contact.get_cont_freq_mat().get_dampings(i, j).get_dampings_vector().size());
-            for (int k = 0; k < contact.get_cont_freq_mat().get_dampings(i, j).get_dampings_vector().size(); k++) {
-                ASSERT_EQ(contact.get_cont_freq_mat().get_dampings(i, j).get_dampings_vector()[k].day,
-                          read_contact.get_cont_freq_mat().get_dampings(i, j).get_dampings_vector()[k].day);
-                ASSERT_EQ(contact.get_cont_freq_mat().get_dampings(i, j).get_dampings_vector()[k].factor,
-                          read_contact.get_cont_freq_mat().get_dampings(i, j).get_dampings_vector()[k].factor);
-            }
+            auto& dampings_vector = contact.get_cont_freq_mat()
+                                        .get_dampings(static_cast<int>(i), static_cast<int>(j))
+                                        .get_dampings_vector();
+            auto& cmp_dampings_vector = read_contact.get_cont_freq_mat()
+                                            .get_dampings(static_cast<int>(i), static_cast<int>(j))
+                                            .get_dampings_vector();
+            ASSERT_THAT(dampings_vector, testing::ContainerEq(cmp_dampings_vector));
         }
     }
 }
@@ -439,21 +436,21 @@ TEST(TestSaveParameters, compareGraphs)
 
     epi::Graph<epi::SecirParams, epi::MigrationEdge> graph_read = epi::read_graph();
 
-    int num_nodes = graph.nodes().size();
-    int num_edges = graph.edges().size();
+    auto num_nodes = graph.nodes().size();
+    auto num_edges = graph.edges().size();
 
     ASSERT_EQ(num_nodes, graph_read.nodes().size());
     ASSERT_EQ(num_edges, graph_read.edges().size());
 
-    for (int node = 0; node < num_nodes; node++) {
+    for (size_t node = 0; node < num_nodes; node++) {
         epi::SecirParams graph_params               = graph.nodes()[0];
         epi::ContactFrequencyMatrix graph_cont_freq = graph_params.get_contact_patterns();
 
         epi::SecirParams graph_read_params               = graph_read.nodes()[0];
         epi::ContactFrequencyMatrix graph_read_cont_freq = graph_read_params.get_contact_patterns();
 
-        int num_compart = graph_params.populations.get_num_compartments() / num_groups;
-        int num_groups  = graph_cont_freq.get_size();
+        size_t num_compart = graph_params.populations.get_num_compartments() / num_groups;
+        size_t num_groups  = graph_cont_freq.get_size();
         ASSERT_EQ(num_groups, graph_read_cont_freq.get_size());
         ASSERT_EQ(num_compart, graph_read_params.populations.get_num_compartments() / num_groups);
 
@@ -550,20 +547,16 @@ TEST(TestSaveParameters, compareGraphs)
                 *graph_read_params.probabilities[group].get_icu_per_hospitalized().get_distribution().get());
 
             for (int contact_group = 0; contact_group < num_groups; contact_group++) {
-                ASSERT_EQ(graph_cont_freq.get_cont_freq(group, contact_group),
-                          graph_read_cont_freq.get_cont_freq(group, contact_group));
+                ASSERT_EQ(graph_cont_freq.get_cont_freq(static_cast<int>(group), static_cast<int>(contact_group)),
+                          graph_read_cont_freq.get_cont_freq(static_cast<int>(group), static_cast<int>(contact_group)));
 
-                int num_dampings = graph_cont_freq.get_dampings(group, contact_group).get_dampings_vector().size();
-                ASSERT_EQ(num_dampings,
-                          graph_read_cont_freq.get_dampings(group, contact_group).get_dampings_vector().size());
-                for (int damp = 0; damp < num_dampings; damp++) {
-                    ASSERT_EQ(
-                        graph_cont_freq.get_dampings(group, contact_group).get_dampings_vector().at(damp).day,
-                        graph_read_cont_freq.get_dampings(group, contact_group).get_dampings_vector().at(damp).day);
-                    ASSERT_EQ(
-                        graph_cont_freq.get_dampings(group, contact_group).get_dampings_vector().at(damp).factor,
-                        graph_read_cont_freq.get_dampings(group, contact_group).get_dampings_vector().at(damp).factor);
-                }
+                auto& dampings_v =
+                    graph_cont_freq.get_dampings(static_cast<int>(group), static_cast<int>(contact_group))
+                        .get_dampings_vector();
+                auto& cmp_dampings_v =
+                    graph_read_cont_freq.get_dampings(static_cast<int>(group), static_cast<int>(contact_group))
+                        .get_dampings_vector();
+                ASSERT_THAT(dampings_v, testing::ContainerEq(cmp_dampings_v));
             }
 
             check_distribution(*graph_params.get_contact_patterns().get_distribution_damp_nb().get(),

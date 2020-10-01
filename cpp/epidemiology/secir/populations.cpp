@@ -9,7 +9,7 @@ namespace epi
 Populations::Populations(std::vector<size_t> const& category_sizes)
     : m_category_sizes(category_sizes)
 {
-    size_t prod = std::accumulate(category_sizes.begin(), category_sizes.end(), 1, std::multiplies<size_t>());
+    size_t prod = std::accumulate(category_sizes.begin(), category_sizes.end(), size_t(1), std::multiplies<size_t>());
     m_y         = std::vector<UncertainValue>(prod, 0.0);
 }
 
@@ -151,7 +151,7 @@ void Populations::set_total(double value)
 {
     double current_population = get_total();
     if (fabs(current_population) < 1e-12) {
-        double ysize = m_y.size();
+        double ysize = static_cast<double>(m_y.size());
         for (auto i = 0; i < m_y.size(); i++) {
             m_y[i] = value / ysize;
         }

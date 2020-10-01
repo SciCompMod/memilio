@@ -17,6 +17,14 @@ public:
     double factor;
 
     Damping(double day_in, double factor_in);
+    bool operator==(const Damping& other) const
+    {
+        return day == other.day && factor == other.factor;
+    }
+    bool operator!=(const Damping& other) const
+    {
+        return !(*this == other);
+    }
 };
 
 class Dampings

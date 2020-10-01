@@ -117,6 +117,13 @@ private:
     std::unique_ptr<ParameterDistribution> m_dist;
 };
 
+//gtest printer
+//TODO: should be extended when UncertainValue gets operator== that compares distributions as well
+inline void PrintTo(const UncertainValue& uv, std::ostream* os)
+{
+    (*os) << uv.value();
+}
+
 } // namespace epi
 
 #endif // UNCERTAINVALUE_H

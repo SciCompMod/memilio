@@ -128,7 +128,7 @@ std::vector<size_t> get_slice_indices(size_t dimension, size_t index, std::vecto
     assert(dimensions[dimension] > 0);
     assert(index < dimensions[dimension]);
 
-    size_t prod = std::accumulate(dimensions.begin(), dimensions.end(), 1, std::multiplies<size_t>());
+    size_t prod = std::accumulate(dimensions.begin(), dimensions.end(), size_t(1), std::multiplies<size_t>());
 
     // recursively get all the start indices of the index ranges. prod is the size of the range
     std::vector<size_t> starts;
