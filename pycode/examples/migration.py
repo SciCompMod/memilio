@@ -60,8 +60,8 @@ def parameter_study():
     sim.advance(tmax)
 
     #process results
-    region0_result = sim.graph.get_node(0).get_result()
-    region1_result = sim.graph.get_node(1).get_result()
+    region0_result = sim.graph.get_node(0).result
+    region1_result = sim.graph.get_node(1).result
 
 if __name__ == "__main__":
     parameter_study()

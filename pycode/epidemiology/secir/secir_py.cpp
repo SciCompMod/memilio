@@ -354,9 +354,9 @@ PYBIND11_MODULE(_secir, m)
     py::class_<epi::SecirSimulation>(m, "SecirSimulation")
         .def(py::init<const epi::SecirParams&, double, double>(), py::arg("params"), py::arg("t0") = 0,
              py::arg("dt") = 0.1)
-        .def("get_result", py::overload_cast<>(&epi::SecirSimulation::get_result, py::const_),
-             py::return_value_policy::reference_internal)
-        .def("advance", &epi::SecirSimulation::advance);
+        .def_property_readonly("result", py::overload_cast<>(&epi::SecirSimulation::get_result, py::const_),
+                               py::return_value_policy::reference_internal)
+        .def("advance", &epi::SecirSimulation::advance, py::arg("tmax"));
 
     py::class_<epi::MigrationEdge>(m, "MigrationParams")
         .def(py::init<const Eigen::VectorXd&>(), py::arg("coeffs"))
@@ -403,7 +403,7 @@ PYBIND11_MODULE(_secir, m)
         .def(
             "get_edge", [](const SecirParamsGraph& self, size_t edge_idx) -> auto& { return self.edges()[edge_idx]; },
             py::return_value_policy::reference_internal)
-        .def_property_readonly("get_num_out_edges",
+        .def("get_num_out_edges",
                                [](const SecirParamsGraph& self, size_t node_idx) {
                                    return self.out_edges(node_idx).size();
                                })
@@ -439,7 +439,7 @@ PYBIND11_MODULE(_secir, m)
         .def(
             "get_edge", [](const MigrationGraph& self, size_t edge_idx) -> auto& { return self.edges()[edge_idx]; },
             py::return_value_policy::reference_internal)
-        .def_property_readonly("get_num_out_edges",
+        .def("get_num_out_edges",
                                [](const MigrationGraph& self, size_t node_idx) {
                                    return self.out_edges(node_idx).size();
                                })
