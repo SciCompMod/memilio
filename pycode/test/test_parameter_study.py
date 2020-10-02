@@ -1,8 +1,9 @@
 import unittest
 import epidemiology.secir as secir
+import numpy as np
 
 class Test_ParameterStudy(unittest.TestCase):
-    def test_run(self):
+    def _get_params(self):
         params = secir.SecirParams()
 
         params.times[0].set_incubation(5.2)
@@ -34,6 +35,10 @@ class Test_ParameterStudy(unittest.TestCase):
         params.probabilities[0].set_dead_per_icu(0.3)
 
         params.apply_constraints()
+        return params
+
+    def test_run(self):
+        params = self._get_params()
 
         t0 = 1
         tmax = 10
@@ -50,11 +55,35 @@ class Test_ParameterStudy(unittest.TestCase):
             self.assertAlmostEqual(result.get_time(0), t0)
             self.assertAlmostEqual(result.get_last_time(), tmax)
             self.assertEqual(node_idx, 0)
-        handle_result_func.c = 0
 
-        study.run(handle_result_func)
+        handle_result_func.c = 0
+        result = study.run(handle_result_func)
 
         self.assertEqual(handle_result_func.c, num_runs)
+        self.assertEqual(len(result), num_runs)
+        
+        handle_result_func.c = 0
+        result = study.run_single(handle_result_func)
+
+        self.assertEqual(handle_result_func.c, num_runs)
+        self.assertEqual(len(result), num_runs)
+
+    def test_graph(self):        
+        params = self._get_params()
+        graph = secir.SecirParamsGraph()
+        graph.add_node(params)
+        graph.add_node(params)
+        graph.add_edge(0, 1, 0.01 * np.ones(8))
+        graph.add_edge(1, 0, 0.01 * np.ones(8))
+
+        t0 = 1
+        tmax = 10
+        num_runs = 3
+        graph_dt = 1.0
+        study = secir.ParameterStudy(graph, t0, tmax, graph_dt, num_runs)
+
+        self.assertEqual(study.secir_params_graph.num_nodes, 2)
+        self.assertEqual(study.secir_params_graph.num_edges, 2)
 
 if __name__ == '__main__':
     unittest.main()

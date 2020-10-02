@@ -1,5 +1,6 @@
 import unittest
-from epidemiology.secir import UncertainContactMatrix, ContactFrequencyMatrix, Damping, SecirParams, simulate, StageTimes, Probabilities, Populations, SecirCompartments
+from epidemiology.secir import (UncertainContactMatrix, ContactFrequencyMatrix, Damping, SecirParams,
+                                simulate, StageTimes, Probabilities, Populations, SecirCompartments, SecirSimulation)
 
 class Test_secir_integration(unittest.TestCase):
 
@@ -49,6 +50,14 @@ class Test_secir_integration(unittest.TestCase):
       self.assertAlmostEqual(result.get_time(0), 0.)
       self.assertAlmostEqual(result.get_time(1), 0.1)
       self.assertAlmostEqual(result.get_last_time(), 100.)
+
+    def test_simulation_simple(self):
+        sim = SecirSimulation(self.params, t0 = 0., dt = 0.1)
+        sim.advance(tmax = 100.)
+        result = sim.result
+        self.assertAlmostEqual(result.get_time(0), 0.)
+        self.assertAlmostEqual(result.get_time(1), 0.1)
+        self.assertAlmostEqual(result.get_last_time(), 100.)
 
 if __name__ == '__main__':
     unittest.main()
