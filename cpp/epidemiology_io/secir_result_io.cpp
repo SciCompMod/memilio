@@ -17,9 +17,9 @@ void save_result(const TimeSeries<double>& result, const std::string& filename)
 {
     const int n_dims = 2;
 
-    const int n_data    = result.get_num_time_points();
+    const int n_data    = static_cast<int>(result.get_num_time_points());
     const int n_compart = SecirCompartments::SecirCount;
-    const int nb_groups = result[0].size() / n_compart;
+    const int nb_groups = static_cast<int>(result[0].size()) / n_compart;
 
     H5File file(filename, H5F_ACC_TRUNC);
 
@@ -37,7 +37,7 @@ void save_result(const TimeSeries<double>& result, const std::string& filename)
     for (int group = 0; group < nb_groups + 1; ++group) {
         auto dset = std::vector<Eigen::Matrix<double, n_compart, 1>>(n_data);
         if (group < nb_groups) {
-            for (size_t irow = 0; irow < result.get_num_time_points(); ++irow) {
+            for (size_t irow = 0; irow < static_cast<size_t>(result.get_num_time_points()); ++irow) {
                 auto v     = result[irow].eval();
                 auto slice = epi::slice(v, {group * n_compart, n_compart});
                 dset[irow] = slice;

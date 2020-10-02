@@ -87,7 +87,7 @@ void write_distribution(const TixiDocumentHandle& handle, const std::string& pat
     distribution.accept(visitor);
 
     tixiAddFloatVector(handle, element_path.c_str(), "PredefinedSamples", distribution.get_predefined_samples().data(),
-                       distribution.get_predefined_samples().size(), "%g");
+                       static_cast<int>(distribution.get_predefined_samples().size()), "%g");
 }
 
 std::unique_ptr<UncertainValue> read_element(TixiDocumentHandle handle, const std::string& path, int io_mode)
@@ -164,7 +164,7 @@ std::unique_ptr<ParameterDistribution> read_distribution(TixiDocumentHandle hand
 void write_predef_sample(TixiDocumentHandle handle, const std::string& path, const std::vector<double>& samples)
 {
     tixiRemoveElement(handle, path_join(path, "PredefinedSamples").c_str());
-    tixiAddFloatVector(handle, path.c_str(), "PredefinedSamples", samples.data(), samples.size(), "%g");
+    tixiAddFloatVector(handle, path.c_str(), "PredefinedSamples", samples.data(), static_cast<int>(samples.size()), "%g");
 }
 
 void write_contact(TixiDocumentHandle handle, const std::string& path, const UncertainContactMatrix& contact_pattern,
@@ -184,7 +184,7 @@ void write_contact(TixiDocumentHandle handle, const std::string& path, const Unc
     }
     for (int i = 0; i < num_groups; i++) {
         for (int j = 0; j < num_groups; j++) {
-            int num_damp            = contact_freq_matrix.get_dampings(i, j).get_dampings_vector().size();
+            int num_damp            = static_cast<int>(contact_freq_matrix.get_dampings(i, j).get_dampings_vector().size());
             std::vector<double> row = {};
             for (int k = 0; k < num_damp; k++) {
                 row.emplace_back(contact_freq_matrix.get_dampings(i, j).get_dampings_vector()[k].day);
@@ -345,7 +345,7 @@ SecirParams read_parameter_space(TixiDocumentHandle handle, const std::string& p
 void write_parameter_space(TixiDocumentHandle handle, const std::string& path, const SecirParams& parameters,
                            int num_runs, int io_mode)
 {
-    int num_groups = parameters.get_num_groups();
+    int num_groups = static_cast<int>(parameters.get_num_groups());
     tixiAddIntegerElement(handle, path.c_str(), "NumberOfGroups", num_groups, "%d");
 
     for (size_t i = 0; i < num_groups; i++) {
@@ -479,13 +479,13 @@ void write_edge(TixiDocumentHandle handle, const std::string& path,
                 const Graph<SecirParams, MigrationEdge>& graph, int edge)
 {
 
-    int num_groups  = graph.nodes()[0].get_num_groups();
-    int num_compart = graph.nodes()[0].populations.get_num_compartments() / num_groups;
+    int num_groups  = static_cast<int>(graph.nodes()[0].get_num_groups());
+    int num_compart = static_cast<int>(graph.nodes()[0].populations.get_num_compartments()) / num_groups;
 
     std::string edge_path = path_join(path, "Edge" + std::to_string(edge));
     tixiCreateElement(handle, path.c_str(), ("Edge" + std::to_string(edge)).c_str());
-    tixiAddIntegerElement(handle, edge_path.c_str(), "StartNode", graph.edges()[edge].start_node_idx, "%d");
-    tixiAddIntegerElement(handle, edge_path.c_str(), "EndNode", graph.edges()[edge].end_node_idx, "%d");
+    tixiAddIntegerElement(handle, edge_path.c_str(), "StartNode", static_cast<int>(graph.edges()[edge].start_node_idx), "%d");
+    tixiAddIntegerElement(handle, edge_path.c_str(), "EndNode", static_cast<int>(graph.edges()[edge].end_node_idx), "%d");
     for (int group = 0; group < num_groups; group++) {
         std::vector<double> weights;
         for (int compart = 0; compart < num_compart; compart++) {
@@ -529,10 +529,10 @@ void write_graph(const Graph<SecirParams, MigrationEdge>& graph, double t0, doub
     TixiDocumentHandle handle;
     tixiCreateDocument("Edges", &handle);
 
-    int num_nodes   = graph.nodes().size();
-    int num_edges   = graph.edges().size();
+    int num_nodes   = static_cast<int>(graph.nodes().size());
+    int num_edges   = static_cast<int>(graph.edges().size());
     int num_groups  = graph.nodes()[0].get_contact_patterns().get_cont_freq_mat().get_size();
-    int num_compart = graph.nodes()[0].populations.get_num_compartments() / num_groups;
+    int num_compart = static_cast<int>(graph.nodes()[0].populations.get_num_compartments()) / num_groups;
 
     tixiAddIntegerElement(handle, edges_path.c_str(), "NumberOfNodes", num_nodes, "%d");
     tixiAddIntegerElement(handle, edges_path.c_str(), "NumberOfEdges", num_edges, "%d");

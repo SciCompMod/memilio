@@ -264,14 +264,14 @@ TEST(ParameterStudies, check_ensemble_run_result)
         results.push_back(std::move(graph_results[i].nodes()[0].model.get_result()));
     }
 
-    for (size_t i = 0; i < results[0].get_num_time_points(); i++) {
+    for (Eigen::Index i = 0; i < results[0].get_num_time_points(); i++) {
         std::vector<double> total_at_ti(epi::SecirCompartments::SecirCount, 0);
-        // printf("\n");
-        for (size_t j = 0; j < static_cast<size_t>(results[0][i].size()); j++) { // number of compartments per time step
-            // printf(" %.2e ( %d ) ", results[0][i][j], j % epi::SecirCompartments::SecirCount);
+
+        for (Eigen::Index j = 0; j < results[0][i].size(); j++) { // number of compartments per time step
             EXPECT_GE(results[0][i][j], 0.0) << " day " << i << " group " << j;
-            total_at_ti[j / epi::SecirCompartments::SecirCount] += results[0][i][j];
+            total_at_ti[static_cast<size_t>(j) / epi::SecirCompartments::SecirCount] += results[0][i][j];
         }
+
         for (size_t j = 0; j < params.get_num_groups(); j++) {
             EXPECT_NEAR(total_at_ti[j], params.populations.get_group_total(epi::SecirCategory::AgeGroup, j), 1e-3)
                 << " day " << i << " group " << j;

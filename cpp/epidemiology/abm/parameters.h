@@ -9,7 +9,8 @@ namespace epi
 /**
  * parameters of the infection that are the same everywhere within the world.
  */
-struct GlobalInfectionParameters {
+class GlobalInfectionParameters {
+public:
     double incubation_period                  = 1;
     double susceptible_to_exposed_by_carrier  = 1;
     double susceptible_to_exposed_by_infected = 1;

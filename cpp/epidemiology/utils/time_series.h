@@ -266,32 +266,32 @@ public:
      *********************/
     iterator begin()
     {
-        return {m_data, 0};
+        return {&m_data, 0};
     }
 
     iterator end()
     {
-        return {m_data, m_num_time_points};
+        return {&m_data, m_num_time_points};
     }
 
     const_iterator begin() const
     {
-        return {m_data, 0};
+        return {&m_data, 0};
     }
 
     const_iterator end() const
     {
-        return {m_data, m_num_time_points};
+        return {&m_data, m_num_time_points};
     }
 
     const_iterator cbegin() const
     {
-        return {m_data, 0};
+        return {&m_data, 0};
     }
 
     const_iterator cend() const
     {
-        return {m_data, m_num_time_points};
+        return {&m_data, m_num_time_points};
     }
 
     reverse_iterator rbegin()
@@ -332,7 +332,7 @@ public:
      *********************/
     Range<std::pair<time_iterator, time_iterator>> get_times()
     {
-        return make_range(time_iterator{m_data, 0}, time_iterator{m_data, m_num_time_points});
+        return make_range(time_iterator{&m_data, 0}, time_iterator{&m_data, m_num_time_points});
     }
 
     Range<std::pair<const_time_iterator, const_time_iterator>> get_times() const
@@ -342,7 +342,7 @@ public:
 
     Range<std::pair<const_time_iterator, const_time_iterator>> get_const_times() const
     {
-        return make_range(const_time_iterator{m_data, 0}, const_time_iterator{m_data, m_num_time_points});
+        return make_range(const_time_iterator{&m_data, 0}, const_time_iterator{&m_data, m_num_time_points});
     }
 
     Range<std::pair<reverse_time_iterator, reverse_time_iterator>> get_reverse_times()
@@ -414,12 +414,12 @@ namespace details
             return IsConst;
         }
         using Matrix      = typename TimeSeries<FP>::Matrix;
-        using MatrixRef   = std::conditional_t<IsConst, const Matrix, Matrix>&;
-        using VectorValue = typename decltype(std::declval<MatrixRef>()
-                                                  .col(std::declval<Eigen::Index>())
+        using MatrixPtr   = std::conditional_t<IsConst, const Matrix, Matrix>*;
+        using VectorValue = typename decltype(std::declval<MatrixPtr>()
+                                                  ->col(std::declval<Eigen::Index>())
                                                   .tail(std::declval<Eigen::Index>()))::PlainObject;
         using VectorReference =
-            decltype(std::declval<MatrixRef>().col(std::declval<Eigen::Index>()).tail(std::declval<Eigen::Index>()));
+            decltype(std::declval<MatrixPtr>()->col(std::declval<Eigen::Index>()).tail(std::declval<Eigen::Index>()));
         using TimeValue     = FP;
         using TimeReference = std::conditional_t<IsConst, const FP&, FP&>;
     };
@@ -436,15 +436,16 @@ namespace details
     {
     protected:
         using Traits    = details::TimeSeriesIterTraits<FP, IsConstIter>;
-        using MatrixRef = typename Traits::MatrixRef;
-        MatrixRef m_matrix;
+        using MatrixPtr = typename Traits::MatrixPtr;
+        MatrixPtr m_matrix;
         Eigen::Index m_col_idx;
 
     public:
-        TimeSeriesIteratorBase(MatrixRef m, Eigen::Index col_idx = 0)
+        TimeSeriesIteratorBase(MatrixPtr m, Eigen::Index col_idx = 0)
             : m_matrix(m)
             , m_col_idx(col_idx)
         {
+            assert(m_matrix != nullptr);
         }
 
         using difference_type   = std::ptrdiff_t;
@@ -540,37 +541,37 @@ namespace details
 
         bool operator==(const TimeSeriesIteratorBase& other) const
         {
-            assert(&m_matrix == &other.m_matrix);
+            assert(m_matrix == other.m_matrix);
             return m_col_idx == other.m_col_idx;
         }
 
         bool operator!=(const TimeSeriesIteratorBase& other) const
         {
-            assert(&m_matrix == &other.m_matrix);
+            assert(m_matrix == other.m_matrix);
             return !(*this == other);
         }
 
         bool operator<(const TimeSeriesIteratorBase& other) const
         {
-            assert(&m_matrix == &other.m_matrix);
+            assert(m_matrix == other.m_matrix);
             return m_col_idx < other.m_col_idx;
         }
 
         bool operator>(const TimeSeriesIteratorBase& other) const
         {
-            assert(&m_matrix == &other.m_matrix);
+            assert(m_matrix == other.m_matrix);
             return m_col_idx > other.m_col_idx;
         }
 
         bool operator<=(const TimeSeriesIteratorBase& other) const
         {
-            assert(&m_matrix == &other.m_matrix);
+            assert(m_matrix == other.m_matrix);
             return m_col_idx <= other.m_col_idx;
         }
 
         bool operator>=(const TimeSeriesIteratorBase& other) const
         {
-            assert(&m_matrix == &other.m_matrix);
+            assert(m_matrix == other.m_matrix);
             return m_col_idx >= other.m_col_idx;
         }
     };
@@ -604,7 +605,7 @@ public:
 
     reference get_reference()
     {
-        return m_matrix.col(m_col_idx).tail(m_matrix.rows() - 1);
+        return m_matrix->col(m_col_idx).tail(m_matrix->rows() - 1);
     }
 };
 
@@ -636,7 +637,7 @@ public:
 
     reference get_reference()
     {
-        return m_matrix.coeffRef(0, m_col_idx);
+        return m_matrix->coeffRef(0, m_col_idx);
     }
 };
 

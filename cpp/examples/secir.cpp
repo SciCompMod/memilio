@@ -78,7 +78,7 @@ int main()
         for (size_t k = 0; k < epi::SecirCompartments::SecirCount; k++) {
             printf(" %c", vars[k]);
         }
-        int num_points = secir.get_num_time_points();
+        auto num_points = static_cast<size_t>(secir.get_num_time_points());
         for (size_t i = 0; i < num_points; i++) {
             printf("\n%.14f ", secir.get_time(i));
             Eigen::VectorXd res_j = secir.get_value(i);
