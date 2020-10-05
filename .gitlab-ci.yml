@@ -83,6 +83,7 @@ build-py-win:
     - python setup.py bdist_wheel
     - deactivate
   after_script:
+    - cd pycode
     - Remove-Item -path venv37 -recurse
     - Remove-Item -path venv38 -recurse
   artifacts:
