@@ -66,6 +66,29 @@ build-py:
     paths:
       - pycode/wheelhouse/*.whl
 
+build-py-win:
+  tags:
+    - SC-0030VM
+  stage: build
+  before_script:
+    - ci\activate_vc2019.ps1
+    - cd pycode
+    - C:\Devel\Lang\Python-3.7-win64\python.exe -m venv venv37
+    - C:\Devel\Lang\Python-3.8-win64\python.exe -m venv venv38
+  script:
+    - venv38\Scripts\activate
+    - python setup.py bdist_wheel
+    - deactivate
+    - venv37\Scripts\activate
+    - python setup.py bdist_wheel
+    - deactivate
+  after_script:
+    - Remove-Item -path venv37 -recurse
+    - Remove-Item -path venv38 -recurse
+  artifacts:
+    paths:
+      - pycode/dist/*.whl
+
 # run tests using the binary built before
 test-cpp:
   tags:
