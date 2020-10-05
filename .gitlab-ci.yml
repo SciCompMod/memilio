@@ -28,12 +28,7 @@ build-cpp-win:
     - $env:Path += ";c:\Program Files\7-zip"
     - $env:Path += ";c:\Devel\Tools\ninja-1.10.1"
     - md -Force C:\Devel\Libraries\
-    - cmd.exe /c "call `"C:\Devel\Lang\MSVC-2019\VC\Auxiliary\Build\vcvars64.bat`" && set > %temp%\vcvars.txt"
-    - Get-Content "$env:temp\vcvars.txt" | Foreach-Object {
-        if ($_ -match "^(.*?)=(.*)$") {
-          Set-Content "env:\$($matches[1])" $matches[2]
-        }
-      }
+    - ci\activate_vc2019.ps1
     - If (!(Test-Path -Path "c:\Devel\Libraries\TIXI-3.1.1-win64")) {
         Write-Output "Downloading TiXI libraries";
         (new-object System.Net.WebClient).Downloadfile("https://github.com/DLR-SC/tixi/releases/download/v3.1.1/TIXI-3.1.1-win64.zip", "c:\Devel\Libraries\TIXI-3.1.1-win64.zip");
