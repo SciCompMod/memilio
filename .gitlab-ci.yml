@@ -11,7 +11,7 @@ build-cpp:
   script:
     - cd cpp
     - mkdir build && cd build
-    - cmake -G Ninja -DEPI_USE_BUNDLED_EIGEN=OFF -DEPI_BUILD_EPI_IO=ON ..
+    - cmake -G Ninja -DCMAKE_CXX_FLAGS="-std=c++14 -pedantic" -DEPI_USE_BUNDLED_EIGEN=OFF -DEPI_BUILD_EPI_IO=ON ..
     - cmake --build .
   artifacts:
     expire_in: 2 hrs
