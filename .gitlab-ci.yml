@@ -28,12 +28,7 @@ build-cpp-win:
     - $env:Path += ";c:\Program Files\7-zip"
     - $env:Path += ";c:\Devel\Tools\ninja-1.10.1"
     - md -Force C:\Devel\Libraries\
-    - cmd.exe /c "call `"C:\Devel\Lang\MSVC-2019\VC\Auxiliary\Build\vcvars64.bat`" && set > %temp%\vcvars.txt"
-    - Get-Content "$env:temp\vcvars.txt" | Foreach-Object {
-        if ($_ -match "^(.*?)=(.*)$") {
-          Set-Content "env:\$($matches[1])" $matches[2]
-        }
-      }
+    - ci\activate_vc2019.ps1
     - If (!(Test-Path -Path "c:\Devel\Libraries\TIXI-3.1.1-win64")) {
         Write-Output "Downloading TiXI libraries";
         (new-object System.Net.WebClient).Downloadfile("https://github.com/DLR-SC/tixi/releases/download/v3.1.1/TIXI-3.1.1-win64.zip", "c:\Devel\Libraries\TIXI-3.1.1-win64.zip");
@@ -70,6 +65,30 @@ build-py:
   artifacts:
     paths:
       - pycode/wheelhouse/*.whl
+
+build-py-win:
+  tags:
+    - SC-0030VM
+  stage: build
+  before_script:
+    - ci\activate_vc2019.ps1
+    - cd pycode
+    - C:\Devel\Lang\Python-3.7-win64\python.exe -m venv venv37
+    - C:\Devel\Lang\Python-3.8-win64\python.exe -m venv venv38
+  script:
+    - venv38\Scripts\activate
+    - python setup.py bdist_wheel
+    - deactivate
+    - venv37\Scripts\activate
+    - python setup.py bdist_wheel
+    - deactivate
+  after_script:
+    - cd pycode
+    - Remove-Item -path venv37 -recurse
+    - Remove-Item -path venv38 -recurse
+  artifacts:
+    paths:
+      - pycode/dist/*.whl
 
 # run tests using the binary built before
 test-cpp:
