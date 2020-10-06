@@ -12,10 +12,10 @@ from epidemiology.epidata import defaultDict as dd
 from unittest.mock import patch, call
 
 
-# The following lines are commented to remember a solution to write an output without using print()
+# The following lines are commented to remember a solution to write an output without using the function print()
 # This is important, because the usage of print would alter the test results
-import sys
-#sys.stdout.write(str())
+# import sys
+# sys.stdout.write(str())
 
 
 class TestGetDiviData(fake_filesystem_unittest.TestCase):

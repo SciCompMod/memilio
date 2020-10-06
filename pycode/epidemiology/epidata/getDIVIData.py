@@ -275,7 +275,7 @@ def download_data_for_one_day(last_number, download_date):
 #
 # If the dataframe which should contain all data is empty after going through all dates, the program is stopped.
 # Otherwise the dataframe is written to the file filename = "FullData_DIVI".
-# Following the columns are renamed to English and the state and county names are added.
+# Than the columns are renamed to English and the state and county names are added.
 # Afterwards, three kinds of structuring of the data are done.
 # We obtain the chronological sequence of ICU and ICU_ventilated
 # stored in the files "county_divi".json", "state_divi.json"and "germany_divi.json"

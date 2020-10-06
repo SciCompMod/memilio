@@ -98,7 +98,7 @@ optional arguments working for some are:
 Results
 -------
 
-Following data is written either in json or hdf5 format
+The data is written either in json or hdf5 format
 
 For RKI:
 
@@ -107,22 +107,22 @@ When speaking about infected, means always infected inclusive the already recove
  ======== ======== ======================== =================
  Source   Folder   Files                    Data descritpion
  ======== ======== ======================== =================
- RKI      Germany  infected_rki             Numbers of infected over date for whole Germany
- RKI      Germany  deaths_rki               Numbers of deaths over date for whole Germany
- RKI      Germany  infected_state_rki       infected over date for different states (Bundesländer)
- RKI      Germany  all_state_rki            infected, deaths, recovered over date for different states (Bundesländer)
- RKI      Germany  infected_county_rki      infected over date for different counties (Landkreise)
- RKI      Germany  all_county_rki           infected, deaths, recovered over date for different counties (Landkreise)
- RKI      Germany  all_gender_rki           infected, deaths, recovered over date for different gender
- RKI      Germany  all_age_rki              infected, deaths, recovered over date for different age ranges
- RKI      Germany  all_state_age_rki        infected, deaths, recovered over date for different age ranges and states
- RKI      Germany  all_state_age5_rki       infected, deaths, recovered over date for different age difference of 10 years and states
- RKI      Germany  all_state_age10_rki      infected, deaths, recovered over date for different age difference of 10 and states
- RKI      Germany  all_state_gender_rki     infected, deaths, recovered over date for different genders and states
- RKI      Germany  all_county_age_rki       infected, deaths, recovered over date for different age ranges and counties
- RKI      Germany  all_county_age5_rki      infected, deaths, recovered over date for different age ranges (5 years) and counties
- RKI      Germany  all_county_age10_rki     infected, deaths, recovered over date for different age ranges (10 years) and counties
- RKI      Germany  all_county_gender_rki    infected, deaths, recovered over date for different genders counties
+ RKI      Germany  infected_rki             Numbers of infected over time for whole Germany
+ RKI      Germany  deaths_rki               Numbers of deaths over time for whole Germany
+ RKI      Germany  infected_state_rki       infected over time for different states (Bundesländer)
+ RKI      Germany  all_state_rki            infected, deaths, recovered over time for different states (Bundesländer)
+ RKI      Germany  infected_county_rki      infected over time for different counties (Landkreise)
+ RKI      Germany  all_county_rki           infected, deaths, recovered over time for different counties (Landkreise)
+ RKI      Germany  all_gender_rki           infected, deaths, recovered over time for different gender
+ RKI      Germany  all_age_rki              infected, deaths, recovered over time for different age ranges
+ RKI      Germany  all_state_age_rki        infected, deaths, recovered over time for different age ranges and states
+ RKI      Germany  all_state_age5_rki       infected, deaths, recovered over time for different age difference of 10 years and states
+ RKI      Germany  all_state_age10_rki      infected, deaths, recovered over time for different age difference of 10 and states
+ RKI      Germany  all_state_gender_rki     infected, deaths, recovered over time for different genders and states
+ RKI      Germany  all_county_age_rki       infected, deaths, recovered over time for different age ranges and counties
+ RKI      Germany  all_county_age5_rki      infected, deaths, recovered over time for different age ranges (5 years) and counties
+ RKI      Germany  all_county_age10_rki     infected, deaths, recovered over time for different age ranges (10 years) and counties
+ RKI      Germany  all_county_gender_rki    infected, deaths, recovered over time for different genders counties
 
  P        Germany  FullDataB                Full data for Bundesländer
  P        Germany  FullDataL                Full data for Landkreise
@@ -141,9 +141,9 @@ When speaking about infected, means always infected inclusive the already recove
  MISAN    Spain    spain_all_state          ['Date', 'ID_State', 'State', 'Confirmed_total', 'Confirmed_PCR', 'Confirmed_AB', 'Hospitalized', 'ICU', 'Deaths', 'Recovered']
  
  DIVI     Germany  FullData_DIVI            Full data as downloaded from archive with columns ['County', 'State', 'anzahl_meldebereiche', 'reporting_hospitals', 'occupied_ICU', 'free_ICU', 'ID_State', 'Date', 'ICU', 'ICU_ventilated', 'faelle_covid_aktuell_im_bundesland', 'ID_County']
- DIVI     Germany  county_divi              ICU, ICU_ventilated over date for different counties (Landkreise) with columns ['County', 'ID_County', 'ICU', 'ICU_ventilated', 'Date']
- DIVI     Germany  state_divi               ICU, ICU_ventilated over date for different states (Bundesländer) with columns ['Date', 'ICU', 'ICU_ventilated', 'ID_State', 'State']
- DIVI     Germany  germany_divi             ICU, ICU_ventilated over date for whole Germany with columns ['Date', 'ICU', 'ICU_ventilated']
+ DIVI     Germany  county_divi              ICU, ICU_ventilated over time for different counties (Landkreise) with columns ['County', 'ID_County', 'ICU', 'ICU_ventilated', 'Date']
+ DIVI     Germany  state_divi               ICU, ICU_ventilated over time for different states (Bundesländer) with columns ['Date', 'ICU', 'ICU_ventilated', 'ID_State', 'State']
+ DIVI     Germany  germany_divi             ICU, ICU_ventilated over time for whole Germany with columns ['Date', 'ICU', 'ICU_ventilated']
  ======== ======== ======================== =================
 
 Some more notes
