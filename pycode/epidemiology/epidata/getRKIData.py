@@ -141,7 +141,7 @@ def get_rki_data(read_data=dd.defaultDict['read_data'],
    gbNF_cs = gbNF.cumsum()
 
    # outout to json file
-   gd.write_dataframe(gbNF_cs, directory, "infected_rki", out_form)
+   gd.write_dataframe(gbNF_cs.reset_index(), directory, "infected_rki", out_form)
 
 
    if(make_plot == True):
@@ -156,7 +156,7 @@ def get_rki_data(read_data=dd.defaultDict['read_data'],
    gbNT_cs = gbNT.cumsum()
 
    # output
-   gd.write_dataframe(gbNT_cs, directory, "deaths_rki", out_form)
+   gd.write_dataframe(gbNT_cs.reset_index(), directory, "deaths_rki", out_form)
 
    if(make_plot == True):
       gbNT_cs.plot( title = 'COVID-19 deaths', grid = True,
@@ -164,7 +164,7 @@ def get_rki_data(read_data=dd.defaultDict['read_data'],
       plt.tight_layout()
       plt.show()
 
-      dfF.agg({"AnzahlFall": sum, "AnzahlTodesfall": sum, "AnzahlGenesen": sum}) \
+      dfF.agg({AnzahlFall: sum, AnzahlTodesfall: sum, AnzahlGenesen: sum}) \
          .plot( title = 'COVID-19 infections, deaths, recovered', grid = True,
                              kind = 'bar' )
       plt.tight_layout()
@@ -281,9 +281,9 @@ def get_rki_data(read_data=dd.defaultDict['read_data'],
 
 
       # Dead by "Altersgruppe":
-      gbNTAG = df[df.NeuerTodesfall >= 0].groupby( Altersgruppe ).sum()
+      gbNTAG = df[df.NeuerTodesfall >= 0].groupby( Altersgruppe ).agg({AnzahlTodesfall: sum})
 
-      gbNTAG.AnzahlTodesfall.plot( title = 'COVID-19 deaths', grid = True, 
+      gbNTAG.plot( title = 'COVID-19 deaths', grid = True,
                              kind = 'bar' )
       plt.tight_layout()
       plt.show()
