@@ -13,6 +13,7 @@ import {Parameters} from '../Parameters/Parameters';
 
 import {calculateDamping} from '../../common/utils';
 import * as seir from '../../common/seir.js';
+import rki from '../../common/datastore/sql/rki-sql-store';
 import * as moment from 'moment';
 
 import './Simulation.scss';
@@ -68,10 +69,20 @@ class Simulation extends Component {
       days: 200,
     };
 
+    this.start = {
+      confirmed: 0,
+      recovered: 0,
+      deaths: 0,
+    };
+
     this.handleSubmit = this.handleSubmit.bind(this);
     this.updateParameter = this.updateParameter.bind(this);
     this.onSelect = this.onSelect.bind(this);
     this.simulate = this.simulate.bind(this);
+
+    rki.getAllGermany().then((rows) => {
+      this.start = rows[0];
+    });
   }
 
   /**
@@ -141,11 +152,11 @@ class Simulation extends Component {
 
     populations.set_total(this.props.selected.population);
     populations.set(createSizeTVector([0, secir.SecirCompartments.E.value]), 14400);
-    populations.set(createSizeTVector([0, secir.SecirCompartments.C.value]), this.props.start.Confirmed);
+    populations.set(createSizeTVector([0, secir.SecirCompartments.C.value]), this.start.confirmed);
     populations.set(createSizeTVector([0, secir.SecirCompartments.I.value]), 50);
     populations.set(createSizeTVector([0, secir.SecirCompartments.H.value]), 20);
     populations.set(createSizeTVector([0, secir.SecirCompartments.U.value]), 10);
-    populations.set(createSizeTVector([0, secir.SecirCompartments.R.value]), this.props.start.Recovered);
+    populations.set(createSizeTVector([0, secir.SecirCompartments.R.value]), this.start.recovered);
     populations.set(createSizeTVector([0, secir.SecirCompartments.D.value]), 0);
     populations.set_difference_from_total(
       createSizeTVector([0, secir.SecirCompartments.S.value]),
@@ -249,8 +260,8 @@ class Simulation extends Component {
     seir_params.b = p.contact_rate;
     seir_params.g = 1 / p.infection;
     seir_params.E0 = this.props.selected.population / 2;
-    seir_params.I0 = this.props.start.Confirmed; //p.i0;
-    seir_params.R0 = this.props.start.Recovered;
+    seir_params.I0 = this.start.confirmed; //p.i0;
+    seir_params.R0 = this.start.recovered;
     seir_params.N = this.props.selected.population;
 
     let action_damping = calculateDamping(this.props.measures, startDate, days);

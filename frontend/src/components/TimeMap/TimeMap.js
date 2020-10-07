@@ -5,7 +5,7 @@ import React from 'react';
 import {setSelected} from '../../redux/app';
 import InteractiveHeatMap from '../../common/interactive_heat_map';
 import {roundToUTCMidnight} from '../../common/utils';
-import {RKIDatastore as rki, Tables} from '../../common/rki-datastore';
+import rki from '../../common/datastore/sql/rki-sql-store';
 
 import './TimeMap.scss';
 
@@ -65,24 +65,25 @@ class TimeMap extends React.Component {
   async calcStateData() {
     const times = new Map();
 
-    const result = await rki.get(Tables.STATES, {
+    const result = await rki.getAllStatesInRange({
       start: this.props.time.startDate,
       end: this.props.time.endDate,
-      sort: 'date',
     });
 
     let currDate = -1;
     let states = null;
-    for (const {ID_State, Confirmed, Recovered, date} of result) {
+
+    for (const {stateId, confirmed, recovered, date} of result) {
       const d = roundToUTCMidnight(date);
+
       if (d !== currDate) {
         times.set(currDate, states);
         currDate = roundToUTCMidnight(date);
-        states = new Map();
+        states = new Map(states); // clone previous date so there are no holes in data
       }
 
-      if (ID_State > 0) {
-        states.set(ID_State, Confirmed - Recovered);
+      if (stateId > 0) {
+        states.set(stateId, confirmed - recovered);
       }
     }
 
@@ -97,23 +98,22 @@ class TimeMap extends React.Component {
   async calcCountyData() {
     const times = new Map();
 
-    const result = await rki.get(Tables.COUNTIES, {
+    const result = await rki.getAllCountiesInRange({
       start: this.props.time.startDate,
       end: this.props.time.endDate,
-      sort: 'date',
     });
 
     let currDate = -1;
     let counties = null;
-    for (const {ID_County, Confirmed, Recovered, date} of result) {
+    for (const {countyId, confirmed, recovered, date} of result) {
       const d = roundToUTCMidnight(date);
       if (d !== currDate) {
         times.set(currDate, counties);
         currDate = roundToUTCMidnight(date);
-        counties = new Map();
+        counties = new Map(counties); // clone previous date so there are no holes in data
       }
 
-      counties.set(ID_County, Confirmed - Recovered);
+      counties.set(countyId, confirmed - recovered);
     }
 
     if (times.size > 0) {

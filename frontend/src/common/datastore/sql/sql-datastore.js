@@ -1,6 +1,5 @@
 import DB from './sql-database';
-import SQLType from './SQLType';
-import {replaceLastChar} from './utils';
+import {replaceLastChar} from '../../utils';
 
 export class SQLColumn {
   /** @type string */
@@ -33,13 +32,17 @@ export class SQLTable {
 }
 
 export default class SQLDatastore {
-  /** @type SQLTable */
-  table = null;
+  /**
+   * Abstract method to load data into datastore
+   */
+  async populate() {
+    return false;
+  }
 
   /**
    * @param table{SQLTable}
    */
-  constructor(table) {
+  async create(table) {
     let createTableQuery = `CREATE TABLE ${table.name} (`;
     for (const column of table.columns) {
       const notNull = column.notNull === true;
@@ -47,23 +50,21 @@ export default class SQLDatastore {
     }
     createTableQuery = replaceLastChar(createTableQuery, ');');
 
-    DB.then((db) => db.run(createTableQuery));
-
-    this.table = table;
+    return DB.then((db) => db.run(createTableQuery));
   }
 
-  async getAll() {
-    const query = `SELECT * FROM ${this.table.name};`;
+  async getAll(table) {
+    const query = `SELECT * FROM ${table};`;
     const result = await DB.then((db) => db.exec(query));
     return this.resultToArray(result);
   }
 
   /** @param row{any} */
-  async put(row) {
+  async put(table, row) {
     const columns = Object.keys(row);
     const values = Object.values(row);
 
-    let query = `INSERT INTO ${this.table.name} `;
+    let query = `INSERT INTO ${table} `;
 
     query += '(';
     for (const column of columns) {
@@ -83,8 +84,8 @@ export default class SQLDatastore {
    * @param {Array<any> | Array<Array<any>>} rows
    * @param {Array<string>} [columns]
    */
-  async putAll(rows, columns) {
-    let query = `INSERT INTO ${this.table.name} `;
+  async putAll(table, rows, columns) {
+    let query = `INSERT INTO ${table} `;
 
     if (columns) {
       query += '(';

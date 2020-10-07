@@ -4,7 +4,7 @@ import {withTranslation} from 'react-i18next';
 import InfectionChart from '../Graphs/InfectionChart';
 
 import {getActiveMeasures} from '../../redux/measures';
-import rki from '../../common/rki-sql-store';
+import rki from '../../common/datastore/sql/rki-sql-store';
 
 import * as numeral from 'numeral';
 import {CustomInput} from 'reactstrap';
@@ -23,7 +23,7 @@ class Results extends Component {
 
   componentDidMount() {
     if (this.props.selected && this.props.selected.dataset === 'germany') {
-      rki.getAllState(this.props.selected.id).then((data) => {
+      rki.getAllGermany().then((data) => {
         this.setState({
           loading: false,
           rki: data,
@@ -34,12 +34,14 @@ class Results extends Component {
 
   componentDidUpdate(prevProps, prevState, snapshot) {
     if (this.props.selected?.id !== prevProps.selected?.id) {
-      this.setState({
-        loading: true,
-        rki: null,
-      });
-      if (['states', 'germany'].includes(this.props.selected.dataset)) {
-        console.time('getState');
+      if (this.props.selected.dataset === 'germany') {
+        rki.getAllGermany().then((data) => {
+          this.setState({
+            loading: false,
+            rki: data,
+          });
+        });
+      } else if (this.props.selected.dataset === 'states') {
         rki.getAllState(this.props.selected.id).then((data) => {
           console.timeEnd('getState');
           this.setState({
@@ -65,8 +67,6 @@ class Results extends Component {
     const {t} = this.props;
     if (this.state.rki === null) {
       return <div>Bitte wählen sie ein Bundesland aus!</div>;
-    } else if (this.state.loading) {
-      return <div>Loading...</div>;
     } else {
       return (
         <>

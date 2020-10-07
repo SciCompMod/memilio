@@ -11,9 +11,8 @@ import GridLayout from './components/GridLayout';
 import {initializeApp, setSelected} from './redux/app';
 import {setTimeBounds} from './redux/time';
 
-import {RKIDatastore as rki, Tables} from './common/rki-datastore';
-import {PopulationDatastore as population} from './common/population-datastore';
-import './common/rki-sql-store';
+import rki from './common/datastore/sql/rki-sql-store';
+import population from './common/datastore/idb/population-datastore';
 
 import './App.scss';
 
@@ -28,38 +27,61 @@ class App extends Component {
     super(props);
     this.state = {
       loading: true,
+      label: '',
     };
   }
 
-  async componentDidMount() {
-    await this.props.initializeApp();
-    rki.populate([Tables.STATES, Tables.COUNTIES]).then(() => {
-      Promise.all([rki.getTimeBounds(Tables.STATES), population.getByKey(-1)])
-        .then((r) => {
-          console.log(r);
-          const [{start, end}, p] = r;
-          this.props.setTimeBounds({
-            start,
-            end,
-          });
-          console.log(p);
-          this.props.setSelected({
-            id: 0,
-            dataset: 'germany',
-            label: 'Deutschland',
-            population: p.population,
-          });
-          this.setState({loading: false});
-        })
-        .catch((err) => console.log(err));
+  progress(state) {
+    return new Promise((resolve, reject) => {
+      this.setState(state, () => {
+        resolve();
+      });
     });
+  }
+
+  delay(timeout) {
+    return new Promise((resolve, reject) => {
+      setTimeout(() => {
+        resolve();
+      }, timeout);
+    });
+  }
+
+  async componentDidMount() {
+    await this.progress({label: 'Loading configuration'});
+    await this.props.initializeApp();
+
+    await this.progress({label: 'Loading data'});
+    await population.populate();
+    await rki.populate();
+
+    await this.progress({label: 'Initializing application'});
+    const p = await population.getByKey(-1);
+    const {start, end} = await rki.getTimeBounds();
+
+    this.props.setTimeBounds({start, end});
+    this.props.setSelected({
+      id: 0,
+      dataset: 'germany',
+      label: 'Deutschland',
+      population: p.population,
+    });
+
+    await this.progress({label: 'Done'});
+    this.setState({loading: false});
   }
 
   render() {
     if (this.state.loading) {
-      return <Spinner color="white" className="loading-spinner" />;
+      return (
+        <div className="overlay">
+          <div className="loading-progress">
+            <div className="label">{this.state.label}</div>
+            <Spinner color="primary" />
+          </div>
+        </div>
+      );
     }
-
     return <GridLayout />;
   }
 }

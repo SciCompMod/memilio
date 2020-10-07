@@ -109,4 +109,4 @@ class PopulationDatastore extends Datastore {
 }
 
 const populationstore = new PopulationDatastore();
-export {populationstore as PopulationDatastore};
+export default populationstore;
