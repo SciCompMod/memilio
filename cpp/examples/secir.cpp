@@ -22,7 +22,9 @@ int main()
         // tinfasy    = 6.2, // (=R9^(-1)=R_3^(-1)+0.5*R_4^(-1))
         ticu2death = 5; // 3.5-7 (=R5^(-1))
 
-    double cont_freq = 0.5, // 0.2-0.75
+    double cont_freq = 10, // see Polymod study
+        inf_prob = 0.05, 
+        carr_infec = 0.67,
         alpha        = 0.09, // 0.01-0.16
         beta         = 0.25, // 0.05-0.5
         delta        = 0.3, // 0.15-0.77
@@ -58,8 +60,8 @@ int main()
     params.populations.set({0, epi::SecirCompartments::D}, nb_dead_t0);
     params.populations.set_difference_from_total({0, epi::SecirCompartments::S}, nb_total_t0);
 
-    params.probabilities[0].set_infection_from_contact(1.0);
-    params.probabilities[0].set_carrier_infectability(0.67);
+    params.probabilities[0].set_infection_from_contact(inf_prob);
+    params.probabilities[0].set_carrier_infectability(carr_infec);
     params.probabilities[0].set_asymp_per_infectious(alpha);
     params.probabilities[0].set_risk_from_symptomatic(beta);
     params.probabilities[0].set_hospitalized_per_infectious(rho);

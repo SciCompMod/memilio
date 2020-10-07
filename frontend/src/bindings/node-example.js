@@ -21,7 +21,7 @@ secirjs().then(function (secir) {
   times.set_icu_to_death(5); // 3.5 - 7(=R5 ^ (-1))
 
   var probs = new secir.Probabilities();
-  probs.set_infection_from_contact(1.0);
+  probs.set_infection_from_contact(0.05);
   probs.set_carrier_infectability(0.67);
   probs.set_asymp_per_infectious(0.09); // 0.01 - 0.16
   probs.set_risk_from_symptomatic(0.25); // 0.05 - 0.5
@@ -54,7 +54,7 @@ secirjs().then(function (secir) {
 
   secir.print_secir_params(params);
 
-  params[0].get_cont_freq_matrix().set_cont_freq(0.5, 0, 0); // 0.2 - 0.75
+  params[0].get_cont_freq_matrix().set_cont_freq(10, 0, 0); // 0.2 - 0.75
 
   // emulate some mitigations
   var d1 = new secir.Damping(23, 0.8);
