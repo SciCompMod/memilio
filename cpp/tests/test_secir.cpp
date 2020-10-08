@@ -12,7 +12,7 @@ TEST(TestSecir, compareWithPreviousRun)
     double tinc = 5.2, tinfmild = 6, tserint = 4.2, thosp2home = 12, thome2hosp = 5, thosp2icu = 2, ticu2home = 8,
            tinfasy = 6.2, ticu2death = 5;
 
-    double cont_freq = 0.5, alpha = 0.09, beta = 0.25, delta = 0.3, rho = 0.2, theta = 0.25;
+    double cont_freq = 10, inf_prob = 0.05, carr_infec = 1, alpha = 0.09, beta = 0.25, delta = 0.3, rho = 0.2, theta = 0.25;
 
     double nb_total_t0 = 10000, nb_exp_t0 = 100, nb_inf_t0 = 50, nb_car_t0 = 50, nb_hosp_t0 = 20, nb_icu_t0 = 10,
            nb_rec_t0 = 10, nb_dead_t0 = 0;
@@ -48,6 +48,8 @@ TEST(TestSecir, compareWithPreviousRun)
     params.populations.set({0, epi::SecirCompartments::D}, nb_dead_t0);
     params.populations.set_difference_from_total({0, epi::SecirCompartments::S}, nb_total_t0);
 
+    params.probabilities[0].set_infection_from_contact(inf_prob);
+    params.probabilities[0].set_carrier_infectability(carr_infec);
     params.probabilities[0].set_asymp_per_infectious(alpha);
     params.probabilities[0].set_risk_from_symptomatic(beta);
     params.probabilities[0].set_hospitalized_per_infectious(rho);
@@ -79,7 +81,7 @@ TEST(TestSecir, testParamConstructors)
     double tinc = 5.2, tinfmild = 6, tserint = 4.2, thosp2home = 12, thome2hosp = 5, thosp2icu = 2, ticu2home = 8,
            tinfasy = 6.2, ticu2death = 5;
 
-    double cont_freq = 0.5, inf_cont = 0.9, alpha = 0.09, beta = 0.25, delta = 0.3, rho = 0.2, theta = 0.24;
+    double cont_freq = 10, inf_prob = 0.05, carr_infec = 0.67, alpha = 0.09, beta = 0.25, delta = 0.3, rho = 0.2, theta = 0.24;
 
     double nb_total_t0 = 10000, nb_exp_t0 = 100, nb_inf_t0 = 54, nb_car_t0 = 50, nb_hosp_t0 = 20, nb_icu_t0 = 10,
            nb_rec_t0 = 11, nb_dead_t0 = 0;
@@ -104,8 +106,8 @@ TEST(TestSecir, testParamConstructors)
     params.populations.set({0, epi::SecirCompartments::D}, nb_dead_t0);
     params.populations.set_difference_from_total({0, epi::SecirCompartments::S}, nb_total_t0);
 
-    params.probabilities[0].set_infection_from_contact(inf_cont);
-    params.probabilities[0].set_carrier_infectability(1.0);
+    params.probabilities[0].set_infection_from_contact(inf_prob);
+    params.probabilities[0].set_carrier_infectability(carr_infec);
     params.probabilities[0].set_asymp_per_infectious(alpha);
     params.probabilities[0].set_risk_from_symptomatic(beta);
     params.probabilities[0].set_hospitalized_per_infectious(rho);
@@ -432,8 +434,9 @@ TEST(TestSecir, check_constraints)
         tinfasy    = 0.57504, // (=R9^(-1)=R_3^(-1)+0.5*R_4^(-1))
         ticu2death = 5.90264; // 3.5-7 (=R5^(-1))
 
-    double cont_freq = 0.5, // 0.2-0.75
-        infprob      = 0.924519,
+    double cont_freq = 10, // 0.2-0.75
+        inf_prob      = 0.064519,
+        carr_infec = 0.56758,
            alpha     = 2.124921, // 0.01-0.16
         beta         = 0.190609, // 0.05-0.5
         delta        = 0.245801, // 0.15-0.77
@@ -474,8 +477,8 @@ TEST(TestSecir, check_constraints)
     params.populations.set({0, epi::SecirCompartments::D}, nb_dead_t0);
     params.populations.set_difference_from_total({0, epi::SecirCompartments::S}, nb_total_t0);
 
-    params.probabilities[0].set_infection_from_contact(0.8);
-    params.probabilities[0].set_carrier_infectability(0.8);
+    params.probabilities[0].set_infection_from_contact(inf_prob);
+    params.probabilities[0].set_carrier_infectability(carr_infec);
     params.probabilities[0].set_asymp_per_infectious(alpha);
     params.probabilities[0].set_risk_from_symptomatic(beta);
     params.probabilities[0].set_hospitalized_per_infectious(rho);

@@ -12,7 +12,7 @@ TEST(TestSaveResult, compareResultWithH5)
     double tinc = 5.2, tinfmild = 6, tserint = 4.2, thosp2home = 12, thome2hosp = 5, thosp2icu = 2, ticu2home = 8,
            tinfasy = 6.2, ticu2death = 5;
 
-    double cont_freq = 0.5, alpha = 0.09, beta = 0.25, delta = 0.3, rho = 0.2, theta = 0.25;
+    double cont_freq = 10, alpha = 0.09, beta = 0.25, delta = 0.3, rho = 0.2, theta = 0.25;
 
     double nb_total_t0 = 10000, nb_exp_t0 = 100, nb_inf_t0 = 50, nb_car_t0 = 50, nb_hosp_t0 = 20, nb_icu_t0 = 10,
            nb_rec_t0 = 10, nb_dead_t0 = 0;
@@ -43,7 +43,7 @@ TEST(TestSaveResult, compareResultWithH5)
         params.populations.set_difference_from_group_total({i, epi::SecirCompartments::S}, epi::SecirCategory::AgeGroup,
                                                            i, fact * nb_total_t0);
 
-        params.probabilities[i].set_infection_from_contact(0.98);
+        params.probabilities[i].set_infection_from_contact(0.06);
         params.probabilities[i].set_carrier_infectability(0.67);
         params.probabilities[i].set_asymp_per_infectious(alpha);
         params.probabilities[i].set_risk_from_symptomatic(beta);
