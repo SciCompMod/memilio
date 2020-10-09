@@ -15,7 +15,7 @@ public:
     }
 
     template <class Parameter>
-    void set(ScalarType value)
+    void set(typename Parameter::Type value)
     {
         //TODO!!!
     }
@@ -23,7 +23,7 @@ public:
     template <class Parameter>
     typename Parameter::Type const get() const
     {
-        //TODO!!!
+        return 1.0;
     }
 };
 

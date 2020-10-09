@@ -6,6 +6,7 @@
 
 #include <Eigen/Core>
 #include <vector>
+#include <array>
 #include <numeric>
 
 namespace
@@ -257,7 +258,7 @@ public:
     {
         double current_population = get_total();
         if (fabs(current_population) < 1e-12) {
-            double ysize = m_y.size();
+            double ysize = double(m_y.size());
             for (auto i = 0; i < m_y.size(); i++) {
                 m_y[i] = value / ysize;
             }

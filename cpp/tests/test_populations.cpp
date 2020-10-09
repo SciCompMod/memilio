@@ -1,5 +1,6 @@
 #include "epidemiology/model/populations.h"
 #include <gtest/gtest.h>
+#include <array>
 
 enum class InfectionType
 {

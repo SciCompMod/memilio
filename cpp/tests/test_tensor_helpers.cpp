@@ -1,5 +1,6 @@
 #include "epidemiology/utils/tensor_helpers.h"
 #include <gtest/gtest.h>
+#include <array>
 
 TEST(TestTensor, tensor_dimension_prods)
 {
