@@ -33,7 +33,7 @@ Eigen::VectorXd Populations::get_compartments() const
     return m_y_eigen;
 }
 
-UncertainValue const& Populations::get(std::vector<size_t> const& indices) const
+UncertainValue const& Populations::get(std::initializer_list<size_t> const& indices) const
 {
 #ifndef NDEBUG
     assert(indices.size() == m_category_sizes.size());
@@ -45,7 +45,7 @@ UncertainValue const& Populations::get(std::vector<size_t> const& indices) const
     return m_y[flatten_index(indices, m_category_sizes)];
 }
 
-UncertainValue& Populations::get(std::vector<size_t> const& indices)
+UncertainValue& Populations::get(std::initializer_list<size_t> const& indices)
 {
 #ifndef NDEBUG
     assert(indices.size() == m_category_sizes.size());
@@ -87,11 +87,11 @@ void Populations::set_group_total(size_t category_idx, size_t group_idx, double 
     }
 }
 
-void Populations::set_difference_from_group_total(std::vector<size_t> const& indices, size_t category_idx,
+void Populations::set_difference_from_group_total(std::initializer_list<size_t> const& indices, size_t category_idx,
                                                   size_t group_idx, double total_group_population)
 {
     // is the given index part of the group?
-    assert(indices[category_idx] == group_idx);
+    //assert(indices[category_idx] == group_idx);
 
     double current_population = get_group_total(category_idx, group_idx);
     size_t idx                = get_flat_index(indices);
@@ -111,7 +111,7 @@ double Populations::get_total() const
     return sum;
 }
 
-void Populations::set(std::vector<size_t> const& indices, UncertainValue const& value)
+void Populations::set(std::initializer_list<size_t> const& indices, UncertainValue const& value)
 {
 #ifndef NDEBUG
     assert(indices.size() == m_category_sizes.size());
@@ -123,7 +123,7 @@ void Populations::set(std::vector<size_t> const& indices, UncertainValue const& 
     m_y[get_flat_index(indices)] = value;
 }
 
-void Populations::set(std::vector<size_t> const& indices, double value)
+void Populations::set(std::initializer_list<size_t> const& indices, double value)
 {
 #ifndef NDEBUG
     assert(indices.size() == m_category_sizes.size());
@@ -135,7 +135,7 @@ void Populations::set(std::vector<size_t> const& indices, double value)
     m_y[get_flat_index(indices)] = value;
 }
 
-void Populations::set(std::vector<size_t> const& indices, ParameterDistribution const& dist)
+void Populations::set(std::initializer_list<size_t> const& indices, ParameterDistribution const& dist)
 {
 #ifndef NDEBUG
     assert(indices.size() == m_category_sizes.size());
@@ -163,7 +163,7 @@ void Populations::set_total(double value)
     }
 }
 
-void Populations::set_difference_from_total(std::vector<size_t> const& indices, double total_population)
+void Populations::set_difference_from_total(std::initializer_list<size_t> const& indices, double total_population)
 {
     double current_population = get_total();
     size_t idx                = get_flat_index(indices);
@@ -174,7 +174,7 @@ void Populations::set_difference_from_total(std::vector<size_t> const& indices, 
     m_y[idx] = total_population - current_population;
 }
 
-size_t Populations::get_flat_index(std::vector<size_t> const& indices) const
+size_t Populations::get_flat_index(std::initializer_list<size_t> const& indices) const
 {
     return flatten_index(indices, m_category_sizes);
 }

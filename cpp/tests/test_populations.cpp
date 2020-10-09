@@ -1,14 +1,7 @@
-#include "epidemiology/secir/populations.h"
+#include "epidemiology/model/populations.h"
 #include <gtest/gtest.h>
 
-enum Category
-{
-    InfectionTypeCategory,
-    AgeGroupCategory,
-    ContinentCategory
-};
-
-enum InfectionType
+enum class InfectionType
 {
     S,
     E,
@@ -18,10 +11,10 @@ enum InfectionType
     U,
     R,
     D,
-    InfectionTypeCount
+    Count
 };
 
-enum AgeGroup
+enum class AgeGroup
 {
     TwelveAndYounger,
     TwelveToTwenty,
@@ -30,10 +23,10 @@ enum AgeGroup
     FourtyFiveToSixtyFive,
     SixtyFiveToSeventyFive,
     SeventyFiveAndOlder,
-    AgeGroupCount
+    Count
 };
 
-enum Continent
+enum class Continent
 {
     Europe,
     Asia,
@@ -42,36 +35,41 @@ enum Continent
     Australia,
     Antarctica,
     Africa,
-    ContinentCount
+    Count
 };
 
 TEST(TestPopulations, sizes)
 {
 
-    int num_compartments = InfectionTypeCount * AgeGroupCount * ContinentCount;
+    int num_compartments =
+        static_cast<int>(InfectionType::Count) * static_cast<int>(AgeGroup::Count) * static_cast<int>(Continent::Count);
     ASSERT_EQ(7 * 7 * 8, num_compartments);
 
-    epi::Populations m({InfectionTypeCount, AgeGroupCount, ContinentCount});
+    epi::Populations<InfectionType, AgeGroup, Continent> m;
 
     ASSERT_EQ(num_compartments, m.get_num_compartments());
     ASSERT_EQ(num_compartments, m.get_compartments().size());
-    auto category_sizes = m.get_category_sizes();
-    ASSERT_EQ(category_sizes[0], InfectionTypeCount);
-    ASSERT_EQ(category_sizes[1], AgeGroupCount);
-    ASSERT_EQ(category_sizes[2], ContinentCount);
+    auto category_sizes = m.dimensions;
+    ASSERT_EQ(category_sizes[0], static_cast<size_t>(InfectionType::Count));
+    ASSERT_EQ(category_sizes[1], static_cast<size_t>(AgeGroup::Count));
+    ASSERT_EQ(category_sizes[2], static_cast<size_t>(Continent::Count));
     ASSERT_EQ(0, m.get_total());
 }
 
 TEST(TestPopulations, set_population)
 {
-    epi::Populations m({InfectionTypeCount, AgeGroupCount, ContinentCount});
-    m.set_total(1.);
-    int num_compartments = InfectionTypeCount * AgeGroupCount * ContinentCount;
+    epi::Populations<InfectionType, AgeGroup, Continent> m;
 
-    for (size_t i = 0; i < InfectionTypeCount; ++i) {
-        for (size_t j = 0; j < AgeGroupCount; ++j) {
-            for (size_t k = 0; k < ContinentCount; ++k) {
-                ASSERT_NEAR(1. / num_compartments, m.get({i, j, k}), 1e-12);
+    m.set_total(1.);
+    int num_compartments =
+        static_cast<int>(InfectionType::Count) * static_cast<int>(AgeGroup::Count) * static_cast<int>(Continent::Count);
+
+    for (size_t i = 0; i < static_cast<size_t>(InfectionType::Count); ++i) {
+        for (size_t j = 0; j < static_cast<size_t>(AgeGroup::Count); ++j) {
+            for (size_t k = 0; k < static_cast<size_t>(Continent::Count); ++k) {
+                ASSERT_NEAR(1. / num_compartments,
+                            m.get(static_cast<InfectionType>(i), static_cast<AgeGroup>(j), static_cast<Continent>(k)),
+                            1e-12);
             }
         }
     }
@@ -80,24 +78,31 @@ TEST(TestPopulations, set_population)
 
 TEST(TestPopulations, group_population)
 {
-    epi::Populations m({InfectionTypeCount, AgeGroupCount, ContinentCount});
-    m.set_total(1.);
-    int num_compartments = InfectionTypeCount * AgeGroupCount * ContinentCount;
+    epi::Populations<InfectionType, AgeGroup, Continent> m;
 
-    ASSERT_NEAR(1. / AgeGroupCount, m.get_group_total(AgeGroupCategory, FourtyFiveToSixtyFive), 1e-12);
-    m.set_group_total(AgeGroupCategory, FourtyFiveToSixtyFive, 1.);
-    ASSERT_NEAR(1., m.get_group_total(AgeGroupCategory, FourtyFiveToSixtyFive), 1e-12);
-    ASSERT_NEAR(2 - 1. / AgeGroupCount, m.get_total(), 1e-12);
+    m.set_total(1.);
+    int num_compartments =
+        static_cast<int>(InfectionType::Count) * static_cast<int>(AgeGroup::Count) * static_cast<int>(Continent::Count);
+
+    ASSERT_NEAR(1. / static_cast<size_t>(AgeGroup::Count), m.get_group_total<AgeGroup>(AgeGroup::FourtyFiveToSixtyFive),
+                1e-12);
+    m.set_group_total<AgeGroup>(1., AgeGroup::FourtyFiveToSixtyFive);
+    ASSERT_NEAR(1., m.get_group_total<AgeGroup>(AgeGroup::FourtyFiveToSixtyFive), 1e-12);
+    ASSERT_NEAR(2 - 1. / static_cast<size_t>(AgeGroup::Count), m.get_total(), 1e-12);
 
     Eigen::VectorXd y = m.get_compartments();
     size_t idx        = 0;
-    for (size_t i = 0; i < InfectionTypeCount; ++i) {
-        for (size_t j = 0; j < AgeGroupCount; ++j) {
-            for (size_t k = 0; k < ContinentCount; ++k) {
-                ASSERT_EQ(idx, m.get_flat_index({i, j, k}));
+    for (size_t i = 0; i < static_cast<size_t>(InfectionType::Count); ++i) {
+        for (size_t j = 0; j < static_cast<size_t>(AgeGroup::Count); ++j) {
+            for (size_t k = 0; k < static_cast<size_t>(Continent::Count); ++k) {
+                ASSERT_EQ(idx, m.get_flat_index(static_cast<InfectionType>(i), static_cast<AgeGroup>(j),
+                                                static_cast<Continent>(k)));
 
-                if (j == FourtyFiveToSixtyFive) {
-                    ASSERT_NEAR(y[idx], 1. / (InfectionTypeCount * ContinentCount), 1e-12);
+                if (j == static_cast<size_t>(AgeGroup::FourtyFiveToSixtyFive)) {
+                    ASSERT_NEAR(y[idx],
+                                1. /
+                                    (static_cast<size_t>(InfectionType::Count) * static_cast<size_t>(Continent::Count)),
+                                1e-12);
                 }
                 else {
                     ASSERT_NEAR(y[idx], 1. / num_compartments, 1e-12);
@@ -110,28 +115,39 @@ TEST(TestPopulations, group_population)
 
 TEST(TestPopulations, set_difference_from_total)
 {
-    epi::Populations m({InfectionTypeCount, AgeGroupCount, ContinentCount});
-    m.set({S, TwentyToThirtyfive, Africa}, 100);
+    epi::Populations<InfectionType, AgeGroup, Continent> m;
 
-    m.set_difference_from_total({E, TwentyToThirtyfive, Africa}, 1000);
+    m.set(100, InfectionType::S, AgeGroup::TwentyToThirtyfive, Continent::Africa);
+
+    m.set_difference_from_total(1000, InfectionType::E, AgeGroup::TwentyToThirtyfive, Continent::Africa);
     ASSERT_NEAR(1000, m.get_total(), 1e-12);
-    ASSERT_NEAR(900, m.get({E, TwentyToThirtyfive, Africa}), 1e-12);
+    ASSERT_NEAR(900, m.get(InfectionType::E, AgeGroup::TwentyToThirtyfive, Continent::Africa), 1e-12);
 
-    m.set_difference_from_total({E, TwentyToThirtyfive, Africa}, 2000);
+    m.set_difference_from_total(2000, InfectionType::E, AgeGroup::TwentyToThirtyfive, Continent::Africa);
     ASSERT_NEAR(2000, m.get_total(), 1e-12);
-    ASSERT_NEAR(1900, m.get({E, TwentyToThirtyfive, Africa}), 1e-12);
+    ASSERT_NEAR(1900, m.get(InfectionType::E, AgeGroup::TwentyToThirtyfive, Continent::Africa), 1e-12);
 
-    for (size_t i = 0; i < InfectionTypeCount; ++i) {
-        for (size_t j = 0; j < AgeGroupCount; ++j) {
-            for (size_t k = 0; k < ContinentCount; ++k) {
-                if (i == S && j == TwentyToThirtyfive && k == Africa) {
-                    ASSERT_NEAR(100, m.get({i, j, k}), 1e-12);
+    for (size_t i = 0; i < static_cast<size_t>(InfectionType::Count); ++i) {
+        for (size_t j = 0; j < static_cast<size_t>(AgeGroup::Count); ++j) {
+            for (size_t k = 0; k < static_cast<size_t>(Continent::Count); ++k) {
+                if (i == static_cast<size_t>(InfectionType::S) &&
+                    j == static_cast<size_t>(AgeGroup::TwentyToThirtyfive) &&
+                    k == static_cast<size_t>(Continent::Africa)) {
+                    ASSERT_NEAR(
+                        100, m.get(static_cast<InfectionType>(i), static_cast<AgeGroup>(j), static_cast<Continent>(k)),
+                        1e-12);
                 }
-                else if (i == E && j == TwentyToThirtyfive && k == Africa) {
-                    ASSERT_NEAR(1900, m.get({i, j, k}), 1e-12);
+                else if (i == static_cast<size_t>(InfectionType::E) &&
+                         j == static_cast<size_t>(AgeGroup::TwentyToThirtyfive) &&
+                         k == static_cast<size_t>(Continent::Africa)) {
+                    ASSERT_NEAR(
+                        1900, m.get(static_cast<InfectionType>(i), static_cast<AgeGroup>(j), static_cast<Continent>(k)),
+                        1e-12);
                 }
                 else {
-                    ASSERT_NEAR(0, m.get({i, j, k}), 1e-12);
+                    ASSERT_NEAR(
+                        0, m.get(static_cast<InfectionType>(i), static_cast<AgeGroup>(j), static_cast<Continent>(k)),
+                        1e-12);
                 }
             }
         }
@@ -140,34 +156,51 @@ TEST(TestPopulations, set_difference_from_total)
 
 TEST(TestPopulations, set_difference_from_group_total)
 {
-    epi::Populations m({InfectionTypeCount, AgeGroupCount, ContinentCount});
-    m.set({S, TwentyToThirtyfive, Africa}, 100);
-    m.set({S, TwentyToThirtyfive, Europe}, 200);
+    epi::Populations<InfectionType, AgeGroup, Continent> m;
 
-    m.set_difference_from_group_total({E, TwentyToThirtyfive, Africa}, ContinentCategory, Africa, 1000);
-    ASSERT_NEAR(1000, m.get_group_total(ContinentCategory, Africa), 1e-12);
-    ASSERT_NEAR(900, m.get({E, TwentyToThirtyfive, Africa}), 1e-12);
+    m.set(100, InfectionType::S, AgeGroup::TwentyToThirtyfive, Continent::Africa);
+    m.set(200, InfectionType::S, AgeGroup::TwentyToThirtyfive, Continent::Europe);
+
+    m.set_difference_from_group_total<Continent>(1000, Continent::Africa, InfectionType::E,
+                                                 AgeGroup::TwentyToThirtyfive, Continent::Africa);
+    ASSERT_NEAR(1000, m.get_group_total<Continent>(Continent::Africa), 1e-12);
+    ASSERT_NEAR(900, m.get(InfectionType::E, AgeGroup::TwentyToThirtyfive, Continent::Africa), 1e-12);
     ASSERT_NEAR(1200, m.get_total(), 1e-12);
 
-    m.set_difference_from_group_total({E, TwentyToThirtyfive, Africa}, ContinentCategory, Africa, 2000);
-    ASSERT_NEAR(2000, m.get_group_total(ContinentCategory, Africa), 1e-12);
-    ASSERT_NEAR(1900, m.get({E, TwentyToThirtyfive, Africa}), 1e-12);
+    m.set_difference_from_group_total<Continent>(2000, Continent::Africa, InfectionType::E,
+                                                 AgeGroup::TwentyToThirtyfive, Continent::Africa);
+    ASSERT_NEAR(2000, m.get_group_total<Continent>(Continent::Africa), 1e-12);
+    ASSERT_NEAR(1900, m.get(InfectionType::E, AgeGroup::TwentyToThirtyfive, Continent::Africa), 1e-12);
     ASSERT_NEAR(2200, m.get_total(), 1e-12);
 
-    for (size_t i = 0; i < InfectionTypeCount; ++i) {
-        for (size_t j = 0; j < AgeGroupCount; ++j) {
-            for (size_t k = 0; k < ContinentCount; ++k) {
-                if (i == S && j == TwentyToThirtyfive && k == Africa) {
-                    ASSERT_NEAR(100, m.get({i, j, k}), 1e-12);
+    for (size_t i = 0; i < static_cast<size_t>(InfectionType::Count); ++i) {
+        for (size_t j = 0; j < static_cast<size_t>(AgeGroup::Count); ++j) {
+            for (size_t k = 0; k < static_cast<size_t>(Continent::Count); ++k) {
+                if (i == static_cast<size_t>(InfectionType::S) &&
+                    j == static_cast<size_t>(AgeGroup::TwentyToThirtyfive) &&
+                    k == static_cast<size_t>(Continent::Africa)) {
+                    ASSERT_NEAR(
+                        100, m.get(static_cast<InfectionType>(i), static_cast<AgeGroup>(j), static_cast<Continent>(k)),
+                        1e-12);
                 }
-                else if (i == E && j == TwentyToThirtyfive && k == Africa) {
-                    ASSERT_NEAR(1900, m.get({i, j, k}), 1e-12);
+                else if (i == static_cast<size_t>(InfectionType::E) &&
+                         j == static_cast<size_t>(AgeGroup::TwentyToThirtyfive) &&
+                         k == static_cast<size_t>(Continent::Africa)) {
+                    ASSERT_NEAR(
+                        1900, m.get(static_cast<InfectionType>(i), static_cast<AgeGroup>(j), static_cast<Continent>(k)),
+                        1e-12);
                 }
-                else if (i == S && j == TwentyToThirtyfive && k == Europe) {
-                    ASSERT_NEAR(200, m.get({i, j, k}), 1e-12);
+                else if (i == static_cast<size_t>(InfectionType::S) &&
+                         j == static_cast<size_t>(AgeGroup::TwentyToThirtyfive) &&
+                         k == static_cast<size_t>(Continent::Europe)) {
+                    ASSERT_NEAR(
+                        200, m.get(static_cast<InfectionType>(i), static_cast<AgeGroup>(j), static_cast<Continent>(k)),
+                        1e-12);
                 }
                 else {
-                    ASSERT_NEAR(0, m.get({i, j, k}), 1e-12);
+                    ASSERT_NEAR(
+                        0, m.get(static_cast<InfectionType>(i), static_cast<AgeGroup>(j), static_cast<Continent>(k)),
+                        1e-12);
                 }
             }
         }
