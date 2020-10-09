@@ -59,8 +59,9 @@ public:
             dydt[i] = 0;
         }
         for (auto flow : flows) {
-            dydt[call(Populations::get_flat_index, std::get<0>(flow))] += std::get<2>(flow)(parameters, y, t);
-            dydt[call(Populations::get_flat_index, std::get<1>(flow))] -= std::get<2>(flow)(parameters, y, t);
+            ScalarType f = std::get<2>(flow)(parameters, y, t);
+            dydt[call(Populations::get_flat_index, std::get<0>(flow))] += f;
+            dydt[call(Populations::get_flat_index, std::get<1>(flow))] -= f;
         }
     }
 
