@@ -28,6 +28,16 @@ struct Index<T, U, Ts...> : std::integral_constant<std::size_t, 1 + Index<T, Ts.
 template <typename T, typename... Ts>
 constexpr std::size_t Index_v = Index<T, Ts...>::value;
 
+//calculate the product of a parameter pack
+template <size_t... Ns>
+constexpr size_t product()
+{
+    size_t p = 1;
+    for (auto n : {Ns...})
+        p *= n;
+    return p;
+}
+
 } // namespace
 
 namespace epi
@@ -57,8 +67,6 @@ public:
 
     Populations()
     {
-        size_t prod = std::accumulate(dimensions.begin(), dimensions.end(), 1, std::multiplies<size_t>());
-        m_y         = std::vector<UncertainValue>(prod, 0.0);
     }
 
     /**
@@ -70,7 +78,7 @@ public:
      */
     size_t get_num_compartments() const
     {
-        return m_y.size();
+        return product<static_cast<size_t>(CATEGORIES::Count)...>();
     }
 
     /**
@@ -329,7 +337,7 @@ public:
 
 private:
     // A vector containing the population of all compartments
-    std::vector<UncertainValue> m_y;
+    std::array<UncertainValue, product<static_cast<size_t>(CATEGORIES::Count)...>()> m_y{};
 };
 
 // initialize array storying the size of each category
