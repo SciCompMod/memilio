@@ -74,8 +74,8 @@ namespace epi
  * @param dimensions a vector of the dimension sizes of each dimension
  * @return the corresponding flat index
  */
-template <class Container>
-size_t flatten_index(std::initializer_list<size_t> const& indices, Container const& dimensions)
+template <class IndexContainer = std::initializer_list<size_t>, class DimContainer>
+size_t flatten_index(IndexContainer const& indices, DimContainer const& dimensions)
 {
 
 #ifndef NDEBUG

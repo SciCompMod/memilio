@@ -6,7 +6,7 @@
 #include <epidemiology/utils/graph.h>
 #include <epidemiology/migration/migration.h>
 #include <epidemiology/secir/damping.h>
-#include <epidemiology/model/populations.h>
+#include <epidemiology/secir/populations.h>
 #include <epidemiology/secir/uncertain_matrix.h>
 #include <epidemiology/secir/secir.h>
 

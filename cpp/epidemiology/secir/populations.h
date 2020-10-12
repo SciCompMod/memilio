@@ -63,14 +63,14 @@ public:
      * @param indices a vector containing the indices for each category
      * @return the population of compartment
      */
-    UncertainValue const& get(std::initializer_list<size_t> const& indices) const;
+    UncertainValue const& get(std::vector<size_t> const& indices) const;
 
     /**
      * @brief get returns the population of one compartment
      * @param indices a vector containing the indices for each category
      * @return the population of compartment
      */
-    UncertainValue& get(std::initializer_list<size_t> const& indices);
+    UncertainValue& get(std::vector<size_t> const& indices);
 
     /**
      * @brief get_group_total returns the total population of a group in one category
@@ -91,21 +91,21 @@ public:
      * @param indices a vector containing the indices for each category
      * @param value the new value for the compartment's population
      */
-    void set(std::initializer_list<size_t> const& indices, UncertainValue const& value);
+    void set(std::vector<size_t> const& indices, UncertainValue const& value);
 
     /**
      * @brief set sets the scalar value of the population of one compartment
      * @param indices a vector containing the indices for each category
      * @param value the new value for the compartment's population
      */
-    void set(std::initializer_list<size_t> const& indices, double value);
+    void set(std::vector<size_t> const& indices, double value);
 
     /**
      * @brief set sets the random distribution of the population of one compartment
      * @param indices a vector containing the indices for each category
      * @param value the new random distribution for the compartment's population
      */
-    void set(std::initializer_list<size_t> const& indices, ParameterDistribution const& dist);
+    void set(std::vector<size_t> const& indices, ParameterDistribution const& dist);
 
     /**
      * @brief set_group_total sets the total population for a given group
@@ -130,8 +130,8 @@ public:
      * @param group_idx The index of the group within the category
      * @param total_population the new value for the total population
      */
-    void set_difference_from_group_total(std::initializer_list<size_t> const& indices, size_t category_idx,
-                                         size_t group_idx, double total_population);
+    void set_difference_from_group_total(std::vector<size_t> const& indices, size_t category_idx, size_t group_idx,
+                                         double total_population);
 
     /**
      * @brief set_total sets the total population
@@ -151,7 +151,7 @@ public:
      * @param indices the index of the compartment
      * @param total_population the new value for the total population
      */
-    void set_difference_from_total(std::initializer_list<size_t> const& indices, double total_population);
+    void set_difference_from_total(std::vector<size_t> const& indices, double total_population);
 
     /**
      * @brief get_flat_index returns the flat index into the stored population, given the
@@ -159,7 +159,7 @@ public:
      * @param indices a vector of indices
      * @return a flat index into the data structure storing the compartment populations
      */
-    size_t get_flat_index(std::initializer_list<size_t> const& indices) const;
+    size_t get_flat_index(std::vector<size_t> const& indices) const;
 
     /**
      * @brief checks whether the population Parameters satisfy their corresponding constraints and applys them
