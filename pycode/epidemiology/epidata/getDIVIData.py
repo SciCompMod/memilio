@@ -86,11 +86,6 @@ def call_call_url(url_prefix, call_number):
 
     try:
         df = pandas.read_csv(call_url)
-    except OSError as e:
-        exit_string = "ERROR: URL " + call_url + " could not be opened. " \
-                      + "Hint: check your internet connection."
-
-        sys.exit(exit_string)
     except:
         pass
 
@@ -183,6 +178,16 @@ def download_data_for_one_day(last_number, download_date):
                         date(2020, 8, 28): 5020,
                         date(2020, 8, 31): 5026,
                         date(2020, 9, 5): 5036,
+                        date(2020, 9, 10): 5048,
+                        date(2020, 9, 12): 5052,
+                        date(2020, 9, 15): 5058,
+                        date(2020, 9, 16): 5073,
+                        date(2020, 9, 18): 5082,
+                        date(2020, 9, 20): 5087,
+                        date(2020, 9, 23): 5093,
+                        date(2020, 9, 28): 5103,
+                        date(2020, 10, 4): 5115,
+                        date(2020, 10, 6): 5120,
                         }
     start_date_differs = False
 
@@ -216,6 +221,13 @@ def download_data_for_one_day(last_number, download_date):
         call_number = call_number_dict[download_date]
 
         df = call_call_url(url_prefix, call_number)
+
+        # if no data has been added, but numbers are in dict something else is wrong, e.g. internet connection
+        if df.empty:
+            exit_string = "Something went wrong with download of data for date " + str(download_date) \
+                          + ", although it is part of the call_number_dict."
+            sys.exit(exit_string)
+
 
     else:
         # case where start_date is not 24-04-2020 and is not in dict

@@ -215,17 +215,6 @@ class TestGetDiviData(fake_filesystem_unittest.TestCase):
         # check whether the read data is as expected
         self.assertTrue((pd.read_json(self.test_string1) == df).all().all())
 
-        # check exception when OSError is returned
-
-        mock_read_csv.side_effect = OSError
-
-        gdd.call_call_url(url_prefix, call_number)
-
-        exit_string = "ERROR: URL " + call_url + " could not be opened. " \
-                      + "Hint: check your internet connection."
-
-        mock_sys_error.assert_called_with(exit_string)
-
         # check other exception different to OSError
 
         mock_read_csv.side_effect = BaseException
@@ -367,6 +356,25 @@ class TestGetDiviData(fake_filesystem_unittest.TestCase):
         mock_ccu.assert_has_calls(expected_calls)
         # check if expected calls are the last 4 calls
         self.assertTrue(mock_ccu.mock_calls[-4:] == expected_calls)
+
+    # test case where call_call_url returns an empty data frame although the given date is in the call_number_dict
+    @patch('epidemiology.epidata.getDIVIData.call_call_url')
+    def test_gdd_download_data_for_one_day_error(self, mock_ccu):
+
+        df_empty = pd.DataFrame()
+
+        mock_ccu.return_value = df_empty
+
+        download_date = date(2020, 4, 24)
+
+        with self.assertRaises(SystemExit) as cm:
+            [call_number, df, call_string] = gdd.download_data_for_one_day(0, download_date)
+
+        exit_string = "Something went wrong with download of data for date " + str(download_date) \
+                          + ", although it is part of the call_number_dict."
+
+        self.assertEqual(cm.exception.code, exit_string)
+
 
     def fake_download_data_for_one_day(self, last_number, start_date):
         data_dict = {
