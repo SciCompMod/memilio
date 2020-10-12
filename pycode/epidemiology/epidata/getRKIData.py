@@ -9,11 +9,11 @@ from epidemiology.epidata import getDataIntoPandasDataFrame as gd
 from epidemiology.epidata import defaultDict as dd
 
 
-
 def get_rki_data(read_data=dd.defaultDict['read_data'],
-                 make_plot=dd.defaultDict['make_plot'],
                  out_form=dd.defaultDict['out_form'],
-                 out_folder=dd.defaultDict['out_folder']):
+                 out_folder=dd.defaultDict['out_folder'],
+                 make_plot=dd.defaultDict['make_plot'],
+):
 
    directory = os.path.join(out_folder, 'Germany/')
    gd.check_dir(directory)
@@ -354,9 +354,9 @@ def get_rki_data(read_data=dd.defaultDict['read_data'],
 
 def main():
 
-   [read_data, make_plot, out_form, out_folder] = gd.cli('Download data from RKI')
+   [read_data, out_form, out_folder, make_plot] = gd.cli("rki")
 
-   get_rki_data(read_data, make_plot, out_form, out_folder)
+   get_rki_data(read_data, out_form, out_folder, make_plot)
 
 if __name__ == "__main__":
 
