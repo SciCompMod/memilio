@@ -29,15 +29,19 @@ struct Index<T, U, Ts...> : std::integral_constant<std::size_t, 1 + Index<T, Ts.
 template <typename T, typename... Ts>
 constexpr std::size_t Index_v = Index<T, Ts...>::value;
 
-//calculate the product of a parameter pack
-template <size_t... Ns>
-constexpr size_t product()
-{
-    size_t p = 1;
-    for (auto n : {Ns...})
-        p *= n;
-    return p;
-}
+//calculate the product of a size_t parameter pack
+template <size_t...>
+struct product;
+
+template <>
+struct product<> {
+    static constexpr size_t value = 1;
+};
+
+template <size_t i, size_t... tail>
+struct product<i, tail...> {
+    static constexpr size_t value = i * product<tail...>::value;
+};
 
 } // namespace
 
@@ -85,7 +89,7 @@ public:
      */
     static size_t constexpr get_num_compartments()
     {
-        return product<static_cast<size_t>(CATEGORIES::Count)...>();
+        return size;
     }
 
     /**
@@ -353,10 +357,11 @@ public:
 
     // An array storying the size of each category
     static std::array<size_t, sizeof...(CATEGORIES)> dimensions;
+    static size_t constexpr size{product<static_cast<size_t>(CATEGORIES::Count)...>().value};
 
 private:
     // A vector containing the population of all compartments
-    std::array<UncertainValue, product<static_cast<size_t>(CATEGORIES::Count)...>()> m_y{};
+    std::array<UncertainValue, size> m_y{};
 };
 
 // initialize array storying the size of each category
