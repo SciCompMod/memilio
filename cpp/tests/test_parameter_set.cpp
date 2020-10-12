@@ -98,7 +98,7 @@ TEST(TestParameterSet, defaultConstructor)
                   "default constructor missing");
     static_assert(std::is_default_constructible<epi::ParameterSet<DefaultConstructibleParam>>::value,
                   "default constructor missing");
-    ASSERT_NO_THROW(epi::ParameterSet<NotDefaultConstructibleParam>(epi::DefaultInit()));
+    ASSERT_NO_THROW(epi::ParameterSet<NotDefaultConstructibleParam>(epi::DefaultInit{}));
     ASSERT_NO_THROW(epi::ParameterSet<DefaultConstructibleParam>());
 }
 
@@ -107,16 +107,16 @@ TEST(TestParameterSet, defaultInitConstructor)
     auto params1 = epi::ParameterSet<IntParam1>(epi::DefaultInit());
     ASSERT_EQ(params1.get<IntParam1>(), 1);
 
-    auto params2 = epi::ParameterSet<IntParam1, DoubleParam>(epi::DefaultInit());
+    auto params2 = epi::ParameterSet<IntParam1, DoubleParam>(epi::DefaultInit{});
     ASSERT_EQ(params2.get<IntParam1>(), 1);
     ASSERT_EQ(params2.get<DoubleParam>(), 1.0);
 
-    auto params3 = epi::ParameterSet<IntParam1, DoubleParam, IntParam2>(epi::DefaultInit());
+    auto params3 = epi::ParameterSet<IntParam1, DoubleParam, IntParam2>(epi::DefaultInit{});
     ASSERT_EQ(params3.get<IntParam1>(), 1);
     ASSERT_EQ(params3.get<DoubleParam>(), 1.0);
     ASSERT_EQ(params3.get<IntParam2>(), 2);
 
-    auto params4 = epi::ParameterSet<NoDefaultMemberFunctionParam>(epi::DefaultInit());
+    auto params4 = epi::ParameterSet<NoDefaultMemberFunctionParam>(epi::DefaultInit{});
     ASSERT_EQ(params4.get<NoDefaultMemberFunctionParam>(), DefaultConstructible());
 }
 
