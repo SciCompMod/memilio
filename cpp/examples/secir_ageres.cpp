@@ -8,6 +8,7 @@
 
 int main()
 {
+
     epi::set_log_level(epi::LogLevel::debug);
 
     double t0   = 0;
@@ -85,6 +86,8 @@ int main()
     }
 
     params.apply_constraints();
+
+    epi::read_population_data(params, {25., 50., 25.}, "04", "04", 1);
 
     std::vector<Eigen::VectorXd> secir(0);
 

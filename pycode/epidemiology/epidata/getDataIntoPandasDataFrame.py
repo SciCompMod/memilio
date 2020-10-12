@@ -5,7 +5,7 @@ import json
 import pandas
 import argparse
 
-from epidemiology.epidata import defaultDict as dd
+import defaultDict as dd
 
 def loadGeojson( targetFileName, apiUrl = 'https://opendata.arcgis.com/datasets/', 
                  extension = 'geojson' ):
@@ -113,6 +113,8 @@ def write_dataframe(df, directory, file_prefix, file_type):
        sys.exit(exit_string)
 
    if file_type == "json":
+       if 'Date' in df.columns:
+            df.Date = df.Date.dt.strftime('%Y-%m-%d')
        df.to_json(os.path.join(directory, file_prefix + outFormEnd), **outFormSpec)
    elif file_type == "hdf5":
        df.to_hdf(os.path.join(directory, file_prefix + outFormEnd), **outFormSpec)

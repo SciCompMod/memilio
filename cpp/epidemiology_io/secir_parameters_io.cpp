@@ -15,6 +15,9 @@
 #include <iostream>
 #include <string>
 #include <random>
+#include <fstream>
+#include <jsoncpp/json/json.h>
+#include <jsoncpp/json/value.h>
 
 namespace epi
 {
@@ -572,6 +575,131 @@ Graph<ModelNode<SecirParams>, MigrationEdge> read_graph()
     }
     tixiCloseDocument(handle);
     return graph;
+}
+
+void read_population_data(epi::SecirParams& params, std::vector<double> param_ranges, std::string month,
+                          std::string day, int region)
+{
+    if (param_ranges.size() != params.get_num_groups()) {
+        assert("size of param_ranges needs to be the same size as the number of groups in params");
+    }
+    if (std::accumulate(param_ranges.begin(), param_ranges.end(), 0.0) != 100.) {
+        assert("param_ranges must add up to 100");
+    }
+    Json::Reader reader;
+    Json::Value root;
+    std::string id_name;
+    if (region == 0) {
+        std::ifstream json_file("../../data/pydata/Germany/all_age_rki.json");
+        reader.parse(json_file, root);
+    }
+    else if (region < 1000) {
+        std::ifstream json_file("../../data/pydata/Germany/all_state_age_rki.json");
+        reader.parse(json_file, root);
+        id_name = "ID_State";
+    }
+    else {
+        std::ifstream json_file("../../data/pydata/Germany/all_county_age_rki.json");
+        reader.parse(json_file, root);
+        id_name = "ID_County";
+    }
+
+    std::vector<std::string> age_names = {"A00-A04", "A05-A14", "A15-A34", "A35-A59", "A60-A79", "A80+", "unknown"};
+    std::vector<double> age_ranges     = {5., 10., 20., 25., 20., 20.};
+
+    std::vector<std::vector<double>> interpol;
+
+    int counter = 0;
+    double rest = 0.0;
+    for (int i = 0; i < age_ranges.size(); i++) {
+        interpol.push_back({});
+        if (rest < 0) {
+            interpol[i].push_back(-rest / age_ranges[i]);
+        }
+        if (counter < param_ranges.size() - 1) {
+            rest += age_ranges[i];
+            while (rest > 0) {
+                rest -= param_ranges[counter];
+                interpol[i].push_back((param_ranges[counter] + std::min(rest, 0.0)) / age_ranges[i]);
+                counter++;
+            }
+            if (rest < 0) {
+                interpol[i].push_back(1.0);
+            }
+            else if (rest == 0) {
+                interpol[i].push_back(0.0);
+            }
+        }
+        else {
+            interpol[i].push_back((age_ranges[i] + rest) / age_ranges[i]);
+            if (rest < 0 || counter == 0) {
+                interpol[i].push_back(1.0);
+            }
+            else if (rest == 0) {
+                interpol[i].push_back(0.0);
+            }
+            rest = 0;
+        }
+    }
+    interpol.push_back({1.0, 1.0});
+
+    std::vector<double> num_inf(age_names.size(), 0.0);
+    std::vector<double> num_death(age_names.size(), 0.0);
+    std::vector<double> num_rec(age_names.size(), 0.0);
+    for (int i = 0; i < root.size(); i++) {
+        bool id = true;
+        if (region > 0) {
+            id = root[i][id_name] == region;
+        }
+        std::string date = root[i]["Date"].asString();
+        if (std::strcmp(month.c_str(), date.substr(5, 2).c_str()) == 0 &&
+            std::strcmp(day.c_str(), date.substr(8, 2).c_str()) == 0 && id) {
+
+            for (int age = 0; age < age_names.size(); age++) {
+                if (std::strcmp(root[i]["Age_RKI"].asString().c_str(), age_names[age].c_str()) == 0) {
+                    num_inf[age] += root[i]["Confirmed"].asDouble();
+                    num_death[age] += root[i]["Deaths"].asDouble();
+                    num_rec[age] += root[i]["Recovered"].asDouble();
+                }
+            }
+        }
+    }
+
+    std::vector<double> interpol_inf(params.get_num_groups() + 1, 0.0);
+    std::vector<double> interpol_death(params.get_num_groups() + 1, 0.0);
+    std::vector<double> interpol_rec(params.get_num_groups() + 1, 0.0);
+
+    counter = 0;
+    for (int i = 0; i < interpol.size() - 1; i++) {
+        for (int j = 0; j < interpol[i].size() - 1; j++) {
+            interpol_inf[counter] += interpol[i][j] * num_inf[i];
+            interpol_death[counter] += interpol[i][j] * num_death[i];
+            interpol_rec[counter] += interpol[i][j] * num_rec[i];
+            if (j < interpol[i].size() - 2 || interpol[i][interpol[i].size() - 1] == 0.0) {
+                counter++;
+            }
+        }
+    }
+
+    for (int i = 0; i < params.get_num_groups(); i++) {
+        interpol_inf[i] += (double)num_inf[num_inf.size() - 1] / (double)params.get_num_groups();
+        interpol_death[i] += (double)num_death[num_death.size() - 1] / (double)params.get_num_groups();
+        interpol_rec[i] += (double)num_rec[num_rec.size() - 1] / (double)params.get_num_groups();
+    }
+
+    if (std::accumulate(num_inf.begin(), num_inf.end(), 0.0) > 0) {
+        int num_groups = params.get_num_groups();
+        for (size_t i = 0; i < num_groups; i++) {
+            params.populations.set({i, epi::SecirCompartments::I},
+                                   interpol_inf[i] - interpol_death[i] - interpol_rec[i]);
+            params.populations.set({i, epi::SecirCompartments::D}, interpol_death[i]);
+            params.populations.set({i, epi::SecirCompartments::R}, interpol_rec[i]);
+        }
+    }
+    else {
+        log_warning("No infections reported on date " + day + "-" + month + " for region " + std::to_string(region) +
+                    ". Population data has not been set.");
+    }
 }
 
 } // namespace epi

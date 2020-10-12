@@ -178,6 +178,17 @@ void write_graph(const Graph<ModelNode<SecirParams>, MigrationEdge>& graph, doub
  */
 Graph<ModelNode<SecirParams>, MigrationEdge> read_graph();
 
+/**
+ * @brief reads population data from RKI files
+ * @param params Parameters in which the data is set
+ * @param param_ranges Vector which specifies the age ranges of params. Needs to add up to 100
+ * @param month specifies month at which the data is read (2-digit string)
+ * @param day specifies day at which the data is read (2-digit string)
+ * @param region region id of county of interest
+ */
+void read_population_data(epi::SecirParams& params, std::vector<double> param_ranges, std::string month = "03",
+                          std::string day = "09", int region = 0);
+
 } // namespace epi
 
 #endif

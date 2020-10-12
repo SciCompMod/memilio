@@ -583,3 +583,57 @@ TEST(TestSaveParameters, compareGraphs)
         }
     }
 }
+
+TEST(TestSaveParameters, ReadPopulationDataAllAges)
+{
+    epi::SecirParams params(1);
+    std::vector<double> ranges = {100};
+
+    epi::read_population_data(params, ranges, "03", "03", 0);
+
+    ASSERT_EQ(params.populations.get({0, epi::SecirCompartments::I}), 0);
+    ASSERT_EQ(params.populations.get({0, epi::SecirCompartments::D}), 51);
+    ASSERT_EQ(params.populations.get({0, epi::SecirCompartments::R}), 1884);
+}
+
+TEST(TestSaveParameters, ReadPopulationDataRKIAges)
+{
+    epi::SecirParams params(6);
+    std::vector<double> ranges = {5., 10., 20., 25., 20., 30.};
+
+    epi::read_population_data(params, ranges, "03", "03", 0);
+
+    std::vector<double> infected  = {0, 0, 0, 0, 0, 0};
+    std::vector<double> deaths    = {0, 0, 1, 3, 24, 23};
+    std::vector<double> recovered = {17, 37, 517, 933, 337, 43};
+
+    for (size_t i = 0; i < ranges.size(); i++) {
+        ASSERT_EQ(params.populations.get({i, epi::SecirCompartments::I}), infected[i]);
+        ASSERT_EQ(params.populations.get({i, epi::SecirCompartments::D}), deaths[i]);
+        ASSERT_EQ(params.populations.get({i, epi::SecirCompartments::R}), recovered[i]);
+    }
+}
+
+TEST(TestSaveParameters, ReadPopulationDataMultipleAges)
+{
+    epi::SecirParams params(8);
+    std::vector<double> ranges = {5., 15., 15., 10., 10., 10., 10., 25.};
+
+    epi::read_population_data(params, ranges, "03", "03", 0);
+
+    double infected  = 0.;
+    double deaths    = 0.;
+    double recovered = 0.;
+
+    for (size_t i = 0; i < ranges.size(); i++) {
+        infected += params.populations.get({i, epi::SecirCompartments::I});
+        deaths += params.populations.get({i, epi::SecirCompartments::D});
+        recovered += params.populations.get({i, epi::SecirCompartments::R});
+    }
+
+    std::cout << params.populations.get({7, epi::SecirCompartments::I}) << std::endl;
+
+    EXPECT_NEAR(infected, 0, 1e-6);
+    EXPECT_NEAR(deaths, 51, 1e-6);
+    EXPECT_NEAR(recovered, 1884, 1e-6);
+}
