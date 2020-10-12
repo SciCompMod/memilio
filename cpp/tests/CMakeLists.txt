@@ -29,6 +29,7 @@ set(TESTSOURCES
   test_uncertain.cpp
   test_time_series.cpp
   test_abm.cpp
+  test_parameter_set.cpp
   distributions_helpers.h
   distributions_helpers.cpp
   gtest_helpers.h
