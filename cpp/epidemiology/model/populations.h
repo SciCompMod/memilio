@@ -3,6 +3,7 @@
 
 #include <epidemiology/utils/uncertain_value.h>
 #include "epidemiology/utils/tensor_helpers.h"
+#include "epidemiology/model/ScalarType.h"
 
 #include <Eigen/Core>
 #include <vector>
@@ -44,18 +45,20 @@ namespace epi
 {
 
 /**
- * @brief A class for compartment populations
+ * @brief A class template for compartment populations
  *
  * Populations can be split up into different categories, e.g. by
  * age group, yearly income group, gender etc. Compartmental models
  * introduce the additional category of infection type. For the SEIR
- * model these are Susceptible, Exposed, Infected and Removed.
+ * model these are Susceptible, Exposed, Infected and Removed. Every category
+ * is assumed to contain a finite number of groups.
  *
- * This class is a wrapper around a tensor that stores the individual populations
- * in each category and it provides some helper functions to get and set
- * the population of subgroups.
+ * This template can be instantiated given an arbitrary set of categories.
+ * The categories are assumed to be an enum class with a member Count refering to
+ * the number of elements in the enum.
  *
- * It is implemented as a "flat tensor" of compartment populations
+ * The class created from this template contains a "flat array" of compartment
+ * populations and some functions for retrieving or setting the populations.
  *
  */
 
@@ -63,8 +66,12 @@ template <class... CATEGORIES>
 class Populations
 {
 public:
+    // This type can be used by other classes to refer to a concrete compartment
     using Index = std::tuple<CATEGORIES...>;
 
+    /**
+     * @brief Populations default constructor
+     */
     Populations()
     {
     }
@@ -76,13 +83,13 @@ public:
      *
      * @return number of compartments
      */
-    size_t get_num_compartments() const
+    static size_t constexpr get_num_compartments()
     {
         return product<static_cast<size_t>(CATEGORIES::Count)...>();
     }
 
     /**
-     * @brief get_compartments returns a copy of the vector of populations. This can be used
+     * @brief get_compartments returns an Eigen copy of the vector of populations. This can be used
      * as initial conditions for the ODE solver
      * @return Eigen::VectorXd  of populations
      */
@@ -98,7 +105,7 @@ public:
 
     /**
      * @brief get returns the population of one compartment
-     * @param indices a vector containing the indices for each category
+     * @param Cats enum values for each category
      * @return the population of compartment
      */
     UncertainValue& get(CATEGORIES... Cats)
@@ -108,7 +115,7 @@ public:
 
     /**
      * @brief get returns the population of one compartment
-     * @param indices a vector containing the indices for each category
+     * @param Cats enum values for each category
      * @return the population of compartment
      */
     UncertainValue const& get(CATEGORIES... Cats) const
@@ -116,12 +123,32 @@ public:
         return m_y[get_flat_index(Cats...)];
     }
 
+    /**
+     * @brief get_grom returns the value of a flat container
+     * at the flat index corresponding to set of enum values.
+     * It is the same as get, except that it takes the values
+     * from an outside reference flat container, rather than the
+     * initial values stored within this class
+     * @param y a reference to a flat container
+     * @param Cats emi, va;ies fpr eacj category
+     * @return the population of compartment
+     */
     template <typename Arr>
     static auto get_from(Arr& y, CATEGORIES... Cats)
     {
         return y[get_flat_index(Cats...)];
     }
 
+    /**
+     * @brief get_grom returns the value of a flat container
+     * at the flat index corresponding to set of enum values.
+     * It is the same as get, except that it takes the values
+     * from an outside reference flat container, rather than the
+     * initial values stored within this class
+     * @param y a reference to a flat container
+     * @param Cats emi, va;ies fpr eacj category
+     * @return the population of compartment
+     */
     template <typename Arr>
     static auto const get_from(Arr const& y, CATEGORIES... Cats)
     {
@@ -155,11 +182,7 @@ public:
      */
     double get_total() const
     {
-        double sum = 0;
-        for (auto i = 0; i < m_y.size(); i++) {
-            sum += m_y[i];
-        }
-        return sum;
+        return std::accumulate(m_y.begin(), m_y.end(), ScalarType(0.));
     }
 
     /**
@@ -206,7 +229,7 @@ public:
     template <class T>
     void set_group_total(double value, T group_idx)
     {
-        double current_population = get_group_total<T>(group_idx);
+        double current_population = get_group_total(group_idx);
 
         size_t idx          = static_cast<size_t>(group_idx);
         size_t category_idx = Index_v<T, CATEGORIES...>;
@@ -240,11 +263,7 @@ public:
     void set_difference_from_group_total(double total_group_population, T group_idx, CATEGORIES... Cats)
 
     {
-        // TODO: https://stackoverflow.com/questions/20162903/template-parameter-packs-access-nth-type-and-nth-element
-        // // is the given index part of the group?
-        // assert(indices[category_idx] == group_idx);
-
-        double current_population = get_group_total<T>(group_idx);
+        double current_population = get_group_total(group_idx);
         size_t idx                = get_flat_index(Cats...);
         current_population -= m_y[idx];
 

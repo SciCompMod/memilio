@@ -31,29 +31,68 @@ auto call(Function f, Tuple t)
 namespace epi
 {
 
+/**
+ * @brief ComppartmentalModel is a template for a compartmental model for an
+ * array of initial populations and a parameter set
+ *
+ * The Populations must be a concrete class derived from the Populations template,
+ * i.e. a multi-dimensional array of compartment populations where each dimension
+ * corresponds to a category
+ *
+ * The ParameterSet must be a concrete class derived form the ParameterSet template,
+ * i.e. a compile-time map of parameters used by the model. These can be referenced
+ * when defining the flows between compartments and they can be used for parameter
+ * studies
+ *
+ */
 template <class Populations, class ParameterSet>
 struct CompartmentalModel {
 public:
+    // The flow function takes a set of parameters, the current time t and the
+    // snapshot y of all population sizes at time t, represented as a flat array and returns a scalar value
+    // that represents a flow going from one compartment to another.
     using FlowFunction =
         std::function<ScalarType(ParameterSet const& p, Eigen::Ref<const Eigen::VectorXd> y, double t)>;
+
+    // A flow is a tuple of a from-index corresponding to the departing compartment, a to-index
+    // corresponding to the receiving compartment and a FlowFunction. The value returned by the flow
+    // function will be subtracted from the time derivative of the populations at the flat index corresponding
+    // to the from-compartment, and added to the time derivative of the populations at the flat index
+    // corresponding to the to-compartment.
     using Flow = std::tuple<typename Populations::Index, typename Populations::Index, FlowFunction>;
 
+    /**
+     * @brief CompartmentalModel default constructor
+     */
     CompartmentalModel()
     {
     }
 
+    /**
+     * @brief add_flow defines a flow from compartment A to another compartment B
+     * @param from is the index of the departure compartment A
+     * @param to is the index of the receiving compartment B
+     * @param f is a function defining the flow given a set of parameters, the current time t and the
+     * snapshot y of all population sizes at time t, represented as a flat array
+     */
     void add_flow(typename Populations::Index from, typename Populations::Index to, FlowFunction f)
     {
         flows.push_back(Flow(from, to, f));
     }
 
     /**
-     * @brief get_right_hand_side returns the right-hand-side f of the ODE dydt = f(y, t)
+     * @brief eval_right_hand_side evaulates the right-hand-side f of the ODE dydt = f(y, t)
+     *
+     * The heart of the compartmental model is a first order ODE dydt = f(y,t), where y is a flat
+     * representation of all the compartmental populations at time t. This function evaluates the
+     * right-hand-side f of the ODE from the intercompartmental flows. It can be used in an ODE
+     * solver
+     *
      * @param y the current state of the model as a flat array
      * @param t the current time
      * @param dydt a reference to the calculated output
      */
-    void get_right_hand_side(Eigen::Ref<const Eigen::VectorXd> y, double t, Eigen::Ref<Eigen::VectorXd> dydt) const
+    void eval_right_hand_side(Eigen::Ref<const Eigen::VectorXd> y, double t, Eigen::Ref<Eigen::VectorXd> dydt) const
     {
         for (size_t i = 0; i < y.size(); ++i) {
             dydt[i] = 0;
@@ -65,6 +104,11 @@ public:
         }
     }
 
+    /**
+     * @brief get_initial_values returns the initial values for the compartmental populations.
+     * This can be used as initial conditions in an ODE solver
+     * @return the initial populatoins
+     */
     Eigen::VectorXd get_initial_values() const
     {
         return populations.get_compartments();
