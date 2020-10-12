@@ -6,6 +6,8 @@
 #include <epidemiology_io/secir_parameters_io.h>
 #include <epidemiology/migration/migration.h>
 #include <distributions_helpers.h>
+#include <jsoncpp/json/json.h>
+#include <jsoncpp/json/value.h>
 #include <gtest/gtest.h>
 
 TEST(TestSaveParameters, compareParameterStudy)
@@ -591,9 +593,36 @@ TEST(TestSaveParameters, ReadPopulationDataAllAges)
 
     epi::read_population_data(params, ranges, "03", "03", 0);
 
-    ASSERT_EQ(params.populations.get({0, epi::SecirCompartments::I}), 0);
-    ASSERT_EQ(params.populations.get({0, epi::SecirCompartments::D}), 51);
-    ASSERT_EQ(params.populations.get({0, epi::SecirCompartments::R}), 1884);
+    Json::Reader reader;
+    Json::Value root;
+    std::string id_name;
+    std::ifstream json_file("../../data/pydata/Germany/all_age_rki.json");
+    reader.parse(json_file, root);
+
+    std::vector<std::string> age_names = {"A00-A04", "A05-A14", "A15-A34", "A35-A59", "A60-A79", "A80+", "unknown"};
+
+    double infected  = 0;
+    double deaths    = 0;
+    double recovered = 0;
+
+    for (int i = 0; i < root.size(); i++) {
+        std::string date = root[i]["Date"].asString();
+        if (std::strcmp("03", date.substr(5, 2).c_str()) == 0 && std::strcmp("03", date.substr(8, 2).c_str()) == 0) {
+
+            for (int age = 0; age < age_names.size(); age++) {
+                if (std::strcmp(root[i]["Age_RKI"].asString().c_str(), age_names[age].c_str()) == 0) {
+                    infected += root[i]["Confirmed"].asDouble() - root[i]["Deaths"].asDouble() -
+                                root[i]["Recovered"].asDouble();
+                    deaths += root[i]["Deaths"].asDouble();
+                    recovered += root[i]["Recovered"].asDouble();
+                }
+            }
+        }
+    }
+
+    ASSERT_EQ(params.populations.get({0, epi::SecirCompartments::I}), infected);
+    ASSERT_EQ(params.populations.get({0, epi::SecirCompartments::D}), deaths);
+    ASSERT_EQ(params.populations.get({0, epi::SecirCompartments::R}), recovered);
 }
 
 TEST(TestSaveParameters, ReadPopulationDataRKIAges)
@@ -603,9 +632,32 @@ TEST(TestSaveParameters, ReadPopulationDataRKIAges)
 
     epi::read_population_data(params, ranges, "03", "03", 0);
 
-    std::vector<double> infected  = {0, 0, 0, 0, 0, 0};
-    std::vector<double> deaths    = {0, 0, 1, 3, 24, 23};
-    std::vector<double> recovered = {17, 37, 517, 933, 337, 43};
+    std::vector<double> infected;
+    std::vector<double> deaths;
+    std::vector<double> recovered;
+
+    Json::Reader reader;
+    Json::Value root;
+    std::string id_name;
+    std::ifstream json_file("../../data/pydata/Germany/all_age_rki.json");
+    reader.parse(json_file, root);
+
+    std::vector<std::string> age_names = {"A00-A04", "A05-A14", "A15-A34", "A35-A59", "A60-A79", "A80+", "unknown"};
+
+    for (int i = 0; i < root.size(); i++) {
+        std::string date = root[i]["Date"].asString();
+        if (std::strcmp("03", date.substr(5, 2).c_str()) == 0 && std::strcmp("03", date.substr(8, 2).c_str()) == 0) {
+
+            for (int age = 0; age < age_names.size(); age++) {
+                if (std::strcmp(root[i]["Age_RKI"].asString().c_str(), age_names[age].c_str()) == 0) {
+                    infected.push_back(root[i]["Confirmed"].asDouble() - root[i]["Deaths"].asDouble() -
+                                       root[i]["Recovered"].asDouble());
+                    deaths.push_back(root[i]["Deaths"].asDouble());
+                    recovered.push_back(root[i]["Recovered"].asDouble());
+                }
+            }
+        }
+    }
 
     for (size_t i = 0; i < ranges.size(); i++) {
         ASSERT_EQ(params.populations.get({i, epi::SecirCompartments::I}), infected[i]);
@@ -621,19 +673,46 @@ TEST(TestSaveParameters, ReadPopulationDataMultipleAges)
 
     epi::read_population_data(params, ranges, "03", "03", 0);
 
+    double infected_param  = 0.;
+    double deaths_param    = 0.;
+    double recovered_param = 0.;
+
     double infected  = 0.;
     double deaths    = 0.;
     double recovered = 0.;
 
     for (size_t i = 0; i < ranges.size(); i++) {
-        infected += params.populations.get({i, epi::SecirCompartments::I});
-        deaths += params.populations.get({i, epi::SecirCompartments::D});
-        recovered += params.populations.get({i, epi::SecirCompartments::R});
+        infected_param += params.populations.get({i, epi::SecirCompartments::I});
+        deaths_param += params.populations.get({i, epi::SecirCompartments::D});
+        recovered_param += params.populations.get({i, epi::SecirCompartments::R});
+    }
+
+    Json::Reader reader;
+    Json::Value root;
+    std::string id_name;
+    std::ifstream json_file("../../data/pydata/Germany/all_age_rki.json");
+    reader.parse(json_file, root);
+
+    std::vector<std::string> age_names = {"A00-A04", "A05-A14", "A15-A34", "A35-A59", "A60-A79", "A80+", "unknown"};
+
+    for (int i = 0; i < root.size(); i++) {
+        std::string date = root[i]["Date"].asString();
+        if (std::strcmp("03", date.substr(5, 2).c_str()) == 0 && std::strcmp("03", date.substr(8, 2).c_str()) == 0) {
+
+            for (int age = 0; age < age_names.size(); age++) {
+                if (std::strcmp(root[i]["Age_RKI"].asString().c_str(), age_names[age].c_str()) == 0) {
+                    infected += root[i]["Confirmed"].asDouble() - root[i]["Deaths"].asDouble() -
+                                root[i]["Recovered"].asDouble();
+                    deaths += root[i]["Deaths"].asDouble();
+                    recovered += root[i]["Recovered"].asDouble();
+                }
+            }
+        }
     }
 
     std::cout << params.populations.get({7, epi::SecirCompartments::I}) << std::endl;
 
-    EXPECT_NEAR(infected, 0, 1e-6);
-    EXPECT_NEAR(deaths, 51, 1e-6);
-    EXPECT_NEAR(recovered, 1884, 1e-6);
+    EXPECT_NEAR(infected, infected_param, 1e-6);
+    EXPECT_NEAR(deaths, deaths_param, 1e-6);
+    EXPECT_NEAR(recovered, recovered_param, 1e-6);
 }
