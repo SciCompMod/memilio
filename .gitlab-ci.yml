@@ -47,7 +47,7 @@ test-cpp:
     - echo 'deb http://download.opensuse.org/repositories/science:/dlr/xUbuntu_18.04/ /' | tee /etc/apt/sources.list.d/science:dlr.list
     - wget -O - https://download.opensuse.org/repositories/science:dlr/xUbuntu_18.04/Release.key  | apt-key add -
     - apt -qq update
-    - apt -qq -y install libtixi3
+    - apt -qq -y install libtixi3 libjsoncpp1
   dependencies:
     - build-cpp
   script:
