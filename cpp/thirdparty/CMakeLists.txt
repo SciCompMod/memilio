@@ -67,4 +67,6 @@ if (EPI_BUILD_EPI_IO)
   find_package(HDF5 REQUIRED COMPONENTS CXX)
 
   find_package(tixi3 REQUIRED CONFIG)
+
+  find_package(jsoncpp REQUIRED CONFIG)
 endif(EPI_BUILD_EPI_IO)

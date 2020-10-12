@@ -91,8 +91,8 @@ if (EPI_BUILD_EPI_IO)
         $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
     )
 
-    target_link_libraries(epidemiology_io PUBLIC epidemiology tixi3
-                          PRIVATE ${HDF5_CXX_LIBRARIES} )
+    target_link_libraries(epidemiology_io PUBLIC epidemiology tixi3 jsoncpp
+                          PRIVATE ${HDF5_CXX_LIBRARIES})
     target_include_directories(epidemiology_io PRIVATE ${HDF5_INCLUDE_DIRS})
 
     target_compile_definitions(epidemiology_io PUBLIC "-DHAVE_EPI_IO")
