@@ -3,7 +3,7 @@
 
 #include <epidemiology/utils/uncertain_value.h>
 #include "epidemiology/utils/tensor_helpers.h"
-#include "epidemiology/model/ScalarType.h"
+#include "epidemiology/utils/ScalarType.h"
 
 #include <Eigen/Core>
 #include <vector>
@@ -70,6 +70,8 @@ template <class... CATEGORIES>
 class Populations
 {
 public:
+    using Type = UncertainValue;
+
     // This type can be used by other classes to refer to a concrete compartment
     using Index = std::tuple<CATEGORIES...>;
 
@@ -112,7 +114,7 @@ public:
      * @param Cats enum values for each category
      * @return the population of compartment
      */
-    UncertainValue& get(CATEGORIES... Cats)
+    Type& get(CATEGORIES... Cats)
     {
         return m_y[get_flat_index(Cats...)];
     }
@@ -122,7 +124,7 @@ public:
      * @param Cats enum values for each category
      * @return the population of compartment
      */
-    UncertainValue const& get(CATEGORIES... Cats) const
+    Type const& get(CATEGORIES... Cats) const
     {
         return m_y[get_flat_index(Cats...)];
     }
@@ -166,7 +168,7 @@ public:
      * @return total population of the group
      */
     template <class T>
-    double get_group_total(T group_idx) const
+    ScalarType get_group_total(T group_idx) const
     {
         //TODO maybe implement an iterator/visitor pattern rather than calculating indices?
         size_t idx          = static_cast<size_t>(group_idx);
@@ -184,7 +186,7 @@ public:
      * @brief get_total returns the total population of all compartments
      * @return total population
      */
-    double get_total() const
+    ScalarType get_total() const
     {
         return std::accumulate(m_y.begin(), m_y.end(), ScalarType(0.));
     }
@@ -194,7 +196,7 @@ public:
      * @param indices a vector containing the indices for each category
      * @param value the new value for the compartment's population
      */
-    void set(UncertainValue const& value, CATEGORIES... Cats)
+    void set(Type const& value, CATEGORIES... Cats)
     {
         m_y[get_flat_index(Cats...)] = value;
     }
@@ -204,19 +206,9 @@ public:
      * @param indices a vector containing the indices for each category
      * @param value the new value for the compartment's population
      */
-    void set(double value, CATEGORIES... Cats)
+    void set(ScalarType value, CATEGORIES... Cats)
     {
         m_y[get_flat_index(Cats...)] = value;
-    }
-
-    /**
-     * @brief set sets the random distribution of the population of one compartment
-     * @param indices a vector containing the indices for each category
-     * @param value the new random distribution for the compartment's population
-     */
-    void set(ParameterDistribution const& dist, CATEGORIES... Cats)
-    {
-        m_y[get_flat_index(Cats...)].set_distribution(dist);
     }
 
     /**
@@ -231,9 +223,9 @@ public:
      * @param value the new value for the total population
      */
     template <class T>
-    void set_group_total(double value, T group_idx)
+    void set_group_total(ScalarType value, T group_idx)
     {
-        double current_population = get_group_total(group_idx);
+        ScalarType current_population = get_group_total(group_idx);
 
         size_t idx          = static_cast<size_t>(group_idx);
         size_t category_idx = Index_v<T, CATEGORIES...>;
@@ -264,11 +256,11 @@ public:
      * @param group_idx The enum of the group within the category
      */
     template <class T>
-    void set_difference_from_group_total(double total_group_population, T group_idx, CATEGORIES... Cats)
+    void set_difference_from_group_total(ScalarType total_group_population, T group_idx, CATEGORIES... Cats)
 
     {
-        double current_population = get_group_total(group_idx);
-        size_t idx                = get_flat_index(Cats...);
+        ScalarType current_population = get_group_total(group_idx);
+        size_t idx                    = get_flat_index(Cats...);
         current_population -= m_y[idx];
 
         assert(current_population <= total_group_population);
@@ -285,7 +277,7 @@ public:
      *
      * @param value the new value for the total population
      */
-    void set_total(double value)
+    void set_total(ScalarType value)
     {
         double current_population = get_total();
         if (fabs(current_population) < 1e-12) {
@@ -361,7 +353,7 @@ public:
 
 private:
     // A vector containing the population of all compartments
-    std::array<UncertainValue, size> m_y{};
+    std::array<Type, size> m_y{};
 };
 
 // initialize array storying the size of each category

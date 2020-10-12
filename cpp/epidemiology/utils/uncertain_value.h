@@ -3,6 +3,7 @@
 
 #include "epidemiology/utils/memory.h"
 #include "epidemiology/utils/parameter_distributions.h"
+#include "epidemiology/utils/ScalarType.h"
 
 #include <memory>
 #include <ostream>
@@ -12,7 +13,7 @@ namespace epi
 
 /**
  * @brief The UncertainValue class consists of a 
- *        scalar double value and a Distribution object
+ *        scalar value and a Distribution object
  * 
  * The UncertainValue class represents a model parameter that
  * can take a scalar value but that is subjected to a uncertainty.
@@ -23,7 +24,7 @@ namespace epi
 class UncertainValue
 {
 public:
-    UncertainValue(double v = 0.)
+    UncertainValue(ScalarType v = 0.)
         : m_value(v)
     {
     }
@@ -44,7 +45,7 @@ public:
 
     /**
     * @brief Set an UncertainValue from another UncertainValue
-    *        containing a double and a distribution
+    *        containing a scalar and a distribution
     */
     UncertainValue& operator=(const UncertainValue& other)
     {
@@ -55,29 +56,30 @@ public:
     }
 
     /**
-     * @brief Conversion to double by returning the double contained in UncertainValue
+     * @brief Conversion to scalar by returning the scalar contained in UncertainValue
      */
-    operator double() const
+    operator ScalarType() const
     {
         return m_value;
     }
 
-    double value() const {
-      return m_value;
-    }
-
-    /**
-     * @brief Conversion to double reference by returning the double contained in UncertainValue
-     */
-    operator double&()
+    ScalarType value() const
     {
         return m_value;
     }
 
     /**
-     * @brief Set an UncertainValue from a double, distribution remains unchanged.
+     * @brief Conversion to scalar reference by returning the scalar contained in UncertainValue
      */
-    UncertainValue& operator=(double v)
+    operator ScalarType&()
+    {
+        return m_value;
+    }
+
+    /**
+     * @brief Set an UncertainValue from a scalar, distribution remains unchanged.
+     */
+    UncertainValue& operator=(ScalarType v)
     {
         m_value = v;
         return *this;
@@ -111,10 +113,10 @@ public:
      *
      * If no distribution is set, the value is not changed.
      */
-    double draw_sample();
+    ScalarType draw_sample();
 
 private:
-    double m_value;
+    ScalarType m_value;
     std::unique_ptr<ParameterDistribution> m_dist;
 };
 

@@ -1,7 +1,7 @@
 #ifndef COMPARTMENTALMODEL_H
 #define COMPARTMENTALMODEL_H
 
-#include "epidemiology/model/ScalarType.h"
+#include "epidemiology/utils/ScalarType.h"
 #include <vector>
 #include <functional>
 #include <Eigen/Core>

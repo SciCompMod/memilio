@@ -1,7 +1,7 @@
 #ifndef SIMULATION_H
 #define SIMULATION_H
 
-#include "epidemiology/model/ScalarType.h"
+#include "epidemiology/utils/ScalarType.h"
 #include "epidemiology/utils/time_series.h"
 #include "epidemiology/math/adapt_rk.h"
 
