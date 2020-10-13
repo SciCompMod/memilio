@@ -26,7 +26,7 @@ TEST(TestSaveParameters, compareParameterStudy)
            num_rec_t0 = 10, num_dead_t0 = 0;
 
     auto num_groups = size_t(2);
-    double fact    = 1.0 / (double)num_groups;
+    double fact     = 1.0 / (double)num_groups;
 
     epi::SecirParams params(num_groups);
 
@@ -98,7 +98,7 @@ TEST(TestSaveParameters, compareParameterStudy)
     const epi::UncertainContactMatrix& contact      = study.get_secir_params().get_contact_patterns();
     const epi::UncertainContactMatrix& read_contact = read_params.get_contact_patterns();
 
-    num_groups          = study.get_secir_params().get_num_groups();
+    num_groups             = study.get_secir_params().get_num_groups();
     size_t num_groups_read = read_params.get_num_groups();
     ASSERT_EQ(num_groups, num_groups_read);
 
@@ -239,7 +239,7 @@ TEST(TestSaveParameters, compareSingleRun)
            num_rec_t0 = 10, num_dead_t0 = 0;
 
     auto num_groups = size_t(2);
-    double fact    = 1.0 / (double)num_groups;
+    double fact     = 1.0 / (double)num_groups;
 
     epi::SecirParams params(num_groups);
 
@@ -307,7 +307,7 @@ TEST(TestSaveParameters, compareSingleRun)
     const epi::UncertainContactMatrix& contact      = study.get_secir_params().get_contact_patterns();
     const epi::UncertainContactMatrix& read_contact = read_params.get_contact_patterns();
 
-    num_groups          = study.get_secir_params().get_num_groups();
+    num_groups             = study.get_secir_params().get_num_groups();
     size_t num_groups_read = read_params.get_num_groups();
     ASSERT_EQ(num_groups, num_groups_read);
 
@@ -590,23 +590,27 @@ TEST(TestSaveParameters, ReadPopulationDataAllAges)
     epi::SecirParams params(1);
     std::vector<double> ranges = {100};
 
-    epi::read_population_data(params, ranges, "03", "03", 0, TEST_DATA_DIR);
+    epi::read_population_data(params, ranges, "05", "05", 0, TEST_DATA_DIR);
 
     Json::Reader reader;
+    Json::Reader reader_divi;
     Json::Value root;
-    std::string id_name;
+    Json::Value root_divi;
     std::ifstream json_file(epi::path_join(TEST_DATA_DIR, "all_age_rki.json"));
+    std::ifstream json_file_divi(epi::path_join(TEST_DATA_DIR, "germany_divi.json"));
     reader.parse(json_file, root);
+    reader_divi.parse(json_file_divi, root_divi);
 
     std::vector<std::string> age_names = {"A00-A04", "A05-A14", "A15-A34", "A35-A59", "A60-A79", "A80+", "unknown"};
 
     double infected  = 0;
     double deaths    = 0;
     double recovered = 0;
+    double icu       = 0;
 
     for (int i = 0; i < root.size(); i++) {
         std::string date = root[i]["Date"].asString();
-        if (std::strcmp("03", date.substr(5, 2).c_str()) == 0 && std::strcmp("03", date.substr(8, 2).c_str()) == 0) {
+        if (std::strcmp("05", date.substr(5, 2).c_str()) == 0 && std::strcmp("05", date.substr(8, 2).c_str()) == 0) {
 
             for (int age = 0; age < age_names.size(); age++) {
                 if (std::strcmp(root[i]["Age_RKI"].asString().c_str(), age_names[age].c_str()) == 0) {
@@ -619,9 +623,18 @@ TEST(TestSaveParameters, ReadPopulationDataAllAges)
         }
     }
 
+    for (int i = 0; i < root_divi.size(); i++) {
+        std::string date = root_divi[i]["Date"].asString();
+        if (std::strcmp("05", date.substr(5, 2).c_str()) == 0 && std::strcmp("05", date.substr(8, 2).c_str()) == 0) {
+
+            icu = root_divi[i]["ICU"].asDouble();
+        }
+    }
+
     ASSERT_EQ(params.populations.get({0, epi::SecirCompartments::I}), infected);
     ASSERT_EQ(params.populations.get({0, epi::SecirCompartments::D}), deaths);
     ASSERT_EQ(params.populations.get({0, epi::SecirCompartments::R}), recovered);
+    ASSERT_EQ(params.populations.get({0, epi::SecirCompartments::U}), icu);
 }
 
 TEST(TestSaveParameters, ReadPopulationDataRKIAges)
@@ -629,23 +642,28 @@ TEST(TestSaveParameters, ReadPopulationDataRKIAges)
     epi::SecirParams params(6);
     std::vector<double> ranges = {5., 10., 20., 25., 20., 30.};
 
-    epi::read_population_data(params, ranges, "03", "03", 0, TEST_DATA_DIR);
+    epi::read_population_data(params, ranges, "05", "05", 0, TEST_DATA_DIR);
 
     std::vector<double> infected;
     std::vector<double> deaths;
     std::vector<double> recovered;
 
+    double icu = 0;
+
     Json::Reader reader;
+    Json::Reader reader_divi;
     Json::Value root;
-    std::string id_name;
+    Json::Value root_divi;
     std::ifstream json_file(epi::path_join(TEST_DATA_DIR, "all_age_rki.json"));
+    std::ifstream json_file_divi(epi::path_join(TEST_DATA_DIR, "germany_divi.json"));
     reader.parse(json_file, root);
+    reader_divi.parse(json_file_divi, root_divi);
 
     std::vector<std::string> age_names = {"A00-A04", "A05-A14", "A15-A34", "A35-A59", "A60-A79", "A80+", "unknown"};
 
     for (int i = 0; i < root.size(); i++) {
         std::string date = root[i]["Date"].asString();
-        if (std::strcmp("03", date.substr(5, 2).c_str()) == 0 && std::strcmp("03", date.substr(8, 2).c_str()) == 0) {
+        if (std::strcmp("05", date.substr(5, 2).c_str()) == 0 && std::strcmp("05", date.substr(8, 2).c_str()) == 0) {
 
             for (int age = 0; age < age_names.size(); age++) {
                 if (std::strcmp(root[i]["Age_RKI"].asString().c_str(), age_names[age].c_str()) == 0) {
@@ -658,10 +676,19 @@ TEST(TestSaveParameters, ReadPopulationDataRKIAges)
         }
     }
 
+    for (int i = 0; i < root_divi.size(); i++) {
+        std::string date = root_divi[i]["Date"].asString();
+        if (std::strcmp("05", date.substr(5, 2).c_str()) == 0 && std::strcmp("05", date.substr(8, 2).c_str()) == 0) {
+
+            icu = root_divi[i]["ICU"].asDouble();
+        }
+    }
+
     for (size_t i = 0; i < ranges.size(); i++) {
         ASSERT_EQ(params.populations.get({i, epi::SecirCompartments::I}), infected[i]);
         ASSERT_EQ(params.populations.get({i, epi::SecirCompartments::D}), deaths[i]);
         ASSERT_EQ(params.populations.get({i, epi::SecirCompartments::R}), recovered[i]);
+        ASSERT_EQ(params.populations.get({i, epi::SecirCompartments::U}), icu / ranges.size());
     }
 }
 
@@ -670,33 +697,39 @@ TEST(TestSaveParameters, ReadPopulationDataMultipleAges)
     epi::SecirParams params(8);
     std::vector<double> ranges = {5., 15., 15., 10., 10., 10., 10., 25.};
 
-    epi::read_population_data(params, ranges, "03", "03", 0, TEST_DATA_DIR);
+    epi::read_population_data(params, ranges, "05", "05", 0, TEST_DATA_DIR);
 
     double infected_param  = 0.;
     double deaths_param    = 0.;
     double recovered_param = 0.;
+    double icu_param       = 0.;
 
     double infected  = 0.;
     double deaths    = 0.;
     double recovered = 0.;
+    double icu       = 0.;
 
     for (size_t i = 0; i < ranges.size(); i++) {
         infected_param += params.populations.get({i, epi::SecirCompartments::I});
         deaths_param += params.populations.get({i, epi::SecirCompartments::D});
         recovered_param += params.populations.get({i, epi::SecirCompartments::R});
+        icu_param += params.populations.get({i, epi::SecirCompartments::U});
     }
 
     Json::Reader reader;
+    Json::Reader reader_divi;
     Json::Value root;
-    std::string id_name;
+    Json::Value root_divi;
     std::ifstream json_file(epi::path_join(TEST_DATA_DIR, "all_age_rki.json"));
+    std::ifstream json_file_divi(epi::path_join(TEST_DATA_DIR, "germany_divi.json"));
     reader.parse(json_file, root);
+    reader_divi.parse(json_file_divi, root_divi);
 
     std::vector<std::string> age_names = {"A00-A04", "A05-A14", "A15-A34", "A35-A59", "A60-A79", "A80+", "unknown"};
 
     for (int i = 0; i < root.size(); i++) {
         std::string date = root[i]["Date"].asString();
-        if (std::strcmp("03", date.substr(5, 2).c_str()) == 0 && std::strcmp("03", date.substr(8, 2).c_str()) == 0) {
+        if (std::strcmp("05", date.substr(5, 2).c_str()) == 0 && std::strcmp("05", date.substr(8, 2).c_str()) == 0) {
 
             for (int age = 0; age < age_names.size(); age++) {
                 if (std::strcmp(root[i]["Age_RKI"].asString().c_str(), age_names[age].c_str()) == 0) {
@@ -709,9 +742,16 @@ TEST(TestSaveParameters, ReadPopulationDataMultipleAges)
         }
     }
 
-    std::cout << params.populations.get({7, epi::SecirCompartments::I}) << std::endl;
+    for (int i = 0; i < root_divi.size(); i++) {
+        std::string date = root_divi[i]["Date"].asString();
+        if (std::strcmp("05", date.substr(5, 2).c_str()) == 0 && std::strcmp("05", date.substr(8, 2).c_str()) == 0) {
+
+            icu = root_divi[i]["ICU"].asDouble();
+        }
+    }
 
     EXPECT_NEAR(infected, infected_param, 1e-6);
     EXPECT_NEAR(deaths, deaths_param, 1e-6);
     EXPECT_NEAR(recovered, recovered_param, 1e-6);
+    EXPECT_NEAR(icu, icu_param, 1e-6);
 }
