@@ -97,7 +97,7 @@ public:
         for (size_t i = 0; i < y.size(); ++i) {
             dydt[i] = 0;
         }
-        for (auto flow : flows) {
+        for (auto& flow : flows) {
             ScalarType f = std::get<2>(flow)(parameters, y, t);
             dydt[call(Populations::get_flat_index, std::get<0>(flow))] += f;
             dydt[call(Populations::get_flat_index, std::get<1>(flow))] -= f;
