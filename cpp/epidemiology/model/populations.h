@@ -349,7 +349,7 @@ public:
 
     // An array storying the size of each category
     static std::array<size_t, sizeof...(CATEGORIES)> dimensions;
-    static size_t constexpr size{product<static_cast<size_t>(CATEGORIES::Count)...>().value};
+    static size_t constexpr size = product<static_cast<size_t>(CATEGORIES::Count)...>::value;
 
 private:
     // A vector containing the population of all compartments
