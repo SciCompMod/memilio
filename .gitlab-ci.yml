@@ -7,7 +7,7 @@ build-cpp:
     - echo 'deb http://download.opensuse.org/repositories/science:/dlr/xUbuntu_16.04/ /' | sudo tee /etc/apt/sources.list.d/science:dlr.list
     - wget -O - https://download.opensuse.org/repositories/science:dlr/xUbuntu_16.04/Release.key  | sudo apt-key add -
     - sudo apt -qq update
-    - sudo apt -qq -y install libhdf5-dev libtixi3-dev lcov
+    - sudo apt -qq -y install libhdf5-dev libtixi3-dev lcov libboost-filesystem-dev
   script:
     - cd cpp
     - mkdir build && cd build
@@ -106,7 +106,7 @@ test-cpp:
     - echo 'deb http://download.opensuse.org/repositories/science:/dlr/xUbuntu_18.04/ /' | tee /etc/apt/sources.list.d/science:dlr.list
     - wget -O - https://download.opensuse.org/repositories/science:dlr/xUbuntu_18.04/Release.key  | apt-key add -
     - apt -qq update
-    - apt -qq -y install libtixi3 g++ python3-pip
+    - apt -qq -y install libtixi3 g++ python3-pip libboost-filesystem1.71.0
     - python3 -m pip install gcovr
   dependencies:
     - build-cpp

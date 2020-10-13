@@ -15,6 +15,7 @@
 #include <iostream>
 #include <string>
 #include <random>
+#include <boost/filesystem.hpp>
 
 namespace epi
 {
@@ -440,12 +441,15 @@ void write_single_run_params(const int run, const SecirParams& params, double t0
     tixiCreateDocument("Parameters", &handle);
     ParameterStudy study(params, t0, tmax, num_runs);
 
+    std::cout << boost::filesystem::create_directory("results") << std::endl;
+    std::cout << get_current_dir_name() << std::endl;
+
     write_parameter_study(handle, path, study);
-    tixiSaveDocument(handle,
-                     ("Parameters_run" + std::to_string(run) + "_node" + std::to_string(node) + ".xml").c_str());
+    tixiSaveDocument(
+        handle, ("results/Parameters_run" + std::to_string(run) + "_node" + std::to_string(node) + ".xml").c_str());
     tixiCloseDocument(handle);
 
-    save_result(result, ("Results_run" + std::to_string(run) + "_node" + std::to_string(node) + ".h5"));
+    save_result(result, ("results/Results_run" + std::to_string(run) + "_node" + std::to_string(node) + ".h5"));
 }
 
 void write_node(const Graph<SecirParams, MigrationEdge>& graph, int node)
