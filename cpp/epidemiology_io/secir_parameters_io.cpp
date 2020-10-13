@@ -578,7 +578,7 @@ Graph<ModelNode<SecirParams>, MigrationEdge> read_graph()
 }
 
 void read_population_data(epi::SecirParams& params, std::vector<double> param_ranges, std::string month,
-                          std::string day, int region)
+                          std::string day, int region, std::string dir)
 {
     if (param_ranges.size() != params.get_num_groups()) {
         assert("size of param_ranges needs to be the same size as the number of groups in params");
@@ -590,16 +590,16 @@ void read_population_data(epi::SecirParams& params, std::vector<double> param_ra
     Json::Value root;
     std::string id_name;
     if (region == 0) {
-        std::ifstream json_file("../../data/pydata/Germany/all_age_rki.json");
+        std::ifstream json_file(path_join(dir, "all_age_rki.json"));
         reader.parse(json_file, root);
     }
     else if (region < 1000) {
-        std::ifstream json_file("../../data/pydata/Germany/all_state_age_rki.json");
+        std::ifstream json_file(path_join(dir, "all_state_age_rki.json"));
         reader.parse(json_file, root);
         id_name = "ID_State";
     }
     else {
-        std::ifstream json_file("../../data/pydata/Germany/all_county_age_rki.json");
+        std::ifstream json_file(path_join(dir, "all_county_age_rki.json"));
         reader.parse(json_file, root);
         id_name = "ID_County";
     }

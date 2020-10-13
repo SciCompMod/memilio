@@ -187,7 +187,7 @@ Graph<ModelNode<SecirParams>, MigrationEdge> read_graph();
  * @param region region id of county of interest
  */
 void read_population_data(epi::SecirParams& params, std::vector<double> param_ranges, std::string month = "03",
-                          std::string day = "09", int region = 0);
+                          std::string day = "09", int region = 0, std::string dir = "../../data/pydata/Germany");
 
 } // namespace epi
 
