@@ -5,7 +5,7 @@ import json
 import pandas
 import argparse
 
-import defaultDict as dd
+from epidemiology.epidata import defaultDict as dd
 
 def loadGeojson( targetFileName, apiUrl = 'https://opendata.arcgis.com/datasets/', 
                  extension = 'geojson' ):
