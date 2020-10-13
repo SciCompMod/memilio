@@ -151,8 +151,8 @@ void read_node(Graph<SecirParams, MigrationEdge>& graph, int node);
  * @param graph Graph which holds the edge
  * @param edge Edge ID
  */
-void write_edge(TixiDocumentHandle handle, const std::string& path,
-                const Graph<SecirParams, MigrationEdge>& graph, int edge);
+void write_edge(TixiDocumentHandle handle, const std::string& path, const Graph<SecirParams, MigrationEdge>& graph,
+                int edge);
 
 /**
  * @brief Reads information of a single edge and saves it into the graph
@@ -161,8 +161,7 @@ void write_edge(TixiDocumentHandle handle, const std::string& path,
  * @param graph Graph to which the edge is added
  * @param edge Edge ID
  */
-void read_edge(TixiDocumentHandle handle, const std::string& path, Graph<SecirParams, MigrationEdge>& graph,
-               int edge);
+void read_edge(TixiDocumentHandle handle, const std::string& path, Graph<SecirParams, MigrationEdge>& graph, int edge);
 
 /**
  * @brief creates xml files for each node of a Secir simulation graph and one xml file for its edges
@@ -185,6 +184,7 @@ Graph<SecirParams, MigrationEdge> read_graph();
  * @param month specifies month at which the data is read (2-digit string)
  * @param day specifies day at which the data is read (2-digit string)
  * @param region region id of county of interest
+ * @param dir directory of files
  */
 void read_population_data(epi::SecirParams& params, std::vector<double> param_ranges, std::string month = "03",
                           std::string day = "09", int region = 0, std::string dir = "../../data/pydata/Germany");
