@@ -1,4 +1,5 @@
 #include "load_test_data.h"
+#include "test_data_dir.h"
 #include "epidemiology/secir/secir.h"
 #include <epidemiology/secir/parameter_space.h>
 #include <epidemiology/secir/parameter_studies.h>
@@ -596,7 +597,7 @@ TEST(TestSaveParameters, ReadPopulationDataAllAges)
     Json::Reader reader;
     Json::Value root;
     std::string id_name;
-    std::ifstream json_file("../../data/pydata/Germany/all_age_rki.json");
+    std::ifstream json_file(epi::path_join(TEST_DATA_DIR, "test_rki.json"));
     reader.parse(json_file, root);
 
     std::vector<std::string> age_names = {"A00-A04", "A05-A14", "A15-A34", "A35-A59", "A60-A79", "A80+", "unknown"};
@@ -639,7 +640,7 @@ TEST(TestSaveParameters, ReadPopulationDataRKIAges)
     Json::Reader reader;
     Json::Value root;
     std::string id_name;
-    std::ifstream json_file("../../data/pydata/Germany/all_age_rki.json");
+    std::ifstream json_file(epi::path_join(TEST_DATA_DIR, "test_rki.json"));
     reader.parse(json_file, root);
 
     std::vector<std::string> age_names = {"A00-A04", "A05-A14", "A15-A34", "A35-A59", "A60-A79", "A80+", "unknown"};
@@ -690,7 +691,7 @@ TEST(TestSaveParameters, ReadPopulationDataMultipleAges)
     Json::Reader reader;
     Json::Value root;
     std::string id_name;
-    std::ifstream json_file("../../data/pydata/Germany/all_age_rki.json");
+    std::ifstream json_file(epi::path_join(TEST_DATA_DIR, "test_rki.json"));
     reader.parse(json_file, root);
 
     std::vector<std::string> age_names = {"A00-A04", "A05-A14", "A15-A34", "A35-A59", "A60-A79", "A80+", "unknown"};
