@@ -1,5 +1,6 @@
 import unittest
-from epidemiology.secir import UncertainContactMatrix, ContactFrequencyMatrix, Damping, SecirParams, simulate, StageTimes, Probabilities, Populations, SecirCompartments
+from epidemiology.secir import (UncertainContactMatrix, ContactFrequencyMatrix, Damping, SecirParams,
+                                simulate, StageTimes, Probabilities, Populations, SecirCompartments, SecirSimulation)
 
 class Test_secir_integration(unittest.TestCase):
 
@@ -12,10 +13,10 @@ class Test_secir_integration(unittest.TestCase):
         times.set_home_to_hospitalized(5.)  # 2.5-7 (=R6^(-1))
         times.set_hospitalized_to_icu(2.)  # 1-3.5 (=R7^(-1))
         times.set_icu_to_home(8.)  # 5-16 (=R8^(-1))
-        times.set_infectious_asymp(6.2)  # (=R9^(-1)=R_3^(-1)+0.5*R_4^(-1))
         times.set_icu_to_death(5.)  # 3.5-7 (=R5^(-1))
 
         probs = Probabilities()
+        probs.set_infection_from_contact(1.0)
         probs.set_asymp_per_infectious(0.09)  # 0.01-0.16
         probs.set_risk_from_symptomatic(0.25)  # 0.05-0.5
         probs.set_hospitalized_per_infectious(0.2)  # 0.1-0.35
@@ -34,19 +35,29 @@ class Test_secir_integration(unittest.TestCase):
 
         # set the params required for the simulation
         params = SecirParams(1)
-        params.times[0] = times
-        params.probabilities[0] = probs
+        params.times = [times]
+        params.probabilities = [probs]
         params.populations = people
 
         params.get_contact_patterns().get_cont_freq_mat().set_cont_freq(0.5, 0, 0)
+
+        params.apply_constraints()
 
         self.params = params
 
     def test_simulate_simple(self):
       result = simulate(t0=0., tmax=100., dt=0.1, params=self.params)
-      self.assertAlmostEqual(result[0].t[0], 0.)
-      self.assertAlmostEqual(result[0].t[1], 0.1)
-      self.assertAlmostEqual(result[0].t[-1], 100.)
+      self.assertAlmostEqual(result.get_time(0), 0.)
+      self.assertAlmostEqual(result.get_time(1), 0.1)
+      self.assertAlmostEqual(result.get_last_time(), 100.)
+
+    def test_simulation_simple(self):
+        sim = SecirSimulation(self.params, t0 = 0., dt = 0.1)
+        sim.advance(tmax = 100.)
+        result = sim.result
+        self.assertAlmostEqual(result.get_time(0), 0.)
+        self.assertAlmostEqual(result.get_time(1), 0.1)
+        self.assertAlmostEqual(result.get_last_time(), 100.)
 
 if __name__ == '__main__':
     unittest.main()

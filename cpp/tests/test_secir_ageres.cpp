@@ -41,6 +41,8 @@ TEST(TestSecir, compareAgeResWithSingleRun)
         params.populations.set_difference_from_group_total({i, epi::SecirCompartments::S}, epi::SecirCategory::AgeGroup,
                                                            i, fact * nb_total_t0);
 
+        params.probabilities[i].set_infection_from_contact(1.0);
+        params.probabilities[i].set_carrier_infectability(1.0);
         params.probabilities[i].set_asymp_per_infectious(alpha);
         params.probabilities[i].set_risk_from_symptomatic(beta);
         params.probabilities[i].set_hospitalized_per_infectious(rho);
@@ -59,8 +61,7 @@ TEST(TestSecir, compareAgeResWithSingleRun)
         }
     }
 
-    std::vector<Eigen::VectorXd> secihurd(0);
-    auto t = simulate(t0, tmax, dt, params, secihurd);
+    epi::TimeSeries<double> secihurd = simulate(t0, tmax, dt, params);
 
     // char vars[] = {'S', 'E', 'C', 'I', 'H', 'U', 'R', 'D'};
     // printf("People in\n");
@@ -77,15 +78,14 @@ TEST(TestSecir, compareAgeResWithSingleRun)
 
     auto compare = load_test_data_csv<double>("secihurd-compare.csv");
 
-    ASSERT_EQ(compare.size(), t.size());
-    ASSERT_EQ(compare.size(), secihurd.size());
+    ASSERT_EQ(compare.size(), secihurd.get_num_time_points());
     for (size_t i = 0; i < compare.size(); i++) {
-        ASSERT_EQ(compare[i].size() - 1, secihurd[i].size() / nb_groups) << "at row " << i;
-        ASSERT_NEAR(t[i], compare[i][0], 1e-10) << "at row " << i;
+        ASSERT_EQ(compare[i].size() - 1, secihurd.get_num_elements() / nb_groups) << "at row " << i;
+        ASSERT_NEAR(secihurd.get_time(i), compare[i][0], 1e-10) << "at row " << i;
         for (size_t j = 1; j < compare[i].size(); j++) {
             double dummy = 0;
             for (size_t k = 0; k < nb_groups; k++) {
-                dummy += secihurd[i][j - 1 + k * epi::SecirCompartments::SecirCount];
+                dummy += secihurd.get_value(i)[j - 1 + k * epi::SecirCompartments::SecirCount];
             }
             EXPECT_NEAR(dummy, compare[i][j], 1e-10) << " at row " << i;
         }

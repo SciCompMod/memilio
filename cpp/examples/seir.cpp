@@ -29,10 +29,8 @@ int main()
 
     print_seir_params(params);
 
-    std::vector<Eigen::VectorXd> seir(0);
-
-    simulate(t0, tmax, dt, params, seir);
+    auto seir = simulate(t0, tmax, dt, params);
 
     printf("\n number total: %f\n",
-           seir[seir.size() - 1][0] + seir[seir.size() - 1][1] + seir[seir.size() - 1][2] + seir[seir.size() - 1][3]);
+           seir.get_last_value()[0] + seir.get_last_value()[1] + seir.get_last_value()[2] + seir.get_last_value()[3]);
 }

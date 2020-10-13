@@ -121,6 +121,12 @@ void set_params_distributions_normal(SecirParams& params, double t0, double tmax
             ParameterDistributionNormal(std::max(min_val, (1 - dev_rel * 2.6) * value_params),
                                         (1 + dev_rel * 2.6) * value_params, value_params, dev_rel * value_params));
 
+        // carrier infectability
+        value_params = params.probabilities[i].get_carrier_infectability();
+        params.probabilities[i].set_carrier_infectability(
+            ParameterDistributionNormal(std::max(min_val, (1 - dev_rel * 2.6) * value_params),
+                                        (1 + dev_rel * 2.6) * value_params, value_params, dev_rel * value_params));                                        
+
         // asymptomatic per infectious
         value_params = params.probabilities[i].get_asymp_per_infectious();
         params.probabilities[i].set_asymp_per_infectious(

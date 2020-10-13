@@ -7,6 +7,8 @@
 #include <functional>
 #include <cassert>
 
+#include <numeric>
+
 namespace epi
 {
 

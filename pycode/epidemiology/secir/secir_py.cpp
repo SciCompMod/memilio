@@ -1,101 +1,34 @@
 #include <pybind11/pybind11.h>
 #include <pybind11/stl.h>
+#include <pybind11/operators.h>
+#include <pybind11/eigen.h>
+#include <pybind11/functional.h>
 
 #include <epidemiology/secir/secir.h>
 #include <epidemiology/secir/damping.h>
+#include <epidemiology/utils/time_series.h>
+#include <epidemiology/secir/parameter_studies.h>
+
+#include <Eigen/Core>
 #include <vector>
 
 namespace py = pybind11;
 
-class SecirResult
+namespace
 {
-public:
-    void resize(size_t size)
-    {
-        t.resize(size, 0.);
-        nb_sus.resize(size, 0.);
-        nb_exp.resize(size, 0.);
-        nb_car.resize(size, 0.);
-        nb_inf.resize(size, 0.);
-        nb_hosp.resize(size, 0.);
-        nb_icu.resize(size, 0.);
-        nb_rec.resize(size, 0.);
-        nb_dead.resize(size, 0.);
-    }
 
-    std::vector<double> t;
-    std::vector<double> nb_sus;
-    std::vector<double> nb_exp;
-    std::vector<double> nb_car;
-    std::vector<double> nb_inf;
-    std::vector<double> nb_hosp;
-    std::vector<double> nb_icu;
-    std::vector<double> nb_rec;
-    std::vector<double> nb_dead;
-};
-
-std::vector<SecirResult> simulate_secir(double t0, double tmax, double dt, epi::SecirParams const& params)
+std::vector<epi::TimeSeries<double>> filter_graph_results(
+    const std::vector<epi::Graph<epi::ModelNode<epi::SecirSimulation>, epi::MigrationEdge>>& graph_results)
 {
-    std::vector<Eigen::VectorXd> seir(0);
-    auto times = simulate(t0, tmax, dt, params, seir);
-
-    SecirResult result;
-    printf("seir size is: %zd, %zd", seir.size(), seir[0].size());
-    if (seir.size() < 1 || seir[0].size() % epi::SecirCompartments::SecirCount != 0) {
-        throw std::runtime_error("Invalid result from secir simulation");
-    }
-
-    size_t n_data = seir.size();
-    result.resize(n_data);
-
-    int nb_groups = seir[0].size() / epi::SecirCompartments::SecirCount;
-
-    for (size_t irow = 0; irow < seir.size(); ++irow) {
-
-        result.t[irow]       = times[irow];
-        result.nb_sus[irow]  = 0;
-        result.nb_exp[irow]  = 0;
-        result.nb_car[irow]  = 0;
-        result.nb_inf[irow]  = 0;
-        result.nb_hosp[irow] = 0;
-        result.nb_icu[irow]  = 0;
-        result.nb_rec[irow]  = 0;
-        result.nb_dead[irow] = 0;
-        for (size_t groups = 0; groups < nb_groups; ++groups) {
-
-            result.nb_sus[irow] += seir[irow][0 + groups * epi::SecirCompartments::SecirCount];
-            result.nb_exp[irow] += seir[irow][1 + groups * epi::SecirCompartments::SecirCount];
-            result.nb_car[irow] += seir[irow][2 + groups * epi::SecirCompartments::SecirCount];
-            result.nb_inf[irow] += seir[irow][3 + groups * epi::SecirCompartments::SecirCount];
-            result.nb_hosp[irow] += seir[irow][4 + groups * epi::SecirCompartments::SecirCount];
-            result.nb_icu[irow] += seir[irow][5 + groups * epi::SecirCompartments::SecirCount];
-            result.nb_rec[irow] += seir[irow][6 + groups * epi::SecirCompartments::SecirCount];
-            result.nb_dead[irow] += seir[irow][7 + groups * epi::SecirCompartments::SecirCount];
-        }
-    }
-
-    std::vector<SecirResult> GroupResult;
-
-    for (int i = 0; i < nb_groups; ++i) {
-        SecirResult temp_result;
-        size_t n_data = seir.size();
-        temp_result.resize(n_data);
-        for (size_t irow = 0; irow < seir.size(); ++irow) {
-            temp_result.t[irow]       = times[irow];
-            temp_result.nb_sus[irow]  = seir[irow][0 + i * epi::SecirCompartments::SecirCount];
-            temp_result.nb_exp[irow]  = seir[irow][1 + i * epi::SecirCompartments::SecirCount];
-            temp_result.nb_car[irow]  = seir[irow][2 + i * epi::SecirCompartments::SecirCount];
-            temp_result.nb_inf[irow]  = seir[irow][3 + i * epi::SecirCompartments::SecirCount];
-            temp_result.nb_hosp[irow] = seir[irow][4 + i * epi::SecirCompartments::SecirCount];
-            temp_result.nb_icu[irow]  = seir[irow][5 + i * epi::SecirCompartments::SecirCount];
-            temp_result.nb_rec[irow]  = seir[irow][6 + i * epi::SecirCompartments::SecirCount];
-            temp_result.nb_dead[irow] = seir[irow][7 + i * epi::SecirCompartments::SecirCount];
-        }
-        GroupResult.push_back(temp_result);
-    }
-
-    return GroupResult;
+    std::vector<epi::TimeSeries<double>> results;
+    results.reserve(graph_results.size());
+    std::transform(graph_results.begin(), graph_results.end(), std::back_inserter(results), [](auto&& graph) {
+        return graph.nodes()[0].model.get_result();
+    });
+    return results;
 }
+
+} // namespace
 
 PYBIND11_MODULE(_secir, m)
 {
@@ -127,75 +60,189 @@ PYBIND11_MODULE(_secir, m)
         .def("add", &epi::Dampings::add)
         .def("get_factor", &epi::Dampings::get_factor);
 
-    py::class_<SecirResult>(m, "SecirResult")
-        .def_readonly("t", &SecirResult::t)
-        .def_readonly("nb_sus", &SecirResult::nb_sus)
-        .def_readonly("nb_exp", &SecirResult::nb_exp)
-        .def_readonly("nb_car", &SecirResult::nb_car)
-        .def_readonly("nb_inf", &SecirResult::nb_inf)
-        .def_readonly("nb_hosp", &SecirResult::nb_hosp)
-        .def_readonly("nb_icu", &SecirResult::nb_icu)
-        .def_readonly("nb_rec", &SecirResult::nb_rec)
-        .def_readonly("nb_dead", &SecirResult::nb_dead);
+    py::class_<epi::TimeSeries<double>>(m, "TimeSeries")
+        .def(py::init<Eigen::Index>(), py::arg("num_elements"))
+        .def("get_num_time_points", &epi::TimeSeries<double>::get_num_time_points)
+        .def("get_num_elements", &epi::TimeSeries<double>::get_num_elements)
+        .def("get_time", py::overload_cast<Eigen::Index>(&epi::TimeSeries<double>::get_time), py::arg("index"))
+        .def("get_last_time", py::overload_cast<>(&epi::TimeSeries<double>::get_last_time))
+        .def("get_value", py::overload_cast<Eigen::Index>(&epi::TimeSeries<double>::get_value), py::arg("index"))
+        .def("get_last_value", py::overload_cast<>(&epi::TimeSeries<double>::get_last_value))
+        .def(
+            "__getitem__",
+            [](epi::TimeSeries<double>& self, Eigen::Index i) {
+                if (i >= 0 && i < self.get_num_time_points()) {
+                    return self[i];
+                }
+                else {
+                    throw pybind11::index_error("Index out of range."); //needs to throw exception for iterable
+                }
+            },
+            py::is_operator(), py::arg("index"))
+        .def(
+            "__setitem__",
+            [](epi::TimeSeries<double>& self, Eigen::Index i, Eigen::Ref<const epi::TimeSeries<double>::Vector> expr) {
+                if (i >= 0 && i < self.get_num_time_points()) {
+                    self[i] = expr;
+                }
+                else {
+                    throw pybind11::index_error("Index out of range."); //needs to throw exception for iterable
+                }
+            },
+            py::is_operator(), py::arg("index"), py::arg("v"))
+        .def("add_time_point",
+             [](epi::TimeSeries<double>& self) {
+                 return self.add_time_point();
+             })
+        .def("add_time_point",
+             [](epi::TimeSeries<double>& self, double t) {
+                 return self.add_time_point(t);
+             })
+        .def("add_time_point",
+             [](epi::TimeSeries<double>& self, double t, Eigen::Ref<const epi::TimeSeries<double>::Vector> expr) {
+                 return self.add_time_point(t, expr);
+             })
+        .def("as_ndarray", [](epi::TimeSeries<double>& self) {
+            auto m = Eigen::Map<epi::TimeSeries<double>::Matrix>(self.data(), self.get_num_rows(),
+                                                                 self.get_num_time_points());
+            return Eigen::Ref<epi::TimeSeries<double>::Matrix>(m);
+        });
+
+    py::class_<epi::ParameterDistribution>(m, "ParameterDistribution")
+        .def_property("lower_bound", &epi::ParameterDistribution::get_lower_bound,
+                      &epi::ParameterDistribution::set_lower_bound)
+        .def_property("upper_bound", &epi::ParameterDistribution::get_upper_bound,
+                      &epi::ParameterDistribution::set_upper_bound)
+        .def("add_predefined_sample", &epi::ParameterDistribution::add_predefined_sample)
+        .def("remove_predefined_samples", &epi::ParameterDistribution::remove_predefined_samples)
+        .def("get_sample", &epi::ParameterDistribution::get_sample);
+
+    py::class_<epi::ParameterDistributionNormal, epi::ParameterDistribution>(m, "ParameterDistributionNormal")
+        .def(py::init<double, double, double, double>(), py::arg("lb"), py::arg("ub"), py::arg("mean"),
+             py::arg("std_dev"))
+        .def(py::init<double, double, double>(), py::arg("lb"), py::arg("ub"), py::arg("mean"))
+        .def_property("mean", &epi::ParameterDistributionNormal::get_mean, &epi::ParameterDistributionNormal::set_mean)
+        .def_property("standard_dev", &epi::ParameterDistributionNormal::get_standard_dev,
+                      &epi::ParameterDistributionNormal::set_standard_dev);
+
+    py::class_<epi::ParameterDistributionUniform, epi::ParameterDistribution>(m, "ParameterDistributionUniform")
+        .def(py::init<>())
+        .def(py::init<double, double>(), py::arg("lb"), py::arg("ub"));
+
+    py::class_<epi::UncertainValue>(m, "UncertainValue")
+        .def(py::init<double>(), py::arg("value") = 0.0)
+        .def_property(
+            "value",
+            [](epi::UncertainValue& self) {
+                return double(self);
+            },
+            [](epi::UncertainValue& self, double v) {
+                self = v;
+            })
+        .def("set_distribution", //a property would be nicer but getter and setter use a different type
+             &epi::UncertainValue::set_distribution)
+        .def(
+            "get_distribution",
+            [](const epi::UncertainValue& self) {
+                return self.get_distribution().get();
+            },
+            py::return_value_policy::reference_internal)
+        .def(
+            "get_distribution",
+            [](epi::UncertainValue& self) {
+                return self.get_distribution().get();
+            },
+            py::return_value_policy::reference_internal)
+        .def("draw_sample", &epi::UncertainValue::draw_sample);
 
     py::class_<epi::SecirParams::StageTimes>(m, "StageTimes")
         .def(py::init<>())
         .def("set_incubation", py::overload_cast<double>(&epi::SecirParams::StageTimes::set_incubation))
-        // .def("set_incubation", py::overload_cast<&epi::ParameterDistribution>(&epi::SecirParams::StageTimes::set_incubation)) // invalid template argument?? To do..
+        .def("set_incubation",
+             py::overload_cast<const epi::ParameterDistribution&>(&epi::SecirParams::StageTimes::set_incubation))
         .def("set_infectious_mild", py::overload_cast<double>(&epi::SecirParams::StageTimes::set_infectious_mild))
-        // .def("set_infectious_mild", py::overload_cast<&epi::ParameterDistribution>(&epi::SecirParams::StageTimes::set_infectious_mild))
+        .def("set_infectious_mild",
+             py::overload_cast<const epi::ParameterDistribution&>(&epi::SecirParams::StageTimes::set_infectious_mild))
         .def("set_serialinterval", py::overload_cast<double>(&epi::SecirParams::StageTimes::set_serialinterval))
-        // .def("set_serialinterval", py::overload_cast<&epi::ParameterDistribution>(&epi::SecirParams::StageTimes::set_serialinterval))
+        .def("set_serialinterval",
+             py::overload_cast<const epi::ParameterDistribution&>(&epi::SecirParams::StageTimes::set_serialinterval))
         .def("set_hospitalized_to_home",
              py::overload_cast<double>(&epi::SecirParams::StageTimes::set_hospitalized_to_home))
-        // .def("set_hospitalized_to_home", py::overload_cast<&epi::ParameterDistribution>(&epi::SecirParams::StageTimes::set_hospitalized_to_home))
+        .def("set_hospitalized_to_home", py::overload_cast<const epi::ParameterDistribution&>(
+                                             &epi::SecirParams::StageTimes::set_hospitalized_to_home))
         .def("set_home_to_hospitalized",
              py::overload_cast<double>(&epi::SecirParams::StageTimes::set_home_to_hospitalized))
-        // .def("set_home_to_hospitalized", py::overload_cast<&epi::ParameterDistribution>(&epi::SecirParams::StageTimes::set_home_to_hospitalized))
+        .def("set_home_to_hospitalized", py::overload_cast<const epi::ParameterDistribution&>(
+                                             &epi::SecirParams::StageTimes::set_home_to_hospitalized))
         .def("set_hospitalized_to_icu",
              py::overload_cast<double>(&epi::SecirParams::StageTimes::set_hospitalized_to_icu))
-        // .def("set_hospitalized_to_icu", py::overload_cast<&epi::ParameterDistribution>(&epi::SecirParams::StageTimes::set_hospitalized_to_icu))
+        .def("set_hospitalized_to_icu", py::overload_cast<const epi::ParameterDistribution&>(
+                                            &epi::SecirParams::StageTimes::set_hospitalized_to_icu))
         .def("set_icu_to_home", py::overload_cast<double>(&epi::SecirParams::StageTimes::set_icu_to_home))
-        // .def("set_icu_to_home", py::overload_cast<&epi::ParameterDistribution>(&epi::SecirParams::StageTimes::set_icu_to_home))
+        .def("set_icu_to_home",
+             py::overload_cast<const epi::ParameterDistribution&>(&epi::SecirParams::StageTimes::set_icu_to_home))
         .def("set_infectious_asymp", py::overload_cast<double>(&epi::SecirParams::StageTimes::set_infectious_asymp))
-        // .def("set_infectious_asymp", py::overload_cast<&epi::ParameterDistribution>(&epi::SecirParams::StageTimes::set_infectious_asymp))
+        .def("set_infectious_asymp",
+             py::overload_cast<const epi::ParameterDistribution&>(&epi::SecirParams::StageTimes::set_infectious_asymp))
         .def("set_icu_to_death", py::overload_cast<double>(&epi::SecirParams::StageTimes::set_icu_to_death))
-        // .def("set_icu_to_death", py::overload_cast<&epi::ParameterDistribution>(&epi::SecirParams::StageTimes::set_icu_to_death))
+        .def("set_icu_to_death",
+             py::overload_cast<const epi::ParameterDistribution&>(&epi::SecirParams::StageTimes::set_icu_to_death))
 
-        .def("get_incubation", py::overload_cast<>(&epi::SecirParams::StageTimes::get_incubation))
-        .def("get_incubation", py::overload_cast<>(&epi::SecirParams::StageTimes::get_incubation, py::const_))
-        .def("get_infectious_mild", py::overload_cast<>(&epi::SecirParams::StageTimes::get_infectious_mild))
-        .def("get_infectious_mild", py::overload_cast<>(&epi::SecirParams::StageTimes::get_infectious_mild, py::const_))
-        .def("get_serialinterval", py::overload_cast<>(&epi::SecirParams::StageTimes::get_serialinterval))
-        .def("get_serialinterval", py::overload_cast<>(&epi::SecirParams::StageTimes::get_serialinterval, py::const_))
-        .def("get_hospitalized_to_home", py::overload_cast<>(&epi::SecirParams::StageTimes::get_hospitalized_to_home))
+        .def("get_incubation", py::overload_cast<>(&epi::SecirParams::StageTimes::get_incubation),
+             py::return_value_policy::reference_internal)
+        .def("get_incubation", py::overload_cast<>(&epi::SecirParams::StageTimes::get_incubation, py::const_),
+             py::return_value_policy::reference_internal)
+        .def("get_infectious_mild", py::overload_cast<>(&epi::SecirParams::StageTimes::get_infectious_mild),
+             py::return_value_policy::reference_internal)
+        .def("get_infectious_mild", py::overload_cast<>(&epi::SecirParams::StageTimes::get_infectious_mild, py::const_),
+             py::return_value_policy::reference_internal)
+        .def("get_serialinterval", py::overload_cast<>(&epi::SecirParams::StageTimes::get_serialinterval),
+             py::return_value_policy::reference_internal)
+        .def("get_serialinterval", py::overload_cast<>(&epi::SecirParams::StageTimes::get_serialinterval, py::const_),
+             py::return_value_policy::reference_internal)
+        .def("get_hospitalized_to_home", py::overload_cast<>(&epi::SecirParams::StageTimes::get_hospitalized_to_home),
+             py::return_value_policy::reference_internal)
         .def("get_hospitalized_to_home",
-             py::overload_cast<>(&epi::SecirParams::StageTimes::get_hospitalized_to_home, py::const_))
-        .def("get_home_to_hospitalized", py::overload_cast<>(&epi::SecirParams::StageTimes::get_home_to_hospitalized))
+             py::overload_cast<>(&epi::SecirParams::StageTimes::get_hospitalized_to_home, py::const_),
+             py::return_value_policy::reference_internal)
+        .def("get_home_to_hospitalized", py::overload_cast<>(&epi::SecirParams::StageTimes::get_home_to_hospitalized),
+             py::return_value_policy::reference_internal)
         .def("get_home_to_hospitalized",
-             py::overload_cast<>(&epi::SecirParams::StageTimes::get_home_to_hospitalized, py::const_))
-        .def("get_hospitalized_to_icu", py::overload_cast<>(&epi::SecirParams::StageTimes::get_hospitalized_to_icu))
+             py::overload_cast<>(&epi::SecirParams::StageTimes::get_home_to_hospitalized, py::const_),
+             py::return_value_policy::reference_internal)
+        .def("get_hospitalized_to_icu", py::overload_cast<>(&epi::SecirParams::StageTimes::get_hospitalized_to_icu),
+             py::return_value_policy::reference_internal)
         .def("get_hospitalized_to_icu",
-             py::overload_cast<>(&epi::SecirParams::StageTimes::get_hospitalized_to_icu, py::const_))
-        .def("get_icu_to_home", py::overload_cast<>(&epi::SecirParams::StageTimes::get_icu_to_home))
-        .def("get_icu_to_home", py::overload_cast<>(&epi::SecirParams::StageTimes::get_icu_to_home, py::const_))
-        .def("get_infectious_asymp", py::overload_cast<>(&epi::SecirParams::StageTimes::get_infectious_asymp))
+             py::overload_cast<>(&epi::SecirParams::StageTimes::get_hospitalized_to_icu, py::const_),
+             py::return_value_policy::reference_internal)
+        .def("get_icu_to_home", py::overload_cast<>(&epi::SecirParams::StageTimes::get_icu_to_home),
+             py::return_value_policy::reference_internal)
+        .def("get_icu_to_home", py::overload_cast<>(&epi::SecirParams::StageTimes::get_icu_to_home, py::const_),
+             py::return_value_policy::reference_internal)
+        .def("get_infectious_asymp", py::overload_cast<>(&epi::SecirParams::StageTimes::get_infectious_asymp),
+             py::return_value_policy::reference_internal)
         .def("get_infectious_asymp",
-             py::overload_cast<>(&epi::SecirParams::StageTimes::get_infectious_asymp, py::const_))
-        .def("get_icu_to_dead", py::overload_cast<>(&epi::SecirParams::StageTimes::get_icu_to_dead))
-        .def("get_icu_to_dead", py::overload_cast<>(&epi::SecirParams::StageTimes::get_icu_to_dead, py::const_));
+             py::overload_cast<>(&epi::SecirParams::StageTimes::get_infectious_asymp, py::const_),
+             py::return_value_policy::reference_internal)
+        .def("get_icu_to_dead", py::overload_cast<>(&epi::SecirParams::StageTimes::get_icu_to_dead),
+             py::return_value_policy::reference_internal)
+        .def("get_icu_to_dead", py::overload_cast<>(&epi::SecirParams::StageTimes::get_icu_to_dead, py::const_),
+             py::return_value_policy::reference_internal);
 
     py::class_<epi::Populations>(m, "Populations")
         .def(py::init<std::vector<size_t>&>())
         .def("get_num_compartments", &epi::Populations::get_num_compartments)
         .def("get_category_sizes", &epi::Populations::get_category_sizes)
         .def("get_compartments", &epi::Populations::get_compartments)
-        .def("get", py::overload_cast<std::vector<size_t> const&>(&epi::Populations::get))
-        .def("get", py::overload_cast<std::vector<size_t> const&>(&epi::Populations::get, py::const_))
+        .def("get", py::overload_cast<std::vector<size_t> const&>(&epi::Populations::get),
+             py::return_value_policy::reference_internal)
+        .def("get", py::overload_cast<std::vector<size_t> const&>(&epi::Populations::get, py::const_),
+             py::return_value_policy::reference_internal)
         .def("get_group_total", &epi::Populations::get_group_total)
         .def("get_total", &epi::Populations::get_total)
         .def("set", py::overload_cast<std::vector<size_t> const&, double>(&epi::Populations::set))
-        // .def("set", py::overload_cast<std::vector<size_t> const&, &epi::ParameterDistribution>(&epi::Populations::set))
+        .def("set",
+             py::overload_cast<std::vector<size_t> const&, const epi::ParameterDistribution&>(&epi::Populations::set))
         .def("set_group_total", &epi::Populations::set_group_total)
         .def("set_total", &epi::Populations::set_total)
         .def("set_difference_from_total", &epi::Populations::set_difference_from_total)
@@ -206,44 +253,72 @@ PYBIND11_MODULE(_secir, m)
         .def(py::init<>())
         .def("set_infection_from_contact",
              py::overload_cast<double>(&epi::SecirParams::Probabilities::set_infection_from_contact))
-        // .def("set_infection_from_contact", py::overload_cast<&epi::ParameterDistribution>(&epi::SecirParams::Probabilities::set_infection_from_contact))
+        .def("set_infection_from_contact", py::overload_cast<const epi::ParameterDistribution&>(
+                                               &epi::SecirParams::Probabilities::set_infection_from_contact))
+        .def("set_carrier_infectability",
+             py::overload_cast<double>(&epi::SecirParams::Probabilities::set_carrier_infectability))
+        .def("set_carrier_infectability", py::overload_cast<const epi::ParameterDistribution&>(
+                                              &epi::SecirParams::Probabilities::set_carrier_infectability))
         .def("set_asymp_per_infectious",
              py::overload_cast<double>(&epi::SecirParams::Probabilities::set_asymp_per_infectious))
-        // .def("set_asymp_per_infectious", py::overload_cast<&epi::ParameterDistribution>(&epi::SecirParams::Probabilities::set_asymp_per_infectious))
+        .def("set_asymp_per_infectious", py::overload_cast<const epi::ParameterDistribution&>(
+                                             &epi::SecirParams::Probabilities::set_asymp_per_infectious))
         .def("set_risk_from_symptomatic",
              py::overload_cast<double>(&epi::SecirParams::Probabilities::set_risk_from_symptomatic))
-        // .def("set_risk_from_symptomatic", py::overload_cast<&epi::ParameterDistribution>(&epi::SecirParams::Probabilities::set_risk_from_symptomatic))
+        .def("set_risk_from_symptomatic", py::overload_cast<const epi::ParameterDistribution&>(
+                                              &epi::SecirParams::Probabilities::set_risk_from_symptomatic))
         .def("set_hospitalized_per_infectious",
              py::overload_cast<double>(&epi::SecirParams::Probabilities::set_hospitalized_per_infectious))
-        // .def("set_hospitalized_per_infectious", py::overload_cast<&epi::ParameterDistribution>(&epi::SecirParams::Probabilities::set_hospitalized_per_infectious))
+        .def("set_hospitalized_per_infectious", py::overload_cast<const epi::ParameterDistribution&>(
+                                                    &epi::SecirParams::Probabilities::set_hospitalized_per_infectious))
         .def("set_icu_per_hospitalized",
              py::overload_cast<double>(&epi::SecirParams::Probabilities::set_icu_per_hospitalized))
-        // .def("set_icu_per_hospitalized", py::overload_cast<&epi::ParameterDistribution>(&epi::SecirParams::Probabilities::set_icu_per_hospitalized))
+        .def("set_icu_per_hospitalized", py::overload_cast<const epi::ParameterDistribution&>(
+                                             &epi::SecirParams::Probabilities::set_icu_per_hospitalized))
         .def("set_dead_per_icu", py::overload_cast<double>(&epi::SecirParams::Probabilities::set_dead_per_icu))
-        // .def("set_dead_per_icu", py::overload_cast<&epi::ParameterDistribution>(&epi::SecirParams::Probabilities::set_dead_per_icu))
+        .def("set_dead_per_icu",
+             py::overload_cast<const epi::ParameterDistribution&>(&epi::SecirParams::Probabilities::set_dead_per_icu))
 
         .def("get_infection_from_contact",
-             py::overload_cast<>(&epi::SecirParams::Probabilities::get_infection_from_contact))
+             py::overload_cast<>(&epi::SecirParams::Probabilities::get_infection_from_contact),
+             py::return_value_policy::reference_internal)
         .def("get_infection_from_contact",
-             py::overload_cast<>(&epi::SecirParams::Probabilities::get_infection_from_contact, py::const_))
+             py::overload_cast<>(&epi::SecirParams::Probabilities::get_infection_from_contact, py::const_),
+             py::return_value_policy::reference_internal)
+        .def("get_carrier_infectability",
+             py::overload_cast<>(&epi::SecirParams::Probabilities::get_carrier_infectability),
+             py::return_value_policy::reference_internal)
+        .def("get_carrier_infectability",
+             py::overload_cast<>(&epi::SecirParams::Probabilities::get_carrier_infectability, py::const_),
+             py::return_value_policy::reference_internal)
         .def("get_asymp_per_infectious",
-             py::overload_cast<>(&epi::SecirParams::Probabilities::get_asymp_per_infectious))
+             py::overload_cast<>(&epi::SecirParams::Probabilities::get_asymp_per_infectious),
+             py::return_value_policy::reference_internal)
         .def("get_asymp_per_infectious",
-             py::overload_cast<>(&epi::SecirParams::Probabilities::get_asymp_per_infectious, py::const_))
+             py::overload_cast<>(&epi::SecirParams::Probabilities::get_asymp_per_infectious, py::const_),
+             py::return_value_policy::reference_internal)
         .def("get_risk_from_symptomatic",
-             py::overload_cast<>(&epi::SecirParams::Probabilities::get_risk_from_symptomatic))
+             py::overload_cast<>(&epi::SecirParams::Probabilities::get_risk_from_symptomatic),
+             py::return_value_policy::reference_internal)
         .def("get_risk_from_symptomatic",
-             py::overload_cast<>(&epi::SecirParams::Probabilities::get_risk_from_symptomatic, py::const_))
+             py::overload_cast<>(&epi::SecirParams::Probabilities::get_risk_from_symptomatic, py::const_),
+             py::return_value_policy::reference_internal)
         .def("get_hospitalized_per_infectious",
-             py::overload_cast<>(&epi::SecirParams::Probabilities::get_hospitalized_per_infectious))
+             py::overload_cast<>(&epi::SecirParams::Probabilities::get_hospitalized_per_infectious),
+             py::return_value_policy::reference_internal)
         .def("get_hospitalized_per_infectious",
-             py::overload_cast<>(&epi::SecirParams::Probabilities::get_hospitalized_per_infectious, py::const_))
+             py::overload_cast<>(&epi::SecirParams::Probabilities::get_hospitalized_per_infectious, py::const_),
+             py::return_value_policy::reference_internal)
         .def("get_icu_per_hospitalized",
-             py::overload_cast<>(&epi::SecirParams::Probabilities::get_icu_per_hospitalized))
+             py::overload_cast<>(&epi::SecirParams::Probabilities::get_icu_per_hospitalized),
+             py::return_value_policy::reference_internal)
         .def("get_icu_per_hospitalized",
-             py::overload_cast<>(&epi::SecirParams::Probabilities::get_icu_per_hospitalized, py::const_))
-        .def("get_dead_per_icu", py::overload_cast<>(&epi::SecirParams::Probabilities::get_dead_per_icu))
-        .def("get_dead_per_icu", py::overload_cast<>(&epi::SecirParams::Probabilities::get_dead_per_icu, py::const_));
+             py::overload_cast<>(&epi::SecirParams::Probabilities::get_icu_per_hospitalized, py::const_),
+             py::return_value_policy::reference_internal)
+        .def("get_dead_per_icu", py::overload_cast<>(&epi::SecirParams::Probabilities::get_dead_per_icu),
+             py::return_value_policy::reference_internal)
+        .def("get_dead_per_icu", py::overload_cast<>(&epi::SecirParams::Probabilities::get_dead_per_icu, py::const_),
+             py::return_value_policy::reference_internal);
 
     py::class_<epi::ContactFrequencyMatrix>(m, "ContactFrequencyMatrix")
         .def(py::init<>())
@@ -257,21 +332,171 @@ PYBIND11_MODULE(_secir, m)
     py::class_<epi::UncertainContactMatrix>(m, "UncertainContactMatrix")
         .def(py::init<>())
         .def(py::init<epi::ContactFrequencyMatrix>())
-        .def("get_cont_freq_mat", py::overload_cast<>(&epi::UncertainContactMatrix::get_cont_freq_mat));
+        .def("get_cont_freq_mat", py::overload_cast<>(&epi::UncertainContactMatrix::get_cont_freq_mat),
+             py::return_value_policy::reference_internal);
 
     py::class_<epi::SecirParams>(m, "SecirParams")
-        .def(py::init<size_t>())
+        .def(py::init<size_t>(), py::arg("num_groups") = 1)
         .def_readwrite("times", &epi::SecirParams::times)
         .def_readwrite("populations", &epi::SecirParams::populations)
         .def_readwrite("probabilities", &epi::SecirParams::probabilities)
-        .def_readwrite("probabilities", &epi::SecirParams::probabilities)
         .def("check_constraints", &epi::SecirParams::check_constraints)
         .def("apply_constraints", &epi::SecirParams::apply_constraints)
-        .def("get_contact_patterns", py::overload_cast<>(&epi::SecirParams::get_contact_patterns))
-        .def("get_contact_patterns", py::overload_cast<>(&epi::SecirParams::get_contact_patterns, py::const_));
+        .def("get_contact_patterns", py::overload_cast<>(&epi::SecirParams::get_contact_patterns),
+             py::return_value_policy::reference_internal)
+        .def("get_contact_patterns", py::overload_cast<>(&epi::SecirParams::get_contact_patterns, py::const_),
+             py::return_value_policy::reference_internal);
 
-    m.def("simulate", &simulate_secir, "Simulates the SECIR model from t0 to tmax.", py::arg("t0"), py::arg("tmax"),
-          py::arg("dt"), py::arg("params"));
+    m.def("simulate", py::overload_cast<double, double, double, const epi::SecirParams&>(&epi::simulate),
+          "Simulates the SECIR model from t0 to tmax.", py::arg("t0"), py::arg("tmax"), py::arg("dt"),
+          py::arg("params"));
+
+    py::class_<epi::SecirSimulation>(m, "SecirSimulation")
+        .def(py::init<const epi::SecirParams&, double, double>(), py::arg("params"), py::arg("t0") = 0,
+             py::arg("dt") = 0.1)
+        .def_property_readonly("result", py::overload_cast<>(&epi::SecirSimulation::get_result, py::const_),
+                               py::return_value_policy::reference_internal)
+        .def("advance", &epi::SecirSimulation::advance, py::arg("tmax"));
+
+    py::class_<epi::MigrationEdge>(m, "MigrationParams")
+        .def(py::init<const Eigen::VectorXd&>(), py::arg("coeffs"))
+        .def_property(
+            "coefficients", [](const epi::MigrationEdge& self) -> auto& { return self.coefficients; },
+            [](epi::MigrationEdge& self, const Eigen::VectorXd& v) {
+                self.coefficients = v;
+            },
+            py::return_value_policy::reference_internal);
+
+    py::class_<epi::Edge<epi::MigrationEdge>>(m, "MigrationEdge")
+        .def_property_readonly("start_node_idx",
+                               [](const epi::Edge<epi::MigrationEdge>& self) {
+                                   return self.start_node_idx;
+                               })
+        .def_property_readonly("end_node_idx",
+                               [](const epi::Edge<epi::MigrationEdge>& self) {
+                                   return self.end_node_idx;
+                               })
+        .def_property_readonly(
+            "property", [](const epi::Edge<epi::MigrationEdge>& self) -> auto& { return self.property; },
+            py::return_value_policy::reference_internal);
+
+    using SecirParamsGraph = epi::Graph<epi::SecirParams, epi::MigrationEdge>;
+    py::class_<SecirParamsGraph>(m, "SecirParamsGraph")
+        .def(py::init<>())
+        .def("add_node", &SecirParamsGraph::add_node<const epi::SecirParams&>,
+             py::return_value_policy::reference_internal)
+        .def("add_edge", &SecirParamsGraph::add_edge<const epi::MigrationEdge&>,
+             py::return_value_policy::reference_internal)
+        .def("add_edge", &SecirParamsGraph::add_edge<const Eigen::VectorXd&>,
+             py::return_value_policy::reference_internal)
+        .def_property_readonly("num_nodes",
+                               [](const SecirParamsGraph& self) {
+                                   return self.nodes().size();
+                               })
+        .def(
+            "get_node", [](const SecirParamsGraph& self, size_t node_idx) -> auto& { return self.nodes()[node_idx]; },
+            py::return_value_policy::reference_internal)
+        .def_property_readonly("num_edges",
+                               [](const SecirParamsGraph& self) {
+                                   return self.edges().size();
+                               })
+        .def(
+            "get_edge", [](const SecirParamsGraph& self, size_t edge_idx) -> auto& { return self.edges()[edge_idx]; },
+            py::return_value_policy::reference_internal)
+        .def("get_num_out_edges",
+                               [](const SecirParamsGraph& self, size_t node_idx) {
+                                   return self.out_edges(node_idx).size();
+                               })
+        .def(
+            "get_out_edge", [](const SecirParamsGraph& self, size_t node_idx, size_t edge_idx) -> auto& {
+                return self.out_edges(node_idx)[edge_idx];
+            },
+            py::return_value_policy::reference_internal);
+
+    using MigrationGraph = epi::Graph<epi::ModelNode<epi::SecirSimulation>, epi::MigrationEdge>;
+    py::class_<MigrationGraph>(m, "MigrationGraph")
+        .def(py::init<>())
+        .def(
+            "add_node", [](MigrationGraph & self, const epi::SecirParams& p, double t0, double dt) -> auto& {
+                return self.add_node(p, t0, dt).model;
+            },
+            py::arg("params"), py::arg("t0") = 0.0, py::arg("dt") = 0.1, py::return_value_policy::reference_internal)
+        .def("add_edge", &MigrationGraph::add_edge<const epi::MigrationEdge&>,
+             py::return_value_policy::reference_internal)
+        .def("add_edge", &MigrationGraph::add_edge<const Eigen::VectorXd&>, py::return_value_policy::reference_internal)
+        .def_property_readonly("num_nodes",
+                               [](const MigrationGraph& self) {
+                                   return self.nodes().size();
+                               })
+        .def(
+            "get_node",
+            [](const MigrationGraph& self, size_t node_idx) -> auto& { return self.nodes()[node_idx].model; },
+            py::return_value_policy::reference_internal)
+        .def_property_readonly("num_edges",
+                               [](const MigrationGraph& self) {
+                                   return self.edges().size();
+                               })
+        .def(
+            "get_edge", [](const MigrationGraph& self, size_t edge_idx) -> auto& { return self.edges()[edge_idx]; },
+            py::return_value_policy::reference_internal)
+        .def("get_num_out_edges",
+                               [](const MigrationGraph& self, size_t node_idx) {
+                                   return self.out_edges(node_idx).size();
+                               })
+        .def(
+            "get_out_edge", [](const MigrationGraph& self, size_t node_idx, size_t edge_idx) -> auto& {
+                return self.out_edges(node_idx)[edge_idx];
+            },
+            py::return_value_policy::reference_internal);
+
+    py::class_<epi::GraphSimulation<MigrationGraph>>(m, "MigrationSimulation")
+        .def(py::init([](const MigrationGraph& graph, double t0, double dt) {
+            return std::make_unique<epi::GraphSimulation<MigrationGraph>>(epi::make_migration_sim(t0, dt, graph));
+        }), py::arg("graph"), py::arg("t0") = 0.0, py::arg("dt") = 1.0)
+        .def_property_readonly("graph",
+                               py::overload_cast<>(&epi::GraphSimulation<MigrationGraph>::get_graph, py::const_),
+                               py::return_value_policy::reference_internal)
+        .def_property_readonly("t", &epi::GraphSimulation<MigrationGraph>::get_t)
+        .def("advance", &epi::GraphSimulation<MigrationGraph>::advance, py::arg("tmax"));
+
+    py::class_<epi::ParameterStudy>(m, "ParameterStudy")
+        .def(py::init<const epi::SecirParams&, double, double, size_t>(), py::arg("params"), py::arg("t0"),
+             py::arg("tmax"), py::arg("num_runs"))
+        .def(py::init<const epi::SecirParams&, double, double, double, size_t>(), py::arg("params"), py::arg("t0"),
+             py::arg("tmax"), py::arg("dev_rel"), py::arg("num_runs"))
+        .def(py::init<const SecirParamsGraph&, double, double, double, size_t>(), py::arg("params_graph"),
+             py::arg("t0"), py::arg("tmax"), py::arg("graph_dt"), py::arg("num_runs"))
+        .def_property("num_runs", &epi::ParameterStudy::get_num_runs, &epi::ParameterStudy::set_num_runs)
+        .def_property("tmax", &epi::ParameterStudy::get_tmax, &epi::ParameterStudy::set_tmax)
+        .def_property("t0", &epi::ParameterStudy::get_t0, &epi::ParameterStudy::set_t0)
+        .def_property_readonly("secir_params", py::overload_cast<>(&epi::ParameterStudy::get_secir_params),
+                               py::return_value_policy::reference_internal)
+        .def_property_readonly("secir_params", py::overload_cast<>(&epi::ParameterStudy::get_secir_params, py::const_),
+                               py::return_value_policy::reference_internal)
+        .def_property_readonly("secir_params_graph", py::overload_cast<>(&epi::ParameterStudy::get_secir_params_graph),
+                               py::return_value_policy::reference_internal)
+        .def_property_readonly("secir_params_graph",
+                               py::overload_cast<>(&epi::ParameterStudy::get_secir_params_graph, py::const_),
+                               py::return_value_policy::reference_internal)
+        .def("run", &epi::ParameterStudy::run)
+        .def("run",
+             [](epi::ParameterStudy& self) { //default argument doesn't seem to work with functions
+                 return self.run();
+             })
+        .def(
+            "run_single",
+            [](epi::ParameterStudy& self, epi::HandleSimulationResultFunction handle_result_func) {
+                return filter_graph_results(self.run(handle_result_func));
+            },
+            py::arg("handle_result_func"))
+        .def("run_single", [](epi::ParameterStudy& self) {
+            return filter_graph_results(self.run());
+        });
+
+    m.def("set_params_distributions_normal", &epi::set_params_distributions_normal, py::arg("params"), py::arg("t0"),
+          py::arg("tmax"), py::arg("dev_rel"));
+
+    m.def("draw_sample", &epi::draw_sample, py::arg("params"));
 
     m.attr("__version__") = "dev";
 }

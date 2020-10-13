@@ -54,7 +54,7 @@ TYPED_TEST(TestTimeSeries, addPoints)
     ASSERT_EQ(ts.get_num_time_points(), 3);
     ASSERT_EQ(ts.get_capacity(), 1 << 2);
 
-    auto i = 3;
+    float i = 3.0f;
     while (i < 7) {
         ts.add_time_point(i);
         ++i;
@@ -118,11 +118,11 @@ TYPED_TEST(TestTimeSeries, constAccess)
     ts.add_time_point(0., epi::TimeSeries<TypeParam>::Vector::Random(1));
     const auto& constref = ts;
     static_assert(
-        std::is_same<decltype(constref[0]), Eigen::Ref<const typename epi::TimeSeries<TypeParam>::Vector>>::value);
+        std::is_same<decltype(constref[0]), Eigen::Ref<const typename epi::TimeSeries<TypeParam>::Vector>>::value, "wrong type");
     static_assert(std::is_same<decltype(constref.get_value(0)),
-                               Eigen::Ref<const typename epi::TimeSeries<TypeParam>::Vector>>::value);
+                               Eigen::Ref<const typename epi::TimeSeries<TypeParam>::Vector>>::value, "wrong type");
     static_assert(std::is_same<decltype(constref.get_last_value()),
-                               Eigen::Ref<const typename epi::TimeSeries<TypeParam>::Vector>>::value);
+                               Eigen::Ref<const typename epi::TimeSeries<TypeParam>::Vector>>::value, "wrong type");
     ASSERT_EQ(epi::print_wrap(ts[0]), epi::print_wrap(constref[0]));
 }
 
@@ -141,7 +141,7 @@ TYPED_TEST(TestTimeSeries, accessInvalidRange)
 {
     epi::TimeSeries<TypeParam> ts(1);
     for (Eigen::Index i = 0; i < 123; i++) {
-        ts.add_time_point(i);
+        ts.add_time_point();
     }
     ASSERT_DEBUG_DEATH(ts.get_value(-1), testing::ContainsRegex(".*"));
     ASSERT_DEBUG_DEATH(ts.get_value(123), testing::ContainsRegex(".*"));
@@ -161,7 +161,8 @@ TYPED_TEST(TestTimeSeries, data)
     ts.add_time_point(3.0, v3);
 
     auto data_range = epi::make_range(ts.data(), ts.data() + 8);
-    ASSERT_THAT(data_range, testing::ElementsAre(0.0, 0.5, 1.0, 1.5, 2.0, 2.5, 3.0, 3.5));
+    ASSERT_THAT(data_range, testing::ElementsAre(TypeParam(0.0), TypeParam(0.5), TypeParam(1.0), TypeParam(1.5),
+                                                 TypeParam(2.0), TypeParam(2.5), TypeParam(3.0), TypeParam(3.5)));
 }
 
 TYPED_TEST(TestTimeSeries, iteratorsRange)
@@ -227,9 +228,9 @@ TYPED_TEST(TestTimeSeries, timeIteratorsRange)
         ASSERT_EQ(t, ts.get_time(i));
         --i;
     }
-    ASSERT_THAT(ts.get_times(), testing::ElementsAre(0, 1, 2, 3));
-    ASSERT_THAT(ts_constref.get_times(), testing::ElementsAre(0, 1, 2, 3));
-    ASSERT_THAT(ts.get_reverse_times(), testing::ElementsAre(3, 2, 1, 0));
+    ASSERT_THAT(ts.get_times(), testing::ElementsAre(TypeParam(0.0), TypeParam(1.0), TypeParam(2.0), TypeParam(3.0)));
+    ASSERT_THAT(ts_constref.get_times(), testing::ElementsAre(TypeParam(0.0), TypeParam(1.0), TypeParam(2.0), TypeParam(3.0)));
+    ASSERT_THAT(ts.get_reverse_times(), testing::ElementsAre(TypeParam(3.0), TypeParam(2.0), TypeParam(1.0), TypeParam(0.0)));
 }
 
 TYPED_TEST(TestTimeSeries, iteratorsRandomAccess)

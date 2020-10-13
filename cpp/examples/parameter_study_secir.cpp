@@ -31,7 +31,9 @@ int main(int argc, char* argv[])
                          "'additional parameter'");
     }
 
-    double cont_freq = 0.5, // 0.2-0.75
+    double cont_freq = 10, // see Polymod study
+        inf_prob = 0.05, 
+        carr_infec = 0.67,
         alpha        = 0.09, // 0.01-0.16
         beta         = 0.25, // 0.05-0.5
         delta        = 0.3, // 0.15-0.77
@@ -73,7 +75,8 @@ int main(int argc, char* argv[])
         params.populations.set_difference_from_group_total({i, epi::SecirCompartments::S}, epi::SecirCategory::AgeGroup,
                                                            i, fact * num_total_t0);
 
-        params.probabilities[i].set_infection_from_contact(1.0);
+        params.probabilities[i].set_infection_from_contact(inf_prob);
+        params.probabilities[i].set_carrier_infectability(carr_infec);
         params.probabilities[i].set_asymp_per_infectious(alpha);
         params.probabilities[i].set_risk_from_symptomatic(beta);
         params.probabilities[i].set_hospitalized_per_infectious(rho);
@@ -109,9 +112,7 @@ int main(int argc, char* argv[])
     tixiCloseDocument(handle3);
 
     // create study
-    epi::ParameterStudy parameter_study(epi::make_migration_sim<epi::SecirSimulation>, params, t0, tmax, 0.2, 1);
-
-    parameter_study.set_num_runs(1);
+    epi::ParameterStudy parameter_study(params, t0, tmax, 0.2, 1);
 
     // write and run study
     std::string path = "/Parameters";
