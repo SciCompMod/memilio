@@ -597,7 +597,7 @@ TEST(TestSaveParameters, ReadPopulationDataAllAges)
     Json::Reader reader;
     Json::Value root;
     std::string id_name;
-    std::ifstream json_file(epi::path_join(TEST_DATA_DIR, "test_rki.json"));
+    std::ifstream json_file(epi::path_join(TEST_DATA_DIR, "all_age_rki.json"));
     reader.parse(json_file, root);
 
     std::vector<std::string> age_names = {"A00-A04", "A05-A14", "A15-A34", "A35-A59", "A60-A79", "A80+", "unknown"};
@@ -640,7 +640,7 @@ TEST(TestSaveParameters, ReadPopulationDataRKIAges)
     Json::Reader reader;
     Json::Value root;
     std::string id_name;
-    std::ifstream json_file(epi::path_join(TEST_DATA_DIR, "test_rki.json"));
+    std::ifstream json_file(epi::path_join(TEST_DATA_DIR, "all_age_rki.json"));
     reader.parse(json_file, root);
 
     std::vector<std::string> age_names = {"A00-A04", "A05-A14", "A15-A34", "A35-A59", "A60-A79", "A80+", "unknown"};
@@ -691,7 +691,7 @@ TEST(TestSaveParameters, ReadPopulationDataMultipleAges)
     Json::Reader reader;
     Json::Value root;
     std::string id_name;
-    std::ifstream json_file(epi::path_join(TEST_DATA_DIR, "test_rki.json"));
+    std::ifstream json_file(epi::path_join(TEST_DATA_DIR, "all_age_rki.json"));
     reader.parse(json_file, root);
 
     std::vector<std::string> age_names = {"A00-A04", "A05-A14", "A15-A34", "A35-A59", "A60-A79", "A80+", "unknown"};
