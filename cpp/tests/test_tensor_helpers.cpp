@@ -119,15 +119,15 @@ TEST(TestTensor, get_slice_indices_order_three)
     std::array<size_t, 3> dims = {2, 2, 3};
 
     // first dimension
-    ASSERT_EQ(std::vector<size_t>({0, 1, 2, 3, 4, 5}), epi::get_slice_indices(0, 0, dims));
-    ASSERT_EQ(std::vector<size_t>({6, 7, 8, 9, 10, 11}), epi::get_slice_indices(0, 1, dims));
+    EXPECT_EQ(std::vector<size_t>({0, 1, 2, 3, 4, 5}), epi::get_slice_indices(0, 0, dims));
+    EXPECT_EQ(std::vector<size_t>({6, 7, 8, 9, 10, 11}), epi::get_slice_indices(0, 1, dims));
 
     // second dimension
-    ASSERT_EQ(std::vector<size_t>({0, 1, 2, 6, 7, 8}), epi::get_slice_indices(1, 0, dims));
-    ASSERT_EQ(std::vector<size_t>({3, 4, 5, 9, 10, 11}), epi::get_slice_indices(1, 1, dims));
+    EXPECT_EQ(std::vector<size_t>({0, 1, 2, 6, 7, 8}), epi::get_slice_indices(1, 0, dims));
+    EXPECT_EQ(std::vector<size_t>({3, 4, 5, 9, 10, 11}), epi::get_slice_indices(1, 1, dims));
 
     // third dimension
-    ASSERT_EQ(std::vector<size_t>({0, 3, 6, 9}), epi::get_slice_indices(2, 0, dims));
-    ASSERT_EQ(std::vector<size_t>({1, 4, 7, 10}), epi::get_slice_indices(2, 1, dims));
-    ASSERT_EQ(std::vector<size_t>({2, 5, 8, 11}), epi::get_slice_indices(2, 2, dims));
+    EXPECT_EQ(std::vector<size_t>({0, 3, 6, 9}), epi::get_slice_indices(2, 0, dims));
+    EXPECT_EQ(std::vector<size_t>({1, 4, 7, 10}), epi::get_slice_indices(2, 1, dims));
+    EXPECT_EQ(std::vector<size_t>({2, 5, 8, 11}), epi::get_slice_indices(2, 2, dims));
 }

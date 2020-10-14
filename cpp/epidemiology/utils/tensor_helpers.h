@@ -152,7 +152,7 @@ std::vector<size_t> unravel_index_given_prods(size_t const index, std::vector<si
  * hypothetical tensor. It is assumed that the tensor is stored in row-major fashion.
  *
  * Example: If dimensions=(3, 3), we have a hypothetical 2rd-order tesor of size 3x3. Stored in row-major
- * fashion the indices are flat indices are
+ * fashion the flat indices are
  *
  *    0 : (0, 0)
  *    1 : (0, 1)
@@ -182,6 +182,7 @@ std::vector<size_t> get_slice_indices(size_t dimension, size_t index, Container 
     // There might be more efficient ways to achieve this. Another (much simpler) option would be to
     // create a visitor that just iterates over all elements of a flat array and checks the unraveled index
     // against dimension and index using unravel_index.
+    // an even better option would be to use boost::multi_array and the implemented views
 
     assert(dimension < dimensions.size());
     assert(dimensions[dimension] > 0);
@@ -193,17 +194,15 @@ std::vector<size_t> get_slice_indices(size_t dimension, size_t index, Container 
     std::vector<size_t> starts;
     starts.reserve(prod / dimensions[dimension]);
     get_start_indices(0, dimension, index, dimensions, starts, prod);
+    std::sort(starts.begin(), starts.end());
 
     // append the start indices by the ranges
-    size_t starts_init_size = starts.size();
-    for (size_t i = 0; i < starts_init_size; ++i) {
-        std::vector<size_t> range(prod - 1);
-        std::iota(range.begin(), range.end(), starts[i] + 1);
-        starts.insert(starts.end(), range.begin(), range.end());
+    for (auto it = starts.begin(); it != starts.end();) {
+        starts.insert(it + 1, prod - 1, 0);
+        std::iota(it + 1, it + prod, *it + 1);
+        it += prod;
     }
 
-    //sort and return
-    std::sort(starts.begin(), starts.end());
     return starts;
 }
 
