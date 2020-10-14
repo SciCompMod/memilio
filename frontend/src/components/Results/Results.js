@@ -43,7 +43,6 @@ class Results extends Component {
         });
       } else if (this.props.selected.dataset === 'states') {
         rki.getAllState(this.props.selected.id).then((data) => {
-          console.timeEnd('getState');
           this.setState({
             loading: false,
             rki: data,

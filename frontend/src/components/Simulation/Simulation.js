@@ -17,6 +17,7 @@ import rki from '../../common/datastore/sql/rki-sql-store';
 import * as moment from 'moment';
 
 import './Simulation.scss';
+import SECIRStore from '../../common/datastore/sql/secir-sql-store';
 
 // load secir library if available
 let secir = null;
@@ -232,6 +233,8 @@ class Simulation extends Component {
         }, {})
     );
 
+    const {dataset, id, label} = this.props.selected;
+    SECIRStore.populate(dataset, id, label, result2);
     this.props.setData(result2);
   }
 
@@ -302,6 +305,8 @@ class Simulation extends Component {
         }, {})
     );
 
+    const {dataset, id, label} = this.props.selected;
+    SECIRStore.populate(dataset, id, label, result);
     this.props.setData(result);
   }
 

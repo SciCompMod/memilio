@@ -50,7 +50,7 @@ export default class SQLDatastore {
     }
     createTableQuery = replaceLastChar(createTableQuery, ');');
 
-    return DB.then((db) => db.run(createTableQuery));
+    await this.runQuery(createTableQuery);
   }
 
   async getAll(table) {
@@ -77,7 +77,7 @@ export default class SQLDatastore {
       query += `'${value}',`;
     }
     query = replaceLastChar(query, ');');
-    DB.then((db) => db.run(query));
+    await this.runQuery(query);
   }
 
   /**
@@ -105,7 +105,11 @@ export default class SQLDatastore {
     }
     query = replaceLastChar(query, ';');
 
-    DB.then((db) => db.run(query));
+    await this.runQuery(query);
+  }
+
+  async clear(table) {
+    await this.runQuery(`DELETE FROM ${table}`);
   }
 
   async runQuery(query) {
