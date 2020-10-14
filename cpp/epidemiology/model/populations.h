@@ -99,7 +99,7 @@ public:
      * as initial conditions for the ODE solver
      * @return Eigen::VectorXd  of populations
      */
-    Eigen::Ref<const Eigen::VectorXd> get_compartments() const
+    Eigen::VectorXd get_compartments() const
     {
         Eigen::VectorXd m_y_eigen(m_y.size());
         for (auto i = 0; i < m_y.size(); i++) {
@@ -140,8 +140,9 @@ public:
      * @return the population of compartment
      */
     template <class Arr>
-    static auto const get_from(Arr const& y, Categories... cats)
+    static decltype(auto) get_from(Arr&& y, Categories... cats)
     {
+        static_assert(std::is_lvalue_reference<Arr>::value);
         return y[get_flat_index(cats...)];
     }
 
