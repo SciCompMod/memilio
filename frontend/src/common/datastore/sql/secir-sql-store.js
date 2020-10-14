@@ -63,6 +63,9 @@ class SECIRSQLStore extends SQLDatastore {
         l = this.Level.COUNTY;
         stateId = stateIdFromCountyId(id);
         countyId = id;
+        break;
+      default:
+        break;
     }
 
     let dataTransformed = [];
