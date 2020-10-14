@@ -45,27 +45,20 @@ class SECIRSQLStore extends SQLDatastore {
     this.create(this.table);
   }
 
-  async populate(level, id, name, data) {
-    await this.clear('secir');
-
+  async addRegionData(level, id, name, data) {
     let l;
     let stateId = null;
     let countyId = null;
-    switch (level) {
-      case 'germany':
-        l = this.Level.GERMANY;
-        break;
-      case 'states':
-        l = this.Level.STATE;
-        stateId = id;
-        break;
-      case 'counties':
-        l = this.Level.COUNTY;
-        stateId = stateIdFromCountyId(id);
-        countyId = id;
-        break;
-      default:
-        break;
+    if (level === 'germany') {
+      l = this.Level.GERMANY;
+    } else if (level === 'states') {
+      l = this.Level.STATE;
+      stateId = id;
+    } else if (level === 'counties') {
+      l = this.Level.COUNTY;
+      stateId = stateIdFromCountyId(id);
+      countyId = id;
+    } else {
     }
 
     let dataTransformed = [];

@@ -1,7 +1,7 @@
 import React, {Component} from 'react';
 import {withTranslation} from 'react-i18next';
 import {connect} from 'react-redux';
-import {Label, Input, Button, Form, FormGroup, Col, PopoverBody, UncontrolledPopover} from 'reactstrap';
+import {Button, Col, Form, FormGroup, Input, Label, PopoverBody, UncontrolledPopover} from 'reactstrap';
 import DateRangePicker from 'react-daterange-picker';
 import {getActiveMeasures} from '../../redux/measures';
 import {updateModel} from '../../redux/models';
@@ -18,6 +18,8 @@ import * as moment from 'moment';
 
 import './Simulation.scss';
 import SECIRStore from '../../common/datastore/sql/secir-sql-store';
+import Regions from '../../common/regions';
+import populationstore from '../../common/datastore/idb/population-datastore';
 
 // load secir library if available
 let secir = null;
@@ -123,119 +125,143 @@ class Simulation extends Component {
     }
 
     const startDate = this.state.startDate;
-    const times = new secir.StageTimes();
 
-    times.set_incubation(getValue('incubation')); // R_2 ^ (-1) + R_3 ^ (-1)
-    times.set_infectious_mild(getValue('infmild')); // 4 - 14(=R4 ^ (-1))
-    times.set_serialinterval(getValue('serint')); // 4 - 4.4 // R_2^(-1)+0.5*R_3^(-1)
-    times.set_hospitalized_to_home(getValue('hosp2home')); // 7 - 16(=R5 ^ (-1))
-    times.set_home_to_hospitalized(getValue('home2hosp')); // 2.5 - 7(=R6 ^ (-1))
-    times.set_hospitalized_to_icu(getValue('hosp2icu')); // 1 - 3.5(=R7 ^ (-1))
-    times.set_icu_to_home(getValue('icu2home')); // 5 - 16(=R8 ^ (-1))
-    times.set_infectious_asymp(getValue('infasy')); // (= R9 ^ (-1)= R_3 ^ (-1) + 0.5 * R_4 ^ (-1))
-    times.set_icu_to_death(getValue('icu2death')); // 3.5 - 7(=R5 ^ (-1))
+    const simulateRegion = async (region) => {
+      const times = new secir.StageTimes();
 
-    const probs = new secir.Probabilities();
-    probs.set_asymp_per_infectious(getValue('alpha')); // 0.01 - 0.16
-    probs.set_risk_from_symptomatic(getValue('beta')); // 0.05 - 0.5
-    probs.set_hospitalized_per_infectious(getValue('rho')); // 0.1 - 0.35
-    probs.set_icu_per_hospitalized(getValue('theta')); // 0.15 - 0.4
-    probs.set_dead_per_icu(getValue('delta')); // 0.15 - 0.77
-    probs.set_infection_from_contact(getValue('infprob'));
+      times.set_incubation(getValue('incubation')); // R_2 ^ (-1) + R_3 ^ (-1)
+      times.set_infectious_mild(getValue('infmild')); // 4 - 14(=R4 ^ (-1))
+      times.set_serialinterval(getValue('serint')); // 4 - 4.4 // R_2^(-1)+0.5*R_3^(-1)
+      times.set_hospitalized_to_home(getValue('hosp2home')); // 7 - 16(=R5 ^ (-1))
+      times.set_home_to_hospitalized(getValue('home2hosp')); // 2.5 - 7(=R6 ^ (-1))
+      times.set_hospitalized_to_icu(getValue('hosp2icu')); // 1 - 3.5(=R7 ^ (-1))
+      times.set_icu_to_home(getValue('icu2home')); // 5 - 16(=R8 ^ (-1))
+      times.set_infectious_asymp(getValue('infasy')); // (= R9 ^ (-1)= R_3 ^ (-1) + 0.5 * R_4 ^ (-1))
+      times.set_icu_to_death(getValue('icu2death')); // 3.5 - 7(=R5 ^ (-1))
 
-    const vec_times = new secir.VectorSecirParamsStageTimes();
-    const vec_probs = new secir.VectorSecirParamsProbabilities();
+      const probs = new secir.Probabilities();
+      probs.set_asymp_per_infectious(getValue('alpha')); // 0.01 - 0.16
+      probs.set_risk_from_symptomatic(getValue('beta')); // 0.05 - 0.5
+      probs.set_hospitalized_per_infectious(getValue('rho')); // 0.1 - 0.35
+      probs.set_icu_per_hospitalized(getValue('theta')); // 0.15 - 0.4
+      probs.set_dead_per_icu(getValue('delta')); // 0.15 - 0.77
+      probs.set_infection_from_contact(getValue('infprob'));
 
-    vec_times.push_back(times);
-    vec_probs.push_back(probs);
+      const vec_times = new secir.VectorSecirParamsStageTimes();
+      const vec_probs = new secir.VectorSecirParamsProbabilities();
 
-    const populations = new secir.Populations(createSizeTVector([1, secir.SecirCompartments.SecirCount.value]));
+      vec_times.push_back(times);
+      vec_probs.push_back(probs);
 
-    populations.set_total(this.props.selected.population);
-    populations.set(createSizeTVector([0, secir.SecirCompartments.E.value]), 14400);
-    populations.set(createSizeTVector([0, secir.SecirCompartments.C.value]), this.start.confirmed);
-    populations.set(createSizeTVector([0, secir.SecirCompartments.I.value]), 50);
-    populations.set(createSizeTVector([0, secir.SecirCompartments.H.value]), 20);
-    populations.set(createSizeTVector([0, secir.SecirCompartments.U.value]), 10);
-    populations.set(createSizeTVector([0, secir.SecirCompartments.R.value]), this.start.recovered);
-    populations.set(createSizeTVector([0, secir.SecirCompartments.D.value]), 0);
-    populations.set_difference_from_total(
-      createSizeTVector([0, secir.SecirCompartments.S.value]),
-      this.props.selected.population
-    );
+      const populations = new secir.Populations(createSizeTVector([1, secir.SecirCompartments.SecirCount.value]));
+      const pop = (await populationstore.getByKey(region.id)).population;
 
-    const contact_freq_mat = new secir.ContactFrequencyMatrix();
-    contact_freq_mat.set_cont_freq(0.5, 0, 0);
+      populations.set_total(pop);
+      populations.set(createSizeTVector([0, secir.SecirCompartments.E.value]), 14400);
+      populations.set(createSizeTVector([0, secir.SecirCompartments.C.value]), this.start.confirmed);
+      populations.set(createSizeTVector([0, secir.SecirCompartments.I.value]), 50);
+      populations.set(createSizeTVector([0, secir.SecirCompartments.H.value]), 20);
+      populations.set(createSizeTVector([0, secir.SecirCompartments.U.value]), 10);
+      populations.set(createSizeTVector([0, secir.SecirCompartments.R.value]), this.start.recovered);
+      populations.set(createSizeTVector([0, secir.SecirCompartments.D.value]), 0);
+      populations.set_difference_from_total(createSizeTVector([0, secir.SecirCompartments.S.value]), pop);
 
-    // emulate some mitigations
-    let action_damping = calculateDamping(this.props.measures, startDate, this.state.days);
+      const contact_freq_mat = new secir.ContactFrequencyMatrix();
+      contact_freq_mat.set_cont_freq(0.5, 0, 0);
 
-    action_damping.forEach((v) => {
-      const d = new secir.Damping(v.day, v.damping);
-      contact_freq_mat.add_damping(d, 0, 0);
-      d.delete();
-    });
+      // emulate some mitigations
+      let action_damping = calculateDamping(this.props.measures, startDate, this.state.days);
 
-    const uncertain_contact_matrix = new secir.UncertainContactMatrix(contact_freq_mat);
+      action_damping.forEach((v) => {
+        const d = new secir.Damping(v.day, v.damping);
+        contact_freq_mat.add_damping(d, 0, 0);
+        d.delete();
+      });
 
-    // set the params required for the simulation
-    const param = new secir.SecirParams(contact_freq_mat);
-    param.times = vec_times;
-    param.probabilities = vec_probs;
-    param.populations = populations;
+      const uncertain_contact_matrix = new secir.UncertainContactMatrix(contact_freq_mat);
 
-    contact_freq_mat.delete();
-    uncertain_contact_matrix.delete();
-    populations.delete();
+      // set the params required for the simulation
+      const param = new secir.SecirParams(contact_freq_mat);
+      param.times = vec_times;
+      param.probabilities = vec_probs;
+      param.populations = populations;
 
-    const result = secir.simulate(0, this.state.days, 0.1, param);
+      contact_freq_mat.delete();
+      uncertain_contact_matrix.delete();
+      populations.delete();
 
-    param.delete();
+      const result = secir.simulate(0, this.state.days, 0.1, param);
 
-    // copy data to plain javascript arrays
-    const data = {
-      t: toArray(result.t),
-      S: toArray(result.nb_sus),
-      E: toArray(result.nb_exp),
-      nb_car: toArray(result.nb_car),
-      I: toArray(result.nb_inf),
-      nb_hosp: toArray(result.nb_hosp),
-      nb_icu: toArray(result.nb_icu),
-      R: toArray(result.nb_rec),
-      nb_dead: toArray(result.nb_dead),
+      param.delete();
+
+      // copy data to plain javascript arrays
+      const data = {
+        t: toArray(result.t),
+        S: toArray(result.nb_sus),
+        E: toArray(result.nb_exp),
+        nb_car: toArray(result.nb_car),
+        I: toArray(result.nb_inf),
+        nb_hosp: toArray(result.nb_hosp),
+        nb_icu: toArray(result.nb_icu),
+        R: toArray(result.nb_rec),
+        nb_dead: toArray(result.nb_dead),
+      };
+
+      result.delete();
+
+      return Object.values(
+        Object.keys(data)
+          .filter((k) => k !== 't')
+          .reduce((acc, k) => {
+            data[k].forEach((value, index) => {
+              let date = new Date(startDate + index * 24 * 60 * 60 * 1000);
+              date.setHours(0);
+              date.setMilliseconds(0);
+              date.setMinutes(0);
+              date.setSeconds(0);
+
+              date = date.getTime();
+              if (!acc[date]) {
+                acc[date] = {
+                  date,
+                };
+              }
+              acc[date] = Object.assign(acc[date], {
+                [k]: parseInt(value),
+              });
+            });
+
+            return acc;
+          }, {})
+      );
     };
 
-    result.delete();
+    /* TODO currently not possible, because of a memory leak in the secirjs.js module.
+    SECIRStore.clear('secir').then(async () => {
+      console.time('simulate');
+      {
+        const result = await simulateRegion(Regions.GERMANY);
+        const {dataset, id, label} = Regions.GERMANY;
+        await SECIRStore.addRegionData(dataset, id, label, result);
+      }
 
-    const result2 = Object.values(
-      Object.keys(data)
-        .filter((k) => k !== 't')
-        .reduce((acc, k) => {
-          data[k].forEach((value, index) => {
-            let date = new Date(startDate + index * 24 * 60 * 60 * 1000);
-            date.setHours(0);
-            date.setMilliseconds(0);
-            date.setMinutes(0);
-            date.setSeconds(0);
+      for (const state of Regions.STATES) {
+        const result = await simulateRegion(state);
+        await SECIRStore.addRegionData(state.dataset, state.id, state.label, result);
+      }
 
-            date = date.getTime();
-            if (!acc[date]) {
-              acc[date] = {
-                date,
-              };
-            }
-            acc[date] = Object.assign(acc[date], {
-              [k]: parseInt(value),
-            });
-          });
+      for (const county of Regions.COUNTIES) {
+        const result = await simulateRegion(county);
+        await SECIRStore.addRegionData(county.dataset, county.id, county.label, result);
+      }
+      console.timeEnd('simulate');
+    });
+    */
 
-          return acc;
-        }, {})
-    );
-
-    const {dataset, id, label} = this.props.selected;
-    SECIRStore.populate(dataset, id, label, result2);
-    this.props.setData(result2);
+    simulateRegion({
+      ...this.props.selected,
+      id: this.props.selected.id === 0 ? -1 : this.props.selected.id,
+    }).then((selectedResult) => this.props.setData(selectedResult));
   }
 
   /**
@@ -306,7 +332,7 @@ class Simulation extends Component {
     );
 
     const {dataset, id, label} = this.props.selected;
-    SECIRStore.populate(dataset, id, label, result);
+    SECIRStore.addRegionData(dataset, id, label, result);
     this.props.setData(result);
   }
 
