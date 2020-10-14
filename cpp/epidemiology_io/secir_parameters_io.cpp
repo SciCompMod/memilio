@@ -585,12 +585,11 @@ Graph<SecirParams, MigrationEdge> read_graph()
 void read_population_data(epi::SecirParams& params, std::vector<double> param_ranges, std::string month,
                           std::string day, int region, std::string dir)
 {
-    if (param_ranges.size() != params.get_num_groups()) {
-        assert("size of param_ranges needs to be the same size as the number of groups in params");
-    }
-    if (std::accumulate(param_ranges.begin(), param_ranges.end(), 0.0) != 100.) {
-        assert("param_ranges must add up to 100");
-    }
+
+    assert(param_ranges.size() == params.get_num_groups() &&
+           "size of param_ranges needs to be the same size as the number of groups in params");
+    assert(std::accumulate(param_ranges.begin(), param_ranges.end(), 0.0) == 100. && "param_ranges must add up to 100");
+
     Json::Reader reader;
     Json::Reader reader_divi;
     Json::Value root;

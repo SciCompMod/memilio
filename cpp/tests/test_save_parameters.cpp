@@ -640,7 +640,7 @@ TEST(TestSaveParameters, ReadPopulationDataAllAges)
 TEST(TestSaveParameters, ReadPopulationDataRKIAges)
 {
     epi::SecirParams params(6);
-    std::vector<double> ranges = {5., 10., 20., 25., 20., 30.};
+    std::vector<double> ranges = {5., 10., 20., 25., 20., 20.};
 
     epi::read_population_data(params, ranges, "05", "05", 0, TEST_DATA_DIR);
 
