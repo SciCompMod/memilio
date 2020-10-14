@@ -72,6 +72,8 @@ build-py-win:
   tags:
     - SC-0030VM
   stage: build
+  only:
+    - disabled
   before_script:
     - ci\activate_vc2019.ps1
     - cd pycode
