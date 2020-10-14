@@ -18,7 +18,6 @@ import * as moment from 'moment';
 
 import './Simulation.scss';
 import SECIRStore from '../../common/datastore/sql/secir-sql-store';
-import Regions from '../../common/regions';
 import populationstore from '../../common/datastore/idb/population-datastore';
 
 // load secir library if available
