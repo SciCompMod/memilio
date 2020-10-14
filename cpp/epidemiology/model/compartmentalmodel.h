@@ -14,13 +14,13 @@ namespace
 //Taken from https://stackoverflow.com/questions/7858817/unpacking-a-tuple-to-call-a-matching-function-pointer/9288547#9288547
 
 template <typename Function, typename Tuple, size_t... I>
-auto call(Function f, Tuple t, std::index_sequence<I...>)
+decltype(auto) call(Function f, Tuple t, std::index_sequence<I...>)
 {
     return f(std::get<I>(t)...);
 }
 
 template <typename Function, typename Tuple>
-auto call(Function f, Tuple t)
+decltype(auto) call(Function f, Tuple t)
 {
     static constexpr auto size = std::tuple_size<Tuple>::value;
     return call(f, t, std::make_index_sequence<size>{});
@@ -94,9 +94,7 @@ public:
      */
     void eval_right_hand_side(Eigen::Ref<const Eigen::VectorXd> y, double t, Eigen::Ref<Eigen::VectorXd> dydt) const
     {
-        for (size_t i = 0; i < y.size(); ++i) {
-            dydt[i] = 0;
-        }
+        dydt.setZero();
         for (auto& flow : flows) {
             ScalarType f = std::get<2>(flow)(parameters, y, t);
             dydt[call(Populations::get_flat_index, std::get<0>(flow))] += f;

@@ -51,14 +51,14 @@ namespace epi
 /**
  * @brief A class template for compartment populations
  *
- * Populations can be split up into different categories, e.g. by
+ * Populations can be split up into different Categories, e.g. by
  * age group, yearly income group, gender etc. Compartmental models
  * introduce the additional category of infection type. For the SEIR
  * model these are Susceptible, Exposed, Infected and Removed. Every category
  * is assumed to contain a finite number of groups.
  *
- * This template can be instantiated given an arbitrary set of categories.
- * The categories are assumed to be an enum class with a member Count refering to
+ * This template can be instantiated given an arbitrary set of Categories.
+ * The Categories are assumed to be an enum class with a member Count refering to
  * the number of elements in the enum.
  *
  * The class created from this template contains a "flat array" of compartment
@@ -66,14 +66,14 @@ namespace epi
  *
  */
 
-template <class... CATEGORIES>
+template <class... Categories>
 class Populations
 {
 public:
     using Type = UncertainValue;
 
     // This type can be used by other classes to refer to a concrete compartment
-    using Index = std::tuple<CATEGORIES...>;
+    using Index = std::tuple<Categories...>;
 
     /**
      * @brief Populations default constructor
@@ -99,7 +99,7 @@ public:
      * as initial conditions for the ODE solver
      * @return Eigen::VectorXd  of populations
      */
-    Eigen::VectorXd get_compartments() const
+    Eigen::Ref<const Eigen::VectorXd> get_compartments() const
     {
         Eigen::VectorXd m_y_eigen(m_y.size());
         for (auto i = 0; i < m_y.size(); i++) {
@@ -111,54 +111,38 @@ public:
 
     /**
      * @brief get returns the population of one compartment
-     * @param Cats enum values for each category
+     * @param cats enum values for each category
      * @return the population of compartment
      */
-    Type& get(CATEGORIES... Cats)
+    Type& get(Categories... cats)
     {
-        return m_y[get_flat_index(Cats...)];
+        return m_y[get_flat_index(cats...)];
     }
 
     /**
      * @brief get returns the population of one compartment
-     * @param Cats enum values for each category
+     * @param cats enum values for each category
      * @return the population of compartment
      */
-    Type const& get(CATEGORIES... Cats) const
+    Type const& get(Categories... cats) const
     {
-        return m_y[get_flat_index(Cats...)];
+        return m_y[get_flat_index(cats...)];
     }
 
     /**
-     * @brief get_grom returns the value of a flat container
+     * @brief get_from returns the value of a flat container
      * at the flat index corresponding to set of enum values.
      * It is the same as get, except that it takes the values
      * from an outside reference flat container, rather than the
      * initial values stored within this class
      * @param y a reference to a flat container
-     * @param Cats emi, va;ies fpr eacj category
+     * @param cats enum values for each category
      * @return the population of compartment
      */
-    template <typename Arr>
-    static auto get_from(Arr& y, CATEGORIES... Cats)
+    template <class Arr>
+    static auto const get_from(Arr const& y, Categories... cats)
     {
-        return y[get_flat_index(Cats...)];
-    }
-
-    /**
-     * @brief get_grom returns the value of a flat container
-     * at the flat index corresponding to set of enum values.
-     * It is the same as get, except that it takes the values
-     * from an outside reference flat container, rather than the
-     * initial values stored within this class
-     * @param y a reference to a flat container
-     * @param Cats emi, va;ies fpr eacj category
-     * @return the population of compartment
-     */
-    template <typename Arr>
-    static auto const get_from(Arr const& y, CATEGORIES... Cats)
-    {
-        return y[get_flat_index(Cats...)];
+        return y[get_flat_index(cats...)];
     }
 
     /**
@@ -172,7 +156,7 @@ public:
     {
         //TODO maybe implement an iterator/visitor pattern rather than calculating indices?
         size_t idx          = static_cast<size_t>(group_idx);
-        size_t category_idx = Index_v<T, CATEGORIES...>;
+        size_t category_idx = Index_v<T, Categories...>;
 
         double sum   = 0;
         auto indices = get_slice_indices(category_idx, idx, dimensions);
@@ -196,9 +180,9 @@ public:
      * @param indices a vector containing the indices for each category
      * @param value the new value for the compartment's population
      */
-    void set(Type const& value, CATEGORIES... Cats)
+    void set(Type const& value, Categories... cats)
     {
-        m_y[get_flat_index(Cats...)] = value;
+        m_y[get_flat_index(cats...)] = value;
     }
 
     /**
@@ -206,9 +190,9 @@ public:
      * @param indices a vector containing the indices for each category
      * @param value the new value for the compartment's population
      */
-    void set(ScalarType value, CATEGORIES... Cats)
+    void set(ScalarType value, Categories... cats)
     {
-        m_y[get_flat_index(Cats...)] = value;
+        m_y[get_flat_index(cats...)] = value;
     }
 
     /**
@@ -228,7 +212,7 @@ public:
         ScalarType current_population = get_group_total(group_idx);
 
         size_t idx          = static_cast<size_t>(group_idx);
-        size_t category_idx = Index_v<T, CATEGORIES...>;
+        size_t category_idx = Index_v<T, Categories...>;
 
         //TODO slice indices are calcualated twice...
         auto indices = get_slice_indices(category_idx, idx, dimensions);
@@ -256,11 +240,11 @@ public:
      * @param group_idx The enum of the group within the category
      */
     template <class T>
-    void set_difference_from_group_total(ScalarType total_group_population, T group_idx, CATEGORIES... Cats)
+    void set_difference_from_group_total(ScalarType total_group_population, T group_idx, Categories... cats)
 
     {
         ScalarType current_population = get_group_total(group_idx);
-        size_t idx                    = get_flat_index(Cats...);
+        size_t idx                    = get_flat_index(cats...);
         current_population -= m_y[idx];
 
         assert(current_population <= total_group_population);
@@ -300,10 +284,10 @@ public:
      * @param indices the index of the compartment
      * @param total_population the new value for the total population
      */
-    void set_difference_from_total(double total_population, CATEGORIES... Cats)
+    void set_difference_from_total(double total_population, Categories... cats)
     {
         double current_population = get_total();
-        size_t idx                = get_flat_index(Cats...);
+        size_t idx                = get_flat_index(cats...);
         current_population -= m_y[idx];
 
         assert(current_population <= total_population);
@@ -317,9 +301,9 @@ public:
      * @param indices a vector of indices
      * @return a flat index into the data structure storing the compartment populations
      */
-    static size_t get_flat_index(CATEGORIES... Cats)
+    static size_t get_flat_index(Categories... cats)
     {
-        return flatten_index({static_cast<size_t>(Cats)...}, dimensions);
+        return flatten_index({static_cast<size_t>(cats)...}, dimensions);
     }
 
     /**
@@ -348,8 +332,8 @@ public:
     }
 
     // An array storying the size of each category
-    static std::array<size_t, sizeof...(CATEGORIES)> dimensions;
-    static size_t constexpr size = product<static_cast<size_t>(CATEGORIES::Count)...>::value;
+    static std::array<size_t, sizeof...(Categories)> dimensions;
+    static size_t constexpr size = product<static_cast<size_t>(Categories::Count)...>::value;
 
 private:
     // A vector containing the population of all compartments
@@ -357,9 +341,9 @@ private:
 };
 
 // initialize array storying the size of each category
-template <class... CATEGORIES>
-std::array<size_t, sizeof...(CATEGORIES)> Populations<CATEGORIES...>::dimensions = {
-    static_cast<size_t>(CATEGORIES::Count)...};
+template <class... Categories>
+std::array<size_t, sizeof...(Categories)> Populations<Categories...>::dimensions = {
+    static_cast<size_t>(Categories::Count)...};
 
 } // namespace epi
 

@@ -91,7 +91,7 @@ void Populations::set_difference_from_group_total(std::vector<size_t> const& ind
                                                   size_t group_idx, double total_group_population)
 {
     // is the given index part of the group?
-    //assert(indices[category_idx] == group_idx);
+    assert(indices[category_idx] == group_idx);
 
     double current_population = get_group_total(category_idx, group_idx);
     size_t idx                = get_flat_index(indices);
