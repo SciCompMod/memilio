@@ -37,7 +37,8 @@ SecirResult simulate_secir(double t0, double tmax, double dt, epi::SecirParams c
 {
     auto result_timeseries = simulate(t0, tmax, dt, params);
 
-    if (result_timeseries.get_num_time_points() < 1 || result_timeseries.get_num_elements() != epi::SecirCompartments::SecirCount) {
+    if (result_timeseries.get_num_time_points() < 1 ||
+        result_timeseries.get_num_elements() != epi::SecirCompartments::SecirCount) {
         throw std::runtime_error("Invalid result from secir simulation");
     }
 
@@ -141,6 +142,8 @@ EMSCRIPTEN_BINDINGS(secirjs)
         .constructor<>()
         .function("set_infection_from_contact",
                   js::select_overload<void(double)>(&epi::SecirParams::Probabilities::set_infection_from_contact))
+        .function("set_carrier_infectability",
+                  js::select_overload<void(double)>(&epi::SecirParams::Probabilities::set_carrier_infectability))
         .function("set_asymp_per_infectious",
                   js::select_overload<void(double)>(&epi::SecirParams::Probabilities::set_asymp_per_infectious))
         .function("set_risk_from_symptomatic",
@@ -155,6 +158,8 @@ EMSCRIPTEN_BINDINGS(secirjs)
         // at the moment, no const getters available in JS
         .function("get_infection_from_contact", js::select_overload<epi::UncertainValue&()>(
                                                     &epi::SecirParams::Probabilities::get_infection_from_contact))
+        .function("get_carrier_infectability", js::select_overload<epi::UncertainValue&()>(
+                                                   &epi::SecirParams::Probabilities::get_carrier_infectability))
         .function("get_asymp_per_infectious", js::select_overload<epi::UncertainValue&()>(
                                                   &epi::SecirParams::Probabilities::get_asymp_per_infectious))
         .function("get_risk_from_symptomatic", js::select_overload<epi::UncertainValue&()>(

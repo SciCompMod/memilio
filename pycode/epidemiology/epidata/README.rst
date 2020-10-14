@@ -32,6 +32,8 @@ We want to get data from the Spanish Ministery of Health (MISAN) provided in the
 
 https://github.com/datadista/datasets/tree/master/COVID%2019
 
+Data from DIVI Intensivregister (DIVI)
+
 Dependencies
 ------------
 
@@ -70,6 +72,7 @@ Afterwards for getting RKI data the program can be executed, by calling one of t
       getpopuldata
       getjhdata
       getspaindata
+      getdividata
       getalldata
 
 While running the program close one figure-window to get the next one.
@@ -79,20 +82,23 @@ Run options
 
 There are several optional run options
 
-optional arguments:
+optional arguments working for all are:
   -h, --help                         show this help message and exit
   -r, --read-from-disk               Reads the data from file "json" instead of downloading it.
-  -p, --plot                         Plots the data.
   -h5, --hdf5                        Changes output format from json to hdf5.
   -o OUT_PATH, --out_path OUT_PATH   Defines folder for output.
 
+optional arguments working for some are:
+  -p, --plot                         Plots the data. [rki]
+  -sd, --start-date                  Changes date for which data collection is started [divi]
+  -ed, --end-date                    Changes date for which data collection is stopped [divi]
+  -u, -- update                      Just chronological missing data is added, **after** the existing ones
 
-Note: The plot option is at the moment just working for the rki data
 
 Results
 -------
 
-Following data is written either in json or hdf5 format
+The data is written either in json or hdf5 format
 
 For RKI:
 
@@ -101,22 +107,22 @@ When speaking about infected, means always infected inclusive the already recove
  ======== ======== ======================== =================
  Source   Folder   Files                    Data descritpion
  ======== ======== ======================== =================
- RKI      Germany  infected_rki             Numbers of infected over date for whole Germany
- RKI      Germany  deaths_rki               Numbers of deaths over date for whole Germany
- RKI      Germany  infected_state_rki       infected over date for different states (Bundesländer)
- RKI      Germany  all_state_rki            infected, deaths, recovered over date for different states (Bundesländer)
- RKI      Germany  infected_county_rki      infected over date for different counties (Landkreise)
- RKI      Germany  all_county_rki           infected, deaths, recovered over date for different counties (Landkreise)
- RKI      Germany  all_gender_rki           infected, deaths, recovered over date for different gender
- RKI      Germany  all_age_rki              infected, deaths, recovered over date for different age ranges
- RKI      Germany  all_state_age_rki        infected, deaths, recovered over date for different age ranges and states
- RKI      Germany  all_state_age5_rki       infected, deaths, recovered over date for different age difference of 10 years and states
- RKI      Germany  all_state_age10_rki      infected, deaths, recovered over date for different age difference of 10 and states
- RKI      Germany  all_state_gender_rki     infected, deaths, recovered over date for different genders and states
- RKI      Germany  all_county_age_rki       infected, deaths, recovered over date for different age ranges and counties
- RKI      Germany  all_county_age5_rki      infected, deaths, recovered over date for different age ranges (5 years) and counties
- RKI      Germany  all_county_age10_rki     infected, deaths, recovered over date for different age ranges (10 years) and counties
- RKI      Germany  all_county_gender_rki    infected, deaths, recovered over date for different genders counties
+ RKI      Germany  infected_rki             Numbers of infected over time for whole Germany
+ RKI      Germany  deaths_rki               Numbers of deaths over time for whole Germany
+ RKI      Germany  infected_state_rki       infected over time for different states (Bundesländer)
+ RKI      Germany  all_state_rki            infected, deaths, recovered over time for different states (Bundesländer)
+ RKI      Germany  infected_county_rki      infected over time for different counties (Landkreise)
+ RKI      Germany  all_county_rki           infected, deaths, recovered over time for different counties (Landkreise)
+ RKI      Germany  all_gender_rki           infected, deaths, recovered over time for different gender
+ RKI      Germany  all_age_rki              infected, deaths, recovered over time for different age ranges
+ RKI      Germany  all_state_age_rki        infected, deaths, recovered over time for different age ranges and states
+ RKI      Germany  all_state_age5_rki       infected, deaths, recovered over time for different age difference of 10 years and states
+ RKI      Germany  all_state_age10_rki      infected, deaths, recovered over time for different age difference of 10 and states
+ RKI      Germany  all_state_gender_rki     infected, deaths, recovered over time for different genders and states
+ RKI      Germany  all_county_age_rki       infected, deaths, recovered over time for different age ranges and counties
+ RKI      Germany  all_county_age5_rki      infected, deaths, recovered over time for different age ranges (5 years) and counties
+ RKI      Germany  all_county_age10_rki     infected, deaths, recovered over time for different age ranges (10 years) and counties
+ RKI      Germany  all_county_gender_rki    infected, deaths, recovered over time for different genders counties
 
  P        Germany  FullDataB                Full data for Bundesländer
  P        Germany  FullDataL                Full data for Landkreise
@@ -133,9 +139,14 @@ When speaking about infected, means always infected inclusive the already recove
 
  MISAN    Spain    spain_all_age            ['Date', 'Age', 'Gender', 'Confirmed', 'Hospitalized', 'ICU', 'Deaths'] for different age ranges
  MISAN    Spain    spain_all_state          ['Date', 'ID_State', 'State', 'Confirmed_total', 'Confirmed_PCR', 'Confirmed_AB', 'Hospitalized', 'ICU', 'Deaths', 'Recovered']
+ 
+ DIVI     Germany  FullData_DIVI            Full data as downloaded from archive with columns ['County', 'State', 'anzahl_meldebereiche', 'reporting_hospitals', 'occupied_ICU', 'free_ICU', 'ID_State', 'Date', 'ICU', 'ICU_ventilated', 'faelle_covid_aktuell_im_bundesland', 'ID_County']
+ DIVI     Germany  county_divi              ICU, ICU_ventilated over time for different counties (Landkreise) with columns ['County', 'ID_County', 'ICU', 'ICU_ventilated', 'Date']
+ DIVI     Germany  state_divi               ICU, ICU_ventilated over time for different states (Bundesländer) with columns ['Date', 'ICU', 'ICU_ventilated', 'ID_State', 'State']
+ DIVI     Germany  germany_divi             ICU, ICU_ventilated over time for whole Germany with columns ['Date', 'ICU', 'ICU_ventilated']
  ======== ======== ======================== =================
 
-Some more Notes
+Some more notes
 ---------------
 
 When speaking about infected, means always infected inclusive the already recovered persons
@@ -166,13 +177,29 @@ IMPORTANT NOTE: ONLY USE THIS DATA WITH CARE, WE ARE WAITING FOR AN UPDATE TO CO
 #               Castilla y León (hasta 2020-04-06)             Galicia (hasta 2020-04-29)                  #
 #               Madrid (hasta 2020-04-26)                                                                  #
 
+For DIVI:
+
+For everyday there is one file, from which we extract the date.
+However, in the beginning the data was different to the later ones.
+For the first two dates, 24.4. and 25.4., there is no data for ICU_ventilated (faelle_covid_aktuell_beatmet).
+For the 24.4. even has the ICU data only for each state (faelle_covid_aktuell_im_bundesland) but not for every county.
+Thus, it is not yet considered in the summarized data for counties, states and whole Germany. (There are
+zero entries for these dates).
+Not every hospital is reporting the number of corona patients in intensive care units (ICU). The number of
+reporting hospitals differs from day to day and is given in FullData_DIVI.
+
 Notes for developers
 --------------------
 
 We use dictionaries to change the columns name to have all the names the same and are able to easily change them
 If data from with other languages are used please add the dictionary in "defaultDict.py" and use the exsting one.
+
 Note: You should not use the possibilities of pandas the access the columne with dataframe.column but instead use
 datafram[column] and use th dictionaries for the column-name.
 
+When a new script to download data is added please add the functionality to the dictionary cli_dict in the cli function in getDataIntoPandasDataFrame.py
+by adding a name for it a key and adding a list with in the form [comment to print, list of used parser arguments]
 
+If a new parser-argument has to be added, you need to add two if-loops for it to the ci-function in getDataIntoPandasDataFrame.py:
+first make the parser.add_argument(...) and second to append the arg-list.
 

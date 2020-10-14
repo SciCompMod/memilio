@@ -38,10 +38,10 @@ In order to use IO of parameters and simulation results (*epidemiology_io* libra
 
 *Steps to execute C++ code via python bindings*
 
-*  Create a python virtual environment via python3 -m venv virtualenv/
+*  Create a python virtual environment via python3 -m venv virtualenv/ somewhere under the main epidemiology/ folder
 *  Activate the environment via source virtualenv/bin/activate
 *  Do pip3 install scikit-build
-*  In epidemiology-cpp/pycode do
+*  In epidemiology/pycode do
    *  python3 setup.py build
    *  python3 setup.py install
    *  execute some example

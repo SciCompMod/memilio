@@ -51,10 +51,10 @@ std::vector<size_t> unravel_index_given_prods(size_t const index, std::vector<si
     std::vector<size_t> out(dim_prods.size(), 0);
 
     // recursively write out the remainder of the division by the dim_prods entries (in reverse order)
-    int rem = index;
-    int i   = 0;
+    size_t rem = index;
+    size_t i   = 0;
     for (auto p = dim_prods.rbegin() + 1; p != dim_prods.rend(); ++p) {
-        out[i++] = (int)rem / *p;
+        out[i++] = (size_t)rem / *p;
         rem      = rem % *p;
         if (rem == 0) {
             return out;
@@ -128,7 +128,7 @@ std::vector<size_t> get_slice_indices(size_t dimension, size_t index, std::vecto
     assert(dimensions[dimension] > 0);
     assert(index < dimensions[dimension]);
 
-    size_t prod = std::accumulate(dimensions.begin(), dimensions.end(), 1, std::multiplies<size_t>());
+    size_t prod = std::accumulate(dimensions.begin(), dimensions.end(), size_t(1), std::multiplies<size_t>());
 
     // recursively get all the start indices of the index ranges. prod is the size of the range
     std::vector<size_t> starts;

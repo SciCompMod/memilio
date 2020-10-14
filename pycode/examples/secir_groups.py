@@ -81,6 +81,7 @@ def plot_secir():
     for i in range(num_groups):
         params.times[i] = times
         params.probabilities[i].set_infection_from_contact(sus_ORs[i])
+        params.probabilities[i].set_carrier_infectability(0.67)
         params.probabilities[i].set_asymp_per_infectious(1-symp_probs[i])
         params.probabilities[i].set_risk_from_symptomatic(0.25)
         params.probabilities[i].set_hospitalized_per_infectious(severe_probs[i])

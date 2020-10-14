@@ -12,7 +12,7 @@ TEST(TestSaveResult, compareResultWithH5)
     double tinc = 5.2, tinfmild = 6, tserint = 4.2, thosp2home = 12, thome2hosp = 5, thosp2icu = 2, ticu2home = 8,
            tinfasy = 6.2, ticu2death = 5;
 
-    double cont_freq = 0.5, alpha = 0.09, beta = 0.25, delta = 0.3, rho = 0.2, theta = 0.25;
+    double cont_freq = 10, alpha = 0.09, beta = 0.25, delta = 0.3, rho = 0.2, theta = 0.25;
 
     double nb_total_t0 = 10000, nb_exp_t0 = 100, nb_inf_t0 = 50, nb_car_t0 = 50, nb_hosp_t0 = 20, nb_icu_t0 = 10,
            nb_rec_t0 = 10, nb_dead_t0 = 0;
@@ -43,6 +43,8 @@ TEST(TestSaveResult, compareResultWithH5)
         params.populations.set_difference_from_group_total({i, epi::SecirCompartments::S}, epi::SecirCategory::AgeGroup,
                                                            i, fact * nb_total_t0);
 
+        params.probabilities[i].set_infection_from_contact(0.06);
+        params.probabilities[i].set_carrier_infectability(0.67);
         params.probabilities[i].set_asymp_per_infectious(alpha);
         params.probabilities[i].set_risk_from_symptomatic(beta);
         params.probabilities[i].set_hospitalized_per_infectious(rho);
@@ -67,16 +69,16 @@ TEST(TestSaveResult, compareResultWithH5)
 
     ASSERT_EQ(result_from_file.get_groups().get_num_time_points(), result_from_sim.get_num_time_points());
     ASSERT_EQ(result_from_file.get_totals().get_num_time_points(), result_from_sim.get_num_time_points());
-    for (size_t i = 0; i < result_from_sim.get_num_time_points(); i++) {
+    for (Eigen::Index i = 0; i < result_from_sim.get_num_time_points(); i++) {
         ASSERT_EQ(result_from_file.get_groups().get_num_elements(), result_from_sim.get_num_elements())
             << "at row " << i;
         ASSERT_EQ(result_from_file.get_totals().get_num_elements(), result_from_sim.get_num_elements() / nb_groups)
             << "at row " << i;
         ASSERT_NEAR(result_from_sim.get_time(i), result_from_file.get_groups().get_time(i), 1e-10) << "at row " << i;
         ASSERT_NEAR(result_from_sim.get_time(i), result_from_file.get_totals().get_time(i), 1e-10) << "at row " << i;
-        for (size_t l = 0; l < result_from_file.get_totals().get_num_elements(); l++) {
+        for (Eigen::Index l = 0; l < result_from_file.get_totals().get_num_elements(); l++) {
             double dummy = 0.0;
-            for (size_t j = 0; j < nb_groups; j++) {
+            for (Eigen::Index j = 0; j < Eigen::Index(nb_groups); j++) {
                 dummy += result_from_sim[i][j * epi::SecirCompartments::SecirCount + l];
                 EXPECT_NEAR(result_from_file.get_groups()[i][j * epi::SecirCompartments::SecirCount + l],
                             result_from_sim[i][j * epi::SecirCompartments::SecirCount + l], 1e-10)

@@ -49,11 +49,11 @@ TEST_F(TestCompareSeirWithJS, integrate)
 
     ASSERT_EQ(refData.size(), result.get_num_time_points());
 
-    for (size_t irow = 0; irow < result.get_num_time_points(); ++irow) {
-        double t = refData[irow][0];
+    for (Eigen::Index irow = 0; irow < result.get_num_time_points(); ++irow) {
+        double t = refData[static_cast<size_t>(irow)][0];
         ASSERT_NEAR(t, result.get_times()[irow], 1e-12) << "at row " << irow;
         for (size_t icol = 0; icol < 4; ++icol) {
-            double ref    = refData[irow][icol + 1];
+            double ref    = refData[static_cast<size_t>(irow)][icol + 1];
             double actual = result[irow][icol];
 
             double tol = 1e-6 * ref;

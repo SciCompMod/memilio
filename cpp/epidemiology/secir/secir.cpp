@@ -357,6 +357,7 @@ void SecirParams::StageTimes::check_constraints() const
 
 SecirParams::Probabilities::Probabilities()
     : m_infprob{1}
+    , m_carrinf{1}
     , m_asympinf{0}
     , m_risksymp{0}
     , m_hospinf{0}
@@ -378,6 +379,21 @@ void SecirParams::Probabilities::set_infection_from_contact(double infprob)
 void SecirParams::Probabilities::set_infection_from_contact(ParameterDistribution const& infprob)
 {
     m_infprob.set_distribution(infprob);
+}
+
+void SecirParams::Probabilities::set_carrier_infectability(UncertainValue const& carrinf)
+{
+    m_carrinf = carrinf;
+}
+
+void SecirParams::Probabilities::set_carrier_infectability(double carrinf)
+{
+    m_carrinf = carrinf;
+}
+
+void SecirParams::Probabilities::set_carrier_infectability(ParameterDistribution const& carrinf)
+{
+    m_carrinf.set_distribution(carrinf);
 }
 
 void SecirParams::Probabilities::set_asymp_per_infectious(UncertainValue const& asympinf)
@@ -465,6 +481,16 @@ UncertainValue& SecirParams::Probabilities::get_infection_from_contact()
     return m_infprob;
 }
 
+const UncertainValue& SecirParams::Probabilities::get_carrier_infectability() const
+{
+    return m_carrinf;
+}
+
+UncertainValue& SecirParams::Probabilities::get_carrier_infectability()
+{
+    return m_carrinf;
+}
+
 const UncertainValue& SecirParams::Probabilities::get_asymp_per_infectious() const
 {
     return m_asympinf;
@@ -517,6 +543,16 @@ UncertainValue& SecirParams::Probabilities::get_dead_per_icu()
 
 void SecirParams::Probabilities::apply_constraints()
 {
+    if (m_infprob < 0.0) {
+        log_warning("Constraint check: Parameter m_asympinf changed from {:0.4f} to {:d} ", m_infprob, 0);
+        m_infprob = 0;
+    }
+
+    if (m_carrinf < 0.0) {
+        log_warning("Constraint check: Parameter m_asympinf changed from {:0.4f} to {:d} ", m_carrinf, 0);
+        m_carrinf = 0;
+    }
+
     if (m_asympinf < 0.0 || m_asympinf > 1.0) {
         log_warning("Constraint check: Parameter m_asympinf changed from {:0.4f} to {:d} ", m_asympinf, 0);
         m_asympinf = 0;
@@ -545,29 +581,32 @@ void SecirParams::Probabilities::apply_constraints()
 
 void SecirParams::Probabilities::check_constraints() const
 {
+    if (m_infprob < 0.0) {
+        log_warning("Constraint check: Parameter m_infprob smaller {:d}", 0);
+    }
+
+    if (m_carrinf < 0.0) {
+        log_warning("Constraint check: Parameter m_carrinf smaller {:d}", 0);
+    }
+
     if (m_asympinf < 0.0 || m_asympinf > 1.0) {
-        log_warning("Constraint check: Parameter m_asympinf changed from {:0.4f} smaller {:d} or larger {:d}",
-                    m_asympinf, 0, 1);
+        log_warning("Constraint check: Parameter m_asympinf smaller {:d} or larger {:d}", 0, 1);
     }
 
     if (m_risksymp < 0.0 || m_risksymp > 1.0) {
-        log_warning("Constraint check: Parameter m_risksymp changed from {:0.4f} smaller {:d} or larger {:d}",
-                    m_risksymp, 0, 1);
+        log_warning("Constraint check: Parameter m_risksymp smaller {:d} or larger {:d}", 0, 1);
     }
 
     if (m_hospinf < 0.0 || m_hospinf > 1.0) {
-        log_warning("Constraint check: Parameter m_risksymp changed from {:0.4f} smaller {:d} or larger {:d}",
-                    m_hospinf, 0, 1);
+        log_warning("Constraint check: Parameter m_risksymp smaller {:d} or larger {:d}", 0, 1);
     }
 
     if (m_icuhosp < 0.0 || m_icuhosp > 1.0) {
-        log_warning("Constraint check: Parameter m_risksymp changed from {:0.4f} smaller {:d} or larger {:d}",
-                    m_icuhosp, 0, 1);
+        log_warning("Constraint check: Parameter m_risksymp smaller {:d} or larger {:d}", 0, 1);
     }
 
     if (m_deathicu < 0.0 || m_deathicu > 1.0) {
-        log_warning("Constraint check: Parameter m_risksymp changed from {:0.4f} smaller {:d} or larger {:d}",
-                    m_deathicu, 0, 1);
+        log_warning("Constraint check: Parameter m_risksymp smaller {:d} or larger {:d}", 0, 1);
     }
 }
 
@@ -640,13 +679,14 @@ void secir_get_derivatives(SecirParams const& params, Eigen::Ref<const Eigen::Ve
             size_t Rj = params.populations.get_flat_index({j, R});
 
             // effective contact rate by contact rate between groups i and j and damping j
-            double cont_freq_eff =
-                cont_freq_matrix.get_cont_freq(i, j) *
-                cont_freq_matrix.get_dampings(i, j).get_factor(t); // get effective contact rate between i and j
+            double cont_freq_eff = // get effective contact rate between i and j
+                cont_freq_matrix.get_cont_freq(static_cast<int>(i), static_cast<int>(j)) *
+                cont_freq_matrix.get_dampings(static_cast<int>(i), static_cast<int>(j)).get_factor(t); 
             double Nj      = y[Sj] + y[Ej] + y[Cj] + y[Ij] + y[Hj] + y[Uj] + y[Rj]; // without died people
             double divNj   = 1.0 / Nj; // precompute 1.0/Nj
             double dummy_S = y[Si] * cont_freq_eff * divNj * params.probabilities[i].get_infection_from_contact() *
-                             (y[Cj] + params.probabilities[j].get_risk_from_symptomatic() * y[Ij]);
+                             (params.probabilities[j].get_carrier_infectability() * y[Cj] +
+                              params.probabilities[j].get_risk_from_symptomatic() * y[Ij]);
 
             dydt[Si] -= dummy_S; // -R1*(C+beta*I)*S/N0
             dydt[Ei] += dummy_S; // R1*(C+beta*I)*S/N0-R2*E
