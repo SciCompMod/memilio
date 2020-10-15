@@ -19,6 +19,7 @@ import * as moment from 'moment';
 import './Simulation.scss';
 import SECIRStore from '../../common/datastore/sql/secir-sql-store';
 import populationstore from '../../common/datastore/idb/population-datastore';
+import Regions from '../../common/regions';
 
 // load secir library if available
 let secir = null;
@@ -152,18 +153,34 @@ class Simulation extends Component {
       vec_times.push_back(times);
       vec_probs.push_back(probs);
 
-      const populations = new secir.Populations(createSizeTVector([1, secir.SecirCompartments.SecirCount.value]));
+      const vectorPop = createSizeTVector([1, secir.SecirCompartments.SecirCount.value]);
+      const populations = new secir.Populations(vectorPop);
       const pop = (await populationstore.getByKey(region.id)).population;
 
       populations.set_total(pop);
-      populations.set(createSizeTVector([0, secir.SecirCompartments.E.value]), 14400);
-      populations.set(createSizeTVector([0, secir.SecirCompartments.C.value]), this.start.confirmed);
-      populations.set(createSizeTVector([0, secir.SecirCompartments.I.value]), 50);
-      populations.set(createSizeTVector([0, secir.SecirCompartments.H.value]), 20);
-      populations.set(createSizeTVector([0, secir.SecirCompartments.U.value]), 10);
-      populations.set(createSizeTVector([0, secir.SecirCompartments.R.value]), this.start.recovered);
-      populations.set(createSizeTVector([0, secir.SecirCompartments.D.value]), 0);
-      populations.set_difference_from_total(createSizeTVector([0, secir.SecirCompartments.S.value]), pop);
+      const vectorE = createSizeTVector([0, secir.SecirCompartments.E.value]);
+      populations.set(vectorE, 14400);
+
+      const vectorC = createSizeTVector([0, secir.SecirCompartments.C.value]);
+      populations.set(vectorC, this.start.confirmed);
+
+      const vectorI = createSizeTVector([0, secir.SecirCompartments.I.value]);
+      populations.set(vectorI, 50);
+
+      const vectorH = createSizeTVector([0, secir.SecirCompartments.H.value]);
+      populations.set(vectorH, 20);
+
+      const vectorU = createSizeTVector([0, secir.SecirCompartments.U.value]);
+      populations.set(vectorU, 10);
+
+      const vectorR = createSizeTVector([0, secir.SecirCompartments.R.value]);
+      populations.set(vectorR, this.start.recovered);
+
+      const vectorD = createSizeTVector([0, secir.SecirCompartments.D.value]);
+      populations.set(vectorD, 0);
+
+      const vectorS = createSizeTVector([0, secir.SecirCompartments.S.value]);
+      populations.set_difference_from_total(vectorS, pop);
 
       const contact_freq_mat = new secir.ContactFrequencyMatrix();
       contact_freq_mat.set_cont_freq(0.5, 0, 0);
@@ -192,6 +209,21 @@ class Simulation extends Component {
       const result = secir.simulate(0, this.state.days, 0.1, param);
 
       param.delete();
+
+      times.delete();
+      probs.delete();
+      vec_times.delete();
+      vec_probs.delete();
+
+      vectorPop.delete();
+      vectorE.delete();
+      vectorC.delete();
+      vectorI.delete();
+      vectorH.delete();
+      vectorU.delete();
+      vectorR.delete();
+      vectorD.delete();
+      vectorS.delete();
 
       // copy data to plain javascript arrays
       const data = {
@@ -235,7 +267,7 @@ class Simulation extends Component {
       );
     };
 
-    /* TODO currently not possible, because of a memory leak in the secirjs.js module.
+    /* TODO memory leak prevents this from working.
     SECIRStore.clear('secir').then(async () => {
       console.time('simulate');
       {
@@ -489,6 +521,7 @@ class Simulation extends Component {
             <FormGroup row className="mx-0">
               <Col>
                 <Button
+                  id="start-simulation-button"
                   onClick={this.simulate}
                   size="sm"
                   disabled={this.state.selected === null || this.props.selected === null}

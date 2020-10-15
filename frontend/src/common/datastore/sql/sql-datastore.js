@@ -109,7 +109,7 @@ export default class SQLDatastore {
   }
 
   async clear(table) {
-    await this.runQuery(`DELETE FROM ${table}`);
+    await this.runQuery(`DELETE FROM ${table}; VACUUM`);
   }
 
   async runQuery(query) {
