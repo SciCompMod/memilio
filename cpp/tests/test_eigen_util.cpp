@@ -1,4 +1,5 @@
 #include <epidemiology/utils/eigen_util.h>
+#include "matchers.h"
 #include <gtest/gtest.h>
 
 namespace Eigen
@@ -23,7 +24,7 @@ TYPED_TEST(TestEigenUtilMatrix, slice)
     TypeParam B(3, 2);
     B << 4, 6, 8, 10, 12, 14;
 
-    ASSERT_EQ(epi::print_wrap(epi::slice(A, {1, 3, 1}, {0, 2, 2})), epi::print_wrap(B));
+    ASSERT_EQ(print_wrap(epi::slice(A, {1, 3, 1}, {0, 2, 2})), print_wrap(B));
 }
 
 template <class V>
@@ -39,7 +40,7 @@ TYPED_TEST(TestEigenUtilVector, slice)
     TypeParam B(4);
     B << 1, 4, 7, 10;
 
-    ASSERT_EQ(epi::print_wrap(epi::slice(A, {1, 4, 3})), epi::print_wrap(B));
+    ASSERT_EQ(print_wrap(epi::slice(A, {1, 4, 3})), print_wrap(B));
 }
 
 TYPED_TEST(TestEigenUtilMatrix, reshape)
@@ -57,6 +58,6 @@ TYPED_TEST(TestEigenUtilMatrix, reshape)
         D << 0, 3, 1, 4, 2, 5;
     }
 
-    EXPECT_EQ(epi::print_wrap(epi::reshape(A, 1, 6)), epi::print_wrap(B));
-    EXPECT_EQ(epi::print_wrap(epi::reshape(A, 3, 2)), epi::print_wrap(C));
+    EXPECT_EQ(print_wrap(epi::reshape(A, 1, 6)), print_wrap(B));
+    EXPECT_EQ(print_wrap(epi::reshape(A, 3, 2)), print_wrap(C));
 }

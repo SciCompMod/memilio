@@ -81,6 +81,9 @@ auto make_graph_sim(double t0, double dt, Graph&& g, NodeF&& node_func, EdgeF&& 
                                                 std::forward<EdgeF>(edge_func));
 }
 
+/**
+ * represents the simulation in one node of the graph.
+ */
 template <class Model>
 class ModelNode
 {
@@ -90,6 +93,23 @@ public:
         : model(std::forward<Args>(args)...)
     {
     }
+
+    /**
+     * get the result of the simulation in this node.
+     */
+    decltype(auto) get_result() const
+    {
+        return model.get_result();
+    }
+    
+    /**
+     * get the parameters of the simulation in this node.
+     */
+    decltype(auto) get_params() const
+    {
+        return model.get_params();
+    }
+
     Model model;
     Eigen::VectorXd last_state;
 };

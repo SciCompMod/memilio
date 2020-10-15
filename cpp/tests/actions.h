@@ -1,5 +1,5 @@
-#ifndef GTEST_HELPERS_H
-#define GTEST_HELPERS_H
+#ifndef EPI_TESTS_ACTIONS_H
+#define EPI_TESTS_ACTIONS_H
 
 #include <gmock/gmock.h>
 
@@ -24,4 +24,4 @@ ACTION_P(AddAssign, x) { arg0 += x; }
 ACTION_P(AddAssignUnsafe, x) { const_cast<arg0_type&>(arg0) += x; }
 ACTION(AssignUnsafe) { const_cast<arg0_type&>(arg0) = arg1; }
 
-#endif //GTEST_HELPERS_H
+#endif //EPI_TESTS_ACTIONS_H

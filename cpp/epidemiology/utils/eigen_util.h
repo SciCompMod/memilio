@@ -124,26 +124,4 @@ auto reshape(M&& m, Eigen::Index rows, Eigen::Index cols)
     return Eigen::Map<std::remove_reference_t<M>>(m.data(), rows, cols);
 }
 
-/**
- * @brief overload gtest printer function for eigen matrices.
- * @note see https://stackoverflow.com/questions/25146997/teach-google-test-how-to-print-eigen-matrix
- */
-template <class M>
-struct MatrixPrintWrap : public M {
-    friend void PrintTo(const MatrixPrintWrap& m, std::ostream* os)
-    {
-        (*os) << '\n' << m;
-    }
-};
-
-/**
- * @brief wrap m for gtest printing
- * returns a reference to the original object, no copying or moving, mind the lifetime!
- */
-template <class M>
-const MatrixPrintWrap<M>& print_wrap(const M& m)
-{
-    return static_cast<const MatrixPrintWrap<M>&>(m);
-}
-
 } // namespace epi
