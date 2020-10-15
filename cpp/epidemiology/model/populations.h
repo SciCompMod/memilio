@@ -142,7 +142,7 @@ public:
     template <class Arr>
     static decltype(auto) get_from(Arr&& y, Categories... cats)
     {
-        static_assert(std::is_lvalue_reference<Arr>::value);
+        static_assert(std::is_lvalue_reference<Arr>::value, "get_from is disabled for temporary arrays.");
         return y[get_flat_index(cats...)];
     }
 
