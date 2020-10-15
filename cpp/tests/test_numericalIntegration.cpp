@@ -1,7 +1,7 @@
 #include <epidemiology/math/euler.h>
 #include <epidemiology/math/adapt_rk.h>
+#include <actions.h>
 
-#include <gtest_helpers.h>
 #include <gtest/gtest.h>
 #include <gmock/gmock.h>
 #include <string>

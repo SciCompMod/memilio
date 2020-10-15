@@ -7,6 +7,7 @@
 #include <Eigen/Core>
 #include <vector>
 #include <map>
+#include <ostream>
 
 namespace epi
 {
@@ -87,6 +88,21 @@ public:
         , m_num_time_points(other.m_num_time_points)
     {
         get_valid_block() = other.get_valid_block();
+    }
+
+    /**
+     * @brief constructs TimeSeries instance and initializes it with zeros
+     * @param num_time_points number of time steps
+     * @param num_elements number of compartiments * number of groups
+     * @return
+     */
+    static TimeSeries zero(Eigen::Index num_time_points, Eigen::Index num_elements)
+    {
+        TimeSeries value_matrix(num_elements);
+        value_matrix.m_data            = Matrix::Zero(num_elements + 1, num_time_points);
+        value_matrix.m_num_time_points = num_time_points;
+
+        return value_matrix;
     }
 
     /** copy assignment */
@@ -361,6 +377,14 @@ public:
         auto time_range = get_const_times();
         return make_range(const_reverse_time_iterator{time_range.end()},
                           const_reverse_time_iterator{time_range.begin()});
+    }
+
+    /**
+     * print this object (googletest)
+     */
+    friend void PrintTo(const TimeSeries& self, std::ostream* os)
+    {
+        *os << '\n' << self.get_valid_block();
     }
 
 private:

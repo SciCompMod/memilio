@@ -67,6 +67,9 @@ add_library(epidemiology
     epidemiology/abm/random_number_generator.cpp
     epidemiology/abm/parameters.h
     epidemiology/abm/parameters.cpp
+    epidemiology/secir/parameter_studies.h
+    epidemiology/secir/analyze_result.h
+    epidemiology/secir/analyze_result.cpp
 )
 
 target_include_directories(epidemiology PUBLIC

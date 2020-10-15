@@ -30,9 +30,11 @@ set(TESTSOURCES
   test_uncertain.cpp
   test_time_series.cpp
   test_abm.cpp
+  test_analyze_result.cpp
   distributions_helpers.h
   distributions_helpers.cpp
-  gtest_helpers.h
+  actions.h
+  matchers.h
 )
 
 if (TARGET epidemiology_io)
