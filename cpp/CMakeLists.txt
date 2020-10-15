@@ -18,6 +18,11 @@ add_library(epidemiology
     epidemiology/utils/tensor_helpers.cpp
     epidemiology/math/euler.cpp
     epidemiology/math/euler.h
+    epidemiology/utils/ScalarType.h
+    epidemiology/model/compartmentalmodel.h
+    epidemiology/model/populations.h
+    epidemiology/model/parameterset.h
+    epidemiology/model/simulation.h
     epidemiology/secir/damping.cpp
     epidemiology/secir/damping.h
     epidemiology/secir/secir.cpp
@@ -38,8 +43,8 @@ add_library(epidemiology
     epidemiology/utils/visitor.h
     epidemiology/secir/parameter_space.h
     epidemiology/secir/parameter_space.cpp
-    epidemiology/utils/uncertain_value.cpp
     epidemiology/utils/uncertain_value.h
+    epidemiology/utils/uncertain_value.cpp
     epidemiology/secir/uncertain_matrix.cpp
     epidemiology/secir/uncertain_matrix.h    
     epidemiology/utils/memory.h

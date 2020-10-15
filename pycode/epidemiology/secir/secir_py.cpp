@@ -130,13 +130,13 @@ PYBIND11_MODULE(_secir, m)
         .def(py::init<double, double>(), py::arg("lb"), py::arg("ub"));
 
     py::class_<epi::UncertainValue>(m, "UncertainValue")
-        .def(py::init<double>(), py::arg("value") = 0.0)
+        .def(py::init<ScalarType>(), py::arg("value") = 0.0)
         .def_property(
             "value",
             [](epi::UncertainValue& self) {
-                return double(self);
+                return ScalarType(self);
             },
-            [](epi::UncertainValue& self, double v) {
+            [](epi::UncertainValue& self, ScalarType v) {
                 self = v;
             })
         .def("set_distribution", //a property would be nicer but getter and setter use a different type

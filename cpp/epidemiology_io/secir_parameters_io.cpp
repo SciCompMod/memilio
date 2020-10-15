@@ -164,7 +164,8 @@ std::unique_ptr<ParameterDistribution> read_distribution(TixiDocumentHandle hand
 void write_predef_sample(TixiDocumentHandle handle, const std::string& path, const std::vector<double>& samples)
 {
     tixiRemoveElement(handle, path_join(path, "PredefinedSamples").c_str());
-    tixiAddFloatVector(handle, path.c_str(), "PredefinedSamples", samples.data(), static_cast<int>(samples.size()), "%g");
+    tixiAddFloatVector(handle, path.c_str(), "PredefinedSamples", samples.data(), static_cast<int>(samples.size()),
+                       "%g");
 }
 
 void write_contact(TixiDocumentHandle handle, const std::string& path, const UncertainContactMatrix& contact_pattern,
@@ -184,7 +185,7 @@ void write_contact(TixiDocumentHandle handle, const std::string& path, const Unc
     }
     for (int i = 0; i < num_groups; i++) {
         for (int j = 0; j < num_groups; j++) {
-            int num_damp            = static_cast<int>(contact_freq_matrix.get_dampings(i, j).get_dampings_vector().size());
+            int num_damp = static_cast<int>(contact_freq_matrix.get_dampings(i, j).get_dampings_vector().size());
             std::vector<double> row = {};
             for (int k = 0; k < num_damp; k++) {
                 row.emplace_back(contact_freq_matrix.get_dampings(i, j).get_dampings_vector()[k].day);
@@ -475,8 +476,8 @@ void read_node(Graph<SecirParams, MigrationEdge>& graph, int node)
     tixiCloseDocument(node_handle);
 }
 
-void write_edge(TixiDocumentHandle handle, const std::string& path,
-                const Graph<SecirParams, MigrationEdge>& graph, int edge)
+void write_edge(TixiDocumentHandle handle, const std::string& path, const Graph<SecirParams, MigrationEdge>& graph,
+                int edge)
 {
 
     int num_groups  = static_cast<int>(graph.nodes()[0].get_num_groups());
@@ -484,8 +485,10 @@ void write_edge(TixiDocumentHandle handle, const std::string& path,
 
     std::string edge_path = path_join(path, "Edge" + std::to_string(edge));
     tixiCreateElement(handle, path.c_str(), ("Edge" + std::to_string(edge)).c_str());
-    tixiAddIntegerElement(handle, edge_path.c_str(), "StartNode", static_cast<int>(graph.edges()[edge].start_node_idx), "%d");
-    tixiAddIntegerElement(handle, edge_path.c_str(), "EndNode", static_cast<int>(graph.edges()[edge].end_node_idx), "%d");
+    tixiAddIntegerElement(handle, edge_path.c_str(), "StartNode", static_cast<int>(graph.edges()[edge].start_node_idx),
+                          "%d");
+    tixiAddIntegerElement(handle, edge_path.c_str(), "EndNode", static_cast<int>(graph.edges()[edge].end_node_idx),
+                          "%d");
     for (int group = 0; group < num_groups; group++) {
         std::vector<double> weights;
         for (int compart = 0; compart < num_compart; compart++) {
@@ -496,8 +499,7 @@ void write_edge(TixiDocumentHandle handle, const std::string& path,
     }
 }
 
-void read_edge(TixiDocumentHandle handle, const std::string& path, Graph<SecirParams, MigrationEdge>& graph,
-               int edge)
+void read_edge(TixiDocumentHandle handle, const std::string& path, Graph<SecirParams, MigrationEdge>& graph, int edge)
 {
 
     std::string edge_path = path_join(path, "Edge" + std::to_string(edge));
