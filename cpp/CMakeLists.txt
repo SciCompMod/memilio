@@ -43,9 +43,10 @@ add_library(epidemiology
     epidemiology/model/simulation.h
     epidemiology/secir/damping.cpp
     epidemiology/secir/damping.h
-    epidemiology/secir/secir.cpp
+    epidemiology/secir/secir_params.h
     epidemiology/secir/secir.h
-    epidemiology/secir/seir.cpp
+    epidemiology/secir/seir_params.cpp
+    epidemiology/secir/seir_params.h
     epidemiology/secir/seir.h
     epidemiology/math/adapt_rk.cpp
     epidemiology/math/adapt_rk.h
@@ -57,11 +58,8 @@ add_library(epidemiology
     epidemiology/utils/graph.cpp
     epidemiology/utils/eigen.h
     epidemiology/utils/eigen_util.h
-    epidemiology/secir/populations.h
-    epidemiology/secir/populations.cpp
     epidemiology/utils/visitor.h
     epidemiology/secir/parameter_space.h
-    epidemiology/secir/parameter_space.cpp
     epidemiology/utils/uncertain_value.h
     epidemiology/utils/uncertain_value.cpp
     epidemiology/secir/uncertain_matrix.cpp
