@@ -13,7 +13,7 @@ namespace epi
 
 using HandleSimulationResultFunction = std::function<void(const SecirParams&, const TimeSeries<double>&, int node)>;
 
-auto DummyHandleResultFunction = [](const SecirParams& params, const TimeSeries<double>&, int node) {};
+auto DummyHandleResultFunction = [](const SecirParams&, const TimeSeries<double>&, int) {};
 
 /**
  * Class that performs multiple simulation runs with randomly sampled parameters.

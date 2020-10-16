@@ -1,10 +1,11 @@
 #ifndef EPI_TIME_SERIES_H
 #define EPI_TIME_SERIES_H
 
+#include "epidemiology/utils/eigen.h"
 #include "epidemiology/utils/eigen_util.h"
 #include "epidemiology/utils/stl_util.h"
+#include "epidemiology/utils/compiler_diagnostics.h"
 
-#include <Eigen/Core>
 #include <vector>
 #include <map>
 #include <ostream>
@@ -421,7 +422,7 @@ namespace details
         i |= i >> 4;
         i |= i >> 8;
         i |= i >> 16;
-        if (sizeof(Eigen::Index) == 8) {
+        IF_CONSTEXPR(sizeof(Eigen::Index) == 8) {
             i |= i >> 32;
         }
         ++i;

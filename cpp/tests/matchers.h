@@ -1,6 +1,7 @@
 #ifndef EPI_TESTS_MATCHERS_H
 #define EPI_TESTS_MATCHERS_H
 
+#include "epidemiology/utils/compiler_diagnostics.h"
 #include "gmock/gmock.h"
 
 /**
@@ -69,6 +70,7 @@ MATCHER_P3(MatrixNear, other, rtol, atol,
            "approx. equal to " + testing::PrintToString(print_wrap(other)) + " (rtol = " + testing::PrintToString(rtol) +
                ", atol = " + testing::PrintToString(atol) + ")")
 {
+    epi::unused(result_listener);
     return ((arg - other).array().abs() <= (atol + rtol * other.array().abs())).all();
 }
 
@@ -80,6 +82,7 @@ MATCHER_P3(MatrixNear, other, rtol, atol,
 MATCHER_P(MatrixNear, other,
            "approx. equal to " + testing::PrintToString(print_wrap(other)) + " (rtol = 1e-15, atol = 1e-15)")
 {
+    epi::unused(result_listener);
     return ((arg - other).array().abs() <= (1e-15 + 1e-15 * other.array().abs())).all();
 }
 

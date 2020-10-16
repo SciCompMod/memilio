@@ -51,7 +51,7 @@ namespace
 struct Foo {
 };
 
-std::ostream& operator<<(std::ostream& os, const Foo& f)
+std::ostream& operator<<(std::ostream& os, const Foo&)
 {
     return os;
 }
@@ -90,6 +90,7 @@ TEST(TestInsertSortedReplace, returnsValidIterator)
     x = *epi::insert_sorted_replace(v, 1);
     x = *epi::insert_sorted_replace(v, 4);
     x = *epi::insert_sorted_replace(v, 7);
+    ASSERT_EQ(x, 7);
 }
 
 TEST(TestInsertSortedReplace, reverse)
@@ -109,9 +110,9 @@ TEST(TestInsertSortedReplace, reverse)
 TEST(TestInsertSortedReplace, replace)
 {
     struct Foo_ {
-        Foo_(int i1, int i2)
-            : i1(i1)
-            , i2(i2)
+        Foo_(int i1_, int i2_)
+            : i1(i1_)
+            , i2(i2_)
         {
         }
         int i1, i2;
@@ -205,7 +206,7 @@ TEST(TestContains, normalCase)
 TEST(TestContains, empty)
 {
     auto v = std::vector<int>();
-    ASSERT_FALSE(epi::contains(v.begin(), v.end(), [](auto&& e) {
+    ASSERT_FALSE(epi::contains(v.begin(), v.end(), [](auto&&) {
         return true;
     }));
 }

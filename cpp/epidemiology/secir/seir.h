@@ -1,11 +1,11 @@
 #ifndef SEIR_H
 #define SEIR_H
 
+#include "epidemiology/utils/eigen.h"
 #include "epidemiology/math/integrator.h"
 #include "epidemiology/secir/populations.h"
 #include "epidemiology/secir/damping.h"
 
-#include <Eigen/Core>
 #include <vector>
 
 namespace epi

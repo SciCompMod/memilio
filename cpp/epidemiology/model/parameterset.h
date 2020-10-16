@@ -15,7 +15,7 @@ public:
     }
 
     template <class Parameter>
-    void set(typename Parameter::Type value)
+    void set(typename Parameter::Type /*value*/)
     {
         //TODO!!!
     }

@@ -5,7 +5,7 @@
 #include "epidemiology/abm/state.h"
 #include "epidemiology/abm/location_type.h"
 
-#include <Eigen/Core>
+#include "epidemiology/utils/eigen.h"
 #include <array>
 #include <random>
 
@@ -24,6 +24,14 @@ public:
      * @param type the type of the location
      */
     Location(LocationType type);
+
+    /**
+     * get the type of this location.
+     */
+    LocationType get_type() const 
+    {
+        return m_type;
+    }
 
     /** 
      * a person interacts with the population at this location, may change infection state.

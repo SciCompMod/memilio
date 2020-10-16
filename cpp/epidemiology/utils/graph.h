@@ -173,7 +173,7 @@ private:
 }; // namespace epi
 
 template <class T>
-std::enable_if_t<!has_ostream_op<T>::value, void> print_graph_object(std::ostream& os, size_t idx, const T& o)
+std::enable_if_t<!has_ostream_op<T>::value, void> print_graph_object(std::ostream& os, size_t idx, const T&)
 {
     os << idx;
 }

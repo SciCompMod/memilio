@@ -16,7 +16,7 @@ TEST(TestSecir, compareAgeResWithSingleRun)
     double nb_total_t0 = 10000, nb_exp_t0 = 100, nb_inf_t0 = 50, nb_car_t0 = 50, nb_hosp_t0 = 20, nb_icu_t0 = 10,
            nb_rec_t0 = 10, nb_dead_t0 = 0;
 
-    int nb_groups = 3;
+    size_t nb_groups = 3;
     double fact   = 1.0 / (double)nb_groups;
 
     epi::SecirParams params(nb_groups);
@@ -53,11 +53,11 @@ TEST(TestSecir, compareAgeResWithSingleRun)
     params.apply_constraints();
 
     epi::ContactFrequencyMatrix& cont_freq_matrix = params.get_contact_patterns();
-    epi::Damping dummy(30., 0.3);
-    for (int i = 0; i < nb_groups; i++) {
-        for (int j = 0; j < nb_groups; j++) {
+    epi::Damping dummyx(30., 0.3);
+    for (int i = 0; i < static_cast<int>(nb_groups); i++) {
+        for (int j = 0; j < static_cast<int>(nb_groups); j++) {
             cont_freq_matrix.set_cont_freq(fact * cont_freq, i, j);
-            cont_freq_matrix.add_damping(dummy, i, j);
+            cont_freq_matrix.add_damping(dummyx, i, j);
         }
     }
 
@@ -78,7 +78,7 @@ TEST(TestSecir, compareAgeResWithSingleRun)
 
     auto compare = load_test_data_csv<double>("secihurd-compare.csv");
 
-    ASSERT_EQ(compare.size(), secihurd.get_num_time_points());
+    ASSERT_EQ(compare.size(), static_cast<size_t>(secihurd.get_num_time_points()));
     for (size_t i = 0; i < compare.size(); i++) {
         ASSERT_EQ(compare[i].size() - 1, secihurd.get_num_elements() / nb_groups) << "at row " << i;
         ASSERT_NEAR(secihurd.get_time(i), compare[i][0], 1e-10) << "at row " << i;

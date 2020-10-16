@@ -5,9 +5,9 @@ namespace epi
 
 AbmSimulation::AbmSimulation(double t, World&& world)
     : m_world(std::move(world))
+    , m_result(Eigen::Index(InfectionState::Count))
     , m_t(t)
     , m_dt(1.0)
-    , m_result(Eigen::Index(InfectionState::Count))
 {
     store_result_at(t);
 }

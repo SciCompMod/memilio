@@ -30,8 +30,8 @@ namespace
     InfectionState random_transition(InfectionState old_state, double dt,
                                      const std::pair<InfectionState, double> (&transitions)[NumTransitions])
     {
-        auto sum = std::accumulate(std::begin(transitions), std::end(transitions), 0.0, [](auto&& sum, auto&& t) {
-            return t.second + sum;
+        auto sum = std::accumulate(std::begin(transitions), std::end(transitions), 0.0, [](auto&& a, auto&& t) {
+            return a + t.second;
         });
 
         if (sum <= 0) {
@@ -78,7 +78,7 @@ InfectionState Location::interact(const Person& person, double dt, const GlobalI
     }
 }
 
-void Location::begin_step(double dt, const GlobalInfectionParameters& global_params)
+void Location::begin_step(double /*dt*/, const GlobalInfectionParameters& global_params)
 {
     //cache for next step so it stays constant during the step while subpopulations change
     //otherwise we would have to cache all state changes during a step which uses more memory

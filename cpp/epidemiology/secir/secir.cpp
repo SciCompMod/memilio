@@ -627,7 +627,7 @@ UncertainContactMatrix const& SecirParams::get_contact_patterns() const
 
 void SecirParams::apply_constraints()
 {
-    for (int i = 0; i < times.size(); i++) {
+    for (size_t i = 0; i < times.size(); i++) {
         populations.apply_constraints();
         times[i].apply_constraints();
         probabilities[i].apply_constraints();
@@ -636,7 +636,7 @@ void SecirParams::apply_constraints()
 
 void SecirParams::check_constraints() const
 {
-    for (int i = 0; i < times.size(); i++) {
+    for (size_t i = 0; i < times.size(); i++) {
         populations.check_constraints();
         times[i].check_constraints();
         probabilities[i].check_constraints();
