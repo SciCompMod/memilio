@@ -7,7 +7,7 @@
 #include <epidemiology/utils/graph.h>
 #include <epidemiology/migration/migration.h>
 #include <epidemiology/secir/damping.h>
-#include <epidemiology/secir/populations.h>
+#include <epidemiology/model/populations.h>
 #include <epidemiology/secir/uncertain_matrix.h>
 #include <epidemiology/secir/secir.h>
 
@@ -256,7 +256,7 @@ UncertainContactMatrix read_contact(TixiDocumentHandle handle, const std::string
     return contact_patterns;
 }
 
-ParameterStudy read_parameter_study(TixiDocumentHandle handle, const std::string& path)
+auto read_parameter_study(TixiDocumentHandle handle, const std::string& path)
 {
     int io_mode;
     int num_runs;
@@ -268,23 +268,34 @@ ParameterStudy read_parameter_study(TixiDocumentHandle handle, const std::string
     tixiGetDoubleElement(handle, path_join(path, "T0").c_str(), &t0);
     tixiGetDoubleElement(handle, path_join(path, "TMax").c_str(), &tmax);
 
-    return ParameterStudy(read_parameter_space(handle, path, io_mode), t0, tmax, num_runs);
+    auto model = read_parameter_space(handle, path, io_mode);
+    return ParameterStudy<decltype(model)>(model, t0, tmax, num_runs);
 }
 
-SecirParams read_parameter_space(TixiDocumentHandle handle, const std::string& path, int io_mode)
+auto read_parameter_space(TixiDocumentHandle handle, const std::string& path, int io_mode)
 {
     int num_groups;
     tixiGetIntegerElement(handle, path_join(path, "NumberOfGroups").c_str(), &num_groups);
 
-    SecirParams params{(size_t)num_groups};
+    using AgeGroup = AgeGroup1;
+    if (num_groups == 3) {
+        using AgeGroup = AgeGroup3;
+    }
+    else if (num_groups == 5) {
+        using AgeGroup = AgeGroup5;
+    }
+    else {
+        epi::log_error("Only 1, 3 or 5 age grops allowed at the moment.");
+    }
+
+    auto model = create_secir_model<AgeGroup>();
 
     double read_buffer;
     tixiGetDoubleElement(handle, path_join(path, "StartDay").c_str(), &read_buffer);
-    params.set_start_day(read_buffer);
-    params.set_seasonality(*read_element(handle, path_join(path, "Seasonality"), io_mode));
-    params.set_icu_capacity(*read_element(handle, path_join(path, "ICUCapacity"), io_mode));
-
-    params.set_contact_patterns(read_contact(handle, path_join(path, "ContactFreq"), io_mode));
+    model.parameters.set_start_day(read_buffer);
+    model.parameters.set_seasonality(*read_element(handle, path_join(path, "Seasonality"), io_mode));
+    model.parameters.set_icu_capacity(*read_element(handle, path_join(path, "ICUCapacity"), io_mode));
+    model.parameters.set_contact_patterns(read_contact(handle, path_join(path, "ContactFreq"), io_mode));
 
     for (size_t i = 0; i < static_cast<size_t>(num_groups); i++) {
         auto group_name = "Group" + std::to_string(i + 1);
@@ -294,319 +305,64 @@ SecirParams read_parameter_space(TixiDocumentHandle handle, const std::string& p
         auto population_path = path_join(group_path, "Population");
 
         tixiGetDoubleElement(handle, path_join(population_path, "Dead").c_str(), &read_buffer);
-        params.populations.set({i, SecirCompartments::D}, read_buffer);
+        model.populations.set(read_buffer, (AgeGroup)i, InfectionType::D);
 
-        params.populations.set({i, SecirCompartments::E},
-                               *read_element(handle, path_join(population_path, "Exposed"), io_mode));
-        params.populations.set({i, SecirCompartments::C},
-                               *read_element(handle, path_join(population_path, "Carrier"), io_mode));
-        params.populations.set({i, SecirCompartments::I},
-                               *read_element(handle, path_join(population_path, "Infectious"), io_mode));
-        params.populations.set({i, SecirCompartments::H},
-                               *read_element(handle, path_join(population_path, "Hospitalized"), io_mode));
-        params.populations.set({i, SecirCompartments::U},
-                               *read_element(handle, path_join(population_path, "ICU"), io_mode));
-        params.populations.set({i, SecirCompartments::R},
-                               *read_element(handle, path_join(population_path, "Recovered"), io_mode));
+        model.populations.set(*read_element(handle, path_join(population_path, "Exposed"), io_mode), (AgeGroup)i,
+                              InfectionType::E);
+        model.populations.set(*read_element(handle, path_join(population_path, "Carrier"), io_mode), (AgeGroup)i,
+                              InfectionType::C);
+        model.populations.set(*read_element(handle, path_join(population_path, "Infectious"), io_mode), (AgeGroup)i,
+                              InfectionType::I);
+        model.populations.set(*read_element(handle, path_join(population_path, "Hospitalized"), io_mode), (AgeGroup)i,
+                              InfectionType::H);
+        model.populations.set(*read_element(handle, path_join(population_path, "ICU"), io_mode), (AgeGroup)i,
+                              InfectionType::U);
+        model.populations.set(*read_element(handle, path_join(population_path, "Recovered"), io_mode), (AgeGroup)i,
+                              InfectionType::R);
 
         tixiGetDoubleElement(handle, path_join(population_path, "Total").c_str(), &read_buffer);
-        params.populations.set_difference_from_group_total({i, SecirCompartments::S}, epi::SecirCategory::AgeGroup, i,
-                                                           read_buffer);
+        model.populations.set_difference_from_group_total(read_buffer, (AgeGroup)i, (AgeGroup)i, InfectionType::S);
 
         // times
         auto times_path = path_join(group_path, "StageTimes");
 
-        params.times[i].set_incubation(*read_element(handle, path_join(times_path, "Incubation"), io_mode));
-        params.times[i].set_infectious_mild(*read_element(handle, path_join(times_path, "InfectiousMild"), io_mode));
-        params.times[i].set_serialinterval(*read_element(handle, path_join(times_path, "SerialInterval"), io_mode));
-        params.times[i].set_hospitalized_to_home(
+        model.parameters.times[i].set_incubation(*read_element(handle, path_join(times_path, "Incubation"), io_mode));
+        model.parameters.times[i].set_infectious_mild(
+            *read_element(handle, path_join(times_path, "InfectiousMild"), io_mode));
+        model.parameters.times[i].set_serialinterval(
+            *read_element(handle, path_join(times_path, "SerialInterval"), io_mode));
+        model.parameters.times[i].set_hospitalized_to_home(
             *read_element(handle, path_join(times_path, "HospitalizedToRecovered"), io_mode));
-        params.times[i].set_home_to_hospitalized(
+        model.parameters.times[i].set_home_to_hospitalized(
             *read_element(handle, path_join(times_path, "InfectiousToHospitalized"), io_mode));
-        params.times[i].set_infectious_asymp(*read_element(handle, path_join(times_path, "InfectiousAsympt"), io_mode));
-        params.times[i].set_hospitalized_to_icu(
+        model.parameters.times[i].set_infectious_asymp(
+            *read_element(handle, path_join(times_path, "InfectiousAsympt"), io_mode));
+        model.parameters.times[i].set_hospitalized_to_icu(
             *read_element(handle, path_join(times_path, "HospitalizedToICU"), io_mode));
-        params.times[i].set_icu_to_home(*read_element(handle, path_join(times_path, "ICUToRecovered"), io_mode));
-        params.times[i].set_icu_to_death(*read_element(handle, path_join(times_path, "ICUToDead"), io_mode));
+        model.parameters.times[i].set_icu_to_home(
+            *read_element(handle, path_join(times_path, "ICUToRecovered"), io_mode));
+        model.parameters.times[i].set_icu_to_death(*read_element(handle, path_join(times_path, "ICUToDead"), io_mode));
 
         // probabilities
         auto probabilities_path = path_join(group_path, "Probabilities");
 
-        params.probabilities[i].set_infection_from_contact(
+        model.parameters.probabilities[i].set_infection_from_contact(
             *read_element(handle, path_join(probabilities_path, "InfectedFromContact"), io_mode));
-        params.probabilities[i].set_carrier_infectability(
+        model.parameters.probabilities[i].set_carrier_infectability(
             *read_element(handle, path_join(probabilities_path, "Carrierinfectability"), io_mode));
-        params.probabilities[i].set_asymp_per_infectious(
+        model.parameters.probabilities[i].set_asymp_per_infectious(
             *read_element(handle, path_join(probabilities_path, "AsympPerInfectious"), io_mode));
-        params.probabilities[i].set_risk_from_symptomatic(
+        model.parameters.probabilities[i].set_risk_from_symptomatic(
             *read_element(handle, path_join(probabilities_path, "RiskFromSymptomatic"), io_mode));
-        params.probabilities[i].set_dead_per_icu(
+        model.parameters.probabilities[i].set_dead_per_icu(
             *read_element(handle, path_join(probabilities_path, "DeadPerICU"), io_mode));
-        params.probabilities[i].set_hospitalized_per_infectious(
+        model.parameters.probabilities[i].set_hospitalized_per_infectious(
             *read_element(handle, path_join(probabilities_path, "HospitalizedPerInfectious"), io_mode));
-        params.probabilities[i].set_icu_per_hospitalized(
+        model.parameters.probabilities[i].set_icu_per_hospitalized(
             *read_element(handle, path_join(probabilities_path, "ICUPerHospitalized"), io_mode));
     }
 
-    return params;
-}
-
-void write_parameter_space(TixiDocumentHandle handle, const std::string& path, const SecirParams& parameters,
-                           int num_runs, int io_mode)
-{
-    auto num_groups = parameters.get_num_groups();
-    tixiAddIntegerElement(handle, path.c_str(), "NumberOfGroups", static_cast<int>(num_groups), "%d");
-
-    tixiAddDoubleElement(handle, path.c_str(), "StartDay", parameters.get_start_day(), "%g");
-    write_element(handle, path, "Seasonality", parameters.get_seasonality(), io_mode, num_runs);
-    write_element(handle, path, "ICUCapacity", parameters.get_icu_capacity(), io_mode, num_runs);
-
-    for (size_t i = 0; i < num_groups; i++) {
-        auto group_name = "Group" + std::to_string(i + 1);
-        auto group_path = path_join(path, group_name);
-
-        tixiCreateElement(handle, path.c_str(), group_name.c_str());
-
-        // populations
-        auto population_path = path_join(group_path, "Population");
-        tixiCreateElement(handle, group_path.c_str(), "Population");
-
-        tixiAddDoubleElement(handle, population_path.c_str(), "Total",
-                             parameters.populations.get_group_total(AgeGroup, i), "%g");
-        tixiAddDoubleElement(handle, population_path.c_str(), "Dead",
-                             parameters.populations.get({i, SecirCompartments::D}), "%g");
-        write_element(handle, population_path, "Exposed", parameters.populations.get({i, SecirCompartments::E}),
-                      io_mode, num_runs);
-        write_element(handle, population_path, "Carrier", parameters.populations.get({i, SecirCompartments::C}),
-                      io_mode, num_runs);
-        write_element(handle, population_path, "Infectious", parameters.populations.get({i, SecirCompartments::I}),
-                      io_mode, num_runs);
-        write_element(handle, population_path, "Hospitalized", parameters.populations.get({i, SecirCompartments::H}),
-                      io_mode, num_runs);
-        write_element(handle, population_path, "ICU", parameters.populations.get({i, SecirCompartments::U}), io_mode,
-                      num_runs);
-        write_element(handle, population_path, "Recovered", parameters.populations.get({i, SecirCompartments::R}),
-                      io_mode, num_runs);
-
-        // times
-        auto times_path = path_join(group_path, "StageTimes");
-        tixiCreateElement(handle, group_path.c_str(), "StageTimes");
-
-        write_element(handle, times_path, "Incubation", parameters.times[i].get_incubation(), io_mode, num_runs);
-        write_element(handle, times_path, "InfectiousMild", parameters.times[i].get_infectious_mild(), io_mode,
-                      num_runs);
-        write_element(handle, times_path, "SerialInterval", parameters.times[i].get_serialinterval(), io_mode,
-                      num_runs);
-        write_element(handle, times_path, "HospitalizedToRecovered", parameters.times[i].get_hospitalized_to_home(),
-                      io_mode, num_runs);
-        write_element(handle, times_path, "InfectiousToHospitalized", parameters.times[i].get_home_to_hospitalized(),
-                      io_mode, num_runs);
-        write_element(handle, times_path, "InfectiousAsympt", parameters.times[i].get_infectious_asymp(), io_mode,
-                      num_runs);
-        write_element(handle, times_path, "HospitalizedToICU", parameters.times[i].get_hospitalized_to_icu(), io_mode,
-                      num_runs);
-        write_element(handle, times_path, "ICUToRecovered", parameters.times[i].get_icu_to_home(), io_mode, num_runs);
-        write_element(handle, times_path, "ICUToDead", parameters.times[i].get_icu_to_dead(), io_mode, num_runs);
-
-        // probabilities
-        auto probabilities_path = path_join(group_path, "Probabilities");
-        tixiCreateElement(handle, group_path.c_str(), "Probabilities");
-
-        write_element(handle, probabilities_path, "InfectedFromContact",
-                      parameters.probabilities[i].get_infection_from_contact(), io_mode, num_runs);
-        write_element(handle, probabilities_path, "Carrierinfectability",
-                      parameters.probabilities[i].get_carrier_infectability(), io_mode, num_runs);
-        write_element(handle, probabilities_path, "AsympPerInfectious",
-                      parameters.probabilities[i].get_asymp_per_infectious(), io_mode, num_runs);
-        write_element(handle, probabilities_path, "RiskFromSymptomatic",
-                      parameters.probabilities[i].get_risk_from_symptomatic(), io_mode, num_runs);
-        write_element(handle, probabilities_path, "DeadPerICU", parameters.probabilities[i].get_dead_per_icu(), io_mode,
-                      num_runs);
-        write_element(handle, probabilities_path, "HospitalizedPerInfectious",
-                      parameters.probabilities[i].get_hospitalized_per_infectious(), io_mode, num_runs);
-        write_element(handle, probabilities_path, "ICUPerHospitalized",
-                      parameters.probabilities[i].get_icu_per_hospitalized(), io_mode, num_runs);
-    }
-
-    write_contact(handle, path, parameters.get_contact_patterns(), io_mode);
-}
-
-void write_parameter_study(TixiDocumentHandle handle, const std::string& path, const ParameterStudy& parameter_study,
-                           int io_mode)
-{
-    tixiAddIntegerElement(handle, path.c_str(), "IOMode", io_mode, "%d");
-    tixiAddIntegerElement(handle, path.c_str(), "Runs", parameter_study.get_num_runs(), "%d");
-    tixiAddDoubleElement(handle, path.c_str(), "T0", parameter_study.get_t0(), "%g");
-    tixiAddDoubleElement(handle, path.c_str(), "TMax", parameter_study.get_tmax(), "%g");
-
-    write_parameter_space(handle, path, parameter_study.get_secir_params(), parameter_study.get_num_runs(), io_mode);
-}
-
-void write_single_run_params(const int run, const SecirParams& params, double t0, double tmax,
-                             const TimeSeries<double>& result, int node)
-{
-
-    int num_runs     = 1;
-    std::string path = "/Parameters";
-    TixiDocumentHandle handle;
-    tixiCreateDocument("Parameters", &handle);
-    ParameterStudy study(params, t0, tmax, num_runs);
-
-    boost::filesystem::path dir("results");
-
-    bool created = boost::filesystem::create_directory(dir);
-
-    if (created) {
-        log_info("Directory '{:s}' was created. Results are stored in {:s}/results.", dir.string(),
-                 epi::get_current_dir_name());
-    }
-    else {
-        log_info(
-            "Directory '{:s}' already exists. Results are stored in {:s}/ results. Files from previous runs will be "
-            "overwritten",
-            dir.string(), epi::get_current_dir_name());
-    }
-
-    write_parameter_study(handle, path, study);
-
-    tixiSaveDocument(
-        handle,
-        (dir / ("Parameters_run" + std::to_string(run) + "_node" + std::to_string(node) + ".xml")).string().c_str());
-    tixiCloseDocument(handle);
-
-    save_result(result,
-                (dir / ("Results_run" + std::to_string(run) + "_node" + std::to_string(node) + ".h5")).string());
-}
-
-void write_node(const Graph<SecirParams, MigrationEdge>& graph, int node)
-{
-    int num_runs = 1;
-    int io_mode  = 2;
-
-    std::string path = "/Parameters";
-    TixiDocumentHandle handle;
-    tixiCreateDocument("Parameters", &handle);
-
-    tixiAddIntegerElement(handle, path.c_str(), "NodeID", node, "%d");
-
-    auto params = graph.nodes()[node];
-
-    write_parameter_space(handle, path, params, num_runs, io_mode);
-    tixiSaveDocument(handle, ("GraphNode" + std::to_string(node) + ".xml").c_str());
-    tixiCloseDocument(handle);
-}
-
-void read_node(Graph<SecirParams, MigrationEdge>& graph, int node)
-{
-    TixiDocumentHandle node_handle;
-    tixiOpenDocument(("GraphNode" + std::to_string(node) + ".xml").c_str(), &node_handle);
-
-    graph.add_node(read_parameter_space(node_handle, "/Parameters", 2));
-
-    tixiCloseDocument(node_handle);
-}
-
-void write_edge(TixiDocumentHandle handle, const std::string& path, const Graph<SecirParams, MigrationEdge>& graph,
-                int edge)
-{
-
-    int num_groups  = static_cast<int>(graph.nodes()[0].get_num_groups());
-    int num_compart = static_cast<int>(graph.nodes()[0].populations.get_num_compartments()) / num_groups;
-
-    std::string edge_path = path_join(path, "Edge" + std::to_string(edge));
-    tixiCreateElement(handle, path.c_str(), ("Edge" + std::to_string(edge)).c_str());
-    tixiAddIntegerElement(handle, edge_path.c_str(), "StartNode", static_cast<int>(graph.edges()[edge].start_node_idx),
-                          "%d");
-    tixiAddIntegerElement(handle, edge_path.c_str(), "EndNode", static_cast<int>(graph.edges()[edge].end_node_idx),
-                          "%d");
-    for (int group = 0; group < num_groups; group++) {
-        std::vector<double> weights;
-        for (int compart = 0; compart < num_compart; compart++) {
-            weights.push_back(graph.edges()[edge].property.coefficients[compart + group * num_compart]);
-        }
-        tixiAddFloatVector(handle, edge_path.c_str(), ("Group" + std::to_string(group + 1)).c_str(), weights.data(),
-                           num_compart, "%g");
-    }
-}
-
-void read_edge(TixiDocumentHandle handle, const std::string& path, Graph<SecirParams, MigrationEdge>& graph, int edge)
-{
-
-    std::string edge_path = path_join(path, "Edge" + std::to_string(edge));
-    int num_groups;
-    int num_compart;
-    int start_node;
-    int end_node;
-
-    tixiGetIntegerElement(handle, path_join(path, "NumberOfGroups").c_str(), &num_groups);
-    tixiGetIntegerElement(handle, path_join(path, "NumberOfCompartiments").c_str(), &num_compart);
-    tixiGetIntegerElement(handle, path_join(edge_path, "StartNode").c_str(), &start_node);
-    tixiGetIntegerElement(handle, path_join(edge_path, "EndNode").c_str(), &end_node);
-
-    auto all_weights = Eigen::VectorXd(num_compart * num_groups);
-    for (int group = 0; group < num_groups; group++) {
-        double* weights = nullptr;
-        tixiGetFloatVector(handle, path_join(edge_path, "Group" + std::to_string(group + 1)).c_str(), &weights,
-                           num_compart);
-        for (int compart = 0; compart < num_compart; compart++) {
-            all_weights(compart + group * num_compart) = weights[compart];
-        }
-    }
-    graph.add_edge(start_node, end_node, all_weights);
-}
-
-void write_graph(const Graph<SecirParams, MigrationEdge>& graph)
-{
-    std::string edges_path = "/Edges";
-    TixiDocumentHandle handle;
-    tixiCreateDocument("Edges", &handle);
-
-    int num_nodes   = static_cast<int>(graph.nodes().size());
-    int num_edges   = static_cast<int>(graph.edges().size());
-    int num_groups  = graph.nodes()[0].get_contact_patterns().get_cont_freq_mat().get_size();
-    int num_compart = static_cast<int>(graph.nodes()[0].populations.get_num_compartments()) / num_groups;
-
-    tixiAddIntegerElement(handle, edges_path.c_str(), "NumberOfNodes", num_nodes, "%d");
-    tixiAddIntegerElement(handle, edges_path.c_str(), "NumberOfEdges", num_edges, "%d");
-    tixiAddIntegerElement(handle, edges_path.c_str(), "NumberOfGroups", num_groups, "%d");
-    tixiAddIntegerElement(handle, edges_path.c_str(), "NumberOfCompartiments", num_compart, "%d");
-
-    for (int edge = 0; edge < num_edges; edge++) {
-        write_edge(handle, edges_path, graph, edge);
-    }
-
-    tixiSaveDocument(handle, "GraphEdges.xml");
-    tixiCloseDocument(handle);
-
-    for (int node = 0; node < num_nodes; node++) {
-        write_node(graph, node);
-    }
-}
-
-Graph<SecirParams, MigrationEdge> read_graph()
-{
-    TixiDocumentHandle handle;
-    tixiOpenDocument("GraphEdges.xml", &handle);
-
-    std::string edges_path = "/Edges";
-
-    int num_nodes;
-    int num_edges;
-
-    tixiGetIntegerElement(handle, path_join(edges_path, "NumberOfNodes").c_str(), &num_nodes);
-    tixiGetIntegerElement(handle, path_join(edges_path, "NumberOfEdges").c_str(), &num_edges);
-
-    Graph<SecirParams, MigrationEdge> graph;
-
-    for (int node = 0; node < num_nodes; node++) {
-        read_node(graph, node);
-    }
-
-    for (int edge = 0; edge < num_edges; edge++) {
-        read_edge(handle, edges_path, graph, edge);
-    }
-    tixiCloseDocument(handle);
-    return graph;
+    return model;
 }
 
 } // namespace epi

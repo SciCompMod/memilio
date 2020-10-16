@@ -59,7 +59,7 @@ using SecirModel5 = CompartmentalModel<Populations<AgeGroup5, InfectionType>, Se
 // a factory function anymore. Its main purpose is to instantiate the
 // intercompartmental flows
 template <class AgeGroup>
-auto create_secir_model()
+CompartmentalModel<Populations<AgeGroup, InfectionType>, SecirParams<(size_t)AgeGroup::Count>> create_secir_model()
 {
     using Pa = SecirParams<AgeGroup::Count>;
     using Po = Populations<AgeGroup, InfectionType>;
