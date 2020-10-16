@@ -92,8 +92,6 @@ public:
 
     double base_reprod;
 
-    UncertainValue m_icu_capacity;
-
     /**
      * @brief sets the start day in the SECIR model
      * The start day defines in which season the simulation can be started
@@ -1151,6 +1149,10 @@ private:
     size_t m_num_groups;
 
     UncertainContactMatrix m_contact_patterns;
+
+    double m_tstart;
+    UncertainValue m_seasonality;
+    UncertainValue m_icu_capacity;
 };
 
 /**

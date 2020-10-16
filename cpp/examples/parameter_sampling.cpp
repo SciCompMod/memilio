@@ -54,26 +54,28 @@ int main()
     /*
      * Contact frequency and dampings variable element
      */
-    size_t nb_groups = 3;
-    epi::ContactFrequencyMatrix contact_freq_matrix{nb_groups};
+    epi::SecirModel3 model = epi::create_secir_model<epi::AgeGroup3>();
+    size_t nb_groups       = model.parameters.get_num_groups();
     for (size_t i = 0; i < nb_groups; i++) {
         for (size_t j = i; i < nb_groups; i++) {
-            contact_freq_matrix.set_cont_freq(0.5, static_cast<int>(i), static_cast<int>(j));
+            model.parameters.get_contact_patterns().get_cont_freq_mat().set_cont_freq(0.5, static_cast<int>(i),
+                                                                                      static_cast<int>(j));
         }
     }
 
     double t0   = 0;
     double tmax = 100;
 
-    epi::SecirParams params(contact_freq_matrix);
-    params.get_contact_patterns().set_distribution_damp_nb(epi::ParameterDistributionUniform(1, (tmax - t0) / 10));
-    params.get_contact_patterns().set_distribution_damp_days(epi::ParameterDistributionUniform(t0, tmax));
-    params.get_contact_patterns().set_distribution_damp_diag_base(epi::ParameterDistributionUniform(0.1, 1));
-    params.get_contact_patterns().set_distribution_damp_diag_rel(epi::ParameterDistributionUniform(0.6, 1.4));
-    params.get_contact_patterns().set_distribution_damp_offdiag_rel(epi::ParameterDistributionUniform(0.7, 1.1));
+    model.parameters.get_contact_patterns().set_distribution_damp_nb(
+        epi::ParameterDistributionUniform(1, (tmax - t0) / 10));
+    model.parameters.get_contact_patterns().set_distribution_damp_days(epi::ParameterDistributionUniform(t0, tmax));
+    model.parameters.get_contact_patterns().set_distribution_damp_diag_base(epi::ParameterDistributionUniform(0.1, 1));
+    model.parameters.get_contact_patterns().set_distribution_damp_diag_rel(epi::ParameterDistributionUniform(0.6, 1.4));
+    model.parameters.get_contact_patterns().set_distribution_damp_offdiag_rel(
+        epi::ParameterDistributionUniform(0.7, 1.1));
 
-    draw_sample(params);
-    epi::ContactFrequencyMatrix cfmat_sample = params.get_contact_patterns();
+    draw_sample(model);
+    epi::ContactFrequencyMatrix cfmat_sample = model.parameters.get_contact_patterns();
 
     printf("\n\n Number of dampings: %zu\n", cfmat_sample.get_dampings(0, 0).get_dampings_vector().size());
 

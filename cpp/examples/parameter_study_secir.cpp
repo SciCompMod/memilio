@@ -48,10 +48,11 @@ int main(int argc, char* argv[])
     // theta = theta_in; // icu per hospitalized
     // delta = delta_in; // deaths per ICUs
 
-    int num_groups = 1;
-    double fact    = 1.0 / (double)num_groups;
+    epi::SecirModel1 model = epi::create_secir_model<epi::AgeGroup1>();
+    int num_groups         = model.parameters.get_num_groups();
+    double fact            = 1.0 / (double)num_groups;
 
-    epi::SecirParams params(num_groups);
+    auto& params = model.parameters;
 
     params.set_icu_capacity(std::numeric_limits<double>::max());
     params.set_start_day(0);
@@ -68,15 +69,15 @@ int main(int argc, char* argv[])
         params.times[i].set_infectious_asymp(tinfasy);
         params.times[i].set_icu_to_death(ticu2death);
 
-        params.populations.set({i, epi::SecirCompartments::E}, fact * num_exp_t0);
-        params.populations.set({i, epi::SecirCompartments::C}, fact * num_car_t0);
-        params.populations.set({i, epi::SecirCompartments::I}, fact * num_inf_t0);
-        params.populations.set({i, epi::SecirCompartments::H}, fact * num_hosp_t0);
-        params.populations.set({i, epi::SecirCompartments::U}, fact * num_icu_t0);
-        params.populations.set({i, epi::SecirCompartments::R}, fact * num_rec_t0);
-        params.populations.set({i, epi::SecirCompartments::D}, fact * num_dead_t0);
-        params.populations.set_difference_from_group_total({i, epi::SecirCompartments::S}, epi::SecirCategory::AgeGroup,
-                                                           i, fact * num_total_t0);
+        model.populations.set(fact * num_exp_t0, (epi::AgeGroup1)i, epi::InfectionType::E);
+        model.populations.set(fact * num_car_t0, (epi::AgeGroup1)i, epi::InfectionType::C);
+        model.populations.set(fact * num_inf_t0, (epi::AgeGroup1)i, epi::InfectionType::I);
+        model.populations.set(fact * num_hosp_t0, (epi::AgeGroup1)i, epi::InfectionType::H);
+        model.populations.set(fact * num_icu_t0, (epi::AgeGroup1)i, epi::InfectionType::U);
+        model.populations.set(fact * num_rec_t0, (epi::AgeGroup1)i, epi::InfectionType::R);
+        model.populations.set(fact * num_dead_t0, (epi::AgeGroup1)i, epi::InfectionType::D);
+        model.populations.set_difference_from_group_total(fact * num_total_t0, (epi::AgeGroup1)i, (epi::AgeGroup1)i,
+                                                          epi::InfectionType::S);
 
         params.probabilities[i].set_infection_from_contact(inf_prob);
         params.probabilities[i].set_carrier_infectability(carr_infec);
@@ -95,27 +96,27 @@ int main(int argc, char* argv[])
         }
     }
 
-    epi::set_params_distributions_normal(params, t0, tmax, 0.2);
+    epi::set_params_distributions_normal(model, t0, tmax, 0.2);
 
     // write parameter space without parameter study
     std::string path2 = "/Parameters2";
     TixiDocumentHandle handle2;
     tixiCreateDocument("Parameters2", &handle2);
-    epi::write_parameter_space(handle2, path2, params, 0, 2);
+    epi::write_parameter_space(handle2, path2, model, 0, 2);
     tixiSaveDocument(handle2, "Parameters2.xml");
     tixiCloseDocument(handle2);
 
     // draw sample and write same parameter space but with different current values
-    epi::draw_sample(params);
+    epi::draw_sample(model);
     std::string path3 = "/Parameters3";
     TixiDocumentHandle handle3;
     tixiCreateDocument("Parameters3", &handle3);
-    epi::write_parameter_space(handle3, path3, params, 0, 2);
+    epi::write_parameter_space(handle3, path3, model, 0, 2);
     tixiSaveDocument(handle3, "Parameters3.xml");
     tixiCloseDocument(handle3);
 
     // create study
-    epi::ParameterStudy parameter_study(params, t0, tmax, 0.2, 1);
+    epi::ParameterStudy<epi::SecirModel1> parameter_study(model, t0, tmax, 0.2, 1);
 
     // write and run study
     std::string path = "/Parameters";
@@ -128,9 +129,9 @@ int main(int argc, char* argv[])
     tixiCloseDocument(handle);
 
     tixiOpenDocument("Parameters.xml", &handle);
-    epi::ParameterStudy read_study = epi::read_parameter_study(handle, path);
-    int run                        = 0;
-    auto lambda                    = [&run, t0, tmax](const auto& params, const auto& secir_result, int node) {
+    epi::ParameterStudy<epi::SecirModel1> read_study = epi::read_parameter_study<epi::SecirModel1>(handle, path);
+    int run                                          = 0;
+    auto lambda = [&run, t0, tmax](const auto& params, const auto& secir_result, int node) {
         epi::write_single_run_params(run++, params, t0, tmax, secir_result, node);
     };
     auto results = read_study.run(lambda);

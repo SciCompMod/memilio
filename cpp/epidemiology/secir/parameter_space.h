@@ -23,7 +23,7 @@ namespace epi
 */
 template <class AgeGroup>
 void set_params_distributions_normal(
-    CompartmentalModel<Populations<AgeGroup, InfectionType>, SecirParams<AgeGroup::Count>>& model, double t0,
+    CompartmentalModel<Populations<AgeGroup, InfectionType>, SecirParams<(size_t)AgeGroup::Count>>& model, double t0,
     double tmax, double dev_rel)
 {
     double min_val = 0.001;
@@ -202,7 +202,7 @@ void set_params_distributions_normal(
 * @param[inout] params SecirParams including contact patterns for alle age groups
 */
 template <class AgeGroup>
-void draw_sample(CompartmentalModel<Populations<AgeGroup, InfectionType>, SecirParams<AgeGroup::Count>>& model)
+void draw_sample(CompartmentalModel<Populations<AgeGroup, InfectionType>, SecirParams<(size_t)AgeGroup::Count>>& model)
 {
     params.get_seasonality().draw_sample();
     params.get_icu_capacity().draw_sample();

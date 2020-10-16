@@ -44,10 +44,11 @@ int main()
     // theta = theta_in; // icu per hospitalized
     // delta = delta_in; // deaths per ICUs
 
-    int nb_groups = 3;
-    double fact   = 1.0 / (double)nb_groups;
+    epi::SecirModel3 model = epi::create_secir_model<epi::AgeGroup3>();
+    int nb_groups          = model.parameters.get_num_groups();
+    double fact            = 1.0 / (double)nb_groups;
 
-    epi::SecirParams params(nb_groups);
+    auto& params = model.parameters;
 
     params.set_icu_capacity(std::numeric_limits<double>::max());
     params.set_start_day(0);
@@ -63,15 +64,15 @@ int main()
         params.times[i].set_icu_to_home(ticu2home);
         params.times[i].set_icu_to_death(ticu2death);
 
-        params.populations.set({i, epi::SecirCompartments::E}, fact * nb_exp_t0);
-        params.populations.set({i, epi::SecirCompartments::C}, fact * nb_car_t0);
-        params.populations.set({i, epi::SecirCompartments::I}, fact * nb_inf_t0);
-        params.populations.set({i, epi::SecirCompartments::H}, fact * nb_hosp_t0);
-        params.populations.set({i, epi::SecirCompartments::U}, fact * nb_icu_t0);
-        params.populations.set({i, epi::SecirCompartments::R}, fact * nb_rec_t0);
-        params.populations.set({i, epi::SecirCompartments::D}, fact * nb_dead_t0);
-        params.populations.set_difference_from_group_total({i, epi::SecirCompartments::S}, epi::SecirCategory::AgeGroup,
-                                                           i, fact * nb_total_t0);
+        model.populations.set(fact * nb_exp_t0, (epi::AgeGroup3)i, epi::InfectionType::E);
+        model.populations.set(fact * nb_car_t0, (epi::AgeGroup3)i, epi::InfectionType::C);
+        model.populations.set(fact * nb_inf_t0, (epi::AgeGroup3)i, epi::InfectionType::I);
+        model.populations.set(fact * nb_hosp_t0, (epi::AgeGroup3)i, epi::InfectionType::H);
+        model.populations.set(fact * nb_icu_t0, (epi::AgeGroup3)i, epi::InfectionType::U);
+        model.populations.set(fact * nb_rec_t0, (epi::AgeGroup3)i, epi::InfectionType::R);
+        model.populations.set(fact * nb_dead_t0, (epi::AgeGroup3)i, epi::InfectionType::D);
+        model.populations.set_difference_from_group_total(fact * nb_total_t0, (epi::AgeGroup3)i, (epi::AgeGroup3)i,
+                                                          epi::InfectionType::S);
 
         params.probabilities[i].set_infection_from_contact(inf_prob);
         params.probabilities[i].set_carrier_infectability(carr_infec);
@@ -99,13 +100,13 @@ int main()
     printf("Number of time points :%d\n", static_cast<int>(secir.get_num_time_points()));
     printf("People in\n");
 
-    for (size_t k = 0; k < epi::SecirCompartments::SecirCount; k++) {
+    for (size_t k = 0; k < (size_t)epi::InfectionType::Count; k++) {
         double dummy = 0;
 
         for (size_t i = 0; i < params.get_num_groups(); i++) {
             printf("\t %c[%d]: %.0f", vars[k], (int)i,
-                   secir.get_last_value()[k + epi::SecirCompartments::SecirCount * (int)i]);
-            dummy += secir.get_last_value()[k + epi::SecirCompartments::SecirCount * (int)i];
+                   secir.get_last_value()[k + (size_t)epi::InfectionType::Count * (int)i]);
+            dummy += secir.get_last_value()[k + (size_t)epi::InfectionType::Count * (int)i];
         }
 
         printf("\t %c_otal: %.0f\n", vars[k], dummy);

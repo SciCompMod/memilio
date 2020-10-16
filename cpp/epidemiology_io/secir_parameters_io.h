@@ -84,7 +84,99 @@ void write_predef_sample(TixiDocumentHandle handle, const std::string& path, con
  * @param io_mode type of xml input (see epi::write_parameter_study for more details)
  * @return returns a SecirParams object
  */
-auto read_parameter_space(TixiDocumentHandle handle, const std::string& path, int io_mode);
+template <class Model>
+Model read_parameter_space(TixiDocumentHandle handle, const std::string& path, int io_mode)
+{
+    int num_groups;
+    tixiGetIntegerElement(handle, path_join(path, "NumberOfGroups").c_str(), &num_groups);
+
+    using AgeGroup = AgeGroup1;
+    if (num_groups == 3) {
+        using AgeGroup = AgeGroup3;
+    }
+    else if (num_groups == 5) {
+        using AgeGroup = AgeGroup5;
+    }
+    else {
+        epi::log_error("Only 1, 3 or 5 age grops allowed at the moment.");
+    }
+
+    auto model = create_secir_model<AgeGroup>();
+    double read_buffer;
+    tixiGetDoubleElement(handle, path_join(path, "StartDay").c_str(), &read_buffer);
+    model.parameters.set_start_day(read_buffer);
+    model.parameters.set_seasonality(*read_element(handle, path_join(path, "Seasonality"), io_mode));
+    model.parameters.set_icu_capacity(*read_element(handle, path_join(path, "ICUCapacity"), io_mode));
+    model.parameters.set_contact_patterns(read_contact(handle, path_join(path, "ContactFreq"), io_mode));
+
+    for (size_t i = 0; i < num_groups; i++) {
+        auto group_name = "Group" + std::to_string(i + 1);
+        auto group_path = path_join(path, group_name);
+
+        // populations
+        auto population_path = path_join(group_path, "Population");
+
+        double read_buffer;
+        tixiGetDoubleElement(handle, path_join(population_path, "Dead").c_str(), &read_buffer);
+        model.populations.set(read_buffer, (AgeGroup)i, InfectionType::D);
+
+        model.populations.set(*read_element(handle, path_join(population_path, "Exposed"), io_mode), (AgeGroup)i,
+                              InfectionType::E);
+        model.populations.set(*read_element(handle, path_join(population_path, "Carrier"), io_mode), (AgeGroup)i,
+                              InfectionType::C);
+        model.populations.set(*read_element(handle, path_join(population_path, "Infectious"), io_mode), (AgeGroup)i,
+                              InfectionType::I);
+        model.populations.set(*read_element(handle, path_join(population_path, "Hospitalized"), io_mode), (AgeGroup)i,
+                              InfectionType::H);
+        model.populations.set(*read_element(handle, path_join(population_path, "ICU"), io_mode), (AgeGroup)i,
+                              InfectionType::U);
+        model.populations.set(*read_element(handle, path_join(population_path, "Recovered"), io_mode), (AgeGroup)i,
+                              InfectionType::R);
+
+        tixiGetDoubleElement(handle, path_join(population_path, "Total").c_str(), &read_buffer);
+        model.populations.set_difference_from_group_total(read_buffer, (AgeGroup)i, (AgeGroup)i, InfectionType::S);
+
+        // times
+        auto times_path = path_join(group_path, "StageTimes");
+
+        model.parameters.times[i].set_incubation(*read_element(handle, path_join(times_path, "Incubation"), io_mode));
+        model.parameters.times[i].set_infectious_mild(
+            *read_element(handle, path_join(times_path, "InfectiousMild"), io_mode));
+        model.parameters.times[i].set_serialinterval(
+            *read_element(handle, path_join(times_path, "SerialInterval"), io_mode));
+        model.parameters.times[i].set_hospitalized_to_home(
+            *read_element(handle, path_join(times_path, "HospitalizedToRecovered"), io_mode));
+        model.parameters.times[i].set_home_to_hospitalized(
+            *read_element(handle, path_join(times_path, "InfectiousToHospitalized"), io_mode));
+        model.parameters.times[i].set_infectious_asymp(
+            *read_element(handle, path_join(times_path, "InfectiousAsympt"), io_mode));
+        model.parameters.times[i].set_hospitalized_to_icu(
+            *read_element(handle, path_join(times_path, "HospitalizedToICU"), io_mode));
+        model.parameters.times[i].set_icu_to_home(
+            *read_element(handle, path_join(times_path, "ICUToRecovered"), io_mode));
+        model.parameters.times[i].set_icu_to_death(*read_element(handle, path_join(times_path, "ICUToDead"), io_mode));
+
+        // probabilities
+        auto probabilities_path = path_join(group_path, "Probabilities");
+
+        model.parameters.probabilities[i].set_infection_from_contact(
+            *read_element(handle, path_join(probabilities_path, "InfectedFromContact"), io_mode));
+        model.parameters.probabilities[i].set_carrier_infectability(
+            *read_element(handle, path_join(probabilities_path, "Carrierinfectability"), io_mode));
+        model.parameters.probabilities[i].set_asymp_per_infectious(
+            *read_element(handle, path_join(probabilities_path, "AsympPerInfectious"), io_mode));
+        model.parameters.probabilities[i].set_risk_from_symptomatic(
+            *read_element(handle, path_join(probabilities_path, "RiskFromSymptomatic"), io_mode));
+        model.parameters.probabilities[i].set_dead_per_icu(
+            *read_element(handle, path_join(probabilities_path, "DeadPerICU"), io_mode));
+        model.parameters.probabilities[i].set_hospitalized_per_infectious(
+            *read_element(handle, path_join(probabilities_path, "HospitalizedPerInfectious"), io_mode));
+        model.parameters.probabilities[i].set_icu_per_hospitalized(
+            *read_element(handle, path_join(probabilities_path, "ICUPerHospitalized"), io_mode));
+    }
+
+    return model;
+}
 
 /**
  * @brief write parameter space to xml file
@@ -119,7 +211,8 @@ void write_parameter_space(
 
         tixiAddDoubleElement(handle, population_path.c_str(), "Total", model.populations.get_group_total((AgeGroup)i),
                              "%g");
-        tixiAddDoubleElement(handle, population_path.c_str(), "Dead", model.populations.get(i, InfectionType::D), "%g");
+        tixiAddDoubleElement(handle, population_path.c_str(), "Dead",
+                             model.populations.get((AgeGroup)i, InfectionType::D), "%g");
         write_element(handle, population_path, "Exposed", model.populations.get((AgeGroup)i, InfectionType::E), io_mode,
                       num_runs);
         write_element(handle, population_path, "Carrier", model.populations.get((AgeGroup)i, InfectionType::C), io_mode,
@@ -182,7 +275,22 @@ void write_parameter_space(
  * @param handle Tixi Document Handle
  * @param path Path to XML Tree of parameters of study
  */
-auto read_parameter_study(TixiDocumentHandle handle, const std::string& path);
+template <class Model>
+ParameterStudy<Model> read_parameter_study(TixiDocumentHandle handle, const std::string& path)
+{
+    int io_mode;
+    int num_runs;
+    double t0;
+    double tmax;
+
+    tixiGetIntegerElement(handle, path_join(path, "IOMode").c_str(), &io_mode);
+    tixiGetIntegerElement(handle, path_join(path, "Runs").c_str(), &num_runs);
+    tixiGetDoubleElement(handle, path_join(path, "T0").c_str(), &t0);
+    tixiGetDoubleElement(handle, path_join(path, "TMax").c_str(), &tmax);
+
+    Model model = read_parameter_space(handle, path, io_mode);
+    return ParameterStudy<Model>(model, t0, tmax, num_runs);
+}
 
 /**
  * @brief write parameter study to xml file
@@ -204,7 +312,7 @@ void write_parameter_study(TixiDocumentHandle handle, const std::string& path,
     tixiAddDoubleElement(handle, path.c_str(), "T0", parameter_study.get_t0(), "%g");
     tixiAddDoubleElement(handle, path.c_str(), "TMax", parameter_study.get_tmax(), "%g");
 
-    write_parameter_space(handle, path, parameter_study.get_secir_params(), parameter_study.get_num_runs(), io_mode);
+    write_parameter_space(handle, path, parameter_study.get_model(), parameter_study.get_num_runs(), io_mode);
 }
 
 /**

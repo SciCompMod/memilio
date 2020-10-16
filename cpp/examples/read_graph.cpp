@@ -38,10 +38,11 @@ int main(int argc, char** argv)
     double nb_total_t0 = 10000, nb_exp_t0 = 100, nb_inf_t0 = 50, nb_car_t0 = 50, nb_hosp_t0 = 20, nb_icu_t0 = 10,
            nb_rec_t0 = 10, nb_dead_t0 = 0;
 
-    int nb_groups = 1;
-    double fact   = 1.0 / (double)nb_groups;
+    epi::SecirModel1 model = epi::create_secir_model<epi::AgeGroup1>();
+    int nb_groups          = model.parameters.get_num_groups();
+    double fact            = 1.0 / (double)nb_groups;
 
-    epi::SecirParams params(nb_groups);
+    auto& params = model.parameters;
 
     params.set_icu_capacity(std::numeric_limits<double>::max());
     params.set_start_day(0);
@@ -58,15 +59,15 @@ int main(int argc, char** argv)
         params.times[i].set_infectious_asymp(tinfasy);
         params.times[i].set_icu_to_death(ticu2death);
 
-        params.populations.set({i, epi::SecirCompartments::E}, fact * nb_exp_t0);
-        params.populations.set({i, epi::SecirCompartments::C}, fact * nb_car_t0);
-        params.populations.set({i, epi::SecirCompartments::I}, fact * nb_inf_t0);
-        params.populations.set({i, epi::SecirCompartments::H}, fact * nb_hosp_t0);
-        params.populations.set({i, epi::SecirCompartments::U}, fact * nb_icu_t0);
-        params.populations.set({i, epi::SecirCompartments::R}, fact * nb_rec_t0);
-        params.populations.set({i, epi::SecirCompartments::D}, fact * nb_dead_t0);
-        params.populations.set_difference_from_group_total({i, epi::SecirCompartments::S}, epi::SecirCategory::AgeGroup,
-                                                           i, fact * nb_total_t0);
+        model.populations.set(fact * nb_exp_t0, (epi::AgeGroup1)i, epi::InfectionType::E);
+        model.populations.set(fact * nb_car_t0, (epi::AgeGroup1)i, epi::InfectionType::C);
+        model.populations.set(fact * nb_inf_t0, (epi::AgeGroup1)i, epi::InfectionType::I);
+        model.populations.set(fact * nb_hosp_t0, (epi::AgeGroup1)i, epi::InfectionType::H);
+        model.populations.set(fact * nb_icu_t0, (epi::AgeGroup1)i, epi::InfectionType::U);
+        model.populations.set(fact * nb_rec_t0, (epi::AgeGroup1)i, epi::InfectionType::R);
+        model.populations.set(fact * nb_dead_t0, (epi::AgeGroup1)i, epi::InfectionType::D);
+        model.populations.set_difference_from_group_total(fact * nb_total_t0, (epi::AgeGroup1)i, (epi::AgeGroup1)i,
+                                                          epi::InfectionType::S);
 
         params.probabilities[i].set_infection_from_contact(inf_prob);
         params.probabilities[i].set_carrier_infectability(carr_infec);
@@ -90,7 +91,7 @@ int main(int argc, char** argv)
     std::cout << "Done" << std::endl;
 
     std::cout << "Intializing Graph..." << std::flush;
-    epi::Graph<epi::SecirParams, epi::MigrationEdge> graph;
+    epi::Graph<epi::SecirModel1, epi::MigrationEdge> graph;
     for (int node = 0; node < twitter_migration_2018.rows(); node++) {
         graph.add_node(params);
     }
@@ -106,11 +107,11 @@ int main(int argc, char** argv)
     std::cout << "Done" << std::endl;
 
     std::cout << "Reading XML Files..." << std::flush;
-    epi::Graph<epi::SecirParams, epi::MigrationEdge> graph_read = epi::read_graph();
+    epi::Graph<epi::SecirModel1, epi::MigrationEdge> graph_read = epi::read_graph<epi::SecirModel1>();
     std::cout << "Done" << std::endl;
 
     std::cout << "Running Simulations..." << std::flush;
-    auto study = epi::ParameterStudy(graph_read, t0, tmax, 1.0, 2);
+    auto study = epi::ParameterStudy<epi::SecirModel1>(graph_read, t0, tmax, 1.0, 2);
     std::cout << "Done" << std::endl;
 
     return 0;
