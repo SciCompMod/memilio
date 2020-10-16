@@ -61,7 +61,7 @@ using SecirModel5 = CompartmentalModel<Populations<AgeGroup5, InfectionType>, Se
 template <class AgeGroup>
 CompartmentalModel<Populations<AgeGroup, InfectionType>, SecirParams<(size_t)AgeGroup::Count>> create_secir_model()
 {
-    using Pa = SecirParams<AgeGroup::Count>;
+    using Pa = SecirParams<(size_t)AgeGroup::Count>;
     using Po = Populations<AgeGroup, InfectionType>;
     CompartmentalModel<Po, Pa> model;
 
@@ -80,8 +80,9 @@ CompartmentalModel<Populations<AgeGroup, InfectionType>, SecirParams<(size_t)Age
             model.add_flow(std::make_tuple((AgeGroup)i, InfectionType::S),
                            std::make_tuple((AgeGroup)i, InfectionType::E),
                            [i, j](Pa const& p, Eigen::Ref<const Eigen::VectorXd> y, double t) {
-                               ScalarType cont_freq_eff = p.get_contact_patterns().get_cont_freq(i, j) *
-                                                          p.get_contact_patterns().get_dampings(i, j).get_factor(t);
+                               ScalarType cont_freq_eff =
+                                   p.get_contact_patterns().get_cont_freq_mat().get_cont_freq(i, j) *
+                                   p.get_contact_patterns().get_cont_freq_mat().get_dampings(i, j).get_factor(t);
                                ScalarType Nj = Po::get_from(y, (AgeGroup)j, InfectionType::S) +
                                                Po::get_from(y, (AgeGroup)j, InfectionType::E) +
                                                Po::get_from(y, (AgeGroup)j, InfectionType::C) +

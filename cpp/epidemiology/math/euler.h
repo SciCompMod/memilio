@@ -1,14 +1,13 @@
 #ifndef EULER_H
 #define EULER_H
 
+#include "epidemiology/secir/secir.h"
 #include "epidemiology/math/integrator.h"
 
 #include <vector>
 
 namespace epi
 {
-
-class SecirParams; // forward declaration such that secir.h is not required here
 
 /**
  * @brief Simple explicit euler integration y(t+1) = y(t) + h*f(t,y) for ODE y'(t) = f(t,y)
@@ -38,7 +37,7 @@ public:
      * @brief Setting up the implicit Euler integrator
      * @param params Paramters of the SECIR/SECIHURD model
      */
-    ImplicitEulerIntegratorCore(SecirParams const& params);
+    ImplicitEulerIntegratorCore(SecirModel1 const& params);
 
     /**
      * @brief Fixed step width of the time implicit Euler time integration scheme
@@ -51,13 +50,13 @@ public:
     bool step(const DerivFunction& f, Eigen::Ref<const Eigen::VectorXd> yt, double& t, double& dt,
               Eigen::Ref<Eigen::VectorXd> ytp1) const override;
 
-    SecirParams const& get_secir_params() const
+    SecirModel1 const& get_secir_params() const
     {
-        return m_params;
+        return m_model;
     }
 
 private:
-    const SecirParams& m_params;
+    const SecirModel1& m_model;
 };
 
 } // namespace epi

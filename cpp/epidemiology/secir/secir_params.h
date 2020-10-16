@@ -3,7 +3,6 @@
 
 #include "epidemiology/utils/eigen.h"
 #include "epidemiology/utils/uncertain_value.h"
-#include "epidemiology/math/euler.h"
 #include "epidemiology/math/adapt_rk.h"
 #include "epidemiology/secir/uncertain_matrix.h"
 
