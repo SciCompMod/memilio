@@ -32,11 +32,11 @@ TEST(ParameterStudies, sample_from_secir_params)
     double num_total_t0 = 10000, num_exp_t0 = 100, num_inf_t0 = 50, num_car_t0 = 50, num_hosp_t0 = 20, num_icu_t0 = 10,
            num_rec_t0 = 10, num_dead_t0 = 0;
 
-    size_t num_groups = 3;
-    double fact       = 1.0 / (double)num_groups;
+    epi::SecirModel3 model = epi::create_secir_model<epi::AgeGroup3>();
+    size_t num_groups      = model.parameters.get_num_groups();
+    double fact            = 1.0 / (double)num_groups;
 
-    epi::SecirParams params(num_groups);
-
+    auto& params = model.parameters;
     for (size_t i = 0; i < num_groups; i++) {
         params.times[i].set_incubation(tinc);
         params.times[i].set_infectious_mild(tinfmild);
@@ -48,15 +48,15 @@ TEST(ParameterStudies, sample_from_secir_params)
         params.times[i].set_infectious_asymp(tinfasy);
         params.times[i].set_icu_to_death(ticu2death);
 
-        params.populations.set({i, epi::SecirCompartments::E}, fact * num_exp_t0);
-        params.populations.set({i, epi::SecirCompartments::C}, fact * num_car_t0);
-        params.populations.set({i, epi::SecirCompartments::I}, fact * num_inf_t0);
-        params.populations.set({i, epi::SecirCompartments::H}, fact * num_hosp_t0);
-        params.populations.set({i, epi::SecirCompartments::U}, fact * num_icu_t0);
-        params.populations.set({i, epi::SecirCompartments::R}, fact * num_rec_t0);
-        params.populations.set({i, epi::SecirCompartments::D}, fact * num_dead_t0);
-        params.populations.set_difference_from_group_total({i, epi::SecirCompartments::S}, epi::SecirCategory::AgeGroup,
-                                                           i, fact * num_total_t0);
+        model.populations.set(fact * num_exp_t0, (epi::AgeGroup3)i, epi::InfectionType::E);
+        model.populations.set(fact * num_car_t0, (epi::AgeGroup3)i, epi::InfectionType::C);
+        model.populations.set(fact * num_inf_t0, (epi::AgeGroup3)i, epi::InfectionType::I);
+        model.populations.set(fact * num_hosp_t0, (epi::AgeGroup3)i, epi::InfectionType::H);
+        model.populations.set(fact * num_icu_t0, (epi::AgeGroup3)i, epi::InfectionType::U);
+        model.populations.set(fact * num_rec_t0, (epi::AgeGroup3)i, epi::InfectionType::R);
+        model.populations.set(fact * num_dead_t0, (epi::AgeGroup3)i, epi::InfectionType::D);
+        model.populations.set_difference_from_group_total(fact * num_total_t0, (epi::AgeGroup3)i, (epi::AgeGroup3)i,
+                                                          epi::InfectionType::S);
 
         params.probabilities[i].set_infection_from_contact(inf_prob);
         params.probabilities[i].set_carrier_infectability(carr_infec);
@@ -74,15 +74,15 @@ TEST(ParameterStudies, sample_from_secir_params)
         }
     }
 
-    epi::set_params_distributions_normal(params, t0, tmax, 0.2);
+    epi::set_params_distributions_normal(model, t0, tmax, 0.2);
 
-    draw_sample(params);
+    draw_sample(model);
 
     for (size_t i = 0; i < params.get_num_groups(); i++) {
 
-        EXPECT_GE(params.populations.get_group_total(epi::SecirCategory::AgeGroup, i), 0);
+        EXPECT_GE(model.populations.get_group_total((epi::AgeGroup3)i), 0);
 
-        EXPECT_NEAR(params.populations.get_group_total(epi::SecirCategory::AgeGroup, i), fact * num_total_t0, 1e-6);
+        EXPECT_NEAR(model.populations.get_group_total((epi::AgeGroup3)i), fact * num_total_t0, 1e-6);
 
         EXPECT_GE(params.times[i].get_incubation(), 0);
 
@@ -209,10 +209,11 @@ TEST(ParameterStudies, check_ensemble_run_result)
     double num_total_t0 = 10000, num_exp_t0 = 100, num_inf_t0 = 50, num_car_t0 = 50, num_hosp_t0 = 20, num_icu_t0 = 10,
            num_rec_t0 = 10, num_dead_t0 = 0;
 
-    size_t num_groups = 1;
-    double fact       = 1.0 / (double)num_groups;
+    epi::SecirModel1 model = epi::create_secir_model<epi::AgeGroup1>();
+    size_t num_groups      = model.parameters.get_num_groups();
+    double fact            = 1.0 / (double)num_groups;
 
-    epi::SecirParams params(num_groups);
+    auto& params = model.parameters;
 
     for (size_t i = 0; i < num_groups; i++) {
         params.times[i].set_incubation(tinc);
@@ -225,15 +226,15 @@ TEST(ParameterStudies, check_ensemble_run_result)
         params.times[i].set_infectious_asymp(tinfasy);
         params.times[i].set_icu_to_death(ticu2death);
 
-        params.populations.set({i, epi::SecirCompartments::E}, fact * num_exp_t0);
-        params.populations.set({i, epi::SecirCompartments::C}, fact * num_car_t0);
-        params.populations.set({i, epi::SecirCompartments::I}, fact * num_inf_t0);
-        params.populations.set({i, epi::SecirCompartments::H}, fact * num_hosp_t0);
-        params.populations.set({i, epi::SecirCompartments::U}, fact * num_icu_t0);
-        params.populations.set({i, epi::SecirCompartments::R}, fact * num_rec_t0);
-        params.populations.set({i, epi::SecirCompartments::D}, fact * num_dead_t0);
-        params.populations.set_difference_from_group_total({i, epi::SecirCompartments::S}, epi::SecirCategory::AgeGroup,
-                                                           i, fact * num_total_t0);
+        model.populations.set_total(num_total_t0);
+        model.populations.set(num_exp_t0, (epi::AgeGroup1)0, epi::InfectionType::E);
+        model.populations.set(num_car_t0, (epi::AgeGroup1)0, epi::InfectionType::C);
+        model.populations.set(num_inf_t0, (epi::AgeGroup1)0, epi::InfectionType::I);
+        model.populations.set(num_hosp_t0, (epi::AgeGroup1)0, epi::InfectionType::H);
+        model.populations.set(num_icu_t0, (epi::AgeGroup1)0, epi::InfectionType::U);
+        model.populations.set(num_rec_t0, (epi::AgeGroup1)0, epi::InfectionType::R);
+        model.populations.set(num_dead_t0, (epi::AgeGroup1)0, epi::InfectionType::D);
+        model.populations.set_difference_from_total(num_total_t0, (epi::AgeGroup1)0, epi::InfectionType::S);
 
         params.probabilities[i].set_infection_from_contact(inf_prob);
         params.probabilities[i].set_carrier_infectability(carr_infec);
@@ -252,11 +253,11 @@ TEST(ParameterStudies, check_ensemble_run_result)
         }
     }
 
-    epi::ParameterStudy parameter_study(params, t0, tmax, 0.2, 1);
+    epi::ParameterStudy<epi::SecirModel1> parameter_study(model, t0, tmax, 0.2, 1);
 
     // Run parameter study
     parameter_study.set_num_runs(1);
-    std::vector<epi::Graph<epi::ModelNode<epi::SecirSimulation>, epi::MigrationEdge>> graph_results =
+    std::vector<epi::Graph<epi::ModelNode<epi::Simulation<epi::SecirModel1>>, epi::MigrationEdge>> graph_results =
         parameter_study.run();
 
     std::vector<epi::TimeSeries<double>> results;
@@ -265,15 +266,15 @@ TEST(ParameterStudies, check_ensemble_run_result)
     }
 
     for (Eigen::Index i = 0; i < results[0].get_num_time_points(); i++) {
-        std::vector<double> total_at_ti(epi::SecirCompartments::SecirCount, 0);
+        std::vector<double> total_at_ti((size_t)epi::InfectionType::Count, 0);
 
         for (Eigen::Index j = 0; j < results[0][i].size(); j++) { // number of compartments per time step
             EXPECT_GE(results[0][i][j], 0.0) << " day " << i << " group " << j;
-            total_at_ti[static_cast<size_t>(j) / epi::SecirCompartments::SecirCount] += results[0][i][j];
+            total_at_ti[static_cast<size_t>(j) / (size_t)epi::InfectionType::Count] += results[0][i][j];
         }
 
         for (size_t j = 0; j < params.get_num_groups(); j++) {
-            EXPECT_NEAR(total_at_ti[j], params.populations.get_group_total(epi::SecirCategory::AgeGroup, j), 1e-3)
+            EXPECT_NEAR(total_at_ti[j], model.populations.get_group_total((epi::AgeGroup1)j), 1e-3)
                 << " day " << i << " group " << j;
         }
     }

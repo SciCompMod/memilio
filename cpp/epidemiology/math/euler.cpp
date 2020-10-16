@@ -24,8 +24,8 @@ bool ImplicitEulerIntegratorCore::step(const DerivFunction& /*f*/, Eigen::Ref<co
 {
     // 0: S,      1: E,     2: C,     3: I,     4: H,     5: U,     6: R,     7: D
 
-    SecirModel1 model                              = get_secir_model();
-    ContactFrequencyMatrix const& cont_freq_matrix = model.parametersget_contact_patterns();
+    SecirModel1 model                              = m_model;
+    ContactFrequencyMatrix const& cont_freq_matrix = model.parameters.get_contact_patterns().get_cont_freq_mat();
 
     auto yt_eval = yt.eval();
 

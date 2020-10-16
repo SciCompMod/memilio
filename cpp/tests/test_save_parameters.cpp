@@ -37,14 +37,14 @@ TEST(TestSaveParameters, compareParameterStudy)
         params.times[i].set_infectious_asymp(tinfasy);
         params.times[i].set_icu_to_death(ticu2death);
 
-        params.populations.set({i, epi::SecirCompartments::E}, fact * num_exp_t0);
-        params.populations.set({i, epi::SecirCompartments::C}, fact * num_car_t0);
-        params.populations.set({i, epi::SecirCompartments::I}, fact * num_inf_t0);
-        params.populations.set({i, epi::SecirCompartments::H}, fact * num_hosp_t0);
-        params.populations.set({i, epi::SecirCompartments::U}, fact * num_icu_t0);
-        params.populations.set({i, epi::SecirCompartments::R}, fact * num_rec_t0);
-        params.populations.set({i, epi::SecirCompartments::D}, fact * num_dead_t0);
-        params.populations.set_difference_from_group_total({i, epi::SecirCompartments::S}, epi::SecirCategory::AgeGroup,
+        params.populations.set({i, epi::InfectionType::E}, fact * num_exp_t0);
+        params.populations.set({i, epi::InfectionType::C}, fact * num_car_t0);
+        params.populations.set({i, epi::InfectionType::I}, fact * num_inf_t0);
+        params.populations.set({i, epi::InfectionType::H}, fact * num_hosp_t0);
+        params.populations.set({i, epi::InfectionType::U}, fact * num_icu_t0);
+        params.populations.set({i, epi::InfectionType::R}, fact * num_rec_t0);
+        params.populations.set({i, epi::InfectionType::D}, fact * num_dead_t0);
+        params.populations.set_difference_from_group_total({i, epi::InfectionType::S}, epi::SecirCategory::AgeGroup,
                                                            i, fact * num_total_t0);
 
         params.probabilities[i].set_infection_from_contact(0.06);
@@ -99,35 +99,35 @@ TEST(TestSaveParameters, compareParameterStudy)
     ASSERT_EQ(num_groups, num_groups_read);
 
     for (size_t i = 0; i < num_groups; i++) {
-        ASSERT_EQ(params.populations.get({i, epi::SecirCompartments::D}),
-                  read_params.populations.get({i, epi::SecirCompartments::D}));
+        ASSERT_EQ(params.populations.get({i, epi::InfectionType::D}),
+                  read_params.populations.get({i, epi::InfectionType::D}));
         ASSERT_EQ(params.populations.get_group_total(epi::AgeGroup, i),
                   read_params.populations.get_group_total(epi::AgeGroup, i));
-        ASSERT_EQ(params.populations.get({i, epi::SecirCompartments::E}),
-                  read_params.populations.get({i, epi::SecirCompartments::E}));
-        ASSERT_EQ(params.populations.get({i, epi::SecirCompartments::C}),
-                  read_params.populations.get({i, epi::SecirCompartments::C}));
-        ASSERT_EQ(params.populations.get({i, epi::SecirCompartments::I}),
-                  read_params.populations.get({i, epi::SecirCompartments::I}));
-        ASSERT_EQ(params.populations.get({i, epi::SecirCompartments::H}),
-                  read_params.populations.get({i, epi::SecirCompartments::H}));
-        ASSERT_EQ(params.populations.get({i, epi::SecirCompartments::U}),
-                  read_params.populations.get({i, epi::SecirCompartments::U}));
-        ASSERT_EQ(params.populations.get({i, epi::SecirCompartments::R}),
-                  read_params.populations.get({i, epi::SecirCompartments::R}));
+        ASSERT_EQ(params.populations.get({i, epi::InfectionType::E}),
+                  read_params.populations.get({i, epi::InfectionType::E}));
+        ASSERT_EQ(params.populations.get({i, epi::InfectionType::C}),
+                  read_params.populations.get({i, epi::InfectionType::C}));
+        ASSERT_EQ(params.populations.get({i, epi::InfectionType::I}),
+                  read_params.populations.get({i, epi::InfectionType::I}));
+        ASSERT_EQ(params.populations.get({i, epi::InfectionType::H}),
+                  read_params.populations.get({i, epi::InfectionType::H}));
+        ASSERT_EQ(params.populations.get({i, epi::InfectionType::U}),
+                  read_params.populations.get({i, epi::InfectionType::U}));
+        ASSERT_EQ(params.populations.get({i, epi::InfectionType::R}),
+                  read_params.populations.get({i, epi::InfectionType::R}));
 
-        check_distribution(*params.populations.get({i, epi::SecirCompartments::E}).get_distribution(),
-                           *read_params.populations.get({i, epi::SecirCompartments::E}).get_distribution());
-        check_distribution(*params.populations.get({i, epi::SecirCompartments::C}).get_distribution(),
-                           *read_params.populations.get({i, epi::SecirCompartments::C}).get_distribution());
-        check_distribution(*params.populations.get({i, epi::SecirCompartments::I}).get_distribution(),
-                           *read_params.populations.get({i, epi::SecirCompartments::I}).get_distribution());
-        check_distribution(*params.populations.get({i, epi::SecirCompartments::H}).get_distribution(),
-                           *read_params.populations.get({i, epi::SecirCompartments::H}).get_distribution());
-        check_distribution(*params.populations.get({i, epi::SecirCompartments::U}).get_distribution(),
-                           *read_params.populations.get({i, epi::SecirCompartments::U}).get_distribution());
-        check_distribution(*params.populations.get({i, epi::SecirCompartments::R}).get_distribution(),
-                           *read_params.populations.get({i, epi::SecirCompartments::R}).get_distribution());
+        check_distribution(*params.populations.get({i, epi::InfectionType::E}).get_distribution(),
+                           *read_params.populations.get({i, epi::InfectionType::E}).get_distribution());
+        check_distribution(*params.populations.get({i, epi::InfectionType::C}).get_distribution(),
+                           *read_params.populations.get({i, epi::InfectionType::C}).get_distribution());
+        check_distribution(*params.populations.get({i, epi::InfectionType::I}).get_distribution(),
+                           *read_params.populations.get({i, epi::InfectionType::I}).get_distribution());
+        check_distribution(*params.populations.get({i, epi::InfectionType::H}).get_distribution(),
+                           *read_params.populations.get({i, epi::InfectionType::H}).get_distribution());
+        check_distribution(*params.populations.get({i, epi::InfectionType::U}).get_distribution(),
+                           *read_params.populations.get({i, epi::InfectionType::U}).get_distribution());
+        check_distribution(*params.populations.get({i, epi::InfectionType::R}).get_distribution(),
+                           *read_params.populations.get({i, epi::InfectionType::R}).get_distribution());
 
         ASSERT_EQ(params.times[i].get_incubation(), read_params.times[i].get_incubation());
         ASSERT_EQ(params.times[i].get_infectious_mild(), read_params.times[i].get_infectious_mild());
@@ -249,14 +249,14 @@ TEST(TestSaveParameters, compareSingleRun)
         params.times[i].set_infectious_asymp(tinfasy);
         params.times[i].set_icu_to_death(ticu2death);
 
-        params.populations.set({i, epi::SecirCompartments::E}, fact * num_exp_t0);
-        params.populations.set({i, epi::SecirCompartments::C}, fact * num_car_t0);
-        params.populations.set({i, epi::SecirCompartments::I}, fact * num_inf_t0);
-        params.populations.set({i, epi::SecirCompartments::H}, fact * num_hosp_t0);
-        params.populations.set({i, epi::SecirCompartments::U}, fact * num_icu_t0);
-        params.populations.set({i, epi::SecirCompartments::R}, fact * num_rec_t0);
-        params.populations.set({i, epi::SecirCompartments::D}, fact * num_dead_t0);
-        params.populations.set_difference_from_group_total({i, epi::SecirCompartments::S}, epi::SecirCategory::AgeGroup,
+        params.populations.set({i, epi::InfectionType::E}, fact * num_exp_t0);
+        params.populations.set({i, epi::InfectionType::C}, fact * num_car_t0);
+        params.populations.set({i, epi::InfectionType::I}, fact * num_inf_t0);
+        params.populations.set({i, epi::InfectionType::H}, fact * num_hosp_t0);
+        params.populations.set({i, epi::InfectionType::U}, fact * num_icu_t0);
+        params.populations.set({i, epi::InfectionType::R}, fact * num_rec_t0);
+        params.populations.set({i, epi::InfectionType::D}, fact * num_dead_t0);
+        params.populations.set_difference_from_group_total({i, epi::InfectionType::S}, epi::SecirCategory::AgeGroup,
                                                            i, fact * num_total_t0);
 
         params.probabilities[i].set_infection_from_contact(0.06);
@@ -307,22 +307,22 @@ TEST(TestSaveParameters, compareSingleRun)
     ASSERT_EQ(num_groups, num_groups_read);
 
     for (size_t i = 0; i < num_groups; i++) {
-        ASSERT_EQ(params.populations.get({i, epi::SecirCompartments::D}),
-                  read_params.populations.get({i, epi::SecirCompartments::D}));
+        ASSERT_EQ(params.populations.get({i, epi::InfectionType::D}),
+                  read_params.populations.get({i, epi::InfectionType::D}));
         ASSERT_EQ(params.populations.get_group_total(epi::AgeGroup, i),
                   read_params.populations.get_group_total(epi::AgeGroup, i));
-        ASSERT_EQ(params.populations.get({i, epi::SecirCompartments::E}),
-                  read_params.populations.get({i, epi::SecirCompartments::E}));
-        ASSERT_EQ(params.populations.get({i, epi::SecirCompartments::C}),
-                  read_params.populations.get({i, epi::SecirCompartments::C}));
-        ASSERT_EQ(params.populations.get({i, epi::SecirCompartments::I}),
-                  read_params.populations.get({i, epi::SecirCompartments::I}));
-        ASSERT_EQ(params.populations.get({i, epi::SecirCompartments::H}),
-                  read_params.populations.get({i, epi::SecirCompartments::H}));
-        ASSERT_EQ(params.populations.get({i, epi::SecirCompartments::U}),
-                  read_params.populations.get({i, epi::SecirCompartments::U}));
-        ASSERT_EQ(params.populations.get({i, epi::SecirCompartments::R}),
-                  read_params.populations.get({i, epi::SecirCompartments::R}));
+        ASSERT_EQ(params.populations.get({i, epi::InfectionType::E}),
+                  read_params.populations.get({i, epi::InfectionType::E}));
+        ASSERT_EQ(params.populations.get({i, epi::InfectionType::C}),
+                  read_params.populations.get({i, epi::InfectionType::C}));
+        ASSERT_EQ(params.populations.get({i, epi::InfectionType::I}),
+                  read_params.populations.get({i, epi::InfectionType::I}));
+        ASSERT_EQ(params.populations.get({i, epi::InfectionType::H}),
+                  read_params.populations.get({i, epi::InfectionType::H}));
+        ASSERT_EQ(params.populations.get({i, epi::InfectionType::U}),
+                  read_params.populations.get({i, epi::InfectionType::U}));
+        ASSERT_EQ(params.populations.get({i, epi::InfectionType::R}),
+                  read_params.populations.get({i, epi::InfectionType::R}));
 
         ASSERT_EQ(params.times[i].get_incubation(), read_params.times[i].get_incubation());
         ASSERT_EQ(params.times[i].get_infectious_mild(), read_params.times[i].get_infectious_mild());
@@ -390,14 +390,14 @@ TEST(TestSaveParameters, compareGraphs)
         params.times[i].set_infectious_asymp(tinfasy);
         params.times[i].set_icu_to_death(ticu2death);
 
-        params.populations.set({i, epi::SecirCompartments::E}, fact * num_exp_t0);
-        params.populations.set({i, epi::SecirCompartments::C}, fact * num_car_t0);
-        params.populations.set({i, epi::SecirCompartments::I}, fact * num_inf_t0);
-        params.populations.set({i, epi::SecirCompartments::H}, fact * num_hosp_t0);
-        params.populations.set({i, epi::SecirCompartments::U}, fact * num_icu_t0);
-        params.populations.set({i, epi::SecirCompartments::R}, fact * num_rec_t0);
-        params.populations.set({i, epi::SecirCompartments::D}, fact * num_dead_t0);
-        params.populations.set_difference_from_group_total({i, epi::SecirCompartments::S}, epi::SecirCategory::AgeGroup,
+        params.populations.set({i, epi::InfectionType::E}, fact * num_exp_t0);
+        params.populations.set({i, epi::InfectionType::C}, fact * num_car_t0);
+        params.populations.set({i, epi::InfectionType::I}, fact * num_inf_t0);
+        params.populations.set({i, epi::InfectionType::H}, fact * num_hosp_t0);
+        params.populations.set({i, epi::InfectionType::U}, fact * num_icu_t0);
+        params.populations.set({i, epi::InfectionType::R}, fact * num_rec_t0);
+        params.populations.set({i, epi::InfectionType::D}, fact * num_dead_t0);
+        params.populations.set_difference_from_group_total({i, epi::InfectionType::S}, epi::SecirCategory::AgeGroup,
                                                            i, fact * num_total_t0);
 
         params.probabilities[i].set_infection_from_contact(0.06);
@@ -451,30 +451,30 @@ TEST(TestSaveParameters, compareGraphs)
                   graph_read_params.populations.get_num_compartments());
 
         for (size_t group = 0; group < num_groups; group++) {
-            ASSERT_EQ(graph_params.populations.get({group, epi::SecirCompartments::D}),
-                      graph_read_params.populations.get({group, epi::SecirCompartments::D}));
+            ASSERT_EQ(graph_params.populations.get({group, epi::InfectionType::D}),
+                      graph_read_params.populations.get({group, epi::InfectionType::D}));
             ASSERT_EQ(graph_params.populations.get_total(), graph_read_params.populations.get_total());
             check_distribution(
-                *graph_params.populations.get({group, epi::SecirCompartments::E}).get_distribution().get(),
-                *graph_read_params.populations.get({group, epi::SecirCompartments::E}).get_distribution().get());
+                *graph_params.populations.get({group, epi::InfectionType::E}).get_distribution().get(),
+                *graph_read_params.populations.get({group, epi::InfectionType::E}).get_distribution().get());
             check_distribution(
-                *graph_params.populations.get({group, epi::SecirCompartments::C}).get_distribution().get(),
-                *graph_read_params.populations.get({group, epi::SecirCompartments::C}).get_distribution().get());
+                *graph_params.populations.get({group, epi::InfectionType::C}).get_distribution().get(),
+                *graph_read_params.populations.get({group, epi::InfectionType::C}).get_distribution().get());
             check_distribution(
-                *graph_params.populations.get({group, epi::SecirCompartments::I}).get_distribution().get(),
-                *graph_read_params.populations.get({group, epi::SecirCompartments::I}).get_distribution().get());
+                *graph_params.populations.get({group, epi::InfectionType::I}).get_distribution().get(),
+                *graph_read_params.populations.get({group, epi::InfectionType::I}).get_distribution().get());
             check_distribution(
-                *graph_params.populations.get({group, epi::SecirCompartments::H}).get_distribution().get(),
-                *graph_read_params.populations.get({group, epi::SecirCompartments::H}).get_distribution().get());
+                *graph_params.populations.get({group, epi::InfectionType::H}).get_distribution().get(),
+                *graph_read_params.populations.get({group, epi::InfectionType::H}).get_distribution().get());
             check_distribution(
-                *graph_params.populations.get({group, epi::SecirCompartments::U}).get_distribution().get(),
-                *graph_read_params.populations.get({group, epi::SecirCompartments::U}).get_distribution().get());
+                *graph_params.populations.get({group, epi::InfectionType::U}).get_distribution().get(),
+                *graph_read_params.populations.get({group, epi::InfectionType::U}).get_distribution().get());
             check_distribution(
-                *graph_params.populations.get({group, epi::SecirCompartments::R}).get_distribution().get(),
-                *graph_read_params.populations.get({group, epi::SecirCompartments::R}).get_distribution().get());
+                *graph_params.populations.get({group, epi::InfectionType::R}).get_distribution().get(),
+                *graph_read_params.populations.get({group, epi::InfectionType::R}).get_distribution().get());
             check_distribution(
-                *graph_params.populations.get({group, epi::SecirCompartments::E}).get_distribution().get(),
-                *graph_read_params.populations.get({group, epi::SecirCompartments::E}).get_distribution().get());
+                *graph_params.populations.get({group, epi::InfectionType::E}).get_distribution().get(),
+                *graph_read_params.populations.get({group, epi::InfectionType::E}).get_distribution().get());
 
             ASSERT_EQ(graph_params.times[group].get_incubation(), graph_read_params.times[group].get_incubation());
             ASSERT_EQ(graph_params.times[group].get_infectious_mild(),

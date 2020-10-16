@@ -4,6 +4,7 @@
 #include "epidemiology/secir/seir.h"
 #include "epidemiology/utils/eigen_util.h"
 #include "epidemiology/utils/eigen.h"
+#include "epidemiology/model/simulation.h"
 #include "gtest/gtest.h"
 
 #include <cmath>
@@ -14,28 +15,28 @@ TEST(TestMigration, compareWithSingleIntegration)
     auto tmax = 5;
     auto dt   = 1;
 
-    auto params1 = epi::SeirParams();
-    params1.populations.set({epi::SeirCompartments::S}, 0.9);
-    params1.populations.set({epi::SeirCompartments::E}, 0.1);
-    params1.populations.set_total(1000);
-    params1.times.set_cont_freq(2.5);
-    params1.times.set_incubation(4);
-    params1.times.set_infectious(10);
+    auto model1 = epi::create_seir_model();
+    model1.populations.set(0.9, epi::InfectionType::S);
+    model1.populations.set(0.1, epi::InfectionType::E);
+    model1.populations.set_total(1000);
+    model1.parameters.times.set_cont_freq(2.5);
+    model1.parameters.times.set_incubation(4);
+    model1.parameters.times.set_infectious(10);
 
-    auto params2 = params1;
-    params2.populations.set({epi::SeirCompartments::S}, 1.);
-    params2.populations.set_total(500);
+    auto model2 = model1;
+    model2.populations.set(1., epi::InfectionType::S);
+    model2.populations.set_total(500);
 
-    auto graph_sim =
-        epi::make_migration_sim(t0, dt, epi::Graph<epi::ModelNode<epi::SeirSimulation>, epi::MigrationEdge>());
+    auto graph_sim = epi::make_migration_sim(
+        t0, dt, epi::Graph<epi::ModelNode<epi::Simulation<epi::SeirModel>>, epi::MigrationEdge>());
     auto& g = graph_sim.get_graph();
-    g.add_node(params1, t0);
-    g.add_node(params2, t0);
+    g.add_node(model1, t0);
+    g.add_node(model2, t0);
     g.add_edge(0, 1, Eigen::VectorXd::Constant(4, 0)); //no migration along this edge
     g.add_edge(1, 0, Eigen::VectorXd::Constant(4, 0));
 
-    auto single_sim1 = epi::SeirSimulation(params1, t0);
-    auto single_sim2 = epi::SeirSimulation(params2, t0);
+    auto single_sim1 = epi::Simulation<epi::SeirModel>(model1, t0);
+    auto single_sim2 = epi::Simulation<epi::SeirModel>(model2, t0);
 
     auto nsteps = int((tmax - t0) / dt);
     EXPECT_EQ(nsteps, (tmax - t0) / dt);

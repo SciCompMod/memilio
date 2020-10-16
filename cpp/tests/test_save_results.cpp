@@ -33,15 +33,15 @@ TEST(TestSaveResult, compareResultWithH5)
         params.times[i].set_infectious_asymp(tinfasy);
         params.times[i].set_icu_to_death(ticu2death);
 
-        params.populations.set({i, epi::SecirCompartments::E}, fact * nb_exp_t0);
-        params.populations.set({i, epi::SecirCompartments::C}, fact * nb_car_t0);
-        params.populations.set({i, epi::SecirCompartments::I}, fact * nb_inf_t0);
-        params.populations.set({i, epi::SecirCompartments::H}, fact * nb_hosp_t0);
-        params.populations.set({i, epi::SecirCompartments::U}, fact * nb_icu_t0);
-        params.populations.set({i, epi::SecirCompartments::R}, fact * nb_rec_t0);
-        params.populations.set({i, epi::SecirCompartments::D}, fact * nb_dead_t0);
-        params.populations.set_difference_from_group_total({i, epi::SecirCompartments::S}, epi::SecirCategory::AgeGroup,
-                                                           i, fact * nb_total_t0);
+        params.populations.set({i, epi::InfectionType::E}, fact * nb_exp_t0);
+        params.populations.set({i, epi::InfectionType::C}, fact * nb_car_t0);
+        params.populations.set({i, epi::InfectionType::I}, fact * nb_inf_t0);
+        params.populations.set({i, epi::InfectionType::H}, fact * nb_hosp_t0);
+        params.populations.set({i, epi::InfectionType::U}, fact * nb_icu_t0);
+        params.populations.set({i, epi::InfectionType::R}, fact * nb_rec_t0);
+        params.populations.set({i, epi::InfectionType::D}, fact * nb_dead_t0);
+        params.populations.set_difference_from_group_total({i, epi::InfectionType::S}, epi::SecirCategory::AgeGroup, i,
+                                                           fact * nb_total_t0);
 
         params.probabilities[i].set_infection_from_contact(0.06);
         params.probabilities[i].set_carrier_infectability(0.67);
@@ -72,16 +72,17 @@ TEST(TestSaveResult, compareResultWithH5)
     for (Eigen::Index i = 0; i < result_from_sim.get_num_time_points(); i++) {
         ASSERT_EQ(result_from_file.get_groups().get_num_elements(), result_from_sim.get_num_elements())
             << "at row " << i;
-        ASSERT_EQ(result_from_file.get_totals().get_num_elements(), result_from_sim.get_num_elements() / static_cast<Eigen::Index>(nb_groups))
+        ASSERT_EQ(result_from_file.get_totals().get_num_elements(),
+                  result_from_sim.get_num_elements() / static_cast<Eigen::Index>(nb_groups))
             << "at row " << i;
         ASSERT_NEAR(result_from_sim.get_time(i), result_from_file.get_groups().get_time(i), 1e-10) << "at row " << i;
         ASSERT_NEAR(result_from_sim.get_time(i), result_from_file.get_totals().get_time(i), 1e-10) << "at row " << i;
         for (Eigen::Index l = 0; l < result_from_file.get_totals().get_num_elements(); l++) {
             double total = 0.0;
             for (Eigen::Index j = 0; j < Eigen::Index(nb_groups); j++) {
-                total += result_from_sim[i][j * epi::SecirCompartments::SecirCount + l];
-                EXPECT_NEAR(result_from_file.get_groups()[i][j * epi::SecirCompartments::SecirCount + l],
-                            result_from_sim[i][j * epi::SecirCompartments::SecirCount + l], 1e-10)
+                total += result_from_sim[i][j * epi::InfectionType::SecirCount + l];
+                EXPECT_NEAR(result_from_file.get_groups()[i][j * epi::InfectionType::SecirCount + l],
+                            result_from_sim[i][j * epi::InfectionType::SecirCount + l], 1e-10)
                     << " at row " << i << " at row " << l << " at Group " << j;
             }
             EXPECT_NEAR(result_from_file.get_totals()[i][l], total, 1e-10) << " at row " << i << " at row " << l;

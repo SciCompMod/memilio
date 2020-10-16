@@ -31,14 +31,14 @@ TEST(TestSecir, compareAgeResWithSingleRun)
         params.times[i].set_icu_to_home(ticu2home);
         params.times[i].set_icu_to_death(ticu2death);
 
-        params.populations.set({i, epi::SecirCompartments::E}, fact * nb_exp_t0);
-        params.populations.set({i, epi::SecirCompartments::C}, fact * nb_car_t0);
-        params.populations.set({i, epi::SecirCompartments::I}, fact * nb_inf_t0);
-        params.populations.set({i, epi::SecirCompartments::H}, fact * nb_hosp_t0);
-        params.populations.set({i, epi::SecirCompartments::U}, fact * nb_icu_t0);
-        params.populations.set({i, epi::SecirCompartments::R}, fact * nb_rec_t0);
-        params.populations.set({i, epi::SecirCompartments::D}, fact * nb_dead_t0);
-        params.populations.set_difference_from_group_total({i, epi::SecirCompartments::S}, epi::SecirCategory::AgeGroup,
+        params.populations.set({i, epi::InfectionType::E}, fact * nb_exp_t0);
+        params.populations.set({i, epi::InfectionType::C}, fact * nb_car_t0);
+        params.populations.set({i, epi::InfectionType::I}, fact * nb_inf_t0);
+        params.populations.set({i, epi::InfectionType::H}, fact * nb_hosp_t0);
+        params.populations.set({i, epi::InfectionType::U}, fact * nb_icu_t0);
+        params.populations.set({i, epi::InfectionType::R}, fact * nb_rec_t0);
+        params.populations.set({i, epi::InfectionType::D}, fact * nb_dead_t0);
+        params.populations.set_difference_from_group_total({i, epi::InfectionType::S}, epi::SecirCategory::AgeGroup,
                                                            i, fact * nb_total_t0);
 
         params.probabilities[i].set_infection_from_contact(1.0);
@@ -65,7 +65,7 @@ TEST(TestSecir, compareAgeResWithSingleRun)
 
     // char vars[] = {'S', 'E', 'C', 'I', 'H', 'U', 'R', 'D'};
     // printf("People in\n");
-    // for (size_t k = 0; k < epi::SecirCompartments::SecirCount; k++) {
+    // for (size_t k = 0; k < epi::InfectionType::SecirCount; k++) {
     //     double dummy = 0;
 
     //     for (size_t i = 0; i < params.get_num_groups(); i++) {
@@ -85,7 +85,7 @@ TEST(TestSecir, compareAgeResWithSingleRun)
         for (size_t j = 1; j < compare[i].size(); j++) {
             double dummy = 0;
             for (size_t k = 0; k < nb_groups; k++) {
-                dummy += secihurd.get_value(i)[j - 1 + k * epi::SecirCompartments::SecirCount];
+                dummy += secihurd.get_value(i)[j - 1 + k * epi::InfectionType::SecirCount];
             }
             EXPECT_NEAR(dummy, compare[i][j], 1e-10) << " at row " << i;
         }

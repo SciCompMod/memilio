@@ -41,14 +41,14 @@ TEST(TestSecir, compareWithPreviousRun)
     epi::Damping dummy(30., 0.3);
     cont_freq_matrix.add_damping(dummy, 0, 0);
 
-    params.populations.set({0, epi::SecirCompartments::E}, nb_exp_t0);
-    params.populations.set({0, epi::SecirCompartments::C}, nb_car_t0);
-    params.populations.set({0, epi::SecirCompartments::I}, nb_inf_t0);
-    params.populations.set({0, epi::SecirCompartments::H}, nb_hosp_t0);
-    params.populations.set({0, epi::SecirCompartments::U}, nb_icu_t0);
-    params.populations.set({0, epi::SecirCompartments::R}, nb_rec_t0);
-    params.populations.set({0, epi::SecirCompartments::D}, nb_dead_t0);
-    params.populations.set_difference_from_total({0, epi::SecirCompartments::S}, nb_total_t0);
+    params.populations.set({0, epi::InfectionType::E}, nb_exp_t0);
+    params.populations.set({0, epi::InfectionType::C}, nb_car_t0);
+    params.populations.set({0, epi::InfectionType::I}, nb_inf_t0);
+    params.populations.set({0, epi::InfectionType::H}, nb_hosp_t0);
+    params.populations.set({0, epi::InfectionType::U}, nb_icu_t0);
+    params.populations.set({0, epi::InfectionType::R}, nb_rec_t0);
+    params.populations.set({0, epi::InfectionType::D}, nb_dead_t0);
+    params.populations.set_difference_from_total({0, epi::InfectionType::S}, nb_total_t0);
 
     params.probabilities[0].set_infection_from_contact(inf_prob);
     params.probabilities[0].set_carrier_infectability(carr_infec);
@@ -104,14 +104,14 @@ TEST(TestSecir, testParamConstructors)
     params.times[0].set_icu_to_home(ticu2home);
     params.times[0].set_icu_to_death(ticu2death);
 
-    params.populations.set({0, epi::SecirCompartments::E}, nb_exp_t0);
-    params.populations.set({0, epi::SecirCompartments::C}, nb_car_t0);
-    params.populations.set({0, epi::SecirCompartments::I}, nb_inf_t0);
-    params.populations.set({0, epi::SecirCompartments::H}, nb_hosp_t0);
-    params.populations.set({0, epi::SecirCompartments::U}, nb_icu_t0);
-    params.populations.set({0, epi::SecirCompartments::R}, nb_rec_t0);
-    params.populations.set({0, epi::SecirCompartments::D}, nb_dead_t0);
-    params.populations.set_difference_from_total({0, epi::SecirCompartments::S}, nb_total_t0);
+    params.populations.set({0, epi::InfectionType::E}, nb_exp_t0);
+    params.populations.set({0, epi::InfectionType::C}, nb_car_t0);
+    params.populations.set({0, epi::InfectionType::I}, nb_inf_t0);
+    params.populations.set({0, epi::InfectionType::H}, nb_hosp_t0);
+    params.populations.set({0, epi::InfectionType::U}, nb_icu_t0);
+    params.populations.set({0, epi::InfectionType::R}, nb_rec_t0);
+    params.populations.set({0, epi::InfectionType::D}, nb_dead_t0);
+    params.populations.set_difference_from_total({0, epi::InfectionType::S}, nb_total_t0);
 
     params.probabilities[0].set_infection_from_contact(inf_prob);
     params.probabilities[0].set_carrier_infectability(carr_infec);
@@ -133,22 +133,14 @@ TEST(TestSecir, testParamConstructors)
     EXPECT_EQ(params.get_seasonality(), params2.get_seasonality());
 
     EXPECT_EQ(params.populations.get_total(), params2.populations.get_total());
-    EXPECT_EQ(params.populations.get({0, epi::SecirCompartments::S}),
-              params2.populations.get({0, epi::SecirCompartments::S}));
-    EXPECT_EQ(params.populations.get({0, epi::SecirCompartments::E}),
-              params2.populations.get({0, epi::SecirCompartments::E}));
-    EXPECT_EQ(params.populations.get({0, epi::SecirCompartments::C}),
-              params2.populations.get({0, epi::SecirCompartments::C}));
-    EXPECT_EQ(params.populations.get({0, epi::SecirCompartments::I}),
-              params2.populations.get({0, epi::SecirCompartments::I}));
-    EXPECT_EQ(params.populations.get({0, epi::SecirCompartments::H}),
-              params2.populations.get({0, epi::SecirCompartments::H}));
-    EXPECT_EQ(params.populations.get({0, epi::SecirCompartments::U}),
-              params2.populations.get({0, epi::SecirCompartments::U}));
-    EXPECT_EQ(params.populations.get({0, epi::SecirCompartments::R}),
-              params2.populations.get({0, epi::SecirCompartments::R}));
-    EXPECT_EQ(params.populations.get({0, epi::SecirCompartments::D}),
-              params2.populations.get({0, epi::SecirCompartments::D}));
+    EXPECT_EQ(params.populations.get({0, epi::InfectionType::S}), params2.populations.get({0, epi::InfectionType::S}));
+    EXPECT_EQ(params.populations.get({0, epi::InfectionType::E}), params2.populations.get({0, epi::InfectionType::E}));
+    EXPECT_EQ(params.populations.get({0, epi::InfectionType::C}), params2.populations.get({0, epi::InfectionType::C}));
+    EXPECT_EQ(params.populations.get({0, epi::InfectionType::I}), params2.populations.get({0, epi::InfectionType::I}));
+    EXPECT_EQ(params.populations.get({0, epi::InfectionType::H}), params2.populations.get({0, epi::InfectionType::H}));
+    EXPECT_EQ(params.populations.get({0, epi::InfectionType::U}), params2.populations.get({0, epi::InfectionType::U}));
+    EXPECT_EQ(params.populations.get({0, epi::InfectionType::R}), params2.populations.get({0, epi::InfectionType::R}));
+    EXPECT_EQ(params.populations.get({0, epi::InfectionType::D}), params2.populations.get({0, epi::InfectionType::D}));
 
     EXPECT_EQ(params.times[0].get_incubation(), params2.times[0].get_incubation());
     EXPECT_EQ(params.times[0].get_serialinterval(), params2.times[0].get_serialinterval());
@@ -183,22 +175,14 @@ TEST(TestSecir, testParamConstructors)
     EXPECT_EQ(params.get_seasonality(), params3.get_seasonality());
 
     EXPECT_EQ(params3.populations.get_total(), params.populations.get_total());
-    EXPECT_EQ(params3.populations.get({0, epi::SecirCompartments::S}),
-              params.populations.get({0, epi::SecirCompartments::S}));
-    EXPECT_EQ(params3.populations.get({0, epi::SecirCompartments::E}),
-              params.populations.get({0, epi::SecirCompartments::E}));
-    EXPECT_EQ(params3.populations.get({0, epi::SecirCompartments::C}),
-              params.populations.get({0, epi::SecirCompartments::C}));
-    EXPECT_EQ(params3.populations.get({0, epi::SecirCompartments::I}),
-              params.populations.get({0, epi::SecirCompartments::I}));
-    EXPECT_EQ(params3.populations.get({0, epi::SecirCompartments::H}),
-              params.populations.get({0, epi::SecirCompartments::H}));
-    EXPECT_EQ(params3.populations.get({0, epi::SecirCompartments::U}),
-              params.populations.get({0, epi::SecirCompartments::U}));
-    EXPECT_EQ(params3.populations.get({0, epi::SecirCompartments::R}),
-              params.populations.get({0, epi::SecirCompartments::R}));
-    EXPECT_EQ(params3.populations.get({0, epi::SecirCompartments::D}),
-              params.populations.get({0, epi::SecirCompartments::D}));
+    EXPECT_EQ(params3.populations.get({0, epi::InfectionType::S}), params.populations.get({0, epi::InfectionType::S}));
+    EXPECT_EQ(params3.populations.get({0, epi::InfectionType::E}), params.populations.get({0, epi::InfectionType::E}));
+    EXPECT_EQ(params3.populations.get({0, epi::InfectionType::C}), params.populations.get({0, epi::InfectionType::C}));
+    EXPECT_EQ(params3.populations.get({0, epi::InfectionType::I}), params.populations.get({0, epi::InfectionType::I}));
+    EXPECT_EQ(params3.populations.get({0, epi::InfectionType::H}), params.populations.get({0, epi::InfectionType::H}));
+    EXPECT_EQ(params3.populations.get({0, epi::InfectionType::U}), params.populations.get({0, epi::InfectionType::U}));
+    EXPECT_EQ(params3.populations.get({0, epi::InfectionType::R}), params.populations.get({0, epi::InfectionType::R}));
+    EXPECT_EQ(params3.populations.get({0, epi::InfectionType::D}), params.populations.get({0, epi::InfectionType::D}));
 
     EXPECT_EQ(params3.times[0].get_incubation(), params.times[0].get_incubation());
     EXPECT_EQ(params3.times[0].get_serialinterval(), params.times[0].get_serialinterval());
@@ -232,22 +216,14 @@ TEST(TestSecir, testParamConstructors)
     EXPECT_EQ(params4.get_seasonality(), params3.get_seasonality());
 
     EXPECT_EQ(params3.populations.get_total(), params4.populations.get_total());
-    EXPECT_EQ(params3.populations.get({0, epi::SecirCompartments::S}),
-              params4.populations.get({0, epi::SecirCompartments::S}));
-    EXPECT_EQ(params3.populations.get({0, epi::SecirCompartments::E}),
-              params4.populations.get({0, epi::SecirCompartments::E}));
-    EXPECT_EQ(params3.populations.get({0, epi::SecirCompartments::C}),
-              params4.populations.get({0, epi::SecirCompartments::C}));
-    EXPECT_EQ(params3.populations.get({0, epi::SecirCompartments::I}),
-              params4.populations.get({0, epi::SecirCompartments::I}));
-    EXPECT_EQ(params3.populations.get({0, epi::SecirCompartments::H}),
-              params4.populations.get({0, epi::SecirCompartments::H}));
-    EXPECT_EQ(params3.populations.get({0, epi::SecirCompartments::U}),
-              params4.populations.get({0, epi::SecirCompartments::U}));
-    EXPECT_EQ(params3.populations.get({0, epi::SecirCompartments::R}),
-              params4.populations.get({0, epi::SecirCompartments::R}));
-    EXPECT_EQ(params3.populations.get({0, epi::SecirCompartments::D}),
-              params4.populations.get({0, epi::SecirCompartments::D}));
+    EXPECT_EQ(params3.populations.get({0, epi::InfectionType::S}), params4.populations.get({0, epi::InfectionType::S}));
+    EXPECT_EQ(params3.populations.get({0, epi::InfectionType::E}), params4.populations.get({0, epi::InfectionType::E}));
+    EXPECT_EQ(params3.populations.get({0, epi::InfectionType::C}), params4.populations.get({0, epi::InfectionType::C}));
+    EXPECT_EQ(params3.populations.get({0, epi::InfectionType::I}), params4.populations.get({0, epi::InfectionType::I}));
+    EXPECT_EQ(params3.populations.get({0, epi::InfectionType::H}), params4.populations.get({0, epi::InfectionType::H}));
+    EXPECT_EQ(params3.populations.get({0, epi::InfectionType::U}), params4.populations.get({0, epi::InfectionType::U}));
+    EXPECT_EQ(params3.populations.get({0, epi::InfectionType::R}), params4.populations.get({0, epi::InfectionType::R}));
+    EXPECT_EQ(params3.populations.get({0, epi::InfectionType::D}), params4.populations.get({0, epi::InfectionType::D}));
 
     EXPECT_EQ(params3.times[0].get_incubation(), params4.times[0].get_incubation());
     EXPECT_EQ(params3.times[0].get_serialinterval(), params4.times[0].get_serialinterval());
@@ -281,22 +257,14 @@ TEST(TestSecir, testParamConstructors)
     EXPECT_EQ(params5.get_seasonality(), params3.get_seasonality());
 
     EXPECT_EQ(params5.populations.get_total(), params3.populations.get_total());
-    EXPECT_EQ(params5.populations.get({0, epi::SecirCompartments::S}),
-              params3.populations.get({0, epi::SecirCompartments::S}));
-    EXPECT_EQ(params5.populations.get({0, epi::SecirCompartments::E}),
-              params3.populations.get({0, epi::SecirCompartments::E}));
-    EXPECT_EQ(params5.populations.get({0, epi::SecirCompartments::C}),
-              params3.populations.get({0, epi::SecirCompartments::C}));
-    EXPECT_EQ(params5.populations.get({0, epi::SecirCompartments::I}),
-              params3.populations.get({0, epi::SecirCompartments::I}));
-    EXPECT_EQ(params5.populations.get({0, epi::SecirCompartments::H}),
-              params3.populations.get({0, epi::SecirCompartments::H}));
-    EXPECT_EQ(params5.populations.get({0, epi::SecirCompartments::U}),
-              params3.populations.get({0, epi::SecirCompartments::U}));
-    EXPECT_EQ(params5.populations.get({0, epi::SecirCompartments::R}),
-              params3.populations.get({0, epi::SecirCompartments::R}));
-    EXPECT_EQ(params5.populations.get({0, epi::SecirCompartments::D}),
-              params3.populations.get({0, epi::SecirCompartments::D}));
+    EXPECT_EQ(params5.populations.get({0, epi::InfectionType::S}), params3.populations.get({0, epi::InfectionType::S}));
+    EXPECT_EQ(params5.populations.get({0, epi::InfectionType::E}), params3.populations.get({0, epi::InfectionType::E}));
+    EXPECT_EQ(params5.populations.get({0, epi::InfectionType::C}), params3.populations.get({0, epi::InfectionType::C}));
+    EXPECT_EQ(params5.populations.get({0, epi::InfectionType::I}), params3.populations.get({0, epi::InfectionType::I}));
+    EXPECT_EQ(params5.populations.get({0, epi::InfectionType::H}), params3.populations.get({0, epi::InfectionType::H}));
+    EXPECT_EQ(params5.populations.get({0, epi::InfectionType::U}), params3.populations.get({0, epi::InfectionType::U}));
+    EXPECT_EQ(params5.populations.get({0, epi::InfectionType::R}), params3.populations.get({0, epi::InfectionType::R}));
+    EXPECT_EQ(params5.populations.get({0, epi::InfectionType::D}), params3.populations.get({0, epi::InfectionType::D}));
 
     EXPECT_EQ(params5.times[0].get_incubation(), params3.times[0].get_incubation());
     EXPECT_EQ(params5.times[0].get_serialinterval(), params3.times[0].get_serialinterval());
@@ -388,13 +356,13 @@ TEST(TestSecir, testSettersAndGetters)
     params.times[0].set_infectious_asymp(vec[8]);
     params.times[0].set_icu_to_death(vec[9]);
 
-    params.populations.set({0, epi::SecirCompartments::E}, vec[10]);
-    params.populations.set({0, epi::SecirCompartments::C}, vec[11]);
-    params.populations.set({0, epi::SecirCompartments::I}, vec[12]);
-    params.populations.set({0, epi::SecirCompartments::H}, vec[13]);
-    params.populations.set({0, epi::SecirCompartments::U}, vec[14]);
-    params.populations.set({0, epi::SecirCompartments::R}, vec[15]);
-    params.populations.set({0, epi::SecirCompartments::D}, vec[16]);
+    params.populations.set({0, epi::InfectionType::E}, vec[10]);
+    params.populations.set({0, epi::InfectionType::C}, vec[11]);
+    params.populations.set({0, epi::InfectionType::I}, vec[12]);
+    params.populations.set({0, epi::InfectionType::H}, vec[13]);
+    params.populations.set({0, epi::InfectionType::U}, vec[14]);
+    params.populations.set({0, epi::InfectionType::R}, vec[15]);
+    params.populations.set({0, epi::InfectionType::D}, vec[16]);
 
     params.probabilities[0].set_infection_from_contact(vec[17]);
     params.probabilities[0].set_carrier_infectability(vec[18]);
@@ -423,19 +391,19 @@ TEST(TestSecir, testSettersAndGetters)
     check_distribution(*vec[8].get_distribution(), *params.times[0].get_infectious_asymp().get_distribution());
     check_distribution(*vec[9].get_distribution(), *params.times[0].get_icu_to_dead().get_distribution());
     check_distribution(*vec[10].get_distribution(),
-                       *params.populations.get({0, epi::SecirCompartments::E}).get_distribution());
+                       *params.populations.get({0, epi::InfectionType::E}).get_distribution());
     check_distribution(*vec[11].get_distribution(),
-                       *params.populations.get({0, epi::SecirCompartments::C}).get_distribution());
+                       *params.populations.get({0, epi::InfectionType::C}).get_distribution());
     check_distribution(*vec[12].get_distribution(),
-                       *params.populations.get({0, epi::SecirCompartments::I}).get_distribution());
+                       *params.populations.get({0, epi::InfectionType::I}).get_distribution());
     check_distribution(*vec[13].get_distribution(),
-                       *params.populations.get({0, epi::SecirCompartments::H}).get_distribution());
+                       *params.populations.get({0, epi::InfectionType::H}).get_distribution());
     check_distribution(*vec[14].get_distribution(),
-                       *params.populations.get({0, epi::SecirCompartments::U}).get_distribution());
+                       *params.populations.get({0, epi::InfectionType::U}).get_distribution());
     check_distribution(*vec[15].get_distribution(),
-                       *params.populations.get({0, epi::SecirCompartments::R}).get_distribution());
+                       *params.populations.get({0, epi::InfectionType::R}).get_distribution());
     check_distribution(*vec[16].get_distribution(),
-                       *params.populations.get({0, epi::SecirCompartments::D}).get_distribution());
+                       *params.populations.get({0, epi::InfectionType::D}).get_distribution());
     check_distribution(*vec[17].get_distribution(),
                        *params.probabilities[0].get_infection_from_contact().get_distribution());
     check_distribution(*vec[18].get_distribution(),
@@ -462,13 +430,13 @@ TEST(TestSecir, testSettersAndGetters)
     EXPECT_EQ(vec[7], params.times[0].get_icu_to_home());
     EXPECT_EQ(vec[8], params.times[0].get_infectious_asymp());
     EXPECT_EQ(vec[9], params.times[0].get_icu_to_dead());
-    EXPECT_EQ(vec[10], params.populations.get({0, epi::SecirCompartments::E}));
-    EXPECT_EQ(vec[11], params.populations.get({0, epi::SecirCompartments::C}));
-    EXPECT_EQ(vec[12], params.populations.get({0, epi::SecirCompartments::I}));
-    EXPECT_EQ(vec[13], params.populations.get({0, epi::SecirCompartments::H}));
-    EXPECT_EQ(vec[14], params.populations.get({0, epi::SecirCompartments::U}));
-    EXPECT_EQ(vec[15], params.populations.get({0, epi::SecirCompartments::R}));
-    EXPECT_EQ(vec[16], params.populations.get({0, epi::SecirCompartments::D}));
+    EXPECT_EQ(vec[10], params.populations.get({0, epi::InfectionType::E}));
+    EXPECT_EQ(vec[11], params.populations.get({0, epi::InfectionType::C}));
+    EXPECT_EQ(vec[12], params.populations.get({0, epi::InfectionType::I}));
+    EXPECT_EQ(vec[13], params.populations.get({0, epi::InfectionType::H}));
+    EXPECT_EQ(vec[14], params.populations.get({0, epi::InfectionType::U}));
+    EXPECT_EQ(vec[15], params.populations.get({0, epi::InfectionType::R}));
+    EXPECT_EQ(vec[16], params.populations.get({0, epi::InfectionType::D}));
     EXPECT_EQ(vec[17], params.probabilities[0].get_infection_from_contact());
     EXPECT_EQ(vec[18], params.probabilities[0].get_carrier_infectability());
     EXPECT_EQ(vec[19], params.probabilities[0].get_asymp_per_infectious());
@@ -524,14 +492,14 @@ TEST(TestSecir, testValueConstraints)
     epi::Damping dummy(30., 0.3);
     cont_freq_matrix.add_damping(dummy, 0, 0);
 
-    params.populations.set({0, epi::SecirCompartments::E}, nb_exp_t0);
-    params.populations.set({0, epi::SecirCompartments::C}, nb_car_t0);
-    params.populations.set({0, epi::SecirCompartments::I}, nb_inf_t0);
-    params.populations.set({0, epi::SecirCompartments::H}, nb_hosp_t0);
-    params.populations.set({0, epi::SecirCompartments::U}, nb_icu_t0);
-    params.populations.set({0, epi::SecirCompartments::R}, nb_rec_t0);
-    params.populations.set({0, epi::SecirCompartments::D}, nb_dead_t0);
-    params.populations.set_difference_from_total({0, epi::SecirCompartments::S}, nb_total_t0);
+    params.populations.set({0, epi::InfectionType::E}, nb_exp_t0);
+    params.populations.set({0, epi::InfectionType::C}, nb_car_t0);
+    params.populations.set({0, epi::InfectionType::I}, nb_inf_t0);
+    params.populations.set({0, epi::InfectionType::H}, nb_hosp_t0);
+    params.populations.set({0, epi::InfectionType::U}, nb_icu_t0);
+    params.populations.set({0, epi::InfectionType::R}, nb_rec_t0);
+    params.populations.set({0, epi::InfectionType::D}, nb_dead_t0);
+    params.populations.set_difference_from_total({0, epi::InfectionType::S}, nb_total_t0);
 
     params.probabilities[0].set_infection_from_contact(inf_prob);
     params.probabilities[0].set_carrier_infectability(carr_infec);
@@ -544,13 +512,13 @@ TEST(TestSecir, testValueConstraints)
     epi::set_log_level(epi::LogLevel::off);
     params.check_constraints();
 
-    EXPECT_EQ(-91, params.populations.get({0, epi::SecirCompartments::E}));
+    EXPECT_EQ(-91, params.populations.get({0, epi::InfectionType::E}));
     EXPECT_EQ(2.124921, params.probabilities[0].get_asymp_per_infectious().value());
     EXPECT_NEAR(5.08993, params.times[0].get_serialinterval(), 1e-14);
 
     params.apply_constraints();
 
-    EXPECT_EQ(0.0, params.populations.get({0, epi::SecirCompartments::E}));
+    EXPECT_EQ(0.0, params.populations.get({0, epi::InfectionType::E}));
     EXPECT_EQ(0.0, params.probabilities[0].get_asymp_per_infectious().value());
     EXPECT_NEAR(4.6, params.times[0].get_serialinterval(), 1e-14);
 }
@@ -581,14 +549,14 @@ TEST(TestSecir, testModelConstraints)
     params.times[0].set_icu_to_home(ticu2home);
     params.times[0].set_icu_to_death(ticu2death);
 
-    params.populations.set({0, epi::SecirCompartments::E}, nb_exp_t0);
-    params.populations.set({0, epi::SecirCompartments::C}, nb_car_t0);
-    params.populations.set({0, epi::SecirCompartments::I}, nb_inf_t0);
-    params.populations.set({0, epi::SecirCompartments::H}, nb_hosp_t0);
-    params.populations.set({0, epi::SecirCompartments::U}, nb_icu_t0);
-    params.populations.set({0, epi::SecirCompartments::R}, nb_rec_t0);
-    params.populations.set({0, epi::SecirCompartments::D}, nb_dead_t0);
-    params.populations.set_difference_from_total({0, epi::SecirCompartments::S}, nb_total_t0);
+    params.populations.set({0, epi::InfectionType::E}, nb_exp_t0);
+    params.populations.set({0, epi::InfectionType::C}, nb_car_t0);
+    params.populations.set({0, epi::InfectionType::I}, nb_inf_t0);
+    params.populations.set({0, epi::InfectionType::H}, nb_hosp_t0);
+    params.populations.set({0, epi::InfectionType::U}, nb_icu_t0);
+    params.populations.set({0, epi::InfectionType::R}, nb_rec_t0);
+    params.populations.set({0, epi::InfectionType::D}, nb_dead_t0);
+    params.populations.set_difference_from_total({0, epi::InfectionType::S}, nb_total_t0);
 
     params.probabilities[0].set_infection_from_contact(inf_prob);
     params.probabilities[0].set_carrier_infectability(carr_infec);

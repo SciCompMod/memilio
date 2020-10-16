@@ -29,7 +29,8 @@ TEST(TestImplicitEuler, compareOneTimeStep)
     double nb_total_t0 = 10000, nb_exp_t0 = 100, nb_inf_t0 = 50, nb_car_t0 = 50, nb_hosp_t0 = 20, nb_icu_t0 = 10,
            nb_rec_t0 = 10, nb_dead_t0 = 0;
 
-    epi::SecirParams params;
+    epi::SecirModel1 model = epi::create_secir_model<epi::AgeGroup1>();
+    auto& params           = model.parameters;
 
     params.times[0].set_incubation(tinc);
     params.times[0].set_infectious_mild(tinfmild);
@@ -46,15 +47,15 @@ TEST(TestImplicitEuler, compareOneTimeStep)
     epi::Damping dummy(30., 0.3);
     cont_freq_matrix.add_damping(dummy, 0, 0);
 
-    params.populations.set_total(nb_total_t0);
-    params.populations.set({0, epi::SecirCompartments::E}, nb_exp_t0);
-    params.populations.set({0, epi::SecirCompartments::C}, nb_car_t0);
-    params.populations.set({0, epi::SecirCompartments::I}, nb_inf_t0);
-    params.populations.set({0, epi::SecirCompartments::H}, nb_hosp_t0);
-    params.populations.set({0, epi::SecirCompartments::U}, nb_icu_t0);
-    params.populations.set({0, epi::SecirCompartments::R}, nb_rec_t0);
-    params.populations.set({0, epi::SecirCompartments::D}, nb_dead_t0);
-    params.populations.set_difference_from_total({0, epi::SecirCompartments::S}, nb_total_t0);
+    model.populations.set_total(nb_total_t0);
+    model.populations.set(nb_exp_t0, (epi::AgeGroup1)0, epi::InfectionType::E);
+    model.populations.set(nb_car_t0, (epi::AgeGroup1)0, epi::InfectionType::C);
+    model.populations.set(nb_inf_t0, (epi::AgeGroup1)0, epi::InfectionType::I);
+    model.populations.set(nb_hosp_t0, (epi::AgeGroup1)0, epi::InfectionType::H);
+    model.populations.set(nb_icu_t0, (epi::AgeGroup1)0, epi::InfectionType::U);
+    model.populations.set(nb_rec_t0, (epi::AgeGroup1)0, epi::InfectionType::R);
+    model.populations.set(nb_dead_t0, (epi::AgeGroup1)0, epi::InfectionType::D);
+    model.populations.set_difference_from_total(nb_total_t0, (epi::AgeGroup1)0, epi::InfectionType::S);
 
     params.probabilities[0].set_infection_from_contact(1.0);
     params.probabilities[0].set_asymp_per_infectious(alpha);
@@ -65,11 +66,11 @@ TEST(TestImplicitEuler, compareOneTimeStep)
 
     epi::DerivFunction dummy_f; // only required for explicit time integrators
 
-    auto y0 = params.populations.get_compartments();
+    auto y0 = model.populations.get_compartments();
     Eigen::VectorXd y1(y0.size()); // solution at time t=\Delta t=0.1
 
-    epi::ImplicitEulerIntegratorCore(params)
-        .step(dummy_f, y0, t0, dt, y1); // just one iteration of implicit Euler scheme
+    epi::ImplicitEulerIntegratorCore(model).step(dummy_f, y0, t0, dt,
+                                                 y1); // just one iteration of implicit Euler scheme
 
     EXPECT_NEAR(y1[0], 9756.897564185243, 1e-10);
     EXPECT_NEAR(y1[1], 99.97811957794602, 1e-10);
