@@ -275,6 +275,11 @@ SecirParams read_parameter_space(TixiDocumentHandle handle, const std::string& p
     tixiGetIntegerElement(handle, path_join(path, "NumberOfGroups").c_str(), &num_groups);
 
     SecirParams params{(size_t)num_groups};
+    double read_buffer;
+    tixiGetDoubleElement(handle, path_join(path, "Seasonality").c_str(), &read_buffer);
+    params.set_start_day(read_buffer);
+    params.set_seasonality(*read_element(handle, path_join(path, "Seasonality"), io_mode));
+
     params.set_contact_patterns(read_contact(handle, path_join(path, "ContactFreq"), io_mode));
 
     for (size_t i = 0; i < static_cast<size_t>(num_groups); i++) {
@@ -284,7 +289,6 @@ SecirParams read_parameter_space(TixiDocumentHandle handle, const std::string& p
         // populations
         auto population_path = path_join(group_path, "Population");
 
-        double read_buffer;
         tixiGetDoubleElement(handle, path_join(population_path, "Dead").c_str(), &read_buffer);
         params.populations.set({i, SecirCompartments::D}, read_buffer);
 
@@ -348,6 +352,9 @@ void write_parameter_space(TixiDocumentHandle handle, const std::string& path, c
 {
     auto num_groups = parameters.get_num_groups();
     tixiAddIntegerElement(handle, path.c_str(), "NumberOfGroups", static_cast<int>(num_groups), "%d");
+
+    tixiAddDoubleElement(handle, path.c_str(), "Start day", parameters.get_start_day(), "%g");
+    write_element(handle, path, "Seasonality", parameters.get_seasonality(), io_mode, num_runs);
 
     for (size_t i = 0; i < num_groups; i++) {
         auto group_name = "Group" + std::to_string(i + 1);

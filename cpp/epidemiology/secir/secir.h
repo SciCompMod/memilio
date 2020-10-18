@@ -90,6 +90,8 @@ public:
         , probabilities(nb_groups, Probabilities())
         , m_num_groups{nb_groups}
         , m_contact_patterns(ContactFrequencyMatrix{nb_groups})
+        , m_tstart{0}
+        , m_seasonality{0}
     {
     }
 
@@ -99,6 +101,8 @@ public:
         , probabilities(cont_freq_matrix.get_size(), Probabilities())
         , m_num_groups{(size_t)cont_freq_matrix.get_size()}
         , m_contact_patterns(cont_freq_matrix)
+        , m_tstart{0}
+        , m_seasonality{0}
     {
     }
 
@@ -108,6 +112,45 @@ public:
     }
 
     double base_reprod;
+
+    /**
+     * @brief sets the start day in the SECIR model
+     * @param tstart start day
+     */
+    void set_start_day(double tstart);
+
+    /**
+     * @brief returns the start day in the SECIR model
+     */
+    double get_start_day() const;
+
+    /**
+     * @brief sets the seasonality in the SECIR model
+     * @param seasonality seasonality
+     */
+    void set_seasonality(UncertainValue const& seasonality);
+
+    /**
+     * @brief sets the seasonality in the SECIR model
+     * @param seasonality seasonality
+     */
+    void set_seasonality(double seasonality);
+
+    /**
+     * @brief sets the seasonality in the SECIR model
+     * @param seasonality seasonality
+     */
+    void set_seasonality(ParameterDistribution const& seasonality);
+
+    /**
+     * @brief returns the seasonality in the SECIR model
+     */
+    const UncertainValue& get_seasonality() const;
+
+    /**
+     * @brief returns the seasonality in the SECIR model
+     */
+    UncertainValue& get_seasonality();
 
     // time parameters for the different 'stages' of the disease of scale day or 1/day
     // 'stages' does not refer to the 'states' of the SECIR model but also includes incubation time or contact frequency
@@ -590,6 +633,9 @@ private:
     size_t m_num_groups;
 
     UncertainContactMatrix m_contact_patterns;
+
+    double m_tstart;
+    UncertainValue m_seasonality;
 };
 
 /**
