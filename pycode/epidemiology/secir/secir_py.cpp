@@ -341,6 +341,13 @@ PYBIND11_MODULE(_secir, m)
         .def_readwrite("times", &epi::SecirParams::times)
         .def_readwrite("populations", &epi::SecirParams::populations)
         .def_readwrite("probabilities", &epi::SecirParams::probabilities)
+        .def("get_icu_capacity", py::overload_cast<>(&epi::SecirParams::get_icu_capacity),
+             py::return_value_policy::reference_internal)
+        .def("get_icu_capacity", py::overload_cast<>(&epi::SecirParams::get_icu_capacity, py::const_),
+             py::return_value_policy::reference_internal)
+        .def("set_icu_capacity", py::overload_cast<double>(&epi::SecirParams::set_icu_capacity))
+        .def("set_icu_capacity",
+             py::overload_cast<const epi::ParameterDistribution&>(&epi::SecirParams::set_icu_capacity))
         .def("check_constraints", &epi::SecirParams::check_constraints)
         .def("apply_constraints", &epi::SecirParams::apply_constraints)
         .def("get_contact_patterns", py::overload_cast<>(&epi::SecirParams::get_contact_patterns),
@@ -405,9 +412,9 @@ PYBIND11_MODULE(_secir, m)
             "get_edge", [](const SecirParamsGraph& self, size_t edge_idx) -> auto& { return self.edges()[edge_idx]; },
             py::return_value_policy::reference_internal)
         .def("get_num_out_edges",
-                               [](const SecirParamsGraph& self, size_t node_idx) {
-                                   return self.out_edges(node_idx).size();
-                               })
+             [](const SecirParamsGraph& self, size_t node_idx) {
+                 return self.out_edges(node_idx).size();
+             })
         .def(
             "get_out_edge", [](const SecirParamsGraph& self, size_t node_idx, size_t edge_idx) -> auto& {
                 return self.out_edges(node_idx)[edge_idx];
@@ -441,9 +448,9 @@ PYBIND11_MODULE(_secir, m)
             "get_edge", [](const MigrationGraph& self, size_t edge_idx) -> auto& { return self.edges()[edge_idx]; },
             py::return_value_policy::reference_internal)
         .def("get_num_out_edges",
-                               [](const MigrationGraph& self, size_t node_idx) {
-                                   return self.out_edges(node_idx).size();
-                               })
+             [](const MigrationGraph& self, size_t node_idx) {
+                 return self.out_edges(node_idx).size();
+             })
         .def(
             "get_out_edge", [](const MigrationGraph& self, size_t node_idx, size_t edge_idx) -> auto& {
                 return self.out_edges(node_idx)[edge_idx];
@@ -452,8 +459,9 @@ PYBIND11_MODULE(_secir, m)
 
     py::class_<epi::GraphSimulation<MigrationGraph>>(m, "MigrationSimulation")
         .def(py::init([](const MigrationGraph& graph, double t0, double dt) {
-            return std::make_unique<epi::GraphSimulation<MigrationGraph>>(epi::make_migration_sim(t0, dt, graph));
-        }), py::arg("graph"), py::arg("t0") = 0.0, py::arg("dt") = 1.0)
+                 return std::make_unique<epi::GraphSimulation<MigrationGraph>>(epi::make_migration_sim(t0, dt, graph));
+             }),
+             py::arg("graph"), py::arg("t0") = 0.0, py::arg("dt") = 1.0)
         .def_property_readonly("graph",
                                py::overload_cast<>(&epi::GraphSimulation<MigrationGraph>::get_graph, py::const_),
                                py::return_value_policy::reference_internal)
@@ -499,8 +507,10 @@ PYBIND11_MODULE(_secir, m)
 
     m.def("draw_sample", &epi::draw_sample, py::arg("params"));
 
-    m.def("interpolate_simulation_result", py::overload_cast<const epi::TimeSeries<double>&>(&epi::interpolate_simulation_result));
-    m.def("interpolate_simulation_result", py::overload_cast<const MigrationGraph&>(&epi::interpolate_simulation_result));
+    m.def("interpolate_simulation_result",
+          py::overload_cast<const epi::TimeSeries<double>&>(&epi::interpolate_simulation_result));
+    m.def("interpolate_simulation_result",
+          py::overload_cast<const MigrationGraph&>(&epi::interpolate_simulation_result));
 
     m.def("interpolate_ensemble_results", &epi::interpolate_ensemble_results<MigrationGraph>);
     m.def("interpolate_ensemble_results", &epi::interpolate_ensemble_results<epi::TimeSeries<double>>);

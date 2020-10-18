@@ -275,6 +275,8 @@ SecirParams read_parameter_space(TixiDocumentHandle handle, const std::string& p
     tixiGetIntegerElement(handle, path_join(path, "NumberOfGroups").c_str(), &num_groups);
 
     SecirParams params{(size_t)num_groups};
+    params.set_icu_capacity(*read_element(handle, path_join(path, "ICUCapacity"), io_mode));
+
     params.set_contact_patterns(read_contact(handle, path_join(path, "ContactFreq"), io_mode));
 
     for (size_t i = 0; i < num_groups; i++) {
@@ -348,6 +350,8 @@ void write_parameter_space(TixiDocumentHandle handle, const std::string& path, c
 {
     int num_groups = static_cast<int>(parameters.get_num_groups());
     tixiAddIntegerElement(handle, path.c_str(), "NumberOfGroups", num_groups, "%d");
+
+    write_element(handle, path, "ICUCapacity", parameters.get_icu_capacity(), io_mode, num_runs);
 
     for (size_t i = 0; i < num_groups; i++) {
         auto group_name = "Group" + std::to_string(i + 1);

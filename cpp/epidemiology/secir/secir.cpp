@@ -13,6 +13,30 @@
 
 namespace epi
 {
+void SecirParams::set_icu_capacity(UncertainValue const& icu_capacity)
+{
+    m_icu_capacity = icu_capacity;
+}
+
+void SecirParams::set_icu_capacity(double icu_capacity)
+{
+    m_icu_capacity = icu_capacity;
+}
+
+void SecirParams::set_icu_capacity(ParameterDistribution const& icu_capacity)
+{
+    m_icu_capacity.set_distribution(icu_capacity);
+}
+
+const UncertainValue& SecirParams::get_icu_capacity() const
+{
+    return m_icu_capacity;
+}
+
+UncertainValue& SecirParams::get_icu_capacity()
+{
+    return m_icu_capacity;
+}
 
 SecirParams::StageTimes::StageTimes()
     : m_tinc{1.0}
@@ -627,6 +651,11 @@ UncertainContactMatrix const& SecirParams::get_contact_patterns() const
 
 void SecirParams::apply_constraints()
 {
+    if (m_icu_capacity < 0.0) {
+        log_warning("Constraint check: Parameter m_icu_capacity changed from {:0.4f} to {:d}", m_icu_capacity, 0);
+        m_icu_capacity = 0;
+    }
+
     for (int i = 0; i < times.size(); i++) {
         populations.apply_constraints();
         times[i].apply_constraints();
@@ -636,6 +665,10 @@ void SecirParams::apply_constraints()
 
 void SecirParams::check_constraints() const
 {
+    if (m_icu_capacity < 0.0) {
+        log_warning("Constraint check: Parameter m_icu_capacity smaller {:d}", 0);
+    }
+
     for (int i = 0; i < times.size(); i++) {
         populations.check_constraints();
         times[i].check_constraints();
@@ -669,6 +702,9 @@ void secir_get_derivatives(SecirParams const& params, Eigen::Ref<const Eigen::Ve
 
         dydt[Si] = 0;
         dydt[Ei] = 0;
+
+        double icu_occupancy = 0;
+
         for (size_t j = 0; j < n_agegroups; j++) {
             size_t Sj = params.populations.get_flat_index({j, S});
             size_t Ej = params.populations.get_flat_index({j, E});
@@ -681,7 +717,7 @@ void secir_get_derivatives(SecirParams const& params, Eigen::Ref<const Eigen::Ve
             // effective contact rate by contact rate between groups i and j and damping j
             double cont_freq_eff = // get effective contact rate between i and j
                 cont_freq_matrix.get_cont_freq(static_cast<int>(i), static_cast<int>(j)) *
-                cont_freq_matrix.get_dampings(static_cast<int>(i), static_cast<int>(j)).get_factor(t); 
+                cont_freq_matrix.get_dampings(static_cast<int>(i), static_cast<int>(j)).get_factor(t);
             double Nj      = y[Sj] + y[Ej] + y[Cj] + y[Ij] + y[Hj] + y[Uj] + y[Rj]; // without died people
             double divNj   = 1.0 / Nj; // precompute 1.0/Nj
             double dummy_S = y[Si] * cont_freq_eff * divNj * params.probabilities[i].get_infection_from_contact() *
@@ -690,6 +726,8 @@ void secir_get_derivatives(SecirParams const& params, Eigen::Ref<const Eigen::Ve
 
             dydt[Si] -= dummy_S; // -R1*(C+beta*I)*S/N0
             dydt[Ei] += dummy_S; // R1*(C+beta*I)*S/N0-R2*E
+
+            icu_occupancy += y[Uj];
         }
 
         double dummy_R2 =
@@ -713,18 +751,25 @@ void secir_get_derivatives(SecirParams const& params, Eigen::Ref<const Eigen::Ve
             ((1 - params.probabilities[i].get_icu_per_hospitalized()) / params.times[i].get_hospitalized_to_home() +
              params.probabilities[i].get_icu_per_hospitalized() / params.times[i].get_hospitalized_to_icu()) *
                 y[Hi];
-        dydt[Ui] =
-            params.probabilities[i].get_icu_per_hospitalized() / params.times[i].get_hospitalized_to_icu() * y[Hi] -
-            ((1 - params.probabilities[i].get_dead_per_icu()) / params.times[i].get_icu_to_home() +
-             params.probabilities[i].get_dead_per_icu() / params.times[i].get_icu_to_dead()) *
-                y[Ui];
+        dydt[Ui] = -((1 - params.probabilities[i].get_dead_per_icu()) / params.times[i].get_icu_to_home() +
+                     params.probabilities[i].get_dead_per_icu() / params.times[i].get_icu_to_dead()) *
+                   y[Ui];
+        if (icu_occupancy <= params.get_icu_capacity()) {
+            dydt[Ui] +=
+                params.probabilities[i].get_icu_per_hospitalized() / params.times[i].get_hospitalized_to_icu() * y[Hi];
+        }
         dydt[Ri] = params.probabilities[i].get_asymp_per_infectious() / params.times[i].get_infectious_asymp() * y[Ci] +
                    (1 - params.probabilities[i].get_hospitalized_per_infectious()) /
                        params.times[i].get_infectious_mild() * y[Ii] +
                    (1 - params.probabilities[i].get_icu_per_hospitalized()) /
                        params.times[i].get_hospitalized_to_home() * y[Hi] +
                    (1 - params.probabilities[i].get_dead_per_icu()) / params.times[i].get_icu_to_home() * y[Ui];
+
         dydt[Di] = params.probabilities[i].get_dead_per_icu() / params.times[i].get_icu_to_dead() * y[Ui];
+        if (icu_occupancy > params.get_icu_capacity()) {
+            dydt[Di] +=
+                params.probabilities[i].get_icu_per_hospitalized() / params.times[i].get_hospitalized_to_icu() * y[Hi];
+        }
     }
 }
 

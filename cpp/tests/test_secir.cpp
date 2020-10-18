@@ -12,7 +12,8 @@ TEST(TestSecir, compareWithPreviousRun)
     double tinc = 5.2, tinfmild = 6, tserint = 4.2, thosp2home = 12, thome2hosp = 5, thosp2icu = 2, ticu2home = 8,
            tinfasy = 6.2, ticu2death = 5;
 
-    double cont_freq = 10, inf_prob = 0.05, carr_infec = 1, alpha = 0.09, beta = 0.25, delta = 0.3, rho = 0.2, theta = 0.25;
+    double cont_freq = 10, inf_prob = 0.05, carr_infec = 1, alpha = 0.09, beta = 0.25, delta = 0.3, rho = 0.2,
+           theta = 0.25;
 
     double nb_total_t0 = 10000, nb_exp_t0 = 100, nb_inf_t0 = 50, nb_car_t0 = 50, nb_hosp_t0 = 20, nb_icu_t0 = 10,
            nb_rec_t0 = 10, nb_dead_t0 = 0;
@@ -81,12 +82,17 @@ TEST(TestSecir, testParamConstructors)
     double tinc = 5.2, tinfmild = 6, tserint = 4.2, thosp2home = 12, thome2hosp = 5, thosp2icu = 2, ticu2home = 8,
            tinfasy = 6.2, ticu2death = 5;
 
-    double cont_freq = 10, inf_prob = 0.05, carr_infec = 0.67, alpha = 0.09, beta = 0.25, delta = 0.3, rho = 0.2, theta = 0.24;
+    double cont_freq = 10, inf_prob = 0.05, carr_infec = 0.67, alpha = 0.09, beta = 0.25, delta = 0.3, rho = 0.2,
+           theta = 0.24;
 
     double nb_total_t0 = 10000, nb_exp_t0 = 100, nb_inf_t0 = 54, nb_car_t0 = 50, nb_hosp_t0 = 20, nb_icu_t0 = 10,
            nb_rec_t0 = 11, nb_dead_t0 = 0;
 
+    double icu_cap = 4444;
+
     epi::SecirParams params;
+
+    params.set_icu_capacity(4444);
 
     params.times[0].set_incubation(tinc);
     params.times[0].set_infectious_mild(tinfmild);
@@ -120,6 +126,8 @@ TEST(TestSecir, testParamConstructors)
     cont_freq_matrix.add_damping(dummy, 0, 0);
 
     epi::SecirParams params2{params}; // copy constructor
+
+    EXPECT_EQ(params.get_icu_capacity(), params2.get_icu_capacity());
 
     EXPECT_EQ(params.populations.get_total(), params2.populations.get_total());
     EXPECT_EQ(params.populations.get({0, epi::SecirCompartments::S}),
@@ -167,6 +175,8 @@ TEST(TestSecir, testParamConstructors)
 
     epi::SecirParams params3 = std::move(params2); // move constructor
 
+    EXPECT_EQ(params.get_icu_capacity(), params3.get_icu_capacity());
+
     EXPECT_EQ(params3.populations.get_total(), params.populations.get_total());
     EXPECT_EQ(params3.populations.get({0, epi::SecirCompartments::S}),
               params.populations.get({0, epi::SecirCompartments::S}));
@@ -212,6 +222,8 @@ TEST(TestSecir, testParamConstructors)
 
     epi::SecirParams params4 = params3; // copy assignment constructor
 
+    EXPECT_EQ(params4.get_icu_capacity(), params3.get_icu_capacity());
+
     EXPECT_EQ(params3.populations.get_total(), params4.populations.get_total());
     EXPECT_EQ(params3.populations.get({0, epi::SecirCompartments::S}),
               params4.populations.get({0, epi::SecirCompartments::S}));
@@ -256,6 +268,8 @@ TEST(TestSecir, testParamConstructors)
               params3.get_contact_patterns().get_cont_freq_mat().get_dampings(0, 0).get_factor(35));
 
     epi::SecirParams params5 = std::move(params4); // move assignment constructor
+
+    EXPECT_EQ(params5.get_icu_capacity(), params3.get_icu_capacity());
 
     EXPECT_EQ(params5.populations.get_total(), params3.populations.get_total());
     EXPECT_EQ(params5.populations.get({0, epi::SecirCompartments::S}),
@@ -351,6 +365,8 @@ TEST(TestSecir, setters_and_getters)
 
     EXPECT_EQ(params.times[0].get_incubation().get_distribution().get(), nullptr);
 
+    params.set_icu_capacity(val);
+
     params.times[0].set_incubation(val);
     params.times[0].set_infectious_mild(val);
     params.times[0].set_serialinterval(val);
@@ -394,8 +410,8 @@ TEST(TestSecir, setters_and_getters)
                        *params.populations.get({0, epi::SecirCompartments::U}).get_distribution());
     check_distribution(*params.populations.get({0, epi::SecirCompartments::R}).get_distribution(),
                        *params.populations.get({0, epi::SecirCompartments::D}).get_distribution());
-    check_distribution(*params.probabilities[0].get_asymp_per_infectious().get_distribution(),
-                       *params.probabilities[0].get_risk_from_symptomatic().get_distribution());
+    check_distribution(*params.get_icu_capacity().get_distribution(),
+                       *params.probabilities[0].get_asymp_per_infectious().get_distribution());
     check_distribution(*params.probabilities[0].get_risk_from_symptomatic().get_distribution(),
                        *params.probabilities[0].get_carrier_infectability().get_distribution());
     check_distribution(*params.probabilities[0].get_hospitalized_per_infectious().get_distribution(),
@@ -418,8 +434,7 @@ TEST(TestSecir, setters_and_getters)
     EXPECT_EQ(params.probabilities[0].get_hospitalized_per_infectious(),
               params.probabilities[0].get_icu_per_hospitalized());
     EXPECT_EQ(params.probabilities[0].get_dead_per_icu(), params.probabilities[0].get_infection_from_contact());
-    EXPECT_EQ(params.probabilities[0].get_carrier_infectability(),
-              params.probabilities[0].get_infection_from_contact());
+    EXPECT_EQ(params.probabilities[0].get_carrier_infectability(), params.get_icu_capacity());
 }
 
 TEST(TestSecir, check_constraints)
@@ -435,13 +450,12 @@ TEST(TestSecir, check_constraints)
         ticu2death = 5.90264; // 3.5-7 (=R5^(-1))
 
     double cont_freq = 10, // 0.2-0.75
-        inf_prob      = 0.064519,
-        carr_infec = 0.56758,
-           alpha     = 2.124921, // 0.01-0.16
-        beta         = 0.190609, // 0.05-0.5
-        delta        = 0.245801, // 0.15-0.77
-        rho          = 0.183693, // 0.1-0.35
-        theta        = 0.185556; // 0.15-0.4
+        inf_prob = 0.064519, carr_infec = 0.56758,
+           alpha = 2.124921, // 0.01-0.16
+        beta     = 0.190609, // 0.05-0.5
+        delta    = 0.245801, // 0.15-0.77
+        rho      = 0.183693, // 0.1-0.35
+        theta    = 0.185556; // 0.15-0.4
 
     double nb_total_t0 = 10000, nb_exp_t0 = -91, nb_inf_t0 = 39, nb_car_t0 = 36, nb_hosp_t0 = 20, nb_icu_t0 = 10,
            nb_rec_t0 = 8, nb_dead_t0 = 0;
@@ -497,4 +511,57 @@ TEST(TestSecir, check_constraints)
     EXPECT_EQ(0.0, params.populations.get({0, epi::SecirCompartments::E}));
     EXPECT_EQ(0.0, params.probabilities[0].get_asymp_per_infectious().value());
     EXPECT_NEAR(4.6, params.times[0].get_serialinterval(), 1e-14);
+}
+
+TEST(TestSecir, testModelingCorrectness)
+{
+    double t0   = 0;
+    double tmax = 50;
+    double dt   = 0.1;
+
+    double tinc = 5.2, tinfmild = 6, tserint = 4.2, thosp2home = 12, thome2hosp = 5, thosp2icu = 2, ticu2home = 8,
+           tinfasy = 6.2, ticu2death = 5;
+
+    double cont_freq = 10, inf_prob = 0.05, carr_infec = 1, alpha = 0.09, beta = 0.25, delta = 0.3, rho = 0.2,
+           theta = 0.25;
+
+    double nb_total_t0 = 10000, nb_exp_t0 = 100, nb_inf_t0 = 50, nb_car_t0 = 50, nb_hosp_t0 = 20, nb_icu_t0 = 0,
+           nb_rec_t0 = 10, nb_dead_t0 = 0;
+
+    epi::SecirParams params;
+
+    params.set_icu_capacity(0);
+
+    params.times[0].set_incubation(tinc);
+    params.times[0].set_infectious_mild(tinfmild);
+    params.times[0].set_serialinterval(tserint);
+    params.times[0].set_hospitalized_to_home(thosp2home);
+    params.times[0].set_home_to_hospitalized(thome2hosp);
+    params.times[0].set_hospitalized_to_icu(thosp2icu);
+    params.times[0].set_icu_to_home(ticu2home);
+    params.times[0].set_icu_to_death(ticu2death);
+
+    params.populations.set({0, epi::SecirCompartments::E}, nb_exp_t0);
+    params.populations.set({0, epi::SecirCompartments::C}, nb_car_t0);
+    params.populations.set({0, epi::SecirCompartments::I}, nb_inf_t0);
+    params.populations.set({0, epi::SecirCompartments::H}, nb_hosp_t0);
+    params.populations.set({0, epi::SecirCompartments::U}, nb_icu_t0);
+    params.populations.set({0, epi::SecirCompartments::R}, nb_rec_t0);
+    params.populations.set({0, epi::SecirCompartments::D}, nb_dead_t0);
+    params.populations.set_difference_from_total({0, epi::SecirCompartments::S}, nb_total_t0);
+
+    params.probabilities[0].set_infection_from_contact(inf_prob);
+    params.probabilities[0].set_carrier_infectability(carr_infec);
+    params.probabilities[0].set_asymp_per_infectious(alpha);
+    params.probabilities[0].set_risk_from_symptomatic(beta);
+    params.probabilities[0].set_hospitalized_per_infectious(rho);
+    params.probabilities[0].set_icu_per_hospitalized(theta);
+    params.probabilities[0].set_dead_per_icu(delta);
+
+    params.apply_constraints();
+
+    epi::TimeSeries<double> secihurd = simulate(t0, tmax, dt, params);
+    for (size_t i = 0; i < secihurd.get_num_time_points(); i++) {
+        EXPECT_LE(secihurd.get_value(i)[5], 1) << " at row " << i;
+    }
 }

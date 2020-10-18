@@ -9,12 +9,17 @@ void set_params_distributions_normal(SecirParams& params, double t0, double tmax
 {
     double min_val = 0.001;
 
+    double value_params = params.get_icu_capacity();
+    params.set_icu_capacity(ParameterDistributionNormal(std::max(min_val, (1 - dev_rel * 2.6) * value_params),
+                                                        (1 + dev_rel * 2.6) * value_params, value_params,
+                                                        dev_rel * value_params));
+
     // populations
     for (size_t i = 0; i < params.get_num_groups(); i++) {
 
         // variably sized groups
         // exposed
-        double value_params = params.populations.get({i, SecirCompartments::E});
+        value_params = params.populations.get({i, SecirCompartments::E});
         params.populations.set({i, SecirCompartments::E},
                                ParameterDistributionNormal(std::max(min_val, (1 - dev_rel * 2.6) * value_params),
                                                            (1 + dev_rel * 2.6) * value_params, value_params,
@@ -125,7 +130,7 @@ void set_params_distributions_normal(SecirParams& params, double t0, double tmax
         value_params = params.probabilities[i].get_carrier_infectability();
         params.probabilities[i].set_carrier_infectability(
             ParameterDistributionNormal(std::max(min_val, (1 - dev_rel * 2.6) * value_params),
-                                        (1 + dev_rel * 2.6) * value_params, value_params, dev_rel * value_params));                                        
+                                        (1 + dev_rel * 2.6) * value_params, value_params, dev_rel * value_params));
 
         // asymptomatic per infectious
         value_params = params.probabilities[i].get_asymp_per_infectious();

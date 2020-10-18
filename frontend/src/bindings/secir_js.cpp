@@ -190,6 +190,8 @@ EMSCRIPTEN_BINDINGS(secirjs)
         .property("times", &epi::SecirParams::times)
         .property("populations", &epi::SecirParams::populations)
         .property("probabilities", &epi::SecirParams::probabilities)
+        .function("set_icu_capacity", js::select_overload<void(double)>(&epi::SecirParams::set_icu_capacity))
+        .function("get_icu_capacity", js::select_overload<epi::UncertainValue&()>(&epi::SecirParams::get_icu_capacity))
         .function("get_contact_patterns",
                   js::select_overload<epi::UncertainContactMatrix&()>(&epi::SecirParams::get_contact_patterns))
         .function("set_contact_patterns", &epi::SecirParams::set_contact_patterns);
