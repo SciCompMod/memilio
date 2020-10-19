@@ -112,7 +112,7 @@ int main(int argc, char** argv)
     std::cout << "Done" << std::endl;
 
     std::cout << "Running Simulations..." << std::flush;
-    auto study = epi::ParameterStudy<epi::SecirModel1>(graph_read, t0, tmax, 1.0, 2);
+    auto study = epi::ParameterStudy<epi::SecirModel<epi::AgeGroup1>>(graph_read, t0, tmax, 1.0, 2);
     std::cout << "Done" << std::endl;
 
     return 0;

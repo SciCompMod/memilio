@@ -94,7 +94,7 @@ int main()
 
     params.apply_constraints();
 
-    epi::TimeSeries<double> secir = simulate(t0, tmax, dt, params);
+    epi::TimeSeries<double> secir = simulate(t0, tmax, dt, model);
 
     char vars[] = {'S', 'E', 'C', 'I', 'H', 'U', 'R', 'D'};
     printf("Number of time points :%d\n", static_cast<int>(secir.get_num_time_points()));

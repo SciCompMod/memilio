@@ -91,17 +91,17 @@ Model read_parameter_space(TixiDocumentHandle handle, const std::string& path, i
     tixiGetIntegerElement(handle, path_join(path, "NumberOfGroups").c_str(), &num_groups);
 
     using AgeGroup = AgeGroup1;
-    if (num_groups == 3) {
+    if (num_groups == 2) {
+        using AgeGroup = AgeGroup2;
+    }
+    else if (num_groups == 3) {
         using AgeGroup = AgeGroup3;
     }
-    else if (num_groups == 5) {
-        using AgeGroup = AgeGroup5;
-    }
     else {
-        epi::log_error("Only 1, 3 or 5 age grops allowed at the moment.");
+        epi::log_error("Only 1, 2 or 3 age groups allowed at the moment.");
     }
 
-    auto model = create_secir_model<AgeGroup>();
+    SecirModel<AgeGroup> model;
     double read_buffer;
     tixiGetDoubleElement(handle, path_join(path, "StartDay").c_str(), &read_buffer);
     model.parameters.set_start_day(read_buffer);
@@ -186,11 +186,9 @@ Model read_parameter_space(TixiDocumentHandle handle, const std::string& path, i
  * @param num_runs Number of runs of parameter study (used for predefinied samples)
  * @param io_mode type of xml output (see epi::write_parameter_study for more details)
  */
-template <class AgeGroup>
-void write_parameter_space(
-    TixiDocumentHandle handle, const std::string& path,
-    CompartmentalModel<Populations<AgeGroup, InfectionType>, SecirParams<(size_t)AgeGroup::Count>>& model, int num_runs,
-    int io_mode)
+template <class Model>
+void write_parameter_space(TixiDocumentHandle handle, const std::string& path, Model const& model, int num_runs,
+                           int io_mode)
 {
     auto num_groups = model.parameters.get_num_groups();
     tixiAddIntegerElement(handle, path.c_str(), "NumberOfGroups", num_groups, "%d");
@@ -209,22 +207,22 @@ void write_parameter_space(
         auto population_path = path_join(group_path, "Population");
         tixiCreateElement(handle, group_path.c_str(), "Population");
 
-        tixiAddDoubleElement(handle, population_path.c_str(), "Total", model.populations.get_group_total((AgeGroup)i),
-                             "%g");
+        tixiAddDoubleElement(handle, population_path.c_str(), "Total",
+                             model.populations.get_group_total((typename Model::AgeGroup)i), "%g");
         tixiAddDoubleElement(handle, population_path.c_str(), "Dead",
-                             model.populations.get((AgeGroup)i, InfectionType::D), "%g");
-        write_element(handle, population_path, "Exposed", model.populations.get((AgeGroup)i, InfectionType::E), io_mode,
-                      num_runs);
-        write_element(handle, population_path, "Carrier", model.populations.get((AgeGroup)i, InfectionType::C), io_mode,
-                      num_runs);
-        write_element(handle, population_path, "Infectious", model.populations.get((AgeGroup)i, InfectionType::I),
-                      io_mode, num_runs);
-        write_element(handle, population_path, "Hospitalized", model.populations.get((AgeGroup)i, InfectionType::H),
-                      io_mode, num_runs);
-        write_element(handle, population_path, "ICU", model.populations.get((AgeGroup)i, InfectionType::U), io_mode,
-                      num_runs);
-        write_element(handle, population_path, "Recovered", model.populations.get((AgeGroup)i, InfectionType::R),
-                      io_mode, num_runs);
+                             model.populations.get((typename Model::AgeGroup)i, InfectionType::D), "%g");
+        write_element(handle, population_path, "Exposed",
+                      model.populations.get((typename Model::AgeGroup)i, InfectionType::E), io_mode, num_runs);
+        write_element(handle, population_path, "Carrier",
+                      model.populations.get((typename Model::AgeGroup)i, InfectionType::C), io_mode, num_runs);
+        write_element(handle, population_path, "Infectious",
+                      model.populations.get((typename Model::AgeGroup)i, InfectionType::I), io_mode, num_runs);
+        write_element(handle, population_path, "Hospitalized",
+                      model.populations.get((typename Model::AgeGroup)i, InfectionType::H), io_mode, num_runs);
+        write_element(handle, population_path, "ICU",
+                      model.populations.get((typename Model::AgeGroup)i, InfectionType::U), io_mode, num_runs);
+        write_element(handle, population_path, "Recovered",
+                      model.populations.get((typename Model::AgeGroup)i, InfectionType::R), io_mode, num_runs);
 
         // times
         auto times_path = path_join(group_path, "StageTimes");
@@ -288,7 +286,7 @@ ParameterStudy<Model> read_parameter_study(TixiDocumentHandle handle, const std:
     tixiGetDoubleElement(handle, path_join(path, "T0").c_str(), &t0);
     tixiGetDoubleElement(handle, path_join(path, "TMax").c_str(), &tmax);
 
-    Model model = read_parameter_space(handle, path, io_mode);
+    Model model = read_parameter_space<Model>(handle, path, io_mode);
     return ParameterStudy<Model>(model, t0, tmax, num_runs);
 }
 
@@ -312,7 +310,7 @@ void write_parameter_study(TixiDocumentHandle handle, const std::string& path,
     tixiAddDoubleElement(handle, path.c_str(), "T0", parameter_study.get_t0(), "%g");
     tixiAddDoubleElement(handle, path.c_str(), "TMax", parameter_study.get_tmax(), "%g");
 
-    write_parameter_space(handle, path, parameter_study.get_model(), parameter_study.get_num_runs(), io_mode);
+    write_parameter_space<Model>(handle, path, parameter_study.get_model(), parameter_study.get_num_runs(), io_mode);
 }
 
 /**
@@ -395,7 +393,7 @@ void read_node(Graph<Model, MigrationEdge>& graph, int node)
     TixiDocumentHandle node_handle;
     tixiOpenDocument(("GraphNode" + std::to_string(node) + ".xml").c_str(), &node_handle);
 
-    graph.add_node(read_parameter_space(node_handle, "/Parameters", 2));
+    graph.add_node(read_parameter_space<Model>(node_handle, "/Parameters", 2));
 
     tixiCloseDocument(node_handle);
 }
@@ -411,7 +409,7 @@ template <class Model>
 void write_edge(TixiDocumentHandle handle, const std::string& path, const Graph<Model, MigrationEdge>& graph, int edge)
 {
 
-    int num_groups  = static_cast<int>(graph.nodes()[0].get_num_groups());
+    int num_groups  = static_cast<int>(graph.nodes()[0].parameters.get_num_groups());
     int num_compart = static_cast<int>(graph.nodes()[0].populations.get_num_compartments()) / num_groups;
 
     std::string edge_path = path_join(path, "Edge" + std::to_string(edge));

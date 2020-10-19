@@ -47,13 +47,15 @@ enum class AgeGroup1
     Count = 1
 };
 
-template <class AgeGroup>
-class SecirModel : public CompartmentalModel<Populations<AgeGroup, InfectionType>, SecirParams<(size_t)AgeGroup::Count>>
+template <class AG>
+class SecirModel : public CompartmentalModel<Populations<AG, InfectionType>, SecirParams<(size_t)AG::Count>>
 {
-    using Pa = SecirParams<(size_t)AgeGroup::Count>;
-    using Po = Populations<AgeGroup, InfectionType>;
+    using Pa = SecirParams<(size_t)AG::Count>;
+    using Po = Populations<AG, InfectionType>;
 
 public:
+    using AgeGroup = AG;
+
     SecirModel()
     {
         size_t n_agegroups = (size_t)AgeGroup::Count;

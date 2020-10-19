@@ -79,11 +79,11 @@ public:
     std::vector<epi::Graph<epi::ModelNode<epi::Simulation<Model>>, epi::MigrationEdge>>
     run(HandleSimulationResultFunction result_processing_function = DummyHandleResultFunction)
     {
-        std::vector<epi::Graph<epi::ModelNode<Model>, epi::MigrationEdge>> ensemble_result;
+        std::vector<epi::Graph<epi::ModelNode<epi::Simulation<Model>>, epi::MigrationEdge>> ensemble_result;
 
         // Iterate over all parameters in the parameter space
         for (size_t i = 0; i < m_num_runs; i++) {
-            epi::Graph<epi::ModelNode<Model>, epi::MigrationEdge> sim_graph;
+            epi::Graph<epi::ModelNode<epi::Simulation<Model>>, epi::MigrationEdge> sim_graph;
 
             for (auto& params_node : m_graph.nodes()) {
                 draw_sample(params_node);
@@ -102,7 +102,7 @@ public:
 
             int node_id = 0;
             for (auto& node : result.nodes()) {
-                simulation_result_function(node.model.get_params(), node.model.get_result(), node_id);
+                result_processing_function(node.model.get_model(), node.model.get_result(), node_id);
                 node_id++;
             }
 

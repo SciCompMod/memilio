@@ -29,8 +29,8 @@ TEST(TestImplicitEuler, compareOneTimeStep)
     double nb_total_t0 = 10000, nb_exp_t0 = 100, nb_inf_t0 = 50, nb_car_t0 = 50, nb_hosp_t0 = 20, nb_icu_t0 = 10,
            nb_rec_t0 = 10, nb_dead_t0 = 0;
 
-    epi::SecirModel1 model = epi::create_secir_model<epi::AgeGroup1>();
-    auto& params           = model.parameters;
+    epi::SecirModel<epi::AgeGroup1> model;
+    auto& params = model.parameters;
 
     params.times[0].set_incubation(tinc);
     params.times[0].set_infectious_mild(tinfmild);

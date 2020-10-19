@@ -25,6 +25,7 @@ public:
         : m_integratorCore(std::make_shared<RKIntegratorCore>(1e-3, 1.))
         , m_integrator([model](auto&& y, auto&& t, auto&& dydt) { model.eval_right_hand_side(y, t, dydt); }, t0,
                        model.get_initial_values(), dt, m_integratorCore)
+        , m_model(model)
     {
         m_integratorCore->set_rel_tolerance(1e-4);
         m_integratorCore->set_abs_tolerance(1e-1);
@@ -58,9 +59,18 @@ public:
         return m_integrator.get_result();
     }
 
+    /**
+     * @brief returns the simulation model used in simulation
+     */
+    const Model& get_model() const
+    {
+        return m_model;
+    }
+
 private:
     std::shared_ptr<RKIntegratorCore> m_integratorCore;
     OdeIntegrator m_integrator;
+    Model m_model;
 }; // namespace epi
 
 /**

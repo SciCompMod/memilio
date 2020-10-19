@@ -132,8 +132,8 @@ int main(int argc, char* argv[])
     epi::ParameterStudy<epi::SecirModel<epi::AgeGroup1>> read_study =
         epi::read_parameter_study<epi::SecirModel<epi::AgeGroup1>>(handle, path);
     int run     = 0;
-    auto lambda = [&run, t0, tmax](const auto& params, const auto& secir_result, int node) {
-        epi::write_single_run_params(run++, params, t0, tmax, secir_result, node);
+    auto lambda = [&run, t0, tmax](const auto& model, const auto& secir_result, int node) {
+        epi::write_single_run_params(run++, model, t0, tmax, secir_result, node);
     };
     auto results = read_study.run(lambda);
 
