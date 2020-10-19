@@ -5,7 +5,6 @@ import {Button, Col, Form, FormGroup, Input, Label, PopoverBody, UncontrolledPop
 import DateRangePicker from 'react-daterange-picker';
 import {getActiveMeasures} from '../../redux/measures';
 import {updateModel} from '../../redux/models';
-// import { getSelectedData } from '../../redux/app';
 import {setData} from '../../redux/seir';
 
 import AgeGroupParameters from '../Parameters/AgeGroupParameters';
@@ -19,7 +18,6 @@ import * as moment from 'moment';
 import './Simulation.scss';
 import SECIRStore from '../../common/datastore/sql/secir-sql-store';
 import populationstore from '../../common/datastore/idb/population-datastore';
-import Regions from '../../common/regions';
 
 // load secir library if available
 let secir = null;
