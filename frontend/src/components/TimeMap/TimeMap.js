@@ -2,10 +2,12 @@ import {connect} from 'react-redux';
 
 import React from 'react';
 
-import './TimeMap.scss';
 import {setSelected} from '../../redux/app';
 import InteractiveHeatMap from '../../common/interactive_heat_map';
 import {roundToUTCMidnight} from '../../common/utils';
+import rki from '../../common/datastore/sql/rki-sql-store';
+
+import './TimeMap.scss';
 
 /**
  * This Component has two major functions:
@@ -42,7 +44,7 @@ class TimeMap extends React.Component {
         });
       } else {
         if (this.props.selection !== null) {
-          this.props.setSelected(null);
+          //this.props.setSelected(null);
         }
       }
     };
@@ -60,30 +62,29 @@ class TimeMap extends React.Component {
   }
 
   /** @private */
-  calcStateData() {
+  async calcStateData() {
     const times = new Map();
 
-    /** @type Map<number, number> | null */
-    let lastStates = null;
-    for (let d = this.props.time.startDate; d < this.props.time.endDate; d += 24 * 60 * 60 * 1000) {
-      let date = roundToUTCMidnight(d);
-      let states = new Map();
+    const result = await rki.getAllStatesInRange({
+      start: this.props.time.startDate,
+      end: this.props.time.endDate,
+    });
 
-      for (let i = 1; i <= 16; i++) {
-        const s = this.props.states.all[i];
-        const value = s.find((e) => e.date >= date);
+    let currDate = -1;
+    let states = null;
 
-        if (value) {
-          states.set(i, value.Confirmed);
-        } else if (lastStates !== null) {
-          states.set(i, lastStates.get(i));
-        } else {
-          states.set(i, 0);
-        }
+    for (const {stateId, confirmed, recovered, date} of result) {
+      const d = roundToUTCMidnight(date);
+
+      if (d !== currDate) {
+        times.set(currDate, states);
+        currDate = roundToUTCMidnight(date);
+        states = new Map(states); // clone previous date so there are no holes in data
       }
 
-      times.set(date, states);
-      lastStates = states;
+      if (stateId > 0) {
+        states.set(stateId, confirmed - recovered);
+      }
     }
 
     if (times.size > 0) {
@@ -94,29 +95,25 @@ class TimeMap extends React.Component {
   }
 
   /** @private */
-  calcCountyData() {
+  async calcCountyData() {
     const times = new Map();
 
-    /** @type Map<number, number> | null */
-    let lastCounties = null;
-    for (let d = this.props.time.startDate; d < this.props.time.endDate; d += 24 * 60 * 60 * 1000) {
-      let date = roundToUTCMidnight(d);
-      let counties = new Map();
+    const result = await rki.getAllCountiesInRange({
+      start: this.props.time.startDate,
+      end: this.props.time.endDate,
+    });
 
-      for (let [id, c] of Object.entries(this.props.counties.all)) {
-        const value = c.find((e) => e.date >= date);
-
-        if (value) {
-          counties.set(parseInt(id), value.Confirmed);
-        } else if (lastCounties !== null) {
-          counties.set(parseInt(id), lastCounties.get(parseInt(id)));
-        } else {
-          counties.set(parseInt(id), 0);
-        }
+    let currDate = -1;
+    let counties = null;
+    for (const {countyId, confirmed, recovered, date} of result) {
+      const d = roundToUTCMidnight(date);
+      if (d !== currDate) {
+        times.set(currDate, counties);
+        currDate = roundToUTCMidnight(date);
+        counties = new Map(counties); // clone previous date so there are no holes in data
       }
 
-      times.set(date, counties);
-      lastCounties = counties;
+      counties.set(countyId, confirmed - recovered);
     }
 
     if (times.size > 0) {
@@ -182,7 +179,7 @@ class TimeMap extends React.Component {
       this.props.seirRegions !== null &&
       (this.props.seirRegions !== prevProps.seirRegions || this.state.seirTimes.size === 0)
     ) {
-      this.calcSeirData();
+      //this.calcSeirData();
     }
 
     const currDate = this.props.time.currentDate;
@@ -218,12 +215,10 @@ class TimeMap extends React.Component {
 
 function mapState(state) {
   return {
+    counties: null,
     selection: state.app.selected,
     time: state.time,
-    states: state.app.states,
-    counties: state.app.counties,
     seirRegions: state.seir.regionData,
-    populations: state.app.populations.states,
   };
 }
 
