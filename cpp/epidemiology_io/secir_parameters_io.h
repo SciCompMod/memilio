@@ -177,6 +177,15 @@ void write_graph(const Graph<SecirParams, MigrationEdge>& graph, double t0, doub
  */
 Graph<SecirParams, MigrationEdge> read_graph();
 
+void interpolate_ages(std::vector<double>& age_ranges, std::vector<double>& param_ranges,
+                      std::vector<std::vector<double>>& interpolation, std::vector<bool>& carry_over);
+
+void set_rki_data(epi::SecirParams& params, std::vector<double> param_ranges, int month, int day, int region,
+                  std::string dir);
+
+void set_divi_data(epi::SecirParams& params, std::vector<double> param_ranges, int month, int day, int region,
+                   std::string dir);
+
 /**
  * @brief reads population data from RKI files
  * @param params Parameters in which the data is set
@@ -186,8 +195,8 @@ Graph<SecirParams, MigrationEdge> read_graph();
  * @param region region id of county of interest
  * @param dir directory of files
  */
-void read_population_data(epi::SecirParams& params, std::vector<double> param_ranges, std::string month = "03",
-                          std::string day = "09", int region = 0, std::string dir = "../../data/pydata/Germany");
+void read_population_data(epi::SecirParams& params, std::vector<double> param_ranges, int month, int day, int region,
+                          std::string dir);
 
 } // namespace epi
 
