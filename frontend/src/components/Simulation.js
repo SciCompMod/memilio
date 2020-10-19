@@ -35,7 +35,7 @@ class Simulation extends PureComponent {
     const regionResults = new Map();
     for (let [regionId, region] of Object.entries(this.props.childData.all)) {
       const start = region[0];
-      const population = this.populations.get(parseInt(regionId));
+      const population = this.populations.get(parseInt(regionId, 10));
 
       const regionResult = this.simulateRegion(start, population);
       regionResults.set(parseInt(regionId, 10), regionResult);
