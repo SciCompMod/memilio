@@ -591,7 +591,6 @@ void read_population_data(epi::SecirParams& params, std::vector<double> param_ra
     assert(std::accumulate(param_ranges.begin(), param_ranges.end(), 0.0) == 100. && "param_ranges must add up to 100");
 
     Json::Reader reader;
-    Json::Reader reader_divi;
     Json::Value root;
     Json::Value root_divi;
     std::string id_name;
@@ -665,11 +664,10 @@ void read_population_data(epi::SecirParams& params, std::vector<double> param_ra
             id = root[i][id_name] == region;
         }
         std::string date = root[i]["Date"].asString();
-        if (std::strcmp(month.c_str(), date.substr(5, 2).c_str()) == 0 &&
-            std::strcmp(day.c_str(), date.substr(8, 2).c_str()) == 0 && id) {
+        if (month == date.substr(5, 2) && day == date.substr(8, 2) && id) {
 
             for (int age = 0; age < age_names.size(); age++) {
-                if (std::strcmp(root[i]["Age_RKI"].asString().c_str(), age_names[age].c_str()) == 0) {
+                if (root[i]["Age_RKI"].asString() == age_names[age]) {
                     num_inf[age] += root[i]["Confirmed"].asDouble();
                     num_death[age] += root[i]["Deaths"].asDouble();
                     num_rec[age] += root[i]["Recovered"].asDouble();
@@ -685,8 +683,7 @@ void read_population_data(epi::SecirParams& params, std::vector<double> param_ra
             id = root[i][id_name] == region;
         }
         std::string date = root_divi[i]["Date"].asString();
-        if (std::strcmp(month.c_str(), date.substr(5, 2).c_str()) == 0 &&
-            std::strcmp(day.c_str(), date.substr(8, 2).c_str()) == 0 && id) {
+        if (month == date.substr(5, 2) && day == date.substr(8, 2) && id) {
 
             num_icu = root_divi[i]["ICU"].asDouble();
         }
