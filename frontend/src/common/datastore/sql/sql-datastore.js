@@ -31,6 +31,9 @@ export class SQLTable {
   columns = [];
 }
 
+/**
+ * An abstraction around an in memory SQL database.
+ */
 export default class SQLDatastore {
   /**
    * Abstract method to load data into datastore
@@ -53,13 +56,22 @@ export default class SQLDatastore {
     await this.runQuery(createTableQuery);
   }
 
+  /**
+   * Returns all entries of the given table.
+   * @param table{string} The name of the table.
+   * @return Array<any> Each array entry is an object representing a row,
+   *                    with keys corresponding to column names and values to the values.
+   */
   async getAll(table) {
     const query = `SELECT * FROM ${table};`;
     const result = await DB.then((db) => db.exec(query));
     return this.resultToArray(result);
   }
 
-  /** @param row{any} */
+  /**
+   * @param table{string} The name of the table to put the row in
+   * @param row{any} A JavaScript object where the keys are the column names and the values are the values.
+   */
   async put(table, row) {
     const columns = Object.keys(row);
     const values = Object.values(row);
@@ -81,6 +93,10 @@ export default class SQLDatastore {
   }
 
   /**
+   * Inserts multiple rows into the given table. The columns parameter has to be specified only if you don't insert all
+   * columns in the order they have in the table.
+   *
+   * @param table{string} The name of the table.
    * @param {Array<any> | Array<Array<any>>} rows
    * @param {Array<string>} [columns]
    */
@@ -108,20 +124,39 @@ export default class SQLDatastore {
     await this.runQuery(query);
   }
 
+  /**
+   * Deletes all entries of the table and frees used memory.
+   * @param table{string} The name of the table.
+   * @return {Promise<void>}
+   */
   async clear(table) {
     await this.runQuery(`DELETE FROM ${table}; VACUUM`);
   }
 
+  /**
+   * Runs the given query and ignores the result.
+   * @param query{string}
+   * @return {Promise<void>}
+   */
   async runQuery(query) {
     DB.then((db) => db.run(query));
   }
 
+  /**
+   * Runs the given query and returns the result.
+   * @param query{string}
+   * @return {Promise<Array<{columns: Array<string>, values: Array<Array<any>>}>>}
+   */
   async execQuery(query) {
     return await DB.then((db) => db.exec(query));
   }
 
   /**
    * @protected
+   *
+   * Converts the result of a query to an array of rows, where rows are objects with their key representing column names
+   * and their values representing entries.
+   *
    * @param {Array<{columns: Array<string>, values: Array<Array<any>>}>} result
    * @return Array<any>
    */

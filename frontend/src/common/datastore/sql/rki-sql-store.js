@@ -4,6 +4,9 @@ import SQLType from './SQLType';
 import {stateIdFromCountyId} from '../../utils';
 
 // TODO: Use multiple tables and JOINs?
+/**
+ * This class manages all RKI related data.
+ */
 class RKISQLStore extends SQLDatastore {
   /** @enum */
   Level = {
@@ -84,10 +87,14 @@ class RKISQLStore extends SQLDatastore {
     const batchSize = 2000;
     for (let i = 0; i < dataTransformed.length; i += batchSize) {
       const subArray = dataTransformed.slice(i, i + batchSize);
-      this.putAll(this.table.name, subArray);
+      await this.putAll(this.table.name, subArray);
     }
   }
 
+  /**
+   * Returns all entries for Germany ordered by date.
+   * @return {Promise<Array<{date: number, confirmed: number, recovered: number, deaths: number}>>}
+   */
   async getAllGermany() {
     // const query = `SELECT ${columns} FROM ${this.table.name} WHERE level=${this.Level.GERMANY} ORDER BY date`;
     const query = `SELECT 
@@ -102,11 +109,24 @@ class RKISQLStore extends SQLDatastore {
     return this.resultToArray(await this.execQuery(query));
   }
 
+  /**
+   * Returns all entries for the given state.
+   * @param stateId{number}
+   * @param columns{string} Comma separated list of column names.
+   * @return {Promise<Array<{date: number, confirmed: number, recovered: number, deaths: number}>>}
+   */
   async getAllState(stateId, columns = 'date, confirmed, recovered, deaths') {
     const query = `SELECT ${columns} FROM ${this.table.name} WHERE level=${this.Level.STATE} AND stateId='${stateId}' ORDER BY date`;
     return this.resultToArray(await this.execQuery(query));
   }
 
+  /**
+   * Returns all entries for the given state in the specified date range.
+   * @param stateId{number}
+   * @param range{{start: number, end: number}}
+   * @param columns{string} Comma separated list of column names.
+   * @return {Promise<Array<{date: number, confirmed: number, recovered: number, deaths: number}>>}
+   */
   async getAllStateInRange(stateId, range, columns = 'date, confirmed, recovered, deaths') {
     const query = `SELECT 
       ${columns} 
@@ -118,16 +138,33 @@ class RKISQLStore extends SQLDatastore {
     return this.resultToArray(await this.execQuery(query));
   }
 
+  /**
+   * Returns all entries for the given county.
+   * @param countyId{number}
+   * @param columns{string} Comma separated list of column names.
+   * @return {Promise<Array<{date: number, confirmed: number, recovered: number, deaths: number}>>}
+   */
   async getAllCounty(countyId, columns = 'date, confirmed, recovered, deaths') {
     const query = `SELECT ${columns} FROM ${this.table.name} WHERE level=${this.Level.COUNTY} AND countyId='${countyId}' ORDER BY date`;
     return this.resultToArray(await this.execQuery(query));
   }
 
+  /**
+   * Gets all entries for all states.
+   * @param columns{string} Comma separated list of column names.
+   * @return {Promise<Array<{date: number, stateId: number, confirmed: number, recovered: number, deaths: number}>>}
+   */
   async getAllStates(columns = 'date, stateId, confirmed, recovered, deaths') {
     const query = `SELECT ${columns} FROM ${this.table.name} WHERE level=${this.Level.STATE} ORDER BY date`;
     return this.resultToArray(await this.execQuery(query));
   }
 
+  /**
+   * Gets all entries in the specified date range for all states.
+   * @param range{{start: number, end: number}}
+   * @param columns{string} Comma separated list of column names.
+   * @return {Promise<Array<{date: number, stateId: number, confirmed: number, recovered: number, deaths: number}>>}
+   */
   async getAllStatesInRange(range, columns = 'date, stateId, confirmed, recovered, deaths') {
     const query = `SELECT 
       ${columns} 
@@ -138,11 +175,23 @@ class RKISQLStore extends SQLDatastore {
     return this.resultToArray(await this.execQuery(query));
   }
 
+  /**
+   * Returns all entries for counties in the given state.
+   * @param stateId{number}
+   * @param columns{string} Comma separated list of column names.
+   * @return {Promise<Array<{date: number, countyId: number, confirmed: number, recovered: number, deaths: number}>>}
+   */
   async getAllCountiesOfState(stateId, columns = 'date, countyId, confirmed, recovered, deaths') {
     const query = `SELECT ${columns} FROM ${this.table.name} WHERE level=${this.Level.COUNTY} AND stateId='${stateId}' ORDER BY date`;
     return this.resultToArray(await this.execQuery(query));
   }
 
+  /**
+   * Returns entries in the given date range for all counties.
+   * @param range{{start: number, end: number}}
+   * @param columns{string} Comma separated list of column names.
+   * @return {Promise<Array<{date: number, countyId: number, confirmed: number, recovered: number, deaths: number}>>}
+   */
   async getAllCountiesInRange(range, columns = 'date, countyId, confirmed, recovered, deaths') {
     const query = `SELECT 
       ${columns} 
@@ -153,6 +202,10 @@ class RKISQLStore extends SQLDatastore {
     return this.resultToArray(await this.execQuery(query));
   }
 
+  /**
+   * Returns the minimum and maximum time of existing data.
+   * @return {Promise<{start: number, end: number}>}
+   */
   async getTimeBounds() {
     const query = `SELECT MIN(date) as start, MAX(date) as end FROM ${this.table.name} WHERE level=${this.Level.STATE}`;
     return this.resultToArray(await this.execQuery(query))[0];
