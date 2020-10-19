@@ -90,15 +90,15 @@ TYPED_TEST(TestTimeSeries, assignValues)
 TYPED_TEST(TestTimeSeries, copyEmpty)
 {
     epi::TimeSeries<TypeParam> ts(10);
-    epi::TimeSeries<TypeParam> ts2(ts);
-    epi::TimeSeries<TypeParam> ts3(1);
-    ts3 = ts;
+    epi::TimeSeries<TypeParam> ts_copy1(ts);
+    epi::TimeSeries<TypeParam> ts_copy2(1);
+    ts_copy2 = ts;
 
-    for (auto&& ts : {&ts2, &ts3}) {
-        ASSERT_EQ(ts->get_num_elements(), 10);
-        ASSERT_EQ(ts->get_num_rows(), 11);
-        ASSERT_EQ(ts->get_num_time_points(), 0);
-        ASSERT_EQ(ts->get_capacity(), 0);
+    for (auto&& ts_copy : {&ts_copy1, &ts_copy2}) {
+        ASSERT_EQ(ts_copy->get_num_elements(), 10);
+        ASSERT_EQ(ts_copy->get_num_rows(), 11);
+        ASSERT_EQ(ts_copy->get_num_time_points(), 0);
+        ASSERT_EQ(ts_copy->get_capacity(), 0);
     }
 }
 

@@ -5,7 +5,7 @@ TEST(TestDamping, initialDampingIsIdentityEverywhere)
 {
     epi::Dampings dampings;
     for (auto x : {-1e100, -12.35, -1e-23, 0.0, 1e-76, 5.67, 1e75}) {
-        EXPECT_EQ(dampings.get_factor(0), 1);
+        EXPECT_EQ(dampings.get_factor(x), 1);
     }
 }
 

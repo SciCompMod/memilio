@@ -36,11 +36,9 @@ class ImplicitEulerIntegratorCore : public IntegratorCore
 public:
     /**
      * @brief Setting up the implicit Euler integrator
-     * @param dt_min Mininum time step
-     * @param dt_max Maximum time step
      * @param params Paramters of the SECIR/SECIHURD model
      */
-    ImplicitEulerIntegratorCore(double dt_min, double dt_max, SecirParams const& params);
+    ImplicitEulerIntegratorCore(SecirParams const& params);
 
     /**
      * @brief Fixed step width of the time implicit Euler time integration scheme
@@ -58,21 +56,7 @@ public:
         return m_params;
     }
 
-    /// @param tol the required absolute tolerance for the comparison with the Fehlberg approximation (actually not really required but used in SecirSimulation constructor)
-    void set_abs_tolerance(double tol)
-    {
-        m_abs_tol = tol;
-    }
-
-    /// @param tol the required relative tolerance for the comparison with the Fehlberg approximation (actually not really required but used in SecirSimulation constructor)
-    void set_rel_tolerance(double tol)
-    {
-        m_rel_tol = tol;
-    }
-
 private:
-    double m_abs_tol, m_rel_tol;
-    double m_dt_min, m_dt_max;
     const SecirParams& m_params;
 };
 

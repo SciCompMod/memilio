@@ -67,15 +67,15 @@ std::vector<TimeSeries<double>> ensemble_mean(const std::vector<std::vector<Time
 
     std::vector<TimeSeries<double>> mean(num_nodes, TimeSeries<double>::zero(num_time_points, num_elements));
 
-    for (int run = 0; run < num_runs; run++) {
+    for (size_t run = 0; run < num_runs; run++) {
         assert(ensemble_result[run].size() == num_nodes && "ensemble results not uniform.");
-        for (int node = 0; node < num_nodes; node++) {
+        for (size_t node = 0; node < num_nodes; node++) {
             assert(ensemble_result[run][node].get_num_time_points() == num_time_points &&
                    "ensemble results not uniform.");
-            for (int time = 0; time < num_time_points; time++) {
+            for (Eigen::Index time = 0; time < num_time_points; time++) {
                 assert(ensemble_result[run][node].get_num_elements() == num_elements &&
                        "ensemble results not uniform.");
-                mean[node].get_time(time) = time;
+                mean[node].get_time(time) = ensemble_result[run][node].get_time(time);
                 mean[node][time] += ensemble_result[run][node][time] / num_runs;
             }
         }

@@ -7,6 +7,7 @@
 #define SPDLOG_ACTIVE_LEVEL SPDLOG_LEVEL_TRACE
 #endif
 
+#include "epidemiology/utils/compiler_diagnostics.h"
 #include <spdlog/spdlog.h>
 
 namespace epi
@@ -51,6 +52,9 @@ inline void set_log_level(LogLevel level)
     case LogLevel::off:
         l = spdlog::level::off;
         break;
+    default:
+        l = spdlog::level::info;
+        assert(false && "Unknown LogLevel.");
     }
     spdlog::set_level(l);
 }
@@ -74,6 +78,8 @@ template <typename... Args> inline void log_debug(spdlog::string_view_t fmt, con
 {
 #ifndef NDEBUG
     spdlog::default_logger_raw()->debug(fmt, args...);
+#else 
+    unused(fmt, args...);
 #endif
 }
 

@@ -10,7 +10,6 @@ TEST(ParameterStudies, sample_from_secir_params)
 {
     double t0   = 0;
     double tmax = 100;
-    double dt   = 0.1;
 
     double tinc    = 5.2, // R_2^(-1)+R_3^(-1)
         tinfmild   = 6, // 4-14  (=R4^(-1))
@@ -34,8 +33,8 @@ TEST(ParameterStudies, sample_from_secir_params)
     double num_total_t0 = 10000, num_exp_t0 = 100, num_inf_t0 = 50, num_car_t0 = 50, num_hosp_t0 = 20, num_icu_t0 = 10,
            num_rec_t0 = 10, num_dead_t0 = 0;
 
-    int num_groups = 3;
-    double fact    = 1.0 / (double)num_groups;
+    size_t num_groups = 3;
+    double fact       = 1.0 / (double)num_groups;
 
     epi::SecirParams params(num_groups);
 
@@ -70,8 +69,8 @@ TEST(ParameterStudies, sample_from_secir_params)
     }
 
     epi::ContactFrequencyMatrix& cont_freq_matrix = params.get_contact_patterns();
-    for (int i = 0; i < num_groups; i++) {
-        for (int j = i; j < num_groups; j++) {
+    for (int i = 0; i < static_cast<int>(num_groups); i++) {
+        for (int j = i; j < static_cast<int>(num_groups); j++) {
             cont_freq_matrix.set_cont_freq(fact * cont_freq, i, j);
         }
     }
@@ -136,7 +135,6 @@ TEST(ParameterStudies, test_normal_distribution)
     EXPECT_EQ(std_dev_demanded, parameter_dist_normal_2.get_standard_dev());
 
     // check that sampling only occurs in boundaries
-    int counter[10] = {0};
     for (int i = 0; i < 1000; i++) {
         double val = parameter_dist_normal_2.get_sample();
         EXPECT_GE(parameter_dist_normal_2.get_upper_bound() + 1e-10, val);
@@ -190,7 +188,6 @@ TEST(ParameterStudies, check_ensemble_run_result)
 {
     double t0   = 0;
     double tmax = 50;
-    double dt   = 0.1;
 
     double tinc    = 5.2, // R_2^(-1)+R_3^(-1)
         tinfmild   = 6, // 4-14  (=R4^(-1))
@@ -214,8 +211,8 @@ TEST(ParameterStudies, check_ensemble_run_result)
     double num_total_t0 = 10000, num_exp_t0 = 100, num_inf_t0 = 50, num_car_t0 = 50, num_hosp_t0 = 20, num_icu_t0 = 10,
            num_rec_t0 = 10, num_dead_t0 = 0;
 
-    int num_groups = 1;
-    double fact    = 1.0 / (double)num_groups;
+    size_t num_groups = 1;
+    double fact       = 1.0 / (double)num_groups;
 
     epi::SecirParams params(num_groups);
 
@@ -251,8 +248,8 @@ TEST(ParameterStudies, check_ensemble_run_result)
 
     epi::ContactFrequencyMatrix& cont_freq_matrix = params.get_contact_patterns();
     epi::Damping dummy(30., 0.3);
-    for (int i = 0; i < num_groups; i++) {
-        for (int j = i; j < num_groups; j++) {
+    for (int i = 0; i < static_cast<int>(num_groups); i++) {
+        for (int j = i; j < static_cast<int>(num_groups); j++) {
             cont_freq_matrix.set_cont_freq(fact * cont_freq, i, j);
         }
     }
@@ -260,13 +257,12 @@ TEST(ParameterStudies, check_ensemble_run_result)
     epi::ParameterStudy parameter_study(params, t0, tmax, 0.2, 1);
 
     // Run parameter study
-    int run = 0;
     parameter_study.set_num_runs(1);
     std::vector<epi::Graph<epi::ModelNode<epi::SecirSimulation>, epi::MigrationEdge>> graph_results =
         parameter_study.run();
 
     std::vector<epi::TimeSeries<double>> results;
-    for (int i = 0; i < graph_results.size(); i++) {
+    for (size_t i = 0; i < graph_results.size(); i++) {
         results.push_back(std::move(graph_results[i].nodes()[0].model.get_result()));
     }
 

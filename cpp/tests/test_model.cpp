@@ -106,7 +106,7 @@ TEST(TestCompartmentalModel, secir)
                 //Ei to Ci
                 model.add_flow(std::make_tuple(InfectionType::S, ai, gj, ik),
                                std::make_tuple(InfectionType::E, ai, gj, ik),
-                               [ai, gj, ik](Pa const& p, Eigen::Ref<const Eigen::VectorXd> y, double t) {
+                               [ai, gj, ik](Pa const& p, Eigen::Ref<const Eigen::VectorXd> y, double /*t*/) {
                                    return Po::get_from(y, InfectionType::E, ai, gj, ik) /
                                           (2 * p.get<SerialInterval>() - p.get<IncubationTime>());
                                });

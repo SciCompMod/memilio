@@ -14,16 +14,12 @@ bool EulerIntegratorCore::step(const DerivFunction& f, Eigen::Ref<const Eigen::V
     return true;
 }
 
-ImplicitEulerIntegratorCore::ImplicitEulerIntegratorCore(double dt_min, double dt_max, SecirParams const& params)
-    : m_abs_tol(1e-10)
-    , m_rel_tol(1e-5)
-    , m_dt_min(dt_min)
-    , m_dt_max(dt_max)
-    , m_params{params}
+ImplicitEulerIntegratorCore::ImplicitEulerIntegratorCore(SecirParams const& params)
+    : m_params{params}
 {
 }
 
-bool ImplicitEulerIntegratorCore::step(const DerivFunction& f, Eigen::Ref<const Eigen::VectorXd> yt, double& t,
+bool ImplicitEulerIntegratorCore::step(const DerivFunction& /*f*/, Eigen::Ref<const Eigen::VectorXd> yt, double& t,
                                        double& dt, Eigen::Ref<Eigen::VectorXd> ytp1) const
 {
     // 0: S,      1: E,     2: C,     3: I,     4: H,     5: U,     6: R,     7: D

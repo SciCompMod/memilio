@@ -3,7 +3,7 @@
 
 #include <epidemiology/utils/time_series.h>
 
-#include <Eigen/Core>
+#include "epidemiology/utils/eigen.h"
 #include <memory>
 #include <vector>
 #include <functional>
@@ -76,10 +76,10 @@ public:
     }
 
 private:
-    std::shared_ptr<IntegratorCore> m_core;
-    double m_dt;
-    TimeSeries<double> m_result;
     DerivFunction m_f;
+    TimeSeries<double> m_result;
+    double m_dt;
+    std::shared_ptr<IntegratorCore> m_core;
 };
 
 } // namespace epi

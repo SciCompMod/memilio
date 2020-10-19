@@ -4,8 +4,8 @@
 #include <epidemiology/utils/uncertain_value.h>
 #include "epidemiology/utils/tensor_helpers.h"
 #include "epidemiology/utils/ScalarType.h"
+#include "epidemiology/utils/eigen.h"
 
-#include <Eigen/Core>
 #include <vector>
 #include <array>
 #include <numeric>
@@ -102,7 +102,7 @@ public:
     Eigen::VectorXd get_compartments() const
     {
         Eigen::VectorXd m_y_eigen(m_y.size());
-        for (auto i = 0; i < m_y.size(); i++) {
+        for (size_t i = 0; i < m_y.size(); i++) {
             m_y_eigen[i] = m_y[i];
         }
 
@@ -267,12 +267,12 @@ public:
         double current_population = get_total();
         if (fabs(current_population) < 1e-12) {
             double ysize = double(m_y.size());
-            for (auto i = 0; i < m_y.size(); i++) {
+            for (size_t i = 0; i < m_y.size(); i++) {
                 m_y[i] = value / ysize;
             }
         }
         else {
-            for (auto i = 0; i < m_y.size(); i++) {
+            for (size_t i = 0; i < m_y.size(); i++) {
                 m_y[i] *= value / current_population;
             }
         }
@@ -312,7 +312,7 @@ public:
      */
     void apply_constraints()
     {
-        for (auto i = 0; i < m_y.size(); i++) {
+        for (size_t i = 0; i < m_y.size(); i++) {
             if (m_y[i] < 0) {
                 log_warning("Constraint check: Compartment size {:d} changed from {:.4f} to {:d}", i, m_y[i], 0);
                 m_y[i] = 0;
@@ -325,7 +325,7 @@ public:
      */
     void check_constraints() const
     {
-        for (auto i = 0; i < m_y.size(); i++) {
+        for (size_t i = 0; i < m_y.size(); i++) {
             if (m_y[i] < 0) {
                 log_error("Constraint check: Compartment size {:d} is {:.4f} and smaller {:d}", i, m_y[i], 0);
             }

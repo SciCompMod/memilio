@@ -1,6 +1,6 @@
 #pragma once
 
-#include <Eigen/Core>
+#include "epidemiology/utils/eigen.h"
 #include <utility>
 #include <iostream>
 
@@ -12,10 +12,10 @@ namespace epi
  */
 template <typename T>
 struct Seq {
-    Seq(T start, T n, T stride = 1)
-        : start(start)
-        , n(n)
-        , stride(stride)
+    Seq(T start_, T n_, T stride_ = 1)
+        : start(start_)
+        , n(n_)
+        , stride(stride_)
     {
         assert(start >= 0);
         assert(n >= 0);
