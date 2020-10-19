@@ -38,9 +38,9 @@ int main(int argc, char** argv)
     double nb_total_t0 = 10000, nb_exp_t0 = 100, nb_inf_t0 = 50, nb_car_t0 = 50, nb_hosp_t0 = 20, nb_icu_t0 = 10,
            nb_rec_t0 = 10, nb_dead_t0 = 0;
 
-    epi::SecirModel1 model = epi::create_secir_model<epi::AgeGroup1>();
-    int nb_groups          = model.parameters.get_num_groups();
-    double fact            = 1.0 / (double)nb_groups;
+    epi::SecirModel<epi::AgeGroup1> model;
+    int nb_groups = model.parameters.get_num_groups();
+    double fact   = 1.0 / (double)nb_groups;
 
     auto& params = model.parameters;
 
@@ -91,7 +91,7 @@ int main(int argc, char** argv)
     std::cout << "Done" << std::endl;
 
     std::cout << "Intializing Graph..." << std::flush;
-    epi::Graph<epi::SecirModel1, epi::MigrationEdge> graph;
+    epi::Graph<epi::SecirModel<epi::AgeGroup1>, epi::MigrationEdge> graph;
     for (int node = 0; node < twitter_migration_2018.rows(); node++) {
         graph.add_node(params);
     }
@@ -107,7 +107,8 @@ int main(int argc, char** argv)
     std::cout << "Done" << std::endl;
 
     std::cout << "Reading XML Files..." << std::flush;
-    epi::Graph<epi::SecirModel1, epi::MigrationEdge> graph_read = epi::read_graph<epi::SecirModel1>();
+    epi::Graph<epi::SecirModel<epi::AgeGroup1>, epi::MigrationEdge> graph_read =
+        epi::read_graph<epi::SecirModel<epi::AgeGroup1>>();
     std::cout << "Done" << std::endl;
 
     std::cout << "Running Simulations..." << std::flush;

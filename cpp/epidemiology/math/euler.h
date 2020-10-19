@@ -9,6 +9,8 @@
 namespace epi
 {
 
+using SecirModel1 = SecirModel<AgeGroup1>;
+
 /**
  * @brief Simple explicit euler integration y(t+1) = y(t) + h*f(t,y) for ODE y'(t) = f(t,y)
  */

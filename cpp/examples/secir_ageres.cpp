@@ -44,9 +44,9 @@ int main()
     // theta = theta_in; // icu per hospitalized
     // delta = delta_in; // deaths per ICUs
 
-    epi::SecirModel3 model = epi::create_secir_model<epi::AgeGroup3>();
-    int nb_groups          = model.parameters.get_num_groups();
-    double fact            = 1.0 / (double)nb_groups;
+    epi::SecirModel<epi::AgeGroup3> model;
+    int nb_groups = model.parameters.get_num_groups();
+    double fact   = 1.0 / (double)nb_groups;
 
     auto& params = model.parameters;
 

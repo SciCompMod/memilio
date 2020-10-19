@@ -48,9 +48,9 @@ int main(int argc, char* argv[])
     // theta = theta_in; // icu per hospitalized
     // delta = delta_in; // deaths per ICUs
 
-    epi::SecirModel1 model = epi::create_secir_model<epi::AgeGroup1>();
-    int num_groups         = model.parameters.get_num_groups();
-    double fact            = 1.0 / (double)num_groups;
+    epi::SecirModel<epi::AgeGroup1> model;
+    int num_groups = model.parameters.get_num_groups();
+    double fact    = 1.0 / (double)num_groups;
 
     auto& params = model.parameters;
 
@@ -116,7 +116,7 @@ int main(int argc, char* argv[])
     tixiCloseDocument(handle3);
 
     // create study
-    epi::ParameterStudy<epi::SecirModel1> parameter_study(model, t0, tmax, 0.2, 1);
+    epi::ParameterStudy<epi::SecirModel<epi::AgeGroup1>> parameter_study(model, t0, tmax, 0.2, 1);
 
     // write and run study
     std::string path = "/Parameters";
@@ -129,8 +129,9 @@ int main(int argc, char* argv[])
     tixiCloseDocument(handle);
 
     tixiOpenDocument("Parameters.xml", &handle);
-    epi::ParameterStudy<epi::SecirModel1> read_study = epi::read_parameter_study<epi::SecirModel1>(handle, path);
-    int run                                          = 0;
+    epi::ParameterStudy<epi::SecirModel<epi::AgeGroup1>> read_study =
+        epi::read_parameter_study<epi::SecirModel<epi::AgeGroup1>>(handle, path);
+    int run     = 0;
     auto lambda = [&run, t0, tmax](const auto& params, const auto& secir_result, int node) {
         epi::write_single_run_params(run++, params, t0, tmax, secir_result, node);
     };

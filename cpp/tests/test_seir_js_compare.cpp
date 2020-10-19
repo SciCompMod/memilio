@@ -1,5 +1,6 @@
 #include "load_test_data.h"
 #include <epidemiology/secir/seir.h>
+#include "epidemiology/model/simulation.h"
 #include <gtest/gtest.h>
 
 using real = double;
@@ -15,24 +16,24 @@ protected:
         dt      = 0.1002004008016032;
 
         double total_population = 1061000;
-        params.populations.set({epi::InfectionType::E}, 10000);
-        params.populations.set({epi::InfectionType::I}, 1000);
-        params.populations.set({epi::InfectionType::R}, 1000);
-        params.populations.set({epi::InfectionType::S}, total_population -
-                                                               params.populations.get({epi::InfectionType::E}) -
-                                                               params.populations.get({epi::InfectionType::I}) -
-                                                               params.populations.get({epi::InfectionType::R}));
+        model.populations.set(10000, epi::InfectionType::E);
+        model.populations.set(1000, epi::InfectionType::I);
+        model.populations.set(1000, epi::InfectionType::R);
+        model.populations.set(total_population - model.populations.get(epi::InfectionType::E) -
+                                  model.populations.get(epi::InfectionType::I) -
+                                  model.populations.get(epi::InfectionType::R),
+                              epi::InfectionType::S);
         // suscetible now set with every other update
-        // params.nb_sus_t0   = params.nb_total_t0 - params.nb_exp_t0 - params.nb_inf_t0 - params.nb_rec_t0;
-        params.times.set_incubation(5.2);
-        params.times.set_cont_freq(2.7);
-        params.times.set_infectious(2);
+        // model.nb_sus_t0   = model.nb_total_t0 - model.nb_exp_t0 - model.nb_inf_t0 - model.nb_rec_t0;
+        model.parameters.times.set_incubation(5.2);
+        model.parameters.times.set_cont_freq(2.7);
+        model.parameters.times.set_infectious(2);
 
         // add two dampings
-        params.dampings.add(epi::Damping(0., 1.0));
-        params.dampings.add(epi::Damping(12.0, 0.4));
+        model.parameters.dampings.add(epi::Damping(0., 1.0));
+        model.parameters.dampings.add(epi::Damping(12.0, 0.4));
 
-        params.dampings.set_smoothing(false);
+        model.parameters.dampings.set_smoothing(false);
     }
 
 public:
@@ -40,12 +41,12 @@ public:
     real t0;
     real tmax;
     real dt;
-    epi::SeirParams params;
+    epi::SeirModel model;
 };
 
 TEST_F(TestCompareSeirWithJS, integrate)
 {
-    auto result = simulate(t0, tmax, dt, params);
+    auto result = simulate(t0, tmax, dt, model);
 
     ASSERT_EQ(refData.size(), static_cast<size_t>(result.get_num_time_points()));
 

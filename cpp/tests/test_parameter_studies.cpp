@@ -32,9 +32,9 @@ TEST(ParameterStudies, sample_from_secir_params)
     double num_total_t0 = 10000, num_exp_t0 = 100, num_inf_t0 = 50, num_car_t0 = 50, num_hosp_t0 = 20, num_icu_t0 = 10,
            num_rec_t0 = 10, num_dead_t0 = 0;
 
-    epi::SecirModel3 model = epi::create_secir_model<epi::AgeGroup3>();
-    size_t num_groups      = model.parameters.get_num_groups();
-    double fact            = 1.0 / (double)num_groups;
+    epi::SecirModel<epi::AgeGroup3> model;
+    size_t num_groups = model.parameters.get_num_groups();
+    double fact       = 1.0 / (double)num_groups;
 
     auto& params = model.parameters;
     for (size_t i = 0; i < num_groups; i++) {
@@ -209,9 +209,9 @@ TEST(ParameterStudies, check_ensemble_run_result)
     double num_total_t0 = 10000, num_exp_t0 = 100, num_inf_t0 = 50, num_car_t0 = 50, num_hosp_t0 = 20, num_icu_t0 = 10,
            num_rec_t0 = 10, num_dead_t0 = 0;
 
-    epi::SecirModel1 model = epi::create_secir_model<epi::AgeGroup1>();
-    size_t num_groups      = model.parameters.get_num_groups();
-    double fact            = 1.0 / (double)num_groups;
+    epi::SecirModel<epi::AgeGroup1> model;
+    size_t num_groups = model.parameters.get_num_groups();
+    double fact       = 1.0 / (double)num_groups;
 
     auto& params = model.parameters;
 
@@ -253,12 +253,12 @@ TEST(ParameterStudies, check_ensemble_run_result)
         }
     }
 
-    epi::ParameterStudy<epi::SecirModel1> parameter_study(model, t0, tmax, 0.2, 1);
+    epi::ParameterStudy<epi::SecirModel<epi::AgeGroup1>> parameter_study(model, t0, tmax, 0.2, 1);
 
     // Run parameter study
     parameter_study.set_num_runs(1);
-    std::vector<epi::Graph<epi::ModelNode<epi::Simulation<epi::SecirModel1>>, epi::MigrationEdge>> graph_results =
-        parameter_study.run();
+    std::vector<epi::Graph<epi::ModelNode<epi::Simulation<epi::SecirModel<epi::AgeGroup1>>>, epi::MigrationEdge>>
+        graph_results = parameter_study.run();
 
     std::vector<epi::TimeSeries<double>> results;
     for (size_t i = 0; i < graph_results.size(); i++) {

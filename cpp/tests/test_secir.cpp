@@ -19,7 +19,7 @@ TEST(TestSecir, compareWithPreviousRun)
     double nb_total_t0 = 10000, nb_exp_t0 = 100, nb_inf_t0 = 50, nb_car_t0 = 50, nb_hosp_t0 = 20, nb_icu_t0 = 10,
            nb_rec_t0 = 10, nb_dead_t0 = 0;
 
-    epi::SecirParams params;
+    epi::SecirModel<epi::AgeGroup1> model;
 
     // alpha = alpha_in; // percentage of asymptomatic cases
     // beta  = beta_in; // risk of infection from the infected symptomatic patients
@@ -27,40 +27,41 @@ TEST(TestSecir, compareWithPreviousRun)
     // theta = theta_in; // icu per hospitalized
     // delta = delta_in; // deaths per ICUs
 
-    params.times[0].set_incubation(tinc);
-    params.times[0].set_infectious_mild(tinfmild);
-    params.times[0].set_serialinterval(tserint);
-    params.times[0].set_hospitalized_to_home(thosp2home);
-    params.times[0].set_home_to_hospitalized(thome2hosp);
-    params.times[0].set_hospitalized_to_icu(thosp2icu);
-    params.times[0].set_icu_to_home(ticu2home);
-    params.times[0].set_icu_to_death(ticu2death);
+    model.parameters.times[0].set_incubation(tinc);
+    model.parameters.times[0].set_infectious_mild(tinfmild);
+    model.parameters.times[0].set_serialinterval(tserint);
+    model.parameters.times[0].set_hospitalized_to_home(thosp2home);
+    model.parameters.times[0].set_home_to_hospitalized(thome2hosp);
+    model.parameters.times[0].set_hospitalized_to_icu(thosp2icu);
+    model.parameters.times[0].set_icu_to_home(ticu2home);
+    model.parameters.times[0].set_icu_to_death(ticu2death);
 
-    epi::ContactFrequencyMatrix& cont_freq_matrix = params.get_contact_patterns();
+    epi::ContactFrequencyMatrix& cont_freq_matrix = model.parameters.get_contact_patterns();
     cont_freq_matrix.set_cont_freq(cont_freq, 0, 0);
     epi::Damping dummy(30., 0.3);
     cont_freq_matrix.add_damping(dummy, 0, 0);
 
-    params.populations.set({0, epi::InfectionType::E}, nb_exp_t0);
-    params.populations.set({0, epi::InfectionType::C}, nb_car_t0);
-    params.populations.set({0, epi::InfectionType::I}, nb_inf_t0);
-    params.populations.set({0, epi::InfectionType::H}, nb_hosp_t0);
-    params.populations.set({0, epi::InfectionType::U}, nb_icu_t0);
-    params.populations.set({0, epi::InfectionType::R}, nb_rec_t0);
-    params.populations.set({0, epi::InfectionType::D}, nb_dead_t0);
-    params.populations.set_difference_from_total({0, epi::InfectionType::S}, nb_total_t0);
+    model.populations.set_total(nb_total_t0);
+    model.populations.set(nb_exp_t0, (epi::AgeGroup1)0, epi::InfectionType::E);
+    model.populations.set(nb_car_t0, (epi::AgeGroup1)0, epi::InfectionType::C);
+    model.populations.set(nb_inf_t0, (epi::AgeGroup1)0, epi::InfectionType::I);
+    model.populations.set(nb_hosp_t0, (epi::AgeGroup1)0, epi::InfectionType::H);
+    model.populations.set(nb_icu_t0, (epi::AgeGroup1)0, epi::InfectionType::U);
+    model.populations.set(nb_rec_t0, (epi::AgeGroup1)0, epi::InfectionType::R);
+    model.populations.set(nb_dead_t0, (epi::AgeGroup1)0, epi::InfectionType::D);
+    model.populations.set_difference_from_total(nb_total_t0, (epi::AgeGroup1)0, epi::InfectionType::S);
 
-    params.probabilities[0].set_infection_from_contact(inf_prob);
-    params.probabilities[0].set_carrier_infectability(carr_infec);
-    params.probabilities[0].set_asymp_per_infectious(alpha);
-    params.probabilities[0].set_risk_from_symptomatic(beta);
-    params.probabilities[0].set_hospitalized_per_infectious(rho);
-    params.probabilities[0].set_icu_per_hospitalized(theta);
-    params.probabilities[0].set_dead_per_icu(delta);
+    model.parameters.probabilities[0].set_infection_from_contact(inf_prob);
+    model.parameters.probabilities[0].set_carrier_infectability(carr_infec);
+    model.parameters.probabilities[0].set_asymp_per_infectious(alpha);
+    model.parameters.probabilities[0].set_risk_from_symptomatic(beta);
+    model.parameters.probabilities[0].set_hospitalized_per_infectious(rho);
+    model.parameters.probabilities[0].set_icu_per_hospitalized(theta);
+    model.parameters.probabilities[0].set_dead_per_icu(delta);
 
-    params.apply_constraints();
+    model.parameters.apply_constraints();
 
-    epi::TimeSeries<double> secihurd = simulate(t0, tmax, dt, params);
+    epi::TimeSeries<double> secihurd = simulate(t0, tmax, dt, model);
 
     auto compare = load_test_data_csv<double>("secihurd-compare.csv");
 
@@ -88,208 +89,265 @@ TEST(TestSecir, testParamConstructors)
     double icu_cap   = 4444;
     double start_day = 30, seasonality = 0.3;
 
-    epi::SecirParams params;
+    epi::SecirModel<epi::AgeGroup1> model;
 
-    params.set_icu_capacity(icu_cap);
+    model.parameters.set_icu_capacity(icu_cap);
 
-    params.set_start_day(start_day);
-    params.set_seasonality(seasonality);
+    model.parameters.set_start_day(start_day);
+    model.parameters.set_seasonality(seasonality);
 
-    params.times[0].set_incubation(tinc);
-    params.times[0].set_infectious_mild(tinfmild);
-    params.times[0].set_serialinterval(tserint);
-    params.times[0].set_hospitalized_to_home(thosp2home);
-    params.times[0].set_home_to_hospitalized(thome2hosp);
-    params.times[0].set_hospitalized_to_icu(thosp2icu);
-    params.times[0].set_icu_to_home(ticu2home);
-    params.times[0].set_icu_to_death(ticu2death);
+    model.parameters.times[0].set_incubation(tinc);
+    model.parameters.times[0].set_infectious_mild(tinfmild);
+    model.parameters.times[0].set_serialinterval(tserint);
+    model.parameters.times[0].set_hospitalized_to_home(thosp2home);
+    model.parameters.times[0].set_home_to_hospitalized(thome2hosp);
+    model.parameters.times[0].set_hospitalized_to_icu(thosp2icu);
+    model.parameters.times[0].set_icu_to_home(ticu2home);
+    model.parameters.times[0].set_icu_to_death(ticu2death);
 
-    params.populations.set({0, epi::InfectionType::E}, nb_exp_t0);
-    params.populations.set({0, epi::InfectionType::C}, nb_car_t0);
-    params.populations.set({0, epi::InfectionType::I}, nb_inf_t0);
-    params.populations.set({0, epi::InfectionType::H}, nb_hosp_t0);
-    params.populations.set({0, epi::InfectionType::U}, nb_icu_t0);
-    params.populations.set({0, epi::InfectionType::R}, nb_rec_t0);
-    params.populations.set({0, epi::InfectionType::D}, nb_dead_t0);
-    params.populations.set_difference_from_total({0, epi::InfectionType::S}, nb_total_t0);
+    model.populations.set_total(nb_total_t0);
+    model.populations.set(nb_exp_t0, (epi::AgeGroup1)0, epi::InfectionType::E);
+    model.populations.set(nb_car_t0, (epi::AgeGroup1)0, epi::InfectionType::C);
+    model.populations.set(nb_inf_t0, (epi::AgeGroup1)0, epi::InfectionType::I);
+    model.populations.set(nb_hosp_t0, (epi::AgeGroup1)0, epi::InfectionType::H);
+    model.populations.set(nb_icu_t0, (epi::AgeGroup1)0, epi::InfectionType::U);
+    model.populations.set(nb_rec_t0, (epi::AgeGroup1)0, epi::InfectionType::R);
+    model.populations.set(nb_dead_t0, (epi::AgeGroup1)0, epi::InfectionType::D);
+    model.populations.set_difference_from_total(nb_total_t0, (epi::AgeGroup1)0, epi::InfectionType::S);
 
-    params.probabilities[0].set_infection_from_contact(inf_prob);
-    params.probabilities[0].set_carrier_infectability(carr_infec);
-    params.probabilities[0].set_asymp_per_infectious(alpha);
-    params.probabilities[0].set_risk_from_symptomatic(beta);
-    params.probabilities[0].set_hospitalized_per_infectious(rho);
-    params.probabilities[0].set_icu_per_hospitalized(theta);
-    params.probabilities[0].set_dead_per_icu(delta);
+    model.parameters.probabilities[0].set_infection_from_contact(inf_prob);
+    model.parameters.probabilities[0].set_carrier_infectability(carr_infec);
+    model.parameters.probabilities[0].set_asymp_per_infectious(alpha);
+    model.parameters.probabilities[0].set_risk_from_symptomatic(beta);
+    model.parameters.probabilities[0].set_hospitalized_per_infectious(rho);
+    model.parameters.probabilities[0].set_icu_per_hospitalized(theta);
+    model.parameters.probabilities[0].set_dead_per_icu(delta);
 
-    epi::ContactFrequencyMatrix& cont_freq_matrix = params.get_contact_patterns();
+    epi::ContactFrequencyMatrix& cont_freq_matrix = model.parameters.get_contact_patterns();
     cont_freq_matrix.set_cont_freq(cont_freq, 0, 0);
     epi::Damping dummy(30., 0.3);
     cont_freq_matrix.add_damping(dummy, 0, 0);
 
-    epi::SecirParams params2{params}; // copy constructor
+    epi::SecirModel<epi::AgeGroup1> model2{model}; // copy constructor
 
-    EXPECT_EQ(params.get_icu_capacity(), params2.get_icu_capacity());
-    EXPECT_EQ(params.get_start_day(), params2.get_start_day());
-    EXPECT_EQ(params.get_seasonality(), params2.get_seasonality());
+    EXPECT_EQ(model.parameters.get_icu_capacity(), model2.parameters.get_icu_capacity());
+    EXPECT_EQ(model.parameters.get_start_day(), model2.parameters.get_start_day());
+    EXPECT_EQ(model.parameters.get_seasonality(), model2.parameters.get_seasonality());
 
-    EXPECT_EQ(params.populations.get_total(), params2.populations.get_total());
-    EXPECT_EQ(params.populations.get({0, epi::InfectionType::S}), params2.populations.get({0, epi::InfectionType::S}));
-    EXPECT_EQ(params.populations.get({0, epi::InfectionType::E}), params2.populations.get({0, epi::InfectionType::E}));
-    EXPECT_EQ(params.populations.get({0, epi::InfectionType::C}), params2.populations.get({0, epi::InfectionType::C}));
-    EXPECT_EQ(params.populations.get({0, epi::InfectionType::I}), params2.populations.get({0, epi::InfectionType::I}));
-    EXPECT_EQ(params.populations.get({0, epi::InfectionType::H}), params2.populations.get({0, epi::InfectionType::H}));
-    EXPECT_EQ(params.populations.get({0, epi::InfectionType::U}), params2.populations.get({0, epi::InfectionType::U}));
-    EXPECT_EQ(params.populations.get({0, epi::InfectionType::R}), params2.populations.get({0, epi::InfectionType::R}));
-    EXPECT_EQ(params.populations.get({0, epi::InfectionType::D}), params2.populations.get({0, epi::InfectionType::D}));
+    EXPECT_EQ(model.populations.get_total(), model2.populations.get_total());
+    EXPECT_EQ(model.populations.get((epi::AgeGroup1)0, epi::InfectionType::S),
+              model.populations.get((epi::AgeGroup1)0, epi::InfectionType::S));
+    EXPECT_EQ(model.populations.get((epi::AgeGroup1)0, epi::InfectionType::E),
+              model.populations.get((epi::AgeGroup1)0, epi::InfectionType::E));
+    EXPECT_EQ(model.populations.get((epi::AgeGroup1)0, epi::InfectionType::C),
+              model.populations.get((epi::AgeGroup1)0, epi::InfectionType::C));
+    EXPECT_EQ(model.populations.get((epi::AgeGroup1)0, epi::InfectionType::I),
+              model.populations.get((epi::AgeGroup1)0, epi::InfectionType::I));
+    EXPECT_EQ(model.populations.get((epi::AgeGroup1)0, epi::InfectionType::H),
+              model.populations.get((epi::AgeGroup1)0, epi::InfectionType::H));
+    EXPECT_EQ(model.populations.get((epi::AgeGroup1)0, epi::InfectionType::U),
+              model.populations.get((epi::AgeGroup1)0, epi::InfectionType::U));
+    EXPECT_EQ(model.populations.get((epi::AgeGroup1)0, epi::InfectionType::R),
+              model.populations.get((epi::AgeGroup1)0, epi::InfectionType::R));
+    EXPECT_EQ(model.populations.get((epi::AgeGroup1)0, epi::InfectionType::D),
+              model.populations.get((epi::AgeGroup1)0, epi::InfectionType::D));
 
-    EXPECT_EQ(params.times[0].get_incubation(), params2.times[0].get_incubation());
-    EXPECT_EQ(params.times[0].get_serialinterval(), params2.times[0].get_serialinterval());
-    EXPECT_EQ(params.times[0].get_infectious_mild(), params2.times[0].get_infectious_mild());
-    EXPECT_EQ(params.times[0].get_infectious_asymp(), params2.times[0].get_infectious_asymp());
-    EXPECT_EQ(params.times[0].get_home_to_hospitalized(), params2.times[0].get_home_to_hospitalized());
-    EXPECT_EQ(params.times[0].get_hospitalized_to_home(), params2.times[0].get_hospitalized_to_home());
-    EXPECT_EQ(params.times[0].get_hospitalized_to_icu(), params2.times[0].get_hospitalized_to_icu());
-    EXPECT_EQ(params.times[0].get_icu_to_dead(), params2.times[0].get_icu_to_dead());
-    EXPECT_EQ(params.times[0].get_icu_to_home(), params2.times[0].get_icu_to_home());
-    EXPECT_EQ(params.get_contact_patterns().get_cont_freq_mat().get_dampings(0, 0).get_factor(35),
-              params2.get_contact_patterns().get_cont_freq_mat().get_dampings(0, 0).get_factor(35));
+    EXPECT_EQ(model.parameters.times[0].get_incubation(), model2.parameters.times[0].get_incubation());
+    EXPECT_EQ(model.parameters.times[0].get_serialinterval(), model2.parameters.times[0].get_serialinterval());
+    EXPECT_EQ(model.parameters.times[0].get_infectious_mild(), model2.parameters.times[0].get_infectious_mild());
+    EXPECT_EQ(model.parameters.times[0].get_infectious_asymp(), model2.parameters.times[0].get_infectious_asymp());
+    EXPECT_EQ(model.parameters.times[0].get_home_to_hospitalized(),
+              model2.parameters.times[0].get_home_to_hospitalized());
+    EXPECT_EQ(model.parameters.times[0].get_hospitalized_to_home(),
+              model2.parameters.times[0].get_hospitalized_to_home());
+    EXPECT_EQ(model.parameters.times[0].get_hospitalized_to_icu(),
+              model2.parameters.times[0].get_hospitalized_to_icu());
+    EXPECT_EQ(model.parameters.times[0].get_icu_to_dead(), model2.parameters.times[0].get_icu_to_dead());
+    EXPECT_EQ(model.parameters.times[0].get_icu_to_home(), model2.parameters.times[0].get_icu_to_home());
+    EXPECT_EQ(model.parameters.get_contact_patterns().get_cont_freq_mat().get_dampings(0, 0).get_factor(35),
+              model2.parameters.get_contact_patterns().get_cont_freq_mat().get_dampings(0, 0).get_factor(35));
 
-    EXPECT_EQ(params.probabilities[0].get_infection_from_contact(),
-              params2.probabilities[0].get_infection_from_contact());
-    EXPECT_EQ(params.probabilities[0].get_carrier_infectability(),
-              params2.probabilities[0].get_carrier_infectability());
-    EXPECT_EQ(params.probabilities[0].get_risk_from_symptomatic(),
-              params2.probabilities[0].get_risk_from_symptomatic());
-    EXPECT_EQ(params.probabilities[0].get_asymp_per_infectious(), params2.probabilities[0].get_asymp_per_infectious());
-    EXPECT_EQ(params.probabilities[0].get_hospitalized_per_infectious(),
-              params2.probabilities[0].get_hospitalized_per_infectious());
-    EXPECT_EQ(params.probabilities[0].get_icu_per_hospitalized(), params2.probabilities[0].get_icu_per_hospitalized());
-    EXPECT_EQ(params.probabilities[0].get_dead_per_icu(), params2.probabilities[0].get_dead_per_icu());
-    EXPECT_EQ(params.get_contact_patterns().get_cont_freq_mat().get_dampings(0, 0).get_factor(35),
-              params2.get_contact_patterns().get_cont_freq_mat().get_dampings(0, 0).get_factor(35));
+    EXPECT_EQ(model.parameters.probabilities[0].get_infection_from_contact(),
+              model2.parameters.probabilities[0].get_infection_from_contact());
+    EXPECT_EQ(model.parameters.probabilities[0].get_carrier_infectability(),
+              model2.parameters.probabilities[0].get_carrier_infectability());
+    EXPECT_EQ(model.parameters.probabilities[0].get_risk_from_symptomatic(),
+              model2.parameters.probabilities[0].get_risk_from_symptomatic());
+    EXPECT_EQ(model.parameters.probabilities[0].get_asymp_per_infectious(),
+              model2.parameters.probabilities[0].get_asymp_per_infectious());
+    EXPECT_EQ(model.parameters.probabilities[0].get_hospitalized_per_infectious(),
+              model2.parameters.probabilities[0].get_hospitalized_per_infectious());
+    EXPECT_EQ(model.parameters.probabilities[0].get_icu_per_hospitalized(),
+              model2.parameters.probabilities[0].get_icu_per_hospitalized());
+    EXPECT_EQ(model.parameters.probabilities[0].get_dead_per_icu(),
+              model2.parameters.probabilities[0].get_dead_per_icu());
+    EXPECT_EQ(model.parameters.get_contact_patterns().get_cont_freq_mat().get_dampings(0, 0).get_factor(35),
+              model2.parameters.get_contact_patterns().get_cont_freq_mat().get_dampings(0, 0).get_factor(35));
 
-    epi::SecirParams params3 = std::move(params2); // move constructor
+    epi::SecirModel<epi::AgeGroup1> model3 = std::move(model2); // move constructor
 
-    EXPECT_EQ(params.get_icu_capacity(), params3.get_icu_capacity());
-    EXPECT_EQ(params.get_start_day(), params3.get_start_day());
-    EXPECT_EQ(params.get_seasonality(), params3.get_seasonality());
+    EXPECT_EQ(model.parameters.get_icu_capacity(), model3.parameters.get_icu_capacity());
+    EXPECT_EQ(model.parameters.get_start_day(), model3.parameters.get_start_day());
+    EXPECT_EQ(model.parameters.get_seasonality(), model3.parameters.get_seasonality());
 
-    EXPECT_EQ(params3.populations.get_total(), params.populations.get_total());
-    EXPECT_EQ(params3.populations.get({0, epi::InfectionType::S}), params.populations.get({0, epi::InfectionType::S}));
-    EXPECT_EQ(params3.populations.get({0, epi::InfectionType::E}), params.populations.get({0, epi::InfectionType::E}));
-    EXPECT_EQ(params3.populations.get({0, epi::InfectionType::C}), params.populations.get({0, epi::InfectionType::C}));
-    EXPECT_EQ(params3.populations.get({0, epi::InfectionType::I}), params.populations.get({0, epi::InfectionType::I}));
-    EXPECT_EQ(params3.populations.get({0, epi::InfectionType::H}), params.populations.get({0, epi::InfectionType::H}));
-    EXPECT_EQ(params3.populations.get({0, epi::InfectionType::U}), params.populations.get({0, epi::InfectionType::U}));
-    EXPECT_EQ(params3.populations.get({0, epi::InfectionType::R}), params.populations.get({0, epi::InfectionType::R}));
-    EXPECT_EQ(params3.populations.get({0, epi::InfectionType::D}), params.populations.get({0, epi::InfectionType::D}));
+    EXPECT_EQ(model3.populations.get_total(), model.populations.get_total());
+    EXPECT_EQ(model3.populations.get((epi::AgeGroup1)0, epi::InfectionType::S),
+              model.populations.get((epi::AgeGroup1)0, epi::InfectionType::S));
+    EXPECT_EQ(model3.populations.get((epi::AgeGroup1)0, epi::InfectionType::E),
+              model.populations.get((epi::AgeGroup1)0, epi::InfectionType::E));
+    EXPECT_EQ(model3.populations.get((epi::AgeGroup1)0, epi::InfectionType::C),
+              model.populations.get((epi::AgeGroup1)0, epi::InfectionType::C));
+    EXPECT_EQ(model3.populations.get((epi::AgeGroup1)0, epi::InfectionType::I),
+              model.populations.get((epi::AgeGroup1)0, epi::InfectionType::I));
+    EXPECT_EQ(model3.populations.get((epi::AgeGroup1)0, epi::InfectionType::H),
+              model.populations.get((epi::AgeGroup1)0, epi::InfectionType::H));
+    EXPECT_EQ(model3.populations.get((epi::AgeGroup1)0, epi::InfectionType::U),
+              model.populations.get((epi::AgeGroup1)0, epi::InfectionType::U));
+    EXPECT_EQ(model3.populations.get((epi::AgeGroup1)0, epi::InfectionType::R),
+              model.populations.get((epi::AgeGroup1)0, epi::InfectionType::R));
+    EXPECT_EQ(model3.populations.get((epi::AgeGroup1)0, epi::InfectionType::D),
+              model.populations.get((epi::AgeGroup1)0, epi::InfectionType::D));
 
-    EXPECT_EQ(params3.times[0].get_incubation(), params.times[0].get_incubation());
-    EXPECT_EQ(params3.times[0].get_serialinterval(), params.times[0].get_serialinterval());
-    EXPECT_EQ(params3.times[0].get_infectious_mild(), params.times[0].get_infectious_mild());
-    EXPECT_EQ(params3.times[0].get_infectious_asymp(), params.times[0].get_infectious_asymp());
-    EXPECT_EQ(params3.times[0].get_home_to_hospitalized(), params.times[0].get_home_to_hospitalized());
-    EXPECT_EQ(params3.times[0].get_hospitalized_to_home(), params.times[0].get_hospitalized_to_home());
-    EXPECT_EQ(params3.times[0].get_hospitalized_to_icu(), params.times[0].get_hospitalized_to_icu());
-    EXPECT_EQ(params3.times[0].get_icu_to_dead(), params.times[0].get_icu_to_dead());
-    EXPECT_EQ(params3.times[0].get_icu_to_home(), params.times[0].get_icu_to_home());
+    EXPECT_EQ(model3.parameters.times[0].get_incubation(), model.parameters.times[0].get_incubation());
+    EXPECT_EQ(model3.parameters.times[0].get_serialinterval(), model.parameters.times[0].get_serialinterval());
+    EXPECT_EQ(model3.parameters.times[0].get_infectious_mild(), model.parameters.times[0].get_infectious_mild());
+    EXPECT_EQ(model3.parameters.times[0].get_infectious_asymp(), model.parameters.times[0].get_infectious_asymp());
+    EXPECT_EQ(model3.parameters.times[0].get_home_to_hospitalized(),
+              model.parameters.times[0].get_home_to_hospitalized());
+    EXPECT_EQ(model3.parameters.times[0].get_hospitalized_to_home(),
+              model.parameters.times[0].get_hospitalized_to_home());
+    EXPECT_EQ(model3.parameters.times[0].get_hospitalized_to_icu(),
+              model.parameters.times[0].get_hospitalized_to_icu());
+    EXPECT_EQ(model3.parameters.times[0].get_icu_to_dead(), model.parameters.times[0].get_icu_to_dead());
+    EXPECT_EQ(model3.parameters.times[0].get_icu_to_home(), model.parameters.times[0].get_icu_to_home());
 
-    EXPECT_EQ(params3.probabilities[0].get_infection_from_contact(),
-              params.probabilities[0].get_infection_from_contact());
-    EXPECT_EQ(params3.probabilities[0].get_carrier_infectability(),
-              params.probabilities[0].get_carrier_infectability());
-    EXPECT_EQ(params3.probabilities[0].get_risk_from_symptomatic(),
-              params.probabilities[0].get_risk_from_symptomatic());
-    EXPECT_EQ(params3.probabilities[0].get_asymp_per_infectious(), params.probabilities[0].get_asymp_per_infectious());
-    EXPECT_EQ(params3.probabilities[0].get_hospitalized_per_infectious(),
-              params.probabilities[0].get_hospitalized_per_infectious());
-    EXPECT_EQ(params3.probabilities[0].get_icu_per_hospitalized(), params.probabilities[0].get_icu_per_hospitalized());
-    EXPECT_EQ(params3.probabilities[0].get_dead_per_icu(), params.probabilities[0].get_dead_per_icu());
+    EXPECT_EQ(model3.parameters.probabilities[0].get_infection_from_contact(),
+              model.parameters.probabilities[0].get_infection_from_contact());
+    EXPECT_EQ(model3.parameters.probabilities[0].get_carrier_infectability(),
+              model.parameters.probabilities[0].get_carrier_infectability());
+    EXPECT_EQ(model3.parameters.probabilities[0].get_risk_from_symptomatic(),
+              model.parameters.probabilities[0].get_risk_from_symptomatic());
+    EXPECT_EQ(model3.parameters.probabilities[0].get_asymp_per_infectious(),
+              model.parameters.probabilities[0].get_asymp_per_infectious());
+    EXPECT_EQ(model3.parameters.probabilities[0].get_hospitalized_per_infectious(),
+              model.parameters.probabilities[0].get_hospitalized_per_infectious());
+    EXPECT_EQ(model3.parameters.probabilities[0].get_icu_per_hospitalized(),
+              model.parameters.probabilities[0].get_icu_per_hospitalized());
+    EXPECT_EQ(model3.parameters.probabilities[0].get_dead_per_icu(),
+              model.parameters.probabilities[0].get_dead_per_icu());
 
-    EXPECT_EQ(params.get_contact_patterns().get_cont_freq_mat().get_dampings(0, 0).get_factor(35),
-              params3.get_contact_patterns().get_cont_freq_mat().get_dampings(0, 0).get_factor(35));
+    EXPECT_EQ(model.parameters.get_contact_patterns().get_cont_freq_mat().get_dampings(0, 0).get_factor(35),
+              model3.parameters.get_contact_patterns().get_cont_freq_mat().get_dampings(0, 0).get_factor(35));
 
-    epi::SecirParams params4 = params3; // copy assignment constructor
+    epi::SecirModel<epi::AgeGroup1> model4 = model3; // copy assignment constructor
 
-    EXPECT_EQ(params4.get_icu_capacity(), params3.get_icu_capacity());
-    EXPECT_EQ(params4.get_start_day(), params3.get_start_day());
-    EXPECT_EQ(params4.get_seasonality(), params3.get_seasonality());
+    EXPECT_EQ(model4.parameters.get_icu_capacity(), model3.parameters.get_icu_capacity());
+    EXPECT_EQ(model4.parameters.get_start_day(), model3.parameters.get_start_day());
+    EXPECT_EQ(model4.parameters.get_seasonality(), model3.parameters.get_seasonality());
 
-    EXPECT_EQ(params3.populations.get_total(), params4.populations.get_total());
-    EXPECT_EQ(params3.populations.get({0, epi::InfectionType::S}), params4.populations.get({0, epi::InfectionType::S}));
-    EXPECT_EQ(params3.populations.get({0, epi::InfectionType::E}), params4.populations.get({0, epi::InfectionType::E}));
-    EXPECT_EQ(params3.populations.get({0, epi::InfectionType::C}), params4.populations.get({0, epi::InfectionType::C}));
-    EXPECT_EQ(params3.populations.get({0, epi::InfectionType::I}), params4.populations.get({0, epi::InfectionType::I}));
-    EXPECT_EQ(params3.populations.get({0, epi::InfectionType::H}), params4.populations.get({0, epi::InfectionType::H}));
-    EXPECT_EQ(params3.populations.get({0, epi::InfectionType::U}), params4.populations.get({0, epi::InfectionType::U}));
-    EXPECT_EQ(params3.populations.get({0, epi::InfectionType::R}), params4.populations.get({0, epi::InfectionType::R}));
-    EXPECT_EQ(params3.populations.get({0, epi::InfectionType::D}), params4.populations.get({0, epi::InfectionType::D}));
+    EXPECT_EQ(model3.populations.get_total(), model4.populations.get_total());
+    EXPECT_EQ(model3.populations.get((epi::AgeGroup1)0, epi::InfectionType::S),
+              model4.populations.get((epi::AgeGroup1)0, epi::InfectionType::S));
+    EXPECT_EQ(model3.populations.get((epi::AgeGroup1)0, epi::InfectionType::E),
+              model4.populations.get((epi::AgeGroup1)0, epi::InfectionType::E));
+    EXPECT_EQ(model3.populations.get((epi::AgeGroup1)0, epi::InfectionType::C),
+              model4.populations.get((epi::AgeGroup1)0, epi::InfectionType::C));
+    EXPECT_EQ(model3.populations.get((epi::AgeGroup1)0, epi::InfectionType::I),
+              model4.populations.get((epi::AgeGroup1)0, epi::InfectionType::I));
+    EXPECT_EQ(model3.populations.get((epi::AgeGroup1)0, epi::InfectionType::H),
+              model4.populations.get((epi::AgeGroup1)0, epi::InfectionType::H));
+    EXPECT_EQ(model3.populations.get((epi::AgeGroup1)0, epi::InfectionType::U),
+              model4.populations.get((epi::AgeGroup1)0, epi::InfectionType::U));
+    EXPECT_EQ(model3.populations.get((epi::AgeGroup1)0, epi::InfectionType::R),
+              model4.populations.get((epi::AgeGroup1)0, epi::InfectionType::R));
+    EXPECT_EQ(model3.populations.get((epi::AgeGroup1)0, epi::InfectionType::D),
+              model4.populations.get((epi::AgeGroup1)0, epi::InfectionType::D));
 
-    EXPECT_EQ(params3.times[0].get_incubation(), params4.times[0].get_incubation());
-    EXPECT_EQ(params3.times[0].get_serialinterval(), params4.times[0].get_serialinterval());
-    EXPECT_EQ(params3.times[0].get_infectious_mild(), params4.times[0].get_infectious_mild());
-    EXPECT_EQ(params3.times[0].get_infectious_asymp(), params4.times[0].get_infectious_asymp());
-    EXPECT_EQ(params3.times[0].get_home_to_hospitalized(), params4.times[0].get_home_to_hospitalized());
-    EXPECT_EQ(params3.times[0].get_hospitalized_to_home(), params4.times[0].get_hospitalized_to_home());
-    EXPECT_EQ(params3.times[0].get_hospitalized_to_icu(), params4.times[0].get_hospitalized_to_icu());
-    EXPECT_EQ(params3.times[0].get_icu_to_dead(), params4.times[0].get_icu_to_dead());
-    EXPECT_EQ(params3.times[0].get_icu_to_home(), params4.times[0].get_icu_to_home());
+    EXPECT_EQ(model3.parameters.times[0].get_incubation(), model4.parameters.times[0].get_incubation());
+    EXPECT_EQ(model3.parameters.times[0].get_serialinterval(), model4.parameters.times[0].get_serialinterval());
+    EXPECT_EQ(model3.parameters.times[0].get_infectious_mild(), model4.parameters.times[0].get_infectious_mild());
+    EXPECT_EQ(model3.parameters.times[0].get_infectious_asymp(), model4.parameters.times[0].get_infectious_asymp());
+    EXPECT_EQ(model3.parameters.times[0].get_home_to_hospitalized(),
+              model4.parameters.times[0].get_home_to_hospitalized());
+    EXPECT_EQ(model3.parameters.times[0].get_hospitalized_to_home(),
+              model4.parameters.times[0].get_hospitalized_to_home());
+    EXPECT_EQ(model3.parameters.times[0].get_hospitalized_to_icu(),
+              model4.parameters.times[0].get_hospitalized_to_icu());
+    EXPECT_EQ(model3.parameters.times[0].get_icu_to_dead(), model4.parameters.times[0].get_icu_to_dead());
+    EXPECT_EQ(model3.parameters.times[0].get_icu_to_home(), model4.parameters.times[0].get_icu_to_home());
 
-    EXPECT_EQ(params3.probabilities[0].get_infection_from_contact(),
-              params4.probabilities[0].get_infection_from_contact());
-    EXPECT_EQ(params3.probabilities[0].get_carrier_infectability(),
-              params4.probabilities[0].get_carrier_infectability());
-    EXPECT_EQ(params3.probabilities[0].get_risk_from_symptomatic(),
-              params4.probabilities[0].get_risk_from_symptomatic());
-    EXPECT_EQ(params3.probabilities[0].get_asymp_per_infectious(), params4.probabilities[0].get_asymp_per_infectious());
-    EXPECT_EQ(params3.probabilities[0].get_hospitalized_per_infectious(),
-              params4.probabilities[0].get_hospitalized_per_infectious());
-    EXPECT_EQ(params3.probabilities[0].get_icu_per_hospitalized(), params4.probabilities[0].get_icu_per_hospitalized());
-    EXPECT_EQ(params3.probabilities[0].get_dead_per_icu(), params4.probabilities[0].get_dead_per_icu());
+    EXPECT_EQ(model3.parameters.probabilities[0].get_infection_from_contact(),
+              model4.parameters.probabilities[0].get_infection_from_contact());
+    EXPECT_EQ(model3.parameters.probabilities[0].get_carrier_infectability(),
+              model4.parameters.probabilities[0].get_carrier_infectability());
+    EXPECT_EQ(model3.parameters.probabilities[0].get_risk_from_symptomatic(),
+              model4.parameters.probabilities[0].get_risk_from_symptomatic());
+    EXPECT_EQ(model3.parameters.probabilities[0].get_asymp_per_infectious(),
+              model4.parameters.probabilities[0].get_asymp_per_infectious());
+    EXPECT_EQ(model3.parameters.probabilities[0].get_hospitalized_per_infectious(),
+              model4.parameters.probabilities[0].get_hospitalized_per_infectious());
+    EXPECT_EQ(model3.parameters.probabilities[0].get_icu_per_hospitalized(),
+              model4.parameters.probabilities[0].get_icu_per_hospitalized());
+    EXPECT_EQ(model3.parameters.probabilities[0].get_dead_per_icu(),
+              model4.parameters.probabilities[0].get_dead_per_icu());
 
-    EXPECT_EQ(params4.get_contact_patterns().get_cont_freq_mat().get_dampings(0, 0).get_factor(35),
-              params3.get_contact_patterns().get_cont_freq_mat().get_dampings(0, 0).get_factor(35));
+    EXPECT_EQ(model4.parameters.get_contact_patterns().get_cont_freq_mat().get_dampings(0, 0).get_factor(35),
+              model3.parameters.get_contact_patterns().get_cont_freq_mat().get_dampings(0, 0).get_factor(35));
 
-    epi::SecirParams params5 = std::move(params4); // move assignment constructor
+    epi::SecirModel<epi::AgeGroup1> model5 = std::move(model4); // move assignment constructor
 
-    EXPECT_EQ(params5.get_icu_capacity(), params3.get_icu_capacity());
-    EXPECT_EQ(params5.get_start_day(), params3.get_start_day());
-    EXPECT_EQ(params5.get_seasonality(), params3.get_seasonality());
+    EXPECT_EQ(model5.parameters.get_icu_capacity(), model3.parameters.get_icu_capacity());
+    EXPECT_EQ(model5.parameters.get_start_day(), model3.parameters.get_start_day());
+    EXPECT_EQ(model5.parameters.get_seasonality(), model3.parameters.get_seasonality());
 
-    EXPECT_EQ(params5.populations.get_total(), params3.populations.get_total());
-    EXPECT_EQ(params5.populations.get({0, epi::InfectionType::S}), params3.populations.get({0, epi::InfectionType::S}));
-    EXPECT_EQ(params5.populations.get({0, epi::InfectionType::E}), params3.populations.get({0, epi::InfectionType::E}));
-    EXPECT_EQ(params5.populations.get({0, epi::InfectionType::C}), params3.populations.get({0, epi::InfectionType::C}));
-    EXPECT_EQ(params5.populations.get({0, epi::InfectionType::I}), params3.populations.get({0, epi::InfectionType::I}));
-    EXPECT_EQ(params5.populations.get({0, epi::InfectionType::H}), params3.populations.get({0, epi::InfectionType::H}));
-    EXPECT_EQ(params5.populations.get({0, epi::InfectionType::U}), params3.populations.get({0, epi::InfectionType::U}));
-    EXPECT_EQ(params5.populations.get({0, epi::InfectionType::R}), params3.populations.get({0, epi::InfectionType::R}));
-    EXPECT_EQ(params5.populations.get({0, epi::InfectionType::D}), params3.populations.get({0, epi::InfectionType::D}));
+    EXPECT_EQ(model5.populations.get_total(), model3.populations.get_total());
+    EXPECT_EQ(model5.populations.get((epi::AgeGroup1)0, epi::InfectionType::S),
+              model3.populations.get((epi::AgeGroup1)0, epi::InfectionType::S));
+    EXPECT_EQ(model5.populations.get((epi::AgeGroup1)0, epi::InfectionType::E),
+              model3.populations.get((epi::AgeGroup1)0, epi::InfectionType::E));
+    EXPECT_EQ(model5.populations.get((epi::AgeGroup1)0, epi::InfectionType::C),
+              model3.populations.get((epi::AgeGroup1)0, epi::InfectionType::C));
+    EXPECT_EQ(model5.populations.get((epi::AgeGroup1)0, epi::InfectionType::I),
+              model3.populations.get((epi::AgeGroup1)0, epi::InfectionType::I));
+    EXPECT_EQ(model5.populations.get((epi::AgeGroup1)0, epi::InfectionType::H),
+              model3.populations.get((epi::AgeGroup1)0, epi::InfectionType::H));
+    EXPECT_EQ(model5.populations.get((epi::AgeGroup1)0, epi::InfectionType::U),
+              model3.populations.get((epi::AgeGroup1)0, epi::InfectionType::U));
+    EXPECT_EQ(model5.populations.get((epi::AgeGroup1)0, epi::InfectionType::R),
+              model3.populations.get((epi::AgeGroup1)0, epi::InfectionType::R));
+    EXPECT_EQ(model5.populations.get((epi::AgeGroup1)0, epi::InfectionType::D),
+              model3.populations.get((epi::AgeGroup1)0, epi::InfectionType::D));
 
-    EXPECT_EQ(params5.times[0].get_incubation(), params3.times[0].get_incubation());
-    EXPECT_EQ(params5.times[0].get_serialinterval(), params3.times[0].get_serialinterval());
-    EXPECT_EQ(params5.times[0].get_infectious_mild(), params3.times[0].get_infectious_mild());
-    EXPECT_EQ(params5.times[0].get_infectious_asymp(), params3.times[0].get_infectious_asymp());
-    EXPECT_EQ(params5.times[0].get_home_to_hospitalized(), params3.times[0].get_home_to_hospitalized());
-    EXPECT_EQ(params5.times[0].get_hospitalized_to_home(), params3.times[0].get_hospitalized_to_home());
-    EXPECT_EQ(params5.times[0].get_hospitalized_to_icu(), params3.times[0].get_hospitalized_to_icu());
-    EXPECT_EQ(params5.times[0].get_icu_to_dead(), params3.times[0].get_icu_to_dead());
-    EXPECT_EQ(params5.times[0].get_icu_to_home(), params3.times[0].get_icu_to_home());
+    EXPECT_EQ(model5.parameters.times[0].get_incubation(), model3.parameters.times[0].get_incubation());
+    EXPECT_EQ(model5.parameters.times[0].get_serialinterval(), model3.parameters.times[0].get_serialinterval());
+    EXPECT_EQ(model5.parameters.times[0].get_infectious_mild(), model3.parameters.times[0].get_infectious_mild());
+    EXPECT_EQ(model5.parameters.times[0].get_infectious_asymp(), model3.parameters.times[0].get_infectious_asymp());
+    EXPECT_EQ(model5.parameters.times[0].get_home_to_hospitalized(),
+              model3.parameters.times[0].get_home_to_hospitalized());
+    EXPECT_EQ(model5.parameters.times[0].get_hospitalized_to_home(),
+              model3.parameters.times[0].get_hospitalized_to_home());
+    EXPECT_EQ(model5.parameters.times[0].get_hospitalized_to_icu(),
+              model3.parameters.times[0].get_hospitalized_to_icu());
+    EXPECT_EQ(model5.parameters.times[0].get_icu_to_dead(), model3.parameters.times[0].get_icu_to_dead());
+    EXPECT_EQ(model5.parameters.times[0].get_icu_to_home(), model3.parameters.times[0].get_icu_to_home());
 
-    EXPECT_EQ(params5.probabilities[0].get_infection_from_contact(),
-              params3.probabilities[0].get_infection_from_contact());
-    EXPECT_EQ(params5.probabilities[0].get_carrier_infectability(),
-              params3.probabilities[0].get_carrier_infectability());
-    EXPECT_EQ(params5.probabilities[0].get_risk_from_symptomatic(),
-              params3.probabilities[0].get_risk_from_symptomatic());
-    EXPECT_EQ(params5.probabilities[0].get_asymp_per_infectious(), params3.probabilities[0].get_asymp_per_infectious());
-    EXPECT_EQ(params5.probabilities[0].get_hospitalized_per_infectious(),
-              params3.probabilities[0].get_hospitalized_per_infectious());
-    EXPECT_EQ(params5.probabilities[0].get_icu_per_hospitalized(), params3.probabilities[0].get_icu_per_hospitalized());
-    EXPECT_EQ(params5.probabilities[0].get_dead_per_icu(), params3.probabilities[0].get_dead_per_icu());
+    EXPECT_EQ(model5.parameters.probabilities[0].get_infection_from_contact(),
+              model3.parameters.probabilities[0].get_infection_from_contact());
+    EXPECT_EQ(model5.parameters.probabilities[0].get_carrier_infectability(),
+              model3.parameters.probabilities[0].get_carrier_infectability());
+    EXPECT_EQ(model5.parameters.probabilities[0].get_risk_from_symptomatic(),
+              model3.parameters.probabilities[0].get_risk_from_symptomatic());
+    EXPECT_EQ(model5.parameters.probabilities[0].get_asymp_per_infectious(),
+              model3.parameters.probabilities[0].get_asymp_per_infectious());
+    EXPECT_EQ(model5.parameters.probabilities[0].get_hospitalized_per_infectious(),
+              model3.parameters.probabilities[0].get_hospitalized_per_infectious());
+    EXPECT_EQ(model5.parameters.probabilities[0].get_icu_per_hospitalized(),
+              model3.parameters.probabilities[0].get_icu_per_hospitalized());
+    EXPECT_EQ(model5.parameters.probabilities[0].get_dead_per_icu(),
+              model3.parameters.probabilities[0].get_dead_per_icu());
 
-    EXPECT_EQ(params5.get_contact_patterns().get_cont_freq_mat().get_dampings(0, 0).get_factor(35),
-              params3.get_contact_patterns().get_cont_freq_mat().get_dampings(0, 0).get_factor(35));
+    EXPECT_EQ(model5.parameters.get_contact_patterns().get_cont_freq_mat().get_dampings(0, 0).get_factor(35),
+              model3.parameters.get_contact_patterns().get_cont_freq_mat().get_dampings(0, 0).get_factor(35));
 
     epi::ContactFrequencyMatrix contact_freq_matrix{2};
 
@@ -334,7 +392,7 @@ TEST(TestSecir, testSettersAndGetters)
         vec.push_back(val);
     }
 
-    epi::SecirParams params;
+    epi::SecirModel<epi::AgeGroup1> model;
 
     // alpha = alpha_in; // percentage of asymptomatic cases
     // beta  = beta_in; // risk of infection from the infected symptomatic patients
@@ -342,108 +400,112 @@ TEST(TestSecir, testSettersAndGetters)
     // theta = theta_in; // icu per hospitalized
     // delta = delta_in; // deaths per ICUs
 
-    EXPECT_EQ(params.times[0].get_incubation().get_distribution().get(), nullptr);
+    EXPECT_EQ(model.parameters.times[0].get_incubation().get_distribution().get(), nullptr);
 
-    params.set_icu_capacity(vec[0]);
+    model.parameters.set_icu_capacity(vec[0]);
 
-    params.times[0].set_incubation(vec[1]);
-    params.times[0].set_infectious_mild(vec[2]);
-    params.times[0].set_serialinterval(vec[3]);
-    params.times[0].set_hospitalized_to_home(vec[4]);
-    params.times[0].set_home_to_hospitalized(vec[5]);
-    params.times[0].set_hospitalized_to_icu(vec[6]);
-    params.times[0].set_icu_to_home(vec[7]);
-    params.times[0].set_infectious_asymp(vec[8]);
-    params.times[0].set_icu_to_death(vec[9]);
+    model.parameters.times[0].set_incubation(vec[1]);
+    model.parameters.times[0].set_infectious_mild(vec[2]);
+    model.parameters.times[0].set_serialinterval(vec[3]);
+    model.parameters.times[0].set_hospitalized_to_home(vec[4]);
+    model.parameters.times[0].set_home_to_hospitalized(vec[5]);
+    model.parameters.times[0].set_hospitalized_to_icu(vec[6]);
+    model.parameters.times[0].set_icu_to_home(vec[7]);
+    model.parameters.times[0].set_infectious_asymp(vec[8]);
+    model.parameters.times[0].set_icu_to_death(vec[9]);
 
-    params.populations.set({0, epi::InfectionType::E}, vec[10]);
-    params.populations.set({0, epi::InfectionType::C}, vec[11]);
-    params.populations.set({0, epi::InfectionType::I}, vec[12]);
-    params.populations.set({0, epi::InfectionType::H}, vec[13]);
-    params.populations.set({0, epi::InfectionType::U}, vec[14]);
-    params.populations.set({0, epi::InfectionType::R}, vec[15]);
-    params.populations.set({0, epi::InfectionType::D}, vec[16]);
+    model.populations.set(vec[10], (epi::AgeGroup1)0, epi::InfectionType::E);
+    model.populations.set(vec[11], (epi::AgeGroup1)0, epi::InfectionType::C);
+    model.populations.set(vec[12], (epi::AgeGroup1)0, epi::InfectionType::I);
+    model.populations.set(vec[13], (epi::AgeGroup1)0, epi::InfectionType::H);
+    model.populations.set(vec[14], (epi::AgeGroup1)0, epi::InfectionType::U);
+    model.populations.set(vec[15], (epi::AgeGroup1)0, epi::InfectionType::R);
+    model.populations.set(vec[16], (epi::AgeGroup1)0, epi::InfectionType::D);
 
-    params.probabilities[0].set_infection_from_contact(vec[17]);
-    params.probabilities[0].set_carrier_infectability(vec[18]);
-    params.probabilities[0].set_asymp_per_infectious(vec[19]);
-    params.probabilities[0].set_risk_from_symptomatic(vec[20]);
-    params.probabilities[0].set_hospitalized_per_infectious(vec[21]);
-    params.probabilities[0].set_icu_per_hospitalized(vec[22]);
-    params.probabilities[0].set_dead_per_icu(vec[23]);
+    model.parameters.probabilities[0].set_infection_from_contact(vec[17]);
+    model.parameters.probabilities[0].set_carrier_infectability(vec[18]);
+    model.parameters.probabilities[0].set_asymp_per_infectious(vec[19]);
+    model.parameters.probabilities[0].set_risk_from_symptomatic(vec[20]);
+    model.parameters.probabilities[0].set_hospitalized_per_infectious(vec[21]);
+    model.parameters.probabilities[0].set_icu_per_hospitalized(vec[22]);
+    model.parameters.probabilities[0].set_dead_per_icu(vec[23]);
 
-    EXPECT_NE(params.times[0].get_incubation().get_distribution().get(), nullptr);
-
+    EXPECT_NE(model.parameters.times[0].get_incubation().get_distribution().get(), nullptr);
     check_distribution(*vec[0].get_distribution(), *params.get_icu_capacity().get_distribution());
 
     params.set_start_day(vec[24]);
     params.set_seasonality(vec[25]);
 
-    EXPECT_NE(params.times[0].get_incubation().get_distribution().get(), nullptr);
+    EXPECT_NE(model.parameters.times[0].get_incubation().get_distribution().get(), nullptr);
 
-    check_distribution(*vec[1].get_distribution(), *params.times[0].get_incubation().get_distribution());
-    check_distribution(*vec[2].get_distribution(), *params.times[0].get_infectious_mild().get_distribution());
-    check_distribution(*vec[3].get_distribution(), *params.times[0].get_serialinterval().get_distribution());
-    check_distribution(*vec[4].get_distribution(), *params.times[0].get_hospitalized_to_home().get_distribution());
-    check_distribution(*vec[5].get_distribution(), *params.times[0].get_home_to_hospitalized().get_distribution());
-    check_distribution(*vec[6].get_distribution(), *params.times[0].get_hospitalized_to_icu().get_distribution());
-    check_distribution(*vec[7].get_distribution(), *params.times[0].get_icu_to_home().get_distribution());
-    check_distribution(*vec[8].get_distribution(), *params.times[0].get_infectious_asymp().get_distribution());
-    check_distribution(*vec[9].get_distribution(), *params.times[0].get_icu_to_dead().get_distribution());
+    check_distribution(*vec[1].get_distribution(), *model.parameters.times[0].get_incubation().get_distribution());
+    check_distribution(*vec[2].get_distribution(), *model.parameters.times[0].get_infectious_mild().get_distribution());
+    check_distribution(*vec[3].get_distribution(), *model.parameters.times[0].get_serialinterval().get_distribution());
+    check_distribution(*vec[4].get_distribution(),
+                       *model.parameters.times[0].get_hospitalized_to_home().get_distribution());
+    check_distribution(*vec[5].get_distribution(),
+                       *model.parameters.times[0].get_home_to_hospitalized().get_distribution());
+    check_distribution(*vec[6].get_distribution(),
+                       *model.parameters.times[0].get_hospitalized_to_icu().get_distribution());
+    check_distribution(*vec[7].get_distribution(), *model.parameters.times[0].get_icu_to_home().get_distribution());
+    check_distribution(*vec[8].get_distribution(),
+                       *model.parameters.times[0].get_infectious_asymp().get_distribution());
+    check_distribution(*vec[9].get_distribution(), *model.parameters.times[0].get_icu_to_dead().get_distribution());
     check_distribution(*vec[10].get_distribution(),
-                       *params.populations.get({0, epi::InfectionType::E}).get_distribution());
+                       *model.populations.get(epi::AgeGroup1)0, epi::InfectionType::E).get_distribution());
     check_distribution(*vec[11].get_distribution(),
-                       *params.populations.get({0, epi::InfectionType::C}).get_distribution());
+                       *model.populations.get(epi::AgeGroup1)0, epi::InfectionType::C).get_distribution());
     check_distribution(*vec[12].get_distribution(),
-                       *params.populations.get({0, epi::InfectionType::I}).get_distribution());
+                       *model.populations.get(epi::AgeGroup1)0, epi::InfectionType::I).get_distribution());
     check_distribution(*vec[13].get_distribution(),
-                       *params.populations.get({0, epi::InfectionType::H}).get_distribution());
+                       *model.populations.get(epi::AgeGroup1)0, epi::InfectionType::H).get_distribution());
     check_distribution(*vec[14].get_distribution(),
-                       *params.populations.get({0, epi::InfectionType::U}).get_distribution());
+                       *model.populations.get(epi::AgeGroup1)0, epi::InfectionType::U).get_distribution());
     check_distribution(*vec[15].get_distribution(),
-                       *params.populations.get({0, epi::InfectionType::R}).get_distribution());
+                       *model.populations.get(epi::AgeGroup1)0, epi::InfectionType::R).get_distribution());
     check_distribution(*vec[16].get_distribution(),
-                       *params.populations.get({0, epi::InfectionType::D}).get_distribution());
+                       *model.populations.get(epi::AgeGroup1)0, epi::InfectionType::D).get_distribution());
     check_distribution(*vec[17].get_distribution(),
-                       *params.probabilities[0].get_infection_from_contact().get_distribution());
+                       *model.parameters.probabilities[0].get_infection_from_contact().get_distribution());
     check_distribution(*vec[18].get_distribution(),
-                       *params.probabilities[0].get_carrier_infectability().get_distribution());
+                       *model.parameters.probabilities[0].get_carrier_infectability().get_distribution());
     check_distribution(*vec[19].get_distribution(),
-                       *params.probabilities[0].get_asymp_per_infectious().get_distribution());
+                       *model.parameters.probabilities[0].get_asymp_per_infectious().get_distribution());
     check_distribution(*vec[20].get_distribution(),
-                       *params.probabilities[0].get_risk_from_symptomatic().get_distribution());
+                       *model.parameters.probabilities[0].get_risk_from_symptomatic().get_distribution());
     check_distribution(*vec[21].get_distribution(),
-                       *params.probabilities[0].get_hospitalized_per_infectious().get_distribution());
+                       *model.parameters.probabilities[0].get_hospitalized_per_infectious().get_distribution());
     check_distribution(*vec[22].get_distribution(),
-                       *params.probabilities[0].get_icu_per_hospitalized().get_distribution());
-    check_distribution(*vec[23].get_distribution(), *params.probabilities[0].get_dead_per_icu().get_distribution());
+                       *model.parameters.probabilities[0].get_icu_per_hospitalized().get_distribution());
+    check_distribution(*vec[23].get_distribution(),
+                       *model.parameters.probabilities[0].get_dead_per_icu().get_distribution());
     // no dist for start day
     check_distribution(*vec[25].get_distribution(), *params.get_seasonality().get_distribution());
 
     EXPECT_EQ(vec[0], params.get_icu_capacity());
-    EXPECT_EQ(vec[1], params.times[0].get_incubation());
-    EXPECT_EQ(vec[2], params.times[0].get_infectious_mild());
-    EXPECT_EQ(vec[3], params.times[0].get_serialinterval());
-    EXPECT_EQ(vec[4], params.times[0].get_hospitalized_to_home());
-    EXPECT_EQ(vec[5], params.times[0].get_home_to_hospitalized());
-    EXPECT_EQ(vec[6], params.times[0].get_hospitalized_to_icu());
-    EXPECT_EQ(vec[7], params.times[0].get_icu_to_home());
-    EXPECT_EQ(vec[8], params.times[0].get_infectious_asymp());
-    EXPECT_EQ(vec[9], params.times[0].get_icu_to_dead());
-    EXPECT_EQ(vec[10], params.populations.get({0, epi::InfectionType::E}));
-    EXPECT_EQ(vec[11], params.populations.get({0, epi::InfectionType::C}));
-    EXPECT_EQ(vec[12], params.populations.get({0, epi::InfectionType::I}));
-    EXPECT_EQ(vec[13], params.populations.get({0, epi::InfectionType::H}));
-    EXPECT_EQ(vec[14], params.populations.get({0, epi::InfectionType::U}));
-    EXPECT_EQ(vec[15], params.populations.get({0, epi::InfectionType::R}));
-    EXPECT_EQ(vec[16], params.populations.get({0, epi::InfectionType::D}));
-    EXPECT_EQ(vec[17], params.probabilities[0].get_infection_from_contact());
-    EXPECT_EQ(vec[18], params.probabilities[0].get_carrier_infectability());
-    EXPECT_EQ(vec[19], params.probabilities[0].get_asymp_per_infectious());
-    EXPECT_EQ(vec[20], params.probabilities[0].get_risk_from_symptomatic());
-    EXPECT_EQ(vec[21], params.probabilities[0].get_hospitalized_per_infectious());
-    EXPECT_EQ(vec[22], params.probabilities[0].get_icu_per_hospitalized());
-    EXPECT_EQ(vec[23], params.probabilities[0].get_dead_per_icu());
+    EXPECT_EQ(vec[1], model.parameters.times[0].get_incubation());
+    EXPECT_EQ(vec[2], model.parameters.times[0].get_infectious_mild());
+    EXPECT_EQ(vec[3], model.parameters.times[0].get_serialinterval());
+    EXPECT_EQ(vec[4], model.parameters.times[0].get_hospitalized_to_home());
+    EXPECT_EQ(vec[5], model.parameters.times[0].get_home_to_hospitalized());
+    EXPECT_EQ(vec[6], model.parameters.times[0].get_hospitalized_to_icu());
+    EXPECT_EQ(vec[7], model.parameters.times[0].get_icu_to_home());
+    EXPECT_EQ(vec[8], model.parameters.times[0].get_infectious_asymp());
+    EXPECT_EQ(vec[9], model.parameters.times[0].get_icu_to_dead());
+    EXPECT_EQ(vec[10], model.populations.get(epi::AgeGroup1)0, epi::InfectionType::E));
+    EXPECT_EQ(vec[11], model.populations.get(epi::AgeGroup1)0, epi::InfectionType::C));
+    EXPECT_EQ(vec[12], model.populations.get(epi::AgeGroup1)0, epi::InfectionType::I));
+    EXPECT_EQ(vec[13], model.populations.get(epi::AgeGroup1)0, epi::InfectionType::H));
+    EXPECT_EQ(vec[14], model.populations.get(epi::AgeGroup1)0, epi::InfectionType::U));
+    EXPECT_EQ(vec[15], model.populations.get(epi::AgeGroup1)0, epi::InfectionType::R));
+    EXPECT_EQ(vec[16], model.populations.get(epi::AgeGroup1)0, epi::InfectionType::D));
+    EXPECT_EQ(vec[17], model.parameters.probabilities[0].get_infection_from_contact());
+    EXPECT_EQ(vec[18], model.parameters.probabilities[0].get_carrier_infectability());
+    EXPECT_EQ(vec[19], model.parameters.probabilities[0].get_asymp_per_infectious());
+    EXPECT_EQ(vec[20], model.parameters.probabilities[0].get_risk_from_symptomatic());
+    EXPECT_EQ(vec[21], model.parameters.probabilities[0].get_hospitalized_per_infectious());
+    EXPECT_EQ(vec[22], model.parameters.probabilities[0].get_icu_per_hospitalized());
+    EXPECT_EQ(vec[23], model.parameters.probabilities[0].get_dead_per_icu());
     EXPECT_EQ(vec[24], params.get_start_day());
     EXPECT_EQ(vec[25], params.get_seasonality());
 }
@@ -470,7 +532,7 @@ TEST(TestSecir, testValueConstraints)
     double nb_total_t0 = 10000, nb_exp_t0 = -91, nb_inf_t0 = 39, nb_car_t0 = 36, nb_hosp_t0 = 20, nb_icu_t0 = 10,
            nb_rec_t0 = 8, nb_dead_t0 = 0;
 
-    epi::SecirParams params;
+    epi::SecirModel<epi::AgeGroup1> model;
 
     // alpha = alpha_in; // percentage of asymptomatic cases
     // beta  = beta_in; // risk of infection from the infected symptomatic patients
@@ -478,49 +540,50 @@ TEST(TestSecir, testValueConstraints)
     // theta = theta_in; // icu per hospitalized
     // delta = delta_in; // deaths per ICUs
 
-    params.times[0].set_incubation(tinc);
-    params.times[0].set_infectious_mild(tinfmild);
-    params.times[0].set_serialinterval(tserint);
-    params.times[0].set_hospitalized_to_home(thosp2home);
-    params.times[0].set_home_to_hospitalized(thome2hosp);
-    params.times[0].set_hospitalized_to_icu(thosp2icu);
-    params.times[0].set_icu_to_home(ticu2home);
-    params.times[0].set_icu_to_death(ticu2death);
+    model.parameters.times[0].set_incubation(tinc);
+    model.parameters.times[0].set_infectious_mild(tinfmild);
+    model.parameters.times[0].set_serialinterval(tserint);
+    model.parameters.times[0].set_hospitalized_to_home(thosp2home);
+    model.parameters.times[0].set_home_to_hospitalized(thome2hosp);
+    model.parameters.times[0].set_hospitalized_to_icu(thosp2icu);
+    model.parameters.times[0].set_icu_to_home(ticu2home);
+    model.parameters.times[0].set_icu_to_death(ticu2death);
 
-    epi::ContactFrequencyMatrix& cont_freq_matrix = params.get_contact_patterns();
+    epi::ContactFrequencyMatrix& cont_freq_matrix = model.parameters.get_contact_patterns();
     cont_freq_matrix.set_cont_freq(cont_freq, 0, 0);
     epi::Damping dummy(30., 0.3);
     cont_freq_matrix.add_damping(dummy, 0, 0);
 
-    params.populations.set({0, epi::InfectionType::E}, nb_exp_t0);
-    params.populations.set({0, epi::InfectionType::C}, nb_car_t0);
-    params.populations.set({0, epi::InfectionType::I}, nb_inf_t0);
-    params.populations.set({0, epi::InfectionType::H}, nb_hosp_t0);
-    params.populations.set({0, epi::InfectionType::U}, nb_icu_t0);
-    params.populations.set({0, epi::InfectionType::R}, nb_rec_t0);
-    params.populations.set({0, epi::InfectionType::D}, nb_dead_t0);
-    params.populations.set_difference_from_total({0, epi::InfectionType::S}, nb_total_t0);
+    model.populations.set_total(nb_total_t0);
+    model.populations.set(nb_exp_t0, (epi::AgeGroup1)0, epi::InfectionType::E);
+    model.populations.set(nb_car_t0, (epi::AgeGroup1)0, epi::InfectionType::C);
+    model.populations.set(nb_inf_t0, (epi::AgeGroup1)0, epi::InfectionType::I);
+    model.populations.set(nb_hosp_t0, (epi::AgeGroup1)0, epi::InfectionType::H);
+    model.populations.set(nb_icu_t0, (epi::AgeGroup1)0, epi::InfectionType::U);
+    model.populations.set(nb_rec_t0, (epi::AgeGroup1)0, epi::InfectionType::R);
+    model.populations.set(nb_dead_t0, (epi::AgeGroup1)0, epi::InfectionType::D);
+    model.populations.set_difference_from_total(nb_total_t0, (epi::AgeGroup1)0, epi::InfectionType::S);
 
-    params.probabilities[0].set_infection_from_contact(inf_prob);
-    params.probabilities[0].set_carrier_infectability(carr_infec);
-    params.probabilities[0].set_asymp_per_infectious(alpha);
-    params.probabilities[0].set_risk_from_symptomatic(beta);
-    params.probabilities[0].set_hospitalized_per_infectious(rho);
-    params.probabilities[0].set_icu_per_hospitalized(theta);
-    params.probabilities[0].set_dead_per_icu(delta);
+    model.parameters.probabilities[0].set_infection_from_contact(inf_prob);
+    model.parameters.probabilities[0].set_carrier_infectability(carr_infec);
+    model.parameters.probabilities[0].set_asymp_per_infectious(alpha);
+    model.parameters.probabilities[0].set_risk_from_symptomatic(beta);
+    model.parameters.probabilities[0].set_hospitalized_per_infectious(rho);
+    model.parameters.probabilities[0].set_icu_per_hospitalized(theta);
+    model.parameters.probabilities[0].set_dead_per_icu(delta);
 
     epi::set_log_level(epi::LogLevel::off);
-    params.check_constraints();
+    model.parameters.check_constraints();
 
-    EXPECT_EQ(-91, params.populations.get({0, epi::InfectionType::E}));
-    EXPECT_EQ(2.124921, params.probabilities[0].get_asymp_per_infectious().value());
-    EXPECT_NEAR(5.08993, params.times[0].get_serialinterval(), 1e-14);
+    EXPECT_EQ(-91, model.populations.get((epi::AgeGroup1)0, epi::InfectionType::E));
+    EXPECT_EQ(2.124921, model.parameters.probabilities[0].get_asymp_per_infectious().value());
+    EXPECT_NEAR(5.08993, model.parameters.times[0].get_serialinterval(), 1e-14);
 
-    params.apply_constraints();
+    model.parameters.apply_constraints();
 
-    EXPECT_EQ(0.0, params.populations.get({0, epi::InfectionType::E}));
-    EXPECT_EQ(0.0, params.probabilities[0].get_asymp_per_infectious().value());
-    EXPECT_NEAR(4.6, params.times[0].get_serialinterval(), 1e-14);
+    EXPECT_EQ(0.0, model.populations.get((epi::AgeGroup1)0, epi::InfectionType::E));
+    EXPECT_EQ(0.0, model.parameters.probabilities[0].get_asymp_per_infectious().value());
+    EXPECT_NEAR(4.6, model.parameters.times[0].get_serialinterval(), 1e-14);
 }
 
 TEST(TestSecir, testModelConstraints)
@@ -540,31 +603,31 @@ TEST(TestSecir, testModelConstraints)
 
     epi::SecirParams params;
 
-    params.times[0].set_incubation(tinc);
-    params.times[0].set_infectious_mild(tinfmild);
-    params.times[0].set_serialinterval(tserint);
-    params.times[0].set_hospitalized_to_home(thosp2home);
-    params.times[0].set_home_to_hospitalized(thome2hosp);
-    params.times[0].set_hospitalized_to_icu(thosp2icu);
-    params.times[0].set_icu_to_home(ticu2home);
-    params.times[0].set_icu_to_death(ticu2death);
+    model.parameters.times[0].set_incubation(tinc);
+    model.parameters.times[0].set_infectious_mild(tinfmild);
+    model.parameters.times[0].set_serialinterval(tserint);
+    model.parameters.times[0].set_hospitalized_to_home(thosp2home);
+    model.parameters.times[0].set_home_to_hospitalized(thome2hosp);
+    model.parameters.times[0].set_hospitalized_to_icu(thosp2icu);
+    model.parameters.times[0].set_icu_to_home(ticu2home);
+    model.parameters.times[0].set_icu_to_death(ticu2death);
 
-    params.populations.set({0, epi::InfectionType::E}, nb_exp_t0);
-    params.populations.set({0, epi::InfectionType::C}, nb_car_t0);
-    params.populations.set({0, epi::InfectionType::I}, nb_inf_t0);
-    params.populations.set({0, epi::InfectionType::H}, nb_hosp_t0);
-    params.populations.set({0, epi::InfectionType::U}, nb_icu_t0);
-    params.populations.set({0, epi::InfectionType::R}, nb_rec_t0);
-    params.populations.set({0, epi::InfectionType::D}, nb_dead_t0);
-    params.populations.set_difference_from_total({0, epi::InfectionType::S}, nb_total_t0);
+    model.populations.set({0, epi::InfectionType::E}, nb_exp_t0);
+    model.populations.set({0, epi::InfectionType::C}, nb_car_t0);
+    model.populations.set({0, epi::InfectionType::I}, nb_inf_t0);
+    model.populations.set({0, epi::InfectionType::H}, nb_hosp_t0);
+    model.populations.set({0, epi::InfectionType::U}, nb_icu_t0);
+    model.populations.set({0, epi::InfectionType::R}, nb_rec_t0);
+    model.populations.set({0, epi::InfectionType::D}, nb_dead_t0);
+    model.populations.set_difference_from_total({0, epi::InfectionType::S}, nb_total_t0);
 
-    params.probabilities[0].set_infection_from_contact(inf_prob);
-    params.probabilities[0].set_carrier_infectability(carr_infec);
-    params.probabilities[0].set_asymp_per_infectious(alpha);
-    params.probabilities[0].set_risk_from_symptomatic(beta);
-    params.probabilities[0].set_hospitalized_per_infectious(rho);
-    params.probabilities[0].set_icu_per_hospitalized(theta);
-    params.probabilities[0].set_dead_per_icu(delta);
+    model.parameters.probabilities[0].set_infection_from_contact(inf_prob);
+    model.parameters.probabilities[0].set_carrier_infectability(carr_infec);
+    model.parameters.probabilities[0].set_asymp_per_infectious(alpha);
+    model.parameters.probabilities[0].set_risk_from_symptomatic(beta);
+    model.parameters.probabilities[0].set_hospitalized_per_infectious(rho);
+    model.parameters.probabilities[0].set_icu_per_hospitalized(theta);
+    model.parameters.probabilities[0].set_dead_per_icu(delta);
 
     epi::ContactFrequencyMatrix& cont_freq_matrix = params.get_contact_patterns();
     cont_freq_matrix.set_cont_freq(cont_freq, 0, 0);

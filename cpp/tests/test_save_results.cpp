@@ -1,4 +1,5 @@
 #include "load_test_data.h"
+#include "epidemiology/model/simulation.h"
 #include "epidemiology/secir/secir.h"
 #include <epidemiology_io/secir_result_io.h>
 #include <gtest/gtest.h>
@@ -17,10 +18,9 @@ TEST(TestSaveResult, compareResultWithH5)
     double nb_total_t0 = 10000, nb_exp_t0 = 100, nb_inf_t0 = 50, nb_car_t0 = 50, nb_hosp_t0 = 20, nb_icu_t0 = 10,
            nb_rec_t0 = 10, nb_dead_t0 = 0;
 
-    size_t nb_groups = 1;
-    double fact      = 1.0 / (double)nb_groups;
-
-    epi::SecirParams params(nb_groups);
+    epi::SecirModel<epi::AgeGroup1> model;
+    size_t nb_groups = (size_t)epi::AgeGroup1::Count;
+    auto& params     = model.parameters;
 
     for (size_t i = 0; i < nb_groups; i++) {
         params.times[i].set_incubation(tinc);
@@ -33,15 +33,14 @@ TEST(TestSaveResult, compareResultWithH5)
         params.times[i].set_infectious_asymp(tinfasy);
         params.times[i].set_icu_to_death(ticu2death);
 
-        params.populations.set({i, epi::InfectionType::E}, fact * nb_exp_t0);
-        params.populations.set({i, epi::InfectionType::C}, fact * nb_car_t0);
-        params.populations.set({i, epi::InfectionType::I}, fact * nb_inf_t0);
-        params.populations.set({i, epi::InfectionType::H}, fact * nb_hosp_t0);
-        params.populations.set({i, epi::InfectionType::U}, fact * nb_icu_t0);
-        params.populations.set({i, epi::InfectionType::R}, fact * nb_rec_t0);
-        params.populations.set({i, epi::InfectionType::D}, fact * nb_dead_t0);
-        params.populations.set_difference_from_group_total({i, epi::InfectionType::S}, epi::SecirCategory::AgeGroup, i,
-                                                           fact * nb_total_t0);
+        model.populations.set(nb_exp_t0, (epi::AgeGroup1)i, epi::InfectionType::E);
+        model.populations.set(nb_car_t0, (epi::AgeGroup1)i, epi::InfectionType::C);
+        model.populations.set(nb_inf_t0, (epi::AgeGroup1)i, epi::InfectionType::I);
+        model.populations.set(nb_hosp_t0, (epi::AgeGroup1)i, epi::InfectionType::H);
+        model.populations.set(nb_icu_t0, (epi::AgeGroup1)i, epi::InfectionType::U);
+        model.populations.set(nb_rec_t0, (epi::AgeGroup1)i, epi::InfectionType::R);
+        model.populations.set(nb_dead_t0, (epi::AgeGroup1)i, epi::InfectionType::D);
+        model.populations.set_difference_from_group_total(fact * nb_total_t0, (epi::AgeGroup1)0, epi::InfectionType::S);
 
         params.probabilities[i].set_infection_from_contact(0.06);
         params.probabilities[i].set_carrier_infectability(0.67);
@@ -61,7 +60,7 @@ TEST(TestSaveResult, compareResultWithH5)
         }
     }
 
-    auto result_from_sim = simulate(t0, tmax, dt, params);
+    auto result_from_sim = simulate(t0, tmax, dt, model);
 
     epi::save_result(result_from_sim, "test_result.h5");
 
@@ -80,9 +79,9 @@ TEST(TestSaveResult, compareResultWithH5)
         for (Eigen::Index l = 0; l < result_from_file.get_totals().get_num_elements(); l++) {
             double total = 0.0;
             for (Eigen::Index j = 0; j < Eigen::Index(nb_groups); j++) {
-                total += result_from_sim[i][j * epi::InfectionType::SecirCount + l];
-                EXPECT_NEAR(result_from_file.get_groups()[i][j * epi::InfectionType::SecirCount + l],
-                            result_from_sim[i][j * epi::InfectionType::SecirCount + l], 1e-10)
+                total += result_from_sim[i][j * (size_t)epi::InfectionType::Count + l];
+                EXPECT_NEAR(result_from_file.get_groups()[i][j * (size_t)epi::InfectionType::Count + l],
+                            result_from_sim[i][j * (size_t)epi::InfectionType::Count + l], 1e-10)
                     << " at row " << i << " at row " << l << " at Group " << j;
             }
             EXPECT_NEAR(result_from_file.get_totals()[i][l], total, 1e-10) << " at row " << i << " at row " << l;
