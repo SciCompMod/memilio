@@ -18,11 +18,21 @@ class Parameter extends Component {
     }
   }
 
+  /**
+   * Update parameter value on input change
+   *
+   * @param {*} value
+   */
   update(value) {
     this.setState({
       value,
     });
 
+    /*
+      Update value in store in timeout, otherwise the 
+      store will "spammed" with updates when the slider
+      moved.
+    */
     if (this.timeout) {
       clearTimeout(this.timeout);
     }
