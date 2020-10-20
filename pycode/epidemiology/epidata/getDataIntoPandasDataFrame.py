@@ -109,7 +109,7 @@ def cli(what):
    parser.add_argument('-r',  '--read-from-disk',
                        help='Reads the data from file "json" instead of downloading it.',
                        action='store_true')
-   parser.add_argument('-h5', '--hdf5', help='Changes output format from json to hdf5.',
+   parser.add_argument('-h5', '--hdf5', help='Changes output format from json to hdf5.', action='store_true')
    parser.add_argument('-js', '--json_timeasstring', help='Changes output format from to json with date as string.',
                        action='store_true')
    parser.add_argument('-o', '--out-path', type=str, default=out_path_default, help='Defines folder for output.')
@@ -140,7 +140,12 @@ def cli(what):
 
    READ_DATA = args.read_from_disk
    arg_list.append(READ_DATA)
-   OUT_FORM = "hdf5" if args.hdf5 else dd.defaultDict['out_form']
+   if args.hdf5:
+      OUT_FORM = "hdf5"
+   elif args.json_timeasstring:
+      OUT_FORM = "json_timeasstring"
+   else:
+      OUT_FORM = dd.defaultDict['out_form']
    arg_list.append(OUT_FORM)
    arg_list.append(args.out_path)
 
@@ -185,6 +190,8 @@ def write_dataframe(df, directory, file_prefix, file_type):
        sys.exit(exit_string)
 
    if file_type == "json":
+       df.to_json(os.path.join(directory, file_prefix + outFormEnd), **outFormSpec)
+   elif file_type == "json_timeasstring":
        if 'Date' in df.columns:
             if type(df.Date.values[0]) != type("string"):
                  df.Date = df.Date.dt.strftime('%Y-%m-%d')
