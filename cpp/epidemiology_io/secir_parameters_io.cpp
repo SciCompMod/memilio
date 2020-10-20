@@ -669,16 +669,17 @@ void set_rki_data(epi::SecirParams& params, std::vector<double> param_ranges, in
     std::vector<double> num_inf(age_names.size(), 0.0);
     std::vector<double> num_death(age_names.size(), 0.0);
     std::vector<double> num_rec(age_names.size(), 0.0);
-    for (int i = 0; i < root.size(); i++) {
-        bool id          = region == 0 || root[i][id_name] == region;
-        std::string date = root[i]["Date"].asString();
-        if (month == std::stoi(date.substr(5, 2)) && day == std::stoi(date.substr(8, 2)) && id) {
 
-            for (int age = 0; age < age_names.size(); age++) {
+    for (int age = 0; age < age_names.size(); age++) {
+        for (int i = 0; i < root.size(); i++) {
+            bool id          = region == 0 || root[i][id_name] == region;
+            std::string date = root[i]["Date"].asString();
+            if (month == std::stoi(date.substr(5, 2)) && day == std::stoi(date.substr(8, 2)) && id) {
                 if (root[i]["Age_RKI"].asString() == age_names[age]) {
-                    num_inf[age] += root[i]["Confirmed"].asDouble();
-                    num_death[age] += root[i]["Deaths"].asDouble();
-                    num_rec[age] += root[i]["Recovered"].asDouble();
+                    num_inf[age]   = root[i]["Confirmed"].asDouble();
+                    num_death[age] = root[i]["Deaths"].asDouble();
+                    num_rec[age]   = root[i]["Recovered"].asDouble();
+                    break;
                 }
             }
         }
