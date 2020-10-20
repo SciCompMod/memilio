@@ -82,10 +82,9 @@ TEST(TestSaveParameters, compareParameterStudy)
     tixiSaveDocument(handle, "TestParameters.xml");
     tixiCloseDocument(handle);
 
-#ifndef EPI_NO_IO
     tixiOpenDocument("TestParameters.xml", &handle);
     epi::ParameterStudy<epi::SecirModel<epi::AgeGroup2>> read_study =
-        epi::read_parameter_study<epi::SecirModel<epi::AgeGroup2>>(handle, path);
+        epi::read_parameter_study<epi::AgeGroup2>(handle, path);
     tixiCloseDocument(handle);
 
     ASSERT_EQ(study.get_num_runs(), read_study.get_num_runs());
@@ -105,7 +104,7 @@ TEST(TestSaveParameters, compareParameterStudy)
         ASSERT_EQ(model.populations.get((epi::AgeGroup2)i, epi::InfectionType::D),
                   read_model.populations.get((epi::AgeGroup2)i, epi::InfectionType::D));
         ASSERT_EQ(model.populations.get_group_total((epi::AgeGroup2)i),
-                  read_model.populations.get_group_total((epi::AgeGroup1)i));
+                  read_model.populations.get_group_total((epi::AgeGroup2)i));
         ASSERT_EQ(model.populations.get((epi::AgeGroup2)i, epi::InfectionType::E),
                   read_model.populations.get((epi::AgeGroup2)i, epi::InfectionType::E));
         ASSERT_EQ(model.populations.get((epi::AgeGroup2)i, epi::InfectionType::C),
@@ -228,7 +227,6 @@ TEST(TestSaveParameters, compareParameterStudy)
                        *read_contact.get_distribution_damp_diag_rel().get());
     check_distribution(*contact.get_distribution_damp_offdiag_rel().get(),
                        *read_contact.get_distribution_damp_offdiag_rel().get());
-#endif
 }
 
 TEST(TestSaveParameters, compareSingleRun)
@@ -299,10 +297,9 @@ TEST(TestSaveParameters, compareSingleRun)
     tixiSaveDocument(handle, "TestParameterValues.xml");
     tixiCloseDocument(handle);
 
-#ifndef EPI_NO_IO
     tixiOpenDocument("TestParameterValues.xml", &handle);
     epi::ParameterStudy<epi::SecirModel<epi::AgeGroup2>> read_study =
-        epi::read_parameter_study<epi::SecirModel<epi::AgeGroup2>>(handle, path);
+        epi::read_parameter_study<epi::AgeGroup2>(handle, path);
     tixiCloseDocument(handle);
 
     ASSERT_EQ(study.get_num_runs(), read_study.get_num_runs());
@@ -377,7 +374,6 @@ TEST(TestSaveParameters, compareSingleRun)
             ASSERT_THAT(dampings_vector, testing::ContainerEq(cmp_dampings_vector));
         }
     }
-#endif
 }
 
 TEST(TestSaveParameters, compareGraphs)
@@ -449,7 +445,6 @@ TEST(TestSaveParameters, compareGraphs)
 
     epi::write_graph(graph);
 
-#ifndef EPI_NO_IO
     epi::Graph<epi::SecirModel<epi::AgeGroup2>, epi::MigrationEdge> graph_read =
         epi::read_graph<epi::SecirModel<epi::AgeGroup2>>();
 
@@ -621,5 +616,4 @@ TEST(TestSaveParameters, compareGraphs)
 
         ASSERT_THAT(graph_read.edges(), testing::ElementsAreArray(graph.edges()));
     }
-#endif
 }

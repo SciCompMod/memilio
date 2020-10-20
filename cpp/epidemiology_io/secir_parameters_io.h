@@ -9,8 +9,6 @@
 
 #include <tixi.h>
 
-#define EPI_NO_IO 1
-
 namespace epi
 {
 /**
@@ -79,7 +77,6 @@ void write_distribution(const TixiDocumentHandle& handle, const std::string& pat
  */
 void write_predef_sample(TixiDocumentHandle handle, const std::string& path, const std::vector<double>& samples);
 
-#ifdef EPI_NO_IO
 /**
  * @brief read parameter space from xml file
  * @param handle Tixi Document Handle
@@ -87,20 +84,13 @@ void write_predef_sample(TixiDocumentHandle handle, const std::string& path, con
  * @param io_mode type of xml input (see epi::write_parameter_study for more details)
  * @return returns a SecirParams object
  */
-template <class Model>
-Model read_parameter_space(TixiDocumentHandle handle, const std::string& path, int io_mode)
+template <class AgeGroup>
+SecirModel<AgeGroup> read_parameter_space(TixiDocumentHandle handle, const std::string& path, int io_mode)
 {
     int num_groups;
     tixiGetIntegerElement(handle, path_join(path, "NumberOfGroups").c_str(), &num_groups);
 
-    using AgeGroup = AgeGroup1;
-    if (num_groups == 2) {
-        using AgeGroup = AgeGroup2;
-    }
-    else if (num_groups == 3) {
-        using AgeGroup = AgeGroup3;
-    }
-    else {
+    if (num_groups != (int)AgeGroup::Count) {
         epi::log_error("Only 1, 2 or 3 age groups allowed at the moment.");
     }
 
@@ -180,7 +170,6 @@ Model read_parameter_space(TixiDocumentHandle handle, const std::string& path, i
 
     return model;
 }
-#endif
 
 /**
  * @brief write parameter space to xml file
@@ -272,14 +261,13 @@ void write_parameter_space(TixiDocumentHandle handle, const std::string& path, M
     write_contact(handle, path, model.parameters.get_contact_patterns(), io_mode, num_runs);
 }
 
-#ifndef EPI_NO_IO
 /**
  * @brief read parameter study from xml file
  * @param handle Tixi Document Handle
  * @param path Path to XML Tree of parameters of study
  */
-template <class Model>
-ParameterStudy<Model> read_parameter_study(TixiDocumentHandle handle, const std::string& path)
+template <class AgeGroup>
+ParameterStudy<SecirModel<AgeGroup>> read_parameter_study(TixiDocumentHandle handle, const std::string& path)
 {
     int io_mode;
     int num_runs;
@@ -291,10 +279,9 @@ ParameterStudy<Model> read_parameter_study(TixiDocumentHandle handle, const std:
     tixiGetDoubleElement(handle, path_join(path, "T0").c_str(), &t0);
     tixiGetDoubleElement(handle, path_join(path, "TMax").c_str(), &tmax);
 
-    Model model = read_parameter_space<Model>(handle, path, io_mode);
-    return ParameterStudy<Model>(model, t0, tmax, num_runs);
+    SecirModel<AgeGroup> model = read_parameter_space<AgeGroup>(handle, path, io_mode);
+    return ParameterStudy<SecirModel<AgeGroup>>(model, t0, tmax, num_runs);
 }
-#endif
 
 /**
  * @brief write parameter study to xml file
@@ -387,23 +374,22 @@ void write_node(const Graph<Model, MigrationEdge>& graph, int node, double t0, d
     tixiSaveDocument(handle, ("GraphNode" + std::to_string(node) + ".xml").c_str());
     tixiCloseDocument(handle);
 }
-#ifndef EPI_NO_IO
+
 /**
  * @brief reads parameters of a single node and saves it into the graph
  * @param graph Graph in which the node is saved
  * @param node Node ID
  */
-template <class Model>
-void read_node(Graph<Model, MigrationEdge>& graph, int node)
+template <class AgeGroup>
+void read_node(Graph<SecirModel<AgeGroup>, MigrationEdge>& graph, int node)
 {
     TixiDocumentHandle node_handle;
     tixiOpenDocument(("GraphNode" + std::to_string(node) + ".xml").c_str(), &node_handle);
 
-    graph.add_node(read_parameter_space<Model>(node_handle, "/Parameters", 2));
+    graph.add_node(read_parameter_space<AgeGroup>(node_handle, "/Parameters", 2));
 
     tixiCloseDocument(node_handle);
 }
-#endif
 
 /**
  * @brief Writes the information of a single edge into a xml file
@@ -505,8 +491,7 @@ void write_graph(const Graph<Model, MigrationEdge>& graph, double t0, double tma
     }
 }
 
-#ifndef EPI_NO_IO
-/**
+/*
  * @brief reads graph xml files and returns a Secir simulation graph
  */
 template <class Model>
@@ -535,7 +520,7 @@ Graph<Model, MigrationEdge> read_graph()
     tixiCloseDocument(handle);
     return model;
 }
-#endif
+
 } // namespace epi
 
 #endif
