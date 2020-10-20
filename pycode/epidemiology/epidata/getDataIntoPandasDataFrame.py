@@ -110,6 +110,7 @@ def cli(what):
                        help='Reads the data from file "json" instead of downloading it.',
                        action='store_true')
    parser.add_argument('-h5', '--hdf5', help='Changes output format from json to hdf5.',
+   parser.add_argument('-js', '--json_timeasstring', help='Changes output format from to json with date as string.',
                        action='store_true')
    parser.add_argument('-o', '--out-path', type=str, default=out_path_default, help='Defines folder for output.')
 
