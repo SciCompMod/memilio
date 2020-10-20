@@ -4,6 +4,10 @@
 #include <epidemiology/secir/damping.h>
 #include <vector>
 
+#ifdef DEBUG
+#include <sanitizer/lsan_interface.h>
+#endif
+
 namespace js = emscripten;
 
 class SecirResult
@@ -212,4 +216,8 @@ EMSCRIPTEN_BINDINGS(secirjs)
     js::register_vector<epi::SecirParams>("VectorSecirParams");
     js::register_vector<epi::SecirParams::Probabilities>("VectorSecirParamsProbabilities");
     js::register_vector<epi::SecirParams::StageTimes>("VectorSecirParamsStageTimes");
+
+#ifdef DEBUG
+  js::function("doLeakCheck", &__lsan_do_recoverable_leak_check);
+#endif
 }

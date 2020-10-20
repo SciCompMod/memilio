@@ -34,9 +34,10 @@ if (window['secirjs']) {
  */
 const toArray = (vector) => {
   const arr = [];
-  for (var i = 0; i < vector.size(); ++i) {
+  for (let i = 0; i < vector.size(); ++i) {
     arr.push(vector.get(i));
   }
+  vector.delete();
   return arr;
 };
 
@@ -237,6 +238,8 @@ class Simulation extends Component {
       };
 
       result.delete();
+
+      secir.doLeakCheck();
 
       return Object.values(
         Object.keys(data)
