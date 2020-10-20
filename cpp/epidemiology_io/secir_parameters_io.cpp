@@ -590,7 +590,7 @@ void interpolate_ages(std::vector<double>& age_ranges, std::vector<double>& para
 
     //residual of param age groups
     double res = 0.0;
-    for (int i = 0; i < age_ranges.size(); i++) {
+    for (size_t i = 0; i < age_ranges.size(); i++) {
         interpolation.push_back({});
 
         // if current param age group didn't fit into previous rki age group, transfer residual to current age group
@@ -665,10 +665,7 @@ void set_rki_data(epi::SecirParams& params, std::vector<double> param_ranges, in
     std::vector<double> num_death(age_names.size(), 0.0);
     std::vector<double> num_rec(age_names.size(), 0.0);
     for (int i = 0; i < root.size(); i++) {
-        bool id = true;
-        if (region > 0) {
-            id = root[i][id_name] == region;
-        }
+        bool id          = region == 0 || root[i][id_name] == region;
         std::string date = root[i]["Date"].asString();
         if (month == std::stoi(date.substr(5, 2)) && day == std::stoi(date.substr(8, 2)) && id) {
 
@@ -687,7 +684,7 @@ void set_rki_data(epi::SecirParams& params, std::vector<double> param_ranges, in
     std::vector<double> interpol_rec(params.get_num_groups() + 1, 0.0);
 
     int counter = 0;
-    for (int i = 0; i < interpolation.size() - 1; i++) {
+    for (size_t i = 0; i < interpolation.size() - 1; i++) {
         for (int j = 0; j < interpolation[i].size(); j++) {
             interpol_inf[counter] += interpolation[i][j] * num_inf[i];
             interpol_death[counter] += interpolation[i][j] * num_death[i];
@@ -698,7 +695,7 @@ void set_rki_data(epi::SecirParams& params, std::vector<double> param_ranges, in
         }
     }
 
-    for (int i = 0; i < params.get_num_groups(); i++) {
+    for (size_t i = 0; i < params.get_num_groups(); i++) {
         interpol_inf[i] += (double)num_inf[num_inf.size() - 1] / (double)params.get_num_groups();
         interpol_death[i] += (double)num_death[num_death.size() - 1] / (double)params.get_num_groups();
         interpol_rec[i] += (double)num_rec[num_rec.size() - 1] / (double)params.get_num_groups();
@@ -744,10 +741,7 @@ void set_divi_data(epi::SecirParams& params, std::vector<double> param_ranges, i
 
     double num_icu = 0;
     for (int i = 0; i < root.size(); i++) {
-        bool id = true;
-        if (region > 0) {
-            id = root[i][id_name] == region;
-        }
+        bool id          = region == 0 || root[i][id_name] == region;
         std::string date = root[i]["Date"].asString();
         if (month == std::stoi(date.substr(5, 2)) && day == std::stoi(date.substr(8, 2)) && id) {
             num_icu = root[i]["ICU"].asDouble();

@@ -592,49 +592,10 @@ TEST(TestSaveParameters, ReadPopulationDataAllAges)
 
     epi::read_population_data(params, ranges, 5, 5, 0, TEST_DATA_DIR);
 
-    Json::Reader reader;
-    Json::Reader reader_divi;
-    Json::Value root;
-    Json::Value root_divi;
-    std::ifstream json_file(epi::path_join(TEST_DATA_DIR, "all_age_rki.json"));
-    std::ifstream json_file_divi(epi::path_join(TEST_DATA_DIR, "germany_divi.json"));
-    reader.parse(json_file, root);
-    reader_divi.parse(json_file_divi, root_divi);
-
-    std::vector<std::string> age_names = {"A00-A04", "A05-A14", "A15-A34", "A35-A59", "A60-A79", "A80+", "unknown"};
-
-    double infected  = 0;
-    double deaths    = 0;
-    double recovered = 0;
-    double icu       = 0;
-
-    for (int i = 0; i < root.size(); i++) {
-        std::string date = root[i]["Date"].asString();
-        if (std::strcmp("05", date.substr(5, 2).c_str()) == 0 && std::strcmp("05", date.substr(8, 2).c_str()) == 0) {
-
-            for (int age = 0; age < age_names.size(); age++) {
-                if (std::strcmp(root[i]["Age_RKI"].asString().c_str(), age_names[age].c_str()) == 0) {
-                    infected += root[i]["Confirmed"].asDouble() - root[i]["Deaths"].asDouble() -
-                                root[i]["Recovered"].asDouble();
-                    deaths += root[i]["Deaths"].asDouble();
-                    recovered += root[i]["Recovered"].asDouble();
-                }
-            }
-        }
-    }
-
-    for (int i = 0; i < root_divi.size(); i++) {
-        std::string date = root_divi[i]["Date"].asString();
-        if (std::strcmp("05", date.substr(5, 2).c_str()) == 0 && std::strcmp("05", date.substr(8, 2).c_str()) == 0) {
-
-            icu = root_divi[i]["ICU"].asDouble();
-        }
-    }
-
-    ASSERT_EQ(params.populations.get({0, epi::SecirCompartments::I}), infected);
-    ASSERT_EQ(params.populations.get({0, epi::SecirCompartments::D}), deaths);
-    ASSERT_EQ(params.populations.get({0, epi::SecirCompartments::R}), recovered);
-    ASSERT_EQ(params.populations.get({0, epi::SecirCompartments::U}), icu);
+    ASSERT_EQ(params.populations.get({0, epi::SecirCompartments::I}), 0);
+    ASSERT_EQ(params.populations.get({0, epi::SecirCompartments::D}), 8626);
+    ASSERT_EQ(params.populations.get({0, epi::SecirCompartments::R}), 160148);
+    ASSERT_EQ(params.populations.get({0, epi::SecirCompartments::U}), 1937);
 }
 
 TEST(TestSaveParameters, ReadPopulationDataRKIAges)
@@ -643,10 +604,6 @@ TEST(TestSaveParameters, ReadPopulationDataRKIAges)
     std::vector<double> ranges = {5., 10., 20., 25., 20., 20.};
 
     epi::read_population_data(params, ranges, 5, 5, 0, TEST_DATA_DIR);
-
-    std::vector<double> infected;
-    std::vector<double> deaths;
-    std::vector<double> recovered;
 
     double icu = 0;
 
@@ -661,34 +618,15 @@ TEST(TestSaveParameters, ReadPopulationDataRKIAges)
 
     std::vector<std::string> age_names = {"A00-A04", "A05-A14", "A15-A34", "A35-A59", "A60-A79", "A80+", "unknown"};
 
-    for (int i = 0; i < root.size(); i++) {
-        std::string date = root[i]["Date"].asString();
-        if (std::strcmp("05", date.substr(5, 2).c_str()) == 0 && std::strcmp("05", date.substr(8, 2).c_str()) == 0) {
-
-            for (int age = 0; age < age_names.size(); age++) {
-                if (std::strcmp(root[i]["Age_RKI"].asString().c_str(), age_names[age].c_str()) == 0) {
-                    infected.push_back(root[i]["Confirmed"].asDouble() - root[i]["Deaths"].asDouble() -
-                                       root[i]["Recovered"].asDouble());
-                    deaths.push_back(root[i]["Deaths"].asDouble());
-                    recovered.push_back(root[i]["Recovered"].asDouble());
-                }
-            }
-        }
-    }
-
-    for (int i = 0; i < root_divi.size(); i++) {
-        std::string date = root_divi[i]["Date"].asString();
-        if (std::strcmp("05", date.substr(5, 2).c_str()) == 0 && std::strcmp("05", date.substr(8, 2).c_str()) == 0) {
-
-            icu = root_divi[i]["ICU"].asDouble();
-        }
-    }
+    std::vector<double> infected  = {0, 0, 0, 0, 0, 0};
+    std::vector<double> deaths    = {1, 0, 18, 391, 2791, 5425};
+    std::vector<double> recovered = {1516, 3656, 41947, 70301, 29224, 13504};
 
     for (size_t i = 0; i < ranges.size(); i++) {
         ASSERT_EQ(params.populations.get({i, epi::SecirCompartments::I}), infected[i]);
         ASSERT_EQ(params.populations.get({i, epi::SecirCompartments::D}), deaths[i]);
         ASSERT_EQ(params.populations.get({i, epi::SecirCompartments::R}), recovered[i]);
-        ASSERT_EQ(params.populations.get({i, epi::SecirCompartments::U}), icu / ranges.size());
+        ASSERT_EQ(params.populations.get({i, epi::SecirCompartments::U}), 1937 / (double)ranges.size());
     }
 }
 
@@ -704,11 +642,6 @@ TEST(TestSaveParameters, ReadPopulationDataMultipleAges)
     double recovered_param = 0.;
     double icu_param       = 0.;
 
-    double infected  = 0.;
-    double deaths    = 0.;
-    double recovered = 0.;
-    double icu       = 0.;
-
     for (size_t i = 0; i < ranges.size(); i++) {
         infected_param += params.populations.get({i, epi::SecirCompartments::I});
         deaths_param += params.populations.get({i, epi::SecirCompartments::D});
@@ -716,42 +649,55 @@ TEST(TestSaveParameters, ReadPopulationDataMultipleAges)
         icu_param += params.populations.get({i, epi::SecirCompartments::U});
     }
 
-    Json::Reader reader;
-    Json::Reader reader_divi;
-    Json::Value root;
-    Json::Value root_divi;
-    std::ifstream json_file(epi::path_join(TEST_DATA_DIR, "all_age_rki.json"));
-    std::ifstream json_file_divi(epi::path_join(TEST_DATA_DIR, "germany_divi.json"));
-    reader.parse(json_file, root);
-    reader_divi.parse(json_file_divi, root_divi);
+    std::vector<double> infected  = {0, 0, 0, 0, 0, 0};
+    std::vector<double> deaths    = {1, 0, 18, 391, 2791, 5425};
+    std::vector<double> recovered = {1516, 3656, 41947, 70301, 29224, 13504};
 
-    std::vector<std::string> age_names = {"A00-A04", "A05-A14", "A15-A34", "A35-A59", "A60-A79", "A80+", "unknown"};
+    ASSERT_EQ(params.populations.get({0, epi::SecirCompartments::I}), infected[0]);
+    ASSERT_EQ(params.populations.get({0, epi::SecirCompartments::D}), deaths[0]);
+    ASSERT_EQ(params.populations.get({0, epi::SecirCompartments::R}), recovered[0]);
+    ASSERT_EQ(params.populations.get({0, epi::SecirCompartments::U}), 1937 / (double)ranges.size());
 
-    for (int i = 0; i < root.size(); i++) {
-        std::string date = root[i]["Date"].asString();
-        if (std::strcmp("05", date.substr(5, 2).c_str()) == 0 && std::strcmp("05", date.substr(8, 2).c_str()) == 0) {
+    ASSERT_EQ(params.populations.get({1, epi::SecirCompartments::I}), infected[1] + (1.0 / 4.0) * infected[2]);
+    ASSERT_EQ(params.populations.get({1, epi::SecirCompartments::D}), deaths[1] + (1.0 / 4.0) * deaths[2]);
+    ASSERT_EQ(params.populations.get({1, epi::SecirCompartments::R}), recovered[1] + (1.0 / 4.0) * recovered[2]);
+    ASSERT_EQ(params.populations.get({1, epi::SecirCompartments::U}), 1937 / (double)ranges.size());
 
-            for (int age = 0; age < age_names.size(); age++) {
-                if (std::strcmp(root[i]["Age_RKI"].asString().c_str(), age_names[age].c_str()) == 0) {
-                    infected += root[i]["Confirmed"].asDouble() - root[i]["Deaths"].asDouble() -
-                                root[i]["Recovered"].asDouble();
-                    deaths += root[i]["Deaths"].asDouble();
-                    recovered += root[i]["Recovered"].asDouble();
-                }
-            }
-        }
-    }
+    ASSERT_EQ(params.populations.get({2, epi::SecirCompartments::I}), (3.0 / 4.0) * infected[2]);
+    ASSERT_EQ(params.populations.get({2, epi::SecirCompartments::D}), (3.0 / 4.0) * deaths[2]);
+    ASSERT_EQ(params.populations.get({2, epi::SecirCompartments::R}), (3.0 / 4.0) * recovered[2]);
+    ASSERT_EQ(params.populations.get({2, epi::SecirCompartments::U}), 1937 / (double)ranges.size());
 
-    for (int i = 0; i < root_divi.size(); i++) {
-        std::string date = root_divi[i]["Date"].asString();
-        if (std::strcmp("05", date.substr(5, 2).c_str()) == 0 && std::strcmp("05", date.substr(8, 2).c_str()) == 0) {
+    ASSERT_EQ(params.populations.get({3, epi::SecirCompartments::I}), (2.0 / 5.0) * infected[3]);
+    ASSERT_EQ(params.populations.get({3, epi::SecirCompartments::D}), (2.0 / 5.0) * deaths[3]);
+    ASSERT_EQ(params.populations.get({3, epi::SecirCompartments::R}), (2.0 / 5.0) * recovered[3]);
+    ASSERT_EQ(params.populations.get({3, epi::SecirCompartments::U}), 1937 / (double)ranges.size());
 
-            icu = root_divi[i]["ICU"].asDouble();
-        }
-    }
+    ASSERT_EQ(params.populations.get({4, epi::SecirCompartments::I}), (2.0 / 5.0) * infected[3]);
+    ASSERT_EQ(params.populations.get({4, epi::SecirCompartments::D}), (2.0 / 5.0) * deaths[3]);
+    ASSERT_EQ(params.populations.get({4, epi::SecirCompartments::R}), (2.0 / 5.0) * recovered[3]);
+    ASSERT_EQ(params.populations.get({4, epi::SecirCompartments::U}), 1937 / (double)ranges.size());
 
-    EXPECT_NEAR(infected, infected_param, 1e-6);
-    EXPECT_NEAR(deaths, deaths_param, 1e-6);
-    EXPECT_NEAR(recovered, recovered_param, 1e-6);
-    EXPECT_NEAR(icu, icu_param, 1e-6);
+    ASSERT_EQ(params.populations.get({5, epi::SecirCompartments::I}),
+              (1.0 / 5.0) * infected[3] + (1.0 / 4.0) * infected[4]);
+    ASSERT_EQ(params.populations.get({5, epi::SecirCompartments::D}),
+              (1.0 / 5.0) * deaths[3] + (1.0 / 4.0) * deaths[4]);
+    ASSERT_EQ(params.populations.get({5, epi::SecirCompartments::R}),
+              (1.0 / 5.0) * recovered[3] + (1.0 / 4.0) * recovered[4]);
+    ASSERT_EQ(params.populations.get({5, epi::SecirCompartments::U}), 1937 / (double)ranges.size());
+
+    ASSERT_EQ(params.populations.get({6, epi::SecirCompartments::I}), (2.0 / 4.0) * infected[4]);
+    ASSERT_EQ(params.populations.get({6, epi::SecirCompartments::D}), (2.0 / 4.0) * deaths[4]);
+    ASSERT_EQ(params.populations.get({6, epi::SecirCompartments::R}), (2.0 / 4.0) * recovered[4]);
+    ASSERT_EQ(params.populations.get({6, epi::SecirCompartments::U}), 1937 / (double)ranges.size());
+
+    ASSERT_EQ(params.populations.get({7, epi::SecirCompartments::I}), (1.0 / 4.0) * infected[4] + infected[5]);
+    ASSERT_EQ(params.populations.get({7, epi::SecirCompartments::D}), (1.0 / 4.0) * deaths[4] + deaths[5]);
+    ASSERT_EQ(params.populations.get({7, epi::SecirCompartments::R}), (1.0 / 4.0) * recovered[4] + recovered[5]);
+    ASSERT_EQ(params.populations.get({7, epi::SecirCompartments::U}), 1937 / (double)ranges.size());
+
+    EXPECT_NEAR(0, infected_param, 1e-6);
+    EXPECT_NEAR(8626, deaths_param, 1e-6);
+    EXPECT_NEAR(160148, recovered_param, 1e-6);
+    EXPECT_NEAR(1937, icu_param, 1e-6);
 }
