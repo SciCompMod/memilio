@@ -7,12 +7,12 @@ build-cpp:
     - echo 'deb http://download.opensuse.org/repositories/science:/dlr/xUbuntu_16.04/ /' | sudo tee /etc/apt/sources.list.d/science:dlr.list
     - wget -O - https://download.opensuse.org/repositories/science:dlr/xUbuntu_16.04/Release.key  | sudo apt-key add -
     - sudo apt -qq update
-    - sudo apt -qq -y install libeigen3-dev libhdf5-dev libtixi3-dev
+    - sudo apt -qq -y install libhdf5-dev libtixi3-dev lcov
   script:
     - cd cpp
     - mkdir build && cd build
-    - cmake -G Ninja -DCMAKE_CXX_FLAGS="-std=c++14 -pedantic" -DEPI_USE_BUNDLED_EIGEN=OFF -DEPI_BUILD_EPI_IO=ON ..
-    - cmake --build .
+    - cmake -DCMAKE_BUILD_TYPE=Debug -DCMAKE_CXX_FLAGS="-std=c++14 -pedantic" -DEPI_BUILD_EPI_IO=ON -DEPI_TEST_COVERAGE=ON ..
+    - make -j
   artifacts:
     expire_in: 2 hrs
     paths:
@@ -106,15 +106,24 @@ test-cpp:
     - echo 'deb http://download.opensuse.org/repositories/science:/dlr/xUbuntu_18.04/ /' | tee /etc/apt/sources.list.d/science:dlr.list
     - wget -O - https://download.opensuse.org/repositories/science:dlr/xUbuntu_18.04/Release.key  | apt-key add -
     - apt -qq update
-    - apt -qq -y install libtixi3
+    - apt -qq -y install libtixi3 lcov gcovr g++
   dependencies:
     - build-cpp
   script:
     - cd cpp/build/tests
-    - ./runUnitTests --gtest_output="xml:report.xml"
+    - ./runUnitTests  --gtest_output="xml:report.xml"
+    - cd ../../../
+    - gcovr -f cpp/epidemiology
+    - gcovr -f cpp/epidemiology --xml -o coverage.xml
+    - mkdir coverage_report && cd coverage_report
+    - gcovr -r .. -f ../cpp/epidemiology --html --html-details -o index.html
   artifacts:
     reports:
       junit: cpp/build/tests/report.xml
+      cobertura: coverage.xml
+    paths:
+      - coverage_report
+    expire_in: 1 week
 
 # run tests using the binary built before
 test-cpp-win:
