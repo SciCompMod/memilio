@@ -591,7 +591,6 @@ void interpolate_ages(std::vector<double>& age_ranges, std::vector<double>& para
     //residual of param age groups
     double res = 0.0;
     for (size_t i = 0; i < age_ranges.size(); i++) {
-        interpolation.push_back({});
 
         // if current param age group didn't fit into previous rki age group, transfer residual to current age group
         if (res < 0) {
@@ -641,7 +640,7 @@ void set_rki_data(epi::SecirParams& params, std::vector<double> param_ranges, Js
     std::vector<std::string> age_names = {"A00-A04", "A05-A14", "A15-A34", "A35-A59", "A60-A79", "A80+", "unknown"};
     std::vector<double> age_ranges     = {5., 10., 20., 25., 20., 20.};
 
-    std::vector<std::vector<double>> interpolation;
+    std::vector<std::vector<double>> interpolation(age_names.size());
     std::vector<bool> carry_over;
 
     interpolate_ages(age_ranges, param_ranges, interpolation, carry_over);
@@ -777,7 +776,7 @@ void read_population_data_state(epi::SecirParams& params, std::vector<double> pa
 void read_population_data_county(epi::SecirParams& params, std::vector<double> param_ranges, int month, int day,
                                  int county, std::string dir)
 {
-    assert(county > 0 && "State must be between 1 and 16");
+    assert(county > 999 && "State must be between 1 and 16");
     assert(param_ranges.size() == params.get_num_groups() &&
            "size of param_ranges needs to be the same size as the number of groups in params");
     assert(std::accumulate(param_ranges.begin(), param_ranges.end(), 0.0) == 100. && "param_ranges must add up to 100");
