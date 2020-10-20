@@ -41,10 +41,10 @@ public:
 private:
     void store_result_at(double t);
 
-    double m_t;
-    double m_dt;
     World m_world;
     TimeSeries<double> m_result;
+    double m_t;
+    double m_dt;
 };
 
 } // namespace epi

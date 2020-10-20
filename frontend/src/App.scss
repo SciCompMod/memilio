@@ -1,5 +1,38 @@
 @import './dlr-ci.scss';
 
+.overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(255, 255, 255, 0.7);
+  z-index: 200;
+
+  .loading-progress {
+    width: 30%;
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    margin-left: -15%;
+    margin-top: -7rem;
+    text-align: center;
+
+    .label {
+      font-size: 2rem;
+    }
+    .progress {
+      border: 1px solid $dlr-gray;
+      background-color: $dlr-gray-light;
+    }
+
+    .spinner-border {
+      width: 5rem !important;
+      height: 5rem !important;
+      border-width: 0.5rem !important;
+    }
+  }
+}
 .wrapper {
   padding: 0;
   height: 100vh;

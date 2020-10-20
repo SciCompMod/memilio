@@ -10,13 +10,6 @@
 namespace epi
 {
 
-/* TODO: Add more distributions here. */
-typedef enum
-{
-    DIST_UNIFORM,
-    DIST_NORMAL
-} distribution;
-
 /**
  * @brief This is a visitor class to visit all Parameter Distribution objects
  *

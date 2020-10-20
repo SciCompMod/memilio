@@ -10,7 +10,7 @@ TEST(TestSecir, compareWithPreviousRun)
     double dt   = 0.1;
 
     double tinc = 5.2, tinfmild = 6, tserint = 4.2, thosp2home = 12, thome2hosp = 5, thosp2icu = 2, ticu2home = 8,
-           tinfasy = 6.2, ticu2death = 5;
+           ticu2death = 5;
 
     double cont_freq = 10, inf_prob = 0.05, carr_infec = 1, alpha = 0.09, beta = 0.25, delta = 0.3, rho = 0.2, theta = 0.25;
 
@@ -62,9 +62,9 @@ TEST(TestSecir, compareWithPreviousRun)
 
     auto compare = load_test_data_csv<double>("secihurd-compare.csv");
 
-    ASSERT_EQ(compare.size(), secihurd.get_num_time_points());
+    ASSERT_EQ(compare.size(), static_cast<size_t>(secihurd.get_num_time_points()));
     for (size_t i = 0; i < compare.size(); i++) {
-        ASSERT_EQ(compare[i].size(), secihurd.get_num_elements() + 1) << "at row " << i;
+        ASSERT_EQ(compare[i].size(), static_cast<size_t>(secihurd.get_num_elements()) + 1) << "at row " << i;
         EXPECT_NEAR(secihurd.get_time(i), compare[i][0], 1e-10) << "at row " << i;
         for (size_t j = 1; j < compare[i].size(); j++) {
             EXPECT_NEAR(secihurd.get_value(i)[j - 1], compare[i][j], 1e-10) << " at row " << i;
@@ -74,12 +74,8 @@ TEST(TestSecir, compareWithPreviousRun)
 
 TEST(TestSecir, testParamConstructors)
 {
-    double t0   = 0;
-    double tmax = 50;
-    double dt   = 0.1;
-
     double tinc = 5.2, tinfmild = 6, tserint = 4.2, thosp2home = 12, thome2hosp = 5, thosp2icu = 2, ticu2home = 8,
-           tinfasy = 6.2, ticu2death = 5;
+           ticu2death = 5;
 
     double cont_freq = 10, inf_prob = 0.05, carr_infec = 0.67, alpha = 0.09, beta = 0.25, delta = 0.3, rho = 0.2, theta = 0.24;
 
@@ -431,7 +427,6 @@ TEST(TestSecir, check_constraints)
         thome2hosp = 4.45361, // 2.5-7 (=R6^(-1))
         thosp2icu  = 2.15791, // 1-3.5 (=R7^(-1))
         ticu2home  = 9.16291, // 5-16 (=R8^(-1))
-        tinfasy    = 0.57504, // (=R9^(-1)=R_3^(-1)+0.5*R_4^(-1))
         ticu2death = 5.90264; // 3.5-7 (=R5^(-1))
 
     double cont_freq = 10, // 0.2-0.75

@@ -17,6 +17,7 @@ set(TESTSOURCES
   test_populations.cpp
   test_seir_js_compare.cpp
   test_numericalIntegration.cpp
+  test_model.cpp
   test_damping.cpp
   test_secir.cpp
   test_implicit_euler.cpp
@@ -29,9 +30,11 @@ set(TESTSOURCES
   test_uncertain.cpp
   test_time_series.cpp
   test_abm.cpp
+  test_analyze_result.cpp
   distributions_helpers.h
   distributions_helpers.cpp
-  gtest_helpers.h
+  actions.h
+  matchers.h
 )
 
 if (TARGET epidemiology_io)
@@ -45,7 +48,9 @@ endif()
 add_executable(runUnitTests ${TESTSOURCES})
 target_include_directories(runUnitTests PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 target_link_libraries(runUnitTests PRIVATE epidemiology gtest_main)
-
+target_compile_options(runUnitTests PRIVATE
+    $<$<OR:$<CXX_COMPILER_ID:Clang>,$<CXX_COMPILER_ID:GNU>>: -Wall -Wextra -Wshadow --pedantic-errors -Wno-deprecated-copy>
+    $<$<CXX_COMPILER_ID:MSVC>: /W4 /WX>)
 target_compile_features(runUnitTests PUBLIC cxx_std_14)
 
 if (TARGET epidemiology_io)

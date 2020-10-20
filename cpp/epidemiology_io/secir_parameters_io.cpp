@@ -172,7 +172,7 @@ void write_predef_sample(TixiDocumentHandle handle, const std::string& path, con
 }
 
 void write_contact(TixiDocumentHandle handle, const std::string& path, const UncertainContactMatrix& contact_pattern,
-                   int io_mode, int num_runs)
+                   int io_mode)
 {
     ContactFrequencyMatrix const& contact_freq_matrix = contact_pattern.get_cont_freq_mat();
     int num_groups                                    = contact_freq_matrix.get_size();
@@ -280,7 +280,7 @@ SecirParams read_parameter_space(TixiDocumentHandle handle, const std::string& p
     SecirParams params{(size_t)num_groups};
     params.set_contact_patterns(read_contact(handle, path_join(path, "ContactFreq"), io_mode));
 
-    for (size_t i = 0; i < num_groups; i++) {
+    for (size_t i = 0; i < static_cast<size_t>(num_groups); i++) {
         auto group_name = "Group" + std::to_string(i + 1);
         auto group_path = path_join(path, group_name);
 
@@ -349,8 +349,8 @@ SecirParams read_parameter_space(TixiDocumentHandle handle, const std::string& p
 void write_parameter_space(TixiDocumentHandle handle, const std::string& path, const SecirParams& parameters,
                            int num_runs, int io_mode)
 {
-    int num_groups = static_cast<int>(parameters.get_num_groups());
-    tixiAddIntegerElement(handle, path.c_str(), "NumberOfGroups", num_groups, "%d");
+    auto num_groups = parameters.get_num_groups();
+    tixiAddIntegerElement(handle, path.c_str(), "NumberOfGroups", static_cast<int>(num_groups), "%d");
 
     for (size_t i = 0; i < num_groups; i++) {
         auto group_name = "Group" + std::to_string(i + 1);
@@ -419,7 +419,7 @@ void write_parameter_space(TixiDocumentHandle handle, const std::string& path, c
                       parameters.probabilities[i].get_icu_per_hospitalized(), io_mode, num_runs);
     }
 
-    write_contact(handle, path, parameters.get_contact_patterns(), io_mode, num_runs);
+    write_contact(handle, path, parameters.get_contact_patterns(), io_mode);
 }
 
 void write_parameter_study(TixiDocumentHandle handle, const std::string& path, const ParameterStudy& parameter_study,
@@ -451,7 +451,7 @@ void write_single_run_params(const int run, const SecirParams& params, double t0
     save_result(result, ("Results_run" + std::to_string(run) + "_node" + std::to_string(node) + ".h5"));
 }
 
-void write_node(const Graph<SecirParams, MigrationEdge>& graph, int node, double t0, double tmax)
+void write_node(const Graph<SecirParams, MigrationEdge>& graph, int node)
 {
     int num_runs = 1;
     int io_mode  = 2;
@@ -528,7 +528,7 @@ void read_edge(TixiDocumentHandle handle, const std::string& path, Graph<SecirPa
     graph.add_edge(start_node, end_node, all_weights);
 }
 
-void write_graph(const Graph<SecirParams, MigrationEdge>& graph, double t0, double tmax)
+void write_graph(const Graph<SecirParams, MigrationEdge>& graph)
 {
     std::string edges_path = "/Edges";
     TixiDocumentHandle handle;
@@ -552,7 +552,7 @@ void write_graph(const Graph<SecirParams, MigrationEdge>& graph, double t0, doub
     tixiCloseDocument(handle);
 
     for (int node = 0; node < num_nodes; node++) {
-        write_node(graph, node, t0, tmax);
+        write_node(graph, node);
     }
 }
 

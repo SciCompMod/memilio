@@ -1,13 +1,13 @@
 #ifndef SECIR_H
 #define SECIR_H
 
+#include "epidemiology/utils/eigen.h"
 #include "epidemiology/utils/uncertain_value.h"
 #include "epidemiology/math/euler.h"
 #include "epidemiology/math/adapt_rk.h"
 #include "epidemiology/secir/uncertain_matrix.h"
 #include "epidemiology/secir/populations.h"
 
-#include <Eigen/Core>
 #include <vector>
 
 namespace epi
@@ -85,21 +85,21 @@ class SecirParams
 {
 public:
     SecirParams(size_t nb_groups = 1)
-        : m_contact_patterns(ContactFrequencyMatrix{nb_groups})
-        , populations(Populations({nb_groups, SecirCount}))
+        : populations(Populations({nb_groups, SecirCount}))
+        , times(nb_groups, StageTimes())
+        , probabilities(nb_groups, Probabilities())
         , m_num_groups{nb_groups}
+        , m_contact_patterns(ContactFrequencyMatrix{nb_groups})
     {
-        times         = std::vector<StageTimes>(nb_groups, StageTimes());
-        probabilities = std::vector<Probabilities>(nb_groups, Probabilities());
     }
 
     SecirParams(ContactFrequencyMatrix cont_freq_matrix)
-        : m_contact_patterns(cont_freq_matrix)
-        , populations(Populations({(size_t)cont_freq_matrix.get_size(), SecirCount}))
+        : populations(Populations({(size_t)cont_freq_matrix.get_size(), SecirCount}))
+        , times(cont_freq_matrix.get_size(), StageTimes())
+        , probabilities(cont_freq_matrix.get_size(), Probabilities())
         , m_num_groups{(size_t)cont_freq_matrix.get_size()}
+        , m_contact_patterns(cont_freq_matrix)
     {
-        times         = std::vector<StageTimes>(cont_freq_matrix.get_size(), StageTimes());
-        probabilities = std::vector<Probabilities>(cont_freq_matrix.get_size(), Probabilities());
     }
 
     size_t get_num_groups() const

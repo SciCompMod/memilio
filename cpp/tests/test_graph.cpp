@@ -118,11 +118,11 @@ TEST(TestGraphSimulation, simulate)
 
     auto sim = epi::make_graph_sim(
         t0, dt, g,
-        [&node_func](auto&& t, auto&& dt, auto&& n) {
-            node_func(t, dt, n);
+        [&node_func](auto&& t, auto&& dt_, auto&& n) {
+            node_func(t, dt_, n);
         },
-        [&edge_func](auto&& t, auto&& dt, auto&& e, auto&& n1, auto&& n2) {
-            edge_func(t, dt, e, n1, n2);
+        [&edge_func](auto&& t, auto&& dt_, auto&& e, auto&& n1, auto&& n2) {
+            edge_func(t, dt_, e, n1, n2);
         });
 
     sim.advance(tmax);
@@ -145,7 +145,7 @@ TEST(TestGraphSimulation, stopsAtTmax)
     const auto dt   = 0.076;
 
     auto sim = epi::make_graph_sim(
-        t0, dt, g, [](auto&& t, auto&& dt, auto&& n) {}, [](auto&& t, auto&& dt, auto&& e, auto&& n1, auto&& n2) {});
+        t0, dt, g, [](auto&&, auto&&, auto&&) {}, [](auto&&, auto&&, auto&&, auto&&, auto&&) {});
 
     sim.advance(tmax);
 
@@ -162,10 +162,10 @@ TEST(TestGraph, persistentChangesDuringSimulation)
     g.add_edge(0, 2, 2);
     g.add_edge(1, 2, 3);
 
-    auto node_func = [](auto&& t, auto&& dt, auto&& n) {
+    auto node_func = [](auto&& /*t*/, auto&& /*dt*/, auto&& n) {
         ++n;
     };
-    auto edge_func = [](auto&& t, auto&& dt, auto&& e, auto&& n1, auto&& n2) {
+    auto edge_func = [](auto&& /*t*/, auto&& /*dt*/, auto&& e, auto&& /*n1*/, auto&& n2) {
         ++e;
         ++n2;
     };

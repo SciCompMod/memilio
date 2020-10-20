@@ -15,7 +15,6 @@ TEST(TestSaveParameters, compareParameterStudy)
 {
     double t0   = 0.0;
     double tmax = 50.5;
-    double dt   = 0.1;
 
     double tinc = 5.2, tinfmild = 6, tserint = 4.2, thosp2home = 12, thome2hosp = 5, thosp2icu = 2, ticu2home = 8,
            tinfasy = 6.2, ticu2death = 5;
@@ -62,8 +61,8 @@ TEST(TestSaveParameters, compareParameterStudy)
 
     epi::ContactFrequencyMatrix& cont_freq_matrix = params.get_contact_patterns();
     epi::Damping dummy(30., 0.3);
-    for (int i = 0; i < num_groups; i++) {
-        for (int j = i; j < num_groups; j++) {
+    for (int i = 0; i < static_cast<int>(num_groups); i++) {
+        for (int j = i; j < static_cast<int>(num_groups); j++) {
             cont_freq_matrix.set_cont_freq(fact * cont_freq, i, j);
             cont_freq_matrix.add_damping(dummy, i, j);
         }
@@ -228,7 +227,6 @@ TEST(TestSaveParameters, compareSingleRun)
 {
     double t0   = 0.0;
     double tmax = 50.5;
-    double dt   = 0.1;
 
     double tinc = 5.2, tinfmild = 6, tserint = 4.2, thosp2home = 12, thome2hosp = 5, thosp2icu = 2, ticu2home = 8,
            tinfasy = 6.2, ticu2death = 5;
@@ -370,7 +368,6 @@ TEST(TestSaveParameters, compareGraphs)
 {
     double t0   = 0.0;
     double tmax = 50.5;
-    double dt   = 0.1;
 
     double tinc = 5.2, tinfmild = 6, tserint = 4.2, thosp2home = 12, thome2hosp = 5, thosp2icu = 2, ticu2home = 8,
            tinfasy = 6.2, ticu2death = 5;
@@ -380,7 +377,7 @@ TEST(TestSaveParameters, compareGraphs)
     double num_total_t0 = 10000, num_exp_t0 = 100, num_inf_t0 = 50, num_car_t0 = 50, num_hosp_t0 = 20, num_icu_t0 = 10,
            num_rec_t0 = 10, num_dead_t0 = 0;
 
-    int num_groups = 2;
+    size_t num_groups = 2;
     double fact    = 1.0 / (double)num_groups;
 
     epi::SecirParams params(num_groups);
@@ -417,8 +414,8 @@ TEST(TestSaveParameters, compareGraphs)
 
     epi::ContactFrequencyMatrix& cont_freq_matrix = params.get_contact_patterns();
     epi::Damping dummy(30., 0.3);
-    for (int i = 0; i < num_groups; i++) {
-        for (int j = i; j < num_groups; j++) {
+    for (int i = 0; i < static_cast<int>(num_groups); i++) {
+        for (int j = i; j < static_cast<int>(num_groups); j++) {
             cont_freq_matrix.set_cont_freq(fact * cont_freq, i, j);
             cont_freq_matrix.add_damping(dummy, i, j);
             if (j > i) {
@@ -435,7 +432,7 @@ TEST(TestSaveParameters, compareGraphs)
     graph.add_edge(0, 1, Eigen::VectorXd::Constant(params.populations.get_num_compartments(), 0.01));
     graph.add_edge(1, 0, Eigen::VectorXd::Constant(params.populations.get_num_compartments(), 0.01));
 
-    epi::write_graph(graph, t0, tmax);
+    epi::write_graph(graph);
 
     epi::Graph<epi::SecirParams, epi::MigrationEdge> graph_read = epi::read_graph();
 
@@ -452,10 +449,9 @@ TEST(TestSaveParameters, compareGraphs)
         epi::SecirParams graph_read_params               = graph_read.nodes()[0];
         epi::ContactFrequencyMatrix graph_read_cont_freq = graph_read_params.get_contact_patterns();
 
-        size_t num_compart = graph_params.populations.get_num_compartments() / num_groups;
-        size_t num_groups  = graph_cont_freq.get_size();
         ASSERT_EQ(num_groups, graph_read_cont_freq.get_size());
-        ASSERT_EQ(num_compart, graph_read_params.populations.get_num_compartments() / num_groups);
+        ASSERT_EQ(graph_params.populations.get_num_compartments(),
+                  graph_read_params.populations.get_num_compartments());
 
         for (size_t group = 0; group < num_groups; group++) {
             ASSERT_EQ(graph_params.populations.get({group, epi::SecirCompartments::D}),
@@ -549,7 +545,7 @@ TEST(TestSaveParameters, compareGraphs)
                 *graph_params.probabilities[group].get_icu_per_hospitalized().get_distribution().get(),
                 *graph_read_params.probabilities[group].get_icu_per_hospitalized().get_distribution().get());
 
-            for (int contact_group = 0; contact_group < num_groups; contact_group++) {
+            for (size_t contact_group = 0; contact_group < num_groups; contact_group++) {
                 ASSERT_EQ(graph_cont_freq.get_cont_freq(static_cast<int>(group), static_cast<int>(contact_group)),
                           graph_read_cont_freq.get_cont_freq(static_cast<int>(group), static_cast<int>(contact_group)));
 
@@ -574,14 +570,7 @@ TEST(TestSaveParameters, compareGraphs)
                                *graph_read_params.get_contact_patterns().get_distribution_damp_offdiag_rel().get());
         }
 
-        for (int edge = 0; edge < num_edges; edge++) {
-            ASSERT_EQ(graph.edges()[edge].start_node_idx, graph_read.edges()[edge].start_node_idx);
-            ASSERT_EQ(graph.edges()[edge].end_node_idx, graph_read.edges()[edge].end_node_idx);
-            for (int i = 0; i < num_compart * num_groups; i++) {
-                ASSERT_EQ(graph.edges()[edge].property.coefficients[i],
-                          graph_read.edges()[edge].property.coefficients[i]);
-            }
-        }
+        ASSERT_THAT(graph_read.edges(), testing::ElementsAreArray(graph.edges()));
     }
 }
 

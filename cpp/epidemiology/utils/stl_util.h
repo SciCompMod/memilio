@@ -157,7 +157,7 @@ namespace details
     /**
      * breaks the recursion of path_join_rec.
      */
-    inline void path_join_rec(std::stringstream& ss, bool w)
+    inline void path_join_rec(std::stringstream&, bool)
     {
     }
 

@@ -8,6 +8,7 @@
 #include <epidemiology/secir/damping.h>
 #include <epidemiology/utils/time_series.h>
 #include <epidemiology/secir/parameter_studies.h>
+#include <epidemiology/secir/analyze_result.h>
 
 #include <Eigen/Core>
 #include <vector>
@@ -130,13 +131,13 @@ PYBIND11_MODULE(_secir, m)
         .def(py::init<double, double>(), py::arg("lb"), py::arg("ub"));
 
     py::class_<epi::UncertainValue>(m, "UncertainValue")
-        .def(py::init<double>(), py::arg("value") = 0.0)
+        .def(py::init<ScalarType>(), py::arg("value") = 0.0)
         .def_property(
             "value",
             [](epi::UncertainValue& self) {
-                return double(self);
+                return ScalarType(self);
             },
-            [](epi::UncertainValue& self, double v) {
+            [](epi::UncertainValue& self, ScalarType v) {
                 self = v;
             })
         .def("set_distribution", //a property would be nicer but getter and setter use a different type
@@ -497,6 +498,15 @@ PYBIND11_MODULE(_secir, m)
           py::arg("tmax"), py::arg("dev_rel"));
 
     m.def("draw_sample", &epi::draw_sample, py::arg("params"));
+
+    m.def("interpolate_simulation_result", py::overload_cast<const epi::TimeSeries<double>&>(&epi::interpolate_simulation_result));
+    m.def("interpolate_simulation_result", py::overload_cast<const MigrationGraph&>(&epi::interpolate_simulation_result));
+
+    m.def("interpolate_ensemble_results", &epi::interpolate_ensemble_results<MigrationGraph>);
+    m.def("interpolate_ensemble_results", &epi::interpolate_ensemble_results<epi::TimeSeries<double>>);
+
+    m.def("ensemble_mean", &epi::ensemble_mean);
+    m.def("ensemble_percentile", &epi::ensemble_percentile);
 
     m.attr("__version__") = "dev";
 }

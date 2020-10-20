@@ -179,3 +179,13 @@ export function lastElement(array) {
     throw RangeError("Can't get the last element of an empty array!");
   }
 }
+
+/**
+ *
+ * @param string {string}
+ * @param replacement {string}
+ * @return {string}
+ */
+export function replaceLastChar(string, replacement) {
+  return string.slice(0, -1) + replacement;
+}
