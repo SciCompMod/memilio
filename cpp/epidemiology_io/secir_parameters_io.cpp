@@ -586,7 +586,7 @@ void interpolate_ages(std::vector<double>& age_ranges, std::vector<double>& para
                       std::vector<std::vector<double>>& interpolation, std::vector<bool>& carry_over)
 {
     //counter for parameter age groups
-    int counter = 0;
+    size_t counter = 0;
 
     //residual of param age groups
     double res = 0.0;
@@ -670,8 +670,8 @@ void set_rki_data(epi::SecirParams& params, std::vector<double> param_ranges, in
     std::vector<double> num_death(age_names.size(), 0.0);
     std::vector<double> num_rec(age_names.size(), 0.0);
 
-    for (int age = 0; age < age_names.size(); age++) {
-        for (int i = 0; i < root.size(); i++) {
+    for (size_t age = 0; age < age_names.size(); age++) {
+        for (unsigned int i = 0; i < root.size(); i++) {
             bool id          = region == 0 || root[i][id_name] == region;
             std::string date = root[i]["Date"].asString();
             if (month == std::stoi(date.substr(5, 2)) && day == std::stoi(date.substr(8, 2)) && id) {
@@ -691,7 +691,7 @@ void set_rki_data(epi::SecirParams& params, std::vector<double> param_ranges, in
 
     int counter = 0;
     for (size_t i = 0; i < interpolation.size() - 1; i++) {
-        for (int j = 0; j < interpolation[i].size(); j++) {
+        for (size_t j = 0; j < interpolation[i].size(); j++) {
             interpol_inf[counter] += interpolation[i][j] * num_inf[i];
             interpol_death[counter] += interpolation[i][j] * num_death[i];
             interpol_rec[counter] += interpolation[i][j] * num_rec[i];
@@ -708,7 +708,7 @@ void set_rki_data(epi::SecirParams& params, std::vector<double> param_ranges, in
     }
 
     if (std::accumulate(num_inf.begin(), num_inf.end(), 0.0) > 0) {
-        int num_groups = params.get_num_groups();
+        size_t num_groups = params.get_num_groups();
         for (size_t i = 0; i < num_groups; i++) {
             params.populations.set({i, epi::SecirCompartments::I},
                                    interpol_inf[i] - interpol_death[i] - interpol_rec[i]);
@@ -722,8 +722,7 @@ void set_rki_data(epi::SecirParams& params, std::vector<double> param_ranges, in
     }
 }
 
-void set_divi_data(epi::SecirParams& params, std::vector<double> param_ranges, int month, int day, int region,
-                   std::string dir)
+void set_divi_data(epi::SecirParams& params, int month, int day, int region, std::string dir)
 {
 
     Json::Reader reader;
@@ -746,7 +745,7 @@ void set_divi_data(epi::SecirParams& params, std::vector<double> param_ranges, i
     }
 
     double num_icu = 0;
-    for (int i = 0; i < root.size(); i++) {
+    for (unsigned int i = 0; i < root.size(); i++) {
         bool id          = region == 0 || root[i][id_name] == region;
         std::string date = root[i]["Date"].asString();
         if (month == std::stoi(date.substr(5, 2)) && day == std::stoi(date.substr(8, 2)) && id) {
@@ -755,7 +754,7 @@ void set_divi_data(epi::SecirParams& params, std::vector<double> param_ranges, i
     }
 
     if (num_icu > 0) {
-        int num_groups = params.get_num_groups();
+        size_t num_groups = params.get_num_groups();
         for (size_t i = 0; i < num_groups; i++) {
             params.populations.set({i, epi::SecirCompartments::U}, num_icu / (double)num_groups);
         }
@@ -775,7 +774,7 @@ void read_population_data(epi::SecirParams& params, std::vector<double> param_ra
     assert(std::accumulate(param_ranges.begin(), param_ranges.end(), 0.0) == 100. && "param_ranges must add up to 100");
 
     set_rki_data(params, param_ranges, month, day, region, dir);
-    set_divi_data(params, param_ranges, month, day, region, dir);
+    set_divi_data(params, month, day, region, dir);
 }
 
 } // namespace epi

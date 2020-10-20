@@ -182,8 +182,7 @@ void interpolate_ages(std::vector<double>& age_ranges, std::vector<double>& para
 void set_rki_data(epi::SecirParams& params, std::vector<double> param_ranges, int month, int day, int region,
                   std::string dir);
 
-void set_divi_data(epi::SecirParams& params, std::vector<double> param_ranges, int month, int day, int region,
-                   std::string dir);
+void set_divi_data(epi::SecirParams& params, int month, int day, int region, std::string dir);
 
 /**
  * @brief reads population data from RKI files
