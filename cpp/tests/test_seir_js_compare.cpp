@@ -1,5 +1,6 @@
 #include "load_test_data.h"
 #include <epidemiology/secir/seir.h>
+#include "epidemiology/math/euler.h"
 #include "epidemiology/model/simulation.h"
 #include <gtest/gtest.h>
 
@@ -46,7 +47,7 @@ public:
 
 TEST_F(TestCompareSeirWithJS, integrate)
 {
-    auto result = simulate(t0, tmax, dt, model);
+    auto result = epi::simulate<epi::SeirModel, epi::EulerIntegratorCore>(t0, tmax, dt, model);
 
     ASSERT_EQ(refData.size(), static_cast<size_t>(result.get_num_time_points()));
 

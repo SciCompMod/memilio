@@ -28,15 +28,16 @@ TEST(TestMigration, compareWithSingleIntegration)
     model2.populations.set_total(500);
 
     auto graph_sim = epi::make_migration_sim(
-        t0, dt, epi::Graph<epi::ModelNode<epi::Simulation<epi::SeirModel>>, epi::MigrationEdge>());
+        t0, dt,
+        epi::Graph<epi::ModelNode<epi::Simulation<epi::SeirModel, epi::EulerIntegratorCore>>, epi::MigrationEdge>());
     auto& g = graph_sim.get_graph();
     g.add_node(model1, t0);
     g.add_node(model2, t0);
     g.add_edge(0, 1, Eigen::VectorXd::Constant(4, 0)); //no migration along this edge
     g.add_edge(1, 0, Eigen::VectorXd::Constant(4, 0));
 
-    auto single_sim1 = epi::Simulation<epi::SeirModel>(model1, t0);
-    auto single_sim2 = epi::Simulation<epi::SeirModel>(model2, t0);
+    auto single_sim1 = epi::Simulation<epi::SeirModel, epi::EulerIntegratorCore>(model1, t0);
+    auto single_sim2 = epi::Simulation<epi::SeirModel, epi::EulerIntegratorCore>(model2, t0);
 
     auto nsteps = int((tmax - t0) / dt);
     EXPECT_EQ(nsteps, (tmax - t0) / dt);

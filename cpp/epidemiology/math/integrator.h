@@ -34,6 +34,9 @@ public:
      */
     virtual bool step(const DerivFunction& f, Eigen::Ref<const Eigen::VectorXd> yt, double& t, double& dt,
                       Eigen::Ref<Eigen::VectorXd> ytp1) const = 0;
+
+    virtual void set_rel_tolerance(double) = 0;
+    virtual void set_abs_tolerance(double) = 0;
 };
 
 /**

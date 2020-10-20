@@ -20,7 +20,7 @@ class TestVerifyNumericalIntegrator : public testing::Test
 protected:
     void SetUp() override
     {
-        t0    = 0.;
+        t0   = 0.;
         tmax = 2 * std::acos(-1); // 2PI
         err  = 0;
     }
@@ -46,9 +46,7 @@ TEST_F(TestVerifyNumericalIntegrator, euler_sine)
     sol[0][0]     = std::sin(0);
     sol[n - 1][0] = std::sin((n - 1) * dt);
 
-    auto f = [](auto&& /*y*/, auto&& t, auto&& dydt) {
-        dydt[0] = std::cos(t);
-    };
+    auto f = [](auto&& /*y*/, auto&& t, auto&& dydt) { dydt[0] = std::cos(t); };
     epi::EulerIntegratorCore euler;
 
     auto t = t0;
@@ -126,6 +124,8 @@ public:
                 (const epi::DerivFunction& f, Eigen::Ref<const Eigen::VectorXd> yt, double& t, double& dt,
                  Eigen::Ref<Eigen::VectorXd> ytp1),
                 (const));
+    MOCK_METHOD(void, set_abs_tolerance, (double));
+    MOCK_METHOD(void, set_rel_tolerance, (double));
 };
 
 TEST(TestOdeIntegrator, integratorDoesTheRightNumberOfSteps)

@@ -86,7 +86,7 @@ public:
      * @param dt_min Mininum time step
      * @param dt_max Maximum time step
      */
-    RKIntegratorCore(double dt_min, double dt_max)
+    RKIntegratorCore(double dt_min = 1e-10, double dt_max = 1e10)
         : m_abs_tol(1e-10)
         , m_rel_tol(1e-5)
         , m_dt_min(dt_min)

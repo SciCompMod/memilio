@@ -4,14 +4,17 @@
 #include "epidemiology/utils/ScalarType.h"
 #include "epidemiology/utils/time_series.h"
 #include "epidemiology/math/adapt_rk.h"
+#include "epidemiology/math/euler.h"
 
 namespace epi
 {
 
+using DefaultIntegratorCore = RKIntegratorCore;
+
 /**
  * @brief A class for the simulation of a compartment model.
  */
-template <class Model>
+template <class Model, class IntegratorCore = DefaultIntegratorCore>
 class Simulation
 {
 public:
@@ -22,7 +25,7 @@ public:
      * @param[in] dt initial step size of integration
      */
     Simulation(Model const& model, double t0 = 0., double dt = 0.1)
-        : m_integratorCore(std::make_shared<RKIntegratorCore>(1e-3, 1.))
+        : m_integratorCore(std::make_shared<IntegratorCore>())
         , m_integrator([model](auto&& y, auto&& t, auto&& dydt) { model.eval_right_hand_side(y, t, dydt); }, t0,
                        model.get_initial_values(), dt, m_integratorCore)
         , m_model(model)
@@ -68,7 +71,7 @@ public:
     }
 
 private:
-    std::shared_ptr<RKIntegratorCore> m_integratorCore;
+    std::shared_ptr<IntegratorCore> m_integratorCore;
     OdeIntegrator m_integrator;
     Model m_model;
 }; // namespace epi
@@ -82,10 +85,10 @@ private:
  * @return a TimeSeries to represent the final simulation result
  *
  */
-template <class Model>
+template <class Model, class IntegratorCore = DefaultIntegratorCore>
 TimeSeries<ScalarType> simulate(double t0, double tmax, double dt, Model const& model)
 {
-    Simulation<Model> sim(model, t0, dt);
+    Simulation<Model, IntegratorCore> sim(model, t0, dt);
     sim.advance(tmax);
     return sim.get_result();
 }

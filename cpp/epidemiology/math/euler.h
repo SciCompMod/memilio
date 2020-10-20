@@ -27,6 +27,15 @@ public:
      */
     bool step(const DerivFunction& f, Eigen::Ref<const Eigen::VectorXd> yt, double& t, double& dt,
               Eigen::Ref<Eigen::VectorXd> ytp1) const override;
+
+    void set_abs_tolerance(double) override
+    {
+        log_warning("Setting absolute tolerance has no influence on an explicit Euler integrator");
+    };
+    void set_rel_tolerance(double) override
+    {
+        log_warning("Setting relative tolerance has no influence on an explicit Euler integrator");
+    };
 };
 
 /**
@@ -55,6 +64,18 @@ public:
     SecirModel1 const& get_secir_params() const
     {
         return m_model;
+    }
+
+    /// @param tol the required absolute tolerance for the comparison with the Fehlberg approximation (actually not really required but used in SecirSimulation constructor)
+    void set_abs_tolerance(double tol) override
+    {
+        m_abs_tol = tol;
+    }
+
+    /// @param tol the required relative tolerance for the comparison with the Fehlberg approximation (actually not really required but used in SecirSimulation constructor)
+    void set_rel_tolerance(double tol) override
+    {
+        m_rel_tol = tol;
     }
 
 private:
