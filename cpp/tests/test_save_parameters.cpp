@@ -82,6 +82,7 @@ TEST(TestSaveParameters, compareParameterStudy)
     tixiSaveDocument(handle, "TestParameters.xml");
     tixiCloseDocument(handle);
 
+#ifndef EPI_NO_IO
     tixiOpenDocument("TestParameters.xml", &handle);
     epi::ParameterStudy<epi::SecirModel<epi::AgeGroup2>> read_study =
         epi::read_parameter_study<epi::SecirModel<epi::AgeGroup2>>(handle, path);
@@ -227,6 +228,7 @@ TEST(TestSaveParameters, compareParameterStudy)
                        *read_contact.get_distribution_damp_diag_rel().get());
     check_distribution(*contact.get_distribution_damp_offdiag_rel().get(),
                        *read_contact.get_distribution_damp_offdiag_rel().get());
+#endif
 }
 
 TEST(TestSaveParameters, compareSingleRun)
@@ -297,6 +299,7 @@ TEST(TestSaveParameters, compareSingleRun)
     tixiSaveDocument(handle, "TestParameterValues.xml");
     tixiCloseDocument(handle);
 
+#ifndef EPI_NO_IO
     tixiOpenDocument("TestParameterValues.xml", &handle);
     epi::ParameterStudy<epi::SecirModel<epi::AgeGroup2>> read_study =
         epi::read_parameter_study<epi::SecirModel<epi::AgeGroup2>>(handle, path);
@@ -374,6 +377,7 @@ TEST(TestSaveParameters, compareSingleRun)
             ASSERT_THAT(dampings_vector, testing::ContainerEq(cmp_dampings_vector));
         }
     }
+#endif
 }
 
 TEST(TestSaveParameters, compareGraphs)
@@ -445,6 +449,7 @@ TEST(TestSaveParameters, compareGraphs)
 
     epi::write_graph(graph);
 
+#ifndef EPI_NO_IO
     epi::Graph<epi::SecirModel<epi::AgeGroup2>, epi::MigrationEdge> graph_read =
         epi::read_graph<epi::SecirModel<epi::AgeGroup2>>();
 
@@ -616,4 +621,5 @@ TEST(TestSaveParameters, compareGraphs)
 
         ASSERT_THAT(graph_read.edges(), testing::ElementsAreArray(graph.edges()));
     }
+#endif
 }

@@ -128,6 +128,7 @@ int main(int argc, char* argv[])
     tixiSaveDocument(handle, "Parameters.xml");
     tixiCloseDocument(handle);
 
+#ifndef EPI_NO_IO
     tixiOpenDocument("Parameters.xml", &handle);
     epi::ParameterStudy<epi::SecirModel<epi::AgeGroup1>> read_study =
         epi::read_parameter_study<epi::SecirModel<epi::AgeGroup1>>(handle, path);
@@ -136,6 +137,7 @@ int main(int argc, char* argv[])
         epi::write_single_run_params(run++, model, t0, tmax, secir_result, node);
     };
     auto results = read_study.run(lambda);
+#endif
 
 #if 0
     if (argc > 1) {

@@ -93,7 +93,7 @@ int main(int argc, char** argv)
     std::cout << "Intializing Graph..." << std::flush;
     epi::Graph<epi::SecirModel<epi::AgeGroup1>, epi::MigrationEdge> graph;
     for (int node = 0; node < twitter_migration_2018.rows(); node++) {
-        graph.add_node(params);
+        graph.add_node(model);
     }
     for (int row = 0; row < twitter_migration_2018.rows(); row++) {
         for (int col = 0; col < twitter_migration_2018.cols(); col++) {
@@ -106,6 +106,7 @@ int main(int argc, char** argv)
     epi::write_graph(graph);
     std::cout << "Done" << std::endl;
 
+#ifndef EPI_NO_IO
     std::cout << "Reading XML Files..." << std::flush;
     epi::Graph<epi::SecirModel<epi::AgeGroup1>, epi::MigrationEdge> graph_read =
         epi::read_graph<epi::SecirModel<epi::AgeGroup1>>();
@@ -114,6 +115,6 @@ int main(int argc, char** argv)
     std::cout << "Running Simulations..." << std::flush;
     auto study = epi::ParameterStudy<epi::SecirModel<epi::AgeGroup1>>(graph_read, t0, tmax, 1.0, 2);
     std::cout << "Done" << std::endl;
-
+#endif
     return 0;
 }

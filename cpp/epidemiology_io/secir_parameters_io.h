@@ -9,6 +9,8 @@
 
 #include <tixi.h>
 
+#define EPI_NO_IO 1
+
 namespace epi
 {
 /**
@@ -77,6 +79,7 @@ void write_distribution(const TixiDocumentHandle& handle, const std::string& pat
  */
 void write_predef_sample(TixiDocumentHandle handle, const std::string& path, const std::vector<double>& samples);
 
+#ifdef EPI_NO_IO
 /**
  * @brief read parameter space from xml file
  * @param handle Tixi Document Handle
@@ -177,6 +180,7 @@ Model read_parameter_space(TixiDocumentHandle handle, const std::string& path, i
 
     return model;
 }
+#endif
 
 /**
  * @brief write parameter space to xml file
@@ -268,6 +272,7 @@ void write_parameter_space(TixiDocumentHandle handle, const std::string& path, M
     write_contact(handle, path, model.parameters.get_contact_patterns(), io_mode, num_runs);
 }
 
+#ifndef EPI_NO_IO
 /**
  * @brief read parameter study from xml file
  * @param handle Tixi Document Handle
@@ -289,6 +294,7 @@ ParameterStudy<Model> read_parameter_study(TixiDocumentHandle handle, const std:
     Model model = read_parameter_space<Model>(handle, path, io_mode);
     return ParameterStudy<Model>(model, t0, tmax, num_runs);
 }
+#endif
 
 /**
  * @brief write parameter study to xml file
@@ -381,7 +387,7 @@ void write_node(const Graph<Model, MigrationEdge>& graph, int node, double t0, d
     tixiSaveDocument(handle, ("GraphNode" + std::to_string(node) + ".xml").c_str());
     tixiCloseDocument(handle);
 }
-
+#ifndef EPI_NO_IO
 /**
  * @brief reads parameters of a single node and saves it into the graph
  * @param graph Graph in which the node is saved
@@ -397,6 +403,7 @@ void read_node(Graph<Model, MigrationEdge>& graph, int node)
 
     tixiCloseDocument(node_handle);
 }
+#endif
 
 /**
  * @brief Writes the information of a single edge into a xml file
@@ -498,6 +505,7 @@ void write_graph(const Graph<Model, MigrationEdge>& graph, double t0, double tma
     }
 }
 
+#ifndef EPI_NO_IO
 /**
  * @brief reads graph xml files and returns a Secir simulation graph
  */
@@ -527,7 +535,7 @@ Graph<Model, MigrationEdge> read_graph()
     tixiCloseDocument(handle);
     return model;
 }
-
+#endif
 } // namespace epi
 
 #endif
