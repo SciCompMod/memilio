@@ -7,6 +7,8 @@
 #include <epidemiology/secir/parameter_studies.h>
 
 #include <tixi.h>
+#include <jsoncpp/json/json.h>
+#include <jsoncpp/json/value.h>
 
 namespace epi
 {
@@ -179,10 +181,10 @@ Graph<SecirParams, MigrationEdge> read_graph();
 void interpolate_ages(std::vector<double>& age_ranges, std::vector<double>& param_ranges,
                       std::vector<std::vector<double>>& interpolation, std::vector<bool>& carry_over);
 
-void set_rki_data(epi::SecirParams& params, std::vector<double> param_ranges, int month, int day, int region,
-                  std::string dir);
+void set_rki_data(epi::SecirParams& params, std::vector<double> param_ranges, Json::Value& root, std::string& id_name,
+                  int region, int month, int day);
 
-void set_divi_data(epi::SecirParams& params, int month, int day, int region, std::string dir);
+void set_divi_data(epi::SecirParams& params, Json::Value& root, std::string& id_name, int region, int month, int day);
 
 /**
  * @brief reads population data from RKI files
@@ -193,8 +195,14 @@ void set_divi_data(epi::SecirParams& params, int month, int day, int region, std
  * @param region region id of county of interest
  * @param dir directory of files
  */
-void read_population_data(epi::SecirParams& params, std::vector<double> param_ranges, int month, int day, int region,
-                          std::string dir);
+void read_population_data_germany(epi::SecirParams& params, std::vector<double> param_ranges, int month, int day,
+                                  std::string dir);
+
+void read_population_data_state(epi::SecirParams& params, std::vector<double> param_ranges, int month, int day,
+                                int state, std::string dir);
+
+void read_population_data_county(epi::SecirParams& params, std::vector<double> param_ranges, int month, int day,
+                                 int county, std::string dir);
 
 } // namespace epi
 

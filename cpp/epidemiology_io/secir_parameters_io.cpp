@@ -635,29 +635,9 @@ void interpolate_ages(std::vector<double>& age_ranges, std::vector<double>& para
     carry_over.push_back(true);
 }
 
-void set_rki_data(epi::SecirParams& params, std::vector<double> param_ranges, int month, int day, int region,
-                  std::string dir)
+void set_rki_data(epi::SecirParams& params, std::vector<double> param_ranges, Json::Value& root, std::string& id_name,
+                  int region, int month, int day)
 {
-
-    Json::Reader reader;
-    Json::Value root;
-    std::string id_name;
-
-    if (region == 0) {
-        std::ifstream json_file(path_join(dir, "all_age_rki.json"));
-        reader.parse(json_file, root);
-    }
-    else if (region < 1000) {
-        std::ifstream json_file(path_join(dir, "all_state_age_rki.json"));
-        reader.parse(json_file, root);
-        id_name = "ID_State";
-    }
-    else {
-        std::ifstream json_file(path_join(dir, "all_county_age_rki.json"));
-        reader.parse(json_file, root);
-        id_name = "ID_County";
-    }
-
     std::vector<std::string> age_names = {"A00-A04", "A05-A14", "A15-A34", "A35-A59", "A60-A79", "A80+", "unknown"};
     std::vector<double> age_ranges     = {5., 10., 20., 25., 20., 20.};
 
@@ -722,27 +702,8 @@ void set_rki_data(epi::SecirParams& params, std::vector<double> param_ranges, in
     }
 }
 
-void set_divi_data(epi::SecirParams& params, int month, int day, int region, std::string dir)
+void set_divi_data(epi::SecirParams& params, Json::Value& root, std::string& id_name, int region, int month, int day)
 {
-
-    Json::Reader reader;
-    Json::Value root;
-    std::string id_name;
-
-    if (region == 0) {
-        std::ifstream json_file(path_join(dir, "germany_divi.json"));
-        reader.parse(json_file, root);
-    }
-    else if (region < 1000) {
-        std::ifstream json_file(path_join(dir, "state_divi.json"));
-        reader.parse(json_file, root);
-        id_name = "ID_State";
-    }
-    else {
-        std::ifstream json_file(path_join(dir, "county_divi.json"));
-        reader.parse(json_file, root);
-        id_name = "ID_County";
-    }
 
     double num_icu = 0;
     for (unsigned int i = 0; i < root.size(); i++) {
@@ -765,16 +726,76 @@ void set_divi_data(epi::SecirParams& params, int month, int day, int region, std
     }
 }
 
-void read_population_data(epi::SecirParams& params, std::vector<double> param_ranges, int month, int day, int region,
-                          std::string dir)
+void read_population_data_germany(epi::SecirParams& params, std::vector<double> param_ranges, int month, int day,
+                                  std::string dir)
 {
+
+    Json::Reader reader;
+    Json::Value root_rki;
+    Json::Value root_divi;
+
+    std::string id_name;
+
+    std::ifstream divi(path_join(dir, "germany_divi.json"));
+    reader.parse(divi, root_divi);
+
+    std::ifstream rki(path_join(dir, "all_age_rki.json"));
+    reader.parse(rki, root_rki);
 
     assert(param_ranges.size() == params.get_num_groups() &&
            "size of param_ranges needs to be the same size as the number of groups in params");
     assert(std::accumulate(param_ranges.begin(), param_ranges.end(), 0.0) == 100. && "param_ranges must add up to 100");
 
-    set_rki_data(params, param_ranges, month, day, region, dir);
-    set_divi_data(params, month, day, region, dir);
+    set_rki_data(params, param_ranges, root_rki, id_name, 0, month, day);
+    set_divi_data(params, root_divi, id_name, 0, month, day);
+}
+
+void read_population_data_state(epi::SecirParams& params, std::vector<double> param_ranges, int month, int day,
+                                int state, std::string dir)
+{
+    assert(state > 0 && state <= 16 && "State must be between 1 and 16");
+    assert(param_ranges.size() == params.get_num_groups() &&
+           "size of param_ranges needs to be the same size as the number of groups in params");
+    assert(std::accumulate(param_ranges.begin(), param_ranges.end(), 0.0) == 100. && "param_ranges must add up to 100");
+
+    Json::Reader reader;
+    Json::Value root_rki;
+    Json::Value root_divi;
+
+    std::string id_name = "ID_State";
+
+    std::ifstream divi(path_join(dir, "state_divi.json"));
+    reader.parse(divi, root_divi);
+
+    std::ifstream rki(path_join(dir, "all_state_age_rki.json"));
+    reader.parse(rki, root_rki);
+
+    set_rki_data(params, param_ranges, root_rki, id_name, state, month, day);
+    set_divi_data(params, root_divi, id_name, state, month, day);
+}
+
+void read_population_data_county(epi::SecirParams& params, std::vector<double> param_ranges, int month, int day,
+                                 int county, std::string dir)
+{
+    assert(county > 0 && "State must be between 1 and 16");
+    assert(param_ranges.size() == params.get_num_groups() &&
+           "size of param_ranges needs to be the same size as the number of groups in params");
+    assert(std::accumulate(param_ranges.begin(), param_ranges.end(), 0.0) == 100. && "param_ranges must add up to 100");
+
+    Json::Reader reader;
+    Json::Value root_rki;
+    Json::Value root_divi;
+
+    std::string id_name = "ID_County";
+
+    std::ifstream divi(path_join(dir, "county_divi.json"));
+    reader.parse(divi, root_divi);
+
+    std::ifstream rki(path_join(dir, "all_county_age_rki.json"));
+    reader.parse(rki, root_rki);
+
+    set_rki_data(params, param_ranges, root_rki, id_name, county, month, day);
+    set_divi_data(params, root_divi, id_name, county, month, day);
 }
 
 } // namespace epi

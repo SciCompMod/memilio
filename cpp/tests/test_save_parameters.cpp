@@ -579,7 +579,7 @@ TEST(TestSaveParameters, ReadPopulationDataAllAges)
     epi::SecirParams params(1);
     std::vector<double> ranges = {100};
 
-    epi::read_population_data(params, ranges, 5, 5, 0, TEST_DATA_DIR);
+    epi::read_population_data_germany(params, ranges, 5, 5, TEST_DATA_DIR);
 
     ASSERT_EQ(params.populations.get({0, epi::SecirCompartments::I}), 0);
     ASSERT_EQ(params.populations.get({0, epi::SecirCompartments::D}), 8626);
@@ -592,7 +592,7 @@ TEST(TestSaveParameters, ReadPopulationDataRKIAges)
     epi::SecirParams params(6);
     std::vector<double> ranges = {5., 10., 20., 25., 20., 20.};
 
-    epi::read_population_data(params, ranges, 5, 5, 0, TEST_DATA_DIR);
+    epi::read_population_data_germany(params, ranges, 5, 5, TEST_DATA_DIR);
 
     Json::Reader reader;
     Json::Reader reader_divi;
@@ -622,7 +622,7 @@ TEST(TestSaveParameters, ReadPopulationDataMultipleAges)
     epi::SecirParams params(8);
     std::vector<double> ranges = {5., 15., 15., 10., 10., 10., 10., 25.};
 
-    epi::read_population_data(params, ranges, 5, 5, 0, TEST_DATA_DIR);
+    epi::read_population_data_germany(params, ranges, 5, 5, TEST_DATA_DIR);
 
     double infected_param  = 0.;
     double deaths_param    = 0.;
