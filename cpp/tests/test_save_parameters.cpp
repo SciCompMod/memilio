@@ -378,7 +378,7 @@ TEST(TestSaveParameters, compareGraphs)
            num_rec_t0 = 10, num_dead_t0 = 0;
 
     size_t num_groups = 2;
-    double fact    = 1.0 / (double)num_groups;
+    double fact       = 1.0 / (double)num_groups;
 
     epi::SecirParams params(num_groups);
 
@@ -593,8 +593,6 @@ TEST(TestSaveParameters, ReadPopulationDataRKIAges)
     std::vector<double> ranges = {5., 10., 20., 25., 20., 20.};
 
     epi::read_population_data(params, ranges, 5, 5, 0, TEST_DATA_DIR);
-
-    double icu = 0;
 
     Json::Reader reader;
     Json::Reader reader_divi;
