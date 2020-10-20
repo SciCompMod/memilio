@@ -347,13 +347,15 @@ TEST(TestSecir, testParamConstructors)
     }
 }
 
-TEST(TestSecir, setters_and_getters)
+TEST(TestSecir, testSettersAndGetters)
 {
-    epi::UncertainValue val(3.0);
-    double dev_rel     = 0.2;
-    double lower_bound = std::max(1e-6, (1 - dev_rel * 2.6) * val);
-    double upper_bound = (1 + dev_rel * 2.6) * val;
-    val.set_distribution(epi::ParameterDistributionNormal(lower_bound, upper_bound, val, dev_rel * val));
+    std::vector<epi::UncertainValue> vec;
+
+    for (int i = 0; i < 24; i++) {
+        epi::UncertainValue val = epi::UncertainValue(i);
+        val.set_distribution(epi::ParameterDistributionNormal(i, 10 * i, 5 * i, i / 10.0));
+        vec.push_back(val);
+    }
 
     epi::SecirParams params;
 
@@ -365,79 +367,101 @@ TEST(TestSecir, setters_and_getters)
 
     EXPECT_EQ(params.times[0].get_incubation().get_distribution().get(), nullptr);
 
-    params.set_icu_capacity(val);
+    params.set_icu_capacity(vec[0]);
 
-    params.times[0].set_incubation(val);
-    params.times[0].set_infectious_mild(val);
-    params.times[0].set_serialinterval(val);
-    params.times[0].set_hospitalized_to_home(val);
-    params.times[0].set_home_to_hospitalized(val);
-    params.times[0].set_hospitalized_to_icu(val);
-    params.times[0].set_icu_to_home(val);
-    params.times[0].set_infectious_asymp(val);
-    params.times[0].set_icu_to_death(val);
+    params.times[0].set_incubation(vec[1]);
+    params.times[0].set_infectious_mild(vec[2]);
+    params.times[0].set_serialinterval(vec[3]);
+    params.times[0].set_hospitalized_to_home(vec[4]);
+    params.times[0].set_home_to_hospitalized(vec[5]);
+    params.times[0].set_hospitalized_to_icu(vec[6]);
+    params.times[0].set_icu_to_home(vec[7]);
+    params.times[0].set_infectious_asymp(vec[8]);
+    params.times[0].set_icu_to_death(vec[9]);
 
-    params.populations.set({0, epi::SecirCompartments::E}, val);
-    params.populations.set({0, epi::SecirCompartments::C}, val);
-    params.populations.set({0, epi::SecirCompartments::I}, val);
-    params.populations.set({0, epi::SecirCompartments::H}, val);
-    params.populations.set({0, epi::SecirCompartments::U}, val);
-    params.populations.set({0, epi::SecirCompartments::R}, val);
-    params.populations.set({0, epi::SecirCompartments::D}, val);
+    params.populations.set({0, epi::SecirCompartments::E}, vec[10]);
+    params.populations.set({0, epi::SecirCompartments::C}, vec[11]);
+    params.populations.set({0, epi::SecirCompartments::I}, vec[12]);
+    params.populations.set({0, epi::SecirCompartments::H}, vec[13]);
+    params.populations.set({0, epi::SecirCompartments::U}, vec[14]);
+    params.populations.set({0, epi::SecirCompartments::R}, vec[15]);
+    params.populations.set({0, epi::SecirCompartments::D}, vec[16]);
 
-    params.probabilities[0].set_infection_from_contact(val);
-    params.probabilities[0].set_carrier_infectability(val);
-    params.probabilities[0].set_asymp_per_infectious(val);
-    params.probabilities[0].set_risk_from_symptomatic(val);
-    params.probabilities[0].set_hospitalized_per_infectious(val);
-    params.probabilities[0].set_icu_per_hospitalized(val);
-    params.probabilities[0].set_dead_per_icu(val);
+    params.probabilities[0].set_infection_from_contact(vec[17]);
+    params.probabilities[0].set_carrier_infectability(vec[18]);
+    params.probabilities[0].set_asymp_per_infectious(vec[19]);
+    params.probabilities[0].set_risk_from_symptomatic(vec[20]);
+    params.probabilities[0].set_hospitalized_per_infectious(vec[21]);
+    params.probabilities[0].set_icu_per_hospitalized(vec[22]);
+    params.probabilities[0].set_dead_per_icu(vec[23]);
 
     EXPECT_NE(params.times[0].get_incubation().get_distribution().get(), nullptr);
-    check_distribution(*params.times[0].get_incubation().get_distribution(),
-                       *params.times[0].get_infectious_mild().get_distribution());
-    check_distribution(*params.times[0].get_serialinterval().get_distribution(),
-                       *params.times[0].get_hospitalized_to_home().get_distribution());
-    check_distribution(*params.times[0].get_home_to_hospitalized().get_distribution(),
-                       *params.times[0].get_hospitalized_to_icu().get_distribution());
-    check_distribution(*params.times[0].get_icu_to_home().get_distribution(),
-                       *params.times[0].get_infectious_asymp().get_distribution());
-    check_distribution(*params.times[0].get_icu_to_dead().get_distribution(),
-                       *params.populations.get({0, epi::SecirCompartments::E}).get_distribution());
-    check_distribution(*params.populations.get({0, epi::SecirCompartments::C}).get_distribution(),
-                       *params.populations.get({0, epi::SecirCompartments::I}).get_distribution());
-    check_distribution(*params.populations.get({0, epi::SecirCompartments::H}).get_distribution(),
-                       *params.populations.get({0, epi::SecirCompartments::U}).get_distribution());
-    check_distribution(*params.populations.get({0, epi::SecirCompartments::R}).get_distribution(),
-                       *params.populations.get({0, epi::SecirCompartments::D}).get_distribution());
-    check_distribution(*params.get_icu_capacity().get_distribution(),
-                       *params.probabilities[0].get_asymp_per_infectious().get_distribution());
-    check_distribution(*params.probabilities[0].get_risk_from_symptomatic().get_distribution(),
-                       *params.probabilities[0].get_carrier_infectability().get_distribution());
-    check_distribution(*params.probabilities[0].get_hospitalized_per_infectious().get_distribution(),
-                       *params.probabilities[0].get_icu_per_hospitalized().get_distribution());
-    check_distribution(*params.probabilities[0].get_dead_per_icu().get_distribution(),
-                       *params.probabilities[0].get_infection_from_contact().get_distribution());
 
-    EXPECT_EQ(params.times[0].get_incubation(), params.times[0].get_infectious_mild());
-    EXPECT_EQ(params.times[0].get_serialinterval(), params.times[0].get_hospitalized_to_home());
-    EXPECT_EQ(params.times[0].get_home_to_hospitalized(), params.times[0].get_hospitalized_to_icu());
-    EXPECT_EQ(params.times[0].get_icu_to_home(), params.times[0].get_infectious_asymp());
-    EXPECT_EQ(params.times[0].get_icu_to_dead(), params.populations.get({0, epi::SecirCompartments::E}));
-    EXPECT_EQ(params.populations.get({0, epi::SecirCompartments::C}),
-              params.populations.get({0, epi::SecirCompartments::I}));
-    EXPECT_EQ(params.populations.get({0, epi::SecirCompartments::H}),
-              params.populations.get({0, epi::SecirCompartments::U}));
-    EXPECT_EQ(params.populations.get({0, epi::SecirCompartments::R}),
-              params.populations.get({0, epi::SecirCompartments::D}));
-    EXPECT_EQ(params.probabilities[0].get_asymp_per_infectious(), params.probabilities[0].get_risk_from_symptomatic());
-    EXPECT_EQ(params.probabilities[0].get_hospitalized_per_infectious(),
-              params.probabilities[0].get_icu_per_hospitalized());
-    EXPECT_EQ(params.probabilities[0].get_dead_per_icu(), params.probabilities[0].get_infection_from_contact());
-    EXPECT_EQ(params.probabilities[0].get_carrier_infectability(), params.get_icu_capacity());
+    check_distribution(*vec[0].get_distribution(), *params.get_icu_capacity().get_distribution());
+    check_distribution(*vec[1].get_distribution(), *params.times[0].get_incubation().get_distribution());
+    check_distribution(*vec[2].get_distribution(), *params.times[0].get_infectious_mild().get_distribution());
+    check_distribution(*vec[3].get_distribution(), *params.times[0].get_serialinterval().get_distribution());
+    check_distribution(*vec[4].get_distribution(), *params.times[0].get_hospitalized_to_home().get_distribution());
+    check_distribution(*vec[5].get_distribution(), *params.times[0].get_home_to_hospitalized().get_distribution());
+    check_distribution(*vec[6].get_distribution(), *params.times[0].get_hospitalized_to_icu().get_distribution());
+    check_distribution(*vec[7].get_distribution(), *params.times[0].get_icu_to_home().get_distribution());
+    check_distribution(*vec[8].get_distribution(), *params.times[0].get_infectious_asymp().get_distribution());
+    check_distribution(*vec[9].get_distribution(), *params.times[0].get_icu_to_dead().get_distribution());
+    check_distribution(*vec[10].get_distribution(),
+                       *params.populations.get({0, epi::SecirCompartments::E}).get_distribution());
+    check_distribution(*vec[11].get_distribution(),
+                       *params.populations.get({0, epi::SecirCompartments::C}).get_distribution());
+    check_distribution(*vec[12].get_distribution(),
+                       *params.populations.get({0, epi::SecirCompartments::I}).get_distribution());
+    check_distribution(*vec[13].get_distribution(),
+                       *params.populations.get({0, epi::SecirCompartments::H}).get_distribution());
+    check_distribution(*vec[14].get_distribution(),
+                       *params.populations.get({0, epi::SecirCompartments::U}).get_distribution());
+    check_distribution(*vec[15].get_distribution(),
+                       *params.populations.get({0, epi::SecirCompartments::R}).get_distribution());
+    check_distribution(*vec[16].get_distribution(),
+                       *params.populations.get({0, epi::SecirCompartments::D}).get_distribution());
+    check_distribution(*vec[17].get_distribution(),
+                       *params.probabilities[0].get_infection_from_contact().get_distribution());
+    check_distribution(*vec[18].get_distribution(),
+                       *params.probabilities[0].get_carrier_infectability().get_distribution());
+    check_distribution(*vec[19].get_distribution(),
+                       *params.probabilities[0].get_asymp_per_infectious().get_distribution());
+    check_distribution(*vec[20].get_distribution(),
+                       *params.probabilities[0].get_risk_from_symptomatic().get_distribution());
+    check_distribution(*vec[21].get_distribution(),
+                       *params.probabilities[0].get_hospitalized_per_infectious().get_distribution());
+    check_distribution(*vec[22].get_distribution(),
+                       *params.probabilities[0].get_icu_per_hospitalized().get_distribution());
+    check_distribution(*vec[23].get_distribution(), *params.probabilities[0].get_dead_per_icu().get_distribution());
+
+    EXPECT_EQ(vec[0], params.get_icu_capacity());
+    EXPECT_EQ(vec[1], params.times[0].get_incubation());
+    EXPECT_EQ(vec[2], params.times[0].get_infectious_mild());
+    EXPECT_EQ(vec[3], params.times[0].get_serialinterval());
+    EXPECT_EQ(vec[4], params.times[0].get_hospitalized_to_home());
+    EXPECT_EQ(vec[5], params.times[0].get_home_to_hospitalized());
+    EXPECT_EQ(vec[6], params.times[0].get_hospitalized_to_icu());
+    EXPECT_EQ(vec[7], params.times[0].get_icu_to_home());
+    EXPECT_EQ(vec[8], params.times[0].get_infectious_asymp());
+    EXPECT_EQ(vec[9], params.times[0].get_icu_to_dead());
+    EXPECT_EQ(vec[10], params.populations.get({0, epi::SecirCompartments::E}));
+    EXPECT_EQ(vec[11], params.populations.get({0, epi::SecirCompartments::C}));
+    EXPECT_EQ(vec[12], params.populations.get({0, epi::SecirCompartments::I}));
+    EXPECT_EQ(vec[13], params.populations.get({0, epi::SecirCompartments::H}));
+    EXPECT_EQ(vec[14], params.populations.get({0, epi::SecirCompartments::U}));
+    EXPECT_EQ(vec[15], params.populations.get({0, epi::SecirCompartments::R}));
+    EXPECT_EQ(vec[16], params.populations.get({0, epi::SecirCompartments::D}));
+    EXPECT_EQ(vec[17], params.probabilities[0].get_infection_from_contact());
+    EXPECT_EQ(vec[18], params.probabilities[0].get_carrier_infectability());
+    EXPECT_EQ(vec[19], params.probabilities[0].get_asymp_per_infectious());
+    EXPECT_EQ(vec[20], params.probabilities[0].get_risk_from_symptomatic());
+    EXPECT_EQ(vec[21], params.probabilities[0].get_hospitalized_per_infectious());
+    EXPECT_EQ(vec[22], params.probabilities[0].get_icu_per_hospitalized());
+    EXPECT_EQ(vec[23], params.probabilities[0].get_dead_per_icu());
 }
 
-TEST(TestSecir, check_constraints)
+TEST(TestSecir, testValueConstraints)
 {
     double tinc    = 5.1, // R_2^(-1)+R_3^(-1)
         tinfmild   = 5.86642, // 4-14  (=R4^(-1))
@@ -513,7 +537,7 @@ TEST(TestSecir, check_constraints)
     EXPECT_NEAR(4.6, params.times[0].get_serialinterval(), 1e-14);
 }
 
-TEST(TestSecir, testModelingCorrectness)
+TEST(TestSecir, testModelConstraints)
 {
     double t0   = 0;
     double tmax = 50;
@@ -529,8 +553,6 @@ TEST(TestSecir, testModelingCorrectness)
            nb_rec_t0 = 10, nb_dead_t0 = 0;
 
     epi::SecirParams params;
-
-    params.set_icu_capacity(0);
 
     params.times[0].set_incubation(tinc);
     params.times[0].set_infectious_mild(tinfmild);
@@ -561,7 +583,17 @@ TEST(TestSecir, testModelingCorrectness)
     params.apply_constraints();
 
     epi::TimeSeries<double> secihurd = simulate(t0, tmax, dt, params);
-    for (size_t i = 0; i < secihurd.get_num_time_points(); i++) {
-        EXPECT_LE(secihurd.get_value(i)[5], 1) << " at row " << i;
+    double max_icu_cap               = 0;
+    for (size_t i = 0; i < (size_t)secihurd.get_num_time_points(); i++) {
+        if (secihurd.get_value(i)[5] > max_icu_cap) {
+            max_icu_cap = secihurd.get_value(i)[5];
+        }
+    }
+
+    params.set_icu_capacity(max_icu_cap - 3);
+
+    secihurd = simulate(t0, tmax, dt, params);
+    for (size_t i = 0; i < (size_t)secihurd.get_num_time_points(); i++) {
+        EXPECT_LE(secihurd.get_value(i)[5], max_icu_cap - 2) << " at row " << i;
     }
 }
