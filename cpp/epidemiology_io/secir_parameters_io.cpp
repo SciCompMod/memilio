@@ -595,16 +595,21 @@ void interpolate_ages(std::vector<double>& age_ranges, std::vector<double>& para
 
         // if current param age group didn't fit into previous rki age group, transfer residual to current age group
         if (res < 0) {
-            interpolation[i].push_back(-res / age_ranges[i]);
+            interpolation[i].push_back(std::min(-res / age_ranges[i], 1.0));
         }
 
         if (counter < param_ranges.size() - 1) {
             res += age_ranges[i];
+            if (std::abs(res) < age_ranges[i]) {
+                counter++;
+            }
             // iterate over param age groups while there is still room in the current rki age group
             while (res > 0) {
                 res -= param_ranges[counter];
                 interpolation[i].push_back((param_ranges[counter] + std::min(res, 0.0)) / age_ranges[i]);
-                counter++;
+                if (res >= 0) {
+                    counter++;
+                }
             }
             if (res < 0) {
                 carry_over.push_back(true);
