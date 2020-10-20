@@ -106,7 +106,8 @@ test-cpp:
     - echo 'deb http://download.opensuse.org/repositories/science:/dlr/xUbuntu_18.04/ /' | tee /etc/apt/sources.list.d/science:dlr.list
     - wget -O - https://download.opensuse.org/repositories/science:dlr/xUbuntu_18.04/Release.key  | apt-key add -
     - apt -qq update
-    - apt -qq -y install libtixi3 lcov gcovr g++
+    - apt -qq -y install libtixi3 g++ python3-pip
+    - python3 -m pip install gcovr
   dependencies:
     - build-cpp
   script:
@@ -116,7 +117,7 @@ test-cpp:
     - gcovr -f cpp/epidemiology
     - gcovr -f cpp/epidemiology --xml -o coverage.xml
     - mkdir coverage_report && cd coverage_report
-    - gcovr -r .. -f ../cpp/epidemiology --html --html-details -o index.html
+    - gcovr -r .. -f ../cpp/epidemiology --exclude-throw-branches --html --html-details -o index.html
   artifacts:
     reports:
       junit: cpp/build/tests/report.xml
