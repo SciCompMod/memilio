@@ -37,7 +37,10 @@ const toArray = (vector) => {
   for (let i = 0; i < vector.size(); ++i) {
     arr.push(vector.get(i));
   }
+
+  // The vector in this function is a copy, so we need to manually clean it up.
   vector.delete();
+
   return arr;
 };
 
@@ -238,8 +241,6 @@ class Simulation extends Component {
       };
 
       result.delete();
-
-      secir.doLeakCheck();
 
       return Object.values(
         Object.keys(data)
