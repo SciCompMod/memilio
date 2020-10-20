@@ -172,6 +172,7 @@ def write_dataframe(df, directory, file_prefix, file_type):
 
    outForm = {
        'json': [".json", {"orient": "records"}],
+       'json_timeasstring': [".json", {"orient": "records"}],
        'hdf5': [".h5", {"key": "data"}]
    }
 
