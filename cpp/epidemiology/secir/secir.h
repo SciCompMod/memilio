@@ -79,7 +79,7 @@ public:
                         ScalarType divNj = 1.0 / Nj; // precompute 1.0/Nj
                         ScalarType Si    = Po::get_from(y, (AgeGroup)i, InfectionType::S);
                         ScalarType Cj    = Po::get_from(y, (AgeGroup)j, InfectionType::C);
-                        ScalarType Ij    = Po::get_from(y, (AgeGroup)i, InfectionType::I);
+                        ScalarType Ij    = Po::get_from(y, (AgeGroup)j, InfectionType::I);
                         return Si * cont_freq_eff * divNj * p.probabilities[i].get_infection_from_contact() *
                                (p.probabilities[j].get_carrier_infectability() * Cj +
                                 p.probabilities[j].get_risk_from_symptomatic() * Ij);

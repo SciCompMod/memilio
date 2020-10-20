@@ -92,7 +92,7 @@ int main()
         }
     }
 
-    params.apply_constraints();
+    model.apply_constraints();
 
     epi::TimeSeries<double> secir = simulate(t0, tmax, dt, model);
 

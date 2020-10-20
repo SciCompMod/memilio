@@ -15,16 +15,16 @@ TEST(TestMigration, compareWithSingleIntegration)
     auto tmax = 5;
     auto dt   = 1;
 
-    auto model1 = epi::create_seir_model();
-    model1.populations.set(0.9, epi::InfectionType::S);
-    model1.populations.set(0.1, epi::InfectionType::E);
+    epi::SeirModel model1;
+    model1.populations.set(0.9, epi::SeirInfType::S);
+    model1.populations.set(0.1, epi::SeirInfType::E);
     model1.populations.set_total(1000);
     model1.parameters.times.set_cont_freq(2.5);
     model1.parameters.times.set_incubation(4);
     model1.parameters.times.set_infectious(10);
 
     auto model2 = model1;
-    model2.populations.set(1., epi::InfectionType::S);
+    model2.populations.set(1., epi::SeirInfType::S);
     model2.populations.set_total(500);
 
     auto graph_sim = epi::make_migration_sim(

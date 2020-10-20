@@ -59,7 +59,7 @@ TEST(TestSecir, compareWithPreviousRun)
     model.parameters.probabilities[0].set_icu_per_hospitalized(theta);
     model.parameters.probabilities[0].set_dead_per_icu(delta);
 
-    model.parameters.apply_constraints();
+    model.apply_constraints();
 
     epi::TimeSeries<double> secihurd = simulate(t0, tmax, dt, model);
 
@@ -579,7 +579,7 @@ TEST(TestSecir, testValueConstraints)
     EXPECT_EQ(2.124921, model.parameters.probabilities[0].get_asymp_per_infectious().value());
     EXPECT_NEAR(5.08993, model.parameters.times[0].get_serialinterval(), 1e-14);
 
-    model.parameters.apply_constraints();
+    model.apply_constraints();
 
     EXPECT_EQ(0.0, model.populations.get((epi::AgeGroup1)0, epi::InfectionType::E));
     EXPECT_EQ(0.0, model.parameters.probabilities[0].get_asymp_per_infectious().value());

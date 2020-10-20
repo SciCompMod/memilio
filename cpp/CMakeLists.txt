@@ -48,6 +48,7 @@ add_library(epidemiology
     epidemiology/secir/seir_params.cpp
     epidemiology/secir/seir_params.h
     epidemiology/secir/seir.h
+    epidemiology/secir/seir.cpp
     epidemiology/math/adapt_rk.cpp
     epidemiology/math/adapt_rk.h
     epidemiology/math/integrator.h

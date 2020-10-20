@@ -97,8 +97,8 @@ public:
         dydt.setZero();
         for (auto& flow : flows) {
             ScalarType f = std::get<2>(flow)(parameters, y, t);
-            dydt[call(Populations::get_flat_index, std::get<0>(flow))] += f;
-            dydt[call(Populations::get_flat_index, std::get<1>(flow))] -= f;
+            dydt[call(Populations::get_flat_index, std::get<0>(flow))] -= f;
+            dydt[call(Populations::get_flat_index, std::get<1>(flow))] += f;
         }
     }
 
@@ -110,6 +110,12 @@ public:
     Eigen::VectorXd get_initial_values() const
     {
         return populations.get_compartments();
+    }
+
+    void apply_constraints()
+    {
+        populations.apply_constraints();
+        parameters.apply_constraints();
     }
 
     Populations populations{};

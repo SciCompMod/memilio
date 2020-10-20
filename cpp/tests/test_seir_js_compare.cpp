@@ -16,13 +16,13 @@ protected:
         dt      = 0.1002004008016032;
 
         double total_population = 1061000;
-        model.populations.set(10000, epi::InfectionType::E);
-        model.populations.set(1000, epi::InfectionType::I);
-        model.populations.set(1000, epi::InfectionType::R);
-        model.populations.set(total_population - model.populations.get(epi::InfectionType::E) -
-                                  model.populations.get(epi::InfectionType::I) -
-                                  model.populations.get(epi::InfectionType::R),
-                              epi::InfectionType::S);
+        model.populations.set(10000, epi::SeirInfType::E);
+        model.populations.set(1000, epi::SeirInfType::I);
+        model.populations.set(1000, epi::SeirInfType::R);
+        model.populations.set(total_population - model.populations.get(epi::SeirInfType::E) -
+                                  model.populations.get(epi::SeirInfType::I) -
+                                  model.populations.get(epi::SeirInfType::R),
+                              epi::SeirInfType::S);
         // suscetible now set with every other update
         // model.nb_sus_t0   = model.nb_total_t0 - model.nb_exp_t0 - model.nb_inf_t0 - model.nb_rec_t0;
         model.parameters.times.set_incubation(5.2);

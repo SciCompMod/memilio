@@ -72,7 +72,7 @@ int main()
     model.parameters.probabilities[0].set_icu_per_hospitalized(theta);
     model.parameters.probabilities[0].set_dead_per_icu(delta);
 
-    model.parameters.apply_constraints();
+    model.apply_constraints();
 
     epi::TimeSeries<double> secir = simulate(t0, tmax, dt, model);
 

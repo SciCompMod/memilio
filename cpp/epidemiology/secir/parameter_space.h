@@ -245,7 +245,7 @@ void draw_sample(CompartmentalModel<Populations<AgeGroup, InfectionType>, SecirP
 
     model.parameters.get_contact_patterns().draw_sample();
 
-    model.parameters.apply_constraints();
+    model.apply_constraints();
 }
 
 } // namespace epi

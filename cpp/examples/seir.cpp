@@ -12,16 +12,15 @@ int main()
 
     epi::log_info("Simulating SEIR; t={} ... {} with dt = {}.", t0, tmax, dt);
 
-    epi::SeirModel model = epi::create_seir_model();
+    epi::SeirModel model;
 
     double total_population = 10000;
-    model.populations.set(100, epi::InfectionType::E);
-    model.populations.set(100, epi::InfectionType::I);
-    model.populations.set(100, epi::InfectionType::R);
-    model.populations.set(total_population - model.populations.get(epi::InfectionType::E) -
-                              model.populations.get(epi::InfectionType::I) -
-                              model.populations.get(epi::InfectionType::R),
-                          epi::InfectionType::S);
+    model.populations.set(100, epi::SeirInfType::E);
+    model.populations.set(100, epi::SeirInfType::I);
+    model.populations.set(100, epi::SeirInfType::R);
+    model.populations.set(total_population - model.populations.get(epi::SeirInfType::E) -
+                              model.populations.get(epi::SeirInfType::I) - model.populations.get(epi::SeirInfType::R),
+                          epi::SeirInfType::S);
     // suscetible now set with every other update
     // params.nb_sus_t0   = params.nb_total_t0 - params.nb_exp_t0 - params.nb_inf_t0 - params.nb_rec_t0;
     model.parameters.times.set_incubation(5.2);
