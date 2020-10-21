@@ -183,7 +183,7 @@ Graph<SecirParams, MigrationEdge> read_graph();
  * @param interpolation vector of ratios that are aplied to the data of age_ranges
  * @param carry_over boolean vector which indicates whether there is an overflow from one age group to the next while interpolating data
  */
-void interpolate_ages(std::vector<double>& age_ranges, std::vector<double>& param_ranges,
+void interpolate_ages(const std::vector<double>& age_ranges, const std::vector<double>& param_ranges,
                       std::vector<std::vector<double>>& interpolation, std::vector<bool>& carry_over);
 
 /**
@@ -194,8 +194,8 @@ void interpolate_ages(std::vector<double>& age_ranges, std::vector<double>& para
  * @param day specifies day at which the data is read
  * @param dir directory of files
  */
-void read_population_data_germany(epi::SecirParams& params, std::vector<double>& param_ranges, int month, int day,
-                                  std::string& dir);
+void read_population_data_germany(epi::SecirParams& params, const std::vector<double>& param_ranges, int month, int day,
+                                  const std::string& dir);
 
 /**
  * @brief reads population data from population files for the specefied state
@@ -206,8 +206,8 @@ void read_population_data_germany(epi::SecirParams& params, std::vector<double>&
  * @param state region key of state of interest
  * @param dir directory of files
  */
-void read_population_data_state(epi::SecirParams& params, std::vector<double>& param_ranges, int month, int day,
-                                int state, std::string& dir);
+void read_population_data_state(epi::SecirParams& params, const std::vector<double>& param_ranges, int month, int day,
+                                int state, const std::string& dir);
 
 /**
  * @brief reads population data from population files for the specefied county
@@ -218,8 +218,8 @@ void read_population_data_state(epi::SecirParams& params, std::vector<double>& p
  * @param county region key of county of interest
  * @param dir directory of files
  */
-void read_population_data_county(epi::SecirParams& params, std::vector<double>& param_ranges, int month, int day,
-                                 int county, std::string& dir);
+void read_population_data_county(epi::SecirParams& params, const std::vector<double>& param_ranges, int month, int day,
+                                 int county, const std::string& dir);
 
 } // namespace epi
 
