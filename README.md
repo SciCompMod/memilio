@@ -1,6 +1,7 @@
 # Epidemiology #
 
 [![pipeline status](https://gitlab.dlr.de/hpc-against-corona/epidemiology/badges/master/pipeline.svg)](https://gitlab.dlr.de/hpc-against-corona/epidemiology/-/commits/master)
+[![coverage report](https://gitlab.dlr.de/hpc-against-corona/epidemiology/badges/master/coverage.svg)](https://gitlab.dlr.de/hpc-against-corona/epidemiology/-/jobs/artifacts/master/file/coverage_report/index.html?job=test-cpp)
 
 This is a common project between the department of Systems Immunology (SIMM) of the he Helmholtz Center for Infection Research (HZI) and the Institute for Software Technology of the German Aerospace Center (DLR). This project will bring cutting edge and compute intensive epidemiological models to a large scale, which enables a precise and high-resolution spatiotemporal pandemic simulation for entire countries.
 
@@ -35,6 +36,19 @@ In order to use IO of parameters and simulation results (*epidemiology_io* libra
 * Run 
   * an example via ./examples/secir_ageres
   * all unit tests via ./tests/runUnitTests
+
+*Running code coverage analysis*
+
+Code coverage analysis currently only works on linux with the "Makefile" generator and in Debug mode. To perform
+the analysis, configure cmake as follows
+
+    cmake -DCMAKE_BUILD_TYPE=Debug -DEPI_TEST_COVERAGE=ON ..
+
+This step needs to have the tool lcov installed. To execute the coverage, run
+
+    cmake --build . --target coverage
+
+It will generate a html report inside the `coverage` directory.
 
 *Steps to execute C++ code via python bindings*
 
