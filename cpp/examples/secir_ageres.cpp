@@ -90,7 +90,9 @@ int main()
 
     params.apply_constraints();
 
-    epi::read_population_data_state(params, {25., 50., 25.}, 4, 4, 1, "../../data/pydata/Germany");
+    std::string path                 = "../../data/pydata/Germany";
+    std::vector<double> param_ranges = {25., 50., 25.};
+    epi::read_population_data_state(params, param_ranges, 4, 4, 1, path);
 
     epi::TimeSeries<double> secir = simulate(t0, tmax, dt, params);
 

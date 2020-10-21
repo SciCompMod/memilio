@@ -634,7 +634,7 @@ void interpolate_ages(std::vector<double>& age_ranges, std::vector<double>& para
     carry_over.push_back(true);
 }
 
-void set_rki_data(epi::SecirParams& params, std::vector<double> param_ranges, Json::Value& root, std::string& id_name,
+void set_rki_data(epi::SecirParams& params, std::vector<double>& param_ranges, Json::Value& root, std::string& id_name,
                   int region, int month, int day)
 {
     std::vector<std::string> age_names = {"A00-A04", "A05-A14", "A15-A34", "A35-A59", "A60-A79", "A80+", "unknown"};
@@ -725,8 +725,8 @@ void set_divi_data(epi::SecirParams& params, Json::Value& root, std::string& id_
     }
 }
 
-void read_population_data_germany(epi::SecirParams& params, std::vector<double> param_ranges, int month, int day,
-                                  std::string dir)
+void read_population_data_germany(epi::SecirParams& params, std::vector<double>& param_ranges, int month, int day,
+                                  std::string& dir)
 {
 
     Json::Reader reader;
@@ -749,8 +749,8 @@ void read_population_data_germany(epi::SecirParams& params, std::vector<double> 
     set_divi_data(params, root_divi, id_name, 0, month, day);
 }
 
-void read_population_data_state(epi::SecirParams& params, std::vector<double> param_ranges, int month, int day,
-                                int state, std::string dir)
+void read_population_data_state(epi::SecirParams& params, std::vector<double>& param_ranges, int month, int day,
+                                int state, std::string& dir)
 {
     assert(state > 0 && state <= 16 && "State must be between 1 and 16");
     assert(param_ranges.size() == params.get_num_groups() &&
@@ -773,8 +773,8 @@ void read_population_data_state(epi::SecirParams& params, std::vector<double> pa
     set_divi_data(params, root_divi, id_name, state, month, day);
 }
 
-void read_population_data_county(epi::SecirParams& params, std::vector<double> param_ranges, int month, int day,
-                                 int county, std::string dir)
+void read_population_data_county(epi::SecirParams& params, std::vector<double>& param_ranges, int month, int day,
+                                 int county, std::string& dir)
 {
     assert(county > 999 && "State must be between 1 and 16");
     assert(param_ranges.size() == params.get_num_groups() &&
