@@ -22,8 +22,6 @@ build-cpp-win:
   stage: build
   tags:
     - SC-0030VM
-  only:
-    - disabled
   before_script:
     - $env:Path = "c:\Windows\System32"
     - $env:Path += ";c:\Devel\Tools\cmake-3.18.3-win64-x64\bin"
@@ -72,8 +70,6 @@ build-py-win:
   tags:
     - SC-0030VM
   stage: build
-  only:
-    - disabled
   before_script:
     - ci\activate_vc2019.ps1
     - cd pycode
@@ -131,8 +127,6 @@ test-cpp-win:
   tags:
     - SC-0030VM
   stage: test
-  only:
-    - disabled
   dependencies:
     - build-cpp-win
   script:
