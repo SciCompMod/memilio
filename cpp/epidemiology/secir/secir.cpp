@@ -656,7 +656,7 @@ void SecirParams::apply_constraints()
         m_icu_capacity = 0;
     }
 
-    for (int i = 0; i < times.size(); i++) {
+    for (size_t i = 0; i < times.size(); i++) {
         populations.apply_constraints();
         times[i].apply_constraints();
         probabilities[i].apply_constraints();
@@ -669,7 +669,7 @@ void SecirParams::check_constraints() const
         log_warning("Constraint check: Parameter m_icu_capacity smaller {:d}", 0);
     }
 
-    for (int i = 0; i < times.size(); i++) {
+    for (size_t i = 0; i < times.size(); i++) {
         populations.check_constraints();
         times[i].check_constraints();
         probabilities[i].check_constraints();

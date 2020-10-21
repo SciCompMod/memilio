@@ -57,9 +57,9 @@ public:
     }
 
 private:
+    std::reference_wrapper<Location> m_location;
     InfectionState m_state;
     double m_time_until_carrier;
-    std::reference_wrapper<Location> m_location;
     //age, times, ...
 };
 

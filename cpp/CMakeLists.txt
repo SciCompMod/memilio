@@ -38,6 +38,7 @@ add_library(epidemiology
     epidemiology/migration/migration.cpp
     epidemiology/utils/graph.h
     epidemiology/utils/graph.cpp
+    epidemiology/utils/eigen.h
     epidemiology/utils/eigen_util.h
     epidemiology/secir/populations.h
     epidemiology/secir/populations.cpp
@@ -81,6 +82,9 @@ target_include_directories(epidemiology PUBLIC
 
 target_compile_features(epidemiology PUBLIC cxx_std_14)
 target_link_libraries(epidemiology PUBLIC spdlog::spdlog Eigen3::Eigen)
+target_compile_options(epidemiology PRIVATE
+    $<$<OR:$<CXX_COMPILER_ID:Clang>,$<CXX_COMPILER_ID:GNU>>: -Wall -Wextra -Werror -Wshadow --pedantic-errors -Wno-deprecated-copy>
+    $<$<CXX_COMPILER_ID:MSVC>: /W4 /WX>)
 
 if (EPI_BUILD_EPI_IO)
     
@@ -105,6 +109,9 @@ if (EPI_BUILD_EPI_IO)
     target_include_directories(epidemiology_io PRIVATE ${HDF5_INCLUDE_DIRS})
 
     target_compile_definitions(epidemiology_io PUBLIC "-DHAVE_EPI_IO")
+    target_compile_options(epidemiology_io PRIVATE
+        $<$<OR:$<CXX_COMPILER_ID:Clang>,$<CXX_COMPILER_ID:GNU>>: -Wall -Wextra -Werror -Wshadow --pedantic-errors -Wno-deprecated-copy>
+        $<$<CXX_COMPILER_ID:MSVC>: /W4 /WX>)
 
 endif(EPI_BUILD_EPI_IO)
 

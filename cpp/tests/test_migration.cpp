@@ -3,7 +3,7 @@
 #include "epidemiology/migration/migration.h"
 #include "epidemiology/secir/seir.h"
 #include "epidemiology/utils/eigen_util.h"
-#include <Eigen/Core>
+#include "epidemiology/utils/eigen.h"
 #include "gtest/gtest.h"
 
 #include <cmath>

@@ -100,7 +100,7 @@ int main(int argc, char** argv)
     std::cout << "Done" << std::endl;
 
     std::cout << "Writing XML Files..." << std::flush;
-    epi::write_graph(graph, t0, tmax);
+    epi::write_graph(graph);
     std::cout << "Done" << std::endl;
 
     std::cout << "Reading XML Files..." << std::flush;

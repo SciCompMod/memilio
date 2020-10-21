@@ -1,4 +1,5 @@
 #include <epidemiology/utils/eigen_util.h>
+#include "epidemiology/utils/compiler_diagnostics.h"
 #include "matchers.h"
 #include <gtest/gtest.h>
 
@@ -47,7 +48,7 @@ TYPED_TEST(TestEigenUtilMatrix, reshape)
 {
     TypeParam A(2, 3), B(1, 6), C(3, 2), D(6, 1);
     A << 0, 1, 2, 3, 4, 5;
-    if (TypeParam::IsRowMajor) {
+    IF_CONSTEXPR(TypeParam::IsRowMajor) {
         B << 0, 1, 2, 3, 4, 5;
         C << 0, 1, 2, 3, 4, 5;
         D << 0, 1, 2, 3, 4, 5;

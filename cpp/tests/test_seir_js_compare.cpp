@@ -47,7 +47,7 @@ TEST_F(TestCompareSeirWithJS, integrate)
 {
     auto result = simulate(t0, tmax, dt, params);
 
-    ASSERT_EQ(refData.size(), result.get_num_time_points());
+    ASSERT_EQ(refData.size(), static_cast<size_t>(result.get_num_time_points()));
 
     for (Eigen::Index irow = 0; irow < result.get_num_time_points(); ++irow) {
         double t = refData[static_cast<size_t>(irow)][0];

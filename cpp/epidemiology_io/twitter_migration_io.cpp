@@ -1,7 +1,7 @@
 #include <epidemiology_io/twitter_migration_io.h>
+#include "epidemiology/utils/eigen.h"
 #include <epidemiology/utils/logging.h>
 
-#include <Eigen/Core>
 #include <iostream>
 #include <fstream>
 #include <string>
@@ -54,16 +54,16 @@ Eigen::MatrixXi read_migration(const std::string& filename)
 
         std::string tp;
         if (file.is_open()) { //checking whether the file could be opened
-            int i = 0;
+            int linenumber = 0;
             while (getline(file, tp)) {
                 auto line = split(tp, '\t');
-                if (i > 0) {
+                if (linenumber > 0) {
                     ids.push_back(std::stoi(line[2]));
-                    txt_matrix(i - 1, 0) = std::stoi(line[2]);
-                    txt_matrix(i - 1, 1) = std::stoi(line[3]);
-                    txt_matrix(i - 1, 2) = std::stoi(line[4]);
+                    txt_matrix(linenumber - 1, 0) = std::stoi(line[2]);
+                    txt_matrix(linenumber - 1, 1) = std::stoi(line[3]);
+                    txt_matrix(linenumber - 1, 2) = std::stoi(line[4]);
                 }
-                i++;
+                linenumber++;
             }
 
             sort(ids.begin(), ids.end());
@@ -72,8 +72,8 @@ Eigen::MatrixXi read_migration(const std::string& filename)
             ids.resize(std::distance(ids.begin(), iter));
 
             Eigen::MatrixXi migration(ids.size(), ids.size());
-            for (int i = 0; i < ids.size(); i++) {
-                for (int j = 0; j < ids.size(); j++)
+            for (Eigen::Index i = 0; i < static_cast<Eigen::Index>(ids.size()); i++) {
+                for (Eigen::Index j = 0; j < static_cast<Eigen::Index>(ids.size()); j++)
                     migration(i, j) = 0;
             }
 

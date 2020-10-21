@@ -25,10 +25,9 @@ UncertainContactMatrix read_contact(TixiDocumentHandle handle, const std::string
  * @param path Path to contact frequency matrix Tree of XML file
  * @param contact_pattern Contact frequencies, dampings, and distributions
  * @param io_mode type of xml ouput (see epi::write_parameter_study for more details)
- * @param num_runs Number of runs of parameter study (used for predefinied samples of dampings)
  */
 void write_contact(TixiDocumentHandle handle, const std::string& path, const UncertainContactMatrix& contact_pattern,
-                   int io_mode, int num_runs);
+                   int io_mode);
 
 /**
  * @brief reads parameter distribution and/or value from xml file
@@ -135,7 +134,7 @@ void write_single_run_params(const int run, const SecirParams& params, double t0
  * @param t0 starting point of simulation
  * @param tmax end point of simulation
  */
-void write_node(const Graph<SecirParams, MigrationEdge>& graph, int node, double t0, double tmax);
+void write_node(const Graph<SecirParams, MigrationEdge>& graph, int node);
 
 /**
  * @brief reads parameters of a single node and saves it into the graph
@@ -171,7 +170,7 @@ void read_edge(TixiDocumentHandle handle, const std::string& path, Graph<SecirPa
  * @param tmax end point of simulation
  */
 //TO-DO: Implement apropriate File System for XML FIles
-void write_graph(const Graph<SecirParams, MigrationEdge>& graph, double t0, double tmax);
+void write_graph(const Graph<SecirParams, MigrationEdge>& graph);
 
 /**
  * @brief reads graph xml files and returns a Secir simulation graph

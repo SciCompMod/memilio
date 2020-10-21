@@ -3,12 +3,13 @@ import {connect} from 'react-redux';
 import {Button} from 'reactstrap';
 import {getActiveMeasures} from '../redux/measures';
 import {getParameterMap} from '../redux/parameters';
-import {getPopulationsOfRegion, getSelectedChildData, getSelectedData} from '../redux/app';
 import {setData, setRegionData} from '../redux/seir';
 import {setEndDate, setStartDate} from '../redux/time';
 
 import {Damping, makeSeirParam, simulate_seir} from '../common/seir.js';
 import {calculateDamping, lastElement} from '../common/utils';
+
+import {PopulationDatastore as populations} from '../common/population-datastore';
 
 /** @typedef {{date: number, S: number, E: number, I: number, R: number}} SEIREntry */
 
@@ -16,6 +17,8 @@ import {calculateDamping, lastElement} from '../common/utils';
  * @deprecated
  */
 class Simulation extends PureComponent {
+  populations = null;
+
   /**
    * Runs a SEIR simulation on the selected region and related regions.
    * If Germany is selected  => Run on Germany and its' federal states.
@@ -32,10 +35,10 @@ class Simulation extends PureComponent {
     const regionResults = new Map();
     for (let [regionId, region] of Object.entries(this.props.childData.all)) {
       const start = region[0];
-      const population = this.props.populations.get(parseInt(regionId));
+      const population = this.populations.get(parseInt(regionId, 10));
 
       const regionResult = this.simulateRegion(start, population);
-      regionResults.set(parseInt(regionId), regionResult);
+      regionResults.set(parseInt(regionId, 10), regionResult);
     }
 
     this.props.setRegionData(Object.fromEntries(regionResults));
@@ -105,6 +108,16 @@ class Simulation extends PureComponent {
     );
   }
 
+  async componentDidUpdate() {
+    let p = await populations.getCountiesByState(this.props.selected ? this.props.selected.id : 0);
+    if (p && Array.isArray(p)) {
+      this.populations = p.reduce((acc, value, i) => {
+        acc.set(value.key, value.population);
+        return acc;
+      }, new Map());
+    }
+  }
+
   render() {
     return (
       <Button onClick={this.simulate.bind(this)} size="sm" disabled={this.props.selected === null}>
@@ -115,16 +128,16 @@ class Simulation extends PureComponent {
 }
 
 const mapState = (state) => {
-  let start = getSelectedData(state);
+  let start = null; //getSelectedData(state);
   if (start) {
     start = start.start;
   }
+
   return {
     start,
-    childData: getSelectedChildData(state),
+    childData: null, //getSelectedChildData(state),
 
     /** @type Map<number, number> */
-    populations: getPopulationsOfRegion(state, state.app.selected ? state.app.selected.id : 0),
     selected: state.app.selected,
     measures: getActiveMeasures(state.measures),
     parameters: getParameterMap(state.parameters),

@@ -144,32 +144,32 @@ TEST(TestEnsembleMean, basic)
     //run 1
     ensemble.emplace_back(2, epi::TimeSeries<double>(1));
     //node 1
-    ensemble.back()[0].add_time_point(0.0, Vec::Constant(1, 0.0));
-    ensemble.back()[0].add_time_point(1.0, Vec::Constant(1, 1.0));
-    ensemble.back()[0].add_time_point(2.0, Vec::Constant(1, 2.0));
+    ensemble.back()[0].add_time_point(3.0, Vec::Constant(1, 0.0));
+    ensemble.back()[0].add_time_point(4.0, Vec::Constant(1, 1.0));
+    ensemble.back()[0].add_time_point(5.0, Vec::Constant(1, 2.0));
     //node 2
-    ensemble.back()[1].add_time_point(0.0, Vec::Constant(1, 0.0));
-    ensemble.back()[1].add_time_point(1.0, Vec::Constant(1, 1.0));
-    ensemble.back()[1].add_time_point(2.0, Vec::Constant(1, 2.0));
+    ensemble.back()[1].add_time_point(3.0, Vec::Constant(1, 0.0));
+    ensemble.back()[1].add_time_point(4.0, Vec::Constant(1, 1.0));
+    ensemble.back()[1].add_time_point(5.0, Vec::Constant(1, 2.0));
 
     //run 2
     ensemble.emplace_back(2, epi::TimeSeries<double>(1));
     //node 1
-    ensemble.back()[0].add_time_point(0.0, Vec::Constant(1, 0.5));
-    ensemble.back()[0].add_time_point(1.0, Vec::Constant(1, 3.0));
-    ensemble.back()[0].add_time_point(2.0, Vec::Constant(1, 0.0));
+    ensemble.back()[0].add_time_point(3.0, Vec::Constant(1, 0.5));
+    ensemble.back()[0].add_time_point(4.0, Vec::Constant(1, 3.0));
+    ensemble.back()[0].add_time_point(5.0, Vec::Constant(1, 0.0));
     //node 2
-    ensemble.back()[1].add_time_point(0.0, Vec::Constant(1, 1.5));
-    ensemble.back()[1].add_time_point(1.0, Vec::Constant(1, 0.5));
-    ensemble.back()[1].add_time_point(2.0, Vec::Constant(1, 1.0));
+    ensemble.back()[1].add_time_point(3.0, Vec::Constant(1, 1.5));
+    ensemble.back()[1].add_time_point(4.0, Vec::Constant(1, 0.5));
+    ensemble.back()[1].add_time_point(5.0, Vec::Constant(1, 1.0));
 
     auto mean = epi::ensemble_mean(ensemble);
     
     ASSERT_EQ(mean.size(), 2);
-    ASSERT_THAT(mean[0].get_times(), testing::ElementsAre(0.0, 1.0, 2.0));
+    ASSERT_THAT(mean[0].get_times(), testing::ElementsAre(3.0, 4.0, 5.0));
     ASSERT_THAT(mean[0], testing::ElementsAre(MatrixNear(Vec::Constant(1, 0.25)), MatrixNear(Vec::Constant(1, 2.0)),
                                               MatrixNear(Vec::Constant(1, 1.0))));
-    ASSERT_THAT(mean[1].get_times(), testing::ElementsAre(0.0, 1.0, 2.0));
+    ASSERT_THAT(mean[1].get_times(), testing::ElementsAre(3.0, 4.0, 5.0));
     ASSERT_THAT(mean[1], testing::ElementsAre(MatrixNear(Vec::Constant(1, 0.75)), MatrixNear(Vec::Constant(1, 0.75)),
                                               MatrixNear(Vec::Constant(1, 1.5))));
 }
@@ -183,46 +183,46 @@ TEST(TestEnsemblePercentile, basic)
     //run 1
     ensemble.emplace_back(2, epi::TimeSeries<double>(2));
     //node 1
-    ensemble.back()[0].add_time_point(0.0, (Vec(2) << 0.0, 0.0).finished());
     ensemble.back()[0].add_time_point(1.0, (Vec(2) << 0.0, 0.0).finished());
     ensemble.back()[0].add_time_point(2.0, (Vec(2) << 0.0, 0.0).finished());
+    ensemble.back()[0].add_time_point(3.0, (Vec(2) << 0.0, 0.0).finished());
     //node 2
-    ensemble.back()[1].add_time_point(0.0, (Vec(2) << 0.2, 0.0).finished());
-    ensemble.back()[1].add_time_point(1.0, (Vec(2) << 0.0, 0.0).finished());
+    ensemble.back()[1].add_time_point(1.0, (Vec(2) << 0.2, 0.0).finished());
     ensemble.back()[1].add_time_point(2.0, (Vec(2) << 0.0, 0.0).finished());
+    ensemble.back()[1].add_time_point(3.0, (Vec(2) << 0.0, 0.0).finished());
 
     //run 2
     ensemble.emplace_back(2, epi::TimeSeries<double>(2));
     //node 1
-    ensemble.back()[0].add_time_point(0.0, (Vec(2) << 0.0, 0.0).finished());
-    ensemble.back()[0].add_time_point(1.0, (Vec(2) << 0.0, 1.0).finished());
-    ensemble.back()[0].add_time_point(2.0, (Vec(2) << 0.0, 0.0).finished());
+    ensemble.back()[0].add_time_point(1.0, (Vec(2) << 0.0, 0.0).finished());
+    ensemble.back()[0].add_time_point(2.0, (Vec(2) << 0.0, 1.0).finished());
+    ensemble.back()[0].add_time_point(3.0, (Vec(2) << 0.0, 0.0).finished());
     //node 2
-    ensemble.back()[1].add_time_point(0.0, (Vec(2) << 0.1, 0.0).finished());
-    ensemble.back()[1].add_time_point(1.0, (Vec(2) << 0.0, 0.0).finished());
+    ensemble.back()[1].add_time_point(1.0, (Vec(2) << 0.1, 0.0).finished());
     ensemble.back()[1].add_time_point(2.0, (Vec(2) << 0.0, 0.0).finished());
+    ensemble.back()[1].add_time_point(3.0, (Vec(2) << 0.0, 0.0).finished());
 
     //run 3
     ensemble.emplace_back(2, epi::TimeSeries<double>(2));
     //node 1
-    ensemble.back()[0].add_time_point(0.0, (Vec(2) << 0.0, 0.0).finished());
-    ensemble.back()[0].add_time_point(1.0, (Vec(2) << 0.0, 2.0).finished());
-    ensemble.back()[0].add_time_point(2.0, (Vec(2) << 0.0, 0.0).finished());
+    ensemble.back()[0].add_time_point(1.0, (Vec(2) << 0.0, 0.0).finished());
+    ensemble.back()[0].add_time_point(2.0, (Vec(2) << 0.0, 2.0).finished());
+    ensemble.back()[0].add_time_point(3.0, (Vec(2) << 0.0, 0.0).finished());
     //node 2
-    ensemble.back()[1].add_time_point(0.0, (Vec(2) << 0.3, 0.0).finished());
-    ensemble.back()[1].add_time_point(1.0, (Vec(2) << 0.0, 0.0).finished());
+    ensemble.back()[1].add_time_point(1.0, (Vec(2) << 0.3, 0.0).finished());
     ensemble.back()[1].add_time_point(2.0, (Vec(2) << 0.0, 0.0).finished());
+    ensemble.back()[1].add_time_point(3.0, (Vec(2) << 0.0, 0.0).finished());
 
     //run 4
     ensemble.emplace_back(2, epi::TimeSeries<double>(2));
     //node 1
-    ensemble.back()[0].add_time_point(0.0, (Vec(2) << 0.0, 0.0).finished());
-    ensemble.back()[0].add_time_point(1.0, (Vec(2) << 0.0, 3.0).finished());
-    ensemble.back()[0].add_time_point(2.0, (Vec(2) << 0.0, 0.0).finished());
+    ensemble.back()[0].add_time_point(1.0, (Vec(2) << 0.0, 0.0).finished());
+    ensemble.back()[0].add_time_point(2.0, (Vec(2) << 0.0, 3.0).finished());
+    ensemble.back()[0].add_time_point(3.0, (Vec(2) << 0.0, 0.0).finished());
     //node 2
-    ensemble.back()[1].add_time_point(0.0, (Vec(2) << 0.0, 0.0).finished());
     ensemble.back()[1].add_time_point(1.0, (Vec(2) << 0.0, 0.0).finished());
     ensemble.back()[1].add_time_point(2.0, (Vec(2) << 0.0, 0.0).finished());
+    ensemble.back()[1].add_time_point(3.0, (Vec(2) << 0.0, 0.0).finished());
 
     auto q1 = epi::ensemble_percentile(ensemble, 0.2);
     auto q2 = epi::ensemble_percentile(ensemble, 0.4);
@@ -231,22 +231,22 @@ TEST(TestEnsemblePercentile, basic)
     
     //checking only a few elements
     ASSERT_EQ(q1.size(), 2);
-    ASSERT_THAT(q1[0].get_times(), testing::ElementsAre(0.0, 1.0, 2.0));
+    ASSERT_THAT(q1[0].get_times(), testing::ElementsAre(1.0, 2.0, 3.0));
     ASSERT_EQ(q1[0][1][1], 0.0);
     ASSERT_EQ(q1[1][0][0], 0.0);
 
     ASSERT_EQ(q2.size(), 2);
-    ASSERT_THAT(q2[0].get_times(), testing::ElementsAre(0.0, 1.0, 2.0));
+    ASSERT_THAT(q2[0].get_times(), testing::ElementsAre(1.0, 2.0, 3.0));
     ASSERT_EQ(q2[0][1][1], 1.0);
     ASSERT_EQ(q2[1][0][0], 0.1);
 
     ASSERT_EQ(q3.size(), 2);
-    ASSERT_THAT(q3[0].get_times(), testing::ElementsAre(0.0, 1.0, 2.0));
+    ASSERT_THAT(q3[0].get_times(), testing::ElementsAre(1.0, 2.0, 3.0));
     ASSERT_EQ(q3[0][1][1], 2.0);
     ASSERT_EQ(q3[1][0][0], 0.2);
 
     ASSERT_EQ(q4.size(), 2);
-    ASSERT_THAT(q4[0].get_times(), testing::ElementsAre(0.0, 1.0, 2.0));
+    ASSERT_THAT(q4[0].get_times(), testing::ElementsAre(1.0, 2.0, 3.0));
     ASSERT_EQ(q4[0][1][1], 3.0);
     ASSERT_EQ(q4[1][0][0], 0.3);
 }

@@ -1,7 +1,7 @@
 #ifndef READ_TWITTER_H
 #define READ_TWITTER_H
 
-#include <Eigen/Core>
+#include "epidemiology/utils/eigen.h"
 #include <iostream>
 #include <fstream>
 #include <string>

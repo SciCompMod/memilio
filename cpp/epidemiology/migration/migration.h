@@ -3,7 +3,7 @@
 
 #include "epidemiology/utils/graph.h"
 
-#include <Eigen/Core>
+#include "epidemiology/utils/eigen.h"
 #include <vector>
 
 namespace epi
@@ -23,9 +23,9 @@ public:
 
     GraphSimulation(double t0, double dt, const Graph& g, const node_function& node_func,
                     const edge_function&& edge_func)
-        : m_graph(g)
-        , m_t(t0)
+        : m_t(t0)
         , m_dt(dt)
+        , m_graph(g)
         , m_node_func(node_func)
         , m_edge_func(edge_func)
     {
@@ -117,12 +117,17 @@ public:
 class MigrationEdge
 {
 public:
-    MigrationEdge(const Eigen::VectorXd& coefficients)
-        : coefficients(coefficients)
+    MigrationEdge(const Eigen::VectorXd& coeffs)
+        : coefficients(coeffs)
     {
     }
     //per group and compartment
     Eigen::VectorXd coefficients;
+
+    bool operator==(const MigrationEdge& other) const 
+    {
+        return coefficients == other.coefficients;
+    }
 };
 
 template <class Model>
@@ -133,7 +138,7 @@ void evolve_model(double t, double dt, ModelNode<Model>& model)
 }
 
 template <class Model>
-void apply_migration(double t, double dt, MigrationEdge& migrationEdge, ModelNode<Model>& model1,
+void apply_migration(double /*t*/, double dt, MigrationEdge& migrationEdge, ModelNode<Model>& model1,
                      ModelNode<Model>& model2)
 {
     auto migration = (dt * model1.last_state.array() * migrationEdge.coefficients.array()).matrix();

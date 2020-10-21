@@ -20,7 +20,7 @@ std::vector<size_t> tensor_dimension_prods(std::vector<size_t> const& dimensions
     std::vector<size_t> prods(dimensions.size());
     auto d   = dimensions.rbegin();
     prods[0] = *(d++);
-    for (auto i = 1; i < prods.size() && d != dimensions.rend(); ++i) {
+    for (size_t i = 1; i < prods.size() && d != dimensions.rend(); ++i) {
         prods[i] = prods[i - 1] * (*(d++));
     }
     return prods;
@@ -28,7 +28,7 @@ std::vector<size_t> tensor_dimension_prods(std::vector<size_t> const& dimensions
 
 std::vector<size_t> unravel_index_given_prods(size_t const index, std::vector<size_t> const& dim_prods)
 {
-    assert(index >= 0 && index < dim_prods.back());
+    assert(index < dim_prods.back());
 
     std::vector<size_t> out(dim_prods.size(), 0);
 
