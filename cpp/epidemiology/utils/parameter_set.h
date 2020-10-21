@@ -91,6 +91,18 @@ namespace details
             return m_value;
         }
 
+        template<class T>
+        bool operator==(const TaggedParameter<T>& other)
+        {
+            return m_value == other.m_value;
+        }
+
+        template<class T>
+        bool operator!=(const TaggedParameter<T>& other)
+        {
+            return m_value != other.m_value;
+        }
+
     private:
         Type m_value;
     };
@@ -187,6 +199,16 @@ public:
     static constexpr size_t size()
     {
         return sizeof...(Tags);
+    }
+
+    bool operator==(const ParameterSet& b) const 
+    {
+        return m_tup == b.m_tup; 
+    }
+
+    bool operator!=(const ParameterSet& b) const 
+    {
+        return m_tup != b.m_tup; 
     }
 
 private:

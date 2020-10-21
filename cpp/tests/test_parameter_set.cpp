@@ -243,3 +243,15 @@ TEST(TestParameterSet, constType)
     static_assert(std::is_constructible<epi::ParameterSet<ConstTypeParam>, epi::DefaultInit>::value,
                   "const parameter not default initializable");
 }
+
+TEST(TestParameterSet, equality)
+{
+    epi::ParameterSet<IntParam1, DoubleParam> a(1, 0.5);
+    epi::ParameterSet<IntParam1, DoubleParam> b(1, 0.5);
+    epi::ParameterSet<IntParam1, DoubleParam> c(1, 0.6);
+    epi::ParameterSet<IntParam1, DoubleParam> d(2, 0.5);
+    
+    ASSERT_TRUE(a == b);
+    ASSERT_TRUE(a != c);
+    ASSERT_TRUE(a != d);
+}
