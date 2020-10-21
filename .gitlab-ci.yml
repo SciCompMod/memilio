@@ -42,7 +42,7 @@ build-cpp-win:
     - md -Force build-win
     - cd build-win
     - cmake --version
-    - cmake -G "Ninja" -DCMAKE_BUILD_TYPE=Release -DEPI_USE_BUNDLED_EIGEN=ON -DEPI_BUILD_EPI_IO=ON -DHDF5_USE_STATIC_LIBRARIES=ON -DHDF5_DIR=C:\Devel\Libraries\HDF5-1.10.1-win64\cmake -Dtixi3_DIR=C:\Devel\Libraries\TIXI-3.1.1-win64\lib\tixi3 ..
+    - cmake -G "Ninja" -DCMAKE_BUILD_TYPE=Release -DEPI_USE_BUNDLED_EIGEN=ON -DEPI_BUILD_EPI_IO=ON -DHDF5_USE_STATIC_LIBRARIES=ON -DHDF5_DIR=C:\Devel\Libraries\HDF5-1.10.1-win64\cmake -DBOOST_ROOT:PATH="C:\Program Files\boost_1_74_0" -DBoost_USE_STATIC_LIBS=ON -Dtixi3_DIR=C:\Devel\Libraries\TIXI-3.1.1-win64\lib\tixi3 ..
     - cp "c:\Devel\Libraries\TIXI-3.1.1-win64\bin\tixi3.dll" "tests"
     - cmake --build .
 
