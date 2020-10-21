@@ -156,9 +156,10 @@ test-py:
     - for pkg in `ls pycode/wheelhouse/*36*.whl`; do python3.6 -m pip install $pkg; done
     - pip install pyfakefs
     - pip install freezegun
+    - pip install coverage
   script:
     - cd pycode/test
-    - python3 -m unittest
+    - PYTHONPATH=.. python3 -m coverage run --source ../epidemiology -m unittest
     - getrkidata --help
     - getpopuldata --help
     - getjhdata --help
@@ -166,6 +167,15 @@ test-py:
     - getdividata --help
     - getalldata --help
     - cleandata --help
+    - python3 -m coverage report
+    - python3 -m coverage xml -o coverage_python.xml
+    - python3 -m coverage html -d coverage_python
+    - mv coverage_python ../../
+  artifacts:
+    reports:
+      cobertura: pycode/test/coverage_python.xml
+    paths:
+      - coverage_python
 
 download-data:
   tags:
