@@ -1,5 +1,6 @@
 #include <epidemiology_io/secir_parameters_io.h>
 #include <epidemiology_io/secir_result_io.h>
+#include <epidemiology_io/io.h>
 #include <epidemiology/utils/memory.h>
 #include <epidemiology/utils/uncertain_value.h>
 #include <epidemiology/utils/stl_util.h>
@@ -447,13 +448,13 @@ void write_single_run_params(const int run, const SecirParams& params, double t0
 
     if (created) {
         log_info("Directory '{:s}' was created. Results are stored in {:s}/results.", dir.string(),
-                 get_current_dir_name());
+                 epi::get_current_dir_name());
     }
     else {
         log_info(
             "Directory '{:s}' already exists. Results are stored in {:s}/ results. Files from previous runs will be "
             "overwritten",
-            dir.string(), get_current_dir_name());
+            dir.string(), epi::get_current_dir_name());
     }
 
     write_parameter_study(handle, path, study);
