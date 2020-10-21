@@ -159,7 +159,7 @@ test-py:
     - pip install coverage
   script:
     - cd pycode/test
-    - python3 -m coverage run --include=*site-packages/epidemiology*,*dist-packages/epidemiology*,epidemiology* -m unittest
+    - python3 -W ignore::DeprecationWarning -m coverage run --include=*site-packages/epidemiology*,*dist-packages/epidemiology*,epidemiology* -m unittest
     - python3 -m coverage report
     - python3 -m coverage xml -o coverage_python.xml
     - python3 -m coverage html -d coverage_python

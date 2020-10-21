@@ -1,7 +1,8 @@
 # Epidemiology #
 
 [![pipeline status](https://gitlab.dlr.de/hpc-against-corona/epidemiology/badges/master/pipeline.svg)](https://gitlab.dlr.de/hpc-against-corona/epidemiology/-/commits/master)
-[![coverage report](https://gitlab.dlr.de/hpc-against-corona/epidemiology/badges/master/coverage.svg)](https://gitlab.dlr.de/hpc-against-corona/epidemiology/-/jobs/artifacts/master/file/coverage_report/index.html?job=test-cpp)
+C++: [![c++ coverage report](https://gitlab.dlr.de/hpc-against-corona/epidemiology/badges/master/coverage.svg?job=test-cpp)](https://gitlab.dlr.de/hpc-against-corona/epidemiology/-/jobs/artifacts/master/file/coverage_report/index.html?job=test-cpp)
+Python: [![python coverage report](https://gitlab.dlr.de/hpc-against-corona/epidemiology/badges/master/coverage.svg?job=test-py)](https://gitlab.dlr.de/hpc-against-corona/epidemiology/-/jobs/artifacts/master/file/coverage_python/index.html?job=test-py)
 
 This is a common project between the department of Systems Immunology (SIMM) of the he Helmholtz Center for Infection Research (HZI) and the Institute for Software Technology of the German Aerospace Center (DLR). This project will bring cutting edge and compute intensive epidemiological models to a large scale, which enables a precise and high-resolution spatiotemporal pandemic simulation for entire countries.
 
