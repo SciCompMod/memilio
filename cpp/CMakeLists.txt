@@ -121,7 +121,7 @@ if (EPI_BUILD_EPI_IO)
     )
 
     target_link_libraries(epidemiology_io PUBLIC epidemiology tixi3
-                          PRIVATE ${HDF5_CXX_LIBRARIES} ${Boost_LIBRARIES})
+                          PRIVATE ${HDF5_CXX_LIBRARIES} Boost::filesystem)
     target_include_directories(epidemiology_io PRIVATE ${HDF5_INCLUDE_DIRS})
 
     target_compile_definitions(epidemiology_io PUBLIC "-DHAVE_EPI_IO")
