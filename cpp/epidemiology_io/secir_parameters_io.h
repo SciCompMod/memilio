@@ -187,6 +187,31 @@ void interpolate_ages(const std::vector<double>& age_ranges, const std::vector<d
                       std::vector<std::vector<double>>& interpolation, std::vector<bool>& carry_over);
 
 /**
+ * @brief sets populations data from RKI into SecirParams
+ * @param params Object in which the data is set
+ * @param param_ranges Age ranges of params
+ * @param path Path to RKI file
+ * @param id_name Name of region key column
+ * @param region Key of the region of interest
+ * @param month Specifies month at which the data is read
+ * @param day Specifies day at which the data is read
+ */
+void set_rki_data(epi::SecirParams& params, const std::vector<double>& param_ranges, const std::string& path,
+                  const std::string& id_name, int region, int month, int day);
+
+/**
+ * @brief sets populations data from DIVI register into SecirParams
+ * @param params Object in which the data is set
+ * @param path Path to DIVI file
+ * @param id_name Name of region key column
+ * @param region Key of the region of interest
+ * @param month Specifies month at which the data is read
+ * @param day Specifies day at which the data is read
+ */
+void set_divi_data(epi::SecirParams& params, const std::string& path, const std::string& id_name, int region, int month,
+                   int day);
+
+/**
  * @brief reads population data from population files for the whole country
  * @param params Parameters in which the data is set
  * @param param_ranges Vector which specifies the age ranges of params. Needs to add up to 100
