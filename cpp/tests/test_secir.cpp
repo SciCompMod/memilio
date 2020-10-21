@@ -588,6 +588,18 @@ TEST(TestSecir, testModelConstraints)
 
     secihurd = simulate(t0, tmax, dt, params);
     for (size_t i = 0; i < (size_t)secihurd.get_num_time_points(); i++) {
-        EXPECT_LE(secihurd.get_value(i)[5], max_icu_cap - 2) << " at row " << i;
+        EXPECT_LE(secihurd.get_value(i)[5], max_icu_cap - 2.5) << " at row " << i;
+    }
+
+    // temporary test for random variables
+    set_params_distributions_normal(params, t0, tmax, 0.2);
+
+    for (size_t j = 0; j < 10; j++) {
+        draw_sample(params);
+        params.set_icu_capacity(10);
+        secihurd = simulate(t0, tmax, dt, params);
+        for (size_t i = 0; i < (size_t)secihurd.get_num_time_points(); i++) {
+            EXPECT_LE(secihurd.get_value(i)[5], 10.5) << " at row " << i;
+        }
     }
 }
