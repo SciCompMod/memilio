@@ -731,25 +731,12 @@ void secir_get_derivatives(SecirParams const& params, Eigen::Ref<const Eigen::Ve
             icu_occupancy += y[Uj];
         }
 
-        double icu_capacity_free_rel = (params.get_icu_capacity() - icu_occupancy) / params.get_icu_capacity();
-        double prob_hosp2icu         = params.probabilities[i].get_icu_per_hospitalized();
-        double prob_hosp2dead        = 0;
-        if (icu_capacity_free_rel < 0) {
-            icu_capacity_free_rel = 0;
-            prob_hosp2icu         = 0;
-            prob_hosp2dead        = params.probabilities[i].get_icu_per_hospitalized();
-        }
         // ICU capacity shortage is close
-        if (icu_capacity_free_rel < 0.05 && icu_capacity_free_rel > 0) {
+        double prob_hosp2icu =
+            smoother_cosine(icu_occupancy, 0.95 * params.get_icu_capacity(), params.get_icu_capacity(),
+                            params.probabilities[i].get_icu_per_hospitalized(), 0);
 
-            prob_hosp2icu = smoother_cosine(t, t - (1 - icu_capacity_free_rel / 0.05), t + icu_capacity_free_rel / 0.05,
-                                            params.probabilities[i].get_icu_per_hospitalized(), 0);
-            prob_hosp2dead = params.probabilities[i].get_icu_per_hospitalized() - prob_hosp2icu;
-        }
-        // printf("\n At t=%.4f (%s). Cap: %.4f, Occ.: %.4f, free: %.4f perc., prob_hosp2icu: %.4f, "
-        //        "prob_hosp2dead: %.4f. ",
-        //        t, icu_capacity_free_rel < 0.05 ? "ICU shortage" : "\t\t   ", (double)params.get_icu_capacity(),
-        //        icu_occupancy, icu_capacity_free_rel, prob_hosp2icu, prob_hosp2dead);
+        double prob_hosp2dead = params.probabilities[i].get_icu_per_hospitalized() - prob_hosp2icu;
 
         double dummy_R2 =
             1.0 / (2 * params.times[i].get_serialinterval() - params.times[i].get_incubation()); // R2 = 1/(2SI-TINC)
