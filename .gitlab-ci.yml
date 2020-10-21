@@ -106,7 +106,7 @@ test-cpp:
     - echo 'deb http://download.opensuse.org/repositories/science:/dlr/xUbuntu_18.04/ /' | tee /etc/apt/sources.list.d/science:dlr.list
     - wget -O - https://download.opensuse.org/repositories/science:dlr/xUbuntu_18.04/Release.key  | apt-key add -
     - apt -qq update
-    - apt -qq -y install libtixi3 g++ python3-pip libboost-filesystem1.71.0
+    - apt -qq -y install libtixi3 g++ python3-pip libboost-filesystem1.62.0
     - python3 -m pip install gcovr
   dependencies:
     - build-cpp
