@@ -10,7 +10,7 @@ void set_params_distributions_normal(SecirParams& params, double t0, double tmax
     double min_val = 0.001;
 
     double value_params = params.get_seasonality();
-    params.set_seasonality(ParameterDistributionNormal(std::max(min_val, (1 - dev_rel * 2.6) * value_params),
+    params.set_seasonality(ParameterDistributionNormal(std::max(0.0, (1 - dev_rel * 2.6) * value_params),
                                                        (1 + dev_rel * 2.6) * value_params, value_params,
                                                        dev_rel * value_params));
 

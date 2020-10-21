@@ -35,8 +35,8 @@ int main()
 
     epi::SecirParams params;
 
-    params.set_start_day(17);
-    params.set_seasonality(0.3);
+    params.set_start_day(0);
+    params.set_seasonality(0);
 
     params.times[0].set_incubation(tinc);
     params.times[0].set_infectious_mild(tinfmild);

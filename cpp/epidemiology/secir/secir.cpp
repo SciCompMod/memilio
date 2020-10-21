@@ -723,10 +723,11 @@ void secir_get_derivatives(SecirParams const& params, Eigen::Ref<const Eigen::Ve
             size_t Rj = params.populations.get_flat_index({j, R});
 
             // effective contact rate by contact rate between groups i and j and damping j
-            double cont_freq_eff = // get effective contact rate between i and j
+            double season_val =
                 (1 + params.get_seasonality() *
-                         sin(3.141592653589793 * (std::fmod((params.get_start_day() + t), 365.0) / 182.5 + 0.5))) *
-                cont_freq_matrix.get_cont_freq(static_cast<int>(i), static_cast<int>(j)) *
+                         sin(3.141592653589793 * (std::fmod((params.get_start_day() + t), 365.0) / 182.5 + 0.5)));
+            double cont_freq_eff = // get effective contact rate between i and j
+                season_val * cont_freq_matrix.get_cont_freq(static_cast<int>(i), static_cast<int>(j)) *
                 cont_freq_matrix.get_dampings(static_cast<int>(i), static_cast<int>(j)).get_factor(t);
             double Nj      = y[Sj] + y[Ej] + y[Cj] + y[Ij] + y[Hj] + y[Uj] + y[Rj]; // without died people
             double divNj   = 1.0 / Nj; // precompute 1.0/Nj

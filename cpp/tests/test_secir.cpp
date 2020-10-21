@@ -1,5 +1,6 @@
 #include "load_test_data.h"
 #include "epidemiology/secir/secir.h"
+#include "epidemiology/secir/analyze_result.h"
 #include <distributions_helpers.h>
 #include <gtest/gtest.h>
 
@@ -544,13 +545,14 @@ TEST(TestSecir, testValueConstraints)
 TEST(TestSecir, testModelConstraints)
 {
     double t0   = 0;
-    double tmax = 180;
+    double tmax = 60; // after 60 days with cont_freq 10 and winter, the virus would already decline
     double dt   = 0.1;
 
     double tinc = 5.2, tinfmild = 6, tserint = 4.2, thosp2home = 12, thome2hosp = 5, thosp2icu = 2, ticu2home = 8,
            ticu2death = 5;
 
-    double inf_prob = 0.05, carr_infec = 1, alpha = 0.09, beta = 0.25, delta = 0.3, rho = 0.2, theta = 0.25;
+    double cont_freq = 10, inf_prob = 0.05, carr_infec = 1, alpha = 0.09, beta = 0.25, delta = 0.3, rho = 0.2,
+           theta = 0.25;
 
     double nb_total_t0 = 10000, nb_exp_t0 = 100, nb_inf_t0 = 50, nb_car_t0 = 50, nb_hosp_t0 = 20, nb_icu_t0 = 0,
            nb_rec_t0 = 10, nb_dead_t0 = 0;
@@ -583,15 +585,31 @@ TEST(TestSecir, testModelConstraints)
     params.probabilities[0].set_icu_per_hospitalized(theta);
     params.probabilities[0].set_dead_per_icu(delta);
 
+    epi::ContactFrequencyMatrix& cont_freq_matrix = params.get_contact_patterns();
+    cont_freq_matrix.set_cont_freq(cont_freq, 0, 0);
+
     params.apply_constraints();
 
     epi::TimeSeries<double> secihurd = simulate(t0, tmax, dt, params);
 
-    params.set_start_day(90);
+    epi::TimeSeries<double> secihurd_interp = epi::interpolate_simulation_result(secihurd);
+
+    params.set_start_day(100);
     params.set_seasonality(0.5);
 
-    epi::TimeSeries<double> secihurd_season = simulate(t0, tmax, dt, params);
-    for (size_t i = 0; i < (size_t)secihurd.get_num_time_points(); i++) {
-        EXPECT_LE(secihurd_season.get_value(i)[5], secihurd.get_value(i)[5]) << " at row " << i;
+    epi::TimeSeries<double> secihurd_season        = simulate(t0, tmax, dt, params);
+    epi::TimeSeries<double> secihurd_season_interp = epi::interpolate_simulation_result(secihurd_season);
+
+    for (size_t i = 0; i < (size_t)secihurd_interp.get_num_time_points(); i++) {
+        EXPECT_LE(secihurd_season_interp.get_value(i)[3], secihurd_interp.get_value(i)[3]) << " at row " << i;
+    }
+
+    params.set_start_day(280);
+
+    epi::TimeSeries<double> secihurd_season2        = simulate(t0, tmax, dt, params);
+    epi::TimeSeries<double> secihurd_season2_interp = epi::interpolate_simulation_result(secihurd_season2);
+
+    for (size_t i = 0; i < (size_t)secihurd_interp.get_num_time_points(); i++) {
+        EXPECT_GE(secihurd_season2_interp.get_value(i)[3], secihurd_interp.get_value(i)[3]) << " at row " << i;
     }
 }
