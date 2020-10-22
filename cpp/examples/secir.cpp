@@ -35,6 +35,7 @@ int main()
 
     epi::SecirParams params;
 
+    params.set_icu_capacity(20);
     params.set_start_day(0);
     params.set_seasonality(0);
 

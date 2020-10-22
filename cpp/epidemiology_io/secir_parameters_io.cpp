@@ -277,10 +277,12 @@ SecirParams read_parameter_space(TixiDocumentHandle handle, const std::string& p
     tixiGetIntegerElement(handle, path_join(path, "NumberOfGroups").c_str(), &num_groups);
 
     SecirParams params{(size_t)num_groups};
+
     double read_buffer;
     tixiGetDoubleElement(handle, path_join(path, "StartDay").c_str(), &read_buffer);
     params.set_start_day(read_buffer);
     params.set_seasonality(*read_element(handle, path_join(path, "Seasonality"), io_mode));
+    params.set_icu_capacity(*read_element(handle, path_join(path, "ICUCapacity"), io_mode));
 
     params.set_contact_patterns(read_contact(handle, path_join(path, "ContactFreq"), io_mode));
 
@@ -357,6 +359,7 @@ void write_parameter_space(TixiDocumentHandle handle, const std::string& path, c
 
     tixiAddDoubleElement(handle, path.c_str(), "StartDay", parameters.get_start_day(), "%g");
     write_element(handle, path, "Seasonality", parameters.get_seasonality(), io_mode, num_runs);
+    write_element(handle, path, "ICUCapacity", parameters.get_icu_capacity(), io_mode, num_runs);
 
     for (size_t i = 0; i < num_groups; i++) {
         auto group_name = "Group" + std::to_string(i + 1);

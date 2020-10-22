@@ -85,9 +85,12 @@ TEST(TestSecir, testParamConstructors)
     double nb_total_t0 = 10000, nb_exp_t0 = 100, nb_inf_t0 = 54, nb_car_t0 = 50, nb_hosp_t0 = 20, nb_icu_t0 = 10,
            nb_rec_t0 = 11, nb_dead_t0 = 0;
 
+    double icu_cap   = 4444;
     double start_day = 30, seasonality = 0.3;
 
     epi::SecirParams params;
+
+    params.set_icu_capacity(icu_cap);
 
     params.set_start_day(start_day);
     params.set_seasonality(seasonality);
@@ -125,6 +128,7 @@ TEST(TestSecir, testParamConstructors)
 
     epi::SecirParams params2{params}; // copy constructor
 
+    EXPECT_EQ(params.get_icu_capacity(), params2.get_icu_capacity());
     EXPECT_EQ(params.get_start_day(), params2.get_start_day());
     EXPECT_EQ(params.get_seasonality(), params2.get_seasonality());
 
@@ -174,6 +178,7 @@ TEST(TestSecir, testParamConstructors)
 
     epi::SecirParams params3 = std::move(params2); // move constructor
 
+    EXPECT_EQ(params.get_icu_capacity(), params3.get_icu_capacity());
     EXPECT_EQ(params.get_start_day(), params3.get_start_day());
     EXPECT_EQ(params.get_seasonality(), params3.get_seasonality());
 
@@ -222,6 +227,7 @@ TEST(TestSecir, testParamConstructors)
 
     epi::SecirParams params4 = params3; // copy assignment constructor
 
+    EXPECT_EQ(params4.get_icu_capacity(), params3.get_icu_capacity());
     EXPECT_EQ(params4.get_start_day(), params3.get_start_day());
     EXPECT_EQ(params4.get_seasonality(), params3.get_seasonality());
 
@@ -270,6 +276,7 @@ TEST(TestSecir, testParamConstructors)
 
     epi::SecirParams params5 = std::move(params4); // move assignment constructor
 
+    EXPECT_EQ(params5.get_icu_capacity(), params3.get_icu_capacity());
     EXPECT_EQ(params5.get_start_day(), params3.get_start_day());
     EXPECT_EQ(params5.get_seasonality(), params3.get_seasonality());
 
@@ -369,6 +376,8 @@ TEST(TestSecir, testSettersAndGetters)
 
     EXPECT_EQ(params.times[0].get_incubation().get_distribution().get(), nullptr);
 
+    params.set_icu_capacity(vec[0]);
+
     params.times[0].set_incubation(vec[1]);
     params.times[0].set_infectious_mild(vec[2]);
     params.times[0].set_serialinterval(vec[3]);
@@ -394,6 +403,10 @@ TEST(TestSecir, testSettersAndGetters)
     params.probabilities[0].set_hospitalized_per_infectious(vec[21]);
     params.probabilities[0].set_icu_per_hospitalized(vec[22]);
     params.probabilities[0].set_dead_per_icu(vec[23]);
+
+    EXPECT_NE(params.times[0].get_incubation().get_distribution().get(), nullptr);
+
+    check_distribution(*vec[0].get_distribution(), *params.get_icu_capacity().get_distribution());
 
     params.set_start_day(vec[24]);
     params.set_seasonality(vec[25]);
@@ -436,9 +449,10 @@ TEST(TestSecir, testSettersAndGetters)
     check_distribution(*vec[22].get_distribution(),
                        *params.probabilities[0].get_icu_per_hospitalized().get_distribution());
     check_distribution(*vec[23].get_distribution(), *params.probabilities[0].get_dead_per_icu().get_distribution());
-
+    // no dist for start day
     check_distribution(*vec[25].get_distribution(), *params.get_seasonality().get_distribution());
 
+    EXPECT_EQ(vec[0], params.get_icu_capacity());
     EXPECT_EQ(vec[1], params.times[0].get_incubation());
     EXPECT_EQ(vec[2], params.times[0].get_infectious_mild());
     EXPECT_EQ(vec[3], params.times[0].get_serialinterval());
@@ -462,7 +476,6 @@ TEST(TestSecir, testSettersAndGetters)
     EXPECT_EQ(vec[21], params.probabilities[0].get_hospitalized_per_infectious());
     EXPECT_EQ(vec[22], params.probabilities[0].get_icu_per_hospitalized());
     EXPECT_EQ(vec[23], params.probabilities[0].get_dead_per_icu());
-
     EXPECT_EQ(vec[24], params.get_start_day());
     EXPECT_EQ(vec[25], params.get_seasonality());
 }
@@ -554,7 +567,7 @@ TEST(TestSecir, testModelConstraints)
     double cont_freq = 10, inf_prob = 0.05, carr_infec = 1, alpha = 0.09, beta = 0.25, delta = 0.3, rho = 0.2,
            theta = 0.25;
 
-    double nb_total_t0 = 10000, nb_exp_t0 = 100, nb_inf_t0 = 50, nb_car_t0 = 50, nb_hosp_t0 = 20, nb_icu_t0 = 0,
+    double nb_total_t0 = 1000000, nb_exp_t0 = 10000, nb_inf_t0 = 5000, nb_car_t0 = 500, nb_hosp_t0 = 20, nb_icu_t0 = 0,
            nb_rec_t0 = 10, nb_dead_t0 = 0;
 
     epi::SecirParams params;
@@ -591,6 +604,12 @@ TEST(TestSecir, testModelConstraints)
     params.apply_constraints();
 
     epi::TimeSeries<double> secihurd = simulate(t0, tmax, dt, params);
+    double max_icu_cap               = 0;
+    for (Eigen::Index i = 0; i < secihurd.get_num_time_points(); i++) {
+        if (secihurd.get_value(i)[5] > max_icu_cap) {
+            max_icu_cap = secihurd.get_value(i)[5];
+        }
+    }
 
     epi::TimeSeries<double> secihurd_interp = epi::interpolate_simulation_result(secihurd);
 
@@ -611,5 +630,31 @@ TEST(TestSecir, testModelConstraints)
 
     for (Eigen::Index i = 0; i < secihurd_interp.get_num_time_points(); i++) {
         EXPECT_GE(secihurd_season2_interp.get_value(i)[3], secihurd_interp.get_value(i)[3]) << " at row " << i;
+    }
+
+    // params.set_icu_capacity(max_icu_cap - 3);
+
+    // secihurd = simulate(t0, tmax, dt, params);
+    // for (Eigen::Index i = 0; i < secihurd.get_num_time_points(); i++) {
+    //     EXPECT_LE(secihurd.get_value(i)[5], max_icu_cap - 2.5) << " at row " << i;
+    // }
+
+    // temporary test for random variables
+    set_params_distributions_normal(params, t0, tmax, 0.2);
+
+    for (size_t j = 0; j < 10; j++) {
+        draw_sample(params);
+        params.set_icu_capacity(8000);
+        secihurd = simulate(t0, tmax, dt, params);
+        // max_icu_cap = 0;
+        // for (Eigen::Index i = 0; i < secihurd.get_num_time_points(); i++) {
+        //     if (secihurd.get_value(i)[5] > max_icu_cap) {
+        //         max_icu_cap = secihurd.get_value(i)[5];
+        //     }
+        // }
+        // printf("\n max cap: %.4f ", max_icu_cap);
+        for (Eigen::Index i = 0; i < secihurd.get_num_time_points(); i++) {
+            EXPECT_LE(secihurd.get_value(i)[5], 9000) << " at row " << i;
+        }
     }
 }

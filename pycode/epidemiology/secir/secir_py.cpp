@@ -341,6 +341,13 @@ PYBIND11_MODULE(_secir, m)
         .def_readwrite("times", &epi::SecirParams::times)
         .def_readwrite("populations", &epi::SecirParams::populations)
         .def_readwrite("probabilities", &epi::SecirParams::probabilities)
+        .def("get_icu_capacity", py::overload_cast<>(&epi::SecirParams::get_icu_capacity),
+             py::return_value_policy::reference_internal)
+        .def("get_icu_capacity", py::overload_cast<>(&epi::SecirParams::get_icu_capacity, py::const_),
+             py::return_value_policy::reference_internal)
+        .def("set_icu_capacity", py::overload_cast<double>(&epi::SecirParams::set_icu_capacity))
+        .def("set_icu_capacity",
+             py::overload_cast<const epi::ParameterDistribution&>(&epi::SecirParams::set_icu_capacity))
         .def("get_start_day", &epi::SecirParams::get_start_day)
         .def("set_start_day", &epi::SecirParams::set_start_day)
         .def("get_seasonality", py::overload_cast<>(&epi::SecirParams::get_seasonality),

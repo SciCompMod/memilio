@@ -35,6 +35,7 @@ add_library(epidemiology
     epidemiology/utils/tensor_helpers.cpp
     epidemiology/math/euler.cpp
     epidemiology/math/euler.h
+    epidemiology/math/smoother.h    
     epidemiology/utils/ScalarType.h
     epidemiology/model/compartmentalmodel.h
     epidemiology/model/populations.h

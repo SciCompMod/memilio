@@ -138,7 +138,9 @@ bool RKIntegratorCore::step(const DerivFunction& f, Eigen::Ref<const Eigen::Vect
             }
         }
 
-        // printf("\n low %.8f\t high %.8f\t max_err: %.8f,\t val: %.8f,\t crit: %.8f,\t %d t: %.8f\t dt: %.8f ", ytp1_low[0], ytp1_high[0], max_err, max_val, m_abs_tol + max_val*tol_rel, max_err <= (m_abs_tol + max_val*m_rel_tol), t, dt);
+        // printf("\n low %.8f\t high %.8f\t max_err: %.8f,\t val: %.8f,\t crit: %.8f,\t %d t: %.8f\t dt: %.8f ",
+        //    ytp1_low[0], ytp1_high[0], max_err, max_val, m_abs_tol + max_val * m_rel_tol,
+        //    max_err <= (m_abs_tol + max_val * m_rel_tol), t, dt);
         // sleep(1);
         conv_crit = m_abs_tol + max_val * m_rel_tol;
 
@@ -152,7 +154,7 @@ bool RKIntegratorCore::step(const DerivFunction& f, Eigen::Ref<const Eigen::Vect
 
             // printf("\n succ: %d t: %.2e dt: %.2e \t ", !failed_step_size_adapt, t, dt);
             // double sum = 0;
-            // for (size_t kkk = 0; kkk < ytp1.size(); kkk++) {
+            // for (size_t kkk = 0; kkk < (size_t)ytp1.size(); kkk++) {
             //     printf(" [%lu] %.2e ", kkk, ytp1[kkk]);
             //     sum += ytp1[kkk];
             // }

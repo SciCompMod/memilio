@@ -1,6 +1,7 @@
 #include "epidemiology/secir/secir.h"
 #include "epidemiology/math/euler.h"
 #include "epidemiology/math/adapt_rk.h"
+#include "epidemiology/math/smoother.h"
 #include "epidemiology/utils/eigen_util.h"
 #include "epidemiology_io/secir_result_io.h"
 
@@ -46,6 +47,31 @@ const UncertainValue& SecirParams::get_seasonality() const
 UncertainValue& SecirParams::get_seasonality()
 {
     return m_seasonality;
+}
+
+void SecirParams::set_icu_capacity(UncertainValue const& icu_capacity)
+{
+    m_icu_capacity = icu_capacity;
+}
+
+void SecirParams::set_icu_capacity(double icu_capacity)
+{
+    m_icu_capacity = icu_capacity;
+}
+
+void SecirParams::set_icu_capacity(ParameterDistribution const& icu_capacity)
+{
+    m_icu_capacity.set_distribution(icu_capacity);
+}
+
+const UncertainValue& SecirParams::get_icu_capacity() const
+{
+    return m_icu_capacity;
+}
+
+UncertainValue& SecirParams::get_icu_capacity()
+{
+    return m_icu_capacity;
 }
 
 SecirParams::StageTimes::StageTimes()
@@ -661,9 +687,15 @@ UncertainContactMatrix const& SecirParams::get_contact_patterns() const
 
 void SecirParams::apply_constraints()
 {
+
     if (m_seasonality < 0.0 || m_seasonality > 0.5) {
         log_warning("Constraint check: Parameter m_seasonality changed from {:0.4f} to {:d}", m_seasonality, 0);
         m_seasonality = 0;
+    }
+
+    if (m_icu_capacity < 0.0) {
+        log_warning("Constraint check: Parameter m_icu_capacity changed from {:0.4f} to {:d}", m_icu_capacity, 0);
+        m_icu_capacity = 0;
     }
 
     for (size_t i = 0; i < times.size(); i++) {
@@ -677,6 +709,10 @@ void SecirParams::check_constraints() const
 {
     if (m_seasonality < 0.0 || m_seasonality > 0.5) {
         log_warning("Constraint check: Parameter m_seasonality smaller {:d} or larger {:d}", 0, 0.5);
+    }
+
+    if (m_icu_capacity < 0.0) {
+        log_warning("Constraint check: Parameter m_icu_capacity smaller {:d}", 0);
     }
 
     for (size_t i = 0; i < times.size(); i++) {
@@ -713,6 +749,8 @@ void secir_get_derivatives(SecirParams const& params, Eigen::Ref<const Eigen::Ve
         dydt[Si] = 0;
         dydt[Ei] = 0;
 
+        double icu_occupancy = 0;
+
         for (size_t j = 0; j < n_agegroups; j++) {
             size_t Sj = params.populations.get_flat_index({j, S});
             size_t Ej = params.populations.get_flat_index({j, E});
@@ -737,7 +775,16 @@ void secir_get_derivatives(SecirParams const& params, Eigen::Ref<const Eigen::Ve
 
             dydt[Si] -= dummy_S; // -R1*(C+beta*I)*S/N0
             dydt[Ei] += dummy_S; // R1*(C+beta*I)*S/N0-R2*E
+
+            icu_occupancy += y[Uj];
         }
+
+        // ICU capacity shortage is close
+        double prob_hosp2icu =
+            smoother_cosine(icu_occupancy, 0.90 * params.get_icu_capacity(), params.get_icu_capacity(),
+                            params.probabilities[i].get_icu_per_hospitalized(), 0);
+
+        double prob_hosp2dead = params.probabilities[i].get_icu_per_hospitalized() - prob_hosp2icu;
 
         double dummy_R2 =
             1.0 / (2 * params.times[i].get_serialinterval() - params.times[i].get_incubation()); // R2 = 1/(2SI-TINC)
@@ -760,11 +807,12 @@ void secir_get_derivatives(SecirParams const& params, Eigen::Ref<const Eigen::Ve
             ((1 - params.probabilities[i].get_icu_per_hospitalized()) / params.times[i].get_hospitalized_to_home() +
              params.probabilities[i].get_icu_per_hospitalized() / params.times[i].get_hospitalized_to_icu()) *
                 y[Hi];
-        dydt[Ui] =
-            params.probabilities[i].get_icu_per_hospitalized() / params.times[i].get_hospitalized_to_icu() * y[Hi] -
-            ((1 - params.probabilities[i].get_dead_per_icu()) / params.times[i].get_icu_to_home() +
-             params.probabilities[i].get_dead_per_icu() / params.times[i].get_icu_to_dead()) *
-                y[Ui];
+        dydt[Ui] = -((1 - params.probabilities[i].get_dead_per_icu()) / params.times[i].get_icu_to_home() +
+                     params.probabilities[i].get_dead_per_icu() / params.times[i].get_icu_to_dead()) *
+                   y[Ui];
+        // add flow from hosp to icu according to potentially adjusted probability due to ICU limits
+        dydt[Ui] += prob_hosp2icu / params.times[i].get_hospitalized_to_icu() * y[Hi];
+
         dydt[Ri] = params.probabilities[i].get_asymp_per_infectious() / params.times[i].get_infectious_asymp() * y[Ci] +
                    (1 - params.probabilities[i].get_hospitalized_per_infectious()) /
                        params.times[i].get_infectious_mild() * y[Ii] +
@@ -773,6 +821,8 @@ void secir_get_derivatives(SecirParams const& params, Eigen::Ref<const Eigen::Ve
                    (1 - params.probabilities[i].get_dead_per_icu()) / params.times[i].get_icu_to_home() * y[Ui];
 
         dydt[Di] = params.probabilities[i].get_dead_per_icu() / params.times[i].get_icu_to_dead() * y[Ui];
+        // add potential, additional deaths due to ICU overflow
+        dydt[Di] += prob_hosp2dead / params.times[i].get_hospitalized_to_icu() * y[Hi];
     }
 }
 

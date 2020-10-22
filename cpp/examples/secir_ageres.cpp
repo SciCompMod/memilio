@@ -49,6 +49,7 @@ int main()
 
     epi::SecirParams params(nb_groups);
 
+    params.set_icu_capacity(std::numeric_limits<double>::max());
     params.set_start_day(0);
     params.set_seasonality(0);
 

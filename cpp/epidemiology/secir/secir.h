@@ -92,6 +92,7 @@ public:
         , m_contact_patterns(ContactFrequencyMatrix{nb_groups})
         , m_tstart{0}
         , m_seasonality{0}
+        , m_icu_capacity{std::numeric_limits<double>::max()}
     {
     }
 
@@ -103,6 +104,7 @@ public:
         , m_contact_patterns(cont_freq_matrix)
         , m_tstart{0}
         , m_seasonality{0}
+        , m_icu_capacity{std::numeric_limits<double>::max()}
     {
     }
 
@@ -172,6 +174,34 @@ public:
      * 
      */
     UncertainValue& get_seasonality();
+
+    /**
+     * @brief sets the icu capacity in the SECIR model
+     * @param icu_capacity icu capacity
+     */
+    void set_icu_capacity(UncertainValue const& icu_capacity);
+
+    /**
+     * @brief sets the icu capacity in the SECIR model
+     * @param icu_capacity icu capacity
+     */
+    void set_icu_capacity(double icu_capacity);
+
+    /**
+     * @brief sets the icu capacity in the SECIR model
+     * @param icu_capacity icu capacity
+     */
+    void set_icu_capacity(ParameterDistribution const& icu_capacity);
+
+    /**
+     * @brief returns the icu capacity in the SECIR model
+     */
+    const UncertainValue& get_icu_capacity() const;
+
+    /**
+     * @brief returns the icu capacity in the SECIR model
+     */
+    UncertainValue& get_icu_capacity();
 
     // time parameters for the different 'stages' of the disease of scale day or 1/day
     // 'stages' does not refer to the 'states' of the SECIR model but also includes incubation time or contact frequency
@@ -657,6 +687,7 @@ private:
 
     double m_tstart;
     UncertainValue m_seasonality;
+    UncertainValue m_icu_capacity;
 };
 
 /**

@@ -14,6 +14,11 @@ void set_params_distributions_normal(SecirParams& params, double t0, double tmax
                                                        (1 + dev_rel * 2.6) * value_params, value_params,
                                                        dev_rel * value_params));
 
+    value_params = params.get_icu_capacity();
+    params.set_icu_capacity(ParameterDistributionNormal(std::max(min_val, (1 - dev_rel * 2.6) * value_params),
+                                                        (1 + dev_rel * 2.6) * value_params, value_params,
+                                                        dev_rel * value_params));
+
     // populations
     for (size_t i = 0; i < params.get_num_groups(); i++) {
 
@@ -176,6 +181,7 @@ void set_params_distributions_normal(SecirParams& params, double t0, double tmax
 void draw_sample(SecirParams& params)
 {
     params.get_seasonality().draw_sample();
+    params.get_icu_capacity().draw_sample();
 
     for (size_t i = 0; i < params.get_num_groups(); i++) {
 
