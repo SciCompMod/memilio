@@ -11,6 +11,23 @@ mark_as_advanced(EPI_USE_BUNDLED_SPDLOG)
 set(CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake" ${CMAKE_MODULE_PATH})
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
+# code coverage analysis
+# Note: this only works under linux and with make
+# Ninja creates different directory names which do not work together with this scrupt
+if(CMAKE_BUILD_TYPE STREQUAL "Debug")
+    option (EPI_TEST_COVERAGE "Enable GCov coverage analysis (adds a 'coverage' target)" OFF)
+    if (EPI_TEST_COVERAGE)
+        message(STATUS "Coverage enabled")
+        include(CodeCoverage)
+        append_coverage_compiler_flags()
+        setup_target_for_coverage_lcov(
+            NAME coverage
+            EXECUTABLE runUnitTests
+            EXCLUDE "${CMAKE_SOURCE_DIR}/tests*" "${CMAKE_SOURCE_DIR}/examples*" "${CMAKE_BINARY_DIR}/*" "/usr*"
+        )
+    endif()
+endif()
+
 include(thirdparty/CMakeLists.txt)
 
 add_library(epidemiology
@@ -104,7 +121,7 @@ if (EPI_BUILD_EPI_IO)
     )
 
     target_link_libraries(epidemiology_io PUBLIC epidemiology tixi3
-                          PRIVATE ${HDF5_CXX_LIBRARIES} )
+                          PRIVATE ${HDF5_CXX_LIBRARIES} Boost::filesystem Boost::disable_autolinking)
     target_include_directories(epidemiology_io PRIVATE ${HDF5_INCLUDE_DIRS})
 
     target_compile_definitions(epidemiology_io PUBLIC "-DHAVE_EPI_IO")
