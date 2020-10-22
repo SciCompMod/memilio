@@ -44,6 +44,8 @@ int main(int argc, char** argv)
     epi::SecirParams params(nb_groups);
 
     params.set_icu_capacity(std::numeric_limits<double>::max());
+    params.set_start_day(0);
+    params.set_seasonality(0);
 
     for (size_t i = 0; i < nb_groups; i++) {
         params.times[i].set_incubation(tinc);

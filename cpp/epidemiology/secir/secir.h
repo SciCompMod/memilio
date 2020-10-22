@@ -90,6 +90,8 @@ public:
         , probabilities(nb_groups, Probabilities())
         , m_num_groups{nb_groups}
         , m_contact_patterns(ContactFrequencyMatrix{nb_groups})
+        , m_tstart{0}
+        , m_seasonality{0}
         , m_icu_capacity{std::numeric_limits<double>::max()}
     {
     }
@@ -100,6 +102,8 @@ public:
         , probabilities(cont_freq_matrix.get_size(), Probabilities())
         , m_num_groups{(size_t)cont_freq_matrix.get_size()}
         , m_contact_patterns(cont_freq_matrix)
+        , m_tstart{0}
+        , m_seasonality{0}
         , m_icu_capacity{std::numeric_limits<double>::max()}
     {
     }
@@ -110,6 +114,66 @@ public:
     }
 
     double base_reprod;
+
+    /**
+     * @brief sets the start day in the SECIR model
+     * The start day defines in which season the simulation can be started
+     * If the start day is 180 and simulation takes place from t0=0 to
+     * tmax=100 the days 180 to 280 of the year are simulated
+     * @param tstart start day
+     */
+    void set_start_day(double tstart);
+
+    /**
+     * @brief returns the start day in the SECIR model
+     * The start day defines in which season the simulation can be started
+     * If the start day is 180 and simulation takes place from t0=0 to
+     * tmax=100 the days 180 to 280 of the year are simulated
+     */
+    double get_start_day() const;
+
+    /**
+     * @brief sets the seasonality in the SECIR model
+     * the seasonality is given as (1+k*sin()) where the sine
+     * curve is below one in summer and above one in winter
+     * 
+     * @param seasonality seasonality
+     */
+    void set_seasonality(UncertainValue const& seasonality);
+
+    /**
+     * @brief sets the seasonality in the SECIR model
+     * the seasonality is given as (1+k*sin()) where the sine
+     * curve is below one in summer and above one in winter
+     * 
+     * @param seasonality seasonality
+     */
+    void set_seasonality(double seasonality);
+
+    /**
+     * @brief sets the seasonality in the SECIR model
+     * the seasonality is given as (1+k*sin()) where the sine
+     * curve is below one in summer and above one in winter
+     * 
+     * @param seasonality seasonality
+     */
+    void set_seasonality(ParameterDistribution const& seasonality);
+
+    /**
+     * @brief returns the seasonality in the SECIR model
+     * the seasonality is given as (1+k*sin()) where the sine
+     * curve is below one in summer and above one in winter
+     * 
+     */
+    const UncertainValue& get_seasonality() const;
+
+    /**
+     * @brief returns the seasonality in the SECIR model
+     * the seasonality is given as (1+k*sin()) where the sine
+     * curve is below one in summer and above one in winter
+     * 
+     */
+    UncertainValue& get_seasonality();
 
     /**
      * @brief sets the icu capacity in the SECIR model
@@ -621,6 +685,8 @@ private:
 
     UncertainContactMatrix m_contact_patterns;
 
+    double m_tstart;
+    UncertainValue m_seasonality;
     UncertainValue m_icu_capacity;
 };
 

@@ -1,5 +1,6 @@
 #include "load_test_data.h"
 #include "epidemiology/secir/secir.h"
+#include "epidemiology/secir/analyze_result.h"
 #include <distributions_helpers.h>
 #include <gtest/gtest.h>
 
@@ -84,11 +85,15 @@ TEST(TestSecir, testParamConstructors)
     double nb_total_t0 = 10000, nb_exp_t0 = 100, nb_inf_t0 = 54, nb_car_t0 = 50, nb_hosp_t0 = 20, nb_icu_t0 = 10,
            nb_rec_t0 = 11, nb_dead_t0 = 0;
 
-    double icu_cap = 4444;
+    double icu_cap   = 4444;
+    double start_day = 30, seasonality = 0.3;
 
     epi::SecirParams params;
 
     params.set_icu_capacity(icu_cap);
+
+    params.set_start_day(start_day);
+    params.set_seasonality(seasonality);
 
     params.times[0].set_incubation(tinc);
     params.times[0].set_infectious_mild(tinfmild);
@@ -124,6 +129,8 @@ TEST(TestSecir, testParamConstructors)
     epi::SecirParams params2{params}; // copy constructor
 
     EXPECT_EQ(params.get_icu_capacity(), params2.get_icu_capacity());
+    EXPECT_EQ(params.get_start_day(), params2.get_start_day());
+    EXPECT_EQ(params.get_seasonality(), params2.get_seasonality());
 
     EXPECT_EQ(params.populations.get_total(), params2.populations.get_total());
     EXPECT_EQ(params.populations.get({0, epi::SecirCompartments::S}),
@@ -172,6 +179,8 @@ TEST(TestSecir, testParamConstructors)
     epi::SecirParams params3 = std::move(params2); // move constructor
 
     EXPECT_EQ(params.get_icu_capacity(), params3.get_icu_capacity());
+    EXPECT_EQ(params.get_start_day(), params3.get_start_day());
+    EXPECT_EQ(params.get_seasonality(), params3.get_seasonality());
 
     EXPECT_EQ(params3.populations.get_total(), params.populations.get_total());
     EXPECT_EQ(params3.populations.get({0, epi::SecirCompartments::S}),
@@ -219,6 +228,8 @@ TEST(TestSecir, testParamConstructors)
     epi::SecirParams params4 = params3; // copy assignment constructor
 
     EXPECT_EQ(params4.get_icu_capacity(), params3.get_icu_capacity());
+    EXPECT_EQ(params4.get_start_day(), params3.get_start_day());
+    EXPECT_EQ(params4.get_seasonality(), params3.get_seasonality());
 
     EXPECT_EQ(params3.populations.get_total(), params4.populations.get_total());
     EXPECT_EQ(params3.populations.get({0, epi::SecirCompartments::S}),
@@ -266,6 +277,8 @@ TEST(TestSecir, testParamConstructors)
     epi::SecirParams params5 = std::move(params4); // move assignment constructor
 
     EXPECT_EQ(params5.get_icu_capacity(), params3.get_icu_capacity());
+    EXPECT_EQ(params5.get_start_day(), params3.get_start_day());
+    EXPECT_EQ(params5.get_seasonality(), params3.get_seasonality());
 
     EXPECT_EQ(params5.populations.get_total(), params3.populations.get_total());
     EXPECT_EQ(params5.populations.get({0, epi::SecirCompartments::S}),
@@ -347,7 +360,7 @@ TEST(TestSecir, testSettersAndGetters)
 {
     std::vector<epi::UncertainValue> vec;
 
-    for (int i = 0; i < 24; i++) {
+    for (int i = 0; i < 26; i++) {
         epi::UncertainValue val = epi::UncertainValue(i);
         val.set_distribution(epi::ParameterDistributionNormal(i, 10 * i, 5 * i, i / 10.0));
         vec.push_back(val);
@@ -394,6 +407,12 @@ TEST(TestSecir, testSettersAndGetters)
     EXPECT_NE(params.times[0].get_incubation().get_distribution().get(), nullptr);
 
     check_distribution(*vec[0].get_distribution(), *params.get_icu_capacity().get_distribution());
+
+    params.set_start_day(vec[24]);
+    params.set_seasonality(vec[25]);
+
+    EXPECT_NE(params.times[0].get_incubation().get_distribution().get(), nullptr);
+
     check_distribution(*vec[1].get_distribution(), *params.times[0].get_incubation().get_distribution());
     check_distribution(*vec[2].get_distribution(), *params.times[0].get_infectious_mild().get_distribution());
     check_distribution(*vec[3].get_distribution(), *params.times[0].get_serialinterval().get_distribution());
@@ -430,6 +449,8 @@ TEST(TestSecir, testSettersAndGetters)
     check_distribution(*vec[22].get_distribution(),
                        *params.probabilities[0].get_icu_per_hospitalized().get_distribution());
     check_distribution(*vec[23].get_distribution(), *params.probabilities[0].get_dead_per_icu().get_distribution());
+    // no dist for start day
+    check_distribution(*vec[25].get_distribution(), *params.get_seasonality().get_distribution());
 
     EXPECT_EQ(vec[0], params.get_icu_capacity());
     EXPECT_EQ(vec[1], params.times[0].get_incubation());
@@ -455,6 +476,8 @@ TEST(TestSecir, testSettersAndGetters)
     EXPECT_EQ(vec[21], params.probabilities[0].get_hospitalized_per_infectious());
     EXPECT_EQ(vec[22], params.probabilities[0].get_icu_per_hospitalized());
     EXPECT_EQ(vec[23], params.probabilities[0].get_dead_per_icu());
+    EXPECT_EQ(vec[24], params.get_start_day());
+    EXPECT_EQ(vec[25], params.get_seasonality());
 }
 
 TEST(TestSecir, testValueConstraints)
@@ -535,7 +558,7 @@ TEST(TestSecir, testValueConstraints)
 TEST(TestSecir, testModelConstraints)
 {
     double t0   = 0;
-    double tmax = 50;
+    double tmax = 60; // after 60 days with cont_freq 10 and winter, the virus would already decline
     double dt   = 0.1;
 
     double tinc = 5.2, tinfmild = 6, tserint = 4.2, thosp2home = 12, thome2hosp = 5, thosp2icu = 2, ticu2home = 8,
@@ -586,6 +609,27 @@ TEST(TestSecir, testModelConstraints)
         if (secihurd.get_value(i)[5] > max_icu_cap) {
             max_icu_cap = secihurd.get_value(i)[5];
         }
+    }
+
+    epi::TimeSeries<double> secihurd_interp = epi::interpolate_simulation_result(secihurd);
+
+    params.set_start_day(100);
+    params.set_seasonality(0.5);
+
+    epi::TimeSeries<double> secihurd_season        = simulate(t0, tmax, dt, params);
+    epi::TimeSeries<double> secihurd_season_interp = epi::interpolate_simulation_result(secihurd_season);
+
+    for (Eigen::Index i = 0; i < secihurd_interp.get_num_time_points(); i++) {
+        EXPECT_LE(secihurd_season_interp.get_value(i)[3], secihurd_interp.get_value(i)[3]) << " at row " << i;
+    }
+
+    params.set_start_day(280);
+
+    epi::TimeSeries<double> secihurd_season2        = simulate(t0, tmax, dt, params);
+    epi::TimeSeries<double> secihurd_season2_interp = epi::interpolate_simulation_result(secihurd_season2);
+
+    for (Eigen::Index i = 0; i < secihurd_interp.get_num_time_points(); i++) {
+        EXPECT_GE(secihurd_season2_interp.get_value(i)[3], secihurd_interp.get_value(i)[3]) << " at row " << i;
     }
 
     // params.set_icu_capacity(max_icu_cap - 3);

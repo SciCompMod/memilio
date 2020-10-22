@@ -14,6 +14,41 @@
 
 namespace epi
 {
+void SecirParams::set_start_day(double tstart)
+{
+    m_tstart = tstart;
+}
+
+double SecirParams::get_start_day() const
+{
+    return m_tstart;
+}
+
+void SecirParams::set_seasonality(UncertainValue const& seasonality)
+{
+    m_seasonality = seasonality;
+}
+
+void SecirParams::set_seasonality(double seasonality)
+{
+    m_seasonality = seasonality;
+}
+
+void SecirParams::set_seasonality(ParameterDistribution const& seasonality)
+{
+    m_seasonality.set_distribution(seasonality);
+}
+
+const UncertainValue& SecirParams::get_seasonality() const
+{
+    return m_seasonality;
+}
+
+UncertainValue& SecirParams::get_seasonality()
+{
+    return m_seasonality;
+}
+
 void SecirParams::set_icu_capacity(UncertainValue const& icu_capacity)
 {
     m_icu_capacity = icu_capacity;
@@ -652,6 +687,12 @@ UncertainContactMatrix const& SecirParams::get_contact_patterns() const
 
 void SecirParams::apply_constraints()
 {
+
+    if (m_seasonality < 0.0 || m_seasonality > 0.5) {
+        log_warning("Constraint check: Parameter m_seasonality changed from {:0.4f} to {:d}", m_seasonality, 0);
+        m_seasonality = 0;
+    }
+
     if (m_icu_capacity < 0.0) {
         log_warning("Constraint check: Parameter m_icu_capacity changed from {:0.4f} to {:d}", m_icu_capacity, 0);
         m_icu_capacity = 0;
@@ -666,6 +707,10 @@ void SecirParams::apply_constraints()
 
 void SecirParams::check_constraints() const
 {
+    if (m_seasonality < 0.0 || m_seasonality > 0.5) {
+        log_warning("Constraint check: Parameter m_seasonality smaller {:d} or larger {:d}", 0, 0.5);
+    }
+
     if (m_icu_capacity < 0.0) {
         log_warning("Constraint check: Parameter m_icu_capacity smaller {:d}", 0);
     }
@@ -716,8 +761,11 @@ void secir_get_derivatives(SecirParams const& params, Eigen::Ref<const Eigen::Ve
             size_t Rj = params.populations.get_flat_index({j, R});
 
             // effective contact rate by contact rate between groups i and j and damping j
+            double season_val =
+                (1 + params.get_seasonality() *
+                         sin(3.141592653589793 * (std::fmod((params.get_start_day() + t), 365.0) / 182.5 + 0.5)));
             double cont_freq_eff = // get effective contact rate between i and j
-                cont_freq_matrix.get_cont_freq(static_cast<int>(i), static_cast<int>(j)) *
+                season_val * cont_freq_matrix.get_cont_freq(static_cast<int>(i), static_cast<int>(j)) *
                 cont_freq_matrix.get_dampings(static_cast<int>(i), static_cast<int>(j)).get_factor(t);
             double Nj      = y[Sj] + y[Ej] + y[Cj] + y[Ij] + y[Hj] + y[Uj] + y[Rj]; // without died people
             double divNj   = 1.0 / Nj; // precompute 1.0/Nj

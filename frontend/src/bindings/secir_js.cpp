@@ -192,6 +192,10 @@ EMSCRIPTEN_BINDINGS(secirjs)
         .property("probabilities", &epi::SecirParams::probabilities)
         .function("set_icu_capacity", js::select_overload<void(double)>(&epi::SecirParams::set_icu_capacity))
         .function("get_icu_capacity", js::select_overload<epi::UncertainValue&()>(&epi::SecirParams::get_icu_capacity))
+        .function("set_start_day", &epi::SecirParams::set_start_day)
+        .function("get_start_day", &epi::SecirParams::get_start_day)
+        .function("set_seasonality", js::select_overload<void(double)>(&epi::SecirParams::set_seasonality))
+        .function("get_seasonality", js::select_overload<epi::UncertainValue&()>(&epi::SecirParams::get_seasonality))
         .function("get_contact_patterns",
                   js::select_overload<epi::UncertainContactMatrix&()>(&epi::SecirParams::get_contact_patterns))
         .function("set_contact_patterns", &epi::SecirParams::set_contact_patterns);
