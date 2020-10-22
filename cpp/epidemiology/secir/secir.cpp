@@ -733,7 +733,7 @@ void secir_get_derivatives(SecirParams const& params, Eigen::Ref<const Eigen::Ve
 
         // ICU capacity shortage is close
         double prob_hosp2icu =
-            smoother_cosine(icu_occupancy, 0.95 * params.get_icu_capacity(), params.get_icu_capacity(),
+            smoother_cosine(icu_occupancy, 0.90 * params.get_icu_capacity(), params.get_icu_capacity(),
                             params.probabilities[i].get_icu_per_hospitalized(), 0);
 
         double prob_hosp2dead = params.probabilities[i].get_icu_per_hospitalized() - prob_hosp2icu;
