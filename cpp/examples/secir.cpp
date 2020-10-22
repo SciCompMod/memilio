@@ -23,18 +23,20 @@ int main()
         ticu2death = 5; // 3.5-7 (=R5^(-1))
 
     double cont_freq = 10, // see Polymod study
-        inf_prob = 0.05, 
-        carr_infec = 0.67,
-        alpha        = 0.09, // 0.01-0.16
-        beta         = 0.25, // 0.05-0.5
-        delta        = 0.3, // 0.15-0.77
-        rho          = 0.2, // 0.1-0.35
-        theta        = 0.25; // 0.15-0.4
+        inf_prob = 0.05, carr_infec = 0.67,
+           alpha = 0.09, // 0.01-0.16
+        beta     = 0.25, // 0.05-0.5
+        delta    = 0.3, // 0.15-0.77
+        rho      = 0.2, // 0.1-0.35
+        theta    = 0.25; // 0.15-0.4
 
     double nb_total_t0 = 10000, nb_exp_t0 = 100, nb_inf_t0 = 50, nb_car_t0 = 50, nb_hosp_t0 = 20, nb_icu_t0 = 10,
            nb_rec_t0 = 10, nb_dead_t0 = 0;
 
     epi::SecirParams params;
+
+    params.set_start_day(0);
+    params.set_seasonality(0);
 
     params.times[0].set_incubation(tinc);
     params.times[0].set_infectious_mild(tinfmild);
