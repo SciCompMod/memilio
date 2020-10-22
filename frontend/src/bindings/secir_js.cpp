@@ -218,6 +218,10 @@ EMSCRIPTEN_BINDINGS(secirjs)
     js::register_vector<epi::SecirParams::StageTimes>("VectorSecirParamsStageTimes");
 
 #ifdef DEBUG
-  js::function("doLeakCheck", &__lsan_do_recoverable_leak_check);
+    /**
+     * Checks if all memory allocated by the WebAssembly module is freed. If not it will emit a warning with relevant
+     * information about a potential leak.
+     */
+    js::function("doLeakCheck", &__lsan_do_recoverable_leak_check);
 #endif
 }
