@@ -76,9 +76,7 @@ double Dampings::get_factor(double day) const
                 double fac_lower     = (ub - 1)->factor; // factor at lower bound day
                 double fac_upper     = (ub)->factor; // factor at upper bound day
 
-                // f(x) = 0.5*(fac_lower - fac_upper)*cos(pi/ descent_area*(x-day_upper_min))+0.5*(fac_lower + fac_upper)
                 double ret = smoother_cosine(day, day_upper_min, day_upper, fac_lower, fac_upper);
-                // printf("\n\n in descent.. day %.6f factor %.6f (%.4e) ", day, ret, ret - ret2);
 
                 return ret;
             }
