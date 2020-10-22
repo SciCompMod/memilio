@@ -115,40 +115,61 @@ public:
 
     /**
      * @brief sets the start day in the SECIR model
+     * The start day defines in which season the simulation can be started
+     * If the start day is 180 and simulation takes place from t0=0 to
+     * tmax=100 the days 180 to 280 of the year are simulated
      * @param tstart start day
      */
     void set_start_day(double tstart);
 
     /**
      * @brief returns the start day in the SECIR model
+     * The start day defines in which season the simulation can be started
+     * If the start day is 180 and simulation takes place from t0=0 to
+     * tmax=100 the days 180 to 280 of the year are simulated
      */
     double get_start_day() const;
 
     /**
      * @brief sets the seasonality in the SECIR model
+     * the seasonality is given as (1+k*sin()) where the sine
+     * curve is below one in summer and above one in winter
+     * 
      * @param seasonality seasonality
      */
     void set_seasonality(UncertainValue const& seasonality);
 
     /**
      * @brief sets the seasonality in the SECIR model
+     * the seasonality is given as (1+k*sin()) where the sine
+     * curve is below one in summer and above one in winter
+     * 
      * @param seasonality seasonality
      */
     void set_seasonality(double seasonality);
 
     /**
      * @brief sets the seasonality in the SECIR model
+     * the seasonality is given as (1+k*sin()) where the sine
+     * curve is below one in summer and above one in winter
+     * 
      * @param seasonality seasonality
      */
     void set_seasonality(ParameterDistribution const& seasonality);
 
     /**
      * @brief returns the seasonality in the SECIR model
+     * the seasonality is given as (1+k*sin()) where the sine
+     * curve is below one in summer and above one in winter
+     * 
      */
     const UncertainValue& get_seasonality() const;
 
     /**
      * @brief returns the seasonality in the SECIR model
+     * the seasonality is given as (1+k*sin()) where the sine
+     * curve is below one in summer and above one in winter
+     * 
      */
     UncertainValue& get_seasonality();
 
