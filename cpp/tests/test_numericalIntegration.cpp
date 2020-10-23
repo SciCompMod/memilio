@@ -73,9 +73,11 @@ TEST_F(TestVerifyNumericalIntegrator, runge_kutta_fehlberg45_sine)
     y   = std::vector<Eigen::VectorXd>(n, Eigen::VectorXd::Constant(1, 0));
     sol = std::vector<Eigen::VectorXd>(n, Eigen::VectorXd::Constant(1, 0));
 
-    epi::RKIntegratorCore rkf45(1e-3, 1.0);
+    epi::RKIntegratorCore rkf45;
     rkf45.set_abs_tolerance(1e-7);
     rkf45.set_rel_tolerance(1e-7);
+    rkf45.set_dt_min(1e-3);
+    rkf45.set_dt_max(1.0);
 
     sol[0][0] = std::sin(0);
 
