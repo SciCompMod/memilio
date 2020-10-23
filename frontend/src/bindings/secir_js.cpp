@@ -4,6 +4,10 @@
 #include <epidemiology/secir/damping.h>
 #include <vector>
 
+#ifdef DEBUG
+#include <sanitizer/lsan_interface.h>
+#endif
+
 namespace js = emscripten;
 
 class SecirResult
@@ -218,4 +222,12 @@ EMSCRIPTEN_BINDINGS(secirjs)
     js::register_vector<epi::SecirParams>("VectorSecirParams");
     js::register_vector<epi::SecirParams::Probabilities>("VectorSecirParamsProbabilities");
     js::register_vector<epi::SecirParams::StageTimes>("VectorSecirParamsStageTimes");
+
+#ifdef DEBUG
+    /**
+     * Checks if all memory allocated by the WebAssembly module is freed. If not it will emit a warning with relevant
+     * information about a potential leak.
+     */
+    js::function("doLeakCheck", &__lsan_do_recoverable_leak_check);
+#endif
 }
