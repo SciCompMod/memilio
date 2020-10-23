@@ -118,6 +118,12 @@ public:
         parameters.apply_constraints();
     }
 
+    void check_constraints() const
+    {
+        populations.check_constraints();
+        parameters.check_constraints();
+    }
+
     Populations populations{};
     ParameterSet parameters{};
 

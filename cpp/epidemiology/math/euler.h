@@ -31,11 +31,22 @@ public:
     void set_abs_tolerance(double) override
     {
         log_warning("Setting absolute tolerance has no influence on an explicit Euler integrator");
-    };
+    }
     void set_rel_tolerance(double) override
     {
         log_warning("Setting relative tolerance has no influence on an explicit Euler integrator");
-    };
+    }
+    /// sets the minimum step size (not used)
+    void set_dt_min(double) override
+    {
+        log_warning("Setting minimum step size has no influence on an explict Euler integrator");
+    }
+
+    /// sets the minimum step size (not used)
+    void set_dt_max(double) override
+    {
+        log_warning("Setting maximum step size has no influence on an explict Euler integrator");
+    }
 };
 
 /**
@@ -76,6 +87,18 @@ public:
     void set_rel_tolerance(double tol) override
     {
         m_rel_tol = tol;
+    }
+
+    /// sets the minimum step size (not used)
+    void set_dt_min(double) override
+    {
+        log_warning("Setting minimum step size has no influence on an implicit Euler integrator");
+    }
+
+    /// sets the minimum step size (not used)
+    void set_dt_max(double) override
+    {
+        log_warning("Setting maximum step size has no influence on an implicit Euler integrator");
     }
 
 private:

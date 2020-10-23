@@ -86,7 +86,7 @@ public:
      * @param dt_min Mininum time step
      * @param dt_max Maximum time step
      */
-    RKIntegratorCore(double dt_min = 1e-10, double dt_max = 1e10)
+    RKIntegratorCore(double dt_min = 1e-3, double dt_max = 1)
         : m_abs_tol(1e-10)
         , m_rel_tol(1e-5)
         , m_dt_min(dt_min)
@@ -104,6 +104,18 @@ public:
     void set_rel_tolerance(double tol)
     {
         m_rel_tol = tol;
+    }
+
+    /// sets the minimum step size (not used)
+    void set_dt_min(double dt_min) override
+    {
+        m_dt_min = dt_min;
+    }
+
+    /// sets the minimum step size (not used)
+    void set_dt_max(double dt_max) override
+    {
+        m_dt_max = dt_max;
     }
 
     // Allow setting different RK tablea schemes

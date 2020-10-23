@@ -126,6 +126,8 @@ public:
                 (const));
     MOCK_METHOD(void, set_abs_tolerance, (double));
     MOCK_METHOD(void, set_rel_tolerance, (double));
+    MOCK_METHOD(void, set_dt_min, (double));
+    MOCK_METHOD(void, set_dt_max, (double));
 };
 
 TEST(TestOdeIntegrator, integratorDoesTheRightNumberOfSteps)

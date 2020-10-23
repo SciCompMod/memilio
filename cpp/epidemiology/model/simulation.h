@@ -30,6 +30,8 @@ public:
                        model.get_initial_values(), dt, m_integratorCore)
         , m_model(model)
     {
+        m_integratorCore->set_dt_min(0.3);
+        m_integratorCore->set_dt_max(1.0);
         m_integratorCore->set_rel_tolerance(1e-4);
         m_integratorCore->set_abs_tolerance(1e-1);
     }
@@ -88,6 +90,7 @@ private:
 template <class Model, class IntegratorCore = DefaultIntegratorCore>
 TimeSeries<ScalarType> simulate(double t0, double tmax, double dt, Model const& model)
 {
+    model.check_constraints();
     Simulation<Model, IntegratorCore> sim(model, t0, dt);
     sim.advance(tmax);
     return sim.get_result();

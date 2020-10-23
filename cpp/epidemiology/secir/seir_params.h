@@ -70,6 +70,8 @@ public:
         double m_cont_freq, m_tinc_inv, m_tinfmild_inv;
     };
 
+    void check_constraints() const {}; //dummy check_constraints function
+
     StageTimes times;
 
     // This defines a damping factor for a mitigation strategy for different points in time.

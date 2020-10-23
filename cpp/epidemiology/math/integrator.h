@@ -37,6 +37,8 @@ public:
 
     virtual void set_rel_tolerance(double) = 0;
     virtual void set_abs_tolerance(double) = 0;
+    virtual void set_dt_min(double)        = 0;
+    virtual void set_dt_max(double)        = 0;
 };
 
 /**
