@@ -431,6 +431,7 @@ TEST(TestSecir, testSettersAndGetters)
     model.parameters.probabilities[0].set_dead_per_icu(vec[23]);
 
     EXPECT_NE(model.parameters.times[0].get_incubation().get_distribution().get(), nullptr);
+
     check_distribution(*vec[0].get_distribution(), *model.parameters.get_icu_capacity().get_distribution());
 
     model.parameters.set_start_day(vec[24]);

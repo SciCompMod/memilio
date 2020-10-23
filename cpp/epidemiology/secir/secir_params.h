@@ -545,11 +545,11 @@ public:
          */
         const UncertainValue& get_home_to_hospitalized() const
         {
-            return m_thosp2home;
+            return m_thome2hosp;
         }
         UncertainValue& get_home_to_hospitalized()
         {
-            return m_thosp2home;
+            return m_thome2hosp;
         }
 
         /**
@@ -1102,6 +1102,16 @@ public:
      */
     void apply_constraints()
     {
+        if (m_seasonality < 0.0 || m_seasonality > 0.5) {
+            log_warning("Constraint check: Parameter m_seasonality changed from {:0.4f} to {:d}", m_seasonality, 0);
+            m_seasonality = 0;
+        }
+
+        if (m_icu_capacity < 0.0) {
+            log_warning("Constraint check: Parameter m_icu_capacity changed from {:0.4f} to {:d}", m_icu_capacity, 0);
+            m_icu_capacity = 0;
+        }
+
         for (size_t i = 0; i < times.size(); i++) {
             times[i].apply_constraints();
             probabilities[i].apply_constraints();
@@ -1113,6 +1123,14 @@ public:
      */
     void check_constraints() const
     {
+        if (m_seasonality < 0.0 || m_seasonality > 0.5) {
+            log_warning("Constraint check: Parameter m_seasonality smaller {:d} or larger {:d}", 0, 0.5);
+        }
+
+        if (m_icu_capacity < 0.0) {
+            log_warning("Constraint check: Parameter m_icu_capacity smaller {:d}", 0);
+        }
+
         for (size_t i = 0; i < times.size(); i++) {
             times[i].check_constraints();
             probabilities[i].check_constraints();
