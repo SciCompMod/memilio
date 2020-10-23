@@ -480,9 +480,9 @@ TEST(TestSecir, testSettersAndGetters)
     check_distribution(*vec[23].get_distribution(),
                        *model.parameters.probabilities[0].get_dead_per_icu().get_distribution());
     // no dist for start day
-    check_distribution(*vec[25].get_distribution(), *params.get_seasonality().get_distribution());
+    check_distribution(*vec[25].get_distribution(), *model.parameters.get_seasonality().get_distribution());
 
-    EXPECT_EQ(vec[0], params.get_icu_capacity());
+    EXPECT_EQ(vec[0], model.parameters.get_icu_capacity());
     EXPECT_EQ(vec[1], model.parameters.times[0].get_incubation());
     EXPECT_EQ(vec[2], model.parameters.times[0].get_infectious_mild());
     EXPECT_EQ(vec[3], model.parameters.times[0].get_serialinterval());
@@ -506,8 +506,8 @@ TEST(TestSecir, testSettersAndGetters)
     EXPECT_EQ(vec[21], model.parameters.probabilities[0].get_hospitalized_per_infectious());
     EXPECT_EQ(vec[22], model.parameters.probabilities[0].get_icu_per_hospitalized());
     EXPECT_EQ(vec[23], model.parameters.probabilities[0].get_dead_per_icu());
-    EXPECT_EQ(vec[24], params.get_start_day());
-    EXPECT_EQ(vec[25], params.get_seasonality());
+    EXPECT_EQ(vec[24], model.parameters.get_start_day());
+    EXPECT_EQ(vec[25], model.parameters.get_seasonality());
 }
 
 TEST(TestSecir, testValueConstraints)

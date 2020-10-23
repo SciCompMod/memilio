@@ -1,3 +1,4 @@
+#include "epidemiology/model/simulation.h"
 #include "epidemiology/secir/analyze_result.h"
 #include "matchers.h"
 #include "gtest/gtest.h"
@@ -52,10 +53,11 @@ TEST(TestInterpolateTimeSeries, simpleValues)
     auto interpolated = epi::interpolate_simulation_result(ts);
 
     ASSERT_THAT(interpolated.get_times(), ElementsAreLinspace(0.0, 6.0, 7));
-    ASSERT_THAT(interpolated, testing::ElementsAre(MatrixNear(Vec::Constant(1, 0.1)), MatrixNear(Vec::Constant(1, 0.25)),
-                                                   MatrixNear(Vec::Constant(1, 0.35)), MatrixNear(Vec::Constant(1, 0.45)),
-                                                   MatrixNear(Vec::Constant(1, 0.55)), MatrixNear(Vec::Constant(1, 0.65)),
-                                                   MatrixNear(Vec::Constant(1, 0.7))));
+    ASSERT_THAT(interpolated,
+                testing::ElementsAre(MatrixNear(Vec::Constant(1, 0.1)), MatrixNear(Vec::Constant(1, 0.25)),
+                                     MatrixNear(Vec::Constant(1, 0.35)), MatrixNear(Vec::Constant(1, 0.45)),
+                                     MatrixNear(Vec::Constant(1, 0.55)), MatrixNear(Vec::Constant(1, 0.65)),
+                                     MatrixNear(Vec::Constant(1, 0.7))));
 }
 
 TEST(TestInterpolateTimeSeries, aFewMoreComplexValues)
@@ -90,27 +92,27 @@ TEST(TestInterpolateTimeSeries, timePointsCanMatchDayExactly)
 
     ASSERT_THAT(interpolated.get_times(), ElementsAreLinspace(0.0, 3.0, 4));
     ASSERT_THAT(interpolated[1], MatrixNear(Vec::Constant(1, 2.0)));
-    ASSERT_THAT(interpolated[2], MatrixNear(Vec::Constant(1, 2.0 + 10./11.)));
+    ASSERT_THAT(interpolated[2], MatrixNear(Vec::Constant(1, 2.0 + 10. / 11.)));
 }
 
 TEST(TestInterpolateGraph, basic)
 {
-    auto g = epi::Graph<epi::ModelNode<epi::SecirSimulation>, epi::MigrationEdge>();
-    g.add_node(epi::SecirParams(), 0.5);
-    g.add_node(epi::SecirParams(), 0.5);
-    for (auto& n : g.nodes())
-    {
+    using Model      = epi::SecirModel<epi::AgeGroup1>;
+    using Simulation = epi::Simulation<Model>;
+    auto g           = epi::Graph<epi::ModelNode<Simulation>, epi::MigrationEdge>();
+    g.add_node(Model(), 0.5);
+    g.add_node(Model(), 0.5);
+    for (auto& n : g.nodes()) {
         n.model.advance(4.5);
     }
 
     auto interpolated = epi::interpolate_simulation_result(g);
     ASSERT_EQ(interpolated.size(), 2);
-    for (auto& n : interpolated)
-    {
+    for (auto& n : interpolated) {
         //interpolation of time series tested separately.
         //so only checking that each node was interpolated.
         ASSERT_THAT(n.get_times(), ElementsAreLinspace(0.0, 5.0, 6));
-    } 
+    }
 }
 
 TEST(TestInterpolateEnsemble, basic)
@@ -130,13 +132,13 @@ TEST(TestInterpolateEnsemble, basic)
 
     ASSERT_EQ(interpolated.size(), ts.size());
     ASSERT_THAT(interpolated[0].get_times(), ElementsAreLinspace(0.0, 2.0, 3));
-    ASSERT_THAT(interpolated[0][1], MatrixNear(Vec::Constant(1, 1.0 + 1.0 * 1/3)));
+    ASSERT_THAT(interpolated[0][1], MatrixNear(Vec::Constant(1, 1.0 + 1.0 * 1 / 3)));
     ASSERT_THAT(interpolated[1].get_times(), ElementsAreLinspace(0.0, 2.0, 3));
-    ASSERT_THAT(interpolated[1][1], MatrixNear(Vec::Constant(1, 0.0 + 1.0 * 2/3)));
+    ASSERT_THAT(interpolated[1][1], MatrixNear(Vec::Constant(1, 0.0 + 1.0 * 2 / 3)));
 }
 
 TEST(TestEnsembleMean, basic)
-{    
+{
     using Vec = epi::TimeSeries<double>::Vector;
 
     std::vector<std::vector<epi::TimeSeries<double>>> ensemble;
@@ -164,7 +166,7 @@ TEST(TestEnsembleMean, basic)
     ensemble.back()[1].add_time_point(5.0, Vec::Constant(1, 1.0));
 
     auto mean = epi::ensemble_mean(ensemble);
-    
+
     ASSERT_EQ(mean.size(), 2);
     ASSERT_THAT(mean[0].get_times(), testing::ElementsAre(3.0, 4.0, 5.0));
     ASSERT_THAT(mean[0], testing::ElementsAre(MatrixNear(Vec::Constant(1, 0.25)), MatrixNear(Vec::Constant(1, 2.0)),
@@ -175,7 +177,7 @@ TEST(TestEnsembleMean, basic)
 }
 
 TEST(TestEnsemblePercentile, basic)
-{    
+{
     using Vec = epi::TimeSeries<double>::Vector;
 
     std::vector<std::vector<epi::TimeSeries<double>>> ensemble;
@@ -228,7 +230,7 @@ TEST(TestEnsemblePercentile, basic)
     auto q2 = epi::ensemble_percentile(ensemble, 0.4);
     auto q3 = epi::ensemble_percentile(ensemble, 0.7);
     auto q4 = epi::ensemble_percentile(ensemble, 0.9);
-    
+
     //checking only a few elements
     ASSERT_EQ(q1.size(), 2);
     ASSERT_THAT(q1[0].get_times(), testing::ElementsAre(1.0, 2.0, 3.0));
