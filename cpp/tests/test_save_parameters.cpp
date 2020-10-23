@@ -462,8 +462,7 @@ TEST(TestSaveParameters, compareGraphs)
         epi::ContactFrequencyMatrix graph_read_cont_freq = graph_read_model.parameters.get_contact_patterns();
 
         ASSERT_EQ(num_groups, graph_read_cont_freq.get_size());
-        ASSERT_EQ(graph_params.populations.get_num_compartments(),
-                  graph_read_params.populations.get_num_compartments());
+        ASSERT_EQ(graph_model.populations.get_num_compartments(), graph_read_model.populations.get_num_compartments());
 
         for (size_t group = 0; group < num_groups; group++) {
             ASSERT_EQ(graph_model.populations.get((epi::AgeGroup2)group, epi::InfectionType::D),

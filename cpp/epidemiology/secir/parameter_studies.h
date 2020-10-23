@@ -12,8 +12,6 @@
 namespace epi
 {
 
-auto DummyHandleResultFunction = [](const SecirParams&, const TimeSeries<double>&, int) {};
-
 /**
  * Class that performs multiple simulation runs with randomly sampled parameters.
  */
@@ -77,7 +75,7 @@ public:
      * @param[in] result_processing_function Processing function for simulation results, e.g., output function
      */
     std::vector<epi::Graph<epi::ModelNode<epi::Simulation<Model>>, epi::MigrationEdge>>
-    run(HandleSimulationResultFunction result_processing_function = DummyHandleResultFunction)
+    run(HandleSimulationResultFunction result_processing_function = [](const Model&, const TimeSeries<double>&, int) {})
     {
         std::vector<epi::Graph<epi::ModelNode<epi::Simulation<Model>>, epi::MigrationEdge>> ensemble_result;
 

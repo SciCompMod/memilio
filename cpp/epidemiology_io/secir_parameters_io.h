@@ -5,7 +5,10 @@
 #include <epidemiology/utils/graph.h>
 #include <epidemiology/migration/migration.h>
 #include <epidemiology/secir/parameter_studies.h>
+#include <epidemiology_io/io.h>
 #include <epidemiology_io/secir_result_io.h>
+
+#include <boost/filesystem.hpp>
 
 #include <tixi.h>
 
@@ -102,14 +105,13 @@ SecirModel<AgeGroup> read_parameter_space(TixiDocumentHandle handle, const std::
     model.parameters.set_icu_capacity(*read_element(handle, path_join(path, "ICUCapacity"), io_mode));
     model.parameters.set_contact_patterns(read_contact(handle, path_join(path, "ContactFreq"), io_mode));
 
-    for (size_t i = 0; i < num_groups; i++) {
+    for (int i = 0; i < num_groups; i++) {
         auto group_name = "Group" + std::to_string(i + 1);
         auto group_path = path_join(path, group_name);
 
         // populations
         auto population_path = path_join(group_path, "Population");
 
-        double read_buffer;
         tixiGetDoubleElement(handle, path_join(population_path, "Dead").c_str(), &read_buffer);
         model.populations.set(read_buffer, (AgeGroup)i, InfectionType::D);
 
@@ -186,9 +188,9 @@ void write_parameter_space(TixiDocumentHandle handle, const std::string& path, M
     auto num_groups = model.parameters.get_num_groups();
     tixiAddIntegerElement(handle, path.c_str(), "NumberOfGroups", num_groups, "%d");
 
-    tixiAddDoubleElement(handle, path.c_str(), "StartDay", parameters.get_start_day(), "%g");
-    write_element(handle, path, "Seasonality", parameters.get_seasonality(), io_mode, num_runs);
-    write_element(handle, path, "ICUCapacity", parameters.get_icu_capacity(), io_mode, num_runs);
+    tixiAddDoubleElement(handle, path.c_str(), "StartDay", model.parameters.get_start_day(), "%g");
+    write_element(handle, path, "Seasonality", model.parameters.get_seasonality(), io_mode, num_runs);
+    write_element(handle, path, "ICUCapacity", model.parameters.get_icu_capacity(), io_mode, num_runs);
 
     for (size_t i = 0; i < num_groups; i++) {
         auto group_name = "Group" + std::to_string(i + 1);
@@ -258,7 +260,7 @@ void write_parameter_space(TixiDocumentHandle handle, const std::string& path, M
                       model.parameters.probabilities[i].get_icu_per_hospitalized(), io_mode, num_runs);
     }
 
-    write_contact(handle, path, model.parameters.get_contact_patterns(), io_mode, num_runs);
+    write_contact(handle, path, model.parameters.get_contact_patterns(), io_mode);
 }
 
 /**
@@ -357,7 +359,7 @@ void write_single_run_params(const int run, const Model& model, double t0, doubl
  * @param tmax end point of simulation
  */
 template <class Model>
-void write_node(const Graph<Model, MigrationEdge>& graph, int node, double t0, double tmax)
+void write_node(const Graph<Model, MigrationEdge>& graph, int node)
 {
     int num_runs = 1;
     int io_mode  = 2;
@@ -463,7 +465,7 @@ void read_edge(TixiDocumentHandle handle, const std::string& path, Graph<Model, 
  */
 //TO-DO: Implement apropriate File System for XML FIles
 template <class Model>
-void write_graph(const Graph<Model, MigrationEdge>& graph, double t0, double tmax)
+void write_graph(const Graph<Model, MigrationEdge>& graph)
 {
     std::string edges_path = "/Edges";
     TixiDocumentHandle handle;
@@ -487,7 +489,7 @@ void write_graph(const Graph<Model, MigrationEdge>& graph, double t0, double tma
     tixiCloseDocument(handle);
 
     for (int node = 0; node < num_nodes; node++) {
-        write_node(graph, node, t0, tmax);
+        write_node(graph, node);
     }
 }
 
@@ -518,7 +520,7 @@ Graph<Model, MigrationEdge> read_graph()
         read_edge(handle, edges_path, graph, edge);
     }
     tixiCloseDocument(handle);
-    return model;
+    return graph;
 }
 
 } // namespace epi

@@ -40,7 +40,7 @@ TEST(TestSaveResult, compareResultWithH5)
         model.populations.set(nb_icu_t0, (epi::AgeGroup1)i, epi::InfectionType::U);
         model.populations.set(nb_rec_t0, (epi::AgeGroup1)i, epi::InfectionType::R);
         model.populations.set(nb_dead_t0, (epi::AgeGroup1)i, epi::InfectionType::D);
-        model.populations.set_difference_from_group_total(fact * nb_total_t0, (epi::AgeGroup1)0, epi::InfectionType::S);
+        model.populations.set_difference_from_total(nb_total_t0, (epi::AgeGroup1)0, epi::InfectionType::S);
 
         params.probabilities[i].set_infection_from_contact(0.06);
         params.probabilities[i].set_carrier_infectability(0.67);
@@ -55,7 +55,7 @@ TEST(TestSaveResult, compareResultWithH5)
     epi::Damping dummy(30., 0.3);
     for (int i = 0; i < static_cast<int>(nb_groups); i++) {
         for (int j = i; j < static_cast<int>(nb_groups); j++) {
-            cont_freq_matrix.set_cont_freq(fact * cont_freq, i, j);
+            cont_freq_matrix.set_cont_freq(cont_freq, i, j);
             cont_freq_matrix.add_damping(dummy, i, j);
         }
     }

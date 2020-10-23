@@ -80,6 +80,8 @@ public:
 
 private:
     const SecirModel1& m_model;
+    double m_abs_tol;
+    double m_rel_tol;
 };
 
 } // namespace epi

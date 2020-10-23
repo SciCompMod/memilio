@@ -41,13 +41,13 @@ public:
 
         //E to I
         this->add_flow(std::make_tuple(SeirInfType::E), std::make_tuple(SeirInfType::I),
-                       [](Pa const& p, Eigen::Ref<const Eigen::VectorXd> y, double t) {
+                       [](Pa const& p, Eigen::Ref<const Eigen::VectorXd> y, double /*t*/) {
                            return p.times.get_incubation_inv() * Po::get_from(y, SeirInfType::E);
                        });
 
         //I to R
         this->add_flow(std::make_tuple(SeirInfType::I), std::make_tuple(SeirInfType::R),
-                       [](Pa const& p, Eigen::Ref<const Eigen::VectorXd> y, double t) {
+                       [](Pa const& p, Eigen::Ref<const Eigen::VectorXd> y, double /*t*/) {
                            return p.times.get_infectious_inv() * Po::get_from(y, SeirInfType::I);
                        });
     }

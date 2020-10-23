@@ -28,15 +28,15 @@ void set_params_distributions_normal(
 {
     double min_val = 0.001;
 
-    double value_params = params.get_seasonality();
-    params.set_seasonality(ParameterDistributionNormal(std::max(0.0, (1 - dev_rel * 2.6) * value_params),
-                                                       (1 + dev_rel * 2.6) * value_params, value_params,
-                                                       dev_rel * value_params));
+    double value_params = model.parameters.get_seasonality();
+    model.parameters.set_seasonality(ParameterDistributionNormal(std::max(0.0, (1 - dev_rel * 2.6) * value_params),
+                                                                 (1 + dev_rel * 2.6) * value_params, value_params,
+                                                                 dev_rel * value_params));
 
-    value_params = params.get_icu_capacity();
-    params.set_icu_capacity(ParameterDistributionNormal(std::max(min_val, (1 - dev_rel * 2.6) * value_params),
-                                                        (1 + dev_rel * 2.6) * value_params, value_params,
-                                                        dev_rel * value_params));
+    value_params = model.parameters.get_icu_capacity();
+    model.parameters.set_icu_capacity(ParameterDistributionNormal(std::max(min_val, (1 - dev_rel * 2.6) * value_params),
+                                                                  (1 + dev_rel * 2.6) * value_params, value_params,
+                                                                  dev_rel * value_params));
 
     // populations
     for (size_t i = 0; i < model.parameters.get_num_groups(); i++) {
@@ -88,7 +88,7 @@ void set_params_distributions_normal(
     // times
     for (size_t i = 0; i < model.parameters.get_num_groups(); i++) {
         // incubation time
-        double value_params = model.parameters.times[i].get_incubation();
+        value_params = model.parameters.times[i].get_incubation();
         model.parameters.times[i].set_incubation(
             ParameterDistributionNormal(std::max(min_val, (1 - dev_rel * 2.6) * value_params),
                                         (1 + dev_rel * 2.6) * value_params, value_params, dev_rel * value_params));
@@ -145,7 +145,7 @@ void set_params_distributions_normal(
     // probabilities
     for (size_t i = 0; i < model.parameters.get_num_groups(); i++) {
         // infection from contact
-        double value_params = model.parameters.probabilities[i].get_infection_from_contact();
+        value_params = model.parameters.probabilities[i].get_infection_from_contact();
         model.parameters.probabilities[i].set_infection_from_contact(
             ParameterDistributionNormal(std::max(min_val, (1 - dev_rel * 2.6) * value_params),
                                         (1 + dev_rel * 2.6) * value_params, value_params, dev_rel * value_params));
@@ -204,8 +204,8 @@ void set_params_distributions_normal(
 template <class AgeGroup>
 void draw_sample(CompartmentalModel<Populations<AgeGroup, InfectionType>, SecirParams<(size_t)AgeGroup::Count>>& model)
 {
-    params.get_seasonality().draw_sample();
-    params.get_icu_capacity().draw_sample();
+    model.parameters.get_seasonality().draw_sample();
+    model.parameters.get_icu_capacity().draw_sample();
 
     for (size_t i = 0; i < model.parameters.get_num_groups(); i++) {
 

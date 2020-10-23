@@ -89,7 +89,7 @@ public:
             // Ei to Ci
             this->add_flow(std::make_tuple((AgeGroup)i, InfectionType::E),
                            std::make_tuple((AgeGroup)i, InfectionType::C),
-                           [i](Pa const& p, Eigen::Ref<const Eigen::VectorXd> y, double t) {
+                           [i](Pa const& p, Eigen::Ref<const Eigen::VectorXd> y, double /*t*/) {
                                return Po::get_from(y, (AgeGroup)i, InfectionType::E) /
                                       (2 * p.times[i].get_serialinterval() - p.times[i].get_incubation());
                            });
@@ -97,7 +97,7 @@ public:
             // Ci to Ii
             this->add_flow(std::make_tuple((AgeGroup)i, InfectionType::C),
                            std::make_tuple((AgeGroup)i, InfectionType::I),
-                           [i](Pa const& p, Eigen::Ref<const Eigen::VectorXd> y, double t) {
+                           [i](Pa const& p, Eigen::Ref<const Eigen::VectorXd> y, double /*t*/) {
                                double dummy_R3 = 0.5 / (p.times[i].get_incubation() - p.times[i].get_serialinterval());
                                double alpha    = p.probabilities[i].get_asymp_per_infectious();
                                return ((1 - alpha) * dummy_R3) * Po::get_from(y, (AgeGroup)i, InfectionType::C);
@@ -106,7 +106,7 @@ public:
             // Ci to Ri
             this->add_flow(
                 std::make_tuple((AgeGroup)i, InfectionType::C), std::make_tuple((AgeGroup)i, InfectionType::R),
-                [i](Pa const& p, Eigen::Ref<const Eigen::VectorXd> y, double t) {
+                [i](Pa const& p, Eigen::Ref<const Eigen::VectorXd> y, double /*t*/) {
                     double alpha = p.probabilities[i].get_asymp_per_infectious();
                     return (alpha / p.times[i].get_infectious_asymp()) * Po::get_from(y, (AgeGroup)i, InfectionType::C);
                 });
@@ -114,7 +114,7 @@ public:
             // Ii to Ri
             this->add_flow(std::make_tuple((AgeGroup)i, InfectionType::I),
                            std::make_tuple((AgeGroup)i, InfectionType::R),
-                           [i](Pa const& p, Eigen::Ref<const Eigen::VectorXd> y, double t) {
+                           [i](Pa const& p, Eigen::Ref<const Eigen::VectorXd> y, double /*t*/) {
                                return Po::get_from(y, (AgeGroup)i, InfectionType::I) *
                                       (1 - p.probabilities[i].get_hospitalized_per_infectious()) /
                                       p.times[i].get_infectious_mild();
@@ -123,7 +123,7 @@ public:
             // Ii to Hi
             this->add_flow(
                 std::make_tuple((AgeGroup)i, InfectionType::I), std::make_tuple((AgeGroup)i, InfectionType::H),
-                [i](Pa const& p, Eigen::Ref<const Eigen::VectorXd> y, double t) {
+                [i](Pa const& p, Eigen::Ref<const Eigen::VectorXd> y, double /*t*/) {
                     return Po::get_from(y, (AgeGroup)i, InfectionType::I) *
                            p.probabilities[i].get_hospitalized_per_infectious() / p.times[i].get_home_to_hospitalized();
                 });
@@ -131,7 +131,7 @@ public:
             // Hi to Ui
             this->add_flow(
                 std::make_tuple((AgeGroup)i, InfectionType::H), std::make_tuple((AgeGroup)i, InfectionType::U),
-                [i](Pa const& p, Eigen::Ref<const Eigen::VectorXd> y, double t) {
+                [i](Pa const& p, Eigen::Ref<const Eigen::VectorXd> y, double /*t*/) {
                     return Po::get_from(y, (AgeGroup)i, InfectionType::H) *
                            p.probabilities[i].get_icu_per_hospitalized() / p.times[i].get_hospitalized_to_icu();
                 });
@@ -139,7 +139,7 @@ public:
             // Hi to Ri
             this->add_flow(
                 std::make_tuple((AgeGroup)i, InfectionType::H), std::make_tuple((AgeGroup)i, InfectionType::R),
-                [i](Pa const& p, Eigen::Ref<const Eigen::VectorXd> y, double t) {
+                [i](Pa const& p, Eigen::Ref<const Eigen::VectorXd> y, double /*t*/) {
                     return Po::get_from(y, (AgeGroup)i, InfectionType::H) *
                            (1 - p.probabilities[i].get_icu_per_hospitalized()) / p.times[i].get_hospitalized_to_home();
                 });
@@ -147,7 +147,7 @@ public:
             // Ui to Ri
             this->add_flow(std::make_tuple((AgeGroup)i, InfectionType::U),
                            std::make_tuple((AgeGroup)i, InfectionType::R),
-                           [i](Pa const& p, Eigen::Ref<const Eigen::VectorXd> y, double t) {
+                           [i](Pa const& p, Eigen::Ref<const Eigen::VectorXd> y, double /*t*/) {
                                return Po::get_from(y, (AgeGroup)i, InfectionType::U) *
                                       (1 - p.probabilities[i].get_dead_per_icu()) / p.times[i].get_icu_to_home();
                            });
@@ -155,7 +155,7 @@ public:
             // Ui to Di
             this->add_flow(std::make_tuple((AgeGroup)i, InfectionType::U),
                            std::make_tuple((AgeGroup)i, InfectionType::D),
-                           [i](Pa const& p, Eigen::Ref<const Eigen::VectorXd> y, double t) {
+                           [i](Pa const& p, Eigen::Ref<const Eigen::VectorXd> y, double /*t*/) {
                                return Po::get_from(y, (AgeGroup)i, InfectionType::U) *
                                       p.probabilities[i].get_dead_per_icu() / p.times[i].get_icu_to_dead();
                            });

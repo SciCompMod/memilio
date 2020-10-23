@@ -1102,7 +1102,7 @@ public:
      */
     void apply_constraints()
     {
-        for (int i = 0; i < times.size(); i++) {
+        for (size_t i = 0; i < times.size(); i++) {
             times[i].apply_constraints();
             probabilities[i].apply_constraints();
         }
@@ -1113,7 +1113,7 @@ public:
      */
     void check_constraints() const
     {
-        for (int i = 0; i < times.size(); i++) {
+        for (size_t i = 0; i < times.size(); i++) {
             times[i].check_constraints();
             probabilities[i].check_constraints();
         }
