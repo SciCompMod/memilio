@@ -4,6 +4,7 @@
 #include "epidemiology/model/compartmentalmodel.h"
 #include "epidemiology/model/populations.h"
 #include "epidemiology/secir/secir_params.h"
+#include "epidemiology/math/smoother.h"
 
 namespace epi
 {
@@ -66,8 +67,12 @@ public:
                 this->add_flow(
                     std::make_tuple((AgeGroup)i, InfectionType::S), std::make_tuple((AgeGroup)i, InfectionType::E),
                     [i, j](Pa const& p, Eigen::Ref<const Eigen::VectorXd> y, double t) {
+                        // effective contact rate by contact rate between groups i and j and damping j
+                        ScalarType season_val =
+                            (1 + p.get_seasonality() * sin(3.141592653589793 *
+                                                           (std::fmod((p.get_start_day() + t), 365.0) / 182.5 + 0.5)));
                         ScalarType cont_freq_eff =
-                            p.get_contact_patterns().get_cont_freq_mat().get_cont_freq(i, j) *
+                            season_val * p.get_contact_patterns().get_cont_freq_mat().get_cont_freq(i, j) *
                             p.get_contact_patterns().get_cont_freq_mat().get_dampings(i, j).get_factor(t);
                         ScalarType Nj = Po::get_from(y, (AgeGroup)j, InfectionType::S) +
                                         Po::get_from(y, (AgeGroup)j, InfectionType::E) +
@@ -129,11 +134,38 @@ public:
                 });
 
             // Hi to Ui
+            this->add_flow(std::make_tuple((AgeGroup)i, InfectionType::H),
+                           std::make_tuple((AgeGroup)i, InfectionType::U),
+                           [i](Pa const& p, Eigen::Ref<const Eigen::VectorXd> y, double /*t*/) {
+                               ScalarType icu_occupancy = 0;
+                               for (size_t j = 0; j < (size_t)AgeGroup::Count; ++j) {
+                                   icu_occupancy += Po::get_from(y, (AgeGroup)j, InfectionType::U);
+                               }
+
+                               ScalarType prob_hosp2icu =
+                                   smoother_cosine(icu_occupancy, 0.90 * p.get_icu_capacity(), p.get_icu_capacity(),
+                                                   p.probabilities[i].get_icu_per_hospitalized(), 0);
+
+                               return Po::get_from(y, (AgeGroup)i, InfectionType::H) * prob_hosp2icu /
+                                      p.times[i].get_hospitalized_to_icu();
+                           });
+
+            // Hi to Di
             this->add_flow(
-                std::make_tuple((AgeGroup)i, InfectionType::H), std::make_tuple((AgeGroup)i, InfectionType::U),
+                std::make_tuple((AgeGroup)i, InfectionType::H), std::make_tuple((AgeGroup)i, InfectionType::D),
                 [i](Pa const& p, Eigen::Ref<const Eigen::VectorXd> y, double /*t*/) {
-                    return Po::get_from(y, (AgeGroup)i, InfectionType::H) *
-                           p.probabilities[i].get_icu_per_hospitalized() / p.times[i].get_hospitalized_to_icu();
+                    ScalarType icu_occupancy = 0;
+                    for (size_t j = 0; j < (size_t)AgeGroup::Count; ++j) {
+                        icu_occupancy += Po::get_from(y, (AgeGroup)j, InfectionType::U);
+                    }
+
+                    ScalarType prob_hosp2icu =
+                        smoother_cosine(icu_occupancy, 0.90 * p.get_icu_capacity(), p.get_icu_capacity(),
+                                        p.probabilities[i].get_icu_per_hospitalized(), 0);
+                    ScalarType prob_hosp2dead = p.probabilities[i].get_icu_per_hospitalized() - prob_hosp2icu;
+
+                    return Po::get_from(y, (AgeGroup)i, InfectionType::H) * prob_hosp2dead /
+                           p.times[i].get_hospitalized_to_icu();
                 });
 
             // Hi to Ri
