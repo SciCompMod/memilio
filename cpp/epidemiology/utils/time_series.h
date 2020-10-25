@@ -178,6 +178,25 @@ public:
         return value;
     }
 
+    /** 
+     * remove time point.
+     * @param i index to remove
+     */
+    void remove_time_point(Eigen::Index i)
+    {
+        assert(i >= 0 && i < m_num_time_points);
+        m_num_time_points -= 1;
+        for (auto j = i; j < m_num_time_points; ++j)
+        {
+            m_data.col(j) = m_data.col(j + 1);
+        }
+    }
+
+    void remove_last_time_point()
+    {
+        remove_time_point(m_num_time_points - 1);
+    }
+
     /**
      * time of time point at index i
      */
