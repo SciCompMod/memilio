@@ -13,10 +13,10 @@ namespace epi
 
 enum SeirCompartments
 {
-    S,
-    E,
-    I,
-    R,
+    SeirS,
+    SeirE,
+    SeirI,
+    SeirR,
     SeirCount
 };
 

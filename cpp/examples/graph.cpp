@@ -10,7 +10,7 @@ int main(int argc, char** argv)
     const auto dt   = 1.; //time step of migration, not integration
 
     epi::SeirParams params;
-    params.populations.set({epi::SeirCompartments::S}, 10000);
+    params.populations.set({epi::SeirCompartments::SeirS}, 10000);
     params.times.set_incubation(1);
     params.times.set_cont_freq(2.7);
     params.times.set_infectious(1);
@@ -21,8 +21,8 @@ int main(int argc, char** argv)
     //some contact restrictions in group 1
     params_group1.dampings.add({5, 0.5});
     //infection starts in group 1
-    params_group1.populations.set({epi::SeirCompartments::S}, 9990);
-    params_group1.populations.set({epi::SeirCompartments::E}, 10);
+    params_group1.populations.set({epi::SeirCompartments::SeirS}, 9990);
+    params_group1.populations.set({epi::SeirCompartments::SeirE}, 10);
 
     epi::Graph<epi::ModelNode<epi::SeirSimulation>, epi::MigrationEdge> g;
     g.add_node(params_group1, t0);

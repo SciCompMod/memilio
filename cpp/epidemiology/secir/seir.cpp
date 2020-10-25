@@ -17,8 +17,8 @@ void print_seir_params(const SeirParams& params)
            "rate:\t %.4f \n\t N:\t %d \n\t E0:\t %d \n\t I0:\t %d \n\t R0:\t %d\n",
            1.0 / params.times.get_incubation_inv(), 1.0 / params.times.get_infectious_inv(),
            params.times.get_cont_freq(), (int)params.populations.get_total(),
-           (int)params.populations.get({SeirCompartments::E}), (int)params.populations.get({SeirCompartments::I}),
-           (int)params.populations.get({SeirCompartments::R}));
+           (int)params.populations.get({SeirCompartments::SeirE}), (int)params.populations.get({SeirCompartments::SeirI}),
+           (int)params.populations.get({SeirCompartments::SeirR}));
 }
 
 /**
@@ -71,12 +71,12 @@ void seir_get_derivatives(const SeirParams& params, Eigen::Ref<const Eigen::Vect
     double cont_freq_eff = params.times.get_cont_freq() * params.dampings.get_factor(t);
     double divN          = 1.0 / params.populations.get_total();
 
-    dydt[SeirCompartments::S] = -cont_freq_eff * y[SeirCompartments::S] * y[SeirCompartments::I] * divN;
-    dydt[SeirCompartments::E] = cont_freq_eff * y[SeirCompartments::S] * y[SeirCompartments::I] * divN -
-                                params.times.get_incubation_inv() * y[SeirCompartments::E];
-    dydt[SeirCompartments::I] = params.times.get_incubation_inv() * y[SeirCompartments::E] -
-                                params.times.get_infectious_inv() * y[SeirCompartments::I];
-    dydt[SeirCompartments::R] = params.times.get_infectious_inv() * y[SeirCompartments::I];
+    dydt[SeirCompartments::SeirS] = -cont_freq_eff * y[SeirCompartments::SeirS] * y[SeirCompartments::SeirI] * divN;
+    dydt[SeirCompartments::SeirE] = cont_freq_eff * y[SeirCompartments::SeirS] * y[SeirCompartments::SeirI] * divN -
+                                params.times.get_incubation_inv() * y[SeirCompartments::SeirE];
+    dydt[SeirCompartments::SeirI] = params.times.get_incubation_inv() * y[SeirCompartments::SeirE] -
+                                params.times.get_infectious_inv() * y[SeirCompartments::SeirI];
+    dydt[SeirCompartments::SeirR] = params.times.get_infectious_inv() * y[SeirCompartments::SeirI];
 }
 
 TimeSeries<double> simulate(double t0, double tmax, double dt, const SeirParams& params)
