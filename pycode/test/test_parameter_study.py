@@ -79,8 +79,7 @@ class Test_ParameterStudy(unittest.TestCase):
         t0 = 1
         tmax = 10
         num_runs = 3
-        graph_dt = 1.0
-        study = secir.ParameterStudy(graph, t0, tmax, graph_dt, num_runs)
+        study = secir.ParameterStudy(graph, t0, tmax, num_runs)
 
         self.assertEqual(study.secir_params_graph.num_nodes, 2)
         self.assertEqual(study.secir_params_graph.num_edges, 2)

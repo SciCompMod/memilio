@@ -100,7 +100,7 @@ TEST(TestInterpolateGraph, basic)
     g.add_node(epi::SecirParams(), 0.5);
     for (auto& n : g.nodes())
     {
-        n.model.advance(4.5);
+        n.evolve(0.5, 4.0);
     }
 
     auto interpolated = epi::interpolate_simulation_result(g);

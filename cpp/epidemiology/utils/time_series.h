@@ -160,9 +160,8 @@ public:
     Eigen::Ref<Vector> add_time_point(FP t)
     {
         add_time_point_noinit();
-        auto col = m_data.col(m_num_time_points - 1);
-        col(0)   = t;
-        return col.tail(get_num_elements());
+        get_last_time() = t;
+        return get_last_value();
     }
 
     /**
@@ -482,7 +481,7 @@ namespace details
         using Traits    = details::TimeSeriesIterTraits<FP, IsConstIter>;
         using MatrixPtr = typename Traits::MatrixPtr;
         MatrixPtr m_matrix;
-        Eigen::Index m_col_idx;
+        Eigen::Index m_col_idx = -1;
 
     public:
         TimeSeriesIteratorBase(MatrixPtr m, Eigen::Index col_idx = 0)
@@ -506,6 +505,7 @@ namespace details
 
         reference operator*()
         {
+            assert(m_col_idx >= 0 && m_col_idx < m_matrix->cols());
             return static_cast<Derived&>(*this).get_reference();
         }
 

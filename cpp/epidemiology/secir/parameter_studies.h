@@ -30,7 +30,7 @@ public:
      * @param num_runs number of runs
      */
     ParameterStudy(const epi::Graph<epi::SecirParams, epi::MigrationEdge>& graph, double t0, double tmax,
-                   double graph_sim_dt, size_t num_runs);
+                   size_t num_runs);
 
     /**
      * @brief Create study for single compartment model.
@@ -137,19 +137,16 @@ private:
     double m_t0;
     // End time (should be the same for all simulations)
     double m_tmax;
-    // time step of the graph
-    double m_dt_graph_sim;
     // adaptive time step of the integrator (will be corrected if too large/small)
     double m_dt_integration = 0.1;
 };
 
 inline ParameterStudy::ParameterStudy(const epi::Graph<epi::SecirParams, epi::MigrationEdge>& graph, double t0,
-                                      double tmax, double graph_sim_dt, size_t num_runs)
+                                      double tmax, size_t num_runs)
     : m_graph(graph)
     , m_num_runs(num_runs)
     , m_t0{t0}
     , m_tmax{tmax}
-    , m_dt_graph_sim(graph_sim_dt)
 {
 }
 
@@ -157,7 +154,6 @@ inline ParameterStudy::ParameterStudy(SecirParams const& params, double t0, doub
     : m_num_runs{num_runs}
     , m_t0{t0}
     , m_tmax{tmax}
-    , m_dt_graph_sim(tmax - t0)
 {
     m_graph.add_node(params);
 }
@@ -185,11 +181,11 @@ ParameterStudy::run(HandleSimulationResultFunction simulation_result_function)
         }
 
         for (auto& edge : m_graph.edges()) {
-            sim_graph.add_edge(edge.start_node_idx, edge.end_node_idx, edge.property.coefficients);
+            sim_graph.add_edge(edge.start_node_idx, edge.end_node_idx, edge.property.get_coefficients());
         }
 
         // Call the simulation function
-        auto sim = make_migration_sim(m_t0, m_dt_graph_sim, sim_graph);
+        auto sim = make_migration_sim(m_t0, sim_graph);
         sim.advance(m_tmax);
 
         auto result = sim.get_graph();

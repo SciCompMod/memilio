@@ -107,7 +107,7 @@ int main(int argc, char** argv)
     std::cout << "Done" << std::endl;
 
     std::cout << "Running Simulations..." << std::flush;
-    auto study = epi::ParameterStudy(graph_read, t0, tmax, 1.0, 2);
+    auto study = epi::ParameterStudy(graph_read, t0, tmax, 2);
     std::cout << "Done" << std::endl;
 
     return 0;

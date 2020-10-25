@@ -30,7 +30,7 @@ int main(int argc, char** argv)
     g.add_edge(0, 1, Eigen::VectorXd::Constant(epi::SeirCompartments::SeirCount, 0.01));
     g.add_edge(1, 0, Eigen::VectorXd::Constant(epi::SeirCompartments::SeirCount, 0.01));
 
-    auto sim = epi::make_migration_sim(t0, dt, g);
+    auto sim = epi::make_migration_sim(t0, g);
 
     sim.advance(10);
 

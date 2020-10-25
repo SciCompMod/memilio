@@ -65,14 +65,14 @@ double SeirParams::StageTimes::get_infectious_inv() const
     return m_tinfmild_inv;
 }
 
-void seir_get_derivatives(const SeirParams& params, Eigen::Ref<const Eigen::VectorXd> y, double t,
-                          Eigen::Ref<Eigen::VectorXd> dydt)
+void seir_get_derivatives(const SeirParams& params, Eigen::Ref<const Eigen::VectorXd> pop,
+                          Eigen::Ref<const Eigen::VectorXd> y, double t, Eigen::Ref<Eigen::VectorXd> dydt)
 {
     double cont_freq_eff = params.times.get_cont_freq() * params.dampings.get_factor(t);
     double divN          = 1.0 / params.populations.get_total();
 
-    dydt[SeirCompartments::SeirS] = -cont_freq_eff * y[SeirCompartments::SeirS] * y[SeirCompartments::SeirI] * divN;
-    dydt[SeirCompartments::SeirE] = cont_freq_eff * y[SeirCompartments::SeirS] * y[SeirCompartments::SeirI] * divN -
+    dydt[SeirCompartments::SeirS] = -cont_freq_eff * y[SeirCompartments::SeirS] * pop[SeirCompartments::SeirI] * divN;
+    dydt[SeirCompartments::SeirE] = cont_freq_eff * y[SeirCompartments::SeirS] * pop[SeirCompartments::SeirI] * divN -
                                 params.times.get_incubation_inv() * y[SeirCompartments::SeirE];
     dydt[SeirCompartments::SeirI] = params.times.get_incubation_inv() * y[SeirCompartments::SeirE] -
                                 params.times.get_infectious_inv() * y[SeirCompartments::SeirI];
@@ -87,11 +87,12 @@ TimeSeries<double> simulate(double t0, double tmax, double dt, const SeirParams&
 }
 
 SeirSimulation::SeirSimulation(const SeirParams& params, double t0, double dt_init)
-    : m_integrator(
+    : m_params(params)
+    , m_integrator(
           [params](auto&& y, auto&& t, auto&& dydt) {
               seir_get_derivatives(params, y, t, dydt);
           },
-          t0, params.populations.get_compartments(), dt_init,
+          t0, m_params.populations.get_compartments(), dt_init,
           std::make_shared<EulerIntegratorCore>() /*std::make_shared<RkIntegratorCore>(1e-6, 1.)*/)
 {
 }
