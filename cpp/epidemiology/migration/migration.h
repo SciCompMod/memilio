@@ -158,7 +158,7 @@ template <class FP>
 typename TimeSeries<FP>::const_reverse_iterator find_value_reverse(const TimeSeries<FP> ts, FP t_search)
 {
     auto iter_t = find_if(ts.get_reverse_times().begin(), ts.get_reverse_times().end(), [=](auto t) {
-        return std::abs(t - t_search) < 1e-10;
+        return std::abs(t - t_search) < FP(1e-10);
     });
     if (iter_t != ts.get_reverse_times().end()) {
         return ts.rbegin() + (iter_t - ts.get_reverse_times().begin());

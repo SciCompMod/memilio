@@ -6,6 +6,7 @@
 #include "epidemiology/utils/stl_util.h"
 #include "epidemiology/utils/compiler_diagnostics.h"
 
+#include <iterator>
 #include <vector>
 #include <map>
 #include <ostream>
@@ -552,7 +553,7 @@ namespace details
             return tmp;
         }
 
-        difference_type operator-(const TimeSeriesIteratorBase& other)
+        difference_type operator-(const TimeSeriesIteratorBase& other) const
         {
             return m_col_idx - other.m_col_idx;
         }

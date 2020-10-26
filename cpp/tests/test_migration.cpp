@@ -55,10 +55,12 @@ TEST(TestMigration, compareNoMigrationWithSingleIntegration)
 TEST(TestMigration, nodeEvolve)
 {
     auto cfm = epi::ContactFrequencyMatrix(1);
-    cfm.set_cont_freq(0, 0, 5.0);
+    cfm.set_cont_freq(5.0, 0, 0);
     epi::SecirParams params(cfm);
     params.populations.set({0, epi::E}, 100);
     params.populations.set_difference_from_total({0, epi::S}, 1000);
+    params.times[0].set_serialinterval(1.5);
+    params.times[0].set_incubation(2.0);
     params.apply_constraints();
 
     double t0 = 2.835;
@@ -82,6 +84,8 @@ TEST(TestMigration, edgeApplyMigration)
     params.probabilities[0].set_risk_from_symptomatic(1.0);
     params.probabilities[0].set_carrier_infectability(1.0);
     params.probabilities[0].set_hospitalized_per_infectious(0.5);
+    params.times[0].set_serialinterval(1.5);
+    params.times[0].set_incubation(2.0);
     params.apply_constraints();
     double t = 3.125;
     epi::ModelNode<epi::SecirSimulation> node1(params, t);
