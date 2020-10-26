@@ -7,8 +7,6 @@
 #include <epidemiology_io/secir_parameters_io.h>
 #include <epidemiology/migration/migration.h>
 #include <distributions_helpers.h>
-#include <jsoncpp/json/json.h>
-#include <jsoncpp/json/value.h>
 #include <gtest/gtest.h>
 
 TEST(TestSaveParameters, compareParameterStudy)
@@ -595,15 +593,6 @@ TEST(TestSaveParameters, ReadPopulationDataRKIAges)
 
     std::string path = TEST_DATA_DIR;
     epi::read_population_data_germany(params, ranges, 5, 5, path);
-
-    Json::Reader reader;
-    Json::Reader reader_divi;
-    Json::Value root;
-    Json::Value root_divi;
-    std::ifstream json_file(epi::path_join(TEST_DATA_DIR, "all_age_rki.json"));
-    std::ifstream json_file_divi(epi::path_join(TEST_DATA_DIR, "germany_divi.json"));
-    reader.parse(json_file, root);
-    reader_divi.parse(json_file_divi, root_divi);
 
     std::vector<std::string> age_names = {"A00-A04", "A05-A14", "A15-A34", "A35-A59", "A60-A79", "A80+", "unknown"};
 

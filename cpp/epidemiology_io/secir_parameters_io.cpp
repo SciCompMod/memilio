@@ -11,13 +11,17 @@
 #include <epidemiology/secir/secir.h>
 
 #include <tixi.h>
+
+#include <json/json.h>
+#include <json/value.h>
+
+#include <numeric>
 #include <vector>
 #include <iostream>
 #include <string>
 #include <random>
 #include <fstream>
-#include <jsoncpp/json/json.h>
-#include <jsoncpp/json/value.h>
+
 
 namespace epi
 {
