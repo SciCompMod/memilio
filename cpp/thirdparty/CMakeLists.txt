@@ -1,3 +1,8 @@
+# Versions of the bundled libraries
+# If you like to upgrade, just change the number
+set(EPI_EIGEN_VERSION "3.3.0")
+set(EPI_SPDLOG_VERSION "1.5.0") 
+set(EPI_JSONCPP_VERSION "1.7.4")
 
 
 set(SPDLOG_INSTALL ON)
@@ -10,7 +15,7 @@ if(EPI_USE_BUNDLED_SPDLOG)
         include(DownloadProject)
         download_project(PROJ                spdlog
                          GIT_REPOSITORY      https://github.com/gabime/spdlog.git
-                         GIT_TAG             v1.5.0
+                         GIT_TAG             v${EPI_SPDLOG_VERSION}
                          UPDATE_DISCONNECTED 1
                          QUIET
         )
@@ -21,7 +26,7 @@ if(EPI_USE_BUNDLED_SPDLOG)
         FetchContent_Declare(
           spdlog
           GIT_REPOSITORY https://github.com/gabime/spdlog.git
-          GIT_TAG v1.5.0
+          GIT_TAG v${EPI_SPDLOG_VERSION}
         )
         FetchContent_GetProperties(spdlog)
         if(NOT spdlog_POPULATED)
@@ -40,7 +45,7 @@ if(EPI_USE_BUNDLED_EIGEN)
 
         include(DownloadProject)
         download_project(PROJ                eigen
-                         URL                 http://gitlab.com/libeigen/eigen/-/archive/3.3.0/eigen-3.3.0.tar.gz
+                         URL                 http://gitlab.com/libeigen/eigen/-/archive/${EPI_EIGEN_VERSION}/eigen-${EPI_EIGEN_VERSION}.tar.gz
                          UPDATE_DISCONNECTED 1
                          QUIET
         )
@@ -48,7 +53,7 @@ if(EPI_USE_BUNDLED_EIGEN)
         include(FetchContent)
         FetchContent_Declare(
           eigen
-          URL http://gitlab.com/libeigen/eigen/-/archive/3.3.0/eigen-3.3.0.tar.gz
+          URL http://gitlab.com/libeigen/eigen/-/archive/${EPI_EIGEN_VERSION}/eigen-${EPI_EIGEN_VERSION}.tar.gz
         )
         FetchContent_GetProperties(eigen)
         if(NOT eigen_POPULATED)
@@ -75,7 +80,7 @@ if (EPI_BUILD_EPI_IO)
 
         include(DownloadProject)
         download_project(PROJ               jsoncpp
-                        URL                 https://github.com/open-source-parsers/jsoncpp/archive/1.7.4.tar.gz
+                        URL                 https://github.com/open-source-parsers/jsoncpp/archive/${EPI_JSONCPP_VERSION}.tar.gz
                         UPDATE_DISCONNECTED 1
                         QUIET
         )
@@ -84,7 +89,7 @@ if (EPI_BUILD_EPI_IO)
       include(FetchContent)
       FetchContent_Declare(
         jsoncpp
-        URL https://github.com/open-source-parsers/jsoncpp/archive/1.7.4.tar.gz
+        URL https://github.com/open-source-parsers/jsoncpp/archive/${EPI_JSONCPP_VERSION}.tar.gz
       )
       FetchContent_GetProperties(jsoncpp)
       if(NOT jsoncpp_POPULATED)
