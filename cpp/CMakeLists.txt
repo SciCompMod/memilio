@@ -118,7 +118,6 @@ if (EPI_BUILD_EPI_IO)
     target_include_directories(epidemiology_io PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
         $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
-        ${Boost_INCLUDE_DIR}
     )
 
     target_link_libraries(epidemiology_io PUBLIC epidemiology tixi3

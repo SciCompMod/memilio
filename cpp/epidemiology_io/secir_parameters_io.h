@@ -8,8 +8,6 @@
 #include <epidemiology_io/io.h>
 #include <epidemiology_io/secir_result_io.h>
 
-#include <boost/filesystem.hpp>
-
 #include <tixi.h>
 
 namespace epi
@@ -326,29 +324,28 @@ void write_single_run_params(const int run, const Model& model, double t0, doubl
     tixiCreateDocument("Parameters", &handle);
     ParameterStudy<Model> study(model, t0, tmax, num_runs);
 
-    boost::filesystem::path dir("results");
-
-    bool created = boost::filesystem::create_directory(dir);
+    std::string abs_path;
+    bool created = create_directory("results", abs_path);
 
     if (created) {
-        log_info("Directory '{:s}' was created. Results are stored in {:s}/results.", dir.string(),
+        log_info("Results are stored in {:s}/results.",
                  epi::get_current_dir_name());
     }
     else {
         log_info(
-            "Directory '{:s}' already exists. Results are stored in {:s}/ results. Files from previous runs will be "
+            "Results are stored in {:s}/ results. Files from previous runs will be "
             "overwritten",
-            dir.string(), epi::get_current_dir_name());
+            epi::get_current_dir_name());
     }
 
     write_parameter_study(handle, path, study);
     tixiSaveDocument(
         handle,
-        (dir / ("Parameters_run" + std::to_string(run) + "_node" + std::to_string(node) + ".xml")).string().c_str());
+        (abs_path + "/Parameters_run" + std::to_string(run) + "_node" + std::to_string(node) + ".xml").c_str());
     tixiCloseDocument(handle);
 
     save_result(result,
-                (dir / ("Results_run" + std::to_string(run) + "_node" + std::to_string(node) + ".h5")).string());
+                (abs_path + "/Results_run" + std::to_string(run) + "_node" + std::to_string(node) + ".h5").c_str());
 }
 
 /**
