@@ -89,8 +89,8 @@ public:
     RKIntegratorCore()
         : m_abs_tol(1e-10)
         , m_rel_tol(1e-5)
-        , m_dt_min(1e-10)
-        , m_dt_max(1e10)
+        , m_dt_min(std::numeric_limits<double>::min())
+        , m_dt_max(std::numeric_limits<double>::max())
     {
     }
 
