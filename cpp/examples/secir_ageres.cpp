@@ -1,6 +1,7 @@
 #include <epidemiology/secir/secir.h>
 #include <epidemiology/utils/time_series.h>
 #include <epidemiology/utils/logging.h>
+#include <epidemiology/model/simulation.h>
 
 #ifdef HAVE_EPI_IO
 #include <epidemiology_io/secir_result_io.h>
@@ -45,7 +46,7 @@ int main()
     // delta = delta_in; // deaths per ICUs
 
     epi::SecirModel<epi::AgeGroup3> model;
-    int nb_groups = model.parameters.get_num_groups();
+    auto nb_groups = model.parameters.get_num_groups();
     double fact   = 1.0 / (double)nb_groups;
 
     auto& params = model.parameters;

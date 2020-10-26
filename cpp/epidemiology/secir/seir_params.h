@@ -1,8 +1,6 @@
 #ifndef SEIR_PARAMS_H
 #define SEIR_PARAMS_H
 
-#include "epidemiology/math/integrator.h"
-#include "epidemiology/model/populations.h"
 #include "epidemiology/secir/damping.h"
 
 #include <Eigen/Core>

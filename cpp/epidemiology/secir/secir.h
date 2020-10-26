@@ -72,8 +72,8 @@ public:
                             (1 + p.get_seasonality() * sin(3.141592653589793 *
                                                            (std::fmod((p.get_start_day() + t), 365.0) / 182.5 + 0.5)));
                         ScalarType cont_freq_eff =
-                            season_val * p.get_contact_patterns().get_cont_freq_mat().get_cont_freq(i, j) *
-                            p.get_contact_patterns().get_cont_freq_mat().get_dampings(i, j).get_factor(t);
+                            season_val * p.get_contact_patterns().get_cont_freq_mat().get_cont_freq((int)i, (int)j) *
+                            p.get_contact_patterns().get_cont_freq_mat().get_dampings((int)i, (int)j).get_factor(t);
                         ScalarType Nj = Po::get_from(y, (AgeGroup)j, InfectionType::S) +
                                         Po::get_from(y, (AgeGroup)j, InfectionType::E) +
                                         Po::get_from(y, (AgeGroup)j, InfectionType::C) +
