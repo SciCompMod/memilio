@@ -12,11 +12,18 @@
 #include <epidemiology/secir/secir.h>
 
 #include <tixi.h>
+
+#include <json/json.h>
+#include <json/value.h>
+
+#include <boost/filesystem.hpp>
+
+#include <numeric>
 #include <vector>
 #include <iostream>
 #include <string>
 #include <random>
-#include <boost/filesystem.hpp>
+#include <fstream>
 
 namespace epi
 {
@@ -607,6 +614,203 @@ Graph<SecirParams, MigrationEdge> read_graph()
     }
     tixiCloseDocument(handle);
     return graph;
+}
+
+void interpolate_ages(const std::vector<double>& age_ranges, const std::vector<double>& param_ranges,
+                      std::vector<std::vector<double>>& interpolation, std::vector<bool>& carry_over)
+{
+    //counter for parameter age groups
+    size_t counter = 0;
+
+    //residual of param age groups
+    double res = 0.0;
+    for (size_t i = 0; i < age_ranges.size(); i++) {
+
+        // if current param age group didn't fit into previous rki age group, transfer residual to current age group
+        if (res < 0) {
+            interpolation[i].push_back(std::min(-res / age_ranges[i], 1.0));
+        }
+
+        if (counter < param_ranges.size() - 1) {
+            res += age_ranges[i];
+            if (std::abs(res) < age_ranges[i]) {
+                counter++;
+            }
+            // iterate over param age groups while there is still room in the current rki age group
+            while (res > 0) {
+                res -= param_ranges[counter];
+                interpolation[i].push_back((param_ranges[counter] + std::min(res, 0.0)) / age_ranges[i]);
+                if (res >= 0) {
+                    counter++;
+                }
+            }
+            if (res < 0) {
+                carry_over.push_back(true);
+            }
+            else if (res == 0) {
+                carry_over.push_back(false);
+            }
+        }
+        // if last param age group is reached
+        else {
+            interpolation[i].push_back((age_ranges[i] + res) / age_ranges[i]);
+            if (res < 0 || counter == 0) {
+                carry_over.push_back(true);
+            }
+            else if (res == 0) {
+                carry_over.push_back(false);
+            }
+            res = 0;
+        }
+    }
+    // last entries for "unknown" age group
+    interpolation.push_back({1.0});
+    carry_over.push_back(true);
+}
+
+void set_rki_data(epi::SecirParams& params, const std::vector<double>& param_ranges, const std::string& path,
+                  const std::string& id_name, int region, int month, int day)
+{
+    Json::Reader reader;
+    Json::Value root;
+
+    std::ifstream rki(path);
+    reader.parse(rki, root);
+
+    std::vector<std::string> age_names = {"A00-A04", "A05-A14", "A15-A34", "A35-A59", "A60-A79", "A80+", "unknown"};
+    std::vector<double> age_ranges     = {5., 10., 20., 25., 20., 20.};
+
+    std::vector<std::vector<double>> interpolation(age_names.size());
+    std::vector<bool> carry_over;
+
+    interpolate_ages(age_ranges, param_ranges, interpolation, carry_over);
+
+    std::vector<double> num_inf(age_names.size(), 0.0);
+    std::vector<double> num_death(age_names.size(), 0.0);
+    std::vector<double> num_rec(age_names.size(), 0.0);
+
+    for (size_t age = 0; age < age_names.size(); age++) {
+        for (unsigned int i = 0; i < root.size(); i++) {
+            bool correct_region = region == 0 || root[i][id_name] == region;
+            std::string date    = root[i]["Date"].asString();
+            if (month == std::stoi(date.substr(5, 2)) && day == std::stoi(date.substr(8, 2)) && correct_region) {
+                if (root[i]["Age_RKI"].asString() == age_names[age]) {
+                    num_inf[age]   = root[i]["Confirmed"].asDouble();
+                    num_death[age] = root[i]["Deaths"].asDouble();
+                    num_rec[age]   = root[i]["Recovered"].asDouble();
+                    break;
+                }
+            }
+        }
+    }
+
+    std::vector<double> interpol_inf(params.get_num_groups() + 1, 0.0);
+    std::vector<double> interpol_death(params.get_num_groups() + 1, 0.0);
+    std::vector<double> interpol_rec(params.get_num_groups() + 1, 0.0);
+
+    int counter = 0;
+    for (size_t i = 0; i < interpolation.size() - 1; i++) {
+        for (size_t j = 0; j < interpolation[i].size(); j++) {
+            interpol_inf[counter] += interpolation[i][j] * num_inf[i];
+            interpol_death[counter] += interpolation[i][j] * num_death[i];
+            interpol_rec[counter] += interpolation[i][j] * num_rec[i];
+            if (j < interpolation[i].size() - 1 || !carry_over[i]) {
+                counter++;
+            }
+        }
+    }
+
+    for (size_t i = 0; i < params.get_num_groups(); i++) {
+        interpol_inf[i] += (double)num_inf[num_inf.size() - 1] / (double)params.get_num_groups();
+        interpol_death[i] += (double)num_death[num_death.size() - 1] / (double)params.get_num_groups();
+        interpol_rec[i] += (double)num_rec[num_rec.size() - 1] / (double)params.get_num_groups();
+    }
+
+    if (std::accumulate(num_inf.begin(), num_inf.end(), 0.0) > 0) {
+        size_t num_groups = params.get_num_groups();
+        for (size_t i = 0; i < num_groups; i++) {
+            params.populations.set({i, epi::SecirCompartments::I},
+                                   interpol_inf[i] - interpol_death[i] - interpol_rec[i]);
+            params.populations.set({i, epi::SecirCompartments::D}, interpol_death[i]);
+            params.populations.set({i, epi::SecirCompartments::R}, interpol_rec[i]);
+        }
+    }
+    else {
+        log_warning("No infections reported on date " + std::to_string(day) + "-" + std::to_string(month) +
+                    " for region " + std::to_string(region) + ". Population data has not been set.");
+    }
+}
+
+void set_divi_data(epi::SecirParams& params, const std::string& path, const std::string& id_name, int region, int month,
+                   int day)
+{
+
+    Json::Reader reader;
+    Json::Value root;
+
+    std::ifstream divi(path);
+    reader.parse(divi, root);
+
+    double num_icu = 0;
+    for (unsigned int i = 0; i < root.size(); i++) {
+        bool correct_region = region == 0 || root[i][id_name] == region;
+        std::string date    = root[i]["Date"].asString();
+        if (month == std::stoi(date.substr(5, 2)) && day == std::stoi(date.substr(8, 2)) && correct_region) {
+            num_icu = root[i]["ICU"].asDouble();
+        }
+    }
+
+    if (num_icu > 0) {
+        size_t num_groups = params.get_num_groups();
+        for (size_t i = 0; i < num_groups; i++) {
+            params.populations.set({i, epi::SecirCompartments::U}, num_icu / (double)num_groups);
+        }
+    }
+    else {
+        log_warning("No ICU patients reported on date " + std::to_string(day) + "-" + std::to_string(month) +
+                    " for region " + std::to_string(region) + ".");
+    }
+}
+
+void read_population_data_germany(epi::SecirParams& params, const std::vector<double>& param_ranges, int month, int day,
+                                  const std::string& dir)
+{
+    assert(param_ranges.size() == params.get_num_groups() &&
+           "size of param_ranges needs to be the same size as the number of groups in params");
+    assert(std::accumulate(param_ranges.begin(), param_ranges.end(), 0.0) == 100. && "param_ranges must add up to 100");
+
+    std::string id_name;
+
+    set_rki_data(params, param_ranges, path_join(dir, "all_age_rki.json"), id_name, 0, month, day);
+    set_divi_data(params, path_join(dir, "germany_divi.json"), id_name, 0, month, day);
+}
+
+void read_population_data_state(epi::SecirParams& params, const std::vector<double>& param_ranges, int month, int day,
+                                int state, const std::string& dir)
+{
+    assert(state > 0 && state <= 16 && "State must be between 1 and 16");
+    assert(param_ranges.size() == params.get_num_groups() &&
+           "size of param_ranges needs to be the same size as the number of groups in params");
+    assert(std::accumulate(param_ranges.begin(), param_ranges.end(), 0.0) == 100. && "param_ranges must add up to 100");
+
+    std::string id_name = "ID_State";
+
+    set_rki_data(params, param_ranges, path_join(dir, "all_state_age_rki.json"), id_name, state, month, day);
+    set_divi_data(params, path_join(dir, "state_divi.json"), id_name, state, month, day);
+}
+
+void read_population_data_county(epi::SecirParams& params, const std::vector<double>& param_ranges, int month, int day,
+                                 int county, const std::string& dir)
+{
+    assert(county > 999 && "State must be between 1 and 16");
+    assert(param_ranges.size() == params.get_num_groups() &&
+           "size of param_ranges needs to be the same size as the number of groups in params");
+    assert(std::accumulate(param_ranges.begin(), param_ranges.end(), 0.0) == 100. && "param_ranges must add up to 100");
+
+    std::string id_name = "ID_County";
+
+    set_rki_data(params, param_ranges, path_join(dir, "all_county_age_rki.json"), id_name, county, month, day);
+    set_divi_data(params, path_join(dir, "county_divi.json"), id_name, county, month, day);
 }
 
 } // namespace epi
