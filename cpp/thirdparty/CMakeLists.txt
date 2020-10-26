@@ -68,5 +68,40 @@ if (EPI_BUILD_EPI_IO)
 
   find_package(tixi3 REQUIRED CONFIG)
 
-  find_package(jsoncpp REQUIRED CONFIG)
+  if(EPI_USE_BUNDLED_JSONCPP)
+    message(STATUS "Downloading jsoncpp library")
+    if(CMAKE_VERSION VERSION_LESS 3.11)
+        set(UPDATE_DISCONNECTED_IF_AVAILABLE "UPDATE_DISCONNECTED 1")
+
+        include(DownloadProject)
+        download_project(PROJ               jsoncpp
+                        URL                 https://github.com/open-source-parsers/jsoncpp/archive/1.7.4.tar.gz
+                        UPDATE_DISCONNECTED 1
+                        QUIET
+        )
+        add_subdirectory(${jsoncpp_SOURCE_DIR} ${jsoncpp_SOURCE_DIR} EXCLUDE_FROM_ALL)
+    else()
+      include(FetchContent)
+      FetchContent_Declare(
+        jsoncpp
+        URL https://github.com/open-source-parsers/jsoncpp/archive/1.7.4.tar.gz
+      )
+      FetchContent_GetProperties(jsoncpp)
+      if(NOT jsoncpp_POPULATED)
+        FetchContent_Populate(jsoncpp)
+        add_subdirectory(${jsoncpp_SOURCE_DIR} ${jsoncpp_BINARY_DIR} EXCLUDE_FROM_ALL)
+      endif()
+
+    endif()
+  else(EPI_USE_BUNDLED_JSONCPP)
+    find_package(jsoncpp REQUIRED CONFIG)
+  endif(EPI_USE_BUNDLED_JSONCPP)
+
+  if (BUILD_SHARED_LIBS)
+    add_library(jsoncpp ALIAS jsoncpp_lib)
+  else(BUILD_SHARED_LIBS)
+    add_library(jsoncpp ALIAS jsoncpp_lib_static)
+  endif(BUILD_SHARED_LIBS)
+
+
 endif(EPI_BUILD_EPI_IO)
