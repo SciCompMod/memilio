@@ -39,7 +39,7 @@ int main(int argc, char** argv)
            nb_rec_t0 = 10, nb_dead_t0 = 0;
 
     epi::SecirModel<epi::AgeGroup1> model;
-    int nb_groups = model.parameters.get_num_groups();
+    size_t nb_groups = model.parameters.get_num_groups();
     double fact   = 1.0 / (double)nb_groups;
 
     auto& params = model.parameters;

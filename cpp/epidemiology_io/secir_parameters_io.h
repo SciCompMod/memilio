@@ -185,14 +185,14 @@ template <class Model>
 void write_parameter_space(TixiDocumentHandle handle, const std::string& path, Model const& model, int num_runs,
                            int io_mode)
 {
-    auto num_groups = model.parameters.get_num_groups();
+    int num_groups = (int)model.parameters.get_num_groups();
     tixiAddIntegerElement(handle, path.c_str(), "NumberOfGroups", num_groups, "%d");
 
     tixiAddDoubleElement(handle, path.c_str(), "StartDay", model.parameters.get_start_day(), "%g");
     write_element(handle, path, "Seasonality", model.parameters.get_seasonality(), io_mode, num_runs);
     write_element(handle, path, "ICUCapacity", model.parameters.get_icu_capacity(), io_mode, num_runs);
 
-    for (size_t i = 0; i < num_groups; i++) {
+    for (int i = 0; i < num_groups; i++) {
         auto group_name = "Group" + std::to_string(i + 1);
         auto group_path = path_join(path, group_name);
 

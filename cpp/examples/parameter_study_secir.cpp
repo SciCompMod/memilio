@@ -6,13 +6,12 @@
 
 #include <tixi.h>
 
-int main(int argc, char* argv[])
+int main()
 {
     epi::set_log_level(epi::LogLevel::debug);
 
     double t0   = 0;
     double tmax = 50;
-    double dt   = 0.1;
 
     double tinc    = 5.2, // R_2^(-1)+R_3^(-1)
         tinfmild   = 6, // 4-14  (=R4^(-1))
@@ -49,7 +48,7 @@ int main(int argc, char* argv[])
     // delta = delta_in; // deaths per ICUs
 
     epi::SecirModel<epi::AgeGroup1> model;
-    int num_groups = model.parameters.get_num_groups();
+    int num_groups = (int)model.parameters.get_num_groups();
     double fact    = 1.0 / (double)num_groups;
 
     auto& params = model.parameters;
@@ -58,7 +57,7 @@ int main(int argc, char* argv[])
     params.set_start_day(0);
     params.set_seasonality(0);
 
-    for (size_t i = 0; i < num_groups; i++) {
+    for (int i = 0; i < num_groups; i++) {
         params.times[i].set_incubation(tinc);
         params.times[i].set_infectious_mild(tinfmild);
         params.times[i].set_serialinterval(tserint);
