@@ -1,5 +1,6 @@
 #include <epidemiology_io/secir_parameters_io.h>
 #include <epidemiology_io/secir_result_io.h>
+#include <epidemiology_io/io.h>
 #include <epidemiology/utils/memory.h>
 #include <epidemiology/utils/uncertain_value.h>
 #include <epidemiology/utils/stl_util.h>
@@ -15,13 +16,14 @@
 #include <json/json.h>
 #include <json/value.h>
 
+#include <boost/filesystem.hpp>
+
 #include <numeric>
 #include <vector>
 #include <iostream>
 #include <string>
 #include <random>
 #include <fstream>
-
 
 namespace epi
 {
@@ -282,6 +284,13 @@ SecirParams read_parameter_space(TixiDocumentHandle handle, const std::string& p
     tixiGetIntegerElement(handle, path_join(path, "NumberOfGroups").c_str(), &num_groups);
 
     SecirParams params{(size_t)num_groups};
+
+    double read_buffer;
+    tixiGetDoubleElement(handle, path_join(path, "StartDay").c_str(), &read_buffer);
+    params.set_start_day(read_buffer);
+    params.set_seasonality(*read_element(handle, path_join(path, "Seasonality"), io_mode));
+    params.set_icu_capacity(*read_element(handle, path_join(path, "ICUCapacity"), io_mode));
+
     params.set_contact_patterns(read_contact(handle, path_join(path, "ContactFreq"), io_mode));
 
     for (size_t i = 0; i < static_cast<size_t>(num_groups); i++) {
@@ -291,7 +300,6 @@ SecirParams read_parameter_space(TixiDocumentHandle handle, const std::string& p
         // populations
         auto population_path = path_join(group_path, "Population");
 
-        double read_buffer;
         tixiGetDoubleElement(handle, path_join(population_path, "Dead").c_str(), &read_buffer);
         params.populations.set({i, SecirCompartments::D}, read_buffer);
 
@@ -355,6 +363,10 @@ void write_parameter_space(TixiDocumentHandle handle, const std::string& path, c
 {
     auto num_groups = parameters.get_num_groups();
     tixiAddIntegerElement(handle, path.c_str(), "NumberOfGroups", static_cast<int>(num_groups), "%d");
+
+    tixiAddDoubleElement(handle, path.c_str(), "StartDay", parameters.get_start_day(), "%g");
+    write_element(handle, path, "Seasonality", parameters.get_seasonality(), io_mode, num_runs);
+    write_element(handle, path, "ICUCapacity", parameters.get_icu_capacity(), io_mode, num_runs);
 
     for (size_t i = 0; i < num_groups; i++) {
         auto group_name = "Group" + std::to_string(i + 1);
@@ -447,12 +459,30 @@ void write_single_run_params(const int run, const SecirParams& params, double t0
     tixiCreateDocument("Parameters", &handle);
     ParameterStudy study(params, t0, tmax, num_runs);
 
+    boost::filesystem::path dir("results");
+
+    bool created = boost::filesystem::create_directory(dir);
+
+    if (created) {
+        log_info("Directory '{:s}' was created. Results are stored in {:s}/results.", dir.string(),
+                 epi::get_current_dir_name());
+    }
+    else {
+        log_info(
+            "Directory '{:s}' already exists. Results are stored in {:s}/ results. Files from previous runs will be "
+            "overwritten",
+            dir.string(), epi::get_current_dir_name());
+    }
+
     write_parameter_study(handle, path, study);
-    tixiSaveDocument(handle,
-                     ("Parameters_run" + std::to_string(run) + "_node" + std::to_string(node) + ".xml").c_str());
+
+    tixiSaveDocument(
+        handle,
+        (dir / ("Parameters_run" + std::to_string(run) + "_node" + std::to_string(node) + ".xml")).string().c_str());
     tixiCloseDocument(handle);
 
-    save_result(result, ("Results_run" + std::to_string(run) + "_node" + std::to_string(node) + ".h5"));
+    save_result(result,
+                (dir / ("Results_run" + std::to_string(run) + "_node" + std::to_string(node) + ".h5")).string());
 }
 
 void write_node(const Graph<SecirParams, MigrationEdge>& graph, int node)

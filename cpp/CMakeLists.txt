@@ -36,6 +36,7 @@ add_library(epidemiology
     epidemiology/utils/tensor_helpers.cpp
     epidemiology/math/euler.cpp
     epidemiology/math/euler.h
+    epidemiology/math/smoother.h    
     epidemiology/utils/ScalarType.h
     epidemiology/model/compartmentalmodel.h
     epidemiology/model/populations.h
@@ -122,7 +123,7 @@ if (EPI_BUILD_EPI_IO)
     )
 
     target_link_libraries(epidemiology_io PUBLIC epidemiology tixi3
-                          PRIVATE jsoncpp ${HDF5_CXX_LIBRARIES})
+                          PRIVATE jsoncpp ${HDF5_CXX_LIBRARIES} Boost::filesystem Boost::disable_autolinking)
     target_include_directories(epidemiology_io PRIVATE ${HDF5_INCLUDE_DIRS})
 
     target_compile_definitions(epidemiology_io PUBLIC "-DHAVE_EPI_IO")

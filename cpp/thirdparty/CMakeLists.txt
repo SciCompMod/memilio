@@ -71,6 +71,8 @@ if (EPI_BUILD_EPI_IO)
   # TODO: support also HDF5 config mode
   find_package(HDF5 REQUIRED COMPONENTS CXX)
 
+  find_package(Boost REQUIRED COMPONENTS filesystem)
+
   find_package(tixi3 REQUIRED CONFIG)
 
   if(EPI_USE_BUNDLED_JSONCPP)
@@ -107,6 +109,5 @@ if (EPI_BUILD_EPI_IO)
   else(BUILD_SHARED_LIBS)
     add_library(jsoncpp ALIAS jsoncpp_lib_static)
   endif(BUILD_SHARED_LIBS)
-
 
 endif(EPI_BUILD_EPI_IO)

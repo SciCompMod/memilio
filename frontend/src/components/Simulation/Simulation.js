@@ -34,9 +34,13 @@ if (window['secirjs']) {
  */
 const toArray = (vector) => {
   const arr = [];
-  for (var i = 0; i < vector.size(); ++i) {
+  for (let i = 0; i < vector.size(); ++i) {
     arr.push(vector.get(i));
   }
+
+  // The vector in this function is a copy, so we need to manually clean it up.
+  vector.delete();
+
   return arr;
 };
 

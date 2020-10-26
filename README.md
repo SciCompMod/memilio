@@ -24,8 +24,12 @@ See thirdparty/CMakeLists.txt for details.
 In order to use IO of parameters and simulation results (*epidemiology_io* library), the tools
   * tixi3 (https://github.com/DLR-SC/tixi) and 
   * hdf5 (https://www.hdfgroup.org/ e.g., via apt install libhdf5-serial-dev)
-  * jsoncpp (via apt install libjsoncpp-dev)
-  need to be installed.
+  * Boost Filesystem (https://www.boost.org/ e.g. via apt install libboost-filesystem-dev)
+  
+need to be installed.
+
+In addition, *epidemiology_io* is bundled with
+ * jsoncpp (https://github.com/open-source-parsers/jsoncpp)
 
 
 **Installation** 
