@@ -77,9 +77,16 @@ private:
     double m_t0;
 };
 
+/** 
+ * represents the migration between two nodes.
+ */
 class MigrationEdge
 {
 public:
+    /**
+     * create edge with coefficients.
+     * @param coeffs % of people in each group and compartment that migrate daily
+     */
     MigrationEdge(const Eigen::VectorXd& coeffs)
         : m_coefficients(coeffs)
         , m_migrated(coeffs.rows())
@@ -99,24 +106,43 @@ public:
         return m_coefficients != other.m_coefficients;
     }
 
+    /**
+     * get the migration coefficients.
+     */
     Eigen::Ref<const Eigen::VectorXd> get_coefficients() const
     {
         return m_coefficients;
     }
-
     Eigen::Ref<Eigen::VectorXd> get_coefficients()
     {
         return m_coefficients;
     }
-    
+
+    /**
+     * adjust number of migrated people when they return.
+     * @param[inout] migrated number of people that migrated as input, number of people that return as output
+     * @param params parameters of model in the node that the people migrated to.
+     * @param total total population in the node that the people migrated to.
+     * @param t time of migration
+     * @param dt time between migration and return
+     */
     void calculate_returns_ode(Eigen::Ref<TimeSeries<double>::Vector> migrated, const SecirParams& params,
                                Eigen::Ref<const TimeSeries<double>::Vector> total, double t, double dt);
-
     void calculate_returns_ode(Eigen::Ref<TimeSeries<double>::Vector> migrated, const SeirParams& params,
                                Eigen::Ref<const TimeSeries<double>::Vector> total, double t, double dt);
 
+    /**
+     * compute migration from node_from to node_to.
+     * migration is based on coefficients.
+     * migrants are added to the current state of node_to, subtracted from node_from.
+     * on return, migrants (adjusted for infections) are subtracted from node_to, added to node_from.
+     * @param t current time
+     * @param dt last time step (fixed to 0.5 for migration model)
+     * @param node_from node that people migrated from, return to
+     * @param node_to node that people migrated to, return from
+     */
     template <class Model>
-    void apply_migration(double t, double dt, ModelNode<Model>& node1, ModelNode<Model>& node2);
+    void apply_migration(double t, double dt, ModelNode<Model>& node_from, ModelNode<Model>& node_to);
 
 private:
     Eigen::VectorXd m_coefficients; //one per group and compartment
@@ -125,6 +151,9 @@ private:
     bool m_return_migrated;
 };
 
+/**
+ * find the value in the time series at time t_search starting from the end.
+ */
 template <class FP>
 typename TimeSeries<FP>::const_reverse_iterator find_value_reverse(const TimeSeries<FP> ts, FP t_search)
 {
@@ -138,17 +167,17 @@ typename TimeSeries<FP>::const_reverse_iterator find_value_reverse(const TimeSer
 }
 
 template <class Model>
-void MigrationEdge::apply_migration(double t, double dt, ModelNode<Model>& node1, ModelNode<Model>& node2)
+void MigrationEdge::apply_migration(double t, double dt, ModelNode<Model>& node_from, ModelNode<Model>& node_to)
 {
     assert(dt == 0.5);
 
     //returns
     for (Eigen::Index i = m_return_times.get_num_time_points() - 1; i >= 0; --i) {
         if (m_return_times.get_time(i) <= t) {
-            auto v0 = *find_value_reverse(node2.get_result(), m_migrated.get_time(i));
-            calculate_returns_ode(m_migrated[i], node2.get_params(), v0, m_migrated.get_time(i), dt);
-            node1.get_result().get_last_value() += m_migrated[i];
-            node2.get_result().get_last_value() -= m_migrated[i];
+            auto v0 = *find_value_reverse(node_to.get_result(), m_migrated.get_time(i));
+            calculate_returns_ode(m_migrated[i], node_to.get_params(), v0, m_migrated.get_time(i), dt);
+            node_from.get_result().get_last_value() += m_migrated[i];
+            node_to.get_result().get_last_value() -= m_migrated[i];
             m_migrated.remove_time_point(i);
             m_return_times.remove_time_point(i);
         }
@@ -156,13 +185,13 @@ void MigrationEdge::apply_migration(double t, double dt, ModelNode<Model>& node1
 
     if (!m_return_migrated) {
         //normal daily migration
-        const auto migration = (node1.get_last_state().array() * m_coefficients.array()).matrix();
+        const auto migration = (node_from.get_last_state().array() * m_coefficients.array()).matrix();
 
-        node2.get_result().get_last_value() += migration;
-        node1.get_result().get_last_value() -= migration;
+        node_to.get_result().get_last_value() += migration;
+        node_from.get_result().get_last_value() -= migration;
 
         //I don't understand why this doesn't work: m_migrated.add_time_point(t, migration);
-        m_migrated.add_time_point(t, (node1.get_last_state().array() * m_coefficients.array()).matrix());
+        m_migrated.add_time_point(t, (node_from.get_last_state().array() * m_coefficients.array()).matrix());
         m_return_times.add_time_point(t + 0.5);
     }
     m_return_migrated = !m_return_migrated;
@@ -175,10 +204,10 @@ void evolve_model(double t, double dt, ModelNode<Model>& node)
 }
 
 template <class Model>
-void apply_migration(double t, double dt, MigrationEdge& migrationEdge, ModelNode<Model>& node1,
-                     ModelNode<Model>& node2)
+void apply_migration(double t, double dt, MigrationEdge& migrationEdge, ModelNode<Model>& node_from,
+                     ModelNode<Model>& node_to)
 {
-    migrationEdge.apply_migration(t, dt, node1, node2);
+    migrationEdge.apply_migration(t, dt, node_from, node_to);
 }
 
 template <typename Model>
