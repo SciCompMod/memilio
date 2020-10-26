@@ -71,7 +71,11 @@ if (EPI_BUILD_EPI_IO)
   # TODO: support also HDF5 config mode
   find_package(HDF5 REQUIRED COMPONENTS CXX)
 
-  find_package(Boost REQUIRED COMPONENTS filesystem)
+  if (EPI_USE_BUNDLED_BOOST)
+    include(BuildBoost)
+  else(EPI_USE_BUNDLED_BOOST)
+    find_package(Boost REQUIRED COMPONENTS filesystem)
+  endif(EPI_USE_BUNDLED_BOOST)
 
   find_package(tixi3 REQUIRED CONFIG)
 
