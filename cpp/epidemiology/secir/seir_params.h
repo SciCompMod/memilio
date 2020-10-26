@@ -2,8 +2,6 @@
 #define SEIR_PARAMS_H
 
 #include "epidemiology/secir/damping.h"
-
-#include <Eigen/Core>
 #include <vector>
 
 namespace epi
