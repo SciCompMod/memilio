@@ -4,6 +4,10 @@
 #include <epidemiology/secir/damping.h>
 #include <vector>
 
+#ifdef DEBUG
+#include <sanitizer/lsan_interface.h>
+#endif
+
 namespace js = emscripten;
 
 class SecirResult
@@ -190,6 +194,12 @@ EMSCRIPTEN_BINDINGS(secirjs)
         .property("times", &epi::SecirParams::times)
         .property("populations", &epi::SecirParams::populations)
         .property("probabilities", &epi::SecirParams::probabilities)
+        .function("set_icu_capacity", js::select_overload<void(double)>(&epi::SecirParams::set_icu_capacity))
+        .function("get_icu_capacity", js::select_overload<epi::UncertainValue&()>(&epi::SecirParams::get_icu_capacity))
+        .function("set_start_day", &epi::SecirParams::set_start_day)
+        .function("get_start_day", &epi::SecirParams::get_start_day)
+        .function("set_seasonality", js::select_overload<void(double)>(&epi::SecirParams::set_seasonality))
+        .function("get_seasonality", js::select_overload<epi::UncertainValue&()>(&epi::SecirParams::get_seasonality))
         .function("get_contact_patterns",
                   js::select_overload<epi::UncertainContactMatrix&()>(&epi::SecirParams::get_contact_patterns))
         .function("set_contact_patterns", &epi::SecirParams::set_contact_patterns);
@@ -212,4 +222,12 @@ EMSCRIPTEN_BINDINGS(secirjs)
     js::register_vector<epi::SecirParams>("VectorSecirParams");
     js::register_vector<epi::SecirParams::Probabilities>("VectorSecirParamsProbabilities");
     js::register_vector<epi::SecirParams::StageTimes>("VectorSecirParamsStageTimes");
+
+#ifdef DEBUG
+    /**
+     * Checks if all memory allocated by the WebAssembly module is freed. If not it will emit a warning with relevant
+     * information about a potential leak.
+     */
+    js::function("doLeakCheck", &__lsan_do_recoverable_leak_check);
+#endif
 }

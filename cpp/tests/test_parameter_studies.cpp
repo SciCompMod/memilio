@@ -22,13 +22,12 @@ TEST(ParameterStudies, sample_from_secir_params)
         ticu2death = 5; // 3.5-7 (=R5^(-1))
 
     double cont_freq = 10, // see Polymod study
-        inf_prob = 0.05, 
-        carr_infec = 0.67,
-        alpha        = 0.09, // 0.01-0.16
-        beta         = 0.25, // 0.05-0.5
-        delta        = 0.3, // 0.15-0.77
-        rho          = 0.2, // 0.1-0.35
-        theta        = 0.25; // 0.15-0.4
+        inf_prob = 0.05, carr_infec = 0.67,
+           alpha = 0.09, // 0.01-0.16
+        beta     = 0.25, // 0.05-0.5
+        delta    = 0.3, // 0.15-0.77
+        rho      = 0.2, // 0.1-0.35
+        theta    = 0.25; // 0.15-0.4
 
     double num_total_t0 = 10000, num_exp_t0 = 100, num_inf_t0 = 50, num_car_t0 = 50, num_hosp_t0 = 20, num_icu_t0 = 10,
            num_rec_t0 = 10, num_dead_t0 = 0;
@@ -200,13 +199,12 @@ TEST(ParameterStudies, check_ensemble_run_result)
         ticu2death = 5; // 3.5-7 (=R5^(-1))
 
     double cont_freq = 10, // see Polymod study
-        inf_prob = 0.05, 
-        carr_infec = 0.67,
-        alpha        = 0.09, // 0.01-0.16
-        beta         = 0.25, // 0.05-0.5
-        delta        = 0.3, // 0.15-0.77
-        rho          = 0.2, // 0.1-0.35
-        theta        = 0.25; // 0.15-0.4
+        inf_prob = 0.05, carr_infec = 0.67,
+           alpha = 0.09, // 0.01-0.16
+        beta     = 0.25, // 0.05-0.5
+        delta    = 0.3, // 0.15-0.77
+        rho      = 0.2, // 0.1-0.35
+        theta    = 0.25; // 0.15-0.4
 
     double num_total_t0 = 10000, num_exp_t0 = 100, num_inf_t0 = 50, num_car_t0 = 50, num_hosp_t0 = 20, num_icu_t0 = 10,
            num_rec_t0 = 10, num_dead_t0 = 0;

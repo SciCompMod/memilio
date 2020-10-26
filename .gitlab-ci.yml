@@ -7,7 +7,7 @@ build-cpp:
     - echo 'deb http://download.opensuse.org/repositories/science:/dlr/xUbuntu_16.04/ /' | sudo tee /etc/apt/sources.list.d/science:dlr.list
     - wget -O - https://download.opensuse.org/repositories/science:dlr/xUbuntu_16.04/Release.key  | sudo apt-key add -
     - sudo apt -qq update
-    - sudo apt -qq -y install libhdf5-dev libtixi3-dev lcov
+    - sudo apt -qq -y install libhdf5-dev libtixi3-dev lcov libboost-filesystem-dev
   script:
     - cd cpp
     - mkdir build && cd build
@@ -22,8 +22,6 @@ build-cpp-win:
   stage: build
   tags:
     - SC-0030VM
-  only:
-    - disabled
   before_script:
     - $env:Path = "c:\Windows\System32"
     - $env:Path += ";c:\Devel\Tools\cmake-3.18.3-win64-x64\bin"
@@ -42,7 +40,7 @@ build-cpp-win:
     - md -Force build-win
     - cd build-win
     - cmake --version
-    - cmake -G "Ninja" -DCMAKE_BUILD_TYPE=Release -DEPI_USE_BUNDLED_EIGEN=ON -DEPI_BUILD_EPI_IO=ON -DHDF5_USE_STATIC_LIBRARIES=ON -DHDF5_DIR=C:\Devel\Libraries\HDF5-1.10.1-win64\cmake -Dtixi3_DIR=C:\Devel\Libraries\TIXI-3.1.1-win64\lib\tixi3 ..
+    - cmake -G "Ninja" -DCMAKE_BUILD_TYPE=Release -DEPI_USE_BUNDLED_EIGEN=ON -DEPI_BUILD_EPI_IO=ON -DHDF5_USE_STATIC_LIBRARIES=ON -DHDF5_DIR=C:\Devel\Libraries\HDF5-1.10.1-win64\cmake -DBOOST_ROOT:PATH="C:\Program Files\boost_1_74_0" -DBoost_USE_STATIC_LIBS=ON -Dtixi3_DIR=C:\Devel\Libraries\TIXI-3.1.1-win64\lib\tixi3 ..
     - cp "c:\Devel\Libraries\TIXI-3.1.1-win64\bin\tixi3.dll" "tests"
     - cmake --build .
 
@@ -72,8 +70,6 @@ build-py-win:
   tags:
     - SC-0030VM
   stage: build
-  only:
-    - disabled
   before_script:
     - ci\activate_vc2019.ps1
     - cd pycode
@@ -106,7 +102,7 @@ test-cpp:
     - echo 'deb http://download.opensuse.org/repositories/science:/dlr/xUbuntu_18.04/ /' | tee /etc/apt/sources.list.d/science:dlr.list
     - wget -O - https://download.opensuse.org/repositories/science:dlr/xUbuntu_18.04/Release.key  | apt-key add -
     - apt -qq update
-    - apt -qq -y install libtixi3 g++ python3-pip
+    - apt -qq -y install libtixi3 g++ python3-pip libboost-filesystem1.62.0
     - python3 -m pip install gcovr
   dependencies:
     - build-cpp
@@ -131,8 +127,6 @@ test-cpp-win:
   tags:
     - SC-0030VM
   stage: test
-  only:
-    - disabled
   dependencies:
     - build-cpp-win
   script:
