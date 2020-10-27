@@ -98,7 +98,8 @@ std::unique_ptr<UncertainValue> read_element(TixiDocumentHandle handle, const st
 
     if (io_mode == 0) {
         double read_buffer;
-        tixiGetDoubleElement(handle, path.c_str(), &read_buffer);
+        ReturnCode status = tixiGetDoubleElement(handle, path.c_str(), &read_buffer);
+        assert(status == SUCCESS);
         value = std::make_unique<UncertainValue>(read_buffer);
     }
     else if (io_mode == 1 || io_mode == 2 || io_mode == 3) {
@@ -106,7 +107,8 @@ std::unique_ptr<UncertainValue> read_element(TixiDocumentHandle handle, const st
 
         if (io_mode == 2) {
             double read_buffer;
-            tixiGetDoubleElement(handle, path_join(path, "Value").c_str(), &read_buffer);
+            ReturnCode status = tixiGetDoubleElement(handle, path_join(path, "Value").c_str(), &read_buffer);
+            assert(status == SUCCESS);
             value = std::make_unique<UncertainValue>(read_buffer);
         }
         value->set_distribution(*distribution.get());
@@ -591,7 +593,7 @@ void write_graph(const Graph<SecirParams, MigrationEdge>& graph)
     }
 
     for (int node = 0; node < num_nodes; node++) {
-        tixiSaveDocument(handle[node], (dir / ("GraphEdges_node" + std::to_string(node) + ".xml")).c_str());
+        tixiSaveDocument(handle[node], (dir / ("GraphEdges_node" + std::to_string(node) + ".xml")).string().c_str());
         tixiCloseDocument(handle[node]);
     }
 
@@ -599,7 +601,7 @@ void write_graph(const Graph<SecirParams, MigrationEdge>& graph)
         TixiDocumentHandle node_handle;
         tixiCreateDocument("Parameters", &node_handle);
         write_node(node_handle, graph, node);
-        tixiSaveDocument(node_handle, (dir / ("GraphNode" + std::to_string(node) + ".xml")).c_str());
+        tixiSaveDocument(node_handle, (dir / ("GraphNode" + std::to_string(node) + ".xml")).string().c_str());
         tixiCloseDocument(node_handle);
     }
 }
@@ -626,12 +628,12 @@ Graph<SecirParams, MigrationEdge> read_graph()
 
     for (int node = 0; node < num_nodes; node++) {
         TixiDocumentHandle node_handle;
-        tixiOpenDocument((dir / ("GraphNode" + std::to_string(node) + ".xml")).c_str(), &node_handle);
+        tixiOpenDocument((dir / ("GraphNode" + std::to_string(node) + ".xml")).string().c_str(), &node_handle);
         read_node(node_handle, graph);
     }
 
     for (int start_node = 0; start_node < num_nodes; start_node++) {
-        tixiOpenDocument((dir / ("GraphEdges_node" + std::to_string(start_node) + ".xml")).c_str(),
+        tixiOpenDocument((dir / ("GraphEdges_node" + std::to_string(start_node) + ".xml")).string().c_str(),
                          &edge_handles[start_node]);
         for (int end_node = 0; end_node < num_nodes; end_node++) {
             read_edge(edge_handles, edges_path, graph, start_node, end_node);
