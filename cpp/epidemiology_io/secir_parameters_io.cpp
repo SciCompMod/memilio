@@ -95,10 +95,11 @@ void write_distribution(const TixiDocumentHandle& handle, const std::string& pat
 std::unique_ptr<UncertainValue> read_element(TixiDocumentHandle handle, const std::string& path, int io_mode)
 {
     std::unique_ptr<UncertainValue> value;
+    ReturnCode status;
 
     if (io_mode == 0) {
         double read_buffer;
-        ReturnCode status = tixiGetDoubleElement(handle, path.c_str(), &read_buffer);
+        status = tixiGetDoubleElement(handle, path.c_str(), &read_buffer);
         assert(status == SUCCESS && ("Failed to read value at " + path).c_str());
         value = std::make_unique<UncertainValue>(read_buffer);
     }
@@ -107,7 +108,7 @@ std::unique_ptr<UncertainValue> read_element(TixiDocumentHandle handle, const st
 
         if (io_mode == 2) {
             double read_buffer;
-            ReturnCode status = tixiGetDoubleElement(handle, path_join(path, "Value").c_str(), &read_buffer);
+            status = tixiGetDoubleElement(handle, path_join(path, "Value").c_str(), &read_buffer);
             assert(status == SUCCESS && ("Failed to read value at " + path).c_str());
             value = std::make_unique<UncertainValue>(read_buffer);
         }
