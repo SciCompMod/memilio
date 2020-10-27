@@ -85,6 +85,8 @@ int main(int argc, char** argv)
         }
     }
 
+    epi::set_params_distributions_normal(params, t0, tmax, 0.2);
+
     std::cout << "Readimg Migration File..." << std::flush;
     Eigen::MatrixXi twitter_migration_2018 = epi::read_migration("2018_lk_matrix.txt");
     std::cout << "Done" << std::endl;

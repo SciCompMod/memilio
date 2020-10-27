@@ -134,14 +134,14 @@ void write_single_run_params(const int run, const SecirParams& params, double t0
  * @param t0 starting point of simulation
  * @param tmax end point of simulation
  */
-void write_node(const Graph<SecirParams, MigrationEdge>& graph, int node);
+void write_node(TixiDocumentHandle handle, const Graph<SecirParams, MigrationEdge>& graph, int node);
 
 /**
  * @brief reads parameters of a single node and saves it into the graph
  * @param graph Graph in which the node is saved
  * @param node Node ID
  */
-void read_node(Graph<SecirParams, MigrationEdge>& graph, int node);
+void read_node(TixiDocumentHandle node_handle, Graph<SecirParams, MigrationEdge>& graph);
 
 /**
  * @brief Writes the information of a single edge into a xml file
@@ -150,7 +150,7 @@ void read_node(Graph<SecirParams, MigrationEdge>& graph, int node);
  * @param graph Graph which holds the edge
  * @param edge Edge ID
  */
-void write_edge(TixiDocumentHandle handle, const std::string& path,
+void write_edge(const std::vector<TixiDocumentHandle>& edge_handles, const std::string& path,
                 const Graph<SecirParams, MigrationEdge>& graph, int edge);
 
 /**
@@ -160,8 +160,8 @@ void write_edge(TixiDocumentHandle handle, const std::string& path,
  * @param graph Graph to which the edge is added
  * @param edge Edge ID
  */
-void read_edge(TixiDocumentHandle handle, const std::string& path, Graph<SecirParams, MigrationEdge>& graph,
-               int edge);
+void read_edge(const std::vector<TixiDocumentHandle>& edge_handles, const std::string& path,
+               Graph<SecirParams, MigrationEdge>& graph, int start_node, int end_node);
 
 /**
  * @brief creates xml files for each node of a Secir simulation graph and one xml file for its edges
@@ -169,7 +169,6 @@ void read_edge(TixiDocumentHandle handle, const std::string& path, Graph<SecirPa
  * @param t0 starting point of simulation
  * @param tmax end point of simulation
  */
-//TO-DO: Implement apropriate File System for XML FIles
 void write_graph(const Graph<SecirParams, MigrationEdge>& graph);
 
 /**

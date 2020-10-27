@@ -478,43 +478,40 @@ void write_single_run_params(const int run, const SecirParams& params, double t0
                 (dir / ("Results_run" + std::to_string(run) + "_node" + std::to_string(node) + ".h5")).string());
 }
 
-void write_node(const Graph<SecirParams, MigrationEdge>& graph, int node)
+void write_node(TixiDocumentHandle handle, const Graph<SecirParams, MigrationEdge>& graph, int node)
 {
     int num_runs = 1;
     int io_mode  = 2;
 
     std::string path = "/Parameters";
-    TixiDocumentHandle handle;
-    tixiCreateDocument("Parameters", &handle);
 
     tixiAddIntegerElement(handle, path.c_str(), "NodeID", node, "%d");
 
     auto params = graph.nodes()[node];
 
     write_parameter_space(handle, path, params, num_runs, io_mode);
-    tixiSaveDocument(handle, ("GraphNode" + std::to_string(node) + ".xml").c_str());
-    tixiCloseDocument(handle);
 }
 
-void read_node(Graph<SecirParams, MigrationEdge>& graph, int node)
+void read_node(TixiDocumentHandle node_handle, Graph<SecirParams, MigrationEdge>& graph)
 {
-    TixiDocumentHandle node_handle;
-    tixiOpenDocument(("GraphNode" + std::to_string(node) + ".xml").c_str(), &node_handle);
 
     graph.add_node(read_parameter_space(node_handle, "/Parameters", 2));
-
     tixiCloseDocument(node_handle);
 }
 
-void write_edge(TixiDocumentHandle handle, const std::string& path, const Graph<SecirParams, MigrationEdge>& graph,
-                int edge)
+void write_edge(const std::vector<TixiDocumentHandle>& edge_handles, const std::string& path,
+                const Graph<SecirParams, MigrationEdge>& graph, int edge)
 {
 
     int num_groups  = static_cast<int>(graph.nodes()[0].get_num_groups());
     int num_compart = static_cast<int>(graph.nodes()[0].populations.get_num_compartments()) / num_groups;
 
-    std::string edge_path = path_join(path, "Edge" + std::to_string(edge));
-    tixiCreateElement(handle, path.c_str(), ("Edge" + std::to_string(edge)).c_str());
+    auto start_node = static_cast<int>(graph.edges()[edge].start_node_idx);
+    auto end_node   = static_cast<int>(graph.edges()[edge].end_node_idx);
+    auto handle     = edge_handles[start_node];
+
+    std::string edge_path = path_join(path, "EdgeTo" + std::to_string(end_node));
+    tixiCreateElement(handle, path.c_str(), ("EdgeTo" + std::to_string(end_node)).c_str());
     tixiAddIntegerElement(handle, edge_path.c_str(), "StartNode", static_cast<int>(graph.edges()[edge].start_node_idx),
                           "%d");
     tixiAddIntegerElement(handle, edge_path.c_str(), "EndNode", static_cast<int>(graph.edges()[edge].end_node_idx),
@@ -529,64 +526,91 @@ void write_edge(TixiDocumentHandle handle, const std::string& path, const Graph<
     }
 }
 
-void read_edge(TixiDocumentHandle handle, const std::string& path, Graph<SecirParams, MigrationEdge>& graph, int edge)
+void read_edge(const std::vector<TixiDocumentHandle>& edge_handles, const std::string& path,
+               Graph<SecirParams, MigrationEdge>& graph, int start_node, int end_node)
 {
 
-    std::string edge_path = path_join(path, "Edge" + std::to_string(edge));
+    auto handle           = edge_handles[start_node];
+    std::string edge_path = path_join(path, "EdgeTo" + std::to_string(end_node));
     int num_groups;
     int num_compart;
-    int start_node;
-    int end_node;
 
     tixiGetIntegerElement(handle, path_join(path, "NumberOfGroups").c_str(), &num_groups);
     tixiGetIntegerElement(handle, path_join(path, "NumberOfCompartiments").c_str(), &num_compart);
-    tixiGetIntegerElement(handle, path_join(edge_path, "StartNode").c_str(), &start_node);
-    tixiGetIntegerElement(handle, path_join(edge_path, "EndNode").c_str(), &end_node);
 
     auto all_weights = Eigen::VectorXd(num_compart * num_groups);
     for (int group = 0; group < num_groups; group++) {
-        double* weights = nullptr;
-        tixiGetFloatVector(handle, path_join(edge_path, "Group" + std::to_string(group + 1)).c_str(), &weights,
-                           num_compart);
-        for (int compart = 0; compart < num_compart; compart++) {
-            all_weights(compart + group * num_compart) = weights[compart];
+        double* weights   = nullptr;
+        ReturnCode status = tixiGetFloatVector(
+            handle, path_join(edge_path, "Group" + std::to_string(group + 1)).c_str(), &weights, num_compart);
+        if (status == SUCCESS) {
+            for (int compart = 0; compart < num_compart; compart++) {
+                all_weights(compart + group * num_compart) = weights[compart];
+            }
+            graph.add_edge(start_node, end_node, all_weights);
         }
     }
-    graph.add_edge(start_node, end_node, all_weights);
 }
 
 void write_graph(const Graph<SecirParams, MigrationEdge>& graph)
 {
-    std::string edges_path = "/Edges";
-    TixiDocumentHandle handle;
-    tixiCreateDocument("Edges", &handle);
+
+    boost::filesystem::path dir("graph_parameters");
+
+    bool created = boost::filesystem::create_directory(dir);
+
+    if (created) {
+        log_info("Directory '{:s}' was created. Results are stored in {:s}.", dir.string(),
+                 path_join(epi::get_current_dir_name(), dir.string()));
+    }
+    else {
+        log_info("Directory '{:s}' already exists. Results are stored in {:s}. Files from previous "
+                 "runs will be "
+                 "overwritten",
+                 dir.string(), path_join(epi::get_current_dir_name(), dir.string()));
+    }
 
     int num_nodes   = static_cast<int>(graph.nodes().size());
     int num_edges   = static_cast<int>(graph.edges().size());
     int num_groups  = graph.nodes()[0].get_contact_patterns().get_cont_freq_mat().get_size();
     int num_compart = static_cast<int>(graph.nodes()[0].populations.get_num_compartments()) / num_groups;
 
-    tixiAddIntegerElement(handle, edges_path.c_str(), "NumberOfNodes", num_nodes, "%d");
-    tixiAddIntegerElement(handle, edges_path.c_str(), "NumberOfEdges", num_edges, "%d");
-    tixiAddIntegerElement(handle, edges_path.c_str(), "NumberOfGroups", num_groups, "%d");
-    tixiAddIntegerElement(handle, edges_path.c_str(), "NumberOfCompartiments", num_compart, "%d");
+    std::vector<TixiDocumentHandle> handle(num_nodes);
+    std::string edges_path = "/Edges";
+    for (int i = 0; i < num_nodes; i++) {
+        tixiCreateDocument("Edges", &handle[i]);
+
+        tixiAddIntegerElement(handle[i], edges_path.c_str(), "NumberOfNodes", num_nodes, "%d");
+        tixiAddIntegerElement(handle[i], edges_path.c_str(), "NumberOfEdges", num_edges, "%d");
+        tixiAddIntegerElement(handle[i], edges_path.c_str(), "NumberOfGroups", num_groups, "%d");
+        tixiAddIntegerElement(handle[i], edges_path.c_str(), "NumberOfCompartiments", num_compart, "%d");
+    }
 
     for (int edge = 0; edge < num_edges; edge++) {
         write_edge(handle, edges_path, graph, edge);
     }
 
-    tixiSaveDocument(handle, "GraphEdges.xml");
-    tixiCloseDocument(handle);
+    for (int node = 0; node < num_nodes; node++) {
+        tixiSaveDocument(handle[node], (dir / ("GraphEdges_node" + std::to_string(node) + ".xml")).c_str());
+        tixiCloseDocument(handle[node]);
+    }
 
     for (int node = 0; node < num_nodes; node++) {
-        write_node(graph, node);
+        TixiDocumentHandle node_handle;
+        tixiCreateDocument("Parameters", &node_handle);
+        write_node(node_handle, graph, node);
+        tixiSaveDocument(node_handle, (dir / ("GraphNode" + std::to_string(node) + ".xml")).c_str());
+        tixiCloseDocument(node_handle);
     }
 }
 
 Graph<SecirParams, MigrationEdge> read_graph()
 {
+
+    boost::filesystem::path dir("graph_parameters");
+
     TixiDocumentHandle handle;
-    tixiOpenDocument("GraphEdges.xml", &handle);
+    tixiOpenDocument((dir / "GraphEdges_node0.xml").c_str(), &handle);
 
     std::string edges_path = "/Edges";
 
@@ -596,16 +620,25 @@ Graph<SecirParams, MigrationEdge> read_graph()
     tixiGetIntegerElement(handle, path_join(edges_path, "NumberOfNodes").c_str(), &num_nodes);
     tixiGetIntegerElement(handle, path_join(edges_path, "NumberOfEdges").c_str(), &num_edges);
 
+    std::vector<TixiDocumentHandle> edge_handles(num_nodes);
+
     Graph<SecirParams, MigrationEdge> graph;
 
     for (int node = 0; node < num_nodes; node++) {
-        read_node(graph, node);
+        TixiDocumentHandle node_handle;
+        tixiOpenDocument((dir / ("GraphNode" + std::to_string(node) + ".xml")).c_str(), &node_handle);
+        read_node(node_handle, graph);
     }
 
-    for (int edge = 0; edge < num_edges; edge++) {
-        read_edge(handle, edges_path, graph, edge);
+    for (int start_node = 0; start_node < num_nodes; start_node++) {
+        tixiOpenDocument((dir / ("GraphEdges_node" + std::to_string(start_node) + ".xml")).c_str(),
+                         &edge_handles[start_node]);
+        for (int end_node = 0; end_node < num_nodes; end_node++) {
+            read_edge(edge_handles, edges_path, graph, start_node, end_node);
+        }
+
+        tixiCloseDocument(edge_handles[start_node]);
     }
-    tixiCloseDocument(handle);
     return graph;
 }
 
