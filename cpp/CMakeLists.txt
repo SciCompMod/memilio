@@ -5,6 +5,7 @@ project(epidemiology VERSION 0.1.0)
 option(EPI_USE_BUNDLED_SPDLOG "Use spdlog bundled with epi" ON)
 option(EPI_USE_BUNDLED_EIGEN "Use eigen bundled with epi" ON)
 option(EPI_BUILD_EPI_IO "Build epidemiology_io library (requires TiXI and HDF5)" OFF)
+option(EPI_USE_BUNDLED_BOOST "Use boost bundled with epi (only for epi-io)" ON)
 option(EPI_USE_BUNDLED_JSONCPP "Use jsoncpp bundled with epi (only for epi-io)" ON)
 
 mark_as_advanced(EPI_USE_BUNDLED_SPDLOG)
