@@ -170,6 +170,10 @@ def get_rki_data(read_data=dd.defaultDict['read_data'],
       plt.tight_layout()
       plt.show()
 
+   gbNF = df.groupby(dateToUse).agg({AnzahlFall: sum, AnzahlTodesfall: sum, AnzahlGenesen: sum})
+   gbNF_cs = gbNF.cumsum()
+
+   gd.write_dataframe(gbNF_cs.reset_index(), directory, "all_germany_rki", out_form)
 
    ############## Data for states all ages ################
    

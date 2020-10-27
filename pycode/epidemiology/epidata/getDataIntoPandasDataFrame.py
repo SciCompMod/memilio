@@ -89,6 +89,7 @@ def cli(what):
 
    cli_dict = {"divi": ['Downloads data from DIVI', 'start_date', 'end_date', 'update'],
                "rki": ['Download data from RKI', 'plot'],
+               "rkiest": ['Download data from RKI and JH and estimate recovered and deaths'],
                "spain": ['Download of spain data'],
                "population": ['Download population data'],
                "jh" : ['Downloads data from JH'],
@@ -97,7 +98,7 @@ def cli(what):
    try:
       what_list = cli_dict[what]
    except KeyError:
-      exit_string = "Wrong key cor cli_dict"
+      exit_string = "Wrong key or cli_dict"
       sys.exit(exit_string)
 
    out_path_default = dd.defaultDict['out_folder']

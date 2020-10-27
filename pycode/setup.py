@@ -32,7 +32,8 @@ setup(
             'getspaindata = epidemiology.epidata.getSpainData:main',
             'getdividata = epidemiology.epidata.getDIVIData:main',
             'getalldata = epidemiology.epidata.getAllData:main',
-            'cleandata = epidemiology.epidata.cleanData:main'
+            'cleandata = epidemiology.epidata.cleanData:main',
+            'getrkiestimation = epidemiology.epidata.getRKIDatawithEstimations:main'
         ],
     },
     package_dir={
