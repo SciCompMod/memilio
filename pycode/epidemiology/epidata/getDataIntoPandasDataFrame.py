@@ -8,10 +8,12 @@ import datetime
 
 from epidemiology.epidata import defaultDict as dd
 
+
+
 def loadGeojson( targetFileName, apiUrl = 'https://opendata.arcgis.com/datasets/', 
                  extension = 'geojson' ):
 
-    """ Loads data default: ArcGIS data sets in GeoJSON format. (pandas DataFrame)
+    """! Loads data default: ArcGIS data sets in GeoJSON format. (pandas DataFrame)
 
     This routine loads datasets default: ArcGIS data sets in GeoJSON format of the given public
     data item ID into a pandas DataFrame and returns the DataFrame. Trivial 
@@ -19,10 +21,10 @@ def loadGeojson( targetFileName, apiUrl = 'https://opendata.arcgis.com/datasets/
     constant data fields.
 
     Keyword arguments:
-    targetFileName -- File name without ending, for ArcGIS: public data item ID (string)
-    apiUrl -- URL to file, default: ArcGIS data sets API URL (string, default
+    @param targetFileName -- File name without ending, for ArcGIS: public data item ID (string)
+    @param apiUrl -- URL to file, default: ArcGIS data sets API URL (string, default
               'https://opendata.arcgis.com/datasets/')
-    extension -- Data format extension (string, default 'geojson')
+    return extension -- Data format extension (string, default 'geojson')
 
     """
     url = apiUrl + targetFileName + '.' + extension
@@ -46,7 +48,7 @@ def loadGeojson( targetFileName, apiUrl = 'https://opendata.arcgis.com/datasets/
 
 def loadCsv( targetFileName, apiUrl = 'https://opendata.arcgis.com/datasets/', 
                  extension = 'csv' ):
-    """ Loads ArcGIS data sets in CSV format. (pandas DataFrame)
+    """! Loads ArcGIS data sets in CSV format. (pandas DataFrame)
 
     This routine loads data sets (default from ArcGIS) in CSV format of the given public data 
     item ID into a pandas DataFrame and returns the DataFrame. 
@@ -105,7 +107,7 @@ def cli(what):
    check_dir(out_path_default)
 
    parser = argparse.ArgumentParser(description=what_list[0])
-   
+
    parser.add_argument('-r',  '--read-from-disk',
                        help='Reads the data from file "json" instead of downloading it.',
                        action='store_true')

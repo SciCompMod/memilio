@@ -7,8 +7,8 @@ from datetime import timedelta, date
 from epidemiology.epidata import getDataIntoPandasDataFrame as gd
 from epidemiology.epidata import defaultDict as dd
 
-## @package getDIVIData
-# Data of the DIVI -
+## @file getDIVIData.py
+# @brief Data of the DIVI -
 # Deutsche interdisziplinäre Vereinigung für Intensiv- und Notfallmedizin
 # about Sars-CoV2 is downloaded.
 # This data contains the number of Covid19 patients in intensive care

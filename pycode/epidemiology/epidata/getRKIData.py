@@ -1,3 +1,12 @@
+## @file getRKIData.py
+#
+# @brief Downloads the data of the Robert-Koch-Institut (RKI) and provides it in different ways.
+#
+# The RKI data we download can be found at https://npgeo-corona-npgeo-de.hub.arcgis.com/datasets/dd4580c810204019a7b8eb3e0b329dd6_0
+#
+# Be careful: Recovered and deaths are not correct set in this case
+
+# Imports
 import os
 import sys
 import json
@@ -14,6 +23,41 @@ def get_rki_data(read_data=dd.defaultDict['read_data'],
                  out_folder=dd.defaultDict['out_folder'],
                  make_plot=dd.defaultDict['make_plot'],
 ):
+   """! Downloads the RKI data and provides different kind of structured data
+
+   The data is read in either from the internet or from a json file (FullDataRKI.json), stored in an earlier run.
+   If the data is read form the internet, before changing anything the data is stored in FullDataRKI.json.
+   To store and change the data we use pandas
+
+   While working with the data
+   - the column names are changed to english
+   - A new Column "Date" is defined.
+   - We are only interested in the values where the parameter NeuerFall, NeuerTodesfall, NeuGenesen are larger than 0.
+   The values, when these parameter are negative are just useful,
+   if one would want to get the difference to the previous day.
+   For details we refer to the above mentioned webpage.
+   - For all different parameter and different columns in the following the values  are added up for whole germany for every date
+   and the cumulative sum is calculated. Besides something else is mentioned.
+   - For this function a possibility is provided to plot the different data sets.
+   - Following data is generated and written to the mentioned filename
+       - All infected (current and past) for whole germany are stored in "infected_rki"
+       - All deaths whole germany are stored in "deaths_rki"
+       - Infected split for states are stored in "infected_state_rki"
+       - Infected, deaths and recovered split for states are stored in "all_state_rki"
+       - Infected split for counties are stored in "infected_county_rki"
+       - Infected, deaths and recovered split for county are stored in "all_county_rki"
+       - Infected, deaths and recovered split for gender are stored in "all_gender_rki"
+       - Infected, deaths and recovered split for state and gender are stored in "all_state_gender_rki"
+       - Infected, deaths and recovered split for county and gender are stored in "all_county_gender_rki"
+       - Infected, deaths and recovered split for age are stored in "all_age_rki"
+       - Infected, deaths and recovered split for state and age are stored in "all_state_age_rki"
+       - Infected, deaths and recovered split for county and age are stored in "all_county_age_rki"
+
+   @param read_data False [Default] or True. Defines if data is read from file or downloaded.
+   @param update_date "True" if existing data is updated or
+   "False [Default]" if it is downloaded for all dates from start_date to end_date.
+   @param out_folder Folder where data is written to.
+   """
 
    directory = os.path.join(out_folder, 'Germany/')
    gd.check_dir(directory)
@@ -143,7 +187,6 @@ def get_rki_data(read_data=dd.defaultDict['read_data'],
    # outout to json file
    gd.write_dataframe(gbNF_cs.reset_index(), directory, "infected_rki", out_form)
 
-
    if(make_plot == True):
       # make plot
       gbNF_cs.plot( title = 'COVID-19 infections', grid = True, 
@@ -170,6 +213,10 @@ def get_rki_data(read_data=dd.defaultDict['read_data'],
       plt.tight_layout()
       plt.show()
 
+   gbNF = df.groupby(dateToUse).agg({AnzahlFall: sum, AnzahlTodesfall: sum, AnzahlGenesen: sum})
+   gbNF_cs = gbNF.cumsum()
+
+   gd.write_dataframe(gbNF_cs.reset_index(), directory, "all_germany_rki", out_form)
 
    ############## Data for states all ages ################
    
@@ -353,6 +400,7 @@ def get_rki_data(read_data=dd.defaultDict['read_data'],
 
 
 def main():
+   """! Main program entry."""
 
    [read_data, out_form, out_folder, make_plot] = gd.cli("rki")
 

@@ -1,4 +1,4 @@
-# Epidemiology #
+# HPC against Corona #
 
 [![pipeline status](https://gitlab.dlr.de/hpc-against-corona/epidemiology/badges/master/pipeline.svg)](https://gitlab.dlr.de/hpc-against-corona/epidemiology/-/commits/master)
 [![coverage report](https://gitlab.dlr.de/hpc-against-corona/epidemiology/badges/master/coverage.svg)](https://gitlab.dlr.de/hpc-against-corona/epidemiology/-/jobs/artifacts/master/file/coverage_report/index.html?job=test-cpp)
@@ -8,9 +8,22 @@ This is a common project between the department of Systems Immunology (SIMM) of 
 
 **Getting started**
 
-This project is divided into multiple building blocks. The implementation of the epidemiological models is to be found in cpp. Data acquisition tools and data is to be found in data. The interactive frontend is to be found under frontend. It is regularly deployed to http://hpcagainstcorona.sc.bs.dlr.de/index.html. In pycode you find python bindings to call the C++ code available in cpp. At the moment, some data tools are still under pycode, too.
+This project is divided into multiple building blocks. The implementation of the epidemiological models is to be found in cpp.
+Data acquisition tools and data is to be found in data.
+The interactive frontend is to be found under frontend.
+It is regularly deployed to http://hpcagainstcorona.sc.bs.dlr.de/index.html.
+In pycode the epidemiology python package is defined.
+It consists of python bindings (seir, secir) to call the C++ code available in cpp and the epidata subpackage which provides tools to download and structure important data.
 
-The C++ code is divided into two libraries, *epidemiology* (models, math, ensemble runs etc.) and *epidemiology_io* (IO routines for parameter sets and simulation results). By standard, *epidemiology* is built without *epidemiology_io*.
+The C++ code is divided into two libraries, *epidemiology* (models, math, ensemble runs etc.) and *epidemiology_io* (IO routines for parameter sets and simulation results).
+By standard, *epidemiology* is built without *epidemiology_io*.
+
+
+**Documentation**
+
+In every important part of the project, desribed above, a README can be found which contains further information about the structure of the specific project part, the instructions for the user and very important the instructions for the developer.
+
+Furthermore, the code is documentent via doxygen and n isntruction how to get it is provided in the docs folder.
 
 
 **Requirements**
