@@ -18,9 +18,10 @@ namespace epi
 template <class Model>
 class ParameterStudy
 {
-    using HandleSimulationResultFunction = std::function<void(const Model&, const TimeSeries<double>&, int node)>;
 
 public:
+
+    using HandleSimulationResultFunction = std::function<void(const Model&, const TimeSeries<double>&, int node)>;
     /**
      * create study for graph of compartment models.
      * @param graph graph of parameters
