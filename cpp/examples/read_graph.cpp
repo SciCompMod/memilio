@@ -4,9 +4,19 @@
 
 #include <iostream>
 
+void print_usage()
+{
+    std::cout << "Usage: read_graph MIGRATION_FILE" << "\n\n";
+    std::cout << "This example performs a simulation based on twitter "
+                 "migration data." << std::endl;
+}
+
 int main(int argc, char** argv)
 {
-    assert(argc == 2 && "Funtion needs the name of the twitter file as an argument");
+    if (argc != 2) {
+        print_usage();
+        return -1;
+    }
 
     auto filename = argv[1];
 
