@@ -50,11 +50,10 @@ class Test_ParameterStudy(unittest.TestCase):
         self.assertEqual(study.num_runs, num_runs)
 
         #mock callback
-        def handle_result_func(params, result, node_idx):
+        def handle_result_func(graph):
             handle_result_func.c += 1
-            self.assertAlmostEqual(result.get_time(0), t0)
-            self.assertAlmostEqual(result.get_last_time(), tmax)
-            self.assertEqual(node_idx, 0)
+            self.assertAlmostEqual(graph.get_node(0).result.get_time(0), t0)
+            self.assertAlmostEqual(graph.get_node(0).result.get_last_time(), tmax)
 
         handle_result_func.c = 0
         result = study.run(handle_result_func)
