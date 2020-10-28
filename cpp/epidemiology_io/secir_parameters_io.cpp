@@ -625,24 +625,25 @@ void write_graph(const Graph<SecirParams, MigrationEdge>& graph)
     int num_groups  = graph.nodes()[0].get_contact_patterns().get_cont_freq_mat().get_size();
     int num_compart = static_cast<int>(graph.nodes()[0].populations.get_num_compartments()) / num_groups;
 
-    std::vector<TixiDocumentHandle> handle(num_nodes);
+    std::vector<TixiDocumentHandle> edge_handles(num_nodes);
     std::string edges_path = "/Edges";
-    for (int i = 0; i < num_nodes; i++) {
-        tixiCreateDocument("Edges", &handle[i]);
+    for (auto& current_handle : edge_handles) {
+        tixiCreateDocument("Edges", &current_handle);
 
-        tixiAddIntegerElement(handle[i], edges_path.c_str(), "NumberOfNodes", num_nodes, "%d");
-        tixiAddIntegerElement(handle[i], edges_path.c_str(), "NumberOfEdges", num_edges, "%d");
-        tixiAddIntegerElement(handle[i], edges_path.c_str(), "NumberOfGroups", num_groups, "%d");
-        tixiAddIntegerElement(handle[i], edges_path.c_str(), "NumberOfCompartiments", num_compart, "%d");
+        tixiAddIntegerElement(current_handle, edges_path.c_str(), "NumberOfNodes", num_nodes, "%d");
+        tixiAddIntegerElement(current_handle, edges_path.c_str(), "NumberOfEdges", num_edges, "%d");
+        tixiAddIntegerElement(current_handle, edges_path.c_str(), "NumberOfGroups", num_groups, "%d");
+        tixiAddIntegerElement(current_handle, edges_path.c_str(), "NumberOfCompartiments", num_compart, "%d");
     }
 
     for (int edge = 0; edge < num_edges; edge++) {
-        write_edge(handle, edges_path, graph, edge);
+        write_edge(edge_handles, edges_path, graph, edge);
     }
 
     for (int node = 0; node < num_nodes; node++) {
-        tixiSaveDocument(handle[node], (dir / ("GraphEdges_node" + std::to_string(node) + ".xml")).string().c_str());
-        tixiCloseDocument(handle[node]);
+        tixiSaveDocument(edge_handles[node],
+                         (dir / ("GraphEdges_node" + std::to_string(node) + ".xml")).string().c_str());
+        tixiCloseDocument(edge_handles[node]);
     }
 
     for (int node = 0; node < num_nodes; node++) {
