@@ -485,15 +485,9 @@ void write_parameter_study(TixiDocumentHandle handle, const std::string& path, c
     write_parameter_space(handle, path, parameter_study.get_secir_params(), parameter_study.get_num_runs(), io_mode);
 }
 
-void write_single_run_params(const int run, const SecirParams& params, double t0, double tmax,
-                             const TimeSeries<double>& result, int node)
+void write_single_run_params(const int run, epi::Graph<epi::ModelNode<epi::SecirSimulation>, epi::MigrationEdge> graph,
+                             double t0, double tmax)
 {
-
-    int num_runs     = 1;
-    std::string path = "/Parameters";
-    TixiDocumentHandle handle;
-    tixiCreateDocument("Parameters", &handle);
-    ParameterStudy study(params, t0, tmax, num_runs);
 
     boost::filesystem::path dir("results");
 
@@ -509,16 +503,26 @@ void write_single_run_params(const int run, const SecirParams& params, double t0
             "overwritten",
             dir.string(), epi::get_current_dir_name());
     }
+    int node_id = 0;
+    for (auto& node : graph.nodes()) {
+        int num_runs     = 1;
+        std::string path = "/Parameters";
+        TixiDocumentHandle handle;
+        tixiCreateDocument("Parameters", &handle);
+        ParameterStudy study(node.get_params(), t0, tmax, num_runs);
 
-    write_parameter_study(handle, path, study);
+        write_parameter_study(handle, path, study);
 
-    tixiSaveDocument(
-        handle,
-        (dir / ("Parameters_run" + std::to_string(run) + "_node" + std::to_string(node) + ".xml")).string().c_str());
-    tixiCloseDocument(handle);
+        tixiSaveDocument(handle,
+                         (dir / ("Parameters_run" + std::to_string(run) + "_node" + std::to_string(node_id) + ".xml"))
+                             .string()
+                             .c_str());
+        tixiCloseDocument(handle);
 
-    save_result(result,
-                (dir / ("Results_run" + std::to_string(run) + "_node" + std::to_string(node) + ".h5")).string());
+        save_result(node.get_result(),
+                    (dir / ("Results_run" + std::to_string(run) + "_node" + std::to_string(node_id) + ".h5")).string());
+        node_id++;
+    }
 }
 
 void write_node(TixiDocumentHandle handle, const Graph<SecirParams, MigrationEdge>& graph, int node)

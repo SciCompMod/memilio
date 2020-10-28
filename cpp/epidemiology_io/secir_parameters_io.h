@@ -124,8 +124,8 @@ void write_parameter_study(TixiDocumentHandle handle, const std::string& path, c
  * @param t0 starting point of simulation
  * @param tmax end point of simulation
  */
-void write_single_run_params(const int run, const SecirParams& params, double t0, double tmax,
-                             const TimeSeries<double>& result, int node);
+void write_single_run_params(const int run, epi::Graph<epi::ModelNode<SecirSimulation>, MigrationEdge> graph, double t0,
+                             double tmax);
 
 /**
  * @brief Creates xml file containing Parameters of one node of a graph
