@@ -97,7 +97,7 @@ void bind_Populations(py::module& m, std::string const& name)
 {
     py::class_<epi::Populations<Cats...>> c(m, name.c_str());
     c.def(py::init<>())
-        .def("get_num_compartments", &epi::Populations<Cats...>::get_num_compartments)
+        .def_static("get_num_compartments", &epi::Populations<Cats...>::get_num_compartments)
         .def("get_compartments", &epi::Populations<Cats...>::get_compartments)
         .def("get", py::overload_cast<Cats...>(&epi::Populations<Cats...>::get),
             py::return_value_policy::reference_internal)
@@ -453,17 +453,6 @@ void bind_ParameterStudy(py::module& m, std::string const& name)
 template <class AgeGroup>
 void bind_secir_ageres(py::module& m)
 {
-    py::enum_<epi::InfectionType>(m, "InfectionType")
-        .value("S", epi::InfectionType::S)
-        .value("E", epi::InfectionType::E)
-        .value("C", epi::InfectionType::C)
-        .value("I", epi::InfectionType::I)
-        .value("H", epi::InfectionType::H)
-        .value("U", epi::InfectionType::U)
-        .value("R", epi::InfectionType::R)
-        .value("D", epi::InfectionType::D)
-        .value("Count", epi::InfectionType::Count)
-        .export_values();
 
     py::enum_<AgeGroup> agegroup_enum(m, "InfectionType");
     for (size_t i=0; i < (size_t)AgeGroup::Count; ++i) {
@@ -473,37 +462,37 @@ void bind_secir_ageres(py::module& m)
 
     size_t constexpr N = (size_t)AgeGroup::Count;
 
-    bind_Populations<AgeGroup, epi::InfectionType>(m, "Populations" + N);
+    bind_Populations<AgeGroup, epi::InfectionType>(m, "Populations" + std::to_string(N));
 
-    bind_SecirParams<N>(m, "SecirParams" + N);
+    bind_SecirParams<N>(m, "SecirParams" + std::to_string(N));
 
     //TODO: Currently, StageTimes and Probabilies are subclasses of the class template SecirParams.
     // If this were not the case, we would not really need a StageTimes class per
     // number of AgeGroups, but since we are planning to remove the SecirParams class
     // this is a valid workaround for now.
-    bind_StageTimes<N>(m, "StageTimes" + N);
-    bind_Probabilities<N>(m, "Probabilities" + N);
+    bind_StageTimes<N>(m, "StageTimes" + std::to_string(N));
+    bind_Probabilities<N>(m, "Probabilities" + std::to_string(N));
 
     using Populations = epi::Populations<AgeGroup, epi::InfectionType>;
     using SecirParams = epi::SecirParams<N>;
-    bind_CompartmentalModel<Populations, SecirParams>(m, "SecirModel" + N);
+    bind_CompartmentalModel<Populations, SecirParams>(m, "SecirModel" + std::to_string(N));
 
     using SecirModel = epi::CompartmentalModel<Populations, SecirParams>;
-    bind_Simulation<SecirModel>(m, "Simulation" + N);
+    bind_Simulation<SecirModel>(m, "Simulation" + std::to_string(N));
 
     m.def("simulate", py::overload_cast<double, double, double, const SecirModel&>(&epi::simulate<SecirModel>),
           "Simulates a SecirModel1 from t0 to tmax.", py::arg("t0"), py::arg("tmax"), py::arg("dt"),
           py::arg("model"));
 
-    bind_Graph<SecirModel, epi::MigrationEdge>(m, "SecirModelGraph" + N);
+    bind_Graph<SecirModel, epi::MigrationEdge>(m, "SecirModelGraph" + std::to_string(N));
 
     using Simulation = epi::Simulation<SecirModel>;
-    bind_Graph<epi::ModelNode<Simulation>, epi::MigrationEdge>(m, "MigrationGraph" + N);
+    bind_Graph<epi::ModelNode<Simulation>, epi::MigrationEdge>(m, "MigrationGraph" + std::to_string(N));
 
     using MigrationGraph = epi::Graph<epi::ModelNode<Simulation>, epi::MigrationEdge>;
-    bind_GraphSimulation<MigrationGraph>(m, "MigrationSimulation" + N);
+    bind_GraphSimulation<MigrationGraph>(m, "MigrationSimulation" + std::to_string(N));
 
-    bind_ParameterStudy<SecirModel>(m, "ParameterStudy" + N);
+    bind_ParameterStudy<SecirModel>(m, "ParameterStudy" + std::to_string(N));
 
     m.def("set_params_distributions_normal", &epi::set_params_distributions_normal<AgeGroup>, py::arg("model"), py::arg("t0"),
           py::arg("tmax"), py::arg("dev_rel"));
@@ -670,6 +659,18 @@ PYBIND11_MODULE(_secir, m)
 
     m.def("ensemble_mean", &epi::ensemble_mean);
     m.def("ensemble_percentile", &epi::ensemble_percentile);
+
+    py::enum_<epi::InfectionType>(m, "InfectionType")
+        .value("S", epi::InfectionType::S)
+        .value("E", epi::InfectionType::E)
+        .value("C", epi::InfectionType::C)
+        .value("I", epi::InfectionType::I)
+        .value("H", epi::InfectionType::H)
+        .value("U", epi::InfectionType::U)
+        .value("R", epi::InfectionType::R)
+        .value("D", epi::InfectionType::D)
+        .value("Count", epi::InfectionType::Count)
+        .export_values();
 
     bind_secir_ageres<epi::AgeGroup1>(m);
     bind_secir_ageres<epi::AgeGroup2>(m);

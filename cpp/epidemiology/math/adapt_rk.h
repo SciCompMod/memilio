@@ -95,13 +95,13 @@ public:
     }
 
     /// @param tol the required absolute tolerance for the comparison with the Fehlberg approximation
-    void set_abs_tolerance(double tol)
+    void set_abs_tolerance(double tol) override
     {
         m_abs_tol = tol;
     }
 
     /// @param tol the required relative tolerance for the comparison with the Fehlberg approximation
-    void set_rel_tolerance(double tol)
+    void set_rel_tolerance(double tol) override
     {
         m_rel_tol = tol;
     }

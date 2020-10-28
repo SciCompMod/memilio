@@ -1,6 +1,8 @@
 #include <emscripten/bind.h>
 
 #include <epidemiology/secir/secir.h>
+#include <epidemiology/model/populations.h>
+#include <epidemiology/model/simulation.h>
 #include <epidemiology/secir/damping.h>
 #include <vector>
 
@@ -37,12 +39,13 @@ public:
     std::vector<double> nb_dead;
 };
 
-SecirResult simulate_secir(double t0, double tmax, double dt, epi::SecirParams const& params)
+template <class Model>
+SecirResult simulate_secir(double t0, double tmax, double dt, Model const& model)
 {
-    auto result_timeseries = simulate(t0, tmax, dt, params);
+    auto result_timeseries = simulate(t0, tmax, dt, model);
 
     if (result_timeseries.get_num_time_points() < 1 ||
-        result_timeseries.get_num_elements() != epi::SecirCompartments::SecirCount) {
+        result_timeseries.get_num_elements() != (size_t)epi::InfectionType::Count) {
         throw std::runtime_error("Invalid result from secir simulation");
     }
 
@@ -63,6 +66,232 @@ SecirResult simulate_secir(double t0, double tmax, double dt, epi::SecirParams c
 
     return result;
 }
+
+// the following functions help bind class template realizations
+//https://stackoverflow.com/questions/64552878/how-can-i-automatically-bind-templated-member-functions-of-variadic-class-templa
+template <typename T>
+std::string pretty_name()
+{
+    std::ostringstream o;
+    o << typeid(T).name();
+    return o.str();
+}
+template <> std::string pretty_name<epi::AgeGroup1>(){ return "AgeGroup"; }
+template <> std::string pretty_name<epi::AgeGroup2>(){ return "AgeGroup"; }
+template <> std::string pretty_name<epi::AgeGroup3>(){ return "AgeGroup"; }
+template <> std::string pretty_name<epi::InfectionType>(){ return "InfectionType"; }
+
+template <class C>
+void bind_populations_get_group_total_for_all_cats(js::class_<C>&, std::string const&){}
+
+template <class C, class T, class... Ts>
+void bind_populations_get_group_total_for_all_cats(js::class_<C>& c, std::string const& basename)
+{
+    // name of method is basename + typename
+    std::ostringstream o;
+    o << basename << pretty_name<T>();
+
+    // recursively bind the member for each type
+    c.function(o.str().c_str(), &C::template get_group_total<T>);
+    bind_populations_get_group_total_for_all_cats<C, Ts...>(c, basename);
+}
+
+template <class C>
+void bind_populations_set_group_total_for_all_cats(js::class_<C>&, std::string const&){}
+
+template <class C, class T, class... Ts>
+void bind_populations_set_group_total_for_all_cats(js::class_<C>& c, std::string const& basename)
+{
+    // name of method is basename + typename
+    std::ostringstream o;
+    o << basename << pretty_name<T>();
+
+    // recursively bind the member for each type
+    c.function(o.str().c_str(), &C::template set_group_total<T>);
+    bind_populations_set_group_total_for_all_cats<C, Ts...>(c, basename);
+}
+
+template <class C>
+void bind_populations_set_difference_from_group_total_for_all_cats(js::class_<C>&, std::string const&){}
+
+template <class C, class T, class... Ts>
+void bind_populations_set_difference_from_group_total_for_all_cats(js::class_<C>& c, std::string const& basename)
+{
+    // name of method is basename + typename
+    std::ostringstream o;
+    o << basename << pretty_name<T>();
+
+    // recursively bind the member for each type
+    c.function(o.str().c_str(), &C::template set_difference_from_group_total<T>);
+    bind_populations_set_difference_from_group_total_for_all_cats<C, Ts...>(c, basename);
+}
+
+/*
+ * @brief bind Populations class template for any choice of categories
+ */
+template<class... Cats>
+void bind_Populations(std::string const& name)
+{
+    using Class = epi::Populations<Cats...>;
+    js::class_<Class> c(name.c_str());
+    c.template constructor<>()
+        .class_function("get_num_compartments", &Class::get_num_compartments)
+        .function("get_compartments", &Class::get_compartments)
+        .function("get", js::select_overload<typename Class::Type&(Cats...)>(&Class::get))
+        .function("get_total", &Class::get_total)
+        .function("set", js::select_overload<void(ScalarType, Cats...)>(&Class::set))
+        .function("set_difference_from_total", &Class::set_difference_from_total)
+        .function("set_total", &Class::set_total)
+        .function("get_flat_index", &Class::get_flat_index);
+
+        bind_populations_get_group_total_for_all_cats<Class, Cats...>(c, "get_group_total");
+        bind_populations_set_group_total_for_all_cats<Class, Cats...>(c, "set_group_total");
+        bind_populations_set_difference_from_group_total_for_all_cats<Class, Cats...>(c, "set_difference_from_group_total");
+}
+
+template<int N>
+void bind_StageTimes(std::string const& name)
+{
+    using Class = typename epi::SecirParams<N>::StageTimes;
+    js::class_<Class>(name.c_str())
+        .template constructor<>()
+        .function("set_incubation", js::select_overload<void(double)>(&Class::set_incubation))
+        .function("set_infectious_mild",
+                  js::select_overload<void(double)>(&Class::set_infectious_mild))
+        .function("set_serialinterval",
+                  js::select_overload<void(double)>(&Class::set_serialinterval))
+        .function("set_hospitalized_to_home",
+                  js::select_overload<void(double)>(&Class::set_hospitalized_to_home))
+        .function("set_home_to_hospitalized",
+                  js::select_overload<void(double)>(&Class::set_home_to_hospitalized))
+        .function("set_hospitalized_to_icu",
+                  js::select_overload<void(double)>(&Class::set_hospitalized_to_icu))
+        .function("set_icu_to_home", js::select_overload<void(double)>(&Class::set_icu_to_home))
+        .function("set_infectious_asymp",
+                  js::select_overload<void(double)>(&Class::set_infectious_asymp))
+        .function("set_icu_to_death",
+                  js::select_overload<void(double)>(&Class::set_icu_to_death))
+
+        // at the moment, no const getters available in JS
+        .function("get_incubation",
+                  js::select_overload<epi::UncertainValue&()>(&Class::get_incubation))
+        .function("get_infectious_mild",
+                  js::select_overload<epi::UncertainValue&()>(&Class::get_infectious_mild))
+        .function("get_serialinterval",
+                  js::select_overload<epi::UncertainValue&()>(&Class::get_serialinterval))
+        .function("get_hospitalized_to_home",
+                  js::select_overload<epi::UncertainValue&()>(&Class::get_hospitalized_to_home))
+        .function("get_home_to_hospitalized",
+                  js::select_overload<epi::UncertainValue&()>(&Class::get_home_to_hospitalized))
+        .function("get_hospitalized_to_icu",
+                  js::select_overload<epi::UncertainValue&()>(&Class::get_hospitalized_to_icu))
+        .function("get_icu_to_home",
+                  js::select_overload<epi::UncertainValue&()>(&Class::get_icu_to_home))
+        .function("get_infectious_asymp",
+                  js::select_overload<epi::UncertainValue&()>(&Class::get_infectious_asymp))
+        .function("get_icu_to_dead",
+                  js::select_overload<epi::UncertainValue&()>(&Class::get_icu_to_dead));
+}
+
+template<int N>
+void bind_Probabilities(std::string const& name)
+{
+    using Class = typename epi::SecirParams<N>::Probabilities;
+    js::class_<Class>(name.c_str())
+        .template constructor<>()
+        .function("set_infection_from_contact",
+                  js::select_overload<void(double)>(&Class::set_infection_from_contact))
+        .function("set_carrier_infectability",
+                  js::select_overload<void(double)>(&Class::set_carrier_infectability))
+        .function("set_asymp_per_infectious",
+                  js::select_overload<void(double)>(&Class::set_asymp_per_infectious))
+        .function("set_risk_from_symptomatic",
+                  js::select_overload<void(double)>(&Class::set_risk_from_symptomatic))
+        .function("set_hospitalized_per_infectious",
+                  js::select_overload<void(double)>(&Class::set_hospitalized_per_infectious))
+        .function("set_icu_per_hospitalized",
+                  js::select_overload<void(double)>(&Class::set_icu_per_hospitalized))
+        .function("set_dead_per_icu",
+                  js::select_overload<void(double)>(&Class::set_dead_per_icu))
+
+        // at the moment, no const getters available in JS
+        .function("get_infection_from_contact", js::select_overload<epi::UncertainValue&()>(
+                                                    &Class::get_infection_from_contact))
+        .function("get_carrier_infectability", js::select_overload<epi::UncertainValue&()>(
+                                                   &Class::get_carrier_infectability))
+        .function("get_asymp_per_infectious", js::select_overload<epi::UncertainValue&()>(
+                                                  &Class::get_asymp_per_infectious))
+        .function("get_risk_from_symptomatic", js::select_overload<epi::UncertainValue&()>(
+                                                   &Class::get_risk_from_symptomatic))
+        .function("get_hospitalized_per_infectious",
+                  js::select_overload<epi::UncertainValue&()>(
+                      &Class::get_hospitalized_per_infectious))
+        .function("get_icu_per_hospitalized", js::select_overload<epi::UncertainValue&()>(
+                                                  &Class::get_icu_per_hospitalized))
+        .function("get_dead_per_icu",
+                  js::select_overload<epi::UncertainValue&()>(&Class::get_dead_per_icu));
+}
+
+template <int N>
+void bind_SecirParams(std::string const& name)
+{
+    using Class = typename epi::SecirParams<N>;
+    js::class_<Class>(name.c_str())
+        .template constructor<epi::ContactFrequencyMatrix&>()
+        .property("times", &Class::times)
+        .property("probabilities", &Class::probabilities)
+        .function("set_icu_capacity", js::select_overload<void(double)>(&Class::set_icu_capacity))
+        .function("get_icu_capacity", js::select_overload<epi::UncertainValue&()>(&Class::get_icu_capacity))
+        .function("set_start_day", &Class::set_start_day)
+        .function("get_start_day", &Class::get_start_day)
+        .function("set_seasonality", js::select_overload<void(double)>(&Class::set_seasonality))
+        .function("get_seasonality", js::select_overload<epi::UncertainValue&()>(&Class::get_seasonality))
+        .function("get_contact_patterns",
+                  js::select_overload<epi::UncertainContactMatrix&()>(&Class::get_contact_patterns))
+        .function("set_contact_patterns", &Class::set_contact_patterns);
+
+}
+
+template<class Populations, class Parameters>
+void bind_CompartmentalModel(std::string const& name)
+{
+    using Class = epi::CompartmentalModel<Populations, Parameters>;
+    js::class_<Class>(name.c_str())
+        .template constructor<>()
+        .function("apply_constraints", &Class::apply_constraints)
+        .function("check_constraints", &Class::check_constraints)
+        .function("get_initial_values", &Class::get_initial_values)
+        .property("populations", &Class::populations)
+        .property("parameters", &Class::parameters);
+}
+
+template <class AgeGroup>
+auto bind_secir_ageres()
+{
+    size_t constexpr N = (size_t)AgeGroup::Count;
+
+    bind_Populations<AgeGroup, epi::InfectionType>("Populations" + std::to_string(N));
+    bind_SecirParams<N>("SecirParams" + std::to_string(N));
+
+    //TODO: Currently, StageTimes and Probabilies are subclasses of the class template SecirParams.
+    // If this were not the case, we would not really need a StageTimes class per
+    // number of AgeGroups, but since we are planning to remove the SecirParams class
+    // this is a valid workaround for now.
+    bind_StageTimes<N>("StageTimes" + std::to_string(N));
+    bind_Probabilities<N>("Probabilities" + std::to_string(N));
+
+    using Populations = epi::Populations<AgeGroup, epi::InfectionType>;
+    bind_CompartmentalModel<Populations, epi::SecirParams<N>>("SecirModel" + std::to_string(N));
+
+    using Model = epi::CompartmentalModel<Populations, epi::SecirParams<N>>;
+    js::function("simulate", &simulate_secir<Model>);
+
+    js::register_vector<Model>(("VectorSecirModel" + std::to_string(N)).c_str());
+    js::register_vector<typename epi::SecirParams<N>>(("VectorSecirParams" + std::to_string(N)).c_str());
+    js::register_vector<typename epi::SecirParams<N>::Probabilities>(("VectorSecirParamsProbabilities" + std::to_string(N)).c_str());
+    js::register_vector<typename epi::SecirParams<N>::StageTimes>(("VectorSecirParamsStageTimes" + std::to_string(N)).c_str());
+}
+
 
 EMSCRIPTEN_BINDINGS(secirjs)
 {
@@ -87,94 +316,6 @@ EMSCRIPTEN_BINDINGS(secirjs)
         .property("nb_rec", &SecirResult::nb_rec)
         .property("nb_dead", &SecirResult::nb_dead);
 
-    js::class_<epi::SecirParams::StageTimes>("StageTimes")
-        .constructor<>()
-        .function("set_incubation", js::select_overload<void(double)>(&epi::SecirParams::StageTimes::set_incubation))
-        .function("set_infectious_mild",
-                  js::select_overload<void(double)>(&epi::SecirParams::StageTimes::set_infectious_mild))
-        .function("set_serialinterval",
-                  js::select_overload<void(double)>(&epi::SecirParams::StageTimes::set_serialinterval))
-        .function("set_hospitalized_to_home",
-                  js::select_overload<void(double)>(&epi::SecirParams::StageTimes::set_hospitalized_to_home))
-        .function("set_home_to_hospitalized",
-                  js::select_overload<void(double)>(&epi::SecirParams::StageTimes::set_home_to_hospitalized))
-        .function("set_hospitalized_to_icu",
-                  js::select_overload<void(double)>(&epi::SecirParams::StageTimes::set_hospitalized_to_icu))
-        .function("set_icu_to_home", js::select_overload<void(double)>(&epi::SecirParams::StageTimes::set_icu_to_home))
-        .function("set_infectious_asymp",
-                  js::select_overload<void(double)>(&epi::SecirParams::StageTimes::set_infectious_asymp))
-        .function("set_icu_to_death",
-                  js::select_overload<void(double)>(&epi::SecirParams::StageTimes::set_icu_to_death))
-
-        // at the moment, no const getters available in JS
-        .function("get_incubation",
-                  js::select_overload<epi::UncertainValue&()>(&epi::SecirParams::StageTimes::get_incubation))
-        .function("get_infectious_mild",
-                  js::select_overload<epi::UncertainValue&()>(&epi::SecirParams::StageTimes::get_infectious_mild))
-        .function("get_serialinterval",
-                  js::select_overload<epi::UncertainValue&()>(&epi::SecirParams::StageTimes::get_serialinterval))
-        .function("get_hospitalized_to_home",
-                  js::select_overload<epi::UncertainValue&()>(&epi::SecirParams::StageTimes::get_hospitalized_to_home))
-        .function("get_home_to_hospitalized",
-                  js::select_overload<epi::UncertainValue&()>(&epi::SecirParams::StageTimes::get_home_to_hospitalized))
-        .function("get_hospitalized_to_icu",
-                  js::select_overload<epi::UncertainValue&()>(&epi::SecirParams::StageTimes::get_hospitalized_to_icu))
-        .function("get_icu_to_home",
-                  js::select_overload<epi::UncertainValue&()>(&epi::SecirParams::StageTimes::get_icu_to_home))
-        .function("get_infectious_asymp",
-                  js::select_overload<epi::UncertainValue&()>(&epi::SecirParams::StageTimes::get_infectious_asymp))
-        .function("get_icu_to_dead",
-                  js::select_overload<epi::UncertainValue&()>(&epi::SecirParams::StageTimes::get_icu_to_dead));
-
-    js::class_<epi::Populations>("Populations")
-        .constructor<std::vector<size_t>&>()
-        .function("get_num_compartments", &epi::Populations::get_num_compartments)
-        .function("get_category_sizes", &epi::Populations::get_category_sizes)
-        .function("get_compartments", &epi::Populations::get_compartments)
-        .function("get", js::select_overload<epi::UncertainValue&(std::vector<size_t> const&)>(&epi::Populations::get))
-        .function("get_group_total", &epi::Populations::get_group_total)
-        .function("get_total", &epi::Populations::get_total)
-        .function("set", js::select_overload<void(std::vector<size_t> const&, double)>(&epi::Populations::set))
-        // .function("set", js::select_overload<void(std::vector<size_t> const&, &epi::ParameterDistribution)>(&epi::Populations::set))
-        .function("set_group_total", &epi::Populations::set_group_total)
-        .function("set_difference_from_total", &epi::Populations::set_difference_from_total)
-        .function("set_difference_from_group_total", &epi::Populations::set_difference_from_group_total)
-        .function("set_total", &epi::Populations::set_total)
-        .function("get_flat_index", &epi::Populations::get_flat_index);
-
-    js::class_<epi::SecirParams::Probabilities>("Probabilities")
-        .constructor<>()
-        .function("set_infection_from_contact",
-                  js::select_overload<void(double)>(&epi::SecirParams::Probabilities::set_infection_from_contact))
-        .function("set_carrier_infectability",
-                  js::select_overload<void(double)>(&epi::SecirParams::Probabilities::set_carrier_infectability))
-        .function("set_asymp_per_infectious",
-                  js::select_overload<void(double)>(&epi::SecirParams::Probabilities::set_asymp_per_infectious))
-        .function("set_risk_from_symptomatic",
-                  js::select_overload<void(double)>(&epi::SecirParams::Probabilities::set_risk_from_symptomatic))
-        .function("set_hospitalized_per_infectious",
-                  js::select_overload<void(double)>(&epi::SecirParams::Probabilities::set_hospitalized_per_infectious))
-        .function("set_icu_per_hospitalized",
-                  js::select_overload<void(double)>(&epi::SecirParams::Probabilities::set_icu_per_hospitalized))
-        .function("set_dead_per_icu",
-                  js::select_overload<void(double)>(&epi::SecirParams::Probabilities::set_dead_per_icu))
-
-        // at the moment, no const getters available in JS
-        .function("get_infection_from_contact", js::select_overload<epi::UncertainValue&()>(
-                                                    &epi::SecirParams::Probabilities::get_infection_from_contact))
-        .function("get_carrier_infectability", js::select_overload<epi::UncertainValue&()>(
-                                                   &epi::SecirParams::Probabilities::get_carrier_infectability))
-        .function("get_asymp_per_infectious", js::select_overload<epi::UncertainValue&()>(
-                                                  &epi::SecirParams::Probabilities::get_asymp_per_infectious))
-        .function("get_risk_from_symptomatic", js::select_overload<epi::UncertainValue&()>(
-                                                   &epi::SecirParams::Probabilities::get_risk_from_symptomatic))
-        .function("get_hospitalized_per_infectious",
-                  js::select_overload<epi::UncertainValue&()>(
-                      &epi::SecirParams::Probabilities::get_hospitalized_per_infectious))
-        .function("get_icu_per_hospitalized", js::select_overload<epi::UncertainValue&()>(
-                                                  &epi::SecirParams::Probabilities::get_icu_per_hospitalized))
-        .function("get_dead_per_icu",
-                  js::select_overload<epi::UncertainValue&()>(&epi::SecirParams::Probabilities::get_dead_per_icu));
 
     js::class_<epi::ContactFrequencyMatrix>("ContactFrequencyMatrix")
         .constructor<>()
@@ -189,39 +330,24 @@ EMSCRIPTEN_BINDINGS(secirjs)
         .function("get_cont_freq_mat",
                   js::select_overload<epi::ContactFrequencyMatrix&()>(&epi::UncertainContactMatrix::get_cont_freq_mat));
 
-    js::class_<epi::SecirParams>("SecirParams")
-        .constructor<epi::ContactFrequencyMatrix&>()
-        .property("times", &epi::SecirParams::times)
-        .property("populations", &epi::SecirParams::populations)
-        .property("probabilities", &epi::SecirParams::probabilities)
-        .function("set_icu_capacity", js::select_overload<void(double)>(&epi::SecirParams::set_icu_capacity))
-        .function("get_icu_capacity", js::select_overload<epi::UncertainValue&()>(&epi::SecirParams::get_icu_capacity))
-        .function("set_start_day", &epi::SecirParams::set_start_day)
-        .function("get_start_day", &epi::SecirParams::get_start_day)
-        .function("set_seasonality", js::select_overload<void(double)>(&epi::SecirParams::set_seasonality))
-        .function("get_seasonality", js::select_overload<epi::UncertainValue&()>(&epi::SecirParams::get_seasonality))
-        .function("get_contact_patterns",
-                  js::select_overload<epi::UncertainContactMatrix&()>(&epi::SecirParams::get_contact_patterns))
-        .function("set_contact_patterns", &epi::SecirParams::set_contact_patterns);
+    js::enum_<epi::InfectionType>("InfectionType")
+        .value("E", epi::InfectionType::E)
+        .value("S", epi::InfectionType::S)
+        .value("C", epi::InfectionType::C)
+        .value("I", epi::InfectionType::I)
+        .value("H", epi::InfectionType::H)
+        .value("U", epi::InfectionType::U)
+        .value("R", epi::InfectionType::R)
+        .value("D", epi::InfectionType::D)
+        .value("Count", epi::InfectionType::Count);
 
-    js::function("simulate", &simulate_secir);
-
-    js::enum_<epi::SecirCompartments>("SecirCompartments")
-        .value("E", epi::SecirCompartments::E)
-        .value("S", epi::SecirCompartments::S)
-        .value("C", epi::SecirCompartments::C)
-        .value("I", epi::SecirCompartments::I)
-        .value("H", epi::SecirCompartments::H)
-        .value("U", epi::SecirCompartments::U)
-        .value("R", epi::SecirCompartments::R)
-        .value("D", epi::SecirCompartments::D)
-        .value("SecirCount", epi::SecirCompartments::SecirCount);
+    bind_secir_ageres<epi::AgeGroup1>();
+    bind_secir_ageres<epi::AgeGroup2>();
+    bind_secir_ageres<epi::AgeGroup3>();
 
     js::register_vector<double>("VectorDouble");
     js::register_vector<size_t>("VectorSizeT");
-    js::register_vector<epi::SecirParams>("VectorSecirParams");
-    js::register_vector<epi::SecirParams::Probabilities>("VectorSecirParamsProbabilities");
-    js::register_vector<epi::SecirParams::StageTimes>("VectorSecirParamsStageTimes");
+
 
 #ifdef DEBUG
     /**
