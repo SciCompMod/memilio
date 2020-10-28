@@ -35,7 +35,7 @@ int count_lines(const std::string& filename)
         file.close();
     }
     else {
-        epi::log_error("File could not be opened.");
+        assert(false && "File could not be opened.");
     }
     return count;
 }

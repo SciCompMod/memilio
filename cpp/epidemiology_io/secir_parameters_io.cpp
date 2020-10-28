@@ -491,7 +491,7 @@ void write_parameter_study(TixiDocumentHandle handle, const std::string& path, c
 void write_single_run_params(const int run, epi::Graph<epi::ModelNode<epi::SecirSimulation>, epi::MigrationEdge> graph,
                              double t0, double tmax)
 {
-
+    assert(graph.nodes().size() > 0 && "Graph Nodes are empty");
     boost::filesystem::path dir("results");
 
     bool created = boost::filesystem::create_directory(dir);
@@ -516,20 +516,20 @@ void write_single_run_params(const int run, epi::Graph<epi::ModelNode<epi::Secir
 
         write_parameter_study(handle, path, study);
 
-        tixiSaveDocument(handle,
-                         (dir / ("Parameters_run" + std::to_string(run) + "_node" + std::to_string(node_id) + ".xml"))
-                             .string()
-                             .c_str());
+        tixiSaveDocument(handle, path_join(dir.string(), ("Parameters_run" + std::to_string(run) + "_node" +
+                                                          std::to_string(node_id) + ".xml"))
+                                     .c_str());
         tixiCloseDocument(handle);
 
-        save_result(node.get_result(),
-                    (dir / ("Results_run" + std::to_string(run) + "_node" + std::to_string(node_id) + ".h5")).string());
+        save_result(node.get_result(), path_join(dir.string(), ("Results_run" + std::to_string(run) + "_node" +
+                                                                std::to_string(node_id) + ".h5")));
         node_id++;
     }
 }
 
 void write_node(TixiDocumentHandle handle, const Graph<SecirParams, MigrationEdge>& graph, int node)
 {
+    assert(graph.nodes().size() > 0 && "Graph Nodes are empty");
     int num_runs = 1;
     int io_mode  = 2;
 
@@ -551,7 +551,7 @@ void read_node(TixiDocumentHandle node_handle, Graph<SecirParams, MigrationEdge>
 void write_edge(const std::vector<TixiDocumentHandle>& edge_handles, const std::string& path,
                 const Graph<SecirParams, MigrationEdge>& graph, int edge)
 {
-
+    assert(graph.nodes().size() > 0 && "Graph Nodes are empty");
     int num_groups  = static_cast<int>(graph.nodes()[0].get_num_groups());
     int num_compart = static_cast<int>(graph.nodes()[0].populations.get_num_compartments()) / num_groups;
 
@@ -652,7 +652,7 @@ void write_graph(const Graph<SecirParams, MigrationEdge>& graph, const std::stri
         TixiDocumentHandle node_handle;
         tixiCreateDocument("Parameters", &node_handle);
         write_node(node_handle, graph, node);
-        tixiSaveDocument(node_handle, (dir / ("GraphNode" + std::to_string(node) + ".xml")).string().c_str());
+        tixiSaveDocument(node_handle, path_join(dir.string(), ("GraphNode" + std::to_string(node) + ".xml")).c_str());
         tixiCloseDocument(node_handle);
     }
 }
@@ -664,7 +664,7 @@ Graph<SecirParams, MigrationEdge> read_graph(const std::string& dir_string)
 
     ReturnCode status;
     TixiDocumentHandle handle;
-    tixiOpenDocument((dir / "GraphEdges_node0.xml").string().c_str(), &handle);
+    tixiOpenDocument(path_join(dir.string(), "GraphEdges_node0.xml").c_str(), &handle);
 
     std::string edges_path = "/Edges";
 
