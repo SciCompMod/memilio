@@ -50,17 +50,10 @@ void bind_populations_members_for_all_cats(py::class_<C>&){}
 template <class C, class T, class... Ts>
 void bind_populations_members_for_all_cats(py::class_<C>& c)
 {
-    std::ostringstream o1;
-    o1 << "set_difference_from_group_total" << pretty_name<T>();
-    c.def(o1.str().c_str(), &C::template set_difference_from_group_total<T>);
-
-    std::ostringstream o2;
-    o2 << "set_group_total" << pretty_name<T>();
-    c.def(o2.str().c_str(), &C::template set_group_total<T>);
-
-    std::ostringstream o3;
-    o3 << "get_group_total" << pretty_name<T>();
-    c.def(o3.str().c_str(), &C::template get_group_total<T>);
+    std::string tname = pretty_name<T>();
+    c.def(("set_difference_from_group_total_" + tname).c_str(), &C::template set_difference_from_group_total<T>)
+     .def(("set_group_total_" + tname).c_str(), &C::template set_group_total<T>)
+     .def(("get_group_total_" + tname).c_str(), &C::template get_group_total<T>);
 
     // recursively bind the member for each type
     bind_populations_members_for_all_cats<C, Ts...>(c);
@@ -304,6 +297,14 @@ void bind_CompartmentalModel(py::module& m, std::string const& name)
                 [](Model& self, Parameters& p) { self.parameters = p; });
 }
 
+template<class AgeGroup>
+void bind_SecirModel(py::module& m, std::string const& name)
+{
+    py::class_<epi::SecirModel<AgeGroup>>(m, name.c_str())
+            .def(py::init<>());
+}
+
+
 /*
  * @brief bind Simulation for any number model
  */
@@ -451,9 +452,10 @@ void bind_secir_ageres(py::module& m)
 
     using Populations = epi::Populations<AgeGroup, epi::InfectionType>;
     using SecirParams = epi::SecirParams<N>;
-    bind_CompartmentalModel<Populations, SecirParams>(m, "SecirModel" + std::to_string(N));
+    bind_CompartmentalModel<Populations, SecirParams>(m, "SecirModelBase" + std::to_string(N));  //<- no flows
+    bind_SecirModel<AgeGroup>(m, "SecirModel" + std::to_string(N));  //<-- flows defined in derived constructor at rt
 
-    using SecirModel = epi::CompartmentalModel<Populations, SecirParams>;
+    using SecirModel = epi::SecirModel<AgeGroup>;
     bind_Simulation<SecirModel>(m, "Simulation" + std::to_string(N));
 
     m.def("simulate", py::overload_cast<double, double, double, const SecirModel&>(&epi::simulate<SecirModel>),

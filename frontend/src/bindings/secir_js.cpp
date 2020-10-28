@@ -87,17 +87,10 @@ void bind_populations_members_for_all_cats(js::class_<C>&){}
 template <class C, class T, class... Ts>
 void bind_populations_members_for_all_cats(js::class_<C>& c)
 {
-    std::ostringstream o1;
-    o1 << "set_difference_from_group_total" << pretty_name<T>();
-    c.function(o1.str().c_str(), &C::template set_difference_from_group_total<T>);
-
-    std::ostringstream o2;
-    o2 << "set_group_total" << pretty_name<T>();
-    c.function(o2.str().c_str(), &C::template set_group_total<T>);
-
-    std::ostringstream o3;
-    o3 << "get_group_total" << pretty_name<T>();
-    c.function(o3.str().c_str(), &C::template get_group_total<T>);
+    std::string tname = pretty_name<T>();
+    c.function(("set_difference_from_group_total_" + tname).c_str(), &C::template set_difference_from_group_total<T>)
+     .function(("set_group_total_" + tname).c_str(), &C::template set_group_total<T>)
+     .function(("get_group_total_" + tname).c_str(), &C::template get_group_total<T>);
 
     // recursively bind the member for each type
     bind_populations_members_for_all_cats<C, Ts...>(c);
@@ -241,6 +234,13 @@ void bind_CompartmentalModel(std::string const& name)
         .property("parameters", &Class::parameters);
 }
 
+template<class AgeGroup>
+void bind_SecirModel(std::string const& name)
+{
+    js::class_<epi::SecirModel<AgeGroup>>(name.c_str())
+            .template constructor<>();
+}
+
 template <class AgeGroup>
 auto bind_secir_ageres()
 {
@@ -257,12 +257,13 @@ auto bind_secir_ageres()
     bind_Probabilities<N>("Probabilities" + std::to_string(N));
 
     using Populations = epi::Populations<AgeGroup, epi::InfectionType>;
-    bind_CompartmentalModel<Populations, epi::SecirParams<N>>("SecirModel" + std::to_string(N));
+    bind_CompartmentalModel<Populations, epi::SecirParams<N>>("SecirModelBase" + std::to_string(N));  //<- no flows
+    bind_SecirModel<AgeGroup>("SecirModel" + std::to_string(N));  //<-- flows defined in derived constructor at rt
 
-    using Model = epi::CompartmentalModel<Populations, epi::SecirParams<N>>;
-    js::function("simulate", &simulate_secir<Model>);
+    using SecirModel = epi::SecirModel<AgeGroup>;
+    js::function("simulate", &simulate_secir<SecirModel>);
 
-    js::register_vector<Model>(("VectorSecirModel" + std::to_string(N)).c_str());
+    js::register_vector<SecirModel>(("VectorSecirModel" + std::to_string(N)).c_str());
     js::register_vector<typename epi::SecirParams<N>>(("VectorSecirParams" + std::to_string(N)).c_str());
     js::register_vector<typename epi::SecirParams<N>::Probabilities>(("VectorSecirParamsProbabilities" + std::to_string(N)).c_str());
     js::register_vector<typename epi::SecirParams<N>::StageTimes>(("VectorSecirParamsStageTimes" + std::to_string(N)).c_str());
