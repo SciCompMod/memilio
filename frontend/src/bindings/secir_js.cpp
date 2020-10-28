@@ -82,48 +82,25 @@ template <> std::string pretty_name<epi::AgeGroup3>(){ return "AgeGroup"; }
 template <> std::string pretty_name<epi::InfectionType>(){ return "InfectionType"; }
 
 template <class C>
-void bind_populations_get_group_total_for_all_cats(js::class_<C>&, std::string const&){}
+void bind_populations_members_for_all_cats(js::class_<C>&){}
 
 template <class C, class T, class... Ts>
-void bind_populations_get_group_total_for_all_cats(js::class_<C>& c, std::string const& basename)
+void bind_populations_members_for_all_cats(js::class_<C>& c)
 {
-    // name of method is basename + typename
-    std::ostringstream o;
-    o << basename << pretty_name<T>();
+    std::ostringstream o1;
+    o1 << "set_difference_from_group_total" << pretty_name<T>();
+    c.function(o1.str().c_str(), &C::template set_difference_from_group_total<T>);
+
+    std::ostringstream o2;
+    o2 << "set_group_total" << pretty_name<T>();
+    c.function(o2.str().c_str(), &C::template set_group_total<T>);
+
+    std::ostringstream o3;
+    o3 << "get_group_total" << pretty_name<T>();
+    c.function(o3.str().c_str(), &C::template get_group_total<T>);
 
     // recursively bind the member for each type
-    c.function(o.str().c_str(), &C::template get_group_total<T>);
-    bind_populations_get_group_total_for_all_cats<C, Ts...>(c, basename);
-}
-
-template <class C>
-void bind_populations_set_group_total_for_all_cats(js::class_<C>&, std::string const&){}
-
-template <class C, class T, class... Ts>
-void bind_populations_set_group_total_for_all_cats(js::class_<C>& c, std::string const& basename)
-{
-    // name of method is basename + typename
-    std::ostringstream o;
-    o << basename << pretty_name<T>();
-
-    // recursively bind the member for each type
-    c.function(o.str().c_str(), &C::template set_group_total<T>);
-    bind_populations_set_group_total_for_all_cats<C, Ts...>(c, basename);
-}
-
-template <class C>
-void bind_populations_set_difference_from_group_total_for_all_cats(js::class_<C>&, std::string const&){}
-
-template <class C, class T, class... Ts>
-void bind_populations_set_difference_from_group_total_for_all_cats(js::class_<C>& c, std::string const& basename)
-{
-    // name of method is basename + typename
-    std::ostringstream o;
-    o << basename << pretty_name<T>();
-
-    // recursively bind the member for each type
-    c.function(o.str().c_str(), &C::template set_difference_from_group_total<T>);
-    bind_populations_set_difference_from_group_total_for_all_cats<C, Ts...>(c, basename);
+    bind_populations_members_for_all_cats<C, Ts...>(c);
 }
 
 /*
@@ -144,9 +121,8 @@ void bind_Populations(std::string const& name)
         .function("set_total", &Class::set_total)
         .function("get_flat_index", &Class::get_flat_index);
 
-        bind_populations_get_group_total_for_all_cats<Class, Cats...>(c, "get_group_total");
-        bind_populations_set_group_total_for_all_cats<Class, Cats...>(c, "set_group_total");
-        bind_populations_set_difference_from_group_total_for_all_cats<Class, Cats...>(c, "set_difference_from_group_total");
+        //get_group_total, set_group_total and set_difference_from_group_total
+        bind_populations_members_for_all_cats<Class, Cats...>(c);
 }
 
 template<int N>
