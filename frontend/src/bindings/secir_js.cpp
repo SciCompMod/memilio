@@ -79,6 +79,7 @@ std::string pretty_name()
 template <> std::string pretty_name<epi::AgeGroup1>(){ return "AgeGroup"; }
 template <> std::string pretty_name<epi::AgeGroup2>(){ return "AgeGroup"; }
 template <> std::string pretty_name<epi::AgeGroup3>(){ return "AgeGroup"; }
+template <> std::string pretty_name<epi::AgeGroup8>(){ return "AgeGroup"; }
 template <> std::string pretty_name<epi::InfectionType>(){ return "InfectionType"; }
 
 template <class C>

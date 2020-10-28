@@ -27,21 +27,22 @@ enum class InfectionType
 
 enum class AgeGroup2
 {
+    Group0,
     Group1,
-    Group2,
     Count = 2
 };
 
 enum class AgeGroup3
 {
+    Group0,
     Group1,
     Group2,
-    Group3,
     Count = 3
 };
 
 enum class AgeGroup8
 {
+    Group0,
     Group1,
     Group2,
     Group3,
@@ -49,7 +50,6 @@ enum class AgeGroup8
     Group5,
     Group6,
     Group7,
-    Group8,
     Count = 8
 };
 
@@ -57,7 +57,7 @@ enum class AgeGroup8
 // more abstract compile time map, this is not needed anymore
 enum class AgeGroup1
 {
-    All,
+    Group0,
     Count = 1
 };
 
