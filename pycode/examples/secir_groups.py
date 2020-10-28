@@ -1,4 +1,5 @@
-from epidemiology.secir import UncertainContactMatrix, ContactFrequencyMatrix, Damping, SecirParams, simulate, StageTimes, Probabilities, Populations, SecirCompartments
+from epidemiology.secir import (UncertainContactMatrix, ContactFrequencyMatrix, Damping, SecirModel8, simulate,
+                                AgeGroup8, InfectionType)
 from matplotlib import pyplot as plt
 import pandas as pd
 import numpy as np
@@ -34,28 +35,14 @@ def plot_secir():
     contact_polymod = 0.5*(contact_polymod + contact_polymod.T)
     
     num_groups = contact_polymod.shape[-1]
-    num_compartments = int(SecirCompartments.SecirCount)
+    assert num_groups == 8
+    num_compartments = int(InfectionType.Count)
 
     create_dampings(path='../../data/contact_data/', days=days)
     dampings = pd.read_csv('../../data/contact_data/dampings.csv', index_col=0, header=[0, 1]).values
     dampings = np.swapaxes(dampings.reshape(num_groups,days,num_groups),1,2)
     for i in range(days):
         dampings[:,:,i] = 0.5*(dampings[:,:,i] + dampings[:,:,i].T)
-
-
-    
-
-
-    times = StageTimes()
-    times.set_incubation(5.2)  # R_2^(-1)+R_3^(-1)
-    times.set_infectious_mild(6.)  # 4-14  (=R4^(-1))
-    times.set_serialinterval(4.2)   # 4-4.4 // R_2^(-1)+0.5*R_3^(-1)
-    times.set_hospitalized_to_home(12.)  # 7-16 (=R5^(-1))
-    times.set_home_to_hospitalized(5.)  # 2.5-7 (=R6^(-1))
-    times.set_hospitalized_to_icu(2.)  # 1-3.5 (=R7^(-1))
-    times.set_icu_to_home(8.)  # 5-16 (=R8^(-1))
-    times.set_infectious_asymp(6.2)  # (=R9^(-1)=R_3^(-1)+0.5*R_4^(-1))
-    times.set_icu_to_death(5.)  # 3.5-7 (=R5^(-1))
 
     sus_ORs=np.array([0.34, 0.67, 1.00, 1.00, 1.00, 1.00, 1.24, 1.47]) # Odds ratios for relative susceptibility -- from https://science.sciencemag.org/content/early/2020/05/04/science.abb8001; 10-20 and 60-70 bins are the average across the ORs
     symp_probs=np.array([0.50, 0.55, 0.60, 0.65, 0.70, 0.75, 0.80, (0.85 + 0.90)/2])  # Overall probability of developing symptoms (based on https://www.medrxiv.org/content/10.1101/2020.03.24.20043018v1.full.pdf, scaled for overall symptomaticity)
@@ -77,35 +64,44 @@ def plot_secir():
     probs.set_dead_per_icu(0.3)  # 0.15-0.77'''
 
     # set the params required for the simulation
-    params = SecirParams(num_groups)
+    model = SecirModel8()
     for i in range(num_groups):
-        params.times[i] = times
-        params.probabilities[i].set_infection_from_contact(sus_ORs[i])
-        params.probabilities[i].set_carrier_infectability(0.67)
-        params.probabilities[i].set_asymp_per_infectious(1-symp_probs[i])
-        params.probabilities[i].set_risk_from_symptomatic(0.25)
-        params.probabilities[i].set_hospitalized_per_infectious(severe_probs[i])
-        params.probabilities[i].set_icu_per_hospitalized(crit_probs[i]/severe_probs[i])
-        params.probabilities[i].set_dead_per_icu(death_probs[i]/(crit_probs[i]/severe_probs[i]))
+        model.parameters.times[i].set_incubation(5.2)  # R_2^(-1)+R_3^(-1)
+        model.parameters.times[i].set_infectious_mild(6.)  # 4-14  (=R4^(-1))
+        model.parameters.times[i].set_serialinterval(4.2)  # 4-4.4 // R_2^(-1)+0.5*R_3^(-1)
+        model.parameters.times[i].set_hospitalized_to_home(12.)  # 7-16 (=R5^(-1))
+        model.parameters.times[i].set_home_to_hospitalized(5.)  # 2.5-7 (=R6^(-1))
+        model.parameters.times[i].set_hospitalized_to_icu(2.)  # 1-3.5 (=R7^(-1))
+        model.parameters.times[i].set_icu_to_home(8.)  # 5-16 (=R8^(-1))
+        model.parameters.times[i].set_infectious_asymp(6.2)  # (=R9^(-1)=R_3^(-1)+0.5*R_4^(-1))
+        model.parameters.times[i].set_icu_to_death(5.)  # 3.5-7 (=R5^(-1))
 
-        params.populations.set([i, SecirCompartments.E], 100*num_pop[i]/sum(num_pop))
-        params.populations.set([i, SecirCompartments.C],  50*num_pop[i]/sum(num_pop))
-        params.populations.set([i, SecirCompartments.I],  50*num_pop[i]/sum(num_pop))
-        params.populations.set([i, SecirCompartments.H],  10*num_pop[i]/sum(num_pop))
-        params.populations.set([i, SecirCompartments.U],  10*num_pop[i]/sum(num_pop))
-        params.populations.set([i, SecirCompartments.R],  10*num_pop[i]/sum(num_pop))
-        params.populations.set([i, SecirCompartments.D],   0*num_pop[i]/sum(num_pop))
+        model.parameters.probabilities[i].set_infection_from_contact(sus_ORs[i])
+        model.parameters.probabilities[i].set_carrier_infectability(0.67)
+        model.parameters.probabilities[i].set_asymp_per_infectious(1-symp_probs[i])
+        model.parameters.probabilities[i].set_risk_from_symptomatic(0.25)
+        model.parameters.probabilities[i].set_hospitalized_per_infectious(severe_probs[i])
+        model.parameters.probabilities[i].set_icu_per_hospitalized(crit_probs[i]/severe_probs[i])
+        model.parameters.probabilities[i].set_dead_per_icu(death_probs[i]/(crit_probs[i]/severe_probs[i]))
 
-    params.populations.set_total(Mio)
+        model.populations.set(100*num_pop[i]/sum(num_pop), AgeGroup8(i), InfectionType.E)
+        model.populations.set( 50*num_pop[i]/sum(num_pop), AgeGroup8(i), InfectionType.C)
+        model.populations.set( 50*num_pop[i]/sum(num_pop), AgeGroup8(i), InfectionType.I)
+        model.populations.set( 10*num_pop[i]/sum(num_pop), AgeGroup8(i), InfectionType.H)
+        model.populations.set( 10*num_pop[i]/sum(num_pop), AgeGroup8(i), InfectionType.U)
+        model.populations.set( 10*num_pop[i]/sum(num_pop), AgeGroup8(i), InfectionType.R)
+        model.populations.set(  0*num_pop[i]/sum(num_pop), AgeGroup8(i), InfectionType.D)
+
+    model.populations.set_total(Mio)
     
     #  set contact rates and emulate some mitigations
     for i in range(num_groups):
         for j in range(0,num_groups):
-            params.get_contact_patterns().get_cont_freq_mat().set_cont_freq(contact_polymod[i,j]*inf_prob, i, j)
+            model.parameters.get_contact_patterns().get_cont_freq_mat().set_cont_freq(contact_polymod[i,j]*inf_prob, i, j)
             # params.get_contact_patterns().get_cont_freq_mat().set_cont_freq(0.62*num_pop[i]/sum(num_pop), i, j)
             if use_dampings:
                 for d in range(dampings.shape[2]):
-                    params.get_contact_patterns().get_cont_freq_mat().add_damping(Damping(d, dampings[i,j,d]*1.06), i, j)
+                    model.parameters.get_contact_patterns().get_cont_freq_mat().add_damping(Damping(d, dampings[i,j,d]*1.06), i, j)
                 #  params.get_contact_patterns().get_cont_freq_mat().add_damping(Damping(25., damp_work[i,j]), i, j)
                 #  params.get_contact_patterns().get_cont_freq_mat().add_damping(Damping(35., damp_home[i,j]), i, j)
                 #  params.get_contact_patterns().get_cont_freq_mat().add_damping(Damping(40., damp_school[i,j]), i, j)
@@ -120,7 +116,7 @@ def plot_secir():
                 # params.get_contact_patterns().get_cont_freq_mat().add_damping(Damping(100., 0.7), 0, 0)
 
     # run the simulation
-    result = simulate(t0=0., tmax=days, dt=0.1, params=params)
+    result = simulate(t0=0., tmax=days, dt=0.1, model=model)
 
     num_time_points = result.get_num_time_points()
     result_array = result.as_ndarray()

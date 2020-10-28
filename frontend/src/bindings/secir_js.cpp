@@ -331,6 +331,7 @@ EMSCRIPTEN_BINDINGS(secirjs)
     bind_secir_ageres<epi::AgeGroup1>();
     bind_secir_ageres<epi::AgeGroup2>();
     bind_secir_ageres<epi::AgeGroup3>();
+    bind_secir_ageres<epi::AgeGroup8>();
 
     js::register_vector<double>("VectorDouble");
     js::register_vector<size_t>("VectorSizeT");

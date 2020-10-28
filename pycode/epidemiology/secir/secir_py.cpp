@@ -693,6 +693,7 @@ PYBIND11_MODULE(_secir, m)
     bind_secir_ageres<epi::AgeGroup1>(m);
     bind_secir_ageres<epi::AgeGroup2>(m);
     bind_secir_ageres<epi::AgeGroup3>(m);
+    bind_secir_ageres<epi::AgeGroup8>(m);
 
     m.attr("__version__") = "dev";
 }

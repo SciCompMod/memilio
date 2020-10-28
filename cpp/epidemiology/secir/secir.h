@@ -40,6 +40,19 @@ enum class AgeGroup3
     Count = 3
 };
 
+enum class AgeGroup8
+{
+    Group1,
+    Group2,
+    Group3,
+    Group4,
+    Group5,
+    Group6,
+    Group7,
+    Group8,
+    Count = 8
+};
+
 //TODO: Once the secir_params have been replaced with a
 // more abstract compile time map, this is not needed anymore
 enum class AgeGroup1
