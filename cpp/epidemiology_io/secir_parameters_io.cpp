@@ -543,7 +543,6 @@ void read_node(TixiDocumentHandle node_handle, Graph<SecirParams, MigrationEdge>
 {
 
     graph.add_node(read_parameter_space(node_handle, "/Parameters", 2));
-    tixiCloseDocument(node_handle);
 }
 
 void write_edge(const std::vector<TixiDocumentHandle>& edge_handles, const std::string& path,
@@ -683,6 +682,7 @@ Graph<SecirParams, MigrationEdge> read_graph()
         TixiDocumentHandle node_handle;
         tixiOpenDocument((dir / ("GraphNode" + std::to_string(node) + ".xml")).string().c_str(), &node_handle);
         read_node(node_handle, graph);
+        tixiCloseDocument(node_handle);
     }
 
     for (int start_node = 0; start_node < num_nodes; start_node++) {
