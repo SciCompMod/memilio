@@ -166,7 +166,7 @@ void read_edge(const std::vector<TixiDocumentHandle>& edge_handles, const std::s
 /**
  * @brief creates xml files for each node of a Secir simulation graph and one xml file for its edges for each node
  * @param graph Graph which should be written
- * @param dir_string sirectory, where graph should be stored
+ * @param dir_string directory, where graph should be stored
  */
 void write_graph(const Graph<SecirParams, MigrationEdge>& graph, const std::string& dir_string);
 
