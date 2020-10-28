@@ -9,6 +9,7 @@
 
 int main()
 {
+
     epi::set_log_level(epi::LogLevel::debug);
 
     double t0   = 0;
@@ -92,6 +93,10 @@ int main()
     }
 
     params.apply_constraints();
+
+    std::string path                 = "../../data/pydata/Germany";
+    std::vector<double> param_ranges = {25., 50., 25.};
+    epi::read_population_data_state(params, param_ranges, 4, 4, 1, path);
 
     epi::TimeSeries<double> secir = simulate(t0, tmax, dt, params);
 

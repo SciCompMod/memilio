@@ -779,3 +779,112 @@ TEST(TestSaveParameters, compareGraphWithFile)
         ASSERT_THAT(graph_read.edges(), testing::ElementsAreArray(graph.edges()));
     }
 }
+
+TEST(TestSaveParameters, ReadPopulationDataAllAges)
+{
+    epi::SecirParams params(1);
+    std::vector<double> ranges = {100};
+
+    std::string path = TEST_DATA_DIR;
+    epi::read_population_data_germany(params, ranges, 5, 5, path);
+
+    ASSERT_EQ(params.populations.get({0, epi::SecirCompartments::I}), 0);
+    ASSERT_EQ(params.populations.get({0, epi::SecirCompartments::D}), 8626);
+    ASSERT_EQ(params.populations.get({0, epi::SecirCompartments::R}), 160148);
+    ASSERT_EQ(params.populations.get({0, epi::SecirCompartments::U}), 1937);
+}
+
+TEST(TestSaveParameters, ReadPopulationDataRKIAges)
+{
+    epi::SecirParams params(6);
+    std::vector<double> ranges = {5., 10., 20., 25., 20., 20.};
+
+    std::string path = TEST_DATA_DIR;
+    epi::read_population_data_germany(params, ranges, 5, 5, path);
+
+    std::vector<std::string> age_names = {"A00-A04", "A05-A14", "A15-A34", "A35-A59", "A60-A79", "A80+", "unknown"};
+
+    std::vector<double> infected  = {0, 0, 0, 0, 0, 0};
+    std::vector<double> deaths    = {1, 0, 18, 391, 2791, 5425};
+    std::vector<double> recovered = {1516, 3656, 41947, 70301, 29224, 13504};
+
+    for (size_t i = 0; i < ranges.size(); i++) {
+        ASSERT_EQ(params.populations.get({i, epi::SecirCompartments::I}), infected[i]);
+        ASSERT_EQ(params.populations.get({i, epi::SecirCompartments::D}), deaths[i]);
+        ASSERT_EQ(params.populations.get({i, epi::SecirCompartments::R}), recovered[i]);
+        ASSERT_EQ(params.populations.get({i, epi::SecirCompartments::U}), 1937 / (double)ranges.size());
+    }
+}
+
+TEST(TestSaveParameters, ReadPopulationDataMultipleAges)
+{
+    epi::SecirParams params(8);
+    std::vector<double> ranges = {5., 15., 15., 10., 10., 10., 10., 25.};
+
+    std::string path = TEST_DATA_DIR;
+    epi::read_population_data_germany(params, ranges, 5, 5, path);
+
+    double infected_param  = 0.;
+    double deaths_param    = 0.;
+    double recovered_param = 0.;
+    double icu_param       = 0.;
+
+    for (size_t i = 0; i < ranges.size(); i++) {
+        infected_param += params.populations.get({i, epi::SecirCompartments::I});
+        deaths_param += params.populations.get({i, epi::SecirCompartments::D});
+        recovered_param += params.populations.get({i, epi::SecirCompartments::R});
+        icu_param += params.populations.get({i, epi::SecirCompartments::U});
+    }
+
+    std::vector<double> infected  = {0, 0, 0, 0, 0, 0};
+    std::vector<double> deaths    = {1, 0, 18, 391, 2791, 5425};
+    std::vector<double> recovered = {1516, 3656, 41947, 70301, 29224, 13504};
+
+    ASSERT_EQ(params.populations.get({0, epi::SecirCompartments::I}), infected[0]);
+    ASSERT_EQ(params.populations.get({0, epi::SecirCompartments::D}), deaths[0]);
+    ASSERT_EQ(params.populations.get({0, epi::SecirCompartments::R}), recovered[0]);
+    ASSERT_EQ(params.populations.get({0, epi::SecirCompartments::U}), 1937 / (double)ranges.size());
+
+    ASSERT_EQ(params.populations.get({1, epi::SecirCompartments::I}), infected[1] + (1.0 / 4.0) * infected[2]);
+    ASSERT_EQ(params.populations.get({1, epi::SecirCompartments::D}), deaths[1] + (1.0 / 4.0) * deaths[2]);
+    ASSERT_EQ(params.populations.get({1, epi::SecirCompartments::R}), recovered[1] + (1.0 / 4.0) * recovered[2]);
+    ASSERT_EQ(params.populations.get({1, epi::SecirCompartments::U}), 1937 / (double)ranges.size());
+
+    ASSERT_EQ(params.populations.get({2, epi::SecirCompartments::I}), (3.0 / 4.0) * infected[2]);
+    ASSERT_EQ(params.populations.get({2, epi::SecirCompartments::D}), (3.0 / 4.0) * deaths[2]);
+    ASSERT_EQ(params.populations.get({2, epi::SecirCompartments::R}), (3.0 / 4.0) * recovered[2]);
+    ASSERT_EQ(params.populations.get({2, epi::SecirCompartments::U}), 1937 / (double)ranges.size());
+
+    ASSERT_EQ(params.populations.get({3, epi::SecirCompartments::I}), (2.0 / 5.0) * infected[3]);
+    ASSERT_EQ(params.populations.get({3, epi::SecirCompartments::D}), (2.0 / 5.0) * deaths[3]);
+    ASSERT_EQ(params.populations.get({3, epi::SecirCompartments::R}), (2.0 / 5.0) * recovered[3]);
+    ASSERT_EQ(params.populations.get({3, epi::SecirCompartments::U}), 1937 / (double)ranges.size());
+
+    ASSERT_EQ(params.populations.get({4, epi::SecirCompartments::I}), (2.0 / 5.0) * infected[3]);
+    ASSERT_EQ(params.populations.get({4, epi::SecirCompartments::D}), (2.0 / 5.0) * deaths[3]);
+    ASSERT_EQ(params.populations.get({4, epi::SecirCompartments::R}), (2.0 / 5.0) * recovered[3]);
+    ASSERT_EQ(params.populations.get({4, epi::SecirCompartments::U}), 1937 / (double)ranges.size());
+
+    ASSERT_EQ(params.populations.get({5, epi::SecirCompartments::I}),
+              (1.0 / 5.0) * infected[3] + (1.0 / 4.0) * infected[4]);
+    ASSERT_EQ(params.populations.get({5, epi::SecirCompartments::D}),
+              (1.0 / 5.0) * deaths[3] + (1.0 / 4.0) * deaths[4]);
+    ASSERT_EQ(params.populations.get({5, epi::SecirCompartments::R}),
+              (1.0 / 5.0) * recovered[3] + (1.0 / 4.0) * recovered[4]);
+    ASSERT_EQ(params.populations.get({5, epi::SecirCompartments::U}), 1937 / (double)ranges.size());
+
+    ASSERT_EQ(params.populations.get({6, epi::SecirCompartments::I}), (2.0 / 4.0) * infected[4]);
+    ASSERT_EQ(params.populations.get({6, epi::SecirCompartments::D}), (2.0 / 4.0) * deaths[4]);
+    ASSERT_EQ(params.populations.get({6, epi::SecirCompartments::R}), (2.0 / 4.0) * recovered[4]);
+    ASSERT_EQ(params.populations.get({6, epi::SecirCompartments::U}), 1937 / (double)ranges.size());
+
+    ASSERT_EQ(params.populations.get({7, epi::SecirCompartments::I}), (1.0 / 4.0) * infected[4] + infected[5]);
+    ASSERT_EQ(params.populations.get({7, epi::SecirCompartments::D}), (1.0 / 4.0) * deaths[4] + deaths[5]);
+    ASSERT_EQ(params.populations.get({7, epi::SecirCompartments::R}), (1.0 / 4.0) * recovered[4] + recovered[5]);
+    ASSERT_EQ(params.populations.get({7, epi::SecirCompartments::U}), 1937 / (double)ranges.size());
+
+    EXPECT_NEAR(0, infected_param, 1e-6);
+    EXPECT_NEAR(8626, deaths_param, 1e-6);
+    EXPECT_NEAR(160148, recovered_param, 1e-6);
+    EXPECT_NEAR(1937, icu_param, 1e-6);
+}

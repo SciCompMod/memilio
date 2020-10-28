@@ -176,6 +176,76 @@ void write_graph(const Graph<SecirParams, MigrationEdge>& graph, const std::stri
  */
 Graph<SecirParams, MigrationEdge> read_graph(const std::string& dir_string);
 
+/**
+ * @brief interpolates age_ranges to param_ranges and saves ratios in interpolation
+ * @param age_ranges original age ranges of the data
+ * @param param_ranges age ranges to which the data should be fitted
+ * @param interpolation vector of ratios that are aplied to the data of age_ranges
+ * @param carry_over boolean vector which indicates whether there is an overflow from one age group to the next while interpolating data
+ */
+void interpolate_ages(const std::vector<double>& age_ranges, const std::vector<double>& param_ranges,
+                      std::vector<std::vector<double>>& interpolation, std::vector<bool>& carry_over);
+
+/**
+ * @brief sets populations data from RKI into SecirParams
+ * @param params Object in which the data is set
+ * @param param_ranges Age ranges of params
+ * @param path Path to RKI file
+ * @param id_name Name of region key column
+ * @param region Key of the region of interest
+ * @param month Specifies month at which the data is read
+ * @param day Specifies day at which the data is read
+ */
+void set_rki_data(epi::SecirParams& params, const std::vector<double>& param_ranges, const std::string& path,
+                  const std::string& id_name, int region, int month, int day);
+
+/**
+ * @brief sets populations data from DIVI register into SecirParams
+ * @param params Object in which the data is set
+ * @param path Path to DIVI file
+ * @param id_name Name of region key column
+ * @param region Key of the region of interest
+ * @param month Specifies month at which the data is read
+ * @param day Specifies day at which the data is read
+ */
+void set_divi_data(epi::SecirParams& params, const std::string& path, const std::string& id_name, int region, int month,
+                   int day);
+
+/**
+ * @brief reads population data from population files for the whole country
+ * @param params Parameters in which the data is set
+ * @param param_ranges Vector which specifies the age ranges of params. Needs to add up to 100
+ * @param month specifies month at which the data is read
+ * @param day specifies day at which the data is read
+ * @param dir directory of files
+ */
+void read_population_data_germany(epi::SecirParams& params, const std::vector<double>& param_ranges, int month, int day,
+                                  const std::string& dir);
+
+/**
+ * @brief reads population data from population files for the specefied state
+ * @param params Parameters in which the data is set
+ * @param param_ranges Vector which specifies the age ranges of params. Needs to add up to 100
+ * @param month specifies month at which the data is read
+ * @param day specifies day at which the data is read
+ * @param state region key of state of interest
+ * @param dir directory of files
+ */
+void read_population_data_state(epi::SecirParams& params, const std::vector<double>& param_ranges, int month, int day,
+                                int state, const std::string& dir);
+
+/**
+ * @brief reads population data from population files for the specefied county
+ * @param params Parameters in which the data is set
+ * @param param_ranges Vector which specifies the age ranges of params. Needs to add up to 100
+ * @param month specifies month at which the data is read
+ * @param day specifies day at which the data is read
+ * @param county region key of county of interest
+ * @param dir directory of files
+ */
+void read_population_data_county(epi::SecirParams& params, const std::vector<double>& param_ranges, int month, int day,
+                                 int county, const std::string& dir);
+
 } // namespace epi
 
 #endif
