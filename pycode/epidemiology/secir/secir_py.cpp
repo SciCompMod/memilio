@@ -300,7 +300,10 @@ void bind_CompartmentalModel(py::module& m, std::string const& name)
 template<class AgeGroup>
 void bind_SecirModel(py::module& m, std::string const& name)
 {
-    py::class_<epi::SecirModel<AgeGroup>>(m, name.c_str())
+    using Pa = epi::SecirParams<(size_t)AgeGroup::Count>;
+    using Po = epi::Populations<AgeGroup, epi::InfectionType>;
+    using Model = epi::CompartmentalModel<Po, Pa>;
+    py::class_<epi::SecirModel<AgeGroup>, Model>(m, name.c_str())
             .def(py::init<>());
 }
 
@@ -322,46 +325,83 @@ void bind_Simulation(py::module& m, std::string const& name)
 /*
  * @brief bind Graph for any node and edge type
  */
-template<class Node, class Edge>
-void bind_Graph(py::module& m, std::string const& name)
+template<class Model>
+void bind_SecirModelGraph(py::module& m, std::string const& name)
 {
-    using G = epi::Graph<Node, Edge>;
+    using G = epi::Graph<Model, epi::MigrationEdge>;
     py::class_<G>(m, name.c_str())
-        .def(py::init<>())
-        .def("add_node", &G::template add_node<const Node&>,
-             py::return_value_policy::reference_internal)
-//        .def(
-//            "add_node", [](MigrationGraph & self, const epi::SecirParams& p, double t0, double dt) -> auto& {
-//                return self.add_node(p, t0, dt).model;
-//            },
-//            py::arg("params"), py::arg("t0") = 0.0, py::arg("dt") = 0.1, py::return_value_policy::reference_internal)
-        .def("add_edge", &G::template add_edge<const Edge&>,
-             py::return_value_policy::reference_internal)
-        .def("add_edge", &G::template add_edge<const Eigen::VectorXd&>,
-             py::return_value_policy::reference_internal)
-        .def_property_readonly("num_nodes",
-                               [](const G& self) {
-                                   return self.nodes().size();
-                               })
-        .def(
-            "get_node", [](const G& self, size_t node_idx) -> auto& { return self.nodes()[node_idx]; },
-            py::return_value_policy::reference_internal)
-        .def_property_readonly("num_edges",
-                               [](const G& self) {
-                                   return self.edges().size();
-                               })
-        .def(
-            "get_edge", [](const G& self, size_t edge_idx) -> auto& { return self.edges()[edge_idx]; },
-            py::return_value_policy::reference_internal)
-        .def("get_num_out_edges",
-             [](const G& self, size_t node_idx) {
-                 return self.out_edges(node_idx).size();
-             })
-        .def(
-            "get_out_edge", [](const G& self, size_t node_idx, size_t edge_idx) -> auto& {
-                return self.out_edges(node_idx)[edge_idx];
-            },
-            py::return_value_policy::reference_internal);
+            .def(py::init<>())
+            .def("add_node", &G::template add_node<const Model&>,
+                 py::return_value_policy::reference_internal)
+            .def("add_edge", &G::template add_edge<const epi::MigrationEdge&>,
+                 py::return_value_policy::reference_internal)
+            .def("add_edge", &G::template add_edge<const Eigen::VectorXd&>,
+                 py::return_value_policy::reference_internal)
+            .def_property_readonly("num_nodes",
+                                   [](const G& self) {
+                                       return self.nodes().size();
+                                   })
+            .def(
+                "get_node", [](const G& self, size_t node_idx) -> auto& { return self.nodes()[node_idx]; },
+                py::return_value_policy::reference_internal)
+            .def_property_readonly("num_edges",
+                                   [](const G& self) {
+                                       return self.edges().size();
+                                   })
+            .def(
+                "get_edge", [](const G& self, size_t edge_idx) -> auto& { return self.edges()[edge_idx]; },
+                py::return_value_policy::reference_internal)
+            .def("get_num_out_edges",
+                 [](const G& self, size_t node_idx) {
+                     return self.out_edges(node_idx).size();
+                 })
+            .def(
+                "get_out_edge", [](const G& self, size_t node_idx, size_t edge_idx) -> auto& {
+                    return self.out_edges(node_idx)[edge_idx];
+                },
+                py::return_value_policy::reference_internal);
+
+}
+
+template<class Simulation, class Model>
+void bind_MigrationGraph(py::module& m, std::string const& name)
+{
+    using G = epi::Graph<epi::ModelNode<Simulation>, epi::MigrationEdge>;
+    py::class_<G>(m, name.c_str())
+            .def(py::init<>())
+            .def(
+                "add_node", [](G & self, const Model& p, double t0, double dt) -> auto& {
+                    return self.add_node(p, t0, dt).model;
+                },
+                py::arg("model"), py::arg("t0") = 0.0, py::arg("dt") = 0.1, py::return_value_policy::reference_internal)
+            .def("add_edge", &G::template add_edge<const epi::MigrationEdge&>,
+                 py::return_value_policy::reference_internal)
+            .def("add_edge", &G::template add_edge<const Eigen::VectorXd&>, py::return_value_policy::reference_internal)
+            .def_property_readonly("num_nodes",
+                                   [](const G& self) {
+                                       return self.nodes().size();
+                                   })
+            .def(
+                "get_node",
+                [](const G& self, size_t node_idx) -> auto& { return self.nodes()[node_idx].model; },
+                py::return_value_policy::reference_internal)
+            .def_property_readonly("num_edges",
+                                   [](const G& self) {
+                                       return self.edges().size();
+                                   })
+            .def(
+                "get_edge", [](const G& self, size_t edge_idx) -> auto& { return self.edges()[edge_idx]; },
+                py::return_value_policy::reference_internal)
+            .def("get_num_out_edges",
+                 [](const G& self, size_t node_idx) {
+                     return self.out_edges(node_idx).size();
+                 })
+            .def(
+                "get_out_edge", [](const G& self, size_t node_idx, size_t edge_idx) -> auto& {
+                    return self.out_edges(node_idx)[edge_idx];
+                },
+                py::return_value_policy::reference_internal);
+
 }
 
 /*
@@ -430,14 +470,13 @@ void bind_ParameterStudy(py::module& m, std::string const& name)
 template <class AgeGroup>
 void bind_secir_ageres(py::module& m)
 {
-
-    py::enum_<AgeGroup> agegroup_enum(m, "InfectionType");
-    for (size_t i=0; i < (size_t)AgeGroup::Count; ++i) {
-        agegroup_enum.value("Group" + i, (AgeGroup)i);
-    }
-    agegroup_enum.export_values();
-
     size_t constexpr N = (size_t)AgeGroup::Count;
+
+    py::enum_<AgeGroup> agegroup_enum(m, ("AgeGroup" + std::to_string(N)).c_str());
+    for (size_t i=0; i < (size_t)AgeGroup::Count; ++i) {
+        agegroup_enum.value(("Group" + std::to_string(i)).c_str(), (AgeGroup)i);
+    }
+    agegroup_enum.value("Count", AgeGroup::Count).export_values();
 
     bind_Populations<AgeGroup, epi::InfectionType>(m, "Populations" + std::to_string(N));
 
@@ -456,16 +495,17 @@ void bind_secir_ageres(py::module& m)
     bind_SecirModel<AgeGroup>(m, "SecirModel" + std::to_string(N));  //<-- flows defined in derived constructor at rt
 
     using SecirModel = epi::SecirModel<AgeGroup>;
-    bind_Simulation<SecirModel>(m, "Simulation" + std::to_string(N));
+    bind_Simulation<SecirModel>(m, "SecirSimulation" + std::to_string(N));
 
     m.def("simulate", py::overload_cast<double, double, double, const SecirModel&>(&epi::simulate<SecirModel>),
           "Simulates a SecirModel1 from t0 to tmax.", py::arg("t0"), py::arg("tmax"), py::arg("dt"),
           py::arg("model"));
 
-    bind_Graph<SecirModel, epi::MigrationEdge>(m, "SecirModelGraph" + std::to_string(N));
+    bind_SecirModelGraph<SecirModel>(m, "SecirModelGraph" + std::to_string(N));
+
 
     using Simulation = epi::Simulation<SecirModel>;
-    bind_Graph<epi::ModelNode<Simulation>, epi::MigrationEdge>(m, "MigrationGraph" + std::to_string(N));
+    bind_MigrationGraph<Simulation, SecirModel>(m, "MigrationGraph" + std::to_string(N));
 
     using MigrationGraph = epi::Graph<epi::ModelNode<Simulation>, epi::MigrationEdge>;
     bind_GraphSimulation<MigrationGraph>(m, "MigrationSimulation" + std::to_string(N));

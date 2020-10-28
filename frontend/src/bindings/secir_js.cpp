@@ -237,7 +237,11 @@ void bind_CompartmentalModel(std::string const& name)
 template<class AgeGroup>
 void bind_SecirModel(std::string const& name)
 {
-    js::class_<epi::SecirModel<AgeGroup>>(name.c_str())
+
+    using Pa = epi::SecirParams<(size_t)AgeGroup::Count>;
+    using Po = epi::Populations<AgeGroup, epi::InfectionType>;
+    using Model = epi::CompartmentalModel<Po, Pa>;
+    js::class_<epi::SecirModel<AgeGroup>, js::base<Model>>(name.c_str())
             .template constructor<>();
 }
 
@@ -245,6 +249,12 @@ template <class AgeGroup>
 auto bind_secir_ageres()
 {
     size_t constexpr N = (size_t)AgeGroup::Count;
+
+    js::enum_<AgeGroup> agegroup_enum(("AgeGroup" + std::to_string(N)).c_str());
+    for (size_t i=0; i < (size_t)AgeGroup::Count; ++i) {
+        agegroup_enum.value(("Group" + std::to_string(i)).c_str(), (AgeGroup)i);
+    }
+    agegroup_enum.value("Count", AgeGroup::Count);
 
     bind_Populations<AgeGroup, epi::InfectionType>("Populations" + std::to_string(N));
     bind_SecirParams<N>("SecirParams" + std::to_string(N));

@@ -26,10 +26,10 @@ class Test_AnalyzeResult(unittest.TestCase):
         self.assertEqual(interpolated[1].get_time(2), 2.0)
     
     def test_ensemble_graph(self):
-        params = secir.SecirParams(1)
-        graph = secir.MigrationGraph()
-        graph.add_node(params)
-        sim = secir.MigrationSimulation(graph, t0 = 0, dt = 0.5)
+        model = secir.SecirModel1()
+        graph = secir.MigrationGraph1()
+        graph.add_node(model)
+        sim = secir.MigrationSimulation1(graph, t0 = 0, dt = 0.5)
         sim.advance(2)
         interpolated = secir.interpolate_ensemble_results([sim.graph, sim.graph])
         self.assertEqual(interpolated[0][0].get_time(0), 0.0)
