@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Edges>
+  <NumberOfNodes>2</NumberOfNodes>
+  <NumberOfEdges>2</NumberOfEdges>
+  <NumberOfGroups>2</NumberOfGroups>
+  <NumberOfCompartiments>8</NumberOfCompartiments>
+  <EdgeTo0>
+    <StartNode>1</StartNode>
+    <EndNode>0</EndNode>
+    <Group1 mapType="vector">0.01;0.01;0.01;0.01;0.01;0.01;0.01;0.01</Group1>
+    <Group2 mapType="vector">0.01;0.01;0.01;0.01;0.01;0.01;0.01;0.01</Group2>
+  </EdgeTo0>
+</Edges>
