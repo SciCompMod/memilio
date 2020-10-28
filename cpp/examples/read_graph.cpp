@@ -104,11 +104,11 @@ int main(int argc, char** argv)
     std::cout << "Done" << std::endl;
 
     std::cout << "Writing XML Files..." << std::flush;
-    epi::write_graph(graph);
+    epi::write_graph(graph, "graph_parameters");
     std::cout << "Done" << std::endl;
 
     std::cout << "Reading XML Files..." << std::flush;
-    epi::Graph<epi::SecirParams, epi::MigrationEdge> graph_read = epi::read_graph();
+    epi::Graph<epi::SecirParams, epi::MigrationEdge> graph_read = epi::read_graph("graph_parameters");
     std::cout << "Done" << std::endl;
 
     std::cout << "Running Simulations..." << std::flush;

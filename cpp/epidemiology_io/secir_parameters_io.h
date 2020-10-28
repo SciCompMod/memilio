@@ -166,13 +166,15 @@ void read_edge(const std::vector<TixiDocumentHandle>& edge_handles, const std::s
 /**
  * @brief creates xml files for each node of a Secir simulation graph and one xml file for its edges for each node
  * @param graph Graph which should be written
+ * @param dir_string sirectory, where graph should be stored
  */
-void write_graph(const Graph<SecirParams, MigrationEdge>& graph);
+void write_graph(const Graph<SecirParams, MigrationEdge>& graph, const std::string& dir_string);
 
 /**
  * @brief reads graph xml files and returns a Secir simulation graph
+ * @param dir_string directory from where graph should be read
  */
-Graph<SecirParams, MigrationEdge> read_graph();
+Graph<SecirParams, MigrationEdge> read_graph(const std::string& dir_string);
 
 } // namespace epi
 

@@ -602,10 +602,10 @@ void read_edge(const std::vector<TixiDocumentHandle>& edge_handles, const std::s
     }
 }
 
-void write_graph(const Graph<SecirParams, MigrationEdge>& graph)
+void write_graph(const Graph<SecirParams, MigrationEdge>& graph, const std::string& dir_string)
 {
 
-    boost::filesystem::path dir("graph_parameters");
+    boost::filesystem::path dir(dir_string);
 
     bool created = boost::filesystem::create_directory(dir);
 
@@ -615,7 +615,7 @@ void write_graph(const Graph<SecirParams, MigrationEdge>& graph)
     }
     else {
         log_info("Directory '{:s}' already exists. Results are stored in {:s}. Files from previous "
-                 "runs will be "
+                 "graph will be "
                  "overwritten",
                  dir.string(), path_join(epi::get_current_dir_name(), dir.string()));
     }
@@ -655,12 +655,13 @@ void write_graph(const Graph<SecirParams, MigrationEdge>& graph)
     }
 }
 
-Graph<SecirParams, MigrationEdge> read_graph()
+Graph<SecirParams, MigrationEdge> read_graph(const std::string& dir_string)
 {
+    boost::filesystem::path dir(dir_string);
+    auto check_dir = boost::filesystem::exists(dir);
+    assert(check_dir && ("Directory " + dir_string + " does not exist.").c_str());
+
     ReturnCode status;
-
-    boost::filesystem::path dir("graph_parameters");
-
     TixiDocumentHandle handle;
     tixiOpenDocument((dir / "GraphEdges_node0.xml").string().c_str(), &handle);
 

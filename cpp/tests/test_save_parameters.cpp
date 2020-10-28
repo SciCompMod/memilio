@@ -22,7 +22,7 @@ TEST(TestSaveParameters, compareParameterStudy)
            num_rec_t0 = 10, num_dead_t0 = 0;
 
     auto num_groups = size_t(2);
-    double fact    = 1.0 / (double)num_groups;
+    double fact     = 1.0 / (double)num_groups;
 
     epi::SecirParams params(num_groups);
 
@@ -94,7 +94,7 @@ TEST(TestSaveParameters, compareParameterStudy)
     const epi::UncertainContactMatrix& contact      = study.get_secir_params().get_contact_patterns();
     const epi::UncertainContactMatrix& read_contact = read_params.get_contact_patterns();
 
-    num_groups          = study.get_secir_params().get_num_groups();
+    num_groups             = study.get_secir_params().get_num_groups();
     size_t num_groups_read = read_params.get_num_groups();
     ASSERT_EQ(num_groups, num_groups_read);
 
@@ -234,7 +234,7 @@ TEST(TestSaveParameters, compareSingleRun)
            num_rec_t0 = 10, num_dead_t0 = 0;
 
     auto num_groups = size_t(2);
-    double fact    = 1.0 / (double)num_groups;
+    double fact     = 1.0 / (double)num_groups;
 
     epi::SecirParams params(num_groups);
 
@@ -302,7 +302,7 @@ TEST(TestSaveParameters, compareSingleRun)
     const epi::UncertainContactMatrix& contact      = study.get_secir_params().get_contact_patterns();
     const epi::UncertainContactMatrix& read_contact = read_params.get_contact_patterns();
 
-    num_groups          = study.get_secir_params().get_num_groups();
+    num_groups             = study.get_secir_params().get_num_groups();
     size_t num_groups_read = read_params.get_num_groups();
     ASSERT_EQ(num_groups, num_groups_read);
 
@@ -375,7 +375,7 @@ TEST(TestSaveParameters, compareGraphs)
            num_rec_t0 = 10, num_dead_t0 = 0;
 
     size_t num_groups = 2;
-    double fact    = 1.0 / (double)num_groups;
+    double fact       = 1.0 / (double)num_groups;
 
     epi::SecirParams params(num_groups);
 
@@ -429,9 +429,9 @@ TEST(TestSaveParameters, compareGraphs)
     graph.add_edge(0, 1, Eigen::VectorXd::Constant(params.populations.get_num_compartments(), 0.01));
     graph.add_edge(1, 0, Eigen::VectorXd::Constant(params.populations.get_num_compartments(), 0.01));
 
-    epi::write_graph(graph);
+    epi::write_graph(graph, "graph_parameters");
 
-    epi::Graph<epi::SecirParams, epi::MigrationEdge> graph_read = epi::read_graph();
+    epi::Graph<epi::SecirParams, epi::MigrationEdge> graph_read = epi::read_graph("graph_parameters");
 
     auto num_nodes = graph.nodes().size();
     auto num_edges = graph.edges().size();
