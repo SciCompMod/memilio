@@ -30,6 +30,9 @@ void write_element(const TixiDocumentHandle& handle, const std::string& path, co
         tixiAddDoubleElement(handle, path.c_str(), element_name.c_str(), (double)element, "%g");
     }
     else if (io_mode == 1 || io_mode == 2 || io_mode == 3) {
+        assert(element.get_distribution().get() && ("No Distribution detected for " + element_name +
+                                                    ". Either define a distribution or choose a different io_mode.")
+                                                       .c_str());
         auto distribution = element.get_distribution().get();
         write_distribution(handle, path, element_name, *distribution);
         if (io_mode == 2) {
@@ -497,7 +500,7 @@ void write_single_run_params(const int run, epi::Graph<epi::ModelNode<epi::Secir
         log_info("Directory '{:s}' was created. Results are stored in {:s}/results.", dir.string(),
                  epi::get_current_dir_name());
     }
-    else {
+    else if (run == 0) {
         log_info(
             "Directory '{:s}' already exists. Results are stored in {:s}/ results. Files from previous runs will be "
             "overwritten",
@@ -604,9 +607,9 @@ void read_edge(const std::vector<TixiDocumentHandle>& edge_handles, const std::s
 
 void write_graph(const Graph<SecirParams, MigrationEdge>& graph, const std::string& dir_string)
 {
+    assert(graph.nodes().size() > 0 && "Graph Nodes are empty");
 
     boost::filesystem::path dir(dir_string);
-
     bool created = boost::filesystem::create_directory(dir);
 
     if (created) {
@@ -619,7 +622,6 @@ void write_graph(const Graph<SecirParams, MigrationEdge>& graph, const std::stri
                  "overwritten",
                  dir.string(), path_join(epi::get_current_dir_name(), dir.string()));
     }
-
     int num_nodes   = static_cast<int>(graph.nodes().size());
     int num_edges   = static_cast<int>(graph.edges().size());
     int num_groups  = graph.nodes()[0].get_contact_patterns().get_cont_freq_mat().get_size();
@@ -658,8 +660,7 @@ void write_graph(const Graph<SecirParams, MigrationEdge>& graph, const std::stri
 Graph<SecirParams, MigrationEdge> read_graph(const std::string& dir_string)
 {
     boost::filesystem::path dir(dir_string);
-    auto check_dir = boost::filesystem::exists(dir);
-    assert(check_dir && ("Directory " + dir_string + " does not exist.").c_str());
+    assert(boost::filesystem::exists(dir) && ("Directory " + dir_string + " does not exist.").c_str());
 
     ReturnCode status;
     TixiDocumentHandle handle;

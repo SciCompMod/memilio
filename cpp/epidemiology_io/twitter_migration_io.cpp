@@ -93,7 +93,7 @@ Eigen::MatrixXi read_migration(const std::string& filename)
             return migration;
         }
         else {
-            epi::log_error("File could not be opened.");
+            assert(false && "File could not be opened.");
 
             return Eigen::MatrixXi(0, 0);
         }
