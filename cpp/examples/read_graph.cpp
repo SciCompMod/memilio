@@ -6,6 +6,10 @@
 
 int main(int argc, char** argv)
 {
+    assert(argc == 2 && "Funtion needs the name of the twitter file as an argument");
+
+    auto filename = argv[1];
+
     const auto t0   = 0.;
     const auto tmax = 10.;
     const auto dt   = 1.; //time step of migration, not integration
@@ -88,7 +92,7 @@ int main(int argc, char** argv)
     epi::set_params_distributions_normal(params, t0, tmax, 0.2);
 
     std::cout << "Reading Migration File..." << std::flush;
-    Eigen::MatrixXi twitter_migration_2018 = epi::read_migration("2018_lk_matrix.txt");
+    Eigen::MatrixXi twitter_migration_2018 = epi::read_migration(filename);
     std::cout << "Done" << std::endl;
 
     std::cout << "Intializing Graph..." << std::flush;
@@ -98,7 +102,9 @@ int main(int argc, char** argv)
     }
     for (int row = 0; row < twitter_migration_2018.rows(); row++) {
         for (int col = 0; col < twitter_migration_2018.cols(); col++) {
-            graph.add_edge(row, col, Eigen::VectorXd::Constant(8 * nb_groups, twitter_migration_2018(row, col)));
+            graph.add_edge(row, col,
+                           Eigen::VectorXd::Constant(8 * nb_groups, twitter_migration_2018(row, col) /
+                                                                        graph.nodes()[row].populations.get_total()));
         }
     }
     std::cout << "Done" << std::endl;
