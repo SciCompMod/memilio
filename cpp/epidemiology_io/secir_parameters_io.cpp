@@ -12,11 +12,18 @@
 #include <epidemiology/secir/secir.h>
 
 #include <tixi.h>
+
+#include <json/json.h>
+#include <json/value.h>
+
+#include <boost/filesystem.hpp>
+
+#include <numeric>
 #include <vector>
 #include <iostream>
 #include <string>
 #include <random>
-#include <boost/filesystem.hpp>
+#include <fstream>
 
 namespace epi
 {
@@ -254,6 +261,114 @@ UncertainContactMatrix read_contact(TixiDocumentHandle handle, const std::string
             *read_distribution(handle, path_join(path, "DampingOffdiagRel")));
     }
     return contact_patterns;
+}
+
+void interpolate_ages(const std::vector<double>& age_ranges, const std::vector<double>& param_ranges,
+                      std::vector<std::vector<double>>& interpolation, std::vector<bool>& carry_over)
+{
+    //counter for parameter age groups
+    size_t counter = 0;
+
+    //residual of param age groups
+    double res = 0.0;
+    for (size_t i = 0; i < age_ranges.size(); i++) {
+
+        // if current param age group didn't fit into previous rki age group, transfer residual to current age group
+        if (res < 0) {
+            interpolation[i].push_back(std::min(-res / age_ranges[i], 1.0));
+        }
+
+        if (counter < param_ranges.size() - 1) {
+            res += age_ranges[i];
+            if (std::abs(res) < age_ranges[i]) {
+                counter++;
+            }
+            // iterate over param age groups while there is still room in the current rki age group
+            while (res > 0) {
+                res -= param_ranges[counter];
+                interpolation[i].push_back((param_ranges[counter] + std::min(res, 0.0)) / age_ranges[i]);
+                if (res >= 0) {
+                    counter++;
+                }
+            }
+            if (res < 0) {
+                carry_over.push_back(true);
+            }
+            else if (res == 0) {
+                carry_over.push_back(false);
+            }
+        }
+        // if last param age group is reached
+        else {
+            interpolation[i].push_back((age_ranges[i] + res) / age_ranges[i]);
+            if (res < 0 || counter == 0) {
+                carry_over.push_back(true);
+            }
+            else if (res == 0) {
+                carry_over.push_back(false);
+            }
+            res = 0;
+        }
+    }
+    // last entries for "unknown" age group
+    interpolation.push_back({1.0});
+    carry_over.push_back(true);
+}
+
+void read_rki_data(std::string const& path,
+                   const std::string& id_name,
+                   int region, int month, int day,
+                   std::vector<double>& num_inf,
+                   std::vector<double>& num_death,
+                   std::vector<double>& num_rec)
+{
+    Json::Reader reader;
+    Json::Value root;
+
+    std::ifstream rki(path);
+    reader.parse(rki, root);
+
+    std::vector<std::string> age_names = {"A00-A04", "A05-A14", "A15-A34", "A35-A59", "A60-A79", "A80+", "unknown"};
+
+    num_inf.resize(age_names.size());
+    num_death.resize(age_names.size());
+    num_rec.resize(age_names.size());
+
+    for (size_t age = 0; age < age_names.size(); age++) {
+        for (unsigned int i = 0; i < root.size(); i++) {
+            bool correct_region = region == 0 || root[i][id_name] == region;
+            std::string date    = root[i]["Date"].asString();
+            if (month == std::stoi(date.substr(5, 2)) && day == std::stoi(date.substr(8, 2)) && correct_region) {
+                if (root[i]["Age_RKI"].asString() == age_names[age]) {
+                    num_inf[age]   = root[i]["Confirmed"].asDouble();
+                    num_death[age] = root[i]["Deaths"].asDouble();
+                    num_rec[age]   = root[i]["Recovered"].asDouble();
+                    break;
+                }
+            }
+        }
+    }
+}
+
+double read_divi_data(const std::string& path,
+                      const std::string& id_name,
+                      int region, int month, int day)
+{
+    Json::Reader reader;
+    Json::Value root;
+
+    std::ifstream divi(path);
+    reader.parse(divi, root);
+
+    double num_icu = 0;
+    for (unsigned int i = 0; i < root.size(); i++) {
+        bool correct_region = region == 0 || root[i][id_name] == region;
+        std::string date    = root[i]["Date"].asString();
+        if (month == std::stoi(date.substr(5, 2)) && day == std::stoi(date.substr(8, 2)) && correct_region) {
+            num_icu = root[i]["ICU"].asDouble();
+        }
+    }
+    return num_icu;
 }
 
 } // namespace epi

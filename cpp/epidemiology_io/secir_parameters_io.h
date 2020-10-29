@@ -10,6 +10,7 @@
 
 #include <tixi.h>
 
+
 namespace epi
 {
 /**
@@ -92,7 +93,7 @@ SecirModel<AgeGroup> read_parameter_space(TixiDocumentHandle handle, const std::
     tixiGetIntegerElement(handle, path_join(path, "NumberOfGroups").c_str(), &num_groups);
 
     if (num_groups != (int)AgeGroup::Count) {
-        epi::log_error("Only 1, 2 or 3 age groups allowed at the moment.");
+        epi::log_error("Only 1, 2,3, 6 or 8 age groups allowed at the moment.");
     }
 
     SecirModel<AgeGroup> model;
@@ -518,6 +519,209 @@ Graph<Model, MigrationEdge> read_graph()
     }
     tixiCloseDocument(handle);
     return graph;
+}
+
+/**
+ * @brief interpolates age_ranges to param_ranges and saves ratios in interpolation
+ * @param age_ranges original age ranges of the data
+ * @param param_ranges age ranges to which the data should be fitted
+ * @param interpolation vector of ratios that are aplied to the data of age_ranges
+ * @param carry_over boolean vector which indicates whether there is an overflow from one age group to the next while interpolating data
+ */
+void interpolate_ages(const std::vector<double>& age_ranges, const std::vector<double>& param_ranges,
+                      std::vector<std::vector<double>>& interpolation, std::vector<bool>& carry_over);
+
+
+/**
+ * @brief reads populations data from RKI
+ * @param path Path to RKI file
+ * @param id_name Name of region key column
+ * @param region Key of the region of interest
+ * @param month Specifies month at which the data is read
+ * @param day Specifies day at which the data is read
+ * @param num_inf output vector for number of infected
+ * @param num_death output vector for number of dead
+ * @param num_rec output vector for number of recovered
+ */
+void read_rki_data(std::string const& path,
+                   const std::string& id_name,
+                   int region, int month, int day,
+                   std::vector<double>& num_inf,
+                   std::vector<double>& num_death,
+                   std::vector<double>& num_rec);
+/**
+ * @brief sets populations data from RKI into a SecirModel
+ * @param model Object in which the data is set
+ * @param param_ranges Age ranges of params
+ * @param path Path to RKI file
+ * @param id_name Name of region key column
+ * @param region Key of the region of interest
+ * @param month Specifies month at which the data is read
+ * @param day Specifies day at which the data is read
+ */
+template <class Model>
+void set_rki_data(Model& model, const std::vector<double>& param_ranges, const std::string& path,
+                  const std::string& id_name, int region, int month, int day)
+{
+
+    std::vector<double> age_ranges     = {5., 10., 20., 25., 20., 20.};
+
+    std::vector<std::vector<double>> interpolation(age_ranges.size()+1);
+    std::vector<bool> carry_over;
+
+    interpolate_ages(age_ranges, param_ranges, interpolation, carry_over);
+
+    std::vector<double> num_inf;
+    std::vector<double> num_death;
+    std::vector<double> num_rec;
+
+    read_rki_data(path, id_name, region, month, day, num_inf, num_death, num_rec);
+
+    std::vector<double> interpol_inf(model.parameters.get_num_groups() + 1, 0.0);
+    std::vector<double> interpol_death(model.parameters.get_num_groups() + 1, 0.0);
+    std::vector<double> interpol_rec(model.parameters.get_num_groups() + 1, 0.0);
+
+    int counter = 0;
+    for (size_t i = 0; i < interpolation.size() - 1; i++) {
+        for (size_t j = 0; j < interpolation[i].size(); j++) {
+            interpol_inf[counter] += interpolation[i][j] * num_inf[i];
+            interpol_death[counter] += interpolation[i][j] * num_death[i];
+            interpol_rec[counter] += interpolation[i][j] * num_rec[i];
+            if (j < interpolation[i].size() - 1 || !carry_over[i]) {
+                counter++;
+            }
+        }
+    }
+
+    for (size_t i = 0; i < model.parameters.get_num_groups(); i++) {
+        interpol_inf[i] += (double)num_inf[num_inf.size() - 1] / (double)model.parameters.get_num_groups();
+        interpol_death[i] += (double)num_death[num_death.size() - 1] / (double)model.parameters.get_num_groups();
+        interpol_rec[i] += (double)num_rec[num_rec.size() - 1] / (double)model.parameters.get_num_groups();
+    }
+
+    if (std::accumulate(num_inf.begin(), num_inf.end(), 0.0) > 0) {
+        size_t num_groups = model.parameters.get_num_groups();
+        for (size_t i = 0; i < num_groups; i++) {
+            model.populations.set(interpol_inf[i] - interpol_death[i] - interpol_rec[i], (typename Model::AgeGroup)i, epi::InfectionType::I);
+            model.populations.set(interpol_death[i], (typename Model::AgeGroup)i, epi::InfectionType::D);
+            model.populations.set(interpol_rec[i], (typename Model::AgeGroup)i, epi::InfectionType::R);
+        }
+    }
+    else {
+        log_warning("No infections reported on date " + std::to_string(day) + "-" + std::to_string(month) +
+                    " for region " + std::to_string(region) + ". Population data has not been set.");
+    }
+}
+
+/**
+ * @brief reads number of ICU patients from DIVI register into SecirParams
+ * @param path Path to DIVI file
+ * @param id_name Name of region key column
+ * @param region Key of the region of interest
+ * @param month Specifies month at which the data is read
+ * @param day Specifies day at which the data is read
+ * @return number of ICU patients
+ */
+double read_divi_data(const std::string& path,
+                      const std::string& id_name,
+                      int region, int month, int day);
+
+/**
+ * @brief sets populations data from DIVI register into SecirParams
+ * @param params Object in which the data is set
+ * @param path Path to DIVI file
+ * @param id_name Name of region key column
+ * @param region Key of the region of interest
+ * @param month Specifies month at which the data is read
+ * @param day Specifies day at which the data is read
+ */
+template <class Model>
+void set_divi_data(Model& model, const std::string& path, const std::string& id_name, int region, int month,
+                   int day)
+{
+
+    double num_icu = read_divi_data(path, id_name, region, month, day);
+
+    if (num_icu > 0) {
+        size_t num_groups = model.parameters.get_num_groups();
+        for (size_t i = 0; i < num_groups; i++) {
+            model.populations.set(num_icu / (double)num_groups, (typename Model::AgeGroup)i, epi::InfectionType::U);
+        }
+    }
+    else {
+        log_warning("No ICU patients reported on date " + std::to_string(day) + "-" + std::to_string(month) +
+                    " for region " + std::to_string(region) + ".");
+    }
+}
+
+/**
+ * @brief reads population data from population files for the whole country
+ * @param params Parameters in which the data is set
+ * @param param_ranges Vector which specifies the age ranges of params. Needs to add up to 100
+ * @param month specifies month at which the data is read
+ * @param day specifies day at which the data is read
+ * @param dir directory of files
+ */
+template <class Model>
+void read_population_data_germany(Model& model, const std::vector<double>& param_ranges, int month, int day,
+                                  const std::string& dir)
+{
+    assert(param_ranges.size() == model.parameters.get_num_groups() &&
+           "size of param_ranges needs to be the same size as the number of groups in model.parameters");
+    assert(std::accumulate(param_ranges.begin(), param_ranges.end(), 0.0) == 100. && "param_ranges must add up to 100");
+
+    std::string id_name;
+
+    set_rki_data(model, param_ranges, path_join(dir, "all_age_rki.json"), id_name, 0, month, day);
+    set_divi_data(model, path_join(dir, "germany_divi.json"), id_name, 0, month, day);
+}
+
+/**
+ * @brief reads population data from population files for the specefied state
+ * @param params Parameters in which the data is set
+ * @param param_ranges Vector which specifies the age ranges of params. Needs to add up to 100
+ * @param month specifies month at which the data is read
+ * @param day specifies day at which the data is read
+ * @param state region key of state of interest
+ * @param dir directory of files
+ */
+template <class Model>
+void read_population_data_state(Model& model, const std::vector<double>& param_ranges, int month, int day,
+                                int state, const std::string& dir)
+{
+    assert(state > 0 && state <= 16 && "State must be between 1 and 16");
+    assert(param_ranges.size() == model.parameters.get_num_groups() &&
+           "size of param_ranges needs to be the same size as the number of groups in params");
+    assert(std::accumulate(param_ranges.begin(), param_ranges.end(), 0.0) == 100. && "param_ranges must add up to 100");
+
+    std::string id_name = "ID_State";
+
+    set_rki_data(model, param_ranges, path_join(dir, "all_state_age_rki.json"), id_name, state, month, day);
+    set_divi_data(model, path_join(dir, "state_divi.json"), id_name, state, month, day);
+}
+
+/**
+ * @brief reads population data from population files for the specefied county
+ * @param params Parameters in which the data is set
+ * @param param_ranges Vector which specifies the age ranges of params. Needs to add up to 100
+ * @param month specifies month at which the data is read
+ * @param day specifies day at which the data is read
+ * @param county region key of county of interest
+ * @param dir directory of files
+ */
+template <class Model>
+void read_population_data_county(Model& model, const std::vector<double>& param_ranges, int month, int day,
+                                 int county, const std::string& dir)
+{
+    assert(county > 999 && "State must be between 1 and 16");
+    assert(param_ranges.size() == model.parameters.get_num_groups() &&
+           "size of param_ranges needs to be the same size as the number of groups in params");
+    assert(std::accumulate(param_ranges.begin(), param_ranges.end(), 0.0) == 100. && "param_ranges must add up to 100");
+
+    std::string id_name = "ID_County";
+
+    set_rki_data(model, param_ranges, path_join(dir, "all_county_age_rki.json"), id_name, county, month, day);
+    set_divi_data(model, path_join(dir, "county_divi.json"), id_name, county, month, day);
 }
 
 } // namespace epi

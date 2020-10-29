@@ -1,4 +1,5 @@
 #include "load_test_data.h"
+#include "test_data_dir.h"
 #include "epidemiology/secir/secir.h"
 #include <epidemiology/secir/parameter_space.h>
 #include <epidemiology/secir/parameter_studies.h>
@@ -313,6 +314,7 @@ TEST(TestSaveParameters, compareSingleRun)
 
     num_groups             = study.get_model().parameters.get_num_groups();
     size_t num_groups_read = read_model.parameters.get_num_groups();
+
     ASSERT_EQ(num_groups, num_groups_read);
 
     for (size_t i = 0; i < num_groups; i++) {
@@ -615,4 +617,113 @@ TEST(TestSaveParameters, compareGraphs)
 
         ASSERT_THAT(graph_read.edges(), testing::ElementsAreArray(graph.edges()));
     }
+}
+
+TEST(TestSaveParameters, ReadPopulationDataAllAges)
+{
+    epi::SecirModel<epi::AgeGroup1> model;
+    std::vector<double> ranges = {100};
+
+    std::string path = TEST_DATA_DIR;
+    epi::read_population_data_germany(model, ranges, 5, 5, path);
+
+    ASSERT_EQ(model.populations.get((epi::AgeGroup1)0, epi::InfectionType::I), 0);
+    ASSERT_EQ(model.populations.get((epi::AgeGroup1)0, epi::InfectionType::D), 8626);
+    ASSERT_EQ(model.populations.get((epi::AgeGroup1)0, epi::InfectionType::R), 160148);
+    ASSERT_EQ(model.populations.get((epi::AgeGroup1)0, epi::InfectionType::U), 1937);
+}
+
+TEST(TestSaveParameters, ReadPopulationDataRKIAges)
+{
+    epi::SecirModel<epi::AgeGroup6> model;
+    std::vector<double> ranges = {5., 10., 20., 25., 20., 20.};
+
+    std::string path = TEST_DATA_DIR;
+    epi::read_population_data_germany(model, ranges, 5, 5, path);
+
+    std::vector<std::string> age_names = {"A00-A04", "A05-A14", "A15-A34", "A35-A59", "A60-A79", "A80+", "unknown"};
+
+    std::vector<double> infected  = {0, 0, 0, 0, 0, 0};
+    std::vector<double> deaths    = {1, 0, 18, 391, 2791, 5425};
+    std::vector<double> recovered = {1516, 3656, 41947, 70301, 29224, 13504};
+
+    for (size_t i = 0; i < ranges.size(); i++) {
+        ASSERT_EQ(model.populations.get((epi::AgeGroup6)i, epi::InfectionType::I), infected[i]);
+        ASSERT_EQ(model.populations.get((epi::AgeGroup6)i, epi::InfectionType::D), deaths[i]);
+        ASSERT_EQ(model.populations.get((epi::AgeGroup6)i, epi::InfectionType::R), recovered[i]);
+        ASSERT_EQ(model.populations.get((epi::AgeGroup6)i, epi::InfectionType::U), 1937 / (double)ranges.size());
+    }
+}
+
+TEST(TestSaveParameters, ReadPopulationDataMultipleAges)
+{
+    epi::SecirModel<epi::AgeGroup8> model;
+    std::vector<double> ranges = {5., 15., 15., 10., 10., 10., 10., 25.};
+
+    std::string path = TEST_DATA_DIR;
+    epi::read_population_data_germany(model, ranges, 5, 5, path);
+
+    double infected_param  = 0.;
+    double deaths_param    = 0.;
+    double recovered_param = 0.;
+    double icu_param       = 0.;
+
+    for (size_t i = 0; i < ranges.size(); i++) {
+        infected_param += model.populations.get((epi::AgeGroup8)i, epi::InfectionType::I);
+        deaths_param += model.populations.get((epi::AgeGroup8)i, epi::InfectionType::D);
+        recovered_param += model.populations.get((epi::AgeGroup8)i, epi::InfectionType::R);
+        icu_param += model.populations.get((epi::AgeGroup8)i, epi::InfectionType::U);
+    }
+
+    std::vector<double> infected  = {0, 0, 0, 0, 0, 0};
+    std::vector<double> deaths    = {1, 0, 18, 391, 2791, 5425};
+    std::vector<double> recovered = {1516, 3656, 41947, 70301, 29224, 13504};
+
+    ASSERT_EQ(model.populations.get((epi::AgeGroup8)0, epi::InfectionType::I), infected[0]);
+    ASSERT_EQ(model.populations.get((epi::AgeGroup8)0, epi::InfectionType::D), deaths[0]);
+    ASSERT_EQ(model.populations.get((epi::AgeGroup8)0, epi::InfectionType::R), recovered[0]);
+    ASSERT_EQ(model.populations.get((epi::AgeGroup8)0, epi::InfectionType::U), 1937 / (double)ranges.size());
+
+    ASSERT_EQ(model.populations.get((epi::AgeGroup8)1, epi::InfectionType::I), infected[1] + (1.0 / 4.0) * infected[2]);
+    ASSERT_EQ(model.populations.get((epi::AgeGroup8)1, epi::InfectionType::D), deaths[1] + (1.0 / 4.0) * deaths[2]);
+    ASSERT_EQ(model.populations.get((epi::AgeGroup8)1, epi::InfectionType::R), recovered[1] + (1.0 / 4.0) * recovered[2]);
+    ASSERT_EQ(model.populations.get((epi::AgeGroup8)1, epi::InfectionType::U), 1937 / (double)ranges.size());
+
+    ASSERT_EQ(model.populations.get((epi::AgeGroup8)2, epi::InfectionType::I), (3.0 / 4.0) * infected[2]);
+    ASSERT_EQ(model.populations.get((epi::AgeGroup8)2, epi::InfectionType::D), (3.0 / 4.0) * deaths[2]);
+    ASSERT_EQ(model.populations.get((epi::AgeGroup8)2, epi::InfectionType::R), (3.0 / 4.0) * recovered[2]);
+    ASSERT_EQ(model.populations.get((epi::AgeGroup8)2, epi::InfectionType::U), 1937 / (double)ranges.size());
+
+    ASSERT_EQ(model.populations.get((epi::AgeGroup8)3, epi::InfectionType::I), (2.0 / 5.0) * infected[3]);
+    ASSERT_EQ(model.populations.get((epi::AgeGroup8)3, epi::InfectionType::D), (2.0 / 5.0) * deaths[3]);
+    ASSERT_EQ(model.populations.get((epi::AgeGroup8)3, epi::InfectionType::R), (2.0 / 5.0) * recovered[3]);
+    ASSERT_EQ(model.populations.get((epi::AgeGroup8)3, epi::InfectionType::U), 1937 / (double)ranges.size());
+
+    ASSERT_EQ(model.populations.get((epi::AgeGroup8)4, epi::InfectionType::I), (2.0 / 5.0) * infected[3]);
+    ASSERT_EQ(model.populations.get((epi::AgeGroup8)4, epi::InfectionType::D), (2.0 / 5.0) * deaths[3]);
+    ASSERT_EQ(model.populations.get((epi::AgeGroup8)4, epi::InfectionType::R), (2.0 / 5.0) * recovered[3]);
+    ASSERT_EQ(model.populations.get((epi::AgeGroup8)4, epi::InfectionType::U), 1937 / (double)ranges.size());
+
+    ASSERT_EQ(model.populations.get((epi::AgeGroup8)5, epi::InfectionType::I),
+              (1.0 / 5.0) * infected[3] + (1.0 / 4.0) * infected[4]);
+    ASSERT_EQ(model.populations.get((epi::AgeGroup8)5, epi::InfectionType::D),
+              (1.0 / 5.0) * deaths[3] + (1.0 / 4.0) * deaths[4]);
+    ASSERT_EQ(model.populations.get((epi::AgeGroup8)5, epi::InfectionType::R),
+              (1.0 / 5.0) * recovered[3] + (1.0 / 4.0) * recovered[4]);
+    ASSERT_EQ(model.populations.get((epi::AgeGroup8)5, epi::InfectionType::U), 1937 / (double)ranges.size());
+
+    ASSERT_EQ(model.populations.get((epi::AgeGroup8)6, epi::InfectionType::I), (2.0 / 4.0) * infected[4]);
+    ASSERT_EQ(model.populations.get((epi::AgeGroup8)6, epi::InfectionType::D), (2.0 / 4.0) * deaths[4]);
+    ASSERT_EQ(model.populations.get((epi::AgeGroup8)6, epi::InfectionType::R), (2.0 / 4.0) * recovered[4]);
+    ASSERT_EQ(model.populations.get((epi::AgeGroup8)6, epi::InfectionType::U), 1937 / (double)ranges.size());
+
+    ASSERT_EQ(model.populations.get((epi::AgeGroup8)7, epi::InfectionType::I), (1.0 / 4.0) * infected[4] + infected[5]);
+    ASSERT_EQ(model.populations.get((epi::AgeGroup8)7, epi::InfectionType::D), (1.0 / 4.0) * deaths[4] + deaths[5]);
+    ASSERT_EQ(model.populations.get((epi::AgeGroup8)7, epi::InfectionType::R), (1.0 / 4.0) * recovered[4] + recovered[5]);
+    ASSERT_EQ(model.populations.get((epi::AgeGroup8)7, epi::InfectionType::U), 1937 / (double)ranges.size());
+
+    EXPECT_NEAR(0, infected_param, 1e-6);
+    EXPECT_NEAR(8626, deaths_param, 1e-6);
+    EXPECT_NEAR(160148, recovered_param, 1e-6);
+    EXPECT_NEAR(1937, icu_param, 1e-6);
 }

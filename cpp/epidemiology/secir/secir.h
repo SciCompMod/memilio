@@ -40,6 +40,17 @@ enum class AgeGroup3
     Count = 3
 };
 
+enum class AgeGroup6
+{
+    Group0,
+    Group1,
+    Group2,
+    Group3,
+    Group4,
+    Group5,
+    Count = 6
+};
+
 enum class AgeGroup8
 {
     Group0,
