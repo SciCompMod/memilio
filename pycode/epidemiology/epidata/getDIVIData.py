@@ -188,6 +188,13 @@ def download_data_for_one_day(last_number, download_date):
                         date(2020, 9, 28): 5103,
                         date(2020, 10, 4): 5115,
                         date(2020, 10, 6): 5120,
+                        date(2020, 10, 14): 5136,
+                        date(2020, 10, 17): 5142,
+                        date(2020, 10, 20): 5149,
+                        date(2020, 10, 21): 5152,
+                        date(2020, 10, 23): 5158,
+                        date(2020, 10, 25): 5163,
+                        date(2020, 10, 28): 5174,
                         }
     start_date_differs = False
 
@@ -199,6 +206,8 @@ def download_data_for_one_day(last_number, download_date):
         call_time = "-09-15"
     else:
         call_time = "-12-15"
+    if download_date == date(2020, 9, 14):
+        call_time = "-14-15"
 
     # need extension "-2" for dates between 12.6. and 25.6.
     ext = ""
