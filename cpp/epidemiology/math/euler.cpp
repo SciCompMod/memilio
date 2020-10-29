@@ -70,7 +70,6 @@ bool ImplicitEulerIntegratorCore::step(const DerivFunction& /*f*/, Eigen::Ref<co
     yt_tilde[size_t(InfectionType::I)] = yt_eval[size_t(InfectionType::I)];
 
     // fix-point iteration since C and I are discretized explicitly (C^n, I^n), using this approach we obtain a close approximation to (C^{n+1}, I^{n+1})
-    double TOL = 1e-4;
 
     do {
         // S
@@ -96,8 +95,8 @@ bool ImplicitEulerIntegratorCore::step(const DerivFunction& /*f*/, Eigen::Ref<co
                                                         dt * (1 - params.probabilities[0].get_asymp_per_infectious()) *
                                                             dummy_R3 * yt_tilde[size_t(InfectionType::C)]);
 
-    } while (std::fabs(yt_tilde[size_t(InfectionType::C)] - y_temp_C) > TOL &&
-             std::fabs(yt_tilde[size_t(InfectionType::I)] - y_temp_I) > TOL);
+    } while (std::fabs(yt_tilde[size_t(InfectionType::C)] - y_temp_C) > m_abs_tol &&
+             std::fabs(yt_tilde[size_t(InfectionType::I)] - y_temp_I) > m_abs_tol);
 
     // H (use new value for I, i.e. I^{n+1})
     yt_tilde[size_t(InfectionType::H)] =

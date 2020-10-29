@@ -84,9 +84,9 @@ public:
     }
 
     /// @param tol the required relative tolerance for the comparison with the Fehlberg approximation (actually not really required but used in SecirSimulation constructor)
-    void set_rel_tolerance(double tol) override
+    void set_rel_tolerance(double) override
     {
-        m_rel_tol = tol;
+        log_warning("Currently, the implicit Euler does not use a relative tolerance");
     }
 
     /// sets the minimum step size (not used)
@@ -103,8 +103,7 @@ public:
 
 private:
     const SecirModel1& m_model;
-    double m_abs_tol;
-    double m_rel_tol;
+    double m_abs_tol = 1e-4;
 };
 
 } // namespace epi
