@@ -204,10 +204,10 @@ def download_data_for_one_day(last_number, download_date):
     time_shift_date = date(2020, 6, 5)
     if download_date < time_shift_date:
         call_time = "-09-15"
+    elif download_date == date(2020, 9, 14):
+        call_time = "-14-15"
     else:
         call_time = "-12-15"
-    if download_date == date(2020, 9, 14):
-        call_time = "-14-15"
 
     # need extension "-2" for dates between 12.6. and 25.6.
     ext = ""
