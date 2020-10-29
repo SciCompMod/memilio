@@ -106,8 +106,8 @@ class Timeline extends Component {
     const date = this.props.startDate + (this.props.endDate - this.props.startDate) * this.#slider.start;
 
     this.setState({
-      start: this.createDateString(this.props.startDate),
-      end: this.createDateString(this.props.endDate),
+      //start: this.createDateString(this.props.startDate),
+      //end: this.createDateString(this.props.endDate),
       value: this.createDateString(date),
     });
 

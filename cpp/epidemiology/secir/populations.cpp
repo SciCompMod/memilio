@@ -9,7 +9,7 @@ namespace epi
 Populations::Populations(std::vector<size_t> const& category_sizes)
     : m_category_sizes(category_sizes)
 {
-    size_t prod = std::accumulate(category_sizes.begin(), category_sizes.end(), 1, std::multiplies<size_t>());
+    size_t prod = std::accumulate(category_sizes.begin(), category_sizes.end(), size_t(1), std::multiplies<size_t>());
     m_y         = std::vector<UncertainValue>(prod, 0.0);
 }
 
@@ -26,7 +26,7 @@ std::vector<size_t> const& Populations::get_category_sizes() const
 Eigen::VectorXd Populations::get_compartments() const
 {
     Eigen::VectorXd m_y_eigen(m_y.size());
-    for (auto i = 0; i < m_y.size(); i++) {
+    for (size_t i = 0; i < m_y.size(); i++) {
         m_y_eigen[i] = m_y[i];
     }
 
@@ -105,7 +105,7 @@ void Populations::set_difference_from_group_total(std::vector<size_t> const& ind
 double Populations::get_total() const
 {
     double sum = 0;
-    for (auto i = 0; i < m_y.size(); i++) {
+    for (size_t i = 0; i < m_y.size(); i++) {
         sum += m_y[i];
     }
     return sum;
@@ -151,13 +151,13 @@ void Populations::set_total(double value)
 {
     double current_population = get_total();
     if (fabs(current_population) < 1e-12) {
-        double ysize = m_y.size();
-        for (auto i = 0; i < m_y.size(); i++) {
+        double ysize = static_cast<double>(m_y.size());
+        for (size_t i = 0; i < m_y.size(); i++) {
             m_y[i] = value / ysize;
         }
     }
     else {
-        for (auto i = 0; i < m_y.size(); i++) {
+        for (size_t i = 0; i < m_y.size(); i++) {
             m_y[i] *= value / current_population;
         }
     }
@@ -181,7 +181,7 @@ size_t Populations::get_flat_index(std::vector<size_t> const& indices) const
 
 void Populations::apply_constraints()
 {
-    for (auto i = 0; i < m_y.size(); i++) {
+    for (size_t i = 0; i < m_y.size(); i++) {
         if (m_y[i] < 0) {
             log_warning("Constraint check: Compartment size {:d} changed from {:.4f} to {:d}", i, m_y[i], 0);
             m_y[i] = 0;
@@ -191,7 +191,7 @@ void Populations::apply_constraints()
 
 void Populations::check_constraints() const
 {
-    for (auto i = 0; i < m_y.size(); i++) {
+    for (size_t i = 0; i < m_y.size(); i++) {
         if (m_y[i] < 0) {
             log_error("Constraint check: Compartment size {:d} is {:.4f} and smaller {:d}", i, m_y[i], 0);
         }

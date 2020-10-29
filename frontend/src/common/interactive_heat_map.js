@@ -75,7 +75,7 @@ export default class InteractiveHeatMap {
       target: this.#stateChoroplethSeries.mapPolygons.template,
       min: am4core.color('#DDD', 1),
       max: am4core.color('#F00', 1),
-      logarithmic: true,
+      logarithmic: false,
     };
     this.#stateChoroplethSeries.heatRules.push(this.#stateHeatRule);
 
@@ -139,7 +139,7 @@ export default class InteractiveHeatMap {
   setStateValues(values) {
     if (values) {
       for (let stateDatum of this.#stateChoroplethSeries.data) {
-        stateDatum.value = values.get(stateDatum.id);
+        stateDatum.value = values.get(stateDatum.id) ?? 0;
       }
 
       this.#stateChoroplethSeries.invalidateRawData();
@@ -155,7 +155,7 @@ export default class InteractiveHeatMap {
     if (this.#countySeries.has(this.selectedState)) {
       const series = this.#countySeries.get(this.selectedState);
       for (let countyDatum of series.data) {
-        countyDatum.value = values.get(parseInt(countyDatum.RS, 10));
+        countyDatum.value = values.get(parseInt(countyDatum.RS, 10)) ?? 0;
       }
 
       series.invalidateRawData();
@@ -180,7 +180,7 @@ export default class InteractiveHeatMap {
       target: countyPolygonTemplate,
       min: am4core.color('#DDD', 1),
       max: am4core.color('#F00', 1),
-      logarithmic: true,
+      logarithmic: false,
     };
 
     newSeries.heatRules.push(countyHeatRule);

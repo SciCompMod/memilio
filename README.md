@@ -1,6 +1,7 @@
 # Epidemiology #
 
 [![pipeline status](https://gitlab.dlr.de/hpc-against-corona/epidemiology/badges/master/pipeline.svg)](https://gitlab.dlr.de/hpc-against-corona/epidemiology/-/commits/master)
+[![coverage report](https://gitlab.dlr.de/hpc-against-corona/epidemiology/badges/master/coverage.svg)](https://gitlab.dlr.de/hpc-against-corona/epidemiology/-/jobs/artifacts/master/file/coverage_report/index.html?job=test-cpp)
 
 This is a common project between the department of Systems Immunology (SIMM) of the he Helmholtz Center for Infection Research (HZI) and the Institute for Software Technology of the German Aerospace Center (DLR). This project will bring cutting edge and compute intensive epidemiological models to a large scale, which enables a precise and high-resolution spatiotemporal pandemic simulation for entire countries.
 
@@ -23,8 +24,16 @@ See thirdparty/CMakeLists.txt for details.
 In order to use IO of parameters and simulation results (*epidemiology_io* library), the tools
   * tixi3 (https://github.com/DLR-SC/tixi) and 
   * hdf5 (https://www.hdfgroup.org/ e.g., via apt install libhdf5-serial-dev)
-  need to be installed.
+  
+need to be installed.
 
+In addition, *epidemiology_io* is bundled with
+ * jsoncpp (https://github.com/open-source-parsers/jsoncpp)
+ * Boost Filesystem (https://www.boost.org/)
+
+ All bundled libraries can be built as part of this project and don't need to be installed.
+
+ See here for more information on 3rdparty-dependencies: [cpp/thirdparty/Readme.rst](cpp/thirdparty/Readme.rst)
 
 **Installation** 
 
@@ -36,12 +45,25 @@ In order to use IO of parameters and simulation results (*epidemiology_io* libra
   * an example via ./examples/secir_ageres
   * all unit tests via ./tests/runUnitTests
 
+*Running code coverage analysis*
+
+Code coverage analysis currently only works on linux with the "Makefile" generator and in Debug mode. To perform
+the analysis, configure cmake as follows
+
+    cmake -DCMAKE_BUILD_TYPE=Debug -DEPI_TEST_COVERAGE=ON ..
+
+This step needs to have the tool lcov installed. To execute the coverage, run
+
+    cmake --build . --target coverage
+
+It will generate a html report inside the `coverage` directory.
+
 *Steps to execute C++ code via python bindings*
 
-*  Create a python virtual environment via python3 -m venv virtualenv/
+*  Create a python virtual environment via python3 -m venv virtualenv/ somewhere under the main epidemiology/ folder
 *  Activate the environment via source virtualenv/bin/activate
 *  Do pip3 install scikit-build
-*  In epidemiology-cpp/pycode do
+*  In epidemiology/pycode do
    *  python3 setup.py build
    *  python3 setup.py install
    *  execute some example

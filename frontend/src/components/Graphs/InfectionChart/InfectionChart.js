@@ -52,12 +52,16 @@ class InfectionChart extends Component {
     this.createSeries(t('rki.deaths'), 'rkid');
     this.createSeries(t('rki.recovered'), 'rkir');
 
-    this.createSeries(t('parameters.sus'), 'seirs');
-    this.createSeries(t('parameters.exposed'), 'seire');
-    this.createSeries(t('parameters.infected'), 'seiri');
-    this.createSeries(t('parameters.recovered'), 'seirr');
+    this.createSeries(t('parameters.sus.label'), 'seirs');
+    this.createSeries(t('parameters.exposed.label'), 'seire');
+    this.createSeries(t('parameters.infected.label'), 'seiri');
+    this.createSeries(t('parameters.recovered.label'), 'seirr');
 
     this.updateData();
+  }
+
+  componentWillUnmount() {
+    // this.#chart.dispose();
   }
 
   /**
@@ -140,9 +144,9 @@ class InfectionChart extends Component {
         }
 
         const curr = timeMap.get(entry.date);
-        curr.rkic = entry.Confirmed;
-        curr.rkid = entry.Deaths;
-        curr.rkir = entry.Recovered;
+        curr.rkic = entry.confirmed;
+        curr.rkid = entry.deaths;
+        curr.rkir = entry.recovered;
       }
     }
 

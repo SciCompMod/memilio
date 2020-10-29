@@ -17,7 +17,12 @@ namespace epi
  * @brief inserts element in a sorted vector, replacing items that are equal
  * precondition:  elements in the vector are partially sorted and unique according the predicate
  * postcondition: same as precondition, additionally contains exactly one element that is equal to item, 
- *                order of other items is conserved
+ *                order of other items is preserved
+ * @param vec vector where item will be inserted
+ * @param item item to insert
+ * @param pred binary comparator, pred(item, a) returns true if item should go before element a,
+ *                                pred(a, item) returns true if element a should go before item
+ * @return iterator to inserted or replaced item in vec
  */
 template <typename T, typename Pred>
 typename std::vector<T>::iterator insert_sorted_replace(std::vector<T>& vec, T const& item, Pred pred)
@@ -28,11 +33,11 @@ typename std::vector<T>::iterator insert_sorted_replace(std::vector<T>& vec, T c
     assert(ub - lb <= 1); //input vector contains at most one item that is equal to the new item
     if (ub - lb == 1) {
         *lb = item;
+        return lb;
     }
     else {
-        vec.insert(lb, item);
+        return vec.insert(lb, item);
     }
-    return lb;
 }
 
 template <typename T>
@@ -152,7 +157,7 @@ namespace details
     /**
      * breaks the recursion of path_join_rec.
      */
-    inline void path_join_rec(std::stringstream& ss, bool w)
+    inline void path_join_rec(std::stringstream&, bool)
     {
     }
 

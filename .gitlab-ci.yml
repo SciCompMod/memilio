@@ -7,16 +7,47 @@ build-cpp:
     - echo 'deb http://download.opensuse.org/repositories/science:/dlr/xUbuntu_16.04/ /' | sudo tee /etc/apt/sources.list.d/science:dlr.list
     - wget -O - https://download.opensuse.org/repositories/science:dlr/xUbuntu_16.04/Release.key  | sudo apt-key add -
     - sudo apt -qq update
-    - sudo apt -qq -y install libeigen3-dev libhdf5-dev libtixi3-dev
+    - sudo apt -qq -y install libhdf5-dev libtixi3-dev lcov
   script:
     - cd cpp
     - mkdir build && cd build
-    - cmake -G Ninja -DEPI_USE_BUNDLED_EIGEN=OFF -DEPI_BUILD_EPI_IO=ON ..
-    - cmake --build .
+    - cmake -DCMAKE_BUILD_TYPE=Debug -DCMAKE_CXX_FLAGS="-std=c++14 -pedantic" -DEPI_BUILD_EPI_IO=ON -DEPI_TEST_COVERAGE=ON ..
+    - make -j
   artifacts:
     expire_in: 2 hrs
     paths:
       - cpp/build/
+
+build-cpp-win:
+  stage: build
+  tags:
+    - SC-0030VM
+  before_script:
+    - $env:Path = "c:\Windows\System32"
+    - $env:Path += ";c:\Devel\Tools\cmake-3.18.3-win64-x64\bin"
+    - $env:Path += ";c:\Program Files\7-zip"
+    - $env:Path += ";c:\Devel\Tools\ninja-1.10.1"
+    - md -Force C:\Devel\Libraries\
+    - ci\activate_vc2019.ps1
+    - If (!(Test-Path -Path "c:\Devel\Libraries\TIXI-3.1.1-win64")) {
+        Write-Output "Downloading TiXI libraries";
+        (new-object System.Net.WebClient).Downloadfile("https://github.com/DLR-SC/tixi/releases/download/v3.1.1/TIXI-3.1.1-win64.zip", "c:\Devel\Libraries\TIXI-3.1.1-win64.zip");
+        Write-Output "Extract TiXI libraries";
+        7z x -y "c:\Devel\Libraries\TIXI-3.1.1-win64.zip" -oC:\Devel\Libraries
+      }
+  script:
+    - cd cpp
+    - md -Force build-win
+    - cd build-win
+    - cmake --version
+    - cmake -G "Ninja" -DCMAKE_BUILD_TYPE=Release -DEPI_USE_BUNDLED_EIGEN=ON -DEPI_BUILD_EPI_IO=ON -DHDF5_USE_STATIC_LIBRARIES=ON -DHDF5_DIR=C:\Devel\Libraries\HDF5-1.10.1-win64\cmake -Dtixi3_DIR=C:\Devel\Libraries\TIXI-3.1.1-win64\lib\tixi3 ..
+    - cp "c:\Devel\Libraries\TIXI-3.1.1-win64\bin\tixi3.dll" "tests"
+    - cmake --build .
+
+  artifacts:
+    expire_in: 2 hrs
+    paths:
+      - cpp/build-win/
 
 build-py:
   tags:
@@ -35,6 +66,30 @@ build-py:
     paths:
       - pycode/wheelhouse/*.whl
 
+build-py-win:
+  tags:
+    - SC-0030VM
+  stage: build
+  before_script:
+    - ci\activate_vc2019.ps1
+    - cd pycode
+    - C:\Devel\Lang\Python-3.7-win64\python.exe -m venv venv37
+    - C:\Devel\Lang\Python-3.8-win64\python.exe -m venv venv38
+  script:
+    - venv38\Scripts\activate
+    - python setup.py bdist_wheel
+    - deactivate
+    - venv37\Scripts\activate
+    - python setup.py bdist_wheel
+    - deactivate
+  after_script:
+    - cd pycode
+    - Remove-Item -path venv37 -recurse
+    - Remove-Item -path venv38 -recurse
+  artifacts:
+    paths:
+      - pycode/dist/*.whl
+
 # run tests using the binary built before
 test-cpp:
   tags:
@@ -47,15 +102,39 @@ test-cpp:
     - echo 'deb http://download.opensuse.org/repositories/science:/dlr/xUbuntu_18.04/ /' | tee /etc/apt/sources.list.d/science:dlr.list
     - wget -O - https://download.opensuse.org/repositories/science:dlr/xUbuntu_18.04/Release.key  | apt-key add -
     - apt -qq update
-    - apt -qq -y install libtixi3
+    - apt -qq -y install libtixi3 g++ python3-pip
+    - python3 -m pip install gcovr
   dependencies:
     - build-cpp
   script:
     - cd cpp/build/tests
-    - ./runUnitTests --gtest_output="xml:report.xml"
+    - ./runUnitTests  --gtest_output="xml:report.xml"
+    - cd ../../../
+    - gcovr -f cpp/epidemiology
+    - gcovr -f cpp/epidemiology --xml -o coverage.xml
+    - mkdir coverage_report && cd coverage_report
+    - gcovr -r .. -f ../cpp/epidemiology --exclude-throw-branches --html --html-details -o index.html
   artifacts:
     reports:
       junit: cpp/build/tests/report.xml
+      cobertura: coverage.xml
+    paths:
+      - coverage_report
+    expire_in: 1 week
+
+# run tests using the binary built before
+test-cpp-win:
+  tags:
+    - SC-0030VM
+  stage: test
+  dependencies:
+    - build-cpp-win
+  script:
+    - cd cpp/build-win/tests
+    - .\runUnitTests.exe --gtest_output="xml:report.xml"
+  artifacts:
+    reports:
+      junit: cpp/build-win/tests/report.xml
 
 test-py:
   tags:
@@ -70,6 +149,7 @@ test-py:
     - python3.6 -m pip install --upgrade pip
     - for pkg in `ls pycode/wheelhouse/*36*.whl`; do python3.6 -m pip install $pkg; done
     - pip install pyfakefs
+    - pip install freezegun
   script:
     - cd pycode/test
     - python3 -m unittest
@@ -77,6 +157,7 @@ test-py:
     - getpopuldata --help
     - getjhdata --help
     - getspaindata --help
+    - getdividata --help
     - getalldata --help
     - cleandata --help
 
@@ -98,6 +179,7 @@ download-data:
     - getpopuldata -o data_dl
     - getjhdata -o data_dl
     - getspaindata -o data_dl
+    - getdividata -o data_dl
   artifacts:
     paths:
       - data_dl/*.json

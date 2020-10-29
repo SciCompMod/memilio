@@ -1,7 +1,7 @@
 #include <epidemiology/math/euler.h>
 #include <epidemiology/math/adapt_rk.h>
+#include <actions.h>
 
-#include <gtest_helpers.h>
 #include <gtest/gtest.h>
 #include <gmock/gmock.h>
 #include <string>
@@ -10,7 +10,7 @@
 #include <ios>
 #include <cmath>
 
-void sin_deriv(Eigen::Ref<Eigen::VectorXd const> y, const double t, Eigen::Ref<Eigen::VectorXd> dydt)
+void sin_deriv(Eigen::Ref<Eigen::VectorXd const> /*y*/, const double t, Eigen::Ref<Eigen::VectorXd> dydt)
 {
     dydt[0] = std::cos(t);
 }
@@ -20,7 +20,7 @@ class TestVerifyNumericalIntegrator : public testing::Test
 protected:
     void SetUp() override
     {
-        t    = 0.;
+        t0    = 0.;
         tmax = 2 * std::acos(-1); // 2PI
         err  = 0;
     }
@@ -29,7 +29,7 @@ public:
     std::vector<Eigen::VectorXd> y;
     std::vector<Eigen::VectorXd> sol;
 
-    double t;
+    double t0;
     double tmax;
     size_t n;
     double dt;
@@ -39,18 +39,19 @@ public:
 TEST_F(TestVerifyNumericalIntegrator, euler_sine)
 {
     n   = 1000;
-    dt  = (tmax - t) / n;
+    dt  = (tmax - t0) / n;
     y   = std::vector<Eigen::VectorXd>(n, Eigen::VectorXd::Constant(1, 0));
     sol = std::vector<Eigen::VectorXd>(n, Eigen::VectorXd::Constant(1, 0));
 
     sol[0][0]     = std::sin(0);
     sol[n - 1][0] = std::sin((n - 1) * dt);
 
-    auto f = [](auto&& y, auto&& t, auto&& dydt) {
+    auto f = [](auto&& /*y*/, auto&& t, auto&& dydt) {
         dydt[0] = std::cos(t);
     };
     epi::EulerIntegratorCore euler;
 
+    auto t = t0;
     for (size_t i = 0; i < n - 1; i++) {
         sol[i + 1][0] = std::sin((i + 1) * dt);
 
@@ -70,7 +71,7 @@ TEST_F(TestVerifyNumericalIntegrator, runge_kutta_fehlberg45_sine)
 {
 
     n   = 10;
-    dt  = (tmax - t) / n;
+    dt  = (tmax - t0) / n;
     y   = std::vector<Eigen::VectorXd>(n, Eigen::VectorXd::Constant(1, 0));
     sol = std::vector<Eigen::VectorXd>(n, Eigen::VectorXd::Constant(1, 0));
 
@@ -81,7 +82,7 @@ TEST_F(TestVerifyNumericalIntegrator, runge_kutta_fehlberg45_sine)
     sol[0][0] = std::sin(0);
 
     size_t i      = 0;
-    double t_eval = t;
+    double t_eval = t0;
     // printf("\n t: %.8f\t sol %.8f\t rkf %.8f", t, sol[0][0], y[0][0]);
     while (t_eval - tmax < 1e-10) {
 
@@ -89,8 +90,6 @@ TEST_F(TestVerifyNumericalIntegrator, runge_kutta_fehlberg45_sine)
             sol.push_back(Eigen::VectorXd::Constant(1, 0));
             y.push_back(Eigen::VectorXd::Constant(1, 0));
         }
-
-        double dt_old = dt;
 
         rkf45.step(&sin_deriv, y[i], t_eval, dt, y[i + 1]); //
 
@@ -135,7 +134,7 @@ TEST(TestOdeIntegrator, integratorDoesTheRightNumberOfSteps)
     auto mock_core = std::make_shared<testing::StrictMock<MockIntegratorCore>>();
     EXPECT_CALL(*mock_core, step).Times(100);
 
-    auto f          = [](auto&& y, auto&& t, auto&& dydt) {};
+    auto f          = [](auto&&, auto&&, auto&&) {};
     auto integrator = epi::OdeIntegrator(f, 0, Eigen::VectorXd::Constant(1, 0.0), 1e-2, mock_core);
     integrator.advance(1);
     EXPECT_EQ(integrator.get_result().get_num_time_points(), 101);
@@ -143,7 +142,7 @@ TEST(TestOdeIntegrator, integratorDoesTheRightNumberOfSteps)
 
 TEST(TestOdeIntegrator, integratorStopsAtTMax)
 {
-    auto f          = [](auto&& y, auto&& t, auto&& dydt) {};
+    auto f          = [](auto&&, auto&&, auto&&) {};
     auto integrator = epi::OdeIntegrator(f, 0, Eigen::VectorXd::Constant(1, 0.0), 0.137,
                                          std::make_shared<testing::NiceMock<MockIntegratorCore>>());
     integrator.advance(2.34);
@@ -186,7 +185,7 @@ TEST(TestOdeIntegrator, integratorUpdatesStepsize)
         EXPECT_CALL(*mock_core, step(_, _, _, Eq(6), _)).Times(1);
     }
 
-    auto f          = [](auto&& y, auto&& t, auto&& dydt) {};
+    auto f          = [](auto&&, auto&&, auto&&) {};
     auto integrator = epi::OdeIntegrator(f, 0, Eigen::VectorXd::Constant(1, 0), 1.0, mock_core);
     integrator.advance(10.0);
     integrator.advance(23.0);
@@ -207,7 +206,7 @@ TEST(TestOdeIntegrator, integratorContinuesAtLastState)
     auto dy         = Eigen::VectorXd::Constant(1, 1);
     auto y0         = Eigen::VectorXd::Constant(1, 0);
     auto mock_core  = std::make_shared<testing::StrictMock<MockIntegratorCore>>();
-    auto f          = [](auto&& y, auto&& t, auto&& dydt) {};
+    auto f          = [](auto&&, auto&&, auto&&) {};
     auto integrator = epi::OdeIntegrator(f, 0, y0, dt, mock_core);
 
     {

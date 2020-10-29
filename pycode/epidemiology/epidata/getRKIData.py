@@ -9,11 +9,11 @@ from epidemiology.epidata import getDataIntoPandasDataFrame as gd
 from epidemiology.epidata import defaultDict as dd
 
 
-
 def get_rki_data(read_data=dd.defaultDict['read_data'],
-                 make_plot=dd.defaultDict['make_plot'],
                  out_form=dd.defaultDict['out_form'],
-                 out_folder=dd.defaultDict['out_folder']):
+                 out_folder=dd.defaultDict['out_folder'],
+                 make_plot=dd.defaultDict['make_plot'],
+):
 
    directory = os.path.join(out_folder, 'Germany/')
    gd.check_dir(directory)
@@ -141,7 +141,7 @@ def get_rki_data(read_data=dd.defaultDict['read_data'],
    gbNF_cs = gbNF.cumsum()
 
    # outout to json file
-   gd.write_dataframe(gbNF_cs, directory, "infected_rki", out_form)
+   gd.write_dataframe(gbNF_cs.reset_index(), directory, "infected_rki", out_form)
 
 
    if(make_plot == True):
@@ -156,7 +156,7 @@ def get_rki_data(read_data=dd.defaultDict['read_data'],
    gbNT_cs = gbNT.cumsum()
 
    # output
-   gd.write_dataframe(gbNT_cs, directory, "deaths_rki", out_form)
+   gd.write_dataframe(gbNT_cs.reset_index(), directory, "deaths_rki", out_form)
 
    if(make_plot == True):
       gbNT_cs.plot( title = 'COVID-19 deaths', grid = True,
@@ -164,7 +164,7 @@ def get_rki_data(read_data=dd.defaultDict['read_data'],
       plt.tight_layout()
       plt.show()
 
-      dfF.agg({"AnzahlFall": sum, "AnzahlTodesfall": sum, "AnzahlGenesen": sum}) \
+      dfF.agg({AnzahlFall: sum, AnzahlTodesfall: sum, AnzahlGenesen: sum}) \
          .plot( title = 'COVID-19 infections, deaths, recovered', grid = True,
                              kind = 'bar' )
       plt.tight_layout()
@@ -281,9 +281,9 @@ def get_rki_data(read_data=dd.defaultDict['read_data'],
 
 
       # Dead by "Altersgruppe":
-      gbNTAG = df[df.NeuerTodesfall >= 0].groupby( Altersgruppe ).sum()
+      gbNTAG = df[df.NeuerTodesfall >= 0].groupby( Altersgruppe ).agg({AnzahlTodesfall: sum})
 
-      gbNTAG.AnzahlTodesfall.plot( title = 'COVID-19 deaths', grid = True, 
+      gbNTAG.plot( title = 'COVID-19 deaths', grid = True,
                              kind = 'bar' )
       plt.tight_layout()
       plt.show()
@@ -354,9 +354,9 @@ def get_rki_data(read_data=dd.defaultDict['read_data'],
 
 def main():
 
-   [read_data, make_plot, out_form, out_folder] = gd.cli('Download data from RKI')
+   [read_data, out_form, out_folder, make_plot] = gd.cli("rki")
 
-   get_rki_data(read_data, make_plot, out_form, out_folder)
+   get_rki_data(read_data, out_form, out_folder, make_plot)
 
 if __name__ == "__main__":
 

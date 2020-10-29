@@ -2,8 +2,8 @@
 #define POPULATIONS_H
 
 #include <epidemiology/utils/uncertain_value.h>
+#include "epidemiology/utils/eigen.h"
 
-#include <Eigen/Core>
 #include <vector>
 
 namespace epi

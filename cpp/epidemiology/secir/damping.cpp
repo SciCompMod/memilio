@@ -1,5 +1,6 @@
 #include "epidemiology/secir/damping.h"
 #include "epidemiology/utils/stl_util.h"
+#include "epidemiology/math/smoother.h"
 
 #include <algorithm>
 #include <cassert>
@@ -74,20 +75,8 @@ double Dampings::get_factor(double day) const
                 double day_upper_min = day_upper - descent_area;
                 double fac_lower     = (ub - 1)->factor; // factor at lower bound day
                 double fac_upper     = (ub)->factor; // factor at upper bound day
-                double ret;
-                if (fac_lower >= fac_upper) {
-                    // f(x) = 0.5*(fac_lower - fac_upper)*cos(pi/ descent_area*(x-day_upper_min))+0.5*(fac_lower + fac_upper)
-                    ret = 0.5 * (fac_lower - fac_upper) *
-                              std::cos(3.14159265358979323846 / descent_area * (day - day_upper_min)) +
-                          0.5 * (fac_lower + fac_upper);
-                }
-                else {
-                    ret = 0.5 * (fac_upper - fac_lower) *
-                              std::cos(3.14159265358979323846 / descent_area * (descent_area + (day - day_upper_min))) +
-                          0.5 * (fac_lower + fac_upper);
-                }
 
-                // printf("\n\n in descent.. day %.6f factor %.6f ", day, ret);
+                double ret = smoother_cosine(day, day_upper_min, day_upper, fac_lower, fac_upper);
 
                 return ret;
             }

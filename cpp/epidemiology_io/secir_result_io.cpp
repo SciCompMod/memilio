@@ -1,9 +1,9 @@
 #include <epidemiology_io/secir_result_io.h>
+#include "epidemiology_io/hdf5_cpp.h"
 #include <epidemiology/utils/eigen_util.h>
 #include <epidemiology/secir/secir.h>
 #include <epidemiology/secir/damping.h>
 
-#include <H5Cpp.h>
 #include <vector>
 #include <iostream>
 #include <string>
@@ -17,19 +17,17 @@ void save_result(const TimeSeries<double>& result, const std::string& filename)
 {
     const int n_dims = 2;
 
-    const int n_data    = result.get_num_time_points();
+    const int n_data    = static_cast<int>(result.get_num_time_points());
     const int n_compart = SecirCompartments::SecirCount;
-    const int nb_groups = result[0].size() / n_compart;
+    const int nb_groups = static_cast<int>(result[0].size()) / n_compart;
 
     H5File file(filename, H5F_ACC_TRUNC);
 
-    hsize_t dims[] = {static_cast<hsize_t>(n_data)};
-    auto dataspace = DataSpace(1, dims);
-
-    auto DATASET_NAME = "Time";
-    auto dataset      = file.createDataSet(DATASET_NAME, PredType::NATIVE_DOUBLE, dataspace);
-    auto times        = std::vector<double>(result.get_times().begin(), result.get_times().end());
-    dataset.write(times.data(), PredType::NATIVE_DOUBLE);
+    hsize_t dims_t[] = {static_cast<hsize_t>(n_data)};
+    auto dspace_t    = DataSpace(1, dims_t);
+    auto dset_t      = file.createDataSet("Time", PredType::NATIVE_DOUBLE, dspace_t);
+    auto times       = std::vector<double>(result.get_times().begin(), result.get_times().end());
+    dset_t.write(times.data(), PredType::NATIVE_DOUBLE);
 
     auto total =
         std::vector<Eigen::Matrix<double, n_compart, 1>>(n_data, Eigen::Matrix<double, n_compart, 1>::Constant(0));
@@ -37,7 +35,7 @@ void save_result(const TimeSeries<double>& result, const std::string& filename)
     for (int group = 0; group < nb_groups + 1; ++group) {
         auto dset = std::vector<Eigen::Matrix<double, n_compart, 1>>(n_data);
         if (group < nb_groups) {
-            for (size_t irow = 0; irow < result.get_num_time_points(); ++irow) {
+            for (size_t irow = 0; irow < static_cast<size_t>(result.get_num_time_points()); ++irow) {
                 auto v     = result[irow].eval();
                 auto slice = epi::slice(v, {group * n_compart, n_compart});
                 dset[irow] = slice;
@@ -45,16 +43,15 @@ void save_result(const TimeSeries<double>& result, const std::string& filename)
             }
         }
 
-        hsize_t dims[] = {static_cast<hsize_t>(n_data), static_cast<hsize_t>(n_compart)};
-        auto dataspace = DataSpace(n_dims, dims);
-
-        auto DATASET_NAME = group == nb_groups ? std::string("Total") : "Group" + std::to_string(group + 1);
-        auto dataset      = file.createDataSet(DATASET_NAME, PredType::NATIVE_DOUBLE, dataspace);
+        hsize_t dims_values[] = {static_cast<hsize_t>(n_data), static_cast<hsize_t>(n_compart)};
+        auto dspace_values    = DataSpace(n_dims, dims_values);
+        auto dset_name        = group == nb_groups ? std::string("Total") : "Group" + std::to_string(group + 1);
+        auto dset_values      = file.createDataSet(dset_name, PredType::NATIVE_DOUBLE, dspace_values);
 
         if (group == nb_groups)
-            dataset.write(total.data(), PredType::NATIVE_DOUBLE);
+            dset_values.write(total.data(), PredType::NATIVE_DOUBLE);
         else
-            dataset.write(dset.data(), PredType::NATIVE_DOUBLE);
+            dset_values.write(dset.data(), PredType::NATIVE_DOUBLE);
     }
 }
 
@@ -81,7 +78,7 @@ SecirSimulationResult read_result(const std::string& filename, int nb_groups)
     TimeSeries<double> groups(nb_compart * nb_groups), totals(nb_compart);
     groups.reserve(dims_time[0]);
     totals.reserve(dims_time[0]);
-    for (int i = 0; i < dims_time[0]; i++) {
+    for (size_t i = 0; i < dims_time[0]; i++) {
         groups.add_time_point(time[i]);
         totals.add_time_point(time[i]);
     }
@@ -101,8 +98,8 @@ SecirSimulationResult read_result(const std::string& filename, int nb_groups)
         auto group = std::vector<double[nb_compart]>(dims_group[0]);
         dataset_group.read(group.data(), PredType::NATIVE_DOUBLE, mspace2, filespace_group);
 
-        for (int j = 0; j < dims_group[0]; j++) {
-            for (int k = 0; k < nb_compart; k++) {
+        for (size_t j = 0; j < dims_group[0]; j++) {
+            for (size_t k = 0; k < nb_compart; k++) {
                 groups[j][nb_compart * i + k] = group[j][k];
             }
         }

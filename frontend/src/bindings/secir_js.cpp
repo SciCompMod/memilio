@@ -4,6 +4,10 @@
 #include <epidemiology/secir/damping.h>
 #include <vector>
 
+#ifdef DEBUG
+#include <sanitizer/lsan_interface.h>
+#endif
+
 namespace js = emscripten;
 
 class SecirResult
@@ -35,28 +39,26 @@ public:
 
 SecirResult simulate_secir(double t0, double tmax, double dt, epi::SecirParams const& params)
 {
-    std::vector<Eigen::VectorXd> seir(0);
-    auto times = simulate(t0, tmax, dt, params, seir);
+    auto result_timeseries = simulate(t0, tmax, dt, params);
 
-    SecirResult result;
-    if (seir.size() < 1 || seir[0].size() != epi::SecirCompartments::SecirCount) {
+    if (result_timeseries.get_num_time_points() < 1 ||
+        result_timeseries.get_num_elements() != epi::SecirCompartments::SecirCount) {
         throw std::runtime_error("Invalid result from secir simulation");
     }
 
-    size_t n_data = seir.size();
-    result.resize(n_data);
+    SecirResult result;
+    result.resize(result_timeseries.get_num_time_points());
 
-    for (size_t irow = 0; irow < seir.size(); ++irow) {
-
-        result.t[irow]       = times[irow];
-        result.nb_sus[irow]  = seir[irow][0];
-        result.nb_exp[irow]  = seir[irow][1];
-        result.nb_car[irow]  = seir[irow][2];
-        result.nb_inf[irow]  = seir[irow][3];
-        result.nb_hosp[irow] = seir[irow][4];
-        result.nb_icu[irow]  = seir[irow][5];
-        result.nb_rec[irow]  = seir[irow][6];
-        result.nb_dead[irow] = seir[irow][7];
+    for (size_t irow = 0; irow < result_timeseries.get_num_time_points(); ++irow) {
+        result.t[irow]       = result_timeseries.get_times()[irow];
+        result.nb_sus[irow]  = result_timeseries[irow][0];
+        result.nb_exp[irow]  = result_timeseries[irow][1];
+        result.nb_car[irow]  = result_timeseries[irow][2];
+        result.nb_inf[irow]  = result_timeseries[irow][3];
+        result.nb_hosp[irow] = result_timeseries[irow][4];
+        result.nb_icu[irow]  = result_timeseries[irow][5];
+        result.nb_rec[irow]  = result_timeseries[irow][6];
+        result.nb_dead[irow] = result_timeseries[irow][7];
     }
 
     return result;
@@ -144,6 +146,8 @@ EMSCRIPTEN_BINDINGS(secirjs)
         .constructor<>()
         .function("set_infection_from_contact",
                   js::select_overload<void(double)>(&epi::SecirParams::Probabilities::set_infection_from_contact))
+        .function("set_carrier_infectability",
+                  js::select_overload<void(double)>(&epi::SecirParams::Probabilities::set_carrier_infectability))
         .function("set_asymp_per_infectious",
                   js::select_overload<void(double)>(&epi::SecirParams::Probabilities::set_asymp_per_infectious))
         .function("set_risk_from_symptomatic",
@@ -158,6 +162,8 @@ EMSCRIPTEN_BINDINGS(secirjs)
         // at the moment, no const getters available in JS
         .function("get_infection_from_contact", js::select_overload<epi::UncertainValue&()>(
                                                     &epi::SecirParams::Probabilities::get_infection_from_contact))
+        .function("get_carrier_infectability", js::select_overload<epi::UncertainValue&()>(
+                                                   &epi::SecirParams::Probabilities::get_carrier_infectability))
         .function("get_asymp_per_infectious", js::select_overload<epi::UncertainValue&()>(
                                                   &epi::SecirParams::Probabilities::get_asymp_per_infectious))
         .function("get_risk_from_symptomatic", js::select_overload<epi::UncertainValue&()>(
@@ -178,16 +184,50 @@ EMSCRIPTEN_BINDINGS(secirjs)
         .function("get_dampings", &epi::ContactFrequencyMatrix::get_dampings)
         .function("add_damping", &epi::ContactFrequencyMatrix::add_damping);
 
+    js::class_<epi::UncertainContactMatrix>("UncertainContactMatrix")
+        .constructor<epi::ContactFrequencyMatrix>()
+        .function("get_cont_freq_mat",
+                  js::select_overload<epi::ContactFrequencyMatrix&()>(&epi::UncertainContactMatrix::get_cont_freq_mat));
+
     js::class_<epi::SecirParams>("SecirParams")
-        .constructor<size_t>()
+        .constructor<epi::ContactFrequencyMatrix&>()
         .property("times", &epi::SecirParams::times)
         .property("populations", &epi::SecirParams::populations)
         .property("probabilities", &epi::SecirParams::probabilities)
+        .function("set_icu_capacity", js::select_overload<void(double)>(&epi::SecirParams::set_icu_capacity))
+        .function("get_icu_capacity", js::select_overload<epi::UncertainValue&()>(&epi::SecirParams::get_icu_capacity))
+        .function("set_start_day", &epi::SecirParams::set_start_day)
+        .function("get_start_day", &epi::SecirParams::get_start_day)
+        .function("set_seasonality", js::select_overload<void(double)>(&epi::SecirParams::set_seasonality))
+        .function("get_seasonality", js::select_overload<epi::UncertainValue&()>(&epi::SecirParams::get_seasonality))
         .function("get_contact_patterns",
-                  js::select_overload<epi::UncertainContactMatrix&()>(&epi::SecirParams::get_contact_patterns));
+                  js::select_overload<epi::UncertainContactMatrix&()>(&epi::SecirParams::get_contact_patterns))
+        .function("set_contact_patterns", &epi::SecirParams::set_contact_patterns);
 
     js::function("simulate", &simulate_secir);
 
+    js::enum_<epi::SecirCompartments>("SecirCompartments")
+        .value("E", epi::SecirCompartments::E)
+        .value("S", epi::SecirCompartments::S)
+        .value("C", epi::SecirCompartments::C)
+        .value("I", epi::SecirCompartments::I)
+        .value("H", epi::SecirCompartments::H)
+        .value("U", epi::SecirCompartments::U)
+        .value("R", epi::SecirCompartments::R)
+        .value("D", epi::SecirCompartments::D)
+        .value("SecirCount", epi::SecirCompartments::SecirCount);
+
     js::register_vector<double>("VectorDouble");
+    js::register_vector<size_t>("VectorSizeT");
     js::register_vector<epi::SecirParams>("VectorSecirParams");
+    js::register_vector<epi::SecirParams::Probabilities>("VectorSecirParamsProbabilities");
+    js::register_vector<epi::SecirParams::StageTimes>("VectorSecirParamsStageTimes");
+
+#ifdef DEBUG
+    /**
+     * Checks if all memory allocated by the WebAssembly module is freed. If not it will emit a warning with relevant
+     * information about a potential leak.
+     */
+    js::function("doLeakCheck", &__lsan_do_recoverable_leak_check);
+#endif
 }

@@ -1,13 +1,13 @@
 #ifndef SECIR_H
 #define SECIR_H
 
+#include "epidemiology/utils/eigen.h"
 #include "epidemiology/utils/uncertain_value.h"
 #include "epidemiology/math/euler.h"
 #include "epidemiology/math/adapt_rk.h"
 #include "epidemiology/secir/uncertain_matrix.h"
 #include "epidemiology/secir/populations.h"
 
-#include <Eigen/Core>
 #include <vector>
 
 namespace epi
@@ -85,21 +85,27 @@ class SecirParams
 {
 public:
     SecirParams(size_t nb_groups = 1)
-        : m_contact_patterns(ContactFrequencyMatrix{nb_groups})
-        , populations(Populations({nb_groups, SecirCount}))
+        : populations(Populations({nb_groups, SecirCount}))
+        , times(nb_groups, StageTimes())
+        , probabilities(nb_groups, Probabilities())
         , m_num_groups{nb_groups}
+        , m_contact_patterns(ContactFrequencyMatrix{nb_groups})
+        , m_tstart{0}
+        , m_seasonality{0}
+        , m_icu_capacity{std::numeric_limits<double>::max()}
     {
-        times         = std::vector<StageTimes>(nb_groups, StageTimes());
-        probabilities = std::vector<Probabilities>(nb_groups, Probabilities());
     }
 
     SecirParams(ContactFrequencyMatrix cont_freq_matrix)
-        : m_contact_patterns(cont_freq_matrix)
-        , populations(Populations({(size_t)cont_freq_matrix.get_size(), SecirCount}))
+        : populations(Populations({(size_t)cont_freq_matrix.get_size(), SecirCount}))
+        , times(cont_freq_matrix.get_size(), StageTimes())
+        , probabilities(cont_freq_matrix.get_size(), Probabilities())
         , m_num_groups{(size_t)cont_freq_matrix.get_size()}
+        , m_contact_patterns(cont_freq_matrix)
+        , m_tstart{0}
+        , m_seasonality{0}
+        , m_icu_capacity{std::numeric_limits<double>::max()}
     {
-        times         = std::vector<StageTimes>(cont_freq_matrix.get_size(), StageTimes());
-        probabilities = std::vector<Probabilities>(cont_freq_matrix.get_size(), Probabilities());
     }
 
     size_t get_num_groups() const
@@ -108,6 +114,94 @@ public:
     }
 
     double base_reprod;
+
+    /**
+     * @brief sets the start day in the SECIR model
+     * The start day defines in which season the simulation can be started
+     * If the start day is 180 and simulation takes place from t0=0 to
+     * tmax=100 the days 180 to 280 of the year are simulated
+     * @param tstart start day
+     */
+    void set_start_day(double tstart);
+
+    /**
+     * @brief returns the start day in the SECIR model
+     * The start day defines in which season the simulation can be started
+     * If the start day is 180 and simulation takes place from t0=0 to
+     * tmax=100 the days 180 to 280 of the year are simulated
+     */
+    double get_start_day() const;
+
+    /**
+     * @brief sets the seasonality in the SECIR model
+     * the seasonality is given as (1+k*sin()) where the sine
+     * curve is below one in summer and above one in winter
+     * 
+     * @param seasonality seasonality
+     */
+    void set_seasonality(UncertainValue const& seasonality);
+
+    /**
+     * @brief sets the seasonality in the SECIR model
+     * the seasonality is given as (1+k*sin()) where the sine
+     * curve is below one in summer and above one in winter
+     * 
+     * @param seasonality seasonality
+     */
+    void set_seasonality(double seasonality);
+
+    /**
+     * @brief sets the seasonality in the SECIR model
+     * the seasonality is given as (1+k*sin()) where the sine
+     * curve is below one in summer and above one in winter
+     * 
+     * @param seasonality seasonality
+     */
+    void set_seasonality(ParameterDistribution const& seasonality);
+
+    /**
+     * @brief returns the seasonality in the SECIR model
+     * the seasonality is given as (1+k*sin()) where the sine
+     * curve is below one in summer and above one in winter
+     * 
+     */
+    const UncertainValue& get_seasonality() const;
+
+    /**
+     * @brief returns the seasonality in the SECIR model
+     * the seasonality is given as (1+k*sin()) where the sine
+     * curve is below one in summer and above one in winter
+     * 
+     */
+    UncertainValue& get_seasonality();
+
+    /**
+     * @brief sets the icu capacity in the SECIR model
+     * @param icu_capacity icu capacity
+     */
+    void set_icu_capacity(UncertainValue const& icu_capacity);
+
+    /**
+     * @brief sets the icu capacity in the SECIR model
+     * @param icu_capacity icu capacity
+     */
+    void set_icu_capacity(double icu_capacity);
+
+    /**
+     * @brief sets the icu capacity in the SECIR model
+     * @param icu_capacity icu capacity
+     */
+    void set_icu_capacity(ParameterDistribution const& icu_capacity);
+
+    /**
+     * @brief returns the icu capacity in the SECIR model
+     */
+    const UncertainValue& get_icu_capacity() const;
+
+    /**
+     * @brief returns the icu capacity in the SECIR model
+     */
+    UncertainValue& get_icu_capacity();
 
     // time parameters for the different 'stages' of the disease of scale day or 1/day
     // 'stages' does not refer to the 'states' of the SECIR model but also includes incubation time or contact frequency
@@ -395,6 +489,24 @@ public:
         void set_infection_from_contact(ParameterDistribution const& infprob);
 
         /**
+        * @brief sets the relative carrier infectability 
+        * @param carrinf relative carrier infectability
+        */
+        void set_carrier_infectability(UncertainValue const& carrinf);
+
+        /**
+        * @brief sets the relative carrier infectability
+        * @param carrinf relative carrier infectability
+        */
+        void set_carrier_infectability(double carrinf);
+
+        /**
+        * @brief sets the relative carrier infectability
+        * @param carrinf relative carrier infectability
+        */
+        void set_carrier_infectability(ParameterDistribution const& carrinf);
+
+        /**
         * @brief sets the percentage of asymptomatic cases in the SECIR model
         * @param alpha the percentage of asymptomatic cases
         */
@@ -490,6 +602,12 @@ public:
         UncertainValue& get_infection_from_contact();
 
         /**
+        * @brief set the relative carrier infectability
+        */
+        const UncertainValue& get_carrier_infectability() const;
+        UncertainValue& get_carrier_infectability();
+
+        /**
         * @brief returns the percentage of asymptomatic cases in the SECIR model
         */
         const UncertainValue& get_asymp_per_infectious() const;
@@ -530,7 +648,7 @@ public:
         void check_constraints() const;
 
     private:
-        UncertainValue m_infprob, m_asympinf, m_risksymp, m_hospinf, m_icuhosp, m_deathicu; // probabilities
+        UncertainValue m_infprob, m_carrinf, m_asympinf, m_risksymp, m_hospinf, m_icuhosp, m_deathicu; // probabilities
     };
 
     /**
@@ -566,6 +684,10 @@ private:
     size_t m_num_groups;
 
     UncertainContactMatrix m_contact_patterns;
+
+    double m_tstart;
+    UncertainValue m_seasonality;
+    UncertainValue m_icu_capacity;
 };
 
 /**
@@ -628,18 +750,6 @@ private:
     OdeIntegrator m_integrator;
     SecirParams m_params;
 };
-
-/**
- * @brief DEPRECATED run secir simulation over fixed time
- * @param[in] t0 start time
- * @param[in] tmax end time
- * @param[in] dt initial step size of integration
- * @param[in] params SECIR params: contact frequencies, population sizes and epidemiological parameters
- * @param[out] secir value of compartments at each integration time point
- * @returns integration time points
- */
-std::vector<double> simulate(double t0, double tmax, double dt, SecirParams const& params,
-                             std::vector<Eigen::VectorXd>& secir);
 
 /**
  * @brief run secir simulation over fixed time

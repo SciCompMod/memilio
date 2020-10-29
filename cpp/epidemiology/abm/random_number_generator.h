@@ -7,6 +7,8 @@
 #include <functional>
 #include <cassert>
 
+#include <numeric>
+
 namespace epi
 {
 
@@ -228,7 +230,7 @@ public:
             }
         }
         assert(false && "this should never happen.");
-        return -1;
+        return result_type(-1);
     }
 
 private:

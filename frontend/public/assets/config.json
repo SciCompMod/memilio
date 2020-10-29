@@ -16,6 +16,30 @@
       "intervals": []
     }
   ],
+  "ageGroups": ["0-4", "5-14", "15-34", "35-59", "60-79", "80+"],
+  "models": {
+    "seir": ["contact_rate", "incubation", "infection"],
+    "secir": {
+      "ages": "all",
+      "parameters": [
+        "incubation",
+        "serint",
+        "infmild",
+        "hosp2home",
+        "home2hosp",
+        "hosp2icu",
+        "icu2home",
+        "infasy",
+        "icu2death",
+        "infprob",
+        "alpha",
+        "beta",
+        "rho",
+        "theta",
+        "delta"
+      ]
+    }
+  },
   "parameters": [
     {
       "label": "parameters.contactrate",
@@ -48,6 +72,132 @@
       "label": "parameters.exposed",
       "name": "e0",
       "default": 0
+    },
+    {
+      "label": "parameters.serint",
+      "name": "serint",
+      "type": "slider",
+      "min": 4,
+      "max": 4.4,
+      "step": 0.1,
+      "default": 4.2
+    },
+    {
+      "label": "parameters.infmild",
+      "name": "infmild",
+      "type": "slider",
+      "min": 4,
+      "max": 14,
+      "step": 0.1,
+      "default": 6
+    },
+    {
+      "label": "parameters.hosp2home",
+      "name": "hosp2home",
+      "type": "slider",
+      "min": 7,
+      "max": 16,
+      "step": 0.1,
+      "default": 12
+    },
+    {
+      "label": "parameters.home2hosp",
+      "name": "home2hosp",
+      "type": "slider",
+      "min": 2.5,
+      "max": 7,
+      "step": 0.1,
+      "default": 5
+    },
+    {
+      "label": "parameters.hosp2icu",
+      "name": "hosp2icu",
+      "type": "slider",
+      "min": 1,
+      "max": 3.5,
+      "step": 0.1,
+      "default": 2
+    },
+    {
+      "label": "parameters.icu2home",
+      "name": "icu2home",
+      "type": "slider",
+      "min": 5,
+      "max": 16,
+      "step": 0.1,
+      "default": 8
+    },
+    {
+      "label": "parameters.infasy",
+      "name": "infasy",
+      "type": "slider",
+      "min": 0,
+      "max": 10,
+      "step": 0.1,
+      "default": 6.2
+    },
+    {
+      "label": "parameters.icu2death",
+      "name": "icu2death",
+      "type": "slider",
+      "min": 3.5,
+      "max": 7,
+      "step": 0.1,
+      "default": 5
+    },
+    {
+      "label": "parameters.infprob",
+      "name": "infprob",
+      "type": "slider",
+      "min": 0,
+      "max": 1,
+      "step": 0.1,
+      "default": 1
+    },
+    {
+      "label": "parameters.alpha",
+      "name": "alpha",
+      "type": "slider",
+      "min": 0,
+      "max": 10,
+      "step": 0.1,
+      "default": 0.09
+    },
+    {
+      "label": "parameters.beta",
+      "name": "beta",
+      "type": "slider",
+      "min": 0,
+      "max": 10,
+      "step": 0.1,
+      "default": 0.25
+    },
+    {
+      "label": "parameters.rho",
+      "name": "rho",
+      "type": "slider",
+      "min": 0,
+      "max": 10,
+      "step": 0.1,
+      "default": 0.2
+    },
+    {
+      "label": "parameters.theta",
+      "name": "theta",
+      "type": "slider",
+      "min": 0,
+      "max": 10,
+      "step": 0.1,
+      "default": 0.25
+    },
+    {
+      "label": "parameters.delta",
+      "name": "delta",
+      "type": "slider",
+      "min": 0,
+      "max": 10,
+      "step": 0.1,
+      "default": 0.3
     }
   ]
 }

@@ -68,7 +68,7 @@ TEST(TestImplicitEuler, compareOneTimeStep)
     auto y0 = params.populations.get_compartments();
     Eigen::VectorXd y1(y0.size()); // solution at time t=\Delta t=0.1
 
-    epi::ImplicitEulerIntegratorCore(1e-3, 1., params)
+    epi::ImplicitEulerIntegratorCore(params)
         .step(dummy_f, y0, t0, dt, y1); // just one iteration of implicit Euler scheme
 
     EXPECT_NEAR(y1[0], 9756.897564185243, 1e-10);

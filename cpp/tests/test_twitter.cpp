@@ -1,8 +1,8 @@
 #include <epidemiology_io/twitter_migration_io.h>
 #include <epidemiology/utils/logging.h>
+#include "epidemiology/utils/eigen.h"
 
 #include <gtest/gtest.h>
-#include <Eigen/Core>
 
 TEST(TestTwitter, compareWithSimpleFile)
 {

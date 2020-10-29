@@ -22,17 +22,22 @@ int main()
         // tinfasy    = 6.2, // (=R9^(-1)=R_3^(-1)+0.5*R_4^(-1))
         ticu2death = 5; // 3.5-7 (=R5^(-1))
 
-    double cont_freq = 0.5, // 0.2-0.75
-        alpha        = 0.09, // 0.01-0.16
-        beta         = 0.25, // 0.05-0.5
-        delta        = 0.3, // 0.15-0.77
-        rho          = 0.2, // 0.1-0.35
-        theta        = 0.25; // 0.15-0.4
+    double cont_freq = 10, // see Polymod study
+        inf_prob = 0.05, carr_infec = 0.67,
+           alpha = 0.09, // 0.01-0.16
+        beta     = 0.25, // 0.05-0.5
+        delta    = 0.3, // 0.15-0.77
+        rho      = 0.2, // 0.1-0.35
+        theta    = 0.25; // 0.15-0.4
 
     double nb_total_t0 = 10000, nb_exp_t0 = 100, nb_inf_t0 = 50, nb_car_t0 = 50, nb_hosp_t0 = 20, nb_icu_t0 = 10,
            nb_rec_t0 = 10, nb_dead_t0 = 0;
 
     epi::SecirParams params;
+
+    params.set_icu_capacity(20);
+    params.set_start_day(0);
+    params.set_seasonality(0);
 
     params.times[0].set_incubation(tinc);
     params.times[0].set_infectious_mild(tinfmild);
@@ -58,7 +63,8 @@ int main()
     params.populations.set({0, epi::SecirCompartments::D}, nb_dead_t0);
     params.populations.set_difference_from_total({0, epi::SecirCompartments::S}, nb_total_t0);
 
-    params.probabilities[0].set_infection_from_contact(1.0);
+    params.probabilities[0].set_infection_from_contact(inf_prob);
+    params.probabilities[0].set_carrier_infectability(carr_infec);
     params.probabilities[0].set_asymp_per_infectious(alpha);
     params.probabilities[0].set_risk_from_symptomatic(beta);
     params.probabilities[0].set_hospitalized_per_infectious(rho);
@@ -67,11 +73,9 @@ int main()
 
     params.apply_constraints();
 
-    std::vector<Eigen::VectorXd> secir(0);
+    epi::TimeSeries<double> secir = simulate(t0, tmax, dt, params);
 
-    simulate(t0, tmax, dt, params, secir);
-
-    bool print_to_terminal = false;
+    bool print_to_terminal = true;
 
     if (print_to_terminal) {
         char vars[] = {'S', 'E', 'C', 'I', 'H', 'U', 'R', 'D'};
@@ -79,16 +83,17 @@ int main()
         for (size_t k = 0; k < epi::SecirCompartments::SecirCount; k++) {
             printf(" %c", vars[k]);
         }
-        for (size_t i = 0; i < secir.size(); i++) {
-            printf("\n ");
+        auto num_points = static_cast<size_t>(secir.get_num_time_points());
+        for (size_t i = 0; i < num_points; i++) {
+            printf("\n%.14f ", secir.get_time(i));
+            Eigen::VectorXd res_j = secir.get_value(i);
             for (size_t j = 0; j < epi::SecirCompartments::SecirCount; j++) {
-                printf(" %.14f", secir[i][j]);
+                printf(" %.14f", res_j[j]);
             }
         }
 
-        printf("number total: %f", secir[secir.size() - 1][0] + secir[secir.size() - 1][1] +
-                                       secir[secir.size() - 1][2] + secir[secir.size() - 1][3] +
-                                       secir[secir.size() - 1][4] + secir[secir.size() - 1][5] +
-                                       secir[secir.size() - 1][6] + secir[secir.size() - 1][7]);
+        Eigen::VectorXd res_j = secir.get_last_value();
+        printf("number total: %f",
+               res_j[0] + res_j[1] + res_j[2] + res_j[3] + res_j[4] + res_j[5] + res_j[6] + res_j[7]);
     }
 }

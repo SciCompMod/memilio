@@ -1,4 +1,5 @@
 #include "epidemiology/abm/abm.h"
+#include "matchers.h"
 #include "gtest/gtest.h"
 #include "gmock/gmock.h"
 #include <memory>
@@ -10,8 +11,8 @@ TEST(TestLocation, init)
          i                     = epi::InfectionState(size_t(i) + 1)) {
         ASSERT_EQ(location.get_subpopulation(i), 0);
     }
-    ASSERT_EQ(epi::print_wrap(location.get_subpopulations()),
-              epi::print_wrap(Eigen::VectorXi::Zero(Eigen::Index(epi::InfectionState::Count))));
+    ASSERT_EQ(print_wrap(location.get_subpopulations()),
+              print_wrap(Eigen::VectorXi::Zero(Eigen::Index(epi::InfectionState::Count))));
 }
 
 TEST(TestLocation, addRemovePerson)
@@ -305,10 +306,10 @@ TEST(TestWorld, evolve)
 
     auto world      = epi::World();
     auto& location1 = world.add_location(epi::LocationType::School);
-    auto& p1        = world.add_person(location1, epi::InfectionState::Carrier);
-    auto& p2        = world.add_person(location1, epi::InfectionState::Susceptible);
+    world.add_person(location1, epi::InfectionState::Carrier);
+    world.add_person(location1, epi::InfectionState::Susceptible);
     auto& location2 = world.add_location(epi::LocationType::School);
-    auto& p3        = world.add_person(location2, epi::InfectionState::Infected_Detected);
+    world.add_person(location2, epi::InfectionState::Infected_Detected);
 
     //setup mock so only p2 transitions
     ScopedMockDistribution<testing::StrictMock<MockDistribution<epi::ExponentialDistribution<double>>>>
@@ -329,27 +330,15 @@ TEST(TestWorld, evolve)
     EXPECT_EQ(world.get_persons()[2].get_infection_state(), epi::InfectionState::Infected_Detected);
 }
 
-template <class T>
-auto ElementsAreLinspace(T b, T e, size_t num_points)
-{
-    assert(num_points >= 2);
-
-    std::vector<T> values(num_points);
-    for (size_t i = 0; i < num_points; i++) {
-        values[i] = i * (e - b) / (num_points - 1);
-    }
-    return testing::ElementsAreArray(values);
-}
-
 TEST(TestSimulation, advance_random)
 {
     auto world      = epi::World();
     auto& location1 = world.add_location(epi::LocationType::School);
-    auto& p1        = world.add_person(location1, epi::InfectionState::Carrier);
-    auto& p2        = world.add_person(location1, epi::InfectionState::Susceptible);
+    world.add_person(location1, epi::InfectionState::Carrier);
+    world.add_person(location1, epi::InfectionState::Susceptible);
     auto& location2 = world.add_location(epi::LocationType::School);
-    auto& p3        = world.add_person(location2, epi::InfectionState::Infected_Detected);
-    auto& p4        = world.add_person(location2, epi::InfectionState::Infected_Undetected);
+    world.add_person(location2, epi::InfectionState::Infected_Detected);
+    world.add_person(location2, epi::InfectionState::Infected_Undetected);
 
     auto sim = epi::AbmSimulation(0, std::move(world));
 

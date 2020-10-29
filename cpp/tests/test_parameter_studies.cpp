@@ -10,7 +10,6 @@ TEST(ParameterStudies, sample_from_secir_params)
 {
     double t0   = 0;
     double tmax = 100;
-    double dt   = 0.1;
 
     double tinc    = 5.2, // R_2^(-1)+R_3^(-1)
         tinfmild   = 6, // 4-14  (=R4^(-1))
@@ -22,18 +21,19 @@ TEST(ParameterStudies, sample_from_secir_params)
         tinfasy    = 6.2, // (=R9^(-1)=R_3^(-1)+0.5*R_4^(-1))
         ticu2death = 5; // 3.5-7 (=R5^(-1))
 
-    double cont_freq = 0.5, // 0.2-0.75
-        alpha        = 0.09, // 0.01-0.16
-        beta         = 0.25, // 0.05-0.5
-        delta        = 0.3, // 0.15-0.77
-        rho          = 0.2, // 0.1-0.35
-        theta        = 0.25; // 0.15-0.4
+    double cont_freq = 10, // see Polymod study
+        inf_prob = 0.05, carr_infec = 0.67,
+           alpha = 0.09, // 0.01-0.16
+        beta     = 0.25, // 0.05-0.5
+        delta    = 0.3, // 0.15-0.77
+        rho      = 0.2, // 0.1-0.35
+        theta    = 0.25; // 0.15-0.4
 
     double num_total_t0 = 10000, num_exp_t0 = 100, num_inf_t0 = 50, num_car_t0 = 50, num_hosp_t0 = 20, num_icu_t0 = 10,
            num_rec_t0 = 10, num_dead_t0 = 0;
 
-    int num_groups = 3;
-    double fact    = 1.0 / (double)num_groups;
+    size_t num_groups = 3;
+    double fact       = 1.0 / (double)num_groups;
 
     epi::SecirParams params(num_groups);
 
@@ -58,7 +58,8 @@ TEST(ParameterStudies, sample_from_secir_params)
         params.populations.set_difference_from_group_total({i, epi::SecirCompartments::S}, epi::SecirCategory::AgeGroup,
                                                            i, fact * num_total_t0);
 
-        params.probabilities[i].set_infection_from_contact(1.0);
+        params.probabilities[i].set_infection_from_contact(inf_prob);
+        params.probabilities[i].set_carrier_infectability(carr_infec);
         params.probabilities[i].set_asymp_per_infectious(alpha);
         params.probabilities[i].set_risk_from_symptomatic(beta);
         params.probabilities[i].set_hospitalized_per_infectious(rho);
@@ -67,8 +68,8 @@ TEST(ParameterStudies, sample_from_secir_params)
     }
 
     epi::ContactFrequencyMatrix& cont_freq_matrix = params.get_contact_patterns();
-    for (int i = 0; i < num_groups; i++) {
-        for (int j = i; j < num_groups; j++) {
+    for (int i = 0; i < static_cast<int>(num_groups); i++) {
+        for (int j = i; j < static_cast<int>(num_groups); j++) {
             cont_freq_matrix.set_cont_freq(fact * cont_freq, i, j);
         }
     }
@@ -133,7 +134,6 @@ TEST(ParameterStudies, test_normal_distribution)
     EXPECT_EQ(std_dev_demanded, parameter_dist_normal_2.get_standard_dev());
 
     // check that sampling only occurs in boundaries
-    int counter[10] = {0};
     for (int i = 0; i < 1000; i++) {
         double val = parameter_dist_normal_2.get_sample();
         EXPECT_GE(parameter_dist_normal_2.get_upper_bound() + 1e-10, val);
@@ -187,7 +187,6 @@ TEST(ParameterStudies, check_ensemble_run_result)
 {
     double t0   = 0;
     double tmax = 50;
-    double dt   = 0.1;
 
     double tinc    = 5.2, // R_2^(-1)+R_3^(-1)
         tinfmild   = 6, // 4-14  (=R4^(-1))
@@ -199,18 +198,19 @@ TEST(ParameterStudies, check_ensemble_run_result)
         tinfasy    = 6.2, // (=R9^(-1)=R_3^(-1)+0.5*R_4^(-1))
         ticu2death = 5; // 3.5-7 (=R5^(-1))
 
-    double cont_freq = 0.5, // 0.2-0.75
-        alpha        = 0.09, // 0.01-0.16
-        beta         = 0.25, // 0.05-0.5
-        delta        = 0.3, // 0.15-0.77
-        rho          = 0.2, // 0.1-0.35
-        theta        = 0.25; // 0.15-0.4
+    double cont_freq = 10, // see Polymod study
+        inf_prob = 0.05, carr_infec = 0.67,
+           alpha = 0.09, // 0.01-0.16
+        beta     = 0.25, // 0.05-0.5
+        delta    = 0.3, // 0.15-0.77
+        rho      = 0.2, // 0.1-0.35
+        theta    = 0.25; // 0.15-0.4
 
     double num_total_t0 = 10000, num_exp_t0 = 100, num_inf_t0 = 50, num_car_t0 = 50, num_hosp_t0 = 20, num_icu_t0 = 10,
            num_rec_t0 = 10, num_dead_t0 = 0;
 
-    int num_groups = 1;
-    double fact    = 1.0 / (double)num_groups;
+    size_t num_groups = 1;
+    double fact       = 1.0 / (double)num_groups;
 
     epi::SecirParams params(num_groups);
 
@@ -235,7 +235,8 @@ TEST(ParameterStudies, check_ensemble_run_result)
         params.populations.set_difference_from_group_total({i, epi::SecirCompartments::S}, epi::SecirCategory::AgeGroup,
                                                            i, fact * num_total_t0);
 
-        params.probabilities[i].set_infection_from_contact(1.0);
+        params.probabilities[i].set_infection_from_contact(inf_prob);
+        params.probabilities[i].set_carrier_infectability(carr_infec);
         params.probabilities[i].set_asymp_per_infectious(alpha);
         params.probabilities[i].set_risk_from_symptomatic(beta);
         params.probabilities[i].set_hospitalized_per_infectious(rho);
@@ -245,33 +246,32 @@ TEST(ParameterStudies, check_ensemble_run_result)
 
     epi::ContactFrequencyMatrix& cont_freq_matrix = params.get_contact_patterns();
     epi::Damping dummy(30., 0.3);
-    for (int i = 0; i < num_groups; i++) {
-        for (int j = i; j < num_groups; j++) {
+    for (int i = 0; i < static_cast<int>(num_groups); i++) {
+        for (int j = i; j < static_cast<int>(num_groups); j++) {
             cont_freq_matrix.set_cont_freq(fact * cont_freq, i, j);
         }
     }
 
-    epi::ParameterStudy parameter_study(epi::make_migration_sim<epi::SecirSimulation>, params, t0, tmax, 0.2, 1);
+    epi::ParameterStudy parameter_study(params, t0, tmax, 0.2, 1);
 
     // Run parameter study
-    int run = 0;
     parameter_study.set_num_runs(1);
     std::vector<epi::Graph<epi::ModelNode<epi::SecirSimulation>, epi::MigrationEdge>> graph_results =
         parameter_study.run();
 
     std::vector<epi::TimeSeries<double>> results;
-    for (int i = 0; i < graph_results.size(); i++) {
+    for (size_t i = 0; i < graph_results.size(); i++) {
         results.push_back(std::move(graph_results[i].nodes()[0].model.get_result()));
     }
 
-    for (size_t i = 0; i < results[0].get_num_time_points(); i++) {
+    for (Eigen::Index i = 0; i < results[0].get_num_time_points(); i++) {
         std::vector<double> total_at_ti(epi::SecirCompartments::SecirCount, 0);
-        // printf("\n");
-        for (size_t j = 0; j < static_cast<size_t>(results[0][i].size()); j++) { // number of compartments per time step
-            // printf(" %.2e ( %d ) ", results[0][i][j], j % epi::SecirCompartments::SecirCount);
+
+        for (Eigen::Index j = 0; j < results[0][i].size(); j++) { // number of compartments per time step
             EXPECT_GE(results[0][i][j], 0.0) << " day " << i << " group " << j;
-            total_at_ti[j / epi::SecirCompartments::SecirCount] += results[0][i][j];
+            total_at_ti[static_cast<size_t>(j) / epi::SecirCompartments::SecirCount] += results[0][i][j];
         }
+
         for (size_t j = 0; j < params.get_num_groups(); j++) {
             EXPECT_NEAR(total_at_ti[j], params.populations.get_group_total(epi::SecirCategory::AgeGroup, j), 1e-3)
                 << " day " << i << " group " << j;

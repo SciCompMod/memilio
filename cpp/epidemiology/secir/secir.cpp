@@ -1,6 +1,7 @@
 #include "epidemiology/secir/secir.h"
 #include "epidemiology/math/euler.h"
 #include "epidemiology/math/adapt_rk.h"
+#include "epidemiology/math/smoother.h"
 #include "epidemiology/utils/eigen_util.h"
 #include "epidemiology_io/secir_result_io.h"
 
@@ -13,6 +14,65 @@
 
 namespace epi
 {
+void SecirParams::set_start_day(double tstart)
+{
+    m_tstart = tstart;
+}
+
+double SecirParams::get_start_day() const
+{
+    return m_tstart;
+}
+
+void SecirParams::set_seasonality(UncertainValue const& seasonality)
+{
+    m_seasonality = seasonality;
+}
+
+void SecirParams::set_seasonality(double seasonality)
+{
+    m_seasonality = seasonality;
+}
+
+void SecirParams::set_seasonality(ParameterDistribution const& seasonality)
+{
+    m_seasonality.set_distribution(seasonality);
+}
+
+const UncertainValue& SecirParams::get_seasonality() const
+{
+    return m_seasonality;
+}
+
+UncertainValue& SecirParams::get_seasonality()
+{
+    return m_seasonality;
+}
+
+void SecirParams::set_icu_capacity(UncertainValue const& icu_capacity)
+{
+    m_icu_capacity = icu_capacity;
+}
+
+void SecirParams::set_icu_capacity(double icu_capacity)
+{
+    m_icu_capacity = icu_capacity;
+}
+
+void SecirParams::set_icu_capacity(ParameterDistribution const& icu_capacity)
+{
+    m_icu_capacity.set_distribution(icu_capacity);
+}
+
+const UncertainValue& SecirParams::get_icu_capacity() const
+{
+    return m_icu_capacity;
+}
+
+UncertainValue& SecirParams::get_icu_capacity()
+{
+    return m_icu_capacity;
+}
 
 SecirParams::StageTimes::StageTimes()
     : m_tinc{1.0}
@@ -357,6 +417,7 @@ void SecirParams::StageTimes::check_constraints() const
 
 SecirParams::Probabilities::Probabilities()
     : m_infprob{1}
+    , m_carrinf{1}
     , m_asympinf{0}
     , m_risksymp{0}
     , m_hospinf{0}
@@ -378,6 +439,21 @@ void SecirParams::Probabilities::set_infection_from_contact(double infprob)
 void SecirParams::Probabilities::set_infection_from_contact(ParameterDistribution const& infprob)
 {
     m_infprob.set_distribution(infprob);
+}
+
+void SecirParams::Probabilities::set_carrier_infectability(UncertainValue const& carrinf)
+{
+    m_carrinf = carrinf;
+}
+
+void SecirParams::Probabilities::set_carrier_infectability(double carrinf)
+{
+    m_carrinf = carrinf;
+}
+
+void SecirParams::Probabilities::set_carrier_infectability(ParameterDistribution const& carrinf)
+{
+    m_carrinf.set_distribution(carrinf);
 }
 
 void SecirParams::Probabilities::set_asymp_per_infectious(UncertainValue const& asympinf)
@@ -465,6 +541,16 @@ UncertainValue& SecirParams::Probabilities::get_infection_from_contact()
     return m_infprob;
 }
 
+const UncertainValue& SecirParams::Probabilities::get_carrier_infectability() const
+{
+    return m_carrinf;
+}
+
+UncertainValue& SecirParams::Probabilities::get_carrier_infectability()
+{
+    return m_carrinf;
+}
+
 const UncertainValue& SecirParams::Probabilities::get_asymp_per_infectious() const
 {
     return m_asympinf;
@@ -517,6 +603,16 @@ UncertainValue& SecirParams::Probabilities::get_dead_per_icu()
 
 void SecirParams::Probabilities::apply_constraints()
 {
+    if (m_infprob < 0.0) {
+        log_warning("Constraint check: Parameter m_asympinf changed from {:0.4f} to {:d} ", m_infprob, 0);
+        m_infprob = 0;
+    }
+
+    if (m_carrinf < 0.0) {
+        log_warning("Constraint check: Parameter m_asympinf changed from {:0.4f} to {:d} ", m_carrinf, 0);
+        m_carrinf = 0;
+    }
+
     if (m_asympinf < 0.0 || m_asympinf > 1.0) {
         log_warning("Constraint check: Parameter m_asympinf changed from {:0.4f} to {:d} ", m_asympinf, 0);
         m_asympinf = 0;
@@ -545,29 +641,32 @@ void SecirParams::Probabilities::apply_constraints()
 
 void SecirParams::Probabilities::check_constraints() const
 {
+    if (m_infprob < 0.0) {
+        log_warning("Constraint check: Parameter m_infprob smaller {:d}", 0);
+    }
+
+    if (m_carrinf < 0.0) {
+        log_warning("Constraint check: Parameter m_carrinf smaller {:d}", 0);
+    }
+
     if (m_asympinf < 0.0 || m_asympinf > 1.0) {
-        log_warning("Constraint check: Parameter m_asympinf changed from {:0.4f} smaller {:d} or larger {:d}",
-                    m_asympinf, 0, 1);
+        log_warning("Constraint check: Parameter m_asympinf smaller {:d} or larger {:d}", 0, 1);
     }
 
     if (m_risksymp < 0.0 || m_risksymp > 1.0) {
-        log_warning("Constraint check: Parameter m_risksymp changed from {:0.4f} smaller {:d} or larger {:d}",
-                    m_risksymp, 0, 1);
+        log_warning("Constraint check: Parameter m_risksymp smaller {:d} or larger {:d}", 0, 1);
     }
 
     if (m_hospinf < 0.0 || m_hospinf > 1.0) {
-        log_warning("Constraint check: Parameter m_risksymp changed from {:0.4f} smaller {:d} or larger {:d}",
-                    m_hospinf, 0, 1);
+        log_warning("Constraint check: Parameter m_risksymp smaller {:d} or larger {:d}", 0, 1);
     }
 
     if (m_icuhosp < 0.0 || m_icuhosp > 1.0) {
-        log_warning("Constraint check: Parameter m_risksymp changed from {:0.4f} smaller {:d} or larger {:d}",
-                    m_icuhosp, 0, 1);
+        log_warning("Constraint check: Parameter m_risksymp smaller {:d} or larger {:d}", 0, 1);
     }
 
     if (m_deathicu < 0.0 || m_deathicu > 1.0) {
-        log_warning("Constraint check: Parameter m_risksymp changed from {:0.4f} smaller {:d} or larger {:d}",
-                    m_deathicu, 0, 1);
+        log_warning("Constraint check: Parameter m_risksymp smaller {:d} or larger {:d}", 0, 1);
     }
 }
 
@@ -588,7 +687,18 @@ UncertainContactMatrix const& SecirParams::get_contact_patterns() const
 
 void SecirParams::apply_constraints()
 {
-    for (int i = 0; i < times.size(); i++) {
+
+    if (m_seasonality < 0.0 || m_seasonality > 0.5) {
+        log_warning("Constraint check: Parameter m_seasonality changed from {:0.4f} to {:d}", m_seasonality, 0);
+        m_seasonality = 0;
+    }
+
+    if (m_icu_capacity < 0.0) {
+        log_warning("Constraint check: Parameter m_icu_capacity changed from {:0.4f} to {:d}", m_icu_capacity, 0);
+        m_icu_capacity = 0;
+    }
+
+    for (size_t i = 0; i < times.size(); i++) {
         populations.apply_constraints();
         times[i].apply_constraints();
         probabilities[i].apply_constraints();
@@ -597,7 +707,15 @@ void SecirParams::apply_constraints()
 
 void SecirParams::check_constraints() const
 {
-    for (int i = 0; i < times.size(); i++) {
+    if (m_seasonality < 0.0 || m_seasonality > 0.5) {
+        log_warning("Constraint check: Parameter m_seasonality smaller {:d} or larger {:d}", 0, 0.5);
+    }
+
+    if (m_icu_capacity < 0.0) {
+        log_warning("Constraint check: Parameter m_icu_capacity smaller {:d}", 0);
+    }
+
+    for (size_t i = 0; i < times.size(); i++) {
         populations.check_constraints();
         times[i].check_constraints();
         probabilities[i].check_constraints();
@@ -630,6 +748,9 @@ void secir_get_derivatives(SecirParams const& params, Eigen::Ref<const Eigen::Ve
 
         dydt[Si] = 0;
         dydt[Ei] = 0;
+
+        double icu_occupancy = 0;
+
         for (size_t j = 0; j < n_agegroups; j++) {
             size_t Sj = params.populations.get_flat_index({j, S});
             size_t Ej = params.populations.get_flat_index({j, E});
@@ -640,17 +761,30 @@ void secir_get_derivatives(SecirParams const& params, Eigen::Ref<const Eigen::Ve
             size_t Rj = params.populations.get_flat_index({j, R});
 
             // effective contact rate by contact rate between groups i and j and damping j
-            double cont_freq_eff =
-                cont_freq_matrix.get_cont_freq(i, j) *
-                cont_freq_matrix.get_dampings(i, j).get_factor(t); // get effective contact rate between i and j
+            double season_val =
+                (1 + params.get_seasonality() *
+                         sin(3.141592653589793 * (std::fmod((params.get_start_day() + t), 365.0) / 182.5 + 0.5)));
+            double cont_freq_eff = // get effective contact rate between i and j
+                season_val * cont_freq_matrix.get_cont_freq(static_cast<int>(i), static_cast<int>(j)) *
+                cont_freq_matrix.get_dampings(static_cast<int>(i), static_cast<int>(j)).get_factor(t);
             double Nj      = y[Sj] + y[Ej] + y[Cj] + y[Ij] + y[Hj] + y[Uj] + y[Rj]; // without died people
             double divNj   = 1.0 / Nj; // precompute 1.0/Nj
             double dummy_S = y[Si] * cont_freq_eff * divNj * params.probabilities[i].get_infection_from_contact() *
-                             (y[Cj] + params.probabilities[j].get_risk_from_symptomatic() * y[Ij]);
+                             (params.probabilities[j].get_carrier_infectability() * y[Cj] +
+                              params.probabilities[j].get_risk_from_symptomatic() * y[Ij]);
 
             dydt[Si] -= dummy_S; // -R1*(C+beta*I)*S/N0
             dydt[Ei] += dummy_S; // R1*(C+beta*I)*S/N0-R2*E
+
+            icu_occupancy += y[Uj];
         }
+
+        // ICU capacity shortage is close
+        double prob_hosp2icu =
+            smoother_cosine(icu_occupancy, 0.90 * params.get_icu_capacity(), params.get_icu_capacity(),
+                            params.probabilities[i].get_icu_per_hospitalized(), 0);
+
+        double prob_hosp2dead = params.probabilities[i].get_icu_per_hospitalized() - prob_hosp2icu;
 
         double dummy_R2 =
             1.0 / (2 * params.times[i].get_serialinterval() - params.times[i].get_incubation()); // R2 = 1/(2SI-TINC)
@@ -673,18 +807,22 @@ void secir_get_derivatives(SecirParams const& params, Eigen::Ref<const Eigen::Ve
             ((1 - params.probabilities[i].get_icu_per_hospitalized()) / params.times[i].get_hospitalized_to_home() +
              params.probabilities[i].get_icu_per_hospitalized() / params.times[i].get_hospitalized_to_icu()) *
                 y[Hi];
-        dydt[Ui] =
-            params.probabilities[i].get_icu_per_hospitalized() / params.times[i].get_hospitalized_to_icu() * y[Hi] -
-            ((1 - params.probabilities[i].get_dead_per_icu()) / params.times[i].get_icu_to_home() +
-             params.probabilities[i].get_dead_per_icu() / params.times[i].get_icu_to_dead()) *
-                y[Ui];
+        dydt[Ui] = -((1 - params.probabilities[i].get_dead_per_icu()) / params.times[i].get_icu_to_home() +
+                     params.probabilities[i].get_dead_per_icu() / params.times[i].get_icu_to_dead()) *
+                   y[Ui];
+        // add flow from hosp to icu according to potentially adjusted probability due to ICU limits
+        dydt[Ui] += prob_hosp2icu / params.times[i].get_hospitalized_to_icu() * y[Hi];
+
         dydt[Ri] = params.probabilities[i].get_asymp_per_infectious() / params.times[i].get_infectious_asymp() * y[Ci] +
                    (1 - params.probabilities[i].get_hospitalized_per_infectious()) /
                        params.times[i].get_infectious_mild() * y[Ii] +
                    (1 - params.probabilities[i].get_icu_per_hospitalized()) /
                        params.times[i].get_hospitalized_to_home() * y[Hi] +
                    (1 - params.probabilities[i].get_dead_per_icu()) / params.times[i].get_icu_to_home() * y[Ui];
+
         dydt[Di] = params.probabilities[i].get_dead_per_icu() / params.times[i].get_icu_to_dead() * y[Ui];
+        // add potential, additional deaths due to ICU overflow
+        dydt[Di] += prob_hosp2dead / params.times[i].get_hospitalized_to_icu() * y[Hi];
     }
 }
 
@@ -694,18 +832,6 @@ TimeSeries<double> simulate(double t0, double tmax, double dt, SecirParams const
     SecirSimulation sim(params, t0, dt);
     sim.advance(tmax);
     return sim.get_result();
-}
-
-std::vector<double> simulate(double t0, double tmax, double dt, SecirParams const& params,
-                             std::vector<Eigen::VectorXd>& secir)
-{
-    auto result = simulate(t0, tmax, dt, params);
-    std::vector<double> t(result.get_times().begin(), result.get_times().end());
-    std::transform(result.begin(), result.end(), std::back_inserter(secir), [](auto&& v_ref) {
-        return v_ref.eval();
-    });
-
-    return t;
 }
 
 SecirSimulation::SecirSimulation(SecirParams const& params, double t0, double dt)

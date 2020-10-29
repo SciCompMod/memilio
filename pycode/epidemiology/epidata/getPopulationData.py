@@ -7,7 +7,6 @@ from epidemiology.epidata import defaultDict as dd
 
 
 def get_population_data(read_data=dd.defaultDict['read_data'],
-                        make_plot=dd.defaultDict['make_plot'],
                         out_form=dd.defaultDict['out_form'],
                         out_folder=dd.defaultDict['out_folder']):
 
@@ -31,13 +30,13 @@ def get_one_data_set(read_data, out_form, directory, d):
 
    if(read_data):
       # if once dowloaded just read json file
-      file = os.path.join(directory, d.filename+".json")
+      file = os.path.join(directory, d.filename + ".json")
 
       try:
          df = pandas.read_json(file)
 
       except ValueError:
-         exit_string = "Error: The file: " + file + "does not exist. Call program without -r flag to get it."
+         exit_string = "Error: The file: " + file + " does not exist. Call program without -r flag to get it."
          sys.exit(exit_string)
    else:
 
@@ -63,8 +62,8 @@ def get_one_data_set(read_data, out_form, directory, d):
 
 def main():
 
-   [read_data, make_plot, out_form, out_folder] = gd.cli('Download population data')
-   get_population_data(read_data, make_plot, out_form, out_folder)
+   [read_data, out_form, out_folder] = gd.cli("population")
+   get_population_data(read_data, out_form, out_folder)
 
 
 if __name__ == "__main__":

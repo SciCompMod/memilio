@@ -5,11 +5,30 @@ project(epidemiology VERSION 0.1.0)
 option(EPI_USE_BUNDLED_SPDLOG "Use spdlog bundled with epi" ON)
 option(EPI_USE_BUNDLED_EIGEN "Use eigen bundled with epi" ON)
 option(EPI_BUILD_EPI_IO "Build epidemiology_io library (requires TiXI and HDF5)" OFF)
+option(EPI_USE_BUNDLED_BOOST "Use boost bundled with epi (only for epi-io)" ON)
+option(EPI_USE_BUNDLED_JSONCPP "Use jsoncpp bundled with epi (only for epi-io)" ON)
 
 mark_as_advanced(EPI_USE_BUNDLED_SPDLOG)
 
 set(CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake" ${CMAKE_MODULE_PATH})
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
+
+# code coverage analysis
+# Note: this only works under linux and with make
+# Ninja creates different directory names which do not work together with this scrupt
+if(CMAKE_BUILD_TYPE STREQUAL "Debug")
+    option (EPI_TEST_COVERAGE "Enable GCov coverage analysis (adds a 'coverage' target)" OFF)
+    if (EPI_TEST_COVERAGE)
+        message(STATUS "Coverage enabled")
+        include(CodeCoverage)
+        append_coverage_compiler_flags()
+        setup_target_for_coverage_lcov(
+            NAME coverage
+            EXECUTABLE runUnitTests
+            EXCLUDE "${CMAKE_SOURCE_DIR}/tests*" "${CMAKE_SOURCE_DIR}/examples*" "${CMAKE_BINARY_DIR}/*" "/usr*"
+        )
+    endif()
+endif()
 
 include(thirdparty/CMakeLists.txt)
 
@@ -18,6 +37,12 @@ add_library(epidemiology
     epidemiology/utils/tensor_helpers.cpp
     epidemiology/math/euler.cpp
     epidemiology/math/euler.h
+    epidemiology/math/smoother.h    
+    epidemiology/utils/ScalarType.h
+    epidemiology/model/compartmentalmodel.h
+    epidemiology/model/populations.h
+    epidemiology/model/parameterset.h
+    epidemiology/model/simulation.h
     epidemiology/secir/damping.cpp
     epidemiology/secir/damping.h
     epidemiology/secir/secir.cpp
@@ -32,14 +57,15 @@ add_library(epidemiology
     epidemiology/migration/migration.cpp
     epidemiology/utils/graph.h
     epidemiology/utils/graph.cpp
+    epidemiology/utils/eigen.h
     epidemiology/utils/eigen_util.h
     epidemiology/secir/populations.h
     epidemiology/secir/populations.cpp
     epidemiology/utils/visitor.h
     epidemiology/secir/parameter_space.h
     epidemiology/secir/parameter_space.cpp
-    epidemiology/utils/uncertain_value.cpp
     epidemiology/utils/uncertain_value.h
+    epidemiology/utils/uncertain_value.cpp
     epidemiology/secir/uncertain_matrix.cpp
     epidemiology/secir/uncertain_matrix.h    
     epidemiology/utils/memory.h
@@ -62,6 +88,9 @@ add_library(epidemiology
     epidemiology/abm/random_number_generator.cpp
     epidemiology/abm/parameters.h
     epidemiology/abm/parameters.cpp
+    epidemiology/secir/parameter_studies.h
+    epidemiology/secir/analyze_result.h
+    epidemiology/secir/analyze_result.cpp
 )
 
 target_include_directories(epidemiology PUBLIC
@@ -70,8 +99,11 @@ target_include_directories(epidemiology PUBLIC
 )
 
 
-target_compile_features(epidemiology PRIVATE cxx_std_14)
+target_compile_features(epidemiology PUBLIC cxx_std_14)
 target_link_libraries(epidemiology PUBLIC spdlog::spdlog Eigen3::Eigen)
+target_compile_options(epidemiology PRIVATE
+    $<$<OR:$<CXX_COMPILER_ID:Clang>,$<CXX_COMPILER_ID:GNU>>: -Wall -Wextra -Werror -Wshadow --pedantic-errors -Wno-deprecated-copy>
+    $<$<CXX_COMPILER_ID:MSVC>: /W4 /WX>)
 
 if (EPI_BUILD_EPI_IO)
     
@@ -92,10 +124,13 @@ if (EPI_BUILD_EPI_IO)
     )
 
     target_link_libraries(epidemiology_io PUBLIC epidemiology tixi3
-                          PRIVATE ${HDF5_CXX_LIBRARIES} )
+                          PRIVATE jsoncpp ${HDF5_CXX_LIBRARIES} Boost::filesystem Boost::disable_autolinking)
     target_include_directories(epidemiology_io PRIVATE ${HDF5_INCLUDE_DIRS})
 
     target_compile_definitions(epidemiology_io PUBLIC "-DHAVE_EPI_IO")
+    target_compile_options(epidemiology_io PRIVATE
+        $<$<OR:$<CXX_COMPILER_ID:Clang>,$<CXX_COMPILER_ID:GNU>>: -Wall -Wextra -Werror -Wshadow --pedantic-errors -Wno-deprecated-copy>
+        $<$<CXX_COMPILER_ID:MSVC>: /W4 /WX>)
 
 endif(EPI_BUILD_EPI_IO)
 

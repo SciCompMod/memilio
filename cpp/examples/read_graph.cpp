@@ -27,12 +27,13 @@ int main(int argc, char** argv)
                          "'additional parameter'");
     }
 
-    double cont_freq = 0.5, // 0.2-0.75
-        alpha        = 0.09, // 0.01-0.16
-        beta         = 0.25, // 0.05-0.5
-        delta        = 0.3, // 0.15-0.77
-        rho          = 0.2, // 0.1-0.35
-        theta        = 0.25; // 0.15-0.4
+    double cont_freq = 10, // see Polymod study
+        inf_prob = 0.05, carr_infec = 0.67,
+           alpha = 0.09, // 0.01-0.16
+        beta     = 0.25, // 0.05-0.5
+        delta    = 0.3, // 0.15-0.77
+        rho      = 0.2, // 0.1-0.35
+        theta    = 0.25; // 0.15-0.4
 
     double nb_total_t0 = 10000, nb_exp_t0 = 100, nb_inf_t0 = 50, nb_car_t0 = 50, nb_hosp_t0 = 20, nb_icu_t0 = 10,
            nb_rec_t0 = 10, nb_dead_t0 = 0;
@@ -41,6 +42,10 @@ int main(int argc, char** argv)
     double fact   = 1.0 / (double)nb_groups;
 
     epi::SecirParams params(nb_groups);
+
+    params.set_icu_capacity(std::numeric_limits<double>::max());
+    params.set_start_day(0);
+    params.set_seasonality(0);
 
     for (size_t i = 0; i < nb_groups; i++) {
         params.times[i].set_incubation(tinc);
@@ -63,7 +68,8 @@ int main(int argc, char** argv)
         params.populations.set_difference_from_group_total({i, epi::SecirCompartments::S}, epi::SecirCategory::AgeGroup,
                                                            i, fact * nb_total_t0);
 
-        params.probabilities[i].set_infection_from_contact(1.0);
+        params.probabilities[i].set_infection_from_contact(inf_prob);
+        params.probabilities[i].set_carrier_infectability(carr_infec);
         params.probabilities[i].set_asymp_per_infectious(alpha);
         params.probabilities[i].set_risk_from_symptomatic(beta);
         params.probabilities[i].set_hospitalized_per_infectious(rho);
@@ -84,7 +90,7 @@ int main(int argc, char** argv)
     std::cout << "Done" << std::endl;
 
     std::cout << "Intializing Graph..." << std::flush;
-    epi::Graph<epi::ModelNode<epi::SecirParams>, epi::MigrationEdge> graph;
+    epi::Graph<epi::SecirParams, epi::MigrationEdge> graph;
     for (int node = 0; node < twitter_migration_2018.rows(); node++) {
         graph.add_node(params);
     }
@@ -96,15 +102,15 @@ int main(int argc, char** argv)
     std::cout << "Done" << std::endl;
 
     std::cout << "Writing XML Files..." << std::flush;
-    epi::write_graph(graph, t0, tmax);
+    epi::write_graph(graph);
     std::cout << "Done" << std::endl;
 
     std::cout << "Reading XML Files..." << std::flush;
-    epi::Graph<epi::ModelNode<epi::SecirParams>, epi::MigrationEdge> graph_read = epi::read_graph();
+    epi::Graph<epi::SecirParams, epi::MigrationEdge> graph_read = epi::read_graph();
     std::cout << "Done" << std::endl;
 
     std::cout << "Running Simulations..." << std::flush;
-    auto study = epi::ParameterStudy(epi::make_migration_sim<epi::SecirSimulation>, graph_read, t0, tmax, 2);
+    auto study = epi::ParameterStudy(graph_read, t0, tmax, 1.0, 2);
     std::cout << "Done" << std::endl;
 
     return 0;
