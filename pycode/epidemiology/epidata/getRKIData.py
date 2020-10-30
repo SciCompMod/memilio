@@ -19,7 +19,6 @@ from epidemiology.epidata import defaultDict as dd
 # return Boolean to say if data is complete or not
 def check_for_completeness(df):
 
-
    if not df.empty:
       id_bundesland = df["IdBundesland"].max()
 
@@ -27,8 +26,7 @@ def check_for_completeness(df):
       if id_bundesland < 16:
          return False
 
-   else:
-      return True
+   return True
 
 
 def get_rki_data(read_data=dd.defaultDict['read_data'],
@@ -69,8 +67,11 @@ def get_rki_data(read_data=dd.defaultDict['read_data'],
 
       # try another possibility
       if not complete:
-            df = load['csv']("","https://npgeo-de.maps.arcgis.com/sharing/rest/content/"
-                               "items/f10774f1c63e40168479a1feb6c7ca74/data")
+            df = load['csv']("","https://npgeo-de.maps.arcgis.com/sharing/rest/content/items/"
+                                "f10774f1c63e40168479a1feb6c7ca74/data", "")
+            ID = "FID"
+      else:
+         ID = "ObjectId"
 
       if df.empty != True:
       # output data to not always download it
@@ -103,7 +104,6 @@ def get_rki_data(read_data=dd.defaultDict['read_data'],
    Landkreis = dd.GerEng['Landkreis']
 
    # translate column gender from German to English and standardize
-
    df.loc[df.Geschlecht == 'unbekannt', ['Geschlecht']] = dd.GerEng['unbekannt']
    df.loc[df.Geschlecht == 'W', ['Geschlecht']] = dd.GerEng['W']
    df.loc[df.Geschlecht == 'M', ['Geschlecht']] = dd.GerEng['M']
@@ -156,7 +156,7 @@ def get_rki_data(read_data=dd.defaultDict['read_data'],
    dfF.loc[dfF.NeuGenesen<0, [AnzahlGenesen]] = 0
 
    # get rid of unnecessary columns
-   dfF = dfF.drop(['NeuerFall', 'NeuerTodesfall', 'NeuGenesen', "IstErkrankungsbeginn", "ObjectId",
+   dfF = dfF.drop(['NeuerFall', 'NeuerTodesfall', 'NeuGenesen', "IstErkrankungsbeginn", ID,
                    "Meldedatum", "Datenstand", "Refdatum", Altersgruppe2], 1)
 
    print("Available columns:", df.columns)
