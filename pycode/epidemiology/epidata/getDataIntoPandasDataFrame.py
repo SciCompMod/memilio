@@ -89,7 +89,7 @@ def cli(what):
 
    cli_dict = {"divi": ['Downloads data from DIVI', 'start_date', 'end_date', 'update'],
                "rki": ['Download data from RKI', 'plot'],
-               "rkiest": ['Download data from RKI and JH and estimate recovered and deaths'],
+               "rkiest": ['Download data from RKI and JH and estimate recovered and deaths', 'plot'],
                "spain": ['Download of spain data'],
                "population": ['Download population data'],
                "jh" : ['Downloads data from JH'],

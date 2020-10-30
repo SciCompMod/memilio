@@ -24,6 +24,7 @@ defaultDict = {
 # Rules for keys: start with small letter,
 # one word, if several words start with capital letter
 # do not use underscore
+# Do not change the keys of this dictionary!!!!
 EngEng = {
    'gender': 'Gender',
    'confirmed': 'Confirmed',
@@ -543,3 +544,6 @@ County = {
    11006: 'SK Berlin Steglitz-Zehlendorf',
    11007: 'SK Berlin Tempelhof-Schöneberg',
 }
+
+gender_list = [EngEng["male"], EngEng["female"], EngEng["unknown"]]
+age_rki_list = ["A0-A4", "A5-A14", "A15-A34", "A35-A59", "A60-A79", "A80+" ]
