@@ -74,6 +74,8 @@ add_library(epidemiology
     epidemiology/utils/time_series.cpp
     epidemiology/utils/span.h
     epidemiology/utils/span.cpp
+    epidemiology/utils/type_safe.h
+    epidemiology/utils/type_safe.cpp
     epidemiology/abm/location.cpp
     epidemiology/abm/location.h
     epidemiology/abm/simulation.cpp
