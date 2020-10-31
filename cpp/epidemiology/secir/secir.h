@@ -89,19 +89,19 @@ public:
         , times(nb_groups, StageTimes())
         , probabilities(nb_groups, Probabilities())
         , m_num_groups{nb_groups}
-        , m_contact_patterns(ContactFrequencyMatrix{nb_groups})
+        , m_contact_patterns(static_cast<Eigen::Index>(nb_groups), 1)
         , m_tstart{0}
         , m_seasonality{0}
         , m_icu_capacity{std::numeric_limits<double>::max()}
     {
     }
 
-    SecirParams(ContactFrequencyMatrix cont_freq_matrix)
-        : populations(Populations({(size_t)cont_freq_matrix.get_size(), SecirCount}))
-        , times(cont_freq_matrix.get_size(), StageTimes())
-        , probabilities(cont_freq_matrix.get_size(), Probabilities())
-        , m_num_groups{(size_t)cont_freq_matrix.get_size()}
-        , m_contact_patterns(cont_freq_matrix)
+    SecirParams(const ContactMatrixGroup& cont_matrix)
+        : populations(Populations({(size_t)cont_matrix.get_num_groups(), SecirCount}))
+        , times((size_t)cont_matrix.get_num_groups(), StageTimes())
+        , probabilities((size_t)cont_matrix.get_num_groups(), Probabilities())
+        , m_num_groups{(size_t)cont_matrix.get_num_groups()}
+        , m_contact_patterns(cont_matrix)
         , m_tstart{0}
         , m_seasonality{0}
         , m_icu_capacity{std::numeric_limits<double>::max()}

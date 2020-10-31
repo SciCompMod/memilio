@@ -10,79 +10,75 @@
 namespace epi
 {
 
-Damping::Damping(double day_in, double factor_in)
-    : day(day_in)
-    , factor(factor_in)
+void Dampings::finalize() const
 {
+    using std::get;
+
+    if (m_accumulated_dampings_cached.empty()) {
+        m_accumulated_dampings_cached.emplace_back(Eigen::MatrixXd::Zero(m_num_groups, m_num_groups),
+                                                   SimulationTime(std::numeric_limits<double>::lowest()));
+
+        std::vector<std::tuple<std::reference_wrapper<const Eigen::MatrixXd>, DampingLevel, DampingType>>
+            active_by_type;
+        std::vector<std::tuple<Eigen::MatrixXd, DampingLevel>> sum_by_level;
+        for (auto& damping : m_dampings) {
+            update_active_dampings(damping, active_by_type, sum_by_level);
+            m_accumulated_dampings_cached.emplace_back(inclusive_exclusive_sum(sum_by_level),
+                                                       get<SimulationTime>(damping));
+            assert((get<Eigen::MatrixXd>(m_accumulated_dampings_cached.back()).array() <= 1).all() &&
+                   "accumulated damping must be below 1.");
+        }
+
+        m_accumulated_dampings_cached.emplace_back(get<Eigen::MatrixXd>(m_accumulated_dampings_cached.back()),
+                                                   SimulationTime(std::numeric_limits<double>::max()));
+    }
 }
 
-Dampings::Dampings()
-    : m_dampings({{0.0, 1.0}})
-    , m_smoothing(true)
+void Dampings::add_(const Damping& damping)
 {
-}
-
-std::vector<Damping> const& Dampings::get_dampings_vector() const
-{
-    return m_dampings;
-}
-
-void Dampings::set_smoothing(bool smoothing)
-{
-    m_smoothing = smoothing;
-}
-
-void Dampings::add(const Damping& d)
-{
-    // make sure, the damping array is sorted
-    insert_sorted_replace(m_dampings, d, [](const Damping& d1, const Damping& d2) {
-        return d1.day < d2.day;
+    assert(damping.get_coeffs().rows() == m_num_groups && damping.get_coeffs().cols() == m_num_groups);
+    insert_sorted_replace(m_dampings, damping, [](auto& tup1, auto& tup2) {
+        return double(std::get<SimulationTime>(tup1)) < double(std::get<SimulationTime>(tup2));
     });
+    m_accumulated_dampings_cached.clear();
 }
 
-double Dampings::get_factor(double day) const
+void Dampings::update_active_dampings(
+    const Damping& damping,
+    std::vector<std::tuple<std::reference_wrapper<const Eigen::MatrixXd>, DampingLevel, DampingType>>& active_by_type,
+    std::vector<std::tuple<Eigen::MatrixXd, DampingLevel>>& sum_by_level)
 {
-    //returns the damping that is active at the specified time or the first damping
-    assert(!m_dampings.empty());
-    auto ub = std::upper_bound(begin(m_dampings), end(m_dampings), day, [](double d1, const Damping& d2) {
-        return d1 < d2.day;
-    });
+    using std::get;
 
-    // ub is the damping
-    if (ub == begin(m_dampings)) { // only if day input is negative... (should not be the case...)
-        return ub->factor;
+    const int MatrixIdx = 0;
+
+    auto iter_active_same_type = std::find_if(active_by_type.begin(), active_by_type.end(), [&damping](auto& active) {
+        return get<DampingLevel>(active) == get<DampingLevel>(damping) &&
+               get<DampingType>(active) == get<DampingType>(damping);
+    });
+    if (iter_active_same_type != active_by_type.end()) {
+        //replace active of the same type and level
+        auto& active_same_type = *iter_active_same_type;
+        auto& sum_same_level   = *std::find_if(sum_by_level.begin(), sum_by_level.end(), [&damping](auto& sum) {
+            return get<DampingLevel>(sum) == get<DampingLevel>(damping);
+        });
+        get<MatrixIdx>(sum_same_level) += get<MatrixIdx>(damping) - get<MatrixIdx>(active_same_type).get();
+        get<MatrixIdx>(active_same_type) = get<MatrixIdx>(damping);
     }
     else {
-        if (m_smoothing) {
-            double descent_area = 1.0; // smoothing of damping of 1 day max
-            double day_upper    = 1e100; // large number; larger than maximum of days to be simulated
-            if (ub < end(m_dampings)) { // if this is the case, there are at least two dampings in the list before
+        //add new type
+        active_by_type.emplace_back(get<MatrixIdx>(damping), get<DampingLevel>(damping), get<DampingType>(damping));
 
-                day_upper    = (ub)->day;
-                descent_area = std::min(1.0, day_upper - (ub - 1)->day);
-            }
-
-            if (day < day_upper - descent_area) {
-                // here, the factor of the actual damping is return
-                // printf("\n\n standard.. day %.6f factor %.6f ", day, (ub - 1)->factor);
-                return (ub - 1)->factor;
-            }
-            else {
-                // here, the transition of the actual to the next damping is smoothed
-                // scale the cosine function such that (0,cos(0)) is mapped to (day_lower, fac_lower)
-                // and (pi,cos(pi)) to (day_upper, fac_upper)
-
-                double day_upper_min = day_upper - descent_area;
-                double fac_lower     = (ub - 1)->factor; // factor at lower bound day
-                double fac_upper     = (ub)->factor; // factor at upper bound day
-
-                double ret = smoother_cosine(day, day_upper_min, day_upper, fac_lower, fac_upper);
-
-                return ret;
-            }
+        auto iter_sum_same_level = std::find_if(sum_by_level.begin(), sum_by_level.end(), [&damping](auto& sum) {
+            return get<DampingLevel>(sum) == get<DampingLevel>(damping);
+        });
+        if (iter_sum_same_level != sum_by_level.end()) {
+            //add to existing level
+            get<MatrixIdx>(*iter_sum_same_level) += get<MatrixIdx>(damping);
         }
         else {
-            return (ub - 1)->factor;
+            //add new level
+            sum_by_level.emplace_back(get<MatrixIdx>(damping), get<DampingLevel>(damping));
         }
     }
 }

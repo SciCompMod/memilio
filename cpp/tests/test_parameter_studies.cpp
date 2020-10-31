@@ -67,12 +67,8 @@ TEST(ParameterStudies, sample_from_secir_params)
         params.probabilities[i].set_dead_per_icu(delta);
     }
 
-    epi::ContactFrequencyMatrix& cont_freq_matrix = params.get_contact_patterns();
-    for (int i = 0; i < static_cast<int>(num_groups); i++) {
-        for (int j = i; j < static_cast<int>(num_groups); j++) {
-            cont_freq_matrix.set_cont_freq(fact * cont_freq, i, j);
-        }
-    }
+    epi::ContactMatrixGroup& contact_matrix = params.get_contact_patterns();
+    contact_matrix[0] = epi::ContactMatrix(Eigen::MatrixXd::Constant(num_groups, num_groups, fact * cont_freq));
 
     epi::set_params_distributions_normal(params, t0, tmax, 0.2);
 
@@ -89,13 +85,13 @@ TEST(ParameterStudies, sample_from_secir_params)
         EXPECT_GE(params.probabilities[i].get_infection_from_contact(), 0);
     }
 
-    epi::ContactFrequencyMatrix& cont_freq_matrix_sample = params.get_contact_patterns();
+    epi::ContactMatrixGroup& contact_matrix_sample = params.get_contact_patterns();
 
-    for (size_t i = 0; i < params.get_num_groups(); i++) {
-        for (size_t j = 0; j < params.get_num_groups(); j++) {
-            EXPECT_GE(cont_freq_matrix_sample.get_dampings(static_cast<int>(i), static_cast<int>(j)).get_factor(1.0),
-                      0);
-            EXPECT_GE(cont_freq_matrix_sample.get_cont_freq(static_cast<int>(i), static_cast<int>(j)), 0);
+    for (auto& cfm : contact_matrix_sample) {
+        EXPECT_GE(cfm.get_dampings().size(), 1);
+        EXPECT_LE(cfm.get_dampings().size(), 10);
+        for (auto& damping : cfm.get_dampings()) {
+            EXPECT_TRUE((damping.get_coeffs().array() >= 0.0).all());
         }
     }
 }
@@ -244,13 +240,9 @@ TEST(ParameterStudies, check_ensemble_run_result)
         params.probabilities[i].set_dead_per_icu(delta);
     }
 
-    epi::ContactFrequencyMatrix& cont_freq_matrix = params.get_contact_patterns();
-    epi::Damping dummy(30., 0.3);
-    for (int i = 0; i < static_cast<int>(num_groups); i++) {
-        for (int j = i; j < static_cast<int>(num_groups); j++) {
-            cont_freq_matrix.set_cont_freq(fact * cont_freq, i, j);
-        }
-    }
+    epi::ContactMatrixGroup& contact_matrix = params.get_contact_patterns();
+    contact_matrix[0] =
+        epi::ContactMatrix(Eigen::MatrixXd::Constant(num_groups, num_groups, fact * cont_freq));
 
     epi::ParameterStudy parameter_study(params, t0, tmax, 0.2, 1);
 

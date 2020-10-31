@@ -15,8 +15,8 @@ class Test_ParameterStudy(unittest.TestCase):
         params.times[0].set_icu_to_home(8)
         params.times[0].set_icu_to_death(5)
 
-        params.get_contact_patterns().get_cont_freq_mat().set_cont_freq(0.5, 0, 0)
-        params.get_contact_patterns().get_cont_freq_mat().add_damping(secir.Damping(30, 0.3), 0, 0)
+        params.get_contact_patterns().cont_freq_mat[0] = secir.ContactMatrix(np.r_[0.5])
+        params.get_contact_patterns().cont_freq_mat.add_damping(secir.Damping(np.r_[0.7], 30.0))
 
         params.populations.set([0, secir.SecirCompartments.E], 100)
         params.populations.set([0, secir.SecirCompartments.C], 50)

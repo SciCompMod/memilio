@@ -18,7 +18,7 @@ TEST(TestMigration, compareWithSingleIntegration)
     params1.populations.set({epi::SeirCompartments::S}, 0.9);
     params1.populations.set({epi::SeirCompartments::E}, 0.1);
     params1.populations.set_total(1000);
-    params1.times.set_cont_freq(2.5);
+    params1.contact_frequency.get_baseline()(0, 0) = 2.5;
     params1.times.set_incubation(4);
     params1.times.set_infectious(10);
 

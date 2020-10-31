@@ -36,10 +36,9 @@ TEST(TestSecir, compareWithPreviousRun)
     params.times[0].set_icu_to_home(ticu2home);
     params.times[0].set_icu_to_death(ticu2death);
 
-    epi::ContactFrequencyMatrix& cont_freq_matrix = params.get_contact_patterns();
-    cont_freq_matrix.set_cont_freq(cont_freq, 0, 0);
-    epi::Damping dummy(30., 0.3);
-    cont_freq_matrix.add_damping(dummy, 0, 0);
+    epi::ContactMatrixGroup& contact_matrix = params.get_contact_patterns();
+    contact_matrix[0]                       = epi::ContactMatrix(Eigen::MatrixXd::Constant(1, 1, cont_freq));
+    contact_matrix[0].add_damping(0.7, epi::SimulationTime(30.));
 
     params.populations.set({0, epi::SecirCompartments::E}, nb_exp_t0);
     params.populations.set({0, epi::SecirCompartments::C}, nb_car_t0);
@@ -121,10 +120,9 @@ TEST(TestSecir, testParamConstructors)
     params.probabilities[0].set_icu_per_hospitalized(theta);
     params.probabilities[0].set_dead_per_icu(delta);
 
-    epi::ContactFrequencyMatrix& cont_freq_matrix = params.get_contact_patterns();
-    cont_freq_matrix.set_cont_freq(cont_freq, 0, 0);
-    epi::Damping dummy(30., 0.3);
-    cont_freq_matrix.add_damping(dummy, 0, 0);
+    epi::ContactMatrixGroup& contact_matrix = params.get_contact_patterns();
+    contact_matrix[0] = epi::ContactMatrix(Eigen::MatrixXd::Constant(1, 1, cont_freq));
+    contact_matrix[0].add_damping(0.7, epi::SimulationTime(30.));
 
     epi::SecirParams params2{params}; // copy constructor
 
@@ -159,8 +157,7 @@ TEST(TestSecir, testParamConstructors)
     EXPECT_EQ(params.times[0].get_hospitalized_to_icu(), params2.times[0].get_hospitalized_to_icu());
     EXPECT_EQ(params.times[0].get_icu_to_dead(), params2.times[0].get_icu_to_dead());
     EXPECT_EQ(params.times[0].get_icu_to_home(), params2.times[0].get_icu_to_home());
-    EXPECT_EQ(params.get_contact_patterns().get_cont_freq_mat().get_dampings(0, 0).get_factor(35),
-              params2.get_contact_patterns().get_cont_freq_mat().get_dampings(0, 0).get_factor(35));
+    EXPECT_EQ(params.get_contact_patterns().get_cont_freq_mat(), params2.get_contact_patterns().get_cont_freq_mat());
 
     EXPECT_EQ(params.probabilities[0].get_infection_from_contact(),
               params2.probabilities[0].get_infection_from_contact());
@@ -173,8 +170,7 @@ TEST(TestSecir, testParamConstructors)
               params2.probabilities[0].get_hospitalized_per_infectious());
     EXPECT_EQ(params.probabilities[0].get_icu_per_hospitalized(), params2.probabilities[0].get_icu_per_hospitalized());
     EXPECT_EQ(params.probabilities[0].get_dead_per_icu(), params2.probabilities[0].get_dead_per_icu());
-    EXPECT_EQ(params.get_contact_patterns().get_cont_freq_mat().get_dampings(0, 0).get_factor(35),
-              params2.get_contact_patterns().get_cont_freq_mat().get_dampings(0, 0).get_factor(35));
+    EXPECT_EQ(params.get_contact_patterns().get_cont_freq_mat(), params2.get_contact_patterns().get_cont_freq_mat());
 
     epi::SecirParams params3 = std::move(params2); // move constructor
 
@@ -222,8 +218,7 @@ TEST(TestSecir, testParamConstructors)
     EXPECT_EQ(params3.probabilities[0].get_icu_per_hospitalized(), params.probabilities[0].get_icu_per_hospitalized());
     EXPECT_EQ(params3.probabilities[0].get_dead_per_icu(), params.probabilities[0].get_dead_per_icu());
 
-    EXPECT_EQ(params.get_contact_patterns().get_cont_freq_mat().get_dampings(0, 0).get_factor(35),
-              params3.get_contact_patterns().get_cont_freq_mat().get_dampings(0, 0).get_factor(35));
+    EXPECT_EQ(params.get_contact_patterns().get_cont_freq_mat(), params3.get_contact_patterns().get_cont_freq_mat());
 
     epi::SecirParams params4 = params3; // copy assignment constructor
 
@@ -271,8 +266,7 @@ TEST(TestSecir, testParamConstructors)
     EXPECT_EQ(params3.probabilities[0].get_icu_per_hospitalized(), params4.probabilities[0].get_icu_per_hospitalized());
     EXPECT_EQ(params3.probabilities[0].get_dead_per_icu(), params4.probabilities[0].get_dead_per_icu());
 
-    EXPECT_EQ(params4.get_contact_patterns().get_cont_freq_mat().get_dampings(0, 0).get_factor(35),
-              params3.get_contact_patterns().get_cont_freq_mat().get_dampings(0, 0).get_factor(35));
+    EXPECT_EQ(params4.get_contact_patterns().get_cont_freq_mat(), params3.get_contact_patterns().get_cont_freq_mat());
 
     epi::SecirParams params5 = std::move(params4); // move assignment constructor
 
@@ -320,40 +314,7 @@ TEST(TestSecir, testParamConstructors)
     EXPECT_EQ(params5.probabilities[0].get_icu_per_hospitalized(), params3.probabilities[0].get_icu_per_hospitalized());
     EXPECT_EQ(params5.probabilities[0].get_dead_per_icu(), params3.probabilities[0].get_dead_per_icu());
 
-    EXPECT_EQ(params5.get_contact_patterns().get_cont_freq_mat().get_dampings(0, 0).get_factor(35),
-              params3.get_contact_patterns().get_cont_freq_mat().get_dampings(0, 0).get_factor(35));
-
-    epi::ContactFrequencyMatrix contact_freq_matrix{2};
-
-    for (int i = 0; i < 2; i++) {
-        for (int j = i; j < 2; j++) {
-            contact_freq_matrix.set_cont_freq(0.5 * cont_freq, i, j);
-        }
-    }
-
-    epi::ContactFrequencyMatrix contact_freq_matrix2{contact_freq_matrix};
-
-    for (int i = 0; i < 2; i++) {
-        for (int j = i; j < 2; j++) {
-            EXPECT_EQ(contact_freq_matrix.get_cont_freq(i, j), contact_freq_matrix2.get_cont_freq(i, j));
-        }
-    }
-
-    epi::ContactFrequencyMatrix contact_freq_matrix3{std::move(contact_freq_matrix2)};
-
-    for (int i = 0; i < 2; i++) {
-        for (int j = i; j < 2; j++) {
-            EXPECT_EQ(contact_freq_matrix3.get_cont_freq(i, j), contact_freq_matrix.get_cont_freq(i, j));
-        }
-    }
-
-    epi::ContactFrequencyMatrix contact_freq_matrix4 = std::move(contact_freq_matrix3);
-
-    for (int i = 0; i < 2; i++) {
-        for (int j = i; j < 2; j++) {
-            EXPECT_EQ(contact_freq_matrix4.get_cont_freq(i, j), contact_freq_matrix.get_cont_freq(i, j));
-        }
-    }
+    EXPECT_EQ(params5.get_contact_patterns().get_cont_freq_mat(), params3.get_contact_patterns().get_cont_freq_mat());
 }
 
 TEST(TestSecir, testSettersAndGetters)
@@ -519,10 +480,9 @@ TEST(TestSecir, testValueConstraints)
     params.times[0].set_icu_to_home(ticu2home);
     params.times[0].set_icu_to_death(ticu2death);
 
-    epi::ContactFrequencyMatrix& cont_freq_matrix = params.get_contact_patterns();
-    cont_freq_matrix.set_cont_freq(cont_freq, 0, 0);
-    epi::Damping dummy(30., 0.3);
-    cont_freq_matrix.add_damping(dummy, 0, 0);
+    epi::ContactMatrixGroup& contact_matrix = params.get_contact_patterns();
+    contact_matrix[0]                       = epi::ContactMatrix(Eigen::MatrixXd::Constant(1, 1, cont_freq));
+    contact_matrix[0].add_damping(0.7, epi::SimulationTime(30.));
 
     params.populations.set({0, epi::SecirCompartments::E}, nb_exp_t0);
     params.populations.set({0, epi::SecirCompartments::C}, nb_car_t0);
@@ -598,8 +558,8 @@ TEST(TestSecir, testModelConstraints)
     params.probabilities[0].set_icu_per_hospitalized(theta);
     params.probabilities[0].set_dead_per_icu(delta);
 
-    epi::ContactFrequencyMatrix& cont_freq_matrix = params.get_contact_patterns();
-    cont_freq_matrix.set_cont_freq(cont_freq, 0, 0);
+    epi::ContactMatrixGroup& contact_matrix = params.get_contact_patterns();
+    contact_matrix[0] = epi::ContactMatrix(Eigen::MatrixXd::Constant(1, 1, cont_freq));
 
     params.apply_constraints();
 

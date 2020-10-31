@@ -12,14 +12,14 @@ int main(int argc, char** argv)
     epi::SeirParams params;
     params.populations.set({epi::SeirCompartments::S}, 10000);
     params.times.set_incubation(1);
-    params.times.set_cont_freq(2.7);
+    params.contact_frequency.get_baseline()(0, 0) = 2.7;
     params.times.set_infectious(1);
 
     //two mostly identical groups
     auto params_group1 = params;
     auto params_group2 = params;
     //some contact restrictions in group 1
-    params_group1.dampings.add({5, 0.5});
+    params_group1.contact_frequency.add_damping(0.5, epi::SimulationTime(5));
     //infection starts in group 1
     params_group1.populations.set({epi::SeirCompartments::S}, 9990);
     params_group1.populations.set({epi::SeirCompartments::E}, 10);
