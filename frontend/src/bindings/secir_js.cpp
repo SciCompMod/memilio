@@ -91,7 +91,7 @@ EMSCRIPTEN_BINDINGS(secirjs)
                 self.get_type() = epi::DampingType(v);
             })
         .property<int>(
-            "time",
+            "level",
             [](auto& self) {
                 return int(self.get_level());
             },
