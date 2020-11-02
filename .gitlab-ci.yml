@@ -148,8 +148,7 @@ test-py:
     - apt -qq -y install python3-pip gnupg
     - python3.6 -m pip install --upgrade pip
     - for pkg in `ls pycode/wheelhouse/*36*.whl`; do python3.6 -m pip install $pkg; done
-    - pip install pyfakefs
-    - pip install freezegun
+    - pip install -r pycode/requirements-dev.txt
   script:
     - cd pycode/test
     - python3 -m unittest
