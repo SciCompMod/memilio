@@ -9,12 +9,10 @@
 namespace epi
 {
 
-using DefaultIntegratorCore = RKIntegratorCore;
-
 /**
  * @brief A class for the simulation of a compartment model.
  */
-template <class Model, class IntegratorCore = DefaultIntegratorCore>
+template <class Model>
 class Simulation
 {
 public:
@@ -25,15 +23,22 @@ public:
      * @param[in] dt initial step size of integration
      */
     Simulation(Model const& model, double t0 = 0., double dt = 0.1)
-        : m_integratorCore(std::make_shared<IntegratorCore>())
+        : m_integratorCore(std::make_shared<RKIntegratorCore>())
         , m_integrator([model](auto&& y, auto&& t, auto&& dydt) { model.eval_right_hand_side(y, t, dydt); }, t0,
                        model.get_initial_values(), dt, m_integratorCore)
         , m_model(model)
     {
-        m_integratorCore->set_dt_min(0.3);
-        m_integratorCore->set_dt_max(1.0);
-        m_integratorCore->set_rel_tolerance(1e-4);
-        m_integratorCore->set_abs_tolerance(1e-1);
+        this->set_default_parameters();
+    }
+
+    /*
+     * @brief set the core integrator used in the simulation
+     */
+    void set_integrator(std::shared_ptr<IntegratorCore> integrator)
+    {
+        m_integratorCore = std::move(integrator);
+        m_integrator.set_integrator(m_integratorCore);
+        this->set_default_parameters();
     }
 
     /**
@@ -73,6 +78,15 @@ public:
     }
 
 private:
+
+    void set_default_parameters()
+    {
+        m_integratorCore->set_dt_min(0.3);
+        m_integratorCore->set_dt_max(1.0);
+        m_integratorCore->set_rel_tolerance(1e-4);
+        m_integratorCore->set_abs_tolerance(1e-1);
+    }
+
     std::shared_ptr<IntegratorCore> m_integratorCore;
     OdeIntegrator m_integrator;
     Model m_model;
@@ -87,11 +101,15 @@ private:
  * @return a TimeSeries to represent the final simulation result
  *
  */
-template <class Model, class IntegratorCore = DefaultIntegratorCore>
-TimeSeries<ScalarType> simulate(double t0, double tmax, double dt, Model const& model)
+template <class Model>
+TimeSeries<ScalarType> simulate(double t0, double tmax, double dt, Model const& model,
+                                std::shared_ptr<IntegratorCore> integrator = nullptr)
 {
     model.check_constraints();
-    Simulation<Model, IntegratorCore> sim(model, t0, dt);
+    Simulation<Model> sim(model, t0, dt);
+    if (integrator) {
+        sim.set_integrator(integrator);
+    }
     sim.advance(tmax);
     return sim.get_result();
 }

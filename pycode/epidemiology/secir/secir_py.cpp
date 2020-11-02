@@ -498,7 +498,7 @@ void bind_secir_ageres(py::module& m)
     using SecirModel = epi::SecirModel<AgeGroup>;
     bind_Simulation<SecirModel>(m, "SecirSimulation" + std::to_string(N));
 
-    m.def("simulate", py::overload_cast<double, double, double, const SecirModel&>(&epi::simulate<SecirModel>),
+    m.def("simulate", [](double t0, double tmax, double dt, const SecirModel& model) { return epi::simulate<SecirModel>(t0, tmax, dt, model); },
           "Simulates a SecirModel1 from t0 to tmax.", py::arg("t0"), py::arg("tmax"), py::arg("dt"),
           py::arg("model"));
 

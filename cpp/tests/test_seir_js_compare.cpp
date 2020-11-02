@@ -47,7 +47,8 @@ public:
 
 TEST_F(TestCompareSeirWithJS, integrate)
 {
-    auto result = epi::simulate<epi::SeirModel, epi::EulerIntegratorCore>(t0, tmax, dt, model);
+    auto integrator = std::make_shared<epi::EulerIntegratorCore>();
+    auto result = epi::simulate<epi::SeirModel>(t0, tmax, dt, model, integrator);
 
     ASSERT_EQ(refData.size(), static_cast<size_t>(result.get_num_time_points()));
 

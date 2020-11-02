@@ -101,6 +101,22 @@ public:
     {
         return model.get_result();
     }
+
+    /**
+     * return the model
+     */
+    Model& get_model()
+    {
+        return model;
+    }
+
+    /**
+     * return the model
+     */
+    Model const & get_model() const
+    {
+        return model;
+    }
     
     /**
      * get the parameters of the simulation in this node.
