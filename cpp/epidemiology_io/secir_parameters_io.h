@@ -124,57 +124,57 @@ void write_parameter_study(TixiDocumentHandle handle, const std::string& path, c
  * @param t0 starting point of simulation
  * @param tmax end point of simulation
  */
-void write_single_run_params(const int run, const SecirParams& params, double t0, double tmax,
-                             const TimeSeries<double>& result, int node);
+void write_single_run_params(const int run, epi::Graph<epi::ModelNode<SecirSimulation>, MigrationEdge> graph, double t0,
+                             double tmax);
 
 /**
  * @brief Creates xml file containing Parameters of one node of a graph
+ * @param handle Tixi document handle
  * @param graph Graph which holds the node
  * @param node Node ID
- * @param t0 starting point of simulation
- * @param tmax end point of simulation
  */
-void write_node(const Graph<SecirParams, MigrationEdge>& graph, int node);
+void write_node(TixiDocumentHandle handle, const Graph<SecirParams, MigrationEdge>& graph, int node);
 
 /**
  * @brief reads parameters of a single node and saves it into the graph
+ * @param node_handle Tixi document handle
  * @param graph Graph in which the node is saved
- * @param node Node ID
  */
-void read_node(Graph<SecirParams, MigrationEdge>& graph, int node);
+void read_node(TixiDocumentHandle node_handle, Graph<SecirParams, MigrationEdge>& graph);
 
 /**
- * @brief Writes the information of a single edge into a xml file
- * @param handle Tixi Document Handle
+ * @brief Writes the information of a single edge into the xml file corresponding to its start node
+ * @param edge_handles vecor of Tixi Document Handle. It's length is the number of nodes in the graph
  * @param path Path to document root
  * @param graph Graph which holds the edge
  * @param edge Edge ID
  */
-void write_edge(TixiDocumentHandle handle, const std::string& path, const Graph<SecirParams, MigrationEdge>& graph,
-                int edge);
+void write_edge(const std::vector<TixiDocumentHandle>& edge_handles, const std::string& path,
+                const Graph<SecirParams, MigrationEdge>& graph, int edge);
 
 /**
  * @brief Reads information of a single edge and saves it into the graph
- * @param handle Tixi document handle
+ * @param edge_handles vecor of Tixi Document Handle. It's length is the number of nodes in the graph
  * @param path Path to document root
  * @param graph Graph to which the edge is added
- * @param edge Edge ID
+ * @param stort_node origin of the edge
+ * @param end_node destination of the edge
  */
-void read_edge(TixiDocumentHandle handle, const std::string& path, Graph<SecirParams, MigrationEdge>& graph, int edge);
+void read_edge(const std::vector<TixiDocumentHandle>& edge_handles, const std::string& path,
+               Graph<SecirParams, MigrationEdge>& graph, int start_node, int end_node);
 
 /**
- * @brief creates xml files for each node of a Secir simulation graph and one xml file for its edges
+ * @brief creates xml files for each node of a Secir simulation graph and one xml file for its edges for each node
  * @param graph Graph which should be written
- * @param t0 starting point of simulation
- * @param tmax end point of simulation
+ * @param dir_string directory, where graph should be stored
  */
-//TO-DO: Implement apropriate File System for XML FIles
-void write_graph(const Graph<SecirParams, MigrationEdge>& graph);
+void write_graph(const Graph<SecirParams, MigrationEdge>& graph, const std::string& dir_string);
 
 /**
  * @brief reads graph xml files and returns a Secir simulation graph
+ * @param dir_string directory from where graph should be read
  */
-Graph<SecirParams, MigrationEdge> read_graph();
+Graph<SecirParams, MigrationEdge> read_graph(const std::string& dir_string);
 
 /**
  * @brief interpolates age_ranges to param_ranges and saves ratios in interpolation

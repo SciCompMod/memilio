@@ -11,9 +11,10 @@
 namespace epi
 {
 
-using HandleSimulationResultFunction = std::function<void(const SecirParams&, const TimeSeries<double>&, int node)>;
+using HandleSimulationResultFunction =
+    std::function<void(epi::Graph<epi::ModelNode<epi::SecirSimulation>, epi::MigrationEdge>)>;
 
-auto DummyHandleResultFunction = [](const SecirParams&, const TimeSeries<double>&, int) {};
+auto DummyHandleResultFunction = [](epi::Graph<epi::ModelNode<epi::SecirSimulation>, epi::MigrationEdge>) {};
 
 /**
  * Class that performs multiple simulation runs with randomly sampled parameters.
@@ -31,6 +32,9 @@ public:
      */
     ParameterStudy(const epi::Graph<epi::SecirParams, epi::MigrationEdge>& graph, double t0, double tmax,
                    double graph_sim_dt, size_t num_runs);
+
+    ParameterStudy(const epi::Graph<epi::SecirParams, epi::MigrationEdge>& graph, double t0, double tmax,
+                   double dev_rel, double graph_sim_dt, size_t num_runs);
 
     /**
      * @brief Create study for single compartment model.
@@ -153,6 +157,19 @@ inline ParameterStudy::ParameterStudy(const epi::Graph<epi::SecirParams, epi::Mi
 {
 }
 
+inline ParameterStudy::ParameterStudy(const epi::Graph<epi::SecirParams, epi::MigrationEdge>& graph, double t0,
+                                      double tmax, double dev_rel, double graph_sim_dt, size_t num_runs)
+    : m_graph(graph)
+    , m_num_runs(num_runs)
+    , m_t0{t0}
+    , m_tmax{tmax}
+    , m_dt_graph_sim(graph_sim_dt)
+{
+    for (auto& params_node : m_graph.nodes()) {
+        set_params_distributions_normal(params_node, t0, tmax, dev_rel);
+    }
+}
+
 inline ParameterStudy::ParameterStudy(SecirParams const& params, double t0, double tmax, size_t num_runs)
     : m_num_runs{num_runs}
     , m_t0{t0}
@@ -181,6 +198,7 @@ ParameterStudy::run(HandleSimulationResultFunction simulation_result_function)
 
         for (auto& params_node : m_graph.nodes()) {
             draw_sample(params_node);
+            params_node.apply_constraints();
             sim_graph.add_node(params_node, m_t0, m_dt_integration);
         }
 
@@ -194,11 +212,7 @@ ParameterStudy::run(HandleSimulationResultFunction simulation_result_function)
 
         auto result = sim.get_graph();
 
-        int node_id = 0;
-        for (auto& node : result.nodes()) {
-            simulation_result_function(node.get_params(), node.get_result(), node_id);
-            node_id++;
-        }
+        simulation_result_function(result);
 
         ensemble_result.push_back(result);
     }
