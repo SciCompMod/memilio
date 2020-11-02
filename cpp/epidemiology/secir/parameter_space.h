@@ -26,165 +26,57 @@ void set_params_distributions_normal(
     CompartmentalModel<Populations<AgeGroup, InfectionType>, SecirParams<(size_t)AgeGroup::Count>>& model, double t0,
     double tmax, double dev_rel)
 {
-    double min_val = 0.001;
+    auto calc_distr = [dev_rel](double v, double min_val = 0.001){
+        return ParameterDistributionNormal(std::max(min_val, (1 - dev_rel * 2.6) * v),
+                                           (1 + dev_rel * 2.6) * v,
+                                           v,
+                                           dev_rel * v);
+    };
 
-    double value_params = model.parameters.get_seasonality();
-    model.parameters.set_seasonality(ParameterDistributionNormal(std::max(0.0, (1 - dev_rel * 2.6) * value_params),
-                                                                 (1 + dev_rel * 2.6) * value_params, value_params,
-                                                                 dev_rel * value_params));
 
-    value_params = model.parameters.get_icu_capacity();
-    model.parameters.set_icu_capacity(ParameterDistributionNormal(std::max(min_val, (1 - dev_rel * 2.6) * value_params),
-                                                                  (1 + dev_rel * 2.6) * value_params, value_params,
-                                                                  dev_rel * value_params));
+    model.parameters.set_seasonality(  calc_distr(model.parameters.get_seasonality(), 0.0));
+    model.parameters.set_icu_capacity( calc_distr(model.parameters.get_icu_capacity()));
 
     // populations
     for (size_t i = 0; i < model.parameters.get_num_groups(); i++) {
+        for ( size_t j = 0; j < (size_t)InfectionType::Count; j++) {
 
-        // variably sized groups
-        // exposed
-        value_params = model.populations.get(AgeGroup(i), InfectionType::E);
-        model.populations.get(AgeGroup(i), InfectionType::E)
-            .set_distribution(ParameterDistributionNormal(std::max(min_val, (1 - dev_rel * 2.6) * value_params),
-                                                          (1 + dev_rel * 2.6) * value_params, value_params,
-                                                          dev_rel * value_params));
+            // don't touch S and D
+            if ( j == (size_t)InfectionType::S || j == (size_t)InfectionType::D) {
+                continue;
+            }
 
-        // carrier
-        value_params = model.populations.get(AgeGroup(i), InfectionType::C);
-        model.populations.get(AgeGroup(i), InfectionType::C)
-            .set_distribution(ParameterDistributionNormal(std::max(min_val, (1 - dev_rel * 2.6) * value_params),
-                                                          (1 + dev_rel * 2.6) * value_params, value_params,
-                                                          dev_rel * value_params));
 
-        // infectious
-        value_params = model.populations.get(AgeGroup(i), InfectionType::I);
-        model.populations.get(AgeGroup(i), InfectionType::I)
-            .set_distribution(ParameterDistributionNormal(std::max(min_val, (1 - dev_rel * 2.6) * value_params),
-                                                          (1 + dev_rel * 2.6) * value_params, value_params,
-                                                          dev_rel * value_params));
-
-        // hospitalized
-        value_params = model.populations.get(AgeGroup(i), InfectionType::H);
-        model.populations.get(AgeGroup(i), InfectionType::H)
-            .set_distribution(ParameterDistributionNormal(std::max(min_val, (1 - dev_rel * 2.6) * value_params),
-                                                          (1 + dev_rel * 2.6) * value_params, value_params,
-                                                          dev_rel * value_params));
-
-        // icu
-        value_params = model.populations.get(AgeGroup(i), InfectionType::U);
-        model.populations.get(AgeGroup(i), InfectionType::U)
-            .set_distribution(ParameterDistributionNormal(std::max(min_val, (1 - dev_rel * 2.6) * value_params),
-                                                          (1 + dev_rel * 2.6) * value_params, value_params,
-                                                          dev_rel * value_params));
-
-        // recovered
-        value_params = model.populations.get(AgeGroup(i), InfectionType::R);
-        model.populations.get(AgeGroup(i), InfectionType::R)
-            .set_distribution(ParameterDistributionNormal(std::max(min_val, (1 - dev_rel * 2.6) * value_params),
-                                                          (1 + dev_rel * 2.6) * value_params, value_params,
-                                                          dev_rel * value_params));
+            // variably sized groups
+            model.populations.get(AgeGroup(i), InfectionType(j))
+                .set_distribution(calc_distr(model.populations.get(AgeGroup(i), InfectionType(j))));
+        }
     }
 
     // times
     for (size_t i = 0; i < model.parameters.get_num_groups(); i++) {
-        // incubation time
-        value_params = model.parameters.times[i].get_incubation();
-        model.parameters.times[i].set_incubation(
-            ParameterDistributionNormal(std::max(min_val, (1 - dev_rel * 2.6) * value_params),
-                                        (1 + dev_rel * 2.6) * value_params, value_params, dev_rel * value_params));
 
-        // serial interval
-        value_params = model.parameters.times[i].get_serialinterval();
-        model.parameters.times[i].set_serialinterval(
-            ParameterDistributionNormal(std::max(min_val, (1 - dev_rel * 2.6) * value_params),
-                                        (1 + dev_rel * 2.6) * value_params, value_params, dev_rel * value_params));
-
-        // infectious time (mild)
-        value_params = model.parameters.times[i].get_infectious_mild();
-        model.parameters.times[i].set_infectious_mild(
-            ParameterDistributionNormal(std::max(min_val, (1 - dev_rel * 2.6) * value_params),
-                                        (1 + dev_rel * 2.6) * value_params, value_params, dev_rel * value_params));
-
-        // infectious to recovered (hospitalized to home)
-        value_params = model.parameters.times[i].get_hospitalized_to_home();
-        model.parameters.times[i].set_hospitalized_to_home(
-            ParameterDistributionNormal(std::max(min_val, (1 - dev_rel * 2.6) * value_params),
-                                        (1 + dev_rel * 2.6) * value_params, value_params, dev_rel * value_params));
-
-        // infectious to hospitalized (home to hospitalized)
-        value_params = model.parameters.times[i].get_home_to_hospitalized();
-        model.parameters.times[i].set_home_to_hospitalized(
-            ParameterDistributionNormal(std::max(min_val, (1 - dev_rel * 2.6) * value_params),
-                                        (1 + dev_rel * 2.6) * value_params, value_params, dev_rel * value_params));
-
-        // infectious (asymptomatic)
-        value_params = model.parameters.times[i].get_infectious_asymp();
-        model.parameters.times[i].set_infectious_asymp(
-            ParameterDistributionNormal(std::max(min_val, (1 - dev_rel * 2.6) * value_params),
-                                        (1 + dev_rel * 2.6) * value_params, value_params, dev_rel * value_params));
-
-        // hospitalized to ICU
-        value_params = model.parameters.times[i].get_hospitalized_to_icu();
-        model.parameters.times[i].set_hospitalized_to_icu(
-            ParameterDistributionNormal(std::max(min_val, (1 - dev_rel * 2.6) * value_params),
-                                        (1 + dev_rel * 2.6) * value_params, value_params, dev_rel * value_params));
-
-        // ICU to recovered
-        value_params = model.parameters.times[i].get_icu_to_home();
-        model.parameters.times[i].set_icu_to_home(
-            ParameterDistributionNormal(std::max(min_val, (1 - dev_rel * 2.6) * value_params),
-                                        (1 + dev_rel * 2.6) * value_params, value_params, dev_rel * value_params));
-
-        // ICU to death
-        value_params = model.parameters.times[i].get_icu_to_dead();
-        model.parameters.times[i].set_icu_to_death(
-            ParameterDistributionNormal(std::max(min_val, (1 - dev_rel * 2.6) * value_params),
-                                        (1 + dev_rel * 2.6) * value_params, value_params, dev_rel * value_params));
+        model.parameters.times[i].set_incubation(           calc_distr(model.parameters.times[i].get_incubation()));
+        model.parameters.times[i].set_serialinterval(       calc_distr(model.parameters.times[i].get_serialinterval()));
+        model.parameters.times[i].set_infectious_mild(      calc_distr(model.parameters.times[i].get_infectious_mild()));
+        model.parameters.times[i].set_hospitalized_to_home( calc_distr(model.parameters.times[i].get_hospitalized_to_home()));
+        model.parameters.times[i].set_home_to_hospitalized( calc_distr(model.parameters.times[i].get_home_to_hospitalized()));
+        model.parameters.times[i].set_infectious_asymp(     calc_distr(model.parameters.times[i].get_infectious_asymp()));
+        model.parameters.times[i].set_hospitalized_to_icu(  calc_distr(model.parameters.times[i].get_hospitalized_to_icu()));
+        model.parameters.times[i].set_icu_to_home(          calc_distr(model.parameters.times[i].get_icu_to_home()));
+        model.parameters.times[i].set_icu_to_death(         calc_distr(model.parameters.times[i].get_icu_to_dead()));
     }
 
     // probabilities
     for (size_t i = 0; i < model.parameters.get_num_groups(); i++) {
-        // infection from contact
-        value_params = model.parameters.probabilities[i].get_infection_from_contact();
-        model.parameters.probabilities[i].set_infection_from_contact(
-            ParameterDistributionNormal(std::max(min_val, (1 - dev_rel * 2.6) * value_params),
-                                        (1 + dev_rel * 2.6) * value_params, value_params, dev_rel * value_params));
 
-        // carrier infectability
-        value_params = model.parameters.probabilities[i].get_carrier_infectability();
-        model.parameters.probabilities[i].set_carrier_infectability(
-            ParameterDistributionNormal(std::max(min_val, (1 - dev_rel * 2.6) * value_params),
-                                        (1 + dev_rel * 2.6) * value_params, value_params, dev_rel * value_params));
-
-        // asymptomatic per infectious
-        value_params = model.parameters.probabilities[i].get_asymp_per_infectious();
-        model.parameters.probabilities[i].set_asymp_per_infectious(
-            ParameterDistributionNormal(std::max(min_val, (1 - dev_rel * 2.6) * value_params),
-                                        (1 + dev_rel * 2.6) * value_params, value_params, dev_rel * value_params));
-
-        // risk of infection from infectious
-        value_params = model.parameters.probabilities[i].get_risk_from_symptomatic();
-        model.parameters.probabilities[i].set_risk_from_symptomatic(
-            ParameterDistributionNormal(std::max(min_val, (1 - dev_rel * 2.6) * value_params),
-                                        (1 + dev_rel * 2.6) * value_params, value_params, dev_rel * value_params));
-
-        // deaths per icu treatments
-        value_params = model.parameters.probabilities[i].get_dead_per_icu();
-        model.parameters.probabilities[i].set_dead_per_icu(
-            ParameterDistributionNormal(std::max(min_val, (1 - dev_rel * 2.6) * value_params),
-                                        (1 + dev_rel * 2.6) * value_params, value_params, dev_rel * value_params));
-
-        // hospitalized per infections
-        value_params = model.parameters.probabilities[i].get_hospitalized_per_infectious();
-        model.parameters.probabilities[i].set_hospitalized_per_infectious(
-            ParameterDistributionNormal(std::max(min_val, (1 - dev_rel * 2.6) * value_params),
-                                        (1 + dev_rel * 2.6) * value_params, value_params, dev_rel * value_params));
-
-        // icu treatments per hospitalized
-        value_params = model.parameters.probabilities[i].get_icu_per_hospitalized();
-        model.parameters.probabilities[i].set_icu_per_hospitalized(
-            ParameterDistributionNormal(std::max(min_val, (1 - dev_rel * 2.6) * value_params),
-                                        (1 + dev_rel * 2.6) * value_params, value_params, dev_rel * value_params));
+        model.parameters.probabilities[i].set_infection_from_contact(      calc_distr(model.parameters.probabilities[i].get_infection_from_contact()));
+        model.parameters.probabilities[i].set_carrier_infectability(       calc_distr(model.parameters.probabilities[i].get_carrier_infectability()));
+        model.parameters.probabilities[i].set_asymp_per_infectious(        calc_distr(model.parameters.probabilities[i].get_asymp_per_infectious()));
+        model.parameters.probabilities[i].set_risk_from_symptomatic(       calc_distr(model.parameters.probabilities[i].get_risk_from_symptomatic()));
+        model.parameters.probabilities[i].set_dead_per_icu(                calc_distr(model.parameters.probabilities[i].get_dead_per_icu()));
+        model.parameters.probabilities[i].set_hospitalized_per_infectious( calc_distr(model.parameters.probabilities[i].get_hospitalized_per_infectious()));
+        model.parameters.probabilities[i].set_icu_per_hospitalized(        calc_distr(model.parameters.probabilities[i].get_icu_per_hospitalized()));
     }
 
     // maximum number of dampings; to avoid overfitting only allow one damping for every 10 days simulated
