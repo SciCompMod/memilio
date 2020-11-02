@@ -423,7 +423,6 @@ namespace details
         i |= i >> 8;
         i |= i >> 16;
         IF_CONSTEXPR(sizeof(Eigen::Index) == 8) {
-        //if(sizeof(Eigen::Index) == 8) {
             i |= i >> 32;
         }
         ++i;

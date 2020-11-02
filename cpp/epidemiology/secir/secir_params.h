@@ -11,53 +11,34 @@
 namespace epi
 {
 
+
 /**
- * Paramters of the SECIR/SECIHURD model:
- * T_inc (also sigma^(-1) or R_2^(-1)+R_3^(-1)): mean incubation period (default: 5.2);
- *          R_2^(-1) is the first part of the incubation time where the person is not yet infectioous
- *          R_3 is the exchange between asymptomatic carriers and infectious people; R_3^(-1) is the second part of the incubation time where the person is infectious WITHOUT showing symptoms
- * T_serint (also R_2^(-1)+0.5*R_3^(-1)): serial interval (default: 4.2);
- * T_infmild (also gamma^(-1) or R_4^(-1)): time a person remains infective after disease (if 'hospitalized' is considered a state, it does not apply to them but only to 'mildly infected' people in SECIR)
- * T_hosp2home (also R_5^(1)): duration for which the hospitalized patients not requiring further intensive care remain under general hospital care (=INF or R_5=0 in standard SEIR to waive influence of this parameter)
- * T_home2hosp (also R_6^(-1)): mean time a patient with mild symptoms spends at home before hospital admission due to worsening of the disease condition  (=INF or R_6=0 in standard SEIR to waive influence of this parameter)
- * T_hosp2icu (also R_7^(-1)): mean time a patient who entered the hospital will be hopistalized without ICU before being connected to an ICU  (=INF or R_7=0 in standard SEIR to waive influence of this parameter)
- * T_icu2home (also R_8^(-1)): mean time a patient is connected to an ICU before returning home (=INF or R_8=0 in standard SEIR to waive influence of this parameter)
- * T_infasy (also R_9^(-1)): mean time an asymptomatic person remains infective (=INF or R_9=0 in standard SEIR to waive influence of this parameter)
- * T_icu2death (also d; better would be R_10^(-1)): mean time a person needs ICU support before dying (=INF or R_10=0 in standard SEIR to waive influence of this parameter)
- * cont_freq (also R_1: contact frequency/rate; called beta in the standard SEIR model)
- * alpha: share of asymptomatic cases
- * beta (Not the beta in SEIR model): risk of infection from the infected symptomatic patients
- * rho: H/I; hospitalized per infected (=0 in standard SEIR)
- * theta: U/H; intensive care units per hospitalized
- * delta: D/U; deaths per intensive care units
-**/
-/**
-     * @brief Initializes a SECIR/SECIHURD model
+     * @brief Parameters of an age-resolved SECIR/SECIHURD model.
      *
-     * @todo parameter description
+     * The template parameter N refers to the number of agegroups. All parameters that can be associated to an age group are stored in a vector of length N
      *
-     * @param tinc
-     * @param tinfmild
-     * @param tserint
-     * @param thosp2home
-     * @param thome2hosp
-     * @param thosp2icu
-     * @param ticu2home
-     * @param tinfasy
-     * @param ticu2death
-     * @param alpha_in
-     * @param beta_in
-     * @param delta_in
-     * @param rho_in
-     * @param theta_in
-     * @param nb_total_t0_in
-     * @param nb_exp_t0_in
-     * @param nb_car_t0_in
-     * @param nb_inf_t0_in
-     * @param nb_hosp_t0_in
-     * @param nb_icu_t0_in
-     * @param nb_rec_t0_in
-     * @param nb_dead_t0_in
+     * The age-group dependent parameters are organized into a vector of SecirParams::StageTimes and a vector of SecirParams::Probabilities that
+     * refer to the stage times spend in an infection group or the probability to switch an infection group respectively
+     *
+     * Paramters of the SECIR/SECIHURD model:
+     * T_inc (also sigma^(-1) or R_2^(-1)+R_3^(-1)): mean incubation period (default: 5.2);
+     *          R_2^(-1) is the first part of the incubation time where the person is not yet infectioous
+     *          R_3 is the exchange between asymptomatic carriers and infectious people; R_3^(-1) is the second part of the incubation time where the person is infectious WITHOUT showing symptoms
+     * T_serint (also R_2^(-1)+0.5*R_3^(-1)): serial interval (default: 4.2);
+     * T_infmild (also gamma^(-1) or R_4^(-1)): time a person remains infective after disease (if 'hospitalized' is considered a state, it does not apply to them but only to 'mildly infected' people in SECIR)
+     * T_hosp2home (also R_5^(1)): duration for which the hospitalized patients not requiring further intensive care remain under general hospital care (=INF or R_5=0 in standard SEIR to waive influence of this parameter)
+     * T_home2hosp (also R_6^(-1)): mean time a patient with mild symptoms spends at home before hospital admission due to worsening of the disease condition  (=INF or R_6=0 in standard SEIR to waive influence of this parameter)
+     * T_hosp2icu (also R_7^(-1)): mean time a patient who entered the hospital will be hopistalized without ICU before being connected to an ICU  (=INF or R_7=0 in standard SEIR to waive influence of this parameter)
+     * T_icu2home (also R_8^(-1)): mean time a patient is connected to an ICU before returning home (=INF or R_8=0 in standard SEIR to waive influence of this parameter)
+     * T_infasy (also R_9^(-1)): mean time an asymptomatic person remains infective (=INF or R_9=0 in standard SEIR to waive influence of this parameter)
+     * T_icu2death (also d; better would be R_10^(-1)): mean time a person needs ICU support before dying (=INF or R_10=0 in standard SEIR to waive influence of this parameter)
+     * cont_freq (also R_1: contact frequency/rate; called beta in the standard SEIR model)
+     * alpha: share of asymptomatic cases
+     * beta (Not the beta in SEIR model): risk of infection from the infected symptomatic patients
+     * rho: H/I; hospitalized per infected (=0 in standard SEIR)
+     * theta: U/H; intensive care units per hospitalized
+     * delta: D/U; deaths per intensive care units
+     *
      */
 template <int N>
 class SecirParams
