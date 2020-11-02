@@ -22,8 +22,6 @@ build-cpp-win:
   stage: build
   tags:
     - SC-0030VM
-  only:
-    - disabled
   before_script:
     - $env:Path = "c:\Windows\System32"
     - $env:Path += ";c:\Devel\Tools\cmake-3.18.3-win64-x64\bin"
@@ -72,8 +70,6 @@ build-py-win:
   tags:
     - SC-0030VM
   stage: build
-  only:
-    - disabled
   before_script:
     - ci\activate_vc2019.ps1
     - cd pycode
@@ -131,8 +127,6 @@ test-cpp-win:
   tags:
     - SC-0030VM
   stage: test
-  only:
-    - disabled
   dependencies:
     - build-cpp-win
   script:
@@ -154,9 +148,7 @@ test-py:
     - apt -qq -y install python3-pip gnupg
     - python3.6 -m pip install --upgrade pip
     - for pkg in `ls pycode/wheelhouse/*36*.whl`; do python3.6 -m pip install $pkg; done
-    - pip install pyfakefs
-    - pip install freezegun
-    - pip install coverage
+    - pip install -r pycode/requirements-dev.txt
   script:
     - cd pycode/test
     - python3 -W ignore::DeprecationWarning -m coverage run --include=*site-packages/epidemiology*,*dist-packages/epidemiology*,epidemiology* -m unittest

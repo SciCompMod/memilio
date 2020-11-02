@@ -5,6 +5,8 @@ project(epidemiology VERSION 0.1.0)
 option(EPI_USE_BUNDLED_SPDLOG "Use spdlog bundled with epi" ON)
 option(EPI_USE_BUNDLED_EIGEN "Use eigen bundled with epi" ON)
 option(EPI_BUILD_EPI_IO "Build epidemiology_io library (requires TiXI and HDF5)" OFF)
+option(EPI_USE_BUNDLED_BOOST "Use boost bundled with epi (only for epi-io)" ON)
+option(EPI_USE_BUNDLED_JSONCPP "Use jsoncpp bundled with epi (only for epi-io)" ON)
 
 mark_as_advanced(EPI_USE_BUNDLED_SPDLOG)
 
@@ -35,6 +37,7 @@ add_library(epidemiology
     epidemiology/utils/tensor_helpers.cpp
     epidemiology/math/euler.cpp
     epidemiology/math/euler.h
+    epidemiology/math/smoother.h    
     epidemiology/utils/ScalarType.h
     epidemiology/model/compartmentalmodel.h
     epidemiology/model/populations.h
@@ -121,7 +124,7 @@ if (EPI_BUILD_EPI_IO)
     )
 
     target_link_libraries(epidemiology_io PUBLIC epidemiology tixi3
-                          PRIVATE ${HDF5_CXX_LIBRARIES} )
+                          PRIVATE jsoncpp ${HDF5_CXX_LIBRARIES} Boost::filesystem Boost::disable_autolinking)
     target_include_directories(epidemiology_io PRIVATE ${HDF5_INCLUDE_DIRS})
 
     target_compile_definitions(epidemiology_io PUBLIC "-DHAVE_EPI_IO")
