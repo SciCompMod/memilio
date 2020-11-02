@@ -107,6 +107,7 @@ When speaking about infected, means always infected inclusive the already recove
  ======== ======== ======================== =================
  Source   Folder   Files                    Data descritpion
  ======== ======== ======================== =================
+ RKI      Germany  all_germany_rki          infected, deaths, recovered over time for whole Germany
  RKI      Germany  infected_rki             Numbers of infected over time for whole Germany
  RKI      Germany  deaths_rki               Numbers of deaths over time for whole Germany
  RKI      Germany  infected_state_rki       infected over time for different states (Bundesländer)
@@ -116,13 +117,20 @@ When speaking about infected, means always infected inclusive the already recove
  RKI      Germany  all_gender_rki           infected, deaths, recovered over time for different gender
  RKI      Germany  all_age_rki              infected, deaths, recovered over time for different age ranges
  RKI      Germany  all_state_age_rki        infected, deaths, recovered over time for different age ranges and states
- RKI      Germany  all_state_age5_rki       infected, deaths, recovered over time for different age difference of 10 years and states
- RKI      Germany  all_state_age10_rki      infected, deaths, recovered over time for different age difference of 10 and states
  RKI      Germany  all_state_gender_rki     infected, deaths, recovered over time for different genders and states
  RKI      Germany  all_county_age_rki       infected, deaths, recovered over time for different age ranges and counties
- RKI      Germany  all_county_age5_rki      infected, deaths, recovered over time for different age ranges (5 years) and counties
- RKI      Germany  all_county_age10_rki     infected, deaths, recovered over time for different age ranges (10 years) and counties
  RKI      Germany  all_county_gender_rki    infected, deaths, recovered over time for different genders counties
+
+ RKI-Estimation      Germany  all_germany_rki_estimated          infected, deaths, recovered, recovered_estimated, deaths_estimated over time for whole Germany
+ RKI-Estimation      Germany  all_state_rki_estimated            infected, deaths, recovered, recovered_estimated, deaths_estimated over time for different states (Bundesländer)
+ RKI-Estimation      Germany  all_county_rki_estimated           infected, deaths, recovered, recovered_estimated, deaths_estimated over time for different counties (Landkreise)
+ RKI-Estimation      Germany  all_gender_rki_estimated           infected, deaths, recovered, recovered_estimated, deaths_estimated over time for different gender
+ RKI-Estimation      Germany  all_age_rki_estimated              infected, deaths, recovered, recovered_estimated, deaths_estimated over time for different age ranges
+ RKI-Estimation      Germany  all_state_age_rki_estimated        infected, deaths, recovered, recovered_estimated, deaths_estimated over time for different age ranges and states
+ RKI-Estimation      Germany  all_state_gender_rki_estimated     infected, deaths, recovered, recovered_estimated, deaths_estimated over time for different genders and states
+ RKI-Estimation      Germany  all_county_age_rki_estimated       infected, deaths, recovered, recovered_estimated, deaths_estimated over time for different age ranges and counties
+ RKI-Estimation      Germany  all_county_gender_rki_estimated    infected, deaths, recovered, recovered_estimated, deaths_estimated over time for different genders counties
+
 
  P        Germany  FullDataB                Full data for Bundesländer
  P        Germany  FullDataL                Full data for Landkreise

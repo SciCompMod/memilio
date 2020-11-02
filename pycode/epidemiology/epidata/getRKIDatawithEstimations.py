@@ -72,8 +72,6 @@ def get_rki_data_with_estimations(read_data=dd.defaultDict['read_data'],
                            "all_county_rki", "all_county_gender_rki", "all_county_age_rki"]
 
     for file_to_change in rki_files_to_change:
-    #for j in range(1):
-        #file_to_change = rki_files_to_change[0]
         # read data of rki file
         rki_data_file = os.path.join(data_path, file_to_change + ".json")
         df_rki = pd.read_json(rki_data_file)
