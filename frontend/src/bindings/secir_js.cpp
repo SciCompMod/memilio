@@ -1,7 +1,6 @@
 #include <emscripten/bind.h>
 
 #include <epidemiology/secir/secir.h>
-#include <epidemiology/secir/damping.h>
 #include <vector>
 
 #ifdef DEBUG
@@ -67,14 +66,46 @@ SecirResult simulate_secir(double t0, double tmax, double dt, epi::SecirParams c
 EMSCRIPTEN_BINDINGS(secirjs)
 {
     js::class_<epi::Damping>("Damping")
-        .constructor<double, double>()
-        .property("day", &epi::Damping::day)
-        .property("factor", &epi::Damping::factor);
-
-    js::class_<epi::Dampings>("Dampings")
-        .constructor<>()
-        .function("add", &epi::Dampings::add)
-        .function("get_factor", &epi::Dampings::get_factor);
+        .constructor<epi::Damping(Eigen::Index, double, int, int, double)>(
+            [](auto n, auto d, auto lv, auto ty, auto t) {
+                return epi::Damping(n, d, epi::DampingLevel(lv), epi::DampingType(ty), epi::SimulationTime(t));
+            })
+        .constructor<epi::Damping(Eigen::Index, double, double)>(
+            [](auto n, auto d, auto t) {
+                return epi::Damping(n, d, epi::SimulationTime(t));
+            })
+        .property<double>(
+            "time",
+            [](auto& self) {
+                return double(self.get_time());
+            },
+            [](auto& self, auto v) {
+                self.get_time() = epi::SimulationTime(v);
+            })
+        .property<int>(
+            "type",
+            [](auto& self) {
+                return int(self.get_type());
+            },
+            [](auto& self, auto v) {
+                self.get_type() = epi::DampingType(v);
+            })
+        .property<int>(
+            "time",
+            [](auto& self) {
+                return int(self.get_level());
+            },
+            [](auto& self, auto v) {
+                self.get_level() = epi::DampingLevel(v);
+            })
+        .function("get_coeff",
+                  std::function<double(epi::Damping&, Eigen::Index, Eigen::Index)>([](auto& self, auto i, auto j) {
+                      return self.get_coeffs()(i, j);
+                  }))
+        .function("set_coeff", std::function<void(epi::Damping&, Eigen::Index, Eigen::Index, double)>(
+                                   [](auto& self, auto i, auto j, double d) {
+                                       self.get_coeffs()(i, j) = d;
+                                   }));
 
     js::class_<SecirResult>("SecirResult")
         .property("t", &SecirResult::t)
@@ -176,21 +207,56 @@ EMSCRIPTEN_BINDINGS(secirjs)
         .function("get_dead_per_icu",
                   js::select_overload<epi::UncertainValue&()>(&epi::SecirParams::Probabilities::get_dead_per_icu));
 
-    js::class_<epi::ContactFrequencyMatrix>("ContactFrequencyMatrix")
-        .constructor<>()
-        .function("set_cont_freq", &epi::ContactFrequencyMatrix::set_cont_freq)
-        .function("get_cont_freq", &epi::ContactFrequencyMatrix::get_cont_freq)
-        .function("set_dampings", &epi::ContactFrequencyMatrix::set_dampings)
-        .function("get_dampings", &epi::ContactFrequencyMatrix::get_dampings)
-        .function("add_damping", &epi::ContactFrequencyMatrix::add_damping);
+    js::class_<epi::ContactMatrix>("ContactMatrix")
+        .constructor<Eigen::Index>()
+        .function("add_damping", std::function<void(epi::ContactMatrix&, const epi::Damping&)>([](auto& self, auto& d) {
+                      self.add_damping(d);
+                  }))
+        .function("get_num_dampings", std::function<size_t(epi::ContactMatrix&)>([](auto& self) {
+                      return self.get_dampings().size();
+                  }))
+        .function("get_damping", std::function<epi::Damping&(epi::ContactMatrix&, size_t)>(
+                                     [](auto& self, auto i) -> auto& { return self.get_dampings()[i]; }))
+        .function("get_factor", std::function<double(epi::Dampings&, double, Eigen::Index, Eigen::Index)>(
+                                    [](auto& self, auto t, auto i, auto j) {
+                                        return self.get_matrix_at(t)(i, j);
+                                    }))
+        .function("get_baseline",
+                  std::function<double(epi::ContactMatrix&, Eigen::Index, Eigen::Index)>([](auto& self, auto i, auto j) {
+                      return self.get_baseline()(i, j);
+                  }))
+        .function("set_baseline",
+                  std::function<void(epi::ContactMatrix&, Eigen::Index, Eigen::Index, double)>([](auto& self, auto i, auto j, auto d) {
+                      self.get_baseline()(i, j) = d;
+                  }))
+        .function("get_minimum",
+                  std::function<double(epi::ContactMatrix&, Eigen::Index, Eigen::Index)>([](auto& self, auto i, auto j) {
+                      return self.get_minimum()(i, j);
+                  }))
+        .function("set_minimum",
+                  std::function<void(epi::ContactMatrix&, Eigen::Index, Eigen::Index, double)>([](auto& self, auto i, auto j, auto d) {
+                      self.get_minimum()(i, j) = d;
+                  }));
+
+    js::class_<epi::ContactMatrixGroup>("ContactMatrixGroup")
+        .constructor<Eigen::Index, size_t>()
+        .function("get_num_matrices", std::function<size_t(epi::ContactMatrixGroup&)>([](auto& self) {
+                      return self.get_num_matrices();
+                  }))
+        .function("get_matrix", std::function<epi::ContactMatrix&(epi::ContactMatrixGroup&, size_t)>(
+                                    [](auto& self, auto i) -> auto& { return self[i]; }))
+        .function("get_factor", std::function<double(epi::ContactMatrixGroup&, double, Eigen::Index, Eigen::Index)>(
+                                    [](auto& self, auto t, auto i, auto j) {
+                                        return self.get_matrix_at(t)(i, j);
+                                    }));
 
     js::class_<epi::UncertainContactMatrix>("UncertainContactMatrix")
-        .constructor<epi::ContactFrequencyMatrix>()
+        .constructor<const epi::ContactMatrixGroup&>()
         .function("get_cont_freq_mat",
-                  js::select_overload<epi::ContactFrequencyMatrix&()>(&epi::UncertainContactMatrix::get_cont_freq_mat));
+                  js::select_overload<epi::ContactMatrixGroup&()>(&epi::UncertainContactMatrix::get_cont_freq_mat));
 
     js::class_<epi::SecirParams>("SecirParams")
-        .constructor<epi::ContactFrequencyMatrix&>()
+        .constructor<const epi::ContactMatrixGroup&>()
         .property("times", &epi::SecirParams::times)
         .property("populations", &epi::SecirParams::populations)
         .property("probabilities", &epi::SecirParams::probabilities)
