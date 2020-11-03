@@ -51,6 +51,26 @@ public:
                            return p.times.get_infectious_inv() * Po::get_from(y, SeirInfType::I);
                        });
     }
+
+#if USE_DEPRECATED_SECIR_DERIV_FUNC
+
+void get_derivatives(Eigen::Ref<const Eigen::VectorXd> y, double t,
+                           Eigen::Ref<Eigen::VectorXd> dydt) const override
+{
+    auto& params = this->parameters;
+    double cont_freq_eff = params.times.get_cont_freq() * params.dampings.get_factor(t);
+    double divN          = 1.0 / populations.get_total();
+
+    dydt[(size_t)SeirInfType::S] = -cont_freq_eff * y[(size_t)SeirInfType::S] * y[(size_t)SeirInfType::I] * divN;
+    dydt[(size_t)SeirInfType::E] = cont_freq_eff * y[(size_t)SeirInfType::S] * y[(size_t)SeirInfType::I] * divN -
+                                params.times.get_incubation_inv() * y[(size_t)SeirInfType::E];
+    dydt[(size_t)SeirInfType::I] = params.times.get_incubation_inv() * y[(size_t)SeirInfType::E] -
+                                params.times.get_infectious_inv() * y[(size_t)SeirInfType::I];
+    dydt[(size_t)SeirInfType::R] = params.times.get_infectious_inv() * y[(size_t)SeirInfType::I];
+}
+
+
+#endif // USE_DEPRECATED_SECIR_DERIV_FUNC
 };
 
 /**

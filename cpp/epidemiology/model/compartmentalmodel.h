@@ -6,6 +6,8 @@
 #include <vector>
 #include <functional>
 
+#define USE_DEPRECATED_SECIR_DERIV_FUNC 0
+
 namespace
 {
 
@@ -80,6 +82,11 @@ public:
         flows.push_back(Flow(from, to, f));
     }
 
+#if USE_DEPRECATED_SECIR_DERIV_FUNC
+    virtual void get_derivatives(Eigen::Ref<const Eigen::VectorXd> y, double t,
+                            Eigen::Ref<Eigen::VectorXd> dydt) const = 0;
+#endif  // USE_DEPRECATED_SECIR_DERIV_FUNC
+
     /**
      * @brief eval_right_hand_side evaulates the right-hand-side f of the ODE dydt = f(y, t)
      *
@@ -95,11 +102,16 @@ public:
     void eval_right_hand_side(Eigen::Ref<const Eigen::VectorXd> y, double t, Eigen::Ref<Eigen::VectorXd> dydt) const
     {
         dydt.setZero();
+
+#if USE_DEPRECATED_SECIR_DERIV_FUNC
+        this->get_derivatives(y, t, dydt);
+#else // USE_DEPRECATED_SECIR_DERIV_FUNC
         for (auto& flow : flows) {
             ScalarType f = std::get<2>(flow)(parameters, y, t);
             dydt[call(Populations::get_flat_index, std::get<0>(flow))] -= f;
             dydt[call(Populations::get_flat_index, std::get<1>(flow))] += f;
         }
+#endif // USE_DEPRECATED_SECIR_DERIV_FUNC
     }
 
     /**
