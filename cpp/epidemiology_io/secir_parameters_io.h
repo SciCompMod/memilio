@@ -196,7 +196,7 @@ void write_parameter_space(TixiDocumentHandle handle, const std::string& path, M
                            int io_mode)
 {
     auto num_groups = model.parameters.get_num_groups();
-    tixiAddIntegerElement(handle, path.c_str(), "NumberOfGroups", num_groups, "%d");
+    tixiAddIntegerElement(handle, path.c_str(), "NumberOfGroups", (int)num_groups, "%d");
 
     tixiAddDoubleElement(handle, path.c_str(), "StartDay", model.parameters.get_start_day(), "%g");
     write_element(handle, path, "Seasonality", model.parameters.get_seasonality(), io_mode, num_runs);
@@ -551,8 +551,9 @@ template <class Model>
 Graph<Model, MigrationEdge> read_graph(const std::string& dir_string)
 {
     std::string abs_path;
-    bool dir_exists = directory_exists(dir_string, abs_path);
-    assert(dir_exists && ("Directory " + dir_string + " does not exist.").c_str());
+    if (!directory_exists(dir_string, abs_path)) {
+        log_error("Directory" + dir_string + " does not exist.");
+    }
 
     ReturnCode status;
     TixiDocumentHandle handle;
