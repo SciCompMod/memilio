@@ -139,10 +139,8 @@ public:
 private:
     Tableau m_tab;
     TableauFinal m_tab_final;
-    double m_abs_tol = 1e-1;
-    double m_rel_tol = 1e-4;
-    double m_dt_min = 0.3;
-    double m_dt_max = 1.0;
+    double m_abs_tol, m_rel_tol;
+    double m_dt_min, m_dt_max;
 };
 
 } // namespace epi
