@@ -6,6 +6,7 @@
 #include "epidemiology/utils/eigen.h"
 #include "epidemiology/utils/eigen_util.h"
 #include "epidemiology/secir/populations.h"
+#include "epidemiology/utils/compiler_diagnostics.h"
 
 #include <cassert>
 
@@ -170,6 +171,7 @@ template <class Model>
 void MigrationEdge::apply_migration(double t, double dt, ModelNode<Model>& node_from, ModelNode<Model>& node_to)
 {
     assert(dt == 0.5);
+    unused(dt);
 
     //returns
     for (Eigen::Index i = m_return_times.get_num_time_points() - 1; i >= 0; --i) {
