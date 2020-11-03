@@ -26,16 +26,17 @@ void set_params_distributions_normal(
     CompartmentalModel<Populations<AgeGroup, InfectionType>, SecirParams<(size_t)AgeGroup::Count>>& model, double t0,
     double tmax, double dev_rel)
 {
-    auto calc_distr = [dev_rel](double v, double min_val = 0.001){
-        return ParameterDistributionNormal(std::max(min_val, (1 - dev_rel * 2.6) * v),
-                                           (1 + dev_rel * 2.6) * v,
-                                           v,
-                                           dev_rel * v);
+    auto set_distribution = [dev_rel](UncertainValue& v, double min_val = 0.001){
+        v.set_distribution( ParameterDistributionNormal(std::max(min_val,
+                                                       (1 - dev_rel * 2.6) * v),
+                                                       (1 + dev_rel * 2.6) * v,
+                                                       v,
+                                                       dev_rel * v));
     };
 
 
-    model.parameters.set_seasonality(  calc_distr(model.parameters.get_seasonality(), 0.0));
-    model.parameters.set_icu_capacity( calc_distr(model.parameters.get_icu_capacity()));
+    set_distribution(model.parameters.get_seasonality(), 0.0);
+    set_distribution(model.parameters.get_icu_capacity());
 
     // populations
     for (size_t i = 0; i < model.parameters.get_num_groups(); i++) {
@@ -48,35 +49,34 @@ void set_params_distributions_normal(
 
 
             // variably sized groups
-            model.populations.get(AgeGroup(i), InfectionType(j))
-                .set_distribution(calc_distr(model.populations.get(AgeGroup(i), InfectionType(j))));
+            set_distribution(model.populations.get(AgeGroup(i), InfectionType(j)));
         }
     }
 
     // times
     for (size_t i = 0; i < model.parameters.get_num_groups(); i++) {
 
-        model.parameters.times[i].set_incubation(           calc_distr(model.parameters.times[i].get_incubation()));
-        model.parameters.times[i].set_serialinterval(       calc_distr(model.parameters.times[i].get_serialinterval()));
-        model.parameters.times[i].set_infectious_mild(      calc_distr(model.parameters.times[i].get_infectious_mild()));
-        model.parameters.times[i].set_hospitalized_to_home( calc_distr(model.parameters.times[i].get_hospitalized_to_home()));
-        model.parameters.times[i].set_home_to_hospitalized( calc_distr(model.parameters.times[i].get_home_to_hospitalized()));
-        model.parameters.times[i].set_infectious_asymp(     calc_distr(model.parameters.times[i].get_infectious_asymp()));
-        model.parameters.times[i].set_hospitalized_to_icu(  calc_distr(model.parameters.times[i].get_hospitalized_to_icu()));
-        model.parameters.times[i].set_icu_to_home(          calc_distr(model.parameters.times[i].get_icu_to_home()));
-        model.parameters.times[i].set_icu_to_death(         calc_distr(model.parameters.times[i].get_icu_to_dead()));
+        set_distribution(model.parameters.times[i].get_incubation());
+        set_distribution(model.parameters.times[i].get_serialinterval());
+        set_distribution(model.parameters.times[i].get_infectious_mild());
+        set_distribution(model.parameters.times[i].get_hospitalized_to_home());
+        set_distribution(model.parameters.times[i].get_home_to_hospitalized());
+        set_distribution(model.parameters.times[i].get_infectious_asymp());
+        set_distribution(model.parameters.times[i].get_hospitalized_to_icu());
+        set_distribution(model.parameters.times[i].get_icu_to_home());
+        set_distribution(model.parameters.times[i].get_icu_to_dead());
     }
 
     // probabilities
     for (size_t i = 0; i < model.parameters.get_num_groups(); i++) {
 
-        model.parameters.probabilities[i].set_infection_from_contact(      calc_distr(model.parameters.probabilities[i].get_infection_from_contact()));
-        model.parameters.probabilities[i].set_carrier_infectability(       calc_distr(model.parameters.probabilities[i].get_carrier_infectability()));
-        model.parameters.probabilities[i].set_asymp_per_infectious(        calc_distr(model.parameters.probabilities[i].get_asymp_per_infectious()));
-        model.parameters.probabilities[i].set_risk_from_symptomatic(       calc_distr(model.parameters.probabilities[i].get_risk_from_symptomatic()));
-        model.parameters.probabilities[i].set_dead_per_icu(                calc_distr(model.parameters.probabilities[i].get_dead_per_icu()));
-        model.parameters.probabilities[i].set_hospitalized_per_infectious( calc_distr(model.parameters.probabilities[i].get_hospitalized_per_infectious()));
-        model.parameters.probabilities[i].set_icu_per_hospitalized(        calc_distr(model.parameters.probabilities[i].get_icu_per_hospitalized()));
+        set_distribution(model.parameters.probabilities[i].get_infection_from_contact());
+        set_distribution(model.parameters.probabilities[i].get_carrier_infectability());
+        set_distribution(model.parameters.probabilities[i].get_asymp_per_infectious());
+        set_distribution(model.parameters.probabilities[i].get_risk_from_symptomatic());
+        set_distribution(model.parameters.probabilities[i].get_dead_per_icu());
+        set_distribution(model.parameters.probabilities[i].get_hospitalized_per_infectious());
+        set_distribution(model.parameters.probabilities[i].get_icu_per_hospitalized());
     }
 
     // maximum number of dampings; to avoid overfitting only allow one damping for every 10 days simulated
