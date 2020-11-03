@@ -27,19 +27,35 @@ public:
         , m_integrator([model](auto&& y, auto&& t, auto&& dydt) { model.eval_right_hand_side(y, t, dydt); }, t0,
                        model.get_initial_values(), dt, m_integratorCore)
         , m_model(model)
-    {
-        this->set_default_parameters();
-    }
+    {}
 
-    /*
+    /**
      * @brief set the core integrator used in the simulation
      */
     void set_integrator(std::shared_ptr<IntegratorCore> integrator)
     {
         m_integratorCore = std::move(integrator);
         m_integrator.set_integrator(m_integratorCore);
-        this->set_default_parameters();
     }
+
+    /**
+     * @brief get_integrator
+     * @return pointer to the core integrator used in the simulation
+     */
+    IntegratorCore* get_integrator()
+    {
+        return m_integratorCore.get();
+    }
+
+    /**
+     * @brief get_integrator
+     * @return pointer to the core integrator used in the simulation
+     */
+    IntegratorCore const* get_integrator() const
+    {
+        return m_integratorCore.get();
+    }
+
 
     /**
      * @brief advance simulation to tmax
@@ -78,14 +94,6 @@ public:
     }
 
 private:
-
-    void set_default_parameters()
-    {
-        m_integratorCore->set_dt_min(0.3);
-        m_integratorCore->set_dt_max(1.0);
-        m_integratorCore->set_rel_tolerance(1e-4);
-        m_integratorCore->set_abs_tolerance(1e-1);
-    }
 
     std::shared_ptr<IntegratorCore> m_integratorCore;
     OdeIntegrator m_integrator;

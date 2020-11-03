@@ -126,10 +126,6 @@ public:
                 (const epi::DerivFunction& f, Eigen::Ref<const Eigen::VectorXd> yt, double& t, double& dt,
                  Eigen::Ref<Eigen::VectorXd> ytp1),
                 (const));
-    MOCK_METHOD(void, set_abs_tolerance, (double));
-    MOCK_METHOD(void, set_rel_tolerance, (double));
-    MOCK_METHOD(void, set_dt_min, (double));
-    MOCK_METHOD(void, set_dt_max, (double));
 };
 
 TEST(TestOdeIntegrator, integratorDoesTheRightNumberOfSteps)

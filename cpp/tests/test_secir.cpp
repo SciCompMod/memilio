@@ -61,7 +61,12 @@ TEST(TestSecir, compareWithPreviousRun)
 
     model.apply_constraints();
 
-    epi::TimeSeries<double> secihurd = simulate(t0, tmax, dt, model);
+    auto integrator = std::make_shared<epi::RKIntegratorCore>();
+    integrator->set_dt_min(0.3);
+    integrator->set_dt_max(1.0);
+    integrator->set_rel_tolerance(1e-4);
+    integrator->set_abs_tolerance(1e-1);
+    epi::TimeSeries<double> secihurd = simulate(t0, tmax, dt, model, integrator);
 
     auto compare = load_test_data_csv<double>("secihurd-compare.csv");
 

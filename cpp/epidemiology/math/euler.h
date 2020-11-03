@@ -27,26 +27,6 @@ public:
      */
     bool step(const DerivFunction& f, Eigen::Ref<const Eigen::VectorXd> yt, double& t, double& dt,
               Eigen::Ref<Eigen::VectorXd> ytp1) const override;
-
-    void set_abs_tolerance(double) override
-    {
-        log_warning("Setting absolute tolerance has no influence on an explicit Euler integrator");
-    }
-    void set_rel_tolerance(double) override
-    {
-        log_warning("Setting relative tolerance has no influence on an explicit Euler integrator");
-    }
-    /// sets the minimum step size (not used)
-    void set_dt_min(double) override
-    {
-        log_warning("Setting minimum step size has no influence on an explict Euler integrator");
-    }
-
-    /// sets the minimum step size (not used)
-    void set_dt_max(double) override
-    {
-        log_warning("Setting maximum step size has no influence on an explict Euler integrator");
-    }
 };
 
 /**
@@ -78,27 +58,9 @@ public:
     }
 
     /// @param tol the required absolute tolerance for the comparison with the Fehlberg approximation (actually not really required but used in SecirSimulation constructor)
-    void set_abs_tolerance(double tol) override
+    void set_abs_tolerance(double tol)
     {
         m_abs_tol = tol;
-    }
-
-    /// @param tol the required relative tolerance for the comparison with the Fehlberg approximation (actually not really required but used in SecirSimulation constructor)
-    void set_rel_tolerance(double) override
-    {
-        log_warning("Currently, the implicit Euler does not use a relative tolerance");
-    }
-
-    /// sets the minimum step size (not used)
-    void set_dt_min(double) override
-    {
-        log_warning("Setting minimum step size has no influence on an implicit Euler integrator");
-    }
-
-    /// sets the minimum step size (not used)
-    void set_dt_max(double) override
-    {
-        log_warning("Setting maximum step size has no influence on an implicit Euler integrator");
     }
 
 private:

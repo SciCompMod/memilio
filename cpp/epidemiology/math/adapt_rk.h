@@ -95,25 +95,25 @@ public:
     }
 
     /// @param tol the required absolute tolerance for the comparison with the Fehlberg approximation
-    void set_abs_tolerance(double tol) override
+    void set_abs_tolerance(double tol)
     {
         m_abs_tol = tol;
     }
 
     /// @param tol the required relative tolerance for the comparison with the Fehlberg approximation
-    void set_rel_tolerance(double tol) override
+    void set_rel_tolerance(double tol)
     {
         m_rel_tol = tol;
     }
 
-    /// sets the minimum step size (not used)
-    void set_dt_min(double dt_min) override
+    /// sets the minimum step size
+    void set_dt_min(double dt_min)
     {
         m_dt_min = dt_min;
     }
 
-    /// sets the minimum step size (not used)
-    void set_dt_max(double dt_max) override
+    /// sets the minimum step size
+    void set_dt_max(double dt_max)
     {
         m_dt_max = dt_max;
     }
@@ -139,8 +139,10 @@ public:
 private:
     Tableau m_tab;
     TableauFinal m_tab_final;
-    double m_abs_tol, m_rel_tol;
-    double m_dt_min, m_dt_max;
+    double m_abs_tol = 1e-1;
+    double m_rel_tol = 1e-4;
+    double m_dt_min = 0.3;
+    double m_dt_max = 1.0;
 };
 
 } // namespace epi
