@@ -90,7 +90,7 @@ build-py-win:
     paths:
       - pycode/dist/*.whl
 
-build-cpp:
+build-docs:
   stage: build
   tags:
     - SC-0030VM
@@ -99,9 +99,9 @@ build-cpp:
     doxygen
   artifacts:
     expose_as: "Documentation"
-  paths:
-     - docs/_build/html/index.html
-  expire_in: 3 day
+    paths:
+      - docs/_build/html/index.html
+    expire_in: 3 day
 
 
 # run tests using the binary built before
