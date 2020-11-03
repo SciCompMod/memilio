@@ -125,7 +125,9 @@
   },
   "population": "Einwohnerzahl",
   "state": "Bundesland",
+  "states": "Bundesländer",
   "county": "Landkreis",
+  "counties": "Landkreise",
   "selection": "Auswahl",
   "no-selection": "Keine Auswahl getroffen!"
 }
