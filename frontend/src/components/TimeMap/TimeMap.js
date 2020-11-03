@@ -63,16 +63,6 @@ class TimeMap extends React.Component {
       }
     };
 
-    /*
-    if (this.props.dataset === 'states') {
-      this.props.data.then((data) => this.calcStateData(data));
-      this.#map.showStateSeries();
-    } else {
-      this.props.data.then((data) => this.calcCountyData(data));
-      this.#map.showStateSeries();
-      this.#map.showCountySeries();
-    }*/
-
     this.setState({dataset: 'states'});
   }
 
