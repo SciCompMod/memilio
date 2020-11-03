@@ -89,8 +89,13 @@ void write_predef_sample(TixiDocumentHandle handle, const std::string& path, con
 template <class AgeGroup>
 SecirModel<AgeGroup> read_parameter_space(TixiDocumentHandle handle, const std::string& path, int io_mode)
 {
+    ReturnCode status;
+
     int num_groups;
-    tixiGetIntegerElement(handle, path_join(path, "NumberOfGroups").c_str(), &num_groups);
+    status = tixiGetIntegerElement(handle, path_join(path, "NumberOfGroups").c_str(), &num_groups);
+    assert(status == SUCCESS && ("Failed to read num_groups at " + path).c_str());
+
+    status = tixiGetIntegerElement(handle, path_join(path, "NumberOfGroups").c_str(), &num_groups);
 
     if (num_groups != (int)AgeGroup::Count) {
         epi::log_error("Only 1, 2,3, 6 or 8 age groups allowed at the moment.");
@@ -98,20 +103,24 @@ SecirModel<AgeGroup> read_parameter_space(TixiDocumentHandle handle, const std::
 
     SecirModel<AgeGroup> model;
     double read_buffer;
-    tixiGetDoubleElement(handle, path_join(path, "StartDay").c_str(), &read_buffer);
+    status = tixiGetDoubleElement(handle, path_join(path, "StartDay").c_str(), &read_buffer);
+    assert(status == SUCCESS && ("Failed to read StartDay at " + path).c_str());
+
     model.parameters.set_start_day(read_buffer);
     model.parameters.set_seasonality(*read_element(handle, path_join(path, "Seasonality"), io_mode));
     model.parameters.set_icu_capacity(*read_element(handle, path_join(path, "ICUCapacity"), io_mode));
     model.parameters.set_contact_patterns(read_contact(handle, path_join(path, "ContactFreq"), io_mode));
 
-    for (int i = 0; i < num_groups; i++) {
+    for (size_t i = 0; i < static_cast<size_t>(num_groups); i++) {
         auto group_name = "Group" + std::to_string(i + 1);
         auto group_path = path_join(path, group_name);
 
         // populations
         auto population_path = path_join(group_path, "Population");
 
-        tixiGetDoubleElement(handle, path_join(population_path, "Dead").c_str(), &read_buffer);
+        status = tixiGetDoubleElement(handle, path_join(population_path, "Dead").c_str(), &read_buffer);
+        assert(status == SUCCESS && ("Failed to read number of deaths at " + path).c_str());
+
         model.populations.set(read_buffer, (AgeGroup)i, InfectionType::D);
 
         model.populations.set(*read_element(handle, path_join(population_path, "Exposed"), io_mode), (AgeGroup)i,
@@ -127,7 +136,9 @@ SecirModel<AgeGroup> read_parameter_space(TixiDocumentHandle handle, const std::
         model.populations.set(*read_element(handle, path_join(population_path, "Recovered"), io_mode), (AgeGroup)i,
                               InfectionType::R);
 
-        tixiGetDoubleElement(handle, path_join(population_path, "Total").c_str(), &read_buffer);
+        status = tixiGetDoubleElement(handle, path_join(population_path, "Total").c_str(), &read_buffer);
+        assert(status == SUCCESS && ("Failed to read total population at " + path).c_str());
+
         model.populations.set_difference_from_group_total(read_buffer, (AgeGroup)i, (AgeGroup)i, InfectionType::S);
 
         // times
@@ -184,14 +195,14 @@ template <class Model>
 void write_parameter_space(TixiDocumentHandle handle, const std::string& path, Model const& model, int num_runs,
                            int io_mode)
 {
-    int num_groups = (int)model.parameters.get_num_groups();
+    auto num_groups = model.parameters.get_num_groups();
     tixiAddIntegerElement(handle, path.c_str(), "NumberOfGroups", num_groups, "%d");
 
     tixiAddDoubleElement(handle, path.c_str(), "StartDay", model.parameters.get_start_day(), "%g");
     write_element(handle, path, "Seasonality", model.parameters.get_seasonality(), io_mode, num_runs);
     write_element(handle, path, "ICUCapacity", model.parameters.get_icu_capacity(), io_mode, num_runs);
 
-    for (int i = 0; i < num_groups; i++) {
+    for (size_t i = 0; i < num_groups; i++) {
         auto group_name = "Group" + std::to_string(i + 1);
         auto group_path = path_join(path, group_name);
 
@@ -270,15 +281,24 @@ void write_parameter_space(TixiDocumentHandle handle, const std::string& path, M
 template <class AgeGroup>
 ParameterStudy<SecirModel<AgeGroup>> read_parameter_study(TixiDocumentHandle handle, const std::string& path)
 {
+    ReturnCode status;
+
     int io_mode;
     int num_runs;
     double t0;
     double tmax;
 
-    tixiGetIntegerElement(handle, path_join(path, "IOMode").c_str(), &io_mode);
-    tixiGetIntegerElement(handle, path_join(path, "Runs").c_str(), &num_runs);
-    tixiGetDoubleElement(handle, path_join(path, "T0").c_str(), &t0);
-    tixiGetDoubleElement(handle, path_join(path, "TMax").c_str(), &tmax);
+    status = tixiGetIntegerElement(handle, path_join(path, "IOMode").c_str(), &io_mode);
+    assert(status == SUCCESS && ("Failed to read io_mode at " + path).c_str());
+
+    status = tixiGetIntegerElement(handle, path_join(path, "Runs").c_str(), &num_runs);
+    assert(status == SUCCESS && ("Failed to read num_runs at " + path).c_str());
+
+    status = tixiGetDoubleElement(handle, path_join(path, "T0").c_str(), &t0);
+    assert(status == SUCCESS && ("Failed to read t0 at " + path).c_str());
+
+    status = tixiGetDoubleElement(handle, path_join(path, "TMax").c_str(), &tmax);
+    assert(status == SUCCESS && ("Failed to read tmax at " + path).c_str());
 
     SecirModel<AgeGroup> model = read_parameter_space<AgeGroup>(handle, path, io_mode);
     return ParameterStudy<SecirModel<AgeGroup>>(model, t0, tmax, num_runs);
@@ -315,15 +335,11 @@ void write_parameter_study(TixiDocumentHandle handle, const std::string& path,
  * @param tmax end point of simulation
  */
 template <class Model>
-void write_single_run_params(const int run, const Model& model, double t0, double tmax,
-                             const TimeSeries<double>& result, int node)
+        void write_single_run_params(const int run, epi::Graph<epi::ModelNode<epi::Simulation<Model>>, epi::MigrationEdge> graph,
+                                     double t0, double tmax)
 {
+    assert(graph.nodes().size() > 0 && "Graph Nodes are empty");
 
-    int num_runs     = 1;
-    std::string path = "/Parameters";
-    TixiDocumentHandle handle;
-    tixiCreateDocument("Parameters", &handle);
-    ParameterStudy<Model> study(model, t0, tmax, num_runs);
 
     std::string abs_path;
     bool created = create_directory("results", abs_path);
@@ -334,79 +350,86 @@ void write_single_run_params(const int run, const Model& model, double t0, doubl
     }
     else {
         log_info(
-            "Results are stored in {:s}/ results. Files from previous runs will be "
+            "Results are stored in {:s}/results. Files from previous runs will be "
             "overwritten",
             epi::get_current_dir_name());
     }
 
-    write_parameter_study(handle, path, study);
-    tixiSaveDocument(
-        handle,
-        (abs_path + "/Parameters_run" + std::to_string(run) + "_node" + std::to_string(node) + ".xml").c_str());
-    tixiCloseDocument(handle);
+    int node_id = 0;
+    for (auto& node : graph.nodes()) {
+        int num_runs     = 1;
+        std::string path = "/Parameters";
+        TixiDocumentHandle handle;
+        tixiCreateDocument("Parameters", &handle);
+        ParameterStudy<Model> study(node.get_model().get_model(), t0, tmax, num_runs);
 
-    save_result(result,
-                (abs_path + "/Results_run" + std::to_string(run) + "_node" + std::to_string(node) + ".h5").c_str());
+        write_parameter_study(handle, path, study);
+
+        tixiSaveDocument(handle, path_join(abs_path, ("Parameters_run" + std::to_string(run) + "_node" +
+                                                          std::to_string(node_id) + ".xml"))
+                                     .c_str());
+        tixiCloseDocument(handle);
+
+        save_result(node.get_result(), path_join(abs_path, ("Results_run" + std::to_string(run) + "_node" +
+                                                                std::to_string(node_id) + ".h5")));
+        node_id++;
+    }
 }
 
 /**
  * @brief Creates xml file containing Parameters of one node of a graph
+ * @param handle Tixi document handle
  * @param graph Graph which holds the node
  * @param node Node ID
- * @param t0 starting point of simulation
- * @param tmax end point of simulation
  */
 template <class Model>
-void write_node(const Graph<Model, MigrationEdge>& graph, int node)
+void write_node(TixiDocumentHandle handle, const Graph<Model, MigrationEdge>& graph, int node)
 {
+    assert(graph.nodes().size() > 0 && "Graph Nodes are empty");
     int num_runs = 1;
     int io_mode  = 2;
 
     std::string path = "/Parameters";
-    TixiDocumentHandle handle;
-    tixiCreateDocument("Parameters", &handle);
 
     tixiAddIntegerElement(handle, path.c_str(), "NodeID", node, "%d");
 
     auto model = graph.nodes()[node];
 
     write_parameter_space(handle, path, model, num_runs, io_mode);
-    tixiSaveDocument(handle, ("GraphNode" + std::to_string(node) + ".xml").c_str());
-    tixiCloseDocument(handle);
 }
 
 /**
  * @brief reads parameters of a single node and saves it into the graph
+ * @param node_handle Tixi document handle
  * @param graph Graph in which the node is saved
- * @param node Node ID
  */
 template <class AgeGroup>
-void read_node(Graph<SecirModel<AgeGroup>, MigrationEdge>& graph, int node)
+void read_node(TixiDocumentHandle node_handle, Graph<SecirModel<AgeGroup>, MigrationEdge>& graph)
 {
-    TixiDocumentHandle node_handle;
-    tixiOpenDocument(("GraphNode" + std::to_string(node) + ".xml").c_str(), &node_handle);
-
     graph.add_node(read_parameter_space<AgeGroup>(node_handle, "/Parameters", 2));
-
-    tixiCloseDocument(node_handle);
 }
 
 /**
- * @brief Writes the information of a single edge into a xml file
- * @param handle Tixi Document Handle
+ * @brief Writes the information of a single edge into the xml file corresponding to its start node
+ * @param edge_handles vecor of Tixi Document Handle. It's length is the number of nodes in the graph
  * @param path Path to document root
  * @param graph Graph which holds the edge
  * @param edge Edge ID
  */
 template <class Model>
-void write_edge(TixiDocumentHandle handle, const std::string& path, const Graph<Model, MigrationEdge>& graph, int edge)
+void write_edge(const std::vector<TixiDocumentHandle>& edge_handles, const std::string& path,
+                const Graph<Model, MigrationEdge>& graph, int edge)
 {
-
+    assert(graph.nodes().size() > 0 && "Graph Nodes are empty");
     int num_groups  = static_cast<int>(graph.nodes()[0].parameters.get_num_groups());
     int num_compart = static_cast<int>(graph.nodes()[0].populations.get_num_compartments()) / num_groups;
 
-    std::string edge_path = path_join(path, "Edge" + std::to_string(edge));
-    tixiCreateElement(handle, path.c_str(), ("Edge" + std::to_string(edge)).c_str());
+    auto start_node = static_cast<int>(graph.edges()[edge].start_node_idx);
+    auto end_node   = static_cast<int>(graph.edges()[edge].end_node_idx);
+    auto handle     = edge_handles[start_node];
+
+    std::string edge_path = path_join(path, "EdgeTo" + std::to_string(end_node));
+    tixiCreateElement(handle, path.c_str(), ("EdgeTo" + std::to_string(end_node)).c_str());
     tixiAddIntegerElement(handle, edge_path.c_str(), "StartNode", static_cast<int>(graph.edges()[edge].start_node_idx),
                           "%d");
     tixiAddIntegerElement(handle, edge_path.c_str(), "EndNode", static_cast<int>(graph.edges()[edge].end_node_idx),
@@ -423,101 +446,149 @@ void write_edge(TixiDocumentHandle handle, const std::string& path, const Graph<
 
 /**
  * @brief Reads information of a single edge and saves it into the graph
- * @param handle Tixi document handle
+ * @param edge_handles vecor of Tixi Document Handle. It's length is the number of nodes in the graph
  * @param path Path to document root
  * @param graph Graph to which the edge is added
- * @param edge Edge ID
+ * @param stort_node origin of the edge
+ * @param end_node destination of the edge
  */
 template <class Model>
-void read_edge(TixiDocumentHandle handle, const std::string& path, Graph<Model, MigrationEdge>& graph, int edge)
+void read_edge(const std::vector<TixiDocumentHandle>& edge_handles, const std::string& path,
+               Graph<Model, MigrationEdge>& graph, int start_node, int end_node)
 {
+    ReturnCode status;
 
-    std::string edge_path = path_join(path, "Edge" + std::to_string(edge));
+    auto handle           = edge_handles[start_node];
+    std::string edge_path = path_join(path, "EdgeTo" + std::to_string(end_node));
     int num_groups;
     int num_compart;
-    int start_node;
-    int end_node;
 
-    tixiGetIntegerElement(handle, path_join(path, "NumberOfGroups").c_str(), &num_groups);
-    tixiGetIntegerElement(handle, path_join(path, "NumberOfCompartiments").c_str(), &num_compart);
-    tixiGetIntegerElement(handle, path_join(edge_path, "StartNode").c_str(), &start_node);
-    tixiGetIntegerElement(handle, path_join(edge_path, "EndNode").c_str(), &end_node);
+    status = tixiGetIntegerElement(handle, path_join(path, "NumberOfGroups").c_str(), &num_groups);
+    assert(status == SUCCESS && ("Failed to read num_groups at " + path).c_str());
+
+    status = tixiGetIntegerElement(handle, path_join(path, "NumberOfCompartiments").c_str(), &num_compart);
+    assert(status == SUCCESS && ("Failed to read num_compart at " + path).c_str());
 
     auto all_weights = Eigen::VectorXd(num_compart * num_groups);
     for (int group = 0; group < num_groups; group++) {
         double* weights = nullptr;
-        tixiGetFloatVector(handle, path_join(edge_path, "Group" + std::to_string(group + 1)).c_str(), &weights,
-                           num_compart);
-        for (int compart = 0; compart < num_compart; compart++) {
-            all_weights(compart + group * num_compart) = weights[compart];
+        status = tixiGetFloatVector(handle, path_join(edge_path, "Group" + std::to_string(group + 1)).c_str(), &weights,
+                                    num_compart);
+        if (status == SUCCESS) {
+            for (int compart = 0; compart < num_compart; compart++) {
+                all_weights(compart + group * num_compart) = weights[compart];
+            }
+            graph.add_edge(start_node, end_node, all_weights);
         }
     }
-    graph.add_edge(start_node, end_node, all_weights);
 }
 
+
 /**
- * @brief creates xml files for each node of a Secir simulation graph and one xml file for its edges
+ * @brief creates xml files for each node of a Secir simulation graph and one xml file for its edges for each node
  * @param graph Graph which should be written
- * @param t0 starting point of simulation
- * @param tmax end point of simulation
+ * @param dir_string directory, where graph should be stored
  */
 //TO-DO: Implement apropriate File System for XML FIles
 template <class Model>
-void write_graph(const Graph<Model, MigrationEdge>& graph)
+void write_graph(const Graph<Model, MigrationEdge>& graph, const std::string& dir_string)
 {
-    std::string edges_path = "/Edges";
-    TixiDocumentHandle handle;
-    tixiCreateDocument("Edges", &handle);
+    assert(graph.nodes().size() > 0 && "Graph Nodes are empty");
 
+    std::string abs_path;
+    bool created = create_directory(dir_string, abs_path);
+
+    if (created) {
+        log_info("Results are stored in {:s}/results.",
+                 epi::get_current_dir_name());
+    }
+    else {
+        log_info("Results are stored in {:s}/results. Files from previous "
+                 "graph will be "
+                 "overwritten",
+                 epi::get_current_dir_name());
+    }
     int num_nodes   = static_cast<int>(graph.nodes().size());
     int num_edges   = static_cast<int>(graph.edges().size());
     int num_groups  = graph.nodes()[0].parameters.get_contact_patterns().get_cont_freq_mat().get_size();
     int num_compart = static_cast<int>(graph.nodes()[0].populations.get_num_compartments()) / num_groups;
 
-    tixiAddIntegerElement(handle, edges_path.c_str(), "NumberOfNodes", num_nodes, "%d");
-    tixiAddIntegerElement(handle, edges_path.c_str(), "NumberOfEdges", num_edges, "%d");
-    tixiAddIntegerElement(handle, edges_path.c_str(), "NumberOfGroups", num_groups, "%d");
-    tixiAddIntegerElement(handle, edges_path.c_str(), "NumberOfCompartiments", num_compart, "%d");
+    std::vector<TixiDocumentHandle> edge_handles(num_nodes);
+    std::string edges_path = "/Edges";
+    for (auto& current_handle : edge_handles) {
+        tixiCreateDocument("Edges", &current_handle);
 
-    for (int edge = 0; edge < num_edges; edge++) {
-        write_edge(handle, edges_path, graph, edge);
+        tixiAddIntegerElement(current_handle, edges_path.c_str(), "NumberOfNodes", num_nodes, "%d");
+        tixiAddIntegerElement(current_handle, edges_path.c_str(), "NumberOfEdges", num_edges, "%d");
+        tixiAddIntegerElement(current_handle, edges_path.c_str(), "NumberOfGroups", num_groups, "%d");
+        tixiAddIntegerElement(current_handle, edges_path.c_str(), "NumberOfCompartiments", num_compart, "%d");
     }
 
-    tixiSaveDocument(handle, "GraphEdges.xml");
-    tixiCloseDocument(handle);
+    for (int edge = 0; edge < num_edges; edge++) {
+        write_edge(edge_handles, edges_path, graph, edge);
+    }
 
     for (int node = 0; node < num_nodes; node++) {
-        write_node(graph, node);
+        tixiSaveDocument(edge_handles[node],
+                         (path_join(abs_path.c_str(), ("GraphEdges_node" + std::to_string(node) + ".xml")).c_str()));
+        tixiCloseDocument(edge_handles[node]);
+    }
+
+    for (int node = 0; node < num_nodes; node++) {
+        TixiDocumentHandle node_handle;
+        tixiCreateDocument("Parameters", &node_handle);
+        write_node(node_handle, graph, node);
+        tixiSaveDocument(node_handle, path_join(abs_path, ("GraphNode" + std::to_string(node) + ".xml")).c_str());
+        tixiCloseDocument(node_handle);
     }
 }
 
 /*
  * @brief reads graph xml files and returns a Secir simulation graph
+ * @param dir_string directory from where graph should be read
  */
 template <class Model>
-Graph<Model, MigrationEdge> read_graph()
+Graph<Model, MigrationEdge> read_graph(const std::string& dir_string)
 {
+    std::string abs_path;
+    bool dir_exists = directory_exists(dir_string, abs_path);
+    assert(dir_exists && ("Directory " + dir_string + " does not exist.").c_str());
+
+    ReturnCode status;
     TixiDocumentHandle handle;
-    tixiOpenDocument("GraphEdges.xml", &handle);
+    tixiOpenDocument(path_join(abs_path, "GraphEdges_node0.xml").c_str(), &handle);
 
     std::string edges_path = "/Edges";
 
     int num_nodes;
     int num_edges;
 
-    tixiGetIntegerElement(handle, path_join(edges_path, "NumberOfNodes").c_str(), &num_nodes);
-    tixiGetIntegerElement(handle, path_join(edges_path, "NumberOfEdges").c_str(), &num_edges);
+    status = tixiGetIntegerElement(handle, path_join(edges_path, "NumberOfNodes").c_str(), &num_nodes);
+    assert(status == SUCCESS && ("Failed to read num_nodes at " + edges_path).c_str());
+
+    status = tixiGetIntegerElement(handle, path_join(edges_path, "NumberOfEdges").c_str(), &num_edges);
+    assert(status == SUCCESS && ("Failed to read num_edges at " + edges_path).c_str());
+
+    std::vector<TixiDocumentHandle> edge_handles(num_nodes);
 
     Graph<Model, MigrationEdge> graph;
 
     for (int node = 0; node < num_nodes; node++) {
-        read_node(graph, node);
+        TixiDocumentHandle node_handle;
+        tixiOpenDocument(path_join(abs_path,("GraphNode" + std::to_string(node) + ".xml")).c_str(), &node_handle);
+        read_node(node_handle, graph);
+        tixiCloseDocument(node_handle);
     }
 
-    for (int edge = 0; edge < num_edges; edge++) {
-        read_edge(handle, edges_path, graph, edge);
+    for (int start_node = 0; start_node < num_nodes; start_node++) {
+        tixiOpenDocument(path_join(abs_path, ("GraphEdges_node" + std::to_string(start_node) + ".xml")).c_str(),
+                         &edge_handles[start_node]);
+        for (int end_node = 0; end_node < num_nodes; end_node++) {
+            read_edge(edge_handles, edges_path, graph, start_node, end_node);
+        }
+
+        tixiCloseDocument(edge_handles[start_node]);
     }
-    tixiCloseDocument(handle);
     return graph;
 }
 

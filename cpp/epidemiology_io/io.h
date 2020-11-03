@@ -22,6 +22,8 @@ std::string get_current_dir_name();
  */
 bool create_directory(std::string const& rel_path, std::string& abs_path);
 
+bool directory_exists(std::string const& rel_path, std::string& abs_path);
+
 } // namespace epi
 
 #endif // IO_H

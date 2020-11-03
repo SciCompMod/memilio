@@ -445,10 +445,10 @@ TEST(TestSaveParameters, compareGraphs)
     graph.add_edge(0, 1, Eigen::VectorXd::Constant(model.populations.get_num_compartments(), 0.01));
     graph.add_edge(1, 0, Eigen::VectorXd::Constant(model.populations.get_num_compartments(), 0.01));
 
-    epi::write_graph(graph);
+    epi::write_graph(graph, "graph_parameters");
 
     epi::Graph<epi::SecirModel<epi::AgeGroup2>, epi::MigrationEdge> graph_read =
-        epi::read_graph<epi::SecirModel<epi::AgeGroup2>>();
+        epi::read_graph<epi::SecirModel<epi::AgeGroup2>>("graph_parameters");
 
     auto num_nodes = graph.nodes().size();
     auto num_edges = graph.edges().size();

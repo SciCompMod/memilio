@@ -151,7 +151,11 @@ test-py:
     - pip install -r pycode/requirements-dev.txt
   script:
     - cd pycode/test
-    - python3 -m unittest
+    - python3 -W ignore::DeprecationWarning -m coverage run --include=*site-packages/epidemiology*,*dist-packages/epidemiology*,epidemiology* -m unittest
+    - python3 -m coverage report
+    - python3 -m coverage xml -o coverage_python.xml
+    - python3 -m coverage html -d coverage_python
+    - mv coverage_python ../../
     - getrkidata --help
     - getpopuldata --help
     - getjhdata --help
@@ -159,6 +163,11 @@ test-py:
     - getdividata --help
     - getalldata --help
     - cleandata --help
+  artifacts:
+    reports:
+      cobertura: pycode/test/coverage_python.xml
+    paths:
+      - coverage_python
 
 download-data:
   tags:

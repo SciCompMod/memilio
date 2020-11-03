@@ -21,7 +21,9 @@ class ParameterStudy
 
 public:
 
-    using HandleSimulationResultFunction = std::function<void(const Model&, const TimeSeries<double>&, int node)>;
+    using HandleSimulationResultFunction = std::function<void(epi::Graph<epi::ModelNode<epi::Simulation<Model>>, epi::MigrationEdge>)>;
+
+
     /**
      * create study for graph of compartment models.
      * @param graph graph of parameters
@@ -38,6 +40,19 @@ public:
         , m_tmax{tmax}
         , m_dt_graph_sim(graph_sim_dt)
     {
+    }
+
+    ParameterStudy(const epi::Graph<Model, epi::MigrationEdge>& graph, double t0, double tmax,
+                   double dev_rel, double graph_sim_dt, size_t num_runs)
+        : m_graph(graph)
+        , m_num_runs(num_runs)
+        , m_t0{t0}
+        , m_tmax{tmax}
+        , m_dt_graph_sim(graph_sim_dt)
+    {
+        for (auto& params_node : m_graph.nodes()) {
+            set_params_distributions_normal(params_node, t0, tmax, dev_rel);
+        }
     }
 
     /**
@@ -76,9 +91,10 @@ public:
      * @param[in] result_processing_function Processing function for simulation results, e.g., output function
      */
     std::vector<epi::Graph<epi::ModelNode<epi::Simulation<Model>>, epi::MigrationEdge>>
-    run(HandleSimulationResultFunction result_processing_function = [](const Model&, const TimeSeries<double>&, int) {})
+    run(HandleSimulationResultFunction result_processing_function = [](epi::Graph<epi::ModelNode<epi::Simulation<Model>>, epi::MigrationEdge>) {})
     {
         std::vector<epi::Graph<epi::ModelNode<epi::Simulation<Model>>, epi::MigrationEdge>> ensemble_result;
+        ensemble_result.reserve(m_num_runs);
 
         // Iterate over all parameters in the parameter space
         for (size_t i = 0; i < m_num_runs; i++) {
@@ -86,6 +102,7 @@ public:
 
             for (auto& params_node : m_graph.nodes()) {
                 draw_sample(params_node);
+                params_node.apply_constraints();
                 sim_graph.add_node(params_node, m_t0, m_dt_integration);
             }
 
@@ -99,11 +116,7 @@ public:
 
             auto result = sim.get_graph();
 
-            int node_id = 0;
-            for (auto& node : result.nodes()) {
-                result_processing_function(node.model.get_model(), node.model.get_result(), node_id);
-                node_id++;
-            }
+            result_processing_function(result);
 
             ensemble_result.push_back(result);
         }
@@ -194,6 +207,7 @@ private:
     // adaptive time step of the integrator (will be corrected if too large/small)
     double m_dt_integration = 0.1;
 };
+
 
 } // namespace epi
 

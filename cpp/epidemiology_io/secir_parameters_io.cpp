@@ -37,6 +37,9 @@ void write_element(const TixiDocumentHandle& handle, const std::string& path, co
         tixiAddDoubleElement(handle, path.c_str(), element_name.c_str(), (double)element, "%g");
     }
     else if (io_mode == 1 || io_mode == 2 || io_mode == 3) {
+        assert(element.get_distribution().get() && ("No Distribution detected for " + element_name +
+                                                    ". Either define a distribution or choose a different io_mode.")
+                                                       .c_str());
         auto distribution = element.get_distribution().get();
         write_distribution(handle, path, element_name, *distribution);
         if (io_mode == 2) {
@@ -102,10 +105,12 @@ void write_distribution(const TixiDocumentHandle& handle, const std::string& pat
 std::unique_ptr<UncertainValue> read_element(TixiDocumentHandle handle, const std::string& path, int io_mode)
 {
     std::unique_ptr<UncertainValue> value;
+    ReturnCode status;
 
     if (io_mode == 0) {
         double read_buffer;
-        tixiGetDoubleElement(handle, path.c_str(), &read_buffer);
+        status = tixiGetDoubleElement(handle, path.c_str(), &read_buffer);
+        assert(status == SUCCESS && ("Failed to read value at " + path).c_str());
         value = std::make_unique<UncertainValue>(read_buffer);
     }
     else if (io_mode == 1 || io_mode == 2 || io_mode == 3) {
@@ -113,7 +118,8 @@ std::unique_ptr<UncertainValue> read_element(TixiDocumentHandle handle, const st
 
         if (io_mode == 2) {
             double read_buffer;
-            tixiGetDoubleElement(handle, path_join(path, "Value").c_str(), &read_buffer);
+            status = tixiGetDoubleElement(handle, path_join(path, "Value").c_str(), &read_buffer);
+            assert(status == SUCCESS && ("Failed to read value at " + path).c_str());
             value = std::make_unique<UncertainValue>(read_buffer);
         }
         value->set_distribution(*distribution.get());
@@ -127,27 +133,40 @@ std::unique_ptr<UncertainValue> read_element(TixiDocumentHandle handle, const st
 
 std::unique_ptr<ParameterDistribution> read_distribution(TixiDocumentHandle handle, const std::string& path)
 {
+    ReturnCode status;
     std::unique_ptr<ParameterDistribution> distribution;
 
     char* distri_str;
-    tixiGetTextElement(handle, path_join(path, "Distribution").c_str(), &distri_str);
+    status = tixiGetTextElement(handle, path_join(path, "Distribution").c_str(), &distri_str);
+    assert(status == SUCCESS && ("Failed to read distribution type at " + path).c_str());
     if (strcmp("Normal", distri_str) == 0) {
         double mean;
         double dev;
         double min;
         double max;
-        tixiGetDoubleElement(handle, path_join(path, "Mean").c_str(), &mean);
-        tixiGetDoubleElement(handle, path_join(path, "Deviation").c_str(), &dev);
-        tixiGetDoubleElement(handle, path_join(path, "Min").c_str(), &min);
-        tixiGetDoubleElement(handle, path_join(path, "Max").c_str(), &max);
+        status = tixiGetDoubleElement(handle, path_join(path, "Mean").c_str(), &mean);
+        assert(status == SUCCESS && ("Failed to read mean at " + path).c_str());
+
+        status = tixiGetDoubleElement(handle, path_join(path, "Deviation").c_str(), &dev);
+        assert(status == SUCCESS && ("Failed to read deviation at " + path).c_str());
+
+        status = tixiGetDoubleElement(handle, path_join(path, "Min").c_str(), &min);
+        assert(status == SUCCESS && ("Failed to read min value at " + path).c_str());
+
+        status = tixiGetDoubleElement(handle, path_join(path, "Max").c_str(), &max);
+        assert(status == SUCCESS && ("Failed to read max value at " + path).c_str());
 
         distribution = std::make_unique<ParameterDistributionNormal>(min, max, mean, dev);
     }
     else if (strcmp("Uniform", distri_str) == 0) {
         double min;
         double max;
-        tixiGetDoubleElement(handle, path_join(path, "Min").c_str(), &min);
-        tixiGetDoubleElement(handle, path_join(path, "Max").c_str(), &max);
+        status = tixiGetDoubleElement(handle, path_join(path, "Min").c_str(), &min);
+        assert(status == SUCCESS && ("Failed to read min value at " + path).c_str());
+
+        status = tixiGetDoubleElement(handle, path_join(path, "Max").c_str(), &max);
+        assert(status == SUCCESS && ("Failed to read max value at " + path).c_str());
+
         distribution = std::make_unique<ParameterDistributionUniform>(min, max);
     }
     else {
@@ -220,13 +239,18 @@ void write_contact(TixiDocumentHandle handle, const std::string& path, const Unc
 
 UncertainContactMatrix read_contact(TixiDocumentHandle handle, const std::string& path, int io_mode)
 {
+
+    ReturnCode status;
     int num_groups;
-    tixiGetIntegerElement(handle, path_join("/Parameters", "NumberOfGroups").c_str(), &num_groups);
+    status = tixiGetIntegerElement(handle, path_join("/Parameters", "NumberOfGroups").c_str(), &num_groups);
+    assert(status == SUCCESS && ("Failed to read num_groups at " + path).c_str());
+
     UncertainContactMatrix contact_patterns{ContactFrequencyMatrix{(size_t)num_groups}};
     for (int i = 0; i < num_groups; i++) {
         double* row = nullptr;
-        tixiGetFloatVector(handle, path_join(path, "ContactRateGroup_" + std::to_string(i + 1)).c_str(), &row,
-                           num_groups);
+        status = tixiGetFloatVector(handle, path_join(path, "ContactRateGroup_" + std::to_string(i + 1)).c_str(), &row,
+                                    num_groups);
+        assert(status == SUCCESS && ("Failed to read contact rate at " + path).c_str());
 
         for (int j = 0; j < num_groups; ++j) {
             contact_patterns.get_cont_freq_mat().set_cont_freq(row[j], i, j);
@@ -236,15 +260,19 @@ UncertainContactMatrix read_contact(TixiDocumentHandle handle, const std::string
     for (int i = 0; i < num_groups; i++) {
         for (int j = 0; j < num_groups; j++) {
             int num_dampings;
-            tixiGetVectorSize(
+            status = tixiGetVectorSize(
                 handle,
                 path_join(path, ("DampingsGroups_" + std::to_string(i + 1) + "_" + std::to_string(j + 1))).c_str(),
                 &num_dampings);
+            assert(status == SUCCESS && ("Failed to read num_dampings at " + path).c_str());
+
             double* dampings = nullptr;
-            tixiGetFloatVector(
+            status           = tixiGetFloatVector(
                 handle,
                 path_join(path, ("DampingsGroups_" + std::to_string(i + 1) + "_" + std::to_string(j + 1))).c_str(),
                 &dampings, num_dampings);
+            assert(status == SUCCESS && ("Failed to read dampings at " + path).c_str());
+
             for (int k = 0; k < num_dampings / 2; k++) {
                 contact_patterns.get_cont_freq_mat().add_damping(Damping{dampings[2 * k], dampings[2 * k + 1]}, i, j);
             }
@@ -262,6 +290,7 @@ UncertainContactMatrix read_contact(TixiDocumentHandle handle, const std::string
     }
     return contact_patterns;
 }
+
 
 void interpolate_ages(const std::vector<double>& age_ranges, const std::vector<double>& param_ranges,
                       std::vector<std::vector<double>>& interpolation, std::vector<bool>& carry_over)

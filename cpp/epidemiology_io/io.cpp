@@ -39,4 +39,11 @@ bool create_directory(std::string const& rel_path, std::string& abs_path){
     return created;
 }
 
+bool directory_exists(std::string const& rel_path, std::string& abs_path)
+{
+    boost::filesystem::path dir(rel_path);
+    abs_path = dir.string();
+    return boost::filesystem::exists(dir);
+}
+
 } // namespace epi

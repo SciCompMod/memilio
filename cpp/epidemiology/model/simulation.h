@@ -93,6 +93,14 @@ public:
         return m_model;
     }
 
+    /**
+     * @brief returns the simulation model used in simulation
+     */
+    Model& get_model()
+    {
+        return m_model;
+    }
+
 private:
 
     std::shared_ptr<IntegratorCore> m_integratorCore;
