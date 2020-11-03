@@ -128,6 +128,7 @@
   "states": "Bundesländer",
   "county": "Landkreis",
   "counties": "Landkreise",
+  "germany": "Deutschland",
   "selection": "Auswahl",
   "no-selection": "Keine Auswahl getroffen!"
 }

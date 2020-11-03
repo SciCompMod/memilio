@@ -46,6 +46,13 @@ class TimeMap extends React.Component {
           population: newState.destatis.population,
         });
       } else {
+        this.props.setSelected({
+          dataset: 'germany',
+          id: -1,
+          label: this.props.t('germany'),
+          population: '83166711 ',
+        });
+
         if (this.props.selection !== null) {
           //this.props.setSelected(null);
         }
