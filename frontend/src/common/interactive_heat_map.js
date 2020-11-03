@@ -116,7 +116,7 @@ export default class InteractiveHeatMap {
     this.#countySeries.hidden = true;
 
     const countyPolygonTemplate = this.#countySeries.mapPolygons.template;
-    countyPolygonTemplate.tooltipText = '{GEN}: {value}';
+    countyPolygonTemplate.tooltipText = '{BEZ} {GEN}: {value}';
     countyPolygonTemplate.nonScalingStroke = true;
     countyPolygonTemplate.applyOnClones = true;
 

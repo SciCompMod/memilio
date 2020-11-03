@@ -57,7 +57,7 @@ class TimeMap extends React.Component {
         this.props.setSelected({
           dataset: 'counties',
           id: parseInt(newCounty.RS, 10),
-          label: newCounty.GEN,
+          label: `${newCounty.BEZ} ${newCounty.GEN}`,
           population: newCounty.destatis.population,
         });
       }
