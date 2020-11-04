@@ -83,8 +83,9 @@ public:
     }
 
 #if USE_DEPRECATED_SECIR_DERIV_FUNC
-    virtual void get_derivatives(Eigen::Ref<const Eigen::VectorXd> y, double t,
-                            Eigen::Ref<Eigen::VectorXd> dydt) const = 0;
+    //REMARK: Not pure virtual for easier wrapping
+    virtual void get_derivatives(Eigen::Ref<const Eigen::VectorXd> /*y*/, double /*t*/,
+                                 Eigen::Ref<Eigen::VectorXd> /*dydt*/) const {};
 #endif  // USE_DEPRECATED_SECIR_DERIV_FUNC
 
     /**
