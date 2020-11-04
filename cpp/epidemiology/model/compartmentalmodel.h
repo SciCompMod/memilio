@@ -6,7 +6,7 @@
 #include <vector>
 #include <functional>
 
-#define USE_DEPRECATED_SECIR_DERIV_FUNC 0
+#define USE_DEPRECATED_SECIR_DERIV_FUNC 1
 
 namespace
 {
