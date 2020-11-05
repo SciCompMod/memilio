@@ -1,3 +1,9 @@
+stages:
+  - build
+  - test
+  - publish
+
+
 build-cpp:
   stage: build
   tags:
