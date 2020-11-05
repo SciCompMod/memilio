@@ -3,8 +3,8 @@ import numpy as np
 import pandas as pd
 
 
-def impute_comix(matrix, env):
-    polymod = pd.read_csv('images/Polymod' + env + '.csv', index_col=0).values
+def impute_comix(matrix, env, path):
+    polymod = pd.read_csv(path + 'Polymod' + env + '.csv', index_col=0).values
 
     eig_polymod, _ = np.linalg.eig(polymod[2:, 2:])
     eig_comix, _ = np.linalg.eig(matrix[2:, 2:])
@@ -24,9 +24,10 @@ def impute_comix(matrix, env):
 
     return new_comix
 
-def read_from_screenshot(image, env, impute = False, show_result = False):
-    image_values = np.flip(cv2.imread(image + env + '.png'), axis=0)
-    colorbar = np.flip(cv2.imread('images/Colorbar.png'), axis=0)
+def read_from_screenshot(image, env, path, impute = False, show_result = False):
+    print(path + image + env + '.png')
+    image_values = np.flip(cv2.imread(path + image + env + '.png'), axis=0)
+    colorbar = np.flip(cv2.imread(path + 'Colorbar.png'), axis=0)
 
 
 
@@ -52,12 +53,12 @@ def read_from_screenshot(image, env, impute = False, show_result = False):
             contact_matrix[l,k] = np.argmin(color_norm)*9/colorbar.shape[0]
 
     if impute:
-        contact_matrix = impute_comix(contact_matrix, env)
+        contact_matrix = impute_comix(contact_matrix, env, path)
 
     print(contact_matrix)
     columns = ['0-4', '5-17', '18-29', '30-39', '40-49', '50-59', '60-69', '70+']
     df = pd.DataFrame(data = contact_matrix, index=columns, columns=columns)
-    df.to_csv(image + env + '.csv')
+    df.to_csv(path + image + env + '.csv')
 
     if show_result:
         cv2.imshow('image', image_values)
@@ -76,10 +77,10 @@ def read_from_screenshot(image, env, impute = False, show_result = False):
 
 
 if __name__ == "__main__":
-    path = 'images/'
-    read_from_screenshot(path + 'Polymod', '', show_result=False, impute=False)
-    read_from_screenshot(path + 'Comix', '', show_result=False, impute=False)
+    path = '../../../data/contact_data/images/'
+    read_from_screenshot('Polymod', '', path, show_result=False, impute=False)
+    read_from_screenshot('Comix', '', path, show_result=False, impute=False)
     names = ['_Physical', '_Home', '_Work', '_Other', '_School']
     for env in names:
-        read_from_screenshot(path + 'Polymod', env, show_result=False, impute=False)
-        read_from_screenshot(path + 'Comix', env, show_result=False, impute=True)
+        read_from_screenshot('Polymod', env, path, show_result=False, impute=False)
+        read_from_screenshot('Comix', env, path, show_result=False, impute=True)
