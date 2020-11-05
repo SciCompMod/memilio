@@ -1,7 +1,8 @@
 # HPC against Corona #
 
 [![pipeline status](https://gitlab.dlr.de/hpc-against-corona/epidemiology/badges/master/pipeline.svg)](https://gitlab.dlr.de/hpc-against-corona/epidemiology/-/commits/master)
-[![coverage report](https://gitlab.dlr.de/hpc-against-corona/epidemiology/badges/master/coverage.svg)](https://gitlab.dlr.de/hpc-against-corona/epidemiology/-/jobs/artifacts/master/file/coverage_report/index.html?job=test-cpp)
+C++: [![c++ coverage report](https://gitlab.dlr.de/hpc-against-corona/epidemiology/badges/master/coverage.svg?job=test-cpp)](https://gitlab.dlr.de/hpc-against-corona/epidemiology/-/jobs/artifacts/master/file/coverage_report/index.html?job=test-cpp)
+Python: [![python coverage report](https://gitlab.dlr.de/hpc-against-corona/epidemiology/badges/master/coverage.svg?job=test-py)](https://gitlab.dlr.de/hpc-against-corona/epidemiology/-/jobs/artifacts/master/file/coverage_python/index.html?job=test-py)
 
 This is a common project between the department of Systems Immunology (SIMM) of the he Helmholtz Center for Infection Research (HZI) and the Institute for Software Technology of the German Aerospace Center (DLR). This project will bring cutting edge and compute intensive epidemiological models to a large scale, which enables a precise and high-resolution spatiotemporal pandemic simulation for entire countries.
 
@@ -37,9 +38,16 @@ See thirdparty/CMakeLists.txt for details.
 In order to use IO of parameters and simulation results (*epidemiology_io* library), the tools
   * tixi3 (https://github.com/DLR-SC/tixi) and 
   * hdf5 (https://www.hdfgroup.org/ e.g., via apt install libhdf5-serial-dev)
-  * Boost Filesystem (https://www.boost.org/ e.g. via apt install libboost-filesystem-dev)
-  need to be installed.
+  
+need to be installed.
 
+In addition, *epidemiology_io* is bundled with
+ * jsoncpp (https://github.com/open-source-parsers/jsoncpp)
+ * Boost Filesystem (https://www.boost.org/)
+
+ All bundled libraries can be built as part of this project and don't need to be installed.
+
+ See here for more information on 3rdparty-dependencies: [cpp/thirdparty/Readme.rst](cpp/thirdparty/Readme.rst)
 
 **Installation** 
 

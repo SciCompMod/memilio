@@ -12,11 +12,18 @@
 #include <epidemiology/secir/secir.h>
 
 #include <tixi.h>
+
+#include <json/json.h>
+#include <json/value.h>
+
+#include <boost/filesystem.hpp>
+
+#include <numeric>
 #include <vector>
 #include <iostream>
 #include <string>
 #include <random>
-#include <boost/filesystem.hpp>
+#include <fstream>
 
 namespace epi
 {
@@ -30,6 +37,9 @@ void write_element(const TixiDocumentHandle& handle, const std::string& path, co
         tixiAddDoubleElement(handle, path.c_str(), element_name.c_str(), (double)element, "%g");
     }
     else if (io_mode == 1 || io_mode == 2 || io_mode == 3) {
+        assert(element.get_distribution().get() && ("No Distribution detected for " + element_name +
+                                                    ". Either define a distribution or choose a different io_mode.")
+                                                       .c_str());
         auto distribution = element.get_distribution().get();
         write_distribution(handle, path, element_name, *distribution);
         if (io_mode == 2) {
@@ -95,10 +105,12 @@ void write_distribution(const TixiDocumentHandle& handle, const std::string& pat
 std::unique_ptr<UncertainValue> read_element(TixiDocumentHandle handle, const std::string& path, int io_mode)
 {
     std::unique_ptr<UncertainValue> value;
+    ReturnCode status;
 
     if (io_mode == 0) {
         double read_buffer;
-        tixiGetDoubleElement(handle, path.c_str(), &read_buffer);
+        status = tixiGetDoubleElement(handle, path.c_str(), &read_buffer);
+        assert(status == SUCCESS && ("Failed to read value at " + path).c_str());
         value = std::make_unique<UncertainValue>(read_buffer);
     }
     else if (io_mode == 1 || io_mode == 2 || io_mode == 3) {
@@ -106,7 +118,8 @@ std::unique_ptr<UncertainValue> read_element(TixiDocumentHandle handle, const st
 
         if (io_mode == 2) {
             double read_buffer;
-            tixiGetDoubleElement(handle, path_join(path, "Value").c_str(), &read_buffer);
+            status = tixiGetDoubleElement(handle, path_join(path, "Value").c_str(), &read_buffer);
+            assert(status == SUCCESS && ("Failed to read value at " + path).c_str());
             value = std::make_unique<UncertainValue>(read_buffer);
         }
         value->set_distribution(*distribution.get());
@@ -120,27 +133,40 @@ std::unique_ptr<UncertainValue> read_element(TixiDocumentHandle handle, const st
 
 std::unique_ptr<ParameterDistribution> read_distribution(TixiDocumentHandle handle, const std::string& path)
 {
+    ReturnCode status;
     std::unique_ptr<ParameterDistribution> distribution;
 
     char* distri_str;
-    tixiGetTextElement(handle, path_join(path, "Distribution").c_str(), &distri_str);
+    status = tixiGetTextElement(handle, path_join(path, "Distribution").c_str(), &distri_str);
+    assert(status == SUCCESS && ("Failed to read distribution type at " + path).c_str());
     if (strcmp("Normal", distri_str) == 0) {
         double mean;
         double dev;
         double min;
         double max;
-        tixiGetDoubleElement(handle, path_join(path, "Mean").c_str(), &mean);
-        tixiGetDoubleElement(handle, path_join(path, "Deviation").c_str(), &dev);
-        tixiGetDoubleElement(handle, path_join(path, "Min").c_str(), &min);
-        tixiGetDoubleElement(handle, path_join(path, "Max").c_str(), &max);
+        status = tixiGetDoubleElement(handle, path_join(path, "Mean").c_str(), &mean);
+        assert(status == SUCCESS && ("Failed to read mean at " + path).c_str());
+
+        status = tixiGetDoubleElement(handle, path_join(path, "Deviation").c_str(), &dev);
+        assert(status == SUCCESS && ("Failed to read deviation at " + path).c_str());
+
+        status = tixiGetDoubleElement(handle, path_join(path, "Min").c_str(), &min);
+        assert(status == SUCCESS && ("Failed to read min value at " + path).c_str());
+
+        status = tixiGetDoubleElement(handle, path_join(path, "Max").c_str(), &max);
+        assert(status == SUCCESS && ("Failed to read max value at " + path).c_str());
 
         distribution = std::make_unique<ParameterDistributionNormal>(min, max, mean, dev);
     }
     else if (strcmp("Uniform", distri_str) == 0) {
         double min;
         double max;
-        tixiGetDoubleElement(handle, path_join(path, "Min").c_str(), &min);
-        tixiGetDoubleElement(handle, path_join(path, "Max").c_str(), &max);
+        status = tixiGetDoubleElement(handle, path_join(path, "Min").c_str(), &min);
+        assert(status == SUCCESS && ("Failed to read min value at " + path).c_str());
+
+        status = tixiGetDoubleElement(handle, path_join(path, "Max").c_str(), &max);
+        assert(status == SUCCESS && ("Failed to read max value at " + path).c_str());
+
         distribution = std::make_unique<ParameterDistributionUniform>(min, max);
     }
     else {
@@ -213,13 +239,18 @@ void write_contact(TixiDocumentHandle handle, const std::string& path, const Unc
 
 UncertainContactMatrix read_contact(TixiDocumentHandle handle, const std::string& path, int io_mode)
 {
+
+    ReturnCode status;
     int num_groups;
-    tixiGetIntegerElement(handle, path_join("/Parameters", "NumberOfGroups").c_str(), &num_groups);
+    status = tixiGetIntegerElement(handle, path_join("/Parameters", "NumberOfGroups").c_str(), &num_groups);
+    assert(status == SUCCESS && ("Failed to read num_groups at " + path).c_str());
+
     UncertainContactMatrix contact_patterns{ContactFrequencyMatrix{(size_t)num_groups}};
     for (int i = 0; i < num_groups; i++) {
         double* row = nullptr;
-        tixiGetFloatVector(handle, path_join(path, "ContactRateGroup_" + std::to_string(i + 1)).c_str(), &row,
-                           num_groups);
+        status = tixiGetFloatVector(handle, path_join(path, "ContactRateGroup_" + std::to_string(i + 1)).c_str(), &row,
+                                    num_groups);
+        assert(status == SUCCESS && ("Failed to read contact rate at " + path).c_str());
 
         for (int j = 0; j < num_groups; ++j) {
             contact_patterns.get_cont_freq_mat().set_cont_freq(row[j], i, j);
@@ -229,15 +260,19 @@ UncertainContactMatrix read_contact(TixiDocumentHandle handle, const std::string
     for (int i = 0; i < num_groups; i++) {
         for (int j = 0; j < num_groups; j++) {
             int num_dampings;
-            tixiGetVectorSize(
+            status = tixiGetVectorSize(
                 handle,
                 path_join(path, ("DampingsGroups_" + std::to_string(i + 1) + "_" + std::to_string(j + 1))).c_str(),
                 &num_dampings);
+            assert(status == SUCCESS && ("Failed to read num_dampings at " + path).c_str());
+
             double* dampings = nullptr;
-            tixiGetFloatVector(
+            status           = tixiGetFloatVector(
                 handle,
                 path_join(path, ("DampingsGroups_" + std::to_string(i + 1) + "_" + std::to_string(j + 1))).c_str(),
                 &dampings, num_dampings);
+            assert(status == SUCCESS && ("Failed to read dampings at " + path).c_str());
+
             for (int k = 0; k < num_dampings / 2; k++) {
                 contact_patterns.get_cont_freq_mat().add_damping(Damping{dampings[2 * k], dampings[2 * k + 1]}, i, j);
             }
@@ -258,28 +293,42 @@ UncertainContactMatrix read_contact(TixiDocumentHandle handle, const std::string
 
 ParameterStudy read_parameter_study(TixiDocumentHandle handle, const std::string& path)
 {
+    ReturnCode status;
+
     int io_mode;
     int num_runs;
     double t0;
     double tmax;
 
-    tixiGetIntegerElement(handle, path_join(path, "IOMode").c_str(), &io_mode);
-    tixiGetIntegerElement(handle, path_join(path, "Runs").c_str(), &num_runs);
-    tixiGetDoubleElement(handle, path_join(path, "T0").c_str(), &t0);
-    tixiGetDoubleElement(handle, path_join(path, "TMax").c_str(), &tmax);
+    status = tixiGetIntegerElement(handle, path_join(path, "IOMode").c_str(), &io_mode);
+    assert(status == SUCCESS && ("Failed to read io_mode at " + path).c_str());
+
+    status = tixiGetIntegerElement(handle, path_join(path, "Runs").c_str(), &num_runs);
+    assert(status == SUCCESS && ("Failed to read num_runs at " + path).c_str());
+
+    status = tixiGetDoubleElement(handle, path_join(path, "T0").c_str(), &t0);
+    assert(status == SUCCESS && ("Failed to read t0 at " + path).c_str());
+
+    status = tixiGetDoubleElement(handle, path_join(path, "TMax").c_str(), &tmax);
+    assert(status == SUCCESS && ("Failed to read tmax at " + path).c_str());
 
     return ParameterStudy(read_parameter_space(handle, path, io_mode), t0, tmax, num_runs);
 }
 
 SecirParams read_parameter_space(TixiDocumentHandle handle, const std::string& path, int io_mode)
 {
+    ReturnCode status;
+
     int num_groups;
-    tixiGetIntegerElement(handle, path_join(path, "NumberOfGroups").c_str(), &num_groups);
+    status = tixiGetIntegerElement(handle, path_join(path, "NumberOfGroups").c_str(), &num_groups);
+    assert(status == SUCCESS && ("Failed to read num_groups at " + path).c_str());
 
     SecirParams params{(size_t)num_groups};
 
     double read_buffer;
-    tixiGetDoubleElement(handle, path_join(path, "StartDay").c_str(), &read_buffer);
+    status = tixiGetDoubleElement(handle, path_join(path, "StartDay").c_str(), &read_buffer);
+    assert(status == SUCCESS && ("Failed to read StartDay at " + path).c_str());
+
     params.set_start_day(read_buffer);
     params.set_seasonality(*read_element(handle, path_join(path, "Seasonality"), io_mode));
     params.set_icu_capacity(*read_element(handle, path_join(path, "ICUCapacity"), io_mode));
@@ -293,7 +342,9 @@ SecirParams read_parameter_space(TixiDocumentHandle handle, const std::string& p
         // populations
         auto population_path = path_join(group_path, "Population");
 
-        tixiGetDoubleElement(handle, path_join(population_path, "Dead").c_str(), &read_buffer);
+        status = tixiGetDoubleElement(handle, path_join(population_path, "Dead").c_str(), &read_buffer);
+        assert(status == SUCCESS && ("Failed to read number of deaths at " + path).c_str());
+
         params.populations.set({i, SecirCompartments::D}, read_buffer);
 
         params.populations.set({i, SecirCompartments::E},
@@ -309,7 +360,9 @@ SecirParams read_parameter_space(TixiDocumentHandle handle, const std::string& p
         params.populations.set({i, SecirCompartments::R},
                                *read_element(handle, path_join(population_path, "Recovered"), io_mode));
 
-        tixiGetDoubleElement(handle, path_join(population_path, "Total").c_str(), &read_buffer);
+        status = tixiGetDoubleElement(handle, path_join(population_path, "Total").c_str(), &read_buffer);
+        assert(status == SUCCESS && ("Failed to read total population at " + path).c_str());
+
         params.populations.set_difference_from_group_total({i, SecirCompartments::S}, epi::SecirCategory::AgeGroup, i,
                                                            read_buffer);
 
@@ -442,16 +495,10 @@ void write_parameter_study(TixiDocumentHandle handle, const std::string& path, c
     write_parameter_space(handle, path, parameter_study.get_secir_params(), parameter_study.get_num_runs(), io_mode);
 }
 
-void write_single_run_params(const int run, const SecirParams& params, double t0, double tmax,
-                             const TimeSeries<double>& result, int node)
+void write_single_run_params(const int run, epi::Graph<epi::ModelNode<epi::SecirSimulation>, epi::MigrationEdge> graph,
+                             double t0, double tmax)
 {
-
-    int num_runs     = 1;
-    std::string path = "/Parameters";
-    TixiDocumentHandle handle;
-    tixiCreateDocument("Parameters", &handle);
-    ParameterStudy study(params, t0, tmax, num_runs);
-
+    assert(graph.nodes().size() > 0 && "Graph Nodes are empty");
     boost::filesystem::path dir("results");
 
     bool created = boost::filesystem::create_directory(dir);
@@ -460,61 +507,67 @@ void write_single_run_params(const int run, const SecirParams& params, double t0
         log_info("Directory '{:s}' was created. Results are stored in {:s}/results.", dir.string(),
                  epi::get_current_dir_name());
     }
-    else {
+    else if (run == 0) {
         log_info(
             "Directory '{:s}' already exists. Results are stored in {:s}/ results. Files from previous runs will be "
             "overwritten",
             dir.string(), epi::get_current_dir_name());
     }
+    int node_id = 0;
+    for (auto& node : graph.nodes()) {
+        int num_runs     = 1;
+        std::string path = "/Parameters";
+        TixiDocumentHandle handle;
+        tixiCreateDocument("Parameters", &handle);
+        ParameterStudy study(node.get_params(), t0, tmax, num_runs);
 
-    write_parameter_study(handle, path, study);
+        write_parameter_study(handle, path, study);
 
-    tixiSaveDocument(
-        handle,
-        (dir / ("Parameters_run" + std::to_string(run) + "_node" + std::to_string(node) + ".xml")).string().c_str());
-    tixiCloseDocument(handle);
+        tixiSaveDocument(handle, path_join(dir.string(), ("Parameters_run" + std::to_string(run) + "_node" +
+                                                          std::to_string(node_id) + ".xml"))
+                                     .c_str());
+        tixiCloseDocument(handle);
 
-    save_result(result,
-                (dir / ("Results_run" + std::to_string(run) + "_node" + std::to_string(node) + ".h5")).string());
+        save_result(node.get_result(), path_join(dir.string(), ("Results_run" + std::to_string(run) + "_node" +
+                                                                std::to_string(node_id) + ".h5")));
+        node_id++;
+    }
 }
 
-void write_node(const Graph<SecirParams, MigrationEdge>& graph, int node)
+void write_node(TixiDocumentHandle handle, const Graph<SecirParams, MigrationEdge>& graph, int node)
 {
+    assert(graph.nodes().size() > 0 && "Graph Nodes are empty");
     int num_runs = 1;
     int io_mode  = 2;
 
     std::string path = "/Parameters";
-    TixiDocumentHandle handle;
-    tixiCreateDocument("Parameters", &handle);
 
     tixiAddIntegerElement(handle, path.c_str(), "NodeID", node, "%d");
 
     auto params = graph.nodes()[node];
 
     write_parameter_space(handle, path, params, num_runs, io_mode);
-    tixiSaveDocument(handle, ("GraphNode" + std::to_string(node) + ".xml").c_str());
-    tixiCloseDocument(handle);
 }
 
-void read_node(Graph<SecirParams, MigrationEdge>& graph, int node)
+void read_node(TixiDocumentHandle node_handle, Graph<SecirParams, MigrationEdge>& graph)
 {
-    TixiDocumentHandle node_handle;
-    tixiOpenDocument(("GraphNode" + std::to_string(node) + ".xml").c_str(), &node_handle);
 
     graph.add_node(read_parameter_space(node_handle, "/Parameters", 2));
-
-    tixiCloseDocument(node_handle);
 }
 
-void write_edge(TixiDocumentHandle handle, const std::string& path, const Graph<SecirParams, MigrationEdge>& graph,
-                int edge)
+void write_edge(const std::vector<TixiDocumentHandle>& edge_handles, const std::string& path,
+                const Graph<SecirParams, MigrationEdge>& graph, int edge)
 {
-
+    assert(graph.nodes().size() > 0 && "Graph Nodes are empty");
     int num_groups  = static_cast<int>(graph.nodes()[0].get_num_groups());
     int num_compart = static_cast<int>(graph.nodes()[0].populations.get_num_compartments()) / num_groups;
 
-    std::string edge_path = path_join(path, "Edge" + std::to_string(edge));
-    tixiCreateElement(handle, path.c_str(), ("Edge" + std::to_string(edge)).c_str());
+    auto start_node = static_cast<int>(graph.edges()[edge].start_node_idx);
+    auto end_node   = static_cast<int>(graph.edges()[edge].end_node_idx);
+    auto handle     = edge_handles[start_node];
+
+    std::string edge_path = path_join(path, "EdgeTo" + std::to_string(end_node));
+    tixiCreateElement(handle, path.c_str(), ("EdgeTo" + std::to_string(end_node)).c_str());
     tixiAddIntegerElement(handle, edge_path.c_str(), "StartNode", static_cast<int>(graph.edges()[edge].start_node_idx),
                           "%d");
     tixiAddIntegerElement(handle, edge_path.c_str(), "EndNode", static_cast<int>(graph.edges()[edge].end_node_idx),
@@ -529,84 +582,326 @@ void write_edge(TixiDocumentHandle handle, const std::string& path, const Graph<
     }
 }
 
-void read_edge(TixiDocumentHandle handle, const std::string& path, Graph<SecirParams, MigrationEdge>& graph, int edge)
+void read_edge(const std::vector<TixiDocumentHandle>& edge_handles, const std::string& path,
+               Graph<SecirParams, MigrationEdge>& graph, int start_node, int end_node)
 {
+    ReturnCode status;
 
-    std::string edge_path = path_join(path, "Edge" + std::to_string(edge));
+    auto handle           = edge_handles[start_node];
+    std::string edge_path = path_join(path, "EdgeTo" + std::to_string(end_node));
     int num_groups;
     int num_compart;
-    int start_node;
-    int end_node;
 
-    tixiGetIntegerElement(handle, path_join(path, "NumberOfGroups").c_str(), &num_groups);
-    tixiGetIntegerElement(handle, path_join(path, "NumberOfCompartiments").c_str(), &num_compart);
-    tixiGetIntegerElement(handle, path_join(edge_path, "StartNode").c_str(), &start_node);
-    tixiGetIntegerElement(handle, path_join(edge_path, "EndNode").c_str(), &end_node);
+    status = tixiGetIntegerElement(handle, path_join(path, "NumberOfGroups").c_str(), &num_groups);
+    assert(status == SUCCESS && ("Failed to read num_groups at " + path).c_str());
+
+    status = tixiGetIntegerElement(handle, path_join(path, "NumberOfCompartiments").c_str(), &num_compart);
+    assert(status == SUCCESS && ("Failed to read num_compart at " + path).c_str());
 
     auto all_weights = Eigen::VectorXd(num_compart * num_groups);
     for (int group = 0; group < num_groups; group++) {
         double* weights = nullptr;
-        tixiGetFloatVector(handle, path_join(edge_path, "Group" + std::to_string(group + 1)).c_str(), &weights,
-                           num_compart);
-        for (int compart = 0; compart < num_compart; compart++) {
-            all_weights(compart + group * num_compart) = weights[compart];
+        status = tixiGetFloatVector(handle, path_join(edge_path, "Group" + std::to_string(group + 1)).c_str(), &weights,
+                                    num_compart);
+        if (status == SUCCESS) {
+            for (int compart = 0; compart < num_compart; compart++) {
+                all_weights(compart + group * num_compart) = weights[compart];
+            }
+            graph.add_edge(start_node, end_node, all_weights);
         }
     }
-    graph.add_edge(start_node, end_node, all_weights);
 }
 
-void write_graph(const Graph<SecirParams, MigrationEdge>& graph)
+void write_graph(const Graph<SecirParams, MigrationEdge>& graph, const std::string& dir_string)
 {
-    std::string edges_path = "/Edges";
-    TixiDocumentHandle handle;
-    tixiCreateDocument("Edges", &handle);
+    assert(graph.nodes().size() > 0 && "Graph Nodes are empty");
 
+    boost::filesystem::path dir(dir_string);
+    bool created = boost::filesystem::create_directory(dir);
+
+    if (created) {
+        log_info("Directory '{:s}' was created. Results are stored in {:s}.", dir.string(),
+                 path_join(epi::get_current_dir_name(), dir.string()));
+    }
+    else {
+        log_info("Directory '{:s}' already exists. Results are stored in {:s}. Files from previous "
+                 "graph will be "
+                 "overwritten",
+                 dir.string(), path_join(epi::get_current_dir_name(), dir.string()));
+    }
     int num_nodes   = static_cast<int>(graph.nodes().size());
     int num_edges   = static_cast<int>(graph.edges().size());
     int num_groups  = graph.nodes()[0].get_contact_patterns().get_cont_freq_mat().get_size();
     int num_compart = static_cast<int>(graph.nodes()[0].populations.get_num_compartments()) / num_groups;
 
-    tixiAddIntegerElement(handle, edges_path.c_str(), "NumberOfNodes", num_nodes, "%d");
-    tixiAddIntegerElement(handle, edges_path.c_str(), "NumberOfEdges", num_edges, "%d");
-    tixiAddIntegerElement(handle, edges_path.c_str(), "NumberOfGroups", num_groups, "%d");
-    tixiAddIntegerElement(handle, edges_path.c_str(), "NumberOfCompartiments", num_compart, "%d");
+    std::vector<TixiDocumentHandle> edge_handles(num_nodes);
+    std::string edges_path = "/Edges";
+    for (auto& current_handle : edge_handles) {
+        tixiCreateDocument("Edges", &current_handle);
 
-    for (int edge = 0; edge < num_edges; edge++) {
-        write_edge(handle, edges_path, graph, edge);
+        tixiAddIntegerElement(current_handle, edges_path.c_str(), "NumberOfNodes", num_nodes, "%d");
+        tixiAddIntegerElement(current_handle, edges_path.c_str(), "NumberOfEdges", num_edges, "%d");
+        tixiAddIntegerElement(current_handle, edges_path.c_str(), "NumberOfGroups", num_groups, "%d");
+        tixiAddIntegerElement(current_handle, edges_path.c_str(), "NumberOfCompartiments", num_compart, "%d");
     }
 
-    tixiSaveDocument(handle, "GraphEdges.xml");
-    tixiCloseDocument(handle);
+    for (int edge = 0; edge < num_edges; edge++) {
+        write_edge(edge_handles, edges_path, graph, edge);
+    }
 
     for (int node = 0; node < num_nodes; node++) {
-        write_node(graph, node);
+        tixiSaveDocument(edge_handles[node],
+                         (dir / ("GraphEdges_node" + std::to_string(node) + ".xml")).string().c_str());
+        tixiCloseDocument(edge_handles[node]);
+    }
+
+    for (int node = 0; node < num_nodes; node++) {
+        TixiDocumentHandle node_handle;
+        tixiCreateDocument("Parameters", &node_handle);
+        write_node(node_handle, graph, node);
+        tixiSaveDocument(node_handle, path_join(dir.string(), ("GraphNode" + std::to_string(node) + ".xml")).c_str());
+        tixiCloseDocument(node_handle);
     }
 }
 
-Graph<SecirParams, MigrationEdge> read_graph()
+Graph<SecirParams, MigrationEdge> read_graph(const std::string& dir_string)
 {
+    boost::filesystem::path dir(dir_string);
+    assert(boost::filesystem::exists(dir) && ("Directory " + dir_string + " does not exist.").c_str());
+
+    ReturnCode status;
     TixiDocumentHandle handle;
-    tixiOpenDocument("GraphEdges.xml", &handle);
+    tixiOpenDocument(path_join(dir.string(), "GraphEdges_node0.xml").c_str(), &handle);
 
     std::string edges_path = "/Edges";
 
     int num_nodes;
     int num_edges;
 
-    tixiGetIntegerElement(handle, path_join(edges_path, "NumberOfNodes").c_str(), &num_nodes);
-    tixiGetIntegerElement(handle, path_join(edges_path, "NumberOfEdges").c_str(), &num_edges);
+    status = tixiGetIntegerElement(handle, path_join(edges_path, "NumberOfNodes").c_str(), &num_nodes);
+    assert(status == SUCCESS && ("Failed to read num_nodes at " + edges_path).c_str());
+
+    status = tixiGetIntegerElement(handle, path_join(edges_path, "NumberOfEdges").c_str(), &num_edges);
+    assert(status == SUCCESS && ("Failed to read num_edges at " + edges_path).c_str());
+
+    std::vector<TixiDocumentHandle> edge_handles(num_nodes);
 
     Graph<SecirParams, MigrationEdge> graph;
 
     for (int node = 0; node < num_nodes; node++) {
-        read_node(graph, node);
+        TixiDocumentHandle node_handle;
+        tixiOpenDocument((dir / ("GraphNode" + std::to_string(node) + ".xml")).string().c_str(), &node_handle);
+        read_node(node_handle, graph);
+        tixiCloseDocument(node_handle);
     }
 
-    for (int edge = 0; edge < num_edges; edge++) {
-        read_edge(handle, edges_path, graph, edge);
+    for (int start_node = 0; start_node < num_nodes; start_node++) {
+        tixiOpenDocument((dir / ("GraphEdges_node" + std::to_string(start_node) + ".xml")).string().c_str(),
+                         &edge_handles[start_node]);
+        for (int end_node = 0; end_node < num_nodes; end_node++) {
+            read_edge(edge_handles, edges_path, graph, start_node, end_node);
+        }
+
+        tixiCloseDocument(edge_handles[start_node]);
     }
-    tixiCloseDocument(handle);
     return graph;
+}
+
+void interpolate_ages(const std::vector<double>& age_ranges, const std::vector<double>& param_ranges,
+                      std::vector<std::vector<double>>& interpolation, std::vector<bool>& carry_over)
+{
+    //counter for parameter age groups
+    size_t counter = 0;
+
+    //residual of param age groups
+    double res = 0.0;
+    for (size_t i = 0; i < age_ranges.size(); i++) {
+
+        // if current param age group didn't fit into previous rki age group, transfer residual to current age group
+        if (res < 0) {
+            interpolation[i].push_back(std::min(-res / age_ranges[i], 1.0));
+        }
+
+        if (counter < param_ranges.size() - 1) {
+            res += age_ranges[i];
+            if (std::abs(res) < age_ranges[i]) {
+                counter++;
+            }
+            // iterate over param age groups while there is still room in the current rki age group
+            while (res > 0) {
+                res -= param_ranges[counter];
+                interpolation[i].push_back((param_ranges[counter] + std::min(res, 0.0)) / age_ranges[i]);
+                if (res >= 0) {
+                    counter++;
+                }
+            }
+            if (res < 0) {
+                carry_over.push_back(true);
+            }
+            else if (res == 0) {
+                carry_over.push_back(false);
+            }
+        }
+        // if last param age group is reached
+        else {
+            interpolation[i].push_back((age_ranges[i] + res) / age_ranges[i]);
+            if (res < 0 || counter == 0) {
+                carry_over.push_back(true);
+            }
+            else if (res == 0) {
+                carry_over.push_back(false);
+            }
+            res = 0;
+        }
+    }
+    // last entries for "unknown" age group
+    interpolation.push_back({1.0});
+    carry_over.push_back(true);
+}
+
+void set_rki_data(epi::SecirParams& params, const std::vector<double>& param_ranges, const std::string& path,
+                  const std::string& id_name, int region, int month, int day)
+{
+    Json::Reader reader;
+    Json::Value root;
+
+    std::ifstream rki(path);
+    reader.parse(rki, root);
+
+    std::vector<std::string> age_names = {"A00-A04", "A05-A14", "A15-A34", "A35-A59", "A60-A79", "A80+", "unknown"};
+    std::vector<double> age_ranges     = {5., 10., 20., 25., 20., 20.};
+
+    std::vector<std::vector<double>> interpolation(age_names.size());
+    std::vector<bool> carry_over;
+
+    interpolate_ages(age_ranges, param_ranges, interpolation, carry_over);
+
+    std::vector<double> num_inf(age_names.size(), 0.0);
+    std::vector<double> num_death(age_names.size(), 0.0);
+    std::vector<double> num_rec(age_names.size(), 0.0);
+
+    for (size_t age = 0; age < age_names.size(); age++) {
+        for (unsigned int i = 0; i < root.size(); i++) {
+            bool correct_region = region == 0 || root[i][id_name] == region;
+            std::string date    = root[i]["Date"].asString();
+            if (month == std::stoi(date.substr(5, 2)) && day == std::stoi(date.substr(8, 2)) && correct_region) {
+                if (root[i]["Age_RKI"].asString() == age_names[age]) {
+                    num_inf[age]   = root[i]["Confirmed"].asDouble();
+                    num_death[age] = root[i]["Deaths"].asDouble();
+                    num_rec[age]   = root[i]["Recovered"].asDouble();
+                    break;
+                }
+            }
+        }
+    }
+
+    std::vector<double> interpol_inf(params.get_num_groups() + 1, 0.0);
+    std::vector<double> interpol_death(params.get_num_groups() + 1, 0.0);
+    std::vector<double> interpol_rec(params.get_num_groups() + 1, 0.0);
+
+    int counter = 0;
+    for (size_t i = 0; i < interpolation.size() - 1; i++) {
+        for (size_t j = 0; j < interpolation[i].size(); j++) {
+            interpol_inf[counter] += interpolation[i][j] * num_inf[i];
+            interpol_death[counter] += interpolation[i][j] * num_death[i];
+            interpol_rec[counter] += interpolation[i][j] * num_rec[i];
+            if (j < interpolation[i].size() - 1 || !carry_over[i]) {
+                counter++;
+            }
+        }
+    }
+
+    for (size_t i = 0; i < params.get_num_groups(); i++) {
+        interpol_inf[i] += (double)num_inf[num_inf.size() - 1] / (double)params.get_num_groups();
+        interpol_death[i] += (double)num_death[num_death.size() - 1] / (double)params.get_num_groups();
+        interpol_rec[i] += (double)num_rec[num_rec.size() - 1] / (double)params.get_num_groups();
+    }
+
+    if (std::accumulate(num_inf.begin(), num_inf.end(), 0.0) > 0) {
+        size_t num_groups = params.get_num_groups();
+        for (size_t i = 0; i < num_groups; i++) {
+            params.populations.set({i, epi::SecirCompartments::I},
+                                   interpol_inf[i] - interpol_death[i] - interpol_rec[i]);
+            params.populations.set({i, epi::SecirCompartments::D}, interpol_death[i]);
+            params.populations.set({i, epi::SecirCompartments::R}, interpol_rec[i]);
+        }
+    }
+    else {
+        log_warning("No infections reported on date " + std::to_string(day) + "-" + std::to_string(month) +
+                    " for region " + std::to_string(region) + ". Population data has not been set.");
+    }
+}
+
+void set_divi_data(epi::SecirParams& params, const std::string& path, const std::string& id_name, int region, int month,
+                   int day)
+{
+
+    Json::Reader reader;
+    Json::Value root;
+
+    std::ifstream divi(path);
+    reader.parse(divi, root);
+
+    double num_icu = 0;
+    for (unsigned int i = 0; i < root.size(); i++) {
+        bool correct_region = region == 0 || root[i][id_name] == region;
+        std::string date    = root[i]["Date"].asString();
+        if (month == std::stoi(date.substr(5, 2)) && day == std::stoi(date.substr(8, 2)) && correct_region) {
+            num_icu = root[i]["ICU"].asDouble();
+        }
+    }
+
+    if (num_icu > 0) {
+        size_t num_groups = params.get_num_groups();
+        for (size_t i = 0; i < num_groups; i++) {
+            params.populations.set({i, epi::SecirCompartments::U}, num_icu / (double)num_groups);
+        }
+    }
+    else {
+        log_warning("No ICU patients reported on date " + std::to_string(day) + "-" + std::to_string(month) +
+                    " for region " + std::to_string(region) + ".");
+    }
+}
+
+void read_population_data_germany(epi::SecirParams& params, const std::vector<double>& param_ranges, int month, int day,
+                                  const std::string& dir)
+{
+    assert(param_ranges.size() == params.get_num_groups() &&
+           "size of param_ranges needs to be the same size as the number of groups in params");
+    assert(std::accumulate(param_ranges.begin(), param_ranges.end(), 0.0) == 100. && "param_ranges must add up to 100");
+
+    std::string id_name;
+
+    set_rki_data(params, param_ranges, path_join(dir, "all_age_rki.json"), id_name, 0, month, day);
+    set_divi_data(params, path_join(dir, "germany_divi.json"), id_name, 0, month, day);
+}
+
+void read_population_data_state(epi::SecirParams& params, const std::vector<double>& param_ranges, int month, int day,
+                                int state, const std::string& dir)
+{
+    assert(state > 0 && state <= 16 && "State must be between 1 and 16");
+    assert(param_ranges.size() == params.get_num_groups() &&
+           "size of param_ranges needs to be the same size as the number of groups in params");
+    assert(std::accumulate(param_ranges.begin(), param_ranges.end(), 0.0) == 100. && "param_ranges must add up to 100");
+
+    std::string id_name = "ID_State";
+
+    set_rki_data(params, param_ranges, path_join(dir, "all_state_age_rki.json"), id_name, state, month, day);
+    set_divi_data(params, path_join(dir, "state_divi.json"), id_name, state, month, day);
+}
+
+void read_population_data_county(epi::SecirParams& params, const std::vector<double>& param_ranges, int month, int day,
+                                 int county, const std::string& dir)
+{
+    assert(county > 999 && "State must be between 1 and 16");
+    assert(param_ranges.size() == params.get_num_groups() &&
+           "size of param_ranges needs to be the same size as the number of groups in params");
+    assert(std::accumulate(param_ranges.begin(), param_ranges.end(), 0.0) == 100. && "param_ranges must add up to 100");
+
+    std::string id_name = "ID_County";
+
+    set_rki_data(params, param_ranges, path_join(dir, "all_county_age_rki.json"), id_name, county, month, day);
+    set_divi_data(params, path_join(dir, "county_divi.json"), id_name, county, month, day);
 }
 
 } // namespace epi

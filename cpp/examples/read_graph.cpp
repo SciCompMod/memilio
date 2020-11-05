@@ -4,8 +4,22 @@
 
 #include <iostream>
 
+void print_usage()
+{
+    std::cout << "Usage: read_graph MIGRATION_FILE" << "\n\n";
+    std::cout << "This example performs a simulation based on twitter "
+                 "migration data." << std::endl;
+}
+
 int main(int argc, char** argv)
 {
+    if (argc != 2) {
+        print_usage();
+        return -1;
+    }
+
+    auto filename = argv[1];
+
     const auto t0   = 0.;
     const auto tmax = 10.;
     const auto dt   = 1.; //time step of migration, not integration
@@ -85,8 +99,10 @@ int main(int argc, char** argv)
         }
     }
 
-    std::cout << "Readimg Migration File..." << std::flush;
-    Eigen::MatrixXi twitter_migration_2018 = epi::read_migration("2018_lk_matrix.txt");
+    epi::set_params_distributions_normal(params, t0, tmax, 0.2);
+
+    std::cout << "Reading Migration File..." << std::flush;
+    Eigen::MatrixXi twitter_migration_2018 = epi::read_migration(filename);
     std::cout << "Done" << std::endl;
 
     std::cout << "Intializing Graph..." << std::flush;
@@ -96,17 +112,19 @@ int main(int argc, char** argv)
     }
     for (int row = 0; row < twitter_migration_2018.rows(); row++) {
         for (int col = 0; col < twitter_migration_2018.cols(); col++) {
-            graph.add_edge(row, col, Eigen::VectorXd::Constant(8 * nb_groups, twitter_migration_2018(row, col)));
+            graph.add_edge(row, col,
+                           Eigen::VectorXd::Constant(8 * nb_groups, twitter_migration_2018(row, col) /
+                                                                        graph.nodes()[row].populations.get_total()));
         }
     }
     std::cout << "Done" << std::endl;
 
     std::cout << "Writing XML Files..." << std::flush;
-    epi::write_graph(graph);
+    epi::write_graph(graph, "graph_parameters");
     std::cout << "Done" << std::endl;
 
     std::cout << "Reading XML Files..." << std::flush;
-    epi::Graph<epi::SecirParams, epi::MigrationEdge> graph_read = epi::read_graph();
+    epi::Graph<epi::SecirParams, epi::MigrationEdge> graph_read = epi::read_graph("graph_parameters");
     std::cout << "Done" << std::endl;
 
     std::cout << "Running Simulations..." << std::flush;
