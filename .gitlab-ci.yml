@@ -264,8 +264,8 @@ pages:
   script:
     - echo "Prepare basic Pages sites"
     - mkdir -p public/${CI_COMMIT_REF_NAME}/
-    - cp scripts/ci/main_index.html public/index.html
-    - cp scripts/ci/branch_index.html public/${CI_COMMIT_REF_NAME}/index.html
+    - cp ci_index/main_index.html public/index.html
+    - cp ci_index/branch_index.html public/${CI_COMMIT_REF_NAME}/index.html
     - echo "Prepare documentation" # Prepare documentation
     - mkdir -p public/${CI_COMMIT_REF_NAME}/documentation
     - cp -r docs/_build/html/* public/${CI_COMMIT_REF_NAME}/documentation
