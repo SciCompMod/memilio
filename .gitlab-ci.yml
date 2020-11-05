@@ -101,8 +101,8 @@ build-docs:
   tags:
     - SC-0030VM
   script:
-    cd docs
-    doxygen
+    - cd docs
+    - doxygen
   artifacts:
     expose_as: "Documentation"
     paths:
