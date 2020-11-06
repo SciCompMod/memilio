@@ -211,6 +211,9 @@ void set_rki_data(epi::SecirParams& params, const std::vector<double>& param_ran
 void set_divi_data(epi::SecirParams& params, const std::string& path, const std::string& id_name, int region, int month,
                    int day);
 
+void set_population_data(epi::SecirParams& params, const std::vector<double>& param_ranges, const std::string& path,
+                         const std::string& id_name, int region);
+
 /**
  * @brief reads population data from population files for the whole country
  * @param params Parameters in which the data is set

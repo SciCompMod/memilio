@@ -792,6 +792,7 @@ TEST(TestSaveParameters, ReadPopulationDataAllAges)
     ASSERT_EQ(params.populations.get({0, epi::SecirCompartments::D}), 8626);
     ASSERT_EQ(params.populations.get({0, epi::SecirCompartments::R}), 160148);
     ASSERT_EQ(params.populations.get({0, epi::SecirCompartments::U}), 1937);
+    ASSERT_EQ(params.populations.get_total(), 83166695);
 }
 
 TEST(TestSaveParameters, ReadPopulationDataRKIAges)
@@ -814,6 +815,8 @@ TEST(TestSaveParameters, ReadPopulationDataRKIAges)
         ASSERT_EQ(params.populations.get({i, epi::SecirCompartments::R}), recovered[i]);
         ASSERT_EQ(params.populations.get({i, epi::SecirCompartments::U}), 1937 / (double)ranges.size());
     }
+
+    EXPECT_NEAR(params.populations.get_total(), 83166695, 1e-6);
 }
 
 TEST(TestSaveParameters, ReadPopulationDataMultipleAges)
@@ -887,4 +890,35 @@ TEST(TestSaveParameters, ReadPopulationDataMultipleAges)
     EXPECT_NEAR(8626, deaths_param, 1e-6);
     EXPECT_NEAR(160148, recovered_param, 1e-6);
     EXPECT_NEAR(1937, icu_param, 1e-6);
+    EXPECT_NEAR(params.populations.get_total(), 83166695, 1e-6);
+}
+
+TEST(TestSaveParameters, ReadPopulationDataStateAllAges)
+{
+    epi::SecirParams params(1);
+    std::vector<double> ranges = {100};
+
+    std::string path = TEST_DATA_DIR;
+    epi::read_population_data_state(params, ranges, 5, 5, 1, path);
+
+    ASSERT_EQ(params.populations.get({0, epi::SecirCompartments::I}), 0);
+    ASSERT_EQ(params.populations.get({0, epi::SecirCompartments::D}), 145);
+    ASSERT_EQ(params.populations.get({0, epi::SecirCompartments::R}), 2741);
+    ASSERT_EQ(params.populations.get({0, epi::SecirCompartments::U}), 18);
+    ASSERT_EQ(params.populations.get_total(), 2903777);
+}
+
+TEST(TestSaveParameters, ReadPopulationDataCountyAllAges)
+{
+    epi::SecirParams params(1);
+    std::vector<double> ranges = {100};
+
+    std::string path = TEST_DATA_DIR;
+    epi::read_population_data_county(params, ranges, 9, 1, 1002, path);
+
+    ASSERT_EQ(params.populations.get({0, epi::SecirCompartments::I}), 0);
+    ASSERT_EQ(params.populations.get({0, epi::SecirCompartments::D}), 0);
+    ASSERT_EQ(params.populations.get({0, epi::SecirCompartments::R}), 156);
+    ASSERT_EQ(params.populations.get({0, epi::SecirCompartments::U}), 1);
+    ASSERT_EQ(params.populations.get_total(), 246793);
 }
