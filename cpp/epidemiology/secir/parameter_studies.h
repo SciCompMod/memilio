@@ -203,7 +203,7 @@ ParameterStudy::run(HandleSimulationResultFunction simulation_result_function)
         }
 
         for (auto& edge : m_graph.edges()) {
-            sim_graph.add_edge(edge.start_node_idx, edge.end_node_idx, edge.property.coefficients);
+            sim_graph.add_edge(edge.start_node_idx, edge.end_node_idx, edge.property);
         }
 
         // Call the simulation function

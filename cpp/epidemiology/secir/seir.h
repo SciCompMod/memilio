@@ -13,10 +13,10 @@ namespace epi
 
 enum SeirCompartments
 {
-    S,
-    E,
-    I,
-    R,
+    SeirS,
+    SeirE,
+    SeirI,
+    SeirR,
     SeirCount
 };
 
@@ -88,6 +88,15 @@ public:
 void print_seir_params(SeirParams const& params);
 
 /**
+ * Computes the current time-derivative of S, E, I, and R in the SEIR model.
+ * Uses different population to compute the contact rates.
+ * @param pop population that are in contact and cause infections.
+ * @see seir_get_derivatives
+ */
+void seir_get_derivatives(SeirParams const& params, Eigen::Ref<const Eigen::VectorXd> pop,
+                          Eigen::Ref<const Eigen::VectorXd> y, double t, Eigen::Ref<Eigen::VectorXd> dydt);
+
+/**
  * Computes the current time-derivative of S, E, I, and R in the SEIR model
  * @param[in] params SEIR Model parameters, created by seir_param
  * @tparam T the datatype of the cases
@@ -95,7 +104,10 @@ void print_seir_params(SeirParams const& params);
  * @param[in] t time / current day
  * @param[out] dydt the values of the time derivatices of S, E, I, and R
  */
-void seir_get_derivatives(SeirParams const& params, const Eigen::VectorXd& y, double t, Eigen::VectorXd& dydt);
+inline void seir_get_derivatives(SeirParams const& params, Eigen::Ref<const Eigen::VectorXd> y, double t, Eigen::Ref<Eigen::VectorXd> dydt)
+{
+    seir_get_derivatives(params, y, y, t, dydt);
+}
 
 /**
  * @brief simulate SEIR compartment model
@@ -113,8 +125,13 @@ public:
     {
         return m_integrator.get_result();
     }
+    const SeirParams& get_params() const
+    {
+        return m_params;
+    }
 
 private:
+    SeirParams m_params;
     OdeIntegrator m_integrator;
 };
 

@@ -503,6 +503,7 @@ TEST(TestSecir, testValueConstraints)
 
     epi::set_log_level(epi::LogLevel::off);
     params.check_constraints();
+    epi::set_log_level(epi::LogLevel::warn);
 
     EXPECT_EQ(-91, params.populations.get({0, epi::SecirCompartments::E}));
     EXPECT_EQ(2.124921, params.probabilities[0].get_asymp_per_infectious().value());

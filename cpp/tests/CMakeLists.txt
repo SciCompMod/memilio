@@ -26,6 +26,7 @@ set(TESTSOURCES
   test_secir_ageres.cpp
   test_parameter_studies.cpp
   test_graph.cpp
+  test_graph_simulation.cpp
   test_stl_util.cpp
   test_uncertain.cpp
   test_time_series.cpp

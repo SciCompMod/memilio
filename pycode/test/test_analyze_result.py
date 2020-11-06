@@ -29,7 +29,7 @@ class Test_AnalyzeResult(unittest.TestCase):
         params = secir.SecirParams(1)
         graph = secir.MigrationGraph()
         graph.add_node(params)
-        sim = secir.MigrationSimulation(graph, t0 = 0, dt = 0.5)
+        sim = secir.MigrationSimulation(graph, t0 = 0)
         sim.advance(2)
         interpolated = secir.interpolate_ensemble_results([sim.graph, sim.graph])
         self.assertEqual(interpolated[0][0].get_time(0), 0.0)

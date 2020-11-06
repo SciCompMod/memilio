@@ -62,6 +62,23 @@ Eigen::Index minor_size(M&& m)
 }
 
 /**
+ * helper to get the matrix type from an eigen expression 
+ * with correct const volatile qualitfications.
+ */
+template<class M>
+struct CVPlainMatrix
+{
+    using Type = typename M::PlainMatrix;
+};
+template<class M>
+struct CVPlainMatrix<Eigen::Ref<const M>>
+{
+    using Type = const M;
+};
+template<class M>
+using CVPlainMatrixT = typename CVPlainMatrix<M>::Type;
+
+/**
  * @brief take a regular slice of a row or column vector.
  * The slices shares the same memory as the original vector, no copying is performed,
  * changes to the slice are also made to the original vector.
@@ -73,7 +90,7 @@ Eigen::Index minor_size(M&& m)
 template <class V, std::enable_if_t<is_dynamic_vector<V>::value, int> = 0>
 auto slice(V&& v, Seq<Eigen::Index> elems)
 {
-    return Eigen::Map<std::remove_reference_t<V>, 0, Eigen::Stride<Eigen::Dynamic, Eigen::Dynamic>>(
+    return Eigen::Map<CVPlainMatrixT<std::remove_reference_t<V>>, 0, Eigen::Stride<Eigen::Dynamic, Eigen::Dynamic>>(
         v.data() + elems.start, elems.n, Eigen::Stride<Eigen::Dynamic, Eigen::Dynamic>{1, elems.stride});
 }
 
@@ -99,7 +116,7 @@ auto slice(M&& m, Seq<Eigen::Index> rows, Seq<Eigen::Index> cols)
     auto minStride = minSpec.stride;
     auto data      = m.data() + majSpec.start * minor_size(m) + minSpec.start;
 
-    return Eigen::Map<std::remove_reference_t<M>, Eigen::Unaligned, Eigen::Stride<Eigen::Dynamic, Eigen::Dynamic>>(
+    return Eigen::Map<CVPlainMatrixT<std::remove_reference_t<M>>, Eigen::Unaligned, Eigen::Stride<Eigen::Dynamic, Eigen::Dynamic>>(
         data, rows.n, cols.n, {majStride, minStride});
 }
 
@@ -121,7 +138,7 @@ auto reshape(M&& m, Eigen::Index rows, Eigen::Index cols)
     assert(rows >= 1);
     assert(cols >= 1);
 
-    return Eigen::Map<std::remove_reference_t<M>>(m.data(), rows, cols);
+    return Eigen::Map<CVPlainMatrixT<std::remove_reference_t<M>>>(m.data(), rows, cols);
 }
 
 } // namespace epi

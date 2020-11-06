@@ -14,13 +14,13 @@ int main()
     epi::SeirParams params;
 
     double total_population = 10000;
-    params.populations.set({epi::SeirCompartments::E}, 100);
-    params.populations.set({epi::SeirCompartments::I}, 100);
-    params.populations.set({epi::SeirCompartments::R}, 100);
-    params.populations.set({epi::SeirCompartments::S}, total_population -
-                                                           params.populations.get({epi::SeirCompartments::E}) -
-                                                           params.populations.get({epi::SeirCompartments::I}) -
-                                                           params.populations.get({epi::SeirCompartments::R}));
+    params.populations.set({epi::SeirCompartments::SeirE}, 100);
+    params.populations.set({epi::SeirCompartments::SeirI}, 100);
+    params.populations.set({epi::SeirCompartments::SeirR}, 100);
+    params.populations.set({epi::SeirCompartments::SeirS}, total_population -
+                                                           params.populations.get({epi::SeirCompartments::SeirE}) -
+                                                           params.populations.get({epi::SeirCompartments::SeirI}) -
+                                                           params.populations.get({epi::SeirCompartments::SeirR}));
     // suscetible now set with every other update
     // params.nb_sus_t0   = params.nb_total_t0 - params.nb_exp_t0 - params.nb_inf_t0 - params.nb_rec_t0;
     params.times.set_incubation(5.2);
