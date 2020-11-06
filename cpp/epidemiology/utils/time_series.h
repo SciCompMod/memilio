@@ -5,6 +5,7 @@
 #include "epidemiology/utils/eigen_util.h"
 #include "epidemiology/utils/stl_util.h"
 #include "epidemiology/utils/compiler_diagnostics.h"
+#include "epidemiology/math/floating_point.h"
 
 #include <iterator>
 #include <vector>
@@ -685,6 +686,26 @@ public:
         return m_matrix->coeffRef(0, m_col_idx);
     }
 };
+
+/**
+ * find the value in the time series at time t_search starting from the end.
+ * @param ts TimeSeries to seach
+ * @param t_search a time point
+ * @param abs_tol absolute floating point tolerance for equality of time values
+ * @param rel_tol relative floating point tolerance for equality of time values
+ * @return TimeSeries::reverse_iterator that points to ts[t_search] or ts.rend()
+ */
+template <class TS, class FP>
+decltype(std::declval<TS>().rend()) find_value_reverse(TS&& ts, FP t_search, FP abs_tol = 0, FP rel_tol = 0)
+{
+    auto iter_t = find_if(ts.get_reverse_times().begin(), ts.get_reverse_times().end(), [=](auto t) {
+        return floating_point_equal(t, t_search, abs_tol, rel_tol);
+    });
+    if (iter_t != ts.get_reverse_times().end()) {
+        return ts.rbegin() + (iter_t - ts.get_reverse_times().begin());
+    }
+    return ts.rend();
+}
 
 } // namespace epi
 

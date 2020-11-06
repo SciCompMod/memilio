@@ -7,7 +7,7 @@ int main(int argc, char** argv)
 {
     const auto t0   = 0.;
     const auto tmax = 10.;
-    const auto dt   = 1.; //time step of migration, not integration
+    const auto dt   = 0.5; //time step of migration, daily migration every second step
 
     epi::SeirParams params;
     params.populations.set({epi::SeirCompartments::SeirS}, 10000);
@@ -30,7 +30,7 @@ int main(int argc, char** argv)
     g.add_edge(0, 1, Eigen::VectorXd::Constant(epi::SeirCompartments::SeirCount, 0.01));
     g.add_edge(1, 0, Eigen::VectorXd::Constant(epi::SeirCompartments::SeirCount, 0.01));
 
-    auto sim = epi::make_migration_sim(t0, g);
+    auto sim = epi::make_migration_sim(t0, dt, g);
 
     sim.advance(10);
 

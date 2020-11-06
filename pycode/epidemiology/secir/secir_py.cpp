@@ -467,10 +467,10 @@ PYBIND11_MODULE(_secir, m)
             py::return_value_policy::reference_internal);
 
     py::class_<epi::GraphSimulation<MigrationGraph>>(m, "MigrationSimulation")
-        .def(py::init([](const MigrationGraph& graph, double t0) {
-                 return std::make_unique<epi::GraphSimulation<MigrationGraph>>(epi::make_migration_sim(t0, graph));
+        .def(py::init([](const MigrationGraph& graph, double t0, double dt) {
+                 return std::make_unique<epi::GraphSimulation<MigrationGraph>>(epi::make_migration_sim(t0, dt, graph));
              }),
-             py::arg("graph"), py::arg("t0") = 0.0)
+             py::arg("graph"), py::arg("t0") = 0.0, py::arg("dt") = 0.5)
         .def_property_readonly("graph",
                                py::overload_cast<>(&epi::GraphSimulation<MigrationGraph>::get_graph, py::const_),
                                py::return_value_policy::reference_internal)
@@ -482,8 +482,8 @@ PYBIND11_MODULE(_secir, m)
              py::arg("tmax"), py::arg("num_runs"))
         .def(py::init<const epi::SecirParams&, double, double, double, size_t>(), py::arg("params"), py::arg("t0"),
              py::arg("tmax"), py::arg("dev_rel"), py::arg("num_runs"))
-        .def(py::init<const SecirParamsGraph&, double, double, size_t>(), py::arg("params_graph"),
-             py::arg("t0"), py::arg("tmax"), py::arg("num_runs"))
+        .def(py::init<const SecirParamsGraph&, double, double, double, size_t>(), py::arg("params_graph"),
+             py::arg("t0"), py::arg("tmax"), py::arg("dt"), py::arg("num_runs"))
         .def_property("num_runs", &epi::ParameterStudy::get_num_runs, &epi::ParameterStudy::set_num_runs)
         .def_property("tmax", &epi::ParameterStudy::get_tmax, &epi::ParameterStudy::set_tmax)
         .def_property("t0", &epi::ParameterStudy::get_t0, &epi::ParameterStudy::set_t0)

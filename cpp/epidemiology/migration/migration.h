@@ -86,7 +86,7 @@ class MigrationEdge
 public:
     /**
      * create edge with coefficients.
-     * @param coeffs % of people in each group and compartment that migrate daily
+     * @param coeffs % of people in each group and compartment that migrate in each time step.
      */
     MigrationEdge(const Eigen::VectorXd& coeffs)
         : m_coefficients(coeffs)
@@ -152,32 +152,15 @@ private:
     bool m_return_migrated;
 };
 
-/**
- * find the value in the time series at time t_search starting from the end.
- */
-template <class FP>
-typename TimeSeries<FP>::const_reverse_iterator find_value_reverse(const TimeSeries<FP> ts, FP t_search)
-{
-    auto iter_t = find_if(ts.get_reverse_times().begin(), ts.get_reverse_times().end(), [=](auto t) {
-        return std::abs(t - t_search) < FP(1e-10);
-    });
-    if (iter_t != ts.get_reverse_times().end()) {
-        return ts.rbegin() + (iter_t - ts.get_reverse_times().begin());
-    }
-    return ts.rend();
-}
-
 template <class Model>
 void MigrationEdge::apply_migration(double t, double dt, ModelNode<Model>& node_from, ModelNode<Model>& node_to)
 {
-    assert(dt == 0.5);
-    unused(dt);
-
     //returns
     for (Eigen::Index i = m_return_times.get_num_time_points() - 1; i >= 0; --i) {
         if (m_return_times.get_time(i) <= t) {
-            auto v0 = *find_value_reverse(node_to.get_result(), m_migrated.get_time(i));
-            calculate_returns_ode(m_migrated[i], node_to.get_params(), v0, m_migrated.get_time(i), dt);
+            auto v0 = find_value_reverse(node_to.get_result(), m_migrated.get_time(i), 1e-10, 1e-10);
+            assert(v0 != node_to.get_result().rend() && "unexpected error.");
+            calculate_returns_ode(m_migrated[i], node_to.get_params(), *v0, m_migrated.get_time(i), dt);
             node_from.get_result().get_last_value() += m_migrated[i];
             node_to.get_result().get_last_value() -= m_migrated[i];
             m_migrated.remove_time_point(i);
@@ -187,24 +170,29 @@ void MigrationEdge::apply_migration(double t, double dt, ModelNode<Model>& node_
 
     if (!m_return_migrated) {
         //normal daily migration
-        const auto migration = (node_from.get_last_state().array() * m_coefficients.array()).matrix();
-
-        node_to.get_result().get_last_value() += migration;
-        node_from.get_result().get_last_value() -= migration;
-
-        //I don't understand why this doesn't work: m_migrated.add_time_point(t, migration);
         m_migrated.add_time_point(t, (node_from.get_last_state().array() * m_coefficients.array()).matrix());
-        m_return_times.add_time_point(t + 0.5);
+        m_return_times.add_time_point(t + dt);
+
+        node_to.get_result().get_last_value() += m_migrated.get_last_value();
+        node_from.get_result().get_last_value() -= m_migrated.get_last_value();
     }
     m_return_migrated = !m_return_migrated;
 }
 
+/**
+ * edge functor for migration simulation.
+ * @see ModelNode::evolve
+ */
 template <class Model>
 void evolve_model(double t, double dt, ModelNode<Model>& node)
 {
     node.evolve(t, dt);
 }
 
+/**
+ * edge functor for migration simulation.
+ * @see MigrationEdge::apply_migration
+ */
 template <class Model>
 void apply_migration(double t, double dt, MigrationEdge& migrationEdge, ModelNode<Model>& node_from,
                      ModelNode<Model>& node_to)
@@ -212,11 +200,20 @@ void apply_migration(double t, double dt, MigrationEdge& migrationEdge, ModelNod
     migrationEdge.apply_migration(t, dt, node_from, node_to);
 }
 
+/**
+ * create a migration simulation.
+ * After every second time step, for each edge a portion of the population corresponding to the coefficients of the edge
+ * moves from one node to the other. In the next timestep, the migrated population return to their "home" node. 
+ * Returns are adjusted based on the development in the target node. 
+ * @param t0 start time of the simulation
+ * @param dt time step between migrations
+ * @param graph set up for migration simulation
+ */
 template <typename Model>
 GraphSimulation<Graph<ModelNode<Model>, MigrationEdge>>
-make_migration_sim(double t0, const Graph<ModelNode<Model>, MigrationEdge>& graph)
+make_migration_sim(double t0, double dt, const Graph<ModelNode<Model>, MigrationEdge>& graph)
 {
-    return make_graph_sim(t0, 0.5, graph, &evolve_model<Model>, &apply_migration<Model>);
+    return make_graph_sim(t0, dt, graph, &evolve_model<Model>, &apply_migration<Model>);
 }
 
 } // namespace epi

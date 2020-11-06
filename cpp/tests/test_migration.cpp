@@ -14,6 +14,7 @@ TEST(TestMigration, compareNoMigrationWithSingleIntegration)
 {
     auto t0   = 0;
     auto tmax = 5;
+    auto dt = 0.5;
     
     auto params1 = epi::SeirParams();
     params1.populations.set({epi::SeirCompartments::SeirS}, 0.9);
@@ -28,7 +29,7 @@ TEST(TestMigration, compareNoMigrationWithSingleIntegration)
     params2.populations.set_total(500);
 
     auto graph_sim =
-        epi::make_migration_sim(t0, epi::Graph<epi::ModelNode<epi::SeirSimulation>, epi::MigrationEdge>());
+        epi::make_migration_sim(t0, dt, epi::Graph<epi::ModelNode<epi::SeirSimulation>, epi::MigrationEdge>());
     auto& g = graph_sim.get_graph();
     g.add_node(params1, t0);
     g.add_node(params2, t0);
