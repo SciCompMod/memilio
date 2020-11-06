@@ -8,6 +8,9 @@ import {roundToUTCMidnight} from '../../common/utils';
 import rki from '../../common/datastore/sql/rki-sql-store';
 
 import './TimeMap.scss';
+import {ButtonGroup} from 'reactstrap';
+import {Button} from 'reactstrap';
+import {withTranslation} from 'react-i18next';
 
 /**
  * This Component has two major functions:
@@ -43,6 +46,13 @@ class TimeMap extends React.Component {
           population: newState.destatis.population,
         });
       } else {
+        this.props.setSelected({
+          dataset: 'germany',
+          id: -1,
+          label: this.props.t('germany'),
+          population: '83166711 ',
+        });
+
         if (this.props.selection !== null) {
           //this.props.setSelected(null);
         }
@@ -54,26 +64,23 @@ class TimeMap extends React.Component {
         this.props.setSelected({
           dataset: 'counties',
           id: parseInt(newCounty.RS, 10),
-          label: newCounty.id,
+          label: `${newCounty.BEZ} ${newCounty.GEN}`,
           population: newCounty.destatis.population,
         });
       }
     };
+
+    this.setState({dataset: 'states'});
   }
 
   /** @private */
-  async calcStateData() {
+  async calcStateData(data) {
     const times = new Map();
-
-    const result = await rki.getAllStatesInRange({
-      start: this.props.time.startDate,
-      end: this.props.time.endDate,
-    });
 
     let currDate = -1;
     let states = null;
 
-    for (const {stateId, confirmed, recovered, date} of result) {
+    for (const {stateId, confirmed, recovered, date} of data) {
       const d = roundToUTCMidnight(date);
 
       if (d !== currDate) {
@@ -95,17 +102,12 @@ class TimeMap extends React.Component {
   }
 
   /** @private */
-  async calcCountyData() {
+  async calcCountyData(data) {
     const times = new Map();
-
-    const result = await rki.getAllCountiesInRange({
-      start: this.props.time.startDate,
-      end: this.props.time.endDate,
-    });
 
     let currDate = -1;
     let counties = null;
-    for (const {countyId, confirmed, recovered, date} of result) {
+    for (const {countyId, confirmed, recovered, date} of data) {
       const d = roundToUTCMidnight(date);
       if (d !== currDate) {
         times.set(currDate, counties);
@@ -158,21 +160,27 @@ class TimeMap extends React.Component {
 
   componentDidUpdate(prevProps, prevState, snapshot) {
     if (
-      this.props.states !== prevProps.states ||
-      this.state.stateTimes.size === 0 ||
-      this.props.time.startDate !== prevProps.time.startDate ||
-      this.props.time.endDate !== prevProps.time.endDate
+      this.state.dataset === 'states' &&
+      (this.state.dataset !== prevState.dataset ||
+        this.props.data.states !== prevProps.data.states ||
+        this.state.stateTimes.size === 0 ||
+        this.props.time.startDate !== prevProps.time.startDate ||
+        this.props.time.endDate !== prevProps.time.endDate)
     ) {
-      this.calcStateData();
+      this.props.data.states.then((data) => this.calcStateData(data));
+      this.#map.showStateSeries();
     }
 
     if (
-      this.props.counties !== prevProps.counties ||
-      this.state.countyTimes.size === 0 ||
-      this.props.time.startDate !== prevProps.time.startDate ||
-      this.props.time.endDate !== prevProps.time.endDate
+      this.state.dataset === 'counties' &&
+      (this.state.dataset !== prevState.dataset ||
+        this.props.data.counties !== prevProps.data.counties ||
+        this.state.countyTimes.size === 0 ||
+        this.props.time.startDate !== prevProps.time.startDate ||
+        this.props.time.endDate !== prevProps.time.endDate)
     ) {
-      this.calcCountyData();
+      this.props.data.counties.then((data) => this.calcCountyData(data));
+      this.#map.showCountySeries();
     }
 
     if (
@@ -193,7 +201,7 @@ class TimeMap extends React.Component {
         }
       } else {
         this.#map.setDataSetName('RKI');
-        if (this.#map.selectedState !== -1 && this.state.countyTimes.has(currDate)) {
+        if (this.#map.selectedState === -1 && this.state.countyTimes.has(currDate)) {
           this.#map.setCountyValues(this.state.countyTimes.get(currDate));
         }
 
@@ -205,9 +213,40 @@ class TimeMap extends React.Component {
   }
 
   render(ctx) {
+    const {t} = this.props;
     return (
       <div style={{height: '100%'}}>
-        <div id="timeMapDiv" style={{height: '100%'}} />
+        <div className="container-fluid h-100" style={{marginTop: '5px'}}>
+          <div className="row justify-content-center h-100">
+            <div className="col-12">
+              <div className="h-100 d-flex flex-column">
+                <div className="row">
+                  <ButtonGroup className="col-8 offset-2">
+                    <Button
+                      color="primary"
+                      onClick={() => this.setState({dataset: 'states'})}
+                      active={this.state.dataset === 'states'}
+                      style={{width: '50%'}}
+                    >
+                      {t('states')}
+                    </Button>
+                    <Button
+                      color="primary"
+                      onClick={() => this.setState({dataset: 'counties'})}
+                      active={this.state.dataset === 'counties'}
+                      style={{width: '50%'}}
+                    >
+                      {t('counties')}
+                    </Button>
+                  </ButtonGroup>
+                </div>
+                <div className="row flex-grow-1">
+                  <div id="timeMapDiv" className="col-12" />
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
     );
   }
@@ -215,7 +254,10 @@ class TimeMap extends React.Component {
 
 function mapState(state) {
   return {
-    counties: null,
+    data: {
+      states: rki.getAllStatesInRange({start: state.time.startDate, end: state.time.endDate}),
+      counties: rki.getAllCountiesInRange({start: state.time.startDate, end: state.time.endDate}),
+    },
     selection: state.app.selected,
     time: state.time,
     seirRegions: state.seir.regionData,
@@ -223,5 +265,6 @@ function mapState(state) {
 }
 
 const ConnectedTimeMap = connect(mapState, {setSelected})(TimeMap);
+const Translated = withTranslation()(ConnectedTimeMap);
 
-export {ConnectedTimeMap as TimeMap};
+export {Translated as TimeMap};
