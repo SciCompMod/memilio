@@ -18,6 +18,10 @@ namespace epi
  * actual contacts are adjusted over time by dampings.
  * The effective contacts are B - D * (B - M), where B is the baseline, D are
  * combined dampings and M is the minimum.
+ * The minimum is not necessarily smaller than the baseline in every entry,
+ * but it reflects the state at maximum lockdown. In places where the 
+ * minimum is greater than the baseline, a positive damping increases
+ * instead of reduces contacts.
  * All these members are matrix valued, e.g. B_ij are the normal contacts
  * that one person in group i has with persons in group j.
  */

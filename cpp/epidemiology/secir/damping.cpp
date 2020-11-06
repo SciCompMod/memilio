@@ -26,7 +26,8 @@ void Dampings::finalize() const
             m_accumulated_dampings_cached.emplace_back(inclusive_exclusive_sum(sum_by_level),
                                                        get<SimulationTime>(damping));
             assert((get<Eigen::MatrixXd>(m_accumulated_dampings_cached.back()).array() <= 1).all() &&
-                   "accumulated damping must be below 1.");
+                   (get<Eigen::MatrixXd>(m_accumulated_dampings_cached.back()).array() >= 0).all() &&
+                   "unexpected error, accumulated damping out of range.");
         }
 
         m_accumulated_dampings_cached.emplace_back(get<Eigen::MatrixXd>(m_accumulated_dampings_cached.back()),
