@@ -575,7 +575,7 @@ void write_edge(const std::vector<TixiDocumentHandle>& edge_handles, const std::
     for (int group = 0; group < num_groups; group++) {
         std::vector<double> weights;
         for (int compart = 0; compart < num_compart; compart++) {
-            weights.push_back(graph.edges()[edge].property.coefficients[compart + group * num_compart]);
+            weights.push_back(graph.edges()[edge].property.get_coefficients()[compart + group * num_compart]);
         }
         tixiAddFloatVector(handle, edge_path.c_str(), ("Group" + std::to_string(group + 1)).c_str(), weights.data(),
                            num_compart, "%g");

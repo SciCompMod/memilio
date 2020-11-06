@@ -261,7 +261,7 @@ TEST(ParameterStudies, check_ensemble_run_result)
 
     std::vector<epi::TimeSeries<double>> results;
     for (size_t i = 0; i < graph_results.size(); i++) {
-        results.push_back(std::move(graph_results[i].nodes()[0].model.get_result()));
+        results.push_back(std::move(graph_results[i].nodes()[0].get_result()));
     }
 
     for (Eigen::Index i = 0; i < results[0].get_num_time_points(); i++) {

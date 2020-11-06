@@ -722,8 +722,8 @@ void SecirParams::check_constraints() const
     }
 }
 
-void secir_get_derivatives(SecirParams const& params, Eigen::Ref<const Eigen::VectorXd> y, double t,
-                           Eigen::Ref<Eigen::VectorXd> dydt)
+void secir_get_derivatives(SecirParams const& params, Eigen::Ref<const Eigen::VectorXd> pop,
+                           Eigen::Ref<const Eigen::VectorXd> y, double t, Eigen::Ref<Eigen::VectorXd> dydt)
 {
     // alpha  // percentage of asymptomatic cases
     // beta // risk of infection from the infected symptomatic patients
@@ -766,12 +766,12 @@ void secir_get_derivatives(SecirParams const& params, Eigen::Ref<const Eigen::Ve
                          sin(3.141592653589793 * (std::fmod((params.get_start_day() + t), 365.0) / 182.5 + 0.5)));
             double cont_freq_eff = // get effective contact rate between i and j
                 season_val * cont_freq_matrix.get_cont_freq(static_cast<int>(i), static_cast<int>(j)) *
-                cont_freq_matrix.get_dampings(static_cast<int>(i), static_cast<int>(j)).get_factor(t);
-            double Nj      = y[Sj] + y[Ej] + y[Cj] + y[Ij] + y[Hj] + y[Uj] + y[Rj]; // without died people
+                cont_freq_matrix.get_dampings(static_cast<int>(i), static_cast<int>(j)).get_factor(t); 
+            double Nj      = pop[Sj] + pop[Ej] + pop[Cj] + pop[Ij] + pop[Hj] + pop[Uj] + pop[Rj]; // without died people
             double divNj   = 1.0 / Nj; // precompute 1.0/Nj
             double dummy_S = y[Si] * cont_freq_eff * divNj * params.probabilities[i].get_infection_from_contact() *
-                             (params.probabilities[j].get_carrier_infectability() * y[Cj] +
-                              params.probabilities[j].get_risk_from_symptomatic() * y[Ij]);
+                             (params.probabilities[j].get_carrier_infectability() * pop[Cj] +
+                              params.probabilities[j].get_risk_from_symptomatic() * pop[Ij]);
 
             dydt[Si] -= dummy_S; // -R1*(C+beta*I)*S/N0
             dydt[Ei] += dummy_S; // R1*(C+beta*I)*S/N0-R2*E

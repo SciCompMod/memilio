@@ -55,6 +55,8 @@ add_library(epidemiology
     epidemiology/math/integrator.cpp
     epidemiology/migration/migration.h
     epidemiology/migration/migration.cpp
+    epidemiology/migration/graph_simulation.h
+    epidemiology/migration/graph_simulation.cpp
     epidemiology/utils/graph.h
     epidemiology/utils/graph.cpp
     epidemiology/utils/eigen.h

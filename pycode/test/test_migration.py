@@ -29,7 +29,7 @@ class Test_Migration(unittest.TestCase):
         graph.add_node(secir.SecirParams(), 0)
         graph.add_edge(0, 1, np.ones(8))
 
-        sim = secir.MigrationSimulation(graph, t0 = 0.0, dt = 1)
+        sim = secir.MigrationSimulation(graph, t0 = 0.0)
         sim.advance(2)
 
         #integration does adaptive time steps so exact count is unknown

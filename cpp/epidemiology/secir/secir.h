@@ -696,14 +696,25 @@ private:
 double get_reprod_rate(SecirParams const& params, double t, std::vector<double> const& yt);
 
 /**
+ * Computes the current time-derivative of the SECIR compartment populations (e.g., S, E, C, I, H, U, R, D).
+ * Uses separate population values to compute contact rates.
+ * @param pop population that is in contact and causes infections.
+ * @see secir_get_derivatives
+ */
+void secir_get_derivatives(SecirParams const& params, Eigen::Ref<const Eigen::VectorXd> pop,
+                           Eigen::Ref<const Eigen::VectorXd> y, double t, Eigen::Ref<Eigen::VectorXd> dydt);
+/**
  * Computes the current time-derivative of the SECIR compartment populations (e.g., S, E, C, I, H, U, R, D)
  * @param[in]  params SECIR params: contact frequencies, population sizes and epidemiological parameters
  * @param[in] y current  SECIR compartments' values at t; (e.g., y: [0:S, 1:E, ...])
  * @param[in] t time / current day
  * @param[out] dydt the values of the time derivatives of the SECIR compartments (e.g., S, E, C, I, H, U, R, D)
  */
-void secir_get_derivatives(SecirParams const& params, Eigen::Ref<const Eigen::VectorXd> y, double t,
-                           Eigen::Ref<Eigen::VectorXd> dydt);
+inline void secir_get_derivatives(SecirParams const& params, Eigen::Ref<const Eigen::VectorXd> y, double t,
+                                  Eigen::Ref<Eigen::VectorXd> dydt)
+{
+    secir_get_derivatives(params, y, y, t, dydt);
+}
 
 /**
  * @brief simulate SECIR compartment model.
