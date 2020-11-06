@@ -401,7 +401,7 @@ TEST(TestSaveParameters, compareGraphs)
         epi::SecirParams graph_read_params               = graph_read.nodes()[0];
         epi::ContactMatrixGroup& graph_read_cont_matrix = graph_read_params.get_contact_patterns();
 
-        ASSERT_EQ(graph_read_cont_matrix.get_num_groups(), num_groups);
+        ASSERT_EQ(graph_read_cont_matrix.get_num_groups(), static_cast<Eigen::Index>(num_groups));
         ASSERT_EQ(graph_read_cont_matrix, graph_cont_matrix);
         ASSERT_EQ(graph_params.populations.get_num_compartments(),
                   graph_read_params.populations.get_num_compartments());
