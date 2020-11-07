@@ -173,9 +173,9 @@ void set_params_distributions_normal(SecirParams& params, double t0, double tmax
     // off diagonal values vary between 0.7 to 1.1 of the corresponding diagonal value (symmetrization is conducted)
     params.get_contact_patterns().set_distribution_damp_nb(ParameterDistributionUniform(1, (tmax - t0) / 10));
     params.get_contact_patterns().set_distribution_damp_days(ParameterDistributionUniform(t0, tmax));
-    params.get_contact_patterns().set_distribution_damp_diag_base(ParameterDistributionUniform(0.1, 1));
-    params.get_contact_patterns().set_distribution_damp_diag_rel(ParameterDistributionUniform(0.6, 1.4));
-    params.get_contact_patterns().set_distribution_damp_offdiag_rel(ParameterDistributionUniform(0.7, 1.1));
+    params.get_contact_patterns().set_distribution_damp_diag_base(ParameterDistributionUniform(0.0, 0.9));
+    params.get_contact_patterns().set_distribution_damp_diag_rel(ParameterDistributionUniform(0.0, 0.4));
+    params.get_contact_patterns().set_distribution_damp_offdiag_rel(ParameterDistributionUniform(0.0, 0.3));
 }
 
 void draw_sample(SecirParams& params)

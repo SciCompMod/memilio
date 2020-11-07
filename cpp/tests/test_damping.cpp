@@ -1,78 +1,86 @@
 #include "epidemiology/secir/damping.h"
+#include "matchers.h"
 #include <gtest/gtest.h>
 
-TEST(TestDamping, initialDampingIsIdentityEverywhere)
+TEST(TestDampings, initZero)
 {
-    epi::Dampings dampings;
-    for (auto x : {-1e100, -12.35, -1e-23, 0.0, 1e-76, 5.67, 1e75}) {
-        EXPECT_EQ(dampings.get_factor(x), 1);
-    }
+    epi::Dampings dampings(3);
+    EXPECT_EQ(print_wrap(dampings.get_matrix_at(-1e5)), print_wrap(Eigen::MatrixXd::Zero(3, 3)));
+    EXPECT_EQ(print_wrap(dampings.get_matrix_at(0)), print_wrap(Eigen::MatrixXd::Zero(3, 3)));
+    EXPECT_EQ(print_wrap(dampings.get_matrix_at(1e-32)), print_wrap(Eigen::MatrixXd::Zero(3, 3)));
+    EXPECT_EQ(print_wrap(dampings.get_matrix_at(1e5)), print_wrap(Eigen::MatrixXd::Zero(3, 3)));
 }
 
-TEST(TestDamping, dampingContinuesConstantOnBothSides)
+TEST(TestDampings, dampingsOnDifferentLevels)
 {
-    double d = 13.4;
-    double v = 5.723;
-
-    epi::Dampings dampings;
-    dampings.add({d, v});
-
-    for (auto x : {1.00001, 5.67, 1e75}) {
-        EXPECT_EQ(dampings.get_factor(0 - x), 1) << "extrapolating before first";
-        EXPECT_EQ(dampings.get_factor(d + x), v) << "extrapolating after last";
-    }
+    epi::Dampings dampings(2);
+    auto D1 = 0.25;
+    auto D2 = (Eigen::MatrixXd(2, 2) << 0.25, 0.5, 0.75, 1).finished();
+    dampings.add(D1, epi::DampingLevel(7), epi::DampingType(3), epi::SimulationTime(0.5));
+    dampings.add(D2, epi::DampingLevel(13), epi::DampingType(3), epi::SimulationTime(2.0));
+    EXPECT_EQ(print_wrap(dampings.get_matrix_at(-1e5)), print_wrap(Eigen::MatrixXd::Zero(2, 2)));
+    EXPECT_EQ(print_wrap(dampings.get_matrix_at(-0.5)), print_wrap(Eigen::MatrixXd::Zero(2, 2)));
+    EXPECT_THAT(print_wrap(dampings.get_matrix_at(0.5 + 1e-32)), MatrixNear(Eigen::MatrixXd::Constant(2, 2, D1)));
+    EXPECT_THAT(print_wrap(dampings.get_matrix_at(1e5)), MatrixNear((D1 + D2.array() - D1 * D2.array()).matrix()));
 }
 
-TEST(TestDamping, dampingIsConstantBetweenTwoPoints)
+TEST(TestDampings, dampingsOnSameLevel)
 {
-    epi::Dampings dampings;
-    dampings.add({1, 3.4});
-    dampings.add({12, 1.5});
-
-    double eps = 1e-15;
-    EXPECT_EQ(dampings.get_factor(1 + 1 + eps), 3.4);
-    EXPECT_EQ(dampings.get_factor(12 - 1 - eps), 3.4);
-    EXPECT_EQ(dampings.get_factor(6.5565), 3.4);
+    epi::Dampings dampings(2);
+    auto D1 = 0.25;
+    auto D2 = (Eigen::MatrixXd(2, 2) << 0.0, 0.25, 0.5, 0.75).finished();
+    dampings.add(D1, epi::DampingLevel(-2), epi::DampingType(0), epi::SimulationTime(0.5));
+    dampings.add(D2, epi::DampingLevel(-2), epi::DampingType(1), epi::SimulationTime(2.0));
+    EXPECT_EQ(print_wrap(dampings.get_matrix_at(-1e5)), print_wrap(Eigen::MatrixXd::Zero(2, 2)));
+    EXPECT_EQ(print_wrap(dampings.get_matrix_at(-0.5)), print_wrap(Eigen::MatrixXd::Zero(2, 2)));
+    EXPECT_THAT(print_wrap(dampings.get_matrix_at(0.5 + 1e-32)), MatrixNear(Eigen::MatrixXd::Constant(2, 2, D1)));
+    EXPECT_THAT(print_wrap(dampings.get_matrix_at(1e5)), MatrixNear((D1 + D2.array()).matrix()));
 }
 
-TEST(TestDamping, dampingJumpsMonotonouslySmoothed)
+TEST(TestDampings, dampingOfSameType)
 {
-    epi::Dampings dampings;
-    dampings.add({2, 3.14});
-    dampings.add({3, 2.13});
-    dampings.add({3.5, 0.13});
-    dampings.add({4.5, 4.13});
-
-    int nb_steps = 20;
-    double step  = 1.0 / (double)nb_steps;
-    for (int i = 0; i < nb_steps; i++) {
-        EXPECT_EQ(dampings.get_factor(2 + i * step) > dampings.get_factor(2 + (i + 1) * step), true);
-        // printf("\n %f %f ", d - 0.5 + (double)i / 100, dampings.get_factor(d - 0.5 + (double)i / 100));
-    }
-
-    for (int i = 0; i < nb_steps; i++) {
-        EXPECT_EQ(dampings.get_factor(3 + 0.5 * i * step) > dampings.get_factor(3 + 0.5 * (i + 1) * step), true);
-    }
-
-    for (int i = 0; i < nb_steps; i++) {
-        EXPECT_EQ(dampings.get_factor(3.5 + i * step) < dampings.get_factor(3.5 + (i + 1) * step), true);
-    }
+    epi::Dampings dampings(2);
+    auto D1 = 0.25;
+    auto D2 = (Eigen::MatrixXd(2, 2) << 0.0, 0.25, 0.5, 0.75).finished();
+    dampings.add(D1, epi::DampingLevel(123), epi::DampingType(5), epi::SimulationTime(0.5));
+    dampings.add(D2, epi::DampingLevel(123), epi::DampingType(5), epi::SimulationTime(2.0));
+    EXPECT_EQ(print_wrap(dampings.get_matrix_at(-1e5)), print_wrap(Eigen::MatrixXd::Zero(2, 2)));
+    EXPECT_EQ(print_wrap(dampings.get_matrix_at(-0.5)), print_wrap(Eigen::MatrixXd::Zero(2, 2)));
+    EXPECT_THAT(print_wrap(dampings.get_matrix_at(0.5 + 1e-32)), MatrixNear(Eigen::MatrixXd::Constant(2, 2, D1)));
+    EXPECT_THAT(print_wrap(dampings.get_matrix_at(1e5)), MatrixNear(D2));
 }
 
-TEST(TestDamping, duplicatePointsOverwriteTheOldPoint)
+TEST(TestDampings, dampingsCombined)
 {
-    epi::Dampings dampings;
-    dampings.add({2, 1.3});
-    dampings.add({2, 0.01});
-    dampings.add({2, 5.6});
-    dampings.add({5, 2.5});
+    epi::Dampings dampings(2);
+    auto D1 = 0.25;
+    auto D2 = (Eigen::MatrixXd(2, 2) << 0.1, 0.1, 0.1, 0.1).finished();
+    auto D3 = (Eigen::MatrixXd(2, 2) << 0.0, 0.25, 0.5, 0.75).finished();
+    auto D4 = 0.5;
+    //add dampings out of order to check sorting
+    dampings.add(D2, epi::DampingLevel(7), epi::DampingType(2), epi::SimulationTime(0.0));
+    dampings.add(D1, epi::DampingLevel(123), epi::DampingType(5), epi::SimulationTime(-2.0));
+    dampings.add(D4, epi::DampingLevel(123), epi::DampingType(5), epi::SimulationTime(3.0));
+    dampings.add(D3, epi::DampingLevel(7), epi::DampingType(3), epi::SimulationTime(1.5));
+    EXPECT_THAT(print_wrap(dampings.get_matrix_at(-1e5)), print_wrap(Eigen::MatrixXd::Zero(2, 2)));
+    EXPECT_THAT(print_wrap(dampings.get_matrix_at(-1.0)), MatrixNear(Eigen::MatrixXd::Constant(2, 2, D1)));
+    EXPECT_THAT(print_wrap(dampings.get_matrix_at(0.2)), MatrixNear((D1 + D2.array() - D1 * D2.array()).matrix()));
+    EXPECT_THAT(print_wrap(dampings.get_matrix_at(2.0)),
+                MatrixNear((D1 + D2.array() + D3.array() - D1 * (D2 + D3).array()).matrix()));
+    EXPECT_THAT(print_wrap(dampings.get_matrix_at(1e45)),
+                MatrixNear((D4 + D2.array() + D3.array() - D4 * (D2 + D3).array()).matrix()));
+}
 
-    //old value is overwritten
-    EXPECT_EQ(dampings.get_factor(2), 5.6);
-    EXPECT_EQ(dampings.get_factor(3), 5.6);
+TEST(TestDampings, smoothTransitions)
+{
+    epi::Dampings dampings(2);
+    auto D1 = 0.25;
+    auto D2 = (Eigen::MatrixXd(2, 2) << 0.1, 0.1, 0.1, 0.1).finished();
+    dampings.add(D1, epi::DampingLevel(123), epi::DampingType(5), epi::SimulationTime(-2.0));
+    dampings.add(D2, epi::DampingLevel(1), epi::DampingType(10), epi::SimulationTime(1.5));
 
-    //other values are unaffected
-    EXPECT_EQ(dampings.get_factor(0.5), 1);
-    EXPECT_EQ(dampings.get_factor(5), 2.5);
-    EXPECT_EQ(dampings.get_factor(5.0341), 2.5);
+    EXPECT_THAT(print_wrap(dampings.get_matrix_at(-2.5)),
+                MatrixNear((dampings.get_matrix_at(-3.) + dampings.get_matrix_at(-2.)) / 2));
+    EXPECT_THAT(print_wrap(dampings.get_matrix_at(1.0)),
+                MatrixNear((dampings.get_matrix_at(0.5) + dampings.get_matrix_at(1.5)) / 2));
 }

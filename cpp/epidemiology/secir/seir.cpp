@@ -16,7 +16,7 @@ void print_seir_params(const SeirParams& params)
     printf("\n SEIR model set.\n Parameters:\n\t Time incubation:\t %.4f \n\t Time infectious:\t %.4f \n\t contact "
            "rate:\t %.4f \n\t N:\t %d \n\t E0:\t %d \n\t I0:\t %d \n\t R0:\t %d\n",
            1.0 / params.times.get_incubation_inv(), 1.0 / params.times.get_infectious_inv(),
-           params.times.get_cont_freq(), (int)params.populations.get_total(),
+           params.contact_frequency.get_baseline()(0, 0), (int)params.populations.get_total(),
            (int)params.populations.get({SeirCompartments::SeirE}), (int)params.populations.get({SeirCompartments::SeirI}),
            (int)params.populations.get({SeirCompartments::SeirR}));
 }
@@ -35,11 +35,6 @@ SeirParams::StageTimes::StageTimes()
     // base_reprod  = 2.7; // 3.5 (in JS version)
 }
 
-void SeirParams::StageTimes::set_cont_freq(double const& cont_freq)
-{
-    m_cont_freq = cont_freq;
-}
-
 void SeirParams::StageTimes::set_incubation(double const& tinc)
 {
     m_tinc_inv = 1.0 / tinc;
@@ -48,11 +43,6 @@ void SeirParams::StageTimes::set_incubation(double const& tinc)
 void SeirParams::StageTimes::set_infectious(double const& tinfmild)
 {
     m_tinfmild_inv = 1.0 / tinfmild;
-}
-
-double SeirParams::StageTimes::get_cont_freq() const
-{
-    return m_cont_freq;
 }
 
 double SeirParams::StageTimes::get_incubation_inv() const
@@ -68,7 +58,7 @@ double SeirParams::StageTimes::get_infectious_inv() const
 void seir_get_derivatives(const SeirParams& params, Eigen::Ref<const Eigen::VectorXd> pop,
                           Eigen::Ref<const Eigen::VectorXd> y, double t, Eigen::Ref<Eigen::VectorXd> dydt)
 {
-    double cont_freq_eff = params.times.get_cont_freq() * params.dampings.get_factor(t);
+    double cont_freq_eff = params.contact_frequency.get_matrix_at(t)(0, 0);
     double divN          = 1.0 / params.populations.get_total();
 
     dydt[SeirCompartments::SeirS] = -cont_freq_eff * y[SeirCompartments::SeirS] * pop[SeirCompartments::SeirI] * divN;

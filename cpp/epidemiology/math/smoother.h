@@ -1,3 +1,7 @@
+#ifndef EPI_MATH_SMOOTHER_H
+#define EPI_MATH_SMOOTHER_H
+
+#include "epidemiology/utils/eigen.h"
 #include <cmath>
 
 namespace epi
@@ -30,4 +34,25 @@ inline double smoother_cosine(double x, double xleft, double xright, double ylef
            0.5 * (yleft + yright);
 }
 
+/**
+ * smoother_cosine as a matrix valued function.
+ * @param x evaluation point
+ * @param xleft left boundary x
+ * @param xright right boundary x
+ * @param yleft matrix expression, function value at left boundary
+ * @param yright matrix expression, function value at right boundary
+ * @return a matrix expression with yij = smoother_cosine(x, xleft, xright, yleftij, yrightij)
+ */
+template <class LeftExpr, class RightExpr,
+          std::enable_if_t<std::is_base_of<Eigen::MatrixBase<std::decay_t<LeftExpr>>, std::decay_t<LeftExpr>>::value,
+                           int> = 0>
+auto smoother_cosine(double x, double xleft, double xright, const LeftExpr& yleft_expr, const RightExpr& yright_expr)
+{
+    return yleft_expr.binaryExpr(yright_expr, [=](auto yleft, auto yright) {
+        return smoother_cosine(x, xleft, xright, yleft, yright);
+    });
+}
+
 } // namespace epi
+
+#endif //EPI_MATH_SMOOTHER_H

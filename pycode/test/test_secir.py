@@ -1,6 +1,7 @@
 import unittest
-from epidemiology.secir import (UncertainContactMatrix, ContactFrequencyMatrix, Damping, SecirParams,
+from epidemiology.secir import (UncertainContactMatrix, ContactMatrix, Damping, SecirParams,
                                 simulate, StageTimes, Probabilities, Populations, SecirCompartments, SecirSimulation)
+import numpy as np
 
 class Test_secir_integration(unittest.TestCase):
 
@@ -39,7 +40,7 @@ class Test_secir_integration(unittest.TestCase):
         params.probabilities = [probs]
         params.populations = people
 
-        params.get_contact_patterns().get_cont_freq_mat().set_cont_freq(0.5, 0, 0)
+        params.get_contact_patterns().cont_freq_mat[0] = ContactMatrix(np.r_[0.5])
 
         params.apply_constraints()
 

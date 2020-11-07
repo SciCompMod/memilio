@@ -733,7 +733,7 @@ void secir_get_derivatives(SecirParams const& params, Eigen::Ref<const Eigen::Ve
     // 0: S,      1: E,     2: C,     3: I,     4: H,     5: U,     6: R,     7: D
     size_t n_agegroups = params.get_num_groups();
 
-    ContactFrequencyMatrix const& cont_freq_matrix = params.get_contact_patterns();
+    ContactMatrixGroup const& contact_matrix = params.get_contact_patterns();
 
     for (size_t i = 0; i < n_agegroups; i++) {
 
@@ -764,9 +764,8 @@ void secir_get_derivatives(SecirParams const& params, Eigen::Ref<const Eigen::Ve
             double season_val =
                 (1 + params.get_seasonality() *
                          sin(3.141592653589793 * (std::fmod((params.get_start_day() + t), 365.0) / 182.5 + 0.5)));
-            double cont_freq_eff = // get effective contact rate between i and j
-                season_val * cont_freq_matrix.get_cont_freq(static_cast<int>(i), static_cast<int>(j)) *
-                cont_freq_matrix.get_dampings(static_cast<int>(i), static_cast<int>(j)).get_factor(t); 
+            double cont_freq_eff = season_val * contact_matrix.get_matrix_at(t)(static_cast<Eigen::Index>(i),
+                                                                                static_cast<Eigen::Index>(j));
             double Nj      = pop[Sj] + pop[Ej] + pop[Cj] + pop[Ij] + pop[Hj] + pop[Uj] + pop[Rj]; // without died people
             double divNj   = 1.0 / Nj; // precompute 1.0/Nj
             double dummy_S = y[Si] * cont_freq_eff * divNj * params.probabilities[i].get_infection_from_contact() *

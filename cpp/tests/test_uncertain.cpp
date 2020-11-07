@@ -96,39 +96,35 @@ TEST(TestUncertain, uncertain_value_predef)
 
 TEST(TestUncertain, uncertain_matrix)
 {
-    epi::ContactFrequencyMatrix cont_freq_matrix{2};
-    epi::Damping dummy(30., 0.3);
-    for (int i = 0; i < 2; i++) {
-        for (int j = i; j < 2; j++) {
-            cont_freq_matrix.set_cont_freq((i + 1) * (j + 1), i, j);
-            cont_freq_matrix.add_damping(dummy, i, j);
-        }
-    }
+    epi::ContactMatrix contact_matrix(Eigen::MatrixXd::NullaryExpr(2, 2, [](auto i, auto j) -> double {
+        return (i + 1) * (j + 1);
+    }));
+    contact_matrix.add_damping(0.7, epi::SimulationTime(30.));
 
-    epi::UncertainContactMatrix uncertain_mat{cont_freq_matrix};
+    epi::UncertainContactMatrix uncertain_mat{{contact_matrix}};
 
-    EXPECT_EQ(uncertain_mat.get_cont_freq_mat().get_cont_freq(0, 1), 2);
-    EXPECT_EQ(uncertain_mat.get_cont_freq_mat().get_cont_freq(1, 1), 4);
-    EXPECT_EQ(uncertain_mat.get_cont_freq_mat().get_dampings(1, 1).get_factor(37),
-              cont_freq_matrix.get_dampings(1, 1).get_factor(37));
-    EXPECT_EQ(uncertain_mat.get_cont_freq_mat().get_dampings(1, 1).get_factor(37), 0.3);
+    EXPECT_EQ(uncertain_mat.get_cont_freq_mat()[0].get_baseline()(0, 1), 2);
+    EXPECT_EQ(uncertain_mat.get_cont_freq_mat()[0].get_baseline()(1, 1), 4);
+    EXPECT_EQ(uncertain_mat.get_cont_freq_mat()[0].get_dampings()[0].get_coeffs()(1, 1), 0.7);
 
     uncertain_mat.set_distribution_damp_nb(epi::ParameterDistributionUniform(1, 3));
     uncertain_mat.set_distribution_damp_days(epi::ParameterDistributionUniform(0, 19));
-    uncertain_mat.set_distribution_damp_diag_base(epi::ParameterDistributionUniform(0.1, 1));
-    uncertain_mat.set_distribution_damp_diag_rel(epi::ParameterDistributionUniform(0.6, 1.4));
-    uncertain_mat.set_distribution_damp_offdiag_rel(epi::ParameterDistributionUniform(0.7, 1.1));
+    uncertain_mat.set_distribution_damp_diag_base(epi::ParameterDistributionUniform(0.1, 1.));
+    uncertain_mat.set_distribution_damp_diag_rel(epi::ParameterDistributionUniform(0.6, 1.0));
+    uncertain_mat.set_distribution_damp_offdiag_rel(epi::ParameterDistributionUniform(0.7, 1.0));
 
+    uncertain_mat.draw_sample(true); // retain previously added dampings in contact patterns
+    EXPECT_GE(uncertain_mat.get_cont_freq_mat()[0].get_dampings()[0].get_coeffs()(0, 0), 0.06);
+    EXPECT_LE(uncertain_mat.get_cont_freq_mat()[0].get_dampings()[0].get_coeffs()(0, 0), 1.0);
+    EXPECT_EQ(uncertain_mat.get_cont_freq_mat()[0].get_dampings().back().get_coeffs()(1, 1), 0.7);
+
+    uncertain_mat.draw_sample(); // removes all previously added dampings (argument default = false)
+    EXPECT_EQ(uncertain_mat.get_cont_freq_mat().get_matrix_at(37),
+              uncertain_mat.get_cont_freq_mat().get_matrix_at(20));
+
+    //check copy ctor
     epi::UncertainContactMatrix uncertain_mat2{uncertain_mat};
-    uncertain_mat2.draw_sample(true); // retain previously added dampings in contact patterns
-    EXPECT_GE(uncertain_mat2.get_cont_freq_mat().get_dampings(0, 0).get_factor(20), 0.06);
-    EXPECT_LE(uncertain_mat2.get_cont_freq_mat().get_dampings(0, 0).get_factor(20), 1.4);
-    EXPECT_EQ(uncertain_mat2.get_cont_freq_mat().get_dampings(1, 1).get_factor(37), 0.3);
-
-    uncertain_mat2.draw_sample(); // removes all previously added dampings (argument default = false)
-    EXPECT_EQ(uncertain_mat2.get_cont_freq_mat().get_dampings(1, 1).get_factor(37),
-              uncertain_mat2.get_cont_freq_mat().get_dampings(1, 1).get_factor(20));
-
+    uncertain_mat2.get_cont_freq_mat() = uncertain_mat.get_cont_freq_mat();
     check_distribution(*uncertain_mat.get_distribution_damp_days().get(),
                        *uncertain_mat2.get_distribution_damp_days().get());
     check_distribution(*uncertain_mat.get_distribution_damp_nb().get(),
@@ -162,13 +158,10 @@ TEST(TestUncertain, uncertain_matrix)
         EXPECT_LE(sample, 1.1);
     }
 
+    //check assignment op
     epi::UncertainContactMatrix uncertain_mat3;
     uncertain_mat3 = uncertain_mat2;
-
-    uncertain_mat3.draw_sample();
-    EXPECT_EQ(uncertain_mat2.get_cont_freq_mat().get_dampings(1, 1).get_factor(37),
-              uncertain_mat2.get_cont_freq_mat().get_dampings(1, 1).get_factor(20));
-
+    uncertain_mat3.get_cont_freq_mat() = uncertain_mat2.get_cont_freq_mat();
     check_distribution(*uncertain_mat3.get_distribution_damp_days().get(),
                        *uncertain_mat2.get_distribution_damp_days().get());
     check_distribution(*uncertain_mat3.get_distribution_damp_nb().get(),

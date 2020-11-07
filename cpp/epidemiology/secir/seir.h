@@ -4,7 +4,7 @@
 #include "epidemiology/utils/eigen.h"
 #include "epidemiology/math/integrator.h"
 #include "epidemiology/secir/populations.h"
-#include "epidemiology/secir/damping.h"
+#include "epidemiology/secir/contact_matrix.h"
 
 #include <vector>
 
@@ -61,11 +61,6 @@ public:
         void set_infectious(double const& tinfmild);
 
         /**
-         * @brief returns the contact frequency set for the SEIR model in 1/day unit
-         */
-        double get_cont_freq() const;
-
-        /**
          * @brief returns 1.0 over the incubation time set for the SEIR model in day unit
          */
         double get_incubation_inv() const;
@@ -82,9 +77,8 @@ public:
     StageTimes times;
 
     Populations populations{Populations({SeirCount})};
-
-    // This defines a damping factor for a mitigation strategy for different points in time.
-    Dampings dampings;
+    
+    ContactMatrix contact_frequency{1};
 };
 
 /**

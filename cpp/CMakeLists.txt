@@ -68,14 +68,18 @@ add_library(epidemiology
     epidemiology/secir/parameter_space.cpp
     epidemiology/utils/uncertain_value.h
     epidemiology/utils/uncertain_value.cpp
-    epidemiology/secir/uncertain_matrix.cpp
     epidemiology/secir/uncertain_matrix.h    
+    epidemiology/secir/uncertain_matrix.cpp
+    epidemiology/secir/contact_matrix.h    
+    epidemiology/secir/contact_matrix.cpp
     epidemiology/utils/memory.h
     epidemiology/utils/parameter_distributions.h
     epidemiology/utils/time_series.h
     epidemiology/utils/time_series.cpp
     epidemiology/utils/span.h
     epidemiology/utils/span.cpp
+    epidemiology/utils/type_safe.h
+    epidemiology/utils/type_safe.cpp
     epidemiology/abm/location.cpp
     epidemiology/abm/location.h
     epidemiology/abm/simulation.cpp

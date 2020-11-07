@@ -20,7 +20,7 @@ TEST(TestMigration, compareNoMigrationWithSingleIntegration)
     params1.populations.set({epi::SeirCompartments::SeirS}, 0.9);
     params1.populations.set({epi::SeirCompartments::SeirE}, 0.1);
     params1.populations.set_total(1000);
-    params1.times.set_cont_freq(2.5);
+    params1.contact_frequency.get_baseline()(0, 0) = 2.5;
     params1.times.set_incubation(4);
     params1.times.set_infectious(10);
 
@@ -55,9 +55,9 @@ TEST(TestMigration, compareNoMigrationWithSingleIntegration)
 
 TEST(TestMigration, nodeEvolve)
 {
-    auto cfm = epi::ContactFrequencyMatrix(1);
-    cfm.set_cont_freq(5.0, 0, 0);
-    epi::SecirParams params(cfm);
+    auto cm = epi::ContactMatrixGroup(1, 1);
+    cm[0].get_minimum()(0, 0) = 5.0;
+    epi::SecirParams params(cm);
     params.populations.set({0, epi::E}, 100);
     params.populations.set_difference_from_total({0, epi::S}, 1000);
     params.times[0].set_serialinterval(1.5);
@@ -76,9 +76,9 @@ TEST(TestMigration, nodeEvolve)
 TEST(TestMigration, edgeApplyMigration)
 {
     //setup nodes
-    auto cfm = epi::ContactFrequencyMatrix(1);
-    cfm.set_cont_freq(5.0, 0, 0);
-    epi::SecirParams params(cfm);
+    auto cm = epi::ContactMatrixGroup(1, 1);
+    cm[0].get_baseline()(0, 0) = 5.0;
+    epi::SecirParams params(cm);
     params.populations.set({0, epi::I}, 10);
     params.populations.set_difference_from_total({0, epi::S}, 1000);
     params.probabilities[0].set_infection_from_contact(1.0);

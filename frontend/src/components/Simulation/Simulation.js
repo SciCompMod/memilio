@@ -184,15 +184,15 @@ class Simulation extends Component {
       const vectorS = createSizeTVector([0, secir.SecirCompartments.S.value]);
       populations.set_difference_from_total(vectorS, pop);
 
-      const contact_freq_mat = new secir.ContactFrequencyMatrix();
-      contact_freq_mat.set_cont_freq(0.5, 0, 0);
+      const contact_freq_mat = new secir.ContactMatrixGroup(1, 1);
+      contact_freq_mat.get_matrix(0).set_baseline(0, 0, 0.5);
 
       // emulate some mitigations
       let action_damping = calculateDamping(this.props.measures, startDate, this.state.days);
 
       action_damping.forEach((v) => {
-        const d = new secir.Damping(v.day, v.damping);
-        contact_freq_mat.add_damping(d, 0, 0);
+        const d = new secir.Damping(1, v.damping, v.day);
+        contact_freq_mat.get_matrix(0).add_damping(d);
         d.delete();
       });
 

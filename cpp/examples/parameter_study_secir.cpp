@@ -87,13 +87,8 @@ int main(int argc, char* argv[])
         params.probabilities[i].set_dead_per_icu(delta);
     }
 
-    epi::ContactFrequencyMatrix& cont_freq_matrix = params.get_contact_patterns();
-    epi::Damping dummy(30., 0.3);
-    for (int i = 0; i < num_groups; i++) {
-        for (int j = i; j < num_groups; j++) {
-            cont_freq_matrix.set_cont_freq(fact * cont_freq, i, j);
-        }
-    }
+    epi::ContactMatrixGroup& contact_matrix = params.get_contact_patterns();
+    contact_matrix[0] = epi::ContactMatrix(Eigen::MatrixXd::Constant(num_groups, num_groups, fact * cont_freq));
 
     epi::set_params_distributions_normal(params, t0, tmax, 0.2);
 
