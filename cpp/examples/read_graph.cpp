@@ -1,14 +1,16 @@
 #include <epidemiology/migration/migration.h>
 #include <epidemiology_io/secir_parameters_io.h>
-#include <epidemiology_io/twitter_migration_io.h>
+#include <epidemiology_io/mobility_io.h>
 
 #include <iostream>
 
 void print_usage()
 {
-    std::cout << "Usage: read_graph MIGRATION_FILE" << "\n\n";
+    std::cout << "Usage: read_graph MIGRATION_FILE"
+              << "\n\n";
     std::cout << "This example performs a simulation based on twitter "
-                 "migration data." << std::endl;
+                 "migration data."
+              << std::endl;
 }
 
 int main(int argc, char** argv)
@@ -97,7 +99,7 @@ int main(int argc, char** argv)
     epi::set_params_distributions_normal(params, t0, tmax, 0.2);
 
     std::cout << "Reading Migration File..." << std::flush;
-    Eigen::MatrixXi twitter_migration_2018 = epi::read_migration(filename);
+    Eigen::MatrixXd twitter_migration_2018 = epi::read_mobility_plain(filename);
     std::cout << "Done" << std::endl;
 
     std::cout << "Intializing Graph..." << std::flush;
