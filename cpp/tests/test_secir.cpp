@@ -121,7 +121,7 @@ TEST(TestSecir, testParamConstructors)
     params.probabilities[0].set_dead_per_icu(delta);
 
     epi::ContactMatrixGroup& contact_matrix = params.get_contact_patterns();
-    contact_matrix[0] = epi::ContactMatrix(Eigen::MatrixXd::Constant(1, 1, cont_freq));
+    contact_matrix[0]                       = epi::ContactMatrix(Eigen::MatrixXd::Constant(1, 1, cont_freq));
     contact_matrix[0].add_damping(0.7, epi::SimulationTime(30.));
 
     epi::SecirParams params2{params}; // copy constructor
@@ -519,7 +519,7 @@ TEST(TestSecir, testValueConstraints)
 TEST(TestSecir, testModelConstraints)
 {
     double t0   = 0;
-    double tmax = 60; // after 60 days with cont_freq 10 and winter, the virus would already decline
+    double tmax = 57; // after 57 days with cont_freq 10 and winter, the virus would already decline
     double dt   = 0.1;
 
     double tinc = 5.2, tinfmild = 6, tserint = 4.2, thosp2home = 12, thome2hosp = 5, thosp2icu = 2, ticu2home = 8,
@@ -560,7 +560,7 @@ TEST(TestSecir, testModelConstraints)
     params.probabilities[0].set_dead_per_icu(delta);
 
     epi::ContactMatrixGroup& contact_matrix = params.get_contact_patterns();
-    contact_matrix[0] = epi::ContactMatrix(Eigen::MatrixXd::Constant(1, 1, cont_freq));
+    contact_matrix[0]                       = epi::ContactMatrix(Eigen::MatrixXd::Constant(1, 1, cont_freq));
 
     params.apply_constraints();
 

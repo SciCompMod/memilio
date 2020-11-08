@@ -359,10 +359,10 @@ void SecirParams::StageTimes::apply_constraints()
         m_ticu2home = 1.0;
     }
 
-    if (m_tinfasy != 1.0 / (0.5 / (m_tinc - m_tserint) + 0.5 / m_tinfmild)) {
+    if (m_tinfasy != 1.0 / (0.5 / (m_tinc - m_tserint)) + 0.5 * m_tinfmild) {
         log_info("Constraint check: Parameter m_tinfasy set as fully dependent on tinc, tserint and tinfmild. See HZI "
                  "paper.");
-        m_tinfasy = 1.0 / (0.5 / (m_tinc - m_tserint) + 0.5 / m_tinfmild);
+        m_tinfasy = 1.0 / (0.5 / (m_tinc - m_tserint)) + 0.5 * m_tinfmild;
     }
 
     if (m_ticu2death < 1.0) {
@@ -405,7 +405,7 @@ void SecirParams::StageTimes::check_constraints() const
         log_error("Constraint check: Parameter m_ticu2home {:.4f} smaller {:.4f}", m_ticu2home, 1.0);
     }
 
-    if (m_tinfasy != 1.0 / (0.5 / (m_tinc - m_tserint) + 0.5 / m_tinfmild)) {
+    if (m_tinfasy != 1.0 / (0.5 / (m_tinc - m_tserint)) + 0.5 * m_tinfmild) {
         log_error("Constraint check: Parameter m_tinfasy not set as fully dependent on tinc, tserint and tinfmild. See "
                   "HZI paper.");
     }
