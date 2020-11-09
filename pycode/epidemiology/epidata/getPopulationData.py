@@ -123,7 +123,7 @@ def get_new_counties(data_temp):
          data_temp[-2, 1:] += data_temp[i,1:]
          to_delete.append(i)
 
-      # fuse "Ludwigslust" adn "Parchim" into "Ludwigslust-Parchim"
+      # fuse "Ludwigslust" and "Parchim" into "Ludwigslust-Parchim"
       if data_temp[i,0] in [13054, 13060]:
          data_temp[-1, 1:] += data_temp[i,1:]
          to_delete.append(i)
