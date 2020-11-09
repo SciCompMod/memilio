@@ -192,7 +192,6 @@ def get_age_population_data(read_data=dd.defaultDict['read_data'],
    for i in range(len(data[0, :]) - 1):
       data_current[:, i + 1] = np.multiply(data[:, i + 1], ratio)
    
-   
    #create dataframe
    df = pandas.DataFrame(data.astype(int), columns=columns)
    df_current = pandas.DataFrame(np.round(data_current).astype(int), columns=columns)
