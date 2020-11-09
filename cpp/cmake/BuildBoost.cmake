@@ -42,9 +42,9 @@ add_library(Boost::filesystem ALIAS boost_filesystem)
 set(Boost_LIBRARIES Boost::boost Boost::filesystem)
 set(Boost_FOUND ON)
 
-install (TARGETS
-    boost
-    boost_disable_autolink
-    boost_filesystem
-    ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
-)
+#install (TARGETS
+#    boost
+#    boost_disable_autolink
+#    boost_filesystem
+#    ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
+#)
