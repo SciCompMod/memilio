@@ -60,37 +60,70 @@ def get_one_data_set(read_data, out_form, directory, d):
    dfo = dfo.rename(columns=dd.GerEng)
    gd.write_dataframe(dfo, directory, d.filename_out, out_form)
 
+# creates 7 new counties that were formed since 2011 and deletes old counties
 def get_new_counties(data_temp):
+   # create 7 new counties
    data_temp = np.append(data_temp, np.zeros((7,data_temp.shape[1])), axis=0)
+
+   # Göttingen
    data_temp[-7,0] = 3159
+
+   # Mecklenburgische Seenplatte
    data_temp[-6,0] = 13071
+
+   # Landkreis Rostock
    data_temp[-5,0] = 13072
+
+   # Vorpommern Rügen
    data_temp[-4,0] = 13073
+
+   # Nordwestmecklenburg
    data_temp[-3,0] = 13074
+
+   # Vorpommern Greifswald
    data_temp[-2,0] = 13075
+
+   # Ludwigslust-Parchim
    data_temp[-1,0] = 13076
 
 
    to_delete = []
    for i in range(len(data_temp[:,0])):
+      # fuse "Göttingen" and "Osterode am Harz" into Göttingen
       if data_temp[i,0] in [3152, 3156]:
          data_temp[-7, 1:] += data_temp[i,1:]
          to_delete.append(i)
+
+      # fuse "Müritz", "Neubrandenburg", "Mecklenburg-Sterlitz" 
+      # and "Demmin" into "Mecklenburgische Seenplatte"
       if data_temp[i,0] in [13056, 13002, 13055, 13052]:
          data_temp[-6, 1:] += data_temp[i,1:]
          to_delete.append(i)
+
+      # fuse "Bad Doberan and Güstrow" into "Landkreis Rostosck"
       if data_temp[i,0] in [13051, 13053]:
          data_temp[-5, 1:] += data_temp[i,1:]
          to_delete.append(i)
+
+      # fuse "Rügen", "Stralsund" and "Nordvorpommern" into 
+      # "Vorpommern Rügen"
       if data_temp[i,0] in [13061, 13005, 13057]:
          data_temp[-4, 1:] += data_temp[i,1:]
          to_delete.append(i)
+
+      # fuse "Wismar" and "Nordwestmecklenburg" into 
+      # "Nordwestmecklenburg"
       if data_temp[i,0] in [13006, 13058]:
          data_temp[-3, 1:] += data_temp[i,1:]
          to_delete.append(i)
+
+      # fuse "Ostvorpommern", "Uecker-Randow" and "Greifswald"
+      # into "Vorpommern Greifswald"
       if data_temp[i,0] in [13059, 13062, 13001]:
          data_temp[-2, 1:] += data_temp[i,1:]
          to_delete.append(i)
+
+      # fuse "Ludwigslust" adn "Parchim" into "Ludwigslust-Parchim"
       if data_temp[i,0] in [13054, 13060]:
          data_temp[-1, 1:] += data_temp[i,1:]
          to_delete.append(i)

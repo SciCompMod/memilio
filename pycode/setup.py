@@ -11,10 +11,11 @@ except ImportError:
     subprocess.check_call([sys.executable, "-m", "pip", "install", "scikit-build"])
     from skbuild import setup
 
+
 __version__ = '0.1.0'
 
 
-INSTALL_REQUIRES = ['pandas', 'matplotlib', 'tables', 'numpy']
+INSTALL_REQUIRES = ['pandas', 'matplotlib', 'tables', 'numpy', 'xlrd']
 
 
 setup(

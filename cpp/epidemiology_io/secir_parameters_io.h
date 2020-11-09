@@ -211,6 +211,14 @@ void set_rki_data(epi::SecirParams& params, const std::vector<double>& param_ran
 void set_divi_data(epi::SecirParams& params, const std::string& path, const std::string& id_name, int region, int month,
                    int day);
 
+/**
+ * @brief sets population data from census data
+ * @param params Object in which the data is set
+ * @param param_ranges Age ranges of params
+ * @param path Path to RKI file
+ * @param id_name Name of region key column
+ * @param region Key of the region of interest
+ */
 void set_population_data(epi::SecirParams& params, const std::vector<double>& param_ranges, const std::string& path,
                          const std::string& id_name, int region);
 
