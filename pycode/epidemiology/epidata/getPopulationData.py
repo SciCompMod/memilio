@@ -138,15 +138,49 @@ def get_age_population_data(read_data=dd.defaultDict['read_data'],
                        out_form=dd.defaultDict['out_form'],
                        out_folder=dd.defaultDict['out_folder']):
 
-   path_counties = 'http://hpcagainstcorona.sc.bs.dlr.de/data/migration/'
-   path_reg_key = 'https://www.zensus2011.de/SharedDocs/Downloads/DE/Pressemitteilung/DemografischeGrunddaten/1A_EinwohnerzahlGeschlecht.xls?__blob=publicationFile&v=5'
-   path_zensus = 'https://opendata.arcgis.com/datasets/abad92e8eead46a4b0d252ee9438eb53_1.csv'
+
+   directory = os.path.join(out_folder, 'Germany/')
+   gd.check_dir(directory)
    
-   #read tables
-   counties = pandas.read_excel(os.path.join(path_counties,'kreise_deu.xlsx'),sheet_name=1, header=3)
-   reg_key = pandas.read_excel(path_reg_key, sheet_name='Tabelle_1A', header=12)
-   zensus = gd.loadCsv("abad92e8eead46a4b0d252ee9438eb53_1")
+   filename_counties = 'migration'
+   filename_reg_key = 'reg_key'
+   filename_zensus = 'zensus'
+
+   if(read_data):
+
+      file_in = os.path.join(directory, filename_counties+".json")
+      try:
+         counties = pandas.read_json(file_in)
+      except ValueError:
+         exit_string = "Error: The file: " + file_in + " does not exist. Call program without -r flag to get it."
+         sys.exit(exit_string)
+      
+      file_in = os.path.join(directory, filename_zensus+".json")
+      try:
+         zensus = pandas.read_json(file_in)
+      except ValueError:
+         exit_string = "Error: The file: " + file_in + " does not exist. Call program without -r flag to get it."
+         sys.exit(exit_string)
+
+      file_in = os.path.join(directory, filename_reg_key+".json")
+      try:
+         reg_key = pandas.read_json(file_in)
+      except ValueError:
+         exit_string = "Error: The file: " + file_in + " does not exist. Call program without -r flag to get it."
+         sys.exit(exit_string)
+   else:
+      path_counties = 'http://hpcagainstcorona.sc.bs.dlr.de/data/migration/'
+      path_reg_key = 'https://www.zensus2011.de/SharedDocs/Downloads/DE/Pressemitteilung/DemografischeGrunddaten/1A_EinwohnerzahlGeschlecht.xls?__blob=publicationFile&v=5'
    
+      #read tables
+      counties = pandas.read_excel(os.path.join(path_counties,'kreise_deu.xlsx'),sheet_name=1, header=3)
+      reg_key = pandas.read_excel(path_reg_key, sheet_name='Tabelle_1A', header=12)
+      zensus = gd.loadCsv("abad92e8eead46a4b0d252ee9438eb53_1")
+
+      
+      gd.write_dataframe(counties, directory, filename_counties, "json")
+      gd.write_dataframe(reg_key, directory, filename_reg_key, "json")
+      gd.write_dataframe(zensus, directory, filename_zensus, "json")
    
    #find region keys for census population data
    key = np.zeros((len(zensus)))
@@ -164,7 +198,7 @@ def get_age_population_data(read_data=dd.defaultDict['read_data'],
    female = ['W_Unter_3', 'W_3_bis_5', 'W_6_bis_14', 'W_15_bis_17', 'W_18_bis_24',
            'W_25_bis_29', 'W_30_bis_39', 'W_40_bis_49', 'W_50_bis_64',
            'W_65_bis_74', 'W_75_und_aelter']
-   columns = ['Key', 'Total', '<3 years', '3-5 years', '6-14 years', '15-17 years', '18-24 years',
+   columns = [dd.EngEng['idCounty'], 'Total', '<3 years', '3-5 years', '6-14 years', '15-17 years', '18-24 years',
               '25-29 years', '30-39 years', '40-49 years', '50-64 years',
               '65-74 years', '>74 years']
    
@@ -207,6 +241,7 @@ def main():
 
    [read_data, out_form, out_folder] = gd.cli("population")
    get_age_population_data(read_data, out_form, out_folder)
+   get_population_data(read_data, out_form, out_folder)
 
 
 if __name__ == "__main__":

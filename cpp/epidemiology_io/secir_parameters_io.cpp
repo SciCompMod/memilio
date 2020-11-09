@@ -930,7 +930,7 @@ void read_population_data_germany(epi::SecirParams& params, const std::vector<do
 
     set_rki_data(params, param_ranges, path_join(dir, "all_age_rki.json"), id_name, 0, month, day);
     set_divi_data(params, path_join(dir, "germany_divi.json"), id_name, 0, month, day);
-    set_population_data(params, param_ranges, path_join(dir, "county_current_population.json"), "Key", 0);
+    set_population_data(params, param_ranges, path_join(dir, "county_current_population.json"), "ID_County", 0);
 }
 
 void read_population_data_state(epi::SecirParams& params, const std::vector<double>& param_ranges, int month, int day,
@@ -945,7 +945,7 @@ void read_population_data_state(epi::SecirParams& params, const std::vector<doub
 
     set_rki_data(params, param_ranges, path_join(dir, "all_state_age_rki.json"), id_name, state, month, day);
     set_divi_data(params, path_join(dir, "state_divi.json"), id_name, state, month, day);
-    set_population_data(params, param_ranges, path_join(dir, "county_current_population.json"), "Key", state);
+    set_population_data(params, param_ranges, path_join(dir, "county_current_population.json"), "ID_County", state);
 }
 
 void read_population_data_county(epi::SecirParams& params, const std::vector<double>& param_ranges, int month, int day,
@@ -960,7 +960,7 @@ void read_population_data_county(epi::SecirParams& params, const std::vector<dou
 
     set_rki_data(params, param_ranges, path_join(dir, "all_county_age_rki.json"), id_name, county, month, day);
     set_divi_data(params, path_join(dir, "county_divi.json"), id_name, county, month, day);
-    set_population_data(params, param_ranges, path_join(dir, "county_current_population.json"), "Key", county);
+    set_population_data(params, param_ranges, path_join(dir, "county_current_population.json"), "ID_County", county);
 }
 
 } // namespace epi
