@@ -145,7 +145,7 @@ def get_age_population_data(read_data=dd.defaultDict['read_data'],
    #read tables
    counties = pandas.read_excel(os.path.join(path_counties,'kreise_deu.xlsx'),sheet_name=1, header=3)
    reg_key = pandas.read_excel(path_reg_key, sheet_name='Tabelle_1A', header=12)
-   zensus = pandas.read_csv(path_zensus)
+   zensus = gd.loadCsv("abad92e8eead46a4b0d252ee9438eb53_1")
    
    
    #find region keys for census population data
