@@ -196,8 +196,6 @@ def get_age_population_data(read_data=dd.defaultDict['read_data'],
    df = pandas.DataFrame(data.astype(int), columns=columns)
    df_current = pandas.DataFrame(np.round(data_current).astype(int), columns=columns)
    
-   
-   
    directory = out_folder  
    directory = os.path.join(directory, 'Germany/')
    gd.check_dir(directory)
