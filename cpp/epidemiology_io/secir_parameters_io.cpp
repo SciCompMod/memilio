@@ -10,6 +10,7 @@
 #include <epidemiology/secir/populations.h>
 #include <epidemiology/secir/uncertain_matrix.h>
 #include <epidemiology/secir/secir.h>
+#include <epidemiology/utils/compiler_diagnostics.h>
 
 #include <tixi.h>
 
@@ -105,7 +106,8 @@ void write_distribution(const TixiDocumentHandle& handle, const std::string& pat
 std::unique_ptr<UncertainValue> read_element(TixiDocumentHandle handle, const std::string& path, int io_mode)
 {
     std::unique_ptr<UncertainValue> value;
-    ReturnCode status;
+    ReturnCode status; 
+    unused(status);
 
     if (io_mode == 0) {
         double read_buffer;
@@ -133,7 +135,8 @@ std::unique_ptr<UncertainValue> read_element(TixiDocumentHandle handle, const st
 
 std::unique_ptr<ParameterDistribution> read_distribution(TixiDocumentHandle handle, const std::string& path)
 {
-    ReturnCode status;
+    ReturnCode status; 
+    unused(status);
     std::unique_ptr<ParameterDistribution> distribution;
 
     char* distri_str;
@@ -217,6 +220,7 @@ template <class M = Eigen::MatrixXd>
 M read_matrix(TixiDocumentHandle handle, const std::string& path)
 {
     auto status = SUCCESS;
+    unused(status);
     int rows, cols;
     status = tixiGetIntegerAttribute(handle, path.c_str(), "Rows", &rows);
     assert(status == SUCCESS && "Failed to read matrix rows.");
@@ -267,6 +271,7 @@ ContactMatrixGroup read_contact_frequency_matrix_collection(TixiDocumentHandle h
                                                                           const std::string& path)
 {
     auto status = SUCCESS;
+    unused(status);
 
     auto collection_path = path_join(path, "ContactMatrixGroup");
     int num_matrices;
@@ -337,7 +342,8 @@ UncertainContactMatrix read_contact(TixiDocumentHandle handle, const std::string
 
 ParameterStudy read_parameter_study(TixiDocumentHandle handle, const std::string& path)
 {
-    ReturnCode status;
+    ReturnCode status; 
+    unused(status);
 
     int io_mode;
     int num_runs;
@@ -361,7 +367,8 @@ ParameterStudy read_parameter_study(TixiDocumentHandle handle, const std::string
 
 SecirParams read_parameter_space(TixiDocumentHandle handle, const std::string& path, int io_mode)
 {
-    ReturnCode status;
+    ReturnCode status; 
+    unused(status);
 
     int num_groups;
     status = tixiGetIntegerElement(handle, path_join(path, "NumberOfGroups").c_str(), &num_groups);
@@ -629,7 +636,8 @@ void write_edge(const std::vector<TixiDocumentHandle>& edge_handles, const std::
 void read_edge(const std::vector<TixiDocumentHandle>& edge_handles, const std::string& path,
                Graph<SecirParams, MigrationEdge>& graph, int start_node, int end_node)
 {
-    ReturnCode status;
+    ReturnCode status; 
+    unused(status);
 
     auto handle           = edge_handles[start_node];
     std::string edge_path = path_join(path, "EdgeTo" + std::to_string(end_node));
@@ -713,7 +721,8 @@ Graph<SecirParams, MigrationEdge> read_graph(const std::string& dir_string)
     boost::filesystem::path dir(dir_string);
     assert(boost::filesystem::exists(dir) && ("Directory " + dir_string + " does not exist.").c_str());
 
-    ReturnCode status;
+    ReturnCode status; 
+    unused(status);
     TixiDocumentHandle handle;
     tixiOpenDocument(path_join(dir.string(), "GraphEdges_node0.xml").c_str(), &handle);
 
