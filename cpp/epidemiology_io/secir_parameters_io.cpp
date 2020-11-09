@@ -916,6 +916,62 @@ void set_divi_data(epi::SecirParams& params, const std::string& path, const std:
     }
 }
 
+void set_population_data(epi::SecirParams& params, const std::vector<double>& param_ranges, const std::string& path,
+                         const std::string& id_name, int region)
+{
+    Json::Reader reader;
+    Json::Value root;
+
+    std::ifstream census(path);
+    reader.parse(census, root);
+
+    std::vector<std::string> age_names = {"<3 years", "3-5 years", "6-14 years", "15-17 years", "18-24 years",
+                                          "25-29 years", "30-39 years", "40-49 years", "50-64 years",
+                                          "65-74 years", ">74 years"};
+    std::vector<double> age_ranges     = {3., 3., 9., 3., 7., 5., 10., 10., 15., 10., 25.};
+
+    std::vector<std::vector<double>> interpolation(age_names.size());
+    std::vector<bool> carry_over;
+
+    interpolate_ages(age_ranges, param_ranges, interpolation, carry_over);
+
+
+    std::vector<double> num_population(age_names.size(), 0.0);
+
+    for (size_t age = 0; age < age_names.size(); age++) {
+        for (unsigned int i = 0; i < root.size(); i++) {
+            bool correct_region = region == 0 || (int) root[i][id_name].asDouble()/1000 == region || root[i][id_name] == region ;
+            if (correct_region) {
+                num_population[age]   += root[i][age_names[age]].asDouble();
+            }
+        }
+    }
+
+    std::vector<double> interpol_population(params.get_num_groups() + 1, 0.0);
+
+    int counter = 0;
+    for (size_t i = 0; i < interpolation.size() - 1; i++) {
+        for (size_t j = 0; j < interpolation[i].size(); j++) {
+            interpol_population[counter] += interpolation[i][j] * num_population[i];
+            if (j < interpolation[i].size() - 1 || !carry_over[i]) {
+                counter++;
+            }
+        }
+    }
+
+    if (std::accumulate(num_population.begin(), num_population.end(), 0.0) > 0) {
+        size_t num_groups = params.get_num_groups();
+        for (size_t i = 0; i < num_groups; i++) {
+            params.populations.set_difference_from_group_total({i, epi::SecirCompartments::S}, epi::SecirCategory::AgeGroup,
+                                                                i, interpol_population[i]);
+        }
+    }
+    else {
+        log_warning("No population data available for region " + std::to_string(region) + ". Population data has not been set.");
+    }
+
+}
+
 void read_population_data_germany(epi::SecirParams& params, const std::vector<double>& param_ranges, int month, int day,
                                   const std::string& dir)
 {
@@ -927,6 +983,7 @@ void read_population_data_germany(epi::SecirParams& params, const std::vector<do
 
     set_rki_data(params, param_ranges, path_join(dir, "all_age_rki.json"), id_name, 0, month, day);
     set_divi_data(params, path_join(dir, "germany_divi.json"), id_name, 0, month, day);
+    set_population_data(params, param_ranges, path_join(dir, "county_current_population.json"), "ID_County", 0);
 }
 
 void read_population_data_state(epi::SecirParams& params, const std::vector<double>& param_ranges, int month, int day,
@@ -941,6 +998,7 @@ void read_population_data_state(epi::SecirParams& params, const std::vector<doub
 
     set_rki_data(params, param_ranges, path_join(dir, "all_state_age_rki.json"), id_name, state, month, day);
     set_divi_data(params, path_join(dir, "state_divi.json"), id_name, state, month, day);
+    set_population_data(params, param_ranges, path_join(dir, "county_current_population.json"), "ID_County", state);
 }
 
 void read_population_data_county(epi::SecirParams& params, const std::vector<double>& param_ranges, int month, int day,
@@ -955,6 +1013,7 @@ void read_population_data_county(epi::SecirParams& params, const std::vector<dou
 
     set_rki_data(params, param_ranges, path_join(dir, "all_county_age_rki.json"), id_name, county, month, day);
     set_divi_data(params, path_join(dir, "county_divi.json"), id_name, county, month, day);
+    set_population_data(params, param_ranges, path_join(dir, "county_current_population.json"), "ID_County", county);
 }
 
 } // namespace epi

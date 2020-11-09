@@ -26,6 +26,8 @@ https://opendata.arcgis.com/datasets/5dc2fc92850241c3be3d704aa0945d9c_2.csv
 
 https://opendata.arcgis.com/datasets/b2e6d8854d9744ca88144d30bef06a76_1.geojson
 
+https://opendata.arcgis.com/datasets/abad92e8eead46a4b0d252ee9438eb53_1.csv
+
 Data from John Hopkins University (JH)
 
 We want to get data from the Spanish Ministery of Health (MISAN) provided in the github repo:
@@ -40,6 +42,7 @@ Dependencies
 Needed python packages:
 
 - pandas
+- xlrd
 - matplotlib
 - tables
 
@@ -128,6 +131,8 @@ When speaking about infected, means always infected inclusive the already recove
  P        Germany  FullDataL                Full data for Landkreise
  P        Germany  PopulStates              Einwohnerzahl (EWZ) for all Bundesländer
  P        Germany  PopulCounties            Einwohnerzahl (EWZ) for all Landkreise (however some are missing compared to RKI data)
+ P	  Germany  county_population        Einwohnerzahl for different age groups from the 2011 census
+ P	  Germany  county_current_populationEinwohnerzahl for different age groups from the 2011 census, extrapolated to the current level
 
  JH       .        FullData_JohnHopkins     Data as downloaded from github
  JH       .        all_provincestate        Time-cumsum of confirmed, recovered, death for states or provinces if they where given
