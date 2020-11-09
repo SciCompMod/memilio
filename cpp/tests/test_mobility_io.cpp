@@ -1,12 +1,13 @@
-#include <epidemiology_io/twitter_migration_io.h>
+#include "load_test_data.h"
+#include <epidemiology_io/mobility_io.h>
 #include <epidemiology/utils/logging.h>
 #include "epidemiology/utils/eigen.h"
 
 #include <gtest/gtest.h>
 
-TEST(TestTwitter, compareWithSimpleFile)
+TEST(TestReadMigration, readFormatted)
 {
-    Eigen::MatrixXi test_matrix(4, 4);
+    Eigen::MatrixXd test_matrix(4, 4);
     for (int i = 0; i < 4; i++) {
         test_matrix(i, i) = 0;
         for (int j = i + 1; j < 4; j++) {
@@ -40,13 +41,65 @@ TEST(TestTwitter, compareWithSimpleFile)
         file.close();
     }
 
-    auto matrix_read = epi::read_migration("test_twitter.txt");
+    auto matrix_read = epi::read_mobility_formatted("test_twitter.txt");
 
     ASSERT_EQ(test_matrix.rows(), matrix_read.rows());
     ASSERT_EQ(test_matrix.cols(), matrix_read.cols());
     for (int i = 0; i < test_matrix.rows(); i++) {
         for (int j = 0; j < test_matrix.cols(); j++) {
             ASSERT_EQ(test_matrix(i, j), matrix_read(i, j));
+        }
+    }
+}
+
+TEST(TestReadMigration, readPlain)
+{
+    Eigen::MatrixXd test_matrix(6, 6);
+
+    test_matrix(0, 0) = 0.4413;
+    test_matrix(0, 1) = 0.4504;
+    test_matrix(0, 2) = 1.2383;
+    test_matrix(0, 3) = 0.8033;
+    test_matrix(0, 4) = 0.0494;
+    test_matrix(0, 5) = 0.0017;
+    test_matrix(1, 0) = 0.0485;
+    test_matrix(1, 1) = 0.7616;
+    test_matrix(1, 2) = 0.6532;
+    test_matrix(1, 3) = 1.1614;
+    test_matrix(1, 4) = 0.0256;
+    test_matrix(1, 5) = 0.0013;
+    test_matrix(2, 0) = 0.1800;
+    test_matrix(2, 1) = 0.1795;
+    test_matrix(2, 2) = 0.8806;
+    test_matrix(2, 3) = 0.6413;
+    test_matrix(2, 4) = 0.0429;
+    test_matrix(2, 5) = 0.0032;
+    test_matrix(3, 0) = 0.0495;
+    test_matrix(3, 1) = 0.2639;
+    test_matrix(3, 2) = 0.5189;
+    test_matrix(3, 3) = 0.8277;
+    test_matrix(3, 4) = 0.0679;
+    test_matrix(3, 5) = 0.0014;
+    test_matrix(4, 0) = 0.0087;
+    test_matrix(4, 1) = 0.0394;
+    test_matrix(4, 2) = 0.1417;
+    test_matrix(4, 3) = 0.3834;
+    test_matrix(4, 4) = 0.7064;
+    test_matrix(4, 5) = 0.0447;
+    test_matrix(5, 0) = 0.0292;
+    test_matrix(5, 1) = 0.0648;
+    test_matrix(5, 2) = 0.1248;
+    test_matrix(5, 3) = 0.4179;
+    test_matrix(5, 4) = 0.3497;
+    test_matrix(5, 5) = 0.1544;
+
+    auto matrix_read = epi::read_mobility_plain(get_test_data_file_path("contacts.txt"));
+
+    ASSERT_EQ(test_matrix.rows(), matrix_read.rows());
+    ASSERT_EQ(test_matrix.cols(), matrix_read.cols());
+    for (int i = 0; i < test_matrix.rows(); i++) {
+        for (int j = 0; j < test_matrix.cols(); j++) {
+            ASSERT_EQ(test_matrix(i, j), matrix_read(i, j)) << "at entry " << i << ", " << j;
         }
     }
 }
