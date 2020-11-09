@@ -46,4 +46,5 @@ install (TARGETS
     boost
     boost_disable_autolink
     boost_filesystem
+    ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
 )
