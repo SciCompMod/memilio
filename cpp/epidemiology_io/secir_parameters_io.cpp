@@ -383,6 +383,7 @@ SecirParams read_parameter_space(TixiDocumentHandle handle, const std::string& p
     params.set_start_day(read_buffer);
     params.set_seasonality(*read_element(handle, path_join(path, "Seasonality"), io_mode));
     params.set_icu_capacity(*read_element(handle, path_join(path, "ICUCapacity"), io_mode));
+    params.set_test_and_trace_capacity(*read_element(handle, path_join(path, "TestAndTraceCapacity"), io_mode));
 
     params.set_contact_patterns(read_contact(handle, path_join(path, "ContactFreq"), io_mode));
 
@@ -444,6 +445,8 @@ SecirParams read_parameter_space(TixiDocumentHandle handle, const std::string& p
             *read_element(handle, path_join(probabilities_path, "AsympPerInfectious"), io_mode));
         params.probabilities[i].set_risk_from_symptomatic(
             *read_element(handle, path_join(probabilities_path, "RiskFromSymptomatic"), io_mode));
+        params.probabilities[i].set_test_and_trace_max_risk_from_symptomatic(
+            *read_element(handle, path_join(probabilities_path, "TestAndTraceMaxRiskFromSymptomatic"), io_mode));
         params.probabilities[i].set_dead_per_icu(
             *read_element(handle, path_join(probabilities_path, "DeadPerICU"), io_mode));
         params.probabilities[i].set_hospitalized_per_infectious(
@@ -464,6 +467,7 @@ void write_parameter_space(TixiDocumentHandle handle, const std::string& path, c
     tixiAddDoubleElement(handle, path.c_str(), "StartDay", parameters.get_start_day(), "%g");
     write_element(handle, path, "Seasonality", parameters.get_seasonality(), io_mode, num_runs);
     write_element(handle, path, "ICUCapacity", parameters.get_icu_capacity(), io_mode, num_runs);
+    write_element(handle, path, "TestAndTraceCapacity", parameters.get_test_and_trace_capacity(), io_mode, num_runs);
 
     for (size_t i = 0; i < num_groups; i++) {
         auto group_name = "Group" + std::to_string(i + 1);
@@ -524,6 +528,8 @@ void write_parameter_space(TixiDocumentHandle handle, const std::string& path, c
                       parameters.probabilities[i].get_asymp_per_infectious(), io_mode, num_runs);
         write_element(handle, probabilities_path, "RiskFromSymptomatic",
                       parameters.probabilities[i].get_risk_from_symptomatic(), io_mode, num_runs);
+        write_element(handle, probabilities_path, "TestAndTraceMaxRiskFromSymptomatic",
+                      parameters.probabilities[i].get_test_and_trace_max_risk_from_symptomatic(), io_mode, num_runs);
         write_element(handle, probabilities_path, "DeadPerICU", parameters.probabilities[i].get_dead_per_icu(), io_mode,
                       num_runs);
         write_element(handle, probabilities_path, "HospitalizedPerInfectious",

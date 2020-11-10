@@ -307,6 +307,10 @@ PYBIND11_MODULE(_secir, m)
              py::overload_cast<double>(&epi::SecirParams::Probabilities::set_risk_from_symptomatic))
         .def("set_risk_from_symptomatic", py::overload_cast<const epi::ParameterDistribution&>(
                                               &epi::SecirParams::Probabilities::set_risk_from_symptomatic))
+        .def("set_test_and_trace_max_risk_from_symptomatic",
+             py::overload_cast<double>(&epi::SecirParams::Probabilities::set_test_and_trace_max_risk_from_symptomatic))
+        .def("set_test_and_trace_max_risk_from_symptomatic", py::overload_cast<const epi::ParameterDistribution&>(
+                                              &epi::SecirParams::Probabilities::set_test_and_trace_max_risk_from_symptomatic))
         .def("set_hospitalized_per_infectious",
              py::overload_cast<double>(&epi::SecirParams::Probabilities::set_hospitalized_per_infectious))
         .def("set_hospitalized_per_infectious", py::overload_cast<const epi::ParameterDistribution&>(
@@ -342,6 +346,12 @@ PYBIND11_MODULE(_secir, m)
              py::return_value_policy::reference_internal)
         .def("get_risk_from_symptomatic",
              py::overload_cast<>(&epi::SecirParams::Probabilities::get_risk_from_symptomatic, py::const_),
+             py::return_value_policy::reference_internal)
+        .def("get_test_and_trace_max_risk_from_symptomatic",
+             py::overload_cast<>(&epi::SecirParams::Probabilities::get_test_and_trace_max_risk_from_symptomatic),
+             py::return_value_policy::reference_internal)
+        .def("get_test_and_trace_max_risk_from_symptomatic",
+             py::overload_cast<>(&epi::SecirParams::Probabilities::get_test_and_trace_max_risk_from_symptomatic, py::const_),
              py::return_value_policy::reference_internal)
         .def("get_hospitalized_per_infectious",
              py::overload_cast<>(&epi::SecirParams::Probabilities::get_hospitalized_per_infectious),
@@ -451,6 +461,13 @@ PYBIND11_MODULE(_secir, m)
         .def("set_icu_capacity", py::overload_cast<double>(&epi::SecirParams::set_icu_capacity))
         .def("set_icu_capacity",
              py::overload_cast<const epi::ParameterDistribution&>(&epi::SecirParams::set_icu_capacity))
+        .def("get_test_and_trace_capacity", py::overload_cast<>(&epi::SecirParams::get_test_and_trace_capacity),
+             py::return_value_policy::reference_internal)
+        .def("get_test_and_trace_capacity", py::overload_cast<>(&epi::SecirParams::get_test_and_trace_capacity, py::const_),
+             py::return_value_policy::reference_internal)
+        .def("set_test_and_trace_capacity", py::overload_cast<double>(&epi::SecirParams::set_test_and_trace_capacity))
+        .def("set_test_and_trace_capacity",
+             py::overload_cast<const epi::ParameterDistribution&>(&epi::SecirParams::set_test_and_trace_capacity))
         .def("get_start_day", &epi::SecirParams::get_start_day)
         .def("set_start_day", &epi::SecirParams::set_start_day)
         .def("get_seasonality", py::overload_cast<>(&epi::SecirParams::get_seasonality),

@@ -7,6 +7,7 @@
 #include <epidemiology_io/secir_parameters_io.h>
 #include <epidemiology/migration/migration.h>
 #include <distributions_helpers.h>
+#include <matchers.h>
 #include <gtest/gtest.h>
 
 TEST(TestSaveParameters, compareParameterStudy)
@@ -341,6 +342,8 @@ TEST(TestSaveParameters, compareGraphs)
 
     epi::SecirParams params(num_groups);
 
+    params.set_test_and_trace_capacity(30);
+
     for (size_t i = 0; i < num_groups; i++) {
         params.times[i].set_incubation(tinc);
         params.times[i].set_infectious_mild(tinfmild);
@@ -366,6 +369,7 @@ TEST(TestSaveParameters, compareGraphs)
         params.probabilities[i].set_carrier_infectability(0.67);
         params.probabilities[i].set_asymp_per_infectious(alpha);
         params.probabilities[i].set_risk_from_symptomatic(beta);
+        params.probabilities[i].set_test_and_trace_max_risk_from_symptomatic(beta * 3);
         params.probabilities[i].set_hospitalized_per_infectious(rho);
         params.probabilities[i].set_icu_per_hospitalized(theta);
         params.probabilities[i].set_dead_per_icu(delta);
@@ -405,6 +409,11 @@ TEST(TestSaveParameters, compareGraphs)
         ASSERT_EQ(graph_read_cont_matrix, graph_cont_matrix);
         ASSERT_EQ(graph_params.populations.get_num_compartments(),
                   graph_read_params.populations.get_num_compartments());
+
+        EXPECT_THAT(graph_read_params.get_test_and_trace_capacity().value(),
+                    FloatingPointEqual(graph_params.get_test_and_trace_capacity().value(), 1e-12, 1e-12));
+        check_distribution(*graph_params.get_test_and_trace_capacity().get_distribution().get(),
+                           *graph_read_params.get_test_and_trace_capacity().get_distribution().get());
 
         for (size_t group = 0; group < num_groups; group++) {
             ASSERT_EQ(graph_params.populations.get({group, epi::SecirCompartments::D}),
@@ -452,6 +461,8 @@ TEST(TestSaveParameters, compareGraphs)
                       graph_read_params.probabilities[group].get_infection_from_contact());
             ASSERT_EQ(graph_params.probabilities[group].get_risk_from_symptomatic(),
                       graph_read_params.probabilities[group].get_risk_from_symptomatic());
+            ASSERT_EQ(graph_params.probabilities[group].get_test_and_trace_max_risk_from_symptomatic(),
+                      graph_read_params.probabilities[group].get_test_and_trace_max_risk_from_symptomatic());
             ASSERT_EQ(graph_params.probabilities[group].get_asymp_per_infectious(),
                       graph_read_params.probabilities[group].get_asymp_per_infectious());
             ASSERT_EQ(graph_params.probabilities[group].get_dead_per_icu(),
@@ -489,6 +500,14 @@ TEST(TestSaveParameters, compareGraphs)
             check_distribution(
                 *graph_params.probabilities[group].get_risk_from_symptomatic().get_distribution().get(),
                 *graph_read_params.probabilities[group].get_risk_from_symptomatic().get_distribution().get());
+            check_distribution(*graph_params.probabilities[group]
+                                    .get_test_and_trace_max_risk_from_symptomatic()
+                                    .get_distribution()
+                                    .get(),
+                               *graph_read_params.probabilities[group]
+                                    .get_test_and_trace_max_risk_from_symptomatic()
+                                    .get_distribution()
+                                    .get());
             check_distribution(*graph_params.probabilities[group].get_dead_per_icu().get_distribution().get(),
                                *graph_read_params.probabilities[group].get_dead_per_icu().get_distribution().get());
             check_distribution(

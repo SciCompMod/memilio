@@ -619,3 +619,51 @@ TEST(TestSecir, testModelConstraints)
         }
     }
 }
+
+TEST(Secir, testAndTraceCapacity)
+{
+    double tinc = 5.2, tinfmild = 6, tserint = 4.2;
+
+    double cont_freq = 10, inf_prob = 0.05, carr_infec = 1, alpha = 0.09, beta = 0.25;
+
+    double nb_total_t0 = 10000, nb_exp_t0 = 100, nb_inf_t0 = 50, nb_car_t0 = 50;
+
+    epi::SecirParams params;
+
+    params.times[0].set_incubation(tinc);
+    params.times[0].set_infectious_mild(tinfmild);
+    params.times[0].set_serialinterval(tserint);
+
+    epi::ContactMatrixGroup& contact_matrix = params.get_contact_patterns();
+    contact_matrix[0]                       = epi::ContactMatrix(Eigen::MatrixXd::Constant(1, 1, cont_freq));
+
+    params.populations.set({0, epi::SecirCompartments::E}, nb_exp_t0);
+    params.populations.set({0, epi::SecirCompartments::C}, nb_car_t0);
+    params.populations.set({0, epi::SecirCompartments::I}, nb_inf_t0);
+    params.populations.set_difference_from_total({0, epi::SecirCompartments::S}, nb_total_t0);
+
+    params.probabilities[0].set_infection_from_contact(inf_prob);
+    params.probabilities[0].set_carrier_infectability(carr_infec);
+    params.probabilities[0].set_asymp_per_infectious(alpha);
+    params.probabilities[0].set_risk_from_symptomatic(beta);
+
+    params.apply_constraints();
+
+    auto y = params.populations.get_compartments();
+
+    auto dydt_default = Eigen::VectorXd(Eigen::Index(epi::SecirCount));
+    epi::secir_get_derivatives(params, y, 0, dydt_default);
+
+    params.set_test_and_trace_capacity(50);
+    params.probabilities[0].set_test_and_trace_max_risk_from_symptomatic(beta * 3);
+    auto dydt_under_capacity = Eigen::VectorXd(Eigen::Index(epi::SecirCount));
+    epi::secir_get_derivatives(params, y, 0, dydt_under_capacity);
+
+    params.set_test_and_trace_capacity(10);
+    params.probabilities[0].set_test_and_trace_max_risk_from_symptomatic(beta * 3);
+    auto dydt_over_capacity = Eigen::VectorXd(Eigen::Index(epi::SecirCount));
+    epi::secir_get_derivatives(params, y, 0, dydt_over_capacity);
+
+    EXPECT_DOUBLE_EQ(dydt_under_capacity[epi::E], dydt_default[epi::E]);
+    EXPECT_GT(dydt_over_capacity[epi::E], dydt_default[epi::E]);
+}

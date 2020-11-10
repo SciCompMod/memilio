@@ -2,6 +2,7 @@
 #define EPI_TESTS_MATCHERS_H
 
 #include "epidemiology/utils/compiler_diagnostics.h"
+#include "epidemiology/math/floating_point.h"
 #include "gmock/gmock.h"
 
 /**
@@ -84,6 +85,21 @@ MATCHER_P(MatrixNear, other,
 {
     epi::unused(result_listener);
     return ((arg - other).array().abs() <= (1e-15 + 1e-15 * other.array().abs())).all();
+}
+
+/**
+ * gmock matcher, checks if two floating point values are almost equal.
+ * @param other value to compare
+ * @param rtol relative tolerance
+ * @param atol absolute tolerance
+ * @return matcher that accepts floating point values.
+ */
+MATCHER_P3(FloatingPointEqual, other, rtol, atol,
+           "approx. equal to " + testing::PrintToString(other) + " (rtol = " + testing::PrintToString(rtol) +
+               ", atol = " + testing::PrintToString(atol) + ")")
+{
+    epi::unused(result_listener);
+    return epi::floating_point_equal(arg, other, atol, rtol);
 }
 
 #endif //EPI_TESTS_MATCHERS_H
