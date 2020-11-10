@@ -808,7 +808,7 @@ void secir_get_derivatives(SecirParams const& params, Eigen::Ref<const Eigen::Ve
         //symptomatic are less well quarantined when testing and tracing is overwhelmed so they infect more people
         auto test_and_trace_required = (1 - params.probabilities[i].get_asymp_per_infectious()) * dummy_R3 * pop[Ci];
         auto risk_from_symptomatic   = smoother_cosine(
-            test_and_trace_required, params.get_test_and_trace_capacity(), params.get_test_and_trace_capacity() * 10,
+            test_and_trace_required, params.get_test_and_trace_capacity(), params.get_test_and_trace_capacity() * 5,
             params.probabilities[i].get_risk_from_symptomatic(),
             params.probabilities[i].get_test_and_trace_max_risk_from_symptomatic());
 
