@@ -423,6 +423,7 @@ SecirParams::Probabilities::Probabilities()
     , m_hospinf{0}
     , m_icuhosp{0}
     , m_deathicu{0}
+    , m_tnt_max_risksymp{0}
 {
 }
 
@@ -484,6 +485,21 @@ void SecirParams::Probabilities::set_risk_from_symptomatic(double risksymp)
 void SecirParams::Probabilities::set_risk_from_symptomatic(ParameterDistribution const& risksymp)
 {
     m_risksymp.set_distribution(risksymp);
+}
+
+void SecirParams::Probabilities::set_test_and_trace_max_risk_from_symptomatic(UncertainValue const& value)
+{
+    m_tnt_max_risksymp = value;
+}
+
+void SecirParams::Probabilities::set_test_and_trace_max_risk_from_symptomatic(double value)
+{
+    m_tnt_max_risksymp = value;
+}
+
+void SecirParams::Probabilities::set_test_and_trace_max_risk_from_symptomatic(ParameterDistribution const& distribution)
+{
+    m_tnt_max_risksymp.set_distribution(distribution);
 }
 
 void SecirParams::Probabilities::set_hospitalized_per_infectious(UncertainValue const& hospinf)
@@ -569,6 +585,16 @@ const UncertainValue& SecirParams::Probabilities::get_risk_from_symptomatic() co
 UncertainValue& SecirParams::Probabilities::get_risk_from_symptomatic()
 {
     return m_risksymp;
+}
+
+const UncertainValue& SecirParams::Probabilities::get_test_and_trace_max_risk_from_symptomatic() const
+{
+    return m_tnt_max_risksymp;
+}
+
+UncertainValue& SecirParams::Probabilities::get_test_and_trace_max_risk_from_symptomatic()
+{
+    return m_tnt_max_risksymp;
 }
 
 const UncertainValue& SecirParams::Probabilities::get_hospitalized_per_infectious() const
@@ -685,6 +711,31 @@ UncertainContactMatrix const& SecirParams::get_contact_patterns() const
     return m_contact_patterns;
 }
 
+UncertainValue& SecirParams::get_test_and_trace_capacity()
+{
+    return m_test_and_trace_capacity;
+}
+
+const UncertainValue& SecirParams::get_test_and_trace_capacity() const
+{
+    return m_test_and_trace_capacity;
+}
+
+void SecirParams::set_test_and_trace_capacity(double value)
+{
+    m_test_and_trace_capacity = value;
+}
+
+void SecirParams::set_test_and_trace_capacity(const UncertainValue& value)
+{
+    m_test_and_trace_capacity = value;
+}
+
+void SecirParams::set_test_and_trace_capacity(const ParameterDistribution& distribution)
+{
+    m_test_and_trace_capacity.set_distribution(distribution);
+}
+
 void SecirParams::apply_constraints()
 {
 
@@ -749,6 +800,18 @@ void secir_get_derivatives(SecirParams const& params, Eigen::Ref<const Eigen::Ve
         dydt[Si] = 0;
         dydt[Ei] = 0;
 
+        double dummy_R2 =
+            1.0 / (2 * params.times[i].get_serialinterval() - params.times[i].get_incubation()); // R2 = 1/(2SI-TINC)
+        double dummy_R3 =
+            0.5 / (params.times[i].get_incubation() - params.times[i].get_serialinterval()); // R3 = 1/(2(TINC-SI))
+
+        //symptomatic are less well quarantined when testing and tracing is overwhelmed so they infect more people
+        auto test_and_trace_required = (1 - params.probabilities[i].get_asymp_per_infectious()) * dummy_R3 * pop[Ci];
+        auto risk_from_symptomatic   = smoother_cosine(
+            test_and_trace_required, params.get_test_and_trace_capacity(), params.get_test_and_trace_capacity() * 5,
+            params.probabilities[i].get_risk_from_symptomatic(),
+            params.probabilities[i].get_test_and_trace_max_risk_from_symptomatic());
+
         double icu_occupancy = 0;
 
         for (size_t j = 0; j < n_agegroups; j++) {
@@ -770,7 +833,7 @@ void secir_get_derivatives(SecirParams const& params, Eigen::Ref<const Eigen::Ve
             double divNj   = 1.0 / Nj; // precompute 1.0/Nj
             double dummy_S = y[Si] * cont_freq_eff * divNj * params.probabilities[i].get_infection_from_contact() *
                              (params.probabilities[j].get_carrier_infectability() * pop[Cj] +
-                              params.probabilities[j].get_risk_from_symptomatic() * pop[Ij]);
+                              risk_from_symptomatic * pop[Ij]);
 
             dydt[Si] -= dummy_S; // -R1*(C+beta*I)*S/N0
             dydt[Ei] += dummy_S; // R1*(C+beta*I)*S/N0-R2*E
@@ -784,11 +847,6 @@ void secir_get_derivatives(SecirParams const& params, Eigen::Ref<const Eigen::Ve
                             params.probabilities[i].get_icu_per_hospitalized(), 0);
 
         double prob_hosp2dead = params.probabilities[i].get_icu_per_hospitalized() - prob_hosp2icu;
-
-        double dummy_R2 =
-            1.0 / (2 * params.times[i].get_serialinterval() - params.times[i].get_incubation()); // R2 = 1/(2SI-TINC)
-        double dummy_R3 =
-            0.5 / (params.times[i].get_incubation() - params.times[i].get_serialinterval()); // R3 = 1/(2(TINC-SI))
 
         dydt[Ei] -= dummy_R2 * y[Ei]; // only exchange of E and C done here
         dydt[Ci] = dummy_R2 * y[Ei] -

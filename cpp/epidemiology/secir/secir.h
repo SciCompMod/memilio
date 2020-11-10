@@ -93,6 +93,7 @@ public:
         , m_tstart{0}
         , m_seasonality{0}
         , m_icu_capacity{std::numeric_limits<double>::max()}
+        , m_test_and_trace_capacity{std::numeric_limits<double>::max()}
     {
     }
 
@@ -105,6 +106,7 @@ public:
         , m_tstart{0}
         , m_seasonality{0}
         , m_icu_capacity{std::numeric_limits<double>::max()}
+        , m_test_and_trace_capacity{std::numeric_limits<double>::max()}
     {
     }
 
@@ -542,6 +544,15 @@ public:
         */
         void set_risk_from_symptomatic(ParameterDistribution const& m_risksymp);
 
+        ///@{
+        /**
+         * risk of infection from symptomatic cases increases as test and trace capacity is exceeded.
+         */
+        void set_test_and_trace_max_risk_from_symptomatic(const UncertainValue& value);
+        void set_test_and_trace_max_risk_from_symptomatic(double value);
+        void set_test_and_trace_max_risk_from_symptomatic(const ParameterDistribution& distribution);
+        ///@}
+
         /**
         * @brief sets the percentage of hospitalized patients per infected patients in the SECIR model
         * @param rho percentage of hospitalized patients per infected patients
@@ -619,6 +630,14 @@ public:
         const UncertainValue& get_risk_from_symptomatic() const;
         UncertainValue& get_risk_from_symptomatic();
 
+        ///@{
+        /**
+         * risk of infection from symptomatic cases increases as test and trace capacity is exceeded.
+         */
+        UncertainValue const& get_test_and_trace_max_risk_from_symptomatic() const;
+        UncertainValue& get_test_and_trace_max_risk_from_symptomatic();
+        ///@}
+
         /**
         * @brief returns the percentage of hospitalized patients per infected patients in the SECIR model
         */
@@ -649,6 +668,7 @@ public:
 
     private:
         UncertainValue m_infprob, m_carrinf, m_asympinf, m_risksymp, m_hospinf, m_icuhosp, m_deathicu; // probabilities
+        UncertainValue m_tnt_max_risksymp;
     };
 
     /**
@@ -676,6 +696,23 @@ public:
      */
     UncertainContactMatrix const& get_contact_patterns() const;
 
+    ///@{
+    /**
+     * capacity to test and trace contacts of infected for quarantine per day.
+     */
+    void set_test_and_trace_capacity(const UncertainValue& value);
+    void set_test_and_trace_capacity(double value);
+    void set_test_and_trace_capacity(const ParameterDistribution& distribution);
+    ///@}
+        
+    ///@{
+    /**
+     * capacity to test and trace contacts of infected for quarantine per day.
+     */
+    UncertainValue const& get_test_and_trace_capacity() const;
+    UncertainValue& get_test_and_trace_capacity();
+    ///@}
+
     Populations populations;
     std::vector<StageTimes> times;
     std::vector<Probabilities> probabilities;
@@ -688,6 +725,7 @@ private:
     double m_tstart;
     UncertainValue m_seasonality;
     UncertainValue m_icu_capacity;
+    UncertainValue m_test_and_trace_capacity;
 };
 
 /**
