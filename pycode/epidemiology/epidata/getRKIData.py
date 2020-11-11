@@ -24,9 +24,14 @@ def check_for_completeness(df):
 
       # in case data is incomplete
       if id_bundesland < 16:
+         print("Downloaded RKI data is not complete. Another option will be tested.")
          return False
 
-   return True
+      # if it semms complete
+      return True
+
+   # if it is empty
+   return False
 
 
 def get_rki_data(read_data=dd.defaultDict['read_data'],
@@ -65,7 +70,7 @@ def get_rki_data(read_data=dd.defaultDict['read_data'],
 
       complete = check_for_completeness(df)
 
-      # try another possibility
+      # try another possibility if df was empty or incomplete
       if not complete:
             df = load['csv']("","https://npgeo-de.maps.arcgis.com/sharing/rest/content/items/"
                                 "f10774f1c63e40168479a1feb6c7ca74/data", "")
