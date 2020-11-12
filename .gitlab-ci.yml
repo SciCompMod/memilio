@@ -93,7 +93,7 @@ build-py-win:
 build-docs:
   stage: build
   tags:
-    - SC-0030VM
+    - docker
   script:
     - cd docs
     - doxygen
