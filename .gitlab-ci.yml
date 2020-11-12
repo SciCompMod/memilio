@@ -91,9 +91,10 @@ build-py-win:
       - pycode/dist/*.whl
 
 build-docs:
-  stage: build
-  tags:
-    - docker
+  image: ubuntu:18.04
+  stage: test
+  dependencies:
+    - build-py
   script:
     - cd docs
     - doxygen
