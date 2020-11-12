@@ -77,6 +77,7 @@ def get_rki_data_with_estimations(read_data=dd.defaultDict['read_data'],
         df_rki = pd.read_json(rki_data_file)
 
         # generate new columns to store estimated values
+        # TODO Add also column infected and calculate it in the end
         df_rki[recovered_estimated] = np.nan
         #df_rki[recovered_after14days] = np.nan
         df_rki[deaths_estimated] = np.nan
@@ -106,24 +107,27 @@ def get_rki_data_with_estimations(read_data=dd.defaultDict['read_data'],
         df_rki = df_rki.drop([dstr], 1)
         gd.write_dataframe(df_rki, data_path, file_to_change + "_estimated", out_form)
 
-        # check if calculation is meaningfull
+        # check if calculation is meaningful
+        # TODO Add jh data to whole germany plot
 
         if(make_plot == True):
-           df_rki.plot(x=date, y = [recovered, recovered_estimated], title = 'COVID-19 check recovered', grid = True,
-                                style = '-o')
+           df_rki.plot(x=date, y = [recovered, recovered_estimated],
+                       title = 'COVID-19 check recovered for '+ file_to_change,
+                       grid = True, style = '-o')
            plt.tight_layout()
            plt.show()
 
-           df_rki.plot(x=date, y=[deaths, deaths_estimated], title='COVID-19 check deaths', grid=True,
-                       style='-o')
+           df_rki.plot(x=date, y=[deaths, deaths_estimated],
+                       title='COVID-19 check deaths '+ file_to_change,
+                       grid=True, style='-o')
            plt.tight_layout()
            plt.show()
 
            df_rki[week] = df_rki[date].dt.isocalendar().week
 
-           df_rki_week = df_rki.groupby(week).agg({deaths: sum, deaths_estimated: sum}).reset_index()
-
            # TODO download and plot the rki file where there are the real number of deaths dependent on week number.
+           # df_rki_week = df_rki.groupby(week).agg({deaths: sum, deaths_estimated: sum}).reset_index()
+
            #url = "https://www.rki.de/DE/Content/InfAZ/N/Neuartiges_Coronavirus/Projekte_RKI/COVID-19_Todesfaelle.xlsx?__blob=publicationFile"
 
            #df_real_deaths_per_week = pd.read_excel(url)
