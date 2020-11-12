@@ -101,7 +101,7 @@ build-docs:
   artifacts:
     expose_as: "Documentation"
     paths:
-      - docs/_build/html/index.html
+      - docs/html/
     expire_in: 3 day
 
 
@@ -256,23 +256,25 @@ www:
 
 #######################
 # Publish stage
-#pages:
-#  stage: deploy
-#  dependencies:
-#    - build-docs
-#  tags:
-#    - SC-0030VM
-#  script:
-#    - echo "Prepare basic Pages sites"
-#    - mkdir -p public/${CI_COMMIT_REF_NAME}/
-#    - cp ci_index/main_index.html public/index.html
-#    - cp ci_index/branch_index.html public/${CI_COMMIT_REF_NAME}/index.html
-#    - echo "Prepare documentation" # Prepare documentation
-#    - mkdir -p public/${CI_COMMIT_REF_NAME}/documentation
-#    - cp -r docs/_build/html/* public/${CI_COMMIT_REF_NAME}/documentation
-#  artifacts:
-#    paths:
-#      - public # All relevant content needs to be available here
-#  only:
+pages:
+  image: ubuntu:18.04
+  stage: deploy
+  dependencies:
+    - build-docs
+  tags:
+    - docker
+  script:
+    - echo "Prepare basic Pages sites"
+    - mkdir -p public/${CI_COMMIT_REF_NAME}/
+    - cp ci_index/main_index.html public/index.html
+    - cp ci_index/branch_index.html public/${CI_COMMIT_REF_NAME}/index.html
+    - echo "Prepare documentation" # Prepare documentation
+    - mkdir -p public/${CI_COMMIT_REF_NAME}/documentation
+    - cp -r docs/html/* public/${CI_COMMIT_REF_NAME}/documentation
+  artifacts:
+    paths:
+      - public # All relevant content needs to be available here
+  only:
 #    - master
+     - 269-improve-documentation-of-python-data
   
