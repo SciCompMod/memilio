@@ -10,16 +10,24 @@ from epidemiology.epidata import defaultDict as dd
 
 
 def fuse_berlin(df, group=[]):
+   print(df)
    berlin = df[(df['ID_County'].values/1000).astype(int)==11]
-   berlin = berlin.groupby(['Date'] + group).agg('sum').reset_index()
+   print(berlin)
+   berlin = berlin.groupby(['Date', 'Age5', 'Age10', 'Gender', 'ID_State', 'Refdatum', 'Meldedatum', 'ObjectId', 'State', 'County', 'Age_RKI', 'Datenstand'] + group).agg('sum').reset_index()
+
    berlin[dd.EngEng['idCounty']] = 11000
    berlin[dd.EngEng['county']] = dd.County[11000]
 
-   new_df = df[(df['ID_County'].values/1000).astype(int)!=11]
+   new_df = df[(df[dd.EngEng['idCounty']].values/1000).astype(int)!=11]
    new_df = pandas.concat([new_df, berlin], axis=0)
 
+   print(berlin)
+
    dateToUse = 'Date'
-   new_df.sort_values( dateToUse, inplace = True )
+   new_df.sort_values( [dateToUse], inplace = True )
+
+   print(new_df[new_df['ID_County']==11000])
+   print(new_df)
 
    return new_df
 
@@ -216,28 +224,29 @@ def get_rki_data(read_data=dd.defaultDict['read_data'],
 
    ############# Data for counties all ages ######################
 
+   if concat_berlin:
+      df = fuse_berlin(df)
    # NeuerFall: Infected (incl. recovered) over "dateToUse" for every county ("Landkreis"):
    gbNFc = df[df.NeuerFall >= 0].groupby([IdLandkreis, Landkreis, dateToUse])\
                                 .agg({AnzahlFall: sum})
-
    gbNFc_cs = gbNFc.groupby(level=1).cumsum().reset_index()
 
    # output
    if concat_berlin:
-      gbNFc_cs = fuse_berlin(gbNFc_cs)
       gd.write_dataframe(gbNFc_cs, directory, "infected_county_rki_concated_berlin", out_form)
    else:
       gd.write_dataframe(gbNFc_cs, directory, "infected_county_rki", out_form)
 
    # infected (incl recovered), deaths and recovered together 
 
+   if concat_berlin:
+      dfF = fuse_berlin(dfF)
    gbAllC = dfF.groupby( [IdLandkreis, Landkreis, dateToUse]).\
                 agg({AnzahlFall: sum, AnzahlTodesfall: sum, AnzahlGenesen: sum})
    gbAllC_cs = gbAllC.groupby(level=1).cumsum().reset_index()
 
    # output
    if concat_berlin:
-      gbAllC_cs = fuse_berlin(gbAllC_cs)
       gd.write_dataframe(gbAllC_cs, directory, "all_county_rki_concated_berlin", out_form)
    else:
       gd.write_dataframe(gbAllC_cs, directory, "all_county_rki", out_form)
@@ -282,8 +291,7 @@ def get_rki_data(read_data=dd.defaultDict['read_data'],
 
    # output
    if concat_berlin:
-      gbAllC_cs = fuse_berlin(gbAllGCounty_cs, [Geschlecht])
-      gd.write_dataframe(gbAllC_cs, directory, "all_county_gender_rki_concated_berlin", out_form)
+      gd.write_dataframe(gbAllGCounty_cs, directory, "all_county_gender_rki_concated_berlin", out_form)
    else:
       gd.write_dataframe(gbAllGCounty_cs, directory, "all_county_gender_rki", out_form)
   
@@ -359,8 +367,7 @@ def get_rki_data(read_data=dd.defaultDict['read_data'],
 
    # output
    if concat_berlin:
-      gbAllC_cs = fuse_berlin(gbAllAgeCounty_cs, [Altersgruppe])
-      gd.write_dataframe(gbAllC_cs, directory, "all_county_age_rki_concated_berlin", out_form)
+      gd.write_dataframe(gbAllAgeCounty_cs, directory, "all_county_age_rki_concated_berlin", out_form)
    else:
       gd.write_dataframe(gbAllAgeCounty_cs, directory, "all_county_age_rki", out_form)
 
@@ -372,8 +379,7 @@ def get_rki_data(read_data=dd.defaultDict['read_data'],
 
    # output
    if concat_berlin:
-      gbAllC_cs = fuse_berlin(gbAllAgeCounty_cs, [Altersgruppe2])
-      gd.write_dataframe(gbAllC_cs, directory, "all_county_age5_rki_concated_berlin", out_form)
+      gd.write_dataframe(gbAllAgeCounty_cs, directory, "all_county_age5_rki_concated_berlin", out_form)
    else:
       gd.write_dataframe(gbAllAgeCounty_cs, directory, "all_county_age5_rki", out_form)
 
@@ -385,8 +391,7 @@ def get_rki_data(read_data=dd.defaultDict['read_data'],
 
    # output
    if concat_berlin:
-      gbAllC_cs = fuse_berlin(gbAllAgeCounty_cs, ['Age10'])
-      gd.write_dataframe(gbAllC_cs, directory, "all_county_age10_rki_concated_berlin", out_form)
+      gd.write_dataframe(gbAllAgeCounty_cs, directory, "all_county_age10_rki_concated_berlin", out_form)
    else:
       gd.write_dataframe(gbAllAgeCounty_cs, directory, "all_county_age10_rki", out_form)
 
