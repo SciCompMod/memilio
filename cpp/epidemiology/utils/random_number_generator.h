@@ -18,7 +18,9 @@ namespace epi
  */
 inline std::mt19937_64& thread_local_rng()
 {
-    static thread_local auto rng = std::mt19937_64(std::random_device()());
+    static thread_local std::random_device rd;
+    static thread_local std::seed_seq seeds({rd(), rd(), rd(), rd(), rd(), rd()});
+    static thread_local auto rng = std::mt19937_64(seeds);
     return rng;
 }
 
