@@ -36,13 +36,16 @@
     "uuid": "7.0.3"
   },
   "devDependencies": {
-    "husky": "4.2.5",
-    "lint-staged": "10.2.11",
-    "prettier": "2.0.5",
+    "@testing-library/dom": "^7.26.6",
+    "@testing-library/jest-dom": "^5.11.6",
+    "@testing-library/react": "^11.1.2",
     "grunt": "1.1.0",
     "grunt-contrib-copy": "1.0.0",
+    "husky": "4.2.5",
+    "lint-staged": "10.2.11",
     "load-grunt-tasks": "3.5.2",
-    "node-sass": "^4.14.1"
+    "node-sass": "^4.14.1",
+    "prettier": "2.0.5"
   },
   "scripts": {
     "start": "react-scripts start",
