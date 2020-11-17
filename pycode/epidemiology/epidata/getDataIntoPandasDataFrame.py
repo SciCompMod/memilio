@@ -45,7 +45,7 @@ def loadGeojson( targetFileName, apiUrl = 'https://opendata.arcgis.com/datasets/
 
 
 def loadCsv( targetFileName, apiUrl = 'https://opendata.arcgis.com/datasets/', 
-                 extension = 'csv' ):
+                 extension = '.csv' ):
     """ Loads ArcGIS data sets in CSV format. (pandas DataFrame)
 
     This routine loads data sets (default from ArcGIS) in CSV format of the given public data 
@@ -58,7 +58,7 @@ def loadCsv( targetFileName, apiUrl = 'https://opendata.arcgis.com/datasets/',
     extension -- Data format extension (string, default 'csv')
 
     """
-    url = apiUrl + targetFileName + '.' + extension
+    url = apiUrl + targetFileName  + extension
 
     try:
        df = pandas.read_csv( url )
@@ -89,6 +89,7 @@ def cli(what):
 
    cli_dict = {"divi": ['Downloads data from DIVI', 'start_date', 'end_date', 'update'],
                "rki": ['Download data from RKI', 'plot'],
+               "rkiest": ['Download data from RKI and JH and estimate recovered and deaths', 'plot'],
                "spain": ['Download of spain data'],
                "population": ['Download population data'],
                "jh" : ['Downloads data from JH'],
@@ -97,7 +98,7 @@ def cli(what):
    try:
       what_list = cli_dict[what]
    except KeyError:
-      exit_string = "Wrong key cor cli_dict"
+      exit_string = "Wrong key or cli_dict"
       sys.exit(exit_string)
 
    out_path_default = dd.defaultDict['out_folder']
