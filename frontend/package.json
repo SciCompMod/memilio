@@ -51,6 +51,7 @@
     "start": "react-scripts start",
     "build": "react-scripts build",
     "test": "react-scripts test",
+    "coverage": "CI=true react-scripts test --passWithNoTests --coverage",
     "eject": "react-scripts eject"
   },
   "eslintConfig": {
@@ -77,6 +78,9 @@
     "src/**/*.{js,jsx,ts,tsx,json,css,scss,md}": [
       "prettier --write"
     ]
+  },
+  "jest": {
+    "coverageReporters": ["clover", "cobertura", "lcov", "text", "text-summary"]
   },
   "repository": {
     "type": "git",

@@ -201,7 +201,7 @@ download-data:
 
 build-js:
   tags:
-    - docker
+   - docker
   image: node:12
   stage: build
   before_script:
@@ -230,6 +230,19 @@ build-js-bindings:
     - frontend/build/secirjs.js
     - frontend/build/secirjs.wasm
 
+test-js:
+  stage: test
+  dependencies:
+    - build-js
+  script:
+    - cd frontend
+    - npm run coverage
+  artifacts:
+    reports:
+      cobertura: frontend/coverage/cobertura-coverage.xml
+    paths:
+      - frontend/coverage/lcov-report
+    
 www:
   tags:
     - native
