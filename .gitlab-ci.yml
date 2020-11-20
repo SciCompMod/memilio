@@ -231,11 +231,14 @@ build-js-bindings:
     - frontend/build/secirjs.wasm
 
 test-js:
+  tags:
+   - docker
+  image: node:12
   stage: test
-  dependencies:
-    - build-js
-  script:
+  before_script:
     - cd frontend
+    - npm install
+  script:
     - npm run coverage
   artifacts:
     reports:
