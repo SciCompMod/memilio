@@ -1,27 +1,97 @@
 #ifndef EPI_ABM_RANDOM_NUMBER_GENERATOR_H
 #define EPI_ABM_RANDOM_NUMBER_GENERATOR_H
 
+#include "epidemiology/utils/logging.h"
 #include "epidemiology/utils/span.h"
 
-#include <random>
-#include <functional>
 #include <cassert>
-
+#include <functional>
 #include <numeric>
+#include <random>
+#include <sstream>
 
 namespace epi
 {
 
 /**
+ * models a uniform_random_bit_generator.
+ * keeps track of its seeds so they can be logged or set.
+ * @see thread_local_rng for a static instance.
+ */
+class RandomNumberGenerator
+{
+public:
+    using result_type = std::mt19937_64::result_type;
+
+    static result_type min()
+    {
+        return std::mt19937_64::min();
+    }
+    static result_type max()
+    {
+        return std::mt19937_64::max();
+    }
+    result_type operator()()
+    {
+        return m_rng();
+    }
+
+    static std::vector<unsigned int> generate_seeds()
+    {
+        std::random_device rd;
+        return {rd(), rd(), rd(), rd(), rd(), rd()};
+    }
+
+    RandomNumberGenerator()
+        : m_seeds(generate_seeds())
+    {
+        std::seed_seq sseq(m_seeds.begin(), m_seeds.end());
+        m_rng.seed(sseq);
+    }
+    std::vector<unsigned int> get_seeds() const
+    {
+        return m_seeds;
+    }
+    void seed(const std::vector<unsigned int>& seeds)
+    {
+        m_seeds = seeds;
+        std::seed_seq sseq(m_seeds.begin(), m_seeds.end());
+        m_rng.seed(sseq);
+    }
+
+private:
+    std::vector<unsigned int> m_seeds;
+    std::mt19937_64 m_rng;
+};
+
+/**
  * get a random number generator that is static and local to this thread.
  * @return a random number generator that is static and local to this thread.
  */
-inline std::mt19937_64& thread_local_rng()
+inline RandomNumberGenerator& thread_local_rng()
 {
-    static thread_local std::random_device rd;
-    static thread_local std::seed_seq seeds({rd(), rd(), rd(), rd(), rd(), rd()});
-    static thread_local auto rng = std::mt19937_64(seeds);
+    static thread_local auto rng = RandomNumberGenerator();
     return rng;
+}
+
+inline void log_rng_seeds(const RandomNumberGenerator& rng, LogLevel level)
+{
+    const auto& seeds = rng.get_seeds();
+    std::stringstream ss;
+    bool first = true;
+    for (auto& s : seeds) {
+        if (!first) {
+            ss << ", ";
+        }
+        first = false;
+        ss << s;
+    }
+    log(level, "Using RNG with seeds: {0}.", ss.str());
+}
+
+inline void log_thread_local_rng_seeds(LogLevel level)
+{
+    log_rng_seeds(thread_local_rng(), level);
 }
 
 /**

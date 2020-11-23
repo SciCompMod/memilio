@@ -3,11 +3,14 @@
 #include <epidemiology/secir/parameter_space.h>
 #include <epidemiology/secir/parameter_studies.h>
 #include <epidemiology/migration/migration.h>
+#include <epidemiology/utils/random_number_generator.h>
 #include <gtest/gtest.h>
 #include <stdio.h>
 
 TEST(ParameterStudies, sample_from_secir_params)
 {
+    epi::log_thread_local_rng_seeds(epi::LogLevel::warn);
+
     double t0   = 0;
     double tmax = 100;
 
@@ -98,6 +101,7 @@ TEST(ParameterStudies, sample_from_secir_params)
 
 TEST(ParameterStudies, test_normal_distribution)
 {
+    epi::log_thread_local_rng_seeds(epi::LogLevel::warn);
 
     epi::ParameterDistributionNormal parameter_dist_normal_1;
 
@@ -139,6 +143,7 @@ TEST(ParameterStudies, test_normal_distribution)
 
 TEST(ParameterStudies, test_uniform_distribution)
 {
+    epi::log_thread_local_rng_seeds(epi::LogLevel::warn);
 
     // check if full argument constructor works correctly
     epi::ParameterDistributionUniform parameter_dist_unif(1.0, 10.0);
@@ -181,6 +186,8 @@ TEST(ParameterStudies, test_predefined_samples)
 
 TEST(ParameterStudies, check_ensemble_run_result)
 {
+    epi::log_thread_local_rng_seeds(epi::LogLevel::warn);
+    
     double t0   = 0;
     double tmax = 50;
 
