@@ -86,17 +86,26 @@ Run options
 There are several optional run options
 
 optional arguments working for all are:
-  -h, --help                         show this help message and exit
-  -r, --read-from-disk               Reads the data from file "json" instead of downloading it.
-  -h5, --hdf5                        Changes output format from json to hdf5.
-  -o OUT_PATH, --out_path OUT_PATH   Defines folder for output.
+-h, --help            show this help message and exit
+  -r, --read-from-disk  Reads the data from file "json" instead of downloading
+                        it.
+  -ff {json,hdf5,json_timeasstring}, --file-format {json,hdf5,json_timeasstring}
+                        Defines output format for data files. Default is
+                        "json_timeasstring".
+  -o OUT_PATH, --out-path OUT_PATH
+                        Defines folder for output.
 
 optional arguments working for some are:
-  -p, --plot                         Plots the data. [rki]
-  -sd, --start-date                  Changes date for which data collection is started [divi]
-  -ed, --end-date                    Changes date for which data collection is stopped [divi]
-  -u, -- update                      Just chronological missing data is added, **after** the existing ones
 
+  -ed END_DATE, --end-date END_DATE
+                        Defines date after which data download is
+                        stopped.Should have form: YYYY-mm-dd. Default is today
+  -p, --plot            Plots the data.
+  -sd START_DATE, --start-date START_DATE
+                        Defines start date for data download. Should have
+                        form: YYYY-mm-dd.Default is 2020-04-24
+  -u, --update          Reads the data from file "json", downloads and adds
+                        data from today.
 
 Results
 -------
