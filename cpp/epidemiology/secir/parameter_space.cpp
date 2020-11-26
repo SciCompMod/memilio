@@ -19,6 +19,11 @@ void set_params_distributions_normal(SecirParams& params, double t0, double tmax
                                                         (1 + dev_rel * 2.6) * value_params, value_params,
                                                         dev_rel * value_params));
 
+    value_params = params.get_test_and_trace_capacity();
+    params.set_test_and_trace_capacity(
+        ParameterDistributionNormal(std::max(min_val, (1 - dev_rel * 2.6) * value_params),
+                                    (1 + dev_rel * 2.6) * value_params, value_params, dev_rel * value_params));
+
     // populations
     for (size_t i = 0; i < params.get_num_groups(); i++) {
 
@@ -149,6 +154,11 @@ void set_params_distributions_normal(SecirParams& params, double t0, double tmax
             ParameterDistributionNormal(std::max(min_val, (1 - dev_rel * 2.6) * value_params),
                                         (1 + dev_rel * 2.6) * value_params, value_params, dev_rel * value_params));
 
+        value_params = params.probabilities[i].get_test_and_trace_max_risk_from_symptomatic();
+        params.probabilities[i].set_test_and_trace_max_risk_from_symptomatic(
+            ParameterDistributionNormal(std::max(min_val, (1 - dev_rel * 2.6) * value_params),
+                                        (1 + dev_rel * 2.6) * value_params, value_params, dev_rel * value_params));
+
         // deaths per icu treatments
         value_params = params.probabilities[i].get_dead_per_icu();
         params.probabilities[i].set_dead_per_icu(
@@ -182,6 +192,7 @@ void draw_sample(SecirParams& params)
 {
     params.get_seasonality().draw_sample();
     params.get_icu_capacity().draw_sample();
+    params.get_test_and_trace_capacity().draw_sample();
 
     for (size_t i = 0; i < params.get_num_groups(); i++) {
 
@@ -216,6 +227,7 @@ void draw_sample(SecirParams& params)
         params.probabilities[i].get_infection_from_contact().draw_sample();
         params.probabilities[i].get_asymp_per_infectious().draw_sample();
         params.probabilities[i].get_risk_from_symptomatic().draw_sample();
+        params.probabilities[i].get_test_and_trace_max_risk_from_symptomatic().draw_sample();
         params.probabilities[i].get_dead_per_icu().draw_sample();
         params.probabilities[i].get_hospitalized_per_infectious().draw_sample();
         params.probabilities[i].get_icu_per_hospitalized().draw_sample();

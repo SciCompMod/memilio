@@ -21,6 +21,15 @@
     <PredefinedSamples mapType="vector"></PredefinedSamples>
     <Value>1.79769e+308</Value>
   </ICUCapacity>
+  <TestAndTraceCapacity>
+    <Distribution>Normal</Distribution>
+    <Mean>1.79769e+308</Mean>
+    <Deviation>2.69654e+307</Deviation>
+    <Min>1.09659e+308</Min>
+    <Max>inf</Max>
+    <PredefinedSamples mapType="vector"></PredefinedSamples>
+    <Value>1.79769e+308</Value>
+  </TestAndTraceCapacity>
   <Group1>
     <Population>
       <Total>5000</Total>
@@ -200,6 +209,15 @@
         <PredefinedSamples mapType="vector"></PredefinedSamples>
         <Value>0.25</Value>
       </RiskFromSymptomatic>
+      <TestAndTraceMaxRiskFromSymptomatic>
+        <Distribution>Normal</Distribution>
+        <Mean>0.75</Mean>
+        <Deviation>0.0375</Deviation>
+        <Min>0.6525</Min>
+        <Max>0.8475</Max>
+        <PredefinedSamples mapType="vector"></PredefinedSamples>
+        <Value>0.75</Value>
+      </TestAndTraceMaxRiskFromSymptomatic>
       <DeadPerICU>
         <Distribution>Normal</Distribution>
         <Mean>0.3</Mean>
@@ -408,6 +426,15 @@
         <PredefinedSamples mapType="vector"></PredefinedSamples>
         <Value>0.25</Value>
       </RiskFromSymptomatic>
+      <TestAndTraceMaxRiskFromSymptomatic>
+        <Distribution>Normal</Distribution>
+        <Mean>0.75</Mean>
+        <Deviation>0.0375</Deviation>
+        <Min>0.6525</Min>
+        <Max>0.8475</Max>
+        <PredefinedSamples mapType="vector"></PredefinedSamples>
+        <Value>0.75</Value>
+      </TestAndTraceMaxRiskFromSymptomatic>
       <DeadPerICU>
         <Distribution>Normal</Distribution>
         <Mean>0.3</Mean>

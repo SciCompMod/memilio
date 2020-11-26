@@ -183,6 +183,9 @@ EMSCRIPTEN_BINDINGS(secirjs)
                   js::select_overload<void(double)>(&epi::SecirParams::Probabilities::set_asymp_per_infectious))
         .function("set_risk_from_symptomatic",
                   js::select_overload<void(double)>(&epi::SecirParams::Probabilities::set_risk_from_symptomatic))
+        .function("set_test_and_trace_max_risk_from_symptomatic",
+                  js::select_overload<void(double)>(
+                      &epi::SecirParams::Probabilities::set_test_and_trace_max_risk_from_symptomatic))
         .function("set_hospitalized_per_infectious",
                   js::select_overload<void(double)>(&epi::SecirParams::Probabilities::set_hospitalized_per_infectious))
         .function("set_icu_per_hospitalized",
@@ -199,6 +202,9 @@ EMSCRIPTEN_BINDINGS(secirjs)
                                                   &epi::SecirParams::Probabilities::get_asymp_per_infectious))
         .function("get_risk_from_symptomatic", js::select_overload<epi::UncertainValue&()>(
                                                    &epi::SecirParams::Probabilities::get_risk_from_symptomatic))
+        .function("get_test_and_trace_max_risk_from_symptomatic",
+                  js::select_overload<epi::UncertainValue&()>(
+                      &epi::SecirParams::Probabilities::get_test_and_trace_max_risk_from_symptomatic))
         .function("get_hospitalized_per_infectious",
                   js::select_overload<epi::UncertainValue&()>(
                       &epi::SecirParams::Probabilities::get_hospitalized_per_infectious))
@@ -262,6 +268,10 @@ EMSCRIPTEN_BINDINGS(secirjs)
         .property("probabilities", &epi::SecirParams::probabilities)
         .function("set_icu_capacity", js::select_overload<void(double)>(&epi::SecirParams::set_icu_capacity))
         .function("get_icu_capacity", js::select_overload<epi::UncertainValue&()>(&epi::SecirParams::get_icu_capacity))
+        .function("set_test_and_trace_capacity",
+                  js::select_overload<void(double)>(&epi::SecirParams::set_test_and_trace_capacity))
+        .function("get_test_and_trace_capacity",
+                  js::select_overload<epi::UncertainValue&()>(&epi::SecirParams::get_test_and_trace_capacity))
         .function("set_start_day", &epi::SecirParams::set_start_day)
         .function("get_start_day", &epi::SecirParams::get_start_day)
         .function("set_seasonality", js::select_overload<void(double)>(&epi::SecirParams::set_seasonality))
