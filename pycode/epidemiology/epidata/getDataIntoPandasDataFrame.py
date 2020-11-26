@@ -98,11 +98,12 @@ def cli(what):
    try:
       what_list = cli_dict[what]
    except KeyError:
-      exit_string = "Wrong key or cli_dict"
+      exit_string = "Wrong key or cli_dict."
       sys.exit(exit_string)
 
    out_path_default = dd.defaultDict['out_folder']
    out_path_default = os.path.join(out_path_default, 'pydata')
+
    check_dir(out_path_default)
 
    parser = argparse.ArgumentParser(description=what_list[0])
@@ -110,13 +111,13 @@ def cli(what):
    parser.add_argument('-r',  '--read-from-disk',
                        help='Reads the data from file "json" instead of downloading it.',
                        action='store_true')
-   parser.add_argument('-h5', '--hdf5', help='Changes output format from json to hdf5.', action='store_true')
-   parser.add_argument('-js', '--json_timeasstring', help='Changes output format from to json with date as string.',
-                       action='store_true')
+   parser.add_argument('-ff', '--file-format', type=str, default=dd.defaultDict['out_form'],
+                       choices=['json', 'hdf5', 'json_timeasstring'],
+                       help='Defines output format for data files. Default is \"' + str(dd.defaultDict['out_form']+ "\"."))
    parser.add_argument('-o', '--out-path', type=str, default=out_path_default, help='Defines folder for output.')
 
    if 'end_date' in what_list:
-       parser.add_argument('-ed', '--end_date',
+       parser.add_argument('-ed', '--end-date',
                            help='Defines date after which data download is stopped.'
                                 'Should have form: YYYY-mm-dd. Default is today',
                            type=lambda s: datetime.datetime.strptime(s, '%Y-%m-%d').date(),
@@ -125,11 +126,12 @@ def cli(what):
       parser.add_argument('-p', '--plot', help='Plots the data.',
                           action='store_true')
    if 'start_date' in what_list:
-      parser.add_argument('-sd',  '--start_date',
+      parser.add_argument('-sd',  '--start-date',
                           help='Defines start date for data download. Should have form: YYYY-mm-dd.'
                                'Default is 2020-04-24',
                           type=lambda s: datetime.datetime.strptime(s, '%Y-%m-%d').date(),
                           default = dd.defaultDict['start_date'])
+
    if 'update' in what_list:
       parser.add_argument('-u',  '--update',
                           help='Reads the data from file "json", downloads and adds data from today.',
@@ -141,13 +143,7 @@ def cli(what):
 
    READ_DATA = args.read_from_disk
    arg_list.append(READ_DATA)
-   if args.hdf5:
-      OUT_FORM = "hdf5"
-   elif args.json_timeasstring:
-      OUT_FORM = "json_timeasstring"
-   else:
-      OUT_FORM = dd.defaultDict['out_form']
-   arg_list.append(OUT_FORM)
+   arg_list.append(args.file_format)
    arg_list.append(args.out_path)
 
    # add additional arguments in alphabetical order
@@ -193,7 +189,7 @@ def write_dataframe(df, directory, file_prefix, file_type):
    if file_type == "json":
        df.to_json(os.path.join(directory, file_prefix + outFormEnd), **outFormSpec)
    elif file_type == "json_timeasstring":
-       if 'Date' in df.columns:
+       if dd.EngEng['date'] in df.columns:
             if type(df.Date.values[0]) != type("string"):
                  df.Date = df.Date.dt.strftime('%Y-%m-%d')
        df.to_json(os.path.join(directory, file_prefix + outFormEnd), **outFormSpec)
