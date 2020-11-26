@@ -59,7 +59,7 @@ def fuse_berlin(df, group=[]):
 def get_rki_data(read_data=dd.defaultDict['read_data'],
                  out_form=dd.defaultDict['out_form'],
                  out_folder=dd.defaultDict['out_folder'],
-                 concat_berlin=dd.defaultDict['concat_berlin'],
+                 split_berlin=dd.defaultDict['split_berlin'],
                  make_plot=dd.defaultDict['make_plot']
 ):
 
@@ -268,7 +268,7 @@ def get_rki_data(read_data=dd.defaultDict['read_data'],
 
    ############# Data for counties all ages ######################
 
-   if concat_berlin:
+   if split_berlin:
       df = fuse_berlin(df)
    # NeuerFall: Infected (incl. recovered) over "dateToUse" for every county ("Landkreis"):
    gbNFc = df[df.NeuerFall >= 0].groupby([IdLandkreis, Landkreis, dateToUse])\
@@ -276,22 +276,22 @@ def get_rki_data(read_data=dd.defaultDict['read_data'],
    gbNFc_cs = gbNFc.groupby(level=1).cumsum().reset_index()
 
    # output
-   if concat_berlin:
-      gd.write_dataframe(gbNFc_cs, directory, "infected_county_rki_concated_berlin", out_form)
+   if split_berlin:
+      gd.write_dataframe(gbNFc_cs, directory, "infected_county_rki_splited_berlin", out_form)
    else:
       gd.write_dataframe(gbNFc_cs, directory, "infected_county_rki", out_form)
 
    # infected (incl recovered), deaths and recovered together 
 
-   if concat_berlin:
+   if split_berlin:
       dfF = fuse_berlin(dfF)
    gbAllC = dfF.groupby( [IdLandkreis, Landkreis, dateToUse]).\
                 agg({AnzahlFall: sum, AnzahlTodesfall: sum, AnzahlGenesen: sum})
    gbAllC_cs = gbAllC.groupby(level=1).cumsum().reset_index()
 
    # output
-   if concat_berlin:
-      gd.write_dataframe(gbAllC_cs, directory, "all_county_rki_concated_berlin", out_form)
+   if split_berlin:
+      gd.write_dataframe(gbAllC_cs, directory, "all_county_rki_splited_berlin", out_form)
    else:
       gd.write_dataframe(gbAllC_cs, directory, "all_county_rki", out_form)
    
@@ -335,8 +335,8 @@ def get_rki_data(read_data=dd.defaultDict['read_data'],
    gbAllGCounty_cs = gbAllGCounty.groupby(level=[1,2]).cumsum().reset_index()
 
    # output
-   if concat_berlin:
-      gd.write_dataframe(gbAllGCounty_cs, directory, "all_county_gender_rki_concated_berlin", out_form)
+   if split_berlin:
+      gd.write_dataframe(gbAllGCounty_cs, directory, "all_county_gender_rki_splited_berlin", out_form)
    else:
       gd.write_dataframe(gbAllGCounty_cs, directory, "all_county_gender_rki", out_form)
   
@@ -411,8 +411,8 @@ def get_rki_data(read_data=dd.defaultDict['read_data'],
    gbAllAgeCounty_cs = gbAllAgeCounty.groupby(level=[1,2]).cumsum().reset_index()
 
    # output
-   if concat_berlin:
-      gd.write_dataframe(gbAllAgeCounty_cs, directory, "all_county_age_rki_concated_berlin", out_form)
+   if split_berlin:
+      gd.write_dataframe(gbAllAgeCounty_cs, directory, "all_county_age_rki_splited_berlin", out_form)
    else:
       gd.write_dataframe(gbAllAgeCounty_cs, directory, "all_county_age_rki", out_form)
 
@@ -425,8 +425,8 @@ def get_rki_data(read_data=dd.defaultDict['read_data'],
 
    # output
    '''
-   if concat_berlin:
-      gd.write_dataframe(gbAllAgeCounty_cs, directory, "all_county_age5_rki_concated_berlin", out_form)
+   if split_berlin:
+      gd.write_dataframe(gbAllAgeCounty_cs, directory, "all_county_age5_rki_splited_berlin", out_form)
    else:
       gd.write_dataframe(gbAllAgeCounty_cs, directory, "all_county_age5_rki", out_form)
    '''
@@ -439,8 +439,8 @@ def get_rki_data(read_data=dd.defaultDict['read_data'],
 
    # output
    '''
-   if concat_berlin:
-      gd.write_dataframe(gbAllAgeCounty_cs, directory, "all_county_age10_rki_concated_berlin", out_form)
+   if split_berlin:
+      gd.write_dataframe(gbAllAgeCounty_cs, directory, "all_county_age10_rki_splited_berlin", out_form)
    else:
       gd.write_dataframe(gbAllAgeCounty_cs, directory, "all_county_age10_rki", out_form)
    '''
@@ -448,9 +448,9 @@ def get_rki_data(read_data=dd.defaultDict['read_data'],
 
 def main():
 
-   [read_data, out_form, out_folder, concat_berlin, make_plot] = gd.cli("rki")
+   [read_data, out_form, out_folder, split_berlin, make_plot] = gd.cli("rki")
 
-   get_rki_data(read_data, out_form, out_folder, concat_berlin, make_plot)
+   get_rki_data(read_data, out_form, out_folder, split_berlin, make_plot)
 
 if __name__ == "__main__":
 

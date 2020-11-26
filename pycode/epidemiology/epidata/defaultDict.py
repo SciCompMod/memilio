@@ -16,7 +16,7 @@ defaultDict = {
    'update_data': False,
    'start_date': date(2020, 4, 24),
    'end_date': date.today(),
-   'concat_berlin': False,
+   'split_berlin': False,
    'out_form': 'json_timeasstring'
 }
 
