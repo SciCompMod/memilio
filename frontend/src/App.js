@@ -56,12 +56,12 @@ class App extends Component {
     await rki.populate();
 
     await this.progress({label: 'Initializing application'});
-    const p = await population.getByKey(-1);
+    const p = await population.getByKey('0');
     const {start, end} = await rki.getTimeBounds();
 
     this.props.setTimeBounds({start, end});
     this.props.setSelected({
-      id: 0,
+      id: '0',
       dataset: 'germany',
       label: 'Deutschland',
       population: p.population,
