@@ -16,7 +16,6 @@ target_compile_features(secirjs PRIVATE cxx_std_14)
 
 target_link_libraries(secirjs PRIVATE epidemiology)
 set_target_properties(secirjs PROPERTIES LINK_FLAGS  "--bind -s MODULARIZE=1 -s EXPORT_NAME=\"secirjs\" -s INITIAL_MEMORY=536870912")
-# add_link_options("SHELL:-s INITIAL_MEMORY=536870912")
 
 if (CMAKE_BUILD_TYPE STREQUAL "Debug" OR CMAKE_BUILD_TYPE STREQUAL "debug" OR CMAKE_BUILD_TYPE STREQUAL "DEBUG")
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -s ASSERTIONS=1 -O0 -g3 -fsanitize=address")
