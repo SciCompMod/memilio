@@ -111,12 +111,13 @@ export const calculateDamping = (measures, base_date, days) => {
 };
 
 /**
- * Rounds the timestamp down to UTC Midnight.
+ * Rounds the timestamp down to UTC Noon.
  * @param timestamp {number}
  * @return {number}
  */
-export function roundToUTCMidnight(timestamp) {
-  return timestamp - (timestamp % (24 * 60 * 60 * 1000));
+export function roundToUTCNoon(timestamp) {
+  const MILLIS_TO_HOURS = 60 * 60 * 1000;
+  return timestamp - (timestamp % (24 * MILLIS_TO_HOURS)) + 12 * MILLIS_TO_HOURS;
 }
 
 /**
@@ -147,23 +148,35 @@ export function filterJSObject(object, filterFn) {
  * @return {string} A two digit number describing the corresponding federal state key.
  */
 export function stateIdFromCountyId(countyId) {
+  if (!isCountyId(countyId)) {
+    throw Error('Given parameter is not a valid county id!');
+  }
+
   return countyId.substr(0, 2);
 }
 
 /**
+ * Tests if the given string is containing two digits. Note that this alone is
+ * not enough to validate as a state id, since only "01" to "16" are valid. But
+ * this check is much easier.
+ *
  * @param id {string}
  * @return {boolean}
  */
 export function isStateId(id) {
-  return id.length === 2;
+  return id.length === 2 && /^\d+$/.test(id); // assert it only contains digits
 }
 
 /**
+ * Tests if the given string is containing five digits. Note that this alone is
+ * not enough to validate as a county id, since only a subset of combinations is
+ * correct. A correct parser would be way out of scope currently.
+ *
  * @param id {string}
  * @return {boolean}
  */
 export function isCountyId(id) {
-  return id.length === 5;
+  return id.length === 5 && /^\d+$/.test(id); // assert it only contains digits
 }
 
 /**
@@ -188,5 +201,9 @@ export function lastElement(array) {
  * @return {string}
  */
 export function replaceLastChar(string, replacement) {
+  if (string.length === 0) {
+    throw RangeError("Can't replace the last character of an empty string!");
+  }
+
   return string.slice(0, -1) + replacement;
 }
