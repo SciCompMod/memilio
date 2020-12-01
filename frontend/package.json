@@ -80,7 +80,13 @@
     ]
   },
   "jest": {
-    "coverageReporters": ["clover", "cobertura", "lcov", "text", "text-summary"]
+    "coverageReporters": [
+      "clover",
+      "cobertura",
+      "lcov",
+      "text",
+      "text-summary"
+    ]
   },
   "repository": {
     "type": "git",
