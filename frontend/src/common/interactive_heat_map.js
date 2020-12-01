@@ -27,11 +27,11 @@ export default class InteractiveHeatMap {
   /** @type boolean */
   #seriesHit = false;
 
-  /** @type number */
-  selectedState = -1;
+  /** @type string */
+  selectedState = '0';
 
-  /** @type number */
-  selectedCounty = -1;
+  /** @type string */
+  selectedCounty = '0';
 
   /** @callback StateSelectedCallback
    *  @param newState {StateMetaData} */
@@ -93,8 +93,8 @@ export default class InteractiveHeatMap {
     const zoomOutEvent = () => {
       this.onStateSelected(null);
       this.onCountySelected(null);
-      this.selectedCounty = -1;
-      this.stateSelected({id: -1});
+      this.selectedCounty = '0';
+      this.stateSelected({id: '0'});
     };
 
     this.#map.events.on('hit', () => {
@@ -142,7 +142,7 @@ export default class InteractiveHeatMap {
     countyPolygonTemplate.events.on('hit', (e) => {
       this.#seriesHit = true;
       const item = e.target.dataItem.dataContext;
-      this.selectedCounty = item !== null ? parseInt(item.RS, 10) : -1;
+      this.selectedCounty = item !== null ? item.RS : '0';
       this.onCountySelected(item);
     });
 
@@ -173,11 +173,11 @@ export default class InteractiveHeatMap {
     this.#dataSetLabel.text = 'Dataset: ' + name;
   }
 
-  /** @param values {Map<number, number>} */
+  /** @param values {Map<string, number>} */
   setStateValues(values) {
     if (values) {
       for (let stateDatum of this.#stateChoroplethSeries.data) {
-        stateDatum.value = values.get(stateDatum.id) ?? 0;
+        stateDatum.value = values.get(stateDatum.AGS) ?? 0;
       }
 
       this.#stateChoroplethSeries.invalidateRawData();
@@ -191,20 +191,20 @@ export default class InteractiveHeatMap {
     }
 
     for (let countyDatum of this.#countySeries.data) {
-      countyDatum.value = values.get(parseInt(countyDatum.RS, 10)) ?? 0;
+      countyDatum.value = values.get(countyDatum.RS) ?? 0;
     }
 
     this.#countySeries.invalidateRawData();
   }
 
   /** @private
-   *  @param id {number} */
-  stateSelected(id) {
-    if (id > 0) {
-      this.selectedState = id;
+   *  @param selectedState {any} */
+  stateSelected(selectedState) {
+    if (selectedState.id !== '0') {
+      this.selectedState = selectedState.id.toString().padStart(2, '0');
     } else {
       // No state is selected.
-      this.selectedState = -1;
+      this.selectedState = '0';
       this.#map.goHome();
     }
   }

@@ -41,14 +41,14 @@ class TimeMap extends React.Component {
       if (newState !== null) {
         this.props.setSelected({
           dataset: 'states',
-          id: newState.id,
+          id: newState.id.toString().padStart(2, '0'),
           label: newState.name,
           population: newState.destatis.population,
         });
       } else {
         this.props.setSelected({
           dataset: 'germany',
-          id: -1,
+          id: '0',
           label: this.props.t('germany'),
           population: '83166711 ',
         });
@@ -63,7 +63,7 @@ class TimeMap extends React.Component {
       if (newCounty !== null) {
         this.props.setSelected({
           dataset: 'counties',
-          id: parseInt(newCounty.RS, 10),
+          id: newCounty.RS,
           label: `${newCounty.BEZ} ${newCounty.GEN}`,
           population: newCounty.destatis.population,
         });
@@ -89,7 +89,7 @@ class TimeMap extends React.Component {
         states = new Map(states); // clone previous date so there are no holes in data
       }
 
-      if (stateId > 0) {
+      if (stateId !== '0') {
         states.set(stateId, confirmed - recovered);
       }
     }
@@ -129,7 +129,7 @@ class TimeMap extends React.Component {
   calcSeirData() {
     const times = new Map();
 
-    /** @type Map<number, number> | null */
+    /** @type Map<string, number> | null */
     let lastRegions = null;
     for (let d = this.props.time.startDate; d < this.props.time.endDate; d += 24 * 60 * 60 * 1000) {
       let date = roundToUTCMidnight(d);
@@ -139,11 +139,11 @@ class TimeMap extends React.Component {
         const value = region.find((e) => e.date >= date);
 
         if (value) {
-          regions.set(parseInt(id), value.I);
+          regions.set(id, value.I);
         } else if (lastRegions !== null) {
-          regions.set(parseInt(id), lastRegions.get(parseInt(id)));
+          regions.set(id, lastRegions.get(id));
         } else {
-          regions.set(parseInt(id), 0);
+          regions.set(id, 0);
         }
       }
 
@@ -194,14 +194,14 @@ class TimeMap extends React.Component {
     if (prevProps.time.currentDate !== currDate) {
       if (this.props.seirRegions !== null) {
         this.#map.setDataSetName('SEIR');
-        if (this.#map.selectedState !== -1) {
+        if (this.#map.selectedState !== '0') {
           this.#map.setCountyValues(this.state.seirTimes.get(currDate));
         } else {
           this.#map.setStateValues(this.state.seirTimes.get(currDate));
         }
       } else {
         this.#map.setDataSetName('RKI');
-        if (this.#map.selectedState === -1 && this.state.countyTimes.has(currDate)) {
+        if (this.#map.selectedState === '0' && this.state.countyTimes.has(currDate)) {
           this.#map.setCountyValues(this.state.countyTimes.get(currDate));
         }
 
