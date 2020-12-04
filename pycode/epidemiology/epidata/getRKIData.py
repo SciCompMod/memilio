@@ -38,7 +38,7 @@ def fuse_berlin(df, group=[]):
    print(df)
    berlin = df[(df['ID_County'].values/1000).astype(int)==11]
    print(berlin)
-   berlin = berlin.groupby(['Date', 'Age5', 'Age10', 'Gender', 'ID_State', 'Refdatum', 'Meldedatum', 'ObjectId', 'State', 'County', 'Age_RKI', 'Datenstand'] + group).agg('sum').reset_index()
+   berlin = berlin.groupby(['Date', 'Gender', 'ID_State', 'State', 'County', 'Age_RKI'] + group).agg('sum').reset_index()
 
    berlin[dd.EngEng['idCounty']] = 11000
    berlin[dd.EngEng['county']] = dd.County[11000]
@@ -268,7 +268,7 @@ def get_rki_data(read_data=dd.defaultDict['read_data'],
 
    ############# Data for counties all ages ######################
 
-   if split_berlin:
+   if not split_berlin:
       df = fuse_berlin(df)
    # NeuerFall: Infected (incl. recovered) over "dateToUse" for every county ("Landkreis"):
    gbNFc = df[df.NeuerFall >= 0].groupby([IdLandkreis, Landkreis, dateToUse])\
@@ -283,7 +283,7 @@ def get_rki_data(read_data=dd.defaultDict['read_data'],
 
    # infected (incl recovered), deaths and recovered together 
 
-   if split_berlin:
+   if not split_berlin:
       dfF = fuse_berlin(dfF)
    gbAllC = dfF.groupby( [IdLandkreis, Landkreis, dateToUse]).\
                 agg({AnzahlFall: sum, AnzahlTodesfall: sum, AnzahlGenesen: sum})
