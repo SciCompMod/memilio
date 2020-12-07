@@ -7,14 +7,17 @@ import pycode.epidemiology.epidata.getRKIData as getRKIData
 import datetime
 
 """function to get RKI and DIVI data on a specific given day, json files with data are downloaded in file 'Germany' if not downloaded before
-additional one can plot RKI and DIVI data- just run this file."""
+additional one can plot RKI and DIVI data and age resolved incidence-values- just run this file."""
 
-#yesterday = pd.Timestamp(datetime.date.today()) - pd.DateOffset(days=1)
-yesterday = pd.Timestamp('2020.10.28')
+yesterday = pd.Timestamp(datetime.date.today()) - pd.DateOffset(days=1)
+endday_divi = pd.Timestamp('2020.10.28')
 
 # if True, plots will be saved in folder RKI_plots
 saveplot_RKI_and_DIVI = False
-
+#population data from Statistisches Bundesamt 31.12.2019 as RKI used since 08.10.2020
+#age_group_population_total=[3961376,7429883,19117865,28919134,18057318,5681135]
+#population data from 31.12.2018 as RKI used from beginning until 08.10.2020
+age_group_population_total=[3926397,7364418,19213113,29137839,17988340,5389106]
 
 def get_day_confirmed(day=pd.Timestamp('2020.02.02')):
     """get confirmed value of whole Germany on input day in format [confirmedvalue]"""
@@ -25,8 +28,7 @@ def get_day_confirmed(day=pd.Timestamp('2020.02.02')):
         getRKIData.get_rki_data(out_folder='../examples', make_plot=False)
     df = pd.read_json("Germany/infected_rki.json")
     start_date = day
-    end_date = day + pd.DateOffset(days=1)
-    mask = (df['Date'] > start_date) & (df['Date'] <= end_date)
+    mask = (df['Date'] == start_date)
     if df.loc[mask].empty:
         #on this day, no additional people got confirmed, so one have to take confirmed value from day before
         start_date = start_date - pd.DateOffset(days=1)
@@ -70,8 +72,8 @@ def get_day_death(day=pd.Timestamp('2020.02.02')):
         getRKIData.get_rki_data(out_folder='../examples', make_plot=False)
     df = pd.read_json("Germany/deaths_rki.json")
     start_date = day
-    end_date = day + pd.DateOffset(days=1)
-    mask = (df['Date'] > start_date) & (df['Date'] <= end_date)
+    mask=(df['Date'] == start_date)
+
     if df.loc[mask].empty:
         start_date = start_date - pd.DateOffset(days=1)
         return get_day_death(day=start_date)
@@ -83,10 +85,10 @@ def plot_RKI(daystart=pd.Timestamp('2020.01.28'), simulationperiod=100, comp='Co
     options for comp: 'Confirmed','Death'''
     if not (daystart + pd.DateOffset(days=simulationperiod) <= yesterday):
         simulationperiod = yesterday.dayofyear - daystart.dayofyear
-    t = range(simulationperiod)
     list = get_timeperiod_RKI(startday=daystart, endday=daystart + pd.DateOffset(days=simulationperiod), comp=comp)
 
     list = np.asarray(list)
+    t = range(len(list))
     datelist = np.array(
         pd.date_range(daystart.date(), periods=simulationperiod, freq='D').strftime('%m-%d').tolist())
     tick_range = (np.arange(int(simulationperiod / 10) + 1) * 10)
@@ -108,7 +110,6 @@ def plot_RKI_last7days(daystart=pd.Timestamp('2020.01.28'), simulationperiod=100
     '''function plotting on each day the the average Confirmed RKI-Data from last 7 days'''
     if not(daystart + pd.DateOffset(days=simulationperiod) <= yesterday):
         simulationperiod = yesterday.dayofyear - daystart.dayofyear
-    t = range(simulationperiod - 6)
 
     list = get_timeperiod_RKI(startday=daystart, endday=daystart + pd.DateOffset(days=simulationperiod), comp=comp)
     list = np.asarray(list)
@@ -119,6 +120,8 @@ def plot_RKI_last7days(daystart=pd.Timestamp('2020.01.28'), simulationperiod=100
     listerg = listerg / 7
     erg = listerg[6:]
     erg = erg[0:len(erg) - 6]
+
+    t=range(len(erg))
 
     datelist = np.array(
         pd.date_range((daystart + pd.DateOffset(days=6)).date(), periods=simulationperiod - 6, freq='D').strftime(
@@ -152,9 +155,7 @@ def get_day_age(day=pd.Timestamp('2020.02.02'), comp='Confirmed', interpol_unkno
         print('Download RKI Data from the Internet, takes some time')
         getRKIData.get_rki_data(out_folder='../examples', make_plot=False)
     df = pd.read_json("Germany/all_age_rki.json")
-    start_date = day
-    end_date = day + pd.DateOffset(days=1)
-    mask = (df['Date'] > start_date) & (df['Date'] <= end_date)
+    mask = (df['Date'] == day)
 
     if comp == 'Death':
         ret = df.loc[mask].iloc[:, 3].values
@@ -182,7 +183,8 @@ def get_day_age(day=pd.Timestamp('2020.02.02'), comp='Confirmed', interpol_unkno
     if len(ret) == 7 and interpol_unknown:
         new = np.array([0] * 6)
         new[0:6] = ret[0:6]
-        new = new + (ret[6] / 6)
+        help = np.array([(1 / sum(age_group_population_total))] * len(age_group_population_total))
+        new = new + age_group_population_total * help * ret[6]
         ret = new
 
     return ret
@@ -193,8 +195,8 @@ def get_timeperiod_age_RKI(daystart=pd.Timestamp('2020.01.28'), simulationperiod
     list = []
     t = range(simulationperiod)
     for i in t:
-        if i==0:
-            ret = get_day_age(day=daystart + pd.DateOffset(days=i), comp=comp, interpol_unknown=True,search_for_last=True)
+        if i == 0:
+            ret = get_day_age(day=daystart, comp=comp, interpol_unknown=True,search_for_last=True)
         else:
             ret = get_day_age(day=daystart + pd.DateOffset(days=i), comp=comp, interpol_unknown=False,search_for_last=False)
             if 0 in ret:
@@ -207,22 +209,20 @@ def get_timeperiod_age_RKI(daystart=pd.Timestamp('2020.01.28'), simulationperiod
             if len(ret) == 7:
                 new = np.array([0] * 6)
                 new[0:6] = ret[0:6]
-                new = new + (ret[6] / 6)
+                help=np.array([(1/sum(age_group_population_total))]*len(age_group_population_total))
+                new = new + age_group_population_total*help*ret[6]
                 ret = new
         list.append(ret.tolist())
     return list
 
 def plot_age(daystart=pd.Timestamp('2020.01.28'), simulationperiod=100, comp='Confirmed'):
     ages = ["[0,5)", "[5,15)", "[15,35)", "[35,60)", "[60,80)", "80+"]
-    if daystart + pd.DateOffset(days=simulationperiod) <= yesterday:
-        t = range(simulationperiod)
-    else:
+    if not(daystart + pd.DateOffset(days=simulationperiod) <= yesterday):
         simulationperiod = yesterday.dayofyear - daystart.dayofyear
-        t = range(simulationperiod)
     list=get_timeperiod_age_RKI(daystart=daystart, simulationperiod=simulationperiod, comp=comp)
 
     list = np.asarray(list)
-    # list=np.transpose(list)
+    t=range(len(list))
     datelist = np.array(
         pd.date_range(daystart.date(), periods=simulationperiod, freq='D').strftime('%m-%d').tolist())
     tick_range = (np.arange(int(simulationperiod / 10) + 1) * 10)
@@ -240,6 +240,74 @@ def plot_age(daystart=pd.Timestamp('2020.01.28'), simulationperiod=100, comp='Co
     if saveplot_RKI_and_DIVI:
         fig.savefig('RKI_plots/RKI_ageresolved_plot_until_' + yesterday.strftime(
             "%d.%m.%Y") + '_' + comp + '.png')
+
+def plot_age_incidence(daystart=pd.Timestamp('2020.01.28'), simulationweeks=28):
+    '''one can compare these incidence plot with RKI report from 2020-09-15 '''
+    simulationperiod=simulationweeks*7
+
+    ages = ["[0,5)", "[5,15)", "[15,35)", "[35,60)", "[60,80)", "80+"]
+    if not (daystart + pd.DateOffset(days=simulationperiod) <= yesterday):
+        simulationperiod = yesterday.dayofyear - daystart.dayofyear
+
+    list=get_timeperiod_age_RKI(daystart=daystart, simulationperiod=simulationperiod, comp='Confirmed')
+
+    list = np.asarray(list)
+    t=np.arange(daystart.isocalendar()[1],daystart.isocalendar()[1]+simulationweeks)
+    result=np.zeros((simulationweeks,len(ages)))
+    for i in range(simulationweeks):
+        #calculate new reported cases per week per age group
+        result[i,:]=list[(i+1)*7-1,:]-list[i*7,:]
+    for j in range(len(ages)):
+        # new reported cases per 100000 residents
+        result[:,j]=result[:,j]*(100000/age_group_population_total[j])
+
+    fig, ax = plt.subplots()
+
+    for age in range(len(ages)):
+        ax.plot(t, result[:, age], label=ages[age])
+    ax.set_title("Icidence-values")
+    ax.set(ylabel='new reported cases per 100000 residents in calendar week',xlabel='calendar week')
+    ax.legend()
+    ax.grid(linestyle='dotted')
+    if saveplot_RKI_and_DIVI:
+        fig.savefig('RKI_plots/RKI_ageresolved_plot_until_' + yesterday.strftime(
+            "%d.%m.%Y") + '_incidence.png')
+
+def plot_age_incidence_daily(daystart=pd.Timestamp('2020.01.28'), simulationperiod=200):
+    ages = ["[0,5)", "[5,15)", "[15,35)", "[35,60)", "[60,80)", "80+"]
+    if not (daystart + pd.DateOffset(days=simulationperiod) <= yesterday):
+        simulationperiod = yesterday.dayofyear - daystart.dayofyear
+
+    list=get_timeperiod_age_RKI(daystart=daystart-pd.DateOffset(days=7), simulationperiod=simulationperiod+7, comp='Confirmed')
+
+    list = np.asarray(list)
+    t=range(len(list)-7)
+    result=np.zeros((simulationperiod,len(ages)))
+    for i in range(simulationperiod):
+        #calculate new reported cases per week per age group
+        result[i,:]=list[i+6,:]-list[i,:]
+    for j in range(len(ages)):
+        # new reported cases per 100000 residents
+        result[:,j]=result[:,j]*(100000/age_group_population_total[j])
+    datelist = np.array(
+        pd.date_range(daystart.date(), periods=simulationperiod, freq='D').strftime('%m-%d').tolist())
+    tick_range = (np.arange(int(simulationperiod / 10) + 1) * 10)
+    tick_range[-1] -= 1
+    fig, ax = plt.subplots()
+
+
+    for age in range(len(ages)):
+        ax.plot(t, result[:, age], label=ages[age])
+    ax.set_title("Icidence-values daily")
+    ax.set_xticks(tick_range)
+    ax.set_xticklabels(datelist[tick_range], rotation=45)
+    ax.set(ylabel='new reported cases per 100000 residents in calendar week',xlabel='calendar week')
+    ax.legend()
+    ax.grid(linestyle='dotted')
+    if saveplot_RKI_and_DIVI:
+        fig.savefig('RKI_plots/RKI_ageresolved_plot_until_' + yesterday.strftime(
+            "%d.%m.%Y") + '_incidence_daily.png')
+
 
 
 # countyresolved
@@ -271,7 +339,7 @@ def get_day_DIVI(day=pd.Timestamp('2020.03.27')):
     else:
         if not os.path.exists('Germany') or not os.path.exists('Germany/germany_divi.json'):
             print('Download DIVI Data from the Internet, takes some time')
-            getDIVIData.get_divi_data(out_folder='../examples', end_date=yesterday)
+            getDIVIData.get_divi_data(out_folder='../examples', end_date=endday_divi)
         df = pd.read_json("Germany/germany_divi.json")
         start_date = day
         end_date = day + pd.DateOffset(days=1)
@@ -285,10 +353,10 @@ def get_day_DIVI(day=pd.Timestamp('2020.03.27')):
 def plot_DIVI(daystart=pd.Timestamp('2020.04.25'), simulationperiod=100):
     '''prints DIVI Data Beginning on daystart for simulationperiod days '''
     list = []
-    if daystart + pd.DateOffset(days=simulationperiod) <= yesterday:
+    if daystart + pd.DateOffset(days=simulationperiod) <= endday_divi:
         t = range(simulationperiod + 1)
     else:
-        simulationperiod = yesterday.dayofyear - daystart.dayofyear
+        simulationperiod = endday_divi.dayofyear - daystart.dayofyear
         t = range(simulationperiod + 1)
     for i in t:
         ret = get_day_DIVI(day=daystart + pd.DateOffset(days=i))
@@ -308,7 +376,7 @@ def plot_DIVI(daystart=pd.Timestamp('2020.04.25'), simulationperiod=100):
     ax.set(ylabel='number of people')
     ax.grid(linestyle='dotted')
     if saveplot_RKI_and_DIVI:
-        fig.savefig('RKI_plots/DIVI_plot_until_' + yesterday.strftime("%d.%m.%Y") + '.png')
+        fig.savefig('RKI_plots/DIVI_plot_until_' + endday_divi.strftime("%d.%m.%Y") + '.png')
 
 
 def get_day_countyDIVI(day=pd.Timestamp('2020.03.27'), county='SK Köln'):
@@ -319,7 +387,7 @@ def get_day_countyDIVI(day=pd.Timestamp('2020.03.27'), county='SK Köln'):
     else:
         if not os.path.exists('Germany') or not os.path.exists('Germany/county_divi.json'):
             print('Download DIVI Data from the Internet, takes some time')
-            getDIVIData.get_divi_data(out_folder='../examples', end_date=yesterday)
+            getDIVIData.get_divi_data(out_folder='../examples', end_date=endday_divi)
         df = pd.read_json("Germany/county_divi.json")
         start_date = day
         end_date = day + pd.DateOffset(days=1)
@@ -336,12 +404,16 @@ if __name__ == "__main__":
             os.makedirs('RKI_plots')
 
     simulationperiod=300
+    daystart = pd.Timestamp('2020.03.02')
     if True:
-        plot_RKI_last7days(simulationperiod=simulationperiod)
-        plot_RKI_last7days(simulationperiod=simulationperiod,comp='Death')
+        plot_age_incidence(daystart=daystart, simulationweeks=28)
+        plot_age_incidence_daily(daystart=daystart, simulationperiod=28*7)
+    if True:
+        plot_RKI_last7days(daystart=daystart,simulationperiod=simulationperiod)
+        plot_RKI_last7days(daystart=daystart,simulationperiod=simulationperiod,comp='Death')
         plot_DIVI(simulationperiod=simulationperiod)
-        plot_age(simulationperiod=simulationperiod)
-        plot_age(simulationperiod=simulationperiod, comp='Death')
-        plot_RKI(daystart=pd.Timestamp('2019.12.30'),simulationperiod=simulationperiod)
-        plot_RKI(simulationperiod=simulationperiod, comp='Death')
+        plot_age(daystart=daystart,simulationperiod=simulationperiod)
+        plot_age(daystart=daystart,simulationperiod=simulationperiod, comp='Death')
+        plot_RKI(daystart=daystart,simulationperiod=simulationperiod)
+        plot_RKI(daystart=daystart,simulationperiod=simulationperiod, comp='Death')
     plt.show()
