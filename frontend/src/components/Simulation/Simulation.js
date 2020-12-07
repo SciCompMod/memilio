@@ -293,7 +293,7 @@ class Simulation extends Component {
 
     simulateRegion({
       ...this.props.selected,
-      id: this.props.selected.id === 0 ? -1 : this.props.selected.id,
+      id: this.props.selected.id,
     }).then((selectedResult) => this.props.setData(selectedResult));
   }
 

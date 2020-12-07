@@ -138,32 +138,32 @@ export function filterJSObject(object, filterFn) {
 }
 
 /**
- * County ids are defined as state id (SS) and three numbers (CCC) => SSCCC. We can get the State id by getting rid of
- * the last three numbers.
+ * County ids are defined as state id (SS) and three numbers (CCC) => SSCCC. We can get the State id by getting the
+ * first two numbers.
  *
  * See: https://en.wikipedia.org/wiki/Community_Identification_Number#Germany
  *
- * @param countyId {number} A four or five digit number describing a federal county key.
- * @return {number} A one or two digit number describing the corresponding federal state key.
+ * @param countyId {string} A five digit number describing a federal county key.
+ * @return {string} A two digit number describing the corresponding federal state key.
  */
 export function stateIdFromCountyId(countyId) {
-  return Math.floor(countyId / 1000);
+  return countyId.substr(0, 2);
 }
 
 /**
- * @param id {number}
+ * @param id {string}
  * @return {boolean}
  */
 export function isStateId(id) {
-  return id > 0 && id < 100;
+  return id.length === 2;
 }
 
 /**
- * @param id {number}
+ * @param id {string}
  * @return {boolean}
  */
 export function isCountyId(id) {
-  return id > 999;
+  return id.length === 5;
 }
 
 /**
@@ -182,6 +182,7 @@ export function lastElement(array) {
 
 /**
  *
+
  * @param string {string}
  * @param replacement {string}
  * @return {string}

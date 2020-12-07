@@ -29,8 +29,8 @@ class RKISQLStore extends SQLDatastore {
       columns: [
         new SQLColumn('level', SQLType.INT2, true),
 
-        new SQLColumn('stateId', SQLType.INT),
-        new SQLColumn('countyId', SQLType.INT),
+        new SQLColumn('stateId', SQLType.TEXT),
+        new SQLColumn('countyId', SQLType.TEXT),
 
         new SQLColumn('name', SQLType.TEXT),
 
@@ -53,7 +53,7 @@ class RKISQLStore extends SQLDatastore {
     for (const datum of data) {
       dataTransformed.push([
         this.Level.STATE,
-        datum.ID_State,
+        datum.ID_State.toString().padStart(2, '0'),
         null,
         datum.State,
         datum.Date,
@@ -73,8 +73,8 @@ class RKISQLStore extends SQLDatastore {
     for (const datum of data) {
       dataTransformed.push([
         this.Level.COUNTY,
-        stateIdFromCountyId(datum.ID_County),
-        datum.ID_County,
+        stateIdFromCountyId(datum.ID_County.toString().padStart(5, '0')),
+        datum.ID_County.toString().padStart(5, '0'),
         datum.County,
         datum.Date,
         datum.Confirmed,
@@ -111,7 +111,7 @@ class RKISQLStore extends SQLDatastore {
 
   /**
    * Returns all entries for the given state.
-   * @param stateId{number}
+   * @param stateId{string}
    * @param columns{string} Comma separated list of column names.
    * @return {Promise<Array<{date: number, confirmed: number, recovered: number, deaths: number}>>}
    */
@@ -122,7 +122,7 @@ class RKISQLStore extends SQLDatastore {
 
   /**
    * Returns all entries for the given state in the specified date range.
-   * @param stateId{number}
+   * @param stateId{string}
    * @param range{{start: number, end: number}}
    * @param columns{string} Comma separated list of column names.
    * @return {Promise<Array<{date: number, confirmed: number, recovered: number, deaths: number}>>}
@@ -140,7 +140,7 @@ class RKISQLStore extends SQLDatastore {
 
   /**
    * Returns all entries for the given county.
-   * @param countyId{number}
+   * @param countyId{string}
    * @param columns{string} Comma separated list of column names.
    * @return {Promise<Array<{date: number, confirmed: number, recovered: number, deaths: number}>>}
    */
@@ -152,7 +152,7 @@ class RKISQLStore extends SQLDatastore {
   /**
    * Gets all entries for all states.
    * @param columns{string} Comma separated list of column names.
-   * @return {Promise<Array<{date: number, stateId: number, confirmed: number, recovered: number, deaths: number}>>}
+   * @return {Promise<Array<{date: number, stateId: string, confirmed: number, recovered: number, deaths: number}>>}
    */
   async getAllStates(columns = 'date, stateId, confirmed, recovered, deaths') {
     const query = `SELECT ${columns} FROM ${this.table.name} WHERE level=${this.Level.STATE} ORDER BY date`;
@@ -163,7 +163,7 @@ class RKISQLStore extends SQLDatastore {
    * Gets all entries in the specified date range for all states.
    * @param range{{start: number, end: number}}
    * @param columns{string} Comma separated list of column names.
-   * @return {Promise<Array<{date: number, stateId: number, confirmed: number, recovered: number, deaths: number}>>}
+   * @return {Promise<Array<{date: number, stateId: string, confirmed: number, recovered: number, deaths: number}>>}
    */
   async getAllStatesInRange(range, columns = 'date, stateId, confirmed, recovered, deaths') {
     const query = `SELECT 
@@ -177,9 +177,9 @@ class RKISQLStore extends SQLDatastore {
 
   /**
    * Returns all entries for counties in the given state.
-   * @param stateId{number}
+   * @param stateId{string}
    * @param columns{string} Comma separated list of column names.
-   * @return {Promise<Array<{date: number, countyId: number, confirmed: number, recovered: number, deaths: number}>>}
+   * @return {Promise<Array<{date: number, countyId: string, confirmed: number, recovered: number, deaths: number}>>}
    */
   async getAllCountiesOfState(stateId, columns = 'date, countyId, confirmed, recovered, deaths') {
     const query = `SELECT ${columns} FROM ${this.table.name} WHERE level=${this.Level.COUNTY} AND stateId='${stateId}' ORDER BY date`;
@@ -190,7 +190,7 @@ class RKISQLStore extends SQLDatastore {
    * Returns entries in the given date range for all counties.
    * @param range{{start: number, end: number}}
    * @param columns{string} Comma separated list of column names.
-   * @return {Promise<Array<{date: number, countyId: number, confirmed: number, recovered: number, deaths: number}>>}
+   * @return {Promise<Array<{date: number, countyId: string, confirmed: number, recovered: number, deaths: number}>>}
    */
   async getAllCountiesInRange(range, columns = 'date, countyId, confirmed, recovered, deaths') {
     const query = `SELECT 
