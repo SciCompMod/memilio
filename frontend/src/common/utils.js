@@ -1,12 +1,50 @@
+/**
+ * Goes through each item of the list and groups all items by the property with the given key.
+ *
+ * @param list{Array<Object>} A list of objects
+ * @param key{string | number}
+ * @return An object with the key values as properties and list of objects containing the key-value pairs.
+ *
+ * @example
+ * const list = [
+ *   {name: 'peter', gender: 'male'},
+ *   {name: 'hans', gender: 'male'},
+ *   {name: 'maria', gender: 'female'},
+ * ];
+ *
+ * groupBy(list, 'gender');
+ *
+ * // result:
+ * {
+ *   male: [
+ *     {name: 'peter', gender: 'male'},
+ *     {name: 'hans', gender: 'male'},
+ *   ],
+ *   female: [
+ *     {name: 'maria', gender: 'female'}
+ *   ]
+ * }
+ */
 export const groupBy = (list, key) => {
   return list.reduce(function (groups, item) {
     const val = item[key];
-    groups[val] = groups[val] || [];
-    groups[val].push(item);
+
+    if (val !== undefined) {
+      groups[val] = groups[val] || [];
+      groups[val].push(item);
+    }
+
     return groups;
   }, {});
 };
 
+/**
+ * TODO
+ * @param a
+ * @param b
+ * @param key
+ * @return {*}
+ */
 export const merge = (a, b, key) => {
   if (!a && !b) {
     return [];
@@ -53,10 +91,22 @@ export const merge = (a, b, key) => {
   return merged;
 };
 
+/**
+ * TODO
+ * @param list
+ * @param key
+ * @return {*}
+ */
 export const sumByKey = (list, key) => {
   return list.reduce((acc, val) => acc + val[key], 0);
 };
 
+/**
+ * TODO
+ * @param list
+ * @param key
+ * @return {*}
+ */
 export const renameKey = (list, a, b) => {
   return list.map((e) => {
     e[b] = e[a];
@@ -65,6 +115,12 @@ export const renameKey = (list, a, b) => {
   });
 };
 
+/**
+ * TODO
+ * @param list
+ * @param key
+ * @return {*}
+ */
 export const calculateDamping = (measures, base_date, days) => {
   var damping = new Array(days).fill(1);
 

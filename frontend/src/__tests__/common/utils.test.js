@@ -1,18 +1,43 @@
 import * as utils from '../../common/utils';
-import {lastElement, roundToUTCNoon} from '../../common/utils';
+
+it('groupBy', () => {
+  const list = [
+    {name: 'peter', gender: 'male'},
+    {name: 'hans', gender: 'male'},
+    {name: 'maria', gender: 'female'},
+  ];
+
+  expect(utils.groupBy(list, 'gender')).toEqual({
+    male: [
+      {name: 'peter', gender: 'male'},
+      {name: 'hans', gender: 'male'},
+    ],
+    female: [{name: 'maria', gender: 'female'}],
+  });
+
+  expect(utils.groupBy([{a: ''}], 'a')).toEqual({'': [{a: ''}]});
+  expect(utils.groupBy([{b: 'b'}], 'a')).toEqual({});
+  expect(utils.groupBy([], 'a')).toEqual({});
+  expect(utils.groupBy([{a: 0, b: 'x'}, {a: 1, b: 'y'}, {b: 'y'}], 'a')).toEqual({
+    0: [{a: 0, b: 'x'}],
+    1: [{a: 1, b: 'y'}],
+  });
+});
+
+it('merge', () => {});
 
 it('roundToUTCMidnight', () => {
   const input0 = Date.UTC(2000, 6, 15, 0, 0, 0, 0);
   const expected0 = Date.UTC(2000, 6, 15, 12, 0, 0, 0);
-  expect(roundToUTCNoon(input0)).toEqual(expected0);
+  expect(utils.roundToUTCNoon(input0)).toEqual(expected0);
 
   const input1 = Date.UTC(2000, 6, 15, 12, 0, 0, 0);
   const expected1 = Date.UTC(2000, 6, 15, 12, 0, 0, 0);
-  expect(roundToUTCNoon(input1)).toEqual(expected1);
+  expect(utils.roundToUTCNoon(input1)).toEqual(expected1);
 
   const input2 = Date.UTC(2000, 6, 15, 23, 59, 59, 999);
   const expected2 = Date.UTC(2000, 6, 15, 12, 0, 0, 0);
-  expect(roundToUTCNoon(input2)).toEqual(expected2);
+  expect(utils.roundToUTCNoon(input2)).toEqual(expected2);
 });
 
 it('filterJSObject', () => {
@@ -82,10 +107,10 @@ it('isCountyId', () => {
 });
 
 it('lastElement', () => {
-  expect(lastElement([0])).toEqual(0);
-  expect(lastElement([0, 0])).toEqual(0);
-  expect(lastElement([0, 1])).toEqual(1);
-  expect(() => lastElement([])).toThrow(RangeError);
+  expect(utils.lastElement([0])).toEqual(0);
+  expect(utils.lastElement([0, 0])).toEqual(0);
+  expect(utils.lastElement([0, 1])).toEqual(1);
+  expect(() => utils.lastElement([])).toThrow(RangeError);
 });
 
 it('replaceLastChar', () => {
