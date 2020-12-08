@@ -60,8 +60,7 @@ export const merge = (a, b, key) => {
     let keyB;
     if (Array.isArray(key)) {
       if (key.length === 1) {
-        keyA = key[0];
-        keyB = key[0];
+        keyA = keyB = key[0];
       } else if (key.length > 1) {
         keyA = key[0];
         keyB = key[1];
@@ -69,8 +68,7 @@ export const merge = (a, b, key) => {
         return [...a, ...b];
       }
     } else {
-      keyA = key;
-      keyB = key;
+      keyA = keyB = key;
     }
 
     const compare = (first, second) => {
