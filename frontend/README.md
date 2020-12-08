@@ -34,16 +34,13 @@ the bug to us.]
 
 **Building the WebAssembly module**
 1. Enable your Emscripten SDK by executing their `emsdk_dev` script.
-2. Create the folder `frontend/build_wasm` and go into it.
-3. Run `emcmake cmake -DCMAKE_INSTALL_PREFIX="<path_to_project>/frontend/public" ..`
-4. Run `emmake make`
-5. Run `emmake make install`
+2. Run `npm run build:wasm`
 
 > Note: If you want to debug the WebAssembly module you can enable debug mode by executing
 >
-> `emcmake cmake -DCMAKE_BUILD_TYPE=Debug -DCMAKE_INSTALL_PREFIX="<path_to_project>/frontend/public" ..`
+> `npm run build:wasm:debug`
 >
-> in step 3. You can then also check for memory leaks from JavaScript by executing the `doLeakCheck()` function of the WASM module.
+> in step 2. You can then also check for memory leaks from JavaScript by executing the `doLeakCheck()` function of the WASM module.
 
 #### Development
 Run `npm run start` in this folder. 
