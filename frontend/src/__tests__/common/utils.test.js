@@ -24,7 +24,137 @@ it('groupBy', () => {
   });
 });
 
-it('merge', () => {});
+it('merge', () => {
+  expect(utils.merge([], [], null)).toEqual([]);
+  expect(utils.merge(null, null, null)).toEqual([]);
+  expect(utils.merge([], null, null)).toEqual([]);
+  expect(utils.merge(null, [], null)).toEqual([]);
+  expect(
+    utils.merge(
+      [
+        {a: 1, b: 'c'},
+        {a: 2, b: 'd'},
+      ],
+      [],
+      null
+    )
+  ).toEqual([
+    {a: 1, b: 'c'},
+    {a: 2, b: 'd'},
+  ]);
+  expect(
+    utils.merge(
+      [
+        {a: 1, b: 'c'},
+        {a: 2, b: 'd'},
+      ],
+      null,
+      null
+    )
+  ).toEqual([
+    {a: 1, b: 'c'},
+    {a: 2, b: 'd'},
+  ]);
+  expect(
+    utils.merge(
+      [],
+      [
+        {a: 1, b: 'c'},
+        {a: 2, b: 'd'},
+      ],
+      null
+    )
+  ).toEqual([
+    {a: 1, b: 'c'},
+    {a: 2, b: 'd'},
+  ]);
+
+  expect(
+    utils.merge(
+      null,
+      [
+        {a: 1, b: 'c'},
+        {a: 2, b: 'd'},
+      ],
+      null
+    )
+  ).toEqual([
+    {a: 1, b: 'c'},
+    {a: 2, b: 'd'},
+  ]);
+
+  expect(utils.merge([{a: 1, b: 'c'}], [{a: 2, b: 'd'}], [])).toEqual([
+    {a: 1, b: 'c'},
+    {a: 2, b: 'd'},
+  ]);
+  expect(utils.merge([{a: 1, b: 'd'}], [{a: 2, b: 'x'}, {b: 'c'}], ['a'])).toEqual([
+    {a: 1, b: 'd'},
+    {a: 2, b: 'x'},
+    {b: 'c'},
+  ]);
+
+  expect(utils.merge([{a: 1, b: 'd'}], [{a: 2, b: 'x'}, {b: 'c'}], ['b'])).toEqual([
+    {a: 1, b: 'd'},
+    {b: 'c'},
+    {a: 2, b: 'x'},
+  ]);
+
+  expect(utils.merge([{a: 1, b: 'd'}], [{a: 2, b: 'x'}, {b: 'c'}], 'a')).toEqual([
+    {a: 1, b: 'd'},
+    {a: 2, b: 'x'},
+    {b: 'c'},
+  ]);
+
+  expect(utils.merge([{a: 1, b: 'd'}], [{a: 2, b: 'x'}, {b: 'c'}], 'b')).toEqual([
+    {a: 1, b: 'd'},
+    {b: 'c'},
+    {a: 2, b: 'x'},
+  ]);
+
+  expect(
+    utils.merge(
+      [
+        {a: 2, b: 'a'},
+        {a: 1, b: 'd'},
+      ],
+      [{a: 2, b: 'x'}, {b: 'c'}],
+      ['a', 'b']
+    )
+  ).toEqual([{a: 1, b: 'd'}, {a: 2, b: 'a'}, {b: 'c'}, {a: 2, b: 'x'}]);
+
+  expect(
+    utils.merge(
+      [
+        {a: 2, b: 'a'},
+        {a: 1, b: 'd'},
+      ],
+      [{a: 2, b: 'x'}, {b: 'c'}],
+      ['b', 'a']
+    )
+  ).toEqual([{a: 2, b: 'a'}, {a: 1, b: 'd'}, {a: 2, b: 'x'}, {b: 'c'}]);
+
+  expect(
+    utils.merge(
+      [
+        {a: 2, b: 'a'},
+        {a: 1, b: 'd'},
+      ],
+      [{a: 2, b: 'x'}, {b: 'c'}],
+      ['b', 'a', 'd']
+    )
+  ).toEqual([{a: 2, b: 'a'}, {a: 1, b: 'd'}, {a: 2, b: 'x'}, {b: 'c'}]);
+
+  expect(
+    utils.merge(
+      [
+        {a: 2, b: 'a'},
+        {a: 1, b: 'd'},
+      ],
+      [{a: 2, b: 'x'}, {b: 'c'}],
+      null
+    )
+  ).toEqual([{a: 2, b: 'a'}, {a: 1, b: 'd'}, {a: 2, b: 'x'}, {b: 'c'}]);
+});
 
 it('roundToUTCMidnight', () => {
   const input0 = Date.UTC(2000, 6, 15, 0, 0, 0, 0);

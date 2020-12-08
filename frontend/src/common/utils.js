@@ -39,56 +39,52 @@ export const groupBy = (list, key) => {
 };
 
 /**
- * TODO
- * @param a
- * @param b
- * @param key
- * @return {*}
+ * TODO This function is very confusing. It merges two arrays, but sorts them individually first.
+ *      If one of the arrays is invalid or empty the function returns the other array unsorted...
+ *      The arrays can also be ordered over different keys. Is there any need for all these features?
+ * @param a{Array<any>}
+ * @param b{Array<any>}
+ * @param key{number | string | Array<number | string>}
+ * @return {Array<any>}
  */
 export const merge = (a, b, key) => {
-  if (!a && !b) {
-    return [];
-  }
+  const aInvalid = !a || a.length === 0;
+  const bInvalid = !b || b.length === 0;
 
-  if (!a) {
-    return b;
-  }
+  if (aInvalid && bInvalid) return [];
+  if (aInvalid) return b;
+  if (bInvalid) return a;
 
-  if (!b) {
-    return a;
-  }
-
-  let uniqueKeys = null;
-  if (Array.isArray(key)) {
-    if (key.length === 0) {
-      return [];
+  if (key) {
+    let keyA;
+    let keyB;
+    if (Array.isArray(key)) {
+      if (key.length === 1) {
+        keyA = key[0];
+        keyB = key[0];
+      } else if (key.length > 1) {
+        keyA = key[0];
+        keyB = key[1];
+      } else {
+        return [...a, ...b];
+      }
+    } else {
+      keyA = key;
+      keyB = key;
     }
 
-    if (key.length === 1) {
-      key = [key[0], key[0]];
-    }
+    const compare = (first, second) => {
+      if (first < second) return -1;
+      if (first > second) return 1;
+      return 0;
+    };
 
-    if (key.length > 2) {
-      key = key.slice(0, 2);
-    }
-  } else {
-    key = [key, key];
+    const aSorted = a.sort((x, y) => compare(x[keyA], y[keyA]));
+    const bSorted = b.sort((x, y) => compare(x[keyB], y[keyB]));
+    return [...aSorted, ...bSorted];
   }
 
-  const aKeys = a.map((e) => e[key[0]]).sort();
-  const bKeys = b.map((e) => e[key[1]]).sort();
-  uniqueKeys = new Set([...aKeys, ...bKeys]);
-
-  const merged = [];
-
-  for (let k of uniqueKeys) {
-    merged.push({
-      ...a.find((e) => e[key[0]] === k),
-      ...b.find((e) => e[key[1]] === k),
-    });
-  }
-
-  return merged;
+  return [...a, ...b];
 };
 
 /**
