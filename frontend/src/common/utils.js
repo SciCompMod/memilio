@@ -7,10 +7,6 @@ export const groupBy = (list, key) => {
   }, {});
 };
 
-export const reduceBy = (list, key) => {
-  return;
-};
-
 export const merge = (a, b, key) => {
   if (!a && !b) {
     return [];

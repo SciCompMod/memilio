@@ -1,5 +1,5 @@
-import * as utils from '../../src/common/utils';
-import {lastElement, roundToUTCNoon} from '../../src/common/utils';
+import * as utils from '../../common/utils';
+import {lastElement, roundToUTCNoon} from '../../common/utils';
 
 it('roundToUTCMidnight', () => {
   const input0 = Date.UTC(2000, 6, 15, 0, 0, 0, 0);

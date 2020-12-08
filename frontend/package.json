@@ -141,7 +141,7 @@
       "react-app-polyfill/jsdom"
     ],
     "testMatch": [
-      "**/test/**/*.{js,jsx,ts,tsx}"
+      "**/src/__tests__/**/*.{js,jsx,ts,tsx}"
     ],
     "testEnvironment": "jest-environment-jsdom-fourteen",
     "transform": {
