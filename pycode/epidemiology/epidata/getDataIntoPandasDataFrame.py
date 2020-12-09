@@ -158,11 +158,11 @@ def cli(what):
       UPDATE_DATA = args.update
       arg_list.append(UPDATE_DATA)
 
-      # TODO: Change arguments such that one argument + parameter can be either read_data or update
-      if READ_DATA:
-         exit_string = "You called the program with '--read-from-disk' and '--update'." \
-                       "Please choose just one. Both together is not possible."
-         sys.exit(exit_string)
+   # TODO: Change arguments such that one argument + parameter can be either read_data or update
+   if READ_DATA and UPDATE_DATA:
+      exit_string = "You called the program with '--read-from-disk' and '--update'." \
+                   "Please choose just one. Both together is not possible."
+      sys.exit(exit_string)
 
    return arg_list
 
