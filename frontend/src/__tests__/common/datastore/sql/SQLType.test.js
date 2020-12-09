@@ -24,19 +24,19 @@ it('VARYING_CHARACTER', () => {
   expect(SQLType.VARYING_CHARACTER(128)).toEqual('VARYING CHARACTER(128)');
 });
 
-it('VARYING_CHARACTER', () => {
+it('NCHAR', () => {
   expect(SQLType.NCHAR(1)).toEqual('NCHAR(1)');
   expect(SQLType.NCHAR(2)).toEqual('NCHAR(2)');
   expect(SQLType.NCHAR(128)).toEqual('NCHAR(128)');
 });
 
-it('VARYING_CHARACTER', () => {
+it('NATIVE_CHARACTER', () => {
   expect(SQLType.NATIVE_CHARACTER(1)).toEqual('NATIVE CHARACTER(1)');
   expect(SQLType.NATIVE_CHARACTER(2)).toEqual('NATIVE CHARACTER(2)');
   expect(SQLType.NATIVE_CHARACTER(128)).toEqual('NATIVE CHARACTER(128)');
 });
 
-it('VARYING_CHARACTER', () => {
+it('NVARCHAR', () => {
   expect(SQLType.NVARCHAR(1)).toEqual('NVARCHAR(1)');
   expect(SQLType.NVARCHAR(2)).toEqual('NVARCHAR(2)');
   expect(SQLType.NVARCHAR(128)).toEqual('NVARCHAR(128)');
