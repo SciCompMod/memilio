@@ -86,37 +86,41 @@ export const merge = (a, b, key) => {
 };
 
 /**
- * TODO
- * @param list
- * @param key
- * @return {*}
+ * Returns the sum of values given by the objects property with the given key.
+ * @param list{Array<Object>}
+ * @param key{number | string}
+ * @return {number}
  */
 export const sumByKey = (list, key) => {
-  return list.reduce((acc, val) => acc + val[key], 0);
+  return list.reduce((acc, val) => acc + (isNaN(val[key]) ? 0 : val[key]), 0);
 };
 
 /**
- * TODO
- * @param list
- * @param key
- * @return {*}
+ * Renames the property a to b for all objects in the list.
+ * @param list{Array<Object>}
+ * @param a{string | number}
+ * @param b{string | number}
+ * @return {Array<Object>}
  */
 export const renameKey = (list, a, b) => {
   return list.map((e) => {
-    e[b] = e[a];
-    delete e[a];
+    if (e.hasOwnProperty(a)) {
+      e[b] = e[a];
+      delete e[a];
+    }
     return e;
   });
 };
 
 /**
  * TODO
- * @param list
- * @param key
+ * @param measures{Array}
+ * @param base_date{number}
+ * @param days{number}
  * @return {*}
  */
 export const calculateDamping = (measures, base_date, days) => {
-  var damping = new Array(days).fill(1);
+  const damping = new Array(days).fill(1);
 
   measures.forEach((measure, index_i) => {
     measure.intervals.forEach((interval) => {
@@ -126,7 +130,7 @@ export const calculateDamping = (measures, base_date, days) => {
       let start = Math.floor((start_date - base_date) / (1000 * 60 * 60 * 24));
       let end = Math.min(days, Math.floor((end_date - base_date) / (1000 * 60 * 60 * 24)));
 
-      for (var i = start; i < end; i++) {
+      for (let i = start; i < end; i++) {
         if (measures[index_i].damping < damping[i]) {
           damping[i] = measures[index_i].damping;
         }

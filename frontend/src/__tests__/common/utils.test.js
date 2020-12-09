@@ -7,7 +7,7 @@ it('groupBy', () => {
     {name: 'maria', gender: 'female'},
   ];
 
-  expect(utils.groupBy(list, 'gender')).toEqual({
+  expect(utils.groupBy(list, 'gender')).toStrictEqual({
     male: [
       {name: 'peter', gender: 'male'},
       {name: 'hans', gender: 'male'},
@@ -15,20 +15,20 @@ it('groupBy', () => {
     female: [{name: 'maria', gender: 'female'}],
   });
 
-  expect(utils.groupBy([{a: ''}], 'a')).toEqual({'': [{a: ''}]});
-  expect(utils.groupBy([{b: 'b'}], 'a')).toEqual({});
-  expect(utils.groupBy([], 'a')).toEqual({});
-  expect(utils.groupBy([{a: 0, b: 'x'}, {a: 1, b: 'y'}, {b: 'y'}], 'a')).toEqual({
+  expect(utils.groupBy([{a: ''}], 'a')).toStrictEqual({'': [{a: ''}]});
+  expect(utils.groupBy([{b: 'b'}], 'a')).toStrictEqual({});
+  expect(utils.groupBy([], 'a')).toStrictEqual({});
+  expect(utils.groupBy([{a: 0, b: 'x'}, {a: 1, b: 'y'}, {b: 'y'}], 'a')).toStrictEqual({
     0: [{a: 0, b: 'x'}],
     1: [{a: 1, b: 'y'}],
   });
 });
 
 it('merge', () => {
-  expect(utils.merge([], [], null)).toEqual([]);
-  expect(utils.merge(null, null, null)).toEqual([]);
-  expect(utils.merge([], null, null)).toEqual([]);
-  expect(utils.merge(null, [], null)).toEqual([]);
+  expect(utils.merge([], [], null)).toStrictEqual([]);
+  expect(utils.merge(null, null, null)).toStrictEqual([]);
+  expect(utils.merge([], null, null)).toStrictEqual([]);
+  expect(utils.merge(null, [], null)).toStrictEqual([]);
   expect(
     utils.merge(
       [
@@ -38,7 +38,7 @@ it('merge', () => {
       [],
       null
     )
-  ).toEqual([
+  ).toStrictEqual([
     {a: 1, b: 'c'},
     {a: 2, b: 'd'},
   ]);
@@ -51,7 +51,7 @@ it('merge', () => {
       null,
       null
     )
-  ).toEqual([
+  ).toStrictEqual([
     {a: 1, b: 'c'},
     {a: 2, b: 'd'},
   ]);
@@ -64,7 +64,7 @@ it('merge', () => {
       ],
       null
     )
-  ).toEqual([
+  ).toStrictEqual([
     {a: 1, b: 'c'},
     {a: 2, b: 'd'},
   ]);
@@ -78,34 +78,34 @@ it('merge', () => {
       ],
       null
     )
-  ).toEqual([
+  ).toStrictEqual([
     {a: 1, b: 'c'},
     {a: 2, b: 'd'},
   ]);
 
-  expect(utils.merge([{a: 1, b: 'c'}], [{a: 2, b: 'd'}], [])).toEqual([
+  expect(utils.merge([{a: 1, b: 'c'}], [{a: 2, b: 'd'}], [])).toStrictEqual([
     {a: 1, b: 'c'},
     {a: 2, b: 'd'},
   ]);
-  expect(utils.merge([{a: 1, b: 'd'}], [{a: 2, b: 'x'}, {b: 'c'}], ['a'])).toEqual([
+  expect(utils.merge([{a: 1, b: 'd'}], [{a: 2, b: 'x'}, {b: 'c'}], ['a'])).toStrictEqual([
     {a: 1, b: 'd'},
     {a: 2, b: 'x'},
     {b: 'c'},
   ]);
 
-  expect(utils.merge([{a: 1, b: 'd'}], [{a: 2, b: 'x'}, {b: 'c'}], ['b'])).toEqual([
+  expect(utils.merge([{a: 1, b: 'd'}], [{a: 2, b: 'x'}, {b: 'c'}], ['b'])).toStrictEqual([
     {a: 1, b: 'd'},
     {b: 'c'},
     {a: 2, b: 'x'},
   ]);
 
-  expect(utils.merge([{a: 1, b: 'd'}], [{a: 2, b: 'x'}, {b: 'c'}], 'a')).toEqual([
+  expect(utils.merge([{a: 1, b: 'd'}], [{a: 2, b: 'x'}, {b: 'c'}], 'a')).toStrictEqual([
     {a: 1, b: 'd'},
     {a: 2, b: 'x'},
     {b: 'c'},
   ]);
 
-  expect(utils.merge([{a: 1, b: 'd'}], [{a: 2, b: 'x'}, {b: 'c'}], 'b')).toEqual([
+  expect(utils.merge([{a: 1, b: 'd'}], [{a: 2, b: 'x'}, {b: 'c'}], 'b')).toStrictEqual([
     {a: 1, b: 'd'},
     {b: 'c'},
     {a: 2, b: 'x'},
@@ -120,7 +120,7 @@ it('merge', () => {
       [{a: 2, b: 'x'}, {b: 'c'}],
       ['a', 'b']
     )
-  ).toEqual([{a: 1, b: 'd'}, {a: 2, b: 'a'}, {b: 'c'}, {a: 2, b: 'x'}]);
+  ).toStrictEqual([{a: 1, b: 'd'}, {a: 2, b: 'a'}, {b: 'c'}, {a: 2, b: 'x'}]);
 
   expect(
     utils.merge(
@@ -131,7 +131,7 @@ it('merge', () => {
       [{a: 2, b: 'x'}, {b: 'c'}],
       ['b', 'a']
     )
-  ).toEqual([{a: 2, b: 'a'}, {a: 1, b: 'd'}, {a: 2, b: 'x'}, {b: 'c'}]);
+  ).toStrictEqual([{a: 2, b: 'a'}, {a: 1, b: 'd'}, {a: 2, b: 'x'}, {b: 'c'}]);
 
   expect(
     utils.merge(
@@ -142,7 +142,7 @@ it('merge', () => {
       [{a: 2, b: 'x'}, {b: 'c'}],
       ['b', 'a', 'd']
     )
-  ).toEqual([{a: 2, b: 'a'}, {a: 1, b: 'd'}, {a: 2, b: 'x'}, {b: 'c'}]);
+  ).toStrictEqual([{a: 2, b: 'a'}, {a: 1, b: 'd'}, {a: 2, b: 'x'}, {b: 'c'}]);
 
   expect(
     utils.merge(
@@ -153,7 +153,25 @@ it('merge', () => {
       [{a: 2, b: 'x'}, {b: 'c'}],
       null
     )
-  ).toEqual([{a: 2, b: 'a'}, {a: 1, b: 'd'}, {a: 2, b: 'x'}, {b: 'c'}]);
+  ).toStrictEqual([{a: 2, b: 'a'}, {a: 1, b: 'd'}, {a: 2, b: 'x'}, {b: 'c'}]);
+});
+
+it('sumByKey', () => {
+  expect(utils.sumByKey([], 'price')).toEqual(0);
+  expect(utils.sumByKey([{price: 10}], 'price')).toEqual(10);
+  expect(utils.sumByKey([{price: 10}, {price: 11}], 'price')).toEqual(21);
+  expect(utils.sumByKey([{price: 10}, {}], 'price')).toEqual(10);
+});
+
+it('renameKey', () => {
+  expect(utils.renameKey([], 'a', 'b')).toStrictEqual([]);
+  expect(utils.renameKey([{a: 5}], 'a', 'b')).toStrictEqual([{b: 5}]);
+  expect(utils.renameKey([{a: 5}, {c: 3}], 'a', 'b')).toStrictEqual([{b: 5}, {c: 3}]);
+  expect(utils.renameKey([{a: 5}, {a: undefined}], 'a', 'b')).toStrictEqual([{b: 5}, {b: undefined}]);
+});
+
+it('calculateDamping', () => {
+  // TODO
 });
 
 it('roundToUTCMidnight', () => {
