@@ -10,6 +10,7 @@ namespace epi
 class Person;
 
 LocationType random_migration(const Person& p, double t, double dt, const MigrationParameters& params);
+LocationType go_to_school(const Person& p, double t, double dt, const MigrationParameters& params);
 
 } // namespace epi
 
