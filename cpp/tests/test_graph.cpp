@@ -5,14 +5,15 @@
 TEST(TestGraph, creation)
 {
     epi::Graph<int, int> g;
-    g.add_node(6);
-    g.add_node(4);
-    g.add_node(8);
+    g.add_node(0, 6);
+    g.add_node(1, 4);
+    g.add_node(2, 8);
     g.add_edge(0, 1, 1);
     g.add_edge(2, 1, 3);
     g.add_edge(1, 2, 2);
 
-    EXPECT_THAT(g.nodes(), testing::ElementsAre(6, 4, 8));
+    std::vector<epi::Node<int>> n = {{0, 6}, {1, 4}, {2, 8}};
+    EXPECT_THAT(g.nodes(), testing::ElementsAreArray(n));
 
     std::vector<epi::Edge<int>> v = {{0, 1, 1}, {1, 2, 2}, {2, 1, 3}};
     EXPECT_THAT(g.edges(), testing::ElementsAreArray(v));

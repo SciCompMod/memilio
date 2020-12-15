@@ -37,13 +37,13 @@ public:
             }
 
             for (auto& n : m_graph.nodes()) {
-                m_node_func(m_t, dt, n);
+                m_node_func(m_t, dt, n.property);
             }
 
             m_t += dt;
 
             for (auto& e : m_graph.edges()) {
-                m_edge_func(m_t, dt, e.property, m_graph.nodes()[e.start_node_idx], m_graph.nodes()[e.end_node_idx]);
+                m_edge_func(m_t, dt, e.property, m_graph.nodes()[e.start_node_idx].property, m_graph.nodes()[e.end_node_idx].property);
             }
         }
     }

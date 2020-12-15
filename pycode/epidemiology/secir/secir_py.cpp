@@ -24,7 +24,7 @@ std::vector<epi::TimeSeries<double>> filter_graph_results(
     std::vector<epi::TimeSeries<double>> results;
     results.reserve(graph_results.size());
     std::transform(graph_results.begin(), graph_results.end(), std::back_inserter(results), [](auto&& graph) {
-        return graph.nodes()[0].get_result();
+        return graph.nodes()[0].property.get_result();
     });
     return results;
 }
@@ -517,6 +517,24 @@ PYBIND11_MODULE(_secir, m)
             "property", [](const epi::Edge<epi::MigrationEdge>& self) -> auto& { return self.property; },
             py::return_value_policy::reference_internal);
 
+    py::class_<epi::Node<epi::SecirParams>>(m, "SecirParamsNode")
+        .def_property_readonly("id",
+                               [](const epi::Node<epi::SecirParams>& self) {
+                                   return self.id;
+                               })
+        .def_property_readonly(
+            "property", [](const epi::Node<epi::SecirParams>& self) -> auto& { return self.property; },
+            py::return_value_policy::reference_internal);
+
+    py::class_<epi::Node<epi::ModelNode<epi::SecirSimulation>>>(m, "SecirSimulationNode")
+        .def_property_readonly("id",
+                               [](const epi::Node<epi::SecirSimulation>& self) {
+                                   return self.id;
+                               })
+        .def_property_readonly(
+            "property", [](const epi::Node<epi::ModelNode<epi::SecirSimulation>>& self) -> auto& { return self.property.model; },
+            py::return_value_policy::reference_internal);
+
     using SecirParamsGraph = epi::Graph<epi::SecirParams, epi::MigrationEdge>;
     py::class_<SecirParamsGraph>(m, "SecirParamsGraph")
         .def(py::init<>())
@@ -554,10 +572,10 @@ PYBIND11_MODULE(_secir, m)
     py::class_<MigrationGraph>(m, "MigrationGraph")
         .def(py::init<>())
         .def(
-            "add_node", [](MigrationGraph & self, const epi::SecirParams& p, double t0, double dt) -> auto& {
-                return self.add_node(p, t0, dt).model;
+            "add_node", [](MigrationGraph & self, int id, const epi::SecirParams& p, double t0, double dt) -> auto& {
+                return self.add_node(id, p, t0, dt);
             },
-            py::arg("params"), py::arg("t0") = 0.0, py::arg("dt") = 0.1, py::return_value_policy::reference_internal)
+            py::arg("id"), py::arg("params"), py::arg("t0") = 0.0, py::arg("dt") = 0.1, py::return_value_policy::reference_internal)
         .def("add_edge", &MigrationGraph::add_edge<const epi::MigrationEdge&>,
              py::return_value_policy::reference_internal)
         .def("add_edge", &MigrationGraph::add_edge<const Eigen::VectorXd&>, py::return_value_policy::reference_internal)
@@ -567,7 +585,7 @@ PYBIND11_MODULE(_secir, m)
                                })
         .def(
             "get_node",
-            [](const MigrationGraph& self, size_t node_idx) -> auto& { return self.nodes()[node_idx].model; },
+            [](const MigrationGraph& self, size_t node_idx) -> auto& { return self.nodes()[node_idx]; },
             py::return_value_policy::reference_internal)
         .def_property_readonly("num_edges",
                                [](const MigrationGraph& self) {
