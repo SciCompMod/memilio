@@ -31,6 +31,22 @@ struct EdgeBase : public OutEdgeBase, public InEdgeBase {
 };
 
 /**
+ * @brief represents a node of the graph
+ * @param id unique id for the node (e.g. regional keys)
+ */
+template <class NodePropertyT>
+struct Node {
+    template <class... Args>
+    Node(int node_id, Args&&... args)
+        : id{node_id}
+        , property(std::forward<Args>(args)...)
+    {
+    }
+    int id;
+    NodePropertyT property;
+};
+
+/**
  * @brief represents an edge of the graph
  */
 template <class EdgePropertyT>
@@ -44,6 +60,15 @@ struct Edge : public EdgeBase {
 
     EdgePropertyT property;
 };
+
+/**
+ * @brief comparison operator if node property type is equality comparable
+ */
+template <class T>
+std::enable_if_t<has_eq_op<T>::value, bool> operator==(const Node<T>& n1, const Node<T>& n2)
+{
+    return n1.id == n2.id && n1.property == n2.property;
+}
 
 /**
  * @brief comparison operator if edge property type is equality comparable
@@ -88,9 +113,9 @@ public:
      * @brief add a node to the graph. property of the node is constructed from arguments.
      */
     template <class... Args>
-    NodePropertyT& add_node(Args&&... args)
+    Node<NodePropertyT>& add_node(int id, Args&&... args)
     {
-        m_nodes.emplace_back(std::forward<Args>(args)...);
+        m_nodes.emplace_back(Node<NodePropertyT> (id, std::forward<Args>(args)...));
         return m_nodes.back();
     }
 
@@ -109,6 +134,8 @@ public:
                                                      : e1.start_node_idx < e2.start_node_idx;
                                       });
     }
+
+
 
     /**
      * @brief range of nodes
@@ -168,7 +195,7 @@ private:
     }
 
 private:
-    std::vector<NodePropertyT> m_nodes;
+    std::vector<Node<NodePropertyT>> m_nodes;
     std::vector<Edge<EdgePropertyT>> m_edges;
 }; // namespace epi
 

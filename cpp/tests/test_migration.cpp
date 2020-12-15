@@ -31,8 +31,8 @@ TEST(TestMigration, compareNoMigrationWithSingleIntegration)
     auto graph_sim =
         epi::make_migration_sim(t0, dt, epi::Graph<epi::ModelNode<epi::SeirSimulation>, epi::MigrationEdge>());
     auto& g = graph_sim.get_graph();
-    g.add_node(params1, t0);
-    g.add_node(params2, t0);
+    g.add_node(0, params1, t0);
+    g.add_node(1, params2, t0);
     g.add_edge(0, 1, Eigen::VectorXd::Constant(4, 0)); //no migration along this edge
     g.add_edge(1, 0, Eigen::VectorXd::Constant(4, 0));
 
@@ -43,13 +43,13 @@ TEST(TestMigration, compareNoMigrationWithSingleIntegration)
     single_sim1.advance(tmax);
     single_sim2.advance(tmax);
 
-    EXPECT_DOUBLE_EQ(g.nodes()[0].get_result().get_last_time(), single_sim1.get_result().get_last_time());
-    EXPECT_DOUBLE_EQ(g.nodes()[1].get_result().get_last_time(), single_sim2.get_result().get_last_time());
+    EXPECT_DOUBLE_EQ(g.nodes()[0].property.get_result().get_last_time(), single_sim1.get_result().get_last_time());
+    EXPECT_DOUBLE_EQ(g.nodes()[1].property.get_result().get_last_time(), single_sim2.get_result().get_last_time());
 
     //graph may have different time steps, so we can't expect high accuracy here
-    EXPECT_NEAR((g.nodes()[0].get_result().get_last_value() - single_sim1.get_result().get_last_value()).norm(),
+    EXPECT_NEAR((g.nodes()[0].property.get_result().get_last_value() - single_sim1.get_result().get_last_value()).norm(),
                 0.0, 1e-6);
-    EXPECT_NEAR((g.nodes()[1].get_result().get_last_value() - single_sim2.get_result().get_last_value()).norm(),
+    EXPECT_NEAR((g.nodes()[1].property.get_result().get_last_value() - single_sim2.get_result().get_last_value()).norm(),
                 0.0, 1e-6);
 }
 

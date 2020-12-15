@@ -53,7 +53,7 @@ interpolate_simulation_result(const Graph<ModelNode<SecirSimulation>, MigrationE
     interpolated.reserve(graph_result.nodes().size());
     std::transform(graph_result.nodes().begin(), graph_result.nodes().end(), std::back_inserter(interpolated),
                    [](auto& n) {
-                       return interpolate_simulation_result(n.get_result());
+                       return interpolate_simulation_result(n.property.get_result());
                    });
     return interpolated;
 }

@@ -383,8 +383,8 @@ TEST(TestSaveParameters, compareGraphs)
     epi::set_params_distributions_normal(params, t0, tmax, 0.15);
 
     epi::Graph<epi::SecirParams, epi::MigrationEdge> graph;
-    graph.add_node(params);
-    graph.add_node(params);
+    graph.add_node(0, params);
+    graph.add_node(1, params);
     graph.add_edge(0, 1, Eigen::VectorXd::Constant(params.populations.get_num_compartments(), 0.01));
     graph.add_edge(1, 0, Eigen::VectorXd::Constant(params.populations.get_num_compartments(), 0.01));
 
@@ -399,17 +399,17 @@ TEST(TestSaveParameters, compareGraphs)
     ASSERT_EQ(num_edges, graph_read.edges().size());
 
     for (size_t node = 0; node < num_nodes; node++) {
-        epi::SecirParams graph_params               = graph.nodes()[0];
+        epi::SecirParams graph_params               = graph.nodes()[0].property;
         epi::ContactMatrixGroup& graph_cont_matrix = graph_params.get_contact_patterns();
 
-        epi::SecirParams graph_read_params               = graph_read.nodes()[0];
+        epi::SecirParams graph_read_params               = graph_read.nodes()[0].property;
         epi::ContactMatrixGroup& graph_read_cont_matrix = graph_read_params.get_contact_patterns();
 
         ASSERT_EQ(graph_read_cont_matrix.get_num_groups(), static_cast<Eigen::Index>(num_groups));
         ASSERT_EQ(graph_read_cont_matrix, graph_cont_matrix);
         ASSERT_EQ(graph_params.populations.get_num_compartments(),
                   graph_read_params.populations.get_num_compartments());
-
+        ASSERT_EQ(graph.nodes()[node].id, graph_read.nodes()[node].id);
         EXPECT_THAT(graph_read_params.get_test_and_trace_capacity().value(),
                     FloatingPointEqual(graph_params.get_test_and_trace_capacity().value(), 1e-12, 1e-12));
         check_distribution(*graph_params.get_test_and_trace_capacity().get_distribution().get(),
@@ -589,8 +589,8 @@ TEST(TestSaveParameters, compareGraphWithFile)
     epi::set_params_distributions_normal(params, t0, tmax, 0.15);
 
     epi::Graph<epi::SecirParams, epi::MigrationEdge> graph;
-    graph.add_node(params);
-    graph.add_node(params);
+    graph.add_node(0, params);
+    graph.add_node(1, params);
     graph.add_edge(0, 1, Eigen::VectorXd::Constant(params.populations.get_num_compartments(), 0.01));
     graph.add_edge(1, 0, Eigen::VectorXd::Constant(params.populations.get_num_compartments(), 0.01));
 
@@ -603,10 +603,10 @@ TEST(TestSaveParameters, compareGraphWithFile)
     ASSERT_EQ(num_edges, graph_read.edges().size());
 
     for (size_t node = 0; node < num_nodes; node++) {
-        epi::SecirParams graph_params                         = graph.nodes()[0];
+        epi::SecirParams graph_params                         = graph.nodes()[0].property;
         epi::ContactMatrixGroup graph_cont_freq = graph_params.get_contact_patterns();
 
-        epi::SecirParams graph_read_params                         = graph_read.nodes()[0];
+        epi::SecirParams graph_read_params                         = graph_read.nodes()[0].property;
         epi::ContactMatrixGroup graph_read_cont_freq = graph_read_params.get_contact_patterns();
 
         ASSERT_EQ(num_groups, static_cast<size_t>(graph_read_cont_freq.get_num_groups()));
