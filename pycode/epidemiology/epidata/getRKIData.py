@@ -41,7 +41,7 @@ def check_for_completeness(df):
 # districts with only one county, which is called 'Berlin'.  
 def fuse_berlin(df):
    berlin = df[(df['ID_County'].values/1000).astype(int)==11]
-   berlin = berlin.groupby(['Date', 'Gender', 'ID_State', 'State', 'County', 'Age_RKI'] + group).agg('sum').reset_index()
+   berlin = berlin.groupby(['Date', 'Gender', 'ID_State', 'State', 'County', 'Age_RKI']).agg('sum').reset_index()
 
    berlin[dd.EngEng['idCounty']] = 11000
    berlin[dd.EngEng['county']] = dd.County[11000]
