@@ -33,7 +33,12 @@ def check_for_completeness(df):
    # if it is empty
    return False
 
-
+## Concatenates the different districts of Berlin into one district
+# The RKI data for Berlin is devided into 7 different districts.
+# This does not correspond to the other datasets, which usually only 
+# one entry for Berlin. 
+# This function is used to replace the entries of the 7 different 
+# districts with only one county, which is called 'Berlin'.  
 def fuse_berlin(df, group=[]):
    berlin = df[(df['ID_County'].values/1000).astype(int)==11]
    berlin = berlin.groupby(['Date', 'Gender', 'ID_State', 'State', 'County', 'Age_RKI'] + group).agg('sum').reset_index()
