@@ -39,7 +39,7 @@ def check_for_completeness(df):
 # one entry for Berlin. 
 # This function is used to replace the entries of the 7 different 
 # districts with only one county, which is called 'Berlin'.  
-def fuse_berlin(df, group=[]):
+def fuse_berlin(df):
    berlin = df[(df['ID_County'].values/1000).astype(int)==11]
    berlin = berlin.groupby(['Date', 'Gender', 'ID_State', 'State', 'County', 'Age_RKI'] + group).agg('sum').reset_index()
 
