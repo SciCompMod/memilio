@@ -44,7 +44,6 @@ def fuse_berlin(df, group=[]):
    new_df = df[(df[dd.EngEng['idCounty']].values/1000).astype(int)!=11]
    new_df = pandas.concat([new_df, berlin], axis=0)
 
-   print(berlin)
 
    dateToUse = 'Date'
    new_df.sort_values( [dateToUse], inplace = True )
