@@ -1021,7 +1021,7 @@ void read_population_data_county(epi::SecirParams& params, const std::vector<dou
 
     std::string id_name = "ID_County";
 
-    set_rki_data(params, param_ranges, path_join(dir, "all_county_age_rki_concated_berlin.json"), id_name, county, month, day);
+    set_rki_data(params, param_ranges, path_join(dir, "all_county_age_rki.json"), id_name, county, month, day);
     set_divi_data(params, path_join(dir, "county_divi.json"), id_name, county, month, day);
     set_population_data(params, param_ranges, path_join(dir, "county_current_population.json"), "ID_County", county);
 }
