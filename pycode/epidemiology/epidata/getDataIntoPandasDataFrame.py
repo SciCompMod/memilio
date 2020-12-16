@@ -117,7 +117,7 @@ def cli(what):
    parser.add_argument('-o', '--out-path', type=str, default=out_path_default, help='Defines folder for output.')
 
    if 'split_berlin' in what_list:
-       parser.add_argument('-cb', '--split_berlin',
+       parser.add_argument('-sb', '--split_berlin',
                            help='Berlin data is split into different counties,'
                                 ' instead of having only one county for Berlin.',
                            action='store_true')
