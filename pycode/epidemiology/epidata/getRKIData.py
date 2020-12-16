@@ -407,7 +407,7 @@ def get_rki_data(read_data=dd.defaultDict['read_data'],
 
    # output
    if split_berlin:
-      gd.write_dataframe(gbAllAgeCounty_cs, directory, "all_county_age_rki_splited_berlin", out_form)
+      gd.write_dataframe(gbAllAgeCounty_cs, directory, "all_county_age_rki_split_berlin", out_form)
    else:
       gd.write_dataframe(gbAllAgeCounty_cs, directory, "all_county_age_rki", out_form)
 
