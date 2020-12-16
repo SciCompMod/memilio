@@ -49,8 +49,6 @@ def fuse_berlin(df, group=[]):
    dateToUse = 'Date'
    new_df.sort_values( [dateToUse], inplace = True )
 
-   print(new_df[new_df['ID_County']==11000])
-   print(new_df)
 
    return new_df
 
