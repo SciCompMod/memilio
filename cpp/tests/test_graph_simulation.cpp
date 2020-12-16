@@ -28,10 +28,10 @@ TEST(TestGraphSimulation, simulate)
     using testing::Eq;
 
     epi::Graph<int, int> g;
-    g.add_node(0);
-    g.add_node(1);
-    g.add_node(2);
-    g.add_node(3);
+    g.add_node(6, 0);
+    g.add_node(8, 1);
+    g.add_node(4, 2);
+    g.add_node(2, 3);
     g.add_edge(0, 1, 0);
     g.add_edge(1, 2, 1);
     g.add_edge(0, 2, 2);
@@ -86,8 +86,8 @@ TEST(TestGraphSimulation, stopsAtTmax)
     using testing::Eq;
 
     epi::Graph<int, int> g;
-    g.add_node(0);
-    g.add_node(1);
+    g.add_node(6, 0);
+    g.add_node(8, 1);
     g.add_edge(0, 1, 0);
 
     const auto t0   = 1.0;
@@ -105,9 +105,9 @@ TEST(TestGraphSimulation, stopsAtTmax)
 TEST(TestGraphSimulation, persistentChangesDuringSimulation)
 {
     epi::Graph<int, int> g;
-    g.add_node(6);
-    g.add_node(4);
-    g.add_node(8);
+    g.add_node(0, 6);
+    g.add_node(1, 4);
+    g.add_node(2, 8);
     g.add_edge(0, 1, 1);
     g.add_edge(0, 2, 2);
     g.add_edge(1, 2, 3);
@@ -126,8 +126,8 @@ TEST(TestGraphSimulation, persistentChangesDuringSimulation)
     int num_steps = 2;
     sim.advance(t0 + num_steps * dt);
 
-    EXPECT_THAT(sim.get_graph().nodes(),
-                testing::ElementsAre(6 + num_steps, 4 + num_steps + num_steps, 8 + num_steps + 2 * num_steps));
-    std::vector<epi::Edge<int>> v = {{0, 1, 1 + num_steps}, {0, 2, 2 + num_steps}, {1, 2, 3 + num_steps}};
-    EXPECT_THAT(sim.get_graph().edges(), testing::ElementsAreArray(v));
+    std::vector<epi::Node<int>> v_n = {{0, 6 + num_steps}, {1, 4 + 2*num_steps}, {2, 8 + 3* num_steps}};
+    EXPECT_THAT(sim.get_graph().nodes(), testing::ElementsAreArray(v_n));
+    std::vector<epi::Edge<int>> v_e = {{0, 1, 1 + num_steps}, {0, 2, 2 + num_steps}, {1, 2, 3 + num_steps}};
+    EXPECT_THAT(sim.get_graph().edges(), testing::ElementsAreArray(v_e));
 }

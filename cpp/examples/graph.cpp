@@ -25,8 +25,8 @@ int main(int argc, char** argv)
     params_group1.populations.set({epi::SeirCompartments::SeirE}, 10);
 
     epi::Graph<epi::ModelNode<epi::SeirSimulation>, epi::MigrationEdge> g;
-    g.add_node(params_group1, t0);
-    g.add_node(params_group2, t0);
+    g.add_node(1001, params_group1, t0);
+    g.add_node(1002, params_group2, t0);
     g.add_edge(0, 1, Eigen::VectorXd::Constant(epi::SeirCompartments::SeirCount, 0.01));
     g.add_edge(1, 0, Eigen::VectorXd::Constant(epi::SeirCompartments::SeirCount, 0.01));
 

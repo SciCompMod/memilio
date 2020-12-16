@@ -47,6 +47,8 @@
   "scripts": {
     "start": "react-scripts start",
     "build": "react-scripts build",
+    "build:wasm": "cmake -E make_directory build_wasm && cd build_wasm && emcmake cmake -DCMAKE_BUILD_TYPE=Release .. && emmake make && emmake make install",
+    "build:wasm:debug": "cmake -E make_directory build_wasm && cd build_wasm && emcmake cmake -DCMAKE_BUILD_TYPE=Debug .. && emmake make && emmake make install",
     "test": "react-scripts test",
     "eject": "react-scripts eject"
   },

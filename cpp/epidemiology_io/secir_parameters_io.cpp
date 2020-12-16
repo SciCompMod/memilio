@@ -576,7 +576,7 @@ void write_single_run_params(const int run, epi::Graph<epi::ModelNode<epi::Secir
         std::string path = "/Parameters";
         TixiDocumentHandle handle;
         tixiCreateDocument("Parameters", &handle);
-        ParameterStudy study(node.get_params(), t0, tmax, num_runs);
+        ParameterStudy study(node.property.get_params(), t0, tmax, num_runs);
 
         write_parameter_study(handle, path, study);
 
@@ -585,7 +585,7 @@ void write_single_run_params(const int run, epi::Graph<epi::ModelNode<epi::Secir
                                      .c_str());
         tixiCloseDocument(handle);
 
-        save_result(node.get_result(), path_join(dir.string(), ("Results_run" + std::to_string(run) + "_node" +
+        save_result(node.property.get_result(), path_join(dir.string(), ("Results_run" + std::to_string(run) + "_node" +
                                                                 std::to_string(node_id) + ".h5")));
         node_id++;
     }
@@ -599,25 +599,29 @@ void write_node(TixiDocumentHandle handle, const Graph<SecirParams, MigrationEdg
 
     std::string path = "/Parameters";
 
-    tixiAddIntegerElement(handle, path.c_str(), "NodeID", node, "%d");
 
-    auto params = graph.nodes()[node];
+    auto params = graph.nodes()[node].property;
+    int node_id =  static_cast<int>(graph.nodes()[node].id);
 
+
+    tixiAddIntegerElement(handle, path.c_str(), "NodeID", node_id, "%d");
     write_parameter_space(handle, path, params, num_runs, io_mode);
 }
 
 void read_node(TixiDocumentHandle node_handle, Graph<SecirParams, MigrationEdge>& graph)
 {
+    int node_id;
+    tixiGetIntegerElement(node_handle, path_join("/Parameters", "NodeID").c_str(), &node_id);
+    graph.add_node(node_id, read_parameter_space(node_handle, "/Parameters", 2));
 
-    graph.add_node(read_parameter_space(node_handle, "/Parameters", 2));
 }
 
 void write_edge(const std::vector<TixiDocumentHandle>& edge_handles, const std::string& path,
                 const Graph<SecirParams, MigrationEdge>& graph, int edge)
 {
     assert(graph.nodes().size() > 0 && "Graph Nodes are empty");
-    int num_groups  = static_cast<int>(graph.nodes()[0].get_num_groups());
-    int num_compart = static_cast<int>(graph.nodes()[0].populations.get_num_compartments()) / num_groups;
+    int num_groups  = static_cast<int>(graph.nodes()[0].property.get_num_groups());
+    int num_compart = static_cast<int>(graph.nodes()[0].property.populations.get_num_compartments()) / num_groups;
 
     auto start_node = static_cast<int>(graph.edges()[edge].start_node_idx);
     auto end_node   = static_cast<int>(graph.edges()[edge].end_node_idx);
@@ -689,8 +693,8 @@ void write_graph(const Graph<SecirParams, MigrationEdge>& graph, const std::stri
     }
     int num_nodes   = static_cast<int>(graph.nodes().size());
     int num_edges   = static_cast<int>(graph.edges().size());
-    int num_groups  = static_cast<int>(graph.nodes()[0].get_contact_patterns().get_cont_freq_mat().get_num_groups());
-    int num_compart = static_cast<int>(graph.nodes()[0].populations.get_num_compartments()) / num_groups;
+    int num_groups  = static_cast<int>(graph.nodes()[0].property.get_contact_patterns().get_cont_freq_mat().get_num_groups());
+    int num_compart = static_cast<int>(graph.nodes()[0].property.populations.get_num_compartments()) / num_groups;
 
     std::vector<TixiDocumentHandle> edge_handles(num_nodes);
     std::string edges_path = "/Edges";
