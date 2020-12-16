@@ -36,7 +36,6 @@ def check_for_completeness(df):
 
 def fuse_berlin(df, group=[]):
    berlin = df[(df['ID_County'].values/1000).astype(int)==11]
-   print(berlin)
    berlin = berlin.groupby(['Date', 'Gender', 'ID_State', 'State', 'County', 'Age_RKI'] + group).agg('sum').reset_index()
 
    berlin[dd.EngEng['idCounty']] = 11000
