@@ -95,11 +95,13 @@ def get_rki_data(read_data=dd.defaultDict['read_data'],
 
       # try another possibility if df was empty or incomplete
       if not complete:
+
+            print("Note: RKI data is incomplete. Trying another source.")
+
             df = load['csv']("","https://npgeo-de.maps.arcgis.com/sharing/rest/content/items/"
                                 "f10774f1c63e40168479a1feb6c7ca74/data", "")
-            ID = "FID"
-      else:
-         ID = "ObjectId"
+
+            df.rename(columns = {'FID':"ObjectId"}, inplace = True)
 
       if df.empty != True:
       # output data to not always download it
@@ -184,7 +186,7 @@ def get_rki_data(read_data=dd.defaultDict['read_data'],
    dfF.loc[dfF.NeuGenesen<0, [AnzahlGenesen]] = 0
 
    # get rid of unnecessary columns
-   dfF = dfF.drop(['NeuerFall', 'NeuerTodesfall', 'NeuGenesen', "IstErkrankungsbeginn", ID,
+   dfF = dfF.drop(['NeuerFall', 'NeuerTodesfall', 'NeuGenesen', "IstErkrankungsbeginn", "ObjectId",
                    "Meldedatum", "Datenstand", "Refdatum", Altersgruppe2], 1)
 
    print("Available columns:", df.columns)
