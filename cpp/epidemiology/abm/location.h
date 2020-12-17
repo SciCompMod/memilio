@@ -101,7 +101,7 @@ private:
     int m_num_persons = 0;
     std::array<int, size_t(InfectionState::Count)> m_subpopulations;
     LocalInfectionParameters m_parameters;
-    double m_cached_exposure_rate;
+    AgeDependentParameter m_cached_exposure_rate;
 };
 } // namespace epi
 

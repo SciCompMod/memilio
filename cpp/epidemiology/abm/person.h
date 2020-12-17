@@ -2,6 +2,7 @@
 #define EPI_ABM_PERSON_H
 
 #include "epidemiology/abm/state.h"
+#include "epidemiology/abm/age.h"
 
 #include <functional>
 
@@ -22,7 +23,7 @@ public:
      * @param location the initial location of the person
      * @param state the initial infection state of the person
      */
-    Person(Location& location, InfectionState state);
+    Person(Location& location, InfectionState state, AbmAgeGroup age = AbmAgeGroup::Age15to34);
 
     /** 
      * interact with the population at its current location.
@@ -47,6 +48,11 @@ public:
         return m_state;
     }
 
+    AbmAgeGroup get_age() const
+    {
+        return m_age;
+    }
+
     /**
      * get the current location of the person.
      * @returns the current location of the person
@@ -60,6 +66,7 @@ private:
     std::reference_wrapper<Location> m_location;
     InfectionState m_state;
     double m_time_until_carrier;
+    AbmAgeGroup m_age;
     //age, times, ...
 };
 
