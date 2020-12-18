@@ -91,16 +91,17 @@ build-py-win:
       - pycode/dist/*.whl
 
 build-docs:
-  stage: build
-  tags:
-    - SC-0030VM
+  image: ubuntu:18.04
+  stage: test
+  dependencies:
+    - build-py
   script:
-    cd docs
-    doxygen
+    - cd docs
+    - doxygen
   artifacts:
     expose_as: "Documentation"
     paths:
-      - docs/_build/html/index.html
+      - docs/html/
     expire_in: 3 day
 
 
@@ -264,11 +265,12 @@ www:
 #######################
 # Publish stage
 pages:
-  stage: publish
+  image: ubuntu:18.04
+  stage: deploy
   dependencies:
     - build-docs
   tags:
-    - SC-0030VM
+    - docker
   script:
     - echo "Prepare basic Pages sites"
     - mkdir -p public/${CI_COMMIT_REF_NAME}/
@@ -276,10 +278,11 @@ pages:
     - cp ci_index/branch_index.html public/${CI_COMMIT_REF_NAME}/index.html
     - echo "Prepare documentation" # Prepare documentation
     - mkdir -p public/${CI_COMMIT_REF_NAME}/documentation
-    - cp -r docs/_build/html/* public/${CI_COMMIT_REF_NAME}/documentation
+    - cp -r docs/html/* public/${CI_COMMIT_REF_NAME}/documentation
   artifacts:
     paths:
       - public # All relevant content needs to be available here
   only:
-    - master
+#    - master
+     - 269-improve-documentation-of-python-data
   
