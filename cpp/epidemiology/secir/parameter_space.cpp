@@ -19,6 +19,11 @@ void set_params_distributions_normal(SecirParams& params, double t0, double tmax
                                                         (1 + dev_rel * 2.6) * value_params, value_params,
                                                         dev_rel * value_params));
 
+    value_params = params.get_test_and_trace_capacity();
+    params.set_test_and_trace_capacity(
+        ParameterDistributionNormal(std::max(min_val, (1 - dev_rel * 2.6) * value_params),
+                                    (1 + dev_rel * 2.6) * value_params, value_params, dev_rel * value_params));
+
     // populations
     for (size_t i = 0; i < params.get_num_groups(); i++) {
 
@@ -149,6 +154,11 @@ void set_params_distributions_normal(SecirParams& params, double t0, double tmax
             ParameterDistributionNormal(std::max(min_val, (1 - dev_rel * 2.6) * value_params),
                                         (1 + dev_rel * 2.6) * value_params, value_params, dev_rel * value_params));
 
+        value_params = params.probabilities[i].get_test_and_trace_max_risk_from_symptomatic();
+        params.probabilities[i].set_test_and_trace_max_risk_from_symptomatic(
+            ParameterDistributionNormal(std::max(min_val, (1 - dev_rel * 2.6) * value_params),
+                                        (1 + dev_rel * 2.6) * value_params, value_params, dev_rel * value_params));
+
         // deaths per icu treatments
         value_params = params.probabilities[i].get_dead_per_icu();
         params.probabilities[i].set_dead_per_icu(
@@ -173,15 +183,16 @@ void set_params_distributions_normal(SecirParams& params, double t0, double tmax
     // off diagonal values vary between 0.7 to 1.1 of the corresponding diagonal value (symmetrization is conducted)
     params.get_contact_patterns().set_distribution_damp_nb(ParameterDistributionUniform(1, (tmax - t0) / 10));
     params.get_contact_patterns().set_distribution_damp_days(ParameterDistributionUniform(t0, tmax));
-    params.get_contact_patterns().set_distribution_damp_diag_base(ParameterDistributionUniform(0.1, 1));
-    params.get_contact_patterns().set_distribution_damp_diag_rel(ParameterDistributionUniform(0.6, 1.4));
-    params.get_contact_patterns().set_distribution_damp_offdiag_rel(ParameterDistributionUniform(0.7, 1.1));
+    params.get_contact_patterns().set_distribution_damp_diag_base(ParameterDistributionUniform(0.0, 0.9));
+    params.get_contact_patterns().set_distribution_damp_diag_rel(ParameterDistributionUniform(0.0, 0.4));
+    params.get_contact_patterns().set_distribution_damp_offdiag_rel(ParameterDistributionUniform(0.0, 0.3));
 }
 
 void draw_sample(SecirParams& params)
 {
     params.get_seasonality().draw_sample();
     params.get_icu_capacity().draw_sample();
+    params.get_test_and_trace_capacity().draw_sample();
 
     for (size_t i = 0; i < params.get_num_groups(); i++) {
 
@@ -216,6 +227,7 @@ void draw_sample(SecirParams& params)
         params.probabilities[i].get_infection_from_contact().draw_sample();
         params.probabilities[i].get_asymp_per_infectious().draw_sample();
         params.probabilities[i].get_risk_from_symptomatic().draw_sample();
+        params.probabilities[i].get_test_and_trace_max_risk_from_symptomatic().draw_sample();
         params.probabilities[i].get_dead_per_icu().draw_sample();
         params.probabilities[i].get_hospitalized_per_infectious().draw_sample();
         params.probabilities[i].get_icu_per_hospitalized().draw_sample();

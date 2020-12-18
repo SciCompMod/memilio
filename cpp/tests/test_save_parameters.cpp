@@ -7,6 +7,7 @@
 #include <epidemiology_io/secir_parameters_io.h>
 #include <epidemiology/migration/migration.h>
 #include <distributions_helpers.h>
+#include <matchers.h>
 #include <gtest/gtest.h>
 
 TEST(TestSaveParameters, compareParameterStudy)
@@ -57,15 +58,13 @@ TEST(TestSaveParameters, compareParameterStudy)
         params.probabilities[i].set_dead_per_icu(delta);
     }
 
-    epi::ContactFrequencyMatrix& cont_freq_matrix = params.get_contact_patterns();
-    epi::Damping dummy(30., 0.3);
-    for (int i = 0; i < static_cast<int>(num_groups); i++) {
-        for (int j = i; j < static_cast<int>(num_groups); j++) {
-            cont_freq_matrix.set_cont_freq(fact * cont_freq, i, j);
-            cont_freq_matrix.add_damping(dummy, i, j);
-        }
-    }
-    cont_freq_matrix.add_damping(epi::Damping{35, 0.2}, 0, 0);
+    epi::ContactMatrixGroup& contact_matrix = params.get_contact_patterns();
+    contact_matrix[0] = epi::ContactMatrix(Eigen::MatrixXd::Constant(num_groups, num_groups, fact * cont_freq));
+    contact_matrix.add_damping(0.7, epi::SimulationTime(30.));
+    auto damping2  = Eigen::MatrixXd::Zero(num_groups, num_groups).eval();
+    damping2(0, 0) = 0.8;
+    contact_matrix.add_damping(damping2, epi::SimulationTime(35));
+
     int num_runs     = 5;
     std::string path = "/Parameters";
     TixiDocumentHandle handle;
@@ -184,31 +183,7 @@ TEST(TestSaveParameters, compareParameterStudy)
         check_distribution(*params.probabilities[i].get_icu_per_hospitalized().get_distribution(),
                            *read_params.probabilities[i].get_icu_per_hospitalized().get_distribution());
 
-        for (size_t j = 0; j < num_groups; j++) {
-            ASSERT_EQ(contact.get_cont_freq_mat().get_cont_freq(static_cast<int>(i), static_cast<int>(j)),
-                      read_contact.get_cont_freq_mat().get_cont_freq(static_cast<int>(i), static_cast<int>(j)));
-
-            auto& dampings_vector = contact.get_cont_freq_mat()
-                                        .get_dampings(static_cast<int>(i), static_cast<int>(j))
-                                        .get_dampings_vector();
-            auto& cmp_dampings_vector = read_contact.get_cont_freq_mat()
-                                            .get_dampings(static_cast<int>(i), static_cast<int>(j))
-                                            .get_dampings_vector();
-            ASSERT_THAT(dampings_vector, testing::ContainerEq(cmp_dampings_vector));
-        }
-
-        for (size_t j = 0; j < num_groups; j++) {
-            ASSERT_EQ(contact.get_cont_freq_mat().get_cont_freq(static_cast<int>(i), static_cast<int>(j)),
-                      read_contact.get_cont_freq_mat().get_cont_freq(static_cast<int>(i), static_cast<int>(j)));
-
-            auto& dampings_vector = contact.get_cont_freq_mat()
-                                        .get_dampings(static_cast<int>(i), static_cast<int>(j))
-                                        .get_dampings_vector();
-            auto& cmp_dampings_vector = read_contact.get_cont_freq_mat()
-                                            .get_dampings(static_cast<int>(i), static_cast<int>(j))
-                                            .get_dampings_vector();
-            ASSERT_THAT(dampings_vector, testing::ContainerEq(cmp_dampings_vector));
-        }
+        ASSERT_THAT(contact.get_cont_freq_mat(), testing::ContainerEq(read_contact.get_cont_freq_mat()));
     }
 
     check_distribution(*contact.get_distribution_damp_nb().get(), *read_contact.get_distribution_damp_nb().get());
@@ -269,15 +244,13 @@ TEST(TestSaveParameters, compareSingleRun)
         params.probabilities[i].set_dead_per_icu(delta);
     }
 
-    epi::ContactFrequencyMatrix& cont_freq_matrix = params.get_contact_patterns();
-    epi::Damping dummy(30., 0.3);
-    for (int i = 0; i < static_cast<int>(num_groups); i++) {
-        for (int j = i; j < static_cast<int>(num_groups); j++) {
-            cont_freq_matrix.set_cont_freq(fact * cont_freq, i, j);
-            cont_freq_matrix.add_damping(dummy, i, j);
-        }
-    }
-    cont_freq_matrix.add_damping(epi::Damping{35, 0.2}, 0, 0);
+    epi::ContactMatrixGroup& contact_matrix = params.get_contact_patterns();
+    contact_matrix[0] = epi::ContactMatrix(Eigen::MatrixXd::Constant(num_groups, num_groups, fact * cont_freq));
+    contact_matrix.add_damping(0.7, epi::SimulationTime(30.));
+    auto damping2  = Eigen::MatrixXd::Zero(num_groups, num_groups).eval();
+    damping2(0, 0) = 0.8;
+    contact_matrix.add_damping(damping2, epi::SimulationTime(35));
+
     int num_runs     = 5;
     std::string path = "/Parameters";
     TixiDocumentHandle handle;
@@ -347,18 +320,7 @@ TEST(TestSaveParameters, compareSingleRun)
         ASSERT_EQ(params.probabilities[i].get_icu_per_hospitalized(),
                   read_params.probabilities[i].get_icu_per_hospitalized());
 
-        for (size_t j = 0; j < num_groups; j++) {
-            ASSERT_EQ(contact.get_cont_freq_mat().get_cont_freq(static_cast<int>(i), static_cast<int>(j)),
-                      read_contact.get_cont_freq_mat().get_cont_freq(static_cast<int>(i), static_cast<int>(j)));
-
-            auto& dampings_vector = contact.get_cont_freq_mat()
-                                        .get_dampings(static_cast<int>(i), static_cast<int>(j))
-                                        .get_dampings_vector();
-            auto& cmp_dampings_vector = read_contact.get_cont_freq_mat()
-                                            .get_dampings(static_cast<int>(i), static_cast<int>(j))
-                                            .get_dampings_vector();
-            ASSERT_THAT(dampings_vector, testing::ContainerEq(cmp_dampings_vector));
-        }
+        ASSERT_EQ(contact.get_cont_freq_mat(), read_contact.get_cont_freq_mat());
     }
 }
 
@@ -379,6 +341,8 @@ TEST(TestSaveParameters, compareGraphs)
     double fact       = 1.0 / (double)num_groups;
 
     epi::SecirParams params(num_groups);
+
+    params.set_test_and_trace_capacity(30);
 
     for (size_t i = 0; i < num_groups; i++) {
         params.times[i].set_incubation(tinc);
@@ -405,28 +369,22 @@ TEST(TestSaveParameters, compareGraphs)
         params.probabilities[i].set_carrier_infectability(0.67);
         params.probabilities[i].set_asymp_per_infectious(alpha);
         params.probabilities[i].set_risk_from_symptomatic(beta);
+        params.probabilities[i].set_test_and_trace_max_risk_from_symptomatic(beta * 3);
         params.probabilities[i].set_hospitalized_per_infectious(rho);
         params.probabilities[i].set_icu_per_hospitalized(theta);
         params.probabilities[i].set_dead_per_icu(delta);
     }
 
-    epi::ContactFrequencyMatrix& cont_freq_matrix = params.get_contact_patterns();
-    epi::Damping dummy(30., 0.3);
-    for (int i = 0; i < static_cast<int>(num_groups); i++) {
-        for (int j = i; j < static_cast<int>(num_groups); j++) {
-            cont_freq_matrix.set_cont_freq(fact * cont_freq, i, j);
-            cont_freq_matrix.add_damping(dummy, i, j);
-            if (j > i) {
-                cont_freq_matrix.set_cont_freq(fact * cont_freq, j, i);
-            }
-        }
-    }
+    epi::ContactMatrixGroup& contact_matrix = params.get_contact_patterns();
+    contact_matrix[0] = epi::ContactMatrix(Eigen::MatrixXd::Constant(num_groups, num_groups, fact * cont_freq));
+    contact_matrix.add_damping(Eigen::MatrixXd::Constant(num_groups, num_groups, 0.7).triangularView<Eigen::Upper>(),
+                               epi::SimulationTime(30.));
 
     epi::set_params_distributions_normal(params, t0, tmax, 0.15);
 
     epi::Graph<epi::SecirParams, epi::MigrationEdge> graph;
-    graph.add_node(params);
-    graph.add_node(params);
+    graph.add_node(0, params);
+    graph.add_node(1, params);
     graph.add_edge(0, 1, Eigen::VectorXd::Constant(params.populations.get_num_compartments(), 0.01));
     graph.add_edge(1, 0, Eigen::VectorXd::Constant(params.populations.get_num_compartments(), 0.01));
 
@@ -441,15 +399,21 @@ TEST(TestSaveParameters, compareGraphs)
     ASSERT_EQ(num_edges, graph_read.edges().size());
 
     for (size_t node = 0; node < num_nodes; node++) {
-        epi::SecirParams graph_params               = graph.nodes()[0];
-        epi::ContactFrequencyMatrix graph_cont_freq = graph_params.get_contact_patterns();
+        epi::SecirParams graph_params               = graph.nodes()[0].property;
+        epi::ContactMatrixGroup& graph_cont_matrix = graph_params.get_contact_patterns();
 
-        epi::SecirParams graph_read_params               = graph_read.nodes()[0];
-        epi::ContactFrequencyMatrix graph_read_cont_freq = graph_read_params.get_contact_patterns();
+        epi::SecirParams graph_read_params               = graph_read.nodes()[0].property;
+        epi::ContactMatrixGroup& graph_read_cont_matrix = graph_read_params.get_contact_patterns();
 
-        ASSERT_EQ(num_groups, graph_read_cont_freq.get_size());
+        ASSERT_EQ(graph_read_cont_matrix.get_num_groups(), static_cast<Eigen::Index>(num_groups));
+        ASSERT_EQ(graph_read_cont_matrix, graph_cont_matrix);
         ASSERT_EQ(graph_params.populations.get_num_compartments(),
                   graph_read_params.populations.get_num_compartments());
+        ASSERT_EQ(graph.nodes()[node].id, graph_read.nodes()[node].id);
+        EXPECT_THAT(graph_read_params.get_test_and_trace_capacity().value(),
+                    FloatingPointEqual(graph_params.get_test_and_trace_capacity().value(), 1e-12, 1e-12));
+        check_distribution(*graph_params.get_test_and_trace_capacity().get_distribution().get(),
+                           *graph_read_params.get_test_and_trace_capacity().get_distribution().get());
 
         for (size_t group = 0; group < num_groups; group++) {
             ASSERT_EQ(graph_params.populations.get({group, epi::SecirCompartments::D}),
@@ -497,6 +461,8 @@ TEST(TestSaveParameters, compareGraphs)
                       graph_read_params.probabilities[group].get_infection_from_contact());
             ASSERT_EQ(graph_params.probabilities[group].get_risk_from_symptomatic(),
                       graph_read_params.probabilities[group].get_risk_from_symptomatic());
+            ASSERT_EQ(graph_params.probabilities[group].get_test_and_trace_max_risk_from_symptomatic(),
+                      graph_read_params.probabilities[group].get_test_and_trace_max_risk_from_symptomatic());
             ASSERT_EQ(graph_params.probabilities[group].get_asymp_per_infectious(),
                       graph_read_params.probabilities[group].get_asymp_per_infectious());
             ASSERT_EQ(graph_params.probabilities[group].get_dead_per_icu(),
@@ -534,6 +500,14 @@ TEST(TestSaveParameters, compareGraphs)
             check_distribution(
                 *graph_params.probabilities[group].get_risk_from_symptomatic().get_distribution().get(),
                 *graph_read_params.probabilities[group].get_risk_from_symptomatic().get_distribution().get());
+            check_distribution(*graph_params.probabilities[group]
+                                    .get_test_and_trace_max_risk_from_symptomatic()
+                                    .get_distribution()
+                                    .get(),
+                               *graph_read_params.probabilities[group]
+                                    .get_test_and_trace_max_risk_from_symptomatic()
+                                    .get_distribution()
+                                    .get());
             check_distribution(*graph_params.probabilities[group].get_dead_per_icu().get_distribution().get(),
                                *graph_read_params.probabilities[group].get_dead_per_icu().get_distribution().get());
             check_distribution(
@@ -542,19 +516,6 @@ TEST(TestSaveParameters, compareGraphs)
             check_distribution(
                 *graph_params.probabilities[group].get_icu_per_hospitalized().get_distribution().get(),
                 *graph_read_params.probabilities[group].get_icu_per_hospitalized().get_distribution().get());
-
-            for (size_t contact_group = 0; contact_group < num_groups; contact_group++) {
-                ASSERT_EQ(graph_cont_freq.get_cont_freq(static_cast<int>(group), static_cast<int>(contact_group)),
-                          graph_read_cont_freq.get_cont_freq(static_cast<int>(group), static_cast<int>(contact_group)));
-
-                auto& dampings_v =
-                    graph_cont_freq.get_dampings(static_cast<int>(group), static_cast<int>(contact_group))
-                        .get_dampings_vector();
-                auto& cmp_dampings_v =
-                    graph_read_cont_freq.get_dampings(static_cast<int>(group), static_cast<int>(contact_group))
-                        .get_dampings_vector();
-                ASSERT_THAT(dampings_v, testing::ContainerEq(cmp_dampings_v));
-            }
 
             check_distribution(*graph_params.get_contact_patterns().get_distribution_damp_nb().get(),
                                *graph_read_params.get_contact_patterns().get_distribution_damp_nb().get());
@@ -620,23 +581,16 @@ TEST(TestSaveParameters, compareGraphWithFile)
         params.probabilities[i].set_dead_per_icu(delta);
     }
 
-    epi::ContactFrequencyMatrix& cont_freq_matrix = params.get_contact_patterns();
-    epi::Damping dummy(30., 0.3);
-    for (int i = 0; i < static_cast<int>(num_groups); i++) {
-        for (int j = i; j < static_cast<int>(num_groups); j++) {
-            cont_freq_matrix.set_cont_freq(fact * cont_freq, i, j);
-            cont_freq_matrix.add_damping(dummy, i, j);
-            if (j > i) {
-                cont_freq_matrix.set_cont_freq(fact * cont_freq, j, i);
-            }
-        }
-    }
+    epi::ContactMatrixGroup& contact_matrix = params.get_contact_patterns();
+    contact_matrix[0] = epi::ContactMatrix(Eigen::MatrixXd::Constant(num_groups, num_groups, fact * cont_freq));
+    contact_matrix.add_damping(Eigen::MatrixXd::Constant(num_groups, num_groups, 0.7).triangularView<Eigen::Upper>(),
+                               epi::SimulationTime(30.));
 
     epi::set_params_distributions_normal(params, t0, tmax, 0.15);
 
     epi::Graph<epi::SecirParams, epi::MigrationEdge> graph;
-    graph.add_node(params);
-    graph.add_node(params);
+    graph.add_node(0, params);
+    graph.add_node(1, params);
     graph.add_edge(0, 1, Eigen::VectorXd::Constant(params.populations.get_num_compartments(), 0.01));
     graph.add_edge(1, 0, Eigen::VectorXd::Constant(params.populations.get_num_compartments(), 0.01));
 
@@ -649,13 +603,13 @@ TEST(TestSaveParameters, compareGraphWithFile)
     ASSERT_EQ(num_edges, graph_read.edges().size());
 
     for (size_t node = 0; node < num_nodes; node++) {
-        epi::SecirParams graph_params               = graph.nodes()[0];
-        epi::ContactFrequencyMatrix graph_cont_freq = graph_params.get_contact_patterns();
+        epi::SecirParams graph_params                         = graph.nodes()[0].property;
+        epi::ContactMatrixGroup graph_cont_freq = graph_params.get_contact_patterns();
 
-        epi::SecirParams graph_read_params               = graph_read.nodes()[0];
-        epi::ContactFrequencyMatrix graph_read_cont_freq = graph_read_params.get_contact_patterns();
+        epi::SecirParams graph_read_params                         = graph_read.nodes()[0].property;
+        epi::ContactMatrixGroup graph_read_cont_freq = graph_read_params.get_contact_patterns();
 
-        ASSERT_EQ(num_groups, graph_read_cont_freq.get_size());
+        ASSERT_EQ(num_groups, static_cast<size_t>(graph_read_cont_freq.get_num_groups()));
         ASSERT_EQ(graph_params.populations.get_num_compartments(),
                   graph_read_params.populations.get_num_compartments());
 
@@ -751,18 +705,7 @@ TEST(TestSaveParameters, compareGraphWithFile)
                 *graph_params.probabilities[group].get_icu_per_hospitalized().get_distribution().get(),
                 *graph_read_params.probabilities[group].get_icu_per_hospitalized().get_distribution().get());
 
-            for (size_t contact_group = 0; contact_group < num_groups; contact_group++) {
-                ASSERT_EQ(graph_cont_freq.get_cont_freq(static_cast<int>(group), static_cast<int>(contact_group)),
-                          graph_read_cont_freq.get_cont_freq(static_cast<int>(group), static_cast<int>(contact_group)));
-
-                auto& dampings_v =
-                    graph_cont_freq.get_dampings(static_cast<int>(group), static_cast<int>(contact_group))
-                        .get_dampings_vector();
-                auto& cmp_dampings_v =
-                    graph_read_cont_freq.get_dampings(static_cast<int>(group), static_cast<int>(contact_group))
-                        .get_dampings_vector();
-                ASSERT_THAT(dampings_v, testing::ContainerEq(cmp_dampings_v));
-            }
+            ASSERT_EQ(graph_cont_freq, graph_read_cont_freq);
 
             check_distribution(*graph_params.get_contact_patterns().get_distribution_damp_nb().get(),
                                *graph_read_params.get_contact_patterns().get_distribution_damp_nb().get());
@@ -792,6 +735,7 @@ TEST(TestSaveParameters, ReadPopulationDataAllAges)
     ASSERT_EQ(params.populations.get({0, epi::SecirCompartments::D}), 8626);
     ASSERT_EQ(params.populations.get({0, epi::SecirCompartments::R}), 160148);
     ASSERT_EQ(params.populations.get({0, epi::SecirCompartments::U}), 1937);
+    ASSERT_EQ(params.populations.get_total(), 83166695);
 }
 
 TEST(TestSaveParameters, ReadPopulationDataRKIAges)
@@ -814,6 +758,8 @@ TEST(TestSaveParameters, ReadPopulationDataRKIAges)
         ASSERT_EQ(params.populations.get({i, epi::SecirCompartments::R}), recovered[i]);
         ASSERT_EQ(params.populations.get({i, epi::SecirCompartments::U}), 1937 / (double)ranges.size());
     }
+
+    EXPECT_NEAR(params.populations.get_total(), 83166695, 1e-6);
 }
 
 TEST(TestSaveParameters, ReadPopulationDataMultipleAges)
@@ -887,4 +833,35 @@ TEST(TestSaveParameters, ReadPopulationDataMultipleAges)
     EXPECT_NEAR(8626, deaths_param, 1e-6);
     EXPECT_NEAR(160148, recovered_param, 1e-6);
     EXPECT_NEAR(1937, icu_param, 1e-6);
+    EXPECT_NEAR(params.populations.get_total(), 83166695, 1e-6);
+}
+
+TEST(TestSaveParameters, ReadPopulationDataStateAllAges)
+{
+    epi::SecirParams params(1);
+    std::vector<double> ranges = {100};
+
+    std::string path = TEST_DATA_DIR;
+    epi::read_population_data_state(params, ranges, 5, 5, 1, path);
+
+    ASSERT_EQ(params.populations.get({0, epi::SecirCompartments::I}), 0);
+    ASSERT_EQ(params.populations.get({0, epi::SecirCompartments::D}), 145);
+    ASSERT_EQ(params.populations.get({0, epi::SecirCompartments::R}), 2741);
+    ASSERT_EQ(params.populations.get({0, epi::SecirCompartments::U}), 18);
+    ASSERT_EQ(params.populations.get_total(), 2903777);
+}
+
+TEST(TestSaveParameters, ReadPopulationDataCountyAllAges)
+{
+    epi::SecirParams params(1);
+    std::vector<double> ranges = {100};
+
+    std::string path = TEST_DATA_DIR;
+    epi::read_population_data_county(params, ranges, 9, 1, 1002, path);
+
+    ASSERT_EQ(params.populations.get({0, epi::SecirCompartments::I}), 0);
+    ASSERT_EQ(params.populations.get({0, epi::SecirCompartments::D}), 0);
+    ASSERT_EQ(params.populations.get({0, epi::SecirCompartments::R}), 156);
+    ASSERT_EQ(params.populations.get({0, epi::SecirCompartments::U}), 1);
+    ASSERT_EQ(params.populations.get_total(), 246793);
 }

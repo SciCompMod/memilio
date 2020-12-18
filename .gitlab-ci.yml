@@ -52,7 +52,7 @@ build-cpp-win:
 build-py:
   tags:
    - docker
-  image: quay.io/pypa/manylinux2010_x86_64
+  image: quay.io/pypa/manylinux2014_x86_64
   stage: build
   before_script:
     - yum install ninja-build -qy

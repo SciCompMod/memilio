@@ -55,6 +55,8 @@ add_library(epidemiology
     epidemiology/math/integrator.cpp
     epidemiology/migration/migration.h
     epidemiology/migration/migration.cpp
+    epidemiology/migration/graph_simulation.h
+    epidemiology/migration/graph_simulation.cpp
     epidemiology/utils/graph.h
     epidemiology/utils/graph.cpp
     epidemiology/utils/eigen.h
@@ -66,14 +68,18 @@ add_library(epidemiology
     epidemiology/secir/parameter_space.cpp
     epidemiology/utils/uncertain_value.h
     epidemiology/utils/uncertain_value.cpp
-    epidemiology/secir/uncertain_matrix.cpp
     epidemiology/secir/uncertain_matrix.h    
+    epidemiology/secir/uncertain_matrix.cpp
+    epidemiology/secir/contact_matrix.h    
+    epidemiology/secir/contact_matrix.cpp
     epidemiology/utils/memory.h
     epidemiology/utils/parameter_distributions.h
     epidemiology/utils/time_series.h
     epidemiology/utils/time_series.cpp
     epidemiology/utils/span.h
     epidemiology/utils/span.cpp
+    epidemiology/utils/type_safe.h
+    epidemiology/utils/type_safe.cpp
     epidemiology/abm/location.cpp
     epidemiology/abm/location.h
     epidemiology/abm/simulation.cpp
@@ -114,8 +120,8 @@ if (EPI_BUILD_EPI_IO)
       epidemiology_io/secir_parameters_io.h
       epidemiology_io/io.cpp
       epidemiology_io/io.h
-      epidemiology_io/twitter_migration_io.cpp
-      epidemiology_io/twitter_migration_io.h
+      epidemiology_io/mobility_io.cpp
+      epidemiology_io/mobility_io.h
     )
 
     target_include_directories(epidemiology_io PUBLIC

@@ -5,7 +5,9 @@
 #include "epidemiology/utils/eigen_util.h"
 #include "epidemiology/utils/stl_util.h"
 #include "epidemiology/utils/compiler_diagnostics.h"
+#include "epidemiology/math/floating_point.h"
 
+#include <iterator>
 #include <vector>
 #include <map>
 #include <ostream>
@@ -160,9 +162,8 @@ public:
     Eigen::Ref<Vector> add_time_point(FP t)
     {
         add_time_point_noinit();
-        auto col = m_data.col(m_num_time_points - 1);
-        col(0)   = t;
-        return col.tail(get_num_elements());
+        get_last_time() = t;
+        return get_last_value();
     }
 
     /**
@@ -176,6 +177,25 @@ public:
         auto value = add_time_point(t);
         value      = expr;
         return value;
+    }
+
+    /** 
+     * remove time point.
+     * @param i index to remove
+     */
+    void remove_time_point(Eigen::Index i)
+    {
+        assert(i >= 0 && i < m_num_time_points);
+        m_num_time_points -= 1;
+        for (auto j = i; j < m_num_time_points; ++j)
+        {
+            m_data.col(j) = m_data.col(j + 1);
+        }
+    }
+
+    void remove_last_time_point()
+    {
+        remove_time_point(m_num_time_points - 1);
     }
 
     /**
@@ -463,7 +483,7 @@ namespace details
         using Traits    = details::TimeSeriesIterTraits<FP, IsConstIter>;
         using MatrixPtr = typename Traits::MatrixPtr;
         MatrixPtr m_matrix;
-        Eigen::Index m_col_idx;
+        Eigen::Index m_col_idx = -1;
 
     public:
         TimeSeriesIteratorBase(MatrixPtr m, Eigen::Index col_idx = 0)
@@ -487,6 +507,7 @@ namespace details
 
         reference operator*()
         {
+            assert(m_col_idx >= 0 && m_col_idx < m_matrix->cols());
             return static_cast<Derived&>(*this).get_reference();
         }
 
@@ -533,7 +554,7 @@ namespace details
             return tmp;
         }
 
-        difference_type operator-(const TimeSeriesIteratorBase& other)
+        difference_type operator-(const TimeSeriesIteratorBase& other) const
         {
             return m_col_idx - other.m_col_idx;
         }
@@ -665,6 +686,26 @@ public:
         return m_matrix->coeffRef(0, m_col_idx);
     }
 };
+
+/**
+ * find the value in the time series at time t_search starting from the end.
+ * @param ts TimeSeries to seach
+ * @param t_search a time point
+ * @param abs_tol absolute floating point tolerance for equality of time values
+ * @param rel_tol relative floating point tolerance for equality of time values
+ * @return TimeSeries::reverse_iterator that points to ts[t_search] or ts.rend()
+ */
+template <class TS, class FP>
+decltype(std::declval<TS>().rend()) find_value_reverse(TS&& ts, FP t_search, FP abs_tol = 0, FP rel_tol = 0)
+{
+    auto iter_t = find_if(ts.get_reverse_times().begin(), ts.get_reverse_times().end(), [=](auto t) {
+        return floating_point_equal(t, t_search, abs_tol, rel_tol);
+    });
+    if (iter_t != ts.get_reverse_times().end()) {
+        return ts.rbegin() + (iter_t - ts.get_reverse_times().begin());
+    }
+    return ts.rend();
+}
 
 } // namespace epi
 

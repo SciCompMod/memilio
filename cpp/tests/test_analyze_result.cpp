@@ -96,11 +96,11 @@ TEST(TestInterpolateTimeSeries, timePointsCanMatchDayExactly)
 TEST(TestInterpolateGraph, basic)
 {
     auto g = epi::Graph<epi::ModelNode<epi::SecirSimulation>, epi::MigrationEdge>();
-    g.add_node(epi::SecirParams(), 0.5);
-    g.add_node(epi::SecirParams(), 0.5);
+    g.add_node(0, epi::SecirParams(), 0.5);
+    g.add_node(1, epi::SecirParams(), 0.5);
     for (auto& n : g.nodes())
     {
-        n.model.advance(4.5);
+        n.property.evolve(0.5, 4.0);
     }
 
     auto interpolated = epi::interpolate_simulation_result(g);

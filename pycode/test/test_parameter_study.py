@@ -15,8 +15,8 @@ class Test_ParameterStudy(unittest.TestCase):
         params.times[0].set_icu_to_home(8)
         params.times[0].set_icu_to_death(5)
 
-        params.get_contact_patterns().get_cont_freq_mat().set_cont_freq(0.5, 0, 0)
-        params.get_contact_patterns().get_cont_freq_mat().add_damping(secir.Damping(30, 0.3), 0, 0)
+        params.get_contact_patterns().cont_freq_mat[0] = secir.ContactMatrix(np.r_[0.5])
+        params.get_contact_patterns().cont_freq_mat.add_damping(secir.Damping(np.r_[0.7], 30.0))
 
         params.populations.set([0, secir.SecirCompartments.E], 100)
         params.populations.set([0, secir.SecirCompartments.C], 50)
@@ -52,8 +52,8 @@ class Test_ParameterStudy(unittest.TestCase):
         #mock callback
         def handle_result_func(graph):
             handle_result_func.c += 1
-            self.assertAlmostEqual(graph.get_node(0).result.get_time(0), t0)
-            self.assertAlmostEqual(graph.get_node(0).result.get_last_time(), tmax)
+            self.assertAlmostEqual(graph.get_node(0).property.result.get_time(0), t0)
+            self.assertAlmostEqual(graph.get_node(0).property.result.get_last_time(), tmax)
 
         handle_result_func.c = 0
         result = study.run(handle_result_func)
@@ -70,16 +70,12 @@ class Test_ParameterStudy(unittest.TestCase):
     def test_graph(self):        
         params = self._get_params()
         graph = secir.SecirParamsGraph()
-        graph.add_node(params)
-        graph.add_node(params)
+        graph.add_node(0, params)
+        graph.add_node(1, params)
         graph.add_edge(0, 1, 0.01 * np.ones(8))
         graph.add_edge(1, 0, 0.01 * np.ones(8))
 
-        t0 = 1
-        tmax = 10
-        num_runs = 3
-        graph_dt = 1.0
-        study = secir.ParameterStudy(graph, t0, tmax, graph_dt, num_runs)
+        study = secir.ParameterStudy(graph, t0 = 1, tmax = 10, dt = 0.5, num_runs = 3)
 
         self.assertEqual(study.secir_params_graph.num_nodes, 2)
         self.assertEqual(study.secir_params_graph.num_edges, 2)

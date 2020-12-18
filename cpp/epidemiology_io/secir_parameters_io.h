@@ -133,7 +133,7 @@ void write_single_run_params(const int run, epi::Graph<epi::ModelNode<SecirSimul
  * @param graph Graph which holds the node
  * @param node Node ID
  */
-void write_node(TixiDocumentHandle handle, const Graph<SecirParams, MigrationEdge>& graph, int node);
+void write_node(TixiDocumentHandle handle, const Graph<SecirParams, MigrationEdge> &graph, int node);
 
 /**
  * @brief reads parameters of a single node and saves it into the graph
@@ -168,7 +168,7 @@ void read_edge(const std::vector<TixiDocumentHandle>& edge_handles, const std::s
  * @param graph Graph which should be written
  * @param dir_string directory, where graph should be stored
  */
-void write_graph(const Graph<SecirParams, MigrationEdge>& graph, const std::string& dir_string);
+void write_graph(const Graph<SecirParams, MigrationEdge> &graph, const std::string& dir_string);
 
 /**
  * @brief reads graph xml files and returns a Secir simulation graph
@@ -210,6 +210,17 @@ void set_rki_data(epi::SecirParams& params, const std::vector<double>& param_ran
  */
 void set_divi_data(epi::SecirParams& params, const std::string& path, const std::string& id_name, int region, int month,
                    int day);
+
+/**
+ * @brief sets population data from census data
+ * @param params Object in which the data is set
+ * @param param_ranges Age ranges of params
+ * @param path Path to RKI file
+ * @param id_name Name of region key column
+ * @param region Key of the region of interest
+ */
+void set_population_data(epi::SecirParams& params, const std::vector<double>& param_ranges, const std::string& path,
+                         const std::string& id_name, int region);
 
 /**
  * @brief reads population data from population files for the whole country

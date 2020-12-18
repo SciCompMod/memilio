@@ -195,6 +195,21 @@ def download_data_for_one_day(last_number, download_date):
                         date(2020, 10, 23): 5158,
                         date(2020, 10, 25): 5163,
                         date(2020, 10, 28): 5174,
+                        date(2020, 10, 29): 5180,
+                        date(2020, 11, 6): 5199,
+                        date(2020, 11, 12): 5212,
+                        date(2020, 11, 14): 5219,
+                        date(2020, 11, 16): 5224,
+                        date(2020, 11, 17): 5229,
+                        date(2020, 11, 18): 5232,
+                        date(2020, 11, 20): 5238,
+                        date(2020, 11, 21): 5253,
+                        date(2020, 11, 24): 5260,
+                        date(2020, 11, 25): 5263,
+                        date(2020, 12, 2): 5286,
+                        date(2020, 12, 3): 5289,
+                        date(2020, 12, 4): 5292,
+                        date(2020, 12, 8): 5300,
                         }
     start_date_differs = False
 
@@ -430,7 +445,7 @@ def get_divi_data(read_data=dd.defaultDict['read_data'],
         df.loc[df["County"] == key, ["County"]] = value
 
     # write data for counties to file
-    df_counties = df[["County", "ID_County", "ICU", "ICU_ventilated", "Date"]]
+    df_counties = df[["County", "ID_County", "ICU", "ICU_ventilated", "Date"]].copy()
     filename = "county_divi"
     gd.write_dataframe(df_counties, directory, filename, out_form)
 

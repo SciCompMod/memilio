@@ -113,12 +113,12 @@ public:
 
     const SecirParams& get_secir_params() const
     {
-        return m_graph.nodes()[0];
+        return m_graph.nodes()[0].property;
     }
 
     SecirParams& get_secir_params()
     {
-        return m_graph.nodes()[0];
+        return m_graph.nodes()[0].property;
     }
 
     const Graph<SecirParams, MigrationEdge>& get_secir_params_graph() const
@@ -166,7 +166,7 @@ inline ParameterStudy::ParameterStudy(const epi::Graph<epi::SecirParams, epi::Mi
     , m_dt_graph_sim(graph_sim_dt)
 {
     for (auto& params_node : m_graph.nodes()) {
-        set_params_distributions_normal(params_node, t0, tmax, dev_rel);
+        set_params_distributions_normal(params_node.property, t0, tmax, dev_rel);
     }
 }
 
@@ -176,14 +176,14 @@ inline ParameterStudy::ParameterStudy(SecirParams const& params, double t0, doub
     , m_tmax{tmax}
     , m_dt_graph_sim(tmax - t0)
 {
-    m_graph.add_node(params);
+    m_graph.add_node(0, params);
 }
 
 inline ParameterStudy::ParameterStudy(SecirParams const& params, double t0, double tmax, double dev_rel,
                                       size_t num_runs)
     : ParameterStudy(params, t0, tmax, num_runs)
 {
-    set_params_distributions_normal(m_graph.nodes()[0], t0, tmax, dev_rel);
+    set_params_distributions_normal(m_graph.nodes()[0].property, t0, tmax, dev_rel);
 }
 
 inline std::vector<epi::Graph<epi::ModelNode<epi::SecirSimulation>, epi::MigrationEdge>>
@@ -197,13 +197,13 @@ ParameterStudy::run(HandleSimulationResultFunction simulation_result_function)
         epi::Graph<epi::ModelNode<epi::SecirSimulation>, epi::MigrationEdge> sim_graph;
 
         for (auto& params_node : m_graph.nodes()) {
-            draw_sample(params_node);
-            params_node.apply_constraints();
-            sim_graph.add_node(params_node, m_t0, m_dt_integration);
+            draw_sample(params_node.property);
+            params_node.property.apply_constraints();
+            sim_graph.add_node(params_node.id, params_node.property, m_t0, m_dt_integration);
         }
 
         for (auto& edge : m_graph.edges()) {
-            sim_graph.add_edge(edge.start_node_idx, edge.end_node_idx, edge.property.coefficients);
+            sim_graph.add_edge(edge.start_node_idx, edge.end_node_idx, edge.property);
         }
 
         // Call the simulation function

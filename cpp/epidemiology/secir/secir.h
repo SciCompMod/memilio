@@ -89,22 +89,24 @@ public:
         , times(nb_groups, StageTimes())
         , probabilities(nb_groups, Probabilities())
         , m_num_groups{nb_groups}
-        , m_contact_patterns(ContactFrequencyMatrix{nb_groups})
+        , m_contact_patterns(static_cast<Eigen::Index>(nb_groups), 1)
         , m_tstart{0}
         , m_seasonality{0}
         , m_icu_capacity{std::numeric_limits<double>::max()}
+        , m_test_and_trace_capacity{std::numeric_limits<double>::max()}
     {
     }
 
-    SecirParams(ContactFrequencyMatrix cont_freq_matrix)
-        : populations(Populations({(size_t)cont_freq_matrix.get_size(), SecirCount}))
-        , times(cont_freq_matrix.get_size(), StageTimes())
-        , probabilities(cont_freq_matrix.get_size(), Probabilities())
-        , m_num_groups{(size_t)cont_freq_matrix.get_size()}
-        , m_contact_patterns(cont_freq_matrix)
+    SecirParams(const ContactMatrixGroup& cont_matrix)
+        : populations(Populations({(size_t)cont_matrix.get_num_groups(), SecirCount}))
+        , times((size_t)cont_matrix.get_num_groups(), StageTimes())
+        , probabilities((size_t)cont_matrix.get_num_groups(), Probabilities())
+        , m_num_groups{(size_t)cont_matrix.get_num_groups()}
+        , m_contact_patterns(cont_matrix)
         , m_tstart{0}
         , m_seasonality{0}
         , m_icu_capacity{std::numeric_limits<double>::max()}
+        , m_test_and_trace_capacity{std::numeric_limits<double>::max()}
     {
     }
 
@@ -542,6 +544,15 @@ public:
         */
         void set_risk_from_symptomatic(ParameterDistribution const& m_risksymp);
 
+        ///@{
+        /**
+         * risk of infection from symptomatic cases increases as test and trace capacity is exceeded.
+         */
+        void set_test_and_trace_max_risk_from_symptomatic(const UncertainValue& value);
+        void set_test_and_trace_max_risk_from_symptomatic(double value);
+        void set_test_and_trace_max_risk_from_symptomatic(const ParameterDistribution& distribution);
+        ///@}
+
         /**
         * @brief sets the percentage of hospitalized patients per infected patients in the SECIR model
         * @param rho percentage of hospitalized patients per infected patients
@@ -619,6 +630,14 @@ public:
         const UncertainValue& get_risk_from_symptomatic() const;
         UncertainValue& get_risk_from_symptomatic();
 
+        ///@{
+        /**
+         * risk of infection from symptomatic cases increases as test and trace capacity is exceeded.
+         */
+        UncertainValue const& get_test_and_trace_max_risk_from_symptomatic() const;
+        UncertainValue& get_test_and_trace_max_risk_from_symptomatic();
+        ///@}
+
         /**
         * @brief returns the percentage of hospitalized patients per infected patients in the SECIR model
         */
@@ -649,6 +668,7 @@ public:
 
     private:
         UncertainValue m_infprob, m_carrinf, m_asympinf, m_risksymp, m_hospinf, m_icuhosp, m_deathicu; // probabilities
+        UncertainValue m_tnt_max_risksymp;
     };
 
     /**
@@ -676,6 +696,23 @@ public:
      */
     UncertainContactMatrix const& get_contact_patterns() const;
 
+    ///@{
+    /**
+     * capacity to test and trace contacts of infected for quarantine per day.
+     */
+    void set_test_and_trace_capacity(const UncertainValue& value);
+    void set_test_and_trace_capacity(double value);
+    void set_test_and_trace_capacity(const ParameterDistribution& distribution);
+    ///@}
+        
+    ///@{
+    /**
+     * capacity to test and trace contacts of infected for quarantine per day.
+     */
+    UncertainValue const& get_test_and_trace_capacity() const;
+    UncertainValue& get_test_and_trace_capacity();
+    ///@}
+
     Populations populations;
     std::vector<StageTimes> times;
     std::vector<Probabilities> probabilities;
@@ -688,6 +725,7 @@ private:
     double m_tstart;
     UncertainValue m_seasonality;
     UncertainValue m_icu_capacity;
+    UncertainValue m_test_and_trace_capacity;
 };
 
 /**
@@ -696,14 +734,25 @@ private:
 double get_reprod_rate(SecirParams const& params, double t, std::vector<double> const& yt);
 
 /**
+ * Computes the current time-derivative of the SECIR compartment populations (e.g., S, E, C, I, H, U, R, D).
+ * Uses separate population values to compute contact rates.
+ * @param pop population that is in contact and causes infections.
+ * @see secir_get_derivatives
+ */
+void secir_get_derivatives(SecirParams const& params, Eigen::Ref<const Eigen::VectorXd> pop,
+                           Eigen::Ref<const Eigen::VectorXd> y, double t, Eigen::Ref<Eigen::VectorXd> dydt);
+/**
  * Computes the current time-derivative of the SECIR compartment populations (e.g., S, E, C, I, H, U, R, D)
  * @param[in]  params SECIR params: contact frequencies, population sizes and epidemiological parameters
  * @param[in] y current  SECIR compartments' values at t; (e.g., y: [0:S, 1:E, ...])
  * @param[in] t time / current day
  * @param[out] dydt the values of the time derivatives of the SECIR compartments (e.g., S, E, C, I, H, U, R, D)
  */
-void secir_get_derivatives(SecirParams const& params, Eigen::Ref<const Eigen::VectorXd> y, double t,
-                           Eigen::Ref<Eigen::VectorXd> dydt);
+inline void secir_get_derivatives(SecirParams const& params, Eigen::Ref<const Eigen::VectorXd> y, double t,
+                                  Eigen::Ref<Eigen::VectorXd> dydt)
+{
+    secir_get_derivatives(params, y, y, t, dydt);
+}
 
 /**
  * @brief simulate SECIR compartment model.

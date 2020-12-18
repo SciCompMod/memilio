@@ -23,7 +23,7 @@ int main()
         ticu2death = 5; // 3.5-7 (=R5^(-1))
 
     double cont_freq = 10, // see Polymod study
-        inf_prob = 0.05, carr_infec = 0.67,
+        inf_prob = 0.05, carr_infec = 1,
            alpha = 0.09, // 0.01-0.16
         beta     = 0.25, // 0.05-0.5
         delta    = 0.3, // 0.15-0.77
@@ -35,7 +35,7 @@ int main()
 
     epi::SecirParams params;
 
-    params.set_icu_capacity(20);
+    // params.set_icu_capacity(20);
     params.set_start_day(0);
     params.set_seasonality(0);
 
@@ -48,12 +48,10 @@ int main()
     params.times[0].set_icu_to_home(ticu2home);
     params.times[0].set_icu_to_death(ticu2death);
 
-    epi::ContactFrequencyMatrix& cont_freq_matrix = params.get_contact_patterns();
-    cont_freq_matrix.set_cont_freq(cont_freq, 0, 0);
-    epi::Damping dummy(30., 0.3);
-    cont_freq_matrix.add_damping(dummy, 0, 0);
+    epi::ContactMatrixGroup& contact_matrix = params.get_contact_patterns();
+    contact_matrix[0]                       = epi::ContactMatrix(Eigen::MatrixXd::Constant(1, 1, cont_freq));
+    contact_matrix[0].add_damping(0.7, epi::SimulationTime(30.));
 
-    params.populations.set_total(nb_total_t0);
     params.populations.set({0, epi::SecirCompartments::E}, nb_exp_t0);
     params.populations.set({0, epi::SecirCompartments::C}, nb_car_t0);
     params.populations.set({0, epi::SecirCompartments::I}, nb_inf_t0);

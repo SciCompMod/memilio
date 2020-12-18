@@ -1,4 +1,4 @@
-from epidemiology.secir import UncertainContactMatrix, ContactFrequencyMatrix, Damping, SecirParams, simulate, StageTimes, Probabilities, Populations, SecirCompartments
+from epidemiology.secir import UncertainContactMatrix, ContactMatrix, Damping, SecirParams, simulate, StageTimes, Probabilities, Populations, SecirCompartments
 from matplotlib import pyplot as plt
 import pandas as pd
 import numpy as np

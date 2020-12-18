@@ -3,7 +3,7 @@
 
 #include "epidemiology/utils/memory.h"
 #include "epidemiology/utils/parameter_distributions.h"
-#include "epidemiology/secir/damping.h"
+#include "epidemiology/secir/contact_matrix.h"
 
 #include <memory>
 
@@ -11,81 +11,14 @@ namespace epi
 {
 
 /**
- * @brief Initializes a Contact Frequency matrix for 
- **/
-class ContactFrequencyMatrix
-{
-public:
-    /**
-     * @brief Standard constructor of 1x1-matrix of contact frequencies (i.e., one contact frequency)
-     */
-    ContactFrequencyMatrix();
-
-    /**
-     * @brief Constructor of a nb_groups x nb_groups-contact frequencies matrix
-     * @param[in] nb_groups number of groups in the model
-     */
-    ContactFrequencyMatrix(size_t nb_groups);
-
-    /**
-     * @brief returns the size of the contact frequency matrix
-     */
-    int get_size() const;
-
-    /**
-     * @brief sets the contact frequency in the SECIR model; in case of multiple groups, set the contact rate cr_ij=cont_freq
-     * @param cont_freq contact rate/frequency in 1/day unit
-     * @param self_group own group
-     * @param contact_group group which gets in contact with own group
-     */
-    void set_cont_freq(double cont_freq, int self_group, int contact_group);
-
-    /**
-     * @brief returns the contact frequency set for the SECIR model in 1/day unit; in case of multiple groups, returns the contact rate cr_ij
-     */
-    double get_cont_freq(int self_group, int contact_group) const;
-
-    /**
-     * @brief sets the damping in the SECIR model; in case of multiple groups, set the contact rate d_ij=cont_freq
-     * @param damping dampings over the whole time line in day unit
-     * @param self_group own group
-     * @param contact_group group which gets in contact with own group
-     */
-    void set_dampings(Dampings const& damping, int self_group, int contact_group);
-
-    /**
-     * @brief returns the dampings set for the SECIR model in 1/day unit; in case of multiple groups, returns the damping d_ij
-     */
-    const Dampings& get_dampings(int self_group, int contact_group) const;
-
-    /**
-     * @brief add damping to the dampings object specified by self_ and contact_group
-     * @param damping one damping in day unit
-     * @param self_group own group
-     * @param contact_group group which gets in contact with own group
-     */
-    void add_damping(Damping const& damping, int self_group, int contact_group);
-
-    /**
-     * @brief removes all previously set dampings
-     */
-    void clear_dampings();
-
-private:
-    std::vector<std::vector<double>> m_cont_freq;
-    // This defines a damping factor for a mitigation strategy for different points in time.
-    std::vector<std::vector<Dampings>> m_dampings;
-};
-
-/**
  * @brief The UncertainContactMatrix class consists of a
- *        ContactFrequencyMatrix and certain distributions that describe
+ *        ContactMatrix and certain distributions that describe
  *        the relative and uncertain changes of diagonal and 
  *        offdiagonal values over time 
  * 
  * The UncertainContactMatrix class represents a matrix-style model parameter 
- * that can take a ContactFrequencyMatrix value but that is subjected to a uncertainty,
- * based on contact pattern changes realized by an uncertain number and shape of epi::Damping(s).
+ * that can take a ContactMatrix value but that is subjected to a uncertainty,
+ * based on contact pattern changes realized by an uncertain number and shape of dampings.
  * The uncertainty is represented by a several distributions.
  * The number of and days where contact pattern changes is characterized by two distributions.
  * The changes in diagonal entries are supposed to be at the same magnitude, its base 
@@ -96,52 +29,52 @@ private:
 class UncertainContactMatrix
 {
 public:
-    UncertainContactMatrix();
+    UncertainContactMatrix(Eigen::Index num_groups = 1, size_t num_matrices = 1);
 
-    UncertainContactMatrix(ContactFrequencyMatrix cont_freq);
+    UncertainContactMatrix(const ContactMatrixGroup& cont_freq);
 
     /**
-    * @brief Create an UncertainContactMatrix by cloning ContactFrequencyMatrix 
+    * @brief Create an UncertainContactMatrix by cloning ContactMatrix 
     *        and distributions of another UncertainContactMatrix
     */
     UncertainContactMatrix(const UncertainContactMatrix& other);
 
     /**
     * @brief Set an UncertainContactMatrix from another UncertainContactMatrix, 
-     *        containing a ContactFrequencyMatrix and related distributions
+     *        containing a ContactMatrix and related distributions
      *        for changes in contact patterns over time.
     */
     UncertainContactMatrix& operator=(const UncertainContactMatrix& other);
 
     /**
-     * @brief Conversion to const ContactFrequencyMatrix reference by returning the 
-     *        ContactFrequencyMatrix contained in UncertainContactMatrix
+     * @brief Conversion to const ContactMatrix reference by returning the 
+     *        ContactMatrix contained in UncertainContactMatrix
      */
-    operator ContactFrequencyMatrix const &() const;
+    operator ContactMatrixGroup const &() const;
 
     /**
-     * @brief Conversion to ContactFrequencyMatrix reference by returning the 
-     *        ContactFrequencyMatrix contained in UncertainContactMatrix
+     * @brief Conversion to ContactMatrix reference by returning the 
+     *        ContactMatrix contained in UncertainContactMatrix
      */
-    operator ContactFrequencyMatrix&();
+    operator ContactMatrixGroup&();
 
     /**
-     * @brief Set an UncertainContactMatrix from a ContactFrequencyMatrix, 
+     * @brief Set an UncertainContactMatrix from a ContactMatrix, 
      *        all distributions remain unchanged.
      */
-    UncertainContactMatrix& operator=(ContactFrequencyMatrix cont_freq);
+    UncertainContactMatrix& operator=(const ContactMatrixGroup& cont_freq);
 
     /**
-     * @brief Returns the ContactFrequencyMatrix reference 
+     * @brief Returns the ContactMatrix reference 
      *        of the UncertainContactMatrix object
      */
-    ContactFrequencyMatrix& get_cont_freq_mat();
+    ContactMatrixGroup& get_cont_freq_mat();
 
     /**
-     * @brief Returns the const ContactFrequencyMatrix reference 
+     * @brief Returns the const ContactMatrix reference 
      *        of the UncertainContactMatrix object
      */
-    ContactFrequencyMatrix const& get_cont_freq_mat() const;
+    ContactMatrixGroup const& get_cont_freq_mat() const;
 
     /**
      * @brief Sets the random distribution for the number of 
@@ -163,7 +96,7 @@ public:
 
     /**
      * @brief Sets the random distribution for a multiplicative base factor
-     *        (changing the diagonal entries of the ContactFrequencyMatrix)
+     *        (changing the diagonal entries of the ContactMatrix)
      *
      * The function uses copy semantics, i.e. it copies
      * the distribution object.
@@ -172,7 +105,7 @@ public:
 
     /**
      * @brief Sets the random distribution for the multiplicative factors
-     *        changing each diagonal entry of the ContactFrequencyMatrix
+     *        changing each diagonal entry of the ContactMatrix
      *        relative to the base value sampled by the distribution from
      *        get_distribution_damp_diag_base()
      *
@@ -183,7 +116,7 @@ public:
 
     /**
      * @brief Sets the random distribution for the multiplicative factors
-     *        changing each offdiagonal entry of the ContactFrequencyMatrix
+     *        changing each offdiagonal entry of the ContactMatrix
      *        relative to the corresponding diagonal entries by the distribution 
      *        from get_distribution_damp_diag_rel()
      *
@@ -226,7 +159,7 @@ public:
 
     /**
      * @brief Returns the random distribution for a multiplicative base factor
-     *        (changing the diagonal entries of the ContactFrequencyMatrix)
+     *        (changing the diagonal entries of the ContactMatrix)
      *
      * If it is not set, a nullptr is returned.
      */
@@ -234,7 +167,7 @@ public:
 
     /**
      * @brief Returns the random distribution for a multiplicative base factor
-     *        (changing the diagonal entries of the ContactFrequencyMatrix)
+     *        (changing the diagonal entries of the ContactMatrix)
      *
      * If it is not set, a nullptr is returned.
      */
@@ -242,7 +175,7 @@ public:
 
     /**
      * @brief Returns the random distribution for the multiplicative factors
-     *        changing each diagonal entry of the ContactFrequencyMatrix
+     *        changing each diagonal entry of the ContactMatrix
      *        relative to the base value sampled by the distribution from
      *        get_distribution_damp_diag_base()
      *
@@ -252,7 +185,7 @@ public:
 
     /**
      * @brief Returns the random distribution for the multiplicative factors
-     *        changing each diagonal entry of the ContactFrequencyMatrix
+     *        changing each diagonal entry of the ContactMatrix
      *        relative to the base value sampled by the distribution from
      *        get_distribution_damp_diag_base()
      *
@@ -262,7 +195,7 @@ public:
 
     /**
      * @brief Returns the random distribution for the multiplicative factors
-     *        changing each offdiagonal entry of the ContactFrequencyMatrix
+     *        changing each offdiagonal entry of the ContactMatrix
      *        relative to the corresponding diagonal entries by the distribution 
      *        from get_distribution_damp_diag_rel()
      *        
@@ -273,7 +206,7 @@ public:
 
     /**
      * @brief Returns the random distribution for the multiplicative factors
-     *        changing each offdiagonal entry of the ContactFrequencyMatrix
+     *        changing each offdiagonal entry of the ContactMatrix
      *        relative to the corresponding diagonal entries by the distribution 
      *        from get_distribution_damp_diag_rel()
      *        
@@ -289,10 +222,10 @@ public:
      * @param accum accumulating current and newly sampled dampings if true;
      *              default: false; removing all previously set dampings
      */
-    ContactFrequencyMatrix draw_sample(bool accum = false);
+    ContactMatrixGroup draw_sample(bool accum = false);
 
 private:
-    ContactFrequencyMatrix m_cont_freq;
+    ContactMatrixGroup m_cont_freq;
     std::unique_ptr<ParameterDistribution>
         m_damp_nb; // random number of dampings (one damping is understood as nb_groups^2 many dampings at the same day)
     std::unique_ptr<ParameterDistribution> m_damp_days; // random number of day where to implement damping
