@@ -16,11 +16,23 @@ template<class E>
 class DependentParameter
 {
 public:
+    /**
+     * default constructor.
+     */
     DependentParameter() = default;
+
+    /**
+     * constant constructor.
+     * same value for each group.
+     */
     DependentParameter(double d)
         : values(Eigen::VectorXd::Constant(Eigen::Index(E::Count), d))
     {
     }
+
+    /**
+     * get the value for group a.
+     */
     const double& operator[](E a) const
     {
         return values[size_t(a)];
@@ -29,12 +41,21 @@ public:
     {
         return values[size_t(a)];
     }
+
+    /**
+     * set values.
+     * @param v one value for all groups or n values (one for each group) 
+     */
     template <class V, class = std::enable_if_t<std::is_assignable<Eigen::ArrayXd, V>::value, int>>
     DependentParameter& operator=(V&& v)
     {
         values = v;
         return *this;
     }
+
+    /**
+     * as Eigen3 array for componentwise operations.
+     */
     const Eigen::ArrayXd& array() const
     {
         return values;
