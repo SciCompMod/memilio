@@ -16,6 +16,8 @@ enum class AbmAgeGroup
     Age35to59,
     Age60to79,
     Age80plus,
+
+    Count
 };
 
 } // namespace epi

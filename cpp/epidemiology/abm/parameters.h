@@ -9,27 +9,28 @@ namespace epi
 {
 
 /**
- * parameter that depends on the age group.
+ * parameter that depends an enum, e.g. the age group.
 * EXPERIMENTAL; will be merged with new model framework soon.
  */
-class AgeDependentParameter
+template<class E>
+class DependentParameter
 {
 public:
-    AgeDependentParameter() = default;
-    AgeDependentParameter(double d)
-        : values(Eigen::VectorXd::Constant(6, d))
+    DependentParameter() = default;
+    DependentParameter(double d)
+        : values(Eigen::VectorXd::Constant(Eigen::Index(E::Count), d))
     {
     }
-    const double& operator[](AbmAgeGroup a) const
+    const double& operator[](E a) const
     {
         return values[size_t(a)];
     }
-    double& operator[](AbmAgeGroup a)
+    double& operator[](E a)
     {
         return values[size_t(a)];
     }
     template <class V, class = std::enable_if_t<std::is_assignable<Eigen::ArrayXd, V>::value, int>>
-    AgeDependentParameter& operator=(V&& v)
+    DependentParameter& operator=(V&& v)
     {
         values = v;
         return *this;
@@ -44,7 +45,7 @@ public:
     }
 
 private:
-    Eigen::ArrayXd values = Eigen::ArrayXd(6);
+    Eigen::ArrayXd values { Eigen::Index(E::Count) };
 };
 
 /**
@@ -52,15 +53,15 @@ private:
  */
 class GlobalInfectionParameters {
 public:
-    AgeDependentParameter incubation_period                  = 1.;
-    AgeDependentParameter susceptible_to_exposed_by_carrier  = 1.;
-    AgeDependentParameter susceptible_to_exposed_by_infected = 1.;
-    AgeDependentParameter carrier_to_infected                = 1.;
-    AgeDependentParameter carrier_to_recovered               = 1.;
-    AgeDependentParameter infected_to_recovered              = 1.;
-    AgeDependentParameter infected_to_dead                   = 1.;
-    AgeDependentParameter recovered_to_susceptible           = 1.;
-    AgeDependentParameter detect_infection                   = 0.5;
+    DependentParameter<AbmAgeGroup> incubation_period                  = 1.;
+    DependentParameter<AbmAgeGroup> susceptible_to_exposed_by_carrier  = 1.;
+    DependentParameter<AbmAgeGroup> susceptible_to_exposed_by_infected = 1.;
+    DependentParameter<AbmAgeGroup> carrier_to_infected                = 1.;
+    DependentParameter<AbmAgeGroup> carrier_to_recovered               = 1.;
+    DependentParameter<AbmAgeGroup> infected_to_recovered              = 1.;
+    DependentParameter<AbmAgeGroup> infected_to_dead                   = 1.;
+    DependentParameter<AbmAgeGroup> recovered_to_susceptible           = 1.;
+    DependentParameter<AbmAgeGroup> detect_infection                   = 0.5;
 };
 
 /**
