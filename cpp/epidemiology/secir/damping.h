@@ -27,7 +27,14 @@ DECL_TYPESAFE(DampingType, int);
 /**
  * double simulation time.
  */
-DECL_TYPESAFE(SimulationTime, double);
+class SimulationTime : public TypeSafe<double, SimulationTime>,
+                       public OperatorAddSub<SimulationTime>,
+                       public OperatorScalarMultDiv<SimulationTime, double>,
+                       public OperatorComparison<SimulationTime>
+{
+public:
+    using TypeSafe<double, SimulationTime>::TypeSafe;
+};
 
 /**
  * represent interventions or effects that affect contact frequencies between multiple groups.

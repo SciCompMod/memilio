@@ -41,6 +41,10 @@ public:
     {
         return m_t;
     }
+    T get() const 
+    {
+        return m_t;
+    }
 
     /**
      * equality operators.
@@ -64,6 +68,110 @@ public:
 
 private:
     T m_t;
+};
+
+/**
+ * base class to add default operator +, +=, -, -= to TypeSafe.
+ */
+template<class TS>
+class OperatorAddSub
+{
+public:
+    TS operator+(const TS& other) const
+    {
+        return TS { static_cast<const TS&>(*this).get() + other.get() };
+    }
+    TS& operator+=(const TS& other)
+    {
+        return static_cast<TS&>(*this) = (*this + other);
+    }
+    TS operator-(const TS& other) const
+    {
+        return TS { static_cast<const TS&>(*this).get() - other.get() };
+    }
+    TS& operator-=(const TS& other)
+    {
+        return static_cast<TS&>(*this) = (*this - other);
+    }
+};
+
+/**
+ * base class to add default operator ++, -- to TypeSafe.
+ */
+template<class TS>
+class OperatorIncrDecr
+{
+public:
+    TS& operator++()
+    {        
+        return static_cast<TS&>(*this) = TS { static_cast<const TS&>(*this).get() + 1 };
+    }
+    TS operator++(int)
+    {
+        auto tmp = static_cast<TS&>(*this);
+        static_cast<TS&>(*this) = TS { static_cast<const TS&>(*this).get() + 1 };
+        return tmp;
+    }
+    TS& operator--()
+    {        
+        return static_cast<TS&>(*this) = TS { static_cast<const TS&>(*this).get() - 1 };
+    }
+    TS operator--(int)
+    {
+        auto tmp = static_cast<TS&>(*this);
+        static_cast<TS&>(*this) = TS { static_cast<const TS&>(*this).get() - 1 };
+        return tmp;
+    }
+};
+
+/**
+ * base class to add operator *, *=, /, /= with a scalar to TypeSafe.
+ */
+template<class TS, class S>
+class OperatorScalarMultDiv
+{
+public:
+    TS operator*(const S& other) const
+    {
+        return TS { static_cast<const TS&>(*this).get() * other };
+    }
+    TS& operator*=(const S& other)
+    {
+        return static_cast<TS&>(*this) = (*this * other);
+    }
+    TS operator/(const S& other) const
+    {
+        return TS { static_cast<const TS&>(*this).get() / other };
+    }
+    TS& operator/=(const S& other)
+    {
+        return static_cast<TS&>(*this) = (*this / other);
+    }
+};
+
+/**
+ * base class to add operator <, <=, >, >= to TypeSafe.
+ */
+template<class TS>
+class OperatorComparison
+{
+    public:
+    bool operator<(const TS& other) const 
+    {
+        return static_cast<const TS&>(*this).get() < static_cast<const TS&>(other).get();
+    }
+    bool operator<=(const TS& other) const
+    {
+        return static_cast<const TS&>(*this).get() <= static_cast<const TS&>(other).get();
+    }
+    bool operator>(const TS& other) const 
+    {
+        return static_cast<const TS&>(*this).get() > static_cast<const TS&>(other).get();
+    }
+    bool operator>=(const TS& other) const
+    {
+        return static_cast<const TS&>(*this).get() >= static_cast<const TS&>(other).get();
+    }
 };
 
 /**
