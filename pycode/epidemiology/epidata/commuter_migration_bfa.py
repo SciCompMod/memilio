@@ -17,15 +17,18 @@ counties = pd.read_excel(os.path.join(path, 'kreise_deu.xlsx'), sheet_name=1)
 # counties.info()
 
 def get_data():
+    # get all data generated in this file
     (countykey_list, countypop_list, govkey_list) = get_key_and_population_lists()
     (key2matindex, govkey2local) = create_hashmaps(countykey_list, govkey_list)
-    (gov_table, key2govkey, key2localkey) = make_gov_list(countykey_list, govkey_list)
+    (gov_table, key2govkey, key2localkey) = make_belonging_together_keys_list(countykey_list, govkey_list)
     state_gov_table = create_government_regions_list_per_state(govkey_list)
-    mat_commuter_migration = get_matrix_commuter_migration_patterns(gov_table, key2matindex, key2govkey, key2localkey,
+    mat_commuter_migration = get_matrix_commuter_migration_patterns(countypop_list, govkey_list, key2matindex,
                                                                     govkey2local,
-                                                                    countypop_list, state_gov_table, govkey_list)
-    return (countykey_list, countypop_list, govkey_list,key2matindex, govkey2local,gov_table, key2govkey, key2localkey,
-            state_gov_table,mat_commuter_migration)
+                                                                    gov_table, key2govkey, key2localkey,
+                                                                    state_gov_table)
+    return (
+        countykey_list, countypop_list, govkey_list, key2matindex, govkey2local, gov_table, key2govkey, key2localkey,
+        state_gov_table, mat_commuter_migration)
 
 
 def get_key_and_population_lists():
@@ -93,10 +96,12 @@ def verify_sorted(countykey_list):
             print('Error. Input list not sorted, population per county list had to be sorted accordingly.')
 
 
-def create_hashmaps(countykey_list, govkey_list):
+def create_hashmaps(countykey_list=None, govkey_list=None):
+    # create a hashmap from sorted regional identifiers (01001 - ...) to 0 - num_counties
+    if countykey_list is None or govkey_list is None:
+        (countykey_list, help, govkey_list) = get_key_and_population_lists()
     verify_sorted(countykey_list)
 
-    # create a hashmap from sorted regional identifiers (01001 - ...) to 0 - num_counties
     key2matindex = collections.OrderedDict()
     i = 0
     for index in countykey_list:
@@ -119,10 +124,13 @@ def create_hashmaps(countykey_list, govkey_list):
     return (key2matindex, govkey2local)
 
 
-def make_gov_list(countykey_list, govkey_list):
+def make_belonging_together_keys_list(countykey_list=None, govkey_list=None):
     # make list of government regions with lists of counties that belong to them
     # make list of states with government regions that belong to them
     # only works with sorted lists of keys
+    if govkey_list is None or countykey_list is None:
+        (countykey_list, help, govkey_list) = get_key_and_population_lists()
+
     verify_sorted(countykey_list)
 
     gov_table = []
@@ -159,7 +167,7 @@ def make_gov_list(countykey_list, govkey_list):
     return (gov_table, key2govkey, key2localkey)
 
 
-def create_government_regions_list_per_state(govkey_list):
+def create_government_regions_list_per_state(govkey_list=get_key_and_population_lists()[2]):
     # create government regions list per state
     state_gov_table = []
 
@@ -179,9 +187,18 @@ def create_government_regions_list_per_state(govkey_list):
     return state_gov_table
 
 
-def get_matrix_commuter_migration_patterns(gov_table, key2matindex, key2govkey, key2localkey, govkey2local,
-                                           countypop_list, state_gov_table, govkey_list):
+def get_matrix_commuter_migration_patterns(countypop_list=None, govkey_list=None, key2matindex=None, govkey2local=None,
+                                           gov_table=None, key2govkey=None, key2localkey=None, state_gov_table=None):
     # matrix of commuter migration patterns
+    if countypop_list is None or govkey_list is None:
+        (countykey_list, countypop_list, govkey_list) = get_key_and_population_lists()
+    if key2matindex is None or govkey2local is None:
+        (key2matindex, govkey2local) = create_hashmaps(countykey_list, govkey_list)
+    if gov_table is None or key2govkey is None or key2localkey is None:
+        (gov_table, key2govkey, key2localkey) = make_belonging_together_keys_list(countykey_list, govkey_list)
+    if state_gov_table is None:
+        state_gov_table = create_government_regions_list_per_state(govkey_list)
+
     mat_commuter_migration = np.zeros((num_counties, num_counties))
 
     # maxium errors (of people not detected)
