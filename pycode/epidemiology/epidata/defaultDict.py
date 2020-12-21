@@ -16,7 +16,8 @@ defaultDict = {
    'update_data': False,
    'start_date': date(2020, 4, 24),
    'end_date': date.today(),
-   'out_form': 'json_timeasstring',
+   'split_berlin': False,
+   'out_form': 'json_timeasstring'
 }
 
 # The following dict EngEng makes sure that for all
@@ -536,6 +537,7 @@ County = {
    9462: 'SK Bayreuth',
    9463: 'SK Coburg',
    9464: 'SK Hof',
+   11000: 'SK Berlin',
    11001: 'SK Berlin Mitte',
    11002: 'SK Berlin Friedrichshain-Kreuzberg',
    11003: 'SK Berlin Pankow',

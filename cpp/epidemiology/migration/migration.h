@@ -46,7 +46,6 @@ public:
     {
         return model.get_result();
     }
-
     /**
      * get the parameters of the simulation in this node.
      */
