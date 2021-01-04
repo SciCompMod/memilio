@@ -183,6 +183,32 @@ test-py:
       cobertura: pycode/test/coverage_python.xml
     paths:
       - coverage_python
+    expire_in: 3 day
+
+lint-py:
+  tags:
+    - docker
+  image: ubuntu:18.04
+  stage: test
+  dependencies:
+    - build-py
+  before_script:
+    - apt -qq update
+    - apt -qq -y install python3-pip gnupg
+    - python3.6 -m pip install --upgrade pip
+    - for pkg in `ls pycode/wheelhouse/*36*.whl`; do python3.6 -m pip install $pkg; done
+    - pip install -r pycode/requirements-dev.txt
+  script:
+    - cd pycode
+    - mkdir -p build_pylint
+    - pip install --use-feature=2020-resolver -e .[develop] 
+    - python setup.py pylint
+    - pylint-json2html -f jsonextended -o build_pylint/pylint.html < build_pylint/pylint_extended.json
+  artifacts:
+    paths:
+      - pycode/build_pylint/pylint.html
+    expire_in: 3 day
+
 
 download-data:
   tags:
@@ -279,6 +305,9 @@ pages:
     - echo "Prepare documentation" # Prepare documentation
     - mkdir -p public/${CI_COMMIT_REF_NAME}/documentation
     - cp -r docs/html/* public/${CI_COMMIT_REF_NAME}/documentation
+    - echo "Prepare pylint reports" # Prepare pylint
+    - mkdir -p public/${CI_COMMIT_REF_NAME}/pylint
+    - cp pycode/build_pylint/pylint.html public/${CI_COMMIT_REF_NAME}/pylint/
   artifacts:
     paths:
       - public # All relevant content needs to be available here

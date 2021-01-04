@@ -69,3 +69,14 @@ To run the tests make
 
     python -m unittest
 
+
+Inspection via pylint
+---------------------
+Pylint report for actial master:
+
+
+:Pylint Report: https://ssa.pages.gitlab.dlr.de/hpc-against-corona/epidemiology/master/pylint/pylint.html
+:Pylint Report: https://ssa.pages.gitlab.dlr.de/hpc-against-corona/epidemiology/269-improve-documentation-of-python-data/pylint/pylint.html
+
+
+

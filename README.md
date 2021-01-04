@@ -4,6 +4,8 @@
 C++: [![c++ coverage report](https://gitlab.dlr.de/hpc-against-corona/epidemiology/badges/master/coverage.svg?job=test-cpp)](https://gitlab.dlr.de/hpc-against-corona/epidemiology/-/jobs/artifacts/master/file/coverage_report/index.html?job=test-cpp)
 Python: [![python coverage report](https://gitlab.dlr.de/hpc-against-corona/epidemiology/badges/master/coverage.svg?job=test-py)](https://gitlab.dlr.de/hpc-against-corona/epidemiology/-/jobs/artifacts/master/file/coverage_python/index.html?job=test-py)
 
+:Documentation: https://ssa.pages.gitlab.dlr.de/hpc-against-corona/epidemiology/269-improve-documentation-of-python-data/documentation/
+
 This is a common project between the department of Systems Immunology (SIMM) of the he Helmholtz Center for Infection Research (HZI) and the Institute for Software Technology of the German Aerospace Center (DLR). This project will bring cutting edge and compute intensive epidemiological models to a large scale, which enables a precise and high-resolution spatiotemporal pandemic simulation for entire countries.
 
 
@@ -24,7 +26,7 @@ By standard, *epidemiology* is built without *epidemiology_io*.
 
 In every important part of the project, desribed above, a README can be found which contains further information about the structure of the specific project part, the instructions for the user and very important the instructions for the developer.
 
-Furthermore, the code is documentent via doxygen and n isntruction how to get it is provided in the docs folder.
+Furthermore, the code is documentent via doxygen and an instruction how to get it, is provided in the docs folder.
 
 
 **Requirements**
