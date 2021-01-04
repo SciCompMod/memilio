@@ -1,18 +1,10 @@
-import os
-import sys
-import pandas
-import bisect
-from datetime import timedelta, date
-
-from epidemiology.epidata import getDataIntoPandasDataFrame as gd
-from epidemiology.epidata import defaultDict as dd
-
 ## @file getDIVIData.py
-# @brief Data of the DIVI -
-# Deutsche interdisziplinäre Vereinigung für Intensiv- und Notfallmedizin
+# @brief Data of the DIVI
 # about Sars-CoV2 is downloaded.
 # This data contains the number of Covid19 patients in intensive care
 # and the number of those that are additionally ventilated.
+#
+# DIVI - Deutsche interdisziplinäre Vereinigung für Intensiv- und Notfallmedizin
 #
 # data explanation:
 # - reporting_hospitals is the number of reporting hospitals
@@ -30,20 +22,29 @@ from epidemiology.epidata import defaultDict as dd
 # The column ICU does not exist for the 24.4.
 # ICU_ventilated does not exist for the 24.4. and 25.4.
 
+import os
+import sys
+import pandas
+import bisect
+from datetime import timedelta, date
 
-## Adjusts data such that the data structure looks the same for all dates
-#
-# For the first available dates of year 2020, there are some differences and thus special treatment is needed:
-# - 24.4.: Rename column 'kreis' to 'gemeindeschluessel'
-# - 25.4.: Add id bundesland, which is extracted from the given column "gemeindeschluessel"
-# - 24.4.-27.4.: Add date as a column
-# - 29.9.: Empty column has to be removed
-#
-# @param df A pandas data frame
-# @param date_of_data The date for the data stored in df
-# @return the changed pandas dataframe
-#
+from epidemiology.epidata import getDataIntoPandasDataFrame as gd
+from epidemiology.epidata import defaultDict as dd
+
+
 def adjust_data(df, date_of_data):
+    """!Adjusts data such that the data structure looks the same for all dates
+
+    For the first available dates of year 2020, there are some differences and thus special treatment is needed:
+    - 24.4.: Rename column 'kreis' to 'gemeindeschluessel'
+    - 25.4.: Add id bundesland, which is extracted from the given column "gemeindeschluessel"
+    - 24.4.-27.4.: Add date as a column
+    - 29.9.: Empty column has to be removed
+
+    @param df A pandas data frame
+    @param date_of_data The date for the data stored in df
+    @return changed pandas dataframe
+    """
 
     # rename column 'kreis' of first date to match data of following days
     if date_of_data == date(2020, 4, 24):
@@ -67,16 +68,18 @@ def adjust_data(df, date_of_data):
 
     return df
 
-## Calls, if possible a url and breaks if it is not possible to call the url,
-# e.g., due to a not working internet connection
-# or returns an empty dataframe if url is not the correct one.
-#
-# @param url_prefix Date specific part of the url
-# @param call_number Irregular number which is needed for the url
-#
-# @return pandas dataframe which is either empty or contains requested data
-#
+
 def call_call_url(url_prefix, call_number):
+
+    """!Calls, if possible a url and breaks if it is not possible to call the url,
+    e.g., due to a not working internet connection
+    or returns an empty dataframe if url is not the correct one.
+
+    @param url_prefix Date specific part of the url
+    @param call_number Irregular number which is needed for the url
+
+    @return pandas dataframe which is either empty or contains requested data
+    """
 
     call_url = "https://www.divi.de/divi-intensivregister-tagesreport-archiv-csv/divi-intensivregister-" \
                + url_prefix + "/viewdocument/" + str(call_number)
@@ -91,14 +94,15 @@ def call_call_url(url_prefix, call_number):
 
     return df
 
-## Finds nearest but earlier date to a given date from a list of dates.
-#
-# @param date_list Iterable object with dates
-# @param date_given Single date
-#
-# @return date from date_list which is closest but earlier to date_given.
-#
+
 def nearest_earlier_date(date_list, date_given):
+    """!Finds nearest but earlier date to a given date from a list of dates.
+
+    @param date_list Iterable object of dates
+    @param date_given Single date
+
+    @return date from date_list which is closest but earlier to date_given.
+    """
 
     # should be sorted but for case
     date_list.sort();
@@ -107,31 +111,33 @@ def nearest_earlier_date(date_list, date_given):
     # get date which is closest
     return min(date_list[:index], key=lambda x: abs(x - date_given))
 
-## Downloads data for given date
-#
-# This function checks if the given date is a key of a dictionary where dates
-# and their corresponding call_numbers are stored.
-# This is stored there if the difference of the call_number to the call_number of the date before is larger than 1 or 2.
-# If the date is not part of the call_number_dict the new call_number is calculated.
-# First, the last_number is successively increased by one until a difference of 300 is reached.
-# Then, the last_number is successively decreased by one until a difference of 300 is reached.
-# At last the last_number without a change is tried.
-# If data could be downloaded by the function call_call_url and the difference was 1 or 2,
-# the data is simply given back.
-# If the difference is different an additional message is printed in the end of the program,
-# which can be used to copy the date and the corresponding call_number directly into the call_number_dict
-# to decrease runtime of the program.
-# Furthermore, in this function another specific part of the url, the call_time, is estimated from the given date.
-# If the date is before 2020-6-5 the time "-09-15" and afterwards "-12-15" has to be added to the date.
-# Moreover for dates in the range [2020-6-12),2020-6-5], an additional "-2" has to be added after the call_time.
-# Thus, the url_prefix = call_date + call_time + ext and is then given to the call_call_url fct.
-#
-# @param last_number This is the call_number which is needed for the download url
-# of the date 1 day before this one
-# @param download_data The date for which the data should be downloaded
-# @return List of call_number of the download_data, the pandas dataframe, and a string which is either empty or contains
-# what should be added to "call_number_dict"
+
 def download_data_for_one_day(last_number, download_date):
+    """!Downloads data for given date
+
+    This function checks if the given date is a key of a dictionary where dates
+    and their corresponding call_numbers are stored.
+    This is stored there if the difference of the call_number to the call_number of the date before is larger than 1 or 2.
+    If the date is not part of the call_number_dict the new call_number is calculated.
+    First, the last_number is successively increased by one until a difference of 300 is reached.
+    Then, the last_number is successively decreased by one until a difference of 300 is reached.
+    At last the last_number without a change is tried.
+    If data could be downloaded by the function call_call_url and the difference was 1 or 2,
+    the data is simply given back.
+    If the difference is different an additional message is printed in the end of the program,
+    which can be used to copy the date and the corresponding call_number directly into the call_number_dict
+    to decrease runtime of the program.
+    Furthermore, in this function another specific part of the url, the call_time, is estimated from the given date.
+    If the date is before 2020-6-5 the time "-09-15" and afterwards "-12-15" has to be added to the date.
+    Moreover for dates in the range [2020-6-12),2020-6-5], an additional "-2" has to be added after the call_time.
+    Thus, the url_prefix = call_date + call_time + ext and is then given to the call_call_url fct.
+
+    @param last_number This is the call_number which is needed for the download url
+    of the date 1 day before this one
+    @param download_date The date for which the data should be downloaded
+    @return List of call_number of the download_data, the pandas dataframe, and a string which is either empty or contains
+    what should be added to "call_number_dict"
+    """
 
     # define call numbers for dates where call number doesn't increase by 1
     call_number_dict = {date(2020, 4, 24): 3974,
@@ -251,8 +257,6 @@ def download_data_for_one_day(last_number, download_date):
             exit_string = "Something went wrong with download of data for date " + str(download_date) \
                           + ", although it is part of the call_number_dict."
             sys.exit(exit_string)
-
-
     else:
         # case where start_date is not 24-04-2020 and is not in dict
         # then we search to date which is closest to given date and smaller
@@ -286,44 +290,6 @@ def download_data_for_one_day(last_number, download_date):
     return [call_number, df, call_string]
 
 
-## Function to get the divi data.
-#
-# Available data start from 2020-4-24.
-# If the given start_dat is earlier, it is changed to this date and a warning is printed.
-# If it does not already exist, the folder Germany is generated in the given out_folder.
-# If read_data == True and the file "FullData_DIVI.json" exists, the data is read form this file
-# and stored in a pandas dataframe.
-# Otherwise the program is stopped.
-#
-# If update_data == True  the same happens as for read_data == True.
-# Furthermore, if the last date in read data is yesterday, the data of today is downloaded.
-# For this download an easier link can be used than the one where we have to find the mysterious call_number.
-# If the data has not yet been uploaded, the program is stopped with a message to try again later.
-# If there is more data missing than today, the parameter start_date is changed to the first missing data,
-# and the data is normally downloaded (see below).
-#
-# If data should normally be downloaded between start_date and end_date, we start with an empty pandas dataframe.
-# Afterwards, for everyday between start_date and end_date, both included,
-# the function download_data_for_one_day is called.
-# If a given back dataframe is empty, a warning is printed that this date is missing, but the program is not stopped.
-# If start_date is earlier or equal 2020-04-29, the function adjust_data has to be called.
-# If data has been downloaded, the dataframe of this one date is added to the dataframe with all dates.
-#
-# If the dataframe which should contain all data is empty after going through all dates, the program is stopped.
-# Otherwise the dataframe is written to the file filename = "FullData_DIVI".
-# Than the columns are renamed to English and the state and county names are added.
-# Afterwards, three kinds of structuring of the data are done.
-# We obtain the chronological sequence of ICU and ICU_ventilated
-# stored in the files "county_divi".json", "state_divi.json"and "germany_divi.json"
-# for counties, states and whole Germany, respectively.
-#
-# @param read_data False [Default] or True. Defines if data is read from file or downloaded.
-# @param update_date "True" if existing data is updated or
-# "False [Default]" if it is downloaded for all dates from start_date to end_date.
-# @param out_folder Folder where data is written to.
-# @param start_date [Optional] Date to start to download data [Default = 2020.4.24].
-# @param end_date [Optional] Date to stop to download data [Default = today].
-#
 def get_divi_data(read_data=dd.defaultDict['read_data'],
                   out_form=dd.defaultDict['out_form'],
                   out_folder=dd.defaultDict['out_folder'],
@@ -331,6 +297,44 @@ def get_divi_data(read_data=dd.defaultDict['read_data'],
                   start_date=dd.defaultDict['start_date'],
                   update_data=dd.defaultDict['update_data'],
                   ):
+    """!Function to get the divi data.
+
+    Available data start from 2020-4-24.
+    If the given start_dat is earlier, it is changed to this date and a warning is printed.
+    If it does not already exist, the folder Germany is generated in the given out_folder.
+    If read_data == True and the file "FullData_DIVI.json" exists, the data is read form this file
+    and stored in a pandas dataframe.
+    Otherwise the program is stopped.
+
+    If update_data == True  the same happens as for read_data == True.
+    Furthermore, if the last date in read data is yesterday, the data of today is downloaded.
+    For this download an easier link can be used than the one where we have to find the mysterious call_number.
+    If the data has not yet been uploaded, the program is stopped with a message to try again later.
+    If there is more data missing than today, the parameter start_date is changed to the first missing data,
+    and the data is normally downloaded (see below).
+
+    If data should normally be downloaded between start_date and end_date, we start with an empty pandas dataframe.
+    Afterwards, for everyday between start_date and end_date, both included,
+    the function download_data_for_one_day is called.
+    If a given back dataframe is empty, a warning is printed that this date is missing, but the program is not stopped.
+    If start_date is earlier or equal 2020-04-29, the function adjust_data has to be called.
+    If data has been downloaded, the dataframe of this one date is added to the dataframe with all dates.
+
+    If the dataframe which should contain all data is empty after going through all dates, the program is stopped.
+    Otherwise the dataframe is written to the file filename = "FullData_DIVI".
+    Than the columns are renamed to English and the state and county names are added.
+    Afterwards, three kinds of structuring of the data are done.
+    We obtain the chronological sequence of ICU and ICU_ventilated
+    stored in the files "county_divi".json", "state_divi.json"and "germany_divi.json"
+    for counties, states and whole Germany, respectively.
+
+    @param read_data False [Default] or True. Defines if data is read from file or downloaded.
+    @param update_date "True" if existing data is updated or
+    "False [Default]" if it is downloaded for all dates from start_date to end_date.
+    @param out_folder Folder where data is written to.
+    @param start_date [Optional] Date to start to download data [Default = 2020.4.24].
+    @param end_date [Optional] Date to stop to download data [Default = today].
+    """
 
     delta = timedelta(days=1)
     today = date.today()
@@ -479,6 +483,8 @@ def get_divi_data(read_data=dd.defaultDict['read_data'],
 
 
 def main():
+    """! Main program entry."""
+
     [read_data, out_form, out_folder, end_date, start_date, update_data] = gd.cli('divi',)
     get_divi_data(read_data, out_form, out_folder, end_date, start_date, update_data)
 
