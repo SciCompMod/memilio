@@ -185,9 +185,19 @@ def get_new_counties(data_temp):
 def get_age_population_data(read_data=dd.defaultDict['read_data'],
                        out_form=dd.defaultDict['out_form'],
                        out_folder=dd.defaultDict['out_folder']):
-   """!
+   """! Download data with age splitting
 
+   Data is downloaded from thee sources
+   - our own migration [stored in "counties"]
+   - Zensus2011 data splitted by gender for whole germany, states, counties in xls
+   with additional data from 30.04.2011 (just used for reg_key?) [stored in "reg_key"]
+   - Zensus2011 data from opendata splitted for age and gender [stored in "zensus"]
 
+   Data is either downloaded or read from "out_folder"/Germany/.
+
+   Working with the data includes:
+   - For the Zensus data the male and female data is added to get just the age dependence
+   - Population data is estimated upt o now (Add more detailed description)
 
    @param read_data False [Default] or True. Defines if data is read from file or downloaded.
    @param out_form File format which is used for writing the data. Default defined in defaultDict.
@@ -225,14 +235,14 @@ def get_age_population_data(read_data=dd.defaultDict['read_data'],
          sys.exit(exit_string)
    else:
       path_counties = 'http://hpcagainstcorona.sc.bs.dlr.de/data/migration/'
-      path_reg_key = 'https://www.zensus2011.de/SharedDocs/Downloads/DE/Pressemitteilung/DemografischeGrunddaten/1A_EinwohnerzahlGeschlecht.xls?__blob=publicationFile&v=5'
+      path_reg_key = 'https://www.zensus2011.de/SharedDocs/Downloads/DE/Pressemitteilung/DemografischeGrunddaten/' \
+                     '1A_EinwohnerzahlGeschlecht.xls?__blob=publicationFile&v=5'
    
       #read tables
       counties = pandas.read_excel(os.path.join(path_counties,'kreise_deu.xlsx'),sheet_name=1, header=3, engine='openpyxl')
       reg_key = pandas.read_excel(path_reg_key, sheet_name='Tabelle_1A', header=12)
       zensus = gd.loadCsv("abad92e8eead46a4b0d252ee9438eb53_1")
 
-      
       gd.write_dataframe(counties, directory, filename_counties, "json")
       gd.write_dataframe(reg_key, directory, filename_reg_key, "json")
       gd.write_dataframe(zensus, directory, filename_zensus, "json")
@@ -276,7 +286,6 @@ def get_age_population_data(read_data=dd.defaultDict['read_data'],
                     ratio[i] = counties['Bevölkerung2)'].values[j]/data[i, 1]
               except:
                  dummy = 0
-
 
    # adjust population data for all ages to current level
    data_current = np.zeros(data.shape)

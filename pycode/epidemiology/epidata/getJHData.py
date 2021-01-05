@@ -1,3 +1,8 @@
+## @file getJHData.py
+#
+# @brief Download data from John Hopkins University
+#
+
 import os
 import sys
 import pandas
@@ -9,6 +14,24 @@ from epidemiology.epidata import defaultDict as dd
 def get_jh_data(read_data=dd.defaultDict['read_data'],
                 out_form=dd.defaultDict['out_form'],
                 out_folder=dd.defaultDict['out_folder']):
+   """! Download data from John Hopkins University
+
+   Data is either downloaded and afterwards stored or loaded from a stored filed.
+   The file is "FullData_JohnHopkins.json"
+
+   Working with the data includes
+   - rename columns such that "/" is deleted, e.g Country/Region becomes CountryRegion
+   - data of all countries together are written to a file
+   - download the data from following countries in a separate file
+   and are stored in the according folders with the country name
+       - Germany, SouthKorea, Spain, France, Italy, US, China
+   - furthermore, all countries, for which provinces are added, are written to a file
+
+   @param read_data False [Default] or True. Defines if data is read from file or downloaded.
+   @param out_form File format which is used for writing the data. Default defined in defaultDict.
+   @param out_folder Path to folder where data is written in folder out_folder/Germany.
+   @param end_date [Optional] Date to stop to download data [Default = today].
+   """
 
    filename = "FullData_JohnHopkins"
 
@@ -58,7 +81,7 @@ def get_jh_data(read_data=dd.defaultDict['read_data'],
       "China": directory_prc,
    }
 
-   ########### Coutries ##########################
+   ########### Countries ##########################
 
    gb = df.groupby( ['CountryRegion', 'Date']).agg({"Confirmed": sum, "Recovered": sum, "Deaths": sum})
 
@@ -92,8 +115,8 @@ def get_jh_data(read_data=dd.defaultDict['read_data'],
    # TODO: US more detailes 
 
 
-
 def main():
+   """! Main program entry."""
 
    [read_data, out_form, out_folder] = gd.cli("jh")
    get_jh_data(read_data, out_form, out_folder)
