@@ -99,9 +99,9 @@ test-docs:
   stage: test
   dependencies:
     - build-py
-  #before_script:
-  #  - apt -qq update
-  #  - apt -qq -y install doxygen
+  before_script:
+    - apt -qq update
+    - apt -qq -y install doxygen
   script:
     - cd docs
     - doxygen
