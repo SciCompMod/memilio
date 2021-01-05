@@ -70,7 +70,6 @@ def adjust_data(df, date_of_data):
 
 
 def call_call_url(url_prefix, call_number):
-
     """!Calls, if possible a url and breaks if it is not possible to call the url,
     e.g., due to a not working internet connection
     or returns an empty dataframe if url is not the correct one.
@@ -81,8 +80,12 @@ def call_call_url(url_prefix, call_number):
     @return pandas dataframe which is either empty or contains requested data
     """
 
-    call_url = "https://www.divi.de/divi-intensivregister-tagesreport-archiv-csv/divi-intensivregister-" \
-               + url_prefix + "/viewdocument/" + str(call_number)
+    #call_url = "https://www.divi.de/divi-intensivregister-tagesreport-archiv-csv/divi-intensivregister-" \
+    #           + url_prefix + "/viewdocument/" + str(call_number)
+    call_url = "https://www.divi.de/divi-intensivregister-tagesreport-archiv-csv"+"/viewdocument/" \
+               + str(call_number) + "/divi-intensivregister-" + url_prefix
+
+    print(call_url)
 
     # empty data frame
     df = pandas.DataFrame()
@@ -216,6 +219,11 @@ def download_data_for_one_day(last_number, download_date):
                         date(2020, 12, 3): 5289,
                         date(2020, 12, 4): 5292,
                         date(2020, 12, 8): 5300,
+                        date(2020, 12, 11): 5308,
+                        date(2020, 12, 17): 5321,
+                        date(2020, 12, 19): 5326,
+                        date(2020, 12, 22): 5333,
+                        date(2020, 12, 30): 5350,
                         }
     start_date_differs = False
 
@@ -249,6 +257,8 @@ def download_data_for_one_day(last_number, download_date):
     if download_date in call_number_dict.keys():
 
         call_number = call_number_dict[download_date]
+
+        print(url_prefix, call_number)
 
         df = call_call_url(url_prefix, call_number)
 
@@ -336,6 +346,8 @@ def get_divi_data(read_data=dd.defaultDict['read_data'],
     @param end_date [Optional] Date to stop to download data [Default = today].
     """
 
+    print("Das ist ein test")
+
     delta = timedelta(days=1)
     today = date.today()
 
@@ -375,6 +387,7 @@ def get_divi_data(read_data=dd.defaultDict['read_data'],
                     # download data from today
                     # while loop to download further data will be skipped
                     df2 = gd.loadCsv('DIVI-Intensivregister-Tagesreport', apiUrl='https://www.divi.de/')
+                    # https://www.divi.de/divi-intensivregister-tagesreport-archiv-csv/viewdocument/3974/divi-intensivregister-2020-04-24-09-15
 
                     if not df2.empty:
                         # test if online data is already the one of today
@@ -425,7 +438,7 @@ def get_divi_data(read_data=dd.defaultDict['read_data'],
         if not new_dict_string == "":
             print("New drifting number in link found. "
                   "To decrease runtime, please copy the following "
-                  "to the dcitionary \"call_number_dict\" in the function \"download_data_for_one_day\": ")
+                  "to the dicitionary \"call_number_dict\" in the function \"download_data_for_one_day\": ")
             print(new_dict_string)
 
         gd.write_dataframe(df, directory, filename, out_form)
@@ -483,8 +496,9 @@ def get_divi_data(read_data=dd.defaultDict['read_data'],
 
 
 def main():
-    """! Main program entry."""
+    """ Main program entry."""
 
+    print("main")
     [read_data, out_form, out_folder, end_date, start_date, update_data] = gd.cli('divi',)
     get_divi_data(read_data, out_form, out_folder, end_date, start_date, update_data)
 

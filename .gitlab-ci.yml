@@ -203,7 +203,7 @@ lint-py:
   script:
     - cd pycode
     - mkdir -p build_pylint
-    - pip install --use-feature=2020-resolver -e .[develop] 
+    - pip install .[pylint]
     - python setup.py pylint
     - pylint-json2html -f jsonextended -o build_pylint/pylint.html < build_pylint/pylint_extended.json
   artifacts:
