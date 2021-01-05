@@ -77,9 +77,11 @@ build-py-win:
     - C:\Devel\Lang\Python-3.8-win64\python.exe -m venv venv38
   script:
     - venv38\Scripts\activate
+    - pip install --upgrade pip
     - python setup.py bdist_wheel
     - deactivate
     - venv37\Scripts\activate
+    - pip install --upgrade pip
     - python setup.py bdist_wheel
     - deactivate
   after_script:
