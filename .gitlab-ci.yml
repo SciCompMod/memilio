@@ -56,7 +56,7 @@ build-py:
   stage: build
   before_script:
     - yum install ninja-build -qy
-    - yum install doxygen
+    - yum install doxygen -qy
     - cd pycode
   script:
     - /opt/python/cp36-cp36m/bin/python setup.py bdist_wheel
