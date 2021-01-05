@@ -92,14 +92,16 @@ build-py:
 #    paths:
 #      - pycode/dist/*.whl
 
-build-docs:
+test-docs:
+  tags:
+    - docker
   image: ubuntu:18.04
   stage: test
   dependencies:
     - build-py
-  before_script:
-    - apt -qq update
-    - apt -qq -y install doxygen
+  #before_script:
+  #  - apt -qq update
+  #  - apt -qq -y install doxygen
   script:
     - cd docs
     - doxygen
@@ -190,7 +192,7 @@ test-py:
       - coverage_python
     expire_in: 3 day
 
-lint-py:
+test-pylint:
   tags:
     - docker
   image: ubuntu:18.04
@@ -299,7 +301,8 @@ pages:
   image: ubuntu:18.04
   stage: deploy
   dependencies:
-    - build-docs
+    - test-docs
+    - test-pylint
   tags:
     - docker
   script:
