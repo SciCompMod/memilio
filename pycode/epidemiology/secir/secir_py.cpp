@@ -441,9 +441,7 @@ PYBIND11_MODULE(_secir, m)
         .def(py::init<const epi::ContactMatrixGroup&>())
         .def_property(
             "cont_freq_mat",
-            [](const epi::UncertainContactMatrix& self) {
-                return self.get_cont_freq_mat();
-            },
+                py::overload_cast<>(&epi::UncertainContactMatrix::get_cont_freq_mat),
             [](epi::UncertainContactMatrix& self, const epi::ContactMatrixGroup& c) {
                 self.get_cont_freq_mat() = c;
             },
