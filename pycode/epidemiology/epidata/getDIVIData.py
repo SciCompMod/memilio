@@ -80,12 +80,8 @@ def call_call_url(url_prefix, call_number):
     @return pandas dataframe which is either empty or contains requested data
     """
 
-    #call_url = "https://www.divi.de/divi-intensivregister-tagesreport-archiv-csv/divi-intensivregister-" \
-    #           + url_prefix + "/viewdocument/" + str(call_number)
-    call_url = "https://www.divi.de/divi-intensivregister-tagesreport-archiv-csv"+"/viewdocument/" \
-               + str(call_number) + "/divi-intensivregister-" + url_prefix
-
-    print(call_url)
+    call_url = "https://www.divi.de/divi-intensivregister-tagesreport-archiv-csv/divi-intensivregister-" \
+               + url_prefix + "/viewdocument/" + str(call_number)
 
     # empty data frame
     df = pandas.DataFrame()
@@ -258,8 +254,6 @@ def download_data_for_one_day(last_number, download_date):
 
         call_number = call_number_dict[download_date]
 
-        print(url_prefix, call_number)
-
         df = call_call_url(url_prefix, call_number)
 
         # if no data has been added, but numbers are in dict something else is wrong, e.g. internet connection
@@ -345,8 +339,6 @@ def get_divi_data(read_data=dd.defaultDict['read_data'],
     @param start_date [Optional] Date to start to download data [Default = 2020.4.24].
     @param end_date [Optional] Date to stop to download data [Default = today].
     """
-
-    print("Das ist ein test")
 
     delta = timedelta(days=1)
     today = date.today()
@@ -498,7 +490,6 @@ def get_divi_data(read_data=dd.defaultDict['read_data'],
 def main():
     """ Main program entry."""
 
-    print("main")
     [read_data, out_form, out_folder, end_date, start_date, update_data] = gd.cli('divi',)
     get_divi_data(read_data, out_form, out_folder, end_date, start_date, update_data)
 
