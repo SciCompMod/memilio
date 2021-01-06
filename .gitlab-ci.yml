@@ -140,8 +140,9 @@ test-cpp:
     reports:
       junit: cpp/build/tests/report.xml
       cobertura: coverage.xml
+    expose_as: "CPP Coverage Report"
     paths:
-      - coverage_report
+      - coverage_report/
     expire_in: 1 week
 
 # run tests using the binary built before
@@ -188,8 +189,9 @@ test-py:
   artifacts:
     reports:
       cobertura: pycode/test/coverage_python.xml
+    expose_as: "Python Coverage Report"
     paths:
-      - coverage_python
+      - coverage_python/
     expire_in: 3 day
 
 test-pylint:
@@ -303,6 +305,8 @@ pages:
   image: ubuntu:18.04
   stage: deploy
   dependencies:
+    - test-py
+    - test-cpp
     - test-docs
     - test-pylint
   tags:
@@ -318,6 +322,12 @@ pages:
     - echo "Prepare pylint reports" # Prepare pylint
     - mkdir -p public/${CI_COMMIT_REF_NAME}/pylint
     - cp pycode/build_pylint/pylint.html public/${CI_COMMIT_REF_NAME}/pylint/
+    - echo "Prepare coverage reports" # prepare coverage
+    - mkdir -p public/${CI_COMMIT_REF_NAME}/coverage
+    - mkdir -p public/${CI_COMMIT_REF_NAME}/coverage/cpp
+    - mkdir -p public/${CI_COMMIT_REF_NAME}/coverage/python
+    - cp -r coverage_python/* public/${CI_COMMIT_REF_NAME}/coverage/python/
+    - cp -r coverage_report/* public/${CI_COMMIT_REF_NAME}/coverage/cpp/
   artifacts:
     paths:
       - public # All relevant content needs to be available here
