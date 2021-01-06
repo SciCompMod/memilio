@@ -208,10 +208,12 @@ test-pylint:
   script:
     - cd pycode
     - mkdir -p build_pylint
-    - pip install .[pylint]
-    - python setup.py pylint
+    - pip install pylint
+    - pip install pylint-json2html
+    - python3.6 setup.py pylint
     - pylint-json2html -f jsonextended -o build_pylint/pylint.html < build_pylint/pylint_extended.json
   artifacts:
+    expose_as: "Pylint Report"
     paths:
       - pycode/build_pylint/pylint.html
     expire_in: 3 day
