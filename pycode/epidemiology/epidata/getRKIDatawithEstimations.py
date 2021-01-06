@@ -1,9 +1,12 @@
+## @file getRKIDatawithEstimations.py
+#
+# @brief Estimates recovered and deaths from data from RKI and john hopkins together
+#
+
 import os
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
-from datetime import timedelta, datetime
-
 
 from epidemiology.epidata import getDataIntoPandasDataFrame as gd
 from epidemiology.epidata import defaultDict as dd

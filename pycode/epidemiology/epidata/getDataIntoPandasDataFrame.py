@@ -1,3 +1,13 @@
+## @file getDataIntoPandasDataFrame.py
+# @brief Tools to convert data to pandas dataframes
+#
+# This tool contains
+# - load geojson format
+# - load csv format
+# - organizes the command line interface
+# - check if directory exists and if not creates it
+# - writes pandas dataframe to file of three different formats
+
 import os
 import sys
 from urllib.request import urlopen
@@ -9,18 +19,16 @@ import datetime
 from epidemiology.epidata import defaultDict as dd
 
 
-
 def loadGeojson( targetFileName, apiUrl = 'https://opendata.arcgis.com/datasets/', 
                  extension = 'geojson' ):
 
-    """! Loads data default: ArcGIS data sets in GeoJSON format. (pandas DataFrame)
+    """ Loads data default: ArcGIS data sets in GeoJSON format. (pandas DataFrame)
 
     This routine loads datasets default: ArcGIS data sets in GeoJSON format of the given public
     data item ID into a pandas DataFrame and returns the DataFrame. Trivial 
     information gets removed by JSON normalization and dropping of always 
     constant data fields.
 
-    Keyword arguments:
     @param targetFileName -- File name without ending, for ArcGIS: public data item ID (string)
     @param apiUrl -- URL to file, default: ArcGIS data sets API URL (string, default
               'https://opendata.arcgis.com/datasets/')
@@ -48,15 +56,15 @@ def loadGeojson( targetFileName, apiUrl = 'https://opendata.arcgis.com/datasets/
 
 def loadCsv( targetFileName, apiUrl = 'https://opendata.arcgis.com/datasets/',
                  extension = '.csv' ):
-    """! Loads ArcGIS data sets in CSV format. (pandas DataFrame)
+    """ Loads data sets in CSV format. (pandas DataFrame)
     This routine loads data sets (default from ArcGIS) in CSV format of the given public data 
-    item ID into a pandas DataFrame and returns the DataFrame. 
+    item ID into a pandas DataFrame and returns the DataFrame.
 
-    Keyword arguments:
-    targerFileName -- file name which should be downloaded, for ArcGIS it should be public data item ID (string)
-    apiUrl -- API URL (string, default
+    @param targerFileName -- file name which should be downloaded, for ArcGIS it should be public data item ID (string)
+    @param apiUrl -- API URL (string, default
               'https://opendata.arcgis.com/datasets/')
-    extension -- Data format extension (string, default 'csv')
+    @param extension -- Data format extension (string, default 'csv')
+    return dataframe
     """
 
     url = apiUrl + targetFileName  + extension
@@ -80,6 +88,31 @@ def loadCsv( targetFileName, apiUrl = 'https://opendata.arcgis.com/datasets/',
 #    return key_list
 
 def cli(what):
+   """Defines command line interface
+
+   The function parameter "what" is used as a dictionary key.
+   The return of the dictionary is either a list of a string and a list of keywords.
+   The string is the message that should be printed when working on the specific package.
+   The further list, contains all special command line arguments which are needed for this package.
+
+   If the key is nor part of the dictionary the program is stopped.
+
+   The default for the out_folder is set to
+
+   Three default arguments are added to the parser:
+   - read-from-disk, Default = False
+   - file-format, Default = json_timeasstring, choices = ['json', 'hdf5', 'json_timeasstring']
+   - out_path Default = data/pydata/
+
+   Depending on what following parser can be added:
+   - end_date
+   - plot
+   - split_berlin
+   - start_date
+   - update
+
+   @param what Defines what packages calls and thus what kind of command line arguments should be defined.
+   """
 
    # TODO: may it would be easier to make a dict like the following one together with a function to get key:
    # TODO: all should automatically do everything
@@ -117,11 +150,6 @@ def cli(what):
                        help='Defines output format for data files. Default is \"' + str(dd.defaultDict['out_form']+ "\"."))
    parser.add_argument('-o', '--out-path', type=str, default=out_path_default, help='Defines folder for output.')
 
-   if 'split_berlin' in what_list:
-       parser.add_argument('-sb', '--split_berlin',
-                           help='Berlin data is split into different counties,'
-                                ' instead of having only one county for Berlin.',
-                           action='store_true')
    if 'end_date' in what_list:
        parser.add_argument('-ed', '--end-date',
                            help='Defines date after which data download is stopped.'
@@ -131,13 +159,17 @@ def cli(what):
    if 'plot' in what_list:
       parser.add_argument('-p', '--plot', help='Plots the data.',
                           action='store_true')
+   if 'split_berlin' in what_list:
+       parser.add_argument('-sb', '--split_berlin',
+                           help='Berlin data is split into different counties,'
+                                ' instead of having only one county for Berlin.',
+                           action='store_true')
    if 'start_date' in what_list:
       parser.add_argument('-sd',  '--start-date',
                           help='Defines start date for data download. Should have form: YYYY-mm-dd.'
                                'Default is 2020-04-24',
                           type=lambda s: datetime.datetime.strptime(s, '%Y-%m-%d').date(),
                           default = dd.defaultDict['start_date'])
-
    if 'update' in what_list:
       parser.add_argument('-u',  '--update',
                           help='Reads the data from file "json", downloads and adds data from today.',
@@ -174,12 +206,41 @@ def cli(what):
 
    return arg_list
 
+
 def check_dir(directory):
+    """ Checks existence and creates folder
+
+    It is checked if the folder given in the parameter "directory" exists.
+    If it does not exist it is created.
+
+    @param directory directory which should exist
+
+    """
+
     # check if directory exists or create it
     if not os.path.exists(directory):
         os.makedirs(directory)
 
+
 def write_dataframe(df, directory, file_prefix, file_type):
+   """ Writes pandas dataframe to file
+
+   This routine writes a pandas dataframe to a file in a given format.
+   The filename is given without ending.
+   A file_type can be
+   - json
+   - json_timeasstring [Default]
+   - hdf5
+   The file_type defines the file format and thus also the file ending.
+   The file format can be json or hdf5.
+   For this option the column Date is converted from datetime to string.
+
+   @param df pandas dataframe (pandas DataFrame)
+   @param directory directory where to safe (string)
+   @param file_prefix filename without ending (string)
+   @param file_type defines ending (string)
+
+   """
 
    outForm = {
        'json': [".json", {"orient": "records"}],

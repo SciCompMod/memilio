@@ -37,6 +37,7 @@ def get_all_data(read_data=dd.defaultDict['read_data'],
     - getJHData.get_jh_data(read_data, out_form, out_folder)
     - getDIVIData.get_divi_data(read_data, out_form, out_folder, end_date, start_date, update_data)
 
+    Keyword arguments:
     @param read_data False [Default] or True. Defines if data is read from file or downloaded.
     @param out_form File format which is used for writing the data. Default defined in defaultDict.
     @param out_folder Path to folder where data is written in folder out_folder/Germany.
@@ -46,6 +47,7 @@ def get_all_data(read_data=dd.defaultDict['read_data'],
     @param start_date [Optional] Date to start to download data [Default = 2020-04-24].
     @param update_date "True" if existing data is updated or
     "False [Default]" if it is downloaded for all dates from start_date to end_date.
+
     """
 
     getRKIData.get_rki_data(read_data, out_form, out_folder, make_plot, split_berlin)

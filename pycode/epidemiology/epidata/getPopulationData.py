@@ -3,8 +3,7 @@
 # @brief Downloads data about population statistic
 #
 # To download the data two functions are called
-# Used sources are:
-# -
+
 
 import os
 import sys
