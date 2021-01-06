@@ -196,8 +196,8 @@ class TestGetDiviData(fake_filesystem_unittest.TestCase):
         call_number = 3961
         df = gdd.call_call_url(url_prefix, call_number)
 
-        call_url = "https://www.divi.de/divi-intensivregister-tagesreport-archiv-csv/divi-intensivregister-" + \
-                   "2020-07-07-12-15/viewdocument/3961"
+        call_url = "https://www.divi.de/divi-intensivregister-tagesreport-archiv-csv/viewdocument/" +\
+                   "3961/divi-intensivregister-" + "2020-07-07-12-15"
 
         mock_read_csv.assert_called_with(call_url)
 
@@ -208,9 +208,7 @@ class TestGetDiviData(fake_filesystem_unittest.TestCase):
         input_string = "An additional output."
         df = gdd.call_call_url(url_prefix, call_number)
 
-        mock_read_csv.assert_called_with(
-            "https://www.divi.de/divi-intensivregister-tagesreport-archiv-csv/divi-intensivregister-" +
-            "2020-07-07-12-15/viewdocument/3961")
+        mock_read_csv.assert_called_with(call_url)
 
         # check whether the read data is as expected
         self.assertTrue((pd.read_json(self.test_string1) == df).all().all())
