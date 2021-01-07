@@ -80,8 +80,8 @@ def call_call_url(url_prefix, call_number):
     @return pandas dataframe which is either empty or contains requested data
     """
 
-    call_url = "https://www.divi.de/divi-intensivregister-tagesreport-archiv-csv/divi-intensivregister-" \
-               + url_prefix + "/viewdocument/" + str(call_number)
+    call_url = "https://www.divi.de/divi-intensivregister-tagesreport-archiv-csv" + "/viewdocument/" \
+               + str(call_number) + "/divi-intensivregister-" + url_prefix
 
     # empty data frame
     df = pandas.DataFrame()
@@ -215,6 +215,11 @@ def download_data_for_one_day(last_number, download_date):
                         date(2020, 12, 3): 5289,
                         date(2020, 12, 4): 5292,
                         date(2020, 12, 8): 5300,
+                        date(2020, 12, 11): 5308,
+                        date(2020, 12, 17): 5321,
+                        date(2020, 12, 19): 5326,
+                        date(2020, 12, 22): 5333,
+                        date(2020, 12, 30): 5350,
                         }
     start_date_differs = False
 
