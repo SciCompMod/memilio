@@ -15,7 +15,7 @@ The interactive frontend is to be found under frontend.
 It is regularly deployed to http://hpcagainstcorona.sc.bs.dlr.de/index.html.
 In pycode the epidemiology python package is defined.
 It consists of python bindings (seir, secir) to call the C++ code available in cpp and the epidata subpackage which provides tools to download and structure important data.
-More about the python packgae can be found in [Python README](pycode/README.rst)
+More about the python package can be found in [Python README](pycode/README.rst).
 
 The C++ code is divided into two libraries, *epidemiology* (models, math, ensemble runs etc.) and *epidemiology_io* (IO routines for parameter sets and simulation results).
 By standard, *epidemiology* is built without *epidemiology_io*.

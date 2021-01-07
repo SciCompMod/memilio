@@ -43,11 +43,10 @@ build-cpp-win:
     - cmake -G "Ninja" -DCMAKE_BUILD_TYPE=Release -DEPI_USE_BUNDLED_EIGEN=ON -DEPI_BUILD_EPI_IO=ON -DHDF5_USE_STATIC_LIBRARIES=ON -DHDF5_DIR=C:\Devel\Libraries\HDF5-1.10.1-win64\cmake -Dtixi3_DIR=C:\Devel\Libraries\TIXI-3.1.1-win64\lib\tixi3 ..
     - cp "c:\Devel\Libraries\TIXI-3.1.1-win64\bin\tixi3.dll" "tests"
     - cmake --build .
-
-#  artifacts:
-#    expire_in: 2 hrs
-#    paths:
-#      - cpp/build-win/
+  artifacts:
+    expire_in: 2 hrs
+    paths:
+      - cpp/build-win/
 
 build-py:
   tags:
@@ -77,11 +76,9 @@ build-py-win:
     - C:\Devel\Lang\Python-3.8-win64\python.exe -m venv venv38
   script:
     - venv38\Scripts\activate
-    - pip install --upgrade pip --user
     - python setup.py bdist_wheel
     - deactivate
     - venv37\Scripts\activate
-    - pip install --upgrade pip --user
     - python setup.py bdist_wheel
     - deactivate
   after_script:
