@@ -13,7 +13,7 @@ To do so, install the package (see below) and than the following executables are
       - getalldata
 
 For all executables there are several run options.
-Use -h for more information or the :ref:'README <epidata/README.rst>' in the corresponding subdirectory.
+Use -h for more information or the :ref:'README <epidata/README>' in the corresponding subdirectory.
 
  - ``epidemiology.secir``: Contains a python/pybind11 wrapper to the C++ code. An example is provided
 
