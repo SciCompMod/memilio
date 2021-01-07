@@ -14,10 +14,16 @@ Content
 Information
 -----------
 
-Documentation: https://ssa.pages.gitlab.dlr.de/hpc-against-corona/epidemiology/269-improve-documentation-of-python-data/documentation/index.html
+Documentation: https://hpc-against-corona.pages.gitlab.dlr.de/epidemiology/269-improve-documentation-of-python-data/documentation/index.html
 :Python Coverage Report:
-https://ssa.pages.gitlab.dlr.de/hpc-against-corona/epidemiology/269-improve-documentation-of-python-data/coverage/python/index.html
-:Pylint Report: https://ssa.pages.gitlab.dlr.de/hpc-against-corona/epidemiology/269-improve-documentation-of-python-data/pylint/pylint.html
+https://hpc-against-corona.pages.gitlab.dlr.de/epidemiology/269-improve-documentation-of-python-data/coverage/python/index.html
+:Pylint Report: https://hpc-against-corona.pages.gitlab.dlr.de/epidemiology/269-improve-documentation-of-python-data/pylint/pylint.html
+
+:Documentation: https://hpc-against-corona.pages.gitlab.dlr.de/epidemiology/master/documentation/index.html
+:Python Coverage Report:
+https://hpc-against-corona.pages.gitlab.dlr.de/epidemiology/master/coverage/python/index.html
+:Pylint Report: https://hpc-against-corona.pages.gitlab.dlr.de/epidemiology/master/pylint/pylint.html
+
 
 Introduction
 ------------
@@ -206,6 +212,11 @@ Adding a new parser:
 - add to cli_dict in getDataIntoPandasDataFrame.py which scripts use this parser
 - add an if 'new parser' in what_list and add parser.add_argument()
 - add an of if-loop to append arg_list
+
+General
+- Always add unittests
+- Check test coverage report, if every new feature is covered.
+- Check the pylint report just comments with "refactor" are allowed.
 
 More detailed information can be found in the documentation of the different functions in
 

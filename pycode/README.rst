@@ -13,7 +13,7 @@ To do so, install the package (see below) and than the following executables are
       - getalldata
 
 For all executables there are several run options.
-Use -h for more information or the 'README <epidata/README.rst>'_ in the corresponding subdirectory.
+Use -h for more information or the :ref:'README <epidata/README.rst>' in the corresponding subdirectory.
 
  - ``epidemiology.secir``: Contains a python/pybind11 wrapper to the C++ code. An example is provided
 
@@ -55,8 +55,8 @@ To install, just enter
 This builds the C++ extension and copies everything required to your site-packages.
 
 
-Testing
--------
+Testing and Coverage
+--------------------
 
 The following packages have to be installed to run the tests:
 
@@ -69,14 +69,29 @@ To run the tests make
 
     python -m unittest
 
+To get the coverage report do
+.. code:: sh
+
+    python3 -m coverage report
+    python3 -m coverage xml -o coverage_python.xml
+    python3 -m coverage html -d coverage_python
+
 
 Inspection via pylint
 ---------------------
-Pylint report for actial master:
+The following packages have to be installed to run pylint:
 
+- pylint
+- pylint-json2html
 
-:Pylint Report: https://ssa.pages.gitlab.dlr.de/hpc-against-corona/epidemiology/master/pylint/pylint.html
-:Pylint Report: https://ssa.pages.gitlab.dlr.de/hpc-against-corona/epidemiology/269-improve-documentation-of-python-data/pylint/pylint.html
+After installing the package, run
 
+.. code:: sh
 
+    python3.6 setup.py pylint
+    pylint-json2html -f jsonextended -o build_pylint/pylint.html < build_pylint/pylint_extended.json
 
+Pylint report for actual master:
+
+:Pylint Report: https://hpc-against-corona.pages.gitlab.dlr.de/epidemiology/master/pylint/pylint.html
+:Pylint Report: https://hpc-against-corona.pages.gitlab.dlr.de/epidemiology/269-improve-documentation-of-python-data/pylint/pylint.html
