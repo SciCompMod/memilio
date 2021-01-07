@@ -4,8 +4,6 @@
 C++: [![c++ coverage report](https://gitlab.dlr.de/hpc-against-corona/epidemiology/badges/master/coverage.svg?job=test-cpp)](https://gitlab.dlr.de/hpc-against-corona/epidemiology/-/jobs/artifacts/master/file/coverage_report/index.html?job=test-cpp)
 Python: [![python coverage report](https://gitlab.dlr.de/hpc-against-corona/epidemiology/badges/master/coverage.svg?job=test-py)](https://gitlab.dlr.de/hpc-against-corona/epidemiology/-/jobs/artifacts/master/file/coverage_python/index.html?job=test-py)
 
-Documentation: https://ssa.pages.gitlab.dlr.de/hpc-against-corona/epidemiology/269-improve-documentation-of-python-data/documentation/
-
 This is a common project between the department of Systems Immunology (SIMM) of the he Helmholtz Center for Infection Research (HZI) and the Institute for Software Technology of the German Aerospace Center (DLR). This project will bring cutting edge and compute intensive epidemiological models to a large scale, which enables a precise and high-resolution spatiotemporal pandemic simulation for entire countries.
 
 
@@ -17,6 +15,7 @@ The interactive frontend is to be found under frontend.
 It is regularly deployed to http://hpcagainstcorona.sc.bs.dlr.de/index.html.
 In pycode the epidemiology python package is defined.
 It consists of python bindings (seir, secir) to call the C++ code available in cpp and the epidata subpackage which provides tools to download and structure important data.
+More about the python packgae can be found in [Python README](pycode/README.rst)
 
 The C++ code is divided into two libraries, *epidemiology* (models, math, ensemble runs etc.) and *epidemiology_io* (IO routines for parameter sets and simulation results).
 By standard, *epidemiology* is built without *epidemiology_io*.
@@ -26,7 +25,9 @@ By standard, *epidemiology* is built without *epidemiology_io*.
 
 In every important part of the project, desribed above, a README can be found which contains further information about the structure of the specific project part, the instructions for the user and very important the instructions for the developer.
 
-Furthermore, the code is documentent via doxygen and an instruction how to get it, is provided in the docs folder.
+Furthermore, the code is documented via doxygen and an instruction how to get it, is provided in the docs folder.
+The documentation of the code of the master branch can be found here:
+[Documentation of master](https://ssa.pages.gitlab.dlr.de/hpc-against-corona/epidemiology/269-improve-documentation-of-python-data/documentation/)
 
 
 **Requirements**
