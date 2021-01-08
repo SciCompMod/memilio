@@ -58,7 +58,7 @@ def get_spain_data(read_data=dd.defaultDict['read_data'],
          # Get data:
          # https://raw.githubusercontent.com/datadista/datasets/master/COVID%2019/nacional_covid19_rango_edad.csv
          df_age = gd.loadCsv('nacional_covid19_rango_edad',
-                           apiUrl='https://raw.githubusercontent.com/datadista/datasets/master/COVID%2019/')
+                           apiUrl='https://raw.githubusercontent.com/datadista/datasets/master/COVID%2019/old_series/')
       except:
          exit_string = "Files \'nacional_covid19_rango_edad\' are not available online. Check URL."
          sys.exit(exit_string)
@@ -71,7 +71,7 @@ def get_spain_data(read_data=dd.defaultDict['read_data'],
          # Get data:
          # https://raw.githubusercontent.com/datadista/datasets/master/COVID%2019/ccaa_covid19_datos_isciii.csv
          df_state = gd.loadCsv('ccaa_covid19_datos_isciii',
-                              apiUrl='https://raw.githubusercontent.com/datadista/datasets/master/COVID%2019/')
+                              apiUrl='https://raw.githubusercontent.com/datadista/datasets/master/COVID%2019/old_series/')
       except:
          exit_string = "Files \'ccaa_covid19_datos_isciii\' are not available online. Check URL."
          sys.exit(exit_string)
