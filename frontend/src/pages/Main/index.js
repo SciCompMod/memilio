@@ -1,12 +1,12 @@
 import React, {Component} from 'react';
 import {Responsive, WidthProvider} from 'react-grid-layout';
-import Simulation from './Simulation/Simulation';
-import Measures from './Measures';
-import Results from './Results';
-import Timeline from './Timeline';
-import TimeMap from './TimeMap';
+import Simulation from '../../components/Simulation/Simulation';
+import Measures from '../../components/Measures';
+import Results from '../../components/Results';
+import Timeline from '../../components/Timeline';
+import TimeMap from '../../components/TimeMap';
 
-import './GridLayout.scss';
+import './styles.scss';
 
 const ResponsiveGridLayout = WidthProvider(Responsive);
 

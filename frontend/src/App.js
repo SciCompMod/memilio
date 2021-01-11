@@ -3,10 +3,11 @@ import {connect} from 'react-redux';
 import {withTranslation} from 'react-i18next';
 import am4lang_de_DE from '@amcharts/amcharts4/lang/de_DE';
 import * as am4core from '@amcharts/amcharts4/core';
+import {BrowserRouter as Router, Switch, Route} from 'react-router-dom';
 
 import {Spinner} from 'reactstrap';
 
-import GridLayout from './components/GridLayout';
+import Main from './pages/Main';
 
 import {initializeApp, setSelected} from './redux/app';
 import {setTimeBounds} from './redux/time';
@@ -72,17 +73,25 @@ class App extends Component {
   }
 
   render() {
-    if (this.state.loading) {
-      return (
-        <div className="overlay">
-          <div className="loading-progress">
-            <div className="label">{this.state.label}</div>
-            <Spinner color="primary" />
+    return (
+      <Router>
+        <Switch>
+          <Route path="/">
+            <Main />
+          </Route>
+        </Switch>
+        {this.state.loading ? (
+          <div className="overlay">
+            <div className="loading-progress">
+              <div className="label">{this.state.label}</div>
+              <Spinner color="primary" />
+            </div>
           </div>
-        </div>
-      );
-    }
-    return <GridLayout />;
+        ) : (
+          <></>
+        )}
+      </Router>
+    );
   }
 }
 
