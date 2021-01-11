@@ -44,6 +44,7 @@
     "identity-obj-proxy": "3.0.0",
     "jest": "24.9.0",
     "jest-environment-jsdom-fourteen": "1.0.1",
+    "jest-junit": "^12.0.0",
     "jest-resolve": "24.9.0",
     "jest-watch-typeahead": "0.4.2",
     "ka-table": "^3.7.2",
@@ -182,7 +183,16 @@
       "lcov",
       "text",
       "text-summary"
+    ],
+    "reporters": [
+      "default",
+      "jest-junit"
     ]
+  },
+  "jest-junit": {
+    "outputDirectory": "coverage/junit",
+    "outputName": "junit.xml",
+    "usePathForSuiteName": "true"
   },
   "repository": {
     "type": "git",
