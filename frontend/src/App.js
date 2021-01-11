@@ -3,7 +3,7 @@ import {connect} from 'react-redux';
 import {withTranslation} from 'react-i18next';
 import am4lang_de_DE from '@amcharts/amcharts4/lang/de_DE';
 import * as am4core from '@amcharts/amcharts4/core';
-import {BrowserRouter as Router, Switch, Route} from 'react-router-dom';
+import {HashRouter as Router, Switch, Route} from 'react-router-dom';
 
 import {Spinner} from 'reactstrap';
 
@@ -16,6 +16,9 @@ import rki from './common/datastore/sql/rki-sql-store';
 import population from './common/datastore/idb/population-datastore';
 
 import './App.scss';
+import About from './pages/About';
+import Impressum from './pages/Impressum';
+import Dsgvo from './pages/Dsgvo';
 
 // AmCharts defaults to English as a locale and not the browser default,
 // so we have to set it manually.
@@ -76,6 +79,15 @@ class App extends Component {
     return (
       <Router>
         <Switch>
+          <Route path="/impressum">
+            <Impressum />
+          </Route>
+          <Route path="/dsgvo">
+            <Dsgvo />
+          </Route>
+          <Route path="/about">
+            <About />
+          </Route>
           <Route path="/">
             <Main />
           </Route>
