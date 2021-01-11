@@ -52,7 +52,7 @@ export default function Impressum() {
         <i>Martin J. Kühn, Linder Höhe, 54117 Köln</i>
       </p>
       <br />
-      <b>Das Portal bitte einfügen wird betreut durch:</b>
+      <b>Das Portal wird betreut durch:</b>
       <br />
       <p>
         <b>Deutsches Zentrum für Luft- und Raumfahrt (DLR)</b>
