@@ -2,13 +2,14 @@ import os
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
+import requests
 from datetime import timedelta, datetime
-
 
 from epidemiology.epidata import getDataIntoPandasDataFrame as gd
 from epidemiology.epidata import defaultDict as dd
 from epidemiology.epidata import getRKIData as grd
 from epidemiology.epidata import getJHData as gjd
+
 
 ## Function to estimare recovered and deaths from combination of RKI and JH data
 #
@@ -25,16 +26,14 @@ def get_rki_data_with_estimations(read_data=dd.defaultDict['read_data'],
                                   out_form=dd.defaultDict['out_form'],
                                   out_folder=dd.defaultDict['out_folder'],
                                   make_plot=dd.defaultDict['make_plot']):
-
     data_path = os.path.join(out_folder, 'Germany/')
 
     if not read_data:
+        # get rki data
+        grd.get_rki_data(read_data, out_form, out_folder, False)
 
-       # get rki data
-       grd.get_rki_data(read_data, out_form, out_folder, False)
-
-       # get data from John Hopkins University
-       gjd.get_jh_data(read_data, out_form, out_folder)
+        # get data from John Hopkins University
+        gjd.get_jh_data(read_data, out_form, out_folder)
 
     # Now we now which data is generated and we can use it
     # read in jh data
@@ -52,13 +51,13 @@ def get_rki_data_with_estimations(read_data=dd.defaultDict['read_data'],
 
     recovered_estimated = recovered + "_estimated"
     recovered_after14days = recovered + "_after14days"
-    deaths_estimated = deaths+ "_estimated"
+    deaths_estimated = deaths + "_estimated"
     dstr = date + "_string"
     week = "Week"
 
-    #delta = timedelta(days=14)
+    # delta = timedelta(days=14)
 
-    df_jh[fr_r_c] =  df_jh[recovered] / df_jh[confirmed]
+    df_jh[fr_r_c] = df_jh[recovered] / df_jh[confirmed]
     df_jh[fr_d_c] = df_jh[deaths] / df_jh[confirmed]
 
     # There might be some NaN due to division with 0
@@ -79,27 +78,26 @@ def get_rki_data_with_estimations(read_data=dd.defaultDict['read_data'],
         # generate new columns to store estimated values
         # TODO Add also column infected and calculate it in the end
         df_rki[recovered_estimated] = np.nan
-        #df_rki[recovered_after14days] = np.nan
+        # df_rki[recovered_after14days] = np.nan
         df_rki[deaths_estimated] = np.nan
 
         # convert time stamp of rki data
         df_rki[dstr] = df_rki[date].dt.strftime('%Y-%m-%d')
 
         for i in range(len(df_jh)):
-
             date_jh = df_jh.loc[i, date].strftime('%Y-%m-%d')
             fraction_rec_conf = df_jh.loc[i, fr_r_c]
             fraction_deaths_conf = df_jh.loc[i, fr_d_c]
 
             # go to date and calculate estimation
             df_rki.loc[(df_rki[dstr] == date_jh), recovered_estimated] \
-                = np.round(fraction_rec_conf*df_rki.loc[(df_rki[dstr] == date_jh), confirmed])
+                = np.round(fraction_rec_conf * df_rki.loc[(df_rki[dstr] == date_jh), confirmed])
 
             # TODO: Check how recovered would be, if everyone would be recovered in 14 days
-            #now_confirmed = df_rki.loc[(df_rki[dstr] == date_jh), confirmed]
+            # now_confirmed = df_rki.loc[(df_rki[dstr] == date_jh), confirmed]
             # shift confirmed to recovered 14 days later
-            #date_after14days = (datetime.strptime(date_jh, '%Y-%m-%d')+delta).strftime('%Y-%m-%d')
-            #df_rki.loc[(df_rki[dstr] == date_after14days), recovered_after14days] = now_confirmed
+            # date_after14days = (datetime.strptime(date_jh, '%Y-%m-%d')+delta).strftime('%Y-%m-%d')
+            # df_rki.loc[(df_rki[dstr] == date_after14days), recovered_after14days] = now_confirmed
 
             df_rki.loc[(df_rki[dstr] == date_jh), deaths_estimated] \
                 = np.round(fraction_deaths_conf * df_rki.loc[(df_rki[dstr] == date_jh), confirmed])
@@ -107,44 +105,84 @@ def get_rki_data_with_estimations(read_data=dd.defaultDict['read_data'],
         df_rki = df_rki.drop([dstr], 1)
         gd.write_dataframe(df_rki, data_path, file_to_change + "_estimated", out_form)
 
+        if file_to_change == "all_germany_rki":
+            outp = df_rki
+
         # check if calculation is meaningful
         # TODO Add jh data to whole germany plot
+        if (make_plot == True):
+            df_rki.plot(x=date, y=[recovered, recovered_estimated],
+                        title='COVID-19 check recovered for ' + file_to_change,
+                        grid=True, style='-o')
+            plt.tight_layout()
+            plt.show()
 
-        if(make_plot == True):
-           df_rki.plot(x=date, y = [recovered, recovered_estimated],
-                       title = 'COVID-19 check recovered for '+ file_to_change,
-                       grid = True, style = '-o')
-           plt.tight_layout()
-           plt.show()
+            df_rki.plot(x=date, y=[deaths, deaths_estimated],
+                        title='COVID-19 check deaths ' + file_to_change,
+                        grid=True, style='-o')
+            plt.tight_layout()
+            plt.show()
 
-           df_rki.plot(x=date, y=[deaths, deaths_estimated],
-                       title='COVID-19 check deaths '+ file_to_change,
-                       grid=True, style='-o')
-           plt.tight_layout()
-           plt.show()
+            # df_rki[week] = df_rki[date].dt.isocalendar().week
 
-           df_rki[week] = df_rki[date].dt.isocalendar().week
+    return outp
 
-           # TODO download and plot the rki file where there are the real number of deaths dependent on week number.
-           # df_rki_week = df_rki.groupby(week).agg({deaths: sum, deaths_estimated: sum}).reset_index()
 
-           #url = "https://www.rki.de/DE/Content/InfAZ/N/Neuartiges_Coronavirus/Projekte_RKI/COVID-19_Todesfaelle.xlsx?__blob=publicationFile"
+def compare_estimated_and_rki_deathsnumbers(df_rki):
+    print("starting")
+    df_rki['Date'] = pd.to_datetime(df_rki['Date'], format="%Y-%m-%d")
+    # just look at calendar weeks of 2020, else we will start at week 1 again
+    df_rki['Date'] = df_rki['Date'].loc[df_rki['Date'] < datetime.strptime('21 01 04', '%y %m %d')]
+    df_rki["week"] = df_rki['Date'].dt.isocalendar().week
+    # want to have daily deaths numbers, not accumulated
+    df_rki["deaths_daily"] = df_rki['Deaths'] - df_rki['Deaths'].shift(periods=1, fill_value=0)
+    df_rki["deaths_estimated_daily"] = df_rki['Deaths_estimated'] - df_rki['Deaths_estimated'].shift(periods=1,
+                                                                                                     fill_value=0)
+    df_rki_week = df_rki.groupby("week").agg({"deaths_daily": sum, "deaths_estimated_daily": sum}).reset_index()
+    df_rki_week.rename(
+        columns={'deaths_daily': 'Deaths_weekly', 'deaths_estimated_daily': 'Deaths_estimated_weekly'}, inplace=True)
 
-           #df_real_deaths_per_week = pd.read_excel(url)
+    # dowload weekly deaths numbers from rki
+    url = "https://www.rki.de/DE/Content/InfAZ/N/Neuartiges_Coronavirus/Projekte_RKI/COVID-19_Todesfaelle.xlsx?__blob=publicationFile"
+    r = requests.get(url)
+    filename = "COVID-19_Todesfaelle.xlsx"
+    with open(filename, 'wb') as output_file:
+        output_file.write(r.content)
 
-           #df_rki_week.plot(x=week, y=[deaths, deaths_estimated], title='COVID-19 check deaths dependent on wek number', grid=True,
-           #            style='-o')
-           #plt.tight_layout()
-           #plt.show()
+    df_real_deaths_per_week = pd.read_excel("COVID-19_Todesfaelle.xlsx", sheet_name=0)
+    df_real_deaths_per_week.rename(
+        columns={'Sterbejahr': 'year', 'Sterbewoche': 'week',
+                 'Anzahl verstorbene COVID-19 Fälle': 'confirmed_deaths_weekly'},
+        inplace=True)
+    df_real_deaths_per_week.confirmed_deaths_weekly = pd.to_numeric(df_real_deaths_per_week.confirmed_deaths_weekly,
+                                                                    errors='coerce')
 
-        # TODO: think about to add age dependent weight function
+    df_rki_week = df_rki_week.merge(df_real_deaths_per_week, how='outer', on="week")
+    del df_rki_week['year']
+    df_rki_week['confirmed_deaths_weekly'] = df_rki_week['confirmed_deaths_weekly'].fillna(0)
+    df_rki_week['confirmed_deaths_accumulated'] = df_rki_week['confirmed_deaths_weekly'].cumsum()
+    df_rki_week['Deaths_accumulated'] = df_rki_week['Deaths_weekly'].cumsum()
+    df_rki_week['Deaths_estimated_accumulated'] = df_rki_week['Deaths_estimated_weekly'].cumsum()
+
+    df_rki_week.plot(x="week", y=["Deaths_weekly", "Deaths_estimated_weekly", "confirmed_deaths_weekly"],
+                     title='COVID-19 check deaths dependent on week number', grid=True,
+                     style='-o')
+    plt.tight_layout()
+    df_rki_week.plot(x="week", y=["Deaths_accumulated", "Deaths_estimated_accumulated", "confirmed_deaths_accumulated"],
+                     title='COVID-19 check deaths accumulated dependent on week number', grid=True,
+                     style='-o')
+    plt.tight_layout()
+    plt.show()
+
+    # TODO: think about to add age dependent weight function
+
 
 def main():
     [read_data, out_form, out_folder, make_plot] = gd.cli("rkiest")
-    get_rki_data_with_estimations(read_data, out_form, out_folder, make_plot)
+    read_data = True
+    outp = get_rki_data_with_estimations(read_data, out_form, out_folder, make_plot)
+    compare_estimated_and_rki_deathsnumbers(outp)
 
 
 if __name__ == "__main__":
     main()
-
-
