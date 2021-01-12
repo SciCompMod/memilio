@@ -1,8 +1,10 @@
 import React from 'react';
+import {Link} from 'react-router-dom';
 
 export default function DSGVO() {
   return (
     <div className="dsgvo">
+      <Link to="/">Zurück</Link>
       <h2>
         <b>Informationen zum Datenschutz</b>
       </h2>

@@ -1,8 +1,10 @@
 import React from 'react';
+import {Link} from 'react-router-dom';
 
 export default function Impressum() {
   return (
     <div className="impressum">
+      <Link to="/">Zurück</Link>
       <h2>
         <b>Impressum gem. § 5 TMG und § 55 Rundfunkstaatsvertrag</b>
       </h2>

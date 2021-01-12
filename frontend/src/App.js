@@ -3,17 +3,11 @@ import {connect} from 'react-redux';
 import {withTranslation} from 'react-i18next';
 import am4lang_de_DE from '@amcharts/amcharts4/lang/de_DE';
 import * as am4core from '@amcharts/amcharts4/core';
-import {HashRouter as Router, Switch, Route} from 'react-router-dom';
+import {HashRouter as Router, Switch, Route, Link} from 'react-router-dom';
 
 import {Spinner} from 'reactstrap';
 
 import Main from './pages/Main';
-
-import {initializeApp, setSelected} from './redux/app';
-import {setTimeBounds} from './redux/time';
-
-import rki from './common/datastore/sql/rki-sql-store';
-import population from './common/datastore/idb/population-datastore';
 
 import './App.scss';
 import About from './pages/About';
@@ -30,7 +24,7 @@ class App extends Component {
   constructor(props) {
     super(props);
     this.state = {
-      loading: true,
+      loading: false,
       label: '',
     };
   }
@@ -51,60 +45,58 @@ class App extends Component {
     });
   }
 
-  async componentDidMount() {
-    await this.progress({label: 'Loading configuration'});
-    await this.props.initializeApp();
-
-    await this.progress({label: 'Loading data'});
-    await population.populate();
-    await rki.populate();
-
-    await this.progress({label: 'Initializing application'});
-    const p = await population.getByKey('0');
-    const {start, end} = await rki.getTimeBounds();
-
-    this.props.setTimeBounds({start, end});
-    this.props.setSelected({
-      id: '0',
-      dataset: 'germany',
-      label: 'Deutschland',
-      population: p.population,
-    });
-
-    await this.progress({label: 'Done'});
-    this.setState({loading: false});
-  }
+  async componentDidMount() {}
 
   render() {
     return (
-      <Router>
-        <Switch>
-          <Route path="/impressum">
-            <Impressum />
-          </Route>
-          <Route path="/dsgvo">
-            <Dsgvo />
-          </Route>
-          <Route path="/about">
-            <About />
-          </Route>
-          <Route path="/">
-            <Main />
-          </Route>
-        </Switch>
-        {this.state.loading ? (
-          <div className="overlay">
-            <div className="loading-progress">
-              <div className="label">{this.state.label}</div>
-              <Spinner color="primary" />
+      <div className="app">
+        <Router>
+          <header>
+            <h1 className="title">SARS-CoV-2 Reproduktionszahlen innerhalb Deutschland</h1>
+            <div className="logos">
+              <div className="hzi-logo">
+                <img src="assets/logo-hzi2-de.svg" alt="HZI" />
+              </div>
+              <div className="dlr-signet">
+                <img src="assets/dlr-signet.png" alt="DLR Signet" />
+              </div>
             </div>
+            <div className="links">
+              <Link to="/about">Informationen</Link>
+              <Link to="/impressum">Impressum</Link>
+              <Link to="/dsgvo">DSGVO</Link>
+            </div>
+          </header>
+          <div className="body">
+            <Switch>
+              <Route path="/impressum">
+                <Impressum />
+              </Route>
+              <Route path="/dsgvo">
+                <Dsgvo />
+              </Route>
+              <Route path="/about">
+                <About />
+              </Route>
+              <Route path="/">
+                <Main />
+              </Route>
+            </Switch>
+            {this.state.loading ? (
+              <div className="overlay">
+                <div className="loading-progress">
+                  <div className="label">{this.state.label}</div>
+                  <Spinner color="primary" />
+                </div>
+              </div>
+            ) : (
+              <></>
+            )}
           </div>
-        ) : (
-          <></>
-        )}
-      </Router>
+        </Router>
+      </div>
     );
   }
 }
 
-export default connect(null, {initializeApp, setTimeBounds, setSelected})(withTranslation()(App));
+export default connect(null, {})(withTranslation()(App));
