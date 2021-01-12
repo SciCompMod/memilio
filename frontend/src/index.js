@@ -25,6 +25,8 @@ numeral.locale('en');
 
 moment.locale('en');
 
+//{process.env.NODE_ENV === 'production' ? <App /> : <Developer><App/></Developer>}
+
 ReactDOM.render(
   <Provider store={store}>
     <Suspense fallback={<Spinner color="white" className="loading-spinner" />}>

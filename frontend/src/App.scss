@@ -33,52 +33,91 @@
     }
   }
 }
-.wrapper {
-  padding: 0;
-  height: 100vh;
-  overflow: auto;
-  background-color: #dedede;
+
+body,
+#root {
+  height: 100%;
+}
+
+#root {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  overflow: hidden;
+}
+
+.app {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
 
   header {
-    padding: 10px 20px 20px 20px;
-    border-bottom: 1px solid #aaa;
+    background-color: #f0f0f0; // $dlr-gray-medium;
+    height: 89px;
+    max-height: 89px;
+    min-height: 89px;
+    position: relative;
 
-    .logo {
-      position: relative;
-      margin: 0;
+    .title {
+      font-size: 37px;
+      transform: translateY(50%) translateX(1rem);
     }
 
-    .logo > img {
-      width: 62px;
-      float: left;
-      margin: 0 10px 10px 0;
+    .logos {
+      height: 50.84px;
+      position: absolute;
+      top: 50%;
+      margin-top: -25.42px;
+      right: 1em;
+
+      img {
+        height: 50.84px;
+      }
+
+      .hzi-logo,
+      .dlr-signet {
+        display: inline-block;
+      }
+
+      .hzi-logo {
+        width: 95px;
+        overflow: hidden;
+      }
+
+      .dlr-signet {
+        float: right;
+      }
     }
 
-    .logo .logo-text {
-      line-height: 17px;
-      font-size: 0.875rem;
-      font-family: FrutigerLTW02-65Bold, 'Helvetica Neue', Helvetica, Roboto, Arial, sans-serif;
-      display: block;
-      padding-top: 19px;
-      font-weight: 400;
+    .links {
+      display: inline-block;
+      position: absolute;
+      right: 1rem;
+      bottom: 0.05rem;
+      font-size: 0.8rem;
+
+      a:not(:first-child) {
+        margin-left: 0.5rem;
+      }
     }
   }
 
-  .main-panel {
-    height: calc(100vh - 6.5em);
-    margin: 0.5em;
-  }
+  .body {
+    background-color: #f8f8f9; //$dlr-gray-light;
 
-  .map-container,
-  .settings-container {
-    height: 50%;
-    border: 1px solid #aaa;
-    background-color: white;
-  }
+    flex-grow: 1;
+    overflow: auto;
 
-  .graphs-container {
-    height: 100%;
-    border: 1px solid #aaa;
-    background-color: white;
+    display: flex;
+    flex-direction: row;
+
+    .about,
+    .impressum,
+    .dsgvo {
+      width: 68.2%;
+      margin: 1rem auto;
+    }
   }
 }
