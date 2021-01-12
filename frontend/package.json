@@ -105,7 +105,7 @@
     "start": "node scripts/start.js",
     "build": "node scripts/build.js",
     "test": "node scripts/test.js",
-    "coverage": "CI=true node scripts/test.js --passWithNoTests --coverage"
+    "coverage": "CI=true node scripts/test.js --coverage"
   },
   "eslintConfig": {
     "extends": "react-app"
