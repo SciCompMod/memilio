@@ -188,6 +188,7 @@ download-data:
     - getjhdata -o data_dl
     - getspaindata -o data_dl
     - getdividata -o data_dl
+  allow_failure: true
   artifacts:
     paths:
       - data_dl/*.json

@@ -133,7 +133,7 @@ void write_single_run_params(const int run, epi::Graph<epi::ModelNode<SecirSimul
  * @param graph Graph which holds the node
  * @param node Node ID
  */
-void write_node(TixiDocumentHandle handle, const Graph<SecirParams, MigrationEdge>& graph, int node);
+void write_node(TixiDocumentHandle handle, const Graph<SecirParams, MigrationEdge> &graph, int node);
 
 /**
  * @brief reads parameters of a single node and saves it into the graph
@@ -168,7 +168,7 @@ void read_edge(const std::vector<TixiDocumentHandle>& edge_handles, const std::s
  * @param graph Graph which should be written
  * @param dir_string directory, where graph should be stored
  */
-void write_graph(const Graph<SecirParams, MigrationEdge>& graph, const std::string& dir_string);
+void write_graph(const Graph<SecirParams, MigrationEdge> &graph, const std::string& dir_string);
 
 /**
  * @brief reads graph xml files and returns a Secir simulation graph

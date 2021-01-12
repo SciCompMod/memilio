@@ -106,6 +106,9 @@ optional arguments working for some are:
                         form: YYYY-mm-dd.Default is 2020-04-24
   -u, --update          Reads the data from file "json", downloads and adds
                         data from today.
+  --split_berlin        Does not concatenate the different districts of Berlin 
+			into one county and keeps it as 7 different districts
+     			which are provided by the original RKI data.
 
 Results
 -------

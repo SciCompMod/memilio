@@ -88,7 +88,7 @@ def cli(what):
    #                "update": ['divi']                 }
 
    cli_dict = {"divi": ['Downloads data from DIVI', 'start_date', 'end_date', 'update'],
-               "rki": ['Download data from RKI', 'plot'],
+               "rki": ['Download data from RKI', 'plot', 'split_berlin'],
                "rkiest": ['Download data from RKI and JH and estimate recovered and deaths', 'plot'],
                "spain": ['Download of spain data'],
                "population": ['Download population data'],
@@ -116,6 +116,11 @@ def cli(what):
                        help='Defines output format for data files. Default is \"' + str(dd.defaultDict['out_form']+ "\"."))
    parser.add_argument('-o', '--out-path', type=str, default=out_path_default, help='Defines folder for output.')
 
+   if 'split_berlin' in what_list:
+       parser.add_argument('-sb', '--split_berlin',
+                           help='Berlin data is split into different counties,'
+                                ' instead of having only one county for Berlin.',
+                           action='store_true')
    if 'end_date' in what_list:
        parser.add_argument('-ed', '--end-date',
                            help='Defines date after which data download is stopped.'
@@ -148,6 +153,8 @@ def cli(what):
 
    # add additional arguments in alphabetical order
    # TODO: check if it is possible to automatically generate this
+   if 'split_berlin' in what_list:
+       arg_list.append(args.split_berlin)
    if 'end_date' in what_list:
        arg_list.append(args.end_date)
    if 'plot' in what_list:
@@ -159,7 +166,7 @@ def cli(what):
       arg_list.append(UPDATE_DATA)
 
       # TODO: Change arguments such that one argument + parameter can be either read_data or update
-      if READ_DATA:
+      if READ_DATA and UPDATE_DATA:
          exit_string = "You called the program with '--read-from-disk' and '--update'." \
                        "Please choose just one. Both together is not possible."
          sys.exit(exit_string)

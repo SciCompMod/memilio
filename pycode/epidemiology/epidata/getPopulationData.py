@@ -173,7 +173,7 @@ def get_age_population_data(read_data=dd.defaultDict['read_data'],
       path_reg_key = 'https://www.zensus2011.de/SharedDocs/Downloads/DE/Pressemitteilung/DemografischeGrunddaten/1A_EinwohnerzahlGeschlecht.xls?__blob=publicationFile&v=5'
    
       #read tables
-      counties = pandas.read_excel(os.path.join(path_counties,'kreise_deu.xlsx'),sheet_name=1, header=3)
+      counties = pandas.read_excel(os.path.join(path_counties,'kreise_deu.xlsx'),sheet_name=1, header=3, engine='openpyxl')
       reg_key = pandas.read_excel(path_reg_key, sheet_name='Tabelle_1A', header=12)
       zensus = gd.loadCsv("abad92e8eead46a4b0d252ee9438eb53_1")
 
@@ -214,10 +214,13 @@ def get_age_population_data(read_data=dd.defaultDict['read_data'],
    # compute ratio of current and 2011 population data
    ratio = np.ones(len(data[:,0]))
    for i in range(len(ratio)):
-      for j in range(len(counties)-11):
+      for j in range(len(counties)):
           if not counties['Schlüssel-nummer'].isnull().values[j]:
-              if data[i,0] == int(counties['Schlüssel-nummer'].values[j]):
-                   ratio[i] = counties['Bevölkerung2)'].values[j]/data[i, 1]
+              try:
+                 if data[i,0] == int(counties['Schlüssel-nummer'].values[j]):
+                    ratio[i] = counties['Bevölkerung2)'].values[j]/data[i, 1]
+              except:
+                 dummy = 0
 
 
    # adjust population data for all ages to current level

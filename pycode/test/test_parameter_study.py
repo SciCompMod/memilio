@@ -52,8 +52,8 @@ class Test_ParameterStudy(unittest.TestCase):
         #mock callback
         def handle_result_func(graph):
             handle_result_func.c += 1
-            self.assertAlmostEqual(graph.get_node(0).result.get_time(0), t0)
-            self.assertAlmostEqual(graph.get_node(0).result.get_last_time(), tmax)
+            self.assertAlmostEqual(graph.get_node(0).property.result.get_time(0), t0)
+            self.assertAlmostEqual(graph.get_node(0).property.result.get_last_time(), tmax)
 
         handle_result_func.c = 0
         result = study.run(handle_result_func)
@@ -70,8 +70,8 @@ class Test_ParameterStudy(unittest.TestCase):
     def test_graph(self):        
         params = self._get_params()
         graph = secir.SecirParamsGraph()
-        graph.add_node(params)
-        graph.add_node(params)
+        graph.add_node(0, params)
+        graph.add_node(1, params)
         graph.add_edge(0, 1, 0.01 * np.ones(8))
         graph.add_edge(1, 0, 0.01 * np.ones(8))
 
