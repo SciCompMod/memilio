@@ -52,7 +52,7 @@ class App extends Component {
       <div className="app">
         <Router>
           <header>
-            <h1 className="title">SARS-CoV-2 Reproduktionszahlen innerhalb Deutschlands</h1>
+            <div className="title">SARS-CoV-2 Reproduktionszahlen innerhalb Deutschlands</div>
             <div className="logos">
               <div className="hzi-logo">
                 <img src="assets/logo-hzi2-de.svg" alt="HZI" />

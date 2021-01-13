@@ -62,7 +62,29 @@ body,
 
     .title {
       font-size: 37px;
-      transform: translateY(50%) translateX(1rem);
+      white-space: normal;
+      margin: 0 250px 0 1rem;
+      top: 50%;
+      transform: translateY(-50%);
+      position: relative;
+    }
+
+    @media (max-width: 1200px) {
+      .title {
+        font-size: 25px !important;
+      }
+    }
+
+    @media (max-width: 650px) {
+      .title {
+        font-size: 20px !important;
+      }
+    }
+
+    @media (max-width: 500px) {
+      .title {
+        font-size: 15px !important;
+      }
     }
 
     .logos {

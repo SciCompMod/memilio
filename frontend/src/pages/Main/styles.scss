@@ -38,6 +38,8 @@
     flex-direction: row;
     align-items: center;
 
+    background-color: white;
+
     .info {
       height: 200px;
       border-bottom: 2px solid #e2e4e6;
@@ -53,6 +55,39 @@
       .district {
         font-size: 2em;
         text-align: center;
+      }
+    }
+  }
+
+  @media (max-width: 1300px) {
+    .left {
+      width: 50% !important;
+      min-width: 50% !important;
+      max-width: 50% !important;
+    }
+
+    .right .graph {
+      height: 50%;
+    }
+  }
+}
+
+@media (max-width: 700px) {
+  .main {
+    flex-direction: column !important;
+
+    .left {
+      height: 700px;
+      width: 100% !important;
+      min-width: 100% !important;
+      max-width: 100% !important;
+    }
+
+    .right {
+      height: 500px !important;
+
+      .graph {
+        height: 100% !important;
       }
     }
   }
