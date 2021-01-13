@@ -1,7 +1,7 @@
 {
   "name": "hpc-against-virus",
   "version": "0.4.0",
-  "homepage": "/",
+  "homepage": ".",
   "dependencies": {
     "@amcharts/amcharts4": "^4.9.31",
     "@amcharts/amcharts4-geodata": "^4.1.16",
