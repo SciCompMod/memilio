@@ -40,20 +40,20 @@ public:
 
     /**
      * @brief get_integrator
-     * @return pointer to the core integrator used in the simulation
+     * @return reference to the core integrator used in the simulation
      */
-    IntegratorCore* get_integrator()
+    IntegratorCore& get_integrator()
     {
-        return m_integratorCore.get();
+        return *m_integratorCore;
     }
 
     /**
      * @brief get_integrator
-     * @return pointer to the core integrator used in the simulation
+     * @return reference to the core integrator used in the simulation
      */
-    IntegratorCore const* get_integrator() const
+    IntegratorCore const& get_integrator() const
     {
-        return m_integratorCore.get();
+        return *m_integratorCore;
     }
 
 
