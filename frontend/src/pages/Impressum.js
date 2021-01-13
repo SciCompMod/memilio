@@ -19,7 +19,7 @@ export default function Impressum() {
         <br />
         Telefax: +49 2203 67310
         <br />
-        E-Mail: contact-dlr [at] dlr.de
+        E-Mail: contact-hpc-against-corona [at] dlr.de
         <br />
         WWW:&nbsp;
         <a href="https://www.dlr.de/" target="blank">

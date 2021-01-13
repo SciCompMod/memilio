@@ -33,9 +33,9 @@ export default function About() {
         Koch-Institut gemeldeten Fällen.
       </p>
       <p>
-        <b>Disclaimer:</b> "This website and its contents herein, including all data and analysis are provided to the
+        <b>Disclaimer:</b> This website and its contents herein, including all data and analysis are provided to the
         public strictly for educational and academic research purposes. Reliance on the Website for medical guidance or
-        use of the Website in commerce is strictly prohibited."
+        use of the Website in commerce is strictly prohibited.
       </p>
     </div>
   );

@@ -1,5 +1,5 @@
 import React, {Component} from 'react';
-import {Button, ButtonGroup} from 'reactstrap';
+import {Button, ButtonGroup, UncontrolledTooltip} from 'reactstrap';
 import RtChart from '../../components/Graphs/RtChart';
 
 import HeatMap from '../../common/heat-map';
@@ -39,7 +39,6 @@ class MainPage extends Component {
   }
 
   async componentDidMount() {
-    console.time('mount view');
     // fetch rt data
     const data = await fetch('assets/rt.rel.districts.json').then((res) => res.json());
 
@@ -110,8 +109,11 @@ class MainPage extends Component {
       selected: {rs: 'germany', bez: 'Deutschland', gen: ''},
       timestamps: timestamps,
       timestampOffset: first_timestamp_idx,
-      timestring: dayjs(first_timestamp).locale('de').format('DD MMMM YYYY'),
-      timestep: timestamps.findIndex((x) => x === first_timestamp),
+      timestring: dayjs(timestamps[timestamps.length - 1])
+        .locale('de')
+        .format('DD MMMM YYYY'),
+      //timestep: timestamps.findIndex((x) => x === first_timestamp),
+      timestep: timestamps.length,
       start: timestamps.findIndex((x) => x === first_timestamp),
       end: timestamps.length,
     });
@@ -120,7 +122,7 @@ class MainPage extends Component {
 
     // wait a little to let amcharts finish render
     setTimeout((x) => {
-      this.map.setValues(this.map_data_rt.get(timestamps[first_timestamp_idx]));
+      this.map.setValues(this.map_data_rt.get(timestamps[timestamps.length - 1]));
 
       // subscribe to events from map
       this.map.subscribe((event) => {
@@ -138,7 +140,7 @@ class MainPage extends Component {
             });
         }
       });
-    }, 2000);
+    }, 1000);
     console.timeEnd('mount view');
   }
 
@@ -212,6 +214,7 @@ class MainPage extends Component {
                   size="sm"
                   onClick={() => this.selectDataset('absolute')}
                   active={this.state.dataset === 'absolute'}
+                  id="absolute"
                 >
                   Absolut
                 </Button>
@@ -220,9 +223,17 @@ class MainPage extends Component {
                   size="sm"
                   onClick={() => this.selectDataset('relative')}
                   active={this.state.dataset === 'relative'}
+                  id="relative"
                 >
-                  Relative
+                  Relativ
                 </Button>
+                <UncontrolledTooltip placement="top" target="absolute">
+                  Visualisiert die aktuelle Reproduktionszahl pro Landkreis.
+                </UncontrolledTooltip>
+                <UncontrolledTooltip placement="top" target="relative">
+                  Visualisiert die aktuelle Reproduktionszahl pro Landkreis in Relation zur Reproduktionszahl
+                  Deutschlands
+                </UncontrolledTooltip>
               </ButtonGroup>
             </div>
           </div>
@@ -235,8 +246,8 @@ class MainPage extends Component {
             </div>
             <RtChart
               series={[
-                {key: 'rt', label: 'RT absolute'},
-                {key: 'rt_rel', label: 'RT relative', isHidden: this.state.selected.rs === 'germany'},
+                {key: 'rt', label: 'RT absolut'},
+                {key: 'rt_rel', label: 'RT relativ', isHidden: this.state.selected.rs === 'germany'},
               ]}
               data={this.chart_data ? this.chart_data.get(this.state.selected.rs) : []}
               district={this.state.selected.rs}
