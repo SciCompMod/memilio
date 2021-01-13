@@ -14,7 +14,7 @@ export default function About() {
         der numerischen Simulation einen wichtigen Beitrag leisten.
       </p>
       <p>
-        Das Institut für Softwaretechnologie entwickelt in Zusammenarbeit mit dem Helmholtzzentrum für
+        Das Institut für Softwaretechnologie entwickelt in Zusammenarbeit mit dem Helmholtz-Zentrum für
         Infektionsforschung ein umfassendes Softwarepaket, welches das COVID19-Infektionsgeschehen per Simulation
         darstellt. Neben einer hochaufgelösten Modellierung der Infektionsausbreitung steht im Mittelpunkt die Wirkung
         der Gegenmaßnahmen zu bewerten. Teil des Softwarepaktes ist ein Online-Tool, welches der Öffentlichkeit zu

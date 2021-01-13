@@ -40,9 +40,7 @@ class MainPage extends Component {
 
   async componentDidMount() {
     // fetch rt data
-    const data = await fetch(
-      'https://gitlab.com/simm/covid19/rt-districts/-/raw/main/rt.rel.districts.json'
-    ).then((res) => res.json());
+    const data = await fetch('assets/rt.rel.districts.json').then((res) => res.json());
 
     const keys = Object.keys(data);
     const districts = _.uniq(data.DistrictID);
