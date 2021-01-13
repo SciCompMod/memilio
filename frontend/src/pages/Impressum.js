@@ -5,7 +5,7 @@ export default function Impressum() {
   return (
     <div className="impressum">
       <Link to="/">Zurück</Link>
-      <h2>
+      <h2 className="mt-2">
         <b>Impressum gem. § 5 TMG und § 55 Rundfunkstaatsvertrag</b>
       </h2>
       <p>
