@@ -46,8 +46,6 @@ export default class InteractiveHeatMap extends Subject {
     this.#map.numberFormatter.numberFormat = '#,###.##';
 
     this.#countySeries = new am4maps.MapPolygonSeries();
-    this.#countySeries.geodataSource.url = 'assets/counties/lk_germany.geojson';
-    this.#countySeries.useGeodata = true;
 
     const heatColors = [
       am4core.color('rgb(255, 255, 255)'),
@@ -151,6 +149,9 @@ export default class InteractiveHeatMap extends Subject {
         });
       }
     });
+
+    this.#countySeries.geodataSource.url = 'assets/counties/lk_germany.geojson';
+    this.#countySeries.useGeodata = true;
 
     this.#map.invalidate();
   }

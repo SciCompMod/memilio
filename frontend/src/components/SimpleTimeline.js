@@ -8,6 +8,7 @@ export default class SimpleTimeline extends Component {
   static defaultProps = {
     start: 0,
     end: 0,
+    value: -1,
     onChange: () => {},
   };
 
@@ -79,6 +80,10 @@ export default class SimpleTimeline extends Component {
       this.#sliderAnimation.events.on('animationended', () => {
         this.#playButton.isActive = false;
       });
+      if (prevProps.value === -1 && this.props.value > 0) {
+        this.#slider.start = this.props.value;
+        this.#sliderAnimation.setProgress(this.#slider.start);
+      }
     }
   }
 

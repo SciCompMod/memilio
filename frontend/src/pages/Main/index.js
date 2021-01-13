@@ -40,7 +40,9 @@ class MainPage extends Component {
 
   async componentDidMount() {
     // fetch rt data
-    const data = await fetch('assets/rt.rel.districts.json').then((res) => res.json());
+    const data = await fetch(
+      'https://gitlab.com/simm/covid19/rt-districts/-/raw/main/rt.rel.districts.json'
+    ).then((res) => res.json());
 
     const keys = Object.keys(data);
     const districts = _.uniq(data.DistrictID);
@@ -141,7 +143,6 @@ class MainPage extends Component {
         }
       });
     }, 1000);
-    console.timeEnd('mount view');
   }
 
   /**
@@ -205,7 +206,12 @@ class MainPage extends Component {
       <div className="main">
         <div className="left">
           <div className="timeline">
-            <SimpleTimeline start={this.state.start} end={this.state.end} onChange={this.update} />
+            <SimpleTimeline
+              start={this.state.start}
+              end={this.state.end}
+              value={this.state.timestep}
+              onChange={this.update}
+            />
             <div className="timestring">{this.state.timestring}</div>
             <div className="options">
               <ButtonGroup>
