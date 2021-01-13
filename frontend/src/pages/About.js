@@ -1,10 +1,16 @@
-import React from 'react';
+import React, {useEffect} from 'react';
 import {Link} from 'react-router-dom';
 
 export default function About() {
+  useEffect(() => {
+    document.title = document.title = `Über die Webseite`;
+  });
+
   return (
     <div className="about">
-      <Link to="/">Zurück</Link>
+      <Link tabIndex="1" titel="Zurück zur Hauptseite" to="/">
+        Zurück
+      </Link>
       <h1 className="mt-2">Über die Webseite</h1>
       <p>
         Die Corona-Pandemie stellt nicht nur jeden einzelnen Menschen vor viele Fragen. Auch die Politik muss

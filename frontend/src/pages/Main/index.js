@@ -39,6 +39,7 @@ class MainPage extends Component {
   }
 
   async componentDidMount() {
+    document.title = `SARS-CoV-2 Reproduktionszahlen`;
     // fetch rt data
     const data = await fetch('assets/rt.rel.districts.json').then((res) => res.json());
 

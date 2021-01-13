@@ -13,6 +13,7 @@ import './App.scss';
 import About from './pages/About';
 import Impressum from './pages/Impressum';
 import Dsgvo from './pages/Dsgvo';
+import Accessibility from './pages/Accessibility';
 
 // AmCharts defaults to English as a locale and not the browser default,
 // so we have to set it manually.
@@ -67,11 +68,14 @@ class App extends Component {
               <Route path="/impressum">
                 <Impressum />
               </Route>
-              <Route path="/dsgvo">
+              <Route path="/datenschutz">
                 <Dsgvo />
               </Route>
-              <Route path="/about">
+              <Route path="/informationen">
                 <About />
+              </Route>
+              <Route path="/barrierefreiheit">
+                <Accessibility />
               </Route>
               <Route path="/">
                 <Main />
@@ -89,9 +93,23 @@ class App extends Component {
             )}
           </div>
           <div className="links">
-            <Link to="/about">Informationen</Link>
-            <Link to="/impressum">Impressum</Link>
-            <Link to="/dsgvo">DSGVO</Link>
+            <Link tabIndex="2" title="Weitere Informationen zu der Webseite" to="/informationen">
+              Informationen
+            </Link>
+            <Link tabIndex="3" title="Impressum" to="/impressum">
+              Impressum
+            </Link>
+            <Link tabIndex="4" title="Datenschutzerklärung" to="/datenschutz">
+              Datenschutzerklärung
+            </Link>
+            <Link
+              tabIndex="5"
+              title="Erklärung zur Barrierefreiheit"
+              alt="Accessibility statement"
+              to="/barrierefreiheit"
+            >
+              Barrierefreiheit
+            </Link>
           </div>
         </Router>
       </div>

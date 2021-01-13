@@ -80,3 +80,8 @@ h6,
 .h6 {
   font-size: 0.25rem;
 }
+
+a {
+  color: darken($dlr-blue, 30%);
+  text-decoration: none;
+}

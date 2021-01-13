@@ -1,10 +1,16 @@
-import React from 'react';
+import React, {useEffect} from 'react';
 import {Link} from 'react-router-dom';
 
 export default function DSGVO() {
+  useEffect(() => {
+    document.title = document.title = `Datenschutzerklärung`;
+  });
+
   return (
     <div className="dsgvo">
-      <Link to="/">Zurück</Link>
+      <Link tabIndex="1" titel="Zurück zur Hauptseite" to="/">
+        Zurück
+      </Link>
       <h2 className="mt-2">
         <b>Informationen zum Datenschutz</b>
       </h2>

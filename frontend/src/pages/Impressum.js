@@ -1,12 +1,18 @@
-import React from 'react';
+import React, {useEffect} from 'react';
 import {Link} from 'react-router-dom';
 
 export default function Impressum() {
+  useEffect(() => {
+    document.title = 'Impressum';
+  });
+
   return (
     <div className="impressum">
-      <Link to="/">Zurück</Link>
+      <Link tabIndex="1" titel="Zurück zur Hauptseite" to="/">
+        Zurück
+      </Link>
       <h2 className="mt-2">
-        <b>Impressum gem. § 5 TMG und § 55 Rundfunkstaatsvertrag</b>
+        <b>Impressum gem. § 5 TMG und § 55 Medienstaatsvertrag</b>
       </h2>
       <p>
         Deutsches Zentrum für Luft- und Raumfahrt e. V. (DLR)
@@ -28,8 +34,8 @@ export default function Impressum() {
       </p>
       <p>
         Gesetzlicher Vertreter des DLR ist der Vorstand, bestehend aus Prof. Dr. Anke Kaysser-Pyzalla, Klaus Hamacher
-        (stellvertretender Vorsitzender des Vorstands), Prof. Rolf Henke, Prof. Dr. rer. nat. Hansjörg Dittus, Prof.
-        Dr.-Ing. Karsten Lemmer und Dr.-Ing. Walther Pelzer.
+        (stellvertretender Vorsitzender des Vorstands), Prof. Dr. rer. nat. Hansjörg Dittus, Prof. Dr.-Ing. Karsten
+        Lemmer und Dr.-Ing. Walther Pelzer.
       </p>
       <p>
         Sitz des Vorstands: <br />
@@ -49,7 +55,7 @@ export default function Impressum() {
         <br />
         DE 121965658
       </p>
-      <h3>Verantwortliche/r nach § 55 Abs. 2 Rundfunkstaatsvertrag:</h3>
+      <h3>Verantwortliche/r nach § 55 Abs. 2 Medienstaatsvertrag:</h3>
       <p>
         <i>Martin J. Kühn, Linder Höhe, 54117 Köln</i>
       </p>
