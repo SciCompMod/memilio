@@ -83,6 +83,7 @@ public:
 
     SecirModel()
     {
+#if !USE_DERIV_FUNC
         size_t n_agegroups = (size_t)AgeGroup::Count;
         for (size_t i = 0; i < n_agegroups; i++) {
             for (size_t j = 0; j < n_agegroups; j++) {
@@ -90,35 +91,42 @@ public:
                 // Si to Ei individually for each age group j
                 this->add_flow(
                     std::make_tuple((AgeGroup)i, InfectionType::S), std::make_tuple((AgeGroup)i, InfectionType::E),
-                    [i, j](Pa const& p, Eigen::Ref<const Eigen::VectorXd> y, double t) {
+                    [i, j](Pa const& p, Eigen::Ref<const Eigen::VectorXd> pop, Eigen::Ref<const Eigen::VectorXd> y, double t) {
+
+                        //symptomatic are less well quarantined when testing and tracing is overwhelmed so they infect more people
+                        auto test_and_trace_required = (1 - params.probabilities[i].get_asymp_per_infectious()) * dummy_R3 * Po::get_from(pop, (AgeGroup)i, InfectionType::C);
+                        auto risk_from_symptomatic   = smoother_cosine(
+                            test_and_trace_required, params.get_test_and_trace_capacity(), params.get_test_and_trace_capacity() * 5,
+                            params.probabilities[i].get_risk_from_symptomatic(),
+                            params.probabilities[i].get_test_and_trace_max_risk_from_symptomatic());
+
                         // effective contact rate by contact rate between groups i and j and damping j
                         ScalarType season_val =
                             (1 + p.get_seasonality() * sin(3.141592653589793 *
                                                            (std::fmod((p.get_start_day() + t), 365.0) / 182.5 + 0.5)));
-                        ScalarType cont_freq_eff =
-                            season_val * p.get_contact_patterns().get_cont_freq_mat().get_cont_freq((int)i, (int)j) *
-                            p.get_contact_patterns().get_cont_freq_mat().get_dampings((int)i, (int)j).get_factor(t);
-                        ScalarType Nj = Po::get_from(y, (AgeGroup)j, InfectionType::S) +
-                                        Po::get_from(y, (AgeGroup)j, InfectionType::E) +
-                                        Po::get_from(y, (AgeGroup)j, InfectionType::C) +
-                                        Po::get_from(y, (AgeGroup)j, InfectionType::I) +
-                                        Po::get_from(y, (AgeGroup)j, InfectionType::H) +
-                                        Po::get_from(y, (AgeGroup)j, InfectionType::U) +
-                                        Po::get_from(y, (AgeGroup)j, InfectionType::R); // without died people
+                        ScalarType cont_freq_eff = season_val * contact_matrix.get_matrix_at(t)(static_cast<Eigen::Index>(i),
+                                                                                                static_cast<Eigen::Index>(j));
+                        ScalarType Nj = Po::get_from(pop, (AgeGroup)j, InfectionType::S) +
+                                        Po::get_from(pop, (AgeGroup)j, InfectionType::E) +
+                                        Po::get_from(pop, (AgeGroup)j, InfectionType::C) +
+                                        Po::get_from(pop, (AgeGroup)j, InfectionType::I) +
+                                        Po::get_from(pop, (AgeGroup)j, InfectionType::H) +
+                                        Po::get_from(pop, (AgeGroup)j, InfectionType::U) +
+                                        Po::get_from(pop, (AgeGroup)j, InfectionType::R); // without died people
                         ScalarType divNj = 1.0 / Nj; // precompute 1.0/Nj
                         ScalarType Si    = Po::get_from(y, (AgeGroup)i, InfectionType::S);
-                        ScalarType Cj    = Po::get_from(y, (AgeGroup)j, InfectionType::C);
-                        ScalarType Ij    = Po::get_from(y, (AgeGroup)j, InfectionType::I);
+                        ScalarType Cj    = Po::get_from(pop, (AgeGroup)j, InfectionType::C);
+                        ScalarType Ij    = Po::get_from(pop, (AgeGroup)j, InfectionType::I);
                         return Si * cont_freq_eff * divNj * p.probabilities[i].get_infection_from_contact() *
                                (p.probabilities[j].get_carrier_infectability() * Cj +
-                                p.probabilities[j].get_risk_from_symptomatic() * Ij);
+                                risk_from_symptomatic * Ij);
                     });
             }
 
             // Ei to Ci
             this->add_flow(std::make_tuple((AgeGroup)i, InfectionType::E),
                            std::make_tuple((AgeGroup)i, InfectionType::C),
-                           [i](Pa const& p, Eigen::Ref<const Eigen::VectorXd> y, double /*t*/) {
+                           [i](Pa const& p, Eigen::Ref<const Eigen::VectorXd> /*pop*/, Eigen::Ref<const Eigen::VectorXd> y, double /*t*/) {
                                return Po::get_from(y, (AgeGroup)i, InfectionType::E) /
                                       (2 * p.times[i].get_serialinterval() - p.times[i].get_incubation());
                            });
@@ -126,7 +134,7 @@ public:
             // Ci to Ii
             this->add_flow(std::make_tuple((AgeGroup)i, InfectionType::C),
                            std::make_tuple((AgeGroup)i, InfectionType::I),
-                           [i](Pa const& p, Eigen::Ref<const Eigen::VectorXd> y, double /*t*/) {
+                           [i](Pa const& p, Eigen::Ref<const Eigen::VectorXd> /*pop*/, Eigen::Ref<const Eigen::VectorXd> y, double /*t*/) {
                                double dummy_R3 = 0.5 / (p.times[i].get_incubation() - p.times[i].get_serialinterval());
                                double alpha    = p.probabilities[i].get_asymp_per_infectious();
                                return ((1 - alpha) * dummy_R3) * Po::get_from(y, (AgeGroup)i, InfectionType::C);
@@ -135,7 +143,7 @@ public:
             // Ci to Ri
             this->add_flow(
                 std::make_tuple((AgeGroup)i, InfectionType::C), std::make_tuple((AgeGroup)i, InfectionType::R),
-                [i](Pa const& p, Eigen::Ref<const Eigen::VectorXd> y, double /*t*/) {
+                [i](Pa const& p, Eigen::Ref<const Eigen::VectorXd> /*pop*/, Eigen::Ref<const Eigen::VectorXd> y, double /*t*/) {
                     double alpha = p.probabilities[i].get_asymp_per_infectious();
                     return (alpha / p.times[i].get_infectious_asymp()) * Po::get_from(y, (AgeGroup)i, InfectionType::C);
                 });
@@ -143,7 +151,7 @@ public:
             // Ii to Ri
             this->add_flow(std::make_tuple((AgeGroup)i, InfectionType::I),
                            std::make_tuple((AgeGroup)i, InfectionType::R),
-                           [i](Pa const& p, Eigen::Ref<const Eigen::VectorXd> y, double /*t*/) {
+                           [i](Pa const& p, Eigen::Ref<const Eigen::VectorXd> /*pop*/, Eigen::Ref<const Eigen::VectorXd> y, double /*t*/) {
                                return Po::get_from(y, (AgeGroup)i, InfectionType::I) *
                                       (1 - p.probabilities[i].get_hospitalized_per_infectious()) /
                                       p.times[i].get_infectious_mild();
@@ -152,7 +160,7 @@ public:
             // Ii to Hi
             this->add_flow(
                 std::make_tuple((AgeGroup)i, InfectionType::I), std::make_tuple((AgeGroup)i, InfectionType::H),
-                [i](Pa const& p, Eigen::Ref<const Eigen::VectorXd> y, double /*t*/) {
+                [i](Pa const& p, Eigen::Ref<const Eigen::VectorXd> /*pop*/, Eigen::Ref<const Eigen::VectorXd> y, double /*t*/) {
                     return Po::get_from(y, (AgeGroup)i, InfectionType::I) *
                            p.probabilities[i].get_hospitalized_per_infectious() / p.times[i].get_home_to_hospitalized();
                 });
@@ -160,7 +168,7 @@ public:
             // Hi to Ui
             this->add_flow(std::make_tuple((AgeGroup)i, InfectionType::H),
                            std::make_tuple((AgeGroup)i, InfectionType::U),
-                           [i](Pa const& p, Eigen::Ref<const Eigen::VectorXd> y, double /*t*/) {
+                           [i](Pa const& p, Eigen::Ref<const Eigen::VectorXd> /*pop*/, Eigen::Ref<const Eigen::VectorXd> y, double /*t*/) {
                                ScalarType icu_occupancy = 0;
                                for (size_t j = 0; j < (size_t)AgeGroup::Count; ++j) {
                                    icu_occupancy += Po::get_from(y, (AgeGroup)j, InfectionType::U);
@@ -177,7 +185,7 @@ public:
             // Hi to Di
             this->add_flow(
                 std::make_tuple((AgeGroup)i, InfectionType::H), std::make_tuple((AgeGroup)i, InfectionType::D),
-                [i](Pa const& p, Eigen::Ref<const Eigen::VectorXd> y, double /*t*/) {
+                [i](Pa const& p, Eigen::Ref<const Eigen::VectorXd> /*pop*/, Eigen::Ref<const Eigen::VectorXd> y, double /*t*/) {
                     ScalarType icu_occupancy = 0;
                     for (size_t j = 0; j < (size_t)AgeGroup::Count; ++j) {
                         icu_occupancy += Po::get_from(y, (AgeGroup)j, InfectionType::U);
@@ -195,7 +203,7 @@ public:
             // Hi to Ri
             this->add_flow(
                 std::make_tuple((AgeGroup)i, InfectionType::H), std::make_tuple((AgeGroup)i, InfectionType::R),
-                [i](Pa const& p, Eigen::Ref<const Eigen::VectorXd> y, double /*t*/) {
+                [i](Pa const& p, Eigen::Ref<const Eigen::VectorXd> /*pop*/, Eigen::Ref<const Eigen::VectorXd> y, double /*t*/) {
                     return Po::get_from(y, (AgeGroup)i, InfectionType::H) *
                            (1 - p.probabilities[i].get_icu_per_hospitalized()) / p.times[i].get_hospitalized_to_home();
                 });
@@ -203,7 +211,7 @@ public:
             // Ui to Ri
             this->add_flow(std::make_tuple((AgeGroup)i, InfectionType::U),
                            std::make_tuple((AgeGroup)i, InfectionType::R),
-                           [i](Pa const& p, Eigen::Ref<const Eigen::VectorXd> y, double /*t*/) {
+                           [i](Pa const& p, Eigen::Ref<const Eigen::VectorXd> /*pop*/, Eigen::Ref<const Eigen::VectorXd> y, double /*t*/) {
                                return Po::get_from(y, (AgeGroup)i, InfectionType::U) *
                                       (1 - p.probabilities[i].get_dead_per_icu()) / p.times[i].get_icu_to_home();
                            });
@@ -211,17 +219,19 @@ public:
             // Ui to Di
             this->add_flow(std::make_tuple((AgeGroup)i, InfectionType::U),
                            std::make_tuple((AgeGroup)i, InfectionType::D),
-                           [i](Pa const& p, Eigen::Ref<const Eigen::VectorXd> y, double /*t*/) {
+                           [i](Pa const& p, Eigen::Ref<const Eigen::VectorXd> /*pop*/, Eigen::Ref<const Eigen::VectorXd> y, double /*t*/) {
                                return Po::get_from(y, (AgeGroup)i, InfectionType::U) *
                                       p.probabilities[i].get_dead_per_icu() / p.times[i].get_icu_to_dead();
                            });
         }
+#endif
     }
 
-#if USE_DEPRECATED_SECIR_DERIV_FUNC
+#if USE_DERIV_FUNC
 
-void get_derivatives(Eigen::Ref<const Eigen::VectorXd> y, double t,
-                           Eigen::Ref<Eigen::VectorXd> dydt) const override
+void get_derivatives(Eigen::Ref<const Eigen::VectorXd> pop,
+                     Eigen::Ref<const Eigen::VectorXd> y, double t,
+                     Eigen::Ref<Eigen::VectorXd> dydt) const override
 {
     // alpha  // percentage of asymptomatic cases
     // beta // risk of infection from the infected symptomatic patients
@@ -232,7 +242,7 @@ void get_derivatives(Eigen::Ref<const Eigen::VectorXd> y, double t,
     auto& params = this->parameters;
     size_t n_agegroups = params.get_num_groups();
 
-    ContactFrequencyMatrix const& cont_freq_matrix = params.get_contact_patterns();
+    ContactMatrixGroup const& contact_matrix = params.get_contact_patterns();
 
     for (size_t i = 0; i < n_agegroups; i++) {
 
@@ -247,6 +257,18 @@ void get_derivatives(Eigen::Ref<const Eigen::VectorXd> y, double t,
 
         dydt[Si] = 0;
         dydt[Ei] = 0;
+
+        double dummy_R2 =
+            1.0 / (2 * params.times[i].get_serialinterval() - params.times[i].get_incubation()); // R2 = 1/(2SI-TINC)
+        double dummy_R3 =
+            0.5 / (params.times[i].get_incubation() - params.times[i].get_serialinterval()); // R3 = 1/(2(TINC-SI))
+
+        //symptomatic are less well quarantined when testing and tracing is overwhelmed so they infect more people
+        auto test_and_trace_required = (1 - params.probabilities[i].get_asymp_per_infectious()) * dummy_R3 * Po::get_from(pop, (AgeGroup)i, InfectionType::C);
+        auto risk_from_symptomatic   = smoother_cosine(
+            test_and_trace_required, params.get_test_and_trace_capacity(), params.get_test_and_trace_capacity() * 5,
+            params.probabilities[i].get_risk_from_symptomatic(),
+            params.probabilities[i].get_test_and_trace_max_risk_from_symptomatic());
 
         double icu_occupancy = 0;
 
@@ -263,14 +285,13 @@ void get_derivatives(Eigen::Ref<const Eigen::VectorXd> y, double t,
             double season_val =
                 (1 + params.get_seasonality() *
                          sin(3.141592653589793 * (std::fmod((params.get_start_day() + t), 365.0) / 182.5 + 0.5)));
-            double cont_freq_eff = // get effective contact rate between i and j
-                season_val * cont_freq_matrix.get_cont_freq(static_cast<int>(i), static_cast<int>(j)) *
-                cont_freq_matrix.get_dampings(static_cast<int>(i), static_cast<int>(j)).get_factor(t);
-            double Nj      = y[Sj] + y[Ej] + y[Cj] + y[Ij] + y[Hj] + y[Uj] + y[Rj]; // without died people
+            double cont_freq_eff = season_val * contact_matrix.get_matrix_at(t)(static_cast<Eigen::Index>(i),
+                                                                                static_cast<Eigen::Index>(j));
+            double Nj      = pop[Sj] + pop[Ej] + pop[Cj] + pop[Ij] + pop[Hj] + pop[Uj] + pop[Rj]; // without died people
             double divNj   = 1.0 / Nj; // precompute 1.0/Nj
             double dummy_S = y[Si] * cont_freq_eff * divNj * params.probabilities[i].get_infection_from_contact() *
-                             (params.probabilities[j].get_carrier_infectability() * y[Cj] +
-                              params.probabilities[j].get_risk_from_symptomatic() * y[Ij]);
+                             (params.probabilities[j].get_carrier_infectability() * pop[Cj] +
+                              risk_from_symptomatic * pop[Ij]);
 
             dydt[Si] -= dummy_S; // -R1*(C+beta*I)*S/N0
             dydt[Ei] += dummy_S; // R1*(C+beta*I)*S/N0-R2*E
@@ -285,10 +306,6 @@ void get_derivatives(Eigen::Ref<const Eigen::VectorXd> y, double t,
 
         double prob_hosp2dead = params.probabilities[i].get_icu_per_hospitalized() - prob_hosp2icu;
 
-        double dummy_R2 =
-            1.0 / (2 * params.times[i].get_serialinterval() - params.times[i].get_incubation()); // R2 = 1/(2SI-TINC)
-        double dummy_R3 =
-            0.5 / (params.times[i].get_incubation() - params.times[i].get_serialinterval()); // R3 = 1/(2(TINC-SI))
 
         dydt[Ei] -= dummy_R2 * y[Ei]; // only exchange of E and C done here
         dydt[Ci] = dummy_R2 * y[Ei] -
@@ -325,7 +342,7 @@ void get_derivatives(Eigen::Ref<const Eigen::VectorXd> y, double t,
     }
 }
 
-#endif // USE_DEPRECATED_SECIR_DERIV_FUNC
+#endif // USE_DERIV_FUNC
 
 };
 

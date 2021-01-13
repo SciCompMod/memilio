@@ -1,6 +1,7 @@
 import Datastore from './datastore';
 import axios from 'axios';
 import _ from 'lodash';
+import {stateIdFromCountyId} from '../../utils';
 
 export class Population {
   key;
@@ -26,7 +27,7 @@ class PopulationDatastore extends Datastore {
           obj.population = obj.EWZ;
           obj.key = obj.stateKey || obj.countyKey;
           if (obj.countyKey) {
-            obj.stateKey = parseInt(obj.countyKey / 1000);
+            obj.stateKey = stateIdFromCountyId(obj.countyKey);
           }
 
           // delete old properties
@@ -62,7 +63,7 @@ class PopulationDatastore extends Datastore {
         const germany = _.reduce(response.data.states, (result, value, idx) => result + value.EWZ, 0);
 
         await this.db.population.add({
-          stateKey: -1,
+          stateKey: '0',
           Bundesland: 'Deutschland',
           EWZ: germany,
         });
@@ -80,7 +81,7 @@ class PopulationDatastore extends Datastore {
 
   /**
    * Get population for given state or county key
-   * @param {number} key state or county key
+   * @param {string} key state or county key
    * @returns Promise
    */
   async getByKey(key) {
@@ -95,7 +96,7 @@ class PopulationDatastore extends Datastore {
 
   /**
    * Get populations for all counties in state.
-   * @param {number} key state key
+   * @param {string} key state key
    * @returns Promise
    */
   async getCountiesByState(key) {

@@ -24,8 +24,8 @@ int main()
     // suscetible now set with every other update
     // params.nb_sus_t0   = params.nb_total_t0 - params.nb_exp_t0 - params.nb_inf_t0 - params.nb_rec_t0;
     model.parameters.times.set_incubation(5.2);
-    model.parameters.times.set_cont_freq(0.4);
     model.parameters.times.set_infectious(6);
+    model.parameters.contact_frequency.get_baseline()(0, 0) = 0.4;
 
     print_seir_params(model);
 

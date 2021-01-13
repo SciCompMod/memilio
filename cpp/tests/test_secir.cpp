@@ -36,10 +36,9 @@ TEST(TestSecir, compareWithPreviousRun)
     model.parameters.times[0].set_icu_to_home(ticu2home);
     model.parameters.times[0].set_icu_to_death(ticu2death);
 
-    epi::ContactFrequencyMatrix& cont_freq_matrix = model.parameters.get_contact_patterns();
-    cont_freq_matrix.set_cont_freq(cont_freq, 0, 0);
-    epi::Damping dummy(30., 0.3);
-    cont_freq_matrix.add_damping(dummy, 0, 0);
+    epi::ContactMatrixGroup& contact_matrix = model.parameters.get_contact_patterns();
+    contact_matrix[0]                       = epi::ContactMatrix(Eigen::MatrixXd::Constant(1, 1, cont_freq));
+    contact_matrix[0].add_damping(0.7, epi::SimulationTime(30.));
 
     model.populations.set_total(nb_total_t0);
     model.populations.set(nb_exp_t0, (epi::AgeGroup1)0, epi::InfectionType::E);
@@ -128,10 +127,9 @@ TEST(TestSecir, testParamConstructors)
     model.parameters.probabilities[0].set_icu_per_hospitalized(theta);
     model.parameters.probabilities[0].set_dead_per_icu(delta);
 
-    epi::ContactFrequencyMatrix& cont_freq_matrix = model.parameters.get_contact_patterns();
-    cont_freq_matrix.set_cont_freq(cont_freq, 0, 0);
-    epi::Damping dummy(30., 0.3);
-    cont_freq_matrix.add_damping(dummy, 0, 0);
+    epi::ContactMatrixGroup& contact_matrix = model.parameters.get_contact_patterns();
+    contact_matrix[0]                       = epi::ContactMatrix(Eigen::MatrixXd::Constant(1, 1, cont_freq));
+    contact_matrix[0].add_damping(0.7, epi::SimulationTime(30.));
 
     epi::SecirModel<epi::AgeGroup1> model2{model}; // copy constructor
 
@@ -169,8 +167,8 @@ TEST(TestSecir, testParamConstructors)
               model2.parameters.times[0].get_hospitalized_to_icu());
     EXPECT_EQ(model.parameters.times[0].get_icu_to_dead(), model2.parameters.times[0].get_icu_to_dead());
     EXPECT_EQ(model.parameters.times[0].get_icu_to_home(), model2.parameters.times[0].get_icu_to_home());
-    EXPECT_EQ(model.parameters.get_contact_patterns().get_cont_freq_mat().get_dampings(0, 0).get_factor(35),
-              model2.parameters.get_contact_patterns().get_cont_freq_mat().get_dampings(0, 0).get_factor(35));
+    EXPECT_EQ(model.parameters.get_contact_patterns().get_cont_freq_mat(),
+              model2.parameters.get_contact_patterns().get_cont_freq_mat());
 
     EXPECT_EQ(model.parameters.probabilities[0].get_infection_from_contact(),
               model2.parameters.probabilities[0].get_infection_from_contact());
@@ -186,8 +184,8 @@ TEST(TestSecir, testParamConstructors)
               model2.parameters.probabilities[0].get_icu_per_hospitalized());
     EXPECT_EQ(model.parameters.probabilities[0].get_dead_per_icu(),
               model2.parameters.probabilities[0].get_dead_per_icu());
-    EXPECT_EQ(model.parameters.get_contact_patterns().get_cont_freq_mat().get_dampings(0, 0).get_factor(35),
-              model2.parameters.get_contact_patterns().get_cont_freq_mat().get_dampings(0, 0).get_factor(35));
+    EXPECT_EQ(model.parameters.get_contact_patterns().get_cont_freq_mat(),
+              model2.parameters.get_contact_patterns().get_cont_freq_mat());
 
     epi::SecirModel<epi::AgeGroup1> model3 = std::move(model2); // move constructor
 
@@ -241,8 +239,8 @@ TEST(TestSecir, testParamConstructors)
     EXPECT_EQ(model3.parameters.probabilities[0].get_dead_per_icu(),
               model.parameters.probabilities[0].get_dead_per_icu());
 
-    EXPECT_EQ(model.parameters.get_contact_patterns().get_cont_freq_mat().get_dampings(0, 0).get_factor(35),
-              model3.parameters.get_contact_patterns().get_cont_freq_mat().get_dampings(0, 0).get_factor(35));
+    EXPECT_EQ(model.parameters.get_contact_patterns().get_cont_freq_mat(),
+              model3.parameters.get_contact_patterns().get_cont_freq_mat());
 
     epi::SecirModel<epi::AgeGroup1> model4 = model3; // copy assignment constructor
 
@@ -296,8 +294,8 @@ TEST(TestSecir, testParamConstructors)
     EXPECT_EQ(model3.parameters.probabilities[0].get_dead_per_icu(),
               model4.parameters.probabilities[0].get_dead_per_icu());
 
-    EXPECT_EQ(model4.parameters.get_contact_patterns().get_cont_freq_mat().get_dampings(0, 0).get_factor(35),
-              model3.parameters.get_contact_patterns().get_cont_freq_mat().get_dampings(0, 0).get_factor(35));
+    EXPECT_EQ(model4.parameters.get_contact_patterns().get_cont_freq_mat(),
+              model3.parameters.get_contact_patterns().get_cont_freq_mat());
 
     epi::SecirModel<epi::AgeGroup1> model5 = std::move(model4); // move assignment constructor
 
@@ -351,40 +349,8 @@ TEST(TestSecir, testParamConstructors)
     EXPECT_EQ(model5.parameters.probabilities[0].get_dead_per_icu(),
               model3.parameters.probabilities[0].get_dead_per_icu());
 
-    EXPECT_EQ(model5.parameters.get_contact_patterns().get_cont_freq_mat().get_dampings(0, 0).get_factor(35),
-              model3.parameters.get_contact_patterns().get_cont_freq_mat().get_dampings(0, 0).get_factor(35));
-
-    epi::ContactFrequencyMatrix contact_freq_matrix{2};
-
-    for (int i = 0; i < 2; i++) {
-        for (int j = i; j < 2; j++) {
-            contact_freq_matrix.set_cont_freq(0.5 * cont_freq, i, j);
-        }
-    }
-
-    epi::ContactFrequencyMatrix contact_freq_matrix2{contact_freq_matrix};
-
-    for (int i = 0; i < 2; i++) {
-        for (int j = i; j < 2; j++) {
-            EXPECT_EQ(contact_freq_matrix.get_cont_freq(i, j), contact_freq_matrix2.get_cont_freq(i, j));
-        }
-    }
-
-    epi::ContactFrequencyMatrix contact_freq_matrix3{std::move(contact_freq_matrix2)};
-
-    for (int i = 0; i < 2; i++) {
-        for (int j = i; j < 2; j++) {
-            EXPECT_EQ(contact_freq_matrix3.get_cont_freq(i, j), contact_freq_matrix.get_cont_freq(i, j));
-        }
-    }
-
-    epi::ContactFrequencyMatrix contact_freq_matrix4 = std::move(contact_freq_matrix3);
-
-    for (int i = 0; i < 2; i++) {
-        for (int j = i; j < 2; j++) {
-            EXPECT_EQ(contact_freq_matrix4.get_cont_freq(i, j), contact_freq_matrix.get_cont_freq(i, j));
-        }
-    }
+    EXPECT_EQ(model5.parameters.get_contact_patterns().get_cont_freq_mat(),
+              model3.parameters.get_contact_patterns().get_cont_freq_mat());
 }
 
 TEST(TestSecir, testSettersAndGetters)
@@ -555,10 +521,9 @@ TEST(TestSecir, testValueConstraints)
     model.parameters.times[0].set_icu_to_home(ticu2home);
     model.parameters.times[0].set_icu_to_death(ticu2death);
 
-    epi::ContactFrequencyMatrix& cont_freq_matrix = model.parameters.get_contact_patterns();
-    cont_freq_matrix.set_cont_freq(cont_freq, 0, 0);
-    epi::Damping dummy(30., 0.3);
-    cont_freq_matrix.add_damping(dummy, 0, 0);
+    epi::ContactMatrixGroup& contact_matrix = model.parameters.get_contact_patterns();
+    contact_matrix[0]                       = epi::ContactMatrix(Eigen::MatrixXd::Constant(1, 1, cont_freq));
+    contact_matrix[0].add_damping(0.7, epi::SimulationTime(30.));
 
     model.populations.set_total(nb_total_t0);
     model.populations.set(nb_exp_t0, (epi::AgeGroup1)0, epi::InfectionType::E);
@@ -580,6 +545,7 @@ TEST(TestSecir, testValueConstraints)
 
     epi::set_log_level(epi::LogLevel::off);
     model.parameters.check_constraints();
+    epi::set_log_level(epi::LogLevel::warn);
 
     EXPECT_EQ(-91, model.populations.get((epi::AgeGroup1)0, epi::InfectionType::E));
     EXPECT_EQ(2.124921, model.parameters.probabilities[0].get_asymp_per_infectious().value());
@@ -595,7 +561,7 @@ TEST(TestSecir, testValueConstraints)
 TEST(TestSecir, testModelConstraints)
 {
     double t0   = 0;
-    double tmax = 60; // after 60 days with cont_freq 10 and winter, the virus would already decline
+    double tmax = 57; // after 57 days with cont_freq 10 and winter, the virus would already decline
     double dt   = 0.1;
 
     double tinc = 5.2, tinfmild = 6, tserint = 4.2, thosp2home = 12, thome2hosp = 5, thosp2icu = 2, ticu2home = 8,
@@ -635,8 +601,8 @@ TEST(TestSecir, testModelConstraints)
     model.parameters.probabilities[0].set_icu_per_hospitalized(theta);
     model.parameters.probabilities[0].set_dead_per_icu(delta);
 
-    epi::ContactFrequencyMatrix& cont_freq_matrix = model.parameters.get_contact_patterns();
-    cont_freq_matrix.set_cont_freq(cont_freq, 0, 0);
+    epi::ContactMatrixGroup& contact_matrix = model.parameters.get_contact_patterns();
+    contact_matrix[0]                           = epi::ContactMatrix(Eigen::MatrixXd::Constant(1, 1, cont_freq));
 
     model.apply_constraints();
 
@@ -694,4 +660,53 @@ TEST(TestSecir, testModelConstraints)
             EXPECT_LE(secihurd.get_value(i)[5], 9000) << " at row " << i;
         }
     }
+}
+
+TEST(Secir, testAndTraceCapacity)
+{
+    double tinc = 5.2, tinfmild = 6, tserint = 4.2;
+
+    double cont_freq = 10, inf_prob = 0.05, carr_infec = 1, alpha = 0.09, beta = 0.25;
+
+    double nb_total_t0 = 10000, nb_exp_t0 = 100, nb_inf_t0 = 50, nb_car_t0 = 50;
+
+    epi::SecirModel<epi::AgeGroup1> model;
+    auto& params = model.parameters;
+
+    params.times[0].set_incubation(tinc);
+    params.times[0].set_infectious_mild(tinfmild);
+    params.times[0].set_serialinterval(tserint);
+
+    epi::ContactMatrixGroup& contact_matrix = params.get_contact_patterns();
+    contact_matrix[0]                       = epi::ContactMatrix(Eigen::MatrixXd::Constant(1, 1, cont_freq));
+
+    model.populations.set(nb_exp_t0, (epi::AgeGroup1)0, epi::InfectionType::E);
+    model.populations.set(nb_car_t0, (epi::AgeGroup1)0, epi::InfectionType::C);
+    model.populations.set(nb_inf_t0, (epi::AgeGroup1)0, epi::InfectionType::I);
+    model.populations.set_difference_from_total(nb_total_t0, (epi::AgeGroup1)0, epi::InfectionType::S);
+
+    params.probabilities[0].set_infection_from_contact(inf_prob);
+    params.probabilities[0].set_carrier_infectability(carr_infec);
+    params.probabilities[0].set_asymp_per_infectious(alpha);
+    params.probabilities[0].set_risk_from_symptomatic(beta);
+
+    params.apply_constraints();
+
+    auto y = model.populations.get_compartments();
+
+    auto dydt_default = Eigen::VectorXd(Eigen::Index(epi::InfectionType::Count));
+    model.get_derivatives(y, y, 0, dydt_default);
+
+    params.set_test_and_trace_capacity(50);
+    params.probabilities[0].set_test_and_trace_max_risk_from_symptomatic(beta * 3);
+    auto dydt_under_capacity = Eigen::VectorXd(Eigen::Index(epi::InfectionType::Count));
+    model.get_derivatives(y, y, 0, dydt_under_capacity);
+
+    params.set_test_and_trace_capacity(10);
+    params.probabilities[0].set_test_and_trace_max_risk_from_symptomatic(beta * 3);
+    auto dydt_over_capacity = Eigen::VectorXd(Eigen::Index(epi::InfectionType::Count));
+    model.get_derivatives(y, y, 0, dydt_over_capacity);
+
+    EXPECT_DOUBLE_EQ(dydt_under_capacity[(size_t)epi::InfectionType::E], dydt_default[(size_t)epi::InfectionType::E]);
+    EXPECT_GT(dydt_over_capacity[(size_t)epi::InfectionType::E], dydt_default[(size_t)epi::InfectionType::E]);
 }

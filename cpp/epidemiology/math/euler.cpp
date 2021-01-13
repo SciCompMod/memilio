@@ -24,8 +24,8 @@ bool ImplicitEulerIntegratorCore::step(const DerivFunction& /*f*/, Eigen::Ref<co
 {
     // 0: S,      1: E,     2: C,     3: I,     4: H,     5: U,     6: R,     7: D
 
-    auto& params                                   = m_model.parameters;
-    ContactFrequencyMatrix const& cont_freq_matrix = params.get_contact_patterns().get_cont_freq_mat();
+    const auto& params         = m_model.parameters;
+    const auto& contact_matrix = params.get_contact_patterns().get_cont_freq_mat();
 
     auto yt_eval = yt.eval();
 
@@ -35,7 +35,7 @@ bool ImplicitEulerIntegratorCore::step(const DerivFunction& /*f*/, Eigen::Ref<co
     // go through the variables of the system: S, E, I, ....
     double divN = 1.0 / m_model.populations.get_total(); // precompute 1.0/N
 
-    double cont_freq_eff = cont_freq_matrix.get_cont_freq(0, 0) * cont_freq_matrix.get_dampings(0, 0).get_factor(t);
+    double cont_freq_eff = contact_matrix.get_matrix_at(t)(0, 0);
 
     double dummy_R2 =
         1.0 / (2 * (params.times[0].get_serialinterval()) - (params.times[0].get_incubation())); // R2 = 1/(2SI-TINC)

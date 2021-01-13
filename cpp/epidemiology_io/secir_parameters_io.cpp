@@ -10,6 +10,7 @@
 #include <epidemiology/model/populations.h>
 #include <epidemiology/secir/uncertain_matrix.h>
 #include <epidemiology/secir/secir.h>
+#include <epidemiology/utils/compiler_diagnostics.h>
 
 #include <tixi.h>
 
@@ -105,7 +106,8 @@ void write_distribution(const TixiDocumentHandle& handle, const std::string& pat
 std::unique_ptr<UncertainValue> read_element(TixiDocumentHandle handle, const std::string& path, int io_mode)
 {
     std::unique_ptr<UncertainValue> value;
-    ReturnCode status;
+    ReturnCode status; 
+    unused(status);
 
     if (io_mode == 0) {
         double read_buffer;
@@ -133,7 +135,8 @@ std::unique_ptr<UncertainValue> read_element(TixiDocumentHandle handle, const st
 
 std::unique_ptr<ParameterDistribution> read_distribution(TixiDocumentHandle handle, const std::string& path)
 {
-    ReturnCode status;
+    ReturnCode status; 
+    unused(status);
     std::unique_ptr<ParameterDistribution> distribution;
 
     char* distri_str;
@@ -196,34 +199,118 @@ void write_predef_sample(TixiDocumentHandle handle, const std::string& path, con
                        "%g");
 }
 
+template <class M>
+void write_matrix(TixiDocumentHandle handle, const std::string& path, const std::string& name, M&& m)
+{
+    tixiCreateElement(handle, path.c_str(), name.c_str());
+    auto matrix_path = path_join(path, name);
+    tixiAddIntegerAttribute(handle, matrix_path.c_str(), "Rows", (int)m.rows(), "%d");
+    tixiAddIntegerAttribute(handle, matrix_path.c_str(), "Cols", (int)m.cols(), "%d");
+    //Matrix may be column major but we want to output row major 
+    std::vector<double> coeffs(m.size());
+    for (Eigen::Index i = 0; i < m.rows(); ++i) {
+        for (Eigen::Index j = 0; j < m.cols(); ++j) {
+            coeffs[i * m.cols() + j] = m(i, j);
+        }
+    }
+    tixiAddFloatVector(handle, matrix_path.c_str(), "Coefficients", coeffs.data(), (int)coeffs.size(), "%.18g");
+}
+
+template <class M = Eigen::MatrixXd>
+M read_matrix(TixiDocumentHandle handle, const std::string& path)
+{
+    auto status = SUCCESS;
+    unused(status);
+    int rows, cols;
+    status = tixiGetIntegerAttribute(handle, path.c_str(), "Rows", &rows);
+    assert(status == SUCCESS && "Failed to read matrix rows.");
+    status = tixiGetIntegerAttribute(handle, path.c_str(), "Cols", &cols);
+    assert(status == SUCCESS && "Failed to read matrix columns.");
+    double* coeffs;
+    M m{rows, cols};
+    status = tixiGetFloatVector(handle, path_join(path, "Coefficients").c_str(), &coeffs, (int)m.size());
+    assert(status == SUCCESS && "Failed to read matrix coefficients.");
+    //values written as row major, but matrix type might be column major
+    //so we can't just copy all coeffs to m.data()
+    for (Eigen::Index i = 0; i < m.rows(); ++i) {
+        for (Eigen::Index j = 0; j < m.cols(); ++j) {
+            m(i, j) = coeffs[i * m.cols() + j];
+        }
+    }
+    return m;
+}
+
+void write_contact_frequency_matrix_collection(TixiDocumentHandle handle, const std::string& path,
+                                               const ContactMatrixGroup& cfmc)
+{
+    tixiCreateElement(handle, path.c_str(), "ContactMatrixGroup");
+    auto collection_path = path_join(path, "ContactMatrixGroup");
+    for (size_t i = 0; i < cfmc.get_num_matrices(); ++i) {
+        auto& cfm     = cfmc[i];
+        auto cfm_name = "ContactMatrix" + std::to_string(i + 1);
+        tixiCreateElement(handle, collection_path.c_str(), cfm_name.c_str());
+        auto cfm_path = path_join(collection_path, cfm_name);
+        write_matrix(handle, cfm_path, "Baseline", cfm.get_baseline());
+        write_matrix(handle, cfm_path, "Minimum", cfm.get_minimum());
+        tixiCreateElement(handle, cfm_path.c_str(), "Dampings");
+        auto dampings_path = path_join(cfm_path, "Dampings");
+        for (size_t j = 0; j < cfm.get_dampings().size(); ++j) {
+            auto& damping     = cfm.get_dampings()[j];
+            auto damping_name = "Damping" + std::to_string(j + 1);
+            tixiCreateElement(handle, dampings_path.c_str(), damping_name.c_str());
+            auto damping_path = path_join(dampings_path, damping_name);
+            tixiAddDoubleAttribute(handle, damping_path.c_str(), "Time", double(damping.get_time()), "%.18g");
+            tixiAddIntegerAttribute(handle, damping_path.c_str(), "Type", int(damping.get_type()), "%d");
+            tixiAddIntegerAttribute(handle, damping_path.c_str(), "Level", int(damping.get_level()), "%d");
+            write_matrix(handle, damping_path, "Values", damping.get_coeffs());
+        }
+    }
+}
+
+ContactMatrixGroup read_contact_frequency_matrix_collection(TixiDocumentHandle handle,
+                                                                          const std::string& path)
+{
+    auto status = SUCCESS;
+    unused(status);
+
+    auto collection_path = path_join(path, "ContactMatrixGroup");
+    int num_matrices;
+    status = tixiGetNumberOfChilds(handle, collection_path.c_str(), &num_matrices);
+    assert(status == SUCCESS && "Failed to read ContactMatrixGroup.");
+    ContactMatrixGroup cfmc{1, size_t(num_matrices)};
+    for (size_t i = 0; i < cfmc.get_num_matrices(); ++i) {
+        auto cfm_path      = path_join(collection_path, "ContactMatrix" + std::to_string(i + 1));
+        cfmc[i]            = ContactMatrix(read_matrix<>(handle, path_join(cfm_path, "Baseline")),
+                                         read_matrix<>(handle, path_join(cfm_path, "Minimum")));
+        auto dampings_path = path_join(cfm_path, "Dampings");
+        int num_dampings;
+        status = tixiGetNumberOfChilds(handle, dampings_path.c_str(), &num_dampings);
+        assert(status == SUCCESS && "Failed to read Dampings from ContactMatrix.");
+        for (int j = 0; j < num_dampings; ++j) {
+            auto damping_path = path_join(dampings_path, "Damping" + std::to_string(j + 1));
+            double t;
+            status = tixiGetDoubleAttribute(handle, damping_path.c_str(), "Time", &t);
+            assert(status == SUCCESS && "Failed to read Damping Time.");
+            int type;
+            status = tixiGetIntegerAttribute(handle, damping_path.c_str(), "Type", &type);
+            assert(status == SUCCESS && "Failed to read Damping Type.");
+            int level;
+            status = tixiGetIntegerAttribute(handle, damping_path.c_str(), "Level", &level);
+            assert(status == SUCCESS && "Failed to read Damping Level.");
+            cfmc[i].add_damping(read_matrix<>(handle, path_join(damping_path, "Values")), DampingLevel(level),
+                                DampingType(type), SimulationTime(t));
+        }
+    }
+    return cfmc;
+}
+
 void write_contact(TixiDocumentHandle handle, const std::string& path, const UncertainContactMatrix& contact_pattern,
                    int io_mode)
 {
-    ContactFrequencyMatrix const& contact_freq_matrix = contact_pattern.get_cont_freq_mat();
-    int num_groups                                    = contact_freq_matrix.get_size();
     tixiCreateElement(handle, path.c_str(), "ContactFreq");
     auto contact_path = path_join(path, "ContactFreq");
-    for (int i = 0; i < num_groups; i++) {
-        std::vector<double> row = {};
-        for (int j = 0; j < num_groups; j++) {
-            row.emplace_back(contact_freq_matrix.get_cont_freq(i, j));
-        }
-        tixiAddFloatVector(handle, contact_path.c_str(), ("ContactRateGroup_" + std::to_string(i + 1)).c_str(),
-                           row.data(), num_groups, "%g");
-    }
-    for (int i = 0; i < num_groups; i++) {
-        for (int j = 0; j < num_groups; j++) {
-            int num_damp = static_cast<int>(contact_freq_matrix.get_dampings(i, j).get_dampings_vector().size());
-            std::vector<double> row = {};
-            for (int k = 0; k < num_damp; k++) {
-                row.emplace_back(contact_freq_matrix.get_dampings(i, j).get_dampings_vector()[k].day);
-                row.emplace_back(contact_freq_matrix.get_dampings(i, j).get_dampings_vector()[k].factor);
-            }
-            tixiAddFloatVector(handle, contact_path.c_str(),
-                               ("DampingsGroups_" + std::to_string(i + 1) + "_" + std::to_string(j + 1)).c_str(),
-                               row.data(), 2 * num_damp, "%g");
-        }
-    }
+
+    write_contact_frequency_matrix_collection(handle, contact_path, contact_pattern.get_cont_freq_mat());
 
     if (io_mode == 1 || io_mode == 2 || io_mode == 3) {
         write_distribution(handle, contact_path, "NumDampings", *contact_pattern.get_distribution_damp_nb().get());
@@ -239,45 +326,7 @@ void write_contact(TixiDocumentHandle handle, const std::string& path, const Unc
 
 UncertainContactMatrix read_contact(TixiDocumentHandle handle, const std::string& path, int io_mode)
 {
-
-    ReturnCode status;
-    int num_groups;
-    status = tixiGetIntegerElement(handle, path_join("/Parameters", "NumberOfGroups").c_str(), &num_groups);
-    assert(status == SUCCESS && ("Failed to read num_groups at " + path).c_str());
-
-    UncertainContactMatrix contact_patterns{ContactFrequencyMatrix{(size_t)num_groups}};
-    for (int i = 0; i < num_groups; i++) {
-        double* row = nullptr;
-        status = tixiGetFloatVector(handle, path_join(path, "ContactRateGroup_" + std::to_string(i + 1)).c_str(), &row,
-                                    num_groups);
-        assert(status == SUCCESS && ("Failed to read contact rate at " + path).c_str());
-
-        for (int j = 0; j < num_groups; ++j) {
-            contact_patterns.get_cont_freq_mat().set_cont_freq(row[j], i, j);
-        }
-    }
-
-    for (int i = 0; i < num_groups; i++) {
-        for (int j = 0; j < num_groups; j++) {
-            int num_dampings;
-            status = tixiGetVectorSize(
-                handle,
-                path_join(path, ("DampingsGroups_" + std::to_string(i + 1) + "_" + std::to_string(j + 1))).c_str(),
-                &num_dampings);
-            assert(status == SUCCESS && ("Failed to read num_dampings at " + path).c_str());
-
-            double* dampings = nullptr;
-            status           = tixiGetFloatVector(
-                handle,
-                path_join(path, ("DampingsGroups_" + std::to_string(i + 1) + "_" + std::to_string(j + 1))).c_str(),
-                &dampings, num_dampings);
-            assert(status == SUCCESS && ("Failed to read dampings at " + path).c_str());
-
-            for (int k = 0; k < num_dampings / 2; k++) {
-                contact_patterns.get_cont_freq_mat().add_damping(Damping{dampings[2 * k], dampings[2 * k + 1]}, i, j);
-            }
-        }
-    }
+    UncertainContactMatrix contact_patterns{read_contact_frequency_matrix_collection(handle, path)};
 
     if (io_mode == 1 || io_mode == 2 || io_mode == 3) {
         contact_patterns.set_distribution_damp_nb(*read_distribution(handle, path_join(path, "NumDampings")));
@@ -290,7 +339,6 @@ UncertainContactMatrix read_contact(TixiDocumentHandle handle, const std::string
     }
     return contact_patterns;
 }
-
 
 void interpolate_ages(const std::vector<double>& age_ranges, const std::vector<double>& param_ranges,
                       std::vector<std::vector<double>>& interpolation, std::vector<bool>& carry_over)
@@ -399,5 +447,33 @@ double read_divi_data(const std::string& path,
     }
     return num_icu;
 }
+
+std::vector<double> read_population_data(const std::string& path,
+                                         const std::string& id_name,
+                                         int region)
+{
+    Json::Reader reader;
+    Json::Value root;
+
+    std::ifstream census(path);
+    reader.parse(census, root);
+
+    std::vector<std::string> age_names = {"<3 years", "3-5 years", "6-14 years", "15-17 years", "18-24 years",
+                                          "25-29 years", "30-39 years", "40-49 years", "50-64 years",
+                                          "65-74 years", ">74 years"};
+
+    std::vector<double> num_population(age_names.size(), 0.);
+
+    for (size_t age = 0; age < age_names.size(); age++) {
+        for (unsigned int i = 0; i < root.size(); i++) {
+            bool correct_region = region == 0 || (int) root[i][id_name].asDouble()/1000 == region || root[i][id_name] == region ;
+            if (correct_region) {
+                num_population[age]   += root[i][age_names[age]].asDouble();
+            }
+        }
+    }
+    return num_population;
+}
+
 
 } // namespace epi

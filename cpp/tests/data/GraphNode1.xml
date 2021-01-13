@@ -21,6 +21,15 @@
     <PredefinedSamples mapType="vector"></PredefinedSamples>
     <Value>1.79769e+308</Value>
   </ICUCapacity>
+  <TestAndTraceCapacity>
+    <Distribution>Normal</Distribution>
+    <Mean>1.79769e+308</Mean>
+    <Deviation>2.69654e+307</Deviation>
+    <Min>1.09659e+308</Min>
+    <Max>inf</Max>
+    <PredefinedSamples mapType="vector"></PredefinedSamples>
+    <Value>1.79769e+308</Value>
+  </TestAndTraceCapacity>
   <Group1>
     <Population>
       <Total>5000</Total>
@@ -200,6 +209,15 @@
         <PredefinedSamples mapType="vector"></PredefinedSamples>
         <Value>0.25</Value>
       </RiskFromSymptomatic>
+      <TestAndTraceMaxRiskFromSymptomatic>
+        <Distribution>Normal</Distribution>
+        <Mean>0.75</Mean>
+        <Deviation>0.0375</Deviation>
+        <Min>0.6525</Min>
+        <Max>0.8475</Max>
+        <PredefinedSamples mapType="vector"></PredefinedSamples>
+        <Value>0.75</Value>
+      </TestAndTraceMaxRiskFromSymptomatic>
       <DeadPerICU>
         <Distribution>Normal</Distribution>
         <Mean>0.3</Mean>
@@ -408,6 +426,15 @@
         <PredefinedSamples mapType="vector"></PredefinedSamples>
         <Value>0.25</Value>
       </RiskFromSymptomatic>
+      <TestAndTraceMaxRiskFromSymptomatic>
+        <Distribution>Normal</Distribution>
+        <Mean>0.75</Mean>
+        <Deviation>0.0375</Deviation>
+        <Min>0.6525</Min>
+        <Max>0.8475</Max>
+        <PredefinedSamples mapType="vector"></PredefinedSamples>
+        <Value>0.75</Value>
+      </TestAndTraceMaxRiskFromSymptomatic>
       <DeadPerICU>
         <Distribution>Normal</Distribution>
         <Mean>0.3</Mean>
@@ -438,12 +465,23 @@
     </Probabilities>
   </Group2>
   <ContactFreq>
-    <ContactRateGroup_1 mapType="vector">5;5</ContactRateGroup_1>
-    <ContactRateGroup_2 mapType="vector">5;5</ContactRateGroup_2>
-    <DampingsGroups_1_1 mapType="vector">0;1;30;0.3</DampingsGroups_1_1>
-    <DampingsGroups_1_2 mapType="vector">0;1;30;0.3</DampingsGroups_1_2>
-    <DampingsGroups_2_1 mapType="vector">0;1</DampingsGroups_2_1>
-    <DampingsGroups_2_2 mapType="vector">0;1;30;0.3</DampingsGroups_2_2>
+    <ContactMatrixGroup>
+      <ContactMatrix1>
+        <Baseline Rows="2" Cols="2">
+          <Coefficients mapType="vector">5;5;5;5</Coefficients>
+        </Baseline>
+        <Minimum Rows="2" Cols="2">
+          <Coefficients mapType="vector">0;0;0;0</Coefficients>
+        </Minimum>
+        <Dampings>
+          <Damping1 Time="30" Type="0" Level="0">
+            <Values Rows="2" Cols="2">
+              <Coefficients mapType="vector">0.7;0.7;0.0;0.7</Coefficients>
+            </Values>
+          </Damping1>
+        </Dampings>
+      </ContactMatrix1>
+    </ContactMatrixGroup>
     <NumDampings>
       <Distribution>Uniform</Distribution>
       <Min>1</Min>
@@ -458,20 +496,20 @@
     </DampingDay>
     <DampingDiagBase>
       <Distribution>Uniform</Distribution>
-      <Min>0.1</Min>
-      <Max>1</Max>
+      <Min>0</Min>
+      <Max>0.9</Max>
       <PredefinedSamples mapType="vector"></PredefinedSamples>
     </DampingDiagBase>
     <DampingDiagRel>
       <Distribution>Uniform</Distribution>
-      <Min>0.6</Min>
-      <Max>1.4</Max>
+      <Min>0</Min>
+      <Max>0.4</Max>
       <PredefinedSamples mapType="vector"></PredefinedSamples>
     </DampingDiagRel>
     <DampingOffdiagRel>
       <Distribution>Uniform</Distribution>
-      <Min>0.7</Min>
-      <Max>1.1</Max>
+      <Min>0</Min>
+      <Max>0.3</Max>
       <PredefinedSamples mapType="vector"></PredefinedSamples>
     </DampingOffdiagRel>
   </ContactFreq>

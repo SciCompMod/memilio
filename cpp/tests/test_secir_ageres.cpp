@@ -53,14 +53,9 @@ TEST(TestSecir, compareAgeResWithSingleRun)
 
     params.apply_constraints();
 
-    epi::ContactFrequencyMatrix& cont_freq_matrix = params.get_contact_patterns();
-    epi::Damping dummyx(30., 0.3);
-    for (int i = 0; i < static_cast<int>(nb_groups); i++) {
-        for (int j = 0; j < static_cast<int>(nb_groups); j++) {
-            cont_freq_matrix.set_cont_freq(fact * cont_freq, i, j);
-            cont_freq_matrix.add_damping(dummyx, i, j);
-        }
-    }
+    epi::ContactMatrixGroup& contact_matrix = params.get_contact_patterns();
+    contact_matrix[0] = epi::ContactMatrix(Eigen::MatrixXd::Constant(nb_groups, nb_groups, fact * cont_freq));
+    contact_matrix[0].add_damping(0.7, epi::SimulationTime(30.));
 
     auto integrator = std::make_shared<epi::RKIntegratorCore>();
     integrator->set_dt_min(0.3);

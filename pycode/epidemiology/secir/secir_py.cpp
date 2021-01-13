@@ -25,7 +25,7 @@ std::vector<epi::TimeSeries<double>> filter_graph_results(
     std::vector<epi::TimeSeries<double>> results;
     results.reserve(graph_results.size());
     std::transform(graph_results.begin(), graph_results.end(), std::back_inserter(results), [](auto&& graph) {
-        return graph.nodes()[0].model.get_result();
+        return graph.nodes()[0].property.get_result();
     });
     return results;
 }
@@ -223,6 +223,9 @@ void bind_Probabilities(py::module& m, std::string const& name)
             .def("get_risk_from_symptomatic",
                  py::overload_cast<>(&epi::SecirParams<N>::Probabilities::get_risk_from_symptomatic),
                  py::return_value_policy::reference_internal)
+            .def("get_test_and_trace_max_risk_from_symptomatic",
+                 py::overload_cast<>(&epi::SecirParams<N>::Probabilities::get_test_and_trace_max_risk_from_symptomatic),
+                 py::return_value_policy::reference_internal)
             .def("get_risk_from_symptomatic",
                  py::overload_cast<>(&epi::SecirParams<N>::Probabilities::get_risk_from_symptomatic, py::const_),
                  py::return_value_policy::reference_internal)
@@ -270,6 +273,13 @@ void bind_SecirParams(py::module& m, std::string const& name)
             .def("set_seasonality", py::overload_cast<double>(&epi::SecirParams<N>::set_seasonality))
             .def("set_seasonality",
                  py::overload_cast<const epi::ParameterDistribution&>(&epi::SecirParams<N>::set_seasonality))
+            .def("get_test_and_trace_capacity", py::overload_cast<>(&epi::SecirParams<N>::get_test_and_trace_capacity),
+                 py::return_value_policy::reference_internal)
+            .def("get_test_and_trace_capacity", py::overload_cast<>(&epi::SecirParams<N>::get_test_and_trace_capacity, py::const_),
+                 py::return_value_policy::reference_internal)
+            .def("set_test_and_trace_capacity", py::overload_cast<double>(&epi::SecirParams<N>::set_test_and_trace_capacity))
+            .def("set_test_and_trace_capacity",
+                 py::overload_cast<const epi::ParameterDistribution&>(&epi::SecirParams<N>::set_test_and_trace_capacity))
             .def("check_constraints", &epi::SecirParams<N>::check_constraints)
             .def("apply_constraints", &epi::SecirParams<N>::apply_constraints)
             .def("get_contact_patterns", py::overload_cast<>(&epi::SecirParams<N>::get_contact_patterns),
@@ -323,6 +333,34 @@ void bind_Simulation(py::module& m, std::string const& name)
             .def("advance", &epi::Simulation<Model>::advance, py::arg("tmax"));
 }
 
+template <typename Model>
+void bind_SecirModelNode(py::module& m, std::string const& name)
+{
+    py::class_<epi::Node<Model>>(m, name.c_str())
+        .def_property_readonly("id",
+                               [](const epi::Node<Model>& self) {
+                                   return self.id;
+                               })
+        .def_property_readonly(
+            "property", [](const epi::Node<Model>& self) -> auto& { return self.property; },
+            py::return_value_policy::reference_internal);
+}
+
+template <typename Model>
+void bind_SecirSimulationNode(py::module& m, std::string const& name)
+{
+
+    using Simulation = epi::Simulation<Model>;
+    py::class_<epi::Node<epi::ModelNode<Simulation>>>(m, name.c_str())
+        .def_property_readonly("id",
+                               [](const epi::Node<Simulation>& self) {
+                                   return self.id;
+                               })
+        .def_property_readonly(
+            "property", [](const epi::Node<epi::ModelNode<Simulation>>& self) -> auto& { return self.property.model; },
+            py::return_value_policy::reference_internal);
+}
+
 /*
  * @brief bind Graph for any node and edge type
  */
@@ -371,10 +409,10 @@ void bind_MigrationGraph(py::module& m, std::string const& name)
     py::class_<G>(m, name.c_str())
             .def(py::init<>())
             .def(
-                "add_node", [](G & self, const Model& p, double t0, double dt) -> auto& {
-                    return self.add_node(p, t0, dt).model;
+                "add_node", [](G & self, int id, const Model& p, double t0, double dt) -> auto& {
+                    return self.add_node(id, p, t0, dt);
                 },
-                py::arg("model"), py::arg("t0") = 0.0, py::arg("dt") = 0.1, py::return_value_policy::reference_internal)
+                py::arg("id"), py::arg("model"), py::arg("t0") = 0.0, py::arg("dt") = 0.1, py::return_value_policy::reference_internal)
             .def("add_edge", &G::template add_edge<const epi::MigrationEdge&>,
                  py::return_value_policy::reference_internal)
             .def("add_edge", &G::template add_edge<const Eigen::VectorXd&>, py::return_value_policy::reference_internal)
@@ -384,7 +422,7 @@ void bind_MigrationGraph(py::module& m, std::string const& name)
                                    })
             .def(
                 "get_node",
-                [](const G& self, size_t node_idx) -> auto& { return self.nodes()[node_idx].model; },
+                [](const G& self, size_t node_idx) -> auto& { return self.nodes()[node_idx]; },
                 py::return_value_policy::reference_internal)
             .def_property_readonly("num_edges",
                                    [](const G& self) {
@@ -436,7 +474,7 @@ void bind_ParameterStudy(py::module& m, std::string const& name)
         .def(py::init<const Model&, double, double, double, size_t>(), py::arg("model"), py::arg("t0"),
              py::arg("tmax"), py::arg("dev_rel"), py::arg("num_runs"))
         .def(py::init<const epi::Graph<Model, epi::MigrationEdge>&, double, double, double, size_t>(), py::arg("model_graph"),
-             py::arg("t0"), py::arg("tmax"), py::arg("graph_dt"), py::arg("num_runs"))
+             py::arg("t0"), py::arg("tmax"), py::arg("dt"), py::arg("num_runs"))
         .def_property("num_runs", &epi::ParameterStudy<Model>::get_num_runs, &epi::ParameterStudy<Model>::set_num_runs)
         .def_property("tmax", &epi::ParameterStudy<Model>::get_tmax, &epi::ParameterStudy<Model>::set_tmax)
         .def_property("t0", &epi::ParameterStudy<Model>::get_t0, &epi::ParameterStudy<Model>::set_t0)
@@ -502,6 +540,8 @@ void bind_secir_ageres(py::module& m)
           "Simulates a SecirModel1 from t0 to tmax.", py::arg("t0"), py::arg("tmax"), py::arg("dt"),
           py::arg("model"));
 
+    bind_SecirModelNode<SecirModel>(m, "SecirModelNode" + std::to_string(N));
+    bind_SecirSimulationNode<SecirModel>(m, "SecirSimulationNode" + std::to_string(N));
     bind_SecirModelGraph<SecirModel>(m, "SecirModelGraph" + std::to_string(N));
 
 
@@ -530,14 +570,53 @@ PYBIND11_MODULE(_secir, m)
 {
 
     py::class_<epi::Damping>(m, "Damping")
-        .def(py::init<double, double>(), py::arg("day"), py::arg("factor"))
-        .def_readwrite("day", &epi::Damping::day)
-        .def_readwrite("factor", &epi::Damping::factor);
+        .def(py::init([](const Eigen::Ref<const Eigen::MatrixXd>& c, double t, int level, int type) {
+                 return epi::Damping(c, epi::DampingLevel(level), epi::DampingType(type), epi::SimulationTime(t));
+             }),
+             py::arg("coeffs"), py::arg("t"), py::arg("level") = 0, py::arg("type") = 0)
+        .def_property(
+            "coeffs", [](const epi::Damping& self) -> const auto& { return self.get_coeffs(); },
+            [](epi::Damping& self, const Eigen::Ref<const Eigen::MatrixXd>& v) {
+                self.get_coeffs() = v;
+            },
+            py::return_value_policy::reference_internal)
+        .def_property(
+            "time",
+            [](const epi::Damping& self) {
+                return self.get_time();
+            },
+            [](epi::Damping& self, double v) {
+                self.get_time() = epi::SimulationTime(v);
+            },
+            py::return_value_policy::reference_internal)
+        .def_property(
+            "type",
+            [](const epi::Damping& self) {
+                return self.get_type();
+            },
+            [](epi::Damping& self, int v) {
+                self.get_type() = epi::DampingType(v);
+            },
+            py::return_value_policy::reference_internal)
+        .def_property(
+            "level",
+            [](const epi::Damping& self) {
+                return self.get_level();
+            },
+            [](epi::Damping& self, int v) {
+                self.get_level() = epi::DampingLevel(v);
+            },
+            py::return_value_policy::reference_internal);
 
     py::class_<epi::Dampings>(m, "Dampings")
-        .def(py::init<>())
-        .def("add", &epi::Dampings::add)
-        .def("get_factor", &epi::Dampings::get_factor);
+        .def(py::init<Eigen::Index>())
+        .def("add",
+             [](epi::Dampings& self, const epi::Damping& d) {
+                 self.add(d);
+             })
+        .def("get_matrix_at", [](const epi::Dampings& self, double t) {
+            return self.get_matrix_at(t);
+        });
 
     py::class_<epi::TimeSeries<double>>(m, "TimeSeries")
         .def(py::init<Eigen::Index>(), py::arg("num_elements"))
@@ -634,27 +713,92 @@ PYBIND11_MODULE(_secir, m)
             py::return_value_policy::reference_internal)
         .def("draw_sample", &epi::UncertainValue::draw_sample);
 
-    py::class_<epi::ContactFrequencyMatrix>(m, "ContactFrequencyMatrix")
-        .def(py::init<>())
-        .def(py::init<size_t>())
-        .def("set_cont_freq", &epi::ContactFrequencyMatrix::set_cont_freq)
-        .def("get_cont_freq", &epi::ContactFrequencyMatrix::get_cont_freq)
-        .def("set_dampings", &epi::ContactFrequencyMatrix::set_dampings)
-        .def("get_dampings", &epi::ContactFrequencyMatrix::get_dampings, py::return_value_policy::reference_internal)
-        .def("add_damping", &epi::ContactFrequencyMatrix::add_damping);
+
+    py::class_<epi::ContactMatrix>(m, "ContactMatrix")
+        .def(py::init<const Eigen::Ref<const Eigen::MatrixXd>&, const Eigen::Ref<const Eigen::MatrixXd>&>(),
+             py::arg("baseline"), py::arg("minimum"))
+        .def(py::init<const Eigen::Ref<const Eigen::MatrixXd>&>(), py::arg("baseline"))
+        .def(py::init<Eigen::Index>())
+        .def("add_damping",
+             [](epi::ContactMatrix& self, const epi::Damping& d) {
+                 self.add_damping(d);
+             })
+        .def_property(
+            "baseline", [](const epi::ContactMatrix& self) -> auto& { return self.get_baseline(); },
+            [](epi::ContactMatrix& self, const Eigen::Ref<const Eigen::MatrixXd>& v) {
+                self.get_baseline() = v;
+            },
+            py::return_value_policy::reference_internal)
+        .def_property(
+            "minimum", [](const epi::ContactMatrix& self) -> auto& { return self.get_minimum(); },
+            [](epi::ContactMatrix& self, const Eigen::Ref<const Eigen::MatrixXd>& v) {
+                self.get_minimum() = v;
+            },
+            py::return_value_policy::reference_internal)
+        .def_property_readonly("num_groups",
+                               [](const epi::ContactMatrix& self) {
+                                   return self.get_num_groups();
+                               })
+        .def("get_dampings",
+             [](const epi::ContactMatrix& self) {
+                 return std::vector<epi::Damping>(self.get_dampings().begin(), self.get_dampings().end());
+             })
+        .def("get_matrix_at", [](const epi::ContactMatrix& self, double t) {
+            return self.get_matrix_at(t);
+        });
+
+    py::class_<epi::ContactMatrixGroup>(m, "ContactMatrixGroup")
+        .def(py::init<Eigen::Index, size_t>(), py::arg("num_groups") = 1, py::arg("num_matrices") = 1)
+        .def("add_damping",
+             [](epi::ContactMatrixGroup& self, const epi::Damping& d) {
+                 self.add_damping(d);
+             })
+        .def_property_readonly("num_groups",
+                               [](const epi::ContactMatrixGroup& self) {
+                                   return self.get_num_groups();
+                               })
+        .def_property_readonly("num_matrices",
+                               [](const epi::ContactMatrixGroup& self) {
+                                   return self.get_num_matrices();
+                               })
+        .def(
+            "__getitem__", [](epi::ContactMatrixGroup & self, size_t i) -> auto& {
+                if (i < 0 || i >= self.get_num_matrices()) {
+                    throw py::index_error("index out of range");
+                }
+                return self[i];
+            },
+            py::return_value_policy::reference_internal)
+        .def("__setitem__",
+             [](epi::ContactMatrixGroup& self, size_t i, const epi::ContactMatrix& m) {
+                 if (i < 0 && i >= self.get_num_matrices()) {
+                     throw py::index_error("index out of range");
+                 }
+                 self[i] = m;
+             })
+        .def("get_matrix_at", [](const epi::ContactMatrixGroup& self, double t) {
+            return self.get_matrix_at(t);
+        });
 
     py::class_<epi::UncertainContactMatrix>(m, "UncertainContactMatrix")
         .def(py::init<>())
-        .def(py::init<epi::ContactFrequencyMatrix>())
-        .def("get_cont_freq_mat", py::overload_cast<>(&epi::UncertainContactMatrix::get_cont_freq_mat),
-             py::return_value_policy::reference_internal);
+        .def(py::init<const epi::ContactMatrixGroup&>())
+        .def_property(
+            "cont_freq_mat",
+            [](const epi::UncertainContactMatrix& self) {
+                return self.get_cont_freq_mat();
+            },
+            [](epi::UncertainContactMatrix& self, const epi::ContactMatrixGroup& c) {
+                self.get_cont_freq_mat() = c;
+            },
+            py::return_value_policy::reference_internal);
 
     py::class_<epi::MigrationEdge>(m, "MigrationParams")
         .def(py::init<const Eigen::VectorXd&>(), py::arg("coeffs"))
         .def_property(
-            "coefficients", [](const epi::MigrationEdge& self) -> auto& { return self.coefficients; },
+            "coefficients", [](const epi::MigrationEdge& self) -> auto { return self.get_coefficients(); },
             [](epi::MigrationEdge& self, const Eigen::VectorXd& v) {
-                self.coefficients = v;
+                self.get_coefficients() = v;
             },
             py::return_value_policy::reference_internal);
 
@@ -674,6 +818,8 @@ PYBIND11_MODULE(_secir, m)
     // https://github.com/pybind/pybind11/issues/1153
     m.def("interpolate_simulation_result",
           static_cast<epi::TimeSeries<double> (*)(const epi::TimeSeries<double>&)>(&epi::interpolate_simulation_result));
+
+
     m.def("interpolate_ensemble_results", &epi::interpolate_ensemble_results<epi::TimeSeries<double>>);
 
     m.def("ensemble_mean", &epi::ensemble_mean);

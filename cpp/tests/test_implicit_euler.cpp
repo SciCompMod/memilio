@@ -42,10 +42,9 @@ TEST(TestImplicitEuler, compareOneTimeStep)
     params.times[0].set_infectious_asymp(tinfasy);
     params.times[0].set_icu_to_death(ticu2death);
 
-    epi::ContactFrequencyMatrix& cont_freq_matrix = params.get_contact_patterns();
-    cont_freq_matrix.set_cont_freq(cont_freq, 0, 0);
-    epi::Damping dummy(30., 0.3);
-    cont_freq_matrix.add_damping(dummy, 0, 0);
+    epi::ContactMatrixGroup& contact_matrix = params.get_contact_patterns();
+    contact_matrix[0]                       = epi::ContactMatrix(Eigen::MatrixXd::Constant(1, 1, cont_freq));
+    contact_matrix.add_damping(0.7, epi::SimulationTime(30.));
 
     model.populations.set_total(nb_total_t0);
     model.populations.set(nb_exp_t0, (epi::AgeGroup1)0, epi::InfectionType::E);

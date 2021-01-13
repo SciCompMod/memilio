@@ -27,50 +27,51 @@ class SeirModel : public CompartmentalModel<Populations<SeirInfType>, SeirParams
 public:
     SeirModel()
     {
+#if !USE_DERIV_FUNC
         //S to E
         this->add_flow(std::make_tuple(SeirInfType::S), std::make_tuple(SeirInfType::E),
-                       [](Pa const& p, Eigen::Ref<const Eigen::VectorXd> y, double t) {
-                           ScalarType cont_freq_eff = p.times.get_cont_freq() * p.dampings.get_factor(t);
+                       [](Pa const& p, Eigen::Ref<const Eigen::VectorXd> pop, Eigen::Ref<const Eigen::VectorXd> y, double t) {
+                           ScalarType cont_freq_eff = params.contact_frequency.get_matrix_at(t)(0, 0);
 
                            //TODO: We should probably write a static Po::get_total_from function
                            ScalarType divN = 1.0 / (Po::get_from(y, SeirInfType::S) + Po::get_from(y, SeirInfType::E) +
                                                     Po::get_from(y, SeirInfType::I) + Po::get_from(y, SeirInfType::R));
-                           return cont_freq_eff * Po::get_from(y, SeirInfType::S) * Po::get_from(y, SeirInfType::I) *
+                           return cont_freq_eff * Po::get_from(y, SeirInfType::S) * Po::get_from(pop, SeirInfType::I) *
                                   divN;
                        });
 
         //E to I
         this->add_flow(std::make_tuple(SeirInfType::E), std::make_tuple(SeirInfType::I),
-                       [](Pa const& p, Eigen::Ref<const Eigen::VectorXd> y, double /*t*/) {
+                       [](Pa const& p, Eigen::Ref<const Eigen::VectorXd> /*pop*/, Eigen::Ref<const Eigen::VectorXd> y, double /*t*/) {
                            return p.times.get_incubation_inv() * Po::get_from(y, SeirInfType::E);
                        });
 
         //I to R
         this->add_flow(std::make_tuple(SeirInfType::I), std::make_tuple(SeirInfType::R),
-                       [](Pa const& p, Eigen::Ref<const Eigen::VectorXd> y, double /*t*/) {
+                       [](Pa const& p, Eigen::Ref<const Eigen::VectorXd> /*pop*/, Eigen::Ref<const Eigen::VectorXd> y, double /*t*/) {
                            return p.times.get_infectious_inv() * Po::get_from(y, SeirInfType::I);
                        });
+#endif
     }
 
-#if USE_DEPRECATED_SECIR_DERIV_FUNC
+#if USE_DERIV_FUNC
+    void get_derivatives(Eigen::Ref<const Eigen::VectorXd> pop,
+                         Eigen::Ref<const Eigen::VectorXd> y, double t,
+                         Eigen::Ref<Eigen::VectorXd> dydt) const override
+    {
+        auto& params = this->parameters;
+        double cont_freq_eff = params.contact_frequency.get_matrix_at(t)(0, 0);
+        double divN          = 1.0 / populations.get_total();
 
-void get_derivatives(Eigen::Ref<const Eigen::VectorXd> y, double t,
-                           Eigen::Ref<Eigen::VectorXd> dydt) const override
-{
-    auto& params = this->parameters;
-    double cont_freq_eff = params.times.get_cont_freq() * params.dampings.get_factor(t);
-    double divN          = 1.0 / populations.get_total();
+        dydt[(size_t)SeirInfType::S] = -cont_freq_eff * y[(size_t)SeirInfType::S] * pop[(size_t)SeirInfType::I] * divN;
+        dydt[(size_t)SeirInfType::E] = cont_freq_eff * y[(size_t)SeirInfType::S] * pop[(size_t)SeirInfType::I] * divN -
+                                    params.times.get_incubation_inv() * y[(size_t)SeirInfType::E];
+        dydt[(size_t)SeirInfType::I] = params.times.get_incubation_inv() * y[(size_t)SeirInfType::E] -
+                                    params.times.get_infectious_inv() * y[(size_t)SeirInfType::I];
+        dydt[(size_t)SeirInfType::R] = params.times.get_infectious_inv() * y[(size_t)SeirInfType::I];
+    }
 
-    dydt[(size_t)SeirInfType::S] = -cont_freq_eff * y[(size_t)SeirInfType::S] * y[(size_t)SeirInfType::I] * divN;
-    dydt[(size_t)SeirInfType::E] = cont_freq_eff * y[(size_t)SeirInfType::S] * y[(size_t)SeirInfType::I] * divN -
-                                params.times.get_incubation_inv() * y[(size_t)SeirInfType::E];
-    dydt[(size_t)SeirInfType::I] = params.times.get_incubation_inv() * y[(size_t)SeirInfType::E] -
-                                params.times.get_infectious_inv() * y[(size_t)SeirInfType::I];
-    dydt[(size_t)SeirInfType::R] = params.times.get_infectious_inv() * y[(size_t)SeirInfType::I];
-}
-
-
-#endif // USE_DEPRECATED_SECIR_DERIV_FUNC
+#endif // USE_DERIV_FUNC
 };
 
 /**

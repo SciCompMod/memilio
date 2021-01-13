@@ -11,4 +11,5 @@ void print_seir_params(const SeirModel& model)
            (int)model.populations.get(SeirInfType::E), (int)model.populations.get(SeirInfType::I),
            (int)model.populations.get(SeirInfType::R));
 }
+
 } // namespace epi

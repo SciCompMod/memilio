@@ -37,6 +37,7 @@ void set_params_distributions_normal(
 
     set_distribution(model.parameters.get_seasonality(), 0.0);
     set_distribution(model.parameters.get_icu_capacity());
+    set_distribution(model.parameters.get_test_and_trace_capacity());
 
     // populations
     for (size_t i = 0; i < model.parameters.get_num_groups(); i++) {
@@ -74,6 +75,7 @@ void set_params_distributions_normal(
         set_distribution(model.parameters.probabilities[i].get_carrier_infectability());
         set_distribution(model.parameters.probabilities[i].get_asymp_per_infectious());
         set_distribution(model.parameters.probabilities[i].get_risk_from_symptomatic());
+        set_distribution(model.parameters.probabilities[i].get_test_and_trace_max_risk_from_symptomatic());
         set_distribution(model.parameters.probabilities[i].get_dead_per_icu());
         set_distribution(model.parameters.probabilities[i].get_hospitalized_per_infectious());
         set_distribution(model.parameters.probabilities[i].get_icu_per_hospitalized());
@@ -84,9 +86,9 @@ void set_params_distributions_normal(
     // off diagonal values vary between 0.7 to 1.1 of the corresponding diagonal value (symmetrization is conducted)
     model.parameters.get_contact_patterns().set_distribution_damp_nb(ParameterDistributionUniform(1, (tmax - t0) / 10));
     model.parameters.get_contact_patterns().set_distribution_damp_days(ParameterDistributionUniform(t0, tmax));
-    model.parameters.get_contact_patterns().set_distribution_damp_diag_base(ParameterDistributionUniform(0.1, 1));
-    model.parameters.get_contact_patterns().set_distribution_damp_diag_rel(ParameterDistributionUniform(0.6, 1.4));
-    model.parameters.get_contact_patterns().set_distribution_damp_offdiag_rel(ParameterDistributionUniform(0.7, 1.1));
+    model.parameters.get_contact_patterns().set_distribution_damp_diag_base(ParameterDistributionUniform(0.0, 0.9));
+    model.parameters.get_contact_patterns().set_distribution_damp_diag_rel(ParameterDistributionUniform(0.0, 0.4));
+    model.parameters.get_contact_patterns().set_distribution_damp_offdiag_rel(ParameterDistributionUniform(0.0, 0.3));
 }
 
 /* Draws a sample from SecirParams parameter distributions and stores sample values
@@ -98,6 +100,7 @@ void draw_sample(CompartmentalModel<Populations<AgeGroup, InfectionType>, SecirP
 {
     model.parameters.get_seasonality().draw_sample();
     model.parameters.get_icu_capacity().draw_sample();
+    model.parameters.get_test_and_trace_capacity().draw_sample();
 
     for (size_t i = 0; i < model.parameters.get_num_groups(); i++) {
 
@@ -130,6 +133,7 @@ void draw_sample(CompartmentalModel<Populations<AgeGroup, InfectionType>, SecirP
         model.parameters.probabilities[i].get_infection_from_contact().draw_sample();
         model.parameters.probabilities[i].get_asymp_per_infectious().draw_sample();
         model.parameters.probabilities[i].get_risk_from_symptomatic().draw_sample();
+        model.parameters.probabilities[i].get_test_and_trace_max_risk_from_symptomatic().draw_sample();
         model.parameters.probabilities[i].get_dead_per_icu().draw_sample();
         model.parameters.probabilities[i].get_hospitalized_per_infectious().draw_sample();
         model.parameters.probabilities[i].get_icu_per_hospitalized().draw_sample();

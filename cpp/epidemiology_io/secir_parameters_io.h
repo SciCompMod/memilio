@@ -90,6 +90,7 @@ template <class AgeGroup>
 SecirModel<AgeGroup> read_parameter_space(TixiDocumentHandle handle, const std::string& path, int io_mode)
 {
     ReturnCode status;
+    unused(status);
 
     int num_groups;
     status = tixiGetIntegerElement(handle, path_join(path, "NumberOfGroups").c_str(), &num_groups);
@@ -109,6 +110,7 @@ SecirModel<AgeGroup> read_parameter_space(TixiDocumentHandle handle, const std::
     model.parameters.set_start_day(read_buffer);
     model.parameters.set_seasonality(*read_element(handle, path_join(path, "Seasonality"), io_mode));
     model.parameters.set_icu_capacity(*read_element(handle, path_join(path, "ICUCapacity"), io_mode));
+    model.parameters.set_test_and_trace_capacity(*read_element(handle, path_join(path, "TestAndTraceCapacity"), io_mode));
     model.parameters.set_contact_patterns(read_contact(handle, path_join(path, "ContactFreq"), io_mode));
 
     for (size_t i = 0; i < static_cast<size_t>(num_groups); i++) {
@@ -172,6 +174,8 @@ SecirModel<AgeGroup> read_parameter_space(TixiDocumentHandle handle, const std::
             *read_element(handle, path_join(probabilities_path, "AsympPerInfectious"), io_mode));
         model.parameters.probabilities[i].set_risk_from_symptomatic(
             *read_element(handle, path_join(probabilities_path, "RiskFromSymptomatic"), io_mode));
+        model.parameters.probabilities[i].set_test_and_trace_max_risk_from_symptomatic(
+            *read_element(handle, path_join(probabilities_path, "TestAndTraceMaxRiskFromSymptomatic"), io_mode));
         model.parameters.probabilities[i].set_dead_per_icu(
             *read_element(handle, path_join(probabilities_path, "DeadPerICU"), io_mode));
         model.parameters.probabilities[i].set_hospitalized_per_infectious(
@@ -201,6 +205,7 @@ void write_parameter_space(TixiDocumentHandle handle, const std::string& path, M
     tixiAddDoubleElement(handle, path.c_str(), "StartDay", model.parameters.get_start_day(), "%g");
     write_element(handle, path, "Seasonality", model.parameters.get_seasonality(), io_mode, num_runs);
     write_element(handle, path, "ICUCapacity", model.parameters.get_icu_capacity(), io_mode, num_runs);
+    write_element(handle, path, "TestAndTraceCapacity", model.parameters.get_test_and_trace_capacity(), io_mode, num_runs);
 
     for (size_t i = 0; i < num_groups; i++) {
         auto group_name = "Group" + std::to_string(i + 1);
@@ -262,6 +267,8 @@ void write_parameter_space(TixiDocumentHandle handle, const std::string& path, M
                       model.parameters.probabilities[i].get_asymp_per_infectious(), io_mode, num_runs);
         write_element(handle, probabilities_path, "RiskFromSymptomatic",
                       model.parameters.probabilities[i].get_risk_from_symptomatic(), io_mode, num_runs);
+        write_element(handle, probabilities_path, "TestAndTraceMaxRiskFromSymptomatic",
+                      model.parameters.probabilities[i].get_test_and_trace_max_risk_from_symptomatic(), io_mode, num_runs);
         write_element(handle, probabilities_path, "DeadPerICU", model.parameters.probabilities[i].get_dead_per_icu(),
                       io_mode, num_runs);
         write_element(handle, probabilities_path, "HospitalizedPerInfectious",
@@ -348,9 +355,9 @@ template <class Model>
         log_info("Results are stored in {:s}/results.",
                  epi::get_current_dir_name());
     }
-    else {
+    else if (run == 0) {
         log_info(
-            "Results are stored in {:s}/results. Files from previous runs will be "
+            "Directory '{:s}' already exists. Results are stored in {:s}/results. Files from previous runs will be "
             "overwritten",
             epi::get_current_dir_name());
     }
@@ -361,7 +368,7 @@ template <class Model>
         std::string path = "/Parameters";
         TixiDocumentHandle handle;
         tixiCreateDocument("Parameters", &handle);
-        ParameterStudy<Model> study(node.get_model().get_model(), t0, tmax, num_runs);
+        ParameterStudy<Model> study(node.property.get_simulation().get_model(), t0, tmax, num_runs);
 
         write_parameter_study(handle, path, study);
 
@@ -370,7 +377,7 @@ template <class Model>
                                      .c_str());
         tixiCloseDocument(handle);
 
-        save_result(node.get_result(), path_join(abs_path, ("Results_run" + std::to_string(run) + "_node" +
+        save_result(node.property.get_result(), path_join(abs_path, ("Results_run" + std::to_string(run) + "_node" +
                                                                 std::to_string(node_id) + ".h5")));
         node_id++;
     }
@@ -391,10 +398,10 @@ void write_node(TixiDocumentHandle handle, const Graph<Model, MigrationEdge>& gr
 
     std::string path = "/Parameters";
 
-    tixiAddIntegerElement(handle, path.c_str(), "NodeID", node, "%d");
+    auto model = graph.nodes()[node].property;
+    int node_id =  static_cast<int>(graph.nodes()[node].id);
 
-    auto model = graph.nodes()[node];
-
+    tixiAddIntegerElement(handle, path.c_str(), "NodeID", node_id, "%d");
     write_parameter_space(handle, path, model, num_runs, io_mode);
 }
 
@@ -406,7 +413,9 @@ void write_node(TixiDocumentHandle handle, const Graph<Model, MigrationEdge>& gr
 template <class AgeGroup>
 void read_node(TixiDocumentHandle node_handle, Graph<SecirModel<AgeGroup>, MigrationEdge>& graph)
 {
-    graph.add_node(read_parameter_space<AgeGroup>(node_handle, "/Parameters", 2));
+    int node_id;
+    tixiGetIntegerElement(node_handle, path_join("/Parameters", "NodeID").c_str(), &node_id);
+    graph.add_node(node_id, read_parameter_space<AgeGroup>(node_handle, "/Parameters", 2));
 }
 
 /**
@@ -421,8 +430,8 @@ void write_edge(const std::vector<TixiDocumentHandle>& edge_handles, const std::
                 const Graph<Model, MigrationEdge>& graph, int edge)
 {
     assert(graph.nodes().size() > 0 && "Graph Nodes are empty");
-    int num_groups  = static_cast<int>(graph.nodes()[0].parameters.get_num_groups());
-    int num_compart = static_cast<int>(graph.nodes()[0].populations.get_num_compartments()) / num_groups;
+    int num_groups  = static_cast<int>(graph.nodes()[0].property.parameters.get_num_groups());
+    int num_compart = static_cast<int>(graph.nodes()[0].property.populations.get_num_compartments()) / num_groups;
 
     auto start_node = static_cast<int>(graph.edges()[edge].start_node_idx);
     auto end_node   = static_cast<int>(graph.edges()[edge].end_node_idx);
@@ -437,7 +446,7 @@ void write_edge(const std::vector<TixiDocumentHandle>& edge_handles, const std::
     for (int group = 0; group < num_groups; group++) {
         std::vector<double> weights;
         for (int compart = 0; compart < num_compart; compart++) {
-            weights.push_back(graph.edges()[edge].property.coefficients[compart + group * num_compart]);
+            weights.push_back(graph.edges()[edge].property.get_coefficients()[compart + group * num_compart]);
         }
         tixiAddFloatVector(handle, edge_path.c_str(), ("Group" + std::to_string(group + 1)).c_str(), weights.data(),
                            num_compart, "%g");
@@ -457,6 +466,7 @@ void read_edge(const std::vector<TixiDocumentHandle>& edge_handles, const std::s
                Graph<Model, MigrationEdge>& graph, int start_node, int end_node)
 {
     ReturnCode status;
+    unused(status);
 
     auto handle           = edge_handles[start_node];
     std::string edge_path = path_join(path, "EdgeTo" + std::to_string(end_node));
@@ -489,7 +499,6 @@ void read_edge(const std::vector<TixiDocumentHandle>& edge_handles, const std::s
  * @param graph Graph which should be written
  * @param dir_string directory, where graph should be stored
  */
-//TO-DO: Implement apropriate File System for XML FIles
 template <class Model>
 void write_graph(const Graph<Model, MigrationEdge>& graph, const std::string& dir_string)
 {
@@ -510,8 +519,8 @@ void write_graph(const Graph<Model, MigrationEdge>& graph, const std::string& di
     }
     int num_nodes   = static_cast<int>(graph.nodes().size());
     int num_edges   = static_cast<int>(graph.edges().size());
-    int num_groups  = graph.nodes()[0].parameters.get_contact_patterns().get_cont_freq_mat().get_size();
-    int num_compart = static_cast<int>(graph.nodes()[0].populations.get_num_compartments()) / num_groups;
+    int num_groups  = static_cast<int>(graph.nodes()[0].property.parameters.get_contact_patterns().get_cont_freq_mat().get_num_groups());
+    int num_compart = static_cast<int>(graph.nodes()[0].property.populations.get_num_compartments()) / num_groups;
 
     std::vector<TixiDocumentHandle> edge_handles(num_nodes);
     std::string edges_path = "/Edges";
@@ -556,6 +565,7 @@ Graph<Model, MigrationEdge> read_graph(const std::string& dir_string)
     }
 
     ReturnCode status;
+    unused(status);
     TixiDocumentHandle handle;
     tixiOpenDocument(path_join(abs_path, "GraphEdges_node0.xml").c_str(), &handle);
 
@@ -603,7 +613,6 @@ Graph<Model, MigrationEdge> read_graph(const std::string& dir_string)
 void interpolate_ages(const std::vector<double>& age_ranges, const std::vector<double>& param_ranges,
                       std::vector<std::vector<double>>& interpolation, std::vector<bool>& carry_over);
 
-
 /**
  * @brief reads populations data from RKI
  * @param path Path to RKI file
@@ -621,6 +630,9 @@ void read_rki_data(std::string const& path,
                    std::vector<double>& num_inf,
                    std::vector<double>& num_death,
                    std::vector<double>& num_rec);
+
+
+
 /**
  * @brief sets populations data from RKI into a SecirModel
  * @param model Object in which the data is set
@@ -635,7 +647,6 @@ template <class Model>
 void set_rki_data(Model& model, const std::vector<double>& param_ranges, const std::string& path,
                   const std::string& id_name, int region, int month, int day)
 {
-
     std::vector<double> age_ranges     = {5., 10., 20., 25., 20., 20.};
 
     std::vector<std::vector<double>> interpolation(age_ranges.size()+1);
@@ -698,6 +709,7 @@ double read_divi_data(const std::string& path,
                       const std::string& id_name,
                       int region, int month, int day);
 
+
 /**
  * @brief sets populations data from DIVI register into SecirParams
  * @param params Object in which the data is set
@@ -711,7 +723,6 @@ template <class Model>
 void set_divi_data(Model& model, const std::string& path, const std::string& id_name, int region, int month,
                    int day)
 {
-
     double num_icu = read_divi_data(path, id_name, region, month, day);
 
     if (num_icu > 0) {
@@ -725,6 +736,62 @@ void set_divi_data(Model& model, const std::string& path, const std::string& id_
                     " for region " + std::to_string(region) + ".");
     }
 }
+
+/**
+ * @brief reads population data from census data
+ * @param path Path to RKI file
+ * @param id_name Name of region key column
+ * @param region Key of the region of interest
+ */
+std::vector<double> read_population_data(const std::string& path,
+                                         const std::string& id_name,
+                                         int region);
+
+/**
+ * @brief sets population data from census data
+ * @param model Object in which the data is set
+ * @param param_ranges Age ranges of params
+ * @param path Path to RKI file
+ * @param id_name Name of region key column
+ * @param region Key of the region of interest
+ */
+template <class Model>
+void set_population_data(Model& model, const std::vector<double>& param_ranges, const std::string& path,
+                         const std::string& id_name, int region)
+{
+    std::vector<double> age_ranges     = {3., 3., 9., 3., 7., 5., 10., 10., 15., 10., 25.};
+
+    std::vector<std::vector<double>> interpolation(age_ranges.size());
+    std::vector<bool> carry_over;
+
+    interpolate_ages(age_ranges, param_ranges, interpolation, carry_over);
+
+    std::vector<double> num_population = read_population_data(path, id_name, region);
+
+    std::vector<double> interpol_population(model.parameters.get_num_groups() + 1, 0.0);
+
+    int counter = 0;
+    for (size_t i = 0; i < interpolation.size() - 1; i++) {
+        for (size_t j = 0; j < interpolation[i].size(); j++) {
+            interpol_population[counter] += interpolation[i][j] * num_population[i];
+            if (j < interpolation[i].size() - 1 || !carry_over[i]) {
+                counter++;
+            }
+        }
+    }
+
+    if (std::accumulate(num_population.begin(), num_population.end(), 0.0) > 0) {
+        size_t num_groups = model.parameters.get_num_groups();
+        for (size_t i = 0; i < num_groups; i++) {
+            model.populations.set_difference_from_group_total(interpol_population[i], (typename Model::AgeGroup)i, (typename Model::AgeGroup)i, epi::InfectionType::S);
+        }
+    }
+    else {
+        log_warning("No population data available for region " + std::to_string(region) + ". Population data has not been set.");
+    }
+
+}
+
 
 /**
  * @brief reads population data from population files for the whole country
@@ -746,6 +813,7 @@ void read_population_data_germany(Model& model, const std::vector<double>& param
 
     set_rki_data(model, param_ranges, path_join(dir, "all_age_rki.json"), id_name, 0, month, day);
     set_divi_data(model, path_join(dir, "germany_divi.json"), id_name, 0, month, day);
+    set_population_data(model, param_ranges, path_join(dir, "county_current_population.json"), "ID_County", 0);
 }
 
 /**
@@ -770,6 +838,7 @@ void read_population_data_state(Model& model, const std::vector<double>& param_r
 
     set_rki_data(model, param_ranges, path_join(dir, "all_state_age_rki.json"), id_name, state, month, day);
     set_divi_data(model, path_join(dir, "state_divi.json"), id_name, state, month, day);
+    set_population_data(model, param_ranges, path_join(dir, "county_current_population.json"), "ID_County", state);
 }
 
 /**
@@ -794,6 +863,7 @@ void read_population_data_county(Model& model, const std::vector<double>& param_
 
     set_rki_data(model, param_ranges, path_join(dir, "all_county_age_rki.json"), id_name, county, month, day);
     set_divi_data(model, path_join(dir, "county_divi.json"), id_name, county, month, day);
+    set_population_data(model, param_ranges, path_join(dir, "county_current_population.json"), "ID_County", county);
 }
 
 } // namespace epi

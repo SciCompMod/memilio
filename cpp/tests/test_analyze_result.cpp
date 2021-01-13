@@ -100,10 +100,10 @@ TEST(TestInterpolateGraph, basic)
     using Model      = epi::SecirModel<epi::AgeGroup1>;
     using Simulation = epi::Simulation<Model>;
     auto g           = epi::Graph<epi::ModelNode<Simulation>, epi::MigrationEdge>();
-    g.add_node(Model(), 0.5);
-    g.add_node(Model(), 0.5);
+    g.add_node(0, Model(), 0.5);
+    g.add_node(1, Model(), 0.5);
     for (auto& n : g.nodes()) {
-        n.model.advance(4.5);
+        n.property.evolve(0.5, 4.0);
     }
 
     auto interpolated = epi::interpolate_simulation_result(g);

@@ -1,7 +1,7 @@
 #ifndef SEIR_PARAMS_H
 #define SEIR_PARAMS_H
 
-#include "epidemiology/secir/damping.h"
+#include "epidemiology/secir/contact_matrix.h"
 #include <vector>
 
 namespace epi
@@ -70,8 +70,7 @@ public:
 
     StageTimes times;
 
-    // This defines a damping factor for a mitigation strategy for different points in time.
-    Dampings dampings;
+    ContactMatrix contact_frequency{1};
 };
 
 } // namespace epi

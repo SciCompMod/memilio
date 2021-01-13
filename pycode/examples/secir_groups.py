@@ -1,4 +1,4 @@
-from epidemiology.secir import (UncertainContactMatrix, ContactFrequencyMatrix, Damping, SecirModel8, simulate,
+from epidemiology.secir import (UncertainContactMatrix, ContactMatrix, Damping, SecirModel8, simulate,
                                 AgeGroup8, InfectionType)
 from matplotlib import pyplot as plt
 import pandas as pd

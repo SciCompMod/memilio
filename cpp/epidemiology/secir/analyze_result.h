@@ -32,7 +32,7 @@ interpolate_simulation_result(const Graph<ModelNode<Simulation>, MigrationEdge>&
     std::vector<TimeSeries<double>> interpolated;
     interpolated.reserve(graph_result.nodes().size());
     std::transform(graph_result.nodes().begin(), graph_result.nodes().end(), std::back_inserter(interpolated),
-                   [](auto& n) { return interpolate_simulation_result(n.get_result()); });
+                   [](auto& n) { return interpolate_simulation_result(n.property.get_result()); });
     return interpolated;
 }
 

@@ -1,14 +1,16 @@
 #include <epidemiology/migration/migration.h>
 #include <epidemiology_io/secir_parameters_io.h>
-#include <epidemiology_io/twitter_migration_io.h>
+#include <epidemiology_io/mobility_io.h>
 
 #include <iostream>
 
 void print_usage()
 {
-    std::cout << "Usage: read_graph MIGRATION_FILE" << "\n\n";
+    std::cout << "Usage: read_graph MIGRATION_FILE"
+              << "\n\n";
     std::cout << "This example performs a simulation based on twitter "
-                 "migration data." << std::endl;
+                 "migration data."
+              << std::endl;
 }
 
 int main(int argc, char** argv)
@@ -31,15 +33,8 @@ int main(int argc, char** argv)
         thome2hosp = 5, // 2.5-7 (=R6^(-1))
         thosp2icu  = 2, // 1-3.5 (=R7^(-1))
         ticu2home  = 8, // 5-16 (=R8^(-1))
-        tinfasy    = 6.2, // (=R9^(-1)=R_3^(-1)+0.5*R_4^(-1))
+        // tinfasy    = 6.2, // (=R9^(-1)=R_3^(-1)+0.5*R_4^(-1))
         ticu2death = 5; // 3.5-7 (=R5^(-1))
-
-    double tinfasy2 = 1.0 / (0.5 / (tinfmild - tserint) + 0.5 / tinfmild);
-    if (fabs(tinfasy2 - tinfasy) > 0) {
-        epi::log_warning("----> TODO / To consider: In the HZI paper, tinfasy (the asymptomatic infectious time) or "
-                         "R9^(-1)=R_3^(-1)+0.5*R_4^(-1) is directly given by R_3 and R_4 and maybe should not be an "
-                         "'additional parameter'");
-    }
 
     double cont_freq = 10, // see Polymod study
         inf_prob = 0.05, carr_infec = 0.67,
@@ -70,7 +65,6 @@ int main(int argc, char** argv)
         params.times[i].set_home_to_hospitalized(thome2hosp);
         params.times[i].set_hospitalized_to_icu(thosp2icu);
         params.times[i].set_icu_to_home(ticu2home);
-        params.times[i].set_infectious_asymp(tinfasy);
         params.times[i].set_icu_to_death(ticu2death);
 
         model.populations.set(fact * nb_exp_t0, (epi::AgeGroup1)i, epi::InfectionType::E);
@@ -92,30 +86,27 @@ int main(int argc, char** argv)
         params.probabilities[i].set_dead_per_icu(delta);
     }
 
-    epi::ContactFrequencyMatrix& cont_freq_matrix = params.get_contact_patterns();
-    epi::Damping dummy(30., 0.3);
-    for (int i = 0; i < nb_groups; i++) {
-        for (int j = i; j < nb_groups; j++) {
-            cont_freq_matrix.set_cont_freq(fact * cont_freq, i, j);
-        }
-    }
+    params.apply_constraints();
+
+    epi::ContactMatrixGroup& contact_matrix = params.get_contact_patterns();
+    contact_matrix[0] = epi::ContactMatrix(Eigen::MatrixXd::Constant(nb_groups, nb_groups, fact * cont_freq));
 
     epi::set_params_distributions_normal(model, t0, tmax, 0.2);
 
     std::cout << "Reading Migration File..." << std::flush;
-    Eigen::MatrixXi twitter_migration_2018 = epi::read_migration(filename);
+    Eigen::MatrixXd twitter_migration_2018 = epi::read_mobility_plain(filename);
     std::cout << "Done" << std::endl;
 
     std::cout << "Intializing Graph..." << std::flush;
     epi::Graph<epi::SecirModel<epi::AgeGroup1>, epi::MigrationEdge> graph;
     for (int node = 0; node < twitter_migration_2018.rows(); node++) {
-        graph.add_node(model);
+        graph.add_node(node, model);
     }
     for (int row = 0; row < twitter_migration_2018.rows(); row++) {
         for (int col = 0; col < twitter_migration_2018.cols(); col++) {
             graph.add_edge(row, col,
                            Eigen::VectorXd::Constant(8 * nb_groups, twitter_migration_2018(row, col) /
-                                                                        graph.nodes()[row].populations.get_total()));
+                                                                        graph.nodes()[row].property.populations.get_total()));
         }
     }
     std::cout << "Done" << std::endl;
@@ -131,7 +122,7 @@ int main(int argc, char** argv)
     std::cout << "Done" << std::endl;
 
     std::cout << "Running Simulations..." << std::flush;
-    auto study = epi::ParameterStudy<epi::SecirModel<epi::AgeGroup1>>(graph_read, t0, tmax, 1.0, 2);
+    auto study = epi::ParameterStudy<epi::SecirModel<epi::AgeGroup1>>(graph_read, t0, tmax, 0.5, 2);
     std::cout << "Done" << std::endl;
 
     return 0;

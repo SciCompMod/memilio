@@ -3,6 +3,9 @@
   "add": "Add",
   "delete": "Delete",
   "Cancel": "Cancel",
+  "states": "States",
+  "counties": "Counties",
+  "germany": "Germany",
   "measures": {
     "title": "Measures",
     "homeoffice": "75% Home-Office",

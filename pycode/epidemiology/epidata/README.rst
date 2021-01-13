@@ -26,6 +26,8 @@ https://opendata.arcgis.com/datasets/5dc2fc92850241c3be3d704aa0945d9c_2.csv
 
 https://opendata.arcgis.com/datasets/b2e6d8854d9744ca88144d30bef06a76_1.geojson
 
+https://opendata.arcgis.com/datasets/abad92e8eead46a4b0d252ee9438eb53_1.csv
+
 Data from John Hopkins University (JH)
 
 We want to get data from the Spanish Ministery of Health (MISAN) provided in the github repo:
@@ -40,6 +42,7 @@ Dependencies
 Needed python packages:
 
 - pandas
+- xlrd
 - matplotlib
 - tables
 
@@ -83,17 +86,29 @@ Run options
 There are several optional run options
 
 optional arguments working for all are:
-  -h, --help                         show this help message and exit
-  -r, --read-from-disk               Reads the data from file "json" instead of downloading it.
-  -h5, --hdf5                        Changes output format from json to hdf5.
-  -o OUT_PATH, --out_path OUT_PATH   Defines folder for output.
+-h, --help            show this help message and exit
+  -r, --read-from-disk  Reads the data from file "json" instead of downloading
+                        it.
+  -ff {json,hdf5,json_timeasstring}, --file-format {json,hdf5,json_timeasstring}
+                        Defines output format for data files. Default is
+                        "json_timeasstring".
+  -o OUT_PATH, --out-path OUT_PATH
+                        Defines folder for output.
 
 optional arguments working for some are:
-  -p, --plot                         Plots the data. [rki]
-  -sd, --start-date                  Changes date for which data collection is started [divi]
-  -ed, --end-date                    Changes date for which data collection is stopped [divi]
-  -u, -- update                      Just chronological missing data is added, **after** the existing ones
 
+  -ed END_DATE, --end-date END_DATE
+                        Defines date after which data download is
+                        stopped.Should have form: YYYY-mm-dd. Default is today
+  -p, --plot            Plots the data.
+  -sd START_DATE, --start-date START_DATE
+                        Defines start date for data download. Should have
+                        form: YYYY-mm-dd.Default is 2020-04-24
+  -u, --update          Reads the data from file "json", downloads and adds
+                        data from today.
+  --split_berlin        Does not concatenate the different districts of Berlin 
+			into one county and keeps it as 7 different districts
+     			which are provided by the original RKI data.
 
 Results
 -------
@@ -107,6 +122,7 @@ When speaking about infected, means always infected inclusive the already recove
  ======== ======== ======================== =================
  Source   Folder   Files                    Data descritpion
  ======== ======== ======================== =================
+ RKI      Germany  all_germany_rki          infected, deaths, recovered over time for whole Germany
  RKI      Germany  infected_rki             Numbers of infected over time for whole Germany
  RKI      Germany  deaths_rki               Numbers of deaths over time for whole Germany
  RKI      Germany  infected_state_rki       infected over time for different states (Bundesländer)
@@ -116,18 +132,27 @@ When speaking about infected, means always infected inclusive the already recove
  RKI      Germany  all_gender_rki           infected, deaths, recovered over time for different gender
  RKI      Germany  all_age_rki              infected, deaths, recovered over time for different age ranges
  RKI      Germany  all_state_age_rki        infected, deaths, recovered over time for different age ranges and states
- RKI      Germany  all_state_age5_rki       infected, deaths, recovered over time for different age difference of 10 years and states
- RKI      Germany  all_state_age10_rki      infected, deaths, recovered over time for different age difference of 10 and states
  RKI      Germany  all_state_gender_rki     infected, deaths, recovered over time for different genders and states
  RKI      Germany  all_county_age_rki       infected, deaths, recovered over time for different age ranges and counties
- RKI      Germany  all_county_age5_rki      infected, deaths, recovered over time for different age ranges (5 years) and counties
- RKI      Germany  all_county_age10_rki     infected, deaths, recovered over time for different age ranges (10 years) and counties
  RKI      Germany  all_county_gender_rki    infected, deaths, recovered over time for different genders counties
+
+ RKI-Estimation      Germany  all_germany_rki_estimated          infected, deaths, recovered, recovered_estimated, deaths_estimated over time for whole Germany
+ RKI-Estimation      Germany  all_state_rki_estimated            infected, deaths, recovered, recovered_estimated, deaths_estimated over time for different states (Bundesländer)
+ RKI-Estimation      Germany  all_county_rki_estimated           infected, deaths, recovered, recovered_estimated, deaths_estimated over time for different counties (Landkreise)
+ RKI-Estimation      Germany  all_gender_rki_estimated           infected, deaths, recovered, recovered_estimated, deaths_estimated over time for different gender
+ RKI-Estimation      Germany  all_age_rki_estimated              infected, deaths, recovered, recovered_estimated, deaths_estimated over time for different age ranges
+ RKI-Estimation      Germany  all_state_age_rki_estimated        infected, deaths, recovered, recovered_estimated, deaths_estimated over time for different age ranges and states
+ RKI-Estimation      Germany  all_state_gender_rki_estimated     infected, deaths, recovered, recovered_estimated, deaths_estimated over time for different genders and states
+ RKI-Estimation      Germany  all_county_age_rki_estimated       infected, deaths, recovered, recovered_estimated, deaths_estimated over time for different age ranges and counties
+ RKI-Estimation      Germany  all_county_gender_rki_estimated    infected, deaths, recovered, recovered_estimated, deaths_estimated over time for different genders counties
+
 
  P        Germany  FullDataB                Full data for Bundesländer
  P        Germany  FullDataL                Full data for Landkreise
  P        Germany  PopulStates              Einwohnerzahl (EWZ) for all Bundesländer
  P        Germany  PopulCounties            Einwohnerzahl (EWZ) for all Landkreise (however some are missing compared to RKI data)
+ P	  Germany  county_population        Einwohnerzahl for different age groups from the 2011 census
+ P	  Germany  county_current_populationEinwohnerzahl for different age groups from the 2011 census, extrapolated to the current level
 
  JH       .        FullData_JohnHopkins     Data as downloaded from github
  JH       .        all_provincestate        Time-cumsum of confirmed, recovered, death for states or provinces if they where given

@@ -24,9 +24,9 @@ public:
      */
     Simulation(Model const& model, double t0 = 0., double dt = 0.1)
         : m_integratorCore(std::make_shared<RKIntegratorCore>())
-        , m_integrator([model](auto&& y, auto&& t, auto&& dydt) { model.eval_right_hand_side(y, t, dydt); }, t0,
-                       model.get_initial_values(), dt, m_integratorCore)
         , m_model(model)
+        , m_integrator([model](auto&& y, auto&& t, auto&& dydt) { model.eval_right_hand_side(y, y, t, dydt); }, t0,
+                       m_model.get_initial_values(), dt, m_integratorCore)
     {}
 
     /**
@@ -104,8 +104,8 @@ public:
 private:
 
     std::shared_ptr<IntegratorCore> m_integratorCore;
-    OdeIntegrator m_integrator;
     Model m_model;
+    OdeIntegrator m_integrator;
 }; // namespace epi
 
 /**

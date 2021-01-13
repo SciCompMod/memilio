@@ -55,46 +55,31 @@ int main()
      * Contact frequency and dampings variable element
      */
     epi::SecirModel<epi::AgeGroup3> model;
-    size_t nb_groups = model.parameters.get_num_groups();
-    for (size_t i = 0; i < nb_groups; i++) {
-        for (size_t j = i; i < nb_groups; i++) {
-            model.parameters.get_contact_patterns().get_cont_freq_mat().set_cont_freq(0.5, static_cast<int>(i),
-                                                                                      static_cast<int>(j));
-        }
-    }
+    auto& params = model.parameters;
+
+    size_t nb_groups = params.get_num_groups();
+    epi::ContactMatrixGroup cm_group{epi::ContactMatrix(Eigen::MatrixXd::Constant(nb_groups, nb_groups, 0.5))};
+    params.get_contact_patterns() = cm_group;
 
     double t0   = 0;
     double tmax = 100;
 
-    model.parameters.get_contact_patterns().set_distribution_damp_nb(
-        epi::ParameterDistributionUniform(1, (tmax - t0) / 10));
-    model.parameters.get_contact_patterns().set_distribution_damp_days(epi::ParameterDistributionUniform(t0, tmax));
-    model.parameters.get_contact_patterns().set_distribution_damp_diag_base(epi::ParameterDistributionUniform(0.1, 1));
-    model.parameters.get_contact_patterns().set_distribution_damp_diag_rel(epi::ParameterDistributionUniform(0.6, 1.4));
-    model.parameters.get_contact_patterns().set_distribution_damp_offdiag_rel(
-        epi::ParameterDistributionUniform(0.7, 1.1));
+    params.get_contact_patterns().set_distribution_damp_nb(epi::ParameterDistributionUniform(2, (tmax - t0) / 10));
+    params.get_contact_patterns().set_distribution_damp_days(epi::ParameterDistributionUniform(t0, tmax));
+    params.get_contact_patterns().set_distribution_damp_diag_base(epi::ParameterDistributionUniform(0.1, 1));
+    params.get_contact_patterns().set_distribution_damp_diag_rel(epi::ParameterDistributionUniform(0.6, 1.4));
+    params.get_contact_patterns().set_distribution_damp_offdiag_rel(epi::ParameterDistributionUniform(0.7, 1.1));
 
     draw_sample(model);
-    epi::ContactFrequencyMatrix cfmat_sample = model.parameters.get_contact_patterns();
+    auto& cfmat_sample = params.get_contact_patterns().get_cont_freq_mat();
 
-    printf("\n\n Number of dampings: %zu\n", cfmat_sample.get_dampings(0, 0).get_dampings_vector().size());
+    printf("\n\n Number of dampings: %zu\n", cfmat_sample[0].get_dampings().size());
 
-    double day0 = cfmat_sample.get_dampings(0, 0).get_dampings_vector()[0].day;
-    printf("\n First damping G(0,0) at %.2f with factor %.2f\n", cfmat_sample.get_dampings(0, 0).get_factor(day0),
-           day0);
+    printf("\n First damping at %.2f with factor %.2f\n",
+           double(cfmat_sample[0].get_dampings()[0].get_time()),
+           cfmat_sample[0].get_dampings()[0].get_coeffs()(0, 0));
 
-    // printout the damping between all groups at day day1_00
-    double day1_00 = cfmat_sample.get_dampings(0, 0).get_dampings_vector()[1].day;
-    printf("\n Damping at day %.2f\n\t", day1_00);
-    for (size_t i = 0; i < nb_groups; i++) {
-        printf("G%zu\t", i);
-    }
-    for (size_t i = 0; i < nb_groups; i++) {
-        printf("\n G%zu", i);
-        for (size_t j = 0; j < nb_groups; j++) {
-            printf("\t %.2f", cfmat_sample.get_dampings(static_cast<int>(i), static_cast<int>(j))
-                                  .get_factor(day1_00)); // get all the dampings...
-        }
-    }
-    printf("\n");
+    // printout the second damping
+    printf("\n Damping at day %.2f\n\t", double(cfmat_sample[0].get_dampings()[1].get_time()));
+    std::cout << cfmat_sample[0].get_dampings()[1].get_coeffs() << std::endl;
 }

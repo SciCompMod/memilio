@@ -48,22 +48,25 @@ public:
         : times(N, StageTimes())
         , probabilities(N, Probabilities())
         , m_num_groups{N}
-        , m_contact_patterns(ContactFrequencyMatrix{N})
+        , m_contact_patterns(static_cast<Eigen::Index>(N), 1)
         , m_tstart{0}
         , m_seasonality{0}
         , m_icu_capacity{std::numeric_limits<double>::max()}
+        , m_test_and_trace_capacity{std::numeric_limits<double>::max()}
     {
     }
 
-    SecirParams(ContactFrequencyMatrix cont_freq_matrix)
-        : times(cont_freq_matrix.get_size(), StageTimes())
-        , probabilities(cont_freq_matrix.get_size(), Probabilities())
-        , m_num_groups{(size_t)cont_freq_matrix.get_size()}
-        , m_contact_patterns(cont_freq_matrix)
+    SecirParams(const ContactMatrixGroup& cont_matrix)
+        : times(N, StageTimes())
+        , probabilities(N, Probabilities())
+        , m_num_groups{N}
+        , m_contact_patterns(cont_matrix)
         , m_tstart{0}
         , m_seasonality{0}
         , m_icu_capacity{std::numeric_limits<double>::max()}
+        , m_test_and_trace_capacity{std::numeric_limits<double>::max()}
     {
+        assert(cont_matrix.get_num_groups() == N);
     }
 
     size_t get_num_groups() const
@@ -602,8 +605,7 @@ public:
                 m_tserint = 0.5 * m_tinc + 0.5;
             }
             else if (m_tserint > m_tinc - 0.5) {
-                log_warning("Constraint check: Parameter m_tserint changed from {:.4f} to {:.4f}", m_tserint,
-                            m_tinc - 0.5);
+                log_warning("Constraint check: Parameter m_tserint changed from {:.4f} to {:.4f}", m_tserint, m_tinc - 0.5);
                 m_tserint = m_tinc - 0.5;
             }
 
@@ -613,14 +615,12 @@ public:
             }
 
             if (m_thosp2home < 1.0) {
-                log_warning("Constraint check: Parameter m_thosp2home changed from {:.4f} to {:.4f}", m_thosp2home,
-                            1.0);
+                log_warning("Constraint check: Parameter m_thosp2home changed from {:.4f} to {:.4f}", m_thosp2home, 1.0);
                 m_thosp2home = 1.0;
             }
 
             if (m_thome2hosp < 1.0) {
-                log_warning("Constraint check: Parameter m_thome2hosp changed from {:.4f} to {:.4f}", m_thome2hosp,
-                            1.0);
+                log_warning("Constraint check: Parameter m_thome2hosp changed from {:.4f} to {:.4f}", m_thome2hosp, 1.0);
                 m_thome2hosp = 1.0;
             }
 
@@ -634,18 +634,17 @@ public:
                 m_ticu2home = 1.0;
             }
 
-            if (m_tinfasy != 1.0 / (0.5 / (m_tinc - m_tserint) + 0.5 / m_tinfmild)) {
-                log_info("Constraint check: Parameter m_tinfasy set as fully dependent on tinc, tserint and tinfmild. "
-                         "See HZI "
+            if (m_tinfasy != 1.0 / (0.5 / (m_tinc - m_tserint)) + 0.5 * m_tinfmild) {
+                log_info("Constraint check: Parameter m_tinfasy set as fully dependent on tinc, tserint and tinfmild. See HZI "
                          "paper.");
-                m_tinfasy = 1.0 / (0.5 / (m_tinc - m_tserint) + 0.5 / m_tinfmild);
+                m_tinfasy = 1.0 / (0.5 / (m_tinc - m_tserint)) + 0.5 * m_tinfmild;
             }
 
             if (m_ticu2death < 1.0) {
-                log_warning("Constraint check: Parameter m_ticu2death changed from {:.4f} to {:.4f}", m_ticu2death,
-                            1.0);
+                log_warning("Constraint check: Parameter m_ticu2death changed from {:.4f} to {:.4f}", m_ticu2death, 1.0);
                 m_ticu2death = 1.0;
             }
+
         }
 
         /**
@@ -689,9 +688,8 @@ public:
                 log_error("Constraint check: Parameter m_ticu2home {:.4f} smaller {:.4f}", m_ticu2home, 1.0);
             }
 
-            if (m_tinfasy != 1.0 / (0.5 / (m_tinc - m_tserint) + 0.5 / m_tinfmild)) {
-                log_error("Constraint check: Parameter m_tinfasy not set as fully dependent on tinc, tserint and "
-                          "tinfmild. See "
+            if (m_tinfasy != 1.0 / (0.5 / (m_tinc - m_tserint)) + 0.5 * m_tinfmild) {
+                log_error("Constraint check: Parameter m_tinfasy not set as fully dependent on tinc, tserint and tinfmild. See "
                           "HZI paper.");
             }
 
@@ -834,6 +832,25 @@ public:
             m_risksymp.set_distribution(risksymp);
         }
 
+        ///@{
+        /**
+         * risk of infection from symptomatic cases increases as test and trace capacity is exceeded.
+         */
+        void set_test_and_trace_max_risk_from_symptomatic(const UncertainValue& value)
+        {
+            m_tnt_max_risksymp = value;
+        }
+        void set_test_and_trace_max_risk_from_symptomatic(double value)
+        {
+            m_tnt_max_risksymp = value;
+        }
+        void set_test_and_trace_max_risk_from_symptomatic(const ParameterDistribution& distribution)
+        {
+            m_tnt_max_risksymp.set_distribution(distribution);
+        }
+        ///@}
+
+
         /**
         * @brief sets the percentage of hospitalized patients per infected patients in the SECIR model
         * @param rho percentage of hospitalized patients per infected patients
@@ -963,6 +980,21 @@ public:
             return m_risksymp;
         }
 
+        ///@{
+        /**
+         * risk of infection from symptomatic cases increases as test and trace capacity is exceeded.
+         */
+        UncertainValue const& get_test_and_trace_max_risk_from_symptomatic() const
+        {
+             return m_tnt_max_risksymp;
+        }
+        UncertainValue& get_test_and_trace_max_risk_from_symptomatic()
+        {
+             return m_tnt_max_risksymp;
+        }
+        ///@}
+
+
         /**
         * @brief returns the percentage of hospitalized patients per infected patients in the SECIR model
         */
@@ -1038,6 +1070,7 @@ public:
                 log_warning("Constraint check: Parameter m_risksymp changed from {:0.4f} to {:d}", m_deathicu, 0);
                 m_deathicu = 0;
             }
+
         }
 
         /**
@@ -1076,6 +1109,7 @@ public:
 
     private:
         UncertainValue m_infprob, m_carrinf, m_asympinf, m_risksymp, m_hospinf, m_icuhosp, m_deathicu; // probabilities
+        UncertainValue m_tnt_max_risksymp;
     };
 
     /**
@@ -1141,6 +1175,38 @@ public:
         return m_contact_patterns;
     }
 
+    ///@{
+    /**
+     * capacity to test and trace contacts of infected for quarantine per day.
+     */
+    void set_test_and_trace_capacity(const UncertainValue& value)
+    {
+        m_test_and_trace_capacity = value;
+    }
+    void set_test_and_trace_capacity(double value)
+    {
+        m_test_and_trace_capacity = value;
+    }
+    void set_test_and_trace_capacity(const ParameterDistribution& distribution)
+    {
+        m_test_and_trace_capacity.set_distribution(distribution);
+    }
+    ///@}
+
+    ///@{
+    /**
+     * capacity to test and trace contacts of infected for quarantine per day.
+     */
+    UncertainValue const& get_test_and_trace_capacity() const
+    {
+        return m_test_and_trace_capacity;
+    }
+    UncertainValue& get_test_and_trace_capacity()
+    {
+        return m_test_and_trace_capacity;
+    }
+    ///@}
+
     std::vector<StageTimes> times;
     std::vector<Probabilities> probabilities;
 
@@ -1152,6 +1218,7 @@ private:
     double m_tstart;
     UncertainValue m_seasonality;
     UncertainValue m_icu_capacity;
+    UncertainValue m_test_and_trace_capacity;
 };
 
 /**

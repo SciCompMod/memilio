@@ -6,7 +6,7 @@
 #include <vector>
 #include <functional>
 
-#define USE_DEPRECATED_SECIR_DERIV_FUNC 1
+#define USE_DERIV_FUNC 1
 
 namespace
 {
@@ -54,7 +54,7 @@ public:
     // snapshot y of all population sizes at time t, represented as a flat array and returns a scalar value
     // that represents a flow going from one compartment to another.
     using FlowFunction =
-        std::function<ScalarType(ParameterSet const& p, Eigen::Ref<const Eigen::VectorXd> y, double t)>;
+        std::function<ScalarType(ParameterSet const& p, Eigen::Ref<const Eigen::VectorXd> pop, Eigen::Ref<const Eigen::VectorXd> y, double t)>;
 
     // A flow is a tuple of a from-index corresponding to the departing compartment, a to-index
     // corresponding to the receiving compartment and a FlowFunction. The value returned by the flow
@@ -82,11 +82,12 @@ public:
         flows.push_back(Flow(from, to, f));
     }
 
-#if USE_DEPRECATED_SECIR_DERIV_FUNC
-    //REMARK: Not pure virtual for easier wrapping
-    virtual void get_derivatives(Eigen::Ref<const Eigen::VectorXd> /*y*/, double /*t*/,
+#if USE_DERIV_FUNC
+    //REMARK: Not pure virtual for easier java/python bindings
+    virtual void get_derivatives(Eigen::Ref<const Eigen::VectorXd>,
+                                 Eigen::Ref<const Eigen::VectorXd> /*y*/, double /*t*/,
                                  Eigen::Ref<Eigen::VectorXd> /*dydt*/) const {};
-#endif  // USE_DEPRECATED_SECIR_DERIV_FUNC
+#endif  // USE_DERIV_FUNC
 
     /**
      * @brief eval_right_hand_side evaulates the right-hand-side f of the ODE dydt = f(y, t)
@@ -100,19 +101,19 @@ public:
      * @param t the current time
      * @param dydt a reference to the calculated output
      */
-    void eval_right_hand_side(Eigen::Ref<const Eigen::VectorXd> y, double t, Eigen::Ref<Eigen::VectorXd> dydt) const
+    void eval_right_hand_side(Eigen::Ref<const Eigen::VectorXd> pop, Eigen::Ref<const Eigen::VectorXd> y, double t, Eigen::Ref<Eigen::VectorXd> dydt) const
     {
         dydt.setZero();
 
-#if USE_DEPRECATED_SECIR_DERIV_FUNC
-        this->get_derivatives(y, t, dydt);
-#else // USE_DEPRECATED_SECIR_DERIV_FUNC
+#if USE_DERIV_FUNC
+        this->get_derivatives(pop, y, t, dydt);
+#else // USE_DERIV_FUNC
         for (auto& flow : flows) {
-            ScalarType f = std::get<2>(flow)(parameters, y, t);
+            ScalarType f = std::get<2>(flow)(parameters, pop, y, t);
             dydt[call(Populations::get_flat_index, std::get<0>(flow))] -= f;
             dydt[call(Populations::get_flat_index, std::get<1>(flow))] += f;
         }
-#endif // USE_DEPRECATED_SECIR_DERIV_FUNC
+#endif // USE_DERIV_FUNC
     }
 
     /**

@@ -3,6 +3,7 @@ import epidemiology.secir as secir
 import numpy as np
 
 class Test_ParameterStudy(unittest.TestCase):
+
     def _get_model(self):
         model = secir.SecirModel1()
 
@@ -15,8 +16,8 @@ class Test_ParameterStudy(unittest.TestCase):
         model.parameters.times[0].set_icu_to_home(8)
         model.parameters.times[0].set_icu_to_death(5)
 
-        model.parameters.get_contact_patterns().get_cont_freq_mat().set_cont_freq(0.5, 0, 0)
-        model.parameters.get_contact_patterns().get_cont_freq_mat().add_damping(secir.Damping(30, 0.3), 0, 0)
+        model.parameters.get_contact_patterns().cont_freq_mat[0] = secir.ContactMatrix(np.r_[0.5])
+        model.parameters.get_contact_patterns().cont_freq_mat.add_damping(secir.Damping(np.r_[0.7], 30.0))
 
         model.populations.set(100, secir.AgeGroup1.Group0, secir.InfectionType.E)
         model.populations.set(50, secir.AgeGroup1.Group0, secir.InfectionType.C)
@@ -37,6 +38,7 @@ class Test_ParameterStudy(unittest.TestCase):
         model.apply_constraints()
         return model
 
+
     def test_run(self):
         model = self._get_model()
 
@@ -52,8 +54,8 @@ class Test_ParameterStudy(unittest.TestCase):
         #mock callback
         def handle_result_func(graph):
             handle_result_func.c += 1
-            self.assertAlmostEqual(graph.get_node(0).result.get_time(0), t0)
-            self.assertAlmostEqual(graph.get_node(0).result.get_last_time(), tmax)
+            self.assertAlmostEqual(graph.get_node(0).property.result.get_time(0), t0)
+            self.assertAlmostEqual(graph.get_node(0).property.result.get_last_time(), tmax)
 
         handle_result_func.c = 0
         result = study.run(handle_result_func)
@@ -70,16 +72,12 @@ class Test_ParameterStudy(unittest.TestCase):
     def test_graph(self):        
         model = self._get_model()
         graph = secir.SecirModelGraph1()
-        graph.add_node(model)
-        graph.add_node(model)
+        graph.add_node(0, model)
+        graph.add_node(1, model)
         graph.add_edge(0, 1, 0.01 * np.ones(8))
         graph.add_edge(1, 0, 0.01 * np.ones(8))
 
-        t0 = 1
-        tmax = 10
-        num_runs = 3
-        graph_dt = 1.0
-        study = secir.ParameterStudy1(graph, t0, tmax, graph_dt, num_runs)
+        study = secir.ParameterStudy1(graph, t0 = 1, tmax = 10, dt = 0.5, num_runs = 3)
 
         self.assertEqual(study.secir_model_graph.num_nodes, 2)
         self.assertEqual(study.secir_model_graph.num_edges, 2)

@@ -75,6 +75,11 @@ public:
         return *it;
     }
 
+    reference back() const
+    {
+        return *(--end());
+    }
+
     size_t size() const
     {
         return static_cast<size_t>(std::distance(begin(), end()));

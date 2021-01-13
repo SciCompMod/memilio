@@ -25,11 +25,13 @@ set(TESTSOURCES
   test_secir_ageres.cpp
   test_parameter_studies.cpp
   test_graph.cpp
+  test_graph_simulation.cpp
   test_stl_util.cpp
   test_uncertain.cpp
   test_time_series.cpp
   test_abm.cpp
   test_analyze_result.cpp
+  test_contact_matrix.cpp
   distributions_helpers.h
   distributions_helpers.cpp
   actions.h
@@ -40,7 +42,7 @@ if (TARGET epidemiology_io)
   set(TESTSOURCES ${TESTSOURCES}
     test_save_parameters.cpp
     test_save_results.cpp
-    test_twitter.cpp
+    test_mobility_io.cpp
   )
 endif()
 
@@ -48,7 +50,7 @@ add_executable(runUnitTests ${TESTSOURCES})
 target_include_directories(runUnitTests PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 target_link_libraries(runUnitTests PRIVATE epidemiology gtest_main)
 target_compile_options(runUnitTests PRIVATE
-    $<$<OR:$<CXX_COMPILER_ID:Clang>,$<CXX_COMPILER_ID:GNU>>: -Wall -Wextra -Wshadow --pedantic-errors -Wno-deprecated-copy>
+    $<$<OR:$<CXX_COMPILER_ID:Clang>,$<CXX_COMPILER_ID:GNU>>: -Wall -Wextra -Wshadow -Werror --pedantic-errors -Wno-deprecated-copy>
     $<$<CXX_COMPILER_ID:MSVC>: /W4 /WX>)
 target_compile_features(runUnitTests PUBLIC cxx_std_14)
 
