@@ -79,6 +79,7 @@ body,
       .hzi-logo,
       .dlr-signet {
         display: inline-block;
+        margin-left: 1rem;
       }
 
       .hzi-logo {
@@ -88,18 +89,6 @@ body,
 
       .dlr-signet {
         float: right;
-      }
-    }
-
-    .links {
-      display: inline-block;
-      position: absolute;
-      right: 1rem;
-      bottom: 0.05rem;
-      font-size: 0.8rem;
-
-      a:not(:first-child) {
-        margin-left: 0.5rem;
       }
     }
   }
@@ -115,6 +104,17 @@ body,
     .dsgvo {
       width: 68.2%;
       margin: 1rem auto 3rem;
+    }
+  }
+
+  .links {
+    display: inline-block;
+    position: absolute;
+    right: 1rem;
+    bottom: 0.5rem;
+
+    a:not(:first-child) {
+      margin-left: 0.75rem;
     }
   }
 }

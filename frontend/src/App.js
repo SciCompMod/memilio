@@ -52,7 +52,7 @@ class App extends Component {
       <div className="app">
         <Router>
           <header>
-            <h1 className="title">SARS-CoV-2 Reproduktionszahlen innerhalb Deutschland</h1>
+            <h1 className="title">SARS-CoV-2 Reproduktionszahlen innerhalb Deutschlands</h1>
             <div className="logos">
               <div className="hzi-logo">
                 <img src="assets/logo-hzi2-de.svg" alt="HZI" />
@@ -60,11 +60,6 @@ class App extends Component {
               <div className="dlr-signet">
                 <img src="assets/dlr-signet.png" alt="DLR Signet" />
               </div>
-            </div>
-            <div className="links">
-              <Link to="/about">Informationen</Link>
-              <Link to="/impressum">Impressum</Link>
-              <Link to="/dsgvo">DSGVO</Link>
             </div>
           </header>
           <div className="body">
@@ -92,6 +87,11 @@ class App extends Component {
             ) : (
               <></>
             )}
+          </div>
+          <div className="links">
+            <Link to="/about">Informationen</Link>
+            <Link to="/impressum">Impressum</Link>
+            <Link to="/dsgvo">DSGVO</Link>
           </div>
         </Router>
       </div>
