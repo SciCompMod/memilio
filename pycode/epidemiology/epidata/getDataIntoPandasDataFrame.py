@@ -22,7 +22,7 @@ from epidemiology.epidata import defaultDict as dd
 def loadGeojson( targetFileName, apiUrl = 'https://opendata.arcgis.com/datasets/', 
                  extension = 'geojson' ):
 
-    """ Loads data default: ArcGIS data sets in GeoJSON format. (pandas DataFrame)
+    """! Loads data default: ArcGIS data sets in GeoJSON format. (pandas DataFrame)
 
     This routine loads datasets default: ArcGIS data sets in GeoJSON format of the given public
     data item ID into a pandas DataFrame and returns the DataFrame. Trivial 
@@ -56,7 +56,7 @@ def loadGeojson( targetFileName, apiUrl = 'https://opendata.arcgis.com/datasets/
 
 def loadCsv( targetFileName, apiUrl = 'https://opendata.arcgis.com/datasets/',
                  extension = '.csv' ):
-    """ Loads data sets in CSV format. (pandas DataFrame)
+    """! Loads data sets in CSV format. (pandas DataFrame)
     This routine loads data sets (default from ArcGIS) in CSV format of the given public data 
     item ID into a pandas DataFrame and returns the DataFrame.
 
@@ -88,7 +88,7 @@ def loadCsv( targetFileName, apiUrl = 'https://opendata.arcgis.com/datasets/',
 #    return key_list
 
 def cli(what):
-   """Defines command line interface
+   """! Defines command line interface
 
    The function parameter "what" is used as a dictionary key.
    The return of the dictionary is either a list of a string and a list of keywords.
@@ -208,7 +208,7 @@ def cli(what):
 
 
 def check_dir(directory):
-    """ Checks existence and creates folder
+    """! Checks existence and creates folder
 
     It is checked if the folder given in the parameter "directory" exists.
     If it does not exist it is created.
@@ -223,7 +223,7 @@ def check_dir(directory):
 
 
 def write_dataframe(df, directory, file_prefix, file_type):
-   """ Writes pandas dataframe to file
+   """! Writes pandas dataframe to file
 
    This routine writes a pandas dataframe to a file in a given format.
    The filename is given without ending.

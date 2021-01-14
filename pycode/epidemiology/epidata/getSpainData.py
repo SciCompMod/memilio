@@ -1,3 +1,7 @@
+## @file getSpainData.py
+#
+# @brief Downloads data for Spain
+#
 ############################################################################################################
 #                                                                                                          #
 #        IMPORTANT NOTE: WHEN USING THIS DATA, WE HAVE TO CITE https://github.com/datadista/datasets       #

@@ -98,7 +98,7 @@ def get_one_data_set(read_data, out_form, directory, d):
 
 #
 def get_new_counties(data_temp):
-   """"! Creates 7 new counties that were formed since 2011 and deletes old counties
+   """! Creates 7 new counties that were formed since 2011 and deletes old counties
 
    Downloaded data is from 2011.
    However, new counties have been defined.

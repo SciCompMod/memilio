@@ -85,22 +85,34 @@ Run options
 There are several optional run options
 
 optional arguments working for all are:
-  -h, --help            : show this help message and exit
-  -r, --read-from-disk  : Reads the data from file "json" instead of downloading
-                        it.
-  -ff {json,hdf5,json_timeasstring}, --file-format {json,hdf5,json_timeasstring} :
-                        Defines output format for data files. Default is
-                        "json_timeasstring".
-  -o OUT_PATH, --out-path OUT_PATH :
-                        Defines folder for output.
+
++---------------------------------------------+-----------------------------------------------------------+
+| -h, --help                                  | show this help message and exit                           |
++---------------------------------------------+-----------------------------------------------------------+
+| -r, --read-from-disk                        | Reads the data from file "json" instead of downloading it.|
++---------------------------------------------+-----------------------------------------------------------+
+| -o OUT_PATH,                                | Defines folder for output.                                |
+| --out-path OUT_PATH                         |                                                           |
++---------------------------------------------+-----------------------------------------------------------+
+| -ff {json,hdf5,json_timeasstring}           | Defines output format for data files.                     |
+| --file-format {json,hdf5,json_timeasstring} | Default is "json_timeasstring".                           |
++---------------------------------------------+-----------------------------------------------------------+
 
 optional arguments working for some are:
-  -p, --plot                        : Plots the data. [rki]
-  -sd, --start-date                 : Changes date for which data collection is started [divi]
-  -ed, --end-date                   : Changes date for which data collection is stopped [divi]
-  -u, -- update                     : Just chronological missing data is added, **after** the existing ones [divi]
-  -sb, --split_berlin  : Berlin data is split into different counties, instead
-                       : of having only one county for Berlin.
+
++---------------------------------------------+-----------------------------------------------------------+
+| -p, --plot                                  | Plots the data.                                           |
++---------------------------------------------+-----------------------------------------------------------+
+| -ed, --end-date                             | Changes date for which data collection is stopped [divi]  |
++---------------------------------------------+-----------------------------------------------------------+
+| -sd, --start-date                           | Changes date for which data collection is started [divi]  |
++---------------------------------------------+-----------------------------------------------------------+
+| -sb, --split_berlin                         | Berlin data is split into different counties              |
+|                                             |  , instead of having only one county for Berlin.          |
++---------------------------------------------+-----------------------------------------------------------+
+| -u, -- update                               | Just chronological missing data is added,                 |
+|                                             | **after** the existing ones [divi]                        |
++---------------------------------------------+-----------------------------------------------------------+
 
 Hint:
 When using the "--plot" option close one figure-window to get the next one.
@@ -113,8 +125,8 @@ The data is written either in json or hdf5 format
 When speaking about infected, means always infected inclusive the already recovered persons
 
 
- ========       ========    =======================            =================
- Source         Folder      Files                              Data descritpion
+ ========       ========    ========================           =================
+ Source         Folder      Files                              Data description
  ========       ========    ========================           =================
  RKI            Germany     infected_rki                       Numbers of infected over time for whole Germany
  RKI            Germany     deaths_rki                         Numbers of deaths over time for whole Germany
