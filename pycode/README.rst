@@ -2,7 +2,9 @@ Python packages / bindings for the corona project
 =================================================
 
 This package collects the python modules for the corona project. Currently, it contains three modules:
+
 * ``epidemiology.epidata``: Contains scripts to download different kinds of data as RKI, John Hopkins, Spain, Population, DIVI.
+
 To do so, install the package (see below) and than the following executables are available:
      
       * getrkidata
@@ -13,7 +15,7 @@ To do so, install the package (see below) and than the following executables are
       * getalldata
 
 For all executables there are several run options.
-Use -h for more information or the :ref:'epidata_readme' in the corresponding subdirectory.
+Use -h for more information or the :doc:`epidata-readme <epidemiology/epidata/README.rst>` in the corresponding subdirectory.
 
 * ``epidemiology.secir``: Contains a python/pybind11 wrapper to the C++ code. An example is provided
 
