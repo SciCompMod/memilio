@@ -28,7 +28,6 @@ In every important part of the project, desribed above, a README can be found wh
 Furthermore, the code is documented via doxygen and an instruction how to get it, is provided in the docs folder.
 The documentation of the code of the master branch can be found here:
 https://hpc-against-corona.pages.gitlab.dlr.de/epidemiology/master/documentation/
-https://hpc-against-corona.pages.gitlab.dlr.de/epidemiology/269-improve-documentation-of-python-data/documentation/
 
 
 **Requirements**

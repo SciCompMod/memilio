@@ -84,7 +84,6 @@ To get the coverage report do
 Coverage report for actual master:
 
 :Coverage Report: https://hpc-against-corona.pages.gitlab.dlr.de/epidemiology/master/coverage/python/index.html
-:Coverage Report: https://hpc-against-corona.pages.gitlab.dlr.de/epidemiology/269-improve-documentation-of-python-data/coverage/python/index.html
 
 
 Inspection via pylint
@@ -104,4 +103,3 @@ After installing the package, run
 Pylint report for actual master:
 
 :Pylint Report: https://hpc-against-corona.pages.gitlab.dlr.de/epidemiology/master/pylint/pylint.html
-:Pylint Report: https://hpc-against-corona.pages.gitlab.dlr.de/epidemiology/269-improve-documentation-of-python-data/pylint/pylint.html

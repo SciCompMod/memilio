@@ -329,6 +329,5 @@ pages:
     paths:
       - public # All relevant content needs to be available here
   only:
-#    - master
-     - 269-improve-documentation-of-python-data
+     - master
   

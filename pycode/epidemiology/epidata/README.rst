@@ -16,10 +16,6 @@ Content
 Information
 -----------
 
-:Documentation: https://hpc-against-corona.pages.gitlab.dlr.de/epidemiology/269-improve-documentation-of-python-data/documentation/index.html
-:Python Coverage Report: https://hpc-against-corona.pages.gitlab.dlr.de/epidemiology/269-improve-documentation-of-python-data/coverage/python/index.html
-:Pylint Report: https://hpc-against-corona.pages.gitlab.dlr.de/epidemiology/269-improve-documentation-of-python-data/pylint/pylint.html
-
 :Documentation: https://hpc-against-corona.pages.gitlab.dlr.de/epidemiology/master/documentation/index.html
 :Python Coverage Report: https://hpc-against-corona.pages.gitlab.dlr.de/epidemiology/master/coverage/python/index.html
 :Pylint Report: https://hpc-against-corona.pages.gitlab.dlr.de/epidemiology/master/pylint/pylint.html
