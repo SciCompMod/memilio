@@ -3,6 +3,7 @@
 
 #include "epidemiology/abm/state.h"
 #include "epidemiology/abm/age.h"
+#include "epidemiology/abm/time.h"
 
 #include <functional>
 
@@ -31,7 +32,7 @@ public:
      * @param dt length of the current simulation time step
      * @param global_infection_parameters infection parameters that are the same in all locations
      */
-    void interact(double dt, const GlobalInfectionParameters& global_infection_parameters);
+    void interact(TimeSpan dt, const GlobalInfectionParameters& global_infection_parameters);
 
     /** 
      * migrate to a different location.
@@ -65,7 +66,7 @@ public:
 private:
     std::reference_wrapper<Location> m_location;
     InfectionState m_state;
-    double m_time_until_carrier;
+    TimeSpan m_time_until_carrier;
     AbmAgeGroup m_age;
     //age, times, ...
 };

@@ -2,6 +2,7 @@
 #define EPI_ABM_PARAMETERS_H
 
 #include "epidemiology/abm/age.h"
+#include "epidemiology/abm/time.h"
 #include "epidemiology/utils/eigen.h"
 #include <limits>
 
@@ -115,7 +116,7 @@ struct LocalInfectionParameters {
  * parameters that govern the migration between locations
  */
 struct MigrationParameters {
-    double lockdown_date;
+    TimePoint lockdown_date;
 };
 
 } // namespace epi

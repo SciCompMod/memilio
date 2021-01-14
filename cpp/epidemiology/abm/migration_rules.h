@@ -3,14 +3,16 @@
 
 #include "epidemiology/abm/location_type.h"
 #include "epidemiology/abm/parameters.h"
+#include "epidemiology/abm/time.h"
 
 namespace epi
 {
 
 class Person;
 
-LocationType random_migration(const Person& p, double t, double dt, const MigrationParameters& params);
-LocationType go_to_school(const Person& p, double t, double dt, const MigrationParameters& params);
+LocationType random_migration(const Person& p, TimePoint t, TimeSpan dt, const MigrationParameters& params);
+LocationType go_to_school(const Person& p, TimePoint t, TimeSpan dt, const MigrationParameters& params);
+LocationType go_to_work(const Person& p, TimePoint t, TimeSpan dt, const MigrationParameters& params);
 
 } // namespace epi
 

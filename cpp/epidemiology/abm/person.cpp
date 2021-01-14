@@ -13,13 +13,13 @@ Person::Person(Location& location, InfectionState state, AbmAgeGroup age)
 {
 }
 
-void Person::interact(double dt, const GlobalInfectionParameters& global_infection_params)
+void Person::interact(TimeSpan dt, const GlobalInfectionParameters& global_infection_params)
 {
     auto state     = m_state;
     auto new_state = state;
 
     if (state == InfectionState::Exposed) {
-        if (m_time_until_carrier <= 0) {
+        if (m_time_until_carrier <= TimeSpan(0)) {
             new_state = InfectionState::Carrier;
         }
         m_time_until_carrier -= dt;
@@ -27,7 +27,7 @@ void Person::interact(double dt, const GlobalInfectionParameters& global_infecti
     else {
         new_state = m_location.get().interact(*this, dt, global_infection_params);
         if (new_state == InfectionState::Exposed) {
-            m_time_until_carrier = global_infection_params.incubation_period[m_age];
+            m_time_until_carrier = hours(int(global_infection_params.incubation_period[m_age] * 24));
         }
     }
 

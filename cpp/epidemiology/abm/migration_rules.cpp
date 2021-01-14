@@ -9,11 +9,11 @@
 namespace epi
 {
 
-LocationType random_migration(const Person& person, double t, double dt, const MigrationParameters& params)
+LocationType random_migration(const Person& person, TimePoint t, TimeSpan dt, const MigrationParameters& params)
 {
     if (t < params.lockdown_date) {
         auto u = -std::log(std::uniform_real_distribution<double>()(thread_local_rng()));
-        if (u < dt) {
+        if (u < dt.days()) {
             std::vector<LocationType> allowed_locations = {LocationType::Home, LocationType::School,
                                                            LocationType::Work};
             allowed_locations.erase(
@@ -27,29 +27,21 @@ LocationType random_migration(const Person& person, double t, double dt, const M
     return person.get_location().get_type();
 }
 
-int day_of_week(double t)
+LocationType go_to_school(const Person& person, TimePoint t, TimeSpan /*dt*/, const MigrationParameters& params)
 {
-    //is assumed that the simulation starts from monday
-    // Monday: 0
-    // Sunday: 6
-    int days = int(t) % 24;
-    return days % 7;
+    if (t < params.lockdown_date && t.day_of_week() < 5 && t.hour_of_day() >= 8 &&
+        person.get_age() == AbmAgeGroup::Age5to14 && person.get_location().get_type() != epi::LocationType::School) {
+        return epi::LocationType::School;
+    }
+    return person.get_location().get_type();
 }
 
-int hour_of_day(double t)
+LocationType go_to_work(const Person& person, TimePoint t, TimeSpan /*dt*/, const MigrationParameters& params)
 {
-    //is assumed that the simulation starts from 00:00
-    return (int(t) % 24);
-}
-
-LocationType go_to_school(const Person& person, double t, double dt, const MigrationParameters& params)
-{
-    if (t < params.lockdown_date) {
-        int dow = day_of_week(t);
-        int hod = hour_of_day(t);
-        //TODO: Improve it by changing the specific time to a range of times
-        if (dow < 5 and hod == 8)
-            return epi::LocationType::School;
+    if (t < params.lockdown_date &&
+        (person.get_age() == AbmAgeGroup::Age15to34 || person.get_age() == AbmAgeGroup::Age35to59) &&
+        t.day_of_week() < 5 && t.hour_of_day() >= 8 && person.get_location().get_type() != epi::LocationType::Work) {
+        return epi::LocationType::Work;
     }
     return person.get_location().get_type();
 }

@@ -27,7 +27,7 @@ namespace
      * @return new state if transition happens, old_state otherwise
      */
     template <int NumTransitions>
-    InfectionState random_transition(InfectionState old_state, double dt,
+    InfectionState random_transition(InfectionState old_state, TimeSpan dt,
                                      const std::pair<InfectionState, double> (&transitions)[NumTransitions])
     {
         auto sum = std::accumulate(std::begin(transitions), std::end(transitions), 0.0, [](auto&& a, auto&& t) {
@@ -40,7 +40,7 @@ namespace
 
         //time between transitions is exponentially distributed
         auto v = ExponentialDistribution<double>::get_instance()(sum);
-        if (v < dt) {
+        if (v < dt.days()) {
             //pick a random transition
             std::array<double, NumTransitions> rates;
             std::transform(std::begin(transitions), std::end(transitions), rates.begin(), [](auto&& t) { return t.second; });
@@ -52,7 +52,7 @@ namespace
     }
 } // namespace
 
-InfectionState Location::interact(const Person& person, double dt, const GlobalInfectionParameters& global_params) const
+InfectionState Location::interact(const Person& person, TimeSpan dt, const GlobalInfectionParameters& global_params) const
 {
     auto state = person.get_infection_state();
     switch (state) {
@@ -81,7 +81,7 @@ InfectionState Location::interact(const Person& person, double dt, const GlobalI
     }
 }
 
-void Location::begin_step(double /*dt*/, const GlobalInfectionParameters& global_params)
+void Location::begin_step(TimeSpan /*dt*/, const GlobalInfectionParameters& global_params)
 {
     //cache for next step so it stays constant during the step while subpopulations change
     //otherwise we would have to cache all state changes during a step which uses more memory

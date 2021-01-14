@@ -22,42 +22,39 @@ Person& World::add_person(Location& location, InfectionState state, AbmAgeGroup 
     return person;
 }
 
-void World::evolve(double dt)
+void World::evolve(TimePoint t, TimeSpan dt)
 {
-    begin_step(dt);
-    interaction(dt);
-    migration(dt);
-    t+=dt;
+    begin_step(t, dt);
+    interaction(t, dt);
+    migration(t, dt);
 }
 
-void World::interaction(double dt)
+void World::interaction(TimePoint /*t*/, TimeSpan dt)
 {
     for (auto&& person : m_persons) {
         person->interact(dt, m_infection_parameters);
     }
 }
 
-void World::migration(double dt)
+void World::migration(TimePoint t, TimeSpan dt)
 {
-    using migration_rule   = LocationType (*)(const Person&, double, double, const MigrationParameters&);
-    migration_rule rules[] = {&random_migration};
+    using migration_rule   = LocationType (*)(const Person&, TimePoint, TimeSpan, const MigrationParameters&);
+    migration_rule rules[] = {&go_to_school, go_to_work};
     for (auto& person : m_persons) {
         for (auto rule : rules) {
-            auto target_type = rule(*person, 0, dt, m_migration_parameters);
+            auto target_type = rule(*person, t, dt, m_migration_parameters);
             auto target      = std::find_if(m_locations.begin(), m_locations.end(), [target_type](auto& location) {
                 return location->get_type() == target_type;
             });
             if (target != m_locations.end() && target->get() != &person->get_location()) {
                 person->migrate_to(**target);
+                return;
             }
         }
     }
-
-    //TODO: more sensible migration probabilities
-    //TODO: migration by complex rules
 }
 
-void World::begin_step(double dt)
+void World::begin_step(TimePoint /*t*/, TimeSpan dt)
 {
     for (auto&& location : m_locations) {
         location->begin_step(dt, m_infection_parameters);
@@ -72,21 +69,6 @@ auto World::get_locations() const -> Range<std::pair<ConstLocationIterator, Cons
 auto World::get_persons() const -> Range<std::pair<ConstPersonIterator, ConstPersonIterator>>
 {
     return std::make_pair(ConstPersonIterator(m_persons.begin()), ConstPersonIterator(m_persons.end()));
-}
-
-int World::day_of_week()
-{
-    //is assumed that the simulation starts from monday
-    // Monday: 0
-    // Sunday: 6
-    int days = int(t) % 24;
-    return days % 7;
-}
-
-int World::hour_of_day(){
-    //is assumed that the simulation starts from 00:00
-    return (int (t) % 24);
-
 }
 
 } // namespace epi

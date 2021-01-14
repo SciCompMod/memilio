@@ -2,6 +2,7 @@
 #define EPI_ABM_SIMULATOR_H
 
 #include "epidemiology/abm/world.h"
+#include "epidemiology/abm/time.h"
 #include "epidemiology/utils/time_series.h"
 
 namespace epi
@@ -20,13 +21,13 @@ public:
      * @param t the starting time of the simulation
      * @param world the world to simulate
      */
-    AbmSimulation(double t, World&& world);
+    AbmSimulation(TimePoint t, World&& world);
 
     /** 
      * run the simulation from the current time to tmax.
      * @param tmax time to stop
      */
-    void advance(double tmax);
+    void advance(TimePoint tmax);
 
     /**
      * get the result of the simulation.
@@ -39,12 +40,12 @@ public:
     }
 
 private:
-    void store_result_at(double t);
+    void store_result_at(TimePoint t);
 
     World m_world;
     TimeSeries<double> m_result;
-    double m_t;
-    double m_dt;
+    TimePoint m_t;
+    TimeSpan m_dt;
 };
 
 } // namespace epi

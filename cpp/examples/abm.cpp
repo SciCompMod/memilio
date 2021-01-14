@@ -13,9 +13,9 @@ int main()
 
     auto t0   = 0;
     auto tmax = 100;
-    auto sim  = epi::AbmSimulation(t0, std::move(world));
+    auto sim  = epi::AbmSimulation(epi::TimePoint(t0), std::move(world));
 
-    sim.advance(tmax);
+    sim.advance(epi::TimePoint(tmax));
 
     std::cout << "Ran ABM from " << t0 << " to " << 100 << '\n';
     for (auto&& v : sim.get_result()) {

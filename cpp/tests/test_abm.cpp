@@ -148,7 +148,7 @@ TEST(TestLocation, interact)
     params.susceptible_to_exposed_by_infected[age] = 0.5;
 
     //cache precomputed results
-    auto dt = 0.1;
+    auto dt = epi::seconds(8640); //0.1 days
     location.begin_step(dt, params);
 
     ScopedMockDistribution<testing::StrictMock<MockDistribution<epi::ExponentialDistribution<double>>>>
@@ -224,7 +224,8 @@ TEST(TestPerson, interact)
     auto location = epi::Location(epi::LocationType::Home);
     auto person   = epi::Person(location, epi::InfectionState::Infected_Detected, epi::AbmAgeGroup::Age15to34);
     location.add_person(person);
-    location.begin_step(0.1, {});
+    auto dt = epi::seconds(8640); //0.1 days
+    location.begin_step(dt, {});
 
     //setup rng mock so the person has a state transition
     ScopedMockDistribution<testing::StrictMock<MockDistribution<epi::ExponentialDistribution<double>>>>
@@ -234,7 +235,7 @@ TEST(TestPerson, interact)
     EXPECT_CALL(mock_discrete_dist.get_mock(), invoke).Times(1).WillOnce(Return(0));
 
     auto infection_parameters = epi::GlobalInfectionParameters();
-    person.interact(0.1, infection_parameters);
+    person.interact(dt, infection_parameters);
     EXPECT_EQ(person.get_infection_state(), epi::InfectionState::Recovered_Infected);
     EXPECT_EQ(location.get_subpopulation(epi::InfectionState::Recovered_Infected), 1);
     EXPECT_EQ(location.get_subpopulation(epi::InfectionState::Infected_Detected), 0);
@@ -254,7 +255,7 @@ TEST(TestPerson, interact_exposed)
     location.add_person(infected3);
     auto person = epi::Person(location, epi::InfectionState::Susceptible, epi::AbmAgeGroup::Age15to34);
     location.add_person(person);
-    location.begin_step(0.1, {});
+    location.begin_step(epi::hours(1), {});
 
     auto infection_parameters              = epi::GlobalInfectionParameters();
     infection_parameters.incubation_period = 2;
@@ -267,7 +268,7 @@ TEST(TestPerson, interact_exposed)
     EXPECT_CALL(mock_discrete_dist.get_mock(), invoke).Times(1).WillOnce(Return(0));
 
     //person becomes exposed
-    person.interact(0.5, infection_parameters);
+    person.interact(epi::hours(12), infection_parameters);
     ASSERT_EQ(person.get_infection_state(), epi::InfectionState::Exposed);
     EXPECT_EQ(location.get_subpopulation(epi::InfectionState::Exposed), 1);
     EXPECT_EQ(location.get_subpopulation(epi::InfectionState::Carrier), 1);
@@ -275,16 +276,16 @@ TEST(TestPerson, interact_exposed)
     EXPECT_EQ(location.get_subpopulation(epi::InfectionState::Infected_Undetected), 1);
 
     //person becomes a carrier after the incubation time runs out, not random
-    person.interact(0.5, infection_parameters);
+    person.interact(epi::hours(12), infection_parameters);
     ASSERT_EQ(person.get_infection_state(), epi::InfectionState::Exposed);
 
-    person.interact(0.5, infection_parameters);
+    person.interact(epi::hours(12), infection_parameters);
     ASSERT_EQ(person.get_infection_state(), epi::InfectionState::Exposed);
 
-    person.interact(1.0, infection_parameters);
+    person.interact(epi::hours(24), infection_parameters);
     ASSERT_EQ(person.get_infection_state(), epi::InfectionState::Exposed);
 
-    person.interact(0.1, infection_parameters);
+    person.interact(epi::hours(1), infection_parameters);
     ASSERT_EQ(person.get_infection_state(), epi::InfectionState::Carrier);
     EXPECT_EQ(location.get_subpopulation(epi::InfectionState::Exposed), 0);
     EXPECT_EQ(location.get_subpopulation(epi::InfectionState::Carrier), 2);
@@ -348,7 +349,7 @@ TEST(TestWorld, evolve)
         .WillRepeatedly(Return(1e10)); //no random migration, not yet implemented properly
     EXPECT_CALL(mock_discrete_dist.get_mock(), invoke).Times(1).WillOnce(Return(0));
 
-    world.evolve(0.5);
+    world.evolve(epi::TimePoint(0), epi::hours(12));
 
     EXPECT_EQ(world.get_persons()[0].get_infection_state(), epi::InfectionState::Carrier);
     EXPECT_EQ(world.get_persons()[1].get_infection_state(), epi::InfectionState::Exposed);
@@ -365,9 +366,9 @@ TEST(TestSimulation, advance_random)
     world.add_person(location2, epi::InfectionState::Infected_Detected);
     world.add_person(location2, epi::InfectionState::Infected_Undetected);
 
-    auto sim = epi::AbmSimulation(0, std::move(world));
+    auto sim = epi::AbmSimulation(epi::TimePoint(0), std::move(world));
 
-    sim.advance(50);
+    sim.advance(epi::TimePoint(0) + epi::days(50));
     ASSERT_EQ(sim.get_result().get_num_time_points(), 51);
     ASSERT_THAT(sim.get_result().get_times(), ElementsAreLinspace(0.0, 50.0, 51));
     for (auto&& v : sim.get_result()) {
