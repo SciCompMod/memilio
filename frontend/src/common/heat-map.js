@@ -13,9 +13,6 @@ export default class InteractiveHeatMap extends Subject {
   /** @type HeatLegend */
   #countyHeatLegend = null;
 
-  #minRange = null;
-  #maxRange = null;
-
   #min = null;
   #max = null;
 
@@ -35,6 +32,7 @@ export default class InteractiveHeatMap extends Subject {
     });
 
     this.#map.projection = new am4maps.projections.Mercator();
+
     if (showExport) {
       this.#map.exporting.menu = new am4core.ExportMenu();
       this.#map.exporting.menu.align = 'right';
@@ -70,7 +68,6 @@ export default class InteractiveHeatMap extends Subject {
       this.#countyHeatLegend.align = 'left';
       this.#countyHeatLegend.valign = 'bottom';
       this.#countyHeatLegend.orientation = 'vertical';
-      //this.#countyHeatLegend.marginRight = 80;
       this.#countyHeatLegend.marginBottom = 50;
       this.#countyHeatLegend.minValue = 0;
       this.#countyHeatLegend.maxValue = 1;
@@ -124,20 +121,22 @@ export default class InteractiveHeatMap extends Subject {
           )
         );
       }
+
+      return am4core.color('white');
     };
 
     // for some reason this event is triggered multiple times,
     // therfore we only apply the new colors only when the max value changed!
     series.events.on('validated', (event) => {
       if (event.target.children.values.length > 2) {
-        const {low, high} = this.#countySeries.dataItem.values['value'];
+        const {high} = this.#countySeries.dataItem.values['value'];
 
-        const min = this.#min || low;
+        const min = this.#min || 0;
         const max = this.#max || high;
 
         if (showLegend) {
-          this.#countyHeatLegend.minValue = parseInt(Math.ceil(min));
-          this.#countyHeatLegend.maxValue = parseInt(Math.ceil(max));
+          this.#countyHeatLegend.minValue = min;
+          this.#countyHeatLegend.maxValue = max;
         }
 
         event.target.children.values.forEach((mapPolygon, index) => {
@@ -150,10 +149,11 @@ export default class InteractiveHeatMap extends Subject {
       }
     });
 
-    this.#countySeries.geodataSource.url = 'assets/counties/lk_germany.geojson';
     this.#countySeries.useGeodata = true;
+    this.#countySeries.geodataSource.url = 'assets/counties/lk_germany.geojson';
 
-    this.#map.invalidate();
+    this.#map.series.push(this.#countySeries);
+    //this.#map.invalidate();
   }
 
   /** @param values {Map<string, number>} */
