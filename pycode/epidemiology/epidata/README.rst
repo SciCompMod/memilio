@@ -1,3 +1,5 @@
+.. _epidata_readme:
+
 Epidemiology python package - Epidata Subpackage
 ================================================
 
@@ -46,8 +48,7 @@ Our sources are:
 
   https://opendata.arcgis.com/datasets/b2e6d8854d9744ca88144d30bef06a76_1.geojson
 
-  https://www.zensus2011.de/SharedDocs/Downloads/DE/Pressemitteilung/DemografischeGrunddaten/' \
-                     '1A_EinwohnerzahlGeschlecht.xls?__blob=publicationFile&v=5
+  https://www.zensus2011.de/SharedDocs/Downloads/DE/Pressemitteilung/DemografischeGrunddaten/1A_EinwohnerzahlGeschlecht.xls?__blob=publicationFile&v=5
 
 - Data from John Hopkins University (JH)
 
@@ -84,22 +85,22 @@ Run options
 There are several optional run options
 
 optional arguments working for all are:
-  -h, --help            show this help message and exit
-  -r, --read-from-disk  Reads the data from file "json" instead of downloading
+  -h, --help            : show this help message and exit
+  -r, --read-from-disk  : Reads the data from file "json" instead of downloading
                         it.
-  -ff {json,hdf5,json_timeasstring}, --file-format {json,hdf5,json_timeasstring}
+  -ff {json,hdf5,json_timeasstring}, --file-format {json,hdf5,json_timeasstring} :
                         Defines output format for data files. Default is
                         "json_timeasstring".
-  -o OUT_PATH, --out-path OUT_PATH
+  -o OUT_PATH, --out-path OUT_PATH :
                         Defines folder for output.
 
 optional arguments working for some are:
-  -p, --plot                         Plots the data. [rki]
-  -sd, --start-date                  Changes date for which data collection is started [divi]
-  -ed, --end-date                    Changes date for which data collection is stopped [divi]
-  -u, -- update                      Just chronological missing data is added, **after** the existing ones [divi]
-  -sb, --split_berlin   Berlin data is split into different counties, instead
-                        of having only one county for Berlin.
+  -p, --plot                        : Plots the data. [rki]
+  -sd, --start-date                 : Changes date for which data collection is started [divi]
+  -ed, --end-date                   : Changes date for which data collection is stopped [divi]
+  -u, -- update                     : Just chronological missing data is added, **after** the existing ones [divi]
+  -sb, --split_berlin  : Berlin data is split into different counties, instead
+                       : of having only one county for Berlin.
 
 Hint:
 When using the "--plot" option close one figure-window to get the next one.
@@ -108,8 +109,6 @@ Results
 -------
 
 The data is written either in json or hdf5 format
-
-For RKI:
 
 When speaking about infected, means always infected inclusive the already recovered persons
 
@@ -130,21 +129,25 @@ When speaking about infected, means always infected inclusive the already recove
  RKI      Germany  all_county_age_rki       infected, deaths, recovered over time for different age ranges and counties
  RKI      Germany  all_county_gender_rki    infected, deaths, recovered over time for different genders counties
 
- RKI-Estimation      Germany  all_germany_rki          infected, deaths, recovered, recovered_estimated, deaths_estimated over time for whole Germany
- RKI-Estimation      Germany  all_state_rki            infected, deaths, recovered, recovered_estimated, deaths_estimated over time for different states (Bundesländer)
- RKI-Estimation      Germany  all_county_rki           infected, deaths, recovered, recovered_estimated, deaths_estimated over time for different counties (Landkreise)
- RKI-Estimation      Germany  all_gender_rki           infected, deaths, recovered, recovered_estimated, deaths_estimated over time for different gender
- RKI-Estimation      Germany  all_age_rki              infected, deaths, recovered, recovered_estimated, deaths_estimated over time for different age ranges
- RKI-Estimation      Germany  all_state_age_rki        infected, deaths, recovered, recovered_estimated, deaths_estimated over time for different age ranges and states
- RKI-Estimation      Germany  all_state_gender_rki     infected, deaths, recovered, recovered_estimated, deaths_estimated over time for different genders and states
- RKI-Estimation      Germany  all_county_age_rki       infected, deaths, recovered, recovered_estimated, deaths_estimated over time for different age ranges and counties
- RKI-Estimation      Germany  all_county_gender_rki    infected, deaths, recovered, recovered_estimated, deaths_estimated over time for different genders counties
+ RKI-Estimation      Germany  all_germany_rki_estimated          infected, deaths, recovered, recovered_estimated, deaths_estimated over time for whole Germany
+ RKI-Estimation      Germany  all_state_rki_estimated            infected, deaths, recovered, recovered_estimated, deaths_estimated over time for different states (Bundesländer)
+ RKI-Estimation      Germany  all_county_rki_estimated           infected, deaths, recovered, recovered_estimated, deaths_estimated over time for different counties (Landkreise)
+ RKI-Estimation      Germany  all_gender_rki_estimated           infected, deaths, recovered, recovered_estimated, deaths_estimated over time for different gender
+ RKI-Estimation      Germany  all_age_rki_estimated              infected, deaths, recovered, recovered_estimated, deaths_estimated over time for different age ranges
+ RKI-Estimation      Germany  all_state_age_rki_estimated        infected, deaths, recovered, recovered_estimated, deaths_estimated over time for different age ranges and states
+ RKI-Estimation      Germany  all_state_gender_rki_estimated     infected, deaths, recovered, recovered_estimated, deaths_estimated over time for different genders and states
+ RKI-Estimation      Germany  all_county_age_rki_estimated       infected, deaths, recovered, recovered_estimated, deaths_estimated over time for different age ranges and counties
+ RKI-Estimation      Germany  all_county_gender_rki_estimated    infected, deaths, recovered, recovered_estimated, deaths_estimated over time for different genders counties
 
-
- P        Germany  FullDataB                Full data for Bundesländer
- P        Germany  FullDataL                Full data for Landkreise
- P        Germany  PopulStates              Einwohnerzahl (EWZ) for all Bundesländer
- P        Germany  PopulCounties            Einwohnerzahl (EWZ) for all Landkreise (however some are missing compared to RKI data)
+ P        Germany  FullDataB                 Full data for Bundesländer
+ P        Germany  FullDataL                 Full data for Landkreise
+ P        Germany  PopulStates               Einwohnerzahl (EWZ) for all Bundesländer
+ P        Germany  PopulCounties             Einwohnerzahl (EWZ) for all Landkreise (however some are missing compared to RKI data)
+ P        Germany  county_population         Einwohnerzahl for different age groups from the 2011 census
+ P        Germany  county_current_population Einwohnerzahl for different age groups from the 2011 census, extrapolated to the current level
+ P        Germany  migration                 Unchanged migration data
+ P        Germany  reg_key                   Unchangenged regional keys from excel table
+ P        Germany  zensus                    Unchanged Zensus data
 
  JH       .        FullData_JohnHopkins     Data as downloaded from github
  JH       .        all_provincestate        Time-cumsum of confirmed, recovered, death for states or provinces if they where given
