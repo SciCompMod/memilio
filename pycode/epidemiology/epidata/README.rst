@@ -113,9 +113,9 @@ The data is written either in json or hdf5 format
 When speaking about infected, means always infected inclusive the already recovered persons
 
 
- ========       ========    =======================            =================
+ ============== ==========  ================================== =================
  Source         Folder      Files                              Data descritpion
- ========       ========    ========================           =================
+ ============== ==========  ================================== =================
  RKI            Germany     infected_rki                       Numbers of infected over time for whole Germany
  RKI            Germany     deaths_rki                         Numbers of deaths over time for whole Germany
  RKI            Germany     all_germany_rki                    infected, deaths, recovered over time for whole Germany
@@ -168,7 +168,7 @@ When speaking about infected, means always infected inclusive the already recove
  DIVI           Germany     county_divi                        ICU, ICU_ventilated over time for different counties (Landkreise) with columns ['County', 'ID_County', 'ICU', 'ICU_ventilated', 'Date']
  DIVI           Germany     state_divi                         ICU, ICU_ventilated over time for different states (Bundesländer) with columns ['Date', 'ICU', 'ICU_ventilated', 'ID_State', 'State']
  DIVI           Germany     germany_divi                       ICU, ICU_ventilated over time for whole Germany with columns ['Date', 'ICU', 'ICU_ventilated']
- ========       ========    ========================           =================
+ ============== ==========  ================================== =================
 
 Notes for developers
 --------------------
