@@ -17,13 +17,13 @@ void init_vectors(std::vector<Eigen::VectorXd>& y, std::vector<Eigen::VectorXd>&
 void integration_test(std::vector<Eigen::VectorXd>& y, std::vector<Eigen::VectorXd>& sol, size_t& n, double t,
                       double dt, const double tmax, double& err)
 {
-    auto sine_deriv = [](auto&& y, auto&& t, auto&& dydt) {
-        dydt[0] = std::cos(t);
-    };
+    auto sine_deriv = [](auto&& y, auto&& t, auto&& dydt) { dydt[0] = std::cos(t); };
 
-    epi::RKIntegratorCore rkf45(1e-3, 1.0);
+    epi::RKIntegratorCore rkf45;
     rkf45.set_abs_tolerance(1e-7);
     rkf45.set_rel_tolerance(1e-7);
+    rkf45.set_dt_min(1e-3);
+    rkf45.set_dt_max(1.0);
 
     sol[0][0] = std::sin(0);
 

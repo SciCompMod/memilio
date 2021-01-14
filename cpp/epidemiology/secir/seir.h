@@ -1,150 +1,85 @@
 #ifndef SEIR_H
 #define SEIR_H
 
-#include "epidemiology/utils/eigen.h"
-#include "epidemiology/math/integrator.h"
-#include "epidemiology/secir/populations.h"
-#include "epidemiology/secir/contact_matrix.h"
-
-#include <vector>
+#include "epidemiology/model/compartmentalmodel.h"
+#include "epidemiology/model/populations.h"
+#include "epidemiology/secir/seir_params.h"
 
 namespace epi
 {
 
-enum SeirCompartments
+// Create template specialization for the simple SEIR model
+
+enum class SeirInfType
 {
-    SeirS,
-    SeirE,
-    SeirI,
-    SeirR,
-    SeirCount
+    S,
+    E,
+    I,
+    R,
+    Count = 4
 };
 
-/**
- * Paramters of the SEIR model:
- * T_inc (also sigma^(-1) or, in the SECIR modile, R_2^(-1)+R_3^(-1)): mean incubation period (default: 5.2);
- *          in SECIR: R_2^(-1) is the first part of the incubation time where the person is not yet infectioous
- *          in SECIR: R_3 is the exchange between asymptomatic carriers and infectious people; R_3^(-1) is the second part of the incubation time where the person is infectious WITHOUT showing symptoms
- * T_infmild (also gamma^(-1) or R_4^(-1)): time a person remains infective after disease (if 'hospitalized' is considered a state, it does not apply to them but only to 'mildly infected' people in SECIR)
- * cont_freq (contact frequency/rate; called beta in the standard SEIR model, also R_1 in the SECIR model)
- *  NOTE: Here, the contact frequency is not calculated as R_0 * tinf_inv but directly input. This means that the Rt at the beginning (possibly, the R0) is given by Rt=tinf*cont_freq 
-**/
-class SeirParams
+class SeirModel : public CompartmentalModel<Populations<SeirInfType>, SeirParams>
 {
+    using Pa = SeirParams;
+    using Po = Populations<SeirInfType>;
+
 public:
-    // time parameters for the different 'stages' of the disease of scale day or 1/day
-    // 'stages' does not refer to the 'states' of the SEIR model but also includes incubation time or contact frequency
-    class StageTimes
+    SeirModel()
     {
-    public:
-        /**
-         * @brief Initializes a time parameters' struct of the SEIR model
-         */
-        StageTimes();
+#if !USE_DERIV_FUNC
+        //S to E
+        this->add_flow(std::make_tuple(SeirInfType::S), std::make_tuple(SeirInfType::E),
+                       [](Pa const& p, Eigen::Ref<const Eigen::VectorXd> pop, Eigen::Ref<const Eigen::VectorXd> y, double t) {
+                           ScalarType cont_freq_eff = params.contact_frequency.get_matrix_at(t)(0, 0);
 
-        /**
-         * @brief sets the contact frequency for the SEIR model
-         * @param cont_freq contact rate/frequency in 1/day unit
-         */
-        void set_cont_freq(double const& cont_freq);
+                           //TODO: We should probably write a static Po::get_total_from function
+                           ScalarType divN = 1.0 / (Po::get_from(y, SeirInfType::S) + Po::get_from(y, SeirInfType::E) +
+                                                    Po::get_from(y, SeirInfType::I) + Po::get_from(y, SeirInfType::R));
+                           return cont_freq_eff * Po::get_from(y, SeirInfType::S) * Po::get_from(pop, SeirInfType::I) *
+                                  divN;
+                       });
 
-        /**
-         * @brief sets the incubation time for the SEIR model
-         * @param tinc incubation time in day unit
-         */
-        void set_incubation(double const& tinc);
+        //E to I
+        this->add_flow(std::make_tuple(SeirInfType::E), std::make_tuple(SeirInfType::I),
+                       [](Pa const& p, Eigen::Ref<const Eigen::VectorXd> /*pop*/, Eigen::Ref<const Eigen::VectorXd> y, double /*t*/) {
+                           return p.times.get_incubation_inv() * Po::get_from(y, SeirInfType::E);
+                       });
 
-        /**
-         * @brief sets the infectious time for the SEIR model
-         * @param tinfmild infectious time in day unit (in a generalized model, only for cases not treated in a hospital)
-         */
-        void set_infectious(double const& tinfmild);
+        //I to R
+        this->add_flow(std::make_tuple(SeirInfType::I), std::make_tuple(SeirInfType::R),
+                       [](Pa const& p, Eigen::Ref<const Eigen::VectorXd> /*pop*/, Eigen::Ref<const Eigen::VectorXd> y, double /*t*/) {
+                           return p.times.get_infectious_inv() * Po::get_from(y, SeirInfType::I);
+                       });
+#endif
+    }
 
-        /**
-         * @brief returns 1.0 over the incubation time set for the SEIR model in day unit
-         */
-        double get_incubation_inv() const;
+#if USE_DERIV_FUNC
+    void get_derivatives(Eigen::Ref<const Eigen::VectorXd> pop,
+                         Eigen::Ref<const Eigen::VectorXd> y, double t,
+                         Eigen::Ref<Eigen::VectorXd> dydt) const override
+    {
+        auto& params = this->parameters;
+        double cont_freq_eff = params.contact_frequency.get_matrix_at(t)(0, 0);
+        double divN          = 1.0 / populations.get_total();
 
-        /**
-         * @brief returns 1.0 over the infectious time set for the SEIR model in day unit
-         */
-        double get_infectious_inv() const;
+        dydt[(size_t)SeirInfType::S] = -cont_freq_eff * y[(size_t)SeirInfType::S] * pop[(size_t)SeirInfType::I] * divN;
+        dydt[(size_t)SeirInfType::E] = cont_freq_eff * y[(size_t)SeirInfType::S] * pop[(size_t)SeirInfType::I] * divN -
+                                    params.times.get_incubation_inv() * y[(size_t)SeirInfType::E];
+        dydt[(size_t)SeirInfType::I] = params.times.get_incubation_inv() * y[(size_t)SeirInfType::E] -
+                                    params.times.get_infectious_inv() * y[(size_t)SeirInfType::I];
+        dydt[(size_t)SeirInfType::R] = params.times.get_infectious_inv() * y[(size_t)SeirInfType::I];
+    }
 
-    private:
-        double m_cont_freq, m_tinc_inv, m_tinfmild_inv;
-    };
-
-    StageTimes times;
-
-    Populations populations{Populations({SeirCount})};
-    
-    ContactMatrix contact_frequency{1};
+#endif // USE_DERIV_FUNC
 };
 
 /**
  * prints given parameters
  * @param[in] params the SeirParams parameter object
  */
-void print_seir_params(SeirParams const& params);
-
-/**
- * Computes the current time-derivative of S, E, I, and R in the SEIR model.
- * Uses different population to compute the contact rates.
- * @param pop population that are in contact and cause infections.
- * @see seir_get_derivatives
- */
-void seir_get_derivatives(SeirParams const& params, Eigen::Ref<const Eigen::VectorXd> pop,
-                          Eigen::Ref<const Eigen::VectorXd> y, double t, Eigen::Ref<Eigen::VectorXd> dydt);
-
-/**
- * Computes the current time-derivative of S, E, I, and R in the SEIR model
- * @param[in] params SEIR Model parameters, created by seir_param
- * @tparam T the datatype of the cases
- * @param[in] y current  S, E, I, and R values at t; y: [0:S, 1:E, 2:I, 3:R]
- * @param[in] t time / current day
- * @param[out] dydt the values of the time derivatices of S, E, I, and R
- */
-inline void seir_get_derivatives(SeirParams const& params, Eigen::Ref<const Eigen::VectorXd> y, double t, Eigen::Ref<Eigen::VectorXd> dydt)
-{
-    seir_get_derivatives(params, y, y, t, dydt);
-}
-
-/**
- * @brief simulate SEIR compartment model
- */
-class SeirSimulation
-{
-public:
-    SeirSimulation(const SeirParams& params, double t0 = 0., double dt_init = 0.1);
-    Eigen::Ref<Eigen::VectorXd> advance(double tmax);
-    TimeSeries<double>& get_result()
-    {
-        return m_integrator.get_result();
-    }
-    const TimeSeries<double>& get_result() const
-    {
-        return m_integrator.get_result();
-    }
-    const SeirParams& get_params() const
-    {
-        return m_params;
-    }
-
-private:
-    SeirParams m_params;
-    OdeIntegrator m_integrator;
-};
-
-/**
- * Computes the seir curve by integration
- * @param[in] t0 start time of simulation
- * @param[in] tmax end time of simulation
- * @param[in] dt initial time step
- * @param[in] params SEIR model parameters
- * @returns compartments at each integration time point
- */
-TimeSeries<double> simulate(double t0, double tmax, double dt, SeirParams const& params);
+void print_seir_params(const SeirModel& model);
 
 } // namespace epi
 
-#endif // SEIR_H
+#endif
