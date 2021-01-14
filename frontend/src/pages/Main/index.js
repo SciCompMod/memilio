@@ -120,6 +120,7 @@ class MainPage extends Component {
     });
 
     this.map = new HeatMap('map', {showLegend: true});
+    this.map.setLegendMinMax(0, 2);
 
     // wait a little to let amcharts finish render
     setTimeout((x) => {
@@ -141,7 +142,7 @@ class MainPage extends Component {
             });
         }
       });
-    }, 1000);
+    }, 2000);
   }
 
   /**
