@@ -116,7 +116,7 @@ struct LocalInfectionParameters {
  * parameters that govern the migration between locations
  */
 struct MigrationParameters {
-    TimePoint lockdown_date;
+    TimePoint lockdown_date = epi::TimePoint(std::numeric_limits<int>::max());
 };
 
 } // namespace epi
