@@ -33,6 +33,9 @@ LocationType go_to_school(const Person& person, TimePoint t, TimeSpan /*dt*/, co
         person.get_age() == AbmAgeGroup::Age5to14 && person.get_location().get_type() != epi::LocationType::School) {
         return epi::LocationType::School;
     }
+    if (person.get_location().get_type() == epi::LocationType::School && t.hour_of_day() >= 15) {
+        return epi::LocationType::Home;
+    }
     return person.get_location().get_type();
 }
 
@@ -42,6 +45,9 @@ LocationType go_to_work(const Person& person, TimePoint t, TimeSpan /*dt*/, cons
         (person.get_age() == AbmAgeGroup::Age15to34 || person.get_age() == AbmAgeGroup::Age35to59) &&
         t.day_of_week() < 5 && t.hour_of_day() >= 8 && person.get_location().get_type() != epi::LocationType::Work) {
         return epi::LocationType::Work;
+    }
+    if (person.get_location().get_type() == epi::LocationType::Work && t.hour_of_day() >= 17) {
+        return epi::LocationType::Home;
     }
     return person.get_location().get_type();
 }
