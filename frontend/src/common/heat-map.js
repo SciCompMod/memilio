@@ -77,16 +77,20 @@ export default class InteractiveHeatMap extends Subject {
       this.#countyHeatLegend.minColor = heatColors[0];
       this.#countyHeatLegend.maxColor = heatColors[heatColors.length - 1];
 
-      // Override heatLegend gradient
-      var gradient = new am4core.LinearGradient();
-      gradient.rotation = -90;
-      heatColors.forEach(function (color) {
-        gradient.addColor(color);
-      });
+      // This event ensures, that the legend works, when the window resizes.
+      // It looks like it does nothing, but it actually works -.-
+      // noinspection SillyAssignmentJS
+      this.#countyHeatLegend.markers.template.events.on(
+        'sizechanged',
+        (event) => (event.target.fill = event.target.fill)
+      );
 
-      this.#countyHeatLegend.markers.template.adapter.add('fill', function () {
-        return gradient;
-      });
+      // Override heatLegend gradient
+      const gradient = new am4core.LinearGradient();
+      gradient.rotation = -90;
+      heatColors.forEach((color) => gradient.addColor(color));
+
+      this.#countyHeatLegend.markers.template.adapter.add('fill', () => gradient);
     }
     countyPolygonTemplate.events.on('hit', (e) => {
       const item = e.target.dataItem.dataContext;
