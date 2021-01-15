@@ -79,11 +79,10 @@ export default class InteractiveHeatMap extends Subject {
 
       // This event ensures, that the legend works, when the window resizes.
       // It looks like it does nothing, but it actually works -.-
-      // noinspection SillyAssignmentJS
-      this.#countyHeatLegend.markers.template.events.on(
-        'sizechanged',
-        (event) => (event.target.fill = event.target.fill)
-      );
+      this.#countyHeatLegend.markers.template.events.on('sizechanged', (event) => {
+        // eslint-disable-next-line no-self-assign
+        return (event.target.fill = event.target.fill);
+      });
 
       // Override heatLegend gradient
       const gradient = new am4core.LinearGradient();
