@@ -14,6 +14,7 @@ import About from './pages/About';
 import Impressum from './pages/Impressum';
 import Dsgvo from './pages/Dsgvo';
 import Accessibility from './pages/Accessibility';
+import Attribution from './pages/Attribution';
 
 // AmCharts defaults to English as a locale and not the browser default,
 // so we have to set it manually.
@@ -77,6 +78,9 @@ class App extends Component {
               <Route path="/barrierefreiheit">
                 <Accessibility />
               </Route>
+              <Route path="/attribution">
+                <Attribution />
+              </Route>
               <Route path="/">
                 <Main />
               </Route>
@@ -109,6 +113,9 @@ class App extends Component {
               to="/barrierefreiheit"
             >
               Barrierefreiheit
+            </Link>
+            <Link tabIndex="6" title="Attribution" to="/attribution">
+              Attribution
             </Link>
           </div>
         </Router>
