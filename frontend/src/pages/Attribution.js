@@ -7,7 +7,7 @@ export default function Attribution() {
 
   useEffect(() => {
     document.title = document.title = `Attribution`;
-    axios('thirdPartyNotice.json').then((r) => {
+    axios('assets/thirdPartyNotice.json').then((r) => {
       setData({entries: r.data});
     });
   }, []);
