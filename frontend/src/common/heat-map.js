@@ -150,7 +150,7 @@ export default class InteractiveHeatMap extends Subject {
     });
 
     this.#countySeries.useGeodata = true;
-    this.#countySeries.geodataSource.url = 'assets/counties/lk_germany.geojson';
+    this.#countySeries.geodataSource.url = 'assets/counties/lk_germany_reduced.geojson';
 
     this.#map.series.push(this.#countySeries);
     //this.#map.invalidate();
