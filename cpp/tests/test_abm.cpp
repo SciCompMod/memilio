@@ -368,9 +368,9 @@ TEST(TestSimulation, advance_random)
 
     auto sim = epi::AbmSimulation(epi::TimePoint(0), std::move(world));
 
-    sim.advance(epi::TimePoint(0) + epi::days(50));
+    sim.advance(epi::TimePoint(0) + epi::hours(50));
     ASSERT_EQ(sim.get_result().get_num_time_points(), 51);
-    ASSERT_THAT(sim.get_result().get_times(), ElementsAreLinspace(0.0, 50.0, 51));
+    ASSERT_THAT(sim.get_result().get_times(), ElementsAreLinspace(0.0, 50.0 / 24.0, 51));
     for (auto&& v : sim.get_result()) {
         ASSERT_EQ(v.sum(), 4);
     }

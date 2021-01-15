@@ -7,7 +7,7 @@ AbmSimulation::AbmSimulation(TimePoint t, World&& world)
     : m_world(std::move(world))
     , m_result(Eigen::Index(InfectionState::Count))
     , m_t(t)
-    , m_dt(days(1))
+    , m_dt(hours(1))
 {
     store_result_at(t);
 }
