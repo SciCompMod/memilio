@@ -9,7 +9,7 @@ export default function Accessibility() {
   return (
     <div className="accessibility">
       <Link tabIndex="1" titel="Zurück zur Hauptseite" to="/">
-        Zurück
+        Zurück zur Hauptseite
       </Link>
       <h2 className="mt-2">Erklärung zur Barrierefreiheit</h2>
       <p>

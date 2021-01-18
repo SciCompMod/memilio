@@ -15,7 +15,7 @@ export default function Attribution() {
   return (
     <div className="attribution">
       <Link tabIndex="1" titel="Zurück zur Hauptseite" to="/">
-        Zurück
+        Zurück zur Hauptseite
       </Link>
       <h2 className="mt-2">
         <b>Attribution to Third Party Software</b>
