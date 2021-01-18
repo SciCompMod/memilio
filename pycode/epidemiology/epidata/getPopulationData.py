@@ -173,8 +173,8 @@ def get_age_population_data(read_data=dd.defaultDict['read_data'],
       path_reg_key = 'https://www.zensus2011.de/SharedDocs/Downloads/DE/Pressemitteilung/DemografischeGrunddaten/1A_EinwohnerzahlGeschlecht.xls?__blob=publicationFile&v=5'
    
       #read tables
-      counties = pandas.read_excel(os.path.join(path_counties,'kreise_deu.xlsx'),sheet_name=1, header=3, engine='openpyxl')
-      reg_key = pandas.read_excel(path_reg_key, sheet_name='Tabelle_1A', header=12)
+      counties = gd.loadExcel('kreise_deu',apiUrl=path_counties ,extension='.xlsx', sheet_name=1, header=3)
+      reg_key = gd.loadExcel(path_reg_key,apiUrl='',extension='', sheet_name='Tabelle_1A', header=12,engine=None)
       zensus = gd.loadCsv("abad92e8eead46a4b0d252ee9438eb53_1")
 
       

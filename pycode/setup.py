@@ -15,7 +15,7 @@ except ImportError:
 __version__ = '0.1.0'
 
 
-INSTALL_REQUIRES = ['pandas', 'matplotlib', 'tables', 'numpy', 'openpyxl', 'xlrd']
+INSTALL_REQUIRES = ['pandas', 'matplotlib', 'tables', 'numpy', 'openpyxl', 'xlrd','requests']
 
 
 setup(
