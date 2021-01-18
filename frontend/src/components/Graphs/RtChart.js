@@ -10,6 +10,7 @@ export default class RtChart extends Component {
   static defaultProps = {
     data: {},
     district: '',
+    dataset: '',
   };
 
   /** @type XYChart */
@@ -21,17 +22,27 @@ export default class RtChart extends Component {
   /** @type ValueAxis */
   #yAxis = null;
 
+  #legend = null;
+
   /** @type Map<string, LineSeries> */
-  #series = new Map();
+  #series = null;
 
   componentDidMount() {
-    this.#chart = am4core.create('rt-chart', am4charts.XYChart);
+    this.init();
+  }
+
+  init() {
+    this.#chart = am4core.create(`rt-chart-${this.props.id}`, am4charts.XYChart);
     this.#xAxis = this.#chart.xAxes.push(new am4charts.DateAxis());
     this.#yAxis = this.#chart.yAxes.push(new am4charts.ValueAxis());
 
     // disable axis tooltips
     this.#xAxis.cursorTooltipEnabled = false;
     this.#yAxis.cursorTooltipEnabled = false;
+
+    // add legend
+    this.#legend = new am4charts.Legend();
+    this.#chart.legend = this.#legend;
 
     // add xy cursor
     this.#chart.cursor = new am4charts.XYCursor();
@@ -47,6 +58,7 @@ export default class RtChart extends Component {
     this.#xAxis.dateFormats.setKey('month', 'MMMM');
 
     // create given series
+    this.#series = new Map();
     for (let i = 0; i < this.props.series.length; i++) {
       this.createSeries(this.props.series[i]);
     }
@@ -56,18 +68,41 @@ export default class RtChart extends Component {
   }
 
   componentDidUpdate(prevProps) {
+    if (prevProps.id !== this.props.id) {
+      this.#chart.dispose();
+      this.init();
+    }
+
+    // show / hide series
+    for (let i = 0; i < this.props.series.length; i++) {
+      const s = this.props.series[i];
+      let serie = this.#series.get(s.key);
+      if (!serie) {
+        return;
+      }
+      console.log(s, serie);
+      console.log(s.key, s.isHidden);
+      if (s.isHidden) {
+        // check if already hidden and hide if not
+
+        // if series is still visible remove it
+        console.log('hide series', s.key);
+        //this.#chart.series.removeIndex(index);
+        //this.#series.delete(s.key);
+        serie.hide();
+      } else {
+        // check if already visible and show if not
+
+        // if series is not visible add it
+        console.log('show series', s.key);
+        serie.show();
+        //this.createSeries(s);
+      }
+    }
+
     // we only need to update the value when the district value has changes
     if (this.props.district !== prevProps.district) {
       this.#chart.data = this.props.data;
-
-      // show / hide series
-      this.props.series.forEach((serie) => {
-        if (serie.isHidden) {
-          this.#series.get(serie.key).hide();
-        } else {
-          this.#series.get(serie.key).show();
-        }
-      });
     }
   }
 
@@ -85,7 +120,8 @@ export default class RtChart extends Component {
    */
   createSeries(options) {
     const {key, label, isHidden} = options;
-    const series = this.#chart.series.push(new am4charts.LineSeries());
+    const series = new am4charts.LineSeries();
+
     series.name = label;
     series.dataFields.valueY = key;
     series.dataFields.dateX = 'timestamp';
@@ -107,12 +143,17 @@ export default class RtChart extends Component {
     series.tensionY = 0.8;
     series.strokeWidth = 3;
 
-    series.hidden = isHidden || false;
+    series.autoDispose = false;
+
+    this.#chart.series.push(series);
+    if (isHidden) {
+      series.hide();
+    }
 
     this.#series.set(key, series);
   }
 
   render() {
-    return <div id="rt-chart" style={{width: '100%', height: '100%'}}></div>;
+    return <div id={`rt-chart-${this.props.id}`} style={{width: '100%', height: '100%'}}></div>;
   }
 }

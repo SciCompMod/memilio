@@ -26,6 +26,9 @@ class MainPage extends Component {
   /** @type Map<number, Map<string, number>> */
   map_data_rt_rel = null;
 
+  /** @type Map<number, Map<string, number>> */
+  map_data_incidence = null;
+
   /** @type Map<string, array> */
   chart_data = null;
 
@@ -44,6 +47,7 @@ class MainPage extends Component {
     const data = await fetch('assets/rt.rel.districts.json').then((res) => res.json());
 
     const keys = Object.keys(data);
+
     const districts = _.uniq(data.DistrictID);
     const timestamps = _.uniq(data.Timestamp);
     const first_timestamp_idx = data.Rt.findIndex((d) => d !== 'NA');
@@ -53,6 +57,7 @@ class MainPage extends Component {
 
     this.map_data_rt = new Map();
     this.map_data_rt_rel = new Map();
+    this.map_data_incidence = new Map();
     this.chart_data = new Map();
 
     for (let i = 0; i < num_items; i++) {
@@ -73,20 +78,8 @@ class MainPage extends Component {
       );
     }
 
-    const germany = [];
     for (let i = first_timestamp_idx; i < timestamps.length; i++) {
       const x = districts.map((id) => this.chart_data.get(id).find((e) => e.timestamp === timestamps[i]));
-      let rt = x.reduce((acc, c, idx) => {
-        acc += c.rt || 0;
-        return acc;
-      }, 0);
-      rt /= districts.length;
-      germany.push({
-        district: 'germany',
-        districtid: 'germany',
-        timestamp: timestamps[i],
-        rt,
-      });
 
       this.map_data_rt.set(
         timestamps[i],
@@ -103,11 +96,18 @@ class MainPage extends Component {
           return acc;
         }, new Map())
       );
+
+      this.map_data_incidence.set(
+        timestamps[i],
+        x.reduce((acc, c, idx) => {
+          acc.set(c.districtid, c.incidence_week);
+          return acc;
+        }, new Map())
+      );
     }
-    this.chart_data.set('germany', germany);
 
     this.setState({
-      selected: {rs: 'germany', bez: 'Deutschland', gen: ''},
+      selected: {rs: '00000', bez: 'Deutschland', gen: ''},
       timestamps: timestamps,
       timestampOffset: first_timestamp_idx,
       timestring: dayjs(timestamps[timestamps.length - 1])
@@ -133,7 +133,7 @@ class MainPage extends Component {
             break;
           case 'reset':
             this.setState({
-              selected: {rs: 'germany', bez: 'Deutschland', gen: ''},
+              selected: {rs: '00000', bez: 'Deutschland', gen: ''},
             });
             break;
           default:
@@ -178,9 +178,48 @@ class MainPage extends Component {
       case 'relative':
         data = this.map_data_rt_rel.get(timestamp);
         break;
+
+      case 'incidence':
+        data = this.map_data_incidence.get(timestamp);
+        break;
+
       default:
         break;
     }
+    return data;
+  }
+
+  getChartData() {
+    if (!this.chart_data) {
+      return [];
+    }
+    let data = JSON.parse(JSON.stringify(this.chart_data.get(this.state.selected.rs)));
+
+    switch (this.state.dataset) {
+      case 'absolute':
+        data = data.map((d) => {
+          delete d['incidence_week'];
+          return d;
+        });
+        break;
+      case 'relative':
+        data = data.map((d) => {
+          delete d['incidence_week'];
+          return d;
+        });
+        break;
+      case 'incidence':
+        data = data.map((d) => {
+          delete d['rt_rel'];
+          delete d['rt'];
+          return d;
+        });
+        break;
+      default:
+        data = [];
+    }
+
+    console.log('final data', JSON.stringify(data));
     return data;
   }
 
@@ -191,6 +230,13 @@ class MainPage extends Component {
    * @return Map<string, value>
    */
   selectDataset(dataset) {
+    if (dataset === 'incidence') {
+      // reset legend to auto set legend scale
+      this.map.setLegendMinMax(0, 200);
+    } else {
+      // fix legend between 0 and 2
+      this.map.setLegendMinMax(0, 2);
+    }
     this.setState(
       {
         dataset: dataset,
@@ -222,7 +268,7 @@ class MainPage extends Component {
                   active={this.state.dataset === 'absolute'}
                   id="absolute"
                 >
-                  Absolut
+                  Rt Absolut
                 </Button>
                 <Button
                   color="primary"
@@ -231,7 +277,16 @@ class MainPage extends Component {
                   active={this.state.dataset === 'relative'}
                   id="relative"
                 >
-                  Relativ
+                  Rt Relativ
+                </Button>
+                <Button
+                  color="primary"
+                  size="sm"
+                  onClick={() => this.selectDataset('incidence')}
+                  active={this.state.dataset === 'incidence'}
+                  id="incidence"
+                >
+                  7-Tage Inzidenz
                 </Button>
                 <UncontrolledTooltip placement="top" target="absolute">
                   Visualisiert die aktuelle Reproduktionszahl pro Landkreis.
@@ -240,6 +295,9 @@ class MainPage extends Component {
                   Visualisiert die aktuelle Reproduktionszahl pro Landkreis in Relation zur Reproduktionszahl
                   Deutschlands
                 </UncontrolledTooltip>
+                <UncontrolledTooltip placement="top" target="incidence">
+                  7-Tage Inzidenz
+                </UncontrolledTooltip>
               </ButtonGroup>
             </div>
           </div>
@@ -247,17 +305,45 @@ class MainPage extends Component {
         </div>
         <div className="right">
           <div className="graph">
+            <div className="links">
+              {this.state.selected.rs === '00000' || this.state.selected.rs.length === 0 ? (
+                <></>
+              ) : (
+                <Button
+                  color="link"
+                  onClick={() => {
+                    this.setState({
+                      selected: {rs: '00000', bez: 'Deutschland', gen: ''},
+                    });
+                  }}
+                >
+                  Deutschland
+                </Button>
+              )}
+            </div>
             <div className="district">
               {this.state.selected.bez} {this.state.selected.gen}
             </div>
-            <RtChart
-              series={[
-                {key: 'rt', label: 'RT absolut'},
-                {key: 'rt_rel', label: 'RT relativ', isHidden: this.state.selected.rs === 'germany'},
-              ]}
-              data={this.chart_data ? this.chart_data.get(this.state.selected.rs) : []}
-              district={this.state.selected.rs}
-            />
+            {this.state.dataset === 'incidence' ? (
+              <RtChart
+                id="incidence"
+                series={[{key: 'incidence_week', label: '7-Tage Inzidenz'}]}
+                data={this.getChartData()}
+                district={this.state.selected.rs}
+                dataset={this.state.dataset}
+              />
+            ) : (
+              <RtChart
+                id="rt"
+                series={[
+                  {key: 'rt', label: 'RT absolut'},
+                  {key: 'rt_rel', label: 'RT relativ', isHidden: this.state.selected.rs === '00000'},
+                ]}
+                data={this.getChartData()}
+                district={this.state.selected.rs}
+                dataset={this.state.dataset}
+              />
+            )}
           </div>
         </div>
       </div>
