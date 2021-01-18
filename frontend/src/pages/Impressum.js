@@ -9,7 +9,7 @@ export default function Impressum() {
   return (
     <div className="impressum">
       <Link tabIndex="1" titel="Zurück zur Hauptseite" to="/">
-        Zurück
+        Zurück zur Hauptseite
       </Link>
       <h2 className="mt-2">
         <b>Impressum gem. § 5 TMG und § 55 Medienstaatsvertrag</b>
@@ -79,7 +79,9 @@ export default function Impressum() {
       <p>
         Inhaltlich verantwortlich:
         <br />
-        <i>Martin J. Kühn</i>
+        Martin J. Kühn (Deutsches Zentrum für Luft- und Raumfahrt) <br />
+        Michael Meyer-Hermann (Helmholtz-Zentrum für Infektionsforschung) <br />
+        Sebastian Binder (Helmholtz-Zentrum für Infektionsforschung) <br />
       </p>
       <p>
         Haftungshinweis: <br />

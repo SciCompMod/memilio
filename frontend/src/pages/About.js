@@ -9,7 +9,7 @@ export default function About() {
   return (
     <div className="about">
       <Link tabIndex="1" titel="Zurück zur Hauptseite" to="/">
-        Zurück
+        Zurück zur Hauptseite
       </Link>
       <h1 className="mt-2">Über die Webseite</h1>
       <p>
@@ -43,6 +43,25 @@ export default function About() {
         public strictly for educational and academic research purposes. Reliance on the Website for medical guidance or
         use of the Website in commerce is strictly prohibited.
       </p>
+      <h2>Ansprechpartner Helmholtz-Zentrum für Infektionsforschung</h2>
+      <p>
+        Prof. Dr. Michael Meyer-Hermann
+        <br />
+        Dr. Sebastian Binder
+        <br />
+        <a
+          href="https://www.helmholtz-hzi.de/de/forschung/forschungsschwerpunkte/immunantwort-und-interventionen/system-immunologie/m-meyer-hermann/"
+          target="blank"
+        >
+          Kontakt
+        </a>
+      </p>
+      <h2>Ansprechpartner Deutsches Zentrum für Luft- und Raumfahrt</h2>
+      Dr. Martin J. Kühn
+      <br />
+      Dr. Margrit Klitz
+      <br />
+      <a href="mailto:contact-hpc-against-corona@dlr.de">Kontakt</a>
     </div>
   );
 }

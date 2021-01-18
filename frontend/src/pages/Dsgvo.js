@@ -9,7 +9,7 @@ export default function DSGVO() {
   return (
     <div className="dsgvo">
       <Link tabIndex="1" titel="Zurück zur Hauptseite" to="/">
-        Zurück
+        Zurück zur Hauptseite
       </Link>
       <h2 className="mt-2">
         <b>Informationen zum Datenschutz</b>
