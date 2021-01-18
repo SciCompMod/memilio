@@ -73,20 +73,8 @@ class MainPage extends Component {
       );
     }
 
-    const germany = [];
     for (let i = first_timestamp_idx; i < timestamps.length; i++) {
       const x = districts.map((id) => this.chart_data.get(id).find((e) => e.timestamp === timestamps[i]));
-      let rt = x.reduce((acc, c, idx) => {
-        acc += c.rt || 0;
-        return acc;
-      }, 0);
-      rt /= districts.length;
-      germany.push({
-        district: 'germany',
-        districtid: 'germany',
-        timestamp: timestamps[i],
-        rt,
-      });
 
       this.map_data_rt.set(
         timestamps[i],
@@ -104,10 +92,9 @@ class MainPage extends Component {
         }, new Map())
       );
     }
-    this.chart_data.set('germany', germany);
 
     this.setState({
-      selected: {rs: 'germany', bez: 'Deutschland', gen: ''},
+      selected: {rs: '00000', bez: 'Deutschland', gen: ''},
       timestamps: timestamps,
       timestampOffset: first_timestamp_idx,
       timestring: dayjs(timestamps[timestamps.length - 1])
@@ -133,7 +120,7 @@ class MainPage extends Component {
             break;
           case 'reset':
             this.setState({
-              selected: {rs: 'germany', bez: 'Deutschland', gen: ''},
+              selected: {rs: '00000', bez: 'Deutschland', gen: ''},
             });
             break;
           default:
@@ -253,7 +240,7 @@ class MainPage extends Component {
             <RtChart
               series={[
                 {key: 'rt', label: 'RT absolut'},
-                {key: 'rt_rel', label: 'RT relativ', isHidden: this.state.selected.rs === 'germany'},
+                {key: 'rt_rel', label: 'RT relativ', isHidden: this.state.selected.rs === '00000' /*germany*/},
               ]}
               data={this.chart_data ? this.chart_data.get(this.state.selected.rs) : []}
               district={this.state.selected.rs}
