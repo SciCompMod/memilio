@@ -42,10 +42,29 @@ class MainPage extends Component {
     this.update = this.update.bind(this);
   }
 
+  removeDataBeforeSeptember(data) {
+    const indices = new Set();
+    for (let i = 0; i < data.Timestamp.length; i++) {
+      const date = new Date(data.Timestamp[i]);
+      if (date < new Date(2020, 8)) {
+        indices.add(i);
+      }
+    }
+
+    data.DistrictID = data.DistrictID.filter((el, i) => !indices.has(i));
+    data.Timestamp = data.Timestamp.filter((el, i) => !indices.has(i));
+    data.Incidence = data.Incidence.filter((el, i) => !indices.has(i));
+    data.Incidence_week = data.Incidence_week.filter((el, i) => !indices.has(i));
+    data.Rt = data.Rt.filter((el, i) => !indices.has(i));
+    data.Rt_rel = data.Rt_rel.filter((el, i) => !indices.has(i));
+  }
+
   async componentDidMount() {
     document.title = `SARS-CoV-2 Reproduktionszahlen`;
     // fetch rt data
-    const data = await fetch('assets/rt.rel.districts_reduced.json').then((res) => res.json());
+    const data = await fetch('assets/rt.rel.districts.json').then((res) => res.json());
+
+    this.removeDataBeforeSeptember(data);
 
     const keys = Object.keys(data);
 
