@@ -29,14 +29,23 @@ export default function About() {
         User-Interface helfen, den Verlauf der Infektionsketten auch der Bevölkerung erkennbar zu machen.
       </p>
       <p>
-        In der hier veröffentlichen Visualisierung wird die aktuelle Reproduktionszahl in den einzelnen Landkreisen
-        angezeigt. Die Reproduktionszahl gibt an, wie viele Menschen unter den aktuellen Maßnamen von einer infektiösen
+        In der hier veröffentlichen Visualisierung werden die Inzidenzwerte der dem Robert Koch-Institut gemeldeten
+        Fälle pro 7 Tage und 100.000 Einwohner und die aktuelle Reproduktionszahl in den einzelnen Landkreisen
+        angezeigt. Die Reproduktionszahl gibt an, wie viele Menschen unter den aktuellen Maßnahmen von einer infektiösen
         Person durchschnittlich angesteckt werden. Eine Untersuchung dieser Größe auf Landkreisebene bekommt durch das
         Auftreten einer Virusvariante mit deutlich erhöhter Übertragbarkeit eine neue Bedeutung, denn eine auffällig
         erhöhte lokale Reproduktionszahl könnte auf einen Einfluss dieser Virusvariante hindeuten. Deren
-        Reproduktionszahl ist nach Untersuchungen des Imperial College London um einen Faktor von rund 1.7 höher und sie
-        kann daher zu einer beschleunigten lokalen Ausbreitung führen. Die Visualisierung basiert auf den dem Robert
-        Koch-Institut gemeldeten Fällen.
+        Reproduktionszahl ist nach Untersuchungen des Imperial College London (
+        <a href="https://www.medrxiv.org/content/10.1101/2020.12.30.20249034v2" target="_blank">
+          Link
+        </a>
+        ) deutlich höher und sie kann daher zu einer beschleunigten lokalen Ausbreitung führen. Die Visualisierung
+        basiert auf den dem Robert Koch-Institut gemeldeten Fällen. Die <b>absolute</b> Visualisierung gibt die
+        berechnete aktuelle Reproduktionszahl pro Landkreis an. Die <b>relative</b> Visualisierung gibt den Quotienten
+        der Reproduktionszahl des Landkreises durch die Reproduktionszahl für ganz Deutschland aus. Zu beachten ist,
+        dass die Berechnung der Reproduktionszahl auf Landkreisebene größeren statistischen Schwankungen unterliegen
+        kann. Dies ist insbesondere der Fall, wenn die die Fallzahlen, die der Berechnung zu Grunde liegen, sehr niedrig
+        sind.
       </p>
       <p>
         <b>Disclaimer:</b> This website and its contents herein, including all data and analysis are provided to the

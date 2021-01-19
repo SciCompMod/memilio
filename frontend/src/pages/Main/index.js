@@ -269,7 +269,7 @@ class MainPage extends Component {
                   active={this.state.dataset === 'absolute'}
                   id="absolute"
                 >
-                  Rt Absolut
+                  Absolute Reproduktionszahl
                 </Button>
                 <Button
                   color="primary"
@@ -278,7 +278,7 @@ class MainPage extends Component {
                   active={this.state.dataset === 'relative'}
                   id="relative"
                 >
-                  Rt Relativ
+                  Relative Reproduktionszahl
                 </Button>
                 <Button
                   color="primary"
@@ -287,17 +287,17 @@ class MainPage extends Component {
                   active={this.state.dataset === 'incidence'}
                   id="incidence"
                 >
-                  7-Tage Inzidenz
+                  7-Tage-Inzidenz
                 </Button>
                 <UncontrolledTooltip placement="top" target="absolute">
                   Visualisiert die aktuelle Reproduktionszahl pro Landkreis.
                 </UncontrolledTooltip>
                 <UncontrolledTooltip placement="top" target="relative">
                   Visualisiert die aktuelle Reproduktionszahl pro Landkreis in Relation zur Reproduktionszahl
-                  Deutschlands
+                  Deutschlands.
                 </UncontrolledTooltip>
                 <UncontrolledTooltip placement="top" target="incidence">
-                  7-Tage Inzidenz
+                  Anzahl der gemeldeten Fälle in 7 Tagen pro 100.000 Einwohnern.
                 </UncontrolledTooltip>
               </ButtonGroup>
             </div>
@@ -311,33 +311,34 @@ class MainPage extends Component {
               Das Institut für Softwaretechnologie des Deutschen Zentrums für Luft- und Raumfahrt (DLR) entwickelt in
               Zusammenarbeit mit dem Helmholtz-Zentrum für Infektionsforschung ein umfassendes Softwarepaket, welches
               das COVID19-Infektionsgeschehen per Simulation darstellt. In der hier veröffentlichen Visualisierung wird
-              die aktuelle Reproduktionszahl in den einzelnen Stadt- und Landkreisen angezeigt. Die Reproduktionszahl
-              gibt an, wie viele Menschen unter den aktuellen Maßnahmen von einer infektiösen Person durchschnittlich
-              angesteckt werden.
+              die aktuelle Reproduktionszahl, sowie der 7-Tage Inzidenzwert, in den einzelnen Stadt- und Landkreisen
+              angezeigt. Die Reproduktionszahl gibt an, wie viele Menschen unter den aktuellen Maßnahmen von einer
+              infektiösen Person durchschnittlich angesteckt werden. Die 7-Tage-Inzidenz gibt an, wie viele Menschen pro
+              100.000 Einwohnern in 7 Tagen infiziert wurden.
             </p>
             <p>
               <Link title="Weitere Informationen zu der Webseite" to="/informationen">
-                Weitere Informationen zu der Webseite finden sie hier.
+                Weitere Informationen
               </Link>
             </p>
           </div>
+          <div className="show-germany">
+            {this.state.selected.rs === '00000' || this.state.selected.rs.length === 0 ? (
+              <></>
+            ) : (
+              <Button
+                color="primary"
+                onClick={() => {
+                  this.setState({
+                    selected: {rs: '00000', bez: 'Bundesrepublik', gen: 'Deutschland'},
+                  });
+                }}
+              >
+                Deutschland Anzeigen
+              </Button>
+            )}
+          </div>
           <div className="graph">
-            <div className="links">
-              {this.state.selected.rs === '00000' || this.state.selected.rs.length === 0 ? (
-                <></>
-              ) : (
-                <Button
-                  color="link"
-                  onClick={() => {
-                    this.setState({
-                      selected: {rs: '00000', bez: 'Deutschland', gen: ''},
-                    });
-                  }}
-                >
-                  Deutschland
-                </Button>
-              )}
-            </div>
             <div className="district">
               {this.state.selected.bez} {this.state.selected.gen}
             </div>
@@ -353,8 +354,8 @@ class MainPage extends Component {
               <RtChart
                 id="rt"
                 series={[
-                  {key: 'rt', label: 'RT absolut'},
-                  {key: 'rt_rel', label: 'RT relativ', isHidden: this.state.selected.rs === '00000'},
+                  {key: 'rt', label: 'Absolute Reproduktionszahl'},
+                  {key: 'rt_rel', label: 'Relative Reproduktionszahl', isHidden: this.state.selected.rs === '00000'},
                 ]}
                 data={this.getChartData()}
                 district={this.state.selected.rs}
