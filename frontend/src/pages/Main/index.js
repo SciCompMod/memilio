@@ -10,6 +10,7 @@ import 'dayjs/locale/de';
 
 import './styles.scss';
 import SimpleTimeline from '../../components/SimpleTimeline';
+import {Link} from 'react-router-dom';
 
 /**
  *  This component is the main page displayed. It shows the reproduction vales RT and RT relative
@@ -94,7 +95,7 @@ class MainPage extends Component {
     }
 
     this.setState({
-      selected: {rs: '00000', bez: 'Deutschland', gen: ''},
+      selected: {rs: '00000', bez: 'Bundesrepublik', gen: 'Deutschland'},
       timestamps: timestamps,
       timestampOffset: first_timestamp_idx,
       timestring: dayjs(timestamps[timestamps.length - 1])
@@ -120,7 +121,7 @@ class MainPage extends Component {
             break;
           case 'reset':
             this.setState({
-              selected: {rs: '00000', bez: 'Deutschland', gen: ''},
+              selected: {rs: '00000', bez: 'Bundesrepublik', gen: 'Deutschland'},
             });
             break;
           default:
@@ -150,7 +151,7 @@ class MainPage extends Component {
   }
 
   /**
-   * Retrives the data from the currently selected dataset for given timestamp.
+   * Retrieves the data from the currently selected dataset for given timestamp.
    *
    * @param number timestamp
    * @return Map<string, value>
@@ -233,6 +234,22 @@ class MainPage extends Component {
           <div className="map" id="map"></div>
         </div>
         <div className="right">
+          <div className="infotext">
+            <h2>Über diese Seite:</h2>
+            <p>
+              Das Institut für Softwaretechnologie des Deutschen Zentrums für Luft- und Raumfahrt (DLR) entwickelt in
+              Zusammenarbeit mit dem Helmholtz-Zentrum für Infektionsforschung ein umfassendes Softwarepaket, welches
+              das COVID19-Infektionsgeschehen per Simulation darstellt. In der hier veröffentlichen Visualisierung wird
+              die aktuelle Reproduktionszahl in den einzelnen Stadt- und Landkreisen angezeigt. Die Reproduktionszahl
+              gibt an, wie viele Menschen unter den aktuellen Maßnahmen von einer infektiösen Person durchschnittlich
+              angesteckt werden.
+            </p>
+            <p>
+              <Link title="Weitere Informationen zu der Webseite" to="/informationen">
+                Weitere Informationen zu der Webseite finden sie hier.
+              </Link>
+            </p>
+          </div>
           <div className="graph">
             <div className="district">
               {this.state.selected.bez} {this.state.selected.gen}

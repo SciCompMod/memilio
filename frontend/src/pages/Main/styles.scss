@@ -35,14 +35,17 @@
     flex-grow: 1;
 
     display: flex;
-    flex-direction: row;
+    flex-direction: column;
     align-items: center;
+    justify-content: space-around;
+
+    height: 100%;
 
     background-color: white;
 
-    .info {
-      height: 200px;
-      border-bottom: 2px solid #e2e4e6;
+    .infotext {
+      width: 90%;
+      text-align: justify;
     }
 
     .graph {
@@ -85,7 +88,7 @@
     }
 
     .right {
-      height: 500px !important;
+      height: 700px;
 
       .graph {
         height: 100% !important;
