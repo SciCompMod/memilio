@@ -97,24 +97,21 @@ class App extends Component {
             )}
           </div>
           <div className="links">
-            <Link tabIndex="2" title="Weitere Informationen zu der Webseite" to="/informationen">
-              Informationen
-            </Link>
-            <Link tabIndex="3" title="Impressum" to="/impressum">
+            <Link tabIndex="2" title="Impressum" to="/impressum">
               Impressum
             </Link>
-            <Link tabIndex="4" title="Datenschutzerklärung" to="/datenschutz">
+            <Link tabIndex="3" title="Datenschutzerklärung" to="/datenschutz">
               Datenschutzerklärung
             </Link>
             <Link
-              tabIndex="5"
+              tabIndex="4"
               title="Erklärung zur Barrierefreiheit"
               alt="Accessibility statement"
               to="/barrierefreiheit"
             >
               Barrierefreiheit
             </Link>
-            <Link tabIndex="6" title="Attribution" to="/attribution">
+            <Link tabIndex="5" title="Attribution" to="/attribution">
               Attribution
             </Link>
           </div>

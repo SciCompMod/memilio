@@ -21,16 +21,32 @@ export default function Attribution() {
         <b>Attribution to Third Party Software</b>
       </h2>
       <br />
+      <p>
+        Several fantastic pieces of free and open-source software have really helped us to get the website to where it
+        is today! We are grateful, that this is possible in today's world and collaboration around the globe is stronger
+        than ever before.
+      </p>
+      <hr className="solid" />
       <ul>
         {data.entries.map((item) => (
           <li key={item.name + item.version} style={{listStyleType: 'none'}}>
             <h3>
-              <b>{item.name + ' ' + item.version}</b>
+              <b>
+                <u>{item.name + ' ' + item.version}</u>
+              </b>
             </h3>
-            <p>Author: {item.author}</p>
-            <p>Repository: {item.repository}</p>
-            <p>Source: {item.source}</p>
-            <p>License: {item.license}</p>
+            <p>
+              <b>Author:</b> {item.author}
+            </p>
+            <p>
+              <b>Repository:</b> {item.repository}
+            </p>
+            <p>
+              <b>Source:</b> {item.source}
+            </p>
+            <p>
+              <b>License:</b> {item.license}
+            </p>
             <p>{item.licenseText}</p>
             <hr className="solid" />
           </li>
