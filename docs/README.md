@@ -17,7 +17,7 @@ This will create an html documentation
 
 .. code:: sh
 
-     firefox _build/html/index.html
+     firefox html/index.html
 
 This opens the documentation.
 
