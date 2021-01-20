@@ -331,7 +331,7 @@ class MainPage extends Component {
           <div className="map" id="map"></div>
         </div>
         <div className="right">
-          <div className="infotext">
+          <div className="info-text">
             <h2>Über diese Seite:</h2>
             <p>
               Das Institut für Softwaretechnologie des Deutschen Zentrums für Luft- und Raumfahrt (DLR) entwickelt in
@@ -353,6 +353,7 @@ class MainPage extends Component {
               <></>
             ) : (
               <Button
+                size="sm"
                 color="primary"
                 onClick={() => {
                   this.setState({
@@ -360,7 +361,7 @@ class MainPage extends Component {
                   });
                 }}
               >
-                Deutschland Anzeigen
+                Deutschland anzeigen
               </Button>
             )}
           </div>
