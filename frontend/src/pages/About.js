@@ -36,7 +36,11 @@ export default function About() {
         Auftreten einer Virusvariante mit deutlich erhöhter Übertragbarkeit eine neue Bedeutung, denn eine auffällig
         erhöhte lokale Reproduktionszahl könnte auf einen Einfluss dieser Virusvariante hindeuten. Deren
         Reproduktionszahl ist nach Untersuchungen des Imperial College London (
-        <a href="https://www.medrxiv.org/content/10.1101/2020.12.30.20249034v2" target="_blank">
+        <a
+          href="https://www.medrxiv.org/content/10.1101/2020.12.30.20249034v2"
+          target="_blank"
+          rel="noopener noreferrer"
+        >
           Link
         </a>
         ) deutlich höher und sie kann daher zu einer beschleunigten lokalen Ausbreitung führen. Die Visualisierung
@@ -60,7 +64,8 @@ export default function About() {
         <br />
         <a
           href="https://www.helmholtz-hzi.de/de/forschung/forschungsschwerpunkte/immunantwort-und-interventionen/system-immunologie/m-meyer-hermann/"
-          target="blank"
+          target="_blank"
+          rel="noopener noreferrer"
         >
           Kontakt
         </a>

@@ -80,23 +80,13 @@ export default class RtChart extends Component {
       if (!serie) {
         return;
       }
-      console.log(s, serie);
-      console.log(s.key, s.isHidden);
-      if (s.isHidden) {
-        // check if already hidden and hide if not
 
-        // if series is still visible remove it
-        console.log('hide series', s.key);
-        //this.#chart.series.removeIndex(index);
-        //this.#series.delete(s.key);
+      if (s.isHidden) {
+        // hide series it
         serie.hide();
       } else {
-        // check if already visible and show if not
-
-        // if series is not visible add it
-        console.log('show series', s.key);
+        // show series
         serie.show();
-        //this.createSeries(s);
       }
     }
 

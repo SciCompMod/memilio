@@ -239,7 +239,6 @@ class MainPage extends Component {
         data = [];
     }
 
-    console.log('final data', JSON.stringify(data));
     return data;
   }
 
