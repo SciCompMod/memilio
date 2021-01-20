@@ -25,9 +25,6 @@ export default class InteractiveHeatMap extends Subject {
     this.disable_map_hit = false;
 
     this.#map = am4core.create(id, am4maps.MapChart);
-    this.#map.seriesContainer.draggable = false;
-    this.#map.seriesContainer.resizable = false;
-    this.#map.maxZoomLevel = 1;
 
     this.#map.events.on('ready', () => {
       this.next('ready');
