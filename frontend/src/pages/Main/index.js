@@ -61,10 +61,18 @@ class MainPage extends Component {
 
   async componentDidMount() {
     document.title = `SARS-CoV-2 Reproduktionszahlen`;
-    // fetch rt data
-    const data = await fetch('assets/rt.rel.districts.json').then((res) => res.json());
 
-    this.removeDataBeforeSeptember(data);
+    const USE_REDUCED_DATA = false;
+    // fetch rt data
+    const data = await fetch('assets/rt.rel.districts' + (USE_REDUCED_DATA ? '_reduced' : '') + '.json').then((res) =>
+      res.json()
+    );
+
+    if (!USE_REDUCED_DATA) {
+      this.removeDataBeforeSeptember(data);
+    } else {
+      data.Timestamp = data.Timestamp.map((e) => e * 100000);
+    }
 
     const keys = Object.keys(data);
 
@@ -239,7 +247,6 @@ class MainPage extends Component {
         data = [];
     }
 
-    console.log('final data', JSON.stringify(data));
     return data;
   }
 
