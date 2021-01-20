@@ -119,7 +119,10 @@ body,
     background-color: #f8f8f9; //$dlr-gray-light;
 
     flex-grow: 1;
-    overflow: auto;
+
+    @media (max-width: 700px) {
+      overflow: auto;
+    }
 
     .about,
     .impressum,
@@ -128,6 +131,7 @@ body,
     .attribution {
       width: 68.2%;
       margin: 1rem auto 3rem;
+      padding-bottom: 0.25rem;
     }
   }
 
@@ -135,10 +139,13 @@ body,
     display: flex;
     flex-wrap: wrap;
     font-size: 16px;
+    justify-content: space-around;
 
     position: absolute;
-    right: 1rem;
-    bottom: 0.5rem;
+    right: 0;
+    bottom: 0;
+    background: white;
+    padding: 0.25rem;
 
     a:not(:first-child) {
       margin-left: 0.75rem;
