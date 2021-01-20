@@ -30,7 +30,6 @@ def get_jh_data(read_data=dd.defaultDict['read_data'],
    @param read_data False [Default] or True. Defines if data is read from file or downloaded.
    @param out_form File format which is used for writing the data. Default defined in defaultDict.
    @param out_folder Path to folder where data is written in folder out_folder/Germany.
-   @param end_date [Optional] Date to stop to download data [Default = today].
    """
 
    filename = "FullData_JohnHopkins"

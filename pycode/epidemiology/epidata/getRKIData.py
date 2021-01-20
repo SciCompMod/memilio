@@ -48,7 +48,7 @@ def fuse_berlin(df):
    """! Concatenates the different districts of Berlin into one district
 
    The RKI data for Berlin is devided into 7 different districts.
-   This does not correspond to the other datasets, which usually only
+   This does not correspond to the other datasets, which usually has only
    one entry for Berlin.
    This function is used to replace the entries of the 7 different
    districts with only one county, which is called 'Berlin'.
@@ -80,7 +80,7 @@ def get_rki_data(read_data=dd.defaultDict['read_data'],
 ):
    """! Downloads the RKI data and provides different kind of structured data
 
-   The data is read in either from the internet or from a json file (FullDataRKI.json), stored in an earlier run.
+   The data is read either from the internet or from a json file (FullDataRKI.json), stored in an earlier run.
    If the data is read from the internet, before changing anything the data is stored in FullDataRKI.json.
    If data should be downloaded, it is checked if data contains all 16 states.
    If not a different source is tried, in this case a column has to be renamed.
@@ -91,11 +91,11 @@ def get_rki_data(read_data=dd.defaultDict['read_data'],
    - the column names are changed to english depending on defaultDict
    - a new column "Date" is defined.
    - we are only interested in the values where the parameter NeuerFall, NeuerTodesfall, NeuGenesen are larger than 0.
-   The values, when these parameter are negative are just useful,
+   The values, when these parameters are negative are just useful,
    if one would want to get the difference to the previous day.
    For details we refer to the above mentioned webpage.
-   - For all different parameter and different columns the values are added up for whole germany for every date
-   and the cumulative sum is calculated. Besides something else is mentioned.
+   - For all different parameters and different columns the values are added up for whole germany for every date
+   and the cumulative sum is calculated. Unless something else is mentioned.
    - For Berlin all counties can be fused to one [Default]. If Berlin is split, different file names are used.
    - Following data is generated and written to the mentioned filename
        - All infected (current and past) for whole germany are stored in "infected_rki"
@@ -115,7 +115,7 @@ def get_rki_data(read_data=dd.defaultDict['read_data'],
    @param read_data False [Default] or True. Defines if data is read from file or downloaded.
    @param out_form File format which is used for writing the data. Default defined in defaultDict.
    @param out_folder Path to folder where data is written in folder out_folder/Germany.
-   @param split_berlin True [Default] or False. Defines if Berlin counties is fused to just on county.
+   @param split_berlin True or False [Default]. Defines if Berlin counties is fused to just on county.
    @param make_plot False [Default] or True. Defines if plots are generated with matplotlib.
    """
 

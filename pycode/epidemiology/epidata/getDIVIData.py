@@ -128,7 +128,7 @@ def download_data_for_one_day(last_number, download_date):
     to decrease runtime of the program.
     Furthermore, in this function another specific part of the url, the call_time, is estimated from the given date.
     If the date is before 2020-6-5 the time "-09-15" and afterwards "-12-15" has to be added to the date.
-    Moreover for dates in the range [2020-6-12),2020-6-5], an additional "-2" has to be added after the call_time.
+    Moreover for dates in the range [2020-6-12, 2020-6-5], an additional "-2" has to be added after the call_time.
     Thus, the url_prefix = call_date + call_time + ext and is then given to the call_call_url fct.
 
     @param last_number This is the call_number which is needed for the download url
@@ -304,7 +304,7 @@ def get_divi_data(read_data=dd.defaultDict['read_data'],
     """!Function to get the divi data.
 
     Available data start from 2020-4-24.
-    If the given start_dat is earlier, it is changed to this date and a warning is printed.
+    If the given start_date is earlier, it is changed to this date and a warning is printed.
     If it does not already exist, the folder Germany is generated in the given out_folder.
     If read_data == True and the file "FullData_DIVI.json" exists, the data is read form this file
     and stored in a pandas dataframe.
@@ -318,7 +318,7 @@ def get_divi_data(read_data=dd.defaultDict['read_data'],
     and the data is normally downloaded (see below).
 
     If data should normally be downloaded between start_date and end_date, we start with an empty pandas dataframe.
-    Afterwards, for everyday between start_date and end_date, both included,
+    Afterwards, for every day between start_date and end_date, both included,
     the function download_data_for_one_day is called.
     If a given back dataframe is empty, a warning is printed that this date is missing, but the program is not stopped.
     If start_date is earlier or equal 2020-04-29, the function adjust_data has to be called.

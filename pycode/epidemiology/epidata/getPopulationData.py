@@ -22,7 +22,7 @@ def get_population_data(read_data=dd.defaultDict['read_data'],
    A list of all datasets with population data is composed.
 
    In a loop over this list, the different datasets are downloaded.
-   The dataset contains of
+   The dataset consists of:
    - filename to store unchanged data
    - arcis opendata number (identifier of data)
    - Wanted columns
@@ -186,7 +186,7 @@ def get_age_population_data(read_data=dd.defaultDict['read_data'],
                        out_folder=dd.defaultDict['out_folder']):
    """! Download data with age splitting
 
-   Data is downloaded from thee sources
+   Data is downloaded from the following sources
    - our own migration [stored in "counties"]
    - Zensus2011 data splitted by gender for whole germany, states, counties in xls
    with additional data from 30.04.2011 (just used for reg_key?) [stored in "reg_key"]
@@ -196,7 +196,9 @@ def get_age_population_data(read_data=dd.defaultDict['read_data'],
 
    Working with the data includes:
    - For the Zensus data the male and female data is added to get just the age dependence
-   - Population data is estimated upt o now (Add more detailed description)
+   - Population from the Zensus data of all age groups is scaled to the total population of our more recent migration
+   data by a factor which represents the relative increase/decrease in population size
+   between 2011 and 2019 for each county"
 
    @param read_data False [Default] or True. Defines if data is read from file or downloaded.
    @param out_form File format which is used for writing the data. Default defined in defaultDict.

@@ -21,7 +21,7 @@ def get_rki_data_with_estimations(read_data=dd.defaultDict['read_data'],
 
     """! Function to estimate recovered and deaths from combination of RKI and JH data
 
-    From the John-Hopkins (JH) data the fraction revered/confirmed and deaths/confiremd are calculated
+    From the John-Hopkins (JH) data the fraction recovered/confirmed and deaths/confiremd are calculated
     With this fraction every existing RKI data is scaled.
     The new columns recovered_estimated and deaths_estimated are added.
 

@@ -97,8 +97,6 @@ def cli(what):
 
    If the key is nor part of the dictionary the program is stopped.
 
-   The default for the out_folder is set to
-
    Three default arguments are added to the parser:
    - read-from-disk, Default = False
    - file-format, Default = json_timeasstring, choices = ['json', 'hdf5', 'json_timeasstring']
