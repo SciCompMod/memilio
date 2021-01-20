@@ -28,7 +28,7 @@ export default function Impressum() {
         E-Mail: contact-hpc-against-corona [at] dlr.de
         <br />
         WWW:&nbsp;
-        <a href="https://www.dlr.de/" target="blank">
+        <a href="https://www.dlr.de/" target="_blank" rel="noopener noreferrer">
           https://www.dlr.de/
         </a>
       </p>
@@ -107,7 +107,7 @@ export default function Impressum() {
       <p>
         Sofern ausdrücklich angegeben (z.B. unter „Informationen“ zum jeweiligen Werk), stehen Bilder und Videos des DLR
         unter einer{' '}
-        <a href="http://creativecommons.org/licenses/by/3.0/de" target="blank">
+        <a href="http://creativecommons.org/licenses/by/3.0/de" target="_blank" rel="noopener noreferrer">
           Creative Commons Namensnennung 3.0 Deutschland Lizenz
         </a>
         . Das heißt, Sie dürfen das Werk bzw. den Inhalt vervielfältigen, verbreiten und öffentlich zugänglich machen,
@@ -126,7 +126,7 @@ export default function Impressum() {
       <p>
         Hinweis: Im Falle einer Verbreitung müssen Sie anderen alle Lizenzbedingungen mitteilen, die für dieses Werk
         gelten. Ausführliche Informationen und den rechtsverbindlichen Lizenzvertrag finden Sie{' '}
-        <a href="http://creativecommons.org/licenses/by/3.0/de/legalcode" target="blank">
+        <a href="http://creativecommons.org/licenses/by/3.0/de/legalcode" target="_blank" rel="noopener noreferrer">
           hier
         </a>
         .

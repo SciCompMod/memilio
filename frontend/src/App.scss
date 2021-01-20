@@ -131,10 +131,11 @@ body,
     }
   }
 
-  .links {
+  > .links {
+    display: flex;
+    flex-wrap: wrap;
     font-size: 16px;
 
-    display: inline-block;
     position: absolute;
     right: 1rem;
     bottom: 0.5rem;

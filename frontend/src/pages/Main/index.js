@@ -27,6 +27,9 @@ class MainPage extends Component {
   /** @type Map<number, Map<string, number>> */
   map_data_rt_rel = null;
 
+  /** @type Map<number, Map<string, number>> */
+  map_data_incidence = null;
+
   /** @type Map<string, array> */
   chart_data = null;
 
@@ -39,12 +42,40 @@ class MainPage extends Component {
     this.update = this.update.bind(this);
   }
 
+  removeDataBeforeSeptember(data) {
+    const indices = new Set();
+    for (let i = 0; i < data.Timestamp.length; i++) {
+      const date = new Date(data.Timestamp[i]);
+      if (date < new Date(2020, 8)) {
+        indices.add(i);
+      }
+    }
+
+    data.DistrictID = data.DistrictID.filter((el, i) => !indices.has(i));
+    data.Timestamp = data.Timestamp.filter((el, i) => !indices.has(i));
+    data.Incidence = data.Incidence.filter((el, i) => !indices.has(i));
+    data.Incidence_week = data.Incidence_week.filter((el, i) => !indices.has(i));
+    data.Rt = data.Rt.filter((el, i) => !indices.has(i));
+    data.Rt_rel = data.Rt_rel.filter((el, i) => !indices.has(i));
+  }
+
   async componentDidMount() {
     document.title = `SARS-CoV-2 Reproduktionszahlen`;
+
+    const USE_REDUCED_DATA = false;
     // fetch rt data
-    const data = await fetch('assets/rt.rel.districts_reduced.json').then((res) => res.json());
+    const data = await fetch('assets/rt.rel.districts' + (USE_REDUCED_DATA ? '_reduced' : '') + '.json').then((res) =>
+      res.json()
+    );
+
+    if (!USE_REDUCED_DATA) {
+      this.removeDataBeforeSeptember(data);
+    } else {
+      data.Timestamp = data.Timestamp.map((e) => e * 100000);
+    }
 
     const keys = Object.keys(data);
+
     const districts = _.uniq(data.DistrictID);
     const timestamps = _.uniq(data.Timestamp);
     const first_timestamp_idx = data.Rt.findIndex((d) => d !== 'NA');
@@ -54,6 +85,7 @@ class MainPage extends Component {
 
     this.map_data_rt = new Map();
     this.map_data_rt_rel = new Map();
+    this.map_data_incidence = new Map();
     this.chart_data = new Map();
 
     for (let i = 0; i < num_items; i++) {
@@ -89,6 +121,14 @@ class MainPage extends Component {
         timestamps[i],
         x.reduce((acc, c, idx) => {
           acc.set(c.districtid, c.rt_rel);
+          return acc;
+        }, new Map())
+      );
+
+      this.map_data_incidence.set(
+        timestamps[i],
+        x.reduce((acc, c, idx) => {
+          acc.set(c.districtid, c.incidence_week);
           return acc;
         }, new Map())
       );
@@ -166,9 +206,47 @@ class MainPage extends Component {
       case 'relative':
         data = this.map_data_rt_rel.get(timestamp);
         break;
+
+      case 'incidence':
+        data = this.map_data_incidence.get(timestamp);
+        break;
+
       default:
         break;
     }
+    return data;
+  }
+
+  getChartData() {
+    if (!this.chart_data) {
+      return [];
+    }
+    let data = JSON.parse(JSON.stringify(this.chart_data.get(this.state.selected.rs)));
+
+    switch (this.state.dataset) {
+      case 'absolute':
+        data = data.map((d) => {
+          delete d['incidence_week'];
+          return d;
+        });
+        break;
+      case 'relative':
+        data = data.map((d) => {
+          delete d['incidence_week'];
+          return d;
+        });
+        break;
+      case 'incidence':
+        data = data.map((d) => {
+          delete d['rt_rel'];
+          delete d['rt'];
+          return d;
+        });
+        break;
+      default:
+        data = [];
+    }
+
     return data;
   }
 
@@ -179,6 +257,13 @@ class MainPage extends Component {
    * @return Map<string, value>
    */
   selectDataset(dataset) {
+    if (dataset === 'incidence') {
+      // reset legend to auto set legend scale
+      this.map.setLegendMinMax(0, 200);
+    } else {
+      // fix legend between 0 and 2
+      this.map.setLegendMinMax(0, 2);
+    }
     this.setState(
       {
         dataset: dataset,
@@ -210,7 +295,7 @@ class MainPage extends Component {
                   active={this.state.dataset === 'absolute'}
                   id="absolute"
                 >
-                  Absolut
+                  Absolute Reproduktionszahl
                 </Button>
                 <Button
                   color="primary"
@@ -219,14 +304,26 @@ class MainPage extends Component {
                   active={this.state.dataset === 'relative'}
                   id="relative"
                 >
-                  Relativ
+                  Relative Reproduktionszahl
+                </Button>
+                <Button
+                  color="primary"
+                  size="sm"
+                  onClick={() => this.selectDataset('incidence')}
+                  active={this.state.dataset === 'incidence'}
+                  id="incidence"
+                >
+                  7-Tage-Inzidenz
                 </Button>
                 <UncontrolledTooltip placement="top" target="absolute">
                   Visualisiert die aktuelle Reproduktionszahl pro Landkreis.
                 </UncontrolledTooltip>
                 <UncontrolledTooltip placement="top" target="relative">
                   Visualisiert die aktuelle Reproduktionszahl pro Landkreis in Relation zur Reproduktionszahl
-                  Deutschlands
+                  Deutschlands.
+                </UncontrolledTooltip>
+                <UncontrolledTooltip placement="top" target="incidence">
+                  Anzahl der gemeldeten Fälle in 7 Tagen pro 100.000 Einwohnern.
                 </UncontrolledTooltip>
               </ButtonGroup>
             </div>
@@ -240,28 +337,57 @@ class MainPage extends Component {
               Das Institut für Softwaretechnologie des Deutschen Zentrums für Luft- und Raumfahrt (DLR) entwickelt in
               Zusammenarbeit mit dem Helmholtz-Zentrum für Infektionsforschung ein umfassendes Softwarepaket, welches
               das COVID19-Infektionsgeschehen per Simulation darstellt. In der hier veröffentlichen Visualisierung wird
-              die aktuelle Reproduktionszahl in den einzelnen Stadt- und Landkreisen angezeigt. Die Reproduktionszahl
-              gibt an, wie viele Menschen unter den aktuellen Maßnahmen von einer infektiösen Person durchschnittlich
-              angesteckt werden.
+              die aktuelle Reproduktionszahl, sowie der 7-Tage Inzidenzwert, in den einzelnen Stadt- und Landkreisen
+              angezeigt. Die Reproduktionszahl gibt an, wie viele Menschen unter den aktuellen Maßnahmen von einer
+              infektiösen Person durchschnittlich angesteckt werden. Die 7-Tage-Inzidenz gibt an, wie viele Menschen pro
+              100.000 Einwohnern in 7 Tagen infiziert wurden.
             </p>
             <p>
               <Link title="Weitere Informationen zu der Webseite" to="/informationen">
-                Weitere Informationen zu der Webseite finden sie hier.
+                Weitere Informationen
               </Link>
             </p>
+          </div>
+          <div className="show-germany">
+            {this.state.selected.rs === '00000' || this.state.selected.rs.length === 0 ? (
+              <></>
+            ) : (
+              <Button
+                color="primary"
+                onClick={() => {
+                  this.setState({
+                    selected: {rs: '00000', bez: 'Bundesrepublik', gen: 'Deutschland'},
+                  });
+                }}
+              >
+                Deutschland Anzeigen
+              </Button>
+            )}
           </div>
           <div className="graph">
             <div className="district">
               {this.state.selected.bez} {this.state.selected.gen}
             </div>
-            <RtChart
-              series={[
-                {key: 'rt', label: 'RT absolut'},
-                {key: 'rt_rel', label: 'RT relativ', isHidden: this.state.selected.rs === '00000' /*germany*/},
-              ]}
-              data={this.chart_data ? this.chart_data.get(this.state.selected.rs) : []}
-              district={this.state.selected.rs}
-            />
+            {this.state.dataset === 'incidence' ? (
+              <RtChart
+                id="incidence"
+                series={[{key: 'incidence_week', label: '7-Tage Inzidenz'}]}
+                data={this.getChartData()}
+                district={this.state.selected.rs}
+                dataset={this.state.dataset}
+              />
+            ) : (
+              <RtChart
+                id="rt"
+                series={[
+                  {key: 'rt', label: 'Absolute Reproduktionszahl'},
+                  {key: 'rt_rel', label: 'Relative Reproduktionszahl', isHidden: this.state.selected.rs === '00000'},
+                ]}
+                data={this.getChartData()}
+                district={this.state.selected.rs}
+                dataset={this.state.dataset}
+              />
+            )}
           </div>
         </div>
       </div>
