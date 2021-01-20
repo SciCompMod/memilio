@@ -43,7 +43,6 @@ build-cpp-win:
     - cmake -G "Ninja" -DCMAKE_BUILD_TYPE=Release -DEPI_USE_BUNDLED_EIGEN=ON -DEPI_BUILD_EPI_IO=ON -DHDF5_USE_STATIC_LIBRARIES=ON -DHDF5_DIR=C:\Devel\Libraries\HDF5-1.10.1-win64\cmake -Dtixi3_DIR=C:\Devel\Libraries\TIXI-3.1.1-win64\lib\tixi3 ..
     - cp "c:\Devel\Libraries\TIXI-3.1.1-win64\bin\tixi3.dll" "tests"
     - cmake --build .
-
   artifacts:
     expire_in: 2 hrs
     paths:
@@ -90,6 +89,26 @@ build-py-win:
     paths:
       - pycode/dist/*.whl
 
+test-docs:
+  tags:
+    - docker
+  image: ubuntu:18.04
+  stage: test
+  dependencies:
+    - build-py
+  before_script:
+    - apt -qq update
+    - apt -qq -y install doxygen
+  script:
+    - cd docs
+    - doxygen
+  artifacts:
+    expose_as: "Documentation"
+    paths:
+      - docs/html/
+    expire_in: 3 day
+
+
 # run tests using the binary built before
 test-cpp:
   tags:
@@ -118,8 +137,9 @@ test-cpp:
     reports:
       junit: cpp/build/tests/report.xml
       cobertura: coverage.xml
+    expose_as: "CPP Coverage Report"
     paths:
-      - coverage_report
+      - coverage_report/
     expire_in: 1 week
 
 # run tests using the binary built before
@@ -166,8 +186,37 @@ test-py:
   artifacts:
     reports:
       cobertura: pycode/test/coverage_python.xml
+    expose_as: "Python Coverage Report"
     paths:
-      - coverage_python
+      - coverage_python/
+    expire_in: 3 day
+
+test-pylint:
+  tags:
+    - docker
+  image: ubuntu:18.04
+  stage: test
+  dependencies:
+    - build-py
+  before_script:
+    - apt -qq update
+    - apt -qq -y install python3-pip gnupg
+    - python3.6 -m pip install --upgrade pip
+    - for pkg in `ls pycode/wheelhouse/*36*.whl`; do python3.6 -m pip install $pkg; done
+    - pip install -r pycode/requirements-dev.txt
+  script:
+    - cd pycode
+    - mkdir -p build_pylint
+    - pip install pylint
+    - pip install pylint-json2html
+    - python3.6 setup.py pylint
+    - pylint-json2html -f jsonextended -o build_pylint/pylint.html < build_pylint/pylint_extended.json
+  artifacts:
+    expose_as: "Pylint Report"
+    paths:
+      - pycode/build_pylint/pylint.html
+    expire_in: 3 day
+
 
 download-data:
   tags:
@@ -247,3 +296,38 @@ www:
     - echo "Deployed"
   only:
     - /^version-.*$/
+
+#######################
+# Publish stage
+pages:
+  stage: deploy
+  dependencies:
+    - test-py
+    - test-cpp
+    - test-docs
+    - test-pylint
+  tags:
+    - hpcagainstcorona
+  script:
+    - echo "Prepare basic Pages sites"
+    - mkdir -p public/${CI_COMMIT_REF_NAME}/
+    - cp ci_index/main_index.html public/index.html
+    - cp ci_index/branch_index.html public/${CI_COMMIT_REF_NAME}/index.html
+    - echo "Prepare documentation" # Prepare documentation
+    - mkdir -p public/${CI_COMMIT_REF_NAME}/documentation
+    - cp -r docs/html/* public/${CI_COMMIT_REF_NAME}/documentation
+    - echo "Prepare pylint reports" # Prepare pylint
+    - mkdir -p public/${CI_COMMIT_REF_NAME}/pylint
+    - cp pycode/build_pylint/pylint.html public/${CI_COMMIT_REF_NAME}/pylint/
+    - echo "Prepare coverage reports" # prepare coverage
+    - mkdir -p public/${CI_COMMIT_REF_NAME}/coverage
+    - mkdir -p public/${CI_COMMIT_REF_NAME}/coverage/cpp
+    - mkdir -p public/${CI_COMMIT_REF_NAME}/coverage/python
+    - cp -r coverage_python/* public/${CI_COMMIT_REF_NAME}/coverage/python/
+    - cp -r coverage_report/* public/${CI_COMMIT_REF_NAME}/coverage/cpp/
+  artifacts:
+    paths:
+      - public # All relevant content needs to be available here
+  only:
+     - master
+  
