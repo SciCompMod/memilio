@@ -150,27 +150,23 @@ class MainPage extends Component {
     this.map = new HeatMap('map', {showLegend: true});
     this.map.setLegendMinMax(0, 2);
 
-    // wait a little to let amcharts finish render
-    setTimeout((x) => {
-      this.map.setValues(this.map_data_rt.get(timestamps[timestamps.length - 1]));
-
-      // subscribe to events from map
-      this.map.subscribe((event) => {
-        switch (event) {
-          case 'ready':
-            break;
-          case 'reset':
-            this.setState({
-              selected: {rs: '00000', bez: 'Bundesrepublik', gen: 'Deutschland'},
-            });
-            break;
-          default:
-            this.setState({
-              selected: event,
-            });
-        }
-      });
-    }, 2000);
+    // subscribe to events from map
+    this.map.subscribe((event) => {
+      switch (event) {
+        case 'ready':
+          this.map.setValues(this.map_data_rt.get(timestamps[timestamps.length - 1]));
+          break;
+        case 'reset':
+          this.setState({
+            selected: {rs: '00000', bez: 'Bundesrepublik', gen: 'Deutschland'},
+          });
+          break;
+        default:
+          this.setState({
+            selected: event,
+          });
+      }
+    });
   }
 
   /**
@@ -179,7 +175,7 @@ class MainPage extends Component {
    * @param number timestep
    */
   update(timestep) {
-    if (this.map) {
+    if (this.map && this.map.isReady) {
       timestep = this.state.timestampOffset + timestep;
       const timestamp = this.state.timestamps[timestep];
       this.setState({
