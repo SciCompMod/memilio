@@ -45,11 +45,11 @@ export default function About() {
         </a>
         ) deutlich höher und sie kann daher zu einer beschleunigten lokalen Ausbreitung führen. Die Visualisierung
         basiert auf den dem Robert Koch-Institut gemeldeten Fällen. Die <b>absolute</b> Visualisierung gibt die
-        berechnete aktuelle Reproduktionszahl pro Landkreis an. Die <b>relative</b> Visualisierung gibt den Quotienten
-        der Reproduktionszahl des Landkreises durch die Reproduktionszahl für ganz Deutschland aus. Zu beachten ist,
-        dass die Berechnung der Reproduktionszahl auf Landkreisebene größeren statistischen Schwankungen unterliegen
-        kann. Dies ist insbesondere der Fall, wenn die die Fallzahlen, die der Berechnung zu Grunde liegen, sehr niedrig
-        sind.
+        berechnete aktuelle Reproduktionszahl der betrachteten Region an. Die <b>relative</b> Visualisierung gibt den
+        Quotienten der Reproduktionszahl der betrachteten Region durch die Reproduktionszahl für ganz Deutschland aus.
+        Aus diesem Grund ist die relative Reproduktionszahl für Deutschland konstant gleich Eins. Zu beachten ist, dass
+        die Berechnung der Reproduktionszahl auf Landkreisebene größeren statistischen Schwankungen unterliegen kann.
+        Dies ist insbesondere der Fall, wenn die die Fallzahlen, die der Berechnung zu Grunde liegen, sehr niedrig sind.
       </p>
       <p>
         <b>Disclaimer:</b> This website and its contents herein, including all data and analysis are provided to the
