@@ -42,37 +42,11 @@ class MainPage extends Component {
     this.update = this.update.bind(this);
   }
 
-  removeDataBeforeSeptember(data) {
-    const indices = new Set();
-    for (let i = 0; i < data.Timestamp.length; i++) {
-      const date = new Date(data.Timestamp[i]);
-      if (date < new Date(2020, 8)) {
-        indices.add(i);
-      }
-    }
-
-    data.DistrictID = data.DistrictID.filter((el, i) => !indices.has(i));
-    data.Timestamp = data.Timestamp.filter((el, i) => !indices.has(i));
-    data.Incidence = data.Incidence.filter((el, i) => !indices.has(i));
-    data.Incidence_week = data.Incidence_week.filter((el, i) => !indices.has(i));
-    data.Rt = data.Rt.filter((el, i) => !indices.has(i));
-    data.Rt_rel = data.Rt_rel.filter((el, i) => !indices.has(i));
-  }
-
   async componentDidMount() {
     document.title = `SARS-CoV-2 Reproduktionszahlen`;
 
-    const USE_REDUCED_DATA = false;
     // fetch rt data
-    const data = await fetch('assets/rt.rel.districts' + (USE_REDUCED_DATA ? '_reduced' : '') + '.json').then((res) =>
-      res.json()
-    );
-
-    if (!USE_REDUCED_DATA) {
-      this.removeDataBeforeSeptember(data);
-    } else {
-      data.Timestamp = data.Timestamp.map((e) => e * 100000);
-    }
+    const data = await fetch('assets/rt.rel.districts.json').then((res) => res.json());
 
     const keys = Object.keys(data);
 
@@ -150,27 +124,23 @@ class MainPage extends Component {
     this.map = new HeatMap('map', {showLegend: true});
     this.map.setLegendMinMax(0, 2);
 
-    // wait a little to let amcharts finish render
-    setTimeout((x) => {
-      this.map.setValues(this.map_data_rt.get(timestamps[timestamps.length - 1]));
-
-      // subscribe to events from map
-      this.map.subscribe((event) => {
-        switch (event) {
-          case 'ready':
-            break;
-          case 'reset':
-            this.setState({
-              selected: {rs: '00000', bez: 'Bundesrepublik', gen: 'Deutschland'},
-            });
-            break;
-          default:
-            this.setState({
-              selected: event,
-            });
-        }
-      });
-    }, 2000);
+    // subscribe to events from map
+    this.map.subscribe((event) => {
+      switch (event) {
+        case 'ready':
+          this.map.setValues(this.map_data_rt.get(timestamps[timestamps.length - 1]));
+          break;
+        case 'reset':
+          this.setState({
+            selected: {rs: '00000', bez: 'Bundesrepublik', gen: 'Deutschland'},
+          });
+          break;
+        default:
+          this.setState({
+            selected: event,
+          });
+      }
+    });
   }
 
   /**
@@ -179,7 +149,7 @@ class MainPage extends Component {
    * @param number timestep
    */
   update(timestep) {
-    if (this.map) {
+    if (this.map && this.map.isReady) {
       timestep = this.state.timestampOffset + timestep;
       const timestamp = this.state.timestamps[timestep];
       this.setState({

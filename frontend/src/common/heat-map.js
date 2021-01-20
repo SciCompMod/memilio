@@ -16,6 +16,8 @@ export default class InteractiveHeatMap extends Subject {
   #min = null;
   #max = null;
 
+  isReady = false;
+
   constructor(id, options) {
     super();
     const {showExport, showLegend} = Object.assign({showExport: false, showLegend: true}, options);
@@ -29,6 +31,7 @@ export default class InteractiveHeatMap extends Subject {
 
     this.#map.events.on('ready', () => {
       this.next('ready');
+      this.isReady = true;
     });
 
     this.#map.projection = new am4maps.projections.Mercator();
