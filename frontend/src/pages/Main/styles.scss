@@ -96,9 +96,18 @@
     }
 
     .right {
-      height: 700px;
+      height: 1000px;
+
+      .infotext {
+        order: 1;
+        width: 90%;
+        text-align: justify;
+        padding-bottom: 50px;
+        padding-top: 20px;
+      }
 
       .graph {
+        order: 0;
         height: 100% !important;
       }
     }
