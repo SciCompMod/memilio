@@ -13,6 +13,17 @@
       user's mobile device or desktop. See https://developers.google.com/web/fundamentals/web-app-manifest/
     -->
   <link rel="manifest" href="%PUBLIC_URL%/manifest.json" />
+
+  <style>
+    #ie-unsupported-element {
+      visibility: hidden;
+      text-align: center;
+      height: 90vh;
+      line-height: 90vh;
+      vertical-align: center;
+    }
+  </style>
+
   <!--
       Notice the use of %PUBLIC_URL% in the tags above.
       It will be replaced with the URL of the `public` folder during the build.
@@ -28,6 +39,18 @@
 <body>
   <noscript>You need to enable JavaScript to run this app.</noscript>
   <div id="root"></div>
+
+  <h1 id="ie-unsupported-element">Internet Explorer is not supported. Please use a modern browser, like Microsoft Edge, Chrome or Firefox.</h1>
+
+  <script src="browser-detect.umd.js"></script>
+  <script>
+    const browser = browserDetect();
+    if (browser.name === 'ie') {
+      document.getElementById('ie-unsupported-element').style.visibility = 'visible';
+    } else {
+      document.getElementById('ie-unsupported-element').remove();
+    }
+  </script>
 </body>
 
 </html>
