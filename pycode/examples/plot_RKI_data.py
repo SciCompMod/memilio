@@ -12,13 +12,13 @@ import pycode.epidemiology.epidata.defaultDict as dd
 additional one can plot RKI and DIVI data and age resolved incidence-values- just run this file."""
 
 yesterday = pd.Timestamp(datetime.date.today()) - pd.DateOffset(days=1)
-endday_divi = pd.Timestamp('2020.10.28')
+endday_divi = pd.Timestamp('2021.01.04')
 
 # if True, plots will be saved in folder RKI_plots
 saveplot_RKI_and_DIVI = False
 # if you already downloaded RKI and DIVI-Data in Germany folder you can just read data,else it will be downloaded
-read_data_gloabal = False
-folder_for_data = os.path.join(dd.defaultDict['out_folder'], 'Germany/')
+read_data_global = False
+path_for_data = os.path.join(dd.defaultDict['out_folder'], 'Germany/')
 # population data from Statistisches Bundesamt 31.12.2019 as RKI used since 08.10.2020
 # age_group_population_total=[3961376,7429883,19117865,28919134,18057318,5681135]
 # population data from 31.12.2018 as RKI used from beginning until 08.10.2020
@@ -32,7 +32,7 @@ def get_day_confirmed(day=pd.Timestamp('2020.02.02'), read_data=False):
     if not read_data:
         print('Download RKI Data from the Internet, takes some time')
         getRKIData.get_rki_data()
-    df = pd.read_json(folder_for_data + "infected_rki.json")
+    df = pd.read_json(path_for_data + "infected_rki.json")
     start_date = day
     mask = (df['Date'] == start_date)
     if df.loc[mask].empty:
@@ -49,9 +49,9 @@ def get_timeperiod_RKI(startday=pd.Timestamp('2020.02.02'), endday=pd.Timestamp(
         print('Download RKI Data from the Internet, takes some time')
         getRKIData.get_rki_data()
     if comp == 'Death':
-        df = pd.read_json(folder_for_data + 'deaths_rki.json')
+        df = pd.read_json(path_for_data + 'deaths_rki.json')
     else:
-        df = pd.read_json(folder_for_data + "infected_rki.json")
+        df = pd.read_json(path_for_data + "infected_rki.json")
     start_date = startday
     end_date = endday
     mask = (df['Date'] >= start_date) & (df['Date'] <= end_date)
@@ -74,7 +74,7 @@ def get_day_death(day=pd.Timestamp('2020.02.02'), read_data=False):
     if not read_data:
         print('Download RKI Data from the Internet, takes some time')
         getRKIData.get_rki_data()
-    df = pd.read_json(folder_for_data + "deaths_rki.json")
+    df = pd.read_json(path_for_data + "deaths_rki.json")
     start_date = day
     mask = (df['Date'] == start_date)
 
@@ -162,7 +162,7 @@ def get_day_age(day=pd.Timestamp('2020.02.02'), comp='Confirmed', read_data=Fals
     if not read_data:
         print('Download RKI Data from the Internet, takes some time')
         getRKIData.get_rki_data()
-    df = pd.read_json(folder_for_data + "all_age_rki.json")
+    df = pd.read_json(path_for_data + "all_age_rki.json")
     mask = (df['Date'] == day)
 
     if comp == 'Death':
@@ -333,7 +333,7 @@ def get_day_county(day=pd.Timestamp('2020.02.02'), county='SK Köln', comp='Conf
     if not read_data:
         print('Download RKI Data from the Internet, takes some time')
         getRKIData.get_rki_data()
-    df = pd.read_json(folder_for_data+"all_county_rki.json")
+    df = pd.read_json(path_for_data+"all_county_rki.json")
     start_date = day
     end_date = day + pd.DateOffset(days=1)
     mask = (df['Date'] > start_date) & (df['Date'] <= end_date) & (df['County'] == county)
@@ -347,36 +347,37 @@ def get_day_county(day=pd.Timestamp('2020.02.02'), county='SK Köln', comp='Conf
 
 
 # get DIVI data
-def get_day_DIVI(day=pd.Timestamp('2020.03.27')):
+def get_day_DIVI(day=pd.Timestamp('2020.03.27'),read_data=False):
     """get Divi data ICU on input day, data starting on 24.4.2020 """
     if day < pd.Timestamp('2020.04.24'):
         print("error: DIVI dataset starts on 24.04.2020; you asked for " + day.strftime(
             "%d.%m.%Y") + " please search for another solution")
         return np.array([0])
     else:
-        if not os.path.exists('Germany') or not os.path.exists('Germany/germany_divi.json'):
+        if not read_data:
             print('Download DIVI Data from the Internet, takes some time')
-            getDIVIData.get_divi_data(out_folder='../examples', end_date=endday_divi)
-        df = pd.read_json("Germany/germany_divi.json")
+            getDIVIData.get_divi_data(end_date=endday_divi)
+        df = pd.read_json(path_for_data+"germany_divi.json")
         start_date = day
         end_date = day + pd.DateOffset(days=1)
         mask = (df['Date'] > start_date) & (df['Date'] <= end_date)
         if df.loc[mask].empty:
             start_date = start_date - pd.DateOffset(days=1)
-            return get_day_DIVI(day=start_date)
+            return get_day_DIVI(day=start_date,read_data=True)
         return df.loc[mask].iloc[:, 1].values
 
 
-def plot_DIVI(daystart=pd.Timestamp('2020.04.25'), simulationperiod=100):
+def plot_DIVI(daystart=pd.Timestamp('2020.04.25'), simulationperiod=100,read_data=False):
     '''prints DIVI Data Beginning on daystart for simulationperiod days '''
     list = []
     if daystart + pd.DateOffset(days=simulationperiod) <= endday_divi:
         t = range(simulationperiod + 1)
     else:
-        simulationperiod = endday_divi.dayofyear - daystart.dayofyear
+        simulationperiod = (endday_divi - daystart).days
         t = range(simulationperiod + 1)
     for i in t:
-        ret = get_day_DIVI(day=daystart + pd.DateOffset(days=i))
+        ret = get_day_DIVI(day=daystart + pd.DateOffset(days=i),read_data=read_data)
+        read_data=True
         list.append(ret.tolist())
 
     list = np.asarray(list)
@@ -397,16 +398,16 @@ def plot_DIVI(daystart=pd.Timestamp('2020.04.25'), simulationperiod=100):
         fig.savefig('RKI_plots/DIVI_plot_until_' + endday_divi.strftime("%d.%m.%Y") + '.png')
 
 
-def get_day_countyDIVI(day=pd.Timestamp('2020.03.27'), county='SK Köln'):
+def get_day_countyDIVI(day=pd.Timestamp('2020.03.27'), county='SK Köln',read_data=False):
     """get Divi data ICU on input day ,data starting on 24.4.2020"""
     if day < pd.Timestamp('2020.04.24'):
         print("error: DIVI dataset starts on 24.04.2020; you asked for " + day.strftime(
             "%d.%m.%Y") + " please search for another solution")
     else:
-        if not os.path.exists('Germany') or not os.path.exists('Germany/county_divi.json'):
+        if not read_data:
             print('Download DIVI Data from the Internet, takes some time')
-            getDIVIData.get_divi_data(out_folder='../examples', end_date=endday_divi)
-        df = pd.read_json("Germany/county_divi.json")
+            getDIVIData.get_divi_data()
+        df = pd.read_json(path_for_data+"county_divi.json")
         start_date = day
         end_date = day + pd.DateOffset(days=1)
         mask = (df['Date'] > start_date) & (df['Date'] <= end_date) & (df['County'] == county)
@@ -424,7 +425,7 @@ if __name__ == "__main__":
     simulationperiod = 400
     simulationweeks = 40
     daystart = pd.Timestamp('2020.03.02')
-    read_data=read_data_gloabal
+    read_data=read_data_global
     if True:
         plot_age_incidence(daystart=daystart, simulationweeks=simulationweeks,read_data=read_data)
         read_data=True
@@ -437,5 +438,6 @@ if __name__ == "__main__":
         plot_RKI(daystart=daystart, simulationperiod=simulationperiod, comp='Death',read_data=read_data)
         plot_age(daystart=daystart, simulationperiod=simulationperiod,read_data=read_data)
         plot_age(daystart=daystart, simulationperiod=simulationperiod, comp='Death',read_data=read_data)
-    if False:
-        plot_DIVI(simulationperiod=simulationperiod)
+    if True:
+        read_data=read_data_global
+        plot_DIVI(simulationperiod=simulationperiod,read_data=read_data)
