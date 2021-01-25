@@ -68,7 +68,7 @@ def get_rki_data_with_estimations(read_data=dd.defaultDict['read_data'],
     # get data from rki and make new data
     rki_files_to_change = ["all_germany_rki", "all_gender_rki", "all_age_rki",
                            "all_state_rki", "all_state_gender_rki", "all_state_age_rki",
-                           "all_county_rki", "all_county_gender_rki", "all_county_age_rki"]
+                          "all_county_rki", "all_county_gender_rki", "all_county_age_rki"]
 
     for file_to_change in rki_files_to_change:
         # read data of rki file
@@ -144,11 +144,7 @@ def compare_estimated_and_rki_deathsnumbers(df_rki,data_path,read_data,make_plot
 
     # dowload weekly deaths numbers from rki
     if read_data==False:
-        url = "https://www.rki.de/DE/Content/InfAZ/N/Neuartiges_Coronavirus/Projekte_RKI/COVID-19_Todesfaelle.xlsx?__blob=publicationFile"
-        r = requests.get(url)
-        filename = data_path+"RKI_deaths_weekly.xlsx"
-        with open(filename, 'wb') as output_file:
-            output_file.write(r.content)
+        download_weekly_deaths_numbers_rki(data_path)
 
     df_real_deaths_per_week=gd.loadExcel('RKI_deaths_weekly', apiUrl=data_path,
               extension='.xlsx', sheet_name='COVID_Todesfälle')
@@ -193,11 +189,7 @@ def compare_estimated_and_rki_deathsnumbers(df_rki,data_path,read_data,make_plot
 
 def get_weekly_deaths_data_age_gender_resolved(data_path,read_data):
     if read_data==False:
-        url = "https://www.rki.de/DE/Content/InfAZ/N/Neuartiges_Coronavirus/Projekte_RKI/COVID-19_Todesfaelle.xlsx?__blob=publicationFile"
-        r = requests.get(url)
-        filename = data_path+"RKI_deaths_weekly.xlsx"
-        with open(filename, 'wb') as output_file:
-            output_file.write(r.content)
+        download_weekly_deaths_numbers_rki(data_path)
 
     df_real_deaths_per_week_age = gd.loadExcel('RKI_deaths_weekly', apiUrl=data_path,
                                            extension='.xlsx', sheet_name='COVID_Todesfälle_KW_AG10')
@@ -233,6 +225,15 @@ def get_weekly_deaths_data_age_gender_resolved(data_path,read_data):
     # safe information in dataframe in json-file
     gd.write_dataframe(df_real_deaths_per_week_age, data_path, 'weekly_deaths_rki_age_resolved', 'json')
     gd.write_dataframe(df_real_deaths_per_week_gender, data_path, 'weekly_deaths_rki_gender_resolved', 'json')
+
+def download_weekly_deaths_numbers_rki(data_path):
+    #data_path: path where to safe Excel-file
+    url = "https://www.rki.de/DE/Content/InfAZ/N/Neuartiges_Coronavirus/Projekte_RKI/COVID-19_Todesfaelle.xlsx?__blob=publicationFile"
+    r = requests.get(url)
+    filename = os.path.join(data_path , "RKI_deaths_weekly.xlsx")
+    with open(filename, 'wb') as output_file:
+        output_file.write(r.content)
+
 
 
 def main():
