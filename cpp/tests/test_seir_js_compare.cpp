@@ -1,5 +1,7 @@
 #include "load_test_data.h"
 #include <epidemiology/secir/seir.h>
+#include "epidemiology/math/euler.h"
+#include "epidemiology/model/simulation.h"
 #include <gtest/gtest.h>
 
 using real = double;
@@ -15,20 +17,21 @@ protected:
         dt      = 0.1002004008016032;
 
         double total_population = 1061000;
-        params.populations.set({epi::SeirCompartments::SeirE}, 10000);
-        params.populations.set({epi::SeirCompartments::SeirI}, 1000);
-        params.populations.set({epi::SeirCompartments::SeirR}, 1000);
-        params.populations.set({epi::SeirCompartments::SeirS}, total_population -
-                                                               params.populations.get({epi::SeirCompartments::SeirE}) -
-                                                               params.populations.get({epi::SeirCompartments::SeirI}) -
-                                                               params.populations.get({epi::SeirCompartments::SeirR}));
-        // suscetible now set with every other update
-        // params.nb_sus_t0   = params.nb_total_t0 - params.nb_exp_t0 - params.nb_inf_t0 - params.nb_rec_t0;
-        params.times.set_incubation(5.2);
-        params.times.set_infectious(2);
 
-        params.contact_frequency.get_baseline()(0, 0) = 2.7;
-        params.contact_frequency.add_damping(0.6, epi::SimulationTime(12.5));
+        model.populations.set(10000, epi::SeirInfType::E);
+        model.populations.set(1000, epi::SeirInfType::I);
+        model.populations.set(1000, epi::SeirInfType::R);
+        model.populations.set(total_population - model.populations.get(epi::SeirInfType::E) -
+                                  model.populations.get(epi::SeirInfType::I) -
+                                  model.populations.get(epi::SeirInfType::R),
+                              epi::SeirInfType::S);
+        // suscetible now set with every other update
+        // model.nb_sus_t0   = model.nb_total_t0 - model.nb_exp_t0 - model.nb_inf_t0 - model.nb_rec_t0;
+        model.parameters.times.set_incubation(5.2);
+        model.parameters.times.set_infectious(2);
+
+        model.parameters.contact_frequency.get_baseline()(0, 0) = 2.7;
+        model.parameters.contact_frequency.add_damping(0.6, epi::SimulationTime(12.5));
     }
 
 public:
@@ -36,12 +39,13 @@ public:
     real t0;
     real tmax;
     real dt;
-    epi::SeirParams params;
+    epi::SeirModel model;
 };
 
 TEST_F(TestCompareSeirWithJS, integrate)
 {
-    auto result = simulate(t0, tmax, dt, params);
+    auto integrator = std::make_shared<epi::EulerIntegratorCore>();
+    auto result = epi::simulate<epi::SeirModel>(t0, tmax, dt, model, integrator);
 
     ASSERT_EQ(refData.size(), static_cast<size_t>(result.get_num_time_points()));
 

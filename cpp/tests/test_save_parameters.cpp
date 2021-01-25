@@ -23,39 +23,40 @@ TEST(TestSaveParameters, compareParameterStudy)
     double num_total_t0 = 10000, num_exp_t0 = 100, num_inf_t0 = 50, num_car_t0 = 50, num_hosp_t0 = 20, num_icu_t0 = 10,
            num_rec_t0 = 10, num_dead_t0 = 0;
 
-    auto num_groups = size_t(2);
-    double fact     = 1.0 / (double)num_groups;
+    epi::SecirModel<epi::AgeGroup2> model;
+    size_t num_groups = model.parameters.get_num_groups();
+    double fact       = 1.0 / (double)num_groups;
 
-    epi::SecirParams params(num_groups);
+    auto& params = model.parameters;
 
     for (size_t i = 0; i < num_groups; i++) {
-        params.times[i].set_incubation(tinc);
-        params.times[i].set_infectious_mild(tinfmild);
-        params.times[i].set_serialinterval(tserint);
-        params.times[i].set_hospitalized_to_home(thosp2home);
-        params.times[i].set_home_to_hospitalized(thome2hosp);
-        params.times[i].set_hospitalized_to_icu(thosp2icu);
-        params.times[i].set_icu_to_home(ticu2home);
-        params.times[i].set_infectious_asymp(tinfasy);
-        params.times[i].set_icu_to_death(ticu2death);
+        model.parameters.times[i].set_incubation(tinc);
+        model.parameters.times[i].set_infectious_mild(tinfmild);
+        model.parameters.times[i].set_serialinterval(tserint);
+        model.parameters.times[i].set_hospitalized_to_home(thosp2home);
+        model.parameters.times[i].set_home_to_hospitalized(thome2hosp);
+        model.parameters.times[i].set_hospitalized_to_icu(thosp2icu);
+        model.parameters.times[i].set_icu_to_home(ticu2home);
+        model.parameters.times[i].set_infectious_asymp(tinfasy);
+        model.parameters.times[i].set_icu_to_death(ticu2death);
 
-        params.populations.set({i, epi::SecirCompartments::E}, fact * num_exp_t0);
-        params.populations.set({i, epi::SecirCompartments::C}, fact * num_car_t0);
-        params.populations.set({i, epi::SecirCompartments::I}, fact * num_inf_t0);
-        params.populations.set({i, epi::SecirCompartments::H}, fact * num_hosp_t0);
-        params.populations.set({i, epi::SecirCompartments::U}, fact * num_icu_t0);
-        params.populations.set({i, epi::SecirCompartments::R}, fact * num_rec_t0);
-        params.populations.set({i, epi::SecirCompartments::D}, fact * num_dead_t0);
-        params.populations.set_difference_from_group_total({i, epi::SecirCompartments::S}, epi::SecirCategory::AgeGroup,
-                                                           i, fact * num_total_t0);
+        model.populations.set(fact * num_exp_t0, (epi::AgeGroup2)i, epi::InfectionType::E);
+        model.populations.set(fact * num_car_t0, (epi::AgeGroup2)i, epi::InfectionType::C);
+        model.populations.set(fact * num_inf_t0, (epi::AgeGroup2)i, epi::InfectionType::I);
+        model.populations.set(fact * num_hosp_t0, (epi::AgeGroup2)i, epi::InfectionType::H);
+        model.populations.set(fact * num_icu_t0, (epi::AgeGroup2)i, epi::InfectionType::U);
+        model.populations.set(fact * num_rec_t0, (epi::AgeGroup2)i, epi::InfectionType::R);
+        model.populations.set(fact * num_dead_t0, (epi::AgeGroup2)i, epi::InfectionType::D);
+        model.populations.set_difference_from_group_total(fact * num_total_t0, (epi::AgeGroup2)i, (epi::AgeGroup2)i,
+                                                          epi::InfectionType::S);
 
-        params.probabilities[i].set_infection_from_contact(0.06);
-        params.probabilities[i].set_carrier_infectability(0.67);
-        params.probabilities[i].set_asymp_per_infectious(alpha);
-        params.probabilities[i].set_risk_from_symptomatic(beta);
-        params.probabilities[i].set_hospitalized_per_infectious(rho);
-        params.probabilities[i].set_icu_per_hospitalized(theta);
-        params.probabilities[i].set_dead_per_icu(delta);
+        model.parameters.probabilities[i].set_infection_from_contact(0.06);
+        model.parameters.probabilities[i].set_carrier_infectability(0.67);
+        model.parameters.probabilities[i].set_asymp_per_infectious(alpha);
+        model.parameters.probabilities[i].set_risk_from_symptomatic(beta);
+        model.parameters.probabilities[i].set_hospitalized_per_infectious(rho);
+        model.parameters.probabilities[i].set_icu_per_hospitalized(theta);
+        model.parameters.probabilities[i].set_dead_per_icu(delta);
     }
 
     epi::ContactMatrixGroup& contact_matrix = params.get_contact_patterns();
@@ -69,119 +70,127 @@ TEST(TestSaveParameters, compareParameterStudy)
     std::string path = "/Parameters";
     TixiDocumentHandle handle;
 
-    epi::set_params_distributions_normal(params, t0, tmax, 0.2);
+    epi::set_params_distributions_normal(model, t0, tmax, 0.2);
 
     params.times[0].get_incubation().get_distribution()->add_predefined_sample(4711.0);
 
     params.get_contact_patterns().get_distribution_damp_days()->add_predefined_sample(4711.0);
     tixiCreateDocument("Parameters", &handle);
-    epi::ParameterStudy study(params, t0, tmax, num_runs);
+    epi::ParameterStudy<epi::SecirModel<epi::AgeGroup2>> study(model, t0, tmax, num_runs);
 
     epi::write_parameter_study(handle, path, study);
     tixiSaveDocument(handle, "TestParameters.xml");
     tixiCloseDocument(handle);
 
     tixiOpenDocument("TestParameters.xml", &handle);
-    epi::ParameterStudy read_study = epi::read_parameter_study(handle, path);
+    epi::ParameterStudy<epi::SecirModel<epi::AgeGroup2>> read_study =
+        epi::read_parameter_study<epi::AgeGroup2>(handle, path);
     tixiCloseDocument(handle);
 
     ASSERT_EQ(study.get_num_runs(), read_study.get_num_runs());
     ASSERT_EQ(study.get_t0(), read_study.get_t0());
     ASSERT_EQ(study.get_tmax(), read_study.get_tmax());
 
-    const epi::SecirParams& read_params = read_study.get_secir_params();
+    const auto& read_model = read_study.get_model();
 
-    const epi::UncertainContactMatrix& contact      = study.get_secir_params().get_contact_patterns();
-    const epi::UncertainContactMatrix& read_contact = read_params.get_contact_patterns();
+    const epi::UncertainContactMatrix& contact      = study.get_model().parameters.get_contact_patterns();
+    const epi::UncertainContactMatrix& read_contact = read_model.parameters.get_contact_patterns();
 
-    num_groups             = study.get_secir_params().get_num_groups();
-    size_t num_groups_read = read_params.get_num_groups();
+    num_groups             = study.get_model().parameters.get_num_groups();
+    size_t num_groups_read = read_model.parameters.get_num_groups();
     ASSERT_EQ(num_groups, num_groups_read);
 
     for (size_t i = 0; i < num_groups; i++) {
-        ASSERT_EQ(params.populations.get({i, epi::SecirCompartments::D}),
-                  read_params.populations.get({i, epi::SecirCompartments::D}));
-        ASSERT_EQ(params.populations.get_group_total(epi::AgeGroup, i),
-                  read_params.populations.get_group_total(epi::AgeGroup, i));
-        ASSERT_EQ(params.populations.get({i, epi::SecirCompartments::E}),
-                  read_params.populations.get({i, epi::SecirCompartments::E}));
-        ASSERT_EQ(params.populations.get({i, epi::SecirCompartments::C}),
-                  read_params.populations.get({i, epi::SecirCompartments::C}));
-        ASSERT_EQ(params.populations.get({i, epi::SecirCompartments::I}),
-                  read_params.populations.get({i, epi::SecirCompartments::I}));
-        ASSERT_EQ(params.populations.get({i, epi::SecirCompartments::H}),
-                  read_params.populations.get({i, epi::SecirCompartments::H}));
-        ASSERT_EQ(params.populations.get({i, epi::SecirCompartments::U}),
-                  read_params.populations.get({i, epi::SecirCompartments::U}));
-        ASSERT_EQ(params.populations.get({i, epi::SecirCompartments::R}),
-                  read_params.populations.get({i, epi::SecirCompartments::R}));
+        ASSERT_EQ(model.populations.get((epi::AgeGroup2)i, epi::InfectionType::D),
+                  read_model.populations.get((epi::AgeGroup2)i, epi::InfectionType::D));
+        ASSERT_EQ(model.populations.get_group_total((epi::AgeGroup2)i),
+                  read_model.populations.get_group_total((epi::AgeGroup2)i));
+        ASSERT_EQ(model.populations.get((epi::AgeGroup2)i, epi::InfectionType::E),
+                  read_model.populations.get((epi::AgeGroup2)i, epi::InfectionType::E));
+        ASSERT_EQ(model.populations.get((epi::AgeGroup2)i, epi::InfectionType::C),
+                  read_model.populations.get((epi::AgeGroup2)i, epi::InfectionType::C));
+        ASSERT_EQ(model.populations.get((epi::AgeGroup2)i, epi::InfectionType::I),
+                  read_model.populations.get((epi::AgeGroup2)i, epi::InfectionType::I));
+        ASSERT_EQ(model.populations.get((epi::AgeGroup2)i, epi::InfectionType::H),
+                  read_model.populations.get((epi::AgeGroup2)i, epi::InfectionType::H));
+        ASSERT_EQ(model.populations.get((epi::AgeGroup2)i, epi::InfectionType::U),
+                  read_model.populations.get((epi::AgeGroup2)i, epi::InfectionType::U));
+        ASSERT_EQ(model.populations.get((epi::AgeGroup2)i, epi::InfectionType::R),
+                  read_model.populations.get((epi::AgeGroup2)i, epi::InfectionType::R));
 
-        check_distribution(*params.populations.get({i, epi::SecirCompartments::E}).get_distribution(),
-                           *read_params.populations.get({i, epi::SecirCompartments::E}).get_distribution());
-        check_distribution(*params.populations.get({i, epi::SecirCompartments::C}).get_distribution(),
-                           *read_params.populations.get({i, epi::SecirCompartments::C}).get_distribution());
-        check_distribution(*params.populations.get({i, epi::SecirCompartments::I}).get_distribution(),
-                           *read_params.populations.get({i, epi::SecirCompartments::I}).get_distribution());
-        check_distribution(*params.populations.get({i, epi::SecirCompartments::H}).get_distribution(),
-                           *read_params.populations.get({i, epi::SecirCompartments::H}).get_distribution());
-        check_distribution(*params.populations.get({i, epi::SecirCompartments::U}).get_distribution(),
-                           *read_params.populations.get({i, epi::SecirCompartments::U}).get_distribution());
-        check_distribution(*params.populations.get({i, epi::SecirCompartments::R}).get_distribution(),
-                           *read_params.populations.get({i, epi::SecirCompartments::R}).get_distribution());
+        check_distribution(*model.populations.get((epi::AgeGroup2)i, epi::InfectionType::E).get_distribution(),
+                           *read_model.populations.get((epi::AgeGroup2)i, epi::InfectionType::E).get_distribution());
+        check_distribution(*model.populations.get((epi::AgeGroup2)i, epi::InfectionType::C).get_distribution(),
+                           *read_model.populations.get((epi::AgeGroup2)i, epi::InfectionType::C).get_distribution());
+        check_distribution(*model.populations.get((epi::AgeGroup2)i, epi::InfectionType::I).get_distribution(),
+                           *read_model.populations.get((epi::AgeGroup2)i, epi::InfectionType::I).get_distribution());
+        check_distribution(*model.populations.get((epi::AgeGroup2)i, epi::InfectionType::H).get_distribution(),
+                           *read_model.populations.get((epi::AgeGroup2)i, epi::InfectionType::H).get_distribution());
+        check_distribution(*model.populations.get((epi::AgeGroup2)i, epi::InfectionType::U).get_distribution(),
+                           *read_model.populations.get((epi::AgeGroup2)i, epi::InfectionType::U).get_distribution());
+        check_distribution(*model.populations.get((epi::AgeGroup2)i, epi::InfectionType::R).get_distribution(),
+                           *read_model.populations.get((epi::AgeGroup2)i, epi::InfectionType::R).get_distribution());
 
-        ASSERT_EQ(params.times[i].get_incubation(), read_params.times[i].get_incubation());
-        ASSERT_EQ(params.times[i].get_infectious_mild(), read_params.times[i].get_infectious_mild());
-        ASSERT_EQ(params.times[i].get_serialinterval(), read_params.times[i].get_serialinterval());
-        ASSERT_EQ(params.times[i].get_hospitalized_to_home(), read_params.times[i].get_hospitalized_to_home());
-        ASSERT_EQ(params.times[i].get_home_to_hospitalized(), read_params.times[i].get_home_to_hospitalized());
-        ASSERT_EQ(params.times[i].get_infectious_asymp(), read_params.times[i].get_infectious_asymp());
-        ASSERT_EQ(params.times[i].get_hospitalized_to_icu(), read_params.times[i].get_hospitalized_to_icu());
-        ASSERT_EQ(params.times[i].get_icu_to_home(), read_params.times[i].get_icu_to_home());
-        ASSERT_EQ(params.times[i].get_icu_to_dead(), read_params.times[i].get_icu_to_dead());
+        ASSERT_EQ(model.parameters.times[i].get_incubation(), read_model.parameters.times[i].get_incubation());
+        ASSERT_EQ(model.parameters.times[i].get_infectious_mild(),
+                  read_model.parameters.times[i].get_infectious_mild());
+        ASSERT_EQ(model.parameters.times[i].get_serialinterval(), read_model.parameters.times[i].get_serialinterval());
+        ASSERT_EQ(model.parameters.times[i].get_hospitalized_to_home(),
+                  read_model.parameters.times[i].get_hospitalized_to_home());
+        ASSERT_EQ(model.parameters.times[i].get_home_to_hospitalized(),
+                  read_model.parameters.times[i].get_home_to_hospitalized());
+        ASSERT_EQ(model.parameters.times[i].get_infectious_asymp(),
+                  read_model.parameters.times[i].get_infectious_asymp());
+        ASSERT_EQ(model.parameters.times[i].get_hospitalized_to_icu(),
+                  read_model.parameters.times[i].get_hospitalized_to_icu());
+        ASSERT_EQ(model.parameters.times[i].get_icu_to_home(), read_model.parameters.times[i].get_icu_to_home());
+        ASSERT_EQ(model.parameters.times[i].get_icu_to_dead(), read_model.parameters.times[i].get_icu_to_dead());
 
-        check_distribution(*params.times[i].get_incubation().get_distribution(),
-                           *read_params.times[i].get_incubation().get_distribution());
-        check_distribution(*params.times[i].get_infectious_mild().get_distribution(),
-                           *read_params.times[i].get_infectious_mild().get_distribution());
-        check_distribution(*params.times[i].get_serialinterval().get_distribution(),
-                           *read_params.times[i].get_serialinterval().get_distribution());
-        check_distribution(*params.times[i].get_hospitalized_to_home().get_distribution(),
-                           *read_params.times[i].get_hospitalized_to_home().get_distribution());
-        check_distribution(*params.times[i].get_home_to_hospitalized().get_distribution(),
-                           *read_params.times[i].get_home_to_hospitalized().get_distribution());
-        check_distribution(*params.times[i].get_infectious_asymp().get_distribution(),
-                           *read_params.times[i].get_infectious_asymp().get_distribution());
-        check_distribution(*params.times[i].get_hospitalized_to_icu().get_distribution(),
-                           *read_params.times[i].get_hospitalized_to_icu().get_distribution());
-        check_distribution(*params.times[i].get_icu_to_home().get_distribution(),
-                           *read_params.times[i].get_icu_to_home().get_distribution());
-        check_distribution(*params.times[i].get_icu_to_dead().get_distribution(),
-                           *read_params.times[i].get_icu_to_dead().get_distribution());
+        check_distribution(*model.parameters.times[i].get_incubation().get_distribution(),
+                           *read_model.parameters.times[i].get_incubation().get_distribution());
+        check_distribution(*model.parameters.times[i].get_infectious_mild().get_distribution(),
+                           *read_model.parameters.times[i].get_infectious_mild().get_distribution());
+        check_distribution(*model.parameters.times[i].get_serialinterval().get_distribution(),
+                           *read_model.parameters.times[i].get_serialinterval().get_distribution());
+        check_distribution(*model.parameters.times[i].get_hospitalized_to_home().get_distribution(),
+                           *read_model.parameters.times[i].get_hospitalized_to_home().get_distribution());
+        check_distribution(*model.parameters.times[i].get_home_to_hospitalized().get_distribution(),
+                           *read_model.parameters.times[i].get_home_to_hospitalized().get_distribution());
+        check_distribution(*model.parameters.times[i].get_infectious_asymp().get_distribution(),
+                           *read_model.parameters.times[i].get_infectious_asymp().get_distribution());
+        check_distribution(*model.parameters.times[i].get_hospitalized_to_icu().get_distribution(),
+                           *read_model.parameters.times[i].get_hospitalized_to_icu().get_distribution());
+        check_distribution(*model.parameters.times[i].get_icu_to_home().get_distribution(),
+                           *read_model.parameters.times[i].get_icu_to_home().get_distribution());
+        check_distribution(*model.parameters.times[i].get_icu_to_dead().get_distribution(),
+                           *read_model.parameters.times[i].get_icu_to_dead().get_distribution());
 
-        ASSERT_EQ(params.probabilities[i].get_infection_from_contact(),
-                  read_params.probabilities[i].get_infection_from_contact());
-        ASSERT_EQ(params.probabilities[i].get_risk_from_symptomatic(),
-                  read_params.probabilities[i].get_risk_from_symptomatic());
-        ASSERT_EQ(params.probabilities[i].get_asymp_per_infectious(),
-                  read_params.probabilities[i].get_asymp_per_infectious());
-        ASSERT_EQ(params.probabilities[i].get_dead_per_icu(), read_params.probabilities[i].get_dead_per_icu());
-        ASSERT_EQ(params.probabilities[i].get_hospitalized_per_infectious(),
-                  read_params.probabilities[i].get_hospitalized_per_infectious());
-        ASSERT_EQ(params.probabilities[i].get_icu_per_hospitalized(),
-                  read_params.probabilities[i].get_icu_per_hospitalized());
+        ASSERT_EQ(model.parameters.probabilities[i].get_infection_from_contact(),
+                  read_model.parameters.probabilities[i].get_infection_from_contact());
+        ASSERT_EQ(model.parameters.probabilities[i].get_risk_from_symptomatic(),
+                  read_model.parameters.probabilities[i].get_risk_from_symptomatic());
+        ASSERT_EQ(model.parameters.probabilities[i].get_asymp_per_infectious(),
+                  read_model.parameters.probabilities[i].get_asymp_per_infectious());
+        ASSERT_EQ(model.parameters.probabilities[i].get_dead_per_icu(),
+                  read_model.parameters.probabilities[i].get_dead_per_icu());
+        ASSERT_EQ(model.parameters.probabilities[i].get_hospitalized_per_infectious(),
+                  read_model.parameters.probabilities[i].get_hospitalized_per_infectious());
+        ASSERT_EQ(model.parameters.probabilities[i].get_icu_per_hospitalized(),
+                  read_model.parameters.probabilities[i].get_icu_per_hospitalized());
 
-        check_distribution(*params.probabilities[i].get_infection_from_contact().get_distribution(),
-                           *read_params.probabilities[i].get_infection_from_contact().get_distribution());
-        check_distribution(*params.probabilities[i].get_risk_from_symptomatic().get_distribution(),
-                           *read_params.probabilities[i].get_risk_from_symptomatic().get_distribution());
-        check_distribution(*params.probabilities[i].get_asymp_per_infectious().get_distribution(),
-                           *read_params.probabilities[i].get_asymp_per_infectious().get_distribution());
-        check_distribution(*params.probabilities[i].get_dead_per_icu().get_distribution(),
-                           *read_params.probabilities[i].get_dead_per_icu().get_distribution());
-        check_distribution(*params.probabilities[i].get_hospitalized_per_infectious().get_distribution(),
-                           *read_params.probabilities[i].get_hospitalized_per_infectious().get_distribution());
-        check_distribution(*params.probabilities[i].get_icu_per_hospitalized().get_distribution(),
-                           *read_params.probabilities[i].get_icu_per_hospitalized().get_distribution());
+        check_distribution(*model.parameters.probabilities[i].get_infection_from_contact().get_distribution(),
+                           *read_model.parameters.probabilities[i].get_infection_from_contact().get_distribution());
+        check_distribution(*model.parameters.probabilities[i].get_risk_from_symptomatic().get_distribution(),
+                           *read_model.parameters.probabilities[i].get_risk_from_symptomatic().get_distribution());
+        check_distribution(*model.parameters.probabilities[i].get_asymp_per_infectious().get_distribution(),
+                           *read_model.parameters.probabilities[i].get_asymp_per_infectious().get_distribution());
+        check_distribution(*model.parameters.probabilities[i].get_dead_per_icu().get_distribution(),
+                           *read_model.parameters.probabilities[i].get_dead_per_icu().get_distribution());
+        check_distribution(
+            *model.parameters.probabilities[i].get_hospitalized_per_infectious().get_distribution(),
+            *read_model.parameters.probabilities[i].get_hospitalized_per_infectious().get_distribution());
+        check_distribution(*model.parameters.probabilities[i].get_icu_per_hospitalized().get_distribution(),
+                           *read_model.parameters.probabilities[i].get_icu_per_hospitalized().get_distribution());
 
         ASSERT_THAT(contact.get_cont_freq_mat(), testing::ContainerEq(read_contact.get_cont_freq_mat()));
     }
@@ -209,42 +218,41 @@ TEST(TestSaveParameters, compareSingleRun)
     double num_total_t0 = 10000, num_exp_t0 = 100, num_inf_t0 = 50, num_car_t0 = 50, num_hosp_t0 = 20, num_icu_t0 = 10,
            num_rec_t0 = 10, num_dead_t0 = 0;
 
-    auto num_groups = size_t(2);
+    epi::SecirModel<epi::AgeGroup2> model;
+    auto num_groups = size_t(epi::AgeGroup2::Count);
     double fact     = 1.0 / (double)num_groups;
 
-    epi::SecirParams params(num_groups);
-
     for (size_t i = 0; i < num_groups; i++) {
-        params.times[i].set_incubation(tinc);
-        params.times[i].set_infectious_mild(tinfmild);
-        params.times[i].set_serialinterval(tserint);
-        params.times[i].set_hospitalized_to_home(thosp2home);
-        params.times[i].set_home_to_hospitalized(thome2hosp);
-        params.times[i].set_hospitalized_to_icu(thosp2icu);
-        params.times[i].set_icu_to_home(ticu2home);
-        params.times[i].set_infectious_asymp(tinfasy);
-        params.times[i].set_icu_to_death(ticu2death);
+        model.parameters.times[i].set_incubation(tinc);
+        model.parameters.times[i].set_infectious_mild(tinfmild);
+        model.parameters.times[i].set_serialinterval(tserint);
+        model.parameters.times[i].set_hospitalized_to_home(thosp2home);
+        model.parameters.times[i].set_home_to_hospitalized(thome2hosp);
+        model.parameters.times[i].set_hospitalized_to_icu(thosp2icu);
+        model.parameters.times[i].set_icu_to_home(ticu2home);
+        model.parameters.times[i].set_infectious_asymp(tinfasy);
+        model.parameters.times[i].set_icu_to_death(ticu2death);
 
-        params.populations.set({i, epi::SecirCompartments::E}, fact * num_exp_t0);
-        params.populations.set({i, epi::SecirCompartments::C}, fact * num_car_t0);
-        params.populations.set({i, epi::SecirCompartments::I}, fact * num_inf_t0);
-        params.populations.set({i, epi::SecirCompartments::H}, fact * num_hosp_t0);
-        params.populations.set({i, epi::SecirCompartments::U}, fact * num_icu_t0);
-        params.populations.set({i, epi::SecirCompartments::R}, fact * num_rec_t0);
-        params.populations.set({i, epi::SecirCompartments::D}, fact * num_dead_t0);
-        params.populations.set_difference_from_group_total({i, epi::SecirCompartments::S}, epi::SecirCategory::AgeGroup,
-                                                           i, fact * num_total_t0);
+        model.populations.set(fact * num_exp_t0, (epi::AgeGroup2)i, epi::InfectionType::E);
+        model.populations.set(fact * num_car_t0, (epi::AgeGroup2)i, epi::InfectionType::C);
+        model.populations.set(fact * num_inf_t0, (epi::AgeGroup2)i, epi::InfectionType::I);
+        model.populations.set(fact * num_hosp_t0, (epi::AgeGroup2)i, epi::InfectionType::H);
+        model.populations.set(fact * num_icu_t0, (epi::AgeGroup2)i, epi::InfectionType::U);
+        model.populations.set(fact * num_rec_t0, (epi::AgeGroup2)i, epi::InfectionType::R);
+        model.populations.set(fact * num_dead_t0, (epi::AgeGroup2)i, epi::InfectionType::D);
+        model.populations.set_difference_from_group_total(fact * num_total_t0, (epi::AgeGroup2)i, (epi::AgeGroup2)i,
+                                                          epi::InfectionType::S);
 
-        params.probabilities[i].set_infection_from_contact(0.06);
-        params.probabilities[i].set_carrier_infectability(0.67);
-        params.probabilities[i].set_asymp_per_infectious(alpha);
-        params.probabilities[i].set_risk_from_symptomatic(beta);
-        params.probabilities[i].set_hospitalized_per_infectious(rho);
-        params.probabilities[i].set_icu_per_hospitalized(theta);
-        params.probabilities[i].set_dead_per_icu(delta);
+        model.parameters.probabilities[i].set_infection_from_contact(0.06);
+        model.parameters.probabilities[i].set_carrier_infectability(0.67);
+        model.parameters.probabilities[i].set_asymp_per_infectious(alpha);
+        model.parameters.probabilities[i].set_risk_from_symptomatic(beta);
+        model.parameters.probabilities[i].set_hospitalized_per_infectious(rho);
+        model.parameters.probabilities[i].set_icu_per_hospitalized(theta);
+        model.parameters.probabilities[i].set_dead_per_icu(delta);
     }
 
-    epi::ContactMatrixGroup& contact_matrix = params.get_contact_patterns();
+    epi::ContactMatrixGroup& contact_matrix = model.parameters.get_contact_patterns();
     contact_matrix[0] = epi::ContactMatrix(Eigen::MatrixXd::Constant(num_groups, num_groups, fact * cont_freq));
     contact_matrix.add_damping(0.7, epi::SimulationTime(30.));
     auto damping2  = Eigen::MatrixXd::Zero(num_groups, num_groups).eval();
@@ -256,69 +264,77 @@ TEST(TestSaveParameters, compareSingleRun)
     TixiDocumentHandle handle;
 
     tixiCreateDocument("Parameters", &handle);
-    epi::set_params_distributions_normal(params, t0, tmax, 0.0);
-    epi::ParameterStudy study(params, t0, tmax, num_runs);
+    epi::set_params_distributions_normal(model, t0, tmax, 0.0);
+    epi::ParameterStudy<epi::SecirModel<epi::AgeGroup2>> study(model, t0, tmax, num_runs);
 
     epi::write_parameter_study(handle, path, study, 0);
     tixiSaveDocument(handle, "TestParameterValues.xml");
     tixiCloseDocument(handle);
 
     tixiOpenDocument("TestParameterValues.xml", &handle);
-    epi::ParameterStudy read_study = epi::read_parameter_study(handle, path);
+    epi::ParameterStudy<epi::SecirModel<epi::AgeGroup2>> read_study =
+        epi::read_parameter_study<epi::AgeGroup2>(handle, path);
     tixiCloseDocument(handle);
 
     ASSERT_EQ(study.get_num_runs(), read_study.get_num_runs());
     ASSERT_EQ(study.get_t0(), read_study.get_t0());
     ASSERT_EQ(study.get_tmax(), read_study.get_tmax());
 
-    const epi::SecirParams& read_params = read_study.get_secir_params();
+    const epi::SecirModel<epi::AgeGroup2>& read_model = read_study.get_model();
 
-    const epi::UncertainContactMatrix& contact      = study.get_secir_params().get_contact_patterns();
-    const epi::UncertainContactMatrix& read_contact = read_params.get_contact_patterns();
+    const epi::UncertainContactMatrix& contact      = study.get_model().parameters.get_contact_patterns();
+    const epi::UncertainContactMatrix& read_contact = read_model.parameters.get_contact_patterns();
 
-    num_groups             = study.get_secir_params().get_num_groups();
-    size_t num_groups_read = read_params.get_num_groups();
+    num_groups             = study.get_model().parameters.get_num_groups();
+    size_t num_groups_read = read_model.parameters.get_num_groups();
+
     ASSERT_EQ(num_groups, num_groups_read);
 
     for (size_t i = 0; i < num_groups; i++) {
-        ASSERT_EQ(params.populations.get({i, epi::SecirCompartments::D}),
-                  read_params.populations.get({i, epi::SecirCompartments::D}));
-        ASSERT_EQ(params.populations.get_group_total(epi::AgeGroup, i),
-                  read_params.populations.get_group_total(epi::AgeGroup, i));
-        ASSERT_EQ(params.populations.get({i, epi::SecirCompartments::E}),
-                  read_params.populations.get({i, epi::SecirCompartments::E}));
-        ASSERT_EQ(params.populations.get({i, epi::SecirCompartments::C}),
-                  read_params.populations.get({i, epi::SecirCompartments::C}));
-        ASSERT_EQ(params.populations.get({i, epi::SecirCompartments::I}),
-                  read_params.populations.get({i, epi::SecirCompartments::I}));
-        ASSERT_EQ(params.populations.get({i, epi::SecirCompartments::H}),
-                  read_params.populations.get({i, epi::SecirCompartments::H}));
-        ASSERT_EQ(params.populations.get({i, epi::SecirCompartments::U}),
-                  read_params.populations.get({i, epi::SecirCompartments::U}));
-        ASSERT_EQ(params.populations.get({i, epi::SecirCompartments::R}),
-                  read_params.populations.get({i, epi::SecirCompartments::R}));
+        ASSERT_EQ(model.populations.get((epi::AgeGroup2)i, epi::InfectionType::D),
+                  read_model.populations.get((epi::AgeGroup2)i, epi::InfectionType::D));
+        ASSERT_EQ(model.populations.get_group_total((epi::AgeGroup2)i),
+                  read_model.populations.get_group_total((epi::AgeGroup2)i));
+        ASSERT_EQ(model.populations.get((epi::AgeGroup2)i, epi::InfectionType::E),
+                  read_model.populations.get((epi::AgeGroup2)i, epi::InfectionType::E));
+        ASSERT_EQ(model.populations.get((epi::AgeGroup2)i, epi::InfectionType::C),
+                  read_model.populations.get((epi::AgeGroup2)i, epi::InfectionType::C));
+        ASSERT_EQ(model.populations.get((epi::AgeGroup2)i, epi::InfectionType::I),
+                  read_model.populations.get((epi::AgeGroup2)i, epi::InfectionType::I));
+        ASSERT_EQ(model.populations.get((epi::AgeGroup2)i, epi::InfectionType::H),
+                  read_model.populations.get((epi::AgeGroup2)i, epi::InfectionType::H));
+        ASSERT_EQ(model.populations.get((epi::AgeGroup2)i, epi::InfectionType::U),
+                  read_model.populations.get((epi::AgeGroup2)i, epi::InfectionType::U));
+        ASSERT_EQ(model.populations.get((epi::AgeGroup2)i, epi::InfectionType::R),
+                  read_model.populations.get((epi::AgeGroup2)i, epi::InfectionType::R));
 
-        ASSERT_EQ(params.times[i].get_incubation(), read_params.times[i].get_incubation());
-        ASSERT_EQ(params.times[i].get_infectious_mild(), read_params.times[i].get_infectious_mild());
-        ASSERT_EQ(params.times[i].get_serialinterval(), read_params.times[i].get_serialinterval());
-        ASSERT_EQ(params.times[i].get_hospitalized_to_home(), read_params.times[i].get_hospitalized_to_home());
-        ASSERT_EQ(params.times[i].get_home_to_hospitalized(), read_params.times[i].get_home_to_hospitalized());
-        ASSERT_EQ(params.times[i].get_infectious_asymp(), read_params.times[i].get_infectious_asymp());
-        ASSERT_EQ(params.times[i].get_hospitalized_to_icu(), read_params.times[i].get_hospitalized_to_icu());
-        ASSERT_EQ(params.times[i].get_icu_to_home(), read_params.times[i].get_icu_to_home());
-        ASSERT_EQ(params.times[i].get_icu_to_dead(), read_params.times[i].get_icu_to_dead());
+        ASSERT_EQ(model.parameters.times[i].get_incubation(), read_model.parameters.times[i].get_incubation());
+        ASSERT_EQ(model.parameters.times[i].get_infectious_mild(),
+                  read_model.parameters.times[i].get_infectious_mild());
+        ASSERT_EQ(model.parameters.times[i].get_serialinterval(), read_model.parameters.times[i].get_serialinterval());
+        ASSERT_EQ(model.parameters.times[i].get_hospitalized_to_home(),
+                  read_model.parameters.times[i].get_hospitalized_to_home());
+        ASSERT_EQ(model.parameters.times[i].get_home_to_hospitalized(),
+                  read_model.parameters.times[i].get_home_to_hospitalized());
+        ASSERT_EQ(model.parameters.times[i].get_infectious_asymp(),
+                  read_model.parameters.times[i].get_infectious_asymp());
+        ASSERT_EQ(model.parameters.times[i].get_hospitalized_to_icu(),
+                  read_model.parameters.times[i].get_hospitalized_to_icu());
+        ASSERT_EQ(model.parameters.times[i].get_icu_to_home(), read_model.parameters.times[i].get_icu_to_home());
+        ASSERT_EQ(model.parameters.times[i].get_icu_to_dead(), read_model.parameters.times[i].get_icu_to_dead());
 
-        ASSERT_EQ(params.probabilities[i].get_infection_from_contact(),
-                  read_params.probabilities[i].get_infection_from_contact());
-        ASSERT_EQ(params.probabilities[i].get_risk_from_symptomatic(),
-                  read_params.probabilities[i].get_risk_from_symptomatic());
-        ASSERT_EQ(params.probabilities[i].get_asymp_per_infectious(),
-                  read_params.probabilities[i].get_asymp_per_infectious());
-        ASSERT_EQ(params.probabilities[i].get_dead_per_icu(), read_params.probabilities[i].get_dead_per_icu());
-        ASSERT_EQ(params.probabilities[i].get_hospitalized_per_infectious(),
-                  read_params.probabilities[i].get_hospitalized_per_infectious());
-        ASSERT_EQ(params.probabilities[i].get_icu_per_hospitalized(),
-                  read_params.probabilities[i].get_icu_per_hospitalized());
+        ASSERT_EQ(model.parameters.probabilities[i].get_infection_from_contact(),
+                  read_model.parameters.probabilities[i].get_infection_from_contact());
+        ASSERT_EQ(model.parameters.probabilities[i].get_risk_from_symptomatic(),
+                  read_model.parameters.probabilities[i].get_risk_from_symptomatic());
+        ASSERT_EQ(model.parameters.probabilities[i].get_asymp_per_infectious(),
+                  read_model.parameters.probabilities[i].get_asymp_per_infectious());
+        ASSERT_EQ(model.parameters.probabilities[i].get_dead_per_icu(),
+                  read_model.parameters.probabilities[i].get_dead_per_icu());
+        ASSERT_EQ(model.parameters.probabilities[i].get_hospitalized_per_infectious(),
+                  read_model.parameters.probabilities[i].get_hospitalized_per_infectious());
+        ASSERT_EQ(model.parameters.probabilities[i].get_icu_per_hospitalized(),
+                  read_model.parameters.probabilities[i].get_icu_per_hospitalized());
 
         ASSERT_EQ(contact.get_cont_freq_mat(), read_contact.get_cont_freq_mat());
     }
@@ -337,60 +353,60 @@ TEST(TestSaveParameters, compareGraphs)
     double num_total_t0 = 10000, num_exp_t0 = 100, num_inf_t0 = 50, num_car_t0 = 50, num_hosp_t0 = 20, num_icu_t0 = 10,
            num_rec_t0 = 10, num_dead_t0 = 0;
 
-    size_t num_groups = 2;
+    epi::SecirModel<epi::AgeGroup2> model;
+    size_t num_groups = size_t(epi::AgeGroup2::Count);
     double fact       = 1.0 / (double)num_groups;
 
-    epi::SecirParams params(num_groups);
-
-    params.set_test_and_trace_capacity(30);
+    model.parameters.set_test_and_trace_capacity(30);
 
     for (size_t i = 0; i < num_groups; i++) {
-        params.times[i].set_incubation(tinc);
-        params.times[i].set_infectious_mild(tinfmild);
-        params.times[i].set_serialinterval(tserint);
-        params.times[i].set_hospitalized_to_home(thosp2home);
-        params.times[i].set_home_to_hospitalized(thome2hosp);
-        params.times[i].set_hospitalized_to_icu(thosp2icu);
-        params.times[i].set_icu_to_home(ticu2home);
-        params.times[i].set_infectious_asymp(tinfasy);
-        params.times[i].set_icu_to_death(ticu2death);
+        model.parameters.times[i].set_incubation(tinc);
+        model.parameters.times[i].set_infectious_mild(tinfmild);
+        model.parameters.times[i].set_serialinterval(tserint);
+        model.parameters.times[i].set_hospitalized_to_home(thosp2home);
+        model.parameters.times[i].set_home_to_hospitalized(thome2hosp);
+        model.parameters.times[i].set_hospitalized_to_icu(thosp2icu);
+        model.parameters.times[i].set_icu_to_home(ticu2home);
+        model.parameters.times[i].set_infectious_asymp(tinfasy);
+        model.parameters.times[i].set_icu_to_death(ticu2death);
 
-        params.populations.set({i, epi::SecirCompartments::E}, fact * num_exp_t0);
-        params.populations.set({i, epi::SecirCompartments::C}, fact * num_car_t0);
-        params.populations.set({i, epi::SecirCompartments::I}, fact * num_inf_t0);
-        params.populations.set({i, epi::SecirCompartments::H}, fact * num_hosp_t0);
-        params.populations.set({i, epi::SecirCompartments::U}, fact * num_icu_t0);
-        params.populations.set({i, epi::SecirCompartments::R}, fact * num_rec_t0);
-        params.populations.set({i, epi::SecirCompartments::D}, fact * num_dead_t0);
-        params.populations.set_difference_from_group_total({i, epi::SecirCompartments::S}, epi::SecirCategory::AgeGroup,
-                                                           i, fact * num_total_t0);
+        model.populations.set(fact * num_exp_t0, (epi::AgeGroup2)i, epi::InfectionType::E);
+        model.populations.set(fact * num_car_t0, (epi::AgeGroup2)i, epi::InfectionType::C);
+        model.populations.set(fact * num_inf_t0, (epi::AgeGroup2)i, epi::InfectionType::I);
+        model.populations.set(fact * num_hosp_t0, (epi::AgeGroup2)i, epi::InfectionType::H);
+        model.populations.set(fact * num_icu_t0, (epi::AgeGroup2)i, epi::InfectionType::U);
+        model.populations.set(fact * num_rec_t0, (epi::AgeGroup2)i, epi::InfectionType::R);
+        model.populations.set(fact * num_dead_t0, (epi::AgeGroup2)i, epi::InfectionType::D);
+        model.populations.set_difference_from_group_total(fact * num_total_t0, (epi::AgeGroup2)i, (epi::AgeGroup2)i,
+                                                          epi::InfectionType::S);
 
-        params.probabilities[i].set_infection_from_contact(0.06);
-        params.probabilities[i].set_carrier_infectability(0.67);
-        params.probabilities[i].set_asymp_per_infectious(alpha);
-        params.probabilities[i].set_risk_from_symptomatic(beta);
-        params.probabilities[i].set_test_and_trace_max_risk_from_symptomatic(beta * 3);
-        params.probabilities[i].set_hospitalized_per_infectious(rho);
-        params.probabilities[i].set_icu_per_hospitalized(theta);
-        params.probabilities[i].set_dead_per_icu(delta);
+        model.parameters.probabilities[i].set_infection_from_contact(0.06);
+        model.parameters.probabilities[i].set_carrier_infectability(0.67);
+        model.parameters.probabilities[i].set_asymp_per_infectious(alpha);
+        model.parameters.probabilities[i].set_risk_from_symptomatic(beta);
+        model.parameters.probabilities[i].set_test_and_trace_max_risk_from_symptomatic(beta * 3);
+        model.parameters.probabilities[i].set_hospitalized_per_infectious(rho);
+        model.parameters.probabilities[i].set_icu_per_hospitalized(theta);
+        model.parameters.probabilities[i].set_dead_per_icu(delta);
     }
 
-    epi::ContactMatrixGroup& contact_matrix = params.get_contact_patterns();
+    epi::ContactMatrixGroup& contact_matrix = model.parameters.get_contact_patterns();
     contact_matrix[0] = epi::ContactMatrix(Eigen::MatrixXd::Constant(num_groups, num_groups, fact * cont_freq));
     contact_matrix.add_damping(Eigen::MatrixXd::Constant(num_groups, num_groups, 0.7).triangularView<Eigen::Upper>(),
                                epi::SimulationTime(30.));
 
-    epi::set_params_distributions_normal(params, t0, tmax, 0.15);
+    epi::set_params_distributions_normal(model, t0, tmax, 0.15);
 
-    epi::Graph<epi::SecirParams, epi::MigrationEdge> graph;
-    graph.add_node(0, params);
-    graph.add_node(1, params);
-    graph.add_edge(0, 1, Eigen::VectorXd::Constant(params.populations.get_num_compartments(), 0.01));
-    graph.add_edge(1, 0, Eigen::VectorXd::Constant(params.populations.get_num_compartments(), 0.01));
+    epi::Graph<epi::SecirModel<epi::AgeGroup2>, epi::MigrationEdge> graph;
+    graph.add_node(0, model);
+    graph.add_node(1, model);
+    graph.add_edge(0, 1, Eigen::VectorXd::Constant(model.populations.get_num_compartments(), 0.01));
+    graph.add_edge(1, 0, Eigen::VectorXd::Constant(model.populations.get_num_compartments(), 0.01));
 
     epi::write_graph(graph, "graph_parameters");
 
-    epi::Graph<epi::SecirParams, epi::MigrationEdge> graph_read = epi::read_graph("graph_parameters");
+    epi::Graph<epi::SecirModel<epi::AgeGroup2>, epi::MigrationEdge> graph_read =
+        epi::read_graph<epi::SecirModel<epi::AgeGroup2>>("graph_parameters");
 
     auto num_nodes = graph.nodes().size();
     auto num_edges = graph.edges().size();
@@ -399,134 +415,151 @@ TEST(TestSaveParameters, compareGraphs)
     ASSERT_EQ(num_edges, graph_read.edges().size());
 
     for (size_t node = 0; node < num_nodes; node++) {
-        epi::SecirParams graph_params               = graph.nodes()[0].property;
-        epi::ContactMatrixGroup& graph_cont_matrix = graph_params.get_contact_patterns();
+        epi::SecirModel<epi::AgeGroup2> graph_model = graph.nodes()[0].property;
+        epi::ContactMatrixGroup& graph_cont_matrix = graph_model.parameters.get_contact_patterns();
 
-        epi::SecirParams graph_read_params               = graph_read.nodes()[0].property;
-        epi::ContactMatrixGroup& graph_read_cont_matrix = graph_read_params.get_contact_patterns();
+        epi::SecirModel<epi::AgeGroup2> graph_read_model = graph_read.nodes()[0].property;
+        epi::ContactMatrixGroup& graph_read_cont_matrix = graph_read_model.parameters.get_contact_patterns();
 
         ASSERT_EQ(graph_read_cont_matrix.get_num_groups(), static_cast<Eigen::Index>(num_groups));
         ASSERT_EQ(graph_read_cont_matrix, graph_cont_matrix);
-        ASSERT_EQ(graph_params.populations.get_num_compartments(),
-                  graph_read_params.populations.get_num_compartments());
+        ASSERT_EQ(graph_model.populations.get_num_compartments(),
+                  graph_read_model.populations.get_num_compartments());
         ASSERT_EQ(graph.nodes()[node].id, graph_read.nodes()[node].id);
-        EXPECT_THAT(graph_read_params.get_test_and_trace_capacity().value(),
-                    FloatingPointEqual(graph_params.get_test_and_trace_capacity().value(), 1e-12, 1e-12));
-        check_distribution(*graph_params.get_test_and_trace_capacity().get_distribution().get(),
-                           *graph_read_params.get_test_and_trace_capacity().get_distribution().get());
+        EXPECT_THAT(graph_read_model.parameters.get_test_and_trace_capacity().value(),
+                    FloatingPointEqual(graph_model.parameters.get_test_and_trace_capacity().value(), 1e-12, 1e-12));
+        check_distribution(*graph_model.parameters.get_test_and_trace_capacity().get_distribution().get(),
+                           *graph_read_model.parameters.get_test_and_trace_capacity().get_distribution().get());
 
         for (size_t group = 0; group < num_groups; group++) {
-            ASSERT_EQ(graph_params.populations.get({group, epi::SecirCompartments::D}),
-                      graph_read_params.populations.get({group, epi::SecirCompartments::D}));
-            ASSERT_EQ(graph_params.populations.get_total(), graph_read_params.populations.get_total());
+            ASSERT_EQ(graph_model.populations.get((epi::AgeGroup2)group, epi::InfectionType::D),
+                      graph_read_model.populations.get((epi::AgeGroup2)group, epi::InfectionType::D));
+            ASSERT_EQ(graph_model.populations.get_total(), graph_read_model.populations.get_total());
             check_distribution(
-                *graph_params.populations.get({group, epi::SecirCompartments::E}).get_distribution().get(),
-                *graph_read_params.populations.get({group, epi::SecirCompartments::E}).get_distribution().get());
+                *graph_model.populations.get((epi::AgeGroup2)group, epi::InfectionType::E).get_distribution().get(),
+                *graph_read_model.populations.get((epi::AgeGroup2)group, epi::InfectionType::E)
+                     .get_distribution()
+                     .get());
             check_distribution(
-                *graph_params.populations.get({group, epi::SecirCompartments::C}).get_distribution().get(),
-                *graph_read_params.populations.get({group, epi::SecirCompartments::C}).get_distribution().get());
+                *graph_model.populations.get((epi::AgeGroup2)group, epi::InfectionType::C).get_distribution().get(),
+                *graph_read_model.populations.get((epi::AgeGroup2)group, epi::InfectionType::C)
+                     .get_distribution()
+                     .get());
             check_distribution(
-                *graph_params.populations.get({group, epi::SecirCompartments::I}).get_distribution().get(),
-                *graph_read_params.populations.get({group, epi::SecirCompartments::I}).get_distribution().get());
+                *graph_model.populations.get((epi::AgeGroup2)group, epi::InfectionType::I).get_distribution().get(),
+                *graph_read_model.populations.get((epi::AgeGroup2)group, epi::InfectionType::I)
+                     .get_distribution()
+                     .get());
             check_distribution(
-                *graph_params.populations.get({group, epi::SecirCompartments::H}).get_distribution().get(),
-                *graph_read_params.populations.get({group, epi::SecirCompartments::H}).get_distribution().get());
+                *graph_model.populations.get((epi::AgeGroup2)group, epi::InfectionType::H).get_distribution().get(),
+                *graph_read_model.populations.get((epi::AgeGroup2)group, epi::InfectionType::H)
+                     .get_distribution()
+                     .get());
             check_distribution(
-                *graph_params.populations.get({group, epi::SecirCompartments::U}).get_distribution().get(),
-                *graph_read_params.populations.get({group, epi::SecirCompartments::U}).get_distribution().get());
+                *graph_model.populations.get((epi::AgeGroup2)group, epi::InfectionType::U).get_distribution().get(),
+                *graph_read_model.populations.get((epi::AgeGroup2)group, epi::InfectionType::U)
+                     .get_distribution()
+                     .get());
             check_distribution(
-                *graph_params.populations.get({group, epi::SecirCompartments::R}).get_distribution().get(),
-                *graph_read_params.populations.get({group, epi::SecirCompartments::R}).get_distribution().get());
+                *graph_model.populations.get((epi::AgeGroup2)group, epi::InfectionType::R).get_distribution().get(),
+                *graph_read_model.populations.get((epi::AgeGroup2)group, epi::InfectionType::R)
+                     .get_distribution()
+                     .get());
             check_distribution(
-                *graph_params.populations.get({group, epi::SecirCompartments::E}).get_distribution().get(),
-                *graph_read_params.populations.get({group, epi::SecirCompartments::E}).get_distribution().get());
+                *graph_model.populations.get((epi::AgeGroup2)group, epi::InfectionType::E).get_distribution().get(),
+                *graph_read_model.populations.get((epi::AgeGroup2)group, epi::InfectionType::E)
+                     .get_distribution()
+                     .get());
 
-            ASSERT_EQ(graph_params.times[group].get_incubation(), graph_read_params.times[group].get_incubation());
-            ASSERT_EQ(graph_params.times[group].get_infectious_mild(),
-                      graph_read_params.times[group].get_infectious_mild());
-            ASSERT_EQ(graph_params.times[group].get_serialinterval(),
-                      graph_read_params.times[group].get_serialinterval());
-            ASSERT_EQ(graph_params.times[group].get_hospitalized_to_home(),
-                      graph_read_params.times[group].get_hospitalized_to_home());
-            ASSERT_EQ(graph_params.times[group].get_home_to_hospitalized(),
-                      graph_read_params.times[group].get_home_to_hospitalized());
-            ASSERT_EQ(graph_params.times[group].get_infectious_asymp(),
-                      graph_read_params.times[group].get_infectious_asymp());
-            ASSERT_EQ(graph_params.times[group].get_hospitalized_to_icu(),
-                      graph_read_params.times[group].get_hospitalized_to_icu());
-            ASSERT_EQ(graph_params.times[group].get_icu_to_home(), graph_read_params.times[group].get_icu_to_home());
-            ASSERT_EQ(graph_params.times[group].get_icu_to_dead(), graph_read_params.times[group].get_icu_to_dead());
+            ASSERT_EQ(graph_model.parameters.times[group].get_incubation(),
+                      graph_read_model.parameters.times[group].get_incubation());
+            ASSERT_EQ(graph_model.parameters.times[group].get_infectious_mild(),
+                      graph_read_model.parameters.times[group].get_infectious_mild());
+            ASSERT_EQ(graph_model.parameters.times[group].get_serialinterval(),
+                      graph_read_model.parameters.times[group].get_serialinterval());
+            ASSERT_EQ(graph_model.parameters.times[group].get_hospitalized_to_home(),
+                      graph_read_model.parameters.times[group].get_hospitalized_to_home());
+            ASSERT_EQ(graph_model.parameters.times[group].get_home_to_hospitalized(),
+                      graph_read_model.parameters.times[group].get_home_to_hospitalized());
+            ASSERT_EQ(graph_model.parameters.times[group].get_infectious_asymp(),
+                      graph_read_model.parameters.times[group].get_infectious_asymp());
+            ASSERT_EQ(graph_model.parameters.times[group].get_hospitalized_to_icu(),
+                      graph_read_model.parameters.times[group].get_hospitalized_to_icu());
+            ASSERT_EQ(graph_model.parameters.times[group].get_icu_to_home(),
+                      graph_read_model.parameters.times[group].get_icu_to_home());
+            ASSERT_EQ(graph_model.parameters.times[group].get_icu_to_dead(),
+                      graph_read_model.parameters.times[group].get_icu_to_dead());
 
-            ASSERT_EQ(graph_params.probabilities[group].get_infection_from_contact(),
-                      graph_read_params.probabilities[group].get_infection_from_contact());
-            ASSERT_EQ(graph_params.probabilities[group].get_risk_from_symptomatic(),
-                      graph_read_params.probabilities[group].get_risk_from_symptomatic());
-            ASSERT_EQ(graph_params.probabilities[group].get_test_and_trace_max_risk_from_symptomatic(),
-                      graph_read_params.probabilities[group].get_test_and_trace_max_risk_from_symptomatic());
-            ASSERT_EQ(graph_params.probabilities[group].get_asymp_per_infectious(),
-                      graph_read_params.probabilities[group].get_asymp_per_infectious());
-            ASSERT_EQ(graph_params.probabilities[group].get_dead_per_icu(),
-                      graph_read_params.probabilities[group].get_dead_per_icu());
-            ASSERT_EQ(graph_params.probabilities[group].get_hospitalized_per_infectious(),
-                      graph_read_params.probabilities[group].get_hospitalized_per_infectious());
-            ASSERT_EQ(graph_params.probabilities[group].get_icu_per_hospitalized(),
-                      graph_read_params.probabilities[group].get_icu_per_hospitalized());
+            ASSERT_EQ(graph_model.parameters.probabilities[group].get_infection_from_contact(),
+                      graph_read_model.parameters.probabilities[group].get_infection_from_contact());
+            ASSERT_EQ(graph_model.parameters.probabilities[group].get_risk_from_symptomatic(),
+                      graph_read_model.parameters.probabilities[group].get_risk_from_symptomatic());
+            ASSERT_EQ(graph_model.parameters.probabilities[group].get_test_and_trace_max_risk_from_symptomatic(),
+                      graph_read_model.parameters.probabilities[group].get_test_and_trace_max_risk_from_symptomatic());
+            ASSERT_EQ(graph_model.parameters.probabilities[group].get_asymp_per_infectious(),
+                      graph_read_model.parameters.probabilities[group].get_asymp_per_infectious());
+            ASSERT_EQ(graph_model.parameters.probabilities[group].get_dead_per_icu(),
+                      graph_read_model.parameters.probabilities[group].get_dead_per_icu());
+            ASSERT_EQ(graph_model.parameters.probabilities[group].get_hospitalized_per_infectious(),
+                      graph_read_model.parameters.probabilities[group].get_hospitalized_per_infectious());
+            ASSERT_EQ(graph_model.parameters.probabilities[group].get_icu_per_hospitalized(),
+                      graph_read_model.parameters.probabilities[group].get_icu_per_hospitalized());
 
-            check_distribution(*graph_params.times[group].get_incubation().get_distribution().get(),
-                               *graph_read_params.times[group].get_incubation().get_distribution().get());
-            check_distribution(*graph_params.times[group].get_serialinterval().get_distribution().get(),
-                               *graph_read_params.times[group].get_serialinterval().get_distribution().get());
-            check_distribution(*graph_params.times[group].get_infectious_mild().get_distribution().get(),
-                               *graph_read_params.times[group].get_infectious_mild().get_distribution().get());
-            check_distribution(*graph_params.times[group].get_hospitalized_to_home().get_distribution().get(),
-                               *graph_read_params.times[group].get_hospitalized_to_home().get_distribution().get());
-            check_distribution(*graph_params.times[group].get_home_to_hospitalized().get_distribution().get(),
-                               *graph_read_params.times[group].get_home_to_hospitalized().get_distribution().get());
-            check_distribution(*graph_params.times[group].get_infectious_asymp().get_distribution().get(),
-                               *graph_read_params.times[group].get_infectious_asymp().get_distribution().get());
-            check_distribution(*graph_params.times[group].get_hospitalized_to_icu().get_distribution().get(),
-                               *graph_read_params.times[group].get_hospitalized_to_icu().get_distribution().get());
-            check_distribution(*graph_params.times[group].get_icu_to_home().get_distribution().get(),
-                               *graph_read_params.times[group].get_icu_to_home().get_distribution().get());
-            check_distribution(*graph_params.times[group].get_icu_to_dead().get_distribution().get(),
-                               *graph_read_params.times[group].get_icu_to_dead().get_distribution().get());
+             check_distribution(*graph_model.parameters.times[group].get_incubation().get_distribution().get(),
+                                *graph_read_model.parameters.times[group].get_incubation().get_distribution().get());
+             check_distribution(*graph_model.parameters.times[group].get_serialinterval().get_distribution().get(),
+                                *graph_read_model.parameters.times[group].get_serialinterval().get_distribution().get());
+             check_distribution(*graph_model.parameters.times[group].get_infectious_mild().get_distribution().get(),
+                                *graph_read_model.parameters.times[group].get_infectious_mild().get_distribution().get());
+             check_distribution(*graph_model.parameters.times[group].get_hospitalized_to_home().get_distribution().get(),
+                                *graph_read_model.parameters.times[group].get_hospitalized_to_home().get_distribution().get());
+             check_distribution(*graph_model.parameters.times[group].get_home_to_hospitalized().get_distribution().get(),
+                                *graph_read_model.parameters.times[group].get_home_to_hospitalized().get_distribution().get());
+             check_distribution(*graph_model.parameters.times[group].get_infectious_asymp().get_distribution().get(),
+                                *graph_read_model.parameters.times[group].get_infectious_asymp().get_distribution().get());
+             check_distribution(*graph_model.parameters.times[group].get_hospitalized_to_icu().get_distribution().get(),
+                                *graph_read_model.parameters.times[group].get_hospitalized_to_icu().get_distribution().get());
+             check_distribution(*graph_model.parameters.times[group].get_icu_to_home().get_distribution().get(),
+                                *graph_read_model.parameters.times[group].get_icu_to_home().get_distribution().get());
+             check_distribution(*graph_model.parameters.times[group].get_icu_to_dead().get_distribution().get(),
+                                *graph_read_model.parameters.times[group].get_icu_to_dead().get_distribution().get());
 
             check_distribution(
-                *graph_params.probabilities[group].get_infection_from_contact().get_distribution().get(),
-                *graph_read_params.probabilities[group].get_infection_from_contact().get_distribution().get());
+                *graph_model.parameters.times[group].get_infectious_mild().get_distribution().get(),
+                *graph_read_model.parameters.times[group].get_infectious_mild().get_distribution().get());
             check_distribution(
-                *graph_params.probabilities[group].get_asymp_per_infectious().get_distribution().get(),
-                *graph_read_params.probabilities[group].get_asymp_per_infectious().get_distribution().get());
+                *graph_model.parameters.times[group].get_hospitalized_to_home().get_distribution().get(),
+                *graph_read_model.parameters.times[group].get_hospitalized_to_home().get_distribution().get());
             check_distribution(
-                *graph_params.probabilities[group].get_risk_from_symptomatic().get_distribution().get(),
-                *graph_read_params.probabilities[group].get_risk_from_symptomatic().get_distribution().get());
-            check_distribution(*graph_params.probabilities[group]
+                *graph_model.parameters.times[group].get_home_to_hospitalized().get_distribution().get(),
+                *graph_read_model.parameters.times[group].get_home_to_hospitalized().get_distribution().get());
+            check_distribution(*graph_model.parameters.probabilities[group]
                                     .get_test_and_trace_max_risk_from_symptomatic()
                                     .get_distribution()
                                     .get(),
-                               *graph_read_params.probabilities[group]
+                               *graph_read_model.parameters.probabilities[group]
                                     .get_test_and_trace_max_risk_from_symptomatic()
                                     .get_distribution()
                                     .get());
-            check_distribution(*graph_params.probabilities[group].get_dead_per_icu().get_distribution().get(),
-                               *graph_read_params.probabilities[group].get_dead_per_icu().get_distribution().get());
+            check_distribution(*graph_model.parameters.probabilities[group].get_dead_per_icu().get_distribution().get(),
+                               *graph_read_model.parameters.probabilities[group].get_dead_per_icu().get_distribution().get());
             check_distribution(
-                *graph_params.probabilities[group].get_hospitalized_per_infectious().get_distribution().get(),
-                *graph_read_params.probabilities[group].get_hospitalized_per_infectious().get_distribution().get());
+                *graph_model.parameters.times[group].get_infectious_asymp().get_distribution().get(),
+                *graph_read_model.parameters.times[group].get_infectious_asymp().get_distribution().get());
             check_distribution(
-                *graph_params.probabilities[group].get_icu_per_hospitalized().get_distribution().get(),
-                *graph_read_params.probabilities[group].get_icu_per_hospitalized().get_distribution().get());
+                *graph_model.parameters.probabilities[group].get_icu_per_hospitalized().get_distribution().get(),
+                *graph_read_model.parameters.probabilities[group].get_icu_per_hospitalized().get_distribution().get());
 
-            check_distribution(*graph_params.get_contact_patterns().get_distribution_damp_nb().get(),
-                               *graph_read_params.get_contact_patterns().get_distribution_damp_nb().get());
-            check_distribution(*graph_params.get_contact_patterns().get_distribution_damp_days().get(),
-                               *graph_read_params.get_contact_patterns().get_distribution_damp_days().get());
-            check_distribution(*graph_params.get_contact_patterns().get_distribution_damp_diag_base().get(),
-                               *graph_read_params.get_contact_patterns().get_distribution_damp_diag_base().get());
-            check_distribution(*graph_params.get_contact_patterns().get_distribution_damp_diag_rel().get(),
-                               *graph_read_params.get_contact_patterns().get_distribution_damp_diag_rel().get());
-            check_distribution(*graph_params.get_contact_patterns().get_distribution_damp_offdiag_rel().get(),
-                               *graph_read_params.get_contact_patterns().get_distribution_damp_offdiag_rel().get());
+            check_distribution(*graph_model.parameters.get_contact_patterns().get_distribution_damp_nb().get(),
+                               *graph_read_model.parameters.get_contact_patterns().get_distribution_damp_nb().get());
+            check_distribution(*graph_model.parameters.get_contact_patterns().get_distribution_damp_days().get(),
+                               *graph_read_model.parameters.get_contact_patterns().get_distribution_damp_days().get());
+            check_distribution(*graph_model.parameters.get_contact_patterns().get_distribution_damp_diag_base().get(),
+                               *graph_read_model.parameters.get_contact_patterns().get_distribution_damp_diag_base().get());
+            check_distribution(*graph_model.parameters.get_contact_patterns().get_distribution_damp_diag_rel().get(),
+                               *graph_read_model.parameters.get_contact_patterns().get_distribution_damp_diag_rel().get());
+            check_distribution(*graph_model.parameters.get_contact_patterns().get_distribution_damp_offdiag_rel().get(),
+                               *graph_read_model.parameters.get_contact_patterns().get_distribution_damp_offdiag_rel().get());
         }
 
         ASSERT_THAT(graph_read.edges(), testing::ElementsAreArray(graph.edges()));
@@ -549,7 +582,9 @@ TEST(TestSaveParameters, compareGraphWithFile)
     size_t num_groups = 2;
     double fact       = 1.0 / (double)num_groups;
 
-    epi::SecirParams params(num_groups);
+    using Model = epi::SecirModel<epi::AgeGroup2>;
+    Model model;
+    auto& params = model.parameters;
 
     for (size_t i = 0; i < num_groups; i++) {
         params.times[i].set_incubation(tinc);
@@ -562,15 +597,15 @@ TEST(TestSaveParameters, compareGraphWithFile)
         params.times[i].set_infectious_asymp(tinfasy);
         params.times[i].set_icu_to_death(ticu2death);
 
-        params.populations.set({i, epi::SecirCompartments::E}, fact * num_exp_t0);
-        params.populations.set({i, epi::SecirCompartments::C}, fact * num_car_t0);
-        params.populations.set({i, epi::SecirCompartments::I}, fact * num_inf_t0);
-        params.populations.set({i, epi::SecirCompartments::H}, fact * num_hosp_t0);
-        params.populations.set({i, epi::SecirCompartments::U}, fact * num_icu_t0);
-        params.populations.set({i, epi::SecirCompartments::R}, fact * num_rec_t0);
-        params.populations.set({i, epi::SecirCompartments::D}, fact * num_dead_t0);
-        params.populations.set_difference_from_group_total({i, epi::SecirCompartments::S}, epi::SecirCategory::AgeGroup,
-                                                           i, fact * num_total_t0);
+        model.populations.set(fact * num_exp_t0, (epi::AgeGroup2)i, epi::InfectionType::E);
+        model.populations.set(fact * num_car_t0, (epi::AgeGroup2)i, epi::InfectionType::C);
+        model.populations.set(fact * num_inf_t0, (epi::AgeGroup2)i, epi::InfectionType::I);
+        model.populations.set(fact * num_hosp_t0, (epi::AgeGroup2)i, epi::InfectionType::H);
+        model.populations.set(fact * num_icu_t0, (epi::AgeGroup2)i, epi::InfectionType::U);
+        model.populations.set(fact * num_rec_t0, (epi::AgeGroup2)i, epi::InfectionType::R);
+        model.populations.set(fact * num_dead_t0, (epi::AgeGroup2)i, epi::InfectionType::D);
+        model.populations.set_difference_from_group_total(fact * num_total_t0, (epi::AgeGroup2)i, (epi::AgeGroup2)i,
+                                                          epi::InfectionType::S);
 
         params.probabilities[i].set_infection_from_contact(0.06);
         params.probabilities[i].set_carrier_infectability(0.67);
@@ -586,15 +621,15 @@ TEST(TestSaveParameters, compareGraphWithFile)
     contact_matrix.add_damping(Eigen::MatrixXd::Constant(num_groups, num_groups, 0.7).triangularView<Eigen::Upper>(),
                                epi::SimulationTime(30.));
 
-    epi::set_params_distributions_normal(params, t0, tmax, 0.15);
+    epi::set_params_distributions_normal(model, t0, tmax, 0.15);
 
-    epi::Graph<epi::SecirParams, epi::MigrationEdge> graph;
-    graph.add_node(0, params);
-    graph.add_node(1, params);
-    graph.add_edge(0, 1, Eigen::VectorXd::Constant(params.populations.get_num_compartments(), 0.01));
-    graph.add_edge(1, 0, Eigen::VectorXd::Constant(params.populations.get_num_compartments(), 0.01));
+    epi::Graph<Model, epi::MigrationEdge> graph;
+    graph.add_node(0, model);
+    graph.add_node(1, model);
+    graph.add_edge(0, 1, Eigen::VectorXd::Constant(model.populations.get_num_compartments(), 0.01));
+    graph.add_edge(1, 0, Eigen::VectorXd::Constant(model.populations.get_num_compartments(), 0.01));
 
-    epi::Graph<epi::SecirParams, epi::MigrationEdge> graph_read = epi::read_graph(TEST_DATA_DIR);
+    epi::Graph<Model, epi::MigrationEdge> graph_read = epi::read_graph<Model>(TEST_DATA_DIR);
 
     auto num_nodes = graph.nodes().size();
     auto num_edges = graph.edges().size();
@@ -603,120 +638,60 @@ TEST(TestSaveParameters, compareGraphWithFile)
     ASSERT_EQ(num_edges, graph_read.edges().size());
 
     for (size_t node = 0; node < num_nodes; node++) {
-        epi::SecirParams graph_params                         = graph.nodes()[0].property;
-        epi::ContactMatrixGroup graph_cont_freq = graph_params.get_contact_patterns();
+        Model graph_model                         = graph.nodes()[0].property;
+        epi::ContactMatrixGroup graph_cont_freq = graph_model.parameters.get_contact_patterns();
 
-        epi::SecirParams graph_read_params                         = graph_read.nodes()[0].property;
-        epi::ContactMatrixGroup graph_read_cont_freq = graph_read_params.get_contact_patterns();
+        Model graph_read_model                         = graph_read.nodes()[0].property;
+        epi::ContactMatrixGroup graph_read_cont_freq = graph_read_model.parameters.get_contact_patterns();
 
         ASSERT_EQ(num_groups, static_cast<size_t>(graph_read_cont_freq.get_num_groups()));
-        ASSERT_EQ(graph_params.populations.get_num_compartments(),
-                  graph_read_params.populations.get_num_compartments());
+        ASSERT_EQ(graph_model.populations.get_num_compartments(),
+                  graph_read_model.populations.get_num_compartments());
 
         for (size_t group = 0; group < num_groups; group++) {
-            ASSERT_EQ(graph_params.populations.get({group, epi::SecirCompartments::D}),
-                      graph_read_params.populations.get({group, epi::SecirCompartments::D}));
-            ASSERT_EQ(graph_params.populations.get_total(), graph_read_params.populations.get_total());
+            ASSERT_EQ(graph_model.populations.get((epi::AgeGroup2)group, epi::InfectionType::D),
+                      graph_read_model.populations.get((epi::AgeGroup2)group, epi::InfectionType::D));
+            ASSERT_EQ(graph_model.populations.get_total(), graph_read_model.populations.get_total());
             check_distribution(
-                *graph_params.populations.get({group, epi::SecirCompartments::E}).get_distribution().get(),
-                *graph_read_params.populations.get({group, epi::SecirCompartments::E}).get_distribution().get());
+                *graph_model.parameters.probabilities[group].get_infection_from_contact().get_distribution().get(),
+                *graph_read_model.parameters.probabilities[group]
+                     .get_infection_from_contact()
+                     .get_distribution()
+                     .get());
             check_distribution(
-                *graph_params.populations.get({group, epi::SecirCompartments::C}).get_distribution().get(),
-                *graph_read_params.populations.get({group, epi::SecirCompartments::C}).get_distribution().get());
+                *graph_model.parameters.probabilities[group].get_asymp_per_infectious().get_distribution().get(),
+                *graph_read_model.parameters.probabilities[group].get_asymp_per_infectious().get_distribution().get());
             check_distribution(
-                *graph_params.populations.get({group, epi::SecirCompartments::I}).get_distribution().get(),
-                *graph_read_params.populations.get({group, epi::SecirCompartments::I}).get_distribution().get());
+                *graph_model.parameters.probabilities[group].get_risk_from_symptomatic().get_distribution().get(),
+                *graph_read_model.parameters.probabilities[group].get_risk_from_symptomatic().get_distribution().get());
             check_distribution(
-                *graph_params.populations.get({group, epi::SecirCompartments::H}).get_distribution().get(),
-                *graph_read_params.populations.get({group, epi::SecirCompartments::H}).get_distribution().get());
+                *graph_model.parameters.probabilities[group].get_dead_per_icu().get_distribution().get(),
+                *graph_read_model.parameters.probabilities[group].get_dead_per_icu().get_distribution().get());
             check_distribution(
-                *graph_params.populations.get({group, epi::SecirCompartments::U}).get_distribution().get(),
-                *graph_read_params.populations.get({group, epi::SecirCompartments::U}).get_distribution().get());
+                *graph_model.parameters.probabilities[group].get_hospitalized_per_infectious().get_distribution().get(),
+                *graph_read_model.parameters.probabilities[group]
+                     .get_hospitalized_per_infectious()
+                     .get_distribution()
+                     .get());
             check_distribution(
-                *graph_params.populations.get({group, epi::SecirCompartments::R}).get_distribution().get(),
-                *graph_read_params.populations.get({group, epi::SecirCompartments::R}).get_distribution().get());
-            check_distribution(
-                *graph_params.populations.get({group, epi::SecirCompartments::E}).get_distribution().get(),
-                *graph_read_params.populations.get({group, epi::SecirCompartments::E}).get_distribution().get());
-
-            ASSERT_EQ(graph_params.times[group].get_incubation(), graph_read_params.times[group].get_incubation());
-            ASSERT_EQ(graph_params.times[group].get_infectious_mild(),
-                      graph_read_params.times[group].get_infectious_mild());
-            ASSERT_EQ(graph_params.times[group].get_serialinterval(),
-                      graph_read_params.times[group].get_serialinterval());
-            ASSERT_EQ(graph_params.times[group].get_hospitalized_to_home(),
-                      graph_read_params.times[group].get_hospitalized_to_home());
-            ASSERT_EQ(graph_params.times[group].get_home_to_hospitalized(),
-                      graph_read_params.times[group].get_home_to_hospitalized());
-            ASSERT_EQ(graph_params.times[group].get_infectious_asymp(),
-                      graph_read_params.times[group].get_infectious_asymp());
-            ASSERT_EQ(graph_params.times[group].get_hospitalized_to_icu(),
-                      graph_read_params.times[group].get_hospitalized_to_icu());
-            ASSERT_EQ(graph_params.times[group].get_icu_to_home(), graph_read_params.times[group].get_icu_to_home());
-            ASSERT_EQ(graph_params.times[group].get_icu_to_dead(), graph_read_params.times[group].get_icu_to_dead());
-
-            ASSERT_EQ(graph_params.probabilities[group].get_infection_from_contact(),
-                      graph_read_params.probabilities[group].get_infection_from_contact());
-            ASSERT_EQ(graph_params.probabilities[group].get_risk_from_symptomatic(),
-                      graph_read_params.probabilities[group].get_risk_from_symptomatic());
-            ASSERT_EQ(graph_params.probabilities[group].get_asymp_per_infectious(),
-                      graph_read_params.probabilities[group].get_asymp_per_infectious());
-            ASSERT_EQ(graph_params.probabilities[group].get_dead_per_icu(),
-                      graph_read_params.probabilities[group].get_dead_per_icu());
-            ASSERT_EQ(graph_params.probabilities[group].get_hospitalized_per_infectious(),
-                      graph_read_params.probabilities[group].get_hospitalized_per_infectious());
-            ASSERT_EQ(graph_params.probabilities[group].get_icu_per_hospitalized(),
-                      graph_read_params.probabilities[group].get_icu_per_hospitalized());
-
-            check_distribution(*graph_params.times[group].get_incubation().get_distribution().get(),
-                               *graph_read_params.times[group].get_incubation().get_distribution().get());
-            check_distribution(*graph_params.times[group].get_serialinterval().get_distribution().get(),
-                               *graph_read_params.times[group].get_serialinterval().get_distribution().get());
-            check_distribution(*graph_params.times[group].get_infectious_mild().get_distribution().get(),
-                               *graph_read_params.times[group].get_infectious_mild().get_distribution().get());
-            check_distribution(*graph_params.times[group].get_hospitalized_to_home().get_distribution().get(),
-                               *graph_read_params.times[group].get_hospitalized_to_home().get_distribution().get());
-            check_distribution(*graph_params.times[group].get_home_to_hospitalized().get_distribution().get(),
-                               *graph_read_params.times[group].get_home_to_hospitalized().get_distribution().get());
-            check_distribution(*graph_params.times[group].get_infectious_asymp().get_distribution().get(),
-                               *graph_read_params.times[group].get_infectious_asymp().get_distribution().get());
-            check_distribution(*graph_params.times[group].get_hospitalized_to_icu().get_distribution().get(),
-                               *graph_read_params.times[group].get_hospitalized_to_icu().get_distribution().get());
-            check_distribution(*graph_params.times[group].get_icu_to_home().get_distribution().get(),
-                               *graph_read_params.times[group].get_icu_to_home().get_distribution().get());
-            check_distribution(*graph_params.times[group].get_icu_to_dead().get_distribution().get(),
-                               *graph_read_params.times[group].get_icu_to_dead().get_distribution().get());
-
-            check_distribution(
-                *graph_params.probabilities[group].get_infection_from_contact().get_distribution().get(),
-                *graph_read_params.probabilities[group].get_infection_from_contact().get_distribution().get());
-            check_distribution(
-                *graph_params.probabilities[group].get_asymp_per_infectious().get_distribution().get(),
-                *graph_read_params.probabilities[group].get_asymp_per_infectious().get_distribution().get());
-            check_distribution(
-                *graph_params.probabilities[group].get_risk_from_symptomatic().get_distribution().get(),
-                *graph_read_params.probabilities[group].get_risk_from_symptomatic().get_distribution().get());
-            check_distribution(*graph_params.probabilities[group].get_dead_per_icu().get_distribution().get(),
-                               *graph_read_params.probabilities[group].get_dead_per_icu().get_distribution().get());
-            check_distribution(
-                *graph_params.probabilities[group].get_hospitalized_per_infectious().get_distribution().get(),
-                *graph_read_params.probabilities[group].get_hospitalized_per_infectious().get_distribution().get());
-            check_distribution(
-                *graph_params.probabilities[group].get_icu_per_hospitalized().get_distribution().get(),
-                *graph_read_params.probabilities[group].get_icu_per_hospitalized().get_distribution().get());
+                *graph_model.parameters.probabilities[group].get_icu_per_hospitalized().get_distribution().get(),
+                *graph_read_model.parameters.probabilities[group].get_icu_per_hospitalized().get_distribution().get());
 
             ASSERT_EQ(graph_cont_freq, graph_read_cont_freq);
 
-            check_distribution(*graph_params.get_contact_patterns().get_distribution_damp_nb().get(),
-                               *graph_read_params.get_contact_patterns().get_distribution_damp_nb().get());
-            check_distribution(*graph_params.get_contact_patterns().get_distribution_damp_days().get(),
-                               *graph_read_params.get_contact_patterns().get_distribution_damp_days().get());
-            check_distribution(*graph_params.get_contact_patterns().get_distribution_damp_diag_base().get(),
-                               *graph_read_params.get_contact_patterns().get_distribution_damp_diag_base().get());
-            check_distribution(*graph_params.get_contact_patterns().get_distribution_damp_diag_rel().get(),
-                               *graph_read_params.get_contact_patterns().get_distribution_damp_diag_rel().get());
-            check_distribution(*graph_params.get_contact_patterns().get_distribution_damp_offdiag_rel().get(),
-                               *graph_read_params.get_contact_patterns().get_distribution_damp_offdiag_rel().get());
+            check_distribution(*graph_model.parameters.get_contact_patterns().get_distribution_damp_nb().get(),
+                               *graph_read_model.parameters.get_contact_patterns().get_distribution_damp_nb().get());
+            check_distribution(*graph_model.parameters.get_contact_patterns().get_distribution_damp_days().get(),
+                               *graph_read_model.parameters.get_contact_patterns().get_distribution_damp_days().get());
+            check_distribution(
+                *graph_model.parameters.get_contact_patterns().get_distribution_damp_diag_base().get(),
+                *graph_read_model.parameters.get_contact_patterns().get_distribution_damp_diag_base().get());
+            check_distribution(
+                *graph_model.parameters.get_contact_patterns().get_distribution_damp_diag_rel().get(),
+                *graph_read_model.parameters.get_contact_patterns().get_distribution_damp_diag_rel().get());
+            check_distribution(
+                *graph_model.parameters.get_contact_patterns().get_distribution_damp_offdiag_rel().get(),
+                *graph_read_model.parameters.get_contact_patterns().get_distribution_damp_offdiag_rel().get());
         }
 
         ASSERT_THAT(graph_read.edges(), testing::ElementsAreArray(graph.edges()));
@@ -725,26 +700,26 @@ TEST(TestSaveParameters, compareGraphWithFile)
 
 TEST(TestSaveParameters, ReadPopulationDataAllAges)
 {
-    epi::SecirParams params(1);
+    epi::SecirModel<epi::AgeGroup1> model;
     std::vector<double> ranges = {100};
 
     std::string path = TEST_DATA_DIR;
-    epi::read_population_data_germany(params, ranges, 5, 5, path);
+    epi::read_population_data_germany(model, ranges, 5, 5, path);
 
-    ASSERT_EQ(params.populations.get({0, epi::SecirCompartments::I}), 0);
-    ASSERT_EQ(params.populations.get({0, epi::SecirCompartments::D}), 8626);
-    ASSERT_EQ(params.populations.get({0, epi::SecirCompartments::R}), 160148);
-    ASSERT_EQ(params.populations.get({0, epi::SecirCompartments::U}), 1937);
-    ASSERT_EQ(params.populations.get_total(), 83166695);
+    ASSERT_EQ(model.populations.get((epi::AgeGroup1)0, epi::InfectionType::I), 0);
+    ASSERT_EQ(model.populations.get((epi::AgeGroup1)0, epi::InfectionType::D), 8626);
+    ASSERT_EQ(model.populations.get((epi::AgeGroup1)0, epi::InfectionType::R), 160148);
+    ASSERT_EQ(model.populations.get((epi::AgeGroup1)0, epi::InfectionType::U), 1937);
+    ASSERT_EQ(model.populations.get_total(), 83166695);
 }
 
 TEST(TestSaveParameters, ReadPopulationDataRKIAges)
 {
-    epi::SecirParams params(6);
+    epi::SecirModel<epi::AgeGroup6> model;
     std::vector<double> ranges = {5., 10., 20., 25., 20., 20.};
 
     std::string path = TEST_DATA_DIR;
-    epi::read_population_data_germany(params, ranges, 5, 5, path);
+    epi::read_population_data_germany(model, ranges, 5, 5, path);
 
     std::vector<std::string> age_names = {"A00-A04", "A05-A14", "A15-A34", "A35-A59", "A60-A79", "A80+", "unknown"};
 
@@ -753,22 +728,22 @@ TEST(TestSaveParameters, ReadPopulationDataRKIAges)
     std::vector<double> recovered = {1516, 3656, 41947, 70301, 29224, 13504};
 
     for (size_t i = 0; i < ranges.size(); i++) {
-        ASSERT_EQ(params.populations.get({i, epi::SecirCompartments::I}), infected[i]);
-        ASSERT_EQ(params.populations.get({i, epi::SecirCompartments::D}), deaths[i]);
-        ASSERT_EQ(params.populations.get({i, epi::SecirCompartments::R}), recovered[i]);
-        ASSERT_EQ(params.populations.get({i, epi::SecirCompartments::U}), 1937 / (double)ranges.size());
+        ASSERT_EQ(model.populations.get((epi::AgeGroup6)i, epi::InfectionType::I), infected[i]);
+        ASSERT_EQ(model.populations.get((epi::AgeGroup6)i, epi::InfectionType::D), deaths[i]);
+        ASSERT_EQ(model.populations.get((epi::AgeGroup6)i, epi::InfectionType::R), recovered[i]);
+        ASSERT_EQ(model.populations.get((epi::AgeGroup6)i, epi::InfectionType::U), 1937 / (double)ranges.size());
     }
 
-    EXPECT_NEAR(params.populations.get_total(), 83166695, 1e-6);
+    EXPECT_NEAR(model.populations.get_total(), 83166695, 1e-6);
 }
 
 TEST(TestSaveParameters, ReadPopulationDataMultipleAges)
 {
-    epi::SecirParams params(8);
+    epi::SecirModel<epi::AgeGroup8> model;
     std::vector<double> ranges = {5., 15., 15., 10., 10., 10., 10., 25.};
 
     std::string path = TEST_DATA_DIR;
-    epi::read_population_data_germany(params, ranges, 5, 5, path);
+    epi::read_population_data_germany(model, ranges, 5, 5, path);
 
     double infected_param  = 0.;
     double deaths_param    = 0.;
@@ -776,92 +751,92 @@ TEST(TestSaveParameters, ReadPopulationDataMultipleAges)
     double icu_param       = 0.;
 
     for (size_t i = 0; i < ranges.size(); i++) {
-        infected_param += params.populations.get({i, epi::SecirCompartments::I});
-        deaths_param += params.populations.get({i, epi::SecirCompartments::D});
-        recovered_param += params.populations.get({i, epi::SecirCompartments::R});
-        icu_param += params.populations.get({i, epi::SecirCompartments::U});
+        infected_param += model.populations.get((epi::AgeGroup8)i, epi::InfectionType::I);
+        deaths_param += model.populations.get((epi::AgeGroup8)i, epi::InfectionType::D);
+        recovered_param += model.populations.get((epi::AgeGroup8)i, epi::InfectionType::R);
+        icu_param += model.populations.get((epi::AgeGroup8)i, epi::InfectionType::U);
     }
 
     std::vector<double> infected  = {0, 0, 0, 0, 0, 0};
     std::vector<double> deaths    = {1, 0, 18, 391, 2791, 5425};
     std::vector<double> recovered = {1516, 3656, 41947, 70301, 29224, 13504};
 
-    ASSERT_EQ(params.populations.get({0, epi::SecirCompartments::I}), infected[0]);
-    ASSERT_EQ(params.populations.get({0, epi::SecirCompartments::D}), deaths[0]);
-    ASSERT_EQ(params.populations.get({0, epi::SecirCompartments::R}), recovered[0]);
-    ASSERT_EQ(params.populations.get({0, epi::SecirCompartments::U}), 1937 / (double)ranges.size());
+    ASSERT_EQ(model.populations.get((epi::AgeGroup8)0, epi::InfectionType::I), infected[0]);
+    ASSERT_EQ(model.populations.get((epi::AgeGroup8)0, epi::InfectionType::D), deaths[0]);
+    ASSERT_EQ(model.populations.get((epi::AgeGroup8)0, epi::InfectionType::R), recovered[0]);
+    ASSERT_EQ(model.populations.get((epi::AgeGroup8)0, epi::InfectionType::U), 1937 / (double)ranges.size());
 
-    ASSERT_EQ(params.populations.get({1, epi::SecirCompartments::I}), infected[1] + (1.0 / 4.0) * infected[2]);
-    ASSERT_EQ(params.populations.get({1, epi::SecirCompartments::D}), deaths[1] + (1.0 / 4.0) * deaths[2]);
-    ASSERT_EQ(params.populations.get({1, epi::SecirCompartments::R}), recovered[1] + (1.0 / 4.0) * recovered[2]);
-    ASSERT_EQ(params.populations.get({1, epi::SecirCompartments::U}), 1937 / (double)ranges.size());
+    ASSERT_EQ(model.populations.get((epi::AgeGroup8)1, epi::InfectionType::I), infected[1] + (1.0 / 4.0) * infected[2]);
+    ASSERT_EQ(model.populations.get((epi::AgeGroup8)1, epi::InfectionType::D), deaths[1] + (1.0 / 4.0) * deaths[2]);
+    ASSERT_EQ(model.populations.get((epi::AgeGroup8)1, epi::InfectionType::R), recovered[1] + (1.0 / 4.0) * recovered[2]);
+    ASSERT_EQ(model.populations.get((epi::AgeGroup8)1, epi::InfectionType::U), 1937 / (double)ranges.size());
 
-    ASSERT_EQ(params.populations.get({2, epi::SecirCompartments::I}), (3.0 / 4.0) * infected[2]);
-    ASSERT_EQ(params.populations.get({2, epi::SecirCompartments::D}), (3.0 / 4.0) * deaths[2]);
-    ASSERT_EQ(params.populations.get({2, epi::SecirCompartments::R}), (3.0 / 4.0) * recovered[2]);
-    ASSERT_EQ(params.populations.get({2, epi::SecirCompartments::U}), 1937 / (double)ranges.size());
+    ASSERT_EQ(model.populations.get((epi::AgeGroup8)2, epi::InfectionType::I), (3.0 / 4.0) * infected[2]);
+    ASSERT_EQ(model.populations.get((epi::AgeGroup8)2, epi::InfectionType::D), (3.0 / 4.0) * deaths[2]);
+    ASSERT_EQ(model.populations.get((epi::AgeGroup8)2, epi::InfectionType::R), (3.0 / 4.0) * recovered[2]);
+    ASSERT_EQ(model.populations.get((epi::AgeGroup8)2, epi::InfectionType::U), 1937 / (double)ranges.size());
 
-    ASSERT_EQ(params.populations.get({3, epi::SecirCompartments::I}), (2.0 / 5.0) * infected[3]);
-    ASSERT_EQ(params.populations.get({3, epi::SecirCompartments::D}), (2.0 / 5.0) * deaths[3]);
-    ASSERT_EQ(params.populations.get({3, epi::SecirCompartments::R}), (2.0 / 5.0) * recovered[3]);
-    ASSERT_EQ(params.populations.get({3, epi::SecirCompartments::U}), 1937 / (double)ranges.size());
+    ASSERT_EQ(model.populations.get((epi::AgeGroup8)3, epi::InfectionType::I), (2.0 / 5.0) * infected[3]);
+    ASSERT_EQ(model.populations.get((epi::AgeGroup8)3, epi::InfectionType::D), (2.0 / 5.0) * deaths[3]);
+    ASSERT_EQ(model.populations.get((epi::AgeGroup8)3, epi::InfectionType::R), (2.0 / 5.0) * recovered[3]);
+    ASSERT_EQ(model.populations.get((epi::AgeGroup8)3, epi::InfectionType::U), 1937 / (double)ranges.size());
 
-    ASSERT_EQ(params.populations.get({4, epi::SecirCompartments::I}), (2.0 / 5.0) * infected[3]);
-    ASSERT_EQ(params.populations.get({4, epi::SecirCompartments::D}), (2.0 / 5.0) * deaths[3]);
-    ASSERT_EQ(params.populations.get({4, epi::SecirCompartments::R}), (2.0 / 5.0) * recovered[3]);
-    ASSERT_EQ(params.populations.get({4, epi::SecirCompartments::U}), 1937 / (double)ranges.size());
+    ASSERT_EQ(model.populations.get((epi::AgeGroup8)4, epi::InfectionType::I), (2.0 / 5.0) * infected[3]);
+    ASSERT_EQ(model.populations.get((epi::AgeGroup8)4, epi::InfectionType::D), (2.0 / 5.0) * deaths[3]);
+    ASSERT_EQ(model.populations.get((epi::AgeGroup8)4, epi::InfectionType::R), (2.0 / 5.0) * recovered[3]);
+    ASSERT_EQ(model.populations.get((epi::AgeGroup8)4, epi::InfectionType::U), 1937 / (double)ranges.size());
 
-    ASSERT_EQ(params.populations.get({5, epi::SecirCompartments::I}),
+    ASSERT_EQ(model.populations.get((epi::AgeGroup8)5, epi::InfectionType::I),
               (1.0 / 5.0) * infected[3] + (1.0 / 4.0) * infected[4]);
-    ASSERT_EQ(params.populations.get({5, epi::SecirCompartments::D}),
+    ASSERT_EQ(model.populations.get((epi::AgeGroup8)5, epi::InfectionType::D),
               (1.0 / 5.0) * deaths[3] + (1.0 / 4.0) * deaths[4]);
-    ASSERT_EQ(params.populations.get({5, epi::SecirCompartments::R}),
+    ASSERT_EQ(model.populations.get((epi::AgeGroup8)5, epi::InfectionType::R),
               (1.0 / 5.0) * recovered[3] + (1.0 / 4.0) * recovered[4]);
-    ASSERT_EQ(params.populations.get({5, epi::SecirCompartments::U}), 1937 / (double)ranges.size());
+    ASSERT_EQ(model.populations.get((epi::AgeGroup8)5, epi::InfectionType::U), 1937 / (double)ranges.size());
 
-    ASSERT_EQ(params.populations.get({6, epi::SecirCompartments::I}), (2.0 / 4.0) * infected[4]);
-    ASSERT_EQ(params.populations.get({6, epi::SecirCompartments::D}), (2.0 / 4.0) * deaths[4]);
-    ASSERT_EQ(params.populations.get({6, epi::SecirCompartments::R}), (2.0 / 4.0) * recovered[4]);
-    ASSERT_EQ(params.populations.get({6, epi::SecirCompartments::U}), 1937 / (double)ranges.size());
+    ASSERT_EQ(model.populations.get((epi::AgeGroup8)6, epi::InfectionType::I), (2.0 / 4.0) * infected[4]);
+    ASSERT_EQ(model.populations.get((epi::AgeGroup8)6, epi::InfectionType::D), (2.0 / 4.0) * deaths[4]);
+    ASSERT_EQ(model.populations.get((epi::AgeGroup8)6, epi::InfectionType::R), (2.0 / 4.0) * recovered[4]);
+    ASSERT_EQ(model.populations.get((epi::AgeGroup8)6, epi::InfectionType::U), 1937 / (double)ranges.size());
 
-    ASSERT_EQ(params.populations.get({7, epi::SecirCompartments::I}), (1.0 / 4.0) * infected[4] + infected[5]);
-    ASSERT_EQ(params.populations.get({7, epi::SecirCompartments::D}), (1.0 / 4.0) * deaths[4] + deaths[5]);
-    ASSERT_EQ(params.populations.get({7, epi::SecirCompartments::R}), (1.0 / 4.0) * recovered[4] + recovered[5]);
-    ASSERT_EQ(params.populations.get({7, epi::SecirCompartments::U}), 1937 / (double)ranges.size());
+    ASSERT_EQ(model.populations.get((epi::AgeGroup8)7, epi::InfectionType::I), (1.0 / 4.0) * infected[4] + infected[5]);
+    ASSERT_EQ(model.populations.get((epi::AgeGroup8)7, epi::InfectionType::D), (1.0 / 4.0) * deaths[4] + deaths[5]);
+    ASSERT_EQ(model.populations.get((epi::AgeGroup8)7, epi::InfectionType::R), (1.0 / 4.0) * recovered[4] + recovered[5]);
+    ASSERT_EQ(model.populations.get((epi::AgeGroup8)7, epi::InfectionType::U), 1937 / (double)ranges.size());
 
     EXPECT_NEAR(0, infected_param, 1e-6);
     EXPECT_NEAR(8626, deaths_param, 1e-6);
     EXPECT_NEAR(160148, recovered_param, 1e-6);
     EXPECT_NEAR(1937, icu_param, 1e-6);
-    EXPECT_NEAR(params.populations.get_total(), 83166695, 1e-6);
+    EXPECT_NEAR(model.populations.get_total(), 83166695, 1e-6);
 }
 
 TEST(TestSaveParameters, ReadPopulationDataStateAllAges)
 {
-    epi::SecirParams params(1);
+    epi::SecirModel<epi::AgeGroup1> model;
     std::vector<double> ranges = {100};
 
     std::string path = TEST_DATA_DIR;
-    epi::read_population_data_state(params, ranges, 5, 5, 1, path);
+    epi::read_population_data_state(model, ranges, 5, 5, 1, path);
 
-    ASSERT_EQ(params.populations.get({0, epi::SecirCompartments::I}), 0);
-    ASSERT_EQ(params.populations.get({0, epi::SecirCompartments::D}), 145);
-    ASSERT_EQ(params.populations.get({0, epi::SecirCompartments::R}), 2741);
-    ASSERT_EQ(params.populations.get({0, epi::SecirCompartments::U}), 18);
-    ASSERT_EQ(params.populations.get_total(), 2903777);
+    ASSERT_EQ(model.populations.get((epi::AgeGroup1)0, epi::InfectionType::I), 0);
+    ASSERT_EQ(model.populations.get((epi::AgeGroup1)0, epi::InfectionType::D), 145);
+    ASSERT_EQ(model.populations.get((epi::AgeGroup1)0, epi::InfectionType::R), 2741);
+    ASSERT_EQ(model.populations.get((epi::AgeGroup1)0, epi::InfectionType::U), 18);
+    ASSERT_EQ(model.populations.get_total(), 2903777);
 }
 
 TEST(TestSaveParameters, ReadPopulationDataCountyAllAges)
 {
-    epi::SecirParams params(1);
+    epi::SecirModel<epi::AgeGroup1> model;
     std::vector<double> ranges = {100};
 
     std::string path = TEST_DATA_DIR;
-    epi::read_population_data_county(params, ranges, 9, 1, 1002, path);
+    epi::read_population_data_county(model, ranges, 9, 1, 1002, path);
 
-    ASSERT_EQ(params.populations.get({0, epi::SecirCompartments::I}), 0);
-    ASSERT_EQ(params.populations.get({0, epi::SecirCompartments::D}), 0);
-    ASSERT_EQ(params.populations.get({0, epi::SecirCompartments::R}), 156);
-    ASSERT_EQ(params.populations.get({0, epi::SecirCompartments::U}), 1);
-    ASSERT_EQ(params.populations.get_total(), 246793);
+    ASSERT_EQ(model.populations.get((epi::AgeGroup1)0, epi::InfectionType::I), 0);
+    ASSERT_EQ(model.populations.get((epi::AgeGroup1)0, epi::InfectionType::D), 0);
+    ASSERT_EQ(model.populations.get((epi::AgeGroup1)0, epi::InfectionType::R), 156);
+    ASSERT_EQ(model.populations.get((epi::AgeGroup1)0, epi::InfectionType::U), 1);
+    ASSERT_EQ(model.populations.get_total(), 246793);
 }

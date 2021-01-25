@@ -1,26 +1,18 @@
 #ifndef SECIR_H
 #define SECIR_H
 
-#include "epidemiology/utils/eigen.h"
-#include "epidemiology/utils/uncertain_value.h"
-#include "epidemiology/math/euler.h"
-#include "epidemiology/math/adapt_rk.h"
-#include "epidemiology/secir/uncertain_matrix.h"
-#include "epidemiology/secir/populations.h"
-
-#include <vector>
+#include "epidemiology/model/compartmentalmodel.h"
+#include "epidemiology/model/populations.h"
+#include "epidemiology/secir/secir_params.h"
+#include "epidemiology/math/smoother.h"
 
 namespace epi
 {
 
-enum SecirCategory
-{
-    AgeGroup,
-    InfectionType,
-    CategoryCount
-};
+// Create template specializations for the age resolved
+// SECIHURD model
 
-enum SecirCompartments
+enum class InfectionType
 {
     S,
     E,
@@ -30,786 +22,330 @@ enum SecirCompartments
     U,
     R,
     D,
-    SecirCount
+    Count
 };
 
-/**
- * Paramters of the SECIR/SECIHURD model:
- * T_inc (also sigma^(-1) or R_2^(-1)+R_3^(-1)): mean incubation period (default: 5.2);
- *          R_2^(-1) is the first part of the incubation time where the person is not yet infectioous
- *          R_3 is the exchange between asymptomatic carriers and infectious people; R_3^(-1) is the second part of the incubation time where the person is infectious WITHOUT showing symptoms
- * T_serint (also R_2^(-1)+0.5*R_3^(-1)): serial interval (default: 4.2);
- * T_infmild (also gamma^(-1) or R_4^(-1)): time a person remains infective after disease (if 'hospitalized' is considered a state, it does not apply to them but only to 'mildly infected' people in SECIR)
- * T_hosp2home (also R_5^(1)): duration for which the hospitalized patients not requiring further intensive care remain under general hospital care (=INF or R_5=0 in standard SEIR to waive influence of this parameter)
- * T_home2hosp (also R_6^(-1)): mean time a patient with mild symptoms spends at home before hospital admission due to worsening of the disease condition  (=INF or R_6=0 in standard SEIR to waive influence of this parameter)
- * T_hosp2icu (also R_7^(-1)): mean time a patient who entered the hospital will be hopistalized without ICU before being connected to an ICU  (=INF or R_7=0 in standard SEIR to waive influence of this parameter)
- * T_icu2home (also R_8^(-1)): mean time a patient is connected to an ICU before returning home (=INF or R_8=0 in standard SEIR to waive influence of this parameter)
- * T_infasy (also R_9^(-1)): mean time an asymptomatic person remains infective (=INF or R_9=0 in standard SEIR to waive influence of this parameter)
- * T_icu2death (also d; better would be R_10^(-1)): mean time a person needs ICU support before dying (=INF or R_10=0 in standard SEIR to waive influence of this parameter)
- * cont_freq (also R_1: contact frequency/rate; called beta in the standard SEIR model)
- * alpha: share of asymptomatic cases
- * beta (Not the beta in SEIR model): risk of infection from the infected symptomatic patients
- * rho: H/I; hospitalized per infected (=0 in standard SEIR)
- * theta: U/H; intensive care units per hospitalized
- * delta: D/U; deaths per intensive care units
-**/
-/**
-     * @brief Initializes a SECIR/SECIHURD model
-     *
-     * @todo parameter description
-     *
-     * @param tinc
-     * @param tinfmild
-     * @param tserint
-     * @param thosp2home
-     * @param thome2hosp
-     * @param thosp2icu
-     * @param ticu2home
-     * @param tinfasy
-     * @param ticu2death
-     * @param alpha_in
-     * @param beta_in
-     * @param delta_in
-     * @param rho_in
-     * @param theta_in
-     * @param nb_total_t0_in
-     * @param nb_exp_t0_in
-     * @param nb_car_t0_in
-     * @param nb_inf_t0_in
-     * @param nb_hosp_t0_in
-     * @param nb_icu_t0_in
-     * @param nb_rec_t0_in
-     * @param nb_dead_t0_in
-     */
-class SecirParams
+enum class AgeGroup2
 {
+    Group0,
+    Group1,
+    Count = 2
+};
+
+enum class AgeGroup3
+{
+    Group0,
+    Group1,
+    Group2,
+    Count = 3
+};
+
+enum class AgeGroup6
+{
+    Group0,
+    Group1,
+    Group2,
+    Group3,
+    Group4,
+    Group5,
+    Count = 6
+};
+
+enum class AgeGroup8
+{
+    Group0,
+    Group1,
+    Group2,
+    Group3,
+    Group4,
+    Group5,
+    Group6,
+    Group7,
+    Count = 8
+};
+
+//TODO: Once the secir_params have been replaced with a
+// more abstract compile time map, this is not needed anymore
+enum class AgeGroup1
+{
+    Group0,
+    Count = 1
+};
+
+template <class AG>
+class SecirModel : public CompartmentalModel<Populations<AG, InfectionType>, SecirParams<(size_t)AG::Count>>
+{
+    using Pa = SecirParams<(size_t)AG::Count>;
+    using Po = Populations<AG, InfectionType>;
+
 public:
-    SecirParams(size_t nb_groups = 1)
-        : populations(Populations({nb_groups, SecirCount}))
-        , times(nb_groups, StageTimes())
-        , probabilities(nb_groups, Probabilities())
-        , m_num_groups{nb_groups}
-        , m_contact_patterns(static_cast<Eigen::Index>(nb_groups), 1)
-        , m_tstart{0}
-        , m_seasonality{0}
-        , m_icu_capacity{std::numeric_limits<double>::max()}
-        , m_test_and_trace_capacity{std::numeric_limits<double>::max()}
+    using AgeGroup = AG;
+
+    SecirModel()
     {
+#if !USE_DERIV_FUNC
+        size_t n_agegroups = (size_t)AgeGroup::Count;
+        for (size_t i = 0; i < n_agegroups; i++) {
+            for (size_t j = 0; j < n_agegroups; j++) {
+
+                // Si to Ei individually for each age group j
+                this->add_flow(
+                    std::make_tuple((AgeGroup)i, InfectionType::S), std::make_tuple((AgeGroup)i, InfectionType::E),
+                    [i, j](Pa const& p, Eigen::Ref<const Eigen::VectorXd> pop, Eigen::Ref<const Eigen::VectorXd> y, double t) {
+
+                        //symptomatic are less well quarantined when testing and tracing is overwhelmed so they infect more people
+                        auto test_and_trace_required = (1 - params.probabilities[i].get_asymp_per_infectious()) * dummy_R3 * Po::get_from(pop, (AgeGroup)i, InfectionType::C);
+                        auto risk_from_symptomatic   = smoother_cosine(
+                            test_and_trace_required, params.get_test_and_trace_capacity(), params.get_test_and_trace_capacity() * 5,
+                            params.probabilities[i].get_risk_from_symptomatic(),
+                            params.probabilities[i].get_test_and_trace_max_risk_from_symptomatic());
+
+                        // effective contact rate by contact rate between groups i and j and damping j
+                        ScalarType season_val =
+                            (1 + p.get_seasonality() * sin(3.141592653589793 *
+                                                           (std::fmod((p.get_start_day() + t), 365.0) / 182.5 + 0.5)));
+                        ScalarType cont_freq_eff = season_val * contact_matrix.get_matrix_at(t)(static_cast<Eigen::Index>(i),
+                                                                                                static_cast<Eigen::Index>(j));
+                        ScalarType Nj = Po::get_from(pop, (AgeGroup)j, InfectionType::S) +
+                                        Po::get_from(pop, (AgeGroup)j, InfectionType::E) +
+                                        Po::get_from(pop, (AgeGroup)j, InfectionType::C) +
+                                        Po::get_from(pop, (AgeGroup)j, InfectionType::I) +
+                                        Po::get_from(pop, (AgeGroup)j, InfectionType::H) +
+                                        Po::get_from(pop, (AgeGroup)j, InfectionType::U) +
+                                        Po::get_from(pop, (AgeGroup)j, InfectionType::R); // without died people
+                        ScalarType divNj = 1.0 / Nj; // precompute 1.0/Nj
+                        ScalarType Si    = Po::get_from(y, (AgeGroup)i, InfectionType::S);
+                        ScalarType Cj    = Po::get_from(pop, (AgeGroup)j, InfectionType::C);
+                        ScalarType Ij    = Po::get_from(pop, (AgeGroup)j, InfectionType::I);
+                        return Si * cont_freq_eff * divNj * p.probabilities[i].get_infection_from_contact() *
+                               (p.probabilities[j].get_carrier_infectability() * Cj +
+                                risk_from_symptomatic * Ij);
+                    });
+            }
+
+            // Ei to Ci
+            this->add_flow(std::make_tuple((AgeGroup)i, InfectionType::E),
+                           std::make_tuple((AgeGroup)i, InfectionType::C),
+                           [i](Pa const& p, Eigen::Ref<const Eigen::VectorXd> /*pop*/, Eigen::Ref<const Eigen::VectorXd> y, double /*t*/) {
+                               return Po::get_from(y, (AgeGroup)i, InfectionType::E) /
+                                      (2 * p.times[i].get_serialinterval() - p.times[i].get_incubation());
+                           });
+
+            // Ci to Ii
+            this->add_flow(std::make_tuple((AgeGroup)i, InfectionType::C),
+                           std::make_tuple((AgeGroup)i, InfectionType::I),
+                           [i](Pa const& p, Eigen::Ref<const Eigen::VectorXd> /*pop*/, Eigen::Ref<const Eigen::VectorXd> y, double /*t*/) {
+                               double dummy_R3 = 0.5 / (p.times[i].get_incubation() - p.times[i].get_serialinterval());
+                               double alpha    = p.probabilities[i].get_asymp_per_infectious();
+                               return ((1 - alpha) * dummy_R3) * Po::get_from(y, (AgeGroup)i, InfectionType::C);
+                           });
+
+            // Ci to Ri
+            this->add_flow(
+                std::make_tuple((AgeGroup)i, InfectionType::C), std::make_tuple((AgeGroup)i, InfectionType::R),
+                [i](Pa const& p, Eigen::Ref<const Eigen::VectorXd> /*pop*/, Eigen::Ref<const Eigen::VectorXd> y, double /*t*/) {
+                    double alpha = p.probabilities[i].get_asymp_per_infectious();
+                    return (alpha / p.times[i].get_infectious_asymp()) * Po::get_from(y, (AgeGroup)i, InfectionType::C);
+                });
+
+            // Ii to Ri
+            this->add_flow(std::make_tuple((AgeGroup)i, InfectionType::I),
+                           std::make_tuple((AgeGroup)i, InfectionType::R),
+                           [i](Pa const& p, Eigen::Ref<const Eigen::VectorXd> /*pop*/, Eigen::Ref<const Eigen::VectorXd> y, double /*t*/) {
+                               return Po::get_from(y, (AgeGroup)i, InfectionType::I) *
+                                      (1 - p.probabilities[i].get_hospitalized_per_infectious()) /
+                                      p.times[i].get_infectious_mild();
+                           });
+
+            // Ii to Hi
+            this->add_flow(
+                std::make_tuple((AgeGroup)i, InfectionType::I), std::make_tuple((AgeGroup)i, InfectionType::H),
+                [i](Pa const& p, Eigen::Ref<const Eigen::VectorXd> /*pop*/, Eigen::Ref<const Eigen::VectorXd> y, double /*t*/) {
+                    return Po::get_from(y, (AgeGroup)i, InfectionType::I) *
+                           p.probabilities[i].get_hospitalized_per_infectious() / p.times[i].get_home_to_hospitalized();
+                });
+
+            // Hi to Ui
+            this->add_flow(std::make_tuple((AgeGroup)i, InfectionType::H),
+                           std::make_tuple((AgeGroup)i, InfectionType::U),
+                           [i](Pa const& p, Eigen::Ref<const Eigen::VectorXd> /*pop*/, Eigen::Ref<const Eigen::VectorXd> y, double /*t*/) {
+                               ScalarType icu_occupancy = 0;
+                               for (size_t j = 0; j < (size_t)AgeGroup::Count; ++j) {
+                                   icu_occupancy += Po::get_from(y, (AgeGroup)j, InfectionType::U);
+                               }
+
+                               ScalarType prob_hosp2icu =
+                                   smoother_cosine(icu_occupancy, 0.90 * p.get_icu_capacity(), p.get_icu_capacity(),
+                                                   p.probabilities[i].get_icu_per_hospitalized(), 0);
+
+                               return Po::get_from(y, (AgeGroup)i, InfectionType::H) * prob_hosp2icu /
+                                      p.times[i].get_hospitalized_to_icu();
+                           });
+
+            // Hi to Di
+            this->add_flow(
+                std::make_tuple((AgeGroup)i, InfectionType::H), std::make_tuple((AgeGroup)i, InfectionType::D),
+                [i](Pa const& p, Eigen::Ref<const Eigen::VectorXd> /*pop*/, Eigen::Ref<const Eigen::VectorXd> y, double /*t*/) {
+                    ScalarType icu_occupancy = 0;
+                    for (size_t j = 0; j < (size_t)AgeGroup::Count; ++j) {
+                        icu_occupancy += Po::get_from(y, (AgeGroup)j, InfectionType::U);
+                    }
+
+                    ScalarType prob_hosp2icu =
+                        smoother_cosine(icu_occupancy, 0.90 * p.get_icu_capacity(), p.get_icu_capacity(),
+                                        p.probabilities[i].get_icu_per_hospitalized(), 0);
+                    ScalarType prob_hosp2dead = p.probabilities[i].get_icu_per_hospitalized() - prob_hosp2icu;
+
+                    return Po::get_from(y, (AgeGroup)i, InfectionType::H) * prob_hosp2dead /
+                           p.times[i].get_hospitalized_to_icu();
+                });
+
+            // Hi to Ri
+            this->add_flow(
+                std::make_tuple((AgeGroup)i, InfectionType::H), std::make_tuple((AgeGroup)i, InfectionType::R),
+                [i](Pa const& p, Eigen::Ref<const Eigen::VectorXd> /*pop*/, Eigen::Ref<const Eigen::VectorXd> y, double /*t*/) {
+                    return Po::get_from(y, (AgeGroup)i, InfectionType::H) *
+                           (1 - p.probabilities[i].get_icu_per_hospitalized()) / p.times[i].get_hospitalized_to_home();
+                });
+
+            // Ui to Ri
+            this->add_flow(std::make_tuple((AgeGroup)i, InfectionType::U),
+                           std::make_tuple((AgeGroup)i, InfectionType::R),
+                           [i](Pa const& p, Eigen::Ref<const Eigen::VectorXd> /*pop*/, Eigen::Ref<const Eigen::VectorXd> y, double /*t*/) {
+                               return Po::get_from(y, (AgeGroup)i, InfectionType::U) *
+                                      (1 - p.probabilities[i].get_dead_per_icu()) / p.times[i].get_icu_to_home();
+                           });
+
+            // Ui to Di
+            this->add_flow(std::make_tuple((AgeGroup)i, InfectionType::U),
+                           std::make_tuple((AgeGroup)i, InfectionType::D),
+                           [i](Pa const& p, Eigen::Ref<const Eigen::VectorXd> /*pop*/, Eigen::Ref<const Eigen::VectorXd> y, double /*t*/) {
+                               return Po::get_from(y, (AgeGroup)i, InfectionType::U) *
+                                      p.probabilities[i].get_dead_per_icu() / p.times[i].get_icu_to_dead();
+                           });
+        }
+#endif
     }
 
-    SecirParams(const ContactMatrixGroup& cont_matrix)
-        : populations(Populations({(size_t)cont_matrix.get_num_groups(), SecirCount}))
-        , times((size_t)cont_matrix.get_num_groups(), StageTimes())
-        , probabilities((size_t)cont_matrix.get_num_groups(), Probabilities())
-        , m_num_groups{(size_t)cont_matrix.get_num_groups()}
-        , m_contact_patterns(cont_matrix)
-        , m_tstart{0}
-        , m_seasonality{0}
-        , m_icu_capacity{std::numeric_limits<double>::max()}
-        , m_test_and_trace_capacity{std::numeric_limits<double>::max()}
-    {
-    }
-
-    size_t get_num_groups() const
-    {
-        return m_num_groups;
-    }
-
-    double base_reprod;
-
-    /**
-     * @brief sets the start day in the SECIR model
-     * The start day defines in which season the simulation can be started
-     * If the start day is 180 and simulation takes place from t0=0 to
-     * tmax=100 the days 180 to 280 of the year are simulated
-     * @param tstart start day
-     */
-    void set_start_day(double tstart);
-
-    /**
-     * @brief returns the start day in the SECIR model
-     * The start day defines in which season the simulation can be started
-     * If the start day is 180 and simulation takes place from t0=0 to
-     * tmax=100 the days 180 to 280 of the year are simulated
-     */
-    double get_start_day() const;
-
-    /**
-     * @brief sets the seasonality in the SECIR model
-     * the seasonality is given as (1+k*sin()) where the sine
-     * curve is below one in summer and above one in winter
-     * 
-     * @param seasonality seasonality
-     */
-    void set_seasonality(UncertainValue const& seasonality);
-
-    /**
-     * @brief sets the seasonality in the SECIR model
-     * the seasonality is given as (1+k*sin()) where the sine
-     * curve is below one in summer and above one in winter
-     * 
-     * @param seasonality seasonality
-     */
-    void set_seasonality(double seasonality);
-
-    /**
-     * @brief sets the seasonality in the SECIR model
-     * the seasonality is given as (1+k*sin()) where the sine
-     * curve is below one in summer and above one in winter
-     * 
-     * @param seasonality seasonality
-     */
-    void set_seasonality(ParameterDistribution const& seasonality);
-
-    /**
-     * @brief returns the seasonality in the SECIR model
-     * the seasonality is given as (1+k*sin()) where the sine
-     * curve is below one in summer and above one in winter
-     * 
-     */
-    const UncertainValue& get_seasonality() const;
-
-    /**
-     * @brief returns the seasonality in the SECIR model
-     * the seasonality is given as (1+k*sin()) where the sine
-     * curve is below one in summer and above one in winter
-     * 
-     */
-    UncertainValue& get_seasonality();
-
-    /**
-     * @brief sets the icu capacity in the SECIR model
-     * @param icu_capacity icu capacity
-     */
-    void set_icu_capacity(UncertainValue const& icu_capacity);
-
-    /**
-     * @brief sets the icu capacity in the SECIR model
-     * @param icu_capacity icu capacity
-     */
-    void set_icu_capacity(double icu_capacity);
-
-    /**
-     * @brief sets the icu capacity in the SECIR model
-     * @param icu_capacity icu capacity
-     */
-    void set_icu_capacity(ParameterDistribution const& icu_capacity);
-
-    /**
-     * @brief returns the icu capacity in the SECIR model
-     */
-    const UncertainValue& get_icu_capacity() const;
-
-    /**
-     * @brief returns the icu capacity in the SECIR model
-     */
-    UncertainValue& get_icu_capacity();
-
-    // time parameters for the different 'stages' of the disease of scale day or 1/day
-    // 'stages' does not refer to the 'states' of the SECIR model but also includes incubation time or contact frequency
-    class StageTimes
-    {
-    public:
-        /**
-         * @brief Standard constructor of a time parameters' class in the SECIR model
-         */
-        StageTimes();
-        StageTimes(StageTimes&&)      = default;
-        StageTimes(const StageTimes&) = default;
-        StageTimes& operator=(const StageTimes&) = default;
-
-        /**
-         * @brief sets the incubation time in the SECIR model
-         * @param tinc incubation time in day unit
-         */
-        void set_incubation(UncertainValue const& tinc);
-
-        /**
-         * @brief sets the incubation time in the SECIR model
-         * @param tinc incubation time in day unit
-         */
-        void set_incubation(double tinc);
-
-        /**
-         * @brief sets the incubation time in the SECIR model
-         * @param tinc incubation time in day unit
-         */
-        void set_incubation(ParameterDistribution const& tinc);
-
-        /**
-         * @brief sets the infectious time for symptomatic cases that are infected but
-         *        who do not need to be hsopitalized in the SECIR model
-         * @param tinfmild infectious time for symptomatic cases (if not hospitalized) in day unit
-         */
-        void set_infectious_mild(UncertainValue const& tinfmild);
-
-        /**
-         * @brief sets the infectious time for symptomatic cases that are infected but 
-         *        who do not need to be hsopitalized in the SECIR model
-         * @param tinfmild infectious time for symptomatic cases (if not hospitalized) in day unit 
-         */
-        void set_infectious_mild(double tinfmild);
-
-        /**
-         * @brief sets the infectious time for symptomatic cases that are infected but 
-         *        who do not need to be hsopitalized in the SECIR model
-         * @param tinfmild infectious time for symptomatic cases (if not hospitalized) in day unit 
-         */
-        void set_infectious_mild(ParameterDistribution const& tinfmild);
-
-        /**
-         * @brief sets the serial interval in the SECIR model
-         * @param tserint serial interval in day unit
-         */
-        void set_serialinterval(UncertainValue const& tserint);
-
-        /**
-         * @brief sets the serial interval in the SECIR model
-         * @param tserint serial interval in day unit 
-         */
-        void set_serialinterval(double tserint);
-
-        /**
-         * @brief sets the serial interval in the SECIR model
-         * @param tserint serial interval in day unit 
-         */
-        void set_serialinterval(ParameterDistribution const& tserint);
-
-        /**
-         * @brief sets the time people are 'simply' hospitalized before returning home in the SECIR model
-         * @param thosp2home time people are 'simply' hospitalized before returning home in day unit
-         */
-        void set_hospitalized_to_home(UncertainValue const& thosp2home);
-
-        /**
-         * @brief sets the time people are 'simply' hospitalized before returning home in the SECIR model
-         * @param thosp2home time people are 'simply' hospitalized before returning home in day unit 
-         */
-        void set_hospitalized_to_home(double thosp2home);
-
-        /**
-         * @brief sets the time people are 'simply' hospitalized before returning home in the SECIR model
-         * @param thosp2home time people are 'simply' hospitalized before returning home in day unit 
-         */
-        void set_hospitalized_to_home(ParameterDistribution const& thosp2home);
-
-        /**
-         * @brief sets the time people are infectious at home before 'simply' hospitalized in the SECIR model
-         * @param thome2hosp time people are infectious at home before 'simply' hospitalized in day unit
-         */
-        void set_home_to_hospitalized(UncertainValue const& thome2hosp);
-
-        /**
-         * @brief sets the time people are infectious at home before 'simply' hospitalized in the SECIR model
-         * @param thome2hosp time people are infectious at home before 'simply' hospitalized in day unit 
-         */
-        void set_home_to_hospitalized(double thome2hosp);
-
-        /**
-         * @brief sets the time people are infectious at home before 'simply' hospitalized in the SECIR model
-         * @param thome2hosp time people are infectious at home before 'simply' hospitalized in day unit 
-         */
-        void set_home_to_hospitalized(ParameterDistribution const& thome2hosp);
-
-        /**
-         * @brief sets the time people are 'simply' hospitalized before being treated by ICU in the SECIR model
-         * @param thosp2icu time people are 'simply' hospitalized before being treated by ICU in day unit
-         */
-        void set_hospitalized_to_icu(UncertainValue const& thosp2icu);
-
-        /**
-         * @brief sets the time people are 'simply' hospitalized before being treated by ICU in the SECIR model
-         * @param thosp2icu time people are 'simply' hospitalized before being treated by ICU in day unit 
-         */
-        void set_hospitalized_to_icu(double thosp2icu);
-
-        /**
-         * @brief sets the time people are 'simply' hospitalized before being treated by ICU in the SECIR model
-         * @param thosp2icu time people are 'simply' hospitalized before being treated by ICU in day unit 
-         */
-        void set_hospitalized_to_icu(ParameterDistribution const& thosp2icu);
-
-        /**
-         * @brief sets the time people are treated by ICU before returning home in the SECIR model
-         * @param ticu2home time people are treated by ICU before returning home in day unit
-         */
-        void set_icu_to_home(UncertainValue const& ticu2home);
-
-        /**
-         * @brief sets the time people are treated by ICU before returning home in the SECIR model
-         * @param ticu2home time people are treated by ICU before returning home in day unit 
-         */
-        void set_icu_to_home(double ticu2home);
-
-        /**
-         * @brief sets the time people are treated by ICU before returning home in the SECIR model
-         * @param ticu2home time people are treated by ICU before returning home in day unit 
-         */
-        void set_icu_to_home(ParameterDistribution const& ticu2home);
-
-        /**
-         * @brief sets the infectious time for asymptomatic cases in the SECIR model
-         * @param tinfasy infectious time for asymptomatic cases in day unit
-         */
-        void set_infectious_asymp(UncertainValue const& tinfasy);
-
-        /**
-         * @brief sets the infectious time for asymptomatic cases in the SECIR model
-         * @param tinfasy infectious time for asymptomatic cases in day unit 
-         */
-        void set_infectious_asymp(double tinfasy);
-
-        /**
-         * @brief sets the infectious time for asymptomatic cases in the SECIR model
-         * @param tinfasy infectious time for asymptomatic cases in day unit 
-         */
-        void set_infectious_asymp(ParameterDistribution const& tinfasy);
-
-        /**
-         * @brief sets the time people are treated by ICU before dying in the SECIR model
-         * @param ticu2death time people are treated by ICU before dying in day unit
-         */
-        void set_icu_to_death(UncertainValue const& ticu2death);
-
-        /**
-         * @brief sets the time people are treated by ICU before dying in the SECIR model
-         * @param ticu2death time people are treated by ICU before dying in day unit 
-         */
-        void set_icu_to_death(double ticu2death);
-
-        /**
-         * @brief sets the time people are treated by ICU before dying in the SECIR model
-         * @param ticu2death time people are treated by ICU before dying in day unit 
-         */
-        void set_icu_to_death(ParameterDistribution const& ticu2death);
-
-        /**
-         * @brief returns incubation time set for the SECIR model in day unit
-         */
-        const UncertainValue& get_incubation() const;
-        UncertainValue& get_incubation();
-
-        /**
-         * @brief returns infectious time set for the SECIR model in day unit
-         */
-        const UncertainValue& get_infectious_mild() const;
-        UncertainValue& get_infectious_mild();
-
-        /**
-         * @brief returns serial interval in the SECIR model
-         */
-        const UncertainValue& get_serialinterval() const;
-        UncertainValue& get_serialinterval();
-
-        /**
-         * @brief returns time people are 'simply' hospitalized before returning home in the SECIR model 
-         */
-        const UncertainValue& get_hospitalized_to_home() const;
-        UncertainValue& get_hospitalized_to_home();
-
-        /**
-         * @brief returns time people are infectious at home before 'simply' hospitalized in the SECIR model 
-         */
-        const UncertainValue& get_home_to_hospitalized() const;
-        UncertainValue& get_home_to_hospitalized();
-
-        /**
-         * @brief returns time people are 'simply' hospitalized before being treated by ICU in the SECIR model
-         */
-        const UncertainValue& get_hospitalized_to_icu() const;
-        UncertainValue& get_hospitalized_to_icu();
-
-        /**
-         * @brief returns time people are treated by ICU before returning home in the SECIR model
-         */
-        const UncertainValue& get_icu_to_home() const;
-        UncertainValue& get_icu_to_home();
-
-        /**
-         * @brief returns infectious time for asymptomatic cases in the SECIR model
-         */
-        const UncertainValue& get_infectious_asymp() const;
-        UncertainValue& get_infectious_asymp();
-
-        /**
-         * @brief returns time people are treated by ICU before dying in the SECIR model
-         */
-        const UncertainValue& get_icu_to_dead() const;
-        UncertainValue& get_icu_to_dead();
-
-        /**
-         * @brief checks whether the stage times Parameters satisfy their corresponding constraints and applies them, if they do not
-         * For certain stage time values, the simulation can produce (small) negative population results.
-         * To prevent this from happening, mathematical constraints have been derived and implemented here.
-         * For further details, see the overleaf discussion chapter.
-         * The constraints are step size-dependent, in the current implementation, we have assumed dt_max = 1.
-         */
-        void apply_constraints();
-
-        /**
-         * @brief checks whether the stage times Parameters satisfy their corresponding constraints and throws errors, if they do not
-         * For certain stage time values, the simulation can produce (small) negative population results.
-         * To prevent this from happening, mathematical constraints have been derived and implemented here.
-         * For further details, see the overleaf discussion chapter.
-         * The constraints are step size-dependent, in the current implementation, we have assumed dt_max = 1.
-         */
-        void check_constraints() const;
-
-    private:
-        UncertainValue m_tinc, m_tinfmild; // parameters also available in SEIR
-        UncertainValue m_tserint, m_thosp2home, m_thome2hosp, m_thosp2icu, m_ticu2home, m_tinfasy,
-            m_ticu2death; // new SECIR params
-    };
-
-    class Probabilities
-    {
-    public:
-        /**
-         * @brief Standard constructor of probabilites parameters' class in the SECIR model
-         */
-        Probabilities();
-        Probabilities(const Probabilities&) = default;
-        Probabilities(Probabilities&&)      = default;
-        Probabilities& operator=(const Probabilities&) = default;
-
-        /**
-        * @brief sets probability of getting infected from a contact
-        * @param infprob the probability of getting infected from a contact
-        */
-        void set_infection_from_contact(UncertainValue const& infprob);
-
-        /**
-        * @brief sets probability of getting infected from a contact
-        * @param infprob the probability of getting infected from a contact
-        */
-        void set_infection_from_contact(double infprob);
-
-        /**
-        * @brief sets probability of getting infected from a contact
-        * @param infprob the probability of getting infected from a contact
-        */
-        void set_infection_from_contact(ParameterDistribution const& infprob);
-
-        /**
-        * @brief sets the relative carrier infectability 
-        * @param carrinf relative carrier infectability
-        */
-        void set_carrier_infectability(UncertainValue const& carrinf);
-
-        /**
-        * @brief sets the relative carrier infectability
-        * @param carrinf relative carrier infectability
-        */
-        void set_carrier_infectability(double carrinf);
-
-        /**
-        * @brief sets the relative carrier infectability
-        * @param carrinf relative carrier infectability
-        */
-        void set_carrier_infectability(ParameterDistribution const& carrinf);
-
-        /**
-        * @brief sets the percentage of asymptomatic cases in the SECIR model
-        * @param alpha the percentage of asymptomatic cases
-        */
-        void set_asymp_per_infectious(UncertainValue const& m_asympinf);
-
-        /**
-        * @brief sets the percentage of asymptomatic cases in the SECIR model
-        * @param alpha the percentage of asymptomatic cases
-        */
-        void set_asymp_per_infectious(double m_asympinf);
-
-        /**
-        * @brief sets the percentage of asymptomatic cases in the SECIR model
-        * @param alpha the percentage of asymptomatic cases
-        */
-        void set_asymp_per_infectious(ParameterDistribution const& m_asympinf);
-
-        /**
-        * @brief sets the risk of infection from symptomatic cases in the SECIR model
-        * @param beta the risk of infection from symptomatic cases
-        */
-        void set_risk_from_symptomatic(UncertainValue const& m_risksymp);
-
-        /**
-        * @brief sets the risk of infection from symptomatic cases in the SECIR model
-        * @param beta the risk of infection from symptomatic cases 
-        */
-        void set_risk_from_symptomatic(double m_risksymp);
-
-        /**
-        * @brief sets the risk of infection from symptomatic cases in the SECIR model
-        * @param beta the risk of infection from symptomatic cases 
-        */
-        void set_risk_from_symptomatic(ParameterDistribution const& m_risksymp);
-
-        ///@{
-        /**
-         * risk of infection from symptomatic cases increases as test and trace capacity is exceeded.
-         */
-        void set_test_and_trace_max_risk_from_symptomatic(const UncertainValue& value);
-        void set_test_and_trace_max_risk_from_symptomatic(double value);
-        void set_test_and_trace_max_risk_from_symptomatic(const ParameterDistribution& distribution);
-        ///@}
-
-        /**
-        * @brief sets the percentage of hospitalized patients per infected patients in the SECIR model
-        * @param rho percentage of hospitalized patients per infected patients
-        */
-        void set_hospitalized_per_infectious(UncertainValue const& m_hospinf);
-
-        /**
-        * @brief sets the percentage of hospitalized patients per infected patients in the SECIR model
-        * @param rho percentage of hospitalized patients per infected patients
-        */
-        void set_hospitalized_per_infectious(double m_hospinf);
-
-        /**
-        * @brief sets the percentage of hospitalized patients per infected patients in the SECIR model
-        * @param rho percentage of hospitalized patients per infected patients
-        */
-        void set_hospitalized_per_infectious(ParameterDistribution const& m_hospinf);
-
-        /**
-        * @brief sets the percentage of ICU patients per hospitalized patients in the SECIR model
-        * @param theta percentage of ICU patients per hospitalized patients
-        */
-        void set_icu_per_hospitalized(UncertainValue const& m_icuhosp);
-
-        /**
-        * @brief sets the percentage of ICU patients per hospitalized patients in the SECIR model
-        * @param theta percentage of ICU patients per hospitalized patients
-        */
-        void set_icu_per_hospitalized(double m_icuhosp);
-
-        /**
-        * @brief sets the percentage of ICU patients per hospitalized patients in the SECIR model
-        * @param theta percentage of ICU patients per hospitalized patients
-        */
-        void set_icu_per_hospitalized(ParameterDistribution const& m_icuhosp);
-
-        /**
-        * @brief sets the percentage of dead patients per ICU patients in the SECIR model
-        * @param delta percentage of dead patients per ICU patients
-        */
-        void set_dead_per_icu(UncertainValue const& m_deathicu);
-        /**
-        * @brief sets the percentage of dead patients per ICU patients in the SECIR model
-        * @param delta percentage of dead patients per ICU patients 
-        */
-        void set_dead_per_icu(double m_deathicu);
-
-        /**
-        * @brief sets the percentage of dead patients per ICU patients in the SECIR model
-        * @param delta percentage of dead patients per ICU patients 
-        */
-        void set_dead_per_icu(ParameterDistribution const& m_deathicu);
-
-        /**
-        * @brief gets probability of getting infected from a contact
-        */
-        const UncertainValue& get_infection_from_contact() const;
-        UncertainValue& get_infection_from_contact();
-
-        /**
-        * @brief set the relative carrier infectability
-        */
-        const UncertainValue& get_carrier_infectability() const;
-        UncertainValue& get_carrier_infectability();
-
-        /**
-        * @brief returns the percentage of asymptomatic cases in the SECIR model
-        */
-        const UncertainValue& get_asymp_per_infectious() const;
-        UncertainValue& get_asymp_per_infectious();
-
-        /**
-        * @brief returns the risk of infection from symptomatic cases in the SECIR model
-        */
-        const UncertainValue& get_risk_from_symptomatic() const;
-        UncertainValue& get_risk_from_symptomatic();
-
-        ///@{
-        /**
-         * risk of infection from symptomatic cases increases as test and trace capacity is exceeded.
-         */
-        UncertainValue const& get_test_and_trace_max_risk_from_symptomatic() const;
-        UncertainValue& get_test_and_trace_max_risk_from_symptomatic();
-        ///@}
-
-        /**
-        * @brief returns the percentage of hospitalized patients per infected patients in the SECIR model
-        */
-        const UncertainValue& get_hospitalized_per_infectious() const;
-        UncertainValue& get_hospitalized_per_infectious();
-
-        /**
-        * @brief returns the percentage of ICU patients per hospitalized patients in the SECIR model
-        */
-        const UncertainValue& get_icu_per_hospitalized() const;
-        UncertainValue& get_icu_per_hospitalized();
-
-        /**
-        * @brief returns the percentage of dead patients per ICU patients in the SECIR model
-        */
-        const UncertainValue& get_dead_per_icu() const;
-        UncertainValue& get_dead_per_icu();
-
-        /**
-         * @brief checks whether the probability Parameters satisfy their corresponding constraints and applies them, if they do not
-         */
-        void apply_constraints();
-
-        /**
-         * @brief checks whether the probability Parameters satisfy their corresponding constraints and throws errors, if they do not
-         */
-        void check_constraints() const;
-
-    private:
-        UncertainValue m_infprob, m_carrinf, m_asympinf, m_risksymp, m_hospinf, m_icuhosp, m_deathicu; // probabilities
-        UncertainValue m_tnt_max_risksymp;
-    };
-
-    /**
-     * @brief checks whether all Parameters satisfy their corresponding constraints and applies them, if they do not
-     */
-    void apply_constraints();
-
-    /**
-     * @brief checks whether all Parameters satisfy their corresponding constraints and throws errors, if they do not
-     */
-    void check_constraints() const;
-
-    /**
-     * @brief sets the UncertainContactMatrix
-     */
-    void set_contact_patterns(UncertainContactMatrix contact_patterns);
-
-    /**
-     * @brief returns the UncertainContactMatrix
-     */
-    UncertainContactMatrix& get_contact_patterns();
-
-    /**
-     * @brief returns the UncertainContactMatrix
-     */
-    UncertainContactMatrix const& get_contact_patterns() const;
-
-    ///@{
-    /**
-     * capacity to test and trace contacts of infected for quarantine per day.
-     */
-    void set_test_and_trace_capacity(const UncertainValue& value);
-    void set_test_and_trace_capacity(double value);
-    void set_test_and_trace_capacity(const ParameterDistribution& distribution);
-    ///@}
-        
-    ///@{
-    /**
-     * capacity to test and trace contacts of infected for quarantine per day.
-     */
-    UncertainValue const& get_test_and_trace_capacity() const;
-    UncertainValue& get_test_and_trace_capacity();
-    ///@}
-
-    Populations populations;
-    std::vector<StageTimes> times;
-    std::vector<Probabilities> probabilities;
-
-private:
-    size_t m_num_groups;
-
-    UncertainContactMatrix m_contact_patterns;
-
-    double m_tstart;
-    UncertainValue m_seasonality;
-    UncertainValue m_icu_capacity;
-    UncertainValue m_test_and_trace_capacity;
-};
-
-/**
- * @brief WIP !! TO DO: returns the actual, approximated reproduction rate 
- */
-double get_reprod_rate(SecirParams const& params, double t, std::vector<double> const& yt);
-
-/**
- * Computes the current time-derivative of the SECIR compartment populations (e.g., S, E, C, I, H, U, R, D).
- * Uses separate population values to compute contact rates.
- * @param pop population that is in contact and causes infections.
- * @see secir_get_derivatives
- */
-void secir_get_derivatives(SecirParams const& params, Eigen::Ref<const Eigen::VectorXd> pop,
-                           Eigen::Ref<const Eigen::VectorXd> y, double t, Eigen::Ref<Eigen::VectorXd> dydt);
-/**
- * Computes the current time-derivative of the SECIR compartment populations (e.g., S, E, C, I, H, U, R, D)
- * @param[in]  params SECIR params: contact frequencies, population sizes and epidemiological parameters
- * @param[in] y current  SECIR compartments' values at t; (e.g., y: [0:S, 1:E, ...])
- * @param[in] t time / current day
- * @param[out] dydt the values of the time derivatives of the SECIR compartments (e.g., S, E, C, I, H, U, R, D)
- */
-inline void secir_get_derivatives(SecirParams const& params, Eigen::Ref<const Eigen::VectorXd> y, double t,
-                                  Eigen::Ref<Eigen::VectorXd> dydt)
+#if USE_DERIV_FUNC
+
+void get_derivatives(Eigen::Ref<const Eigen::VectorXd> pop,
+                     Eigen::Ref<const Eigen::VectorXd> y, double t,
+                     Eigen::Ref<Eigen::VectorXd> dydt) const override
 {
-    secir_get_derivatives(params, y, y, t, dydt);
+    // alpha  // percentage of asymptomatic cases
+    // beta // risk of infection from the infected symptomatic patients
+    // rho   // hospitalized per infectious
+    // theta // icu per hospitalized
+    // delta  // deaths per ICUs
+    // 0: S,      1: E,     2: C,     3: I,     4: H,     5: U,     6: R,     7: D
+    auto& params = this->parameters;
+    size_t n_agegroups = params.get_num_groups();
+
+    ContactMatrixGroup const& contact_matrix = params.get_contact_patterns();
+
+    for (size_t i = 0; i < n_agegroups; i++) {
+
+        size_t Si = Po::get_flat_index((AgeGroup)i, InfectionType::S);
+        size_t Ei = Po::get_flat_index((AgeGroup)i, InfectionType::E);
+        size_t Ci = Po::get_flat_index((AgeGroup)i, InfectionType::C);
+        size_t Ii = Po::get_flat_index((AgeGroup)i, InfectionType::I);
+        size_t Hi = Po::get_flat_index((AgeGroup)i, InfectionType::H);
+        size_t Ui = Po::get_flat_index((AgeGroup)i, InfectionType::U);
+        size_t Ri = Po::get_flat_index((AgeGroup)i, InfectionType::R);
+        size_t Di = Po::get_flat_index((AgeGroup)i, InfectionType::D);
+
+        dydt[Si] = 0;
+        dydt[Ei] = 0;
+
+        double dummy_R2 =
+            1.0 / (2 * params.times[i].get_serialinterval() - params.times[i].get_incubation()); // R2 = 1/(2SI-TINC)
+        double dummy_R3 =
+            0.5 / (params.times[i].get_incubation() - params.times[i].get_serialinterval()); // R3 = 1/(2(TINC-SI))
+
+        //symptomatic are less well quarantined when testing and tracing is overwhelmed so they infect more people
+        auto test_and_trace_required = (1 - params.probabilities[i].get_asymp_per_infectious()) * dummy_R3 * Po::get_from(pop, (AgeGroup)i, InfectionType::C);
+        auto risk_from_symptomatic   = smoother_cosine(
+            test_and_trace_required, params.get_test_and_trace_capacity(), params.get_test_and_trace_capacity() * 5,
+            params.probabilities[i].get_risk_from_symptomatic(),
+            params.probabilities[i].get_test_and_trace_max_risk_from_symptomatic());
+
+        double icu_occupancy = 0;
+
+        for (size_t j = 0; j < n_agegroups; j++) {
+            size_t Sj = Po::get_flat_index((AgeGroup)j, InfectionType::S);
+            size_t Ej = Po::get_flat_index((AgeGroup)j, InfectionType::E);
+            size_t Cj = Po::get_flat_index((AgeGroup)j, InfectionType::C);
+            size_t Ij = Po::get_flat_index((AgeGroup)j, InfectionType::I);
+            size_t Hj = Po::get_flat_index((AgeGroup)j, InfectionType::H);
+            size_t Uj = Po::get_flat_index((AgeGroup)j, InfectionType::U);
+            size_t Rj = Po::get_flat_index((AgeGroup)j, InfectionType::R);
+
+            // effective contact rate by contact rate between groups i and j and damping j
+            double season_val =
+                (1 + params.get_seasonality() *
+                         sin(3.141592653589793 * (std::fmod((params.get_start_day() + t), 365.0) / 182.5 + 0.5)));
+            double cont_freq_eff = season_val * contact_matrix.get_matrix_at(t)(static_cast<Eigen::Index>(i),
+                                                                                static_cast<Eigen::Index>(j));
+            double Nj      = pop[Sj] + pop[Ej] + pop[Cj] + pop[Ij] + pop[Hj] + pop[Uj] + pop[Rj]; // without died people
+            double divNj   = 1.0 / Nj; // precompute 1.0/Nj
+            double dummy_S = y[Si] * cont_freq_eff * divNj * params.probabilities[i].get_infection_from_contact() *
+                             (params.probabilities[j].get_carrier_infectability() * pop[Cj] +
+                              risk_from_symptomatic * pop[Ij]);
+
+            dydt[Si] -= dummy_S; // -R1*(C+beta*I)*S/N0
+            dydt[Ei] += dummy_S; // R1*(C+beta*I)*S/N0-R2*E
+
+            icu_occupancy += y[Uj];
+        }
+
+        // ICU capacity shortage is close
+        double prob_hosp2icu =
+            smoother_cosine(icu_occupancy, 0.90 * params.get_icu_capacity(), params.get_icu_capacity(),
+                            params.probabilities[i].get_icu_per_hospitalized(), 0);
+
+        double prob_hosp2dead = params.probabilities[i].get_icu_per_hospitalized() - prob_hosp2icu;
+
+
+        dydt[Ei] -= dummy_R2 * y[Ei]; // only exchange of E and C done here
+        dydt[Ci] = dummy_R2 * y[Ei] -
+                   ((1 - params.probabilities[i].get_asymp_per_infectious()) * dummy_R3 +
+                    params.probabilities[i].get_asymp_per_infectious() / params.times[i].get_infectious_asymp()) *
+                       y[Ci];
+        dydt[Ii] =
+            (1 - params.probabilities[i].get_asymp_per_infectious()) * dummy_R3 * y[Ci] -
+            ((1 - params.probabilities[i].get_hospitalized_per_infectious()) / params.times[i].get_infectious_mild() +
+             params.probabilities[i].get_hospitalized_per_infectious() / params.times[i].get_home_to_hospitalized()) *
+                y[Ii];
+        dydt[Hi] =
+            params.probabilities[i].get_hospitalized_per_infectious() / params.times[i].get_home_to_hospitalized() *
+                y[Ii] -
+            ((1 - params.probabilities[i].get_icu_per_hospitalized()) / params.times[i].get_hospitalized_to_home() +
+             params.probabilities[i].get_icu_per_hospitalized() / params.times[i].get_hospitalized_to_icu()) *
+                y[Hi];
+        dydt[Ui] = -((1 - params.probabilities[i].get_dead_per_icu()) / params.times[i].get_icu_to_home() +
+                     params.probabilities[i].get_dead_per_icu() / params.times[i].get_icu_to_dead()) *
+                   y[Ui];
+        // add flow from hosp to icu according to potentially adjusted probability due to ICU limits
+        dydt[Ui] += prob_hosp2icu / params.times[i].get_hospitalized_to_icu() * y[Hi];
+
+        dydt[Ri] = params.probabilities[i].get_asymp_per_infectious() / params.times[i].get_infectious_asymp() * y[Ci] +
+                   (1 - params.probabilities[i].get_hospitalized_per_infectious()) /
+                       params.times[i].get_infectious_mild() * y[Ii] +
+                   (1 - params.probabilities[i].get_icu_per_hospitalized()) /
+                       params.times[i].get_hospitalized_to_home() * y[Hi] +
+                   (1 - params.probabilities[i].get_dead_per_icu()) / params.times[i].get_icu_to_home() * y[Ui];
+
+        dydt[Di] = params.probabilities[i].get_dead_per_icu() / params.times[i].get_icu_to_dead() * y[Ui];
+        // add potential, additional deaths due to ICU overflow
+        dydt[Di] += prob_hosp2dead / params.times[i].get_hospitalized_to_icu() * y[Hi];
+    }
 }
 
-/**
- * @brief simulate SECIR compartment model.
- * The simulation supports multiple groups with different parameters interacting with each other.
- */
-class SecirSimulation
-{
-public:
-    /**
-     * @brief setup the SECIR simulation 
-     * @param[in] params SECIR params: contact frequencies, population sizes and epidemiological parameters
-     * @param[in] t0 start time
-     * @param[in] dt initial step size of integration
-     */
-    SecirSimulation(SecirParams const& params, double t0 = 0., double dt = 0.1);
+#endif // USE_DERIV_FUNC
 
-    /**
-     * @brief advance simulation to tmax
-     * must be greater than get_t().back()
-     * @param tmax next stopping point of simulation
-     */
-    Eigen::Ref<Eigen::VectorXd> advance(double tmax);
-
-    TimeSeries<double>& get_result()
-    {
-        return m_integrator.get_result();
-    }
-
-    const TimeSeries<double>& get_result() const
-    {
-        return m_integrator.get_result();
-    }
-
-    /**
-     * @brief returns the SECIR params used in simulation
-     */
-    const SecirParams& get_params() const
-    {
-        return m_params;
-    }
-
-private:
-    std::shared_ptr<RKIntegratorCore> m_integratorCore;
-    OdeIntegrator m_integrator;
-    SecirParams m_params;
 };
-
-/**
- * @brief run secir simulation over fixed time
- * @param[in] t0 start time
- * @param[in] tmax end time
- * @param[in] dt initial step size of integration
- * @param[in] params SECIR params: contact frequencies, population sizes and epidemiological parameters
- * @returns secir value of compartments at each integration time point
- */
-TimeSeries<double> simulate(double t0, double tmax, double dt, SecirParams const& params);
 
 } // namespace epi
 
-#endif // SECIR_H
+#endif

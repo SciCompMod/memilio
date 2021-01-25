@@ -14,8 +14,8 @@ namespace epi
 
 //defines warning macros for MSVC
 #ifdef _MSC_VER
-#define MSVC_WARNING_DISABLE_PUSH(list) _Pragma(QUOTE(warning(push))) _Pragma(QUOTE(warning(disable : list)))
-#define MSVC_WARNING_POP _Pragma(QUOTE(warning(pop)))
+#define MSVC_WARNING_DISABLE_PUSH(list) __pragma(warning(push)) __pragma(warning(disable : list))
+#define MSVC_WARNING_POP __pragma(warning(pop))
 #else
 #define MSVC_WARNING_DISABLE_PUSH(...)
 #define MSVC_WARNING_POP
