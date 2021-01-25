@@ -196,8 +196,8 @@ class TestGetDiviData(fake_filesystem_unittest.TestCase):
         call_number = 3961
         df = gdd.call_call_url(url_prefix, call_number)
 
-        call_url = "https://www.divi.de/divi-intensivregister-tagesreport-archiv-csv/divi-intensivregister-" + \
-                   "2020-07-07-12-15/viewdocument/3961"
+        call_url = "https://www.divi.de/divi-intensivregister-tagesreport-archiv-csv/viewdocument/" +\
+                   "3961/divi-intensivregister-" + "2020-07-07-12-15"
 
         mock_read_csv.assert_called_with(call_url)
 
@@ -208,9 +208,7 @@ class TestGetDiviData(fake_filesystem_unittest.TestCase):
         input_string = "An additional output."
         df = gdd.call_call_url(url_prefix, call_number)
 
-        mock_read_csv.assert_called_with(
-            "https://www.divi.de/divi-intensivregister-tagesreport-archiv-csv/divi-intensivregister-" +
-            "2020-07-07-12-15/viewdocument/3961")
+        mock_read_csv.assert_called_with(call_url)
 
         # check whether the read data is as expected
         self.assertTrue((pd.read_json(self.test_string1) == df).all().all())
@@ -518,7 +516,7 @@ class TestGetDiviData(fake_filesystem_unittest.TestCase):
         expected_calls = [call(start_string + date(2020, 7, 10).strftime("%Y-%m-%d") + end_string),
                           call("New drifting number in link found. "
                                "To decrease runtime, please copy the following "
-                               "to the dcitionary \"call_number_dict\" in the function \"download_data_for_one_day\": "),
+                               "to the dictionary \"call_number_dict\" in the function \"download_data_for_one_day\": "),
                           call("date(2020, 7, 9): 3987," + "\n"),
                           call("Information: DIVI data has been written to", directory)]
 

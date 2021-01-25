@@ -5,23 +5,25 @@
 #include "epidemiology/secir/parameter_space.h"
 #include "epidemiology/utils/time_series.h"
 #include <epidemiology/migration/migration.h>
+#include <epidemiology/model/simulation.h>
 
 #include <cmath>
 
 namespace epi
 {
 
-using HandleSimulationResultFunction =
-    std::function<void(epi::Graph<epi::ModelNode<epi::SecirSimulation>, epi::MigrationEdge>)>;
-
-auto DummyHandleResultFunction = [](epi::Graph<epi::ModelNode<epi::SecirSimulation>, epi::MigrationEdge>) {};
-
 /**
  * Class that performs multiple simulation runs with randomly sampled parameters.
  */
+template <class Model>
 class ParameterStudy
 {
+
 public:
+
+    using HandleSimulationResultFunction = std::function<void(epi::Graph<epi::ModelNode<epi::Simulation<Model>>, epi::MigrationEdge>)>;
+
+
     /**
      * create study for graph of compartment models.
      * @param graph graph of parameters
@@ -30,11 +32,28 @@ public:
      * @param graph_sim_dt time step of graph simulation
      * @param num_runs number of runs
      */
-    ParameterStudy(const epi::Graph<epi::SecirParams, epi::MigrationEdge>& graph, double t0, double tmax,
-                   double graph_sim_dt, size_t num_runs);
+    ParameterStudy(const epi::Graph<Model, epi::MigrationEdge>& graph, double t0, double tmax, double graph_sim_dt,
+                   size_t num_runs)
+        : m_graph(graph)
+        , m_num_runs(num_runs)
+        , m_t0{t0}
+        , m_tmax{tmax}
+        , m_dt_graph_sim(graph_sim_dt)
+    {
+    }
 
-    ParameterStudy(const epi::Graph<epi::SecirParams, epi::MigrationEdge>& graph, double t0, double tmax,
-                   double dev_rel, double graph_sim_dt, size_t num_runs);
+    ParameterStudy(const epi::Graph<Model, epi::MigrationEdge>& graph, double t0, double tmax,
+                   double dev_rel, double graph_sim_dt, size_t num_runs)
+        : m_graph(graph)
+        , m_num_runs(num_runs)
+        , m_t0{t0}
+        , m_tmax{tmax}
+        , m_dt_graph_sim(graph_sim_dt)
+    {
+        for (auto& params_node : m_graph.nodes()) {
+            set_params_distributions_normal(params_node, t0, tmax, dev_rel);
+        }
+    }
 
     /**
      * @brief Create study for single compartment model.
@@ -43,7 +62,14 @@ public:
      * @param tmax end time of simulations
      * @param num_runs number of runs in ensemble run
      */
-    ParameterStudy(SecirParams const& params, double t0, double tmax, size_t num_runs);
+    ParameterStudy(Model const& model, double t0, double tmax, size_t num_runs)
+        : m_num_runs{num_runs}
+        , m_t0{t0}
+        , m_tmax{tmax}
+        , m_dt_graph_sim(tmax - t0)
+    {
+        m_graph.add_node(0, model);
+    }
 
     /**
      * @brief create study for single compartment model with normal distributions.
@@ -54,14 +80,49 @@ public:
      * @param dev_rel relative deviation of parameters distributions
      * @param num_runs number of runs in ensemble run
      */
-    ParameterStudy(SecirParams const& params, double t0, double tmax, double dev_rel, size_t num_runs);
+    ParameterStudy(Model const& model, double t0, double tmax, double dev_rel, size_t num_runs)
+        : ParameterStudy(model, t0, tmax, num_runs)
+    {
+        set_params_distributions_normal(m_graph.nodes()[0].property, t0, tmax, dev_rel);
+    }
 
     /*
      * @brief Carry out all simulations in the parameter study.
      * @param[in] result_processing_function Processing function for simulation results, e.g., output function
      */
-    std::vector<epi::Graph<epi::ModelNode<epi::SecirSimulation>, epi::MigrationEdge>>
-    run(HandleSimulationResultFunction result_processing_function = DummyHandleResultFunction);
+    std::vector<epi::Graph<epi::ModelNode<epi::Simulation<Model>>, epi::MigrationEdge>>
+    run(HandleSimulationResultFunction result_processing_function = [](epi::Graph<epi::ModelNode<epi::Simulation<Model>>, epi::MigrationEdge>) {})
+    {
+        std::vector<epi::Graph<epi::ModelNode<epi::Simulation<Model>>, epi::MigrationEdge>> ensemble_result;
+        ensemble_result.reserve(m_num_runs);
+
+        // Iterate over all parameters in the parameter space
+        for (size_t i = 0; i < m_num_runs; i++) {
+            epi::Graph<epi::ModelNode<epi::Simulation<Model>>, epi::MigrationEdge> sim_graph;
+
+            for (auto& params_node : m_graph.nodes()) {
+                draw_sample(params_node.property);
+                params_node.property.apply_constraints();
+                sim_graph.add_node(params_node.id, params_node.property, m_t0, m_dt_integration);
+            }
+
+            for (auto& edge : m_graph.edges()) {
+                sim_graph.add_edge(edge.start_node_idx, edge.end_node_idx, edge.property);
+            }
+
+            // Call the simulation function
+            auto sim = make_migration_sim(m_t0, m_dt_graph_sim, sim_graph);
+            sim.advance(m_tmax);
+
+            auto result = sim.get_graph();
+
+            result_processing_function(result);
+
+            ensemble_result.push_back(result);
+        }
+
+        return ensemble_result;
+    }
 
     /*
      * @brief sets the number of Monte Carlo runs
@@ -111,29 +172,29 @@ public:
         return m_t0;
     }
 
-    const SecirParams& get_secir_params() const
+    const Model& get_model() const
     {
-        return m_graph.nodes()[0];
+        return m_graph.nodes()[0].property;
     }
 
-    SecirParams& get_secir_params()
+    Model& get_model()
     {
-        return m_graph.nodes()[0];
+        return m_graph.nodes()[0].property;
     }
 
-    const Graph<SecirParams, MigrationEdge>& get_secir_params_graph() const
+    const Graph<Model, MigrationEdge>& get_secir_model_graph() const
     {
         return m_graph;
     }
 
-    Graph<SecirParams, MigrationEdge>& get_secir_params_graph()
+    Graph<Model, MigrationEdge>& get_secir_model_graph()
     {
         return m_graph;
     }
 
 private:
     // Stores Graph with the names and ranges of all parameters
-    epi::Graph<epi::SecirParams, epi::MigrationEdge> m_graph;
+    epi::Graph<Model, epi::MigrationEdge> m_graph;
 
     size_t m_num_runs;
 
@@ -146,79 +207,6 @@ private:
     // adaptive time step of the integrator (will be corrected if too large/small)
     double m_dt_integration = 0.1;
 };
-
-inline ParameterStudy::ParameterStudy(const epi::Graph<epi::SecirParams, epi::MigrationEdge>& graph, double t0,
-                                      double tmax, double graph_sim_dt, size_t num_runs)
-    : m_graph(graph)
-    , m_num_runs(num_runs)
-    , m_t0{t0}
-    , m_tmax{tmax}
-    , m_dt_graph_sim(graph_sim_dt)
-{
-}
-
-inline ParameterStudy::ParameterStudy(const epi::Graph<epi::SecirParams, epi::MigrationEdge>& graph, double t0,
-                                      double tmax, double dev_rel, double graph_sim_dt, size_t num_runs)
-    : m_graph(graph)
-    , m_num_runs(num_runs)
-    , m_t0{t0}
-    , m_tmax{tmax}
-    , m_dt_graph_sim(graph_sim_dt)
-{
-    for (auto& params_node : m_graph.nodes()) {
-        set_params_distributions_normal(params_node, t0, tmax, dev_rel);
-    }
-}
-
-inline ParameterStudy::ParameterStudy(SecirParams const& params, double t0, double tmax, size_t num_runs)
-    : m_num_runs{num_runs}
-    , m_t0{t0}
-    , m_tmax{tmax}
-    , m_dt_graph_sim(tmax - t0)
-{
-    m_graph.add_node(params);
-}
-
-inline ParameterStudy::ParameterStudy(SecirParams const& params, double t0, double tmax, double dev_rel,
-                                      size_t num_runs)
-    : ParameterStudy(params, t0, tmax, num_runs)
-{
-    set_params_distributions_normal(m_graph.nodes()[0], t0, tmax, dev_rel);
-}
-
-inline std::vector<epi::Graph<epi::ModelNode<epi::SecirSimulation>, epi::MigrationEdge>>
-ParameterStudy::run(HandleSimulationResultFunction simulation_result_function)
-{
-    std::vector<epi::Graph<epi::ModelNode<epi::SecirSimulation>, epi::MigrationEdge>> ensemble_result;
-    ensemble_result.reserve(m_num_runs);
-
-    // Iterate over all parameters in the parameter space
-    for (size_t i = 0; i < m_num_runs; i++) {
-        epi::Graph<epi::ModelNode<epi::SecirSimulation>, epi::MigrationEdge> sim_graph;
-
-        for (auto& params_node : m_graph.nodes()) {
-            draw_sample(params_node);
-            params_node.apply_constraints();
-            sim_graph.add_node(params_node, m_t0, m_dt_integration);
-        }
-
-        for (auto& edge : m_graph.edges()) {
-            sim_graph.add_edge(edge.start_node_idx, edge.end_node_idx, edge.property);
-        }
-
-        // Call the simulation function
-        auto sim = make_migration_sim(m_t0, m_dt_graph_sim, sim_graph);
-        sim.advance(m_tmax);
-
-        auto result = sim.get_graph();
-
-        simulation_result_function(result);
-
-        ensemble_result.push_back(result);
-    }
-
-    return ensemble_result;
-}
 
 } // namespace epi
 

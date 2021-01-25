@@ -1,3 +1,12 @@
+## @file getRKIData.py
+#
+# @brief Downloads the data of the Robert-Koch-Institut (RKI) and provides it in different ways.
+#
+# The RKI data we download can be found at https://npgeo-corona-npgeo-de.hub.arcgis.com/datasets/dd4580c810204019a7b8eb3e0b329dd6_0
+#
+# Be careful: Recovered and deaths are not correct set in this case
+
+# Imports
 import os
 import sys
 import json
@@ -9,15 +18,17 @@ from datetime import timedelta, date
 from epidemiology.epidata import getDataIntoPandasDataFrame as gd
 from epidemiology.epidata import defaultDict as dd
 
-## Checks if all states are mentioned
-# This check had to be added, due to not complete data downloads because of changes from RKI-site
-# Here it is checked if 16 states are part of the data.
-# If data is incomplete the data is downloaded from another possibility
-# It be useful to one dat add even more checks
-#
-# @param df pandas dataframe to check
-# return Boolean to say if data is complete or not
 def check_for_completeness(df):
+   """! Checks if all states are mentioned
+
+   This check had to be added, due to incomplete data downloads because of changes from RKI-site
+   It is checked if 16 states are part of the data.
+   If data is incomplete the data is downloaded from another possibility
+   It would be useful to add even more checks
+
+   @param df pandas dataframe to check
+   @return Boolean to say if data is complete or not
+   """
 
    if not df.empty:
       id_bundesland = df["IdBundesland"].max()
@@ -33,12 +44,80 @@ def check_for_completeness(df):
    # if it is empty
    return False
 
+def fuse_berlin(df):
+   """! Concatenates the different districts of Berlin into one district
+
+   The RKI data for Berlin is devided into 7 different districts.
+   This does not correspond to the other datasets, which usually has only
+   one entry for Berlin.
+   This function is used to replace the entries of the 7 different
+   districts with only one county, which is called 'Berlin'.
+
+   @param df pandas dataframe
+   @return dataframe with fused Berlin
+   """
+
+   berlin = df[(df['ID_County'].values/1000).astype(int)==11]
+   berlin = berlin.groupby(['Date', 'Gender', 'ID_State', 'State', 'County', 'Age_RKI']).agg('sum').reset_index()
+
+   berlin[dd.EngEng['idCounty']] = 11000
+   berlin[dd.EngEng['county']] = dd.County[11000]
+
+   new_df = df[(df[dd.EngEng['idCounty']].values/1000).astype(int)!=11]
+   new_df = pandas.concat([new_df, berlin], axis=0)
+
+   dateToUse = 'Date'
+   new_df.sort_values( [dateToUse], inplace = True )
+
+   return new_df
+
 
 def get_rki_data(read_data=dd.defaultDict['read_data'],
                  out_form=dd.defaultDict['out_form'],
                  out_folder=dd.defaultDict['out_folder'],
                  make_plot=dd.defaultDict['make_plot'],
+                 split_berlin=dd.defaultDict['split_berlin'],
 ):
+   """! Downloads the RKI data and provides different kind of structured data
+
+   The data is read either from the internet or from a json file (FullDataRKI.json), stored in an earlier run.
+   If the data is read from the internet, before changing anything the data is stored in FullDataRKI.json.
+   If data should be downloaded, it is checked if data contains all 16 states.
+   If not a different source is tried, in this case a column has to be renamed.
+   The file is read in or stored at the folder "out_folder"/Germany/.
+   To store and change the data we use pandas
+
+   While working with the data
+   - the column names are changed to english depending on defaultDict
+   - a new column "Date" is defined.
+   - we are only interested in the values where the parameter NeuerFall, NeuerTodesfall, NeuGenesen are larger than 0.
+   The values, when these parameters are negative are just useful,
+   if one would want to get the difference to the previous day.
+   For details we refer to the above mentioned webpage.
+   - For all different parameters and different columns the values are added up for whole germany for every date
+   and the cumulative sum is calculated. Unless something else is mentioned.
+   - For Berlin all counties can be fused to one [Default]. If Berlin is split, different file names are used.
+   - Following data is generated and written to the mentioned filename
+       - All infected (current and past) for whole germany are stored in "infected_rki"
+       - All deaths whole germany are stored in "deaths_rki"
+       - Infected, deaths and recovered for whole germany are stored in "all_germany_rki"
+       - Infected split for states are stored in "infected_state_rki"
+       - Infected, deaths and recovered split for states are stored in "all_state_rki"
+       - Infected split for counties are stored in "infected_county_rki(_split_berlin)"
+       - Infected, deaths and recovered split for county are stored in "all_county_rki(_split_berlin)"
+       - Infected, deaths and recovered split for gender are stored in "all_gender_rki"
+       - Infected, deaths and recovered split for state and gender are stored in "all_state_gender_rki"
+       - Infected, deaths and recovered split for county and gender are stored in "all_county_gender_rki(_split_berlin)"
+       - Infected, deaths and recovered split for age are stored in "all_age_rki"
+       - Infected, deaths and recovered split for state and age are stored in "all_state_age_rki"
+       - Infected, deaths and recovered split for county and age are stored in "all_county_age_rki(_split_berlin)"
+
+   @param read_data False [Default] or True. Defines if data is read from file or downloaded.
+   @param out_form File format which is used for writing the data. Default defined in defaultDict.
+   @param out_folder Path to folder where data is written in folder out_folder/Germany.
+   @param split_berlin True or False [Default]. Defines if Berlin counties is fused to just on county.
+   @param make_plot False [Default] or True. Defines if plots are generated with matplotlib.
+   """
 
    directory = os.path.join(out_folder, 'Germany/')
    gd.check_dir(directory)
@@ -72,11 +151,13 @@ def get_rki_data(read_data=dd.defaultDict['read_data'],
 
       # try another possibility if df was empty or incomplete
       if not complete:
+
+            print("Note: RKI data is incomplete. Trying another source.")
+
             df = load['csv']("","https://npgeo-de.maps.arcgis.com/sharing/rest/content/items/"
                                 "f10774f1c63e40168479a1feb6c7ca74/data", "")
-            ID = "FID"
-      else:
-         ID = "ObjectId"
+
+            df.rename(columns = {'FID':"ObjectId"}, inplace = True)
 
       if df.empty != True:
       # output data to not always download it
@@ -92,9 +173,6 @@ def get_rki_data(read_data=dd.defaultDict['read_data'],
          else:
             exit_string = "Something went wrong, dataframe is empty for csv and geojson!"
             sys.exit(exit_string)
-
-   # generate Test file:
-   # df.head(100).to_json(os.path.join(directory, "TestDataRKI.json"))
 
    # store dict values in parameter to not always call dict itself
    Altersgruppe2 = dd.GerEng['Altersgruppe2']
@@ -151,9 +229,9 @@ def get_rki_data(read_data=dd.defaultDict['read_data'],
 
    dateToUse = 'Date'
    df.sort_values( dateToUse, inplace = True )
+
    # Manipulate data to get rid of conditions: df.NeuerFall >= 0, df.NeuerTodesfall >= 0, df.NeuGenesen >=0
    # There might be a better way
-
    dfF = df
 
    dfF.loc[dfF.NeuerFall<0, [AnzahlFall]] = 0
@@ -161,7 +239,7 @@ def get_rki_data(read_data=dd.defaultDict['read_data'],
    dfF.loc[dfF.NeuGenesen<0, [AnzahlGenesen]] = 0
 
    # get rid of unnecessary columns
-   dfF = dfF.drop(['NeuerFall', 'NeuerTodesfall', 'NeuGenesen', "IstErkrankungsbeginn", ID,
+   dfF = dfF.drop(['NeuerFall', 'NeuerTodesfall', 'NeuGenesen', "IstErkrankungsbeginn", "ObjectId",
                    "Meldedatum", "Datenstand", "Refdatum", Altersgruppe2], 1)
 
    print("Available columns:", df.columns)
@@ -182,7 +260,6 @@ def get_rki_data(read_data=dd.defaultDict['read_data'],
 
    # outout to json file
    gd.write_dataframe(gbNF_cs.reset_index(), directory, "infected_rki", out_form)
-
 
    if(make_plot == True):
       # make plot
@@ -245,23 +322,32 @@ def get_rki_data(read_data=dd.defaultDict['read_data'],
 
    ############# Data for counties all ages ######################
 
+   if not split_berlin:
+      df = fuse_berlin(df)
    # NeuerFall: Infected (incl. recovered) over "dateToUse" for every county ("Landkreis"):
    gbNFc = df[df.NeuerFall >= 0].groupby([IdLandkreis, Landkreis, dateToUse])\
                                 .agg({AnzahlFall: sum})
-
    gbNFc_cs = gbNFc.groupby(level=1).cumsum().reset_index()
 
    # output
-   gd.write_dataframe(gbNFc_cs, directory, "infected_county_rki", out_form)
+   if split_berlin:
+      gd.write_dataframe(gbNFc_cs, directory, "infected_county_rki_split_berlin", out_form)
+   else:
+      gd.write_dataframe(gbNFc_cs, directory, "infected_county_rki", out_form)
 
    # infected (incl recovered), deaths and recovered together 
 
+   if not split_berlin:
+      dfF = fuse_berlin(dfF)
    gbAllC = dfF.groupby( [IdLandkreis, Landkreis, dateToUse]).\
                 agg({AnzahlFall: sum, AnzahlTodesfall: sum, AnzahlGenesen: sum})
    gbAllC_cs = gbAllC.groupby(level=1).cumsum().reset_index()
 
    # output
-   gd.write_dataframe(gbAllC_cs, directory, "all_county_rki", out_form)
+   if split_berlin:
+      gd.write_dataframe(gbAllC_cs, directory, "all_county_rki_splited_berlin", out_form)
+   else:
+      gd.write_dataframe(gbAllC_cs, directory, "all_county_rki", out_form)
    
 
    ######### Data whole Germany different gender ##################
@@ -303,7 +389,10 @@ def get_rki_data(read_data=dd.defaultDict['read_data'],
    gbAllGCounty_cs = gbAllGCounty.groupby(level=[1,2]).cumsum().reset_index()
 
    # output
-   gd.write_dataframe(gbAllGCounty_cs, directory, "all_county_gender_rki", out_form)
+   if split_berlin:
+      gd.write_dataframe(gbAllGCounty_cs, directory, "all_county_gender_rki_split_berlin", out_form)
+   else:
+      gd.write_dataframe(gbAllGCounty_cs, directory, "all_county_gender_rki", out_form)
   
    ######### Data whole Germany different ages ####################
 
@@ -376,7 +465,10 @@ def get_rki_data(read_data=dd.defaultDict['read_data'],
    gbAllAgeCounty_cs = gbAllAgeCounty.groupby(level=[1,2]).cumsum().reset_index()
 
    # output
-   gd.write_dataframe(gbAllAgeCounty_cs, directory, "all_county_age_rki", out_form)
+   if split_berlin:
+      gd.write_dataframe(gbAllAgeCounty_cs, directory, "all_county_age_rki_split_berlin", out_form)
+   else:
+      gd.write_dataframe(gbAllAgeCounty_cs, directory, "all_county_age_rki", out_form)
 
    # TODO: uncomment if ALtersgruppe2 will again be provided
    #### age5 ####
@@ -386,7 +478,11 @@ def get_rki_data(read_data=dd.defaultDict['read_data'],
    #gbAllAgeCounty_cs = gbAllAgeCounty.groupby(level=[1, 2]).cumsum().reset_index()
 
    # output
-   #gd.write_dataframe(gbAllAgeCounty_cs, directory, "all_county_age5_rki", out_form)
+
+   #if split_berlin:
+   #   gd.write_dataframe(gbAllAgeCounty_cs, directory, "all_county_age5_rki_split_berlin", out_form)
+   #else:
+   #   gd.write_dataframe(gbAllAgeCounty_cs, directory, "all_county_age5_rki", out_form)
 
    #### age10 ####
 
@@ -395,14 +491,20 @@ def get_rki_data(read_data=dd.defaultDict['read_data'],
    #gbAllAgeCounty_cs = gbAllAgeCounty.groupby(level=[1,2]).cumsum().reset_index()
 
    # output
-   #gd.write_dataframe(gbAllAgeCounty_cs, directory, "all_county_age10_rki", out_form)
+
+   # if split_berlin:
+   #    gd.write_dataframe(gbAllAgeCounty_cs, directory, "all_county_age10_rki_split_berlin", out_form)
+   # else:
+   #    gd.write_dataframe(gbAllAgeCounty_cs, directory, "all_county_age10_rki", out_form)
 
 
 def main():
+   """! Main program entry."""
 
-   [read_data, out_form, out_folder, make_plot] = gd.cli("rki")
+   [read_data, out_form, out_folder, make_plot, split_berlin] = gd.cli("rki")
 
-   get_rki_data(read_data, out_form, out_folder, make_plot)
+   get_rki_data(read_data, out_form, out_folder, make_plot, split_berlin)
+
 
 if __name__ == "__main__":
 

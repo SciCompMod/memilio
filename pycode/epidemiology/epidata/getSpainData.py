@@ -1,3 +1,7 @@
+## @file getSpainData.py
+#
+# @brief Downloads data for Spain
+#
 ############################################################################################################
 #                                                                                                          #
 #        IMPORTANT NOTE: WHEN USING THIS DATA, WE HAVE TO CITE https://github.com/datadista/datasets       #
@@ -28,10 +32,34 @@ from epidemiology.epidata import defaultDict as dd
 def get_spain_data(read_data=dd.defaultDict['read_data'],
                    out_form=dd.defaultDict['out_form'],
                    out_folder=dd.defaultDict['out_folder']):
+   """! Downloads data from Spain covid-19 data
+
+   Source: https://github.com/datadista/datasets/tree/master/COVID%2019
+
+   The data is read in, either from the internet or from two json files
+   (raw_spain_all_age.json, raw_spain_all_state.json), stored in an earlier run.
+   If the data is read from the internet, before changing anything the data is stored in above mentioned files.
+   The file is read in or stored at the folder "out_folder"/Spain/.
+   To store and change the data we use pandas
+
+   Working with the data
+   - Columns are renamed to english as defined in defaultDict
+   - Spanish names of states, specific characters are removed.
+   - For data splitted for states, it can be chosen if only positive PCR tests are taken into account
+   or also positive antibody tests [Default].
+   To change it, a parameter in the source code has t be changed.
+   - Following files are written
+      - whole spain together stored in spain
+      - spain split for age stored in spain_all_age
+      - spain split into states stored in spain_all_state
+
+   @param read_data False [Default] or True. Defines if data is read from file or downloaded.
+   @param out_form File format which is used for writing the data. Default defined in defaultDict.
+   @param out_folder Path to folder where data is written in folder out_folder/Spain.
+   """
 
    directory = os.path.join(out_folder, 'Spain/')
    gd.check_dir(directory)
-
 
    ages_file = 'raw_spain_all_age'
    stat_file = 'raw_spain_all_state'
@@ -58,7 +86,7 @@ def get_spain_data(read_data=dd.defaultDict['read_data'],
          # Get data:
          # https://raw.githubusercontent.com/datadista/datasets/master/COVID%2019/nacional_covid19_rango_edad.csv
          df_age = gd.loadCsv('nacional_covid19_rango_edad',
-                           apiUrl='https://raw.githubusercontent.com/datadista/datasets/master/COVID%2019/')
+                           apiUrl='https://raw.githubusercontent.com/datadista/datasets/master/COVID%2019/old_series/')
       except:
          exit_string = "Files \'nacional_covid19_rango_edad\' are not available online. Check URL."
          sys.exit(exit_string)
@@ -71,7 +99,7 @@ def get_spain_data(read_data=dd.defaultDict['read_data'],
          # Get data:
          # https://raw.githubusercontent.com/datadista/datasets/master/COVID%2019/ccaa_covid19_datos_isciii.csv
          df_state = gd.loadCsv('ccaa_covid19_datos_isciii',
-                              apiUrl='https://raw.githubusercontent.com/datadista/datasets/master/COVID%2019/')
+                              apiUrl='https://raw.githubusercontent.com/datadista/datasets/master/COVID%2019/old_series/')
       except:
          exit_string = "Files \'ccaa_covid19_datos_isciii\' are not available online. Check URL."
          sys.exit(exit_string)
@@ -155,15 +183,15 @@ def get_spain_data(read_data=dd.defaultDict['read_data'],
       df_state.loc[df_state[dd.EngEng['confirmedTotal']] == 0, [dd.EngEng['confirmedTotal']]]\
          = df_state[ dd.EngEng["confirmedPcr"]] + df_state[dd.EngEng["confirmedAb"]]
 
-
    # output json
    gd.write_dataframe(df_state, directory, "spain_all_state", out_form)
 
 
 def main():
+   """! Main program entry."""
 
-    [read_data, out_form, out_folder] = gd.cli("spain")
-    get_spain_data(read_data, out_form, out_folder)
+   [read_data, out_form, out_folder] = gd.cli("spain")
+   get_spain_data(read_data, out_form, out_folder)
 
 
 if __name__ == "__main__":
