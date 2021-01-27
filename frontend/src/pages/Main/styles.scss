@@ -59,6 +59,10 @@
       margin-top: 1rem;
       width: 90%;
       text-align: justify;
+
+      p {
+        font-size: 11pt;
+      }
     }
 
     .graph {
@@ -88,33 +92,33 @@
   }
 }
 
-@media (max-width: 700px) {
+@media (max-width: 900px) {
   .main {
     flex-direction: column !important;
     height: auto !important;
 
     .left {
-      height: 700px;
+      min-height: 700px;
       width: 100% !important;
       min-width: 100% !important;
       max-width: 100% !important;
     }
 
     .right {
-      height: 1000px;
+      min-height: 1200px;
+      display: flex;
+      flex-direction: column;
+      flex-grow: 1;
 
-      .infotext {
-        order: 1;
-        width: 90%;
+      .info-text {
+        order: 2;
         text-align: justify;
-        padding-bottom: 50px;
-        padding-top: 20px;
+        width: 90%;
+        padding-bottom: 4rem;
       }
 
       .graph {
-        order: 0;
-        height: 100% !important;
-        padding-bottom: 4rem;
+        order: 1;
       }
     }
   }

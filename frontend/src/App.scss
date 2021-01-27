@@ -121,10 +121,7 @@ body,
 
     display: flex;
     flex-grow: 1;
-
-    @media (max-width: 700px) {
-      overflow: auto;
-    }
+    overflow: auto;
 
     .about,
     .impressum,
