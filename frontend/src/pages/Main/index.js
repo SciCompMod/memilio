@@ -298,7 +298,9 @@ class MainPage extends Component {
               </ButtonGroup>
             </div>
           </div>
-          <div className="map" id="map"></div>
+          <div className="map-wrapper">
+            <div className="map" id="map" />
+          </div>
         </div>
         <div className="right">
           <div className="info-text">

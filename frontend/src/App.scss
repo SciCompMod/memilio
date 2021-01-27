@@ -37,6 +37,7 @@
 body,
 #root {
   height: 100%;
+  display: flex;
 }
 
 #root {
@@ -118,6 +119,7 @@ body,
   .body {
     background-color: #f8f8f9; //$dlr-gray-light;
 
+    display: flex;
     flex-grow: 1;
 
     @media (max-width: 700px) {
