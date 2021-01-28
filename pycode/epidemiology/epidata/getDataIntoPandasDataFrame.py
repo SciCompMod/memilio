@@ -106,6 +106,7 @@ def cli(what):
    - end_date
    - plot
    - split_berlin
+   - moving-average
    - start_date
    - update
 
@@ -120,7 +121,7 @@ def cli(what):
    #                "update": ['divi']                 }
 
    cli_dict = {"divi": ['Downloads data from DIVI', 'start_date', 'end_date', 'update'],
-               "rki": ['Download data from RKI', 'plot', 'split_berlin'],
+               "rki": ['Download data from RKI', 'plot', 'split_berlin', 'moving_average'],
                "rkiest": ['Download data from RKI and JH and estimate recovered and deaths', 'plot'],
                "spain": ['Download of spain data'],
                "population": ['Download population data'],
@@ -162,6 +163,10 @@ def cli(what):
                            help='Berlin data is split into different counties,'
                                 ' instead of having only one county for Berlin.',
                            action='store_true')
+   if 'moving_average' in what_list:
+       parser.add_argument('-ma', '--moving_average',
+                           help='The moving average is computed instead of the real values',
+                           action='store_true')
    if 'start_date' in what_list:
       parser.add_argument('-sd',  '--start-date',
                           help='Defines start date for data download. Should have form: YYYY-mm-dd.'
@@ -186,6 +191,8 @@ def cli(what):
    # TODO: check if it is possible to automatically generate this
    if 'split_berlin' in what_list:
        arg_list.append(args.split_berlin)
+   if 'moving_average' in what_list:
+       arg_list.append(args.moving_average)
    if 'end_date' in what_list:
        arg_list.append(args.end_date)
    if 'plot' in what_list:
