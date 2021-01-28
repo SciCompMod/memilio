@@ -15,6 +15,7 @@ import Impressum from './pages/Impressum';
 import Dsgvo from './pages/Dsgvo';
 import Accessibility from './pages/Accessibility';
 import Attribution from './pages/Attribution';
+import DeveloperPage from './pages/Developer';
 
 // AmCharts defaults to English as a locale and not the browser default,
 // so we have to set it manually.
@@ -57,10 +58,14 @@ class App extends Component {
             <div className="title">SARS-CoV-2 Reproduktionszahlen innerhalb Deutschlands</div>
             <div className="logos">
               <div className="hzi-logo">
-                <img src="assets/logo-hzi2-de.svg" alt="HZI" />
+                <a target="_blank" rel="noopener noreferrer" href="https://www.helmholtz-hzi.de/">
+                  <img src="assets/logo-hzi2-de.svg" alt="HZI" />
+                </a>
               </div>
               <div className="dlr-signet">
-                <img src="assets/dlr-signet.png" alt="DLR Signet" />
+                <a target="_blank" rel="noopener noreferrer" href="https://www.dlr.de/">
+                  <img src="assets/dlr-signet.png" alt="DLR Signet" />
+                </a>
               </div>
             </div>
           </header>
@@ -81,9 +86,7 @@ class App extends Component {
               <Route path="/attribution">
                 <Attribution />
               </Route>
-              <Route path="/">
-                <Main />
-              </Route>
+              <Route path="/">{process.env.REACT_APP_MODE === 'development' ? <DeveloperPage /> : <Main />}</Route>
             </Switch>
             {this.state.loading ? (
               <div className="overlay">

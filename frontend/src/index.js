@@ -14,6 +14,10 @@ import './i18n';
 
 import './index.css';
 
+if (process.env.REACT_APP_MODE === 'development') {
+  console.warn('USING DEVELOPMENT MODE DO NOT RELEASE THIS!');
+}
+
 // setup number library
 numeral.register('locale', 'de', {
   delimiters: {
