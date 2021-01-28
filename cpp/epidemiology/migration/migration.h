@@ -5,16 +5,14 @@
 #include "epidemiology/utils/time_series.h"
 #include "epidemiology/utils/eigen.h"
 #include "epidemiology/utils/eigen_util.h"
-#include "epidemiology/secir/populations.h"
+#include "epidemiology/model/populations.h"
 #include "epidemiology/utils/compiler_diagnostics.h"
+#include "epidemiology/math/euler.h"
 
 #include <cassert>
 
 namespace epi
 {
-
-class SecirParams;
-class SeirParams;
 
 /**
  * represents the simulation in one node of the graph.
@@ -46,12 +44,21 @@ public:
     {
         return model.get_result();
     }
+
     /**
-     * get the parameters of the simulation in this node.
+     * get the the simulation in this node.
      */
-    decltype(auto) get_params() const
+    Model& get_simulation()
     {
-        return model.get_params();
+        return model;
+    }
+
+    /**
+     * get the the model in this node.
+     */
+    decltype(auto) get_model() const
+    {
+        return model.get_model();
     }
 
     Eigen::Ref<const Eigen::VectorXd> get_last_state() const
@@ -126,10 +133,18 @@ public:
      * @param t time of migration
      * @param dt time between migration and return
      */
-    void calculate_returns_ode(Eigen::Ref<TimeSeries<double>::Vector> migrated, const SecirParams& params,
-                               Eigen::Ref<const TimeSeries<double>::Vector> total, double t, double dt);
-    void calculate_returns_ode(Eigen::Ref<TimeSeries<double>::Vector> migrated, const SeirParams& params,
-                               Eigen::Ref<const TimeSeries<double>::Vector> total, double t, double dt);
+    template <typename Model>
+    void calculate_returns_ode(Eigen::Ref<TimeSeries<double>::Vector> migrated, const Model& model,
+                               Eigen::Ref<const TimeSeries<double>::Vector> total, double t, double dt)
+    {
+        auto y0 = migrated.eval();
+        auto y1 = migrated;
+        EulerIntegratorCore().step(
+            [&](auto&& y, auto&& t_, auto&& dydt) {
+                model.get_derivatives(total, y, t_, dydt);
+            },
+            y0, t, dt, y1);
+    }
 
     /**
      * compute migration from node_from to node_to.
@@ -159,7 +174,7 @@ void MigrationEdge::apply_migration(double t, double dt, ModelNode<Model>& node_
         if (m_return_times.get_time(i) <= t) {
             auto v0 = find_value_reverse(node_to.get_result(), m_migrated.get_time(i), 1e-10, 1e-10);
             assert(v0 != node_to.get_result().rend() && "unexpected error.");
-            calculate_returns_ode(m_migrated[i], node_to.get_params(), *v0, m_migrated.get_time(i), dt);
+            calculate_returns_ode(m_migrated[i], node_to.get_model(), *v0, m_migrated.get_time(i), dt);
             node_from.get_result().get_last_value() += m_migrated[i];
             node_to.get_result().get_last_value() -= m_migrated[i];
             m_migrated.remove_time_point(i);

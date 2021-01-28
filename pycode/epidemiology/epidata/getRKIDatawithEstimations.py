@@ -1,30 +1,35 @@
+## @file getRKIDatawithEstimations.py
+#
+# @brief Estimates recovered and deaths from data from RKI and john hopkins together
+#
+
 import os
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
-from datetime import timedelta, datetime
-
 
 from epidemiology.epidata import getDataIntoPandasDataFrame as gd
 from epidemiology.epidata import defaultDict as dd
 from epidemiology.epidata import getRKIData as grd
 from epidemiology.epidata import getJHData as gjd
 
-## Function to estimare recovered and deaths from combination of RKI and JH data
-#
-# From the John-Hopkins (JH) data the fraction revered/confirmed and deaths/confiremd are calculated
-# With this fraction every existing RKI data is scaled.
-# The new columns recovered_estimated and deaths_estimated are added.
-#
-# @param read_data False [Default] or True. Defines if data is read from file or downloaded.
-# @param out_form json [Default]
-# @param out_folder Folder where data is written to.
-# @param make_plot [Optional] RKI and estimated data can be compared by plots
-#
+
 def get_rki_data_with_estimations(read_data=dd.defaultDict['read_data'],
                                   out_form=dd.defaultDict['out_form'],
                                   out_folder=dd.defaultDict['out_folder'],
                                   make_plot=dd.defaultDict['make_plot']):
+
+    """! Function to estimate recovered and deaths from combination of RKI and JH data
+
+    From the John-Hopkins (JH) data the fraction recovered/confirmed and deaths/confiremd are calculated
+    With this fraction every existing RKI data is scaled.
+    The new columns recovered_estimated and deaths_estimated are added.
+
+    @param read_data False [Default] or True. Defines if data is read from file or downloaded.
+    @param out_form json [Default]
+    @param out_folder Folder where data is written to.
+    @param make_plot [Optional] RKI and estimated data can be compared by plots
+    """
 
     data_path = os.path.join(out_folder, 'Germany/')
 
@@ -139,12 +144,13 @@ def get_rki_data_with_estimations(read_data=dd.defaultDict['read_data'],
 
         # TODO: think about to add age dependent weight function
 
+
 def main():
+    """! Main program entry."""
+
     [read_data, out_form, out_folder, make_plot] = gd.cli("rkiest")
     get_rki_data_with_estimations(read_data, out_form, out_folder, make_plot)
 
 
 if __name__ == "__main__":
     main()
-
-

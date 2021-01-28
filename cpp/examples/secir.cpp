@@ -1,4 +1,5 @@
 #include <epidemiology/secir/secir.h>
+#include <epidemiology/model/simulation.h>
 #include <epidemiology/utils/logging.h>
 
 int main()
@@ -33,59 +34,60 @@ int main()
     double nb_total_t0 = 10000, nb_exp_t0 = 100, nb_inf_t0 = 50, nb_car_t0 = 50, nb_hosp_t0 = 20, nb_icu_t0 = 10,
            nb_rec_t0 = 10, nb_dead_t0 = 0;
 
-    epi::SecirParams params;
+    epi::SecirModel<epi::AgeGroup1> model;
 
     // params.set_icu_capacity(20);
-    params.set_start_day(0);
-    params.set_seasonality(0);
+    model.parameters.set_start_day(0);
+    model.parameters.set_seasonality(0);
 
-    params.times[0].set_incubation(tinc);
-    params.times[0].set_infectious_mild(tinfmild);
-    params.times[0].set_serialinterval(tserint);
-    params.times[0].set_hospitalized_to_home(thosp2home);
-    params.times[0].set_home_to_hospitalized(thome2hosp);
-    params.times[0].set_hospitalized_to_icu(thosp2icu);
-    params.times[0].set_icu_to_home(ticu2home);
-    params.times[0].set_icu_to_death(ticu2death);
+    model.parameters.times[0].set_incubation(tinc);
+    model.parameters.times[0].set_infectious_mild(tinfmild);
+    model.parameters.times[0].set_serialinterval(tserint);
+    model.parameters.times[0].set_hospitalized_to_home(thosp2home);
+    model.parameters.times[0].set_home_to_hospitalized(thome2hosp);
+    model.parameters.times[0].set_hospitalized_to_icu(thosp2icu);
+    model.parameters.times[0].set_icu_to_home(ticu2home);
+    model.parameters.times[0].set_icu_to_death(ticu2death);
 
-    epi::ContactMatrixGroup& contact_matrix = params.get_contact_patterns();
+    epi::ContactMatrixGroup& contact_matrix = model.parameters.get_contact_patterns();
     contact_matrix[0]                       = epi::ContactMatrix(Eigen::MatrixXd::Constant(1, 1, cont_freq));
     contact_matrix[0].add_damping(0.7, epi::SimulationTime(30.));
 
-    params.populations.set({0, epi::SecirCompartments::E}, nb_exp_t0);
-    params.populations.set({0, epi::SecirCompartments::C}, nb_car_t0);
-    params.populations.set({0, epi::SecirCompartments::I}, nb_inf_t0);
-    params.populations.set({0, epi::SecirCompartments::H}, nb_hosp_t0);
-    params.populations.set({0, epi::SecirCompartments::U}, nb_icu_t0);
-    params.populations.set({0, epi::SecirCompartments::R}, nb_rec_t0);
-    params.populations.set({0, epi::SecirCompartments::D}, nb_dead_t0);
-    params.populations.set_difference_from_total({0, epi::SecirCompartments::S}, nb_total_t0);
+    model.populations.set_total(nb_total_t0);
+    model.populations.set(nb_exp_t0, (epi::AgeGroup1)0, epi::InfectionType::E);
+    model.populations.set(nb_car_t0, (epi::AgeGroup1)0, epi::InfectionType::C);
+    model.populations.set(nb_inf_t0, (epi::AgeGroup1)0, epi::InfectionType::I);
+    model.populations.set(nb_hosp_t0, (epi::AgeGroup1)0, epi::InfectionType::H);
+    model.populations.set(nb_icu_t0, (epi::AgeGroup1)0, epi::InfectionType::U);
+    model.populations.set(nb_rec_t0, (epi::AgeGroup1)0, epi::InfectionType::R);
+    model.populations.set(nb_dead_t0, (epi::AgeGroup1)0, epi::InfectionType::D);
+    model.populations.set_difference_from_total(nb_total_t0, (epi::AgeGroup1)0, epi::InfectionType::S);
 
-    params.probabilities[0].set_infection_from_contact(inf_prob);
-    params.probabilities[0].set_carrier_infectability(carr_infec);
-    params.probabilities[0].set_asymp_per_infectious(alpha);
-    params.probabilities[0].set_risk_from_symptomatic(beta);
-    params.probabilities[0].set_hospitalized_per_infectious(rho);
-    params.probabilities[0].set_icu_per_hospitalized(theta);
-    params.probabilities[0].set_dead_per_icu(delta);
+    model.parameters.probabilities[0].set_infection_from_contact(inf_prob);
+    model.parameters.probabilities[0].set_carrier_infectability(carr_infec);
+    model.parameters.probabilities[0].set_asymp_per_infectious(alpha);
+    model.parameters.probabilities[0].set_risk_from_symptomatic(beta);
+    model.parameters.probabilities[0].set_hospitalized_per_infectious(rho);
+    model.parameters.probabilities[0].set_icu_per_hospitalized(theta);
+    model.parameters.probabilities[0].set_dead_per_icu(delta);
 
-    params.apply_constraints();
+    model.apply_constraints();
 
-    epi::TimeSeries<double> secir = simulate(t0, tmax, dt, params);
+    epi::TimeSeries<double> secir = simulate(t0, tmax, dt, model);
 
     bool print_to_terminal = true;
 
     if (print_to_terminal) {
         char vars[] = {'S', 'E', 'C', 'I', 'H', 'U', 'R', 'D'};
         printf("\n # t");
-        for (size_t k = 0; k < epi::SecirCompartments::SecirCount; k++) {
+        for (size_t k = 0; k < (size_t)epi::InfectionType::Count; k++) {
             printf(" %c", vars[k]);
         }
         auto num_points = static_cast<size_t>(secir.get_num_time_points());
         for (size_t i = 0; i < num_points; i++) {
             printf("\n%.14f ", secir.get_time(i));
             Eigen::VectorXd res_j = secir.get_value(i);
-            for (size_t j = 0; j < epi::SecirCompartments::SecirCount; j++) {
+            for (size_t j = 0; j < (size_t)epi::InfectionType::Count; j++) {
                 printf(" %.14f", res_j[j]);
             }
         }

@@ -516,7 +516,7 @@ class TestGetDiviData(fake_filesystem_unittest.TestCase):
         expected_calls = [call(start_string + date(2020, 7, 10).strftime("%Y-%m-%d") + end_string),
                           call("New drifting number in link found. "
                                "To decrease runtime, please copy the following "
-                               "to the dcitionary \"call_number_dict\" in the function \"download_data_for_one_day\": "),
+                               "to the dictionary \"call_number_dict\" in the function \"download_data_for_one_day\": "),
                           call("date(2020, 7, 9): 3987," + "\n"),
                           call("Information: DIVI data has been written to", directory)]
 
