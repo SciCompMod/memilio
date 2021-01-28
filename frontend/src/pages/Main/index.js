@@ -308,11 +308,11 @@ class MainPage extends Component {
             <p>
               Das Institut für Softwaretechnologie des Deutschen Zentrums für Luft- und Raumfahrt (DLR) entwickelt in
               Zusammenarbeit mit dem Helmholtz-Zentrum für Infektionsforschung ein umfassendes Softwarepaket, welches
-              das COVID19-Infektionsgeschehen per Simulation darstellt. In der hier veröffentlichen Visualisierung wird
-              die aktuelle Reproduktionszahl, sowie der 7-Tage Inzidenzwert, in den einzelnen Stadt- und Landkreisen
-              angezeigt. Die Reproduktionszahl gibt an, wie viele Menschen unter den aktuellen Maßnahmen von einer
-              infektiösen Person durchschnittlich angesteckt werden. Die 7-Tage-Inzidenz gibt an, wie viele Menschen pro
-              100.000 Einwohnern in 7 Tagen infiziert wurden.
+              das COVID19-Infektionsgeschehen darstellt. In der hier veröffentlichen Visualisierung wird die aktuelle
+              Reproduktionszahl, sowie der 7-Tage Inzidenzwert, in den einzelnen Stadt- und Landkreisen angezeigt. Die
+              Reproduktionszahl gibt an, wie viele Menschen unter den aktuellen Maßnahmen von einer infektiösen Person
+              durchschnittlich angesteckt werden. Die 7-Tage-Inzidenz gibt an, wie viele Menschen pro 100.000 Einwohnern
+              in 7 Tagen infiziert wurden.
             </p>
             <p>
               <Link title="Weitere Informationen zu der Webseite" to="/informationen">
