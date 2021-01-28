@@ -75,6 +75,11 @@ public:
         return m_result;
     }
 
+    void set_integrator(std::shared_ptr<IntegratorCore> integrator)
+    {
+        m_core= integrator;
+    }
+
 private:
     DerivFunction m_f;
     TimeSeries<double> m_result;

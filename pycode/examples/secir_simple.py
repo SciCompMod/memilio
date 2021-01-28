@@ -20,52 +20,52 @@ def run_secir_simulation():
     num_compartments = 8
 
     # Initialize Parameters
-    params = secir.SecirParams(num_groups)
+    model = secir.SecirModel6()
 
     # Set parameters
     for i in range(num_groups):
         # Compartment transition duration
-        params.times[i].set_incubation(5.2)
-        params.times[i].set_infectious_mild(6)
-        params.times[i].set_serialinterval(4.2)
-        params.times[i].set_hospitalized_to_home(12)
-        params.times[i].set_home_to_hospitalized(5)
-        params.times[i].set_hospitalized_to_icu(2)
-        params.times[i].set_icu_to_home(8)
-        params.times[i].set_icu_to_death(5)
+        model.parameters.times[i].set_incubation(5.2)
+        model.parameters.times[i].set_infectious_mild(6)
+        model.parameters.times[i].set_serialinterval(4.2)
+        model.parameters.times[i].set_hospitalized_to_home(12)
+        model.parameters.times[i].set_home_to_hospitalized(5)
+        model.parameters.times[i].set_hospitalized_to_icu(2)
+        model.parameters.times[i].set_icu_to_home(8)
+        model.parameters.times[i].set_icu_to_death(5)
 
         # Initial number of peaople in each compartment
-        params.populations.set([i, secir.SecirCompartments.E], 100)
-        params.populations.set([i, secir.SecirCompartments.C], 50)
-        params.populations.set([i, secir.SecirCompartments.I], 50)
-        params.populations.set([i, secir.SecirCompartments.H], 20)
-        params.populations.set([i, secir.SecirCompartments.U], 10)
-        params.populations.set([i, secir.SecirCompartments.R], 10)
-        params.populations.set([i, secir.SecirCompartments.D], 0)
-        params.populations.set_difference_from_group_total([i, secir.SecirCompartments.S],secir.SecirCategory.AgeGroup, i , populations[i])
+        model.populations.set(100, secir.AgeGroup6(i), secir.InfectionType.E)
+        model.populations.set(50, secir.AgeGroup6(i), secir.InfectionType.C)
+        model.populations.set(50, secir.AgeGroup6(i), secir.InfectionType.I)
+        model.populations.set(20, secir.AgeGroup6(i), secir.InfectionType.H)
+        model.populations.set(10, secir.AgeGroup6(i), secir.InfectionType.U)
+        model.populations.set(10, secir.AgeGroup6(i), secir.InfectionType.R)
+        model.populations.set(0, secir.AgeGroup6(i), secir.InfectionType.D)
+        model.populations.set_difference_from_total(populations[i], secir.AgeGroup6(i), secir.InfectionType.S)
 
         # Compartment transition propabilities
-        params.probabilities[i].set_infection_from_contact(1.0)
-        params.probabilities[i].set_carrier_infectability(0.67)
-        params.probabilities[i].set_asymp_per_infectious(0.09)
-        params.probabilities[i].set_risk_from_symptomatic(0.25)
-        params.probabilities[i].set_hospitalized_per_infectious(0.2)
-        params.probabilities[i].set_icu_per_hospitalized(0.25)
-        params.probabilities[i].set_dead_per_icu(0.3)
+        model.parameters.probabilities[i].set_infection_from_contact(1.0)
+        model.parameters.probabilities[i].set_carrier_infectability(0.67)
+        model.parameters.probabilities[i].set_asymp_per_infectious(0.09)
+        model.parameters.probabilities[i].set_risk_from_symptomatic(0.25)
+        model.parameters.probabilities[i].set_hospitalized_per_infectious(0.2)
+        model.parameters.probabilities[i].set_icu_per_hospitalized(0.25)
+        model.parameters.probabilities[i].set_dead_per_icu(0.3)
 
 
     # set contact frequency matrix
-    params.get_contact_patterns().cont_freq_mat[0].baseline = np.ones((num_groups,num_groups))*0.15
-    params.get_contact_patterns().cont_freq_mat[0].minimum = np.ones((num_groups, num_groups)) * 0
+    model.parameters.get_contact_patterns().cont_freq_mat[0].baseline = np.ones((num_groups,num_groups))*0.15
+    model.parameters.get_contact_patterns().cont_freq_mat[0].minimum = np.ones((num_groups, num_groups)) * 0
 
     # Define Damping on Contacts
-    params.get_contact_patterns().cont_freq_mat.add_damping(secir.Damping(np.ones((num_groups, num_groups))*0.9,30, 0, 0))
+    model.parameters.get_contact_patterns().cont_freq_mat.add_damping(secir.Damping(np.ones((num_groups, num_groups))*0.9,30, 0, 0))
 
     # Apply mathematical constraints to parameters
-    params.apply_constraints()
+    model.apply_constraints()
 
     # Run Simulation
-    result = secir.simulate(t0, days, dt, params)
+    result = secir.simulate(t0, days, dt, model)
     print(result.get_last_value())
 
     num_time_points = result.get_num_time_points()

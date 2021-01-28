@@ -25,13 +25,21 @@ TimeSeries<double> interpolate_simulation_result(const TimeSeries<double>& simul
  * @param graph_result graph of simulations whose results will be interpolated 
  * @return one interpolated time series per node 
  */
+template <class Simulation>
 std::vector<TimeSeries<double>>
-interpolate_simulation_result(const Graph<ModelNode<SecirSimulation>, MigrationEdge>& graph_result);
+interpolate_simulation_result(const Graph<ModelNode<Simulation>, MigrationEdge>& graph_result)
+{
+    std::vector<TimeSeries<double>> interpolated;
+    interpolated.reserve(graph_result.nodes().size());
+    std::transform(graph_result.nodes().begin(), graph_result.nodes().end(), std::back_inserter(interpolated),
+                   [](auto& n) { return interpolate_simulation_result(n.property.get_result()); });
+    return interpolated;
+}
 
 /**
  * helper template, type returned by overload interpolate_simulation_result(T t)
  */
-template<class T>
+template <class T>
 using InterpolateResultT = std::decay_t<decltype(interpolate_simulation_result(std::declval<T>()))>;
 
 /**
@@ -45,9 +53,8 @@ std::vector<InterpolateResultT<T>> interpolate_ensemble_results(const std::vecto
 {
     std::vector<InterpolateResultT<T>> interpolated;
     interpolated.reserve(ensemble_results.size());
-    std::transform(ensemble_results.begin(), ensemble_results.end(), std::back_inserter(interpolated), [](auto& run) {
-        return interpolate_simulation_result(run);
-    });
+    std::transform(ensemble_results.begin(), ensemble_results.end(), std::back_inserter(interpolated),
+                   [](auto& run) { return interpolate_simulation_result(run); });
     return interpolated;
 }
 

@@ -17,7 +17,6 @@ set(TESTSOURCES
   test_populations.cpp
   test_seir_js_compare.cpp
   test_numericalIntegration.cpp
-  test_model.cpp
   test_damping.cpp
   test_secir.cpp
   test_implicit_euler.cpp
