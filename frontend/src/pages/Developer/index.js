@@ -26,7 +26,7 @@ export default class DeveloperPage extends Component {
           toggle={this.onDismiss.bind(this)}
           style={{textAlign: 'center'}}
         >
-          <b>THIS PAGE IS A DEVELOPMENT VERSION DO NOT RELEASE THIS!</b>
+          <b>This is a development version. DO NOT RELEASE THIS!</b>
         </Alert>
         <MainPage />
       </div>

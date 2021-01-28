@@ -48,6 +48,10 @@ Your default browser will open with the URL http://localhost:3000/.
 Every time you save a project file the project rebuilds, and the website automatically refreshes. 
 If your default browser is Internet Explorer you have to open the URL (http://localhost:3000/) in another browser (Firefox, Edge or Chrome).
 
+By default, the development version starts in `development` mode. 
+To override this you can create a file `.env.development.local` and insert `REACT_APP_MODE=production`.
+You have to restart the development server for this to have an effect.
+
 **Useful browser plugins for development:**
 - React Developer Tools: [Firefox](https://addons.mozilla.org/de/firefox/addon/react-devtools/), [Chrome](https://chrome.google.com/webstore/detail/react-developer-tools/fmkadmapgofadopljbjfkapdkoienihi)
 - Redux Developer Tools: [Firefox](https://addons.mozilla.org/de/firefox/addon/reduxdevtools/), [Chrome](https://chrome.google.com/webstore/detail/redux-devtools/lmhkpmbekcpmknklioeibfkpmmfibljd?hl=de)
