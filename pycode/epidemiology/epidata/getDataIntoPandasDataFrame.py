@@ -121,7 +121,7 @@ def cli(what):
    #                "update": ['divi']                 }
 
    cli_dict = {"divi": ['Downloads data from DIVI', 'start_date', 'end_date', 'update'],
-               "rki": ['Download data from RKI', 'make_plot', 'split_berlin', 'moving_average'],
+               "rki": ['Download data from RKI', 'make_plot', 'moving_average', 'split_berlin'],
                "rkiest": ['Download data from RKI and JH and estimate recovered and deaths', 'make_plot'],
                "spain": ['Download of spain data'],
                "population": ['Download population data'],
@@ -158,14 +158,14 @@ def cli(what):
    if 'make_plot' in what_list:
       parser.add_argument('-p', '--plot', help='Plots the data.',
                           action='store_true')
+   if 'moving_average' in what_list:
+       parser.add_argument('-ma', '--moving_average',
+                           help='The moving average is computed instead of the real values',
+                           action='store_true')
    if 'split_berlin' in what_list:
        parser.add_argument('-sb', '--split_berlin',
                            help='Berlin data is split into different counties,'
                                 ' instead of having only one county for Berlin.',
-                           action='store_true')
-   if 'moving_average' in what_list:
-       parser.add_argument('-ma', '--moving_average',
-                           help='The moving average is computed instead of the real values',
                            action='store_true')
    if 'start_date' in what_list:
       parser.add_argument('-sd',  '--start-date',
@@ -189,14 +189,14 @@ def cli(what):
 
    # add additional arguments in alphabetical order
    # TODO: check if it is possible to automatically generate this
-   if 'split_berlin' in what_list:
-       arg_list.append(args.split_berlin)
-   if 'moving_average' in what_list:
-       arg_list.append(args.moving_average)
    if 'end_date' in what_list:
        arg_list.append(args.end_date)
    if 'make_plot' in what_list:
       arg_list.append(args.plot)
+   if 'moving_average' in what_list:
+       arg_list.append(args.moving_average)
+   if 'split_berlin' in what_list:
+       arg_list.append(args.split_berlin)
    if 'start_date' in what_list:
       arg_list.append(args.start_date)
    if 'update' in what_list:
