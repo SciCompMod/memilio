@@ -39,7 +39,7 @@ def check_for_completeness(df):
          print("Downloaded RKI data is not complete. Another option will be tested.")
          return False
 
-      # if it semms complete
+      # if it seems complete
       return True
 
    # if it is empty
