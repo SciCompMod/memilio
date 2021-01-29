@@ -121,12 +121,12 @@ def cli(what):
    #                "update": ['divi']                 }
 
    cli_dict = {"divi": ['Downloads data from DIVI', 'start_date', 'end_date', 'update'],
-               "rki": ['Download data from RKI', 'plot', 'split_berlin', 'moving_average'],
-               "rkiest": ['Download data from RKI and JH and estimate recovered and deaths', 'plot'],
+               "rki": ['Download data from RKI', 'make_plot', 'split_berlin', 'moving_average'],
+               "rkiest": ['Download data from RKI and JH and estimate recovered and deaths', 'make_plot'],
                "spain": ['Download of spain data'],
                "population": ['Download population data'],
                "jh" : ['Downloads data from JH'],
-               "all": ['Download all possible data', 'plot','start_date', 'end_date', 'update']}
+               "all": ['Download all possible data', 'make_plot','start_date', 'end_date', 'update']}
 
    try:
       what_list = cli_dict[what]
@@ -155,7 +155,7 @@ def cli(what):
                                 'Should have form: YYYY-mm-dd. Default is today',
                            type=lambda s: datetime.datetime.strptime(s, '%Y-%m-%d').date(),
                            default=dd.defaultDict['end_date'])
-   if 'plot' in what_list:
+   if 'make_plot' in what_list:
       parser.add_argument('-p', '--plot', help='Plots the data.',
                           action='store_true')
    if 'split_berlin' in what_list:
@@ -195,7 +195,7 @@ def cli(what):
        arg_list.append(args.moving_average)
    if 'end_date' in what_list:
        arg_list.append(args.end_date)
-   if 'plot' in what_list:
+   if 'make_plot' in what_list:
       arg_list.append(args.plot)
    if 'start_date' in what_list:
       arg_list.append(args.start_date)
