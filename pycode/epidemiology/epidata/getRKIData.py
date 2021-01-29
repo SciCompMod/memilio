@@ -307,7 +307,6 @@ def get_rki_data(read_data=dd.defaultDict['read_data'],
    gbNF_cs = gbNF.cumsum()
 
    # outout to json file
-   print(gbNF_cs.columns)
    if moving_average:
       gbNF_cs = calc_moving_average(gbNF_cs, [], ['Confirmed'])
    gd.write_dataframe(gbNF_cs.reset_index(), directory, "infected_rki", out_form)
@@ -324,8 +323,6 @@ def get_rki_data(read_data=dd.defaultDict['read_data'],
    gbNT_cs = gbNT.cumsum()
 
    # output
-
-   print(gbNT_cs.columns)
    if moving_average:
       gbNT_cs = calc_moving_average(gbNF_cs, [], ['Deaths'])
    gd.write_dataframe(gbNT_cs.reset_index(), directory, "deaths_rki", out_form)
@@ -345,7 +342,6 @@ def get_rki_data(read_data=dd.defaultDict['read_data'],
    gbNF = df.groupby(dateToUse).agg({AnzahlFall: sum, AnzahlTodesfall: sum, AnzahlGenesen: sum})
    gbNF_cs = gbNF.cumsum()
 
-   print(gbNF_cs.columns)
    if moving_average:
       gbNF_cs = calc_moving_average(gbNF_cs, [], ['Confirmed', 'Deaths', 'Recovered'])
    gd.write_dataframe(gbNF_cs.reset_index(), directory, "all_germany_rki", out_form)
@@ -360,10 +356,8 @@ def get_rki_data(read_data=dd.defaultDict['read_data'],
    gbNFst_cs = gbNFst.groupby(level=1).cumsum().reset_index()
   
    # output
-   print(gbNFst_cs.columns)
    if moving_average:
-      gbAllSt_cs = calc_moving_average(gbAllSt_cs, ['ID_State'], ['Confirmed'])
-      gbNFst_cs = calc_moving_average(gbNFst_cs, ['ID_State'], ['Confirmed', 'Deaths', 'Recovered'])
+      gbNFst_cs = calc_moving_average(gbNFst_cs, ['ID_State'], ['Confirmed'])
    gd.write_dataframe(gbNFst_cs, directory, "infected_state_rki", out_form)
    
    # output nested json
@@ -380,7 +374,6 @@ def get_rki_data(read_data=dd.defaultDict['read_data'],
    gbAllSt_cs = gbAllSt.groupby(level=1).cumsum().reset_index()
 
    # output
-   print(gbAllSt_cs.columns)
    if moving_average:
       gbAllSt_cs = calc_moving_average(gbAllSt_cs, ['ID_State'], ['Confirmed', 'Deaths', 'Recovered'])
    gd.write_dataframe(gbAllSt_cs, directory, "all_state_rki", out_form)
@@ -431,7 +424,6 @@ def get_rki_data(read_data=dd.defaultDict['read_data'],
    gbAllG_cs = gbAllG.groupby(level=0).cumsum().reset_index()
 
    # output
-   print(gbAllG_cs.columns)
    if moving_average:
       gbAllG_cs = calc_moving_average(gbAllG_cs, ['Gender'], ['Confirmed', 'Deaths', 'Recovered'])
    gd.write_dataframe(gbAllG_cs, directory, "all_gender_rki", out_form)
@@ -454,7 +446,6 @@ def get_rki_data(read_data=dd.defaultDict['read_data'],
    gbAllGState_cs = gbAllGState.groupby(level=[1,2]).cumsum().reset_index()
 
    # output
-   print(gbAllGState_cs.columns)
    if moving_average:
       gbAllGState_cs = calc_moving_average(gbAllGState_cs, ['ID_State', 'Gender'], ['Confirmed', 'Deaths', 'Recovered'])
    gd.write_dataframe(gbAllGState_cs, directory, "all_state_gender_rki", out_form)
@@ -482,7 +473,6 @@ def get_rki_data(read_data=dd.defaultDict['read_data'],
    gbAllA_cs = gbAllA.groupby(level=0).cumsum().reset_index()
 
    # output
-   print(gbAllA_cs.columns)
    if moving_average:
       gbAllA_cs = calc_moving_average(gbAllA_cs, ['Age_RKI'],
                                             ['Confirmed', 'Deaths', 'Recovered'])
@@ -515,7 +505,6 @@ def get_rki_data(read_data=dd.defaultDict['read_data'],
    gbAllAgeState_cs = gbAllAgeState.groupby(level=[1,2]).cumsum().reset_index()
 
    # output
-   print(gbAllAgeState_cs.columns)
    if moving_average:
       gbAllAgeState_cs = calc_moving_average(gbAllAgeState_cs, ['ID_State', 'Age_RKI'],
                                             ['Confirmed', 'Deaths', 'Recovered'])
