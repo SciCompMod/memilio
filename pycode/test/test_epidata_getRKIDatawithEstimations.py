@@ -125,7 +125,6 @@ class TestGetRKIDatawithEstimations(fake_filesystem_unittest.TestCase):
         with open(file_jh_with_path, 'w') as f:
             f.write(self.str_whole_country_Germany_jh)
 
-
     def write_weekly_deaths_xlsx_data(self, out_folder):
         sheet1 = pd.DataFrame({'Sterbejahr': ['2020', '2020', '2020', '2020'], 'Sterbewoche': ['1', '3', '10', '51'],
                                'Anzahl verstorbene COVID-19 Fälle': ['0', '<4', '18', '3000']})
@@ -173,14 +172,14 @@ class TestGetRKIDatawithEstimations(fake_filesystem_unittest.TestCase):
 
         # check if expected files are written
         self.assertEqual(len(os.listdir(self.path)), 1)
-        self.assertEqual(len(os.listdir(directory)), 2+len(self.rki_files_to_change))
+        self.assertEqual(len(os.listdir(directory)), 2 + len(self.rki_files_to_change))
 
         grdwd.get_rki_data_with_estimations(read_data, out_form, out_folder, make_plot)
 
         # check if expected files are written
         self.assertEqual(len(os.listdir(self.path)), 1)
-        #1 jh-file, 2*len(rki): original+estimated, 4 weekly deaths original+original&estimated+ageresolved+genderresolved
-        self.assertEqual(len(os.listdir(directory)), 1+ 2*len(self.rki_files_to_change)+4)
+        # 1 jh-file, 2*len(rki): original+estimated, 4 weekly deaths original+original&estimated+ageresolved+genderresolved
+        self.assertEqual(len(os.listdir(directory)), 1 + 2 * len(self.rki_files_to_change) + 4)
 
         f_read = os.path.join(directory, "all_germany_rki_estimated.json")
         df = pd.read_json(f_read)
@@ -231,7 +230,8 @@ class TestGetRKIDatawithEstimations(fake_filesystem_unittest.TestCase):
     @patch('epidemiology.epidata.getRKIDatawithEstimations.grd.get_rki_data')
     @patch('epidemiology.epidata.getRKIDatawithEstimations.gjd.get_jh_data')
     @patch('epidemiology.epidata.getRKIDatawithEstimations.download_weekly_deaths_numbers_rki')
-    def test_get_rki_data_with_estimations_download(self,mock_get_jh_data, mock_get_rki_data,mock_download_weekly_deaths_numbers_rki):
+    def test_get_rki_data_with_estimations_download(self, mock_get_jh_data, mock_get_rki_data,
+                                                    mock_download_weekly_deaths_numbers_rki):
 
         [read_data, make_plot, out_form, out_folder] \
             = [False, False, "json", self.path, ]
@@ -239,10 +239,9 @@ class TestGetRKIDatawithEstimations(fake_filesystem_unittest.TestCase):
         directory = os.path.join(out_folder, 'Germany/')
         gd.check_dir(directory)
 
-
-        mock_get_rki_data.side_effect =self.write_rki_data(directory)
+        mock_get_rki_data.side_effect = self.write_rki_data(directory)
         mock_get_jh_data.side_effect = self.write_jh_data(directory)
-        mock_download_weekly_deaths_numbers_rki.side_effect=self.write_weekly_deaths_xlsx_data(directory)
+        mock_download_weekly_deaths_numbers_rki.side_effect = self.write_weekly_deaths_xlsx_data(directory)
 
         # write files which should be read in by program
 
@@ -273,13 +272,13 @@ class TestGetRKIDatawithEstimations(fake_filesystem_unittest.TestCase):
 
         # check if expected files are written
         self.assertEqual(len(os.listdir(self.path)), 1)
-        self.assertEqual(len(os.listdir(directory)), 2+len(rki_files_to_change))
+        self.assertEqual(len(os.listdir(directory)), 2 + len(rki_files_to_change))
 
         grdwd.get_rki_data_with_estimations(read_data, out_form, out_folder, make_plot)
 
         # check if expected files are written
         self.assertEqual(len(os.listdir(self.path)), 1)
-        self.assertEqual(len(os.listdir(directory)), 1+ 2*len(rki_files_to_change)+4)
+        self.assertEqual(len(os.listdir(directory)), 1 + 2 * len(rki_files_to_change) + 4)
 
         confirmed = dd.EngEng['confirmed']
         recovered = dd.EngEng['recovered']
@@ -328,7 +327,6 @@ class TestGetRKIDatawithEstimations(fake_filesystem_unittest.TestCase):
                          np.round(43 * 2. / 9.))
 
     def test_download_weekly_rki(self):
-        directory_path_file = os.path.join(self.path, 'Germany/RKI_deaths_weekly.xlsx')
         directory = os.path.join(self.path, 'Germany/')
         gd.check_dir(directory)
 
@@ -338,7 +336,8 @@ class TestGetRKIDatawithEstimations(fake_filesystem_unittest.TestCase):
 
         with patch('requests.get') as mock_request:
             url = "https://www.rki.de/DE/Content/InfAZ/N/Neuartiges_Coronavirus/Projekte_RKI/COVID-19_Todesfaelle.xlsx?__blob=publicationFile"
-            df = pd.read_excel(directory_path_file, sheet_name='COVID_Todesfälle')
+            df = gd.loadExcel('RKI_deaths_weekly', apiUrl=directory,
+                              extension='.xlsx', sheet_name='COVID_Todesfälle')
             towrite = io.BytesIO()
             df.to_excel(towrite, index=False)
             towrite.seek(0)
@@ -347,7 +346,8 @@ class TestGetRKIDatawithEstimations(fake_filesystem_unittest.TestCase):
         self.assertEqual(len(os.listdir(self.path)), 1)
         self.assertEqual(len(os.listdir(directory)), 2)
 
-        df_real_deaths_per_week = pd.read_excel(directory + 'RKI_deaths_weekly_new.xlsx')
+        df_real_deaths_per_week = gd.loadExcel('RKI_deaths_weekly_new', apiUrl=directory,
+                                               extension='.xlsx', sheet_name=0)
         self.assertEqual(df_real_deaths_per_week.shape, (4, 3))
         self.assertEqual(pd.to_numeric(df_real_deaths_per_week['Sterbejahr'])[0], 2020)
 
