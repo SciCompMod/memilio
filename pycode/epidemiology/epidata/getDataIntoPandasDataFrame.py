@@ -87,7 +87,7 @@ def loadExcel(targetFileName, apiUrl='https://opendata.arcgis.com/datasets/',
     """
     url = apiUrl + targetFileName + extension
     try:
-        df = pandas.read_excel(url, sheet_name=sheet_name,header=header, engine=engine)
+        df = pandas.read_excel(url, sheet_name=sheet_name, header=header, engine=engine)
     except OSError as e:
         exit_string = "ERROR: URL " + url + " could not be opened."
         sys.exit(exit_string)

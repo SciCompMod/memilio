@@ -11,7 +11,7 @@ from epidemiology.epidata import getRKIData as grd
 from epidemiology.epidata import getJHData as gjd
 
 
-## Function to estimare recovered and deaths from combination of RKI and JH data
+# Function to estimate recovered and deaths from combination of RKI and JH data
 #
 # From the John-Hopkins (JH) data the fraction revered/confirmed and deaths/confiremd are calculated
 # With this fraction every existing RKI data is scaled.
@@ -146,8 +146,8 @@ def compare_estimated_and_rki_deathsnumbers(df_rki,data_path,read_data,make_plot
     if read_data==False:
         download_weekly_deaths_numbers_rki(data_path)
 
-    df_real_deaths_per_week=gd.loadExcel('RKI_deaths_weekly', apiUrl=data_path,
-              extension='.xlsx', sheet_name='COVID_Todesfälle')
+    df_real_deaths_per_week=gd.loadExcel("RKI_deaths_weekly", apiUrl=data_path,
+              extension=".xlsx", sheet_name='COVID_Todesfälle')
     df_real_deaths_per_week.rename(
         columns={'Sterbejahr': 'year', 'Sterbewoche': 'week',
                  'Anzahl verstorbene COVID-19 Fälle': 'confirmed_deaths_weekly'},
@@ -226,15 +226,12 @@ def get_weekly_deaths_data_age_gender_resolved(data_path,read_data):
     gd.write_dataframe(df_real_deaths_per_week_age, data_path, 'weekly_deaths_rki_age_resolved', 'json')
     gd.write_dataframe(df_real_deaths_per_week_gender, data_path, 'weekly_deaths_rki_gender_resolved', 'json')
 
-def download_weekly_deaths_numbers_rki(data_path):
+def download_weekly_deaths_numbers_rki(data_path,name_file="RKI_deaths_weekly.xlsx",url="https://www.rki.de/DE/Content/InfAZ/N/Neuartiges_Coronavirus/Projekte_RKI/COVID-19_Todesfaelle.xlsx?__blob=publicationFile"):
     #data_path: path where to safe Excel-file
-    url = "https://www.rki.de/DE/Content/InfAZ/N/Neuartiges_Coronavirus/Projekte_RKI/COVID-19_Todesfaelle.xlsx?__blob=publicationFile"
     r = requests.get(url)
-    filename = os.path.join(data_path , "RKI_deaths_weekly.xlsx")
+    filename = os.path.join(data_path , name_file)
     with open(filename, 'wb') as output_file:
         output_file.write(r.content)
-
-
 
 def main():
     [read_data, out_form, out_folder, make_plot] = gd.cli("rkiest")

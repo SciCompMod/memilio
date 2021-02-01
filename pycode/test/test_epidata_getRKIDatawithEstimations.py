@@ -12,13 +12,13 @@ from epidemiology.epidata import getDataIntoPandasDataFrame as gd
 from epidemiology.epidata import defaultDict as dd
 from unittest.mock import patch, call
 
-class TestGetRKIDatawithEstimations(fake_filesystem_unittest.TestCase):
 
+class TestGetRKIDatawithEstimations(fake_filesystem_unittest.TestCase):
     path = '/home/RKIEstimationData'
 
     # Notice data is not realistic
     str_whole_country_Germany_jh = \
-("""[{"CountryRegion":"Germany","Date":"2020-01-22","Confirmed":0,"Recovered":0.0,"Deaths":0.0},\
+        ("""[{"CountryRegion":"Germany","Date":"2020-01-22","Confirmed":0,"Recovered":0.0,"Deaths":0.0},\
 {"CountryRegion":"Germany","Date":"2020-01-23","Confirmed":0,"Recovered":0.0,"Deaths":0.0},\
 {"CountryRegion":"Germany","Date":"2020-01-24","Confirmed":0,"Recovered":0.0,"Deaths":0.0},\
 {"CountryRegion":"Germany","Date":"2020-01-25","Confirmed":0,"Recovered":0.0,"Deaths":0.0},\
@@ -101,10 +101,8 @@ class TestGetRKIDatawithEstimations(fake_filesystem_unittest.TestCase):
                            "all_state_rki", "all_state_gender_rki", "all_state_age_rki",
                            "all_county_rki", "all_county_gender_rki", "all_county_age_rki"]
 
-
     def setUp(self):
         self.setUpPyfakefs()
-
 
     def write_rki_data(self, out_folder):
 
@@ -118,7 +116,7 @@ class TestGetRKIDatawithEstimations(fake_filesystem_unittest.TestCase):
                     f.write(self.str_all_gender_rki)
             else:
                 with open(file_rki_with_path, 'w') as f:
-                    f.write(self.str_all_germany_rki )
+                    f.write(self.str_all_germany_rki)
 
     def write_jh_data(self, out_folder):
         file_jh = "whole_country_Germany_jh.json"
@@ -126,6 +124,7 @@ class TestGetRKIDatawithEstimations(fake_filesystem_unittest.TestCase):
 
         with open(file_jh_with_path, 'w') as f:
             f.write(self.str_whole_country_Germany_jh)
+
 
     def write_weekly_deaths_xlsx_data(self, out_folder):
         sheet1 = pd.DataFrame({'Sterbejahr': ['2020', '2020', '2020', '2020'], 'Sterbewoche': ['1', '3', '10', '51'],
@@ -150,7 +149,7 @@ class TestGetRKIDatawithEstimations(fake_filesystem_unittest.TestCase):
 
         income_sheets = {'COVID_Todesfälle': sheet1, 'COVID_Todesfälle_KW_AG10': sheet2,
                          'COVID_Todesfälle_KW_AG20_G': sheet3}
-        path=os.path.join(out_folder, 'RKI_deaths_weekly.xlsx')
+        path = os.path.join(out_folder, 'RKI_deaths_weekly.xlsx')
         dummy = pd.ExcelWriter(path)
 
         for sheet_name in income_sheets.keys():
@@ -328,19 +327,29 @@ class TestGetRKIDatawithEstimations(fake_filesystem_unittest.TestCase):
         self.assertEqual(df[(df[date] == "2020-01-31") & (df[gender] == "female")][deaths_estimated].item(),
                          np.round(43 * 2. / 9.))
 
-    '''def test_download_weekly_rki(self):
+    def test_download_weekly_rki(self):
         directory_path_file = os.path.join(self.path, 'Germany/RKI_deaths_weekly.xlsx')
-        directory=os.path.join(self.path,'Germany/')
-        self.write_weekly_deaths_xlsx_data(directory)
-        with patch('requests.get') as mock_request:
-            url = 'http://google.com'
-        df = pd.read_excel(directory_path_file)
-        towrite = io.BytesIO()
-        df.to_excel(towrite)
-        towrite.seek(0) 
-        mock_request.return_value.content = towrite.read()
-        grdwd.download_weekly_deaths_numbers_rki(directory)'''
+        directory = os.path.join(self.path, 'Germany/')
+        gd.check_dir(directory)
 
+        self.write_weekly_deaths_xlsx_data(directory)
+        self.assertEqual(len(os.listdir(self.path)), 1)
+        self.assertEqual(len(os.listdir(directory)), 1)
+
+        with patch('requests.get') as mock_request:
+            url = "https://www.rki.de/DE/Content/InfAZ/N/Neuartiges_Coronavirus/Projekte_RKI/COVID-19_Todesfaelle.xlsx?__blob=publicationFile"
+            df = pd.read_excel(directory_path_file, sheet_name='COVID_Todesfälle')
+            towrite = io.BytesIO()
+            df.to_excel(towrite, index=False)
+            towrite.seek(0)
+            mock_request.return_value.content = towrite.read()
+            grdwd.download_weekly_deaths_numbers_rki(directory, name_file='RKI_deaths_weekly_new.xlsx', url=url)
+        self.assertEqual(len(os.listdir(self.path)), 1)
+        self.assertEqual(len(os.listdir(directory)), 2)
+
+        df_real_deaths_per_week = pd.read_excel(directory + 'RKI_deaths_weekly_new.xlsx')
+        self.assertEqual(df_real_deaths_per_week.shape, (4, 3))
+        self.assertEqual(pd.to_numeric(df_real_deaths_per_week['Sterbejahr'])[0], 2020)
 
 
 if __name__ == '__main__':
