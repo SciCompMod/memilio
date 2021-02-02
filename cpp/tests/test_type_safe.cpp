@@ -3,7 +3,7 @@
 
 TEST(TypeSafe, init)
 {
-    DECL_TYPESAFE(TS, int);
+    DECL_TYPESAFE(int, TS);
     TS ts(3);
     ASSERT_EQ(ts.get(), 3);
 }
@@ -11,9 +11,8 @@ TEST(TypeSafe, init)
 TEST(TypeSafe, numericOps)
 {
     class TS : public epi::TypeSafe<int, TS>,
-               public epi::OperatorAddSub<TS>,
-               public epi::OperatorScalarMultDiv<TS, int>,
-               public epi::OperatorIncrDecr<TS>
+               public epi::OperatorAdditionSubtraction<TS>,
+               public epi::OperatorScalarMultiplicationDivision<TS, int>
     {
     public:
         using epi::TypeSafe<int, TS>::TypeSafe;

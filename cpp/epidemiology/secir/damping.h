@@ -17,19 +17,19 @@ namespace epi
 /**
  * integer damping level.
  */
-DECL_TYPESAFE(DampingLevel, int);
+DECL_TYPESAFE(int, DampingLevel);
 
 /**
  * integer damping type.
  */
-DECL_TYPESAFE(DampingType, int);
+DECL_TYPESAFE(int, DampingType);
 
 /**
  * double simulation time.
  */
 class SimulationTime : public TypeSafe<double, SimulationTime>,
-                       public OperatorAddSub<SimulationTime>,
-                       public OperatorScalarMultDiv<SimulationTime, double>,
+                       public OperatorAdditionSubtraction<SimulationTime>,
+                       public OperatorScalarMultiplicationDivision<SimulationTime, double>,
                        public OperatorComparison<SimulationTime>
 {
 public:

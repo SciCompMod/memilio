@@ -13,12 +13,16 @@ namespace epi
  *   class Bar : public Type<int, Bar>() {};
  *   void work(Foo f, Bar b);
  * instead of
- *   void work(int f, int b); 
+ *   void work(int f, int b);
+ * @tparam T type of the underlying value
+ * @tparam Derived Concrete type derived from this type for CRTP.
  */
 template <class T, class Derived>
 class TypeSafe
 {
 public:
+    using ValueType = T;
+
     /**
      * default constructor.
      */
@@ -71,35 +75,11 @@ private:
 };
 
 /**
- * base class to add default operator +, +=, -, -= to TypeSafe.
+ * base class to add operator ++, -- (pre- and post-) to a class derived from TypeSafe.
+ * @tparam TS Concrete class derived from TypeSafe
  */
 template<class TS>
-class OperatorAddSub
-{
-public:
-    TS operator+(const TS& other) const
-    {
-        return TS { static_cast<const TS&>(*this).get() + other.get() };
-    }
-    TS& operator+=(const TS& other)
-    {
-        return static_cast<TS&>(*this) = (*this + other);
-    }
-    TS operator-(const TS& other) const
-    {
-        return TS { static_cast<const TS&>(*this).get() - other.get() };
-    }
-    TS& operator-=(const TS& other)
-    {
-        return static_cast<TS&>(*this) = (*this - other);
-    }
-};
-
-/**
- * base class to add default operator ++, -- to TypeSafe.
- */
-template<class TS>
-class OperatorIncrDecr
+class OperatorIncrementDecrement
 {
 public:
     TS& operator++()
@@ -125,10 +105,38 @@ public:
 };
 
 /**
- * base class to add operator *, *=, /, /= with a scalar to TypeSafe.
+ * base class to add default operator +, +=, -, -= to a class derived from TypeSafe.
+ * @tparam TS Concrete class derived from TypeSafe
  */
-template<class TS, class S>
-class OperatorScalarMultDiv
+template<class TS>
+class OperatorAdditionSubtraction : public OperatorIncrementDecrement<TS>
+{
+public:
+    TS operator+(const TS& other) const
+    {
+        return TS { static_cast<const TS&>(*this).get() + other.get() };
+    }
+    TS& operator+=(const TS& other)
+    {
+        return static_cast<TS&>(*this) = (*this + other);
+    }
+    TS operator-(const TS& other) const
+    {
+        return TS { static_cast<const TS&>(*this).get() - other.get() };
+    }
+    TS& operator-=(const TS& other)
+    {
+        return static_cast<TS&>(*this) = (*this - other);
+    }
+};
+
+/**
+ * base class to add operator *, *=, /, /= with a scalar to a class derived from TypeSafe.
+ * @tparam TS Concrete class derived from TypeSafe
+ * @tparam S Type of the scalar, default underlying type of TS
+ */
+template<class TS, class S> //S can't default to TS::ValueType because TS is imcomplete
+class OperatorScalarMultiplicationDivision
 {
 public:
     TS operator*(const S& other) const
@@ -150,7 +158,8 @@ public:
 };
 
 /**
- * base class to add operator <, <=, >, >= to TypeSafe.
+ * base class to add operator <, <=, >, >= to a class derived from TypeSafe.
+ * @tparam TS Concrete class derived from TypeSafe
  */
 template<class TS>
 class OperatorComparison
@@ -177,7 +186,7 @@ class OperatorComparison
 /**
  * helper macro to declare a class that derives from TypeSafe.
  */
-#define DECL_TYPESAFE(Name, T)                                                                                         \
+#define DECL_TYPESAFE(T, Name)                                                                                         \
     struct Name : public ::epi::TypeSafe<T, Name> {                                                                    \
         using TypeSafe<T, Name>::TypeSafe;                                                                             \
     }
