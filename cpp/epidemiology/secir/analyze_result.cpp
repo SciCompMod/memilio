@@ -30,8 +30,10 @@ TimeSeries<double> interpolate_simulation_result(const TimeSeries<double>& simul
         //otherwise check the same time points again
         //in case there is more than one day between the two time points
         if (simulation_result.get_time(i) < day && simulation_result.get_time(i + 1) >= day) {
-            auto weight = (day - simulation_result.get_time(i)) / (simulation_result.get_time(i + 1) - simulation_result.get_time(i));
-            interpolated.add_time_point(day, simulation_result[i] + (simulation_result[i + 1] - simulation_result[i]) * weight);
+            auto weight = (day - simulation_result.get_time(i)) /
+                          (simulation_result.get_time(i + 1) - simulation_result.get_time(i));
+            interpolated.add_time_point(day, simulation_result[i] +
+                                                 (simulation_result[i + 1] - simulation_result[i]) * weight);
             ++day;
         }
         else {
@@ -43,18 +45,6 @@ TimeSeries<double> interpolate_simulation_result(const TimeSeries<double>& simul
         interpolated.add_time_point(day, simulation_result.get_last_value());
     }
 
-    return interpolated;
-}
-
-std::vector<TimeSeries<double>>
-interpolate_simulation_result(const Graph<ModelNode<SecirSimulation>, MigrationEdge>& graph_result)
-{
-    std::vector<TimeSeries<double>> interpolated;
-    interpolated.reserve(graph_result.nodes().size());
-    std::transform(graph_result.nodes().begin(), graph_result.nodes().end(), std::back_inserter(interpolated),
-                   [](auto& n) {
-                       return interpolate_simulation_result(n.property.get_result());
-                   });
     return interpolated;
 }
 
@@ -102,9 +92,7 @@ std::vector<TimeSeries<double>> ensemble_percentile(const std::vector<std::vecto
             percentile[node].get_time(time) = ensemble_result[0][node].get_time(time);
             for (Eigen::Index elem = 0; elem < num_elements; elem++) {
                 std::transform(ensemble_result.begin(), ensemble_result.end(), single_element_ensemble.begin(),
-                               [=](auto& run) {
-                                   return run[node][time][elem];
-                               });
+                               [=](auto& run) { return run[node][time][elem]; });
                 std::sort(single_element_ensemble.begin(), single_element_ensemble.end());
                 percentile[node][time][elem] = single_element_ensemble[static_cast<size_t>(num_runs * p)];
             }

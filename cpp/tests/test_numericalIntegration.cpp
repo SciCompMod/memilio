@@ -20,7 +20,7 @@ class TestVerifyNumericalIntegrator : public testing::Test
 protected:
     void SetUp() override
     {
-        t0    = 0.;
+        t0   = 0.;
         tmax = 2 * std::acos(-1); // 2PI
         err  = 0;
     }
@@ -46,9 +46,7 @@ TEST_F(TestVerifyNumericalIntegrator, euler_sine)
     sol[0][0]     = std::sin(0);
     sol[n - 1][0] = std::sin((n - 1) * dt);
 
-    auto f = [](auto&& /*y*/, auto&& t, auto&& dydt) {
-        dydt[0] = std::cos(t);
-    };
+    auto f = [](auto&& /*y*/, auto&& t, auto&& dydt) { dydt[0] = std::cos(t); };
     epi::EulerIntegratorCore euler;
 
     auto t = t0;
@@ -75,9 +73,11 @@ TEST_F(TestVerifyNumericalIntegrator, runge_kutta_fehlberg45_sine)
     y   = std::vector<Eigen::VectorXd>(n, Eigen::VectorXd::Constant(1, 0));
     sol = std::vector<Eigen::VectorXd>(n, Eigen::VectorXd::Constant(1, 0));
 
-    epi::RKIntegratorCore rkf45(1e-3, 1.0);
+    epi::RKIntegratorCore rkf45;
     rkf45.set_abs_tolerance(1e-7);
     rkf45.set_rel_tolerance(1e-7);
+    rkf45.set_dt_min(1e-3);
+    rkf45.set_dt_max(1.0);
 
     sol[0][0] = std::sin(0);
 
