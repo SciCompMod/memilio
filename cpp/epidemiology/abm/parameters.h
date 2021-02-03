@@ -9,8 +9,9 @@ namespace epi
 {
 
 /**
- * parameter that depends an enum, e.g. the age group.
-* EXPERIMENTAL; will be merged with new model framework soon.
+ * parameter that depends on an enum, e.g. the age group.
+ * EXPERIMENTAL; will be merged with new model framework soon.
+ * @tparam E enum that is used as an index.
  */
 template<class E>
 class DependentParameter
@@ -24,6 +25,7 @@ public:
     /**
      * constant constructor.
      * same value for each group.
+     * @param d Value for every group.
      */
     DependentParameter(double d)
         : values(Eigen::VectorXd::Constant(Eigen::Index(E::Count), d))
@@ -31,25 +33,36 @@ public:
     }
 
     /**
-     * get the value for group a.
+     * array constructor.
+     * @param a array expression with one value per group.
      */
-    const double& operator[](E a) const
+    template <class A, class = std::enable_if_t<std::is_convertible<Eigen::ArrayBase<Eigen::ArrayXd>, std::decay_t<A>>::value, int>>
+    DependentParameter(A&& a)
+        : values(std::forward<A>(a))
     {
-        return values[size_t(a)];
-    }
-    double& operator[](E a)
-    {
-        return values[size_t(a)];
     }
 
     /**
-     * set values.
-     * @param v one value for all groups or n values (one for each group) 
+     * get the value for one group.
+     * @param e group index.
      */
-    template <class V, class = std::enable_if_t<std::is_assignable<Eigen::ArrayXd, V>::value, int>>
-    DependentParameter& operator=(V&& v)
+    const double& operator[](E e) const
     {
-        values = v;
+        return values[size_t(e)];
+    }
+    double& operator[](E e)
+    {
+        return values[size_t(e)];
+    }
+
+    /**
+     * set values, constant or array.
+     * @param a scalar for every group or array expression with one value for each group
+     */
+    template <class A, class = std::enable_if_t<std::is_assignable<Eigen::ArrayXd, A>::value, int>>
+    DependentParameter& operator=(A&& a)
+    {
+        values = std::forward<A>(a);
         return *this;
     }
 

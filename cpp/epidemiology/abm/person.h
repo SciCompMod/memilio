@@ -23,7 +23,7 @@ public:
      * @param location the initial location of the person
      * @param state the initial infection state of the person
      */
-    Person(Location& location, InfectionState state, AbmAgeGroup age = AbmAgeGroup::Age15to34);
+    Person(Location& location, InfectionState state, AbmAgeGroup age);
 
     /** 
      * interact with the population at its current location.

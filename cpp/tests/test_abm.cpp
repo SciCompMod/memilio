@@ -1,4 +1,5 @@
 #include "epidemiology/abm/abm.h"
+#include "epidemiology/utils/eigen_util.h"
 #include "matchers.h"
 #include "gtest/gtest.h"
 #include "gmock/gmock.h"
@@ -18,11 +19,11 @@ TEST(TestLocation, init)
 TEST(TestLocation, addRemovePerson)
 {
     auto location = epi::Location(epi::LocationType::Home);
-    auto person1  = epi::Person(location, epi::InfectionState::Susceptible);
+    auto person1  = epi::Person(location, epi::InfectionState::Susceptible, epi::AbmAgeGroup::Age5to14);
     location.add_person(person1);
-    auto person2 = epi::Person(location, epi::InfectionState::Susceptible);
+    auto person2 = epi::Person(location, epi::InfectionState::Susceptible, epi::AbmAgeGroup::Age15to34);
     location.add_person(person2);
-    auto person3 = epi::Person(location, epi::InfectionState::Exposed);
+    auto person3 = epi::Person(location, epi::InfectionState::Exposed, epi::AbmAgeGroup::Age35to59);
     location.add_person(person3);
 
     ASSERT_EQ(location.get_subpopulation(epi::InfectionState::Susceptible), 2);
@@ -47,7 +48,7 @@ TEST(TestPerson, migrate)
 {
     auto location1 = epi::Location(epi::LocationType::Work);
     auto location2 = epi::Location(epi::LocationType::School);
-    auto person    = epi::Person(location1, epi::InfectionState::Recovered_Carrier);
+    auto person    = epi::Person(location1, epi::InfectionState::Recovered_Carrier, epi::AbmAgeGroup::Age0to4);
     location1.add_person(person);
 
     person.migrate_to(location2);
@@ -119,15 +120,15 @@ TEST(TestLocation, interact)
 
     //setup location with some chance of exposure
     auto location  = epi::Location(epi::LocationType::Work);
-    auto infected1 = epi::Person(location, epi::InfectionState::Carrier);
+    auto infected1 = epi::Person(location, epi::InfectionState::Carrier, epi::AbmAgeGroup::Age15to34);
     location.add_person(infected1);
-    auto infected2 = epi::Person(location, epi::InfectionState::Infected_Detected);
+    auto infected2 = epi::Person(location, epi::InfectionState::Infected_Detected, epi::AbmAgeGroup::Age80plus);
     location.add_person(infected2);
-    auto infected3 = epi::Person(location, epi::InfectionState::Infected_Undetected);
+    auto infected3 = epi::Person(location, epi::InfectionState::Infected_Undetected, epi::AbmAgeGroup::Age5to14);
     location.add_person(infected3);
 
     //test should work identically work with any age
-    epi::AbmAgeGroup age = epi::AbmAgeGroup(epi::UniformIntDistribution<int>()(0, 5));
+    epi::AbmAgeGroup age = epi::AbmAgeGroup(epi::UniformIntDistribution<int>()(0, int(epi::AbmAgeGroup::Count) - 1));
     epi::GlobalInfectionParameters params;
     params.carrier_to_infected = 0;
     params.carrier_to_infected[age] = 0.5;
@@ -221,7 +222,7 @@ TEST(TestPerson, interact)
     using testing::Return;
 
     auto location = epi::Location(epi::LocationType::Home);
-    auto person   = epi::Person(location, epi::InfectionState::Infected_Detected);
+    auto person   = epi::Person(location, epi::InfectionState::Infected_Detected, epi::AbmAgeGroup::Age15to34);
     location.add_person(person);
     location.begin_step(0.1, {});
 
@@ -245,13 +246,13 @@ TEST(TestPerson, interact_exposed)
 
     //setup location with some chance of exposure
     auto location  = epi::Location(epi::LocationType::Work);
-    auto infected1 = epi::Person(location, epi::InfectionState::Carrier);
+    auto infected1 = epi::Person(location, epi::InfectionState::Carrier, epi::AbmAgeGroup::Age15to34);
     location.add_person(infected1);
-    auto infected2 = epi::Person(location, epi::InfectionState::Infected_Detected);
+    auto infected2 = epi::Person(location, epi::InfectionState::Infected_Detected, epi::AbmAgeGroup::Age5to14);
     location.add_person(infected2);
-    auto infected3 = epi::Person(location, epi::InfectionState::Infected_Undetected);
+    auto infected3 = epi::Person(location, epi::InfectionState::Infected_Undetected, epi::AbmAgeGroup::Age60to79);
     location.add_person(infected3);
-    auto person = epi::Person(location, epi::InfectionState::Susceptible);
+    auto person = epi::Person(location, epi::InfectionState::Susceptible, epi::AbmAgeGroup::Age15to34);
     location.add_person(person);
     location.begin_step(0.1, {});
 
@@ -392,4 +393,39 @@ TEST(TestDiscreteDistribution, generate)
         ASSERT_GE(d, 0);
         ASSERT_LE(d, 4);
     }
+}
+
+TEST(TestDependentParameter, init)
+{
+    enum class E
+    {
+        E1 = 0, E2, Count,
+    };
+    epi::DependentParameter<E> p1(3.0);
+    ASSERT_EQ(p1[E::E1], 3.0);
+    ASSERT_EQ(p1[E::E2], 3.0);
+
+    auto v = (Eigen::ArrayXd(2) << 1.0, 2.0).finished();
+    epi::DependentParameter<E> p2(v);
+    ASSERT_EQ(p2[E::E1], 1.0);
+    ASSERT_EQ(p2[E::E2], 2.0);
+    ASSERT_THAT(print_wrap(p2.array().matrix()), print_wrap(v.matrix()));
+}
+
+TEST(TestDependentParameter, assign)
+{
+    enum class E
+    {
+        E1 = 0, E2, Count,
+    };
+    epi::DependentParameter<E> p;
+
+    p = 5.0;
+    ASSERT_EQ(p[E::E1], 5.0);
+    ASSERT_EQ(p[E::E2], 5.0);
+
+    auto v = (Eigen::ArrayXd(2) << 1.0, 2.0).finished();
+    p = v;
+    ASSERT_EQ(p[E::E1], 1.0);
+    ASSERT_EQ(p[E::E2], 2.0);
 }
