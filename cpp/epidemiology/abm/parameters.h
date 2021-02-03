@@ -35,6 +35,7 @@ public:
     /**
      * array constructor.
      * @param a array expression with one value per group.
+     * @tparam A array expression.
      */
     template <class A, class = std::enable_if_t<std::is_convertible<Eigen::ArrayBase<Eigen::ArrayXd>, std::decay_t<A>>::value, int>>
     DependentParameter(A&& a)
@@ -60,6 +61,7 @@ public:
      * set values, constant or array.
      * @param a scalar for every group or array expression with one value for each group
      * @return reference to this object
+     * @tparam A scalar or array expression
      */
     template <class A, class = std::enable_if_t<std::is_assignable<Eigen::ArrayXd, A>::value, int>>
     DependentParameter& operator=(A&& a)
