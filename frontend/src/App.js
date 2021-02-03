@@ -3,7 +3,8 @@ import {connect} from 'react-redux';
 import {withTranslation} from 'react-i18next';
 import am4lang_de_DE from '@amcharts/amcharts4/lang/de_DE';
 import * as am4core from '@amcharts/amcharts4/core';
-import {HashRouter as Router, Switch, Route, Link} from 'react-router-dom';
+import {Switch, Route, Link} from 'react-router-dom';
+import {withRouter} from 'react-router';
 
 import {Spinner} from 'reactstrap';
 
@@ -15,7 +16,6 @@ import Impressum from './pages/Impressum';
 import Dsgvo from './pages/Dsgvo';
 import Accessibility from './pages/Accessibility';
 import Attribution from './pages/Attribution';
-import DeveloperPage from './pages/Developer';
 
 // AmCharts defaults to English as a locale and not the browser default,
 // so we have to set it manually.
@@ -51,77 +51,79 @@ class App extends Component {
   async componentDidMount() {}
 
   render() {
+    const {match} = this.props;
+
     return (
       <div className="app">
-        <Router>
-          <header>
-            <div className="title">SARS-CoV-2 Reproduktionszahlen innerhalb Deutschlands</div>
-            <div className="logos">
-              <div className="hzi-logo">
-                <a target="_blank" rel="noopener noreferrer" href="https://www.helmholtz-hzi.de/">
-                  <img src="assets/logo-hzi2-de.svg" alt="HZI" />
-                </a>
-              </div>
-              <div className="dlr-signet">
-                <a target="_blank" rel="noopener noreferrer" href="https://www.dlr.de/">
-                  <img src="assets/dlr-signet.png" alt="DLR Signet" />
-                </a>
+        <header>
+          <div className="title">SARS-CoV-2 Reproduktionszahlen innerhalb Deutschlands</div>
+          <div className="logos">
+            <div className="hzi-logo">
+              <a target="_blank" rel="noopener noreferrer" href="https://www.helmholtz-hzi.de/">
+                <img src="assets/logo-hzi2-de.svg" alt="HZI" />
+              </a>
+            </div>
+            <div className="dlr-signet">
+              <a target="_blank" rel="noopener noreferrer" href="https://www.dlr.de/">
+                <img src="assets/dlr-signet.png" alt="DLR Signet" />
+              </a>
+            </div>
+          </div>
+        </header>
+        <div className="body">
+          <Switch>
+            <Route path={`${match.path}/impressum`}>
+              <Impressum />
+            </Route>
+            <Route path={`${match.path}/datenschutz`}>
+              <Dsgvo />
+            </Route>
+            <Route path={`${match.path}/informationen`}>
+              <About />
+            </Route>
+            <Route path={`${match.path}/barrierefreiheit`}>
+              <Accessibility />
+            </Route>
+            <Route path={`${match.path}/attribution`}>
+              <Attribution />
+            </Route>
+            <Route path={`${match.path}/`}>
+              <Main />
+            </Route>
+          </Switch>
+          {this.state.loading ? (
+            <div className="overlay">
+              <div className="loading-progress">
+                <div className="label">{this.state.label}</div>
+                <Spinner color="primary" />
               </div>
             </div>
-          </header>
-          <div className="body">
-            <Switch>
-              <Route path="/impressum">
-                <Impressum />
-              </Route>
-              <Route path="/datenschutz">
-                <Dsgvo />
-              </Route>
-              <Route path="/informationen">
-                <About />
-              </Route>
-              <Route path="/barrierefreiheit">
-                <Accessibility />
-              </Route>
-              <Route path="/attribution">
-                <Attribution />
-              </Route>
-              <Route path="/">{process.env.REACT_APP_MODE === 'development' ? <DeveloperPage /> : <Main />}</Route>
-            </Switch>
-            {this.state.loading ? (
-              <div className="overlay">
-                <div className="loading-progress">
-                  <div className="label">{this.state.label}</div>
-                  <Spinner color="primary" />
-                </div>
-              </div>
-            ) : (
-              <></>
-            )}
-          </div>
-          <div className="links">
-            <Link tabIndex="2" title="Impressum" to="/impressum">
-              Impressum
-            </Link>
-            <Link tabIndex="3" title="Datenschutzerklärung" to="/datenschutz">
-              Datenschutzerklärung
-            </Link>
-            <Link
-              tabIndex="4"
-              title="Erklärung zur Barrierefreiheit"
-              alt="Accessibility statement"
-              to="/barrierefreiheit"
-            >
-              Barrierefreiheit
-            </Link>
-            <Link tabIndex="5" title="Attribution" to="/attribution">
-              Attribution
-            </Link>
-          </div>
-        </Router>
+          ) : (
+            <></>
+          )}
+        </div>
+        <div className="links">
+          <Link tabIndex="2" title="Impressum" to={`${match.url}/impressum`}>
+            Impressum
+          </Link>
+          <Link tabIndex="3" title="Datenschutzerklärung" to={`${match.url}/datenschutz`}>
+            Datenschutzerklärung
+          </Link>
+          <Link
+            tabIndex="4"
+            title="Erklärung zur Barrierefreiheit"
+            alt="Accessibility statement"
+            to={`${match.url}/barrierefreiheit`}
+          >
+            Barrierefreiheit
+          </Link>
+          <Link tabIndex="5" title="Attribution" to={`${match.url}/attribution`}>
+            Attribution
+          </Link>
+        </div>
       </div>
     );
   }
 }
 
-export default connect(null, {})(withTranslation()(App));
+export default connect(null, {})(withTranslation()(withRouter(App)));

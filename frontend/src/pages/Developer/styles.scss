@@ -1,31 +1,153 @@
 @import '~bootstrap/scss/bootstrap.scss';
 @import '../../dlr-ci.scss';
 
-.main {
-  width: 100%;
+.develop-wrapper {
   height: 100%;
 
-  display: flex;
-  flex-direction: row;
-
-  .left {
-    width: 38.2%;
-    border-right: 2px solid #e2e4e6;
+  .developer-alert {
+    position: fixed !important;
+    top: 0;
+    left: 0;
+    right: 0;
+    margin: 0;
+    z-index: 1000;
   }
 
-  .right {
-    flex-grow: 1;
+  > .sidebar {
+    background-color: $dlr-white;
+    box-shadow: 0px 1px 5px 0px rgba(0, 0, 0, 0.25);
+    transition: all 0.25s ease-out;
+    overflow: hidden;
 
-    display: flex;
-    flex-direction: column;
+    position: absolute;
+    top: 0;
+    left: 0;
+    bottom: 0;
 
-    .info {
-      height: 200px;
-      border-bottom: 2px solid #e2e4e6;
+    z-index: 9999;
+
+    header {
+      z-index: 100;
+
+      background-position: center;
+      background-repeat: no-repeat;
+      transition: all 0.25s ease-out;
+      font-size: 2rem;
+      text-align: center;
+      height: 2rem;
+      line-height: 2rem;
+      vertical-align: middle;
     }
 
-    .graph {
+    &.normal {
+      width: 50px;
+      min-width: 50px;
+
+      header {
+        .fa-angle-double-right {
+          display: none;
+        }
+      }
+    }
+
+    &.small {
+      width: 15px;
+      min-width: 15px;
+
+      header {
+        font-size: 0.5rem;
+
+        button {
+          padding: 0;
+        }
+
+        .fa-angle-double-left {
+          display: none;
+        }
+      }
+    }
+
+    &.open {
+      width: 220px;
+      min-width: 220px;
+
+      .fa-angle-double-right,
+      .fa-angle-double-left {
+        display: none;
+      }
+    }
+
+    .menu {
+      list-style: none;
+      margin: 0;
+      font-size: 1.25rem;
+      padding: 0;
+      color: $dlr-black;
+      width: 220px;
+
+      height: 100%;
+
+      .more {
+        writing-mode: vertical-lr;
+        text-orientation: upright;
+      }
+
+      .menu-item {
+        padding: 0.25em 0.1em 0.25em 0.75em;
+        cursor: pointer;
+        overflow: hidden;
+
+        a {
+          color: $dlr-gray;
+          text-decoration: none;
+          font-weight: bolder;
+
+          &.active {
+            color: $dlr-black;
+            // text-shadow: 0px 1px 0px $dlr-gray;
+          }
+
+          &:hover {
+            color: $dlr-black;
+          }
+
+          .fa {
+            width: 25px !important;
+            margin-right: 0.6rem !important;
+          }
+        }
+
+        i {
+          @extend .mr-3;
+        }
+
+        .menu-sub-item {
+          @extend .pl-3;
+          @extend .pr-0;
+          @extend .py-1;
+          font-size: 0.85em;
+        }
+      }
+    }
+  }
+
+  > .body {
+    @extend .bg-gray-light;
+    position: absolute;
+    top: 0;
+    left: 0px;
+    right: 0px;
+    bottom: 0px;
+
+    overflow: hidden;
+
+    display: flex;
+    flex-direction: row;
+
+    main {
       flex-grow: 1;
+      overflow: auto;
+      z-index: 1;
     }
   }
 }

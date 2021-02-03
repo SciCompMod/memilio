@@ -3,18 +3,13 @@
 
 .main {
   width: 100%;
-
-  display: flex;
-  flex-direction: row;
+  overflow: auto;
 
   .left {
     width: 38.2%;
     min-width: 38.2%;
     max-width: 38.2%;
     border-right: 2px solid #e2e4e6;
-
-    display: flex;
-    flex-direction: column;
 
     .timeline {
       padding: 0.5rem 0;
@@ -31,8 +26,6 @@
     }
 
     .map-wrapper {
-      display: flex;
-      flex-grow: 1;
       width: 90%;
       margin: auto;
       padding-bottom: 1rem;
@@ -44,21 +37,16 @@
   }
 
   .right {
-    flex-grow: 1;
-
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: space-around;
-
-    height: 100%;
-
     background-color: white;
+    overflow: auto;
+
+    padding-bottom: 1rem;
 
     .info-text {
-      margin-top: 1rem;
+      padding-top: 1rem;
       width: 90%;
       text-align: justify;
+      margin: 0 auto;
 
       p {
         font-size: 11pt;
@@ -67,15 +55,12 @@
 
     .graph {
       height: 68.2%;
+      min-height: 500px;
       width: 100%;
-
-      display: flex;
-      flex-direction: column;
-
-      .district {
-        font-size: 2em;
-        text-align: center;
-      }
+    }
+    .district {
+      font-size: 2em;
+      text-align: center;
     }
   }
 
@@ -92,33 +77,74 @@
   }
 }
 
-@media (max-width: 900px) {
+@media (min-width: 900px) {
   .main {
-    flex-direction: column !important;
-    height: auto !important;
+    display: flex;
+    flex-direction: row;
+    flex-flow: row-reverse;
+    flex-grow: 1;
+
+    .right {
+      //display: flex;
+      //flex-direction: column;
+      // align-items: center;
+      // justify-content: space-around;
+
+      //text-align: center;
+
+      height: 100%;
+
+      .graph {
+        //display: flex;
+        //flex-direction: column;
+      }
+    }
 
     .left {
-      min-height: 700px;
+      display: flex;
+      flex-direction: column;
+
+      .map-wrapper {
+        display: flex;
+        flex-grow: 1;
+      }
+    }
+  }
+}
+
+@media (max-width: 900px) {
+  .main {
+    // display: block;
+    // flex-direction: column !important;
+    // flex-flow: column !important;
+    // height: auto !important;
+    overflow: auto;
+
+    //height: 20000px !important;
+
+    .left {
+      //display: block;
+      //min-height: 700px;
       width: 100% !important;
       min-width: 100% !important;
       max-width: 100% !important;
+
+      .map-wrapper {
+        height: 500px;
+      }
     }
 
     .right {
-      min-height: 1200px;
-      display: flex;
-      flex-direction: column;
-      flex-grow: 1;
+      //display: block;
+      //min-height: 1200px;
 
-      .info-text {
-        order: 2;
-        text-align: justify;
-        width: 90%;
-        padding-bottom: 4rem;
-      }
+      //margin-bottom: 5rem;
 
       .graph {
         order: 1;
+        height: 300px;
+        width: 100%;
+        margin: 0 auto;
       }
     }
   }

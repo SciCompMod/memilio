@@ -121,26 +121,26 @@ class MainPage extends Component {
       end: timestamps.length,
     });
 
-    this.map = new HeatMap('map', {showLegend: true});
-    this.map.setLegendMinMax(0, 2);
+    //this.map = new HeatMap('map', {showLegend: true});
+    //this.map.setLegendMinMax(0, 2);
 
     // subscribe to events from map
-    this.map.subscribe((event) => {
-      switch (event) {
-        case 'ready':
-          this.map.setValues(this.map_data_rt.get(timestamps[timestamps.length - 1]));
-          break;
-        case 'reset':
-          this.setState({
-            selected: {rs: '00000', bez: 'Bundesrepublik', gen: 'Deutschland'},
-          });
-          break;
-        default:
-          this.setState({
-            selected: event,
-          });
-      }
-    });
+    //this.map.subscribe((event) => {
+    //  switch (event) {
+    //    case 'ready':
+    //      //this.map.setValues(this.map_data_rt.get(timestamps[timestamps.length - 1]));
+    //      break;
+    //    case 'reset':
+    //      this.setState({
+    //        selected: {rs: '00000', bez: 'Bundesrepublik', gen: 'Deutschland'},
+    //      });
+    //      break;
+    //    default:
+    //      this.setState({
+    //        selected: event,
+    //      });
+    //  }
+    //});
   }
 
   /**
@@ -156,7 +156,7 @@ class MainPage extends Component {
         timestep,
         timestring: dayjs(timestamp).locale('de').format('DD MMMM YYYY'),
       });
-      this.map.setValues(this.getData(timestamp));
+      //this.map.setValues(this.getData(timestamp));
     }
   }
 
@@ -229,17 +229,17 @@ class MainPage extends Component {
   selectDataset(dataset) {
     if (dataset === 'incidence') {
       // reset legend to auto set legend scale
-      this.map.setLegendMinMax(0, 200);
+      // this.map.setLegendMinMax(0, 200);
     } else {
       // fix legend between 0 and 2
-      this.map.setLegendMinMax(0, 2);
+      // this.map.setLegendMinMax(0, 2);
     }
     this.setState(
       {
         dataset: dataset,
       },
       () => {
-        this.map.setValues(this.getData(this.state.timestamps[this.state.timestep]));
+        //this.map.setValues(this.getData(this.state.timestamps[this.state.timestep]));
       }
     );
   }
@@ -247,6 +247,67 @@ class MainPage extends Component {
   render() {
     return (
       <div className="main">
+        <div className="right">
+          <div className="info-text">
+            <h2>Über diese Seite:</h2>
+            <p>
+              Das Institut für Softwaretechnologie des Deutschen Zentrums für Luft- und Raumfahrt (DLR) entwickelt in
+              Zusammenarbeit mit dem Helmholtz-Zentrum für Infektionsforschung ein umfassendes Softwarepaket, welches
+              das COVID19-Infektionsgeschehen darstellt. In der hier veröffentlichen Visualisierung wird die aktuelle
+              Reproduktionszahl, sowie der 7-Tage Inzidenzwert, in den einzelnen Stadt- und Landkreisen angezeigt. Die
+              Reproduktionszahl gibt an, wie viele Menschen unter den aktuellen Maßnahmen von einer infektiösen Person
+              durchschnittlich angesteckt werden. Die 7-Tage-Inzidenz gibt an, wie viele Menschen pro 100.000 Einwohnern
+              in 7 Tagen infiziert wurden.
+            </p>
+            <p>
+              <Link title="Weitere Informationen zu der Webseite" to="/informationen">
+                Weitere Informationen
+              </Link>
+            </p>
+          </div>
+          <div className="show-germany">
+            {this.state.selected.rs === '00000' || this.state.selected.rs.length === 0 ? (
+              <></>
+            ) : (
+              <Button
+                size="sm"
+                color="primary"
+                onClick={() => {
+                  this.setState({
+                    selected: {rs: '00000', bez: 'Bundesrepublik', gen: 'Deutschland'},
+                  });
+                }}
+              >
+                Deutschland anzeigen
+              </Button>
+            )}
+          </div>
+          <div className="district">
+            {this.state.selected.bez} {this.state.selected.gen}
+          </div>
+          <div className="graph">
+            {this.state.dataset === 'incidence' ? (
+              <RtChart
+                id="incidence"
+                series={[{key: 'incidence_week', label: '7-Tage Inzidenz'}]}
+                data={this.getChartData()}
+                district={this.state.selected.rs}
+                dataset={this.state.dataset}
+              />
+            ) : (
+              <RtChart
+                id="rt"
+                series={[
+                  {key: 'rt', label: 'Absolute Reproduktionszahl'},
+                  {key: 'rt_rel', label: 'Relative Reproduktionszahl', isHidden: this.state.selected.rs === '00000'},
+                ]}
+                data={this.getChartData()}
+                district={this.state.selected.rs}
+                dataset={this.state.dataset}
+              />
+            )}
+          </div>
+        </div>
         <div className="left">
           <div className="timeline">
             <SimpleTimeline
@@ -300,67 +361,6 @@ class MainPage extends Component {
           </div>
           <div className="map-wrapper">
             <div className="map" id="map" />
-          </div>
-        </div>
-        <div className="right">
-          <div className="info-text">
-            <h2>Über diese Seite:</h2>
-            <p>
-              Das Institut für Softwaretechnologie des Deutschen Zentrums für Luft- und Raumfahrt (DLR) entwickelt in
-              Zusammenarbeit mit dem Helmholtz-Zentrum für Infektionsforschung ein umfassendes Softwarepaket, welches
-              das COVID19-Infektionsgeschehen darstellt. In der hier veröffentlichen Visualisierung wird die aktuelle
-              Reproduktionszahl, sowie der 7-Tage Inzidenzwert, in den einzelnen Stadt- und Landkreisen angezeigt. Die
-              Reproduktionszahl gibt an, wie viele Menschen unter den aktuellen Maßnahmen von einer infektiösen Person
-              durchschnittlich angesteckt werden. Die 7-Tage-Inzidenz gibt an, wie viele Menschen pro 100.000 Einwohnern
-              in 7 Tagen infiziert wurden.
-            </p>
-            <p>
-              <Link title="Weitere Informationen zu der Webseite" to="/informationen">
-                Weitere Informationen
-              </Link>
-            </p>
-          </div>
-          <div className="show-germany">
-            {this.state.selected.rs === '00000' || this.state.selected.rs.length === 0 ? (
-              <></>
-            ) : (
-              <Button
-                size="sm"
-                color="primary"
-                onClick={() => {
-                  this.setState({
-                    selected: {rs: '00000', bez: 'Bundesrepublik', gen: 'Deutschland'},
-                  });
-                }}
-              >
-                Deutschland anzeigen
-              </Button>
-            )}
-          </div>
-          <div className="graph">
-            <div className="district">
-              {this.state.selected.bez} {this.state.selected.gen}
-            </div>
-            {this.state.dataset === 'incidence' ? (
-              <RtChart
-                id="incidence"
-                series={[{key: 'incidence_week', label: '7-Tage Inzidenz'}]}
-                data={this.getChartData()}
-                district={this.state.selected.rs}
-                dataset={this.state.dataset}
-              />
-            ) : (
-              <RtChart
-                id="rt"
-                series={[
-                  {key: 'rt', label: 'Absolute Reproduktionszahl'},
-                  {key: 'rt_rel', label: 'Relative Reproduktionszahl', isHidden: this.state.selected.rs === '00000'},
-                ]}
-                data={this.getChartData()}
-                district={this.state.selected.rs}
-                dataset={this.state.dataset}
-              />
-            )}
           </div>
         </div>
       </div>

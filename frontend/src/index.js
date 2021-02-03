@@ -2,6 +2,7 @@ import React, {Suspense} from 'react';
 import ReactDOM from 'react-dom';
 import {Provider} from 'react-redux';
 import App from './App';
+import DeveloperPage from './pages/Developer';
 import store from './redux/store';
 import * as serviceWorker from './serviceWorker';
 import * as numeral from 'numeral';
@@ -13,6 +14,7 @@ import {Spinner} from 'reactstrap';
 import './i18n';
 
 import './index.css';
+import {HashRouter as Router} from 'react-router-dom';
 
 if (process.env.REACT_APP_MODE === 'development') {
   console.warn('USING DEVELOPMENT MODE DO NOT RELEASE THIS!');
@@ -29,12 +31,12 @@ numeral.locale('en');
 
 moment.locale('en');
 
-//{process.env.NODE_ENV === 'production' ? <App /> : <Developer><App/></Developer>}
+//
 
 ReactDOM.render(
   <Provider store={store}>
     <Suspense fallback={<Spinner color="white" className="loading-spinner" />}>
-      <App />
+      <Router>{process.env.REACT_APP_MODE === 'development' ? <DeveloperPage /> : <App />}</Router>
     </Suspense>
   </Provider>,
   document.getElementById('root')
