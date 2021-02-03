@@ -1,4 +1,5 @@
 #include <epidemiology/secir/seir.h>
+#include <epidemiology/model/simulation.h>
 #include <epidemiology/utils/logging.h>
 
 int main()
@@ -11,25 +12,24 @@ int main()
 
     epi::log_info("Simulating SEIR; t={} ... {} with dt = {}.", t0, tmax, dt);
 
-    epi::SeirParams params;
+    epi::SeirModel model;
 
     double total_population = 10000;
-    params.populations.set({epi::SeirCompartments::SeirE}, 100);
-    params.populations.set({epi::SeirCompartments::SeirI}, 100);
-    params.populations.set({epi::SeirCompartments::SeirR}, 100);
-    params.populations.set({epi::SeirCompartments::SeirS}, total_population -
-                                                           params.populations.get({epi::SeirCompartments::SeirE}) -
-                                                           params.populations.get({epi::SeirCompartments::SeirI}) -
-                                                           params.populations.get({epi::SeirCompartments::SeirR}));
+    model.populations.set(100, epi::SeirInfType::E);
+    model.populations.set(100, epi::SeirInfType::I);
+    model.populations.set(100, epi::SeirInfType::R);
+    model.populations.set(total_population - model.populations.get(epi::SeirInfType::E) -
+                              model.populations.get(epi::SeirInfType::I) - model.populations.get(epi::SeirInfType::R),
+                          epi::SeirInfType::S);
     // suscetible now set with every other update
     // params.nb_sus_t0   = params.nb_total_t0 - params.nb_exp_t0 - params.nb_inf_t0 - params.nb_rec_t0;
-    params.times.set_incubation(5.2);
-    params.times.set_infectious(6);
-    params.contact_frequency.get_baseline()(0, 0) = 0.4;
+    model.parameters.times.set_incubation(5.2);
+    model.parameters.times.set_infectious(6);
+    model.parameters.contact_frequency.get_baseline()(0, 0) = 0.4;
 
-    print_seir_params(params);
+    print_seir_params(model);
 
-    auto seir = simulate(t0, tmax, dt, params);
+    auto seir = simulate(t0, tmax, dt, model);
 
     printf("\n number total: %f\n",
            seir.get_last_value()[0] + seir.get_last_value()[1] + seir.get_last_value()[2] + seir.get_last_value()[3]);

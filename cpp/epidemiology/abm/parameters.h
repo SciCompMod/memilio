@@ -45,6 +45,7 @@ public:
     /**
      * get the value for one group.
      * @param e group index.
+     * @return value for the specified group
      */
     const double& operator[](E e) const
     {
@@ -58,6 +59,7 @@ public:
     /**
      * set values, constant or array.
      * @param a scalar for every group or array expression with one value for each group
+     * @return reference to this object
      */
     template <class A, class = std::enable_if_t<std::is_assignable<Eigen::ArrayXd, A>::value, int>>
     DependentParameter& operator=(A&& a)
@@ -68,6 +70,7 @@ public:
 
     /**
      * as Eigen3 array for componentwise operations.
+     * @return all values as array expression. 
      */
     const Eigen::ArrayXd& array() const
     {

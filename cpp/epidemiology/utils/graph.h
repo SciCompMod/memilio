@@ -69,6 +69,11 @@ std::enable_if_t<has_eq_op<T>::value, bool> operator==(const Node<T>& n1, const 
 {
     return n1.id == n2.id && n1.property == n2.property;
 }
+template <class T>
+std::enable_if_t<has_eq_op<T>::value, bool> operator!=(const Node<T>& n1, const Node<T>& n2)
+{
+    return !(n1 == n2);
+}
 
 /**
  * @brief comparison operator if edge property type is equality comparable
@@ -77,6 +82,11 @@ template <class T>
 std::enable_if_t<has_eq_op<T>::value, bool> operator==(const Edge<T>& e1, const Edge<T>& e2)
 {
     return e1.start_node_idx == e2.start_node_idx && e1.end_node_idx == e2.end_node_idx && e1.property == e2.property;
+}
+template <class T>
+std::enable_if_t<has_eq_op<T>::value, bool> operator!=(const Edge<T>& e1, const Edge<T>& e2)
+{
+    return !(e1 == e2);
 }
 
 /**

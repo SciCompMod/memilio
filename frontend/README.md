@@ -54,3 +54,7 @@ If your default browser is Internet Explorer you have to open the URL (http://lo
 
 #### Release Builds
 Run `npm run build` to create a release build. The resulting web page can be found in the build folder.
+
+#### Testing
+Run `npm run test` to enter an interactive testing environment.
+Run `npm run coverage` to run all test and generate an coverage reports. The reports are written into the directory `coverage`.

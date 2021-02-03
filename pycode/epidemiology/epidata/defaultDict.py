@@ -1,4 +1,13 @@
-#This dictionary ensures that in case of calling the functions
+## @file defaultDict.py
+#
+# @brief Defines global parameter, lists and dictionaries
+#
+# Dictionaries define values which are globally used and should be everywhere the same
+# - defaultDict defined default values for the function parameter
+#
+
+
+# This dictionary ensures that in case of calling the functions
 # and of calling the console scripts the default values are the same
 import os
 from datetime import date
@@ -17,6 +26,7 @@ defaultDict = {
    'start_date': date(2020, 4, 24),
    'end_date': date.today(),
    'split_berlin': False,
+   'moving_average': False,
    'out_form': 'json_timeasstring'
 }
 
