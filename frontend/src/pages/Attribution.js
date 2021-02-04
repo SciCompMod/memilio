@@ -1,12 +1,15 @@
 import React, {useState, useEffect} from 'react';
-import {Link} from 'react-router-dom';
+import {Link, useRouteMatch} from 'react-router-dom';
 import axios from 'axios';
 
+import {getParentRoute} from '~/common/utils';
+
 export default function Attribution() {
+  const {path} = useRouteMatch();
   const [data, setData] = useState({entries: []});
 
   useEffect(() => {
-    document.title = document.title = `Attribution`;
+    document.title = `Attribution`;
     axios('assets/thirdPartyNotice.json').then((r) => {
       setData({entries: r.data});
     });
@@ -14,7 +17,7 @@ export default function Attribution() {
 
   return (
     <div className="attribution">
-      <Link tabIndex="1" titel="Zurück zur Hauptseite" to="/">
+      <Link tabIndex="1" titel="Zurück zur Hauptseite" to={getParentRoute(path)}>
         Zurück zur Hauptseite
       </Link>
       <h2 className="mt-2">

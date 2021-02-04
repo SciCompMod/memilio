@@ -32,6 +32,7 @@
 
       .map {
         width: 100%;
+        height: 100%;
       }
     }
   }
@@ -53,9 +54,13 @@
       }
     }
 
+    .show-germany {
+      text-align: center;
+    }
+
     .graph {
-      height: 68.2%;
-      min-height: 500px;
+      height: 60%;
+      min-height: 300px;
       width: 100%;
     }
     .district {
@@ -85,19 +90,7 @@
     flex-grow: 1;
 
     .right {
-      //display: flex;
-      //flex-direction: column;
-      // align-items: center;
-      // justify-content: space-around;
-
-      //text-align: center;
-
       height: 100%;
-
-      .graph {
-        //display: flex;
-        //flex-direction: column;
-      }
     }
 
     .left {
@@ -114,17 +107,9 @@
 
 @media (max-width: 900px) {
   .main {
-    // display: block;
-    // flex-direction: column !important;
-    // flex-flow: column !important;
-    // height: auto !important;
     overflow: auto;
 
-    //height: 20000px !important;
-
     .left {
-      //display: block;
-      //min-height: 700px;
       width: 100% !important;
       min-width: 100% !important;
       max-width: 100% !important;
@@ -135,11 +120,6 @@
     }
 
     .right {
-      //display: block;
-      //min-height: 1200px;
-
-      //margin-bottom: 5rem;
-
       .graph {
         order: 1;
         height: 300px;

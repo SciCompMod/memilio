@@ -5,17 +5,18 @@ import am4lang_de_DE from '@amcharts/amcharts4/lang/de_DE';
 import * as am4core from '@amcharts/amcharts4/core';
 import {Switch, Route, Link} from 'react-router-dom';
 import {withRouter} from 'react-router';
-
 import {Spinner} from 'reactstrap';
 
-import Main from './pages/Main';
+import {fixUrl} from '~/common/utils';
 
-import './App.scss';
+import Main from './pages/Main';
 import About from './pages/About';
 import Impressum from './pages/Impressum';
 import Dsgvo from './pages/Dsgvo';
 import Accessibility from './pages/Accessibility';
 import Attribution from './pages/Attribution';
+
+import './App.scss';
 
 // AmCharts defaults to English as a locale and not the browser default,
 // so we have to set it manually.
@@ -50,8 +51,21 @@ class App extends Component {
 
   async componentDidMount() {}
 
+  componentWillUnmount() {}
+
+  componentDidUpdate() {
+    /* Scroll to top of the page on page update.
+       This is necessary when switching between pages like 'impressum' and such.
+       
+       NOTE: This should only be a temporary solution, since it will probally have a negative impact on
+       more advanced components.
+    */
+
+    window.scrollTo(0, 0);
+  }
+
   render() {
-    const {match} = this.props;
+    const {path, url} = fixUrl(this.props.match);
 
     return (
       <div className="app">
@@ -72,22 +86,22 @@ class App extends Component {
         </header>
         <div className="body">
           <Switch>
-            <Route path={`${match.path}/impressum`}>
-              <Impressum />
-            </Route>
-            <Route path={`${match.path}/datenschutz`}>
-              <Dsgvo />
-            </Route>
-            <Route path={`${match.path}/informationen`}>
+            <Route path={`${path}/informationen`}>
               <About />
             </Route>
-            <Route path={`${match.path}/barrierefreiheit`}>
+            <Route path={`${path}/impressum`}>
+              <Impressum />
+            </Route>
+            <Route path={`${path}/datenschutz`}>
+              <Dsgvo />
+            </Route>
+            <Route path={`${path}/barrierefreiheit`}>
               <Accessibility />
             </Route>
-            <Route path={`${match.path}/attribution`}>
+            <Route path={`${path}/attribution`}>
               <Attribution />
             </Route>
-            <Route path={`${match.path}/`}>
+            <Route path={`${path}/`}>
               <Main />
             </Route>
           </Switch>
@@ -103,21 +117,21 @@ class App extends Component {
           )}
         </div>
         <div className="links">
-          <Link tabIndex="2" title="Impressum" to={`${match.url}/impressum`}>
+          <Link tabIndex="2" title="Impressum" to={`${url}/impressum`}>
             Impressum
           </Link>
-          <Link tabIndex="3" title="Datenschutzerklärung" to={`${match.url}/datenschutz`}>
+          <Link tabIndex="3" title="Datenschutzerklärung" to={`${url}/datenschutz`}>
             Datenschutzerklärung
           </Link>
           <Link
             tabIndex="4"
             title="Erklärung zur Barrierefreiheit"
             alt="Accessibility statement"
-            to={`${match.url}/barrierefreiheit`}
+            to={`${url}/barrierefreiheit`}
           >
             Barrierefreiheit
           </Link>
-          <Link tabIndex="5" title="Attribution" to={`${match.url}/attribution`}>
+          <Link tabIndex="5" title="Attribution" to={`${url}/attribution`}>
             Attribution
           </Link>
         </div>

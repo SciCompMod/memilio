@@ -1,16 +1,17 @@
 import React, {Component} from 'react';
 import {Button, ButtonGroup, UncontrolledTooltip} from 'reactstrap';
-import RtChart from '../../components/Graphs/RtChart';
-
-import HeatMap from '../../common/heat-map';
+import {Link, withRouter} from 'react-router-dom';
 
 import * as _ from 'lodash';
 import * as dayjs from 'dayjs';
 import 'dayjs/locale/de';
 
+import SimpleTimeline from '~/components/SimpleTimeline';
+import RtChart from '~/components/Graphs/RtChart';
+import HeatMap from '~/common/heat-map';
+import {fixUrl} from '~/common/utils';
+
 import './styles.scss';
-import SimpleTimeline from '../../components/SimpleTimeline';
-import {Link} from 'react-router-dom';
 
 /**
  *  This component is the main page displayed. It shows the reproduction vales RT and RT relative
@@ -121,26 +122,26 @@ class MainPage extends Component {
       end: timestamps.length,
     });
 
-    //this.map = new HeatMap('map', {showLegend: true});
-    //this.map.setLegendMinMax(0, 2);
+    this.map = new HeatMap('map', {showLegend: true});
+    this.map.setLegendMinMax(0, 2);
 
     // subscribe to events from map
-    //this.map.subscribe((event) => {
-    //  switch (event) {
-    //    case 'ready':
-    //      //this.map.setValues(this.map_data_rt.get(timestamps[timestamps.length - 1]));
-    //      break;
-    //    case 'reset':
-    //      this.setState({
-    //        selected: {rs: '00000', bez: 'Bundesrepublik', gen: 'Deutschland'},
-    //      });
-    //      break;
-    //    default:
-    //      this.setState({
-    //        selected: event,
-    //      });
-    //  }
-    //});
+    this.map.subscribe((event) => {
+      switch (event) {
+        case 'ready':
+          this.map.setValues(this.map_data_rt.get(timestamps[timestamps.length - 1]));
+          break;
+        case 'reset':
+          this.setState({
+            selected: {rs: '00000', bez: 'Bundesrepublik', gen: 'Deutschland'},
+          });
+          break;
+        default:
+          this.setState({
+            selected: event,
+          });
+      }
+    });
   }
 
   /**
@@ -156,7 +157,7 @@ class MainPage extends Component {
         timestep,
         timestring: dayjs(timestamp).locale('de').format('DD MMMM YYYY'),
       });
-      //this.map.setValues(this.getData(timestamp));
+      this.map.setValues(this.getData(timestamp));
     }
   }
 
@@ -229,22 +230,23 @@ class MainPage extends Component {
   selectDataset(dataset) {
     if (dataset === 'incidence') {
       // reset legend to auto set legend scale
-      // this.map.setLegendMinMax(0, 200);
+      this.map.setLegendMinMax(0, 200);
     } else {
       // fix legend between 0 and 2
-      // this.map.setLegendMinMax(0, 2);
+      this.map.setLegendMinMax(0, 2);
     }
     this.setState(
       {
         dataset: dataset,
       },
       () => {
-        //this.map.setValues(this.getData(this.state.timestamps[this.state.timestep]));
+        this.map.setValues(this.getData(this.state.timestamps[this.state.timestep]));
       }
     );
   }
 
   render() {
+    const {url} = fixUrl(this.props.match);
     return (
       <div className="main">
         <div className="right">
@@ -260,7 +262,7 @@ class MainPage extends Component {
               in 7 Tagen infiziert wurden.
             </p>
             <p>
-              <Link title="Weitere Informationen zu der Webseite" to="/informationen">
+              <Link title="Weitere Informationen zu der Webseite" to={`${url}/informationen`}>
                 Weitere Informationen
               </Link>
             </p>
@@ -368,4 +370,4 @@ class MainPage extends Component {
   }
 }
 
-export default MainPage;
+export default withRouter(MainPage);

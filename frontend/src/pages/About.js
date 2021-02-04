@@ -1,14 +1,18 @@
 import React, {useEffect} from 'react';
-import {Link} from 'react-router-dom';
+import {Link, useRouteMatch} from 'react-router-dom';
+
+import {getParentRoute} from '~/common/utils';
 
 export default function About() {
+  const {path} = useRouteMatch();
+
   useEffect(() => {
-    document.title = document.title = `Über die Webseite`;
+    document.title = `Über die Webseite`;
   });
 
   return (
     <div className="about">
-      <Link tabIndex="1" titel="Zurück zur Hauptseite" to="/">
+      <Link tabIndex="1" titel="Zurück zur Hauptseite" to={getParentRoute(path)}>
         Zurück zur Hauptseite
       </Link>
       <h1 className="mt-2">Über die Webseite</h1>

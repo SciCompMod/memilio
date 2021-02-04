@@ -2,7 +2,7 @@ import React, {Component} from 'react';
 import {Button, Alert} from 'reactstrap';
 import {Link, Redirect, Route, Switch} from 'react-router-dom';
 
-import App from '../../App';
+import App from '~/App';
 
 import './styles.scss';
 

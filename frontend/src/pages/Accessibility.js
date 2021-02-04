@@ -1,14 +1,18 @@
 import React, {useEffect} from 'react';
-import {Link} from 'react-router-dom';
+import {Link, useRouteMatch} from 'react-router-dom';
+
+import {getParentRoute} from '~/common/utils';
 
 export default function Accessibility() {
+  const {path} = useRouteMatch();
+
   useEffect(() => {
-    document.title = document.title = `Erklärung zur Barrierefreiheit`;
+    document.title = `Erklärung zur Barrierefreiheit`;
   });
 
   return (
     <div className="accessibility">
-      <Link tabIndex="1" titel="Zurück zur Hauptseite" to="/">
+      <Link tabIndex="1" titel="Zurück zur Hauptseite" to={getParentRoute(path)}>
         Zurück zur Hauptseite
       </Link>
       <h2 className="mt-2">Erklärung zur Barrierefreiheit</h2>
