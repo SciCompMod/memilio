@@ -44,10 +44,7 @@ inline struct date_sep parse_date(const std::string& date_str)
  */
 inline struct date_sep calc_date_offset(int year, int month, int day, int offset)
 {
-    // assert(month > 0 && month < 13 && day > 0 && day < 32);
-    if (month < 1 || month > 12 || day < 1 || day > 31) {
-        printf("\nError. Year: %d Month %d, Day: %d", year, month, day);
-    }
+    assert(month > 0 && month < 13 && day > 0 && day < 32);
 
     std::vector<int> month_len;
     if (((year % 4 == 0) && (year % 100 != 0)) || (year % 400 == 0)) {
@@ -83,11 +80,6 @@ inline struct date_sep calc_date_offset(int year, int month, int day, int offset
             {
                 return calc_date_offset(year + 1, 1, 1, day_in_year - part_sum[11] - 1);
             }else{
-                // printf("\n -- day in year: %d, part sum %d ", day_in_year, part_sum[11]);
-                // int new_offset = day_in_year - part_sum[11] + 1;
-                // if (((year-1 % 4 == 0) && (year-1 % 100 != 0)) || (year-1 % 400 == 0)) {
-                //     new_offset--;
-                // }
                 return calc_date_offset(year - 1, 12, 31, day_in_year);
             }
         }
@@ -103,10 +95,7 @@ inline struct date_sep calc_date_offset(int year, int month, int day, int offset
  */
 inline int calc_day_in_year(int year, int month, int day)
 {
-    // assert(month > 0 && month < 13 && day > 0 && day < 32);
-    if (month < 1 || month > 12 || day < 1 || day > 31) {
-        printf("\nError. Year: %d Month %d, Day: %d", year, month, day);
-    }
+    assert(month > 0 && month < 13 && day > 0 && day < 32);
 
     if (month > 1) {
         std::vector<int> month_len;
