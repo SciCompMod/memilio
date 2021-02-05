@@ -103,6 +103,13 @@ optional arguments working for some are:
 +---------------------------------------------+-----------------------------------------------------------+
 | -sd, --start-date                           | Changes date for which data collection is started [divi]  |
 +---------------------------------------------+-----------------------------------------------------------+
+| -ma, --moving_average                       | The 7 day moving average is computed for the data         |
+|                                             |  Note that this option will have a negative impact        |
+|                                             |  on performance as well as on the storage space needed    |
+|                                             |  as the dataframe needs to be expanded first in order to  |
+|                                             |  fill the missing values on dates where no new cases      |
+|                                             |  have been reported                                       |
++---------------------------------------------+-----------------------------------------------------------+
 | -sb, --split_berlin                         | Berlin data is split into different counties              |
 |                                             |  , instead of having only one county for Berlin.          |
 +---------------------------------------------+-----------------------------------------------------------+
