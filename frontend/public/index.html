@@ -44,7 +44,7 @@
 
   <script src="browser-detect.umd.js" type="application/javascript"></script>
   <script>
-    const browser = browserDetect();
+    var browser = browserDetect();
     if (browser.name === 'ie') {
       document.getElementById('ie-unsupported-element').style.visibility = 'visible';
     } else {
