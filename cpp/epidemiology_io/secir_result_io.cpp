@@ -18,7 +18,7 @@ void save_result(const TimeSeries<double>& result, const std::string& filename)
     const int n_dims = 2;
 
     const int n_data    = static_cast<int>(result.get_num_time_points());
-    const int n_compart = (const int)InfectionType::Count;
+    const int n_compart = (int)InfectionType::Count;
     const int nb_groups = static_cast<int>(result[0].size()) / n_compart;
 
     H5File file(filename, H5F_ACC_TRUNC);
@@ -58,7 +58,7 @@ void save_result(const TimeSeries<double>& result, const std::string& filename)
 SecirSimulationResult read_result(const std::string& filename, int nb_groups)
 {
     const H5std_string FILE_NAME(filename);
-    const int nb_compart = (const int)InfectionType::Count;
+    const int nb_compart = (int)InfectionType::Count;
 
     H5File file(FILE_NAME, H5F_ACC_RDONLY);
     H5std_string DATASET_NAME_TIME("Time");
