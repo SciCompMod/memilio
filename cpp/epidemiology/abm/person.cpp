@@ -10,6 +10,7 @@ Person::Person(Location& location, InfectionState state, AbmAgeGroup age)
     : m_location(location)
     , m_state(state)
     , m_age(age)
+    , m_time_at_location(std::numeric_limits<int>::max())
 {
 }
 
@@ -35,12 +36,17 @@ void Person::interact(TimeSpan dt, const GlobalInfectionParameters& global_infec
     if (state != new_state) {
         m_location.get().changed_state(*this, state);
     }
+
+    m_time_at_location += dt;
 }
 
 void Person::migrate_to(Location& location)
 {
-    m_location.get().remove_person(*this);
-    m_location = location;
-    m_location.get().add_person(*this);
+    if (&location != &m_location.get()) {
+        m_location.get().remove_person(*this);
+        m_location = location;
+        m_location.get().add_person(*this);
+        m_time_at_location = epi::TimeSpan(0);
+    }
 }
 } // namespace epi

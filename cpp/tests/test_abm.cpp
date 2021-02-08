@@ -343,10 +343,11 @@ TEST(TestWorld, evolveStateTransition)
         mock_exponential_dist;
     ScopedMockDistribution<testing::StrictMock<MockDistribution<epi::DiscreteDistribution<size_t>>>> mock_discrete_dist;
     EXPECT_CALL(mock_exponential_dist.get_mock(), invoke)
-        .Times(3)
+        .Times(testing::AtLeast(3))
         .WillOnce(Return(0.51))
         .WillOnce(Return(0.04))
-        .WillOnce(Return(0.6));
+        .WillOnce(Return(0.6))
+        .WillRepeatedly(Return(1.0));
     EXPECT_CALL(mock_discrete_dist.get_mock(), invoke).Times(1).WillOnce(Return(0));
 
     world.evolve(epi::TimePoint(0), epi::hours(1));
@@ -358,23 +359,25 @@ TEST(TestWorld, evolveStateTransition)
 
 TEST(TestMigrationRules, school)
 {
-    auto home = epi::Location(epi::LocationType::Home);
+    auto home    = epi::Location(epi::LocationType::Home);
     auto p_child = epi::Person(home, epi::InfectionState::Susceptible, epi::AbmAgeGroup::Age5to14);
     auto p_adult = epi::Person(home, epi::InfectionState::Susceptible, epi::AbmAgeGroup::Age15to34);
 
-    auto t = epi::TimePoint(0) + epi::hours(8);
+    auto t_morning  = epi::TimePoint(0) + epi::hours(8);
+    auto t_weekend = epi::TimePoint(0) + epi::days(5) + epi::hours(8);
     auto dt = epi::hours(1);
 
-    ASSERT_EQ(epi::go_to_school(p_child, t, dt, {}), epi::LocationType::School);
-    ASSERT_EQ(epi::go_to_school(p_adult, t, dt, {}), epi::LocationType::Home);    
+    ASSERT_EQ(epi::go_to_school(p_child, t_morning, dt, {}), epi::LocationType::School);
+    ASSERT_EQ(epi::go_to_school(p_adult, t_morning, dt, {}), epi::LocationType::Home);
+    ASSERT_EQ(epi::go_to_school(p_child, t_weekend, dt, {}), epi::LocationType::Home);
 }
 
 TEST(TestMigrationRules, school_return)
 {
-    auto school = epi::Location(epi::LocationType::School);
+    auto school  = epi::Location(epi::LocationType::School);
     auto p_child = epi::Person(school, epi::InfectionState::Susceptible, epi::AbmAgeGroup::Age5to14);
 
-    auto t = epi::TimePoint(0) + epi::hours(15);
+    auto t  = epi::TimePoint(0) + epi::hours(15);
     auto dt = epi::hours(1);
 
     ASSERT_EQ(epi::go_to_school(p_child, t, dt, {}), epi::LocationType::Home);
@@ -382,26 +385,151 @@ TEST(TestMigrationRules, school_return)
 
 TEST(TestMigrationRules, work)
 {
-    auto home = epi::Location(epi::LocationType::Home);
+    auto home      = epi::Location(epi::LocationType::Home);
     auto p_retiree = epi::Person(home, epi::InfectionState::Susceptible, epi::AbmAgeGroup::Age60to79);
-    auto p_adult = epi::Person(home, epi::InfectionState::Susceptible, epi::AbmAgeGroup::Age15to34);
+    auto p_adult   = epi::Person(home, epi::InfectionState::Susceptible, epi::AbmAgeGroup::Age15to34);
 
-    auto t = epi::TimePoint(0) + epi::hours(8);
+    auto t_morning  = epi::TimePoint(0) + epi::hours(8);
+    auto t_night = epi::TimePoint(0) + epi::days(1) + epi::hours(4);
     auto dt = epi::hours(1);
 
-    ASSERT_EQ(epi::go_to_work(p_retiree, t, dt, {}), epi::LocationType::Home);
-    ASSERT_EQ(epi::go_to_work(p_adult, t, dt, {}), epi::LocationType::Work);
+    ASSERT_EQ(epi::go_to_work(p_retiree, t_morning, dt, {}), epi::LocationType::Home);
+    ASSERT_EQ(epi::go_to_work(p_adult, t_morning, dt, {}), epi::LocationType::Work);
+    ASSERT_EQ(epi::go_to_work(p_adult, t_night, dt, {}), epi::LocationType::Home);
 }
 
 TEST(TestMigrationRules, work_return)
 {
-    auto work = epi::Location(epi::LocationType::Work);
+    auto work    = epi::Location(epi::LocationType::Work);
     auto p_adult = epi::Person(work, epi::InfectionState::Susceptible, epi::AbmAgeGroup::Age35to59);
 
-    auto t = epi::TimePoint(0) + epi::hours(17);
+    auto t  = epi::TimePoint(0) + epi::hours(17);
     auto dt = epi::hours(1);
 
     ASSERT_EQ(epi::go_to_work(p_adult, t, dt, {}), epi::LocationType::Home);
+}
+
+TEST(TestMigrationRules, hospital)
+{
+    auto home  = epi::Location(epi::LocationType::Home);
+    auto p_inf = epi::Person(home, epi::InfectionState::Infected_Detected, epi::AbmAgeGroup::Age15to34);
+    auto t     = epi::TimePoint(12346);
+    auto dt    = epi::hours(1);
+
+    ScopedMockDistribution<testing::StrictMock<MockDistribution<epi::ExponentialDistribution<double>>>>
+        mock_exponential_dist;
+    EXPECT_CALL(mock_exponential_dist.get_mock(), invoke).Times(1).WillOnce(testing::Return(0.01));
+
+    ASSERT_EQ(epi::go_to_hospital(p_inf, t, dt, {}), epi::LocationType::Hospital);
+
+    auto p_car = epi::Person(home, epi::InfectionState::Carrier, epi::AbmAgeGroup::Age15to34);
+    ASSERT_EQ(epi::go_to_hospital(p_car, t, dt, {}), epi::LocationType::Home);
+}
+
+TEST(TestMigrationRules, icu)
+{
+    auto hospital = epi::Location(epi::LocationType::Hospital);
+    auto p_hosp   = epi::Person(hospital, epi::InfectionState::Infected_Detected, epi::AbmAgeGroup::Age15to34);
+    auto t        = epi::TimePoint(12346);
+    auto dt       = epi::hours(1);
+
+    ScopedMockDistribution<testing::StrictMock<MockDistribution<epi::ExponentialDistribution<double>>>>
+        mock_exponential_dist;
+    EXPECT_CALL(mock_exponential_dist.get_mock(), invoke).Times(1).WillOnce(testing::Return(0.01));
+
+    ASSERT_EQ(epi::go_to_icu(p_hosp, t, dt, {}), epi::LocationType::IntensiveCareUnit);
+
+    auto work   = epi::Location(epi::LocationType::Work);
+    auto p_work = epi::Person(work, epi::InfectionState::Infected_Detected, epi::AbmAgeGroup::Age15to34);
+    ASSERT_EQ(epi::go_to_icu(p_work, t, dt, {}), epi::LocationType::Work);
+}
+
+TEST(TestMigrationRules, recover)
+{
+    auto hospital = epi::Location(epi::LocationType::Hospital);
+    auto p_rec    = epi::Person(hospital, epi::InfectionState::Recovered_Infected, epi::AbmAgeGroup::Age60to79);
+    auto p_inf    = epi::Person(hospital, epi::InfectionState::Infected_Detected, epi::AbmAgeGroup::Age60to79);
+    auto t        = epi::TimePoint(12346);
+    auto dt       = epi::hours(1);
+
+    ASSERT_EQ(epi::return_home_when_recovered(p_rec, t, dt, {}), epi::LocationType::Home);
+    ASSERT_EQ(epi::return_home_when_recovered(p_inf, t, dt, {}), epi::LocationType::Hospital);
+}
+
+TEST(TestMigrationRules, go_shopping)
+{
+    auto hospital = epi::Location(epi::LocationType::Hospital);
+    auto p_hosp   = epi::Person(hospital, epi::InfectionState::Infected_Detected, epi::AbmAgeGroup::Age0to4);
+    auto home     = epi::Location(epi::LocationType::Home);
+    auto p_home   = epi::Person(home, epi::InfectionState::Infected_Detected, epi::AbmAgeGroup::Age60to79);
+
+    auto t_weekday = epi::TimePoint(0) + epi::days(4) + epi::hours(9);
+    auto t_sunday  = epi::TimePoint(0) + epi::days(6) + epi::hours(9);
+    auto t_night   = epi::TimePoint(0) + epi::days(4) + epi::hours(1);
+    auto dt        = epi::hours(1);
+
+    ASSERT_EQ(epi::go_to_shop(p_hosp, t_weekday, dt, {}), epi::LocationType::Hospital);
+    ASSERT_EQ(epi::go_to_shop(p_home, t_sunday, dt, {}), epi::LocationType::Home);
+    ASSERT_EQ(epi::go_to_shop(p_home, t_night, dt, {}), epi::LocationType::Home);
+
+    ScopedMockDistribution<testing::StrictMock<MockDistribution<epi::ExponentialDistribution<double>>>>
+        mock_exponential_dist;
+    EXPECT_CALL(mock_exponential_dist.get_mock(), invoke).Times(1).WillOnce(testing::Return(0.01));
+    ASSERT_EQ(epi::go_to_shop(p_home, t_weekday, dt, {}), epi::LocationType::BasicsShop);
+}
+
+TEST(TestMigrationRules, shop_return)
+{
+    auto t  = epi::TimePoint(0) + epi::days(4) + epi::hours(9);
+    auto dt = epi::hours(1);
+
+    auto home = epi::Location(epi::LocationType::Home);
+    auto shop = epi::Location(epi::LocationType::BasicsShop);
+    auto p    = epi::Person(home, epi::InfectionState::Carrier, epi::AbmAgeGroup::Age15to34);
+    home.add_person(p);
+    p.migrate_to(shop);
+    p.interact(dt, {});
+
+    ASSERT_EQ(epi::go_to_shop(p, t, dt, {}), epi::LocationType::Home);
+}
+
+TEST(TestMigrationRules, go_event)
+{
+    auto work   = epi::Location(epi::LocationType::Work);
+    auto p_work = epi::Person(work, epi::InfectionState::Infected_Detected, epi::AbmAgeGroup::Age35to59);
+    auto home   = epi::Location(epi::LocationType::Home);
+    auto p_home = epi::Person(home, epi::InfectionState::Infected_Detected, epi::AbmAgeGroup::Age60to79);
+
+    auto t_weekday  = epi::TimePoint(0) + epi::days(4) + epi::hours(20);
+    auto t_saturday = epi::TimePoint(0) + epi::days(5) + epi::hours(10);
+    auto t_night    = epi::TimePoint(0) + epi::days(5) + epi::hours(1);
+    auto dt         = epi::hours(1);
+
+    ASSERT_EQ(epi::go_to_event(p_work, t_weekday, dt, {}), epi::LocationType::Work);
+    ASSERT_EQ(epi::go_to_event(p_home, t_night, dt, {}), epi::LocationType::Home);
+
+    ScopedMockDistribution<testing::StrictMock<MockDistribution<epi::ExponentialDistribution<double>>>>
+        mock_exponential_dist;
+    EXPECT_CALL(mock_exponential_dist.get_mock(), invoke).Times(1).WillOnce(testing::Return(0.01));
+    ASSERT_EQ(epi::go_to_event(p_home, t_weekday, dt, {}), epi::LocationType::SocialEvent);
+
+    EXPECT_CALL(mock_exponential_dist.get_mock(), invoke).Times(1).WillOnce(testing::Return(0.01));
+    ASSERT_EQ(epi::go_to_event(p_home, t_saturday, dt, {}), epi::LocationType::SocialEvent);
+}
+
+TEST(TestMigrationRules, event_return)
+{
+    auto t  = epi::TimePoint(0) + epi::days(4) + epi::hours(9);
+    auto dt = epi::hours(1);
+
+    auto home = epi::Location(epi::LocationType::Home);
+    auto shop = epi::Location(epi::LocationType::BasicsShop);
+    auto p    = epi::Person(home, epi::InfectionState::Carrier, epi::AbmAgeGroup::Age15to34);
+    home.add_person(p);
+    p.migrate_to(shop);
+    p.interact(dt, {});
+
+    ASSERT_EQ(epi::go_to_shop(p, t, dt, {}), epi::LocationType::Home);
 }
 
 TEST(TestWorld, evolveMigration)

@@ -12,7 +12,10 @@ enum class LocationType
     Home,
     School,
     Work,
-    //TODO: add more
+    SocialEvent, // TODO: differentiate different kinds
+    BasicsShop, // groceries and other necessities
+    Hospital,
+    IntensiveCareUnit,
 };
 
 }

@@ -39,7 +39,13 @@ void World::interaction(TimePoint /*t*/, TimeSpan dt)
 void World::migration(TimePoint t, TimeSpan dt)
 {
     using migration_rule   = LocationType (*)(const Person&, TimePoint, TimeSpan, const MigrationParameters&);
-    migration_rule rules[] = {&go_to_school, &go_to_work};
+    migration_rule rules[] = {&return_home_when_recovered,
+                              &go_to_hospital,
+                              &go_to_icu,
+                              &go_to_school,
+                              &go_to_work,
+                              &go_to_shop,
+                              &go_to_event};
     for (auto& person : m_persons) {
         for (auto rule : rules) {
             auto target_type = rule(*person, t, dt, m_migration_parameters);

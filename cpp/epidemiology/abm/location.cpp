@@ -1,6 +1,7 @@
 #include "epidemiology/abm/location.h"
 #include "epidemiology/abm/person.h"
 #include "epidemiology/abm/random_number_generator.h"
+#include "epidemiology/abm/random_events.h"
 
 #include <numeric>
 
@@ -12,45 +13,6 @@ Location::Location(LocationType type)
     , m_subpopulations{}
 {
 }
-
-namespace
-{
-    /**
-     * select a random transition from a list of possible transitions.
-     * each transition is represented by the new state and the probability of the transition.
-     * it's also possible that no transition happens in this time step.
-     * in this case the old state is returned.
-     * input rates don't need to sum up to probability 1, the function performs normalisation.
-     * @param old_state previous state
-     * @param dt length of the time step
-     * @param transitions array of pairs of new states and their rates (probabilities)
-     * @return new state if transition happens, old_state otherwise
-     */
-    template <int NumTransitions>
-    InfectionState random_transition(InfectionState old_state, TimeSpan dt,
-                                     const std::pair<InfectionState, double> (&transitions)[NumTransitions])
-    {
-        auto sum = std::accumulate(std::begin(transitions), std::end(transitions), 0.0, [](auto&& a, auto&& t) {
-            return a + t.second;
-        });
-
-        if (sum <= 0) {
-            return old_state;
-        }
-
-        //time between transitions is exponentially distributed
-        auto v = ExponentialDistribution<double>::get_instance()(sum);
-        if (v < dt.days()) {
-            //pick a random transition
-            std::array<double, NumTransitions> rates;
-            std::transform(std::begin(transitions), std::end(transitions), rates.begin(), [](auto&& t) { return t.second; });
-            auto random_idx = DiscreteDistribution<size_t>::get_instance()(rates);
-            return transitions[random_idx].first;
-        }
-
-        return old_state;
-    }
-} // namespace
 
 InfectionState Location::interact(const Person& person, TimeSpan dt, const GlobalInfectionParameters& global_params) const
 {

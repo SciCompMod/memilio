@@ -250,6 +250,7 @@ private:
 
 /**
  * create a TimeSpan of a specified number of seconds.
+ * @param seconds number of seconds in the time span.
  */
 inline TimeSpan seconds(int seconds)
 {
@@ -258,6 +259,7 @@ inline TimeSpan seconds(int seconds)
 
 /**
  * create a TimeSpan of a specified number of hours.
+ * @param seconds number of hours in the time span.
  */
 inline TimeSpan hours(int hours)
 {
@@ -266,6 +268,7 @@ inline TimeSpan hours(int hours)
 
 /**
  * create a TimeSpan with a specified number of days.
+ * @param seconds number of days in the time span.
  */
 inline TimeSpan days(int days)
 {

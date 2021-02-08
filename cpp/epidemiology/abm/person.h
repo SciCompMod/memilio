@@ -49,6 +49,10 @@ public:
         return m_state;
     }
 
+    /**
+     * get the age of this person.
+     * @return age.
+     */
     AbmAgeGroup get_age() const
     {
         return m_age;
@@ -63,11 +67,21 @@ public:
         return m_location;
     }
 
+    /**
+     * how long has the person been at its current location.
+     * @return time span.
+     */
+    TimeSpan get_time_at_location() const
+    {
+        return m_time_at_location;
+    }
+
 private:
     std::reference_wrapper<Location> m_location;
     InfectionState m_state;
     TimeSpan m_time_until_carrier;
     AbmAgeGroup m_age;
+    TimeSpan m_time_at_location;
     //age, times, ...
 };
 

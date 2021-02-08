@@ -117,6 +117,10 @@ struct LocalInfectionParameters {
  */
 struct MigrationParameters {
     TimePoint lockdown_date = epi::TimePoint(std::numeric_limits<int>::max());
+    DependentParameter<AbmAgeGroup> hospitalization_rate = 1.;
+    DependentParameter<AbmAgeGroup> icu_rate = 1.;
+    DependentParameter<AbmAgeGroup> social_event_rate = 1.;
+    DependentParameter<AbmAgeGroup> basic_shopping_rate = 1.;
 };
 
 } // namespace epi
