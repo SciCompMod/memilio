@@ -46,7 +46,7 @@ def check_for_completeness(df):
    return False
 
 def fill_df(rki_old, group_by, avg_by, moving_average):
-   """! Calculates the the 7 day moving average of the rki data
+   """! Fills missing dates of df and optionally calculates the the 7 day moving average of the rki data
 
    @param rki_old pandas dataframe
    @param group_by List of columns which hold the specifications of the dataframe (Region, age, gender,...)
@@ -54,46 +54,63 @@ def fill_df(rki_old, group_by, avg_by, moving_average):
    @param moving_average Flag which indicates whether to compute the moving average
    @return dataframe with filled dates/moving average
    """
+   # drop time from date
    try:
       rki_old.Date = rki_old.Date.dt.date
    except:
       rki_old['Date'] = pandas.to_datetime(rki_old['Date'])
       rki_old.Date = rki_old.Date.dt.date
 
+   #create empty copy of the df
    rki_new = pandas.DataFrame(columns=rki_old.columns)
 
+   # range of dates which should be filled
    idx = pandas.date_range(min(rki_old.Date), max(rki_old.Date))
+
+   # create list of all possible groupby columns combinations
    unique_ids = []
    for group in group_by:
       unique_ids.append(list(rki_old[group].unique()))
    unique_ids_comb = list(itertools.product(*unique_ids))
 
+   #loop over all regions/ages/gender
    for ids in unique_ids_comb:
       df = rki_old.copy()
       counter = 0
+      # filter df
       while counter < len(ids):
          df = df[df[group_by[counter]] == ids[counter]]
          counter += 1
+
+      # create missing dates
       df.index = df.Date
       df_new = df.reindex(idx)
       df_new.Date = idx
       df_new.index = (range(len(idx)))
+
       if len(df) > 0:
+         # create values for first date
          values = {}
          for column in df.columns:
             values[column] = df[column][0]
          for avg in avg_by:
             values[avg] = 0
 
+         # fill values of missing dates based on last entry
          df_new.fillna(method='ffill', inplace=True)
+         # fill value of the first date, if it doesn't exist yet
          df_new.fillna(values, limit=1, inplace=True)
+         # fill remaining values (between first date and first reported date of the df)
          df_new.fillna(method='ffill', inplace=True)
+
+         # compute 7 day moving average
          if moving_average:
             for avg in avg_by:
                df_new['MA' + avg] = df_new[avg].rolling(window=7, min_periods=1).mean()
                df_new['MA' + avg] = df_new['MA' + avg].fillna(df_new[avg])
                df_new[avg] = df_new['MA' + avg]
                df_new.drop('MA' + avg, axis=1, inplace=True)
+
          rki_new = rki_new.append(df_new)
          rki_new.index = (range(len(rki_new)))
    return rki_new
