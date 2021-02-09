@@ -27,6 +27,7 @@ defaultDict = {
    'end_date': date.today(),
    'split_berlin': False,
    'moving_average': False,
+   'fill_dates': False,
    'out_form': 'json_timeasstring'
 }
 

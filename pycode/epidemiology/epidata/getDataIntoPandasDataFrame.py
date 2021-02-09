@@ -121,7 +121,7 @@ def cli(what):
    #                "update": ['divi']                 }
 
    cli_dict = {"divi": ['Downloads data from DIVI', 'start_date', 'end_date', 'update'],
-               "rki": ['Download data from RKI', 'make_plot', 'moving_average', 'split_berlin'],
+               "rki": ['Download data from RKI', 'fill_dates', 'make_plot', 'moving_average', 'split_berlin'],
                "rkiest": ['Download data from RKI and JH and estimate recovered and deaths', 'make_plot'],
                "spain": ['Download of spain data'],
                "population": ['Download population data'],
@@ -155,6 +155,11 @@ def cli(what):
                                 'Should have form: YYYY-mm-dd. Default is today',
                            type=lambda s: datetime.datetime.strptime(s, '%Y-%m-%d').date(),
                            default=dd.defaultDict['end_date'])
+   if 'fill_dates' in what_list:
+       parser.add_argument('-fd', '--fill_dates',
+                           help='the resulting dfs contain all dates instead of'
+                                ' omitting dates where no new cases were reported',
+                           action='store_true')
    if 'make_plot' in what_list:
       parser.add_argument('-p', '--plot', help='Plots the data.',
                           action='store_true')
@@ -191,6 +196,8 @@ def cli(what):
    # TODO: check if it is possible to automatically generate this
    if 'end_date' in what_list:
        arg_list.append(args.end_date)
+   if 'fill_dates' in what_list:
+       arg_list.append(args.fill_dates)
    if 'make_plot' in what_list:
       arg_list.append(args.plot)
    if 'moving_average' in what_list:
