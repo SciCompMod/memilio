@@ -21,7 +21,7 @@ set(TESTSOURCES
   test_secir.cpp
   test_implicit_euler.cpp
   test_migration.cpp
-  test_date_helper.cpp
+  test_date.cpp
   test_eigen_util.cpp
   test_secir_ageres.cpp
   test_parameter_studies.cpp

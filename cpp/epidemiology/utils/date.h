@@ -1,5 +1,5 @@
-#ifndef DATE_HELPER_H
-#define DATE_HELPER_H
+#ifndef EPI_UTILS_DATE_H
+#define EPI_UTILS_DATE_H
 
 #include <string>
 #include <iostream>
@@ -194,4 +194,4 @@ inline bool check_date(int year, int month, int day, int offset, const std::stri
 
 } // end namespace epi
 
-#endif // DATE_HELPER_H
+#endif // EPI_UTILS_DATE_H

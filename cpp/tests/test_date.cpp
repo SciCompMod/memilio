@@ -1,7 +1,7 @@
-#include <epidemiology/utils/date_helper.h>
+#include <epidemiology/utils/date.h>
 #include <gtest/gtest.h>
 
-TEST(TestDateHelper, calcOffset)
+TEST(TestDate, calcOffset)
 {
     auto new_date = epi::calc_date_offset(2020, 8, 30, 3);
     EXPECT_EQ(new_date.year, 2020);
@@ -79,7 +79,7 @@ TEST(TestDateHelper, calcOffset)
     EXPECT_EQ(new_date.day, 31);             
 }
 
-TEST(TestDateHelper, checkDate)
+TEST(TestDate, checkDate)
 {
     auto checked_date = epi::check_date(2020, 8, 30, 3, "2020.09.02");
     EXPECT_EQ(checked_date, true);
@@ -109,7 +109,7 @@ TEST(TestDateHelper, checkDate)
     EXPECT_EQ(checked_date, false);
 }
 
-TEST(TestDateHelper, calcDayInYear)
+TEST(TestDate, calcDayInYear)
 {
     auto day = epi::calc_day_in_year(2020, 1, 21);
     EXPECT_EQ(day, 21);
@@ -136,7 +136,7 @@ TEST(TestDateHelper, calcDayInYear)
     EXPECT_EQ(day, 361);
 }
 
-TEST(TestDateHelper, calcOffsetDates)
+TEST(TestDate, calcOffsetDates)
 {
     auto offset = epi::calc_offset_dates(2020, 8, 30, 2020, 8, 15);
     EXPECT_EQ(offset, 15);
