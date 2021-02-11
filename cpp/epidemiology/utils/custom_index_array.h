@@ -19,28 +19,28 @@ template <typename T, typename... Ts>
 struct Index;
 
 template <typename T, typename... Ts>
-struct Index<T, T, Ts...> : std::integral_constant<std::size_t, 0> {
+struct Index<T, T, Ts...> : std::integral_constant<int, 0> {
 };
 
 template <typename T, typename U, typename... Ts>
-struct Index<T, U, Ts...> : std::integral_constant<std::size_t, 1 + Index<T, Ts...>::value> {
+struct Index<T, U, Ts...> : std::integral_constant<int, 1 + Index<T, Ts...>::value> {
 };
 
 template <typename T, typename... Ts>
-constexpr std::size_t Index_v = Index<T, Ts...>::value;
+constexpr int Index_v = Index<T, Ts...>::value;
 
-//calculate the product of a size_t parameter pack
-template <size_t...>
+//calculate the product of a integer parameter pack
+template <int...>
 struct product;
 
 template <>
 struct product<> {
-    static constexpr size_t value = 1;
+    static constexpr int value = 1;
 };
 
-template <size_t i, size_t... tail>
+template <int i, int... tail>
 struct product<i, tail...> {
-    static constexpr size_t value = i * product<tail...>::value;
+    static constexpr int value = i * product<tail...>::value;
 };
 
 } // namespace
@@ -111,7 +111,7 @@ public:
      *
      * @return number of compartments
      */
-    static size_t constexpr size()
+    static int constexpr size()
     {
         return siz;
     }
@@ -199,7 +199,7 @@ public:
 
     // An array storying the size of each category
     static std::array<size_t, sizeof...(Categories)> dimensions;
-    static size_t constexpr siz = product<static_cast<size_t>(Categories::Count)...>::value;
+    static int constexpr siz = product<static_cast<int>(Categories::Count)...>::value;
 
 protected:
     // An array containing the elements
