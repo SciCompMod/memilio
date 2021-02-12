@@ -46,8 +46,6 @@ class TestGetRKIData(unittest.TestCase):
 
         result_df = pd.DataFrame(np.array([ID_State, State, Date, Confirmed]).T, columns = ['ID_State', 'State', 'Date', 'Confirmed'])
 
-
-
         Date = ['2020-01-' + str(x).zfill(2) for x in range(2,32)]
         Date = np.array([np.datetime64(x) for x in Date])
         ID_State = np.ones(len(Date))*3
@@ -65,7 +63,6 @@ class TestGetRKIData(unittest.TestCase):
             Confirmed[24 + i] = (50 + i) / 7
 
         Confirmed[29] = (56 / 7)
-
 
         result_df = result_df.append(pd.DataFrame(np.array([ID_State, State, Date, Confirmed]).T, columns = ['ID_State', 'State', 'Date', 'Confirmed']))
         result_df = result_df.astype({'ID_State': 'float64', 'Confirmed': 'float64', 'Date': 'datetime64[ns]'})
@@ -104,8 +101,6 @@ class TestGetRKIData(unittest.TestCase):
 
         result_df = pd.DataFrame(np.array([ID_State, State, Date, Confirmed]).T, columns = ['ID_State', 'State', 'Date', 'Confirmed'])
 
-
-
         Date = ['2020-01-' + str(x).zfill(2) for x in range(2,32)]
         Date = np.array([np.datetime64(x) for x in Date])
         ID_State = np.ones(len(Date))*3
@@ -117,7 +112,6 @@ class TestGetRKIData(unittest.TestCase):
         Confirmed[24:29] = 8
         Confirmed[29:30] = 9
 
-
         result_df = result_df.append(pd.DataFrame(np.array([ID_State, State, Date, Confirmed]).T, columns = ['ID_State', 'State', 'Date', 'Confirmed']))
         result_df = result_df.astype({'ID_State': 'float64', 'Date': 'datetime64[ns]'})
         result_df.index = (range(len(result_df)))
@@ -125,6 +119,7 @@ class TestGetRKIData(unittest.TestCase):
         test_df = getRKIData.fill_df(df, ['ID_State', 'State'], ['Confirmed'], False)
 
         pd.testing.assert_frame_equal(test_df, result_df)
+
 
     def test_fuse_berlin(self):
         Date = ['2020-01-02', '2020-01-03','2020-01-20', '2020-01-25', '2020-01-30']
@@ -162,12 +157,12 @@ class TestGetRKIData(unittest.TestCase):
         result_df = pd.DataFrame(np.array([ID_State, State, Age, Date, Confirmed]).T, columns = ['ID_County', 'County', 'Age_RKI', 'Date', 'Confirmed'])
         result_df = result_df.astype({'ID_County': 'int64', 'Confirmed': 'int64'})
 
-
         test_df = getRKIData.fuse_berlin(df)
         test_df = test_df.groupby( ['ID_County', 'County', 'Age_RKI', 'Date'])\
                              .agg({'Confirmed': sum})
         test_df = test_df.groupby(level=[1,2]).cumsum().reset_index()
         pd.testing.assert_frame_equal(test_df, result_df)
+
 
 if __name__ == '__main__':
     unittest.main()
