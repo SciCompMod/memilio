@@ -101,8 +101,6 @@ class TestGetRKIData(unittest.TestCase):
 
         result_df = pd.DataFrame(np.array([ID_State, State, Date, Confirmed]).T, columns = ['ID_State', 'State', 'Date', 'Confirmed'])
 
-
-
         Date = ['2020-01-' + str(x).zfill(2) for x in range(2,32)]
         Date = np.array([np.datetime64(x) for x in Date])
         ID_State = np.ones(len(Date))*3
