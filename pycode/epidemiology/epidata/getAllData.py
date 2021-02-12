@@ -62,8 +62,10 @@ def get_all_data(read_data=dd.defaultDict['read_data'],
 def main():
     """! Main program entry."""
 
-    [read_data, out_form, out_folder, end_date, fill_dates, make_plot, moving_average, split_berlin, start_date, update_data] = gd.cli("all")
-    get_all_data(read_data, out_form, out_folder, end_date, make_plot, split_berlin, start_date, update_data)
+    [read_data, out_form, out_folder, end_date, fill_dates, make_plot, moving_average, split_berlin, start_date,
+     update_data] = gd.cli("all")
+    get_all_data(read_data, out_form, out_folder, end_date, fill_dates, make_plot, moving_average, split_berlin,
+                 start_date, update_data)
 
 
 if __name__ == "__main__":
