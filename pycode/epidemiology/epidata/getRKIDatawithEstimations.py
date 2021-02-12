@@ -34,9 +34,13 @@ def get_rki_data_with_estimations(read_data=dd.defaultDict['read_data'],
     data_path = os.path.join(out_folder, 'Germany/')
 
     if not read_data:
+        fill_dates = False
+        make_plot_rki = False
+        moving_average = False
+        split_berlin = False
 
        # get rki data
-       grd.get_rki_data(read_data, out_form, out_folder, False)
+       grd.get_rki_data(read_data, out_form, out_folder, fill_dates, make_plot_rki, moving_average, split_berlin)
 
        # get data from John Hopkins University
        gjd.get_jh_data(read_data, out_form, out_folder)
