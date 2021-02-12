@@ -126,8 +126,8 @@ def cli(what):
                "spain": ['Download of spain data'],
                "population": ['Download population data'],
                "jh" : ['Downloads data from JH'],
-               "all": ['Download all possible data', 'fill_dates', 'make_plot', 'moving_average', 'start_date',
-                       'end_date', 'update']}
+               "all": ['Download all possible data', 'end_date', 'fill_dates', 'make_plot', 'moving_average',
+                       'split_berlin', 'start_date', 'update']}
 
    try:
       what_list = cli_dict[what]
