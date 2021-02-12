@@ -94,15 +94,27 @@ class CustomIndexArray
 {
 public:
 
-    using Type = Typ;
-
-    // This type can be used by other classes to refer to a concrete compartment
+    using Type  = Typ;
     using Index = std::tuple<Categories...>;
+    using N     = product<static_cast<size_t>(Categories::Count)...>;
+    using InternalArrayType = Eigen::Matrix<Type, N::value, 1>;
+
+    // An array storying the size of each category
+    static std::array<size_t, sizeof...(Categories)> dimensions;
 
     /**
      * @brief Populations default constructor
+     *
+     * leaves entries uninitialized
      */
     CustomIndexArray() = default;
+
+    template <class... Ts,
+              typename std::enable_if_t<std::is_constructible<Type, Ts...>::value>* = nullptr>
+    CustomIndexArray(Ts&&... args)
+        : m_y(InternalArrayType::Constant(N::value, 1, {std::forward<Ts...>(args)...}))
+    {
+    }
 
     /**
      * @brief get_num_compartments returns the number of compartments
@@ -113,7 +125,7 @@ public:
      */
     static int constexpr size()
     {
-        return siz;
+        return N::value;
     }
 
     /**
@@ -174,16 +186,6 @@ public:
         m_y[get_flat_index(cats...)] = value;
     }
 
-    /**
-     * @brief set sets the scalar value of the element given a custom index
-     * @param indices the custom indices for each category
-     * @param value the new value
-     */
-    void set(ScalarType value, Categories... cats)
-    {
-        m_y[get_flat_index(cats...)] = value;
-    }
-
 
     /**
      * @brief get_flat_index returns the flat index into the stored array, given the
@@ -197,13 +199,9 @@ public:
     }
 
 
-    // An array storying the size of each category
-    static std::array<size_t, sizeof...(Categories)> dimensions;
-    static int constexpr siz = product<static_cast<int>(Categories::Count)...>::value;
-
 protected:
     // An array containing the elements
-    Eigen::Matrix<Type, siz, 1> m_y{};
+    Eigen::Matrix<Type, N::value, 1> m_y{};
 };
 
 // initialize array storying the size of each category

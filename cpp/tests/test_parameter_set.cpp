@@ -1,4 +1,5 @@
 #include <epidemiology/utils/parameter_set.h>
+#include <epidemiology/utils/custom_index_array.h>
 #include <gtest/gtest.h>
 #include <gmock/gmock.h>
 
@@ -29,6 +30,7 @@ struct DoubleParam {
 struct StringParam {
     using Type = std::string;
 };
+
 
 struct NotDefaultConstructible {
     int i;
@@ -173,6 +175,51 @@ struct MockForeachFuncRef {
     }
     Mock& mock;
 };
+
+TEST(TestParameterSet, customIndexArray)
+{
+    enum class AgeGroup
+    {
+        Young,
+        Old,
+        Count = 2
+    };
+
+    enum class Income
+    {
+        Poor,
+        SoSo,
+        Rich,
+        Count = 3
+    };
+
+    struct ParamType1 {
+        using Type = epi::CustomIndexArray<double, AgeGroup>;
+        static Type get_default()
+        {
+            return Type(0.5);
+        }
+    };
+
+    struct ParamType2 {
+        using Type = epi::CustomIndexArray<int, AgeGroup, Income>;
+        static Type get_default()
+        {
+            return Type(42);
+        }
+    };
+
+    auto params = epi::ParameterSet<ParamType1, ParamType2>(epi::DefaultInit());
+    params.get<ParamType1>().set(0.5, AgeGroup::Young);
+    params.get<ParamType1>().set(1.5, AgeGroup::Old);
+    EXPECT_NEAR(params.get<ParamType1>().get(AgeGroup::Young), 0.5, 1e-14);
+    EXPECT_NEAR(params.get<ParamType1>().get(AgeGroup::Old), 1.5, 1e-14);
+    EXPECT_EQ(params.get<ParamType2>().get(AgeGroup::Young, Income::Poor), 42);
+    EXPECT_EQ(params.get<ParamType2>().get(AgeGroup::Young, Income::SoSo), 42);
+    params.get<ParamType2>().set(-42, AgeGroup::Young, Income::SoSo);
+    EXPECT_EQ(params.get<ParamType2>().get(AgeGroup::Young, Income::SoSo), -42);
+
+}
 
 TEST(TestParameterSet, foreach)
 {
