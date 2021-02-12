@@ -163,5 +163,6 @@ class TestGetRKIData(unittest.TestCase):
         test_df = test_df.groupby(level=[1,2]).cumsum().reset_index()
         pd.testing.assert_frame_equal(test_df, result_df)
 
+
 if __name__ == '__main__':
     unittest.main()
