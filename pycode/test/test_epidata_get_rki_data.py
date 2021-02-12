@@ -64,7 +64,6 @@ class TestGetRKIData(unittest.TestCase):
 
         Confirmed[29] = (56 / 7)
 
-
         result_df = result_df.append(pd.DataFrame(np.array([ID_State, State, Date, Confirmed]).T, columns = ['ID_State', 'State', 'Date', 'Confirmed']))
         result_df = result_df.astype({'ID_State': 'float64', 'Confirmed': 'float64', 'Date': 'datetime64[ns]'})
         result_df.index = (range(len(result_df)))
