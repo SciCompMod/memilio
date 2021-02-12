@@ -76,7 +76,6 @@ void bind_Populations(py::module& m, std::string const& name)
             py::return_value_policy::reference_internal)
         .def("get_total", &epi::Populations<Cats...>::get_total)
         .def("set", py::overload_cast<typename epi::Populations<Cats...>::Type const &, Cats...>(&epi::Populations<Cats...>::set))
-        .def("set", py::overload_cast<ScalarType, Cats...>(&epi::Populations<Cats...>::set))
         .def("set_total", &epi::Populations<Cats...>::set_total)
         .def("set_difference_from_total", &epi::Populations<Cats...>::set_difference_from_total)
         .def("get_flat_index", &epi::Populations<Cats...>::get_flat_index);
