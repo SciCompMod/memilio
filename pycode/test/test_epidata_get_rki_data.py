@@ -120,6 +120,7 @@ class TestGetRKIData(unittest.TestCase):
 
         pd.testing.assert_frame_equal(test_df, result_df)
 
+
     def test_fuse_berlin(self):
         Date = ['2020-01-02', '2020-01-03','2020-01-20', '2020-01-25', '2020-01-30']
         Date = np.array([np.datetime64(x) for x in Date])
