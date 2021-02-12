@@ -157,7 +157,6 @@ class TestGetRKIData(unittest.TestCase):
         result_df = pd.DataFrame(np.array([ID_State, State, Age, Date, Confirmed]).T, columns = ['ID_County', 'County', 'Age_RKI', 'Date', 'Confirmed'])
         result_df = result_df.astype({'ID_County': 'int64', 'Confirmed': 'int64'})
 
-
         test_df = getRKIData.fuse_berlin(df)
         test_df = test_df.groupby( ['ID_County', 'County', 'Age_RKI', 'Date'])\
                              .agg({'Confirmed': sum})
