@@ -117,7 +117,7 @@ class MainPage extends Component {
         .locale('de')
         .format('DD MMMM YYYY'),
       //timestep: timestamps.findIndex((x) => x === first_timestamp),
-      timestep: timestamps.length,
+      timestep: timestamps.length - 1,
       start: timestamps.findIndex((x) => x === first_timestamp),
       end: timestamps.length,
     });
