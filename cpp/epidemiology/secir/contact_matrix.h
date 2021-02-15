@@ -154,7 +154,7 @@ public:
 private:
     Eigen::MatrixXd m_baseline;
     Eigen::MatrixXd m_minimum;
-    Dampings m_dampings;
+    SquareDampings m_dampings;
 };
 
 /**

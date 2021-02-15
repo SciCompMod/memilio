@@ -4,16 +4,16 @@
 
 TEST(TestDampings, initZero)
 {
-    epi::Dampings dampings(3);
-    EXPECT_EQ(print_wrap(dampings.get_matrix_at(-1e5)), print_wrap(Eigen::MatrixXd::Zero(3, 3)));
-    EXPECT_EQ(print_wrap(dampings.get_matrix_at(0)), print_wrap(Eigen::MatrixXd::Zero(3, 3)));
-    EXPECT_EQ(print_wrap(dampings.get_matrix_at(1e-32)), print_wrap(Eigen::MatrixXd::Zero(3, 3)));
-    EXPECT_EQ(print_wrap(dampings.get_matrix_at(1e5)), print_wrap(Eigen::MatrixXd::Zero(3, 3)));
+    epi::Dampings<Eigen::MatrixXd> dampings(3, 2);
+    EXPECT_EQ(print_wrap(dampings.get_matrix_at(-1e5)), print_wrap(Eigen::MatrixXd::Zero(3, 2)));
+    EXPECT_EQ(print_wrap(dampings.get_matrix_at(0)), print_wrap(Eigen::MatrixXd::Zero(3, 2)));
+    EXPECT_EQ(print_wrap(dampings.get_matrix_at(1e-32)), print_wrap(Eigen::MatrixXd::Zero(3, 2)));
+    EXPECT_EQ(print_wrap(dampings.get_matrix_at(1e5)), print_wrap(Eigen::MatrixXd::Zero(3, 2)));
 }
 
 TEST(TestDampings, dampingsOnDifferentLevels)
 {
-    epi::Dampings dampings(2);
+    epi::Dampings<Eigen::MatrixXd> dampings(2, 2);
     auto D1 = 0.25;
     auto D2 = (Eigen::MatrixXd(2, 2) << 0.25, 0.5, 0.75, 1).finished();
     dampings.add(D1, epi::DampingLevel(7), epi::DampingType(3), epi::SimulationTime(0.5));
@@ -26,7 +26,7 @@ TEST(TestDampings, dampingsOnDifferentLevels)
 
 TEST(TestDampings, dampingsOnSameLevel)
 {
-    epi::Dampings dampings(2);
+    epi::Dampings<Eigen::MatrixXd> dampings(2, 2);
     auto D1 = 0.25;
     auto D2 = (Eigen::MatrixXd(2, 2) << 0.0, 0.25, 0.5, 0.75).finished();
     dampings.add(D1, epi::DampingLevel(-2), epi::DampingType(0), epi::SimulationTime(0.5));
@@ -39,7 +39,7 @@ TEST(TestDampings, dampingsOnSameLevel)
 
 TEST(TestDampings, dampingOfSameType)
 {
-    epi::Dampings dampings(2);
+    epi::Dampings<Eigen::MatrixXd> dampings(2, 2);
     auto D1 = 0.25;
     auto D2 = (Eigen::MatrixXd(2, 2) << 0.0, 0.25, 0.5, 0.75).finished();
     dampings.add(D1, epi::DampingLevel(123), epi::DampingType(5), epi::SimulationTime(0.5));
@@ -52,7 +52,7 @@ TEST(TestDampings, dampingOfSameType)
 
 TEST(TestDampings, dampingsCombined)
 {
-    epi::Dampings dampings(2);
+    epi::Dampings<Eigen::MatrixXd> dampings(2, 2);
     auto D1 = 0.25;
     auto D2 = (Eigen::MatrixXd(2, 2) << 0.1, 0.1, 0.1, 0.1).finished();
     auto D3 = (Eigen::MatrixXd(2, 2) << 0.0, 0.25, 0.5, 0.75).finished();
@@ -73,7 +73,7 @@ TEST(TestDampings, dampingsCombined)
 
 TEST(TestDampings, smoothTransitions)
 {
-    epi::Dampings dampings(2);
+    epi::Dampings<Eigen::MatrixXd> dampings(2, 2);
     auto D1 = 0.25;
     auto D2 = (Eigen::MatrixXd(2, 2) << 0.1, 0.1, 0.1, 0.1).finished();
     dampings.add(D1, epi::DampingLevel(123), epi::DampingType(5), epi::SimulationTime(-2.0));

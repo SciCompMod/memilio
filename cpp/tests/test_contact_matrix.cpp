@@ -35,8 +35,8 @@ TEST(TestContactMatrix, dampings)
     EXPECT_EQ(cm.get_dampings().size(), 2);
     EXPECT_THAT(
         cm.get_dampings(),
-        testing::ElementsAre(epi::Damping(2, D1, epi::DampingLevel(7), epi::DampingType(3), epi::SimulationTime(0.5)),
-                             epi::Damping(D2, epi::DampingLevel(7), epi::DampingType(2), epi::SimulationTime(2.0))));
+        testing::ElementsAre(epi::SquareDamping(2, D1, epi::DampingLevel(7), epi::DampingType(3), epi::SimulationTime(0.5)),
+                             epi::SquareDamping(D2, epi::DampingLevel(7), epi::DampingType(2), epi::SimulationTime(2.0))));
 
     EXPECT_EQ(print_wrap(cm.get_matrix_at(-1e5)), print_wrap(B));
     EXPECT_EQ(print_wrap(cm.get_matrix_at(-0.5)), print_wrap(B));
