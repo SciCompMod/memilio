@@ -7,6 +7,7 @@
  * - static member function `get_shape_of` that takes a compatible matrix expression and returns it's shape
  * - const member functions rows() and cols()
  * - trivially copyable, moveable, assignable, move assignable
+ * - equality comparable
  */
 
 #ifndef EPI_UTILS_MATRIX_SHAPE_H
@@ -66,11 +67,11 @@ public:
     /**
      * equality comparators.
      */
-    bool operator==(const RectMatrixShape& other)
+    bool operator==(const RectMatrixShape& other) const
     {
         return other.m_rows == m_rows && other.m_cols == m_cols;
     }
-    bool operator!=(const RectMatrixShape& other)
+    bool operator!=(const RectMatrixShape& other) const
     {
         return !(*this == other);
     }
@@ -137,11 +138,11 @@ public:
     /**
      * equality comparators.
      */
-    bool operator==(const SquareMatrixShape& other)
+    bool operator==(const SquareMatrixShape& other) const
     {
         return other.m_rows == m_rows;
     }
-    bool operator!=(const SquareMatrixShape& other)
+    bool operator!=(const SquareMatrixShape& other) const
     {
         return !(*this == other);
     }
@@ -207,11 +208,11 @@ public:
     /**
      * equality comparators.
      */
-    bool operator==(const ColumnVectorShape& other)
+    bool operator==(const ColumnVectorShape& other) const
     {
         return other.m_rows == m_rows;
     }
-    bool operator!=(const ColumnVectorShape& other)
+    bool operator!=(const ColumnVectorShape& other) const
     {
         return !(*this == other);
     }
