@@ -239,7 +239,7 @@ def get_age_population_data(read_data=dd.defaultDict['read_data'],
          path_counties = 'http://hpcagainstcorona.sc.bs.dlr.de/data/migration/'
          counties = pandas.read_excel(os.path.join(path_counties,'kreise_deu.xlsx'),sheet_name=1, header=3, engine='openpyxl')
       except:
-         path_counties = 'https://www.destatis.de/DE/Themen/Laender-Regionen/Regionales/Gemeindeverzeichnis/Administrativ/04-kreise.xlsx;jsessionid=6B8F70BA9D0FF85F3952E8D34151B3A7.internet712?__blob=publicationFile'
+         path_counties = 'https://www.destatis.de/DE/Themen/Laender-Regionen/Regionales/Gemeindeverzeichnis/Administrativ/04-kreise.xlsx;?__blob=publicationFile'
          counties = pandas.read_excel(os.path.join(path_counties),sheet_name=1, header=3, engine='openpyxl')
       path_reg_key = 'https://www.zensus2011.de/SharedDocs/Downloads/DE/Pressemitteilung/DemografischeGrunddaten/' \
                      '1A_EinwohnerzahlGeschlecht.xls?__blob=publicationFile&v=5'
