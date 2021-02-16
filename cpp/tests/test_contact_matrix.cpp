@@ -35,7 +35,7 @@ TEST(TestContactMatrix, dampings)
     EXPECT_EQ(cm.get_dampings().size(), 2);
     EXPECT_THAT(
         cm.get_dampings(),
-        testing::ElementsAre(epi::SquareDamping(2, D1, epi::DampingLevel(7), epi::DampingType(3), epi::SimulationTime(0.5)),
+        testing::ElementsAre(epi::SquareDamping(D1, epi::DampingLevel(7), epi::DampingType(3), epi::SimulationTime(0.5), Eigen::Index(2)),
                              epi::SquareDamping(D2, epi::DampingLevel(7), epi::DampingType(2), epi::SimulationTime(2.0))));
 
     EXPECT_EQ(print_wrap(cm.get_matrix_at(-1e5)), print_wrap(B));
@@ -46,7 +46,7 @@ TEST(TestContactMatrix, dampings)
 
 TEST(TestContactMatrixGroup, sum)
 {
-    epi::ContactMatrixGroup cmg(2, 3);
+    epi::ContactMatrixGroup cmg(3, 2);
     cmg[0] = epi::ContactMatrix(Eigen::MatrixXd::Constant(3, 3, 1.0));
     cmg[1] = epi::ContactMatrix(Eigen::MatrixXd::Constant(3, 3, 2.0));
     cmg[2] = epi::ContactMatrix(Eigen::MatrixXd::Constant(3, 3, 3.0));

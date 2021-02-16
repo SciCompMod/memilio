@@ -48,7 +48,7 @@ public:
         : times(N, StageTimes())
         , probabilities(N, Probabilities())
         , m_num_groups{N}
-        , m_contact_patterns(static_cast<Eigen::Index>(N), 1)
+        , m_contact_patterns(1, static_cast<Eigen::Index>(N))
         , m_tstart{0}
         , m_seasonality{0}
         , m_icu_capacity{std::numeric_limits<double>::max()}
