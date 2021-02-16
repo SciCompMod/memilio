@@ -81,6 +81,8 @@ add_library(epidemiology
     epidemiology/utils/parameter_set.cpp
     epidemiology/utils/date.h
     epidemiology/utils/date.cpp
+    epidemiology/utils/matrix_shape.h
+    epidemiology/utils/matrix_shape.cpp
     epidemiology/abm/location.cpp
     epidemiology/abm/location.h
     epidemiology/abm/simulation.cpp
