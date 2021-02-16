@@ -300,6 +300,135 @@ void write_distribution(const TixiDocumentHandle& handle, const std::string& pat
 void write_predef_sample(TixiDocumentHandle handle, const std::string& path, const std::vector<double>& samples);
 
 /**
+ * write an Eigen matrix to xml file.
+ * @param handle tixi document handle.
+ * @param path path in the document.
+ * @param name name of the element in the document.
+ * @param m matrix.
+ */
+template <class M>
+void write_matrix(TixiDocumentHandle handle, const std::string& path, const std::string& name, M&& m)
+{
+    tixiCreateElement(handle, path.c_str(), name.c_str());
+    auto matrix_path = path_join(path, name);
+    tixiAddIntegerAttribute(handle, matrix_path.c_str(), "Rows", (int)m.rows(), "%d");
+    tixiAddIntegerAttribute(handle, matrix_path.c_str(), "Cols", (int)m.cols(), "%d");
+    //Matrix may be column major but we want to output row major 
+    std::vector<double> coeffs(m.size());
+    for (Eigen::Index i = 0; i < m.rows(); ++i) {
+        for (Eigen::Index j = 0; j < m.cols(); ++j) {
+            coeffs[i * m.cols() + j] = m(i, j);
+        }
+    }
+    tixiAddFloatVector(handle, matrix_path.c_str(), "Coefficients", coeffs.data(), (int)coeffs.size(), "%.18g");
+}
+
+/**
+ * read an Eigen matrix from an xml file.
+ * @param handle tixi document handle.
+ * @param path path to the matrix element in the document.
+ * @return a matrix.
+ */
+template <class M = Eigen::MatrixXd>
+M read_matrix(TixiDocumentHandle handle, const std::string& path)
+{
+    auto status = SUCCESS;
+    unused(status);
+    int rows, cols;
+    status = tixiGetIntegerAttribute(handle, path.c_str(), "Rows", &rows);
+    assert(status == SUCCESS && "Failed to read matrix rows.");
+    status = tixiGetIntegerAttribute(handle, path.c_str(), "Cols", &cols);
+    assert(status == SUCCESS && "Failed to read matrix columns.");
+    double* coeffs;
+    M m{rows, cols};
+    status = tixiGetFloatVector(handle, path_join(path, "Coefficients").c_str(), &coeffs, (int)m.size());
+    assert(status == SUCCESS && "Failed to read matrix coefficients.");
+    //values written as row major, but matrix type might be column major
+    //so we can't just copy all coeffs to m.data()
+    for (Eigen::Index i = 0; i < m.rows(); ++i) {
+        for (Eigen::Index j = 0; j < m.cols(); ++j) {
+            m(i, j) = coeffs[i * m.cols() + j];
+        }
+    }
+    return m;
+}
+
+/**
+ * write an instance of DampingMatrixExpressionGroup to an xml document.
+ * @param handle tixi document handle.
+ * @param path path in the document.
+ * @param cfmc the object to write.
+ */
+template <class C>
+void write_damping_matrix_expression_collection(TixiDocumentHandle handle, const std::string& path, const C& cfmc)
+{
+    tixiCreateElement(handle, path.c_str(), "ContactMatrixGroup");
+    auto collection_path = path_join(path, "ContactMatrixGroup");
+    for (size_t i = 0; i < cfmc.get_num_matrices(); ++i) {
+        auto& cfm     = cfmc[i];
+        auto cfm_name = "ContactMatrix" + std::to_string(i + 1);
+        tixiCreateElement(handle, collection_path.c_str(), cfm_name.c_str());
+        auto cfm_path = path_join(collection_path, cfm_name);
+        write_matrix(handle, cfm_path, "Baseline", cfm.get_baseline());
+        write_matrix(handle, cfm_path, "Minimum", cfm.get_minimum());
+        tixiCreateElement(handle, cfm_path.c_str(), "Dampings");
+        auto dampings_path = path_join(cfm_path, "Dampings");
+        for (size_t j = 0; j < cfm.get_dampings().size(); ++j) {
+            auto& damping     = cfm.get_dampings()[j];
+            auto damping_name = "Damping" + std::to_string(j + 1);
+            tixiCreateElement(handle, dampings_path.c_str(), damping_name.c_str());
+            auto damping_path = path_join(dampings_path, damping_name);
+            tixiAddDoubleAttribute(handle, damping_path.c_str(), "Time", double(damping.get_time()), "%.18g");
+            tixiAddIntegerAttribute(handle, damping_path.c_str(), "Type", int(damping.get_type()), "%d");
+            tixiAddIntegerAttribute(handle, damping_path.c_str(), "Level", int(damping.get_level()), "%d");
+            write_matrix(handle, damping_path, "Values", damping.get_coeffs());
+        }
+    }
+}
+
+/**
+ * read an instance of DampingMatrixExpressionGroup from an xml document.
+ * @param handle tixi document handle.
+ * @param path path in the document.
+ */
+template <class C = ContactMatrixGroup>
+C read_damping_matrix_expression_collection(TixiDocumentHandle handle, const std::string& path)
+{
+    auto status = SUCCESS;
+    unused(status);
+
+    auto collection_path = path_join(path, "ContactMatrixGroup");
+    int num_matrices;
+    status = tixiGetNumberOfChilds(handle, collection_path.c_str(), &num_matrices);
+    assert(status == SUCCESS && "Failed to read ContactMatrixGroup.");
+    C cfmc{size_t(num_matrices), 1};
+    for (size_t i = 0; i < cfmc.get_num_matrices(); ++i) {
+        auto cfm_path      = path_join(collection_path, "ContactMatrix" + std::to_string(i + 1));
+        cfmc[i] = typename C::value_type(read_matrix<typename C::Matrix>(handle, path_join(cfm_path, "Baseline")),
+                                         read_matrix<typename C::Matrix>(handle, path_join(cfm_path, "Minimum")));
+        auto dampings_path = path_join(cfm_path, "Dampings");
+        int num_dampings;
+        status = tixiGetNumberOfChilds(handle, dampings_path.c_str(), &num_dampings);
+        assert(status == SUCCESS && "Failed to read Dampings from ContactMatrix.");
+        for (int j = 0; j < num_dampings; ++j) {
+            auto damping_path = path_join(dampings_path, "Damping" + std::to_string(j + 1));
+            double t;
+            status = tixiGetDoubleAttribute(handle, damping_path.c_str(), "Time", &t);
+            assert(status == SUCCESS && "Failed to read Damping Time.");
+            int type;
+            status = tixiGetIntegerAttribute(handle, damping_path.c_str(), "Type", &type);
+            assert(status == SUCCESS && "Failed to read Damping Type.");
+            int level;
+            status = tixiGetIntegerAttribute(handle, damping_path.c_str(), "Level", &level);
+            assert(status == SUCCESS && "Failed to read Damping Level.");
+            cfmc[i].add_damping(read_matrix<typename C::Matrix>(handle, path_join(damping_path, "Values")),
+                                DampingLevel(level), DampingType(type), SimulationTime(t));
+        }
+    }
+    return cfmc;
+}
+
+/**
  * @brief read parameter space from xml file
  * @param handle Tixi Document Handle
  * @param path Path to XML Tree of the parameter space
@@ -648,8 +777,8 @@ void write_edge(const std::vector<TixiDocumentHandle>& edge_handles, const std::
                 const Graph<Model, MigrationParameters>& graph, int edge)
 {
     assert(graph.nodes().size() > 0 && "Graph Nodes are empty");
-    int num_groups  = static_cast<int>(graph.nodes()[0].property.parameters.get_num_groups());
-    int num_compart = static_cast<int>(graph.nodes()[0].property.populations.get_num_compartments()) / num_groups;
+    // int num_groups  = static_cast<int>(graph.nodes()[0].property.parameters.get_num_groups());
+    // int num_compart = static_cast<int>(graph.nodes()[0].property.populations.get_num_compartments()) / num_groups;
 
     auto start_node = static_cast<int>(graph.edges()[edge].start_node_idx);
     auto end_node   = static_cast<int>(graph.edges()[edge].end_node_idx);
@@ -661,14 +790,9 @@ void write_edge(const std::vector<TixiDocumentHandle>& edge_handles, const std::
                           "%d");
     tixiAddIntegerElement(handle, edge_path.c_str(), "EndNode", static_cast<int>(graph.edges()[edge].end_node_idx),
                           "%d");
-    for (int group = 0; group < num_groups; group++) {
-        std::vector<double> weights;
-        for (int compart = 0; compart < num_compart; compart++) {
-            weights.push_back(graph.edges()[edge].property.get_coefficients()[compart + group * num_compart]);
-        }
-        tixiAddFloatVector(handle, edge_path.c_str(), ("Group" + std::to_string(group + 1)).c_str(), weights.data(),
-                           num_compart, "%g");
-    }
+    tixiCreateElement(handle, edge_path.c_str(), "Parameters");
+    write_damping_matrix_expression_collection(handle, path_join(edge_path, "Parameters").c_str(),
+                                              graph.edges()[edge].property.get_coefficients());
 }
 
 /**
@@ -701,17 +825,8 @@ void read_edge(const std::vector<TixiDocumentHandle>& edge_handles, const std::s
     status = tixiGetIntegerElement(handle, path_join(path, "NumberOfCompartiments").c_str(), &num_compart);
     assert(status == SUCCESS && ("Failed to read num_compart at " + path).c_str());
 
-    auto all_weights = Eigen::VectorXd(num_compart * num_groups);
-    for (int group = 0; group < num_groups; group++) {
-        double* weights = nullptr;
-        status = tixiGetFloatVector(handle, path_join(edge_path, "Group" + std::to_string(group + 1)).c_str(), &weights,
-                                    num_compart);
-        assert(status == SUCCESS && "Failed to read coefficients.");
-        for (int compart = 0; compart < num_compart; compart++) {
-            all_weights(compart + group * num_compart) = weights[compart];
-        }
-    }
-    graph.add_edge(start_node, end_node, all_weights);
+    auto coefficients = read_damping_matrix_expression_collection<MigrationCoefficientGroup>(handle, path_join(edge_path, "Parameters").c_str());
+    graph.add_edge(start_node, end_node, MigrationParameters(coefficients));
 }
 
 /**
