@@ -219,13 +219,14 @@ def get_age_population_data(read_data=dd.defaultDict['read_data'],
       counties = pandas.read_json(file_in)
    except:
       try:
-         print('Local counties Dataframe not found. Trying to download from HPC server')
+         print('Local counties dataframe not found. Trying to download from HPC server')
          path_counties = 'http://hpcagainstcorona.sc.bs.dlr.de/data/migration/'
          counties = pandas.read_excel(os.path.join(path_counties, 'kreise_deu.xlsx'), sheet_name=1, header=3,
                                       engine='openpyxl')
+         gd.write_dataframe(counties, directory, filename_counties, "json")
       except:
-         print('No Access to HPC Server. Trying to download data from the internet')
-         path_counties = 'https://www.destatis.de/DE/Themen/Laender-Regionen/Regionales/Gemeindeverzeichnis/Administrativ/04-kreise.xlsx;jsessionid=6B8F70BA9D0FF85F3952E8D34151B3A7.internet712?__blob=publicationFile'
+         print('No access to HPC Server. Trying to download data from the internet')
+         path_counties = 'https://www.destatis.de/DE/Themen/Laender-Regionen/Regionales/Gemeindeverzeichnis/Administrativ/04-kreise.xlsx;?__blob=publicationFile'
          counties = pandas.read_excel(os.path.join(path_counties), sheet_name=1, header=3, engine='openpyxl')
          gd.write_dataframe(counties, directory, filename_counties, "json")
 
