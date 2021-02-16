@@ -212,45 +212,42 @@ def get_age_population_data(read_data=dd.defaultDict['read_data'],
    filename_reg_key = 'reg_key'
    filename_zensus = 'zensus'
 
-   if(read_data):
 
-      file_in = os.path.join(directory, filename_counties+".json")
-      try:
-         counties = pandas.read_json(file_in)
-      except ValueError:
-         exit_string = "Error: The file: " + file_in + " does not exist. Call program without -r flag to get it."
-         sys.exit(exit_string)
-      
-      file_in = os.path.join(directory, filename_zensus+".json")
-      try:
-         zensus = pandas.read_json(file_in)
-      except ValueError:
-         exit_string = "Error: The file: " + file_in + " does not exist. Call program without -r flag to get it."
-         sys.exit(exit_string)
 
-      file_in = os.path.join(directory, filename_reg_key+".json")
+   file_in = os.path.join(directory, filename_counties+".json")
+   try:
+      counties = pandas.read_json(file_in)
+   except:
       try:
-         reg_key = pandas.read_json(file_in)
-      except ValueError:
-         exit_string = "Error: The file: " + file_in + " does not exist. Call program without -r flag to get it."
-         sys.exit(exit_string)
-   else:
-      try:
+         print('Local counties Dataframe not found. Trying to download from HPC server')
          path_counties = 'http://hpcagainstcorona.sc.bs.dlr.de/data/migration/'
-         counties = pandas.read_excel(os.path.join(path_counties,'kreise_deu.xlsx'),sheet_name=1, header=3, engine='openpyxl')
+         counties = pandas.read_excel(os.path.join(path_counties, 'kreise_deu.xlsx'), sheet_name=1, header=3,
+                                      engine='openpyxl')
       except:
+         print('No Access to HPC Server. Trying to download data from the internet')
          path_counties = 'https://www.destatis.de/DE/Themen/Laender-Regionen/Regionales/Gemeindeverzeichnis/Administrativ/04-kreise.xlsx;jsessionid=6B8F70BA9D0FF85F3952E8D34151B3A7.internet712?__blob=publicationFile'
-         counties = pandas.read_excel(os.path.join(path_counties),sheet_name=1, header=3, engine='openpyxl')
+         counties = pandas.read_excel(os.path.join(path_counties), sheet_name=1, header=3, engine='openpyxl')
+         gd.write_dataframe(counties, directory, filename_counties, "json")
+
+   file_in = os.path.join(directory, filename_zensus+".json")
+   try:
+      zensus = pandas.read_json(file_in)
+   except:
+      print('Local zensus Dataframe not found. Trying to download from the internet')
+      zensus = gd.loadCsv("abad92e8eead46a4b0d252ee9438eb53_1")
+      gd.write_dataframe(zensus, directory, filename_zensus, "json")
+
+   file_in = os.path.join(directory, filename_reg_key+".json")
+   try:
+      reg_key = pandas.read_json(file_in)
+   except:
+      print('Local reg_key Dataframe not found. Trying to download from the internet')
       path_reg_key = 'https://www.zensus2011.de/SharedDocs/Downloads/DE/Pressemitteilung/DemografischeGrunddaten/' \
                      '1A_EinwohnerzahlGeschlecht.xls?__blob=publicationFile&v=5'
-   
-      #read tables
+      # read tables
       reg_key = pandas.read_excel(path_reg_key, sheet_name='Tabelle_1A', header=12)
-      zensus = gd.loadCsv("abad92e8eead46a4b0d252ee9438eb53_1")
-
-      gd.write_dataframe(counties, directory, filename_counties, "json")
       gd.write_dataframe(reg_key, directory, filename_reg_key, "json")
-      gd.write_dataframe(zensus, directory, filename_zensus, "json")
+
    
    #find region keys for census population data
    key = np.zeros((len(zensus)))
