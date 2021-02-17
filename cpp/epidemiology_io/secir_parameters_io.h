@@ -307,6 +307,8 @@ ParameterStudy<SecirModel<AgeGroup>> read_parameter_study(TixiDocumentHandle han
     status = tixiGetDoubleElement(handle, path_join(path, "TMax").c_str(), &tmax);
     assert(status == SUCCESS && ("Failed to read tmax at " + path).c_str());
 
+    unused(status);
+
     SecirModel<AgeGroup> model = read_parameter_space<AgeGroup>(handle, path, io_mode);
     return ParameterStudy<SecirModel<AgeGroup>>(model, t0, tmax, num_runs);
 }
