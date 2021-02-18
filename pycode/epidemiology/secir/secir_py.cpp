@@ -571,6 +571,8 @@ void bind_secir_ageres(py::module& m)
  * @tparam ArgTuples tuples of string and some other type.
  * @param cl class_ that the constructor is defined for.
  * @param arg_tuples tuples that define additional arguments before the shape arguments.
+ *                   tuples (s, t) where s is a string, the name of the argument, and t
+ *                   is a value of Type T, where T is the type of the argument.
  */
 template <class C, class... ArgTuples,
           class = std::enable_if_t<(std::is_same<typename C::type::Shape, epi::SquareMatrixShape>::value ||
