@@ -564,59 +564,222 @@ void bind_secir_ageres(py::module& m)
     m.def("interpolate_ensemble_results", &epi::interpolate_ensemble_results<MigrationGraph>);
 }
 
-} // namespace
-
-PYBIND11_MODULE(_secir, m)
+/**
+ * bind a constructor that has variable number of matrix shape arguments.
+ * same number of arguments as the constructor of Shape.
+ * @tparam C instance of pybind class_
+ * @tparam ArgTuples tuples of string and some other type.
+ * @param cl class_ that the constructor is defined for.
+ * @param arg_tuples tuples that define additional arguments before the shape arguments.
+ */
+template <class C, class... ArgTuples,
+          class = std::enable_if_t<(std::is_same<typename C::type::Shape, epi::SquareMatrixShape>::value ||
+                                    std::is_same<typename C::type::Shape, epi::ColumnVectorShape>::value),
+                                   void>>
+void bind_shape_constructor(C& cl, ArgTuples... arg_tuples)
 {
+    cl.def(py::init<Eigen::Index, std::tuple_element_t<1, ArgTuples>...>(), py::arg(std::get<0>(arg_tuples))...,
+           py::arg("size"));
+}
 
-    py::class_<epi::Damping>(m, "Damping")
-        .def(py::init([](const Eigen::Ref<const Eigen::MatrixXd>& c, double t, int level, int type) {
-                 return epi::Damping(c, epi::DampingLevel(level), epi::DampingType(type), epi::SimulationTime(t));
+/**
+ * binds a property that returns the shape of matrix valued object.
+ * @tparam C instance of pybind class_.
+ * @param cl class that the property is added to.
+ */
+template <class C>
+void bind_shape_property(C& cl)
+{
+    cl.def_property_readonly("shape", [](typename C::type& self) {
+        auto tup = py::tuple(2);
+        tup[0]   = self.get_shape().rows();
+        tup[1]   = self.get_shape().cols();
+        return tup;
+    });
+}
+
+/**
+ * binds all members for an instance of epi::Damping.
+ * @tparam DampingClass instance of pybind class_.
+ * @param damping_class class that the members are added to.
+ */
+template <class DampingClass>
+void bind_damping_members(DampingClass& damping_class)
+{
+    using Damping = typename DampingClass::type;
+    using Matrix  = typename Damping::Matrix;
+    using Shape   = typename Damping::Shape;
+
+    bind_shape_constructor(damping_class);
+    bind_shape_property(damping_class);
+
+    damping_class
+        .def(py::init([](const Eigen::Ref<const Matrix>& c, double t, int level, int type) {
+                 return Damping(c, epi::DampingLevel(level), epi::DampingType(type), epi::SimulationTime(t));
              }),
              py::arg("coeffs"), py::arg("t"), py::arg("level") = 0, py::arg("type") = 0)
         .def_property(
-            "coeffs", [](const epi::Damping& self) -> const auto& { return self.get_coeffs(); },
-            [](epi::Damping& self, const Eigen::Ref<const Eigen::MatrixXd>& v) {
+            "coeffs", [](const Damping& self) -> const auto& { return self.get_coeffs(); },
+            [](Damping& self, const Eigen::Ref<const Matrix>& v) {
                 self.get_coeffs() = v;
             },
             py::return_value_policy::reference_internal)
         .def_property(
             "time",
-            [](const epi::Damping& self) {
+            [](const Damping& self) {
                 return self.get_time();
             },
-            [](epi::Damping& self, double v) {
+            [](Damping& self, double v) {
                 self.get_time() = epi::SimulationTime(v);
             },
             py::return_value_policy::reference_internal)
         .def_property(
             "type",
-            [](const epi::Damping& self) {
+            [](const Damping& self) {
                 return self.get_type();
             },
-            [](epi::Damping& self, int v) {
+            [](Damping& self, int v) {
                 self.get_type() = epi::DampingType(v);
             },
             py::return_value_policy::reference_internal)
         .def_property(
             "level",
-            [](const epi::Damping& self) {
+            [](const Damping& self) {
                 return self.get_level();
             },
-            [](epi::Damping& self, int v) {
+            [](Damping& self, int v) {
                 self.get_level() = epi::DampingLevel(v);
             },
             py::return_value_policy::reference_internal);
+}
 
-    py::class_<epi::Dampings>(m, "Dampings")
-        .def(py::init<Eigen::Index>())
+/**
+ * binds all members for an instance of epi::Dampings.
+ * @tparam DampingsClass instance of pybind class_.
+ * @param dampings_class class that the members are added to.
+ */
+template <class DampingsClass>
+void bind_dampings_members(DampingsClass& dampings_class)
+{
+    using Dampings = typename DampingsClass::type;
+    using Damping  = typename Dampings::value_type;
+    using Matrix   = typename Dampings::Matrix;
+    using Shape    = typename Dampings::Shape;
+
+    bind_shape_constructor(dampings_class);
+    bind_shape_property(dampings_class);
+
+    dampings_class
         .def("add",
-             [](epi::Dampings& self, const epi::Damping& d) {
+             [](Dampings& self, const Damping& d) {
                  self.add(d);
              })
-        .def("get_matrix_at", [](const epi::Dampings& self, double t) {
+        .def("get_matrix_at", [](const Dampings& self, double t) {
             return self.get_matrix_at(t);
         });
+}
+
+/**
+ * binds all members for an instance of epi::DampingExpression.
+ * @tparam DampingExpressionClass instance of pybind class_.
+ * @param damping_expression_class class that the members are added to.
+ */
+template <class DampingExpressionClass>
+void bind_damping_expression_members(DampingExpressionClass& damping_expression_class)
+{
+    using DampingExpression = typename DampingExpressionClass::type;
+    using Dampings          = typename DampingExpression::DampingsType;
+    using Damping           = typename Dampings::value_type;
+    using Matrix            = typename DampingExpression::Matrix;
+    using Shape             = typename DampingExpression::Shape;
+
+    bind_shape_constructor(damping_expression_class);
+    bind_shape_property(damping_expression_class);
+
+    damping_expression_class
+        .def(py::init<const Eigen::Ref<const Matrix>&, const Eigen::Ref<const Matrix>&>(), py::arg("baseline"),
+             py::arg("minimum"))
+        .def(py::init<const Eigen::Ref<const Matrix>&>(), py::arg("baseline"))
+        .def("add_damping",
+             [](DampingExpression& self, const Damping& d) {
+                 self.add_damping(d);
+             })
+        .def_property(
+            "baseline", [](const DampingExpression& self) -> auto& { return self.get_baseline(); },
+            [](DampingExpression& self, const Eigen::Ref<const Matrix>& v) {
+                self.get_baseline() = v;
+            },
+            py::return_value_policy::reference_internal)
+        .def_property(
+            "minimum", [](const DampingExpression& self) -> auto& { return self.get_minimum(); },
+            [](DampingExpression& self, const Eigen::Ref<const Matrix>& v) {
+                self.get_minimum() = v;
+            },
+            py::return_value_policy::reference_internal)
+        .def("get_dampings",
+             [](const DampingExpression& self) {
+                 return std::vector<Damping>(self.get_dampings().begin(), self.get_dampings().end());
+             })
+        .def("get_matrix_at", [](const DampingExpression& self, double t) {
+            return self.get_matrix_at(t);
+        });
+}
+
+/**
+ * binds all members for an instance of epi::DampingExpressionGroup.
+ * @tparam DampingExpressionGroupClass instance of pybind class_.
+ * @param cl class that the members are added to.
+ */
+template <class DampingExpressionGroupClass>
+void bind_damping_expression_group_members(DampingExpressionGroupClass& cl)
+{
+    using DampingExpressionGroup = typename DampingExpressionGroupClass::type;
+    using DampingExpression      = typename DampingExpressionGroup::value_type;
+    using Dampings               = typename DampingExpression::DampingsType;
+    using Damping                = typename Dampings::value_type;
+    using Matrix                 = typename Damping::Matrix;
+    using Shape                  = typename Damping::Shape;
+
+    bind_shape_constructor(cl, std::make_tuple("num_matrices", size_t(0)));
+    bind_shape_property(cl);
+
+    cl.def("add_damping",
+           [](DampingExpressionGroup& self, const Damping& d) {
+               self.add_damping(d);
+           })
+        .def_property_readonly("num_matrices",
+                               [](const DampingExpressionGroup& self) {
+                                   return self.get_num_matrices();
+                               })
+        .def(
+            "__getitem__", [](DampingExpressionGroup & self, size_t i) -> auto& {
+                if (i < 0 || i >= self.get_num_matrices()) {
+                    throw py::index_error("index out of range");
+                }
+                return self[i];
+            },
+            py::return_value_policy::reference_internal)
+        .def("__setitem__",
+             [](DampingExpressionGroup& self, size_t i, const DampingExpression& m) {
+                 if (i < 0 && i >= self.get_num_matrices()) {
+                     throw py::index_error("index out of range");
+                 }
+                 self[i] = m;
+             })
+        .def("get_matrix_at", [](const DampingExpressionGroup& self, double t) {
+            return self.get_matrix_at(t);
+        });
+}
+
+} // namespace
+
+PYBIND11_MODULE(_secir, m)
+{
+    auto damping_class = py::class_<epi::SquareDamping>(m, "Damping");
+    bind_damping_members(damping_class);
+
+    auto dampings_class = py::class_<epi::SquareDampings>(m, "Dampings");
+    bind_dampings_members(dampings_class);
 
     py::class_<epi::TimeSeries<double>>(m, "TimeSeries")
         .def(py::init<Eigen::Index>(), py::arg("num_elements"))
@@ -713,72 +876,13 @@ PYBIND11_MODULE(_secir, m)
             py::return_value_policy::reference_internal)
         .def("draw_sample", &epi::UncertainValue::draw_sample);
 
+    auto contact_matrix_class = py::class_<epi::ContactMatrix>(m, "ContactMatrix");
+    bind_damping_expression_members(contact_matrix_class);
+    contact_matrix_class.def_property_readonly("num_groups", &epi::ContactMatrix::get_num_groups);
 
-    py::class_<epi::ContactMatrix>(m, "ContactMatrix")
-        .def(py::init<const Eigen::Ref<const Eigen::MatrixXd>&, const Eigen::Ref<const Eigen::MatrixXd>&>(),
-             py::arg("baseline"), py::arg("minimum"))
-        .def(py::init<const Eigen::Ref<const Eigen::MatrixXd>&>(), py::arg("baseline"))
-        .def(py::init<Eigen::Index>())
-        .def("add_damping",
-             [](epi::ContactMatrix& self, const epi::Damping& d) {
-                 self.add_damping(d);
-             })
-        .def_property(
-            "baseline", [](const epi::ContactMatrix& self) -> auto& { return self.get_baseline(); },
-            [](epi::ContactMatrix& self, const Eigen::Ref<const Eigen::MatrixXd>& v) {
-                self.get_baseline() = v;
-            },
-            py::return_value_policy::reference_internal)
-        .def_property(
-            "minimum", [](const epi::ContactMatrix& self) -> auto& { return self.get_minimum(); },
-            [](epi::ContactMatrix& self, const Eigen::Ref<const Eigen::MatrixXd>& v) {
-                self.get_minimum() = v;
-            },
-            py::return_value_policy::reference_internal)
-        .def_property_readonly("num_groups",
-                               [](const epi::ContactMatrix& self) {
-                                   return self.get_num_groups();
-                               })
-        .def("get_dampings",
-             [](const epi::ContactMatrix& self) {
-                 return std::vector<epi::Damping>(self.get_dampings().begin(), self.get_dampings().end());
-             })
-        .def("get_matrix_at", [](const epi::ContactMatrix& self, double t) {
-            return self.get_matrix_at(t);
-        });
-
-    py::class_<epi::ContactMatrixGroup>(m, "ContactMatrixGroup")
-        .def(py::init<Eigen::Index, size_t>(), py::arg("num_groups") = 1, py::arg("num_matrices") = 1)
-        .def("add_damping",
-             [](epi::ContactMatrixGroup& self, const epi::Damping& d) {
-                 self.add_damping(d);
-             })
-        .def_property_readonly("num_groups",
-                               [](const epi::ContactMatrixGroup& self) {
-                                   return self.get_num_groups();
-                               })
-        .def_property_readonly("num_matrices",
-                               [](const epi::ContactMatrixGroup& self) {
-                                   return self.get_num_matrices();
-                               })
-        .def(
-            "__getitem__", [](epi::ContactMatrixGroup & self, size_t i) -> auto& {
-                if (i < 0 || i >= self.get_num_matrices()) {
-                    throw py::index_error("index out of range");
-                }
-                return self[i];
-            },
-            py::return_value_policy::reference_internal)
-        .def("__setitem__",
-             [](epi::ContactMatrixGroup& self, size_t i, const epi::ContactMatrix& m) {
-                 if (i < 0 && i >= self.get_num_matrices()) {
-                     throw py::index_error("index out of range");
-                 }
-                 self[i] = m;
-             })
-        .def("get_matrix_at", [](const epi::ContactMatrixGroup& self, double t) {
-            return self.get_matrix_at(t);
-        });
+    auto contact_matrix_group_class = py::class_<epi::ContactMatrixGroup>(m, "ContactMatrixGroup");
+    bind_damping_expression_group_members(contact_matrix_group_class);
+    contact_matrix_group_class.def_property_readonly("num_groups", &epi::ContactMatrixGroup::get_num_groups);
 
     py::class_<epi::UncertainContactMatrix>(m, "UncertainContactMatrix")
         .def(py::init<>())
@@ -791,11 +895,24 @@ PYBIND11_MODULE(_secir, m)
             },
             py::return_value_policy::reference_internal);
 
+    auto migration_damping_class = py::class_<epi::VectorDamping>(m, "MigrationDamping");
+    bind_damping_members(migration_damping_class);
+
+    auto migration_dampings_class = py::class_<epi::VectorDampings>(m, "MigrationDampings");
+    bind_dampings_members(migration_dampings_class);
+
+    auto migration_coeffs_class = py::class_<epi::MigrationCoefficients>(m, "MigrationCoefficients");
+    bind_damping_expression_members(migration_coeffs_class);
+
+    auto migration_coeff_group_class = py::class_<epi::MigrationCoefficientGroup>(m, "MigrationCoefficientGroup");
+    bind_damping_expression_group_members(migration_coeff_group_class);
+
     py::class_<epi::MigrationParameters>(m, "MigrationParameters")
         .def(py::init<const Eigen::VectorXd&>(), py::arg("coeffs"))
+        .def(py::init<const epi::MigrationCoefficientGroup&>(), py::arg("coeffs"))
         .def_property(
-            "coefficients", [](const epi::MigrationParameters& self) -> auto& { return self.get_coefficients(); },
-            [](epi::MigrationParameters& self, const Eigen::VectorXd& v) {
+            "coefficients", py::overload_cast<>(&epi::MigrationParameters::get_coefficients),
+            [](epi::MigrationParameters& self, const epi::MigrationCoefficientGroup& v) {
                 self.get_coefficients() = v;
             },
             py::return_value_policy::reference_internal);
@@ -811,16 +928,9 @@ PYBIND11_MODULE(_secir, m)
                                })
         .def_property_readonly(
             "property", [](const epi::Edge<epi::MigrationEdge>& self) -> auto& { return self.property; },
-            py::return_value_policy::reference_internal)
-        .def_property(
-            "coefficients",
-            [](const epi::Edge<epi::MigrationParameters>& self) -> auto& { return self.property.get_coefficients(); },
-            [](epi::Edge<epi::MigrationParameters>& self, const Eigen::VectorXd& v) {
-                self.property.get_coefficients() = v;
-            },
             py::return_value_policy::reference_internal);
 
-    py::class_<epi::MigrationEdge>(m, "MigrationEdgeProperty")
+    py::class_<epi::MigrationEdge>(m, "Migration")
         .def(py::init<const Eigen::VectorXd&>(), py::arg("coeffs"))
         .def(py::init<const epi::MigrationParameters&>(), py::arg("params"))
         .def_property_readonly(

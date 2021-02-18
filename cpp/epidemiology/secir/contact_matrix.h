@@ -192,7 +192,7 @@ public:
      * @param num_matrices number of matrices.
      */
     template<class... T, class = std::enable_if_t<std::is_constructible<Shape, T...>::value, int>>
-    explicit DampingMatrixExpressionGroup(size_t num_matrices = 1, T... shape_args)
+    explicit DampingMatrixExpressionGroup(size_t num_matrices, T... shape_args)
         : m_matrices(num_matrices, value_type{shape_args...})
     {
         assert(num_matrices > 0);

@@ -35,7 +35,9 @@ class Test_secir_integration(unittest.TestCase):
         model.populations[AgeGroup1.Group0, InfectionType.R] = 10
         model.populations[AgeGroup1.Group0, InfectionType.D] = 0
 
-        model.parameters.get_contact_patterns().cont_freq_mat[0] = ContactMatrix(np.r_[0.5])
+        contacts = ContactMatrix(np.r_[0.5])
+        contacts.add_damping(Damping(coeffs = np.r_[0.0], t = 0.0, level = 0, type = 0))
+        model.parameters.get_contact_patterns().cont_freq_mat[0] = contacts
 
         model.apply_constraints()
 
