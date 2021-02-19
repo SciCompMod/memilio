@@ -289,14 +289,14 @@ auto bind_secir_ageres()
 
 EMSCRIPTEN_BINDINGS(secirjs)
 {
-    js::class_<epi::Damping>("Damping")
-        .constructor<epi::Damping(Eigen::Index, double, int, int, double)>(
-            [](auto n, auto d, auto lv, auto ty, auto t) {
-                return epi::Damping(n, d, epi::DampingLevel(lv), epi::DampingType(ty), epi::SimulationTime(t));
+    js::class_<epi::SquareDamping>("Damping")
+        .constructor<epi::SquareDamping(double, int, int, double, Eigen::Index)>(
+            [](auto d, auto lv, auto ty, auto t, auto n) {
+                return epi::SquareDamping(d, epi::DampingLevel(lv), epi::DampingType(ty), epi::SimulationTime(t), n);
             })
-        .constructor<epi::Damping(Eigen::Index, double, double)>(
-            [](auto n, auto d, auto t) {
-                return epi::Damping(n, d, epi::SimulationTime(t));
+        .constructor<epi::SquareDamping(double, double, Eigen::Index)>(
+            [](auto d, auto t, auto n) {
+                return epi::SquareDamping(d, epi::SimulationTime(t), n);
             })
         .property<double>(
             "time",
@@ -323,10 +323,10 @@ EMSCRIPTEN_BINDINGS(secirjs)
                 self.get_level() = epi::DampingLevel(v);
             })
         .function("get_coeff",
-                  std::function<double(epi::Damping&, Eigen::Index, Eigen::Index)>([](auto& self, auto i, auto j) {
+                  std::function<double(epi::SquareDamping&, Eigen::Index, Eigen::Index)>([](auto& self, auto i, auto j) {
                       return self.get_coeffs()(i, j);
                   }))
-        .function("set_coeff", std::function<void(epi::Damping&, Eigen::Index, Eigen::Index, double)>(
+        .function("set_coeff", std::function<void(epi::SquareDamping&, Eigen::Index, Eigen::Index, double)>(
                                    [](auto& self, auto i, auto j, double d) {
                                        self.get_coeffs()(i, j) = d;
                                    }));
@@ -345,15 +345,15 @@ EMSCRIPTEN_BINDINGS(secirjs)
 
     js::class_<epi::ContactMatrix>("ContactMatrix")
         .constructor<Eigen::Index>()
-        .function("add_damping", std::function<void(epi::ContactMatrix&, const epi::Damping&)>([](auto& self, auto& d) {
+        .function("add_damping", std::function<void(epi::ContactMatrix&, const epi::SquareDamping&)>([](auto& self, auto& d) {
                       self.add_damping(d);
                   }))
         .function("get_num_dampings", std::function<size_t(epi::ContactMatrix&)>([](auto& self) {
                       return self.get_dampings().size();
                   }))
-        .function("get_damping", std::function<epi::Damping&(epi::ContactMatrix&, size_t)>(
+        .function("get_damping", std::function<epi::SquareDamping&(epi::ContactMatrix&, size_t)>(
                                      [](auto& self, auto i) -> auto& { return self.get_dampings()[i]; }))
-        .function("get_factor", std::function<double(epi::Dampings&, double, Eigen::Index, Eigen::Index)>(
+        .function("get_factor", std::function<double(epi::ContactMatrix&, double, Eigen::Index, Eigen::Index)>(
                                     [](auto& self, auto t, auto i, auto j) {
                                         return self.get_matrix_at(t)(i, j);
                                     }))
@@ -375,7 +375,7 @@ EMSCRIPTEN_BINDINGS(secirjs)
                   }));
 
     js::class_<epi::ContactMatrixGroup>("ContactMatrixGroup")
-        .constructor<Eigen::Index, size_t>()
+        .constructor<size_t, Eigen::Index>()
         .function("get_num_matrices", std::function<size_t(epi::ContactMatrixGroup&)>([](auto& self) {
                       return self.get_num_matrices();
                   }))

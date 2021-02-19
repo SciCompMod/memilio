@@ -191,7 +191,7 @@ class Simulation extends Component {
       let action_damping = calculateDamping(this.props.measures, startDate, this.state.days);
 
       action_damping.forEach((v) => {
-        const d = new secir.Damping(1, v.damping, v.day);
+        const d = new secir.Damping(v.damping, v.day, 1);
         contact_freq_mat.get_matrix(0).add_damping(d);
         d.delete();
       });
