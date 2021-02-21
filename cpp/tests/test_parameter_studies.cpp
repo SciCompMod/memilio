@@ -86,14 +86,7 @@ TEST(ParameterStudies, sample_from_secir_params)
     }
 
     epi::ContactMatrixGroup& contact_matrix_sample = params.get_contact_patterns();
-
-    for (auto& cfm : contact_matrix_sample) {
-        EXPECT_GE(cfm.get_dampings().size(), 1);
-        EXPECT_LE(cfm.get_dampings().size(), 10);
-        for (auto& damping : cfm.get_dampings()) {
-            EXPECT_TRUE((damping.get_coeffs().array() >= 0.0).all());
-        }
-    }
+    EXPECT_EQ(contact_matrix_sample[0].get_dampings().size(), 1);
 }
 
 TEST(ParameterStudies, test_normal_distribution)
@@ -261,7 +254,7 @@ TEST(ParameterStudies, check_ensemble_run_result)
         std::vector<double> total_at_ti((size_t)epi::InfectionType::Count, 0);
 
         for (Eigen::Index j = 0; j < results[0][i].size(); j++) { // number of compartments per time step
-            EXPECT_GE(results[0][i][j], 0.0) << " day " << i << " group " << j;
+            EXPECT_GE(results[0][i][j], 0.0) << " day " << results[0].get_time(i) << " group " << j;
             total_at_ti[static_cast<size_t>(j) / (size_t)epi::InfectionType::Count] += results[0][i][j];
         }
 

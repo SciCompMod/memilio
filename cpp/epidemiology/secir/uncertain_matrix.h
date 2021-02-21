@@ -4,6 +4,7 @@
 #include "epidemiology/utils/memory.h"
 #include "epidemiology/utils/parameter_distributions.h"
 #include "epidemiology/secir/contact_matrix.h"
+#include "epidemiology/secir/damping_sampling.h"
 
 #include <memory>
 
@@ -32,19 +33,6 @@ public:
     UncertainContactMatrix(size_t num_matrices = 1, Eigen::Index num_groups = 1);
 
     UncertainContactMatrix(const ContactMatrixGroup& cont_freq);
-
-    /**
-    * @brief Create an UncertainContactMatrix by cloning ContactMatrix 
-    *        and distributions of another UncertainContactMatrix
-    */
-    UncertainContactMatrix(const UncertainContactMatrix& other);
-
-    /**
-    * @brief Set an UncertainContactMatrix from another UncertainContactMatrix, 
-     *        containing a ContactMatrix and related distributions
-     *        for changes in contact patterns over time.
-    */
-    UncertainContactMatrix& operator=(const UncertainContactMatrix& other);
 
     /**
      * @brief Conversion to const ContactMatrix reference by returning the 
@@ -77,143 +65,16 @@ public:
     ContactMatrixGroup const& get_cont_freq_mat() const;
 
     /**
-     * @brief Sets the random distribution for the number of 
-     *        contact pattern changes over time
-     *
-     * The function uses copy semantics, i.e. it copies
-     * the distribution object.
+     * @return list of damping samplings.
      */
-    void set_distribution_damp_nb(const ParameterDistribution& dist);
-
-    /**
-     * @brief Sets the random distribution of the actual 
-     *        points in time where the contact pattern changes
-     *
-     * The function uses copy semantics, i.e. it copies
-     * the distribution object.
-     */
-    void set_distribution_damp_days(const ParameterDistribution& dist);
-
-    /**
-     * @brief Sets the random distribution for a multiplicative base factor
-     *        (changing the diagonal entries of the ContactMatrix)
-     *
-     * The function uses copy semantics, i.e. it copies
-     * the distribution object.
-     */
-    void set_distribution_damp_diag_base(const ParameterDistribution& dist);
-
-    /**
-     * @brief Sets the random distribution for the multiplicative factors
-     *        changing each diagonal entry of the ContactMatrix
-     *        relative to the base value sampled by the distribution from
-     *        get_distribution_damp_diag_base()
-     *
-     * The function uses copy semantics, i.e. it copies
-     * the distribution object.
-     */
-    void set_distribution_damp_diag_rel(const ParameterDistribution& dist);
-
-    /**
-     * @brief Sets the random distribution for the multiplicative factors
-     *        changing each offdiagonal entry of the ContactMatrix
-     *        relative to the corresponding diagonal entries by the distribution 
-     *        from get_distribution_damp_diag_rel()
-     *
-     * The function uses copy semantics, i.e. it copies
-     * the distribution object.
-     */
-    void set_distribution_damp_offdiag_rel(const ParameterDistribution& dist);
-
-    /**
-     * @brief Returns the random distribution for the number of 
-     *        contact pattern changes over time
-     *
-     * If it is not set, a nullptr is returned.
-     */
-    observer_ptr<ParameterDistribution> get_distribution_damp_nb();
-
-    /**
-     * @brief Returns the random distribution for the number of 
-     *        contact pattern changes over time
-     *
-     * If it is not set, a nullptr is returned.
-     */
-    observer_ptr<const ParameterDistribution> get_distribution_damp_nb() const;
-
-    /**
-     * @brief Returns the random distribution of the actual 
-     *        points in time where the contact pattern changes
-     *
-     * If it is not set, a nullptr is returned.
-     */
-    observer_ptr<ParameterDistribution> get_distribution_damp_days();
-
-    /**
-     * @brief Returns the random distribution of the actual 
-     *        points in time where the contact pattern changes
-     *
-     * If it is not set, a nullptr is returned.
-     */
-    observer_ptr<const ParameterDistribution> get_distribution_damp_days() const;
-
-    /**
-     * @brief Returns the random distribution for a multiplicative base factor
-     *        (changing the diagonal entries of the ContactMatrix)
-     *
-     * If it is not set, a nullptr is returned.
-     */
-    observer_ptr<ParameterDistribution> get_distribution_damp_diag_base();
-
-    /**
-     * @brief Returns the random distribution for a multiplicative base factor
-     *        (changing the diagonal entries of the ContactMatrix)
-     *
-     * If it is not set, a nullptr is returned.
-     */
-    observer_ptr<const ParameterDistribution> get_distribution_damp_diag_base() const;
-
-    /**
-     * @brief Returns the random distribution for the multiplicative factors
-     *        changing each diagonal entry of the ContactMatrix
-     *        relative to the base value sampled by the distribution from
-     *        get_distribution_damp_diag_base()
-     *
-     * If it is not set, a nullptr is returned.
-     */
-    observer_ptr<ParameterDistribution> get_distribution_damp_diag_rel();
-
-    /**
-     * @brief Returns the random distribution for the multiplicative factors
-     *        changing each diagonal entry of the ContactMatrix
-     *        relative to the base value sampled by the distribution from
-     *        get_distribution_damp_diag_base()
-     *
-     * If it is not set, a nullptr is returned.
-     */
-    observer_ptr<const ParameterDistribution> get_distribution_damp_diag_rel() const;
-
-    /**
-     * @brief Returns the random distribution for the multiplicative factors
-     *        changing each offdiagonal entry of the ContactMatrix
-     *        relative to the corresponding diagonal entries by the distribution 
-     *        from get_distribution_damp_diag_rel()
-     *        
-     *
-     * If it is not set, a nullptr is returned.
-     */
-    observer_ptr<ParameterDistribution> get_distribution_damp_offdiag_rel();
-
-    /**
-     * @brief Returns the random distribution for the multiplicative factors
-     *        changing each offdiagonal entry of the ContactMatrix
-     *        relative to the corresponding diagonal entries by the distribution 
-     *        from get_distribution_damp_diag_rel()
-     *        
-     *
-     * If it is not set, a nullptr is returned.
-     */
-    observer_ptr<const ParameterDistribution> get_distribution_damp_offdiag_rel() const;
+    const std::vector<DampingSampling>& get_dampings() const
+    {
+        return m_dampings;
+    }
+    std::vector<DampingSampling>& get_dampings()
+    {
+        return m_dampings;
+    }
 
     /**
      * @brief Sets the value by sampling from the distributions
@@ -226,14 +87,7 @@ public:
 
 private:
     ContactMatrixGroup m_cont_freq;
-    std::unique_ptr<ParameterDistribution>
-        m_damp_nb; // random number of dampings (one damping is understood as nb_groups^2 many dampings at the same day)
-    std::unique_ptr<ParameterDistribution> m_damp_days; // random number of day where to implement damping
-    std::unique_ptr<ParameterDistribution>
-        m_damp_diag_base; // random number of base value for the diagonal of the damping matrix
-    std::unique_ptr<ParameterDistribution> m_damp_diag_rel; // random number of variation from base value for diagonal
-    std::unique_ptr<ParameterDistribution>
-        m_damp_offdiag_rel; // random number of variation from diagonal value for offdiagonal
+    std::vector<DampingSampling> m_dampings;
 };
 
 } // namespace epi

@@ -80,6 +80,14 @@ public:
     }
 
     /**
+     * remove all dampings.
+     */
+    void clear_dampings()
+    {
+        m_dampings.clear();
+    }
+
+    /**
      * list of dampings.
      */
     auto get_dampings() const
@@ -255,6 +263,16 @@ public:
     {
         for (auto& m : *this) {
             m.add_damping(std::forward<T>(t)...);
+        }
+    }
+
+    /**
+     * remove all dampings from all matrices.
+     */
+    void clear_dampings()
+    {
+        for (auto& m : *this) {
+            m.clear_dampings();
         }
     }
 
