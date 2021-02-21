@@ -172,6 +172,16 @@ public:
     {
         return Shape::get_shape_of(get_coeffs());
     }
+
+    /**
+     * GTest printer.
+     */
+    friend void PrintTo(const Damping& self, std::ostream* os)
+    {
+        *os << '[' << std::get<SimulationTime>(self) << ',' << std::get<DampingType>(self) << ','
+                << std::get<DampingLevel>(self) << ']';
+        *os << '\n' << std::get<Matrix>(self);
+    }
 };
 
 /**
