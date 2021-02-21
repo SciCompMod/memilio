@@ -393,8 +393,8 @@ TEST(TestSaveParameters, compareGraphs)
 
     epi::ContactMatrixGroup& contact_matrix = model.parameters.get_contact_patterns();
     contact_matrix[0] = epi::ContactMatrix(Eigen::MatrixXd::Constant(num_groups, num_groups, fact * cont_freq));
-    contact_matrix.add_damping(Eigen::MatrixXd::Constant(num_groups, num_groups, 0.7).triangularView<Eigen::Upper>(),
-                               epi::SimulationTime(30.));
+    Eigen::MatrixXd m = Eigen::MatrixXd::Constant(num_groups, num_groups, 0.7).triangularView<Eigen::Upper>();
+    contact_matrix.add_damping(m, epi::SimulationTime(30.));
 
     epi::set_params_distributions_normal(model, t0, tmax, 0.15);
 
@@ -627,8 +627,8 @@ TEST(TestSaveParameters, compareGraphWithFile)
 
     epi::ContactMatrixGroup& contact_matrix = params.get_contact_patterns();
     contact_matrix[0] = epi::ContactMatrix(Eigen::MatrixXd::Constant(num_groups, num_groups, fact * cont_freq));
-    contact_matrix.add_damping(Eigen::MatrixXd::Constant(num_groups, num_groups, 0.7).triangularView<Eigen::Upper>(),
-                               epi::SimulationTime(30.));
+    Eigen::MatrixXd m = Eigen::MatrixXd::Constant(num_groups, num_groups, 0.7).triangularView<Eigen::Upper>();
+    contact_matrix.add_damping(m, epi::SimulationTime(30.));
 
     epi::set_params_distributions_normal(model, t0, tmax, 0.15);
 

@@ -43,8 +43,8 @@ public:
      * @param m matrix to take the shape of.
      * @tparam ME matrix expression.
      */
-    template <class ME, class = std::enable_if_t<is_matrix_expression<ME>::value, void>>
-    static RectMatrixShape get_shape_of(const ME& m)
+    template <class ME>
+    static RectMatrixShape get_shape_of(const Eigen::MatrixBase<ME>& m)
     {
         return {m.rows(), m.cols()};
     }
@@ -104,8 +104,8 @@ public:
      * @param m matrix to take the shape of.
      * @tparam ME matrix expression.
      */
-    template <class ME, class = std::enable_if_t<is_matrix_expression<ME>::value, void>>
-    static SquareMatrixShape get_shape_of(const ME& m)
+    template <class ME>
+    static SquareMatrixShape get_shape_of(const Eigen::MatrixBase<ME>& m)
     {
         assert(m.rows() == m.cols());
         return {m.rows()};
@@ -175,8 +175,8 @@ public:
      * @param m vector to take the shape of.
      * @tparam ME matrix expression.
      */
-    template <class ME, class = std::enable_if_t<is_matrix_expression<ME>::value, void>>
-    static ColumnVectorShape get_shape_of(const ME& m)
+    template <class ME>
+    static ColumnVectorShape get_shape_of(const Eigen::MatrixBase<ME>& m)
     {
         assert(m.cols() == 1);
         return {m.rows()};

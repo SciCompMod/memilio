@@ -35,12 +35,10 @@ public:
      * @param minimum matrix expression, must be same size as baseline
      * @tparam M, K matrix expressions compatible with Matrix type
      */
-    template <class M, class K,
-              class = std::enable_if_t<
-                  (is_matrix_expression<std::decay_t<M>>::value && is_matrix_expression<std::decay_t<K>>::value), void>>
-    DampingMatrixExpression(M&& baseline, K&& minimum)
-        : m_baseline(std::forward<M>(baseline))
-        , m_minimum(std::forward<K>(minimum))
+    template <class M, class K>
+    DampingMatrixExpression(const Eigen::MatrixBase<M>& baseline, const Eigen::MatrixBase<K>& minimum)
+        : m_baseline(baseline)
+        , m_minimum(minimum)
         , m_dampings(Shape::get_shape_of(m_baseline))
     {
         assert(Shape::get_shape_of(m_minimum) == Shape::get_shape_of(m_baseline));
@@ -52,10 +50,10 @@ public:
      * @param baseline matrix expression 
      * @tparam M matrix expressions compatible with Matrix type
      */
-    template <class M, class = std::enable_if_t<is_matrix_expression<std::decay_t<M>>::value, void>>
-    explicit DampingMatrixExpression(M&& baseline)
-        : DampingMatrixExpression(std::forward<M>(baseline), Matrix::Zero(Shape::get_shape_of(baseline).rows(),
-                                                                          Shape::get_shape_of(baseline).cols()))
+    template <class M>
+    explicit DampingMatrixExpression(const Eigen::MatrixBase<M>& baseline)
+        : DampingMatrixExpression(
+              baseline, Matrix::Zero(Shape::get_shape_of(baseline).rows(), Shape::get_shape_of(baseline).cols()))
     {
     }
 

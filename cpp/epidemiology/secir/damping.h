@@ -70,9 +70,9 @@ public:
      * @param t time at which the damping becomes active
      * @tparam ME matrix expression, must be compatible with Shape
      */
-    template <class ME, class = std::enable_if_t<is_matrix_expression<std::decay_t<ME>>::value, void>>
-    Damping(ME&& m, DampingLevel level, DampingType type, SimulationTime t)
-        : Base(std::forward<ME>(m), level, type, t)
+    template <class ME>
+    Damping(const Eigen::MatrixBase<ME>& m, DampingLevel level, DampingType type, SimulationTime t)
+        : Base(m, level, type, t)
     {
         assert((get_coeffs().array() >= 0.).all() && (get_coeffs().array() <= 1.).all() && "damping coefficient out of range");
     }
@@ -98,9 +98,9 @@ public:
      * @param t time at which the damping becomes active
      * @tparam ME matrix expression, must be compatible with Damping::Matrix
      */
-    template <class ME, class = std::enable_if_t<is_matrix_expression<std::decay_t<ME>>::value, void>>
-    Damping(ME&& m, SimulationTime t)
-        : Damping(std::forward<ME>(m), DampingLevel(0), DampingType(0), t)
+    template <class ME>
+    Damping(const Eigen::MatrixBase<ME>& m, SimulationTime t)
+        : Damping(m, DampingLevel(0), DampingType(0), t)
     {
     }
 
