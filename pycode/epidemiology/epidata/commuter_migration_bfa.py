@@ -17,21 +17,26 @@ counties = pd.read_excel(os.path.join(path, 'kreise_deu.xlsx'), sheet_name=1)
 # counties.info()
 
 def get_data():
+    """! Gets the matrix of commuter migration patterns and all additional helper variables.
+
+    """ 
     # get all data generated in this file
     (countykey_list, countypop_list, govkey_list) = get_key_and_population_lists()
-    (key2matindex, govkey2local) = create_hashmaps(countykey_list, govkey_list)
-    (gov_table, key2govkey, key2localkey) = make_belonging_together_keys_list(countykey_list, govkey_list)
-    state_gov_table = create_government_regions_list_per_state(govkey_list)
-    mat_commuter_migration = get_matrix_commuter_migration_patterns(countypop_list, govkey_list, key2matindex,
-                                                                    govkey2local,
-                                                                    gov_table, key2govkey, key2localkey,
-                                                                    state_gov_table)
-    return (
-        countykey_list, countypop_list, govkey_list, key2matindex, govkey2local, gov_table, key2govkey, key2localkey,
-        state_gov_table, mat_commuter_migration)
+    (countykey2numlist, govkey2numlist) = map_keys_to_numlists(countykey_list, govkey_list)
+    (countykey2govkey, countykey2localnumlist, gov_county_table, state_gov_table) = assign_geographical_entities(
+        countykey_list, govkey_list)
+    mat_commuter_migration = get_matrix_commuter_migration_patterns(countypop_list, govkey_list, countykey2numlist,
+                                                                    govkey2numlist,
+                                                                    countykey2govkey, countykey2localnumlist,
+                                                                    gov_county_table, state_gov_table)
+    return (countykey_list, countypop_list, govkey_list, countykey2numlist, govkey2numlist, gov_county_table, countykey2govkey, 
+        countykey2localnumlist, state_gov_table, mat_commuter_migration)
 
 
 def get_key_and_population_lists():
+    """! Get list of regional key identifiers and population sizes for counties.
+
+    """ 
     # get and store all regional (county) identifiers in a list; store county populations accordingly
     # get a list of governing regions
     countykey_list = []
@@ -96,44 +101,60 @@ def verify_sorted(countykey_list):
             print('Error. Input list not sorted, population per county list had to be sorted accordingly.')
 
 
-def create_hashmaps(countykey_list=None, govkey_list=None):
+def map_keys_to_numlists(countykey_list=None, govkey_list=None):
+    """! Creates hash maps from from county regional keys and keys of its governing regions to numbered lists.
+
+    Keyword arguments:
+    @param countykey_list List of county regional keys.
+    @param govkey_list List of governing regions regional keys.
+
+    """     
     # create a hashmap from sorted regional identifiers (01001 - ...) to 0 - num_counties
     if countykey_list is None or govkey_list is None:
-        (countykey_list, help, govkey_list) = get_key_and_population_lists()
+        (countykey_list, [], govkey_list) = get_key_and_population_lists()
     verify_sorted(countykey_list)
 
-    key2matindex = collections.OrderedDict()
+    countykey2numlist = collections.OrderedDict()
     i = 0
     for index in countykey_list:
-        key2matindex[index] = i
+        countykey2numlist[index] = i
         i += 1
 
     if i != num_counties:
         print("Error. Number of counties wrong.")
 
     # create a hash map from sorted gov keys to local list
-    govkey2local = collections.OrderedDict()
+    govkey2numlist = collections.OrderedDict()
     i = 0
     for index in govkey_list:
-        govkey2local[index] = i
+        govkey2numlist[index] = i
         i += 1
 
     if i != num_govregions:
         print("Error. Number of governing regions wrong.")
 
-    return (key2matindex, govkey2local)
+    return (countykey2numlist, govkey2numlist)
 
 
-def make_belonging_together_keys_list(countykey_list=None, govkey_list=None):
-    # make list of government regions with lists of counties that belong to them
-    # make list of states with government regions that belong to them
-    # only works with sorted lists of keys
+def assign_geographical_entities(countykey_list=None, govkey_list=None):
+    """! Assigns counties to governing regions based on key comparison and creates list of governing regions per state.
+
+    Only works with sorted key lists.
+
+    Keyword arguments:
+    @param countykey_list List of county regional keys.
+    @param govkey_list List of governing regions regional keys.
+
+    """     
+
     if govkey_list is None or countykey_list is None:
-        (countykey_list, help, govkey_list) = get_key_and_population_lists()
+        (countykey_list, [], govkey_list) = get_key_and_population_lists()
 
     verify_sorted(countykey_list)
 
-    gov_table = []
+    # Create list of government regions with lists of counties that belong to them and list of states with government 
+    # regions that belong to them; only works with sorted lists of keys.
+    gov_county_table = []
 
     gov_index = 0
     col_index = 0
@@ -147,27 +168,24 @@ def make_belonging_together_keys_list(countykey_list=None, govkey_list=None):
             col_index += 1
         # go to next government region
         if (i < len(countykey_list) - 1 and (not str(countykey_list[i + 1]).startswith(str(govkey_list[gov_index])))):
-            gov_table.append(col_list)  # add government region to full table
+            gov_county_table.append(col_list)  # add government region to full table
             col_list = []
             gov_index += 1
             col_index = 0
 
-    gov_table.append(col_list)  # add last government region
+    gov_county_table.append(col_list)  # add last government region
 
-    if (len(gov_table) != num_govregions):
+    if (len(gov_county_table) != num_govregions):
         print('Error. Number of government regions wrong.')
 
     # create a unique hash map from county key to its government region and a global key to local (in gov region) key ordering
-    key2govkey = collections.OrderedDict()
-    key2localkey = collections.OrderedDict()
-    for i in range(0, len(gov_table)):
-        for j in range(0, len(gov_table[i])):
-            key2govkey[gov_table[i][j]] = i
-            key2localkey[gov_table[i][j]] = j
-    return (gov_table, key2govkey, key2localkey)
+    countykey2govkey = collections.OrderedDict()
+    countykey2localnumlist = collections.OrderedDict()
+    for i in range(0, len(gov_county_table)):
+        for j in range(0, len(gov_county_table[i])):
+            countykey2govkey[gov_county_table[i][j]] = i
+            countykey2localnumlist[gov_county_table[i][j]] = j
 
-
-def create_government_regions_list_per_state(govkey_list=get_key_and_population_lists()[2]):
     # create government regions list per state
     state_gov_table = []
 
@@ -183,21 +201,34 @@ def create_government_regions_list_per_state(govkey_list=get_key_and_population_
             state_gov_table.append(state_govlist_loc)
             state_govlist_loc = []
 
-    state_gov_table.append(state_govlist_loc)  # add last state's list
-    return state_gov_table
+    state_gov_table.append(state_govlist_loc)  # add last state's list            
+
+    return (countykey2govkey, countykey2localnumlist, gov_county_table, state_gov_table)
 
 
-def get_matrix_commuter_migration_patterns(countypop_list=None, govkey_list=None, key2matindex=None, govkey2local=None,
-                                           gov_table=None, key2govkey=None, key2localkey=None, state_gov_table=None):
-    # matrix of commuter migration patterns
+def get_matrix_commuter_migration_patterns(countypop_list=None, govkey_list=None, countykey2numlist=None, 
+                                            govkey2numlist=None, countykey2govkey=None, countykey2localnumlist=None, 
+                                            gov_county_table=None, state_gov_table=None):
+    """! Computes matrix of commuter migration patterns.
+
+    Keyword arguments:
+    @param countypop_list List of populations per counties.
+    @param govkey_list List of governing regions regional keys.    
+    @param countykey2numlist Hash map from county regional keys to numbered list.
+    @param govkey2numlist Hash map from governing region regional keys to numbered list.
+    @param countykey2govkey Hash map from county regional keys to governing region regional keys.
+    @param countykey2localnumlist Hash map from county regional keys to local numbered list (per governing region).
+    @param gov_county_table Table of county regional keys per governing region.
+    @param gov_county_table Table of governing region regional keys per federal state.
+
+    """    
     if countypop_list is None or govkey_list is None:
         (countykey_list, countypop_list, govkey_list) = get_key_and_population_lists()
-    if key2matindex is None or govkey2local is None:
-        (key2matindex, govkey2local) = create_hashmaps(countykey_list, govkey_list)
-    if gov_table is None or key2govkey is None or key2localkey is None:
-        (gov_table, key2govkey, key2localkey) = make_belonging_together_keys_list(countykey_list, govkey_list)
-    if state_gov_table is None:
-        state_gov_table = create_government_regions_list_per_state(govkey_list)
+    if countykey2numlist is None or govkey2numlist is None:
+        (countykey2numlist, govkey2numlist) = map_keys_to_numlists(countykey_list, govkey_list)
+    if gov_county_table is None or countykey2govkey is None or countykey2localnumlist is None or state_gov_table is None:
+        (countykey2govkey, countykey2localnumlist, gov_county_table, state_gov_table) = assign_geographical_entities(
+            countykey_list, govkey_list)
 
     mat_commuter_migration = np.zeros((num_counties, num_counties))
 
@@ -233,16 +264,16 @@ def get_matrix_commuter_migration_patterns(countypop_list=None, govkey_list=None
                 # make zero'd list of counties explicitly migrated to from county considered
                 # 'implicit' migration means 'migration to' which is summed in a larger regional entity and not given in detail per county
                 counties_migratedfrom = []
-                for j in range(0, len(gov_table)):
-                    counties_migratedfrom.append(np.zeros(len(gov_table[j])))
+                for j in range(0, len(gov_county_table)):
+                    counties_migratedfrom.append(np.zeros(len(gov_county_table[j])))
 
                 counties_done.append(commuter_migration_file.iloc[i][0])
-                current_col = key2matindex[commuter_migration_file.iloc[i][0]]
+                current_col = countykey2numlist[commuter_migration_file.iloc[i][0]]
                 curr_county_migratedto = commuter_migration_file.iloc[i][1]
                 current_key = commuter_migration_file.iloc[i][0]
                 current_name = commuter_migration_file.iloc[i][1]
                 # migration to itself excluded!
-                counties_migratedfrom[key2govkey[current_key]][key2localkey[current_key]] = 1
+                counties_migratedfrom[countykey2govkey[current_key]][countykey2localnumlist[current_key]] = 1
 
             if (type(commuter_migration_file.iloc[i][
                          2]) != float):  # removal of nan's, regional keys are stored as strings
@@ -253,13 +284,13 @@ def get_matrix_commuter_migration_patterns(countypop_list=None, govkey_list=None
                     # explicit migration from county to county
                     if (len(str(commuter_migration_file.iloc[i][
                                     2])) == 5):  # check if entry refers to a specific county, then set matrix value
-                        current_row = key2matindex[commuter_migration_file.iloc[i][2]]
+                        current_row = countykey2numlist[commuter_migration_file.iloc[i][2]]
                         val = commuter_migration_file.iloc[i][4]
                         mat_commuter_migration[current_row, current_col] = val
                         checksum += val
                         # print(val)
-                        counties_migratedfrom[key2govkey[commuter_migration_file.iloc[i][2]]][
-                            key2localkey[commuter_migration_file.iloc[i][2]]] = 1
+                        counties_migratedfrom[countykey2govkey[commuter_migration_file.iloc[i][2]]][
+                            countykey2localnumlist[commuter_migration_file.iloc[i][2]]] = 1
                         # print(current_row, current_col, val)
 
                     # take summed values of other REMAINING counties of government region
@@ -274,20 +305,20 @@ def get_matrix_commuter_migration_patterns(countypop_list=None, govkey_list=None
 
                             # sum population of all counties not explicitly migrated from of the current gov region migrated from
                         dummy_pop_sum = 0
-                        for k in range(0, len(gov_table[govkey2local[dummy_key_wozeros]])):
-                            if (counties_migratedfrom[govkey2local[dummy_key_wozeros]][k] < 1):
+                        for k in range(0, len(gov_county_table[govkey2numlist[dummy_key_wozeros]])):
+                            if (counties_migratedfrom[govkey2numlist[dummy_key_wozeros]][k] < 1):
                                 # get identifier (0-401) for county key
-                                globindex = key2matindex[gov_table[govkey2local[dummy_key_wozeros]][k]]
+                                globindex = countykey2numlist[gov_county_table[govkey2numlist[dummy_key_wozeros]][k]]
                                 # sum up
                                 dummy_pop_sum += countypop_list[globindex]
 
                         # distribute emigration relatively to county population where migration comes from
                         # dummy_checksum = 0
-                        for k in range(0, len(gov_table[govkey2local[dummy_key_wozeros]])):
-                            if (counties_migratedfrom[govkey2local[dummy_key_wozeros]][k] < 1):
+                        for k in range(0, len(gov_county_table[govkey2numlist[dummy_key_wozeros]])):
+                            if (counties_migratedfrom[govkey2numlist[dummy_key_wozeros]][k] < 1):
                                 # get identifier (0-401) for county key
-                                globindex = key2matindex[gov_table[govkey2local[dummy_key_wozeros]][k]]
-                                counties_migratedfrom[govkey2local[dummy_key_wozeros]][k] = 1
+                                globindex = countykey2numlist[gov_county_table[govkey2numlist[dummy_key_wozeros]][k]]
+                                counties_migratedfrom[govkey2numlist[dummy_key_wozeros]][k] = 1
 
                                 # set value computed relatively to county size and effective migration
                                 current_row = globindex
@@ -300,24 +331,24 @@ def get_matrix_commuter_migration_patterns(countypop_list=None, govkey_list=None
                     # take summed values of ALL counties of a government region
                     # here, no single county of the region is stated explicitly, all counties are summed together
                     elif (commuter_migration_file.iloc[i][2] in govkey_list and sum(
-                            counties_migratedfrom[govkey2local[commuter_migration_file.iloc[i][2]]]) == 0):
+                            counties_migratedfrom[govkey2numlist[commuter_migration_file.iloc[i][2]]]) == 0):
 
                         # sum population of all counties not explicitly migrated to of the current gov region migrated to
                         dummy_pop_sum = 0
-                        for k in range(0, len(gov_table[govkey2local[commuter_migration_file.iloc[i][2]]])):
-                            if (counties_migratedfrom[govkey2local[commuter_migration_file.iloc[i][2]]][k] < 1):
+                        for k in range(0, len(gov_county_table[govkey2numlist[commuter_migration_file.iloc[i][2]]])):
+                            if (counties_migratedfrom[govkey2numlist[commuter_migration_file.iloc[i][2]]][k] < 1):
                                 # get identifier (0-401) for county key
-                                globindex = key2matindex[gov_table[govkey2local[commuter_migration_file.iloc[i][2]]][k]]
+                                globindex = countykey2numlist[gov_county_table[govkey2numlist[commuter_migration_file.iloc[i][2]]][k]]
                                 # sum up
                                 dummy_pop_sum += countypop_list[globindex]
 
                         # distribute emigration relatively to county population where migration comes from
                         # dummy_checksum = 0
-                        for k in range(0, len(gov_table[govkey2local[commuter_migration_file.iloc[i][2]]])):
-                            if (counties_migratedfrom[govkey2local[commuter_migration_file.iloc[i][2]]][k] < 1):
+                        for k in range(0, len(gov_county_table[govkey2numlist[commuter_migration_file.iloc[i][2]]])):
+                            if (counties_migratedfrom[govkey2numlist[commuter_migration_file.iloc[i][2]]][k] < 1):
                                 # get identifier (0-401) for county key
-                                globindex = key2matindex[gov_table[govkey2local[commuter_migration_file.iloc[i][2]]][k]]
-                                counties_migratedfrom[govkey2local[commuter_migration_file.iloc[i][2]]][k] = 1
+                                globindex = countykey2numlist[gov_county_table[govkey2numlist[commuter_migration_file.iloc[i][2]]][k]]
+                                counties_migratedfrom[govkey2numlist[commuter_migration_file.iloc[i][2]]][k] = 1
 
                                 # set value computed relatively to county size and effective migration
                                 current_row = globindex
@@ -352,12 +383,12 @@ def get_matrix_commuter_migration_patterns(countypop_list=None, govkey_list=None
                         dummy_pop_sum = 0
                         for j in range(0, len(
                                 state_gov_table[dummy_key])):  # over all government regions not explicitly stated
-                            gov_index = govkey2local[state_gov_table[dummy_key][j]]
+                            gov_index = govkey2numlist[state_gov_table[dummy_key][j]]
                             for k in range(0,
-                                           len(gov_table[gov_index])):  # over all counties of the considered gov region
+                                           len(gov_county_table[gov_index])):  # over all counties of the considered gov region
                                 if (counties_migratedfrom[gov_index][k] < 1):
                                     # get identifier (0-401) for county key
-                                    globindex = key2matindex[gov_table[gov_index][k]]
+                                    globindex = countykey2numlist[gov_county_table[gov_index][k]]
                                     # sum up
                                     dummy_pop_sum += countypop_list[globindex]
 
@@ -365,12 +396,12 @@ def get_matrix_commuter_migration_patterns(countypop_list=None, govkey_list=None
                         # dummy_checksum = 0
                         for j in range(0, len(
                                 state_gov_table[dummy_key])):  # over all government regions not explicitly stated
-                            gov_index = govkey2local[state_gov_table[dummy_key][j]]
+                            gov_index = govkey2numlist[state_gov_table[dummy_key][j]]
                             for k in range(0,
-                                           len(gov_table[gov_index])):  # over all counties of the considered gov region
+                                           len(gov_county_table[gov_index])):  # over all counties of the considered gov region
                                 if (counties_migratedfrom[gov_index][k] < 1):
                                     # get identifier (0-401) for county key
-                                    globindex = key2matindex[gov_table[gov_index][k]]
+                                    globindex = countykey2numlist[gov_county_table[gov_index][k]]
                                     counties_migratedfrom[gov_index][k] = 1
 
                                     # set value computed relatively to county size and effective migration
@@ -407,45 +438,56 @@ def get_matrix_commuter_migration_patterns(countypop_list=None, govkey_list=None
 
     print('Maximum absolute error:', max_abs_err)
     print('Maximum relative error:', max_rel_err)
-    testing(key2matindex, mat_commuter_migration, countypop_list)
+    testing(countykey2numlist, mat_commuter_migration, countypop_list)
     return mat_commuter_migration
 
 
-def testing(key2matindex, mat_commuter_migration, countypop_list):
+def testing(countykey2numlist, mat_commuter_migration, countypop_list):
+    """! Tests loaded migration data by some randomly chosen tests.
+
+    Keyword arguments:
+    @param countykey2numlist Hash map of regional key identifier to sorted list from 0 to 400.
+    @param mat_commuter_migration Matrix of commuter migration loaded.
+    @param countypop_list Population numbers for all counties.
+
+    """    
+    
     # just do some tests on randomly chosen migrations
 
     # check migration from Leverkusen (averaged from NRW, 05) to Hildburghausen
-    city_from = key2matindex['05316']
-    city_to = key2matindex['16069']
+    city_from = countykey2numlist['05316']
+    city_to = countykey2numlist['16069']
     if (countypop_list[city_from] != 163729 or mat_commuter_migration[city_from][city_to] != 34 * countypop_list[
         city_from] / 17947221):
         print(countypop_list[city_from], mat_commuter_migration[city_to][city_from])
         print('Error')
 
     # check migration from Duisburg to Oberspreewald-Lausitz
-    city_from = key2matindex['05112']
-    city_to = key2matindex['12066']
+    city_from = countykey2numlist['05112']
+    city_to = countykey2numlist['12066']
     if (mat_commuter_migration[city_from][city_to] != 10):
         print('Error')
 
     # check migration from Lahn-Dill-Kreis to Hamburg
-    city_from = key2matindex['06532']
-    city_to = key2matindex['02000']
+    city_from = countykey2numlist['06532']
+    city_to = countykey2numlist['02000']
     if (mat_commuter_migration[city_from][city_to] != 92):
         print('Error')
 
         # check migration from Landsberg am Lech (averaged from 091) to Hersfeld-Rotenburg
-    city_from = key2matindex['09181']
-    city_to = key2matindex['06632']
+    city_from = countykey2numlist['09181']
+    city_to = countykey2numlist['06632']
     if (mat_commuter_migration[city_from][city_to] != 47 * 120302 / (4710865 - 1484226)):
         print('Error')
 
     # check migration from Herzogtum Lauenburg to Flensburg, Stadt
-    city_from = key2matindex['01001']
-    city_to = key2matindex['01053']
+    city_from = countykey2numlist['01001']
+    city_to = countykey2numlist['01053']
     if (mat_commuter_migration[city_from][city_to] != 17):
         print('Error')
 
 
 if __name__ == "__main__":
-    get_data()
+    (countykey_list, countypop_list, govkey_list, countykey2numlist, govkey2numlist, gov_county_table, countykey2govkey, 
+        countykey2localnumlist, state_gov_table, mat_commuter_migration) = get_data()
+    testing(countykey2numlist, mat_commuter_migration, countypop_list)
