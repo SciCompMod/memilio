@@ -118,8 +118,8 @@ inline Date offset_date_by_days(Date date, int offset_days)
             auto iter = std::find_if(part_sum.begin(), part_sum.end(), [day_in_year](auto s) {
                 return day_in_year <= s;
             });
-            int i     = iter - part_sum.begin();
-            return {year, i + 1, day_in_year - (i > 0 ? part_sum[i - 1] : 0)};
+            int i     = static_cast<int>(iter - part_sum.begin());
+            return {year, i + 1, day_in_year - (i > 0 ? part_sum[static_cast<size_t>(i - 1)] : 0)};
         }
         else {
             if (day_in_year > 0) {
