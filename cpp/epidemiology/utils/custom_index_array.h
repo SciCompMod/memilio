@@ -211,7 +211,7 @@ public:
 
 protected:
     // An array containing the elements
-    Eigen::Matrix<Type, N::value, 1> m_y{};
+    InternalArrayType m_y{};
 };
 
 // initialize array storying the size of each category
