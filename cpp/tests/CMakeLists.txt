@@ -33,6 +33,8 @@ set(TESTSOURCES
   test_abm.cpp
   test_analyze_result.cpp
   test_contact_matrix.cpp
+  test_custom_index_array.cpp
+  test_parameter_set.cpp
   distributions_helpers.h
   distributions_helpers.cpp
   actions.h
