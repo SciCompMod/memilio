@@ -97,22 +97,32 @@ public:
     using Type  = Typ;
     using Index = std::tuple<Categories...>;
     using N     = product<static_cast<size_t>(Categories::Count)...>;
-    using InternalArrayType = Eigen::Matrix<Type, N::value, 1>;
+    using InternalArrayType = Eigen::Array<Type, N::value, 1>;
 
     // An array storying the size of each category
     static std::array<size_t, sizeof...(Categories)> dimensions;
 
     /**
-     * @brief Populations default constructor
+     * @brief CustomIndexArray default constructor
      *
      * leaves entries uninitialized
      */
     CustomIndexArray() = default;
 
+    /**
+     * @brief CustomIndexArray constructor, that initializes the array
+     * to constant instances of `CustsomIndexArray::Type`.
+     *
+     * It forwards the arguments for initializer_list construction of the
+     * contained objects.
+     *
+     * @tparam Ts The argument types of the constructor arguments of Type
+     * @param args The constructor arguments of Type
+     */
     template <class... Ts,
               typename std::enable_if_t<std::is_constructible<Type, Ts...>::value>* = nullptr>
     CustomIndexArray(Ts&&... args)
-        : m_y(InternalArrayType::Constant(N::value, 1, {std::forward<Ts...>(args)...}))
+        : m_y(InternalArrayType::Constant(N::value, 1, {std::forward<Ts>(args)...}))
     {
     }
 
@@ -123,7 +133,7 @@ public:
      *
      * @return number of compartments
      */
-    static int constexpr size()
+    static size_t constexpr size()
     {
         return N::value;
     }
@@ -144,7 +154,7 @@ public:
      * @return the value at the index
      */
     Type& operator[](size_t index) {
-        return m_y[index];
+        return m_y[(Eigen::Index)index];
     }
 
     /**
@@ -153,7 +163,7 @@ public:
      * @return the value at the index
      */
     Type const& operator[](size_t index) const {
-        return m_y[index];
+        return m_y[(Eigen::Index)index];
     }
 
     /**
@@ -163,7 +173,7 @@ public:
      */
     Type& get(Categories... cats)
     {
-        return m_y[get_flat_index(cats...)];
+        return m_y[(Eigen::Index)get_flat_index(cats...)];
     }
 
     /**
@@ -173,7 +183,7 @@ public:
      */
     Type const& get(Categories... cats) const
     {
-        return m_y[get_flat_index(cats...)];
+        return m_y[(Eigen::Index)get_flat_index(cats...)];
     }
 
     /**
@@ -183,7 +193,7 @@ public:
      */
     void set(Type const& value, Categories... cats)
     {
-        m_y[get_flat_index(cats...)] = value;
+        m_y[(Eigen::Index)get_flat_index(cats...)] = value;
     }
 
 

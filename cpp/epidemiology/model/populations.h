@@ -49,7 +49,7 @@ public:
      *
      * @return number of compartments
      */
-    static int constexpr get_num_compartments()
+    static size_t constexpr get_num_compartments()
     {
         return CustomIndexArray<UncertainValue, Categories...>::size();
     }
@@ -95,7 +95,7 @@ public:
         size_t category_idx = Index_v<T, Categories...>;
 
         double sum   = 0;
-        auto indices = get_slice_indices(category_idx, idx, this->dimensions);
+        auto indices = get_slice_indices(category_idx, idx, Populations<Categories...>::dimensions);
         for (auto i : indices) {
             sum += this->m_y[i];
         }
@@ -123,7 +123,7 @@ public:
         size_t category_idx = Index_v<T, Categories...>;
 
         //TODO slice indices are calcualated twice...
-        auto indices = get_slice_indices(category_idx, idx, this->dimensions);
+        auto indices = get_slice_indices(category_idx, idx, Populations<Categories...>::dimensions);
 
         if (fabs(current_population) < 1e-12) {
             for (auto i : indices) {
@@ -185,13 +185,13 @@ public:
         double current_population = get_total();
         if (fabs(current_population) < 1e-12) {
             double ysize = double(this->m_y.size());
-            for (int i = 0; i < this->m_y.size(); i++) {
-                this->m_y[i] = value / ysize;
+            for (size_t i = 0; i < this->get_num_compartments(); i++) {
+                this->m_y[(Eigen::Index)i] = value / ysize;
             }
         }
         else {
-            for (int i = 0; i < this->m_y.size(); i++) {
-                this->m_y[i] *= value / current_population;
+            for (size_t i = 0; i < this->get_num_compartments(); i++) {
+                this->m_y[(Eigen::Index)i] *= value / current_population;
             }
         }
     }

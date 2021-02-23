@@ -28,12 +28,17 @@ namespace details
     };
 } // namespace details
 
-//check whether a get_default function exists
+/**
+ * @brief check whether a get_default function exists
+ * @tparam The type to check for the existence of the member function
+ */
 template <class T>
 using has_get_default_member_function = details::has_get_default_member_function<T>;
 
-//the properties of a parameter
-//can be specialized for further customization
+/**
+ * @brief the properties of a parameter
+ * @tparam Tag the parameter type
+ */
 template <class Tag>
 struct ParameterTagTraits {
     using Type = typename Tag::Type;
@@ -121,18 +126,35 @@ namespace details
     };
 } // namespace details
 
+/**
+ * @brief A tag used for tag-dispatching the Constructor of ParameterSet,
+ * triggering default initialization of all parameters using the get_default
+ * member function.
+ */
 struct DefaultInit {
 };
 
-//a set of parameters defined at compile time
-//parameters added as template parameters (tags)
-//example: struct FooParamTag { using type = X; ... }; ParameterSet<FooParamTag>
+/**
+ * @brief a set of parameters defined at compile time
+ *
+ * parameters added as template parameters (tags)
+ *
+ * example:
+ *
+ *     struct FooParamTag { using type = X; ... };
+ *     ParameterSet<FooParamTag>
+ *
+ * @tparam Tags All parameter types contained in this set. The types should be unique.
+ */
 template <class... Tags>
 class ParameterSet
 {
 public:
-    //default constructor
-    //exists if all parameters are default constructible
+    /**
+     * @brief default constructor
+     *
+     * exists if all parameters are default constructible
+     */
     template <
         class Dummy = void,
         class = std::enable_if_t<details::AllOf<std::is_default_constructible, typename Tags::Type...>::value, Dummy>>
@@ -140,8 +162,10 @@ public:
     {
     }
 
-    //default initializing constructor
-    //exists if all parameters have get_default
+    /**
+     * @brief default initializing constructor
+     * exists if all parameters have get_default
+     */
     template <class Dummy = void,
               class       = std::enable_if_t<
                   details::AllOf<has_get_default_member_function, ParameterTagTraits<Tags>...>::value, Dummy>>
@@ -150,8 +174,11 @@ public:
     {
     }
 
-    //explicit initializing constructor
-    //initializes the n-th parameter using the n-th argument
+    /**
+     * @brief explicit initializing constructor
+     *
+     * initializes the n-th parameter using the n-th argument
+     */
     template <class... T, class = std::enable_if_t<
                               (sizeof...(T) >= 1 &&
                                std::is_constructible<std::tuple<details::TaggedParameter<Tags>...>, T...>::value),
@@ -161,41 +188,65 @@ public:
     {
     }
 
-    //get value of parameter
+    /**
+     * @brief get value of a parameter
+     * @tparam Tag the queried parameter
+     * @return The value of the parameter
+     */
     template <class Tag>
     const typename ParameterTagTraits<Tag>::Type& get() const
     {
         return std::get<details::TaggedParameter<Tag>>(m_tup).get();
     }
 
+    /**
+     * @brief get value of a parameter
+     * @tparam Tag the queried parameter
+     * @return The value of the parameter
+     */
     template <class Tag>
     typename ParameterTagTraits<Tag>::Type& get()
     {
         return std::get<details::TaggedParameter<Tag>>(m_tup).get();
     }
 
-    //set value of parameter
+    /**
+     * @brief set value of a parameter
+     * @tparam Tag the parameter
+     */
     template <class Tag>
     void set(const typename ParameterTagTraits<Tag>::Type& value)
     {
         get<Tag>() = value;
     }
 
+    /**
+     * @brief set value of a parameter
+     * @tparam Tag the parameter
+     */
     template <class Tag, class T>
     void set(T&& arg)
     {
         get<Tag>() = std::forward<T>(arg);
     }
 
-    //(re)set parameter to its default value
-    //only exists if parameter defines get_default
+    /**
+     * @brief (re)set parameter to its default value
+     *
+     * only exists if parameter defines get_default
+     *
+     * @tparam Tag the parameter
+     */
     template <class Tag, class = std::enable_if_t<has_get_default_member_function<ParameterTagTraits<Tag>>::value, Tag>>
     void set_default()
     {
         get<Tag>() = ParameterTagTraits<Tag>::get_default();
     }
 
-    //number of parameters
+    /**
+     * @brief returns the number of parameters
+     * @return //number of parameters
+     */
     static constexpr size_t size()
     {
         return sizeof...(Tags);
@@ -231,7 +282,10 @@ namespace details
     };
 } // namespace details
 
-//get the the tag of the I-th parameter in a set
+
+/**
+ * @brief get the the tag of the I-th parameter in a set
+ */
 template <size_t I, class ParamSet>
 using ParameterTag = details::ParameterTag<I, ParamSet>;
 
@@ -266,17 +320,30 @@ namespace details
     }
 } // namespace details
 
-//call f(t) for all parameters with
-//t a default constructed parameter tag
+/**
+ * @brief call f(t) for all parameters in a ParameterSet with
+ * t a default constructed parameter tag
+ *
+ * @tparam Params a ParameterSet
+ * @tparam F The function type of f
+ * @param f The function to be called
+ */
 template <class Params, class F>
 void foreach_tag(F f)
 {
     details::foreach_tag_impl<Params>(f, std::make_index_sequence<Params::size()>{});
 }
 
-//call f(p, t) for all parameters with
-//p the value of the parameter
-//t a default constructed parameter tag
+/**
+ * @brief call f(p, t) for all parameters in a ParameterSet with
+ * p the value of the parameter
+ * t a default constructed parameter tag
+ *
+ * @tparam F The function type of f
+ * @tparam Tags the parameters
+ * @param p the ParameterSet
+ * @param f The function to be called
+ */
 template <class F, class... Tags>
 void foreach (const ParameterSet<Tags...>& p, F f)
 {

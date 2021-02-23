@@ -41,7 +41,6 @@ add_library(epidemiology
     epidemiology/utils/ScalarType.h
     epidemiology/model/compartmentalmodel.h
     epidemiology/model/populations.h
-    epidemiology/model/parameterset.h
     epidemiology/model/simulation.h
     epidemiology/secir/damping.cpp
     epidemiology/secir/damping.h
