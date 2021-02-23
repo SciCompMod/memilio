@@ -54,16 +54,15 @@ struct Date {
 
     /**
      * gtest printer.
-     */ 
+     */
     friend void PrintTo(const Date& self, std::ostream* os)
     {
-        *os << self.year << "." << self.month << "." << self.day; 
+        *os << self.year << "." << self.month << "." << self.day;
     }
 
     int year;
     int month;
     int day;
-
 };
 
 /**
@@ -116,11 +115,10 @@ inline Date offset_date_by_days(Date date, int offset_days)
         }
 
         if (day_in_year > 0 && day_in_year <= part_sum[11]) {
-
-            int i = 0;
-            while (day_in_year > part_sum[i]) {
-                i++;
-            }
+            auto iter = std::find_if(part_sum.begin(), part_sum.end(), [day_in_year](auto s) {
+                return day_in_year <= s;
+            });
+            int i     = iter - part_sum.begin();
             return {year, i + 1, day_in_year - (i > 0 ? part_sum[i - 1] : 0)};
         }
         else {
