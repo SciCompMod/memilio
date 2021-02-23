@@ -68,8 +68,21 @@ class TestGetJHData(fake_filesystem_unittest.TestCase):
         [read_data, out_form, out_folder] \
             = [True, "json", self.path, ]
 
-        # write files which should be read in by program
         gD.check_dir(out_folder)
+
+        # Test case where file does not exist
+        file = "FullData_JohnHopkins.json"
+        file_with_path = os.path.join(out_folder, file)
+
+        with self.assertRaises(SystemExit) as cm:
+            gJHD.get_jh_data(read_data, out_form, out_folder)
+        self.assertEqual(cm.exception.code,
+                         "Error: The file: " + file_with_path + " does not exist. Call program without -r "
+                                                                "flag to get it.")
+
+        # Test case where file exists
+
+        # write files which should be read in by program
         self.write_jh_data(out_folder)
 
         # check if expected file is written
@@ -152,7 +165,7 @@ class TestGetJHData(fake_filesystem_unittest.TestCase):
         self.assertEqual('France' in df["CountryRegion"].values, True)
         self.assertEqual(df[(df["CountryRegion"] == 'France') & (df["Date"] == "2020-09-26")].shape[0], 5)
         self.assertEqual(df[(df["CountryRegion"] == 'France') & (df["Date"] == "2020-09-26") & (
-                    df['ProvinceState'] == 'Martinique')]["Deaths"].item(), 20)
+                df['ProvinceState'] == 'Martinique')]["Deaths"].item(), 20)
 
     @patch('epidemiology.epidata.getJHData.gd.loadCsv')
     def test_get_JH_Data_Download(self, mock_loadcsv):
@@ -160,8 +173,9 @@ class TestGetJHData(fake_filesystem_unittest.TestCase):
         [read_data, out_form, out_folder] \
             = [False, "json", self.path, ]
 
-        # write files which should be read in by program
         gD.check_dir(out_folder)
+
+        # write files which should be read in by program
         self.write_jh_data(out_folder)
 
         # check if expected file is written
