@@ -307,6 +307,8 @@ ParameterStudy<SecirModel<AgeGroup>> read_parameter_study(TixiDocumentHandle han
     status = tixiGetDoubleElement(handle, path_join(path, "TMax").c_str(), &tmax);
     assert(status == SUCCESS && ("Failed to read tmax at " + path).c_str());
 
+    unused(status);
+
     SecirModel<AgeGroup> model = read_parameter_space<AgeGroup>(handle, path, io_mode);
     return ParameterStudy<SecirModel<AgeGroup>>(model, t0, tmax, num_runs);
 }
@@ -473,6 +475,11 @@ void read_edge(const std::vector<TixiDocumentHandle>& edge_handles, const std::s
     int num_groups;
     int num_compart;
 
+    if (tixiCheckElement(handle, edge_path.c_str()) != SUCCESS)
+    {
+        return;
+    }
+
     status = tixiGetIntegerElement(handle, path_join(path, "NumberOfGroups").c_str(), &num_groups);
     assert(status == SUCCESS && ("Failed to read num_groups at " + path).c_str());
 
@@ -484,13 +491,12 @@ void read_edge(const std::vector<TixiDocumentHandle>& edge_handles, const std::s
         double* weights = nullptr;
         status = tixiGetFloatVector(handle, path_join(edge_path, "Group" + std::to_string(group + 1)).c_str(), &weights,
                                     num_compart);
-        if (status == SUCCESS) {
-            for (int compart = 0; compart < num_compart; compart++) {
-                all_weights(compart + group * num_compart) = weights[compart];
-            }
-            graph.add_edge(start_node, end_node, all_weights);
+        assert(status == SUCCESS && "Failed to read coefficients.");
+        for (int compart = 0; compart < num_compart; compart++) {
+            all_weights(compart + group * num_compart) = weights[compart];
         }
     }
+    graph.add_edge(start_node, end_node, all_weights);
 }
 
 

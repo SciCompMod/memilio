@@ -42,6 +42,7 @@ std::string pretty_name()
 template <> std::string pretty_name<epi::AgeGroup1>(){ return "AgeGroup"; }
 template <> std::string pretty_name<epi::AgeGroup2>(){ return "AgeGroup"; }
 template <> std::string pretty_name<epi::AgeGroup3>(){ return "AgeGroup"; }
+template <> std::string pretty_name<epi::AgeGroup6>(){ return "AgeGroup"; }
 template <> std::string pretty_name<epi::AgeGroup8>(){ return "AgeGroup"; }
 template <> std::string pretty_name<epi::InfectionType>(){ return "InfectionType"; }
 
@@ -76,7 +77,10 @@ void bind_Populations(py::module& m, std::string const& name)
             py::return_value_policy::reference_internal)
         .def("get_total", &epi::Populations<Cats...>::get_total)
         .def("set", py::overload_cast<typename epi::Populations<Cats...>::Type const &, Cats...>(&epi::Populations<Cats...>::set))
-        .def("set", py::overload_cast<ScalarType, Cats...>(&epi::Populations<Cats...>::set))
+        .def("set",
+                 [](epi::Populations<Cats...>& self, ScalarType val, Cats... cats) {
+                     self.set(val, cats...);
+                 })
         .def("set_total", &epi::Populations<Cats...>::set_total)
         .def("set_difference_from_total", &epi::Populations<Cats...>::set_difference_from_total)
         .def("get_flat_index", &epi::Populations<Cats...>::get_flat_index);
@@ -785,9 +789,7 @@ PYBIND11_MODULE(_secir, m)
         .def(py::init<const epi::ContactMatrixGroup&>())
         .def_property(
             "cont_freq_mat",
-            [](const epi::UncertainContactMatrix& self) {
-                return self.get_cont_freq_mat();
-            },
+                py::overload_cast<>(&epi::UncertainContactMatrix::get_cont_freq_mat),
             [](epi::UncertainContactMatrix& self, const epi::ContactMatrixGroup& c) {
                 self.get_cont_freq_mat() = c;
             },
@@ -840,6 +842,7 @@ PYBIND11_MODULE(_secir, m)
     bind_secir_ageres<epi::AgeGroup1>(m);
     bind_secir_ageres<epi::AgeGroup2>(m);
     bind_secir_ageres<epi::AgeGroup3>(m);
+    bind_secir_ageres<epi::AgeGroup6>(m);
     bind_secir_ageres<epi::AgeGroup8>(m);
 
     m.attr("__version__") = "dev";

@@ -1,6 +1,7 @@
 #ifndef EPI_ABM_WORLD_H
 #define EPI_ABM_WORLD_H
 
+#include "epidemiology/abm/age.h"
 #include "epidemiology/abm/parameters.h"
 #include "epidemiology/abm/location.h"
 #include "epidemiology/abm/person.h"
@@ -64,7 +65,7 @@ public:
      * @param state initial infection state of the person
      * @return reference to the newly created person
      */
-    Person& add_person(Location& location, InfectionState state);
+    Person& add_person(Location& location, InfectionState state, AbmAgeGroup age = AbmAgeGroup::Age15to34);
 
     /**
      * get a range of all locations in the world.

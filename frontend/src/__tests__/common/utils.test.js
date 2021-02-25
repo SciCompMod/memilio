@@ -266,3 +266,14 @@ it('replaceLastChar', () => {
   expect(utils.replaceLastChar(',', ';')).toEqual(';');
   expect(() => utils.replaceLastChar('', ';')).toThrow(RangeError);
 });
+
+it('fixUrl', () => {
+  expect(utils.fixUrl({path: '/', url: '/test'})).toEqual({path: '', url: ''});
+  expect(utils.fixUrl({path: '/test', url: '/test'})).toEqual({path: '/test', url: '/test'});
+});
+
+it('getParentRoute', () => {
+  expect(utils.getParentRoute('/parent/child')).toEqual('/parent');
+  expect(utils.getParentRoute('/parent/child/child2')).toEqual('/parent/child');
+  expect(utils.getParentRoute('/parent')).toEqual('');
+});

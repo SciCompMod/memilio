@@ -1,13 +1,15 @@
-## @file getAllData.py
-#
-# @brief Executes all data downloads which belong to the epidata package and downloads external data
-#
-# The functions which are called are:
-# - getRKIData.get_rki_data
-# - getSpainData.get_spain_data
-# - getPopulationData.get_population_data
-# - getJHData.get_jh_data
-# - getDIVIData.get_divi_data
+"""
+@file getAllData.py
+
+@brief Executes all data downloads which belong to the epidata package and downloads external data
+
+The functions which are called are:
+- getRKIData.get_rki_data
+- getSpainData.get_spain_data
+- getPopulationData.get_population_data
+- getJHData.get_jh_data
+- getDIVIData.get_divi_data
+"""
 
 
 from epidemiology.epidata import getDataIntoPandasDataFrame as gd
@@ -45,7 +47,7 @@ def get_all_data(read_data=dd.defaultDict['read_data'],
     @param make_plot False [Default] or True. Defines if plots are generated with matplotlib.
     @param split_berlin True [Default] or False. Defines if Berlin counties is fused to just on county.
     @param start_date [Optional] Date to start to download data [Default = 2020-04-24].
-    @param update_date "True" if existing data is updated or
+    @param update_data "True" if existing data is updated or
     "False [Default]" if it is downloaded for all dates from start_date to end_date.
 
     """
@@ -65,5 +67,4 @@ def main():
 
 
 if __name__ == "__main__":
-
-   main()
+    main()

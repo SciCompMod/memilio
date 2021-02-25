@@ -33,52 +33,171 @@
     }
   }
 }
-.wrapper {
-  padding: 0;
-  height: 100vh;
-  overflow: auto;
-  background-color: #dedede;
 
+body,
+#root {
+  height: 100%;
+}
+
+#root {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  right: 0;
+}
+
+.app {
   header {
-    padding: 10px 20px 20px 20px;
-    border-bottom: 1px solid #aaa;
+    background-color: #f0f0f0;
+    height: 89px;
+    max-height: 89px;
+    min-height: 89px;
+    width: 100%;
+    position: relative;
 
-    .logo {
+    .title {
+      font-size: 37px;
+      white-space: normal;
+      margin: 0 250px 0 1rem;
+      top: 50%;
+      transform: translateY(-50%);
       position: relative;
-      margin: 0;
     }
 
-    .logo > img {
-      width: 62px;
-      float: left;
-      margin: 0 10px 10px 0;
+    @media (max-width: 1200px) {
+      .title {
+        font-size: 25px !important;
+      }
     }
 
-    .logo .logo-text {
-      line-height: 17px;
-      font-size: 0.875rem;
-      font-family: FrutigerLTW02-65Bold, 'Helvetica Neue', Helvetica, Roboto, Arial, sans-serif;
-      display: block;
-      padding-top: 19px;
-      font-weight: 400;
+    @media (max-width: 650px) {
+      .title {
+        font-size: 20px !important;
+      }
+    }
+
+    @media (max-width: 500px) {
+      .title {
+        font-size: 15px !important;
+      }
+    }
+
+    .logos {
+      height: 50.84px;
+      position: absolute;
+      top: 50%;
+      transform: translateY(-50%);
+      right: 1em;
+
+      img {
+        height: 50.84px;
+      }
+
+      .hzi-logo,
+      .dlr-signet {
+        display: inline-block;
+        margin-left: 1rem;
+      }
+
+      .hzi-logo {
+        width: 95px;
+        overflow: hidden;
+      }
+
+      .dlr-signet {
+        float: right;
+      }
     }
   }
 
-  .main-panel {
-    height: calc(100vh - 6.5em);
-    margin: 0.5em;
+  .body {
+    background-color: #f8f8f9;
+    overflow: auto;
+    -webkit-overflow-scrolling: touch;
+
+    .about,
+    .impressum,
+    .dsgvo,
+    .accessibility,
+    .attribution {
+      width: 68.2%;
+      margin: 1rem auto 3rem;
+      padding-bottom: 0.25rem;
+    }
   }
 
-  .map-container,
-  .settings-container {
-    height: 50%;
-    border: 1px solid #aaa;
-    background-color: white;
+  .links {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-around;
   }
 
-  .graphs-container {
+  > .links {
+    font-size: 16px;
+    justify-content: space-around;
+    background: white;
+    padding: 0.25rem;
+    a:not(:first-child) {
+      margin-left: 0.75rem;
+    }
+  }
+}
+@media (max-width: 900px) {
+  .app {
+    header {
+      position: fixed;
+      z-index: 2;
+    }
+
+    .body {
+      padding-top: 89px;
+    }
+  }
+}
+
+@media (max-width: 400px) {
+  .app {
+    header {
+      width: 100%;
+
+      .title {
+        margin-right: 130px;
+      }
+
+      .logos {
+        height: 30px;
+        display: inline-block;
+
+        div,
+        img {
+          height: 100%;
+        }
+
+        .hzi-logo {
+          width: 60px;
+        }
+      }
+    }
+  }
+}
+
+@media (min-width: 900px) {
+  .app {
     height: 100%;
-    border: 1px solid #aaa;
-    background-color: white;
+    display: flex;
+    flex-direction: column;
+
+    .body {
+      display: flex;
+      flex-grow: 1;
+      overflow: auto;
+    }
+
+    > .links {
+      position: absolute;
+      right: 0;
+      bottom: 0;
+    }
   }
 }
