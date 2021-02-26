@@ -325,7 +325,8 @@ pages:
     - test-docs
     - test-pylint
   tags:
-    - hpcagainstcorona
+    - docker
+  image: ubuntu:18.04
   script:
     - echo "Prepare basic Pages sites"
     - mkdir -p public/${CI_COMMIT_REF_NAME}/
