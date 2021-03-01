@@ -695,13 +695,16 @@ void bind_damping_expression_members(DampingExpressionClass& damping_expression_
     using Matrix            = typename DampingExpression::Matrix;
     using Shape             = typename DampingExpression::Shape;
 
-    bind_shape_constructor(damping_expression_class);
-    bind_shape_property(damping_expression_class);
 
+    //matrix constructors have to be defined before shape constructors.
+    //otherwise 1x1 numpy matrices/vectors are converted to scalars and used as shape arguments
     damping_expression_class
         .def(py::init<const Eigen::Ref<const Matrix>&, const Eigen::Ref<const Matrix>&>(), py::arg("baseline"),
              py::arg("minimum"))
-        .def(py::init<const Eigen::Ref<const Matrix>&>(), py::arg("baseline"))
+        .def(py::init<const Eigen::Ref<const Matrix>&>(), py::arg("baseline"));
+    bind_shape_constructor(damping_expression_class);
+
+    damping_expression_class
         .def("add_damping",
              [](DampingExpression& self, const Damping& d) {
                  self.add_damping(d);
@@ -725,6 +728,7 @@ void bind_damping_expression_members(DampingExpressionClass& damping_expression_
         .def("get_matrix_at", [](const DampingExpression& self, double t) {
             return self.get_matrix_at(t);
         });
+    bind_shape_property(damping_expression_class);
 }
 
 /**
