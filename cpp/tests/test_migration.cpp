@@ -21,9 +21,10 @@ TEST(TestMigration, compareNoMigrationWithSingleIntegration)
     model1.populations.set(0.9, epi::SeirInfType::S);
     model1.populations.set(0.1, epi::SeirInfType::E);
     model1.populations.set_total(1000);
-    model1.parameters.contact_frequency.get_baseline()(0, 0) = 2.5;
-    model1.parameters.times.set_incubation(4);
-    model1.parameters.times.set_infectious(10);
+    model1.parameters.get<epi::ContactFrequency>().get_baseline()(0, 0) = 10;
+    model1.parameters.set<epi::TransmissionRisk>(0.4);
+    model1.parameters.set<epi::StageTimeIncubationInv>(1./4);
+    model1.parameters.set<epi::StageTimeInfectiousInv>(1./10);
 
     auto model2 = model1;
     model2.populations.set(1., epi::SeirInfType::S);
