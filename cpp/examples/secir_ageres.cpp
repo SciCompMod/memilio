@@ -48,7 +48,7 @@ int main()
 
     epi::SecirModel<epi::AgeGroup3> model;
     auto nb_groups = model.parameters.get_num_groups();
-    double fact   = 1.0 / (double)nb_groups;
+    double fact    = 1.0 / (double)nb_groups;
 
     auto& params = model.parameters;
 
@@ -90,10 +90,6 @@ int main()
     contact_matrix.add_damping(Eigen::MatrixXd::Constant(nb_groups, nb_groups, 0.7), epi::SimulationTime(30.));
 
     model.apply_constraints();
-
-    std::string path                 = "../../data/pydata/Germany";
-    std::vector<double> param_ranges = {25., 50., 25.};
-    epi::read_population_data_state(model, param_ranges, 4, 4, 1, path);
 
     epi::TimeSeries<double> secir = simulate(t0, tmax, dt, model);
 

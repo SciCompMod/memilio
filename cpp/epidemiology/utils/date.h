@@ -3,6 +3,7 @@
 
 #include <string>
 #include <iostream>
+#include <tuple>
 #include <array>
 #include <numeric>
 #include <algorithm>
@@ -49,6 +50,27 @@ struct Date {
     bool operator!=(const Date& other) const
     {
         return !(*this == other);
+    }
+    bool operator<(const Date& other) const
+    {
+        if (std::tie(year, month, day) < std::tie(other.year, other.month, other.day)) {
+            return true;
+        }
+        else {
+            return false;
+        }
+    }
+    bool operator<=(const Date& other) const
+    {
+        return !(other < *this);
+    }
+    bool operator>(const Date& other) const
+    {
+        return other < *this;
+    }
+    bool operator>=(const Date& other) const
+    {
+        return !(*this < other);
     }
     //@}
 
