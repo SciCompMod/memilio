@@ -46,8 +46,6 @@ add_library(epidemiology
     epidemiology/secir/damping.h
     epidemiology/secir/secir_params.h
     epidemiology/secir/secir.h
-    epidemiology/secir/seir_params.cpp
-    epidemiology/secir/seir_params.h
     epidemiology/secir/seir.h
     epidemiology/secir/seir.cpp
     epidemiology/math/adapt_rk.cpp

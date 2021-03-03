@@ -23,9 +23,10 @@ int main()
                           epi::SeirInfType::S);
     // suscetible now set with every other update
     // params.nb_sus_t0   = params.nb_total_t0 - params.nb_exp_t0 - params.nb_inf_t0 - params.nb_rec_t0;
-    model.parameters.times.set_incubation(5.2);
-    model.parameters.times.set_infectious(6);
-    model.parameters.contact_frequency.get_baseline()(0, 0) = 0.4;
+    model.parameters.set<epi::StageTimeIncubationInv>(1./5.2);
+    model.parameters.set<epi::StageTimeInfectiousInv>(1./6);
+    model.parameters.set<epi::TransmissionRisk>(0.04);
+    model.parameters.get<epi::ContactFrequency>().get_baseline()(0, 0) = 10;
 
     print_seir_params(model);
 
