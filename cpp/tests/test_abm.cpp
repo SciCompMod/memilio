@@ -130,22 +130,22 @@ TEST(TestLocation, interact)
     //test should work identically work with any age
     epi::AbmAgeGroup age = epi::AbmAgeGroup(epi::UniformIntDistribution<int>()(0, int(epi::AbmAgeGroup::Count) - 1));
     epi::GlobalInfectionParameters params;
-    params.carrier_to_infected = 0;
-    params.carrier_to_infected[age] = 0.5;
-    params.carrier_to_recovered = 0;
-    params.carrier_to_recovered[age] = 0.5;
-    params.detect_infection = 0;
-    params.detect_infection[age] = 0.5;
-    params.infected_to_dead = 0;
-    params.infected_to_dead[age] = 0.5;
-    params.infected_to_recovered = 0;
-    params.infected_to_recovered[age] = 0.5;
-    params.recovered_to_susceptible = 0;
-    params.recovered_to_susceptible[age] = 0.5;
-    params.susceptible_to_exposed_by_carrier = 0;
-    params.susceptible_to_exposed_by_carrier[age] = 0.5;
-    params.susceptible_to_exposed_by_infected = 0;
-    params.susceptible_to_exposed_by_infected[age] = 0.5;
+    params.set<epi::CarrierToInfected>(0.);
+    params.get<epi::CarrierToInfected>().set(0.5, age);
+    params.set<epi::CarrierToRecovered>(0.);
+    params.get<epi::CarrierToRecovered>().set(0.5, age);
+    params.set<epi::DetectInfection>(0.);
+    params.get<epi::DetectInfection>().set(0.5, age);
+    params.set<epi::InfectedToDead>(0.);
+    params.get<epi::InfectedToDead>().set(0.5, age);
+    params.set<epi::InfectedToRecovered>(0.);
+    params.get<epi::InfectedToRecovered>().set(0.5, age);
+    params.set<epi::RecoveredToSusceptible>(0.);
+    params.get<epi::RecoveredToSusceptible>().set(0.5, age);
+    params.set<epi::SusceptibleToExposedByCarrier>(0.);
+    params.get<epi::SusceptibleToExposedByCarrier>().set(0.5, age);
+    params.set<epi::SusceptibleToExposedByInfected>(0.);
+    params.get<epi::SusceptibleToExposedByInfected>().set(0.5, age);
 
     //cache precomputed results
     auto dt = 0.1;
@@ -257,7 +257,7 @@ TEST(TestPerson, interact_exposed)
     location.begin_step(0.1, {});
 
     auto infection_parameters              = epi::GlobalInfectionParameters();
-    infection_parameters.incubation_period = 2;
+    infection_parameters.set<epi::IncubationPeriod>(2.);
 
     //setup rng mock so the person becomes exposed
     ScopedMockDistribution<testing::StrictMock<MockDistribution<epi::ExponentialDistribution<double>>>>
@@ -393,39 +393,4 @@ TEST(TestDiscreteDistribution, generate)
         ASSERT_GE(d, 0);
         ASSERT_LE(d, 4);
     }
-}
-
-TEST(TestDependentParameter, init)
-{
-    enum class E
-    {
-        E1 = 0, E2, Count,
-    };
-    epi::DependentParameter<E> p1(3.0);
-    ASSERT_EQ(p1[E::E1], 3.0);
-    ASSERT_EQ(p1[E::E2], 3.0);
-
-    auto v = (Eigen::ArrayXd(2) << 1.0, 2.0).finished();
-    epi::DependentParameter<E> p2(v);
-    ASSERT_EQ(p2[E::E1], 1.0);
-    ASSERT_EQ(p2[E::E2], 2.0);
-    ASSERT_THAT(print_wrap(p2.array().matrix()), print_wrap(v.matrix()));
-}
-
-TEST(TestDependentParameter, assign)
-{
-    enum class E
-    {
-        E1 = 0, E2, Count,
-    };
-    epi::DependentParameter<E> p;
-
-    p = 5.0;
-    ASSERT_EQ(p[E::E1], 5.0);
-    ASSERT_EQ(p[E::E2], 5.0);
-
-    auto v = (Eigen::ArrayXd(2) << 1.0, 2.0).finished();
-    p = v;
-    ASSERT_EQ(p[E::E1], 1.0);
-    ASSERT_EQ(p[E::E2], 2.0);
 }

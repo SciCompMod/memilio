@@ -147,6 +147,10 @@ public:
     {
         return m_y;
     }
+    auto& get_array()
+    {
+        return m_y;
+    }
 
     /**
      * @brief returns the entry of the array given a flat index index

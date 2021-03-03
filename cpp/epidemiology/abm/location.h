@@ -101,7 +101,16 @@ private:
     int m_num_persons = 0;
     std::array<int, size_t(InfectionState::Count)> m_subpopulations;
     LocalInfectionParameters m_parameters;
-    DependentParameter<AbmAgeGroup> m_cached_exposure_rate;
+
+    struct ExposureRate
+    {
+        using Type = CustomIndexArray<double, AbmAgeGroup>;
+        static Type get_default()
+        {
+            return Type(0.);
+        }
+    };
+    ParameterSet<ExposureRate> m_cached_param;
 };
 } // namespace epi
 
