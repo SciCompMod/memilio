@@ -58,7 +58,7 @@ InfectionState Location::interact(const Person& person, double dt, const GlobalI
     auto state = person.get_infection_state();
     switch (state) {
     case InfectionState::Susceptible:
-        return random_transition(state, dt, {{InfectionState::Exposed, m_cached_param.get<ExposureRate>().get(person.get_age())}});
+        return random_transition(state, dt, {{InfectionState::Exposed, m_cached_exposure_rate.get(person.get_age())}});
     case InfectionState::Carrier:
         return random_transition(
             state, dt,
@@ -89,7 +89,7 @@ void Location::begin_step(double /*dt*/, const GlobalInfectionParameters& global
     auto num_carriers = get_subpopulation(InfectionState::Carrier);
     auto num_infected =
         get_subpopulation(InfectionState::Infected_Detected) + get_subpopulation(InfectionState::Infected_Undetected);
-    m_cached_param.get<ExposureRate>().get_array()
+    m_cached_exposure_rate.get_array()
             = std::min(m_parameters.get<EffectiveContacts>(), double(m_num_persons)) / m_num_persons *
                              (global_params.get<SusceptibleToExposedByCarrier>().get_array() * num_carriers +
                               global_params.get<SusceptibleToExposedByInfected>().get_array() * num_infected);
