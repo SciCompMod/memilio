@@ -10,6 +10,7 @@ namespace epi
 Location::Location(LocationType type)
     : m_type(type)
     , m_subpopulations{}
+    , m_parameters{DefaultInit()}
 {
 }
 
