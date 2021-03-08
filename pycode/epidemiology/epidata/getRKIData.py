@@ -173,6 +173,7 @@ def get_rki_data(read_data=dd.defaultDict['read_data'],
    @param out_folder Path to folder where data is written in folder out_folder/Germany.
    @param split_berlin True or False [Default]. Defines if Berlin counties is fused to just on county.
    @param make_plot False [Default] or True. Defines if plots are generated with matplotlib.
+   @param moving_average True or False [Default]. Defines if files for 7 day moving average should be created
    """
 
     directory = os.path.join(out_folder, 'Germany/')
@@ -213,12 +214,13 @@ def get_rki_data(read_data=dd.defaultDict['read_data'],
                                  "f10774f1c63e40168479a1feb6c7ca74/data", "")
 
             df.rename(columns={'FID': "ObjectId"}, inplace=True)
+            complete = check_for_completeness(df)
 
-        if not df.empty:
+        if complete:
             # output data to not always download it
             gd.write_dataframe(df, directory, filename, "json")
         else:
-            print("Information: dataframe was empty for csv. Trying geojson.")
+            print("Information: dataframe was incomplete for csv. Trying geojson.")
             df = load['geojson'](itemId)
 
             complete = check_for_completeness(df)
@@ -313,7 +315,7 @@ def get_rki_data(read_data=dd.defaultDict['read_data'],
     # gbNF_cs = gbNF.AnzahlFall.cumsum()
     gbNF_cs = gbNF.cumsum()
 
-    # outout to json file
+    # output to json file
     gd.write_dataframe(gbNF_cs.reset_index(), directory, "infected_rki", out_form)
     if moving_average:
         gbNF_cs = calc_moving_average(gbNF_cs.reset_index(), [], ['Confirmed'])
@@ -335,6 +337,9 @@ def get_rki_data(read_data=dd.defaultDict['read_data'],
     if moving_average:
         gbNT_cs = calc_moving_average(gbNT_cs.reset_index(), [], ['Deaths'])
         gd.write_dataframe(gbNT_cs.reset_index(), directory, "deaths_rki_ma", out_form)
+        # Attention: deaths_rki_ma file and all_germany_rki_ma deaths-column are not identical in the first six days
+        # after first death. This is the case because in all_germany file, zeros before the first death are included
+        # in the calculation of the moving average and in deaths_rki-file first data are just cumulative deaths.
 
     if make_plot:
         gbNT_cs.plot(title='COVID-19 deaths', grid=True,
@@ -420,10 +425,10 @@ def get_rki_data(read_data=dd.defaultDict['read_data'],
 
     # output
     if split_berlin:
-        gd.write_dataframe(gbAllC_cs, directory, "all_county_rki_splited_berlin", out_form)
+        gd.write_dataframe(gbAllC_cs, directory, "all_county_rki_split_berlin", out_form)
         if moving_average:
             gbAllC_cs = calc_moving_average(gbAllC_cs, ['ID_County'], ['Confirmed', 'Deaths', 'Recovered'])
-            gd.write_dataframe(gbAllC_cs, directory, "all_county_rki_splited_berlin_ma", out_form)
+            gd.write_dataframe(gbAllC_cs, directory, "all_county_rki_split_berlin_ma", out_form)
     else:
         gd.write_dataframe(gbAllC_cs, directory, "all_county_rki", out_form)
         if moving_average:
