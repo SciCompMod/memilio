@@ -200,7 +200,7 @@ namespace details
  * triggering default initialization of all parameters using the get_default
  * member function.
  */
-struct DefaultInit {
+struct NoDefaultInit {
 };
 
 /**
@@ -227,7 +227,7 @@ public:
     template <
         class Dummy = void,
         class = std::enable_if_t<details::AllOf<std::is_default_constructible, typename Tags::Type...>::value, Dummy>>
-    ParameterSet()
+    explicit ParameterSet(NoDefaultInit)
     {
     }
 
@@ -238,7 +238,7 @@ public:
     template <class Dummy = void,
               class       = std::enable_if_t<
                   details::AllOf<has_get_default_member_function, ParameterTagTraits<Tags>...>::value, Dummy>>
-    explicit ParameterSet(DefaultInit)
+    ParameterSet()
         : m_tup(ParameterTagTraits<Tags>::get_default()...)
     {
     }

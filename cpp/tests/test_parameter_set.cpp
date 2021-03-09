@@ -96,35 +96,35 @@ struct MoveOnlyParam {
 
 TEST(TestParameterSet, defaultConstructor)
 {
-    static_assert(!std::is_default_constructible<epi::ParameterSet<NotDefaultConstructibleParam>>::value,
+    static_assert(!std::is_constructible<epi::ParameterSet<NotDefaultConstructibleParam>, epi::NoDefaultInit>::value,
                   "default constructor missing");
     static_assert(std::is_default_constructible<epi::ParameterSet<DefaultConstructibleParam>>::value,
                   "default constructor missing");
-    ASSERT_NO_THROW(epi::ParameterSet<NotDefaultConstructibleParam>(epi::DefaultInit{}));
-    ASSERT_NO_THROW(epi::ParameterSet<DefaultConstructibleParam>());
+    ASSERT_NO_THROW(epi::ParameterSet<NotDefaultConstructibleParam>());
+    ASSERT_NO_THROW(epi::ParameterSet<DefaultConstructibleParam>(epi::NoDefaultInit{}));
 }
 
 TEST(TestParameterSet, defaultInitConstructor)
 {
-    auto params1 = epi::ParameterSet<IntParam1>(epi::DefaultInit());
+    auto params1 = epi::ParameterSet<IntParam1>();
     ASSERT_EQ(params1.get<IntParam1>(), 1);
 
-    auto params2 = epi::ParameterSet<IntParam1, DoubleParam>(epi::DefaultInit{});
+    auto params2 = epi::ParameterSet<IntParam1, DoubleParam>();
     ASSERT_EQ(params2.get<IntParam1>(), 1);
     ASSERT_EQ(params2.get<DoubleParam>(), 1.0);
 
-    auto params3 = epi::ParameterSet<IntParam1, DoubleParam, IntParam2>(epi::DefaultInit{});
+    auto params3 = epi::ParameterSet<IntParam1, DoubleParam, IntParam2>();
     ASSERT_EQ(params3.get<IntParam1>(), 1);
     ASSERT_EQ(params3.get<DoubleParam>(), 1.0);
     ASSERT_EQ(params3.get<IntParam2>(), 2);
 
-    auto params4 = epi::ParameterSet<NoDefaultMemberFunctionParam>(epi::DefaultInit{});
+    auto params4 = epi::ParameterSet<NoDefaultMemberFunctionParam>();
     ASSERT_EQ(params4.get<NoDefaultMemberFunctionParam>(), DefaultConstructible());
 }
 
 TEST(TestParameterSet, setDefault)
 {
-    auto params1 = epi::ParameterSet<IntParam1, DoubleParam>();
+    auto params1 = epi::ParameterSet<IntParam1, DoubleParam>(epi::NoDefaultInit{});
     ASSERT_EQ(params1.get<IntParam1>(), 0);
     params1.set_default<IntParam1>();
     ASSERT_EQ(params1.get<IntParam1>(), 1);
@@ -143,7 +143,7 @@ TEST(TestParameterSet, explicitInitConstructors)
 
 TEST(TestParameterSet, set)
 {
-    epi::ParameterSet<IntParam1, DoubleParam, IntParam2> params(epi::DefaultInit{});
+    epi::ParameterSet<IntParam1, DoubleParam, IntParam2> params;
     params.set<IntParam1>(3);
     ASSERT_EQ(params.get<IntParam1>(), 3);
 }
@@ -154,7 +154,7 @@ TEST(TestParameterSet, moveOnly)
                   "move only parameter not default constructible");
     static_assert(std::is_constructible<epi::ParameterSet<MoveOnlyParam>, MoveOnly&&>::value,
                   "move only parameter not move constructible");
-    static_assert(std::is_constructible<epi::ParameterSet<MoveOnlyParam>, epi::DefaultInit>::value,
+    static_assert(std::is_constructible<epi::ParameterSet<MoveOnlyParam>>::value,
                   "move only parameter not default initializable");
 
     auto params                 = epi::ParameterSet<MoveOnlyParam>(MoveOnly());
@@ -209,7 +209,7 @@ TEST(TestParameterSet, customIndexArray)
         }
     };
 
-    auto params = epi::ParameterSet<ParamType1, ParamType2>(epi::DefaultInit());
+    auto params = epi::ParameterSet<ParamType1, ParamType2>();
     params.get<ParamType1>()[{AgeGroup::Young}] = 0.5;
     params.get<ParamType1>()[{AgeGroup::Old}] = 1.5;
     EXPECT_NEAR(params.get<ParamType1>()[{AgeGroup::Young}], 0.5, 1e-14);
@@ -224,7 +224,7 @@ TEST(TestParameterSet, customIndexArray)
 TEST(TestParameterSet, foreach)
 {
     using testing::An;
-    epi::ParameterSet<IntParam1, DoubleParam, IntParam2> params(epi::DefaultInit{});
+    epi::ParameterSet<IntParam1, DoubleParam, IntParam2> params;
 
     struct MockForeachFunc {
         MOCK_METHOD(void, invoke, (int, IntParam1), ());
@@ -287,7 +287,7 @@ TEST(TestParameterSet, constType)
                   "const parameter not default constructible");
     static_assert(std::is_constructible<epi::ParameterSet<ConstTypeParam>, double>::value,
                   "const parameter not constructible");
-    static_assert(std::is_constructible<epi::ParameterSet<ConstTypeParam>, epi::DefaultInit>::value,
+    static_assert(std::is_constructible<epi::ParameterSet<ConstTypeParam>>::value,
                   "const parameter not default initializable");
 }
 
