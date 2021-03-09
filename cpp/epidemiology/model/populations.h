@@ -61,7 +61,7 @@ public:
      */
     inline Eigen::VectorXd get_compartments() const
     {
-        return this->get_array().template cast<double>();
+        return this->array().template cast<double>();
     }
 
     /**

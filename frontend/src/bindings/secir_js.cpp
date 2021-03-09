@@ -109,13 +109,7 @@ void bind_Populations(std::string const& name)
     c.template constructor<>()
         .class_function("get_num_compartments", &Class::get_num_compartments)
         .function("get_compartments", &Class::get_compartments)
-        .function("get", js::select_overload<typename Class::Type&(Cats...)>(&Class::get))
         .function("get_total", &Class::get_total)
-        .function("set", js::select_overload<void(typename Class::Type const&, Cats...)>(&Class::set))
-        .function("set", std::function<void(epi::Populations<Cats...>&, ScalarType, Cats...)>(
-                                   [](auto& self, ScalarType v, Cats... cats) {
-                                       self.set(v, cats...);
-                                   }))
         .function("set_difference_from_total", &Class::set_difference_from_total)
         .function("set_total", &Class::set_total)
         .function("get_flat_index", &Class::get_flat_index);

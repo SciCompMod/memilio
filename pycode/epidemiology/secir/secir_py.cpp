@@ -71,16 +71,12 @@ void bind_Populations(py::module& m, std::string const& name)
     c.def(py::init<>())
         .def_static("get_num_compartments", &epi::Populations<Cats...>::get_num_compartments)
         .def("get_compartments", &epi::Populations<Cats...>::get_compartments)
-        .def("get", py::overload_cast<Cats...>(&epi::Populations<Cats...>::get),
+        .def("__getitem__",
+             [](const epi::Populations<Cats...>& self, std::tuple<Cats...> const& idx) -> auto& { return self[idx]; },
             py::return_value_policy::reference_internal)
-        .def("get", py::overload_cast<Cats...>(&epi::Populations<Cats...>::get, py::const_),
-            py::return_value_policy::reference_internal)
+        .def("__setitem__",
+             [](epi::Populations<Cats...>& self, std::tuple<Cats...> const& idx, double value) { self[idx] = value; })
         .def("get_total", &epi::Populations<Cats...>::get_total)
-        .def("set", py::overload_cast<typename epi::Populations<Cats...>::Type const &, Cats...>(&epi::Populations<Cats...>::set))
-        .def("set",
-                 [](epi::Populations<Cats...>& self, ScalarType val, Cats... cats) {
-                     self.set(val, cats...);
-                 })
         .def("set_total", &epi::Populations<Cats...>::set_total)
         .def("set_difference_from_total", &epi::Populations<Cats...>::set_difference_from_total)
         .def("get_flat_index", &epi::Populations<Cats...>::get_flat_index);

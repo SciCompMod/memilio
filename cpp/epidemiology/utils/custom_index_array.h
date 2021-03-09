@@ -43,6 +43,24 @@ struct product<i, tail...> {
     static constexpr int value = i * product<tail...>::value;
 };
 
+
+//some metaprogramming to transform a tuple into a parameter pack and use it as
+//an argument in a function.
+//Taken from https://stackoverflow.com/questions/7858817/unpacking-a-tuple-to-call-a-matching-function-pointer/9288547#9288547
+
+template <typename Function, typename Tuple, size_t... I>
+decltype(auto) call(Function f, Tuple t, std::index_sequence<I...>)
+{
+    return f(std::get<I>(t)...);
+}
+
+template <typename Function, typename Tuple>
+decltype(auto) call(Function f, Tuple t)
+{
+    static constexpr auto size = std::tuple_size<Tuple>::value;
+    return call(f, t, std::make_index_sequence<size>{});
+}
+
 } // namespace
 
 namespace epi
@@ -143,11 +161,11 @@ public:
      * as initial conditions for the ODE solver
      * @return Eigen::VectorXd  of populations
      */
-    auto const& get_array() const
+    auto const& array() const
     {
         return m_y;
     }
-    auto& get_array()
+    auto& array()
     {
         return m_y;
     }
@@ -157,8 +175,8 @@ public:
      * @param index a flat index
      * @return the value at the index
      */
-    Type& operator[](size_t index) {
-        return m_y[(Eigen::Index)index];
+    Type& operator[](Index const& index) {
+        return m_y[(Eigen::Index)call(get_flat_index, index)];
     }
 
     /**
@@ -166,38 +184,8 @@ public:
      * @param index a flat index
      * @return the value at the index
      */
-    Type const& operator[](size_t index) const {
-        return m_y[(Eigen::Index)index];
-    }
-
-    /**
-     * @brief get returns the element given a custom index
-     * @param cats the custsom indices for each category
-     * @return the value at the index
-     */
-    Type& get(Categories... cats)
-    {
-        return m_y[(Eigen::Index)get_flat_index(cats...)];
-    }
-
-    /**
-     * @brief get returns the element given a custom index
-     * @param cats the custom indices for each category
-     * @return the value at the index
-     */
-    Type const& get(Categories... cats) const
-    {
-        return m_y[(Eigen::Index)get_flat_index(cats...)];
-    }
-
-    /**
-     * @brief set sets the scalar value of the element given a custom index
-     * @param indices the custom indices for each category
-     * @param value the new value
-     */
-    void set(Type const& value, Categories... cats)
-    {
-        m_y[(Eigen::Index)get_flat_index(cats...)] = value;
+    Type const& operator[](Index const& index) const {
+        return m_y[(Eigen::Index)call(get_flat_index, index)];
     }
 
 

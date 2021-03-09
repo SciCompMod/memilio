@@ -210,14 +210,14 @@ TEST(TestParameterSet, customIndexArray)
     };
 
     auto params = epi::ParameterSet<ParamType1, ParamType2>(epi::DefaultInit());
-    params.get<ParamType1>().set(0.5, AgeGroup::Young);
-    params.get<ParamType1>().set(1.5, AgeGroup::Old);
-    EXPECT_NEAR(params.get<ParamType1>().get(AgeGroup::Young), 0.5, 1e-14);
-    EXPECT_NEAR(params.get<ParamType1>().get(AgeGroup::Old), 1.5, 1e-14);
-    EXPECT_EQ(params.get<ParamType2>().get(AgeGroup::Young, Income::Poor), 42);
-    EXPECT_EQ(params.get<ParamType2>().get(AgeGroup::Young, Income::SoSo), 42);
-    params.get<ParamType2>().set(-42, AgeGroup::Young, Income::SoSo);
-    EXPECT_EQ(params.get<ParamType2>().get(AgeGroup::Young, Income::SoSo), -42);
+    params.get<ParamType1>()[{AgeGroup::Young}] = 0.5;
+    params.get<ParamType1>()[{AgeGroup::Old}] = 1.5;
+    EXPECT_NEAR(params.get<ParamType1>()[{AgeGroup::Young}], 0.5, 1e-14);
+    EXPECT_NEAR(params.get<ParamType1>()[{AgeGroup::Old}], 1.5, 1e-14);
+    EXPECT_EQ((params.get<ParamType2>()[{AgeGroup::Young, Income::Poor}]), 42);
+    EXPECT_EQ((params.get<ParamType2>()[{AgeGroup::Young, Income::SoSo}]), 42);
+    params.get<ParamType2>()[{AgeGroup::Young, Income::SoSo}] = -42;
+    EXPECT_EQ((params.get<ParamType2>()[{AgeGroup::Young, Income::SoSo}]), -42);
 
 }
 
