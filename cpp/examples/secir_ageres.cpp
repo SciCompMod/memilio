@@ -66,13 +66,13 @@ int main()
         params.times[i].set_icu_to_home(ticu2home);
         params.times[i].set_icu_to_death(ticu2death);
 
-        model.populations.set(fact * nb_exp_t0, (epi::AgeGroup3)i, epi::InfectionType::E);
-        model.populations.set(fact * nb_car_t0, (epi::AgeGroup3)i, epi::InfectionType::C);
-        model.populations.set(fact * nb_inf_t0, (epi::AgeGroup3)i, epi::InfectionType::I);
-        model.populations.set(fact * nb_hosp_t0, (epi::AgeGroup3)i, epi::InfectionType::H);
-        model.populations.set(fact * nb_icu_t0, (epi::AgeGroup3)i, epi::InfectionType::U);
-        model.populations.set(fact * nb_rec_t0, (epi::AgeGroup3)i, epi::InfectionType::R);
-        model.populations.set(fact * nb_dead_t0, (epi::AgeGroup3)i, epi::InfectionType::D);
+        model.populations[{(epi::AgeGroup3)i, epi::InfectionType::E}] = fact * nb_exp_t0;
+        model.populations[{(epi::AgeGroup3)i, epi::InfectionType::C}] = fact * nb_car_t0;
+        model.populations[{(epi::AgeGroup3)i, epi::InfectionType::I}] = fact * nb_inf_t0;
+        model.populations[{(epi::AgeGroup3)i, epi::InfectionType::H}] = fact * nb_hosp_t0;
+        model.populations[{(epi::AgeGroup3)i, epi::InfectionType::U}] = fact * nb_icu_t0;
+        model.populations[{(epi::AgeGroup3)i, epi::InfectionType::R}] = fact * nb_rec_t0;
+        model.populations[{(epi::AgeGroup3)i, epi::InfectionType::D}] = fact * nb_dead_t0;
         model.populations.set_difference_from_group_total(fact * nb_total_t0, (epi::AgeGroup3)i, (epi::AgeGroup3)i,
                                                           epi::InfectionType::S);
 

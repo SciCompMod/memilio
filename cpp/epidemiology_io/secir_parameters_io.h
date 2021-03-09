@@ -128,18 +128,12 @@ namespace details
             if (std::accumulate(num_inf[county].begin(), num_inf[county].end(), 0.0) > 0) {
                 size_t num_groups = model[county].parameters.get_num_groups();
                 for (size_t i = 0; i < num_groups; i++) {
-                    model[county].populations.set(num_exp[county][i], (typename Model::AgeGroup)i,
-                                                  epi::InfectionType::E);
-                    model[county].populations.set(num_car[county][i], (typename Model::AgeGroup)i,
-                                                  epi::InfectionType::C);
-                    model[county].populations.set(num_inf[county][i], (typename Model::AgeGroup)i,
-                                                  epi::InfectionType::I);
-                    model[county].populations.set(num_hosp[county][i], (typename Model::AgeGroup)i,
-                                                  epi::InfectionType::H);
-                    model[county].populations.set(num_death[county][i], (typename Model::AgeGroup)i,
-                                                  epi::InfectionType::D);
-                    model[county].populations.set(num_rec[county][i], (typename Model::AgeGroup)i,
-                                                  epi::InfectionType::R);
+                    model[county].populations[{(typename SecirModel<AgeGroup6>::AgeGroup)i, epi::InfectionType::E}] = num_exp[county][i];
+                    model[county].populations[{(typename SecirModel<AgeGroup6>::AgeGroup)i, epi::InfectionType::C}] = num_car[county][i];
+                    model[county].populations[{(typename SecirModel<AgeGroup6>::AgeGroup)i, epi::InfectionType::I}] = num_inf[county][i];
+                    model[county].populations[{(typename SecirModel<AgeGroup6>::AgeGroup)i, epi::InfectionType::H}] = num_hosp[county][i];
+                    model[county].populations[{(typename SecirModel<AgeGroup6>::AgeGroup)i, epi::InfectionType::D}] = num_death[county][i];
+                    model[county].populations[{(typename SecirModel<AgeGroup6>::AgeGroup)i, epi::InfectionType::R}] = num_rec[county][i];
                 }
             }
             else {
@@ -195,9 +189,7 @@ namespace details
         for (size_t region = 0; region < vregion.size(); region++) {
             size_t num_groups = model[region].parameters.get_num_groups();
             for (size_t i = 0; i < num_groups; i++) {
-                model[region].populations.set(scaling_factor_icu * num_icu[region] * mu_I_U[region][i] /
-                                                  sum_mu_I_U[region],
-                                              (typename Model::AgeGroup)i, epi::InfectionType::U);
+                model[region].populations[{(typename SecirModel<AgeGroup6>::AgeGroup)i, epi::InfectionType::U}] = scaling_factor_icu * num_icu[region] * mu_I_U[region][i] / sum_mu_I_U[region];
             }
         }
     }
@@ -352,20 +344,14 @@ SecirModel<AgeGroup> read_parameter_space(TixiDocumentHandle handle, const std::
         status = tixiGetDoubleElement(handle, path_join(population_path, "Dead").c_str(), &read_buffer);
         assert(status == SUCCESS && ("Failed to read number of deaths at " + path).c_str());
 
-        model.populations.set(read_buffer, (AgeGroup)i, InfectionType::D);
+        model.populations[{(AgeGroup)i, InfectionType::D}] = read_buffer;
 
-        model.populations.set(*read_element(handle, path_join(population_path, "Exposed"), io_mode), (AgeGroup)i,
-                              InfectionType::E);
-        model.populations.set(*read_element(handle, path_join(population_path, "Carrier"), io_mode), (AgeGroup)i,
-                              InfectionType::C);
-        model.populations.set(*read_element(handle, path_join(population_path, "Infectious"), io_mode), (AgeGroup)i,
-                              InfectionType::I);
-        model.populations.set(*read_element(handle, path_join(population_path, "Hospitalized"), io_mode), (AgeGroup)i,
-                              InfectionType::H);
-        model.populations.set(*read_element(handle, path_join(population_path, "ICU"), io_mode), (AgeGroup)i,
-                              InfectionType::U);
-        model.populations.set(*read_element(handle, path_join(population_path, "Recovered"), io_mode), (AgeGroup)i,
-                              InfectionType::R);
+        model.populations[{(AgeGroup)i, InfectionType::E}] = * read_element(handle, path_join(population_path, "Exposed"), io_mode);
+        model.populations[{(AgeGroup)i, InfectionType::C}] = * read_element(handle, path_join(population_path, "Carrier"), io_mode);
+        model.populations[{(AgeGroup)i, InfectionType::I}] = * read_element(handle, path_join(population_path, "Infectious"), io_mode);
+        model.populations[{(AgeGroup)i, InfectionType::H}] = * read_element(handle, path_join(population_path, "Hospitalized"), io_mode);
+        model.populations[{(AgeGroup)i, InfectionType::U}] = * read_element(handle, path_join(population_path, "ICU"), io_mode);
+        model.populations[{(AgeGroup)i, InfectionType::R}] = * read_element(handle, path_join(population_path, "Recovered"), io_mode);
 
         status = tixiGetDoubleElement(handle, path_join(population_path, "Total").c_str(), &read_buffer);
         assert(status == SUCCESS && ("Failed to read total population at " + path).c_str());
@@ -450,19 +436,19 @@ void write_parameter_space(TixiDocumentHandle handle, const std::string& path, M
         tixiAddDoubleElement(handle, population_path.c_str(), "Total",
                              model.populations.get_group_total((typename Model::AgeGroup)i), "%g");
         tixiAddDoubleElement(handle, population_path.c_str(), "Dead",
-                             model.populations.get((typename Model::AgeGroup)i, InfectionType::D), "%g");
+                             model.populations[{(typename Model::AgeGroup)i, InfectionType::D}], "%g");
         write_element(handle, population_path, "Exposed",
-                      model.populations.get((typename Model::AgeGroup)i, InfectionType::E), io_mode, num_runs);
+                      model.populations[{(typename Model::AgeGroup)i, InfectionType::E}], io_mode, num_runs);
         write_element(handle, population_path, "Carrier",
-                      model.populations.get((typename Model::AgeGroup)i, InfectionType::C), io_mode, num_runs);
+                      model.populations[{(typename Model::AgeGroup)i, InfectionType::C}], io_mode, num_runs);
         write_element(handle, population_path, "Infectious",
-                      model.populations.get((typename Model::AgeGroup)i, InfectionType::I), io_mode, num_runs);
+                      model.populations[{(typename Model::AgeGroup)i, InfectionType::I}], io_mode, num_runs);
         write_element(handle, population_path, "Hospitalized",
-                      model.populations.get((typename Model::AgeGroup)i, InfectionType::H), io_mode, num_runs);
+                      model.populations[{(typename Model::AgeGroup)i, InfectionType::H}], io_mode, num_runs);
         write_element(handle, population_path, "ICU",
-                      model.populations.get((typename Model::AgeGroup)i, InfectionType::U), io_mode, num_runs);
+                      model.populations[{(typename Model::AgeGroup)i, InfectionType::U}], io_mode, num_runs);
         write_element(handle, population_path, "Recovered",
-                      model.populations.get((typename Model::AgeGroup)i, InfectionType::R), io_mode, num_runs);
+                      model.populations[{(typename Model::AgeGroup)i, InfectionType::R}], io_mode, num_runs);
 
         // times
         auto times_path = path_join(group_path, "StageTimes");

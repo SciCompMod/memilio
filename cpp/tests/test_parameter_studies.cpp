@@ -48,13 +48,13 @@ TEST(ParameterStudies, sample_from_secir_params)
         params.times[i].set_infectious_asymp(tinfasy);
         params.times[i].set_icu_to_death(ticu2death);
 
-        model.populations.set(fact * num_exp_t0, (epi::AgeGroup3)i, epi::InfectionType::E);
-        model.populations.set(fact * num_car_t0, (epi::AgeGroup3)i, epi::InfectionType::C);
-        model.populations.set(fact * num_inf_t0, (epi::AgeGroup3)i, epi::InfectionType::I);
-        model.populations.set(fact * num_hosp_t0, (epi::AgeGroup3)i, epi::InfectionType::H);
-        model.populations.set(fact * num_icu_t0, (epi::AgeGroup3)i, epi::InfectionType::U);
-        model.populations.set(fact * num_rec_t0, (epi::AgeGroup3)i, epi::InfectionType::R);
-        model.populations.set(fact * num_dead_t0, (epi::AgeGroup3)i, epi::InfectionType::D);
+        model.populations[{(epi::AgeGroup3)i, epi::InfectionType::E}] = fact * num_exp_t0;
+        model.populations[{(epi::AgeGroup3)i, epi::InfectionType::C}] = fact * num_car_t0;
+        model.populations[{(epi::AgeGroup3)i, epi::InfectionType::I}] = fact * num_inf_t0;
+        model.populations[{(epi::AgeGroup3)i, epi::InfectionType::H}] = fact * num_hosp_t0;
+        model.populations[{(epi::AgeGroup3)i, epi::InfectionType::U}] = fact * num_icu_t0;
+        model.populations[{(epi::AgeGroup3)i, epi::InfectionType::R}] = fact * num_rec_t0;
+        model.populations[{(epi::AgeGroup3)i, epi::InfectionType::D}] = fact * num_dead_t0;
         model.populations.set_difference_from_group_total(fact * num_total_t0, (epi::AgeGroup3)i, (epi::AgeGroup3)i,
                                                           epi::InfectionType::S);
 
@@ -223,13 +223,13 @@ TEST(ParameterStudies, check_ensemble_run_result)
         params.times[i].set_icu_to_death(ticu2death);
 
         model.populations.set_total(num_total_t0);
-        model.populations.set(num_exp_t0, (epi::AgeGroup1)0, epi::InfectionType::E);
-        model.populations.set(num_car_t0, (epi::AgeGroup1)0, epi::InfectionType::C);
-        model.populations.set(num_inf_t0, (epi::AgeGroup1)0, epi::InfectionType::I);
-        model.populations.set(num_hosp_t0, (epi::AgeGroup1)0, epi::InfectionType::H);
-        model.populations.set(num_icu_t0, (epi::AgeGroup1)0, epi::InfectionType::U);
-        model.populations.set(num_rec_t0, (epi::AgeGroup1)0, epi::InfectionType::R);
-        model.populations.set(num_dead_t0, (epi::AgeGroup1)0, epi::InfectionType::D);
+        model.populations[{(epi::AgeGroup1)0, epi::InfectionType::E}] = num_exp_t0;
+        model.populations[{(epi::AgeGroup1)0, epi::InfectionType::C}] = num_car_t0;
+        model.populations[{(epi::AgeGroup1)0, epi::InfectionType::I}] = num_inf_t0;
+        model.populations[{(epi::AgeGroup1)0, epi::InfectionType::H}] = num_hosp_t0;
+        model.populations[{(epi::AgeGroup1)0, epi::InfectionType::U}] = num_icu_t0;
+        model.populations[{(epi::AgeGroup1)0, epi::InfectionType::R}] = num_rec_t0;
+        model.populations[{(epi::AgeGroup1)0, epi::InfectionType::D}] = num_dead_t0;
         model.populations.set_difference_from_total(num_total_t0, (epi::AgeGroup1)0, epi::InfectionType::S);
 
         params.probabilities[i].set_infection_from_contact(inf_prob);

@@ -19,13 +19,13 @@ class Test_ParameterStudy(unittest.TestCase):
         model.parameters.get_contact_patterns().cont_freq_mat[0] = secir.ContactMatrix(np.r_[0.5])
         model.parameters.get_contact_patterns().cont_freq_mat.add_damping(secir.Damping(np.r_[0.7], 30.0))
 
-        model.populations.set(100, secir.AgeGroup1.Group0, secir.InfectionType.E)
-        model.populations.set(50, secir.AgeGroup1.Group0, secir.InfectionType.C)
-        model.populations.set(50, secir.AgeGroup1.Group0, secir.InfectionType.I)
-        model.populations.set(20, secir.AgeGroup1.Group0, secir.InfectionType.H)
-        model.populations.set(10, secir.AgeGroup1.Group0, secir.InfectionType.U)
-        model.populations.set(10, secir.AgeGroup1.Group0, secir.InfectionType.R)
-        model.populations.set(0, secir.AgeGroup1.Group0, secir.InfectionType.D)
+        model.populations[secir.AgeGroup1.Group0, secir.InfectionType.E] = 100
+        model.populations[secir.AgeGroup1.Group0, secir.InfectionType.C] = 50
+        model.populations[secir.AgeGroup1.Group0, secir.InfectionType.I] = 50
+        model.populations[secir.AgeGroup1.Group0, secir.InfectionType.H] = 20
+        model.populations[secir.AgeGroup1.Group0, secir.InfectionType.U] = 10
+        model.populations[secir.AgeGroup1.Group0, secir.InfectionType.R] = 10
+        model.populations[secir.AgeGroup1.Group0, secir.InfectionType.D] = 0
         model.populations.set_difference_from_total(10000, secir.AgeGroup1.Group0, secir.InfectionType.S)
 
         model.parameters.probabilities[0].set_infection_from_contact(1.0)

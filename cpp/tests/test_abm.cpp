@@ -131,21 +131,21 @@ TEST(TestLocation, interact)
     epi::AbmAgeGroup age = epi::AbmAgeGroup(epi::UniformIntDistribution<int>()(0, int(epi::AbmAgeGroup::Count) - 1));
     epi::GlobalInfectionParameters params;
     params.set<epi::CarrierToInfected>(0.);
-    params.get<epi::CarrierToInfected>().set(0.5, age);
+    params.get<epi::CarrierToInfected>()[{age}] = 0.5;
     params.set<epi::CarrierToRecovered>(0.);
-    params.get<epi::CarrierToRecovered>().set(0.5, age);
+    params.get<epi::CarrierToRecovered>()[{age}] = 0.5;
     params.set<epi::DetectInfection>(0.);
-    params.get<epi::DetectInfection>().set(0.5, age);
+    params.get<epi::DetectInfection>()[{age}] = 0.5;
     params.set<epi::InfectedToDead>(0.);
-    params.get<epi::InfectedToDead>().set(0.5, age);
+    params.get<epi::InfectedToDead>()[{age}] = 0.5;
     params.set<epi::InfectedToRecovered>(0.);
-    params.get<epi::InfectedToRecovered>().set(0.5, age);
+    params.get<epi::InfectedToRecovered>()[{age}] = 0.5;
     params.set<epi::RecoveredToSusceptible>(0.);
-    params.get<epi::RecoveredToSusceptible>().set(0.5, age);
+    params.get<epi::RecoveredToSusceptible>()[{age}] = 0.5;
     params.set<epi::SusceptibleToExposedByCarrier>(0.);
-    params.get<epi::SusceptibleToExposedByCarrier>().set(0.5, age);
+    params.get<epi::SusceptibleToExposedByCarrier>()[{age}] = 0.5;
     params.set<epi::SusceptibleToExposedByInfected>(0.);
-    params.get<epi::SusceptibleToExposedByInfected>().set(0.5, age);
+    params.get<epi::SusceptibleToExposedByInfected>()[{age}] = 0.5;
 
     //cache precomputed results
     auto dt = 0.1;

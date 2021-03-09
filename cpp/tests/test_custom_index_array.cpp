@@ -69,7 +69,7 @@ TEST(CustomIndexArray, ConstantInitialization)
     ArrayType array(42.);
     for (int i=0; i<(int)Dim1::Count; i++) {
         for (int j=0; j<(int)Dim2::Count; j++) {
-             ASSERT_DOUBLE_EQ(array.get((Dim1)i, (Dim2)j), 42.);
+             ASSERT_DOUBLE_EQ((array[{(Dim1)i, (Dim2)j}]), 42.);
         }
     }
 }
@@ -120,12 +120,14 @@ TEST(CustomIndexArray, get)
     using ArrayType = epi::CustomIndexArray<int, Dim1, Dim2, Dim3>;
     ArrayType array(42);
 
-    ASSERT_EQ(array.get(Dim1::Idx1, Dim2::Idx2, Dim3::Idx3), 42);
-    ASSERT_EQ(array[6], 42);
+    ASSERT_EQ((array[{Dim1::Idx1, Dim2::Idx2, Dim3::Idx3}]), 42);
+    ASSERT_EQ((array[{Dim1::Idx1, Dim2::Idx2, Dim3::Idx3}]), 42);
+    ASSERT_EQ(array.array()[6], 42);
 
-    array.get(Dim1::Idx1, Dim2::Idx2, Dim3::Idx3) = 18;
-    ASSERT_EQ(array.get(Dim1::Idx1, Dim2::Idx2, Dim3::Idx3), 18);
-    ASSERT_EQ(array[6], 18);
+    array[{Dim1::Idx1, Dim2::Idx2, Dim3::Idx3}] = 18;
+    ASSERT_EQ((array[{Dim1::Idx1, Dim2::Idx2, Dim3::Idx3}]), 18);
+    ASSERT_EQ((array[{Dim1::Idx1, Dim2::Idx2, Dim3::Idx3}]), 18);
+    ASSERT_EQ(array.array()[6], 18);
 }
 
 TEST(CustomIndexArray, set)
@@ -133,15 +135,19 @@ TEST(CustomIndexArray, set)
     using ArrayType = epi::CustomIndexArray<int, Dim1, Dim2, Dim3>;
     ArrayType array(42);
 
-    ASSERT_EQ(array.get(Dim1::Idx1, Dim2::Idx2, Dim3::Idx3), 42);
-    ASSERT_EQ(array[6], 42);
+    ASSERT_EQ((array[{Dim1::Idx1, Dim2::Idx2, Dim3::Idx3}]), 42);
+    ASSERT_EQ((array[{Dim1::Idx1, Dim2::Idx2, Dim3::Idx3}]), 42);
+    ASSERT_EQ(array.array()[6], 42);
 
-    array.set(18, Dim1::Idx1, Dim2::Idx2, Dim3::Idx3);
-    ASSERT_EQ(array.get(Dim1::Idx1, Dim2::Idx2, Dim3::Idx3), 18);
-    ASSERT_EQ(array[6], 18);
+    array[{Dim1::Idx1, Dim2::Idx2, Dim3::Idx3}] = 18;
+    ASSERT_EQ((array[{Dim1::Idx1, Dim2::Idx2, Dim3::Idx3}]), 18);
+    ASSERT_EQ((array[{Dim1::Idx1, Dim2::Idx2, Dim3::Idx3}]), 18);
+    ASSERT_EQ(array.array()[6], 18);
 
-    array[6] = 99;
-    ASSERT_EQ(array.get(Dim1::Idx1, Dim2::Idx2, Dim3::Idx3), 99);
+    array[{Dim1::Idx1, Dim2::Idx2, Dim3::Idx3}] = 99;
+    ASSERT_EQ((array[{Dim1::Idx1, Dim2::Idx2, Dim3::Idx3}]), 99);
+    ASSERT_EQ((array[{Dim1::Idx1, Dim2::Idx2, Dim3::Idx3}]), 99);
+    ASSERT_EQ(array.array()[6], 99);
 
 
 }

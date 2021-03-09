@@ -41,13 +41,13 @@ TEST(TestSaveParameters, compareParameterStudy)
         model.parameters.times[i].set_infectious_asymp(tinfasy);
         model.parameters.times[i].set_icu_to_death(ticu2death);
 
-        model.populations.set(fact * num_exp_t0, (epi::AgeGroup2)i, epi::InfectionType::E);
-        model.populations.set(fact * num_car_t0, (epi::AgeGroup2)i, epi::InfectionType::C);
-        model.populations.set(fact * num_inf_t0, (epi::AgeGroup2)i, epi::InfectionType::I);
-        model.populations.set(fact * num_hosp_t0, (epi::AgeGroup2)i, epi::InfectionType::H);
-        model.populations.set(fact * num_icu_t0, (epi::AgeGroup2)i, epi::InfectionType::U);
-        model.populations.set(fact * num_rec_t0, (epi::AgeGroup2)i, epi::InfectionType::R);
-        model.populations.set(fact * num_dead_t0, (epi::AgeGroup2)i, epi::InfectionType::D);
+        model.populations[{(epi::AgeGroup2)i, epi::InfectionType::E}] = fact * num_exp_t0;
+        model.populations[{(epi::AgeGroup2)i, epi::InfectionType::C}] = fact * num_car_t0;
+        model.populations[{(epi::AgeGroup2)i, epi::InfectionType::I}] = fact * num_inf_t0;
+        model.populations[{(epi::AgeGroup2)i, epi::InfectionType::H}] = fact * num_hosp_t0;
+        model.populations[{(epi::AgeGroup2)i, epi::InfectionType::U}] = fact * num_icu_t0;
+        model.populations[{(epi::AgeGroup2)i, epi::InfectionType::R}] = fact * num_rec_t0;
+        model.populations[{(epi::AgeGroup2)i, epi::InfectionType::D}] = fact * num_dead_t0;
         model.populations.set_difference_from_group_total(fact * num_total_t0, (epi::AgeGroup2)i, (epi::AgeGroup2)i,
                                                           epi::InfectionType::S);
 
@@ -102,35 +102,35 @@ TEST(TestSaveParameters, compareParameterStudy)
     ASSERT_EQ(num_groups, num_groups_read);
 
     for (size_t i = 0; i < num_groups; i++) {
-        ASSERT_EQ(model.populations.get((epi::AgeGroup2)i, epi::InfectionType::D),
-                  read_model.populations.get((epi::AgeGroup2)i, epi::InfectionType::D));
-        ASSERT_EQ(model.populations.get_group_total((epi::AgeGroup2)i),
-                  read_model.populations.get_group_total((epi::AgeGroup2)i));
-        ASSERT_EQ(model.populations.get((epi::AgeGroup2)i, epi::InfectionType::E),
-                  read_model.populations.get((epi::AgeGroup2)i, epi::InfectionType::E));
-        ASSERT_EQ(model.populations.get((epi::AgeGroup2)i, epi::InfectionType::C),
-                  read_model.populations.get((epi::AgeGroup2)i, epi::InfectionType::C));
-        ASSERT_EQ(model.populations.get((epi::AgeGroup2)i, epi::InfectionType::I),
-                  read_model.populations.get((epi::AgeGroup2)i, epi::InfectionType::I));
-        ASSERT_EQ(model.populations.get((epi::AgeGroup2)i, epi::InfectionType::H),
-                  read_model.populations.get((epi::AgeGroup2)i, epi::InfectionType::H));
-        ASSERT_EQ(model.populations.get((epi::AgeGroup2)i, epi::InfectionType::U),
-                  read_model.populations.get((epi::AgeGroup2)i, epi::InfectionType::U));
-        ASSERT_EQ(model.populations.get((epi::AgeGroup2)i, epi::InfectionType::R),
-                  read_model.populations.get((epi::AgeGroup2)i, epi::InfectionType::R));
+        ASSERT_EQ((model.populations[{(epi::AgeGroup2)i, epi::InfectionType::D}]),
+                  (read_model.populations[{(epi::AgeGroup2)i, epi::InfectionType::D}]));
+        ASSERT_EQ((model.populations.get_group_total((epi::AgeGroup2)i)),
+                  (read_model.populations.get_group_total((epi::AgeGroup2)i)));
+        ASSERT_EQ((model.populations[{(epi::AgeGroup2)i, epi::InfectionType::E}]),
+                  (read_model.populations[{(epi::AgeGroup2)i, epi::InfectionType::E}]));
+        ASSERT_EQ((model.populations[{(epi::AgeGroup2)i, epi::InfectionType::C}]),
+                  (read_model.populations[{(epi::AgeGroup2)i, epi::InfectionType::C}]));
+        ASSERT_EQ((model.populations[{(epi::AgeGroup2)i, epi::InfectionType::I}]),
+                  (read_model.populations[{(epi::AgeGroup2)i, epi::InfectionType::I}]));
+        ASSERT_EQ((model.populations[{(epi::AgeGroup2)i, epi::InfectionType::H}]),
+                  (read_model.populations[{(epi::AgeGroup2)i, epi::InfectionType::H}]));
+        ASSERT_EQ((model.populations[{(epi::AgeGroup2)i, epi::InfectionType::U}]),
+                  (read_model.populations[{(epi::AgeGroup2)i, epi::InfectionType::U}]));
+        ASSERT_EQ((model.populations[{(epi::AgeGroup2)i, epi::InfectionType::R}]),
+                  (read_model.populations[{(epi::AgeGroup2)i, epi::InfectionType::R}]));
 
-        check_distribution(*model.populations.get((epi::AgeGroup2)i, epi::InfectionType::E).get_distribution(),
-                           *read_model.populations.get((epi::AgeGroup2)i, epi::InfectionType::E).get_distribution());
-        check_distribution(*model.populations.get((epi::AgeGroup2)i, epi::InfectionType::C).get_distribution(),
-                           *read_model.populations.get((epi::AgeGroup2)i, epi::InfectionType::C).get_distribution());
-        check_distribution(*model.populations.get((epi::AgeGroup2)i, epi::InfectionType::I).get_distribution(),
-                           *read_model.populations.get((epi::AgeGroup2)i, epi::InfectionType::I).get_distribution());
-        check_distribution(*model.populations.get((epi::AgeGroup2)i, epi::InfectionType::H).get_distribution(),
-                           *read_model.populations.get((epi::AgeGroup2)i, epi::InfectionType::H).get_distribution());
-        check_distribution(*model.populations.get((epi::AgeGroup2)i, epi::InfectionType::U).get_distribution(),
-                           *read_model.populations.get((epi::AgeGroup2)i, epi::InfectionType::U).get_distribution());
-        check_distribution(*model.populations.get((epi::AgeGroup2)i, epi::InfectionType::R).get_distribution(),
-                           *read_model.populations.get((epi::AgeGroup2)i, epi::InfectionType::R).get_distribution());
+        check_distribution(*model.populations[{(epi::AgeGroup2)i, epi::InfectionType::E}].get_distribution(),
+                           *read_model.populations[{(epi::AgeGroup2)i, epi::InfectionType::E}].get_distribution());
+        check_distribution(*model.populations[{(epi::AgeGroup2)i, epi::InfectionType::C}].get_distribution(),
+                           *read_model.populations[{(epi::AgeGroup2)i, epi::InfectionType::C}].get_distribution());
+        check_distribution(*model.populations[{(epi::AgeGroup2)i, epi::InfectionType::I}].get_distribution(),
+                           *read_model.populations[{(epi::AgeGroup2)i, epi::InfectionType::I}].get_distribution());
+        check_distribution(*model.populations[{(epi::AgeGroup2)i, epi::InfectionType::H}].get_distribution(),
+                           *read_model.populations[{(epi::AgeGroup2)i, epi::InfectionType::H}].get_distribution());
+        check_distribution(*model.populations[{(epi::AgeGroup2)i, epi::InfectionType::U}].get_distribution(),
+                           *read_model.populations[{(epi::AgeGroup2)i, epi::InfectionType::U}].get_distribution());
+        check_distribution(*model.populations[{(epi::AgeGroup2)i, epi::InfectionType::R}].get_distribution(),
+                           *read_model.populations[{(epi::AgeGroup2)i, epi::InfectionType::R}].get_distribution());
 
         ASSERT_EQ(model.parameters.times[i].get_incubation(), read_model.parameters.times[i].get_incubation());
         ASSERT_EQ(model.parameters.times[i].get_infectious_mild(),
@@ -234,13 +234,13 @@ TEST(TestSaveParameters, compareSingleRun)
         model.parameters.times[i].set_infectious_asymp(tinfasy);
         model.parameters.times[i].set_icu_to_death(ticu2death);
 
-        model.populations.set(fact * num_exp_t0, (epi::AgeGroup2)i, epi::InfectionType::E);
-        model.populations.set(fact * num_car_t0, (epi::AgeGroup2)i, epi::InfectionType::C);
-        model.populations.set(fact * num_inf_t0, (epi::AgeGroup2)i, epi::InfectionType::I);
-        model.populations.set(fact * num_hosp_t0, (epi::AgeGroup2)i, epi::InfectionType::H);
-        model.populations.set(fact * num_icu_t0, (epi::AgeGroup2)i, epi::InfectionType::U);
-        model.populations.set(fact * num_rec_t0, (epi::AgeGroup2)i, epi::InfectionType::R);
-        model.populations.set(fact * num_dead_t0, (epi::AgeGroup2)i, epi::InfectionType::D);
+        model.populations[{(epi::AgeGroup2)i, epi::InfectionType::E}] = fact * num_exp_t0;
+        model.populations[{(epi::AgeGroup2)i, epi::InfectionType::C}] = fact * num_car_t0;
+        model.populations[{(epi::AgeGroup2)i, epi::InfectionType::I}] = fact * num_inf_t0;
+        model.populations[{(epi::AgeGroup2)i, epi::InfectionType::H}] = fact * num_hosp_t0;
+        model.populations[{(epi::AgeGroup2)i, epi::InfectionType::U}] = fact * num_icu_t0;
+        model.populations[{(epi::AgeGroup2)i, epi::InfectionType::R}] = fact * num_rec_t0;
+        model.populations[{(epi::AgeGroup2)i, epi::InfectionType::D}] = fact * num_dead_t0;
         model.populations.set_difference_from_group_total(fact * num_total_t0, (epi::AgeGroup2)i, (epi::AgeGroup2)i,
                                                           epi::InfectionType::S);
 
@@ -292,22 +292,22 @@ TEST(TestSaveParameters, compareSingleRun)
     ASSERT_EQ(num_groups, num_groups_read);
 
     for (size_t i = 0; i < num_groups; i++) {
-        ASSERT_EQ(model.populations.get((epi::AgeGroup2)i, epi::InfectionType::D),
-                  read_model.populations.get((epi::AgeGroup2)i, epi::InfectionType::D));
-        ASSERT_EQ(model.populations.get_group_total((epi::AgeGroup2)i),
-                  read_model.populations.get_group_total((epi::AgeGroup2)i));
-        ASSERT_EQ(model.populations.get((epi::AgeGroup2)i, epi::InfectionType::E),
-                  read_model.populations.get((epi::AgeGroup2)i, epi::InfectionType::E));
-        ASSERT_EQ(model.populations.get((epi::AgeGroup2)i, epi::InfectionType::C),
-                  read_model.populations.get((epi::AgeGroup2)i, epi::InfectionType::C));
-        ASSERT_EQ(model.populations.get((epi::AgeGroup2)i, epi::InfectionType::I),
-                  read_model.populations.get((epi::AgeGroup2)i, epi::InfectionType::I));
-        ASSERT_EQ(model.populations.get((epi::AgeGroup2)i, epi::InfectionType::H),
-                  read_model.populations.get((epi::AgeGroup2)i, epi::InfectionType::H));
-        ASSERT_EQ(model.populations.get((epi::AgeGroup2)i, epi::InfectionType::U),
-                  read_model.populations.get((epi::AgeGroup2)i, epi::InfectionType::U));
-        ASSERT_EQ(model.populations.get((epi::AgeGroup2)i, epi::InfectionType::R),
-                  read_model.populations.get((epi::AgeGroup2)i, epi::InfectionType::R));
+        ASSERT_EQ((model.populations[{(epi::AgeGroup2)i, epi::InfectionType::D}]),
+                  (read_model.populations[{(epi::AgeGroup2)i, epi::InfectionType::D}]));
+        ASSERT_EQ((model.populations.get_group_total((epi::AgeGroup2)i)),
+                  (read_model.populations.get_group_total((epi::AgeGroup2)i)));
+        ASSERT_EQ((model.populations[{(epi::AgeGroup2)i, epi::InfectionType::E}]),
+                  (read_model.populations[{(epi::AgeGroup2)i, epi::InfectionType::E}]));
+        ASSERT_EQ((model.populations[{(epi::AgeGroup2)i, epi::InfectionType::C}]),
+                  (read_model.populations[{(epi::AgeGroup2)i, epi::InfectionType::C}]));
+        ASSERT_EQ((model.populations[{(epi::AgeGroup2)i, epi::InfectionType::I}]),
+                  (read_model.populations[{(epi::AgeGroup2)i, epi::InfectionType::I}]));
+        ASSERT_EQ((model.populations[{(epi::AgeGroup2)i, epi::InfectionType::H}]),
+                  (read_model.populations[{(epi::AgeGroup2)i, epi::InfectionType::H}]));
+        ASSERT_EQ((model.populations[{(epi::AgeGroup2)i, epi::InfectionType::U}]),
+                  (read_model.populations[{(epi::AgeGroup2)i, epi::InfectionType::U}]));
+        ASSERT_EQ((model.populations[{(epi::AgeGroup2)i, epi::InfectionType::R}]),
+                  (read_model.populations[{(epi::AgeGroup2)i, epi::InfectionType::R}]));
 
         ASSERT_EQ(model.parameters.times[i].get_incubation(), read_model.parameters.times[i].get_incubation());
         ASSERT_EQ(model.parameters.times[i].get_infectious_mild(),
@@ -371,13 +371,13 @@ TEST(TestSaveParameters, compareGraphs)
         model.parameters.times[i].set_infectious_asymp(tinfasy);
         model.parameters.times[i].set_icu_to_death(ticu2death);
 
-        model.populations.set(fact * num_exp_t0, (epi::AgeGroup2)i, epi::InfectionType::E);
-        model.populations.set(fact * num_car_t0, (epi::AgeGroup2)i, epi::InfectionType::C);
-        model.populations.set(fact * num_inf_t0, (epi::AgeGroup2)i, epi::InfectionType::I);
-        model.populations.set(fact * num_hosp_t0, (epi::AgeGroup2)i, epi::InfectionType::H);
-        model.populations.set(fact * num_icu_t0, (epi::AgeGroup2)i, epi::InfectionType::U);
-        model.populations.set(fact * num_rec_t0, (epi::AgeGroup2)i, epi::InfectionType::R);
-        model.populations.set(fact * num_dead_t0, (epi::AgeGroup2)i, epi::InfectionType::D);
+        model.populations[{(epi::AgeGroup2)i, epi::InfectionType::E}] = fact * num_exp_t0;
+        model.populations[{(epi::AgeGroup2)i, epi::InfectionType::C}] = fact * num_car_t0;
+        model.populations[{(epi::AgeGroup2)i, epi::InfectionType::I}] = fact * num_inf_t0;
+        model.populations[{(epi::AgeGroup2)i, epi::InfectionType::H}] = fact * num_hosp_t0;
+        model.populations[{(epi::AgeGroup2)i, epi::InfectionType::U}] = fact * num_icu_t0;
+        model.populations[{(epi::AgeGroup2)i, epi::InfectionType::R}] = fact * num_rec_t0;
+        model.populations[{(epi::AgeGroup2)i, epi::InfectionType::D}] = fact * num_dead_t0;
         model.populations.set_difference_from_group_total(fact * num_total_t0, (epi::AgeGroup2)i, (epi::AgeGroup2)i,
                                                           epi::InfectionType::S);
 
@@ -432,42 +432,42 @@ TEST(TestSaveParameters, compareGraphs)
                            *graph_read_model.parameters.get_test_and_trace_capacity().get_distribution().get());
 
         for (size_t group = 0; group < num_groups; group++) {
-            ASSERT_EQ(graph_model.populations.get((epi::AgeGroup2)group, epi::InfectionType::D),
-                      graph_read_model.populations.get((epi::AgeGroup2)group, epi::InfectionType::D));
+            ASSERT_EQ((graph_model.populations[{(epi::AgeGroup2)group, epi::InfectionType::D}]),
+                      (graph_read_model.populations[{(epi::AgeGroup2)group, epi::InfectionType::D}]));
             ASSERT_EQ(graph_model.populations.get_total(), graph_read_model.populations.get_total());
             check_distribution(
-                *graph_model.populations.get((epi::AgeGroup2)group, epi::InfectionType::E).get_distribution().get(),
-                *graph_read_model.populations.get((epi::AgeGroup2)group, epi::InfectionType::E)
+                *graph_model.populations[{(epi::AgeGroup2)group, epi::InfectionType::E}].get_distribution().get(),
+                *graph_read_model.populations[{(epi::AgeGroup2)group, epi::InfectionType::E}]
                      .get_distribution()
                      .get());
             check_distribution(
-                *graph_model.populations.get((epi::AgeGroup2)group, epi::InfectionType::C).get_distribution().get(),
-                *graph_read_model.populations.get((epi::AgeGroup2)group, epi::InfectionType::C)
+                *graph_model.populations[{(epi::AgeGroup2)group, epi::InfectionType::C}].get_distribution().get(),
+                *graph_read_model.populations[{(epi::AgeGroup2)group, epi::InfectionType::C}]
                      .get_distribution()
                      .get());
             check_distribution(
-                *graph_model.populations.get((epi::AgeGroup2)group, epi::InfectionType::I).get_distribution().get(),
-                *graph_read_model.populations.get((epi::AgeGroup2)group, epi::InfectionType::I)
+                *graph_model.populations[{(epi::AgeGroup2)group, epi::InfectionType::I}].get_distribution().get(),
+                *graph_read_model.populations[{(epi::AgeGroup2)group, epi::InfectionType::I}]
                      .get_distribution()
                      .get());
             check_distribution(
-                *graph_model.populations.get((epi::AgeGroup2)group, epi::InfectionType::H).get_distribution().get(),
-                *graph_read_model.populations.get((epi::AgeGroup2)group, epi::InfectionType::H)
+                *graph_model.populations[{(epi::AgeGroup2)group, epi::InfectionType::H}].get_distribution().get(),
+                *graph_read_model.populations[{(epi::AgeGroup2)group, epi::InfectionType::H}]
                      .get_distribution()
                      .get());
             check_distribution(
-                *graph_model.populations.get((epi::AgeGroup2)group, epi::InfectionType::U).get_distribution().get(),
-                *graph_read_model.populations.get((epi::AgeGroup2)group, epi::InfectionType::U)
+                *graph_model.populations[{(epi::AgeGroup2)group, epi::InfectionType::U}].get_distribution().get(),
+                *graph_read_model.populations[{(epi::AgeGroup2)group, epi::InfectionType::U}]
                      .get_distribution()
                      .get());
             check_distribution(
-                *graph_model.populations.get((epi::AgeGroup2)group, epi::InfectionType::R).get_distribution().get(),
-                *graph_read_model.populations.get((epi::AgeGroup2)group, epi::InfectionType::R)
+                *graph_model.populations[{(epi::AgeGroup2)group, epi::InfectionType::R}].get_distribution().get(),
+                *graph_read_model.populations[{(epi::AgeGroup2)group, epi::InfectionType::R}]
                      .get_distribution()
                      .get());
             check_distribution(
-                *graph_model.populations.get((epi::AgeGroup2)group, epi::InfectionType::E).get_distribution().get(),
-                *graph_read_model.populations.get((epi::AgeGroup2)group, epi::InfectionType::E)
+                *graph_model.populations[{(epi::AgeGroup2)group, epi::InfectionType::E}].get_distribution().get(),
+                *graph_read_model.populations[{(epi::AgeGroup2)group, epi::InfectionType::E}]
                      .get_distribution()
                      .get());
 
@@ -606,13 +606,13 @@ TEST(TestSaveParameters, compareGraphWithFile)
         params.times[i].set_infectious_asymp(tinfasy);
         params.times[i].set_icu_to_death(ticu2death);
 
-        model.populations.set(fact * num_exp_t0, (epi::AgeGroup2)i, epi::InfectionType::E);
-        model.populations.set(fact * num_car_t0, (epi::AgeGroup2)i, epi::InfectionType::C);
-        model.populations.set(fact * num_inf_t0, (epi::AgeGroup2)i, epi::InfectionType::I);
-        model.populations.set(fact * num_hosp_t0, (epi::AgeGroup2)i, epi::InfectionType::H);
-        model.populations.set(fact * num_icu_t0, (epi::AgeGroup2)i, epi::InfectionType::U);
-        model.populations.set(fact * num_rec_t0, (epi::AgeGroup2)i, epi::InfectionType::R);
-        model.populations.set(fact * num_dead_t0, (epi::AgeGroup2)i, epi::InfectionType::D);
+        model.populations[{(epi::AgeGroup2)i, epi::InfectionType::E}] = fact * num_exp_t0;
+        model.populations[{(epi::AgeGroup2)i, epi::InfectionType::C}] = fact * num_car_t0;
+        model.populations[{(epi::AgeGroup2)i, epi::InfectionType::I}] = fact * num_inf_t0;
+        model.populations[{(epi::AgeGroup2)i, epi::InfectionType::H}] = fact * num_hosp_t0;
+        model.populations[{(epi::AgeGroup2)i, epi::InfectionType::U}] = fact * num_icu_t0;
+        model.populations[{(epi::AgeGroup2)i, epi::InfectionType::R}] = fact * num_rec_t0;
+        model.populations[{(epi::AgeGroup2)i, epi::InfectionType::D}] = fact * num_dead_t0;
         model.populations.set_difference_from_group_total(fact * num_total_t0, (epi::AgeGroup2)i, (epi::AgeGroup2)i,
                                                           epi::InfectionType::S);
 
@@ -657,8 +657,8 @@ TEST(TestSaveParameters, compareGraphWithFile)
         ASSERT_EQ(graph_model.populations.get_num_compartments(), graph_read_model.populations.get_num_compartments());
 
         for (size_t group = 0; group < num_groups; group++) {
-            ASSERT_EQ(graph_model.populations.get((epi::AgeGroup2)group, epi::InfectionType::D),
-                      graph_read_model.populations.get((epi::AgeGroup2)group, epi::InfectionType::D));
+            ASSERT_EQ((graph_model.populations[{(epi::AgeGroup2)group, epi::InfectionType::D}]),
+                      (graph_read_model.populations[{(epi::AgeGroup2)group, epi::InfectionType::D}]));
             ASSERT_EQ(graph_model.populations.get_total(), graph_read_model.populations.get_total());
             check_distribution(
                 *graph_model.parameters.probabilities[group].get_infection_from_contact().get_distribution().get(),
@@ -733,14 +733,14 @@ TEST(TestSaveParameters, ReadPopulationDataRKIAges)
     std::vector<double> death = {2, 4, 48, 1137.86, 8174.14, 18528.9};
 
     for (size_t i = 0; i < 6; i++) {
-        EXPECT_NEAR(model[0].populations.get((epi::AgeGroup6)i, epi::InfectionType::S), sus[i], 1e-1);
-        EXPECT_NEAR(model[0].populations.get((epi::AgeGroup6)i, epi::InfectionType::E), exp[i], 1e-1);
-        EXPECT_NEAR(model[0].populations.get((epi::AgeGroup6)i, epi::InfectionType::C), car[i], 1e-1);
-        EXPECT_NEAR(model[0].populations.get((epi::AgeGroup6)i, epi::InfectionType::I), inf[i], 1e-1);
-        EXPECT_NEAR(model[0].populations.get((epi::AgeGroup6)i, epi::InfectionType::H), hosp[i], 1e-1);
-        EXPECT_NEAR(model[0].populations.get((epi::AgeGroup6)i, epi::InfectionType::U), icu[i], 1e-1);
-        EXPECT_NEAR(model[0].populations.get((epi::AgeGroup6)i, epi::InfectionType::R), rec[i], 1e-1);
-        EXPECT_NEAR(model[0].populations.get((epi::AgeGroup6)i, epi::InfectionType::D), death[i], 1e-1);
+        EXPECT_NEAR((model[0].populations[{(epi::AgeGroup6)i, epi::InfectionType::S}]), sus[i], 1e-1);
+        EXPECT_NEAR((model[0].populations[{(epi::AgeGroup6)i, epi::InfectionType::E}]), exp[i], 1e-1);
+        EXPECT_NEAR((model[0].populations[{(epi::AgeGroup6)i, epi::InfectionType::C}]), car[i], 1e-1);
+        EXPECT_NEAR((model[0].populations[{(epi::AgeGroup6)i, epi::InfectionType::I}]), inf[i], 1e-1);
+        EXPECT_NEAR((model[0].populations[{(epi::AgeGroup6)i, epi::InfectionType::H}]), hosp[i], 1e-1);
+        EXPECT_NEAR((model[0].populations[{(epi::AgeGroup6)i, epi::InfectionType::U}]), icu[i], 1e-1);
+        EXPECT_NEAR((model[0].populations[{(epi::AgeGroup6)i, epi::InfectionType::R}]), rec[i], 1e-1);
+        EXPECT_NEAR((model[0].populations[{(epi::AgeGroup6)i, epi::InfectionType::D}]), death[i], 1e-1);
     }
 
     EXPECT_NEAR(model[0].populations.get_total(), 83166695, 1e-6);
@@ -775,14 +775,14 @@ TEST(TestSaveParameters, ReadPopulationDataStateAllAges)
     std::vector<double> death = {0, 0, 0, 16.2857, 99.5714, 198.286};
 
     for (size_t i = 0; i < 6; i++) {
-        EXPECT_NEAR(model[0].populations.get((epi::AgeGroup6)i, epi::InfectionType::S), sus[i], 1e-1);
-        EXPECT_NEAR(model[0].populations.get((epi::AgeGroup6)i, epi::InfectionType::E), exp[i], 1e-1);
-        EXPECT_NEAR(model[0].populations.get((epi::AgeGroup6)i, epi::InfectionType::C), car[i], 1e-1);
-        EXPECT_NEAR(model[0].populations.get((epi::AgeGroup6)i, epi::InfectionType::I), inf[i], 1e-1);
-        EXPECT_NEAR(model[0].populations.get((epi::AgeGroup6)i, epi::InfectionType::H), hosp[i], 1e-1);
-        EXPECT_NEAR(model[0].populations.get((epi::AgeGroup6)i, epi::InfectionType::U), icu[i], 1e-1);
-        EXPECT_NEAR(model[0].populations.get((epi::AgeGroup6)i, epi::InfectionType::R), rec[i], 1e-1);
-        EXPECT_NEAR(model[0].populations.get((epi::AgeGroup6)i, epi::InfectionType::D), death[i], 1e-1);
+        EXPECT_NEAR((model[0].populations[{(epi::AgeGroup6)i, epi::InfectionType::S}]), sus[i], 1e-1);
+        EXPECT_NEAR((model[0].populations[{(epi::AgeGroup6)i, epi::InfectionType::E}]), exp[i], 1e-1);
+        EXPECT_NEAR((model[0].populations[{(epi::AgeGroup6)i, epi::InfectionType::C}]), car[i], 1e-1);
+        EXPECT_NEAR((model[0].populations[{(epi::AgeGroup6)i, epi::InfectionType::I}]), inf[i], 1e-1);
+        EXPECT_NEAR((model[0].populations[{(epi::AgeGroup6)i, epi::InfectionType::H}]), hosp[i], 1e-1);
+        EXPECT_NEAR((model[0].populations[{(epi::AgeGroup6)i, epi::InfectionType::U}]), icu[i], 1e-1);
+        EXPECT_NEAR((model[0].populations[{(epi::AgeGroup6)i, epi::InfectionType::R}]), rec[i], 1e-1);
+        EXPECT_NEAR((model[0].populations[{(epi::AgeGroup6)i, epi::InfectionType::D}]), death[i], 1e-1);
     }
 
     EXPECT_NEAR(model[0].populations.get_total(), 2903777, 1e-6);
@@ -818,14 +818,14 @@ TEST(TestSaveParameters, ReadPopulationDataCountyAllAges)
     std::vector<double> death = {0, 0, 0, 0, 10, 14.4286};
 
     for (size_t i = 0; i < 6; i++) {
-        EXPECT_NEAR(model[0].populations.get((epi::AgeGroup6)i, epi::InfectionType::S), sus[i], 1e-1);
-        EXPECT_NEAR(model[0].populations.get((epi::AgeGroup6)i, epi::InfectionType::E), exp[i], 1e-1);
-        EXPECT_NEAR(model[0].populations.get((epi::AgeGroup6)i, epi::InfectionType::C), car[i], 1e-1);
-        EXPECT_NEAR(model[0].populations.get((epi::AgeGroup6)i, epi::InfectionType::I), inf[i], 1e-1);
-        EXPECT_NEAR(model[0].populations.get((epi::AgeGroup6)i, epi::InfectionType::H), hosp[i], 1e-1);
-        EXPECT_NEAR(model[0].populations.get((epi::AgeGroup6)i, epi::InfectionType::U), icu[i], 1e-1);
-        EXPECT_NEAR(model[0].populations.get((epi::AgeGroup6)i, epi::InfectionType::R), rec[i], 1e-1);
-        EXPECT_NEAR(model[0].populations.get((epi::AgeGroup6)i, epi::InfectionType::D), death[i], 1e-1);
+        EXPECT_NEAR((model[0].populations[{(epi::AgeGroup6)i, epi::InfectionType::S}]), sus[i], 1e-1);
+        EXPECT_NEAR((model[0].populations[{(epi::AgeGroup6)i, epi::InfectionType::E}]), exp[i], 1e-1);
+        EXPECT_NEAR((model[0].populations[{(epi::AgeGroup6)i, epi::InfectionType::C}]), car[i], 1e-1);
+        EXPECT_NEAR((model[0].populations[{(epi::AgeGroup6)i, epi::InfectionType::I}]), inf[i], 1e-1);
+        EXPECT_NEAR((model[0].populations[{(epi::AgeGroup6)i, epi::InfectionType::H}]), hosp[i], 1e-1);
+        EXPECT_NEAR((model[0].populations[{(epi::AgeGroup6)i, epi::InfectionType::U}]), icu[i], 1e-1);
+        EXPECT_NEAR((model[0].populations[{(epi::AgeGroup6)i, epi::InfectionType::R}]), rec[i], 1e-1);
+        EXPECT_NEAR((model[0].populations[{(epi::AgeGroup6)i, epi::InfectionType::D}]), death[i], 1e-1);
     }
 
     EXPECT_NEAR(model[0].populations.get_total(), 246793, 1e-6);

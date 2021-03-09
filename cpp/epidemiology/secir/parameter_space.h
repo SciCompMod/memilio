@@ -50,7 +50,7 @@ void set_params_distributions_normal(
 
 
             // variably sized groups
-            set_distribution(model.populations.get(AgeGroup(i), InfectionType(j)));
+            set_distribution(model.populations[{AgeGroup(i), epi::InfectionType(j)}]);
         }
     }
 
@@ -106,12 +106,12 @@ void draw_sample(CompartmentalModel<Populations<AgeGroup, InfectionType>, SecirP
 
         double group_total = model.populations.get_group_total(AgeGroup(i));
 
-        model.populations.get(AgeGroup(i), InfectionType::E).draw_sample();
-        model.populations.get(AgeGroup(i), InfectionType::C).draw_sample();
-        model.populations.get(AgeGroup(i), InfectionType::I).draw_sample();
-        model.populations.get(AgeGroup(i), InfectionType::H).draw_sample();
-        model.populations.get(AgeGroup(i), InfectionType::U).draw_sample();
-        model.populations.get(AgeGroup(i), InfectionType::R).draw_sample();
+        model.populations[{AgeGroup(i), InfectionType::E}].draw_sample();
+        model.populations[{AgeGroup(i), InfectionType::C}].draw_sample();
+        model.populations[{AgeGroup(i), InfectionType::I}].draw_sample();
+        model.populations[{AgeGroup(i), InfectionType::H}].draw_sample();
+        model.populations[{AgeGroup(i), InfectionType::U}].draw_sample();
+        model.populations[{AgeGroup(i), InfectionType::R}].draw_sample();
 
         // no sampling for dead and total numbers
         // [...]
