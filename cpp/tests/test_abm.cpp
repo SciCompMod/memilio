@@ -187,8 +187,7 @@ TEST(TestLocation, interact)
         EXPECT_EQ(location.interact(carrier, dt, params), epi::InfectionState::Recovered_Carrier);
 
         EXPECT_CALL(mock_exponential_dist.get_mock(), invoke).Times(1).WillOnce(Return(0.11));
-        auto clean_params = epi::GlobalInfectionParameters{epi::DefaultInit()};
-        EXPECT_EQ(location.interact(carrier, dt, clean_params), epi::InfectionState::Carrier);
+        EXPECT_EQ(location.interact(carrier, dt, {}), epi::InfectionState::Carrier);
     }
 
     for (auto&& infected_state : {epi::InfectionState::Infected_Detected, epi::InfectionState::Infected_Undetected}) {
@@ -225,7 +224,7 @@ TEST(TestPerson, interact)
     auto location = epi::Location(epi::LocationType::Home);
     auto person   = epi::Person(location, epi::InfectionState::Infected_Detected, epi::AbmAgeGroup::Age15to34);
     location.add_person(person);
-    location.begin_step(0.1, epi::GlobalInfectionParameters{epi::DefaultInit()});
+    location.begin_step(0.1, {});
 
     //setup rng mock so the person has a state transition
     ScopedMockDistribution<testing::StrictMock<MockDistribution<epi::ExponentialDistribution<double>>>>
@@ -234,7 +233,7 @@ TEST(TestPerson, interact)
     EXPECT_CALL(mock_exponential_dist.get_mock(), invoke).Times(1).WillOnce(Return(0.09));
     EXPECT_CALL(mock_discrete_dist.get_mock(), invoke).Times(1).WillOnce(Return(0));
 
-    auto infection_parameters = epi::GlobalInfectionParameters{epi::DefaultInit()};
+    auto infection_parameters = epi::GlobalInfectionParameters();
     person.interact(0.1, infection_parameters);
     EXPECT_EQ(person.get_infection_state(), epi::InfectionState::Recovered_Infected);
     EXPECT_EQ(location.get_subpopulation(epi::InfectionState::Recovered_Infected), 1);
@@ -255,9 +254,9 @@ TEST(TestPerson, interact_exposed)
     location.add_person(infected3);
     auto person = epi::Person(location, epi::InfectionState::Susceptible, epi::AbmAgeGroup::Age15to34);
     location.add_person(person);
-    location.begin_step(0.1, epi::GlobalInfectionParameters(epi::DefaultInit()));
+    location.begin_step(0.1, {});
 
-    auto infection_parameters              = epi::GlobalInfectionParameters{epi::DefaultInit()};
+    auto infection_parameters              = epi::GlobalInfectionParameters();
     infection_parameters.set<epi::IncubationPeriod>(2.);
 
     //setup rng mock so the person becomes exposed

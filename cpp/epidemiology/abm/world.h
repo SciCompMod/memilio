@@ -30,7 +30,7 @@ public:
      * create a World.
      * @param params parameters of the infection that are the same everywhere in the world.
      */
-    World(const GlobalInfectionParameters& params = GlobalInfectionParameters(DefaultInit()))
+    World(const GlobalInfectionParameters& params = {})
         : m_infection_parameters(params)
     {
     }
