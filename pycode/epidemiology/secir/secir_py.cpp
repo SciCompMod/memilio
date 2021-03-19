@@ -890,6 +890,49 @@ PYBIND11_MODULE(_secir, m)
     bind_damping_expression_group_members(contact_matrix_group_class);
     contact_matrix_group_class.def_property_readonly("num_groups", &epi::ContactMatrixGroup::get_num_groups);
 
+    py::class_<epi::DampingSampling>(m, "DampingSampling")
+        .def(py::init([](const epi::UncertainValue& val, int lvl, int typ, double time,
+                         const std::vector<size_t>& matrices, const Eigen::Ref<const Eigen::VectorXd>& groups) {
+                 return epi::DampingSampling(val, epi::DampingLevel(lvl), epi::DampingType(typ),
+                                             epi::SimulationTime(time), matrices, groups);
+             }),
+             py::arg("value"), py::arg("level"), py::arg("type"), py::arg("time"), py::arg("matrix_indices"),
+             py::arg("group_weights"))
+        .def_property("value", py::overload_cast<>(&epi::DampingSampling::get_value),
+                      &epi::DampingSampling::set_value, py::return_value_policy::reference_internal)
+        .def_property(
+            "level",
+            [](const epi::DampingSampling& self) {
+                return int(self.get_level());
+            },
+            [](epi::DampingSampling& self, int lvl) {
+                self.set_level(epi::DampingLevel(lvl));
+            })
+        .def_property(
+            "type",
+            [](const epi::DampingSampling& self) {
+                return int(self.get_type());
+            },
+            [](epi::DampingSampling& self, int typ) {
+                self.set_type(epi::DampingType(typ));
+            })
+        .def_property(
+            "time",
+            [](const epi::DampingSampling& self) {
+                return double(self.get_time());
+            },
+            [](epi::DampingSampling& self, double t) {
+                self.set_time(epi::SimulationTime(t));
+            })
+        .def_property("matrix_indices", &epi::DampingSampling::get_matrix_indices,
+                      &epi::DampingSampling::set_matrix_indices)
+        .def_property(
+            "group_weights", &epi::DampingSampling::get_group_weights,
+            [](epi::DampingSampling& self, const Eigen::Ref<const Eigen::VectorXd>& v) {
+                self.set_group_weights(v);
+            },
+            py::return_value_policy::reference_internal);
+
     py::class_<epi::UncertainContactMatrix>(m, "UncertainContactMatrix")
         .def(py::init<>())
         .def(py::init<const epi::ContactMatrixGroup&>())
@@ -899,7 +942,11 @@ PYBIND11_MODULE(_secir, m)
             [](epi::UncertainContactMatrix& self, const epi::ContactMatrixGroup& c) {
                 self.get_cont_freq_mat() = c;
             },
-            py::return_value_policy::reference_internal);
+            py::return_value_policy::reference_internal)
+        .def_property("dampings", py::overload_cast<>(&epi::UncertainContactMatrix::get_dampings), 
+            [](epi::UncertainContactMatrix& self, const std::vector<epi::DampingSampling>& v) {
+                self.get_dampings() = v;
+            }, py::return_value_policy::reference_internal);
 
     auto migration_damping_class = py::class_<epi::VectorDamping>(m, "MigrationDamping");
     bind_damping_members(migration_damping_class);
