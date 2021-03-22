@@ -398,7 +398,7 @@ TEST(TestSaveParameters, compareGraphs)
 
     epi::set_params_distributions_normal(model, t0, tmax, 0.15);
 
-    epi::Graph<epi::SecirModel<epi::AgeGroup2>, epi::MigrationEdge> graph;
+    epi::Graph<epi::SecirModel<epi::AgeGroup2>, epi::MigrationParameters> graph;
     graph.add_node(0, model);
     graph.add_node(1, model);
     graph.add_edge(0, 1, Eigen::VectorXd::Constant(model.populations.get_num_compartments(), 0.01));
@@ -406,7 +406,7 @@ TEST(TestSaveParameters, compareGraphs)
 
     epi::write_graph(graph, "graph_parameters");
 
-    epi::Graph<epi::SecirModel<epi::AgeGroup2>, epi::MigrationEdge> graph_read =
+    epi::Graph<epi::SecirModel<epi::AgeGroup2>, epi::MigrationParameters> graph_read =
         epi::read_graph<epi::SecirModel<epi::AgeGroup2>>("graph_parameters");
 
     auto num_nodes = graph.nodes().size();
@@ -632,13 +632,13 @@ TEST(TestSaveParameters, compareGraphWithFile)
 
     epi::set_params_distributions_normal(model, t0, tmax, 0.15);
 
-    epi::Graph<Model, epi::MigrationEdge> graph;
+    epi::Graph<Model, epi::MigrationParameters> graph;
     graph.add_node(0, model);
     graph.add_node(1, model);
     graph.add_edge(0, 1, Eigen::VectorXd::Constant(model.populations.get_num_compartments(), 0.01));
     graph.add_edge(1, 0, Eigen::VectorXd::Constant(model.populations.get_num_compartments(), 0.01));
 
-    epi::Graph<Model, epi::MigrationEdge> graph_read = epi::read_graph<Model>(TEST_DATA_DIR);
+    epi::Graph<Model, epi::MigrationParameters> graph_read = epi::read_graph<Model>(TEST_DATA_DIR);
 
     auto num_nodes = graph.nodes().size();
     auto num_edges = graph.edges().size();
