@@ -777,8 +777,6 @@ void write_edge(const std::vector<TixiDocumentHandle>& edge_handles, const std::
                 const Graph<Model, MigrationParameters>& graph, int edge)
 {
     assert(graph.nodes().size() > 0 && "Graph Nodes are empty");
-    // int num_groups  = static_cast<int>(graph.nodes()[0].property.parameters.get_num_groups());
-    // int num_compart = static_cast<int>(graph.nodes()[0].property.populations.get_num_compartments()) / num_groups;
 
     auto start_node = static_cast<int>(graph.edges()[edge].start_node_idx);
     auto end_node   = static_cast<int>(graph.edges()[edge].end_node_idx);
