@@ -91,19 +91,17 @@ void set_params_distributions_normal(
     model.parameters.get_contact_patterns().set_distribution_damp_offdiag_rel(ParameterDistributionUniform(0.0, 0.3));
 }
 
-/* Draws a sample from SecirParams parameter distributions and stores sample values
-* as SecirParams parameter values (cf. UncertainValue and SecirParams classes)
-* @param[inout] params SecirParams including contact patterns for alle age groups
-*/
-template <class AgeGroup>
-void draw_sample(CompartmentalModel<Populations<AgeGroup, InfectionType>, SecirParams<(size_t)AgeGroup::Count>>& model)
-{
-    model.parameters.get_seasonality().draw_sample();
+/**
+ * draws a sample from the specified distributions for all parameters related to the demographics, e.g. population.
+ * @param[inout] params SecirParams including contact patterns for alle age groups
+ */
+template<class AgeGroup>
+void draw_sample_demographics(CompartmentalModel<Populations<AgeGroup, InfectionType>, SecirParams<(size_t)AgeGroup::Count>>& model)
+{    
     model.parameters.get_icu_capacity().draw_sample();
     model.parameters.get_test_and_trace_capacity().draw_sample();
 
     for (size_t i = 0; i < model.parameters.get_num_groups(); i++) {
-
         double group_total = model.populations.get_group_total(AgeGroup(i));
 
         model.populations[{AgeGroup(i), InfectionType::E}].draw_sample();
@@ -119,7 +117,19 @@ void draw_sample(CompartmentalModel<Populations<AgeGroup, InfectionType>, SecirP
         model.populations.set_difference_from_group_total(group_total, AgeGroup(i), AgeGroup(i), epi::InfectionType::S);
         model.populations.set_difference_from_group_total(model.populations.get_group_total(AgeGroup(i)), AgeGroup(i),
                                                           AgeGroup(i), epi::InfectionType::S);
+    }
+}
 
+/**
+ * draws a sample from the specified distributions for all parameters related to the infection.
+ * @param[inout] params SecirParams including contact patterns for alle age groups
+ */
+template<class AgeGroup>
+void draw_sample_infection(CompartmentalModel<Populations<AgeGroup, InfectionType>, SecirParams<(size_t)AgeGroup::Count>>& model)
+{
+    model.parameters.get_seasonality().draw_sample();
+
+    for (size_t i = 0; i < model.parameters.get_num_groups(); i++) {
         model.parameters.times[i].get_incubation().draw_sample();
         model.parameters.times[i].get_serialinterval().draw_sample();
         model.parameters.times[i].get_infectious_mild().draw_sample();
@@ -138,9 +148,18 @@ void draw_sample(CompartmentalModel<Populations<AgeGroup, InfectionType>, SecirP
         model.parameters.probabilities[i].get_hospitalized_per_infectious().draw_sample();
         model.parameters.probabilities[i].get_icu_per_hospitalized().draw_sample();
     }
+}
 
+/** Draws a sample from SecirParams parameter distributions and stores sample values
+* as SecirParams parameter values (cf. UncertainValue and SecirParams classes)
+* @param[inout] params SecirParams including contact patterns for alle age groups
+*/
+template <class AgeGroup>
+void draw_sample(CompartmentalModel<Populations<AgeGroup, InfectionType>, SecirParams<(size_t)AgeGroup::Count>>& model)
+{
+    draw_sample_infection(model);
+    draw_sample_demographics(model);
     model.parameters.get_contact_patterns().draw_sample();
-
     model.apply_constraints();
 }
 
