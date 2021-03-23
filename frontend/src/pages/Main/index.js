@@ -192,7 +192,7 @@ class MainPage extends Component {
     if (!this.chart_data) {
       return [];
     }
-    let data = JSON.parse(JSON.stringify(this.chart_data.get(this.state.selected.rs)));
+    let data = this.chart_data.get(this.state.selected.rs) ?? [];
 
     switch (this.state.dataset) {
       case 'absolute':
