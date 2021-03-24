@@ -280,8 +280,14 @@ it('getParentRoute', () => {
 
 it('deepCopy', () => {
   const object = {a: 0, b: [1, 2, 3], c: {d: 'test'}};
-  const copied = utils.deepCopy(object);
+  const copiedObject = utils.deepCopy(object);
 
-  expect(copied).toStrictEqual(object);
-  expect(copied).not.toBe(object);
+  expect(copiedObject).toStrictEqual(object);
+  expect(copiedObject).not.toBe(object);
+
+  const array = [0, 1, 2];
+  const copiedArray = utils.deepCopy(array);
+
+  expect(copiedArray).toStrictEqual(array);
+  expect(copiedArray).not.toBe(array);
 });
