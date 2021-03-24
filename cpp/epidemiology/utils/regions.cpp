@@ -1,6 +1,8 @@
 #include "epidemiology/utils/regions.h"
 #include "epidemiology/utils/holiday_data_de.ipp"
 
+#include <tuple>
+
 namespace epi
 {
 
