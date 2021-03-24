@@ -212,7 +212,7 @@ private:
         auto& shared_params_model = m_graph.nodes()[0].property;
         draw_sample_infection(shared_params_model);
         auto& shared_contacts = shared_params_model.parameters.template get<epi::ContactPatterns>();
-        shared_contacts.draw_sample();
+        shared_contacts.draw_sample_dampings();
         auto& shared_dynamic_npis = shared_params_model.parameters.template get<DynamicNPIsInfected>();
         shared_dynamic_npis.draw_sample();
 
@@ -226,12 +226,14 @@ private:
             //save demographic parameters so they aren't overwritten
             auto local_icu_capacity = node_model.parameters.template get<ICUCapacity>();
             auto local_tnt_capacity = node_model.parameters.template get<TestAndTraceCapacity>();
+            auto local_holidays = node_model.parameters.template get<ContactPatterns>().get_school_holidays();
             node_model.parameters = shared_params_model.parameters;
             node_model.parameters.template get<ICUCapacity>() = local_icu_capacity;
             node_model.parameters.template get<TestAndTraceCapacity>() = local_tnt_capacity;
+            node_model.parameters.template get<ContactPatterns>().get_school_holidays() = local_holidays;
 
             node_model.apply_constraints();
-            
+
             sim_graph.add_node(params_node.id, node_model, m_t0, m_dt_integration);
         }
 

@@ -111,14 +111,30 @@ TEST(TestUncertain, uncertain_matrix)
     EXPECT_EQ(uncertain_mat.get_cont_freq_mat()[0].get_baseline()(1, 1), 4);
     EXPECT_EQ(uncertain_mat.get_cont_freq_mat()[0].get_dampings()[0].get_coeffs()(1, 1), 0.7);
 
-    //test sampling of dampings with and without accumulation
-    uncertain_mat.get_dampings().emplace_back(epi::UncertainValue(0.), epi::DampingLevel(0), epi::DampingType(0),
+    uncertain_mat.get_dampings().emplace_back(epi::UncertainValue(0.5), epi::DampingLevel(0), epi::DampingType(0),
                                               epi::SimulationTime(3.0), std::vector<size_t>(1, size_t(0)),
                                               Eigen::VectorXd::Constant(2, 1.0));
 
+    uncertain_mat.get_school_holiday_damping() = epi::DampingSampling(
+        epi::UncertainValue(1.), epi::DampingLevel(1), epi::DampingType(0), epi::SimulationTime(0.0),
+        std::vector<size_t>(1, size_t(0)), (Eigen::VectorXd(2) << 1.0, 0.0).finished());
+    uncertain_mat.get_school_holidays().assign({{epi::SimulationTime(5.0), epi::SimulationTime(17.0)}});
+
     uncertain_mat.draw_sample(true);
-    EXPECT_EQ(uncertain_mat.get_cont_freq_mat()[0].get_dampings().size(), 2);
+    EXPECT_EQ(uncertain_mat.get_cont_freq_mat()[0].get_dampings().size(), 4);
 
     uncertain_mat.draw_sample();
-    EXPECT_EQ(uncertain_mat.get_cont_freq_mat()[0].get_dampings().size(), 1);
+    EXPECT_EQ(uncertain_mat.get_cont_freq_mat()[0].get_dampings().size(), 3);
+
+    EXPECT_EQ(uncertain_mat.get_cont_freq_mat()[0].get_dampings()[0].get_level(), epi::DampingLevel(0));
+    EXPECT_EQ(uncertain_mat.get_cont_freq_mat()[0].get_dampings()[0].get_coeffs()(0, 0), 0.5);
+    EXPECT_EQ(uncertain_mat.get_cont_freq_mat()[0].get_dampings()[0].get_time(), epi::SimulationTime(3.0));
+
+    EXPECT_EQ(uncertain_mat.get_cont_freq_mat()[0].get_dampings()[1].get_level(), epi::DampingLevel(1));
+    EXPECT_EQ(uncertain_mat.get_cont_freq_mat()[0].get_dampings()[1].get_coeffs()(0, 0), 1.0);
+    EXPECT_EQ(uncertain_mat.get_cont_freq_mat()[0].get_dampings()[1].get_time(), epi::SimulationTime(5.0));
+
+    EXPECT_EQ(uncertain_mat.get_cont_freq_mat()[0].get_dampings()[2].get_level(), epi::DampingLevel(1));
+    EXPECT_EQ(uncertain_mat.get_cont_freq_mat()[0].get_dampings()[2].get_coeffs()(0, 0), 0.0);
+    EXPECT_EQ(uncertain_mat.get_cont_freq_mat()[0].get_dampings()[2].get_time(), epi::SimulationTime(17.0));
 }

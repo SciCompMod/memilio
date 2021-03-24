@@ -89,6 +89,9 @@ add_library(epidemiology
     epidemiology/utils/parameter_set.cpp
     epidemiology/utils/date.h
     epidemiology/utils/date.cpp
+    epidemiology/utils/regions.h
+    epidemiology/utils/regions.cpp
+    epidemiology/utils/holiday_data_de.ipp
     epidemiology/utils/matrix_shape.h
     epidemiology/utils/matrix_shape.cpp
     epidemiology/utils/random_number_generator.h
