@@ -12,6 +12,7 @@ import HeatMap from '~/common/heat-map';
 import {fixUrl} from '~/common/utils';
 
 import './styles.scss';
+import {deepCopy} from '../../common/utils';
 
 /**
  *  This component is the main page displayed. It shows the reproduction vales RT and RT relative
@@ -192,7 +193,8 @@ class MainPage extends Component {
     if (!this.chart_data) {
       return [];
     }
-    let data = this.chart_data.get(this.state.selected.rs) ?? [];
+
+    let data = deepCopy(this.chart_data.get(this.state.selected.rs) ?? []);
 
     switch (this.state.dataset) {
       case 'absolute':

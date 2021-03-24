@@ -277,3 +277,11 @@ it('getParentRoute', () => {
   expect(utils.getParentRoute('/parent/child/child2')).toEqual('/parent/child');
   expect(utils.getParentRoute('/parent')).toEqual('');
 });
+
+it('deepCopy', () => {
+  const object = {a: 0, b: [1, 2, 3], c: {d: 'test'}};
+  const copied = utils.deepCopy(object);
+
+  expect(copied).toStrictEqual(object);
+  expect(copied).not.toBe(object);
+});

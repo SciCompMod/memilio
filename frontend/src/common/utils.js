@@ -289,3 +289,13 @@ export function fixUrl(match) {
 export function getParentRoute(path) {
   return path.substring(0, path.lastIndexOf('/'));
 }
+
+/**
+ * Makes a deep copy of the given object.
+ *
+ * @param object
+ * @return {any}
+ */
+export function deepCopy(object) {
+  return JSON.parse(JSON.stringify(object));
+}
