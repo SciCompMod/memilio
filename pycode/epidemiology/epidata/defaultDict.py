@@ -19,15 +19,16 @@ if len(dfp_vec) > 0:
     default_file_path = os.path.join(dfp_vec[0], os.path.join('epidemiology', 'data'))
 
 defaultDict = {
-    'read_data': False,
-    'make_plot': False,
-    'out_folder': default_file_path,
-    'update_data': False,
-    'start_date': date(2020, 4, 24),
-    'end_date': date.today(),
-    'split_berlin': False,
-    'moving_average': False,
-    'out_form': 'json_timeasstring'
+   'read_data': False,
+   'make_plot': False,
+   'out_folder': default_file_path,
+   'update_data': False,
+   'start_date': date(2020, 4, 24),
+   'end_date': date.today(),
+   'split_berlin': False,
+   'moving_average': False,
+   'fill_dates': False,
+   'out_form': 'json_timeasstring'
 }
 
 # The following dict EngEng makes sure that for all
