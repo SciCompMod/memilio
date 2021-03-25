@@ -1,34 +1,134 @@
 #ifndef EPI_ABM_PARAMETERS_H
 #define EPI_ABM_PARAMETERS_H
 
+#include "epidemiology/abm/age.h"
+#include "epidemiology/utils/eigen.h"
+#include "epidemiology/utils/custom_index_array.h"
+#include "epidemiology/utils/parameter_set.h"
 #include <limits>
 
 namespace epi
 {
 
+struct IncubationPeriod
+{
+    using Type = CustomIndexArray<double, AbmAgeGroup>;
+    static Type get_default()
+    {
+        return Type(1.);
+    }
+};
+
+struct SusceptibleToExposedByCarrier
+{
+    using Type = CustomIndexArray<double, AbmAgeGroup>;
+    static Type get_default()
+    {
+        return Type(1.);
+    }
+};
+
+struct SusceptibleToExposedByInfected
+{
+    using Type = CustomIndexArray<double, AbmAgeGroup>;
+    static Type get_default()
+    {
+        return Type(1.);
+    }
+};
+
+struct CarrierToInfected
+{
+    using Type = CustomIndexArray<double, AbmAgeGroup>;
+    static Type get_default()
+    {
+        return Type(1.);
+    }
+};
+
+struct CarrierToRecovered
+{
+    using Type = CustomIndexArray<double, AbmAgeGroup>;
+    static Type get_default()
+    {
+        return Type(1.);
+    }
+};
+
+struct InfectedToRecovered
+{
+    using Type = CustomIndexArray<double, AbmAgeGroup>;
+    static Type get_default()
+    {
+        return Type(1.);
+    }
+};
+
+struct InfectedToDead
+{
+    using Type = CustomIndexArray<double, AbmAgeGroup>;
+    static Type get_default()
+    {
+        return Type(1.);
+    }
+};
+
+struct RecoveredToSusceptible
+{
+    using Type = CustomIndexArray<double, AbmAgeGroup>;
+    static Type get_default()
+    {
+        return Type(1.);
+    }
+};
+
+struct DetectInfection
+{
+    using Type = CustomIndexArray<double, AbmAgeGroup>;
+    static Type get_default()
+    {
+        return Type(0.5);
+    }
+};
+
+
 /**
  * parameters of the infection that are the same everywhere within the world.
  */
-class GlobalInfectionParameters {
-public:
-    double incubation_period                  = 1;
-    double susceptible_to_exposed_by_carrier  = 1;
-    double susceptible_to_exposed_by_infected = 1;
-    double carrier_to_infected                = 1;
-    double carrier_to_recovered               = 1;
-    double infected_to_recovered              = 1;
-    double infected_to_dead                   = 1;
-    double recovered_to_susceptible           = 1;
-    double detect_infection                   = 0.5;
+using GlobalInfectionParameters = ParameterSet<IncubationPeriod,
+                                               SusceptibleToExposedByCarrier,
+                                               SusceptibleToExposedByInfected,
+                                               CarrierToInfected,
+                                               CarrierToRecovered,
+                                               InfectedToRecovered,
+                                               InfectedToDead,
+                                               RecoveredToSusceptible,
+                                               DetectInfection>;
+
+struct DeathFactor
+{
+    using Type = double;
+    static constexpr Type get_default()
+    {
+        return 1.;
+    }
+};
+
+struct EffectiveContacts
+{
+    using Type = double;
+    static constexpr Type get_default()
+    {
+        return std::numeric_limits<double>::max();
+    }
 };
 
 /**
  * parameters of the infection that depend on the location.
  */
-struct LocalInfectionParameters {
-    double death_factor       = 1;
-    double effective_contacts = std::numeric_limits<double>::max();
-};
+using LocalInfectionParameters = ParameterSet<DeathFactor,
+                                              EffectiveContacts>;
+
 
 } // namespace epi
 #endif

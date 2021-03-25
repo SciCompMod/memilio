@@ -47,13 +47,13 @@ TEST(TestImplicitEuler, compareOneTimeStep)
     contact_matrix.add_damping(0.7, epi::SimulationTime(30.));
 
     model.populations.set_total(nb_total_t0);
-    model.populations.set(nb_exp_t0, (epi::AgeGroup1)0, epi::InfectionType::E);
-    model.populations.set(nb_car_t0, (epi::AgeGroup1)0, epi::InfectionType::C);
-    model.populations.set(nb_inf_t0, (epi::AgeGroup1)0, epi::InfectionType::I);
-    model.populations.set(nb_hosp_t0, (epi::AgeGroup1)0, epi::InfectionType::H);
-    model.populations.set(nb_icu_t0, (epi::AgeGroup1)0, epi::InfectionType::U);
-    model.populations.set(nb_rec_t0, (epi::AgeGroup1)0, epi::InfectionType::R);
-    model.populations.set(nb_dead_t0, (epi::AgeGroup1)0, epi::InfectionType::D);
+    model.populations[{(epi::AgeGroup1)0, epi::InfectionType::E}] = nb_exp_t0;
+    model.populations[{(epi::AgeGroup1)0, epi::InfectionType::C}] = nb_car_t0;
+    model.populations[{(epi::AgeGroup1)0, epi::InfectionType::I}] = nb_inf_t0;
+    model.populations[{(epi::AgeGroup1)0, epi::InfectionType::H}] = nb_hosp_t0;
+    model.populations[{(epi::AgeGroup1)0, epi::InfectionType::U}] = nb_icu_t0;
+    model.populations[{(epi::AgeGroup1)0, epi::InfectionType::R}] = nb_rec_t0;
+    model.populations[{(epi::AgeGroup1)0, epi::InfectionType::D}] = nb_dead_t0;
     model.populations.set_difference_from_total(nb_total_t0, (epi::AgeGroup1)0, epi::InfectionType::S);
 
     params.probabilities[0].set_infection_from_contact(1.0);

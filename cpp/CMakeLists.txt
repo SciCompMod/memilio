@@ -41,14 +41,11 @@ add_library(epidemiology
     epidemiology/utils/ScalarType.h
     epidemiology/model/compartmentalmodel.h
     epidemiology/model/populations.h
-    epidemiology/model/parameterset.h
     epidemiology/model/simulation.h
     epidemiology/secir/damping.cpp
     epidemiology/secir/damping.h
     epidemiology/secir/secir_params.h
     epidemiology/secir/secir.h
-    epidemiology/secir/seir_params.cpp
-    epidemiology/secir/seir_params.h
     epidemiology/secir/seir.h
     epidemiology/secir/seir.cpp
     epidemiology/math/adapt_rk.cpp
@@ -71,6 +68,7 @@ add_library(epidemiology
     epidemiology/secir/uncertain_matrix.cpp
     epidemiology/secir/contact_matrix.h    
     epidemiology/secir/contact_matrix.cpp
+    epidemiology/utils/custom_index_array.h
     epidemiology/utils/memory.h
     epidemiology/utils/parameter_distributions.h
     epidemiology/utils/time_series.h
@@ -79,6 +77,10 @@ add_library(epidemiology
     epidemiology/utils/span.cpp
     epidemiology/utils/type_safe.h
     epidemiology/utils/type_safe.cpp
+    epidemiology/utils/parameter_set.h
+    epidemiology/utils/parameter_set.cpp
+    epidemiology/utils/date.h
+    epidemiology/utils/date.cpp
     epidemiology/abm/location.cpp
     epidemiology/abm/location.h
     epidemiology/abm/simulation.cpp

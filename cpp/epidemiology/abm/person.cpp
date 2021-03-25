@@ -1,13 +1,15 @@
 #include "epidemiology/abm/person.h"
 #include "epidemiology/abm/world.h"
 #include "epidemiology/abm/location.h"
+#include "epidemiology/abm/random_number_generator.h"
 
 namespace epi
 {
 
-Person::Person(Location& location, InfectionState state)
+Person::Person(Location& location, InfectionState state, AbmAgeGroup age)
     : m_location(location)
     , m_state(state)
+    , m_age(age)
 {
 }
 
@@ -25,7 +27,7 @@ void Person::interact(double dt, const GlobalInfectionParameters& global_infecti
     else {
         new_state = m_location.get().interact(*this, dt, global_infection_params);
         if (new_state == InfectionState::Exposed) {
-            m_time_until_carrier = global_infection_params.incubation_period;
+            m_time_until_carrier = global_infection_params.get<IncubationPeriod>()[{this->m_age}];
         }
     }
 

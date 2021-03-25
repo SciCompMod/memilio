@@ -266,3 +266,28 @@ it('replaceLastChar', () => {
   expect(utils.replaceLastChar(',', ';')).toEqual(';');
   expect(() => utils.replaceLastChar('', ';')).toThrow(RangeError);
 });
+
+it('fixUrl', () => {
+  expect(utils.fixUrl({path: '/', url: '/test'})).toEqual({path: '', url: ''});
+  expect(utils.fixUrl({path: '/test', url: '/test'})).toEqual({path: '/test', url: '/test'});
+});
+
+it('getParentRoute', () => {
+  expect(utils.getParentRoute('/parent/child')).toEqual('/parent');
+  expect(utils.getParentRoute('/parent/child/child2')).toEqual('/parent/child');
+  expect(utils.getParentRoute('/parent')).toEqual('');
+});
+
+it('deepCopy', () => {
+  const object = {a: 0, b: [1, 2, 3], c: {d: 'test'}};
+  const copiedObject = utils.deepCopy(object);
+
+  expect(copiedObject).toStrictEqual(object);
+  expect(copiedObject).not.toBe(object);
+
+  const array = [0, 1, 2];
+  const copiedArray = utils.deepCopy(array);
+
+  expect(copiedArray).toStrictEqual(array);
+  expect(copiedArray).not.toBe(array);
+});

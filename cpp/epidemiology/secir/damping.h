@@ -17,17 +17,24 @@ namespace epi
 /**
  * integer damping level.
  */
-DECL_TYPESAFE(DampingLevel, int);
+DECL_TYPESAFE(int, DampingLevel);
 
 /**
  * integer damping type.
  */
-DECL_TYPESAFE(DampingType, int);
+DECL_TYPESAFE(int, DampingType);
 
 /**
  * double simulation time.
  */
-DECL_TYPESAFE(SimulationTime, double);
+class SimulationTime : public TypeSafe<double, SimulationTime>,
+                       public OperatorAdditionSubtraction<SimulationTime>,
+                       public OperatorScalarMultiplicationDivision<SimulationTime, double>,
+                       public OperatorComparison<SimulationTime>
+{
+public:
+    using TypeSafe<double, SimulationTime>::TypeSafe;
+};
 
 /**
  * represent interventions or effects that affect contact frequencies between multiple groups.
