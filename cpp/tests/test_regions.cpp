@@ -17,6 +17,7 @@ TEST(TestRegions, get_holidays)
 TEST(TestRegions, get_state_id)
 {
     ASSERT_EQ(epi::regions::de::get_state_id(epi::regions::de::CountyId(1001)), epi::regions::de::StateId(1));
+    ASSERT_EQ(epi::regions::de::get_state_id(epi::regions::de::CountyId(2000)), epi::regions::de::StateId(2));
     ASSERT_EQ(epi::regions::de::get_state_id(epi::regions::de::CountyId(5970)), epi::regions::de::StateId(5));
     ASSERT_EQ(epi::regions::de::get_state_id(epi::regions::de::CountyId(9161)), epi::regions::de::StateId(9));
 }
