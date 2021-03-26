@@ -65,7 +65,7 @@ public:
     /**
      * stream operators.
      */
-    friend std::ostream& operator<<(std::ostream& os, const TypeSafe& ts)
+    friend std::ostream& operator<<(std::ostream& os, const Derived& ts)
     {
         return (os << ts.m_t);
     }
