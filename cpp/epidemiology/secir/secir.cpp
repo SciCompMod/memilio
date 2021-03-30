@@ -785,6 +785,14 @@ void secir_get_derivatives(SecirParams const& params, Eigen::Ref<const Eigen::Ve
     size_t n_agegroups = params.get_num_groups();
 
     ContactMatrixGroup const& contact_matrix = params.get_contact_patterns();
+    
+    auto test_and_trace_required = 0;
+    for (size_t i = 0; i < n_agegroups; i++) {
+        size_t Ci = params.populations.get_flat_index({i, C});
+        double R3 =
+            0.5 / (params.times[i].get_incubation() - params.times[i].get_serialinterval());
+        test_and_trace_required += (1 - params.probabilities[i].get_asymp_per_infectious()) * R3 * pop[Ci];
+    }
 
     for (size_t i = 0; i < n_agegroups; i++) {
 
@@ -800,13 +808,7 @@ void secir_get_derivatives(SecirParams const& params, Eigen::Ref<const Eigen::Ve
         dydt[Si] = 0;
         dydt[Ei] = 0;
 
-        double dummy_R2 =
-            1.0 / (2 * params.times[i].get_serialinterval() - params.times[i].get_incubation()); // R2 = 1/(2SI-TINC)
-        double dummy_R3 =
-            0.5 / (params.times[i].get_incubation() - params.times[i].get_serialinterval()); // R3 = 1/(2(TINC-SI))
-
         //symptomatic are less well quarantined when testing and tracing is overwhelmed so they infect more people
-        auto test_and_trace_required = (1 - params.probabilities[i].get_asymp_per_infectious()) * dummy_R3 * pop[Ci];
         auto risk_from_symptomatic   = smoother_cosine(
             test_and_trace_required, params.get_test_and_trace_capacity(), params.get_test_and_trace_capacity() * 5,
             params.probabilities[i].get_risk_from_symptomatic(),
@@ -841,6 +843,11 @@ void secir_get_derivatives(SecirParams const& params, Eigen::Ref<const Eigen::Ve
             icu_occupancy += y[Uj];
         }
 
+        double dummy_R2 =
+            1.0 / (2 * params.times[i].get_serialinterval() - params.times[i].get_incubation()); // R2 = 1/(2SI-TINC)
+        double dummy_R3 =
+            0.5 / (params.times[i].get_incubation() - params.times[i].get_serialinterval()); // R3 = 1/(2(TINC-SI))
+            
         // ICU capacity shortage is close
         double prob_hosp2icu =
             smoother_cosine(icu_occupancy, 0.90 * params.get_icu_capacity(), params.get_icu_capacity(),
