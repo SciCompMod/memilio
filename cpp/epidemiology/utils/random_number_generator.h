@@ -23,11 +23,11 @@ class RandomNumberGenerator
 public:
     using result_type = std::mt19937_64::result_type;
 
-    static result_type min()
+    static constexpr result_type min()
     {
         return std::mt19937_64::min();
     }
-    static result_type max()
+    static constexpr result_type max()
     {
         return std::mt19937_64::max();
     }
