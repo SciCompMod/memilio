@@ -12,7 +12,8 @@ namespace epi
  * @param secir Results of secir simulation
  * @param filename name of file
  */
-void save_result(const std::vector<TimeSeries<double>>& result, const std::string& filename);
+void save_result(const std::vector<TimeSeries<double>>& result, const std::vector<int>& ids,
+                 const std::string& filename);
 
 class SecirSimulationResult
 {

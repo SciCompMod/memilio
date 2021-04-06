@@ -13,13 +13,14 @@ using namespace H5;
 namespace epi
 {
 
-void save_result(const std::vector<TimeSeries<double>>& results, const std::string& filename)
+void save_result(const std::vector<TimeSeries<double>>& results, const std::vector<int>& ids,
+                 const std::string& filename)
 {
     int county = 0;
     H5File file(filename, H5F_ACC_TRUNC);
     for (auto& result : results) {
 
-        H5::Group county_group = file.createGroup("/" + std::to_string(county));
+        H5::Group county_group = file.createGroup("/" + std::to_string(ids[county]));
         const int n_dims       = 2;
 
         const int n_data    = static_cast<int>(result.get_num_time_points());
@@ -60,6 +61,17 @@ void save_result(const std::vector<TimeSeries<double>>& results, const std::stri
     }
 }
 
+herr_t file_info(hid_t loc_id, const char* name, const H5L_info_t* linfo, void* opdata)
+{
+    unused(linfo);
+    hid_t group;
+    auto group_names = reinterpret_cast<std::vector<std::string>*>(opdata);
+    group            = H5Gopen2(loc_id, name, H5P_DEFAULT);
+    group_names->push_back(name);
+    H5Gclose(group);
+    return 0;
+}
+
 std::vector<SecirSimulationResult> read_result(const std::string& filename, int nb_groups)
 {
     const H5std_string FILE_NAME(filename);
@@ -67,14 +79,13 @@ std::vector<SecirSimulationResult> read_result(const std::string& filename, int 
     std::vector<SecirSimulationResult> results;
 
     H5File file(FILE_NAME, H5F_ACC_RDONLY);
-    hid_t file_it        = file.getLocId();
-    hsize_t num_counties = 0;
-    auto success         = H5Gget_num_objs(file_it, &num_counties);
-    unused(success);
-    std::cout << static_cast<size_t>(num_counties) << std::endl;
+    hid_t file_it = file.getLocId();
+    std::vector<std::string> group_names;
+    herr_t idx = H5Literate(file_it, H5_INDEX_NAME, H5_ITER_INC, NULL, file_info, &group_names);
+    unused(idx);
 
-    for (size_t county = 0; county < static_cast<size_t>(num_counties); ++county) {
-        H5std_string DATASET_NAME_TIME("/" + std::to_string(county) + "/Time");
+    for (auto& name : group_names) {
+        H5std_string DATASET_NAME_TIME("/" + name + "/Time");
         DataSet dataset_time = file.openDataSet(DATASET_NAME_TIME);
 
         DataSpace filespace_time = dataset_time.getSpace();
@@ -97,7 +108,7 @@ std::vector<SecirSimulationResult> read_result(const std::string& filename, int 
         }
 
         for (int i = 0; i < nb_groups; ++i) {
-            auto DATASET_NAME_GROUP = "/" + std::to_string(county) + "/Group" + std::to_string(i + 1);
+            auto DATASET_NAME_GROUP = "/" + name + "/Group" + std::to_string(i + 1);
             auto dataset_group      = file.openDataSet(DATASET_NAME_GROUP);
 
             auto filespace_group = dataset_group.getSpace();
@@ -118,7 +129,7 @@ std::vector<SecirSimulationResult> read_result(const std::string& filename, int 
             }
         }
 
-        H5std_string DATASET_NAME_TOTAL("/" + std::to_string(county) + "/Total");
+        H5std_string DATASET_NAME_TOTAL("/" + name + "/Total");
         DataSet dataset_total = file.openDataSet(DATASET_NAME_TOTAL);
 
         DataSpace filespace = dataset_total.getSpace();

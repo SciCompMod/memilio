@@ -593,9 +593,15 @@ void write_single_run_params(const int run,
             epi::get_current_dir_name());
     }
     std::vector<TimeSeries<double>> all_results;
+    std::vector<int> ids;
+
+    ids.reserve(graph.nodes().size());
     all_results.reserve(graph.nodes().size());
     std::transform(graph.nodes().begin(), graph.nodes().end(), std::back_inserter(all_results), [](auto& node) {
         return node.property.get_result();
+    });
+    std::transform(graph.nodes().begin(), graph.nodes().end(), std::back_inserter(ids), [](auto& node) {
+        return node.id;
     });
 
     int node_id = 0;
@@ -615,7 +621,7 @@ void write_single_run_params(const int run,
         node_id++;
     }
 
-    save_result(all_results,
+    save_result(all_results, ids,
                 path_join(abs_path, ("Results_run" + std::to_string(run) + std::to_string(node_id) + ".h5")));
 }
 

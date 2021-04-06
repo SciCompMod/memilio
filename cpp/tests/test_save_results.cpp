@@ -58,7 +58,8 @@ TEST(TestSaveResult, compareResultWithH5)
 
     auto result_from_sim                                  = simulate(t0, tmax, dt, model);
     std::vector<epi::TimeSeries<double>> results_from_sim = {result_from_sim, result_from_sim};
-    epi::save_result(results_from_sim, "test_result.h5");
+    std::vector<int> ids                                  = {1, 2};
+    epi::save_result(results_from_sim, ids, "test_result.h5");
 
     std::vector<epi::SecirSimulationResult> results_from_file{
         epi::read_result("test_result.h5", static_cast<int>(nb_groups))};
