@@ -103,8 +103,6 @@
     "webpack-license-plugin": "^4.1.2"
   },
   "scripts": {
-    "build:wasm": "cmake -E make_directory build_wasm && cd build_wasm && emcmake cmake -DCMAKE_BUILD_TYPE=Release .. && emmake make && emmake make install",
-    "build:wasm:debug": "cmake -E make_directory build_wasm && cd build_wasm && emcmake cmake -DCMAKE_BUILD_TYPE=Debug .. && emmake make && emmake make install",
     "start": "node scripts/start.js",
     "build": "node scripts/build.js",
     "test": "node scripts/test.js",

@@ -265,27 +265,12 @@ build-js:
     paths:
       - frontend/build/
 
-build-js-bindings:
-  stage: build
-  tags:
-   - docker
-  image: trzeci/emscripten
-  script:
-  - cd frontend
-  - mkdir build && cd build
-  - emcmake cmake ..
-  - cmake --build .
-  artifacts:
-    paths:
-    - frontend/build/secirjs.js
-    - frontend/build/secirjs.wasm
-
 test-js:
   tags:
    - docker
   image: node:12
   stage: test
-  needs: ['build-js', 'build-js-bindings']
+  needs: ['build-js']
   before_script:
     - cd frontend
     - npm install
@@ -305,7 +290,6 @@ www:
   stage: deploy
   dependencies:
     - build-js
-    - build-js-bindings
     - download-data
   script:
     - echo "Deploying to server"
