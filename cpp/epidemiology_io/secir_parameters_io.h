@@ -7,12 +7,232 @@
 #include <epidemiology/secir/parameter_studies.h>
 #include <epidemiology_io/io.h>
 #include <epidemiology_io/secir_result_io.h>
+#include <epidemiology/utils/date.h>
 
 #include <tixi.h>
 
-
 namespace epi
 {
+namespace details
+{
+
+    /**
+ * @brief interpolates age_ranges to param_ranges and saves ratios in interpolation
+ * @param age_ranges original age ranges of the data
+ * @param interpolation vector of ratios that are aplied to the data of age_ranges
+ * @param carry_over boolean vector which indicates whether there is an overflow from one age group to the next while interpolating data
+ */
+    void interpolate_ages(const std::vector<double>& age_ranges, std::vector<std::vector<double>>& interpolation,
+                          std::vector<bool>& carry_over);
+
+    /**
+ * @brief reads populations data from RKI
+ * @param path Path to RKI file
+ * @param id_name Name of region key column
+ * @param region vector of keys of the region of interest
+ * @param year Specifies year at which the data is read
+ * @param month Specifies month at which the data is read
+ * @param day Specifies day at which the data is read
+ * @param num_* output vector for number of people in the corresponding compartement
+ * @param t_* vector average time it takes to get from one compartement to another for each age group
+ * @param mu_* vector probabilities to get from one compartement to another for each age group
+ */
+    void read_rki_data(std::string const& path, const std::string& id_name, std::vector<int> const& region, Date date,
+                       std::vector<std::vector<double>>& num_exp, std::vector<std::vector<double>>& num_car,
+                       std::vector<std::vector<double>>& num_inf, std::vector<std::vector<double>>& num_hosp,
+                       std::vector<std::vector<double>>& num_icu, std::vector<std::vector<double>>& num_death,
+                       std::vector<std::vector<double>>& num_rec, const std::vector<std::vector<int>>& t_car_to_rec,
+                       const std::vector<std::vector<int>>& t_car_to_inf,
+                       const std::vector<std::vector<int>>& t_exp_to_car,
+                       const std::vector<std::vector<int>>& t_inf_to_rec,
+                       const std::vector<std::vector<int>>& t_inf_to_hosp,
+                       const std::vector<std::vector<int>>& t_hosp_to_rec,
+                       const std::vector<std::vector<int>>& t_hosp_to_icu,
+                       const std::vector<std::vector<int>>& t_icu_to_dead,
+                       const std::vector<std::vector<double>>& mu_C_R, const std::vector<std::vector<double>>& mu_I_H,
+                       const std::vector<std::vector<double>>& mu_H_U, const std::vector<double>& scaling_factor_inf);
+
+    /**
+ * @brief sets populations data from RKI into a SecirModel
+ * @param model vector of objects in which the data is set
+ * @param path Path to RKI file
+ * @param id_name Name of region key column
+ * @param region vector of keys of the region of interest
+ * @param year Specifies year at which the data is read
+ * @param month Specifies month at which the data is read
+ * @param day Specifies day at which the data is read
+ * @param scaling_factor_inf factors by which to scale the confirmed cases of rki data
+ */
+    template <class Model>
+    void set_rki_data(std::vector<Model>& model, const std::string& path, const std::string& id_name,
+                      std::vector<int> const& region, Date date, const std::vector<double>& scaling_factor_inf)
+    {
+
+        std::vector<double> age_ranges = {5., 10., 20., 25., 20., 20.};
+        assert(scaling_factor_inf.size() == age_ranges.size());
+
+        std::vector<std::vector<int>> t_car_to_rec{model.size()}; // R9
+        std::vector<std::vector<int>> t_car_to_inf{model.size()}; // R3
+        std::vector<std::vector<int>> t_exp_to_car{model.size()}; // R2
+        std::vector<std::vector<int>> t_inf_to_rec{model.size()}; // R4
+        std::vector<std::vector<int>> t_inf_to_hosp{model.size()}; // R6
+        std::vector<std::vector<int>> t_hosp_to_rec{model.size()}; // R5
+        std::vector<std::vector<int>> t_hosp_to_icu{model.size()}; // R7
+        std::vector<std::vector<int>> t_icu_to_dead{model.size()}; // R10
+
+        std::vector<std::vector<double>> mu_C_R{model.size()};
+        std::vector<std::vector<double>> mu_I_H{model.size()};
+        std::vector<std::vector<double>> mu_H_U{model.size()};
+
+        for (size_t county = 0; county < model.size(); county++) {
+            for (size_t group = 0; group < age_ranges.size(); group++) {
+
+                t_car_to_inf[county].push_back(
+                    static_cast<int>(2 * (model[county].parameters.times[group].get_incubation() -
+                                          model[county].parameters.times[group].get_serialinterval())));
+                t_car_to_rec[county].push_back(static_cast<int>(
+                    t_car_to_inf[county][group] + 0.5 * model[county].parameters.times[group].get_infectious_mild()));
+                t_exp_to_car[county].push_back(
+                    static_cast<int>(2 * model[county].parameters.times[group].get_serialinterval() -
+                                     model[county].parameters.times[group].get_incubation()));
+                t_inf_to_rec[county].push_back(
+                    static_cast<int>(model[county].parameters.times[group].get_infectious_mild()));
+                t_inf_to_hosp[county].push_back(
+                    static_cast<int>(model[county].parameters.times[group].get_home_to_hospitalized()));
+                t_hosp_to_rec[county].push_back(
+                    static_cast<int>(model[county].parameters.times[group].get_hospitalized_to_home()));
+                t_hosp_to_icu[county].push_back(
+                    static_cast<int>(model[county].parameters.times[group].get_hospitalized_to_icu()));
+                t_icu_to_dead[county].push_back(
+                    static_cast<int>(model[county].parameters.times[group].get_icu_to_dead()));
+
+                mu_C_R[county].push_back(model[county].parameters.probabilities[group].get_asymp_per_infectious());
+                mu_I_H[county].push_back(
+                    model[county].parameters.probabilities[group].get_hospitalized_per_infectious());
+                mu_H_U[county].push_back(model[county].parameters.probabilities[group].get_icu_per_hospitalized());
+            }
+        }
+        std::vector<std::vector<double>> num_inf(model.size(), std::vector<double>(age_ranges.size(), 0.0));
+        std::vector<std::vector<double>> num_death(model.size(), std::vector<double>(age_ranges.size(), 0.0));
+        std::vector<std::vector<double>> num_rec(model.size(), std::vector<double>(age_ranges.size(), 0.0));
+        std::vector<std::vector<double>> num_exp(model.size(), std::vector<double>(age_ranges.size(), 0.0));
+        std::vector<std::vector<double>> num_car(model.size(), std::vector<double>(age_ranges.size(), 0.0));
+        std::vector<std::vector<double>> num_hosp(model.size(), std::vector<double>(age_ranges.size(), 0.0));
+        std::vector<std::vector<double>> num_icu(model.size(), std::vector<double>(age_ranges.size(), 0.0));
+
+        read_rki_data(path, id_name, region, date, num_exp, num_car, num_inf, num_hosp, num_icu, num_death, num_rec,
+                      t_car_to_rec, t_car_to_inf, t_exp_to_car, t_inf_to_rec, t_inf_to_hosp, t_hosp_to_rec,
+                      t_hosp_to_icu, t_icu_to_dead, mu_C_R, mu_I_H, mu_H_U, scaling_factor_inf);
+
+        for (size_t county = 0; county < model.size(); county++) {
+            if (std::accumulate(num_inf[county].begin(), num_inf[county].end(), 0.0) > 0) {
+                size_t num_groups = model[county].parameters.get_num_groups();
+                for (size_t i = 0; i < num_groups; i++) {
+                    model[county].populations[{(typename SecirModel<AgeGroup6>::AgeGroup)i, epi::InfectionType::E}] = num_exp[county][i];
+                    model[county].populations[{(typename SecirModel<AgeGroup6>::AgeGroup)i, epi::InfectionType::C}] = num_car[county][i];
+                    model[county].populations[{(typename SecirModel<AgeGroup6>::AgeGroup)i, epi::InfectionType::I}] = num_inf[county][i];
+                    model[county].populations[{(typename SecirModel<AgeGroup6>::AgeGroup)i, epi::InfectionType::H}] = num_hosp[county][i];
+                    model[county].populations[{(typename SecirModel<AgeGroup6>::AgeGroup)i, epi::InfectionType::D}] = num_death[county][i];
+                    model[county].populations[{(typename SecirModel<AgeGroup6>::AgeGroup)i, epi::InfectionType::R}] = num_rec[county][i];
+                }
+            }
+            else {
+                log_warning("No infections reported on date " + std::to_string(date.year) + "-" +
+                            std::to_string(date.month) + "-" + std::to_string(date.day) + " for region " +
+                            std::to_string(region[county]) + ". Population data has not been set.");
+            }
+        }
+    }
+
+    /**
+ * @brief reads number of ICU patients from DIVI register into SecirParams
+ * @param path Path to DIVI file
+ * @param id_name Name of region key column
+ * @param vregion Keys of the region of interest
+ * @param year Specifies year at which the data is read
+ * @param month Specifies month at which the data is read
+ * @param day Specifies day at which the data is read
+ * @param vnum_icu number of ICU patients
+ */
+    void read_divi_data(const std::string& path, const std::string& id_name, const std::vector<int>& vregion, Date date,
+                        std::vector<double>& vnum_icu);
+
+    /**
+ * @brief sets populations data from DIVI register into Model
+ * @param model vector of objects in which the data is set
+ * @param path Path to DIVI file
+ * @param id_name Name of region key column
+ * @param vregion vector of keys of the regions of interest
+ * @param year Specifies year at which the data is read
+ * @param month Specifies month at which the data is read
+ * @param day Specifies day at which the data is read
+ * @param scaling_factor_icu factor by which to scale the icu cases of divi data
+ */
+    template <class Model>
+    void set_divi_data(std::vector<Model>& model, const std::string& path, const std::string& id_name,
+                       const std::vector<int> vregion, Date date, double scaling_factor_icu)
+    {
+        std::vector<double> sum_mu_I_U(vregion.size(), 0);
+        std::vector<std::vector<double>> mu_I_U{model.size()};
+        for (size_t region = 0; region < vregion.size(); region++) {
+            size_t num_groups = model[region].parameters.get_num_groups();
+            for (size_t i = 0; i < num_groups; i++) {
+                sum_mu_I_U[region] += model[region].parameters.probabilities[i].get_icu_per_hospitalized() *
+                                      model[region].parameters.probabilities[i].get_hospitalized_per_infectious();
+                mu_I_U[region].push_back(model[region].parameters.probabilities[i].get_icu_per_hospitalized() *
+                                         model[region].parameters.probabilities[i].get_hospitalized_per_infectious());
+            }
+        }
+        std::vector<double> num_icu(model.size(), 0.0);
+        read_divi_data(path, id_name, vregion, date, num_icu);
+
+        for (size_t region = 0; region < vregion.size(); region++) {
+            size_t num_groups = model[region].parameters.get_num_groups();
+            for (size_t i = 0; i < num_groups; i++) {
+                model[region].populations[{(typename SecirModel<AgeGroup6>::AgeGroup)i, epi::InfectionType::U}] = scaling_factor_icu * num_icu[region] * mu_I_U[region][i] / sum_mu_I_U[region];
+            }
+        }
+    }
+
+    /**
+ * @brief reads population data from census data
+ * @param path Path to RKI file
+ * @param id_name Name of region key column
+ * @param vregion vector of keys of the regions of interest
+ */
+    std::vector<std::vector<double>> read_population_data(const std::string& path, const std::string& id_name,
+                                                          const std::vector<int>& vregion);
+
+    /**
+ * @brief sets population data from census data
+ * @param model vector of objects in which the data is set
+ * @param path Path to RKI file
+ * @param id_name Name of region key column
+ * @param vregion vector of keys of the regions of interest
+ */
+    template <class Model>
+    void set_population_data(std::vector<Model>& model, const std::string& path, const std::string& id_name,
+                             const std::vector<int> vregion)
+    {
+        std::vector<std::vector<double>> num_population = read_population_data(path, id_name, vregion);
+
+        for (size_t region = 0; region < vregion.size(); region++) {
+            if (std::accumulate(num_population[region].begin(), num_population[region].end(), 0.0) > 0) {
+                size_t num_groups = model[region].parameters.get_num_groups();
+                for (size_t i = 0; i < num_groups; i++) {
+                    model[region].populations.set_difference_from_group_total(
+                        num_population[region][i], (typename Model::AgeGroup)i, (typename Model::AgeGroup)i,
+                        epi::InfectionType::S);
+                }
+            }
+            else {
+                log_warning("No population data available for region " + std::to_string(region) +
+                            ". Population data has not been set.");
+            }
+        }
+    }
+} //namespace details
+
 /**
  * @brief read contact frequency matrix and damping distributions from xml file
  * @param handle Tixi Document Handle
@@ -110,7 +330,8 @@ SecirModel<AgeGroup> read_parameter_space(TixiDocumentHandle handle, const std::
     model.parameters.set_start_day(read_buffer);
     model.parameters.set_seasonality(*read_element(handle, path_join(path, "Seasonality"), io_mode));
     model.parameters.set_icu_capacity(*read_element(handle, path_join(path, "ICUCapacity"), io_mode));
-    model.parameters.set_test_and_trace_capacity(*read_element(handle, path_join(path, "TestAndTraceCapacity"), io_mode));
+    model.parameters.set_test_and_trace_capacity(
+        *read_element(handle, path_join(path, "TestAndTraceCapacity"), io_mode));
     model.parameters.set_contact_patterns(read_contact(handle, path_join(path, "ContactFreq"), io_mode));
 
     for (size_t i = 0; i < static_cast<size_t>(num_groups); i++) {
@@ -123,20 +344,14 @@ SecirModel<AgeGroup> read_parameter_space(TixiDocumentHandle handle, const std::
         status = tixiGetDoubleElement(handle, path_join(population_path, "Dead").c_str(), &read_buffer);
         assert(status == SUCCESS && ("Failed to read number of deaths at " + path).c_str());
 
-        model.populations.set(read_buffer, (AgeGroup)i, InfectionType::D);
+        model.populations[{(AgeGroup)i, InfectionType::D}] = read_buffer;
 
-        model.populations.set(*read_element(handle, path_join(population_path, "Exposed"), io_mode), (AgeGroup)i,
-                              InfectionType::E);
-        model.populations.set(*read_element(handle, path_join(population_path, "Carrier"), io_mode), (AgeGroup)i,
-                              InfectionType::C);
-        model.populations.set(*read_element(handle, path_join(population_path, "Infectious"), io_mode), (AgeGroup)i,
-                              InfectionType::I);
-        model.populations.set(*read_element(handle, path_join(population_path, "Hospitalized"), io_mode), (AgeGroup)i,
-                              InfectionType::H);
-        model.populations.set(*read_element(handle, path_join(population_path, "ICU"), io_mode), (AgeGroup)i,
-                              InfectionType::U);
-        model.populations.set(*read_element(handle, path_join(population_path, "Recovered"), io_mode), (AgeGroup)i,
-                              InfectionType::R);
+        model.populations[{(AgeGroup)i, InfectionType::E}] = * read_element(handle, path_join(population_path, "Exposed"), io_mode);
+        model.populations[{(AgeGroup)i, InfectionType::C}] = * read_element(handle, path_join(population_path, "Carrier"), io_mode);
+        model.populations[{(AgeGroup)i, InfectionType::I}] = * read_element(handle, path_join(population_path, "Infectious"), io_mode);
+        model.populations[{(AgeGroup)i, InfectionType::H}] = * read_element(handle, path_join(population_path, "Hospitalized"), io_mode);
+        model.populations[{(AgeGroup)i, InfectionType::U}] = * read_element(handle, path_join(population_path, "ICU"), io_mode);
+        model.populations[{(AgeGroup)i, InfectionType::R}] = * read_element(handle, path_join(population_path, "Recovered"), io_mode);
 
         status = tixiGetDoubleElement(handle, path_join(population_path, "Total").c_str(), &read_buffer);
         assert(status == SUCCESS && ("Failed to read total population at " + path).c_str());
@@ -205,7 +420,8 @@ void write_parameter_space(TixiDocumentHandle handle, const std::string& path, M
     tixiAddDoubleElement(handle, path.c_str(), "StartDay", model.parameters.get_start_day(), "%g");
     write_element(handle, path, "Seasonality", model.parameters.get_seasonality(), io_mode, num_runs);
     write_element(handle, path, "ICUCapacity", model.parameters.get_icu_capacity(), io_mode, num_runs);
-    write_element(handle, path, "TestAndTraceCapacity", model.parameters.get_test_and_trace_capacity(), io_mode, num_runs);
+    write_element(handle, path, "TestAndTraceCapacity", model.parameters.get_test_and_trace_capacity(), io_mode,
+                  num_runs);
 
     for (size_t i = 0; i < num_groups; i++) {
         auto group_name = "Group" + std::to_string(i + 1);
@@ -220,19 +436,19 @@ void write_parameter_space(TixiDocumentHandle handle, const std::string& path, M
         tixiAddDoubleElement(handle, population_path.c_str(), "Total",
                              model.populations.get_group_total((typename Model::AgeGroup)i), "%g");
         tixiAddDoubleElement(handle, population_path.c_str(), "Dead",
-                             model.populations.get((typename Model::AgeGroup)i, InfectionType::D), "%g");
+                             model.populations[{(typename Model::AgeGroup)i, InfectionType::D}], "%g");
         write_element(handle, population_path, "Exposed",
-                      model.populations.get((typename Model::AgeGroup)i, InfectionType::E), io_mode, num_runs);
+                      model.populations[{(typename Model::AgeGroup)i, InfectionType::E}], io_mode, num_runs);
         write_element(handle, population_path, "Carrier",
-                      model.populations.get((typename Model::AgeGroup)i, InfectionType::C), io_mode, num_runs);
+                      model.populations[{(typename Model::AgeGroup)i, InfectionType::C}], io_mode, num_runs);
         write_element(handle, population_path, "Infectious",
-                      model.populations.get((typename Model::AgeGroup)i, InfectionType::I), io_mode, num_runs);
+                      model.populations[{(typename Model::AgeGroup)i, InfectionType::I}], io_mode, num_runs);
         write_element(handle, population_path, "Hospitalized",
-                      model.populations.get((typename Model::AgeGroup)i, InfectionType::H), io_mode, num_runs);
+                      model.populations[{(typename Model::AgeGroup)i, InfectionType::H}], io_mode, num_runs);
         write_element(handle, population_path, "ICU",
-                      model.populations.get((typename Model::AgeGroup)i, InfectionType::U), io_mode, num_runs);
+                      model.populations[{(typename Model::AgeGroup)i, InfectionType::U}], io_mode, num_runs);
         write_element(handle, population_path, "Recovered",
-                      model.populations.get((typename Model::AgeGroup)i, InfectionType::R), io_mode, num_runs);
+                      model.populations[{(typename Model::AgeGroup)i, InfectionType::R}], io_mode, num_runs);
 
         // times
         auto times_path = path_join(group_path, "StageTimes");
@@ -268,7 +484,8 @@ void write_parameter_space(TixiDocumentHandle handle, const std::string& path, M
         write_element(handle, probabilities_path, "RiskFromSymptomatic",
                       model.parameters.probabilities[i].get_risk_from_symptomatic(), io_mode, num_runs);
         write_element(handle, probabilities_path, "TestAndTraceMaxRiskFromSymptomatic",
-                      model.parameters.probabilities[i].get_test_and_trace_max_risk_from_symptomatic(), io_mode, num_runs);
+                      model.parameters.probabilities[i].get_test_and_trace_max_risk_from_symptomatic(), io_mode,
+                      num_runs);
         write_element(handle, probabilities_path, "DeadPerICU", model.parameters.probabilities[i].get_dead_per_icu(),
                       io_mode, num_runs);
         write_element(handle, probabilities_path, "HospitalizedPerInfectious",
@@ -307,6 +524,8 @@ ParameterStudy<SecirModel<AgeGroup>> read_parameter_study(TixiDocumentHandle han
     status = tixiGetDoubleElement(handle, path_join(path, "TMax").c_str(), &tmax);
     assert(status == SUCCESS && ("Failed to read tmax at " + path).c_str());
 
+    unused(status);
+
     SecirModel<AgeGroup> model = read_parameter_space<AgeGroup>(handle, path, io_mode);
     return ParameterStudy<SecirModel<AgeGroup>>(model, t0, tmax, num_runs);
 }
@@ -342,18 +561,17 @@ void write_parameter_study(TixiDocumentHandle handle, const std::string& path,
  * @param tmax end point of simulation
  */
 template <class Model>
-        void write_single_run_params(const int run, epi::Graph<epi::ModelNode<epi::Simulation<Model>>, epi::MigrationEdge> graph,
-                                     double t0, double tmax)
+void write_single_run_params(const int run,
+                             epi::Graph<epi::ModelNode<epi::Simulation<Model>>, epi::MigrationEdge> graph, double t0,
+                             double tmax)
 {
     assert(graph.nodes().size() > 0 && "Graph Nodes are empty");
-
 
     std::string abs_path;
     bool created = create_directory("results", abs_path);
 
     if (created) {
-        log_info("Results are stored in {:s}/results.",
-                 epi::get_current_dir_name());
+        log_info("Results are stored in {:s}/results.", epi::get_current_dir_name());
     }
     else if (run == 0) {
         log_info(
@@ -373,12 +591,12 @@ template <class Model>
         write_parameter_study(handle, path, study);
 
         tixiSaveDocument(handle, path_join(abs_path, ("Parameters_run" + std::to_string(run) + "_node" +
-                                                          std::to_string(node_id) + ".xml"))
+                                                      std::to_string(node_id) + ".xml"))
                                      .c_str());
         tixiCloseDocument(handle);
 
         save_result(node.property.get_result(), path_join(abs_path, ("Results_run" + std::to_string(run) + "_node" +
-                                                                std::to_string(node_id) + ".h5")));
+                                                                     std::to_string(node_id) + ".h5")));
         node_id++;
     }
 }
@@ -390,7 +608,7 @@ template <class Model>
  * @param node Node ID
  */
 template <class Model>
-void write_node(TixiDocumentHandle handle, const Graph<Model, MigrationEdge>& graph, int node)
+void write_node(TixiDocumentHandle handle, const Graph<Model, MigrationParameters>& graph, int node)
 {
     assert(graph.nodes().size() > 0 && "Graph Nodes are empty");
     int num_runs = 1;
@@ -398,8 +616,8 @@ void write_node(TixiDocumentHandle handle, const Graph<Model, MigrationEdge>& gr
 
     std::string path = "/Parameters";
 
-    auto model = graph.nodes()[node].property;
-    int node_id =  static_cast<int>(graph.nodes()[node].id);
+    auto model  = graph.nodes()[node].property;
+    int node_id = static_cast<int>(graph.nodes()[node].id);
 
     tixiAddIntegerElement(handle, path.c_str(), "NodeID", node_id, "%d");
     write_parameter_space(handle, path, model, num_runs, io_mode);
@@ -411,7 +629,7 @@ void write_node(TixiDocumentHandle handle, const Graph<Model, MigrationEdge>& gr
  * @param graph Graph in which the node is saved
  */
 template <class AgeGroup>
-void read_node(TixiDocumentHandle node_handle, Graph<SecirModel<AgeGroup>, MigrationEdge>& graph)
+void read_node(TixiDocumentHandle node_handle, Graph<SecirModel<AgeGroup>, MigrationParameters>& graph)
 {
     int node_id;
     tixiGetIntegerElement(node_handle, path_join("/Parameters", "NodeID").c_str(), &node_id);
@@ -427,7 +645,7 @@ void read_node(TixiDocumentHandle node_handle, Graph<SecirModel<AgeGroup>, Migra
  */
 template <class Model>
 void write_edge(const std::vector<TixiDocumentHandle>& edge_handles, const std::string& path,
-                const Graph<Model, MigrationEdge>& graph, int edge)
+                const Graph<Model, MigrationParameters>& graph, int edge)
 {
     assert(graph.nodes().size() > 0 && "Graph Nodes are empty");
     int num_groups  = static_cast<int>(graph.nodes()[0].property.parameters.get_num_groups());
@@ -463,7 +681,7 @@ void write_edge(const std::vector<TixiDocumentHandle>& edge_handles, const std::
  */
 template <class Model>
 void read_edge(const std::vector<TixiDocumentHandle>& edge_handles, const std::string& path,
-               Graph<Model, MigrationEdge>& graph, int start_node, int end_node)
+               Graph<Model, MigrationParameters>& graph, int start_node, int end_node)
 {
     ReturnCode status;
     unused(status);
@@ -472,6 +690,10 @@ void read_edge(const std::vector<TixiDocumentHandle>& edge_handles, const std::s
     std::string edge_path = path_join(path, "EdgeTo" + std::to_string(end_node));
     int num_groups;
     int num_compart;
+
+    if (tixiCheckElement(handle, edge_path.c_str()) != SUCCESS) {
+        return;
+    }
 
     status = tixiGetIntegerElement(handle, path_join(path, "NumberOfGroups").c_str(), &num_groups);
     assert(status == SUCCESS && ("Failed to read num_groups at " + path).c_str());
@@ -484,15 +706,13 @@ void read_edge(const std::vector<TixiDocumentHandle>& edge_handles, const std::s
         double* weights = nullptr;
         status = tixiGetFloatVector(handle, path_join(edge_path, "Group" + std::to_string(group + 1)).c_str(), &weights,
                                     num_compart);
-        if (status == SUCCESS) {
-            for (int compart = 0; compart < num_compart; compart++) {
-                all_weights(compart + group * num_compart) = weights[compart];
-            }
-            graph.add_edge(start_node, end_node, all_weights);
+        assert(status == SUCCESS && "Failed to read coefficients.");
+        for (int compart = 0; compart < num_compart; compart++) {
+            all_weights(compart + group * num_compart) = weights[compart];
         }
     }
+    graph.add_edge(start_node, end_node, all_weights);
 }
-
 
 /**
  * @brief creates xml files for each node of a Secir simulation graph and one xml file for its edges for each node
@@ -500,7 +720,7 @@ void read_edge(const std::vector<TixiDocumentHandle>& edge_handles, const std::s
  * @param dir_string directory, where graph should be stored
  */
 template <class Model>
-void write_graph(const Graph<Model, MigrationEdge>& graph, const std::string& dir_string)
+void write_graph(const Graph<Model, MigrationParameters>& graph, const std::string& dir_string)
 {
     assert(graph.nodes().size() > 0 && "Graph Nodes are empty");
 
@@ -508,8 +728,7 @@ void write_graph(const Graph<Model, MigrationEdge>& graph, const std::string& di
     bool created = create_directory(dir_string, abs_path);
 
     if (created) {
-        log_info("Results are stored in {:s}/results.",
-                 epi::get_current_dir_name());
+        log_info("Results are stored in {:s}/results.", epi::get_current_dir_name());
     }
     else {
         log_info("Results are stored in {:s}/results. Files from previous "
@@ -517,9 +736,10 @@ void write_graph(const Graph<Model, MigrationEdge>& graph, const std::string& di
                  "overwritten",
                  epi::get_current_dir_name());
     }
-    int num_nodes   = static_cast<int>(graph.nodes().size());
-    int num_edges   = static_cast<int>(graph.edges().size());
-    int num_groups  = static_cast<int>(graph.nodes()[0].property.parameters.get_contact_patterns().get_cont_freq_mat().get_num_groups());
+    int num_nodes  = static_cast<int>(graph.nodes().size());
+    int num_edges  = static_cast<int>(graph.edges().size());
+    int num_groups = static_cast<int>(
+        graph.nodes()[0].property.parameters.get_contact_patterns().get_cont_freq_mat().get_num_groups());
     int num_compart = static_cast<int>(graph.nodes()[0].property.populations.get_num_compartments()) / num_groups;
 
     std::vector<TixiDocumentHandle> edge_handles(num_nodes);
@@ -557,7 +777,7 @@ void write_graph(const Graph<Model, MigrationEdge>& graph, const std::string& di
  * @param dir_string directory from where graph should be read
  */
 template <class Model>
-Graph<Model, MigrationEdge> read_graph(const std::string& dir_string)
+Graph<Model, MigrationParameters> read_graph(const std::string& dir_string)
 {
     std::string abs_path;
     if (!directory_exists(dir_string, abs_path)) {
@@ -582,11 +802,11 @@ Graph<Model, MigrationEdge> read_graph(const std::string& dir_string)
 
     std::vector<TixiDocumentHandle> edge_handles(num_nodes);
 
-    Graph<Model, MigrationEdge> graph;
+    Graph<Model, MigrationParameters> graph;
 
     for (int node = 0; node < num_nodes; node++) {
         TixiDocumentHandle node_handle;
-        tixiOpenDocument(path_join(abs_path,("GraphNode" + std::to_string(node) + ".xml")).c_str(), &node_handle);
+        tixiOpenDocument(path_join(abs_path, ("GraphNode" + std::to_string(node) + ".xml")).c_str(), &node_handle);
         read_node(node_handle, graph);
         tixiCloseDocument(node_handle);
     }
@@ -604,267 +824,88 @@ Graph<Model, MigrationEdge> read_graph(const std::string& dir_string)
 }
 
 /**
- * @brief interpolates age_ranges to param_ranges and saves ratios in interpolation
- * @param age_ranges original age ranges of the data
- * @param param_ranges age ranges to which the data should be fitted
- * @param interpolation vector of ratios that are aplied to the data of age_ranges
- * @param carry_over boolean vector which indicates whether there is an overflow from one age group to the next while interpolating data
- */
-void interpolate_ages(const std::vector<double>& age_ranges, const std::vector<double>& param_ranges,
-                      std::vector<std::vector<double>>& interpolation, std::vector<bool>& carry_over);
-
-/**
- * @brief reads populations data from RKI
- * @param path Path to RKI file
- * @param id_name Name of region key column
- * @param region Key of the region of interest
- * @param month Specifies month at which the data is read
- * @param day Specifies day at which the data is read
- * @param num_inf output vector for number of infected
- * @param num_death output vector for number of dead
- * @param num_rec output vector for number of recovered
- */
-void read_rki_data(std::string const& path,
-                   const std::string& id_name,
-                   int region, int month, int day,
-                   std::vector<double>& num_inf,
-                   std::vector<double>& num_death,
-                   std::vector<double>& num_rec);
-
-
-
-/**
- * @brief sets populations data from RKI into a SecirModel
- * @param model Object in which the data is set
- * @param param_ranges Age ranges of params
- * @param path Path to RKI file
- * @param id_name Name of region key column
- * @param region Key of the region of interest
- * @param month Specifies month at which the data is read
- * @param day Specifies day at which the data is read
- */
-template <class Model>
-void set_rki_data(Model& model, const std::vector<double>& param_ranges, const std::string& path,
-                  const std::string& id_name, int region, int month, int day)
-{
-    std::vector<double> age_ranges     = {5., 10., 20., 25., 20., 20.};
-
-    std::vector<std::vector<double>> interpolation(age_ranges.size()+1);
-    std::vector<bool> carry_over;
-
-    interpolate_ages(age_ranges, param_ranges, interpolation, carry_over);
-
-    std::vector<double> num_inf;
-    std::vector<double> num_death;
-    std::vector<double> num_rec;
-
-    read_rki_data(path, id_name, region, month, day, num_inf, num_death, num_rec);
-
-    std::vector<double> interpol_inf(model.parameters.get_num_groups() + 1, 0.0);
-    std::vector<double> interpol_death(model.parameters.get_num_groups() + 1, 0.0);
-    std::vector<double> interpol_rec(model.parameters.get_num_groups() + 1, 0.0);
-
-    int counter = 0;
-    for (size_t i = 0; i < interpolation.size() - 1; i++) {
-        for (size_t j = 0; j < interpolation[i].size(); j++) {
-            interpol_inf[counter] += interpolation[i][j] * num_inf[i];
-            interpol_death[counter] += interpolation[i][j] * num_death[i];
-            interpol_rec[counter] += interpolation[i][j] * num_rec[i];
-            if (j < interpolation[i].size() - 1 || !carry_over[i]) {
-                counter++;
-            }
-        }
-    }
-
-    for (size_t i = 0; i < model.parameters.get_num_groups(); i++) {
-        interpol_inf[i] += (double)num_inf[num_inf.size() - 1] / (double)model.parameters.get_num_groups();
-        interpol_death[i] += (double)num_death[num_death.size() - 1] / (double)model.parameters.get_num_groups();
-        interpol_rec[i] += (double)num_rec[num_rec.size() - 1] / (double)model.parameters.get_num_groups();
-    }
-
-    if (std::accumulate(num_inf.begin(), num_inf.end(), 0.0) > 0) {
-        size_t num_groups = model.parameters.get_num_groups();
-        for (size_t i = 0; i < num_groups; i++) {
-            model.populations.set(interpol_inf[i] - interpol_death[i] - interpol_rec[i], (typename Model::AgeGroup)i, epi::InfectionType::I);
-            model.populations.set(interpol_death[i], (typename Model::AgeGroup)i, epi::InfectionType::D);
-            model.populations.set(interpol_rec[i], (typename Model::AgeGroup)i, epi::InfectionType::R);
-        }
-    }
-    else {
-        log_warning("No infections reported on date " + std::to_string(day) + "-" + std::to_string(month) +
-                    " for region " + std::to_string(region) + ". Population data has not been set.");
-    }
-}
-
-/**
- * @brief reads number of ICU patients from DIVI register into SecirParams
- * @param path Path to DIVI file
- * @param id_name Name of region key column
- * @param region Key of the region of interest
- * @param month Specifies month at which the data is read
- * @param day Specifies day at which the data is read
- * @return number of ICU patients
- */
-double read_divi_data(const std::string& path,
-                      const std::string& id_name,
-                      int region, int month, int day);
-
-
-/**
- * @brief sets populations data from DIVI register into SecirParams
- * @param params Object in which the data is set
- * @param path Path to DIVI file
- * @param id_name Name of region key column
- * @param region Key of the region of interest
- * @param month Specifies month at which the data is read
- * @param day Specifies day at which the data is read
- */
-template <class Model>
-void set_divi_data(Model& model, const std::string& path, const std::string& id_name, int region, int month,
-                   int day)
-{
-    double num_icu = read_divi_data(path, id_name, region, month, day);
-
-    if (num_icu > 0) {
-        size_t num_groups = model.parameters.get_num_groups();
-        for (size_t i = 0; i < num_groups; i++) {
-            model.populations.set(num_icu / (double)num_groups, (typename Model::AgeGroup)i, epi::InfectionType::U);
-        }
-    }
-    else {
-        log_warning("No ICU patients reported on date " + std::to_string(day) + "-" + std::to_string(month) +
-                    " for region " + std::to_string(region) + ".");
-    }
-}
-
-/**
- * @brief reads population data from census data
- * @param path Path to RKI file
- * @param id_name Name of region key column
- * @param region Key of the region of interest
- */
-std::vector<double> read_population_data(const std::string& path,
-                                         const std::string& id_name,
-                                         int region);
-
-/**
- * @brief sets population data from census data
- * @param model Object in which the data is set
- * @param param_ranges Age ranges of params
- * @param path Path to RKI file
- * @param id_name Name of region key column
- * @param region Key of the region of interest
- */
-template <class Model>
-void set_population_data(Model& model, const std::vector<double>& param_ranges, const std::string& path,
-                         const std::string& id_name, int region)
-{
-    std::vector<double> age_ranges     = {3., 3., 9., 3., 7., 5., 10., 10., 15., 10., 25.};
-
-    std::vector<std::vector<double>> interpolation(age_ranges.size());
-    std::vector<bool> carry_over;
-
-    interpolate_ages(age_ranges, param_ranges, interpolation, carry_over);
-
-    std::vector<double> num_population = read_population_data(path, id_name, region);
-
-    std::vector<double> interpol_population(model.parameters.get_num_groups() + 1, 0.0);
-
-    int counter = 0;
-    for (size_t i = 0; i < interpolation.size() - 1; i++) {
-        for (size_t j = 0; j < interpolation[i].size(); j++) {
-            interpol_population[counter] += interpolation[i][j] * num_population[i];
-            if (j < interpolation[i].size() - 1 || !carry_over[i]) {
-                counter++;
-            }
-        }
-    }
-
-    if (std::accumulate(num_population.begin(), num_population.end(), 0.0) > 0) {
-        size_t num_groups = model.parameters.get_num_groups();
-        for (size_t i = 0; i < num_groups; i++) {
-            model.populations.set_difference_from_group_total(interpol_population[i], (typename Model::AgeGroup)i, (typename Model::AgeGroup)i, epi::InfectionType::S);
-        }
-    }
-    else {
-        log_warning("No population data available for region " + std::to_string(region) + ". Population data has not been set.");
-    }
-
-}
-
-
-/**
  * @brief reads population data from population files for the whole country
- * @param params Parameters in which the data is set
- * @param param_ranges Vector which specifies the age ranges of params. Needs to add up to 100
- * @param month specifies month at which the data is read
- * @param day specifies day at which the data is read
+ * @param model vector of model in which the data is set
+ * @param date Date for which the data should be read
+ * @param scaling_factor_inf factors by which to scale the confirmed cases of rki data
+ * @param scaling_factor_icu factor by which to scale the icu cases of divi data
  * @param dir directory of files
  */
 template <class Model>
-void read_population_data_germany(Model& model, const std::vector<double>& param_ranges, int month, int day,
-                                  const std::string& dir)
+void read_population_data_germany(std::vector<Model>& model, Date date, std::vector<double>& scaling_factor_inf,
+                                  double scaling_factor_icu, const std::string& dir)
 {
-    assert(param_ranges.size() == model.parameters.get_num_groups() &&
-           "size of param_ranges needs to be the same size as the number of groups in model.parameters");
-    assert(std::accumulate(param_ranges.begin(), param_ranges.end(), 0.0) == 100. && "param_ranges must add up to 100");
-
     std::string id_name;
-
-    set_rki_data(model, param_ranges, path_join(dir, "all_age_rki.json"), id_name, 0, month, day);
-    set_divi_data(model, path_join(dir, "germany_divi.json"), id_name, 0, month, day);
-    set_population_data(model, param_ranges, path_join(dir, "county_current_population.json"), "ID_County", 0);
+    std::vector<int> region(1, 0);
+    if (date > Date(2020, 4, 23)) {
+        details::set_divi_data(model, path_join(dir, "germany_divi.json"), id_name, {0}, date, scaling_factor_icu);
+    }
+    else {
+        log_warning("No DIVI data available for this date");
+    }
+    details::set_rki_data(model, path_join(dir, "all_age_rki_ma.json"), id_name, {0}, date, scaling_factor_inf);
+    details::set_population_data(model, path_join(dir, "county_current_population.json"), "ID_County", {0});
 }
 
 /**
  * @brief reads population data from population files for the specefied state
- * @param params Parameters in which the data is set
- * @param param_ranges Vector which specifies the age ranges of params. Needs to add up to 100
- * @param month specifies month at which the data is read
- * @param day specifies day at which the data is read
- * @param state region key of state of interest
+ * @param model vector of model in which the data is set
+ * @param date Date for which the data should be read
+ * @param state vector of region keys of states of interest
+ * @param scaling_factor_inf factors by which to scale the confirmed cases of rki data
+ * @param scaling_factor_icu factor by which to scale the icu cases of divi data
  * @param dir directory of files
  */
 template <class Model>
-void read_population_data_state(Model& model, const std::vector<double>& param_ranges, int month, int day,
-                                int state, const std::string& dir)
+void read_population_data_state(std::vector<Model>& model, Date date, std::vector<int>& state,
+                                std::vector<double>& scaling_factor_inf, double scaling_factor_icu,
+                                const std::string& dir)
 {
-    assert(state > 0 && state <= 16 && "State must be between 1 and 16");
-    assert(param_ranges.size() == model.parameters.get_num_groups() &&
-           "size of param_ranges needs to be the same size as the number of groups in params");
-    assert(std::accumulate(param_ranges.begin(), param_ranges.end(), 0.0) == 100. && "param_ranges must add up to 100");
-
     std::string id_name = "ID_State";
+    if (date > Date(2020, 4, 23)) {
+        details::set_divi_data(model, path_join(dir, "state_divi.json"), id_name, state, date, scaling_factor_icu);
+    }
+    else {
+        log_warning("No DIVI data available for this date");
+    }
 
-    set_rki_data(model, param_ranges, path_join(dir, "all_state_age_rki.json"), id_name, state, month, day);
-    set_divi_data(model, path_join(dir, "state_divi.json"), id_name, state, month, day);
-    set_population_data(model, param_ranges, path_join(dir, "county_current_population.json"), "ID_County", state);
+    details::set_rki_data(model, path_join(dir, "all_state_age_rki_ma.json"), id_name, state, date, scaling_factor_inf);
+    details::set_population_data(model, path_join(dir, "county_current_population.json"), "ID_County", state);
 }
 
 /**
  * @brief reads population data from population files for the specefied county
- * @param params Parameters in which the data is set
- * @param param_ranges Vector which specifies the age ranges of params. Needs to add up to 100
- * @param month specifies month at which the data is read
- * @param day specifies day at which the data is read
- * @param county region key of county of interest
+ * @param model vector of model in which the data is set
+ * @param date Date for which the data should be read
+ * @param county vector of region keys of counties of interest
+ * @param scaling_factor_inf factors by which to scale the confirmed cases of rki data
+ * @param scaling_factor_icu factor by which to scale the icu cases of divi data
  * @param dir directory of files
  */
 template <class Model>
-void read_population_data_county(Model& model, const std::vector<double>& param_ranges, int month, int day,
-                                 int county, const std::string& dir)
+void read_population_data_county(std::vector<Model>& model, Date date, std::vector<int> county,
+                                 std::vector<double>& scaling_factor_inf, double scaling_factor_icu,
+                                 const std::string& dir)
 {
-    assert(county > 999 && "State must be between 1 and 16");
-    assert(param_ranges.size() == model.parameters.get_num_groups() &&
-           "size of param_ranges needs to be the same size as the number of groups in params");
-    assert(std::accumulate(param_ranges.begin(), param_ranges.end(), 0.0) == 100. && "param_ranges must add up to 100");
-
     std::string id_name = "ID_County";
 
-    set_rki_data(model, param_ranges, path_join(dir, "all_county_age_rki.json"), id_name, county, month, day);
-    set_divi_data(model, path_join(dir, "county_divi.json"), id_name, county, month, day);
-    set_population_data(model, param_ranges, path_join(dir, "county_current_population.json"), "ID_County", county);
+    if (date > Date(2020, 4, 23)) {
+        details::set_divi_data(model, path_join(dir, "county_divi.json"), id_name, county, date, scaling_factor_icu);
+    }
+    else {
+        log_warning("No DIVI data available for this date");
+    }
+    details::set_rki_data(model, path_join(dir, "all_county_age_rki_ma.json"), id_name, county, date,
+                          scaling_factor_inf);
+    details::set_population_data(model, path_join(dir, "county_current_population.json"), "ID_County", county);
 }
+
+/**
+ * @brief returns a vector with the ids of all german counties
+ * @param path directory to population data
+ * @return
+ */
+std::vector<int> get_county_ids(const std::string& path);
 
 } // namespace epi
 

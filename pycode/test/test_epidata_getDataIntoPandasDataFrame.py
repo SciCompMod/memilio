@@ -40,7 +40,7 @@ class Test_getDataIntoPandasDataFrame(fake_filesystem_unittest.TestCase):
         assert out_form == dd.defaultDict['out_form']
         assert out_folder == out_path_default
 
-        [read_data, out_form, out_folder, split_berlin, moving_average, make_plot] = gd.cli("rki")
+        [read_data, out_form, out_folder, fill_dates, make_plot, moving_average, split_berlin] = gd.cli("rki")
 
         assert read_data == dd.defaultDict['read_data']
         assert out_form == dd.defaultDict['out_form']
@@ -48,6 +48,7 @@ class Test_getDataIntoPandasDataFrame(fake_filesystem_unittest.TestCase):
         assert make_plot == dd.defaultDict['make_plot']
         assert split_berlin == dd.defaultDict['split_berlin']
         assert moving_average == dd.defaultDict['moving_average']
+        assert fill_dates == dd.defaultDict['fill_dates']
 
         [read_data, out_form, out_folder, make_plot] = gd.cli("rkiest")
 
@@ -65,15 +66,20 @@ class Test_getDataIntoPandasDataFrame(fake_filesystem_unittest.TestCase):
         assert start_date == dd.defaultDict['start_date']
         assert update == dd.defaultDict['update_data']
 
-        [read_data, out_form, out_folder, end_date, make_plot, start_date, update] = gd.cli("all")
+        [read_data, out_form, out_folder, end_date, fill_dates, make_plot, moving_average, split_berlin, start_date,
+         update] = gd.cli("all")
 
         assert read_data == dd.defaultDict['read_data']
         assert out_form == dd.defaultDict['out_form']
         assert out_folder == out_path_default
         assert end_date == dd.defaultDict['end_date']
+        assert fill_dates == dd.defaultDict['fill_dates']
+        assert make_plot == dd.defaultDict['make_plot']
+        assert moving_average == dd.defaultDict['moving_average']
+        assert split_berlin == dd.defaultDict['split_berlin']
         assert start_date == dd.defaultDict['start_date']
         assert update == dd.defaultDict['update_data']
-        assert make_plot == dd.defaultDict['make_plot']
+
 
     @patch('sys.stderr', new_callable=StringIO)
     def test_cli_correct_raise_exit(self, mock_stderr):
@@ -160,13 +166,15 @@ class Test_getDataIntoPandasDataFrame(fake_filesystem_unittest.TestCase):
         assert out_form == 'hdf5'
         assert out_folder == "some_folder"
 
-        sys.argv[1:] = ['--read-from-disk', '--out-path', folder, '--file-format', 'hdf5', '--plot', '--split_berlin', '--moving_average']
+        sys.argv[1:] = ['--read-from-disk', '--out-path', folder, '--file-format', 'hdf5', '--plot', '--split_berlin',
+                        '--moving_average']
 
-        [read_data, out_form, out_folder, split_berlin, moving_average, make_plot] = gd.cli("rki")
+        [read_data, out_form, out_folder, fill_dates, make_plot, moving_average, split_berlin] = gd.cli("rki")
 
         assert read_data == True
         assert out_form == 'hdf5'
         assert out_folder == "some_folder"
+        assert fill_dates == False
         assert split_berlin == True
         assert moving_average == True
         assert make_plot == True
@@ -195,7 +203,8 @@ class Test_getDataIntoPandasDataFrame(fake_filesystem_unittest.TestCase):
         sys.argv[1:] = ['--out-path', folder, '--file-format', 'json', '--update', '--plot',
                         '--start-date', '2020-11-24', '--end-date', '2020-11-26']
 
-        [read_data, out_form, out_folder, end_date, make_plot, start_date, update] = gd.cli("all")
+        [read_data, out_form, out_folder, end_date, fill_dates, make_plot, moving_average, split_berlin, start_date,
+         update] = gd.cli("all")
 
         assert read_data == dd.defaultDict['read_data']
         assert out_form == 'json'
@@ -204,6 +213,9 @@ class Test_getDataIntoPandasDataFrame(fake_filesystem_unittest.TestCase):
         assert start_date == date(2020, 11, 24)
         assert update == True
         assert make_plot == True
+        assert split_berlin == dd.defaultDict['split_berlin']
+        assert moving_average == dd.defaultDict['moving_average']
+        assert fill_dates == dd.defaultDict['fill_dates']
 
     def test_check_dir(self):
 

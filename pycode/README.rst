@@ -35,7 +35,7 @@ Create virtiual environment with name "epi_venv" [name can be changed as you wan
 
    # Setup virtual environment
 
-   python3 -m venv epi_venv
+   python -m venv epi_venv
    source epi_venv/bin/activate
    pip install --upgrade pip
 
@@ -77,9 +77,10 @@ To get the coverage report do
 
 .. code:: sh
 
-    python3 -m coverage report
-    python3 -m coverage xml -o coverage_python.xml
-    python3 -m coverage html -d coverage_python
+    python -m coverage run -m unittest
+    python -m coverage report
+    python -m coverage xml -o coverage_python.xml
+    python -m coverage html -d coverage_python
 
 Coverage report for actual master:
 
@@ -97,7 +98,7 @@ After installing the package, run
 
 .. code:: sh
 
-    python3.6 setup.py pylint
+    python setup.py pylint
     pylint-json2html -f jsonextended -o build_pylint/pylint.html < build_pylint/pylint_extended.json
 
 Pylint report for actual master:

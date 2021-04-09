@@ -26,14 +26,14 @@ class Test_secir_integration(unittest.TestCase):
         model.parameters.probabilities[0].set_icu_per_hospitalized(0.25)  # 0.15-0.4
         model.parameters.probabilities[0].set_dead_per_icu(0.3)  # 0.15-0.77
 
-        model.populations.set(7600, AgeGroup1.Group0, InfectionType.S)
-        model.populations.set(100, AgeGroup1.Group0, InfectionType.E)
-        model.populations.set(50, AgeGroup1.Group0, InfectionType.C)
-        model.populations.set(50, AgeGroup1.Group0, InfectionType.I)
-        model.populations.set(20, AgeGroup1.Group0, InfectionType.H)
-        model.populations.set(10, AgeGroup1.Group0, InfectionType.U)
-        model.populations.set(10, AgeGroup1.Group0, InfectionType.R)
-        model.populations.set(0, AgeGroup1.Group0, InfectionType.D)
+        model.populations[AgeGroup1.Group0, InfectionType.S] = 7600
+        model.populations[AgeGroup1.Group0, InfectionType.E] = 100
+        model.populations[AgeGroup1.Group0, InfectionType.C] = 50
+        model.populations[AgeGroup1.Group0, InfectionType.I] = 50
+        model.populations[AgeGroup1.Group0, InfectionType.H] = 20
+        model.populations[AgeGroup1.Group0, InfectionType.U] = 10
+        model.populations[AgeGroup1.Group0, InfectionType.R] = 10
+        model.populations[AgeGroup1.Group0, InfectionType.D] = 0
 
         model.parameters.get_contact_patterns().cont_freq_mat[0] = ContactMatrix(np.r_[0.5])
 

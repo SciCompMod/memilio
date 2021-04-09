@@ -15,17 +15,16 @@ int main()
     epi::SeirModel model;
 
     double total_population = 10000;
-    model.populations.set(100, epi::SeirInfType::E);
-    model.populations.set(100, epi::SeirInfType::I);
-    model.populations.set(100, epi::SeirInfType::R);
-    model.populations.set(total_population - model.populations.get(epi::SeirInfType::E) -
-                              model.populations.get(epi::SeirInfType::I) - model.populations.get(epi::SeirInfType::R),
-                          epi::SeirInfType::S);
+    model.populations[{epi::SeirInfType::E}] = 100;
+    model.populations[{epi::SeirInfType::I}] = 100;
+    model.populations[{epi::SeirInfType::R}] = 100;
+    model.populations[{epi::SeirInfType::S}] = total_population - model.populations[{epi::SeirInfType::E}] - model.populations[{epi::SeirInfType::I}] - model.populations[{epi::SeirInfType::R}];
     // suscetible now set with every other update
     // params.nb_sus_t0   = params.nb_total_t0 - params.nb_exp_t0 - params.nb_inf_t0 - params.nb_rec_t0;
-    model.parameters.times.set_incubation(5.2);
-    model.parameters.times.set_infectious(6);
-    model.parameters.contact_frequency.get_baseline()(0, 0) = 0.4;
+    model.parameters.set<epi::StageTimeIncubationInv>(1./5.2);
+    model.parameters.set<epi::StageTimeInfectiousInv>(1./6);
+    model.parameters.set<epi::TransmissionRisk>(0.04);
+    model.parameters.get<epi::ContactFrequency>().get_baseline()(0, 0) = 10;
 
     print_seir_params(model);
 

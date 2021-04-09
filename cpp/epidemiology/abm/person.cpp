@@ -28,7 +28,7 @@ void Person::interact(TimeSpan dt, const GlobalInfectionParameters& global_infec
     else {
         new_state = m_location.get().interact(*this, dt, global_infection_params);
         if (new_state == InfectionState::Exposed) {
-            m_time_until_carrier = hours(int(global_infection_params.incubation_period[m_age] * 24));
+            m_time_until_carrier = hours(int(global_infection_params.get<IncubationPeriod>()[{this->m_age}] * 24));
         }
     }
 

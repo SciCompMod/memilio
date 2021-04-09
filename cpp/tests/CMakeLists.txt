@@ -17,10 +17,12 @@ set(TESTSOURCES
   test_populations.cpp
   test_seir_js_compare.cpp
   test_numericalIntegration.cpp
+  test_smoother.cpp
   test_damping.cpp
   test_secir.cpp
   test_implicit_euler.cpp
   test_migration.cpp
+  test_date.cpp
   test_eigen_util.cpp
   test_secir_ageres.cpp
   test_parameter_studies.cpp
@@ -32,6 +34,9 @@ set(TESTSOURCES
   test_abm.cpp
   test_analyze_result.cpp
   test_contact_matrix.cpp
+  test_type_safe.cpp
+  test_custom_index_array.cpp
+  test_parameter_set.cpp
   distributions_helpers.h
   distributions_helpers.cpp
   actions.h

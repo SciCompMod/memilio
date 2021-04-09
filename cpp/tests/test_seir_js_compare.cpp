@@ -18,20 +18,18 @@ protected:
 
         double total_population = 1061000;
 
-        model.populations.set(10000, epi::SeirInfType::E);
-        model.populations.set(1000, epi::SeirInfType::I);
-        model.populations.set(1000, epi::SeirInfType::R);
-        model.populations.set(total_population - model.populations.get(epi::SeirInfType::E) -
-                                  model.populations.get(epi::SeirInfType::I) -
-                                  model.populations.get(epi::SeirInfType::R),
-                              epi::SeirInfType::S);
+        model.populations[{epi::SeirInfType::E}] = 10000;
+        model.populations[{epi::SeirInfType::I}] = 1000;
+        model.populations[{epi::SeirInfType::R}] = 1000;
+        model.populations[{epi::SeirInfType::S}] = total_population - this->model.populations[{epi::SeirInfType::E}] - this->model.populations[{epi::SeirInfType::I}] - this->model.populations[{epi::SeirInfType::R}];
         // suscetible now set with every other update
         // model.nb_sus_t0   = model.nb_total_t0 - model.nb_exp_t0 - model.nb_inf_t0 - model.nb_rec_t0;
-        model.parameters.times.set_incubation(5.2);
-        model.parameters.times.set_infectious(2);
+        model.parameters.set<epi::TransmissionRisk>(1.0);
+        model.parameters.set<epi::StageTimeIncubationInv>(1./5.2);
+        model.parameters.set<epi::StageTimeInfectiousInv>(1./2);;
 
-        model.parameters.contact_frequency.get_baseline()(0, 0) = 2.7;
-        model.parameters.contact_frequency.add_damping(0.6, epi::SimulationTime(12.5));
+        model.parameters.get<epi::ContactFrequency>().get_baseline()(0, 0) = 2.7;
+        model.parameters.get<epi::ContactFrequency>().add_damping(0.6, epi::SimulationTime(12.5));
     }
 
 public:

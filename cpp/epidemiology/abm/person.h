@@ -4,6 +4,7 @@
 #include "epidemiology/abm/state.h"
 #include "epidemiology/abm/age.h"
 #include "epidemiology/abm/time.h"
+#include "epidemiology/abm/parameters.h"
 
 #include <functional>
 
@@ -11,7 +12,6 @@ namespace epi
 {
 
 class Location;
-class GlobalInfectionParameters;
 
 /**
  * Agents in the simulated world that can carry and spread the infection.

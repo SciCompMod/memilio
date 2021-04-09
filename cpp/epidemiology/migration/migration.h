@@ -84,6 +84,54 @@ private:
     double m_t0;
 };
 
+/**
+ * parameters that influence migration.
+ */
+class MigrationParameters
+{
+public:
+    /**
+     * constructor from migration coefficients.
+     * @param coeffs migration coefficients
+     */
+    MigrationParameters(const Eigen::VectorXd& coeffs)
+        : m_coefficients(coeffs)
+    {
+        assert((m_coefficients.array() >= 0).all() && "migration coefficients must be nonnegative");
+    }
+
+    /** 
+     * equality comparison operators
+     */
+    //@{
+    bool operator==(const MigrationParameters& other) const
+    {
+        return m_coefficients == other.m_coefficients;
+    }
+    bool operator!=(const MigrationParameters& other) const
+    {
+        return m_coefficients != other.m_coefficients;
+    }
+    //@}
+
+    /**
+     * migration coefficients.
+     * percentage of people migrating from one node to another
+     * by age and infection compartment.
+     */
+    const Eigen::VectorXd& get_coefficients() const
+    {
+        return m_coefficients;
+    }
+    Eigen::VectorXd& get_coefficients()
+    {
+        return m_coefficients;
+    }
+
+private:
+    Eigen::VectorXd m_coefficients; //one per group and compartment
+};
+
 /** 
  * represents the migration between two nodes.
  */
@@ -94,35 +142,32 @@ public:
      * create edge with coefficients.
      * @param coeffs % of people in each group and compartment that migrate in each time step.
      */
+    MigrationEdge(const MigrationParameters& params)
+        : m_parameters(params)
+        , m_migrated(params.get_coefficients().rows())
+        , m_return_times(0)
+        , m_return_migrated(false)
+    {
+    }
+
+    /**
+     * create edge with coefficients.
+     * @param coeffs % of people in each group and compartment that migrate in each time step.
+     */
     MigrationEdge(const Eigen::VectorXd& coeffs)
-        : m_coefficients(coeffs)
+        : m_parameters(coeffs)
         , m_migrated(coeffs.rows())
         , m_return_times(0)
         , m_return_migrated(false)
     {
-        assert((m_coefficients.array() >= 0).all() && "migration coefficients must be nonnegative");
-    }
-
-    bool operator==(const MigrationEdge& other) const
-    {
-        return m_coefficients == other.m_coefficients;
-    }
-
-    bool operator!=(const MigrationEdge& other) const
-    {
-        return m_coefficients != other.m_coefficients;
     }
 
     /**
-     * get the migration coefficients.
+     * get the migration parameters.
      */
-    Eigen::Ref<const Eigen::VectorXd> get_coefficients() const
+    const MigrationParameters& get_parameters() const
     {
-        return m_coefficients;
-    }
-    Eigen::Ref<Eigen::VectorXd> get_coefficients()
-    {
-        return m_coefficients;
+        return m_parameters;
     }
 
     /**
@@ -160,7 +205,7 @@ public:
     void apply_migration(double t, double dt, ModelNode<Model>& node_from, ModelNode<Model>& node_to);
 
 private:
-    Eigen::VectorXd m_coefficients; //one per group and compartment
+    MigrationParameters m_parameters;
     TimeSeries<double> m_migrated;
     TimeSeries<double> m_return_times;
     bool m_return_migrated;
@@ -184,7 +229,7 @@ void MigrationEdge::apply_migration(double t, double dt, ModelNode<Model>& node_
 
     if (!m_return_migrated) {
         //normal daily migration
-        m_migrated.add_time_point(t, (node_from.get_last_state().array() * m_coefficients.array()).matrix());
+        m_migrated.add_time_point(t, (node_from.get_last_state().array() * m_parameters.get_coefficients().array()).matrix());
         m_return_times.add_time_point(t + dt);
 
         node_to.get_result().get_last_value() += m_migrated.get_last_value();
