@@ -25,7 +25,9 @@ def get_all_data(read_data=dd.defaultDict['read_data'],
                  out_form=dd.defaultDict['out_form'],
                  out_folder=dd.defaultDict['out_folder'],
                  end_date=dd.defaultDict['end_date'],
+                 fill_dates=dd.defaultDict['fill_dates'],
                  make_plot=dd.defaultDict['make_plot'],
+                 moving_average=dd.defaultDict['moving_average'],
                  split_berlin=dd.defaultDict['split_berlin'],
                  start_date=dd.defaultDict['start_date'],
                  update_data=dd.defaultDict['update_data'],
@@ -52,7 +54,7 @@ def get_all_data(read_data=dd.defaultDict['read_data'],
 
     """
 
-    getRKIData.get_rki_data(read_data, out_form, out_folder, make_plot, split_berlin)
+    getRKIData.get_rki_data(read_data, out_form, out_folder, fill_dates, make_plot, moving_average, split_berlin)
     getSpainData.get_spain_data(read_data, out_form, out_folder)
     getPopulationData.get_population_data(read_data, out_form, out_folder)
     getJHData.get_jh_data(read_data, out_form, out_folder)
@@ -62,8 +64,10 @@ def get_all_data(read_data=dd.defaultDict['read_data'],
 def main():
     """! Main program entry."""
 
-    [read_data, out_form, out_folder, end_date, make_plot, split_berlin, start_date, update_data] = gd.cli("all")
-    get_all_data(read_data, out_form, out_folder, end_date, make_plot, split_berlin, start_date, update_data)
+    [read_data, out_form, out_folder, end_date, fill_dates, make_plot, moving_average, split_berlin, start_date,
+     update_data] = gd.cli("all")
+    get_all_data(read_data, out_form, out_folder, end_date, fill_dates, make_plot, moving_average, split_berlin,
+                 start_date, update_data)
 
 
 if __name__ == "__main__":

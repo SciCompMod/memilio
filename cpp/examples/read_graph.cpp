@@ -98,7 +98,7 @@ int main(int argc, char** argv)
     std::cout << "Done" << std::endl;
 
     std::cout << "Intializing Graph..." << std::flush;
-    epi::Graph<epi::SecirModel<epi::AgeGroup1>, epi::MigrationEdge> graph;
+    epi::Graph<epi::SecirModel<epi::AgeGroup1>, epi::MigrationParameters> graph;
     for (int node = 0; node < twitter_migration_2018.rows(); node++) {
         graph.add_node(node, model);
     }
@@ -116,7 +116,7 @@ int main(int argc, char** argv)
     std::cout << "Done" << std::endl;
 
     std::cout << "Reading XML Files..." << std::flush;
-    epi::Graph<epi::SecirModel<epi::AgeGroup1>, epi::MigrationEdge> graph_read =
+    epi::Graph<epi::SecirModel<epi::AgeGroup1>, epi::MigrationParameters> graph_read =
         epi::read_graph<epi::SecirModel<epi::AgeGroup1>>("graph_parameters");
 
     std::cout << "Done" << std::endl;

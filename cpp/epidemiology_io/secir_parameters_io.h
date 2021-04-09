@@ -632,7 +632,7 @@ void write_single_run_params(const int run,
  * @param node Node ID
  */
 template <class Model>
-void write_node(TixiDocumentHandle handle, const Graph<Model, MigrationEdge>& graph, int node)
+void write_node(TixiDocumentHandle handle, const Graph<Model, MigrationParameters>& graph, int node)
 {
     assert(graph.nodes().size() > 0 && "Graph Nodes are empty");
     int num_runs = 1;
@@ -653,7 +653,7 @@ void write_node(TixiDocumentHandle handle, const Graph<Model, MigrationEdge>& gr
  * @param graph Graph in which the node is saved
  */
 template <class AgeGroup>
-void read_node(TixiDocumentHandle node_handle, Graph<SecirModel<AgeGroup>, MigrationEdge>& graph)
+void read_node(TixiDocumentHandle node_handle, Graph<SecirModel<AgeGroup>, MigrationParameters>& graph)
 {
     int node_id;
     tixiGetIntegerElement(node_handle, path_join("/Parameters", "NodeID").c_str(), &node_id);
@@ -669,7 +669,7 @@ void read_node(TixiDocumentHandle node_handle, Graph<SecirModel<AgeGroup>, Migra
  */
 template <class Model>
 void write_edge(const std::vector<TixiDocumentHandle>& edge_handles, const std::string& path,
-                const Graph<Model, MigrationEdge>& graph, int edge)
+                const Graph<Model, MigrationParameters>& graph, int edge)
 {
     assert(graph.nodes().size() > 0 && "Graph Nodes are empty");
     int num_groups  = static_cast<int>(graph.nodes()[0].property.parameters.get_num_groups());
@@ -705,7 +705,7 @@ void write_edge(const std::vector<TixiDocumentHandle>& edge_handles, const std::
  */
 template <class Model>
 void read_edge(const std::vector<TixiDocumentHandle>& edge_handles, const std::string& path,
-               Graph<Model, MigrationEdge>& graph, int start_node, int end_node)
+               Graph<Model, MigrationParameters>& graph, int start_node, int end_node)
 {
     ReturnCode status;
     unused(status);
@@ -744,7 +744,7 @@ void read_edge(const std::vector<TixiDocumentHandle>& edge_handles, const std::s
  * @param dir_string directory, where graph should be stored
  */
 template <class Model>
-void write_graph(const Graph<Model, MigrationEdge>& graph, const std::string& dir_string)
+void write_graph(const Graph<Model, MigrationParameters>& graph, const std::string& dir_string)
 {
     assert(graph.nodes().size() > 0 && "Graph Nodes are empty");
 
@@ -801,7 +801,7 @@ void write_graph(const Graph<Model, MigrationEdge>& graph, const std::string& di
  * @param dir_string directory from where graph should be read
  */
 template <class Model>
-Graph<Model, MigrationEdge> read_graph(const std::string& dir_string)
+Graph<Model, MigrationParameters> read_graph(const std::string& dir_string)
 {
     std::string abs_path;
     if (!directory_exists(dir_string, abs_path)) {
@@ -826,7 +826,7 @@ Graph<Model, MigrationEdge> read_graph(const std::string& dir_string)
 
     std::vector<TixiDocumentHandle> edge_handles(num_nodes);
 
-    Graph<Model, MigrationEdge> graph;
+    Graph<Model, MigrationParameters> graph;
 
     for (int node = 0; node < num_nodes; node++) {
         TixiDocumentHandle node_handle;
