@@ -437,7 +437,7 @@ TEST(TestMigrationRules, icu)
         mock_exponential_dist;
     EXPECT_CALL(mock_exponential_dist.get_mock(), invoke).Times(1).WillOnce(testing::Return(0.01));
 
-    ASSERT_EQ(epi::go_to_icu(p_hosp, t, dt, {}), epi::LocationType::IntensiveCareUnit);
+    ASSERT_EQ(epi::go_to_icu(p_hosp, t, dt, {}), epi::LocationType::ICU);
 
     auto work   = epi::Location(epi::LocationType::Work);
     auto p_work = epi::Person(work, epi::InfectionState::Infected_Detected, epi::AbmAgeGroup::Age15to34);
@@ -488,7 +488,7 @@ TEST(TestMigrationRules, shop_return)
     auto p    = epi::Person(home, epi::InfectionState::Carrier, epi::AbmAgeGroup::Age15to34);
     home.add_person(p);
     p.migrate_to(shop);
-    p.interact(dt, {});
+    p.interact(dt, {}); //person only returns home after some time passed
 
     ASSERT_EQ(epi::go_to_shop(p, t, dt, {}), epi::LocationType::Home);
 }
@@ -519,17 +519,17 @@ TEST(TestMigrationRules, go_event)
 
 TEST(TestMigrationRules, event_return)
 {
-    auto t  = epi::TimePoint(0) + epi::days(4) + epi::hours(9);
-    auto dt = epi::hours(1);
+    auto t  = epi::TimePoint(0) + epi::days(4) + epi::hours(21);
+    auto dt = epi::hours(3);
 
     auto home = epi::Location(epi::LocationType::Home);
-    auto shop = epi::Location(epi::LocationType::BasicsShop);
+    auto shop = epi::Location(epi::LocationType::SocialEvent);
     auto p    = epi::Person(home, epi::InfectionState::Carrier, epi::AbmAgeGroup::Age15to34);
     home.add_person(p);
     p.migrate_to(shop);
-    p.interact(dt, {});
+    p.interact(dt, {}); //person only returns home after some time passed
 
-    ASSERT_EQ(epi::go_to_shop(p, t, dt, {}), epi::LocationType::Home);
+    ASSERT_EQ(epi::go_to_event(p, t, dt, {}), epi::LocationType::Home);
 }
 
 TEST(TestWorld, evolveMigration)

@@ -12,45 +12,47 @@ namespace epi
 
 LocationType random_migration(const Person& person, TimePoint t, TimeSpan dt, const MigrationParameters& params)
 {
-    auto current = person.get_location().get_type();
-    auto make_transition = [current](auto l) {
-        return std::make_pair(l, l == current ? 0. : 1.);
+    auto current_loc     = person.get_location().get_type();
+    auto make_transition = [current_loc](auto l) {
+        return std::make_pair(l, l == current_loc ? 0. : 1.);
     };
     if (t < params.lockdown_date) {
-        return random_transition(current, dt,
+        return random_transition(current_loc, dt,
                                  {make_transition(LocationType::Work), make_transition(LocationType::Home),
                                   make_transition(LocationType::School), make_transition(LocationType::SocialEvent),
                                   make_transition(LocationType::BasicsShop)});
     }
-    return current;
+    return current_loc;
 }
 
 LocationType go_to_school(const Person& person, TimePoint t, TimeSpan /*dt*/, const MigrationParameters& params)
 {
-    if (person.get_location().get_type() == LocationType::Home && t < params.lockdown_date && t.day_of_week() < 5 &&
-        t.hour_of_day() >= 8 && person.get_age() == AbmAgeGroup::Age5to14 &&
-        person.get_location().get_type() != epi::LocationType::School) {
+    auto current_loc = person.get_location().get_type();
+    if (current_loc == LocationType::Home && t < params.lockdown_date && t.day_of_week() < 5 && t.hour_of_day() >= 8 &&
+        person.get_age() == AbmAgeGroup::Age5to14) {
         return epi::LocationType::School;
     }
     //return home
-    if (person.get_location().get_type() == epi::LocationType::School && t.hour_of_day() >= 15) {
+    if (current_loc == epi::LocationType::School && t.hour_of_day() >= 15) {
         return epi::LocationType::Home;
     }
-    return person.get_location().get_type();
+    return current_loc;
 }
 
 LocationType go_to_work(const Person& person, TimePoint t, TimeSpan /*dt*/, const MigrationParameters& params)
 {
-    if (person.get_location().get_type() == LocationType::Home && t < params.lockdown_date &&
+    auto current_loc = person.get_location().get_type();
+
+    if (current_loc == LocationType::Home && t < params.lockdown_date &&
         (person.get_age() == AbmAgeGroup::Age15to34 || person.get_age() == AbmAgeGroup::Age35to59) &&
-        t.day_of_week() < 5 && t.hour_of_day() >= 8 && person.get_location().get_type() != epi::LocationType::Work) {
+        t.day_of_week() < 5 && t.hour_of_day() >= 8) {
         return epi::LocationType::Work;
     }
     //return home
-    if (person.get_location().get_type() == epi::LocationType::Work && t.hour_of_day() >= 17) {
+    if (current_loc == epi::LocationType::Work && t.hour_of_day() >= 17) {
         return epi::LocationType::Home;
     }
-    return person.get_location().get_type();
+    return current_loc;
 }
 
 LocationType go_to_shop(const Person& person, TimePoint t, TimeSpan dt, const MigrationParameters& params)
@@ -81,7 +83,7 @@ LocationType go_to_event(const Person& person, TimePoint t, TimeSpan dt, const M
     }
 
     //return home
-    if (current_loc == LocationType::SocialEvent && t.hour_of_day() > 20 && person.get_time_at_location() >= hours(2)) {
+    if (current_loc == LocationType::SocialEvent && t.hour_of_day() >= 20 && person.get_time_at_location() >= hours(2)) {
         return LocationType::Home;
     }
 
@@ -102,8 +104,7 @@ LocationType go_to_icu(const Person& person, TimePoint /*t*/, TimeSpan dt, const
 {
     auto current_loc = person.get_location().get_type();
     if (current_loc == LocationType::Hospital) {
-        return random_transition(current_loc, dt,
-                                 {{LocationType::IntensiveCareUnit, params.icu_rate[person.get_age()]}});
+        return random_transition(current_loc, dt, {{LocationType::ICU, params.icu_rate[person.get_age()]}});
     }
     return current_loc;
 }
@@ -112,7 +113,7 @@ LocationType return_home_when_recovered(const Person& person, TimePoint /*t*/, T
                                         const MigrationParameters& /*params*/)
 {
     auto current_loc = person.get_location().get_type();
-    if ((current_loc == LocationType::Hospital || current_loc == LocationType::IntensiveCareUnit) &&
+    if ((current_loc == LocationType::Hospital || current_loc == LocationType::ICU) &&
         person.get_infection_state() == InfectionState::Recovered_Infected) {
         return LocationType::Home;
     }

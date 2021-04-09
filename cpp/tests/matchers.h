@@ -75,7 +75,7 @@ MATCHER_P(MatrixNear, other,
  * @param atol absolute tolerance
  * @return matcher that accepts floating point values.
  */
-MATCHER_P3(FloatingPointEqual, other, rtol, atol,
+MATCHER_P3(FloatingPointEqual, other, atol, rtol,
            "approx. equal to " + testing::PrintToString(other) + " (rtol = " + testing::PrintToString(rtol) +
                ", atol = " + testing::PrintToString(atol) + ")")
 {
@@ -84,7 +84,7 @@ MATCHER_P3(FloatingPointEqual, other, rtol, atol,
 }
 
 /**
- * gmock matcher that checks where the elements of a container are linearly spaced.
+ * gmock matcher that checks whether the elements of a container are linearly spaced.
  * @param b minimum value
  * @param e maximum value
  * @param num_points number of linearly spaced points in [b, e]
@@ -98,7 +98,7 @@ auto ElementsAreLinspace(T b, T e, size_t num_points)
     std::vector<decltype(FloatingPointEqual(std::declval<T>(), std::declval<T>(), std::declval<T>()))> values;
     auto step_size = (e - b) / (num_points - 1);
     for (size_t i = 0; i < num_points; i++) {
-        values.push_back(FloatingPointEqual(b + i * step_size, 1e-15, 1e-15 * step_size));
+        values.push_back(FloatingPointEqual(b + i * step_size, 1e-15 * step_size, 1e-15));
     }
     return testing::ElementsAreArray(values);
 }

@@ -15,7 +15,7 @@ enum class LocationType
     SocialEvent, // TODO: differentiate different kinds
     BasicsShop, // groceries and other necessities
     Hospital,
-    IntensiveCareUnit,
+    ICU,
 };
 
 }

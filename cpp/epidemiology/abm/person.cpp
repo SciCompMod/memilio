@@ -46,7 +46,7 @@ void Person::migrate_to(Location& location)
         m_location.get().remove_person(*this);
         m_location = location;
         m_location.get().add_person(*this);
-        m_time_at_location = epi::TimeSpan(0);
+        m_time_at_location = TimeSpan(0);
     }
 }
 } // namespace epi

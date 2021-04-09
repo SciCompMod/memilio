@@ -18,8 +18,9 @@ class Person;
  * @param paras migration parameters.
  * @return location that the person migrates to if the rule is applied, the current location of the person 
  * if the rule is not applied because of age, time, etc.
+ * 
+ * @{
  */
-//@{
 /**
  * completely random migration to any other location.
  */
@@ -60,7 +61,7 @@ LocationType go_to_icu(const Person& p, TimePoint t, TimeSpan dt, const Migratio
  */
 LocationType return_home_when_recovered(const Person& person, TimePoint t, TimeSpan dt,
                                         const MigrationParameters& params);
-//@}
+/**@}*/
 
 } // namespace epi
 

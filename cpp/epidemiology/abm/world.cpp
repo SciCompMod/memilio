@@ -48,12 +48,13 @@ void World::migration(TimePoint t, TimeSpan dt)
                               &go_to_event};
     for (auto& person : m_persons) {
         for (auto rule : rules) {
-            auto target_type = rule(*person, t, dt, m_migration_parameters);
-            auto target      = std::find_if(m_locations.begin(), m_locations.end(), [target_type](auto& location) {
-                return location->get_type() == target_type;
-            });
-            if (target != m_locations.end() && target->get() != &person->get_location()) {
-                person->migrate_to(**target);
+            auto destination_type = rule(*person, t, dt, m_migration_parameters);
+            auto destination_node =
+                std::find_if(m_locations.begin(), m_locations.end(), [destination_type](auto& location) {
+                    return location->get_type() == destination_type;
+                });
+            if (destination_node != m_locations.end() && destination_node->get() != &person->get_location()) {
+                person->migrate_to(**destination_node);
                 break;
             }
         }

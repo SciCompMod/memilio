@@ -50,8 +50,8 @@ public:
 
     /**
      * comparison operators
+     * @{
      */
-    //@{
     bool operator==(const TimeSpan& other) const
     {
         return m_seconds == other.m_seconds;
@@ -76,12 +76,12 @@ public:
     {
         return m_seconds >= other.m_seconds;
     }
-    //@}
+    /**@}*/
 
     /**
-     * numeric operators for addition, subtraction, and scalar integer multiplication and division.
+     * numeric operators for addition, subtraction, and scalar integer multiplication and division. 
+     * @{
      */
-    //@{
     TimeSpan operator+(const TimeSpan& s) const
     {
         return TimeSpan{m_seconds + s.m_seconds};
@@ -119,7 +119,7 @@ public:
         m_seconds /= f;
         return *this;
     }
-    //@}
+    /**@}*/
 
 private:
     int m_seconds;
@@ -184,8 +184,8 @@ public:
 
     /**
      * comparison operators.
+     * @{
      */
-    //@{
     bool operator==(const TimePoint& other) const
     {
         return m_seconds == other.m_seconds;
@@ -210,12 +210,12 @@ public:
     {
         return m_seconds >= other.m_seconds;
     }
-    //@}
+    /**@}*/
 
     /**
      * add or subtract a TimeSpan.
+     * @{
      */
-    //@{
     TimePoint operator+(const TimeSpan& s) const
     {
         return TimePoint{m_seconds + s.seconds()};
@@ -234,7 +234,7 @@ public:
         m_seconds -= s.seconds();
         return *this;
     }
-    //@}
+    /**@}*/
 
     /**
      * TimeSpan difference between two time points.

@@ -20,28 +20,28 @@ class Person
 {
 public:
     /**
-     * create a Person.
+     * Create a Person.
      * @param location the initial location of the person
      * @param state the initial infection state of the person
      */
     Person(Location& location, InfectionState state, AbmAgeGroup age);
 
     /** 
-     * interact with the population at its current location.
-     * The person might change infection state 
+     * Time passes and the person interacts with the population at its current location.
+     * The person might change infection state.
      * @param dt length of the current simulation time step
      * @param global_infection_parameters infection parameters that are the same in all locations
      */
     void interact(TimeSpan dt, const GlobalInfectionParameters& global_infection_parameters);
 
     /** 
-     * migrate to a different location.
+     * Migrate to a different location.
      * @param location the new location of the person.
      * */
     void migrate_to(Location& location);
 
     /**
-     * get the current infection state of the person.
+     * Get the current infection state of the person.
      * @returns the current infection state of the person
      */
     InfectionState get_infection_state() const
@@ -50,7 +50,7 @@ public:
     }
 
     /**
-     * get the age of this person.
+     * Get the age group of this person.
      * @return age.
      */
     AbmAgeGroup get_age() const
@@ -59,7 +59,7 @@ public:
     }
 
     /**
-     * get the current location of the person.
+     * Get the current location of the person.
      * @returns the current location of the person
      */
     const Location& get_location() const
@@ -68,7 +68,7 @@ public:
     }
 
     /**
-     * how long has the person been at its current location.
+     * Get the time the person has been at its current location.
      * @return time span.
      */
     TimeSpan get_time_at_location() const
@@ -82,7 +82,6 @@ private:
     TimeSpan m_time_until_carrier;
     AbmAgeGroup m_age;
     TimeSpan m_time_at_location;
-    //age, times, ...
 };
 
 } // namespace epi
