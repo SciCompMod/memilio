@@ -37,6 +37,17 @@ TEST(TestDampings, dampingsOnSameLevel)
     EXPECT_THAT(print_wrap(dampings.get_matrix_at(1e5)), MatrixNear((D1 + D2.array()).matrix()));
 }
 
+TEST(TestDampings, dampingsAtTheSameTime)
+{
+    epi::Dampings<epi::Damping<epi::SquareMatrixShape>> dampings(2);
+    auto D1 = 0.25;
+    auto D2 = (Eigen::MatrixXd(2, 2) << 0.0, 0.25, 0.5, 0.75).finished();
+    dampings.add(D1, epi::DampingLevel(-2), epi::DampingType(0), epi::SimulationTime(0.5));
+    dampings.add(D2, epi::DampingLevel(-2), epi::DampingType(1), epi::SimulationTime(0.5));
+    EXPECT_THAT(print_wrap(dampings.get_matrix_at(-0.5)), MatrixNear(Eigen::MatrixXd::Zero(2, 2)));
+    EXPECT_THAT(print_wrap(dampings.get_matrix_at(0.5 + 1e-5)), MatrixNear((D1 + D2.array()).matrix()));
+}
+
 TEST(TestDampings, dampingOfSameType)
 {
     epi::Dampings<epi::Damping<epi::SquareMatrixShape>> dampings(2);
