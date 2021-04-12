@@ -3,6 +3,14 @@ import epidemiology.secir as secir
 import numpy as np
 
 class Test_Migration(unittest.TestCase):
+    def test_params(self):
+        coeffs = secir.MigrationCoefficientGroup(1, 8)
+        coeffs[0] = secir.MigrationCoefficients(np.ones(8))
+        coeffs[0].add_damping(secir.MigrationDamping(0.5 * np.ones(8), t = 1.0))
+        params = secir.MigrationParameters(coeffs)
+        self.assertTrue((params.coefficients.get_matrix_at(0) == np.ones(8)).all())
+        self.assertTrue((params.coefficients.get_matrix_at(2) == 0.5 * np.ones(8)).all())
+    
     def test_params_graph(self):
         graph = secir.SecirModelGraph1()
         graph.add_node(0, secir.SecirModel1())
