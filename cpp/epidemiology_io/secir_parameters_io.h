@@ -128,12 +128,18 @@ namespace details
             if (std::accumulate(num_inf[county].begin(), num_inf[county].end(), 0.0) > 0) {
                 size_t num_groups = model[county].parameters.get_num_groups();
                 for (size_t i = 0; i < num_groups; i++) {
-                    model[county].populations[{(typename SecirModel<AgeGroup6>::AgeGroup)i, epi::InfectionType::E}] = num_exp[county][i];
-                    model[county].populations[{(typename SecirModel<AgeGroup6>::AgeGroup)i, epi::InfectionType::C}] = num_car[county][i];
-                    model[county].populations[{(typename SecirModel<AgeGroup6>::AgeGroup)i, epi::InfectionType::I}] = num_inf[county][i];
-                    model[county].populations[{(typename SecirModel<AgeGroup6>::AgeGroup)i, epi::InfectionType::H}] = num_hosp[county][i];
-                    model[county].populations[{(typename SecirModel<AgeGroup6>::AgeGroup)i, epi::InfectionType::D}] = num_death[county][i];
-                    model[county].populations[{(typename SecirModel<AgeGroup6>::AgeGroup)i, epi::InfectionType::R}] = num_rec[county][i];
+                    model[county].populations[{(typename SecirModel<AgeGroup6>::AgeGroup)i, epi::InfectionType::E}] =
+                        num_exp[county][i];
+                    model[county].populations[{(typename SecirModel<AgeGroup6>::AgeGroup)i, epi::InfectionType::C}] =
+                        num_car[county][i];
+                    model[county].populations[{(typename SecirModel<AgeGroup6>::AgeGroup)i, epi::InfectionType::I}] =
+                        num_inf[county][i];
+                    model[county].populations[{(typename SecirModel<AgeGroup6>::AgeGroup)i, epi::InfectionType::H}] =
+                        num_hosp[county][i];
+                    model[county].populations[{(typename SecirModel<AgeGroup6>::AgeGroup)i, epi::InfectionType::D}] =
+                        num_death[county][i];
+                    model[county].populations[{(typename SecirModel<AgeGroup6>::AgeGroup)i, epi::InfectionType::R}] =
+                        num_rec[county][i];
                 }
             }
             else {
@@ -189,7 +195,8 @@ namespace details
         for (size_t region = 0; region < vregion.size(); region++) {
             size_t num_groups = model[region].parameters.get_num_groups();
             for (size_t i = 0; i < num_groups; i++) {
-                model[region].populations[{(typename SecirModel<AgeGroup6>::AgeGroup)i, epi::InfectionType::U}] = scaling_factor_icu * num_icu[region] * mu_I_U[region][i] / sum_mu_I_U[region];
+                model[region].populations[{(typename SecirModel<AgeGroup6>::AgeGroup)i, epi::InfectionType::U}] =
+                    scaling_factor_icu * num_icu[region] * mu_I_U[region][i] / sum_mu_I_U[region];
             }
         }
     }
@@ -346,12 +353,18 @@ SecirModel<AgeGroup> read_parameter_space(TixiDocumentHandle handle, const std::
 
         model.populations[{(AgeGroup)i, InfectionType::D}] = read_buffer;
 
-        model.populations[{(AgeGroup)i, InfectionType::E}] = * read_element(handle, path_join(population_path, "Exposed"), io_mode);
-        model.populations[{(AgeGroup)i, InfectionType::C}] = * read_element(handle, path_join(population_path, "Carrier"), io_mode);
-        model.populations[{(AgeGroup)i, InfectionType::I}] = * read_element(handle, path_join(population_path, "Infectious"), io_mode);
-        model.populations[{(AgeGroup)i, InfectionType::H}] = * read_element(handle, path_join(population_path, "Hospitalized"), io_mode);
-        model.populations[{(AgeGroup)i, InfectionType::U}] = * read_element(handle, path_join(population_path, "ICU"), io_mode);
-        model.populations[{(AgeGroup)i, InfectionType::R}] = * read_element(handle, path_join(population_path, "Recovered"), io_mode);
+        model.populations[{(AgeGroup)i, InfectionType::E}] =
+            *read_element(handle, path_join(population_path, "Exposed"), io_mode);
+        model.populations[{(AgeGroup)i, InfectionType::C}] =
+            *read_element(handle, path_join(population_path, "Carrier"), io_mode);
+        model.populations[{(AgeGroup)i, InfectionType::I}] =
+            *read_element(handle, path_join(population_path, "Infectious"), io_mode);
+        model.populations[{(AgeGroup)i, InfectionType::H}] =
+            *read_element(handle, path_join(population_path, "Hospitalized"), io_mode);
+        model.populations[{(AgeGroup)i, InfectionType::U}] =
+            *read_element(handle, path_join(population_path, "ICU"), io_mode);
+        model.populations[{(AgeGroup)i, InfectionType::R}] =
+            *read_element(handle, path_join(population_path, "Recovered"), io_mode);
 
         status = tixiGetDoubleElement(handle, path_join(population_path, "Total").c_str(), &read_buffer);
         assert(status == SUCCESS && ("Failed to read total population at " + path).c_str());
@@ -579,6 +592,17 @@ void write_single_run_params(const int run,
             "overwritten",
             epi::get_current_dir_name());
     }
+    std::vector<TimeSeries<double>> all_results;
+    std::vector<int> ids;
+
+    ids.reserve(graph.nodes().size());
+    all_results.reserve(graph.nodes().size());
+    std::transform(graph.nodes().begin(), graph.nodes().end(), std::back_inserter(all_results), [](auto& node) {
+        return node.property.get_result();
+    });
+    std::transform(graph.nodes().begin(), graph.nodes().end(), std::back_inserter(ids), [](auto& node) {
+        return node.id;
+    });
 
     int node_id = 0;
     for (auto& node : graph.nodes()) {
@@ -594,11 +618,11 @@ void write_single_run_params(const int run,
                                                       std::to_string(node_id) + ".xml"))
                                      .c_str());
         tixiCloseDocument(handle);
-
-        save_result(node.property.get_result(), path_join(abs_path, ("Results_run" + std::to_string(run) + "_node" +
-                                                                     std::to_string(node_id) + ".h5")));
         node_id++;
     }
+
+    save_result(all_results, ids,
+                path_join(abs_path, ("Results_run" + std::to_string(run) + std::to_string(node_id) + ".h5")));
 }
 
 /**

@@ -1,6 +1,7 @@
 #include "load_test_data.h"
 #include "epidemiology/model/simulation.h"
 #include "epidemiology/secir/secir.h"
+#include "epidemiology/utils/time_series.h"
 #include <epidemiology_io/secir_result_io.h>
 #include <gtest/gtest.h>
 
@@ -55,11 +56,14 @@ TEST(TestSaveResult, compareResultWithH5)
     contact_matrix[0] = epi::ContactMatrix(Eigen::MatrixXd::Constant(nb_groups, nb_groups, cont_freq));
     contact_matrix[0].add_damping(0.7, epi::SimulationTime(30.));
 
-    auto result_from_sim = simulate(t0, tmax, dt, model);
+    auto result_from_sim                                  = simulate(t0, tmax, dt, model);
+    std::vector<epi::TimeSeries<double>> results_from_sim = {result_from_sim, result_from_sim};
+    std::vector<int> ids                                  = {1, 2};
+    epi::save_result(results_from_sim, ids, "test_result.h5");
 
-    epi::save_result(result_from_sim, "test_result.h5");
-
-    epi::SecirSimulationResult result_from_file{epi::read_result("test_result.h5", static_cast<int>(nb_groups))};
+    std::vector<epi::SecirSimulationResult> results_from_file{
+        epi::read_result("test_result.h5", static_cast<int>(nb_groups))};
+    auto result_from_file = results_from_file[0];
 
     ASSERT_EQ(result_from_file.get_groups().get_num_time_points(), result_from_sim.get_num_time_points());
     ASSERT_EQ(result_from_file.get_totals().get_num_time_points(), result_from_sim.get_num_time_points());
