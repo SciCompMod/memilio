@@ -67,6 +67,7 @@ add_library(epidemiology
     epidemiology/secir/uncertain_matrix.cpp
     epidemiology/secir/contact_matrix.h    
     epidemiology/secir/contact_matrix.cpp
+    epidemiology/utils/index.h
     epidemiology/utils/custom_index_array.h
     epidemiology/utils/memory.h
     epidemiology/utils/parameter_distributions.h

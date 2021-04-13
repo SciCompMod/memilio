@@ -36,11 +36,11 @@ class Populations : public CustomIndexArray<UncertainValue, Categories...>
 {
 public:
 
-    using MultiIndex = typename CustomIndexArray<UncertainValue, Categories...>::MultiIndex;
+    using Index = typename CustomIndexArray<UncertainValue, Categories...>::Index;
 
     template <class... Ts,
               typename std::enable_if_t<std::is_constructible<UncertainValue, Ts...>::value>* = nullptr>
-    explicit Populations(MultiIndex const& sizes, Ts... args)
+    explicit Populations(Index const& sizes, Ts... args)
         : CustomIndexArray<UncertainValue, Categories...>(sizes, args...)
     {}
 
@@ -82,7 +82,7 @@ public:
      * @return the population of compartment
      */
     template <class Arr>
-    decltype(auto) get_from(Arr&& y, MultiIndex const& cats) const
+    decltype(auto) get_from(Arr&& y, Index const& cats) const
     {
         static_assert(std::is_lvalue_reference<Arr>::value, "get_from is disabled for temporary arrays.");
         return y[this->get_flat_index(cats)];
@@ -95,7 +95,7 @@ public:
      * @return total population of the group
      */
     template <class T>
-    ScalarType get_group_total(Index<T> group_idx) const
+    ScalarType get_group_total(epi::Index<T> group_idx) const
     {
         auto const s = this->template slice<T>({(size_t)group_idx, 1});
         return std::accumulate(s.begin(), s.end(), 0.);
@@ -114,7 +114,7 @@ public:
      * @param value the new value for the total population
      */
     template <class T>
-    void set_group_total(Index<T> group_idx, ScalarType value)
+    void set_group_total(epi::Index<T> group_idx, ScalarType value)
     {
         ScalarType current_population = get_group_total(group_idx);
         auto s = this->template slice<T>({(size_t)group_idx, 1});
@@ -153,10 +153,10 @@ public:
      * @param group_idx The enum of the group within the category
      */
     template <class T>
-    void set_difference_from_group_total(MultiIndex const& midx, ScalarType total_group_population)
+    void set_difference_from_group_total(Index const& midx, ScalarType total_group_population)
 
     {
-        auto group_idx = midx.template get<T>();
+        auto group_idx = epi::get<T>(midx);
         ScalarType current_population = get_group_total(group_idx);
         size_t idx                    = this->get_flat_index(midx);
         current_population -= this->array()[idx];
@@ -198,7 +198,7 @@ public:
      * @param indices the index of the compartment
      * @param total_population the new value for the total population
      */
-    void set_difference_from_total(MultiIndex midx, double total_population)
+    void set_difference_from_total(Index midx, double total_population)
     {
         double current_population = get_total();
         size_t idx                = this->get_flat_index(midx);
