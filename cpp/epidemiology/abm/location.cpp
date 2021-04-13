@@ -56,7 +56,7 @@ namespace
 InfectionState Location::interact(const Person& person, double dt, const GlobalInfectionParameters& global_params) const
 {
     auto state = person.get_infection_state();
-    auto age = epi::MultiIndex<AbmAgeGroup>({person.get_age()});
+    auto age = person.get_age();
     switch (state) {
     case InfectionState::Susceptible:
         return random_transition(state, dt, {{InfectionState::Exposed, m_cached_exposure_rate[age]}});

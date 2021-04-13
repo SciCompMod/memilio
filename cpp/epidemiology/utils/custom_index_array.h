@@ -3,7 +3,7 @@
 
 #include "epidemiology/utils/eigen.h"
 #include "epidemiology/utils/eigen_util.h"
-#include "epidemiology/utils/type_safe.h"
+#include "epidemiology/utils/index.h"
 
 #include <numeric>
 
@@ -12,23 +12,23 @@ namespace
 
 //calculate the product of tuple elements
 // std::apply or fold expression in C++17
-template <int I, template <class...> class MultiIndex, class... Ts>
-typename std::enable_if<I == sizeof...(Ts), size_t>::type product(MultiIndex<Ts...> const&)
+template <int I, template <class...> class Index, class... Ts>
+typename std::enable_if<(I == sizeof...(Ts)), size_t>::type product(Index<Ts...> const&)
 {
         return 1;
 }
 
-template <int I, template <class...> class MultiIndex, class... Ts>
-typename std::enable_if<I < sizeof...(Ts), size_t>::type product(MultiIndex<Ts...> const& t)
+template <int I, template <class...> class Index, class... Ts>
+typename std::enable_if<(I < sizeof...(Ts)), size_t>::type product(Index<Ts...> const& t)
 {
-    return (size_t)t.template get<I>()*product<I+1, MultiIndex, Ts...>(t);
+    return (size_t)epi::get<I>(t)*product<I+1, Index, Ts...>(t);
 }
 
 
-template <template <class...> class MultiIndex, class... Ts>
-size_t product(MultiIndex<Ts...> const& t)
+template <template <class...> class Index, class... Ts>
+size_t product(Index<Ts...> const& t)
 {
-    return product<0, MultiIndex, Ts...>(t);
+    return product<0, Index, Ts...>(t);
 }
 
 } // namespace
@@ -37,147 +37,39 @@ namespace epi
 {
 
 
-/**
- * @brief An Index is a typesafe wrapper for size_t that is associated with a Tag.
- *
- * The Tag can be any type such as an enum or an empty struct. The Index is used
- * in the MultiIndex class, which in turn is used to index into a CustomIndexArray:
- *
- * CustomIndexArray<Tag1, Tag2> a;
- * a[{Index<Tag1>(0), Index<Tag2>(14)}]
- *
- * Will retrieve the element associated with the indices 0 and 14 for the Tags Tag1
- * and Tag2 respectively.
- *
- * Optionally, the tag can be derived from Index to shorten the notation:
- *
- * struct Tag1 : public Index<Tag1>{
- *    Tag1(size_t val) : Index<Tag1>(val) {}
- * };
- * struct Tag2 : public Index<Tag2>{
- *    Tag2(size_t val) : Index<Tag2>(val) {}
- * };
- * CustomIndexArray<Tag1, Tag2> a;
- * a[{Tag1(0), Tag2(14)}]
- *
- * @tparam CategoryTag A tag for the typesafe index
- *
- */
-template <typename CategoryTag>
-class Index : public TypeSafe<size_t, Index<CategoryTag>>
-            , public OperatorComparison<Index<CategoryTag>>
-            , public OperatorAdditionSubtraction<Index<CategoryTag>>
-{
-public:
-    using TypeSafe<size_t, Index<CategoryTag>>::TypeSafe;
-
-    /**
-     * @brief Constructor from enum, if CategoryTag is an enum
-     */
-    template <typename Dummy = CategoryTag,
-                  std::enable_if_t<std::is_enum<Dummy>::value, void>* = nullptr>
-    Index(Dummy val) : TypeSafe<size_t, Index<CategoryTag>>((size_t)val) {}
-
-    /**
-     * @brief Constructor from size_t
-     * @param val
-     */
-    explicit Index(size_t val) : TypeSafe<size_t, Index<CategoryTag>>(val) {}
-};
-
-
-/**
- * @brief A MultiIndex combines several Index objects. It is used to index into a multidimensional
- * CustomIndexArray
- *
- * @tparam CategoryTag Variadic template parameter for the Tags used in the MultiIndex
- */
-template <typename... CategoryTag>
-class MultiIndex
-{
-public:
-    static size_t constexpr size = sizeof...(CategoryTag);
-
-    // constructor from Indices
-    MultiIndex(Index<CategoryTag> const&...indices) : m_indices{indices...} {}
-
-    // retrieves the Index at the Ith position
-    template <size_t I>
-    constexpr typename std::tuple_element<I, std::tuple<Index<CategoryTag>...> >::type& get() noexcept
-    {
-        return std::get<I>(m_indices);
-    }
-
-    // retrieves the Index at the Ith position
-    template <size_t I>
-    constexpr typename std::tuple_element<I, std::tuple<Index<CategoryTag>...> >::type const& get() const noexcept
-    {
-        return std::get<I>(m_indices);
-    }
-
-    // retrieves the Index for the tag Tag
-    template <typename Tag>
-    constexpr Index<Tag>& get() noexcept
-    {
-        return std::get<Index<Tag>>(m_indices);
-    }
-
-    // retrieves the Index for the tag Tag
-    template <typename Tag>
-    constexpr Index<Tag> const& get() const noexcept
-    {
-        return std::get<Index<Tag>>(m_indices);
-    }
-
-    // comparison operators
-    bool operator==(MultiIndex const& other) const
-    {
-        return m_indices == other.m_indices;
-    }
-
-    bool operator!=(MultiIndex const& other) const
-    {
-        return !(this == other);
-    }
-
-private:
-    std::tuple<Index<CategoryTag>...> m_indices;
-};
-
-
 namespace details {
 
     // calculate the Position of an element in a MultiIndex, given its type
     template <class T, class Tuple>
-    struct MultiIndexPosition;
+    struct IndexPosition;
 
     template <class T, class... Types>
-    struct MultiIndexPosition<T, MultiIndex<T, Types...>> {
+    struct IndexPosition<T, Index<T, Types...>> {
         static const std::size_t value = 0;
     };
 
     template <class T, class U, class... Types>
-    struct MultiIndexPosition<T, MultiIndex<U, Types...>> {
-        static const std::size_t value = 1 + MultiIndexPosition<T, MultiIndex<Types...>>::value;
+    struct IndexPosition<T, Index<U, Types...>> {
+        static const std::size_t value = 1 + IndexPosition<T, Index<Types...>>::value;
     };
 
     // Internal implementation for flatten_index
-    template <size_t I, typename MultiIndex>
-    std::enable_if_t< (I == (MultiIndex::size - 1) ), std::pair<size_t, size_t>> flatten_index(MultiIndex const& indices, MultiIndex const& dimensions)
+    template <size_t I, typename Index>
+    std::enable_if_t< (I == (Index::size - 1) ), std::pair<size_t, size_t>> flatten_index(Index const& indices, Index const& dimensions)
     {
-        assert(indices.template get<I>() < dimensions.template get<I>());
-        return {(size_t)indices.template get<I>(), (size_t)dimensions.template get<I>()};
+        assert(get<I>(indices) < get<I>(dimensions));
+        return {(size_t)epi::get<I>(indices), (size_t)epi::get<I>(dimensions)};
     }
 
-    template <size_t I, typename MultiIndex>
-    std::enable_if_t< (I < (MultiIndex::size - 1) ), std::pair<size_t, size_t>> flatten_index(MultiIndex const& indices, MultiIndex const& dimensions)
+    template <size_t I, typename Index>
+    std::enable_if_t< (I < (Index::size - 1) ), std::pair<size_t, size_t>> flatten_index(Index const& indices, Index const& dimensions)
     {
-        assert(indices.template get<I>() < dimensions.template get<I>());
+        assert(epi::get<I>(indices) < epi::get<I>(dimensions));
 
         size_t val, prod;
         std::tie(val, prod) = flatten_index<I+1>(indices, dimensions);
 
-        return {val + (size_t)indices.template get<I>()*prod, prod*(size_t)dimensions.template get<I>()};
+        return {val + (size_t)epi::get<I>(indices)*prod, prod*(size_t)epi::get<I>(dimensions)};
     }
 
     template <typename T>
@@ -244,7 +136,7 @@ class CustomIndexArray
 public:
 
     using Type              = Typ;
-    using MultiIndex        = ::epi::MultiIndex<Tags...>;
+    using Index             = ::epi::Index<Tags...>;
     using InternalArrayType = Eigen::Array<Type, Eigen::Dynamic, 1>;
 
     /**
@@ -259,7 +151,7 @@ public:
      */
     template <class... Ts,
               typename std::enable_if_t<std::is_constructible<Type, Ts...>::value>* = nullptr>
-    CustomIndexArray(MultiIndex const& dims, Ts&&... args)
+    CustomIndexArray(Index const& dims, Ts&&... args)
         : m_dimensions{dims}
         , m_numel(product(dims))
         , m_y(InternalArrayType::Constant(m_numel, 1, {std::forward<Ts>(args)...}))
@@ -283,8 +175,8 @@ public:
      * @return size along a specified dimension
      */
     template <typename Tag>
-    Index<Tag> size() const {
-        return m_dimensions.template get<Tag>();
+    epi::Index<Tag> size() const {
+        return get<Tag>(m_dimensions);
     }
 
     /**
@@ -305,7 +197,7 @@ public:
      * @param MultiIndex
      * @return the value at the index
      */
-    Type& operator[](MultiIndex const& index) {
+    Type& operator[](Index const& index) {
         return m_y[get_flat_index(index)];
     }
 
@@ -314,7 +206,7 @@ public:
      * @param index a flat index
      * @return the value at the index
      */
-    Type const& operator[](MultiIndex const& index) const {
+    Type const& operator[](Index const& index) const {
         return m_y[get_flat_index(index)];
     }
 
@@ -325,7 +217,7 @@ public:
      * @param indices the custom indices for each category
      * @return a flat index into the data structure storing the compartment populations
      */
-    size_t get_flat_index(MultiIndex const& index) const
+    size_t get_flat_index(Index const& index) const
     {
         return (Eigen::Index)flatten_index(index, m_dimensions);
     }
@@ -492,19 +384,19 @@ private:
          * @param start_iter An iterator to the first element of the data
          * @param idx_sequence_ A sequence of indices into the slice
          */
-        Slice(MultiIndex const& dimensions,
+        Slice(Index const& dimensions,
               iter_type const& start_iter,
               Seq<size_t> idx_sequence_)
             : data_begin(start_iter)
             , idx_sequence(idx_sequence_)
             , m_dimensions(dimensions)
-            , di(dimensions.template get<Tag>())
-            , dr(product<details::MultiIndexPosition<Tag, MultiIndex>::value>(dimensions)/di)
+            , di(epi::get<Tag>(dimensions))
+            , dr(product<details::IndexPosition<Tag, Index>::value>(dimensions)/di)
             , dl(product(dimensions)/(di*dr))
         {
             assert( (size_t)idx_sequence.start + idx_sequence.n <= di );
 
-            m_dimensions.template get<Tag>() = Index<Tag>(idx_sequence.n);
+            epi::get<Tag>(m_dimensions) = epi::Index<Tag>(idx_sequence.n);
         }
 
         // returns the number of elements in a slice
@@ -585,12 +477,12 @@ private:
 
         iter_type data_begin;
         Seq<size_t> idx_sequence;
-        MultiIndex m_dimensions;
+        Index m_dimensions;
         size_t di, dr, dl;
     };
 
     // An array storying the size of each category
-    MultiIndex m_dimensions;
+    Index m_dimensions;
 
     // number of elements stored
     size_t m_numel;

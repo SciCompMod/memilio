@@ -30,6 +30,7 @@ std::vector<epi::TimeSeries<double>> filter_graph_results(
     return results;
 }
 
+// bind an index for a single tag
 template <class Tag>
 void bind_Index(py::module& m, std::string const& name)
 {
@@ -37,20 +38,20 @@ void bind_Index(py::module& m, std::string const& name)
     c.def(py::init<size_t>(), py::arg("value"));
 }
 
-// helper function for implicitly casting from py::tuple to MultiIndex in Python.
+// helper function for implicitly casting from py::tuple to Index in Python.
 // This extracts an Index from a py::tuple of Indices from the correct position,
-// given the corresponding MultiIndex type
+// given the corresponding Index type
 template <typename Tag, class Tuple>
 epi::Index<Tag> extract_index(py::tuple& t)
 {
-    return t[epi::details::MultiIndexPosition<Tag, Tuple>::value].template cast<epi::Index<Tag>>();
+    return t[epi::details::IndexPosition<Tag, Tuple>::value].template cast<epi::Index<Tag>>();
 }
 
-
+// bind an index for more than one tag
 template <class... Tags>
 void bind_MultiIndex(py::module&m, std::string const& name)
 {
-    using C = epi::MultiIndex<Tags...>;
+    using C = epi::Index<Tags...>;
     py::class_<C> c(m, name.c_str());
     c.def(py::init<epi::Index<Tags> const&...>())
             .def(py::init([](py::tuple t){
@@ -91,16 +92,16 @@ template <class Type, class... Tags>
 void bind_CustomIndexArray(py::module& m, std::string const& name)
 {
     using C = typename epi::CustomIndexArray<Type, Tags...>;
-    using MultiIndex = typename epi::CustomIndexArray<Type, Tags...>::MultiIndex;
+    using Index = typename epi::CustomIndexArray<Type, Tags...>::Index;
     py::class_<C> c(m, name.c_str());
-    c.def(py::init([](MultiIndex const& sizes, Type const& val){ return C(sizes, val); }))
-     .def(py::init([](MultiIndex const& sizes){ return C(sizes); }))
+    c.def(py::init([](Index const& sizes, Type const& val){ return C(sizes, val); }))
+     .def(py::init([](Index const& sizes){ return C(sizes); }))
      .def("numel", &C::numel)
      .def("__getitem__",
-          [](const C& self, MultiIndex const& idx) -> auto& { return self[idx]; },
+          [](const C& self, Index const& idx) -> auto& { return self[idx]; },
          py::return_value_policy::reference_internal)
      .def("__setitem__",
-          [](C& self, MultiIndex const& idx, double value) { self[idx] = value; })
+          [](C& self, Index const& idx, double value) { self[idx] = value; })
      .def("__iter__", [](const C &s) { return py::make_iterator(s.begin(), s.end()); },
           py::keep_alive<0, 1>())
      .def("get_flat_index", &C::get_flat_index);
@@ -136,8 +137,8 @@ void bind_Population(py::module& m, std::string const& name)
     using C = epi::Populations<Cats...>;
     using Base = epi::CustomIndexArray<epi::UncertainValue, Cats...>;
     py::class_<C, Base> c(m, name.c_str());
-    c.def(py::init([](epi::MultiIndex<Cats...> const& sizes, double val){ return C(sizes, val); }))
-        .def(py::init([](epi::MultiIndex<Cats...> const& sizes){ return C(sizes); }))
+    c.def(py::init([](epi::Index<Cats...> const& sizes, double val){ return C(sizes, val); }))
+        .def(py::init([](epi::Index<Cats...> const& sizes){ return C(sizes); }))
         .def("get_num_compartments", &C::get_num_compartments)
         .def("get_compartments", &C::get_compartments)
         .def("get_total", &C::get_total)
@@ -955,7 +956,7 @@ PYBIND11_MODULE(_secir, m)
         .def("get_contact_patterns", py::overload_cast<>(&epi::SecirParams::get_contact_patterns, py::const_),
              py::return_value_policy::reference_internal);
 
-    bind_MultiIndex<epi::AgeGroup, epi::InfectionState>(m, "MultiIndex");
+    bind_MultiIndex<epi::AgeGroup, epi::InfectionState>(m, "Index_Agegroup_InfectionState");
     bind_CustomIndexArray<epi::UncertainValue, epi::AgeGroup, epi::InfectionState>(m, "SecirPopulationArray");
     bind_Population<epi::AgeGroup, epi::InfectionState>(m, "SecirPopulation");
 

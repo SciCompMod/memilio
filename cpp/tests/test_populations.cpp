@@ -122,13 +122,13 @@ TEST(TestPopulations, set_difference_from_total)
     Po m({num_infType, num_ageGroup, num_continents});
 
 
-    Po::MultiIndex S_2_Africa = {epi::Index<InfectionState>(InfectionState::S),
-                                 epi::Index<AgeGroup>(2),
-                                 epi::Index<Continent>(Africa)};
+    Po::Index S_2_Africa = {epi::Index<InfectionState>(InfectionState::S),
+                            epi::Index<AgeGroup>(2),
+                            epi::Index<Continent>(Africa)};
 
-    Po::MultiIndex E_2_Africa = {epi::Index<InfectionState>(InfectionState::E),
-                                 epi::Index<AgeGroup>(2),
-                                 epi::Index<Continent>(Africa)};
+    Po::Index E_2_Africa = {epi::Index<InfectionState>(InfectionState::E),
+                            epi::Index<AgeGroup>(2),
+                            epi::Index<Continent>(Africa)};
 
     m[S_2_Africa] = 100;
 
@@ -143,7 +143,7 @@ TEST(TestPopulations, set_difference_from_total)
     for (auto i = epi::Index<InfectionState>(0); i < m.size<InfectionState>(); ++i) {
         for (auto j = epi::Index<AgeGroup>(0); j < m.size<AgeGroup>(); ++j) {
             for (auto k = epi::Index<Continent>(0); k < m.size<Continent>(); ++k) {
-                auto current = Po::MultiIndex(i, j, k);
+                auto current = Po::Index(i, j, k);
                 if ( current == S_2_Africa ) {
                     ASSERT_NEAR(100, (m[current]), 1e-12);
                 }
@@ -167,17 +167,17 @@ TEST(TestPopulations, set_difference_from_group_total)
     using Po = epi::Populations<InfectionState, AgeGroup, Continent>;
     Po m({num_infType, num_ageGroup, num_continents});
 
-    Po::MultiIndex S_2_Africa = {epi::Index<InfectionState>(InfectionState::S),
-                                 epi::Index<AgeGroup>(2),
-                                 epi::Index<Continent>(Africa)};
+    Po::Index S_2_Africa = {epi::Index<InfectionState>(InfectionState::S),
+                            epi::Index<AgeGroup>(2),
+                            epi::Index<Continent>(Africa)};
 
-    Po::MultiIndex E_2_Africa = {epi::Index<InfectionState>(InfectionState::E),
-                                 epi::Index<AgeGroup>(2),
-                                 epi::Index<Continent>(Africa)};
+    Po::Index E_2_Africa = {epi::Index<InfectionState>(InfectionState::E),
+                            epi::Index<AgeGroup>(2),
+                            epi::Index<Continent>(Africa)};
 
-    Po::MultiIndex S_2_Europe = {epi::Index<InfectionState>(InfectionState::E),
-                                 epi::Index<AgeGroup>(2),
-                                 epi::Index<Continent>(Europe)};
+    Po::Index S_2_Europe = {epi::Index<InfectionState>(InfectionState::E),
+                            epi::Index<AgeGroup>(2),
+                            epi::Index<Continent>(Europe)};
 
     m[S_2_Africa] = 100;
     m[S_2_Europe] = 200;
@@ -194,7 +194,7 @@ TEST(TestPopulations, set_difference_from_group_total)
     for (auto i = epi::Index<InfectionState>(0); i < m.size<InfectionState>(); ++i) {
         for (auto j = epi::Index<AgeGroup>(0); j < m.size<AgeGroup>(); ++j) {
             for (auto k = epi::Index<Continent>(0); k < m.size<Continent>(); ++k) {
-                auto current = Po::MultiIndex(i, j, k);
+                auto current = Po::Index(i, j, k);
                 if (current  == S_2_Africa) {
                     ASSERT_NEAR(100, (m[current]), 1e-12);
                 }

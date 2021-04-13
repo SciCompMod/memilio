@@ -1,17 +1,21 @@
 #include "epidemiology/utils/custom_index_array.h"
 #include <gtest/gtest.h>
 
+// A category can be a tag
 struct Dim1;
-enum Dim2E
+
+// A category can be an enum class
+enum class Dim2
 {
     Male,
     Female,
     Count = 2
 };
-struct Dim2 : epi::Index<Dim2> {
-    Dim2(size_t val) : epi::Index<Dim2>(val){}
+
+// We can derive a tag from epi::Index for a shorter notation
+struct Dim3 : epi::Index<Dim3> {
+    Dim3(size_t val) : epi::Index<Dim3>(val){}
 };
-struct Dim3;
 
 TEST(CustomIndexArray, sizesAndDimensions)
 {
@@ -21,29 +25,29 @@ TEST(CustomIndexArray, sizesAndDimensions)
     ASSERT_EQ(array1.size<Dim1>(), epi::Index<Dim1>(3));
 
     using ArrayType2 = epi::CustomIndexArray<double, Dim2>;
-    ArrayType2 array2({Dim2(Dim2E::Count)});
+    ArrayType2 array2({Dim2::Count});
     ASSERT_EQ(array2.numel(), 2);
-    ASSERT_EQ(array2.size<Dim2>(), epi::Index<Dim2>(2));
+    ASSERT_EQ(array2.size<Dim2>(), Dim2(2));
 
     using ArrayType3 = epi::CustomIndexArray<double, Dim3>;
-    ArrayType3 array3({epi::Index<Dim3>(4)});
+    ArrayType3 array3({Dim3(4)});
     ASSERT_EQ(array3.numel(), 4);
-    ASSERT_EQ(array3.size<Dim3>(), epi::Index<Dim3>(4));
+    ASSERT_EQ(array3.size<Dim3>(), Dim3(4));
 
     using ArrayType4 = epi::CustomIndexArray<float, Dim1, Dim2>;
-    ArrayType4 array4({epi::Index<Dim1>(3), epi::Index<Dim2>(Dim2E::Count)});
+    ArrayType4 array4({epi::Index<Dim1>(3), Dim2::Count});
     ASSERT_EQ(array4.numel(), 6);
     ASSERT_EQ(array4.size<Dim1>(), epi::Index<Dim1>(3));
     ASSERT_EQ(array4.size<Dim2>(), Dim2(2));
 
     using ArrayType5 = epi::CustomIndexArray<char, Dim2, Dim1>;
-    ArrayType5 array5({epi::Index<Dim2>(2), epi::Index<Dim1>(3)});
+    ArrayType5 array5({Dim2::Count, epi::Index<Dim1>(3)});
     ASSERT_EQ(array5.numel(), 6);
-    ASSERT_EQ(array5.size<Dim2>(), epi::Index<Dim2>(2));
+    ASSERT_EQ(array5.size<Dim2>(), Dim2(2));
     ASSERT_EQ(array5.size<Dim1>(), epi::Index<Dim1>(3));
 
     using ArrayType6 = epi::CustomIndexArray<char, Dim1, Dim2, Dim3>;
-    ArrayType6 array6({epi::Index<Dim1>(3), epi::Index<Dim2>(2), epi::Index<Dim3>(4)});
+    ArrayType6 array6({epi::Index<Dim1>(3), Dim2::Count, Dim3(4)});
     ASSERT_EQ(array6.numel(), 24);
     ASSERT_EQ(array6.size<Dim1>(), epi::Index<Dim1>(3));
     ASSERT_EQ(array6.size<Dim2>(), epi::Index<Dim2>(2));
