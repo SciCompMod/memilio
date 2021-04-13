@@ -19,9 +19,9 @@ TEST(TestSaveResult, compareResultWithH5)
     double nb_total_t0 = 10000, nb_exp_t0 = 100, nb_inf_t0 = 50, nb_car_t0 = 50, nb_hosp_t0 = 20, nb_icu_t0 = 10,
            nb_rec_t0 = 10, nb_dead_t0 = 0;
 
-    epi::SecirModel<epi::AgeGroup1> model;
-    size_t nb_groups = (size_t)epi::AgeGroup1::Count;
+    epi::SecirModel model(1);
     auto& params     = model.parameters;
+    size_t nb_groups = params.get_num_groups();;
 
     for (size_t i = 0; i < nb_groups; i++) {
         params.times[i].set_incubation(tinc);
@@ -34,14 +34,14 @@ TEST(TestSaveResult, compareResultWithH5)
         params.times[i].set_infectious_asymp(tinfasy);
         params.times[i].set_icu_to_death(ticu2death);
 
-        model.populations[{(epi::AgeGroup1)i, epi::InfectionType::E}] = nb_exp_t0;
-        model.populations[{(epi::AgeGroup1)i, epi::InfectionType::C}] = nb_car_t0;
-        model.populations[{(epi::AgeGroup1)i, epi::InfectionType::I}] = nb_inf_t0;
-        model.populations[{(epi::AgeGroup1)i, epi::InfectionType::H}] = nb_hosp_t0;
-        model.populations[{(epi::AgeGroup1)i, epi::InfectionType::U}] = nb_icu_t0;
-        model.populations[{(epi::AgeGroup1)i, epi::InfectionType::R}] = nb_rec_t0;
-        model.populations[{(epi::AgeGroup1)i, epi::InfectionType::D}] = nb_dead_t0;
-        model.populations.set_difference_from_total(nb_total_t0, (epi::AgeGroup1)0, epi::InfectionType::S);
+        model.populations[{epi::AgeGroup(0), epi::InfectionState::Exposed}] = nb_exp_t0;
+        model.populations[{epi::AgeGroup(0), epi::InfectionState::Carrier}] = nb_car_t0;
+        model.populations[{epi::AgeGroup(0), epi::InfectionState::Infected}] = nb_inf_t0;
+        model.populations[{epi::AgeGroup(0), epi::InfectionState::Hospitalized}] = nb_hosp_t0;
+        model.populations[{epi::AgeGroup(0), epi::InfectionState::ICU}] = nb_icu_t0;
+        model.populations[{epi::AgeGroup(0), epi::InfectionState::Recovered}] = nb_rec_t0;
+        model.populations[{epi::AgeGroup(0), epi::InfectionState::Dead}] = nb_dead_t0;
+        model.populations.set_difference_from_total({epi::AgeGroup(0), epi::InfectionState::Susceptible}, nb_total_t0);
 
         params.probabilities[i].set_infection_from_contact(0.06);
         params.probabilities[i].set_carrier_infectability(0.67);
@@ -78,9 +78,9 @@ TEST(TestSaveResult, compareResultWithH5)
         for (Eigen::Index l = 0; l < result_from_file.get_totals().get_num_elements(); l++) {
             double total = 0.0;
             for (Eigen::Index j = 0; j < Eigen::Index(nb_groups); j++) {
-                total += result_from_sim[i][j * (size_t)epi::InfectionType::Count + l];
-                EXPECT_NEAR(result_from_file.get_groups()[i][j * (size_t)epi::InfectionType::Count + l],
-                            result_from_sim[i][j * (size_t)epi::InfectionType::Count + l], 1e-10)
+                total += result_from_sim[i][j * (size_t)epi::InfectionState::Count + l];
+                EXPECT_NEAR(result_from_file.get_groups()[i][j * (size_t)epi::InfectionState::Count + l],
+                            result_from_sim[i][j * (size_t)epi::InfectionState::Count + l], 1e-10)
                     << " at row " << i << " at row " << l << " at Group " << j;
             }
             EXPECT_NEAR(result_from_file.get_totals()[i][l], total, 1e-10) << " at row " << i << " at row " << l;

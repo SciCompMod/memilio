@@ -29,7 +29,7 @@ TEST(TestImplicitEuler, compareOneTimeStep)
     double nb_total_t0 = 10000, nb_exp_t0 = 100, nb_inf_t0 = 50, nb_car_t0 = 50, nb_hosp_t0 = 20, nb_icu_t0 = 10,
            nb_rec_t0 = 10, nb_dead_t0 = 0;
 
-    epi::SecirModel<epi::AgeGroup1> model;
+    epi::SecirModel model(1);
     auto& params = model.parameters;
 
     params.times[0].set_incubation(tinc);
@@ -47,14 +47,14 @@ TEST(TestImplicitEuler, compareOneTimeStep)
     contact_matrix.add_damping(0.7, epi::SimulationTime(30.));
 
     model.populations.set_total(nb_total_t0);
-    model.populations[{(epi::AgeGroup1)0, epi::InfectionType::E}] = nb_exp_t0;
-    model.populations[{(epi::AgeGroup1)0, epi::InfectionType::C}] = nb_car_t0;
-    model.populations[{(epi::AgeGroup1)0, epi::InfectionType::I}] = nb_inf_t0;
-    model.populations[{(epi::AgeGroup1)0, epi::InfectionType::H}] = nb_hosp_t0;
-    model.populations[{(epi::AgeGroup1)0, epi::InfectionType::U}] = nb_icu_t0;
-    model.populations[{(epi::AgeGroup1)0, epi::InfectionType::R}] = nb_rec_t0;
-    model.populations[{(epi::AgeGroup1)0, epi::InfectionType::D}] = nb_dead_t0;
-    model.populations.set_difference_from_total(nb_total_t0, (epi::AgeGroup1)0, epi::InfectionType::S);
+    model.populations[{epi::AgeGroup(0), epi::InfectionState::Exposed}] = nb_exp_t0;
+    model.populations[{epi::AgeGroup(0), epi::InfectionState::Carrier}] = nb_car_t0;
+    model.populations[{epi::AgeGroup(0), epi::InfectionState::Infected}] = nb_inf_t0;
+    model.populations[{epi::AgeGroup(0), epi::InfectionState::Hospitalized}] = nb_hosp_t0;
+    model.populations[{epi::AgeGroup(0), epi::InfectionState::ICU}] = nb_icu_t0;
+    model.populations[{epi::AgeGroup(0), epi::InfectionState::Recovered}] = nb_rec_t0;
+    model.populations[{epi::AgeGroup(0), epi::InfectionState::Dead}] = nb_dead_t0;
+    model.populations.set_difference_from_total({epi::AgeGroup(0), epi::InfectionState::Susceptible}, nb_total_t0);
 
     params.probabilities[0].set_infection_from_contact(1.0);
     params.probabilities[0].set_asymp_per_infectious(alpha);

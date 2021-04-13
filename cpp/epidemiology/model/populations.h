@@ -10,7 +10,6 @@
 #include <array>
 #include <numeric>
 
-
 namespace epi
 {
 
@@ -37,10 +36,14 @@ class Populations : public CustomIndexArray<UncertainValue, Categories...>
 {
 public:
 
-    /**
-     * @brief Populations default constructor
-     */
-    Populations() = default;
+    using MultiIndex = typename CustomIndexArray<UncertainValue, Categories...>::MultiIndex;
+
+    template <class... Ts,
+              typename std::enable_if_t<std::is_constructible<UncertainValue, Ts...>::value>* = nullptr>
+    explicit Populations(MultiIndex const& sizes, Ts... args)
+        : CustomIndexArray<UncertainValue, Categories...>(sizes, args...)
+    {}
+
 
     /**
      * @brief get_num_compartments returns the number of compartments
@@ -49,9 +52,9 @@ public:
      *
      * @return number of compartments
      */
-    static size_t constexpr get_num_compartments()
+    size_t get_num_compartments() const
     {
-        return CustomIndexArray<UncertainValue, Categories...>::size();
+        return this->numel();
     }
 
     /**
@@ -70,15 +73,19 @@ public:
      * It is the same as get, except that it takes the values
      * from an outside reference flat container, rather than the
      * initial values stored within this class
+     *
+     * TODO: It would be better, to have CustomIndexArray be able to
+     * operate on shared data. Maybe using an Eigen::Map
+     *
      * @param y a reference to a flat container
      * @param cats enum values for each category
      * @return the population of compartment
      */
     template <class Arr>
-    static decltype(auto) get_from(Arr&& y, Categories... cats)
+    decltype(auto) get_from(Arr&& y, MultiIndex const& cats) const
     {
         static_assert(std::is_lvalue_reference<Arr>::value, "get_from is disabled for temporary arrays.");
-        return y[CustomIndexArray<UncertainValue, Categories...>::get_flat_index(cats...)];
+        return y[this->get_flat_index(cats)];
     }
 
     /**
@@ -88,18 +95,10 @@ public:
      * @return total population of the group
      */
     template <class T>
-    ScalarType get_group_total(T group_idx) const
+    ScalarType get_group_total(Index<T> group_idx) const
     {
-        //TODO maybe implement an iterator/visitor pattern rather than calculating indices?
-        size_t idx          = static_cast<size_t>(group_idx);
-        size_t category_idx = Index_v<T, Categories...>;
-
-        double sum   = 0;
-        auto indices = get_slice_indices(category_idx, idx, Populations<Categories...>::dimensions);
-        for (auto i : indices) {
-            sum += this->m_y[i];
-        }
-        return sum;
+        auto const s = this->template slice<T>({(size_t)group_idx, 1});
+        return std::accumulate(s.begin(), s.end(), 0.);
     }
 
 
@@ -115,24 +114,19 @@ public:
      * @param value the new value for the total population
      */
     template <class T>
-    void set_group_total(ScalarType value, T group_idx)
+    void set_group_total(Index<T> group_idx, ScalarType value)
     {
         ScalarType current_population = get_group_total(group_idx);
-
-        size_t idx          = static_cast<size_t>(group_idx);
-        size_t category_idx = Index_v<T, Categories...>;
-
-        //TODO slice indices are calcualated twice...
-        auto indices = get_slice_indices(category_idx, idx, Populations<Categories...>::dimensions);
+        auto s = this->template slice<T>({(size_t)group_idx, 1});
 
         if (fabs(current_population) < 1e-12) {
-            for (auto i : indices) {
-                this->m_y[i] = value / indices.size();
+            for (auto& v : s) {
+                v = value / s.numel();
             }
         }
         else {
-            for (auto i : indices) {
-                this->m_y[i] *= value / current_population;
+            for (auto& v : s) {
+                v *= value / current_population;
             }
         }
     }
@@ -144,7 +138,7 @@ public:
      */
     ScalarType get_total() const
     {
-        return this->m_y.sum();
+        return this->array().sum();
     }
 
 
@@ -159,16 +153,17 @@ public:
      * @param group_idx The enum of the group within the category
      */
     template <class T>
-    void set_difference_from_group_total(ScalarType total_group_population, T group_idx, Categories... cats)
+    void set_difference_from_group_total(MultiIndex const& midx, ScalarType total_group_population)
 
     {
+        auto group_idx = midx.template get<T>();
         ScalarType current_population = get_group_total(group_idx);
-        size_t idx                    = this->get_flat_index(cats...);
-        current_population -= this->m_y[idx];
+        size_t idx                    = this->get_flat_index(midx);
+        current_population -= this->array()[idx];
 
         assert(current_population <= total_group_population);
 
-        this->m_y[idx] = total_group_population - current_population;
+        this->array()[idx] = total_group_population - current_population;
     }
 
     /**
@@ -184,14 +179,14 @@ public:
     {
         double current_population = get_total();
         if (fabs(current_population) < 1e-12) {
-            double ysize = double(this->m_y.size());
+            double ysize = double(this->array().size());
             for (size_t i = 0; i < this->get_num_compartments(); i++) {
-                this->m_y[(Eigen::Index)i] = value / ysize;
+                this->array()[(Eigen::Index)i] = value / ysize;
             }
         }
         else {
             for (size_t i = 0; i < this->get_num_compartments(); i++) {
-                this->m_y[(Eigen::Index)i] *= value / current_population;
+                this->array()[(Eigen::Index)i] *= value / current_population;
             }
         }
     }
@@ -203,15 +198,15 @@ public:
      * @param indices the index of the compartment
      * @param total_population the new value for the total population
      */
-    void set_difference_from_total(double total_population, Categories... cats)
+    void set_difference_from_total(MultiIndex midx, double total_population)
     {
         double current_population = get_total();
-        size_t idx                = this->get_flat_index(cats...);
-        current_population -= this->m_y[idx];
+        size_t idx                = this->get_flat_index(midx);
+        current_population -= this->array()[idx];
 
         assert(current_population <= total_population);
 
-        this->m_y[idx] = total_population - current_population;
+        this->array()[idx] = total_population - current_population;
     }
 
     /**
@@ -219,10 +214,10 @@ public:
      */
     void apply_constraints()
     {
-        for (int i = 0; i < this->m_y.size(); i++) {
-            if (this->m_y[i] < 0) {
-                log_warning("Constraint check: Compartment size {:d} changed from {:.4f} to {:d}", i, this->m_y[i], 0);
-                this->m_y[i] = 0;
+        for (int i = 0; i < this->array().size(); i++) {
+            if (this->array()[i] < 0) {
+                log_warning("Constraint check: Compartment size {:d} changed from {:.4f} to {:d}", i, this->array()[i], 0);
+                this->array()[i] = 0;
             }
         }
     }
@@ -232,9 +227,9 @@ public:
      */
     void check_constraints() const
     {
-        for (int i = 0; i < this->m_y.size(); i++) {
-            if (this->m_y[i] < 0) {
-                log_error("Constraint check: Compartment size {:d} is {:.4f} and smaller {:d}", i, this->m_y[i], 0);
+        for (int i = 0; i < this->array().size(); i++) {
+            if (this->array()[i] < 0) {
+                log_error("Constraint check: Compartment size {:d} is {:.4f} and smaller {:d}", i, this->array()[i], 0);
             }
         }
     }
