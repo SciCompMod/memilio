@@ -1,3 +1,4 @@
+#include <epidemiology/utils/logging.h>
 #include <epidemiology/utils/parameter_set.h>
 #include <epidemiology/utils/custom_index_array.h>
 #include <gtest/gtest.h>
@@ -130,17 +131,6 @@ TEST(TestParameterSet, setDefault)
     ASSERT_EQ(params1.get<IntParam1>(), 1);
 }
 
-TEST(TestParameterSet, explicitInitConstructors)
-{
-    static_assert(std::is_constructible<epi::ParameterSet<DoubleParam>, double>::value,
-                  "explicit initializing constructor missing");
-    static_assert(std::is_constructible<epi::ParameterSet<IntParam1, DoubleParam>, int, double>::value,
-                  "explicit initializing constructor missing");
-    auto params1 = epi::ParameterSet<IntParam1, DoubleParam>{3, 0.5};
-    ASSERT_EQ(params1.get<IntParam1>(), 3);
-    ASSERT_EQ(params1.get<DoubleParam>(), 0.5);
-}
-
 TEST(TestParameterSet, set)
 {
     epi::ParameterSet<IntParam1, DoubleParam, IntParam2> params;
@@ -152,12 +142,11 @@ TEST(TestParameterSet, moveOnly)
 {
     static_assert(std::is_default_constructible<epi::ParameterSet<MoveOnlyParam>>::value,
                   "move only parameter not default constructible");
-    static_assert(std::is_constructible<epi::ParameterSet<MoveOnlyParam>, MoveOnly&&>::value,
-                  "move only parameter not move constructible");
     static_assert(std::is_constructible<epi::ParameterSet<MoveOnlyParam>>::value,
                   "move only parameter not default initializable");
 
-    auto params                 = epi::ParameterSet<MoveOnlyParam>(MoveOnly());
+    epi::ParameterSet<MoveOnlyParam> params;
+    params.set<MoveOnlyParam>(MoveOnly());
     params.get<MoveOnlyParam>() = MoveOnly();
     params.set<MoveOnlyParam>(MoveOnly());
 }
@@ -178,46 +167,34 @@ struct MockForeachFuncRef {
 
 TEST(TestParameterSet, customIndexArray)
 {
-    enum class AgeGroup
-    {
-        Young,
-        Old,
-        Count = 2
-    };
-
-    enum class Income
-    {
-        Poor,
-        SoSo,
-        Rich,
-        Count = 3
-    };
+    struct AgeGroup{};
+    struct Income{};
 
     struct ParamType1 {
         using Type = epi::CustomIndexArray<double, AgeGroup>;
-        static Type get_default()
+        static Type get_default(epi::Index<AgeGroup> n_agegroups, epi::Index<Income>)
         {
-            return Type(0.5);
+            return Type({n_agegroups}, 0.5);
         }
     };
 
     struct ParamType2 {
         using Type = epi::CustomIndexArray<int, AgeGroup, Income>;
-        static Type get_default()
+        static Type get_default(epi::Index<AgeGroup> n_agegroups, epi::Index<Income> n_incomegroups)
         {
-            return Type(42);
+            return Type({n_agegroups, n_incomegroups}, 42);
         }
     };
 
-    auto params = epi::ParameterSet<ParamType1, ParamType2>();
-    params.get<ParamType1>()[{AgeGroup::Young}] = 0.5;
-    params.get<ParamType1>()[{AgeGroup::Old}] = 1.5;
-    EXPECT_NEAR(params.get<ParamType1>()[{AgeGroup::Young}], 0.5, 1e-14);
-    EXPECT_NEAR(params.get<ParamType1>()[{AgeGroup::Old}], 1.5, 1e-14);
-    EXPECT_EQ((params.get<ParamType2>()[{AgeGroup::Young, Income::Poor}]), 42);
-    EXPECT_EQ((params.get<ParamType2>()[{AgeGroup::Young, Income::SoSo}]), 42);
-    params.get<ParamType2>()[{AgeGroup::Young, Income::SoSo}] = -42;
-    EXPECT_EQ((params.get<ParamType2>()[{AgeGroup::Young, Income::SoSo}]), -42);
+    auto params = epi::ParameterSet<ParamType1, ParamType2>(epi::Index<AgeGroup>(2), epi::Index<Income>(3));
+    params.get<ParamType1>()[{epi::Index<AgeGroup>(0)}] = 0.5;
+    params.get<ParamType1>()[{epi::Index<AgeGroup>(1)}] = 1.5;
+    EXPECT_NEAR(params.get<ParamType1>()[{epi::Index<AgeGroup>(0)}], 0.5, 1e-14);
+    EXPECT_NEAR(params.get<ParamType1>()[{epi::Index<AgeGroup>(1)}], 1.5, 1e-14);
+    EXPECT_EQ((params.get<ParamType2>()[{epi::Index<AgeGroup>(0), epi::Index<Income>(0)}]), 42);
+    EXPECT_EQ((params.get<ParamType2>()[{epi::Index<AgeGroup>(0), epi::Index<Income>(1)}]), 42);
+    params.get<ParamType2>()[{epi::Index<AgeGroup>(0), epi::Index<Income>(1)}] = -42;
+    EXPECT_EQ((params.get<ParamType2>()[{epi::Index<AgeGroup>(0), epi::Index<Income>(1)}]), -42);
 
 }
 
@@ -285,18 +262,27 @@ TEST(TestParameterSet, constType)
 {
     static_assert(std::is_default_constructible<epi::ParameterSet<ConstTypeParam>>::value,
                   "const parameter not default constructible");
-    static_assert(std::is_constructible<epi::ParameterSet<ConstTypeParam>, double>::value,
-                  "const parameter not constructible");
     static_assert(std::is_constructible<epi::ParameterSet<ConstTypeParam>>::value,
                   "const parameter not default initializable");
 }
 
 TEST(TestParameterSet, equality)
 {
-    epi::ParameterSet<IntParam1, DoubleParam> a(1, 0.5);
-    epi::ParameterSet<IntParam1, DoubleParam> b(1, 0.5);
-    epi::ParameterSet<IntParam1, DoubleParam> c(1, 0.6);
-    epi::ParameterSet<IntParam1, DoubleParam> d(2, 0.5);
+    epi::ParameterSet<IntParam1, DoubleParam> a;
+    a.set<IntParam1>(1);
+    a.set<DoubleParam>(0.5);
+
+    epi::ParameterSet<IntParam1, DoubleParam> b;
+    b.set<IntParam1>(1);
+    b.set<DoubleParam>(0.5);
+
+    epi::ParameterSet<IntParam1, DoubleParam> c;
+    c.set<IntParam1>(1);
+    c.set<DoubleParam>(0.6);
+
+    epi::ParameterSet<IntParam1, DoubleParam> d;
+    d.set<IntParam1>(2);
+    d.set<DoubleParam>(0.5);
     
     ASSERT_TRUE(a == b);
     ASSERT_TRUE(a != c);
@@ -325,7 +311,9 @@ TEST(TestParameterSet, check_constraints)
 {
     ASSERT_FALSE(epi::has_check_constraints_member_function<DoubleParamNoCheck>::value);
     ASSERT_TRUE(epi::has_check_constraints_member_function<DoubleParamCheck>::value);
-    epi::ParameterSet<DoubleParamNoCheck, DoubleParamCheck> a(-1.5, -2.);
+    epi::ParameterSet<DoubleParamNoCheck, DoubleParamCheck> a;
+    a.set<DoubleParamNoCheck>(-1.5);
+    a.set<DoubleParamCheck>(-2.);
     a.check_constraints();
 }
 
@@ -351,7 +339,8 @@ struct MyParams : public epi::ParameterSet<DoubleParam>
 TEST(TestParameterSet, apply_constraints)
 {
     ASSERT_TRUE(epi::has_apply_constraints_member_function<MyParams>::value);
-    MyParams a(-1.5);
+    MyParams a;
+    a.set<DoubleParam>(-1.5);
     ASSERT_DOUBLE_EQ(a.get<DoubleParam>(), -1.5);
     a.apply_constraints();
     ASSERT_DOUBLE_EQ(a.get<DoubleParam>(), 0.0);

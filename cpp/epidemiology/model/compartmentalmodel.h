@@ -40,12 +40,14 @@ public:
     // function will be subtracted from the time derivative of the populations at the flat index corresponding
     // to the from-compartment, and added to the time derivative of the populations at the flat index
     // corresponding to the to-compartment.
-    using Flow = std::tuple<typename Populations::Index, typename Populations::Index, FlowFunction>;
+    using Flow = std::tuple<typename Populations::MultiIndex, typename Populations::MultiIndex, FlowFunction>;
 
     /**
      * @brief CompartmentalModel default constructor
      */
-    CompartmentalModel()
+    CompartmentalModel(Populations const& po, ParameterSet const& pa)
+        : populations{std::move(po)}
+        , parameters{pa}
     {
     }
 
@@ -56,7 +58,7 @@ public:
      * @param f is a function defining the flow given a set of parameters, the current time t and the
      * snapshot y of all population sizes at time t, represented as a flat array
      */
-    void add_flow(typename Populations::Index from, typename Populations::Index to, FlowFunction f)
+    void add_flow(typename Populations::MultiIndex from, typename Populations::MultiIndex to, FlowFunction f)
     {
         flows.push_back(Flow(from, to, f));
     }

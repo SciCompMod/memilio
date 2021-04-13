@@ -6,7 +6,7 @@
 namespace epi
 {
 
-Person::Person(Location& location, InfectionState state, AbmAgeGroup age)
+Person::Person(Location& location, InfectionState state, Index<AbmAgeGroup> age)
     : m_location(location)
     , m_state(state)
     , m_age(age)
