@@ -13,7 +13,6 @@ include(AddGoogleTest)
 
 set(TESTSOURCES
   testmain.cpp
-  test_tensor_helpers.cpp
   test_populations.cpp
   test_seir_js_compare.cpp
   test_numericalIntegration.cpp
@@ -37,6 +36,7 @@ set(TESTSOURCES
   test_type_safe.cpp
   test_custom_index_array.cpp
   test_parameter_set.cpp
+  test_matrix_shape.cpp
   distributions_helpers.h
   distributions_helpers.cpp
   actions.h

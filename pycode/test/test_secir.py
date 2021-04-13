@@ -1,14 +1,15 @@
 import unittest
 
-from epidemiology.secir import (UncertainContactMatrix, ContactMatrix, Damping, SecirModel1,
-                                simulate, AgeGroup1, InfectionType, SecirSimulation1)
+from epidemiology.secir import (UncertainContactMatrix, ContactMatrix, Damping, SecirModel,
+                                simulate, AgeGroup, Index_InfectionState, SecirSimulation)
+from epidemiology.secir import InfectionState as State
 import numpy as np
 
 class Test_secir_integration(unittest.TestCase):
 
     def setUp(self):
 
-        model = SecirModel1()
+        model = SecirModel(1)
 
         model.parameters.times[0].set_incubation(5.2)  # R_2^(-1)+R_3^(-1)
         model.parameters.times[0].set_infectious_mild(6.)  # 4-14  (=R4^(-1))
@@ -26,16 +27,18 @@ class Test_secir_integration(unittest.TestCase):
         model.parameters.probabilities[0].set_icu_per_hospitalized(0.25)  # 0.15-0.4
         model.parameters.probabilities[0].set_dead_per_icu(0.3)  # 0.15-0.77
 
-        model.populations[AgeGroup1.Group0, InfectionType.S] = 7600
-        model.populations[AgeGroup1.Group0, InfectionType.E] = 100
-        model.populations[AgeGroup1.Group0, InfectionType.C] = 50
-        model.populations[AgeGroup1.Group0, InfectionType.I] = 50
-        model.populations[AgeGroup1.Group0, InfectionType.H] = 20
-        model.populations[AgeGroup1.Group0, InfectionType.U] = 10
-        model.populations[AgeGroup1.Group0, InfectionType.R] = 10
-        model.populations[AgeGroup1.Group0, InfectionType.D] = 0
+        model.populations[AgeGroup(0), Index_InfectionState(State.Susceptible)] = 7600
+        model.populations[AgeGroup(0), Index_InfectionState(State.Exposed)] = 100
+        model.populations[AgeGroup(0), Index_InfectionState(State.Carrier)] = 50
+        model.populations[AgeGroup(0), Index_InfectionState(State.Infected)] = 50
+        model.populations[AgeGroup(0), Index_InfectionState(State.Hospitalized)] = 20
+        model.populations[AgeGroup(0), Index_InfectionState(State.ICU)] = 10
+        model.populations[AgeGroup(0), Index_InfectionState(State.Recovered)] = 10
+        model.populations[AgeGroup(0), Index_InfectionState(State.Dead)] = 0
 
-        model.parameters.get_contact_patterns().cont_freq_mat[0] = ContactMatrix(np.r_[0.5])
+        contacts = ContactMatrix(np.r_[0.5])
+        contacts.add_damping(Damping(coeffs = np.r_[0.0], t = 0.0, level = 0, type = 0))
+        model.parameters.get_contact_patterns().cont_freq_mat[0] = contacts
 
         model.apply_constraints()
 
@@ -48,7 +51,7 @@ class Test_secir_integration(unittest.TestCase):
       self.assertAlmostEqual(result.get_last_time(), 100.)
 
     def test_simulation_simple(self):
-        sim = SecirSimulation1(self.model, t0 = 0., dt = 0.1)
+        sim = SecirSimulation(self.model, t0 = 0., dt = 0.1)
         sim.advance(tmax = 100.)
         result = sim.result
         self.assertAlmostEqual(result.get_time(0), 0.)

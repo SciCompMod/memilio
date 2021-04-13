@@ -33,8 +33,6 @@ endif()
 include(thirdparty/CMakeLists.txt)
 
 add_library(epidemiology
-    epidemiology/utils/tensor_helpers.h
-    epidemiology/utils/tensor_helpers.cpp
     epidemiology/math/euler.cpp
     epidemiology/math/euler.h
     epidemiology/math/smoother.h    
@@ -62,6 +60,7 @@ add_library(epidemiology
     epidemiology/utils/eigen_util.h
     epidemiology/utils/visitor.h
     epidemiology/secir/parameter_space.h
+    epidemiology/secir/parameter_space.cpp
     epidemiology/utils/uncertain_value.h
     epidemiology/utils/uncertain_value.cpp
     epidemiology/secir/uncertain_matrix.h    
@@ -81,6 +80,8 @@ add_library(epidemiology
     epidemiology/utils/parameter_set.cpp
     epidemiology/utils/date.h
     epidemiology/utils/date.cpp
+    epidemiology/utils/matrix_shape.h
+    epidemiology/utils/matrix_shape.cpp
     epidemiology/utils/random_number_generator.h
     epidemiology/utils/random_number_generator.cpp
     epidemiology/abm/location.cpp

@@ -18,10 +18,13 @@ protected:
 
         double total_population = 1061000;
 
-        model.populations[{epi::SeirInfType::E}] = 10000;
-        model.populations[{epi::SeirInfType::I}] = 1000;
-        model.populations[{epi::SeirInfType::R}] = 1000;
-        model.populations[{epi::SeirInfType::S}] = total_population - this->model.populations[{epi::SeirInfType::E}] - this->model.populations[{epi::SeirInfType::I}] - this->model.populations[{epi::SeirInfType::R}];
+        model.populations[{epi::Index<epi::SeirInfType>(epi::SeirInfType::E)}] = 10000;
+        model.populations[{epi::Index<epi::SeirInfType>(epi::SeirInfType::I)}] = 1000;
+        model.populations[{epi::Index<epi::SeirInfType>(epi::SeirInfType::R)}] = 1000;
+        model.populations[{epi::Index<epi::SeirInfType>(epi::SeirInfType::S)}] = total_population
+                                                                                 - this->model.populations[{epi::Index<epi::SeirInfType>(epi::SeirInfType::E)}]
+                                                                                 - this->model.populations[{epi::Index<epi::SeirInfType>(epi::SeirInfType::I)}]
+                                                                                 - this->model.populations[{epi::Index<epi::SeirInfType>(epi::SeirInfType::R)}];
         // suscetible now set with every other update
         // model.nb_sus_t0   = model.nb_total_t0 - model.nb_exp_t0 - model.nb_inf_t0 - model.nb_rec_t0;
         model.parameters.set<epi::TransmissionRisk>(1.0);
