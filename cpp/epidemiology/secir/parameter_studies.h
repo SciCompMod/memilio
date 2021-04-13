@@ -88,14 +88,12 @@ public:
 
     /*
      * @brief Carry out all simulations in the parameter study.
-     * @param[in] result_processing_function Processing function for simulation results, e.g., output function
+     * Save memory and enable more runs by immediately processing and/or discarding the result.
+     * @param result_processing_function Processing function for simulation results, e.g., output function.
+     *                                   Receives the result after each run is completed.
      */
-    std::vector<epi::Graph<epi::ModelNode<epi::Simulation<Model>>, epi::MigrationEdge>>
-    run(HandleSimulationResultFunction result_processing_function = [](epi::Graph<epi::ModelNode<epi::Simulation<Model>>, epi::MigrationEdge>) {})
+    void run(HandleSimulationResultFunction result_processing_function)
     {
-        std::vector<epi::Graph<epi::ModelNode<epi::Simulation<Model>>, epi::MigrationEdge>> ensemble_result;
-        ensemble_result.reserve(m_num_runs);
-
         // Iterate over all parameters in the parameter space
         for (size_t i = 0; i < m_num_runs; i++) {
             auto sim = create_sampled_simulation();
@@ -103,10 +101,23 @@ public:
 
             auto result = sim.get_graph();
 
-            result_processing_function(result);
-
-            ensemble_result.push_back(result);
+            result_processing_function(std::move(result));
         }
+    }
+
+    /*
+     * @brief Carry out all simulations in the parameter study.
+     * Convinience function for a few number of runs, but uses a lot of memory.
+     * @return vector of results of each run.
+     */
+    std::vector<epi::Graph<epi::ModelNode<epi::Simulation<Model>>, epi::MigrationEdge>> run()
+    {
+        std::vector<epi::Graph<epi::ModelNode<epi::Simulation<Model>>, epi::MigrationEdge>> ensemble_result;
+        ensemble_result.reserve(m_num_runs);
+
+        run([&ensemble_result](auto r) {
+            ensemble_result.emplace_back(std::move(r));
+        });
 
         return ensemble_result;
     }

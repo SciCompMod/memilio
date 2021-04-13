@@ -19,13 +19,15 @@ namespace py = pybind11;
 namespace
 {
 
-std::vector<epi::TimeSeries<double>> filter_graph_results(
-    const std::vector<epi::Graph<epi::ModelNode<epi::Simulation<epi::SecirModel>>, epi::MigrationEdge>>& graph_results)
+//select only the first node of the graph of each run, used for parameterstudy with single nodes
+template<class Sim>
+std::vector<Sim> filter_graph_results(
+    const std::vector<epi::Graph<epi::ModelNode<Sim>, epi::MigrationEdge>>& graph_results)
 {
-    std::vector<epi::TimeSeries<double>> results;
+    std::vector<Sim> results;
     results.reserve(graph_results.size());
     std::transform(graph_results.begin(), graph_results.end(), std::back_inserter(results), [](auto&& graph) {
-        return graph.nodes()[0].property.get_result();
+        return graph.nodes()[0].property.model;
     });
     return results;
 }
@@ -319,12 +321,12 @@ template<class Model>
 void bind_ParameterStudy(py::module& m, std::string const& name)
 {
     py::class_<epi::ParameterStudy<Model>>(m, name.c_str())
-        .def(py::init<const Model&, double, double, size_t>(), py::arg("model"), py::arg("t0"),
-             py::arg("tmax"), py::arg("num_runs"))
-        .def(py::init<const Model&, double, double, double, size_t>(), py::arg("model"), py::arg("t0"),
-             py::arg("tmax"), py::arg("dev_rel"), py::arg("num_runs"))
-        .def(py::init<const epi::Graph<Model, epi::MigrationParameters>&, double, double, double, size_t>(), py::arg("model_graph"),
-             py::arg("t0"), py::arg("tmax"), py::arg("dt"), py::arg("num_runs"))
+        .def(py::init<const Model&, double, double, size_t>(), py::arg("model"), py::arg("t0"), py::arg("tmax"),
+             py::arg("num_runs"))
+        .def(py::init<const Model&, double, double, double, size_t>(), py::arg("model"), py::arg("t0"), py::arg("tmax"),
+             py::arg("dev_rel"), py::arg("num_runs"))
+        .def(py::init<const epi::Graph<Model, epi::MigrationParameters>&, double, double, double, size_t>(),
+             py::arg("model_graph"), py::arg("t0"), py::arg("tmax"), py::arg("dt"), py::arg("num_runs"))
         .def_property("num_runs", &epi::ParameterStudy<Model>::get_num_runs, &epi::ParameterStudy<Model>::set_num_runs)
         .def_property("tmax", &epi::ParameterStudy<Model>::get_tmax, &epi::ParameterStudy<Model>::set_tmax)
         .def_property("t0", &epi::ParameterStudy<Model>::get_t0, &epi::ParameterStudy<Model>::set_t0)
@@ -332,20 +334,26 @@ void bind_ParameterStudy(py::module& m, std::string const& name)
                                py::return_value_policy::reference_internal)
         .def_property_readonly("model", py::overload_cast<>(&epi::ParameterStudy<Model>::get_model, py::const_),
                                py::return_value_policy::reference_internal)
-        .def_property_readonly("secir_model_graph", py::overload_cast<>(&epi::ParameterStudy<Model>::get_secir_model_graph),
+        .def_property_readonly("secir_model_graph",
+                               py::overload_cast<>(&epi::ParameterStudy<Model>::get_secir_model_graph),
                                py::return_value_policy::reference_internal)
         .def_property_readonly("secir_model_graph",
                                py::overload_cast<>(&epi::ParameterStudy<Model>::get_secir_model_graph, py::const_),
                                py::return_value_policy::reference_internal)
-        .def("run", &epi::ParameterStudy<Model>::run)
+        .def("run",
+             [](epi::ParameterStudy<Model>& self,
+                typename epi::ParameterStudy<Model>::HandleSimulationResultFunction handle_result) {
+                 self.run(handle_result);
+             }, 
+            py::arg("handle_result_func"))
         .def("run",
              [](epi::ParameterStudy<Model>& self) { //default argument doesn't seem to work with functions
                  return self.run();
              })
         .def(
             "run_single",
-            [](epi::ParameterStudy<Model>& self, typename epi::ParameterStudy<Model>::HandleSimulationResultFunction handle_result_func) {
-                return filter_graph_results(self.run(handle_result_func));
+            [](epi::ParameterStudy<Model>& self, std::function<void(epi::Simulation<Model>)> handle_result) {
+                self.run([handle_result](auto r) { handle_result(r.nodes()[0].property.model); });
             },
             py::arg("handle_result_func"))
         .def("run_single", [](epi::ParameterStudy<Model>& self) {

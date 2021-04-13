@@ -52,23 +52,31 @@ class Test_ParameterStudy(unittest.TestCase):
         self.assertEqual(study.tmax, tmax)
         self.assertEqual(study.num_runs, num_runs)
 
-        #mock callback
+        #run as graph
         def handle_result_func(graph):
             handle_result_func.c += 1
+            handle_result_func.results.append(graph)
             self.assertAlmostEqual(graph.get_node(0).property.result.get_time(0), t0)
             self.assertAlmostEqual(graph.get_node(0).property.result.get_last_time(), tmax)
 
         handle_result_func.c = 0
-        result = study.run(handle_result_func)
+        handle_result_func.results = []
+        study.run(handle_result_func)
 
         self.assertEqual(handle_result_func.c, num_runs)
-        self.assertEqual(len(result), num_runs)
         
-        handle_result_func.c = 0
-        result = study.run_single(handle_result_func)
+        #run as single node
+        def handle_single_result_func(sim):
+            handle_single_result_func.c += 1
+            handle_single_result_func.results.append(sim)
+            self.assertAlmostEqual(sim.result.get_time(0), t0)
+            self.assertAlmostEqual(sim.result.get_last_time(), tmax)
 
-        self.assertEqual(handle_result_func.c, num_runs)
-        self.assertEqual(len(result), num_runs)
+        handle_single_result_func.c = 0
+        handle_single_result_func.results = []
+        study.run_single(handle_single_result_func)
+
+        self.assertEqual(handle_single_result_func.c, num_runs)
 
     def test_graph(self):        
         model = self._get_model()

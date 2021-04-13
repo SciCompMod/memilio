@@ -122,20 +122,7 @@ int main()
     auto lambda                    = [&run, t0, tmax](auto graph) {
         epi::write_single_run_params(run++, graph, t0, tmax);
     };
-    auto results = read_study.run(lambda);
+    read_study.run(lambda);
 
-#if 0
-    if (argc > 1) {
-        // If provided, the first argument is the input file
-        input_filename = argv[1];
-    }
-    else {
-        // If not provided, we use a sample input file
-        input_filename = "parameter_studies_example_input.txt";
-    }
-
-    // Create parameter study
-    ParameterStudy parameter_study(input_filename);
-#endif
     return 0;
 }
