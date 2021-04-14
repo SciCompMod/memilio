@@ -10,6 +10,6 @@
 #include "epidemiology/abm/location.h"
 #include "epidemiology/abm/state.h"
 #include "epidemiology/abm/location_type.h"
-#include "epidemiology/abm/random_number_generator.h"
+#include "epidemiology/utils/random_number_generator.h"
 
 #endif

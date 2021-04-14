@@ -5,6 +5,15 @@
   width: 100%;
   overflow: auto;
 
+  .mobile-alert {
+    position: fixed !important;
+    top: 0;
+    left: 0;
+    right: 0;
+    margin: 0;
+    z-index: 1000;
+  }
+
   .left {
     width: 38.2%;
     min-width: 38.2%;
@@ -63,6 +72,7 @@
       min-height: 300px;
       width: 100%;
     }
+
     .district {
       font-size: 2em;
       text-align: center;

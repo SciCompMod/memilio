@@ -18,8 +18,8 @@ TEST(TestMigration, compareNoMigrationWithSingleIntegration)
     auto dt   = 0.5;
 
     epi::SeirModel model1;
-    model1.populations.set(0.9, epi::SeirInfType::S);
-    model1.populations.set(0.1, epi::SeirInfType::E);
+    model1.populations[{epi::Index<epi::SeirInfType>(epi::SeirInfType::S)}] = 0.9;
+    model1.populations[{epi::Index<epi::SeirInfType>(epi::SeirInfType::E)}] = 0.1;
     model1.populations.set_total(1000);
     model1.parameters.get<epi::ContactFrequency>().get_baseline()(0, 0) = 10;
     model1.parameters.set<epi::TransmissionRisk>(0.4);
@@ -27,7 +27,7 @@ TEST(TestMigration, compareNoMigrationWithSingleIntegration)
     model1.parameters.set<epi::StageTimeInfectiousInv>(1./10);
 
     auto model2 = model1;
-    model2.populations.set(1., epi::SeirInfType::S);
+    model2.populations[{epi::Index<epi::SeirInfType>(epi::SeirInfType::S)}] = 1.;
     model2.populations.set_total(500);
 
     auto graph_sim = epi::make_migration_sim(
@@ -64,15 +64,15 @@ TEST(TestMigration, compareNoMigrationWithSingleIntegration)
 
 TEST(TestMigration, nodeEvolve)
 {
-    using Model = epi::SecirModel<epi::AgeGroup1>;
-    Model model;
+    using Model = epi::SecirModel;
+    Model model(1);
     auto& params = model.parameters;
 
     auto& cm = static_cast<epi::ContactMatrixGroup&>(model.parameters.get_contact_patterns());
     cm[0].get_minimum()(0, 0) = 5.0;
 
-    model.populations.set(100, (epi::AgeGroup1)0, epi::InfectionType::E);
-    model.populations.set_difference_from_total(1000, (epi::AgeGroup1)0, epi::InfectionType::S);
+    model.populations[{epi::AgeGroup(0), epi::InfectionState::Exposed}] = 100;
+    model.populations.set_difference_from_total({epi::AgeGroup(0), epi::InfectionState::Susceptible}, 1000);
     params.times[0].set_serialinterval(1.5);
     params.times[0].set_incubation(2.0);
     params.apply_constraints();
@@ -88,16 +88,16 @@ TEST(TestMigration, nodeEvolve)
 
 TEST(TestMigration, edgeApplyMigration)
 {
-    using Model = epi::SecirModel<epi::AgeGroup1>;
+    using Model = epi::SecirModel;
 
     //setup nodes
-    Model model;
+    Model model(1);
     auto& params = model.parameters;
     auto& cm = static_cast<epi::ContactMatrixGroup&>(model.parameters.get_contact_patterns());
     cm[0].get_baseline()(0, 0) = 5.0;
 
-    model.populations.set(10, (epi::AgeGroup1)0, epi::InfectionType::I);
-    model.populations.set_difference_from_total(1000, (epi::AgeGroup1)0, epi::InfectionType::S);
+    model.populations[{epi::AgeGroup(0), epi::InfectionState::Infected}] = 10;
+    model.populations.set_difference_from_total({epi::AgeGroup(0), epi::InfectionState::Susceptible}, 1000);
     params.probabilities[0].set_infection_from_contact(1.0);
     params.probabilities[0].set_risk_from_symptomatic(1.0);
     params.probabilities[0].set_carrier_infectability(1.0);

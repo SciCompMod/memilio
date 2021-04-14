@@ -1,6 +1,7 @@
 import React, {Component} from 'react';
-import {Button, ButtonGroup, UncontrolledTooltip} from 'reactstrap';
+import {Alert, Button, ButtonGroup, UncontrolledTooltip} from 'reactstrap';
 import {Link, withRouter} from 'react-router-dom';
+import browserDetect from 'browser-detect';
 
 import * as _ from 'lodash';
 import * as dayjs from 'dayjs';
@@ -12,6 +13,7 @@ import HeatMap from '~/common/heat-map';
 import {fixUrl} from '~/common/utils';
 
 import './styles.scss';
+import {deepCopy} from '../../common/utils';
 
 /**
  *  This component is the main page displayed. It shows the reproduction vales RT and RT relative
@@ -36,9 +38,20 @@ class MainPage extends Component {
 
   constructor(props) {
     super(props);
+
+    const browser = browserDetect();
+
     this.state = {
       dataset: 'absolute',
       selected: {rs: '', bez: '', gen: ''},
+
+      // Tablets are not considered mobile devices, so we check for Android and iOS additionally
+      mobileWarningVisible:
+        browser.mobile ||
+        browser.name.toUpperCase().includes('ANDROID') ||
+        browser.name.toUpperCase().includes('IOS') ||
+        browser.os.toUpperCase().includes('ANDROID') ||
+        browser.os.toUpperCase().includes('IOS'),
     };
     this.update = this.update.bind(this);
   }
@@ -192,7 +205,8 @@ class MainPage extends Component {
     if (!this.chart_data) {
       return [];
     }
-    let data = JSON.parse(JSON.stringify(this.chart_data.get(this.state.selected.rs)));
+
+    let data = deepCopy(this.chart_data.get(this.state.selected.rs) ?? []);
 
     switch (this.state.dataset) {
       case 'absolute':
@@ -245,10 +259,28 @@ class MainPage extends Component {
     );
   }
 
+  onDismiss() {
+    this.setState({
+      mobileWarningVisible: false,
+    });
+  }
+
   render() {
     const {url} = fixUrl(this.props.match);
     return (
       <div className="main">
+        <Alert
+          className="mobile-alert"
+          color="warning"
+          isOpen={this.state.mobileWarningVisible}
+          toggle={this.onDismiss.bind(this)}
+          style={{textAlign: 'center'}}
+        >
+          <b>
+            This website is supposed to be used on a computer. Mobile performance might not be optimal. If you have
+            issues on a mobile device try using a laptop or PC.
+          </b>
+        </Alert>
         <div className="right">
           <div className="info-text">
             <h2>Über diese Seite:</h2>

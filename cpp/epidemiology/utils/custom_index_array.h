@@ -1,113 +1,143 @@
 #ifndef CUSTOMINDEXARRAY_H
 #define CUSTOMINDEXARRAY_H
 
-#include <epidemiology/utils/uncertain_value.h>
-#include "epidemiology/utils/tensor_helpers.h"
-#include "epidemiology/utils/ScalarType.h"
 #include "epidemiology/utils/eigen.h"
+#include "epidemiology/utils/eigen_util.h"
+#include "epidemiology/utils/index.h"
 
-#include <vector>
-#include <array>
 #include <numeric>
 
 namespace
 {
 
-// Some metaprogramming to get the index of a given type in a parameter pack.
-// Taken from https://stackoverflow.com/questions/26169198/how-to-get-the-index-of-a-type-in-a-variadic-type-pack
-template <typename T, typename... Ts>
-struct Index;
+//calculate the product of tuple elements
+// std::apply or fold expression in C++17
+template <int I, template <class...> class Index, class... Ts>
+typename std::enable_if<(I == sizeof...(Ts)), size_t>::type product(Index<Ts...> const&)
+{
+        return 1;
+}
 
-template <typename T, typename... Ts>
-struct Index<T, T, Ts...> : std::integral_constant<int, 0> {
-};
+template <int I, template <class...> class Index, class... Ts>
+typename std::enable_if<(I < sizeof...(Ts)), size_t>::type product(Index<Ts...> const& t)
+{
+    return (size_t)epi::get<I>(t)*product<I+1, Index, Ts...>(t);
+}
 
-template <typename T, typename U, typename... Ts>
-struct Index<T, U, Ts...> : std::integral_constant<int, 1 + Index<T, Ts...>::value> {
-};
 
-template <typename T, typename... Ts>
-constexpr int Index_v = Index<T, Ts...>::value;
-
-//calculate the product of a integer parameter pack
-template <int...>
-struct product;
-
-template <>
-struct product<> {
-    static constexpr int value = 1;
-};
-
-template <int i, int... tail>
-struct product<i, tail...> {
-    static constexpr int value = i * product<tail...>::value;
-};
+template <template <class...> class Index, class... Ts>
+size_t product(Index<Ts...> const& t)
+{
+    return product<0, Index, Ts...>(t);
+}
 
 } // namespace
 
 namespace epi
 {
 
+
+namespace details {
+
+    // calculate the Position of an element in a MultiIndex, given its type
+    template <class T, class Tuple>
+    struct IndexPosition;
+
+    template <class T, class... Types>
+    struct IndexPosition<T, Index<T, Types...>> {
+        static const std::size_t value = 0;
+    };
+
+    template <class T, class U, class... Types>
+    struct IndexPosition<T, Index<U, Types...>> {
+        static const std::size_t value = 1 + IndexPosition<T, Index<Types...>>::value;
+    };
+
+    // Internal implementation for flatten_index
+    template <size_t I, typename Index>
+    std::enable_if_t< (I == (Index::size - 1) ), std::pair<size_t, size_t>> flatten_index(Index const& indices, Index const& dimensions)
+    {
+        assert(get<I>(indices) < get<I>(dimensions));
+        return {(size_t)epi::get<I>(indices), (size_t)epi::get<I>(dimensions)};
+    }
+
+    template <size_t I, typename Index>
+    std::enable_if_t< (I < (Index::size - 1) ), std::pair<size_t, size_t>> flatten_index(Index const& indices, Index const& dimensions)
+    {
+        assert(epi::get<I>(indices) < epi::get<I>(dimensions));
+
+        size_t val, prod;
+        std::tie(val, prod) = flatten_index<I+1>(indices, dimensions);
+
+        return {val + (size_t)epi::get<I>(indices)*prod, prod*(size_t)epi::get<I>(dimensions)};
+    }
+
+    template <typename T>
+    struct is_random_access_iterator : std::is_base_of<
+        typename std::iterator_traits<T>::iterator_category
+        , std::random_access_iterator_tag>
+    {};
+
+} // namespace details
+
+
+/**
+ * @brief flatten_index takes a set of indices into a mutlidemsional array and calculates the flat index
+ *
+ * Given indices (i,j,k,...) of a tensor with dimensions (n,m,l,...), flatten_index calculates
+ * the index of the corresponding element if the elements are sorted sequentially in a
+ * row major fashion (that is right indices are incremented before left indices)
+ *
+ * @param indices a vector of indices of a hypothetical tensor
+ * @param dimensions a vector of the dimension sizes of each dimension
+ * @return the corresponding flat index
+ */
+template <typename MultiIndex>
+size_t flatten_index(MultiIndex const& indices, MultiIndex const& dimensions)
+{
+    return details::flatten_index<0>(indices, dimensions).first;
+}
+
 /**
  * @brief A class template for an array with custom indices
  *
  * This class stores an array of elements that can be queried using
- * a variadic number of custom index types. Each index type is associated
+ * a MultiIndex. Each index in the MultiIndex is associated
  * with a category, or dimension into a multidimensional array.
  *
- * Each custom index type must have a nested Count element that is castable
- * to an integer. Typically it is assumed, that custom indices are enums.
  *
  * Example:
  *
- * enum class AgeGroup
- * {
- *    Young,
- *    Old,
- *    Count = 2
- * };
+ * struct AgeGroup{};
  *
- * enum class Gender
+ * enum GenderE
  * {
  *    Female,
  *    Male,
  *    Diverse,
- *    Count = 3
+ *    NumGenders = 3
  * };
+ * struct Gender{};
  *
- * CustomIndexArray<size_t, AgeGroup, Gender> populations;
+ * CustomIndexArray<size_t, AgeGroup, Gender> populations({Index<AgeGroup>(2), Index<Gender>(NumGenders)});
  *
  * Here, populations represents a 2x3 size_t array (though the data is stored contigously).
- * An element can be accessed using a flat row-major index or by using categories:
+ * An element can be accessed using a MultiIndex:
  *
- * auto x = populations.get(4);
- * auto y = populations.get(AgeGroup::Old, Gender::Male);
- * assert(x == y);
+ * auto x = populations[{Index<AgeGroup>(0), Index<Gender>(Female)}];
  *
  * @tparam Typ the type stored in the array
- * @tparam Categories The custom Index types (enums)
+ * @tparam Categories The custom Index types
  *
  */
-
-template <class Typ, class... Categories>
+template <class Typ, class... Tags>
 class CustomIndexArray
 {
 public:
 
-    using Type  = Typ;
-    using Index = std::tuple<Categories...>;
-    using N     = product<static_cast<size_t>(Categories::Count)...>;
-    using InternalArrayType = Eigen::Array<Type, N::value, 1>;
-
-    // An array storying the size of each category
-    static std::array<size_t, sizeof...(Categories)> dimensions;
-
-    /**
-     * @brief CustomIndexArray default constructor
-     *
-     * leaves entries uninitialized
-     */
-    CustomIndexArray() = default;
+    using Type              = Typ;
+    using Index             = ::epi::Index<Tags...>;
+    using InternalArrayType = Eigen::Array<Type, Eigen::Dynamic, 1>;
 
     /**
      * @brief CustomIndexArray constructor, that initializes the array
@@ -121,35 +151,54 @@ public:
      */
     template <class... Ts,
               typename std::enable_if_t<std::is_constructible<Type, Ts...>::value>* = nullptr>
-    CustomIndexArray(Ts&&... args)
-        : m_y(InternalArrayType::Constant(N::value, 1, {std::forward<Ts>(args)...}))
+    CustomIndexArray(Index const& dims, Ts&&... args)
+        : m_dimensions{dims}
+        , m_numel(product(dims))
+        , m_y(InternalArrayType::Constant(m_numel, 1, {std::forward<Ts>(args)...}))
+    {}
+
+    /**
+     * @brief numel returns the number of elements
+     *
+     * This corresponds to the product of the dimension sizes
+     *
+     * @return number of elements
+     */
+    size_t constexpr numel() const
     {
+        return m_numel;
     }
 
     /**
-     * @brief get_num_compartments returns the number of compartments
-     *
-     * This corresponds to the product of the category sizes
-     *
-     * @return number of compartments
+     * @brief returns the size along the dimension provided as template parameter
+     * @tparam Tag Tag of the queried dimension/category
+     * @return size along a specified dimension
      */
-    static size_t constexpr size()
-    {
-        return N::value;
+    template <typename Tag>
+    epi::Index<Tag> size() const {
+        return get<Tag>(m_dimensions);
     }
 
     /**
-     * @brief get_compartments returns an Eigen copy of the vector of populations. This can be used
-     * as initial conditions for the ODE solver
-     * @return Eigen::VectorXd  of populations
+     * @brief array returns a reference to the internally stored flat array.
+     * @return const reference to the CustomIndexArray::InternalArrayType instance
      */
-    auto const& get_array() const
+    auto const& array() const
     {
         return m_y;
     }
-    auto& get_array()
+    auto& array()
     {
         return m_y;
+    }
+
+    /**
+     * @brief returns the entry of the array given a MultiIndex
+     * @param MultiIndex
+     * @return the value at the index
+     */
+    Type& operator[](Index const& index) {
+        return m_y[get_flat_index(index)];
     }
 
     /**
@@ -157,47 +206,8 @@ public:
      * @param index a flat index
      * @return the value at the index
      */
-    Type& operator[](size_t index) {
-        return m_y[(Eigen::Index)index];
-    }
-
-    /**
-     * @brief returns the entry of the array given a flat index index
-     * @param index a flat index
-     * @return the value at the index
-     */
-    Type const& operator[](size_t index) const {
-        return m_y[(Eigen::Index)index];
-    }
-
-    /**
-     * @brief get returns the element given a custom index
-     * @param cats the custsom indices for each category
-     * @return the value at the index
-     */
-    Type& get(Categories... cats)
-    {
-        return m_y[(Eigen::Index)get_flat_index(cats...)];
-    }
-
-    /**
-     * @brief get returns the element given a custom index
-     * @param cats the custom indices for each category
-     * @return the value at the index
-     */
-    Type const& get(Categories... cats) const
-    {
-        return m_y[(Eigen::Index)get_flat_index(cats...)];
-    }
-
-    /**
-     * @brief set sets the scalar value of the element given a custom index
-     * @param indices the custom indices for each category
-     * @param value the new value
-     */
-    void set(Type const& value, Categories... cats)
-    {
-        m_y[(Eigen::Index)get_flat_index(cats...)] = value;
+    Type const& operator[](Index const& index) const {
+        return m_y[get_flat_index(index)];
     }
 
 
@@ -207,21 +217,347 @@ public:
      * @param indices the custom indices for each category
      * @return a flat index into the data structure storing the compartment populations
      */
-    static size_t get_flat_index(Categories... cats)
+    size_t get_flat_index(Index const& index) const
     {
-        return flatten_index({static_cast<size_t>(cats)...}, dimensions);
+        return (Eigen::Index)flatten_index(index, m_dimensions);
     }
 
+private:
 
-protected:
+    // Random Access Iterator for CustomIndexArray
+    // To Do: As of Eigen 3.4, this is not needed anymore,
+    // because the Eigen Matrix classes directly implement stl-compatible
+    // iterators
+    template <typename T>
+    struct Iterator
+    {
+        using iterator_category = std::random_access_iterator_tag;
+        using difference_type   = std::ptrdiff_t;
+        using value_type        = T;
+        using pointer           = value_type*;
+        using reference         = value_type&;
+
+        Iterator(pointer ptr) : m_ptr(ptr) {}
+
+        Iterator& operator=(pointer rhs) { m_ptr = rhs; return *this;}
+        Iterator& operator=(const Iterator &rhs) { m_ptr = rhs._ptr; return *this;}
+        Iterator& operator+=(const int& rhs) { m_ptr += rhs; return *this;}
+        Iterator& operator-=(const int& rhs) { m_ptr -= rhs; return *this;}
+
+        reference operator[](const difference_type& rhs) {return m_ptr[rhs];}
+        value_type const& operator[](const difference_type& rhs) const {return m_ptr[rhs];}
+        reference operator*() { return *(m_ptr); }
+        value_type const& operator*() const { return *(m_ptr); }
+        pointer operator->() { return m_ptr; }
+
+        Iterator& operator++() { ++m_ptr; return *this; }
+        Iterator operator++(int) { Iterator tmp = *this; ++(*this); return tmp; }
+        Iterator& operator--() { --m_ptr; return *this; }
+        Iterator operator--(int) { Iterator tmp = *this; --(*this); return tmp; }
+
+        Iterator operator+(const int& rhs) const { return Iterator(m_ptr + rhs);}
+        Iterator operator-(const int& rhs) const { return Iterator(m_ptr - rhs);}
+
+        friend bool operator== (const Iterator& a, const Iterator& b) { return a.m_ptr == b.m_ptr; }
+        friend bool operator!= (const Iterator& a, const Iterator& b) { return !(a==b); }
+        friend bool operator< (const Iterator&a, const Iterator& b) { return a.m_ptr <  b.m_ptr; }
+        friend bool operator<=(const Iterator&a, const Iterator& b) { return a.m_ptr <= b.m_ptr; }
+        friend bool operator> (const Iterator&a, const Iterator& b) { return a.m_ptr >  b.m_ptr; }
+        friend bool operator>=(const Iterator&a, const Iterator& b) { return a.m_ptr >= b.m_ptr; }
+
+    private:
+
+        pointer m_ptr;
+    };
+
+    /**
+     * @brief A Slice represents a slice of data along one dimension, given a start and
+     * end index into that dimension. Its sole use is to provide an iterator for the data
+     * along this slice.
+     *
+     * If dims = (d0,d1,...d_i,...,dN) are the dimension sizes of this array, and d_i is the
+     * dimension size of the current slice, the indices into the data array are given by
+     *
+     *     i*d_i + j*d_i*d_right + k
+     *
+     * where
+     *
+     *       0 <= i <  d_right
+     *   start <= j <= end
+     *       0 <= k <  d_left
+     *
+     * and start and end are the start and end indices for this slice, d_left = d_0*d_1*...*d_(i-1)
+     * and d_right = d_(i+1)*...*d_N. If d_i = d_0, d_left=1 and if d_i = d_N, d_right=1.
+     *
+     * A slice iterator will store the indices (i,j,k) and increment k before j before i, so that the
+     * returned values are traversed in the flat index from front to back.
+     *
+     */
+    template <typename Tag, typename iter_type,
+              typename std::enable_if_t<details::is_random_access_iterator<iter_type>::value>* = nullptr>
+    class Slice
+    {
+        using difference_type = typename iter_type::difference_type;
+
+        template <typename T>
+        class Iterator
+        {
+        public:
+            using iterator_category = std::random_access_iterator_tag;
+            using difference_type   = std::ptrdiff_t;
+            using value_type        = T;
+            using pointer           = value_type*;
+            using reference         = value_type&;
+
+            Iterator(iter_type begin_, size_t di_, size_t dr_, Seq<size_t> const& seq_, difference_type offset = 0)
+             : data_begin(begin_)
+             , di(di_)
+             , dr(dr_)
+             , seq(seq_)
+             , inner_offset(offset)
+            {
+            }
+
+            Iterator& operator=(size_t rhs) { inner_offset = rhs; return *this;}
+            Iterator& operator=(const Iterator &rhs) { inner_offset = rhs.inner_offset; return *this;}
+            Iterator& operator+=(const int& rhs) { inner_offset += rhs; return *this;}
+            Iterator& operator-=(const int& rhs) { inner_offset -= rhs; return *this;}
+
+            reference operator[](const difference_type& rhs) {return data_begin[outer_offset(inner_offset + rhs)];}
+            value_type const& operator[](const difference_type& rhs) const {return data_begin[outer_offset(inner_offset + rhs)];}
+            reference operator*() { return data_begin[outer_offset(inner_offset)]; }
+            value_type const& operator*() const { return *(data_begin[outer_offset(inner_offset)]); }
+            pointer operator->() { return data_begin + outer_offset(inner_offset); }
+
+            Iterator& operator++() { inner_offset++; return *this; }
+            Iterator operator++(int) { Iterator tmp = *this; ++(*this); return tmp; }
+            Iterator& operator--() { --inner_offset; return *this; }
+            Iterator operator--(int) { Iterator tmp = *this; --(*this); return tmp; }
+
+            Iterator operator+(const int& rhs) const { return Iterator(data_begin, di, dr, seq, inner_offset + rhs);}
+            Iterator operator-(const int& rhs) const { return Iterator(data_begin, di, dr, seq, inner_offset - rhs);}
+
+            friend bool operator== (const Iterator& a, const Iterator& b) { return    a.inner_offset == b.inner_offset
+                                                                                   && a.data_begin   == b.data_begin
+                                                                                   && a.di           == b.di
+                                                                                   && a.dr           == b.dr
+                                                                                   && a.seq.start    == b.seq.start
+                                                                                   && a.seq.n        == b.seq.n
+                                                                                   && a.seq.stride   == b.seq.stride; }
+            friend bool operator!= (const Iterator& a, const Iterator& b) { return !(a==b); }
+            friend bool operator< (const Iterator&a, const Iterator& b) { return a.inner_offset <  b.inner_offset; }
+            friend bool operator<=(const Iterator&a, const Iterator& b) { return a.inner_offset <= b.inner_offset; }
+            friend bool operator> (const Iterator&a, const Iterator& b) { return a.inner_offset >  b.inner_offset; }
+            friend bool operator>=(const Iterator&a, const Iterator& b) { return a.inner_offset >= b.inner_offset; }
+
+        private:
+
+            inline Slice::difference_type outer_offset(difference_type const& inner) const {
+
+                // calculate the outer offset from the inner offset
+
+                // first unravel the inner index into an index (i,j,k) for a 3-dim array with dims (dl, idx_sequence.n, dr)
+                auto dv = std::div(inner, seq.n*dr);
+                difference_type i = dv.quot;
+                dv = std::div(dv.rem, dr);
+                difference_type j = dv.quot*seq.stride + seq.start;
+                difference_type k = dv.rem;
+
+                // then flatten the index for a 3-dim array with dims (dl, di, dr)
+                return i*di*dr + j*dr + k;
+            }
+
+            iter_type data_begin;
+            size_t di, dr;
+            Seq<size_t> seq;
+            difference_type inner_offset;
+        };
+
+    public:
+
+        using iterator        = Iterator<Type>;
+        using const_iterator  = Iterator<Type const>;
+
+        /**
+         * @brief Slice represents a slice into the CustomIndexarray
+         * @param dimensions the dimensions of the CustomIndexArray
+         * @param start_iter An iterator to the first element of the data
+         * @param idx_sequence_ A sequence of indices into the slice
+         */
+        Slice(Index const& dimensions,
+              iter_type const& start_iter,
+              Seq<size_t> idx_sequence_)
+            : data_begin(start_iter)
+            , idx_sequence(idx_sequence_)
+            , m_dimensions(dimensions)
+            , di(epi::get<Tag>(dimensions))
+            , dr(product<details::IndexPosition<Tag, Index>::value>(dimensions)/di)
+            , dl(product(dimensions)/(di*dr))
+        {
+            assert( (size_t)idx_sequence.start + idx_sequence.n <= di );
+
+            epi::get<Tag>(m_dimensions) = epi::Index<Tag>(idx_sequence.n);
+        }
+
+        // returns the number of elements in a slice
+        size_t numel() const {
+            return dl*dr*(idx_sequence.n);
+        }
+
+        // returns an stl-compatible random access iterator into the slice
+        iterator begin() {
+            return iterator(data_begin, di, dr, idx_sequence, 0);
+        }
+
+         // returns an stl-compatible random access iterator into the slice
+        const_iterator begin() const {
+            return const_iterator(data_begin, di, dr, idx_sequence, 0);
+        }
+
+         // returns an stl-compatible end random access iterator into the slice
+        iterator end() {
+            return iterator(data_begin, di, dr, idx_sequence, numel());
+        }
+
+         // returns an stl-compatible end random access iterator into the slice
+        const_iterator end() const {
+            return const_iterator(data_begin, di, dr, idx_sequence, numel());
+        }
+
+        // copies the slice elements into a CustomIndexArray of appropriate dimension
+        CustomIndexArray<Type, Tags...> as_array(){
+            CustomIndexArray<Type, Tags...> array(m_dimensions);
+            Eigen::Index idx = 0;
+            for (auto& v : *this)
+            {
+                array.array()[idx++] = v;
+            };
+            return array;
+        }
+
+        // comparison operators
+        friend bool operator== (const Slice& a, const Slice& b) {
+                return    a.data_begin == b.data_begin
+                       && a.idx_sequence.start == b.idx_sequence.start
+                       && a.idx_sequence.n == b.idx_sequence.n
+                       && a.idx_sequence.stride == b.idx_sequence.stride
+                       && a.m_dimensions == b.m_dimensions;
+        }
+
+        friend bool operator!= (const Slice& a, const Slice& b) { return !(a==b); }
+
+        /**
+         * @brief slice creates a subslice from the current slice
+         * @tparam The Tag corresponding to the dimension of the slice
+         * @param idx_seq An index sequence, consisting of the first index,
+         *                the number of indices and a stride
+         * @return The subslice
+         */
+        template <typename OtherTag>
+        Slice<OtherTag, iterator> slice(Seq<size_t> idx_sequence_)
+        {
+            return Slice<OtherTag, iterator>(m_dimensions, begin(), idx_sequence_);
+        }
+
+
+        /**
+         * @brief slice creates a subslice from the current slice
+         * @tparam The Tag corresponding to the dimension of the slice
+         * @param idx_seq An index sequence, consisting of the first index,
+         *                the number of indices and a stride
+         * @return The subslice
+         */
+        template <typename OtherTag>
+        Slice<OtherTag, const_iterator> slice(Seq<size_t> idx_sequence_) const
+        {
+            return Slice<OtherTag, const_iterator>(m_dimensions, begin(), idx_sequence_);
+        }
+
+    private:
+
+        iter_type data_begin;
+        Seq<size_t> idx_sequence;
+        Index m_dimensions;
+        size_t di, dr, dl;
+    };
+
+    // An array storying the size of each category
+    Index m_dimensions;
+
+    // number of elements stored
+    size_t m_numel;
+
     // An array containing the elements
     InternalArrayType m_y{};
-};
 
-// initialize array storying the size of each category
-template <class Type, class... Categories>
-std::array<size_t, sizeof...(Categories)> CustomIndexArray<Type, Categories...>::dimensions = {
-    static_cast<size_t>(Categories::Count)...};
+public:
+
+    using iterator          = Iterator<Type>;
+    using const_iterator    = Iterator<Type const>;
+
+    /**
+     * @brief begin returns a start iterator for the elements
+     * @return random access iterator
+     */
+    iterator begin()
+    {
+        return iterator(array().data());
+    }
+
+    /**
+     * @brief begin returns a start iterator for the elements
+     * @return random access iterator
+     */
+    const_iterator begin() const
+    {
+        return const_iterator(array().data());
+    }
+
+    /**
+     * @brief begin returns an end iterator for the elements
+     * @return random access iterator
+     */
+    iterator end()
+    {
+        return iterator(array().data() + array().size());
+    }
+
+    /**
+     * @brief begin returns an end iterator for the elements
+     * @return random access iterator
+     */
+    const_iterator end() const
+    {
+        return const_iterator(array().data() + array().size());
+    }
+
+    /**
+     * @brief slice creates a slice into the multidimensional array
+     * @tparam The Tag corresponding to the dimension of the slice
+     * @param idx_seq An index sequence, consisting of the first index,
+     *                the number of indices and a stride
+     * @return The slice
+     */
+    template <typename Tag>
+    Slice<Tag, iterator> slice(Seq<size_t> idx_seq)
+    {
+        return Slice<Tag, iterator>(m_dimensions, begin(), idx_seq);
+    }
+
+    /**
+     * @brief slice creates a slice into the multidimensional array
+     * @tparam The Tag corresponding to the dimension of the slice
+     * @param idx_seq An index sequence, consisting of the first index,
+     *                the number of indices and a stride
+     * @return The slice
+     */
+    template <typename Tag>
+    Slice<Tag, const_iterator> slice(Seq<size_t> idx_seq) const
+    {
+        return Slice<Tag, const_iterator>(m_dimensions, begin(), idx_seq);
+    }
+
+};
 
 } // namespace epi
 

@@ -6,8 +6,8 @@
 
 namespace epi
 {
-UncertainContactMatrix::UncertainContactMatrix(Eigen::Index num_groups, size_t num_matrices)
-    : m_cont_freq(num_groups, num_matrices)
+UncertainContactMatrix::UncertainContactMatrix(size_t num_matrices, Eigen::Index num_groups)
+    : m_cont_freq(num_matrices, num_groups)
 {
 }
 
@@ -156,7 +156,7 @@ ContactMatrixGroup UncertainContactMatrix::draw_sample(bool accum)
         if (!accum) {
             //matrices with same baseline/minimum but no dampings
             auto cont_freq =
-                ContactMatrixGroup{m_cont_freq.get_num_groups(), m_cont_freq.get_num_matrices()};
+                ContactMatrixGroup{m_cont_freq.get_num_matrices(), m_cont_freq.get_num_groups()};
             for (size_t i = 0; i < m_cont_freq.get_num_matrices(); ++i) {
                 cont_freq[i].get_baseline() = m_cont_freq[i].get_baseline();
                 cont_freq[i].get_minimum()  = m_cont_freq[i].get_minimum();

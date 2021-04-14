@@ -18,13 +18,13 @@ namespace details
     using void_t = typename make_void<Ts...>::type;
 
     //helpers for get_default
-    template <class T, class X = void>
+    template <class X, class = void, class... Args>
     struct has_get_default_member_function
         : std::false_type
     {};
 
-    template <class T>
-    struct has_get_default_member_function<T, details::void_t<decltype(T::get_default())>>
+    template <class T, class... Args>
+    struct has_get_default_member_function<T, void_t<decltype(T::get_default(std::declval<Args>()...))>, Args...>
         : std::true_type
     {};
 
@@ -55,8 +55,8 @@ namespace details
  * @brief check whether a get_default function exists
  * @tparam The type to check for the existence of the member function
  */
-template <class T>
-using has_get_default_member_function = details::has_get_default_member_function<T>;
+template <class T, class... Args>
+using has_get_default_member_function = details::has_get_default_member_function<T, void, Args...>;
 
 /**
  * @brief check whether a check_constraints function exists
@@ -81,15 +81,15 @@ struct ParameterTagTraits {
     using Type = typename Tag::Type;
 
     //get_default either with get_default member function or fallback on default constructor
-    template <class Dummy = Tag>
-    static std::enable_if_t<has_get_default_member_function<Dummy>::value, decltype(Dummy::get_default())> get_default()
+    template <class Dummy = Tag, class... Ts>
+    static std::enable_if_t<has_get_default_member_function<Dummy, Ts...>::value, Type> get_default(Ts&&... args)
     {
-        return Tag::get_default();
+        return Tag::get_default(std::forward<Ts>(args)...);
     }
-    template <class Dummy = Tag>
+    template <class Dummy = Tag, class... Ts>
     static std::enable_if_t<
-        !has_get_default_member_function<Dummy>::value && std::is_default_constructible<Type>::value, Type>
-    get_default()
+        !has_get_default_member_function<Dummy, Ts...>::value && std::is_default_constructible<Type>::value, Type>
+    get_default(Ts&&...)
     {
         return Type{};
     }
@@ -176,6 +176,19 @@ namespace details
         static const constexpr bool value = Pred<Head>::value && AllOf<Pred, Tail...>::value;
     };
 
+    //defines value = true if predicate defines value=true for any type in parameter pack
+    template <template <class> class Pred, class... Tail>
+    struct AnyOf;
+
+    template <template <class> class Pred>
+    struct AnyOf<Pred> : public std::false_type {
+    };
+
+    template <template <class> class Pred, class Head, class... Tail>
+    struct AnyOf<Pred, Head, Tail...> {
+        static const constexpr bool value = Pred<Head>::value || AnyOf<Pred, Tail...>::value;
+    };
+
     // call std::get<i>(tup).check_constraints() for all i.
     //
     // In C++17 this is just a fold expression
@@ -200,8 +213,11 @@ namespace details
  * triggering default initialization of all parameters using the get_default
  * member function.
  */
-struct DefaultInit {
+struct NoDefaultInit {
 };
+
+template <typename T>
+using is_no_default_init_tag = std::is_same<NoDefaultInit, T>;
 
 /**
  * @brief a set of parameters defined at compile time
@@ -227,33 +243,19 @@ public:
     template <
         class Dummy = void,
         class = std::enable_if_t<details::AllOf<std::is_default_constructible, typename Tags::Type...>::value, Dummy>>
-    ParameterSet()
+    explicit ParameterSet(NoDefaultInit)
     {
     }
 
     /**
      * @brief default initializing constructor
-     * exists if all parameters have get_default
+     * exists if all parameters have get_default.
+     * Arguments get forwarded to get_default of parameters
      */
-    template <class Dummy = void,
-              class       = std::enable_if_t<
-                  details::AllOf<has_get_default_member_function, ParameterTagTraits<Tags>...>::value, Dummy>>
-    explicit ParameterSet(DefaultInit)
-        : m_tup(ParameterTagTraits<Tags>::get_default()...)
-    {
-    }
-
-    /**
-     * @brief explicit initializing constructor
-     *
-     * initializes the n-th parameter using the n-th argument
-     */
-    template <class... T, class = std::enable_if_t<
-                              (sizeof...(T) >= 1 &&
-                               std::is_constructible<std::tuple<details::TaggedParameter<Tags>...>, T...>::value),
-                              void>>
-    explicit ParameterSet(T&&... args)
-        : m_tup(std::forward<T>(args)...)
+    template <class... T,
+              class = std::enable_if_t<(sizeof...(T)==0) || !details::AnyOf<is_no_default_init_tag, T...>::value, void>>
+    ParameterSet(T&&... args)
+        : m_tup(ParameterTagTraits<Tags>::get_default(std::forward<T>(args)...)...)
     {
     }
 
@@ -306,10 +308,11 @@ public:
      *
      * @tparam Tag the parameter
      */
-    template <class Tag, class = std::enable_if_t<has_get_default_member_function<ParameterTagTraits<Tag>>::value, Tag>>
-    void set_default()
+    template <class Tag,
+              class... T>
+    std::enable_if_t<has_get_default_member_function<ParameterTagTraits<Tag>, T...>::value, void> set_default(T&&... ts)
     {
-        get<Tag>() = ParameterTagTraits<Tag>::get_default();
+        get<Tag>() = ParameterTagTraits<Tag>::get_default(std::forward<T>(ts)...);
     }
 
     /**

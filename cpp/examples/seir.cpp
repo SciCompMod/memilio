@@ -15,12 +15,12 @@ int main()
     epi::SeirModel model;
 
     double total_population = 10000;
-    model.populations.set(100, epi::SeirInfType::E);
-    model.populations.set(100, epi::SeirInfType::I);
-    model.populations.set(100, epi::SeirInfType::R);
-    model.populations.set(total_population - model.populations.get(epi::SeirInfType::E) -
-                              model.populations.get(epi::SeirInfType::I) - model.populations.get(epi::SeirInfType::R),
-                          epi::SeirInfType::S);
+    model.populations[{epi::Index<epi::SeirInfType>(epi::SeirInfType::E)}] = 100;
+    model.populations[{epi::Index<epi::SeirInfType>(epi::SeirInfType::I)}] = 100;
+    model.populations[{epi::Index<epi::SeirInfType>(epi::SeirInfType::R)}] = 100;
+    model.populations[{epi::Index<epi::SeirInfType>(epi::SeirInfType::S)}] = total_population - model.populations[{epi::Index<epi::SeirInfType>(epi::SeirInfType::E)}]
+                                                                                              - model.populations[{epi::Index<epi::SeirInfType>(epi::SeirInfType::I)}]
+                                                                                              - model.populations[{epi::Index<epi::SeirInfType>(epi::SeirInfType::R)}];
     // suscetible now set with every other update
     // params.nb_sus_t0   = params.nb_total_t0 - params.nb_exp_t0 - params.nb_inf_t0 - params.nb_rec_t0;
     model.parameters.set<epi::StageTimeIncubationInv>(1./5.2);
