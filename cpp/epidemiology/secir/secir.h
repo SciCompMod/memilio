@@ -7,6 +7,7 @@
 #include "epidemiology/secir/infection_state.h"
 #include "epidemiology/secir/secir_params.h"
 #include "epidemiology/math/smoother.h"
+#include "epidemiology/utils/eigen_util.h"
 
 namespace epi
 {
@@ -295,11 +296,12 @@ class SecirSimulation;
 /**
  * get percentage of infections per total population.
  * @param model the compartment model with initial values.
+ * @param t current simulation time.
  * @param y current value of compartments.
  * @tparam Base simulation type that uses a secir compartment model. see SecirSimulation.
  */
 template<class Base = Simulation<SecirModel>>
-double get_infections_relative(const SecirSimulation<Base>& model, const Eigen::Ref<const Eigen::VectorXd>& y);
+double get_infections_relative(const SecirSimulation<Base>& model, double t, const Eigen::Ref<const Eigen::VectorXd>& y);
 
 /**
  * specialization of compartment model simulation for secir models.
@@ -344,7 +346,7 @@ public:
 
                 if (floating_point_greater_equal(t, m_t_last_npi_check + dt)) {
                     auto inf_rel =
-                        get_infections_relative(*this, this->get_result().get_last_value()) * dyn_npis.get_base_value();
+                        get_infections_relative(*this, t, this->get_result().get_last_value()) * dyn_npis.get_base_value();
                     auto exceeded_threshold = dyn_npis.get_max_exceeded_threshold(inf_rel);
                     if (exceeded_threshold != dyn_npis.get_thresholds().end() &&
                         (exceeded_threshold->first > m_dynamic_npi.first ||
@@ -389,7 +391,7 @@ inline auto simulate(double t0, double tmax, double dt, const SecirModel& model,
 
 //see declaration above.
 template<class Base>
-double get_infections_relative(const SecirSimulation<Base>& sim, const Eigen::Ref<const Eigen::VectorXd>& y)
+double get_infections_relative(const SecirSimulation<Base>& sim, double /*t*/, const Eigen::Ref<const Eigen::VectorXd>& y)
 {
     double sum_inf = 0;
     for (auto i = AgeGroup(0); i < sim.get_model().parameters.get_num_groups(); ++i) {
@@ -398,6 +400,45 @@ double get_infections_relative(const SecirSimulation<Base>& sim, const Eigen::Re
     auto inf_rel = sum_inf / sim.get_model().populations.get_total();
 
     return inf_rel;
+}
+
+/**
+ * Get migration factors.
+ * Used by migration graph simulation.
+ * Like infection risk, migration of infected individuals is reduced if they are well isolated.
+ * @param model the compartment model with initial values.
+ * @param t current simulation time.
+ * @param y current value of compartments.
+ * @return vector expression, same size as y, with migration factors per compartment.
+ * @tparam Base simulation type that uses a secir compartment model. see SecirSimulation.
+ */
+template <class Base = Simulation<SecirModel>>
+auto get_migration_factors(const SecirSimulation<Base>& sim, double /*t*/, const Eigen::Ref<const Eigen::VectorXd>& y)
+{
+    auto& params = sim.get_model().parameters;
+    //parameters as arrays
+    auto& t_inc     = params.template get<IncubationTime>().array().template cast<double>();
+    auto& t_ser     = params.template get<SerialInterval>().array().template cast<double>();
+    auto& p_asymp   = params.template get<AsymptoticCasesPerInfectious>().array().template cast<double>();
+    auto& p_inf     = params.template get<RiskOfInfectionFromSympomatic>().array().template cast<double>();
+    auto& p_inf_max = params.template get<MaxRiskOfInfectionFromSympomatic>().array().template cast<double>();
+    //slice of carriers
+    auto y_car = slice(y, {Eigen::Index(InfectionState::Carrier), Eigen::Index(size_t(params.get_num_groups())),
+                           Eigen::Index(InfectionState::Count)});
+
+    //compute isolation, same as infection risk from main model
+    auto R3                      = 0.5 / (t_inc - t_ser);
+    auto test_and_trace_required = ((1 - p_asymp) * R3 * y_car.array()).sum();
+    auto risk_from_symptomatic =
+        smoother_cosine(test_and_trace_required, double(params.template get<TestAndTraceCapacity>()),
+                        params.template get<TestAndTraceCapacity>() * 5, p_inf.matrix(), p_inf_max.matrix());
+
+    //set factor for infected
+    auto factors = Eigen::VectorXd::Ones(y.rows()).eval();
+    slice(factors, {Eigen::Index(InfectionState::Infected), Eigen::Index(size_t(params.get_num_groups())),
+                    Eigen::Index(InfectionState::Count)})
+        .array() = risk_from_symptomatic;
+    return factors;
 }
 
 } // namespace epi

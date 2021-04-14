@@ -209,7 +209,7 @@ struct DummyModel {
 
 //overload required for dynamic NPIs
 template<class DummyModel>
-double get_infections_relative(const DummyModel&, const Eigen::Ref<const Eigen::VectorXd>& y)
+double get_infections_relative(const DummyModel&, double, const Eigen::Ref<const Eigen::VectorXd>& y)
 {
     return y[0] / y.sum();
 }

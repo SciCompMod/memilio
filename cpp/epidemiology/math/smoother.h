@@ -43,10 +43,8 @@ inline double smoother_cosine(double x, double xleft, double xright, double ylef
  * @param yright matrix expression, function value at right boundary
  * @return a matrix expression with yij = smoother_cosine(x, xleft, xright, yleftij, yrightij)
  */
-template <class LeftExpr, class RightExpr,
-          std::enable_if_t<std::is_base_of<Eigen::MatrixBase<std::decay_t<LeftExpr>>, std::decay_t<LeftExpr>>::value,
-                           int> = 0>
-auto smoother_cosine(double x, double xleft, double xright, const LeftExpr& yleft_expr, const RightExpr& yright_expr)
+template <class LeftExpr, class RightExpr>
+auto smoother_cosine(double x, double xleft, double xright, const Eigen::MatrixBase<LeftExpr>& yleft_expr, const Eigen::MatrixBase<RightExpr>& yright_expr)
 {
     return yleft_expr.binaryExpr(yright_expr, [=](auto yleft, auto yright) {
         return smoother_cosine(x, xleft, xright, yleft, yright);

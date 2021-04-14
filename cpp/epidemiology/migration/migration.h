@@ -272,7 +272,7 @@ void calculate_migration_returns(Eigen::Ref<TimeSeries<double>::Vector> migrated
  * detect a get_infections_relative function for the Model type.
  */
 template<class Model>
-using get_infections_relative_expr_t = decltype(get_infections_relative(std::declval<const Model&>(), std::declval<const Eigen::Ref<const Eigen::VectorXd>&>()));
+using get_infections_relative_expr_t = decltype(get_infections_relative(std::declval<const Model&>(), std::declval<double>(), std::declval<const Eigen::Ref<const Eigen::VectorXd>&>()));
 
 /**
  * get the percantage of infected people of the total population in the node
@@ -281,17 +281,46 @@ using get_infections_relative_expr_t = decltype(get_infections_relative(std::dec
  * in the same namespace as the Model type.
  * @param node a node of a migration graph.
  * @param y the current value of the simulation.
+ * @param t the current simulation time
  */
 template< class Model, std::enable_if_t<!is_expression_valid<get_infections_relative_expr_t, Model>::value, void*> = nullptr>
-double get_infections_relative(const ModelNode<Model>& /*node*/, const Eigen::Ref<const Eigen::VectorXd>& /*y*/)
+double get_infections_relative(const ModelNode<Model>& /*node*/, double /*t*/, const Eigen::Ref<const Eigen::VectorXd>& /*y*/)
 {
     assert(false && "Overload get_infections_relative for your own model/simulation if you want to use dynamic NPIs.");
     return 0;
 }
 template< class Model, std::enable_if_t<is_expression_valid<get_infections_relative_expr_t, Model>::value, void*> = nullptr>
-double get_infections_relative(const ModelNode<Model>& node, const Eigen::Ref<const Eigen::VectorXd>& y)
+double get_infections_relative(const ModelNode<Model>& node, double t, const Eigen::Ref<const Eigen::VectorXd>& y)
 {
-    return get_infections_relative(node.model, y);
+    return get_infections_relative(node.model, t, y);
+}
+
+/**
+ * detect a get_migration_factors function for the Model type.
+ */
+template<class Model>
+using get_migration_factors_expr_t = decltype(get_migration_factors(std::declval<const Model&>(), std::declval<double>(), std::declval<const Eigen::Ref<const Eigen::VectorXd>&>()));
+
+/**
+ * Get an additional migration factor.
+ * The absolute migration for each compartment is computed by c_i * y_i * f_i, wher c_i is the coefficient set in 
+ * MigrationParameters, y_i is the current compartment population, f_i is the factor returned by this function.
+ * This factor is optional, default 1.0. If you need to adjust migration in that way, overload get_migration_factors(model, t, y) 
+ * for your Model type so that can be found with argument-dependent lookup.
+ * @param node a node of a migration graph.
+ * @param y the current value of the simulation.
+ * @param t the current simulation time
+ * @return a vector expression, same size as y, with the factor for each compartment.
+ */
+template< class Model, std::enable_if_t<!is_expression_valid<get_migration_factors_expr_t, Model>::value, void*> = nullptr>
+auto get_migration_factors(const ModelNode<Model>& /*node*/, double /*t*/, const Eigen::Ref<const Eigen::VectorXd>& y)
+{
+    return Eigen::VectorXd::Ones(y.rows());
+}
+template< class Model, std::enable_if_t<is_expression_valid<get_migration_factors_expr_t, Model>::value, void*> = nullptr>
+auto get_migration_factors(const ModelNode<Model>& node, double t, const Eigen::Ref<const Eigen::VectorXd>& y)
+{
+    return get_migration_factors(node.model, t, y);
 }
 
 template <class Model>
@@ -304,7 +333,7 @@ void MigrationEdge::apply_migration(double t, double dt, ModelNode<Model>& node_
 
     auto& dyn_npis = m_parameters.get_dynamic_npis_infected();
     if (dyn_npis.get_thresholds().size() > 0 && floating_point_greater_equal(t, m_t_last_dynamic_npi_check + dyn_npis.get_interval().get())) {
-        auto inf_rel            = get_infections_relative(node_from, node_from.get_last_state()) * dyn_npis.get_base_value();
+        auto inf_rel            = get_infections_relative(node_from, t, node_from.get_last_state()) * dyn_npis.get_base_value();
         auto exceeded_threshold = dyn_npis.get_max_exceeded_threshold(inf_rel);
         if (exceeded_threshold != dyn_npis.get_thresholds().end() &&
             (exceeded_threshold->first > m_dynamic_npi.first ||
@@ -333,7 +362,10 @@ void MigrationEdge::apply_migration(double t, double dt, ModelNode<Model>& node_
 
     if (!m_return_migrated && (m_parameters.get_coefficients().get_matrix_at(t).array() > 0.0).any()) {
         //normal daily migration
-        m_migrated.add_time_point(t, (node_from.get_last_state().array() * m_parameters.get_coefficients().get_matrix_at(t).array()).matrix());
+        m_migrated.add_time_point(
+            t, (node_from.get_last_state().array() * m_parameters.get_coefficients().get_matrix_at(t).array() *
+                get_migration_factors(node_from, t, node_from.get_last_state()).array())
+                   .matrix());
         m_return_times.add_time_point(t + dt);
 
         node_to.get_result().get_last_value() += m_migrated.get_last_value();
