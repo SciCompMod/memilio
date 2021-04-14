@@ -83,6 +83,8 @@ add_library(epidemiology
     epidemiology/utils/date.cpp
     epidemiology/utils/matrix_shape.h
     epidemiology/utils/matrix_shape.cpp
+    epidemiology/utils/random_number_generator.h
+    epidemiology/utils/random_number_generator.cpp
     epidemiology/abm/location.cpp
     epidemiology/abm/location.h
     epidemiology/abm/simulation.cpp
@@ -93,8 +95,6 @@ add_library(epidemiology
     epidemiology/abm/world.h
     epidemiology/abm/state.h
     epidemiology/abm/location_type.h
-    epidemiology/abm/random_number_generator.h
-    epidemiology/abm/random_number_generator.cpp
     epidemiology/abm/parameters.h
     epidemiology/abm/parameters.cpp
     epidemiology/secir/parameter_studies.h
