@@ -15,6 +15,24 @@ TEST(TestDate, comparison)
     EXPECT_NE(epi::Date(2021, 5, 11), epi::Date(2021, 5, 12));
     EXPECT_NE(epi::Date(2021, 5, 11), epi::Date(2021, 6, 11));
     EXPECT_NE(epi::Date(2021, 5, 11), epi::Date(2022, 5, 11));
+
+    EXPECT_TRUE(epi::Date(2020, 5, 10) < epi::Date(2021, 1, 1));
+    EXPECT_TRUE(epi::Date(2020, 5, 10) < epi::Date(2020, 6, 1));
+    EXPECT_TRUE(epi::Date(2020, 5, 10) < epi::Date(2020, 5, 11));
+    EXPECT_FALSE(epi::Date(2021, 5, 10) < epi::Date(2020, 5, 11));
+    EXPECT_FALSE(epi::Date(2020, 5, 10) < epi::Date(2020, 5, 10));
+    EXPECT_TRUE(epi::Date(2020, 5, 10) <= epi::Date(2020, 5, 10));
+    EXPECT_TRUE(epi::Date(2020, 5, 10) <= epi::Date(2020, 5, 11));
+    EXPECT_FALSE(epi::Date(2020, 5, 10) <= epi::Date(2020, 5, 9));
+
+    EXPECT_FALSE(epi::Date(2020, 5, 10) > epi::Date(2021, 1, 1));
+    EXPECT_FALSE(epi::Date(2020, 5, 10) > epi::Date(2020, 6, 1));
+    EXPECT_FALSE(epi::Date(2020, 5, 10) > epi::Date(2020, 5, 11));
+    EXPECT_TRUE(epi::Date(2021, 5, 10) > epi::Date(2020, 5, 11));
+    EXPECT_FALSE(epi::Date(2020, 5, 10) > epi::Date(2020, 5, 10));
+    EXPECT_TRUE(epi::Date(2020, 5, 10) >= epi::Date(2020, 5, 10));
+    EXPECT_FALSE(epi::Date(2020, 5, 10) >= epi::Date(2020, 5, 11));
+    EXPECT_TRUE(epi::Date(2020, 5, 10) >= epi::Date(2020, 5, 9));
 }
 
 TEST(TestDate, offsetByDays)

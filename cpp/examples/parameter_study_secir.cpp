@@ -40,7 +40,7 @@ int main()
     // theta = theta_in; // icu per hospitalized
     // delta = delta_in; // deaths per ICUs
 
-    epi::SecirModel<epi::AgeGroup1> model;
+    epi::SecirModel model(1);
     int num_groups = (int)model.parameters.get_num_groups();
     double fact    = 1.0 / (double)num_groups;
 
@@ -60,15 +60,15 @@ int main()
         params.times[i].set_icu_to_home(ticu2home);
         params.times[i].set_icu_to_death(ticu2death);
 
-        model.populations.set(fact * num_exp_t0, (epi::AgeGroup1)i, epi::InfectionType::E);
-        model.populations.set(fact * num_car_t0, (epi::AgeGroup1)i, epi::InfectionType::C);
-        model.populations.set(fact * num_inf_t0, (epi::AgeGroup1)i, epi::InfectionType::I);
-        model.populations.set(fact * num_hosp_t0, (epi::AgeGroup1)i, epi::InfectionType::H);
-        model.populations.set(fact * num_icu_t0, (epi::AgeGroup1)i, epi::InfectionType::U);
-        model.populations.set(fact * num_rec_t0, (epi::AgeGroup1)i, epi::InfectionType::R);
-        model.populations.set(fact * num_dead_t0, (epi::AgeGroup1)i, epi::InfectionType::D);
-        model.populations.set_difference_from_group_total(fact * num_total_t0, (epi::AgeGroup1)i, (epi::AgeGroup1)i,
-                                                          epi::InfectionType::S);
+        model.populations[{epi::AgeGroup(i),epi::InfectionState::Exposed}] = fact * num_exp_t0;
+        model.populations[{epi::AgeGroup(i),epi::InfectionState::Carrier}] = fact * num_car_t0;
+        model.populations[{epi::AgeGroup(i),epi::InfectionState::Infected}] = fact * num_inf_t0;
+        model.populations[{epi::AgeGroup(i),epi::InfectionState::Hospitalized}] = fact * num_hosp_t0;
+        model.populations[{epi::AgeGroup(i),epi::InfectionState::ICU}] = fact * num_icu_t0;
+        model.populations[{epi::AgeGroup(i),epi::InfectionState::Recovered}] = fact * num_rec_t0;
+        model.populations[{epi::AgeGroup(i),epi::InfectionState::Dead}] = fact * num_dead_t0;
+        model.populations.set_difference_from_group_total<epi::AgeGroup>({epi::AgeGroup(i), epi::InfectionState::Susceptible},
+                                                                         fact * num_total_t0);
 
         params.probabilities[i].set_infection_from_contact(inf_prob);
         params.probabilities[i].set_carrier_infectability(carr_infec);
@@ -104,7 +104,7 @@ int main()
     tixiCloseDocument(handle3);
 
     // create study
-    epi::ParameterStudy<epi::SecirModel<epi::AgeGroup1>> parameter_study(model, t0, tmax, 0.2, 1);
+    epi::ParameterStudy<epi::SecirModel> parameter_study(model, t0, tmax, 0.2, 1);
 
     // write and run study
     std::string path = "/Parameters";
@@ -117,26 +117,12 @@ int main()
     tixiCloseDocument(handle);
 
     tixiOpenDocument("Parameters.xml", &handle);
-    epi::ParameterStudy<epi::SecirModel<epi::AgeGroup1>> read_study =
-        epi::read_parameter_study<epi::AgeGroup1>(handle, path);
+    epi::ParameterStudy<epi::SecirModel> read_study = epi::read_parameter_study(handle, path);
     int run                        = 0;
     auto lambda                    = [&run, t0, tmax](auto graph) {
         epi::write_single_run_params(run++, graph, t0, tmax);
     };
-    auto results = read_study.run(lambda);
+    read_study.run(lambda);
 
-#if 0
-    if (argc > 1) {
-        // If provided, the first argument is the input file
-        input_filename = argv[1];
-    }
-    else {
-        // If not provided, we use a sample input file
-        input_filename = "parameter_studies_example_input.txt";
-    }
-
-    // Create parameter study
-    ParameterStudy parameter_study(input_filename);
-#endif
     return 0;
 }

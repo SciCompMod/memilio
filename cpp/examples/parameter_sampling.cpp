@@ -54,7 +54,7 @@ int main()
     /*
      * Contact frequency and dampings variable element
      */
-    epi::SecirModel<epi::AgeGroup3> model;
+    epi::SecirModel model(3);
     auto& params = model.parameters;
 
     size_t nb_groups = params.get_num_groups();

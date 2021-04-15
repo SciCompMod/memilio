@@ -19,6 +19,7 @@
     "babel-plugin-named-asset-import": "^0.3.6",
     "babel-preset-react-app": "^9.1.2",
     "bootstrap": "4.4.1",
+    "browser-detect": "^0.2.28",
     "camelcase": "^5.3.1",
     "case-sensitive-paths-webpack-plugin": "2.3.0",
     "css-loader": "3.4.2",
@@ -103,8 +104,6 @@
     "webpack-license-plugin": "^4.1.2"
   },
   "scripts": {
-    "build:wasm": "cmake -E make_directory build_wasm && cd build_wasm && emcmake cmake -DCMAKE_BUILD_TYPE=Release .. && emmake make && emmake make install",
-    "build:wasm:debug": "cmake -E make_directory build_wasm && cd build_wasm && emcmake cmake -DCMAKE_BUILD_TYPE=Debug .. && emmake make && emmake make install",
     "start": "node scripts/start.js",
     "build": "node scripts/build.js",
     "test": "node scripts/test.js",

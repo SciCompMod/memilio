@@ -1,6 +1,6 @@
 #include "epidemiology/abm/location.h"
 #include "epidemiology/abm/person.h"
-#include "epidemiology/abm/random_number_generator.h"
+#include "epidemiology/utils/random_number_generator.h"
 
 #include <numeric>
 
@@ -10,6 +10,7 @@ namespace epi
 Location::Location(LocationType type)
     : m_type(type)
     , m_subpopulations{}
+    , m_cached_exposure_rate({AbmAgeGroup::Count})
 {
 }
 
@@ -55,27 +56,28 @@ namespace
 InfectionState Location::interact(const Person& person, double dt, const GlobalInfectionParameters& global_params) const
 {
     auto state = person.get_infection_state();
+    auto age = person.get_age();
     switch (state) {
     case InfectionState::Susceptible:
-        return random_transition(state, dt, {{InfectionState::Exposed, m_cached_exposure_rate[person.get_age()]}});
+        return random_transition(state, dt, {{InfectionState::Exposed, m_cached_exposure_rate[age]}});
     case InfectionState::Carrier:
         return random_transition(
             state, dt,
             {{InfectionState::Infected_Detected,
-              global_params.detect_infection[person.get_age()] * global_params.carrier_to_infected[person.get_age()]},
-             {InfectionState::Infected_Undetected, (1 - global_params.detect_infection[person.get_age()]) *
-                                                       global_params.carrier_to_infected[person.get_age()]},
-             {InfectionState::Recovered_Carrier, global_params.carrier_to_recovered[person.get_age()]}});
+              global_params.get<DetectInfection>()[age] * global_params.get<CarrierToInfected>()[age]},
+             {InfectionState::Infected_Undetected, (1 - global_params.get<DetectInfection>()[age]) *
+                                                       global_params.get<CarrierToInfected>()[age]},
+             {InfectionState::Recovered_Carrier, global_params.get<CarrierToRecovered>()[age]}});
     case InfectionState::Infected_Detected: //fallthrough!
     case InfectionState::Infected_Undetected:
         return random_transition(
             state, dt,
-            {{InfectionState::Recovered_Infected, global_params.infected_to_recovered[person.get_age()]},
-             {InfectionState::Dead, global_params.infected_to_dead[person.get_age()] * m_parameters.death_factor}});
+            {{InfectionState::Recovered_Infected, global_params.get<InfectedToRecovered>()[age]},
+             {InfectionState::Dead, global_params.get<InfectedToDead>()[age] * m_parameters.get<DeathFactor>()}});
     case InfectionState::Recovered_Carrier: //fallthrough!
     case InfectionState::Recovered_Infected:
         return random_transition(
-            state, dt, {{InfectionState::Susceptible, global_params.recovered_to_susceptible[person.get_age()]}});
+            state, dt, {{InfectionState::Susceptible, global_params.get<RecoveredToSusceptible>()[age]}});
     default:
         return state; //some states don't transition
     }
@@ -88,10 +90,10 @@ void Location::begin_step(double /*dt*/, const GlobalInfectionParameters& global
     auto num_carriers = get_subpopulation(InfectionState::Carrier);
     auto num_infected =
         get_subpopulation(InfectionState::Infected_Detected) + get_subpopulation(InfectionState::Infected_Undetected);
-    m_cached_exposure_rate = std::min(m_parameters.effective_contacts, double(m_num_persons)) / m_num_persons *
-                             (global_params.susceptible_to_exposed_by_carrier.array() * num_carriers +
-                              global_params.susceptible_to_exposed_by_infected.array() * num_infected)
-                                 .matrix();
+    m_cached_exposure_rate.array()
+            = std::min(m_parameters.get<EffectiveContacts>(), double(m_num_persons)) / m_num_persons *
+                             (global_params.get<SusceptibleToExposedByCarrier>().array() * num_carriers +
+                              global_params.get<SusceptibleToExposedByInfected>().array() * num_infected);
 }
 
 void Location::add_person(const Person& p)

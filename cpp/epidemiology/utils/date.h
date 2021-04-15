@@ -3,6 +3,7 @@
 
 #include <string>
 #include <iostream>
+#include <tuple>
 #include <array>
 #include <numeric>
 #include <algorithm>
@@ -50,20 +51,40 @@ struct Date {
     {
         return !(*this == other);
     }
+    bool operator<(const Date& other) const
+    {
+        if (std::tie(year, month, day) < std::tie(other.year, other.month, other.day)) {
+            return true;
+        }
+        else {
+            return false;
+        }
+    }
+    bool operator<=(const Date& other) const
+    {
+        return !(other < *this);
+    }
+    bool operator>(const Date& other) const
+    {
+        return other < *this;
+    }
+    bool operator>=(const Date& other) const
+    {
+        return !(*this < other);
+    }
     //@}
 
     /**
      * gtest printer.
-     */ 
+     */
     friend void PrintTo(const Date& self, std::ostream* os)
     {
-        *os << self.year << "." << self.month << "." << self.day; 
+        *os << self.year << "." << self.month << "." << self.day;
     }
 
     int year;
     int month;
     int day;
-
 };
 
 /**
@@ -116,12 +137,11 @@ inline Date offset_date_by_days(Date date, int offset_days)
         }
 
         if (day_in_year > 0 && day_in_year <= part_sum[11]) {
-
-            int i = 0;
-            while (day_in_year > part_sum[i]) {
-                i++;
-            }
-            return {year, i + 1, day_in_year - (i > 0 ? part_sum[i - 1] : 0)};
+            auto iter = std::find_if(part_sum.begin(), part_sum.end(), [day_in_year](auto s) {
+                return day_in_year <= s;
+            });
+            int i     = static_cast<int>(iter - part_sum.begin());
+            return {year, i + 1, day_in_year - (i > 0 ? part_sum[static_cast<size_t>(i - 1)] : 0)};
         }
         else {
             if (day_in_year > 0) {
