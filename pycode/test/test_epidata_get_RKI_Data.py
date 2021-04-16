@@ -14,11 +14,13 @@ class test_get_RKI_Data(fake_filesystem_unittest.TestCase):
     path = '/home/RKIData'
 
     # strings for read, download and update data
+    # be careful: not completely realistic data
     test_string_all_federal_states = ("""[{"IdBundesland":1,"Bundesland":"Schleswig-Holstein","Landkreis":"SK Kiel", 
     "Altersgruppe":"A60-A79" ,"Geschlecht":"M","AnzahlFall":1,"AnzahlTodesfall":0,"ObjectId":1, 
     "Meldedatum":"2020\/08\/11 00:00:00+00", "IdLandkreis":1002,"Datenstand":"25.01.2021, 00:00 Uhr","NeuerFall":0, 
     "NeuerTodesfall":-9, "Refdatum":"2020\/08\/07 00:00:00+00","NeuGenesen":0,"AnzahlGenesen":1, 
-    "IstErkrankungsbeginn":1, "Altersgruppe2":"Nicht \\u00fcbermittelt"}, {"IdBundesland":1,
+    "IstErkrankungsbeginn":1, "Altersgruppe2":"Nicht \\u00fcbermittelt"},
+    {"IdBundesland":1,
     "Bundesland":"Schleswig-Holstein","Landkreis":"SK Flensburg","Altersgruppe":"A60-A79", "Geschlecht":"M",
     "AnzahlFall":1,"AnzahlTodesfall":1,"ObjectId":617,"Meldedatum":"2020\/03\/24 00:00:00+00", "IdLandkreis":1001,
     "Datenstand":"25.01.2021, 00:00 Uhr","NeuerFall":0,"NeuerTodesfall":0, "Refdatum":"2020\/08\/07 00:00:00+00",
@@ -454,6 +456,7 @@ class test_get_RKI_Data(fake_filesystem_unittest.TestCase):
         file = 'infected_ma_rki.json'
         f_read = os.path.join(directory, file)
         df_infected = pd.read_json(f_read)
+        
         file = 'deaths_ma_rki.json'
         f_read = os.path.join(directory, file)
         df_deaths = pd.read_json(f_read)
@@ -490,6 +493,93 @@ class test_get_RKI_Data(fake_filesystem_unittest.TestCase):
         self.assertAlmostEqual(
             df_state[(df_state['Date'] == "2020-08-11") & (df_state['ID_State'] == 1)]['Deaths'].item(),
             5/7)
+
+    def test_get_rki_data_read_fill_dates(self):
+        # Test without downloading data
+        [read_data, out_form, out_folder, fill_dates, make_plot, moving_average, split_berlin] = \
+            [True, 'json_timeasstring', self.path, True, False, False, False]
+
+        directory = os.path.join(out_folder, 'Germany/')
+        gd.check_dir(directory)
+
+        # write file
+        self.write_rki_data(directory)
+        # check if expected file is written
+        self.assertEqual(len(os.listdir(directory)), 1)
+
+        grki.get_rki_data(read_data, out_form, out_folder, fill_dates, make_plot, moving_average, split_berlin)
+
+        # check if expected files are written
+        self.assertEqual(len(os.listdir(directory)), 27)
+
+        files = ['infected_all_dates_rki.json', 'deaths_all_dates_rki.json', 'all_state_all_dates_rki.json',
+                 "infected_state_all_dates_rki.json", "all_state_all_dates_rki.json",
+                 "infected_county_all_dates_rki.json", "all_county_all_dates_rki.json",
+                 "all_gender_all_dates_rki.json", "all_state_gender_all_dates_rki.json",
+                 "all_county_gender_all_dates_rki.json", "all_age_all_dates_rki.json",
+                 "all_state_age_all_dates_rki.json", "all_county_age_all_dates_rki.json"]
+        for file in files:
+            self.assertTrue(file in os.listdir(directory))
+
+
+        # test if normal file os the same
+        file = "all_germany_rki.json"
+        f_read = os.path.join(directory, file)
+        df = pd.read_json(f_read)
+
+        file = 'infected_rki.json'
+        f_read = os.path.join(directory, file)
+        df_infected = pd.read_json(f_read)
+
+        file = 'deaths_rki.json'
+        f_read = os.path.join(directory, file)
+        df_deaths = pd.read_json(f_read)
+
+        data_list = df.columns.values.tolist()
+        self.assertEqual(data_list, ["Date", "Confirmed", "Deaths", "Recovered"])
+        self.assertEqual(df[(df['Date'] == "2020-08-07")]['Confirmed'].item(),
+                         df_infected[(df_infected['Date'] == "2020-08-07")]['Confirmed'].item())
+        self.assertEqual(df[(df['Date'] == "2020-08-07")]['Confirmed'].item(), 12)
+        self.assertEqual(df[(df['Date'] == "2020-08-07")]['Deaths'].item(),
+                         df_deaths[(df_deaths['Date'] == "2020-08-07")]['Deaths'].item())
+        # one deaths on 2020-04-13 + one on 2020-08-07
+        self.assertEqual(df[(df['Date'] == "2020-08-07")]['Deaths'].item(), 2)
+        self.assertEqual(df[(df['Date'] == "2020-08-07")]["Recovered"].item(), 11)
+        self.assertEqual(df[(df['Date'] == "2020-06-10")]['Confirmed'].item(), 6)
+        self.assertEqual(df[(df['Date'] == "2020-06-10")]['Deaths'].item(), 1)
+        self.assertEqual(df[(df['Date'] == "2020-06-10")]["Recovered"].item(), 6)
+
+        self.assertEqual(df[(df['Date'] == "2020-08-10")]['Deaths'].item(), 5)
+
+        # test _all_dates files
+        file = 'all_germany_all_dates_rki.json'
+        self.assertTrue(file in os.listdir(directory))
+        f_read = os.path.join(directory, file)
+        df_ad = pd.read_json(f_read)
+
+        data_list = df_ad.columns.values.tolist()
+        self.assertEqual(data_list, ["Date", "Confirmed", "Deaths", "Recovered"])
+        # test if 7 day average moving is calculated correctly
+        self.assertEqual(df_ad[(df_ad['Date'] == "2020-06-10")]['Confirmed'].item(), 6)
+        self.assertEqual(df_ad[(df_ad['Date'] == "2020-06-10")]['Deaths'].item(), 1)
+        self.assertEqual(df_ad[(df_ad['Date'] == "2020-06-10")]["Recovered"].item(), 6)
+        # Check an average date in between
+        self.assertEqual(df_ad[(df_ad['Date'] == "2020-07-08")]['Confirmed'].item(), 6)
+        self.assertEqual(df_ad[(df_ad['Date'] == "2020-07-20")]['Deaths'].item(), 1)
+        self.assertEqual(df_ad[(df_ad['Date'] == "2020-07-31")]["Recovered"].item(), 6)
+
+        self.assertEqual(df_ad[(df_ad['Date'] == "2020-08-07")]['Confirmed'].item(), 12)
+        self.assertEqual(df_ad[(df_ad['Date'] == "2020-08-07")]['Deaths'].item(), 2)
+        self.assertEqual(df_ad[(df_ad['Date'] == "2020-08-07")]["Recovered"].item(), 11)
+
+        self.assertEqual(df_ad[(df_ad['Date'] == "2020-08-08")]['Confirmed'].item(), 13)
+        self.assertEqual(df_ad[(df_ad['Date'] == "2020-08-08")]['Deaths'].item(), 2)
+        self.assertEqual(df_ad[(df_ad['Date'] == "2020-08-08")]["Recovered"].item(), 11)
+
+        self.assertEqual(df_ad[(df_ad['Date'] == "2020-08-20")]['Confirmed'].item(), 27)
+        self.assertEqual(df_ad[(df_ad['Date'] == "2020-08-20")]['Deaths'].item(), 5)
+        self.assertEqual(df_ad[(df_ad['Date'] == "2020-08-20")]["Recovered"].item(), 22)
+
 
     def test_get_rki_data_read_moving_average_and_split_berlin(self):
         # test if split_berlin and moving_average = True are working together
@@ -537,6 +627,32 @@ class test_get_RKI_Data(fake_filesystem_unittest.TestCase):
         self.assertAlmostEqual(
             df_county[(df_county['County'] == "SK Berlin Lichtenberg") & (df_county['Date'] == '2020-06-09')][
                 'Deaths'].item(), 0)
+
+    def test_get_rki_data_read_all_dates_and_split_berlin(self):
+        # test if split_berlin and moving_average = True are working together
+        [read_data, out_form, out_folder, fill_dates, make_plot, moving_average, split_berlin] = \
+            [True, 'json_timeasstring', self.path, True, False, False, True, ]
+
+        directory = os.path.join(out_folder, 'Germany/')
+        gd.check_dir(directory)
+
+        # write file
+        self.write_rki_data(directory)
+        # check if expected file is written
+        self.assertEqual(len(os.listdir(directory)), 1)
+
+        grki.get_rki_data(read_data, out_form, out_folder, fill_dates, make_plot, moving_average, split_berlin)
+
+        # check if expected files are written (27  same number as with split_berlin=False)
+        self.assertEqual(len(os.listdir(directory)), 27)
+        # many files are tested before, don't test them again
+        files = ['all_county_split_berlin_rki.json', 'all_county_split_berlin_all_dates_rki.json',
+                 "infected_county_split_berlin_rki.json", "infected_county_split_berlin_all_dates_rki.json",
+                 "all_county_gender_split_berlin_rki.json", "all_county_gender_split_berlin_all_dates_rki.json",
+                 "all_county_age_split_berlin_rki.json", "all_county_age_split_berlin_all_dates_rki.json"]
+        for file in files:
+            self.assertTrue(file in os.listdir(directory))
+
 
     def test_moving_average(self):
         Date = ['2020-01-02', '2020-01-03','2020-01-20', '2020-01-25', '2020-01-30']
@@ -688,6 +804,27 @@ class test_get_RKI_Data(fake_filesystem_unittest.TestCase):
                              .agg({'Confirmed': sum})
         test_df = test_df.groupby(level=[1,2]).cumsum().reset_index()
         pd.testing.assert_frame_equal(test_df, result_df)
+
+    @patch('epidemiology.epidata.getRKIData.gd.cli')
+    def test_main(self, mock_cli):
+        mock_cli.return_value = [True, 'json_timeasstring', self.path, False, False, False, False]
+
+        out_folder = self.path
+        directory = os.path.join(out_folder, 'Germany/')
+        gd.check_dir(directory)
+
+        # Test case where file does not exist
+        file = "FullDataRKI.json"
+        file_with_path = os.path.join(directory, file)
+        # Test case where file exists
+        self.write_rki_data(directory)
+        # check if expected file is written
+        self.assertEqual(len(os.listdir(directory)), 1)
+
+        grki.main()
+        # check if expected files are written
+        self.assertEqual(len(os.listdir(directory)), 14)
+
 
 if __name__ == '__main__':
     unittest.main()
