@@ -3,7 +3,7 @@ from pyfakefs import fake_filesystem_unittest
 import os
 import sys
 from io import StringIO
-from unittest.mock import patch
+from unittest.mock import patch, call
 from datetime import date, datetime
 import pandas as pd
 
@@ -16,6 +16,103 @@ class Test_getDataIntoPandasDataFrame(fake_filesystem_unittest.TestCase):
 
     def setUp(self):
         self.setUpPyfakefs()
+
+    @patch('epidemiology.epidata.getDataIntoPandasDataFrame.urlopen')
+    def test_load_geojson_working(self, mock_urlopen):
+
+        # return an empty dataframe
+        mock_urlopen.return_value = pd.DataFrame()
+
+        df_test = gd.loadCsv("targetFileName")
+        expected_call = [call('https://opendata.arcgis.com/datasets/' + "targetFileName" + '.geojson')]
+        mock_urlopen.assert_has_calls(expected_call)
+
+        assert df_test.empty
+
+        df_test = gd.loadCsv("targetFileName", apiUrl='https://opendata.arcgis.com/datasets/different/',
+                             extension='.notgeojson')
+        expected_call = [call('https://opendata.arcgis.com/datasets/different/' + "targetFileName" + '.notgeojson')]
+        mock_urlopen.assert_has_calls(expected_call)
+
+        assert df_test.empty
+
+        # example data from pandas docs about json_normalize
+        # counties replaced by features, type and geometry added
+        # info added
+        data = [{'state': 'Florida',
+                 'shortname': 'FL',
+                 'features': [{'name': 'Dade',
+                               'population': 12345},
+                             {'name': 'Broward',
+                              'population': 40000},
+                             {'name': 'Palm Beach',
+                              'population': 60000}]},
+                {'state': 'Ohio',
+                 'shortname': 'OH',
+                 'info': {'governor': 'John Kasich'},
+                 'features': [{'name': 'Summit',
+                               'population': 1234},
+                              {'name': 'Cuyahoga',
+                               'population': 1337,
+                               'type': "test",
+                               'geometry': "round"}]}]
+
+        mock_urlopen.return_value = data
+
+        # check if rows exist which should be deleted in function
+        df = pd.json_normalize(data, 'features')
+
+        assert df.columns == ["name", "population", "state", "shortname", "type", "geometry"]
+
+        df_test = gd.loadCsv("targetFileName")
+
+        assert df_test.columns == ["name", "population", "state", "shortname"]
+
+        # TODO: Add test for rename
+
+    @patch('epidemiology.epidata.getDataIntoPandasDataFrame.urlopen')
+    def test_load_geojson_working(self, mock_urlopen):
+
+        mock_urlopen.side_effect = OSError
+
+        with self.assertRaises(SystemExit) as cm:
+            df_test = gd.loadGeojson("targetFileName")
+
+        exit_string = "ERROR: URL " + 'https://opendata.arcgis.com/datasets/' + "targetFileName" + '.geojson' +\
+                      " could not be opened."
+
+        self.assertEqual(cm.exception.code, exit_string)
+
+
+    @patch('epidemiology.epidata.getDataIntoPandasDataFrame.pandas.read_csv')
+    def test_load_csv_working(self, mock_csv):
+        # return an empty dataframe
+        mock_csv.return_value = pd.DataFrame()
+
+        df_test = gd.loadCsv("targetFileName")
+        expected_call = [call('https://opendata.arcgis.com/datasets/' + "targetFileName" + '.csv')]
+        mock_csv.assert_has_calls(expected_call)
+
+        assert df_test.empty
+
+        df_test = gd.loadCsv("targetFileName", apiUrl='https://opendata.arcgis.com/datasets/different/',
+                             extension='.notcsv')
+        expected_call = [call('https://opendata.arcgis.com/datasets/different/' + "targetFileName" + '.notcsv')]
+        mock_csv.assert_has_calls(expected_call)
+
+        assert df_test.empty
+
+    @patch('epidemiology.epidata.getDataIntoPandasDataFrame.pandas.read_csv')
+    def test_load_csv_working(self, mock_csv):
+        mock_csv.side_effect = OSError
+
+        with self.assertRaises(SystemExit) as cm:
+            df_test = gd.loadCsv("targetFileName")
+
+        exit_string = "ERROR: URL " + 'https://opendata.arcgis.com/datasets/' + "targetFileName" + '.csv' + \
+                      " could not be opened."
+
+        self.assertEqual(cm.exception.code, exit_string)
 
     def test_cli_correct_default(self):
         
@@ -275,6 +372,24 @@ class Test_getDataIntoPandasDataFrame(fake_filesystem_unittest.TestCase):
         # file = "test_hdf.h5"
         # self.assertEqual(len(os.listdir(self.path)), 3)
         # self.assertEqual(os.listdir(self.path), [file])
+
+    def test_write_dataframe_error(self):
+
+        gd.check_dir(self.path)
+
+        d1 = date(2020, 11, 26)
+        d1 = datetime.combine(d1, datetime.min.time())
+        d2 = date(2020, 7, 26)
+        d2 = datetime.combine(d2, datetime.min.time())
+
+        d = {'Date': [d1, d2], 'col2': ["d1", "d2"]}
+        df = pd.DataFrame(data=d)
+
+        with self.assertRaises(SystemExit) as cm:
+            gd.write_dataframe(df, self.path, "test_json", 'wrong')
+
+        exit_string = "Error: The file format: " + 'wrong' + " does not exist. Use another one."
+        self.assertEqual(cm.exception.code, exit_string)
 
 
 if __name__ == '__main__':
