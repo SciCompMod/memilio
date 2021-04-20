@@ -8,7 +8,6 @@ Data from following packages can be deleted:
 - getJHData.py
 - getSpainData.py
 - getDIVIData.py
-- getPopulationData
 """
 
 import argparse
@@ -202,6 +201,7 @@ def cli():
     parser.add_argument('-a', '--all',
                         help='Deletes all data and folders which could be possibly written by the epidata package.',
                         action='store_true')
+
     parser.add_argument('-r', '--rki', help='Deletes just rki data.',
                         action='store_true')
     parser.add_argument('-j', '--john-hopkins', help='Deletes just data from John Hopkins university.',
@@ -217,7 +217,7 @@ def cli():
 
     args = parser.parse_args()
 
-    return [args.all, args.rki, args.john_hopkins, args.spain, args.population, args.hdf5, args.out_path]
+    return [args.all_data, args.rki, args.john_hopkins, args.spain, args.population, args.hdf5, args.out_path]
 
 
 def main():
