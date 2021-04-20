@@ -3,7 +3,7 @@ from pyfakefs import fake_filesystem_unittest
 import os
 import sys
 from io import StringIO
-from unittest.mock import patch, call
+from unittest.mock import patch, call, mock_open
 from datetime import date, datetime
 import pandas as pd
 
@@ -14,64 +14,77 @@ class Test_getDataIntoPandasDataFrame(fake_filesystem_unittest.TestCase):
 
     path = '/home/x/'
 
+    data = ("""{"type": "FeatureCollection",\
+"name": "RKI_COVID19",\
+"features": [\
+{ "type": "Feature", "properties": { "ObjectId": 1, "IdBundesland": 1, "Bundesland": "Schleswig-Holstein",\
+"Landkreis": "SK Flensburg", "Altersgruppe": "A15-A34", "Geschlecht": "M", "AnzahlFall": 1, "AnzahlTodesfall": 0,\
+"Meldedatum": "2021-03-26T00:00:00Z", "IdLandkreis": "01001", "Datenstand": "20.04.2021, 00:00 Uhr", "NeuerFall": 0, "NeuerTodesfall": -9, "Refdatum": "2021-03-22T00:00:00Z", "NeuGenesen": 0, "AnzahlGenesen": 1, "IstErkrankungsbeginn": 1, "Altersgruppe2": "Nicht übermittelt" }, "geometry": null },\
+{ "type": "Feature", "properties": { "ObjectId": 2, "IdBundesland": 1, "Bundesland": "Schleswig-Holstein",
+"Landkreis": "SK Flensburg", "Altersgruppe": "A15-A34", "Geschlecht": "M", "AnzahlFall": 7, "AnzahlTodesfall": 0,\
+"Meldedatum": "2021-03-26T00:00:00Z", "IdLandkreis": "01001", "Datenstand": "20.04.2021, 00:00 Uhr", "NeuerFall": 0, "NeuerTodesfall": -9, "Refdatum": "2021-03-26T00:00:00Z", "NeuGenesen": 0, "AnzahlGenesen": 7, "IstErkrankungsbeginn": 0, "Altersgruppe2": "Nicht übermittelt" }, "geometry": null },\
+{ "type": "Feature", "properties": { "ObjectId": 3, "IdBundesland": 1, "Bundesland": "Schleswig-Holstein",\
+"Landkreis": "SK Flensburg", "Altersgruppe": "A15-A34", "Geschlecht": "M", "AnzahlFall": 1, "AnzahlTodesfall": 0,\
+"Meldedatum": "2021-03-26T00:00:00Z", "IdLandkreis": "01001", "Datenstand": "20.04.2021, 00:00 Uhr", "NeuerFall": 0, "NeuerTodesfall": -9, "Refdatum": "2021-03-26T00:00:00Z", "NeuGenesen": -9, "AnzahlGenesen": 0, "IstErkrankungsbeginn": 0, "Altersgruppe2": "Nicht übermittelt" }, "geometry": null }\
+]}""")
+
     def setUp(self):
         self.setUpPyfakefs()
 
+    # @patch('epidemiology.epidata.getDataIntoPandasDataFrame.urlopen')
+    # @patch('epidemiology.epidata.getDataIntoPandasDataFrame.json.loads')
+    # def test_load_geojson_working(self, mock_jsonloads, mock_urlopen):
+    #
+    #
+    #     mock_jsonloads.side_effect = self.data
+    #
+    #     df_test = gd.loadGeojson("targetFileName")
+    #     expected_call = [call('https://opendata.arcgis.com/datasets/' + "targetFileName" + '.geojson')]
+    #     mock_urlopen.assert_has_calls(expected_call)
+    #
+    #     assert df_test.empty
+    #
+    #     df_test = gd.loadCsv("targetFileName", apiUrl='https://opendata.arcgis.com/datasets/different/',
+    #                          extension='.notgeojson')
+    #     expected_call = [call('https://opendata.arcgis.com/datasets/different/' + "targetFileName" + '.notgeojson')]
+    #     mock_urlopen.assert_has_calls(expected_call)
+    #
+    #     assert df_test.empty
+    #
+    #     # example data from pandas docs about json_normalize
+    #     # counties replaced by features, type and geometry added
+    #     # info added
+    #     data = [{'state': 'Florida',
+    #              'shortname': 'FL',
+    #              'features': [{'name': 'Dade',
+    #                            'population': 12345},
+    #                          {'name': 'Broward',
+    #                           'population': 40000},
+    #                          {'name': 'Palm Beach',
+    #                           'population': 60000}]},
+    #             {'state': 'Ohio',
+    #              'shortname': 'OH',
+    #              'info': {'governor': 'John Kasich'},
+    #              'features': [{'name': 'Summit',
+    #                            'population': 1234},
+    #                           {'name': 'Cuyahoga',
+    #                            'population': 1337,
+    #                            'type': "test",
+    #                            'geometry': "round"}]}]
+    #
+    #     mock_urlopen.return_value = data
+    #
+    #     # check if rows exist which should be deleted in function
+    #     df = pd.json_normalize(data, 'features')
+    #
+    #     assert df.columns == ["name", "population", "state", "shortname", "type", "geometry"]
+    #
+    #     df_test = gd.loadCsv("targetFileName")
+    #
+    #     assert df_test.columns == ["name", "population", "state", "shortname"]
+
     @patch('epidemiology.epidata.getDataIntoPandasDataFrame.urlopen')
-    def test_load_geojson_working(self, mock_urlopen):
-
-        # return an empty dataframe
-        mock_urlopen.return_value = pd.DataFrame()
-
-        df_test = gd.loadCsv("targetFileName")
-        expected_call = [call('https://opendata.arcgis.com/datasets/' + "targetFileName" + '.geojson')]
-        mock_urlopen.assert_has_calls(expected_call)
-
-        assert df_test.empty
-
-        df_test = gd.loadCsv("targetFileName", apiUrl='https://opendata.arcgis.com/datasets/different/',
-                             extension='.notgeojson')
-        expected_call = [call('https://opendata.arcgis.com/datasets/different/' + "targetFileName" + '.notgeojson')]
-        mock_urlopen.assert_has_calls(expected_call)
-
-        assert df_test.empty
-
-        # example data from pandas docs about json_normalize
-        # counties replaced by features, type and geometry added
-        # info added
-        data = [{'state': 'Florida',
-                 'shortname': 'FL',
-                 'features': [{'name': 'Dade',
-                               'population': 12345},
-                             {'name': 'Broward',
-                              'population': 40000},
-                             {'name': 'Palm Beach',
-                              'population': 60000}]},
-                {'state': 'Ohio',
-                 'shortname': 'OH',
-                 'info': {'governor': 'John Kasich'},
-                 'features': [{'name': 'Summit',
-                               'population': 1234},
-                              {'name': 'Cuyahoga',
-                               'population': 1337,
-                               'type': "test",
-                               'geometry': "round"}]}]
-
-        mock_urlopen.return_value = data
-
-        # check if rows exist which should be deleted in function
-        df = pd.json_normalize(data, 'features')
-
-        assert df.columns == ["name", "population", "state", "shortname", "type", "geometry"]
-
-        df_test = gd.loadCsv("targetFileName")
-
-        assert df_test.columns == ["name", "population", "state", "shortname"]
-
-        # TODO: Add test for rename
-
-    @patch('epidemiology.epidata.getDataIntoPandasDataFrame.urlopen')
-    def test_load_geojson_working(self, mock_urlopen):
+    def test_load_geojson_error(self, mock_urlopen):
 
         mock_urlopen.side_effect = OSError
 
@@ -85,7 +98,7 @@ class Test_getDataIntoPandasDataFrame(fake_filesystem_unittest.TestCase):
 
 
     @patch('epidemiology.epidata.getDataIntoPandasDataFrame.pandas.read_csv')
-    def test_load_csv_working(self, mock_csv):
+    def test_load_csv_error(self, mock_csv):
         # return an empty dataframe
         mock_csv.return_value = pd.DataFrame()
 
