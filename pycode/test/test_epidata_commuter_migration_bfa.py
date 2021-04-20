@@ -1,6 +1,6 @@
 import unittest
 from pyfakefs import fake_filesystem_unittest
-from mock import patch
+from unittest.mock import patch
 import pandas as pd
 import os
 from epidemiology.epidata import commuter_migration_bfa as cm
