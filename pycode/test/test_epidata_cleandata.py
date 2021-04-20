@@ -1,11 +1,11 @@
 import unittest
 from pyfakefs import fake_filesystem_unittest
 import os
+import sys
 
 from epidemiology.epidata import cleanData as cd
-#from unittest.mock import patch, mock_open
+from epidemiology.epidata import defaultDict as dd
 
-from epidemiology.epidata import getRKIData as grkid
 
 class Test_cleanData(fake_filesystem_unittest.TestCase):
 
@@ -14,20 +14,51 @@ class Test_cleanData(fake_filesystem_unittest.TestCase):
     def setUp(self):
         self.setUpPyfakefs()
 
+    def set_dirs_and_files(self, what):
 
-    def set_dirs_and_files(self):
+        dir_dic_all = { 'Germany' : ["a_rki", "a_jh", "FullRKI", "PopulData", "FullDataB", "FullDataL"],
+                        'Spain': ["a_spain", "b_jh"],
+                        'France': ["c_jh"],
+                        'Italy': ["d_jh"],
+                        'US' : ["e_jh"],
+                        'SouthKorea' : ["f_jh"],
+                        'China' : ["g_jh"]}
 
-        dir_dic = { 'Germany' : ["a_rki", "a_jh", "FullRKI", "PopulData", "FullDataB", "FullDataL"],
-                    'Spain': ["a_spain", "b_jh"],
-                    'France': ["c_jh"],
-                    'Italy': ["d_jh"],
-                    'US' : ["e_jh"],
-                    'SouthKorea' : ["f_jh"],
-                    'China' : ["g_jh"],
-                    }
+        dir_dic_rki = {'Germany': ["a_rki", "FullRKI"]}
+
+        dir_dic_popul = {'Germany': ["PopulData", "FullDataB", "FullDataL"]}
+
+        dir_dic_spain = {'Spain': ["a_spain"]}
+
+        dir_dic_jh = {'Germany': ["a_jh"],
+                      'Spain': ["b_jh"],
+                      'France': ["c_jh"],
+                      'Italy': ["d_jh"],
+                      'US': ["e_jh"],
+                      'SouthKorea': ["f_jh"],
+                      'China': ["g_jh"]}
+
+        ending_all = [".json", ".h5"]
+        ending_json = [".json"]
+
+        dir_choose = {"all": dir_dic_all,
+                      "rki": dir_dic_rki,
+                      "jh": dir_dic_jh,
+                      "popul": dir_dic_popul,
+                      "spain": dir_dic_spain
+                      }
+
+        ending_choose= {"all": ending_all,
+                        "rki": ending_json,
+                        "jh": ending_json,
+                        "spain": ending_json,
+                        "popul": ending_json
+                        }
+
+        dir_dic = dir_choose[what]
+        ending = ending_choose[what]
 
         file_list = ["all_jh", "FullJohnHopkins"]
-        ending = [".json", ".h5"]
 
         # make folders
         for key in dir_dic:
@@ -40,16 +71,17 @@ class Test_cleanData(fake_filesystem_unittest.TestCase):
                     with open(os.path.join(dir_path, file + e), 'w') as f:
                         f.write('foo')
 
-        for file in file_list:
-            for e in ending:
-                with open(os.path.join(self.path, file + e), 'w') as f:
-                    f.write('foo')
+        if what == "all" or what == "jh":
+            for file in file_list:
+                for e in ending:
+                    with open(os.path.join(self.path, file + e), 'w') as f:
+                        f.write('foo')
 
     def test_set_dirs_and_files(self):
 
         # test if writte fct works as expected
 
-        self.set_dirs_and_files()
+        self.set_dirs_and_files("all")
 
         dir_list = ['Germany', 'Spain', 'France', 'Italy', 'US', 'SouthKorea', 'China']
 
@@ -81,7 +113,7 @@ class Test_cleanData(fake_filesystem_unittest.TestCase):
     # generate folder and files
     def test_clean_data_all_should_delete_all(self):
 
-        self.set_dirs_and_files()
+        self.set_dirs_and_files("all")
 
         cd.clean_data(True, False, False, False, False, False, self.path)
 
@@ -90,7 +122,7 @@ class Test_cleanData(fake_filesystem_unittest.TestCase):
 
     def test_clean_data_all_should_not_delete_all(self):
 
-        self.set_dirs_and_files()
+        self.set_dirs_and_files("all")
 
         # add different files and folder
         os.makedirs(os.path.join(self.path, "ImportantDir"))
@@ -112,7 +144,7 @@ class Test_cleanData(fake_filesystem_unittest.TestCase):
 
     def test_clean_data_rki(self):
 
-        self.set_dirs_and_files()
+        self.set_dirs_and_files("all")
 
         cd.clean_data(False, True, False, False, False, False, self.path)
 
@@ -145,7 +177,7 @@ class Test_cleanData(fake_filesystem_unittest.TestCase):
 
     def test_clean_data_rki_h5(self):
 
-        self.set_dirs_and_files()
+        self.set_dirs_and_files("all")
 
         cd.clean_data(False, True, False, False, False, True, self.path)
 
@@ -178,7 +210,7 @@ class Test_cleanData(fake_filesystem_unittest.TestCase):
 
     def test_clean_data_rki_del_dir(self):
 
-        self.set_dirs_and_files()
+        self.set_dirs_and_files("all")
 
         dir_path = os.path.join(self.path, "Germany")
         files = os.listdir(dir_path)
@@ -219,7 +251,7 @@ class Test_cleanData(fake_filesystem_unittest.TestCase):
 
         # test if writte fct works as expected
 
-        self.set_dirs_and_files()
+        self.set_dirs_and_files("all")
 
         cd.clean_data(False, False, False, False, True, False, self.path)
 
@@ -253,7 +285,7 @@ class Test_cleanData(fake_filesystem_unittest.TestCase):
 
         # test if writte fct works as expected
 
-        self.set_dirs_and_files()
+        self.set_dirs_and_files("all")
 
         cd.clean_data(False, False, False, False, True, True, self.path)
 
@@ -283,12 +315,11 @@ class Test_cleanData(fake_filesystem_unittest.TestCase):
                 if dir == "France":
                     self.assertEqual(os.listdir(dir_path), ["c_jh.json", "c_jh.h5"])
 
-
     def test_clean_data_population_del_dir(self):
 
         # test if writte fct works as expected
 
-        self.set_dirs_and_files()
+        self.set_dirs_and_files("all")
 
         dir_path = os.path.join(self.path, "Germany")
         files = os.listdir(dir_path)
@@ -330,7 +361,7 @@ class Test_cleanData(fake_filesystem_unittest.TestCase):
 
         # test if writte fct works as expected
 
-        self.set_dirs_and_files()
+        self.set_dirs_and_files("all")
 
         dir_list = ['Germany', 'Spain', 'France', 'Italy', 'US', 'SouthKorea', 'China']
 
@@ -370,7 +401,7 @@ class Test_cleanData(fake_filesystem_unittest.TestCase):
 
         # test if writte fct works as expected
 
-        self.set_dirs_and_files()
+        self.set_dirs_and_files("all")
 
         cd.clean_data(False, False, True, False, False, False, self.path)
 
@@ -405,7 +436,7 @@ class Test_cleanData(fake_filesystem_unittest.TestCase):
 
         # test if writte fct works as expected
 
-        self.set_dirs_and_files()
+        self.set_dirs_and_files("all")
 
         cd.clean_data(False, False, True, False, False, True, self.path)
 
@@ -440,7 +471,7 @@ class Test_cleanData(fake_filesystem_unittest.TestCase):
 
         # test if writte fct works as expected
 
-        self.set_dirs_and_files()
+        self.set_dirs_and_files("all")
 
         cd.clean_data(False, False, True, False, False, False, self.path)
         cd.clean_data(False, False, True, False, False, True, self.path)
@@ -472,7 +503,7 @@ class Test_cleanData(fake_filesystem_unittest.TestCase):
 
         # test if writte fct works as expected
 
-        self.set_dirs_and_files()
+        self.set_dirs_and_files("all")
 
         cd.clean_data(False, False, False, True, False, False, self.path)
 
@@ -507,7 +538,7 @@ class Test_cleanData(fake_filesystem_unittest.TestCase):
 
         # test if writte fct works as expected
 
-        self.set_dirs_and_files()
+        self.set_dirs_and_files("all")
 
         cd.clean_data(False, False, False, True, False, True, self.path)
 
@@ -542,7 +573,7 @@ class Test_cleanData(fake_filesystem_unittest.TestCase):
 
         # test if writte fct works as expected
 
-        self.set_dirs_and_files()
+        self.set_dirs_and_files("all")
 
         dir_path = os.path.join(self.path, "Spain")
         files = os.listdir(dir_path)
@@ -584,7 +615,7 @@ class Test_cleanData(fake_filesystem_unittest.TestCase):
 
         # test if writte fct works as expected
 
-        self.set_dirs_and_files()
+        self.set_dirs_and_files("all")
 
         cd.clean_data(False, True, True, False, False, False, self.path)
 
@@ -619,7 +650,7 @@ class Test_cleanData(fake_filesystem_unittest.TestCase):
 
         # test if writte fct works as expected
 
-        self.set_dirs_and_files()
+        self.set_dirs_and_files("all")
 
         cd.clean_data(False, True, True, True, False, False, self.path)
 
@@ -654,7 +685,7 @@ class Test_cleanData(fake_filesystem_unittest.TestCase):
 
         # test if writte fct works as expected
 
-        self.set_dirs_and_files()
+        self.set_dirs_and_files("all")
 
         cd.clean_data(False, True, True, True, True, False, self.path)
 
@@ -683,6 +714,179 @@ class Test_cleanData(fake_filesystem_unittest.TestCase):
                 self.assertEqual(len(os.listdir(dir_path)), 1)
                 if dir == "France":
                     self.assertEqual(os.listdir(dir_path), ["c_jh.h5"])
+
+    def test_file_not_found_rki(self):
+
+        self.set_dirs_and_files("rki")
+
+        # add different files and folder
+        os.makedirs(os.path.join(self.path, "ImportantDir"))
+
+        with open(os.path.join(self.path, "wichtig.py"), 'w') as f:
+            f.write('foo')
+
+        cd.clean_data(False, True, False, False, False, False, self.path)
+
+        self.assertEqual(len(os.listdir(self.path)), 2)
+        self.assertEqual(os.listdir(self.path), ["ImportantDir", "wichtig.py"])
+
+    def test_file_not_found_population(self):
+
+        self.set_dirs_and_files("popul")
+
+        # add different files and folder
+        os.makedirs(os.path.join(self.path, "ImportantDir"))
+
+        with open(os.path.join(self.path, "wichtig.py"), 'w') as f:
+            f.write('foo')
+
+        cd.clean_data(False, False, False, False, True, False, self.path)
+
+        self.assertEqual(len(os.listdir(self.path)), 2)
+        self.assertEqual(os.listdir(self.path), ["ImportantDir", "wichtig.py"])
+
+    def test_file_not_found_population(self):
+
+        self.set_dirs_and_files("spain")
+
+        # add different files and folder
+        os.makedirs(os.path.join(self.path, "ImportantDir"))
+
+        with open(os.path.join(self.path, "wichtig.py"), 'w') as f:
+            f.write('foo')
+
+        cd.clean_data(False, False, False, True, False, False, self.path)
+
+        self.assertEqual(len(os.listdir(self.path)), 2)
+        self.assertEqual(os.listdir(self.path), ["ImportantDir", "wichtig.py"])
+
+    def test_file_not_found_jh(self):
+
+        self.set_dirs_and_files("jh")
+
+        # add different files and folder
+        os.makedirs(os.path.join(self.path, "ImportantDir"))
+
+        with open(os.path.join(self.path, "wichtig.py"), 'w') as f:
+            f.write('foo')
+
+        cd.clean_data(False, False, True, False, False, False, self.path)
+
+        self.assertEqual(len(os.listdir(self.path)), 2)
+        self.assertEqual(os.listdir(self.path), ["ImportantDir", "wichtig.py"])
+
+    def test_cli_default(self):
+
+        out_path_default = dd.defaultDict['out_folder']
+
+        sys.argv[1:] = []
+
+        [all_data, rki, jh, spain, popul, hdf5, out_path] = cd.cli()
+
+        print([all_data, rki, jh, spain, popul, hdf5, out_path])
+
+        self.assertEqual(all_data, False)
+        self.assertEqual(rki, False)
+        self.assertEqual(jh, False)
+        self.assertEqual(spain, False)
+        self.assertEqual(popul, False)
+        self.assertEqual(hdf5, False)
+        self.assertEqual(out_path, out_path_default)
+
+    def test_cli_folder(self):
+
+        folder = "some_folder"
+        sys.argv[1:] = ['--out_path', folder]
+
+        [all_data, rki, jh, spain, popul, hdf5, out_path] = cd.cli()
+
+        self.assertEqual(all_data, False)
+        self.assertEqual(rki, False)
+        self.assertEqual(jh, False)
+        self.assertEqual(spain, False)
+        self.assertEqual(popul, False)
+        self.assertEqual(hdf5, False)
+        self.assertEqual(out_path, folder)
+
+    def test_cli_all(self):
+
+        out_path_default = dd.defaultDict['out_folder']
+
+        sys.argv[1:] = ['--all']
+
+        [all_data, rki, jh, spain, popul, hdf5, out_path] = cd.cli()
+
+        self.assertEqual(all_data, True)
+        self.assertEqual(rki, False)
+        self.assertEqual(jh, False)
+        self.assertEqual(spain, False)
+        self.assertEqual(popul, False)
+        self.assertEqual(hdf5, False)
+        self.assertEqual(out_path, out_path_default)
+
+    def test_cli_rki(self):
+
+        out_path_default = dd.defaultDict['out_folder']
+
+        sys.argv[1:] = ['--rki']
+
+        [all_data, rki, jh, spain, popul, hdf5, out_path] = cd.cli()
+
+        self.assertEqual(all_data, False)
+        self.assertEqual(rki, True)
+        self.assertEqual(jh, False)
+        self.assertEqual(spain, False)
+        self.assertEqual(popul, False)
+        self.assertEqual(hdf5, False)
+        self.assertEqual(out_path, out_path_default)
+
+    def test_cli_jh(self):
+
+        out_path_default = dd.defaultDict['out_folder']
+
+        sys.argv[1:] = ['-j', '--hdf5']
+
+        [all_data, rki, jh, spain, popul, hdf5, out_path] = cd.cli()
+
+        self.assertEqual(all_data, False)
+        self.assertEqual(rki, False)
+        self.assertEqual(jh, True)
+        self.assertEqual(spain, False)
+        self.assertEqual(popul, False)
+        self.assertEqual(hdf5, True)
+        self.assertEqual(out_path, out_path_default)
+
+    def test_cli_spain(self):
+
+        out_path_default = dd.defaultDict['out_folder']
+
+        sys.argv[1:] = ['-s', '-h5']
+
+        [all_data, rki, jh, spain, popul, hdf5, out_path] = cd.cli()
+
+        self.assertEqual(all_data, False)
+        self.assertEqual(rki, False)
+        self.assertEqual(jh, False)
+        self.assertEqual(spain, True)
+        self.assertEqual(popul, False)
+        self.assertEqual(hdf5, True)
+        self.assertEqual(out_path, out_path_default)
+
+    def test_cli_popul(self):
+
+        out_path_default = dd.defaultDict['out_folder']
+
+        sys.argv[1:] = ['--population', '-h5']
+
+        [all_data, rki, jh, spain, popul, hdf5, out_path] = cd.cli()
+
+        self.assertEqual(all_data, False)
+        self.assertEqual(rki, False)
+        self.assertEqual(jh, False)
+        self.assertEqual(spain, False)
+        self.assertEqual(popul, True)
+        self.assertEqual(hdf5, True)
+        self.assertEqual(out_path, out_path_default)
 
 
 if __name__ == '__main__':
