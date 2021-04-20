@@ -75,6 +75,33 @@ def loadCsv(targetFileName, apiUrl='https://opendata.arcgis.com/datasets/', exte
 
     return df
 
+def loadExcel(targetFileName, apiUrl='https://opendata.arcgis.com/datasets/',
+              extension='.xls', sheet_name=0, header=0,engine='openpyxl'):
+    """ Loads ArcGIS data sets in Excel formats (xls,xlsx,xlsm,xlsb,odf,ods,odt). (pandas DataFrame)
+
+    This routine loads data sets (default from ArcGIS) in Excel format of the given public data
+    item ID into a pandas DataFrame and returns the DataFrame.
+
+    Keyword arguments:
+    targetFileName -- file name which should be downloaded, for ArcGIS it should be public data item ID (string)
+    apiUrl -- API URL (string, default
+              'https://opendata.arcgis.com/datasets/')
+    extension -- Data format extension (string, default '.xls')
+    sheet -- sheet from Excel file which should be in DataFrame
+            (string (sheetname) or integer (zero-indexed sheet position), default 0)
+    header -- row to use for column labels (Use None if there is no header) (int, default 0)
+    """
+    url = apiUrl + targetFileName + extension
+    try:
+        df = pandas.read_excel(url, sheet_name=sheet_name, header=header, engine=engine)
+    except OSError as e:
+        exit_string = "ERROR: URL " + url + " could not be opened."
+        sys.exit(exit_string)
+
+    return df
+
+
+
 
 # function to return list of keys for any value
 # def get_key(val, my_dict):
