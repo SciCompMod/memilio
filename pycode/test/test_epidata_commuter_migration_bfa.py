@@ -1,5 +1,6 @@
 import unittest
 from pyfakefs import fake_filesystem_unittest
+from mock import patch
 import pandas as pd
 import os
 from epidemiology.epidata import commuter_migration_bfa as cm
@@ -21,7 +22,8 @@ class TestCommuterMigration(fake_filesystem_unittest.TestCase):
                                                     '06632', '07', '071', '07141',
                                                     '07235', '08', '081', '0811', '08111', '09', '091', '09181', '10',
                                                     '10044', '11',
-                                                    '11000', '12', '12051', '12066', '13', '13003', '14', '14511', '15',
+                                                    '11000', '12', '12051', '12066', '13', '13003', '14', '145',
+                                                    '14511', '15',
                                                     '15082',
                                                     '16', '16069'],
 
@@ -42,7 +44,7 @@ class TestCommuterMigration(fake_filesystem_unittest.TestCase):
                                                          'Landkreis', 'Berlin', 'Kreisfreie Stadt', 'Brandenburg',
                                                          'Kreisfreie Stadt',
                                                          'Landkreis', 'Mecklenburg-Vorpommern', 'Kreisfreie Stadt',
-                                                         'Sachsen',
+                                                         'Sachsen', 'Direktionsbezirk Chemnitz',
                                                          'Kreisfreie Stadt', 'Sachsen-Anhalt', 'Landkreis', 'Thüringen',
                                                          'Landkreis'],
 
@@ -55,7 +57,7 @@ class TestCommuterMigration(fake_filesystem_unittest.TestCase):
                                                      'Trier-Saarburg', '', '', '', 'Stuttgart, Stadtkreis', '',
                                                      '', 'Landsberg am Lech', '', 'Saarlouis', '', 'Berlin, Stadt', '',
                                                      'Brandenburg an der Havel, Stadt', 'Oberspreewald-Lausitz', '',
-                                                     'Rostock', '', 'Chemnitz, Stadt', '', 'Anhalt-Bitterfeld', '',
+                                                     'Rostock', '', '', 'Chemnitz, Stadt', '', 'Anhalt-Bitterfeld', '',
                                                      'Hildburghausen'],
 
                                'NUTS3': ['0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0',
@@ -64,12 +66,12 @@ class TestCommuterMigration(fake_filesystem_unittest.TestCase):
                                          '0',
                                          '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0',
                                          '0', '0', '0',
-                                         '0',
+                                         '0', '0',
                                          '0', '0', '0'],
                                'Fläche in km2': ['', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0',
                                                  '0', '0', '0',
                                                  '0', '0', '0',
-                                                 '0', '0',
+                                                 '0', '0', '0',
                                                  '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0',
                                                  '0', '0', '0', '0',
                                                  '0', '0',
@@ -78,7 +80,7 @@ class TestCommuterMigration(fake_filesystem_unittest.TestCase):
                                'insgesamt': ['', '', 90164, 198019, '', 1847253, '', 249406, '', 113643, '', '', 498686,
                                              '', 163729, '',
                                              253319, 120719, '', '', 122297, 149398, '', '', '', 635911, '', '', 120302,
-                                             '', 194319, '', 3669491, '', 72184, 109371, '', 209191, '', 246334, '',
+                                             '', 194319, '', 3669491, '', 72184, 109371, '', 209191, '', '', 246334, '',
                                              158486,
                                              '', 63197]})
 
@@ -121,18 +123,19 @@ class TestCommuterMigration(fake_filesystem_unittest.TestCase):
                                'Wohnort2': ['', '', 'Lahn-Dill-Kreis', 'Nordrhein-Westfalen',
                                             'Brandenburg an der Havel, St.'],
                                'Insgesamt': ['', '', 22, 299, 10]})
-        sheet5 = pd.DataFrame({'Arbeitsort': ['nothing', '05112', '', '', '05316', ''],
-                               'Arbeitsort2': ['', 'Duisburg, Stadt', '', '', 'Leverkusen, Stadt', ''],
-                               'Wohnort': ['nothing', '', '12066', '13003', '', '14511'],
+        sheet5 = pd.DataFrame({'Arbeitsort': ['nothing', '05112', '', '', '', '05316', '', ''],
+                               'Arbeitsort2': ['', 'Duisburg, Stadt', '', '', '', 'Leverkusen, Stadt', '', ''],
+                               'Wohnort': ['nothing', '', '12066', '13003', 'ZZ', '', '14511', 'ZZ'],
                                'Wohnort2': ['', '', 'Oberspreewald-Lausitz', 'Rostock, Hansestadt',
-                                            '', 'Chemnitz, Stadt'],
-                               'Insgesamt': ['', '', 34, 299, '', 12]})
+                                            'Einpendler aus dem Bundesgebiet',
+                                            '', 'Chemnitz, Stadt', 'Einpendler aus dem Bundesgebiet'],
+                               'Insgesamt': ['', '', 34, 299, 305, '', 12, 12]})
         sheet6 = pd.DataFrame({'Arbeitsort': ['nothing', '06532', '', '', '06632', '', ''],
                                'Arbeitsort2': ['', 'Lahn-Dill-Kreis', '', '', 'Hersfeld-Rotenburg', '', ''],
                                'Wohnort': ['nothing', '', '02000', '01053', '', '02000', '091'],
                                'Wohnort2': ['', '', 'Hamburg, Freie und Hansestadt', 'Herzogtum Lauenburg',
                                             '', 'Hamburg, Freie und Hansestadt', 'Übrige Kreise (Regierungsbezirk)'],
-                               'Insgesamt': ['', '', 112, 13, '', 28, 47]})
+                               'Insgesamt': ['nothing', '', 112, 13, '', 28, 47]})
         sheet7 = pd.DataFrame({'Arbeitsort': ['nothing', '07141', '', '', '07235', ''],
                                'Arbeitsort2': ['', 'Rhein-Lahn-Kreis', '', '', 'Trier-Saarburg', ''],
                                'Wohnort': ['nothing', '', '02000', '07235', '', '02000'],
@@ -201,6 +204,41 @@ class TestCommuterMigration(fake_filesystem_unittest.TestCase):
                 sheets[sheet_name].to_excel(dummy, sheet_name=sheet_name, index=False)
             dummy.save()
 
+    @patch('builtins.print')
+    def test_some_errors(self, mock_print):
+        gD.check_dir(self.path)
+        self.write_kreise_deu_daten(self.path)
+        self.write_commuter_all_federal_states(self.path)
+        self.assertEqual(len(os.listdir(self.path)), 17)
+        counties = gD.loadExcel('kreise_deu', apiUrl=self.path, extension='.xlsx', sheet_name=1)
+        setup_dict = {'num_counties': 2,
+                      'abs_tol': 100,
+                      'rel_tol': 0.01,
+                      'num_govregions': 2,
+                      'counties': counties,
+                      'path': self.path}
+        cm.map_keys_to_numlists(setup_dict)
+        mock_print.assert_any_call('Error. Number of government regions wrong. Having', 17, 'instead of', 2)
+        mock_print.assert_any_call("Error. Number of counties wrong.")
+        mock_print.assert_any_call('Error. Number of governing regions wrong.')
+
+        mock_print.call_args_list = []
+        cm.assign_geographical_entities(setup_dict)
+        mock_print.assert_any_call('Error. Number of government regions wrong.')
+
+        mock_print.call_args_list = []
+        cm.verify_sorted(countykey_list=pd.Series(['01001', '01053', '02000', '03101', '06632', '04012', '05112',
+                                                   '05316', '06532', '07141']))
+        mock_print.assert_any_call('Error. Input list not sorted, population per county list had to be sorted '
+                                   'accordingly.')
+
+        mock_print.call_args_list = []
+        setup_dict['num_counties'] = 21
+        setup_dict['num_govregions'] = 17
+        cm.get_matrix_commuter_migration_patterns(setup_dict)
+        mock_print.assert_any_call('Error in calculations for county ', 'Duisburg, Stadt', '\nAccumulated values:',
+                                   333.0, ', correct sum:', 305.0)
+
     def test_migration_data(self):
         """! Tests migration data by some randomly chosen tests.
         """
@@ -208,7 +246,7 @@ class TestCommuterMigration(fake_filesystem_unittest.TestCase):
         self.write_kreise_deu_daten(self.path)
         self.write_commuter_all_federal_states(self.path)
         self.assertEqual(len(os.listdir(self.path)), 17)
-        counties = gD.loadExcel('kreise_deu', apiUrl=self.path,extension='.xlsx', sheet_name=1)
+        counties = gD.loadExcel('kreise_deu', apiUrl=self.path, extension='.xlsx', sheet_name=1)
         setup_dict = {'num_counties': 21,
                       'abs_tol': 100,
                       'rel_tol': 0.01,

@@ -81,7 +81,7 @@ def get_key_and_population_lists(setup_dict):
         print('Error. Number of government regions wrong. Having', len(govkey_list), 'instead of',
               setup_dict['num_govregions'])
 
-    return countykey_list, countypop_list, govkey_list
+    return (countykey_list, countypop_list, govkey_list)
 
 
 def verify_sorted(countykey_list):
@@ -106,7 +106,7 @@ def map_keys_to_numlists(setup_dict, countykey_list=None, govkey_list=None):
     """
     # create a hashmap from sorted regional identifiers (01001 - ...) to 0 - num_counties
     if countykey_list is None or govkey_list is None:
-        (countykey_list, [], govkey_list) = get_key_and_population_lists(setup_dict)
+        countykey_list, _, govkey_list = get_key_and_population_lists(setup_dict)
     verify_sorted(countykey_list)
 
     countykey2numlist = collections.OrderedDict()
@@ -143,7 +143,7 @@ def assign_geographical_entities(setup_dict, countykey_list=None, govkey_list=No
     """
 
     if govkey_list is None or countykey_list is None:
-        (countykey_list, [], govkey_list) = get_key_and_population_lists(setup_dict)
+        countykey_list, _, govkey_list = get_key_and_population_lists(setup_dict)
 
     verify_sorted(countykey_list)
 
@@ -228,6 +228,7 @@ def get_matrix_commuter_migration_patterns(setup_dict, countypop_list=None, govk
     if gov_county_table is None or countykey2govkey is None or countykey2localnumlist is None or \
             state_gov_table is None:
         (countykey2govkey, countykey2localnumlist, gov_county_table, state_gov_table) = assign_geographical_entities(
+            setup_dict,
             countykey_list, govkey_list)
 
     mat_commuter_migration = np.zeros((setup_dict['num_counties'], setup_dict['num_counties']))
@@ -446,7 +447,6 @@ def main():
                   'rel_tol': rel_tol,
                   'path': path,
                   'counties': counties}
-
     (countykey_list, countypop_list, govkey_list, countykey2numlist, govkey2numlist, gov_county_table, countykey2govkey,
      countykey2localnumlist, state_gov_table, mat_commuter_migration) = get_data(setup_dict)
 
