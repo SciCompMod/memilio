@@ -200,132 +200,148 @@ class Test_getDataIntoPandasDataFrame(fake_filesystem_unittest.TestCase):
         the_exception = cm.exception
         self.assertEqual(the_exception.code, "Wrong key or cli_dict.")
 
-        sys.argv[1:] = ['-ff', 'wrong_format']
+        test_args = ["prog", '-ff', 'wrong_format']
+        with patch.object(sys, 'argv', test_args):
 
-        with self.assertRaises(SystemExit) as cm:
-            gd.cli("rki")
-        self.assertRegexpMatches(mock_stderr.getvalue(), r"invalid choice")
+            with self.assertRaises(SystemExit) as cm:
+                gd.cli("rki")
+            self.assertRegexpMatches(mock_stderr.getvalue(), r"invalid choice")
 
         # update and read_data together does not work
-        sys.argv[1:] = ['-u', '-r']
-        with self.assertRaises(SystemExit) as cm:
-            gd.cli("divi")
+        test_args = ["prog", '-u', '-r']
+        with patch.object(sys, 'argv', test_args):
+            with self.assertRaises(SystemExit) as cm:
+                gd.cli("divi")
 
-        the_exception = cm.exception
-        self.assertEqual(the_exception.code, "You called the program with '--read-from-disk' and '--update'." +
-                         "Please choose just one. Both together is not possible.")
+            the_exception = cm.exception
+            self.assertEqual(the_exception.code, "You called the program with '--read-from-disk' and '--update'." +
+                             "Please choose just one. Both together is not possible.")
 
-        sys.argv[1:] = ['-u', '-r']
-        with self.assertRaises(SystemExit) as cm:
-            gd.cli("all")
+        test_args = ["prog", '-u', '-r']
+        with patch.object(sys, 'argv', test_args):
+            with self.assertRaises(SystemExit) as cm:
+                gd.cli("all")
 
-        the_exception = cm.exception
-        self.assertEqual(the_exception.code, "You called the program with '--read-from-disk' and '--update'." +
-                         "Please choose just one. Both together is not possible.")
+            the_exception = cm.exception
+            self.assertEqual(the_exception.code, "You called the program with '--read-from-disk' and '--update'." +
+                             "Please choose just one. Both together is not possible.")
 
-        sys.argv[1:] = ['--update',]
-        with self.assertRaises(SystemExit) as cm:
-            gd.cli("rki")
-        self.assertRegexpMatches(mock_stderr.getvalue(), r"unrecognized arguments")
+        test_args = ["prog", '--update',]
+        with patch.object(sys, 'argv', test_args):
+            with self.assertRaises(SystemExit) as cm:
+                gd.cli("rki")
+            self.assertRegexpMatches(mock_stderr.getvalue(), r"unrecognized arguments")
 
-        sys.argv[1:] = ['--start_date']
-        with self.assertRaises(SystemExit) as cm:
-            gd.cli("rki")
-        self.assertRegexpMatches(mock_stderr.getvalue(), r"unrecognized arguments")
+        test_args = ["prog", '--start_date']
+        with patch.object(sys, 'argv', test_args):
+            with self.assertRaises(SystemExit) as cm:
+                gd.cli("rki")
+            self.assertRegexpMatches(mock_stderr.getvalue(), r"unrecognized arguments")
 
-        sys.argv[1:] = ['--end_date']
-        with self.assertRaises(SystemExit) as cm:
-            gd.cli("rki")
-        self.assertRegexpMatches(mock_stderr.getvalue(), r"unrecognized arguments")
+        test_args = ["prog", '--end_date']
+        with patch.object(sys, 'argv', test_args):
+            with self.assertRaises(SystemExit) as cm:
+                gd.cli("rki")
+            self.assertRegexpMatches(mock_stderr.getvalue(), r"unrecognized arguments")
 
-        sys.argv[1:] = ['--plot']
-        with self.assertRaises(SystemExit) as cm:
-            gd.cli("divi")
-        self.assertRegexpMatches(mock_stderr.getvalue(), r"unrecognized arguments")
+        test_args = ["prog", '--plot']
+        with patch.object(sys, 'argv', test_args):
+            with self.assertRaises(SystemExit) as cm:
+                gd.cli("divi")
+            self.assertRegexpMatches(mock_stderr.getvalue(), r"unrecognized arguments")
 
-        sys.argv[1:] = ['--start-date', '2020,3,24']
-        with self.assertRaises(SystemExit) as cm:
-            gd.cli("divi")
+        test_args = ["prog", '--start-date', '2020,3,24']
+        with patch.object(sys, 'argv', test_args):
+            with self.assertRaises(SystemExit) as cm:
+                gd.cli("divi")
 
-        sys.argv[1:] = ['--end-date', '24-3-2020']
-        with self.assertRaises(SystemExit) as cm:
-            gd.cli("divi")
-
+        test_args = ["prog", '--end-date', '24-3-2020']
+        with patch.object(sys, 'argv', test_args):
+            with self.assertRaises(SystemExit) as cm:
+                gd.cli("divi")
 
     def test_cli_set_different_values(self):
 
         folder = "some_folder"
 
-        sys.argv[1:] = ['--read-from-disk', '--out-path', folder, '--file-format', 'hdf5']
+        test_args = ["prog", '--read-from-disk', '--out-path', folder, '--file-format', 'hdf5']
 
-        [read_data, out_form, out_folder] = gd.cli("spain")
+        with patch.object(sys, 'argv', test_args):
 
-        assert read_data == True
-        assert out_form == 'hdf5'
-        assert out_folder == "some_folder"
+            [read_data, out_form, out_folder] = gd.cli("spain")
 
-        [read_data, out_form, out_folder] = gd.cli("population")
+            assert read_data == True
+            assert out_form == 'hdf5'
+            assert out_folder == "some_folder"
 
-        assert read_data == True
-        assert out_form == 'hdf5'
-        assert out_folder == "some_folder"
+            [read_data, out_form, out_folder] = gd.cli("population")
 
-        [read_data, out_form, out_folder] = gd.cli("jh")
+            assert read_data == True
+            assert out_form == 'hdf5'
+            assert out_folder == "some_folder"
 
-        assert read_data == True
-        assert out_form == 'hdf5'
-        assert out_folder == "some_folder"
+            [read_data, out_form, out_folder] = gd.cli("jh")
 
-        sys.argv[1:] = ['--read-from-disk', '--out-path', folder, '--file-format', 'hdf5', '--plot', '--split_berlin',
-                        '--moving_average']
+            assert read_data == True
+            assert out_form == 'hdf5'
+            assert out_folder == "some_folder"
 
-        [read_data, out_form, out_folder, fill_dates, make_plot, moving_average, split_berlin] = gd.cli("rki")
+        test_args = ["prog", '--read-from-disk', '--out-path', folder, '--file-format', 'hdf5', '--plot',
+                     '--split_berlin', '--moving_average']
 
-        assert read_data == True
-        assert out_form == 'hdf5'
-        assert out_folder == "some_folder"
-        assert fill_dates == False
-        assert split_berlin == True
-        assert moving_average == True
-        assert make_plot == True
+        with patch.object(sys, 'argv', test_args):
 
-        sys.argv[1:] = ['--read-from-disk', '--out-path', folder, '--file-format', 'json', '--plot']
+            [read_data, out_form, out_folder, fill_dates, make_plot, moving_average, split_berlin] = gd.cli("rki")
 
-        [read_data, out_form, out_folder, make_plot] = gd.cli("rkiest")
+            assert read_data == True
+            assert out_form == 'hdf5'
+            assert out_folder == "some_folder"
+            assert fill_dates == False
+            assert split_berlin == True
+            assert moving_average == True
+            assert make_plot == True
 
-        assert read_data == True
-        assert out_form == 'json'
-        assert out_folder == "some_folder"
-        assert make_plot == True
+        test_args = ["prog", '--read-from-disk', '--out-path', folder, '--file-format', 'json', '--plot']
 
-        sys.argv[1:] = ['--out-path', folder, '--file-format', 'json', '--update',
-                        '--start-date', '2020-11-24', '--end-date', '2020-11-26']
+        with patch.object(sys, 'argv', test_args):
 
-        [read_data, out_form, out_folder, end_date, start_date, update] = gd.cli("divi")
+            [read_data, out_form, out_folder, make_plot] = gd.cli("rkiest")
 
-        assert read_data == dd.defaultDict['read_data']
-        assert out_form == 'json'
-        assert out_folder == "some_folder"
-        assert end_date == date(2020,11,26)
-        assert start_date == date(2020,11,24)
-        assert update == True
+            assert read_data == True
+            assert out_form == 'json'
+            assert out_folder == "some_folder"
+            assert make_plot == True
 
-        sys.argv[1:] = ['--out-path', folder, '--file-format', 'json', '--update', '--plot',
-                        '--start-date', '2020-11-24', '--end-date', '2020-11-26']
+        test_args = ["prog", '--out-path', folder, '--file-format', 'json', '--update',
+                     '--start-date', '2020-11-24', '--end-date', '2020-11-26']
 
-        [read_data, out_form, out_folder, end_date, fill_dates, make_plot, moving_average, split_berlin, start_date,
-         update] = gd.cli("all")
+        with patch.object(sys, 'argv', test_args):
+            [read_data, out_form, out_folder, end_date, start_date, update] = gd.cli("divi")
 
-        assert read_data == dd.defaultDict['read_data']
-        assert out_form == 'json'
-        assert out_folder == "some_folder"
-        assert end_date == date(2020, 11, 26)
-        assert start_date == date(2020, 11, 24)
-        assert update == True
-        assert make_plot == True
-        assert split_berlin == dd.defaultDict['split_berlin']
-        assert moving_average == dd.defaultDict['moving_average']
-        assert fill_dates == dd.defaultDict['fill_dates']
+            assert read_data == dd.defaultDict['read_data']
+            assert out_form == 'json'
+            assert out_folder == "some_folder"
+            assert end_date == date(2020,11,26)
+            assert start_date == date(2020,11,24)
+            assert update == True
+
+        test_args = ["prog", '--out-path', folder, '--file-format', 'json', '--update', '--plot',
+                     '--start-date', '2020-11-24', '--end-date', '2020-11-26']
+
+        with patch.object(sys, 'argv', test_args):
+            [read_data, out_form, out_folder, end_date, fill_dates, make_plot, moving_average, split_berlin, start_date,
+             update] = gd.cli("all")
+
+            assert read_data == dd.defaultDict['read_data']
+            assert out_form == 'json'
+            assert out_folder == "some_folder"
+            assert end_date == date(2020, 11, 26)
+            assert start_date == date(2020, 11, 24)
+            assert update == True
+            assert make_plot == True
+            assert split_berlin == dd.defaultDict['split_berlin']
+            assert moving_average == dd.defaultDict['moving_average']
+            assert fill_dates == dd.defaultDict['fill_dates']
 
     def test_check_dir(self):
 
