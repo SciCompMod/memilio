@@ -67,6 +67,7 @@ Needed python packages:
 - numpy<=1.19.4
 - openpyxl
 - xlrd
+- requests
 
 Running the scripts
 -------------------
