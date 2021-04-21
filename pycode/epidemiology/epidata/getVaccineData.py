@@ -8,6 +8,7 @@ from epidemiology.epidata  import getDataIntoPandasDataFrame as gd
 from epidemiology.epidata import defaultDict as dd
 from epidemiology.epidata import getPopulationData
 
+# Downloads vaccine data from RKI
 def download_vaccine_data():
     # get rki vaccine data
     url = 'https://www.rki.de/DE/Content/InfAZ/N/Neuartiges_Coronavirus/Daten/Impfquotenmonitoring.xlsx?__blob=publicationFile'
@@ -21,17 +22,19 @@ def download_vaccine_data():
 
     return vaccine, name
 
-
+# gets rki vaccine monitoring data for all states and extrapolates the values for counties according to their population
+# Missing ratio values for the two different age groups are also estimated
 def get_vaccine_data(read_data=dd.defaultDict['read_data'],
                        out_form=dd.defaultDict['out_form'],
                        out_folder=dd.defaultDict['out_folder']):
 
     vaccine, name = download_vaccine_data()
 
-    # get population data for all countys
     col_names = vaccine.columns
     vaccine = vaccine.replace('-', np.nan)
     vaccine[col_names[5]].fillna(vaccine[col_names[5]].mean(), inplace=True)
+    
+    # get population data for all countys
     population = getPopulationData.get_age_population_data(write_df=False)
 
     # create empty dataframe
