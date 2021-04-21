@@ -776,7 +776,10 @@ class Test_cleanData(fake_filesystem_unittest.TestCase):
         self.assertEqual(len(os.listdir(self.path)), 2)
         self.assertEqual(os.listdir(self.path), ["ImportantDir", "wichtig.py"])
 
-def test_no_files(self):
+    def test_no_files(self):
+
+        # The following should run without any problem.
+        # Every error should be cached and passed
 
         # no data in folder
         cd.clean_data(False, False, True, False, False, False, self.path)
@@ -789,7 +792,6 @@ def test_no_files(self):
 
         # rki
         cd.clean_data(False, True, False, False, False, False, self.path)
-
 
     def test_cli_default(self):
 
