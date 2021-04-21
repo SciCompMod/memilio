@@ -8,27 +8,6 @@
 
 #define USE_DERIV_FUNC 1
 
-namespace
-{
-
-//some metaprogramming to transform a tuple into a parameter pack and use it as
-//an argument in a function.
-//Taken from https://stackoverflow.com/questions/7858817/unpacking-a-tuple-to-call-a-matching-function-pointer/9288547#9288547
-
-template <typename Function, typename Tuple, size_t... I>
-decltype(auto) call(Function f, Tuple t, std::index_sequence<I...>)
-{
-    return f(std::get<I>(t)...);
-}
-
-template <typename Function, typename Tuple>
-decltype(auto) call(Function f, Tuple t)
-{
-    static constexpr auto size = std::tuple_size<Tuple>::value;
-    return call(f, t, std::make_index_sequence<size>{});
-}
-
-} // namespace
 
 namespace epi
 {
@@ -66,7 +45,9 @@ public:
     /**
      * @brief CompartmentalModel default constructor
      */
-    CompartmentalModel()
+    CompartmentalModel(Populations const& po, ParameterSet const& pa)
+        : populations{std::move(po)}
+        , parameters{pa}
     {
     }
 

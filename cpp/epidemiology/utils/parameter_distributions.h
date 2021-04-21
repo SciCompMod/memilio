@@ -3,6 +3,7 @@
 
 #include "epidemiology/utils/logging.h"
 #include "epidemiology/utils/visitor.h"
+#include "epidemiology/utils/random_number_generator.h"
 
 #include <vector>
 #include <random>
@@ -31,20 +32,15 @@ using VisitableParameterDistribution =
 class ParameterDistribution
 {
 public:
-    ParameterDistribution()
-        : m_lower_bound{0}
-        , m_upper_bound{0}
+    ParameterDistribution(double lower_bound, double upper_bound)
+        : m_lower_bound(lower_bound)
+        , m_upper_bound(upper_bound)
     {
-        std::random_device random_device;
-        m_random_generator = std::mt19937{random_device()};
     }
 
-    ParameterDistribution(double lower_bound, double upper_bound)
+    ParameterDistribution()
+        : ParameterDistribution(0, 0)
     {
-        std::random_device random_device;
-        m_random_generator = std::mt19937{random_device()};
-        m_lower_bound      = lower_bound;
-        m_upper_bound      = upper_bound;
     }
 
     virtual ~ParameterDistribution() = default;
@@ -118,7 +114,6 @@ public:
 protected:
     double m_lower_bound; /*< A realistic lower bound on the given parameter */
     double m_upper_bound; /*< A realistic upper bound on the given parameter */
-    std::mt19937 m_random_generator;
     std::vector<double>
         m_predefined_samples; // if these values are set; no real sample will occur but these values will be taken
 };
@@ -251,9 +246,9 @@ public:
 
         int i        = 0;
         int retries  = 10;
-        double rnumb = m_distribution(m_random_generator);
+        double rnumb = m_distribution(thread_local_rng());
         while ((rnumb > m_upper_bound || rnumb < m_lower_bound) && i < retries) {
-            rnumb = m_distribution(m_random_generator);
+            rnumb = m_distribution(thread_local_rng());
             i++;
             if (i == retries) {
                 log_warning("Not successfully sampled within [min,max].");
@@ -306,7 +301,7 @@ public:
             m_distribution = std::uniform_real_distribution<double>{m_lower_bound, m_upper_bound};
         }
 
-        return m_distribution(m_random_generator);
+        return m_distribution(thread_local_rng());
     }
 
     ParameterDistribution* clone() const override

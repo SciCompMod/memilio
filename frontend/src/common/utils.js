@@ -257,3 +257,45 @@ export function replaceLastChar(string, replacement) {
 
   return string.slice(0, -1) + replacement;
 }
+
+/**
+ * Fixes routing urls for developer mode.
+ *
+ * if path is only '/', it will be replaced by ''
+ *
+ * @param match {object}
+ * @return {object}
+ */
+export function fixUrl(match) {
+  let {path, url} = match;
+
+  if (path === '/') {
+    path = '';
+    url = '';
+  }
+
+  return {
+    path,
+    url,
+  };
+}
+
+/**
+ * Cuts of the last part of an url.
+ *
+ * @param {string} path
+ * @return {string} parent path
+ */
+export function getParentRoute(path) {
+  return path.substring(0, path.lastIndexOf('/'));
+}
+
+/**
+ * Makes a deep copy of the given object.
+ *
+ * @param object
+ * @return {any}
+ */
+export function deepCopy(object) {
+  return JSON.parse(JSON.stringify(object));
+}
