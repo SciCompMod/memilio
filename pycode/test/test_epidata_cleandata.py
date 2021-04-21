@@ -746,7 +746,7 @@ class Test_cleanData(fake_filesystem_unittest.TestCase):
         self.assertEqual(len(os.listdir(self.path)), 2)
         self.assertEqual(os.listdir(self.path), ["ImportantDir", "wichtig.py"])
 
-    def test_file_not_found_population(self):
+    def test_file_not_found_spain(self):
 
         self.set_dirs_and_files("spain")
 
@@ -775,6 +775,21 @@ class Test_cleanData(fake_filesystem_unittest.TestCase):
 
         self.assertEqual(len(os.listdir(self.path)), 2)
         self.assertEqual(os.listdir(self.path), ["ImportantDir", "wichtig.py"])
+
+def test_no_files(self):
+
+        # no data in folder
+        cd.clean_data(False, False, True, False, False, False, self.path)
+
+        # population
+        cd.clean_data(False, False, False, False, True, False, self.path)
+
+        # spain
+        cd.clean_data(False, False, False, True, False, False, self.path)
+
+        # rki
+        cd.clean_data(False, True, False, False, False, False, self.path)
+
 
     def test_cli_default(self):
 
