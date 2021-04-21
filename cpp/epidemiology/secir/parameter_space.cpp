@@ -103,21 +103,37 @@ void draw_sample_infection(SecirModel& model)
 {
     model.parameters.get_seasonality().draw_sample();
 
+    //not age dependent
+    model.parameters.times[0].get_incubation().draw_sample();
+    model.parameters.times[0].get_serialinterval().draw_sample();
+    model.parameters.times[0].get_infectious_mild().draw_sample();
+    model.parameters.times[0].get_hospitalized_to_icu().draw_sample();
+    model.parameters.probabilities[0].get_carrier_infectability().draw_sample();
+    model.parameters.probabilities[0].get_risk_from_symptomatic().draw_sample();
+    model.parameters.probabilities[0].get_test_and_trace_max_risk_from_symptomatic().draw_sample();
+
     for (size_t i = 0; i < model.parameters.get_num_groups(); i++) {
-        model.parameters.times[i].get_incubation().draw_sample();
-        model.parameters.times[i].get_serialinterval().draw_sample();
-        model.parameters.times[i].get_infectious_mild().draw_sample();
+        //not age dependent
+        model.parameters.times[i].get_incubation()          = model.parameters.times[0].get_incubation();
+        model.parameters.times[i].get_serialinterval()      = model.parameters.times[0].get_serialinterval();
+        model.parameters.times[i].get_infectious_mild()     = model.parameters.times[0].get_infectious_mild();
+        model.parameters.times[i].get_hospitalized_to_icu() = model.parameters.times[0].get_hospitalized_to_icu();
+        model.parameters.probabilities[i].get_carrier_infectability() =
+            model.parameters.probabilities[0].get_carrier_infectability();
+        model.parameters.probabilities[i].get_risk_from_symptomatic() =
+            model.parameters.probabilities[0].get_risk_from_symptomatic();
+        model.parameters.probabilities[i].get_test_and_trace_max_risk_from_symptomatic() =
+            model.parameters.probabilities[0].get_test_and_trace_max_risk_from_symptomatic();
+
+        //age dependent
         model.parameters.times[i].get_hospitalized_to_home().draw_sample(); // here: home=recovered
         model.parameters.times[i].get_home_to_hospitalized().draw_sample(); // here: home=infectious
         model.parameters.times[i].get_infectious_asymp().draw_sample();
-        model.parameters.times[i].get_hospitalized_to_icu().draw_sample();
         model.parameters.times[i].get_icu_to_dead().draw_sample();
         model.parameters.times[i].get_icu_to_home().draw_sample();
 
         model.parameters.probabilities[i].get_infection_from_contact().draw_sample();
         model.parameters.probabilities[i].get_asymp_per_infectious().draw_sample();
-        model.parameters.probabilities[i].get_risk_from_symptomatic().draw_sample();
-        model.parameters.probabilities[i].get_test_and_trace_max_risk_from_symptomatic().draw_sample();
         model.parameters.probabilities[i].get_dead_per_icu().draw_sample();
         model.parameters.probabilities[i].get_hospitalized_per_infectious().draw_sample();
         model.parameters.probabilities[i].get_icu_per_hospitalized().draw_sample();
