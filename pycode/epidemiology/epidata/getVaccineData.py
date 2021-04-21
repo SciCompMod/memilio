@@ -6,12 +6,9 @@ import os
 
 from epidemiology.epidata  import getDataIntoPandasDataFrame as gd
 from epidemiology.epidata import defaultDict as dd
-import getPopulationData
+from epidemiology.epidata import getPopulationData
 
-def get_vaccine_data(read_data=dd.defaultDict['read_data'],
-                       out_form=dd.defaultDict['out_form'],
-                       out_folder=dd.defaultDict['out_folder']):
-
+def download_vaccine_data():
     # get rki vaccine data
     url = 'https://www.rki.de/DE/Content/InfAZ/N/Neuartiges_Coronavirus/Daten/Impfquotenmonitoring.xlsx?__blob=publicationFile'
     header = {'User-Agent': 'Mozilla/5.0'}
@@ -19,14 +16,27 @@ def get_vaccine_data(read_data=dd.defaultDict['read_data'],
     with io.BytesIO(r.content) as fh:
         df = pandas.io.excel.ExcelFile(fh, engine='openpyxl')
         sheet_names = df.sheet_names
-        vaccine = pandas.read_excel(df, sheet_name=sheet_names[2], header=[1])[:16].drop(['Unnamed: 1', 'Unnamed: 10'], axis=1)
+        vaccine = pandas.read_excel(df, sheet_name=sheet_names[1], header=[1])[2:18].drop(['Unnamed: 1', 'Unnamed: 10'], axis=1)
+        name = sheet_names[2].replace('.', '_', 2).replace('.', '', 1)
+
+    return vaccine, name
+
+
+def get_vaccine_data(read_data=dd.defaultDict['read_data'],
+                       out_form=dd.defaultDict['out_form'],
+                       out_folder=dd.defaultDict['out_folder']):
+
+    vaccine, name = download_vaccine_data()
 
     # get population data for all countys
+    col_names = vaccine.columns
+    vaccine = vaccine.replace('-', np.nan)
+    vaccine[col_names[5]].fillna(vaccine[col_names[5]].mean(), inplace=True)
     population = getPopulationData.get_age_population_data(write_df=False)
 
-
     # create empty dataframe
-    new_df = pandas.DataFrame([], columns=['Id_County', 'Alter1', 'Beruf1', 'Krank1', 'Pflegeheim1', 'Alter2', 'Beruf2', 'Krank2', 'Pflegeheim2'])
+    new_df = pandas.DataFrame([], columns=['ID_County', 'Administrated_Vaccines', 'First_Shot', 'Full_Vaccination',
+                                           'Ratio_All', 'Ratio_Young', 'Ratio_Old'])
 
     # loop over all states
     for state, i in zip(vaccine['Unnamed: 0'], range(len(vaccine))):
@@ -40,22 +50,37 @@ def get_vaccine_data(read_data=dd.defaultDict['read_data'],
         ratio = pop_state['Total'].values/sum(pop_state['Total'])
 
         # scale vaccine values to countys
-        state_values = np.outer(ratio,vaccine.values[i, 1:9])
+        state_values = np.outer(ratio,vaccine.values[i, 1:4])
 
         # store scaled values in dataframe
-        data = np.zeros((len(ratio), len(vaccine.values[i,:9])))
+        data = np.zeros((len(ratio), len(vaccine.values[i,:7])))
         data[:,0] = id_state
-        data[:,1:] = state_values
+        data[:,1:4] = state_values
+        data[:,4] =vaccine.values[i, 4]
+        data[:,5] =vaccine.values[i, 5]
+        if vaccine.values[i, 6] == np.nan:
+            pop_columns = ['<3 years', '3-5 years', '6-14 years', '15-17 years', '18-24 years',
+              '25-29 years', '30-39 years', '40-49 years', '50-64 years',
+              '65-74 years', '>74 years']
+            data[:, 6] = (pop_state['Total'].values*vaccine.values[i, 4] \
+                         - np.sum(pop_state[pop_columns[:8]].values, pop_state[pop_columns[8]].values*2/3) * vaccine.values[i, 5]) \
+                         /np.sum(pop_state[pop_columns[8]].values*2/3, pop_state[pop_columns[9:]].values)
+        else:
+            data[:, 6] = vaccine.values[i,6]
         state_df = pandas.DataFrame(data, columns=new_df.columns)
         new_df = new_df.append(state_df)
+
+
+
 
     directory = out_folder
     directory = os.path.join(directory, 'Germany/')
     gd.check_dir(directory)
 
-    name = sheet_names[2].replace('.', '_', 1).replace('.', '', 1)
 
     gd.write_dataframe(new_df, directory, name, out_form)
+    if out_form=='json_timeasstring':
+        out_form = 'json'
     print('file written to:', directory + name + '.' + out_form)
 
 
