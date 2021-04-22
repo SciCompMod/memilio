@@ -100,7 +100,7 @@ def get_one_data_set(read_data, out_form, directory, d):
 
 
 #
-def get_new_counties(data_temp):
+def get_new_counties(data):
     """! Creates 7 new counties that were formed since 2011 and deletes old counties
 
    Downloaded data is from 2011.
@@ -112,7 +112,7 @@ def get_new_counties(data_temp):
    """
 
     # create 7 new counties
-    data_temp = np.append(data_temp, np.zeros((7, data_temp.shape[1])), axis=0)
+    data_temp = np.append(data, np.zeros((7, data.shape[1])), axis=0)
 
     # Göttingen
     data_temp[-7, 0] = 3159
@@ -180,34 +180,12 @@ def get_new_counties(data_temp):
     data_temp = np.delete(data_temp, to_delete, 0)
     sorted_inds = np.argsort(data_temp[:, 0])
     data_temp = data_temp[sorted_inds, :]
+    if to_delete == []:
+        return data
+    else:
+        return data_temp
 
-    return data_temp
-
-
-def get_age_population_data(read_data=dd.defaultDict['read_data'],
-                            out_form=dd.defaultDict['out_form'],
-                            out_folder=dd.defaultDict['out_folder']):
-    """! Download data with age splitting
-
-   Data is downloaded from the following sources
-   - our own migration [stored in "counties"]
-   - Zensus2011 data splitted by gender for whole germany, states, counties in xls
-   with additional data from 30.04.2011 (just used for reg_key?) [stored in "reg_key"]
-   - Zensus2011 data from opendata splitted for age and gender [stored in "zensus"]
-
-   Data is either downloaded or read from "out_folder"/Germany/.
-
-   Working with the data includes:
-   - For the Zensus data the male and female data is added to get just the age dependence
-   - Population from the Zensus data of all age groups is scaled to the total population of our more recent migration
-   data by a factor which represents the relative increase/decrease in population size
-   between 2011 and 2019 for each county"
-
-   @param read_data False [Default] or True. Defines if data is read from file or downloaded.
-   @param out_form File format which is used for writing the data. Default defined in defaultDict.
-   @param out_folder Path to folder where data is written in folder out_folder/Germany.
-   """
-
+def load_age_population_data(read_data, out_folder):
     directory = os.path.join(out_folder, 'Germany/')
     gd.check_dir(directory)
 
@@ -251,6 +229,35 @@ def get_age_population_data(read_data=dd.defaultDict['read_data'],
         gd.write_dataframe(reg_key, directory, filename_reg_key, "json")
         gd.write_dataframe(zensus, directory, filename_zensus, "json")
 
+    return counties, reg_key, zensus
+
+
+def get_age_population_data(read_data=dd.defaultDict['read_data'],
+                            out_form=dd.defaultDict['out_form'],
+                            out_folder=dd.defaultDict['out_folder']):
+    """! Download data with age splitting
+
+   Data is downloaded from the following sources
+   - our own migration [stored in "counties"]
+   - Zensus2011 data splitted by gender for whole germany, states, counties in xls
+   with additional data from 30.04.2011 (just used for reg_key?) [stored in "reg_key"]
+   - Zensus2011 data from opendata splitted for age and gender [stored in "zensus"]
+
+   Data is either downloaded or read from "out_folder"/Germany/.
+
+   Working with the data includes:
+   - For the Zensus data the male and female data is added to get just the age dependence
+   - Population from the Zensus data of all age groups is scaled to the total population of our more recent migration
+   data by a factor which represents the relative increase/decrease in population size
+   between 2011 and 2019 for each county"
+
+   @param read_data False [Default] or True. Defines if data is read from file or downloaded.
+   @param out_form File format which is used for writing the data. Default defined in defaultDict.
+   @param out_folder Path to folder where data is written in folder out_folder/Germany.
+   """
+
+    counties, reg_key, zensus = load_age_population_data(read_data, out_folder)
+
     # find region keys for census population data
     key = np.zeros((len(zensus)))
     for i in range(len(key)):
@@ -260,6 +267,8 @@ def get_age_population_data(read_data=dd.defaultDict['read_data'],
                     key[i] = reg_key['AGS'].values[j]
 
     unique, inds, count = np.unique(key, return_index=True, return_counts=True)
+    print(key)
+    print(inds, unique)
 
     male = ['M_Unter_3', 'M_3_bis_5', 'M_6_bis_14', 'M_15_bis_17', 'M_18_bis_24',
             'M_25_bis_29', 'M_30_bis_39', 'M_40_bis_49', 'M_50_bis_64',

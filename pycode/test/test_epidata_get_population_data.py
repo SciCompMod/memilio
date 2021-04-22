@@ -4,6 +4,7 @@ from collections import namedtuple
 
 import os
 import pandas as pd
+import numpy as np
 
 from epidemiology.epidata import getPopulationData as gpd
 from epidemiology.epidata import getDataIntoPandasDataFrame as gd
@@ -55,8 +56,70 @@ class Test_getPopulationData(fake_filesystem_unittest.TestCase):
 {"ID_County":1002,"County":"Kiel","Population":247943}]"""
 #{"ID_County":1003,"County":"L\u00fcbeck","Population":216318}
 
+    test_old_counties = np.zeros((18,2))
+    test_old_counties[:,0] = [3152, 3156, 13056, 13002, 13055, 13052, 13051, 13053, 13061, 13005, 13057, 13006, 13058,
+                              13059, 13062, 13001, 13054, 13060]
+    test_old_counties[:,1] = np.arange(len(test_old_counties))
+
+    test_new_counties = np.zeros((7,2))
+    test_new_counties[:,0] = [3159, 13071, 13072, 13073, 13074, 13075, 13076]
+    test_new_counties[:,1] = [1,14,13,27,23, 42, 33]
+
+    data = np.zeros((5, 30))
+    data[:,0] = np.arange(1,6)
+    for i in range(len(data)):
+        data[i, 3] = 22*(i+1)
+        data[i, 4] = 11*(i+1)
+        data[i,5:-2] = 1*(i+1)
+        data[i, 16] = 11*(i+1)
+
+    test_zensus = pd.DataFrame(data, columns=["FID", "DES", "Name", "EWZ", "Gesamt_Maennlich", 'M_Unter_3', 'M_3_bis_5',
+                                              'M_6_bis_14', 'M_15_bis_17', 'M_18_bis_24','M_25_bis_29', 'M_30_bis_39',
+                                              'M_40_bis_49', 'M_50_bis_64','M_65_bis_74', 'M_75_und_aelter', "Gesamt_Weiblich",
+                                              'W_Unter_3', 'W_3_bis_5', 'W_6_bis_14', 'W_15_bis_17', 'W_18_bis_24',
+                                              'W_25_bis_29', 'W_30_bis_39', 'W_40_bis_49', 'W_50_bis_64',
+                                              'W_65_bis_74', 'W_75_und_aelter', 'SHAPE_Length', 'SHAPE_Area'])
+    test_zensus["DES"] = "Kreis"
+    test_zensus["Name"] = ["Hogwarts", "Narnia", "MittelErde", "Westeros", "Wakanda"]
+
+    data = np.zeros((5, 3))
+    data[:, 0] = [1001, 1002, 1003, 1004, 1005]
+    data[:, 2] = [(x+1)*22/1000 for x in range(len(data))]
+
+    test_reg_key = pd.DataFrame(data, columns=['AGS', 'NAME', 'Zensus_EWZ'])
+    test_reg_key['NAME'] = ["Hogwarts", "Narnia", "MittelErde", "Westeros", "Wakanda"]
+
+    data = np.zeros((5,2))
+    data[:, 0] = [1001, 1002, 1003, 1004, 1005]
+    data[:, 1] = [(x+1)*44 for x in range(len(data))]
+
+    test_counties = pd.DataFrame(data, columns=['Schlüssel-nummer', 'Bevölkerung2)'])
+
+    columns = ['ID_County', 'Total', '<3 years', '3-5 years', '6-14 years', '15-17 years', '18-24 years',
+               '25-29 years', '30-39 years', '40-49 years', '50-64 years',
+               '65-74 years', '>74 years']
+
+    data = np.zeros((5, len(columns)))
+    for i in range(len(data)):
+        data[i, 0] = 1001 + i
+        data[i, 1] = 22*(i+1)
+        data[i, 2:] = 2*(i+1)
+    test_population_result = pd.DataFrame(data, columns=columns)
+    test_population_result = test_population_result.astype('int64')
+
+    data = np.zeros((5, len(columns)))
+    for i in range(len(data)):
+        data[i, 0] = 1001 + i
+        data[i, 1] = 44 * (i+1)
+        data[i, 2:] = 4 * (i+1)
+
+    test_current_population_result = pd.DataFrame(data, columns=columns)
+    test_current_population_result = test_current_population_result.astype('int64')
+
+
+
     def setUp(self):
-        self.setUpPyfakefs()
+            self.setUpPyfakefs()
 
     @patch('epidemiology.epidata.getPopulationData.gd.loadCsv')
     def test_gpd_download_data1(self, mock_loadCSV):
@@ -105,6 +168,8 @@ class Test_getPopulationData(fake_filesystem_unittest.TestCase):
         f_path = os.path.join(directory, "PopulStates.json")
         f = open(f_path, "r")
         self.assertEqual(f.read(), self.test_string1r)
+
+
 
     @patch('epidemiology.epidata.getPopulationData.gd.loadCsv')
     def test_gpd_download_data2(self, mock_loadCSV):
@@ -192,6 +257,20 @@ class Test_getPopulationData(fake_filesystem_unittest.TestCase):
         #f = open(f_path, "r")
         #self.assertEqual(f.read(), self.test_string2r)
 
+    def test_get_new_counties(self):
+        test = gpd.get_new_counties(self.test_old_counties)
+        self.assertTrue(np.array_equal(test, self.test_new_counties))
+
+    @patch('epidemiology.epidata.getPopulationData.load_age_population_data', return_value=(test_counties, test_reg_key, test_zensus))
+    def test_get_age_population(self, mock_data):
+
+        gpd.get_age_population_data(False, 'json', self.path)
+
+        test_df = pd.read_json(os.path.join(self.path, 'Germany/', 'county_population.json'))
+        pd.testing.assert_frame_equal(test_df, self.test_population_result)
+
+        test_df = pd.read_json(os.path.join(self.path, 'Germany/', 'county_current_population.json'))
+        pd.testing.assert_frame_equal(test_df, self.test_current_population_result)
 
 # TODO: How to test hdf5 export?
 
