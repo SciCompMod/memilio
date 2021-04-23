@@ -309,8 +309,7 @@ def get_age_population_data(read_data=dd.defaultDict['read_data'],
     if write_df:
         gd.write_dataframe(df, directory, 'county_population', out_form)
         gd.write_dataframe(df_current, directory, 'county_current_population', out_form)
-
-    if not write_df:
+    else:
         return df_current
 
 
