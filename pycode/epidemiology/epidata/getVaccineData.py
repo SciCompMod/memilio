@@ -18,7 +18,8 @@ def download_vaccine_data():
         df = pandas.io.excel.ExcelFile(fh, engine='openpyxl')
         sheet_names = df.sheet_names
         vaccine = pandas.read_excel(df, sheet_name=sheet_names[1], header=[1])[2:18].drop(['Unnamed: 1', 'Unnamed: 10'], axis=1)
-        name = sheet_names[2].replace('.', '_', 2).replace('.', '', 1)
+        name = sheet_names[2].replace('.', '_', 2).replace('.', '', 1)[-8:]
+        name = 'vaccine_data_' + name
 
     return vaccine, name
 
@@ -61,13 +62,13 @@ def get_vaccine_data(read_data=dd.defaultDict['read_data'],
         data[:,1:4] = state_values
         data[:,4] =vaccine.values[i, 4]
         data[:,5] =vaccine.values[i, 5]
-        if vaccine.values[i, 6] == np.nan:
+        if str(vaccine.values[i, 6]) == 'nan':
             pop_columns = ['<3 years', '3-5 years', '6-14 years', '15-17 years', '18-24 years',
               '25-29 years', '30-39 years', '40-49 years', '50-64 years',
               '65-74 years', '>74 years']
-            data[:, 6] = (pop_state['Total'].values*vaccine.values[i, 4] \
-                         - np.sum(pop_state[pop_columns[:8]].values, pop_state[pop_columns[8]].values*2/3) * vaccine.values[i, 5]) \
-                         /np.sum(pop_state[pop_columns[8]].values*2/3, pop_state[pop_columns[9:]].values)
+            data[:, 6] = np.divide(pop_state['Total'].values*vaccine.values[i, 4] \
+                         - (np.sum([pop_state[x].values for x in pop_columns[:8]]) + pop_state[pop_columns[8]].values*2/3) * vaccine.values[i, 5],\
+                         pop_state[pop_columns[8]].values*1/3 + np.sum(pop_state[x].values for x in pop_columns[9:]))
         else:
             data[:, 6] = vaccine.values[i,6]
         state_df = pandas.DataFrame(data, columns=new_df.columns)

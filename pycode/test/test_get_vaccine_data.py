@@ -30,10 +30,15 @@ class TestGetVaccineData(fake_filesystem_unittest.TestCase):
     data[:,2] = np.arange(16) *5
     data[:,3] = np.arange(16)*2
     data[:,4] = np.arange(16)/16
+
     data[:,5] = np.arange(16)/32
     data[:,6] = np.arange(16)/8
 
+    data[5,5:7]= 'nan'
+
     test_vaccine_df =pd.DataFrame(data, columns= col_names)
+
+    test_vaccine_df[col_names[5:7]][5] = '-'
 
     col_names = ['ID_County', 'Total', '<3 years', '3-5 years', '6-14 years', '15-17 years', '18-24 years',
                '25-29 years', '30-39 years', '40-49 years', '50-64 years',
@@ -55,6 +60,8 @@ class TestGetVaccineData(fake_filesystem_unittest.TestCase):
     data[15:, 1:4] = data[15,1:4]/2
     data[:-1, 4:] = test_vaccine_df[test_vaccine_df.columns[4:7]]
     data[-1,4:] = data[15,4:]
+    data[5, 5] = (np.sum(np.arange(16)) - 5)/(32*15)
+    data[5, 6] = (110*data[5, 4] - (80 + (2/3)*10)*data[5,5])/(20 + (1/3)*10)
     test_result_df = pd.DataFrame(data, columns=col_names)
     test_result_df[test_result_df.columns[[0,1,3]]] = test_result_df[test_result_df.columns[[0,1,3]]].astype('int64')
 
