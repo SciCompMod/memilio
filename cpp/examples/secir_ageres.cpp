@@ -3,11 +3,6 @@
 #include <epidemiology/utils/logging.h>
 #include <epidemiology/model/simulation.h>
 
-#ifdef HAVE_EPI_IO
-#include <epidemiology_io/secir_result_io.h>
-#include <epidemiology_io/secir_parameters_io.h>
-#endif
-
 int main()
 {
 
