@@ -272,6 +272,28 @@ class Test_getPopulationData(fake_filesystem_unittest.TestCase):
         test_df = pd.read_json(os.path.join(self.path, 'Germany/', 'county_current_population.json'))
         pd.testing.assert_frame_equal(test_df, self.test_current_population_result)
 
+    def test_load_age_population_data(self):
+
+        directory = os.path.join(self.path, 'Germany/')
+
+        with self.assertRaises(SystemExit) as cm:
+            _, _, _ = gpd.load_age_population_data(True, self.path)
+
+        the_exception = cm.exception
+        self.assertEqual(the_exception.code, "Error: The file: "+ directory + "migration.json does not exist. Call program without -r flag to get it.")
+
+        counties_write, reg_key_write, zensus_write = gpd.load_age_population_data(False, self.path)
+        self.assertEqual(len(os.listdir(directory)), 3)
+
+        counties_read, reg_key_read, zensus_read = gpd.load_age_population_data(True, self.path)
+
+        pd.testing.assert_frame_equal(counties_read, counties_write)
+        pd.testing.assert_frame_equal(reg_key_read, reg_key_write)
+
+
+
+
+
 # TODO: How to test hdf5 export?
 
 if __name__ == '__main__':
