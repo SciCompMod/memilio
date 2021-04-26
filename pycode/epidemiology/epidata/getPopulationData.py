@@ -267,8 +267,6 @@ def get_age_population_data(read_data=dd.defaultDict['read_data'],
                     key[i] = reg_key['AGS'].values[j]
 
     unique, inds, count = np.unique(key, return_index=True, return_counts=True)
-    print(key)
-    print(inds, unique)
 
     male = ['M_Unter_3', 'M_3_bis_5', 'M_6_bis_14', 'M_15_bis_17', 'M_18_bis_24',
             'M_25_bis_29', 'M_30_bis_39', 'M_40_bis_49', 'M_50_bis_64',

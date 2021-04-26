@@ -272,7 +272,10 @@ class Test_getPopulationData(fake_filesystem_unittest.TestCase):
         test_df = pd.read_json(os.path.join(self.path, 'Germany/', 'county_current_population.json'))
         pd.testing.assert_frame_equal(test_df, self.test_current_population_result)
 
-    def test_load_age_population_data(self):
+    @patch('pandas.read_excel', return_value=test_counties)
+    @patch('pandas.read_excel', return_value=test_reg_key)
+    @patch('epidemiology.epidata.getDataIntoPandasDataFrame.loadCsv', return_value=test_zensus)
+    def test_load_age_population_data(self, mock_read_excel1, mock_read_excel2, mock_read_csv):
 
         directory = os.path.join(self.path, 'Germany/')
 
@@ -287,8 +290,9 @@ class Test_getPopulationData(fake_filesystem_unittest.TestCase):
 
         counties_read, reg_key_read, zensus_read = gpd.load_age_population_data(True, self.path)
 
-        pd.testing.assert_frame_equal(counties_read, counties_write)
-        pd.testing.assert_frame_equal(reg_key_read, reg_key_write)
+        pd.testing.assert_frame_equal(counties_read, counties_write, check_dtype=False)
+        pd.testing.assert_frame_equal(reg_key_read, reg_key_write, check_dtype=False)
+        pd.testing.assert_frame_equal(zensus_read, zensus_write, check_dtype=False)
 
 
 
