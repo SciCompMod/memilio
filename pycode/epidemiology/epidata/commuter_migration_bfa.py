@@ -13,7 +13,7 @@ def get_data(setup_dict):
     Gets all data generated in this file
 
     Keyword arguments:
-    @ param setup_dict dictionary with necessary values:
+    @param setup_dict dictionary with necessary values:
         'counties': Dataframe read from file 'kreise_deu.xlsx' with population data
         'num_counties': number of counties in Dataframe counties,
         'num_govregions': number of government regions in Dataframe counties,
@@ -21,17 +21,18 @@ def get_data(setup_dict):
         'abs_tol': tolerated undetected people
         'rel_tol': relative Tolerance to undetected people
 
-    @return countykey_list List of county regional keys
-    @return countypop_list List of populations per counties.
-    @return govkey_list List of governing regions regional keys.
-    @return countykey2numlist Hash map from county regional keys to numbered list.
-    @return govkey2numlist Hash map from governing region regional keys to numbered list.
-    @return gov_county_table Table of county regional keys per governing region.
-    @return countykey2govkey Hash map from county regional keys to governing region regional keys.
-    @return countykey2localnumlist Hash map from county regional keys to local numbered list (per governing region).
-    @return state_gov_table Table of governing region regional keys per federal state.
-    @return mat_commuter_migration Matrix of commuter migration.
-        mat_commuter_migration[i][j]= number of commuters from county with numlist-key i to county with numlist-key j
+    @return Tuple with following content in this order
+    - countykey_list List of county regional keys
+    - countypop_list List of populations per counties.
+    - govkey_list List of governing regions regional keys.
+    - countykey2numlist Hash map from county regional keys to numbered list.
+    - govkey2numlist Hash map from governing region regional keys to numbered list.
+    - gov_county_table Table of county regional keys per governing region.
+    - countykey2govkey Hash map from county regional keys to governing region regional keys.
+    - countykey2localnumlist Hash map from county regional keys to local numbered list (per governing region).
+    - state_gov_table Table of governing region regional keys per federal state.
+    - mat_commuter_migration Matrix of commuter migration.
+    mat_commuter_migration[i][j]= number of commuters from county with numlist-key i to county with numlist-key j
     """
 
     (countykey_list, countypop_list, govkey_list) = get_key_and_population_lists(setup_dict)
@@ -102,7 +103,7 @@ def get_key_and_population_lists(setup_dict):
 
 
 def verify_sorted(countykey_list):
-    """ verify that read countykey_list is sorted
+    """! verify that read countykey_list is sorted
     @param countykey_list List of county regional keys
     """
     sum_check = 0
