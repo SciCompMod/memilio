@@ -1,76 +1,126 @@
+/**
+ * Goes through each item of the list and groups all items by the property with the given key.
+ *
+ * @param list{Array<Object>} A list of objects
+ * @param key{string | number}
+ * @return An object with the key values as properties and list of objects containing the key-value pairs.
+ *
+ * @example
+ * const list = [
+ *   {name: 'peter', gender: 'male'},
+ *   {name: 'hans', gender: 'male'},
+ *   {name: 'maria', gender: 'female'},
+ * ];
+ *
+ * groupBy(list, 'gender');
+ *
+ * // result:
+ * {
+ *   male: [
+ *     {name: 'peter', gender: 'male'},
+ *     {name: 'hans', gender: 'male'},
+ *   ],
+ *   female: [
+ *     {name: 'maria', gender: 'female'}
+ *   ]
+ * }
+ */
 export const groupBy = (list, key) => {
   return list.reduce(function (groups, item) {
     const val = item[key];
-    groups[val] = groups[val] || [];
-    groups[val].push(item);
+
+    if (val !== undefined) {
+      groups[val] = groups[val] || [];
+      groups[val].push(item);
+    }
+
     return groups;
   }, {});
 };
 
-export const reduceBy = (list, key) => {
-  return;
-};
-
+/**
+ * TODO This function is very confusing. It merges two arrays, but sorts them individually first.
+ *      If one of the arrays is invalid or empty the function returns the other array unsorted...
+ *      The arrays can also be ordered over different keys. Is there any need for all these features?
+ * @param a{Array<any>}
+ * @param b{Array<any>}
+ * @param key{number | string | Array<number | string>}
+ * @return {Array<any>}
+ */
 export const merge = (a, b, key) => {
-  if (!a && !b) {
-    return [];
-  }
+  const aInvalid = !a || a.length === 0;
+  const bInvalid = !b || b.length === 0;
 
-  if (!a) {
-    return b;
-  }
+  if (aInvalid && bInvalid) return [];
+  if (aInvalid) return b;
+  if (bInvalid) return a;
 
-  if (!b) {
-    return a;
-  }
-
-  let uniqueKeys = null;
-  if (Array.isArray(key)) {
-    if (key.length === 0) {
-      return [];
+  if (key) {
+    let keyA;
+    let keyB;
+    if (Array.isArray(key)) {
+      if (key.length === 1) {
+        keyA = keyB = key[0];
+      } else if (key.length > 1) {
+        keyA = key[0];
+        keyB = key[1];
+      } else {
+        return [...a, ...b];
+      }
+    } else {
+      keyA = keyB = key;
     }
 
-    if (key.length === 1) {
-      key = [key[0], key[0]];
-    }
+    const compare = (first, second) => {
+      if (first < second) return -1;
+      if (first > second) return 1;
+      return 0;
+    };
 
-    if (key.length > 2) {
-      key = key.slice(0, 2);
-    }
-  } else {
-    key = [key, key];
+    const aSorted = a.sort((x, y) => compare(x[keyA], y[keyA]));
+    const bSorted = b.sort((x, y) => compare(x[keyB], y[keyB]));
+    return [...aSorted, ...bSorted];
   }
 
-  const aKeys = a.map((e) => e[key[0]]).sort();
-  const bKeys = b.map((e) => e[key[1]]).sort();
-  uniqueKeys = new Set([...aKeys, ...bKeys]);
-
-  const merged = [];
-
-  for (let k of uniqueKeys) {
-    merged.push({
-      ...a.find((e) => e[key[0]] === k),
-      ...b.find((e) => e[key[1]] === k),
-    });
-  }
-
-  return merged;
+  return [...a, ...b];
 };
 
+/**
+ * Returns the sum of values given by the objects property with the given key.
+ * @param list{Array<Object>}
+ * @param key{number | string}
+ * @return {number}
+ */
 export const sumByKey = (list, key) => {
-  return list.reduce((acc, val) => acc + val[key], 0);
+  return list.reduce((acc, val) => acc + (isNaN(val[key]) ? 0 : val[key]), 0);
 };
 
+/**
+ * Renames the property a to b for all objects in the list.
+ * @param list{Array<Object>}
+ * @param a{string | number}
+ * @param b{string | number}
+ * @return {Array<Object>}
+ */
 export const renameKey = (list, a, b) => {
   return list.map((e) => {
-    e[b] = e[a];
-    delete e[a];
+    if (e.hasOwnProperty(a)) {
+      e[b] = e[a];
+      delete e[a];
+    }
     return e;
   });
 };
 
+/**
+ * TODO
+ * @param measures{Array}
+ * @param base_date{number}
+ * @param days{number}
+ * @return {*}
+ */
 export const calculateDamping = (measures, base_date, days) => {
-  var damping = new Array(days).fill(1);
+  const damping = new Array(days).fill(1);
 
   measures.forEach((measure, index_i) => {
     measure.intervals.forEach((interval) => {
@@ -80,7 +130,7 @@ export const calculateDamping = (measures, base_date, days) => {
       let start = Math.floor((start_date - base_date) / (1000 * 60 * 60 * 24));
       let end = Math.min(days, Math.floor((end_date - base_date) / (1000 * 60 * 60 * 24)));
 
-      for (var i = start; i < end; i++) {
+      for (let i = start; i < end; i++) {
         if (measures[index_i].damping < damping[i]) {
           damping[i] = measures[index_i].damping;
         }
@@ -111,12 +161,13 @@ export const calculateDamping = (measures, base_date, days) => {
 };
 
 /**
- * Rounds the timestamp down to UTC Midnight.
+ * Rounds the timestamp down to UTC Noon.
  * @param timestamp {number}
  * @return {number}
  */
-export function roundToUTCMidnight(timestamp) {
-  return timestamp - (timestamp % (24 * 60 * 60 * 1000));
+export function roundToUTCNoon(timestamp) {
+  const MILLIS_TO_HOURS = 60 * 60 * 1000;
+  return timestamp - (timestamp % (24 * MILLIS_TO_HOURS)) + 12 * MILLIS_TO_HOURS;
 }
 
 /**
@@ -147,23 +198,35 @@ export function filterJSObject(object, filterFn) {
  * @return {string} A two digit number describing the corresponding federal state key.
  */
 export function stateIdFromCountyId(countyId) {
+  if (!isCountyId(countyId)) {
+    throw Error('Given parameter is not a valid county id!');
+  }
+
   return countyId.substr(0, 2);
 }
 
 /**
+ * Tests if the given string is containing two digits. Note that this alone is
+ * not enough to validate as a state id, since only "01" to "16" are valid. But
+ * this check is much easier.
+ *
  * @param id {string}
  * @return {boolean}
  */
 export function isStateId(id) {
-  return id.length === 2;
+  return id.length === 2 && /^\d+$/.test(id); // assert it only contains digits
 }
 
 /**
+ * Tests if the given string is containing five digits. Note that this alone is
+ * not enough to validate as a county id, since only a subset of combinations is
+ * correct. A correct parser would be way out of scope currently.
+ *
  * @param id {string}
  * @return {boolean}
  */
 export function isCountyId(id) {
-  return id.length === 5;
+  return id.length === 5 && /^\d+$/.test(id); // assert it only contains digits
 }
 
 /**
@@ -188,5 +251,51 @@ export function lastElement(array) {
  * @return {string}
  */
 export function replaceLastChar(string, replacement) {
+  if (string.length === 0) {
+    throw RangeError("Can't replace the last character of an empty string!");
+  }
+
   return string.slice(0, -1) + replacement;
+}
+
+/**
+ * Fixes routing urls for developer mode.
+ *
+ * if path is only '/', it will be replaced by ''
+ *
+ * @param match {object}
+ * @return {object}
+ */
+export function fixUrl(match) {
+  let {path, url} = match;
+
+  if (path === '/') {
+    path = '';
+    url = '';
+  }
+
+  return {
+    path,
+    url,
+  };
+}
+
+/**
+ * Cuts of the last part of an url.
+ *
+ * @param {string} path
+ * @return {string} parent path
+ */
+export function getParentRoute(path) {
+  return path.substring(0, path.lastIndexOf('/'));
+}
+
+/**
+ * Makes a deep copy of the given object.
+ *
+ * @param object
+ * @return {any}
+ */
+export function deepCopy(object) {
+  return JSON.parse(JSON.stringify(object));
 }

@@ -29,7 +29,7 @@ namespace epi
 class UncertainContactMatrix
 {
 public:
-    UncertainContactMatrix(Eigen::Index num_groups = 1, size_t num_matrices = 1);
+    UncertainContactMatrix(size_t num_matrices = 1, Eigen::Index num_groups = 1);
 
     UncertainContactMatrix(const ContactMatrixGroup& cont_freq);
 

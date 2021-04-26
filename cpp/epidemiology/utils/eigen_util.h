@@ -141,4 +141,12 @@ auto reshape(M&& m, Eigen::Index rows, Eigen::Index cols)
     return Eigen::Map<CVPlainMatrixT<std::remove_reference_t<M>>>(m.data(), rows, cols);
 }
 
+/**
+ * template utility.
+ * Defines value = true if M is an Eigen matrix expression.
+ * Defines value = false, otherwise.
+ */
+template<class M>
+using is_matrix_expression = std::is_base_of<Eigen::EigenBase<M>, M>;
+
 } // namespace epi

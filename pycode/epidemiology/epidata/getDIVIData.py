@@ -1,32 +1,35 @@
-## @file getDIVIData.py
-# @brief Data of the DIVI
-# about Sars-CoV2 is downloaded.
-# This data contains the number of Covid19 patients in intensive care
-# and the number of those that are additionally ventilated.
-#
-# DIVI - Deutsche interdisziplinäre Vereinigung für Intensiv- und Notfallmedizin
-#
-# data explanation:
-# - reporting_hospitals is the number of reporting hospitals
-# - ICU is the number of covid patients in reporting hospitals
-# - ICU_ventilated is the number of ventilated covid patients in reporting hospitals
-# - free_ICU is the number of free ICUs in reporting hospitals
-# - occupied_ICU is the number of occupied ICUs in in reporting hospitals
-#
-# ID_County and ID_State is defined by the "Amtlicher Gemeindeschlüssel (AGS)"
-# which is also used in the RKI data as ID_County and ID_State
-# https://de.wikipedia.org/wiki/Liste_der_Landkreise_in_Deutschland.
-#
-# Specific features about the data:
-# The column "faelle_covid_im_bundesland" exits only in the data from the first day (24.4)
-# The column ICU does not exist for the 24.4.
-# ICU_ventilated does not exist for the 24.4. and 25.4.
+"""
+@file getDIVIData.py
+
+@brief Data of the DIVI
+about Sars-CoV2 is downloaded.
+This data contains the number of Covid19 patients in intensive care
+and the number of those that are additionally ventilated.
+
+DIVI - Deutsche interdisziplinäre Vereinigung für Intensiv- und Notfallmedizin
+
+data explanation:
+- reporting_hospitals is the number of reporting hospitals
+- ICU is the number of covid patients in reporting hospitals
+- ICU_ventilated is the number of ventilated covid patients in reporting hospitals
+- free_ICU is the number of free ICUs in reporting hospitals
+- occupied_ICU is the number of occupied ICUs in in reporting hospitals
+
+ID_County and ID_State is defined by the "Amtlicher Gemeindeschlüssel (AGS)"
+which is also used in the RKI data as ID_County and ID_State
+https://de.wikipedia.org/wiki/Liste_der_Landkreise_in_Deutschland.
+
+Specific features about the data:
+The column "faelle_covid_im_bundesland" exits only in the data from the first day (24.4)
+The column ICU does not exist for the 24.4.
+ICU_ventilated does not exist for the 24.4. and 25.4.
+"""
 
 import os
 import sys
-import pandas
 import bisect
 from datetime import timedelta, date
+import pandas
 
 from epidemiology.epidata import getDataIntoPandasDataFrame as gd
 from epidemiology.epidata import defaultDict as dd
@@ -104,7 +107,7 @@ def nearest_earlier_date(date_list, date_given):
     """
 
     # should be sorted but for case
-    date_list.sort();
+    date_list.sort()
     # find all dates before date_given
     index = bisect.bisect(date_list, date_given)
     # get date which is closest
@@ -116,7 +119,8 @@ def download_data_for_one_day(last_number, download_date):
 
     This function checks if the given date is a key of a dictionary where dates
     and their corresponding call_numbers are stored.
-    This is stored there if the difference of the call_number to the call_number of the date before is larger than 1 or 2.
+    This is stored there if the difference of the call_number to the call_number of the date before is larger than
+    1 or 2.
     If the date is not part of the call_number_dict the new call_number is calculated.
     First, the last_number is successively increased by one until a difference of 300 is reached.
     Then, the last_number is successively decreased by one until a difference of 300 is reached.
@@ -134,8 +138,8 @@ def download_data_for_one_day(last_number, download_date):
     @param last_number This is the call_number which is needed for the download url
     of the date 1 day before this one
     @param download_date The date for which the data should be downloaded
-    @return List of call_number of the download_data, the pandas dataframe, and a string which is either empty or contains
-    what should be added to "call_number_dict"
+    @return List of call_number of the download_data, the pandas dataframe, and a string which is either empty or
+    contains what should be added to "call_number_dict"
     """
 
     # define call numbers for dates where call number doesn't increase by 1
@@ -272,19 +276,19 @@ def download_data_for_one_day(last_number, download_date):
 
         # It is most likely that the difference is between 1 and 2
         for sign in range(2):
-            for delta in range(1,300):
+            for delta in range(1, 300):
+                call_number = last_number + sign_dict[sign]*delta
 
-               call_number = last_number + sign_dict[sign]*delta
+                # for delta 1 and 2 the number is not saved in dict,
+                # because it does not take so long to get those numbers
+                if sign == 0 and delta != 1 and delta != 2 and not start_date_differs:
+                    call_string = "date(" + download_date.strftime("%Y, %-m, %-d") + "): " + str(call_number) + "," \
+                                  + "\n"
 
-               # for delta 1 and 2 the number is not saved in dict,
-               # because it does not take so long to get those numbers
-               if sign == 0 and delta != 1 and delta != 2 and not start_date_differs:
-                  call_string = "date(" + download_date.strftime("%Y, %-m, %-d") + "): " + str(call_number) + "," + "\n"
+                df = call_call_url(url_prefix, call_number)
 
-               df = call_call_url(url_prefix, call_number)
-
-               if not df.empty:
-                   return [call_number, df, call_string]
+                if not df.empty:
+                    return [call_number, df, call_string]
 
         # case with same call_number, which is very unlikely
         call_number = last_number
@@ -333,7 +337,8 @@ def get_divi_data(read_data=dd.defaultDict['read_data'],
     for counties, states and whole Germany, respectively.
 
     @param read_data False [Default] or True. Defines if data is read from file or downloaded.
-    @param update_date "True" if existing data is updated or
+    @param out_form File format which is used for writing the data. Default defined in defaultDict.
+    @param update_data "True" if existing data is updated or
     "False [Default]" if it is downloaded for all dates from start_date to end_date.
     @param out_folder Folder where data is written to.
     @param start_date [Optional] Date to start to download data [Default = 2020.4.24].
@@ -464,9 +469,12 @@ def get_divi_data(read_data=dd.defaultDict['read_data'],
     # For the sum calculation Nan is used as a 0, thus some zeros have to be changed back to NaN
     # df_states.loc[df_states["Date"] <= "2020-04-25 09:15:00", "ICU_ventilated"] = np.nan
     # TODO: Fill "faelle_covid_aktuell_im_bundesland" into ICU data
-    #print(df_states.loc[df_states["Date"] == "2020-04-24 09:15:00", "ICU"])
-    #print(df.groupby(["ID_State", "State"]).agg({"faelle_covid_aktuell_im_bundesland": max}).reset_index()[["faelle_covid_aktuell_im_bundesland"]])
-    #df_states.loc[df_states["Date"] == "2020-04-24 09:15:00", "ICU"] = df_states.loc[df_states["Date"] == "2020-04-24 09:15:00", "ICU"].replace(df.groupby(["ID_State", "State"]).agg({"faelle_covid_aktuell_im_bundesland": max})[["faelle_covid_aktuell_im_bundesland"]])
+    # print(df_states.loc[df_states["Date"] == "2020-04-24 09:15:00", "ICU"])
+    # print(df.groupby(["ID_State", "State"]).agg({"faelle_covid_aktuell_im_bundesland": max}).reset_index()
+    # [["faelle_covid_aktuell_im_bundesland"]])
+    # df_states.loc[df_states["Date"] == "2020-04-24 09:15:00", "ICU"] = df_states.loc[df_states["Date"]
+    # == "2020-04-24 09:15:00", "ICU"].replace(df.groupby(["ID_State", "State"]).agg(
+    # {"faelle_covid_aktuell_im_bundesland": max})[["faelle_covid_aktuell_im_bundesland"]])
 
     filename = "state_divi"
     gd.write_dataframe(df_states, directory, filename, out_form)

@@ -35,7 +35,7 @@ const SQLType = {
   CHARACTER: (size) => `CHARACTER(${size})`,
   VARCHAR: (size) => `VARCHAR(${size})`,
   VARYING_CHARACTER: (size) => `VARYING CHARACTER(${size})`,
-  NCHAR: (size) => `VARYING NCHAR(${size})`,
+  NCHAR: (size) => `NCHAR(${size})`,
   NATIVE_CHARACTER: (size) => `NATIVE CHARACTER(${size})`,
   NVARCHAR: (size) => `NVARCHAR(${size})`,
   TEXT: 'TEXT',

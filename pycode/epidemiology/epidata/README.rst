@@ -103,8 +103,19 @@ optional arguments working for some are:
 +---------------------------------------------+-----------------------------------------------------------+
 | -sd, --start-date                           | Changes date for which data collection is started [divi]  |
 +---------------------------------------------+-----------------------------------------------------------+
+| -fd, --fill_dates                           | Returns dataframes with all dates instead of only dates   |
+|                                             | where new cases have been reported.                       |
+|                                             |  Note that this option will have a negative impact        |
+|                                             |  on performance as well as on the storage space needed.   |
+|                                             |  [rki]                                                    |
++---------------------------------------------+-----------------------------------------------------------+
+| -ma, --moving_average                       | The 7 day moving average is computed for the data.        |
+|                                             |  Note that the --fill_dates option will be implicitly     |
+|                                             |  turned on, as computing the moving average requires all  |
+|                                             |  dates to be available. [rki]                             |
++---------------------------------------------+-----------------------------------------------------------+
 | -sb, --split_berlin                         | Berlin data is split into different counties              |
-|                                             |  , instead of having only one county for Berlin.          |
+|                                             |  , instead of having only one county for Berlin. [rki]    |
 +---------------------------------------------+-----------------------------------------------------------+
 | -u, -- update                               | Just chronological missing data is added,                 |
 |                                             | **after** the existing ones [divi]                        |

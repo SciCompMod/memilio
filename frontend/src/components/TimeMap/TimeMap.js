@@ -4,7 +4,7 @@ import React from 'react';
 
 import {setSelected} from '../../redux/app';
 import InteractiveHeatMap from '../../common/interactive_heat_map';
-import {roundToUTCMidnight} from '../../common/utils';
+import {roundToUTCNoon} from '../../common/utils';
 import rki from '../../common/datastore/sql/rki-sql-store';
 
 import './TimeMap.scss';
@@ -81,11 +81,11 @@ class TimeMap extends React.Component {
     let states = null;
 
     for (const {stateId, confirmed, recovered, date} of data) {
-      const d = roundToUTCMidnight(date);
+      const d = roundToUTCNoon(date);
 
       if (d !== currDate) {
         times.set(currDate, states);
-        currDate = roundToUTCMidnight(date);
+        currDate = roundToUTCNoon(date);
         states = new Map(states); // clone previous date so there are no holes in data
       }
 
@@ -108,10 +108,10 @@ class TimeMap extends React.Component {
     let currDate = -1;
     let counties = null;
     for (const {countyId, confirmed, recovered, date} of data) {
-      const d = roundToUTCMidnight(date);
+      const d = roundToUTCNoon(date);
       if (d !== currDate) {
         times.set(currDate, counties);
-        currDate = roundToUTCMidnight(date);
+        currDate = roundToUTCNoon(date);
         counties = new Map(counties); // clone previous date so there are no holes in data
       }
 
@@ -132,7 +132,7 @@ class TimeMap extends React.Component {
     /** @type Map<string, number> | null */
     let lastRegions = null;
     for (let d = this.props.time.startDate; d < this.props.time.endDate; d += 24 * 60 * 60 * 1000) {
-      let date = roundToUTCMidnight(d);
+      let date = roundToUTCNoon(d);
       let regions = new Map();
 
       for (let [id, region] of Object.entries(this.props.seirRegions)) {

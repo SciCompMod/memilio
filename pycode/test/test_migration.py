@@ -3,10 +3,18 @@ import epidemiology.secir as secir
 import numpy as np
 
 class Test_Migration(unittest.TestCase):
+    def test_params(self):
+        coeffs = secir.MigrationCoefficientGroup(1, 8)
+        coeffs[0] = secir.MigrationCoefficients(np.ones(8))
+        coeffs[0].add_damping(secir.MigrationDamping(0.5 * np.ones(8), t = 1.0))
+        params = secir.MigrationParameters(coeffs)
+        self.assertTrue((params.coefficients.get_matrix_at(0) == np.ones(8)).all())
+        self.assertTrue((params.coefficients.get_matrix_at(2) == 0.5 * np.ones(8)).all())
+    
     def test_params_graph(self):
-        graph = secir.SecirModelGraph1()
-        graph.add_node(0, secir.SecirModel1())
-        graph.add_node(1, secir.SecirModel1())
+        graph = secir.SecirModelGraph()
+        graph.add_node(0, secir.SecirModel(1))
+        graph.add_node(1, secir.SecirModel(1))
         graph.add_edge(0, 1, np.ones(8))
         self.assertEqual(graph.num_nodes, 2)
         self.assertEqual(graph.num_edges, 1)
@@ -14,9 +22,9 @@ class Test_Migration(unittest.TestCase):
         self.assertEqual(graph.get_num_out_edges(1), 0)
 
     def test_sim_graph(self):
-        graph = secir.MigrationGraph1()
-        graph.add_node(0, secir.SecirModel1(), 0, 0.1)
-        graph.add_node(1, secir.SecirModel1(), 0)
+        graph = secir.MigrationGraph()
+        graph.add_node(0, secir.SecirModel(1), 0, 0.1)
+        graph.add_node(1, secir.SecirModel(1), 0)
         graph.add_edge(0, 1, np.ones(8))
         self.assertEqual(graph.num_nodes, 2)
         self.assertEqual(graph.num_edges, 1)
@@ -24,12 +32,12 @@ class Test_Migration(unittest.TestCase):
         self.assertEqual(graph.get_num_out_edges(1), 0)
 
     def test_migration_sim(self):        
-        graph = secir.MigrationGraph1()
-        graph.add_node(0, secir.SecirModel1(), 0, 0.1)
-        graph.add_node(1, secir.SecirModel1(), 0)
+        graph = secir.MigrationGraph()
+        graph.add_node(0, secir.SecirModel(1), 0, 0.1)
+        graph.add_node(1, secir.SecirModel(1), 0)
         graph.add_edge(0, 1, np.ones(8))
 
-        sim = secir.MigrationSimulation1(graph, t0 = 0.0)
+        sim = secir.MigrationSimulation(graph, t0 = 0.0)
         sim.advance(2)
 
         #integration does adaptive time steps so exact count is unknown

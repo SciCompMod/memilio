@@ -1,56 +1,113 @@
 {
   "name": "hpc-against-virus",
   "version": "0.4.0",
-  "homepage": "/",
+  "homepage": ".",
   "dependencies": {
     "@amcharts/amcharts4": "^4.9.31",
     "@amcharts/amcharts4-geodata": "^4.1.16",
+    "@babel/core": "7.9.0",
     "@fortawesome/fontawesome-free": "5.13.0",
     "@reduxjs/toolkit": "1.4.0",
+    "@svgr/webpack": "4.3.3",
     "@tensorflow/tfjs": "1.7.2",
-    "axios": "0.19.2",
+    "@typescript-eslint/eslint-plugin": "^2.10.0",
+    "@typescript-eslint/parser": "^2.10.0",
+    "axios": "^0.21.1",
+    "babel-eslint": "10.1.0",
+    "babel-jest": "^24.9.0",
+    "babel-loader": "8.1.0",
+    "babel-plugin-named-asset-import": "^0.3.6",
+    "babel-preset-react-app": "^9.1.2",
     "bootstrap": "4.4.1",
+    "browser-detect": "^0.2.28",
+    "camelcase": "^5.3.1",
+    "case-sensitive-paths-webpack-plugin": "2.3.0",
+    "css-loader": "3.4.2",
     "d3": "5.15.1",
     "dayjs": "^1.9.1",
     "dexie": "^3.0.2",
+    "dotenv": "8.2.0",
+    "dotenv-expand": "5.1.0",
+    "eslint": "^6.6.0",
+    "eslint-config-react-app": "^5.2.1",
+    "eslint-loader": "3.0.3",
+    "eslint-plugin-flowtype": "4.6.0",
+    "eslint-plugin-import": "2.20.1",
+    "eslint-plugin-jsx-a11y": "6.2.3",
+    "eslint-plugin-react": "7.19.0",
+    "eslint-plugin-react-hooks": "^1.6.1",
+    "file-loader": "4.3.0",
+    "fs-extra": "^8.1.0",
+    "html-webpack-plugin": "4.0.0-beta.11",
     "i18next": "19.4.2",
     "i18next-browser-languagedetector": "4.0.2",
-    "i18next-http-backend": "1.0.3",
+    "i18next-http-backend": "^1.0.24",
+    "identity-obj-proxy": "3.0.0",
+    "jest": "24.9.0",
+    "jest-environment-jsdom-fourteen": "1.0.1",
+    "jest-junit": "^12.0.0",
+    "jest-resolve": "24.9.0",
+    "jest-watch-typeahead": "0.4.2",
     "ka-table": "^3.7.2",
     "lodash": "^4.17.20",
     "memoize-one": "5.1.1",
+    "mini-css-extract-plugin": "0.9.0",
     "moment": "2.24.0",
     "moment-range": "4.0.2",
     "numeral": "^2.0.6",
+    "optimize-css-assets-webpack-plugin": "5.0.3",
+    "pnp-webpack-plugin": "1.6.4",
+    "postcss-flexbugs-fixes": "4.1.0",
+    "postcss-loader": "3.0.0",
+    "postcss-normalize": "8.0.1",
+    "postcss-preset-env": "6.7.0",
+    "postcss-safe-parser": "4.0.1",
     "react": "16.13.1",
+    "react-app-polyfill": "^1.0.6",
     "react-daterange-picker": "2.0.1",
+    "react-dev-utils": "^10.2.1",
     "react-dom": "16.13.1",
     "react-grid-layout": "0.18.3",
     "react-i18next": "11.3.4",
     "react-redux": "7.2.0",
+    "react-router-dom": "^5.2.0",
     "react-scripts": "3.4.1",
     "react-thunk": "1.0.0",
     "reactstrap": "8.4.1",
+    "resolve": "1.15.0",
+    "resolve-url-loader": "^3.1.2",
+    "sass-loader": "8.0.2",
+    "semver": "6.3.0",
     "sql.js": "^1.3.0",
+    "style-loader": "0.23.1",
+    "terser-webpack-plugin": "2.3.5",
     "topojson-client": "3.1.0",
-    "uuid": "7.0.3"
+    "ts-pnp": "1.1.6",
+    "url-loader": "2.3.0",
+    "uuid": "7.0.3",
+    "webpack": "4.42.0",
+    "webpack-dev-server": "^3.11.2",
+    "webpack-manifest-plugin": "2.2.0",
+    "workbox-webpack-plugin": "4.3.1"
   },
   "devDependencies": {
-    "husky": "4.2.5",
-    "lint-staged": "10.2.11",
-    "prettier": "2.0.5",
+    "@testing-library/dom": "^7.26.6",
+    "@testing-library/jest-dom": "^5.11.6",
+    "@testing-library/react": "^11.1.2",
     "grunt": "1.1.0",
     "grunt-contrib-copy": "1.0.0",
+    "husky": "4.2.5",
+    "lint-staged": "10.2.11",
     "load-grunt-tasks": "3.5.2",
-    "node-sass": "^4.14.1"
+    "node-sass": "^4.14.1",
+    "prettier": "2.0.5",
+    "webpack-license-plugin": "^4.1.2"
   },
   "scripts": {
-    "start": "react-scripts start",
-    "build": "react-scripts build",
-    "build:wasm": "cmake -E make_directory build_wasm && cd build_wasm && emcmake cmake -DCMAKE_BUILD_TYPE=Release .. && emmake make && emmake make install",
-    "build:wasm:debug": "cmake -E make_directory build_wasm && cd build_wasm && emcmake cmake -DCMAKE_BUILD_TYPE=Debug .. && emmake make && emmake make install",
-    "test": "react-scripts test",
-    "eject": "react-scripts eject"
+    "start": "node scripts/start.js",
+    "build": "node scripts/build.js",
+    "test": "node scripts/test.js",
+    "coverage": "CI=true node scripts/test.js --coverage"
   },
   "eslintConfig": {
     "extends": "react-app"
@@ -77,10 +134,77 @@
       "prettier --write"
     ]
   },
+  "jest": {
+    "roots": [
+      "<rootDir>"
+    ],
+    "collectCoverageFrom": [
+      "src/**/*.{js,jsx,ts,tsx}",
+      "!src/**/*.d.ts"
+    ],
+    "setupFiles": [
+      "react-app-polyfill/jsdom"
+    ],
+    "testMatch": [
+      "**/src/__tests__/**/*.{js,jsx,ts,tsx}"
+    ],
+    "testEnvironment": "jest-environment-jsdom-fourteen",
+    "transform": {
+      "^.+\\.(js|jsx|ts|tsx)$": "<rootDir>/node_modules/babel-jest",
+      "^.+\\.css$": "<rootDir>/config/jest/cssTransform.js",
+      "^(?!.*\\.(js|jsx|ts|tsx|css|json)$)": "<rootDir>/config/jest/fileTransform.js"
+    },
+    "transformIgnorePatterns": [
+      "[/\\\\]node_modules[/\\\\].+\\.(js|jsx|ts|tsx)$",
+      "^.+\\.module\\.(css|sass|scss)$"
+    ],
+    "modulePaths": [],
+    "moduleNameMapper": {
+      "^react-native$": "react-native-web",
+      "^.+\\.module\\.(css|sass|scss)$": "identity-obj-proxy"
+    },
+    "moduleFileExtensions": [
+      "web.js",
+      "js",
+      "web.ts",
+      "ts",
+      "web.tsx",
+      "tsx",
+      "json",
+      "web.jsx",
+      "jsx",
+      "node"
+    ],
+    "watchPlugins": [
+      "jest-watch-typeahead/filename",
+      "jest-watch-typeahead/testname"
+    ],
+    "coverageReporters": [
+      "clover",
+      "cobertura",
+      "lcov",
+      "text",
+      "text-summary"
+    ],
+    "reporters": [
+      "default",
+      "jest-junit"
+    ]
+  },
+  "jest-junit": {
+    "outputDirectory": "coverage/junit",
+    "outputName": "junit.xml",
+    "usePathForSuiteName": "true"
+  },
   "repository": {
     "type": "git",
     "url": "https://gitlab.dlr.de/sc-hpc/epidemiology/"
   },
   "author": "SC-HPC",
-  "license": "BSD"
+  "license": "BSD",
+  "babel": {
+    "presets": [
+      "react-app"
+    ]
+  }
 }
