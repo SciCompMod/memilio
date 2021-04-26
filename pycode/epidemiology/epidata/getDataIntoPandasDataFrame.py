@@ -253,6 +253,8 @@ def write_dataframe(df, directory, file_prefix, file_type):
 
     """
 
+
+
     outForm = {'json': [".json", {"orient": "records"}],
                'json_timeasstring': [".json", {"orient": "records"}], 'hdf5': [".h5", {"key": "data"}]}
 
@@ -263,12 +265,16 @@ def write_dataframe(df, directory, file_prefix, file_type):
         exit_string = "Error: The file format: " + file_type + " does not exist. Use another one."
         sys.exit(exit_string)
 
+    out_path = os.path.join(directory, file_prefix + outFormEnd)
+
     if file_type == "json":
-        df.to_json(os.path.join(directory, file_prefix + outFormEnd), **outFormSpec)
+        df.to_json(out_path, **outFormSpec)
     elif file_type == "json_timeasstring":
         if dd.EngEng['date'] in df.columns:
             if not isinstance(df.Date.values[0], type("string")):
                 df.Date = df.Date.dt.strftime('%Y-%m-%d')
-        df.to_json(os.path.join(directory, file_prefix + outFormEnd), **outFormSpec)
+        df.to_json(out_path, **outFormSpec)
     elif file_type == "hdf5":
-        df.to_hdf(os.path.join(directory, file_prefix + outFormEnd), **outFormSpec)
+        df.to_hdf(out_path, **outFormSpec)
+
+    print("Data is written to", out_path)
