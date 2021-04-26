@@ -78,6 +78,19 @@ TEST(ParameterStudies, sample_from_secir_params)
     draw_sample(model);
 
     for (size_t i = 0; i < params.get_num_groups(); i++) {
+        ASSERT_EQ(params.times[0].get_incubation().value(), params.times[i].get_incubation().value());
+        ASSERT_EQ(params.times[0].get_serialinterval().value(), params.times[i].get_serialinterval().value());
+        ASSERT_EQ(params.times[0].get_infectious_mild().value(), params.times[i].get_infectious_mild().value());
+        ASSERT_EQ(params.times[0].get_hospitalized_to_icu().value(), params.times[i].get_hospitalized_to_icu().value());
+        ASSERT_EQ(params.probabilities[0].get_carrier_infectability().value(),
+                  params.probabilities[i].get_carrier_infectability().value());
+        ASSERT_EQ(params.probabilities[0].get_risk_from_symptomatic().value(),
+                  params.probabilities[i].get_risk_from_symptomatic().value());
+        ASSERT_EQ(params.probabilities[0].get_test_and_trace_max_risk_from_symptomatic().value(),
+                  params.probabilities[i].get_test_and_trace_max_risk_from_symptomatic().value());
+    }
+
+    for (size_t i = 0; i < params.get_num_groups(); i++) {
 
         EXPECT_GE(model.populations.get_group_total(epi::AgeGroup(i)), 0);
 

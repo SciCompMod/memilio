@@ -1,7 +1,7 @@
 #include <epidemiology/migration/migration.h>
 #include <epidemiology_io/secir_parameters_io.h>
 #include <epidemiology_io/mobility_io.h>
-
+#include <data_dir.h>
 #include <iostream>
 
 void print_usage()
@@ -20,8 +20,9 @@ int main(int argc, char** argv)
         return -1;
     }
 
-    auto filename = argv[1];
+    std::string dir = DATA_DIR;
 
+    auto filename   = epi::path_join(dir, "migration", (std::string)argv[1]);
     const auto t0   = 0.;
     const auto tmax = 10.;
     const auto dt   = 1.; //time step of migration, not integration
@@ -49,7 +50,7 @@ int main(int argc, char** argv)
 
     epi::SecirModel model(1);
     size_t nb_groups = model.parameters.get_num_groups();
-    double fact   = 1.0 / (double)nb_groups;
+    double fact      = 1.0 / (double)nb_groups;
 
     auto& params = model.parameters;
 
@@ -104,9 +105,10 @@ int main(int argc, char** argv)
     }
     for (int row = 0; row < twitter_migration_2018.rows(); row++) {
         for (int col = 0; col < twitter_migration_2018.cols(); col++) {
-            graph.add_edge(row, col,
-                           Eigen::VectorXd::Constant(8 * nb_groups, twitter_migration_2018(row, col) /
-                                                                        graph.nodes()[row].property.populations.get_total()));
+            graph.add_edge(
+                row, col,
+                Eigen::VectorXd::Constant(8 * nb_groups, twitter_migration_2018(row, col) /
+                                                             graph.nodes()[row].property.populations.get_total()));
         }
     }
     std::cout << "Done" << std::endl;

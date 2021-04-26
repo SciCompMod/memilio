@@ -115,7 +115,7 @@ target_compile_options(epidemiology PRIVATE
     $<$<CXX_COMPILER_ID:MSVC>: /W4 /WX>)
 
 if (EPI_BUILD_EPI_IO)
-    
+
     add_library(epidemiology_io
       epidemiology_io/secir_result_io.cpp
       epidemiology_io/secir_result_io.h
@@ -126,6 +126,8 @@ if (EPI_BUILD_EPI_IO)
       epidemiology_io/mobility_io.cpp
       epidemiology_io/mobility_io.h
     )
+
+
 
     target_include_directories(epidemiology_io PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>

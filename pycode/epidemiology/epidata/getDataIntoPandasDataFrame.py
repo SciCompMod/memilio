@@ -114,28 +114,28 @@ def loadExcel(targetFileName, apiUrl='https://opendata.arcgis.com/datasets/',
 def cli(what):
     """! Defines command line interface
 
-   The function parameter "what" is used as a dictionary key.
-   The return of the dictionary is either a list of a string and a list of keywords.
-   The string is the message that should be printed when working on the specific package.
-   The further list, contains all special command line arguments which are needed for this package.
+    The function parameter "what" is used as a dictionary key.
+    The return of the dictionary is either a list of a string and a list of keywords.
+    The string is the message that should be printed when working on the specific package.
+    The further list, contains all special command line arguments which are needed for this package.
 
-   If the key is nor part of the dictionary the program is stopped.
+    If the key is nor part of the dictionary the program is stopped.
 
-   Three default arguments are added to the parser:
-   - read-from-disk, Default = False
-   - file-format, Default = json_timeasstring, choices = ['json', 'hdf5', 'json_timeasstring']
-   - out_path Default = data/pydata/
+    Three default arguments are added to the parser:
+    - read-from-disk, Default = False
+    - file-format, Default = json_timeasstring, choices = ['json', 'hdf5', 'json_timeasstring']
+    - out_path Default = data/pydata/
 
-   Depending on what following parser can be added:
-   - end_date
-   - plot
-   - split_berlin
-   - moving-average
-   - start_date
-   - update
+    Depending on what following parser can be added:
+    - end_date
+    - plot
+    - split_berlin
+    - moving-average
+    - start_date
+    - update
 
-   @param what Defines what packages calls and thus what kind of command line arguments should be defined.
-   """
+    @param what Defines what packages calls and thus what kind of command line arguments should be defined.
+    """
 
     # TODO: may it would be easier to make a dict like the following one together with a function to get key:
     # TODO: all should automatically do everything
@@ -149,7 +149,7 @@ def cli(what):
                 "rkiest": ['Download data from RKI and JH and estimate recovered and deaths', 'make_plot'],
                 "spain": ['Download of spain data'],
                 "population": ['Download population data'],
-                "jh": ['Downloads data from JH'],
+                "jh" : ['Downloads data from JH'],
                 "all": ['Download all possible data', 'end_date', 'fill_dates', 'make_plot', 'moving_average',
                         'split_berlin', 'start_date', 'update']}
 
@@ -213,8 +213,8 @@ def cli(what):
 
     arg_list = []
 
-    READ_DATA = args.read_from_disk
-    arg_list.append(READ_DATA)
+    read_data = args.read_from_disk
+    arg_list.append(read_data)
     arg_list.append(args.file_format)
     arg_list.append(args.out_path)
 
@@ -233,11 +233,11 @@ def cli(what):
     if 'start_date' in what_list:
         arg_list.append(args.start_date)
     if 'update' in what_list:
-        UPDATE_DATA = args.update
-        arg_list.append(UPDATE_DATA)
+        update_data = args.update
+        arg_list.append(update_data)
 
         # TODO: Change arguments such that one argument + parameter can be either read_data or update
-        if READ_DATA and UPDATE_DATA:
+        if read_data and update_data:
             exit_string = "You called the program with '--read-from-disk' and '--update'." \
                           "Please choose just one. Both together is not possible."
             sys.exit(exit_string)
