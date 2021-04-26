@@ -20,6 +20,18 @@ def get_data(setup_dict):
         'path': String with datapath where migration files can be found
         'abs_tol': tolerated undetected people
         'rel_tol': relative Tolerance to undetected people
+
+    @return countykey_list List of county regional keys
+    @return countypop_list List of populations per counties.
+    @return govkey_list List of governing regions regional keys.
+    @return countykey2numlist Hash map from county regional keys to numbered list.
+    @return govkey2numlist Hash map from governing region regional keys to numbered list.
+    @return gov_county_table Table of county regional keys per governing region.
+    @return countykey2govkey Hash map from county regional keys to governing region regional keys.
+    @return countykey2localnumlist Hash map from county regional keys to local numbered list (per governing region).
+    @return state_gov_table Table of governing region regional keys per federal state.
+    @return mat_commuter_migration Matrix of commuter migration.
+        mat_commuter_migration[i][j]= number of commuters from county with numlist-key i to county with numlist-key j
     """
 
     (countykey_list, countypop_list, govkey_list) = get_key_and_population_lists(setup_dict)
@@ -38,7 +50,12 @@ def get_data(setup_dict):
 
 def get_key_and_population_lists(setup_dict):
     """! Get list of regional key identifiers and population sizes for counties.
+    @param setup_dict Dictionary with necessary values for 'counties', 'num_counties', 'num_govregions','path',
+    'abs_tol', 'rel_tol'
 
+    @return countykey_list List of county regional keys
+    @return countypop_list List of populations per counties.
+    @return govkey_list List of governing regions regional keys.
     """
     # get and store all regional (county) identifiers in a list; store county populations accordingly
     # get a list of governing regions
@@ -81,7 +98,7 @@ def get_key_and_population_lists(setup_dict):
         print('Error. Number of government regions wrong. Having', len(govkey_list), 'instead of',
               setup_dict['num_govregions'])
 
-    return (countykey_list, countypop_list, govkey_list)
+    return countykey_list, countypop_list, govkey_list
 
 
 def verify_sorted(countykey_list):
@@ -100,9 +117,13 @@ def map_keys_to_numlists(setup_dict, countykey_list=None, govkey_list=None):
     """! Creates hash maps from from county regional keys and keys of its governing regions to numbered lists.
 
     Keyword arguments:
-    @param setup_dict dictionary with necessary values.
+    @param setup_dict Dictionary with necessary values for 'counties', 'num_counties', 'num_govregions','path',
+    'abs_tol', 'rel_tol'
     @param countykey_list List of county regional keys.
     @param govkey_list List of governing regions regional keys.
+
+    @return countykey2numlist Hash map from county regional keys to numbered list.
+    @return govkey2numlist Hash map from governing region regional keys to numbered list.
     """
     # create a hashmap from sorted regional identifiers (01001 - ...) to 0 - num_counties
     if countykey_list is None or govkey_list is None:
@@ -140,6 +161,11 @@ def assign_geographical_entities(setup_dict, countykey_list=None, govkey_list=No
     @param setup_dict dictionary with necessary values
     @param countykey_list List of county regional keys.
     @param govkey_list List of governing regions regional keys.
+
+    @return countykey2govkey Hash map from county regional keys to governing region regional keys.
+    @return countykey2localnumlist Hash map from county regional keys to local numbered list (per governing region).
+    @return gov_county_table Table of county regional keys per governing region.
+    @return state_gov_table Table of governing region regional keys per federal state.
     """
 
     if govkey_list is None or countykey_list is None:
@@ -219,6 +245,11 @@ def get_matrix_commuter_migration_patterns(setup_dict, countypop_list=None, govk
     @param gov_county_table Table of county regional keys per governing region.
     @param state_gov_table Table of governing region regional keys per federal state.
 
+    @return mat_commuter_migration Matrix of commuter migration.
+        mat_commuter_migration[i][j]= number of commuters from county with numlist-key i to county with numlist-key j
+    In commuter migration files is a cumulative value per county for number of commuters from whole Germany given.
+    The printed errors are refering to the absolute and relative errors from included numbers per county in matrix and
+    this cumulative values.
     """
 
     if countypop_list is None or govkey_list is None:

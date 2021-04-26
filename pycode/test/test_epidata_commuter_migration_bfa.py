@@ -13,7 +13,7 @@ class TestCommuterMigration(fake_filesystem_unittest.TestCase):
     def setUp(self):
         self.setUpPyfakefs()
 
-    def write_kreise_deu_daten(self, out_folder):
+    def write_kreise_deu_data(self, out_folder):
         # sheet 0 is unused in commuter_migration_bfa, but other one has to have index 1
         sheet0 = pd.DataFrame({'0': ['0', '0', '0', '0'], '1': ['1', '2', '3', '4']})
         # 'nothing' strings used to interpret keys as Strings instead of numbers
@@ -207,7 +207,7 @@ class TestCommuterMigration(fake_filesystem_unittest.TestCase):
     @patch('builtins.print')
     def test_some_errors(self, mock_print):
         gD.check_dir(self.path)
-        self.write_kreise_deu_daten(self.path)
+        self.write_kreise_deu_data(self.path)
         self.write_commuter_all_federal_states(self.path)
         self.assertEqual(len(os.listdir(self.path)), 17)
         counties = gD.loadExcel('kreise_deu', apiUrl=self.path, extension='.xlsx', sheet_name=1)
@@ -243,7 +243,7 @@ class TestCommuterMigration(fake_filesystem_unittest.TestCase):
         """! Tests migration data by some randomly chosen tests.
         """
         gD.check_dir(self.path)
-        self.write_kreise_deu_daten(self.path)
+        self.write_kreise_deu_data(self.path)
         self.write_commuter_all_federal_states(self.path)
         self.assertEqual(len(os.listdir(self.path)), 17)
         counties = gD.loadExcel('kreise_deu', apiUrl=self.path, extension='.xlsx', sheet_name=1)
