@@ -76,6 +76,32 @@ def loadCsv(targetFileName, apiUrl='https://opendata.arcgis.com/datasets/', exte
     return df
 
 
+def loadExcel(targetFileName, apiUrl='https://opendata.arcgis.com/datasets/',
+              extension='.xls', sheet_name=0, header=0, engine='openpyxl'):
+    """ Loads ArcGIS data sets in Excel formats (xls,xlsx,xlsm,xlsb,odf,ods,odt). (pandas DataFrame)
+
+    This routine loads data sets (default from ArcGIS) in Excel format of the given public data
+    item ID into a pandas DataFrame and returns the DataFrame.
+
+    Keyword arguments:
+    targetFileName -- file name which should be downloaded, for ArcGIS it should be public data item ID (string)
+    apiUrl -- API URL (string, default
+              'https://opendata.arcgis.com/datasets/')
+    extension -- Data format extension (string, default '.xls')
+    sheet -- sheet from Excel file which should be in DataFrame
+            (string (sheetname) or integer (zero-indexed sheet position), default 0)
+    header -- row to use for column labels (Use None if there is no header) (int, default 0)
+    """
+    url = apiUrl + targetFileName + extension
+    try:
+        df = pandas.read_excel(url, sheet_name=sheet_name, header=header, engine=engine)
+    except OSError as e:
+        exit_string = "ERROR: URL " + url + " could not be opened."
+        sys.exit(exit_string)
+
+    return df
+
+
 # function to return list of keys for any value
 # def get_key(val, my_dict):
 #    key_list = []
@@ -130,8 +156,8 @@ def cli(what):
     try:
         what_list = cli_dict[what]
     except KeyError:
-      exit_string = "Wrong key or cli_dict."
-      sys.exit(exit_string)
+        exit_string = "Wrong key or cli_dict."
+        sys.exit(exit_string)
 
     out_path_default = dd.defaultDict['out_folder']
     out_path_default = os.path.join(out_path_default, 'pydata')
@@ -140,12 +166,13 @@ def cli(what):
 
     parser = argparse.ArgumentParser(description=what_list[0])
 
-    parser.add_argument('-r',  '--read-from-disk',
-                       help='Reads the data from file "json" instead of downloading it.',
-                       action='store_true')
+    parser.add_argument('-r', '--read-from-disk',
+                        help='Reads the data from file "json" instead of downloading it.',
+                        action='store_true')
     parser.add_argument('-ff', '--file-format', type=str, default=dd.defaultDict['out_form'],
-                       choices=['json', 'hdf5', 'json_timeasstring'],
-                       help='Defines output format for data files. Default is \"' + str(dd.defaultDict['out_form']+ "\"."))
+                        choices=['json', 'hdf5', 'json_timeasstring'],
+                        help='Defines output format for data files. Default is \"' + str(
+                            dd.defaultDict['out_form'] + "\"."))
     parser.add_argument('-o', '--out-path', type=str, default=out_path_default, help='Defines folder for output.')
 
     if 'end_date' in what_list:
@@ -156,9 +183,9 @@ def cli(what):
                             default=dd.defaultDict['end_date'])
     if 'fill_dates' in what_list:
         parser.add_argument('-fd', '--fill_dates',
-                           help='the resulting dfs contain all dates instead of'
-                                ' omitting dates where no new cases were reported',
-                           action='store_true')
+                            help='the resulting dfs contain all dates instead of'
+                                 ' omitting dates where no new cases were reported',
+                            action='store_true')
     if 'make_plot' in what_list:
         parser.add_argument('-p', '--plot', help='Plots the data.',
                             action='store_true')
@@ -172,13 +199,13 @@ def cli(what):
                                  ' instead of having only one county for Berlin.',
                             action='store_true')
     if 'start_date' in what_list:
-        parser.add_argument('-sd',  '--start-date',
+        parser.add_argument('-sd', '--start-date',
                             help='Defines start date for data download. Should have form: YYYY-mm-dd.'
                                  'Default is 2020-04-24',
                             type=lambda s: datetime.datetime.strptime(s, '%Y-%m-%d').date(),
                             default=dd.defaultDict['start_date'])
     if 'update' in what_list:
-        parser.add_argument('-u',  '--update',
+        parser.add_argument('-u', '--update',
                             help='Reads the data from file "json", downloads and adds data from today.',
                             action='store_true')
 

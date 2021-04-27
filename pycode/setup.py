@@ -79,7 +79,8 @@ setup(
             'getdividata = epidemiology.epidata.getDIVIData:main',
             'getalldata = epidemiology.epidata.getAllData:main',
             'cleandata = epidemiology.epidata.cleanData:main',
-            'getrkiestimation = epidemiology.epidata.getRKIDatawithEstimations:main'
+            'getrkiestimation = epidemiology.epidata.getRKIDatawithEstimations:main',
+            'getcommutermigration = epidemiology.epidata.commuter_migration_bfa:main'
         ],
     },
     package_dir={
