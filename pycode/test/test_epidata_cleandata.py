@@ -612,7 +612,7 @@ class Test_cleanData(fake_filesystem_unittest.TestCase):
                 if dir == "France":
                     self.assertEqual(os.listdir(dir_path), ["c_jh.json", "c_jh.h5"])
 
-    def test_clean_data_rki_john_hokins(self):
+    def test_clean_data_rki_johns_hopkins(self):
 
         # test if writte fct works as expected
 
