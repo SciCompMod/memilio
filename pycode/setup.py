@@ -20,7 +20,8 @@ INSTALL_REQUIRES = ['pandas<1.2.0',
                     'tables',
                     'numpy<=1.19.4',
                     'openpyxl',
-                    'xlrd']
+                    'xlrd', 
+		    'requests']
 
 EXTRAS_REQUIRE = {"pylint": ["pylint", "pylint_json2html"]}
 
