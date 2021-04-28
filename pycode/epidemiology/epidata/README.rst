@@ -67,6 +67,7 @@ Needed python packages:
 - numpy<=1.19.4
 - openpyxl
 - xlrd
+- requests
 
 Running the scripts
 -------------------
@@ -147,6 +148,8 @@ When speaking about infected, means always infected inclusive the already recove
  RKI            Germany     all_state_gender_rki               infected, deaths, recovered over time for different genders and states
  RKI            Germany     all_county_age_rki                 infected, deaths, recovered over time for different age ranges and counties
  RKI            Germany     all_county_gender_rki              infected, deaths, recovered over time for different genders counties
+
+ RKI            Germany     vaccine_data_[DATE]       administered vaccines, first shot, full vaccination, vaccination ratio, vacc ratio young, vacc ratio old
 
  RKI-Estimation Germany     all_germany_rki_estimated          infected, deaths, recovered, recovered_estimated, deaths_estimated over time for whole Germany
  RKI-Estimation Germany     all_state_rki_estimated            infected, deaths, recovered, recovered_estimated, deaths_estimated over time for different states (Bundesländer)

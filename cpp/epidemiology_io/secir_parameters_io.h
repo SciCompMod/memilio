@@ -8,6 +8,7 @@
 #include <epidemiology_io/io.h>
 #include <epidemiology_io/secir_result_io.h>
 #include <epidemiology/utils/date.h>
+#include <epidemiology/secir/analyze_result.h>
 
 #include <tixi.h>
 
@@ -193,7 +194,7 @@ void write_matrix(TixiDocumentHandle handle, const std::string& path, const std:
     auto matrix_path = path_join(path, name);
     tixiAddIntegerAttribute(handle, matrix_path.c_str(), "Rows", (int)m.rows(), "%d");
     tixiAddIntegerAttribute(handle, matrix_path.c_str(), "Cols", (int)m.cols(), "%d");
-    //Matrix may be column major but we want to output row major 
+    //Matrix may be column major but we want to output row major
     std::vector<double> coeffs(m.size());
     for (Eigen::Index i = 0; i < m.rows(); ++i) {
         for (Eigen::Index j = 0; j < m.cols(); ++j) {
@@ -283,8 +284,8 @@ C read_damping_matrix_expression_collection(TixiDocumentHandle handle, const std
     assert(status == SUCCESS && "Failed to read ContactMatrixGroup.");
     C cfmc{size_t(num_matrices), 1};
     for (size_t i = 0; i < cfmc.get_num_matrices(); ++i) {
-        auto cfm_path      = path_join(collection_path, "ContactMatrix" + std::to_string(i + 1));
-        cfmc[i] = typename C::value_type(read_matrix<typename C::Matrix>(handle, path_join(cfm_path, "Baseline")),
+        auto cfm_path = path_join(collection_path, "ContactMatrix" + std::to_string(i + 1));
+        cfmc[i]       = typename C::value_type(read_matrix<typename C::Matrix>(handle, path_join(cfm_path, "Baseline")),
                                          read_matrix<typename C::Matrix>(handle, path_join(cfm_path, "Minimum")));
         auto dampings_path = path_join(cfm_path, "Dampings");
         int num_dampings;
@@ -316,7 +317,6 @@ C read_damping_matrix_expression_collection(TixiDocumentHandle handle, const std
  * @return returns a SecirParams object
  */
 SecirModel read_parameter_space(TixiDocumentHandle handle, const std::string& path, int io_mode);
-
 
 /**
  * @brief write parameter space to xml file
@@ -358,8 +358,8 @@ void write_parameter_study(TixiDocumentHandle handle, const std::string& path,
  * @param tmax end point of simulation
  */
 void write_single_run_params(const int run,
-                             epi::Graph<epi::ModelNode<epi::Simulation<SecirModel>>, epi::MigrationEdge> graph, double t0,
-                             double tmax);
+                             epi::Graph<epi::ModelNode<epi::Simulation<SecirModel>>, epi::MigrationEdge> graph,
+                             double t0, double tmax);
 
 /**
  * @brief Creates xml file containing Parameters of one node of a graph
@@ -421,7 +421,7 @@ void write_edge(const std::vector<TixiDocumentHandle>& edge_handles, const std::
                           "%d");
     tixiCreateElement(handle, edge_path.c_str(), "Parameters");
     write_damping_matrix_expression_collection(handle, path_join(edge_path, "Parameters").c_str(),
-                                              graph.edges()[edge].property.get_coefficients());
+                                               graph.edges()[edge].property.get_coefficients());
 }
 
 /**
@@ -454,7 +454,8 @@ void read_edge(const std::vector<TixiDocumentHandle>& edge_handles, const std::s
     status = tixiGetIntegerElement(handle, path_join(path, "NumberOfCompartiments").c_str(), &num_compart);
     assert(status == SUCCESS && ("Failed to read num_compart at " + path).c_str());
 
-    auto coefficients = read_damping_matrix_expression_collection<MigrationCoefficientGroup>(handle, path_join(edge_path, "Parameters").c_str());
+    auto coefficients = read_damping_matrix_expression_collection<MigrationCoefficientGroup>(
+        handle, path_join(edge_path, "Parameters").c_str());
     graph.add_edge(start_node, end_node, MigrationParameters(coefficients));
 }
 
@@ -565,6 +566,124 @@ Graph<Model, MigrationParameters> read_graph(const std::string& dir_string)
         tixiCloseDocument(edge_handles[start_node]);
     }
     return graph;
+}
+
+/**
+* @brief sets populations data from RKI into a SecirModel
+* @param model vector of objects in which the data is set
+* @param path Path to RKI file
+* @param id_name Name of region key column
+* @param region vector of keys of the region of interest
+* @param year Specifies year at which the data is read
+* @param month Specifies month at which the data is read
+* @param day Specifies day at which the data is read
+* @param scaling_factor_inf factors by which to scale the confirmed cases of rki data
+*/
+template <class Model>
+void extrapolate_rki_results(std::vector<Model>& model, const std::string& dir, const std::string& results_dir,
+                             std::vector<int> const& region, Date date, const std::vector<double>& scaling_factor_inf,
+                             double scaling_factor_icu, int num_days)
+{
+
+    std::string id_name            = "ID_County";
+    std::vector<double> age_ranges = {5., 10., 20., 25., 20., 20.};
+    assert(scaling_factor_inf.size() == age_ranges.size());
+
+    std::vector<std::vector<int>> t_car_to_rec{model.size()}; // R9
+    std::vector<std::vector<int>> t_car_to_inf{model.size()}; // R3
+    std::vector<std::vector<int>> t_exp_to_car{model.size()}; // R2
+    std::vector<std::vector<int>> t_inf_to_rec{model.size()}; // R4
+    std::vector<std::vector<int>> t_inf_to_hosp{model.size()}; // R6
+    std::vector<std::vector<int>> t_hosp_to_rec{model.size()}; // R5
+    std::vector<std::vector<int>> t_hosp_to_icu{model.size()}; // R7
+    std::vector<std::vector<int>> t_icu_to_dead{model.size()}; // R10
+
+    std::vector<std::vector<double>> mu_C_R{model.size()};
+    std::vector<std::vector<double>> mu_I_H{model.size()};
+    std::vector<std::vector<double>> mu_H_U{model.size()};
+
+    std::vector<double> sum_mu_I_U(region.size(), 0);
+    std::vector<std::vector<double>> mu_I_U{model.size()};
+
+    for (size_t county = 0; county < model.size(); county++) {
+        for (size_t group = 0; group < age_ranges.size(); group++) {
+
+            t_car_to_inf[county].push_back(
+                static_cast<int>(2 * (model[county].parameters.times[group].get_incubation() -
+                                      model[county].parameters.times[group].get_serialinterval())));
+            t_car_to_rec[county].push_back(static_cast<int>(
+                t_car_to_inf[county][group] + 0.5 * model[county].parameters.times[group].get_infectious_mild()));
+            t_exp_to_car[county].push_back(
+                static_cast<int>(2 * model[county].parameters.times[group].get_serialinterval() -
+                                 model[county].parameters.times[group].get_incubation()));
+            t_inf_to_rec[county].push_back(
+                static_cast<int>(model[county].parameters.times[group].get_infectious_mild()));
+            t_inf_to_hosp[county].push_back(
+                static_cast<int>(model[county].parameters.times[group].get_home_to_hospitalized()));
+            t_hosp_to_rec[county].push_back(
+                static_cast<int>(model[county].parameters.times[group].get_hospitalized_to_home()));
+            t_hosp_to_icu[county].push_back(
+                static_cast<int>(model[county].parameters.times[group].get_hospitalized_to_icu()));
+            t_icu_to_dead[county].push_back(static_cast<int>(model[county].parameters.times[group].get_icu_to_dead()));
+
+            mu_C_R[county].push_back(model[county].parameters.probabilities[group].get_asymp_per_infectious());
+            mu_I_H[county].push_back(model[county].parameters.probabilities[group].get_hospitalized_per_infectious());
+            mu_H_U[county].push_back(model[county].parameters.probabilities[group].get_icu_per_hospitalized());
+
+            sum_mu_I_U[county] += model[county].parameters.probabilities[group].get_icu_per_hospitalized() *
+                                  model[county].parameters.probabilities[group].get_hospitalized_per_infectious();
+            mu_I_U[county].push_back(model[county].parameters.probabilities[group].get_icu_per_hospitalized() *
+                                     model[county].parameters.probabilities[group].get_hospitalized_per_infectious());
+        }
+    }
+
+    std::vector<TimeSeries<double>> rki_data(
+        region.size(), TimeSeries<double>::zero(num_days, (size_t)InfectionState::Count * age_ranges.size()));
+
+    for (size_t j = 0; j < static_cast<size_t>(num_days); j++) {
+        std::vector<std::vector<double>> num_inf(model.size(), std::vector<double>(age_ranges.size(), 0.0));
+        std::vector<std::vector<double>> num_death(model.size(), std::vector<double>(age_ranges.size(), 0.0));
+        std::vector<std::vector<double>> num_rec(model.size(), std::vector<double>(age_ranges.size(), 0.0));
+        std::vector<std::vector<double>> num_exp(model.size(), std::vector<double>(age_ranges.size(), 0.0));
+        std::vector<std::vector<double>> num_car(model.size(), std::vector<double>(age_ranges.size(), 0.0));
+        std::vector<std::vector<double>> num_hosp(model.size(), std::vector<double>(age_ranges.size(), 0.0));
+        std::vector<std::vector<double>> dummy_icu(model.size(), std::vector<double>(age_ranges.size(), 0.0));
+        std::vector<double> num_icu(model.size(), 0.0);
+
+        details::read_rki_data(path_join(dir, "all_county_age_rki_ma.json"), id_name, region, date, num_exp, num_car,
+                               num_inf, num_hosp, dummy_icu, num_death, num_rec, t_car_to_rec, t_car_to_inf,
+                               t_exp_to_car, t_inf_to_rec, t_inf_to_hosp, t_hosp_to_rec, t_hosp_to_icu, t_icu_to_dead,
+                               mu_C_R, mu_I_H, mu_H_U, scaling_factor_inf);
+        details::read_divi_data(path_join(dir, "county_divi.json"), id_name, region, date, num_icu);
+        std::vector<std::vector<double>> num_population =
+            details::read_population_data(path_join(dir, "county_current_population.json"), id_name, region);
+
+        for (size_t i = 0; i < region.size(); i++) {
+            for (size_t age = 0; age < age_ranges.size(); age++) {
+                rki_data[i][j]((size_t)InfectionState::Exposed + (size_t)epi::InfectionState::Count * age) =
+                    num_exp[i][age];
+                rki_data[i][j]((size_t)InfectionState::Carrier + (size_t)InfectionState::Count * age) = num_car[i][age];
+                rki_data[i][j]((size_t)InfectionState::Infected + (size_t)InfectionState::Count * age) =
+                    num_inf[i][age];
+                rki_data[i][j]((size_t)InfectionState::Hospitalized + (size_t)InfectionState::Count * age) =
+                    num_hosp[i][age];
+                rki_data[i][j]((size_t)InfectionState::ICU + (size_t)InfectionState::Count * age) =
+                    scaling_factor_icu * num_icu[i] * mu_I_U[i][age] / sum_mu_I_U[i];
+                rki_data[i][j]((size_t)InfectionState::Recovered + (size_t)InfectionState::Count * age) =
+                    num_rec[i][age];
+                rki_data[i][j]((size_t)InfectionState::Dead + (size_t)InfectionState::Count * age) = num_death[i][age];
+                rki_data[i][j]((size_t)InfectionState::Susceptible + (size_t)InfectionState::Count * age) =
+                    num_population[i][age] - num_exp[i][age] - num_car[i][age] - num_inf[i][age] - num_hosp[i][age] -
+                    num_rec[i][age] - num_death[i][age] -
+                    rki_data[i][j]((size_t)InfectionState::ICU + (size_t)InfectionState::Count * age);
+            }
+        }
+        date = offset_date_by_days(date, 1);
+    }
+    save_result(rki_data, region, path_join(results_dir, "Results_rki.h5"));
+
+    auto rki_data_sum = epi::sum_nodes(std::vector<std::vector<TimeSeries<double>>>{rki_data});
+    save_result({rki_data_sum[0][0]}, {0}, path_join(results_dir, "Results_rki_sum.h5"));
 }
 
 /**

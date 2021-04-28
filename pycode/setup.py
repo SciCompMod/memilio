@@ -20,7 +20,8 @@ INSTALL_REQUIRES = ['pandas<1.2.0',
                     'tables',
                     'numpy<=1.19.4',
                     'openpyxl',
-                    'xlrd']
+                    'xlrd', 
+		    'requests']
 
 EXTRAS_REQUIRE = {"pylint": ["pylint", "pylint_json2html"]}
 
@@ -79,7 +80,8 @@ setup(
             'getdividata = epidemiology.epidata.getDIVIData:main',
             'getalldata = epidemiology.epidata.getAllData:main',
             'cleandata = epidemiology.epidata.cleanData:main',
-            'getrkiestimation = epidemiology.epidata.getRKIDatawithEstimations:main'
+            'getrkiestimation = epidemiology.epidata.getRKIDatawithEstimations:main',
+            'getcommutermigration = epidemiology.epidata.commuter_migration_bfa:main'
         ],
     },
     package_dir={
