@@ -14,81 +14,81 @@ namespace epi
 struct IncubationPeriod
 {
     using Type = CustomIndexArray<double, AbmAgeGroup>;
-    static Type get_default()
+    static Type get_default(epi::Index<AbmAgeGroup> size)
     {
-        return Type(1.);
+        return Type({size}, 1.);
     }
 };
 
 struct SusceptibleToExposedByCarrier
 {
     using Type = CustomIndexArray<double, AbmAgeGroup>;
-    static Type get_default()
+    static Type get_default(epi::Index<AbmAgeGroup> size)
     {
-        return Type(1.);
+        return Type({size}, 1.);
     }
 };
 
 struct SusceptibleToExposedByInfected
 {
     using Type = CustomIndexArray<double, AbmAgeGroup>;
-    static Type get_default()
+    static Type get_default(epi::Index<AbmAgeGroup> size)
     {
-        return Type(1.);
+        return Type({size}, 1.);
     }
 };
 
 struct CarrierToInfected
 {
     using Type = CustomIndexArray<double, AbmAgeGroup>;
-    static Type get_default()
+    static Type get_default(epi::Index<AbmAgeGroup> size)
     {
-        return Type(1.);
+        return Type({size}, 1.);
     }
 };
 
 struct CarrierToRecovered
 {
     using Type = CustomIndexArray<double, AbmAgeGroup>;
-    static Type get_default()
+    static Type get_default(epi::Index<AbmAgeGroup> size)
     {
-        return Type(1.);
+        return Type({size}, 1.);
     }
 };
 
 struct InfectedToRecovered
 {
     using Type = CustomIndexArray<double, AbmAgeGroup>;
-    static Type get_default()
+    static Type get_default(epi::Index<AbmAgeGroup> size)
     {
-        return Type(1.);
+        return Type({size}, 1.);
     }
 };
 
 struct InfectedToDead
 {
     using Type = CustomIndexArray<double, AbmAgeGroup>;
-    static Type get_default()
+    static Type get_default(epi::Index<AbmAgeGroup> size)
     {
-        return Type(1.);
+        return Type({size}, 1.);
     }
 };
 
 struct RecoveredToSusceptible
 {
     using Type = CustomIndexArray<double, AbmAgeGroup>;
-    static Type get_default()
+    static Type get_default(epi::Index<AbmAgeGroup> size)
     {
-        return Type(1.);
+        return Type({size}, 1.);
     }
 };
 
 struct DetectInfection
 {
     using Type = CustomIndexArray<double, AbmAgeGroup>;
-    static Type get_default()
+    static Type get_default(epi::Index<AbmAgeGroup> size)
     {
-        return Type(0.5);
+        return Type({size}, 0.5);
     }
 };
 

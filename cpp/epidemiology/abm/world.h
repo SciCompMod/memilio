@@ -30,7 +30,7 @@ public:
      * create a World.
      * @param params parameters of the infection that are the same everywhere in the world.
      */
-    World(const GlobalInfectionParameters& params = {})
+    World(const GlobalInfectionParameters& params = {AbmAgeGroup::Count})
         : m_infection_parameters(params)
     {
     }
@@ -65,7 +65,7 @@ public:
      * @param state initial infection state of the person
      * @return reference to the newly created person
      */
-    Person& add_person(Location& location, InfectionState state, AbmAgeGroup age = AbmAgeGroup::Age15to34);
+    Person& add_person(Location& location, InfectionState state, Index<AbmAgeGroup> age = AbmAgeGroup::Age15to34);
 
     /**
      * get a range of all locations in the world.

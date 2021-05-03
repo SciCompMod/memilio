@@ -12,7 +12,8 @@ namespace epi
  * @param secir Results of secir simulation
  * @param filename name of file
  */
-void save_result(const TimeSeries<double>& result, const std::string& filename);
+void save_result(const std::vector<TimeSeries<double>>& result, const std::vector<int>& ids,
+                 const std::string& filename);
 
 class SecirSimulationResult
 {
@@ -63,7 +64,7 @@ private:
  * @param filename name of file
  * @param nb_groups number of groups used during simulation
  */
-SecirSimulationResult read_result(const std::string& filename, int nb_groups);
+std::vector<SecirSimulationResult> read_result(const std::string& filename, int nb_groups);
 
 } // namespace epi
 

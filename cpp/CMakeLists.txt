@@ -33,8 +33,6 @@ endif()
 include(thirdparty/CMakeLists.txt)
 
 add_library(epidemiology
-    epidemiology/utils/tensor_helpers.h
-    epidemiology/utils/tensor_helpers.cpp
     epidemiology/math/euler.cpp
     epidemiology/math/euler.h
     epidemiology/math/smoother.h    
@@ -62,12 +60,14 @@ add_library(epidemiology
     epidemiology/utils/eigen_util.h
     epidemiology/utils/visitor.h
     epidemiology/secir/parameter_space.h
+    epidemiology/secir/parameter_space.cpp
     epidemiology/utils/uncertain_value.h
     epidemiology/utils/uncertain_value.cpp
     epidemiology/secir/uncertain_matrix.h    
     epidemiology/secir/uncertain_matrix.cpp
     epidemiology/secir/contact_matrix.h    
     epidemiology/secir/contact_matrix.cpp
+    epidemiology/utils/index.h
     epidemiology/utils/custom_index_array.h
     epidemiology/utils/memory.h
     epidemiology/utils/parameter_distributions.h
@@ -81,6 +81,10 @@ add_library(epidemiology
     epidemiology/utils/parameter_set.cpp
     epidemiology/utils/date.h
     epidemiology/utils/date.cpp
+    epidemiology/utils/matrix_shape.h
+    epidemiology/utils/matrix_shape.cpp
+    epidemiology/utils/random_number_generator.h
+    epidemiology/utils/random_number_generator.cpp
     epidemiology/abm/location.cpp
     epidemiology/abm/location.h
     epidemiology/abm/simulation.cpp
@@ -91,8 +95,6 @@ add_library(epidemiology
     epidemiology/abm/world.h
     epidemiology/abm/state.h
     epidemiology/abm/location_type.h
-    epidemiology/abm/random_number_generator.h
-    epidemiology/abm/random_number_generator.cpp
     epidemiology/abm/parameters.h
     epidemiology/abm/parameters.cpp
     epidemiology/abm/migration_rules.cpp

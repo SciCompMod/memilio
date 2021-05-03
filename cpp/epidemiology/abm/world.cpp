@@ -1,8 +1,8 @@
 #include "epidemiology/abm/world.h"
 #include "epidemiology/abm/person.h"
 #include "epidemiology/abm/location.h"
-#include "epidemiology/abm/random_number_generator.h"
 #include "epidemiology/abm/migration_rules.h"
+#include "epidemiology/utils/random_number_generator.h"
 #include "epidemiology/utils/stl_util.h"
 
 namespace epi
@@ -14,7 +14,7 @@ Location& World::add_location(LocationType type)
     return *m_locations.back();
 }
 
-Person& World::add_person(Location& location, InfectionState state, AbmAgeGroup age)
+Person& World::add_person(Location& location, InfectionState state, Index<AbmAgeGroup> age)
 {
     m_persons.push_back(std::make_unique<Person>(location, state, age));
     auto& person = *m_persons.back();

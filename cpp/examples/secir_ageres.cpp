@@ -46,7 +46,7 @@ int main()
     // theta = theta_in; // icu per hospitalized
     // delta = delta_in; // deaths per ICUs
 
-    epi::SecirModel<epi::AgeGroup3> model;
+    epi::SecirModel model(3);
     auto nb_groups = model.parameters.get_num_groups();
     double fact    = 1.0 / (double)nb_groups;
 
@@ -66,15 +66,15 @@ int main()
         params.times[i].set_icu_to_home(ticu2home);
         params.times[i].set_icu_to_death(ticu2death);
 
-        model.populations[{(epi::AgeGroup3)i, epi::InfectionType::E}] = fact * nb_exp_t0;
-        model.populations[{(epi::AgeGroup3)i, epi::InfectionType::C}] = fact * nb_car_t0;
-        model.populations[{(epi::AgeGroup3)i, epi::InfectionType::I}] = fact * nb_inf_t0;
-        model.populations[{(epi::AgeGroup3)i, epi::InfectionType::H}] = fact * nb_hosp_t0;
-        model.populations[{(epi::AgeGroup3)i, epi::InfectionType::U}] = fact * nb_icu_t0;
-        model.populations[{(epi::AgeGroup3)i, epi::InfectionType::R}] = fact * nb_rec_t0;
-        model.populations[{(epi::AgeGroup3)i, epi::InfectionType::D}] = fact * nb_dead_t0;
-        model.populations.set_difference_from_group_total(fact * nb_total_t0, (epi::AgeGroup3)i, (epi::AgeGroup3)i,
-                                                          epi::InfectionType::S);
+        model.populations[{epi::AgeGroup(i), epi::InfectionState::Exposed}] = fact * nb_exp_t0;
+        model.populations[{epi::AgeGroup(i), epi::InfectionState::Carrier}] = fact * nb_car_t0;
+        model.populations[{epi::AgeGroup(i), epi::InfectionState::Infected}] = fact * nb_inf_t0;
+        model.populations[{epi::AgeGroup(i), epi::InfectionState::Hospitalized}] = fact * nb_hosp_t0;
+        model.populations[{epi::AgeGroup(i), epi::InfectionState::ICU}] = fact * nb_icu_t0;
+        model.populations[{epi::AgeGroup(i), epi::InfectionState::Recovered}] = fact * nb_rec_t0;
+        model.populations[{epi::AgeGroup(i), epi::InfectionState::Dead}] = fact * nb_dead_t0;
+        model.populations.set_difference_from_group_total<epi::AgeGroup>({epi::AgeGroup(i), epi::InfectionState::Susceptible},
+                                                                         fact * nb_total_t0);
 
         params.probabilities[i].set_infection_from_contact(inf_prob);
         params.probabilities[i].set_carrier_infectability(carr_infec);
@@ -97,13 +97,13 @@ int main()
     printf("Number of time points :%d\n", static_cast<int>(secir.get_num_time_points()));
     printf("People in\n");
 
-    for (size_t k = 0; k < (size_t)epi::InfectionType::Count; k++) {
+    for (size_t k = 0; k < (size_t)epi::InfectionState::Count; k++) {
         double dummy = 0;
 
         for (size_t i = 0; i < params.get_num_groups(); i++) {
             printf("\t %c[%d]: %.0f", vars[k], (int)i,
-                   secir.get_last_value()[k + (size_t)epi::InfectionType::Count * (int)i]);
-            dummy += secir.get_last_value()[k + (size_t)epi::InfectionType::Count * (int)i];
+                   secir.get_last_value()[k + (size_t)epi::InfectionState::Count * (int)i]);
+            dummy += secir.get_last_value()[k + (size_t)epi::InfectionState::Count * (int)i];
         }
 
         printf("\t %c_otal: %.0f\n", vars[k], dummy);

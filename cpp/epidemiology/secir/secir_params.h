@@ -40,33 +40,19 @@ namespace epi
      * delta: D/U; deaths per intensive care units
      *
      */
-template <int N>
 class SecirParams
 {
 public:
-    SecirParams()
-        : times(N, StageTimes())
-        , probabilities(N, Probabilities())
-        , m_num_groups{N}
-        , m_contact_patterns(static_cast<Eigen::Index>(N), 1)
+    SecirParams(size_t num_agegroups)
+        : times(num_agegroups, StageTimes())
+        , probabilities(num_agegroups, Probabilities())
+        , m_num_groups{num_agegroups}
+        , m_contact_patterns(1, static_cast<Eigen::Index>(num_agegroups))
         , m_tstart{0}
         , m_seasonality{0}
         , m_icu_capacity{std::numeric_limits<double>::max()}
         , m_test_and_trace_capacity{std::numeric_limits<double>::max()}
     {
-    }
-
-    SecirParams(const ContactMatrixGroup& cont_matrix)
-        : times(N, StageTimes())
-        , probabilities(N, Probabilities())
-        , m_num_groups{N}
-        , m_contact_patterns(cont_matrix)
-        , m_tstart{0}
-        , m_seasonality{0}
-        , m_icu_capacity{std::numeric_limits<double>::max()}
-        , m_test_and_trace_capacity{std::numeric_limits<double>::max()}
-    {
-        assert(cont_matrix.get_num_groups() == N);
     }
 
     size_t get_num_groups() const

@@ -24,7 +24,7 @@ public:
      * @param location the initial location of the person
      * @param state the initial infection state of the person
      */
-    Person(Location& location, InfectionState state, AbmAgeGroup age);
+    Person(Location& location, InfectionState state, Index<AbmAgeGroup> age);
 
     /** 
      * Time passes and the person interacts with the population at its current location.
@@ -53,7 +53,7 @@ public:
      * Get the age group of this person.
      * @return age.
      */
-    AbmAgeGroup get_age() const
+    epi::Index<AbmAgeGroup> get_age() const
     {
         return m_age;
     }
@@ -80,7 +80,7 @@ private:
     std::reference_wrapper<Location> m_location;
     InfectionState m_state;
     TimeSpan m_time_until_carrier;
-    AbmAgeGroup m_age;
+    epi::Index<AbmAgeGroup> m_age;
     TimeSpan m_time_at_location;
 };
 

@@ -75,6 +75,7 @@ class SeirModel : public CompartmentalModel<SeirPopulations, SeirParameters>
 
 public:
     SeirModel()
+        : CompartmentalModel<SeirPopulations, SeirParameters>(Po({Index<SeirInfType>((size_t)SeirInfType::Count)}, 0.), Pa())
     {
 #if !USE_DERIV_FUNC
         //S to E

@@ -34,7 +34,7 @@ int main()
     double nb_total_t0 = 10000, nb_exp_t0 = 100, nb_inf_t0 = 50, nb_car_t0 = 50, nb_hosp_t0 = 20, nb_icu_t0 = 10,
            nb_rec_t0 = 10, nb_dead_t0 = 0;
 
-    epi::SecirModel<epi::AgeGroup1> model;
+    epi::SecirModel model(1);
 
     // params.set_icu_capacity(20);
     model.parameters.set_start_day(0);
@@ -54,14 +54,14 @@ int main()
     contact_matrix[0].add_damping(0.7, epi::SimulationTime(30.));
 
     model.populations.set_total(nb_total_t0);
-    model.populations[{(epi::AgeGroup1)0, epi::InfectionType::E}] = nb_exp_t0;
-    model.populations[{(epi::AgeGroup1)0, epi::InfectionType::C}] = nb_car_t0;
-    model.populations[{(epi::AgeGroup1)0, epi::InfectionType::I}] = nb_inf_t0;
-    model.populations[{(epi::AgeGroup1)0, epi::InfectionType::H}] = nb_hosp_t0;
-    model.populations[{(epi::AgeGroup1)0, epi::InfectionType::U}] = nb_icu_t0;
-    model.populations[{(epi::AgeGroup1)0, epi::InfectionType::R}] = nb_rec_t0;
-    model.populations[{(epi::AgeGroup1)0, epi::InfectionType::D}] = nb_dead_t0;
-    model.populations.set_difference_from_total(nb_total_t0, (epi::AgeGroup1)0, epi::InfectionType::S);
+    model.populations[{epi::AgeGroup(0), epi::InfectionState::Exposed}] = nb_exp_t0;
+    model.populations[{epi::AgeGroup(0), epi::InfectionState::Carrier}] = nb_car_t0;
+    model.populations[{epi::AgeGroup(0), epi::InfectionState::Infected}] = nb_inf_t0;
+    model.populations[{epi::AgeGroup(0), epi::InfectionState::Hospitalized}] = nb_hosp_t0;
+    model.populations[{epi::AgeGroup(0), epi::InfectionState::ICU}] = nb_icu_t0;
+    model.populations[{epi::AgeGroup(0), epi::InfectionState::Recovered}] = nb_rec_t0;
+    model.populations[{epi::AgeGroup(0), epi::InfectionState::Dead}] = nb_dead_t0;
+    model.populations.set_difference_from_total({epi::AgeGroup(0), epi::InfectionState::Susceptible}, nb_total_t0);
 
     model.parameters.probabilities[0].set_infection_from_contact(inf_prob);
     model.parameters.probabilities[0].set_carrier_infectability(carr_infec);
@@ -80,14 +80,14 @@ int main()
     if (print_to_terminal) {
         char vars[] = {'S', 'E', 'C', 'I', 'H', 'U', 'R', 'D'};
         printf("\n # t");
-        for (size_t k = 0; k < (size_t)epi::InfectionType::Count; k++) {
+        for (size_t k = 0; k < (size_t)epi::InfectionState::Count; k++) {
             printf(" %c", vars[k]);
         }
         auto num_points = static_cast<size_t>(secir.get_num_time_points());
         for (size_t i = 0; i < num_points; i++) {
             printf("\n%.14f ", secir.get_time(i));
             Eigen::VectorXd res_j = secir.get_value(i);
-            for (size_t j = 0; j < (size_t)epi::InfectionType::Count; j++) {
+            for (size_t j = 0; j < (size_t)epi::InfectionState::Count; j++) {
                 printf(" %.14f", res_j[j]);
             }
         }

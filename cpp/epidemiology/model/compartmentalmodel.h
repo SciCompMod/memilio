@@ -45,7 +45,9 @@ public:
     /**
      * @brief CompartmentalModel default constructor
      */
-    CompartmentalModel()
+    CompartmentalModel(Populations const& po, ParameterSet const& pa)
+        : populations{std::move(po)}
+        , parameters{pa}
     {
     }
 
