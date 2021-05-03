@@ -650,7 +650,7 @@ void extrapolate_rki_results(std::vector<Model>& model, const std::string& dir, 
         std::vector<std::vector<double>> dummy_icu(model.size(), std::vector<double>(age_ranges.size(), 0.0));
         std::vector<double> num_icu(model.size(), 0.0);
 
-        details::read_rki_data(path_join(dir, "all_county_age_rki_ma.json"), id_name, region, date, num_exp, num_car,
+        details::read_rki_data(path_join(dir, "all_county_age_ma_rki.json"), id_name, region, date, num_exp, num_car,
                                num_inf, num_hosp, dummy_icu, num_death, num_rec, t_car_to_rec, t_car_to_inf,
                                t_exp_to_car, t_inf_to_rec, t_inf_to_hosp, t_hosp_to_rec, t_hosp_to_icu, t_icu_to_dead,
                                mu_C_R, mu_I_H, mu_H_U, scaling_factor_inf);
@@ -706,7 +706,7 @@ void read_population_data_germany(std::vector<Model>& model, Date date, std::vec
     else {
         log_warning("No DIVI data available for this date");
     }
-    details::set_rki_data(model, path_join(dir, "all_age_rki_ma.json"), id_name, {0}, date, scaling_factor_inf);
+    details::set_rki_data(model, path_join(dir, "all_age_ma_rki.json"), id_name, {0}, date, scaling_factor_inf);
     details::set_population_data(model, path_join(dir, "county_current_population.json"), "ID_County", {0});
 }
 
@@ -732,7 +732,7 @@ void read_population_data_state(std::vector<Model>& model, Date date, std::vecto
         log_warning("No DIVI data available for this date");
     }
 
-    details::set_rki_data(model, path_join(dir, "all_state_age_rki_ma.json"), id_name, state, date, scaling_factor_inf);
+    details::set_rki_data(model, path_join(dir, "all_state_age_ma_rki.json"), id_name, state, date, scaling_factor_inf);
     details::set_population_data(model, path_join(dir, "county_current_population.json"), "ID_County", state);
 }
 
@@ -758,7 +758,7 @@ void read_population_data_county(std::vector<Model>& model, Date date, std::vect
     else {
         log_warning("No DIVI data available for this date");
     }
-    details::set_rki_data(model, path_join(dir, "all_county_age_rki_ma.json"), id_name, county, date,
+    details::set_rki_data(model, path_join(dir, "all_county_age_ma_rki.json"), id_name, county, date,
                           scaling_factor_inf);
     details::set_population_data(model, path_join(dir, "county_current_population.json"), "ID_County", county);
 }
