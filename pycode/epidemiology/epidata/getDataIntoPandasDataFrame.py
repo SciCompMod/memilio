@@ -149,9 +149,10 @@ def cli(what):
                 "rkiest": ['Download data from RKI and JH and estimate recovered and deaths', 'make_plot'],
                 "spain": ['Download of spain data'],
                 "population": ['Download population data'],
+                "vaccine": ['Download vaccine data'],
                 "jh" : ['Downloads data from JH'],
-                "all": ['Download all possible data', 'end_date', 'fill_dates', 'make_plot', 'moving_average',
-                        'split_berlin', 'start_date', 'update']}
+                "sim": ['Download all data needed for simulations', 'start_date', 'end_date', 'update',
+                        'fill_dates', 'make_plot', 'moving_average', 'split_berlin']}
 
     try:
         what_list = cli_dict[what]
