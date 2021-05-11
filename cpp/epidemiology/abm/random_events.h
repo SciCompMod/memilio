@@ -1,5 +1,5 @@
-#include "epidemiology/abm/random_number_generator.h"
 #include "epidemiology/abm/time.h"
+#include "epidemiology/utils/random_number_generator.h"
 #include <algorithm>
 #include <array>
 #include <numeric>

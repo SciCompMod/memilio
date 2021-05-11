@@ -1,9 +1,9 @@
 #include "epidemiology/abm/migration_rules.h"
 #include "epidemiology/abm/person.h"
 #include "epidemiology/abm/location.h"
-#include "epidemiology/abm/random_number_generator.h"
 #include "epidemiology/abm/random_events.h"
 #include "epidemiology/abm/location.h"
+#include "epidemiology/utils/random_number_generator.h"
 
 #include <random>
 
