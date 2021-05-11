@@ -130,7 +130,7 @@ TEST(TestLocation, interact)
 
     //test should work identically work with any age
     epi::AbmAgeGroup age = epi::AbmAgeGroup(epi::UniformIntDistribution<int>()(0, int(epi::AbmAgeGroup::Count) - 1));
-    epi::GlobalInfectionParameters params(epi::AbmAgeGroup::Count);
+    epi::GlobalInfectionParameters params;
     params.set<epi::CarrierToInfected>({{epi::AbmAgeGroup::Count}, 0.});
     params.get<epi::CarrierToInfected>()[{age}] = 0.5;
     params.set<epi::CarrierToRecovered>({{epi::AbmAgeGroup::Count}, 0.});
@@ -188,7 +188,7 @@ TEST(TestLocation, interact)
         EXPECT_EQ(location.interact(carrier, dt, params), epi::InfectionState::Recovered_Carrier);
 
         EXPECT_CALL(mock_exponential_dist.get_mock(), invoke).Times(1).WillOnce(Return(0.11));
-        EXPECT_EQ(location.interact(carrier, dt, {epi::AbmAgeGroup::Count}), epi::InfectionState::Carrier);
+        EXPECT_EQ(location.interact(carrier, dt, params), epi::InfectionState::Carrier);
     }
 
     for (auto&& infected_state : {epi::InfectionState::Infected_Detected, epi::InfectionState::Infected_Undetected}) {
@@ -226,7 +226,7 @@ TEST(TestPerson, interact)
     auto person   = epi::Person(location, epi::InfectionState::Infected_Detected, epi::AbmAgeGroup::Age15to34);
     location.add_person(person);
     auto dt = epi::seconds(8640); //0.1 days
-    location.begin_step(dt, {epi::AbmAgeGroup::Coun});
+    location.begin_step(dt, {});
 
     //setup rng mock so the person has a state transition
     ScopedMockDistribution<testing::StrictMock<MockDistribution<epi::ExponentialDistribution<double>>>>
@@ -235,7 +235,7 @@ TEST(TestPerson, interact)
     EXPECT_CALL(mock_exponential_dist.get_mock(), invoke).Times(1).WillOnce(Return(0.09));
     EXPECT_CALL(mock_discrete_dist.get_mock(), invoke).Times(1).WillOnce(Return(0));
 
-    auto infection_parameters = epi::GlobalInfectionParameters(epi::AbmAgeGroup::Coun);
+    auto infection_parameters = epi::GlobalInfectionParameters();
     person.interact(dt, infection_parameters);
     EXPECT_EQ(person.get_infection_state(), epi::InfectionState::Recovered_Infected);
     EXPECT_EQ(location.get_subpopulation(epi::InfectionState::Recovered_Infected), 1);
@@ -256,9 +256,9 @@ TEST(TestPerson, interact_exposed)
     location.add_person(infected3);
     auto person = epi::Person(location, epi::InfectionState::Susceptible, epi::AbmAgeGroup::Age15to34);
     location.add_person(person);
-    location.begin_step(epi::hours(1), {epi::AbmAgeGroup::Coun});
+    location.begin_step(epi::hours(1), {});
 
-    auto infection_parameters              = epi::GlobalInfectionParameters(epi::AbmAgeGroup::Count);
+    auto infection_parameters = epi::GlobalInfectionParameters();
     infection_parameters.set<epi::IncubationPeriod>({{epi::AbmAgeGroup::Count}, 2.});
 
     //setup rng mock so the person becomes exposed

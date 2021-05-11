@@ -86,6 +86,7 @@ struct ParameterTagTraits {
     {
         return Tag::get_default(std::forward<Ts>(args)...);
     }
+
     template <class Dummy = Tag, class... Ts>
     static std::enable_if_t<
         !has_get_default_member_function<Dummy, Ts...>::value && std::is_default_constructible<Type>::value, Type>
@@ -164,29 +165,45 @@ namespace details
     };
 
     //defines value = true if predicate defines value=true for all types in parameter pack
-    template <template <class> class Pred, class... Tail>
+    template <template <class...> class Pred, class... Tail>
     struct AllOf;
 
-    template <template <class> class Pred>
+    template <template <class...> class Pred>
     struct AllOf<Pred> : public std::true_type {
     };
 
-    template <template <class> class Pred, class Head, class... Tail>
+    template <template <class...> class Pred, class Head, class... Tail>
     struct AllOf<Pred, Head, Tail...> {
         static const constexpr bool value = Pred<Head>::value && AllOf<Pred, Tail...>::value;
     };
 
     //defines value = true if predicate defines value=true for any type in parameter pack
-    template <template <class> class Pred, class... Tail>
+    template <template <class...> class Pred, class... Tail>
     struct AnyOf;
 
-    template <template <class> class Pred>
+    template <template <class...> class Pred>
     struct AnyOf<Pred> : public std::false_type {
     };
 
-    template <template <class> class Pred, class Head, class... Tail>
+    template <template <class...> class Pred, class Head, class... Tail>
     struct AnyOf<Pred, Head, Tail...> {
         static const constexpr bool value = Pred<Head>::value || AnyOf<Pred, Tail...>::value;
+    };
+
+    //for X = template<T1, T2> => BindTail<X, A>::type<B> = X<B, A>
+    template<template<class...> class F, class... Tail>
+    struct BindTail
+    {
+        template<class... Head>
+        using type = F<Head..., Tail...>;
+    };
+
+    //for template<T1, T2> X => BindHead<X, A>::type<B> = X<A, B>
+    template<template<class...> class F, class... Head>
+    struct BindHead
+    {
+        template<class... Tail>
+        using type = F<Head..., Tail...>;
     };
 
     // call std::get<i>(tup).check_constraints() for all i.
@@ -236,9 +253,8 @@ class ParameterSet
 {
 public:
     /**
-     * @brief default constructor
-     *
-     * exists if all parameters are default constructible
+     * @brief non-initializing default constructor.
+     * exists if all parameters are default constructible.
      */
     template <
         class Dummy = void,
@@ -249,13 +265,29 @@ public:
 
     /**
      * @brief default initializing constructor
-     * exists if all parameters have get_default.
-     * Arguments get forwarded to get_default of parameters
+     * Initializes each parameter using either the get_default function defined in the parameter tag or the default constructor.
+     * this constructor exists if all parameters have get_default() without arguments or a default constructor.
      */
-    template <class... T,
-              class = std::enable_if_t<(sizeof...(T)==0) || !details::AnyOf<is_no_default_init_tag, T...>::value, void>>
-    ParameterSet(T&&... args)
-        : m_tup(ParameterTagTraits<Tags>::get_default(std::forward<T>(args)...)...)
+    template <class Dummy = void,
+              class       = std::enable_if_t<
+                  details::AllOf<has_get_default_member_function, ParameterTagTraits<Tags>...>::value, Dummy>>
+    ParameterSet()
+        : m_tup(ParameterTagTraits<Tags>::get_default()...)
+    {
+    }
+
+    /**
+     * @brief default initializing constructor.
+     * Initializes each parameter using either the get_default function defined in the parameter tag or the default constructor.
+     * this constructor exists if all parameters have get_default(args...) with the same number of arguments or a default constructor.
+     * Arguments get forwarded to get_default of parameters.
+     */
+    template <
+        class T1, class... TN,
+        class = std::enable_if_t<details::AllOf<details::BindTail<has_get_default_member_function, T1, TN...>::template type,
+                                                ParameterTagTraits<Tags>...>::value>>
+    explicit ParameterSet(T1&& arg1, TN&&... argn)
+        : m_tup(ParameterTagTraits<Tags>::get_default(arg1, argn...)...)
     {
     }
 

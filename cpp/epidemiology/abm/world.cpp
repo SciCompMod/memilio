@@ -38,7 +38,7 @@ void World::interaction(TimePoint /*t*/, TimeSpan dt)
 
 void World::migration(TimePoint t, TimeSpan dt)
 {
-    using migration_rule   = LocationType (*)(const Person&, TimePoint, TimeSpan, const MigrationParameters&);
+    using migration_rule   = LocationType (*)(const Person&, TimePoint, TimeSpan, const AbmMigrationParameters&);
     migration_rule rules[] = {&return_home_when_recovered,
                               &go_to_hospital,
                               &go_to_icu,

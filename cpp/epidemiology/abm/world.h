@@ -30,8 +30,9 @@ public:
      * create a World.
      * @param params parameters of the infection that are the same everywhere in the world.
      */
-    World(const GlobalInfectionParameters& params = {AbmAgeGroup::Count})
+    World(const GlobalInfectionParameters& params = {})
         : m_infection_parameters(params)
+        , m_migration_parameters()
     {
     }
 
@@ -86,7 +87,7 @@ private:
     std::vector<std::unique_ptr<Person>> m_persons;
     std::vector<std::unique_ptr<Location>> m_locations;
     GlobalInfectionParameters m_infection_parameters;
-    MigrationParameters m_migration_parameters;
+    AbmMigrationParameters m_migration_parameters;
 };
 
 } // namespace epi

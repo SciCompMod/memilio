@@ -14,81 +14,81 @@ namespace epi
 struct IncubationPeriod
 {
     using Type = CustomIndexArray<double, AbmAgeGroup>;
-    static Type get_default(epi::Index<AbmAgeGroup> size)
+    static Type get_default()
     {
-        return Type({size}, 1.);
+        return Type({AbmAgeGroup::Count}, 1.);
     }
 };
 
 struct SusceptibleToExposedByCarrier
 {
     using Type = CustomIndexArray<double, AbmAgeGroup>;
-    static Type get_default(epi::Index<AbmAgeGroup> size)
+    static Type get_default()
     {
-        return Type({size}, 1.);
+        return Type({AbmAgeGroup::Count}, 1.);
     }
 };
 
 struct SusceptibleToExposedByInfected
 {
     using Type = CustomIndexArray<double, AbmAgeGroup>;
-    static Type get_default(epi::Index<AbmAgeGroup> size)
+    static Type get_default()
     {
-        return Type({size}, 1.);
+        return Type({AbmAgeGroup::Count}, 1.);
     }
 };
 
 struct CarrierToInfected
 {
     using Type = CustomIndexArray<double, AbmAgeGroup>;
-    static Type get_default(epi::Index<AbmAgeGroup> size)
+    static Type get_default()
     {
-        return Type({size}, 1.);
+        return Type({AbmAgeGroup::Count}, 1.);
     }
 };
 
 struct CarrierToRecovered
 {
     using Type = CustomIndexArray<double, AbmAgeGroup>;
-    static Type get_default(epi::Index<AbmAgeGroup> size)
+    static Type get_default()
     {
-        return Type({size}, 1.);
+        return Type({AbmAgeGroup::Count}, 1.);
     }
 };
 
 struct InfectedToRecovered
 {
     using Type = CustomIndexArray<double, AbmAgeGroup>;
-    static Type get_default(epi::Index<AbmAgeGroup> size)
+    static Type get_default()
     {
-        return Type({size}, 1.);
+        return Type({AbmAgeGroup::Count}, 1.);
     }
 };
 
 struct InfectedToDead
 {
     using Type = CustomIndexArray<double, AbmAgeGroup>;
-    static Type get_default(epi::Index<AbmAgeGroup> size)
+    static Type get_default()
     {
-        return Type({size}, 1.);
+        return Type({AbmAgeGroup::Count}, 1.);
     }
 };
 
 struct RecoveredToSusceptible
 {
     using Type = CustomIndexArray<double, AbmAgeGroup>;
-    static Type get_default(epi::Index<AbmAgeGroup> size)
+    static Type get_default()
     {
-        return Type({size}, 1.);
+        return Type({AbmAgeGroup::Count}, 1.);
     }
 };
 
 struct DetectInfection
 {
     using Type = CustomIndexArray<double, AbmAgeGroup>;
-    static Type get_default(epi::Index<AbmAgeGroup> size)
+    static Type get_default()
     {
-        return Type({size}, 0.5);
+        return Type({AbmAgeGroup::Count}, 0.5);
     }
 };
 
@@ -144,31 +144,35 @@ struct HospitalizationRate {
     using Type = CustomIndexArray<double, AbmAgeGroup>;
     static auto get_default()
     {
-        return CustomIndexArray<double, AbmAgeGroup>(1.0);
+        return CustomIndexArray<double, AbmAgeGroup>(AbmAgeGroup::Count, 1.0);
     }
 };
 struct IcuRate {
     using Type = CustomIndexArray<double, AbmAgeGroup>;
     static auto get_default()
     {
-        return CustomIndexArray<double, AbmAgeGroup>(1.0);
+        return CustomIndexArray<double, AbmAgeGroup>(AbmAgeGroup::Count, 1.0);
     }
 };
 struct SocialEventRate {
     using Type = CustomIndexArray<double, AbmAgeGroup>;
     static auto get_default()
     {
-        return CustomIndexArray<double, AbmAgeGroup>(1.0);
+        return CustomIndexArray<double, AbmAgeGroup>(AbmAgeGroup::Count, 1.0);
     }
 };
 struct BasicShoppingRate {
     using Type = CustomIndexArray<double, AbmAgeGroup>;
     static auto get_default()
     {
-        return CustomIndexArray<double, AbmAgeGroup>(1.0);
+        return CustomIndexArray<double, AbmAgeGroup>(AbmAgeGroup::Count, 1.0);
     }
 };
-using MigrationParameters =
+
+/**
+ * parameters that control the migration between locations.
+ */
+using AbmMigrationParameters =
     ParameterSet<LockdownDate, HospitalizationRate, IcuRate, SocialEventRate, BasicShoppingRate>;
 
 } // namespace epi

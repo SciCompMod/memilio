@@ -10,7 +10,7 @@
 namespace epi
 {
 
-LocationType random_migration(const Person& person, TimePoint t, TimeSpan dt, const MigrationParameters& params)
+LocationType random_migration(const Person& person, TimePoint t, TimeSpan dt, const AbmMigrationParameters& params)
 {
     auto current_loc     = person.get_location().get_type();
     auto make_transition = [current_loc](auto l) {
@@ -25,7 +25,7 @@ LocationType random_migration(const Person& person, TimePoint t, TimeSpan dt, co
     return current_loc;
 }
 
-LocationType go_to_school(const Person& person, TimePoint t, TimeSpan /*dt*/, const MigrationParameters& params)
+LocationType go_to_school(const Person& person, TimePoint t, TimeSpan /*dt*/, const AbmMigrationParameters& params)
 {
     auto current_loc = person.get_location().get_type();
     if (current_loc == LocationType::Home && t < params.get<LockdownDate>() && t.day_of_week() < 5 &&
@@ -39,7 +39,7 @@ LocationType go_to_school(const Person& person, TimePoint t, TimeSpan /*dt*/, co
     return current_loc;
 }
 
-LocationType go_to_work(const Person& person, TimePoint t, TimeSpan /*dt*/, const MigrationParameters& params)
+LocationType go_to_work(const Person& person, TimePoint t, TimeSpan /*dt*/, const AbmMigrationParameters& params)
 {
     auto current_loc = person.get_location().get_type();
 
@@ -55,7 +55,7 @@ LocationType go_to_work(const Person& person, TimePoint t, TimeSpan /*dt*/, cons
     return current_loc;
 }
 
-LocationType go_to_shop(const Person& person, TimePoint t, TimeSpan dt, const MigrationParameters& params)
+LocationType go_to_shop(const Person& person, TimePoint t, TimeSpan dt, const AbmMigrationParameters& params)
 {
     auto current_loc = person.get_location().get_type();
     //leave
@@ -72,7 +72,7 @@ LocationType go_to_shop(const Person& person, TimePoint t, TimeSpan dt, const Mi
     return current_loc;
 }
 
-LocationType go_to_event(const Person& person, TimePoint t, TimeSpan dt, const MigrationParameters& params)
+LocationType go_to_event(const Person& person, TimePoint t, TimeSpan dt, const AbmMigrationParameters& params)
 {
     auto current_loc = person.get_location().get_type();
     //leave
@@ -91,7 +91,7 @@ LocationType go_to_event(const Person& person, TimePoint t, TimeSpan dt, const M
     return current_loc;
 }
 
-LocationType go_to_hospital(const Person& person, TimePoint /*t*/, TimeSpan dt, const MigrationParameters& params)
+LocationType go_to_hospital(const Person& person, TimePoint /*t*/, TimeSpan dt, const AbmMigrationParameters& params)
 {
     auto current_loc = person.get_location().get_type();
     if (person.get_infection_state() == InfectionState::Infected_Detected) {
@@ -101,7 +101,7 @@ LocationType go_to_hospital(const Person& person, TimePoint /*t*/, TimeSpan dt, 
     return current_loc;
 }
 
-LocationType go_to_icu(const Person& person, TimePoint /*t*/, TimeSpan dt, const MigrationParameters& params)
+LocationType go_to_icu(const Person& person, TimePoint /*t*/, TimeSpan dt, const AbmMigrationParameters& params)
 {
     auto current_loc = person.get_location().get_type();
     if (current_loc == LocationType::Hospital) {
@@ -111,7 +111,7 @@ LocationType go_to_icu(const Person& person, TimePoint /*t*/, TimeSpan dt, const
 }
 
 LocationType return_home_when_recovered(const Person& person, TimePoint /*t*/, TimeSpan /*dt*/,
-                                        const MigrationParameters& /*params*/)
+                                        const AbmMigrationParameters& /*params*/)
 {
     auto current_loc = person.get_location().get_type();
     if ((current_loc == LocationType::Hospital || current_loc == LocationType::ICU) &&

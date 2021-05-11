@@ -24,43 +24,43 @@ class Person;
 /**
  * completely random migration to any other location.
  */
-LocationType random_migration(const Person& p, TimePoint t, TimeSpan dt, const MigrationParameters& params);
+LocationType random_migration(const Person& p, TimePoint t, TimeSpan dt, const AbmMigrationParameters& params);
 
 /**
  * school age children go to school in the morning and return later in the day.
  */
-LocationType go_to_school(const Person& p, TimePoint t, TimeSpan dt, const MigrationParameters& params);
+LocationType go_to_school(const Person& p, TimePoint t, TimeSpan dt, const AbmMigrationParameters& params);
 
 /**
  * working age adults go to work in the morning and return later in the day.
  */
-LocationType go_to_work(const Person& p, TimePoint t, TimeSpan dt, const MigrationParameters& params);
+LocationType go_to_work(const Person& p, TimePoint t, TimeSpan dt, const AbmMigrationParameters& params);
 
 /**
  * people go to the shop outside work/school except on sunday.
  */
-LocationType go_to_shop(const Person& p, TimePoint t, TimeSpan dt, const MigrationParameters& params);
+LocationType go_to_shop(const Person& p, TimePoint t, TimeSpan dt, const AbmMigrationParameters& params);
 
 /**
  * people go to social events outside work/school.
  */
-LocationType go_to_event(const Person& p, TimePoint t, TimeSpan dt, const MigrationParameters& params);
+LocationType go_to_event(const Person& p, TimePoint t, TimeSpan dt, const AbmMigrationParameters& params);
 
 /**
  * infected people may be hospitalized.
  */
-LocationType go_to_hospital(const Person& p, TimePoint t, TimeSpan dt, const MigrationParameters& params);
+LocationType go_to_hospital(const Person& p, TimePoint t, TimeSpan dt, const AbmMigrationParameters& params);
 
 /**
  * people in the hospital may be put in intensive care.
  */
-LocationType go_to_icu(const Person& p, TimePoint t, TimeSpan dt, const MigrationParameters& params);
+LocationType go_to_icu(const Person& p, TimePoint t, TimeSpan dt, const AbmMigrationParameters& params);
 
 /**
  * people in the hospital/icu return home when they recover.
  */
 LocationType return_home_when_recovered(const Person& person, TimePoint t, TimeSpan dt,
-                                        const MigrationParameters& params);
+                                        const AbmMigrationParameters& params);
 /**@}*/
 
 } // namespace epi
