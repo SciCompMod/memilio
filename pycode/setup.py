@@ -78,7 +78,7 @@ setup(
             'getjhdata = epidemiology.epidata.getJHData:main',
             'getspaindata = epidemiology.epidata.getSpainData:main',
             'getdividata = epidemiology.epidata.getDIVIData:main',
-            'getalldata = epidemiology.epidata.getAllData:main',
+            'getsimdata = epidemiology.epidata.getSimulationData:main',
             'cleandata = epidemiology.epidata.cleanData:main',
             'getrkiestimation = epidemiology.epidata.getRKIDatawithEstimations:main',
             'getcommutermigration = epidemiology.epidata.commuter_migration_bfa:main'
