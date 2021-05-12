@@ -181,7 +181,7 @@ test-py:
     - getjhdata --help
     - getspaindata --help
     - getdividata --help
-    - getsimdata --help
+    - getalldata --help
     - cleandata --help
   artifacts:
     reports:
