@@ -43,6 +43,24 @@ class TestGetSimulationData(fake_filesystem_unittest.TestCase):
         mock_vaccine.assert_called()
         mock_vaccine.assert_called_with(False, "json", self.path)
 
+        mock_agep.assert_called()
+        mock_agep.assert_called_with(False, "json", self.path)
+
+        mock_popul.assert_called()
+        mock_popul.assert_called_with(False, "json", self.path)
+
+        mock_rki.assert_called()
+        mock_rki.assert_called_with(False, "json", self.path, dd.defaultDict['fill_dates'], dd.defaultDict['make_plot'],
+                                    dd.defaultDict['moving_average'], dd.defaultDict['split_berlin'])
+
+        mock_divi.assert_called()
+        mock_divi.assert_called_with(False, "json", self.path, dd.defaultDict['end_date'], dd.defaultDict['start_date'],
+                                     dd.defaultDict['update_data'])
+
+
+
+
+
 
 
 
