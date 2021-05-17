@@ -177,7 +177,7 @@ class Test_getDataIntoPandasDataFrame(fake_filesystem_unittest.TestCase):
         assert update == dd.defaultDict['update_data']
 
         [read_data, out_form, out_folder, end_date, fill_dates, make_plot, moving_average, split_berlin, start_date,
-         update] = gd.cli("all")
+         update] = gd.cli("sim")
 
         assert read_data == dd.defaultDict['read_data']
         assert out_form == dd.defaultDict['out_form']
@@ -220,7 +220,7 @@ class Test_getDataIntoPandasDataFrame(fake_filesystem_unittest.TestCase):
         test_args = ["prog", '-u', '-r']
         with patch.object(sys, 'argv', test_args):
             with self.assertRaises(SystemExit) as cm:
-                gd.cli("all")
+                gd.cli("sim")
 
             the_exception = cm.exception
             self.assertEqual(the_exception.code, "You called the program with '--read-from-disk' and '--update'." +
@@ -330,7 +330,7 @@ class Test_getDataIntoPandasDataFrame(fake_filesystem_unittest.TestCase):
 
         with patch.object(sys, 'argv', test_args):
             [read_data, out_form, out_folder, end_date, fill_dates, make_plot, moving_average, split_berlin, start_date,
-             update] = gd.cli("all")
+             update] = gd.cli("sim")
 
             assert read_data == dd.defaultDict['read_data']
             assert out_form == 'json'

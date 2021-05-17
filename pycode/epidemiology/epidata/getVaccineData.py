@@ -92,7 +92,7 @@ def get_vaccine_data(read_data=dd.defaultDict['read_data'],
 def main():
     """! Main program entry."""
 
-    [read_data, out_form, out_folder] = gd.cli("population")
+    [read_data, out_form, out_folder] = gd.cli("vaccine")
     get_vaccine_data(read_data, out_form, out_folder)
 
 
