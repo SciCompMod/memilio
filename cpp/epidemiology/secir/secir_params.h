@@ -818,9 +818,9 @@ public:
             m_risksymp.set_distribution(risksymp);
         }
 
-        ///@{
         /**
          * risk of infection from symptomatic cases increases as test and trace capacity is exceeded.
+         * @{
          */
         void set_test_and_trace_max_risk_from_symptomatic(const UncertainValue& value)
         {
@@ -834,7 +834,7 @@ public:
         {
             m_tnt_max_risksymp.set_distribution(distribution);
         }
-        ///@}
+        /**@}*/
 
 
         /**
@@ -966,9 +966,9 @@ public:
             return m_risksymp;
         }
 
-        ///@{
         /**
          * risk of infection from symptomatic cases increases as test and trace capacity is exceeded.
+         * @{
          */
         UncertainValue const& get_test_and_trace_max_risk_from_symptomatic() const
         {
@@ -978,7 +978,7 @@ public:
         {
              return m_tnt_max_risksymp;
         }
-        ///@}
+        /**@}*/
 
 
         /**
@@ -1161,9 +1161,9 @@ public:
         return m_contact_patterns;
     }
 
-    ///@{
     /**
      * capacity to test and trace contacts of infected for quarantine per day.
+     * @{
      */
     void set_test_and_trace_capacity(const UncertainValue& value)
     {
@@ -1177,11 +1177,11 @@ public:
     {
         m_test_and_trace_capacity.set_distribution(distribution);
     }
-    ///@}
+    /**@}*/
 
-    ///@{
     /**
      * capacity to test and trace contacts of infected for quarantine per day.
+     * @{
      */
     UncertainValue const& get_test_and_trace_capacity() const
     {
@@ -1191,7 +1191,7 @@ public:
     {
         return m_test_and_trace_capacity;
     }
-    ///@}
+    /**@}*/
 
     std::vector<StageTimes> times;
     std::vector<Probabilities> probabilities;

@@ -97,6 +97,8 @@ add_library(epidemiology
     epidemiology/abm/location_type.h
     epidemiology/abm/parameters.h
     epidemiology/abm/parameters.cpp
+    epidemiology/abm/migration_rules.cpp
+    epidemiology/abm/migration_rules.h
     epidemiology/secir/parameter_studies.h
     epidemiology/secir/analyze_result.h
     epidemiology/secir/analyze_result.cpp

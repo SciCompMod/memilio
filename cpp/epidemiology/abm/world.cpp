@@ -1,6 +1,7 @@
 #include "epidemiology/abm/world.h"
 #include "epidemiology/abm/person.h"
 #include "epidemiology/abm/location.h"
+#include "epidemiology/abm/migration_rules.h"
 #include "epidemiology/utils/random_number_generator.h"
 #include "epidemiology/utils/stl_util.h"
 
@@ -21,41 +22,46 @@ Person& World::add_person(Location& location, InfectionState state, Index<AbmAge
     return person;
 }
 
-void World::evolve(double dt)
+void World::evolve(TimePoint t, TimeSpan dt)
 {
-    begin_step(dt);
-    interaction(dt);
-    migration(dt);
+    begin_step(t, dt);
+    interaction(t, dt);
+    migration(t, dt);
 }
 
-void World::interaction(double dt)
+void World::interaction(TimePoint /*t*/, TimeSpan dt)
 {
     for (auto&& person : m_persons) {
         person->interact(dt, m_infection_parameters);
     }
 }
 
-void World::migration(double dt)
+void World::migration(TimePoint t, TimeSpan dt)
 {
-    //random migration
-    for (auto&& person : m_persons) {
-        auto u = ExponentialDistribution<double>::get_instance()();
-        if (u < dt) {
-            auto random_location_idx =
-                UniformIntDistribution<size_t>::get_instance()(size_t(0), m_locations.size() - 2);
-            //exclude the current location from the random selection
-            if (contains(m_locations.begin(), m_locations.begin() + random_location_idx, [&person](auto& e) {
-                    return e.get() == &person->get_location();
-                })) {
-                ++random_location_idx;
+    using migration_rule   = LocationType (*)(const Person&, TimePoint, TimeSpan, const AbmMigrationParameters&);
+    migration_rule rules[] = {&return_home_when_recovered,
+                              &go_to_hospital,
+                              &go_to_icu,
+                              &go_to_school,
+                              &go_to_work,
+                              &go_to_shop,
+                              &go_to_event};
+    for (auto& person : m_persons) {
+        for (auto rule : rules) {
+            auto destination_type = rule(*person, t, dt, m_migration_parameters);
+            auto destination_node =
+                std::find_if(m_locations.begin(), m_locations.end(), [destination_type](auto& location) {
+                    return location->get_type() == destination_type;
+                });
+            if (destination_node != m_locations.end() && destination_node->get() != &person->get_location()) {
+                person->migrate_to(**destination_node);
+                break;
             }
-            person->migrate_to(*m_locations[random_location_idx]);
         }
     }
-    //TODO: migration by complex rules
 }
 
-void World::begin_step(double dt)
+void World::begin_step(TimePoint /*t*/, TimeSpan dt)
 {
     for (auto&& location : m_locations) {
         location->begin_step(dt, m_infection_parameters);
