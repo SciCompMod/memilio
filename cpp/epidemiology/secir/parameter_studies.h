@@ -199,7 +199,7 @@ private:
         //sample global parameters
         auto& shared_params_model = m_graph.nodes()[0].property;
         draw_sample_infection(shared_params_model);
-        auto& shared_contacts = shared_params_model.parameters.get_contact_patterns();
+        auto& shared_contacts = shared_params_model.parameters.template get<epi::ContactPatterns>();
         shared_contacts.draw_sample();
 
         for (auto& params_node : m_graph.nodes()) {
@@ -209,10 +209,8 @@ private:
             draw_sample_demographics(params_node.property);
 
             //copy global parameters
-            node_model.parameters.set_contact_patterns(shared_contacts);
-            node_model.parameters.times = shared_params_model.parameters.times;
-            node_model.parameters.probabilities = shared_params_model.parameters.probabilities;
-            node_model.parameters.set_seasonality(shared_params_model.parameters.get_seasonality());
+            node_model.parameters = shared_params_model.parameters;
+
             node_model.apply_constraints();
             
             sim_graph.add_node(params_node.id, node_model, m_t0, m_dt_integration);

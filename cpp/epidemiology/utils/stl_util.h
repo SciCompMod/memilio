@@ -117,8 +117,13 @@ auto make_range(Iter1&& iter1, Iter2&& iter2)
 /**
  * template meta programming helper type 
  */
-template <class... Ts>
-using void_t = void;
+//see std::void_t (c++ 17)
+template <typename... Ts>
+struct make_void {
+    typedef void type;
+};
+template <typename... Ts>
+using void_t = typename make_void<Ts...>::type;
 
 /**
  * meta function to check type T for an existing stream output operator "<<"

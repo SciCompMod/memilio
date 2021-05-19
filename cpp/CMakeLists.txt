@@ -40,6 +40,8 @@ add_library(epidemiology
     epidemiology/model/compartmentalmodel.h
     epidemiology/model/populations.h
     epidemiology/model/simulation.h
+    epidemiology/secir/age_group.h
+    epidemiology/secir/infection_state.h
     epidemiology/secir/damping.cpp
     epidemiology/secir/damping.h
     epidemiology/secir/secir_params.h

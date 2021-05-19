@@ -68,13 +68,13 @@ TEST(TestMigration, nodeEvolve)
     Model model(1);
     auto& params = model.parameters;
 
-    auto& cm = static_cast<epi::ContactMatrixGroup&>(model.parameters.get_contact_patterns());
+    auto& cm = static_cast<epi::ContactMatrixGroup&>(model.parameters.get<epi::ContactPatterns>());
     cm[0].get_minimum()(0, 0) = 5.0;
 
     model.populations[{epi::AgeGroup(0), epi::InfectionState::Exposed}] = 100;
     model.populations.set_difference_from_total({epi::AgeGroup(0), epi::InfectionState::Susceptible}, 1000);
-    params.times[0].set_serialinterval(1.5);
-    params.times[0].set_incubation(2.0);
+    params.get<epi::SerialInterval>()[(epi::AgeGroup)0] = 1.5;
+    params.get<epi::IncubationTime>()[(epi::AgeGroup)0] = 2.;
     params.apply_constraints();
 
     double t0 = 2.835;
@@ -93,17 +93,17 @@ TEST(TestMigration, edgeApplyMigration)
     //setup nodes
     Model model(1);
     auto& params = model.parameters;
-    auto& cm = static_cast<epi::ContactMatrixGroup&>(model.parameters.get_contact_patterns());
+    auto& cm = static_cast<epi::ContactMatrixGroup&>(model.parameters.get<epi::ContactPatterns>());
     cm[0].get_baseline()(0, 0) = 5.0;
 
     model.populations[{epi::AgeGroup(0), epi::InfectionState::Infected}] = 10;
     model.populations.set_difference_from_total({epi::AgeGroup(0), epi::InfectionState::Susceptible}, 1000);
-    params.probabilities[0].set_infection_from_contact(1.0);
-    params.probabilities[0].set_risk_from_symptomatic(1.0);
-    params.probabilities[0].set_carrier_infectability(1.0);
-    params.probabilities[0].set_hospitalized_per_infectious(0.5);
-    params.times[0].set_serialinterval(1.5);
-    params.times[0].set_incubation(2.0);
+    params.get<epi::InfectionProbabilityFromContact>()[(epi::AgeGroup)0] = 1.;
+    params.get<epi::RiskOfInfectionFromSympomatic>()[(epi::AgeGroup)0] = 1.;
+    params.get<epi::RelativeCarrierInfectability>()[(epi::AgeGroup)0] = 1.;
+    params.get<epi::HospitalizedCasesPerInfectious>()[(epi::AgeGroup)0] = 0.5;
+    params.get<epi::SerialInterval>()[(epi::AgeGroup)0] = 1.5;
+    params.get<epi::IncubationTime>()[(epi::AgeGroup)0] = 2.;
     params.apply_constraints();
     double t = 3.125;
     epi::ModelNode<epi::Simulation<Model>> node1(model, t);

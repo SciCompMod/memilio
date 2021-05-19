@@ -3,19 +3,13 @@
 
 #include <utility>
 #include <tuple>
+#include <epidemiology/utils/stl_util.h>
 
 namespace epi
 {
 
 namespace details
-{
-    //see std::void_t (c++ 17)
-    template <typename... Ts>
-    struct make_void {
-        typedef void type;
-    };
-    template <typename... Ts>
-    using void_t = typename make_void<Ts...>::type;
+{  
 
     //helpers for get_default
     template <class X, class = void, class... Args>
@@ -28,27 +22,6 @@ namespace details
         : std::true_type
     {};
 
-    //helpers for check_constraint
-    template <class T, class X = void>
-    struct has_check_constraints_member_function
-        : std::false_type
-    {};
-
-    template <class T>
-    struct has_check_constraints_member_function<T ,details::void_t<decltype(T::check_constraints(std::declval<typename T::Type const&>()))>>
-        : std::true_type
-    {};
-
-    //helpers for apply_constraints
-    template <class T, class X = void>
-    struct has_apply_constraints_member_function
-        : std::false_type
-    {};
-
-    template <class T>
-    struct has_apply_constraints_member_function<T, details::void_t<decltype(std::declval<T>().apply_constraints())>>
-        : std::true_type
-    {};
 } // namespace details
 
 /**
@@ -57,20 +30,6 @@ namespace details
  */
 template <class T, class... Args>
 using has_get_default_member_function = details::has_get_default_member_function<T, void, Args...>;
-
-/**
- * @brief check whether a check_constraints function exists
- * @tparam The type to check for the existence of the member function
- */
-template <class T>
-using has_check_constraints_member_function = details::has_check_constraints_member_function<T>;
-
-/**
- * @brief check whether a apply_constraints function exists
- * @tparam The type to check for the existence of the member function
- */
-template <class T>
-using has_apply_constraints_member_function = details::has_apply_constraints_member_function<T>;
 
 /**
  * @brief the properties of a parameter
@@ -135,19 +94,6 @@ namespace details
             return m_value;
         }
 
-        //check_constraints either with check_constraints member function or fallback on (void)()
-        template <class Dummy = Tag>
-        std::enable_if_t<has_check_constraints_member_function<Dummy>::value, void> check_constraints() const
-        {
-            Tag::check_constraints(m_value);
-        }
-        template <class Dummy = Tag>
-        std::enable_if_t<
-            !has_check_constraints_member_function<Dummy>::value, void>
-        check_constraints() const
-        {
-        }
-
         template<class T>
         bool operator==(const TaggedParameter<T>& other)
         {
@@ -190,12 +136,15 @@ namespace details
         static const constexpr bool value = Pred<Head>::value || AnyOf<Pred, Tail...>::value;
     };
 
-    //for X = template<T1, T2> => BindTail<X, A>::type<B> = X<B, A>
+    //for X = template<T1, T2> X => BindTail<X, A>::type<B> = X<B, A>
     template<template<class...> class F, class... Tail>
     struct BindTail
     {
         template<class... Head>
-        using type = F<Head..., Tail...>;
+        struct type : F<Head..., Tail...> {};
+        //according to the standard, this must be a real type, can't be an alias of F.
+        //An alias is immediately replaced and discarded when the compiler sees it, but this could leave the template F with some 
+        //parameters bound and some free, which is not allowed. A struct that derives from F is persistent during compilation.
     };
 
     //for template<T1, T2> X => BindHead<X, A>::type<B> = X<A, B>
@@ -203,26 +152,10 @@ namespace details
     struct BindHead
     {
         template<class... Tail>
-        using type = F<Head..., Tail...>;
+        struct type : F<Head..., Tail...> {};
+        //can't be an alias, see BindTail
     };
-
-    // call std::get<i>(tup).check_constraints() for all i.
-    //
-    // In C++17 this is just a fold expression
-    template<std::size_t I = 0, typename... Tp>
-    inline typename std::enable_if<I == sizeof...(Tp), void>::type
-    check_constraints_for_each_parameter(std::tuple<Tp...> const&)
-    {
-    }
-
-    template<std::size_t I = 0, typename... Tp>
-    inline typename std::enable_if<I < sizeof...(Tp), void>::type
-    check_constraints_for_each_parameter(std::tuple<Tp...> const& t)
-    {
-        std::get<I>(t).check_constraints();
-        check_constraints_for_each_parameter<I + 1, Tp...>(t);
-    }
-
+    
 } // namespace details
 
 /**
@@ -364,11 +297,6 @@ public:
     bool operator!=(const ParameterSet& b) const 
     {
         return m_tup != b.m_tup; 
-    }
-
-    void check_constraints() const
-    {
-        details::check_constraints_for_each_parameter(m_tup);
     }
 
 private:
