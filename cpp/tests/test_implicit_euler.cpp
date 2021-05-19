@@ -32,17 +32,17 @@ TEST(TestImplicitEuler, compareOneTimeStep)
     epi::SecirModel model(1);
     auto& params = model.parameters;
 
-    params.times[0].set_incubation(tinc);
-    params.times[0].set_infectious_mild(tinfmild);
-    params.times[0].set_serialinterval(tserint);
-    params.times[0].set_hospitalized_to_home(thosp2home);
-    params.times[0].set_home_to_hospitalized(thome2hosp);
-    params.times[0].set_hospitalized_to_icu(thosp2icu);
-    params.times[0].set_icu_to_home(ticu2home);
-    params.times[0].set_infectious_asymp(tinfasy);
-    params.times[0].set_icu_to_death(ticu2death);
+    params.get<epi::IncubationTime>()[(epi::AgeGroup)0] = tinc;
+    params.get<epi::InfectiousTimeMild>()[(epi::AgeGroup)0] = tinfmild;
+    params.get<epi::SerialInterval>()[(epi::AgeGroup)0] = tserint;
+    params.get<epi::HospitalizedToHomeTime>()[(epi::AgeGroup)0] = thosp2home;
+    params.get<epi::HomeToHospitalizedTime>()[(epi::AgeGroup)0] = thome2hosp;
+    params.get<epi::HospitalizedToICUTime>()[(epi::AgeGroup)0] = thosp2icu;
+    params.get<epi::ICUToHomeTime>()[(epi::AgeGroup)0] = ticu2home;
+    params.get<epi::InfectiousTimeAsymptomatic>()[(epi::AgeGroup)0] = tinfasy;
+    params.get<epi::ICUToDeathTime>()[(epi::AgeGroup)0] = ticu2death;
 
-    epi::ContactMatrixGroup& contact_matrix = params.get_contact_patterns();
+    epi::ContactMatrixGroup& contact_matrix = params.get<epi::ContactPatterns>();
     contact_matrix[0]                       = epi::ContactMatrix(Eigen::MatrixXd::Constant(1, 1, cont_freq));
     contact_matrix.add_damping(0.7, epi::SimulationTime(30.));
 
@@ -56,12 +56,12 @@ TEST(TestImplicitEuler, compareOneTimeStep)
     model.populations[{epi::AgeGroup(0), epi::InfectionState::Dead}] = nb_dead_t0;
     model.populations.set_difference_from_total({epi::AgeGroup(0), epi::InfectionState::Susceptible}, nb_total_t0);
 
-    params.probabilities[0].set_infection_from_contact(1.0);
-    params.probabilities[0].set_asymp_per_infectious(alpha);
-    params.probabilities[0].set_risk_from_symptomatic(beta);
-    params.probabilities[0].set_hospitalized_per_infectious(rho);
-    params.probabilities[0].set_icu_per_hospitalized(theta);
-    params.probabilities[0].set_dead_per_icu(delta);
+    params.get<epi::InfectionProbabilityFromContact>()[(epi::AgeGroup)0] = 1.;
+    params.get<epi::AsymptoticCasesPerInfectious>()[(epi::AgeGroup)0] = alpha;
+    params.get<epi::RiskOfInfectionFromSympomatic>()[(epi::AgeGroup)0] = beta;
+    params.get<epi::HospitalizedCasesPerInfectious>()[(epi::AgeGroup)0] = rho;
+    params.get<epi::ICUCasesPerHospitalized>()[(epi::AgeGroup)0] = theta;
+    params.get<epi::DeathsPerHospitalized>()[(epi::AgeGroup)0] = delta;
 
     epi::DerivFunction dummy_f; // only required for explicit time integrators
 

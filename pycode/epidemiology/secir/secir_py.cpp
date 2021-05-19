@@ -151,6 +151,23 @@ void bind_Population(py::module& m, std::string const& name)
         bind_templated_members_Population<C, Base, Cats...>(c);
 }
 
+template <class ParameterSet>
+void bind_ParameterSet(py::module& m, std::string const& name)
+{
+    py::class_<ParameterSet> c(m, name.c_str());
+    epi::foreach_tag<ParameterSet>([&c](auto t) {
+        using Tag = decltype(t);
+
+        //CAUTION: This requires ParameterTag::name() to be unique within the ParameterSet
+        c.def_property(
+            Tag::name().c_str(), [](const ParameterSet& self) -> auto& { return self.template get<Tag>(); },
+            [](ParameterSet& self, typename Tag::Type const& v) {
+                self.template get<Tag>() = v;
+            },
+            py::return_value_policy::reference_internal);
+    });
+}
+
 /*
  * @brief bind a compartmental model for any Populations and Parameters class
  */
@@ -160,8 +177,8 @@ void bind_CompartmentalModel(py::module& m, std::string const& name)
     using Model = epi::CompartmentalModel<Populations, Parameters>;
     py::class_<Model>(m, name.c_str())
             .def(py::init<Populations const&, Parameters const&>())
-            .def("apply_constraints", &Model::apply_constraints)
-            .def("check_constraints", &Model::check_constraints)
+            .def("apply_constraints", &Model::template apply_constraints<Parameters>)
+            .def("check_constraints", &Model::template check_constraints<Parameters>)
             .def("get_initial_values", &Model::get_initial_values)
             .def_property("populations",
                 [](const Model& self) -> auto& { return self.populations; },
@@ -781,191 +798,17 @@ PYBIND11_MODULE(_secir, m)
     py::class_<epi::AgeGroup, epi::Index<epi::AgeGroup>>(m, "AgeGroup")
         .def(py::init<size_t>());
 
-    py::class_<epi::SecirParams::StageTimes>(m, "StageTimes")
-        .def(py::init<>())
-        .def("set_incubation", py::overload_cast<double>(&epi::SecirParams::StageTimes::set_incubation))
-        .def("set_incubation",
-             py::overload_cast<const epi::ParameterDistribution&>(&epi::SecirParams::StageTimes::set_incubation))
-        .def("set_infectious_mild", py::overload_cast<double>(&epi::SecirParams::StageTimes::set_infectious_mild))
-        .def("set_infectious_mild",
-             py::overload_cast<const epi::ParameterDistribution&>(&epi::SecirParams::StageTimes::set_infectious_mild))
-        .def("set_serialinterval", py::overload_cast<double>(&epi::SecirParams::StageTimes::set_serialinterval))
-        .def("set_serialinterval",
-             py::overload_cast<const epi::ParameterDistribution&>(&epi::SecirParams::StageTimes::set_serialinterval))
-        .def("set_hospitalized_to_home",
-             py::overload_cast<double>(&epi::SecirParams::StageTimes::set_hospitalized_to_home))
-        .def("set_hospitalized_to_home", py::overload_cast<const epi::ParameterDistribution&>(
-                                             &epi::SecirParams::StageTimes::set_hospitalized_to_home))
-        .def("set_home_to_hospitalized",
-             py::overload_cast<double>(&epi::SecirParams::StageTimes::set_home_to_hospitalized))
-        .def("set_home_to_hospitalized", py::overload_cast<const epi::ParameterDistribution&>(
-                                             &epi::SecirParams::StageTimes::set_home_to_hospitalized))
-        .def("set_hospitalized_to_icu",
-             py::overload_cast<double>(&epi::SecirParams::StageTimes::set_hospitalized_to_icu))
-        .def("set_hospitalized_to_icu", py::overload_cast<const epi::ParameterDistribution&>(
-                                            &epi::SecirParams::StageTimes::set_hospitalized_to_icu))
-        .def("set_icu_to_home", py::overload_cast<double>(&epi::SecirParams::StageTimes::set_icu_to_home))
-        .def("set_icu_to_home",
-             py::overload_cast<const epi::ParameterDistribution&>(&epi::SecirParams::StageTimes::set_icu_to_home))
-        .def("set_infectious_asymp", py::overload_cast<double>(&epi::SecirParams::StageTimes::set_infectious_asymp))
-        .def("set_infectious_asymp",
-             py::overload_cast<const epi::ParameterDistribution&>(&epi::SecirParams::StageTimes::set_infectious_asymp))
-        .def("set_icu_to_death", py::overload_cast<double>(&epi::SecirParams::StageTimes::set_icu_to_death))
-        .def("set_icu_to_death",
-             py::overload_cast<const epi::ParameterDistribution&>(&epi::SecirParams::StageTimes::set_icu_to_death))
-
-        .def("get_incubation", py::overload_cast<>(&epi::SecirParams::StageTimes::get_incubation),
-             py::return_value_policy::reference_internal)
-        .def("get_incubation", py::overload_cast<>(&epi::SecirParams::StageTimes::get_incubation, py::const_),
-             py::return_value_policy::reference_internal)
-        .def("get_infectious_mild", py::overload_cast<>(&epi::SecirParams::StageTimes::get_infectious_mild),
-             py::return_value_policy::reference_internal)
-        .def("get_infectious_mild", py::overload_cast<>(&epi::SecirParams::StageTimes::get_infectious_mild, py::const_),
-             py::return_value_policy::reference_internal)
-        .def("get_serialinterval", py::overload_cast<>(&epi::SecirParams::StageTimes::get_serialinterval),
-             py::return_value_policy::reference_internal)
-        .def("get_serialinterval", py::overload_cast<>(&epi::SecirParams::StageTimes::get_serialinterval, py::const_),
-             py::return_value_policy::reference_internal)
-        .def("get_hospitalized_to_home", py::overload_cast<>(&epi::SecirParams::StageTimes::get_hospitalized_to_home),
-             py::return_value_policy::reference_internal)
-        .def("get_hospitalized_to_home",
-             py::overload_cast<>(&epi::SecirParams::StageTimes::get_hospitalized_to_home, py::const_),
-             py::return_value_policy::reference_internal)
-        .def("get_home_to_hospitalized", py::overload_cast<>(&epi::SecirParams::StageTimes::get_home_to_hospitalized),
-             py::return_value_policy::reference_internal)
-        .def("get_home_to_hospitalized",
-             py::overload_cast<>(&epi::SecirParams::StageTimes::get_home_to_hospitalized, py::const_),
-             py::return_value_policy::reference_internal)
-        .def("get_hospitalized_to_icu", py::overload_cast<>(&epi::SecirParams::StageTimes::get_hospitalized_to_icu),
-             py::return_value_policy::reference_internal)
-        .def("get_hospitalized_to_icu",
-             py::overload_cast<>(&epi::SecirParams::StageTimes::get_hospitalized_to_icu, py::const_),
-             py::return_value_policy::reference_internal)
-        .def("get_icu_to_home", py::overload_cast<>(&epi::SecirParams::StageTimes::get_icu_to_home),
-             py::return_value_policy::reference_internal)
-        .def("get_icu_to_home", py::overload_cast<>(&epi::SecirParams::StageTimes::get_icu_to_home, py::const_),
-             py::return_value_policy::reference_internal)
-        .def("get_infectious_asymp", py::overload_cast<>(&epi::SecirParams::StageTimes::get_infectious_asymp),
-             py::return_value_policy::reference_internal)
-        .def("get_infectious_asymp",
-             py::overload_cast<>(&epi::SecirParams::StageTimes::get_infectious_asymp, py::const_),
-             py::return_value_policy::reference_internal)
-        .def("get_icu_to_dead", py::overload_cast<>(&epi::SecirParams::StageTimes::get_icu_to_dead),
-             py::return_value_policy::reference_internal)
-        .def("get_icu_to_dead", py::overload_cast<>(&epi::SecirParams::StageTimes::get_icu_to_dead, py::const_),
-             py::return_value_policy::reference_internal);
-
-
-    py::class_<typename epi::SecirParams::Probabilities>(m, "Probabilities")
-        .def(py::init<>())
-        .def("set_infection_from_contact",
-             py::overload_cast<double>(&epi::SecirParams::Probabilities::set_infection_from_contact))
-        .def("set_infection_from_contact", py::overload_cast<const epi::ParameterDistribution&>(
-                                               &epi::SecirParams::Probabilities::set_infection_from_contact))
-        .def("set_carrier_infectability",
-             py::overload_cast<double>(&epi::SecirParams::Probabilities::set_carrier_infectability))
-        .def("set_carrier_infectability", py::overload_cast<const epi::ParameterDistribution&>(
-                                              &epi::SecirParams::Probabilities::set_carrier_infectability))
-        .def("set_asymp_per_infectious",
-             py::overload_cast<double>(&epi::SecirParams::Probabilities::set_asymp_per_infectious))
-        .def("set_asymp_per_infectious", py::overload_cast<const epi::ParameterDistribution&>(
-                                             &epi::SecirParams::Probabilities::set_asymp_per_infectious))
-        .def("set_risk_from_symptomatic",
-             py::overload_cast<double>(&epi::SecirParams::Probabilities::set_risk_from_symptomatic))
-        .def("set_risk_from_symptomatic", py::overload_cast<const epi::ParameterDistribution&>(
-                                              &epi::SecirParams::Probabilities::set_risk_from_symptomatic))
-        .def("set_hospitalized_per_infectious",
-             py::overload_cast<double>(&epi::SecirParams::Probabilities::set_hospitalized_per_infectious))
-        .def("set_hospitalized_per_infectious", py::overload_cast<const epi::ParameterDistribution&>(
-                                                    &epi::SecirParams::Probabilities::set_hospitalized_per_infectious))
-        .def("set_icu_per_hospitalized",
-             py::overload_cast<double>(&epi::SecirParams::Probabilities::set_icu_per_hospitalized))
-        .def("set_icu_per_hospitalized", py::overload_cast<const epi::ParameterDistribution&>(
-                                             &epi::SecirParams::Probabilities::set_icu_per_hospitalized))
-        .def("set_dead_per_icu", py::overload_cast<double>(&epi::SecirParams::Probabilities::set_dead_per_icu))
-        .def("set_dead_per_icu",
-             py::overload_cast<const epi::ParameterDistribution&>(&epi::SecirParams::Probabilities::set_dead_per_icu))
-
-        .def("get_infection_from_contact",
-             py::overload_cast<>(&epi::SecirParams::Probabilities::get_infection_from_contact),
-             py::return_value_policy::reference_internal)
-        .def("get_infection_from_contact",
-             py::overload_cast<>(&epi::SecirParams::Probabilities::get_infection_from_contact, py::const_),
-             py::return_value_policy::reference_internal)
-        .def("get_carrier_infectability",
-             py::overload_cast<>(&epi::SecirParams::Probabilities::get_carrier_infectability),
-             py::return_value_policy::reference_internal)
-        .def("get_carrier_infectability",
-             py::overload_cast<>(&epi::SecirParams::Probabilities::get_carrier_infectability, py::const_),
-             py::return_value_policy::reference_internal)
-        .def("get_asymp_per_infectious",
-             py::overload_cast<>(&epi::SecirParams::Probabilities::get_asymp_per_infectious),
-             py::return_value_policy::reference_internal)
-        .def("get_asymp_per_infectious",
-             py::overload_cast<>(&epi::SecirParams::Probabilities::get_asymp_per_infectious, py::const_),
-             py::return_value_policy::reference_internal)
-        .def("get_risk_from_symptomatic",
-             py::overload_cast<>(&epi::SecirParams::Probabilities::get_risk_from_symptomatic),
-             py::return_value_policy::reference_internal)
-        .def("get_test_and_trace_max_risk_from_symptomatic",
-             py::overload_cast<>(&epi::SecirParams::Probabilities::get_test_and_trace_max_risk_from_symptomatic),
-             py::return_value_policy::reference_internal)
-        .def("get_risk_from_symptomatic",
-             py::overload_cast<>(&epi::SecirParams::Probabilities::get_risk_from_symptomatic, py::const_),
-             py::return_value_policy::reference_internal)
-        .def("get_hospitalized_per_infectious",
-             py::overload_cast<>(&epi::SecirParams::Probabilities::get_hospitalized_per_infectious),
-             py::return_value_policy::reference_internal)
-        .def("get_hospitalized_per_infectious",
-             py::overload_cast<>(&epi::SecirParams::Probabilities::get_hospitalized_per_infectious, py::const_),
-             py::return_value_policy::reference_internal)
-        .def("get_icu_per_hospitalized",
-             py::overload_cast<>(&epi::SecirParams::Probabilities::get_icu_per_hospitalized),
-             py::return_value_policy::reference_internal)
-        .def("get_icu_per_hospitalized",
-             py::overload_cast<>(&epi::SecirParams::Probabilities::get_icu_per_hospitalized, py::const_),
-             py::return_value_policy::reference_internal)
-        .def("get_dead_per_icu", py::overload_cast<>(&epi::SecirParams::Probabilities::get_dead_per_icu),
-             py::return_value_policy::reference_internal)
-        .def("get_dead_per_icu", py::overload_cast<>(&epi::SecirParams::Probabilities::get_dead_per_icu, py::const_),
-             py::return_value_policy::reference_internal);
-
-    py::class_<typename epi::SecirParams>(m, "SecirParams")
-        .def(py::init<size_t>())
-        .def_readwrite("times", &epi::SecirParams::times)
-        .def_readwrite("probabilities", &epi::SecirParams::probabilities)
-        .def("get_icu_capacity", py::overload_cast<>(&epi::SecirParams::get_icu_capacity),
-             py::return_value_policy::reference_internal)
-        .def("get_icu_capacity", py::overload_cast<>(&epi::SecirParams::get_icu_capacity, py::const_),
-             py::return_value_policy::reference_internal)
-        .def("set_icu_capacity", py::overload_cast<double>(&epi::SecirParams::set_icu_capacity))
-        .def("set_icu_capacity",
-             py::overload_cast<const epi::ParameterDistribution&>(&epi::SecirParams::set_icu_capacity))
-        .def("get_start_day", &epi::SecirParams::get_start_day)
-        .def("set_start_day", &epi::SecirParams::set_start_day)
-        .def("get_seasonality", py::overload_cast<>(&epi::SecirParams::get_seasonality),
-             py::return_value_policy::reference_internal)
-        .def("get_seasonality", py::overload_cast<>(&epi::SecirParams::get_seasonality, py::const_),
-             py::return_value_policy::reference_internal)
-        .def("set_seasonality", py::overload_cast<double>(&epi::SecirParams::set_seasonality))
-        .def("set_seasonality",
-             py::overload_cast<const epi::ParameterDistribution&>(&epi::SecirParams::set_seasonality))
-        .def("get_test_and_trace_capacity", py::overload_cast<>(&epi::SecirParams::get_test_and_trace_capacity),
-             py::return_value_policy::reference_internal)
-        .def("get_test_and_trace_capacity", py::overload_cast<>(&epi::SecirParams::get_test_and_trace_capacity, py::const_),
-             py::return_value_policy::reference_internal)
-        .def("set_test_and_trace_capacity", py::overload_cast<double>(&epi::SecirParams::set_test_and_trace_capacity))
-        .def("set_test_and_trace_capacity",
-             py::overload_cast<const epi::ParameterDistribution&>(&epi::SecirParams::set_test_and_trace_capacity))
-        .def("check_constraints", &epi::SecirParams::check_constraints)
-        .def("apply_constraints", &epi::SecirParams::apply_constraints)
-        .def("get_contact_patterns", py::overload_cast<>(&epi::SecirParams::get_contact_patterns),
-             py::return_value_policy::reference_internal)
-        .def("get_contact_patterns", py::overload_cast<>(&epi::SecirParams::get_contact_patterns, py::const_),
-             py::return_value_policy::reference_internal);
-
     bind_MultiIndex<epi::AgeGroup, epi::InfectionState>(m, "Index_Agegroup_InfectionState");
     bind_CustomIndexArray<epi::UncertainValue, epi::AgeGroup, epi::InfectionState>(m, "SecirPopulationArray");
+    bind_CustomIndexArray<epi::UncertainValue, epi::AgeGroup>(m, "AgeGroupArray");
+
+    bind_ParameterSet<epi::SecirParamsBase>(m, "SecirParamsBase");
+
+    py::class_<epi::SecirParams, epi::SecirParamsBase>(m, "SecirParams")
+        .def(py::init<epi::AgeGroup>())
+        .def("check_constraints", &epi::SecirParams::check_constraints)
+        .def("apply_constraints", &epi::SecirParams::apply_constraints);
+
     bind_Population<epi::AgeGroup, epi::InfectionState>(m, "SecirPopulation");
 
     using SecirPopulations = epi::Populations<epi::AgeGroup, epi::InfectionState>;

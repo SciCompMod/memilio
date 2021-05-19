@@ -484,7 +484,7 @@ void write_graph(const Graph<Model, MigrationParameters>& graph, const std::stri
     int num_nodes  = static_cast<int>(graph.nodes().size());
     int num_edges  = static_cast<int>(graph.edges().size());
     int num_groups = static_cast<int>(
-        graph.nodes()[0].property.parameters.get_contact_patterns().get_cont_freq_mat().get_num_groups());
+        graph.nodes()[0].property.parameters.template get<epi::ContactPatterns>().get_cont_freq_mat().get_num_groups());
     int num_compart = static_cast<int>(graph.nodes()[0].property.populations.get_num_compartments()) / num_groups;
 
     std::vector<TixiDocumentHandle> edge_handles(num_nodes);
@@ -609,31 +609,31 @@ void extrapolate_rki_results(std::vector<Model>& model, const std::string& dir, 
         for (size_t group = 0; group < age_ranges.size(); group++) {
 
             t_car_to_inf[county].push_back(
-                static_cast<int>(2 * (model[county].parameters.times[group].get_incubation() -
-                                      model[county].parameters.times[group].get_serialinterval())));
+                static_cast<int>(2 * (model[county].parameters.template get<IncubationTime>()[AgeGroup(group)] -
+                                      model[county].parameters.template get<SerialInterval>()[AgeGroup(group)])));
             t_car_to_rec[county].push_back(static_cast<int>(
-                t_car_to_inf[county][group] + 0.5 * model[county].parameters.times[group].get_infectious_mild()));
+                t_car_to_inf[county][group] + 0.5 * model[county].parameters.template get<InfectiousTimeMild>()[AgeGroup(group)]));
             t_exp_to_car[county].push_back(
-                static_cast<int>(2 * model[county].parameters.times[group].get_serialinterval() -
-                                 model[county].parameters.times[group].get_incubation()));
+                static_cast<int>(2 * model[county].parameters.template get<SerialInterval>()[AgeGroup(group)] -
+                                 model[county].parameters.template get<IncubationTime>()[AgeGroup(group)]));
             t_inf_to_rec[county].push_back(
-                static_cast<int>(model[county].parameters.times[group].get_infectious_mild()));
+                static_cast<int>(model[county].parameters.template get<InfectiousTimeMild>()[AgeGroup(group)]));
             t_inf_to_hosp[county].push_back(
-                static_cast<int>(model[county].parameters.times[group].get_home_to_hospitalized()));
+                static_cast<int>(model[county].parameters.template get<HomeToHospitalizedTime>()[AgeGroup(group)]));
             t_hosp_to_rec[county].push_back(
-                static_cast<int>(model[county].parameters.times[group].get_hospitalized_to_home()));
+                static_cast<int>(model[county].parameters.template get<HospitalizedToHomeTime>()[AgeGroup(group)]));
             t_hosp_to_icu[county].push_back(
-                static_cast<int>(model[county].parameters.times[group].get_hospitalized_to_icu()));
-            t_icu_to_dead[county].push_back(static_cast<int>(model[county].parameters.times[group].get_icu_to_dead()));
+                static_cast<int>(model[county].parameters.template get<HospitalizedToICUTime>()[AgeGroup(group)]));
+            t_icu_to_dead[county].push_back(static_cast<int>(model[county].parameters.template get<ICUToDeathTime>()[AgeGroup(group)]));
 
-            mu_C_R[county].push_back(model[county].parameters.probabilities[group].get_asymp_per_infectious());
-            mu_I_H[county].push_back(model[county].parameters.probabilities[group].get_hospitalized_per_infectious());
-            mu_H_U[county].push_back(model[county].parameters.probabilities[group].get_icu_per_hospitalized());
+            mu_C_R[county].push_back(model[county].parameters.template get<AsymptoticCasesPerInfectious>()[AgeGroup(group)]);
+            mu_I_H[county].push_back(model[county].parameters.template get<HospitalizedCasesPerInfectious>()[AgeGroup(group)]);
+            mu_H_U[county].push_back(model[county].parameters.template get<ICUCasesPerHospitalized>()[AgeGroup(group)]);
 
-            sum_mu_I_U[county] += model[county].parameters.probabilities[group].get_icu_per_hospitalized() *
-                                  model[county].parameters.probabilities[group].get_hospitalized_per_infectious();
-            mu_I_U[county].push_back(model[county].parameters.probabilities[group].get_icu_per_hospitalized() *
-                                     model[county].parameters.probabilities[group].get_hospitalized_per_infectious());
+            sum_mu_I_U[county] += model[county].parameters.template get<ICUCasesPerHospitalized>()[AgeGroup(group)] *
+                                  model[county].parameters.template get<HospitalizedCasesPerInfectious>()[AgeGroup(group)];
+            mu_I_U[county].push_back(model[county].parameters.template get<ICUCasesPerHospitalized>()[AgeGroup(group)] *
+                                     model[county].parameters.template get<HospitalizedCasesPerInfectious>()[AgeGroup(group)]);
         }
     }
 

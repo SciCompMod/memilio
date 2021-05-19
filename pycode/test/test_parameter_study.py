@@ -8,33 +8,35 @@ class Test_ParameterStudy(unittest.TestCase):
     def _get_model(self):
         model = secir.SecirModel(1)
 
-        model.parameters.times[0].set_incubation(5.2)
-        model.parameters.times[0].set_infectious_mild(6)
-        model.parameters.times[0].set_serialinterval(4.2)
-        model.parameters.times[0].set_hospitalized_to_home(12)
-        model.parameters.times[0].set_home_to_hospitalized(5)
-        model.parameters.times[0].set_hospitalized_to_icu(2)
-        model.parameters.times[0].set_icu_to_home(8)
-        model.parameters.times[0].set_icu_to_death(5)
+        A0 = secir.AgeGroup(0)
 
-        model.parameters.get_contact_patterns().cont_freq_mat[0] = secir.ContactMatrix(np.r_[0.5])
-        model.parameters.get_contact_patterns().cont_freq_mat.add_damping(secir.Damping(np.r_[0.7], 30.0))
+        model.parameters.IncubationTime[A0] = 5.2
+        model.parameters.InfectiousTimeMild[A0] = 6
+        model.parameters.SerialInterval[A0] = 4.2
+        model.parameters.HospitalizedToHomeTime[A0] = 12
+        model.parameters.HomeToHospitalizedTime[A0] = 5
+        model.parameters.HospitalizedToICUTime[A0] = 2
+        model.parameters.ICUToHomeTime[A0] = 8
+        model.parameters.ICUToDeathTime[A0] = 5
 
-        model.populations[secir.AgeGroup(0), secir.Index_InfectionState(State.Exposed)] = 100
-        model.populations[secir.AgeGroup(0), secir.Index_InfectionState(State.Carrier)] = 50
-        model.populations[secir.AgeGroup(0), secir.Index_InfectionState(State.Infected)] = 50
-        model.populations[secir.AgeGroup(0), secir.Index_InfectionState(State.Hospitalized)] = 20
-        model.populations[secir.AgeGroup(0), secir.Index_InfectionState(State.ICU)] = 10
-        model.populations[secir.AgeGroup(0), secir.Index_InfectionState(State.Recovered)] = 10
-        model.populations[secir.AgeGroup(0), secir.Index_InfectionState(State.Dead)] = 0
-        model.populations.set_difference_from_total((secir.AgeGroup(0), secir.Index_InfectionState(State.Susceptible)), 10000)
+        model.parameters.ContactPatterns.cont_freq_mat[0] = secir.ContactMatrix(np.r_[0.5])
+        model.parameters.ContactPatterns.cont_freq_mat.add_damping(secir.Damping(np.r_[0.7], 30.0))
 
-        model.parameters.probabilities[0].set_infection_from_contact(1.0)
-        model.parameters.probabilities[0].set_asymp_per_infectious(0.09)
-        model.parameters.probabilities[0].set_risk_from_symptomatic(0.25)
-        model.parameters.probabilities[0].set_hospitalized_per_infectious(0.2)
-        model.parameters.probabilities[0].set_icu_per_hospitalized(0.25)
-        model.parameters.probabilities[0].set_dead_per_icu(0.3)
+        model.populations[A0, secir.Index_InfectionState(State.Exposed)] = 100
+        model.populations[A0, secir.Index_InfectionState(State.Carrier)] = 50
+        model.populations[A0, secir.Index_InfectionState(State.Infected)] = 50
+        model.populations[A0, secir.Index_InfectionState(State.Hospitalized)] = 20
+        model.populations[A0, secir.Index_InfectionState(State.ICU)] = 10
+        model.populations[A0, secir.Index_InfectionState(State.Recovered)] = 10
+        model.populations[A0, secir.Index_InfectionState(State.Dead)] = 0
+        model.populations.set_difference_from_total((A0, secir.Index_InfectionState(State.Susceptible)), 10000)
+
+        model.parameters.InfectionProbabilityFromContact[A0] = 1.0
+        model.parameters.AsymptoticCasesPerInfectious[A0] = 0.09
+        model.parameters.RiskOfInfectionFromSympomatic[A0] = 0.25
+        model.parameters.HospitalizedCasesPerInfectious[A0] = 0.2
+        model.parameters.ICUCasesPerHospitalized[A0] = 0.25
+        model.parameters.DeathsPerHospitalized[A0] = 0.3
 
         model.apply_constraints()
         return model
