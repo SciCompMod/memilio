@@ -1,6 +1,6 @@
-import React, {Component} from 'react';
-import {Alert, Button, ButtonGroup, UncontrolledTooltip} from 'reactstrap';
-import {Link, withRouter} from 'react-router-dom';
+import React, { Component } from 'react';
+import { Alert, Button, ButtonGroup, UncontrolledTooltip } from 'reactstrap';
+import { Link, withRouter } from 'react-router-dom';
 import browserDetect from 'browser-detect';
 
 import * as _ from 'lodash';
@@ -10,10 +10,11 @@ import 'dayjs/locale/de';
 import SimpleTimeline from '~/components/SimpleTimeline';
 import RtChart from '~/components/Graphs/RtChart';
 import HeatMap from '~/common/heat-map';
-import {fixUrl} from '~/common/utils';
+import { fixUrl } from '~/common/utils';
 
 import './styles.scss';
-import {deepCopy} from '../../common/utils';
+import { deepCopy } from '../../common/utils';
+import { json } from 'd3-fetch';
 
 /**
  *  This component is the main page displayed. It shows the reproduction vales RT and RT relative
@@ -43,7 +44,7 @@ class MainPage extends Component {
 
     this.state = {
       dataset: 'absolute',
-      selected: {rs: '', bez: '', gen: ''},
+      selected: { rs: '', bez: '', gen: '' },
 
       // Tablets are not considered mobile devices, so we check for Android and iOS additionally
       mobileWarningVisible:
@@ -60,8 +61,16 @@ class MainPage extends Component {
     document.title = `SARS-CoV-2 Reproduktionszahlen`;
 
     // fetch rt data
-    const data = await fetch('assets/rt.rel.districts.json').then((res) => res.json());
+    const res = await fetch('assets/rt.rel.districts.json').then(async (res) => {
+      const date = res.headers.get('Last-Modified');
+      const data = await res.json();
+      return {
+        date,
+        data
+      };
+    });
 
+    const data = res.data;
     const keys = Object.keys(data);
 
     const districts = _.uniq(data.DistrictID);
@@ -122,20 +131,26 @@ class MainPage extends Component {
       );
     }
 
+    console.log(new Date(res.date));
     this.setState({
-      selected: {rs: '00000', bez: 'Bundesrepublik', gen: 'Deutschland'},
+      selected: { rs: '00000', bez: 'Bundesrepublik', gen: 'Deutschland' },
       timestamps: timestamps,
       timestampOffset: first_timestamp_idx,
-      timestring: dayjs(timestamps[timestamps.length - 1])
+      lastUpdated: `${dayjs(new Date(res.date))
         .locale('de')
-        .format('DD MMMM YYYY'),
+        .format('DD MMMM YYYY HH:mm')} Uhr`,
+      timestring: `${dayjs(timestamps[timestamps.length - 1])
+        .add(1, 'd')
+        .startOf('d')
+        .locale('de')
+        .format('DD MMMM YYYY HH:mm')} Uhr`,
       //timestep: timestamps.findIndex((x) => x === first_timestamp),
       timestep: timestamps.length - 1,
       start: timestamps.findIndex((x) => x === first_timestamp),
       end: timestamps.length,
     });
 
-    this.map = new HeatMap('map', {showLegend: true});
+    this.map = new HeatMap('map', { showLegend: true });
     this.map.setLegendMinMax(0, 2);
 
     // subscribe to events from map
@@ -146,7 +161,7 @@ class MainPage extends Component {
           break;
         case 'reset':
           this.setState({
-            selected: {rs: '00000', bez: 'Bundesrepublik', gen: 'Deutschland'},
+            selected: { rs: '00000', bez: 'Bundesrepublik', gen: 'Deutschland' },
           });
           break;
         default:
@@ -168,7 +183,11 @@ class MainPage extends Component {
       const timestamp = this.state.timestamps[timestep];
       this.setState({
         timestep,
-        timestring: dayjs(timestamp).locale('de').format('DD MMMM YYYY'),
+        timestring: `${dayjs(timestamp)
+          .add(1, 'd')
+          .startOf('d')
+          .locale('de')
+          .format('DD MMMM YYYY HH:mm')} Uhr`
       });
       this.map.setValues(this.getData(timestamp));
     }
@@ -266,7 +285,7 @@ class MainPage extends Component {
   }
 
   render() {
-    const {url} = fixUrl(this.props.match);
+    const { url } = fixUrl(this.props.match);
     return (
       <div className="main">
         <Alert
@@ -274,7 +293,7 @@ class MainPage extends Component {
           color="warning"
           isOpen={this.state.mobileWarningVisible}
           toggle={this.onDismiss.bind(this)}
-          style={{textAlign: 'center'}}
+          style={{ textAlign: 'center' }}
         >
           <b>
             This website is supposed to be used on a computer. Mobile performance might not be optimal. If you have
@@ -308,7 +327,7 @@ class MainPage extends Component {
                 color="primary"
                 onClick={() => {
                   this.setState({
-                    selected: {rs: '00000', bez: 'Bundesrepublik', gen: 'Deutschland'},
+                    selected: { rs: '00000', bez: 'Bundesrepublik', gen: 'Deutschland' },
                   });
                 }}
               >
@@ -323,7 +342,7 @@ class MainPage extends Component {
             {this.state.dataset === 'incidence' ? (
               <RtChart
                 id="incidence"
-                series={[{key: 'incidence_week', label: '7-Tage Inzidenz'}]}
+                series={[{ key: 'incidence_week', label: '7-Tage Inzidenz' }]}
                 data={this.getChartData()}
                 district={this.state.selected.rs}
                 dataset={this.state.dataset}
@@ -332,8 +351,8 @@ class MainPage extends Component {
               <RtChart
                 id="rt"
                 series={[
-                  {key: 'rt', label: 'Absolute Reproduktionszahl'},
-                  {key: 'rt_rel', label: 'Relative Reproduktionszahl', isHidden: this.state.selected.rs === '00000'},
+                  { key: 'rt', label: 'Absolute Reproduktionszahl' },
+                  { key: 'rt_rel', label: 'Relative Reproduktionszahl', isHidden: this.state.selected.rs === '00000' },
                 ]}
                 data={this.getChartData()}
                 district={this.state.selected.rs}
@@ -350,7 +369,6 @@ class MainPage extends Component {
               value={this.state.timestep}
               onChange={this.update}
             />
-            <div className="timestring">{this.state.timestring}</div>
             <div className="options">
               <ButtonGroup>
                 <Button
@@ -395,6 +413,12 @@ class MainPage extends Component {
           </div>
           <div className="map-wrapper">
             <div className="map" id="map" />
+            <div className="timestring">
+              <div className="label">Anzeigedatum:</div>
+              <div className="time">{this.state.timestring}</div>
+              <div className="label">Letzte Ak­tu­a­li­sie­rung:</div>
+              <div className="time">{this.state.lastUpdated}</div>
+            </div>
           </div>
         </div>
       </div>
