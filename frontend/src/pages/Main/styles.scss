@@ -38,10 +38,21 @@
       width: 90%;
       margin: auto;
       padding-bottom: 1rem;
+      position: relative;
 
       .map {
         width: 100%;
         height: 100%;
+      }
+
+      .timestring {
+        position: absolute;
+        width: 100%;
+        text-align: right;
+        font-size: 0.75em;
+        .label {
+          font-weight: bold;
+        }
       }
     }
   }
