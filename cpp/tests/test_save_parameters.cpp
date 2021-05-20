@@ -190,7 +190,7 @@ TEST(TestSaveParameters, compareParameterStudy)
                            *read_model.parameters.get<epi::ICUCasesPerHospitalized>()[i].get_distribution());
 
         ASSERT_THAT(contact.get_cont_freq_mat(), testing::ContainerEq(read_contact.get_cont_freq_mat()));
-        ASSERT_EQ(contact.get_dampings(), contact.get_dampings());
+        ASSERT_EQ(contact.get_dampings(), read_contact.get_dampings());
     }
 }
 

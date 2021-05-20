@@ -111,6 +111,7 @@ TEST(TestUncertain, uncertain_matrix)
     EXPECT_EQ(uncertain_mat.get_cont_freq_mat()[0].get_baseline()(1, 1), 4);
     EXPECT_EQ(uncertain_mat.get_cont_freq_mat()[0].get_dampings()[0].get_coeffs()(1, 1), 0.7);
 
+    //test sampling of dampings with and without accumulation
     uncertain_mat.get_dampings().emplace_back(epi::UncertainValue(0.), epi::DampingLevel(0), epi::DampingType(0),
                                               epi::SimulationTime(3.0), std::vector<size_t>(1, size_t(0)),
                                               Eigen::VectorXd::Constant(2, 1.0));
