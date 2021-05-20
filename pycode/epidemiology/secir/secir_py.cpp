@@ -706,15 +706,15 @@ PYBIND11_MODULE(_secir, m)
     contact_matrix_group_class.def_property_readonly("num_groups", &epi::ContactMatrixGroup::get_num_groups);
 
     py::class_<epi::DampingSampling>(m, "DampingSampling")
-        .def(py::init([](const epi::UncertainValue& val, int lvl, int typ, double time,
+        .def(py::init([](const epi::UncertainValue& value, int level, int type, double time,
                          const std::vector<size_t>& matrices, const Eigen::Ref<const Eigen::VectorXd>& groups) {
-                 return epi::DampingSampling(val, epi::DampingLevel(lvl), epi::DampingType(typ),
+                 return epi::DampingSampling(value, epi::DampingLevel(level), epi::DampingType(type),
                                              epi::SimulationTime(time), matrices, groups);
              }),
              py::arg("value"), py::arg("level"), py::arg("type"), py::arg("time"), py::arg("matrix_indices"),
              py::arg("group_weights"))
-        .def_property("value", py::overload_cast<>(&epi::DampingSampling::get_value),
-                      &epi::DampingSampling::set_value, py::return_value_policy::reference_internal)
+        .def_property("value", py::overload_cast<>(&epi::DampingSampling::get_value), &epi::DampingSampling::set_value,
+                      py::return_value_policy::reference_internal)
         .def_property(
             "level",
             [](const epi::DampingSampling& self) {
