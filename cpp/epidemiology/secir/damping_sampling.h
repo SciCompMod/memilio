@@ -10,12 +10,16 @@ namespace epi
 
 /**
  * randomly sample dampings for e.g. contact matrices.
- * all coefficients of the damping matrix depend on a single random value, weighted by group.
+ * All coefficients of the damping matrix depend on a single random value.
+ * The damping applies to one or more of the matrices of a DampingExpressionGroup (e.g. ContactMatrixGroup).
+ * The damping value is weighted by group (e.g. age) to be able to e.g. construct dampings that only
+ * apply to specific groups.
  */
 class DampingSampling
 {
 public:
     /**
+     * Creates a DampingSampling.  
      * @param value random value that all matrix coefficients depend on.
      * @param level level of the damping.
      * @param type type of the damping.
@@ -36,7 +40,9 @@ public:
     }
 
     /**
-     * @return random value.
+     * Get the random value.
+     * @return the random value.
+     * @{
      */
     const UncertainValue& get_value() const
     {
@@ -46,66 +52,104 @@ public:
     {
         return m_value;
     }
+    /**@}*/
+
+    /**
+     * Set the random value.
+     * @param v random value.
+     */
     void set_value(const UncertainValue& v)
     {
         m_value = v;
     }
 
     /**
+     * Get the damping level.
      * @return damping level.
      */
     DampingLevel get_level() const
     {
         return m_level;
     }
+    
+    /**
+     * Set the damping level.
+     * @param l the damping level
+     */
     void set_level(DampingLevel l)
     {
         m_level = l;
     }
 
     /**
+     * Get the damping type.
      * @return damping type.
      */
     DampingType get_type() const
     {
         return m_type;
     }
+
+    /**
+     * Set the damping type.
+     * @param t the damping type.
+     */
     void set_type(DampingType t)
     {
         m_type = t;
     }
 
     /**
-     * @return damping time.
+     * Get the time the damping becomes active.
+     * @return the damping time.
      */
     SimulationTime get_time() const
     {
         return m_time;
     }
+
+    /**
+     * Set the time the damping becomes active.
+     * @param t the damping time.
+     */
     void set_time(SimulationTime t)
     {
         m_time = t;
     }
 
     /**
-     * @return list of indices that the damping applies to.
+     * Get a list of matrix indices that the damping applies to.
+     * The indices correspond to the indices of matrix in a DampingExpressionGroup (e.g. ContactMatrixGroup).
+     * @return list of matrix indices.
      */
     const std::vector<size_t>& get_matrix_indices() const
     {
         return m_matrices;
     }
+
+    /**
+     * Set a list of matrix indices that the damping applies to.
+     * @return list of matrix indices.
+     */
     void set_matrix_indices(const std::vector<size_t>& v)
     {
         m_matrices = v;
     }
 
     /**
+     * Get the group weights.
+     * The groups correspond to e.g. age groups in the SECIR model.
      * @return weights of groups.
      */
     const Eigen::VectorXd& get_group_weights() const
     {
         return m_groups;
     }
+    /**
+     * Set the group weights.
+     * @param v a vector expression of group weights.
+     * @tparam V Eigen3 vector expression type.
+     */
     template <class V>
     void set_group_weights(const Eigen::MatrixBase<V>& v)
     {
@@ -123,6 +167,7 @@ public:
     /**
      * make the damping matrix.
      * @param make_mask function that makes a matrix from group weights.
+     * @return the full damping matrix in the shape of the mask
      */
     template <class F>
     auto make_matrix(F&& make_mask) const
@@ -131,7 +176,8 @@ public:
     }
 
     /**
-     * equality comparison.
+     * equality comparison operators. 
+     * @{
      */
     bool operator==(const DampingSampling& other) const
     {
@@ -142,6 +188,7 @@ public:
     {
         return !(*this == other);
     }
+    /**@}*/
 
 private:
     UncertainValue m_value;
