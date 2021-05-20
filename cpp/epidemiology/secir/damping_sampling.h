@@ -165,17 +165,6 @@ public:
     }
 
     /**
-     * make the damping matrix.
-     * @param make_mask function that makes a matrix from group weights.
-     * @return the full damping matrix in the shape of the mask
-     */
-    template <class F>
-    auto make_matrix(F&& make_mask) const
-    {
-        return double(m_value) * make_mask(m_groups);
-    }
-
-    /**
      * equality comparison operators. 
      * @{
      */
@@ -204,41 +193,51 @@ private:
  * does not draw new random value, just adds dampings.
  * @param damping_expression e.g. contact matrix group.
  * @param dampings sampled dampings.
- * @param make_mask functor that creates a weight matrix from group weights.
+ * @param make_mask functor that creates a matrix from damping value weighted by group.
  */
 template <class DampingExpression, class DampingSamplings, class F>
-void apply_dampings(DampingExpression& damping_expression, const DampingSamplings& dampings, F make_mask)
+void apply_dampings(DampingExpression& damping_expression, const DampingSamplings& dampings, F make_matrix)
 {
     for (auto& d : dampings) {
         for (auto& i : d.get_matrix_indices()) {
-            auto m = d.make_matrix(make_mask);
+            auto m = make_matrix(double(d.get_value()) * d.get_group_weights());
             damping_expression[i].add_damping(m, d.get_level(), d.get_type(), d.get_time());
         }
     }
 }
 
 /**
- * make a mask for contact matrices.
- * @param groups group weights.
- * @return square matrix expression.
+ * Make a mask for contact matrices.
+ * Maps the group weights vector onto a contact damping matrix according to the formula
+ * d_ij = 1 - sqrt((1 - g_i) * (1 - g_j))
+ * where d_ij is a coefficient of the matrix
+ * and g_i,g_j are coefficients of the group vector.
+ * For diagonal elements (i.e. contacts of group with itself): d_ii = g_i; 
+ * the damping of the corresponding group is applied directly. 
+ * For off diagonal elements (i.e. contacts of group with other group): d_ij between g_i and g_j; 
+ * the dampings of both groups are combined and applied equally.
+ * @param groups damping value weighted by group.
+ * @return square matrix expression of damping coefficients.
  */
 template <class V>
-auto make_contact_damping_sampling_mask(V&& groups)
+auto make_contact_damping_matrix(V&& groups)
 {
     auto ones_v = std::decay_t<V>::PlainObject::Constant(groups.size(), 1.0);
     auto prod   = (ones_v - groups) * (ones_v.transpose() - groups.transpose());
     auto ones_m = decltype(prod)::PlainObject::Constant(groups.size(), groups.size(), 1.0);
-    return ones_m - prod;
+    return ones_m - sqrt(prod.array()).matrix();
 }
 
 /**
- * make a mask for migration coefficients.
- * @param shape shape (i.e. size) of the vector.
- * @param groups group weights.
- * @return vector expression.
+ * Make a mask for migration coefficients.
+ * Maps the group weights vector onto a migration coefficient damping vector
+ * [g_0, g_0, ..., g_1, g_1, ..., g_2, ...].
+ * @param shape shape (i.e. size) of the migration coefficient vector.
+ * @param groups damping value weighted by group.
+ * @return vector expression of migration coefficient damping.
  */
 template <class V>
-auto make_migration_damping_sampling_mask(ColumnVectorShape shape, V&& groups)
+auto make_migration_damping_vector(ColumnVectorShape shape, V&& groups)
 {
     return Eigen::VectorXd::NullaryExpr(shape.size(), [shape, groups = std::forward<V>(groups)](Eigen::Index i) {
         auto num_groups       = groups.size();

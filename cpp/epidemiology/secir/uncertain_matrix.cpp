@@ -57,7 +57,7 @@ ContactMatrixGroup UncertainContactMatrix::draw_sample(bool accum)
     }
 
     epi::apply_dampings(m_cont_freq, m_dampings, [](auto&& v) {
-        return epi::make_contact_damping_sampling_mask(v);
+        return epi::make_contact_damping_matrix(v);
     });
 
     return m_cont_freq;

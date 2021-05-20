@@ -219,7 +219,7 @@ private:
         for (auto& edge : m_graph.edges()) {
             auto edge_params = edge.property;
             apply_dampings(edge_params.get_coefficients(), shared_contacts.get_dampings(), [&edge_params](auto& v) {
-                return make_migration_damping_sampling_mask(edge_params.get_coefficients().get_shape(), v);
+                return make_migration_damping_vector(edge_params.get_coefficients().get_shape(), v);
             });
             sim_graph.add_edge(edge.start_node_idx, edge.end_node_idx, edge_params);
         }

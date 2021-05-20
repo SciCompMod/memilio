@@ -3,16 +3,7 @@
 #include "matchers.h"
 #include <gtest/gtest.h>
 #include <gmock/gmock.h>
-
-TEST(TestDampingSampling, makeMatrix)
-{
-    epi::DampingSampling ds(epi::UncertainValue(5.0), epi::DampingLevel(0), epi::DampingType(0),
-                            epi::SimulationTime(1.0), {}, Eigen::VectorXd::Constant(4, 1.0));
-    ASSERT_THAT(ds.make_matrix([](auto&&) {
-        return Eigen::MatrixXd::Constant(4, 4, 0.5);
-    }),
-                MatrixNear(Eigen::MatrixXd::Constant(4, 4, 2.5)));
-}
+#include <cmath>
 
 TEST(TestDampingSampling, apply)
 {
@@ -34,7 +25,7 @@ TEST(TestDampingSampling, apply)
     auto cmg = epi::ContactMatrixGroup(2, 2);
 
     epi::apply_dampings(cmg, ds, [](auto&& v) {
-        return epi::make_contact_damping_sampling_mask(v);
+        return epi::make_contact_damping_matrix(v);
     });
 
     ASSERT_THAT(cmg[0].get_dampings(),
@@ -49,13 +40,13 @@ TEST(TestDampingSampling, apply)
 
 TEST(TestDampingSampling, contactMask)
 {
-    auto m = epi::make_contact_damping_sampling_mask((Eigen::VectorXd(2) << 0.0, 0.5).finished()).eval();
-    ASSERT_THAT(print_wrap(m), MatrixNear((Eigen::MatrixXd(2, 2) << 0.0, 0.5, 0.5, 0.75).finished()));
+    auto m = epi::make_contact_damping_matrix((Eigen::VectorXd(2) << 0.0, 0.5).finished()).eval();
+    ASSERT_THAT(print_wrap(m), MatrixNear((Eigen::MatrixXd(2, 2) << 0.0, 1-sqrt(0.5), 1-sqrt(0.5), 0.5).finished()));
 }
 
 TEST(TestDampingSampling, migrationMask)
 {
-    auto m = epi::make_migration_damping_sampling_mask(epi::ColumnVectorShape(6),
+    auto m = epi::make_migration_damping_vector(epi::ColumnVectorShape(6),
                                                        (Eigen::VectorXd(2) << 0.5, 0.25).finished())
                  .eval();
     ASSERT_THAT(print_wrap(m), MatrixNear((Eigen::VectorXd(6) << 0.5, 0.5, 0.5, 0.25, 0.25, 0.25).finished()));
