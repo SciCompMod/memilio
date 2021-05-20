@@ -13,19 +13,13 @@ namespace epi
 
 /**
  * @brief The UncertainContactMatrix class consists of a
- *        ContactMatrix and certain distributions that describe
- *        the relative and uncertain changes of diagonal and 
- *        offdiagonal values over time 
+ *        ContactMatrix with fixed baseline and uncertain Dampings. 
  * 
  * The UncertainContactMatrix class represents a matrix-style model parameter 
  * that can take a ContactMatrix value but that is subjected to a uncertainty,
- * based on contact pattern changes realized by an uncertain number and shape of dampings.
- * The uncertainty is represented by a several distributions.
- * The number of and days where contact pattern changes is characterized by two distributions.
- * The changes in diagonal entries are supposed to be at the same magnitude, its base 
- * value defined by one distribution. Their relative deviation from the base value is 
- * given by another distribution. Another distribution yields the relative deviation
- * of the offdiagonal entries with respect to their corresponding diagonals.
+ * based on contact pattern changes realized by zero or more dampings with uncertain coefficients
+ * that are sampled to modify the contacts at some points in time.
+ * @see UncertainValue
  */
 class UncertainContactMatrix
 {
@@ -65,7 +59,9 @@ public:
     ContactMatrixGroup const& get_cont_freq_mat() const;
 
     /**
+     * @brief Get a list of uncertain Dampings that are sampled and added to the contact matrix.
      * @return list of damping samplings.
+     * @{
      */
     const std::vector<DampingSampling>& get_dampings() const
     {
@@ -75,11 +71,10 @@ public:
     {
         return m_dampings;
     }
+    /**@}*/
 
     /**
-     * @brief Sets the value by sampling from the distributions
-     *
-     * If no distribution is set, the value is not changed.
+     * @brief Samples dampings and adds them to the contact matrix.
      * @param accum accumulating current and newly sampled dampings if true;
      *              default: false; removing all previously set dampings
      */
