@@ -1055,7 +1055,7 @@ DampingSampling read_damping_sampling(TixiDocumentHandle handle, const std::stri
     assert(status == SUCCESS && "Failed to read DampingSampling time.");
     int num_matrices;
     status = tixiGetVectorSize(handle, path_join(path, "MatrixIndices").c_str(), &num_matrices);
-    assert(status == SUCCESS && "Failed to read DampingSampling matrix indices.");
+    assert(status == SUCCESS && "Failed to read DampingSampling size of matrix indices.");
     double* matrices_double;
     status = tixiGetFloatVector(handle, path_join(path, "MatrixIndices").c_str(), &matrices_double, num_matrices);
     assert(status == SUCCESS && "Failed to read DampingSampling matrix indices.");
