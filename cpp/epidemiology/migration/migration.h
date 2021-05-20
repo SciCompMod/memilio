@@ -8,6 +8,7 @@
 #include "epidemiology/model/populations.h"
 #include "epidemiology/utils/compiler_diagnostics.h"
 #include "epidemiology/math/euler.h"
+#include "epidemiology/secir/contact_matrix.h"
 
 #include <cassert>
 

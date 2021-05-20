@@ -18,8 +18,8 @@ TEST(TestMigration, compareNoMigrationWithSingleIntegration)
     auto dt   = 0.5;
 
     epi::SeirModel model1;
-    model1.populations[{epi::SeirInfType::S}] = 0.90000000000000002;
-    model1.populations[{epi::SeirInfType::E}] = 0.10000000000000001;
+    model1.populations[{epi::Index<epi::SeirInfType>(epi::SeirInfType::S)}] = 0.9;
+    model1.populations[{epi::Index<epi::SeirInfType>(epi::SeirInfType::E)}] = 0.1;
     model1.populations.set_total(1000);
     model1.parameters.get<epi::ContactFrequency>().get_baseline()(0, 0) = 10;
     model1.parameters.set<epi::TransmissionRisk>(0.4);
@@ -27,7 +27,7 @@ TEST(TestMigration, compareNoMigrationWithSingleIntegration)
     model1.parameters.set<epi::StageTimeInfectiousInv>(1./10);
 
     auto model2 = model1;
-    model2.populations[{epi::SeirInfType::S}] = 1.;
+    model2.populations[{epi::Index<epi::SeirInfType>(epi::SeirInfType::S)}] = 1.;
     model2.populations.set_total(500);
 
     auto graph_sim = epi::make_migration_sim(
@@ -64,17 +64,17 @@ TEST(TestMigration, compareNoMigrationWithSingleIntegration)
 
 TEST(TestMigration, nodeEvolve)
 {
-    using Model = epi::SecirModel<epi::AgeGroup1>;
-    Model model;
+    using Model = epi::SecirModel;
+    Model model(1);
     auto& params = model.parameters;
 
-    auto& cm = static_cast<epi::ContactMatrixGroup&>(model.parameters.get_contact_patterns());
+    auto& cm = static_cast<epi::ContactMatrixGroup&>(model.parameters.get<epi::ContactPatterns>());
     cm[0].get_minimum()(0, 0) = 5.0;
 
-    model.populations[{(epi::AgeGroup1)0, epi::InfectionType::E}] = 100;
-    model.populations.set_difference_from_total(1000, (epi::AgeGroup1)0, epi::InfectionType::S);
-    params.times[0].set_serialinterval(1.5);
-    params.times[0].set_incubation(2.0);
+    model.populations[{epi::AgeGroup(0), epi::InfectionState::Exposed}] = 100;
+    model.populations.set_difference_from_total({epi::AgeGroup(0), epi::InfectionState::Susceptible}, 1000);
+    params.get<epi::SerialInterval>()[(epi::AgeGroup)0] = 1.5;
+    params.get<epi::IncubationTime>()[(epi::AgeGroup)0] = 2.;
     params.apply_constraints();
 
     double t0 = 2.835;
@@ -88,22 +88,22 @@ TEST(TestMigration, nodeEvolve)
 
 TEST(TestMigration, edgeApplyMigration)
 {
-    using Model = epi::SecirModel<epi::AgeGroup1>;
+    using Model = epi::SecirModel;
 
     //setup nodes
-    Model model;
+    Model model(1);
     auto& params = model.parameters;
-    auto& cm = static_cast<epi::ContactMatrixGroup&>(model.parameters.get_contact_patterns());
+    auto& cm = static_cast<epi::ContactMatrixGroup&>(model.parameters.get<epi::ContactPatterns>());
     cm[0].get_baseline()(0, 0) = 5.0;
 
-    model.populations[{(epi::AgeGroup1)0, epi::InfectionType::I}] = 10;
-    model.populations.set_difference_from_total(1000, (epi::AgeGroup1)0, epi::InfectionType::S);
-    params.probabilities[0].set_infection_from_contact(1.0);
-    params.probabilities[0].set_risk_from_symptomatic(1.0);
-    params.probabilities[0].set_carrier_infectability(1.0);
-    params.probabilities[0].set_hospitalized_per_infectious(0.5);
-    params.times[0].set_serialinterval(1.5);
-    params.times[0].set_incubation(2.0);
+    model.populations[{epi::AgeGroup(0), epi::InfectionState::Infected}] = 10;
+    model.populations.set_difference_from_total({epi::AgeGroup(0), epi::InfectionState::Susceptible}, 1000);
+    params.get<epi::InfectionProbabilityFromContact>()[(epi::AgeGroup)0] = 1.;
+    params.get<epi::RiskOfInfectionFromSympomatic>()[(epi::AgeGroup)0] = 1.;
+    params.get<epi::RelativeCarrierInfectability>()[(epi::AgeGroup)0] = 1.;
+    params.get<epi::HospitalizedCasesPerInfectious>()[(epi::AgeGroup)0] = 0.5;
+    params.get<epi::SerialInterval>()[(epi::AgeGroup)0] = 1.5;
+    params.get<epi::IncubationTime>()[(epi::AgeGroup)0] = 2.;
     params.apply_constraints();
     double t = 3.125;
     epi::ModelNode<epi::Simulation<Model>> node1(model, t);

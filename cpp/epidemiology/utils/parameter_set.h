@@ -3,74 +3,33 @@
 
 #include <utility>
 #include <tuple>
+#include <epidemiology/utils/stl_util.h>
 
 namespace epi
 {
 
 namespace details
-{
-    //see std::void_t (c++ 17)
-    template <typename... Ts>
-    struct make_void {
-        typedef void type;
-    };
-    template <typename... Ts>
-    using void_t = typename make_void<Ts...>::type;
+{  
 
     //helpers for get_default
-    template <class T, class X = void>
+    template <class X, class = void, class... Args>
     struct has_get_default_member_function
         : std::false_type
     {};
 
-    template <class T>
-    struct has_get_default_member_function<T, details::void_t<decltype(T::get_default())>>
+    template <class T, class... Args>
+    struct has_get_default_member_function<T, void_t<decltype(T::get_default(std::declval<Args>()...))>, Args...>
         : std::true_type
     {};
 
-    //helpers for check_constraint
-    template <class T, class X = void>
-    struct has_check_constraints_member_function
-        : std::false_type
-    {};
-
-    template <class T>
-    struct has_check_constraints_member_function<T ,details::void_t<decltype(T::check_constraints(std::declval<typename T::Type const&>()))>>
-        : std::true_type
-    {};
-
-    //helpers for apply_constraints
-    template <class T, class X = void>
-    struct has_apply_constraints_member_function
-        : std::false_type
-    {};
-
-    template <class T>
-    struct has_apply_constraints_member_function<T, details::void_t<decltype(std::declval<T>().apply_constraints())>>
-        : std::true_type
-    {};
 } // namespace details
 
 /**
  * @brief check whether a get_default function exists
  * @tparam The type to check for the existence of the member function
  */
-template <class T>
-using has_get_default_member_function = details::has_get_default_member_function<T>;
-
-/**
- * @brief check whether a check_constraints function exists
- * @tparam The type to check for the existence of the member function
- */
-template <class T>
-using has_check_constraints_member_function = details::has_check_constraints_member_function<T>;
-
-/**
- * @brief check whether a apply_constraints function exists
- * @tparam The type to check for the existence of the member function
- */
-template <class T>
-using has_apply_constraints_member_function = details::has_apply_constraints_member_function<T>;
+template <class T, class... Args>
+using has_get_default_member_function = details::has_get_default_member_function<T, void, Args...>;
 
 /**
  * @brief the properties of a parameter
@@ -81,15 +40,16 @@ struct ParameterTagTraits {
     using Type = typename Tag::Type;
 
     //get_default either with get_default member function or fallback on default constructor
-    template <class Dummy = Tag>
-    static std::enable_if_t<has_get_default_member_function<Dummy>::value, decltype(Dummy::get_default())> get_default()
+    template <class Dummy = Tag, class... Ts>
+    static std::enable_if_t<has_get_default_member_function<Dummy, Ts...>::value, Type> get_default(Ts&&... args)
     {
-        return Tag::get_default();
+        return Tag::get_default(std::forward<Ts>(args)...);
     }
-    template <class Dummy = Tag>
+
+    template <class Dummy = Tag, class... Ts>
     static std::enable_if_t<
-        !has_get_default_member_function<Dummy>::value && std::is_default_constructible<Type>::value, Type>
-    get_default()
+        !has_get_default_member_function<Dummy, Ts...>::value && std::is_default_constructible<Type>::value, Type>
+    get_default(Ts&&...)
     {
         return Type{};
     }
@@ -134,19 +94,6 @@ namespace details
             return m_value;
         }
 
-        //check_constraints either with check_constraints member function or fallback on (void)()
-        template <class Dummy = Tag>
-        std::enable_if_t<has_check_constraints_member_function<Dummy>::value, void> check_constraints() const
-        {
-            Tag::check_constraints(m_value);
-        }
-        template <class Dummy = Tag>
-        std::enable_if_t<
-            !has_check_constraints_member_function<Dummy>::value, void>
-        check_constraints() const
-        {
-        }
-
         template<class T>
         bool operator==(const TaggedParameter<T>& other)
         {
@@ -164,35 +111,51 @@ namespace details
     };
 
     //defines value = true if predicate defines value=true for all types in parameter pack
-    template <template <class> class Pred, class... Tail>
+    template <template <class...> class Pred, class... Tail>
     struct AllOf;
 
-    template <template <class> class Pred>
+    template <template <class...> class Pred>
     struct AllOf<Pred> : public std::true_type {
     };
 
-    template <template <class> class Pred, class Head, class... Tail>
+    template <template <class...> class Pred, class Head, class... Tail>
     struct AllOf<Pred, Head, Tail...> {
         static const constexpr bool value = Pred<Head>::value && AllOf<Pred, Tail...>::value;
     };
 
-    // call std::get<i>(tup).check_constraints() for all i.
-    //
-    // In C++17 this is just a fold expression
-    template<std::size_t I = 0, typename... Tp>
-    inline typename std::enable_if<I == sizeof...(Tp), void>::type
-    check_constraints_for_each_parameter(std::tuple<Tp...> const&)
-    {
-    }
+    //defines value = true if predicate defines value=true for any type in parameter pack
+    template <template <class...> class Pred, class... Tail>
+    struct AnyOf;
 
-    template<std::size_t I = 0, typename... Tp>
-    inline typename std::enable_if<I < sizeof...(Tp), void>::type
-    check_constraints_for_each_parameter(std::tuple<Tp...> const& t)
-    {
-        std::get<I>(t).check_constraints();
-        check_constraints_for_each_parameter<I + 1, Tp...>(t);
-    }
+    template <template <class...> class Pred>
+    struct AnyOf<Pred> : public std::false_type {
+    };
 
+    template <template <class...> class Pred, class Head, class... Tail>
+    struct AnyOf<Pred, Head, Tail...> {
+        static const constexpr bool value = Pred<Head>::value || AnyOf<Pred, Tail...>::value;
+    };
+
+    //for X = template<T1, T2> X => BindTail<X, A>::type<B> = X<B, A>
+    template<template<class...> class F, class... Tail>
+    struct BindTail
+    {
+        template<class... Head>
+        struct type : F<Head..., Tail...> {};
+        //according to the standard, this must be a real type, can't be an alias of F.
+        //An alias is immediately replaced and discarded when the compiler sees it, but this could leave the template F with some 
+        //parameters bound and some free, which is not allowed. A struct that derives from F is persistent during compilation.
+    };
+
+    //for template<T1, T2> X => BindHead<X, A>::type<B> = X<A, B>
+    template<template<class...> class F, class... Head>
+    struct BindHead
+    {
+        template<class... Tail>
+        struct type : F<Head..., Tail...> {};
+        //can't be an alias, see BindTail
+    };
+    
 } // namespace details
 
 /**
@@ -202,6 +165,9 @@ namespace details
  */
 struct NoDefaultInit {
 };
+
+template <typename T>
+using is_no_default_init_tag = std::is_same<NoDefaultInit, T>;
 
 /**
  * @brief a set of parameters defined at compile time
@@ -220,9 +186,8 @@ class ParameterSet
 {
 public:
     /**
-     * @brief default constructor
-     *
-     * exists if all parameters are default constructible
+     * @brief non-initializing default constructor.
+     * exists if all parameters are default constructible.
      */
     template <
         class Dummy = void,
@@ -233,7 +198,8 @@ public:
 
     /**
      * @brief default initializing constructor
-     * exists if all parameters have get_default
+     * Initializes each parameter using either the get_default function defined in the parameter tag or the default constructor.
+     * this constructor exists if all parameters have get_default() without arguments or a default constructor.
      */
     template <class Dummy = void,
               class       = std::enable_if_t<
@@ -244,16 +210,17 @@ public:
     }
 
     /**
-     * @brief explicit initializing constructor
-     *
-     * initializes the n-th parameter using the n-th argument
+     * @brief default initializing constructor.
+     * Initializes each parameter using either the get_default function defined in the parameter tag or the default constructor.
+     * this constructor exists if all parameters have get_default(args...) with the same number of arguments or a default constructor.
+     * Arguments get forwarded to get_default of parameters.
      */
-    template <class... T, class = std::enable_if_t<
-                              (sizeof...(T) >= 1 &&
-                               std::is_constructible<std::tuple<details::TaggedParameter<Tags>...>, T...>::value),
-                              void>>
-    explicit ParameterSet(T&&... args)
-        : m_tup(std::forward<T>(args)...)
+    template <
+        class T1, class... TN,
+        class = std::enable_if_t<details::AllOf<details::BindTail<has_get_default_member_function, T1, TN...>::template type,
+                                                ParameterTagTraits<Tags>...>::value>>
+    explicit ParameterSet(T1&& arg1, TN&&... argn)
+        : m_tup(ParameterTagTraits<Tags>::get_default(arg1, argn...)...)
     {
     }
 
@@ -306,10 +273,11 @@ public:
      *
      * @tparam Tag the parameter
      */
-    template <class Tag, class = std::enable_if_t<has_get_default_member_function<ParameterTagTraits<Tag>>::value, Tag>>
-    void set_default()
+    template <class Tag,
+              class... T>
+    std::enable_if_t<has_get_default_member_function<ParameterTagTraits<Tag>, T...>::value, void> set_default(T&&... ts)
     {
-        get<Tag>() = ParameterTagTraits<Tag>::get_default();
+        get<Tag>() = ParameterTagTraits<Tag>::get_default(std::forward<T>(ts)...);
     }
 
     /**
@@ -329,11 +297,6 @@ public:
     bool operator!=(const ParameterSet& b) const 
     {
         return m_tup != b.m_tup; 
-    }
-
-    void check_constraints() const
-    {
-        details::check_constraints_for_each_parameter(m_tup);
     }
 
 private:

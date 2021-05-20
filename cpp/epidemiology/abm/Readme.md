@@ -12,7 +12,13 @@ The model consists of the following major classes:
 
 ## Simulation
 
-The simulation runs in discrete time steps. Each step is in two phases, an interaction phase and a migration phase. First each person interacts with the other persons at the same location. This interaction determines their infection state transitions. A susceptible person may become exposed by contact with a carrier, an asymptomatic carrier can become symptomatic (infected), etc. The transitions are determined by chance. The probability of a transition depends on the parameters of the infection and the population at this location. During the migration phase, each person may change location. Migration follows complex rules, taking into account the current location, time of day, and properties of the person (e.g. age) (NOT YET IMPLEMENTED). The result of the simulation is for each time step the count of persons in each infection state at that time.
+The simulation runs in discrete time steps. Each step is in two phases, an interaction phase and a migration phase. 
+
+First each person interacts with the other persons at the same location. This interaction determines their infection state transitions. A susceptible person may become exposed by contact with a carrier, an asymptomatic carrier can become symptomatic (infected), etc. The transitions are determined by chance. The probability of a transition depends on the parameters of the infection and the population at this location. 
+
+During the migration phase, each person may change location. Migration follows complex rules, taking into account the current location, time of day, and properties of the person (e.g. age). Some location changes are deterministic and regular (e.g. going to work), others are random (e.g. going to shopping or to a social event in the evening/on the weekend).
+
+The result of the simulation is for each time step the count of persons in each infection state at that time.
 
 ## Example
 An example can also be found at examples/abm.cpp

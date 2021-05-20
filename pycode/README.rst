@@ -29,7 +29,7 @@ Environment
 We recommend to use a virtual environment.
 Therefore, do the following.
 
-Create virtiual environment with name "epi_venv" [name can be changed as you want]
+Create virtiual environment with name "epi_venv" [name can be changed as you want] somewhere into the epidemiology folder(!) 
 
 .. code:: sh
 
@@ -38,6 +38,8 @@ Create virtiual environment with name "epi_venv" [name can be changed as you wan
    python -m venv epi_venv
    source epi_venv/bin/activate
    pip install --upgrade pip
+
+If the virtual env is not created in the epidemiology-folder the default folder for writing and reading data files of the pidata package is in the site-package folder of the env, see output while writing the data. To avoid this use the -o flag, for details see `epidata-readme <epidemiology/epidata/README.rst>`_  or the `Documentation <https://hpc-against-corona.pages.gitlab.dlr.de/epidemiology/master/documentation/index.html>`_.
 
 
 Installation

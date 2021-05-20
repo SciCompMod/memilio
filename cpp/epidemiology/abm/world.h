@@ -32,6 +32,7 @@ public:
      */
     World(const GlobalInfectionParameters& params = {})
         : m_infection_parameters(params)
+        , m_migration_parameters()
     {
     }
 
@@ -45,14 +46,14 @@ public:
      * prepare the world for the next simulation step.
      * @param dt length of the time step 
      */
-    void begin_step(double dt);
+    void begin_step(TimePoint t, TimeSpan dt);
 
     /** 
      * evolve the world one time step.
      * @param dt length of the time step
      */
-    void evolve(double dt);
-
+    void evolve(TimePoint t, TimeSpan dt);
+    
     /** 
      * add a location to the world.
      * @param type type of location to add
@@ -65,7 +66,7 @@ public:
      * @param state initial infection state of the person
      * @return reference to the newly created person
      */
-    Person& add_person(Location& location, InfectionState state, AbmAgeGroup age = AbmAgeGroup::Age15to34);
+    Person& add_person(Location& location, InfectionState state, Index<AbmAgeGroup> age = AbmAgeGroup::Age15to34);
 
     /**
      * get a range of all locations in the world.
@@ -80,12 +81,13 @@ public:
     Range<std::pair<ConstPersonIterator, ConstPersonIterator>> get_persons() const;
 
 private:
-    void interaction(double dt);
-    void migration(double dt);
+    void interaction(TimePoint t, TimeSpan dt);
+    void migration(TimePoint t, TimeSpan dt);
 
     std::vector<std::unique_ptr<Person>> m_persons;
     std::vector<std::unique_ptr<Location>> m_locations;
     GlobalInfectionParameters m_infection_parameters;
+    AbmMigrationParameters m_migration_parameters;
 };
 
 } // namespace epi

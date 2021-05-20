@@ -6,6 +6,7 @@
 #include "epidemiology/utils/stl_util.h"
 #include "epidemiology/utils/matrix_shape.h"
 #include "epidemiology/math/smoother.h"
+#include "epidemiology/math/floating_point.h"
 
 #include <tuple>
 #include <vector>
@@ -411,8 +412,8 @@ private:
     mutable std::vector<std::tuple<Matrix, SimulationTime>> m_accumulated_dampings_cached;
 };
 
-template<class S>
-void Dampings<S>::finalize() const
+template <class D>
+void Dampings<D>::finalize() const
 {
     using std::get;
 
@@ -420,16 +421,20 @@ void Dampings<S>::finalize() const
         m_accumulated_dampings_cached.emplace_back(Matrix::Zero(m_shape.rows(), m_shape.cols()),
                                                    SimulationTime(std::numeric_limits<double>::lowest()));
 
-        std::vector<std::tuple<std::reference_wrapper<const Matrix>, DampingLevel, DampingType>>
-            active_by_type;
+        std::vector<std::tuple<std::reference_wrapper<const Matrix>, DampingLevel, DampingType>> active_by_type;
         std::vector<std::tuple<Matrix, DampingLevel>> sum_by_level;
         for (auto& damping : m_dampings) {
             update_active_dampings(damping, active_by_type, sum_by_level);
-            m_accumulated_dampings_cached.emplace_back(inclusive_exclusive_sum(sum_by_level),
-                                                       get<SimulationTime>(damping));
-            assert((get<Matrix>(m_accumulated_dampings_cached.back()).array() <= 1).all() &&
-                   (get<Matrix>(m_accumulated_dampings_cached.back()).array() >= 0).all() &&
+            auto combined_damping = inclusive_exclusive_sum(sum_by_level);
+            assert((combined_damping.array() <= 1).all() && (combined_damping.array() >= 0).all() &&
                    "unexpected error, accumulated damping out of range.");
+            if (floating_point_equal(double(get<SimulationTime>(damping)),
+                                     double(get<SimulationTime>(m_accumulated_dampings_cached.back())), 1e-15, 1e-15)) {
+                std::get<Matrix>(m_accumulated_dampings_cached.back()) = combined_damping;
+            }
+            else {
+                m_accumulated_dampings_cached.emplace_back(combined_damping, get<SimulationTime>(damping));
+            }
         }
 
         m_accumulated_dampings_cached.emplace_back(get<Matrix>(m_accumulated_dampings_cached.back()),
@@ -437,12 +442,13 @@ void Dampings<S>::finalize() const
     }
 }
 
-template<class D>
+template <class D>
 void Dampings<D>::add_(const value_type& damping)
 {
-    assert(damping.get_shape() == m_shape);
+    assert(damping.get_shape() == m_shape && "Inconsistent matrix shape.");
     insert_sorted_replace(m_dampings, damping, [](auto& tup1, auto& tup2) {
-        return double(std::get<SimulationTime>(tup1)) < double(std::get<SimulationTime>(tup2));
+        return std::make_tuple(tup1.get_time(), int(tup1.get_type()), int(tup1.get_level())) <
+               std::make_tuple(tup2.get_time(), int(tup2.get_type()), int(tup2.get_level()));
     });
     m_accumulated_dampings_cached.clear();
 }

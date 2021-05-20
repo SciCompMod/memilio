@@ -1,6 +1,7 @@
 #include "epidemiology/abm/location.h"
 #include "epidemiology/abm/person.h"
-#include "epidemiology/abm/random_number_generator.h"
+#include "epidemiology/utils/random_number_generator.h"
+#include "epidemiology/abm/random_events.h"
 
 #include <numeric>
 
@@ -10,78 +11,41 @@ namespace epi
 Location::Location(LocationType type)
     : m_type(type)
     , m_subpopulations{}
+    , m_cached_exposure_rate({AbmAgeGroup::Count})
 {
 }
 
-namespace
-{
-    /**
-     * select a random transition from a list of possible transitions.
-     * each transition is represented by the new state and the probability of the transition.
-     * it's also possible that no transition happens in this time step.
-     * in this case the old state is returned.
-     * input rates don't need to sum up to probability 1, the function performs normalisation.
-     * @param old_state previous state
-     * @param dt length of the time step
-     * @param transitions array of pairs of new states and their rates (probabilities)
-     * @return new state if transition happens, old_state otherwise
-     */
-    template <int NumTransitions>
-    InfectionState random_transition(InfectionState old_state, double dt,
-                                     const std::pair<InfectionState, double> (&transitions)[NumTransitions])
-    {
-        auto sum = std::accumulate(std::begin(transitions), std::end(transitions), 0.0, [](auto&& a, auto&& t) {
-            return a + t.second;
-        });
-
-        if (sum <= 0) {
-            return old_state;
-        }
-
-        //time between transitions is exponentially distributed
-        auto v = ExponentialDistribution<double>::get_instance()(sum);
-        if (v < dt) {
-            //pick a random transition
-            std::array<double, NumTransitions> rates;
-            std::transform(std::begin(transitions), std::end(transitions), rates.begin(), [](auto&& t) { return t.second; });
-            auto random_idx = DiscreteDistribution<size_t>::get_instance()(rates);
-            return transitions[random_idx].first;
-        }
-
-        return old_state;
-    }
-} // namespace
-
-InfectionState Location::interact(const Person& person, double dt, const GlobalInfectionParameters& global_params) const
+InfectionState Location::interact(const Person& person, TimeSpan dt, const GlobalInfectionParameters& global_params) const
 {
     auto state = person.get_infection_state();
+    auto age = person.get_age();
     switch (state) {
     case InfectionState::Susceptible:
-        return random_transition(state, dt, {{InfectionState::Exposed, m_cached_exposure_rate[{person.get_age()}]}});
+        return random_transition(state, dt, {{InfectionState::Exposed, m_cached_exposure_rate[age]}});
     case InfectionState::Carrier:
         return random_transition(
             state, dt,
             {{InfectionState::Infected_Detected,
-              global_params.get<DetectInfection>()[{person.get_age()}] * global_params.get<CarrierToInfected>()[{person.get_age()}]},
-             {InfectionState::Infected_Undetected, (1 - global_params.get<DetectInfection>()[{person.get_age()}]) *
-                                                       global_params.get<CarrierToInfected>()[{person.get_age()}]},
-             {InfectionState::Recovered_Carrier, global_params.get<CarrierToRecovered>()[{person.get_age()}]}});
+              global_params.get<DetectInfection>()[age] * global_params.get<CarrierToInfected>()[age]},
+             {InfectionState::Infected_Undetected, (1 - global_params.get<DetectInfection>()[age]) *
+                                                       global_params.get<CarrierToInfected>()[age]},
+             {InfectionState::Recovered_Carrier, global_params.get<CarrierToRecovered>()[age]}});
     case InfectionState::Infected_Detected: //fallthrough!
     case InfectionState::Infected_Undetected:
         return random_transition(
             state, dt,
-            {{InfectionState::Recovered_Infected, global_params.get<InfectedToRecovered>()[{person.get_age()}]},
-             {InfectionState::Dead, global_params.get<InfectedToDead>()[{person.get_age()}] * m_parameters.get<DeathFactor>()}});
+            {{InfectionState::Recovered_Infected, global_params.get<InfectedToRecovered>()[age]},
+             {InfectionState::Dead, global_params.get<InfectedToDead>()[age] * m_parameters.get<DeathFactor>()}});
     case InfectionState::Recovered_Carrier: //fallthrough!
     case InfectionState::Recovered_Infected:
         return random_transition(
-            state, dt, {{InfectionState::Susceptible, global_params.get<RecoveredToSusceptible>()[{person.get_age()}]}});
+            state, dt, {{InfectionState::Susceptible, global_params.get<RecoveredToSusceptible>()[age]}});
     default:
         return state; //some states don't transition
     }
 }
 
-void Location::begin_step(double /*dt*/, const GlobalInfectionParameters& global_params)
+void Location::begin_step(TimeSpan /*dt*/, const GlobalInfectionParameters& global_params)
 {
     //cache for next step so it stays constant during the step while subpopulations change
     //otherwise we would have to cache all state changes during a step which uses more memory

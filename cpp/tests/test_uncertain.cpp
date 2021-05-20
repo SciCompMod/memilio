@@ -76,6 +76,8 @@ TEST(TestUncertain, uncertain_value_assign)
 
 TEST(TestUncertain, uncertain_value_predef)
 {
+    epi::log_thread_local_rng_seeds(epi::LogLevel::warn);
+    
     epi::UncertainValue val(3.0);
     double dev_rel     = 0.2;
     double lower_bound = std::max(1e-6, (1 - dev_rel * 2.6) * val);
@@ -96,6 +98,8 @@ TEST(TestUncertain, uncertain_value_predef)
 
 TEST(TestUncertain, uncertain_matrix)
 {
+    epi::log_thread_local_rng_seeds(epi::LogLevel::warn);
+
     epi::ContactMatrix contact_matrix(Eigen::MatrixXd::NullaryExpr(2, 2, [](auto i, auto j) -> double {
         return (i + 1) * (j + 1);
     }));
