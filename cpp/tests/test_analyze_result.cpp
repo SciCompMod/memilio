@@ -306,36 +306,36 @@ TEST(TestEnsembleParamsPercentile, basic)
     epi::SecirModel model2(2);
 
     auto& params = model.parameters;
-    params.times[0].set_icu_to_death(3);
-    params.times[1].set_hospitalized_to_icu(5);
-    params.probabilities[0].set_carrier_infectability(0.2);
-    params.probabilities[1].set_icu_per_hospitalized(0.5);
+    params.get<epi::ICUToDeathTime>()[epi::AgeGroup(0)] = 3;
+    params.get<epi::HospitalizedToICUTime>()[epi::AgeGroup(1)] = 5;
+    params.get<epi::RelativeCarrierInfectability>()[epi::AgeGroup(0)] = 0.2;
+    params.get<epi::ICUCasesPerHospitalized>()[epi::AgeGroup(1)] = 0.5;
     model.populations[{(epi::AgeGroup)0, epi::InfectionState::Exposed}]      = 10;
     model.populations[{(epi::AgeGroup)1, epi::InfectionState::Hospitalized}] = 10;
 
     auto& params2 = model2.parameters;
-    params2.times[0].set_icu_to_death(5);
-    params2.times[1].set_hospitalized_to_icu(2);
-    params2.probabilities[0].set_carrier_infectability(0.4);
-    params2.probabilities[1].set_icu_per_hospitalized(0.2);
+    params2.get<epi::ICUToDeathTime>()[epi::AgeGroup(0)] = 5;
+    params2.get<epi::HospitalizedToICUTime>()[epi::AgeGroup(1)] = 2;
+    params2.get<epi::RelativeCarrierInfectability>()[epi::AgeGroup(0)] = 0.4;
+    params2.get<epi::ICUCasesPerHospitalized>()[epi::AgeGroup(1)] = 0.2;
     model2.populations[{(epi::AgeGroup)0, epi::InfectionState::Exposed}]      = 20;
     model2.populations[{(epi::AgeGroup)1, epi::InfectionState::Hospitalized}] = 12;
 
     auto g = std::vector<epi::SecirModel>({model, model2});
 
-    params.set_seasonality(0.4);
-    params.times[0].set_icu_to_death(4);
-    params.times[1].set_hospitalized_to_icu(6);
-    params.probabilities[0].set_carrier_infectability(0.3);
-    params.probabilities[1].set_icu_per_hospitalized(0.6);
+    params.set<epi::Seasonality>(0.4);
+    params.get<epi::ICUToDeathTime>()[epi::AgeGroup(0)] = 4;
+    params.get<epi::HospitalizedToICUTime>()[epi::AgeGroup(1)] = 6;
+    params.get<epi::RelativeCarrierInfectability>()[epi::AgeGroup(0)] = 0.3;
+    params.get<epi::ICUCasesPerHospitalized>()[epi::AgeGroup(1)] = 0.6;
     model.populations[{(epi::AgeGroup)0, epi::InfectionState::Exposed}]      = 11;
     model.populations[{(epi::AgeGroup)1, epi::InfectionState::Hospitalized}] = 11;
 
-    params2.set_seasonality(0.4);
-    params2.times[0].set_icu_to_death(6);
-    params2.times[1].set_hospitalized_to_icu(1);
-    params2.probabilities[0].set_carrier_infectability(0.5);
-    params2.probabilities[1].set_icu_per_hospitalized(0.3);
+    params2.set<epi::Seasonality>(0.4);
+    params2.get<epi::ICUToDeathTime>()[epi::AgeGroup(0)] = 6;
+    params2.get<epi::HospitalizedToICUTime>()[epi::AgeGroup(1)] = 1;
+    params2.get<epi::RelativeCarrierInfectability>()[epi::AgeGroup(0)] = 0.5;
+    params2.get<epi::ICUCasesPerHospitalized>()[epi::AgeGroup(1)] = 0.3;
     model2.populations[{(epi::AgeGroup)0, epi::InfectionState::Exposed}]      = 22;
     model2.populations[{(epi::AgeGroup)1, epi::InfectionState::Hospitalized}] = 14;
 
@@ -346,35 +346,35 @@ TEST(TestEnsembleParamsPercentile, basic)
     auto ensemble_p49_params = epi::ensemble_params_percentile(ensemble_params, 0.49);
     auto ensemble_p51_params = epi::ensemble_params_percentile(ensemble_params, 0.51);
 
-    EXPECT_EQ(ensemble_p49_params[0].parameters.get_seasonality(), 0.0);
-    EXPECT_EQ(ensemble_p49_params[1].parameters.get_seasonality(), 0.0);
+    EXPECT_EQ(ensemble_p49_params[0].parameters.get<epi::Seasonality>(), 0.0);
+    EXPECT_EQ(ensemble_p49_params[1].parameters.get<epi::Seasonality>(), 0.0);
 
-    EXPECT_EQ(ensemble_p51_params[0].parameters.get_seasonality(), 0.4);
-    EXPECT_EQ(ensemble_p51_params[1].parameters.get_seasonality(), 0.4);
+    EXPECT_EQ(ensemble_p51_params[0].parameters.get<epi::Seasonality>(), 0.4);
+    EXPECT_EQ(ensemble_p51_params[1].parameters.get<epi::Seasonality>(), 0.4);
 
-    EXPECT_EQ(ensemble_p49_params[0].parameters.times[0].get_icu_to_dead(), 3.0);
-    EXPECT_EQ(ensemble_p49_params[1].parameters.times[0].get_icu_to_dead(), 5.0);
+    EXPECT_EQ(ensemble_p49_params[0].parameters.get<epi::ICUToDeathTime>()[epi::AgeGroup(0)], 3.0);
+    EXPECT_EQ(ensemble_p49_params[1].parameters.get<epi::ICUToDeathTime>()[epi::AgeGroup(0)], 5.0);
 
-    EXPECT_EQ(ensemble_p51_params[0].parameters.times[0].get_icu_to_dead(), 4.0);
-    EXPECT_EQ(ensemble_p51_params[1].parameters.times[0].get_icu_to_dead(), 6.0);
+    EXPECT_EQ(ensemble_p51_params[0].parameters.get<epi::ICUToDeathTime>()[epi::AgeGroup(0)], 4.0);
+    EXPECT_EQ(ensemble_p51_params[1].parameters.get<epi::ICUToDeathTime>()[epi::AgeGroup(0)], 6.0);
 
-    EXPECT_EQ(ensemble_p49_params[0].parameters.times[1].get_hospitalized_to_icu(), 5.0);
-    EXPECT_EQ(ensemble_p49_params[1].parameters.times[1].get_hospitalized_to_icu(), 1.0);
+    EXPECT_EQ(ensemble_p49_params[0].parameters.get<epi::HospitalizedToICUTime>()[epi::AgeGroup(1)], 5.0);
+    EXPECT_EQ(ensemble_p49_params[1].parameters.get<epi::HospitalizedToICUTime>()[epi::AgeGroup(1)], 1.0);
 
-    EXPECT_EQ(ensemble_p51_params[0].parameters.times[1].get_hospitalized_to_icu(), 6.0);
-    EXPECT_EQ(ensemble_p51_params[1].parameters.times[1].get_hospitalized_to_icu(), 2.0);
+    EXPECT_EQ(ensemble_p51_params[0].parameters.get<epi::HospitalizedToICUTime>()[epi::AgeGroup(1)], 6.0);
+    EXPECT_EQ(ensemble_p51_params[1].parameters.get<epi::HospitalizedToICUTime>()[epi::AgeGroup(1)], 2.0);
 
-    EXPECT_EQ(ensemble_p49_params[0].parameters.probabilities[0].get_carrier_infectability(), 0.2);
-    EXPECT_EQ(ensemble_p49_params[1].parameters.probabilities[0].get_carrier_infectability(), 0.4);
+    EXPECT_EQ(ensemble_p49_params[0].parameters.get<epi::RelativeCarrierInfectability>()[epi::AgeGroup(0)], 0.2);
+    EXPECT_EQ(ensemble_p49_params[1].parameters.get<epi::RelativeCarrierInfectability>()[epi::AgeGroup(0)], 0.4);
 
-    EXPECT_EQ(ensemble_p51_params[0].parameters.probabilities[0].get_carrier_infectability(), 0.3);
-    EXPECT_EQ(ensemble_p51_params[1].parameters.probabilities[0].get_carrier_infectability(), 0.5);
+    EXPECT_EQ(ensemble_p51_params[0].parameters.get<epi::RelativeCarrierInfectability>()[epi::AgeGroup(0)], 0.3);
+    EXPECT_EQ(ensemble_p51_params[1].parameters.get<epi::RelativeCarrierInfectability>()[epi::AgeGroup(0)], 0.5);
 
-    EXPECT_EQ(ensemble_p49_params[0].parameters.probabilities[1].get_icu_per_hospitalized(), 0.5);
-    EXPECT_EQ(ensemble_p49_params[1].parameters.probabilities[1].get_icu_per_hospitalized(), 0.2);
+    EXPECT_EQ(ensemble_p49_params[0].parameters.get<epi::ICUCasesPerHospitalized>()[epi::AgeGroup(1)], 0.5);
+    EXPECT_EQ(ensemble_p49_params[1].parameters.get<epi::ICUCasesPerHospitalized>()[epi::AgeGroup(1)], 0.2);
 
-    EXPECT_EQ(ensemble_p51_params[0].parameters.probabilities[1].get_icu_per_hospitalized(), 0.6);
-    EXPECT_EQ(ensemble_p51_params[1].parameters.probabilities[1].get_icu_per_hospitalized(), 0.3);
+    EXPECT_EQ(ensemble_p51_params[0].parameters.get<epi::ICUCasesPerHospitalized>()[epi::AgeGroup(1)], 0.6);
+    EXPECT_EQ(ensemble_p51_params[1].parameters.get<epi::ICUCasesPerHospitalized>()[epi::AgeGroup(1)], 0.3);
 
     EXPECT_EQ((ensemble_p49_params[0].populations[{(epi::AgeGroup)0, epi::InfectionState::Exposed}]), 10);
     EXPECT_EQ((ensemble_p49_params[1].populations[{(epi::AgeGroup)0, epi::InfectionState::Exposed}]), 20);

@@ -3,6 +3,7 @@
 
 #include "epidemiology/utils/ScalarType.h"
 #include "epidemiology/utils/eigen.h"
+#include "epidemiology/utils/stl_util.h"
 #include <vector>
 #include <functional>
 
@@ -11,6 +12,45 @@
 
 namespace epi
 {
+
+namespace details {
+
+    //helpers for check_constraint
+    template <class T, class X = void>
+    struct has_check_constraints_member_function
+        : std::false_type
+    {};
+
+    template <class T>
+    struct has_check_constraints_member_function<T, void_t<decltype(std::declval<T>().check_constraints())>>
+        : std::true_type
+    {};
+
+    //helpers for apply_constraints
+    template <class T, class X = void>
+    struct has_apply_constraints_member_function
+        : std::false_type
+    {};
+
+    template <class T>
+    struct has_apply_constraints_member_function<T, void_t<decltype(std::declval<T>().apply_constraints())>>
+        : std::true_type
+    {};
+} //namespace details
+
+/**
+ * @brief check whether a check_constraints function exists
+ * @tparam The type to check for the existence of the member function
+ */
+template <class T>
+using has_check_constraints_member_function = details::has_check_constraints_member_function<T>;
+
+/**
+ * @brief check whether a apply_constraints function exists
+ * @tparam The type to check for the existence of the member function
+ */
+template <class T>
+using has_apply_constraints_member_function = details::has_apply_constraints_member_function<T>;
 
 /**
  * @brief ComppartmentalModel is a template for a compartmental model for an
@@ -107,16 +147,35 @@ public:
         return populations.get_compartments();
     }
 
-    void apply_constraints()
+    // TODO: if constexpr as soon as we open for C++17
+    template<typename T = ParameterSet>
+    std::enable_if_t<has_apply_constraints_member_function<T>::value>
+    apply_constraints()
     {
         populations.apply_constraints();
         parameters.apply_constraints();
     }
 
-    void check_constraints() const
+    template<typename T = ParameterSet>
+    std::enable_if_t<!has_apply_constraints_member_function<T>::value>
+    apply_constraints()
+    {
+        populations.apply_constraints();
+    }
+
+    template<typename T = ParameterSet>
+    std::enable_if_t<has_check_constraints_member_function<T>::value>
+    check_constraints() const
     {
         populations.check_constraints();
         parameters.check_constraints();
+    }
+
+    template<typename T = ParameterSet>
+    std::enable_if_t<!has_check_constraints_member_function<T>::value>
+    check_constraints() const
+    {
+        populations.check_constraints();
     }
 
     Populations populations{};

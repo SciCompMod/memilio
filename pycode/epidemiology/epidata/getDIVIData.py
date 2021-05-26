@@ -491,9 +491,6 @@ def get_divi_data(read_data=dd.defaultDict['read_data'],
     filename = "germany_divi"
     gd.write_dataframe(df_ger, directory, filename, out_form)
 
-    print("Information: DIVI data has been written to", directory)
-
-
 def main():
     """ Main program entry."""
 

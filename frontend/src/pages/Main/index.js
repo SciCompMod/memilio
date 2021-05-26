@@ -60,8 +60,16 @@ class MainPage extends Component {
     document.title = `SARS-CoV-2 Reproduktionszahlen`;
 
     // fetch rt data
-    const data = await fetch('assets/rt.rel.districts.json').then((res) => res.json());
+    const res = await fetch('assets/rt.rel.districts.json').then(async (res) => {
+      const date = res.headers.get('Last-Modified');
+      const data = await res.json();
+      return {
+        date,
+        data,
+      };
+    });
 
+    const data = res.data;
     const keys = Object.keys(data);
 
     const districts = _.uniq(data.DistrictID);
@@ -122,13 +130,17 @@ class MainPage extends Component {
       );
     }
 
+    console.log(new Date(res.date));
     this.setState({
       selected: {rs: '00000', bez: 'Bundesrepublik', gen: 'Deutschland'},
       timestamps: timestamps,
       timestampOffset: first_timestamp_idx,
-      timestring: dayjs(timestamps[timestamps.length - 1])
+      lastUpdated: `${dayjs(new Date(res.date)).locale('de').format('DD MMMM YYYY HH:mm')} Uhr`,
+      timestring: `${dayjs(timestamps[timestamps.length - 1])
+        .add(1, 'd')
+        .startOf('d')
         .locale('de')
-        .format('DD MMMM YYYY'),
+        .format('DD MMMM YYYY HH:mm')} Uhr`,
       //timestep: timestamps.findIndex((x) => x === first_timestamp),
       timestep: timestamps.length - 1,
       start: timestamps.findIndex((x) => x === first_timestamp),
@@ -168,7 +180,7 @@ class MainPage extends Component {
       const timestamp = this.state.timestamps[timestep];
       this.setState({
         timestep,
-        timestring: dayjs(timestamp).locale('de').format('DD MMMM YYYY'),
+        timestring: `${dayjs(timestamp).add(1, 'd').startOf('d').locale('de').format('DD MMMM YYYY HH:mm')} Uhr`,
       });
       this.map.setValues(this.getData(timestamp));
     }
@@ -350,7 +362,6 @@ class MainPage extends Component {
               value={this.state.timestep}
               onChange={this.update}
             />
-            <div className="timestring">{this.state.timestring}</div>
             <div className="options">
               <ButtonGroup>
                 <Button
@@ -395,6 +406,12 @@ class MainPage extends Component {
           </div>
           <div className="map-wrapper">
             <div className="map" id="map" />
+            <div className="timestring">
+              <div className="label">Anzeigedatum:</div>
+              <div className="time">{this.state.timestring}</div>
+              <div className="label">Letzte Ak­tu­a­li­sie­rung:</div>
+              <div className="time">{this.state.lastUpdated}</div>
+            </div>
           </div>
         </div>
       </div>

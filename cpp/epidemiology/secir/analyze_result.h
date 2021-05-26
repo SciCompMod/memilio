@@ -103,7 +103,7 @@ std::vector<Simulation> ensemble_params_percentile(const std::vector<std::vector
 
     auto num_runs   = ensemble_params.size();
     auto num_nodes  = ensemble_params[0].size();
-    auto num_groups = ensemble_params[0][0].parameters.get_num_groups();
+    auto num_groups = (size_t)ensemble_params[0][0].parameters.get_num_groups();
 
     std::vector<double> single_element_ensemble(num_runs);
 
@@ -121,72 +121,72 @@ std::vector<Simulation> ensemble_params_percentile(const std::vector<std::vector
     };
 
     for (size_t node = 0; node < num_nodes; node++) {
-        for (size_t i = 0; i < num_groups; i++) {
+        for (auto i = AgeGroup(0); i < AgeGroup(num_groups); i++) {
             //Population
             for (size_t compart = 0; compart < (size_t)InfectionState::Count; ++compart) {
                 param_percentil(
                     node, [ compart, i ](auto&& model) -> auto& {
-                        return model.populations[{epi::AgeGroup(i), (InfectionState)compart}];
+                        return model.populations[{i, (InfectionState)compart}];
                     });
             }
             // times
             param_percentil(
-                node, [i](auto&& model) -> auto& { return model.parameters.times[i].get_incubation(); });
+                node, [i](auto&& model) -> auto& { return model.parameters.template get<IncubationTime>()[i]; });
             param_percentil(
-                node, [i](auto&& model) -> auto& { return model.parameters.times[i].get_serialinterval(); });
+                node, [i](auto&& model) -> auto& { return model.parameters.template get<SerialInterval>()[i]; });
             param_percentil(
-                node, [i](auto&& model) -> auto& { return model.parameters.times[i].get_infectious_mild(); });
+                node, [i](auto&& model) -> auto& { return model.parameters.template get<InfectiousTimeMild>()[i]; });
             param_percentil(
-                node, [i](auto&& model) -> auto& { return model.parameters.times[i].get_hospitalized_to_icu(); });
+                node, [i](auto&& model) -> auto& { return model.parameters.template get<HospitalizedToICUTime>()[i]; });
             param_percentil(
-                node, [i](auto&& model) -> auto& { return model.parameters.times[i].get_hospitalized_to_home(); });
+                node, [i](auto&& model) -> auto& { return model.parameters.template get<HospitalizedToHomeTime>()[i]; });
             param_percentil(
-                node, [i](auto&& model) -> auto& { return model.parameters.times[i].get_home_to_hospitalized(); });
+                node, [i](auto&& model) -> auto& { return model.parameters.template get<HomeToHospitalizedTime>()[i]; });
             param_percentil(
-                node, [i](auto&& model) -> auto& { return model.parameters.times[i].get_icu_to_dead(); });
+                node, [i](auto&& model) -> auto& { return model.parameters.template get<ICUToDeathTime>()[i]; });
             param_percentil(
-                node, [i](auto&& model) -> auto& { return model.parameters.times[i].get_icu_to_home(); });
+                node, [i](auto&& model) -> auto& { return model.parameters.template get<ICUToHomeTime>()[i]; });
             //probs
             param_percentil(
                 node, [i](auto&& model) -> auto& {
-                    return model.parameters.probabilities[i].get_carrier_infectability();
+                    return model.parameters.template get<RelativeCarrierInfectability>()[i];
                 });
             param_percentil(
                 node, [i](auto&& model) -> auto& {
-                    return model.parameters.probabilities[i].get_risk_from_symptomatic();
+                    return model.parameters.template get<RiskOfInfectionFromSympomatic>()[i];
                 });
             param_percentil(
                 node, [i](auto&& model) -> auto& {
-                    return model.parameters.probabilities[i].get_test_and_trace_max_risk_from_symptomatic();
+                    return model.parameters.template get<MaxRiskOfInfectionFromSympomatic>()[i];
                 });
             param_percentil(
                 node, [i](auto&& model) -> auto& {
-                    return model.parameters.probabilities[i].get_asymp_per_infectious();
+                    return model.parameters.template get<AsymptoticCasesPerInfectious>()[i];
                 });
             param_percentil(
                 node, [i](auto&& model) -> auto& {
-                    return model.parameters.probabilities[i].get_hospitalized_per_infectious();
+                    return model.parameters.template get<HospitalizedCasesPerInfectious>()[i];
                 });
             param_percentil(
                 node, [i](auto&& model) -> auto& {
-                    return model.parameters.probabilities[i].get_icu_per_hospitalized();
+                    return model.parameters.template get<ICUCasesPerHospitalized>()[i];
                 });
             param_percentil(
-                node, [i](auto&& model) -> auto& { return model.parameters.probabilities[i].get_dead_per_icu(); });
+                node, [i](auto&& model) -> auto& { return model.parameters.template get<epi::DeathsPerHospitalized>()[i]; });
         }
         // group independent params
         param_percentil(
-            node, [](auto&& model) -> auto& { return model.parameters.get_seasonality(); });
+            node, [](auto&& model) -> auto& { return model.parameters.template get<epi::Seasonality>(); });
         param_percentil(
-            node, [](auto&& model) -> auto& { return model.parameters.get_test_and_trace_capacity(); });
+            node, [](auto&& model) -> auto& { return model.parameters.template get<epi::TestAndTraceCapacity>(); });
 
         for (size_t run = 0; run < num_runs; run++) {
 
             auto const& params           = ensemble_params[run][node];
-            single_element_ensemble[run] = params.parameters.get_icu_capacity() * params.populations.get_total();
+            single_element_ensemble[run] = params.parameters.template get<epi::ICUCapacity>() * params.populations.get_total();
         }
         std::sort(single_element_ensemble.begin(), single_element_ensemble.end());
-        percentile[node].parameters.set_icu_capacity(single_element_ensemble[static_cast<size_t>(num_runs * p)]);
+        percentile[node].parameters.template set<epi::ICUCapacity>(single_element_ensemble[static_cast<size_t>(num_runs * p)]);
     }
     return percentile;
 }

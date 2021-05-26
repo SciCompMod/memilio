@@ -322,28 +322,28 @@ namespace details
             for (size_t group = 0; group < age_ranges.size(); group++) {
 
                 t_car_to_inf[county].push_back(
-                    static_cast<int>(2 * (model[county].parameters.times[group].get_incubation() -
-                                          model[county].parameters.times[group].get_serialinterval())));
+                    static_cast<int>(2 * (model[county].parameters.get<epi::IncubationTime>()[(epi::AgeGroup)group] -
+                                          model[county].parameters.get<epi::SerialInterval>()[(epi::AgeGroup)group])));
                 t_car_to_rec[county].push_back(static_cast<int>(
-                    t_car_to_inf[county][group] + 0.5 * model[county].parameters.times[group].get_infectious_mild()));
+                    t_car_to_inf[county][group] + 0.5 * model[county].parameters.get<epi::InfectiousTimeMild>()[(epi::AgeGroup)group]));
                 t_exp_to_car[county].push_back(
-                    static_cast<int>(2 * model[county].parameters.times[group].get_serialinterval() -
-                                     model[county].parameters.times[group].get_incubation()));
+                    static_cast<int>(2 * model[county].parameters.get<epi::SerialInterval>()[(epi::AgeGroup)group] -
+                                     model[county].parameters.get<epi::IncubationTime>()[(epi::AgeGroup)group]));
                 t_inf_to_rec[county].push_back(
-                    static_cast<int>(model[county].parameters.times[group].get_infectious_mild()));
+                    static_cast<int>(model[county].parameters.get<epi::InfectiousTimeMild>()[(epi::AgeGroup)group]));
                 t_inf_to_hosp[county].push_back(
-                    static_cast<int>(model[county].parameters.times[group].get_home_to_hospitalized()));
+                    static_cast<int>(model[county].parameters.get<epi::HomeToHospitalizedTime>()[(epi::AgeGroup)group]));
                 t_hosp_to_rec[county].push_back(
-                    static_cast<int>(model[county].parameters.times[group].get_hospitalized_to_home()));
+                    static_cast<int>(model[county].parameters.get<epi::HospitalizedToHomeTime>()[(epi::AgeGroup)group]));
                 t_hosp_to_icu[county].push_back(
-                    static_cast<int>(model[county].parameters.times[group].get_hospitalized_to_icu()));
+                    static_cast<int>(model[county].parameters.get<epi::HospitalizedToICUTime>()[(epi::AgeGroup)group]));
                 t_icu_to_dead[county].push_back(
-                    static_cast<int>(model[county].parameters.times[group].get_icu_to_dead()));
+                    static_cast<int>(model[county].parameters.get<epi::ICUToDeathTime>()[(epi::AgeGroup)group]));
 
-                mu_C_R[county].push_back(model[county].parameters.probabilities[group].get_asymp_per_infectious());
+                mu_C_R[county].push_back(model[county].parameters.get<epi::AsymptoticCasesPerInfectious>()[(epi::AgeGroup)group]);
                 mu_I_H[county].push_back(
-                    model[county].parameters.probabilities[group].get_hospitalized_per_infectious());
-                mu_H_U[county].push_back(model[county].parameters.probabilities[group].get_icu_per_hospitalized());
+                    model[county].parameters.get<epi::HospitalizedCasesPerInfectious>()[(epi::AgeGroup)group]);
+                mu_H_U[county].push_back(model[county].parameters.get<epi::ICUCasesPerHospitalized>()[(epi::AgeGroup)group]);
             }
         }
         std::vector<std::vector<double>> num_inf(model.size(), std::vector<double>(age_ranges.size(), 0.0));
@@ -360,7 +360,7 @@ namespace details
 
         for (size_t county = 0; county < model.size(); county++) {
             if (std::accumulate(num_inf[county].begin(), num_inf[county].end(), 0.0) > 0) {
-                size_t num_groups = model[county].parameters.get_num_groups();
+                size_t num_groups = (size_t)model[county].parameters.get_num_groups();
                 for (size_t i = 0; i < num_groups; i++) {
                     model[county].populations[{AgeGroup(i), InfectionState::Exposed}] =
                         num_exp[county][i];
@@ -489,10 +489,10 @@ namespace details
 
         for (size_t region = 0; region < vregion.size(); region++) {
             if (std::accumulate(num_population[region].begin(), num_population[region].end(), 0.0) > 0) {
-                size_t num_groups = model[region].parameters.get_num_groups();
-                for (size_t i = 0; i < num_groups; i++) {
+                auto num_groups = model[region].parameters.get_num_groups();
+                for (auto i = AgeGroup(0); i < num_groups; i++) {
                     model[region].populations.set_difference_from_group_total<epi::AgeGroup>(
-                    {AgeGroup(i), InfectionState::Susceptible}, num_population[region][i]);
+                    {i, InfectionState::Susceptible}, num_population[region][size_t(i)]);
                 }
             }
             else {
@@ -509,22 +509,22 @@ namespace details
         std::vector<double> sum_mu_I_U(vregion.size(), 0);
         std::vector<std::vector<double>> mu_I_U{model.size()};
         for (size_t region = 0; region < vregion.size(); region++) {
-            size_t num_groups = model[region].parameters.get_num_groups();
-            for (size_t i = 0; i < num_groups; i++) {
-                sum_mu_I_U[region] += model[region].parameters.probabilities[i].get_icu_per_hospitalized() *
-                                      model[region].parameters.probabilities[i].get_hospitalized_per_infectious();
-                mu_I_U[region].push_back(model[region].parameters.probabilities[i].get_icu_per_hospitalized() *
-                                         model[region].parameters.probabilities[i].get_hospitalized_per_infectious());
+            auto num_groups = model[region].parameters.get_num_groups();
+            for (auto i = epi::AgeGroup(0); i < num_groups; i++) {
+                sum_mu_I_U[region] += model[region].parameters.get<epi::ICUCasesPerHospitalized>()[i] *
+                                      model[region].parameters.get<epi::HospitalizedCasesPerInfectious>()[i];
+                mu_I_U[region].push_back(model[region].parameters.get<epi::ICUCasesPerHospitalized>()[i] *
+                                         model[region].parameters.get<epi::HospitalizedCasesPerInfectious>()[i]);
             }
         }
         std::vector<double> num_icu(model.size(), 0.0);
         read_divi_data(path, id_name, vregion, date, num_icu);
 
         for (size_t region = 0; region < vregion.size(); region++) {
-            size_t num_groups = model[region].parameters.get_num_groups();
-            for (size_t i = 0; i < num_groups; i++) {
-                model[region].populations[{AgeGroup(i), epi::InfectionState::ICU}] =
-                    scaling_factor_icu * num_icu[region] * mu_I_U[region][i] / sum_mu_I_U[region];
+            auto num_groups = model[region].parameters.get_num_groups();
+            for (auto i = epi::AgeGroup(0); i < num_groups; i++) {
+                model[region].populations[{i, epi::InfectionState::ICU}] =
+                    scaling_factor_icu * num_icu[region] * mu_I_U[region][(size_t)i] / sum_mu_I_U[region];
             }
         }
 
@@ -718,15 +718,14 @@ SecirModel read_parameter_space(TixiDocumentHandle handle, const std::string& pa
     status = tixiGetDoubleElement(handle, path_join(path, "StartDay").c_str(), &read_buffer);
     assert(status == SUCCESS && ("Failed to read StartDay at " + path).c_str());
 
-    model.parameters.set_start_day(read_buffer);
-    model.parameters.set_seasonality(*read_element(handle, path_join(path, "Seasonality"), io_mode));
-    model.parameters.set_icu_capacity(*read_element(handle, path_join(path, "ICUCapacity"), io_mode));
-    model.parameters.set_test_and_trace_capacity(
-        *read_element(handle, path_join(path, "TestAndTraceCapacity"), io_mode));
-    model.parameters.set_contact_patterns(read_contact(handle, path_join(path, "ContactFreq"), io_mode));
+    model.parameters.set<epi::StartDay>(read_buffer);
+    model.parameters.set<epi::Seasonality>(* read_element(handle, path_join(path, "Seasonality"), io_mode));
+    model.parameters.set<epi::ICUCapacity>(* read_element(handle, path_join(path, "ICUCapacity"), io_mode));
+    model.parameters.set<epi::TestAndTraceCapacity>(* read_element(handle, path_join(path, "TestAndTraceCapacity"), io_mode));
+    model.parameters.set<epi::ContactPatterns>(read_contact(handle, path_join(path, "ContactFreq"), io_mode));
 
-    for (size_t i = 0; i < static_cast<size_t>(num_groups); i++) {
-        auto group_name = "Group" + std::to_string(i + 1);
+    for (auto i = AgeGroup(0); i < AgeGroup(num_groups); i++) {
+        auto group_name = "Group" + std::to_string((size_t)i + 1);
         auto group_path = path_join(path, group_name);
 
         // populations
@@ -735,65 +734,50 @@ SecirModel read_parameter_space(TixiDocumentHandle handle, const std::string& pa
         status = tixiGetDoubleElement(handle, path_join(population_path, "Dead").c_str(), &read_buffer);
         assert(status == SUCCESS && ("Failed to read number of deaths at " + path).c_str());
 
-        model.populations[{(AgeGroup)i, epi::InfectionState::Dead}] = read_buffer;
+        model.populations[{i, epi::InfectionState::Dead}] = read_buffer;
 
-        model.populations[{(AgeGroup)i, epi::InfectionState::Exposed}] =
+        model.populations[{i, epi::InfectionState::Exposed}] =
             *read_element(handle, path_join(population_path, "Exposed"), io_mode);
-        model.populations[{(AgeGroup)i, epi::InfectionState::Carrier}] =
+        model.populations[{i, epi::InfectionState::Carrier}] =
             *read_element(handle, path_join(population_path, "Carrier"), io_mode);
-        model.populations[{(AgeGroup)i, epi::InfectionState::Infected}] =
+        model.populations[{i, epi::InfectionState::Infected}] =
             *read_element(handle, path_join(population_path, "Infectious"), io_mode);
-        model.populations[{(AgeGroup)i, epi::InfectionState::Hospitalized}] =
+        model.populations[{i, epi::InfectionState::Hospitalized}] =
             *read_element(handle, path_join(population_path, "Hospitalized"), io_mode);
-        model.populations[{(AgeGroup)i, epi::InfectionState::ICU}] =
+        model.populations[{i, epi::InfectionState::ICU}] =
             *read_element(handle, path_join(population_path, "ICU"), io_mode);
-        model.populations[{(AgeGroup)i, epi::InfectionState::Recovered}] =
+        model.populations[{i, epi::InfectionState::Recovered}] =
             *read_element(handle, path_join(population_path, "Recovered"), io_mode);
 
         status = tixiGetDoubleElement(handle, path_join(population_path, "Total").c_str(), &read_buffer);
         assert(status == SUCCESS && ("Failed to read total population at " + path).c_str());
 
-        model.populations.set_difference_from_group_total<AgeGroup>({(AgeGroup)i, epi::InfectionState::Susceptible}, read_buffer);
+        model.populations.set_difference_from_group_total<AgeGroup>({i, epi::InfectionState::Susceptible}, read_buffer);
 
         // times
         auto times_path = path_join(group_path, "StageTimes");
 
-        model.parameters.times[i].set_incubation(*read_element(handle, path_join(times_path, "Incubation"), io_mode));
-        model.parameters.times[i].set_infectious_mild(
-            *read_element(handle, path_join(times_path, "InfectiousMild"), io_mode));
-        model.parameters.times[i].set_serialinterval(
-            *read_element(handle, path_join(times_path, "SerialInterval"), io_mode));
-        model.parameters.times[i].set_hospitalized_to_home(
-            *read_element(handle, path_join(times_path, "HospitalizedToRecovered"), io_mode));
-        model.parameters.times[i].set_home_to_hospitalized(
-            *read_element(handle, path_join(times_path, "InfectiousToHospitalized"), io_mode));
-        model.parameters.times[i].set_infectious_asymp(
-            *read_element(handle, path_join(times_path, "InfectiousAsympt"), io_mode));
-        model.parameters.times[i].set_hospitalized_to_icu(
-            *read_element(handle, path_join(times_path, "HospitalizedToICU"), io_mode));
-        model.parameters.times[i].set_icu_to_home(
-            *read_element(handle, path_join(times_path, "ICUToRecovered"), io_mode));
-        model.parameters.times[i].set_icu_to_death(*read_element(handle, path_join(times_path, "ICUToDead"), io_mode));
+        model.parameters.get<IncubationTime>()[i] = * read_element(handle, path_join(times_path, "Incubation"), io_mode);
+        model.parameters.get<InfectiousTimeMild>()[i] = * read_element(handle, path_join(times_path, "InfectiousMild"), io_mode);
+        model.parameters.get<SerialInterval>()[i] = * read_element(handle, path_join(times_path, "SerialInterval"), io_mode);
+        model.parameters.get<HospitalizedToHomeTime>()[i] = * read_element(handle, path_join(times_path, "HospitalizedToRecovered"), io_mode);
+        model.parameters.get<HomeToHospitalizedTime>()[i] = * read_element(handle, path_join(times_path, "InfectiousToHospitalized"), io_mode);
+        model.parameters.get<InfectiousTimeAsymptomatic>()[i] = * read_element(handle, path_join(times_path, "InfectiousAsympt"), io_mode);
+        model.parameters.get<HospitalizedToICUTime>()[i] = * read_element(handle, path_join(times_path, "HospitalizedToICU"), io_mode);
+        model.parameters.get<ICUToHomeTime>()[i] = * read_element(handle, path_join(times_path, "ICUToRecovered"), io_mode);
+        model.parameters.get<ICUToDeathTime>()[i] = * read_element(handle, path_join(times_path, "ICUToDead"), io_mode);
 
         // probabilities
         auto probabilities_path = path_join(group_path, "Probabilities");
 
-        model.parameters.probabilities[i].set_infection_from_contact(
-            *read_element(handle, path_join(probabilities_path, "InfectedFromContact"), io_mode));
-        model.parameters.probabilities[i].set_carrier_infectability(
-            *read_element(handle, path_join(probabilities_path, "Carrierinfectability"), io_mode));
-        model.parameters.probabilities[i].set_asymp_per_infectious(
-            *read_element(handle, path_join(probabilities_path, "AsympPerInfectious"), io_mode));
-        model.parameters.probabilities[i].set_risk_from_symptomatic(
-            *read_element(handle, path_join(probabilities_path, "RiskFromSymptomatic"), io_mode));
-        model.parameters.probabilities[i].set_test_and_trace_max_risk_from_symptomatic(
-            *read_element(handle, path_join(probabilities_path, "TestAndTraceMaxRiskFromSymptomatic"), io_mode));
-        model.parameters.probabilities[i].set_dead_per_icu(
-            *read_element(handle, path_join(probabilities_path, "DeadPerICU"), io_mode));
-        model.parameters.probabilities[i].set_hospitalized_per_infectious(
-            *read_element(handle, path_join(probabilities_path, "HospitalizedPerInfectious"), io_mode));
-        model.parameters.probabilities[i].set_icu_per_hospitalized(
-            *read_element(handle, path_join(probabilities_path, "ICUPerHospitalized"), io_mode));
+        model.parameters.get<InfectionProbabilityFromContact>()[i] = * read_element(handle, path_join(probabilities_path, "InfectedFromContact"), io_mode);
+        model.parameters.get<RelativeCarrierInfectability>()[i] = * read_element(handle, path_join(probabilities_path, "Carrierinfectability"), io_mode);
+        model.parameters.get<AsymptoticCasesPerInfectious>()[i] = * read_element(handle, path_join(probabilities_path, "AsympPerInfectious"), io_mode);
+        model.parameters.get<RiskOfInfectionFromSympomatic>()[i] = * read_element(handle, path_join(probabilities_path, "RiskFromSymptomatic"), io_mode);
+        model.parameters.get<MaxRiskOfInfectionFromSympomatic>()[i] = * read_element(handle, path_join(probabilities_path, "TestAndTraceMaxRiskFromSymptomatic"), io_mode);
+        model.parameters.get<DeathsPerHospitalized>()[i] = * read_element(handle, path_join(probabilities_path, "DeadPerICU"), io_mode);
+        model.parameters.get<HospitalizedCasesPerInfectious>()[i] = * read_element(handle, path_join(probabilities_path, "HospitalizedPerInfectious"), io_mode);
+        model.parameters.get<ICUCasesPerHospitalized>()[i] = * read_element(handle, path_join(probabilities_path, "ICUPerHospitalized"), io_mode);
     }
 
     return model;
@@ -804,16 +788,16 @@ void write_parameter_space(TixiDocumentHandle handle, const std::string& path, S
                            int io_mode)
 {
     auto num_groups = model.parameters.get_num_groups();
-    tixiAddIntegerElement(handle, path.c_str(), "NumberOfGroups", (int)num_groups, "%d");
+    tixiAddIntegerElement(handle, path.c_str(), "NumberOfGroups", (int)(size_t)num_groups, "%d");
 
-    tixiAddDoubleElement(handle, path.c_str(), "StartDay", model.parameters.get_start_day(), "%g");
-    write_element(handle, path, "Seasonality", model.parameters.get_seasonality(), io_mode, num_runs);
-    write_element(handle, path, "ICUCapacity", model.parameters.get_icu_capacity(), io_mode, num_runs);
-    write_element(handle, path, "TestAndTraceCapacity", model.parameters.get_test_and_trace_capacity(), io_mode,
+    tixiAddDoubleElement(handle, path.c_str(), "StartDay", model.parameters.get<epi::StartDay>(), "%g");
+    write_element(handle, path, "Seasonality", model.parameters.get<epi::Seasonality>(), io_mode, num_runs);
+    write_element(handle, path, "ICUCapacity", model.parameters.get<epi::ICUCapacity>(), io_mode, num_runs);
+    write_element(handle, path, "TestAndTraceCapacity", model.parameters.get<epi::TestAndTraceCapacity>(), io_mode,
                   num_runs);
 
-    for (size_t i = 0; i < num_groups; i++) {
-        auto group_name = "Group" + std::to_string(i + 1);
+    for (auto i = AgeGroup(0); i < AgeGroup(num_groups); i++) {
+        auto group_name = "Group" + std::to_string((size_t)i + 1);
         auto group_path = path_join(path, group_name);
 
         tixiCreateElement(handle, path.c_str(), group_name.c_str());
@@ -823,67 +807,67 @@ void write_parameter_space(TixiDocumentHandle handle, const std::string& path, S
         tixiCreateElement(handle, group_path.c_str(), "Population");
 
         tixiAddDoubleElement(handle, population_path.c_str(), "Total",
-                             model.populations.get_group_total(epi::AgeGroup(i)), "%g");
+                             model.populations.get_group_total(i), "%g");
         tixiAddDoubleElement(handle, population_path.c_str(), "Dead",
-                             model.populations[{AgeGroup(i), InfectionState::Dead}], "%g");
+                             model.populations[{i, InfectionState::Dead}], "%g");
         write_element(handle, population_path, "Exposed",
-                      model.populations[{AgeGroup(i), InfectionState::Exposed}], io_mode, num_runs);
+                      model.populations[{i, InfectionState::Exposed}], io_mode, num_runs);
         write_element(handle, population_path, "Carrier",
-                      model.populations[{AgeGroup(i), InfectionState::Carrier}], io_mode, num_runs);
+                      model.populations[{i, InfectionState::Carrier}], io_mode, num_runs);
         write_element(handle, population_path, "Infectious",
-                      model.populations[{AgeGroup(i), InfectionState::Infected}], io_mode, num_runs);
+                      model.populations[{i, InfectionState::Infected}], io_mode, num_runs);
         write_element(handle, population_path, "Hospitalized",
-                      model.populations[{AgeGroup(i), InfectionState::Hospitalized}], io_mode, num_runs);
+                      model.populations[{i, InfectionState::Hospitalized}], io_mode, num_runs);
         write_element(handle, population_path, "ICU",
-                      model.populations[{AgeGroup(i), InfectionState::ICU}], io_mode, num_runs);
+                      model.populations[{i, InfectionState::ICU}], io_mode, num_runs);
         write_element(handle, population_path, "Recovered",
-                      model.populations[{AgeGroup(i), InfectionState::Recovered}], io_mode, num_runs);
+                      model.populations[{i, InfectionState::Recovered}], io_mode, num_runs);
 
         // times
         auto times_path = path_join(group_path, "StageTimes");
         tixiCreateElement(handle, group_path.c_str(), "StageTimes");
 
-        write_element(handle, times_path, "Incubation", model.parameters.times[i].get_incubation(), io_mode, num_runs);
-        write_element(handle, times_path, "InfectiousMild", model.parameters.times[i].get_infectious_mild(), io_mode,
+        write_element(handle, times_path, "Incubation", model.parameters.get<IncubationTime>()[i], io_mode, num_runs);
+        write_element(handle, times_path, "InfectiousMild", model.parameters.get<InfectiousTimeMild>()[i], io_mode,
                       num_runs);
-        write_element(handle, times_path, "SerialInterval", model.parameters.times[i].get_serialinterval(), io_mode,
+        write_element(handle, times_path, "SerialInterval", model.parameters.get<SerialInterval>()[i], io_mode,
                       num_runs);
         write_element(handle, times_path, "HospitalizedToRecovered",
-                      model.parameters.times[i].get_hospitalized_to_home(), io_mode, num_runs);
+                      model.parameters.get<HospitalizedToHomeTime>()[i], io_mode, num_runs);
         write_element(handle, times_path, "InfectiousToHospitalized",
-                      model.parameters.times[i].get_home_to_hospitalized(), io_mode, num_runs);
-        write_element(handle, times_path, "InfectiousAsympt", model.parameters.times[i].get_infectious_asymp(), io_mode,
+                      model.parameters.get<HomeToHospitalizedTime>()[i], io_mode, num_runs);
+        write_element(handle, times_path, "InfectiousAsympt", model.parameters.get<InfectiousTimeAsymptomatic>()[i], io_mode,
                       num_runs);
-        write_element(handle, times_path, "HospitalizedToICU", model.parameters.times[i].get_hospitalized_to_icu(),
+        write_element(handle, times_path, "HospitalizedToICU", model.parameters.get<HospitalizedToICUTime>()[i],
                       io_mode, num_runs);
-        write_element(handle, times_path, "ICUToRecovered", model.parameters.times[i].get_icu_to_home(), io_mode,
+        write_element(handle, times_path, "ICUToRecovered", model.parameters.get<ICUToHomeTime>()[i], io_mode,
                       num_runs);
-        write_element(handle, times_path, "ICUToDead", model.parameters.times[i].get_icu_to_dead(), io_mode, num_runs);
+        write_element(handle, times_path, "ICUToDead", model.parameters.get<ICUToDeathTime>()[i], io_mode, num_runs);
 
         // probabilities
         auto probabilities_path = path_join(group_path, "Probabilities");
         tixiCreateElement(handle, group_path.c_str(), "Probabilities");
 
         write_element(handle, probabilities_path, "InfectedFromContact",
-                      model.parameters.probabilities[i].get_infection_from_contact(), io_mode, num_runs);
+                      model.parameters.get<InfectionProbabilityFromContact>()[i], io_mode, num_runs);
         write_element(handle, probabilities_path, "Carrierinfectability",
-                      model.parameters.probabilities[i].get_carrier_infectability(), io_mode, num_runs);
+                      model.parameters.get<RelativeCarrierInfectability>()[i], io_mode, num_runs);
         write_element(handle, probabilities_path, "AsympPerInfectious",
-                      model.parameters.probabilities[i].get_asymp_per_infectious(), io_mode, num_runs);
+                      model.parameters.get<AsymptoticCasesPerInfectious>()[i], io_mode, num_runs);
         write_element(handle, probabilities_path, "RiskFromSymptomatic",
-                      model.parameters.probabilities[i].get_risk_from_symptomatic(), io_mode, num_runs);
+                      model.parameters.get<RiskOfInfectionFromSympomatic>()[i], io_mode, num_runs);
         write_element(handle, probabilities_path, "TestAndTraceMaxRiskFromSymptomatic",
-                      model.parameters.probabilities[i].get_test_and_trace_max_risk_from_symptomatic(), io_mode,
+                      model.parameters.get<MaxRiskOfInfectionFromSympomatic>()[i], io_mode,
                       num_runs);
-        write_element(handle, probabilities_path, "DeadPerICU", model.parameters.probabilities[i].get_dead_per_icu(),
+        write_element(handle, probabilities_path, "DeadPerICU", model.parameters.get<DeathsPerHospitalized>()[i],
                       io_mode, num_runs);
         write_element(handle, probabilities_path, "HospitalizedPerInfectious",
-                      model.parameters.probabilities[i].get_hospitalized_per_infectious(), io_mode, num_runs);
+                      model.parameters.get<HospitalizedCasesPerInfectious>()[i], io_mode, num_runs);
         write_element(handle, probabilities_path, "ICUPerHospitalized",
-                      model.parameters.probabilities[i].get_icu_per_hospitalized(), io_mode, num_runs);
+                      model.parameters.get<ICUCasesPerHospitalized>()[i], io_mode, num_runs);
     }
 
-    write_contact(handle, path, model.parameters.get_contact_patterns(), io_mode);
+    write_contact(handle, path, model.parameters.get<epi::ContactPatterns>(), io_mode);
 }
 
 ParameterStudy<SecirModel> read_parameter_study(TixiDocumentHandle handle, const std::string& path)

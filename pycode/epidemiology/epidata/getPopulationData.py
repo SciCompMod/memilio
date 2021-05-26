@@ -100,7 +100,7 @@ def get_one_data_set(read_data, out_form, directory, d):
 
 
 #
-def get_new_counties(data_temp):
+def get_new_counties(data):
     """! Creates 7 new counties that were formed since 2011 and deletes old counties
 
    Downloaded data is from 2011.
@@ -112,7 +112,7 @@ def get_new_counties(data_temp):
    """
 
     # create 7 new counties
-    data_temp = np.append(data_temp, np.zeros((7, data_temp.shape[1])), axis=0)
+    data_temp = np.append(data, np.zeros((7, data.shape[1])), axis=0)
 
     # Göttingen
     data_temp[-7, 0] = 3159
@@ -180,13 +180,62 @@ def get_new_counties(data_temp):
     data_temp = np.delete(data_temp, to_delete, 0)
     sorted_inds = np.argsort(data_temp[:, 0])
     data_temp = data_temp[sorted_inds, :]
+    if to_delete == []:
+        return data
+    else:
+        return data_temp
 
-    return data_temp
+def load_age_population_data(read_data, out_folder):
+    directory = os.path.join(out_folder, 'Germany/')
+    gd.check_dir(directory)
+
+    filename_counties = 'migration'
+    filename_reg_key = 'reg_key'
+    filename_zensus = 'zensus'
+
+    if(read_data):
+
+        file_in = os.path.join(directory, filename_counties+".json")
+        try:
+            counties = pandas.read_json(file_in)
+        except ValueError:
+            exit_string = "Error: The file: " + file_in + " does not exist. Call program without -r flag to get it."
+            sys.exit(exit_string)
+
+        file_in = os.path.join(directory, filename_zensus+".json")
+        try:
+            zensus = pandas.read_json(file_in)
+        except ValueError:
+            exit_string = "Error: The file: " + file_in + " does not exist. Call program without -r flag to get it."
+            sys.exit(exit_string)
+
+        file_in = os.path.join(directory, filename_reg_key+".json")
+        try:
+            reg_key = pandas.read_json(file_in)
+        except ValueError:
+            exit_string = "Error: The file: " + file_in + " does not exist. Call program without -r flag to get it."
+            sys.exit(exit_string)
+    else:
+        path_counties = 'http://hpcagainstcorona.sc.bs.dlr.de/data/migration/'
+        path_reg_key = 'https://www.zensus2011.de/SharedDocs/Downloads/DE/Pressemitteilung/DemografischeGrunddaten/' \
+                       '1A_EinwohnerzahlGeschlecht.xls?__blob=publicationFile&v=5'
+
+        #read tables
+        counties = pandas.read_excel(os.path.join(path_counties,'kreise_deu.xlsx'),sheet_name=1, header=3, engine='openpyxl')
+        reg_key = pandas.read_excel(path_reg_key, sheet_name='Tabelle_1A', header=12)
+        zensus = gd.loadCsv("abad92e8eead46a4b0d252ee9438eb53_1")
+
+        gd.write_dataframe(counties, directory, filename_counties, "json")
+        gd.write_dataframe(reg_key, directory, filename_reg_key, "json")
+        gd.write_dataframe(zensus, directory, filename_zensus, "json")
+
+    return counties, reg_key, zensus
 
 
 def get_age_population_data(read_data=dd.defaultDict['read_data'],
                             out_form=dd.defaultDict['out_form'],
-                            out_folder=dd.defaultDict['out_folder']):
+                            out_folder=dd.defaultDict['out_folder'],
+                            write_df=True):
     """! Download data with age splitting
 
    Data is downloaded from the following sources
@@ -208,55 +257,14 @@ def get_age_population_data(read_data=dd.defaultDict['read_data'],
    @param out_folder Path to folder where data is written in folder out_folder/Germany.
    """
 
-    directory = os.path.join(out_folder, 'Germany/')
-    gd.check_dir(directory)
-
-    filename_counties = 'migration'
-    filename_reg_key = 'reg_key'
-    filename_zensus = 'zensus'
-
-    if read_data:
-        file_in = os.path.join(directory, filename_counties + ".json")
-        try:
-            counties = pandas.read_json(file_in)
-        except ValueError:
-            exit_string = "Error: The file: " + file_in + " does not exist. Call program without -r flag to get it."
-            sys.exit(exit_string)
-
-        file_in = os.path.join(directory, filename_zensus + ".json")
-        try:
-            zensus = pandas.read_json(file_in)
-        except ValueError:
-            exit_string = "Error: The file: " + file_in + " does not exist. Call program without -r flag to get it."
-            sys.exit(exit_string)
-
-        file_in = os.path.join(directory, filename_reg_key + ".json")
-        try:
-            reg_key = pandas.read_json(file_in)
-        except ValueError:
-            exit_string = "Error: The file: " + file_in + " does not exist. Call program without -r flag to get it."
-            sys.exit(exit_string)
-    else:
-        path_counties = 'http://hpcagainstcorona.sc.bs.dlr.de/data/migration/'
-        path_reg_key = 'https://www.zensus2011.de/SharedDocs/Downloads/DE/Pressemitteilung/DemografischeGrunddaten/' \
-                       '1A_EinwohnerzahlGeschlecht.xls?__blob=publicationFile&v=5'
-
-        # read tables
-        counties = pandas.read_excel(os.path.join(path_counties, 'kreise_deu.xlsx'), sheet_name=1, header=3,
-                                     engine='openpyxl')
-        reg_key = pandas.read_excel(path_reg_key, sheet_name='Tabelle_1A', header=12)
-        zensus = gd.loadCsv("abad92e8eead46a4b0d252ee9438eb53_1")
-
-        gd.write_dataframe(counties, directory, filename_counties, "json")
-        gd.write_dataframe(reg_key, directory, filename_reg_key, "json")
-        gd.write_dataframe(zensus, directory, filename_zensus, "json")
+    counties, reg_key, zensus = load_age_population_data(read_data, out_folder)
 
     # find region keys for census population data
     key = np.zeros((len(zensus)))
     for i in range(len(key)):
         for j in range(len(reg_key)):
             if zensus.Name.values[i] == reg_key['NAME'].values.astype(str)[j]:
-                if zensus.EWZ.values[i] == round(reg_key['Zensus_EWZ'].values[j] * 1000):
+                if zensus.EWZ.values[i] == round(reg_key['Zensus_EWZ'].values[j]*1000):
                     key[i] = reg_key['AGS'].values[j]
 
     unique, inds, count = np.unique(key, return_index=True, return_counts=True)
@@ -272,24 +280,24 @@ def get_age_population_data(read_data=dd.defaultDict['read_data'],
                '65-74 years', '>74 years']
 
     # add male and female population data
-    data = np.zeros((len(inds), len(male) + 2))
-    data[:, 0] = key[inds].astype(int)
-    data[:, 1] = zensus['EWZ'].values[inds].astype(int)
-    for i, male_i in enumerate(male):
-        data[:, i + 2] = zensus[male_i].values[inds].astype(int) + zensus[female[i]].values[inds].astype(int)
+    data = np.zeros((len(inds), len(male)+2))
+    data[:,0] = key[inds].astype(int)
+    data[:,1] = zensus['EWZ'].values[inds].astype(int)
+    for i in range(len(male)):
+        data[:, i+2] = zensus[male[i]].values[inds].astype(int) + zensus[female[i]].values[inds].astype(int)
 
     data = get_new_counties(data)
 
     # compute ratio of current and 2011 population data
-    ratio = np.ones(len(data[:, 0]))
+    ratio = np.ones(len(data[:,0]))
     for i in range(len(ratio)):
         for j in range(len(counties)):
             if not counties['Schlüssel-nummer'].isnull().values[j]:
                 try:
-                    if data[i, 0] == int(counties['Schlüssel-nummer'].values[j]):
-                        ratio[i] = counties['Bevölkerung2)'].values[j] / data[i, 1]
+                    if data[i,0] == int(counties['Schlüssel-nummer'].values[j]):
+                        ratio[i] = counties['Bevölkerung2)'].values[j]/data[i, 1]
                 except:
-                    pass
+                    dummy = 0
 
     # adjust population data for all ages to current level
     data_current = np.zeros(data.shape)
@@ -297,7 +305,7 @@ def get_age_population_data(read_data=dd.defaultDict['read_data'],
     for i in range(len(data[0, :]) - 1):
         data_current[:, i + 1] = np.multiply(data[:, i + 1], ratio)
 
-    # create dataframe
+    #create dataframe
     df = pandas.DataFrame(data.astype(int), columns=columns)
     df_current = pandas.DataFrame(np.round(data_current).astype(int), columns=columns)
 
@@ -305,8 +313,12 @@ def get_age_population_data(read_data=dd.defaultDict['read_data'],
     directory = os.path.join(directory, 'Germany/')
     gd.check_dir(directory)
 
-    gd.write_dataframe(df, directory, 'county_population', out_form)
-    gd.write_dataframe(df_current, directory, 'county_current_population', out_form)
+    if write_df:
+        gd.write_dataframe(df, directory, 'county_population', out_form)
+        gd.write_dataframe(df_current, directory, 'county_current_population', out_form)
+    else:
+        return df_current
+
 
 
 def main():

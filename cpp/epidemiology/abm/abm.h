@@ -11,5 +11,6 @@
 #include "epidemiology/abm/state.h"
 #include "epidemiology/abm/location_type.h"
 #include "epidemiology/utils/random_number_generator.h"
+#include "epidemiology/abm/migration_rules.h"
 
 #endif

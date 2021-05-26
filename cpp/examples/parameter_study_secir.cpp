@@ -41,48 +41,49 @@ int main()
     // delta = delta_in; // deaths per ICUs
 
     epi::SecirModel model(1);
-    int num_groups = (int)model.parameters.get_num_groups();
-    double fact    = 1.0 / (double)num_groups;
+    epi::AgeGroup num_groups = model.parameters.get_num_groups();
+    double fact    = 1.0 / (double)(size_t)num_groups;
 
     auto& params = model.parameters;
 
-    params.set_icu_capacity(std::numeric_limits<double>::max());
-    params.set_start_day(0);
-    params.set_seasonality(0);
+    params.set<epi::ICUCapacity>(std::numeric_limits<double>::max());
+    params.set<epi::StartDay>(0);
+    params.set<epi::Seasonality>(0);
 
-    for (int i = 0; i < num_groups; i++) {
-        params.times[i].set_incubation(tinc);
-        params.times[i].set_infectious_mild(tinfmild);
-        params.times[i].set_serialinterval(tserint);
-        params.times[i].set_hospitalized_to_home(thosp2home);
-        params.times[i].set_home_to_hospitalized(thome2hosp);
-        params.times[i].set_hospitalized_to_icu(thosp2icu);
-        params.times[i].set_icu_to_home(ticu2home);
-        params.times[i].set_icu_to_death(ticu2death);
+    for (auto i = epi::AgeGroup(0); i < num_groups; i++) {
+        params.get<epi::IncubationTime>()[i] = tinc;
+        params.get<epi::InfectiousTimeMild>()[i] = tinfmild;
+        params.get<epi::SerialInterval>()[i] = tserint;
+        params.get<epi::HospitalizedToHomeTime>()[i] = thosp2home;
+        params.get<epi::HomeToHospitalizedTime>()[i] = thome2hosp;
+        params.get<epi::HospitalizedToICUTime>()[i] = thosp2icu;
+        params.get<epi::ICUToHomeTime>()[i] = ticu2home;
+        params.get<epi::ICUToDeathTime>()[i] = ticu2death;
 
-        model.populations[{epi::AgeGroup(i),epi::InfectionState::Exposed}] = fact * num_exp_t0;
-        model.populations[{epi::AgeGroup(i),epi::InfectionState::Carrier}] = fact * num_car_t0;
-        model.populations[{epi::AgeGroup(i),epi::InfectionState::Infected}] = fact * num_inf_t0;
-        model.populations[{epi::AgeGroup(i),epi::InfectionState::Hospitalized}] = fact * num_hosp_t0;
-        model.populations[{epi::AgeGroup(i),epi::InfectionState::ICU}] = fact * num_icu_t0;
-        model.populations[{epi::AgeGroup(i),epi::InfectionState::Recovered}] = fact * num_rec_t0;
-        model.populations[{epi::AgeGroup(i),epi::InfectionState::Dead}] = fact * num_dead_t0;
-        model.populations.set_difference_from_group_total<epi::AgeGroup>({epi::AgeGroup(i), epi::InfectionState::Susceptible},
+        model.populations[{i,epi::InfectionState::Exposed}] = fact * num_exp_t0;
+        model.populations[{i,epi::InfectionState::Carrier}] = fact * num_car_t0;
+        model.populations[{i,epi::InfectionState::Infected}] = fact * num_inf_t0;
+        model.populations[{i,epi::InfectionState::Hospitalized}] = fact * num_hosp_t0;
+        model.populations[{i,epi::InfectionState::ICU}] = fact * num_icu_t0;
+        model.populations[{i,epi::InfectionState::Recovered}] = fact * num_rec_t0;
+        model.populations[{i,epi::InfectionState::Dead}] = fact * num_dead_t0;
+        model.populations.set_difference_from_group_total<epi::AgeGroup>({i, epi::InfectionState::Susceptible},
                                                                          fact * num_total_t0);
 
-        params.probabilities[i].set_infection_from_contact(inf_prob);
-        params.probabilities[i].set_carrier_infectability(carr_infec);
-        params.probabilities[i].set_asymp_per_infectious(alpha);
-        params.probabilities[i].set_risk_from_symptomatic(beta);
-        params.probabilities[i].set_hospitalized_per_infectious(rho);
-        params.probabilities[i].set_icu_per_hospitalized(theta);
-        params.probabilities[i].set_dead_per_icu(delta);
+        params.get<epi::InfectionProbabilityFromContact>()[i] = inf_prob;
+        params.get<epi::RelativeCarrierInfectability>()[i] = carr_infec;
+        params.get<epi::AsymptoticCasesPerInfectious>()[i] = alpha;
+        params.get<epi::RiskOfInfectionFromSympomatic>()[i] = beta;
+        params.get<epi::HospitalizedCasesPerInfectious>()[i] = rho;
+        params.get<epi::ICUCasesPerHospitalized>()[i] = theta;
+        params.get<epi::DeathsPerHospitalized>()[i] = delta;
     }
 
     params.apply_constraints();
 
-    epi::ContactMatrixGroup& contact_matrix = params.get_contact_patterns();
-    contact_matrix[0] = epi::ContactMatrix(Eigen::MatrixXd::Constant(num_groups, num_groups, fact * cont_freq));
+    epi::ContactMatrixGroup& contact_matrix = params.get<epi::ContactPatterns>();
+    contact_matrix[0] = epi::ContactMatrix(Eigen::MatrixXd::Constant((size_t)num_groups,
+                                                                     (size_t)num_groups, fact * cont_freq));
 
     epi::set_params_distributions_normal(model, t0, tmax, 0.2);
 

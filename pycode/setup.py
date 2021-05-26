@@ -16,11 +16,12 @@ __version__ = '0.1.0'
 
 
 INSTALL_REQUIRES = ['pandas<1.2.0',
-                    'matplotlib',
+                    'matplotlib<3.4',
                     'tables',
                     'numpy<=1.19.4',
                     'openpyxl',
-                    'xlrd']
+                    'xlrd', 
+		    'requests']
 
 EXTRAS_REQUIRE = {"pylint": ["pylint", "pylint_json2html"]}
 
@@ -77,9 +78,10 @@ setup(
             'getjhdata = epidemiology.epidata.getJHData:main',
             'getspaindata = epidemiology.epidata.getSpainData:main',
             'getdividata = epidemiology.epidata.getDIVIData:main',
-            'getalldata = epidemiology.epidata.getAllData:main',
+            'getsimdata = epidemiology.epidata.getSimulationData:main',
             'cleandata = epidemiology.epidata.cleanData:main',
-            'getrkiestimation = epidemiology.epidata.getRKIDatawithEstimations:main'
+            'getrkiestimation = epidemiology.epidata.getRKIDatawithEstimations:main',
+            'getcommutermigration = epidemiology.epidata.commuter_migration_bfa:main'
         ],
     },
     package_dir={

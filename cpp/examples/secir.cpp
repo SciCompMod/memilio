@@ -37,19 +37,19 @@ int main()
     epi::SecirModel model(1);
 
     // params.set_icu_capacity(20);
-    model.parameters.set_start_day(0);
-    model.parameters.set_seasonality(0);
+    model.parameters.set<epi::StartDay>(0);
+    model.parameters.set<epi::Seasonality>(0);
 
-    model.parameters.times[0].set_incubation(tinc);
-    model.parameters.times[0].set_infectious_mild(tinfmild);
-    model.parameters.times[0].set_serialinterval(tserint);
-    model.parameters.times[0].set_hospitalized_to_home(thosp2home);
-    model.parameters.times[0].set_home_to_hospitalized(thome2hosp);
-    model.parameters.times[0].set_hospitalized_to_icu(thosp2icu);
-    model.parameters.times[0].set_icu_to_home(ticu2home);
-    model.parameters.times[0].set_icu_to_death(ticu2death);
+    model.parameters.get<epi::IncubationTime>()[(epi::AgeGroup)0] = tinc;
+    model.parameters.get<epi::InfectiousTimeMild>()[(epi::AgeGroup)0] = tinfmild;
+    model.parameters.get<epi::SerialInterval>()[(epi::AgeGroup)0] = tserint;
+    model.parameters.get<epi::HospitalizedToHomeTime>()[(epi::AgeGroup)0] = thosp2home;
+    model.parameters.get<epi::HomeToHospitalizedTime>()[(epi::AgeGroup)0] = thome2hosp;
+    model.parameters.get<epi::HospitalizedToICUTime>()[(epi::AgeGroup)0] = thosp2icu;
+    model.parameters.get<epi::ICUToHomeTime>()[(epi::AgeGroup)0] = ticu2home;
+    model.parameters.get<epi::ICUToDeathTime>()[(epi::AgeGroup)0] = ticu2death;
 
-    epi::ContactMatrixGroup& contact_matrix = model.parameters.get_contact_patterns();
+    epi::ContactMatrixGroup& contact_matrix = model.parameters.get<epi::ContactPatterns>();
     contact_matrix[0]                       = epi::ContactMatrix(Eigen::MatrixXd::Constant(1, 1, cont_freq));
     contact_matrix[0].add_damping(0.7, epi::SimulationTime(30.));
 
@@ -63,13 +63,13 @@ int main()
     model.populations[{epi::AgeGroup(0), epi::InfectionState::Dead}] = nb_dead_t0;
     model.populations.set_difference_from_total({epi::AgeGroup(0), epi::InfectionState::Susceptible}, nb_total_t0);
 
-    model.parameters.probabilities[0].set_infection_from_contact(inf_prob);
-    model.parameters.probabilities[0].set_carrier_infectability(carr_infec);
-    model.parameters.probabilities[0].set_asymp_per_infectious(alpha);
-    model.parameters.probabilities[0].set_risk_from_symptomatic(beta);
-    model.parameters.probabilities[0].set_hospitalized_per_infectious(rho);
-    model.parameters.probabilities[0].set_icu_per_hospitalized(theta);
-    model.parameters.probabilities[0].set_dead_per_icu(delta);
+    model.parameters.get<epi::InfectionProbabilityFromContact>()[(epi::AgeGroup)0] = inf_prob;
+    model.parameters.get<epi::RelativeCarrierInfectability>()[(epi::AgeGroup)0] = carr_infec;
+    model.parameters.get<epi::AsymptoticCasesPerInfectious>()[(epi::AgeGroup)0] = alpha;
+    model.parameters.get<epi::RiskOfInfectionFromSympomatic>()[(epi::AgeGroup)0] = beta;
+    model.parameters.get<epi::HospitalizedCasesPerInfectious>()[(epi::AgeGroup)0] = rho;
+    model.parameters.get<epi::ICUCasesPerHospitalized>()[(epi::AgeGroup)0] = theta;
+    model.parameters.get<epi::DeathsPerHospitalized>()[(epi::AgeGroup)0] = delta;
 
     model.apply_constraints();
 
