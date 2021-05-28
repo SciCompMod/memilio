@@ -217,7 +217,11 @@ private:
         }
 
         for (auto& edge : m_graph.edges()) {
-            sim_graph.add_edge(edge.start_node_idx, edge.end_node_idx, edge.property);
+            auto edge_params = edge.property;
+            apply_dampings(edge_params.get_coefficients(), shared_contacts.get_dampings(), [&edge_params](auto& v) {
+                return make_migration_damping_vector(edge_params.get_coefficients().get_shape(), v);
+            });
+            sim_graph.add_edge(edge.start_node_idx, edge.end_node_idx, edge_params);
         }
 
         return make_migration_sim(m_t0, m_dt_graph_sim, sim_graph);

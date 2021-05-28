@@ -25,7 +25,7 @@ void save_result(const std::vector<TimeSeries<double>>& results, const std::vect
         const int n_dims       = 2;
 
         const int n_data    = static_cast<int>(result.get_num_time_points());
-        const int n_compart = (const int)InfectionState::Count;
+        const int n_compart = (int)InfectionState::Count;
         const int nb_groups = static_cast<int>(result[0].size()) / n_compart;
 
         hsize_t dims_t[] = {static_cast<hsize_t>(n_data)};
@@ -76,7 +76,7 @@ herr_t file_info(hid_t loc_id, const char* name, const H5L_info_t* linfo, void* 
 std::vector<SecirSimulationResult> read_result(const std::string& filename, int nb_groups)
 {
     const H5std_string FILE_NAME(filename);
-    const int nb_compart = (const int)InfectionState::Count;
+    const int nb_compart = (int)InfectionState::Count;
     std::vector<SecirSimulationResult> results;
 
     H5File file(FILE_NAME, H5F_ACC_RDONLY);

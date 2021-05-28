@@ -1022,6 +1022,52 @@ ContactMatrixGroup read_contact_frequency_matrix_collection(TixiDocumentHandle h
     return cfmc;
 }
 
+void write_damping_sampling(TixiDocumentHandle handle, const std::string& path, const std::string& name,
+                            const DampingSampling& ds, int io_mode)
+{
+    auto ds_path = path_join(path, name);
+    tixiCreateElement(handle, path.c_str(), name.c_str());
+    write_element(handle, ds_path, "Value", ds.get_value(), io_mode, 0);
+    tixiAddIntegerElement(handle, ds_path.c_str(), "Level", int(ds.get_level()), "%d");
+    tixiAddIntegerElement(handle, ds_path.c_str(), "Type", int(ds.get_type()), "%d");
+    tixiAddDoubleElement(handle, ds_path.c_str(), "Time", double(ds.get_time()), "%.18f");
+    std::vector<double> matrices_double;
+    std::transform(ds.get_matrix_indices().begin(), ds.get_matrix_indices().end(), std::back_inserter(matrices_double), [](auto& i) {
+        return double(i);
+    });
+    tixiAddFloatVector(handle, ds_path.c_str(), "MatrixIndices", matrices_double.data(), int(matrices_double.size()), "%.0f");
+    write_matrix(handle, ds_path, "GroupWeights", ds.get_group_weights());
+}
+
+DampingSampling read_damping_sampling(TixiDocumentHandle handle, const std::string& path, int io_mode)
+{
+    ReturnCode status; 
+    unused(status);
+
+    auto value = read_element(handle, path_join(path, "Value").c_str(), io_mode);
+    int level, type;
+    double time;
+    status = tixiGetIntegerElement(handle, path_join(path, "Level").c_str(), &level);
+    assert(status == SUCCESS && "Failed to read DampingSampling level.");
+    status = tixiGetIntegerElement(handle, path_join(path, "Type").c_str(), &type);
+    assert(status == SUCCESS && "Failed to read DampingSampling type.");
+    tixiGetDoubleElement(handle, path_join(path, "Time").c_str(), &time);
+    assert(status == SUCCESS && "Failed to read DampingSampling time.");
+    int num_matrices;
+    status = tixiGetVectorSize(handle, path_join(path, "MatrixIndices").c_str(), &num_matrices);
+    assert(status == SUCCESS && "Failed to read DampingSampling size of matrix indices.");
+    double* matrices_double;
+    status = tixiGetFloatVector(handle, path_join(path, "MatrixIndices").c_str(), &matrices_double, num_matrices);
+    assert(status == SUCCESS && "Failed to read DampingSampling matrix indices.");
+    std::vector<size_t> matrices;
+    std::transform(matrices_double, matrices_double + num_matrices, std::back_inserter(matrices), [](auto& d) {
+        return int(d);
+    });
+    auto groups = read_matrix<Eigen::VectorXd>(handle, path_join(path, "GroupWeights"));
+
+    return {*value, DampingLevel(level), DampingType(type), SimulationTime(time), matrices, groups};
+}
+
 void write_contact(TixiDocumentHandle handle, const std::string& path, const UncertainContactMatrix& contact_pattern,
                    int io_mode)
 {
@@ -1031,29 +1077,31 @@ void write_contact(TixiDocumentHandle handle, const std::string& path, const Unc
     write_damping_matrix_expression_collection(handle, contact_path, contact_pattern.get_cont_freq_mat());
 
     if (io_mode == 1 || io_mode == 2 || io_mode == 3) {
-        write_distribution(handle, contact_path, "NumDampings", *contact_pattern.get_distribution_damp_nb().get());
-        write_distribution(handle, contact_path, "DampingDay", *contact_pattern.get_distribution_damp_days().get());
-        write_distribution(handle, contact_path, "DampingDiagBase",
-                           *contact_pattern.get_distribution_damp_diag_base().get());
-        write_distribution(handle, contact_path, "DampingDiagRel",
-                           *contact_pattern.get_distribution_damp_diag_rel().get());
-        write_distribution(handle, contact_path, "DampingOffdiagRel",
-                           *contact_pattern.get_distribution_damp_offdiag_rel().get());
+        tixiAddIntegerElement(handle, contact_path.c_str(), "NumDampings", int(contact_pattern.get_dampings().size()), "%d");
+        for (size_t i = 0; i < contact_pattern.get_dampings().size(); ++i)
+        {
+            auto damping_name = "Damping" + std::to_string(i + 1);
+            write_damping_sampling(handle, contact_path, damping_name, contact_pattern.get_dampings()[i], io_mode);
+        }
     }
 }
 
 UncertainContactMatrix read_contact(TixiDocumentHandle handle, const std::string& path, int io_mode)
 {
+    ReturnCode status;
+    unused(status);
+
     UncertainContactMatrix contact_patterns{read_damping_matrix_expression_collection(handle, path)};
 
     if (io_mode == 1 || io_mode == 2 || io_mode == 3) {
-        contact_patterns.set_distribution_damp_nb(*read_distribution(handle, path_join(path, "NumDampings")));
-        contact_patterns.set_distribution_damp_days(*read_distribution(handle, path_join(path, "DampingDay")));
-        contact_patterns.set_distribution_damp_diag_base(
-            *read_distribution(handle, path_join(path, "DampingDiagBase")));
-        contact_patterns.set_distribution_damp_diag_rel(*read_distribution(handle, path_join(path, "DampingDiagRel")));
-        contact_patterns.set_distribution_damp_offdiag_rel(
-            *read_distribution(handle, path_join(path, "DampingOffdiagRel")));
+        int num_dampings;
+        status = tixiGetIntegerElement(handle, path_join(path, "NumDampings").c_str(), &num_dampings);
+        assert(status == SUCCESS && "Failed to read dampings.");
+        for (size_t i = 0; i < size_t(num_dampings); ++i)
+        {
+            auto damping_name = "Damping" + std::to_string(i + 1);
+            contact_patterns.get_dampings().push_back(read_damping_sampling(handle, path_join(path, damping_name).c_str(), io_mode));
+        }
     }
     return contact_patterns;
 }

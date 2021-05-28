@@ -103,14 +103,82 @@ TEST(ParameterStudies, sample_from_secir_params)
     }
 
     epi::ContactMatrixGroup& contact_matrix_sample = params.get<epi::ContactPatterns>();
+    EXPECT_EQ(contact_matrix_sample[0].get_dampings().size(), 1);
+}
 
-    for (auto& cfm : contact_matrix_sample) {
-        EXPECT_GE(cfm.get_dampings().size(), 1);
-        EXPECT_LE(cfm.get_dampings().size(), 10);
-        for (auto& damping : cfm.get_dampings()) {
-            EXPECT_TRUE((damping.get_coeffs().array() >= 0.0).all());
-        }
+TEST(ParameterStudies, sample_edges)
+{
+    double t0   = 0;
+    double tmax = 100;
+
+    double tinc    = 5.2, // R_2^(-1)+R_3^(-1)
+        tinfmild   = 6, // 4-14  (=R4^(-1))
+        tserint    = 4.2, // 4-4.4 // R_2^(-1)+0.5*R_3^(-1)
+        thosp2home = 12, // 7-16 (=R5^(-1))
+        thome2hosp = 5, // 2.5-7 (=R6^(-1))
+        thosp2icu  = 2, // 1-3.5 (=R7^(-1))
+        ticu2home  = 8, // 5-16 (=R8^(-1))
+        tinfasy    = 6.2, // (=R9^(-1)=R_3^(-1)+0.5*R_4^(-1))
+        ticu2death = 5; // 3.5-7 (=R5^(-1))
+
+    double cont_freq = 10, // see Polymod study
+        inf_prob = 0.05, carr_infec = 0.67,
+           alpha = 0.09, // 0.01-0.16
+        beta     = 0.25, // 0.05-0.5
+        delta    = 0.3, // 0.15-0.77
+        rho      = 0.2, // 0.1-0.35
+        theta    = 0.25; // 0.15-0.4
+
+    double num_total_t0 = 10000, num_exp_t0 = 100, num_inf_t0 = 50, num_car_t0 = 50, num_hosp_t0 = 20, num_icu_t0 = 10,
+           num_rec_t0 = 10, num_dead_t0 = 0;
+
+    size_t num_groups = 3;
+    epi::SecirModel model(num_groups);
+    double fact       = 1.0 / (double)num_groups;
+
+    auto& params = model.parameters;
+    for (auto i = epi::Index<epi::AgeGroup>(0); i.get() < num_groups; i++) {
+        params.get<epi::IncubationTime>()[i] = tinc;
+        params.get<epi::InfectiousTimeMild>()[i] = tinfmild;
+        params.get<epi::SerialInterval>()[i] = tserint;
+        params.get<epi::HospitalizedToHomeTime>()[i] = thosp2home;
+        params.get<epi::HomeToHospitalizedTime>()[i] = thome2hosp;
+        params.get<epi::HospitalizedToICUTime>()[i] = thosp2icu;
+        params.get<epi::ICUToHomeTime>()[i] = ticu2home;
+        params.get<epi::InfectiousTimeAsymptomatic>()[i] = tinfasy;
+        params.get<epi::ICUToDeathTime>()[i] = ticu2death;
+
+        model.populations[{i, epi::InfectionState::Exposed}] = fact * num_exp_t0;
+        model.populations[{i, epi::InfectionState::Carrier}] = fact * num_car_t0;
+        model.populations[{i, epi::InfectionState::Infected}] = fact * num_inf_t0;
+        model.populations[{i, epi::InfectionState::Hospitalized}] = fact * num_hosp_t0;
+        model.populations[{i, epi::InfectionState::ICU}] = fact * num_icu_t0;
+        model.populations[{i, epi::InfectionState::Recovered}] = fact * num_rec_t0;
+        model.populations[{i, epi::InfectionState::Dead}] = fact * num_dead_t0;
+        model.populations.set_difference_from_group_total<epi::AgeGroup>({i, epi::InfectionState::Susceptible}, fact * num_total_t0);
+
+        params.get<epi::InfectionProbabilityFromContact>()[i] = inf_prob;
+        params.get<epi::RelativeCarrierInfectability>()[i] = carr_infec;
+        params.get<epi::AsymptoticCasesPerInfectious>()[i] = alpha;
+        params.get<epi::RiskOfInfectionFromSympomatic>()[i] = beta;
+        params.get<epi::HospitalizedCasesPerInfectious>()[i] = rho;
+        params.get<epi::ICUCasesPerHospitalized>()[i] = theta;
+        params.get<epi::DeathsPerHospitalized>()[i] = delta;
     }
+
+    epi::ContactMatrixGroup& contact_matrix = params.get<epi::ContactPatterns>();
+    contact_matrix[0] = epi::ContactMatrix(Eigen::MatrixXd::Constant(num_groups, num_groups, fact * cont_freq));
+    epi::set_params_distributions_normal(model, t0, tmax, 0.2);
+
+    auto graph = epi::Graph<epi::SecirModel, epi::MigrationParameters>();
+    graph.add_node(0, model);
+    graph.add_node(1, model);
+    graph.add_edge(0, 1, epi::MigrationParameters(Eigen::VectorXd::Constant(Eigen::Index(num_groups * 8), 1.0)));
+
+    auto study = epi::ParameterStudy<epi::SecirModel>(graph, 0.0, 0.0, 0.5, 1);
+    auto results = study.run();
+
+    ASSERT_EQ(results[0].edges()[0].property.get_parameters().get_coefficients()[0].get_dampings().size(), 1);
 }
 
 TEST(ParameterStudies, test_normal_distribution)
@@ -282,7 +350,7 @@ TEST(ParameterStudies, check_ensemble_run_result)
         std::vector<double> total_at_ti((size_t)epi::InfectionState::Count, 0);
 
         for (Eigen::Index j = 0; j < results[0][i].size(); j++) { // number of compartments per time step
-            EXPECT_GE(results[0][i][j], 0.0) << " day " << i << " group " << j;
+            EXPECT_GE(results[0][i][j], 0.0) << " day " << results[0].get_time(i) << " group " << j;
             total_at_ti[static_cast<size_t>(j) / (size_t)epi::InfectionState::Count] += results[0][i][j];
         }
 

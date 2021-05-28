@@ -74,7 +74,6 @@ TEST(TestSaveParameters, compareParameterStudy)
 
     params.get<epi::IncubationTime>()[(epi::AgeGroup)0].get_distribution()->add_predefined_sample(4711.0);
 
-    params.get<epi::ContactPatterns>().get_distribution_damp_days()->add_predefined_sample(4711.0);
     tixiCreateDocument("Parameters", &handle);
     epi::ParameterStudy<epi::SecirModel> study(model, t0, tmax, num_runs);
 
@@ -191,16 +190,8 @@ TEST(TestSaveParameters, compareParameterStudy)
                            *read_model.parameters.get<epi::ICUCasesPerHospitalized>()[i].get_distribution());
 
         ASSERT_THAT(contact.get_cont_freq_mat(), testing::ContainerEq(read_contact.get_cont_freq_mat()));
+        ASSERT_EQ(contact.get_dampings(), read_contact.get_dampings());
     }
-
-    check_distribution(*contact.get_distribution_damp_nb().get(), *read_contact.get_distribution_damp_nb().get());
-    check_distribution(*contact.get_distribution_damp_days().get(), *read_contact.get_distribution_damp_days().get());
-    check_distribution(*contact.get_distribution_damp_diag_base().get(),
-                       *read_contact.get_distribution_damp_diag_base().get());
-    check_distribution(*contact.get_distribution_damp_diag_rel().get(),
-                       *read_contact.get_distribution_damp_diag_rel().get());
-    check_distribution(*contact.get_distribution_damp_offdiag_rel().get(),
-                       *read_contact.get_distribution_damp_offdiag_rel().get());
 }
 
 TEST(TestSaveParameters, compareSingleRun)
@@ -334,6 +325,7 @@ TEST(TestSaveParameters, compareSingleRun)
                   read_model.parameters.get<epi::ICUCasesPerHospitalized>()[i]);
 
         ASSERT_EQ(contact.get_cont_freq_mat(), read_contact.get_cont_freq_mat());
+        ASSERT_THAT(read_contact.get_dampings(), testing::IsEmpty()); //not written in io_mode = 0
     }
 }
 
@@ -536,19 +528,8 @@ TEST(TestSaveParameters, compareGraphs)
                 *graph_model.parameters.get<epi::ICUCasesPerHospitalized>()[group].get_distribution().get(),
                 *graph_read_model.parameters.get<epi::ICUCasesPerHospitalized>()[group].get_distribution().get());
 
-            check_distribution(*graph_model.parameters.get<epi::ContactPatterns>().get_distribution_damp_nb().get(),
-                               *graph_read_model.parameters.get<epi::ContactPatterns>().get_distribution_damp_nb().get());
-            check_distribution(*graph_model.parameters.get<epi::ContactPatterns>().get_distribution_damp_days().get(),
-                               *graph_read_model.parameters.get<epi::ContactPatterns>().get_distribution_damp_days().get());
-            check_distribution(
-                *graph_model.parameters.get<epi::ContactPatterns>().get_distribution_damp_diag_base().get(),
-                *graph_read_model.parameters.get<epi::ContactPatterns>().get_distribution_damp_diag_base().get());
-            check_distribution(
-                *graph_model.parameters.get<epi::ContactPatterns>().get_distribution_damp_diag_rel().get(),
-                *graph_read_model.parameters.get<epi::ContactPatterns>().get_distribution_damp_diag_rel().get());
-            check_distribution(
-                *graph_model.parameters.get<epi::ContactPatterns>().get_distribution_damp_offdiag_rel().get(),
-                *graph_read_model.parameters.get<epi::ContactPatterns>().get_distribution_damp_offdiag_rel().get());
+            ASSERT_EQ(graph_model.parameters.get<epi::ContactPatterns>().get_dampings(),
+                      graph_read_model.parameters.get<epi::ContactPatterns>().get_dampings());
         }
 
         ASSERT_THAT(graph_read.edges(), testing::ElementsAreArray(graph.edges()));
@@ -627,10 +608,10 @@ TEST(TestSaveParameters, compareGraphWithFile)
     ASSERT_EQ(num_edges, graph_read.edges().size());
 
     for (size_t node = 0; node < num_nodes; node++) {
-        Model graph_model                       = graph.nodes()[0].property;
+        Model& graph_model                      = graph.nodes()[0].property;
         epi::ContactMatrixGroup graph_cont_freq = graph_model.parameters.get<epi::ContactPatterns>();
 
-        Model graph_read_model                       = graph_read.nodes()[0].property;
+        Model& graph_read_model                      = graph_read.nodes()[0].property;
         epi::ContactMatrixGroup graph_read_cont_freq = graph_read_model.parameters.get<epi::ContactPatterns>();
 
         ASSERT_EQ(num_groups, epi::AgeGroup(graph_read_cont_freq.get_num_groups()));
@@ -665,19 +646,8 @@ TEST(TestSaveParameters, compareGraphWithFile)
 
             ASSERT_EQ(graph_cont_freq, graph_read_cont_freq);
 
-            check_distribution(*graph_model.parameters.get<epi::ContactPatterns>().get_distribution_damp_nb().get(),
-                               *graph_read_model.parameters.get<epi::ContactPatterns>().get_distribution_damp_nb().get());
-            check_distribution(*graph_model.parameters.get<epi::ContactPatterns>().get_distribution_damp_days().get(),
-                               *graph_read_model.parameters.get<epi::ContactPatterns>().get_distribution_damp_days().get());
-            check_distribution(
-                *graph_model.parameters.get<epi::ContactPatterns>().get_distribution_damp_diag_base().get(),
-                *graph_read_model.parameters.get<epi::ContactPatterns>().get_distribution_damp_diag_base().get());
-            check_distribution(
-                *graph_model.parameters.get<epi::ContactPatterns>().get_distribution_damp_diag_rel().get(),
-                *graph_read_model.parameters.get<epi::ContactPatterns>().get_distribution_damp_diag_rel().get());
-            check_distribution(
-                *graph_model.parameters.get<epi::ContactPatterns>().get_distribution_damp_offdiag_rel().get(),
-                *graph_read_model.parameters.get<epi::ContactPatterns>().get_distribution_damp_offdiag_rel().get());
+            ASSERT_EQ(graph_model.parameters.get<epi::ContactPatterns>().get_dampings(),
+                      graph_read_model.parameters.get<epi::ContactPatterns>().get_dampings());
         }
 
         ASSERT_THAT(graph_read.edges(), testing::ElementsAreArray(graph.edges()));

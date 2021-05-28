@@ -60,14 +60,16 @@ void set_params_distributions_normal(
         set_distribution(model.parameters.get<ICUCasesPerHospitalized>()[i]);
     }
 
-    // maximum number of dampings; to avoid overfitting only allow one damping for every 10 days simulated
-    // damping base values are between 0.1 and 1; diagonal values vary lie in the range of 0.6 to 1.4 times the base value
-    // off diagonal values vary between 0.7 to 1.1 of the corresponding diagonal value (symmetrization is conducted)
-    model.parameters.get<ContactPatterns>().set_distribution_damp_nb(ParameterDistributionUniform(1, (tmax - t0) / 10));
-    model.parameters.get<ContactPatterns>().set_distribution_damp_days(ParameterDistributionUniform(t0, tmax));
-    model.parameters.get<ContactPatterns>().set_distribution_damp_diag_base(ParameterDistributionUniform(0.0, 0.9));
-    model.parameters.get<ContactPatterns>().set_distribution_damp_diag_rel(ParameterDistributionUniform(0.0, 0.4));
-    model.parameters.get<ContactPatterns>().set_distribution_damp_offdiag_rel(ParameterDistributionUniform(0.0, 0.3));
+    // dampings
+    auto matrices = std::vector<size_t>();
+    for (size_t i = 0; i < model.parameters.get<ContactPatterns>().get_cont_freq_mat().get_num_matrices(); ++i) {
+        matrices.push_back(i);
+    }
+    auto groups = Eigen::VectorXd::Constant(Eigen::Index(model.parameters.get_num_groups().get()), 1.0);
+    model.parameters.get<ContactPatterns>().get_dampings().emplace_back(
+        epi::UncertainValue(0.5), epi::DampingLevel(0), epi::DampingType(0), epi::SimulationTime(t0 + (tmax - t0) / 2),
+        matrices, groups);
+    set_distribution(model.parameters.get<ContactPatterns>().get_dampings()[0].get_value(), 0.0);
 }
 
 

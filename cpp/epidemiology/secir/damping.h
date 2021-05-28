@@ -246,6 +246,16 @@ public:
         add_(value_type(d, std::forward<T>(t)..., m_shape));
     }
 
+
+    /**
+     * remove all dampings.
+     */
+    void clear()
+    {
+        m_dampings.clear();
+    }
+
+
     /**
      * Computes the real contact frequency at a point in time.
      * Combines the dampings that are active at a point in time according to
