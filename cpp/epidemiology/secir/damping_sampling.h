@@ -207,8 +207,8 @@ void apply_dampings(DampingExpression& damping_expression, const DampingSampling
 }
 
 /**
- * Make a mask for contact matrices.
- * Maps the group weights vector onto a contact damping matrix according to the formula
+ * Make a contact damping matrix from dampings by group.
+ * Maps a vector of dampings by group onto a contact damping matrix according to the formula
  * d_ij = 1 - sqrt((1 - g_i) * (1 - g_j))
  * where d_ij is a coefficient of the matrix
  * and g_i,g_j are coefficients of the group vector.
@@ -229,8 +229,8 @@ auto make_contact_damping_matrix(V&& groups)
 }
 
 /**
- * Make a mask for migration coefficients.
- * Maps the group weights vector onto a migration coefficient damping vector
+ * Make migration coefficient damping vector from dampings by group.
+ * Maps the vector of dampings by group onto a migration coefficient damping vector
  * [g_0, g_0, ..., g_1, g_1, ..., g_2, ...].
  * @param shape shape (i.e. size) of the migration coefficient vector.
  * @param groups damping value weighted by group.
