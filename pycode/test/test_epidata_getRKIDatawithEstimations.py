@@ -125,7 +125,7 @@ class TestGetRKIDatawithEstimations(fake_filesystem_unittest.TestCase):
         with open(file_jh_with_path, 'w') as f:
             f.write(self.str_whole_country_Germany_jh)
 
-    def write_weekly_deaths_xlsx_data(self, out_folder):
+    def write_weekly_deaths_xlsx_data(self, out_folder, file_name='RKI_deaths_weekly.xlsx'):
         sheet1 = pd.DataFrame({'Sterbejahr': ['2020', '2020', '2020', '2020'], 'Sterbewoche': ['1', '3', '10', '51'],
                                'Anzahl verstorbene COVID-19 Fälle': ['0', '<4', '18', '3000']})
         sheet2 = pd.DataFrame({'Sterbejahr': ['2020', '2020', '2020', '2020'], 'Sterbewoche': ['1', '3', '10', '51'],
@@ -148,7 +148,7 @@ class TestGetRKIDatawithEstimations(fake_filesystem_unittest.TestCase):
 
         income_sheets = {'COVID_Todesfälle': sheet1, 'COVID_Todesfälle_KW_AG10': sheet2,
                          'COVID_Todesfälle_KW_AG20_G': sheet3}
-        path = os.path.join(out_folder, 'RKI_deaths_weekly.xlsx')
+        path = os.path.join(out_folder, file_name)
         dummy = pd.ExcelWriter(path)
 
         for sheet_name in income_sheets.keys():
@@ -330,23 +330,23 @@ class TestGetRKIDatawithEstimations(fake_filesystem_unittest.TestCase):
         directory = os.path.join(self.path, 'Germany/')
         gd.check_dir(directory)
 
-        self.write_weekly_deaths_xlsx_data(directory)
+        self.write_weekly_deaths_xlsx_data(directory, file_name='RKI_deaths_weekly_fake.xlsx')
         self.assertEqual(len(os.listdir(self.path)), 1)
+        print(os.listdir(directory))
         self.assertEqual(len(os.listdir(directory)), 1)
 
         with patch('requests.get') as mock_request:
-            url = "https://www.rki.de/DE/Content/InfAZ/N/Neuartiges_Coronavirus/Projekte_RKI/COVID-19_Todesfaelle.xlsx?__blob=publicationFile"
-            df = gd.loadExcel('RKI_deaths_weekly', apiUrl=directory,
+            df = gd.loadExcel('RKI_deaths_weekly_fake', apiUrl=directory,
                               extension='.xlsx', sheet_name='COVID_Todesfälle')
             towrite = io.BytesIO()
             df.to_excel(towrite, index=False)
             towrite.seek(0)
             mock_request.return_value.content = towrite.read()
-            grdwd.download_weekly_deaths_numbers_rki(directory, name_file='RKI_deaths_weekly_new.xlsx', url=url)
+            grdwd.download_weekly_deaths_numbers_rki(directory)
         self.assertEqual(len(os.listdir(self.path)), 1)
         self.assertEqual(len(os.listdir(directory)), 2)
 
-        df_real_deaths_per_week = gd.loadExcel('RKI_deaths_weekly_new', apiUrl=directory,
+        df_real_deaths_per_week = gd.loadExcel('RKI_deaths_weekly', apiUrl=directory,
                                                extension='.xlsx', sheet_name=0)
         self.assertEqual(df_real_deaths_per_week.shape, (4, 3))
         self.assertEqual(pd.to_numeric(df_real_deaths_per_week['Sterbejahr'])[0], 2020)

@@ -1,15 +1,16 @@
 """
 @file getRKIDatawithEstimations.py
 
-@brief Estimates recovered and deaths from data from RKI and john hopkins together
+@brief Estimates recovered and deaths from data from RKI and Johns Hopkins (JH) University together
 """
 
 import os
+from datetime import datetime
+#from datetime import timedelta
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 import requests
-from datetime import timedelta, datetime
 
 from epidemiology.epidata import getDataIntoPandasDataFrame as gd
 from epidemiology.epidata import defaultDict as dd
@@ -62,11 +63,10 @@ def get_rki_data_with_estimations(read_data=dd.defaultDict['read_data'],
     fr_d_c = "fraction_deaths_confirmed"
 
     recovered_estimated = recovered + "_estimated"
-    recovered_after14days = recovered + "_after14days"
+    # recovered_after14days = recovered + "_after14days"
     deaths_estimated = deaths + "_estimated"
     dstr = date + "_string"
-    week = "Week"
-
+    # week = "Week"
     # delta = timedelta(days=14)
 
     df_jh[fr_r_c] = df_jh[recovered] / df_jh[confirmed]
@@ -152,7 +152,7 @@ def compare_estimated_and_rki_deathsnumbers(df_rki,data_path,read_data,make_plot
         columns={'deaths_daily': 'Deaths_weekly', 'deaths_estimated_daily': 'Deaths_estimated_weekly'}, inplace=True)
 
     # dowload weekly deaths numbers from rki
-    if read_data==False:
+    if not read_data:
         download_weekly_deaths_numbers_rki(data_path)
 
     df_real_deaths_per_week=gd.loadExcel("RKI_deaths_weekly", apiUrl=data_path,
@@ -161,13 +161,15 @@ def compare_estimated_and_rki_deathsnumbers(df_rki,data_path,read_data,make_plot
         columns={'Sterbejahr': 'year', 'Sterbewoche': 'week',
                  'Anzahl verstorbene COVID-19 Fälle': 'confirmed_deaths_weekly'},
         inplace=True)
-    df_real_deaths_per_week['confirmed_deaths_weekly'] = pd.to_numeric(df_real_deaths_per_week['confirmed_deaths_weekly'],
-                                                                    errors='coerce')
-    # values which can't be transformed to numeric number are a String called '<4' in dataframe (probably for data protection reasons)
+    df_real_deaths_per_week['confirmed_deaths_weekly'] = \
+        pd.to_numeric(df_real_deaths_per_week['confirmed_deaths_weekly'], errors='coerce')
+    # values which can't be transformed to numeric number are a String called '<4' in dataframe
+    # (probably for data protection reasons)
     # So get random numbers between 1 and 3 to fill these missing values
     help_random = np.random.randint(1, 4 ,(df_real_deaths_per_week['confirmed_deaths_weekly'].shape[0]))
     random_fill = pd.Series(help_random)
-    df_real_deaths_per_week['confirmed_deaths_weekly']=df_real_deaths_per_week['confirmed_deaths_weekly'].fillna(random_fill)
+    df_real_deaths_per_week['confirmed_deaths_weekly'] =\
+        df_real_deaths_per_week['confirmed_deaths_weekly'].fillna(random_fill)
 
     #combine both dataframes to one dataframe
     df_rki_week = df_rki_week.merge(df_real_deaths_per_week, how='outer', on="week")
@@ -178,23 +180,25 @@ def compare_estimated_and_rki_deathsnumbers(df_rki,data_path,read_data,make_plot
     # safe information in dataframe in json-file
     gd.write_dataframe(df_rki_week,data_path,'weekly_deaths_rki','json')
 
-    if make_plot==True:
+    if make_plot:
         df_rki_week['confirmed_deaths_accumulated'] = df_rki_week['confirmed_deaths_weekly'].cumsum()
         df_rki_week['Deaths_accumulated'] = df_rki_week['Deaths_weekly'].cumsum()
         df_rki_week['Deaths_estimated_accumulated'] = df_rki_week['Deaths_estimated_weekly'].cumsum()
 
         #plot
         df_rki_week.plot(x="week", y=["Deaths_weekly", "Deaths_estimated_weekly", "confirmed_deaths_weekly"],
-                     title='COVID-19 check deaths dependent on week number', grid=True,
-                     style='-o')
+                         title='COVID-19 check deaths dependent on week number', grid=True,
+                         style='-o')
         plt.tight_layout()
-        df_rki_week.plot(x="week", y=["Deaths_accumulated", "Deaths_estimated_accumulated", "confirmed_deaths_accumulated"],
-                     title='COVID-19 check deaths accumulated dependent on week number', grid=True,
-                     style='-o')
+        df_rki_week.plot(x="week",
+                         y=["Deaths_accumulated", "Deaths_estimated_accumulated", "confirmed_deaths_accumulated"],
+                         title='COVID-19 check deaths accumulated dependent on week number', grid=True,
+                         style='-o')
         plt.tight_layout()
         plt.show()
 
     # TODO: think about to add age dependent weight function
+
 
 def get_weekly_deaths_data_age_gender_resolved(data_path,read_data):
     if read_data==False:
@@ -206,10 +210,11 @@ def get_weekly_deaths_data_age_gender_resolved(data_path,read_data):
                                                extension='.xlsx', sheet_name='COVID_Todesfälle_KW_AG20_G')
     df_real_deaths_per_week_age.rename(
         columns={'Sterbejahr': 'year', 'Sterbewoche': 'week',
-                 'AG 0-9 Jahre': 'age 0-9 years','AG 10-19 Jahre': 'age 10-19 years',   'AG 20-29 Jahre': 'age 20-29 years',
-                 'AG 30-39 Jahre': 'age 30-39 years','AG 40-49 Jahre': 'age 40-49 years','AG 50-59 Jahre': 'age 50-59 years',
-                 'AG 60-69 Jahre': 'age 60-69 years','AG 70-79 Jahre': 'age 70-79 years','AG 80-89 Jahre': 'age 80-89 years',
-                 'AG 90+ Jahre': 'age 90+ years'},
+                 'AG 0-9 Jahre': 'age 0-9 years','AG 10-19 Jahre': 'age 10-19 years',
+                 'AG 20-29 Jahre': 'age 20-29 years', 'AG 30-39 Jahre': 'age 30-39 years',
+                 'AG 40-49 Jahre': 'age 40-49 years', 'AG 50-59 Jahre': 'age 50-59 years',
+                 'AG 60-69 Jahre': 'age 60-69 years','AG 70-79 Jahre': 'age 70-79 years',
+                 'AG 80-89 Jahre': 'age 80-89 years', 'AG 90+ Jahre': 'age 90+ years'},
         inplace=True)
     df_real_deaths_per_week_gender.rename(
         columns={'Sterbejahr': 'year', 'Sterbewoche': 'week',
@@ -221,11 +226,13 @@ def get_weekly_deaths_data_age_gender_resolved(data_path,read_data):
                  'Frauen, AG 60-79 Jahre': 'female, age 60-79 years',
                  'Frauen, AG 80+ Jahre': 'female, age 80+ years'},
         inplace=True)
+
     for df_real_deaths_per_week in [df_real_deaths_per_week_age,df_real_deaths_per_week_gender]:
         for column in df_real_deaths_per_week:
             df_real_deaths_per_week[column]= pd.to_numeric(df_real_deaths_per_week[column],errors='coerce')
 
-            # values which can't be transformed to numeric number are a String called '<4' in dataframe (probably for data protection reasons)
+            # values which can't be transformed to numeric number are a String called '<4' in dataframe
+            # (probably for data protection reasons)
             # So get random numbers between 1 and 3 to fill these missing values
             help_random = np.random.randint(1, 4,(df_real_deaths_per_week[column].shape[0]))
             random_fill = pd.Series(help_random)
@@ -236,11 +243,21 @@ def get_weekly_deaths_data_age_gender_resolved(data_path,read_data):
     gd.write_dataframe(df_real_deaths_per_week_gender, data_path, 'weekly_deaths_rki_gender_resolved', 'json')
 
 
-def download_weekly_deaths_numbers_rki(data_path,name_file="RKI_deaths_weekly.xlsx",
-                                       url="https://www.rki.de/DE/Content/InfAZ/N/Neuartiges_Coronavirus/Projekte_RKI/COVID-19_Todesfaelle.xlsx?__blob=publicationFile"):
-    #data_path: path where to safe Excel-file
+def download_weekly_deaths_numbers_rki(data_path):
+    """!Downloads excel file from RKI webpage
+
+    @param data_path Path where to store the file.
+    """
+
+    name_file = "RKI_deaths_weekly.xlsx"
+    url = "https://www.rki.de/DE/Content/InfAZ/N/Neuartiges_Coronavirus/Projekte_RKI/" \
+          "COVID-19_Todesfaelle.xlsx?__blob=publicationFile"
+
+    print(url)
+
+    # data_path: path where to safe Excel-file
     r = requests.get(url)
-    filename = os.path.join(data_path , name_file)
+    filename = os.path.join(data_path, name_file)
     with open(filename, 'wb') as output_file:
         output_file.write(r.content)
 
