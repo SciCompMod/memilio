@@ -54,24 +54,24 @@ int main()
     /*
      * Contact frequency and dampings variable element
      */
-    epi::SecirModel<epi::AgeGroup3> model;
+    epi::SecirModel model(3);
     auto& params = model.parameters;
 
-    size_t nb_groups = params.get_num_groups();
-    epi::ContactMatrixGroup cm_group{epi::ContactMatrix(Eigen::MatrixXd::Constant(nb_groups, nb_groups, 0.5))};
-    params.get_contact_patterns() = cm_group;
+    epi::AgeGroup nb_groups = params.get_num_groups();
+    epi::ContactMatrixGroup cm_group{epi::ContactMatrix(Eigen::MatrixXd::Constant((size_t)nb_groups, (size_t)nb_groups, 0.5))};
+    params.get<epi::ContactPatterns>() = cm_group;
 
     double t0   = 0;
     double tmax = 100;
 
-    params.get_contact_patterns().set_distribution_damp_nb(epi::ParameterDistributionUniform(2, (tmax - t0) / 10));
-    params.get_contact_patterns().set_distribution_damp_days(epi::ParameterDistributionUniform(t0, tmax));
-    params.get_contact_patterns().set_distribution_damp_diag_base(epi::ParameterDistributionUniform(0.1, 1));
-    params.get_contact_patterns().set_distribution_damp_diag_rel(epi::ParameterDistributionUniform(0.6, 1.4));
-    params.get_contact_patterns().set_distribution_damp_offdiag_rel(epi::ParameterDistributionUniform(0.7, 1.1));
+    params.get<epi::ContactPatterns>().get_dampings().push_back(epi::DampingSampling(
+        epi::UncertainValue(0.5), epi::DampingLevel(0), epi::DampingType(0), epi::SimulationTime(30.),
+        std::vector<size_t>(1, size_t(0)), Eigen::VectorXd::Constant(Eigen::Index(nb_groups.get()), 1.0)));
+    params.get<epi::ContactPatterns>().get_dampings()[0].get_value().set_distribution(
+        epi::ParameterDistributionNormal(0.0, 1.0, 0.5, 0.2));
 
     draw_sample(model);
-    auto& cfmat_sample = params.get_contact_patterns().get_cont_freq_mat();
+    auto& cfmat_sample = params.get<epi::ContactPatterns>().get_cont_freq_mat();
 
     printf("\n\n Number of dampings: %zu\n", cfmat_sample[0].get_dampings().size());
 

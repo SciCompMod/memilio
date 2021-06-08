@@ -455,36 +455,39 @@ class TestGetDiviData(fake_filesystem_unittest.TestCase):
         self.assertEqual(len(os.listdir(directory)), 4)
         self.assertEqual(os.listdir(directory).sort(), [file, file_out1, file_out2, file_out3].sort())
 
-        # check content of files
-        f_path = os.path.join(directory, file)
-        f = open(f_path, "r")
-        self.assertEqual(f.read(), self.test_string_read_fulldata)
-
-        f_path = os.path.join(directory, file_out1)
-        f = open(f_path, "r")
-        fread = f.read()
-        self.assertEqual(fread, "[" + self.test_stringr1_county + "," + self.test_stringr2_county + "]")
-
-        f_path = os.path.join(directory, file_out2)
-        f = open(f_path, "r")
-        self.assertEqual(f.read(), "[" + self.test_stringr2_state + "]")
-
-        f_path = os.path.join(directory, file_out3)
-        f = open(f_path, "r")
-        self.assertEqual(f.read(), "[" + self.test_stringr1_country + "," + self.test_stringr2_country + "]")
-
         start_string = "Success: Data of date "
         end_string = " has been added to dataframe"
         expected_calls = [call(start_string + date(2020, 7, 7).strftime("%Y-%m-%d") + end_string),
                           call(start_string + date(2020, 7, 8).strftime("%Y-%m-%d") + end_string),
                           call("Warning: Data of date " + date(2020, 7, 9).strftime("%Y-%m-%d")
-                               + " is not added to dataframe"),
-                          call("Information: DIVI data has been written to", directory)]
+                               + " is not added to dataframe")]
+
+        # check content of files
+        f_path = os.path.join(directory, file)
+        f = open(f_path, "r")
+        self.assertEqual(f.read(), self.test_string_read_fulldata)
+        expected_calls.append(call("Information: Data has been written to", f_path))
+
+        f_path = os.path.join(directory, file_out1)
+        f = open(f_path, "r")
+        fread = f.read()
+        self.assertEqual(fread, "[" + self.test_stringr1_county + "," + self.test_stringr2_county + "]")
+        expected_calls.append(call("Information: Data has been written to", f_path))
+
+        f_path = os.path.join(directory, file_out2)
+        f = open(f_path, "r")
+        self.assertEqual(f.read(), "[" + self.test_stringr2_state + "]")
+        expected_calls.append(call("Information: Data has been written to", f_path))
+
+        f_path = os.path.join(directory, file_out3)
+        f = open(f_path, "r")
+        self.assertEqual(f.read(), "[" + self.test_stringr1_country + "," + self.test_stringr2_country + "]")
+        expected_calls.append(call("Information: Data has been written to", f_path))
 
         # check if expected_calls is part of calls
         mock_print.assert_has_calls(expected_calls)
         # check if expected calls are the last three calls
-        self.assertTrue(mock_print.mock_calls[-4:] == expected_calls)
+        self.assertTrue(mock_print.mock_calls[-7:] == expected_calls)
 
         # Check output if whole dataframe is empty
         with self.assertRaises(SystemExit) as cm:
@@ -516,15 +519,18 @@ class TestGetDiviData(fake_filesystem_unittest.TestCase):
         expected_calls = [call(start_string + date(2020, 7, 10).strftime("%Y-%m-%d") + end_string),
                           call("New drifting number in link found. "
                                "To decrease runtime, please copy the following "
-                               "to the dcitionary \"call_number_dict\" in the function \"download_data_for_one_day\": "),
+                               "to the dictionary \"call_number_dict\" in the function \"download_data_for_one_day\": "),
                           call("date(2020, 7, 9): 3987," + "\n"),
-                          call("Information: DIVI data has been written to", directory)]
+                          call('Information: Data has been written to', '/home/DiviData/Germany/FullData_DIVI.json'),
+                          call('Information: Data has been written to', '/home/DiviData/Germany/county_divi.json'),
+                          call('Information: Data has been written to', '/home/DiviData/Germany/state_divi.json'),
+                          call('Information: Data has been written to', '/home/DiviData/Germany/germany_divi.json')]
 
         # check if expected_calls is part of calls
         mock_print.assert_has_calls(expected_calls)
 
         # check if expected calls are the last three calls
-        self.assertTrue(mock_print.mock_calls[-4:] == expected_calls)
+        self.assertTrue(mock_print.mock_calls[-7:] == expected_calls)
 
     def test_gdd_read_data(self):
 
@@ -545,8 +551,8 @@ class TestGetDiviData(fake_filesystem_unittest.TestCase):
         with self.assertRaises(SystemExit) as cm:
             gdd.get_divi_data(read_data, out_form, out_folder,
                               end_date, start_date, update_data)
-        self.assertEqual(cm.exception.code, "Error: The file: " + file_with_path + " does not exist. "
-                                                                                   "Call program without -r or -u flag to get it.")
+        self.assertEqual(cm.exception.code, "Error: The file: " + file_with_path +
+                         " does not exist. Call program without -r or -u flag to get it.")
 
         # Test case with empty file
         with open(file_with_path, 'w') as f:
@@ -640,27 +646,29 @@ class TestGetDiviData(fake_filesystem_unittest.TestCase):
 
         mock_loadcsv.assert_called_with('DIVI-Intensivregister-Tagesreport', apiUrl='https://www.divi.de/')
 
-        # check content of files
+        start_string = "Success: Data of date "
+        end_string = " has been added to dataframe"
+        expected_calls = [call(start_string + date(2020, 7, 8).strftime("%Y-%m-%d") + end_string)]
+                          # check content of files
         f = open(file_with_path, "r")
         self.assertEqual(f.read(), self.test_string_read_fulldata)
+        expected_calls.append(call("Information: Data has been written to", file_with_path))
 
         f_path = os.path.join(directory, file_out1)
         f = open(f_path, "r")
         fread = f.read()
         self.assertEqual(fread, "[" + self.test_stringr1_county + "," + self.test_stringr2_county + "]")
+        expected_calls.append(call("Information: Data has been written to", f_path))
 
         f_path = os.path.join(directory, file_out2)
         f = open(f_path, "r")
         self.assertEqual(f.read(), "[" + self.test_stringr2_state + "]")
+        expected_calls.append(call("Information: Data has been written to", f_path))
 
         f_path = os.path.join(directory, file_out3)
         f = open(f_path, "r")
         self.assertEqual(f.read(), "[" + self.test_stringr1_country + "," + self.test_stringr2_country + "]")
-
-        start_string = "Success: Data of date "
-        end_string = " has been added to dataframe"
-        expected_calls = [call(start_string + date(2020, 7, 8).strftime("%Y-%m-%d") + end_string),
-                          call("Information: DIVI data has been written to", directory)]
+        expected_calls.append(call("Information: Data has been written to", f_path))
 
         # check if expected_calls is part of calls
         mock_print.assert_has_calls(expected_calls)
@@ -682,38 +690,41 @@ class TestGetDiviData(fake_filesystem_unittest.TestCase):
         self.assertEqual(len(os.listdir(directory)), 4)
         self.assertEqual(os.listdir(directory).sort(), [file, file_out1, file_out2, file_out3].sort())
 
-        # check content of files
+        start_string = "Success: Data of date "
+        end_string = " has been added to dataframe"
+        expected_calls = [call(start_string + date(2020, 7, 7).strftime("%Y-%m-%d") + end_string),
+                          call(start_string + date(2020, 7, 8).strftime("%Y-%m-%d") + end_string)]
+
+                          # check content of files
         f = open(file_with_path, "r")
         fread = f.read()
         self.assertEqual(fread, self.test_string_read_fulldata_update)
+        expected_calls.append(call("Information: Data has been written to", file_with_path))
 
         f_path = os.path.join(directory, file_out1)
         f = open(f_path, "r")
         fread = f.read()
         self.assertEqual(fread, "[" + self.test_stringr3_county + "," + self.test_stringr1_county + ","
                          + self.test_stringr2_county + "]")
+        expected_calls.append(call("Information: Data has been written to", f_path))
 
         f_path = os.path.join(directory, file_out2)
         f = open(f_path, "r")
         self.assertEqual(f.read(), "[" + self.test_stringr3_state + "]")
+        expected_calls.append(call("Information: Data has been written to", f_path))
 
         f_path = os.path.join(directory, file_out3)
         f = open(f_path, "r")
         self.assertEqual(f.read(),
                          "[" + self.test_stringr3_country + "," + self.test_stringr1_country + 
                          "," + self.test_stringr2_country + "]")
-
-        start_string = "Success: Data of date "
-        end_string = " has been added to dataframe"
-        expected_calls = [call(start_string + date(2020, 7, 7).strftime("%Y-%m-%d") + end_string),
-                          call(start_string + date(2020, 7, 8).strftime("%Y-%m-%d") + end_string),
-                          call("Information: DIVI data has been written to", directory)]
+        expected_calls.append(call("Information: Data has been written to", f_path))
 
         # check if expected_calls is part of calls
         mock_print.assert_has_calls(expected_calls)
 
         # check if expected calls are the last three calls
-        self.assertTrue(mock_print.mock_calls[-3:] == expected_calls)
+        self.assertTrue(mock_print.mock_calls[-6:] == expected_calls)
 
         # Check what happens if end_date (in real today) is not in dict
         # and the call_number has a difference > 2 to check that no message is printed
@@ -732,38 +743,40 @@ class TestGetDiviData(fake_filesystem_unittest.TestCase):
         self.assertEqual(len(os.listdir(directory)), 4)
         self.assertEqual(os.listdir(directory).sort(), [file, file_out1, file_out2, file_out3].sort())
 
-        # check content of files
+        start_string = "Success: Data of date "
+        end_string = " has been added to dataframe"
+        expected_calls = [call(start_string + date(2020, 4, 28).strftime("%Y-%m-%d") + end_string)]
+                          # check content of files
         f = open(file_with_path, "r")
         fread = f.read()
         self.assertEqual(fread, self.test_string_read_fulldata_update_nondic)
+        expected_calls.append(call("Information: Data has been written to", file_with_path))
 
         # compare county data
         f_path = os.path.join(directory, file_out1)
         f = open(f_path, "r")
         fread = f.read()
         self.assertEqual(fread, "[" + self.test_stringr4_county + "," + self.test_stringr5_county + "]")
+        expected_calls.append(call("Information: Data has been written to", f_path))
 
         # compare state data
         f_path = os.path.join(directory, file_out2)
         f = open(f_path, "r")
         self.assertEqual(f.read(), "[" + self.test_stringr4_state + "," + self.test_stringr5_state + "]")
+        expected_calls.append(call("Information: Data has been written to", f_path))
 
         # compare country data
         f_path = os.path.join(directory, file_out3)
         f = open(f_path, "r")
         self.assertEqual(f.read(),
                          "[" + self.test_stringr4_country + "," + self.test_stringr5_country + "]")
-
-        start_string = "Success: Data of date "
-        end_string = " has been added to dataframe"
-        expected_calls = [call(start_string + date(2020, 4, 28).strftime("%Y-%m-%d") + end_string),
-                          call("Information: DIVI data has been written to", directory)]
+        expected_calls.append(call("Information: Data has been written to", f_path))
 
         # check if expected_calls is part of calls
         mock_print.assert_has_calls(expected_calls)
 
         # check if expected calls are the last two calls
-        self.assertTrue(mock_print.mock_calls[-2:] == expected_calls)
+        self.assertTrue(mock_print.mock_calls[-5:] == expected_calls)
 
 
 def test_nearest_earlier_date(self):

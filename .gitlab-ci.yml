@@ -18,36 +18,35 @@ build-cpp:
     paths:
       - cpp/build/
 
-build-cpp-win:
-  stage: build
-  tags:
-    - SC-0030VM
-  before_script:
-    - $env:Path = "c:\Windows\System32"
-    - $env:Path += ";c:\Devel\Tools\cmake-3.18.3-win64-x64\bin"
-    - $env:Path += ";c:\Program Files\7-zip"
-    - $env:Path += ";c:\Devel\Tools\ninja-1.10.1"
-    - md -Force C:\Devel\Libraries\
-    - ci\activate_vc2019.ps1
-    - If (!(Test-Path -Path "c:\Devel\Libraries\TIXI-3.1.1-win64")) {
-        Write-Output "Downloading TiXI libraries";
-        (new-object System.Net.WebClient).Downloadfile("https://github.com/DLR-SC/tixi/releases/download/v3.1.1/TIXI-3.1.1-win64.zip", "c:\Devel\Libraries\TIXI-3.1.1-win64.zip");
-        Write-Output "Extract TiXI libraries";
-        7z x -y "c:\Devel\Libraries\TIXI-3.1.1-win64.zip" -oC:\Devel\Libraries
-      }
-  script:
-    - cd cpp
-    - md -Force build-win
-    - cd build-win
-    - cmake --version
-    - cmake -G "Ninja" -DCMAKE_BUILD_TYPE=Release -DEPI_USE_BUNDLED_EIGEN=ON -DEPI_BUILD_EPI_IO=ON -DHDF5_USE_STATIC_LIBRARIES=ON -DHDF5_DIR=C:\Devel\Libraries\HDF5-1.10.1-win64\cmake -Dtixi3_DIR=C:\Devel\Libraries\TIXI-3.1.1-win64\lib\tixi3 ..
-    - cp "c:\Devel\Libraries\TIXI-3.1.1-win64\bin\tixi3.dll" "tests"
-    - cmake --build .
-
-  artifacts:
-    expire_in: 2 hrs
-    paths:
-      - cpp/build-win/
+# build-cpp-win:
+#   stage: build
+#   tags:
+#     - SC-0030VM
+#   before_script:
+#     - $env:Path = "c:\Windows\System32"
+#     - $env:Path += ";c:\Devel\Tools\cmake-3.18.3-win64-x64\bin"
+#     - $env:Path += ";c:\Program Files\7-zip"
+#     - $env:Path += ";c:\Devel\Tools\ninja-1.10.1"
+#     - md -Force C:\Devel\Libraries\
+#     - ci\activate_vc2019.ps1
+#     - If (!(Test-Path -Path "c:\Devel\Libraries\TIXI-3.1.1-win64")) {
+#         Write-Output "Downloading TiXI libraries";
+#         (new-object System.Net.WebClient).Downloadfile("https://github.com/DLR-SC/tixi/releases/download/v3.1.1/TIXI-3.1.1-win64.zip", "c:\Devel\Libraries\TIXI-3.1.1-win64.zip");
+#         Write-Output "Extract TiXI libraries";
+#         7z x -y "c:\Devel\Libraries\TIXI-3.1.1-win64.zip" -oC:\Devel\Libraries
+#       }
+#   script:
+#     - cd cpp
+#     - md -Force build-win
+#     - cd build-win
+#     - cmake --version
+#     - cmake -G "Ninja" -DCMAKE_BUILD_TYPE=Release -DEPI_USE_BUNDLED_EIGEN=ON -DEPI_BUILD_EPI_IO=ON -DHDF5_USE_STATIC_LIBRARIES=ON -DHDF5_DIR=C:\Devel\Libraries\HDF5-1.10.1-win64\cmake -Dtixi3_DIR=C:\Devel\Libraries\TIXI-3.1.1-win64\lib\tixi3 ..
+#     - cp "c:\Devel\Libraries\TIXI-3.1.1-win64\bin\tixi3.dll" "tests"
+#     - cmake --build .
+#   artifacts:
+#     expire_in: 2 hrs
+#     paths:
+#       - cpp/build-win/
 
 build-py:
   tags:
@@ -90,6 +89,26 @@ build-py-win:
     paths:
       - pycode/dist/*.whl
 
+test-docs:
+  tags:
+    - docker
+  image: ubuntu:18.04
+  stage: test
+  dependencies:
+    - build-py
+  before_script:
+    - apt -qq update
+    - apt -qq -y install doxygen
+  script:
+    - cd docs
+    - doxygen
+  artifacts:
+    expose_as: "Documentation"
+    paths:
+      - docs/html/
+    expire_in: 3 day
+
+
 # run tests using the binary built before
 test-cpp:
   tags:
@@ -118,23 +137,24 @@ test-cpp:
     reports:
       junit: cpp/build/tests/report.xml
       cobertura: coverage.xml
+    expose_as: "CPP Coverage Report"
     paths:
-      - coverage_report
+      - coverage_report/
     expire_in: 1 week
 
 # run tests using the binary built before
-test-cpp-win:
-  tags:
-    - SC-0030VM
-  stage: test
-  dependencies:
-    - build-cpp-win
-  script:
-    - cd cpp/build-win/tests
-    - .\runUnitTests.exe --gtest_output="xml:report.xml"
-  artifacts:
-    reports:
-      junit: cpp/build-win/tests/report.xml
+# test-cpp-win:
+#   tags:
+#     - SC-0030VM
+#   stage: test
+#   dependencies:
+#     - build-cpp-win
+#   script:
+#     - cd cpp/build-win/tests
+#     - .\runUnitTests.exe --gtest_output="xml:report.xml"
+#   artifacts:
+#     reports:
+#       junit: cpp/build-win/tests/report.xml
 
 test-py:
   tags:
@@ -161,13 +181,42 @@ test-py:
     - getjhdata --help
     - getspaindata --help
     - getdividata --help
-    - getalldata --help
+    - getsimdata --help
     - cleandata --help
   artifacts:
     reports:
       cobertura: pycode/test/coverage_python.xml
+    expose_as: "Python Coverage Report"
     paths:
-      - coverage_python
+      - coverage_python/
+    expire_in: 3 day
+
+test-pylint:
+  tags:
+    - docker
+  image: ubuntu:18.04
+  stage: test
+  dependencies:
+    - build-py
+  before_script:
+    - apt -qq update
+    - apt -qq -y install python3-pip gnupg
+    - python3.6 -m pip install --upgrade pip
+    - for pkg in `ls pycode/wheelhouse/*36*.whl`; do python3.6 -m pip install $pkg; done
+    - pip install -r pycode/requirements-dev.txt
+  script:
+    - cd pycode
+    - mkdir -p build_pylint
+    - pip install pylint
+    - pip install pylint-json2html
+    - python3.6 setup.py pylint
+    - pylint-json2html -f jsonextended -o build_pylint/pylint.html < build_pylint/pylint_extended.json
+  artifacts:
+    expose_as: "Pylint Report"
+    paths:
+      - pycode/build_pylint/pylint.html
+    expire_in: 3 day
+
 
 download-data:
   tags:
@@ -202,7 +251,7 @@ download-data:
 
 build-js:
   tags:
-    - docker
+   - docker
   image: node:12
   stage: build
   before_script:
@@ -216,21 +265,24 @@ build-js:
     paths:
       - frontend/build/
 
-build-js-bindings:
-  stage: build
+test-js:
   tags:
    - docker
-  image: trzeci/emscripten
+  image: node:12
+  stage: test
+  needs: ['build-js']
+  before_script:
+    - cd frontend
+    - npm install
   script:
-  - cd frontend
-  - mkdir build && cd build
-  - emcmake cmake ..
-  - cmake --build .
+    - npm run coverage
   artifacts:
+    reports:
+      junit: frontend/coverage/junit/junit.xml
+      cobertura: frontend/coverage/cobertura-coverage.xml
     paths:
-    - frontend/build/secirjs.js
-    - frontend/build/secirjs.wasm
-
+      - frontend/coverage/lcov-report
+    
 www:
   tags:
     - native
@@ -238,7 +290,6 @@ www:
   stage: deploy
   dependencies:
     - build-js
-    - build-js-bindings
     - download-data
   script:
     - echo "Deploying to server"
@@ -247,3 +298,39 @@ www:
     - echo "Deployed"
   only:
     - /^version-.*$/
+
+#######################
+# Publish stage
+pages:
+  stage: deploy
+  dependencies:
+    - test-py
+    - test-cpp
+    - test-docs
+    - test-pylint
+  tags:
+    - docker
+  image: ubuntu:18.04
+  script:
+    - echo "Prepare basic Pages sites"
+    - mkdir -p public/${CI_COMMIT_REF_NAME}/
+    - cp ci_index/main_index.html public/index.html
+    - cp ci_index/branch_index.html public/${CI_COMMIT_REF_NAME}/index.html
+    - echo "Prepare documentation" # Prepare documentation
+    - mkdir -p public/${CI_COMMIT_REF_NAME}/documentation
+    - cp -r docs/html/* public/${CI_COMMIT_REF_NAME}/documentation
+    - echo "Prepare pylint reports" # Prepare pylint
+    - mkdir -p public/${CI_COMMIT_REF_NAME}/pylint
+    - cp pycode/build_pylint/pylint.html public/${CI_COMMIT_REF_NAME}/pylint/
+    - echo "Prepare coverage reports" # prepare coverage
+    - mkdir -p public/${CI_COMMIT_REF_NAME}/coverage
+    - mkdir -p public/${CI_COMMIT_REF_NAME}/coverage/cpp
+    - mkdir -p public/${CI_COMMIT_REF_NAME}/coverage/python
+    - cp -r coverage_python/* public/${CI_COMMIT_REF_NAME}/coverage/python/
+    - cp -r coverage_report/* public/${CI_COMMIT_REF_NAME}/coverage/cpp/
+  artifacts:
+    paths:
+      - public # All relevant content needs to be available here
+  only:
+     - master
+  

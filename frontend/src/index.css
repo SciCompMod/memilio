@@ -1,6 +1,6 @@
 body {
   margin: 0;
-  font-family: FrutigerLTW02-45Light, 'Helvetica Neue', Helvetica, Roboto, Arial, sans-serif;
+  font-family: Arial, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
@@ -15,14 +15,4 @@ code {
   top: 50vh;
   left: 50vw;
   margin: -2.5rem 0 0 -2.5rem;
-}
-
-@font-face {
-  font-family: 'FrutigerLTW02-65Bold';
-  src: url('https://www.dlr.de/static/latest/static/latest/fonts/FrutigerLTW02-65Bold.woff2') format('woff2');
-}
-
-@font-face {
-  font-family: 'FrutigerLTW02-45Light';
-  src: url('https://www.dlr.de/static/latest/static/latest/fonts/FrutigerLTW02-45Light.woff2') format('woff2');
 }

@@ -3,12 +3,15 @@
 
 #include "epidemiology/model/compartmentalmodel.h"
 #include "epidemiology/model/populations.h"
-#include "epidemiology/secir/seir_params.h"
+#include "epidemiology/utils/parameter_set.h"
+#include "epidemiology/secir/contact_matrix.h"
 
 namespace epi
 {
 
-// Create template specialization for the simple SEIR model
+/****************************************
+ * Define SEIR categories using an enum *
+ ****************************************/
 
 enum class SeirInfType
 {
@@ -19,13 +22,60 @@ enum class SeirInfType
     Count = 4
 };
 
-class SeirModel : public CompartmentalModel<Populations<SeirInfType>, SeirParams>
+using SeirPopulations = Populations<SeirInfType>;
+
+/**************************
+ * define some parameters *
+ **************************/
+
+
+struct TransmissionRisk
 {
-    using Pa = SeirParams;
-    using Po = Populations<SeirInfType>;
+    using Type=double;
+    static constexpr Type get_default() {
+        return 1.0;
+    }
+};
+struct StageTimeIncubationInv
+{
+    using Type=double;
+    static constexpr Type get_default() {
+        return 1.0 / 5.2;
+    }
+};
+struct StageTimeInfectiousInv
+{
+    using Type=double;
+    static constexpr Type get_default() {
+        return 1.0 / 6.0;
+    }
+};
+struct ContactFrequency
+{
+    using Type=ContactMatrix;
+    static Type get_default() {
+        return ContactMatrix{1};
+    }
+};
+
+using SeirParameters = ParameterSet<TransmissionRisk,
+                                    StageTimeIncubationInv,
+                                    StageTimeInfectiousInv,
+                                    ContactFrequency>;
+
+
+/********************
+ * define the model *
+ ********************/
+
+class SeirModel : public CompartmentalModel<SeirPopulations, SeirParameters>
+{
+    using Po = SeirPopulations;
+    using Pa = SeirParameters;
 
 public:
     SeirModel()
+        : CompartmentalModel<SeirPopulations, SeirParameters>(Po({Index<SeirInfType>((size_t)SeirInfType::Count)}, 0.), Pa())
     {
 #if !USE_DERIV_FUNC
         //S to E
@@ -60,15 +110,15 @@ public:
                          Eigen::Ref<Eigen::VectorXd> dydt) const override
     {
         auto& params = this->parameters;
-        double cont_freq_eff = params.contact_frequency.get_matrix_at(t)(0, 0);
-        double divN          = 1.0 / populations.get_total();
+        double S2E_coeff = params.get<ContactFrequency>().get_matrix_at(t)(0, 0) * params.get<TransmissionRisk>()
+                / populations.get_total();
 
-        dydt[(size_t)SeirInfType::S] = -cont_freq_eff * y[(size_t)SeirInfType::S] * pop[(size_t)SeirInfType::I] * divN;
-        dydt[(size_t)SeirInfType::E] = cont_freq_eff * y[(size_t)SeirInfType::S] * pop[(size_t)SeirInfType::I] * divN -
-                                    params.times.get_incubation_inv() * y[(size_t)SeirInfType::E];
-        dydt[(size_t)SeirInfType::I] = params.times.get_incubation_inv() * y[(size_t)SeirInfType::E] -
-                                    params.times.get_infectious_inv() * y[(size_t)SeirInfType::I];
-        dydt[(size_t)SeirInfType::R] = params.times.get_infectious_inv() * y[(size_t)SeirInfType::I];
+        dydt[(size_t)SeirInfType::S] = -S2E_coeff * y[(size_t)SeirInfType::S] * pop[(size_t)SeirInfType::I];
+        dydt[(size_t)SeirInfType::E] = S2E_coeff * y[(size_t)SeirInfType::S] * pop[(size_t)SeirInfType::I] -
+                                    params.get<StageTimeIncubationInv>() * y[(size_t)SeirInfType::E];
+        dydt[(size_t)SeirInfType::I] = params.get<StageTimeIncubationInv>() * y[(size_t)SeirInfType::E] -
+                                    params.get<StageTimeInfectiousInv>() * y[(size_t)SeirInfType::I];
+        dydt[(size_t)SeirInfType::R] = params.get<StageTimeInfectiousInv>() * y[(size_t)SeirInfType::I];
     }
 
 #endif // USE_DERIV_FUNC

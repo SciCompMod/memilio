@@ -1,0 +1,398 @@
+#ifndef EPI_UTILS_PARAMETER_SET_H
+#define EPI_UTILS_PARAMETER_SET_H
+
+#include <utility>
+#include <tuple>
+#include <epidemiology/utils/stl_util.h>
+
+namespace epi
+{
+
+namespace details
+{  
+
+    //helpers for get_default
+    template <class X, class = void, class... Args>
+    struct has_get_default_member_function
+        : std::false_type
+    {};
+
+    template <class T, class... Args>
+    struct has_get_default_member_function<T, void_t<decltype(T::get_default(std::declval<Args>()...))>, Args...>
+        : std::true_type
+    {};
+
+} // namespace details
+
+/**
+ * @brief check whether a get_default function exists
+ * @tparam The type to check for the existence of the member function
+ */
+template <class T, class... Args>
+using has_get_default_member_function = details::has_get_default_member_function<T, void, Args...>;
+
+/**
+ * @brief the properties of a parameter
+ * @tparam Tag the parameter type
+ */
+template <class Tag>
+struct ParameterTagTraits {
+    using Type = typename Tag::Type;
+
+    //get_default either with get_default member function or fallback on default constructor
+    template <class Dummy = Tag, class... Ts>
+    static std::enable_if_t<has_get_default_member_function<Dummy, Ts...>::value, Type> get_default(Ts&&... args)
+    {
+        return Tag::get_default(std::forward<Ts>(args)...);
+    }
+
+    template <class Dummy = Tag, class... Ts>
+    static std::enable_if_t<
+        !has_get_default_member_function<Dummy, Ts...>::value && std::is_default_constructible<Type>::value, Type>
+    get_default(Ts&&...)
+    {
+        return Type{};
+    }
+
+};
+
+namespace details
+{
+    //stores a parameter and tags it so it can be unambiguously found in a tuple
+    template <class TagT>
+    class TaggedParameter
+    {
+    public:
+        using Tag    = TagT;
+        using Traits = ParameterTagTraits<Tag>;
+        using Type   = typename Traits::Type;
+
+        template <class... Ts, class Dummy1 = void,
+                  class = std::enable_if_t<std::is_constructible<Type, Ts...>::value, Dummy1>>
+        TaggedParameter(Ts&&... args)
+            : m_value(std::forward<Ts>(args)...)
+        {
+        }
+
+        operator Type&()
+        {
+            return get();
+        }
+
+        operator const Type&() const
+        {
+            return get();
+        }
+
+        const Type& get() const
+        {
+            return m_value;
+        }
+
+        Type& get()
+        {
+            return m_value;
+        }
+
+        template<class T>
+        bool operator==(const TaggedParameter<T>& other)
+        {
+            return m_value == other.m_value;
+        }
+
+        template<class T>
+        bool operator!=(const TaggedParameter<T>& other)
+        {
+            return m_value != other.m_value;
+        }
+
+    private:
+        Type m_value;
+    };
+
+    //defines value = true if predicate defines value=true for all types in parameter pack
+    template <template <class...> class Pred, class... Tail>
+    struct AllOf;
+
+    template <template <class...> class Pred>
+    struct AllOf<Pred> : public std::true_type {
+    };
+
+    template <template <class...> class Pred, class Head, class... Tail>
+    struct AllOf<Pred, Head, Tail...> {
+        static const constexpr bool value = Pred<Head>::value && AllOf<Pred, Tail...>::value;
+    };
+
+    //defines value = true if predicate defines value=true for any type in parameter pack
+    template <template <class...> class Pred, class... Tail>
+    struct AnyOf;
+
+    template <template <class...> class Pred>
+    struct AnyOf<Pred> : public std::false_type {
+    };
+
+    template <template <class...> class Pred, class Head, class... Tail>
+    struct AnyOf<Pred, Head, Tail...> {
+        static const constexpr bool value = Pred<Head>::value || AnyOf<Pred, Tail...>::value;
+    };
+
+    //for X = template<T1, T2> X => BindTail<X, A>::type<B> = X<B, A>
+    template<template<class...> class F, class... Tail>
+    struct BindTail
+    {
+        template<class... Head>
+        struct type : F<Head..., Tail...> {};
+        //according to the standard, this must be a real type, can't be an alias of F.
+        //An alias is immediately replaced and discarded when the compiler sees it, but this could leave the template F with some 
+        //parameters bound and some free, which is not allowed. A struct that derives from F is persistent during compilation.
+    };
+
+    //for template<T1, T2> X => BindHead<X, A>::type<B> = X<A, B>
+    template<template<class...> class F, class... Head>
+    struct BindHead
+    {
+        template<class... Tail>
+        struct type : F<Head..., Tail...> {};
+        //can't be an alias, see BindTail
+    };
+    
+} // namespace details
+
+/**
+ * @brief A tag used for tag-dispatching the Constructor of ParameterSet,
+ * triggering default initialization of all parameters using the get_default
+ * member function.
+ */
+struct NoDefaultInit {
+};
+
+template <typename T>
+using is_no_default_init_tag = std::is_same<NoDefaultInit, T>;
+
+/**
+ * @brief a set of parameters defined at compile time
+ *
+ * parameters added as template parameters (tags)
+ *
+ * example:
+ *
+ *     struct FooParamTag { using type = X; ... };
+ *     ParameterSet<FooParamTag>
+ *
+ * @tparam Tags All parameter types contained in this set. The types should be unique.
+ */
+template <class... Tags>
+class ParameterSet
+{
+public:
+    /**
+     * @brief non-initializing default constructor.
+     * exists if all parameters are default constructible.
+     */
+    template <
+        class Dummy = void,
+        class = std::enable_if_t<details::AllOf<std::is_default_constructible, typename Tags::Type...>::value, Dummy>>
+    explicit ParameterSet(NoDefaultInit)
+    {
+    }
+
+    /**
+     * @brief default initializing constructor
+     * Initializes each parameter using either the get_default function defined in the parameter tag or the default constructor.
+     * this constructor exists if all parameters have get_default() without arguments or a default constructor.
+     */
+    template <class Dummy = void,
+              class       = std::enable_if_t<
+                  details::AllOf<has_get_default_member_function, ParameterTagTraits<Tags>...>::value, Dummy>>
+    ParameterSet()
+        : m_tup(ParameterTagTraits<Tags>::get_default()...)
+    {
+    }
+
+    /**
+     * @brief default initializing constructor.
+     * Initializes each parameter using either the get_default function defined in the parameter tag or the default constructor.
+     * this constructor exists if all parameters have get_default(args...) with the same number of arguments or a default constructor.
+     * Arguments get forwarded to get_default of parameters.
+     */
+    template <
+        class T1, class... TN,
+        class = std::enable_if_t<details::AllOf<details::BindTail<has_get_default_member_function, T1, TN...>::template type,
+                                                ParameterTagTraits<Tags>...>::value>>
+    explicit ParameterSet(T1&& arg1, TN&&... argn)
+        : m_tup(ParameterTagTraits<Tags>::get_default(arg1, argn...)...)
+    {
+    }
+
+    /**
+     * @brief get value of a parameter
+     * @tparam Tag the queried parameter
+     * @return The value of the parameter
+     */
+    template <class Tag>
+    const typename ParameterTagTraits<Tag>::Type& get() const
+    {
+        return std::get<details::TaggedParameter<Tag>>(m_tup).get();
+    }
+
+    /**
+     * @brief get value of a parameter
+     * @tparam Tag the queried parameter
+     * @return The value of the parameter
+     */
+    template <class Tag>
+    typename ParameterTagTraits<Tag>::Type& get()
+    {
+        return std::get<details::TaggedParameter<Tag>>(m_tup).get();
+    }
+
+    /**
+     * @brief set value of a parameter
+     * @tparam Tag the parameter
+     */
+    template <class Tag>
+    void set(const typename ParameterTagTraits<Tag>::Type& value)
+    {
+        get<Tag>() = value;
+    }
+
+    /**
+     * @brief set value of a parameter
+     * @tparam Tag the parameter
+     */
+    template <class Tag, class T>
+    void set(T&& arg)
+    {
+        get<Tag>() = std::forward<T>(arg);
+    }
+
+    /**
+     * @brief (re)set parameter to its default value
+     *
+     * only exists if parameter defines get_default
+     *
+     * @tparam Tag the parameter
+     */
+    template <class Tag,
+              class... T>
+    std::enable_if_t<has_get_default_member_function<ParameterTagTraits<Tag>, T...>::value, void> set_default(T&&... ts)
+    {
+        get<Tag>() = ParameterTagTraits<Tag>::get_default(std::forward<T>(ts)...);
+    }
+
+    /**
+     * @brief returns the number of parameters
+     * @return //number of parameters
+     */
+    static constexpr size_t size()
+    {
+        return sizeof...(Tags);
+    }
+
+    bool operator==(const ParameterSet& b) const 
+    {
+        return m_tup == b.m_tup; 
+    }
+
+    bool operator!=(const ParameterSet& b) const 
+    {
+        return m_tup != b.m_tup; 
+    }
+
+private:
+    std::tuple<details::TaggedParameter<Tags>...> m_tup;
+};
+
+namespace details
+{
+    //helpers for ParameterTag
+    template <size_t I, class ParamSet>
+    struct ParameterTag;
+
+    template <size_t I, class Head, class... Tail>
+    struct ParameterTag<I, ParameterSet<Head, Tail...>> : public ParameterTag<I - 1, ParameterSet<Tail...>> {
+    };
+
+    template <class Head, class... Tail>
+    struct ParameterTag<0, ParameterSet<Head, Tail...>> {
+        using Type = Head;
+    };
+} // namespace details
+
+
+/**
+ * @brief get the the tag of the I-th parameter in a set
+ */
+template <size_t I, class ParamSet>
+using ParameterTag = details::ParameterTag<I, ParamSet>;
+
+template <size_t I, class ParamSet>
+using ParameterTagT = typename ParameterTag<I, ParamSet>::Type;
+
+namespace details
+{
+    //helpers for foreach
+    template <class... Tail, class Params, class F>
+    std::enable_if_t<sizeof...(Tail) == 0, void> foreach_impl(Params&&, F)
+    {
+    }
+
+    template <class Head, class... Tail, class Params, class F>
+    void foreach_impl(Params&& p, F f)
+    {
+        f(p.template get<Head>(), Head{});
+        foreach_impl<Tail...>(p, f);
+    }
+
+    template <class Params, size_t... Tail, class F>
+    std::enable_if_t<sizeof...(Tail) == 0, void> foreach_tag_impl(F, std::index_sequence<Tail...>)
+    {
+    }
+
+    template <class Params, size_t Head, size_t... Tail, class F>
+    void foreach_tag_impl(F f, std::index_sequence<Head, Tail...>)
+    {
+        f(ParameterTagT<Head, Params>{});
+        foreach_tag_impl<Params, Tail...>(f, std::index_sequence<Tail...>{});
+    }
+} // namespace details
+
+/**
+ * @brief call f(t) for all parameters in a ParameterSet with
+ * t a default constructed parameter tag
+ *
+ * @tparam Params a ParameterSet
+ * @tparam F The function type of f
+ * @param f The function to be called
+ */
+template <class Params, class F>
+void foreach_tag(F f)
+{
+    details::foreach_tag_impl<Params>(f, std::make_index_sequence<Params::size()>{});
+}
+
+/**
+ * @brief call f(p, t) for all parameters in a ParameterSet with
+ * p the value of the parameter
+ * t a default constructed parameter tag
+ *
+ * @tparam F The function type of f
+ * @tparam Tags the parameters
+ * @param p the ParameterSet
+ * @param f The function to be called
+ */
+template <class F, class... Tags>
+void foreach (const ParameterSet<Tags...>& p, F f)
+{
+    details::foreach_impl<Tags...>(p, f);
+}
+
+template <class F, class... Tags>
+void foreach (ParameterSet<Tags...>& p, F f)
+{
+    details::foreach_impl<Tags...>(p, f);
+}
+
+} // namespace epi
+
+#endif //EPI_UTILS_PARAMETER_SET_H

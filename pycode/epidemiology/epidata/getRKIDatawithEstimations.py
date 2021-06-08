@@ -1,3 +1,9 @@
+"""
+@file getRKIDatawithEstimations.py
+
+@brief Estimates recovered and deaths from data from RKI and john hopkins together
+"""
+
 import os
 import pandas as pd
 import numpy as np
@@ -10,27 +16,33 @@ from epidemiology.epidata import defaultDict as dd
 from epidemiology.epidata import getRKIData as grd
 from epidemiology.epidata import getJHData as gjd
 
-
-# Function to estimate recovered and deaths from combination of RKI and JH data
-#
-# From the John-Hopkins (JH) data the fraction revered/confirmed and deaths/confiremd are calculated
-# With this fraction every existing RKI data is scaled.
-# The new columns recovered_estimated and deaths_estimated are added.
-#
-# @param read_data False [Default] or True. Defines if data is read from file or downloaded.
-# @param out_form json [Default]
-# @param out_folder Folder where data is written to.
-# @param make_plot [Optional] RKI and estimated data can be compared by plots
-#
 def get_rki_data_with_estimations(read_data=dd.defaultDict['read_data'],
                                   out_form=dd.defaultDict['out_form'],
                                   out_folder=dd.defaultDict['out_folder'],
                                   make_plot=dd.defaultDict['make_plot']):
+
+    """! Function to estimate recovered and deaths from combination of RKI and JH data
+
+    From the John-Hopkins (JH) data the fraction revered/confirmed and deaths/confiremd are calculated
+    With this fraction every existing RKI data is scaled.
+    The new columns recovered_estimated and deaths_estimated are added.
+
+    @param read_data False [Default] or True. Defines if data is read from file or downloaded.
+    @param out_form json [Default]
+    @param out_folder Folder where data is written to.
+    @param make_plot [Optional] RKI and estimated data can be compared by plots
+    """
+
     data_path = os.path.join(out_folder, 'Germany/')
 
     if not read_data:
+        fill_dates = False
+        make_plot_rki = False
+        moving_average = False
+        split_berlin = False
+
         # get rki data
-        grd.get_rki_data(read_data, out_form, out_folder, False)
+        grd.get_rki_data(read_data, out_form, out_folder, fill_dates, make_plot_rki, moving_average, split_berlin)
 
         # get data from John Hopkins University
         gjd.get_jh_data(read_data, out_form, out_folder)
@@ -107,7 +119,7 @@ def get_rki_data_with_estimations(read_data=dd.defaultDict['read_data'],
 
         # check if calculation is meaningful
         # TODO Add jh data to whole germany plot
-        if (make_plot == True):
+        if make_plot:
             df_rki.plot(x=date, y=[recovered, recovered_estimated],
                         title='COVID-19 check recovered for ' + file_to_change,
                         grid=True, style='-o')
@@ -123,10 +135,7 @@ def get_rki_data_with_estimations(read_data=dd.defaultDict['read_data'],
         if file_to_change == "all_germany_rki":
             compare_estimated_and_rki_deathsnumbers(df_rki,data_path,read_data,make_plot)
             get_weekly_deaths_data_age_gender_resolved(data_path, read_data=True)
-
-
             # df_rki[week] = df_rki[date].dt.isocalendar().week
-
 
 
 def compare_estimated_and_rki_deathsnumbers(df_rki,data_path,read_data,make_plot):
@@ -226,14 +235,19 @@ def get_weekly_deaths_data_age_gender_resolved(data_path,read_data):
     gd.write_dataframe(df_real_deaths_per_week_age, data_path, 'weekly_deaths_rki_age_resolved', 'json')
     gd.write_dataframe(df_real_deaths_per_week_gender, data_path, 'weekly_deaths_rki_gender_resolved', 'json')
 
-def download_weekly_deaths_numbers_rki(data_path,name_file="RKI_deaths_weekly.xlsx",url="https://www.rki.de/DE/Content/InfAZ/N/Neuartiges_Coronavirus/Projekte_RKI/COVID-19_Todesfaelle.xlsx?__blob=publicationFile"):
+
+def download_weekly_deaths_numbers_rki(data_path,name_file="RKI_deaths_weekly.xlsx",
+                                       url="https://www.rki.de/DE/Content/InfAZ/N/Neuartiges_Coronavirus/Projekte_RKI/COVID-19_Todesfaelle.xlsx?__blob=publicationFile"):
     #data_path: path where to safe Excel-file
     r = requests.get(url)
     filename = os.path.join(data_path , name_file)
     with open(filename, 'wb') as output_file:
         output_file.write(r.content)
 
+
 def main():
+    """! Main program entry."""
+
     [read_data, out_form, out_folder, make_plot] = gd.cli("rkiest")
     #read_data=True
     #make_plot=True

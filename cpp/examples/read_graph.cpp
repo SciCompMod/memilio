@@ -1,7 +1,7 @@
 #include <epidemiology/migration/migration.h>
 #include <epidemiology_io/secir_parameters_io.h>
 #include <epidemiology_io/mobility_io.h>
-
+#include <data_dir.h>
 #include <iostream>
 
 void print_usage()
@@ -20,8 +20,9 @@ int main(int argc, char** argv)
         return -1;
     }
 
-    auto filename = argv[1];
+    std::string dir = DATA_DIR;
 
+    auto filename   = epi::path_join(dir, "migration", (std::string)argv[1]);
     const auto t0   = 0.;
     const auto tmax = 10.;
     const auto dt   = 1.; //time step of migration, not integration
@@ -47,49 +48,49 @@ int main(int argc, char** argv)
     double nb_total_t0 = 10000, nb_exp_t0 = 100, nb_inf_t0 = 50, nb_car_t0 = 50, nb_hosp_t0 = 20, nb_icu_t0 = 10,
            nb_rec_t0 = 10, nb_dead_t0 = 0;
 
-    epi::SecirModel<epi::AgeGroup1> model;
-    size_t nb_groups = model.parameters.get_num_groups();
-    double fact   = 1.0 / (double)nb_groups;
+    epi::SecirModel model(1);
+    epi::AgeGroup nb_groups = model.parameters.get_num_groups();
+    double fact   = 1.0 / (double)(size_t)nb_groups;
 
     auto& params = model.parameters;
 
-    params.set_icu_capacity(std::numeric_limits<double>::max());
-    params.set_start_day(0);
-    params.set_seasonality(0);
+    params.set<epi::ICUCapacity>(std::numeric_limits<double>::max());
+    params.set<epi::StartDay>(0);
+    params.set<epi::Seasonality>(0);
 
-    for (size_t i = 0; i < nb_groups; i++) {
-        params.times[i].set_incubation(tinc);
-        params.times[i].set_infectious_mild(tinfmild);
-        params.times[i].set_serialinterval(tserint);
-        params.times[i].set_hospitalized_to_home(thosp2home);
-        params.times[i].set_home_to_hospitalized(thome2hosp);
-        params.times[i].set_hospitalized_to_icu(thosp2icu);
-        params.times[i].set_icu_to_home(ticu2home);
-        params.times[i].set_icu_to_death(ticu2death);
+    for (auto i = epi::AgeGroup(0); i < nb_groups; i++) {
+        params.get<epi::IncubationTime>()[i] = tinc;
+        params.get<epi::InfectiousTimeMild>()[i] = tinfmild;
+        params.get<epi::SerialInterval>()[i] = tserint;
+        params.get<epi::HospitalizedToHomeTime>()[i] = thosp2home;
+        params.get<epi::HomeToHospitalizedTime>()[i] = thome2hosp;
+        params.get<epi::HospitalizedToICUTime>()[i] = thosp2icu;
+        params.get<epi::ICUToHomeTime>()[i] = ticu2home;
+        params.get<epi::ICUToDeathTime>()[i] = ticu2death;
 
-        model.populations.set(fact * nb_exp_t0, (epi::AgeGroup1)i, epi::InfectionType::E);
-        model.populations.set(fact * nb_car_t0, (epi::AgeGroup1)i, epi::InfectionType::C);
-        model.populations.set(fact * nb_inf_t0, (epi::AgeGroup1)i, epi::InfectionType::I);
-        model.populations.set(fact * nb_hosp_t0, (epi::AgeGroup1)i, epi::InfectionType::H);
-        model.populations.set(fact * nb_icu_t0, (epi::AgeGroup1)i, epi::InfectionType::U);
-        model.populations.set(fact * nb_rec_t0, (epi::AgeGroup1)i, epi::InfectionType::R);
-        model.populations.set(fact * nb_dead_t0, (epi::AgeGroup1)i, epi::InfectionType::D);
-        model.populations.set_difference_from_group_total(fact * nb_total_t0, (epi::AgeGroup1)i, (epi::AgeGroup1)i,
-                                                          epi::InfectionType::S);
+        model.populations[{i, epi::InfectionState::Exposed}] = fact * nb_exp_t0;
+        model.populations[{i, epi::InfectionState::Carrier}] = fact * nb_car_t0;
+        model.populations[{i, epi::InfectionState::Infected}] = fact * nb_inf_t0;
+        model.populations[{i, epi::InfectionState::Hospitalized}] = fact * nb_hosp_t0;
+        model.populations[{i, epi::InfectionState::ICU}] = fact * nb_icu_t0;
+        model.populations[{i, epi::InfectionState::Recovered}] = fact * nb_rec_t0;
+        model.populations[{i, epi::InfectionState::Dead}] = fact * nb_dead_t0;
+        model.populations.set_difference_from_group_total<epi::AgeGroup>({i, epi::InfectionState::Susceptible},
+                                                                         fact * nb_total_t0);
 
-        params.probabilities[i].set_infection_from_contact(inf_prob);
-        params.probabilities[i].set_carrier_infectability(carr_infec);
-        params.probabilities[i].set_asymp_per_infectious(alpha);
-        params.probabilities[i].set_risk_from_symptomatic(beta);
-        params.probabilities[i].set_hospitalized_per_infectious(rho);
-        params.probabilities[i].set_icu_per_hospitalized(theta);
-        params.probabilities[i].set_dead_per_icu(delta);
+        params.get<epi::InfectionProbabilityFromContact>()[i] = inf_prob;
+        params.get<epi::RelativeCarrierInfectability>()[i] = carr_infec;
+        params.get<epi::AsymptoticCasesPerInfectious>()[i] = alpha;
+        params.get<epi::RiskOfInfectionFromSympomatic>()[i] = beta;
+        params.get<epi::HospitalizedCasesPerInfectious>()[i] = rho;
+        params.get<epi::ICUCasesPerHospitalized>()[i] = theta;
+        params.get<epi::DeathsPerHospitalized>()[i] = delta;
     }
 
     params.apply_constraints();
 
-    epi::ContactMatrixGroup& contact_matrix = params.get_contact_patterns();
-    contact_matrix[0] = epi::ContactMatrix(Eigen::MatrixXd::Constant(nb_groups, nb_groups, fact * cont_freq));
+    epi::ContactMatrixGroup& contact_matrix = params.get<epi::ContactPatterns>();
+    contact_matrix[0] = epi::ContactMatrix(Eigen::MatrixXd::Constant((size_t)nb_groups, (size_t)nb_groups, fact * cont_freq));
 
     epi::set_params_distributions_normal(model, t0, tmax, 0.2);
 
@@ -98,15 +99,16 @@ int main(int argc, char** argv)
     std::cout << "Done" << std::endl;
 
     std::cout << "Intializing Graph..." << std::flush;
-    epi::Graph<epi::SecirModel<epi::AgeGroup1>, epi::MigrationEdge> graph;
+    epi::Graph<epi::SecirModel, epi::MigrationParameters> graph;
     for (int node = 0; node < twitter_migration_2018.rows(); node++) {
         graph.add_node(node, model);
     }
     for (int row = 0; row < twitter_migration_2018.rows(); row++) {
         for (int col = 0; col < twitter_migration_2018.cols(); col++) {
-            graph.add_edge(row, col,
-                           Eigen::VectorXd::Constant(8 * nb_groups, twitter_migration_2018(row, col) /
-                                                                        graph.nodes()[row].property.populations.get_total()));
+            graph.add_edge(
+                row, col,
+                Eigen::VectorXd::Constant(8 * (size_t)nb_groups, twitter_migration_2018(row, col) /
+                                                             graph.nodes()[row].property.populations.get_total()));
         }
     }
     std::cout << "Done" << std::endl;
@@ -116,13 +118,13 @@ int main(int argc, char** argv)
     std::cout << "Done" << std::endl;
 
     std::cout << "Reading XML Files..." << std::flush;
-    epi::Graph<epi::SecirModel<epi::AgeGroup1>, epi::MigrationEdge> graph_read =
-        epi::read_graph<epi::SecirModel<epi::AgeGroup1>>("graph_parameters");
+    epi::Graph<epi::SecirModel, epi::MigrationParameters> graph_read =
+        epi::read_graph<epi::SecirModel>("graph_parameters");
 
     std::cout << "Done" << std::endl;
 
     std::cout << "Running Simulations..." << std::flush;
-    auto study = epi::ParameterStudy<epi::SecirModel<epi::AgeGroup1>>(graph_read, t0, tmax, 0.5, 2);
+    auto study = epi::ParameterStudy<epi::SecirModel>(graph_read, t0, tmax, 0.5, 2);
     std::cout << "Done" << std::endl;
 
     return 0;

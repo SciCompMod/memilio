@@ -13,52 +13,59 @@ namespace epi
 {
 
 /**
- * represents time dependent contact frequencies between groups.
- * consists of constant baseline and irreducible minimum contacts.
- * actual contacts are adjusted over time by dampings.
- * The effective contacts are B - D * (B - M), where B is the baseline, D are
- * combined dampings and M is the minimum.
- * The minimum is not necessarily smaller than the baseline in every entry,
- * but it reflects the state at maximum lockdown. In places where the 
- * minimum is greater than the baseline, a positive damping increases
- * instead of reduces contacts.
- * All these members are matrix valued, e.g. B_ij are the normal contacts
- * that one person in group i has with persons in group j.
+ * represents the coefficient wise matrix (or vector) expression B - D * M
+ * where B is a baseline, M is a minimum and D is some time dependent complex damping factor.
+ * Base class for e.g. time dependent contact matrices.
+ * Coefficient wise expression, so B, D, M matrices must have the same shape.
+ * @see Damping
+ * @see ContactMatrix
+ * @tparam D instance of Dampings or compatible type
  */
-class ContactMatrix
-{
+template<class D>
+class DampingMatrixExpression
+{    
 public:
+    using DampingsType = D;
+    using Shape        = typename DampingsType::Shape;
+    using Matrix       = typename Shape::Matrix;
+
     /**
-     * construct with baseline and minimum contacts.
-     * @param baseline square matrix expression 
-     * @param minimum square matrix expression, must be same size as baseline
+     * construct with baseline and minimum contacts and zero dampings.
+     * @param baseline matrix expression 
+     * @param minimum matrix expression, must be same size as baseline
+     * @tparam M, K matrix expressions compatible with Matrix type
      */
     template <class M, class K>
-    ContactMatrix(M&& baseline, K&& minimum)
+    DampingMatrixExpression(const Eigen::MatrixBase<M>& baseline, const Eigen::MatrixBase<K>& minimum)
         : m_baseline(baseline)
         , m_minimum(minimum)
-        , m_dampings(get_num_groups())
+        , m_dampings(Shape::get_shape_of(m_baseline))
     {
-        assert(m_baseline.rows() == m_baseline.cols() && m_baseline.rows() > 0);
-        assert(m_minimum.rows() == m_baseline.rows() && m_minimum.cols() == m_baseline.cols());
+        assert(Shape::get_shape_of(m_minimum) == Shape::get_shape_of(m_baseline));
         m_dampings.finalize();
     }
+
     /**
-     * construct contacts with baseline, minimum is set to zero.
-     * @param baseline Matrix expression.
+     * construct with only baseline, minimum and dampings is zero.
+     * @param baseline matrix expression 
+     * @tparam M matrix expressions compatible with Matrix type
      */
-    template <class M,
-              std::enable_if_t<std::is_base_of<Eigen::MatrixBase<std::decay_t<M>>, std::decay_t<M>>::value, int> = 0>
-    explicit ContactMatrix(M&& baseline)
-        : ContactMatrix(baseline, Eigen::MatrixXd::Zero(baseline.rows(), baseline.cols()))
+    template <class M>
+    explicit DampingMatrixExpression(const Eigen::MatrixBase<M>& baseline)
+        : DampingMatrixExpression(
+              baseline, Matrix::Zero(Shape::get_shape_of(baseline).rows(), Shape::get_shape_of(baseline).cols()))
     {
     }
+
     /**
-     * constructor with zero baseline and minimum.
-     * @param num_groups number of groups that have contacts with each other.
+     * construct with shape.
+     * baseline, minimum and dampings all zero.
+     * @param shape_args shape arguments.
+     * @tparam T shape arguments.
      */
-    explicit ContactMatrix(Eigen::Index num_groups = 1)
-        : ContactMatrix(Eigen::MatrixXd::Zero(num_groups, num_groups))
+    template <class... T, class = std::enable_if_t<std::is_constructible<Shape, T...>::value, void>>
+    explicit DampingMatrixExpression(T... shape_args)
+        : DampingMatrixExpression(Matrix::Zero(Shape(shape_args...).rows(), Shape(shape_args...).cols()))
     {
     }
 
@@ -72,11 +79,21 @@ public:
         m_dampings.add(std::forward<T>(t)...);
     }
 
+    /**
+     * remove all dampings.
+     */
+    void clear_dampings()
+    {
+        m_dampings.clear();
+    }
+
+    /**
+     * list of dampings.
+     */
     auto get_dampings() const
     {
         return make_range(m_dampings.begin(), m_dampings.end());
     }
-
     auto get_dampings()
     {
         return make_range(m_dampings.begin(), m_dampings.end());
@@ -85,11 +102,11 @@ public:
     /**
      * get the baseline matrix.
      */
-    const Eigen::MatrixXd& get_baseline() const
+    const Matrix& get_baseline() const
     {
         return m_baseline;
     }
-    Eigen::MatrixXd& get_baseline()
+    Matrix& get_baseline()
     {
         return m_baseline;
     }
@@ -97,31 +114,31 @@ public:
     /**
      * get the minimum matrix.
      */
-    const Eigen::MatrixXd& get_minimum() const
+    const Matrix& get_minimum() const
     {
         return m_minimum;
     }
-    Eigen::MatrixXd& get_minimum()
+    Matrix& get_minimum()
     {
         return m_minimum;
     }
 
     /**
-     * get the number of groups.
+     * dimensions of the matrix.
      */
-    Eigen::Index get_num_groups() const
+    Shape get_shape() const
     {
-        return m_baseline.rows();
+        return Shape::get_shape_of(m_baseline);
     }
 
     /**
      * equality operators.
      */
-    bool operator==(const ContactMatrix& other) const
+    bool operator==(const DampingMatrixExpression& other) const
     {
         return m_baseline == other.m_baseline && m_minimum == other.m_minimum && m_dampings == other.m_dampings;
     }
-    bool operator!=(const ContactMatrix& other) const
+    bool operator!=(const DampingMatrixExpression& other) const
     {
         return !(*this == other);
     }
@@ -144,7 +161,7 @@ public:
     /**
      * gtest printer.
      */
-    friend void PrintTo(const ContactMatrix& self, std::ostream* os)
+    friend void PrintTo(const DampingMatrixExpression& self, std::ostream* os)
     {
         *os << '\n' << self.m_baseline;
         *os << '\n' << self.m_minimum;
@@ -152,32 +169,37 @@ public:
     }
 
 private:
-    Eigen::MatrixXd m_baseline;
-    Eigen::MatrixXd m_minimum;
-    Dampings m_dampings;
+    Matrix m_baseline;
+    Matrix m_minimum;
+    DampingsType m_dampings;
 };
 
 /**
- * represents a collection of contact frequency matrices that whose sum is the total
- * number of contacts.
- * can separate matrices of contacts in different contexts, e.g. work, leisure, etc. 
+ * represents a collection of DampingMatrixExpressions that are summed up.
+ * @tparam E some instance of DampingMatrixExpression or compatible type.
  */
-class ContactMatrixGroup
+template<class E>
+class DampingMatrixExpressionGroup
 {
 public:
-    using value_type      = ContactMatrix;
+    using value_type      = E;
     using reference       = value_type&;
     using const_reference = const value_type&;
-    using iterator        = std::vector<value_type>::iterator;
-    using const_iterator  = std::vector<value_type>::const_iterator;
+    using iterator        = typename std::vector<value_type>::iterator;
+    using const_iterator  = typename std::vector<value_type>::const_iterator;
+    
+    using Shape           = typename value_type::Shape;
+    using Matrix          = typename value_type::Matrix;
+    using DampingsType    = typename value_type::DampingsType;
 
     /**
      * create a collection.
      * @param num_groups number of groups.
      * @param num_matrices number of matrices.
      */
-    ContactMatrixGroup(Eigen::Index num_groups = 1, size_t num_matrices = 1)
-        : m_matrices(num_matrices, ContactMatrix(num_groups))
+    template<class... T, class = std::enable_if_t<std::is_constructible<Shape, T...>::value, int>>
+    explicit DampingMatrixExpressionGroup(size_t num_matrices, T... shape_args)
+        : m_matrices(num_matrices, value_type{shape_args...})
     {
         assert(num_matrices > 0);
     }
@@ -186,7 +208,7 @@ public:
      * create a collection that contains these matrices.
      * @param il initializer list of matrices, must all be the same size.
      */
-    ContactMatrixGroup(std::initializer_list<ContactMatrix> il)
+    DampingMatrixExpressionGroup(std::initializer_list<value_type> il)
         : m_matrices(il)
     {
         assert(il.size() > 0);
@@ -215,25 +237,25 @@ public:
     /**
      * get the number of groups.
      */
-    Eigen::Index get_num_groups() const
+    Shape get_shape() const
     {
-        return m_matrices[0].get_num_groups();
+        return m_matrices[0].get_shape();
     }
 
     /** 
      * equality operators.
      */
-    bool operator==(const ContactMatrixGroup& other) const
+    bool operator==(const DampingMatrixExpressionGroup& other) const
     {
         return m_matrices == other.m_matrices;
     }
-    bool operator!=(const ContactMatrixGroup& other) const
+    bool operator!=(const DampingMatrixExpressionGroup& other) const
     {
         return !(*this == other);
     }
 
     /**
-     * add the damping to all matrices.
+     * add the same damping to all matrices.
      * @see ContactMatrix::add_damping
      */
     template <class... T>
@@ -241,6 +263,16 @@ public:
     {
         for (auto& m : *this) {
             m.add_damping(std::forward<T>(t)...);
+        }
+    }
+
+    /**
+     * remove all dampings from all matrices.
+     */
+    void clear_dampings()
+    {
+        for (auto& m : *this) {
+            m.clear_dampings();
         }
     }
 
@@ -254,7 +286,7 @@ public:
     auto get_matrix_at(T t) const
     {
         return Eigen::MatrixXd::NullaryExpr(
-            get_num_groups(), get_num_groups(), [t, this](Eigen::Index i, Eigen::Index j) {
+            get_shape().rows(), get_shape().cols(), [t, this](Eigen::Index i, Eigen::Index j) {
                 return std::accumulate(m_matrices.begin(), m_matrices.end(), 0.0, [t, i, j](double s, auto& m) {
                     return s + m.get_matrix_at(t)(i, j);
                 });
@@ -284,7 +316,7 @@ public:
     /**
      * gtest printer.
      */
-    friend void PrintTo(const ContactMatrixGroup& self, std::ostream* os)
+    friend void PrintTo(const DampingMatrixExpressionGroup& self, std::ostream* os)
     {
         for (auto& m : self.m_matrices) {
             PrintTo(m, os);
@@ -293,7 +325,55 @@ public:
     }
 
 private:
-    std::vector<ContactMatrix> m_matrices;
+    std::vector<value_type> m_matrices;
+};
+
+/**
+ * represents time dependent contact frequencies between groups.
+ * consists of constant baseline and irreducible minimum contacts.
+ * actual contacts are adjusted over time by dampings.
+ * The effective contacts are B - D * (B - M), where B is the baseline, D are
+ * combined dampings and M is the minimum.
+ * The minimum is not necessarily smaller than the baseline in every entry,
+ * but it reflects the state at maximum lockdown. In places where the 
+ * minimum is greater than the baseline, a positive damping increases
+ * instead of reduces contacts.
+ * All these members are matrix valued, e.g. B_ij are the normal contacts
+ * that one person in group i has with persons in group j.
+ */
+class ContactMatrix : public DampingMatrixExpression<SquareDampings>
+{
+public:
+    using Base = DampingMatrixExpression<SquareDampings>;
+    using Base::Base;
+
+    /**
+     * get the number of groups.
+     */
+    Eigen::Index get_num_groups() const
+    {
+        return Base::get_shape().rows();
+    }
+};
+
+/**
+ * represents a collection of contact frequency matrices that whose sum is the total
+ * number of contacts.
+ * can separate matrices of contacts in different contexts, e.g. work, leisure, etc. 
+ */
+class ContactMatrixGroup : public DampingMatrixExpressionGroup<ContactMatrix>
+{
+public:
+    using Base = DampingMatrixExpressionGroup<ContactMatrix>;
+    using Base::Base;
+    
+    /**
+     * get the number of groups.
+     */
+    Eigen::Index get_num_groups() const
+    {
+        return (*this)[0].get_num_groups();
+    }
 };
 
 } // namespace epi

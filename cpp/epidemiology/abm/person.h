@@ -2,6 +2,9 @@
 #define EPI_ABM_PERSON_H
 
 #include "epidemiology/abm/state.h"
+#include "epidemiology/abm/age.h"
+#include "epidemiology/abm/time.h"
+#include "epidemiology/abm/parameters.h"
 
 #include <functional>
 
@@ -9,7 +12,6 @@ namespace epi
 {
 
 class Location;
-class GlobalInfectionParameters;
 
 /**
  * Agents in the simulated world that can carry and spread the infection.
@@ -18,28 +20,28 @@ class Person
 {
 public:
     /**
-     * create a Person.
+     * Create a Person.
      * @param location the initial location of the person
      * @param state the initial infection state of the person
      */
-    Person(Location& location, InfectionState state);
+    Person(Location& location, InfectionState state, Index<AbmAgeGroup> age);
 
     /** 
-     * interact with the population at its current location.
-     * The person might change infection state 
+     * Time passes and the person interacts with the population at its current location.
+     * The person might change infection state.
      * @param dt length of the current simulation time step
      * @param global_infection_parameters infection parameters that are the same in all locations
      */
-    void interact(double dt, const GlobalInfectionParameters& global_infection_parameters);
+    void interact(TimeSpan dt, const GlobalInfectionParameters& global_infection_parameters);
 
     /** 
-     * migrate to a different location.
+     * Migrate to a different location.
      * @param location the new location of the person.
      * */
     void migrate_to(Location& location);
 
     /**
-     * get the current infection state of the person.
+     * Get the current infection state of the person.
      * @returns the current infection state of the person
      */
     InfectionState get_infection_state() const
@@ -48,7 +50,16 @@ public:
     }
 
     /**
-     * get the current location of the person.
+     * Get the age group of this person.
+     * @return age.
+     */
+    epi::Index<AbmAgeGroup> get_age() const
+    {
+        return m_age;
+    }
+
+    /**
+     * Get the current location of the person.
      * @returns the current location of the person
      */
     const Location& get_location() const
@@ -56,11 +67,21 @@ public:
         return m_location;
     }
 
+    /**
+     * Get the time the person has been at its current location.
+     * @return time span.
+     */
+    TimeSpan get_time_at_location() const
+    {
+        return m_time_at_location;
+    }
+
 private:
     std::reference_wrapper<Location> m_location;
     InfectionState m_state;
-    double m_time_until_carrier;
-    //age, times, ...
+    TimeSpan m_time_until_carrier;
+    epi::Index<AbmAgeGroup> m_age;
+    TimeSpan m_time_at_location;
 };
 
 } // namespace epi

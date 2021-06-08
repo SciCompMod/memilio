@@ -482,35 +482,24 @@
         </Dampings>
       </ContactMatrix1>
     </ContactMatrixGroup>
-    <NumDampings>
-      <Distribution>Uniform</Distribution>
-      <Min>1</Min>
-      <Max>5.05</Max>
-      <PredefinedSamples mapType="vector"></PredefinedSamples>
-    </NumDampings>
-    <DampingDay>
-      <Distribution>Uniform</Distribution>
-      <Min>0</Min>
-      <Max>50.5</Max>
-      <PredefinedSamples mapType="vector"></PredefinedSamples>
-    </DampingDay>
-    <DampingDiagBase>
-      <Distribution>Uniform</Distribution>
-      <Min>0</Min>
-      <Max>0.9</Max>
-      <PredefinedSamples mapType="vector"></PredefinedSamples>
-    </DampingDiagBase>
-    <DampingDiagRel>
-      <Distribution>Uniform</Distribution>
-      <Min>0</Min>
-      <Max>0.4</Max>
-      <PredefinedSamples mapType="vector"></PredefinedSamples>
-    </DampingDiagRel>
-    <DampingOffdiagRel>
-      <Distribution>Uniform</Distribution>
-      <Min>0</Min>
-      <Max>0.3</Max>
-      <PredefinedSamples mapType="vector"></PredefinedSamples>
-    </DampingOffdiagRel>
+    <NumDampings>1</NumDampings>
+    <Damping1>
+      <Value>
+        <Distribution>Normal</Distribution>
+        <Mean>0.5</Mean>
+        <Deviation>0.075</Deviation>
+        <Min>0.305</Min>
+        <Max>0.695</Max>
+        <PredefinedSamples mapType="vector"></PredefinedSamples>
+        <Value>0.5</Value>
+      </Value>
+      <Level>0</Level>
+      <Type>0</Type>
+      <Time>25.25</Time>
+      <MatrixIndices mapType="vector">0</MatrixIndices>
+      <GroupWeights Rows="2" Cols="1">
+        <Coefficients mapType="vector">1;1;1;1</Coefficients>
+      </GroupWeights>
+    </Damping1>
   </ContactFreq>
 </Parameters>

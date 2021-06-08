@@ -262,6 +262,11 @@ dmypy.json
 # Data output
 pycode/**/*.json
 pycode/**/*.h5
-epi_venv/
+pycode/epi_venv/
+pycode/build_pylint/
+
+# Docs
+docs/html
+docs/xml
 
 # End of https://www.gitignore.io/api/c++,node,python
