@@ -306,4 +306,3 @@ def write_dataframe(df, directory, file_prefix, file_type):
         df.to_hdf(out_path, **outFormSpec)
 
     print("Information: Data has been written to", out_path)
-

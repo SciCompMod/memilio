@@ -559,4 +559,4 @@ County = {
 }
 
 gender_list = [EngEng["male"], EngEng["female"], EngEng["unknown"]]
-age_rki_list = ["A0-A4", "A5-A14", "A15-A34", "A35-A59", "A60-A79", "A80+"]
+age_rki_list = ["A0-A04", "A05-A14", "A15-A34", "A35-A59", "A60-A79", "A80+"]

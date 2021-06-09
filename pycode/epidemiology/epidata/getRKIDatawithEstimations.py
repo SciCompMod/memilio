@@ -17,6 +17,7 @@ from epidemiology.epidata import defaultDict as dd
 from epidemiology.epidata import getRKIData as grd
 from epidemiology.epidata import getJHData as gjd
 
+
 def get_rki_data_with_estimations(read_data=dd.defaultDict['read_data'],
                                   out_form=dd.defaultDict['out_form'],
                                   out_folder=dd.defaultDict['out_folder'],
@@ -81,12 +82,17 @@ def get_rki_data_with_estimations(read_data=dd.defaultDict['read_data'],
     # get data from rki and make new data
     rki_files_to_change = ["all_germany_rki", "all_gender_rki", "all_age_rki",
                            "all_state_rki", "all_state_gender_rki", "all_state_age_rki",
-                          "all_county_rki", "all_county_gender_rki", "all_county_age_rki"]
+                           "all_county_rki", "all_county_gender_rki", "all_county_age_rki"]
 
     for file_to_change in rki_files_to_change:
         # read data of rki file
         rki_data_file = os.path.join(data_path, file_to_change + ".json")
-        df_rki = pd.read_json(rki_data_file)
+        try:
+            df_rki = pd.read_json(rki_data_file)
+        except ValueError as e:
+            print("WARNING: Following the file ", file_to_change + ".json does not exist." )
+            continue
+
 
         # generate new columns to store estimated values
         # TODO Add also column infected and calculate it in the end
@@ -131,21 +137,25 @@ def get_rki_data_with_estimations(read_data=dd.defaultDict['read_data'],
                         title='COVID-19 check deaths ' + file_to_change,
                         grid=True, style='-o')
             plt.tight_layout()
+
             plt.show()
 
         if file_to_change == "all_germany_rki":
-            compare_estimated_and_rki_deathsnumbers(df_rki, data_path, read_data, make_plot)
+            compare_estimated_and_rki_deathsnumbers(df_jh, df_rki, data_path, read_data, make_plot)
             get_weekly_deaths_data_age_gender_resolved(data_path, read_data=True)
             # df_rki[week] = df_rki[date].dt.isocalendar().week
+    #if make_plot:
+    #    plt.show()
 
 
-def compare_estimated_and_rki_deathsnumbers(df_rki, data_path, read_data, make_plot):
+def compare_estimated_and_rki_deathsnumbers(df_jh, df_rki, data_path, read_data, make_plot):
     """! Comparison of estimated values and monthly values from rki
 
     From the daily number of deaths the value before is subtracted to have the actual value of the day not
     an accumulation.
     From the daily values, the weekly values are calculated by calculating the sum for the same week.
-    This is done with the values from the original RKI data. and for the estimated values (confirmed times JH fraction)
+    This is done with the values from the original RKI data. and for the estimated values
+    (RKI-confirmed times JH fraction)
     Furthermore, we read the weekly excel table given by the RKI additionally.
 
     From this comparison we can see how good the estimated values are.
@@ -161,20 +171,25 @@ def compare_estimated_and_rki_deathsnumbers(df_rki, data_path, read_data, make_p
     # 2020 had 53 weeks
     # meaning weak 45 is first week in 2021
     df_rki["week"] = df_rki['Date'].dt.isocalendar().week + (df_rki['Date'].dt.isocalendar().year-2020)*53
+    df_jh["week"] = df_jh['Date'].dt.isocalendar().week + (df_jh['Date'].dt.isocalendar().year - 2020)*53
     # want to have daily deaths numbers, not accumulated
     df_rki["deaths_daily"] = df_rki['Deaths'] - df_rki['Deaths'].shift(periods=1, fill_value=0)
+    df_jh["deaths_daily"] = df_jh['Deaths'] - df_jh['Deaths'].shift(periods=1, fill_value=0)
     df_rki["deaths_estimated_daily"] = df_rki['Deaths_estimated'] - df_rki['Deaths_estimated'].shift(periods=1,
                                                                                                      fill_value=0)
     df_rki_week = df_rki.groupby("week").agg({"deaths_daily": sum, "deaths_estimated_daily": sum}).reset_index()
+    df_jh_week = df_jh.groupby("week").agg({"deaths_daily": sum}).reset_index()
     df_rki_week.rename(
         columns={'deaths_daily': 'Deaths_weekly', 'deaths_estimated_daily': 'Deaths_estimated_weekly'}, inplace=True)
+    df_jh_week.rename(
+        columns={'deaths_daily': 'Deaths_weekly'}, inplace=True)
 
     # download weekly deaths numbers from rki
     if not read_data:
         download_weekly_deaths_numbers_rki(data_path)
 
     df_real_deaths_per_week=gd.loadExcel("RKI_deaths_weekly", apiUrl=data_path,
-              extension=".xlsx", sheet_name='COVID_Todesfälle')
+                                         extension=".xlsx", sheet_name='COVID_Todesfälle')
     df_real_deaths_per_week.rename(
         columns={'Sterbejahr': 'year', 'Sterbewoche': 'week',
                  'Anzahl verstorbene COVID-19 Fälle': 'confirmed_deaths_weekly'},
@@ -191,9 +206,7 @@ def compare_estimated_and_rki_deathsnumbers(df_rki, data_path, read_data, make_p
     # we set january 2020 to week 1
     # 2020 had 53 weeks
     # meaning weak 54 is first week in 2021
-    print( df_real_deaths_per_week)
-    df_real_deaths_per_week.loc[ df_real_deaths_per_week.year == 2021, 'week'] += 53
-    print( df_real_deaths_per_week)
+    df_real_deaths_per_week.loc[df_real_deaths_per_week.year == 2021, 'week'] += 53
 
     #combine both dataframes to one dataframe
     df_rki_week = df_rki_week.merge(df_real_deaths_per_week, how='outer', on="week")
@@ -209,17 +222,21 @@ def compare_estimated_and_rki_deathsnumbers(df_rki, data_path, read_data, make_p
         df_rki_week['Deaths_accumulated'] = df_rki_week['Deaths_weekly'].cumsum()
         df_rki_week['Deaths_estimated_accumulated'] = df_rki_week['Deaths_estimated_weekly'].cumsum()
 
+        df_jh_week['Deaths_weekly_accumulated'] = df_jh_week['Deaths_weekly'].cumsum()
+
         #plot
         df_rki_week.plot(x="week", y=["Deaths_weekly", "Deaths_estimated_weekly", "confirmed_deaths_weekly"],
                          title='COVID-19 check deaths dependent on week number', grid=True,
                          style='-o')
-        plt.legend(["RKI daily", "estimated with JH", "RKI excel"])
+        plt.plot(df_jh_week["week"], df_jh_week["Deaths_weekly"])
+        plt.legend(["RKI daily", "estimated with JH", "RKI excel", "JH"])
         plt.tight_layout()
         df_rki_week.plot(x="week",
                          y=["Deaths_accumulated", "Deaths_estimated_accumulated", "confirmed_deaths_accumulated"],
                          title='COVID-19 check deaths accumulated dependent on week number', grid=True,
                          style='-o')
-        plt.legend(["RKI daily", "estimated with JH", "RKI excel"])
+        plt.plot(df_jh_week["week"], df_jh_week["Deaths_weekly_accumulated"])
+        plt.legend(["RKI daily", "estimated with JH", "RKI excel", "JH"])
         plt.tight_layout()
         plt.show()
 
@@ -258,9 +275,9 @@ def get_weekly_deaths_data_age_gender_resolved(data_path, read_data):
                  'Frauen, AG 60-79 Jahre': 'female, age 60-79 years', 'Frauen, AG 80+ Jahre': 'female, age 80+ years'},
         inplace=True)
 
-    for df_real_deaths_per_week in [df_real_deaths_per_week_age,df_real_deaths_per_week_gender]:
+    for df_real_deaths_per_week in [df_real_deaths_per_week_age, df_real_deaths_per_week_gender]:
         for column in df_real_deaths_per_week:
-            df_real_deaths_per_week[column]= pd.to_numeric(df_real_deaths_per_week[column],errors='coerce')
+            df_real_deaths_per_week[column]= pd.to_numeric(df_real_deaths_per_week[column], errors='coerce')
 
             # values which can't be transformed to numeric number are a String called '<4' in dataframe
             # (probably for data protection reasons)
@@ -295,8 +312,6 @@ def main():
     """! Main program entry."""
 
     [read_data, out_form, out_folder, make_plot] = gd.cli("rkiest")
-    #read_data=True
-    #make_plot=True
     get_rki_data_with_estimations(read_data, out_form, out_folder, make_plot)
 
 

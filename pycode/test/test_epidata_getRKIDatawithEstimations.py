@@ -97,6 +97,41 @@ class TestGetRKIDatawithEstimations(fake_filesystem_unittest.TestCase):
 {"Gender":"male","Date":1580342400000,"Confirmed":46,"Deaths":0,"Recovered":46},
 {"Gender":"male","Date":1580428800000,"Confirmed":53,"Deaths":0,"Recovered":53}]""")
 
+    str_age_germany = ("""[
+{"Age_RKI":"A00-A04","Date":1579824000000,"Confirmed":1,"Deaths":0,"Recovered":1},
+{"Age_RKI":"A00-A04","Date":1580256000000,"Confirmed":2,"Deaths":0,"Recovered":2},
+{"Age_RKI":"A00-A04","Date":1580428800000,"Confirmed":3,"Deaths":0,"Recovered":3},
+{"Age_RKI":"A05-A14","Date":1580256000000,"Confirmed":10,"Deaths":0,"Recovered":10},
+{"Age_RKI":"A05-A14","Date":1580342400000,"Confirmed":11,"Deaths":0,"Recovered":11},
+{"Age_RKI":"A05-A14","Date":1580428800000,"Confirmed":12,"Deaths":0,"Recovered":12},
+{"Age_RKI":"A15-A34","Date":1579737600000,"Confirmed":42,"Deaths":0,"Recovered":42},
+{"Age_RKI":"A15-A34","Date":1579824000000,"Confirmed":43,"Deaths":0,"Recovered":43},
+{"Age_RKI":"A15-A34","Date":1579910400000,"Confirmed":44,"Deaths":0,"Recovered":44},
+{"Age_RKI":"A15-A34","Date":1580083200000,"Confirmed":47,"Deaths":0,"Recovered":47},
+{"Age_RKI":"A15-A34","Date":1580169600000,"Confirmed":48,"Deaths":0,"Recovered":48},
+{"Age_RKI":"A15-A34","Date":1580256000000,"Confirmed":51,"Deaths":0,"Recovered":51},
+{"Age_RKI":"A15-A34","Date":1580342400000,"Confirmed":56,"Deaths":0,"Recovered":56},
+{"Age_RKI":"A15-A34","Date":1580428800000,"Confirmed":58,"Deaths":0,"Recovered":58},
+{"Age_RKI":"A35-A59","Date":1579824000000,"Confirmed":69,"Deaths":0,"Recovered":69},
+{"Age_RKI":"A35-A59","Date":1579910400000,"Confirmed":70,"Deaths":0,"Recovered":70},
+{"Age_RKI":"A35-A59","Date":1579996800000,"Confirmed":74,"Deaths":0,"Recovered":74},
+{"Age_RKI":"A35-A59","Date":1580083200000,"Confirmed":76,"Deaths":0,"Recovered":76},
+{"Age_RKI":"A35-A59","Date":1580169600000,"Confirmed":78,"Deaths":0,"Recovered":78},
+{"Age_RKI":"A35-A59","Date":1580256000000,"Confirmed":80,"Deaths":0,"Recovered":80},
+{"Age_RKI":"A35-A59","Date":1580342400000,"Confirmed":81,"Deaths":0,"Recovered":81},
+{"Age_RKI":"A35-A59","Date":1580428800000,"Confirmed":86,"Deaths":0,"Recovered":86},
+{"Age_RKI":"A60-A79","Date":1579824000000,"Confirmed":31,"Deaths":3,"Recovered":28},
+{"Age_RKI":"A60-A79","Date":1579910400000,"Confirmed":32,"Deaths":3,"Recovered":29},
+{"Age_RKI":"A60-A79","Date":1580083200000,"Confirmed":33,"Deaths":3,"Recovered":30},
+{"Age_RKI":"A60-A79","Date":1580169600000,"Confirmed":34,"Deaths":3,"Recovered":31},
+{"Age_RKI":"A60-A79","Date":1580342400000,"Confirmed":35,"Deaths":3,"Recovered":32},
+{"Age_RKI":"A80+","Date":1579737600000,"Confirmed":20,"Deaths":1,"Recovered":19},
+{"Age_RKI":"A80+","Date":1579910400000,"Confirmed":21,"Deaths":1,"Recovered":20},
+{"Age_RKI":"A80+","Date":1580083200000,"Confirmed":22,"Deaths":1,"Recovered":21},
+{"Age_RKI":"A80+","Date":1580256000000,"Confirmed":23,"Deaths":1,"Recovered":22}]""")
+
+
+
     rki_files_to_change = ["all_germany_rki", "all_gender_rki", "all_age_rki",
                            "all_state_rki", "all_state_gender_rki", "all_state_age_rki",
                            "all_county_rki", "all_county_gender_rki", "all_county_age_rki"]
@@ -114,6 +149,9 @@ class TestGetRKIDatawithEstimations(fake_filesystem_unittest.TestCase):
             if file_to_change == "all_gender_rki":
                 with open(file_rki_with_path, 'w') as f:
                     f.write(self.str_all_gender_rki)
+            elif file_to_change == "all_age_rki":
+                with open(file_rki_with_path, 'w') as f:
+                    f.write(self.str_age_germany)
             else:
                 with open(file_rki_with_path, 'w') as f:
                     f.write(self.str_all_germany_rki)
@@ -227,6 +265,63 @@ class TestGetRKIDatawithEstimations(fake_filesystem_unittest.TestCase):
         self.assertEqual(df[(df[date] == "2020-01-31") & (df[gender] == "female")][deaths_estimated].item(),
                          np.round(43 * 2. / 9.))
 
+    def test_get_rki_data_with_estimations_age_data(self):
+
+        [read_data, make_plot, out_form, out_folder] \
+            = [True, False, "json", self.path, ]
+
+        # write files which should be read in by program
+
+        directory = os.path.join(out_folder, 'Germany/')
+        gd.check_dir(directory)
+
+        self.write_rki_data(directory)
+        self.write_jh_data(directory)
+        self.write_weekly_deaths_xlsx_data(directory)
+
+        # check if expected files are written
+        self.assertEqual(len(os.listdir(self.path)), 1)
+        self.assertEqual(len(os.listdir(directory)), 2 + len(self.rki_files_to_change))
+
+        grdwd.get_rki_data_with_estimations(read_data, out_form, out_folder, make_plot)
+
+        # check if expected files are written
+        self.assertEqual(len(os.listdir(self.path)), 1)
+        # 1 jh-file, 2*len(rki): original+estimated, 4 weekly deaths original+original&estimated+ageresolved+genderresolved
+        self.assertEqual(len(os.listdir(directory)), 1 + 2 * len(self.rki_files_to_change) + 4)
+
+        f_read = os.path.join(directory, "all_age_rki_estimated.json")
+        df = pd.read_json(f_read)
+
+        confirmed = dd.EngEng['confirmed']
+        recovered = dd.EngEng['recovered']
+        deaths = dd.EngEng['deaths']
+        date = dd.EngEng['date']
+        recovered_estimated = recovered + "_estimated"
+        deaths_estimated = deaths + "_estimated"
+
+        ages = dd.age_rki_list
+
+        data_list = df.columns.values.tolist()
+
+        self.assertEqual(data_list.sort(),
+                         [date, confirmed, deaths, recovered, recovered_estimated, deaths_estimated, "Age_RKI"].sort())
+
+        age_values_rec = [3, 12, 58, 86]
+        index = 0
+        for value in ages:
+
+            mask = (df['Age_RKI'] == value) & (df[date] == "2020-01-31")
+
+            try:
+                self.assertEqual(df.loc[mask][recovered_estimated].item(), np.round(age_values_rec[index] * 3. / 9.))
+                self.assertEqual(df.loc[mask][deaths_estimated].item(), np.round(age_values_rec[index] * 2. / 9.))
+            except ValueError:
+                pass
+
+            index = index + 1
+
+
     @patch('epidemiology.epidata.getRKIDatawithEstimations.grd.get_rki_data')
     @patch('epidemiology.epidata.getRKIDatawithEstimations.gjd.get_jh_data')
     @patch('epidemiology.epidata.getRKIDatawithEstimations.download_weekly_deaths_numbers_rki')
@@ -332,7 +427,6 @@ class TestGetRKIDatawithEstimations(fake_filesystem_unittest.TestCase):
 
         self.write_weekly_deaths_xlsx_data(directory, file_name='RKI_deaths_weekly_fake.xlsx')
         self.assertEqual(len(os.listdir(self.path)), 1)
-        print(os.listdir(directory))
         self.assertEqual(len(os.listdir(directory)), 1)
 
         with patch('requests.get') as mock_request:
@@ -350,6 +444,24 @@ class TestGetRKIDatawithEstimations(fake_filesystem_unittest.TestCase):
                                                extension='.xlsx', sheet_name=0)
         self.assertEqual(df_real_deaths_per_week.shape, (4, 3))
         self.assertEqual(pd.to_numeric(df_real_deaths_per_week['Sterbejahr'])[0], 2020)
+
+    @patch('builtins.print')
+    def test_except_non_existing_file(self, mock_print):
+
+        [read_data, make_plot, out_form, out_folder] \
+            = [True, False, "json", self.path, ]
+
+        # write files which should be read in by program
+
+        directory = os.path.join(out_folder, 'Germany/')
+        gd.check_dir(directory)
+        self.write_jh_data(directory)
+
+        grdwd.get_rki_data_with_estimations(read_data, out_form, out_folder, make_plot)
+
+        # print is called 9 times, because no file exists
+        self.assertEqual(len(mock_print.mock_calls), 9)
+
 
 
 if __name__ == '__main__':
