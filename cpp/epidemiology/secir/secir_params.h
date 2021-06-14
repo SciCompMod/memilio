@@ -6,6 +6,7 @@
 #include "epidemiology/math/adapt_rk.h"
 #include "epidemiology/secir/age_group.h"
 #include "epidemiology/secir/uncertain_matrix.h"
+#include "epidemiology/secir/dynamic_npis.h"
 #include "epidemiology/utils/parameter_set.h"
 #include "epidemiology/utils/custom_index_array.h"
 
@@ -327,6 +328,20 @@ struct ContactPatterns
 };
 
 /**
+ * @brief the NPIs that are enacted if certain infection thresholds are exceeded.
+ */
+struct DynamicNPIsInfected
+{
+    using Type = DynamicNPIs;
+    static Type get_default(AgeGroup /*size*/) {
+        return {};
+    }
+    static std::string name() {
+        return "DynamicNPIsInfected";
+    }
+};
+
+/**
  * @brief capacity to test and trace contacts of infected for quarantine per day.
  */
 struct TestAndTraceCapacity
@@ -346,6 +361,7 @@ using SecirParamsBase = ParameterSet<StartDay
                                     ,ICUCapacity
                                     ,TestAndTraceCapacity
                                     ,ContactPatterns
+                                    ,DynamicNPIsInfected
                                     ,IncubationTime
                                     ,InfectiousTimeMild
                                     ,InfectiousTimeAsymptomatic

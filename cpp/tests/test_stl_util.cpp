@@ -21,6 +21,15 @@ TEST(TestRange, iterators)
     EXPECT_THAT(r, testing::ElementsAreArray(v));
 }
 
+TEST(TestRange, reverse_iterators)
+{
+    auto v = std::vector<int>{0, 1, 2, 3, 4, 5};
+    auto r = epi::make_range(begin(v), end(v));
+    auto v2 = std::vector<int>(r.rbegin(), r.rend());
+
+    EXPECT_THAT(v2, testing::ElementsAre(5, 4, 3, 2, 1, 0));
+}
+
 TEST(TestRange, c_array)
 {
     int v[] = {1, 2, 3, 4, 5, 6};

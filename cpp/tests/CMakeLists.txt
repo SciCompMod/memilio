@@ -38,6 +38,7 @@ set(TESTSOURCES
   test_parameter_set.cpp
   test_matrix_shape.cpp
   test_damping_sampling.cpp
+  test_dynamic_npis.cpp
   distributions_helpers.h
   distributions_helpers.cpp
   actions.h

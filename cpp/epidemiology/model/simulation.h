@@ -1,7 +1,9 @@
 #ifndef SIMULATION_H
 #define SIMULATION_H
 
+#include "epidemiology/model/compartmentalmodel.h"
 #include "epidemiology/utils/ScalarType.h"
+#include "epidemiology/utils/metaprogramming.h"
 #include "epidemiology/utils/time_series.h"
 #include "epidemiology/math/adapt_rk.h"
 #include "epidemiology/math/euler.h"
@@ -11,11 +13,16 @@ namespace epi
 
 /**
  * @brief A class for the simulation of a compartment model.
+ * @tparam M a CompartmentModel type
  */
-template <class Model>
+template <class M>
 class Simulation
 {
+    static_assert(is_compartment_model<M>::value, "Template parameter must be a compartment model.");
+    
 public:
+    using Model = M;
+
     /**
      * @brief setup the simulation with an ODE solver
      * @param[in] model: An instance of a compartmental model
@@ -59,7 +66,7 @@ public:
 
     /**
      * @brief advance simulation to tmax
-     * must be greater than get_t().back()
+     * tmax must be greater than get_result().get_last_time_point()
      * @param tmax next stopping point of simulation
      */
     Eigen::Ref<Eigen::VectorXd> advance(double tmax)
@@ -109,20 +116,41 @@ private:
 }; // namespace epi
 
 /**
+ * Defines the return type of the `advance` member function of a type.
+ * Template is invalid if this member function does not exist.
+ * @tparam Sim a compartment model simulation type.
+ */
+template <class Sim>
+using advance_expr_t = decltype(std::declval<Sim>().advance(std::declval<double>()));
+
+/**
+ * Template meta function to check if a type is a compartment model simulation. 
+ * Defines a static constant of name `value`. 
+ * The constant `value` will be equal to true if Sim is a valid compartment simulation type.
+ * Otherwise, `value` will be equal to false.
+ * @tparam Sim a type that may or may not be a compartment model simulation.
+ */
+template <class Sim>
+using is_compartment_model_simulation =
+    std::integral_constant<bool, (is_expression_valid<advance_expr_t, Sim>::value &&
+                                  is_compartment_model<typename Sim::Model>::value)>;
+
+/**
  * @brief simulate simulates a compartmental model
  * @param[in] t0 start time
  * @param[in] tmax end time
  * @param[in] dt initial step size of integration
  * @param[in] model: An instance of a compartmental model
  * @return a TimeSeries to represent the final simulation result
- *
+ * @tparam Model a compartment model type
+ * @tparam Sim a simulation type that can simulate the model.
  */
-template <class Model>
+template <class Model, class Sim = Simulation<Model>>
 TimeSeries<ScalarType> simulate(double t0, double tmax, double dt, Model const& model,
                                 std::shared_ptr<IntegratorCore> integrator = nullptr)
 {
     model.check_constraints();
-    Simulation<Model> sim(model, t0, dt);
+    Sim sim(model, t0, dt);
     if (integrator) {
         sim.set_integrator(integrator);
     }
