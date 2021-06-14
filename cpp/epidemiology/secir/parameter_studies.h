@@ -14,14 +14,16 @@ namespace epi
 
 /**
  * Class that performs multiple simulation runs with randomly sampled parameters.
+ * Can simulate migration graphs with one simulation in each node or single simulations.
+ * @tparam S type of simulation that runs in one node of the graph, e.g. SecirSimulation. 
  */
-template <class Model>
+template <class S>
 class ParameterStudy
 {
-
 public:
+    using Simulation = S;
 
-    using HandleSimulationResultFunction = std::function<void(epi::Graph<epi::ModelNode<epi::Simulation<Model>>, epi::MigrationEdge>)>;
+    using HandleSimulationResultFunction = std::function<void(epi::Graph<epi::ModelNode<Simulation>, epi::MigrationEdge>)>;
 
 
     /**
@@ -32,7 +34,7 @@ public:
      * @param graph_sim_dt time step of graph simulation
      * @param num_runs number of runs
      */
-    ParameterStudy(const epi::Graph<Model, epi::MigrationParameters>& graph, double t0, double tmax, double graph_sim_dt,
+    ParameterStudy(const epi::Graph<typename Simulation::Model, epi::MigrationParameters>& graph, double t0, double tmax, double graph_sim_dt,
                    size_t num_runs)
         : m_graph(graph)
         , m_num_runs(num_runs)
@@ -42,7 +44,7 @@ public:
     {
     }
 
-    ParameterStudy(const epi::Graph<Model, epi::MigrationParameters>& graph, double t0, double tmax,
+    ParameterStudy(const epi::Graph<typename Simulation::Model, epi::MigrationParameters>& graph, double t0, double tmax,
                    double dev_rel, double graph_sim_dt, size_t num_runs)
         : m_graph(graph)
         , m_num_runs(num_runs)
@@ -62,7 +64,7 @@ public:
      * @param tmax end time of simulations
      * @param num_runs number of runs in ensemble run
      */
-    ParameterStudy(Model const& model, double t0, double tmax, size_t num_runs)
+    ParameterStudy(typename Simulation::Model const& model, double t0, double tmax, size_t num_runs)
         : m_num_runs{num_runs}
         , m_t0{t0}
         , m_tmax{tmax}
@@ -80,7 +82,7 @@ public:
      * @param dev_rel relative deviation of parameters distributions
      * @param num_runs number of runs in ensemble run
      */
-    ParameterStudy(Model const& model, double t0, double tmax, double dev_rel, size_t num_runs)
+    ParameterStudy(typename Simulation::Model const& model, double t0, double tmax, double dev_rel, size_t num_runs)
         : ParameterStudy(model, t0, tmax, num_runs)
     {
         set_params_distributions_normal(m_graph.nodes()[0].property, t0, tmax, dev_rel);
@@ -110,9 +112,9 @@ public:
      * Convinience function for a few number of runs, but uses a lot of memory.
      * @return vector of results of each run.
      */
-    std::vector<epi::Graph<epi::ModelNode<epi::Simulation<Model>>, epi::MigrationEdge>> run()
+    std::vector<epi::Graph<epi::ModelNode<Simulation>, epi::MigrationEdge>> run()
     {
-        std::vector<epi::Graph<epi::ModelNode<epi::Simulation<Model>>, epi::MigrationEdge>> ensemble_result;
+        std::vector<epi::Graph<epi::ModelNode<Simulation>, epi::MigrationEdge>> ensemble_result;
         ensemble_result.reserve(m_num_runs);
 
         run([&ensemble_result](auto r) {
@@ -170,37 +172,49 @@ public:
         return m_t0;
     }
 
-    const Model& get_model() const
+    /**
+     * Get the input model that the parameter study is run for.
+     * Use for single node simulations, use get_secir_model_graph for graph simulations.
+     * @{
+     */ 
+    const typename Simulation::Model& get_model() const
     {
         return m_graph.nodes()[0].property;
     }
-
-    Model& get_model()
+    typename Simulation::Model& get_model()
     {
         return m_graph.nodes()[0].property;
     }
+    /** @} */
 
-    const Graph<Model, MigrationParameters>& get_secir_model_graph() const
+    /**
+     * Get the input graph that the parameter study is run for.
+     * Use for graph simulations, use get_model for single node simulations.
+     * @{
+     */ 
+    const Graph<typename Simulation::Model, MigrationParameters>& get_secir_model_graph() const
     {
         return m_graph;
     }
-
-    Graph<Model, MigrationParameters>& get_secir_model_graph()
+    Graph<typename Simulation::Model, MigrationParameters>& get_secir_model_graph()
     {
         return m_graph;
     }
+    /** @} */
 
 private:
     //sample parameters and create simulation
-    epi::GraphSimulation<epi::Graph<epi::ModelNode<epi::Simulation<Model>>, epi::MigrationEdge>> create_sampled_simulation()
+    epi::GraphSimulation<epi::Graph<epi::ModelNode<Simulation>, epi::MigrationEdge>> create_sampled_simulation()
     {
-        epi::Graph<epi::ModelNode<epi::Simulation<Model>>, epi::MigrationEdge> sim_graph;
+        epi::Graph<epi::ModelNode<Simulation>, epi::MigrationEdge> sim_graph;
 
         //sample global parameters
         auto& shared_params_model = m_graph.nodes()[0].property;
         draw_sample_infection(shared_params_model);
         auto& shared_contacts = shared_params_model.parameters.template get<epi::ContactPatterns>();
         shared_contacts.draw_sample();
+        auto& shared_dynamic_npis = shared_params_model.parameters.template get<DynamicNPIsInfected>();
+        shared_dynamic_npis.draw_sample();
 
         for (auto& params_node : m_graph.nodes()) {
             auto& node_model = params_node.property;
@@ -209,7 +223,12 @@ private:
             draw_sample_demographics(params_node.property);
 
             //copy global parameters
+            //save demographic parameters so they aren't overwritten
+            auto local_icu_capacity = node_model.parameters.template get<ICUCapacity>();
+            auto local_tnt_capacity = node_model.parameters.template get<TestAndTraceCapacity>();
             node_model.parameters = shared_params_model.parameters;
+            node_model.parameters.template get<ICUCapacity>() = local_icu_capacity;
+            node_model.parameters.template get<TestAndTraceCapacity>() = local_tnt_capacity;
 
             node_model.apply_constraints();
             
@@ -221,6 +240,7 @@ private:
             apply_dampings(edge_params.get_coefficients(), shared_contacts.get_dampings(), [&edge_params](auto& v) {
                 return make_migration_damping_vector(edge_params.get_coefficients().get_shape(), v);
             });
+            edge_params.set_dynamic_npis_infected(shared_dynamic_npis);
             sim_graph.add_edge(edge.start_node_idx, edge.end_node_idx, edge_params);
         }
 
@@ -229,7 +249,7 @@ private:
 
 private:
     // Stores Graph with the names and ranges of all parameters
-    epi::Graph<Model, epi::MigrationParameters> m_graph;
+    epi::Graph<typename Simulation::Model, epi::MigrationParameters> m_graph;
 
     size_t m_num_runs;
 

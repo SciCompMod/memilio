@@ -175,7 +175,7 @@ TEST(ParameterStudies, sample_edges)
     graph.add_node(1, model);
     graph.add_edge(0, 1, epi::MigrationParameters(Eigen::VectorXd::Constant(Eigen::Index(num_groups * 8), 1.0)));
 
-    auto study = epi::ParameterStudy<epi::SecirModel>(graph, 0.0, 0.0, 0.5, 1);
+    auto study   = epi::ParameterStudy<epi::SecirSimulation<>>(graph, 0.0, 0.0, 0.5, 1);
     auto results = study.run();
 
     ASSERT_EQ(results[0].edges()[0].property.get_parameters().get_coefficients()[0].get_dampings().size(), 1);
@@ -334,12 +334,11 @@ TEST(ParameterStudies, check_ensemble_run_result)
     contact_matrix[0] =
         epi::ContactMatrix(Eigen::MatrixXd::Constant((size_t)num_groups, (size_t)num_groups, fact * cont_freq));
 
-    epi::ParameterStudy<epi::SecirModel> parameter_study(model, t0, tmax, 0.2, 1);
+    epi::ParameterStudy<epi::SecirSimulation<>> parameter_study(model, t0, tmax, 0.2, 1);
 
     // Run parameter study
     parameter_study.set_num_runs(1);
-    std::vector<epi::Graph<epi::ModelNode<epi::Simulation<epi::SecirModel>>, epi::MigrationEdge>>
-        graph_results = parameter_study.run();
+    auto graph_results = parameter_study.run();
 
     std::vector<epi::TimeSeries<double>> results;
     for (size_t i = 0; i < graph_results.size(); i++) {

@@ -80,6 +80,15 @@ public:
     }
 
     /**
+     * remove a damping.
+     * @param i index to remove.
+     */
+    void remove_damping(size_t i)
+    {
+        m_dampings.remove(i);
+    }
+
+    /**
      * remove all dampings.
      */
     void clear_dampings()
@@ -141,6 +150,14 @@ public:
     bool operator!=(const DampingMatrixExpression& other) const
     {
         return !(*this == other);
+    }
+
+    /**
+     * update internal cache to make get_matrix_at thread safe.
+     */
+    void finalize()
+    {
+        m_dampings.finalize();
     }
 
     /**
@@ -273,6 +290,16 @@ public:
     {
         for (auto& m : *this) {
             m.clear_dampings();
+        }
+    }
+
+    /**
+     * update internal cache to make get_matrix_at thread safe.
+     */
+    void finalize()
+    {
+        for (auto& m : *this) {
+            m.finalize();
         }
     }
 

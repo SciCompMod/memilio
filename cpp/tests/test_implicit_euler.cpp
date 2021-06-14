@@ -1,6 +1,5 @@
 #include "load_test_data.h"
-#include "epidemiology/secir/secir.h"
-#include "epidemiology/math/euler.h"
+#include "epidemiology/secir/implicit_euler.h"
 #include <gtest/gtest.h>
 
 TEST(TestImplicitEuler, compareOneTimeStep)

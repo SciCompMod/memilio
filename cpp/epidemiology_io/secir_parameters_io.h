@@ -334,7 +334,33 @@ void write_parameter_space(TixiDocumentHandle handle, const std::string& path, S
  * @param handle Tixi Document Handle
  * @param path Path to XML Tree of parameters of study
  */
-ParameterStudy<SecirModel> read_parameter_study(TixiDocumentHandle handle, const std::string& path);
+template <class Simulation>
+ParameterStudy<Simulation> read_parameter_study(TixiDocumentHandle handle, const std::string& path)
+{
+    ReturnCode status;
+
+    int io_mode;
+    int num_runs;
+    double t0;
+    double tmax;
+
+    status = tixiGetIntegerElement(handle, path_join(path, "IOMode").c_str(), &io_mode);
+    assert(status == SUCCESS && ("Failed to read io_mode at " + path).c_str());
+
+    status = tixiGetIntegerElement(handle, path_join(path, "Runs").c_str(), &num_runs);
+    assert(status == SUCCESS && ("Failed to read num_runs at " + path).c_str());
+
+    status = tixiGetDoubleElement(handle, path_join(path, "T0").c_str(), &t0);
+    assert(status == SUCCESS && ("Failed to read t0 at " + path).c_str());
+
+    status = tixiGetDoubleElement(handle, path_join(path, "TMax").c_str(), &tmax);
+    assert(status == SUCCESS && ("Failed to read tmax at " + path).c_str());
+
+    unused(status);
+
+    auto model = read_parameter_space(handle, path, io_mode);
+    return ParameterStudy<Simulation>(model, t0, tmax, num_runs);
+}
 
 /**
  * @brief write parameter study to xml file
@@ -347,8 +373,17 @@ ParameterStudy<SecirModel> read_parameter_study(TixiDocumentHandle handle, const
  *        io_mode = 2: both, values and distributions are written
  *        io_mode = 3: distributions are written and values are saved as predefined samples
  */
+template <class Simulation>
 void write_parameter_study(TixiDocumentHandle handle, const std::string& path,
-                           const ParameterStudy<SecirModel>& parameter_study, int io_mode = 2);
+                           const ParameterStudy<Simulation>& parameter_study, int io_mode = 2)
+{
+    tixiAddIntegerElement(handle, path.c_str(), "IOMode", io_mode, "%d");
+    tixiAddIntegerElement(handle, path.c_str(), "Runs", parameter_study.get_num_runs(), "%d");
+    tixiAddDoubleElement(handle, path.c_str(), "T0", parameter_study.get_t0(), "%g");
+    tixiAddDoubleElement(handle, path.c_str(), "TMax", parameter_study.get_tmax(), "%g");
+
+    write_parameter_space(handle, path, parameter_study.get_model(), parameter_study.get_num_runs(), io_mode);
+}
 
 /**
  * @brief creates xml file with a single run parameter study with std 0 (used to save parameters of individual runs)
@@ -357,9 +392,57 @@ void write_parameter_study(TixiDocumentHandle handle, const std::string& path,
  * @param t0 starting point of simulation
  * @param tmax end point of simulation
  */
+template <class Simulation>
 void write_single_run_params(const int run,
-                             epi::Graph<epi::ModelNode<epi::Simulation<SecirModel>>, epi::MigrationEdge> graph,
-                             double t0, double tmax);
+                             epi::Graph<epi::ModelNode<Simulation>, epi::MigrationEdge> graph, double t0,
+                             double tmax)
+{
+    assert(graph.nodes().size() > 0 && "Graph Nodes are empty");
+
+    std::string abs_path;
+    bool created = create_directory("results", abs_path);
+
+    if (created) {
+        log_info("Results are stored in {:s}/results.", epi::get_current_dir_name());
+    }
+    else if (run == 0) {
+        log_info(
+            "Directory '{:s}' already exists. Results are stored in {:s}/results. Files from previous runs will be "
+            "overwritten",
+            epi::get_current_dir_name());
+    }
+    std::vector<TimeSeries<double>> all_results;
+    std::vector<int> ids;
+
+    ids.reserve(graph.nodes().size());
+    all_results.reserve(graph.nodes().size());
+    std::transform(graph.nodes().begin(), graph.nodes().end(), std::back_inserter(all_results), [](auto& node) {
+        return node.property.get_result();
+    });
+    std::transform(graph.nodes().begin(), graph.nodes().end(), std::back_inserter(ids), [](auto& node) {
+        return node.id;
+    });
+
+    int node_id = 0;
+    for (auto& node : graph.nodes()) {
+        int num_runs     = 1;
+        std::string path = "/Parameters";
+        TixiDocumentHandle handle;
+        tixiCreateDocument("Parameters", &handle);
+        ParameterStudy<Simulation> study(node.property.get_simulation().get_model(), t0, tmax, num_runs);
+
+        write_parameter_study(handle, path, study);
+
+        tixiSaveDocument(handle, path_join(abs_path, ("Parameters_run" + std::to_string(run) + "_node" +
+                                                      std::to_string(node_id) + ".xml"))
+                                     .c_str());
+        tixiCloseDocument(handle);
+        node_id++;
+    }
+
+    save_result(all_results, ids,
+                path_join(abs_path, ("Results_run" + std::to_string(run) + std::to_string(node_id) + ".h5")));
+}
 
 /**
  * @brief Creates xml file containing Parameters of one node of a graph

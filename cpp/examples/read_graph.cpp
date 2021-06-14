@@ -124,7 +124,7 @@ int main(int argc, char** argv)
     std::cout << "Done" << std::endl;
 
     std::cout << "Running Simulations..." << std::flush;
-    auto study = epi::ParameterStudy<epi::SecirModel>(graph_read, t0, tmax, 0.5, 2);
+    auto study = epi::ParameterStudy<epi::SecirSimulation<>>(graph_read, t0, tmax, 0.5, 2);
     std::cout << "Done" << std::endl;
 
     return 0;

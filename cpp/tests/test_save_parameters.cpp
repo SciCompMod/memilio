@@ -75,14 +75,14 @@ TEST(TestSaveParameters, compareParameterStudy)
     params.get<epi::IncubationTime>()[(epi::AgeGroup)0].get_distribution()->add_predefined_sample(4711.0);
 
     tixiCreateDocument("Parameters", &handle);
-    epi::ParameterStudy<epi::SecirModel> study(model, t0, tmax, num_runs);
+    epi::ParameterStudy<epi::SecirSimulation<>> study(model, t0, tmax, num_runs);
 
     epi::write_parameter_study(handle, path, study);
     tixiSaveDocument(handle, "TestParameters.xml");
     tixiCloseDocument(handle);
 
     tixiOpenDocument("TestParameters.xml", &handle);
-    epi::ParameterStudy<epi::SecirModel> read_study = epi::read_parameter_study(handle, path);
+    auto read_study = epi::read_parameter_study<epi::SecirSimulation<>>(handle, path);
     tixiCloseDocument(handle);
 
     ASSERT_EQ(study.get_num_runs(), read_study.get_num_runs());
@@ -254,14 +254,14 @@ TEST(TestSaveParameters, compareSingleRun)
 
     tixiCreateDocument("Parameters", &handle);
     epi::set_params_distributions_normal(model, t0, tmax, 0.0);
-    epi::ParameterStudy<epi::SecirModel> study(model, t0, tmax, num_runs);
+    epi::ParameterStudy<epi::SecirSimulation<>> study(model, t0, tmax, num_runs);
 
     epi::write_parameter_study(handle, path, study, 0);
     tixiSaveDocument(handle, "TestParameterValues.xml");
     tixiCloseDocument(handle);
 
     tixiOpenDocument("TestParameterValues.xml", &handle);
-    epi::ParameterStudy<epi::SecirModel> read_study = epi::read_parameter_study(handle, path);
+    auto read_study = epi::read_parameter_study<epi::SecirSimulation<>>(handle, path);
     tixiCloseDocument(handle);
 
     ASSERT_EQ(study.get_num_runs(), read_study.get_num_runs());
