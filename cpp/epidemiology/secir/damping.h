@@ -246,6 +246,14 @@ public:
         add_(value_type(d, std::forward<T>(t)..., m_shape));
     }
 
+    /**
+     * remove the damping at index i.
+     */
+    void remove(size_t i)
+    {
+        assert(m_dampings.size() > i);
+        m_dampings.erase(m_dampings.begin() + i);
+    }
 
     /**
      * remove all dampings.

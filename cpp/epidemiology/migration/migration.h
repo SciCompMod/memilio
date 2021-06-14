@@ -5,10 +5,12 @@
 #include "epidemiology/utils/time_series.h"
 #include "epidemiology/utils/eigen.h"
 #include "epidemiology/utils/eigen_util.h"
-#include "epidemiology/model/populations.h"
+#include "epidemiology/utils/metaprogramming.h"
+#include "epidemiology/model/simulation.h"
 #include "epidemiology/utils/compiler_diagnostics.h"
 #include "epidemiology/math/euler.h"
 #include "epidemiology/secir/contact_matrix.h"
+#include "epidemiology/secir/dynamic_npis.h"
 
 #include <cassert>
 
@@ -52,14 +54,6 @@ public:
     Model& get_simulation()
     {
         return model;
-    }
-
-    /**
-     * get the the model in this node.
-     */
-    decltype(auto) get_model() const
-    {
-        return model.get_model();
     }
 
     Eigen::Ref<const Eigen::VectorXd> get_last_state() const
@@ -135,9 +129,13 @@ public:
     //@}
 
     /**
-     * migration coefficients.
-     * percentage of people migrating from one node to another
-     * by age and infection compartment.
+     * Get/Setthe migration coefficients.
+     * The coefficients represent the (time-dependent) percentage of people migrating 
+     * from one node to another by age and infection compartment. 
+     * @{
+     */
+    /**
+     * @return the migration coefficients.
      */
     const MigrationCoefficientGroup& get_coefficients() const
     {
@@ -147,9 +145,43 @@ public:
     {
         return m_coefficients;
     }
+    /**
+     * @param coeffs the migration coefficients.
+     */
+    void set_coefficients(const MigrationCoefficientGroup& coeffs)
+    {
+        m_coefficients = coeffs;
+    }
+    /** @} */
+
+    /**
+     * Get/Set dynamic NPIs that are implemented when relative infections exceed thresholds.
+     * This feature is optional. The simulation model needs to overload the get_infected_relative function.
+     * @{
+     */
+    /**
+     * @return dynamic NPIs for relative infections.
+     */
+    const DynamicNPIs& get_dynamic_npis_infected() const
+    {
+        return m_dynamic_npis;
+    }
+    DynamicNPIs& get_dynamic_npis_infected()
+    {
+        return m_dynamic_npis;
+    }
+    /**
+     * @param v dynamic NPIs for relative infections.
+     */
+    void set_dynamic_npis_infected(const DynamicNPIs& v)
+    {
+        m_dynamic_npis = v;
+    }
+    /** @} */
 
 private:
     MigrationCoefficientGroup m_coefficients; //one per group and compartment
+    DynamicNPIs m_dynamic_npis;
 };
 
 /** 
@@ -191,27 +223,6 @@ public:
     }
 
     /**
-     * adjust number of migrated people when they return.
-     * @param[inout] migrated number of people that migrated as input, number of people that return as output
-     * @param params parameters of model in the node that the people migrated to.
-     * @param total total population in the node that the people migrated to.
-     * @param t time of migration
-     * @param dt time between migration and return
-     */
-    template <typename Model>
-    void calculate_returns_ode(Eigen::Ref<TimeSeries<double>::Vector> migrated, const Model& model,
-                               Eigen::Ref<const TimeSeries<double>::Vector> total, double t, double dt)
-    {
-        auto y0 = migrated.eval();
-        auto y1 = migrated;
-        EulerIntegratorCore().step(
-            [&](auto&& y, auto&& t_, auto&& dydt) {
-                model.get_derivatives(total, y, t_, dydt);
-            },
-            y0, t, dt, y1);
-    }
-
-    /**
      * compute migration from node_from to node_to.
      * migration is based on coefficients.
      * migrants are added to the current state of node_to, subtracted from node_from.
@@ -229,17 +240,90 @@ private:
     TimeSeries<double> m_migrated;
     TimeSeries<double> m_return_times;
     bool m_return_migrated;
+    double m_t_last_dynamic_npi_check = -std::numeric_limits<double>::infinity();
+    std::pair<double, SimulationTime> m_dynamic_npi = {-std::numeric_limits<double>::max(), epi::SimulationTime(0)};
 };
+
+/**
+ * adjust number of migrated people when they return according to the model.
+ * E.g. during the time in the other node, some people who left as susceptible will return exposed.
+ * Implemented for general compartmentmodel simulations, overload for your custom model if necessary
+ * so that it can be found with argument-dependent lookup, i.e. in the same namespace as the model.
+ * @param[inout] migrated number of people that migrated as input, number of people that return as output
+ * @param params parameters of model in the node that the people migrated to.
+ * @param total total population in the node that the people migrated to.
+ * @param t time of migration
+ * @param dt time between migration and return
+ */
+template <typename Model, class = std::enable_if_t<is_compartment_model_simulation<Model>::value>>
+void calculate_migration_returns(Eigen::Ref<TimeSeries<double>::Vector> migrated, const Model& model,
+                                 Eigen::Ref<const TimeSeries<double>::Vector> total, double t, double dt)
+{    
+    auto y0 = migrated.eval();
+    auto y1 = migrated;
+    EulerIntegratorCore().step(
+        [&](auto&& y, auto&& t_, auto&& dydt) {
+        model.get_model().get_derivatives(total, y, t_, dydt);
+        },
+        y0, t, dt, y1);
+}
+
+/**
+ * detect a get_infections_relative function for the Model type.
+ */
+template<class Model>
+using get_infections_relative_expr_t = decltype(get_infections_relative(std::declval<const Model&>(), std::declval<const Eigen::Ref<const Eigen::VectorXd>&>()));
+
+/**
+ * get the percantage of infected people of the total population in the node
+ * If dynamic NPIs are enabled, there needs to be an overload of get_infections_relative(model, y)
+ * for the Model type that can be found with argument-dependent lookup. Ideally define get_infections_relative 
+ * in the same namespace as the Model type.
+ * @param node a node of a migration graph.
+ * @param y the current value of the simulation.
+ */
+template< class Model, std::enable_if_t<!is_expression_valid<get_infections_relative_expr_t, Model>::value, void*> = nullptr>
+double get_infections_relative(const ModelNode<Model>& /*node*/, const Eigen::Ref<const Eigen::VectorXd>& /*y*/)
+{
+    assert(false && "Overload get_infections_relative for your own model/simulation if you want to use dynamic NPIs.");
+    return 0;
+}
+template< class Model, std::enable_if_t<is_expression_valid<get_infections_relative_expr_t, Model>::value, void*> = nullptr>
+double get_infections_relative(const ModelNode<Model>& node, const Eigen::Ref<const Eigen::VectorXd>& y)
+{
+    return get_infections_relative(node.model, y);
+}
 
 template <class Model>
 void MigrationEdge::apply_migration(double t, double dt, ModelNode<Model>& node_from, ModelNode<Model>& node_to)
 {
+    //check dynamic npis
+    if (m_t_last_dynamic_npi_check == -std::numeric_limits<double>::infinity()) {
+        m_t_last_dynamic_npi_check = node_from.get_t0();
+    }
+
+    auto& dyn_npis = m_parameters.get_dynamic_npis_infected();
+    if (dyn_npis.get_thresholds().size() > 0 && floating_point_greater_equal(t, m_t_last_dynamic_npi_check + dyn_npis.get_interval().get())) {
+        auto inf_rel            = get_infections_relative(node_from, node_from.get_last_state()) * dyn_npis.get_base_value();
+        auto exceeded_threshold = dyn_npis.get_max_exceeded_threshold(inf_rel);
+        if (exceeded_threshold != dyn_npis.get_thresholds().end() &&
+            (exceeded_threshold->first > m_dynamic_npi.first ||
+             t > double(m_dynamic_npi.second))) { //old NPI was weaker or is expired
+            auto t_end    = epi::SimulationTime(t + double(dyn_npis.get_duration()));
+            m_dynamic_npi = std::make_pair(exceeded_threshold->first, t_end);
+            epi::implement_dynamic_npis(
+                m_parameters.get_coefficients(), exceeded_threshold->second, SimulationTime(t), t_end, [this](auto& g) {
+                    return epi::make_migration_damping_vector(m_parameters.get_coefficients().get_shape(), g);
+                });
+        }
+    }
+
     //returns
     for (Eigen::Index i = m_return_times.get_num_time_points() - 1; i >= 0; --i) {
         if (m_return_times.get_time(i) <= t) {
             auto v0 = find_value_reverse(node_to.get_result(), m_migrated.get_time(i), 1e-10, 1e-10);
             assert(v0 != node_to.get_result().rend() && "unexpected error.");
-            calculate_returns_ode(m_migrated[i], node_to.get_model(), *v0, m_migrated.get_time(i), dt);
+            calculate_migration_returns(m_migrated[i], node_to.model, *v0, m_migrated.get_time(i), dt);
             node_from.get_result().get_last_value() += m_migrated[i];
             node_to.get_result().get_last_value() -= m_migrated[i];
             m_migrated.remove_time_point(i);
@@ -247,7 +331,7 @@ void MigrationEdge::apply_migration(double t, double dt, ModelNode<Model>& node_
         }
     }
 
-    if (!m_return_migrated) {
+    if (!m_return_migrated && (m_parameters.get_coefficients().get_matrix_at(t).array() > 0.0).any()) {
         //normal daily migration
         m_migrated.add_time_point(t, (node_from.get_last_state().array() * m_parameters.get_coefficients().get_matrix_at(t).array()).matrix());
         m_return_times.add_time_point(t + dt);

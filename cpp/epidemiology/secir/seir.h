@@ -70,6 +70,7 @@ using SeirParameters = ParameterSet<TransmissionRisk,
 
 class SeirModel : public CompartmentalModel<SeirPopulations, SeirParameters>
 {
+    using Base = CompartmentalModel<SeirPopulations, SeirParameters>;
     using Po = SeirPopulations;
     using Pa = SeirParameters;
 

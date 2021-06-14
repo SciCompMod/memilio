@@ -192,15 +192,15 @@ void bind_CompartmentalModel(py::module& m, std::string const& name)
 /*
  * @brief bind Simulation for any number model
  */
-template<class Model>
+template <class Simulation>
 void bind_Simulation(py::module& m, std::string const& name)
 {
-    py::class_<epi::Simulation<Model>>(m, name.c_str())
-            .def(py::init<const Model&, double, double>(), py::arg("model"), py::arg("t0") = 0,
-                 py::arg("dt") = 0.1)
-            .def_property_readonly("result", py::overload_cast<>(&epi::Simulation<Model>::get_result, py::const_),
-                                   py::return_value_policy::reference_internal)
-            .def("advance", &epi::Simulation<Model>::advance, py::arg("tmax"));
+    py::class_<Simulation>(m, name.c_str())
+        .def(py::init<const typename Simulation::Model&, double, double>(), py::arg("model"), py::arg("t0") = 0,
+             py::arg("dt") = 0.1)
+        .def_property_readonly("result", py::overload_cast<>(&Simulation::get_result, py::const_),
+                               py::return_value_policy::reference_internal)
+        .def("advance", &Simulation::advance, py::arg("tmax"));
 }
 
 template <typename Model>
@@ -216,11 +216,9 @@ void bind_SecirModelNode(py::module& m, std::string const& name)
             py::return_value_policy::reference_internal);
 }
 
-template <typename Model>
+template <typename Simulation>
 void bind_SecirSimulationNode(py::module& m, std::string const& name)
 {
-
-    using Simulation = epi::Simulation<Model>;
     py::class_<epi::Node<epi::ModelNode<Simulation>>>(m, name.c_str())
         .def_property_readonly("id",
                                [](const epi::Node<Simulation>& self) {
@@ -272,45 +270,42 @@ void bind_SecirModelGraph(py::module& m, std::string const& name)
 
 }
 
-template<class Simulation, class Model>
+template <class Simulation>
 void bind_MigrationGraph(py::module& m, std::string const& name)
 {
     using G = epi::Graph<epi::ModelNode<Simulation>, epi::MigrationEdge>;
     py::class_<G>(m, name.c_str())
-            .def(py::init<>())
-            .def(
-                "add_node", [](G & self, int id, const Model& p, double t0, double dt) -> auto& {
-                    return self.add_node(id, p, t0, dt);
-                },
-                py::arg("id"), py::arg("model"), py::arg("t0") = 0.0, py::arg("dt") = 0.1, py::return_value_policy::reference_internal)
-            .def("add_edge", &G::template add_edge<const epi::MigrationEdge&>,
-                 py::return_value_policy::reference_internal)
-            .def("add_edge", &G::template add_edge<const Eigen::VectorXd&>, py::return_value_policy::reference_internal)
-            .def_property_readonly("num_nodes",
-                                   [](const G& self) {
-                                       return self.nodes().size();
-                                   })
-            .def(
-                "get_node",
-                [](const G& self, size_t node_idx) -> auto& { return self.nodes()[node_idx]; },
-                py::return_value_policy::reference_internal)
-            .def_property_readonly("num_edges",
-                                   [](const G& self) {
-                                       return self.edges().size();
-                                   })
-            .def(
-                "get_edge", [](const G& self, size_t edge_idx) -> auto& { return self.edges()[edge_idx]; },
-                py::return_value_policy::reference_internal)
-            .def("get_num_out_edges",
-                 [](const G& self, size_t node_idx) {
-                     return self.out_edges(node_idx).size();
-                 })
-            .def(
-                "get_out_edge", [](const G& self, size_t node_idx, size_t edge_idx) -> auto& {
-                    return self.out_edges(node_idx)[edge_idx];
-                },
-                py::return_value_policy::reference_internal);
-
+        .def(py::init<>())
+        .def(
+            "add_node", [](G & self, int id, const typename Simulation::Model& p, double t0, double dt) -> auto& {
+                return self.add_node(id, p, t0, dt);
+            },
+            py::arg("id"), py::arg("model"), py::arg("t0") = 0.0, py::arg("dt") = 0.1,
+            py::return_value_policy::reference_internal)
+        .def("add_edge", &G::template add_edge<const epi::MigrationEdge&>, py::return_value_policy::reference_internal)
+        .def("add_edge", &G::template add_edge<const Eigen::VectorXd&>, py::return_value_policy::reference_internal)
+        .def_property_readonly("num_nodes",
+                               [](const G& self) {
+                                   return self.nodes().size();
+                               })
+        .def(
+            "get_node", [](const G& self, size_t node_idx) -> auto& { return self.nodes()[node_idx]; },
+            py::return_value_policy::reference_internal)
+        .def_property_readonly("num_edges",
+                               [](const G& self) {
+                                   return self.edges().size();
+                               })
+        .def(
+            "get_edge", [](const G& self, size_t edge_idx) -> auto& { return self.edges()[edge_idx]; },
+            py::return_value_policy::reference_internal)
+        .def("get_num_out_edges",
+             [](const G& self, size_t node_idx) {
+                 return self.out_edges(node_idx).size();
+             })
+        .def(
+            "get_out_edge",
+            [](const G& self, size_t node_idx, size_t edge_idx) -> auto& { return self.out_edges(node_idx)[edge_idx]; },
+            py::return_value_policy::reference_internal);
 }
 
 /*
@@ -335,46 +330,51 @@ void bind_GraphSimulation(py::module& m, std::string const& name)
 /*
  * @brief bind ParameterStudy for any model
  */
-template<class Model>
+template <class Simulation>
 void bind_ParameterStudy(py::module& m, std::string const& name)
 {
-    py::class_<epi::ParameterStudy<Model>>(m, name.c_str())
-        .def(py::init<const Model&, double, double, size_t>(), py::arg("model"), py::arg("t0"), py::arg("tmax"),
-             py::arg("num_runs"))
-        .def(py::init<const Model&, double, double, double, size_t>(), py::arg("model"), py::arg("t0"), py::arg("tmax"),
-             py::arg("dev_rel"), py::arg("num_runs"))
-        .def(py::init<const epi::Graph<Model, epi::MigrationParameters>&, double, double, double, size_t>(),
+    py::class_<epi::ParameterStudy<Simulation>>(m, name.c_str())
+        .def(py::init<const typename Simulation::Model&, double, double, size_t>(), py::arg("model"), py::arg("t0"),
+             py::arg("tmax"), py::arg("num_runs"))
+        .def(py::init<const typename Simulation::Model&, double, double, double, size_t>(), py::arg("model"),
+             py::arg("t0"), py::arg("tmax"), py::arg("dev_rel"), py::arg("num_runs"))
+        .def(py::init<const epi::Graph<typename Simulation::Model, epi::MigrationParameters>&, double, double, double,
+                      size_t>(),
              py::arg("model_graph"), py::arg("t0"), py::arg("tmax"), py::arg("dt"), py::arg("num_runs"))
-        .def_property("num_runs", &epi::ParameterStudy<Model>::get_num_runs, &epi::ParameterStudy<Model>::set_num_runs)
-        .def_property("tmax", &epi::ParameterStudy<Model>::get_tmax, &epi::ParameterStudy<Model>::set_tmax)
-        .def_property("t0", &epi::ParameterStudy<Model>::get_t0, &epi::ParameterStudy<Model>::set_t0)
-        .def_property_readonly("model", py::overload_cast<>(&epi::ParameterStudy<Model>::get_model),
+        .def_property("num_runs", &epi::ParameterStudy<Simulation>::get_num_runs,
+                      &epi::ParameterStudy<Simulation>::set_num_runs)
+        .def_property("tmax", &epi::ParameterStudy<Simulation>::get_tmax, &epi::ParameterStudy<Simulation>::set_tmax)
+        .def_property("t0", &epi::ParameterStudy<Simulation>::get_t0, &epi::ParameterStudy<Simulation>::set_t0)
+        .def_property_readonly("model", py::overload_cast<>(&epi::ParameterStudy<Simulation>::get_model),
                                py::return_value_policy::reference_internal)
-        .def_property_readonly("model", py::overload_cast<>(&epi::ParameterStudy<Model>::get_model, py::const_),
-                               py::return_value_policy::reference_internal)
-        .def_property_readonly("secir_model_graph",
-                               py::overload_cast<>(&epi::ParameterStudy<Model>::get_secir_model_graph),
+        .def_property_readonly("model", py::overload_cast<>(&epi::ParameterStudy<Simulation>::get_model, py::const_),
                                py::return_value_policy::reference_internal)
         .def_property_readonly("secir_model_graph",
-                               py::overload_cast<>(&epi::ParameterStudy<Model>::get_secir_model_graph, py::const_),
+                               py::overload_cast<>(&epi::ParameterStudy<Simulation>::get_secir_model_graph),
                                py::return_value_policy::reference_internal)
-        .def("run",
-             [](epi::ParameterStudy<Model>& self,
-                typename epi::ParameterStudy<Model>::HandleSimulationResultFunction handle_result) {
-                 self.run(handle_result);
-             }, 
+        .def_property_readonly("secir_model_graph",
+                               py::overload_cast<>(&epi::ParameterStudy<Simulation>::get_secir_model_graph, py::const_),
+                               py::return_value_policy::reference_internal)
+        .def(
+            "run",
+            [](epi::ParameterStudy<Simulation>& self,
+               typename epi::ParameterStudy<Simulation>::HandleSimulationResultFunction handle_result) {
+                self.run(handle_result);
+            },
             py::arg("handle_result_func"))
         .def("run",
-             [](epi::ParameterStudy<Model>& self) { //default argument doesn't seem to work with functions
+             [](epi::ParameterStudy<Simulation>& self) { //default argument doesn't seem to work with functions
                  return self.run();
              })
         .def(
             "run_single",
-            [](epi::ParameterStudy<Model>& self, std::function<void(epi::Simulation<Model>)> handle_result) {
-                self.run([handle_result](auto r) { handle_result(r.nodes()[0].property.model); });
+            [](epi::ParameterStudy<Simulation>& self, std::function<void(Simulation)> handle_result) {
+                self.run([handle_result](auto r) {
+                    handle_result(r.nodes()[0].property.model);
+                });
             },
             py::arg("handle_result_func"))
-        .def("run_single", [](epi::ParameterStudy<Model>& self) {
+        .def("run_single", [](epi::ParameterStudy<Simulation>& self) {
             return filter_graph_results(self.run());
         });
 }
@@ -863,21 +863,21 @@ PYBIND11_MODULE(_secir, m)
     py::class_<epi::SecirModel, epi::CompartmentalModel<SecirPopulations, epi::SecirParams>>(m, "SecirModel")
             .def(py::init<size_t>(), py::arg("num_agegroups"));
 
-    bind_Simulation<epi::SecirModel>(m, "SecirSimulation");
+    bind_Simulation<epi::SecirSimulation<>>(m, "SecirSimulation");
 
-    m.def("simulate", [](double t0, double tmax, double dt, const epi::SecirModel& model) { return epi::simulate<epi::SecirModel>(t0, tmax, dt, model); },
+    m.def("simulate", [](double t0, double tmax, double dt, const epi::SecirModel& model) { return epi::simulate(t0, tmax, dt, model); },
           "Simulates a SecirModel1 from t0 to tmax.", py::arg("t0"), py::arg("tmax"), py::arg("dt"),
           py::arg("model"));
 
     bind_SecirModelNode<epi::SecirModel>(m, "SecirModelNode");
-    bind_SecirSimulationNode<epi::SecirModel>(m, "SecirSimulationNode");
+    bind_SecirSimulationNode<epi::SecirSimulation<>>(m, "SecirSimulationNode");
     bind_SecirModelGraph<epi::SecirModel>(m, "SecirModelGraph");
-    using Simulation = epi::Simulation<epi::SecirModel>;
-    bind_MigrationGraph<Simulation, epi::SecirModel>(m, "MigrationGraph");
+    using Simulation = epi::SecirSimulation<>;
+    bind_MigrationGraph<Simulation>(m, "MigrationGraph");
     using MigrationGraph = epi::Graph<epi::ModelNode<Simulation>, epi::MigrationEdge>;
     bind_GraphSimulation<MigrationGraph>(m, "MigrationSimulation");
 
-    bind_ParameterStudy<epi::SecirModel>(m, "ParameterStudy");
+    bind_ParameterStudy<epi::SecirSimulation<>>(m, "ParameterStudy");
 
     m.def("set_params_distributions_normal", &epi::set_params_distributions_normal, py::arg("model"), py::arg("t0"),
           py::arg("tmax"), py::arg("dev_rel"));

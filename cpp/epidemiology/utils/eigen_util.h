@@ -149,4 +149,16 @@ auto reshape(M&& m, Eigen::Index rows, Eigen::Index cols)
 template<class M>
 using is_matrix_expression = std::is_base_of<Eigen::EigenBase<M>, M>;
 
+/**
+ * coefficient wise maximum of two matrices.
+ * @param a a matrix expression
+ * @param b a matrix expression of the same shape as a
+ * @return a matrix expression the shape of a with each coefficient the maximum of the coefficients of a and b.
+ */
+template<class A, class B>
+auto max(const Eigen::MatrixBase<A>& a, B&& b)
+{
+    return a.binaryExpr(std::forward<B>(b), [](auto a_i, auto b_i) { return std::max(a_i, b_i); });
+}
+
 } // namespace epi

@@ -1,7 +1,6 @@
 #include <epidemiology_io/secir_parameters_io.h>
 #include <epidemiology/secir/parameter_space.h>
 #include <epidemiology/secir/parameter_studies.h>
-#include <epidemiology_io/secir_parameters_io.h>
 #include <epidemiology/migration/migration.h>
 
 #include <tixi.h>
@@ -105,7 +104,7 @@ int main()
     tixiCloseDocument(handle3);
 
     // create study
-    epi::ParameterStudy<epi::SecirModel> parameter_study(model, t0, tmax, 0.2, 1);
+    epi::ParameterStudy<epi::SecirSimulation<>> parameter_study(model, t0, tmax, 0.2, 1);
 
     // write and run study
     std::string path = "/Parameters";
@@ -118,7 +117,7 @@ int main()
     tixiCloseDocument(handle);
 
     tixiOpenDocument("Parameters.xml", &handle);
-    epi::ParameterStudy<epi::SecirModel> read_study = epi::read_parameter_study(handle, path);
+    auto read_study                = epi::read_parameter_study<epi::SecirSimulation<>>(handle, path);
     int run                        = 0;
     auto lambda                    = [&run, t0, tmax](auto graph) {
         epi::write_single_run_params(run++, graph, t0, tmax);

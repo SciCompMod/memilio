@@ -2,6 +2,7 @@
 #define SECIR_H
 
 #include "epidemiology/model/compartmentalmodel.h"
+#include "epidemiology/model/simulation.h"
 #include "epidemiology/model/populations.h"
 #include "epidemiology/secir/infection_state.h"
 #include "epidemiology/secir/secir_params.h"
@@ -15,14 +16,14 @@ namespace epi
 
 class SecirModel : public CompartmentalModel<Populations<AgeGroup, InfectionState>, SecirParams>
 {
-    using Pa = SecirParams;
-    using Po = Populations<AgeGroup, InfectionState>;
+    using Base = CompartmentalModel<epi::Populations<AgeGroup, InfectionState>, SecirParams>;
+    using Pa = Base::ParameterSet;
+    using Po = Base::Populations;
 
 public:
 
     SecirModel(size_t num_agegroups)
-     : CompartmentalModel<Populations<AgeGroup, InfectionState>, SecirParams>(Po({AgeGroup(num_agegroups), InfectionState::Count}),
-                                                                              Pa(AgeGroup(num_agegroups)))
+     : Base(Po({AgeGroup(num_agegroups), InfectionState::Count}), Pa(AgeGroup(num_agegroups)))
     {
 #if !USE_DERIV_FUNC
         size_t n_agegroups = (size_t)AgeGroup::Count;
@@ -286,6 +287,118 @@ void get_derivatives(Eigen::Ref<const Eigen::VectorXd> pop,
 #endif // USE_DERIV_FUNC
 
 };
+
+//forward declaration, see below.
+template <class Base = Simulation<SecirModel>>
+class SecirSimulation;
+
+/**
+ * get percentage of infections per total population.
+ * @param model the compartment model with initial values.
+ * @param y current value of compartments.
+ * @tparam Base simulation type that uses a secir compartment model. see SecirSimulation.
+ */
+template<class Base = Simulation<SecirModel>>
+double get_infections_relative(const SecirSimulation<Base>& model, const Eigen::Ref<const Eigen::VectorXd>& y);
+
+/**
+ * specialization of compartment model simulation for secir models.
+ * @tparam Base simulation type that uses a secir compartment model. default epi::SecirSimulation. For testing purposes only!
+ */
+template <class Base>
+class SecirSimulation : public Base
+{
+public:
+    /**
+     * construct a simulation.
+     * @param model the model to simulate.
+     * @param t0 start time
+     * @param dt time steps
+     */
+    SecirSimulation(SecirModel const& model, double t0 = 0., double dt = 0.1)
+        : Base(model, t0, dt)
+        , m_t_last_npi_check(t0)
+    {
+    }
+
+    /**
+     * @brief advance simulation to tmax.
+     * Overwrites Simulation::advance and includes a check for dynamic NPIs in regular intervals.
+     * @see Simulation::advance
+     * @param tmax next stopping point of simulation
+     * @return value at tmax
+     */
+    Eigen::Ref<Eigen::VectorXd> advance(double tmax)
+    {
+        auto& dyn_npis = this->get_model().parameters.template get<DynamicNPIsInfected>();
+        auto& contact_patterns = this->get_model().parameters.template get<ContactPatterns>();
+        if (dyn_npis.get_thresholds().size() > 0) {            
+            auto t        = Base::get_result().get_last_time();
+            const auto dt = dyn_npis.get_interval().get();
+
+            while (t < tmax) {
+                auto dt_eff = std::min({dt, tmax - t, m_t_last_npi_check + dt - t});
+
+                Base::advance(t + dt_eff);
+                t = t + dt_eff;
+
+                if (floating_point_greater_equal(t, m_t_last_npi_check + dt)) {
+                    auto inf_rel =
+                        get_infections_relative(*this, this->get_result().get_last_value()) * dyn_npis.get_base_value();
+                    auto exceeded_threshold = dyn_npis.get_max_exceeded_threshold(inf_rel);
+                    if (exceeded_threshold != dyn_npis.get_thresholds().end() &&
+                        (exceeded_threshold->first > m_dynamic_npi.first ||
+                         t > double(m_dynamic_npi.second))) { //old npi was weaker or is expired
+                        auto t_end    = epi::SimulationTime(t + double(dyn_npis.get_duration()));
+                        m_dynamic_npi = std::make_pair(exceeded_threshold->first, t_end);
+                        epi::implement_dynamic_npis(contact_patterns.get_cont_freq_mat(), exceeded_threshold->second,
+                                                    SimulationTime(t), t_end, [this](auto& g) {
+                                                        return epi::make_contact_damping_matrix(g);
+                                                    });
+                    }
+
+                    m_t_last_npi_check = t;
+                }
+            }
+
+            return this->get_result().get_last_value();
+        }
+        else {
+            return Base::advance(tmax);
+        }
+    }
+
+private:
+    double m_t_last_npi_check;
+    std::pair<double, SimulationTime> m_dynamic_npi = {-std::numeric_limits<double>::max(), epi::SimulationTime(0)};
+};
+
+/**
+ * specialization of simulate for secir models using SecirSimulation.
+ * @param t0 start time.
+ * @param tmax end time.
+ * @param dt time step.
+ * @param model secir model to simulate.
+ * @param integrator optional integrator, uses rk45 if nullptr.
+ */
+inline auto simulate(double t0, double tmax, double dt, const SecirModel& model,
+              std::shared_ptr<IntegratorCore> integrator = nullptr)
+{
+    return simulate<SecirModel, SecirSimulation<>>(t0, tmax, dt, model, integrator);
+}
+
+//see declaration above.
+template<class Base>
+double get_infections_relative(const SecirSimulation<Base>& sim, const Eigen::Ref<const Eigen::VectorXd>& y)
+{
+    double sum_inf = 0;
+    for (auto i = AgeGroup(0); i < sim.get_model().parameters.get_num_groups(); ++i) {
+        sum_inf = sim.get_model().populations.get_from(y, {i, InfectionState::Infected});
+    }
+    auto inf_rel = sum_inf / sim.get_model().populations.get_total();
+
+    return inf_rel;
+}
 
 } // namespace epi
 
