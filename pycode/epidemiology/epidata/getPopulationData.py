@@ -221,8 +221,8 @@ def load_age_population_data(read_data, out_folder):
                        '1A_EinwohnerzahlGeschlecht.xls?__blob=publicationFile&v=5'
 
         #read tables
-        counties = gd.loadExcel(os.path.join(path_counties,'kreise_deu.xlsx'), apiUrl='',sheet_name=1, header=3)
-        reg_key = gd.loadExcel(path_reg_key, apiUrl='', sheet_name='Tabelle_1A', header=12)
+        counties = gd.loadExcel(os.path.join(path_counties,'kreise_deu.xlsx'), extension='', apiUrl='',sheet_name=1, header=3)
+        reg_key = gd.loadExcel(path_reg_key, apiUrl='', extension = '', sheet_name='Tabelle_1A', header=12)
         zensus = gd.loadCsv("abad92e8eead46a4b0d252ee9438eb53_1")
 
         gd.write_dataframe(counties, directory, filename_counties, "json")
