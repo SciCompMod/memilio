@@ -921,15 +921,15 @@ PYBIND11_MODULE(_secir, m)
     m.def("interpolate_ensemble_results", &epi::interpolate_ensemble_results<MigrationGraph>);
 
     m.def(
-        "get_state_id",
+        "get_state_id_de",
         [](int county) {
-            return int(epi::get_state_id(epi::CountyId(county)));
+            return int(epi::regions::de::get_state_id(epi::regions::de::CountyId(county)));
         },
         py::arg("county_id"));
     m.def(
-        "get_holidays",
+        "get_holidays_de",
         [](int state, epi::Date start_date, epi::Date end_date) {
-            auto h = epi::get_holidays(epi::StateId(state), start_date, end_date);
+            auto h = epi::regions::de::get_holidays(epi::regions::de::StateId(state), start_date, end_date);
             return std::vector<std::pair<epi::Date, epi::Date>>(h.begin(), h.end());
         },
         py::arg("state_id"), py::arg("start_date") = epi::Date(std::numeric_limits<int>::min(), 1, 1),
