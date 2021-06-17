@@ -93,6 +93,7 @@ def loadExcel(targetFileName, apiUrl='https://opendata.arcgis.com/datasets/',
     header -- row to use for column labels (Use None if there is no header) (int, default 0)
     """
     url = apiUrl + targetFileName + extension
+
     try:
         df = pandas.read_excel(url, sheet_name=sheet_name, header=header, engine=engine)
     except OSError as e:
@@ -281,10 +282,9 @@ def write_dataframe(df, directory, file_prefix, file_type):
 
     """
 
-
-
     outForm = {'json': [".json", {"orient": "records"}],
-               'json_timeasstring': [".json", {"orient": "records"}], 'hdf5': [".h5", {"key": "data"}]}
+               'json_timeasstring': [".json", {"orient": "records"}],
+               'hdf5': [".h5", {"key": "data"}]}
 
     try:
         outFormEnd = outForm[file_type][0]

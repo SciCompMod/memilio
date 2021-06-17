@@ -99,7 +99,6 @@ def get_one_data_set(read_data, out_form, directory, d):
     gd.write_dataframe(dfo, directory, d.filename_out, out_form)
 
 
-#
 def get_new_counties(data):
     """! Creates 7 new counties that were formed since 2011 and deletes old counties
 
@@ -185,6 +184,7 @@ def get_new_counties(data):
     else:
         return data_temp
 
+
 def load_age_population_data(read_data, out_folder):
     directory = os.path.join(out_folder, 'Germany/')
     gd.check_dir(directory)
@@ -221,8 +221,8 @@ def load_age_population_data(read_data, out_folder):
                        '1A_EinwohnerzahlGeschlecht.xls?__blob=publicationFile&v=5'
 
         #read tables
-        counties = pandas.read_excel(os.path.join(path_counties,'kreise_deu.xlsx'),sheet_name=1, header=3, engine='openpyxl')
-        reg_key = pandas.read_excel(path_reg_key, sheet_name='Tabelle_1A', header=12)
+        counties = gd.loadExcel(os.path.join(path_counties,'kreise_deu.xlsx'), extension='', apiUrl='', sheet_name=1, header=3)
+        reg_key = gd.loadExcel(path_reg_key, apiUrl='', extension = '', engine=None, sheet_name='Tabelle_1A', header=12)
         zensus = gd.loadCsv("abad92e8eead46a4b0d252ee9438eb53_1")
 
         gd.write_dataframe(counties, directory, filename_counties, "json")
@@ -318,7 +318,6 @@ def get_age_population_data(read_data=dd.defaultDict['read_data'],
         gd.write_dataframe(df_current, directory, 'county_current_population', out_form)
     else:
         return df_current
-
 
 
 def main():

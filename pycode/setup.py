@@ -14,14 +14,13 @@ except ImportError:
 
 __version__ = '0.1.0'
 
-
 INSTALL_REQUIRES = ['pandas<1.2.0',
                     'matplotlib<3.4',
                     'tables',
                     'numpy<=1.19.4',
                     'openpyxl',
                     'xlrd', 
-		    'requests']
+		            'requests']
 
 EXTRAS_REQUIRE = {"pylint": ["pylint", "pylint_json2html"]}
 
