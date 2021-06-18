@@ -5,6 +5,11 @@
 #include "epidemiology/utils/eigen_util.h"
 #include "epidemiology/utils/index.h"
 
+#include "epidemiology/utils/ScalarType.h"
+#include "epidemiology/utils/eigen.h"
+
+#include <vector>
+#include <array>
 #include <numeric>
 
 namespace

@@ -27,8 +27,10 @@ void AbmSimulation::store_result_at(TimePoint t)
 {
     m_result.add_time_point(t.days());
     m_result.get_last_value().setZero();
-    for (auto&& location : m_world.get_locations()) {
-        m_result.get_last_value() += location.get_subpopulations().cast<double>();
+    for (auto&& locations : m_world.get_locations()) {
+        for (auto& location : locations){
+            m_result.get_last_value() += location.get_subpopulations().cast<double>();
+        }
     }
 }
 

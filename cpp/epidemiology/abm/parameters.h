@@ -3,8 +3,8 @@
 
 #include "epidemiology/abm/age.h"
 #include "epidemiology/abm/time.h"
-#include "epidemiology/utils/eigen.h"
 #include "epidemiology/utils/custom_index_array.h"
+#include "epidemiology/utils/eigen.h"
 #include "epidemiology/utils/parameter_set.h"
 #include <limits>
 
