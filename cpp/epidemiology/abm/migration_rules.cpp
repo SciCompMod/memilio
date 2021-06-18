@@ -4,6 +4,7 @@
 #include "epidemiology/abm/random_events.h"
 #include "epidemiology/abm/location.h"
 #include "epidemiology/utils/random_number_generator.h"
+#include "epidemiology/abm/location_type.h"
 
 #include <random>
 
@@ -12,7 +13,7 @@ namespace epi
 
 LocationType random_migration(const Person& person, TimePoint t, TimeSpan dt, const AbmMigrationParameters& params)
 {
-    auto current_loc     = person.get_location().get_type();
+    auto current_loc = person.get_location_id().type;
     auto make_transition = [current_loc](auto l) {
         return std::make_pair(l, l == current_loc ? 0. : 1.);
     };
@@ -27,7 +28,7 @@ LocationType random_migration(const Person& person, TimePoint t, TimeSpan dt, co
 
 LocationType go_to_school(const Person& person, TimePoint t, TimeSpan /*dt*/, const AbmMigrationParameters& params)
 {
-    auto current_loc = person.get_location().get_type();
+    auto current_loc = person.get_location_id().type;
     if (current_loc == LocationType::Home && t < params.get<LockdownDate>() && t.day_of_week() < 5 &&
         t.hour_of_day() >= 8 && person.get_age() == AbmAgeGroup::Age5to14) {
         return epi::LocationType::School;
@@ -41,7 +42,7 @@ LocationType go_to_school(const Person& person, TimePoint t, TimeSpan /*dt*/, co
 
 LocationType go_to_work(const Person& person, TimePoint t, TimeSpan /*dt*/, const AbmMigrationParameters& params)
 {
-    auto current_loc = person.get_location().get_type();
+    auto current_loc = person.get_location_id().type;
 
     if (current_loc == LocationType::Home && t < params.get<LockdownDate>() &&
         (person.get_age() == AbmAgeGroup::Age15to34 || person.get_age() == AbmAgeGroup::Age35to59) &&
@@ -57,7 +58,7 @@ LocationType go_to_work(const Person& person, TimePoint t, TimeSpan /*dt*/, cons
 
 LocationType go_to_shop(const Person& person, TimePoint t, TimeSpan dt, const AbmMigrationParameters& params)
 {
-    auto current_loc = person.get_location().get_type();
+    auto current_loc = person.get_location_id().type;
     //leave
     if (t.day_of_week() < 6 && t.hour_of_day() > 7 && t.hour_of_day() < 22 && current_loc == LocationType::Home) {
         return random_transition(current_loc, dt,
@@ -74,7 +75,7 @@ LocationType go_to_shop(const Person& person, TimePoint t, TimeSpan dt, const Ab
 
 LocationType go_to_event(const Person& person, TimePoint t, TimeSpan dt, const AbmMigrationParameters& params)
 {
-    auto current_loc = person.get_location().get_type();
+    auto current_loc = person.get_location_id().type;
     //leave
     if (current_loc == LocationType::Home && t < params.get<LockdownDate>() &&
         ((t.day_of_week() <= 4 && t.hour_of_day() >= 19) || (t.day_of_week() >= 5 && t.hour_of_day() >= 10))) {
@@ -93,7 +94,7 @@ LocationType go_to_event(const Person& person, TimePoint t, TimeSpan dt, const A
 
 LocationType go_to_hospital(const Person& person, TimePoint /*t*/, TimeSpan dt, const AbmMigrationParameters& params)
 {
-    auto current_loc = person.get_location().get_type();
+    auto current_loc = person.get_location_id().type;
     if (person.get_infection_state() == InfectionState::Infected_Detected) {
         return random_transition(current_loc, dt,
                                  {{LocationType::Hospital, params.get<HospitalizationRate>()[person.get_age()]}});
@@ -103,7 +104,7 @@ LocationType go_to_hospital(const Person& person, TimePoint /*t*/, TimeSpan dt, 
 
 LocationType go_to_icu(const Person& person, TimePoint /*t*/, TimeSpan dt, const AbmMigrationParameters& params)
 {
-    auto current_loc = person.get_location().get_type();
+    auto current_loc = person.get_location_id().type;
     if (current_loc == LocationType::Hospital) {
         return random_transition(current_loc, dt, {{LocationType::ICU, params.get<IcuRate>()[person.get_age()]}});
     }
@@ -113,7 +114,7 @@ LocationType go_to_icu(const Person& person, TimePoint /*t*/, TimeSpan dt, const
 LocationType return_home_when_recovered(const Person& person, TimePoint /*t*/, TimeSpan /*dt*/,
                                         const AbmMigrationParameters& /*params*/)
 {
-    auto current_loc = person.get_location().get_type();
+    auto current_loc = person.get_location_id().type;
     if ((current_loc == LocationType::Hospital || current_loc == LocationType::ICU) &&
         person.get_infection_state() == InfectionState::Recovered_Infected) {
         return LocationType::Home;

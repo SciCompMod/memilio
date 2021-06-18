@@ -8,8 +8,9 @@
 namespace epi
 {
 
-Location::Location(LocationType type)
+Location::Location(LocationType type, uint32_t index)
     : m_type(type)
+    , m_index(index)
     , m_subpopulations{}
     , m_cached_exposure_rate({AbmAgeGroup::Count})
 {
@@ -92,4 +93,6 @@ Eigen::Ref<const Eigen::VectorXi> Location::get_subpopulations() const
 {
     return Eigen::Map<const Eigen::VectorXi>(m_subpopulations.data(), m_subpopulations.size());
 }
+
+
 } // namespace epi

@@ -5,6 +5,8 @@
 #include "epidemiology/abm/age.h"
 #include "epidemiology/abm/time.h"
 #include "epidemiology/abm/parameters.h"
+#include "epidemiology/abm/world.h"
+#include "epidemiology/abm/time.h"
 
 #include <functional>
 
@@ -13,6 +15,8 @@ namespace epi
 
 class Location;
 
+
+
 /**
  * Agents in the simulated world that can carry and spread the infection.
  */
@@ -20,11 +24,18 @@ class Person
 {
 public:
     /**
-     * Create a Person.
+     * create a Person.
+     * @param id index and type of the initial location of the person
+     * @param state the initial infection state of the person
+     */
+    Person(LocationId id, InfectionState state, AbmAgeGroup age);
+    
+    /**
+     * create a Person.
      * @param location the initial location of the person
      * @param state the initial infection state of the person
      */
-    Person(Location& location, InfectionState state, Index<AbmAgeGroup> age);
+    Person(Location& location, InfectionState state, AbmAgeGroup age);
 
     /** 
      * Time passes and the person interacts with the population at its current location.
@@ -32,13 +43,13 @@ public:
      * @param dt length of the current simulation time step
      * @param global_infection_parameters infection parameters that are the same in all locations
      */
-    void interact(TimeSpan dt, const GlobalInfectionParameters& global_infection_parameters);
+    void interact(TimeSpan dt, const GlobalInfectionParameters& global_infection_parameters, Location& loc);
 
     /** 
-     * Migrate to a different location.
-     * @param location the new location of the person.
+     * migrate to a different location.
+     * @param loc_new the new location of the person.
      * */
-    void migrate_to(Location& location);
+    void migrate_to(Location& loc_old, Location& loc_new);
 
     /**
      * Get the current infection state of the person.
@@ -59,13 +70,13 @@ public:
     }
 
     /**
-     * Get the current location of the person.
-     * @returns the current location of the person
+     * get index and type of the current location of the person.
+     * @returns index and type of the current location of the person
      */
-    const Location& get_location() const
+    LocationId get_location_id() const
     {
-        return m_location;
-    }
+        return m_location_id;
+    } 
 
     /**
      * Get the time the person has been at its current location.
@@ -75,9 +86,38 @@ public:
     {
         return m_time_at_location;
     }
+    /**
+     * set an assigned location of the person. The assigned location is saved by its index.
+     * Assume that a person has at most one assigned location per location type.
+     * @param location the new assigned location
+     */
+    void set_assigned_location (Location& location);
+
+    /**
+     * set an assigned location of the person. The assigned location is saved by an index.
+     * Assume that a person has at most one assigned location of a certain location type
+     * @param location_type location type of the new assigned location
+     * @param index index of the new assigned location
+     */
+    void set_assigned_location (LocationId id);
+
+    /**
+     * returns the index of a assigned location of the person.
+     * Assume that a person has at most one assigned location of a certrain location type.
+     * @param type location type of the assigned location
+     */
+    uint32_t get_assigned_location_index (LocationType type) const;
+
+    /**
+     *returns the assigned locations of the person.
+     */
+    const std::vector<uint32_t>& get_assigned_locations () const{
+        return m_assigned_locations;
+    }
 
 private:
-    std::reference_wrapper<Location> m_location;
+    LocationId m_location_id;
+    std::vector<uint32_t> m_assigned_locations;
     InfectionState m_state;
     TimeSpan m_time_until_carrier;
     epi::Index<AbmAgeGroup> m_age;
