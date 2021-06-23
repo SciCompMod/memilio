@@ -150,6 +150,7 @@ def fuse_berlin(df):
 def get_rki_data(read_data=dd.defaultDict['read_data'],
                  out_form=dd.defaultDict['out_form'],
                  out_folder=dd.defaultDict['out_folder'],
+                 no_raw=dd.defaultDict['no_raw'],
                  fill_dates=dd.defaultDict['fill_dates'],
                  make_plot=dd.defaultDict['make_plot'],
                  moving_average=dd.defaultDict['moving_average'],
@@ -192,6 +193,7 @@ def get_rki_data(read_data=dd.defaultDict['read_data'],
     @param read_data False [Default] or True. Defines if data is read from file or downloaded.
     @param out_form File format which is used for writing the data. Default defined in defaultDict.
     @param out_folder Path to folder where data is written in folder out_folder/Germany.
+    @param no_raw True or False [Default]. Defines if unchanged raw data is saved or not.
     @param fill_dates False [Default] or True. Defines if dates where nothing changed are added.
     @param make_plot False [Default] or True. Defines if plots are generated with matplotlib.
     @param moving_average True or False [Default]. Defines if files for 7 day moving average should be created
@@ -240,8 +242,8 @@ def get_rki_data(read_data=dd.defaultDict['read_data'],
 
         if complete:
             # output data to not always download it
-            gd.write_dataframe(df, directory, filename, "json")
-
+            if not no_raw:
+                gd.write_dataframe(df, directory, filename, "json")
         else:
             print("Information: dataframe was incomplete for csv. Trying geojson.")
             df = load['geojson'](itemId)
@@ -249,7 +251,8 @@ def get_rki_data(read_data=dd.defaultDict['read_data'],
             complete = check_for_completeness(df)
 
             if not df.empty and complete:
-                gd.write_dataframe(df, directory, filename, "json")
+                if not no_raw:
+                    gd.write_dataframe(df, directory, filename, "json")
             else:
                 exit_string = "Something went wrong, dataframe is empty for csv and geojson!"
                 sys.exit(exit_string)
@@ -296,11 +299,11 @@ def get_rki_data(read_data=dd.defaultDict['read_data'],
     # df['Age10'] = np.select(conditions, choices, default=dd.GerEng['unbekannt'])
 
     # convert "Datenstand" to real date:
-    df.Datenstand = pandas.to_datetime(df.Datenstand, format='%d.%m.%Y, %H:%M Uhr')  # .dt.tz_localize('Europe/Berlin')
+    df.Datenstand = pandas.to_datetime(df.Datenstand, format='%d.%m.%Y, %H:%M Uhr')
 
     # Correct Timestampes:
     for col in ['Meldedatum', 'Refdatum', 'Date']:
-        df[col] = df[col].astype('datetime64[ns]')  # .dt.tz_localize('Europe/Berlin')
+        df[col] = df[col].astype('datetime64[ns]')
 
     # Be careful "Refdatum" may act different to official describtion
     # on https://npgeo-corona-npgeo-de.hub.arcgis.com/datasets/dd4580c810204019a7b8eb3e0b329dd6_0,
@@ -683,9 +686,10 @@ def get_rki_data(read_data=dd.defaultDict['read_data'],
 def main():
     """! Main program entry."""
 
-    [read_data, out_form, out_folder, fill_dates, make_plot, moving_average, split_berlin] = gd.cli("rki")
+    [read_data, out_form, out_folder, no_raw, fill_dates, make_plot, moving_average, split_berlin]\
+        = gd.cli("rki")
 
-    get_rki_data(read_data, out_form, out_folder, fill_dates, make_plot, moving_average, split_berlin)
+    get_rki_data(read_data, out_form, out_folder, no_raw, fill_dates, make_plot, moving_average, split_berlin)
 
 
 if __name__ == "__main__":

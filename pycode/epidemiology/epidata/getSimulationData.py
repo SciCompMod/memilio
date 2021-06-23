@@ -22,6 +22,7 @@ from epidemiology.epidata import getDIVIData
 def get_simulation_data(read_data=dd.defaultDict['read_data'],
                  out_form=dd.defaultDict['out_form'],
                  out_folder=dd.defaultDict['out_folder'],
+                 no_raw=dd.defaultDict['no_raw'],
                  end_date=dd.defaultDict['end_date'],
                  fill_dates=dd.defaultDict['fill_dates'],
                  make_plot=dd.defaultDict['make_plot'],
@@ -33,15 +34,16 @@ def get_simulation_data(read_data=dd.defaultDict['read_data'],
     """! Downloads all data from external sources
 
     The functions which are called are:
-    - getRKIData.get_rki_data(read_data, out_form, out_folder, make_plot)
-    - getPopulationData.get_population_data(read_data, out_form, out_folder)
-    - getVaccineData.get_jh_data(read_data, out_form, out_folder)
-    - getDIVIData.get_divi_data(read_data, out_form, out_folder, end_date, start_date, update_data)
+    - getRKIData.get_rki_data
+    - getPopulationData.get_population_data
+    - getVaccineData.get_jh_data
+    - getDIVIData.get_divi_data
 
     Keyword arguments:
     @param read_data False [Default] or True. Defines if data is read from file or downloaded.
     @param out_form File format which is used for writing the data. Default defined in defaultDict.
     @param out_folder Path to folder where data is written in folder out_folder/Germany.
+    @param no_raw True or False [Default]. Defines if unchanged raw data is saved or not.
     @param end_date [Optional] Date to stop to download data [Default = today].
     @param make_plot False [Default] or True. Defines if plots are generated with matplotlib.
     @param split_berlin True [Default] or False. Defines if Berlin counties is fused to just on county.
@@ -50,19 +52,19 @@ def get_simulation_data(read_data=dd.defaultDict['read_data'],
     "False [Default]" if it is downloaded for all dates from start_date to end_date.
     """
 
-    getRKIData.get_rki_data(read_data, out_form, out_folder, fill_dates, make_plot, moving_average, split_berlin)
-    getPopulationData.get_population_data(read_data, out_form, out_folder)
-    getPopulationData.get_age_population_data(read_data, out_form, out_folder)
-    getDIVIData.get_divi_data(read_data, out_form, out_folder, end_date, start_date, update_data)
-    getVaccineData.get_vaccine_data(read_data, out_form, out_folder)
+    getRKIData.get_rki_data(read_data, out_form, out_folder, no_raw, fill_dates, make_plot, moving_average, split_berlin)
+    getPopulationData.get_population_data(read_data, out_form, out_folder, no_raw)
+    getPopulationData.get_age_population_data(read_data, out_form, out_folder, no_raw)
+    getDIVIData.get_divi_data(read_data, out_form, out_folder, no_raw, end_date, start_date, update_data)
+    getVaccineData.get_vaccine_data(read_data, out_form, out_folder, no_raw)
 
 
 def main():
     """! Main program entry."""
 
-    [read_data, out_form, out_folder, end_date, fill_dates, make_plot, moving_average, split_berlin, start_date,
+    [read_data, out_form, out_folder, no_raw, end_date, fill_dates, make_plot, moving_average, split_berlin, start_date,
      update_data] = gd.cli("sim")
-    get_simulation_data(read_data, out_form, out_folder, end_date, fill_dates, make_plot, moving_average, split_berlin,
+    get_simulation_data(read_data, out_form, out_folder, no_raw, end_date, fill_dates, make_plot, moving_average, split_berlin,
                         start_date, update_data)
 
 

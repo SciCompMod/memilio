@@ -171,20 +171,23 @@ def cli(what):
     parser.add_argument('-r', '--read-from-disk',
                         help='Reads the data from file "json" instead of downloading it.',
                         action='store_true')
-    parser.add_argument('-ff', '--file-format', type=str, default=dd.defaultDict['out_form'],
+    parser.add_argument('-f', '--file-format', type=str, default=dd.defaultDict['out_form'],
                         choices=['json', 'hdf5', 'json_timeasstring'],
                         help='Defines output format for data files. Default is \"' + str(
                             dd.defaultDict['out_form'] + "\"."))
     parser.add_argument('-o', '--out-path', type=str, default=out_path_default, help='Defines folder for output.')
+    parser.add_argument('-n', '--no-raw', default=dd.defaultDict['no_raw'],
+                        help='Defines if raw data fill be stored for further use.',
+                        action='store_true')
 
     if 'end_date' in what_list:
-        parser.add_argument('-ed', '--end-date',
+        parser.add_argument('-e', '--end-date',
                             help='Defines date after which data download is stopped.'
                                  'Should have form: YYYY-mm-dd. Default is today',
                             type=lambda s: datetime.datetime.strptime(s, '%Y-%m-%d').date(),
                             default=dd.defaultDict['end_date'])
     if 'fill_dates' in what_list:
-        parser.add_argument('-fd', '--fill_dates',
+        parser.add_argument('-d', '--fill-dates',
                             help='the resulting dfs contain all dates instead of'
                                  ' omitting dates where no new cases were reported',
                             action='store_true')
@@ -192,16 +195,16 @@ def cli(what):
         parser.add_argument('-p', '--plot', help='Plots the data.',
                             action='store_true')
     if 'moving_average' in what_list:
-        parser.add_argument('-ma', '--moving_average',
+        parser.add_argument('-m', '--moving-average',
                             help='The moving average is computed instead of the real values',
                             action='store_true')
     if 'split_berlin' in what_list:
-        parser.add_argument('-sb', '--split_berlin',
+        parser.add_argument('-b', '--split-berlin',
                             help='Berlin data is split into different counties,'
                                  ' instead of having only one county for Berlin.',
                             action='store_true')
     if 'start_date' in what_list:
-        parser.add_argument('-sd', '--start-date',
+        parser.add_argument('-s', '--start-date',
                             help='Defines start date for data download. Should have form: YYYY-mm-dd.'
                                  'Default is 2020-04-24',
                             type=lambda s: datetime.datetime.strptime(s, '%Y-%m-%d').date(),
@@ -219,6 +222,7 @@ def cli(what):
     arg_list.append(read_data)
     arg_list.append(args.file_format)
     arg_list.append(args.out_path)
+    arg_list.append(args.no_raw)
 
     # add additional arguments in alphabetical order
     # TODO: check if it is possible to automatically generate this
@@ -254,7 +258,6 @@ def check_dir(directory):
     If it does not exist it is created.
 
     @param directory directory which should exist
-
     """
 
     # check if directory exists or create it

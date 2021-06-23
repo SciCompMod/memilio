@@ -21,6 +21,7 @@ from epidemiology.epidata import getJHData as gjd
 def get_rki_data_with_estimations(read_data=dd.defaultDict['read_data'],
                                   out_form=dd.defaultDict['out_form'],
                                   out_folder=dd.defaultDict['out_folder'],
+                                  no_raw=dd.defaultDict['no_raw'],
                                   make_plot=dd.defaultDict['make_plot']):
 
     """! Function to estimate recovered and deaths from combination of RKI and JH data
@@ -33,6 +34,7 @@ def get_rki_data_with_estimations(read_data=dd.defaultDict['read_data'],
     @param read_data False [Default] or True. Defines if data is read from file or downloaded.
     @param out_form json [Default]
     @param out_folder Folder where data is written to.
+    @param no_raw True or False [Default]. Defines if unchanged raw data is saved or not.
     @param make_plot [Optional] RKI and estimated data can be compared by plots
     """
 
@@ -45,10 +47,11 @@ def get_rki_data_with_estimations(read_data=dd.defaultDict['read_data'],
         split_berlin = False
 
         # get rki data
-        grd.get_rki_data(read_data, out_form, out_folder, fill_dates, make_plot_rki, moving_average, split_berlin)
+        grd.get_rki_data(read_data, out_form, out_folder, no_raw, fill_dates, make_plot_rki, moving_average,
+                         no_raw, split_berlin)
 
         # get data from John Hopkins University
-        gjd.get_jh_data(read_data, out_form, out_folder)
+        gjd.get_jh_data(read_data, out_form, out_folder, no_raw)
 
     # Now we now which data is generated and we can use it
     # read in jh data
@@ -311,8 +314,8 @@ def download_weekly_deaths_numbers_rki(data_path):
 def main():
     """! Main program entry."""
 
-    [read_data, out_form, out_folder, make_plot] = gd.cli("rkiest")
-    get_rki_data_with_estimations(read_data, out_form, out_folder, make_plot)
+    [read_data, out_form, out_folder, no_raw, make_plot] = gd.cli("rkiest")
+    get_rki_data_with_estimations(read_data, out_form, out_folder, no_raw, make_plot)
 
 
 if __name__ == "__main__":

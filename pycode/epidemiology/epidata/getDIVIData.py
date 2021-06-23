@@ -301,6 +301,7 @@ def download_data_for_one_day(last_number, download_date):
 def get_divi_data(read_data=dd.defaultDict['read_data'],
                   out_form=dd.defaultDict['out_form'],
                   out_folder=dd.defaultDict['out_folder'],
+                  no_raw=dd.defaultDict['no_raw'],
                   end_date=dd.defaultDict['end_date'],
                   start_date=dd.defaultDict['start_date'],
                   update_data=dd.defaultDict['update_data'],
@@ -341,6 +342,7 @@ def get_divi_data(read_data=dd.defaultDict['read_data'],
     @param update_data "True" if existing data is updated or
     "False [Default]" if it is downloaded for all dates from start_date to end_date.
     @param out_folder Folder where data is written to.
+    @param no_raw True or False [Default]. Defines if unchanged raw data is saved or not.
     @param start_date [Optional] Date to start to download data [Default = 2020.4.24].
     @param end_date [Optional] Date to stop to download data [Default = today].
     """
@@ -375,7 +377,6 @@ def get_divi_data(read_data=dd.defaultDict['read_data'],
         start_date = end_date + delta
 
         if update_data:
-
             if not df.empty:
                 newest_date = pandas.to_datetime(df['daten_stand']).max().date()
 
@@ -437,7 +438,8 @@ def get_divi_data(read_data=dd.defaultDict['read_data'],
                   "to the dictionary \"call_number_dict\" in the function \"download_data_for_one_day\": ")
             print(new_dict_string)
 
-        gd.write_dataframe(df, directory, filename, out_form)
+        if not no_raw:
+            gd.write_dataframe(df, directory, filename, out_form)
     else:
         exit_string = "Something went wrong, dataframe is empty."
         sys.exit(exit_string)
@@ -494,8 +496,8 @@ def get_divi_data(read_data=dd.defaultDict['read_data'],
 def main():
     """ Main program entry."""
 
-    [read_data, out_form, out_folder, end_date, start_date, update_data] = gd.cli('divi',)
-    get_divi_data(read_data, out_form, out_folder, end_date, start_date, update_data)
+    [read_data, out_form, out_folder, no_raw, end_date, start_date, update_data] = gd.cli('divi',)
+    get_divi_data(read_data, out_form, out_folder, no_raw, end_date, start_date, update_data)
 
 
 if __name__ == "__main__":

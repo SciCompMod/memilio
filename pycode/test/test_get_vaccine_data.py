@@ -1,17 +1,14 @@
 import unittest
 from pyfakefs import fake_filesystem_unittest
-
-
 from unittest.mock import patch, call
-
 
 import os
 import pandas as pd
 import numpy as np
 
-
 from epidemiology.epidata import getVaccineData
 from epidemiology.epidata import getPopulationData
+
 
 class TestGetVaccineData(fake_filesystem_unittest.TestCase):
     # construct fake directory for testing
@@ -65,15 +62,14 @@ class TestGetVaccineData(fake_filesystem_unittest.TestCase):
     test_result_df = pd.DataFrame(data, columns=col_names)
     test_result_df[test_result_df.columns[[0,1,3]]] = test_result_df[test_result_df.columns[[0,1,3]]].astype('int64')
 
-
     def setUp(self):
         self.setUpPyfakefs()
 
     @patch('epidemiology.epidata.getVaccineData.download_vaccine_data', return_value=(test_vaccine_df, 'test_vaccine'))
     @patch('epidemiology.epidata.getVaccineData.getPopulationData.get_age_population_data', return_value=test_pop_df)
     def test_get_vaccine_data(self, mock_vaccine, mock_pop):
-        [read_data, out_form, out_folder] = [False, 'json', self.path]
-        getVaccineData.get_vaccine_data(read_data, out_form, out_folder)
+        [read_data, out_form, out_folder, no_raw] = [False, 'json', self.path, False]
+        getVaccineData.get_vaccine_data(read_data, out_form, out_folder, no_raw)
 
         directory = os.path.join(out_folder, 'Germany/')
 
@@ -84,7 +80,5 @@ class TestGetVaccineData(fake_filesystem_unittest.TestCase):
         pd.testing.assert_frame_equal(test_df, self.test_result_df)
 
 
-
 if __name__ == '__main__':
     unittest.main()
-

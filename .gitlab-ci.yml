@@ -248,6 +248,8 @@ download-data:
       - data_dl/SouthKorea/*.json
       - data_dl/US/*.json
       - data_dl/China/*.json
+  only:
+     - master
 
 build-js:
   tags:

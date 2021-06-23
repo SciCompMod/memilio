@@ -28,7 +28,8 @@ defaultDict = {
    'split_berlin': False,
    'moving_average': False,
    'fill_dates': False,
-   'out_form': 'json_timeasstring'
+   'out_form': 'json_timeasstring',
+   'no_raw': False
 }
 
 # The following dict EngEng makes sure that for all

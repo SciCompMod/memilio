@@ -14,7 +14,8 @@ from epidemiology.epidata import defaultDict as dd
 
 def get_jh_data(read_data=dd.defaultDict['read_data'],
                 out_form=dd.defaultDict['out_form'],
-                out_folder=dd.defaultDict['out_folder']):
+                out_folder=dd.defaultDict['out_folder'],
+                no_raw=dd.defaultDict['no_raw']):
     """! Download data from John Hopkins University
 
    Data is either downloaded and afterwards stored or loaded from a stored filed.
@@ -31,6 +32,7 @@ def get_jh_data(read_data=dd.defaultDict['read_data'],
    @param read_data False [Default] or True. Defines if data is read from file or downloaded.
    @param out_form File format which is used for writing the data. Default defined in defaultDict.
    @param out_folder Path to folder where data is written in folder out_folder/Germany.
+   @param no_raw True or False [Default]. Defines if unchanged raw data is saved or not.
    """
 
     filename = "FullData_JohnHopkins"
@@ -54,7 +56,8 @@ def get_jh_data(read_data=dd.defaultDict['read_data'],
         # ('Europe/Berlin')
 
         # output data to not always download it
-        gd.write_dataframe(df, "", filename, "json")
+        if not no_raw:
+            gd.write_dataframe(df, out_folder, filename, "json")
 
     df.rename({'Country/Region': 'CountryRegion', 'Province/State': 'ProvinceState'}, axis=1, inplace=True)
     print("Available columns:", df.columns)
@@ -120,8 +123,8 @@ def get_jh_data(read_data=dd.defaultDict['read_data'],
 def main():
     """! Main program entry."""
 
-    [read_data, out_form, out_folder] = gd.cli("jh")
-    get_jh_data(read_data, out_form, out_folder)
+    [read_data, out_form, out_folder, no_raw] = gd.cli("jh")
+    get_jh_data(read_data, out_form, out_folder, no_raw)
 
 
 if __name__ == "__main__":
