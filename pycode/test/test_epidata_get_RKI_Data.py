@@ -124,8 +124,8 @@ class test_get_RKI_Data(fake_filesystem_unittest.TestCase):
 
     def test_get_rki_data_read(self):
         # Test without downloading data
-        [read_data, out_form, out_folder, fill_dates, make_plot, moving_average, split_berlin] = \
-            [True, 'json_timeasstring', self.path, False, False, False, False]
+        [read_data, out_form, out_folder, no_raw, fill_dates, make_plot, moving_average, split_berlin] = \
+            [True, 'json_timeasstring', self.path, False, False, False, False, False]
 
         directory = os.path.join(out_folder, 'Germany/')
         gd.check_dir(directory)
@@ -135,7 +135,8 @@ class test_get_RKI_Data(fake_filesystem_unittest.TestCase):
         file_with_path = os.path.join(directory, file)
 
         with self.assertRaises(SystemExit) as cm:
-            grki.get_rki_data(read_data, out_form, out_folder, fill_dates, make_plot, moving_average, split_berlin)
+            grki.get_rki_data(read_data, out_form, out_folder, no_raw, fill_dates, make_plot, moving_average,
+                              split_berlin)
 
         self.assertEqual(cm.exception.code, "Error: The file: " + file_with_path +
                          " does not exist. Call program without -r flag to get it.")
@@ -145,7 +146,8 @@ class test_get_RKI_Data(fake_filesystem_unittest.TestCase):
         # check if expected file is written
         self.assertEqual(len(os.listdir(directory)), 1)
 
-        grki.get_rki_data(read_data, out_form, out_folder, fill_dates, make_plot, moving_average, split_berlin)
+        grki.get_rki_data(read_data, out_form, out_folder, fill_dates, make_plot, moving_average, no_raw,
+                          split_berlin)
 
         # check if expected files are written
         self.assertEqual(len(os.listdir(directory)), 14)
@@ -234,8 +236,8 @@ class test_get_RKI_Data(fake_filesystem_unittest.TestCase):
     @patch('epidemiology.epidata.getRKIData.gd.loadCsv')
     def test_get_rki_data_dowload(self, mock_loadCsv, mock_loadGeojson):
         # Test with downloading data
-        [read_data, out_form, out_folder, fill_dates, make_plot, moving_average, split_berlin] = \
-            [False, 'json_timeasstring', self.path, False, False, False, False, ]
+        [read_data, out_form, out_folder, fill_dates, make_plot, moving_average, no_raw, split_berlin] = \
+            [False, 'json_timeasstring', self.path, False, False, False, False, False, ]
 
         directory = os.path.join(out_folder, 'Germany/')
         gd.check_dir(directory)
@@ -249,7 +251,8 @@ class test_get_RKI_Data(fake_filesystem_unittest.TestCase):
         mock_loadCsv.return_value = pd.read_json(os.path.join(directory, "notFullDataRKI.json"))
         mock_loadGeojson.return_value = pd.read_json(os.path.join(directory, "notFullDataRKI.json"))
         with self.assertRaises(SystemExit) as cm:
-            grki.get_rki_data(read_data, out_form, out_folder, fill_dates, make_plot, moving_average, split_berlin)
+            grki.get_rki_data(read_data, out_form, out_folder, no_raw, fill_dates, make_plot, moving_average,
+                              split_berlin)
         self.assertEqual(cm.exception.code, "Something went wrong, dataframe is empty for csv and geojson!")
 
         mock_loadGeojson.assert_called_once()
@@ -259,7 +262,8 @@ class test_get_RKI_Data(fake_filesystem_unittest.TestCase):
         mock_loadCsv.side_effect = [pd.DataFrame(), pd.read_json(os.path.join(directory, "notFullDataRKI.json"))]
         mock_loadGeojson.return_value = pd.read_json(os.path.join(directory, "FullDataRKI.json"))
 
-        grki.get_rki_data(read_data, out_form, out_folder, fill_dates, make_plot, moving_average, split_berlin)
+        grki.get_rki_data(read_data, out_form, out_folder, no_raw, fill_dates, make_plot, moving_average,
+                          split_berlin)
 
         mock_loadGeojson.assert_called()
         mock_loadCsv.assert_called()
@@ -302,8 +306,8 @@ class test_get_RKI_Data(fake_filesystem_unittest.TestCase):
     def test_get_rki_data_dowload_split_berlin(self, mock_loadCsv, mock_loadGeojson):
         # Test case with downloading data where first csv-source is incomplete and second one is used
         # and split_berlin = True
-        [read_data, out_form, out_folder, fill_dates, make_plot, moving_average, split_berlin] = \
-            [False, 'json_timeasstring', self.path, False, False, False, True]
+        [read_data, out_form, out_folder, fill_dates, no_raw, make_plot, moving_average, split_berlin] = \
+            [False, 'json_timeasstring', self.path, False, False, False, False, True]
 
         directory = os.path.join(out_folder, 'Germany/')
         gd.check_dir(directory)
@@ -317,7 +321,8 @@ class test_get_RKI_Data(fake_filesystem_unittest.TestCase):
         mock_loadCsv.side_effect = [pd.DataFrame(), pd.read_json(os.path.join(directory, "FullDataRKI.json"))]
         mock_loadGeojson.return_value = pd.DataFrame()
 
-        grki.get_rki_data(read_data, out_form, out_folder, fill_dates, make_plot, moving_average, split_berlin)
+        grki.get_rki_data(read_data, out_form, out_folder, no_raw, fill_dates, make_plot, moving_average,
+                          split_berlin)
 
         mock_loadGeojson.assert_not_called()
         mock_loadCsv.assert_called()
@@ -382,8 +387,8 @@ class test_get_RKI_Data(fake_filesystem_unittest.TestCase):
 
     def test_get_rki_data_read_moving_average(self):
         # Test without downloading data
-        [read_data, out_form, out_folder, fill_dates, make_plot, moving_average, split_berlin] = \
-            [True, 'json_timeasstring', self.path, False, False, True, False]
+        [read_data, out_form, out_folder, no_raw, fill_dates, make_plot, moving_average, split_berlin] = \
+            [True, 'json_timeasstring', self.path, False, False, False, True, False]
 
         directory = os.path.join(out_folder, 'Germany/')
         gd.check_dir(directory)
@@ -393,7 +398,8 @@ class test_get_RKI_Data(fake_filesystem_unittest.TestCase):
         # check if expected file is written
         self.assertEqual(len(os.listdir(directory)), 1)
 
-        grki.get_rki_data(read_data, out_form, out_folder, fill_dates, make_plot, moving_average, split_berlin)
+        grki.get_rki_data(read_data, out_form, out_folder, no_raw, fill_dates, make_plot, moving_average,
+                          split_berlin)
 
         # check if expected files are written
         self.assertEqual(len(os.listdir(directory)), 27)
@@ -496,8 +502,8 @@ class test_get_RKI_Data(fake_filesystem_unittest.TestCase):
 
     def test_get_rki_data_read_fill_dates(self):
         # Test without downloading data
-        [read_data, out_form, out_folder, fill_dates, make_plot, moving_average, split_berlin] = \
-            [True, 'json_timeasstring', self.path, True, False, False, False]
+        [read_data, out_form, out_folder, no_raw, fill_dates, make_plot, moving_average, split_berlin] = \
+            [True, 'json_timeasstring', self.path, False, True, False, False, False]
 
         directory = os.path.join(out_folder, 'Germany/')
         gd.check_dir(directory)
@@ -507,7 +513,8 @@ class test_get_RKI_Data(fake_filesystem_unittest.TestCase):
         # check if expected file is written
         self.assertEqual(len(os.listdir(directory)), 1)
 
-        grki.get_rki_data(read_data, out_form, out_folder, fill_dates, make_plot, moving_average, split_berlin)
+        grki.get_rki_data(read_data, out_form, out_folder, no_raw, fill_dates, make_plot, moving_average,
+                          split_berlin)
 
         # check if expected files are written
         self.assertEqual(len(os.listdir(directory)), 27)
@@ -583,8 +590,8 @@ class test_get_RKI_Data(fake_filesystem_unittest.TestCase):
 
     def test_get_rki_data_read_moving_average_and_split_berlin(self):
         # test if split_berlin and moving_average = True are working together
-        [read_data, out_form, out_folder, fill_dates, make_plot, moving_average, split_berlin] = \
-            [True, 'json_timeasstring', self.path, False, False, True, True, ]
+        [read_data, out_form, out_folder, no_raw, fill_dates, make_plot, moving_average, split_berlin] = \
+            [True, 'json_timeasstring', self.path, False, False, False, True, True]
 
         directory = os.path.join(out_folder, 'Germany/')
         gd.check_dir(directory)
@@ -594,7 +601,8 @@ class test_get_RKI_Data(fake_filesystem_unittest.TestCase):
         # check if expected file is written
         self.assertEqual(len(os.listdir(directory)), 1)
 
-        grki.get_rki_data(read_data, out_form, out_folder, fill_dates, make_plot, moving_average, split_berlin)
+        grki.get_rki_data(read_data, out_form, out_folder, no_raw, fill_dates, make_plot, moving_average,
+                          split_berlin)
 
         # check if expected files are written (27  same number as with split_berlin=False)
         self.assertEqual(len(os.listdir(directory)), 27)
@@ -630,8 +638,8 @@ class test_get_RKI_Data(fake_filesystem_unittest.TestCase):
 
     def test_get_rki_data_read_all_dates_and_split_berlin(self):
         # test if split_berlin and moving_average = True are working together
-        [read_data, out_form, out_folder, fill_dates, make_plot, moving_average, split_berlin] = \
-            [True, 'json_timeasstring', self.path, True, False, False, True, ]
+        [read_data, out_form, out_folder, no_raw, fill_dates, make_plot, moving_average, split_berlin] = \
+            [True, 'json_timeasstring', self.path, False, True, False, False, True]
 
         directory = os.path.join(out_folder, 'Germany/')
         gd.check_dir(directory)
@@ -641,7 +649,8 @@ class test_get_RKI_Data(fake_filesystem_unittest.TestCase):
         # check if expected file is written
         self.assertEqual(len(os.listdir(directory)), 1)
 
-        grki.get_rki_data(read_data, out_form, out_folder, fill_dates, make_plot, moving_average, split_berlin)
+        grki.get_rki_data(read_data, out_form, out_folder, no_raw, fill_dates, make_plot, moving_average,
+                          split_berlin)
 
         # check if expected files are written (27  same number as with split_berlin=False)
         self.assertEqual(len(os.listdir(directory)), 27)
@@ -742,7 +751,8 @@ class test_get_RKI_Data(fake_filesystem_unittest.TestCase):
         Confirmed[23:28] = 4
         Confirmed[28:30] = 5
 
-        result_df = pd.DataFrame(np.array([ID_State, State, Date, Confirmed]).T, columns = ['ID_State', 'State', 'Date', 'Confirmed'])
+        result_df = pd.DataFrame(np.array([ID_State, State, Date, Confirmed]).T, columns =
+        ['ID_State', 'State', 'Date', 'Confirmed'])
 
         Date = ['2020-01-' + str(x).zfill(2) for x in range(2,32)]
         Date = np.array([np.datetime64(x) for x in Date])
@@ -755,7 +765,8 @@ class test_get_RKI_Data(fake_filesystem_unittest.TestCase):
         Confirmed[24:29] = 8
         Confirmed[29:30] = 9
 
-        result_df = result_df.append(pd.DataFrame(np.array([ID_State, State, Date, Confirmed]).T, columns = ['ID_State', 'State', 'Date', 'Confirmed']))
+        result_df = result_df.append(pd.DataFrame(np.array([ID_State, State, Date, Confirmed]).T, columns =
+        ['ID_State', 'State', 'Date', 'Confirmed']))
         result_df = result_df.astype({'ID_State': 'float64', 'Date': 'datetime64[ns]'})
         result_df.index = (range(len(result_df)))
 
@@ -805,9 +816,58 @@ class test_get_RKI_Data(fake_filesystem_unittest.TestCase):
         test_df = test_df.groupby(level=[1,2]).cumsum().reset_index()
         pd.testing.assert_frame_equal(test_df, result_df)
 
+    @patch('epidemiology.epidata.getRKIData.gd.loadCsv')
+    def test_no_raw(self, mock_loadCsv):
+        # Test with downloading data
+        [read_data, out_form, out_folder, no_raw, fill_dates, make_plot, moving_average, split_berlin] = \
+            [False, 'json_timeasstring', self.path, True, False, False, False, False]
+
+        directory = os.path.join(out_folder, 'Germany/')
+        gd.check_dir(directory)
+
+        # check if expected files are written
+        mock_loadCsv.return_value = pd.read_json(self.test_string_all_federal_states)
+
+        grki.get_rki_data(read_data, out_form, out_folder, no_raw, fill_dates, make_plot, moving_average,
+                          split_berlin)
+
+        mock_loadCsv.assert_called()
+
+        # check if expected files are written
+        # 13 is one less because FullDataRKI is not written
+        self.assertEqual(len(os.listdir(directory)), 13)
+
+        self.assertTrue("FullDataRKI.json" not in os.listdir(directory))
+
+        # test output files
+        file = "all_germany_rki.json"
+        f_read = os.path.join(directory, file)
+        df = pd.read_json(f_read)
+
+        file = 'infected_rki.json'
+        f_read = os.path.join(directory, file)
+        df_infected = pd.read_json(f_read)
+
+        file = 'deaths_rki.json'
+        f_read = os.path.join(directory, file)
+        df_deaths = pd.read_json(f_read)
+
+        data_list = df.columns.values.tolist()
+        self.assertEqual(data_list, ["Date", "Confirmed", "Deaths", "Recovered"])
+        self.assertEqual(df[(df['Date'] == "2020-08-07")]['Confirmed'].item(),
+                         df_infected[(df_infected['Date'] == "2020-08-07")]['Confirmed'].item())
+        self.assertEqual(df[(df['Date'] == "2020-08-07")]['Confirmed'].item(), 12)
+        self.assertEqual(df[(df['Date'] == "2020-08-07")]['Deaths'].item(),
+                         df_deaths[(df_deaths['Date'] == "2020-08-07")]['Deaths'].item())
+        self.assertEqual(df[(df['Date'] == "2020-08-07")]['Deaths'].item(), 2)
+        self.assertEqual(df[(df['Date'] == "2020-08-07")]["Recovered"].item(), 11)
+        self.assertEqual(df[(df['Date'] == "2020-06-10")]['Confirmed'].item(), 6)
+        self.assertEqual(df[(df['Date'] == "2020-06-10")]['Deaths'].item(), 1)
+        self.assertEqual(df[(df['Date'] == "2020-06-10")]["Recovered"].item(), 6)
+
     @patch('epidemiology.epidata.getRKIData.gd.cli')
     def test_main(self, mock_cli):
-        mock_cli.return_value = [True, 'json_timeasstring', self.path, False, False, False, False]
+        mock_cli.return_value = [True, 'json_timeasstring', self.path, False, False, False, False, False]
 
         out_folder = self.path
         directory = os.path.join(out_folder, 'Germany/')

@@ -32,7 +32,8 @@ from epidemiology.epidata import defaultDict as dd
 
 def get_spain_data(read_data=dd.defaultDict['read_data'],
                    out_form=dd.defaultDict['out_form'],
-                   out_folder=dd.defaultDict['out_folder']):
+                   out_folder=dd.defaultDict['out_folder'],
+                   no_raw=dd.defaultDict['no_raw']):
     """! Downloads data from Spain covid-19 data
 
    Source: https://github.com/datadista/datasets/tree/master/COVID%2019
@@ -57,62 +58,25 @@ def get_spain_data(read_data=dd.defaultDict['read_data'],
    @param read_data False [Default] or True. Defines if data is read from file or downloaded.
    @param out_form File format which is used for writing the data. Default defined in defaultDict.
    @param out_folder Path to folder where data is written in folder out_folder/Spain.
+   @param no_raw True or False [Default]. Defines if unchanged raw data is saved or not.
    """
 
     directory = os.path.join(out_folder, 'Spain/')
     gd.check_dir(directory)
 
+    _get_spain_all_age(read_data, out_form, no_raw, directory)
+    _get_spain_all_state(read_data, out_form, no_raw, directory)
+
+
+def _get_spain_all_age(read_data, out_form, no_raw, directory):
+
     ages_file = 'raw_spain_all_age'
-    stat_file = 'raw_spain_all_state'
 
-    if read_data:
-        AgesJSONData = os.path.join(directory, ages_file + '.json')
-        StatJSONData = os.path.join(directory, stat_file + '.json')
+    data_str = 'nacional_covid19_rango_edad'
+    api_url = 'https://raw.githubusercontent.com/datadista/datasets/master/COVID%2019/old_series/'
+    exit_string = "Files \'nacional_covid19_rango_edad\' are not available online. Check URL."
 
-        # if once dowloaded just read json file
-        print("Read from local.")
-
-        #### ages' data
-        df_age = pandas.read_json(AgesJSONData)
-
-        #### states' data
-        df_state = pandas.read_json(StatJSONData)
-
-    else:
-
-        print("Read Spanish data from online.")
-
-        try:
-            # Get data:
-            # https://raw.githubusercontent.com/datadista/datasets/master/COVID%2019/nacional_covid19_rango_edad.csv
-            df_age = gd.loadCsv('nacional_covid19_rango_edad',
-                                apiUrl=
-                                'https://raw.githubusercontent.com/datadista/datasets/master/COVID%2019/old_series/')
-        except:
-            exit_string = "Files \'nacional_covid19_rango_edad\' are not available online. Check URL."
-            sys.exit(exit_string)
-
-        if not df_age.empty:
-            # output data to not always download it
-            gd.write_dataframe(df_age, directory, ages_file, "json")
-
-        try:
-            # Get data:
-            # https://raw.githubusercontent.com/datadista/datasets/master/COVID%2019/ccaa_covid19_datos_isciii.csv
-            df_state = gd.loadCsv('ccaa_covid19_datos_isciii',
-                                  apiUrl=
-                                  'https://raw.githubusercontent.com/datadista/datasets/master/COVID%2019/old_series/')
-        except:
-            exit_string = "Files \'ccaa_covid19_datos_isciii\' are not available online. Check URL."
-            sys.exit(exit_string)
-
-        if not df_state.empty:
-
-            # output data to not always download it
-            gd.write_dataframe(df_age, directory, stat_file, "json")
-        else:
-            exit_string = "Something went wrong, dataframe is empty!"
-            sys.exit(exit_string)
+    df_age = _read_or_load_data(read_data, no_raw, directory, ages_file, data_str, api_url, exit_string)
 
     # Manipulate data
     if not df_age.empty:
@@ -127,7 +91,6 @@ def get_spain_data(read_data=dd.defaultDict['read_data'],
         age10 = dd.EngEng['age10']
         df_age.loc[df_age[gender] == 'ambos', [gender]] = dd.EngEng['both']
         df_age.loc[df_age[gender] == 'mujeres', [gender]] = dd.EngEng['female']
-        df_age.loc[df_age[gender] == 'mujeres', [gender]] = dd.EngEng['female']
         df_age.loc[df_age[gender] == 'hombres', [gender]] = dd.EngEng['male']
         df_age.loc[df_age[age10] == '80 y +', [age10]] = dd.EngEng['80+']
         df_age.loc[df_age[age10] == '90 y +', [age10]] = dd.EngEng['90+']
@@ -135,7 +98,33 @@ def get_spain_data(read_data=dd.defaultDict['read_data'],
 
         # Correct Timestamps:
         date = dd.EngEng['date']
-        df_age[date] = df_age[date].astype('datetime64[ns]').dt.tz_localize('Europe/Berlin')
+        df_age[date] = df_age[date].astype('datetime64[ns]')
+
+    # only consider men AND women (through information on gender away)
+    df_age = df_age.loc[df_age[dd.EngEng["gender"]] == dd.EngEng['both']]
+
+    # write file for all age groups summed together
+    df_agesum = df_age.loc[df_age[dd.EngEng["age10"]] == dd.EngEng['all']]
+
+    gd.write_dataframe(df_agesum, directory, "spain", out_form)
+
+    # write file with information on all age groups separately
+    # age_groups = ['0-9','10-19','20-29','30-39','40-49','50-59','60-69','70-79','80+']
+    df_agesep = df_age.loc[df_age[dd.EngEng["age10"]] != dd.EngEng['all']]
+
+    gd.write_dataframe(df_agesep, directory, "spain_all_age", out_form)
+
+
+def _get_spain_all_state(read_data, out_form, no_raw, directory):
+
+    stat_file = 'raw_spain_all_state'
+
+    data_str = 'ccaa_covid19_datos_isciii'
+    api_url = 'https://raw.githubusercontent.com/datadista/datasets/master/COVID%2019/old_series/'
+    exit_string = "Files \'ccaa_covid19_datos_isciii\' are not available online. Check URL."
+
+    df_state = _read_or_load_data(read_data, no_raw, directory,
+                                  stat_file, data_str , api_url, exit_string)
 
     if not df_state.empty:
         # standardization of column titles from Spanish to English
@@ -155,24 +144,9 @@ def get_spain_data(read_data=dd.defaultDict['read_data'],
         df_state.loc[df_state[state] == "Aragón", [state]] = dd.EsEng["Aragón"]
 
         # Correct Timestamps:
-        df_state['Date'] = df_state['Date'].astype('datetime64[ns]').dt.tz_localize('Europe/Berlin')
-
-    # only consider men AND women (through information on gender away)
-    df_age = df_age.loc[df_age[dd.EngEng["gender"]] == dd.EngEng['both']]
-
-    # write file for all age groups summed together
-    df_agesum = df_age.loc[df_age[dd.EngEng["age10"]] == dd.EngEng['all']]
-
-    gd.write_dataframe(df_agesum, directory, "spain", out_form)
-
-    # write file with information on all age groups separately
-    # age_groups = ['0-9','10-19','20-29','30-39','40-49','50-59','60-69','70-79','80+']
-    df_agesep = df_age.loc[df_age[dd.EngEng["age10"]] != dd.EngEng['all']]
-
-    gd.write_dataframe(df_agesep, directory, "spain_all_age", out_form)
+        df_state['Date'] = df_state['Date'].astype('datetime64[ns]')
 
     # Preparation for plotting/output:
-
     PCR_ONLY = False  # if pcr only is used
     # dff = df_state['state'].unique()
 
@@ -189,11 +163,46 @@ def get_spain_data(read_data=dd.defaultDict['read_data'],
     gd.write_dataframe(df_state, directory, "spain_all_state", out_form)
 
 
+def _read_or_load_data(read_data, no_raw, directory, file, data=None , api_url=None, exit_string=None):
+
+    if read_data:
+        JSONData = os.path.join(directory, file + '.json')
+
+        # if once downloaded just read json file
+        print("Read from local.")
+
+        df = pandas.read_json(JSONData)
+
+        if not df.empty:
+            return df
+        else:
+            exit_string = "Something went wrong, dataframe is empty!"
+            sys.exit(exit_string)
+
+    else:
+
+        print("Read Spanish data from online.")
+
+        try:
+            # Get data:
+            df = gd.loadCsv(data, apiUrl=api_url)
+        except:
+            sys.exit(exit_string)
+
+        if not df.empty:
+            if not no_raw:
+                # output data to not always download it
+                gd.write_dataframe(df, directory, file, "json")
+            return df
+        else:
+            exit_string = "Something went wrong, dataframe is empty!"
+            sys.exit(exit_string)
+
 def main():
     """! Main program entry."""
 
-    [read_data, out_form, out_folder] = gd.cli("spain")
-    get_spain_data(read_data, out_form, out_folder)
+    [read_data, out_form, out_folder, no_raw] = gd.cli("spain")
+    get_spain_data(read_data, out_form, out_folder, no_raw)
 
 
 if __name__ == "__main__":

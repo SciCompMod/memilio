@@ -17,7 +17,8 @@ from epidemiology.epidata import defaultDict as dd
 
 def get_population_data(read_data=dd.defaultDict['read_data'],
                         out_form=dd.defaultDict['out_form'],
-                        out_folder=dd.defaultDict['out_folder']):
+                        out_folder=dd.defaultDict['out_folder'],
+                        no_raw=dd.defaultDict['no_raw']):
     """! Downloads population data
 
    A list of all datasets with population data is composed.
@@ -34,6 +35,7 @@ def get_population_data(read_data=dd.defaultDict['read_data'],
    @param read_data False [Default] or True. Defines if data is read from file or downloaded.
    @param out_form File format which is used for writing the data. Default defined in defaultDict.
    @param out_folder Path to folder where data is written in folder out_folder/Germany.
+   @param no_raw True or False [Default]. Defines if unchanged raw data is saved or not.
    """
 
     print("Warning: getpopulationdata is not working correctly. A bug workaround has been applied.")
@@ -50,11 +52,12 @@ def get_population_data(read_data=dd.defaultDict['read_data'],
     directory = os.path.join(out_folder, 'Germany/')
     gd.check_dir(directory)
 
+
     for d_i in d:
-        get_one_data_set(read_data, out_form, directory, d_i)
+        get_one_data_set(read_data, out_form, no_raw, directory, d_i)
 
 
-def get_one_data_set(read_data, out_form, directory, d):
+def get_one_data_set(read_data, out_form, no_raw, directory, d):
     """! download one dataset
 
    Data is either downloaded from website or loaded as specific json file from the given "directory".
@@ -89,7 +92,8 @@ def get_one_data_set(read_data, out_form, directory, d):
         df = load['csv'](d.item)
 
         # output data to not always download it
-        gd.write_dataframe(df, directory, d.filename, "json")
+        if not no_raw:
+            gd.write_dataframe(df, directory, d.filename, "json")
 
     print("Available columns:", df.columns)
 
@@ -323,9 +327,9 @@ def get_age_population_data(read_data=dd.defaultDict['read_data'],
 def main():
     """! Main program entry."""
 
-    [read_data, out_form, out_folder] = gd.cli("population")
-    get_age_population_data(read_data, out_form, out_folder)
-    get_population_data(read_data, out_form, out_folder)
+    [read_data, out_form, out_folder, no_raw] = gd.cli("population")
+    get_age_population_data(read_data, out_form, out_folder, no_raw)
+    get_population_data(read_data, out_form, out_folder, no_raw)
 
 
 if __name__ == "__main__":

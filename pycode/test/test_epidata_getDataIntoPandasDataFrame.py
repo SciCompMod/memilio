@@ -131,26 +131,30 @@ class Test_getDataIntoPandasDataFrame(fake_filesystem_unittest.TestCase):
         
         out_path_default = dd.defaultDict['out_folder']
         out_path_default = os.path.join(out_path_default, 'pydata')
-        
-        [read_data, out_form, out_folder] = gd.cli("spain")
+
+        [read_data, out_form, out_folder, no_raw] = gd.cli("spain")
 
         assert read_data == dd.defaultDict['read_data']
         assert out_form == dd.defaultDict['out_form']
         assert out_folder == out_path_default
+        assert no_raw == dd.defaultDict['no_raw']
 
-        [read_data, out_form, out_folder] = gd.cli("population")
-
-        assert read_data == dd.defaultDict['read_data']
-        assert out_form == dd.defaultDict['out_form']
-        assert out_folder == out_path_default
-
-        [read_data, out_form, out_folder] = gd.cli("jh")
+        [read_data, out_form, out_folder, no_raw] = gd.cli("population")
 
         assert read_data == dd.defaultDict['read_data']
         assert out_form == dd.defaultDict['out_form']
         assert out_folder == out_path_default
+        assert no_raw == dd.defaultDict['no_raw']
 
-        [read_data, out_form, out_folder, fill_dates, make_plot, moving_average, split_berlin] = gd.cli("rki")
+        [read_data, out_form, out_folder, no_raw] = gd.cli("jh")
+
+        assert read_data == dd.defaultDict['read_data']
+        assert out_form == dd.defaultDict['out_form']
+        assert out_folder == out_path_default
+        assert no_raw == dd.defaultDict['no_raw']
+
+        [read_data, out_form, out_folder, no_raw, fill_dates, make_plot, moving_average, split_berlin] \
+            = gd.cli("rki")
 
         assert read_data == dd.defaultDict['read_data']
         assert out_form == dd.defaultDict['out_form']
@@ -159,15 +163,17 @@ class Test_getDataIntoPandasDataFrame(fake_filesystem_unittest.TestCase):
         assert split_berlin == dd.defaultDict['split_berlin']
         assert moving_average == dd.defaultDict['moving_average']
         assert fill_dates == dd.defaultDict['fill_dates']
+        assert no_raw == dd.defaultDict['no_raw']
 
-        [read_data, out_form, out_folder, make_plot] = gd.cli("rkiest")
+        [read_data, out_form, out_folder, no_raw, make_plot] = gd.cli("rkiest")
 
         assert read_data == dd.defaultDict['read_data']
         assert out_form == dd.defaultDict['out_form']
         assert out_folder == out_path_default
+        assert no_raw == dd.defaultDict['no_raw']
         assert make_plot == dd.defaultDict['make_plot']
 
-        [read_data, out_form, out_folder, end_date, start_date, update] = gd.cli("divi")
+        [read_data, out_form, out_folder, no_raw, end_date, start_date, update] = gd.cli("divi")
 
         assert read_data == dd.defaultDict['read_data']
         assert out_form == dd.defaultDict['out_form']
@@ -175,13 +181,15 @@ class Test_getDataIntoPandasDataFrame(fake_filesystem_unittest.TestCase):
         assert end_date == dd.defaultDict['end_date']
         assert start_date == dd.defaultDict['start_date']
         assert update == dd.defaultDict['update_data']
+        assert no_raw == dd.defaultDict['no_raw']
 
-        [read_data, out_form, out_folder, end_date, fill_dates, make_plot, moving_average, split_berlin, start_date,
-         update] = gd.cli("sim")
+        [read_data, out_form, out_folder, no_raw, end_date, fill_dates, make_plot, moving_average, split_berlin,
+         start_date, update] = gd.cli("sim")
 
         assert read_data == dd.defaultDict['read_data']
         assert out_form == dd.defaultDict['out_form']
         assert out_folder == out_path_default
+        assert no_raw == dd.defaultDict['no_raw']
         assert end_date == dd.defaultDict['end_date']
         assert fill_dates == dd.defaultDict['fill_dates']
         assert make_plot == dd.defaultDict['make_plot']
@@ -200,7 +208,7 @@ class Test_getDataIntoPandasDataFrame(fake_filesystem_unittest.TestCase):
         the_exception = cm.exception
         self.assertEqual(the_exception.code, "Wrong key or cli_dict.")
 
-        test_args = ["prog", '-ff', 'wrong_format']
+        test_args = ["prog", '-f', 'wrong_format']
         with patch.object(sys, 'argv', test_args):
 
             with self.assertRaises(SystemExit) as cm:
@@ -264,34 +272,35 @@ class Test_getDataIntoPandasDataFrame(fake_filesystem_unittest.TestCase):
 
         folder = "some_folder"
 
-        test_args = ["prog", '--read-from-disk', '--out-path', folder, '--file-format', 'hdf5']
+        test_args = ["prog", '--read-from-disk', '--out-path', folder, '--file-format', 'hdf5', '--no-raw']
 
         with patch.object(sys, 'argv', test_args):
 
-            [read_data, out_form, out_folder] = gd.cli("spain")
-
+            [read_data, out_form, out_folder, no_raw] = gd.cli("spain")
             assert read_data == True
             assert out_form == 'hdf5'
             assert out_folder == "some_folder"
+            assert no_raw == True
 
-            [read_data, out_form, out_folder] = gd.cli("population")
-
+            [read_data, out_form, out_folder, no_raw] = gd.cli("population")
             assert read_data == True
             assert out_form == 'hdf5'
             assert out_folder == "some_folder"
+            assert no_raw == True
 
-            [read_data, out_form, out_folder] = gd.cli("jh")
-
+            [read_data, out_form, out_folder, no_raw] = gd.cli("jh")
             assert read_data == True
             assert out_form == 'hdf5'
             assert out_folder == "some_folder"
+            assert no_raw == True
 
         test_args = ["prog", '--read-from-disk', '--out-path', folder, '--file-format', 'hdf5', '--plot',
-                     '--split_berlin', '--moving_average']
+                     '--split-berlin', '--moving-average', '--no-raw']
 
         with patch.object(sys, 'argv', test_args):
 
-            [read_data, out_form, out_folder, fill_dates, make_plot, moving_average, split_berlin] = gd.cli("rki")
+            [read_data, out_form, out_folder, no_raw, fill_dates, make_plot, moving_average, split_berlin] \
+                = gd.cli("rki")
 
             assert read_data == True
             assert out_form == 'hdf5'
@@ -300,23 +309,25 @@ class Test_getDataIntoPandasDataFrame(fake_filesystem_unittest.TestCase):
             assert split_berlin == True
             assert moving_average == True
             assert make_plot == True
+            assert no_raw == True
 
         test_args = ["prog", '--read-from-disk', '--out-path', folder, '--file-format', 'json', '--plot']
 
         with patch.object(sys, 'argv', test_args):
 
-            [read_data, out_form, out_folder, make_plot] = gd.cli("rkiest")
+            [read_data, out_form, out_folder, no_raw, make_plot] = gd.cli("rkiest")
 
             assert read_data == True
             assert out_form == 'json'
             assert out_folder == "some_folder"
             assert make_plot == True
+            assert no_raw == False
 
         test_args = ["prog", '--out-path', folder, '--file-format', 'json', '--update',
-                     '--start-date', '2020-11-24', '--end-date', '2020-11-26']
+                     '--start-date', '2020-11-24', '--end-date', '2020-11-26', '-n']
 
         with patch.object(sys, 'argv', test_args):
-            [read_data, out_form, out_folder, end_date, start_date, update] = gd.cli("divi")
+            [read_data, out_form, out_folder, no_raw, end_date, start_date, update] = gd.cli("divi")
 
             assert read_data == dd.defaultDict['read_data']
             assert out_form == 'json'
@@ -324,13 +335,14 @@ class Test_getDataIntoPandasDataFrame(fake_filesystem_unittest.TestCase):
             assert end_date == date(2020,11,26)
             assert start_date == date(2020,11,24)
             assert update == True
+            assert no_raw == True
 
         test_args = ["prog", '--out-path', folder, '--file-format', 'json', '--update', '--plot',
                      '--start-date', '2020-11-24', '--end-date', '2020-11-26']
 
         with patch.object(sys, 'argv', test_args):
-            [read_data, out_form, out_folder, end_date, fill_dates, make_plot, moving_average, split_berlin, start_date,
-             update] = gd.cli("sim")
+            [read_data, out_form, out_folder, no_raw, end_date, fill_dates, make_plot, moving_average,
+             split_berlin, start_date, update] = gd.cli("sim")
 
             assert read_data == dd.defaultDict['read_data']
             assert out_form == 'json'
@@ -342,6 +354,7 @@ class Test_getDataIntoPandasDataFrame(fake_filesystem_unittest.TestCase):
             assert split_berlin == dd.defaultDict['split_berlin']
             assert moving_average == dd.defaultDict['moving_average']
             assert fill_dates == dd.defaultDict['fill_dates']
+            assert no_raw == False
 
     def test_check_dir(self):
 

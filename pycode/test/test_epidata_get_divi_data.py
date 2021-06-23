@@ -396,8 +396,8 @@ class TestGetDiviData(fake_filesystem_unittest.TestCase):
         mock_ddfod.return_value = [3961, pd.read_json(self.test_string1), ""]
 
         # case simple download
-        [read_data, update_data, make_plot, out_form, out_folder, start_date, end_date]\
-            = [False, False, False, "json", self.path, date(2020, 7, 7), date(2020, 7, 7)]
+        [read_data, update_data, out_form, out_folder, start_date, end_date, no_raw]\
+            = [False, False, "json", self.path, date(2020, 7, 7), date(2020, 7, 7), False]
 
         directory = os.path.join(out_folder, 'Germany/')
 
@@ -407,7 +407,7 @@ class TestGetDiviData(fake_filesystem_unittest.TestCase):
         file_out2 = "state_divi.json"
         file_out3 = "germany_divi.json"
 
-        gdd.get_divi_data(read_data, out_form, out_folder,
+        gdd.get_divi_data(read_data, out_form, out_folder, no_raw,
                           end_date, start_date, update_data)
 
         # check if folder Germany exists now
@@ -444,7 +444,7 @@ class TestGetDiviData(fake_filesystem_unittest.TestCase):
         start_date = date(2020, 7, 7)
         end_date = date(2020, 7, 9)
 
-        gdd.get_divi_data(read_data, out_form, out_folder,
+        gdd.get_divi_data(read_data, out_form, out_folder, no_raw,
                           end_date, start_date, update_data)
 
         # check if folder Germany exists now
@@ -493,7 +493,7 @@ class TestGetDiviData(fake_filesystem_unittest.TestCase):
         with self.assertRaises(SystemExit) as cm:
             start_date = date(2020, 7, 9)
             end_date = date(2020, 7, 9)
-            gdd.get_divi_data(read_data, out_form, out_folder,
+            gdd.get_divi_data(read_data, out_form, out_folder, no_raw,
                               end_date, start_date, update_data)
         self.assertEqual(cm.exception.code, "Something went wrong, dataframe is empty.")
 
@@ -501,7 +501,7 @@ class TestGetDiviData(fake_filesystem_unittest.TestCase):
         with self.assertRaises(SystemExit) as cm:
             start_date = date(2020, 4, 23)
             end_date = date(2020, 4, 24)
-            gdd.get_divi_data(read_data, out_form, out_folder,
+            gdd.get_divi_data(read_data, out_form, out_folder, no_raw,
                               end_date, start_date, update_data)
         self.assertEqual(cm.exception.code, "Something went wrong, dataframe is empty.")
 
@@ -513,7 +513,7 @@ class TestGetDiviData(fake_filesystem_unittest.TestCase):
         # check case where call_number has to be searched for and should be saved to call_dict.
         start_date = date(2020, 7, 10)
         end_date = date(2020, 7, 10)
-        gdd.get_divi_data(read_data, out_form, out_folder,
+        gdd.get_divi_data(read_data, out_form, out_folder, no_raw,
                           end_date, start_date, update_data)
 
         expected_calls = [call(start_string + date(2020, 7, 10).strftime("%Y-%m-%d") + end_string),
@@ -532,10 +532,37 @@ class TestGetDiviData(fake_filesystem_unittest.TestCase):
         # check if expected calls are the last three calls
         self.assertTrue(mock_print.mock_calls[-7:] == expected_calls)
 
+        # Test download of the full data set
+        @patch('builtins.print')
+        @patch('epidemiology.epidata.getDIVIData.download_data_for_one_day')
+        def test_gdd_download_data_no_raw(self, mock_ddfod, mock_print):
+            mock_ddfod.return_value = [3961, pd.read_json(self.test_string1), ""]
+
+            # case simple download
+            [read_data, update_data, out_form, out_folder, start_date, end_date, no_raw] \
+                = [False, False, "json", self.path, date(2020, 7, 7), date(2020, 7, 7), True]
+
+            directory = os.path.join(out_folder, 'Germany/')
+
+            file_out1 = "county_divi.json"
+            file_out2 = "state_divi.json"
+            file_out3 = "germany_divi.json"
+
+            gdd.get_divi_data(read_data, out_form, out_folder, no_raw,
+                              end_date, start_date, update_data)
+
+            # check if folder Germany exists now
+            self.assertEqual(len(os.listdir(self.path)), 1)
+            self.assertEqual(os.listdir(self.path), ['Germany'])
+
+            # check that four files are generated
+            self.assertEqual(len(os.listdir(directory)), 3)
+            self.assertEqual(os.listdir(directory).sort(), [file_out1, file_out2, file_out3].sort())
+
     def test_gdd_read_data(self):
 
-        [read_data, update_data, make_plot, out_form, out_folder, start_date, end_date] \
-            = [True, False, False, "json", self.path, dd.defaultDict['start_date'], dd.defaultDict['end_date']]
+        [read_data, update_data, out_form, out_folder, start_date, end_date, no_raw] \
+            = [True, False, "json", self.path, dd.defaultDict['start_date'], dd.defaultDict['end_date'], False]
 
         directory = os.path.join(out_folder, 'Germany/')
         gd.check_dir(directory)
@@ -549,7 +576,7 @@ class TestGetDiviData(fake_filesystem_unittest.TestCase):
 
         # Test case where file does not exist
         with self.assertRaises(SystemExit) as cm:
-            gdd.get_divi_data(read_data, out_form, out_folder,
+            gdd.get_divi_data(read_data, out_form, out_folder, no_raw,
                               end_date, start_date, update_data)
         self.assertEqual(cm.exception.code, "Error: The file: " + file_with_path +
                          " does not exist. Call program without -r or -u flag to get it.")
@@ -559,7 +586,7 @@ class TestGetDiviData(fake_filesystem_unittest.TestCase):
             f.write("[]")
 
         with self.assertRaises(SystemExit) as cm:
-            gdd.get_divi_data(read_data, out_form, out_folder,
+            gdd.get_divi_data(read_data, out_form, out_folder, no_raw,
                               end_date, start_date, update_data)
         self.assertEqual(cm.exception.code, "Something went wrong, dataframe is empty.")
 
@@ -567,7 +594,7 @@ class TestGetDiviData(fake_filesystem_unittest.TestCase):
         with open(file_with_path, 'w') as f:
             f.write(self.test_string_read_fulldata)
 
-        gdd.get_divi_data(read_data, out_form, out_folder,
+        gdd.get_divi_data(read_data, out_form, out_folder, no_raw,
                           end_date, start_date, update_data)
 
         self.assertEqual(len(os.listdir(directory)), 4)
@@ -593,7 +620,7 @@ class TestGetDiviData(fake_filesystem_unittest.TestCase):
     @patch('epidemiology.epidata.getDIVIData.gd.loadCsv')
     def test_gdd_update_data(self, mock_loadcsv, mock_print, mock_ddfod):
 
-        [read_data, out_form, out_folder] = [False, "json", self.path]
+        [read_data, out_form, out_folder, no_raw] = [False, "json", self.path, False]
 
         directory = os.path.join(out_folder, 'Germany/')
         gd.check_dir(directory)
@@ -618,7 +645,7 @@ class TestGetDiviData(fake_filesystem_unittest.TestCase):
             f.write("[]")
 
         with self.assertRaises(SystemExit) as cm:
-            gdd.get_divi_data(read_data, out_form, out_folder,
+            gdd.get_divi_data(read_data, out_form, out_folder, no_raw,
                               end_date=dd.defaultDict['end_date'], start_date=dd.defaultDict['start_date'],
                               update_data=True)
         self.assertEqual(cm.exception.code, "Something went wrong, dataframe is empty.")
@@ -631,7 +658,7 @@ class TestGetDiviData(fake_filesystem_unittest.TestCase):
         mock_loadcsv.return_value = pd.read_json(self.test_string1)
 
         with self.assertRaises(SystemExit) as cm:
-            gdd.get_divi_data(read_data, out_form, out_folder,
+            gdd.get_divi_data(read_data, out_form, out_folder, no_raw,
                               end_date=dd.defaultDict['end_date'], start_date=dd.defaultDict['start_date'],
                               update_data=True)
         self.assertEqual(cm.exception.code, "Data of today = " + date(2020, 7, 8).strftime("%Y-%m-%d")
@@ -640,7 +667,7 @@ class TestGetDiviData(fake_filesystem_unittest.TestCase):
         # case where data is online and just data of "today" is missing
         mock_loadcsv.return_value = pd.read_json(self.test_string2)
 
-        gdd.get_divi_data(read_data, out_form, out_folder,
+        gdd.get_divi_data(read_data, out_form, out_folder, no_raw,
                           end_date=dd.defaultDict['end_date'], start_date=dd.defaultDict['start_date'],
                           update_data=True)
 
@@ -682,7 +709,7 @@ class TestGetDiviData(fake_filesystem_unittest.TestCase):
 
         mock_ddfod.side_effect = self.fake_download_data_for_one_day
 
-        gdd.get_divi_data(read_data, out_form, out_folder,
+        gdd.get_divi_data(read_data, out_form, out_folder, no_raw,
                           end_date=date.today(), start_date=dd.defaultDict['start_date'],
                           update_data=True)
 
@@ -735,7 +762,7 @@ class TestGetDiviData(fake_filesystem_unittest.TestCase):
 
         mock_ddfod.side_effect = self.fake_download_data_for_one_day
 
-        gdd.get_divi_data(read_data, out_form, out_folder,
+        gdd.get_divi_data(read_data, out_form, out_folder, no_raw,
                           end_date=date(2020,4,28), start_date=date(2020,4,24),
                           update_data=True)
 
@@ -778,23 +805,22 @@ class TestGetDiviData(fake_filesystem_unittest.TestCase):
         # check if expected calls are the last two calls
         self.assertTrue(mock_print.mock_calls[-5:] == expected_calls)
 
+    def test_nearest_earlier_date(self):
 
-def test_nearest_earlier_date(self):
+        list_of_dates = [date(2020, 4, 24),
+                         date(2020, 5, 6),
+                         date(2020, 6, 5),
+                         date(2020, 6, 12),
+                         date(2020, 6, 26),
+                         date(2020, 6, 28),
+                         date(2020, 6, 29),
+                         date(2020, 6, 30)]
 
-    list_of_dates = [date(2020, 4, 24),
-                     date(2020, 5, 6),
-                     date(2020, 6, 5),
-                     date(2020, 6, 12),
-                     date(2020, 6, 26),
-                     date(2020, 6, 28),
-                     date(2020, 6, 29),
-                     date(2020, 6, 30)]
+        date_to_search = date(2020, 6, 24)
 
-    date_to_search = date(2020, 6, 24)
+        date_ce = gdd.nearest_earlier_date(list_of_dates, date_to_search)
 
-    date_ce = gdd.nearest_earlier_date(list_of_dates, date_to_search)
-
-    self.assertEqual(date_ce, date(2020, 6, 12))
+        self.assertEqual(date_ce, date(2020, 6, 12))
 
 
 if __name__ == '__main__':
