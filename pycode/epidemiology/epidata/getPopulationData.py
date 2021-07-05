@@ -239,6 +239,7 @@ def load_age_population_data(read_data, out_folder):
 def get_age_population_data(read_data=dd.defaultDict['read_data'],
                             file_format=dd.defaultDict['file_format'],
                             out_folder=dd.defaultDict['out_folder'],
+                            no_raw=dd.defaultDict['no_raw'],
                             write_df=True):
     """! Download data with age splitting
 
