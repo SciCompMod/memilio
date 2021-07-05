@@ -28,7 +28,7 @@ defaultDict = {
    'split_berlin': False,
    'moving_average': False,
    'fill_dates': False,
-   'out_form': 'json_timeasstring',
+   'file_format': 'json_timeasstring',
    'no_raw': False
 }
 

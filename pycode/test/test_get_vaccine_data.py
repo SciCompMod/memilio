@@ -68,8 +68,9 @@ class TestGetVaccineData(fake_filesystem_unittest.TestCase):
     @patch('epidemiology.epidata.getVaccineData.download_vaccine_data', return_value=(test_vaccine_df, 'test_vaccine'))
     @patch('epidemiology.epidata.getVaccineData.getPopulationData.get_age_population_data', return_value=test_pop_df)
     def test_get_vaccine_data(self, mock_vaccine, mock_pop):
-        [read_data, out_form, out_folder, no_raw] = [False, 'json', self.path, False]
-        getVaccineData.get_vaccine_data(read_data, out_form, out_folder, no_raw)
+
+        [read_data, file_format, out_folder, no_raw] = [False, 'json', self.path, False]
+        getVaccineData.get_vaccine_data(read_data, file_format, out_folder, no_raw)
 
         directory = os.path.join(out_folder, 'Germany/')
 

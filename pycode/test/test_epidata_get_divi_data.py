@@ -396,7 +396,7 @@ class TestGetDiviData(fake_filesystem_unittest.TestCase):
         mock_ddfod.return_value = [3961, pd.read_json(self.test_string1), ""]
 
         # case simple download
-        [read_data, update_data, out_form, out_folder, start_date, end_date, no_raw]\
+        [read_data, update_data, file_format, out_folder, start_date, end_date, no_raw]\
             = [False, False, "json", self.path, date(2020, 7, 7), date(2020, 7, 7), False]
 
         directory = os.path.join(out_folder, 'Germany/')
@@ -406,8 +406,7 @@ class TestGetDiviData(fake_filesystem_unittest.TestCase):
         file_out1 = "county_divi.json"
         file_out2 = "state_divi.json"
         file_out3 = "germany_divi.json"
-
-        gdd.get_divi_data(read_data, out_form, out_folder, no_raw,
+        gdd.get_divi_data(read_data, file_format, out_folder, no_raw,
                           end_date, start_date, update_data)
 
         # check if folder Germany exists now
@@ -444,7 +443,7 @@ class TestGetDiviData(fake_filesystem_unittest.TestCase):
         start_date = date(2020, 7, 7)
         end_date = date(2020, 7, 9)
 
-        gdd.get_divi_data(read_data, out_form, out_folder, no_raw,
+        gdd.get_divi_data(read_data, file_format, out_folder, no_raw,
                           end_date, start_date, update_data)
 
         # check if folder Germany exists now
@@ -493,7 +492,7 @@ class TestGetDiviData(fake_filesystem_unittest.TestCase):
         with self.assertRaises(SystemExit) as cm:
             start_date = date(2020, 7, 9)
             end_date = date(2020, 7, 9)
-            gdd.get_divi_data(read_data, out_form, out_folder, no_raw,
+            gdd.get_divi_data(read_data, file_format, out_folder, no_raw,
                               end_date, start_date, update_data)
         self.assertEqual(cm.exception.code, "Something went wrong, dataframe is empty.")
 
@@ -501,7 +500,7 @@ class TestGetDiviData(fake_filesystem_unittest.TestCase):
         with self.assertRaises(SystemExit) as cm:
             start_date = date(2020, 4, 23)
             end_date = date(2020, 4, 24)
-            gdd.get_divi_data(read_data, out_form, out_folder, no_raw,
+            gdd.get_divi_data(read_data, file_format, out_folder, no_raw,
                               end_date, start_date, update_data)
         self.assertEqual(cm.exception.code, "Something went wrong, dataframe is empty.")
 
@@ -513,7 +512,7 @@ class TestGetDiviData(fake_filesystem_unittest.TestCase):
         # check case where call_number has to be searched for and should be saved to call_dict.
         start_date = date(2020, 7, 10)
         end_date = date(2020, 7, 10)
-        gdd.get_divi_data(read_data, out_form, out_folder, no_raw,
+        gdd.get_divi_data(read_data, file_format, out_folder, no_raw,
                           end_date, start_date, update_data)
 
         expected_calls = [call(start_string + date(2020, 7, 10).strftime("%Y-%m-%d") + end_string),
@@ -539,7 +538,7 @@ class TestGetDiviData(fake_filesystem_unittest.TestCase):
             mock_ddfod.return_value = [3961, pd.read_json(self.test_string1), ""]
 
             # case simple download
-            [read_data, update_data, out_form, out_folder, start_date, end_date, no_raw] \
+            [read_data, update_data, file_format, out_folder, start_date, end_date, no_raw] \
                 = [False, False, "json", self.path, date(2020, 7, 7), date(2020, 7, 7), True]
 
             directory = os.path.join(out_folder, 'Germany/')
@@ -548,7 +547,7 @@ class TestGetDiviData(fake_filesystem_unittest.TestCase):
             file_out2 = "state_divi.json"
             file_out3 = "germany_divi.json"
 
-            gdd.get_divi_data(read_data, out_form, out_folder, no_raw,
+            gdd.get_divi_data(read_data, file_format, out_folder, no_raw,
                               end_date, start_date, update_data)
 
             # check if folder Germany exists now
@@ -561,7 +560,7 @@ class TestGetDiviData(fake_filesystem_unittest.TestCase):
 
     def test_gdd_read_data(self):
 
-        [read_data, update_data, out_form, out_folder, start_date, end_date, no_raw] \
+        [read_data, update_data, file_format, out_folder, start_date, end_date, no_raw] \
             = [True, False, "json", self.path, dd.defaultDict['start_date'], dd.defaultDict['end_date'], False]
 
         directory = os.path.join(out_folder, 'Germany/')
@@ -576,7 +575,7 @@ class TestGetDiviData(fake_filesystem_unittest.TestCase):
 
         # Test case where file does not exist
         with self.assertRaises(SystemExit) as cm:
-            gdd.get_divi_data(read_data, out_form, out_folder, no_raw,
+            gdd.get_divi_data(read_data, file_format, out_folder, no_raw,
                               end_date, start_date, update_data)
         self.assertEqual(cm.exception.code, "Error: The file: " + file_with_path +
                          " does not exist. Call program without -r or -u flag to get it.")
@@ -586,7 +585,8 @@ class TestGetDiviData(fake_filesystem_unittest.TestCase):
             f.write("[]")
 
         with self.assertRaises(SystemExit) as cm:
-            gdd.get_divi_data(read_data, out_form, out_folder, no_raw,
+            gdd.get_divi_data(read_data, file_format, out_folder, no_raw,
+
                               end_date, start_date, update_data)
         self.assertEqual(cm.exception.code, "Something went wrong, dataframe is empty.")
 
@@ -594,7 +594,7 @@ class TestGetDiviData(fake_filesystem_unittest.TestCase):
         with open(file_with_path, 'w') as f:
             f.write(self.test_string_read_fulldata)
 
-        gdd.get_divi_data(read_data, out_form, out_folder, no_raw,
+        gdd.get_divi_data(read_data, file_format, out_folder, no_raw,
                           end_date, start_date, update_data)
 
         self.assertEqual(len(os.listdir(directory)), 4)
@@ -620,7 +620,7 @@ class TestGetDiviData(fake_filesystem_unittest.TestCase):
     @patch('epidemiology.epidata.getDIVIData.gd.loadCsv')
     def test_gdd_update_data(self, mock_loadcsv, mock_print, mock_ddfod):
 
-        [read_data, out_form, out_folder, no_raw] = [False, "json", self.path, False]
+        [read_data, file_format, out_folder, no_raw] = [False, "json", self.path, False]
 
         directory = os.path.join(out_folder, 'Germany/')
         gd.check_dir(directory)
@@ -634,7 +634,7 @@ class TestGetDiviData(fake_filesystem_unittest.TestCase):
 
         # Test case where file does not exist
         with self.assertRaises(SystemExit) as cm:
-            gdd.get_divi_data(read_data, out_form, out_folder,
+            gdd.get_divi_data(read_data, file_format, out_folder,
                               end_date=dd.defaultDict['end_date'], start_date=dd.defaultDict['start_date'],
                               update_data=True)
         self.assertEqual(cm.exception.code, "Error: The file: " + file_with_path + 
@@ -645,7 +645,7 @@ class TestGetDiviData(fake_filesystem_unittest.TestCase):
             f.write("[]")
 
         with self.assertRaises(SystemExit) as cm:
-            gdd.get_divi_data(read_data, out_form, out_folder, no_raw,
+            gdd.get_divi_data(read_data, file_format, out_folder, no_raw,
                               end_date=dd.defaultDict['end_date'], start_date=dd.defaultDict['start_date'],
                               update_data=True)
         self.assertEqual(cm.exception.code, "Something went wrong, dataframe is empty.")
@@ -658,7 +658,7 @@ class TestGetDiviData(fake_filesystem_unittest.TestCase):
         mock_loadcsv.return_value = pd.read_json(self.test_string1)
 
         with self.assertRaises(SystemExit) as cm:
-            gdd.get_divi_data(read_data, out_form, out_folder, no_raw,
+            gdd.get_divi_data(read_data, file_format, out_folder, no_raw,
                               end_date=dd.defaultDict['end_date'], start_date=dd.defaultDict['start_date'],
                               update_data=True)
         self.assertEqual(cm.exception.code, "Data of today = " + date(2020, 7, 8).strftime("%Y-%m-%d")
@@ -667,7 +667,7 @@ class TestGetDiviData(fake_filesystem_unittest.TestCase):
         # case where data is online and just data of "today" is missing
         mock_loadcsv.return_value = pd.read_json(self.test_string2)
 
-        gdd.get_divi_data(read_data, out_form, out_folder, no_raw,
+        gdd.get_divi_data(read_data, file_format, out_folder, no_raw,
                           end_date=dd.defaultDict['end_date'], start_date=dd.defaultDict['start_date'],
                           update_data=True)
 
@@ -709,7 +709,7 @@ class TestGetDiviData(fake_filesystem_unittest.TestCase):
 
         mock_ddfod.side_effect = self.fake_download_data_for_one_day
 
-        gdd.get_divi_data(read_data, out_form, out_folder, no_raw,
+        gdd.get_divi_data(read_data, file_format, out_folder, no_raw,
                           end_date=date.today(), start_date=dd.defaultDict['start_date'],
                           update_data=True)
 
@@ -762,7 +762,7 @@ class TestGetDiviData(fake_filesystem_unittest.TestCase):
 
         mock_ddfod.side_effect = self.fake_download_data_for_one_day
 
-        gdd.get_divi_data(read_data, out_form, out_folder, no_raw,
+        gdd.get_divi_data(read_data, file_format, out_folder, no_raw,
                           end_date=date(2020,4,28), start_date=date(2020,4,24),
                           update_data=True)
 

@@ -26,7 +26,7 @@ def download_vaccine_data():
 # gets rki vaccine monitoring data for all states and extrapolates the values for counties according to their population
 # Missing ratio values for the two different age groups are also estimated
 def get_vaccine_data(read_data=dd.defaultDict['read_data'],
-                     out_form=dd.defaultDict['out_form'],
+                     file_format=dd.defaultDict['file_format'],
                      out_folder=dd.defaultDict['out_folder'],
                      no_raw=dd.defaultDict['no_raw']):
 
@@ -79,17 +79,17 @@ def get_vaccine_data(read_data=dd.defaultDict['read_data'],
     directory = os.path.join(directory, 'Germany/')
     gd.check_dir(directory)
 
-    gd.write_dataframe(new_df, directory, name, out_form)
-    if out_form=='json_timeasstring':
-        out_form = 'json'
-    print('file written to:', directory + name + '.' + out_form)
+    gd.write_dataframe(new_df, directory, name, file_format)
+    if file_format=='json_timeasstring':
+        file_format = 'json'
+    print('file written to:', directory + name + '.' + file_format)
 
 
 def main():
     """! Main program entry."""
 
-    [read_data, out_form, out_folder, no_raw] = gd.cli("vaccine")
-    get_vaccine_data(read_data, out_form, out_folder, no_raw)
+    arg_dict = gd.cli("vaccine")
+    get_vaccine_data(**arg_dict)
 
 
 if __name__ == "__main__":

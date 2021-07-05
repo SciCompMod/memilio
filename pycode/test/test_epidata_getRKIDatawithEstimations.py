@@ -196,7 +196,7 @@ class TestGetRKIDatawithEstimations(fake_filesystem_unittest.TestCase):
 
     def test_get_rki_data_with_estimations(self):
 
-        [read_data, make_plot, out_form, out_folder, no_raw] \
+        [read_data, make_plot, file_format, out_folder, no_raw] \
             = [True, False, "json", self.path, False]
 
         # write files which should be read in by program
@@ -212,7 +212,7 @@ class TestGetRKIDatawithEstimations(fake_filesystem_unittest.TestCase):
         self.assertEqual(len(os.listdir(self.path)), 1)
         self.assertEqual(len(os.listdir(directory)), 2 + len(self.rki_files_to_change))
 
-        grdwd.get_rki_data_with_estimations(read_data, out_form, out_folder, no_raw, make_plot)
+        grdwd.get_rki_data_with_estimations(read_data, file_format, out_folder, no_raw, make_plot)
 
         # check if expected files are written
         self.assertEqual(len(os.listdir(self.path)), 1)
@@ -267,7 +267,7 @@ class TestGetRKIDatawithEstimations(fake_filesystem_unittest.TestCase):
 
     def test_get_rki_data_with_estimations_age_data(self):
 
-        [read_data, make_plot, out_form, out_folder, no_raw] \
+        [read_data, make_plot, file_format, out_folder, no_raw] \
             = [True, False, "json", self.path, False]
 
         # write files which should be read in by program
@@ -283,7 +283,7 @@ class TestGetRKIDatawithEstimations(fake_filesystem_unittest.TestCase):
         self.assertEqual(len(os.listdir(self.path)), 1)
         self.assertEqual(len(os.listdir(directory)), 2 + len(self.rki_files_to_change))
 
-        grdwd.get_rki_data_with_estimations(read_data, out_form, out_folder, no_raw, make_plot)
+        grdwd.get_rki_data_with_estimations(read_data, file_format, out_folder, no_raw, make_plot)
 
         # check if expected files are written
         self.assertEqual(len(os.listdir(self.path)), 1)
@@ -328,7 +328,7 @@ class TestGetRKIDatawithEstimations(fake_filesystem_unittest.TestCase):
     def test_get_rki_data_with_estimations_download(self, mock_get_jh_data, mock_get_rki_data,
                                                     mock_download_weekly_deaths_numbers_rki):
 
-        [read_data, make_plot, out_form, out_folder, no_raw] \
+        [read_data, make_plot, file_format, out_folder, no_raw] \
             = [False, False, "json", self.path, False]
 
         directory = os.path.join(out_folder, 'Germany/')
@@ -369,7 +369,7 @@ class TestGetRKIDatawithEstimations(fake_filesystem_unittest.TestCase):
         self.assertEqual(len(os.listdir(self.path)), 1)
         self.assertEqual(len(os.listdir(directory)), 2 + len(rki_files_to_change))
 
-        grdwd.get_rki_data_with_estimations(read_data, out_form, out_folder, no_raw, make_plot)
+        grdwd.get_rki_data_with_estimations(read_data, file_format, out_folder, no_raw, make_plot)
 
         # check if expected files are written
         self.assertEqual(len(os.listdir(self.path)), 1)
@@ -448,7 +448,7 @@ class TestGetRKIDatawithEstimations(fake_filesystem_unittest.TestCase):
     @patch('builtins.print')
     def test_except_non_existing_file(self, mock_print):
 
-        [read_data, make_plot, out_form, out_folder, no_raw] \
+        [read_data, make_plot, file_format, out_folder, no_raw] \
             = [True, False, "json", self.path, False]
 
         # write files which should be read in by program
@@ -457,7 +457,7 @@ class TestGetRKIDatawithEstimations(fake_filesystem_unittest.TestCase):
         gd.check_dir(directory)
         self.write_jh_data(directory)
 
-        grdwd.get_rki_data_with_estimations(read_data, out_form, out_folder, no_raw, make_plot)
+        grdwd.get_rki_data_with_estimations(read_data, file_format, out_folder, no_raw, make_plot)
 
         # print is called 9 times, because no file exists
         self.assertEqual(len(mock_print.mock_calls), 9)

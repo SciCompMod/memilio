@@ -16,7 +16,7 @@ from epidemiology.epidata import defaultDict as dd
 
 
 def get_population_data(read_data=dd.defaultDict['read_data'],
-                        out_form=dd.defaultDict['out_form'],
+                        file_format=dd.defaultDict['file_format'],
                         out_folder=dd.defaultDict['out_folder'],
                         no_raw=dd.defaultDict['no_raw']):
     """! Downloads population data
@@ -33,7 +33,7 @@ def get_population_data(read_data=dd.defaultDict['read_data'],
    Data is stored and perhaps loaded from out_folder/Germany.
 
    @param read_data False [Default] or True. Defines if data is read from file or downloaded.
-   @param out_form File format which is used for writing the data. Default defined in defaultDict.
+   @param file_format File format which is used for writing the data. Default defined in defaultDict.
    @param out_folder Path to folder where data is written in folder out_folder/Germany.
    @param no_raw True or False [Default]. Defines if unchanged raw data is saved or not.
    """
@@ -54,10 +54,10 @@ def get_population_data(read_data=dd.defaultDict['read_data'],
 
 
     for d_i in d:
-        get_one_data_set(read_data, out_form, no_raw, directory, d_i)
+        get_one_data_set(read_data, file_format, no_raw, directory, d_i)
 
 
-def get_one_data_set(read_data, out_form, no_raw, directory, d):
+def get_one_data_set(read_data, file_format, no_raw, directory, d):
     """! download one dataset
 
    Data is either downloaded from website or loaded as specific json file from the given "directory".
@@ -65,7 +65,7 @@ def get_one_data_set(read_data, out_form, no_raw, directory, d):
    After load or download the columns are renamed.
 
    @param read_data False [Default] or True. Defines if data is read from file or downloaded.
-   @param out_form File format which is used for writing the data. Default defined in defaultDict.
+   @param file_format File format which is used for writing the data. Default defined in defaultDict.
    @param directory Directory which wiles should be stored and loaded (out_folder/Germany).
    @param d Dataset with (filename to store unchanged data, arcis opendata number, wanted columns, filename for results)
    """
@@ -100,7 +100,7 @@ def get_one_data_set(read_data, out_form, no_raw, directory, d):
     # Filter data for Bundesland/Landkreis and Einwohnerzahl (EWZ)
     dfo = df[d.columns_wanted]
     dfo = dfo.rename(columns=dd.GerEng)
-    gd.write_dataframe(dfo, directory, d.filename_out, out_form)
+    gd.write_dataframe(dfo, directory, d.filename_out, file_format)
 
 
 def get_new_counties(data):
@@ -237,7 +237,7 @@ def load_age_population_data(read_data, out_folder):
 
 
 def get_age_population_data(read_data=dd.defaultDict['read_data'],
-                            out_form=dd.defaultDict['out_form'],
+                            file_format=dd.defaultDict['file_format'],
                             out_folder=dd.defaultDict['out_folder'],
                             write_df=True):
     """! Download data with age splitting
@@ -257,7 +257,7 @@ def get_age_population_data(read_data=dd.defaultDict['read_data'],
    between 2011 and 2019 for each county"
 
    @param read_data False [Default] or True. Defines if data is read from file or downloaded.
-   @param out_form File format which is used for writing the data. Default defined in defaultDict.
+   @param file_format File format which is used for writing the data. Default defined in defaultDict.
    @param out_folder Path to folder where data is written in folder out_folder/Germany.
    """
 
@@ -318,8 +318,8 @@ def get_age_population_data(read_data=dd.defaultDict['read_data'],
     gd.check_dir(directory)
 
     if write_df:
-        gd.write_dataframe(df, directory, 'county_population', out_form)
-        gd.write_dataframe(df_current, directory, 'county_current_population', out_form)
+        gd.write_dataframe(df, directory, 'county_population', file_format)
+        gd.write_dataframe(df_current, directory, 'county_current_population', file_format)
     else:
         return df_current
 
@@ -327,9 +327,9 @@ def get_age_population_data(read_data=dd.defaultDict['read_data'],
 def main():
     """! Main program entry."""
 
-    [read_data, out_form, out_folder, no_raw] = gd.cli("population")
-    get_age_population_data(read_data, out_form, out_folder, no_raw)
-    get_population_data(read_data, out_form, out_folder, no_raw)
+    arg_dict = gd.cli("population")
+    get_age_population_data(**arg_dict)
+    get_population_data(**arg_dict)
 
 
 if __name__ == "__main__":

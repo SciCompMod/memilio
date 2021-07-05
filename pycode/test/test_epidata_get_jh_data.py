@@ -65,7 +65,7 @@ class TestGetJHData(fake_filesystem_unittest.TestCase):
 
     def test_get_JH_Data(self):
         # Test without downloading data
-        [read_data, out_form, out_folder, no_raw] \
+        [read_data, file_format, out_folder, no_raw] \
             = [True, "json", self.path, False]
 
         gD.check_dir(out_folder)
@@ -75,7 +75,7 @@ class TestGetJHData(fake_filesystem_unittest.TestCase):
         file_with_path = os.path.join(out_folder, file)
 
         with self.assertRaises(SystemExit) as cm:
-            gJHD.get_jh_data(read_data, out_form, out_folder, no_raw)
+            gJHD.get_jh_data(read_data, file_format, out_folder, no_raw)
         self.assertEqual(cm.exception.code,
                          "Error: The file: " + file_with_path + " does not exist. Call program without -r "
                                                                 "flag to get it.")
@@ -88,7 +88,7 @@ class TestGetJHData(fake_filesystem_unittest.TestCase):
         # check if expected file is written
         self.assertEqual(len(os.listdir(self.path)), 1)
 
-        gJHD.get_jh_data(read_data, out_form, out_folder, no_raw)
+        gJHD.get_jh_data(read_data, file_format, out_folder, no_raw)
 
         # check if expected files are written
         # 7 country-folders+3 all countries-files
@@ -170,14 +170,14 @@ class TestGetJHData(fake_filesystem_unittest.TestCase):
     @patch('epidemiology.epidata.getJHData.gd.loadCsv')
     def test_get_JH_Data_Download(self, mock_loadcsv):
         # Test without downloading data
-        [read_data, out_form, out_folder, no_raw] \
+        [read_data, file_format, out_folder, no_raw] \
             = [False, "json", self.path, False]
 
         gD.check_dir(out_folder)
 
         mock_loadcsv.return_value = pd.read_json(self.str_FullData_JohnHopkins)
 
-        gJHD.get_jh_data(read_data, out_form, out_folder, no_raw)
+        gJHD.get_jh_data(read_data, file_format, out_folder, no_raw)
 
         mock_loadcsv.assert_called_once()
 
@@ -264,14 +264,14 @@ class TestGetJHData(fake_filesystem_unittest.TestCase):
     @patch('epidemiology.epidata.getJHData.gd.loadCsv')
     def test_get_JH_Data_Download_omit_raw(self, mock_loadcsv):
         # Test without downloading data
-        [read_data, out_form, out_folder, no_raw] \
+        [read_data, file_format, out_folder, no_raw] \
             = [False, "json", self.path, True]
 
         gD.check_dir(out_folder)
 
         mock_loadcsv.return_value = pd.read_json(self.str_FullData_JohnHopkins)
 
-        gJHD.get_jh_data(read_data, out_form, out_folder, no_raw)
+        gJHD.get_jh_data(read_data, file_format, out_folder, no_raw)
 
         mock_loadcsv.assert_called_once()
 

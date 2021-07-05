@@ -12,7 +12,10 @@ To do so, install the package (see below) and than the following executables are
       * getjhdata
       * getspaindata
       * getdividata
-      * getalldata
+      * getsimdata
+      * cleandata
+      * epidemiology/epidata/defaultDict.py
+      * getcommutermigration
 
 For all executables there are several run options.
 Use -h for more information or the `epidata-readme <epidemiology/epidata/README.rst>`_ in the corresponding subdirectory.

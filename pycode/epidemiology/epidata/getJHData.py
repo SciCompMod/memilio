@@ -13,7 +13,7 @@ from epidemiology.epidata import defaultDict as dd
 
 
 def get_jh_data(read_data=dd.defaultDict['read_data'],
-                out_form=dd.defaultDict['out_form'],
+                file_format=dd.defaultDict['file_format'],
                 out_folder=dd.defaultDict['out_folder'],
                 no_raw=dd.defaultDict['no_raw']):
     """! Download data from John Hopkins University
@@ -30,7 +30,7 @@ def get_jh_data(read_data=dd.defaultDict['read_data'],
    - furthermore, all countries, for which provinces are added, are written to a file
 
    @param read_data False [Default] or True. Defines if data is read from file or downloaded.
-   @param out_form File format which is used for writing the data. Default defined in defaultDict.
+   @param file_format File format which is used for writing the data. Default defined in defaultDict.
    @param out_folder Path to folder where data is written in folder out_folder/Germany.
    @param no_raw True or False [Default]. Defines if unchanged raw data is saved or not.
    """
@@ -89,14 +89,14 @@ def get_jh_data(read_data=dd.defaultDict['read_data'],
 
     gb = df.groupby(['CountryRegion', 'Date']).agg({"Confirmed": sum, "Recovered": sum, "Deaths": sum})
 
-    gd.write_dataframe(gb.reset_index(), out_folder, "all_countries_jh", out_form)
+    gd.write_dataframe(gb.reset_index(), out_folder, "all_countries_jh", file_format)
 
     for key in countries:
         # get data for specific countries
         gb_country = gb.reset_index()[gb.reset_index()["CountryRegion"] == key]
         dir_country = countries[key]
         gd.check_dir(dir_country)
-        gd.write_dataframe(gb_country, dir_country, "whole_country_" + key + "_jh", out_form)
+        gd.write_dataframe(gb_country, dir_country, "whole_country_" + key + "_jh", file_format)
 
     # Check what about external provinces. Should they be added?
 
@@ -108,7 +108,7 @@ def get_jh_data(read_data=dd.defaultDict['read_data'],
     gb = dfD.groupby(['CountryRegion', 'ProvinceState', 'Date']).agg(
         {"Confirmed": sum, "Recovered": sum, "Deaths": sum})
 
-    gd.write_dataframe(gb.reset_index(), out_folder, "all_provincestate_jh", out_form)
+    gd.write_dataframe(gb.reset_index(), out_folder, "all_provincestate_jh", file_format)
 
     # print(dfD[dfD.ProvinceState=="Saskatchewan"])
     # print(gb.reset_index()[gb.reset_index().ProvinceState=="Saskatchewan"])
@@ -123,8 +123,8 @@ def get_jh_data(read_data=dd.defaultDict['read_data'],
 def main():
     """! Main program entry."""
 
-    [read_data, out_form, out_folder, no_raw] = gd.cli("jh")
-    get_jh_data(read_data, out_form, out_folder, no_raw)
+    arg_dict = gd.cli("jh")
+    get_jh_data(**arg_dict)
 
 
 if __name__ == "__main__":

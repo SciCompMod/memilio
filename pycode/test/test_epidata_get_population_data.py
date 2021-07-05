@@ -124,12 +124,12 @@ class Test_getPopulationData(fake_filesystem_unittest.TestCase):
 
         mock_loadCSV.return_value = pd.read_json(self.test_string1)
 
-        [read_data, out_form, out_folder, no_raw] = [False, "json", self.path, False]
+        [read_data, file_format, out_folder, no_raw] = [False, "json", self.path, False]
 
         directory = os.path.join(out_folder, 'Germany/')
         gd.check_dir(directory)
 
-        gpd.get_one_data_set(read_data, out_form, no_raw, directory, self.d1)
+        gpd.get_one_data_set(read_data, file_format, no_raw, directory, self.d1)
 
         self.assertEqual(len(os.listdir(self.path)), 1)
         self.assertEqual(os.listdir(self.path), ["Germany"])
@@ -150,12 +150,12 @@ class Test_getPopulationData(fake_filesystem_unittest.TestCase):
 
         mock_loadCSV.return_value = pd.read_json(self.test_string1)
 
-        [read_data, out_form, out_folder, no_raw] = [False, "json", self.path, True]
+        [read_data, file_format, out_folder, no_raw] = [False, "json", self.path, True]
 
         directory = os.path.join(out_folder, 'Germany/')
         gd.check_dir(directory)
 
-        gpd.get_one_data_set(read_data, out_form, no_raw, directory, self.d1)
+        gpd.get_one_data_set(read_data, file_format, no_raw, directory, self.d1)
 
         self.assertEqual(len(os.listdir(self.path)), 1)
         self.assertEqual(os.listdir(self.path), ["Germany"])
@@ -165,7 +165,7 @@ class Test_getPopulationData(fake_filesystem_unittest.TestCase):
 
     def test_gpd_read_data1(self):
 
-        [read_data, out_form, out_folder, no_raw] = [True,  "json", self.path, False]
+        [read_data, file_format, out_folder, no_raw] = [True,  "json", self.path, False]
 
         directory = os.path.join(out_folder, 'Germany/')
         gd.check_dir(directory)
@@ -173,7 +173,7 @@ class Test_getPopulationData(fake_filesystem_unittest.TestCase):
         with open(os.path.join(directory, "FullDataB.json"), 'w') as f:
             f.write(self.test_string1)
 
-        gpd.get_one_data_set(read_data, out_form, no_raw, directory, self.d1)
+        gpd.get_one_data_set(read_data, file_format, no_raw, directory, self.d1)
 
         self.assertEqual(len(os.listdir(self.path)), 1)
         self.assertEqual(os.listdir(self.path), ["Germany"])
@@ -190,14 +190,14 @@ class Test_getPopulationData(fake_filesystem_unittest.TestCase):
 
         mock_loadCSV.return_value = pd.read_json(self.test_string2)
 
-        [read_data, out_form, out_folder, no_raw] = [False, "json", self.path, False]
+        [read_data, file_format, out_folder, no_raw] = [False, "json", self.path, False]
 
         directory = os.path.join(out_folder, 'Germany/')
         gd.check_dir(directory)
 
         d = self.d2
 
-        gpd.get_one_data_set(read_data, out_form, no_raw, directory, d)
+        gpd.get_one_data_set(read_data, file_format, no_raw, directory, d)
 
         self.assertEqual(len(os.listdir(self.path)), 1)
         self.assertEqual(os.listdir(self.path), ["Germany"])
@@ -215,7 +215,7 @@ class Test_getPopulationData(fake_filesystem_unittest.TestCase):
 
     def test_gpd_read_data2(self):
 
-        [read_data, out_form, out_folder, no_raw] = [True, "json", self.path, False]
+        [read_data, file_format, out_folder, no_raw] = [True, "json", self.path, False]
 
         directory = os.path.join(out_folder, 'Germany/')
         gd.check_dir(directory)
@@ -225,7 +225,7 @@ class Test_getPopulationData(fake_filesystem_unittest.TestCase):
         with open(os.path.join(directory, d.filename + ".json" ), 'w') as f:
             f.write(self.test_string2)
 
-        gpd.get_one_data_set(read_data, out_form, no_raw, directory, d)
+        gpd.get_one_data_set(read_data, file_format, no_raw, directory, d)
 
         self.assertEqual(len(os.listdir(self.path)), 1)
         self.assertEqual(os.listdir(self.path), ["Germany"])
@@ -239,7 +239,7 @@ class Test_getPopulationData(fake_filesystem_unittest.TestCase):
 
     def test_gpd_read_data_full(self):
 
-        [read_data, out_form, out_folder, no_raw] = [True, "json", self.path, False]
+        [read_data, file_format, out_folder, no_raw] = [True, "json", self.path, False]
 
         directory = os.path.join(out_folder, 'Germany/')
         gd.check_dir(directory)
@@ -255,7 +255,7 @@ class Test_getPopulationData(fake_filesystem_unittest.TestCase):
         with open(os.path.join(directory, file2), 'w') as f:
             f.write(self.test_string2)
 
-        gpd.get_population_data(read_data, out_form, out_folder)
+        gpd.get_population_data(read_data, file_format, out_folder)
 
         #self.assertEqual(len(os.listdir(directory)), 4)
         self.assertEqual(len(os.listdir(directory)), 3)

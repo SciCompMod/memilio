@@ -167,15 +167,17 @@ def cli(what):
     check_dir(out_path_default)
 
     parser = argparse.ArgumentParser(description=what_list[0])
+    group = parser.add_mutually_exclusive_group()
 
-    parser.add_argument('-r', '--read-from-disk',
-                        help='Reads the data from file "json" instead of downloading it.',
-                        action='store_true')
-    parser.add_argument('-f', '--file-format', type=str, default=dd.defaultDict['out_form'],
+    group.add_argument('-r', '--read-data',
+                       help='Reads the data from file "json" instead of downloading it.',
+                       action='store_true')
+
+    parser.add_argument('-f', '--file-format', type=str, default=dd.defaultDict['file_format'],
                         choices=['json', 'hdf5', 'json_timeasstring'],
                         help='Defines output format for data files. Default is \"' + str(
-                            dd.defaultDict['out_form'] + "\"."))
-    parser.add_argument('-o', '--out-path', type=str, default=out_path_default, help='Defines folder for output.')
+                            dd.defaultDict['file_format'] + "\"."))
+    parser.add_argument('-o', '--out-folder', type=str, default=out_path_default, help='Defines folder for output.')
     parser.add_argument('-n', '--no-raw', default=dd.defaultDict['no_raw'],
                         help='Defines if raw data fill be stored for further use.',
                         action='store_true')
@@ -192,7 +194,7 @@ def cli(what):
                                  ' omitting dates where no new cases were reported',
                             action='store_true')
     if 'make_plot' in what_list:
-        parser.add_argument('-p', '--plot', help='Plots the data.',
+        parser.add_argument('-p', '--make-plot', help='Plots the data.',
                             action='store_true')
     if 'moving_average' in what_list:
         parser.add_argument('-m', '--moving-average',
@@ -210,45 +212,13 @@ def cli(what):
                             type=lambda s: datetime.datetime.strptime(s, '%Y-%m-%d').date(),
                             default=dd.defaultDict['start_date'])
     if 'update' in what_list:
-        parser.add_argument('-u', '--update',
-                            help='Reads the data from file "json", downloads and adds data from today.',
-                            action='store_true')
+        group.add_argument('-u', '--update-data',
+                           help='Reads the data from file "json", downloads and adds data from today.',
+                           action='store_true')
 
     args = parser.parse_args()
 
-    arg_list = []
-
-    read_data = args.read_from_disk
-    arg_list.append(read_data)
-    arg_list.append(args.file_format)
-    arg_list.append(args.out_path)
-    arg_list.append(args.no_raw)
-
-    # add additional arguments in alphabetical order
-    # TODO: check if it is possible to automatically generate this
-    if 'end_date' in what_list:
-        arg_list.append(args.end_date)
-    if 'fill_dates' in what_list:
-        arg_list.append(args.fill_dates)
-    if 'make_plot' in what_list:
-        arg_list.append(args.plot)
-    if 'moving_average' in what_list:
-        arg_list.append(args.moving_average)
-    if 'split_berlin' in what_list:
-        arg_list.append(args.split_berlin)
-    if 'start_date' in what_list:
-        arg_list.append(args.start_date)
-    if 'update' in what_list:
-        update_data = args.update
-        arg_list.append(update_data)
-
-        # TODO: Change arguments such that one argument + parameter can be either read_data or update
-        if read_data and update_data:
-            exit_string = "You called the program with '--read-from-disk' and '--update'." \
-                          "Please choose just one. Both together is not possible."
-            sys.exit(exit_string)
-
-    return arg_list
+    return vars(args)
 
 
 def check_dir(directory):
