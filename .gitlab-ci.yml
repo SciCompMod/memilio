@@ -250,6 +250,7 @@ download-data:
       - data_dl/China/*.json
   only:
      - master
+     - 449-fix-not-working-data-download
 
 build-js:
   tags:
