@@ -148,7 +148,7 @@ def fuse_berlin(df):
 
 
 def get_rki_data(read_data=dd.defaultDict['read_data'],
-                 out_form=dd.defaultDict['out_form'],
+                 file_format=dd.defaultDict['file_format'],
                  out_folder=dd.defaultDict['out_folder'],
                  no_raw=dd.defaultDict['no_raw'],
                  fill_dates=dd.defaultDict['fill_dates'],
@@ -191,7 +191,7 @@ def get_rki_data(read_data=dd.defaultDict['read_data'],
         - Infected, deaths and recovered split for county and age are stored in "all_county_age_rki(_split_berlin)"
 
     @param read_data False [Default] or True. Defines if data is read from file or downloaded.
-    @param out_form File format which is used for writing the data. Default defined in defaultDict.
+    @param file_format File format which is used for writing the data. Default defined in defaultDict.
     @param out_folder Path to folder where data is written in folder out_folder/Germany.
     @param no_raw True or False [Default]. Defines if unchanged raw data is saved or not.
     @param fill_dates False [Default] or True. Defines if dates where nothing changed are added.
@@ -342,13 +342,13 @@ def get_rki_data(read_data=dd.defaultDict['read_data'],
     gbNF_cs = gbNF.cumsum()
 
     # output to json file
-    gd.write_dataframe(gbNF_cs.reset_index(), directory, "infected_rki", out_form)
+    gd.write_dataframe(gbNF_cs.reset_index(), directory, "infected_rki", file_format)
     if fill_dates or moving_average:
         gbNF_cs = fill_df(gbNF_cs.reset_index(), [], ['Confirmed'], moving_average)
         if moving_average:
-            gd.write_dataframe(gbNF_cs, directory, "infected_ma_rki", out_form)
+            gd.write_dataframe(gbNF_cs, directory, "infected_ma_rki", file_format)
         elif fill_dates:
-            gd.write_dataframe(gbNF_cs, directory, "infected_all_dates_rki", out_form)
+            gd.write_dataframe(gbNF_cs, directory, "infected_all_dates_rki", file_format)
 
     if make_plot:
         # make plot
@@ -362,13 +362,13 @@ def get_rki_data(read_data=dd.defaultDict['read_data'],
     gbNT_cs = gbNT.cumsum()
 
     # output
-    gd.write_dataframe(gbNT_cs.reset_index(), directory, "deaths_rki", out_form)
+    gd.write_dataframe(gbNT_cs.reset_index(), directory, "deaths_rki", file_format)
     if fill_dates or moving_average:
       gbNT_cs = fill_df(gbNT_cs.reset_index(), [], ['Deaths'], moving_average)
       if moving_average:
-         gd.write_dataframe(gbNT_cs.reset_index(), directory, "deaths_ma_rki", out_form)
+         gd.write_dataframe(gbNT_cs.reset_index(), directory, "deaths_ma_rki", file_format)
       elif fill_dates:
-         gd.write_dataframe(gbNT_cs.reset_index(), directory, "deaths_all_dates_rki", out_form)
+         gd.write_dataframe(gbNT_cs.reset_index(), directory, "deaths_all_dates_rki", file_format)
 
     if make_plot:
         gbNT_cs.plot(title='COVID-19 deaths', grid=True,
@@ -385,13 +385,13 @@ def get_rki_data(read_data=dd.defaultDict['read_data'],
     gbNF = df.groupby(dateToUse).agg({AnzahlFall: sum, AnzahlTodesfall: sum, AnzahlGenesen: sum})
     gbNF_cs = gbNF.cumsum()
 
-    gd.write_dataframe(gbNF_cs.reset_index(), directory, "all_germany_rki", out_form)
+    gd.write_dataframe(gbNF_cs.reset_index(), directory, "all_germany_rki", file_format)
     if fill_dates or moving_average:
         gbNF_cs = fill_df(gbNF_cs.reset_index(), [], ['Confirmed', 'Deaths', 'Recovered'], moving_average)
         if moving_average:
-            gd.write_dataframe(gbNF_cs, directory, "all_germany_ma_rki", out_form)
+            gd.write_dataframe(gbNF_cs, directory, "all_germany_ma_rki", file_format)
         elif fill_dates:
-            gd.write_dataframe(gbNF_cs, directory, "all_germany_all_dates_rki", out_form)
+            gd.write_dataframe(gbNF_cs, directory, "all_germany_all_dates_rki", file_format)
 
     ############## Data for states all ages ################
 
@@ -403,13 +403,13 @@ def get_rki_data(read_data=dd.defaultDict['read_data'],
     gbNFst_cs = gbNFst.groupby(level=1).cumsum().reset_index()
 
     # output
-    gd.write_dataframe(gbNFst_cs, directory, "infected_state_rki", out_form)
+    gd.write_dataframe(gbNFst_cs, directory, "infected_state_rki", file_format)
     if fill_dates or moving_average:
         gbNFst_cs = fill_df(gbNFst_cs, ['ID_State'], ['Confirmed'], moving_average)
         if moving_average:
-            gd.write_dataframe(gbNFst_cs, directory, "infected_state_ma_rki", out_form)
+            gd.write_dataframe(gbNFst_cs, directory, "infected_state_ma_rki", file_format)
         elif fill_dates:
-            gd.write_dataframe(gbNFst_cs, directory, "infected_state_all_dates_rki", out_form)
+            gd.write_dataframe(gbNFst_cs, directory, "infected_state_all_dates_rki", file_format)
 
     # output nested json
     # gbNFst_cs.groupby(['IdBundesland', 'Bundesland'], as_index=False) \
@@ -424,13 +424,13 @@ def get_rki_data(read_data=dd.defaultDict['read_data'],
     gbAllSt_cs = gbAllSt.groupby(level=1).cumsum().reset_index()
 
     # output
-    gd.write_dataframe(gbAllSt_cs, directory, "all_state_rki", out_form)
+    gd.write_dataframe(gbAllSt_cs, directory, "all_state_rki", file_format)
     if fill_dates or moving_average:
         gbAllSt_cs = fill_df(gbAllSt_cs, ['ID_State'], ['Confirmed', 'Deaths', 'Recovered'], moving_average)
         if moving_average:
-            gd.write_dataframe(gbAllSt_cs, directory, "all_state_ma_rki", out_form)
+            gd.write_dataframe(gbAllSt_cs, directory, "all_state_ma_rki", file_format)
         elif fill_dates:
-            gd.write_dataframe(gbAllSt_cs, directory, "all_state_all_dates_rki", out_form)
+            gd.write_dataframe(gbAllSt_cs, directory, "all_state_all_dates_rki", file_format)
 
     ############# Data for counties all ages ######################
 
@@ -443,21 +443,21 @@ def get_rki_data(read_data=dd.defaultDict['read_data'],
 
     # output
     if split_berlin:
-        gd.write_dataframe(gbNFc_cs, directory, "infected_county_split_berlin_rki", out_form)
+        gd.write_dataframe(gbNFc_cs, directory, "infected_county_split_berlin_rki", file_format)
         if fill_dates or moving_average:
             gbNFc_cs = fill_df(gbNFc_cs, ['ID_County'], ['Confirmed'], moving_average)
             if moving_average:
-                gd.write_dataframe(gbNFc_cs, directory, "infected_county_split_berlin_ma_rki", out_form)
+                gd.write_dataframe(gbNFc_cs, directory, "infected_county_split_berlin_ma_rki", file_format)
             elif fill_dates:
-                gd.write_dataframe(gbNFc_cs, directory, "infected_county_split_berlin_all_dates_rki", out_form)
+                gd.write_dataframe(gbNFc_cs, directory, "infected_county_split_berlin_all_dates_rki", file_format)
     else:
-        gd.write_dataframe(gbNFc_cs, directory, "infected_county_rki", out_form)
+        gd.write_dataframe(gbNFc_cs, directory, "infected_county_rki", file_format)
         if fill_dates or moving_average:
             gbNFc_cs = fill_df(gbNFc_cs, ['ID_County'], ['Confirmed'], moving_average)
             if moving_average:
-                gd.write_dataframe(gbNFc_cs, directory, "infected_county_ma_rki", out_form)
+                gd.write_dataframe(gbNFc_cs, directory, "infected_county_ma_rki", file_format)
             elif fill_dates:
-                gd.write_dataframe(gbNFc_cs, directory, "infected_county_all_dates_rki", out_form)
+                gd.write_dataframe(gbNFc_cs, directory, "infected_county_all_dates_rki", file_format)
 
     # infected (incl recovered), deaths and recovered together
 
@@ -469,21 +469,21 @@ def get_rki_data(read_data=dd.defaultDict['read_data'],
 
     # output
     if split_berlin:
-        gd.write_dataframe(gbAllC_cs, directory, "all_county_split_berlin_rki", out_form)
+        gd.write_dataframe(gbAllC_cs, directory, "all_county_split_berlin_rki", file_format)
         if fill_dates or moving_average:
             gbAllC_cs = fill_df(gbAllC_cs, ['ID_County'], ['Confirmed', 'Deaths', 'Recovered'], moving_average)
             if moving_average:
-                gd.write_dataframe(gbAllC_cs, directory, "all_county_split_berlin_ma_rki", out_form)
+                gd.write_dataframe(gbAllC_cs, directory, "all_county_split_berlin_ma_rki", file_format)
             elif fill_dates:
-                gd.write_dataframe(gbAllC_cs, directory, "all_county_split_berlin_all_dates_rki", out_form)
+                gd.write_dataframe(gbAllC_cs, directory, "all_county_split_berlin_all_dates_rki", file_format)
     else:
-        gd.write_dataframe(gbAllC_cs, directory, "all_county_rki", out_form)
+        gd.write_dataframe(gbAllC_cs, directory, "all_county_rki", file_format)
         if fill_dates or moving_average:
             gbAllC_cs = fill_df(gbAllC_cs, ['ID_County'], ['Confirmed', 'Deaths', 'Recovered'], moving_average)
             if moving_average:
-                gd.write_dataframe(gbAllC_cs, directory, "all_county_ma_rki", out_form)
+                gd.write_dataframe(gbAllC_cs, directory, "all_county_ma_rki", file_format)
             elif fill_dates:
-                gd.write_dataframe(gbAllC_cs, directory, "all_county_all_dates_rki", out_form)
+                gd.write_dataframe(gbAllC_cs, directory, "all_county_all_dates_rki", file_format)
 
     ######### Data whole Germany different gender ##################
 
@@ -495,13 +495,13 @@ def get_rki_data(read_data=dd.defaultDict['read_data'],
     gbAllG_cs = gbAllG.groupby(level=0).cumsum().reset_index()
 
     # output
-    gd.write_dataframe(gbAllG_cs, directory, "all_gender_rki", out_form)
+    gd.write_dataframe(gbAllG_cs, directory, "all_gender_rki", file_format)
     if fill_dates or moving_average:
         gbAllG_cs = fill_df(gbAllG_cs, ['Gender'], ['Confirmed', 'Deaths', 'Recovered'], moving_average)
         if moving_average:
-            gd.write_dataframe(gbAllG_cs, directory, "all_gender_ma_rki", out_form)
+            gd.write_dataframe(gbAllG_cs, directory, "all_gender_ma_rki", file_format)
         elif fill_dates:
-            gd.write_dataframe(gbAllG_cs, directory, "all_gender_all_dates_rki", out_form)
+            gd.write_dataframe(gbAllG_cs, directory, "all_gender_all_dates_rki", file_format)
 
     if make_plot:
         dfF.groupby(Geschlecht) \
@@ -520,14 +520,14 @@ def get_rki_data(read_data=dd.defaultDict['read_data'],
     gbAllGState_cs = gbAllGState.groupby(level=[1, 2]).cumsum().reset_index()
 
     # output
-    gd.write_dataframe(gbAllGState_cs, directory, "all_state_gender_rki", out_form)
+    gd.write_dataframe(gbAllGState_cs, directory, "all_state_gender_rki", file_format)
     if fill_dates or moving_average:
         gbAllGState_cs = fill_df(gbAllGState_cs, ['ID_State', 'Gender'], ['Confirmed', 'Deaths', 'Recovered'],
                                  moving_average)
         if moving_average:
-            gd.write_dataframe(gbAllGState_cs, directory, "all_state_gender_ma_rki", out_form)
+            gd.write_dataframe(gbAllGState_cs, directory, "all_state_gender_ma_rki", file_format)
         elif fill_dates:
-            gd.write_dataframe(gbAllGState_cs, directory, "all_state_gender_all_dates_rki", out_form)
+            gd.write_dataframe(gbAllGState_cs, directory, "all_state_gender_all_dates_rki", file_format)
 
     ############# Gender and County #####################
 
@@ -537,23 +537,23 @@ def get_rki_data(read_data=dd.defaultDict['read_data'],
 
     # output
     if split_berlin:
-        gd.write_dataframe(gbAllGCounty_cs, directory, "all_county_gender_split_berlin_rki", out_form)
+        gd.write_dataframe(gbAllGCounty_cs, directory, "all_county_gender_split_berlin_rki", file_format)
         if fill_dates or moving_average:
             gbAllGCounty_cs = fill_df(gbAllGCounty_cs, ['ID_County', 'Gender'], ['Confirmed', 'Deaths', 'Recovered'],
                                       moving_average)
             if moving_average:
-                gd.write_dataframe(gbAllGCounty_cs, directory, "all_county_gender_split_berlin_ma_rki", out_form)
+                gd.write_dataframe(gbAllGCounty_cs, directory, "all_county_gender_split_berlin_ma_rki", file_format)
             elif fill_dates:
-                gd.write_dataframe(gbAllGCounty_cs, directory, "all_county_gender_split_berlin_all_dates_rki", out_form)
+                gd.write_dataframe(gbAllGCounty_cs, directory, "all_county_gender_split_berlin_all_dates_rki", file_format)
     else:
-        gd.write_dataframe(gbAllGCounty_cs, directory, "all_county_gender_rki", out_form)
+        gd.write_dataframe(gbAllGCounty_cs, directory, "all_county_gender_rki", file_format)
         if fill_dates or moving_average:
             gbAllGCounty_cs = fill_df(gbAllGCounty_cs, ['ID_County', 'Gender'], ['Confirmed', 'Deaths', 'Recovered'],
                                       moving_average)
             if moving_average:
-                gd.write_dataframe(gbAllGCounty_cs, directory, "all_county_gender_ma_rki", out_form)
+                gd.write_dataframe(gbAllGCounty_cs, directory, "all_county_gender_ma_rki", file_format)
             elif fill_dates:
-                gd.write_dataframe(gbAllGCounty_cs, directory, "all_county_gender_all_dates_rki", out_form)
+                gd.write_dataframe(gbAllGCounty_cs, directory, "all_county_gender_all_dates_rki", file_format)
 
     ######### Data whole Germany different ages ####################
 
@@ -564,14 +564,14 @@ def get_rki_data(read_data=dd.defaultDict['read_data'],
     gbAllA_cs = gbAllA.groupby(level=0).cumsum().reset_index()
 
     # output
-    gd.write_dataframe(gbAllA_cs, directory, "all_age_rki", out_form)
+    gd.write_dataframe(gbAllA_cs, directory, "all_age_rki", file_format)
     if fill_dates or moving_average:
         gbAllA_cs = fill_df(gbAllA_cs, ['Age_RKI'],
                             ['Confirmed', 'Deaths', 'Recovered'], moving_average)
         if moving_average:
-            gd.write_dataframe(gbAllA_cs, directory, "all_age_ma_rki", out_form)
+            gd.write_dataframe(gbAllA_cs, directory, "all_age_ma_rki", file_format)
         elif fill_dates:
-            gd.write_dataframe(gbAllA_cs, directory, "all_age_all_dates_rki", out_form)
+            gd.write_dataframe(gbAllA_cs, directory, "all_age_all_dates_rki", file_format)
 
     if make_plot:
         dfF.groupby(Altersgruppe) \
@@ -600,14 +600,14 @@ def get_rki_data(read_data=dd.defaultDict['read_data'],
     gbAllAgeState_cs = gbAllAgeState.groupby(level=[1, 2]).cumsum().reset_index()
 
     # output
-    gd.write_dataframe(gbAllAgeState_cs, directory, "all_state_age_rki", out_form)
+    gd.write_dataframe(gbAllAgeState_cs, directory, "all_state_age_rki", file_format)
     if fill_dates or moving_average:
         gbAllAgeState_cs = fill_df(gbAllAgeState_cs, ['ID_State', 'Age_RKI'],
                                    ['Confirmed', 'Deaths', 'Recovered'], moving_average)
         if moving_average:
-            gd.write_dataframe(gbAllAgeState_cs, directory, "all_state_age_ma_rki", out_form)
+            gd.write_dataframe(gbAllAgeState_cs, directory, "all_state_age_ma_rki", file_format)
         elif fill_dates:
-            gd.write_dataframe(gbAllAgeState_cs, directory, "all_state_age_all_dates_rki", out_form)
+            gd.write_dataframe(gbAllAgeState_cs, directory, "all_state_age_all_dates_rki", file_format)
 
     # TODO: uncomment if ALtersgruppe2 will again be provided
     ##### Age5 and Age10#####
@@ -619,7 +619,7 @@ def get_rki_data(read_data=dd.defaultDict['read_data'],
     # gbAllAgeState_cs = gbAllAgeState.groupby(level=[1, 2]).cumsum().reset_index()
 
     # output
-    # gd.write_dataframe(gbAllAgeState_cs, directory, "all_state_age5_rki", out_form)
+    # gd.write_dataframe(gbAllAgeState_cs, directory, "all_state_age5_rki", file_format)
 
     ##### Age10 #####
 
@@ -629,7 +629,7 @@ def get_rki_data(read_data=dd.defaultDict['read_data'],
     # gbAllAgeState_cs = gbAllAgeState.groupby(level=[1, 2]).cumsum().reset_index()
 
     # output
-    # gd.write_dataframe(gbAllAgeState_cs, directory, "all_state_age10_rki", out_form)
+    # gd.write_dataframe(gbAllAgeState_cs, directory, "all_state_age10_rki", file_format)
 
     ############# Age and County #####################
 
@@ -639,23 +639,23 @@ def get_rki_data(read_data=dd.defaultDict['read_data'],
 
     # output
     if split_berlin:
-        gd.write_dataframe(gbAllAgeCounty_cs, directory, "all_county_age_split_berlin_rki", out_form)
+        gd.write_dataframe(gbAllAgeCounty_cs, directory, "all_county_age_split_berlin_rki", file_format)
         if fill_dates or moving_average:
             gbAllAgeCounty_cs = fill_df(gbAllAgeCounty_cs, ['ID_County', 'Age_RKI'],
                                         ['Confirmed', 'Deaths', 'Recovered'], moving_average)
             if moving_average:
-                gd.write_dataframe(gbAllAgeCounty_cs, directory, "all_county_age_split_berlin_ma_rki", out_form)
+                gd.write_dataframe(gbAllAgeCounty_cs, directory, "all_county_age_split_berlin_ma_rki", file_format)
             elif fill_dates:
-                gd.write_dataframe(gbAllAgeCounty_cs, directory, "all_county_age_split_berlin_all_dates_rki", out_form)
+                gd.write_dataframe(gbAllAgeCounty_cs, directory, "all_county_age_split_berlin_all_dates_rki", file_format)
     else:
-        gd.write_dataframe(gbAllAgeCounty_cs, directory, "all_county_age_rki", out_form)
+        gd.write_dataframe(gbAllAgeCounty_cs, directory, "all_county_age_rki", file_format)
         if fill_dates or moving_average:
             gbAllAgeCounty_cs = fill_df(gbAllAgeCounty_cs, ['ID_County', 'Age_RKI'],
                                         ['Confirmed', 'Deaths', 'Recovered'], moving_average)
             if moving_average:
-                gd.write_dataframe(gbAllAgeCounty_cs, directory, "all_county_age_ma_rki", out_form)
+                gd.write_dataframe(gbAllAgeCounty_cs, directory, "all_county_age_ma_rki", file_format)
             elif fill_dates:
-                gd.write_dataframe(gbAllAgeCounty_cs, directory, "all_county_age_all_dates_rki", out_form)
+                gd.write_dataframe(gbAllAgeCounty_cs, directory, "all_county_age_all_dates_rki", file_format)
 
     # TODO: uncomment if ALtersgruppe2 will again be provided
     #### age5 ####
@@ -665,9 +665,9 @@ def get_rki_data(read_data=dd.defaultDict['read_data'],
     # gbAllAgeCounty_cs = gbAllAgeCounty.groupby(level=[1, 2]).cumsum().reset_index()
 
     # if split_berlin:
-    #   gd.write_dataframe(gbAllAgeCounty_cs, directory, "all_county_age5_split_berlin_rki", out_form)
+    #   gd.write_dataframe(gbAllAgeCounty_cs, directory, "all_county_age5_split_berlin_rki", file_format)
     # else:
-    #   gd.write_dataframe(gbAllAgeCounty_cs, directory, "all_county_age5_rki", out_form)
+    #   gd.write_dataframe(gbAllAgeCounty_cs, directory, "all_county_age5_rki", file_format)
 
     #### age10 ####
 
@@ -678,18 +678,16 @@ def get_rki_data(read_data=dd.defaultDict['read_data'],
     # output
 
     # if split_berlin:
-    #    gd.write_dataframe(gbAllAgeCounty_cs, directory, "all_county_age10_split_berlin_rki", out_form)
+    #    gd.write_dataframe(gbAllAgeCounty_cs, directory, "all_county_age10_split_berlin_rki", file_format)
     # else:
-    #    gd.write_dataframe(gbAllAgeCounty_cs, directory, "all_county_age10_rki", out_form)
+    #    gd.write_dataframe(gbAllAgeCounty_cs, directory, "all_county_age10_rki", file_format)
 
 
 def main():
     """! Main program entry."""
 
-    [read_data, out_form, out_folder, no_raw, fill_dates, make_plot, moving_average, split_berlin]\
-        = gd.cli("rki")
-
-    get_rki_data(read_data, out_form, out_folder, no_raw, fill_dates, make_plot, moving_average, split_berlin)
+    arg_dict = gd.cli("rki")
+    get_rki_data(**arg_dict)
 
 
 if __name__ == "__main__":

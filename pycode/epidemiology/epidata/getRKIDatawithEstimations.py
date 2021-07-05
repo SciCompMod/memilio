@@ -19,7 +19,7 @@ from epidemiology.epidata import getJHData as gjd
 
 
 def get_rki_data_with_estimations(read_data=dd.defaultDict['read_data'],
-                                  out_form=dd.defaultDict['out_form'],
+                                  file_format=dd.defaultDict['file_format'],
                                   out_folder=dd.defaultDict['out_folder'],
                                   no_raw=dd.defaultDict['no_raw'],
                                   make_plot=dd.defaultDict['make_plot']):
@@ -32,7 +32,7 @@ def get_rki_data_with_estimations(read_data=dd.defaultDict['read_data'],
     The new columns recovered_estimated and deaths_estimated are added.
 
     @param read_data False [Default] or True. Defines if data is read from file or downloaded.
-    @param out_form json [Default]
+    @param file_format json [Default]
     @param out_folder Folder where data is written to.
     @param no_raw True or False [Default]. Defines if unchanged raw data is saved or not.
     @param make_plot [Optional] RKI and estimated data can be compared by plots
@@ -47,11 +47,11 @@ def get_rki_data_with_estimations(read_data=dd.defaultDict['read_data'],
         split_berlin = False
 
         # get rki data
-        grd.get_rki_data(read_data, out_form, out_folder, no_raw, fill_dates, make_plot_rki, moving_average,
+        grd.get_rki_data(read_data, file_format, out_folder, no_raw, fill_dates, make_plot_rki, moving_average,
                          no_raw, split_berlin)
 
         # get data from John Hopkins University
-        gjd.get_jh_data(read_data, out_form, out_folder, no_raw)
+        gjd.get_jh_data(read_data, file_format, out_folder, no_raw)
 
     # Now we now which data is generated and we can use it
     # read in jh data
@@ -125,7 +125,7 @@ def get_rki_data_with_estimations(read_data=dd.defaultDict['read_data'],
                 = np.round(fraction_deaths_conf * df_rki.loc[(df_rki[dstr] == date_jh), confirmed])
 
         df_rki = df_rki.drop([dstr], 1)
-        gd.write_dataframe(df_rki, data_path, file_to_change + "_estimated", out_form)
+        gd.write_dataframe(df_rki, data_path, file_to_change + "_estimated", file_format)
 
         # check if calculation is meaningful
         # TODO Add jh data to whole germany plot
@@ -314,8 +314,8 @@ def download_weekly_deaths_numbers_rki(data_path):
 def main():
     """! Main program entry."""
 
-    [read_data, out_form, out_folder, no_raw, make_plot] = gd.cli("rkiest")
-    get_rki_data_with_estimations(read_data, out_form, out_folder, no_raw, make_plot)
+    arg_dict = gd.cli("rkiest")
+    get_rki_data_with_estimations(**arg_dict)
 
 
 if __name__ == "__main__":

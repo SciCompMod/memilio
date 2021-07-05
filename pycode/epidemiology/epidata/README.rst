@@ -86,10 +86,10 @@ optional arguments working for all are:
 +---------------------------------------------+-----------------------------------------------------------+
 | -h, --help                                  | show this help message and exit                           |
 +---------------------------------------------+-----------------------------------------------------------+
-| -r, --read-from-disk                        | Reads the data from file "json" instead of downloading it.|
+| -r, --read-data                             | Reads the data from file "json" instead of downloading it.|
 +---------------------------------------------+-----------------------------------------------------------+
-| -o OUT_PATH,                                | Defines folder for output.                                |
-| --out-path OUT_PATH                         |                                                           |
+| -o OUT_FOLDER,                              | Defines folder for output.                                |
+| --out-folder OUT_FOLDER                     |                                                           |
 +---------------------------------------------+-----------------------------------------------------------+
 | -ff {json,hdf5,json_timeasstring}           | Defines output format for data files.                     |
 | --file-format {json,hdf5,json_timeasstring} | Default is "json_timeasstring".                           |
@@ -98,32 +98,32 @@ optional arguments working for all are:
 optional arguments working for some are:
 
 +---------------------------------------------+-----------------------------------------------------------+
-| -p, --plot                                  | Plots the data.                                           |
+| -p, --make-plot                             | Plots the data.                                           |
 +---------------------------------------------+-----------------------------------------------------------+
 | -ed, --end-date                             | Changes date for which data collection is stopped [divi]  |
 +---------------------------------------------+-----------------------------------------------------------+
 | -sd, --start-date                           | Changes date for which data collection is started [divi]  |
 +---------------------------------------------+-----------------------------------------------------------+
-| -fd, --fill_dates                           | Returns dataframes with all dates instead of only dates   |
+| -fd, --fill-dates                           | Returns dataframes with all dates instead of only dates   |
 |                                             | where new cases have been reported.                       |
 |                                             |  Note that this option will have a negative impact        |
 |                                             |  on performance as well as on the storage space needed.   |
 |                                             |  [rki]                                                    |
 +---------------------------------------------+-----------------------------------------------------------+
-| -ma, --moving_average                       | The 7 day moving average is computed for the data.        |
+| -ma, --moving-average                       | The 7 day moving average is computed for the data.        |
 |                                             |  Note that the --fill_dates option will be implicitly     |
 |                                             |  turned on, as computing the moving average requires all  |
 |                                             |  dates to be available. [rki]                             |
 +---------------------------------------------+-----------------------------------------------------------+
-| -sb, --split_berlin                         | Berlin data is split into different counties              |
+| -sb, --split-berlin                         | Berlin data is split into different counties              |
 |                                             |  , instead of having only one county for Berlin. [rki]    |
 +---------------------------------------------+-----------------------------------------------------------+
-| -u, -- update                               | Just chronological missing data is added,                 |
+| -u, -- update-data                          | Just chronological missing data is added,                 |
 |                                             | **after** the existing ones [divi]                        |
 +---------------------------------------------+-----------------------------------------------------------+
 
 Hint:
-When using the "--plot" option close one figure-window to get the next one.
+When using the "--make-plot" option close one figure-window to get the next one.
 
 Results
 -------
@@ -237,7 +237,6 @@ Adding a new parser:
 - add default value to defaultDict in defaultDict.py
 - add to cli_dict in getDataIntoPandasDataFrame.py which scripts use this parser
 - add an if 'new parser' in what_list and add parser.add_argument()
-- add an of if-loop to append arg_list
 
 General
 - Always add unittests

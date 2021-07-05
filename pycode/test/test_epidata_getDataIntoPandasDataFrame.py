@@ -10,6 +10,14 @@ import pandas as pd
 from epidemiology.epidata import getDataIntoPandasDataFrame as gd
 from epidemiology.epidata import defaultDict as dd
 
+from epidemiology.epidata import getVaccineData
+from epidemiology.epidata import getPopulationData
+from epidemiology.epidata import getRKIData
+from epidemiology.epidata import getDIVIData
+from epidemiology.epidata import getRKIDatawithEstimations
+from epidemiology.epidata import getSpainData
+from epidemiology.epidata import getJHData
+
 class Test_getDataIntoPandasDataFrame(fake_filesystem_unittest.TestCase):
 
     path = '/home/x/'
@@ -132,32 +140,40 @@ class Test_getDataIntoPandasDataFrame(fake_filesystem_unittest.TestCase):
         out_path_default = dd.defaultDict['out_folder']
         out_path_default = os.path.join(out_path_default, 'pydata')
 
-        [read_data, out_form, out_folder, no_raw] = gd.cli("spain")
+        arg_dict = gd.cli("spain")
+        [read_data, file_format, out_folder, no_raw] = [arg_dict["read_data"], arg_dict["file_format"],
+                                                        arg_dict["out_folder"], arg_dict["no_raw"]]
 
         assert read_data == dd.defaultDict['read_data']
-        assert out_form == dd.defaultDict['out_form']
+        assert file_format == dd.defaultDict['file_format']
         assert out_folder == out_path_default
         assert no_raw == dd.defaultDict['no_raw']
 
-        [read_data, out_form, out_folder, no_raw] = gd.cli("population")
+        arg_dict = gd.cli("population")
+        [read_data, file_format, out_folder, no_raw] = [arg_dict["read_data"], arg_dict["file_format"],
+                                                        arg_dict["out_folder"], arg_dict["no_raw"]]
 
         assert read_data == dd.defaultDict['read_data']
-        assert out_form == dd.defaultDict['out_form']
+        assert file_format == dd.defaultDict['file_format']
         assert out_folder == out_path_default
         assert no_raw == dd.defaultDict['no_raw']
 
-        [read_data, out_form, out_folder, no_raw] = gd.cli("jh")
+        arg_dict = gd.cli("jh")
+        [read_data, file_format, out_folder, no_raw] = [arg_dict["read_data"], arg_dict["file_format"],
+                                                        arg_dict["out_folder"], arg_dict["no_raw"]]
 
         assert read_data == dd.defaultDict['read_data']
-        assert out_form == dd.defaultDict['out_form']
+        assert file_format == dd.defaultDict['file_format']
         assert out_folder == out_path_default
         assert no_raw == dd.defaultDict['no_raw']
 
-        [read_data, out_form, out_folder, no_raw, fill_dates, make_plot, moving_average, split_berlin] \
-            = gd.cli("rki")
+        arg_dict = gd.cli("rki")
+        [read_data, file_format, out_folder, fill_dates, make_plot, moving_average, split_berlin, no_raw] =\
+            [arg_dict["read_data"], arg_dict["file_format"], arg_dict["out_folder"], arg_dict["fill_dates"],
+             arg_dict["make_plot"], arg_dict["moving_average"], arg_dict["split_berlin"], arg_dict["no_raw"]]
 
         assert read_data == dd.defaultDict['read_data']
-        assert out_form == dd.defaultDict['out_form']
+        assert file_format == dd.defaultDict['file_format']
         assert out_folder == out_path_default
         assert make_plot == dd.defaultDict['make_plot']
         assert split_berlin == dd.defaultDict['split_berlin']
@@ -165,29 +181,38 @@ class Test_getDataIntoPandasDataFrame(fake_filesystem_unittest.TestCase):
         assert fill_dates == dd.defaultDict['fill_dates']
         assert no_raw == dd.defaultDict['no_raw']
 
-        [read_data, out_form, out_folder, no_raw, make_plot] = gd.cli("rkiest")
+        arg_dict = gd.cli("rkiest")
+        [read_data, file_format, out_folder, no_raw] = [arg_dict["read_data"], arg_dict["file_format"],
+                                                        arg_dict["out_folder"], arg_dict["no_raw"]]
 
         assert read_data == dd.defaultDict['read_data']
-        assert out_form == dd.defaultDict['out_form']
+        assert file_format == dd.defaultDict['file_format']
         assert out_folder == out_path_default
         assert no_raw == dd.defaultDict['no_raw']
         assert make_plot == dd.defaultDict['make_plot']
 
-        [read_data, out_form, out_folder, no_raw, end_date, start_date, update] = gd.cli("divi")
+        arg_dict = gd.cli("divi")
+        [read_data, file_format, out_folder, end_date, start_date, update_data, no_raw] =\
+            [arg_dict["read_data"], arg_dict["file_format"], arg_dict["out_folder"], arg_dict["end_date"],
+             arg_dict["start_date"], arg_dict["update_data"], arg_dict["no_raw"]]
 
         assert read_data == dd.defaultDict['read_data']
-        assert out_form == dd.defaultDict['out_form']
+        assert file_format == dd.defaultDict['file_format']
         assert out_folder == out_path_default
         assert end_date == dd.defaultDict['end_date']
         assert start_date == dd.defaultDict['start_date']
-        assert update == dd.defaultDict['update_data']
+        assert update_data == dd.defaultDict['update_data']
         assert no_raw == dd.defaultDict['no_raw']
 
-        [read_data, out_form, out_folder, no_raw, end_date, fill_dates, make_plot, moving_average, split_berlin,
-         start_date, update] = gd.cli("sim")
+        arg_dict = gd.cli("sim")
+        [read_data, file_format, out_folder, end_date, fill_dates, make_plot, moving_average, split_berlin, start_date,
+         update_data, no_raw] =\
+            [arg_dict["read_data"], arg_dict["file_format"], arg_dict["out_folder"], arg_dict["end_date"],
+             arg_dict["fill_dates"], arg_dict["make_plot"], arg_dict["moving_average"], arg_dict["split_berlin"],
+             arg_dict["start_date"], arg_dict["update_data"], arg_dict["no_raw"]]
 
         assert read_data == dd.defaultDict['read_data']
-        assert out_form == dd.defaultDict['out_form']
+        assert file_format == dd.defaultDict['file_format']
         assert out_folder == out_path_default
         assert no_raw == dd.defaultDict['no_raw']
         assert end_date == dd.defaultDict['end_date']
@@ -196,7 +221,7 @@ class Test_getDataIntoPandasDataFrame(fake_filesystem_unittest.TestCase):
         assert moving_average == dd.defaultDict['moving_average']
         assert split_berlin == dd.defaultDict['split_berlin']
         assert start_date == dd.defaultDict['start_date']
-        assert update == dd.defaultDict['update_data']
+        assert update_data == dd.defaultDict['update_data']
 
 
     @patch('sys.stderr', new_callable=StringIO)
@@ -215,26 +240,24 @@ class Test_getDataIntoPandasDataFrame(fake_filesystem_unittest.TestCase):
                 gd.cli("rki")
             self.assertRegexpMatches(mock_stderr.getvalue(), r"invalid choice")
 
-        # update and read_data together does not work
-        test_args = ["prog", '-u', '-r']
+        # update_data and read_data together does not work
+        test_args = ["prog", '-r', '-u']
         with patch.object(sys, 'argv', test_args):
             with self.assertRaises(SystemExit) as cm:
                 gd.cli("divi")
+            self.assertRegexpMatches(mock_stderr.getvalue(),
+                                     r"argument -u/--update-data: not allowed with argument -r/--read-data")
 
-            the_exception = cm.exception
-            self.assertEqual(the_exception.code, "You called the program with '--read-from-disk' and '--update'." +
-                             "Please choose just one. Both together is not possible.")
 
         test_args = ["prog", '-u', '-r']
         with patch.object(sys, 'argv', test_args):
             with self.assertRaises(SystemExit) as cm:
                 gd.cli("sim")
 
-            the_exception = cm.exception
-            self.assertEqual(the_exception.code, "You called the program with '--read-from-disk' and '--update'." +
-                             "Please choose just one. Both together is not possible.")
+            self.assertRegexpMatches(mock_stderr.getvalue(),
+                                     r"argument -r/--read-data: not allowed with argument -u/--update-data")
 
-        test_args = ["prog", '--update',]
+        test_args = ["prog", '--update-data',]
         with patch.object(sys, 'argv', test_args):
             with self.assertRaises(SystemExit) as cm:
                 gd.cli("rki")
@@ -252,7 +275,7 @@ class Test_getDataIntoPandasDataFrame(fake_filesystem_unittest.TestCase):
                 gd.cli("rki")
             self.assertRegexpMatches(mock_stderr.getvalue(), r"unrecognized arguments")
 
-        test_args = ["prog", '--plot']
+        test_args = ["prog", '--make-plot']
         with patch.object(sys, 'argv', test_args):
             with self.assertRaises(SystemExit) as cm:
                 gd.cli("divi")
@@ -272,84 +295,102 @@ class Test_getDataIntoPandasDataFrame(fake_filesystem_unittest.TestCase):
 
         folder = "some_folder"
 
-        test_args = ["prog", '--read-from-disk', '--out-path', folder, '--file-format', 'hdf5', '--no-raw']
+        test_args = ["prog", '--read-data', '--out-folder', folder, '--file-format', 'hdf5', '--no-raw']
 
         with patch.object(sys, 'argv', test_args):
 
-            [read_data, out_form, out_folder, no_raw] = gd.cli("spain")
+            arg_dict = gd.cli("spain")
+            [read_data, file_format, out_folder, no_raw] = [arg_dict["read_data"], arg_dict["file_format"],
+                                                            arg_dict["out_folder"], arg_dict["no_raw"]]
+
             assert read_data == True
-            assert out_form == 'hdf5'
+            assert file_format == 'hdf5'
             assert out_folder == "some_folder"
             assert no_raw == True
 
-            [read_data, out_form, out_folder, no_raw] = gd.cli("population")
+            arg_dict = gd.cli("population")
+            [read_data, file_format, out_folder, no_raw] = [arg_dict["read_data"], arg_dict["file_format"],
+                                                            arg_dict["out_folder"], arg_dict["no_raw"]]
+
             assert read_data == True
-            assert out_form == 'hdf5'
+            assert file_format == 'hdf5'
             assert out_folder == "some_folder"
             assert no_raw == True
 
-            [read_data, out_form, out_folder, no_raw] = gd.cli("jh")
+            arg_dict = gd.cli("jh")
+            [read_data, file_format, out_folder, no_raw] = [arg_dict["read_data"], arg_dict["file_format"],
+                                                            arg_dict["out_folder"], arg_dict["no_raw"]]
+
             assert read_data == True
-            assert out_form == 'hdf5'
+            assert file_format == 'hdf5'
             assert out_folder == "some_folder"
             assert no_raw == True
 
-        test_args = ["prog", '--read-from-disk', '--out-path', folder, '--file-format', 'hdf5', '--plot',
-                     '--split-berlin', '--moving-average', '--no-raw']
+        test_args = ["prog", '--read-data', '--out-folder', folder, '--file-format', 'hdf5', '--make-plot',
+                     '--split-berlin', '--moving-average', '--no-raw', '--fill-dates']
 
         with patch.object(sys, 'argv', test_args):
-
-            [read_data, out_form, out_folder, no_raw, fill_dates, make_plot, moving_average, split_berlin] \
-                = gd.cli("rki")
+            arg_dict = gd.cli("rki")
+            [read_data, file_format, out_folder, fill_dates, make_plot, moving_average, split_berlin, no_raw] = \
+                [arg_dict["read_data"], arg_dict["file_format"], arg_dict["out_folder"], arg_dict["fill_dates"],
+                 arg_dict["make_plot"], arg_dict["moving_average"], arg_dict["split_berlin"], arg_dict["no_raw"]]
 
             assert read_data == True
-            assert out_form == 'hdf5'
+            assert file_format == 'hdf5'
             assert out_folder == "some_folder"
-            assert fill_dates == False
+            assert fill_dates == True
             assert split_berlin == True
             assert moving_average == True
             assert make_plot == True
             assert no_raw == True
 
-        test_args = ["prog", '--read-from-disk', '--out-path', folder, '--file-format', 'json', '--plot']
+        test_args = ["prog", '--read-data', '--out-folder', folder, '--file-format', 'json', '--make-plot']
 
         with patch.object(sys, 'argv', test_args):
-
-            [read_data, out_form, out_folder, no_raw, make_plot] = gd.cli("rkiest")
+            arg_dict = gd.cli("rkiest")
+            [read_data, file_format, out_folder, no_raw, make_plot] =\
+                [arg_dict["read_data"], arg_dict["file_format"], arg_dict["out_folder"],
+                 arg_dict["no_raw"], arg_dict["make_plot"]]
 
             assert read_data == True
-            assert out_form == 'json'
+            assert file_format == 'json'
             assert out_folder == "some_folder"
             assert make_plot == True
             assert no_raw == False
 
-        test_args = ["prog", '--out-path', folder, '--file-format', 'json', '--update',
+        test_args = ["prog", '--out-folder', folder, '--file-format', 'json', '--update-data',
                      '--start-date', '2020-11-24', '--end-date', '2020-11-26', '-n']
 
         with patch.object(sys, 'argv', test_args):
-            [read_data, out_form, out_folder, no_raw, end_date, start_date, update] = gd.cli("divi")
+            arg_dict = gd.cli("divi")
+            [read_data, file_format, out_folder, end_date, start_date, update_data, no_raw] = \
+                [arg_dict["read_data"], arg_dict["file_format"], arg_dict["out_folder"], arg_dict["end_date"],
+                 arg_dict["start_date"], arg_dict["update_data"], arg_dict["no_raw"]]
 
             assert read_data == dd.defaultDict['read_data']
-            assert out_form == 'json'
+            assert file_format == 'json'
             assert out_folder == "some_folder"
             assert end_date == date(2020,11,26)
             assert start_date == date(2020,11,24)
-            assert update == True
             assert no_raw == True
 
-        test_args = ["prog", '--out-path', folder, '--file-format', 'json', '--update', '--plot',
+        test_args = ["prog", '--out-folder', folder, '--file-format', 'json', '--update-data', '--make-plot',
                      '--start-date', '2020-11-24', '--end-date', '2020-11-26']
 
         with patch.object(sys, 'argv', test_args):
-            [read_data, out_form, out_folder, no_raw, end_date, fill_dates, make_plot, moving_average,
-             split_berlin, start_date, update] = gd.cli("sim")
+            arg_dict = gd.cli("sim")
+            [read_data, file_format, out_folder, no_raw, end_date, fill_dates, make_plot, moving_average, split_berlin,
+             start_date, update_data] =\
+                [arg_dict["read_data"], arg_dict["file_format"], arg_dict["out_folder"], arg_dict["no_raw"],
+                 arg_dict["end_date"], arg_dict["fill_dates"], arg_dict["make_plot"], arg_dict["moving_average"],
+                 arg_dict["split_berlin"], arg_dict["start_date"], arg_dict["update_data"]]
 
             assert read_data == dd.defaultDict['read_data']
-            assert out_form == 'json'
+            assert file_format == 'json'
             assert out_folder == "some_folder"
             assert end_date == date(2020, 11, 26)
             assert start_date == date(2020, 11, 24)
-            assert update == True
+            assert update_data == True
             assert make_plot == True
             assert split_berlin == dd.defaultDict['split_berlin']
             assert moving_average == dd.defaultDict['moving_average']
@@ -432,6 +473,60 @@ class Test_getDataIntoPandasDataFrame(fake_filesystem_unittest.TestCase):
 
         exit_string = "Error: The file format: " + 'wrong' + " does not exist. Use another one."
         self.assertEqual(cm.exception.code, exit_string)
+
+    @patch('epidemiology.epidata.getDIVIData.get_divi_data')
+    @patch('epidemiology.epidata.getRKIData.get_rki_data')
+    @patch('epidemiology.epidata.getPopulationData.get_population_data')
+    @patch('epidemiology.epidata.getPopulationData.get_age_population_data')
+    @patch('epidemiology.epidata.getVaccineData.get_vaccine_data')
+    @patch('epidemiology.epidata.getRKIDatawithEstimations.get_rki_data_with_estimations')
+    @patch('epidemiology.epidata.getJHData.get_jh_data')
+    @patch('epidemiology.epidata.getSpainData.get_spain_data')
+    def test_call_functions(self, mock_spain, mock_jh, mock_rkiwe, mock_vaccine, mock_agep, mock_popul, mock_rki,
+                            mock_divi):
+
+        arg_dict_all = {"read_data": dd.defaultDict['read_data'], "file_format": dd.defaultDict['file_format'],
+                        "out_folder": os.path.join(dd.defaultDict['out_folder'], 'pydata'),
+                        'no_raw': dd.defaultDict["no_raw"]}
+
+        arg_dict_rki_est = {**arg_dict_all,  "make_plot": dd.defaultDict['make_plot']}
+
+        arg_dict_rki = {**arg_dict_rki_est, "fill_dates": dd.defaultDict['fill_dates'],
+                        "moving_average": dd.defaultDict['moving_average'],
+                        "split_berlin": dd.defaultDict['split_berlin']}
+
+        arg_dict_divi = {**arg_dict_all, "end_date": dd.defaultDict['end_date'],
+                         "start_date": dd.defaultDict['start_date'], "update_data": dd.defaultDict['update_data']}
+
+        getVaccineData.main()
+        mock_vaccine.assert_called()
+        mock_vaccine.assert_called_with(**arg_dict_all)
+
+        getPopulationData.main()
+        mock_agep.assert_called()
+        mock_agep.assert_called_with(**arg_dict_all)
+        mock_popul.assert_called()
+        mock_popul.assert_called_with(**arg_dict_all)
+
+        getRKIData.main()
+        mock_rki.assert_called()
+        mock_rki.assert_called_with(**arg_dict_rki)
+
+        getDIVIData.main()
+        mock_divi.assert_called()
+        mock_divi.assert_called_with(**arg_dict_divi)
+
+        getRKIDatawithEstimations.main()
+        mock_rkiwe.assert_called()
+        mock_rkiwe.assert_called_with(**arg_dict_rki_est)
+
+        getSpainData.main()
+        mock_spain.assert_called()
+        mock_spain.assert_called_with(**arg_dict_all)
+
+        getJHData.main()
+        mock_jh.assert_called()
+        mock_jh.assert_called_with(**arg_dict_all)
 
 
 if __name__ == '__main__':

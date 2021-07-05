@@ -299,7 +299,7 @@ def download_data_for_one_day(last_number, download_date):
 
 
 def get_divi_data(read_data=dd.defaultDict['read_data'],
-                  out_form=dd.defaultDict['out_form'],
+                  file_format=dd.defaultDict['file_format'],
                   out_folder=dd.defaultDict['out_folder'],
                   no_raw=dd.defaultDict['no_raw'],
                   end_date=dd.defaultDict['end_date'],
@@ -338,7 +338,7 @@ def get_divi_data(read_data=dd.defaultDict['read_data'],
     for counties, states and whole Germany, respectively.
 
     @param read_data False [Default] or True. Defines if data is read from file or downloaded.
-    @param out_form File format which is used for writing the data. Default defined in defaultDict.
+    @param file_format File format which is used for writing the data. Default defined in defaultDict.
     @param update_data "True" if existing data is updated or
     "False [Default]" if it is downloaded for all dates from start_date to end_date.
     @param out_folder Folder where data is written to.
@@ -439,7 +439,7 @@ def get_divi_data(read_data=dd.defaultDict['read_data'],
             print(new_dict_string)
 
         if not no_raw:
-            gd.write_dataframe(df, directory, filename, out_form)
+            gd.write_dataframe(df, directory, filename, file_format)
     else:
         exit_string = "Something went wrong, dataframe is empty."
         sys.exit(exit_string)
@@ -462,7 +462,7 @@ def get_divi_data(read_data=dd.defaultDict['read_data'],
     # write data for counties to file
     df_counties = df[["County", "ID_County", "ICU", "ICU_ventilated", "Date"]].copy()
     filename = "county_divi"
-    gd.write_dataframe(df_counties, directory, filename, out_form)
+    gd.write_dataframe(df_counties, directory, filename, file_format)
 
     # write data for states to file
     df_states = df.groupby(["ID_State", "State", "Date"]).agg({"ICU": sum, "ICU_ventilated": sum})
@@ -479,7 +479,7 @@ def get_divi_data(read_data=dd.defaultDict['read_data'],
     # {"faelle_covid_aktuell_im_bundesland": max})[["faelle_covid_aktuell_im_bundesland"]])
 
     filename = "state_divi"
-    gd.write_dataframe(df_states, directory, filename, out_form)
+    gd.write_dataframe(df_states, directory, filename, file_format)
 
     # write data for germany to file
     df_ger = df.groupby(["Date"]).agg({"ICU": sum, "ICU_ventilated": sum})
@@ -491,13 +491,13 @@ def get_divi_data(read_data=dd.defaultDict['read_data'],
     # df_ger.loc[df_states["Date"] <= "2020-04-25 09:15:00", "ICU_ventilated"] = np.nan
     # TODO: Use also "faelle_covid_aktuell_im_bundesland" from 25.9.
     filename = "germany_divi"
-    gd.write_dataframe(df_ger, directory, filename, out_form)
+    gd.write_dataframe(df_ger, directory, filename, file_format)
 
 def main():
     """ Main program entry."""
 
-    [read_data, out_form, out_folder, no_raw, end_date, start_date, update_data] = gd.cli('divi',)
-    get_divi_data(read_data, out_form, out_folder, no_raw, end_date, start_date, update_data)
+    arg_dict = gd.cli('divi',)
+    get_divi_data(**arg_dict)
 
 
 if __name__ == "__main__":

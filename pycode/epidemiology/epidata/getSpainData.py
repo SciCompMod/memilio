@@ -31,7 +31,7 @@ from epidemiology.epidata import defaultDict as dd
 
 
 def get_spain_data(read_data=dd.defaultDict['read_data'],
-                   out_form=dd.defaultDict['out_form'],
+                   file_format=dd.defaultDict['file_format'],
                    out_folder=dd.defaultDict['out_folder'],
                    no_raw=dd.defaultDict['no_raw']):
     """! Downloads data from Spain covid-19 data
@@ -56,7 +56,7 @@ def get_spain_data(read_data=dd.defaultDict['read_data'],
       - spain split into states stored in spain_all_state
 
    @param read_data False [Default] or True. Defines if data is read from file or downloaded.
-   @param out_form File format which is used for writing the data. Default defined in defaultDict.
+   @param file_format File format which is used for writing the data. Default defined in defaultDict.
    @param out_folder Path to folder where data is written in folder out_folder/Spain.
    @param no_raw True or False [Default]. Defines if unchanged raw data is saved or not.
    """
@@ -64,11 +64,11 @@ def get_spain_data(read_data=dd.defaultDict['read_data'],
     directory = os.path.join(out_folder, 'Spain/')
     gd.check_dir(directory)
 
-    _get_spain_all_age(read_data, out_form, no_raw, directory)
-    _get_spain_all_state(read_data, out_form, no_raw, directory)
+    _get_spain_all_age(read_data, file_format, no_raw, directory)
+    _get_spain_all_state(read_data, file_format, no_raw, directory)
 
 
-def _get_spain_all_age(read_data, out_form, no_raw, directory):
+def _get_spain_all_age(read_data, file_format, no_raw, directory):
 
     ages_file = 'raw_spain_all_age'
 
@@ -106,16 +106,16 @@ def _get_spain_all_age(read_data, out_form, no_raw, directory):
     # write file for all age groups summed together
     df_agesum = df_age.loc[df_age[dd.EngEng["age10"]] == dd.EngEng['all']]
 
-    gd.write_dataframe(df_agesum, directory, "spain", out_form)
+    gd.write_dataframe(df_agesum, directory, "spain", file_format)
 
     # write file with information on all age groups separately
     # age_groups = ['0-9','10-19','20-29','30-39','40-49','50-59','60-69','70-79','80+']
     df_agesep = df_age.loc[df_age[dd.EngEng["age10"]] != dd.EngEng['all']]
 
-    gd.write_dataframe(df_agesep, directory, "spain_all_age", out_form)
+    gd.write_dataframe(df_agesep, directory, "spain_all_age", file_format)
 
 
-def _get_spain_all_state(read_data, out_form, no_raw, directory):
+def _get_spain_all_state(read_data, file_format, no_raw, directory):
 
     stat_file = 'raw_spain_all_state'
 
@@ -160,7 +160,7 @@ def _get_spain_all_state(read_data, out_form, no_raw, directory):
             = df_state[dd.EngEng["confirmedPcr"]] + df_state[dd.EngEng["confirmedAb"]]
 
     # output json
-    gd.write_dataframe(df_state, directory, "spain_all_state", out_form)
+    gd.write_dataframe(df_state, directory, "spain_all_state", file_format)
 
 
 def _read_or_load_data(read_data, no_raw, directory, file, data=None , api_url=None, exit_string=None):
@@ -201,8 +201,8 @@ def _read_or_load_data(read_data, no_raw, directory, file, data=None , api_url=N
 def main():
     """! Main program entry."""
 
-    [read_data, out_form, out_folder, no_raw] = gd.cli("spain")
-    get_spain_data(read_data, out_form, out_folder, no_raw)
+    arg_dict = gd.cli("spain")
+    get_spain_data(**arg_dict)
 
 
 if __name__ == "__main__":
