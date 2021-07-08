@@ -7,6 +7,7 @@
 #include <epidemiology/utils/custom_index_array.h>
 #include <epidemiology/secir/secir.h>
 #include <epidemiology/secir/damping.h>
+#include <epidemiology/utils/regions.h>
 #include <epidemiology/utils/time_series.h>
 #include <epidemiology/secir/parameter_studies.h>
 #include <epidemiology/secir/analyze_result.h>
@@ -596,6 +597,14 @@ void bind_damping_expression_group_members(DampingExpressionGroupClass& cl)
 
 PYBIND11_MODULE(_secir, m)
 {
+    py::class_<epi::Date>(m, "Date")
+        .def(py::init<int, int, int>(), py::arg("year"), py::arg("month"), py::arg("day"))
+        .def_readwrite("year", &epi::Date::year)
+        .def_readwrite("month", &epi::Date::month)
+        .def_readwrite("day", &epi::Date::day)
+        .def(py::self == py::self)
+        .def(py::self != py::self);
+
     auto damping_class = py::class_<epi::SquareDamping>(m, "Damping");
     bind_damping_members(damping_class);
 
@@ -752,16 +761,38 @@ PYBIND11_MODULE(_secir, m)
         .def(py::init<>())
         .def(py::init<const epi::ContactMatrixGroup&>())
         .def_property(
-            "cont_freq_mat",
-                py::overload_cast<>(&epi::UncertainContactMatrix::get_cont_freq_mat),
+            "cont_freq_mat", py::overload_cast<>(&epi::UncertainContactMatrix::get_cont_freq_mat),
             [](epi::UncertainContactMatrix& self, const epi::ContactMatrixGroup& c) {
                 self.get_cont_freq_mat() = c;
             },
             py::return_value_policy::reference_internal)
-        .def_property("dampings", py::overload_cast<>(&epi::UncertainContactMatrix::get_dampings), 
+        .def_property(
+            "dampings", py::overload_cast<>(&epi::UncertainContactMatrix::get_dampings),
             [](epi::UncertainContactMatrix& self, const std::vector<epi::DampingSampling>& v) {
                 self.get_dampings() = v;
-            }, py::return_value_policy::reference_internal);
+            },
+            py::return_value_policy::reference_internal)
+        .def_property(
+            "school_holidays",
+            [](const epi::UncertainContactMatrix& self) {
+                std::vector<std::pair<double, double>> v(self.get_school_holidays().size());
+                std::transform(self.get_school_holidays().begin(), self.get_school_holidays().end(), v.begin(),
+                               [](auto& p) {
+                                   return std::make_pair(double(p.first), double(p.second));
+                               });
+                return v;
+            },
+            [](epi::UncertainContactMatrix& self, const std::vector<std::pair<double, double>>& v) {
+                self.get_school_holidays().resize(v.size());
+                std::transform(v.begin(), v.end(), self.get_school_holidays().begin(), [](auto& p) {
+                    return std::make_pair(epi::SimulationTime(p.first), epi::SimulationTime(p.second));
+                });
+            })
+        .def_property("school_holiday_damping",
+                      py::overload_cast<>(&epi::UncertainContactMatrix::get_school_holiday_damping),
+                      [](epi::UncertainContactMatrix& self, const epi::DampingSampling& v) {
+                          self.get_school_holiday_damping() = v;
+                      });
 
     auto migration_damping_class = py::class_<epi::VectorDamping>(m, "MigrationDamping");
     bind_damping_members(migration_damping_class);
@@ -888,6 +919,21 @@ PYBIND11_MODULE(_secir, m)
           py::overload_cast<const MigrationGraph&>(&epi::interpolate_simulation_result<Simulation>));
 
     m.def("interpolate_ensemble_results", &epi::interpolate_ensemble_results<MigrationGraph>);
+
+    m.def(
+        "get_state_id_de",
+        [](int county) {
+            return int(epi::regions::de::get_state_id(epi::regions::de::CountyId(county)));
+        },
+        py::arg("county_id"));
+    m.def(
+        "get_holidays_de",
+        [](int state, epi::Date start_date, epi::Date end_date) {
+            auto h = epi::regions::de::get_holidays(epi::regions::de::StateId(state), start_date, end_date);
+            return std::vector<std::pair<epi::Date, epi::Date>>(h.begin(), h.end());
+        },
+        py::arg("state_id"), py::arg("start_date") = epi::Date(std::numeric_limits<int>::min(), 1, 1),
+        py::arg("end_date") = epi::Date(std::numeric_limits<int>::max(), 1, 1));
 
     m.attr("__version__") = "dev";
 }
