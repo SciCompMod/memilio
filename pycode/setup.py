@@ -14,15 +14,16 @@ except ImportError:
 
 __version__ = '0.1.0'
 
-
 INSTALL_REQUIRES = ['pandas<1.2.0',
-                    'matplotlib',
+                    'matplotlib<3.4',
                     'tables',
                     'numpy<=1.19.4',
                     'openpyxl',
-                    'xlrd']
+                    'xlrd', 
+		            'requests']
 
 EXTRAS_REQUIRE = {"pylint": ["pylint", "pylint_json2html"]}
+
 
 class PylintCommand(distutils.cmd.Command):
     """
@@ -48,7 +49,7 @@ class PylintCommand(distutils.cmd.Command):
         }
 
     def finalize_options(self):
-        self.reporter, self.out_file = self.REPORTERS.get(self.out_format)#, self.REPORTERS.get("parseable"))
+        self.reporter, self.out_file = self.REPORTERS.get(self.out_format)  # , self.REPORTERS.get("parseable"))
 
     def run(self):
         os.makedirs("build_pylint", exist_ok=True)
@@ -56,9 +57,10 @@ class PylintCommand(distutils.cmd.Command):
         # Run pylint
         from pylint import lint
         with open(self.out_file, "w", encoding="utf-8") as report_file:
-            options = ["--rcfile=pylintrc", "-j 2", *self.lint_modules]
+            options = ["--rcfile=pylintrc", *self.lint_modules]
 
             lint.Run(options, reporter=self.reporter(report_file), do_exit=False)
+
 
 setup(
     name='epidemiology',
@@ -75,16 +77,17 @@ setup(
             'getjhdata = epidemiology.epidata.getJHData:main',
             'getspaindata = epidemiology.epidata.getSpainData:main',
             'getdividata = epidemiology.epidata.getDIVIData:main',
-            'getalldata = epidemiology.epidata.getAllData:main',
+            'getsimdata = epidemiology.epidata.getSimulationData:main',
             'cleandata = epidemiology.epidata.cleanData:main',
-            'getrkiestimation = epidemiology.epidata.getRKIDatawithEstimations:main'
+            'getrkiestimation = epidemiology.epidata.getRKIDatawithEstimations:main',
+            'getcommutermigration = epidemiology.epidata.commuter_migration_bfa:main'
         ],
     },
     package_dir={
        'epidemiology': 'epidemiology',
        'epidemiology.seir': os.path.join('epidemiology', 'seir'),
-       'epidemiology.secir': os.path.join('epidemiology','secir'),
-       'epidemiology.epidata': os.path.join('epidemiology','epidata')},
+       'epidemiology.secir': os.path.join('epidemiology', 'secir'),
+       'epidemiology.epidata': os.path.join('epidemiology', 'epidata')},
     packages=['epidemiology', 
               'epidemiology.seir',
               'epidemiology.secir',
@@ -93,7 +96,7 @@ setup(
     setup_requires=['cmake'],
     test_suite='test',
     install_requires=INSTALL_REQUIRES,
-    extras_require = EXTRAS_REQUIRE,
+    extras_require=EXTRAS_REQUIRE,
     cmdclass={
             'pylint': PylintCommand,
         },

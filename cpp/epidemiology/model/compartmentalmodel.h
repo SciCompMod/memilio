@@ -3,35 +3,40 @@
 
 #include "epidemiology/utils/ScalarType.h"
 #include "epidemiology/utils/eigen.h"
+#include "epidemiology/utils/metaprogramming.h"
 #include <vector>
 #include <functional>
 
 #define USE_DERIV_FUNC 1
 
-namespace
-{
-
-//some metaprogramming to transform a tuple into a parameter pack and use it as
-//an argument in a function.
-//Taken from https://stackoverflow.com/questions/7858817/unpacking-a-tuple-to-call-a-matching-function-pointer/9288547#9288547
-
-template <typename Function, typename Tuple, size_t... I>
-decltype(auto) call(Function f, Tuple t, std::index_sequence<I...>)
-{
-    return f(std::get<I>(t)...);
-}
-
-template <typename Function, typename Tuple>
-decltype(auto) call(Function f, Tuple t)
-{
-    static constexpr auto size = std::tuple_size<Tuple>::value;
-    return call(f, t, std::make_index_sequence<size>{});
-}
-
-} // namespace
 
 namespace epi
 {
+
+namespace details 
+{
+    //helpers for check_constraint
+    template<class T>
+    using check_constraints_expr_t = decltype(std::declval<T>().check_constraints());
+
+    //helpers for apply_constraints
+    template<class T>
+    using apply_constraints_expr_t = decltype(std::declval<T>().apply_constraints());
+} //namespace details
+
+/**
+ * @brief check whether a check_constraints function exists
+ * @tparam The type to check for the existence of the member function
+ */
+template <class T>
+using has_check_constraints_member_function = is_expression_valid<details::check_constraints_expr_t, T>;
+
+/**
+ * @brief check whether a apply_constraints function exists
+ * @tparam The type to check for the existence of the member function
+ */
+template <class T>
+using has_apply_constraints_member_function = is_expression_valid<details::apply_constraints_expr_t, T>;
 
 /**
  * @brief ComppartmentalModel is a template for a compartmental model for an
@@ -47,9 +52,12 @@ namespace epi
  * studies
  *
  */
-template <class Populations, class ParameterSet>
+template <class Pop, class Params>
 struct CompartmentalModel {
 public:
+    using Populations = Pop;
+    using ParameterSet = Params;
+
     // The flow function takes a set of parameters, the current time t and the
     // snapshot y of all population sizes at time t, represented as a flat array and returns a scalar value
     // that represents a flow going from one compartment to another.
@@ -66,7 +74,9 @@ public:
     /**
      * @brief CompartmentalModel default constructor
      */
-    CompartmentalModel()
+    CompartmentalModel(Populations const& po, ParameterSet const& pa)
+        : populations{std::move(po)}
+        , parameters{pa}
     {
     }
 
@@ -126,16 +136,35 @@ public:
         return populations.get_compartments();
     }
 
-    void apply_constraints()
+    // TODO: if constexpr as soon as we open for C++17
+    template<typename T = ParameterSet>
+    std::enable_if_t<has_apply_constraints_member_function<T>::value>
+    apply_constraints()
     {
         populations.apply_constraints();
         parameters.apply_constraints();
     }
 
-    void check_constraints() const
+    template<typename T = ParameterSet>
+    std::enable_if_t<!has_apply_constraints_member_function<T>::value>
+    apply_constraints()
+    {
+        populations.apply_constraints();
+    }
+
+    template<typename T = ParameterSet>
+    std::enable_if_t<has_check_constraints_member_function<T>::value>
+    check_constraints() const
     {
         populations.check_constraints();
         parameters.check_constraints();
+    }
+
+    template<typename T = ParameterSet>
+    std::enable_if_t<!has_check_constraints_member_function<T>::value>
+    check_constraints() const
+    {
+        populations.check_constraints();
     }
 
     Populations populations{};
@@ -144,6 +173,40 @@ public:
 private:
     std::vector<Flow> flows{};
 };
+
+/**
+ * detect the eval_right_hand_side member function of a compartment model.
+ * If the eval_right_hand_side member function exists in the type M, this template when instatiated
+ * will be equal to the return type of the function.
+ * Otherwise the template is invalid.
+ * @tparam M a type that has a eval_right_hand_side member function, e.g. a compartment model type.
+ */
+template <class M>
+using eval_right_hand_side_expr_t = decltype(std::declval<const M&>().eval_right_hand_side(
+    std::declval<Eigen::Ref<const Eigen::VectorXd>>(), std::declval<Eigen::Ref<const Eigen::VectorXd>>(),
+    std::declval<double>(), std::declval<Eigen::Ref<Eigen::VectorXd>>()));
+
+/**
+ * detect the get_initial_values member function of a compartment model.
+ * If the detect_initial_values member function exists in the type M, this template when instatiated
+ * will be equal to the return type of the function.
+ * Otherwise the template is invalid.
+ * @tparam M a type that has a get_initial_values member function, e.g. a compartment model type.
+ */
+template <class M>
+using get_initial_values_expr_t =
+    decltype(std::declval<Eigen::VectorXd&>() = std::declval<const M&>().get_initial_values());
+
+/**
+ * Template meta function to check if a type is a valid compartment model. 
+ * Defines a static constant of name `value`. 
+ * The constant `value` will be equal to true if M is a valid compartment model type.
+ * Otherwise, `value` will be equal to false.
+ * @tparam Sim a type that may or may not be a compartment model.
+ */
+template <class M>
+using is_compartment_model = std::integral_constant<bool, (is_expression_valid<eval_right_hand_side_expr_t, M>::value &&
+                                                           is_expression_valid<get_initial_values_expr_t, M>::value )>;
 
 } // namespace epi
 

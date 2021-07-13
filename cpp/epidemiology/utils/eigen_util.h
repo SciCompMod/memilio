@@ -90,7 +90,7 @@ using CVPlainMatrixT = typename CVPlainMatrix<M>::Type;
 template <class V, std::enable_if_t<is_dynamic_vector<V>::value, int> = 0>
 auto slice(V&& v, Seq<Eigen::Index> elems)
 {
-    return Eigen::Map<CVPlainMatrixT<std::remove_reference_t<V>>, 0, Eigen::Stride<Eigen::Dynamic, Eigen::Dynamic>>(
+    return Eigen::Map<CVPlainMatrixT<std::decay_t<V>>, 0, Eigen::Stride<Eigen::Dynamic, Eigen::Dynamic>>(
         v.data() + elems.start, elems.n, Eigen::Stride<Eigen::Dynamic, Eigen::Dynamic>{1, elems.stride});
 }
 
@@ -139,6 +139,46 @@ auto reshape(M&& m, Eigen::Index rows, Eigen::Index cols)
     assert(cols >= 1);
 
     return Eigen::Map<CVPlainMatrixT<std::remove_reference_t<M>>>(m.data(), rows, cols);
+}
+
+/**
+ * template utility.
+ * Defines value = true if M is an Eigen matrix expression.
+ * Defines value = false, otherwise.
+ */
+template<class M>
+using is_matrix_expression = std::is_base_of<Eigen::EigenBase<M>, M>;
+
+/**
+ * coefficient wise maximum of two matrices.
+ * @param a a matrix expression
+ * @param b a matrix expression of the same shape as a
+ * @return a matrix expression the shape of a with each coefficient the maximum of the coefficients of a and b.
+ */
+template<class A, class B>
+auto max(const Eigen::MatrixBase<A>& a, B&& b)
+{
+    return a.binaryExpr(std::forward<B>(b), [](auto a_i, auto b_i) { return std::max(a_i, b_i); });
+}
+
+/**
+ * Maps a random access range (i.e. anything with size() and operator[], e.g. std::vector) onto a 
+ * Eigen array expression. Returns a column array expression ´a´ where a[i] = f(v[i]).
+ * The returned expression stores a reference to the range, lifetime of the range must exceed
+ * lifetime of the return.
+ * @param v a random access range.
+ * @param f a function that returns a numeric scalar for each element of v. 
+ * @return an array expression ´a´ the same size as v where a[i] = f(v[i]).
+ */
+template<class Rng, class F>
+auto map(const Rng& v, F f)
+{
+    using Result = std::result_of_t<F(const typename Rng::value_type&)>;
+    using Scalar = std::decay_t<Result>;
+    using Array  = Eigen::Array<Scalar, Eigen::Dynamic, 1>;
+    return Array::NullaryExpr(v.size(), [f, &v] (Eigen::Index i) -> Scalar { 
+        return f(v[size_t(i)]);
+    });
 }
 
 } // namespace epi

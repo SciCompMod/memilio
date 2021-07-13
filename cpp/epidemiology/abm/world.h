@@ -31,7 +31,9 @@ public:
      * @param params parameters of the infection that are the same everywhere in the world.
      */
     World(const GlobalInfectionParameters& params = {})
-        : m_infection_parameters(params)
+        : m_locations((uint32_t)LocationType::Count)
+        , m_infection_parameters(params)
+        , m_migration_parameters()
     {
     }
 
@@ -45,33 +47,33 @@ public:
      * prepare the world for the next simulation step.
      * @param dt length of the time step 
      */
-    void begin_step(double dt);
+    void begin_step(TimePoint t, TimeSpan dt);
 
     /** 
      * evolve the world one time step.
      * @param dt length of the time step
      */
-    void evolve(double dt);
-
+    void evolve(TimePoint t, TimeSpan dt);
+    
     /** 
      * add a location to the world.
      * @param type type of location to add
-     * @return reference to the newly created location
+     * @return index and type of the newly created location
      */
-    Location& add_location(LocationType type);
+    LocationId add_location(LocationType type);
 
     /** add a person to the world 
-     * @param location initial location of the person
+     * @param id index and type of the initial location of the person
      * @param state initial infection state of the person
      * @return reference to the newly created person
      */
-    Person& add_person(Location& location, InfectionState state, AbmAgeGroup age = AbmAgeGroup::Age15to34);
+    Person& add_person(LocationId id, InfectionState state, AbmAgeGroup age = AbmAgeGroup::Age15to34);
 
     /**
      * get a range of all locations in the world.
      * @return a range of all locations.
      */
-    Range<std::pair<ConstLocationIterator, ConstLocationIterator>> get_locations() const;
+    Range<std::pair<std::vector<std::vector<Location>>::const_iterator, std::vector<std::vector<Location>>::const_iterator>> get_locations() const;
 
     /**
      * get a range of all persons in the world.
@@ -79,13 +81,45 @@ public:
      */
     Range<std::pair<ConstPersonIterator, ConstPersonIterator>> get_persons() const;
 
+    /**
+     * get an individualized location
+     * @param id LocationId of the location
+     * @return reference to the location
+     */
+    const Location& get_individualized_location(LocationId id) const;
+
+    Location& get_individualized_location(LocationId id);
+
+    /**
+     * get the current location of a person
+     * @return reference to the current location of the person
+     */
+    const Location& get_location(const Person& person) const;
+
+    Location& get_location(const Person& person);
+
+    /**
+     * find an assigned location of a person
+     * @param type the location type that specifies the assigned location
+     * @return pointer to the assigned location
+     */
+    Location* find_location(LocationType type, const Person& person);
+
+    /** 
+     * number of persons in one infection state at all locations of a type.
+     * @param type specified location type
+     * @return number of persons that are in the specified infection state
+     */
+    int get_subpopulation_combined(InfectionState s, LocationType type) const;
+
 private:
-    void interaction(double dt);
-    void migration(double dt);
+    void interaction(TimePoint t, TimeSpan dt);
+    void migration(TimePoint t, TimeSpan dt);
 
     std::vector<std::unique_ptr<Person>> m_persons;
-    std::vector<std::unique_ptr<Location>> m_locations;
+    std::vector<std::vector<Location>> m_locations;
     GlobalInfectionParameters m_infection_parameters;
+    AbmMigrationParameters m_migration_parameters;
 };
 
 } // namespace epi

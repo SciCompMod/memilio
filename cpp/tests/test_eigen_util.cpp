@@ -62,3 +62,10 @@ TYPED_TEST(TestEigenUtilMatrix, reshape)
     EXPECT_EQ(print_wrap(epi::reshape(A, 1, 6)), print_wrap(B));
     EXPECT_EQ(print_wrap(epi::reshape(A, 3, 2)), print_wrap(C));
 }
+
+TEST(TestEigenUtil, max)
+{
+    auto A = (Eigen::MatrixXi(2, 3) << -1, 2, -3, -4, 5, 6).finished();
+    auto M = epi::max(A, Eigen::MatrixXi::Zero(2, 3));
+    EXPECT_EQ(print_wrap(M), print_wrap((Eigen::MatrixXi(2, 3) << 0, 2, 0, 0, 5, 6).finished()));
+}

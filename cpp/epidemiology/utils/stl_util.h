@@ -1,9 +1,12 @@
 #ifndef STL_UTIL_H
 #define STL_UTIL_H
 
+#include <epidemiology/utils/metaprogramming.h>
+
 #include <vector>
 #include <algorithm>
 #include <utility>
+#include <iterator>
 #include <iostream>
 #include <sstream>
 #include <cstring>
@@ -55,10 +58,12 @@ template <class IterPair>
 class Range
 {
 public:
-    using iterator       = typename IterPair::first_type;
-    using const_iterator = typename IterPair::first_type;
-    using value_type     = typename std::iterator_traits<iterator>::value_type;
-    using reference      = typename std::iterator_traits<iterator>::reference;
+    using iterator               = typename IterPair::first_type;
+    using const_iterator         = typename IterPair::first_type;
+    using reverse_iterator       = std::reverse_iterator<iterator>;
+    using const_reverse_iterator = std::reverse_iterator<const_iterator>;
+    using value_type             = typename std::iterator_traits<iterator>::value_type;
+    using reference              = typename std::iterator_traits<iterator>::reference;
 
     Range(IterPair iter_pair)
         : m_iter_pair(iter_pair)
@@ -95,6 +100,20 @@ public:
         return m_iter_pair.second;
     }
 
+    template <class T = typename std::iterator_traits<iterator>::iterator_category,
+              class   = std::enable_if_t<std::is_base_of<std::bidirectional_iterator_tag, T>::value>>
+    auto rbegin() const
+    {
+        return std::make_reverse_iterator(end());
+    }
+
+    template <class T = typename std::iterator_traits<iterator>::iterator_category,
+              class   = std::enable_if_t<std::is_base_of<std::bidirectional_iterator_tag, T>::value>>
+    auto rend() const
+    {
+        return std::make_reverse_iterator(begin());
+    }
+
 private:
     IterPair m_iter_pair;
 };
@@ -115,30 +134,20 @@ auto make_range(Iter1&& iter1, Iter2&& iter2)
 }
 
 /**
- * template meta programming helper type 
- */
-template <class... Ts>
-using void_t = void;
-
-/**
  * meta function to check type T for an existing stream output operator "<<"
  */
-template <class T, class = void>
-struct has_ostream_op : std::false_type {
-};
+template<class T>
+using ostream_op_expr_t = decltype(std::declval<std::ostream&>() << std::declval<T>());
 template <class T>
-struct has_ostream_op<T, void_t<decltype(std::declval<std::ostream&>() << std::declval<T>())>> : std::true_type {
-};
+using has_ostream_op = is_expression_valid<ostream_op_expr_t, T>;
 
 /**
  * meta function to check type T for an existing equality comparison operator
  */
-template <class T, class = void>
-struct has_eq_op : std::false_type {
-};
+template<class T>
+using eq_op_t = decltype(std::declval<T>() == std::declval<T>());
 template <class T>
-struct has_eq_op<T, void_t<decltype(std::declval<T>() == std::declval<T>())>> : std::true_type {
-};
+using has_eq_op = is_expression_valid<eq_op_t, T>;
 
 namespace details
 {

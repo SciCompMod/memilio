@@ -42,25 +42,6 @@ const MatrixPrintWrap<M>& print_wrap(const M& m)
 }
 
 /**
- * gmock matcher that checks where the elements of a container are linearly spaced.
- * @param b minimum value
- * @param e maximum value
- * @param num_points number of linearly spaced points in [b, e]
- * @return matcher that accepts a stl container
- */
-template <class T>
-auto ElementsAreLinspace(T b, T e, size_t num_points)
-{
-    assert(num_points >= 2);
-
-    std::vector<T> values(num_points);
-    for (size_t i = 0; i < num_points; i++) {
-        values[i] = b + i * (e - b) / (num_points - 1);
-    }
-    return testing::ElementsAreArray(values);
-}
-
-/**
  * gmock matcher, checks if each element of two eigen matrices are within tolerance.
  * @param other matrix to compare
  * @param rtol relative tolerance
@@ -94,12 +75,32 @@ MATCHER_P(MatrixNear, other,
  * @param atol absolute tolerance
  * @return matcher that accepts floating point values.
  */
-MATCHER_P3(FloatingPointEqual, other, rtol, atol,
+MATCHER_P3(FloatingPointEqual, other, atol, rtol,
            "approx. equal to " + testing::PrintToString(other) + " (rtol = " + testing::PrintToString(rtol) +
                ", atol = " + testing::PrintToString(atol) + ")")
 {
     epi::unused(result_listener);
     return epi::floating_point_equal(arg, other, atol, rtol);
+}
+
+/**
+ * gmock matcher that checks whether the elements of a container are linearly spaced.
+ * @param b minimum value
+ * @param e maximum value
+ * @param num_points number of linearly spaced points in [b, e]
+ * @return matcher that accepts a stl container
+ */
+template <class T>
+auto ElementsAreLinspace(T b, T e, size_t num_points)
+{
+    assert(num_points >= 2);
+
+    std::vector<decltype(FloatingPointEqual(std::declval<T>(), std::declval<T>(), std::declval<T>()))> values;
+    auto step_size = (e - b) / (num_points - 1);
+    for (size_t i = 0; i < num_points; i++) {
+        values.push_back(FloatingPointEqual(b + i * step_size, 1e-15 * step_size, 1e-15));
+    }
+    return testing::ElementsAreArray(values);
 }
 
 #endif //EPI_TESTS_MATCHERS_H

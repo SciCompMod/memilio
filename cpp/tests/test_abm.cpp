@@ -1,4 +1,5 @@
 #include "epidemiology/abm/abm.h"
+#include "epidemiology/abm/migration_rules.h"
 #include "epidemiology/utils/eigen_util.h"
 #include "matchers.h"
 #include "gtest/gtest.h"
@@ -7,7 +8,7 @@
 
 TEST(TestLocation, init)
 {
-    auto location = epi::Location(epi::LocationType::School);
+    auto location = epi::Location(epi::LocationType::School, 0);
     for (epi::InfectionState i = epi::InfectionState(0); i < epi::InfectionState::Count;
          i                     = epi::InfectionState(size_t(i) + 1)) {
         ASSERT_EQ(location.get_subpopulation(i), 0);
@@ -16,9 +17,15 @@ TEST(TestLocation, init)
               print_wrap(Eigen::VectorXi::Zero(Eigen::Index(epi::InfectionState::Count))));
 }
 
+TEST(TestLocation, GetIndex)
+{
+    auto location = epi::Location(epi::LocationType::Home, 0);
+    ASSERT_EQ(location.get_index(), 0);
+}
+
 TEST(TestLocation, addRemovePerson)
 {
-    auto location = epi::Location(epi::LocationType::Home);
+    auto location = epi::Location(epi::LocationType::Home, 0);
     auto person1  = epi::Person(location, epi::InfectionState::Susceptible, epi::AbmAgeGroup::Age5to14);
     location.add_person(person1);
     auto person2 = epi::Person(location, epi::InfectionState::Susceptible, epi::AbmAgeGroup::Age15to34);
@@ -37,25 +44,57 @@ TEST(TestLocation, addRemovePerson)
 
 TEST(TestPerson, init)
 {
-    auto location = epi::Location(epi::LocationType::Work);
+    auto location = epi::Location(epi::LocationType::Work, 0);
     auto person   = epi::Person(location, epi::InfectionState::Recovered_Carrier, epi::AbmAgeGroup::Age60to79);
     ASSERT_EQ(person.get_infection_state(), epi::InfectionState::Recovered_Carrier);
-    ASSERT_EQ(&person.get_location(), &location);
+    ASSERT_EQ(person.get_location_id().index, location.get_index());
+    ASSERT_EQ(person.get_location_id().type, location.get_type());
     ASSERT_EQ(person.get_age(), epi::AbmAgeGroup::Age60to79);
 }
 
 TEST(TestPerson, migrate)
 {
-    auto location1 = epi::Location(epi::LocationType::Work);
-    auto location2 = epi::Location(epi::LocationType::School);
-    auto person    = epi::Person(location1, epi::InfectionState::Recovered_Carrier, epi::AbmAgeGroup::Age0to4);
-    location1.add_person(person);
+    auto loc1 = epi::Location(epi::LocationType::Work, 0);
+    auto loc2 = epi::Location(epi::LocationType::School, 0);
+    auto person    = epi::Person(loc1, epi::InfectionState::Recovered_Carrier, epi::AbmAgeGroup::Age0to4);
+    loc1.add_person(person);
 
-    person.migrate_to(location2);
+    person.migrate_to(loc1, loc2);
 
-    ASSERT_EQ(&person.get_location(), &location2);
-    ASSERT_EQ(location2.get_subpopulation(epi::InfectionState::Recovered_Carrier), 1);
-    ASSERT_EQ(location1.get_subpopulation(epi::InfectionState::Recovered_Carrier), 0);
+    ASSERT_EQ(person.get_location_id().index, loc2.get_index());
+    ASSERT_EQ(person.get_location_id().type, loc2.get_type());
+    ASSERT_EQ(loc2.get_subpopulation(epi::InfectionState::Recovered_Carrier), 1);
+    ASSERT_EQ(loc1.get_subpopulation(epi::InfectionState::Recovered_Carrier), 0);
+}
+
+TEST(TestPerson, setGetAssignedLocation)
+{
+    auto location = epi::Location(epi::LocationType::Work, 2);
+    auto person = epi::Person(location, epi::InfectionState::Recovered_Carrier, epi::AbmAgeGroup::Age60to79);
+    person.set_assigned_location(location);
+    ASSERT_EQ(person.get_assigned_location_index(epi::LocationType::Work), 2);
+
+    person.set_assigned_location({4, epi::LocationType::Work});
+    ASSERT_EQ(person.get_assigned_location_index(epi::LocationType::Work), 4);
+}
+
+TEST(TestWorld, findLocation)
+{
+    auto world = epi::World();
+    auto home_id = world.add_location(epi::LocationType::Home);
+    auto school_id = world.add_location(epi::LocationType::School);
+    auto work_id = world.add_location(epi::LocationType::Work);
+    auto person = epi::Person(home_id, epi::InfectionState::Recovered_Carrier, epi::AbmAgeGroup::Age60to79);
+    auto& home =world.get_individualized_location(home_id);
+    auto& school =world.get_individualized_location(school_id);
+    auto& work =world.get_individualized_location(work_id);
+    person.set_assigned_location(home);
+    person.set_assigned_location(school);
+    person.set_assigned_location({0, epi::LocationType::Work});
+
+    ASSERT_EQ(world.find_location(epi::LocationType::Work, person), &work);
+    ASSERT_EQ(world.find_location(epi::LocationType::School, person), &school);
+    ASSERT_EQ(world.find_location(epi::LocationType::Home, person), &home);
 }
 
 /**
@@ -119,7 +158,7 @@ TEST(TestLocation, interact)
     using testing::Return;
 
     //setup location with some chance of exposure
-    auto location  = epi::Location(epi::LocationType::Work);
+    auto location  = epi::Location(epi::LocationType::Work, 0);
     auto infected1 = epi::Person(location, epi::InfectionState::Carrier, epi::AbmAgeGroup::Age15to34);
     location.add_person(infected1);
     auto infected2 = epi::Person(location, epi::InfectionState::Infected_Detected, epi::AbmAgeGroup::Age80plus);
@@ -130,25 +169,25 @@ TEST(TestLocation, interact)
     //test should work identically work with any age
     epi::AbmAgeGroup age = epi::AbmAgeGroup(epi::UniformIntDistribution<int>()(0, int(epi::AbmAgeGroup::Count) - 1));
     epi::GlobalInfectionParameters params;
-    params.carrier_to_infected = 0;
-    params.carrier_to_infected[age] = 0.5;
-    params.carrier_to_recovered = 0;
-    params.carrier_to_recovered[age] = 0.5;
-    params.detect_infection = 0;
-    params.detect_infection[age] = 0.5;
-    params.infected_to_dead = 0;
-    params.infected_to_dead[age] = 0.5;
-    params.infected_to_recovered = 0;
-    params.infected_to_recovered[age] = 0.5;
-    params.recovered_to_susceptible = 0;
-    params.recovered_to_susceptible[age] = 0.5;
-    params.susceptible_to_exposed_by_carrier = 0;
-    params.susceptible_to_exposed_by_carrier[age] = 0.5;
-    params.susceptible_to_exposed_by_infected = 0;
-    params.susceptible_to_exposed_by_infected[age] = 0.5;
+    params.set<epi::CarrierToInfected>({{epi::AbmAgeGroup::Count}, 0.});
+    params.get<epi::CarrierToInfected>()[{age}] = 0.5;
+    params.set<epi::CarrierToRecovered>({{epi::AbmAgeGroup::Count}, 0.});
+    params.get<epi::CarrierToRecovered>()[{age}] = 0.5;
+    params.set<epi::DetectInfection>({{epi::AbmAgeGroup::Count}, 0.});
+    params.get<epi::DetectInfection>()[{age}] = 0.5;
+    params.set<epi::InfectedToDead>({{epi::AbmAgeGroup::Count}, 0.});
+    params.get<epi::InfectedToDead>()[{age}] = 0.5;
+    params.set<epi::InfectedToRecovered>({{epi::AbmAgeGroup::Count}, 0.});
+    params.get<epi::InfectedToRecovered>()[{age}] = 0.5;
+    params.set<epi::RecoveredToSusceptible>({{epi::AbmAgeGroup::Count}, 0.});
+    params.get<epi::RecoveredToSusceptible>()[{age}] = 0.5;
+    params.set<epi::SusceptibleToExposedByCarrier>({{epi::AbmAgeGroup::Count}, 0.});
+    params.get<epi::SusceptibleToExposedByCarrier>()[{age}] = 0.5;
+    params.set<epi::SusceptibleToExposedByInfected>({{epi::AbmAgeGroup::Count}, 0.});
+    params.get<epi::SusceptibleToExposedByInfected>()[{age}] = 0.5;
 
     //cache precomputed results
-    auto dt = 0.1;
+    auto dt = epi::seconds(8640); //0.1 days
     location.begin_step(dt, params);
 
     ScopedMockDistribution<testing::StrictMock<MockDistribution<epi::ExponentialDistribution<double>>>>
@@ -187,7 +226,7 @@ TEST(TestLocation, interact)
         EXPECT_EQ(location.interact(carrier, dt, params), epi::InfectionState::Recovered_Carrier);
 
         EXPECT_CALL(mock_exponential_dist.get_mock(), invoke).Times(1).WillOnce(Return(0.11));
-        EXPECT_EQ(location.interact(carrier, dt, {}), epi::InfectionState::Carrier);
+        EXPECT_EQ(location.interact(carrier, dt, params), epi::InfectionState::Carrier);
     }
 
     for (auto&& infected_state : {epi::InfectionState::Infected_Detected, epi::InfectionState::Infected_Undetected}) {
@@ -221,10 +260,11 @@ TEST(TestPerson, interact)
 {
     using testing::Return;
 
-    auto location = epi::Location(epi::LocationType::Home);
-    auto person   = epi::Person(location, epi::InfectionState::Infected_Detected, epi::AbmAgeGroup::Age15to34);
-    location.add_person(person);
-    location.begin_step(0.1, {});
+    auto loc = epi::Location(epi::LocationType::Home, 0);
+    auto person   = epi::Person(loc, epi::InfectionState::Infected_Detected, epi::AbmAgeGroup::Age15to34);
+    loc.add_person(person);
+    auto dt = epi::seconds(8640); //0.1 days
+    loc.begin_step(dt, {});
 
     //setup rng mock so the person has a state transition
     ScopedMockDistribution<testing::StrictMock<MockDistribution<epi::ExponentialDistribution<double>>>>
@@ -234,10 +274,10 @@ TEST(TestPerson, interact)
     EXPECT_CALL(mock_discrete_dist.get_mock(), invoke).Times(1).WillOnce(Return(0));
 
     auto infection_parameters = epi::GlobalInfectionParameters();
-    person.interact(0.1, infection_parameters);
+    person.interact(dt, infection_parameters, loc);
     EXPECT_EQ(person.get_infection_state(), epi::InfectionState::Recovered_Infected);
-    EXPECT_EQ(location.get_subpopulation(epi::InfectionState::Recovered_Infected), 1);
-    EXPECT_EQ(location.get_subpopulation(epi::InfectionState::Infected_Detected), 0);
+    EXPECT_EQ(loc.get_subpopulation(epi::InfectionState::Recovered_Infected), 1);
+    EXPECT_EQ(loc.get_subpopulation(epi::InfectionState::Infected_Detected), 0);
 }
 
 TEST(TestPerson, interact_exposed)
@@ -245,19 +285,19 @@ TEST(TestPerson, interact_exposed)
     using testing::Return;
 
     //setup location with some chance of exposure
-    auto location  = epi::Location(epi::LocationType::Work);
-    auto infected1 = epi::Person(location, epi::InfectionState::Carrier, epi::AbmAgeGroup::Age15to34);
-    location.add_person(infected1);
-    auto infected2 = epi::Person(location, epi::InfectionState::Infected_Detected, epi::AbmAgeGroup::Age5to14);
-    location.add_person(infected2);
-    auto infected3 = epi::Person(location, epi::InfectionState::Infected_Undetected, epi::AbmAgeGroup::Age60to79);
-    location.add_person(infected3);
-    auto person = epi::Person(location, epi::InfectionState::Susceptible, epi::AbmAgeGroup::Age15to34);
-    location.add_person(person);
-    location.begin_step(0.1, {});
+    auto loc  = epi::Location(epi::LocationType::Work, 0);
+    auto infected1 = epi::Person(loc, epi::InfectionState::Carrier, epi::AbmAgeGroup::Age15to34);
+    loc.add_person(infected1);
+    auto infected2 = epi::Person(loc, epi::InfectionState::Infected_Detected, epi::AbmAgeGroup::Age5to14);
+    loc.add_person(infected2);
+    auto infected3 = epi::Person(loc, epi::InfectionState::Infected_Undetected, epi::AbmAgeGroup::Age60to79);
+    loc.add_person(infected3);
+    auto person = epi::Person(loc, epi::InfectionState::Susceptible, epi::AbmAgeGroup::Age15to34);
+    loc.add_person(person);
+    loc.begin_step(epi::hours(1), {});
 
-    auto infection_parameters              = epi::GlobalInfectionParameters();
-    infection_parameters.incubation_period = 2;
+    auto infection_parameters = epi::GlobalInfectionParameters();
+    infection_parameters.set<epi::IncubationPeriod>({{epi::AbmAgeGroup::Count}, 2.});
 
     //setup rng mock so the person becomes exposed
     ScopedMockDistribution<testing::StrictMock<MockDistribution<epi::ExponentialDistribution<double>>>>
@@ -267,55 +307,69 @@ TEST(TestPerson, interact_exposed)
     EXPECT_CALL(mock_discrete_dist.get_mock(), invoke).Times(1).WillOnce(Return(0));
 
     //person becomes exposed
-    person.interact(0.5, infection_parameters);
+    person.interact(epi::hours(12), infection_parameters, loc);
     ASSERT_EQ(person.get_infection_state(), epi::InfectionState::Exposed);
-    EXPECT_EQ(location.get_subpopulation(epi::InfectionState::Exposed), 1);
-    EXPECT_EQ(location.get_subpopulation(epi::InfectionState::Carrier), 1);
-    EXPECT_EQ(location.get_subpopulation(epi::InfectionState::Infected_Detected), 1);
-    EXPECT_EQ(location.get_subpopulation(epi::InfectionState::Infected_Undetected), 1);
+    EXPECT_EQ(loc.get_subpopulation(epi::InfectionState::Exposed), 1);
+    EXPECT_EQ(loc.get_subpopulation(epi::InfectionState::Carrier), 1);
+    EXPECT_EQ(loc.get_subpopulation(epi::InfectionState::Infected_Detected), 1);
+    EXPECT_EQ(loc.get_subpopulation(epi::InfectionState::Infected_Undetected), 1);
 
     //person becomes a carrier after the incubation time runs out, not random
-    person.interact(0.5, infection_parameters);
+    person.interact(epi::hours(12), infection_parameters, loc);
     ASSERT_EQ(person.get_infection_state(), epi::InfectionState::Exposed);
 
-    person.interact(0.5, infection_parameters);
+    person.interact(epi::hours(12), infection_parameters, loc);
     ASSERT_EQ(person.get_infection_state(), epi::InfectionState::Exposed);
 
-    person.interact(1.0, infection_parameters);
+    person.interact(epi::hours(24), infection_parameters, loc);
     ASSERT_EQ(person.get_infection_state(), epi::InfectionState::Exposed);
 
-    person.interact(0.1, infection_parameters);
+    person.interact(epi::hours(1), infection_parameters, loc);
     ASSERT_EQ(person.get_infection_state(), epi::InfectionState::Carrier);
-    EXPECT_EQ(location.get_subpopulation(epi::InfectionState::Exposed), 0);
-    EXPECT_EQ(location.get_subpopulation(epi::InfectionState::Carrier), 2);
-    EXPECT_EQ(location.get_subpopulation(epi::InfectionState::Infected_Detected), 1);
-    EXPECT_EQ(location.get_subpopulation(epi::InfectionState::Infected_Undetected), 1);
+    EXPECT_EQ(loc.get_subpopulation(epi::InfectionState::Exposed), 0);
+    EXPECT_EQ(loc.get_subpopulation(epi::InfectionState::Carrier), 2);
+    EXPECT_EQ(loc.get_subpopulation(epi::InfectionState::Infected_Detected), 1);
+    EXPECT_EQ(loc.get_subpopulation(epi::InfectionState::Infected_Undetected), 1);
 }
 
 TEST(TestWorld, init)
 {
     auto world = epi::World();
-    ASSERT_THAT(world.get_locations(), testing::ElementsAre());
+    for (uint32_t i=0; i<(uint32_t)epi::LocationType::Count; i++){
+        ASSERT_THAT(world.get_locations()[i], testing::ElementsAre());
+    }
     ASSERT_THAT(world.get_persons(), testing::ElementsAre());
 }
 
 TEST(TestWorld, addLocation)
 {
     auto world   = epi::World();
-    auto& school = world.add_location(epi::LocationType::School);
-    auto& work   = world.add_location(epi::LocationType::Work);
-    auto& home   = world.add_location(epi::LocationType::Home);
+    auto school_id1 = world.add_location(epi::LocationType::School);
+    auto school_id2 = world.add_location(epi::LocationType::School);
+    auto work_id   = world.add_location(epi::LocationType::Work);
+    auto home_id   = world.add_location(epi::LocationType::Home);
 
-    ASSERT_EQ(world.get_locations().size(), 3);
-    ASSERT_EQ(&world.get_locations()[0], &school);
-    ASSERT_EQ(&world.get_locations()[1], &work);
-    ASSERT_EQ(&world.get_locations()[2], &home);
+    ASSERT_EQ(school_id1.index, 0);
+    ASSERT_EQ(school_id2.index, 1);
+
+    auto& school1 = world.get_individualized_location(school_id1);
+    auto& school2 = world.get_individualized_location(school_id2);
+    auto& work = world.get_individualized_location(work_id);
+    auto& home = world.get_individualized_location(home_id);
+
+    ASSERT_EQ(world.get_locations().size(), (uint32_t)epi::LocationType::Count);
+    ASSERT_EQ(world.get_locations()[(uint32_t)epi::LocationType::School].size(), 2);
+    
+    ASSERT_EQ(&world.get_locations()[(uint32_t)epi::LocationType::School][0], &school1);
+    ASSERT_EQ(&world.get_locations()[(uint32_t)epi::LocationType::School][1], &school2);
+    ASSERT_EQ(&world.get_locations()[(uint32_t)epi::LocationType::Work][0], &work);
+    ASSERT_EQ(&world.get_locations()[(uint32_t)epi::LocationType::Home][0], &home);
 }
 
 TEST(TestWorld, addPerson)
 {
-    auto world     = epi::World();
-    auto& location = world.add_location(epi::LocationType::School);
+    auto world = epi::World();
+    auto location = world.add_location(epi::LocationType::School);
 
     auto& p1 = world.add_person(location, epi::InfectionState::Recovered_Carrier);
     auto& p2 = world.add_person(location, epi::InfectionState::Exposed);
@@ -325,16 +379,36 @@ TEST(TestWorld, addPerson)
     ASSERT_EQ(&world.get_persons()[1], &p2);
 }
 
-TEST(TestWorld, evolve)
+TEST(TestWorld, getSubpopulationCombined)
+{
+    auto world = epi::World();
+    auto school1 = world.add_location(epi::LocationType::School);
+    auto school2 = world.add_location(epi::LocationType::School);
+    auto school3 = world.add_location(epi::LocationType::School);
+    world.add_person(school1, epi::InfectionState::Carrier);
+    world.add_person(school1, epi::InfectionState::Susceptible);
+    world.add_person(school2, epi::InfectionState::Susceptible);
+    world.add_person(school2, epi::InfectionState::Susceptible);
+    world.add_person(school3, epi::InfectionState::Carrier);
+
+    ASSERT_EQ(world.get_subpopulation_combined(epi::InfectionState::Susceptible, epi::LocationType::School), 3);
+    ASSERT_EQ(world.get_subpopulation_combined(epi::InfectionState::Carrier, epi::LocationType::School), 2);
+}
+
+TEST(TestWorld, evolveStateTransition)
 {
     using testing::Return;
 
     auto world      = epi::World();
-    auto& location1 = world.add_location(epi::LocationType::School);
-    world.add_person(location1, epi::InfectionState::Carrier);
-    world.add_person(location1, epi::InfectionState::Susceptible);
-    auto& location2 = world.add_location(epi::LocationType::School);
-    world.add_person(location2, epi::InfectionState::Infected_Detected);
+    auto location1 = world.add_location(epi::LocationType::School);
+    auto &p1 = world.add_person(location1, epi::InfectionState::Carrier);
+    auto &p2 = world.add_person(location1, epi::InfectionState::Susceptible);
+    auto location2 = world.add_location(epi::LocationType::Work);
+    auto &p3 = world.add_person(location2, epi::InfectionState::Infected_Detected);
+    p1.set_assigned_location(location1);
+    p2.set_assigned_location(location1);
+    p3.set_assigned_location(location2);
+
 
     //setup mock so only p2 transitions
     ScopedMockDistribution<testing::StrictMock<MockDistribution<epi::ExponentialDistribution<double>>>>
@@ -343,33 +417,244 @@ TEST(TestWorld, evolve)
     EXPECT_CALL(mock_exponential_dist.get_mock(), invoke)
         .Times(testing::AtLeast(3))
         .WillOnce(Return(0.51))
-        .WillOnce(Return(0.4))
+        .WillOnce(Return(0.04))
         .WillOnce(Return(0.6))
-        .WillRepeatedly(Return(1e10)); //no random migration, not yet implemented properly
+        .WillRepeatedly(Return(1.0));
     EXPECT_CALL(mock_discrete_dist.get_mock(), invoke).Times(1).WillOnce(Return(0));
 
-    world.evolve(0.5);
+    world.evolve(epi::TimePoint(0), epi::hours(1));
 
-    EXPECT_EQ(world.get_persons()[0].get_infection_state(), epi::InfectionState::Carrier);
-    EXPECT_EQ(world.get_persons()[1].get_infection_state(), epi::InfectionState::Exposed);
-    EXPECT_EQ(world.get_persons()[2].get_infection_state(), epi::InfectionState::Infected_Detected);
+    EXPECT_EQ(p1.get_infection_state(), epi::InfectionState::Carrier);
+    EXPECT_EQ(p2.get_infection_state(), epi::InfectionState::Exposed);
+    EXPECT_EQ(p3.get_infection_state(), epi::InfectionState::Infected_Detected);
+}
+
+TEST(TestMigrationRules, school)
+{
+    auto home    = epi::Location(epi::LocationType::Home, 0);
+    auto p_child = epi::Person(home, epi::InfectionState::Susceptible, epi::AbmAgeGroup::Age5to14);
+    auto p_adult = epi::Person(home, epi::InfectionState::Susceptible, epi::AbmAgeGroup::Age15to34);
+
+    auto t_morning  = epi::TimePoint(0) + epi::hours(8);
+    auto t_weekend = epi::TimePoint(0) + epi::days(5) + epi::hours(8);
+    auto dt = epi::hours(1);
+
+    ASSERT_EQ(epi::go_to_school(p_child, t_morning, dt, {}), epi::LocationType::School);
+    ASSERT_EQ(epi::go_to_school(p_adult, t_morning, dt, {}), epi::LocationType::Home);
+    ASSERT_EQ(epi::go_to_school(p_child, t_weekend, dt, {}), epi::LocationType::Home);
+}
+
+TEST(TestMigrationRules, school_return)
+{
+    auto school  = epi::Location(epi::LocationType::School, 0);
+    auto p_child = epi::Person(school, epi::InfectionState::Susceptible, epi::AbmAgeGroup::Age5to14);
+
+    auto t  = epi::TimePoint(0) + epi::hours(15);
+    auto dt = epi::hours(1);
+
+    ASSERT_EQ(epi::go_to_school(p_child, t, dt, {}), epi::LocationType::Home);
+}
+
+TEST(TestMigrationRules, work)
+{
+    auto home      = epi::Location(epi::LocationType::Home, 0);
+    auto p_retiree = epi::Person(home, epi::InfectionState::Susceptible, epi::AbmAgeGroup::Age60to79);
+    auto p_adult   = epi::Person(home, epi::InfectionState::Susceptible, epi::AbmAgeGroup::Age15to34);
+
+    auto t_morning  = epi::TimePoint(0) + epi::hours(8);
+    auto t_night = epi::TimePoint(0) + epi::days(1) + epi::hours(4);
+    auto dt = epi::hours(1);
+
+    ASSERT_EQ(epi::go_to_work(p_retiree, t_morning, dt, {}), epi::LocationType::Home);
+    ASSERT_EQ(epi::go_to_work(p_adult, t_morning, dt, {}), epi::LocationType::Work);
+    ASSERT_EQ(epi::go_to_work(p_adult, t_night, dt, {}), epi::LocationType::Home);
+}
+
+TEST(TestMigrationRules, work_return)
+{
+    auto work    = epi::Location(epi::LocationType::Work, 0);
+    auto p_adult = epi::Person(work, epi::InfectionState::Susceptible, epi::AbmAgeGroup::Age35to59);
+
+    auto t  = epi::TimePoint(0) + epi::hours(17);
+    auto dt = epi::hours(1);
+
+    ASSERT_EQ(epi::go_to_work(p_adult, t, dt, {}), epi::LocationType::Home);
+}
+
+TEST(TestMigrationRules, hospital)
+{
+    auto home  = epi::Location(epi::LocationType::Home, 0);
+    auto p_inf = epi::Person(home, epi::InfectionState::Infected_Detected, epi::AbmAgeGroup::Age15to34);
+    auto t     = epi::TimePoint(12346);
+    auto dt    = epi::hours(1);
+
+    ScopedMockDistribution<testing::StrictMock<MockDistribution<epi::ExponentialDistribution<double>>>>
+        mock_exponential_dist;
+    EXPECT_CALL(mock_exponential_dist.get_mock(), invoke).Times(1).WillOnce(testing::Return(0.01));
+
+    ASSERT_EQ(epi::go_to_hospital(p_inf, t, dt, {}), epi::LocationType::Hospital);
+
+    auto p_car = epi::Person(home, epi::InfectionState::Carrier, epi::AbmAgeGroup::Age15to34);
+    ASSERT_EQ(epi::go_to_hospital(p_car, t, dt, {}), epi::LocationType::Home);
+}
+
+TEST(TestMigrationRules, icu)
+{
+    auto hospital = epi::Location(epi::LocationType::Hospital, 0);
+    auto p_hosp   = epi::Person(hospital, epi::InfectionState::Infected_Detected, epi::AbmAgeGroup::Age15to34);
+    auto t        = epi::TimePoint(12346);
+    auto dt       = epi::hours(1);
+
+    ScopedMockDistribution<testing::StrictMock<MockDistribution<epi::ExponentialDistribution<double>>>>
+        mock_exponential_dist;
+    EXPECT_CALL(mock_exponential_dist.get_mock(), invoke).Times(1).WillOnce(testing::Return(0.01));
+
+    ASSERT_EQ(epi::go_to_icu(p_hosp, t, dt, {}), epi::LocationType::ICU);
+
+    auto work   = epi::Location(epi::LocationType::Work, 0);
+    auto p_work = epi::Person(work, epi::InfectionState::Infected_Detected, epi::AbmAgeGroup::Age15to34);
+    ASSERT_EQ(epi::go_to_icu(p_work, t, dt, {}), epi::LocationType::Work);
+}
+
+TEST(TestMigrationRules, recover)
+{
+    auto hospital = epi::Location(epi::LocationType::Hospital, 0);
+    auto p_rec    = epi::Person(hospital, epi::InfectionState::Recovered_Infected, epi::AbmAgeGroup::Age60to79);
+    auto p_inf    = epi::Person(hospital, epi::InfectionState::Infected_Detected, epi::AbmAgeGroup::Age60to79);
+    auto t        = epi::TimePoint(12346);
+    auto dt       = epi::hours(1);
+
+    ASSERT_EQ(epi::return_home_when_recovered(p_rec, t, dt, {}), epi::LocationType::Home);
+    ASSERT_EQ(epi::return_home_when_recovered(p_inf, t, dt, {}), epi::LocationType::Hospital);
+}
+
+TEST(TestMigrationRules, go_shopping)
+{
+    auto hospital = epi::Location(epi::LocationType::Hospital, 0);
+    auto p_hosp   = epi::Person(hospital, epi::InfectionState::Infected_Detected, epi::AbmAgeGroup::Age0to4);
+    auto home     = epi::Location(epi::LocationType::Home, 0);
+    auto p_home   = epi::Person(home, epi::InfectionState::Infected_Detected, epi::AbmAgeGroup::Age60to79);
+
+    auto t_weekday = epi::TimePoint(0) + epi::days(4) + epi::hours(9);
+    auto t_sunday  = epi::TimePoint(0) + epi::days(6) + epi::hours(9);
+    auto t_night   = epi::TimePoint(0) + epi::days(4) + epi::hours(1);
+    auto dt        = epi::hours(1);
+
+    ASSERT_EQ(epi::go_to_shop(p_hosp, t_weekday, dt, {}), epi::LocationType::Hospital);
+    ASSERT_EQ(epi::go_to_shop(p_home, t_sunday, dt, {}), epi::LocationType::Home);
+    ASSERT_EQ(epi::go_to_shop(p_home, t_night, dt, {}), epi::LocationType::Home);
+
+    ScopedMockDistribution<testing::StrictMock<MockDistribution<epi::ExponentialDistribution<double>>>>
+        mock_exponential_dist;
+    EXPECT_CALL(mock_exponential_dist.get_mock(), invoke).Times(1).WillOnce(testing::Return(0.01));
+    ASSERT_EQ(epi::go_to_shop(p_home, t_weekday, dt, {}), epi::LocationType::BasicsShop);
+}
+
+TEST(TestMigrationRules, shop_return)
+{
+    auto t  = epi::TimePoint(0) + epi::days(4) + epi::hours(9);
+    auto dt = epi::hours(1);
+
+    auto home = epi::Location(epi::LocationType::Home, 0);
+    auto shop = epi::Location(epi::LocationType::BasicsShop, 0);
+    auto p    = epi::Person(home, epi::InfectionState::Carrier, epi::AbmAgeGroup::Age15to34);
+    home.add_person(p);
+    p.migrate_to(home, shop);
+    p.interact(dt, {}, shop); //person only returns home after some time passed
+
+    ASSERT_EQ(epi::go_to_shop(p, t, dt, {}), epi::LocationType::Home);
+}
+
+TEST(TestMigrationRules, go_event)
+{
+    auto work   = epi::Location(epi::LocationType::Work, 0);
+    auto p_work = epi::Person(work, epi::InfectionState::Infected_Detected, epi::AbmAgeGroup::Age35to59);
+    auto home   = epi::Location(epi::LocationType::Home, 0);
+    auto p_home = epi::Person(home, epi::InfectionState::Infected_Detected, epi::AbmAgeGroup::Age60to79);
+
+    auto t_weekday  = epi::TimePoint(0) + epi::days(4) + epi::hours(20);
+    auto t_saturday = epi::TimePoint(0) + epi::days(5) + epi::hours(10);
+    auto t_night    = epi::TimePoint(0) + epi::days(5) + epi::hours(1);
+    auto dt         = epi::hours(1);
+
+    ASSERT_EQ(epi::go_to_event(p_work, t_weekday, dt, {}), epi::LocationType::Work);
+    ASSERT_EQ(epi::go_to_event(p_home, t_night, dt, {}), epi::LocationType::Home);
+
+    ScopedMockDistribution<testing::StrictMock<MockDistribution<epi::ExponentialDistribution<double>>>>
+        mock_exponential_dist;
+    EXPECT_CALL(mock_exponential_dist.get_mock(), invoke).Times(1).WillOnce(testing::Return(0.01));
+    ASSERT_EQ(epi::go_to_event(p_home, t_weekday, dt, {}), epi::LocationType::SocialEvent);
+
+    EXPECT_CALL(mock_exponential_dist.get_mock(), invoke).Times(1).WillOnce(testing::Return(0.01));
+    ASSERT_EQ(epi::go_to_event(p_home, t_saturday, dt, {}), epi::LocationType::SocialEvent);
+}
+
+TEST(TestMigrationRules, event_return)
+{
+    auto t  = epi::TimePoint(0) + epi::days(4) + epi::hours(21);
+    auto dt = epi::hours(3);
+
+    auto home = epi::Location(epi::LocationType::Home, 0);
+    auto shop = epi::Location(epi::LocationType::SocialEvent, 0);
+    auto p    = epi::Person(home, epi::InfectionState::Carrier, epi::AbmAgeGroup::Age15to34);
+    home.add_person(p);
+    p.migrate_to(home, shop);
+    p.interact(dt, {}, shop);
+
+    ASSERT_EQ(epi::go_to_event(p, t, dt, {}), epi::LocationType::Home);
+}
+
+TEST(TestWorld, evolveMigration)
+{
+    using testing::Return;
+
+    auto world      = epi::World();
+    auto home_id = world.add_location(epi::LocationType::Home);
+    auto school_id = world.add_location(epi::LocationType::School);
+    auto work_id = world.add_location(epi::LocationType::Work);
+    auto &p1 = world.add_person(home_id, epi::InfectionState::Carrier, epi::AbmAgeGroup::Age15to34);
+    auto &p2 = world.add_person(home_id, epi::InfectionState::Susceptible, epi::AbmAgeGroup::Age5to14);
+    p1.set_assigned_location(school_id);
+    p2.set_assigned_location(school_id);
+    p1.set_assigned_location(work_id);
+    p2.set_assigned_location(work_id);
+    p1.set_assigned_location(home_id);
+    p2.set_assigned_location(home_id);
+
+    auto& school = world.get_individualized_location(school_id);
+    auto& work = world.get_individualized_location(work_id);
+
+    ScopedMockDistribution<testing::StrictMock<MockDistribution<epi::ExponentialDistribution<double>>>>
+        mock_exponential_dist;
+    EXPECT_CALL(mock_exponential_dist.get_mock(), invoke).WillRepeatedly(Return(1.)); //no state transitions
+
+    world.evolve(epi::TimePoint(0) + epi::hours(8), epi::hours(1));
+
+    EXPECT_EQ(p1.get_location_id().type, epi::LocationType::Work);
+    EXPECT_EQ(p2.get_location_id().type, epi::LocationType::School);
+    EXPECT_EQ(school.get_subpopulations().sum(), 1);
+    EXPECT_EQ(work.get_subpopulations().sum(), 1);
 }
 
 TEST(TestSimulation, advance_random)
 {
     auto world      = epi::World();
-    auto& location1 = world.add_location(epi::LocationType::School);
-    world.add_person(location1, epi::InfectionState::Carrier);
-    world.add_person(location1, epi::InfectionState::Susceptible);
-    auto& location2 = world.add_location(epi::LocationType::School);
-    world.add_person(location2, epi::InfectionState::Infected_Detected);
-    world.add_person(location2, epi::InfectionState::Infected_Undetected);
+    auto location1 = world.add_location(epi::LocationType::School);
+    auto location2 = world.add_location(epi::LocationType::School);
+    auto &p1 = world.add_person(location1, epi::InfectionState::Carrier, epi::AbmAgeGroup::Age5to14);
+    auto &p2 = world.add_person(location1, epi::InfectionState::Susceptible, epi::AbmAgeGroup::Age5to14);
+    auto &p3 = world.add_person(location2, epi::InfectionState::Infected_Detected, epi::AbmAgeGroup::Age5to14);
+    auto &p4 = world.add_person(location2, epi::InfectionState::Infected_Undetected, epi::AbmAgeGroup::Age5to14);
+    p1.set_assigned_location(location1);
+    p2.set_assigned_location(location1);
+    p3.set_assigned_location(location2);
+    p4.set_assigned_location(location2);
 
-    auto sim = epi::AbmSimulation(0, std::move(world));
+    auto sim = epi::AbmSimulation(epi::TimePoint(0), std::move(world));
 
-    sim.advance(50);
+    sim.advance(epi::TimePoint(0) + epi::hours(50));
     ASSERT_EQ(sim.get_result().get_num_time_points(), 51);
-    ASSERT_THAT(sim.get_result().get_times(), ElementsAreLinspace(0.0, 50.0, 51));
+    ASSERT_THAT(sim.get_result().get_times(), ElementsAreLinspace(0.0, 50.0 / 24.0, 51));
     for (auto&& v : sim.get_result()) {
         ASSERT_EQ(v.sum(), 4);
     }
@@ -393,39 +678,4 @@ TEST(TestDiscreteDistribution, generate)
         ASSERT_GE(d, 0);
         ASSERT_LE(d, 4);
     }
-}
-
-TEST(TestDependentParameter, init)
-{
-    enum class E
-    {
-        E1 = 0, E2, Count,
-    };
-    epi::DependentParameter<E> p1(3.0);
-    ASSERT_EQ(p1[E::E1], 3.0);
-    ASSERT_EQ(p1[E::E2], 3.0);
-
-    auto v = (Eigen::ArrayXd(2) << 1.0, 2.0).finished();
-    epi::DependentParameter<E> p2(v);
-    ASSERT_EQ(p2[E::E1], 1.0);
-    ASSERT_EQ(p2[E::E2], 2.0);
-    ASSERT_THAT(print_wrap(p2.array().matrix()), print_wrap(v.matrix()));
-}
-
-TEST(TestDependentParameter, assign)
-{
-    enum class E
-    {
-        E1 = 0, E2, Count,
-    };
-    epi::DependentParameter<E> p;
-
-    p = 5.0;
-    ASSERT_EQ(p[E::E1], 5.0);
-    ASSERT_EQ(p[E::E2], 5.0);
-
-    auto v = (Eigen::ArrayXd(2) << 1.0, 2.0).finished();
-    p = v;
-    ASSERT_EQ(p[E::E1], 1.0);
-    ASSERT_EQ(p[E::E2], 2.0);
 }

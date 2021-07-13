@@ -31,8 +31,13 @@ add_executable(abm abm.cpp)
 target_link_libraries(abm PRIVATE epidemiology)
 
 if (TARGET "epidemiology_io")
+
+  file(TO_CMAKE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/../../data" EPI_DATA_DIR)
+  configure_file(data_dir.h.in data_dir.h)
+
   add_executable(read_graph read_graph.cpp)
   target_link_libraries(read_graph PRIVATE epidemiology epidemiology_io)
+  target_include_directories(read_graph PRIVATE ${CMAKE_CURRENT_BINARY_DIR})
 
   target_link_libraries(secir_ageres PRIVATE epidemiology_io)
 

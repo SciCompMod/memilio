@@ -1,6 +1,7 @@
 import React, {Component} from 'react';
-import {Button, ButtonGroup, UncontrolledTooltip} from 'reactstrap';
+import {Alert, Button, ButtonGroup, UncontrolledTooltip} from 'reactstrap';
 import {Link, withRouter} from 'react-router-dom';
+import browserDetect from 'browser-detect';
 
 import * as _ from 'lodash';
 import * as dayjs from 'dayjs';
@@ -12,6 +13,7 @@ import HeatMap from '~/common/heat-map';
 import {fixUrl} from '~/common/utils';
 
 import './styles.scss';
+import {deepCopy} from '../../common/utils';
 
 /**
  *  This component is the main page displayed. It shows the reproduction vales RT and RT relative
@@ -36,9 +38,20 @@ class MainPage extends Component {
 
   constructor(props) {
     super(props);
+
+    const browser = browserDetect();
+
     this.state = {
       dataset: 'absolute',
       selected: {rs: '', bez: '', gen: ''},
+
+      // Tablets are not considered mobile devices, so we check for Android and iOS additionally
+      mobileWarningVisible:
+        browser.mobile ||
+        browser.name.toUpperCase().includes('ANDROID') ||
+        browser.name.toUpperCase().includes('IOS') ||
+        browser.os.toUpperCase().includes('ANDROID') ||
+        browser.os.toUpperCase().includes('IOS'),
     };
     this.update = this.update.bind(this);
   }
@@ -47,8 +60,16 @@ class MainPage extends Component {
     document.title = `SARS-CoV-2 Reproduktionszahlen`;
 
     // fetch rt data
-    const data = await fetch('assets/rt.rel.districts.json').then((res) => res.json());
+    const res = await fetch('assets/rt.rel.districts.json').then(async (res) => {
+      const date = res.headers.get('Last-Modified');
+      const data = await res.json();
+      return {
+        date,
+        data,
+      };
+    });
 
+    const data = res.data;
     const keys = Object.keys(data);
 
     const districts = _.uniq(data.DistrictID);
@@ -109,13 +130,17 @@ class MainPage extends Component {
       );
     }
 
+    console.log(new Date(res.date));
     this.setState({
       selected: {rs: '00000', bez: 'Bundesrepublik', gen: 'Deutschland'},
       timestamps: timestamps,
       timestampOffset: first_timestamp_idx,
-      timestring: dayjs(timestamps[timestamps.length - 1])
+      lastUpdated: `${dayjs(new Date(res.date)).locale('de').format('DD MMMM YYYY HH:mm')} Uhr`,
+      timestring: `${dayjs(timestamps[timestamps.length - 1])
+        .add(1, 'd')
+        .startOf('d')
         .locale('de')
-        .format('DD MMMM YYYY'),
+        .format('DD MMMM YYYY HH:mm')} Uhr`,
       //timestep: timestamps.findIndex((x) => x === first_timestamp),
       timestep: timestamps.length - 1,
       start: timestamps.findIndex((x) => x === first_timestamp),
@@ -155,7 +180,7 @@ class MainPage extends Component {
       const timestamp = this.state.timestamps[timestep];
       this.setState({
         timestep,
-        timestring: dayjs(timestamp).locale('de').format('DD MMMM YYYY'),
+        timestring: `${dayjs(timestamp).add(1, 'd').startOf('d').locale('de').format('DD MMMM YYYY HH:mm')} Uhr`,
       });
       this.map.setValues(this.getData(timestamp));
     }
@@ -192,7 +217,8 @@ class MainPage extends Component {
     if (!this.chart_data) {
       return [];
     }
-    let data = JSON.parse(JSON.stringify(this.chart_data.get(this.state.selected.rs)));
+
+    let data = deepCopy(this.chart_data.get(this.state.selected.rs) ?? []);
 
     switch (this.state.dataset) {
       case 'absolute':
@@ -245,10 +271,28 @@ class MainPage extends Component {
     );
   }
 
+  onDismiss() {
+    this.setState({
+      mobileWarningVisible: false,
+    });
+  }
+
   render() {
     const {url} = fixUrl(this.props.match);
     return (
       <div className="main">
+        <Alert
+          className="mobile-alert"
+          color="warning"
+          isOpen={this.state.mobileWarningVisible}
+          toggle={this.onDismiss.bind(this)}
+          style={{textAlign: 'center'}}
+        >
+          <b>
+            This website is supposed to be used on a computer. Mobile performance might not be optimal. If you have
+            issues on a mobile device try using a laptop or PC.
+          </b>
+        </Alert>
         <div className="right">
           <div className="info-text">
             <h2>Über diese Seite:</h2>
@@ -318,7 +362,6 @@ class MainPage extends Component {
               value={this.state.timestep}
               onChange={this.update}
             />
-            <div className="timestring">{this.state.timestring}</div>
             <div className="options">
               <ButtonGroup>
                 <Button
@@ -363,6 +406,12 @@ class MainPage extends Component {
           </div>
           <div className="map-wrapper">
             <div className="map" id="map" />
+            <div className="timestring">
+              <div className="label">Anzeigedatum:</div>
+              <div className="time">{this.state.timestring}</div>
+              <div className="label">Letzte Ak­tu­a­li­sie­rung:</div>
+              <div className="time">{this.state.lastUpdated}</div>
+            </div>
           </div>
         </div>
       </div>

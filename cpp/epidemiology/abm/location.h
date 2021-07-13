@@ -14,16 +14,27 @@ namespace epi
 class Person;
 
 /**
+ * LocationId identifies a Location uniquely. It consists of the LocationType of the Location and an Index.
+ * The index corresponds to the index into the structure m_locations from world, where all Locations are saved.
+ */
+struct LocationId
+{
+    uint32_t index;
+    LocationType type;
+};
+
+/**
  * all locations in the simulated world where persons gather.
  */
 class Location
 {
 public:
-    /**
+   /**
      * construct a Location of a certain type.
      * @param type the type of the location
+     * @param index the index of the location
      */
-    Location(LocationType type);
+    Location(LocationType type, uint32_t index);
 
     /**
      * get the type of this location.
@@ -33,6 +44,14 @@ public:
         return m_type;
     }
 
+    /**
+     *get the index of this location.
+     */
+    unsigned get_index() const
+    {
+        return m_index;
+    }
+
     /** 
      * a person interacts with the population at this location, may change infection state.
      * @param person the person that interacts with the population
@@ -40,7 +59,7 @@ public:
      * @param global_params global infection parameters
      * @return new infection state of the person
      */
-    InfectionState interact(const Person& person, double dt, const GlobalInfectionParameters& global_params) const;
+    InfectionState interact(const Person& person, TimeSpan dt, const GlobalInfectionParameters& global_params) const;
 
     /** 
      * add a person to the population at this location.
@@ -66,7 +85,7 @@ public:
      * @param dt the duration of the simulation step
      * @param global_params global infection parameters
      */
-    void begin_step(double dt, const GlobalInfectionParameters& global_params);
+    void begin_step(TimeSpan dt, const GlobalInfectionParameters& global_params);
 
     /** 
      * number of persons at this location in one infection state.
@@ -88,6 +107,7 @@ public:
     {
         return m_parameters;
     }
+    
     const LocalInfectionParameters& get_infection_parameters() const
     {
         return m_parameters;
@@ -96,12 +116,13 @@ public:
 private:
     void change_subpopulation(InfectionState s, int delta);
 
-private:
+private: 
     LocationType m_type;
+    uint32_t m_index;
     int m_num_persons = 0;
     std::array<int, size_t(InfectionState::Count)> m_subpopulations;
     LocalInfectionParameters m_parameters;
-    DependentParameter<AbmAgeGroup> m_cached_exposure_rate;
+    CustomIndexArray<double, AbmAgeGroup> m_cached_exposure_rate;
 };
 } // namespace epi
 

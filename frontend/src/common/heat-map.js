@@ -59,7 +59,7 @@ export default class InteractiveHeatMap extends Subject {
     ];
 
     const countyPolygonTemplate = this.#countySeries.mapPolygons.template;
-    countyPolygonTemplate.tooltipText = '{BEZ} {GEN}: {value}';
+    countyPolygonTemplate.tooltipText = '{BEZ} {GEN}: {text}';
     countyPolygonTemplate.nonScalingStroke = true;
     countyPolygonTemplate.applyOnClones = true;
     countyPolygonTemplate.stroke = am4core.color('rgb(221, 221, 221)');
@@ -170,7 +170,9 @@ export default class InteractiveHeatMap extends Subject {
     }
 
     for (let countyDatum of this.#countySeries.data) {
-      countyDatum.value = values.get(countyDatum.RS) ?? 0;
+      const value = values.get(countyDatum.RS);
+      countyDatum.value = value ?? 0;
+      countyDatum.text = value ?? '[red]Fehlende Daten![/]';
     }
 
     this.#countySeries.invalidateRawData();

@@ -5,6 +5,15 @@
   width: 100%;
   overflow: auto;
 
+  .mobile-alert {
+    position: fixed !important;
+    top: 0;
+    left: 0;
+    right: 0;
+    margin: 0;
+    z-index: 1000;
+  }
+
   .left {
     width: 38.2%;
     min-width: 38.2%;
@@ -29,10 +38,21 @@
       width: 90%;
       margin: auto;
       padding-bottom: 1rem;
+      position: relative;
 
       .map {
         width: 100%;
         height: 100%;
+      }
+
+      .timestring {
+        position: absolute;
+        width: 100%;
+        text-align: right;
+        font-size: 0.75em;
+        .label {
+          font-weight: bold;
+        }
       }
     }
   }
@@ -63,6 +83,7 @@
       min-height: 300px;
       width: 100%;
     }
+
     .district {
       font-size: 2em;
       text-align: center;

@@ -33,22 +33,19 @@ endif()
 include(thirdparty/CMakeLists.txt)
 
 add_library(epidemiology
-    epidemiology/utils/tensor_helpers.h
-    epidemiology/utils/tensor_helpers.cpp
     epidemiology/math/euler.cpp
     epidemiology/math/euler.h
     epidemiology/math/smoother.h    
     epidemiology/utils/ScalarType.h
     epidemiology/model/compartmentalmodel.h
     epidemiology/model/populations.h
-    epidemiology/model/parameterset.h
     epidemiology/model/simulation.h
+    epidemiology/secir/age_group.h
+    epidemiology/secir/infection_state.h
     epidemiology/secir/damping.cpp
     epidemiology/secir/damping.h
     epidemiology/secir/secir_params.h
     epidemiology/secir/secir.h
-    epidemiology/secir/seir_params.cpp
-    epidemiology/secir/seir_params.h
     epidemiology/secir/seir.h
     epidemiology/secir/seir.cpp
     epidemiology/math/adapt_rk.cpp
@@ -65,12 +62,21 @@ add_library(epidemiology
     epidemiology/utils/eigen_util.h
     epidemiology/utils/visitor.h
     epidemiology/secir/parameter_space.h
+    epidemiology/secir/parameter_space.cpp
     epidemiology/utils/uncertain_value.h
     epidemiology/utils/uncertain_value.cpp
     epidemiology/secir/uncertain_matrix.h    
     epidemiology/secir/uncertain_matrix.cpp
     epidemiology/secir/contact_matrix.h    
     epidemiology/secir/contact_matrix.cpp
+    epidemiology/secir/damping_sampling.h    
+    epidemiology/secir/damping_sampling.cpp
+    epidemiology/secir/dynamic_npis.h    
+    epidemiology/secir/dynamic_npis.cpp
+    epidemiology/secir/implicit_euler.h    
+    epidemiology/secir/implicit_euler.cpp
+    epidemiology/utils/index.h
+    epidemiology/utils/custom_index_array.h
     epidemiology/utils/memory.h
     epidemiology/utils/parameter_distributions.h
     epidemiology/utils/time_series.h
@@ -79,6 +85,17 @@ add_library(epidemiology
     epidemiology/utils/span.cpp
     epidemiology/utils/type_safe.h
     epidemiology/utils/type_safe.cpp
+    epidemiology/utils/parameter_set.h
+    epidemiology/utils/parameter_set.cpp
+    epidemiology/utils/date.h
+    epidemiology/utils/date.cpp
+    epidemiology/utils/regions.h
+    epidemiology/utils/regions.cpp
+    epidemiology/utils/holiday_data_de.ipp
+    epidemiology/utils/matrix_shape.h
+    epidemiology/utils/matrix_shape.cpp
+    epidemiology/utils/random_number_generator.h
+    epidemiology/utils/random_number_generator.cpp
     epidemiology/abm/location.cpp
     epidemiology/abm/location.h
     epidemiology/abm/simulation.cpp
@@ -89,10 +106,10 @@ add_library(epidemiology
     epidemiology/abm/world.h
     epidemiology/abm/state.h
     epidemiology/abm/location_type.h
-    epidemiology/abm/random_number_generator.h
-    epidemiology/abm/random_number_generator.cpp
     epidemiology/abm/parameters.h
     epidemiology/abm/parameters.cpp
+    epidemiology/abm/migration_rules.cpp
+    epidemiology/abm/migration_rules.h
     epidemiology/secir/parameter_studies.h
     epidemiology/secir/analyze_result.h
     epidemiology/secir/analyze_result.cpp
@@ -111,7 +128,7 @@ target_compile_options(epidemiology PRIVATE
     $<$<CXX_COMPILER_ID:MSVC>: /W4 /WX>)
 
 if (EPI_BUILD_EPI_IO)
-    
+
     add_library(epidemiology_io
       epidemiology_io/secir_result_io.cpp
       epidemiology_io/secir_result_io.h
@@ -122,6 +139,8 @@ if (EPI_BUILD_EPI_IO)
       epidemiology_io/mobility_io.cpp
       epidemiology_io/mobility_io.h
     )
+
+
 
     target_include_directories(epidemiology_io PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>

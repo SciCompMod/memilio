@@ -48,6 +48,28 @@ TimeSeries<double> interpolate_simulation_result(const TimeSeries<double>& simul
     return interpolated;
 }
 
+std::vector<std::vector<TimeSeries<double>>>
+sum_nodes(const std::vector<std::vector<TimeSeries<double>>>& ensemble_result)
+{
+    auto num_runs        = ensemble_result.size();
+    auto num_nodes       = ensemble_result[0].size();
+    auto num_time_points = ensemble_result[0][0].get_num_time_points();
+    auto num_elements    = ensemble_result[0][0].get_num_elements();
+
+    std::vector<std::vector<TimeSeries<double>>> sum_result(
+        num_runs, std::vector<TimeSeries<double>>(1, TimeSeries<double>::zero(num_time_points, num_elements)));
+
+    for (size_t run = 0; run < num_runs; run++) {
+        for (Eigen::Index time = 0; time < num_time_points; time++) {
+            sum_result[run][0].get_time(time) = ensemble_result[run][0].get_time(time);
+            for (size_t node = 0; node < num_nodes; node++) {
+                sum_result[run][0][time] += ensemble_result[run][node][time];
+            }
+        }
+    }
+    return sum_result;
+}
+
 std::vector<TimeSeries<double>> ensemble_mean(const std::vector<std::vector<TimeSeries<double>>>& ensemble_result)
 {
     auto num_runs        = ensemble_result.size();
@@ -92,7 +114,9 @@ std::vector<TimeSeries<double>> ensemble_percentile(const std::vector<std::vecto
             percentile[node].get_time(time) = ensemble_result[0][node].get_time(time);
             for (Eigen::Index elem = 0; elem < num_elements; elem++) {
                 std::transform(ensemble_result.begin(), ensemble_result.end(), single_element_ensemble.begin(),
-                               [=](auto& run) { return run[node][time][elem]; });
+                               [=](auto& run) {
+                                   return run[node][time][elem];
+                               });
                 std::sort(single_element_ensemble.begin(), single_element_ensemble.end());
                 percentile[node][time][elem] = single_element_ensemble[static_cast<size_t>(num_runs * p)];
             }

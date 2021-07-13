@@ -50,7 +50,9 @@ export default function Attribution() {
             <p>
               <b>License:</b> {item.license}
             </p>
-            <p>{item.licenseText}</p>
+            {item.licenseText?.split('\n\n').map((paragraph) => (
+              <p>{paragraph}</p>
+            ))}
             <hr className="solid" />
           </li>
         ))}
