@@ -261,51 +261,6 @@ def get_age_population_data(read_data=dd.defaultDict['read_data'],
    @param file_format File format which is used for writing the data. Default defined in defaultDict.
    @param out_folder Path to folder where data is written in folder out_folder/Germany.
 """
-    directory = os.path.join(out_folder, 'Germany/')
-    gd.check_dir(directory)
-   
-    filename_counties = 'migration'
-    filename_reg_key = 'reg_key'
-    filename_zensus = 'zensus'
-
-
-
-    file_in = os.path.join(directory, filename_counties+".json")
-    try:
-        counties = pandas.read_json(file_in)
-    except:
-        try:
-            print('Local counties dataframe not found. Trying to download from HPC server')
-            path_counties = 'http://hpcagainstcorona.sc.bs.dlr.de/data/migration/'
-            counties = pandas.read_excel(os.path.join(path_counties, 'kreise_deu.xlsx'), sheet_name=1, header=3,
-                                         engine='openpyxl')
-            gd.write_dataframe(counties, directory, filename_counties, "json")
-        except:
-            print('No access to HPC Server. Trying to download data from the internet')
-            path_counties = 'https://www.destatis.de/DE/Themen/Laender-Regionen/Regionales/Gemeindeverzeichnis/Administrativ/04-kreise.xlsx;?__blob=publicationFile'
-            counties = pandas.read_excel(os.path.join(path_counties), sheet_name=1, header=3, engine='openpyxl')
-            gd.write_dataframe(counties, directory, filename_counties, "json")
-
-    file_in = os.path.join(directory, filename_zensus+".json")
-    try:
-        zensus = pandas.read_json(file_in)
-    except:
-        print('Local zensus Dataframe not found. Trying to download from the internet')
-        zensus = gd.loadCsv("abad92e8eead46a4b0d252ee9438eb53_1")
-        gd.write_dataframe(zensus, directory, filename_zensus, "json")
-
-    file_in = os.path.join(directory, filename_reg_key+".json")
-    try:
-        reg_key = pandas.read_json(file_in)
-    except:
-        print('Local reg_key Dataframe not found. Trying to download from the internet')
-        path_reg_key = 'https://www.zensus2011.de/SharedDocs/Downloads/DE/Pressemitteilung/DemografischeGrunddaten/' \
-                       '1A_EinwohnerzahlGeschlecht.xls?__blob=publicationFile&v=5'
-        # read tables
-        reg_key = pandas.read_excel(path_reg_key, sheet_name='Tabelle_1A', header=12)
-        gd.write_dataframe(reg_key, directory, filename_reg_key, "json")
-
-   
     counties, reg_key, zensus = load_age_population_data(out_folder)
 
     # find region keys for census population data
