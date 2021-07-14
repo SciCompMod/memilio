@@ -1,57 +1,71 @@
 import epidemiology.secir as secir
-
+import numpy as np
+from epidemiology.secir import InfectionState as State
 def parameter_study():    
     #setup basic parameters
-    model = secir.SecirModel1()
+    num_groups = 6
+    model = secir.SecirModel(num_groups)
 
-    model.parameters.times[0].set_incubation(5.2)
-    model.parameters.times[0].set_infectious_mild(6)
-    model.parameters.times[0].set_serialinterval(4.2)
-    model.parameters.times[0].set_hospitalized_to_home(12)
-    model.parameters.times[0].set_home_to_hospitalized(5)
-    model.parameters.times[0].set_hospitalized_to_icu(2)
-    model.parameters.times[0].set_icu_to_home(8)
-    model.parameters.times[0].set_icu_to_death(5)
+    for i in range(num_groups):
+        group = secir.AgeGroup(i)
 
-    model.parameters.get_contact_patterns().get_cont_freq_mat().set_cont_freq(0.5, 0, 0)
-    model.parameters.get_contact_patterns().get_cont_freq_mat().add_damping(secir.Damping(30, 0.3), 0, 0)
+        model.parameters.IncubationTime[group] = 5.2
+        model.parameters.InfectiousTimeMild[group] = 6
+        model.parameters.SerialInterval[group] = 4.2
+        model.parameters.HospitalizedToHomeTime[group] = 12
+        model.parameters.HomeToHospitalizedTime[group] = 5
+        model.parameters.HospitalizedToICUTime[group] = 2
+        model.parameters.ICUToHomeTime[group] = 8
+        model.parameters.ICUToDeathTime[group] = 5
 
-    model.populations.set(100, secir.AgeGroup1.Group0, secir.InfectionType.E)
-    model.populations.set( 50, secir.AgeGroup1.Group0, secir.InfectionType.C)
-    model.populations.set( 50, secir.AgeGroup1.Group0, secir.InfectionType.I)
-    model.populations.set( 20, secir.AgeGroup1.Group0, secir.InfectionType.H)
-    model.populations.set( 10, secir.AgeGroup1.Group0, secir.InfectionType.U)
-    model.populations.set( 10, secir.AgeGroup1.Group0, secir.InfectionType.R)
-    model.populations.set(  0, secir.AgeGroup1.Group0, secir.InfectionType.D)
-    model.populations.set_difference_from_total(10000, secir.AgeGroup1.Group0, secir.InfectionType.S)
+        model.populations[group, secir.Index_InfectionState(State.Exposed)] = 100
+        model.populations[group, secir.Index_InfectionState(State.Carrier)] = 50
+        model.populations[group, secir.Index_InfectionState(State.Infected)] = 20
+        model.populations[group, secir.Index_InfectionState(State.Hospitalized)] = 20
+        model.populations[group, secir.Index_InfectionState(State.ICU)] = 10
+        model.populations[group, secir.Index_InfectionState(State.Recovered)] = 50
+        model.populations[group, secir.Index_InfectionState(State.Dead)] = 10
+        model.populations.set_difference_from_group_total_AgeGroup((group, secir.Index_InfectionState(State.Susceptible)), 10000)
 
-    model.parameters.probabilities[0].set_infection_from_contact(1.0)
-    model.parameters.probabilities[0].set_carrier_infectability(0.67)
-    model.parameters.probabilities[0].set_asymp_per_infectious(0.09)
-    model.parameters.probabilities[0].set_risk_from_symptomatic(0.25)
-    model.parameters.probabilities[0].set_hospitalized_per_infectious(0.2)
-    model.parameters.probabilities[0].set_icu_per_hospitalized(0.25)
-    model.parameters.probabilities[0].set_dead_per_icu(0.3)
 
+        model.parameters.InfectionProbabilityFromContact[group].set_distribution(secir.ParameterDistributionUniform(0.1, 0.2))
+        model.parameters.AsymptoticCasesPerInfectious[group] = 0.09
+        model.parameters.RiskOfInfectionFromSympomatic[group] = 0.25
+        model.parameters.HospitalizedCasesPerInfectious[group] = 0.2
+        model.parameters.ICUCasesPerHospitalized[group] = 0.25
+        model.parameters.DeathsPerHospitalized[group] = 0.3
+
+
+    model.parameters.ContactPatterns.cont_freq_mat = secir.ContactMatrixGroup(4,num_groups)
+    model.parameters.ContactPatterns.cont_freq_mat[0] = secir.ContactMatrix(np.ones((num_groups, num_groups))*0.5)
+    model.parameters.ContactPatterns.cont_freq_mat[1] = secir.ContactMatrix(np.ones((num_groups, num_groups))*0.5)
+    model.parameters.ContactPatterns.cont_freq_mat[2] = secir.ContactMatrix(np.ones((num_groups, num_groups))*0.5)
+    model.parameters.ContactPatterns.cont_freq_mat[3] = secir.ContactMatrix(np.ones((num_groups, num_groups))*0.5)
+    model.parameters.ContactPatterns.cont_freq_mat.add_damping(secir.Damping(np.ones((num_groups, num_groups))*0.7, 30.0))
+    print(model.parameters.ContactPatterns.cont_freq_mat[1].baseline)
     #process the result of one run
     parameter_study.c = 0
-    def handle_result(model, result, _):
-        print("run {} with infection rate {:.2G}".format(parameter_study.c, model.parameters.probabilities[0].get_infection_from_contact().value))
-        print("compartments at t = {}:".format(result.get_time(0)))
-        print(result.get_value(0))
-        print("compartments at t = {}:".format(result.get_last_time()))
-        print(result.get_last_value())
+    def handle_result(graph):
+
+        group = secir.AgeGroup(0)
+        print("run {} with infection rate {:.2G}".format(parameter_study.c, graph.get_node(0).property.model.parameters.InfectionProbabilityFromContact[group].value))
+        print("compartments at t = {}:".format(graph.get_node(0).property.result.get_time(0)))
+        print(graph.get_node(0).property.result.get_value(0))
+        print("compartments at t = {}:".format(graph.get_node(0).property.result.get_last_time()))
+        print(graph.get_node(0).property.result.get_last_value())
         parameter_study.c += 1
 
     #study the effect of different infection rates
-    infection_from_contact_uniform = secir.ParameterDistributionUniform(0.5, 1.0)
-    model.parameters.probabilities[0].set_infection_from_contact(infection_from_contact_uniform)
 
     model.apply_constraints()
-    
-    t0 = 0
-    tmax = 50
-    study = secir.ParameterStudy1(model, t0, tmax, num_runs = 3)
+
+    graph = secir.SecirModelGraph()
+    graph.add_node(0, model)
+    graph.add_node(1, model)
+    graph.add_edge(0, 1, 0.01 * np.ones(8*num_groups))
+    graph.add_edge(1, 0, 0.01 * np.ones(8*num_groups))
+
+    study = secir.ParameterStudy(graph, t0 = 1, tmax = 10, dt = 0.5, num_runs = 3)
     study.run(handle_result)
 
 if __name__ == "__main__":
