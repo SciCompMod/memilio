@@ -256,29 +256,20 @@ void implement_dynamic_npis(DampingExprGroup& damping_expr_group, const std::vec
     }
 
     //remove duplicates that accumulated because of dampings that become active during the time span
+    //a damping is obsolete if the most recent damping of the same type and level has the same value
     for (auto& damping_expr : damping_expr_group) {
         //go from the back so indices aren't invalidated when dampings are removed
-        for (size_t i = damping_expr.get_dampings().size() - 1; i >= 1; --i) {
-            auto& di = damping_expr.get_dampings()[i];
-
+        auto dampings = damping_expr.get_dampings();
+        for (auto it = dampings.rbegin(); it != dampings.rend() - 1; ++it) {
             //look for previous damping of the same type/level
-            auto j = i - 1;
-            for (; j >= 0; --j)
-            {
-                auto& dj = damping_expr.get_dampings()[j];
-                if (di.get_level() == dj.get_level() && di.get_type() == dj.get_type()) {
-                    break;
-                }
-            }
+            auto it_prev = std::find_if(it + 1, dampings.rend(), [&di = *it](auto& dj) {
+                return di.get_level() == dj.get_level() && di.get_type() == dj.get_type();
+            });
 
             //remove if match is found and has same value
-            if (j >= 0 && j < damping_expr.get_dampings().size()) 
-            {
-                auto& dj = damping_expr.get_dampings()[j];
-
-                if (di.get_coeffs() == dj.get_coeffs()) {
-                    damping_expr.remove_damping(i);
-                }
+            if (it_prev != dampings.rend() && it->get_coeffs() == it_prev->get_coeffs()) {
+                auto i = (it.base() - 1) - dampings.begin();
+                damping_expr.remove_damping(i);
             }
         }
     }
