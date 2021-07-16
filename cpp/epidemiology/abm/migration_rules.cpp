@@ -30,7 +30,7 @@ LocationType go_to_school(const Person& person, TimePoint t, TimeSpan /*dt*/, co
 {
     auto current_loc = person.get_location_id().type;
     if (current_loc == LocationType::Home && t < params.get<LockdownDate>() && t.day_of_week() < 5 &&
-        t.hour_of_day() >= 8 && person.get_age() == AbmAgeGroup::Age5to14) {
+        t.hour_of_day() >= 8 && person.get_age() == AbmAgeGroup::Age5to14 && person.goes_to_school(t, params)) {
         return epi::LocationType::School;
     }
     //return home
@@ -46,7 +46,7 @@ LocationType go_to_work(const Person& person, TimePoint t, TimeSpan /*dt*/, cons
 
     if (current_loc == LocationType::Home && t < params.get<LockdownDate>() &&
         (person.get_age() == AbmAgeGroup::Age15to34 || person.get_age() == AbmAgeGroup::Age35to59) &&
-        t.day_of_week() < 5 && t.hour_of_day() >= 8) {
+        t.day_of_week() < 5 && t.hour_of_day() >= 8 && person.goes_to_work(t, params)) {
         return epi::LocationType::Work;
     }
     //return home
@@ -80,7 +80,7 @@ LocationType go_to_event(const Person& person, TimePoint t, TimeSpan dt, const A
     if (current_loc == LocationType::Home && t < params.get<LockdownDate>() &&
         ((t.day_of_week() <= 4 && t.hour_of_day() >= 19) || (t.day_of_week() >= 5 && t.hour_of_day() >= 10))) {
         return random_transition(current_loc, dt,
-                                 {{LocationType::SocialEvent, params.get<SocialEventRate>()[person.get_age()]}});
+                                 {{LocationType::SocialEvent, params.get<SocialEventRate>().get_matrix_at(t.days())[(size_t)person.get_age()]}});
     }
 
     //return home

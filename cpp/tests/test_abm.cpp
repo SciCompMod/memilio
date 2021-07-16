@@ -1,5 +1,6 @@
 #include "epidemiology/abm/abm.h"
 #include "epidemiology/abm/migration_rules.h"
+#include "epidemiology/abm/lockdown_rules.h"
 #include "epidemiology/utils/eigen_util.h"
 #include "matchers.h"
 #include "gtest/gtest.h"
@@ -602,6 +603,169 @@ TEST(TestMigrationRules, event_return)
     p.interact(dt, {}, shop);
 
     ASSERT_EQ(epi::go_to_event(p, t, dt, {}), epi::LocationType::Home);
+}
+
+TEST(TestLockdownRules, school_closure)
+{
+    auto t  = epi::TimePoint(0);
+    auto dt = epi::hours(1);
+    auto t_morning  = epi::TimePoint(0) + epi::hours(8);
+    auto home = epi::Location(epi::LocationType::Home, 0);
+    auto school = epi::Location(epi::LocationType::School, 0);
+
+    //setup rng mock so one person is home schooled and the other goes to school
+    ScopedMockDistribution<testing::StrictMock<MockDistribution<epi::UniformDistribution<double>>>>
+        mock_uniform_dist;
+    EXPECT_CALL(mock_uniform_dist.get_mock(), invoke)
+        .Times(testing::AtLeast(4))
+        .WillOnce(testing::Return(0.4))
+        .WillOnce(testing::Return(0.4))
+        .WillOnce(testing::Return(0.2))
+        .WillOnce(testing::Return(0.2))
+        .WillRepeatedly(testing::Return(1.0)); 
+
+    auto p1    = epi::Person(home, epi::InfectionState::Carrier, epi::AbmAgeGroup::Age5to14);
+    p1.set_assigned_location(home);
+    p1.set_assigned_location(school);
+    auto p2    = epi::Person(home, epi::InfectionState::Carrier, epi::AbmAgeGroup::Age5to14);
+    p2.set_assigned_location(home);
+    p2.set_assigned_location(school);
+    epi::AbmMigrationParameters params;
+
+    epi::set_school_closure(t, 0.7, params);
+
+    ASSERT_EQ(epi::go_to_school(p1, t_morning, dt, params), epi::LocationType::Home);
+    ASSERT_EQ(epi::go_to_school(p2, t_morning, dt, params), epi::LocationType::School);
+}
+
+TEST(TestLockdownRules, school_opening)
+{
+    auto t_closing  = epi::TimePoint(0);
+    auto t_opening  = epi::TimePoint(0) + epi::days(1);
+    auto dt = epi::hours(1);
+    auto t_morning  = epi::TimePoint(0) + epi::days(1) + epi::hours(8);
+    auto home = epi::Location(epi::LocationType::Home, 0);
+    auto school = epi::Location(epi::LocationType::School, 0);
+    //setup rng mock so the person is homeschooled in case of lockdown
+    ScopedMockDistribution<testing::StrictMock<MockDistribution<epi::UniformDistribution<double>>>>
+        mock_uniform_dist;
+    EXPECT_CALL(mock_uniform_dist.get_mock(), invoke)
+        .Times(testing::AtLeast(2))
+        .WillOnce(testing::Return(0.5))
+        .WillOnce(testing::Return(0.5))
+        .WillRepeatedly(testing::Return(1.0)); 
+    auto p    = epi::Person(home, epi::InfectionState::Carrier, epi::AbmAgeGroup::Age5to14);
+    p.set_assigned_location(home);
+    p.set_assigned_location(school);
+    epi::AbmMigrationParameters params;
+
+    epi::set_school_closure(t_closing, 1., params);
+    epi::set_school_closure(t_opening, 0., params);
+
+    ASSERT_EQ(epi::go_to_school(p, t_morning, dt, params), epi::LocationType::School);
+}
+
+TEST(TestLockdownRules, home_office)
+{
+    auto t = epi::TimePoint(0);
+    auto t_morning  = epi::TimePoint(0) + epi::hours(8);
+    auto dt = epi::hours(1);
+    auto home      = epi::Location(epi::LocationType::Home, 0);
+    auto work      = epi::Location(epi::LocationType::Work, 0);
+    epi::AbmMigrationParameters params;
+
+    epi::set_home_office(t, 0.4, params);
+    
+    //setup rng mock so one person goes to work and the other works at home
+    ScopedMockDistribution<testing::StrictMock<MockDistribution<epi::UniformDistribution<double>>>>
+        mock_uniform_dist;
+    EXPECT_CALL(mock_uniform_dist.get_mock(), invoke)
+        .Times(testing::AtLeast(4))
+        .WillOnce(testing::Return(0.5))
+        .WillOnce(testing::Return(0.5))
+        .WillOnce(testing::Return(0.7))
+        .WillOnce(testing::Return(0.7))
+        .WillRepeatedly(testing::Return(1.0));        
+
+    auto person1 = epi::Person(home, epi::InfectionState::Susceptible, epi::AbmAgeGroup::Age15to34);
+    auto person2 = epi::Person(home, epi::InfectionState::Susceptible, epi::AbmAgeGroup::Age15to34);
+    person1.set_assigned_location(home);
+    person1.set_assigned_location(work);
+    person2.set_assigned_location(home);
+    person2.set_assigned_location(work);
+
+    ASSERT_EQ(epi::go_to_work(person1, t_morning, dt, params), epi::LocationType::Work);
+    ASSERT_EQ(epi::go_to_work(person2, t_morning, dt, params), epi::LocationType::Home);
+    
+}
+
+TEST(TestLockdownRules, no_home_office)
+{
+    auto t_closing  = epi::TimePoint(0);
+    auto t_opening  = epi::TimePoint(0) + epi::days(1);
+    auto dt = epi::hours(1);
+    auto t_morning  = epi::TimePoint(0) + epi::days(1) + epi::hours(8);
+    auto home = epi::Location(epi::LocationType::Home, 0);
+    auto work = epi::Location(epi::LocationType::Work, 0);
+
+
+    //setup rng mock so the person works in home office
+    ScopedMockDistribution<testing::StrictMock<MockDistribution<epi::UniformDistribution<double>>>>
+        mock_uniform_dist;
+    EXPECT_CALL(mock_uniform_dist.get_mock(), invoke)
+        .Times(testing::AtLeast(2))
+        .WillOnce(testing::Return(0.7))
+        .WillOnce(testing::Return(0.7))
+        .WillRepeatedly(testing::Return(1.0)); 
+
+    auto p    = epi::Person(home, epi::InfectionState::Carrier, epi::AbmAgeGroup::Age15to34);
+    p.set_assigned_location(home);
+    p.set_assigned_location(work);
+    epi::AbmMigrationParameters params;
+
+    epi::set_home_office(t_closing, 0.5, params);
+    epi::set_home_office(t_opening, 0., params);
+
+    ASSERT_EQ(epi::go_to_work(p, t_morning, dt, params), epi::LocationType::Work);
+}
+
+TEST(TestLockdownRules, social_event_closure)
+{
+    auto t  = epi::TimePoint(0);
+    auto dt = epi::hours(1);
+    auto t_evening  = epi::TimePoint(0) + epi::hours(19);
+    auto home = epi::Location(epi::LocationType::Home, 0);
+    auto event = epi::Location(epi::LocationType::SocialEvent, 0);
+    auto p    = epi::Person(home, epi::InfectionState::Carrier, epi::AbmAgeGroup::Age5to14);
+    p.set_assigned_location(home);
+    p.set_assigned_location(event);
+    epi::AbmMigrationParameters params;
+
+    epi::close_social_events(t, 1, params);
+
+    ASSERT_EQ(epi::go_to_event(p, t_evening, dt, params), epi::LocationType::Home);
+}
+
+TEST(TestLockdownRules, social_events_opening)
+{
+    auto t_closing  = epi::TimePoint(0);
+    auto t_opening  = epi::TimePoint(0) + epi::days(1);
+    auto dt = epi::hours(1);
+    auto t_evening  = epi::TimePoint(0) + epi::days(1) + epi::hours(19);
+    auto home = epi::Location(epi::LocationType::Home, 0);
+    auto event = epi::Location(epi::LocationType::SocialEvent, 0);
+    auto p    = epi::Person(home, epi::InfectionState::Carrier, epi::AbmAgeGroup::Age5to14);
+    p.set_assigned_location(event);
+    p.set_assigned_location(home);
+    epi::AbmMigrationParameters params;
+
+    epi::close_social_events(t_closing, 1, params);
+    epi::close_social_events(t_opening, 0, params);
+
+    ScopedMockDistribution<testing::StrictMock<MockDistribution<epi::ExponentialDistribution<double>>>>
+        mock_exponential_dist;
+    EXPECT_CALL(mock_exponential_dist.get_mock(), invoke).Times(1).WillOnce(testing::Return(0.01));
+    ASSERT_EQ(epi::go_to_event(p, t_evening, dt, params), epi::LocationType::SocialEvent);
 }
 
 TEST(TestWorld, evolveMigration)

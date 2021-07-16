@@ -34,7 +34,6 @@ T random_transition(T current_state, TimeSpan dt, const std::pair<T, double> (&t
     auto sum = std::accumulate(std::begin(transitions), std::end(transitions), 0.0, [](auto&& a, auto&& t) {
         return a + t.second;
     });
-
     if (sum <= 0) { //no transitions or all transitions have rate zero
         return current_state;
     }

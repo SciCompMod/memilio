@@ -13,6 +13,8 @@ Person::Person(LocationId id, InfectionState state, AbmAgeGroup age)
     , m_age(age)
     , m_time_at_location(std::numeric_limits<int>::max())
 {
+    m_random_workgroup = UniformDistribution<double>::get_instance()();
+    m_random_schoolgroup = UniformDistribution<double>::get_instance()();
 }
 
 Person::Person(Location& location, InfectionState state, AbmAgeGroup age)
@@ -69,5 +71,15 @@ void Person::set_assigned_location (LocationId id)
 uint32_t Person::get_assigned_location_index (LocationType type) const
 {
     return m_assigned_locations[(uint32_t)type];
+}
+
+bool Person::goes_to_work(TimePoint t, const AbmMigrationParameters& params) const
+{
+    return m_random_workgroup < params.get<WorkRatio>().get_matrix_at(t.days())[0];
+}
+
+bool Person::goes_to_school(TimePoint t, const AbmMigrationParameters& params) const
+{
+    return m_random_schoolgroup < params.get<SchoolRatio>().get_matrix_at(t.days())[0];
 }
 } // namespace epi

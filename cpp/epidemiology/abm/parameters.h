@@ -6,6 +6,9 @@
 #include "epidemiology/utils/custom_index_array.h"
 #include "epidemiology/utils/eigen.h"
 #include "epidemiology/utils/parameter_set.h"
+#include "epidemiology/secir/damping.h"
+#include "epidemiology/secir/contact_matrix.h"
+
 #include <limits>
 
 namespace epi
@@ -154,13 +157,6 @@ struct IcuRate {
         return CustomIndexArray<double, AbmAgeGroup>(AbmAgeGroup::Count, 1.0);
     }
 };
-struct SocialEventRate {
-    using Type = CustomIndexArray<double, AbmAgeGroup>;
-    static auto get_default()
-    {
-        return CustomIndexArray<double, AbmAgeGroup>(AbmAgeGroup::Count, 1.0);
-    }
-};
 struct BasicShoppingRate {
     using Type = CustomIndexArray<double, AbmAgeGroup>;
     static auto get_default()
@@ -168,12 +164,33 @@ struct BasicShoppingRate {
         return CustomIndexArray<double, AbmAgeGroup>(AbmAgeGroup::Count, 1.0);
     }
 };
+struct WorkRatio {
+    using Type = DampingMatrixExpression<Dampings<Damping<ColumnVectorShape>>>;
+    static auto get_default()
+    {
+        return Type(Eigen::VectorXd::Constant(1,1.0));
+    }
+};
+struct SchoolRatio {
+    using Type = DampingMatrixExpression<Dampings<Damping<ColumnVectorShape>>>;
+    static auto get_default()
+    {
+        return Type(Eigen::VectorXd::Constant(1,1.0));
+    }
+};
+struct SocialEventRate {
+    using Type = DampingMatrixExpression<Dampings<Damping<ColumnVectorShape>>>;
+    static auto get_default()
+    {
+        return Type(Eigen::VectorXd::Constant((size_t)AbmAgeGroup::Count,1.0));
+    }
+};
 
 /**
  * parameters that control the migration between locations.
  */
 using AbmMigrationParameters =
-    ParameterSet<LockdownDate, HospitalizationRate, IcuRate, SocialEventRate, BasicShoppingRate>;
+    ParameterSet<LockdownDate, HospitalizationRate, IcuRate, SocialEventRate, BasicShoppingRate, WorkRatio, SchoolRatio>;
 
 } // namespace epi
 #endif
