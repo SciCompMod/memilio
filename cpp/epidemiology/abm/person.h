@@ -115,6 +115,19 @@ public:
         return m_assigned_locations;
     }
 
+    /**
+     * Every person has a random number.
+     * Depending on this number and the time, the person works from home in case of a lockdown.
+     * @return if the person works from home
+     */
+    bool goes_to_work(TimePoint t, const AbmMigrationParameters& params) const;
+
+    /**
+     * Every person has a random number that determines if they go to school in case of a lockdown.
+     * @return if the person goes to school
+     */
+    bool goes_to_school(TimePoint t, const AbmMigrationParameters& params) const;
+
 private:
     LocationId m_location_id;
     std::vector<uint32_t> m_assigned_locations;
@@ -122,6 +135,8 @@ private:
     TimeSpan m_time_until_carrier;
     epi::Index<AbmAgeGroup> m_age;
     TimeSpan m_time_at_location;
+    double m_random_workgroup;
+    double m_random_schoolgroup;
 };
 
 } // namespace epi

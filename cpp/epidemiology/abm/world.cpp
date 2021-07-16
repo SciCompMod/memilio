@@ -53,6 +53,7 @@ void World::migration(TimePoint t, TimeSpan dt)
     };
     for (auto& person : m_persons) {
         for (auto rule : rules) {
+
             //check if transition rule can be applied
             const auto& locs = rule.second;
             bool nonempty = !locs.empty(); 
@@ -123,5 +124,12 @@ int World::get_subpopulation_combined(InfectionState s, LocationType type) const
            { return running_sum + loc.get_subpopulation(s); });
 }
 
+AbmMigrationParameters& World::get_migration_parameters(){
+    return m_migration_parameters;
+} 
+
+const AbmMigrationParameters& World::get_migration_parameters() const{
+    return m_migration_parameters;
+} 
 
 } // namespace epi

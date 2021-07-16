@@ -5,6 +5,7 @@
 #include "epidemiology/abm/parameters.h"
 #include "epidemiology/abm/location.h"
 #include "epidemiology/abm/person.h"
+#include "epidemiology/abm/lockdown_rules.h"
 #include "epidemiology/utils/pointer_dereferencing_iterator.h"
 #include "epidemiology/utils/stl_util.h"
 
@@ -111,6 +112,13 @@ public:
      * @return number of persons that are in the specified infection state
      */
     int get_subpopulation_combined(InfectionState s, LocationType type) const;
+     
+    /** 
+     *get migration parameters
+     */
+    AbmMigrationParameters& get_migration_parameters();
+
+    const AbmMigrationParameters& get_migration_parameters() const;
 
 private:
     void interaction(TimePoint t, TimeSpan dt);
