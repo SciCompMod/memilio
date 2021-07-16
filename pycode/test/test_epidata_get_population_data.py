@@ -292,16 +292,10 @@ class Test_getPopulationData(fake_filesystem_unittest.TestCase):
 
         directory = os.path.join(self.path, 'Germany/')
 
-        with self.assertRaises(SystemExit) as cm:
-            _, _, _ = gpd.load_age_population_data(True, self.path)
-
-        the_exception = cm.exception
-        self.assertEqual(the_exception.code, "Error: The file: "+ directory + "migration.json does not exist. Call program without -r flag to get it.")
-
-        counties_write, reg_key_write, zensus_write = gpd.load_age_population_data(False, self.path)
+        counties_write, reg_key_write, zensus_write = gpd.load_age_population_data(self.path)
         self.assertEqual(len(os.listdir(directory)), 3)
 
-        counties_read, reg_key_read, zensus_read = gpd.load_age_population_data(True, self.path)
+        counties_read, reg_key_read, zensus_read = gpd.load_age_population_data(self.path)
 
         pd.testing.assert_frame_equal(counties_read, counties_write, check_dtype=False)
         pd.testing.assert_frame_equal(reg_key_read, reg_key_write, check_dtype=False)

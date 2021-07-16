@@ -189,7 +189,8 @@ def get_new_counties(data):
         return data_temp
 
 
-def load_age_population_data(read_data, out_folder):
+def load_age_population_data(out_folder):
+
     directory = os.path.join(out_folder, 'Germany/')
     gd.check_dir(directory)
 
@@ -197,41 +198,56 @@ def load_age_population_data(read_data, out_folder):
     filename_reg_key = 'reg_key'
     filename_zensus = 'zensus'
 
-    if(read_data):
-
-        file_in = os.path.join(directory, filename_counties+".json")
+    file_in = os.path.join(directory, filename_counties + ".json")
+    try:
+        counties = pandas.read_json(file_in)
+    except:
+        print('Local counties dataframe not found.')
         try:
-            counties = pandas.read_json(file_in)
+            print('Trying to download from HPC server')
+            path_counties = 'http://hpcagainstcorona.sc.bs.dlr.de/data/migration/'
+            counties = pandas.read_excel(os.path.join(path_counties, 'kreise_deu.xlsx'), sheet_name=1, header=3,
+                                         engine='openpyxl')
+            gd.write_dataframe(counties, directory, filename_counties, "json")
+        except:
+            print('No access to HPC Server.')
+            try:
+                print('Trying to download data from the internet')
+                path_counties = 'https://www.destatis.de/DE/Themen/Laender-Regionen/Regionales/Gemeindeverzeichnis/Administrativ/04-kreise.xlsx;?__blob=publicationFile'
+                counties = pandas.read_excel(os.path.join(path_counties), sheet_name=1, header=3, engine='openpyxl')
+                gd.write_dataframe(counties, directory, filename_counties, "json")
+            except ValueError:
+                exit_string = "Error: The counties file does not exist."
+                sys.exit(exit_string)
+
+    file_in = os.path.join(directory, filename_zensus + ".json")
+    try:
+        zensus = pandas.read_json(file_in)
+    except:
+        print('Local zensus Dataframe not found.')
+        try:
+            print('Trying to download from the internet')
+            zensus = gd.loadCsv("abad92e8eead46a4b0d252ee9438eb53_1")
+            gd.write_dataframe(zensus, directory, filename_zensus, "json")
         except ValueError:
-            exit_string = "Error: The file: " + file_in + " does not exist. Call program without -r flag to get it."
+            exit_string = "Error: The zensus file does not exist."
             sys.exit(exit_string)
 
-        file_in = os.path.join(directory, filename_zensus+".json")
+    file_in = os.path.join(directory, filename_reg_key + ".json")
+    try:
+        reg_key = pandas.read_json(file_in)
+    except:
+        print('Local reg_key Dataframe not found.')
         try:
-            zensus = pandas.read_json(file_in)
+            print('Trying to download from the internet')
+            path_reg_key = 'https://www.zensus2011.de/SharedDocs/Downloads/DE/Pressemitteilung/DemografischeGrunddaten/' \
+                           '1A_EinwohnerzahlGeschlecht.xls?__blob=publicationFile&v=5'
+            # read tables
+            reg_key = pandas.read_excel(path_reg_key, sheet_name='Tabelle_1A', header=12)
+            gd.write_dataframe(reg_key, directory, filename_reg_key, "json")
         except ValueError:
-            exit_string = "Error: The file: " + file_in + " does not exist. Call program without -r flag to get it."
+            exit_string = "Error: The regional key file does not exist."
             sys.exit(exit_string)
-
-        file_in = os.path.join(directory, filename_reg_key+".json")
-        try:
-            reg_key = pandas.read_json(file_in)
-        except ValueError:
-            exit_string = "Error: The file: " + file_in + " does not exist. Call program without -r flag to get it."
-            sys.exit(exit_string)
-    else:
-        path_counties = 'http://hpcagainstcorona.sc.bs.dlr.de/data/migration/'
-        path_reg_key = 'https://www.zensus2011.de/SharedDocs/Downloads/DE/Pressemitteilung/DemografischeGrunddaten/' \
-                       '1A_EinwohnerzahlGeschlecht.xls?__blob=publicationFile&v=5'
-
-        #read tables
-        counties = gd.loadExcel(os.path.join(path_counties,'kreise_deu.xlsx'), extension='', apiUrl='', sheet_name=1, header=3)
-        reg_key = gd.loadExcel(path_reg_key, apiUrl='', extension = '', engine=None, sheet_name='Tabelle_1A', header=12)
-        zensus = gd.loadCsv("abad92e8eead46a4b0d252ee9438eb53_1")
-
-        gd.write_dataframe(counties, directory, filename_counties, "json")
-        gd.write_dataframe(reg_key, directory, filename_reg_key, "json")
-        gd.write_dataframe(zensus, directory, filename_zensus, "json")
 
     return counties, reg_key, zensus
 
@@ -260,9 +276,8 @@ def get_age_population_data(read_data=dd.defaultDict['read_data'],
    @param read_data False [Default] or True. Defines if data is read from file or downloaded.
    @param file_format File format which is used for writing the data. Default defined in defaultDict.
    @param out_folder Path to folder where data is written in folder out_folder/Germany.
-   """
-
-    counties, reg_key, zensus = load_age_population_data(read_data, out_folder)
+"""
+    counties, reg_key, zensus = load_age_population_data(out_folder)
 
     # find region keys for census population data
     key = np.zeros((len(zensus)))
