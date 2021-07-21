@@ -201,6 +201,8 @@ void bind_Simulation(py::module& m, std::string const& name)
              py::arg("dt") = 0.1)
         .def_property_readonly("result", py::overload_cast<>(&Simulation::get_result, py::const_),
                                py::return_value_policy::reference_internal)
+        .def_property_readonly("model", py::overload_cast<>(&Simulation::get_model, py::const_),
+                               py::return_value_policy::reference_internal)
         .def("advance", &Simulation::advance, py::arg("tmax"));
 }
 
