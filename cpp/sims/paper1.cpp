@@ -405,12 +405,12 @@ void set_edges(const fs::path& data_dir, epi::Graph<epi::SecirModel, epi::Migrat
             auto working_population = 0.0;
             auto min_commuter_age   = epi::AgeGroup(2);
             auto max_commuter_age   = epi::AgeGroup(4); //this group is partially retired, only partially commutes
-            for (auto age = min_commuter_age; age < max_commuter_age; ++age) {
+            for (auto age = min_commuter_age; age <= max_commuter_age; ++age) {
                 working_population += populations.get_group_total(age) * (age == max_commuter_age ? 0.33 : 1.0);
             }
             auto commuter_coeff_ij = migration_data_commuter(county_idx_i, county_idx_j) /
                                      working_population; //data is absolute numbers, we need relative
-            for (auto age = min_commuter_age; age < max_commuter_age; ++age) {
+            for (auto age = min_commuter_age; age <= max_commuter_age; ++age) {
                 for (auto compartment : migrating_compartments) {
                     auto coeff_index = populations.get_flat_index({age, compartment});
                     migration_coeffs[size_t(ContactLocation::Work)].get_baseline()[coeff_index] =
