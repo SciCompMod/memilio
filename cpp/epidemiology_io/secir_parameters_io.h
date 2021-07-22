@@ -497,7 +497,7 @@ IOResult<void> read_population_data_state(std::vector<Model>& model, Date date, 
  * @param dir directory of files
  */
 template <class Model>
-IOResult<void> read_population_data_county(std::vector<Model>& model, Date date, std::vector<int> county,
+IOResult<void> read_population_data_county(std::vector<Model>& model, Date date, const std::vector<int>& county,
                                            const std::vector<double>& scaling_factor_inf, double scaling_factor_icu,
                                            const std::string& dir)
 {
