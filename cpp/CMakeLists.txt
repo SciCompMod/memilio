@@ -166,6 +166,7 @@ include(GNUInstallDirs)
 
 add_subdirectory(examples)
 add_subdirectory(tests)
+add_subdirectory(sims)
 # add_subdirectory(docs)
 
 install(TARGETS epidemiology
