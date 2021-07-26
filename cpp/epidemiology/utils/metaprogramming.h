@@ -52,6 +52,25 @@ struct is_expression_valid : details::is_expression_valid<Expr, void, T...>
 {
 };
 
+/**
+ * conjunction (logical and) of zero or more type traits with bool values.
+ * Does boolean shortcircuiting as expected. 
+ * see https://en.cppreference.com/w/cpp/types/conjunction.
+ * @{
+ */
+template <class...>
+struct conjunction : std::true_type {
+};
+template <class B1>
+struct conjunction<B1> : B1 {
+};
+template <class B1, class... Bn>
+struct conjunction<B1, Bn...> : std::conditional_t<bool(B1::value), conjunction<Bn...>, B1> {
+};
+template <class... Bs>
+constexpr bool conjunction_v = conjunction<Bs...>::value;
+/**@}*/
+
 } // namespace epi
 
 #endif

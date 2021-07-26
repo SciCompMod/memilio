@@ -67,17 +67,19 @@ else()
     find_package(Eigen3 3.3 REQUIRED NO_MODULE)
 endif()
 
+if (EPI_USE_BUNDLED_BOOST)
+    include(BuildBoost)
+else()
+    find_package(Boost REQUIRED COMPONENTS outcome optional)
+endif(EPI_USE_BUNDLED_BOOST)
+
 if (EPI_BUILD_EPI_IO)
   # TODO: support also HDF5 config mode
   find_package(HDF5 REQUIRED COMPONENTS CXX)
 
-  if (EPI_USE_BUNDLED_BOOST)
-    include(BuildBoost)
-  else(EPI_USE_BUNDLED_BOOST)
+  if(NOT EPI_USE_BUNDLED_BOOST)
     find_package(Boost REQUIRED COMPONENTS filesystem)
-  endif(EPI_USE_BUNDLED_BOOST)
-
-  find_package(tixi3 REQUIRED CONFIG)
+  endif(NOT EPI_USE_BUNDLED_BOOST)
 
   if(EPI_USE_BUNDLED_JSONCPP)
     message(STATUS "Downloading jsoncpp library")

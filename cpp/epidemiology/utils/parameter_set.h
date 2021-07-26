@@ -1,9 +1,10 @@
 #ifndef EPI_UTILS_PARAMETER_SET_H
 #define EPI_UTILS_PARAMETER_SET_H
 
-#include <utility>
+#include "epidemiology/utils/io.h"
+#include "epidemiology/utils/stl_util.h"
 #include <tuple>
-#include <epidemiology/utils/stl_util.h>
+#include <utility>
 
 namespace epi
 {
@@ -95,13 +96,13 @@ namespace details
         }
 
         template<class T>
-        bool operator==(const TaggedParameter<T>& other)
+        bool operator==(const TaggedParameter<T>& other) const
         {
             return m_value == other.m_value;
         }
 
         template<class T>
-        bool operator!=(const TaggedParameter<T>& other)
+        bool operator!=(const TaggedParameter<T>& other) const
         {
             return m_value != other.m_value;
         }
@@ -296,7 +297,44 @@ public:
 
     bool operator!=(const ParameterSet& b) const 
     {
-        return m_tup != b.m_tup; 
+        return m_tup != b.m_tup;
+    }
+
+    /**
+     * serialize this. 
+     * @see epi::serialize
+     */
+    template <class IOContext>
+    void serialize(IOContext& io) const
+    {
+        auto obj = io.create_object("ParameterSet");
+        foreach (*this, [&obj](auto& p, auto t) mutable {
+            using Tag = decltype(t);
+            obj.add_element(Tag::name(), p);
+        });
+    }
+
+private:
+    ParameterSet(const typename Tags::Type&... t)
+        : m_tup(t...)
+    {
+    }
+
+public:
+    /**
+     * deserialize an object of this class.
+     * @see epi::deserialize
+     */
+    template <class IOContext>
+    static IOResult<ParameterSet> deserialize(IOContext& io)
+    {
+        auto obj = io.expect_object("ParameterSet");
+        return apply(
+            io,
+            [](const typename Tags::Type&... t) {
+                return ParameterSet(t...);
+            },
+            obj.expect_element(Tags::name(), Tag<typename Tags::Type>{})...);
     }
 
 private:

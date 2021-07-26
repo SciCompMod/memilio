@@ -35,15 +35,14 @@ template <class... Categories>
 class Populations : public CustomIndexArray<UncertainValue, Categories...>
 {
 public:
-
-    using Index = typename CustomIndexArray<UncertainValue, Categories...>::Index;
+    using Base = CustomIndexArray<UncertainValue, Categories...>;
+    using Index = typename Base::Index;
 
     template <class... Ts,
               typename std::enable_if_t<std::is_constructible<UncertainValue, Ts...>::value>* = nullptr>
     explicit Populations(Index const& sizes, Ts... args)
-        : CustomIndexArray<UncertainValue, Categories...>(sizes, args...)
+        : Base(sizes, args...)
     {}
-
 
     /**
      * @brief get_num_compartments returns the number of compartments
@@ -138,7 +137,7 @@ public:
      */
     ScalarType get_total() const
     {
-        return this->array().sum();
+        return this->array().template cast<ScalarType>().sum();
     }
 
 
@@ -234,7 +233,15 @@ public:
         }
     }
 
-
+    /**
+     * deserialize an object of this class.
+     * @see epi::deserialize
+     */
+    template<class IOContext>
+    static IOResult<Populations> deserialize(IOContext& io)
+    {
+        return Base::deserialize(io, Tag<Populations>{});
+    }
 };
 
 

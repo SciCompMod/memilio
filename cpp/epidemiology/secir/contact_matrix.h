@@ -185,6 +185,56 @@ public:
         PrintTo(self.m_dampings, os);
     }
 
+    /**
+     * serialize this. 
+     * @see epi::serialize
+     */
+    template<class IOContext>
+    void serialize(IOContext& io) const
+    {
+        auto obj = io.create_object("DampingMatrixExpression");
+        obj.add_element("Baseline", get_baseline());
+        obj.add_element("Minimum", get_minimum());
+        obj.add_list("Dampings", get_dampings().begin(), get_dampings().end());
+    }
+
+protected:
+    /**
+     * deserialize an object of a class derived from this.
+     */
+    template<class IOContext, class Derived>
+    static IOResult<Derived> deserialize(IOContext& io, Tag<Derived>)
+    {        
+        auto obj = io.expect_object("DampingMatrixExpression");
+        auto b = obj.expect_element("Baseline", Tag<Matrix>{});
+        auto m = obj.expect_element("Minimum", Tag<Matrix>{});
+        auto d = obj.expect_list("Dampings", Tag<typename DampingsType::value_type>{});
+        return apply(io, [](auto&& b_, auto&& m_, auto&& d_) -> IOResult<Derived> {
+            if (Shape::get_shape_of(b_) != Shape::get_shape_of(m_)) {
+                return failure(StatusCode::InvalidValue, "Baseline and Minimum must have the same shape.");
+            }
+            auto r = Derived(b_, m_);
+            for (auto&& e : d_) {
+                if (e.get_shape() != Shape::get_shape_of(b_)) {
+                    return failure(StatusCode::InvalidValue, "Dampings must have the same shape as the Baseline.");
+                }
+                r.add_damping(e);
+            }
+            return success(r);
+        }, b, m, d);
+    }
+
+public:
+    /**
+     * deserialize an object of this class.
+     * @see epi::deserialize
+     */
+    template<class IOContext>
+    static IOResult<DampingMatrixExpression> deserialize(IOContext& io)
+    {
+        return deserialize(io, Tag<DampingMatrixExpression>{});
+    }
+
 private:
     Matrix m_baseline;
     Matrix m_minimum;
@@ -231,6 +281,14 @@ public:
         assert(il.size() > 0);
     }
 
+private:    
+    DampingMatrixExpressionGroup(const std::vector<value_type>& v)
+        : m_matrices(v)
+    {
+        assert(v.size() > 0);
+    }
+
+public:
     /**
      * access one matrix.
      */
@@ -351,6 +409,57 @@ public:
         }
     }
 
+    /**
+     * serialize this. 
+     * @see epi::serialize
+     */
+    template <class IOContext>
+    void serialize(IOContext& io) const
+    {
+        auto obj = io.create_object("DampingMatrixExpressionGroup");
+        obj.add_list("Matrices", begin(), end());
+    }
+
+protected:
+    /**
+     * deserialize an object of a class derived from this.
+     * @see epi::deserialize
+     */
+    template <class IOContext, class Derived>
+    static IOResult<Derived> deserialize(IOContext& io, Tag<Derived>)
+    {
+        auto obj = io.expect_object("DampingMatrixExpressionGroup");
+        auto m   = obj.expect_list("Matrices", Tag<value_type>{});
+        return apply(
+            io,
+            [](auto&& m_) -> IOResult<Derived> {
+                //validation
+                if (m_.empty()) {
+                    return failure(StatusCode::InvalidValue, "DampingMatrixExpressionGroup must have at least one matrix.");
+                }
+                auto shape = m_[0].get_shape();
+                for (size_t i = 1; i < m_.size(); ++i) {
+                    if (m_[i].get_shape() != shape) {
+                        return failure(StatusCode::InvalidValue, "Elements of DampingMatrixExpressionGroup must all have the same shape.");
+                    }
+                }
+
+                return success(Derived(m_));
+            },
+            m);
+    }
+
+public:
+    /**
+     * deserialize an object of this class.
+     * @see epi::deserialize
+     */
+    template <class IOContext>
+    static IOResult<DampingMatrixExpressionGroup> deserialize(IOContext& io)
+    {
+        return deserialize(io, Tag<DampingMatrixExpressionGroup>{});
+    }
+
 private:
     std::vector<value_type> m_matrices;
 };
@@ -380,6 +489,16 @@ public:
     Eigen::Index get_num_groups() const
     {
         return Base::get_shape().rows();
+    }    
+    
+    /**
+     * deserialize an object of this class.
+     * @see epi::deserialize
+     */
+    template <class IOContext>
+    static IOResult<ContactMatrix> deserialize(IOContext& io)
+    {
+        return Base::deserialize(io, Tag<ContactMatrix>{});
     }
 };
 
@@ -400,6 +519,16 @@ public:
     Eigen::Index get_num_groups() const
     {
         return (*this)[0].get_num_groups();
+    }
+
+    /**
+     * deserialize an object of this class.
+     * @see epi::deserialize
+     */
+    template <class IOContext>
+    static IOResult<ContactMatrixGroup> deserialize(IOContext& io)
+    {
+        return Base::deserialize(io, Tag<ContactMatrixGroup>{});
     }
 };
 

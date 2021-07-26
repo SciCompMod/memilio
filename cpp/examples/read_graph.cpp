@@ -95,7 +95,13 @@ int main(int argc, char** argv)
     epi::set_params_distributions_normal(model, t0, tmax, 0.2);
 
     std::cout << "Reading Migration File..." << std::flush;
-    Eigen::MatrixXd twitter_migration_2018 = epi::read_mobility_plain(filename);
+    auto read_mobility_result = epi::read_mobility_plain(filename);
+    if (!read_mobility_result)
+    {
+        std::cout << read_mobility_result.error().formatted_message() << '\n';
+        return -1;
+    }
+    auto& twitter_migration_2018 = read_mobility_result.value();
     std::cout << "Done" << std::endl;
 
     std::cout << "Intializing Graph..." << std::flush;
@@ -113,15 +119,21 @@ int main(int argc, char** argv)
     }
     std::cout << "Done" << std::endl;
 
-    std::cout << "Writing XML Files..." << std::flush;
-    epi::write_graph(graph, "graph_parameters");
+    std::cout << "Writing Json Files..." << std::flush;
+    auto write_status = epi::write_graph(graph, "graph_parameters");
+    if (!write_status) {
+        std::cout << "Error: " << write_status.error().formatted_message();
+    }
     std::cout << "Done" << std::endl;
 
-    std::cout << "Reading XML Files..." << std::flush;
-    epi::Graph<epi::SecirModel, epi::MigrationParameters> graph_read =
-        epi::read_graph<epi::SecirModel>("graph_parameters");
-
+    std::cout << "Reading Json Files..." << std::flush;
+    auto graph_read_result = epi::read_graph<epi::SecirModel>("graph_parameters");
+        
+    if (!graph_read_result) {
+        std::cout << "Error: " << graph_read_result.error().formatted_message();
+    }
     std::cout << "Done" << std::endl;
+    auto& graph_read = graph_read_result.value();
 
     std::cout << "Running Simulations..." << std::flush;
     auto study = epi::ParameterStudy<epi::SecirSimulation<>>(graph_read, t0, tmax, 0.5, 2);

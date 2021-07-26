@@ -3,8 +3,6 @@
 #include <epidemiology/secir/parameter_studies.h>
 #include <epidemiology/migration/migration.h>
 
-#include <tixi.h>
-
 int main()
 {
     epi::set_log_level(epi::LogLevel::debug);
@@ -86,43 +84,25 @@ int main()
 
     epi::set_params_distributions_normal(model, t0, tmax, 0.2);
 
-    // write parameter space without parameter study
-    std::string path2 = "/Parameters2";
-    TixiDocumentHandle handle2;
-    tixiCreateDocument("Parameters2", &handle2);
-    epi::write_parameter_space(handle2, path2, model, 0, 2);
-    tixiSaveDocument(handle2, "Parameters2.xml");
-    tixiCloseDocument(handle2);
+    auto write_parameters_status = epi::write_json("parameters.json", model);
+    if (!write_parameters_status)
+    {
+        std::cout << "Error writing parameters: " << write_parameters_status.error().formatted_message(); 
+        return -1;
+    }
 
-    // draw sample and write same parameter space but with different current values
-    epi::draw_sample(model);
-    std::string path3 = "/Parameters3";
-    TixiDocumentHandle handle3;
-    tixiCreateDocument("Parameters3", &handle3);
-    epi::write_parameter_space(handle3, path3, model, 0, 2);
-    tixiSaveDocument(handle3, "Parameters3.xml");
-    tixiCloseDocument(handle3);
-
-    // create study
+    //create study
     epi::ParameterStudy<epi::SecirSimulation<>> parameter_study(model, t0, tmax, 0.2, 1);
 
-    // write and run study
-    std::string path = "/Parameters";
-    TixiDocumentHandle handle;
-    tixiCreateDocument("Parameters", &handle);
-
-    int io_mode = 2;
-    epi::write_parameter_study(handle, path, parameter_study, io_mode);
-    tixiSaveDocument(handle, "Parameters.xml");
-    tixiCloseDocument(handle);
-
-    tixiOpenDocument("Parameters.xml", &handle);
-    auto read_study                = epi::read_parameter_study<epi::SecirSimulation<>>(handle, path);
+    //run study
     int run                        = 0;
-    auto lambda                    = [&run, t0, tmax](auto graph) {
-        epi::write_single_run_params(run++, graph, t0, tmax);
+    auto lambda                    = [&run](auto graph) {
+        auto write_result_status = epi::write_single_run_result(run++, graph);
+        if (!write_result_status) {            
+            std::cout << "Error writing result: " << write_result_status.error().formatted_message(); 
+        }
     };
-    read_study.run(lambda);
+    parameter_study.run(lambda);
 
     return 0;
 }

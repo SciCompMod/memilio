@@ -13,9 +13,5 @@ int main(int argc, char** argv)
 
     ::testing::InitGoogleTest(&argc, argv);
     int retval = RUN_ALL_TESTS();
-
-#if HAVE_EPI_IO
-    epi::io_cleanup();
-#endif
     return retval;
 }

@@ -595,6 +595,25 @@ public:
     }
 
 private:
+    SecirParams(SecirParamsBase&& base)
+        : SecirParamsBase(std::move(base))
+        , m_num_groups(get<ContactPatterns>().get_cont_freq_mat().get_num_groups())
+    {
+    }
+
+public:
+    /**
+     * deserialize an object of this class.
+     * @see epi::deserialize
+     */
+    template<class IOContext>
+    static IOResult<SecirParams> deserialize(IOContext& io)
+    {
+        BOOST_OUTCOME_TRY(base, SecirParamsBase::deserialize(io));
+        return success(SecirParams(std::move(base))); 
+    }
+
+private:
 
     AgeGroup m_num_groups;
 

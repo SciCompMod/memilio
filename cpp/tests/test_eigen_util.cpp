@@ -1,4 +1,5 @@
 #include <epidemiology/utils/eigen_util.h>
+#include <epidemiology/utils/stl_util.h>
 #include "epidemiology/utils/compiler_diagnostics.h"
 #include "matchers.h"
 #include <gtest/gtest.h>
@@ -68,4 +69,50 @@ TEST(TestEigenUtil, max)
     auto A = (Eigen::MatrixXi(2, 3) << -1, 2, -3, -4, 5, 6).finished();
     auto M = epi::max(A, Eigen::MatrixXi::Zero(2, 3));
     EXPECT_EQ(print_wrap(M), print_wrap((Eigen::MatrixXi(2, 3) << 0, 2, 0, 0, 5, 6).finished()));
+}
+
+TEST(TestRowMajorIterator, in_memory)
+{
+    auto m = Eigen::MatrixXd(3, 2);
+    m << 0, 1, 2, 3, 4, 5;
+
+    EXPECT_THAT(epi::make_range(epi::begin(m), epi::end(m)), testing::ElementsAre(0.0, 1.0, 2., 3., 4., 5.));
+    EXPECT_THAT(epi::make_range(epi::cbegin(m), epi::cend(m)), testing::ElementsAre(0.0, 1.0, 2., 3., 4., 5.));
+}
+
+TEST(TestRowMajorIterator, expression)
+{
+    auto m = Eigen::MatrixXd::Constant(3, 2, 0.5);
+
+    EXPECT_THAT(epi::make_range(epi::begin(m), epi::end(m)), testing::ElementsAre(0.5, 0.5, 0.5, 0.5, 0.5, 0.5));
+    EXPECT_THAT(epi::make_range(epi::cbegin(m), epi::cend(m)), testing::ElementsAre(0.5, 0.5, 0.5, 0.5, 0.5, 0.5));
+}
+
+TEST(TestRowMajorIterator, operators)
+{
+    auto m = Eigen::MatrixXd(3, 2);
+    m << 0, 1, 2, 3, 4, 5;
+
+    auto b = epi::begin(m);
+    auto e = epi::end(m);
+
+    {
+        auto it = b + 3;
+        EXPECT_EQ(it, --(++it));
+    }
+
+    EXPECT_EQ(*(b + 2), 2.0);
+    EXPECT_EQ(*(3 + b), 3.0);
+    EXPECT_EQ(*(e - 2), 4.0);
+    EXPECT_EQ(e - b, 6);
+
+    EXPECT_TRUE(b < e);
+    EXPECT_TRUE(b <= e);
+    EXPECT_TRUE(b + 6 <= e);
+    EXPECT_TRUE(e > b);
+    EXPECT_TRUE(e >= b);
+    EXPECT_TRUE(e - 6 >= b);
+    
+    EXPECT_EQ(b + 6, e);
+    EXPECT_NE(b + 5, e);
 }

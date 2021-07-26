@@ -1,19 +1,21 @@
 #ifndef SAVE_RESULT_H
 #define SAVE_RESULT_H
 
-#include <epidemiology/utils/eigen_util.h>
-#include <epidemiology/utils/time_series.h>
+#include "epidemiology/utils/eigen_util.h"
+#include "epidemiology/utils/time_series.h"
+#include "epidemiology/utils/io.h"
 
 namespace epi
 {
+
 /**
  * @brief save secir simulation result to h5 file
  * @param times Vector of timesteps used during simulation
  * @param secir Results of secir simulation
  * @param filename name of file
  */
-void save_result(const std::vector<TimeSeries<double>>& result, const std::vector<int>& ids,
-                 const std::string& filename);
+IOResult<void> save_result(const std::vector<TimeSeries<double>>& result, const std::vector<int>& ids,
+                           const std::string& filename);
 
 class SecirSimulationResult
 {
@@ -64,7 +66,7 @@ private:
  * @param filename name of file
  * @param nb_groups number of groups used during simulation
  */
-std::vector<SecirSimulationResult> read_result(const std::string& filename, int nb_groups);
+IOResult<std::vector<SecirSimulationResult>> read_result(const std::string& filename, int nb_groups);
 
 } // namespace epi
 

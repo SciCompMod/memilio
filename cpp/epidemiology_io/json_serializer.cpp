@@ -1,0 +1,1 @@
+#include "epidemiology_io/json_serializer.h"

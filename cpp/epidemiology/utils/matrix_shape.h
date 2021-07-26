@@ -15,6 +15,7 @@
 
 #include "epidemiology/utils/eigen.h"
 #include "epidemiology/utils/eigen_util.h"
+#include "epidemiology/utils/io.h"
 
 namespace epi
 {
@@ -76,6 +77,39 @@ public:
         return !(*this == other);
     }
 
+    /**
+     * serialize this. 
+     * @see epi::serialize
+     */
+    template <class IOContext>
+    void serialize(IOContext& io) const
+    {
+        auto obj = io.create_object("RectMatrixShape");
+        obj.add_element("Rows", rows());
+        obj.add_element("Columns", cols());
+    }
+
+    /**
+     * deserialize an object of this class.
+     * @see epi::deserialize
+     */
+    template<class IOContext>
+    static IOResult<RectMatrixShape> deserialize(IOContext& io)
+    {
+        auto obj = io.expect_object("RectMatrixShape");
+        auto r = obj.expect_element("Rows", Tag<Eigen::Index>{});
+        auto c = obj.expect_element("Columns", Tag<Eigen::Index>{});
+        return apply(
+            io,
+            [](auto&& r_, auto&& c_) -> IOResult<RectMatrixShape> {
+                if (r_ > 0 && c_ > 0)
+                    return success(RectMatrixShape{r_, c_});
+                else
+                    return failure(StatusCode::OutOfRange, "Rows and Columns of RectMatrixShape must be positive.");
+            },
+            r, c);
+    }
+
 private:
     Eigen::Index m_rows;
     Eigen::Index m_cols;
@@ -94,7 +128,7 @@ public:
      * construct a square matrix of dimensions r
      * @param r number of rows and columns
      */
-    SquareMatrixShape(Eigen::Index r)
+    explicit SquareMatrixShape(Eigen::Index r)
         : m_rows(r)
     {
     }
@@ -108,7 +142,7 @@ public:
     static SquareMatrixShape get_shape_of(const Eigen::MatrixBase<ME>& m)
     {
         assert(m.rows() == m.cols());
-        return {m.rows()};
+        return SquareMatrixShape{m.rows()};
     }
 
     /**
@@ -147,6 +181,37 @@ public:
         return !(*this == other);
     }
 
+    /**
+     * serialize this. 
+     * @see epi::serialize
+     */
+    template <class IOContext>
+    void serialize(IOContext& io) const
+    {
+        auto obj = io.create_object("SquareMatrixShape");
+        obj.add_element("Rows", rows());
+    }
+
+    /**
+     * deserialize an object of this class.
+     * @see epi::deserialize
+     */
+    template<class IOContext>
+    static IOResult<SquareMatrixShape> deserialize(IOContext& io)
+    {
+        auto obj = io.expect_object("SquareMatrixShape");
+        auto r = obj.expect_element("Rows", Tag<Eigen::Index>{});
+        return apply(
+            io,
+            [](auto&& r_) -> IOResult<SquareMatrixShape> {
+                if (r_ > 0)
+                    return success(SquareMatrixShape{r_});
+                else
+                    return failure(StatusCode::OutOfRange, "Rows of SquareMatrixShape must be positive.");
+            },
+            r);
+    }
+
 private:
     Eigen::Index m_rows;
 };
@@ -165,7 +230,7 @@ public:
      * construct the shape of a column vector.
      * @param r number of rows.
      */
-    ColumnVectorShape(Eigen::Index r)
+    explicit ColumnVectorShape(Eigen::Index r)
         : m_rows(r)
     {
     }
@@ -179,7 +244,7 @@ public:
     static ColumnVectorShape get_shape_of(const Eigen::MatrixBase<ME>& m)
     {
         assert(m.cols() == 1);
-        return {m.rows()};
+        return ColumnVectorShape{m.rows()};
     }
 
     /**
@@ -215,6 +280,37 @@ public:
     bool operator!=(const ColumnVectorShape& other) const
     {
         return !(*this == other);
+    }
+
+    /**
+     * serialize this. 
+     * @see epi::serialize
+     */
+    template <class IOContext>
+    void serialize(IOContext& io) const
+    {
+        auto obj = io.create_object("ColumnVectorShape");
+        obj.add_element("Rows", rows());
+    }
+
+    /**
+     * deserialize an object of this class.
+     * @see epi::deserialize
+     */
+    template<class IOContext>
+    static IOResult<ColumnVectorShape> deserialize(IOContext& io)
+    {
+        auto obj = io.expect_object("ColumnVectorShape");
+        auto r = obj.expect_element("Rows", Tag<Eigen::Index>{});
+        return apply(
+            io,
+            [](auto&& r_) -> IOResult<ColumnVectorShape> {
+                if (r_ > 0)
+                    return success(ColumnVectorShape{r_});
+                else
+                    return failure(StatusCode::OutOfRange, "Rows of ColumnVectorShape must be positive");
+            },
+            r);
     }
 
 private:

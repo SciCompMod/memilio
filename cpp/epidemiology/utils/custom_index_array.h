@@ -159,7 +159,7 @@ public:
     CustomIndexArray(Index const& dims, Ts&&... args)
         : m_dimensions{dims}
         , m_numel(product(dims))
-        , m_y(InternalArrayType::Constant(m_numel, 1, {std::forward<Ts>(args)...}))
+        , m_y(InternalArrayType::Constant(m_numel, 1, Type{std::forward<Ts>(args)...}))
     {}
 
     /**
@@ -182,6 +182,14 @@ public:
     template <typename Tag>
     epi::Index<Tag> size() const {
         return get<Tag>(m_dimensions);
+    }
+
+    /**
+     * @brief returns the size of the array along all dimensions.
+     * @return multi-index with size of the array along all dimensions.
+     */
+    Index size() const {
+        return m_dimensions;
     }
 
     /**
@@ -496,7 +504,8 @@ private:
     InternalArrayType m_y{};
 
 public:
-
+    using value_type        = Type;
+    using reference         = Type&;
     using iterator          = Iterator<Type>;
     using const_iterator    = Iterator<Type const>;
 
@@ -562,6 +571,51 @@ public:
         return Slice<Tag, const_iterator>(m_dimensions, begin(), idx_seq);
     }
 
+    /**
+     * serialize this. 
+     * @see epi::serialize
+     */
+    template<class IOContext>
+    void serialize(IOContext& io) const
+    {
+        auto obj = io.create_object("Array");
+        obj.add_element("Dimensions", m_dimensions);
+        obj.add_list("Elements", begin(), end());
+    }
+
+protected:
+    /**
+     * deserialize an object of a class derived from this class.
+     * @see epi::deserialize
+     */
+    template<class IOContext, class Derived>
+    static IOResult<Derived> deserialize(IOContext& io, Tag<Derived>)
+    {
+        auto obj  = io.expect_object("Array");
+        auto dims = obj.expect_element("Dimensions", Tag<Index>{});
+        auto els  = obj.expect_list("Elements", Tag<Type>{});
+        return apply(
+            io,
+            [](auto&& d, auto&& e) -> IOResult<Derived> {
+                auto a = Derived(d);
+                if (a.numel() != e.size())
+                    return failure(StatusCode::OutOfRange, "Dimensions of Array don't match the number of elements.");
+                std::copy(e.begin(), e.end(), epi::begin(a.m_y));
+                return success(a);
+            },
+            dims, els);
+    }
+
+public:
+    /**
+     * deserialize an object of this class.
+     * @see epi::deserialize
+     */
+    template<class IOContext>
+    static IOResult<CustomIndexArray> deserialize(IOContext& io)
+    {
+        return deserialize(io, Tag<CustomIndexArray>{});
+    }
 };
 
 } // namespace epi

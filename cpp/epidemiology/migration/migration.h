@@ -179,6 +179,35 @@ public:
     }
     /** @} */
 
+    /**
+     * serialize this. 
+     * @see epi::serialize
+     */
+    template<class IOContext>
+    void serialize(IOContext& io) const
+    {
+        auto obj = io.create_object("MigrationParameters");
+        obj.add_element("Coefficients", m_coefficients);
+        obj.add_element("DynamicNPIs", m_dynamic_npis);
+    }
+
+    /**
+     * deserialize an object of this class.
+     * @see epi::deserialize
+     */
+    template<class IOContext>
+    static IOResult<MigrationParameters> deserialize(IOContext& io)
+    {
+        auto obj = io.expect_object("MigrationParameters");
+        auto c = obj.expect_element("Coefficients", Tag<MigrationCoefficientGroup>{});
+        auto d = obj.expect_element("DynamicNPIs", Tag<DynamicNPIs>{});
+        return apply(io, [](auto && c_, auto&& d_) {
+            MigrationParameters params(c_);
+            params.set_dynamic_npis_infected(d_);
+            return params;
+        }, c, d);
+    }
+
 private:
     MigrationCoefficientGroup m_coefficients; //one per group and compartment
     DynamicNPIs m_dynamic_npis;

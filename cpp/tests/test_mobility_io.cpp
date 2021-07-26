@@ -2,6 +2,7 @@
 #include <epidemiology_io/mobility_io.h>
 #include <epidemiology/utils/logging.h>
 #include "epidemiology/utils/eigen.h"
+#include "matchers.h"
 
 #include <gtest/gtest.h>
 
@@ -42,14 +43,10 @@ TEST(TestReadMigration, readFormatted)
     }
 
     auto matrix_read = epi::read_mobility_formatted("test_twitter.txt");
-
-    ASSERT_EQ(test_matrix.rows(), matrix_read.rows());
-    ASSERT_EQ(test_matrix.cols(), matrix_read.cols());
-    for (int i = 0; i < test_matrix.rows(); i++) {
-        for (int j = 0; j < test_matrix.cols(); j++) {
-            ASSERT_EQ(test_matrix(i, j), matrix_read(i, j));
-        }
-    }
+    ASSERT_TRUE(matrix_read);
+    ASSERT_EQ(test_matrix.rows(), matrix_read.value().rows());
+    ASSERT_EQ(test_matrix.cols(), matrix_read.value().cols());
+    ASSERT_EQ(print_wrap(test_matrix), print_wrap(matrix_read.value()));
 }
 
 TEST(TestReadMigration, readPlain)
@@ -95,11 +92,8 @@ TEST(TestReadMigration, readPlain)
 
     auto matrix_read = epi::read_mobility_plain(get_test_data_file_path("contacts.txt"));
 
-    ASSERT_EQ(test_matrix.rows(), matrix_read.rows());
-    ASSERT_EQ(test_matrix.cols(), matrix_read.cols());
-    for (int i = 0; i < test_matrix.rows(); i++) {
-        for (int j = 0; j < test_matrix.cols(); j++) {
-            ASSERT_EQ(test_matrix(i, j), matrix_read(i, j)) << "at entry " << i << ", " << j;
-        }
-    }
+    ASSERT_TRUE(matrix_read);
+    ASSERT_EQ(test_matrix.rows(), matrix_read.value().rows());
+    ASSERT_EQ(test_matrix.cols(), matrix_read.value().cols());
+    ASSERT_EQ(print_wrap(test_matrix), print_wrap(matrix_read.value()));
 }

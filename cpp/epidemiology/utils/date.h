@@ -1,6 +1,7 @@
 #ifndef EPI_UTILS_DATE_H
 #define EPI_UTILS_DATE_H
 
+#include "epidemiology/utils/io.h"
 #include <string>
 #include <iostream>
 #include <tuple>
@@ -80,6 +81,42 @@ struct Date {
     friend void PrintTo(const Date& self, std::ostream* os)
     {
         *os << self.year << "." << self.month << "." << self.day;
+    }
+
+    /**
+     * serialize this. 
+     * @see epi::serialize
+     */
+    template <class IOContext>
+    void serialize(IOContext& io) const
+    {
+        auto obj = io.create_object("Date");
+        obj.add_element("Year", year);
+        obj.add_element("Month", month);
+        obj.add_element("Day", day);
+    }
+
+    /**
+     * deserialize an object of this class.
+     * @see epi::deserialize
+     */
+    template<class IOContext>
+    static IOResult<Date> deserialize(IOContext& io)
+    {
+        auto obj = io.expect_object("Date");
+        auto y   = obj.expect_element("Year", Tag<int>{});
+        auto m   = obj.expect_element("Month", Tag<int>{});
+        auto d   = obj.expect_element("Day", Tag<int>{});
+        return apply(
+            io,
+            [](auto&& y_, auto&& m_, auto&& d_) -> IOResult<Date> {
+                if (m_ <= 0 || m_ > 12)
+                    return failure(StatusCode::OutOfRange, "Month must be between 1 and 12 (inclusive).");
+                if (d_ <= 0 || d_ > 31)
+                    return failure(StatusCode::OutOfRange, "Day must be between 1 and 31 (inclusive).");
+                return success(Date{y_, m_, d_});
+            },
+            y, m, d);
     }
 
     int year;

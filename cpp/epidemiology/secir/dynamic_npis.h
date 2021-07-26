@@ -132,6 +132,47 @@ public:
         }
     }
 
+    /**
+     * serialize this. 
+     * @see epi::serialize
+     */
+    template <class IOContext>
+    void serialize(IOContext& io) const
+    {
+        auto obj = io.create_object("DynamicNPIs");
+        obj.add_list("Thresholds", get_thresholds().begin(), get_thresholds().end());
+        obj.add_element("Duration", get_duration());
+        obj.add_element("Interval", get_interval());
+        obj.add_element("BaseValue", get_base_value());
+    }
+
+    /**
+     * deserialize an object of this class.
+     * @see epi::deserialize
+     */
+    template <class IOContext>
+    static IOResult<DynamicNPIs> deserialize(IOContext& io)
+    {
+        auto obj = io.expect_object("DynamicNPIs");
+        auto t   = obj.expect_list("Thresholds", Tag<std::pair<double, std::vector<DampingSampling>>>{});
+        auto d   = obj.expect_element("Duration", Tag<SimulationTime>{});
+        auto i   = obj.expect_element("Interval", Tag<SimulationTime>{});
+        auto b   = obj.expect_element("BaseValue", Tag<double>{});
+        return apply(
+            io,
+            [](auto&& t_, auto&& d_, auto&& i_, auto&& b_) {
+                auto npis = DynamicNPIs();
+                npis.set_duration(d_);
+                npis.set_interval(i_);
+                npis.set_base_value(b_);
+                for (auto&& e : t_) {
+                    npis.set_threshold(e.first, e.second);
+                }
+                return npis;
+            },
+            t, d, i, b);
+    }
+
 private:
     std::vector<std::pair<double, std::vector<DampingSampling>>> m_thresholds;
     SimulationTime m_duration{14.0};

@@ -121,6 +121,51 @@ public:
      */
     ContactMatrixGroup make_matrix(bool accum = false);
 
+    /**
+     * serialize this. 
+     * @see epi::serialize
+     */
+    template<class IOContext>
+    void serialize(IOContext& io) const
+    {
+        auto obj = io.create_object("UncertainContactMatrix");
+        obj.add_element("ContactMatrix", m_cont_freq);
+        if (!(io.flags() & IOF_OmitDistributions)) {
+            obj.add_list("Dampings", m_dampings.begin(), m_dampings.end());
+        }
+    }
+
+    /**
+     * deserialize an object of this class.
+     * @see epi::deserialize
+     */
+    template <class IOContext>
+    static IOResult<UncertainContactMatrix> deserialize(IOContext& io)
+    {
+        auto obj = io.expect_object("UncertainContactMatrix");
+        if (!(io.flags() & IOF_OmitDistributions)) {
+            auto c = obj.expect_element("ContactMatrix", Tag<ContactMatrixGroup>{});
+            auto d = obj.expect_list("Dampings", Tag<DampingSampling>{});
+            return apply(
+                io,
+                [](auto&& c_, auto&& d_) {
+                    auto m           = UncertainContactMatrix{c_};
+                    m.get_dampings() = d_;
+                    return m;
+                },
+                c, d);
+        }
+        else {
+            auto c = obj.expect_element("ContactMatrix", Tag<ContactMatrixGroup>{});
+            return apply(
+                io,
+                [](auto&& c_) {
+                    return UncertainContactMatrix{c_};
+                },
+                c);
+        }
+    }
+
 private:
     ContactMatrixGroup m_cont_freq;
     std::vector<DampingSampling> m_dampings;

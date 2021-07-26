@@ -55,6 +55,15 @@ public:
         return m_raw_ptr != nullptr;
     }
 
+    bool operator==(const observer_ptr& other) const
+    {
+        return m_raw_ptr == other.m_raw_ptr;
+    }
+    bool operator!=(const observer_ptr& other) const
+    {
+        return !(*this == other);
+    }
+
 private:
     T* m_raw_ptr;
 };

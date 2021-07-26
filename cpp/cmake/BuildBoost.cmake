@@ -1,6 +1,6 @@
-set (BOOST_DIR ${PROJECT_BINARY_DIR}/boost_1_72_0)
-set (BOOST_ARCHIVE ${PROJECT_SOURCE_DIR}/thirdparty/boost_1_72_0.tar.gz)
-set (Boost_VERSION "1.72.0")
+set (BOOST_DIR ${PROJECT_BINARY_DIR}/boost_1_75_0)
+set (BOOST_ARCHIVE ${PROJECT_SOURCE_DIR}/thirdparty/boost_1_75_0.tar.gz)
+set (Boost_VERSION "1.75.0")
 set (BOOST_LIB_TYPE STATIC)
 
 if (NOT EXISTS ${BOOST_DIR})
