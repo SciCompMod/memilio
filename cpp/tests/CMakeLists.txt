@@ -40,6 +40,7 @@ set(TESTSOURCES
   test_damping_sampling.cpp
   test_dynamic_npis.cpp
   test_regions.cpp
+  test_io_framework.cpp
   distributions_helpers.h
   distributions_helpers.cpp
   actions.h
@@ -51,6 +52,7 @@ if (TARGET epidemiology_io)
     test_save_parameters.cpp
     test_save_results.cpp
     test_mobility_io.cpp
+    test_json_serializer.cpp
   )
 endif()
 

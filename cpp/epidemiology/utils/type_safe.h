@@ -1,6 +1,7 @@
 #ifndef EPI_UTILS_TYPE_SAFE_H
 #define EPI_UTILS_TYPE_SAFE_H
 
+#include "epidemiology/utils/io.h"
 #include <ostream>
 
 namespace epi
@@ -68,6 +69,27 @@ public:
     friend std::ostream& operator<<(std::ostream& os, const Derived& ts)
     {
         return (os << ts.m_t);
+    }
+
+    /**
+     * serialize this. 
+     * @see epi::serialize
+     */
+    template<class IOContext>
+    void serialize(IOContext& io) const
+    {
+        epi::serialize(io, T(*this));
+    }
+
+    /**
+     * deserialize an object of this class.
+     * @see epi::deserialize
+     */
+    template<class IOContext>
+    static IOResult<Derived> deserialize(IOContext& io)
+    {
+        BOOST_OUTCOME_TRY(t, epi::deserialize(io, Tag<T>{}));
+        return success(Derived(t));
     }
 
 private:

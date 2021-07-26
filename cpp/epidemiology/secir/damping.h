@@ -183,6 +183,40 @@ public:
                 << std::get<DampingLevel>(self) << ']';
         *os << '\n' << std::get<Matrix>(self);
     }
+
+    /**
+     * serialize this. 
+     * @see epi::serialize
+     */
+    template <class IOContext>
+    void serialize(IOContext& io) const
+    {
+        auto obj = io.create_object("Damping");
+        obj.add_element("Time", get_time());
+        obj.add_element("Type", get_type());
+        obj.add_element("Level", get_level());
+        obj.add_element("Coeffs", get_coeffs());
+    }
+
+    /**
+     * deserialize an object of this class.
+     * @see epi::deserialize
+     */
+    template <class IOContext>
+    static IOResult<Damping> deserialize(IOContext& io)
+    {
+        auto obj = io.expect_object("Damping");
+        auto ti  = obj.expect_element("Time", Tag<SimulationTime>{});
+        auto ty  = obj.expect_element("Type", Tag<DampingType>{});
+        auto l   = obj.expect_element("Level", Tag<DampingLevel>{});
+        auto c   = obj.expect_element("Coeffs", Tag<Matrix>{});
+        return apply(
+            io,
+            [](auto&& ti_, auto&& ty_, auto&& l_, auto&& c_) {
+                return Damping(c_, l_, ty_, ti_);
+            },
+            ti, ty, l, c);
+    }
 };
 
 /**
@@ -374,6 +408,40 @@ public:
                 << std::get<DampingLevel>(d) << ']';
             *os << '\n' << std::get<Matrix>(d);
         }
+    }
+
+    /**
+     * serialize this. 
+     * @see epi::serialize
+     */
+    template <class IOContext>
+    void serialize(IOContext& io) const
+    {
+        auto obj = io.create_object("Dampings");
+        obj.add_element("Shape", get_shape());
+        obj.add_list("Dampings", begin(), end());
+    }
+
+    /**
+     * deserialize an object of this class.
+     * @see epi::deserialize
+     */
+    template<class IOContext>
+    static IOResult<Dampings> deserialize(IOContext& io) 
+    {
+        auto obj = io.expect_object("Dampings");
+        auto s = obj.expect_element("Shape", Tag<Shape>{});
+        auto d = obj.expect_list("Dampings", Tag<value_type>{});
+        return apply(io, [](auto&& s_, auto&& d_) -> IOResult<Dampings> {
+            Dampings dampings(s_);
+            for (auto&& i : d_) {
+                if (i.get_shape() != s_) {
+                    return failure(StatusCode::InvalidValue, "Dampings must all have the same shape.");
+                }
+                dampings.add(i);
+            }
+            return success(dampings);
+        }, s, d);
     }
 
 private:

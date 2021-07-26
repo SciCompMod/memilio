@@ -35,14 +35,11 @@ https://hpc-against-corona.pages.gitlab.dlr.de/epidemiology/master/documentation
 By standard *epidemiology* library is bundled with
  * spdlog (https://github.com/gabime/spdlog)
  * eigen v3.3 (http://gitlab.com/libeigen/eigen and http://eigen.tuxfamily.org)
+ * boost outcome and optional (https://www.boost.org/)
 
 See thirdparty/CMakeLists.txt for details.
 
-In order to use IO of parameters and simulation results (*epidemiology_io* library), the tools
-  * tixi3 (https://github.com/DLR-SC/tixi) and 
-  * hdf5 (https://www.hdfgroup.org/ e.g., via apt install libhdf5-serial-dev)
-  
-need to be installed.
+In order to use IO of parameters and simulation results (*epidemiology_io* library), the tool HDF5 (https://www.hdfgroup.org/ e.g., via apt install libhdf5-serial-dev) needs to be installed.
 
 In addition, *epidemiology_io* is bundled with
  * jsoncpp (https://github.com/open-source-parsers/jsoncpp)

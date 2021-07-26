@@ -4,7 +4,7 @@ project(epidemiology VERSION 0.1.0)
 
 option(EPI_USE_BUNDLED_SPDLOG "Use spdlog bundled with epi" ON)
 option(EPI_USE_BUNDLED_EIGEN "Use eigen bundled with epi" ON)
-option(EPI_BUILD_EPI_IO "Build epidemiology_io library (requires TiXI and HDF5)" OFF)
+option(EPI_BUILD_EPI_IO "Build epidemiology_io library (requires HDF5)" OFF)
 option(EPI_USE_BUNDLED_BOOST "Use boost bundled with epi (only for epi-io)" ON)
 option(EPI_USE_BUNDLED_JSONCPP "Use jsoncpp bundled with epi (only for epi-io)" ON)
 
@@ -124,7 +124,7 @@ target_include_directories(epidemiology PUBLIC
 
 
 target_compile_features(epidemiology PUBLIC cxx_std_14)
-target_link_libraries(epidemiology PUBLIC spdlog::spdlog Eigen3::Eigen)
+target_link_libraries(epidemiology PUBLIC spdlog::spdlog Eigen3::Eigen Boost::boost)
 target_compile_options(epidemiology PRIVATE
     $<$<OR:$<CXX_COMPILER_ID:Clang>,$<CXX_COMPILER_ID:GNU>>: -Wall -Wextra -Werror -Wshadow --pedantic-errors -Wno-deprecated-copy>
     $<$<CXX_COMPILER_ID:MSVC>: /W4 /WX>)
@@ -140,6 +140,8 @@ if (EPI_BUILD_EPI_IO)
       epidemiology_io/io.h
       epidemiology_io/mobility_io.cpp
       epidemiology_io/mobility_io.h
+      epidemiology_io/json_serializer.h
+      epidemiology_io/json_serializer.cpp
     )
 
 
@@ -149,8 +151,8 @@ if (EPI_BUILD_EPI_IO)
         $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
     )
 
-    target_link_libraries(epidemiology_io PUBLIC epidemiology tixi3
-                          PRIVATE jsoncpp ${HDF5_CXX_LIBRARIES} Boost::filesystem Boost::disable_autolinking)
+    target_link_libraries(epidemiology_io PUBLIC epidemiology jsoncpp 
+                          PRIVATE ${HDF5_CXX_LIBRARIES} Boost::filesystem Boost::disable_autolinking)
     target_include_directories(epidemiology_io PRIVATE ${HDF5_INCLUDE_DIRS})
 
     target_compile_definitions(epidemiology_io PUBLIC "-DHAVE_EPI_IO")

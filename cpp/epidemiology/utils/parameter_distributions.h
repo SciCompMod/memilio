@@ -4,6 +4,7 @@
 #include "epidemiology/utils/logging.h"
 #include "epidemiology/utils/visitor.h"
 #include "epidemiology/utils/random_number_generator.h"
+#include "epidemiology/utils/io.h"
 
 #include <vector>
 #include <random>
@@ -22,7 +23,21 @@ using ConstParameterDistributionVisitor =
 
 template <class Derived>
 using VisitableParameterDistribution =
-    Visitable<Derived, class ParameterDistribution, ParameterDistributionVisitor, ConstParameterDistributionVisitor>;
+    Visitable<Derived, class ParameterDistribution, ParameterDistributionVisitor, ConstParameterDistributionVisitor>;    
+
+namespace details
+{
+    template <class IOObj>
+    struct SerializationVisitor : ConstParameterDistributionVisitor {
+        SerializationVisitor(IOObj& o)
+            : obj(o)
+        {
+        }
+        virtual void visit(const ParameterDistributionNormal& normal_dist) final;
+        virtual void visit(const ParameterDistributionUniform& uniform_dist) final;
+        IOObj& obj;
+    };
+}
 
 /*
  * Parameter Distribution class which contains the name of a variable as string
@@ -96,6 +111,21 @@ public:
         else {
             return get_rand_sample();
         }
+    }
+
+    /**
+     * serialize this. 
+     * @see epi::serialize
+     */
+    template <class IOContext>
+    void serialize(IOContext& io) const
+    {
+        auto obj     = io.create_object("ParameterDistribution");
+        auto visitor = details::SerializationVisitor<decltype(obj)>{obj};
+        this->accept(visitor);
+        obj.add_element("LowerBound", m_lower_bound);
+        obj.add_element("UpperBound", m_upper_bound);
+        obj.add_list("PredefinedSamples", m_predefined_samples.begin(), m_predefined_samples.end());
     }
 
     virtual double get_rand_sample() = 0;
@@ -276,6 +306,14 @@ private:
     bool m_log_stddev_change = true;
 };
 
+template<class IOObj>
+void details::SerializationVisitor<IOObj>::visit(const ParameterDistributionNormal& normal_dist)
+{
+    obj.add_element("Type", std::string("Normal"));
+    obj.add_element("Mean", normal_dist.get_mean());
+    obj.add_element("StandardDev", normal_dist.get_standard_dev());
+}
+
 /*
  * Child class of Parameter Distribution class which represents an uniform distribution 
  */
@@ -312,6 +350,75 @@ public:
 private:
     std::uniform_real_distribution<double> m_distribution;
 };
+
+template <class IOObj>
+void details::SerializationVisitor<IOObj>::visit(const ParameterDistributionUniform& /*uniform_dist*/)
+{
+    obj.add_element("Type", std::string("Uniform"));
+}
+
+
+/**
+ * deserialize a parameter distribution as a shared_ptr.
+ * @see epi::deserialize
+ */
+template <class IOContext>
+IOResult<std::shared_ptr<ParameterDistribution>> deserialize_internal(IOContext& io,
+                                                                      Tag<std::shared_ptr<ParameterDistribution>>)
+{
+    auto obj  = io.expect_object("ParameterDistribution");
+    auto type = obj.expect_element("Type", Tag<std::string>{});
+    if (type) {
+        if (type.value() == "Uniform") {
+            auto lb     = obj.expect_element("LowerBound", Tag<double>{});
+            auto ub     = obj.expect_element("UpperBound", Tag<double>{});
+            auto predef = obj.expect_list("PredefinedSamples", Tag<double>{});
+            auto p      = apply(
+                io,
+                [](auto&& lb_, auto&& ub_, auto&& predef_) {
+                    auto distr = std::make_shared<ParameterDistributionUniform>(lb_, ub_);
+                    for (auto&& e : predef_) {
+                        distr->add_predefined_sample(e);
+                    }
+                    return distr;
+                },
+                lb, ub, predef);
+            if (p) {
+                return success(p.value());
+            }
+            else {
+                return p.as_failure();
+            }
+        }
+        else if (type.value() == "Normal") {
+            auto m      = obj.expect_element("Mean", Tag<double>{});
+            auto s      = obj.expect_element("StandardDev", Tag<double>{});
+            auto lb     = obj.expect_element("LowerBound", Tag<double>{});
+            auto ub     = obj.expect_element("UpperBound", Tag<double>{});
+            auto predef = obj.expect_list("PredefinedSamples", Tag<double>{});
+            auto p      = apply(
+                io,
+                [](auto&& lb_, auto&& ub_, auto&& m_, auto&& s_, auto&& predef_) {
+                    auto distr = std::make_shared<ParameterDistributionNormal>(lb_, ub_, m_, s_);
+                    for (auto&& e : predef_) {
+                        distr->add_predefined_sample(e);
+                    }
+                    return distr;
+                },
+                lb, ub, m, s, predef);
+            if (p) {
+                return success(p.value());
+            }
+            else {
+                return p.as_failure();
+            }
+        }
+        else {
+            return failure(StatusCode::InvalidValue, "Type of ParameterDistribution " + type.value() + " not valid.");
+        }
+    }
+    return failure(type.error());
+}
 
 } // namespace epi
 

@@ -2,6 +2,7 @@
 #define READ_TWITTER_H
 
 #include "epidemiology/utils/eigen.h"
+#include "epidemiology/utils/io.h"
 #include <iostream>
 #include <fstream>
 #include <string>
@@ -21,7 +22,7 @@ std::vector<std::string> split(const std::string& s, char delimiter);
  * @brief Counts lines of txt file
  * @param filename name of file which is counted
  */
-int count_lines(const std::string& filename);
+IOResult<int> count_lines(const std::string& filename);
 
 /**
  * @brief Reads formatted migration or contact data which is given in columns
@@ -30,7 +31,7 @@ int count_lines(const std::string& filename);
  *        where N is the number of regions
  * @param filename name of file to be read
  */
-Eigen::MatrixXd read_mobility_formatted(const std::string& filename);
+IOResult<Eigen::MatrixXd> read_mobility_formatted(const std::string& filename);
 
 /**
  * @brief Reads txt migration data or contact which is given by values only
@@ -38,7 +39,7 @@ Eigen::MatrixXd read_mobility_formatted(const std::string& filename);
  *        Matrix, where N is the number of regions
  * @param filename name of file to be read
  */
-Eigen::MatrixXd read_mobility_plain(const std::string& filename);
+IOResult<Eigen::MatrixXd> read_mobility_plain(const std::string& filename);
 
 } // namespace epi
 

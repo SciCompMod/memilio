@@ -1,6 +1,8 @@
 #ifndef AGEGROUP_H
 #define AGEGROUP_H
 
+#include "epidemiology/utils/index.h"
+
 namespace epi {
 
 /**

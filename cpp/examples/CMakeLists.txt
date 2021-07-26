@@ -46,6 +46,9 @@ if (TARGET "epidemiology_io")
 
   add_executable(parameter_study_secir parameter_study_secir.cpp)
   target_link_libraries(parameter_study_secir PRIVATE epidemiology epidemiology_io)
+
+  add_executable(serialize serialize.cpp)
+  target_link_libraries(serialize PRIVATE epidemiology epidemiology_io)
 endif()
 
 #add_executable(group_seir group_seir.cpp)

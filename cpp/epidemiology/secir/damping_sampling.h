@@ -179,6 +179,44 @@ public:
     }
     /**@}*/
 
+    /**
+     * serialize this. 
+     * @see epi::serialize
+     */
+    template<class IOContext>
+    void serialize(IOContext& io) const
+    {
+        auto obj = io.create_object("DampingSampling");
+        obj.add_element("Time", get_time());
+        obj.add_element("Type", get_type());
+        obj.add_element("Level", get_level());
+        obj.add_element("Value", get_value());
+        obj.add_list("MatrixIndices", get_matrix_indices().begin(), get_matrix_indices().end());
+        obj.add_element("GroupWeights", get_group_weights());
+    }
+
+    /**
+     * deserialize an object of this class.
+     * @see epi::deserialize
+     */
+    template <class IOContext>
+    static IOResult<DampingSampling> deserialize(IOContext& io)
+    {
+        auto obj = io.expect_object("DampingSampling");
+        auto ti  = obj.expect_element("Time", Tag<SimulationTime>{});
+        auto ty  = obj.expect_element("Type", Tag<DampingType>{});
+        auto l   = obj.expect_element("Level", Tag<DampingLevel>{});
+        auto v   = obj.expect_element("Value", Tag<UncertainValue>{});
+        auto m   = obj.expect_list("MatrixIndices", Tag<size_t>{});
+        auto g   = obj.expect_element("GroupWeights", Tag<Eigen::VectorXd>{});
+        return apply(
+            io,
+            [](auto&& ti_, auto&& ty_, auto&& l_, auto&& v_, auto&& m_, auto&& g_) {
+                return DampingSampling(v_, l_, ty_, ti_, m_, g_);
+            },
+            ti, ty, l, v, m, g);
+    }
+
 private:
     UncertainValue m_value;
     DampingLevel m_level;

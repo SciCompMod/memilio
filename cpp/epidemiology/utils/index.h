@@ -55,8 +55,27 @@ public:
      */
     explicit Index(size_t val) : TypeSafe<size_t, Index<CategoryTag>>(val) {}
 
-};
+    /**
+     * serialize this. 
+     * @see epi::serialize
+     */
+    template <class IOContext>
+    void serialize(IOContext& io) const
+    {
+        epi::serialize(io, size_t(*this));
+    }
 
+    /**
+     * deserialize an object of this class.
+     * @see epi::deserialize
+     */
+    template<class IOContext>
+    static IOResult<Index> deserialize(IOContext& io)
+    {
+        BOOST_OUTCOME_TRY(i, epi::deserialize(io, Tag<size_t>{}));
+        return success(Index(i));
+    }
+};
 
 /**
  * @brief An Index with more than one template parameter combines several Index objects.
@@ -72,7 +91,11 @@ public:
 
     // constructor from Indices
     Index(Index<CategoryTag> const&..._indices) : indices{_indices...} {}
+    
+private:
+    Index(const std::tuple<Index<CategoryTag>...>& _indices) : indices(_indices) {}
 
+public:
     // comparison operators
     bool operator==(Index const& other) const
     {
@@ -84,9 +107,31 @@ public:
         return !(this == other);
     }
 
+    /**
+     * serialize this. 
+     * @see epi::serialize
+     */
+    template<class IOContext>
+    void serialize(IOContext& io) const
+    {
+        auto obj = io.create_object("MultiIndex");
+        obj.add_element("Indices", indices);
+    }
+
+    /**
+     * deserialize an object of this class.
+     * @see epi::deserialize
+     */
+    template<class IOContext>
+    static IOResult<Index> deserialize(IOContext& io)
+    {
+        auto obj = io.expect_object("MultiIndex");
+        auto tup = obj.expect_element("Indices", Tag<decltype(indices)>{});
+        return epi::apply(io, [](auto&& tup_) { return Index(tup_); }, tup);
+    }
+
     std::tuple<Index<CategoryTag>...> indices;
 };
-
 
 // retrieves the Index at the Ith position for a Index with more than one Tag
 template <size_t I, typename... CategoryTags,
@@ -157,7 +202,6 @@ constexpr Index<Tag> const& get(Index<CategoryTags...> const& i) noexcept
     static_assert(std::is_same<Tag, IndexTag>::value, "Tags must match for an Index with just one template parameter");
     return i;
 }
-
 
 } // namespace epi
 

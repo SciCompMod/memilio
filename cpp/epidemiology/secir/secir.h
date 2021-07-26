@@ -22,9 +22,8 @@ class SecirModel : public CompartmentalModel<Populations<AgeGroup, InfectionStat
     using Po = Base::Populations;
 
 public:
-
-    SecirModel(size_t num_agegroups)
-     : Base(Po({AgeGroup(num_agegroups), InfectionState::Count}), Pa(AgeGroup(num_agegroups)))
+    SecirModel(const Populations& pop, const ParameterSet& params)
+     : Base(pop, params)
     {
 #if !USE_DERIV_FUNC
         size_t n_agegroups = (size_t)AgeGroup::Count;
@@ -170,6 +169,11 @@ public:
 #endif
     }
 
+    SecirModel(int num_agegroups)
+        : SecirModel(Po({AgeGroup(num_agegroups), InfectionState::Count}), Pa(AgeGroup(num_agegroups)))
+    {
+    }
+
 #if USE_DERIV_FUNC
 
 void get_derivatives(Eigen::Ref<const Eigen::VectorXd> pop,
@@ -287,6 +291,32 @@ void get_derivatives(Eigen::Ref<const Eigen::VectorXd> pop,
 
 #endif // USE_DERIV_FUNC
 
+    /**
+     * serialize this. 
+     * @see epi::serialize
+     */
+    template<class IOContext>
+    void serialize(IOContext& io) const
+    {
+        auto obj = io.create_object("Secir");
+        obj.add_element("Parameters", parameters);
+        obj.add_element("Populations", populations);
+    }
+
+    /**
+     * deserialize an object of this class.
+     * @see epi::deserialize
+     */
+    template<class IOContext>
+    static IOResult<SecirModel> deserialize(IOContext& io)
+    {
+        auto obj = io.expect_object("Secir");
+        auto par = obj.expect_element("Parameters", Tag<ParameterSet>{});
+        auto pop = obj.expect_element("Populations", Tag<Populations>{});
+        return apply(io, [](auto&& par_, auto&& pop_) { 
+            return SecirModel{pop_, par_};
+        }, par, pop);
+    }
 };
 
 //forward declaration, see below.

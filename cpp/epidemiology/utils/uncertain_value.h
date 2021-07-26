@@ -115,6 +115,71 @@ public:
      */
     ScalarType draw_sample();
 
+    /**
+     * serialize this. 
+     * @see epi::serialize
+     */
+    template<class IOContext>
+    void serialize(IOContext& io) const
+    {
+        auto obj = io.create_object("UncertainValue");
+        if (!(io.flags() & IOF_OmitValues)) {
+            obj.add_element("Value", value());
+        }
+        if (!(io.flags() & IOF_OmitDistributions)) {
+            obj.add_optional("Distribution", get_distribution().get());
+        }
+    }
+
+    /**
+     * deserialize an object of this class.
+     * @see epi::deserialize
+     */
+    template <class IOContext>
+    static IOResult<UncertainValue> deserialize(IOContext& io)
+    {
+        auto obj = io.expect_object("UncertainValue");
+        if (!(io.flags() & IOF_OmitValues) && !(io.flags() & IOF_OmitDistributions)) {
+            auto v = obj.expect_element("Value", Tag<ScalarType>{});
+            auto d = obj.expect_optional("Distribution", Tag<std::shared_ptr<ParameterDistribution>>{});
+            return apply(
+                io,
+                [](auto&& v_, auto&& d_) {
+                    auto uv = UncertainValue(v_);
+                    if (d_) {
+                        uv.set_distribution(**d_);
+                    }
+                    return uv;
+                },
+                v, d);
+        }
+        else if (!(io.flags() & IOF_OmitValues) && (io.flags() & IOF_OmitDistributions)) {
+            auto v = obj.expect_element("Value", Tag<ScalarType>{});
+            return apply(
+                io,
+                [](auto&& v_) {
+                    return UncertainValue(v_);
+                },
+                v);
+        }
+        else if ((io.flags() & IOF_OmitValues) && !(io.flags() & IOF_OmitDistributions)) {
+            auto d = obj.expect_optional("Distribution", Tag<std::shared_ptr<ParameterDistribution>>{});
+            return apply(
+                io,
+                [](auto&& d_) {
+                    auto uv = UncertainValue();
+                    if (d_) {
+                        uv.set_distribution(**d_);
+                    }
+                    return uv;
+                },
+                d);
+        }
+        else {
+            return failure(StatusCode::InvalidValue, "Incompatible Flags in IO Context: IOF_OmitValues & IOF_OmitDistributions.");
+        }
+    }
+
 private:
     ScalarType m_value;
     std::unique_ptr<ParameterDistribution> m_dist;

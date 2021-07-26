@@ -1,8 +1,10 @@
 #pragma once
 
 #include "epidemiology/utils/eigen.h"
+#include "epidemiology/utils/metaprogramming.h"
 #include <utility>
 #include <iostream>
+#include <iterator>
 
 namespace epi
 {
@@ -179,6 +181,276 @@ auto map(const Rng& v, F f)
     return Array::NullaryExpr(v.size(), [f, &v] (Eigen::Index i) -> Scalar { 
         return f(v[size_t(i)]);
     });
+}
+
+namespace details
+{
+    //true if elements returned by matrix(i, j) are references where matrix is of type M;
+    //false if the elements are temporaries, e.g. for expressions like Eigen::MatrixXd::Constant(r, c, v);
+    template <class M>
+    using IsElementReference =
+        std::is_reference<decltype(std::declval<M>()(std::declval<Eigen::Index>(), std::declval<Eigen::Index>()))>;
+}
+
+/**
+ * iterate over elements of eigen matrix expressions in row major order.
+ * @tparam M an eigen matrix expression type, can be in memory or lazy.
+ * @tparam IsConst true if the elements of the matrix are not modifiable.
+ */
+template <class M, bool IsConst = false>
+class RowMajorIterator
+{
+public:
+    using MatrixReference = std::conditional_t<IsConst, const M&, M&>;
+    static_assert(IsConst || details::IsElementReference<MatrixReference>::value,
+                  "Iterator must be const if matrix is not in memory.");
+
+    using iterator_category = std::random_access_iterator_tag;
+    using value_type        = typename M::Scalar;
+    using reference         = std::conditional_t<IsConst, const value_type&, value_type&>;
+    using difference_type   = Eigen::Index;
+
+    // Operator-> returns a pointer to an element if the element can be referenced.
+    // If the matrix returns temporaries, a proxy is returned that holds a local copy
+    // and forwards the address of that copy. Adress is pointer-to-const because modifying
+    // the local inside the proxy is almost certainly not what is intended.
+    struct Proxy {
+        value_type value;
+        const value_type* operator->() const
+        {
+            return &value;
+        }
+    };
+    using pointer = std::conditional_t<details::IsElementReference<MatrixReference>::value,
+                                       std::conditional_t<IsConst, const value_type*, value_type*>, Proxy>;
+
+    /**
+     * Create an iterator that points to a specific element.
+     * Indexing is done by flat indices i = r * nc + c where r is the row index, c is the column index and nc is the number of columns.
+     * @param m reference of a matrix expression. Only a reference is stored, mind the lifetime of the object.
+     * @param i flat index of the element pointed to.
+     */
+    RowMajorIterator(MatrixReference m, Eigen::Index i)
+        : m_matrix(m)
+        , m_i(i)
+    {
+    }
+
+    /**
+     * pre increment operator.
+     */
+    RowMajorIterator& operator++()
+    {
+        ++m_i;
+        return *this;
+    }
+    /**
+     * post increment operator.
+     */
+    RowMajorIterator operator++(int)
+    {
+        auto cpy = *this;
+        ++m_i;
+        return cpy;
+    }
+    /**
+     * random access, add n to index of this.
+     */
+    RowMajorIterator operator+(difference_type n) const
+    {
+        return {const_cast<MatrixReference>(m_matrix), m_i + n};
+    }
+    /**
+     * random access, add n to index of iterator.
+     */
+    friend RowMajorIterator operator+(difference_type n, const RowMajorIterator& iter)
+    {
+        return {const_cast<MatrixReference>(iter.m_matrix), iter.m_i + n};
+    }
+    /**
+     * add n to index of this.
+     */
+    RowMajorIterator& operator+=(difference_type n)
+    {
+        m_i += n;
+        return *this;
+    }
+    /**
+     * pre decrement operator.
+     */
+    RowMajorIterator& operator--()
+    {
+        --m_i;
+        return *this;
+    }
+    /**
+     * post decrement operator.
+     */
+    RowMajorIterator operator--(int)
+    {
+        auto cpy = *this;
+        --m_i;
+        return cpy;
+    }
+    /**
+     * take n from the index of this.
+     */
+    RowMajorIterator operator-(difference_type n) const
+    {
+        return {const_cast<MatrixReference>(m_matrix), m_i - n};
+    }
+    /**
+     * take n from the index of this.
+     */
+    RowMajorIterator& operator-=(difference_type n)
+    {
+        m_i -= n;
+        return *this;
+    }
+    /**
+     * calculate the distance between this and r.
+     */
+    difference_type operator-(RowMajorIterator r) const
+    {
+        return m_i - r.m_i;
+    }
+
+    /**
+     * dereference this to get the element pointed to.
+     * may return a temporary value instead of a reference to the element if the matrix is not evaluated 
+     * in memory, e.g. in the case of Eigen::MatrixXd::Constant(r, c, v).
+     */
+    decltype(auto) operator*() const
+    {
+        return m_matrix(m_i / m_matrix.cols(), m_i % m_matrix.cols());
+    }
+
+    /**
+     * get a pointer to the element this iterator points to.
+     * may return a proxy instead of a reference to the element if the matrix is not evaluated 
+     * in memory, e.g. in the case of Eigen::MatrixXd::Constant(r, c, v).
+     * The proxy stores a copy of the element and forwards the address of this copy.
+     * @{
+     */
+    template <class Dummy                                                        = MatrixReference,
+              std::enable_if_t<details::IsElementReference<Dummy>::value, void*> = nullptr>
+    pointer operator->() const
+    {
+        return &(**this);
+    }
+    template <class Dummy                                                         = MatrixReference,
+              std::enable_if_t<!details::IsElementReference<Dummy>::value, void*> = nullptr>
+    pointer operator->() const
+    {
+        return Proxy{**this};
+    }
+    /**@}*/
+
+    /**
+     * lesser comparison operator.
+     */
+    bool operator<(const RowMajorIterator& other) const
+    {
+        return m_i < other.m_i;
+    }
+    /**
+     * greater than comparison operator.
+     */
+    bool operator>(const RowMajorIterator& other) const
+    {
+        return other < *this;
+    }
+    /**
+     * lesser equal comparison operator.
+     */
+    bool operator<=(const RowMajorIterator& other) const
+    {
+        return !(other < *this);
+    }
+    /**
+     * greater equal comparison operator.
+     */
+    bool operator>=(const RowMajorIterator& other) const
+    {
+        return !(*this < other);
+    }
+    /**
+     * equality comparison operator.
+     */
+    bool operator==(const RowMajorIterator& other) const
+    {
+        return !(*this < other) && !(other < *this);
+    }
+    /**
+     * inequality comparison operator.
+     */
+    bool operator!=(const RowMajorIterator& other) const
+    {
+        return !(*this == other);
+    }
+
+private:
+    MatrixReference m_matrix;
+    Eigen::Index m_i;
+};
+
+/**
+ * create a non-const iterator to first element of the matrix m.
+ * only enabled if the matrix is evaluated in memory, i.e. elements can be modified. 
+ */
+template <class M>
+std::enable_if_t<conjunction_v<std::is_base_of<Eigen::EigenBase<M>, M>, details::IsElementReference<M>>,
+                 RowMajorIterator<M, false>>
+begin(M& m)
+{
+    return {m, 0};
+}
+
+/**
+ * create a const iterator to first element of the matrix m.
+ */
+template <class M>
+std::enable_if_t<std::is_base_of<Eigen::EigenBase<M>, M>::value, RowMajorIterator<M, true>> begin(const M& m)
+{
+    return {m, 0};
+}
+
+/**
+ * create a const iterator to first element of the matrix m.
+ */
+template <class M>
+std::enable_if_t<std::is_base_of<Eigen::EigenBase<M>, M>::value, RowMajorIterator<M, true>> cbegin(const M& m)
+{
+    return {m, 0};
+}
+
+/**
+ * create a non-const end iterator for the matrix m.
+ */
+template <class M>
+std::enable_if_t<conjunction_v<std::is_base_of<Eigen::EigenBase<M>, M>, details::IsElementReference<M>>,
+                 RowMajorIterator<M, false>>
+end(M& m)
+{
+    return {m, m.size()};
+}
+
+/**
+ * create a const end iterator for the matrix m.
+ */
+template <class M>
+std::enable_if_t<std::is_base_of<Eigen::EigenBase<M>, M>::value, RowMajorIterator<M, true>> end(const M& m)
+{
+    return {m, m.size()};
+}
+
+/**
+ * create a non-const end iterator for the matrix m.
+ */
+template <class M>
+std::enable_if_t<std::is_base_of<Eigen::EigenBase<M>, M>::value, RowMajorIterator<M, true>> cend(const M& m)
+{
+    return {m, m.size()};
 }
 
 } // namespace epi

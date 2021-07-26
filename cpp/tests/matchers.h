@@ -3,6 +3,7 @@
 
 #include "epidemiology/utils/compiler_diagnostics.h"
 #include "epidemiology/math/floating_point.h"
+#include "epidemiology/utils/io.h"
 #include "gmock/gmock.h"
 
 /**
@@ -36,7 +37,7 @@ struct MatrixPrintWrap : public M {
  * returns a reference to the original object, no copying or moving, mind the lifetime!
  */
 template <class M>
-const MatrixPrintWrap<M>& print_wrap(const M& m)
+const MatrixPrintWrap<M>& print_wrap(const Eigen::EigenBase<M>& m)
 {
     return static_cast<const MatrixPrintWrap<M>&>(m);
 }
@@ -81,6 +82,44 @@ MATCHER_P3(FloatingPointEqual, other, atol, rtol,
 {
     epi::unused(result_listener);
     return epi::floating_point_equal(arg, other, atol, rtol);
+}
+
+/**
+ * @brief overload gtest printer function for IOResult.
+ * @note see https://stackoverflow.com/questions/25146997/teach-google-test-how-to-print-eigen-matrix
+ */
+template <class T>
+struct IOResultPrintWrap : public epi::IOResult<T> {
+    friend void PrintTo(const IOResultPrintWrap& m, std::ostream* os)
+    {
+        if (m) {
+            *os << "Success";
+        }
+        else {
+            *os << "Error: " << m.error().formatted_message();
+        }
+    }
+};
+
+/**
+ * @brief wrap an IOResult for gtest printing
+ * returns a reference to the original object, no copying or moving, mind the lifetime!
+ */
+template<class T>
+const IOResultPrintWrap<T>& print_wrap(const epi::IOResult<T>& r)
+{
+    return static_cast<const IOResultPrintWrap<T>&>(r);
+}
+
+/**
+ * gmock matcher for IOResult.
+ * The matcher succeeds if the IOResult represents success.
+ * @return matcher that checks an IOResult
+ */
+MATCHER(IsSuccess, std::string(negation ? "isn't" : "is") + " successful. ")
+{
+    epi::unused(result_listener);
+    return bool(arg);
 }
 
 /**
