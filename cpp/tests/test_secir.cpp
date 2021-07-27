@@ -715,3 +715,18 @@ TEST(Secir, testAndTraceCapacity)
     EXPECT_DOUBLE_EQ(dydt_under_capacity[(size_t)epi::InfectionState::Exposed], dydt_default[(size_t)epi::InfectionState::Exposed]);
     EXPECT_GT(dydt_over_capacity[(size_t)epi::InfectionState::Exposed], dydt_default[(size_t)epi::InfectionState::Exposed]);
 }
+
+TEST(Secir, getInfectionsRelative)
+{
+    size_t num_groups = 3;
+    epi::SecirModel model(num_groups);
+    model.populations[{epi::AgeGroup(0), epi::InfectionState::Infected}] = 100.0;
+    model.populations.set_difference_from_group_total<epi::AgeGroup>({epi::AgeGroup(0), epi::InfectionState::Susceptible}, 10'000.0);
+    model.populations[{epi::AgeGroup(1), epi::InfectionState::Infected}] = 50.0;
+    model.populations.set_difference_from_group_total<epi::AgeGroup>({epi::AgeGroup(1), epi::InfectionState::Susceptible}, 20'000.0);
+    model.populations[{epi::AgeGroup(2), epi::InfectionState::Infected}] = 25.0;
+    model.populations.set_difference_from_group_total<epi::AgeGroup>({epi::AgeGroup(2), epi::InfectionState::Susceptible}, 40'000.0);
+
+    epi::SecirSimulation<> sim(model, 0.0);
+    ASSERT_EQ(epi::get_infections_relative(sim, 0.0, sim.get_result().get_last_value()), (100. + 50. + 25.) / (10'000 + 20'000 + 40'000));
+}
