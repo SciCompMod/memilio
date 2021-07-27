@@ -425,7 +425,7 @@ double get_infections_relative(const SecirSimulation<Base>& sim, double /*t*/, c
 {
     double sum_inf = 0;
     for (auto i = AgeGroup(0); i < sim.get_model().parameters.get_num_groups(); ++i) {
-        sum_inf = sim.get_model().populations.get_from(y, {i, InfectionState::Infected});
+        sum_inf += sim.get_model().populations.get_from(y, {i, InfectionState::Infected});
     }
     auto inf_rel = sum_inf / sim.get_model().populations.get_total();
 
