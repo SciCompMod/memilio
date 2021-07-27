@@ -25,7 +25,7 @@ int main(int argc, char** argv)
     model_group1.populations[{epi::Index<epi::SeirInfType>(epi::SeirInfType::S)}] = 9990;
     model_group1.populations[{epi::Index<epi::SeirInfType>(epi::SeirInfType::E)}] = 10;
 
-    epi::Graph<epi::ModelNode<epi::Simulation<epi::SeirModel>>, epi::MigrationEdge> g;
+    epi::Graph<epi::SimulationNode<epi::Simulation<epi::SeirModel>>, epi::MigrationEdge> g;
     g.add_node(1001, model_group1, t0);
     g.add_node(1002, model_group2, t0);
     g.add_edge(0, 1, Eigen::VectorXd::Constant((size_t)epi::SeirInfType::Count, 0.01));

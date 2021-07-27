@@ -192,9 +192,9 @@ TEST(DynamicNPIs, implement)
 namespace epi_test
 {
 
-struct DummyModel {
-    template<class V>
-    DummyModel(V&& y0)
+struct DummySim {
+    template <class V>
+    DummySim(V&& y0)
         : result(0.0, std::forward<V>(y0))
     {
         ON_CALL(*this, advance).WillByDefault([this](auto t) {  
@@ -211,15 +211,15 @@ struct DummyModel {
 };
 
 //overload required for dynamic NPIs
-template<class DummyModel>
-double get_infections_relative(const DummyModel&, double, const Eigen::Ref<const Eigen::VectorXd>& y)
+template <class DummySim>
+double get_infections_relative(const DummySim&, double, const Eigen::Ref<const Eigen::VectorXd>& y)
 {
     return y[0] / y.sum();
 }
 
 //overload required for because the mock is not a compartment model simulation
-template<class DummyModel>
-void calculate_migration_returns(Eigen::Ref<epi::TimeSeries<double>::Vector>, const DummyModel&,
+template <class DummySim>
+void calculate_migration_returns(Eigen::Ref<epi::TimeSeries<double>::Vector>, const DummySim&,
                                  Eigen::Ref<const epi::TimeSeries<double>::Vector>, double, double)
 {
 }
@@ -228,8 +228,8 @@ void calculate_migration_returns(Eigen::Ref<epi::TimeSeries<double>::Vector>, co
 
 TEST(DynamicNPIs, migration)
 {
-    epi::ModelNode<testing::NiceMock<epi_test::DummyModel>> node_from((Eigen::VectorXd(2) << 0.0, 1.0).finished());
-    epi::ModelNode<testing::NiceMock<epi_test::DummyModel>> node_to((Eigen::VectorXd(2) << 0.0, 1.0).finished());
+    epi::SimulationNode<testing::NiceMock<epi_test::DummySim>> node_from((Eigen::VectorXd(2) << 0.0, 1.0).finished());
+    epi::SimulationNode<testing::NiceMock<epi_test::DummySim>> node_to((Eigen::VectorXd(2) << 0.0, 1.0).finished());
 
     auto last_state_safe = (Eigen::VectorXd(2) << 0.01, 0.99).finished();
     auto last_state_crit = (Eigen::VectorXd(2) << 0.02, 0.98).finished();
@@ -255,21 +255,27 @@ TEST(DynamicNPIs, migration)
 
     ASSERT_EQ(edge.get_parameters().get_coefficients()[0].get_dampings().size(), 0); //not check at the beginning
 
-    EXPECT_CALL(node_from.model, advance).Times(1).WillOnce([&](auto t) { node_from.model.result.add_time_point(t, last_state_safe); });
+    EXPECT_CALL(node_from.get_simulation(), advance).Times(1).WillOnce([&](auto t) {
+        node_from.get_simulation().result.add_time_point(t, last_state_safe);
+    });
     node_from.evolve(3.0, 2.5);
     node_to.evolve(3.0, 2.5);
     edge.apply_migration(3.0, 2.5, node_from, node_to);
 
     ASSERT_EQ(edge.get_parameters().get_coefficients()[0].get_dampings().size(), 0); //threshold not exceeded
 
-    EXPECT_CALL(node_from.model, advance).Times(1).WillOnce([&](auto t) { node_from.model.result.add_time_point(t, last_state_crit); });
+    EXPECT_CALL(node_from.get_simulation(), advance).Times(1).WillOnce([&](auto t) { 
+        node_from.get_simulation().result.add_time_point(t, last_state_crit); 
+    });
     node_from.evolve(4.5, 1.5);
     node_to.evolve(4.5, 1.5);
     edge.apply_migration(4.5, 1.5, node_from, node_to);
 
     ASSERT_EQ(edge.get_parameters().get_coefficients()[0].get_dampings().size(), 0); //threshold exceeded, but only check every 3 days
 
-    EXPECT_CALL(node_from.model, advance).Times(1).WillOnce([&](auto t) { node_from.model.result.add_time_point(t, last_state_crit); });
+    EXPECT_CALL(node_from.get_simulation(), advance).Times(1).WillOnce([&](auto t) {
+        node_from.get_simulation().result.add_time_point(t, last_state_crit);
+    });
     node_from.evolve(6.0, 1.5);
     node_to.evolve(6.0, 1.5);
     edge.apply_migration(6.0, 1.5, node_from, node_to);

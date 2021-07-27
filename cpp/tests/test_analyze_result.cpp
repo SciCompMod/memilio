@@ -99,7 +99,7 @@ TEST(TestInterpolateGraph, basic)
 {
     using Model      = epi::SecirModel;
     using Simulation = epi::Simulation<Model>;
-    auto g           = epi::Graph<epi::ModelNode<Simulation>, epi::MigrationEdge>();
+    auto g           = epi::Graph<epi::SimulationNode<Simulation>, epi::MigrationEdge>();
     g.add_node(0, Model(1), 0.5);
     g.add_node(1, Model(1), 0.5);
     for (auto& n : g.nodes()) {
