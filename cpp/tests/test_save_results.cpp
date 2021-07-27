@@ -3,6 +3,7 @@
 #include "epidemiology/secir/secir.h"
 #include "epidemiology/utils/time_series.h"
 #include <epidemiology_io/secir_result_io.h>
+#include "temp_file_register.h"
 #include <gtest/gtest.h>
 
 TEST(TestSaveResult, compareResultWithH5)
@@ -59,10 +60,13 @@ TEST(TestSaveResult, compareResultWithH5)
     auto result_from_sim                                  = simulate(t0, tmax, dt, model);
     std::vector<epi::TimeSeries<double>> results_from_sim = {result_from_sim, result_from_sim};
     std::vector<int> ids                                  = {1, 2};
-    auto save_result_status = epi::save_result(results_from_sim, ids, "test_result.h5");
+
+    TempFileRegister file_register;
+    auto results_file_path = file_register.get_unique_path("test_result-%%%%-%%%%.h5");
+    auto save_result_status = epi::save_result(results_from_sim, ids, results_file_path);
     ASSERT_TRUE(save_result_status);
 
-    auto results_from_file = epi::read_result("test_result.h5", static_cast<int>(size_t(nb_groups)));
+    auto results_from_file = epi::read_result(results_file_path, static_cast<int>(size_t(nb_groups)));
     ASSERT_TRUE(results_from_file);
     auto result_from_file = results_from_file.value()[0];
 

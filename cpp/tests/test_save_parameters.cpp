@@ -8,6 +8,7 @@
 #include <epidemiology/migration/migration.h>
 #include <distributions_helpers.h>
 #include <matchers.h>
+#include "temp_file_register.h"
 #include <epidemiology/utils/date.h>
 #include <gtest/gtest.h>
 
@@ -69,8 +70,9 @@ TEST(TestSaveParameters, json_single_sim_write_read_compare)
     epi::set_params_distributions_normal(model, t0, tmax, 0.2);
 
     params.get<epi::IncubationTime>()[(epi::AgeGroup)0].get_distribution()->add_predefined_sample(4711.0);
-
-    auto filename = "TestParameters.json";
+    
+    TempFileRegister file_register;
+    auto filename = file_register.get_unique_path("TestParameters-%%%%-%%%%.json");
     auto write_status = epi::write_json(filename, model);
     ASSERT_THAT(print_wrap(write_status), IsSuccess());
 
@@ -244,10 +246,12 @@ TEST(TestSaveParameters, json_graphs_write_read_compare)
     graph.add_edge(0, 1, Eigen::VectorXd::Constant(model.populations.get_num_compartments(), 0.01));
     graph.add_edge(1, 0, Eigen::VectorXd::Constant(model.populations.get_num_compartments(), 0.01));
 
-    auto write_status = epi::write_graph(graph, "graph_parameters");
+    TempFileRegister file_register;
+    auto graph_dir = file_register.get_unique_path("graph_parameters-%%%%-%%%%");
+    auto write_status = epi::write_graph(graph, graph_dir);
     ASSERT_THAT(print_wrap(write_status), IsSuccess());
 
-    auto read_result = epi::read_graph<epi::SecirModel>("graph_parameters");
+    auto read_result = epi::read_graph<epi::SecirModel>(graph_dir);
     ASSERT_THAT(print_wrap(read_result), IsSuccess());
 
     auto& graph_read = read_result.value();
@@ -567,19 +571,20 @@ TEST(TestSaveParameters, ExtrapolateRKI)
 
     std::vector<int> county = {1002};
 
-    std::string path = TEST_DATA_DIR;
-
     for (auto group = epi::AgeGroup(0); group < epi::AgeGroup(6); group++) {
         model[0].parameters.get<epi::AsymptoticCasesPerInfectious>()[group] = 0.1 * ((size_t)group + 1);
         model[0].parameters.get<epi::HospitalizedCasesPerInfectious>()[group] = 0.11 * ((size_t)group + 1);
         model[0].parameters.get<epi::ICUCasesPerHospitalized>()[group] = 0.12 * ((size_t)group + 1);
     }
 
+    TempFileRegister file_register;
+    auto results_dir = file_register.get_unique_path("ExtrapolateRKI-%%%%-%%%%");
+    boost::filesystem::create_directory(results_dir);
     auto extrapolate_result =
-        epi::extrapolate_rki_results(model, path, path, county, date, scaling_factor_inf, scaling_factor_icu, 1);
+        epi::extrapolate_rki_results(model, TEST_DATA_DIR, results_dir, county, date, scaling_factor_inf, scaling_factor_icu, 1);
     ASSERT_THAT(print_wrap(extrapolate_result), IsSuccess());
 
-    auto read_result = epi::read_result(epi::path_join(path, "Results_rki.h5"), 6);
+    auto read_result = epi::read_result(epi::path_join(results_dir, "Results_rki.h5"), 6);
     ASSERT_THAT(print_wrap(read_result), IsSuccess());
     auto& file_results = read_result.value();
     auto results = file_results[0].get_groups();
