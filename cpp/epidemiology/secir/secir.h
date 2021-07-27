@@ -191,6 +191,15 @@ void get_derivatives(Eigen::Ref<const Eigen::VectorXd> pop,
 
     ContactMatrixGroup const& contact_matrix = params.get<epi::ContactPatterns>();
 
+    auto icu_occupancy           = 0.0;
+    auto test_and_trace_required = 0.0;
+    for (auto i = AgeGroup(0); i < n_agegroups; ++i) {
+        auto dummy_R3 = 0.5 / (params.get<IncubationTime>()[i] - params.get<SerialInterval>()[i]);
+        test_and_trace_required += (1 - params.get<AsymptoticCasesPerInfectious>()[i]) * dummy_R3 *
+                                   this->populations.get_from(pop, {i, InfectionState::Carrier});
+        icu_occupancy += this->populations.get_from(pop, {i, InfectionState::ICU});
+    }
+
     for (auto i = AgeGroup(0); i < n_agegroups; i++) {
 
         size_t Si = this->populations.get_flat_index({i, InfectionState::Susceptible});
@@ -210,15 +219,6 @@ void get_derivatives(Eigen::Ref<const Eigen::VectorXd> pop,
         double dummy_R3 =
             0.5 / (params.get<IncubationTime>()[i] - params.get<SerialInterval>()[i]); // R3 = 1/(2(TINC-SI))
 
-        //symptomatic are less well quarantined when testing and tracing is overwhelmed so they infect more people
-        auto test_and_trace_required = (1 - params.get<AsymptoticCasesPerInfectious>()[i]) * dummy_R3 * this->populations.get_from(pop, {i, InfectionState::Carrier});
-        auto risk_from_symptomatic   = smoother_cosine(
-            test_and_trace_required, params.get<epi::TestAndTraceCapacity>(), params.get<epi::TestAndTraceCapacity>() * 5,
-            params.get<RiskOfInfectionFromSympomatic>()[i],
-            params.get<MaxRiskOfInfectionFromSympomatic>()[i]);
-
-        double icu_occupancy = 0;
-
         for (auto j = AgeGroup(0); j < n_agegroups; j++) {
             size_t Sj = this->populations.get_flat_index({j, InfectionState::Susceptible});
             size_t Ej = this->populations.get_flat_index({j, InfectionState::Exposed});
@@ -227,6 +227,11 @@ void get_derivatives(Eigen::Ref<const Eigen::VectorXd> pop,
             size_t Hj = this->populations.get_flat_index({j, InfectionState::Hospitalized});
             size_t Uj = this->populations.get_flat_index({j, InfectionState::ICU});
             size_t Rj = this->populations.get_flat_index({j, InfectionState::Recovered});
+
+            //symptomatic are less well quarantined when testing and tracing is overwhelmed so they infect more people
+            auto risk_from_symptomatic = smoother_cosine(
+                test_and_trace_required, params.get<TestAndTraceCapacity>(), params.get<TestAndTraceCapacity>() * 5,
+                params.get<RiskOfInfectionFromSympomatic>()[j], params.get<MaxRiskOfInfectionFromSympomatic>()[j]);
 
             // effective contact rate by contact rate between groups i and j and damping j
             double season_val =
@@ -242,8 +247,6 @@ void get_derivatives(Eigen::Ref<const Eigen::VectorXd> pop,
 
             dydt[Si] -= dummy_S; // -R1*(C+beta*I)*S/N0
             dydt[Ei] += dummy_S; // R1*(C+beta*I)*S/N0-R2*E
-
-            icu_occupancy += y[Uj];
         }
 
         // ICU capacity shortage is close
