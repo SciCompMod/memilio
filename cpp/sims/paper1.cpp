@@ -32,7 +32,7 @@ enum class Intervention
 
 void assign_uniform_distribution(epi::UncertainValue& p, double min, double max)
 {
-    p = epi::UncertainValue(0.5 * (max + min));
+    p   = epi::UncertainValue(0.5 * (max + min));
     min = max = double(p);
     p.set_distribution(epi::ParameterDistributionUniform(min, max));
 }
@@ -55,7 +55,7 @@ void array_assign_uniform_distribution(epi::CustomIndexArray<epi::UncertainValue
     }
 }
 
-void set_covid_parameters(epi::SecirParams& params)
+epi::IOResult<void> set_covid_parameters(epi::SecirParams& params)
 {
     //times
     const double tinc             = 5.2; // R_2^(-1)+R_3^(-1)
@@ -120,6 +120,8 @@ void set_covid_parameters(epi::SecirParams& params)
     const double seasonality_max = 0.3;
 
     assign_uniform_distribution(params.get<epi::Seasonality>(), seasonality_min, seasonality_max);
+
+    return epi::success();
 }
 
 static const std::map<ContactLocation, std::string> contact_locations = {{ContactLocation::Home, "home"},
@@ -127,20 +129,27 @@ static const std::map<ContactLocation, std::string> contact_locations = {{Contac
                                                                          {ContactLocation::Work, "work"},
                                                                          {ContactLocation::Other, "other"}};
 
-void set_contact_matrices(const fs::path& data_dir, epi::SecirParams& params)
+epi::IOResult<void> set_contact_matrices(const fs::path& data_dir, epi::SecirParams& params)
 {
     //TODO: io error handling
     auto contact_matrices = epi::ContactMatrixGroup(contact_locations.size(), size_t(params.get_num_groups()));
     for (auto&& contact_location : contact_locations) {
-        contact_matrices[size_t(contact_location.first)].get_baseline() = epi::read_mobility_plain(
-            (data_dir / "contacts" / ("baseline_" + contact_location.second + ".txt")).string());
-        contact_matrices[size_t(contact_location.first)].get_minimum() = epi::read_mobility_plain(
-            (data_dir / "contacts" / ("minimum_" + contact_location.second + ".txt")).string());
+        BOOST_OUTCOME_TRY(baseline,
+                          epi::read_mobility_plain(
+                              (data_dir / "contacts" / ("baseline_" + contact_location.second + ".txt")).string()));
+        BOOST_OUTCOME_TRY(minimum,
+                          epi::read_mobility_plain(
+                              (data_dir / "contacts" / ("minimum_" + contact_location.second + ".txt")).string()));
+        contact_matrices[size_t(contact_location.first)].get_baseline() = baseline;
+        contact_matrices[size_t(contact_location.first)].get_minimum()  = minimum;
     }
     params.get<epi::ContactPatterns>() = epi::UncertainContactMatrix(contact_matrices);
+
+    return epi::success();
 }
 
-void set_npis(const fs::path& data_dir, epi::Date start_date, epi::Date end_date, epi::SecirParams& params)
+epi::IOResult<void> set_npis(const fs::path& data_dir, epi::Date start_date, epi::Date end_date,
+                             epi::SecirParams& params)
 {
     auto& contacts         = params.get<epi::ContactPatterns>();
     auto& contact_dampings = contacts.get_dampings();
@@ -308,7 +317,7 @@ void set_npis(const fs::path& data_dir, epi::Date start_date, epi::Date end_date
     dynamic_npis.set_interval(epi::SimulationTime(3.0));
     dynamic_npis.set_duration(epi::SimulationTime(14.0));
     dynamic_npis.set_base_value(100'000);
-    dynamic_npis.set_threshold(10.0, dynamic_npi_dampings);    
+    dynamic_npis.set_threshold(10.0, dynamic_npi_dampings);
 
     //school holidays (holiday periods are set per node, see set_nodes)
     auto school_holiday_value = epi::UncertainValue();
@@ -316,29 +325,31 @@ void set_npis(const fs::path& data_dir, epi::Date start_date, epi::Date end_date
     contacts.get_school_holiday_damping() = epi::DampingSampling(
         school_holiday_value, epi::DampingLevel(5), epi::DampingType(int(Intervention::SchoolClosure)),
         epi::SimulationTime(0.0), {size_t(ContactLocation::School)}, group_weights_all);
+
+    return epi::success();
 }
 
-void set_nodes(const epi::SecirParams& params, epi::Date start_date, epi::Date end_date, const fs::path& data_dir,
-               epi::Graph<epi::SecirModel, epi::MigrationParameters>& params_graph)
+epi::IOResult<void> set_nodes(const epi::SecirParams& params, epi::Date start_date, epi::Date end_date,
+                              const fs::path& data_dir,
+                              epi::Graph<epi::SecirModel, epi::MigrationParameters>& params_graph)
 {
     namespace de = epi::regions::de;
 
-    //TODO: error handling
-    auto county_ids = epi::get_county_ids((data_dir / "pydata" / "Germany").string());
+    BOOST_OUTCOME_TRY(county_ids, epi::get_county_ids((data_dir / "pydata" / "Germany").string()));
     std::vector<epi::SecirModel> counties(county_ids.size(), epi::SecirModel(size_t(params.get_num_groups())));
     for (auto& county : counties) {
         county.parameters = params;
     }
     // auto scaling_factor_infected = std::vector<double>(size_t(params.get_num_groups()), 2.5);
-    // auto scaling_factor_icu = 1.0;
-    // epi::read_population_data_county(counties, start_date, county_ids, scaling_factor_infected, scaling_factor_icu,
-    //                                  (data_dir / "pydata" / "Germany").string());
+    // auto scaling_factor_icu      = 1.0;
+    // BOOST_OUTCOME_TRY(epi::read_population_data_county(counties, start_date, county_ids, scaling_factor_infected,
+    //                                                    scaling_factor_icu, (data_dir / "pydata" / "Germany").string()));
 
     for (size_t county_idx = 0; county_idx < counties.size(); ++county_idx) {
         double nb_total_t0 = 10000, nb_exp_t0 = 2, nb_inf_t0 = 0, nb_car_t0 = 0, nb_hosp_t0 = 0, nb_icu_t0 = 0,
                nb_rec_t0 = 0, nb_dead_t0 = 0;
 
-        nb_exp_t0 =  (county_idx % 10 + 1) * 3;
+        nb_exp_t0 = (county_idx % 10 + 1) * 3;
 
         for (epi::AgeGroup i = 0; i < params.get_num_groups(); i++) {
             counties[county_idx].populations[{i, epi::InfectionState::Exposed}]      = nb_exp_t0;
@@ -381,16 +392,24 @@ void set_nodes(const epi::SecirParams& params, epi::Date start_date, epi::Date e
 
         params_graph.add_node(county_ids[county_idx], counties[county_idx]);
     }
+    return epi::success();
 }
 
-void set_edges(const fs::path& data_dir, epi::Graph<epi::SecirModel, epi::MigrationParameters>& params_graph)
+epi::IOResult<void> set_edges(const fs::path& data_dir,
+                              epi::Graph<epi::SecirModel, epi::MigrationParameters>& params_graph)
 {
     //migration between nodes
-    //TODO: error handling: IO, check size of coeff matrices
-    auto migration_data_commuter =
-        epi::read_mobility_plain((data_dir / "migration" / "commuter_migration_scaled.txt").string());
-    auto migration_data_twitter =
-        epi::read_mobility_plain((data_dir / "migration" / "twitter_scaled_1252.txt").string());
+    BOOST_OUTCOME_TRY(migration_data_commuter,
+                      epi::read_mobility_plain((data_dir / "migration" / "commuter_migration_scaled.txt").string()));
+    BOOST_OUTCOME_TRY(migration_data_twitter,
+                      epi::read_mobility_plain((data_dir / "migration" / "twitter_scaled_1252.txt").string()));
+    if (migration_data_commuter.rows() != params_graph.nodes().size() ||
+        migration_data_commuter.cols() != params_graph.nodes().size() ||
+        migration_data_twitter.rows() != params_graph.nodes().size() ||
+        migration_data_twitter.cols() != params_graph.nodes().size()) {
+        return epi::failure(epi::StatusCode::InvalidValue, "Migration matrices not the correct size.");
+    }
+
     auto migrating_compartments = {epi::InfectionState::Susceptible, epi::InfectionState::Exposed,
                                    epi::InfectionState::Carrier, epi::InfectionState::Infected,
                                    epi::InfectionState::Recovered};
@@ -435,9 +454,11 @@ void set_edges(const fs::path& data_dir, epi::Graph<epi::SecirModel, epi::Migrat
             }
         }
     }
+
+    return epi::success();
 }
 
-void run(const fs::path& data_dir)
+epi::IOResult<void> run(const fs::path& data_dir)
 {
     const auto start_date   = epi::Date(2020, 12, 12);
     const auto start_day    = epi::get_day_in_year(start_date);
@@ -449,39 +470,40 @@ void run(const fs::path& data_dir)
     const int num_age_groups = 6;
     epi::SecirParams params(num_age_groups);
     params.get<epi::StartDay>() = start_day;
-    set_covid_parameters(params);
-    set_contact_matrices(data_dir, params);
-    set_npis(data_dir, start_date, end_date, params);
+    BOOST_OUTCOME_TRY(set_covid_parameters(params));
+    BOOST_OUTCOME_TRY(set_contact_matrices(data_dir, params));
+    BOOST_OUTCOME_TRY(set_npis(data_dir, start_date, end_date, params));
 
     //graph of counties with populations and local parameters
     //and migration between counties
     epi::Graph<epi::SecirModel, epi::MigrationParameters> params_graph;
-    set_nodes(params, start_date, end_date, data_dir, params_graph);
-    set_edges(data_dir, params_graph);
+    BOOST_OUTCOME_TRY(set_nodes(params, start_date, end_date, data_dir, params_graph));
+    BOOST_OUTCOME_TRY(set_edges(data_dir, params_graph));
 
     std::cout << std::setprecision(16);
     //parameter study
     auto parameter_study  = epi::ParameterStudy<epi::SecirSimulation<>>{params_graph, 0.0, num_days_sim, 0.5, num_runs};
     auto ensemble_results = std::vector<std::vector<epi::TimeSeries<double>>>{};
-    auto ensemble_params = std::vector<std::vector<epi::SecirModel>>{};
+    auto ensemble_params  = std::vector<std::vector<epi::SecirModel>>{};
     ensemble_results.reserve(size_t(num_runs));
     ensemble_params.reserve(size_t(num_runs));
     parameter_study.run([&ensemble_results, &ensemble_params](auto results_graph) {
         ensemble_results.push_back(epi::interpolate_simulation_result(results_graph));
 
-        ensemble_params.emplace_back(); 
+        ensemble_params.emplace_back();
         ensemble_params.back().reserve(results_graph.nodes().size());
-        std::transform(results_graph.nodes().begin(), results_graph.nodes().end(), std::back_inserter(ensemble_params.back()), [](auto&& node) {
-            return node.property.get_simulation().get_model();
-        });
+        std::transform(results_graph.nodes().begin(), results_graph.nodes().end(),
+                       std::back_inserter(ensemble_params.back()), [](auto&& node) {
+                           return node.property.get_simulation().get_model();
+                       });
     });
 
     auto& params_out = ensemble_params[0][0].parameters;
     std::cout << "matrix at 0\n";
     std::cout << params_out.get<epi::ContactPatterns>().get_cont_freq_mat().get_matrix_at(0.0) << '\n';
     std::cout << "matrix at 20\n";
-    std::cout << params_out.get<epi::ContactPatterns>().get_cont_freq_mat().get_matrix_at(20.0) << '\n';   
-    // for (size_t i = 0; i < contact_locations.size(); ++i) {        
+    std::cout << params_out.get<epi::ContactPatterns>().get_cont_freq_mat().get_matrix_at(20.0) << '\n';
+    // for (size_t i = 0; i < contact_locations.size(); ++i) {
     //     std::cout << "matrix " << i << " at 0\n";
     //     std::cout << params_out.get<epi::ContactPatterns>().get_cont_freq_mat()[i].get_matrix_at(0.0) << '\n';
     // }
@@ -497,6 +519,8 @@ void run(const fs::path& data_dir)
             std::cout << v.transpose() << '\n';
         }
     }
+
+    return epi::success();
 }
 
 int main(int argc, char** argv)
@@ -510,5 +534,8 @@ int main(int argc, char** argv)
     }
     printf("\n");
 
-    run(argv[1]);
+    auto result = run(argv[1]);
+    if (!result) {
+        printf("%s\n", result.error().formatted_message().c_str());
+    }
 }
