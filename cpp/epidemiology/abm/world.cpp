@@ -34,7 +34,7 @@ void World::evolve(TimePoint t, TimeSpan dt)
 void World::interaction(TimePoint /*t*/, TimeSpan dt)
 {
     for (auto&& person : m_persons) {
-        auto loc = get_location(*person);
+        auto& loc = get_location(*person);
         person->interact(dt, m_infection_parameters, loc);
     }
 }
@@ -51,7 +51,7 @@ void World::migration(TimePoint t, TimeSpan dt)
         std::make_pair(&go_to_shop, std::vector<LocationType> {LocationType::Home, LocationType::BasicsShop}),
         std::make_pair(&go_to_event, std::vector<LocationType> {LocationType::Home, LocationType::SocialEvent})
     };
-    for (auto& person : m_persons) {
+    for (auto&& person : m_persons) {
         for (auto rule : rules) {
 
             //check if transition rule can be applied

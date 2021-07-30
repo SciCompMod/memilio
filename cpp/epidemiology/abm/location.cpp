@@ -51,13 +51,19 @@ void Location::begin_step(TimeSpan /*dt*/, const GlobalInfectionParameters& glob
     //cache for next step so it stays constant during the step while subpopulations change
     //otherwise we would have to cache all state changes during a step which uses more memory
     auto num_carriers = get_subpopulation(InfectionState::Carrier);
-    auto num_infected =
-        get_subpopulation(InfectionState::Infected_Detected) + get_subpopulation(InfectionState::Infected_Undetected);
-    m_cached_exposure_rate.array()
+    auto num_infected = get_subpopulation(InfectionState::Infected_Detected) + get_subpopulation(InfectionState::Infected_Undetected);
+    if (m_num_persons == 0){
+        m_cached_exposure_rate = {{epi::AbmAgeGroup::Count}, 0.};
+    } 
+    else{
+        m_cached_exposure_rate.array()
             = std::min(m_parameters.get<EffectiveContacts>(), double(m_num_persons)) / m_num_persons *
                              (global_params.get<SusceptibleToExposedByCarrier>().array() * num_carriers +
                               global_params.get<SusceptibleToExposedByInfected>().array() * num_infected);
+    }
+    
 }
+
 
 void Location::add_person(const Person& p)
 {
@@ -82,6 +88,7 @@ void Location::changed_state(const Person& p, InfectionState old_state)
 void Location::change_subpopulation(InfectionState s, int delta)
 {
     m_subpopulations[size_t(s)] += delta;
+    assert(m_subpopulations[size_t(s)]>=0 && "subpopulations must be non-negative");
 }
 
 int Location::get_subpopulation(InfectionState s) const
