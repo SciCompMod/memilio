@@ -330,8 +330,8 @@ epi::IOResult<void> set_npis(const fs::path& data_dir, epi::Date start_date, epi
 }
 
 epi::IOResult<void> set_nodes(const epi::SecirParams& params, epi::Date start_date, epi::Date end_date,
-                              const fs::path& data_dir,
-                              epi::Graph<epi::SecirModel, epi::MigrationParameters>& params_graph)
+                                          const fs::path& data_dir,
+                                          epi::Graph<epi::SecirModel, epi::MigrationParameters>& params_graph)
 {
     namespace de = epi::regions::de;
 
@@ -340,28 +340,28 @@ epi::IOResult<void> set_nodes(const epi::SecirParams& params, epi::Date start_da
     for (auto& county : counties) {
         county.parameters = params;
     }
-    // auto scaling_factor_infected = std::vector<double>(size_t(params.get_num_groups()), 2.5);
-    // auto scaling_factor_icu      = 1.0;
-    // BOOST_OUTCOME_TRY(epi::read_population_data_county(counties, start_date, county_ids, scaling_factor_infected,
-    //                                                    scaling_factor_icu, (data_dir / "pydata" / "Germany").string()));
+    auto scaling_factor_infected = std::vector<double>(size_t(params.get_num_groups()), 2.5);
+    auto scaling_factor_icu      = 1.0;
+    BOOST_OUTCOME_TRY(epi::read_population_data_county(counties, start_date, county_ids, scaling_factor_infected,
+                                                       scaling_factor_icu, (data_dir / "pydata" / "Germany").string()));
 
     for (size_t county_idx = 0; county_idx < counties.size(); ++county_idx) {
-        double nb_total_t0 = 10000, nb_exp_t0 = 2, nb_inf_t0 = 0, nb_car_t0 = 0, nb_hosp_t0 = 0, nb_icu_t0 = 0,
-               nb_rec_t0 = 0, nb_dead_t0 = 0;
+        // double nb_total_t0 = 10000, nb_exp_t0 = 2, nb_inf_t0 = 0, nb_car_t0 = 0, nb_hosp_t0 = 0, nb_icu_t0 = 0,
+        //        nb_rec_t0 = 0, nb_dead_t0 = 0;
 
-        nb_exp_t0 = (county_idx % 10 + 1) * 3;
+        // nb_exp_t0 = (county_idx % 10 + 1) * 3;
 
-        for (epi::AgeGroup i = 0; i < params.get_num_groups(); i++) {
-            counties[county_idx].populations[{i, epi::InfectionState::Exposed}]      = nb_exp_t0;
-            counties[county_idx].populations[{i, epi::InfectionState::Carrier}]      = nb_car_t0;
-            counties[county_idx].populations[{i, epi::InfectionState::Infected}]     = nb_inf_t0;
-            counties[county_idx].populations[{i, epi::InfectionState::Hospitalized}] = nb_hosp_t0;
-            counties[county_idx].populations[{i, epi::InfectionState::ICU}]          = nb_icu_t0;
-            counties[county_idx].populations[{i, epi::InfectionState::Recovered}]    = nb_rec_t0;
-            counties[county_idx].populations[{i, epi::InfectionState::Dead}]         = nb_dead_t0;
-            counties[county_idx].populations.set_difference_from_group_total<epi::AgeGroup>(
-                {i, epi::InfectionState::Susceptible}, nb_total_t0);
-        }
+        // for (epi::AgeGroup i = 0; i < params.get_num_groups(); i++) {
+        //     counties[county_idx].populations[{i, epi::InfectionState::Exposed}]      = nb_exp_t0;
+        //     counties[county_idx].populations[{i, epi::InfectionState::Carrier}]      = nb_car_t0;
+        //     counties[county_idx].populations[{i, epi::InfectionState::Infected}]     = nb_inf_t0;
+        //     counties[county_idx].populations[{i, epi::InfectionState::Hospitalized}] = nb_hosp_t0;
+        //     counties[county_idx].populations[{i, epi::InfectionState::ICU}]          = nb_icu_t0;
+        //     counties[county_idx].populations[{i, epi::InfectionState::Recovered}]    = nb_rec_t0;
+        //     counties[county_idx].populations[{i, epi::InfectionState::Dead}]         = nb_dead_t0;
+        //     counties[county_idx].populations.set_difference_from_group_total<epi::AgeGroup>(
+        //         {i, epi::InfectionState::Susceptible}, nb_total_t0);
+        // }
 
         //local parameters
         auto tnt_capacity = counties[county_idx].populations.get_total() * 7.5 / 100000.;
@@ -458,13 +458,9 @@ epi::IOResult<void> set_edges(const fs::path& data_dir,
     return epi::success();
 }
 
-epi::IOResult<void> run(const fs::path& data_dir)
+epi::IOResult<epi::Graph<epi::SecirModel, epi::MigrationParameters>> create_graph(epi::Date start_date, epi::Date end_date, const fs::path& data_dir) 
 {
-    const auto start_date   = epi::Date(2020, 12, 12);
     const auto start_day    = epi::get_day_in_year(start_date);
-    const auto num_days_sim = 20.0;
-    const auto end_date     = epi::offset_date_by_days(start_date, int(std::ceil(num_days_sim)));
-    const auto num_runs     = 1;
 
     //global parameters
     const int num_age_groups = 6;
@@ -479,6 +475,42 @@ epi::IOResult<void> run(const fs::path& data_dir)
     epi::Graph<epi::SecirModel, epi::MigrationParameters> params_graph;
     BOOST_OUTCOME_TRY(set_nodes(params, start_date, end_date, data_dir, params_graph));
     BOOST_OUTCOME_TRY(set_edges(data_dir, params_graph));
+
+    return epi::success(params_graph);
+}
+
+epi::IOResult<epi::Graph<epi::SecirModel, epi::MigrationParameters>> load_graph(const fs::path& save_dir)
+{
+    return epi::read_graph<epi::SecirModel>(save_dir.string());
+}
+
+epi::IOResult<void> save_graph(const epi::Graph<epi::SecirModel, epi::MigrationParameters>& params_graph, const fs::path& save_dir)
+{
+    return epi::write_graph(params_graph, save_dir.string());
+}
+
+enum class RunMode {
+    Load,
+    Save,
+};
+
+epi::IOResult<void> run(RunMode mode, const fs::path& data_dir, const fs::path& save_dir)
+{
+    const auto start_date   = epi::Date(2020, 12, 12);
+    const auto num_days_sim = 20.0;
+    const auto end_date     = epi::offset_date_by_days(start_date, int(std::ceil(num_days_sim)));
+    const auto num_runs     = 1;
+
+    epi::Graph<epi::SecirModel, epi::MigrationParameters> params_graph;
+    if (mode == RunMode::Save) {
+        BOOST_OUTCOME_TRY(created, create_graph(start_date, end_date, data_dir));
+        BOOST_OUTCOME_TRY(save_graph(created, save_dir));
+        params_graph = created;
+    }
+    else {
+        BOOST_OUTCOME_TRY(loaded, load_graph(save_dir));
+        params_graph = loaded;
+    }
 
     std::cout << std::setprecision(16);
     //parameter study
@@ -497,6 +529,12 @@ epi::IOResult<void> run(const fs::path& data_dir)
                            return node.property.get_simulation().get_model();
                        });
     });
+
+    std::vector<int> county_ids(params_graph.nodes().size());
+    std::transform(params_graph.nodes().begin(), params_graph.nodes().end(), county_ids.begin(), [](auto& n) {
+        return n.id;
+    });
+    BOOST_OUTCOME_TRY(epi::save_result(ensemble_results[0], county_ids, "bla.h5"));
 
     auto& params_out = ensemble_params[0][0].parameters;
     std::cout << "matrix at 0\n";
@@ -534,8 +572,37 @@ int main(int argc, char** argv)
     }
     printf("\n");
 
-    auto result = run(argv[1]);
+    RunMode mode;
+    std::string save_dir;
+    std::string data_dir;
+    if (argc == 3) {
+        mode = RunMode::Save;
+        data_dir = argv[1];
+        save_dir = argv[2];
+        printf("Reading data from %s, saving graph to %s.\n", data_dir.c_str(), save_dir.c_str());
+    }
+    else if (argc == 2) {
+        mode = RunMode::Load;
+        save_dir = argv[1];
+        data_dir = "";
+        printf("Loading graph from %s.\n", save_dir.c_str());
+    }
+    else
+    {
+        printf("Usage:\n");
+        printf("paper1 <data_dir> <save_dir>\n");
+        printf("\tMake graph with data from <data_dir> and save at <save_dir>, then run the simulation.\n");
+        printf("paper1 <load_dir>\n");
+        printf("\tLoad graph from <load_dir>, then run the simulation.\n");
+        return 0;
+    }
+
+    return 0;
+
+    auto result = run(mode, data_dir, save_dir);
     if (!result) {
         printf("%s\n", result.error().formatted_message().c_str());
+        return -1;
     }
+    return 0;
 }
