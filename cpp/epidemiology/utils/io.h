@@ -585,7 +585,7 @@ details::ApplyResultT<F, T...> apply(IOContext& io, F f, const IOResult<T>&... r
 namespace details
 {
     template <size_t Idx>
-    constexpr std::string make_tuple_element_name()
+    std::string make_tuple_element_name()
     {
         return "Element" + std::to_string(Idx);
     }
