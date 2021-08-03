@@ -197,7 +197,10 @@ struct DummyModel {
     DummyModel(V&& y0)
         : result(0.0, std::forward<V>(y0))
     {
-        ON_CALL(*this, advance).WillByDefault([this](auto t) {  result.add_time_point(t, result.get_last_value()); });
+        ON_CALL(*this, advance).WillByDefault([this](auto t) {  
+            result.reserve(result.get_num_time_points() + 1); 
+            result.add_time_point(t, result.get_last_value()); 
+        });
         ON_CALL(*this, get_result).WillByDefault(testing::ReturnRef(result));
     }
 
@@ -304,6 +307,7 @@ public:
     auto advance(double t)
     { 
         //simple simulation that is constant over time
+        m_result.reserve(m_result.get_num_time_points() + 1);
         return m_result.add_time_point(t, m_result.get_last_value());
     }
 
