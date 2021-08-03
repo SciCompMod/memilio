@@ -232,6 +232,7 @@ private:
             node_model.parameters.template get<TestAndTraceCapacity>() = local_tnt_capacity;
             node_model.parameters.template get<ContactPatterns>().get_school_holidays() = local_holidays;
 
+            node_model.parameters.template get<ContactPatterns>().make_matrix();
             node_model.apply_constraints();
 
             sim_graph.add_node(params_node.id, node_model, m_t0, m_dt_integration);
