@@ -191,6 +191,28 @@ std::vector<Simulation> ensemble_params_percentile(const std::vector<std::vector
     return percentile;
 }
 
+/**
+ * Compute the distance between two SECIR simulation results.
+ * The distance is the 2-norm of the element-wise difference of the two results.
+ * The two results must have the same dimensions.
+ * @param result1 first result.
+ * @param result2 second result.
+ * @return Computed distance between result1 and result2.
+ */
+double result_distance_2norm(const std::vector<epi::TimeSeries<double>>& result1, const std::vector<epi::TimeSeries<double>>& result2);
+
+/**
+ * Compute the distance between two SECIR simulation results in one compartment.
+ * The distance is the 2-norm of the element-wise difference of the two results in the specified compartment.
+ * The two results must have the same dimensions.
+ * @param result1 first result.
+ * @param result2 second result.
+ * @param compartment the compartment to compare.
+ * @return Computed distance between result1 and result2.
+ */
+double result_distance_2norm(const std::vector<epi::TimeSeries<double>>& result1,
+                             const std::vector<epi::TimeSeries<double>>& result2, InfectionState compartment);
+
 } // namespace epi
 
 #endif //EPI_SECIR_ANALYZE_RESULT_H
