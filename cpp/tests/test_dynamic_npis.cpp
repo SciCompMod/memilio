@@ -197,7 +197,10 @@ struct DummyModel {
     DummyModel(V&& y0)
         : result(0.0, std::forward<V>(y0))
     {
-        ON_CALL(*this, advance).WillByDefault([this](auto t) {  result.add_time_point(t, result.get_last_value()); });
+        ON_CALL(*this, advance).WillByDefault([this](auto t) {  
+            result.reserve(result.get_num_time_points() + 1); 
+            result.add_time_point(t, result.get_last_value()); 
+        });
         ON_CALL(*this, get_result).WillByDefault(testing::ReturnRef(result));
     }
 
@@ -238,6 +241,7 @@ TEST(DynamicNPIs, migration)
             1.0, epi::DampingLevel(0), epi::DampingType(0), epi::SimulationTime(0), {0}, Eigen::VectorXd::Ones(2)}});
     npis.set_duration(epi::SimulationTime(5.0));
     npis.set_base_value(100'000);
+    npis.set_interval(epi::SimulationTime(3.0));
 
     epi::MigrationCoefficientGroup coeffs(1, 2);
     epi::MigrationParameters parameters(coeffs);
@@ -252,16 +256,23 @@ TEST(DynamicNPIs, migration)
     ASSERT_EQ(edge.get_parameters().get_coefficients()[0].get_dampings().size(), 0); //not check at the beginning
 
     EXPECT_CALL(node_from.model, advance).Times(1).WillOnce([&](auto t) { node_from.model.result.add_time_point(t, last_state_safe); });
-    node_from.evolve(3.0, 3.0);
-    node_to.evolve(3.0, 3.0);
-    edge.apply_migration(3.0, 3.0, node_from, node_to);
+    node_from.evolve(3.0, 2.5);
+    node_to.evolve(3.0, 2.5);
+    edge.apply_migration(3.0, 2.5, node_from, node_to);
 
     ASSERT_EQ(edge.get_parameters().get_coefficients()[0].get_dampings().size(), 0); //threshold not exceeded
 
     EXPECT_CALL(node_from.model, advance).Times(1).WillOnce([&](auto t) { node_from.model.result.add_time_point(t, last_state_crit); });
-    node_from.evolve(6.0, 3.0);
-    node_to.evolve(6.0, 3.0);
-    edge.apply_migration(6.0, 3.0, node_from, node_to);
+    node_from.evolve(4.5, 1.5);
+    node_to.evolve(4.5, 1.5);
+    edge.apply_migration(4.5, 1.5, node_from, node_to);
+
+    ASSERT_EQ(edge.get_parameters().get_coefficients()[0].get_dampings().size(), 0); //threshold exceeded, but only check every 3 days
+
+    EXPECT_CALL(node_from.model, advance).Times(1).WillOnce([&](auto t) { node_from.model.result.add_time_point(t, last_state_crit); });
+    node_from.evolve(6.0, 1.5);
+    node_to.evolve(6.0, 1.5);
+    edge.apply_migration(6.0, 1.5, node_from, node_to);
 
     ASSERT_EQ(edge.get_parameters().get_coefficients()[0].get_dampings().size(), 2); //NPIs implemented
 }
@@ -296,6 +307,7 @@ public:
     auto advance(double t)
     { 
         //simple simulation that is constant over time
+        m_result.reserve(m_result.get_num_time_points() + 1);
         return m_result.add_time_point(t, m_result.get_last_value());
     }
 

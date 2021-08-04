@@ -374,6 +374,7 @@ void MigrationEdge::apply_migration(double t, double dt, ModelNode<Model>& node_
                     return epi::make_migration_damping_vector(m_parameters.get_coefficients().get_shape(), g);
                 });
         }
+        m_t_last_dynamic_npi_check = t;
     }
 
     //returns
