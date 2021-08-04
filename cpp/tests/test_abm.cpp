@@ -257,6 +257,33 @@ TEST(TestLocation, interact)
     }
 }
 
+TEST(TestPerson, quarantine)
+{
+    using testing::Return;
+
+    auto home = epi::Location(epi::LocationType::Home, 0);
+    auto work = epi::Location(epi::LocationType::Work, 0);
+    auto person   = epi::Person(home, epi::InfectionState::Infected_Detected, epi::AbmAgeGroup::Age15to34);
+    home.add_person(person);
+
+    auto t_morning  = epi::TimePoint(0) + epi::hours(8);
+    auto dt = epi::hours(1);
+
+    ASSERT_EQ(epi::go_to_work(person, t_morning, dt, {}), epi::LocationType::Home);
+
+    //setup rng mock so the person has a state transition to Recovered_Infected
+    ScopedMockDistribution<testing::StrictMock<MockDistribution<epi::ExponentialDistribution<double>>>>
+        mock_exponential_dist;
+    ScopedMockDistribution<testing::StrictMock<MockDistribution<epi::DiscreteDistribution<size_t>>>> mock_discrete_dist;
+    EXPECT_CALL(mock_exponential_dist.get_mock(), invoke).Times(1).WillOnce(Return(0.04));
+    EXPECT_CALL(mock_discrete_dist.get_mock(), invoke).Times(1).WillOnce(Return(0));
+
+    auto infection_parameters = epi::GlobalInfectionParameters();
+    person.interact(dt, infection_parameters, home);
+    ASSERT_EQ(person.get_infection_state(), epi::InfectionState::Recovered_Infected);
+    ASSERT_EQ(epi::go_to_work(person, t_morning, dt, {}), epi::LocationType::Work);
+}
+
 TEST(TestPerson, interact)
 {
     using testing::Return;
@@ -534,7 +561,7 @@ TEST(TestMigrationRules, go_shopping)
     auto hospital = epi::Location(epi::LocationType::Hospital, 0);
     auto p_hosp   = epi::Person(hospital, epi::InfectionState::Infected_Detected, epi::AbmAgeGroup::Age0to4);
     auto home     = epi::Location(epi::LocationType::Home, 0);
-    auto p_home   = epi::Person(home, epi::InfectionState::Infected_Detected, epi::AbmAgeGroup::Age60to79);
+    auto p_home   = epi::Person(home, epi::InfectionState::Susceptible, epi::AbmAgeGroup::Age60to79);
 
     auto t_weekday = epi::TimePoint(0) + epi::days(4) + epi::hours(9);
     auto t_sunday  = epi::TimePoint(0) + epi::days(6) + epi::hours(9);
@@ -569,9 +596,9 @@ TEST(TestMigrationRules, shop_return)
 TEST(TestMigrationRules, go_event)
 {
     auto work   = epi::Location(epi::LocationType::Work, 0);
-    auto p_work = epi::Person(work, epi::InfectionState::Infected_Detected, epi::AbmAgeGroup::Age35to59);
+    auto p_work = epi::Person(work, epi::InfectionState::Susceptible, epi::AbmAgeGroup::Age35to59);
     auto home   = epi::Location(epi::LocationType::Home, 0);
-    auto p_home = epi::Person(home, epi::InfectionState::Infected_Detected, epi::AbmAgeGroup::Age60to79);
+    auto p_home = epi::Person(home, epi::InfectionState::Susceptible, epi::AbmAgeGroup::Age60to79);
 
     auto t_weekday  = epi::TimePoint(0) + epi::days(4) + epi::hours(20);
     auto t_saturday = epi::TimePoint(0) + epi::days(5) + epi::hours(10);

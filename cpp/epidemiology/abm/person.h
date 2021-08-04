@@ -128,11 +128,20 @@ public:
      */
     bool goes_to_school(TimePoint t, const AbmMigrationParameters& params) const;
 
+    /**
+     * Answers the question if a person is currently in quarantine.
+     * @return if the person is in quarantine
+     */
+    bool is_in_quarantine () const {
+        return m_quarantine;
+    }
+
 private:
     LocationId m_location_id;
     std::vector<uint32_t> m_assigned_locations;
     InfectionState m_state;
     TimeSpan m_time_until_carrier;
+    bool m_quarantine;
     epi::Index<AbmAgeGroup> m_age;
     TimeSpan m_time_at_location;
     double m_random_workgroup;

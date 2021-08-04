@@ -10,11 +10,15 @@ Person::Person(LocationId id, InfectionState state, AbmAgeGroup age)
     : m_location_id(id)
     , m_assigned_locations((uint32_t)LocationType::Count, INVALID_LOCATION_INDEX)
     , m_state(state)
+    , m_quarantine(false)
     , m_age(age)
     , m_time_at_location(std::numeric_limits<int>::max())
 {
     m_random_workgroup = UniformDistribution<double>::get_instance()();
     m_random_schoolgroup = UniformDistribution<double>::get_instance()();
+    if (state == InfectionState::Infected_Detected) {
+        m_quarantine = true;
+    }
 }
 
 Person::Person(Location& location, InfectionState state, AbmAgeGroup age)
@@ -38,6 +42,13 @@ void Person::interact(TimeSpan dt, const GlobalInfectionParameters& global_infec
         if (new_state == InfectionState::Exposed) {
             m_time_until_carrier = hours(int(global_infection_params.get<IncubationPeriod>()[{this->m_age}] * 24));
         }
+    }
+
+    if (new_state == InfectionState::Infected_Detected) {
+        m_quarantine = true;
+    }
+    else {
+        m_quarantine = false;
     }
 
     m_state = new_state;
