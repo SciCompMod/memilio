@@ -106,7 +106,7 @@ TEST(ParameterStudies, sample_from_secir_params)
     EXPECT_EQ(contact_matrix_sample[0].get_dampings().size(), 1);
 }
 
-TEST(ParameterStudies, sample_edges)
+TEST(ParameterStudies, sample_graph)
 {
     double t0   = 0;
     double tmax = 100;
@@ -168,6 +168,7 @@ TEST(ParameterStudies, sample_edges)
 
     epi::ContactMatrixGroup& contact_matrix = params.get<epi::ContactPatterns>();
     contact_matrix[0] = epi::ContactMatrix(Eigen::MatrixXd::Constant(num_groups, num_groups, fact * cont_freq));
+
     epi::set_params_distributions_normal(model, t0, tmax, 0.2);
 
     auto graph = epi::Graph<epi::SecirModel, epi::MigrationParameters>();
@@ -178,7 +179,11 @@ TEST(ParameterStudies, sample_edges)
     auto study   = epi::ParameterStudy<epi::SecirSimulation<>>(graph, 0.0, 0.0, 0.5, 1);
     auto results = study.run();
 
-    ASSERT_EQ(results[0].edges()[0].property.get_parameters().get_coefficients()[0].get_dampings().size(), 1);
+    EXPECT_EQ(results[0].edges()[0].property.get_parameters().get_coefficients()[0].get_dampings().size(), 1);
+    for (auto& node : results[0].nodes()) {
+        auto& result_model = node.property.get_simulation().get_model();
+        EXPECT_EQ(result_model.parameters.get<epi::ContactPatterns>().get_cont_freq_mat()[0].get_dampings().size(), 1);
+    }
 }
 
 TEST(ParameterStudies, test_normal_distribution)
