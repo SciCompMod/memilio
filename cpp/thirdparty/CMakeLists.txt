@@ -1,6 +1,6 @@
 # Versions of the bundled libraries
 # If you like to upgrade, just change the number
-set(EPI_EIGEN_VERSION "3.3.0")
+set(EPI_EIGEN_VERSION "3.3")
 set(EPI_SPDLOG_VERSION "1.5.0") 
 set(EPI_JSONCPP_VERSION "1.7.4")
 
@@ -44,17 +44,16 @@ if(EPI_USE_BUNDLED_EIGEN)
         set(UPDATE_DISCONNECTED_IF_AVAILABLE "UPDATE_DISCONNECTED 1")
 
         include(DownloadProject)
-        download_project(PROJ                eigen
-                         URL                 http://gitlab.com/libeigen/eigen/-/archive/${EPI_EIGEN_VERSION}/eigen-${EPI_EIGEN_VERSION}.tar.gz
-                         UPDATE_DISCONNECTED 1
-                         QUIET
-        )
+        download_project(PROJ eigen
+            GIT_REPOSITORY https://gitlab.com/libeigen/eigen.git
+            GIT_TAG ${EPI_EIGEN_VERSION}
+            UPDATE_DISCONNECTED 1
+            QUIET)
     else()
         include(FetchContent)
-        FetchContent_Declare(
-          eigen
-          URL http://gitlab.com/libeigen/eigen/-/archive/${EPI_EIGEN_VERSION}/eigen-${EPI_EIGEN_VERSION}.tar.gz
-        )
+        FetchContent_Declare(eigen
+            GIT_REPOSITORY https://gitlab.com/libeigen/eigen.git
+            GIT_TAG ${EPI_EIGEN_VERSION})
         FetchContent_GetProperties(eigen)
         if(NOT eigen_POPULATED)
           FetchContent_Populate(eigen)
@@ -64,7 +63,7 @@ if(EPI_USE_BUNDLED_EIGEN)
     target_include_directories(eigen INTERFACE ${eigen_SOURCE_DIR})
     add_library(Eigen3::Eigen ALIAS eigen)
 else()
-    find_package(Eigen3 3.3 REQUIRED NO_MODULE)
+    find_package(Eigen3 ${EPI_EIGEN_VERSION} REQUIRED NO_MODULE)
 endif()
 
 if (EPI_USE_BUNDLED_BOOST)
