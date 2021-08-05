@@ -1,3 +1,9 @@
+/**
+ * Simulation used for:
+ * M. J. Kühn et al, 2021: Assessment of effective mitigation and prediction of the spread of SARS-CoV-2 in Germany 
+ * using demographic information and spatial resolution
+ */
+
 #include "epidemiology/secir/parameter_studies.h"
 #include "epidemiology/utils/regions.h"
 #include "epidemiology_io/secir_parameters_io.h"
