@@ -36,7 +36,8 @@ std::string get_current_dir_name()
     return path.string();
 }
 
-IOResult<bool> create_directory(std::string const& rel_path, std::string& abs_path){
+IOResult<bool> create_directory(std::string const& rel_path, std::string& abs_path)
+{
     boost::filesystem::path dir(rel_path);
     abs_path = dir.string();
     boost::system::error_code ec;
@@ -55,6 +56,12 @@ IOResult<bool> create_directory(std::string const& rel_path, std::string& abs_pa
     }
     
     return success(created);
+}
+
+IOResult<bool> create_directory(std::string const& rel_path)
+{
+    std::string abs_path;
+    return create_directory(rel_path, abs_path);
 }
 
 bool file_exists(std::string const& rel_path, std::string& abs_path)
