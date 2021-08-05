@@ -23,7 +23,7 @@ class ParameterStudy
 public:
     using Simulation = S;
 
-    using HandleSimulationResultFunction = std::function<void(epi::Graph<epi::ModelNode<Simulation>, epi::MigrationEdge>)>;
+    using HandleSimulationResultFunction = std::function<void(epi::Graph<epi::SimulationNode<Simulation>, epi::MigrationEdge>)>;
 
 
     /**
@@ -112,9 +112,9 @@ public:
      * Convinience function for a few number of runs, but uses a lot of memory.
      * @return vector of results of each run.
      */
-    std::vector<epi::Graph<epi::ModelNode<Simulation>, epi::MigrationEdge>> run()
+    std::vector<epi::Graph<epi::SimulationNode<Simulation>, epi::MigrationEdge>> run()
     {
-        std::vector<epi::Graph<epi::ModelNode<Simulation>, epi::MigrationEdge>> ensemble_result;
+        std::vector<epi::Graph<epi::SimulationNode<Simulation>, epi::MigrationEdge>> ensemble_result;
         ensemble_result.reserve(m_num_runs);
 
         run([&ensemble_result](auto r) {
@@ -204,9 +204,9 @@ public:
 
 private:
     //sample parameters and create simulation
-    epi::GraphSimulation<epi::Graph<epi::ModelNode<Simulation>, epi::MigrationEdge>> create_sampled_simulation()
+    epi::GraphSimulation<epi::Graph<epi::SimulationNode<Simulation>, epi::MigrationEdge>> create_sampled_simulation()
     {
-        epi::Graph<epi::ModelNode<Simulation>, epi::MigrationEdge> sim_graph;
+        epi::Graph<epi::SimulationNode<Simulation>, epi::MigrationEdge> sim_graph;
 
         //sample global parameters
         auto& shared_params_model = m_graph.nodes()[0].property;

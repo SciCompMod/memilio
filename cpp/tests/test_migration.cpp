@@ -32,7 +32,7 @@ TEST(TestMigration, compareNoMigrationWithSingleIntegration)
 
     auto graph_sim = epi::make_migration_sim(
         t0, dt,
-        epi::Graph<epi::ModelNode<epi::Simulation<epi::SeirModel>>, epi::MigrationEdge>());
+        epi::Graph<epi::SimulationNode<epi::Simulation<epi::SeirModel>>, epi::MigrationEdge>());
     auto& g = graph_sim.get_graph();
     g.add_node(0, model1, t0);
     g.add_node(1, model2, t0);
@@ -80,7 +80,7 @@ TEST(TestMigration, nodeEvolve)
     double t0 = 2.835;
     double dt = 0.5;
 
-    epi::ModelNode<epi::Simulation<Model>> node(model, t0);
+    epi::SimulationNode<epi::Simulation<Model>> node(model, t0);
     node.evolve(t0, dt);
     ASSERT_DOUBLE_EQ(node.get_result().get_last_time(), t0 + dt);
     ASSERT_EQ(print_wrap(node.get_result().get_last_value()), print_wrap(node.get_last_state()));
@@ -106,8 +106,8 @@ TEST(TestMigration, edgeApplyMigration)
     params.get<epi::IncubationTime>()[(epi::AgeGroup)0] = 2.;
     params.apply_constraints();
     double t = 3.125;
-    epi::ModelNode<epi::Simulation<Model>> node1(model, t);
-    epi::ModelNode<epi::Simulation<Model>> node2(model, t);
+    epi::SimulationNode<epi::Simulation<Model>> node1(model, t);
+    epi::SimulationNode<epi::Simulation<Model>> node2(model, t);
 
     //setup edge
     epi::MigrationEdge edge(Eigen::VectorXd::Constant(8, 0.1));

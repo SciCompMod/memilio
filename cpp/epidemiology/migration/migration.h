@@ -20,41 +20,45 @@ namespace epi
 /**
  * represents the simulation in one node of the graph.
  */
-template <class Model>
-class ModelNode
+template <class Sim>
+class SimulationNode
 {
 public:
-    template <class... Args, typename = std::enable_if_t<std::is_constructible<Model, Args...>::value, void>>
-    ModelNode(Args&&... args)
-        : model(std::forward<Args>(args)...)
-        , m_last_state(model.get_result().get_last_value())
-        , m_t0(model.get_result().get_last_time())
+    template <class... Args, typename = std::enable_if_t<std::is_constructible<Sim, Args...>::value, void>>
+    SimulationNode(Args&&... args)
+        : m_simulation(std::forward<Args>(args)...)
+        , m_last_state(m_simulation.get_result().get_last_value())
+        , m_t0(m_simulation.get_result().get_last_time())
     {
     }
 
     /**
      * get the result of the simulation in this node.
+     * @{
      */
     decltype(auto) get_result() const
     {
-        return model.get_result();
+        return m_simulation.get_result();
     }
-
-    /**
-     * get the result of the simulation in this node.
-     */
     decltype(auto) get_result()
     {
-        return model.get_result();
+        return m_simulation.get_result();
     }
+    /**@}*/
 
     /**
      * get the the simulation in this node.
+     * @{
      */
-    Model& get_simulation()
+    Sim& get_simulation()
     {
-        return model;
+        return m_simulation;
+    }    
+    const Sim& get_simulation() const
+    {
+        return m_simulation;
     }
+    /**@}*/
 
     Eigen::Ref<const Eigen::VectorXd> get_last_state() const
     {
@@ -68,13 +72,13 @@ public:
 
     void evolve(double t, double dt)
     {
-        model.advance(t + dt);
-        m_last_state = model.get_result().get_last_value();
+        m_simulation.advance(t + dt);
+        m_last_state = m_simulation.get_result().get_last_value();
     }
 
-    Model model;
 
 private:
+    Sim m_simulation;
     Eigen::VectorXd m_last_state;
     double m_t0;
 };
@@ -261,8 +265,8 @@ public:
      * @param node_from node that people migrated from, return to
      * @param node_to node that people migrated to, return from
      */
-    template <class Model>
-    void apply_migration(double t, double dt, ModelNode<Model>& node_from, ModelNode<Model>& node_to);
+    template <class Sim>
+    void apply_migration(double t, double dt, SimulationNode<Sim>& node_from, SimulationNode<Sim>& node_to);
 
 private:
     MigrationParameters m_parameters;
@@ -284,15 +288,15 @@ private:
  * @param t time of migration
  * @param dt time between migration and return
  */
-template <typename Model, class = std::enable_if_t<is_compartment_model_simulation<Model>::value>>
-void calculate_migration_returns(Eigen::Ref<TimeSeries<double>::Vector> migrated, const Model& model,
+template <class Sim, class = std::enable_if_t<is_compartment_model_simulation<Sim>::value>>
+void calculate_migration_returns(Eigen::Ref<TimeSeries<double>::Vector> migrated, const Sim& sim,
                                  Eigen::Ref<const TimeSeries<double>::Vector> total, double t, double dt)
 {    
     auto y0 = migrated.eval();
     auto y1 = migrated;
     EulerIntegratorCore().step(
         [&](auto&& y, auto&& t_, auto&& dydt) {
-        model.get_model().get_derivatives(total, y, t_, dydt);
+        sim.get_model().get_derivatives(total, y, t_, dydt);
         },
         y0, t, dt, y1);
 }
@@ -300,8 +304,9 @@ void calculate_migration_returns(Eigen::Ref<TimeSeries<double>::Vector> migrated
 /**
  * detect a get_infections_relative function for the Model type.
  */
-template<class Model>
-using get_infections_relative_expr_t = decltype(get_infections_relative(std::declval<const Model&>(), std::declval<double>(), std::declval<const Eigen::Ref<const Eigen::VectorXd>&>()));
+template <class Sim>
+using get_infections_relative_expr_t = decltype(get_infections_relative(
+    std::declval<const Sim&>(), std::declval<double>(), std::declval<const Eigen::Ref<const Eigen::VectorXd>&>()));
 
 /**
  * get the percantage of infected people of the total population in the node
@@ -312,23 +317,26 @@ using get_infections_relative_expr_t = decltype(get_infections_relative(std::dec
  * @param y the current value of the simulation.
  * @param t the current simulation time
  */
-template< class Model, std::enable_if_t<!is_expression_valid<get_infections_relative_expr_t, Model>::value, void*> = nullptr>
-double get_infections_relative(const ModelNode<Model>& /*node*/, double /*t*/, const Eigen::Ref<const Eigen::VectorXd>& /*y*/)
+template <class Sim,
+          std::enable_if_t<!is_expression_valid<get_infections_relative_expr_t, Sim>::value, void*> = nullptr>
+double get_infections_relative(const SimulationNode<Sim>& /*node*/, double /*t*/,
+                               const Eigen::Ref<const Eigen::VectorXd>& /*y*/)
 {
     assert(false && "Overload get_infections_relative for your own model/simulation if you want to use dynamic NPIs.");
     return 0;
 }
-template< class Model, std::enable_if_t<is_expression_valid<get_infections_relative_expr_t, Model>::value, void*> = nullptr>
-double get_infections_relative(const ModelNode<Model>& node, double t, const Eigen::Ref<const Eigen::VectorXd>& y)
+template <class Sim, std::enable_if_t<is_expression_valid<get_infections_relative_expr_t, Sim>::value, void*> = nullptr>
+double get_infections_relative(const SimulationNode<Sim>& node, double t, const Eigen::Ref<const Eigen::VectorXd>& y)
 {
-    return get_infections_relative(node.model, t, y);
+    return get_infections_relative(node.get_simulation(), t, y);
 }
 
 /**
  * detect a get_migration_factors function for the Model type.
  */
-template<class Model>
-using get_migration_factors_expr_t = decltype(get_migration_factors(std::declval<const Model&>(), std::declval<double>(), std::declval<const Eigen::Ref<const Eigen::VectorXd>&>()));
+template <class Sim>
+using get_migration_factors_expr_t = decltype(get_migration_factors(
+    std::declval<const Sim&>(), std::declval<double>(), std::declval<const Eigen::Ref<const Eigen::VectorXd>&>()));
 
 /**
  * Get an additional migration factor.
@@ -341,19 +349,20 @@ using get_migration_factors_expr_t = decltype(get_migration_factors(std::declval
  * @param t the current simulation time
  * @return a vector expression, same size as y, with the factor for each compartment.
  */
-template< class Model, std::enable_if_t<!is_expression_valid<get_migration_factors_expr_t, Model>::value, void*> = nullptr>
-auto get_migration_factors(const ModelNode<Model>& /*node*/, double /*t*/, const Eigen::Ref<const Eigen::VectorXd>& y)
+template <class Sim, std::enable_if_t<!is_expression_valid<get_migration_factors_expr_t, Sim>::value, void*> = nullptr>
+auto get_migration_factors(const SimulationNode<Sim>& /*node*/, double /*t*/,
+                           const Eigen::Ref<const Eigen::VectorXd>& y)
 {
     return Eigen::VectorXd::Ones(y.rows());
 }
-template< class Model, std::enable_if_t<is_expression_valid<get_migration_factors_expr_t, Model>::value, void*> = nullptr>
-auto get_migration_factors(const ModelNode<Model>& node, double t, const Eigen::Ref<const Eigen::VectorXd>& y)
+template <class Sim, std::enable_if_t<is_expression_valid<get_migration_factors_expr_t, Sim>::value, void*> = nullptr>
+auto get_migration_factors(const SimulationNode<Sim>& node, double t, const Eigen::Ref<const Eigen::VectorXd>& y)
 {
-    return get_migration_factors(node.model, t, y);
+    return get_migration_factors(node.get_simulation(), t, y);
 }
 
-template <class Model>
-void MigrationEdge::apply_migration(double t, double dt, ModelNode<Model>& node_from, ModelNode<Model>& node_to)
+template <class Sim>
+void MigrationEdge::apply_migration(double t, double dt, SimulationNode<Sim>& node_from, SimulationNode<Sim>& node_to)
 {
     //check dynamic npis
     if (m_t_last_dynamic_npi_check == -std::numeric_limits<double>::infinity()) {
@@ -382,7 +391,7 @@ void MigrationEdge::apply_migration(double t, double dt, ModelNode<Model>& node_
         if (m_return_times.get_time(i) <= t) {
             auto v0 = find_value_reverse(node_to.get_result(), m_migrated.get_time(i), 1e-10, 1e-10);
             assert(v0 != node_to.get_result().rend() && "unexpected error.");
-            calculate_migration_returns(m_migrated[i], node_to.model, *v0, m_migrated.get_time(i), dt);
+            calculate_migration_returns(m_migrated[i], node_to.get_simulation(), *v0, m_migrated.get_time(i), dt);
             node_from.get_result().get_last_value() += m_migrated[i];
             node_to.get_result().get_last_value() -= m_migrated[i];
             m_migrated.remove_time_point(i);
@@ -406,10 +415,10 @@ void MigrationEdge::apply_migration(double t, double dt, ModelNode<Model>& node_
 
 /**
  * edge functor for migration simulation.
- * @see ModelNode::evolve
+ * @see SimulationNode::evolve
  */
-template <class Model>
-void evolve_model(double t, double dt, ModelNode<Model>& node)
+template <class Sim>
+void evolve_model(double t, double dt, SimulationNode<Sim>& node)
 {
     node.evolve(t, dt);
 }
@@ -418,9 +427,9 @@ void evolve_model(double t, double dt, ModelNode<Model>& node)
  * edge functor for migration simulation.
  * @see MigrationEdge::apply_migration
  */
-template <class Model>
-void apply_migration(double t, double dt, MigrationEdge& migrationEdge, ModelNode<Model>& node_from,
-                     ModelNode<Model>& node_to)
+template <class Sim>
+void apply_migration(double t, double dt, MigrationEdge& migrationEdge, SimulationNode<Sim>& node_from,
+                     SimulationNode<Sim>& node_to)
 {
     migrationEdge.apply_migration(t, dt, node_from, node_to);
 }
@@ -434,11 +443,11 @@ void apply_migration(double t, double dt, MigrationEdge& migrationEdge, ModelNod
  * @param dt time step between migrations
  * @param graph set up for migration simulation
  */
-template <typename Model>
-GraphSimulation<Graph<ModelNode<Model>, MigrationEdge>>
-make_migration_sim(double t0, double dt, const Graph<ModelNode<Model>, MigrationEdge>& graph)
+template <class Sim>
+GraphSimulation<Graph<SimulationNode<Sim>, MigrationEdge>>
+make_migration_sim(double t0, double dt, const Graph<SimulationNode<Sim>, MigrationEdge>& graph)
 {
-    return make_graph_sim(t0, dt, graph, &evolve_model<Model>, &apply_migration<Model>);
+    return make_graph_sim(t0, dt, graph, &evolve_model<Sim>, &apply_migration<Sim>);
 }
 
 } // namespace epi

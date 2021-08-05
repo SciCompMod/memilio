@@ -139,7 +139,7 @@ IOResult<Graph<Model, MigrationParameters>> read_graph(const std::string& direct
  * @param tmax end point of simulation
  */
 template <class Simulation>
-IOResult<void> write_single_run_result(const int run, const epi::Graph<epi::ModelNode<Simulation>, epi::MigrationEdge>& graph)
+IOResult<void> write_single_run_result(const int run, const epi::Graph<epi::SimulationNode<Simulation>, epi::MigrationEdge>& graph)
 {
     assert(graph.nodes().size() > 0 && "Graph Nodes are empty");
 

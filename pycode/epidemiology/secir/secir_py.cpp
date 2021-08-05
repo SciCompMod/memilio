@@ -23,12 +23,12 @@ namespace
 //select only the first node of the graph of each run, used for parameterstudy with single nodes
 template<class Sim>
 std::vector<Sim> filter_graph_results(
-    const std::vector<epi::Graph<epi::ModelNode<Sim>, epi::MigrationEdge>>& graph_results)
+    const std::vector<epi::Graph<epi::SimulationNode<Sim>, epi::MigrationEdge>>& graph_results)
 {
     std::vector<Sim> results;
     results.reserve(graph_results.size());
     std::transform(graph_results.begin(), graph_results.end(), std::back_inserter(results), [](auto&& graph) {
-        return graph.nodes()[0].property.model;
+        return graph.nodes()[0].property.get_simulation();
     });
     return results;
 }
@@ -222,13 +222,14 @@ void bind_SecirModelNode(py::module& m, std::string const& name)
 template <typename Simulation>
 void bind_SecirSimulationNode(py::module& m, std::string const& name)
 {
-    py::class_<epi::Node<epi::ModelNode<Simulation>>>(m, name.c_str())
+    py::class_<epi::Node<epi::SimulationNode<Simulation>>>(m, name.c_str())
         .def_property_readonly("id",
                                [](const epi::Node<Simulation>& self) {
                                    return self.id;
                                })
         .def_property_readonly(
-            "property", [](const epi::Node<epi::ModelNode<Simulation>>& self) -> auto& { return self.property.model; },
+            "property",
+            [](const epi::Node<epi::SimulationNode<Simulation>>& self) -> auto& { return self.property.get_simulation(); },
             py::return_value_policy::reference_internal);
 }
 
@@ -276,7 +277,7 @@ void bind_SecirModelGraph(py::module& m, std::string const& name)
 template <class Simulation>
 void bind_MigrationGraph(py::module& m, std::string const& name)
 {
-    using G = epi::Graph<epi::ModelNode<Simulation>, epi::MigrationEdge>;
+    using G = epi::Graph<epi::SimulationNode<Simulation>, epi::MigrationEdge>;
     py::class_<G>(m, name.c_str())
         .def(py::init<>())
         .def(
@@ -373,7 +374,7 @@ void bind_ParameterStudy(py::module& m, std::string const& name)
             "run_single",
             [](epi::ParameterStudy<Simulation>& self, std::function<void(Simulation)> handle_result) {
                 self.run([handle_result](auto r) {
-                    handle_result(r.nodes()[0].property.model);
+                    handle_result(r.nodes()[0].property.get_simulation());
                 });
             },
             py::arg("handle_result_func"))
@@ -907,7 +908,7 @@ PYBIND11_MODULE(_secir, m)
     bind_SecirModelGraph<epi::SecirModel>(m, "SecirModelGraph");
     using Simulation = epi::SecirSimulation<>;
     bind_MigrationGraph<Simulation>(m, "MigrationGraph");
-    using MigrationGraph = epi::Graph<epi::ModelNode<Simulation>, epi::MigrationEdge>;
+    using MigrationGraph = epi::Graph<epi::SimulationNode<Simulation>, epi::MigrationEdge>;
     bind_GraphSimulation<MigrationGraph>(m, "MigrationSimulation");
 
     bind_ParameterStudy<epi::SecirSimulation<>>(m, "ParameterStudy");
