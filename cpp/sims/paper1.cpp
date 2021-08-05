@@ -9,7 +9,9 @@
 
 namespace fs = boost::filesystem;
 
-//contact matrix indices
+/**
+ * indices of contact matrix corresponding to locations where contacts occur.
+ */
 enum class ContactLocation
 {
     Home = 0,
@@ -19,10 +21,12 @@ enum class ContactLocation
     Count,
 };
 
-//types of damping
+/**
+ * different types of NPI, used as DampingType.
+ */
 enum class Intervention
 {
-    Home = 0,
+    Home,
     SchoolClosure,
     HomeOffice,
     GatheringBanFacilitiesClosure,
@@ -30,13 +34,38 @@ enum class Intervention
     SeniorAwareness,
 };
 
+/**
+ * different level of NPI, used as DampingLevel.
+ */
+enum class InterventionLevel
+{
+    Main,
+    PhysicalDistanceAndMasks,
+    SeniorAwareness,
+    Holidays,
+};
+
+/**
+ * Set a value and distribution of an UncertainValue.
+ * Assigns average of min and max as a value and UNIFORM(min, max) as a distribution.
+ * @param p uncertain value to set.
+ * @param min minimum of distribution.
+ * @param max minimum of distribution.
+ */
 void assign_uniform_distribution(epi::UncertainValue& p, double min, double max)
 {
-    p   = epi::UncertainValue(0.5 * (max + min));
-    min = max = double(p);
+    p = epi::UncertainValue(0.5 * (max + min));
     p.set_distribution(epi::ParameterDistributionUniform(min, max));
 }
 
+/**
+ * Set a value and distribution of an array of UncertainValues.
+ * Assigns average of min[i] and max[i] as a value and UNIFORM(min[i], max[i]) as a distribution for
+ * each element i of the array.
+ * @param array array of UncertainValues to set.
+ * @param min minimum of distribution for each element of array.
+ * @param max minimum of distribution for each element of array.
+ */
 template <size_t N>
 void array_assign_uniform_distribution(epi::CustomIndexArray<epi::UncertainValue, epi::AgeGroup>& array,
                                        const double (&min)[N], const double (&max)[N])
@@ -47,6 +76,13 @@ void array_assign_uniform_distribution(epi::CustomIndexArray<epi::UncertainValue
     }
 }
 
+/**
+ * Set a value and distribution of an array of UncertainValues.
+ * Assigns average of min and max as a value and UNIFORM(min, max) as a distribution to every element of the array.
+ * @param array array of UncertainValues to set.
+ * @param min minimum of distribution.
+ * @param max minimum of distribution.
+ */
 void array_assign_uniform_distribution(epi::CustomIndexArray<epi::UncertainValue, epi::AgeGroup>& array, double min,
                                        double max)
 {
@@ -55,6 +91,11 @@ void array_assign_uniform_distribution(epi::CustomIndexArray<epi::UncertainValue
     }
 }
 
+/**
+ * Set epidemiological parameters of Covid19.
+ * @param params Object that the parameters will be added to.
+ * @returns Currently generates no errors.
+ */
 epi::IOResult<void> set_covid_parameters(epi::SecirParams& params)
 {
     //times
@@ -129,6 +170,13 @@ static const std::map<ContactLocation, std::string> contact_locations = {{Contac
                                                                          {ContactLocation::Work, "work"},
                                                                          {ContactLocation::Other, "other"}};
 
+/**
+ * Set contact matrices.
+ * Reads contact matrices from files in the data directory.
+ * @param data_dir data directory.
+ * @param params Object that the contact matrices will be added to.
+ * @returns any io errors that happen during reading of the files.
+ */
 epi::IOResult<void> set_contact_matrices(const fs::path& data_dir, epi::SecirParams& params)
 {
     //TODO: io error handling
@@ -148,8 +196,14 @@ epi::IOResult<void> set_contact_matrices(const fs::path& data_dir, epi::SecirPar
     return epi::success();
 }
 
-epi::IOResult<void> set_npis(const fs::path& data_dir, epi::Date start_date, epi::Date end_date,
-                             epi::SecirParams& params)
+/**
+ * Set NPIs.
+ * @param start_date start date of the simulation.
+ * @param end_date end date of the simulation.
+ * @param params Object that the NPIs will be added to.
+ * @returns Currently generates no errors.
+ */
+epi::IOResult<void> set_npis(epi::Date start_date, epi::Date end_date, epi::SecirParams& params)
 {
     auto& contacts         = params.get<epi::ContactPatterns>();
     auto& contact_dampings = contacts.get_dampings();
@@ -164,32 +218,34 @@ epi::IOResult<void> set_npis(const fs::path& data_dir, epi::Date start_date, epi
     auto contacts_at_home = [=](auto t, auto min, auto max) {
         auto v = epi::UncertainValue();
         assign_uniform_distribution(v, min, max);
-        return epi::DampingSampling(v, epi::DampingLevel(1), epi::DampingType(int(Intervention::Home)), t,
+        return epi::DampingSampling(v, epi::DampingLevel(int(InterventionLevel::Main)), epi::DampingType(int(Intervention::Home)), t,
                                     {size_t(ContactLocation::Home)}, group_weights_all);
     };
     auto school_closure = [=](auto t, auto min, auto max) {
         auto v = epi::UncertainValue();
         assign_uniform_distribution(v, min, max);
-        return epi::DampingSampling(v, epi::DampingLevel(1), epi::DampingType(int(Intervention::SchoolClosure)), t,
+        return epi::DampingSampling(v, epi::DampingLevel(int(InterventionLevel::Main)),
+                                    epi::DampingType(int(Intervention::SchoolClosure)), t,
                                     {size_t(ContactLocation::School)}, group_weights_all);
     };
     auto home_office = [=](auto t, auto min, auto max) {
         auto v = epi::UncertainValue();
         assign_uniform_distribution(v, min, max);
-        return epi::DampingSampling(v, epi::DampingLevel(1), epi::DampingType(int(Intervention::HomeOffice)), t,
-                                    {size_t(ContactLocation::Work)}, group_weights_all);
+        return epi::DampingSampling(v, epi::DampingLevel(int(InterventionLevel::Main)),
+                                    epi::DampingType(int(Intervention::HomeOffice)), t, {size_t(ContactLocation::Work)},
+                                    group_weights_all);
     };
     auto social_events = [=](auto t, auto min, auto max) {
         auto v = epi::UncertainValue();
         assign_uniform_distribution(v, min, max);
-        return epi::DampingSampling(v, epi::DampingLevel(1),
+        return epi::DampingSampling(v, epi::DampingLevel(int(InterventionLevel::Main)),
                                     epi::DampingType(int(Intervention::GatheringBanFacilitiesClosure)), t,
                                     {size_t(ContactLocation::Other)}, group_weights_all);
     };
     auto social_events_work = [=](auto t, auto min, auto max) {
         auto v = epi::UncertainValue();
         assign_uniform_distribution(v, min, max);
-        return epi::DampingSampling(v, epi::DampingLevel(1),
+        return epi::DampingSampling(v, epi::DampingLevel(int(InterventionLevel::Main)),
                                     epi::DampingType(int(Intervention::GatheringBanFacilitiesClosure)), t,
                                     {size_t(ContactLocation::Work)}, group_weights_all);
     };
@@ -197,20 +253,21 @@ epi::IOResult<void> set_npis(const fs::path& data_dir, epi::Date start_date, epi
         auto v = epi::UncertainValue();
         assign_uniform_distribution(v, min, max);
         return epi::DampingSampling(
-            v, epi::DampingLevel(2), epi::DampingType(int(Intervention::PhysicalDistanceAndMasks)), t,
+            v, epi::DampingLevel(int(InterventionLevel::PhysicalDistanceAndMasks)), epi::DampingType(int(Intervention::PhysicalDistanceAndMasks)), t,
             {size_t(ContactLocation::Home), size_t(ContactLocation::School)}, group_weights_all);
     };
     auto physical_distancing_work_other = [=](auto t, auto min, auto max) {
         auto v = epi::UncertainValue();
         assign_uniform_distribution(v, min, max);
-        return epi::DampingSampling(v, epi::DampingLevel(2),
+        return epi::DampingSampling(v, epi::DampingLevel(int(InterventionLevel::PhysicalDistanceAndMasks)),
                                     epi::DampingType(int(Intervention::PhysicalDistanceAndMasks)), t,
                                     {size_t(ContactLocation::Work), size_t(ContactLocation::Other)}, group_weights_all);
     };
     auto senior_awareness = [=](auto t, auto min, auto max) {
         auto v = epi::UncertainValue();
         assign_uniform_distribution(v, min, max);
-        return epi::DampingSampling(v, epi::DampingLevel(3), epi::DampingType(int(Intervention::SeniorAwareness)), t,
+        return epi::DampingSampling(v, epi::DampingLevel(int(InterventionLevel::SeniorAwareness)),
+                                    epi::DampingType(int(Intervention::SeniorAwareness)), t,
                                     {size_t(ContactLocation::Home), size_t(ContactLocation::Other)},
                                     group_weights_seniors);
     };
@@ -323,15 +380,52 @@ epi::IOResult<void> set_npis(const fs::path& data_dir, epi::Date start_date, epi
     auto school_holiday_value = epi::UncertainValue();
     assign_uniform_distribution(school_holiday_value, 1.0, 1.0);
     contacts.get_school_holiday_damping() = epi::DampingSampling(
-        school_holiday_value, epi::DampingLevel(5), epi::DampingType(int(Intervention::SchoolClosure)),
+        school_holiday_value, epi::DampingLevel(int(InterventionLevel::Holidays)), epi::DampingType(int(Intervention::SchoolClosure)),
         epi::SimulationTime(0.0), {size_t(ContactLocation::School)}, group_weights_all);
 
     return epi::success();
 }
 
+/**
+ * Set synthetic population data for testing.
+ * Same total populaton but different spread of infection in each county.
+ * @param counties parameters for each county.
+ */
+void set_synthetic_population_data(std::vector<epi::SecirModel>& counties) 
+{
+    for (size_t county_idx = 0; county_idx < counties.size(); ++county_idx) {
+        double nb_total_t0 = 10000, nb_exp_t0 = 2, nb_inf_t0 = 0, nb_car_t0 = 0, nb_hosp_t0 = 0, nb_icu_t0 = 0,
+               nb_rec_t0 = 0, nb_dead_t0 = 0;
+
+        nb_exp_t0 = (county_idx % 10 + 1) * 3;
+
+        for (epi::AgeGroup i = 0; i < counties[county_idx].parameters.get_num_groups(); i++) {
+            counties[county_idx].populations[{i, epi::InfectionState::Exposed}]      = nb_exp_t0;
+            counties[county_idx].populations[{i, epi::InfectionState::Carrier}]      = nb_car_t0;
+            counties[county_idx].populations[{i, epi::InfectionState::Infected}]     = nb_inf_t0;
+            counties[county_idx].populations[{i, epi::InfectionState::Hospitalized}] = nb_hosp_t0;
+            counties[county_idx].populations[{i, epi::InfectionState::ICU}]          = nb_icu_t0;
+            counties[county_idx].populations[{i, epi::InfectionState::Recovered}]    = nb_rec_t0;
+            counties[county_idx].populations[{i, epi::InfectionState::Dead}]         = nb_dead_t0;
+            counties[county_idx].populations.set_difference_from_group_total<epi::AgeGroup>(
+                {i, epi::InfectionState::Susceptible}, nb_total_t0);
+        }
+    }
+}
+
+/**
+ * Adds county nodes to graph.
+ * Reads list counties and populations from files in the data directory. 
+ * @param params Parameters that are shared between all nodes.
+ * @param start_date start date of the simulation.
+ * @param end_date end date of the simulation.
+ * @param data_dir data directory.
+ * @param params_graph graph object that the nodes will be added to.
+ * @returns any io errors that happen during reading of the files.
+ */
 epi::IOResult<void> set_nodes(const epi::SecirParams& params, epi::Date start_date, epi::Date end_date,
-                                          const fs::path& data_dir,
-                                          epi::Graph<epi::SecirModel, epi::MigrationParameters>& params_graph)
+                              const fs::path& data_dir,
+                              epi::Graph<epi::SecirModel, epi::MigrationParameters>& params_graph)
 {
     namespace de = epi::regions::de;
 
@@ -344,24 +438,9 @@ epi::IOResult<void> set_nodes(const epi::SecirParams& params, epi::Date start_da
     auto scaling_factor_icu      = 1.0;
     BOOST_OUTCOME_TRY(epi::read_population_data_county(counties, start_date, county_ids, scaling_factor_infected,
                                                        scaling_factor_icu, (data_dir / "pydata" / "Germany").string()));
+    // set_synthetic_population_data(counties);
 
     for (size_t county_idx = 0; county_idx < counties.size(); ++county_idx) {
-        // double nb_total_t0 = 10000, nb_exp_t0 = 2, nb_inf_t0 = 0, nb_car_t0 = 0, nb_hosp_t0 = 0, nb_icu_t0 = 0,
-        //        nb_rec_t0 = 0, nb_dead_t0 = 0;
-
-        // nb_exp_t0 = (county_idx % 10 + 1) * 3;
-
-        // for (epi::AgeGroup i = 0; i < params.get_num_groups(); i++) {
-        //     counties[county_idx].populations[{i, epi::InfectionState::Exposed}]      = nb_exp_t0;
-        //     counties[county_idx].populations[{i, epi::InfectionState::Carrier}]      = nb_car_t0;
-        //     counties[county_idx].populations[{i, epi::InfectionState::Infected}]     = nb_inf_t0;
-        //     counties[county_idx].populations[{i, epi::InfectionState::Hospitalized}] = nb_hosp_t0;
-        //     counties[county_idx].populations[{i, epi::InfectionState::ICU}]          = nb_icu_t0;
-        //     counties[county_idx].populations[{i, epi::InfectionState::Recovered}]    = nb_rec_t0;
-        //     counties[county_idx].populations[{i, epi::InfectionState::Dead}]         = nb_dead_t0;
-        //     counties[county_idx].populations.set_difference_from_group_total<epi::AgeGroup>(
-        //         {i, epi::InfectionState::Susceptible}, nb_total_t0);
-        // }
 
         //local parameters
         auto tnt_capacity = counties[county_idx].populations.get_total() * 7.5 / 100000.;
@@ -395,6 +474,14 @@ epi::IOResult<void> set_nodes(const epi::SecirParams& params, epi::Date start_da
     return epi::success();
 }
 
+/**
+ * Adds edges to graph.
+ * Edges represent commuting and other migration between counties.
+ * Reads migration from files in the data directory.
+ * @param data_dir data directory.
+ * @param params_graph graph object that the nodes will be added to.
+ * @returns any io errors that happen during reading of the files.
+ */
 epi::IOResult<void> set_edges(const fs::path& data_dir,
                               epi::Graph<epi::SecirModel, epi::MigrationParameters>& params_graph)
 {
@@ -458,9 +545,18 @@ epi::IOResult<void> set_edges(const fs::path& data_dir,
     return epi::success();
 }
 
-epi::IOResult<epi::Graph<epi::SecirModel, epi::MigrationParameters>> create_graph(epi::Date start_date, epi::Date end_date, const fs::path& data_dir) 
+/**
+ * Create the input graph for the parameter study.
+ * Reads files from the data directory.
+ * @param start_date start date of the simulation.
+ * @param end_date end date of the simulation.
+ * @param data_dir data directory.
+ * @returns created graph or any io errors that happen during reading of the files.
+ */
+epi::IOResult<epi::Graph<epi::SecirModel, epi::MigrationParameters>>
+create_graph(epi::Date start_date, epi::Date end_date, const fs::path& data_dir)
 {
-    const auto start_day    = epi::get_day_in_year(start_date);
+    const auto start_day = epi::get_day_in_year(start_date);
 
     //global parameters
     const int num_age_groups = 6;
@@ -468,7 +564,7 @@ epi::IOResult<epi::Graph<epi::SecirModel, epi::MigrationParameters>> create_grap
     params.get<epi::StartDay>() = start_day;
     BOOST_OUTCOME_TRY(set_covid_parameters(params));
     BOOST_OUTCOME_TRY(set_contact_matrices(data_dir, params));
-    BOOST_OUTCOME_TRY(set_npis(data_dir, start_date, end_date, params));
+    BOOST_OUTCOME_TRY(set_npis(start_date, end_date, params));
 
     //graph of counties with populations and local parameters
     //and migration between counties
@@ -479,28 +575,182 @@ epi::IOResult<epi::Graph<epi::SecirModel, epi::MigrationParameters>> create_grap
     return epi::success(params_graph);
 }
 
+/**
+ * Load the input graph for the parameter study that was previously saved.
+ * @param save_dir directory where the graph was saved.
+ * @returns created graph or any io errors that happen during reading of the files.
+ */
 epi::IOResult<epi::Graph<epi::SecirModel, epi::MigrationParameters>> load_graph(const fs::path& save_dir)
 {
     return epi::read_graph<epi::SecirModel>(save_dir.string());
 }
 
-epi::IOResult<void> save_graph(const epi::Graph<epi::SecirModel, epi::MigrationParameters>& params_graph, const fs::path& save_dir)
+/**
+ * Save the input graph for the parameter study.
+ * @param save_dir directory where the graph will be saved.
+ * @returns any io errors that happen during writing of the files.
+ */
+epi::IOResult<void> save_graph(const epi::Graph<epi::SecirModel, epi::MigrationParameters>& params_graph,
+                               const fs::path& save_dir)
 {
     return epi::write_graph(params_graph, save_dir.string());
 }
 
-enum class RunMode {
+/**
+ * Create an unconnected graph.
+ * Can be used to save space on disk when writing parameters if the edges are not required.
+ * @param params parameters for each county node.
+ * @param county_ids id of each county node.
+ * @return graph with county nodes but no edges.
+ */
+auto make_graph_no_edges(const std::vector<epi::SecirModel>& params, const std::vector<int>& county_ids)
+{        
+    //make a graph without edges for writing to file
+    auto graph = epi::Graph<epi::SecirModel, epi::MigrationParameters>();
+    for (auto i = size_t(0); i < county_ids.size(); ++i) {
+        graph.add_node(county_ids[i], params[i]);
+    }
+    return graph;
+}
+
+/**
+ * Save the result of a single parameter study run.
+ * Creates a new subdirectory for this run.
+ * @param result result of the simulation run.
+ * @param params parameters used for the simulation run.
+ * @param county_ids ids of the county nodes.
+ * @param result_dir top level directory for all results of the parameter study.
+ * @param run_idx index of the run.
+ * @return any io errors that occur during writing of the files.
+ */
+epi::IOResult<void> save_result(const std::vector<epi::TimeSeries<double>>& result,
+                                const std::vector<epi::SecirModel>& params, const std::vector<int>& county_ids,
+                                const fs::path& result_dir, size_t run_idx)
+{
+    auto result_dir_run = result_dir / ("run" + std::to_string(run_idx));
+    BOOST_OUTCOME_TRY(epi::create_directory(result_dir_run.string()));
+    BOOST_OUTCOME_TRY(epi::save_result(result, county_ids, (result_dir_run / "Result.h5").string()));
+    BOOST_OUTCOME_TRY(epi::write_graph(make_graph_no_edges(params, county_ids), result_dir_run.string(), epi::IOF_OmitDistributions));
+    return epi::success();
+}
+
+/**
+ * Save the results of a parameter study.
+ * Stores different percentiles and sums of the results and parameters. 
+ * @param ensemble_results result of each simulation run.
+ * @param ensemble_params parameters used for each simulation run.
+ * @param county_ids ids of the county nodes.
+ * @param result_dir top level directory for all results of the parameter study.
+ * @return any io errors that occur during writing of the files.
+ */
+epi::IOResult<void> save_results(const std::vector<std::vector<epi::TimeSeries<double>>>& ensemble_results,
+                                 const std::vector<std::vector<epi::SecirModel>>& ensemble_params,
+                                 const std::vector<int>& county_ids, const fs::path& result_dir)
+{
+    //save results and sum of results over nodes
+    auto ensemble_result_sum = epi::sum_nodes(ensemble_results);
+    for (size_t i = 0; i < ensemble_result_sum.size(); ++i) {
+        BOOST_OUTCOME_TRY(epi::save_result(ensemble_result_sum[i], {0},
+                                           (result_dir / ("results_run" + std::to_string(i) + "_sum.h5")).string()));
+        BOOST_OUTCOME_TRY(epi::save_result(ensemble_results[i], county_ids,
+                                           (result_dir / ("results_run" + std::to_string(i) + ".h5")).string()));
+    }
+
+    //make directories for percentiles
+    auto result_dir_p05 = result_dir / "p05";
+    auto result_dir_p25 = result_dir / "p25";
+    auto result_dir_p50 = result_dir / "p50";
+    auto result_dir_p75 = result_dir / "p75";
+    auto result_dir_p95 = result_dir / "p95";
+    BOOST_OUTCOME_TRY(epi::create_directory(result_dir_p05.string()));
+    BOOST_OUTCOME_TRY(epi::create_directory(result_dir_p25.string()));
+    BOOST_OUTCOME_TRY(epi::create_directory(result_dir_p50.string()));
+    BOOST_OUTCOME_TRY(epi::create_directory(result_dir_p75.string()));
+    BOOST_OUTCOME_TRY(epi::create_directory(result_dir_p95.string()));
+
+    //save percentiles of results, summed over nodes
+    {
+        auto ensemble_results_sum_p05 = epi::ensemble_percentile(ensemble_result_sum, 0.05);
+        auto ensemble_results_sum_p25 = epi::ensemble_percentile(ensemble_result_sum, 0.25);
+        auto ensemble_results_sum_p50 = epi::ensemble_percentile(ensemble_result_sum, 0.50);
+        auto ensemble_results_sum_p75 = epi::ensemble_percentile(ensemble_result_sum, 0.75);
+        auto ensemble_results_sum_p95 = epi::ensemble_percentile(ensemble_result_sum, 0.95);
+
+        BOOST_OUTCOME_TRY(
+            epi::save_result(ensemble_results_sum_p05, {0}, (result_dir_p05 / "Results_sum.h5").string()));
+        BOOST_OUTCOME_TRY(
+            epi::save_result(ensemble_results_sum_p25, {0}, (result_dir_p25 / "Results_sum.h5").string()));
+        BOOST_OUTCOME_TRY(
+            epi::save_result(ensemble_results_sum_p50, {0}, (result_dir_p50 / "Results_sum.h5").string()));
+        BOOST_OUTCOME_TRY(
+            epi::save_result(ensemble_results_sum_p75, {0}, (result_dir_p75 / "Results_sum.h5").string()));
+        BOOST_OUTCOME_TRY(
+            epi::save_result(ensemble_results_sum_p95, {0}, (result_dir_p95 / "Results_sum.h5").string()));
+    }
+
+    //save percentiles of results
+    {
+        auto ensemble_results_p05 = epi::ensemble_percentile(ensemble_results, 0.05);
+        auto ensemble_results_p25 = epi::ensemble_percentile(ensemble_results, 0.25);
+        auto ensemble_results_p50 = epi::ensemble_percentile(ensemble_results, 0.50);
+        auto ensemble_results_p75 = epi::ensemble_percentile(ensemble_results, 0.75);
+        auto ensemble_results_p95 = epi::ensemble_percentile(ensemble_results, 0.95);
+
+        BOOST_OUTCOME_TRY(epi::save_result(ensemble_results_p05, county_ids, (result_dir_p05 / "Results.h5").string()));
+        BOOST_OUTCOME_TRY(epi::save_result(ensemble_results_p25, county_ids, (result_dir_p25 / "Results.h5").string()));
+        BOOST_OUTCOME_TRY(epi::save_result(ensemble_results_p50, county_ids, (result_dir_p50 / "Results.h5").string()));
+        BOOST_OUTCOME_TRY(epi::save_result(ensemble_results_p75, county_ids, (result_dir_p75 / "Results.h5").string()));
+        BOOST_OUTCOME_TRY(epi::save_result(ensemble_results_p95, county_ids, (result_dir_p95 / "Results.h5").string()));
+    }
+
+    //save percentiles of parameters
+    {
+        auto ensemble_params_p05 = epi::ensemble_params_percentile(ensemble_params, 0.05);
+        auto ensemble_params_p25 = epi::ensemble_params_percentile(ensemble_params, 0.25);
+        auto ensemble_params_p50 = epi::ensemble_params_percentile(ensemble_params, 0.50);
+        auto ensemble_params_p75 = epi::ensemble_params_percentile(ensemble_params, 0.75);
+        auto ensemble_params_p95 = epi::ensemble_params_percentile(ensemble_params, 0.95);
+
+        auto make_graph = [&county_ids](auto&& params) {
+            return make_graph_no_edges(params, county_ids);
+        };
+        BOOST_OUTCOME_TRY(epi::write_graph(make_graph(ensemble_params_p05), result_dir_p05.string(), epi::IOF_OmitDistributions));
+        BOOST_OUTCOME_TRY(epi::write_graph(make_graph(ensemble_params_p25), result_dir_p25.string(), epi::IOF_OmitDistributions));
+        BOOST_OUTCOME_TRY(epi::write_graph(make_graph(ensemble_params_p50), result_dir_p50.string(), epi::IOF_OmitDistributions));
+        BOOST_OUTCOME_TRY(epi::write_graph(make_graph(ensemble_params_p75), result_dir_p75.string(), epi::IOF_OmitDistributions));
+        BOOST_OUTCOME_TRY(epi::write_graph(make_graph(ensemble_params_p95), result_dir_p95.string(), epi::IOF_OmitDistributions));
+    }
+    return epi::success();
+}
+
+/**
+ * Different modes for running the parameter study.
+ */
+enum class RunMode
+{
     Load,
     Save,
 };
 
-epi::IOResult<void> run(RunMode mode, const fs::path& data_dir, const fs::path& save_dir)
+/**
+ * Run the parameter study.
+ * Load a previously stored graph or create a new one from data. 
+ * The graph is the input for the parameter study.
+ * A newly created graph is saved and can be reused.
+ * @param mode Mode for running the parameter study.
+ * @param data_dir data directory. Not used if mode is RunMode::Load.
+ * @param save_dir directory where the graph is loaded from if mode is RunMOde::Load or save to if mode is RunMode::Save.
+ * @param result_dir directory where all results of the parameter study will be stored.
+ * @returns any io error that occurs during reading or writing of files.
+ */
+epi::IOResult<void> run(RunMode mode, const fs::path& data_dir, const fs::path& save_dir, const fs::path& result_dir)
 {
     const auto start_date   = epi::Date(2020, 12, 12);
     const auto num_days_sim = 20.0;
     const auto end_date     = epi::offset_date_by_days(start_date, int(std::ceil(num_days_sim)));
     const auto num_runs     = 1;
 
+    //create or load graph
     epi::Graph<epi::SecirModel, epi::MigrationParameters> params_graph;
     if (mode == RunMode::Save) {
         BOOST_OUTCOME_TRY(created, create_graph(start_date, end_date, data_dir));
@@ -512,14 +762,20 @@ epi::IOResult<void> run(RunMode mode, const fs::path& data_dir, const fs::path& 
         params_graph = loaded;
     }
 
-    std::cout << std::setprecision(16);
-    //parameter study
+    std::vector<int> county_ids(params_graph.nodes().size());
+    std::transform(params_graph.nodes().begin(), params_graph.nodes().end(), county_ids.begin(), [](auto& n) {
+        return n.id;
+    });
+
+    //run parameter study
     auto parameter_study  = epi::ParameterStudy<epi::SecirSimulation<>>{params_graph, 0.0, num_days_sim, 0.5, num_runs};
     auto ensemble_results = std::vector<std::vector<epi::TimeSeries<double>>>{};
-    auto ensemble_params  = std::vector<std::vector<epi::SecirModel>>{};
     ensemble_results.reserve(size_t(num_runs));
+    auto ensemble_params = std::vector<std::vector<epi::SecirModel>>{};
     ensemble_params.reserve(size_t(num_runs));
-    parameter_study.run([&ensemble_results, &ensemble_params](auto results_graph) {
+    auto save_result_result = epi::IOResult<void>(epi::success());
+    auto run_idx            = size_t(0);
+    parameter_study.run([&](auto results_graph) {
         ensemble_results.push_back(epi::interpolate_simulation_result(results_graph));
 
         ensemble_params.emplace_back();
@@ -528,78 +784,67 @@ epi::IOResult<void> run(RunMode mode, const fs::path& data_dir, const fs::path& 
                        std::back_inserter(ensemble_params.back()), [](auto&& node) {
                            return node.property.get_simulation().get_model();
                        });
-    });
 
-    std::vector<int> county_ids(params_graph.nodes().size());
-    std::transform(params_graph.nodes().begin(), params_graph.nodes().end(), county_ids.begin(), [](auto& n) {
-        return n.id;
-    });
-    BOOST_OUTCOME_TRY(epi::save_result(ensemble_results[0], county_ids, "bla.h5"));
-
-    auto& params_out = ensemble_params[0][0].parameters;
-    std::cout << "matrix at 0\n";
-    std::cout << params_out.get<epi::ContactPatterns>().get_cont_freq_mat().get_matrix_at(0.0) << '\n';
-    std::cout << "matrix at 20\n";
-    std::cout << params_out.get<epi::ContactPatterns>().get_cont_freq_mat().get_matrix_at(20.0) << '\n';
-    // for (size_t i = 0; i < contact_locations.size(); ++i) {
-    //     std::cout << "matrix " << i << " at 0\n";
-    //     std::cout << params_out.get<epi::ContactPatterns>().get_cont_freq_mat()[i].get_matrix_at(0.0) << '\n';
-    // }
-    // int i = 0;
-    // for (auto&& d : params_out.get<epi::ContactPatterns>().get_cont_freq_mat()[1].get_dampings()) {
-    //     std::cout << "\nDamping " << ++i << ":\n";
-    //     PrintTo(d, &std::cout);
-    // }
-
-    for (auto& n : ensemble_results[0]) {
-        for (auto i : {Eigen::Index(0), n.get_num_time_points() - 1}) {
-            const auto& v = n.get_value(i);
-            std::cout << v.transpose() << '\n';
+        if (save_result_result) {
+            save_result_result =
+                save_result(ensemble_results.back(), ensemble_params.back(), county_ids, result_dir, run_idx);
         }
-    }
+        ++run_idx;
+    });
+    BOOST_OUTCOME_TRY(save_result_result);
+    BOOST_OUTCOME_TRY(save_results(ensemble_results, ensemble_params, county_ids, result_dir));
 
     return epi::success();
 }
 
 int main(int argc, char** argv)
 {
+    //TODO: proper command line interface to set:
+    //- number of runs
+    //- start and end date (may be incompatible with runmode::load)
+    //- seeds
+    //- log level
+    //- ...
+
     epi::set_log_level(epi::LogLevel::warn);
 
-    epi::thread_local_rng().seed({1993982109, 2219896052, 2121723912, 560069401, 4132934777, 1129445404});
+    RunMode mode;
+    std::string save_dir;
+    std::string data_dir;
+    std::string result_dir;
+    if (argc == 4) {
+        mode       = RunMode::Save;
+        data_dir   = argv[1];
+        save_dir   = argv[2];
+        result_dir = argv[3];
+        printf("Reading data from \"%s\", saving graph to \"%s\".\n", data_dir.c_str(), save_dir.c_str());
+    }
+    else if (argc == 3) {
+        mode       = RunMode::Load;
+        save_dir   = argv[1];
+        result_dir = argv[2];
+        data_dir   = "";
+        printf("Loading graph from \"%s\".\n", save_dir.c_str());
+    }
+    else {
+        printf("Usage:\n");
+        printf("paper1 <data_dir> <save_dir> <result_dir>\n");
+        printf("\tMake graph with data from <data_dir> and save at <save_dir>, then run the simulation.\n");
+        printf("\tStore the results in <result_dir>\n");
+        printf("paper1 <load_dir> <result_dir>\n");
+        printf("\tLoad graph from <load_dir>, then run the simulation.\n");
+        return 0;
+    }
+    printf("Saving results to \"%s\".\n", result_dir.c_str());
+
+    // epi::thread_local_rng().seed({...}); //set seeds, e.g., for debugging
     printf("Seeds: ");
     for (auto s : epi::thread_local_rng().get_seeds()) {
         printf("%u, ", s);
     }
     printf("\n");
 
-    RunMode mode;
-    std::string save_dir;
-    std::string data_dir;
-    if (argc == 3) {
-        mode = RunMode::Save;
-        data_dir = argv[1];
-        save_dir = argv[2];
-        printf("Reading data from %s, saving graph to %s.\n", data_dir.c_str(), save_dir.c_str());
-    }
-    else if (argc == 2) {
-        mode = RunMode::Load;
-        save_dir = argv[1];
-        data_dir = "";
-        printf("Loading graph from %s.\n", save_dir.c_str());
-    }
-    else
-    {
-        printf("Usage:\n");
-        printf("paper1 <data_dir> <save_dir>\n");
-        printf("\tMake graph with data from <data_dir> and save at <save_dir>, then run the simulation.\n");
-        printf("paper1 <load_dir>\n");
-        printf("\tLoad graph from <load_dir>, then run the simulation.\n");
-        return 0;
-    }
-
-    return 0;
-
-    auto result = run(mode, data_dir, save_dir);
+    auto result = run(mode, data_dir, save_dir, result_dir);
     if (!result) {
         printf("%s\n", result.error().formatted_message().c_str());
         return -1;
