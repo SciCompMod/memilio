@@ -51,3 +51,30 @@ TEST(TestGraph, ot_edges)
     std::vector<epi::Edge<int>> v1 = {{1, 2, 1}};
     EXPECT_THAT(g.out_edges(1), testing::ElementsAreArray(v1));
 }
+
+namespace
+{
+
+struct MoveOnly {
+    MoveOnly();
+    MoveOnly(const MoveOnly&) = delete;
+    MoveOnly& operator=(const MoveOnly&) = delete;
+    MoveOnly(MoveOnly&&)                 = default;
+    MoveOnly& operator=(MoveOnly&&) = default;
+};
+using MoveOnlyGraph = epi::Graph<MoveOnly, MoveOnly>;
+
+template <class G>
+using add_node_expr_t = decltype(std::declval<G>().add_node(int()));
+template <class G>
+using add_edge_expr_t = decltype(std::declval<G>().add_edge(size_t(), size_t()));
+
+} // namespace
+
+static_assert(std::is_constructible<MoveOnlyGraph>::value, "Graph should support move-only node and edge properties.");
+static_assert(std::is_move_constructible<MoveOnlyGraph>::value && std::is_move_assignable<MoveOnlyGraph>::value,
+              "Graph should support move-only node and edge properties.");
+static_assert(epi::is_expression_valid<add_node_expr_t, MoveOnlyGraph>::value,
+              "Graph should support move-only node and edge properties.");
+static_assert(epi::is_expression_valid<add_edge_expr_t, MoveOnlyGraph>::value,
+              "Graph should support move-only node and edge properties.");

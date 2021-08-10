@@ -442,6 +442,7 @@ void apply_migration(double t, double dt, MigrationEdge& migrationEdge, Simulati
  * @param t0 start time of the simulation
  * @param dt time step between migrations
  * @param graph set up for migration simulation
+ * @{
  */
 template <class Sim>
 GraphSimulation<Graph<SimulationNode<Sim>, MigrationEdge>>
@@ -449,6 +450,14 @@ make_migration_sim(double t0, double dt, const Graph<SimulationNode<Sim>, Migrat
 {
     return make_graph_sim(t0, dt, graph, &evolve_model<Sim>, &apply_migration<Sim>);
 }
+
+template <class Sim>
+GraphSimulation<Graph<SimulationNode<Sim>, MigrationEdge>>
+make_migration_sim(double t0, double dt, Graph<SimulationNode<Sim>, MigrationEdge>&& graph)
+{
+    return make_graph_sim(t0, dt, std::move(graph), &evolve_model<Sim>, &apply_migration<Sim>);
+}
+/** @} */
 
 } // namespace epi
 

@@ -125,7 +125,7 @@ public:
     template <class... Args>
     Node<NodePropertyT>& add_node(int id, Args&&... args)
     {
-        m_nodes.emplace_back(Node<NodePropertyT> (id, std::forward<Args>(args)...));
+        m_nodes.emplace_back(id, std::forward<Args>(args)...);
         return m_nodes.back();
     }
 

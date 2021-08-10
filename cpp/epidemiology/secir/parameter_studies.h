@@ -23,9 +23,6 @@ class ParameterStudy
 public:
     using Simulation = S;
 
-    using HandleSimulationResultFunction = std::function<void(epi::Graph<epi::SimulationNode<Simulation>, epi::MigrationEdge>)>;
-
-
     /**
      * create study for graph of compartment models.
      * @param graph graph of parameters
@@ -94,6 +91,7 @@ public:
      * @param result_processing_function Processing function for simulation results, e.g., output function.
      *                                   Receives the result after each run is completed.
      */
+    template<class HandleSimulationResultFunction>
     void run(HandleSimulationResultFunction result_processing_function)
     {
         // Iterate over all parameters in the parameter space
@@ -101,9 +99,7 @@ public:
             auto sim = create_sampled_simulation();
             sim.advance(m_tmax);
 
-            auto result = sim.get_graph();
-
-            result_processing_function(std::move(result));
+            result_processing_function(std::move(sim).get_graph());
         }
     }
 
@@ -117,7 +113,7 @@ public:
         std::vector<epi::Graph<epi::SimulationNode<Simulation>, epi::MigrationEdge>> ensemble_result;
         ensemble_result.reserve(m_num_runs);
 
-        run([&ensemble_result](auto r) {
+        run([&ensemble_result](auto&& r) {
             ensemble_result.emplace_back(std::move(r));
         });
 
@@ -247,7 +243,7 @@ private:
             sim_graph.add_edge(edge.start_node_idx, edge.end_node_idx, edge_params);
         }
 
-        return make_migration_sim(m_t0, m_dt_graph_sim, sim_graph);
+        return make_migration_sim(m_t0, m_dt_graph_sim, std::move(sim_graph));
     }
 
 private:
