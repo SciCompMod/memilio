@@ -388,3 +388,53 @@ TEST(TestEnsembleParamsPercentile, basic)
     EXPECT_EQ((ensemble_p51_params[0].populations[{(epi::AgeGroup)1, epi::InfectionState::Hospitalized}]), 11);
     EXPECT_EQ((ensemble_p51_params[1].populations[{(epi::AgeGroup)1, epi::InfectionState::Hospitalized}]), 14);
 }
+
+TEST(TestDistance, same_result_zero_distance)
+{
+    auto n = Eigen::Index(epi::InfectionState::Count);
+    std::vector<epi::TimeSeries<double>> v1(2, epi::TimeSeries<double>(n));
+    v1[0].add_time_point(0.0, Eigen::VectorXd::Constant(n, 2.3));
+    v1[0].add_time_point(1.0, Eigen::VectorXd::Constant(n, 2.3123));
+    v1[1].add_time_point(0.0, Eigen::VectorXd::Constant(n, 3.123));
+    v1[1].add_time_point(1.0, Eigen::VectorXd::Constant(n, 15151.3123));
+
+    ASSERT_EQ(epi::result_distance_2norm(v1, v1), 0.0);
+    ASSERT_EQ(epi::result_distance_2norm(v1, v1, epi::InfectionState::Exposed), 0.0);
+}
+
+TEST(TestDistance, all_compartments)
+{
+    auto n = Eigen::Index(epi::InfectionState::Count);
+    std::vector<epi::TimeSeries<double>> v1(2, epi::TimeSeries<double>(n));
+    v1[0].add_time_point(0.0, Eigen::VectorXd::Constant(n, 1.0));
+    v1[0].add_time_point(1.0, Eigen::VectorXd::Constant(n, 2.0));
+    v1[1].add_time_point(0.0, Eigen::VectorXd::Constant(n, 3.0));
+    v1[1].add_time_point(1.0, Eigen::VectorXd::Constant(n, 4.0));
+
+    std::vector<epi::TimeSeries<double>> v2(2, epi::TimeSeries<double>(n));
+    v2[0].add_time_point(0.0, Eigen::VectorXd::Constant(n, 3.0));
+    v2[0].add_time_point(1.0, Eigen::VectorXd::Constant(n, 1.0));
+    v2[1].add_time_point(0.0, Eigen::VectorXd::Constant(n, 3.0));
+    v2[1].add_time_point(1.0, Eigen::VectorXd::Constant(n, 10.0));
+
+    ASSERT_EQ(epi::result_distance_2norm(v1, v2), std::sqrt(double(n) * (4.0 + 1.0 + 0.0 + 36.0)));
+}
+
+TEST(TestDistance, one_compartment)
+{
+    auto n = Eigen::Index(epi::InfectionState::Count);
+    auto e = Eigen::Index(epi::InfectionState::Exposed);
+    std::vector<epi::TimeSeries<double>> v1(2, epi::TimeSeries<double>(n));
+    v1[0].add_time_point(0.0, Eigen::VectorXd::Constant(n, 0.0))[e] = 1.0;
+    v1[0].add_time_point(1.0, Eigen::VectorXd::Constant(n, 0.0))[e] = 2.0;
+    v1[1].add_time_point(0.0, Eigen::VectorXd::Constant(n, 0.0))[e] = 3.0;
+    v1[1].add_time_point(1.0, Eigen::VectorXd::Constant(n, 0.0))[e] = 4.0;
+
+    std::vector<epi::TimeSeries<double>> v2(2, epi::TimeSeries<double>(n));
+    v2[0].add_time_point(0.0, Eigen::VectorXd::Constant(n, 0.0))[e] = 3.0;
+    v2[0].add_time_point(1.0, Eigen::VectorXd::Constant(n, 0.0))[e] = 1.0;
+    v2[1].add_time_point(0.0, Eigen::VectorXd::Constant(n, 0.0))[e] = 3.0;
+    v2[1].add_time_point(1.0, Eigen::VectorXd::Constant(n, 0.0))[e] = 10.0;
+
+    ASSERT_EQ(epi::result_distance_2norm(v1, v2, epi::InfectionState::Exposed), std::sqrt(4.0 + 1.0 + 0.0 + 36.0));
+}
