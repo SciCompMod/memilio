@@ -125,22 +125,28 @@ std::vector<TimeSeries<double>> ensemble_percentile(const std::vector<std::vecto
     return percentile;
 }
 
-double result_distance_2norm(const std::vector<epi::TimeSeries<double>>& result1, const std::vector<epi::TimeSeries<double>>& result2)
+double result_distance_2norm(const std::vector<epi::TimeSeries<double>>& result1,
+                             const std::vector<epi::TimeSeries<double>>& result2)
 {
     assert(result1.size() == result2.size());
+    assert(result1.size() > 0);
+    assert(result1[0].get_num_time_points() > 0);
+    assert(result1[0].get_num_elements() > 0);
 
     auto norm_sqr = 0.0;
-    for (auto it_n1 = result1.begin(), it_n2 = result2.begin(); it_n1 < result1.end(); ++it_n1, ++it_n2) {
-        for (Eigen::Index t_i = 0; t_i < it_n1->get_num_time_points(); ++t_i) {
-            auto v1 = (*it_n1)[t_i];
-            auto v2 = (*it_n2)[t_i];
+    for (auto iter_node1 = result1.begin(), iter_node2 = result2.begin(); iter_node1 < result1.end();
+         ++iter_node1, ++iter_node2) {
+        for (Eigen::Index time_idx = 0; time_idx < iter_node1->get_num_time_points(); ++time_idx) {
+            auto v1 = (*iter_node1)[time_idx];
+            auto v2 = (*iter_node2)[time_idx];
             norm_sqr += ((v1 - v2).array() * (v1 - v2).array()).sum();
         }
     }
     return std::sqrt(norm_sqr);
 }
 
-double result_distance_2norm(const std::vector<epi::TimeSeries<double>>& result1, const std::vector<epi::TimeSeries<double>>& result2, InfectionState compartment)
+double result_distance_2norm(const std::vector<epi::TimeSeries<double>>& result1,
+                             const std::vector<epi::TimeSeries<double>>& result2, InfectionState compartment)
 {
     assert(result1.size() == result2.size());
     assert(result1.size() > 0);
@@ -148,18 +154,18 @@ double result_distance_2norm(const std::vector<epi::TimeSeries<double>>& result1
     assert(result1[0].get_num_elements() > 0);
 
     auto num_compartments = Eigen::Index(InfectionState::Count);
-    auto num_age_groups = result1[0].get_num_elements() / num_compartments;
+    auto num_age_groups   = result1[0].get_num_elements() / num_compartments;
 
-    //c++
     auto norm_sqr = 0.0;
-    for (auto it_n1 = result1.begin(), it_n2 = result2.begin(); it_n1 < result1.end(); ++it_n1, ++it_n2) {
-        for (Eigen::Index time_idx = 0; time_idx < it_n1->get_num_time_points(); ++time_idx) {
-            auto v1 = (*it_n1)[time_idx];
-            auto v2 = (*it_n2)[time_idx];
+    for (auto iter_node1 = result1.begin(), iter_node2 = result2.begin(); iter_node1 < result1.end();
+         ++iter_node1, ++iter_node2) {
+        for (Eigen::Index time_idx = 0; time_idx < iter_node1->get_num_time_points(); ++time_idx) {
+            auto v1 = (*iter_node1)[time_idx];
+            auto v2 = (*iter_node2)[time_idx];
             for (Eigen::Index age_idx = 0; age_idx < num_age_groups; ++age_idx) {
                 auto d1 = v1[age_idx * num_compartments + Eigen::Index(compartment)];
                 auto d2 = v2[age_idx * num_compartments + Eigen::Index(compartment)];
-                norm_sqr += (d1 - d2)*(d1 - d2);
+                norm_sqr += (d1 - d2) * (d1 - d2);
             }
         }
     }

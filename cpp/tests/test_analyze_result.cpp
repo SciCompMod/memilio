@@ -417,7 +417,7 @@ TEST(TestDistance, all_compartments)
     v2[1].add_time_point(0.0, Eigen::VectorXd::Constant(n, 3.0));
     v2[1].add_time_point(1.0, Eigen::VectorXd::Constant(n, 10.0));
 
-    ASSERT_EQ(epi::result_distance_2norm(v1, v2), std::sqrt(8 * (4.0 + 1.0 + 0.0 + 36.0)));
+    ASSERT_EQ(epi::result_distance_2norm(v1, v2), std::sqrt(double(n) * (4.0 + 1.0 + 0.0 + 36.0)));
 }
 
 TEST(TestDistance, one_compartment)
