@@ -1,3 +1,22 @@
+/* 
+* Copyright (C) 2020-2021 German Aerospace Center (DLR-SC)
+*
+* Authors: Daniel Abele
+*
+* Contact: Martin J. Kuehn <Martin.Kuehn@DLR.de>
+*
+* Licensed under the Apache License, Version 2.0 (the "License");
+* you may not use this file except in compliance with the License.
+* You may obtain a copy of the License at
+*
+*     http://www.apache.org/licenses/LICENSE-2.0
+*
+* Unless required by applicable law or agreed to in writing, software
+* distributed under the License is distributed on an "AS IS" BASIS,
+* WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+* See the License for the specific language governing permissions and
+* limitations under the License.
+*/
 #include "epidemiology/abm/person.h"
 #include "epidemiology/abm/world.h"
 #include "epidemiology/abm/location.h"
@@ -6,7 +25,7 @@
 namespace epi
 {
 
-Person::Person(LocationId id, InfectionState state, AbmAgeGroup age, const GlobalInfectionParameters& global_params)
+Person::Person(LocationId id, InfectionState state, AbmAgeGroup age)
     : m_location_id(id)
     , m_assigned_locations((uint32_t)LocationType::Count, INVALID_LOCATION_INDEX)
     , m_state(state)
@@ -19,13 +38,10 @@ Person::Person(LocationId id, InfectionState state, AbmAgeGroup age, const Globa
     if (state == InfectionState::Infected_Detected) {
         m_quarantine = true;
     }
-    if (state == InfectionState::Exposed){
-        m_time_until_carrier = hours(UniformIntDistribution<int>::get_instance()(0, int(global_params.get<IncubationPeriod>()[m_age] * 24)));
-    }
 }
 
-Person::Person(Location& location, InfectionState state, AbmAgeGroup age, const GlobalInfectionParameters& global_params)
-    : Person({location.get_index(), location.get_type()}, state, age, global_params)
+Person::Person(Location& location, InfectionState state, AbmAgeGroup age)
+    : Person({location.get_index(), location.get_type()}, state, age)
 {
 }
 

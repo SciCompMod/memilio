@@ -22,8 +22,6 @@ Use -h for more information or the `epidata-readme <epidemiology/epidata/README.
 
 * ``epidemiology.secir``: Contains a python/pybind11 wrapper to the C++ code. An example is provided
 
-* ``epidemiology.seir``: Contains a python/pybind11 wrapper to the C++ code. An example is provided
-
 More details can be found in the corresponding subdirectories.
 
 Environment

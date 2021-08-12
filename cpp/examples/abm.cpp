@@ -1,3 +1,22 @@
+/* 
+* Copyright (C) 2020-2021 German Aerospace Center (DLR-SC)
+*
+* Authors: Daniel Abele
+*
+* Contact: Martin J. Kuehn <Martin.Kuehn@DLR.de>
+*
+* Licensed under the Apache License, Version 2.0 (the "License");
+* you may not use this file except in compliance with the License.
+* You may obtain a copy of the License at
+*
+*     http://www.apache.org/licenses/LICENSE-2.0
+*
+* Unless required by applicable law or agreed to in writing, software
+* distributed under the License is distributed on an "AS IS" BASIS,
+* WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+* See the License for the specific language governing permissions and
+* limitations under the License.
+*/
 #include "epidemiology/abm/abm.h"
 /**
  * Determine the infection state of a person at the beginning of the simulation.
@@ -206,14 +225,14 @@ int main()
 
     //Set global infection parameters (similar to infection parameters in SECIR model) and initialize the world
     epi::GlobalInfectionParameters abm_params;
-    abm_params.set<epi::IncubationPeriod>({{epi::AbmAgeGroup::Count}, 4.});
+    abm_params.set<epi::IncubationPeriod>({{epi::AbmAgeGroup::Count}, 3.});
     abm_params.set<epi::SusceptibleToExposedByCarrier>({{epi::AbmAgeGroup::Count}, 0.02});
     abm_params.set<epi::SusceptibleToExposedByInfected>({{epi::AbmAgeGroup::Count}, 0.02});
     abm_params.set<epi::CarrierToInfected>({{epi::AbmAgeGroup::Count}, 0.15});
     abm_params.set<epi::CarrierToRecovered>({{epi::AbmAgeGroup::Count}, 0.15});
     abm_params.set<epi::InfectedToRecovered>({{epi::AbmAgeGroup::Count}, 0.2});
     abm_params.set<epi::InfectedToDead>({{epi::AbmAgeGroup::Count}, 0.02});
-    abm_params.set<epi::RecoveredToSusceptible>({{epi::AbmAgeGroup::Count}, 0.0});
+    abm_params.set<epi::RecoveredToSusceptible>({{epi::AbmAgeGroup::Count}, 0.});
     
     auto world    = epi::World(abm_params);
 
