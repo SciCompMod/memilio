@@ -18,7 +18,7 @@ LocationId World::add_location(LocationType type)
 
 Person& World::add_person(LocationId id, InfectionState state, AbmAgeGroup age)
 {
-    m_persons.push_back(std::make_unique<Person>(id, state, age));
+    m_persons.push_back(std::make_unique<Person>(id, state, age, m_infection_parameters));
     auto& person = *m_persons.back();
     get_location(person).add_person(person);
     return person;
@@ -131,5 +131,13 @@ AbmMigrationParameters& World::get_migration_parameters(){
 const AbmMigrationParameters& World::get_migration_parameters() const{
     return m_migration_parameters;
 } 
+
+GlobalInfectionParameters& World::get_global_infection_parameters(){
+    return m_infection_parameters;
+}
+
+const GlobalInfectionParameters& World::get_global_infection_parameters() const{
+    return m_infection_parameters;
+}
 
 } // namespace epi

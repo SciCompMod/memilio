@@ -120,6 +120,13 @@ public:
 
     const AbmMigrationParameters& get_migration_parameters() const;
 
+    /** 
+     *get global infection parameters
+     */
+    GlobalInfectionParameters& get_global_infection_parameters();
+
+    const GlobalInfectionParameters& get_global_infection_parameters() const;
+
 private:
     void interaction(TimePoint t, TimeSpan dt);
     void migration(TimePoint t, TimeSpan dt);
