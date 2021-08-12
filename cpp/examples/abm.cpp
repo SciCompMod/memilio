@@ -206,14 +206,14 @@ int main()
 
     //Set global infection parameters (similar to infection parameters in SECIR model) and initialize the world
     epi::GlobalInfectionParameters abm_params;
-    abm_params.set<epi::IncubationPeriod>({{epi::AbmAgeGroup::Count}, 3.});
+    abm_params.set<epi::IncubationPeriod>({{epi::AbmAgeGroup::Count}, 4.});
     abm_params.set<epi::SusceptibleToExposedByCarrier>({{epi::AbmAgeGroup::Count}, 0.02});
     abm_params.set<epi::SusceptibleToExposedByInfected>({{epi::AbmAgeGroup::Count}, 0.02});
     abm_params.set<epi::CarrierToInfected>({{epi::AbmAgeGroup::Count}, 0.15});
     abm_params.set<epi::CarrierToRecovered>({{epi::AbmAgeGroup::Count}, 0.15});
     abm_params.set<epi::InfectedToRecovered>({{epi::AbmAgeGroup::Count}, 0.2});
     abm_params.set<epi::InfectedToDead>({{epi::AbmAgeGroup::Count}, 0.02});
-    abm_params.set<epi::RecoveredToSusceptible>({{epi::AbmAgeGroup::Count}, 0.});
+    abm_params.set<epi::RecoveredToSusceptible>({{epi::AbmAgeGroup::Count}, 0.0});
     
     auto world    = epi::World(abm_params);
 
