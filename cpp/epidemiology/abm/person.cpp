@@ -25,7 +25,7 @@
 namespace epi
 {
 
-Person::Person(LocationId id, InfectionState state, AbmAgeGroup age)
+Person::Person(LocationId id, InfectionState state, AbmAgeGroup age, const GlobalInfectionParameters& global_params)
     : m_location_id(id)
     , m_assigned_locations((uint32_t)LocationType::Count, INVALID_LOCATION_INDEX)
     , m_state(state)
@@ -38,10 +38,13 @@ Person::Person(LocationId id, InfectionState state, AbmAgeGroup age)
     if (state == InfectionState::Infected_Detected) {
         m_quarantine = true;
     }
+    if (state == InfectionState::Exposed){
+        m_time_until_carrier = hours(UniformIntDistribution<int>::get_instance()(0, int(global_params.get<IncubationPeriod>()[m_age] * 24)));
+    }
 }
 
-Person::Person(Location& location, InfectionState state, AbmAgeGroup age)
-    : Person({location.get_index(), location.get_type()}, state, age)
+Person::Person(Location& location, InfectionState state, AbmAgeGroup age, const GlobalInfectionParameters& global_params)
+    : Person({location.get_index(), location.get_type()}, state, age, global_params)
 {
 }
 
