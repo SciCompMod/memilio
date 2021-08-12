@@ -18,6 +18,9 @@ from epidemiology.epidata import getPopulationData
 from epidemiology.epidata import getRKIData
 from epidemiology.epidata import getDIVIData
 
+def print_error(text):
+    print('Error: Something went wrong while getting ' + text + ' data. This was likely caused by a changed file format'
+                                                                ' of the source material. Please report this as an issue. ' + text + ' data could not be stored correctly.')
 
 def get_simulation_data(read_data=dd.defaultDict['read_data'],
                         file_format=dd.defaultDict['file_format'],
@@ -62,12 +65,30 @@ def get_simulation_data(read_data=dd.defaultDict['read_data'],
     arg_dict_divi = {**arg_dict_all, "end_date": end_date,
                      "start_date": start_date, "update_data": update_data}
 
-    getRKIData.get_rki_data(**arg_dict_rki)
-    getPopulationData.get_population_data(**arg_dict_all)
-    getPopulationData.get_age_population_data(**arg_dict_all)
-    getDIVIData.get_divi_data(**arg_dict_divi)
-    getVaccineData.get_vaccine_data(**arg_dict_all)
+    try:
+        getRKIData.get_rki_data(**arg_dict_rki)
+    except:
+        print_error('RKI')
 
+    try:
+        getPopulationData.get_population_data(**arg_dict_all)
+    except:
+        print_error('population')
+
+    try:
+        getPopulationData.get_age_population_data(**arg_dict_all)
+    except:
+        print_error('age population')
+
+    try:
+        getDIVIData.get_divi_data(**arg_dict_divi)
+    except:
+        print_error('Divi')
+
+    try:
+        getVaccineData.get_vaccine_data(**arg_dict_all)
+    except:
+        print_error('vaccine')
 
 def main():
     """! Main program entry."""
