@@ -212,8 +212,12 @@ int main()
     abm_params.set<epi::CarrierToInfected>({{epi::AbmAgeGroup::Count}, 0.15});
     abm_params.set<epi::CarrierToRecovered>({{epi::AbmAgeGroup::Count}, 0.15});
     abm_params.set<epi::InfectedToRecovered>({{epi::AbmAgeGroup::Count}, 0.2});
-    abm_params.set<epi::InfectedToDead>({{epi::AbmAgeGroup::Count}, 0.02});
-    abm_params.set<epi::RecoveredToSusceptible>({{epi::AbmAgeGroup::Count}, 0.0});
+    abm_params.set<epi::InfectedToSevere>({{epi::AbmAgeGroup::Count}, 0.03});
+    abm_params.set<epi::SevereToRecovered>({{epi::AbmAgeGroup::Count}, 0.1});
+    abm_params.set<epi::SevereToCritical>({{epi::AbmAgeGroup::Count}, 0.1});
+    abm_params.set<epi::CriticalToRecovered>({{epi::AbmAgeGroup::Count}, 0.02});
+    abm_params.set<epi::CriticalToDead>({{epi::AbmAgeGroup::Count}, 0.06});
+    abm_params.set<epi::RecoveredToSusceptible>({{epi::AbmAgeGroup::Count}, 0.});
     
     auto world    = epi::World(abm_params);
 
@@ -238,9 +242,10 @@ int main()
 
     // The results are saved in a table with 9 rows. 
     // The first row is t = time, the others correspond to the number of people with a certain infection state at this time:
-    // S = Susceptible, E = Exposed, C= Carrier, I_d = Infected_Detected, I_u = Infected_Undetected, R_C = Recovered_Carrier, R_I = Recovered_Infected, D = Dead
+    // S = Susceptible, E = Exposed, C= Carrier, I_d = Infected_Detected, I_u = Infected_Undetected, I_s = Infected_Severe,
+    // I_c = Infected_Critical, R_C = Recovered_Carrier, R_I = Recovered_Infected, D = Dead
     // E.g. the following gnuplot skrips plots detected infections and deaths.
-    // plot "abm.txt" using 1:5 with lines title "infected (detected)", "abm.txt" using 1:9 with lines title "dead"
+    // plot "abm.txt" using 1:5 with lines title "infected (detected)", "abm.txt" using 1:11 with lines title "dead"
     // set xlabel "days"
     // set ylabel "number of people"
     // set title "ABM Example"
@@ -248,7 +253,7 @@ int main()
     // set terminal png
     // replot
     auto f_abm = fopen("abm.txt", "w");
-    fprintf(f_abm, "# t S E C I_d I_u R_C R_I D\n");
+    fprintf(f_abm, "# t S E C I_d I_u I_s I_c R_C R_I D\n");
     for (auto i = 0; i < sim.get_result().get_num_time_points(); ++i) {
         fprintf(f_abm, "%f ", sim.get_result().get_time(i));
         auto v = sim.get_result().get_value(i);

@@ -180,10 +180,18 @@ TEST(TestLocation, interact)
     params.get<epi::CarrierToRecovered>()[{age}] = 0.5;
     params.set<epi::DetectInfection>({{epi::AbmAgeGroup::Count}, 0.});
     params.get<epi::DetectInfection>()[{age}] = 0.5;
-    params.set<epi::InfectedToDead>({{epi::AbmAgeGroup::Count}, 0.});
-    params.get<epi::InfectedToDead>()[{age}] = 0.5;
+    params.set<epi::InfectedToSevere>({{epi::AbmAgeGroup::Count}, 0.});
+    params.get<epi::InfectedToSevere>()[{age}] = 0.5;
     params.set<epi::InfectedToRecovered>({{epi::AbmAgeGroup::Count}, 0.});
     params.get<epi::InfectedToRecovered>()[{age}] = 0.5;
+    params.set<epi::SevereToCritical>({{epi::AbmAgeGroup::Count}, 0.});
+    params.get<epi::SevereToCritical>()[{age}] = 0.5;
+    params.set<epi::SevereToRecovered>({{epi::AbmAgeGroup::Count}, 0.});
+    params.get<epi::SevereToRecovered>()[{age}] = 0.5;
+    params.set<epi::CriticalToDead>({{epi::AbmAgeGroup::Count}, 0.});
+    params.get<epi::CriticalToDead>()[{age}] = 0.5;
+    params.set<epi::CriticalToRecovered>({{epi::AbmAgeGroup::Count}, 0.});
+    params.get<epi::CriticalToRecovered>()[{age}] = 0.5;
     params.set<epi::RecoveredToSusceptible>({{epi::AbmAgeGroup::Count}, 0.});
     params.get<epi::RecoveredToSusceptible>()[{age}] = 0.5;
     params.set<epi::SusceptibleToExposedByCarrier>({{epi::AbmAgeGroup::Count}, 0.});
@@ -253,10 +261,40 @@ TEST(TestLocation, interact)
 
         EXPECT_CALL(mock_exponential_dist.get_mock(), invoke).Times(1).WillOnce(Return(0.09));
         EXPECT_CALL(mock_discrete_dist.get_mock(), invoke).Times(1).WillOnce(Return(1));
-        EXPECT_EQ(location.interact(infected, dt, params), epi::InfectionState::Dead);
+        EXPECT_EQ(location.interact(infected, dt, params), epi::InfectionState::Infected_Severe);
 
         EXPECT_CALL(mock_exponential_dist.get_mock(), invoke).Times(1).WillOnce(Return(0.1001));
         EXPECT_EQ(location.interact(infected, dt, params), infected_state);
+    }
+
+    {
+        auto severe = epi::Person(location, epi::InfectionState::Infected_Severe, age, params);
+
+        EXPECT_CALL(mock_exponential_dist.get_mock(), invoke).Times(1).WillOnce(Return(0.09));
+        EXPECT_CALL(mock_discrete_dist.get_mock(), invoke).Times(1).WillOnce(Return(0));
+        EXPECT_EQ(location.interact(severe, dt, params), epi::InfectionState::Recovered_Infected);
+
+        EXPECT_CALL(mock_exponential_dist.get_mock(), invoke).Times(1).WillOnce(Return(0.09));
+        EXPECT_CALL(mock_discrete_dist.get_mock(), invoke).Times(1).WillOnce(Return(1));
+        EXPECT_EQ(location.interact(severe, dt, params), epi::InfectionState::Infected_Critical);
+
+        EXPECT_CALL(mock_exponential_dist.get_mock(), invoke).Times(1).WillOnce(Return(0.1001));
+        EXPECT_EQ(location.interact(severe, dt, params), epi::InfectionState::Infected_Severe);
+    }
+
+    {
+        auto critical = epi::Person(location, epi::InfectionState::Infected_Critical, age, params);
+
+        EXPECT_CALL(mock_exponential_dist.get_mock(), invoke).Times(1).WillOnce(Return(0.09));
+        EXPECT_CALL(mock_discrete_dist.get_mock(), invoke).Times(1).WillOnce(Return(0));
+        EXPECT_EQ(location.interact(critical, dt, params), epi::InfectionState::Recovered_Infected);
+
+        EXPECT_CALL(mock_exponential_dist.get_mock(), invoke).Times(1).WillOnce(Return(0.09));
+        EXPECT_CALL(mock_discrete_dist.get_mock(), invoke).Times(1).WillOnce(Return(1));
+        EXPECT_EQ(location.interact(critical, dt, params), epi::InfectionState::Dead);
+
+        EXPECT_CALL(mock_exponential_dist.get_mock(), invoke).Times(1).WillOnce(Return(0.1001));
+        EXPECT_EQ(location.interact(critical, dt, params), epi::InfectionState::Infected_Critical);
     }
 
     for (auto&& recovered_state : {epi::InfectionState::Recovered_Carrier, epi::InfectionState::Recovered_Infected}) {
@@ -526,35 +564,27 @@ TEST(TestMigrationRules, work_return)
 TEST(TestMigrationRules, hospital)
 {
     auto home  = epi::Location(epi::LocationType::Home, 0);
-    auto p_inf = epi::Person(home, epi::InfectionState::Infected_Detected, epi::AbmAgeGroup::Age15to34, {});
+    auto p_inf = epi::Person(home, epi::InfectionState::Infected_Severe, epi::AbmAgeGroup::Age15to34, {});
     auto t     = epi::TimePoint(12346);
     auto dt    = epi::hours(1);
 
-    ScopedMockDistribution<testing::StrictMock<MockDistribution<epi::ExponentialDistribution<double>>>>
-        mock_exponential_dist;
-    EXPECT_CALL(mock_exponential_dist.get_mock(), invoke).Times(1).WillOnce(testing::Return(0.01));
-
     ASSERT_EQ(epi::go_to_hospital(p_inf, t, dt, {}), epi::LocationType::Hospital);
 
-    auto p_car = epi::Person(home, epi::InfectionState::Carrier, epi::AbmAgeGroup::Age15to34, {});
+    auto p_car = epi::Person(home, epi::InfectionState::Infected_Detected, epi::AbmAgeGroup::Age15to34, {});
     ASSERT_EQ(epi::go_to_hospital(p_car, t, dt, {}), epi::LocationType::Home);
 }
 
 TEST(TestMigrationRules, icu)
 {
     auto hospital = epi::Location(epi::LocationType::Hospital, 0);
-    auto p_hosp   = epi::Person(hospital, epi::InfectionState::Infected_Detected, epi::AbmAgeGroup::Age15to34, {});
+    auto p_hosp   = epi::Person(hospital, epi::InfectionState::Infected_Critical, epi::AbmAgeGroup::Age15to34, {});
     auto t        = epi::TimePoint(12346);
     auto dt       = epi::hours(1);
-
-    ScopedMockDistribution<testing::StrictMock<MockDistribution<epi::ExponentialDistribution<double>>>>
-        mock_exponential_dist;
-    EXPECT_CALL(mock_exponential_dist.get_mock(), invoke).Times(1).WillOnce(testing::Return(0.01));
 
     ASSERT_EQ(epi::go_to_icu(p_hosp, t, dt, {}), epi::LocationType::ICU);
 
     auto work   = epi::Location(epi::LocationType::Work, 0);
-    auto p_work = epi::Person(work, epi::InfectionState::Infected_Detected, epi::AbmAgeGroup::Age15to34, {});
+    auto p_work = epi::Person(work, epi::InfectionState::Infected_Undetected, epi::AbmAgeGroup::Age15to34, {});
     ASSERT_EQ(epi::go_to_icu(p_work, t, dt, {}), epi::LocationType::Work);
 }
 
@@ -562,7 +592,7 @@ TEST(TestMigrationRules, recover)
 {
     auto hospital = epi::Location(epi::LocationType::Hospital, 0);
     auto p_rec    = epi::Person(hospital, epi::InfectionState::Recovered_Infected, epi::AbmAgeGroup::Age60to79, {});
-    auto p_inf    = epi::Person(hospital, epi::InfectionState::Infected_Detected, epi::AbmAgeGroup::Age60to79, {});
+    auto p_inf    = epi::Person(hospital, epi::InfectionState::Infected_Severe, epi::AbmAgeGroup::Age60to79, {});
     auto t        = epi::TimePoint(12346);
     auto dt       = epi::hours(1);
 
