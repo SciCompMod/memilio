@@ -82,6 +82,7 @@ void World::migration(TimePoint t, TimeSpan dt)
                 auto target_type = rule.first(*person, t, dt, m_migration_parameters);
                 Location* target      = find_location(target_type, *person);
                 if (target != & get_location(*person)) {
+                    target->get_testing_scheme().run_scheme(*person, m_testing_parameters);
                     person->migrate_to(get_location(*person), *target);
                     break;
                 }

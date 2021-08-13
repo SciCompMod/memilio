@@ -32,6 +32,7 @@ Person::Person(LocationId id, InfectionState state, AbmAgeGroup age, const Globa
     , m_quarantine(false)
     , m_age(age)
     , m_time_at_location(std::numeric_limits<int>::max())
+    , m_time_since_test(std::numeric_limits<int>::max())
 {
     m_random_workgroup = UniformDistribution<double>::get_instance()();
     m_random_schoolgroup = UniformDistribution<double>::get_instance()();
@@ -116,21 +117,26 @@ bool Person::goes_to_school(TimePoint t, const AbmMigrationParameters& params) c
     return m_random_schoolgroup < params.get<SchoolRatio>().get_matrix_at(t.days())[0];
 }
 
-bool Person::get_tested(double sensitivity, double specificity) const{
+bool Person::get_tested(double sensitivity, double specificity){
     double random = UniformDistribution<double>::get_instance()();
-    if (m_state == Carrier, m_state == Infected_Undetected || m_state == Infected_Detected || m_state == Infected_Severe || m_state == Infected_Critical){
+    m_time_since_test = days(0);
+    if (m_state == InfectionState::Carrier || m_state == InfectionState::Infected_Undetected || m_state == InfectionState::Infected_Detected || m_state == InfectionState::Infected_Severe || m_state == InfectionState::Infected_Critical){
         if (random < sensitivity){
+            m_quarantine = true;
             return true;
         }
         else{
+            m_quarantine = false;
             return false;
         }
     }
     else {
         if (random < specificity){
+            m_quarantine = false;
             return false;
         }
         else {
+            m_quarantine = true;
             return true;
         }
     }

@@ -32,6 +32,7 @@ Location::Location(LocationType type, uint32_t index)
     , m_index(index)
     , m_subpopulations{}
     , m_cached_exposure_rate({AbmAgeGroup::Count})
+    , m_testing_scheme()
 {
 }
 

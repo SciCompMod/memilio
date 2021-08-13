@@ -109,6 +109,15 @@ public:
     {
         return m_time_at_location;
     }
+
+    /**
+     * Get the time since the person has been testes.
+     * @return time span.
+     */
+    TimeSpan get_time_since_test() const
+    {
+        return m_time_since_test;
+    }
     /**
      * set an assigned location of the person. The assigned location is saved by its index.
      * Assume that a person has at most one assigned location per location type.
@@ -161,11 +170,13 @@ public:
 
     /**
      * Simulates a Corona test and returns the test result of the person.
+     * If the test is positive, the person has to quarantine.
+     * If the test is negative, quarantine ends.
      * @param sensitivity sensitivity of the test method
      * @param specificity specificity of the test method
      * @return true if the test result of the person is positive
      */
-    bool get_tested(double sensitivity, double specificity) const;
+    bool get_tested(double sensitivity, double specificity);
 
 
 private:
@@ -178,6 +189,7 @@ private:
     TimeSpan m_time_at_location;
     double m_random_workgroup;
     double m_random_schoolgroup;
+    TimeSpan m_time_since_test;
 };
 
 } // namespace epi

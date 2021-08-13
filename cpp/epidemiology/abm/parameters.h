@@ -183,6 +183,30 @@ struct EffectiveContacts
  */
 using LocalInfectionParameters = ParameterSet<EffectiveContacts>;
 
+struct Sensitivity
+{
+    using Type = double;
+    static constexpr Type get_default()
+    {
+        return 0.9;
+    }
+};
+
+struct Specificity
+{
+    using Type = double;
+    static constexpr Type get_default()
+    {
+        return 0.99;
+    }
+};
+
+/**
+ * parameters of the testing that are the same everywhere in the world.
+ */
+using GlobalTestingParameters = ParameterSet<Sensitivity,
+                                             Specificity>;
+
 /**
  * parameters that govern the migration between locations
  */
