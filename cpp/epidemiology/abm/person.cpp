@@ -115,4 +115,24 @@ bool Person::goes_to_school(TimePoint t, const AbmMigrationParameters& params) c
 {
     return m_random_schoolgroup < params.get<SchoolRatio>().get_matrix_at(t.days())[0];
 }
+
+bool Person::get_tested(double sensitivity, double specificity) const{
+    double random = UniformDistribution<double>::get_instance()();
+    if (m_state == Carrier, m_state == Infected_Undetected || m_state == Infected_Detected || m_state == Infected_Severe || m_state == Infected_Critical){
+        if (random < sensitivity){
+            return true;
+        }
+        else{
+            return false;
+        }
+    }
+    else {
+        if (random < specificity){
+            return false;
+        }
+        else {
+            return true;
+        }
+    }
+}
 } // namespace epi

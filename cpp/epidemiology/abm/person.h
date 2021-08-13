@@ -159,6 +159,15 @@ public:
         return m_quarantine;
     }
 
+    /**
+     * Simulates a Corona test and returns the test result of the person.
+     * @param sensitivity sensitivity of the test method
+     * @param specificity specificity of the test method
+     * @return true if the test result of the person is positive
+     */
+    bool get_tested(double sensitivity, double specificity) const;
+
+
 private:
     LocationId m_location_id;
     std::vector<uint32_t> m_assigned_locations;
