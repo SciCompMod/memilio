@@ -179,7 +179,6 @@ test-py:
     - getrkidata --help
     - getpopuldata --help
     - getjhdata --help
-    - getspaindata --help
     - getdividata --help
     - getsimdata --help
     - cleandata --help
@@ -235,7 +234,6 @@ download-data:
     - getrkidata -o data_dl
     - getpopuldata -o data_dl
     - getjhdata -o data_dl
-    - getspaindata -o data_dl
     - getdividata -o data_dl
   allow_failure: true
   artifacts:

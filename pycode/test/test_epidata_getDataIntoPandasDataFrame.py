@@ -34,7 +34,6 @@ from epidemiology.epidata import getPopulationData
 from epidemiology.epidata import getRKIData
 from epidemiology.epidata import getDIVIData
 from epidemiology.epidata import getRKIDatawithEstimations
-from epidemiology.epidata import getSpainData
 from epidemiology.epidata import getJHData
 
 class Test_getDataIntoPandasDataFrame(fake_filesystem_unittest.TestCase):
@@ -158,15 +157,6 @@ class Test_getDataIntoPandasDataFrame(fake_filesystem_unittest.TestCase):
         
         out_path_default = dd.defaultDict['out_folder']
         out_path_default = os.path.join(out_path_default, 'pydata')
-
-        arg_dict = gd.cli("spain")
-        [read_data, file_format, out_folder, no_raw] = [arg_dict["read_data"], arg_dict["file_format"],
-                                                        arg_dict["out_folder"], arg_dict["no_raw"]]
-
-        assert read_data == dd.defaultDict['read_data']
-        assert file_format == dd.defaultDict['file_format']
-        assert out_folder == out_path_default
-        assert no_raw == dd.defaultDict['no_raw']
 
         arg_dict = gd.cli("population")
         [read_data, file_format, out_folder, no_raw] = [arg_dict["read_data"], arg_dict["file_format"],
@@ -317,15 +307,6 @@ class Test_getDataIntoPandasDataFrame(fake_filesystem_unittest.TestCase):
         test_args = ["prog", '--read-data', '--out-folder', folder, '--file-format', 'hdf5', '--no-raw']
 
         with patch.object(sys, 'argv', test_args):
-
-            arg_dict = gd.cli("spain")
-            [read_data, file_format, out_folder, no_raw] = [arg_dict["read_data"], arg_dict["file_format"],
-                                                            arg_dict["out_folder"], arg_dict["no_raw"]]
-
-            assert read_data == True
-            assert file_format == 'hdf5'
-            assert out_folder == "some_folder"
-            assert no_raw == True
 
             arg_dict = gd.cli("population")
             [read_data, file_format, out_folder, no_raw] = [arg_dict["read_data"], arg_dict["file_format"],
@@ -500,8 +481,7 @@ class Test_getDataIntoPandasDataFrame(fake_filesystem_unittest.TestCase):
     @patch('epidemiology.epidata.getVaccineData.get_vaccine_data')
     @patch('epidemiology.epidata.getRKIDatawithEstimations.get_rki_data_with_estimations')
     @patch('epidemiology.epidata.getJHData.get_jh_data')
-    @patch('epidemiology.epidata.getSpainData.get_spain_data')
-    def test_call_functions(self, mock_spain, mock_jh, mock_rkiwe, mock_vaccine, mock_agep, mock_popul, mock_rki,
+    def test_call_functions(self, mock_jh, mock_rkiwe, mock_vaccine, mock_agep, mock_popul, mock_rki,
                             mock_divi):
 
         arg_dict_all = {"read_data": dd.defaultDict['read_data'], "file_format": dd.defaultDict['file_format'],
@@ -538,10 +518,6 @@ class Test_getDataIntoPandasDataFrame(fake_filesystem_unittest.TestCase):
         getRKIDatawithEstimations.main()
         mock_rkiwe.assert_called()
         mock_rkiwe.assert_called_with(**arg_dict_rki_est)
-
-        getSpainData.main()
-        mock_spain.assert_called()
-        mock_spain.assert_called_with(**arg_dict_all)
 
         getJHData.main()
         mock_jh.assert_called()

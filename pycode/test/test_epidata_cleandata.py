@@ -37,7 +37,7 @@ class Test_cleanData(fake_filesystem_unittest.TestCase):
     def set_dirs_and_files(self, what):
 
         dir_dic_all = { 'Germany' : ["a_rki", "a_jh", "FullRKI", "PopulData", "FullDataB", "FullDataL"],
-                        'Spain': ["a_spain", "b_jh"],
+                        'Spain': ["b_jh"],
                         'France': ["c_jh"],
                         'Italy': ["d_jh"],
                         'US' : ["e_jh"],
@@ -47,8 +47,6 @@ class Test_cleanData(fake_filesystem_unittest.TestCase):
         dir_dic_rki = {'Germany': ["a_rki", "FullRKI"]}
 
         dir_dic_popul = {'Germany': ["PopulData", "FullDataB", "FullDataL"]}
-
-        dir_dic_spain = {'Spain': ["a_spain"]}
 
         dir_dic_jh = {'Germany': ["a_jh"],
                       'Spain': ["b_jh"],
@@ -64,14 +62,12 @@ class Test_cleanData(fake_filesystem_unittest.TestCase):
         dir_choose = {"all": dir_dic_all,
                       "rki": dir_dic_rki,
                       "jh": dir_dic_jh,
-                      "popul": dir_dic_popul,
-                      "spain": dir_dic_spain
+                      "popul": dir_dic_popul
                       }
 
         ending_choose= {"all": ending_all,
                         "rki": ending_json,
                         "jh": ending_json,
-                        "spain": ending_json,
                         "popul": ending_json
                         }
 
@@ -123,8 +119,8 @@ class Test_cleanData(fake_filesystem_unittest.TestCase):
                                   "FullDataL.json", "FullDataL.h5"])
 
             elif dir == "Spain":
-                self.assertEqual(len(os.listdir(dir_path)), 4)
-                self.assertEqual(os.listdir(dir_path), ["a_spain.json", "a_spain.h5", "b_jh.json", "b_jh.h5"])
+                self.assertEqual(len(os.listdir(dir_path)), 2)
+                self.assertEqual(os.listdir(dir_path), ["b_jh.json", "b_jh.h5"])
             else:
                 self.assertEqual(len(os.listdir(dir_path)), 2)
                 if dir == "France":
@@ -135,7 +131,7 @@ class Test_cleanData(fake_filesystem_unittest.TestCase):
 
         self.set_dirs_and_files("all")
 
-        cd.clean_data(True, False, False, False, False, False, self.path)
+        cd.clean_data(True, False, False, False, False, self.path)
 
         # Should delete everything
         self.assertEqual(len(os.listdir(self.path)), 0)
@@ -154,7 +150,7 @@ class Test_cleanData(fake_filesystem_unittest.TestCase):
         with open(os.path.join(dir_path, "secret.txt"), 'w') as f:
             f.write('foo')
 
-        cd.clean_data(True, False, False, False, False, False, self.path)
+        cd.clean_data(True, False, False, False, False, self.path)
 
         # Should delete everything
         self.assertEqual(len(os.listdir(self.path)), 3)
@@ -166,7 +162,7 @@ class Test_cleanData(fake_filesystem_unittest.TestCase):
 
         self.set_dirs_and_files("all")
 
-        cd.clean_data(False, True, False, False, False, False, self.path)
+        cd.clean_data(False, True, False, False, False, self.path)
 
         dir_list = ['Germany', 'Spain', 'France', 'Italy', 'US', 'SouthKorea', 'China']
 
@@ -188,8 +184,8 @@ class Test_cleanData(fake_filesystem_unittest.TestCase):
                                   "FullDataL.json", "FullDataL.h5"])
 
             elif dir == "Spain":
-                self.assertEqual(len(os.listdir(dir_path)), 4)
-                self.assertEqual(os.listdir(dir_path), ["a_spain.json", "a_spain.h5", "b_jh.json", "b_jh.h5"])
+                self.assertEqual(len(os.listdir(dir_path)), 2)
+                self.assertEqual(os.listdir(dir_path), ["b_jh.json", "b_jh.h5"])
             else:
                 self.assertEqual(len(os.listdir(dir_path)), 2)
                 if dir == "France":
@@ -199,7 +195,7 @@ class Test_cleanData(fake_filesystem_unittest.TestCase):
 
         self.set_dirs_and_files("all")
 
-        cd.clean_data(False, True, False, False, False, True, self.path)
+        cd.clean_data(False, True, False, False, True, self.path)
 
         dir_list = ['Germany', 'Spain', 'France', 'Italy', 'US', 'SouthKorea', 'China']
 
@@ -221,8 +217,8 @@ class Test_cleanData(fake_filesystem_unittest.TestCase):
                                   "FullDataL.json", "FullDataL.h5"])
 
             elif dir == "Spain":
-                self.assertEqual(len(os.listdir(dir_path)), 4)
-                self.assertEqual(os.listdir(dir_path), ["a_spain.json", "a_spain.h5", "b_jh.json", "b_jh.h5"])
+                self.assertEqual(len(os.listdir(dir_path)), 2)
+                self.assertEqual(os.listdir(dir_path), ["b_jh.json", "b_jh.h5"])
             else:
                 self.assertEqual(len(os.listdir(dir_path)), 2)
                 if dir == "France":
@@ -245,7 +241,7 @@ class Test_cleanData(fake_filesystem_unittest.TestCase):
         self.assertEqual(len(os.listdir(dir_path)), 2)
         self.assertEqual(os.listdir(dir_path), ["a_rki.json", "FullRKI.json"])
 
-        cd.clean_data(False, True, False, False, False, False, self.path)
+        cd.clean_data(False, True, False, False, False, self.path)
 
         dir_list = ['Spain', 'France', 'Italy', 'US', 'SouthKorea', 'China']
 
@@ -260,8 +256,8 @@ class Test_cleanData(fake_filesystem_unittest.TestCase):
             dir_path = os.path.join(self.path, dir)
 
             if dir == "Spain":
-                self.assertEqual(len(os.listdir(dir_path)), 4)
-                self.assertEqual(os.listdir(dir_path), ["a_spain.json", "a_spain.h5", "b_jh.json", "b_jh.h5"])
+                self.assertEqual(len(os.listdir(dir_path)), 2)
+                self.assertEqual(os.listdir(dir_path), ["b_jh.json", "b_jh.h5"])
             else:
                 self.assertEqual(len(os.listdir(dir_path)), 2)
                 if dir == "France":
@@ -273,7 +269,7 @@ class Test_cleanData(fake_filesystem_unittest.TestCase):
 
         self.set_dirs_and_files("all")
 
-        cd.clean_data(False, False, False, False, True, False, self.path)
+        cd.clean_data(False, False, False, True, False, self.path)
 
         dir_list = ['Germany', 'Spain', 'France', 'Italy', 'US', 'SouthKorea', 'China']
 
@@ -294,8 +290,8 @@ class Test_cleanData(fake_filesystem_unittest.TestCase):
                                   "PopulData.h5", "FullDataB.h5", "FullDataL.h5"])
 
             elif dir == "Spain":
-                self.assertEqual(len(os.listdir(dir_path)), 4)
-                self.assertEqual(os.listdir(dir_path), ["a_spain.json", "a_spain.h5", "b_jh.json", "b_jh.h5"])
+                self.assertEqual(len(os.listdir(dir_path)), 2)
+                self.assertEqual(os.listdir(dir_path), ["b_jh.json", "b_jh.h5"])
             else:
                 self.assertEqual(len(os.listdir(dir_path)), 2)
                 if dir == "France":
@@ -307,7 +303,7 @@ class Test_cleanData(fake_filesystem_unittest.TestCase):
 
         self.set_dirs_and_files("all")
 
-        cd.clean_data(False, False, False, False, True, True, self.path)
+        cd.clean_data(False, False, False, True, True, self.path)
 
         dir_list = ['Germany', 'Spain', 'France', 'Italy', 'US', 'SouthKorea', 'China']
 
@@ -328,8 +324,8 @@ class Test_cleanData(fake_filesystem_unittest.TestCase):
                                   "PopulData.json", "FullDataB.json", "FullDataL.json"])
 
             elif dir == "Spain":
-                self.assertEqual(len(os.listdir(dir_path)), 4)
-                self.assertEqual(os.listdir(dir_path), ["a_spain.json", "a_spain.h5", "b_jh.json", "b_jh.h5"])
+                self.assertEqual(len(os.listdir(dir_path)), 2)
+                self.assertEqual(os.listdir(dir_path), ["b_jh.json", "b_jh.h5"])
             else:
                 self.assertEqual(len(os.listdir(dir_path)), 2)
                 if dir == "France":
@@ -353,7 +349,7 @@ class Test_cleanData(fake_filesystem_unittest.TestCase):
 
         self.assertEqual(len(os.listdir(dir_path)), 3)
 
-        cd.clean_data(False, False, False, False, True, False, self.path)
+        cd.clean_data(False, False, False, True, False, self.path)
 
         dir_list = ['Spain', 'France', 'Italy', 'US', 'SouthKorea', 'China']
 
@@ -368,8 +364,8 @@ class Test_cleanData(fake_filesystem_unittest.TestCase):
             dir_path = os.path.join(self.path, dir)
 
             if dir == "Spain":
-                self.assertEqual(len(os.listdir(dir_path)), 4)
-                self.assertEqual(os.listdir(dir_path), ["a_spain.json", "a_spain.h5", "b_jh.json", "b_jh.h5"])
+                self.assertEqual(len(os.listdir(dir_path)), 2)
+                self.assertEqual(os.listdir(dir_path), ["b_jh.json", "b_jh.h5"])
             else:
                 self.assertEqual(len(os.listdir(dir_path)), 2)
                 if dir == "France":
@@ -377,7 +373,7 @@ class Test_cleanData(fake_filesystem_unittest.TestCase):
 
     def test_all_false(self):
 
-        cd.clean_data(False, False, False, False, False, False, self.path)
+        cd.clean_data(False, False, False, False, False, self.path)
 
         # test if writte fct works as expected
 
@@ -403,8 +399,8 @@ class Test_cleanData(fake_filesystem_unittest.TestCase):
                                   "FullDataL.json", "FullDataL.h5"])
 
             elif dir == "Spain":
-                self.assertEqual(len(os.listdir(dir_path)), 4)
-                self.assertEqual(os.listdir(dir_path), ["a_spain.json", "a_spain.h5", "b_jh.json", "b_jh.h5"])
+                self.assertEqual(len(os.listdir(dir_path)), 2)
+                self.assertEqual(os.listdir(dir_path), ["b_jh.json", "b_jh.h5"])
             else:
                 self.assertEqual(len(os.listdir(dir_path)), 2)
                 if dir == "France":
@@ -412,7 +408,7 @@ class Test_cleanData(fake_filesystem_unittest.TestCase):
 
     def test_wrong_path(self):
 
-        cd.clean_data(True, False, False, False, False, False, "/home/y")
+        cd.clean_data(True, False, False, False, False, "/home/y")
 
         # TODO add some test: but what? - nothing is happening in this case
 
@@ -423,7 +419,7 @@ class Test_cleanData(fake_filesystem_unittest.TestCase):
 
         self.set_dirs_and_files("all")
 
-        cd.clean_data(False, False, True, False, False, False, self.path)
+        cd.clean_data(False, False, True, False, False, self.path)
 
         dir_list = ['Germany', 'Spain', 'France', 'Italy', 'US', 'SouthKorea', 'China']
 
@@ -445,8 +441,8 @@ class Test_cleanData(fake_filesystem_unittest.TestCase):
                                   "FullDataL.json", "FullDataL.h5"])
 
             elif dir == "Spain":
-                self.assertEqual(len(os.listdir(dir_path)), 3)
-                self.assertEqual(os.listdir(dir_path), ["a_spain.json", "a_spain.h5", "b_jh.h5"])
+                self.assertEqual(len(os.listdir(dir_path)), 1)
+                self.assertEqual(os.listdir(dir_path), ["b_jh.h5"])
             else:
                 self.assertEqual(len(os.listdir(dir_path)), 1)
                 if dir == "France":
@@ -458,7 +454,7 @@ class Test_cleanData(fake_filesystem_unittest.TestCase):
 
         self.set_dirs_and_files("all")
 
-        cd.clean_data(False, False, True, False, False, True, self.path)
+        cd.clean_data(False, False, True, False, True, self.path)
 
         dir_list = ['Germany', 'Spain', 'France', 'Italy', 'US', 'SouthKorea', 'China']
 
@@ -480,8 +476,8 @@ class Test_cleanData(fake_filesystem_unittest.TestCase):
                                   "FullDataL.json", "FullDataL.h5"])
 
             elif dir == "Spain":
-                self.assertEqual(len(os.listdir(dir_path)), 3)
-                self.assertEqual(os.listdir(dir_path), ["a_spain.json", "a_spain.h5", "b_jh.json"])
+                self.assertEqual(len(os.listdir(dir_path)), 1)
+                self.assertEqual(os.listdir(dir_path), ["b_jh.json"])
             else:
                 self.assertEqual(len(os.listdir(dir_path)), 1)
                 if dir == "France":
@@ -493,14 +489,14 @@ class Test_cleanData(fake_filesystem_unittest.TestCase):
 
         self.set_dirs_and_files("all")
 
-        cd.clean_data(False, False, True, False, False, False, self.path)
-        cd.clean_data(False, False, True, False, False, True, self.path)
+        cd.clean_data(False, False, True, False, False, self.path)
+        cd.clean_data(False, False, True, False, True, self.path)
 
-        dir_list = ['Germany', 'Spain']
+        dir_list = ['Germany']
 
         # Test wanted folder and file structure
 
-        self.assertEqual(len(os.listdir(self.path)), 2)
+        self.assertEqual(len(os.listdir(self.path)), 1)
 
         self.assertEqual(os.listdir(self.path),
                          dir_list)
@@ -515,129 +511,13 @@ class Test_cleanData(fake_filesystem_unittest.TestCase):
                                   "PopulData.json", "PopulData.h5", "FullDataB.json", "FullDataB.h5",
                                   "FullDataL.json", "FullDataL.h5"])
 
-            elif dir == "Spain":
-                self.assertEqual(len(os.listdir(dir_path)), 2)
-                self.assertEqual(os.listdir(dir_path), ["a_spain.json", "a_spain.h5"])
-
-    def test_clean_data_spain(self):
-
-        # test if writte fct works as expected
-
-        self.set_dirs_and_files("all")
-
-        cd.clean_data(False, False, False, True, False, False, self.path)
-
-        dir_list = ['Germany', 'Spain', 'France', 'Italy', 'US', 'SouthKorea', 'China']
-
-        # Test wanted folder and file structure
-
-        self.assertEqual(len(os.listdir(self.path)), 11)
-
-        self.assertEqual(os.listdir(self.path),
-                         dir_list + ['all_jh.json', 'all_jh.h5', 'FullJohnHopkins.json', 'FullJohnHopkins.h5'])
-
-        for dir in dir_list:
-            dir_path = os.path.join(self.path, dir)
-
-            if dir == "Germany":
-                self.assertEqual(len(os.listdir(dir_path)), 12)
-                self.assertEqual(os.listdir(dir_path),
-                                 ["a_rki.json", "a_rki.h5", "a_jh.json", "a_jh.h5", "FullRKI.json", "FullRKI.h5",
-                                  "PopulData.json", "PopulData.h5", "FullDataB.json", "FullDataB.h5",
-                                  "FullDataL.json", "FullDataL.h5"])
-
-            elif dir == "Spain":
-                self.assertEqual(len(os.listdir(dir_path)), 3)
-                self.assertEqual(os.listdir(dir_path), ["a_spain.h5", "b_jh.json", "b_jh.h5"])
-            else:
-                self.assertEqual(len(os.listdir(dir_path)), 2)
-                if dir == "France":
-                    self.assertEqual(os.listdir(dir_path), ["c_jh.json", "c_jh.h5"])
-
-    def test_clean_data_spain_hdf5(self):
-
-        # test if writte fct works as expected
-
-        self.set_dirs_and_files("all")
-
-        cd.clean_data(False, False, False, True, False, True, self.path)
-
-        dir_list = ['Germany', 'Spain', 'France', 'Italy', 'US', 'SouthKorea', 'China']
-
-        # Test wanted folder and file structure
-
-        self.assertEqual(len(os.listdir(self.path)), 11)
-
-        self.assertEqual(os.listdir(self.path),
-                         dir_list + ['all_jh.json', 'all_jh.h5', 'FullJohnHopkins.json', 'FullJohnHopkins.h5'])
-
-        for dir in dir_list:
-            dir_path = os.path.join(self.path, dir)
-
-            if dir == "Germany":
-                self.assertEqual(len(os.listdir(dir_path)), 12)
-                self.assertEqual(os.listdir(dir_path),
-                                 ["a_rki.json", "a_rki.h5", "a_jh.json", "a_jh.h5", "FullRKI.json", "FullRKI.h5",
-                                  "PopulData.json", "PopulData.h5", "FullDataB.json", "FullDataB.h5",
-                                  "FullDataL.json", "FullDataL.h5"])
-
-            elif dir == "Spain":
-                self.assertEqual(len(os.listdir(dir_path)), 3)
-                self.assertEqual(os.listdir(dir_path), ["a_spain.json", "b_jh.json", "b_jh.h5"])
-            else:
-                self.assertEqual(len(os.listdir(dir_path)), 2)
-                if dir == "France":
-                    self.assertEqual(os.listdir(dir_path), ["c_jh.json", "c_jh.h5"])
-
-    def test_clean_data_spain_del_dir(self):
-
-        # test if writte fct works as expected
-
-        self.set_dirs_and_files("all")
-
-        dir_path = os.path.join(self.path, "Spain")
-        files = os.listdir(dir_path)
-
-        # delete all files except which will be deleted
-        for item in files:
-            if item == "a_spain.json":
-                continue
-            else:
-                os.remove(os.path.join(dir_path, item))
-
-        cd.clean_data(False, False, False, True, False, False, self.path)
-
-        dir_list = ['Germany', 'France', 'Italy', 'US', 'SouthKorea', 'China']
-
-        # Test wanted folder and file structure
-
-        self.assertEqual(len(os.listdir(self.path)), 10)
-
-        self.assertEqual(os.listdir(self.path),
-                         dir_list + ['all_jh.json', 'all_jh.h5', 'FullJohnHopkins.json', 'FullJohnHopkins.h5'])
-
-        for dir in dir_list:
-            dir_path = os.path.join(self.path, dir)
-
-            if dir == "Germany":
-                self.assertEqual(len(os.listdir(dir_path)), 12)
-                self.assertEqual(os.listdir(dir_path),
-                                 ["a_rki.json", "a_rki.h5", "a_jh.json", "a_jh.h5", "FullRKI.json", "FullRKI.h5",
-                                  "PopulData.json", "PopulData.h5", "FullDataB.json", "FullDataB.h5",
-                                  "FullDataL.json", "FullDataL.h5"])
-
-            else:
-                self.assertEqual(len(os.listdir(dir_path)), 2)
-                if dir == "France":
-                    self.assertEqual(os.listdir(dir_path), ["c_jh.json", "c_jh.h5"])
-
     def test_clean_data_rki_johns_hopkins(self):
 
         # test if writte fct works as expected
 
         self.set_dirs_and_files("all")
 
-        cd.clean_data(False, True, True, False, False, False, self.path)
+        cd.clean_data(False, True, True, False, False, self.path)
 
         dir_list = ['Germany', 'Spain', 'France', 'Italy', 'US', 'SouthKorea', 'China']
 
@@ -659,43 +539,8 @@ class Test_cleanData(fake_filesystem_unittest.TestCase):
                                   "FullDataL.json", "FullDataL.h5"])
 
             elif dir == "Spain":
-                self.assertEqual(len(os.listdir(dir_path)), 3)
-                self.assertEqual(os.listdir(dir_path), ["a_spain.json", "a_spain.h5", "b_jh.h5"])
-            else:
                 self.assertEqual(len(os.listdir(dir_path)), 1)
-                if dir == "France":
-                    self.assertEqual(os.listdir(dir_path), ["c_jh.h5"])
-
-    def test_clean_data_rki_john_hokins_spain(self):
-
-        # test if writte fct works as expected
-
-        self.set_dirs_and_files("all")
-
-        cd.clean_data(False, True, True, True, False, False, self.path)
-
-        dir_list = ['Germany', 'Spain', 'France', 'Italy', 'US', 'SouthKorea', 'China']
-
-        # Test wanted folder and file structure
-
-        self.assertEqual(len(os.listdir(self.path)), 9)
-
-        self.assertEqual(os.listdir(self.path),
-                         dir_list + ['all_jh.h5', 'FullJohnHopkins.h5'])
-
-        for dir in dir_list:
-            dir_path = os.path.join(self.path, dir)
-
-            if dir == "Germany":
-                self.assertEqual(len(os.listdir(dir_path)), 9)
-                self.assertEqual(os.listdir(dir_path),
-                                 ["a_rki.h5", "a_jh.h5", "FullRKI.h5",
-                                  "PopulData.json", "PopulData.h5", "FullDataB.json", "FullDataB.h5",
-                                  "FullDataL.json", "FullDataL.h5"])
-
-            elif dir == "Spain":
-                self.assertEqual(len(os.listdir(dir_path)), 2)
-                self.assertEqual(os.listdir(dir_path), ["a_spain.h5", "b_jh.h5"])
+                self.assertEqual(os.listdir(dir_path), ["b_jh.h5"])
             else:
                 self.assertEqual(len(os.listdir(dir_path)), 1)
                 if dir == "France":
@@ -707,7 +552,7 @@ class Test_cleanData(fake_filesystem_unittest.TestCase):
 
         self.set_dirs_and_files("all")
 
-        cd.clean_data(False, True, True, True, True, False, self.path)
+        cd.clean_data(False, True, True, True, False, self.path)
 
         dir_list = ['Germany', 'Spain', 'France', 'Italy', 'US', 'SouthKorea', 'China']
 
@@ -728,8 +573,8 @@ class Test_cleanData(fake_filesystem_unittest.TestCase):
                                   "PopulData.h5", "FullDataB.h5", "FullDataL.h5"])
 
             elif dir == "Spain":
-                self.assertEqual(len(os.listdir(dir_path)), 2)
-                self.assertEqual(os.listdir(dir_path), ["a_spain.h5", "b_jh.h5"])
+                self.assertEqual(len(os.listdir(dir_path)), 1)
+                self.assertEqual(os.listdir(dir_path), ["b_jh.h5"])
             else:
                 self.assertEqual(len(os.listdir(dir_path)), 1)
                 if dir == "France":
@@ -745,7 +590,7 @@ class Test_cleanData(fake_filesystem_unittest.TestCase):
         with open(os.path.join(self.path, "wichtig.py"), 'w') as f:
             f.write('foo')
 
-        cd.clean_data(False, True, False, False, False, False, self.path)
+        cd.clean_data(False, True, False, False, False, self.path)
 
         self.assertEqual(len(os.listdir(self.path)), 2)
         self.assertEqual(os.listdir(self.path), ["ImportantDir", "wichtig.py"])
@@ -760,22 +605,7 @@ class Test_cleanData(fake_filesystem_unittest.TestCase):
         with open(os.path.join(self.path, "wichtig.py"), 'w') as f:
             f.write('foo')
 
-        cd.clean_data(False, False, False, False, True, False, self.path)
-
-        self.assertEqual(len(os.listdir(self.path)), 2)
-        self.assertEqual(os.listdir(self.path), ["ImportantDir", "wichtig.py"])
-
-    def test_file_not_found_spain(self):
-
-        self.set_dirs_and_files("spain")
-
-        # add different files and folder
-        os.makedirs(os.path.join(self.path, "ImportantDir"))
-
-        with open(os.path.join(self.path, "wichtig.py"), 'w') as f:
-            f.write('foo')
-
-        cd.clean_data(False, False, False, True, False, False, self.path)
+        cd.clean_data(False, False, False, True, False, self.path)
 
         self.assertEqual(len(os.listdir(self.path)), 2)
         self.assertEqual(os.listdir(self.path), ["ImportantDir", "wichtig.py"])
@@ -790,7 +620,7 @@ class Test_cleanData(fake_filesystem_unittest.TestCase):
         with open(os.path.join(self.path, "wichtig.py"), 'w') as f:
             f.write('foo')
 
-        cd.clean_data(False, False, True, False, False, False, self.path)
+        cd.clean_data(False, False, True, False, False, self.path)
 
         self.assertEqual(len(os.listdir(self.path)), 2)
         self.assertEqual(os.listdir(self.path), ["ImportantDir", "wichtig.py"])
@@ -801,16 +631,13 @@ class Test_cleanData(fake_filesystem_unittest.TestCase):
         # Every error should be cached and passed
 
         # no data in folder
-        cd.clean_data(False, False, True, False, False, False, self.path)
+        cd.clean_data(False, False, True, False, False, self.path)
 
         # population
-        cd.clean_data(False, False, False, False, True, False, self.path)
-
-        # spain
-        cd.clean_data(False, False, False, True, False, False, self.path)
+        cd.clean_data(False, False, False, True, False, self.path)
 
         # rki
-        cd.clean_data(False, True, False, False, False, False, self.path)
+        cd.clean_data(False, True, False, False, False, self.path)
 
     def test_cli_default(self):
 
@@ -820,14 +647,13 @@ class Test_cleanData(fake_filesystem_unittest.TestCase):
 
         with patch.object(sys, 'argv', test_args):
 
-            [all_data, rki, jh, spain, popul, hdf5, out_path] = cd.cli()
+            [all_data, rki, jh, popul, hdf5, out_path] = cd.cli()
 
-            print([all_data, rki, jh, spain, popul, hdf5, out_path])
+            print([all_data, rki, jh, popul, hdf5, out_path])
 
             self.assertEqual(all_data, False)
             self.assertEqual(rki, False)
             self.assertEqual(jh, False)
-            self.assertEqual(spain, False)
             self.assertEqual(popul, False)
             self.assertEqual(hdf5, False)
             self.assertEqual(out_path, out_path_default)
@@ -839,12 +665,11 @@ class Test_cleanData(fake_filesystem_unittest.TestCase):
 
         with patch.object(sys, 'argv', test_args):
 
-            [all_data, rki, jh, spain, popul, hdf5, out_path] = cd.cli()
+            [all_data, rki, jh, popul, hdf5, out_path] = cd.cli()
 
             self.assertEqual(all_data, False)
             self.assertEqual(rki, False)
             self.assertEqual(jh, False)
-            self.assertEqual(spain, False)
             self.assertEqual(popul, False)
             self.assertEqual(hdf5, False)
             self.assertEqual(out_path, folder)
@@ -857,12 +682,11 @@ class Test_cleanData(fake_filesystem_unittest.TestCase):
 
         with patch.object(sys, 'argv', test_args):
 
-            [all_data, rki, jh, spain, popul, hdf5, out_path] = cd.cli()
+            [all_data, rki, jh, popul, hdf5, out_path] = cd.cli()
 
             self.assertEqual(all_data, True)
             self.assertEqual(rki, False)
             self.assertEqual(jh, False)
-            self.assertEqual(spain, False)
             self.assertEqual(popul, False)
             self.assertEqual(hdf5, False)
             self.assertEqual(out_path, out_path_default)
@@ -875,12 +699,11 @@ class Test_cleanData(fake_filesystem_unittest.TestCase):
 
         with patch.object(sys, 'argv', test_args):
 
-            [all_data, rki, jh, spain, popul, hdf5, out_path] = cd.cli()
+            [all_data, rki, jh, popul, hdf5, out_path] = cd.cli()
 
             self.assertEqual(all_data, False)
             self.assertEqual(rki, True)
             self.assertEqual(jh, False)
-            self.assertEqual(spain, False)
             self.assertEqual(popul, False)
             self.assertEqual(hdf5, False)
             self.assertEqual(out_path, out_path_default)
@@ -893,32 +716,15 @@ class Test_cleanData(fake_filesystem_unittest.TestCase):
 
         with patch.object(sys, 'argv', test_args):
 
-            [all_data, rki, jh, spain, popul, hdf5, out_path] = cd.cli()
+            [all_data, rki, jh, popul, hdf5, out_path] = cd.cli()
 
             self.assertEqual(all_data, False)
             self.assertEqual(rki, False)
             self.assertEqual(jh, True)
-            self.assertEqual(spain, False)
             self.assertEqual(popul, False)
             self.assertEqual(hdf5, True)
             self.assertEqual(out_path, out_path_default)
 
-    def test_cli_spain(self):
-
-        out_path_default = dd.defaultDict['out_folder']
-
-        test_args = ["prog", '-s', '-h5']
-
-        with patch.object(sys, 'argv', test_args):
-            [all_data, rki, jh, spain, popul, hdf5, out_path] = cd.cli()
-
-            self.assertEqual(all_data, False)
-            self.assertEqual(rki, False)
-            self.assertEqual(jh, False)
-            self.assertEqual(spain, True)
-            self.assertEqual(popul, False)
-            self.assertEqual(hdf5, True)
-            self.assertEqual(out_path, out_path_default)
 
     def test_cli_popul(self):
 
@@ -928,12 +734,11 @@ class Test_cleanData(fake_filesystem_unittest.TestCase):
 
         with patch.object(sys, 'argv', test_args):
 
-            [all_data, rki, jh, spain, popul, hdf5, out_path] = cd.cli()
+            [all_data, rki, jh, popul, hdf5, out_path] = cd.cli()
 
             self.assertEqual(all_data, False)
             self.assertEqual(rki, False)
             self.assertEqual(jh, False)
-            self.assertEqual(spain, False)
             self.assertEqual(popul, True)
             self.assertEqual(hdf5, True)
             self.assertEqual(out_path, out_path_default)
