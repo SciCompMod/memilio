@@ -179,7 +179,6 @@ test-py:
     - getrkidata --help
     - getpopuldata --help
     - getjhdata --help
-    - getspaindata --help
     - getdividata --help
     - getsimdata --help
     - cleandata --help
@@ -235,7 +234,6 @@ download-data:
     - getrkidata -o data_dl
     - getpopuldata -o data_dl
     - getjhdata -o data_dl
-    - getspaindata -o data_dl
     - getdividata -o data_dl
   allow_failure: true
   artifacts:
@@ -250,40 +248,6 @@ download-data:
       - data_dl/China/*.json
   only:
      - master
-
-build-js:
-  tags:
-   - docker
-  image: node:12
-  stage: build
-  before_script:
-    - cd frontend
-    - npm install
-  script:
-    - echo "Building app deployment"
-    - npm run build
-    - echo "Building done"
-  artifacts:
-    paths:
-      - frontend/build/
-
-test-js:
-  tags:
-   - docker
-  image: node:12
-  stage: test
-  needs: ['build-js']
-  before_script:
-    - cd frontend
-    - npm install
-  script:
-    - npm run coverage
-  artifacts:
-    reports:
-      junit: frontend/coverage/junit/junit.xml
-      cobertura: frontend/coverage/cobertura-coverage.xml
-    paths:
-      - frontend/coverage/lcov-report
     
 www:
   tags:
@@ -291,7 +255,6 @@ www:
     - hpcagainstcorona
   stage: deploy
   dependencies:
-    - build-js
     - download-data
   script:
     - echo "Deploying to server"

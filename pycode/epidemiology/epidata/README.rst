@@ -182,9 +182,6 @@ When speaking about infected, means always infected inclusive the already recove
  JH             China       whole_country_China_jh             Time-cumsum of confirmed, recovered, death for China
  JH             US          whole_country_US_jh                Time-cumsum of confirmed, recovered, death for US
 
- MISAN          Spain       spain_all_age                      ['Date', 'Age', 'Gender', 'Confirmed', 'Hospitalized', 'ICU', 'Deaths'] for different age ranges
- MISAN          Spain       spain_all_state                    ['Date', 'ID_State', 'State', 'Confirmed_total', 'Confirmed_PCR', 'Confirmed_AB', 'Hospitalized', 'ICU', 'Deaths', 'Recovered']
-
  DIVI           Germany     FullData_DIVI                      Full data as downloaded from archive with columns ['County', 'State', 'anzahl_meldebereiche', 'reporting_hospitals', 'occupied_ICU', 'free_ICU', 'ID_State', 'Date', 'ICU', 'ICU_ventilated', 'faelle_covid_aktuell_im_bundesland', 'ID_County']
  DIVI           Germany     county_divi                        ICU, ICU_ventilated over time for different counties (Landkreise) with columns ['County', 'ID_County', 'ICU', 'ICU_ventilated', 'Date']
  DIVI           Germany     state_divi                         ICU, ICU_ventilated over time for different states (Bundesländer) with columns ['Date', 'ICU', 'ICU_ventilated', 'ID_State', 'State']
@@ -257,21 +254,6 @@ There are different columns of infected:
 'Confirmed_total' is the sum of the previous two
 'Confirmed' if the differentiation between PCR and ANTIBODY is not made/known, only the column 'Confirmed' appears
 
-
-For Spain:
-
-IMPORTANT NOTE: ONLY USE THIS DATA WITH CARE, WE ARE WAITING FOR AN UPDATE TO CORRECT THE FOLLOWING PROBLEM:
-
-#                                                                                                          #
-#        DO NOT USE DATA FROM THE FOLLOWING REGIONS SINCE THE COLUMNS HOSPITALIZED AND ICU                 #
-#        ARE NOT CORRECTLY SUMMED TO TOTAL NUMBERS ! THE SAME APPLIES TO ALL AGE DATA AT THE MOMENT !      #
-#                                                                                                          #
-#               HOSPITALIZED                                   ICU                                         #
-#               Castilla La Mancha (until 2020-04-11)          Castilla La Mancha (hasta 2020-04-12)       #
-#               Comunidad Valenciana (hasta 2020-04-08)        Castilla y León (hasta 2020-04-17)          #
-#               Madrid (hasta 2020-04-26)                      Comunidad Valenciana (hasta 2020-04-08)     #
-#               Castilla y León (hasta 2020-04-06)             Galicia (hasta 2020-04-29)                  #
-#               Madrid (hasta 2020-04-26)                                                                  #
 
 For DIVI:
 
