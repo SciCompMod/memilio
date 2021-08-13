@@ -28,6 +28,16 @@ public:
     {
     }
 
+    GraphSimulation(double t0, double dt, Graph&& g, const node_function& node_func,
+                    const edge_function&& edge_func)
+        : m_t(t0)
+        , m_dt(dt)
+        , m_graph(std::move(g))
+        , m_node_func(node_func)
+        , m_edge_func(edge_func)
+    {
+    }
+
     void advance(double t_max = 1.0)
     {
         auto dt = m_dt;
@@ -53,14 +63,19 @@ public:
         return m_t;
     }
 
-    Graph& get_graph()
+    Graph& get_graph() &
     {
         return m_graph;
     }
 
-    const Graph& get_graph() const
+    const Graph& get_graph() const &
     {
         return m_graph;
+    }
+
+    Graph&& get_graph() && 
+    {
+        return std::move(m_graph);
     }
 
 private:
@@ -74,7 +89,7 @@ private:
 template <class Graph, class NodeF, class EdgeF>
 auto make_graph_sim(double t0, double dt, Graph&& g, NodeF&& node_func, EdgeF&& edge_func)
 {
-    return GraphSimulation<std::decay_t<Graph>>(t0, dt, g, std::forward<NodeF>(node_func),
+    return GraphSimulation<std::decay_t<Graph>>(t0, dt, std::forward<Graph>(g), std::forward<NodeF>(node_func),
                                                 std::forward<EdgeF>(edge_func));
 }
 

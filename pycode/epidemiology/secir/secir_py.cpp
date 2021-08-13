@@ -324,9 +324,9 @@ void bind_GraphSimulation(py::module& m, std::string const& name)
                  return std::make_unique<GS>(epi::make_migration_sim(t0, dt, graph));
              }),
              py::arg("graph"), py::arg("t0") = 0.0, py::arg("dt") = 1.0)
-        .def_property_readonly("graph",
-                               py::overload_cast<>(&GS::get_graph, py::const_),
-                               py::return_value_policy::reference_internal)
+        .def_property_readonly(
+            "graph", [](const GS& self) -> const Graph& { return self.get_graph(); },
+            py::return_value_policy::reference_internal)
         .def_property_readonly("t", &GS::get_t)
         .def("advance", &GS::advance, py::arg("tmax"));
 }
@@ -361,9 +361,8 @@ void bind_ParameterStudy(py::module& m, std::string const& name)
                                py::return_value_policy::reference_internal)
         .def(
             "run",
-            [](epi::ParameterStudy<Simulation>& self,
-               typename epi::ParameterStudy<Simulation>::HandleSimulationResultFunction handle_result) {
-                self.run(handle_result);
+            [](epi::ParameterStudy<Simulation>& self, std::function<void(const epi::Graph<epi::SimulationNode<Simulation>, epi::MigrationEdge>&)> handle_result) {
+                self.run([&handle_result](auto&& g) { handle_result(g); });
             },
             py::arg("handle_result_func"))
         .def("run",

@@ -31,7 +31,7 @@ int main(int argc, char** argv)
     g.add_edge(0, 1, Eigen::VectorXd::Constant((size_t)epi::SeirInfType::Count, 0.01));
     g.add_edge(1, 0, Eigen::VectorXd::Constant((size_t)epi::SeirInfType::Count, 0.01));
 
-    auto sim = epi::make_migration_sim(t0, dt, g);
+    auto sim = epi::make_migration_sim(t0, dt, std::move(g));
 
     sim.advance(tmax);
 

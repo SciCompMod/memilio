@@ -131,3 +131,24 @@ TEST(TestGraphSimulation, persistentChangesDuringSimulation)
     std::vector<epi::Edge<int>> v_e = {{0, 1, 1 + num_steps}, {0, 2, 2 + num_steps}, {1, 2, 3 + num_steps}};
     EXPECT_THAT(sim.get_graph().edges(), testing::ElementsAreArray(v_e));
 }
+
+namespace
+{
+
+struct MoveOnly {
+    MoveOnly();
+    MoveOnly(const MoveOnly&) = delete;
+    MoveOnly& operator=(const MoveOnly&) = delete;
+    MoveOnly(MoveOnly&&)                 = default;
+    MoveOnly& operator=(MoveOnly&&) = default;
+};
+using MoveOnlyGraph    = epi::Graph<MoveOnly, MoveOnly>;
+using MoveOnlyGraphSim = epi::GraphSimulation<MoveOnlyGraph>;
+
+} // namespace
+
+static_assert(std::is_constructible<MoveOnlyGraphSim, double, double, MoveOnlyGraph&&, MoveOnlyGraphSim::node_function,
+                                    MoveOnlyGraphSim::edge_function>::value,
+              "GraphSimulation should support move-only graphs.");
+static_assert(std::is_move_constructible<MoveOnlyGraphSim>::value && std::is_move_assignable<MoveOnlyGraphSim>::value,
+              "GraphSimulation should support move-only graphs.");
