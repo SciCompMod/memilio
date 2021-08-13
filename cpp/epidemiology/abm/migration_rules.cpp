@@ -95,21 +95,20 @@ LocationType go_to_event(const Person& person, TimePoint t, TimeSpan dt, const A
     return current_loc;
 }
 
-LocationType go_to_hospital(const Person& person, TimePoint /*t*/, TimeSpan dt, const AbmMigrationParameters& params)
+LocationType go_to_hospital(const Person& person, TimePoint /*t*/, TimeSpan /*dt*/, const AbmMigrationParameters& /*params*/)
 {
     auto current_loc = person.get_location_id().type;
-    if (person.get_infection_state() == InfectionState::Infected_Detected) {
-        return random_transition(current_loc, dt,
-                                 {{LocationType::Hospital, params.get<HospitalizationRate>()[person.get_age()]}});
+    if (person.get_infection_state() == InfectionState::Infected_Severe) {
+        return LocationType::Hospital;
     }
     return current_loc;
 }
 
-LocationType go_to_icu(const Person& person, TimePoint /*t*/, TimeSpan dt, const AbmMigrationParameters& params)
+LocationType go_to_icu(const Person& person, TimePoint /*t*/, TimeSpan /*dt*/, const AbmMigrationParameters& /*params*/)
 {
     auto current_loc = person.get_location_id().type;
-    if (current_loc == LocationType::Hospital) {
-        return random_transition(current_loc, dt, {{LocationType::ICU, params.get<IcuRate>()[person.get_age()]}});
+    if (person.get_infection_state() == InfectionState::Infected_Critical) {
+        return LocationType::ICU;
     }
     return current_loc;
 }

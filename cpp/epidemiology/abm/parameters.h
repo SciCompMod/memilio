@@ -68,7 +68,43 @@ struct InfectedToRecovered
     }
 };
 
-struct InfectedToDead
+struct InfectedToSevere
+{
+    using Type = CustomIndexArray<double, AbmAgeGroup>;
+    static Type get_default()
+    {
+        return Type({AbmAgeGroup::Count}, 1.);
+    }
+};
+
+struct SevereToCritical
+{
+    using Type = CustomIndexArray<double, AbmAgeGroup>;
+    static Type get_default()
+    {
+        return Type({AbmAgeGroup::Count}, 1.);
+    }
+};
+
+struct SevereToRecovered
+{
+    using Type = CustomIndexArray<double, AbmAgeGroup>;
+    static Type get_default()
+    {
+        return Type({AbmAgeGroup::Count}, 1.);
+    }
+};
+
+struct CriticalToRecovered
+{
+    using Type = CustomIndexArray<double, AbmAgeGroup>;
+    static Type get_default()
+    {
+        return Type({AbmAgeGroup::Count}, 1.);
+    }
+};
+
+struct CriticalToDead
 {
     using Type = CustomIndexArray<double, AbmAgeGroup>;
     static Type get_default()
@@ -105,18 +141,14 @@ using GlobalInfectionParameters = ParameterSet<IncubationPeriod,
                                                CarrierToInfected,
                                                CarrierToRecovered,
                                                InfectedToRecovered,
-                                               InfectedToDead,
+                                               InfectedToSevere,
+                                               SevereToCritical,
+                                               SevereToRecovered,
+                                               CriticalToDead,
+                                               CriticalToRecovered,
                                                RecoveredToSusceptible,
                                                DetectInfection>;
 
-struct DeathFactor
-{
-    using Type = double;
-    static constexpr Type get_default()
-    {
-        return 1.;
-    }
-};
 
 struct EffectiveContacts
 {
@@ -130,8 +162,7 @@ struct EffectiveContacts
 /**
  * parameters of the infection that depend on the location.
  */
-using LocalInfectionParameters = ParameterSet<DeathFactor,
-                                              EffectiveContacts>;
+using LocalInfectionParameters = ParameterSet<EffectiveContacts>;
 
 /**
  * parameters that govern the migration between locations
@@ -141,20 +172,6 @@ struct LockdownDate {
     static auto get_default()
     {
         return TimePoint(std::numeric_limits<int>::max());
-    }
-};
-struct HospitalizationRate {
-    using Type = CustomIndexArray<double, AbmAgeGroup>;
-    static auto get_default()
-    {
-        return CustomIndexArray<double, AbmAgeGroup>(AbmAgeGroup::Count, 1.0);
-    }
-};
-struct IcuRate {
-    using Type = CustomIndexArray<double, AbmAgeGroup>;
-    static auto get_default()
-    {
-        return CustomIndexArray<double, AbmAgeGroup>(AbmAgeGroup::Count, 1.0);
     }
 };
 struct BasicShoppingRate {
@@ -190,7 +207,7 @@ struct SocialEventRate {
  * parameters that control the migration between locations.
  */
 using AbmMigrationParameters =
-    ParameterSet<LockdownDate, HospitalizationRate, IcuRate, SocialEventRate, BasicShoppingRate, WorkRatio, SchoolRatio>;
+    ParameterSet<LockdownDate, SocialEventRate, BasicShoppingRate, WorkRatio, SchoolRatio>;
 
 } // namespace epi
 #endif

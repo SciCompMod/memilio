@@ -36,7 +36,17 @@ InfectionState Location::interact(const Person& person, TimeSpan dt, const Globa
         return random_transition(
             state, dt,
             {{InfectionState::Recovered_Infected, global_params.get<InfectedToRecovered>()[age]},
-             {InfectionState::Dead, global_params.get<InfectedToDead>()[age] * m_parameters.get<DeathFactor>()}});
+             {InfectionState::Infected_Severe, global_params.get<InfectedToSevere>()[age]}});
+    case InfectionState::Infected_Severe:
+        return random_transition(
+            state, dt,
+            {{InfectionState::Recovered_Infected, global_params.get<SevereToRecovered>()[age]},
+             {InfectionState::Infected_Critical, global_params.get<SevereToCritical>()[age]}});
+    case InfectionState::Infected_Critical:
+        return random_transition(
+            state, dt,
+            {{InfectionState::Recovered_Infected, global_params.get<CriticalToRecovered>()[age]},
+             {InfectionState::Dead, global_params.get<CriticalToDead>()[age]}});
     case InfectionState::Recovered_Carrier: //fallthrough!
     case InfectionState::Recovered_Infected:
         return random_transition(

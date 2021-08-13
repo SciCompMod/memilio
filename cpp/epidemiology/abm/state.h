@@ -17,6 +17,8 @@ enum class InfectionState : std::uint32_t
     Carrier,
     Infected_Detected,
     Infected_Undetected,
+    Infected_Severe,
+    Infected_Critical,
     Recovered_Carrier,
     Recovered_Infected,
     Dead,

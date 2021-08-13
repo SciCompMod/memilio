@@ -47,7 +47,7 @@ void Person::interact(TimeSpan dt, const GlobalInfectionParameters& global_infec
         }
     }
 
-    if (new_state == InfectionState::Infected_Detected) {
+    if (new_state == InfectionState::Infected_Detected || new_state == InfectionState::Infected_Severe || new_state == InfectionState::Infected_Critical) {
         m_quarantine = true;
     }
     else {
