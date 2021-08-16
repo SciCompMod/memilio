@@ -26,8 +26,8 @@ jobs:
         run: |
           echo 'deb http://download.opensuse.org/repositories/science:/dlr/xUbuntu_16.04/ /' | sudo tee /etc/apt/sources.list.d/science:dlr.list
           wget -O - https://download.opensuse.org/repositories/science:dlr/xUbuntu_16.04/Release.key  | sudo apt-key add -
-          sudo apt -qq update
-          sudo apt -qq -y install libhdf5-dev libtixi3-dev lcov
+          sudo apt-get -qq update
+          sudo apt-get -qq -y install libhdf5-dev libtixi3-dev lcov
       - name: Build
         run: |
           cd cpp
@@ -41,37 +41,37 @@ jobs:
           path: cpp/build/tests
           retention-days: 1
 
-  build-cpp-win:
-    runs-on: windows-latest
-    steps:
-      - uses: actions/checkout@v2
-      - name: Download TIXI
-        run: |
-          $env:Path += ";c:\Program Files\7-zip"
-          md -Force ${{github.workspace}}\Libraries\
-          if (!(Test-Path -Path "${{github.workspace}}\Libraries\TIXI-3.1.1-win64")) {
-            Write-Output "Downloading TiXI libraries";
-            Invoke-WebRequest -Uri "https://github.com/DLR-SC/tixi/releases/download/v3.1.1/TIXI-3.1.1-win64.zip" -OutFile "${{github.workspace}}\Libraries\TIXI-3.1.1-win64.zip";
-            Write-Output "Extract TiXI libraries";
-            7z x -y "${{github.workspace}}\Libraries\TIXI-3.1.1-win64.zip" -o${{github.workspace}}\Libraries
-          }
-      - name: Install ninja
-        run: choco install -y ninja
-      - name: Build
-        run: |
-          cd cpp
-          md -Force build-win
-          cd build-win
-          cmake --version
-          cmake -G "Ninja" -DCMAKE_BUILD_TYPE=Release -DEPI_USE_BUNDLED_EIGEN=ON -DEPI_BUILD_EPI_IO=ON -DHDF5_USE_STATIC_LIBRARIES=ON -DHDF5_DIR=${{github.workspace}}\Libraries\HDF5-1.12.0-win64\cmake\hdf5 -Dtixi3_DIR=${{github.workspace}}\Libraries\TIXI-3.1.1-win64\lib\tixi3 ..
-          cp "${{github.workspace}}\Libraries\TIXI-3.1.1-win64\bin\tixi3.dll" "tests"
-          cmake --build .
-      - name: Upload built test directory
-        uses: actions/upload-artifact@v2
-        with:
-          name: build-tests-windows
-          path: cpp/build-win/tests
-          retention-days: 1
+#  build-cpp-win:
+#    runs-on: windows-latest
+#    steps:
+#      - uses: actions/checkout@v2
+#      - name: Download TIXI
+#        run: |
+#          $env:Path += ";c:\Program Files\7-zip"
+#          md -Force ${{github.workspace}}\Libraries\
+#          if (!(Test-Path -Path "${{github.workspace}}\Libraries\TIXI-3.1.1-win64")) {
+#            Write-Output "Downloading TiXI libraries";
+#            Invoke-WebRequest -Uri "https://github.com/DLR-SC/tixi/releases/download/v3.1.1/TIXI-3.1.1-win64.zip" -OutFile "${{github.workspace}}\Libraries\TIXI-3.1.1-win64.zip";
+#            Write-Output "Extract TiXI libraries";
+#            7z x -y "${{github.workspace}}\Libraries\TIXI-3.1.1-win64.zip" -o${{github.workspace}}\Libraries
+#          }
+#      - name: Install ninja
+#        run: choco install -y ninja
+#      - name: Build
+#        run: |
+#          cd cpp
+#          md -Force build-win
+#          cd build-win
+#          cmake --version
+#          cmake -G "Ninja" -DCMAKE_BUILD_TYPE=Release -DEPI_USE_BUNDLED_EIGEN=ON -DEPI_BUILD_EPI_IO=ON -DHDF5_USE_STATIC_LIBRARIES=ON -DHDF5_DIR=${{github.workspace}}\Libraries\HDF5-1.12.0-win64\cmake\hdf5 -Dtixi3_DIR=${{github.workspace}}\Libraries\TIXI-3.1.1-win64\lib\tixi3 ..
+#          cp "${{github.workspace}}\Libraries\TIXI-3.1.1-win64\bin\tixi3.dll" "tests"
+#          cmake --build .
+#      - name: Upload built test directory
+#        uses: actions/upload-artifact@v2
+#        with:
+#          name: build-tests-windows
+#          path: cpp/build-win/tests
+#          retention-days: 1
 
 
   test-cpp:
@@ -81,12 +81,12 @@ jobs:
       - uses: actions/checkout@v2
       - name: Install Dependencies
         run: |
-          apt -qq update
-          apt -qq -y install libhdf5-cpp-100 wget gnupg
+          apt-get -qq update
+          apt-get -qq -y install libhdf5-cpp-100 wget gnupg
           echo 'deb http://download.opensuse.org/repositories/science:/dlr/xUbuntu_18.04/ /' | tee /etc/apt/sources.list.d/science:dlr.list
           wget -O - https://download.opensuse.org/repositories/science:dlr/xUbuntu_18.04/Release.key  | apt-key add -
-          apt -qq update
-          apt -qq -y install libtixi3 g++ python3-pip
+          apt-get -qq update
+          apt-get -qq -y install libtixi3 g++ python3-pip
           python3 -m pip install gcovr
       - name: Download built test directory
         uses: actions/download-artifact@v2
@@ -111,25 +111,25 @@ jobs:
             coverage_report
           retention-days: 1
 
-  test-cpp-win:
-    needs: build-cpp-win
-    runs-on: windows-latest
-    steps:
-      - name: Download built test directory
-        uses: actions/download-artifact@v2
-        with:
-          name: build-tests-windows
-      - name: Run unit tests
-        run: |
-          cd cpp/build-win/tests
-          .\runUnitTests.exe --gtest_output="xml:report.xml"
-      - name: Upload report
-        uses: actions/upload-artifact@v2
-        with:
-          name: test-cpp-win-report
-          path: |
-            cpp/build-win/tests/report.xml
-          retention-days: 1
+#  test-cpp-win:
+#    needs: build-cpp-win
+#    runs-on: windows-latest
+#    steps:
+#      - name: Download built test directory
+#        uses: actions/download-artifact@v2
+#        with:
+#          name: build-tests-windows
+#      - name: Run unit tests
+#        run: |
+#          cd cpp/build-win/tests
+#          .\runUnitTests.exe --gtest_output="xml:report.xml"
+#      - name: Upload report
+#        uses: actions/upload-artifact@v2
+#        with:
+#          name: test-cpp-win-report
+#          path: |
+#            cpp/build-win/tests/report.xml
+#          retention-days: 1
 
 
   build-py:
@@ -162,8 +162,8 @@ jobs:
       - uses: actions/checkout@v2
       - name: Install dependencies
         run: |
-          apt -qq update
-          apt -qq -y install doxygen
+          apt-get -qq update
+          apt-get -qq -y install doxygen
       - name: Create documentation
         run: |
           cd docs
@@ -182,8 +182,8 @@ jobs:
       - uses: actions/checkout@v2
       - name: Install dependencies
         run: |
-          apt -qq update
-          apt -qq -y install python3-pip gnupg
+          apt-get -qq update
+          apt-get -qq -y install python3-pip gnupg
           python3.6 -m pip install --upgrade pip
       - name: Download Python Wheels
         uses: actions/download-artifact@v2
@@ -223,8 +223,8 @@ jobs:
       - uses: actions/checkout@v2
       - name: Install dependencies
         run: |
-          apt -qq update
-          apt -qq -y install python3-pip gnupg
+          apt-get -qq update
+          apt-get -qq -y install python3-pip gnupg
           python3.6 -m pip install --upgrade pip
       - name: Download Python Wheels
         uses: actions/download-artifact@v2
@@ -257,8 +257,8 @@ jobs:
       - uses: actions/checkout@v2
       - name: Install dependencies
         run: |
-          apt -qq update
-          apt -qq -y install python3-pip gnupg
+          apt-get -qq update
+          apt-get -qq -y install python3-pip gnupg
           python3.6 -m pip install --upgrade pip
       - name: Download Python Wheels
         uses: actions/download-artifact@v2
@@ -297,8 +297,8 @@ jobs:
       - uses: actions/checkout@v2
       - name: Install dependencies
         run: |
-          apt -qq update
-          apt -qq -y install git curl
+          apt-get -qq update
+          apt-get -qq -y install git curl
       - name: Download python coverage report
         uses: actions/download-artifact@v2
         with:
@@ -326,8 +326,8 @@ jobs:
       - uses: actions/checkout@v2
       - name: Install dependencies
         run: |
-          apt -qq update
-          apt -qq -y install git
+          apt-get -qq update
+          apt-get -qq -y install git
       - name: Download python coverage report
         uses: actions/download-artifact@v2
         with:
