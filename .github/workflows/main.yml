@@ -93,6 +93,7 @@ jobs:
       - name: Run unit tests
         run: |
           cd cpp/build/tests
+          sudo chmod a+x runUnitTests
           ./runUnitTests  --gtest_output="xml:report.xml"
           cd ../../../
           gcovr -f cpp/epidemiology
@@ -319,7 +320,7 @@ jobs:
       - name: Deploy to codecov.io
         uses: codecov/codecov-action@v1
         with:
-          files: ./frontend/coverage/cobertura-coverage.xml,./pycode/test/coverage_python.xml,./coverage.xml
+          files: ./pycode/test/coverage_python.xml,./coverage.xml
           verbose: true
 
   pages:
