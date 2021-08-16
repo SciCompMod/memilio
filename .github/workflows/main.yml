@@ -30,7 +30,7 @@ jobs:
           cd cpp
           mkdir -p build && cd build
           cmake -DCMAKE_BUILD_TYPE=Debug -DCMAKE_CXX_FLAGS="-std=c++14 -pedantic" -DEPI_BUILD_EPI_IO=ON -DEPI_TEST_COVERAGE=ON ..
-          make -j
+          make
       - name: Upload built test directory
         uses: actions/upload-artifact@v2
         with:
