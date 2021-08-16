@@ -55,6 +55,8 @@ jobs:
             Write-Output "Extract TiXI libraries";
             7z x -y "${{github.workspace}}\Libraries\TIXI-3.1.1-win64.zip" -o${{github.workspace}}\Libraries
           }
+      - name: Install ninja
+        run: choco install -y ninja
       - name: Build
         run: |
           cd cpp
