@@ -81,12 +81,12 @@ jobs:
       - uses: actions/checkout@v2
       - name: Install Dependencies
         run: |
-          apt-get -qq update
-          apt-get -qq -y install libhdf5-cpp-100 wget gnupg
+          sudo apt-get -qq update
+          sudo apt-get -qq -y install libhdf5-cpp-100 wget gnupg
           echo 'deb http://download.opensuse.org/repositories/science:/dlr/xUbuntu_18.04/ /' | tee /etc/apt/sources.list.d/science:dlr.list
           wget -O - https://download.opensuse.org/repositories/science:dlr/xUbuntu_18.04/Release.key  | apt-key add -
-          apt-get -qq update
-          apt-get -qq -y install libtixi3 g++ python3-pip
+          sudo apt-get -qq update
+          sudo apt-get -qq -y install libtixi3 g++ python3-pip
           python3 -m pip install gcovr
       - name: Download built test directory
         uses: actions/download-artifact@v2
@@ -162,8 +162,8 @@ jobs:
       - uses: actions/checkout@v2
       - name: Install dependencies
         run: |
-          apt-get -qq update
-          apt-get -qq -y install doxygen
+          sudo apt-get -qq update
+          sudo apt-get -qq -y install doxygen
       - name: Create documentation
         run: |
           cd docs
@@ -182,8 +182,8 @@ jobs:
       - uses: actions/checkout@v2
       - name: Install dependencies
         run: |
-          apt-get -qq update
-          apt-get -qq -y install python3-pip gnupg
+          sudo apt-get -qq update
+          sudo apt-get -qq -y install python3-pip gnupg
           python3.6 -m pip install --upgrade pip
       - name: Download Python Wheels
         uses: actions/download-artifact@v2
@@ -223,8 +223,8 @@ jobs:
       - uses: actions/checkout@v2
       - name: Install dependencies
         run: |
-          apt-get -qq update
-          apt-get -qq -y install python3-pip gnupg
+          sudo apt-get -qq update
+          sudo apt-get -qq -y install python3-pip gnupg
           python3.6 -m pip install --upgrade pip
       - name: Download Python Wheels
         uses: actions/download-artifact@v2
@@ -257,8 +257,8 @@ jobs:
       - uses: actions/checkout@v2
       - name: Install dependencies
         run: |
-          apt-get -qq update
-          apt-get -qq -y install python3-pip gnupg
+          sudo apt-get -qq update
+          sudo apt-get -qq -y install python3-pip gnupg
           python3.6 -m pip install --upgrade pip
       - name: Download Python Wheels
         uses: actions/download-artifact@v2
@@ -297,8 +297,8 @@ jobs:
       - uses: actions/checkout@v2
       - name: Install dependencies
         run: |
-          apt-get -qq update
-          apt-get -qq -y install git curl
+          sudo apt-get -qq update
+          sudo apt-get -qq -y install git curl
       - name: Download python coverage report
         uses: actions/download-artifact@v2
         with:
@@ -326,8 +326,8 @@ jobs:
       - uses: actions/checkout@v2
       - name: Install dependencies
         run: |
-          apt-get -qq update
-          apt-get -qq -y install git
+          sudo apt-get -qq update
+          sudo apt-get -qq -y install git
       - name: Download python coverage report
         uses: actions/download-artifact@v2
         with:
