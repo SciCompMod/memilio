@@ -16,10 +16,9 @@ on:
 jobs:
         
   build-cpp:
-    runs-on: ubuntu-18.04
+    runs-on: ubuntu-latest
     container:
       image: conanio/gcc72
-      options: --user root
     steps:
       - uses: actions/checkout@v2
       - name: Install dependencies
@@ -76,7 +75,7 @@ jobs:
 
   test-cpp:
     needs: build-cpp
-    runs-on: ubuntu-18.04
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
       - name: Install Dependencies
