@@ -313,10 +313,6 @@ jobs:
         uses: actions/download-artifact@v2
         with:
           name: test-cpp-coverage-reports
-      - name: Download js coverage report
-        uses: actions/download-artifact@v2
-        with:
-          name: test-js-coverage-reports
       - name: Deploy to codecov.io
         uses: codecov/codecov-action@v1
         with:
