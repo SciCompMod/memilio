@@ -80,8 +80,8 @@ jobs:
         run: |
           sudo apt-get -qq update
           sudo apt-get -qq -y install libhdf5-cpp-100 wget gnupg
-          echo 'deb http://download.opensuse.org/repositories/science:/dlr/xUbuntu_18.04/ /' | tee /etc/apt/sources.list.d/science:dlr.list
-          wget -O - https://download.opensuse.org/repositories/science:dlr/xUbuntu_18.04/Release.key  | apt-key add -
+          echo 'deb http://download.opensuse.org/repositories/science:/dlr/xUbuntu_18.04/ /' | sudo tee /etc/apt/sources.list.d/science:dlr.list
+          wget -O - https://download.opensuse.org/repositories/science:dlr/xUbuntu_18.04/Release.key  | sudo apt-key add -
           sudo apt-get -qq update
           sudo apt-get -qq -y install libtixi3 g++ python3-pip
           python3 -m pip install gcovr
