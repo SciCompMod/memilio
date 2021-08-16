@@ -184,22 +184,22 @@ jobs:
         run: |
           sudo apt-get -qq update
           sudo apt-get -qq -y install python3-pip gnupg
-          python3.6 -m pip install --upgrade pip
+          python -m pip install --upgrade pip
       - name: Download Python Wheels
         uses: actions/download-artifact@v2
         with:
           name: python-wheels
       - name: Install Python Wheels
         run: |
-          for pkg in `ls pycode/wheelhouse/*36*.whl`; do python3.6 -m pip install $pkg; done
+          for pkg in `ls pycode/wheelhouse/*36*.whl`; do python -m pip install $pkg; done
           pip install -r pycode/requirements-dev.txt
       - name: Run unit tests
         run: |
           cd pycode/test
-          python3 -W ignore::DeprecationWarning -m coverage run --include=*site-packages/epidemiology*,*dist-packages/epidemiology*,epidemiology* -m unittest
-          python3 -m coverage report
-          python3 -m coverage xml -o coverage_python.xml
-          python3 -m coverage html -d coverage_python
+          python -W ignore::DeprecationWarning -m coverage run --include=*site-packages/epidemiology*,*dist-packages/epidemiology*,epidemiology* -m unittest
+          python -m coverage report
+          python -m coverage xml -o coverage_python.xml
+          python -m coverage html -d coverage_python
           cp -r coverage_python ../../
           getrkidata --help
           getpopuldata --help
@@ -225,14 +225,14 @@ jobs:
         run: |
           sudo apt-get -qq update
           sudo apt-get -qq -y install python3-pip gnupg
-          python3.6 -m pip install --upgrade pip
+          python -m pip install --upgrade pip
       - name: Download Python Wheels
         uses: actions/download-artifact@v2
         with:
           name: python-wheels
       - name: Install Python Wheels
         run: |
-          for pkg in `ls pycode/wheelhouse/*36*.whl`; do python3.6 -m pip install $pkg; done
+          for pkg in `ls pycode/wheelhouse/*36*.whl`; do python -m pip install $pkg; done
           pip install -r pycode/requirements-dev.txt
       - name: Run pylint
         run: |
@@ -240,7 +240,7 @@ jobs:
           mkdir -p build_pylint
           pip install pylint
           pip install pylint-json2html
-          python3.6 setup.py pylint
+          python setup.py pylint
           pylint-json2html -f jsonextended -o build_pylint/pylint.html < build_pylint/pylint_extended.json
       - name: Upload Pylint Report
         uses: actions/upload-artifact@v2
@@ -259,14 +259,14 @@ jobs:
         run: |
           sudo apt-get -qq update
           sudo apt-get -qq -y install python3-pip gnupg
-          python3.6 -m pip install --upgrade pip
+          python -m pip install --upgrade pip
       - name: Download Python Wheels
         uses: actions/download-artifact@v2
         with:
           name: python-wheels
       - name: Install Python Wheels
         run: |
-          for pkg in `ls pycode/wheelhouse/*36*.whl`; do python3.6 -m pip install $pkg; done
+          for pkg in `ls pycode/wheelhouse/*36*.whl`; do python -m pip install $pkg; done
       - name: Dowload Data
         run: |
           mkdir -p data_dl
@@ -314,7 +314,6 @@ jobs:
       - name: Deploy to codecov.io
         uses: codecov/codecov-action@v1
         with:
-          token: ${{ secrets.CODECOV_TOKEN }} # not required for public repos
           files: ./frontend/coverage/cobertura-coverage.xml,./pycode/test/coverage_python.xml,./coverage.xml
           verbose: true
 
