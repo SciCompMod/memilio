@@ -1,6 +1,6 @@
 # HPC against Corona #
 
-[![pipeline status](https://gitlab.dlr.de/hpc-against-corona/epidemiology/badges/master/pipeline.svg)](https://gitlab.dlr.de/hpc-against-corona/epidemiology/-/commits/master)
+[![CI](https://github.com/DLR-SC/memilio/actions/workflows/main.yml/badge.svg)](https://github.com/DLR-SC/memilio/actions/workflows/main.yml)
 C++: [![c++ coverage report](https://gitlab.dlr.de/hpc-against-corona/epidemiology/badges/master/coverage.svg?job=test-cpp)](https://gitlab.dlr.de/hpc-against-corona/epidemiology/-/jobs/artifacts/master/file/coverage_report/index.html?job=test-cpp)
 Python: [![python coverage report](https://gitlab.dlr.de/hpc-against-corona/epidemiology/badges/master/coverage.svg?job=test-py)](https://gitlab.dlr.de/hpc-against-corona/epidemiology/-/jobs/artifacts/master/file/coverage_python/index.html?job=test-py)
 
