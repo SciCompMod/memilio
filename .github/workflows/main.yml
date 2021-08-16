@@ -281,7 +281,6 @@ jobs:
           getrkidata -o data_dl
           getpopuldata -o data_dl
           getjhdata -o data_dl
-          getspaindata -o data_dl
           getdividata -o data_dl
       - name: Upload Data
         uses: actions/upload-artifact@v2
