@@ -16,15 +16,13 @@ on:
 jobs:
         
   build-cpp:
-    runs-on: ubuntu-latest
-    container:
-      image: conanio/gcc72
+    runs-on: ubuntu-18.04
     steps:
       - uses: actions/checkout@v2
       - name: Install dependencies
         run: |
-          echo 'deb http://download.opensuse.org/repositories/science:/dlr/xUbuntu_16.04/ /' | sudo tee /etc/apt/sources.list.d/science:dlr.list
-          wget -O - https://download.opensuse.org/repositories/science:dlr/xUbuntu_16.04/Release.key  | sudo apt-key add -
+          echo 'deb http://download.opensuse.org/repositories/science:/dlr/xUbuntu_18.04/ /' | sudo tee /etc/apt/sources.list.d/science:dlr.list
+          wget -O - https://download.opensuse.org/repositories/science:dlr/xUbuntu_18.04/Release.key  | sudo apt-key add -
           sudo apt-get -qq update
           sudo apt-get -qq -y install libhdf5-dev libtixi3-dev lcov
       - name: Build
