@@ -156,8 +156,6 @@ jobs:
   test-docs:
     needs: build-py
     runs-on: ubuntu-latest
-    container:
-      image: ubuntu:18.04
     steps:
       - uses: actions/checkout@v2
       - name: Install dependencies
@@ -191,6 +189,7 @@ jobs:
           name: python-wheels
       - name: Install Python Wheels
         run: |
+          ls pycode/wheelhouse/
           for pkg in `ls pycode/wheelhouse/*36*.whl`; do python -m pip install $pkg; done
           pip install -r pycode/requirements-dev.txt
       - name: Run unit tests
