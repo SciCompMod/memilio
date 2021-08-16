@@ -151,7 +151,7 @@ jobs:
         uses: actions/upload-artifact@v2
         with:
           name: python-wheels
-          path: pycode/wheelhouse/*.whl
+          path: pycode/wheelhouse
           
   test-docs:
     needs: build-py
@@ -187,9 +187,9 @@ jobs:
         uses: actions/download-artifact@v2
         with:
           name: python-wheels
+          path: pycode/wheelhouse
       - name: Install Python Wheels
         run: |
-          ls pycode/wheelhouse/
           for pkg in `ls pycode/wheelhouse/*36*.whl`; do python -m pip install $pkg; done
           pip install -r pycode/requirements-dev.txt
       - name: Run unit tests
