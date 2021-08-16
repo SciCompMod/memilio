@@ -89,6 +89,7 @@ jobs:
         uses: actions/download-artifact@v2
         with:
           name: build-tests-linux
+          path: cpp/build/tests
       - name: Run unit tests
         run: |
           cd cpp/build/tests
@@ -343,10 +344,12 @@ jobs:
         uses: actions/download-artifact@v2
         with:
           name: documentation
+          path: docs/html
       - name: Download pylint report
         uses: actions/download-artifact@v2
         with:
           name: pylint-report
+          path: pycode/build_pylint/pylint.html
       - name: Prepare basic Pages sites
         run: |
           mkdir -p public
