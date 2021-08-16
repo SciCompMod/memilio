@@ -1,0 +1,370 @@
+name: CI
+
+on: 
+  schedule:
+    - cron: "40 2 * * *"
+  push:
+    branches:
+      - '**'
+    tags:
+      - version-*
+  pull_request_target:
+
+  # Allows you to run this workflow manually from the Actions tab
+  workflow_dispatch:
+
+jobs:
+        
+  build-cpp:
+    runs-on: ubuntu-latest
+    container:
+      image: conanio/gcc72
+      options: --user root
+    steps:
+      - uses: actions/checkout@v2
+      - name: Install dependencies
+        run: |
+          echo 'deb http://download.opensuse.org/repositories/science:/dlr/xUbuntu_16.04/ /' | sudo tee /etc/apt/sources.list.d/science:dlr.list
+          wget -O - https://download.opensuse.org/repositories/science:dlr/xUbuntu_16.04/Release.key  | sudo apt-key add -
+          sudo apt -qq update
+          sudo apt -qq -y install libhdf5-dev libtixi3-dev lcov
+      - name: Build
+        run: |
+          cd cpp
+          mkdir -p build && cd build
+          cmake -DCMAKE_BUILD_TYPE=Debug -DCMAKE_CXX_FLAGS="-std=c++14 -pedantic" -DEPI_BUILD_EPI_IO=ON -DEPI_TEST_COVERAGE=ON ..
+          make -j
+      - name: Upload built test directory
+        uses: actions/upload-artifact@v2
+        with:
+          name: build-tests-linux
+          path: cpp/build/tests
+          retention-days: 1
+
+  build-cpp-win:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Download TIXI
+        run: |
+          $env:Path += ";c:\Program Files\7-zip"
+          md -Force ${{github.workspace}}\Libraries\
+          if (!(Test-Path -Path "${{github.workspace}}\Libraries\TIXI-3.1.1-win64")) {
+            Write-Output "Downloading TiXI libraries";
+            Invoke-WebRequest -Uri "https://github.com/DLR-SC/tixi/releases/download/v3.1.1/TIXI-3.1.1-win64.zip" -OutFile "${{github.workspace}}\Libraries\TIXI-3.1.1-win64.zip";
+            Write-Output "Extract TiXI libraries";
+            7z x -y "${{github.workspace}}\Libraries\TIXI-3.1.1-win64.zip" -o${{github.workspace}}\Libraries
+          }
+      - name: Build
+        run: |
+          cd cpp
+          md -Force build-win
+          cd build-win
+          cmake --version
+          cmake -G "Ninja" -DCMAKE_BUILD_TYPE=Release -DEPI_USE_BUNDLED_EIGEN=ON -DEPI_BUILD_EPI_IO=ON -DHDF5_USE_STATIC_LIBRARIES=ON -DHDF5_DIR=${{github.workspace}}\Libraries\HDF5-1.12.0-win64\cmake\hdf5 -Dtixi3_DIR=${{github.workspace}}\Libraries\TIXI-3.1.1-win64\lib\tixi3 ..
+          cp "${{github.workspace}}\Libraries\TIXI-3.1.1-win64\bin\tixi3.dll" "tests"
+          cmake --build .
+      - name: Upload built test directory
+        uses: actions/upload-artifact@v2
+        with:
+          name: build-tests-windows
+          path: cpp/build-win/tests
+          retention-days: 1
+
+
+  test-cpp:
+    needs: build-cpp
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Install Dependencies
+        run: |
+          apt -qq update
+          apt -qq -y install libhdf5-cpp-100 wget gnupg
+          echo 'deb http://download.opensuse.org/repositories/science:/dlr/xUbuntu_18.04/ /' | tee /etc/apt/sources.list.d/science:dlr.list
+          wget -O - https://download.opensuse.org/repositories/science:dlr/xUbuntu_18.04/Release.key  | apt-key add -
+          apt -qq update
+          apt -qq -y install libtixi3 g++ python3-pip
+          python3 -m pip install gcovr
+      - name: Download built test directory
+        uses: actions/download-artifact@v2
+        with:
+          name: build-tests-linux
+      - name: Run unit tests
+        run: |
+          cd cpp/build/tests
+          ./runUnitTests  --gtest_output="xml:report.xml"
+          cd ../../../
+          gcovr -f cpp/epidemiology
+          gcovr -f cpp/epidemiology --xml -o coverage.xml
+          mkdir coverage_report && cd coverage_report
+          gcovr -r .. -f ../cpp/epidemiology --exclude-throw-branches --html --html-details -o index.html
+      - name: Upload coverage reports
+        uses: actions/upload-artifact@v2
+        with:
+          name: test-cpp-coverage-reports
+          path: |
+            cpp/build/tests/report.xml
+            coverage.xml
+            coverage_report
+          retention-days: 1
+
+  test-cpp-win:
+    needs: build-cpp-win
+    runs-on: windows-latest
+    steps:
+      - name: Download built test directory
+        uses: actions/download-artifact@v2
+        with:
+          name: build-tests-windows
+      - name: Run unit tests
+        run: |
+          cd cpp/build-win/tests
+          .\runUnitTests.exe --gtest_output="xml:report.xml"
+      - name: Upload report
+        uses: actions/upload-artifact@v2
+        with:
+          name: test-cpp-win-report
+          path: |
+            cpp/build-win/tests/report.xml
+          retention-days: 1
+
+
+  build-py:
+    runs-on: ubuntu-latest
+    container:
+      image: quay.io/pypa/manylinux2014_x86_64
+    steps:
+      - uses: actions/checkout@v2
+      - name: Install dependencies
+        run: yum install ninja-build -qy
+      - name: Build Python Wheels
+        run: |
+          cd pycode
+          /opt/python/cp36-cp36m/bin/python setup.py bdist_wheel
+          /opt/python/cp37-cp37m/bin/python setup.py bdist_wheel
+          /opt/python/cp38-cp38/bin/python setup.py bdist_wheel
+          for whl in dist/*.whl; do auditwheel repair "$whl"; done
+      - name: Upload Python Wheels
+        uses: actions/upload-artifact@v2
+        with:
+          name: python-wheels
+          path: pycode/wheelhouse/*.whl
+          
+  test-docs:
+    needs: build-py
+    runs-on: ubuntu-latest
+    container:
+      image: ubuntu:18.04
+    steps:
+      - uses: actions/checkout@v2
+      - name: Install dependencies
+        run: |
+          apt -qq update
+          apt -qq -y install doxygen
+      - name: Create documentation
+        run: |
+          cd docs
+          doxygen
+      - name: Upload Documentation
+        uses: actions/upload-artifact@v2
+        with:
+          name: documentation
+          path: docs/html
+          retention-days: 3
+
+  test-py:
+    needs: build-py
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Install dependencies
+        run: |
+          apt -qq update
+          apt -qq -y install python3-pip gnupg
+          python3.6 -m pip install --upgrade pip
+      - name: Download Python Wheels
+        uses: actions/download-artifact@v2
+        with:
+          name: python-wheels
+      - name: Install Python Wheels
+        run: |
+          for pkg in `ls pycode/wheelhouse/*36*.whl`; do python3.6 -m pip install $pkg; done
+          pip install -r pycode/requirements-dev.txt
+      - name: Run unit tests
+        run: |
+          cd pycode/test
+          python3 -W ignore::DeprecationWarning -m coverage run --include=*site-packages/epidemiology*,*dist-packages/epidemiology*,epidemiology* -m unittest
+          python3 -m coverage report
+          python3 -m coverage xml -o coverage_python.xml
+          python3 -m coverage html -d coverage_python
+          cp -r coverage_python ../../
+          getrkidata --help
+          getpopuldata --help
+          getjhdata --help
+          getdividata --help
+          getsimdata --help
+          cleandata --help
+      - name: Upload coverage reports
+        uses: actions/upload-artifact@v2
+        with:
+          name: test-py-coverage-reports
+          path: |
+            pycode/test/coverage_python.xml
+            coverage_python/
+          retention-days: 1
+
+  test-pylint:
+    needs: build-py
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Install dependencies
+        run: |
+          apt -qq update
+          apt -qq -y install python3-pip gnupg
+          python3.6 -m pip install --upgrade pip
+      - name: Download Python Wheels
+        uses: actions/download-artifact@v2
+        with:
+          name: python-wheels
+      - name: Install Python Wheels
+        run: |
+          for pkg in `ls pycode/wheelhouse/*36*.whl`; do python3.6 -m pip install $pkg; done
+          pip install -r pycode/requirements-dev.txt
+      - name: Run pylint
+        run: |
+          cd pycode
+          mkdir -p build_pylint
+          pip install pylint
+          pip install pylint-json2html
+          python3.6 setup.py pylint
+          pylint-json2html -f jsonextended -o build_pylint/pylint.html < build_pylint/pylint_extended.json
+      - name: Upload Pylint Report
+        uses: actions/upload-artifact@v2
+        with:
+          name: pylint-report
+          path: pycode/build_pylint/pylint.html
+          retention-days: 3
+
+  dowload-data:
+    needs: build-py
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v2
+      - name: Install dependencies
+        run: |
+          apt -qq update
+          apt -qq -y install python3-pip gnupg
+          python3.6 -m pip install --upgrade pip
+      - name: Download Python Wheels
+        uses: actions/download-artifact@v2
+        with:
+          name: python-wheels
+      - name: Install Python Wheels
+        run: |
+          for pkg in `ls pycode/wheelhouse/*36*.whl`; do python3.6 -m pip install $pkg; done
+      - name: Dowload Data
+        run: |
+          mkdir -p data_dl
+          getrkidata -o data_dl
+          getpopuldata -o data_dl
+          getjhdata -o data_dl
+          getspaindata -o data_dl
+          getdividata -o data_dl
+      - name: Upload Data
+        uses: actions/upload-artifact@v2
+        with:
+          name: data
+          path: |
+            data_dl/*.json
+            data_dl/Germany/*.json
+            data_dl/Spain/*.json
+            data_dl/France/*.json
+            data_dl/Italy*.json
+            data_dl/SouthKorea/*.json
+            data_dl/US/*.json
+            data_dl/China/*.json
+          retention-days: 1
+          
+  codecov:
+    needs: [test-py, test-cpp]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Install dependencies
+        run: |
+          apt -qq update
+          apt -qq -y install git curl
+      - name: Download python coverage report
+        uses: actions/download-artifact@v2
+        with:
+          name: test-py-coverage-reports
+      - name: Download cpp coverage report
+        uses: actions/download-artifact@v2
+        with:
+          name: test-cpp-coverage-reports
+      - name: Download js coverage report
+        uses: actions/download-artifact@v2
+        with:
+          name: test-js-coverage-reports
+      - name: Deploy to codecov.io
+        uses: codecov/codecov-action@v1
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }} # not required for public repos
+          files: ./frontend/coverage/cobertura-coverage.xml,./pycode/test/coverage_python.xml,./coverage.xml
+          verbose: true
+
+  pages:
+    needs: [test-py, test-cpp, test-docs, test-pylint]
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+    steps:
+      - uses: actions/checkout@v2
+      - name: Install dependencies
+        run: |
+          apt -qq update
+          apt -qq -y install git
+      - name: Download python coverage report
+        uses: actions/download-artifact@v2
+        with:
+          name: test-py-coverage-reports
+      - name: Download cpp coverage report
+        uses: actions/download-artifact@v2
+        with:
+          name: test-cpp-coverage-reports
+      - name: Download documentation
+        uses: actions/download-artifact@v2
+        with:
+          name: documentation
+      - name: Download pylint report
+        uses: actions/download-artifact@v2
+        with:
+          name: pylint-report
+      - name: Prepare basic Pages sites
+        run: |
+          mkdir -p public
+          cp ci_index/main_index.html public/index.html
+          cp ci_index/branch_index.html public/index.html
+      - name: Prepare documentation
+        run: |
+          mkdir -p public/documentation
+          cp -r docs/html/* public/documentation
+      - name: Prepare pylint reports
+        run: |
+          mkdir -p public/pylint
+          cp pycode/build_pylint/pylint.html public/pylint/
+      - name: Prepare coverage reports
+        run: |
+          mkdir -p public/coverage
+          mkdir -p public/coverage/cpp
+          mkdir -p public/coverage/python
+          cp -r coverage_python/* public/coverage/python/
+          cp -r coverage_report/* public/coverage/cpp/
+      - name: Deploy to gh-pages branch
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./public
+
