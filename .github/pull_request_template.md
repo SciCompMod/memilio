@@ -5,8 +5,8 @@ As many checkboxes as possible should be ticked.
 
 ### Checks by code author:
 * [ ] There is at least one issue associated with the pull request.
-* [ ] The branch follows the naming conventions as defined in the [git workflow][1].
-* [ ] New code adheres with the [coding guidelines][2]
+* [ ] The branch follows the naming conventions as defined in the [git workflow](git-workflow).
+* [ ] New code adheres with the [coding guidelines](coding-guidelines)
 * [ ] Tests for new functionality has been added
 * [ ] A local test was succesful
 * [ ] There is appropriate **documentation** of your work. (use doxygen style comments)
