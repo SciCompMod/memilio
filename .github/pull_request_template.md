@@ -23,5 +23,3 @@ As many checkboxes as possible should be ticked.
 * [ ] The git history is clean and linearized for the merge request.
 * [ ] Coverage report for new code is acceptable. 
 
-[1]: https://gitlab.dlr.de/hpc-against-corona/epidemiology/-/wikis/Git-workflow-and-change-process
-[2]: https://github.com/DLR-SC/memilio/wiki/coding-guidelines
