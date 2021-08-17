@@ -14,7 +14,7 @@ As many checkboxes as possible should be ticked.
 * [ ] If new mathematical methods or epidemiological terms are used, has the glossary been updated ? Did you provide further documentation ?
  is present or referenced. Please provide your references.
 * [ ] The following questions are addressed in the documentation*:  Developers (what did you do?, how can it be maintained?), For users (how to use your work?), For admins (how to install and configure your work?)
-* For documentation. please write or update the Readme in the current working directory!
+* For documentation: Please write or update the Readme in the current working directory!
 
 ### Checks by code reviewer(s):
 * [ ] Is the code clean of development artifacts e.g., unnecessary comments, prints, ...
