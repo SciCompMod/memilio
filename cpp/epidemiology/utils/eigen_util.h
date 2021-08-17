@@ -206,9 +206,11 @@ namespace details
 {
     //true if elements returned by matrix(i, j) are references where matrix is of type M;
     //false if the elements are temporaries, e.g. for expressions like Eigen::MatrixXd::Constant(r, c, v);
+    //Caution: This works only for matrix expressions having the LinearAccessBit:
+    // https://eigen.tuxfamily.org/dox/classEigen_1_1DenseCoeffsBase_3_01Derived_00_01ReadOnlyAccessors_01_4.html#a496672306836589fa04a6ab33cb0cf2a
     template <class M>
     using IsElementReference =
-        std::is_reference<decltype(std::declval<M>()(std::declval<Eigen::Index>(), std::declval<Eigen::Index>()))>;
+        std::is_reference<decltype(std::declval<M>()[std::declval<Eigen::Index>()])>;
 }
 
 /**
@@ -254,6 +256,23 @@ public:
         , m_i(i)
     {
     }
+
+    /**
+     * Default copy constructor and copy assignment operator, default move constructor and move assignment operator
+     */
+    RowMajorIterator(const RowMajorIterator& other)
+        : m_matrix(other.m_matrix)
+        , m_i(other.m_i)
+    {
+    }
+    RowMajorIterator& operator=(const RowMajorIterator& other)
+    {
+        m_matrix = other.m_matrix;
+        m_i = other.m_i;
+        return *this;
+    };
+    RowMajorIterator(RowMajorIterator&&) = default;
+    RowMajorIterator& operator=(RowMajorIterator&&) = default;
 
     /**
      * pre increment operator.
