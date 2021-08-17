@@ -65,6 +65,7 @@ jobs:
           cd cpp
           md -Force build-win
           cd build-win
+          call "C:\Program Files (x86)\Microsoft Visual Studio\2019\Enterprise\VC\Auxiliary\Build\vcvarsall.bat" amd64
           cmake --version
           cmake -G "Ninja" -DCMAKE_BUILD_TYPE=Release -DEPI_USE_BUNDLED_EIGEN=ON -DEPI_BUILD_EPI_IO=ON -DHDF5_USE_STATIC_LIBRARIES=ON -DHDF5_DIR="C:\Program Files\HDF_Group\HDF5\1.12.1\share\cmake\hdf5" ..
           cmake --build .
