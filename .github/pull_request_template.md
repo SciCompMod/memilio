@@ -19,7 +19,7 @@ As many checkboxes as possible should be ticked.
 ### Checks by code reviewer(s):
 * [ ] Is the code clean of development artifacts e.g., unnecessary comments, prints, ...
 * [ ] The ticket goals for each associated issue are reached or problems are clearly addressed (i.e., a new issue was introduced).
-* [ ] There are appropriate **unit tests** and they pass. The meaning of "appropriate" is defined by the [test strategy](not yet defined).
+* [ ] There are appropriate **unit tests** and they pass.
 * [ ] The git history is clean and linearized for the merge request.
 * [ ] Coverage report for new code is acceptable. 
 
