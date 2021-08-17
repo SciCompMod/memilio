@@ -61,9 +61,10 @@ jobs:
           Start-Process "msiexec.exe" -ArgumentList $MSIArguments -Wait -NoNewWindow
           type hdf5_install_log.txt
       - name: Build
+        shell: cmd /C call {0}
         run: |
           cd cpp
-          md -Force build-win
+          mkdir build-win
           cd build-win
           call "C:\Program Files (x86)\Microsoft Visual Studio\2019\Enterprise\VC\Auxiliary\Build\vcvarsall.bat" amd64
           cmake --version
