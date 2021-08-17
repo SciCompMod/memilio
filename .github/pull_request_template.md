@@ -11,7 +11,7 @@ As many checkboxes as possible should be ticked.
 * [ ] A local test was succesful
 * [ ] There is appropriate **documentation** of your work. (use doxygen style comments)
 * [ ] If new third party software is used, did you pay attention to its license? Please remember to add it to the wiki after successful merging.
-* [ ] If new mathematical methods or epidemiological terms are used, has the glossary at https://gitlab.dlr.de/hpc-against-corona/epidemiology/-/wikis/Glossary been updated ? Did you provide further documentation ?
+* [ ] If new mathematical methods or epidemiological terms are used, has the glossary been updated ? Did you provide further documentation ?
  is present or referenced. Please provide your references.
 * [ ] The following questions are addressed in the documentation*:  Developers (what did you do?, how can it be maintained?), For users (how to use your work?), For admins (how to install and configure your work?)
 * For documentation. please write or update the Readme in the current working directory!
