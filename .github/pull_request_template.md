@@ -4,7 +4,7 @@
 As many checkboxes as possible should be ticked.
 
 ### Checks by code author:
-* [ ] There is at least one issue associated with the merge request.
+* [ ] There is at least one issue associated with the pull request.
 * [ ] The branch follows the naming conventions as defined in the [git workflow][1].
 * [ ] New code adheres with the [coding guidelines][2]
 * [ ] Tests for new functionality has been added
@@ -24,4 +24,4 @@ As many checkboxes as possible should be ticked.
 * [ ] Coverage report for new code is acceptable. 
 
 [1]: https://gitlab.dlr.de/hpc-against-corona/epidemiology/-/wikis/Git-workflow-and-change-process
-[2]: https://gitlab.dlr.de/hpc-against-corona/epidemiology/-/wikis/Coding-Guidelines
+[2]: https://github.com/DLR-SC/memilio/wiki/coding-guidelines
