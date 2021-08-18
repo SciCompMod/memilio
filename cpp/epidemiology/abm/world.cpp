@@ -38,7 +38,7 @@ LocationId World::add_location(LocationType type)
 
 Person& World::add_person(LocationId id, InfectionState state, AbmAgeGroup age)
 {
-    m_persons.push_back(std::make_unique<Person>(id, state, age, m_infection_parameters));
+    m_persons.push_back(std::make_unique<Person>(id, state, age, m_infection_parameters, m_testing_parameters));
     auto& person = *m_persons.back();
     get_location(person).add_person(person);
     return person;
@@ -55,7 +55,7 @@ void World::interaction(TimePoint /*t*/, TimeSpan dt)
 {
     for (auto&& person : m_persons) {
         auto& loc = get_location(*person);
-        person->interact(dt, m_infection_parameters, loc);
+        person->interact(dt, m_infection_parameters, loc, m_testing_parameters);
     }
 }
 
@@ -159,6 +159,14 @@ GlobalInfectionParameters& World::get_global_infection_parameters(){
 
 const GlobalInfectionParameters& World::get_global_infection_parameters() const{
     return m_infection_parameters;
+}
+
+GlobalTestingParameters& World::get_global_testing_parameters(){
+    return m_testing_parameters;
+}
+
+const GlobalTestingParameters& World::get_global_testing_parameters() const{
+    return m_testing_parameters;
 }
 
 } // namespace epi

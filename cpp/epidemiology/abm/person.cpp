@@ -25,7 +25,7 @@
 namespace epi
 {
 
-Person::Person(LocationId id, InfectionState state, AbmAgeGroup age, const GlobalInfectionParameters& global_params)
+Person::Person(LocationId id, InfectionState state, AbmAgeGroup age, const GlobalInfectionParameters& global_params, const GlobalTestingParameters& global_testing_params)
     : m_location_id(id)
     , m_assigned_locations((uint32_t)LocationType::Count, INVALID_LOCATION_INDEX)
     , m_state(state)
@@ -36,20 +36,23 @@ Person::Person(LocationId id, InfectionState state, AbmAgeGroup age, const Globa
 {
     m_random_workgroup = UniformDistribution<double>::get_instance()();
     m_random_schoolgroup = UniformDistribution<double>::get_instance()();
-    if (state == InfectionState::Infected_Detected) {
-        m_quarantine = true;
+    if (state == InfectionState::Infected) {
+        double rand = UniformDistribution<double>::get_instance()();
+        if (rand < global_params.get<DetectInfection>()[this->m_age]){
+            this->get_tested(global_testing_params.get<Sensitivity>(), global_testing_params.get<Specificity>());
+        }
     }
     if (state == InfectionState::Exposed){
         m_time_until_carrier = hours(UniformIntDistribution<int>::get_instance()(0, int(global_params.get<IncubationPeriod>()[m_age] * 24)));
     }
 }
 
-Person::Person(Location& location, InfectionState state, AbmAgeGroup age, const GlobalInfectionParameters& global_params)
-    : Person({location.get_index(), location.get_type()}, state, age, global_params)
+Person::Person(Location& location, InfectionState state, AbmAgeGroup age, const GlobalInfectionParameters& global_params, const GlobalTestingParameters& global_testing_params)
+    : Person({location.get_index(), location.get_type()}, state, age, global_params, global_testing_params)
 {
 }
 
-void Person::interact(TimeSpan dt, const GlobalInfectionParameters& global_infection_params, Location& loc)
+void Person::interact(TimeSpan dt, const GlobalInfectionParameters& global_infection_params, Location& loc, const GlobalTestingParameters& global_testing_params)
 {
     auto state     = m_state;
     auto new_state = state;
@@ -67,8 +70,14 @@ void Person::interact(TimeSpan dt, const GlobalInfectionParameters& global_infec
         }
     }
 
-    if (new_state == InfectionState::Infected_Detected || new_state == InfectionState::Infected_Severe || new_state == InfectionState::Infected_Critical) {
+    if (new_state == InfectionState::Infected_Severe || new_state == InfectionState::Infected_Critical) {
         m_quarantine = true;
+    }
+    else if (new_state == InfectionState::Infected){
+        double rand = UniformDistribution<double>::get_instance()();
+        if (rand < global_infection_params.get<TestWhileInfected>()[this->m_age]){
+            this->get_tested(global_testing_params.get<Sensitivity>(), global_testing_params.get<Specificity>());
+        }
     }
     else {
         m_quarantine = false;
@@ -120,7 +129,7 @@ bool Person::goes_to_school(TimePoint t, const AbmMigrationParameters& params) c
 bool Person::get_tested(double sensitivity, double specificity){
     double random = UniformDistribution<double>::get_instance()();
     m_time_since_test = days(0);
-    if (m_state == InfectionState::Carrier || m_state == InfectionState::Infected_Undetected || m_state == InfectionState::Infected_Detected || m_state == InfectionState::Infected_Severe || m_state == InfectionState::Infected_Critical){
+    if (m_state == InfectionState::Carrier || m_state == InfectionState::Infected || m_state == InfectionState::Infected_Severe || m_state == InfectionState::Infected_Critical){
         if (random < sensitivity){
             m_quarantine = true;
             return true;

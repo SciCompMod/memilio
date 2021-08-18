@@ -149,6 +149,13 @@ public:
 
     const GlobalInfectionParameters& get_global_infection_parameters() const;
 
+    /** 
+     *get global testing parameters
+     */
+    GlobalTestingParameters& get_global_testing_parameters();
+
+    const GlobalTestingParameters& get_global_testing_parameters() const;
+
 private:
     void interaction(TimePoint t, TimeSpan dt);
     void migration(TimePoint t, TimeSpan dt);

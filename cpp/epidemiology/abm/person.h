@@ -49,7 +49,7 @@ public:
      * @param age the age group of the person
      * @param global_params the global infection parameters
      */
-    Person(LocationId id, InfectionState state, AbmAgeGroup age, const GlobalInfectionParameters& global_params);
+    Person(LocationId id, InfectionState state, AbmAgeGroup age, const GlobalInfectionParameters& global_params, const GlobalTestingParameters& global_testing_params);
     
     /**
      * create a Person.
@@ -58,7 +58,7 @@ public:
      * @param age the age group of the person
      * @param global_params the global infection parameters
      */
-    Person(Location& location, InfectionState state, AbmAgeGroup age, const GlobalInfectionParameters& global_params);
+    Person(Location& location, InfectionState state, AbmAgeGroup age, const GlobalInfectionParameters& global_params, const GlobalTestingParameters& global_testing_params);
 
     /** 
      * Time passes and the person interacts with the population at its current location.
@@ -66,7 +66,7 @@ public:
      * @param dt length of the current simulation time step
      * @param global_infection_parameters infection parameters that are the same in all locations
      */
-    void interact(TimeSpan dt, const GlobalInfectionParameters& global_infection_parameters, Location& loc);
+    void interact(TimeSpan dt, const GlobalInfectionParameters& global_infection_parameters, Location& loc, const GlobalTestingParameters& global_testing_params);
 
     /** 
      * migrate to a different location.

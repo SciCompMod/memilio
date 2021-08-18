@@ -150,6 +150,15 @@ struct DetectInfection
     }
 };
 
+struct TestWhileInfected
+{
+    using Type = CustomIndexArray<double, AbmAgeGroup>;
+    static Type get_default()
+    {
+        return Type({AbmAgeGroup::Count}, 0.005);
+    }
+};
+
 
 /**
  * parameters of the infection that are the same everywhere within the world.
@@ -166,7 +175,8 @@ using GlobalInfectionParameters = ParameterSet<IncubationPeriod,
                                                CriticalToDead,
                                                CriticalToRecovered,
                                                RecoveredToSusceptible,
-                                               DetectInfection>;
+                                               DetectInfection,
+                                               TestWhileInfected>;
 
 
 struct EffectiveContacts
