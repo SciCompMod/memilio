@@ -33,7 +33,7 @@ jobs:
         uses: actions/upload-artifact@v2
         with:
           name: build-tests-linux
-          path: cpp/build/tests
+          path: cpp/build
           retention-days: 1
 
   build-cpp-win:
@@ -94,7 +94,7 @@ jobs:
         uses: actions/download-artifact@v2
         with:
           name: build-tests-linux
-          path: cpp/build/tests
+          path: cpp/build
       - name: Run unit tests
         run: |
           cd cpp/build/tests
