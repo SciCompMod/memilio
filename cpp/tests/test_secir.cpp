@@ -738,7 +738,7 @@ TEST(Secir, testAndTraceCapacity)
 TEST(Secir, getInfectionsRelative)
 {
     size_t num_groups = 3;
-    epi::SecirModel model(num_groups);
+    epi::SecirModel model((int)num_groups);
     model.populations[{epi::AgeGroup(0), epi::InfectionState::Infected}] = 100.0;
     model.populations.set_difference_from_group_total<epi::AgeGroup>({epi::AgeGroup(0), epi::InfectionState::Susceptible}, 10'000.0);
     model.populations[{epi::AgeGroup(1), epi::InfectionState::Infected}] = 50.0;

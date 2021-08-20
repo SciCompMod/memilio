@@ -601,7 +601,7 @@ IOResult<T> read_json(const std::string& path, Tag<T> tag, int flags = IOF_None)
 //Implementations for JsonContext/Object member functions below//
 /////////////////////////////////////////////////////////////////
 
-template <class T, std::enable_if_t<JsonType<T>::value, void*> = nullptr>
+template <class T, std::enable_if_t<JsonType<T>::value, void*>>
 void JsonObject::add_element(const std::string& name, const T& value)
 {
     if (m_status->is_ok()) {
@@ -609,7 +609,7 @@ void JsonObject::add_element(const std::string& name, const T& value)
     }
 }
 
-template <class T, std::enable_if_t<!JsonType<T>::value, void*> = nullptr>
+template <class T, std::enable_if_t<!JsonType<T>::value, void*>>
 void JsonObject::add_element(const std::string& name, const T& value)
 {
     if (m_status->is_ok()) {
@@ -629,7 +629,7 @@ void JsonObject::add_optional(const std::string& name, const T* value)
     }
 }
 
-template <class Iter, std::enable_if_t<JsonType<typename Iter::value_type>::value, void*> = nullptr>
+template <class Iter, std::enable_if_t<JsonType<typename Iter::value_type>::value, void*>>
 void JsonObject::add_list(const std::string& name, Iter b, Iter e)
 {
     if (m_status->is_ok()) {
@@ -640,7 +640,7 @@ void JsonObject::add_list(const std::string& name, Iter b, Iter e)
     }
 }
 
-template <class Iter, std::enable_if_t<!JsonType<typename Iter::value_type>::value, void*> = nullptr>
+template <class Iter, std::enable_if_t<!JsonType<typename Iter::value_type>::value, void*>>
 void JsonObject::add_list(const std::string& name, Iter b, Iter e)
 {
     if (m_status->is_ok()) {
@@ -656,7 +656,7 @@ void JsonObject::add_list(const std::string& name, Iter b, Iter e)
     }
 }
 
-template <class T, std::enable_if_t<JsonType<T>::value, void*> = nullptr>
+template <class T, std::enable_if_t<JsonType<T>::value, void*>>
 IOResult<T> JsonObject::expect_element(const std::string& name, Tag<T> /*tag*/) const
 {
     if (m_status->is_error()) {
@@ -676,7 +676,7 @@ IOResult<T> JsonObject::expect_element(const std::string& name, Tag<T> /*tag*/) 
                    r.error().message() + " (" + name + ")"); //annotate type error message with element name
 }
 
-template <class T, std::enable_if_t<!JsonType<T>::value, void*> = nullptr>
+template <class T, std::enable_if_t<!JsonType<T>::value, void*>>
 IOResult<T> JsonObject::expect_element(const std::string& name, Tag<T> tag) const
 {
     if (m_status->is_error()) {
@@ -708,7 +708,7 @@ IOResult<boost::optional<T>> JsonObject::expect_optional(const std::string& name
     return failure(r.error());
 }
 
-template <class T, std::enable_if_t<JsonType<T>::value, void*> = nullptr>
+template <class T, std::enable_if_t<JsonType<T>::value, void*>>
 IOResult<std::vector<T>> JsonObject::expect_list(const std::string& name, Tag<T> /*tag*/)
 {
     if (m_status->is_error()) {
@@ -732,7 +732,7 @@ IOResult<std::vector<T>> JsonObject::expect_list(const std::string& name, Tag<T>
     return failure(StatusCode::KeyNotFound, name);
 }
 
-template <class T, std::enable_if_t<!JsonType<T>::value, void*> = nullptr>
+template <class T, std::enable_if_t<!JsonType<T>::value, void*>>
 IOResult<std::vector<T>> JsonObject::expect_list(const std::string& name, Tag<T> tag)
 {
     if (m_status->is_error()) {

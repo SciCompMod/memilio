@@ -40,7 +40,7 @@ TEST(TestLocation, init)
 TEST(TestLocation, GetIndex)
 {
     auto location = epi::Location(epi::LocationType::Home, 0);
-    ASSERT_EQ(location.get_index(), 0);
+    ASSERT_EQ((int)location.get_index(), 0);
 }
 
 TEST(TestLocation, addRemovePerson)
@@ -161,10 +161,10 @@ TEST(TestPerson, setGetAssignedLocation)
     auto location = epi::Location(epi::LocationType::Work, 2);
     auto person = epi::Person(location, epi::InfectionState::Recovered_Carrier, epi::AbmAgeGroup::Age60to79, {});
     person.set_assigned_location(location);
-    ASSERT_EQ(person.get_assigned_location_index(epi::LocationType::Work), 2);
+    ASSERT_EQ((int)person.get_assigned_location_index(epi::LocationType::Work), 2);
 
     person.set_assigned_location({4, epi::LocationType::Work});
-    ASSERT_EQ(person.get_assigned_location_index(epi::LocationType::Work), 4);
+    ASSERT_EQ((int)person.get_assigned_location_index(epi::LocationType::Work), 4);
 }
 
 TEST(TestWorld, findLocation)
@@ -448,8 +448,8 @@ TEST(TestWorld, addLocation)
     auto work_id   = world.add_location(epi::LocationType::Work);
     auto home_id   = world.add_location(epi::LocationType::Home);
 
-    ASSERT_EQ(school_id1.index, 0);
-    ASSERT_EQ(school_id2.index, 1);
+    ASSERT_EQ((int)school_id1.index, 0);
+    ASSERT_EQ((int)school_id2.index, 1);
 
     auto& school1 = world.get_individualized_location(school_id1);
     auto& school2 = world.get_individualized_location(school_id2);
