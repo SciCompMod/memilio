@@ -85,6 +85,5 @@ It will generate a html report inside the `coverage` directory.
 *  Run the python tests in the pycode/test folder by typing python -m unittest
 
 **Development**
-* [Git workflow and change process](https://gitlab.dlr.de/hpc-against-corona/epidemiology/-/wikis/Git-workflow-and-change-process)
-* [C++ Coding Guidelines](https://gitlab.dlr.de/hpc-against-corona/epidemiology/-/wikis/Cpp-Coding-Guidlines)
-* [Python Coding Guidelines](https://gitlab.dlr.de/hpc-against-corona/epidemiology/-/wikis/Python%20Coding%20Guidelines)
+* [Git workflow and change process](https://github.com/DLR-SC/memilio/wiki/git-workflow)
+* [Coding Guidelines](https://github.com/DLR-SC/memilio/wiki/coding-guidelines)
