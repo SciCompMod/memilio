@@ -3,23 +3,18 @@
 [![CI](https://github.com/DLR-SC/memilio/actions/workflows/main.yml/badge.svg)](https://github.com/DLR-SC/memilio/actions/workflows/main.yml)
 [![codecov](https://codecov.io/gh/DLR-SC/memilio/branch/main/graph/badge.svg?token=DVQXIQJHBM)](https://codecov.io/gh/DLR-SC/memilio)
 
-MEmilio is a common project between the department of Systems Immunology (SIMM) of the he Helmholtz Center for Infection Research (HZI) and the Institute for Software Technology of the German Aerospace Center (DLR). This project will bring cutting edge and compute intensive epidemiological models to a large scale, which enables a precise and high-resolution spatiotemporal pandemic simulation for entire countries. MEMILIO is still under developement but it is available as Open Source and we encourage everyone to make use of it. If you use it, please cite:
+MEmilio is a common project between the Institute for Software Technology of the German Aerospace Center (DLR) and the department of Systems Immunology (SIMM) of the he Helmholtz Center for Infection Research (HZI). This project will bring cutting edge and compute intensive epidemiological models to a large scale, which enables a precise and high-resolution spatiotemporal pandemic simulation for entire countries. MEmilio is still under developement but it is available as Open Source and we encourage everyone to make use of it. If you use it, please cite:
 
 M. J. Kühn, D. Abele, T. Mitra, W. Koslow, M. Abedi, K. Rack, M. Siggel, S. Khailaie, M. Klitz, S. Binder, Luca Spataro, J. Gilg, J. Kleinert, M. Häberle, L. Plötzke, C. D. Spinner, M. Stecher, X. X. Zhu, A. Basermann, M. Meyer-Hermann, "Assessment of effective mitigation and prediction of the spread of SARS-CoV-2 in Germany using demographic information and spatial resolution". Mathematical Biosciences 339, 108648 (2021). https://www.sciencedirect.com/science/article/pii/S0025556421000845?via%3Dihub
 
 
 **Getting started**
 
-This project is divided into multiple building blocks. The implementation of the epidemiological models is to be found in cpp.
-Data acquisition tools and data is to be found in data.
-The interactive frontend is to be found under frontend.
-It is regularly deployed to http://hpcagainstcorona.sc.bs.dlr.de/index.html.
-In pycode the epidemiology python package is defined.
-It consists of python bindings (seir, secir) to call the C++ code available in cpp and the epidata subpackage which provides tools to download and structure important data.
-More about the python package can be found in [Python README](pycode/README.rst).
+This project is divided into multiple building blocks. The implementation of the epidemiological models is to be found in cpp. Currently, there is a ODE-SECIR and an agent-based model. Data acquisition tools and data is to be found in data. 
 
-The C++ code is divided into two libraries, *epidemiology* (models, math, ensemble runs etc.) and *epidemiology_io* (IO routines for parameter sets and simulation results).
-By standard, *epidemiology* is built without *epidemiology_io*.
+In pycode, the epidemiology python package is defined. It consists of python bindings to call the C++ code available in cpp and the epidata subpackage which provides tools to download and structure important data. More about the python package can be found in [Python README](pycode/README.rst).
+
+The C++ code is divided into two libraries, *epidemiology* (models, math, ensemble runs etc.) and *epidemiology_io* (IO routines for parameter sets and simulation results). By standard, *epidemiology* is built without *epidemiology_io*.
 
 
 **Documentation**
@@ -28,7 +23,7 @@ In every important part of the project, desribed above, a README can be found wh
 
 Furthermore, the code is documented via doxygen and an instruction how to get it, is provided in the docs folder.
 The documentation of the code of the master branch can be found here:
-https://hpc-against-corona.pages.gitlab.dlr.de/epidemiology/master/documentation/
+https://dlr-sc.github.io/memilio/documentation/index.html
 
 
 **Requirements**
