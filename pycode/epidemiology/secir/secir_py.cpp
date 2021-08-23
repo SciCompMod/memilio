@@ -53,7 +53,7 @@ std::vector<Sim> filter_graph_results(
 }
 
 // bind an index for a single tag
-template <class Tag>
+template <class Tag> 
 void bind_Index(py::module& m, std::string const& name)
 {
     py::class_<epi::Index<Tag>> c(m, name.c_str());
@@ -71,15 +71,13 @@ epi::Index<Tag> extract_index(py::tuple& t)
 
 // bind an index for more than one tag
 template <class... Tags>
-void bind_MultiIndex(py::module&m, std::string const& name)
+void bind_MultiIndex(py::module& m, std::string const& name)
 {
     using C = epi::Index<Tags...>;
     py::class_<C> c(m, name.c_str());
-    c.def(py::init<epi::Index<Tags> const&...>())
-            .def(py::init([](py::tuple t){
-                     return C(extract_index<Tags, C>(t)...);
-                 }
-                 ));
+    c.def(py::init<epi::Index<Tags> const&...>()).def(py::init([](py::tuple t) {
+        return C(extract_index<Tags, C>(t)...);
+    }));
 
     py::implicitly_convertible<py::tuple, C>();
 }
@@ -93,12 +91,21 @@ std::string pretty_name()
     o << typeid(T).name();
     return o.str();
 }
-template <> std::string pretty_name<epi::InfectionState>(){ return "InfectionState"; }
-template <> std::string pretty_name<epi::AgeGroup>(){ return "AgeGroup"; }
-
+template <>
+std::string pretty_name<epi::InfectionState>()
+{
+    return "InfectionState";
+}
+template <>
+std::string pretty_name<epi::AgeGroup>()
+{
+    return "AgeGroup";
+}
 
 template <class C>
-void bind_templated_members_CustomIndexArray(py::class_<C>&){}
+void bind_templated_members_CustomIndexArray(py::class_<C>&)
+{
+}
 
 template <class C, class T, class... Ts>
 void bind_templated_members_CustomIndexArray(py::class_<C>& c)
@@ -113,20 +120,30 @@ void bind_templated_members_CustomIndexArray(py::class_<C>& c)
 template <class Type, class... Tags>
 void bind_CustomIndexArray(py::module& m, std::string const& name)
 {
-    using C = typename epi::CustomIndexArray<Type, Tags...>;
+    using C     = typename epi::CustomIndexArray<Type, Tags...>;
     using Index = typename epi::CustomIndexArray<Type, Tags...>::Index;
     py::class_<C> c(m, name.c_str());
-    c.def(py::init([](Index const& sizes, Type const& val){ return C(sizes, val); }))
-     .def(py::init([](Index const& sizes){ return C(sizes); }))
-     .def("numel", &C::numel)
-     .def("__getitem__",
-          [](const C& self, Index const& idx) -> auto& { return self[idx]; },
-         py::return_value_policy::reference_internal)
-     .def("__setitem__",
-          [](C& self, Index const& idx, double value) { self[idx] = value; })
-     .def("__iter__", [](const C &s) { return py::make_iterator(s.begin(), s.end()); },
-          py::keep_alive<0, 1>())
-     .def("get_flat_index", &C::get_flat_index);
+    c.def(py::init([](Index const& sizes, Type const& val) {
+         return C(sizes, val);
+     }))
+        .def(py::init([](Index const& sizes) {
+            return C(sizes);
+        }))
+        .def("numel", &C::numel)
+        .def(
+            "__getitem__", [](const C& self, Index const& idx) -> auto& { return self[idx]; },
+            py::return_value_policy::reference_internal)
+        .def("__setitem__",
+             [](C& self, Index const& idx, double value) {
+                 self[idx] = value;
+             })
+        .def(
+            "__iter__",
+            [](const C& s) {
+                return py::make_iterator(s.begin(), s.end());
+            },
+            py::keep_alive<0, 1>())
+        .def("get_flat_index", &C::get_flat_index);
 
     // Not supported in Python yet: Slicing
 
@@ -134,17 +151,18 @@ void bind_CustomIndexArray(py::module& m, std::string const& name)
     bind_templated_members_CustomIndexArray<C, Tags...>(c);
 }
 
-
 template <class C, class Base>
-void bind_templated_members_Population(py::class_<C, Base>&){}
+void bind_templated_members_Population(py::class_<C, Base>&)
+{
+}
 
 template <class C, class Base, class T, class... Ts>
 void bind_templated_members_Population(py::class_<C, Base>& c)
 {
     std::string tname = pretty_name<T>();
     c.def(("set_difference_from_group_total_" + tname).c_str(), &C::template set_difference_from_group_total<T>)
-     .def(("set_group_total_" + tname).c_str(), &C::template set_group_total<T>)
-     .def(("get_group_total_" + tname).c_str(), &C::template get_group_total<T>);
+        .def(("set_group_total_" + tname).c_str(), &C::template set_group_total<T>)
+        .def(("get_group_total_" + tname).c_str(), &C::template get_group_total<T>);
 
     // recursively bind the member for each type
     bind_templated_members_Population<C, Base, Ts...>(c);
@@ -153,22 +171,26 @@ void bind_templated_members_Population(py::class_<C, Base>& c)
 /*
  * @brief bind Populations class template for any choice of categories
  */
-template<class... Cats>
+template <class... Cats>
 void bind_Population(py::module& m, std::string const& name)
 {
-    using C = epi::Populations<Cats...>;
+    using C    = epi::Populations<Cats...>;
     using Base = epi::CustomIndexArray<epi::UncertainValue, Cats...>;
     py::class_<C, Base> c(m, name.c_str());
-    c.def(py::init([](epi::Index<Cats...> const& sizes, double val){ return C(sizes, val); }))
-        .def(py::init([](epi::Index<Cats...> const& sizes){ return C(sizes); }))
+    c.def(py::init([](epi::Index<Cats...> const& sizes, double val) {
+         return C(sizes, val);
+     }))
+        .def(py::init([](epi::Index<Cats...> const& sizes) {
+            return C(sizes);
+        }))
         .def("get_num_compartments", &C::get_num_compartments)
         .def("get_compartments", &C::get_compartments)
         .def("get_total", &C::get_total)
         .def("set_total", &C::set_total)
         .def("set_difference_from_total", &C::set_difference_from_total);
 
-        //get_group_total, set_group_total and set_difference_from_group_total
-        bind_templated_members_Population<C, Base, Cats...>(c);
+    //get_group_total, set_group_total and set_difference_from_group_total
+    bind_templated_members_Population<C, Base, Cats...>(c);
 }
 
 template <class ParameterSet>
@@ -191,7 +213,7 @@ void bind_ParameterSet(py::module& m, std::string const& name)
 /*
  * @brief bind a compartmental model for any Populations and Parameters class
  */
-template<class Populations, class Parameters>
+template <class Populations, class Parameters>
 void bind_CompartmentalModel(py::module& m, std::string const& name)
 {
     using Model = epi::CompartmentalModel<Populations, Parameters>;
@@ -207,7 +229,6 @@ void bind_CompartmentalModel(py::module& m, std::string const& name)
                 [](const Model& self) -> auto& { return self.parameters; },
                 [](Model& self, Parameters& p) { self.parameters = p; });
 }
-
 
 /*
  * @brief bind Simulation for any number model
@@ -255,42 +276,38 @@ void bind_SecirSimulationNode(py::module& m, std::string const& name)
 /*
  * @brief bind Graph for any node and edge type
  */
-template<class Model>
+template <class Model>
 void bind_SecirModelGraph(py::module& m, std::string const& name)
 {
     using G = epi::Graph<Model, epi::MigrationParameters>;
     py::class_<G>(m, name.c_str())
-            .def(py::init<>())
-            .def("add_node", &G::template add_node<const Model&>,
-                 py::return_value_policy::reference_internal)
-            .def("add_edge", &G::template add_edge<const epi::MigrationParameters&>,
-                 py::return_value_policy::reference_internal)
-            .def("add_edge", &G::template add_edge<const Eigen::VectorXd&>,
-                 py::return_value_policy::reference_internal)
-            .def_property_readonly("num_nodes",
-                                   [](const G& self) {
-                                       return self.nodes().size();
-                                   })
-            .def(
-                "get_node", [](const G& self, size_t node_idx) -> auto& { return self.nodes()[node_idx]; },
-                py::return_value_policy::reference_internal)
-            .def_property_readonly("num_edges",
-                                   [](const G& self) {
-                                       return self.edges().size();
-                                   })
-            .def(
-                "get_edge", [](const G& self, size_t edge_idx) -> auto& { return self.edges()[edge_idx]; },
-                py::return_value_policy::reference_internal)
-            .def("get_num_out_edges",
-                 [](const G& self, size_t node_idx) {
-                     return self.out_edges(node_idx).size();
-                 })
-            .def(
-                "get_out_edge", [](const G& self, size_t node_idx, size_t edge_idx) -> auto& {
-                    return self.out_edges(node_idx)[edge_idx];
-                },
-                py::return_value_policy::reference_internal);
-
+        .def(py::init<>())
+        .def("add_node", &G::template add_node<const Model&>, py::return_value_policy::reference_internal)
+        .def("add_edge", &G::template add_edge<const epi::MigrationParameters&>,
+             py::return_value_policy::reference_internal)
+        .def("add_edge", &G::template add_edge<const Eigen::VectorXd&>, py::return_value_policy::reference_internal)
+        .def_property_readonly("num_nodes",
+                               [](const G& self) {
+                                   return self.nodes().size();
+                               })
+        .def(
+            "get_node", [](const G& self, size_t node_idx) -> auto& { return self.nodes()[node_idx]; },
+            py::return_value_policy::reference_internal)
+        .def_property_readonly("num_edges",
+                               [](const G& self) {
+                                   return self.edges().size();
+                               })
+        .def(
+            "get_edge", [](const G& self, size_t edge_idx) -> auto& { return self.edges()[edge_idx]; },
+            py::return_value_policy::reference_internal)
+        .def("get_num_out_edges",
+             [](const G& self, size_t node_idx) {
+                 return self.out_edges(node_idx).size();
+             })
+        .def(
+            "get_out_edge",
+            [](const G& self, size_t node_idx, size_t edge_idx) -> auto& { return self.out_edges(node_idx)[edge_idx]; },
+            py::return_value_policy::reference_internal);
 }
 
 template <class Simulation>
@@ -334,7 +351,7 @@ void bind_MigrationGraph(py::module& m, std::string const& name)
 /*
  * @brief bind GraphSimulation for any node and edge type
  */
-template<class Graph>
+template <class Graph>
 void bind_GraphSimulation(py::module& m, std::string const& name)
 {
     using GS = epi::GraphSimulation<Graph>;
@@ -531,7 +548,6 @@ void bind_damping_expression_members(DampingExpressionClass& damping_expression_
     using Damping           = typename Dampings::value_type;
     using Matrix            = typename DampingExpression::Matrix;
     using Shape             = typename DampingExpression::Shape;
-
 
     //matrix constructors have to be defined before shape constructors.
     //otherwise 1x1 numpy matrices/vectors are converted to scalars and used as shape arguments
@@ -894,8 +910,7 @@ PYBIND11_MODULE(_secir, m)
     bind_Index<epi::InfectionState>(m, "Index_InfectionState");
     bind_Index<epi::AgeGroup>(m, "Index_AgeGroup");
 
-    py::class_<epi::AgeGroup, epi::Index<epi::AgeGroup>>(m, "AgeGroup")
-        .def(py::init<size_t>());
+    py::class_<epi::AgeGroup, epi::Index<epi::AgeGroup>>(m, "AgeGroup").def(py::init<size_t>());
 
     bind_MultiIndex<epi::AgeGroup, epi::InfectionState>(m, "Index_Agegroup_InfectionState");
     bind_CustomIndexArray<epi::UncertainValue, epi::AgeGroup, epi::InfectionState>(m, "SecirPopulationArray");
@@ -913,7 +928,7 @@ PYBIND11_MODULE(_secir, m)
     using SecirPopulations = epi::Populations<epi::AgeGroup, epi::InfectionState>;
     bind_CompartmentalModel<SecirPopulations, epi::SecirParams>(m, "SecirModelBase");
     py::class_<epi::SecirModel, epi::CompartmentalModel<SecirPopulations, epi::SecirParams>>(m, "SecirModel")
-            .def(py::init<size_t>(), py::arg("num_agegroups"));
+        .def(py::init<size_t>(), py::arg("num_agegroups"));
 
     bind_Simulation<epi::SecirSimulation<>>(m, "SecirSimulation");
 
