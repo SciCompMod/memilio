@@ -46,7 +46,10 @@ def run_secir_groups_simulation():
     num_compartments = len(compartments)
 
     # set contact frequency matrix
-    baseline_contact_matrix = "../../data/contacts/baseline_school_pf_eig.txt"
+    baseline_contact_matrix0 = "../../data/contacts/baseline_home.txt"
+    baseline_contact_matrix1 = "../../data/contacts/baseline_school_pf_eig.txt"
+    baseline_contact_matrix2 = "../../data/contacts/baseline_work.txt"
+    baseline_contact_matrix3 = "../../data/contacts/baseline_other.txt"
 
     # Initialize Parameters
     model = secir.SecirModel(len(populations))
@@ -75,18 +78,19 @@ def run_secir_groups_simulation():
             secir.Index_InfectionState(secir.InfectionState.Susceptible)), populations[i])
 
         # Compartment transition propabilities
-        model.parameters.probabilities[0].set_infection_from_contact(1.0)
-        model.parameters.probabilities[0].set_carrier_infectability(0.67)
-        model.parameters.probabilities[0].set_asymp_per_infectious(0.09)
-        model.parameters.probabilities[0].set_risk_from_symptomatic(0.25)
-        model.parameters.probabilities[0].set_hospitalized_per_infectious(0.2)
-        model.parameters.probabilities[0].set_icu_per_hospitalized(0.25)
-        model.parameters.probabilities[0].set_dead_per_icu(0.3)
+        model.parameters.probabilities[i].set_infection_from_contact(1.0)
+        model.parameters.probabilities[i].set_carrier_infectability(0.67)
+        model.parameters.probabilities[i].set_asymp_per_infectious(0.09)
+        model.parameters.probabilities[i].set_risk_from_symptomatic(0.25)
+        model.parameters.probabilities[i].set_hospitalized_per_infectious(0.2)
+        model.parameters.probabilities[i].set_icu_per_hospitalized(0.25)
+        model.parameters.probabilities[i].set_dead_per_icu(0.3)
         
     
     # set contact rates and emulate some mitigations
     # set contact frequency matrix
-    model.parameters.get_contact_patterns().cont_freq_mat[0].baseline = np.loadtxt(baseline_contact_matrix)
+    model.parameters.get_contact_patterns().cont_freq_mat[0].baseline = np.loadtxt(baseline_contact_matrix0) \
+        + np.loadtxt(baseline_contact_matrix1) + np.loadtxt(baseline_contact_matrix2) + np.loadtxt(baseline_contact_matrix3)
     model.parameters.get_contact_patterns().cont_freq_mat[0].minimum = np.ones((num_groups, num_groups)) * 0
 
     # Define Damping on Contacts
