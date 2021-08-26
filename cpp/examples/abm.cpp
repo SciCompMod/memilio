@@ -23,11 +23,13 @@
  * The infection states are chosen randomly. They are distributed according to the probabilites set in the example.
  * @return random infection state
  */
-epi::InfectionState determine_infection_state(double exposed, double infected, double carrier, double recovered){
-    double susceptible = 1 - exposed - infected - carrier - recovered;
-    std::vector<double> weights = {susceptible, exposed, carrier, infected/2, infected/2, recovered/2, recovered/2};
-    uint32_t state = epi::DiscreteDistribution<size_t>::get_instance()(weights);
-    return (epi::InfectionState) state;
+epi::InfectionState determine_infection_state(double exposed, double infected, double carrier, double recovered)
+{
+    double susceptible          = 1 - exposed - infected - carrier - recovered;
+    std::vector<double> weights = {susceptible,  exposed,       carrier,      infected / 2,
+                                   infected / 2, recovered / 2, recovered / 2};
+    uint32_t state              = epi::DiscreteDistribution<size_t>::get_instance()(weights);
+    return (epi::InfectionState)state;
 }
 
 /**
@@ -35,16 +37,19 @@ epi::InfectionState determine_infection_state(double exposed, double infected, d
  * The age structur is equal to the age structure in Germany, 2019.
  * The distribution of household sizes approximates the distribution of household sizes in 2019.
  */
-void create_people (epi::World& world, double num_total_people, double exposed_pct, double infected_pct, double carrier_pct, double recovered_pct){
-    
-    // Create a household with arbitrary many people. 
+void create_people(epi::World& world, double num_total_people, double exposed_pct, double infected_pct,
+                   double carrier_pct, double recovered_pct)
+{
+
+    // Create a household with arbitrary many people.
     // The vector age_groups contains the age groups of the people that are part of the household.
-    auto create_household = [&](const std::vector<epi::AbmAgeGroup>& age_groups){
+    auto create_household = [&](const std::vector<epi::AbmAgeGroup>& age_groups) {
         // Create home
         auto home = world.add_location(epi::LocationType::Home);
         // Genenerate people with defined age groups and assign them their home
-        for(auto age_group : age_groups){
-            auto& p = world.add_person(home, determine_infection_state(exposed_pct, infected_pct, carrier_pct, recovered_pct), age_group);
+        for (auto age_group : age_groups) {
+            auto& p = world.add_person(
+                home, determine_infection_state(exposed_pct, infected_pct, carrier_pct, recovered_pct), age_group);
             p.set_assigned_location(home);
         }
     };
@@ -54,9 +59,10 @@ void create_people (epi::World& world, double num_total_people, double exposed_p
     // 4% of the population is younger than 5
     int num_people_age0to4 = num_total_people * 0.04;
     // THe increment is 3 since in each loop 3 children are added.
-    for (auto i = 0; i < num_people_age0to4; i=i+3){
+    for (auto i = 0; i < num_people_age0to4; i = i + 3) {
         //Families with 2 children younger than 5
-        create_household({epi::AbmAgeGroup::Age0to4, epi::AbmAgeGroup::Age0to4, epi::AbmAgeGroup::Age35to59, epi::AbmAgeGroup::Age35to59});
+        create_household({epi::AbmAgeGroup::Age0to4, epi::AbmAgeGroup::Age0to4, epi::AbmAgeGroup::Age35to59,
+                          epi::AbmAgeGroup::Age35to59});
         //Families with 1 child younger than 5
         create_household({epi::AbmAgeGroup::Age0to4, epi::AbmAgeGroup::Age15to34, epi::AbmAgeGroup::Age15to34});
     }
@@ -64,9 +70,10 @@ void create_people (epi::World& world, double num_total_people, double exposed_p
     // 9% of population are childreen between 5 and 14 years.
     int num_people_age5to14 = num_total_people * 0.09;
     // The ncrement is 3 since in each loop 3 children are added.
-    for (auto i = 0; i < num_people_age5to14; i=i+3){
+    for (auto i = 0; i < num_people_age5to14; i = i + 3) {
         //Families with 2 children older than 5
-        create_household({epi::AbmAgeGroup::Age5to14, epi::AbmAgeGroup::Age5to14, epi::AbmAgeGroup::Age35to59, epi::AbmAgeGroup::Age35to59});
+        create_household({epi::AbmAgeGroup::Age5to14, epi::AbmAgeGroup::Age5to14, epi::AbmAgeGroup::Age35to59,
+                          epi::AbmAgeGroup::Age35to59});
         //Families with 1 child older than 5
         create_household({epi::AbmAgeGroup::Age5to14, epi::AbmAgeGroup::Age15to34, epi::AbmAgeGroup::Age35to59});
     }
@@ -76,16 +83,16 @@ void create_people (epi::World& world, double num_total_people, double exposed_p
     int num_people_age15to24 = num_total_people * 0.23;
     // Assumptions: Approx. 25% of people between 15 and 34 live with their children (they have been already added above)
     // 8% lives with their parents, 36% lives alone and 31 % with their partner
-    for (auto i = 0; i < num_people_age15to24 * 0.08; ++i){
+    for (auto i = 0; i < num_people_age15to24 * 0.08; ++i) {
         //Person lives with parents
         create_household({epi::AbmAgeGroup::Age15to34, epi::AbmAgeGroup::Age35to59, epi::AbmAgeGroup::Age35to59});
     }
-    for (auto i = 0; i < num_people_age15to24 * 0.36; ++i){
+    for (auto i = 0; i < num_people_age15to24 * 0.36; ++i) {
         //Person lives alone
         create_household({epi::AbmAgeGroup::Age15to34});
     }
     // Increment is 2 since in every loop two people between 15 and 34 years are added.
-    for (auto i = 0; i < num_people_age15to24 * 0.36; i=i+2){
+    for (auto i = 0; i < num_people_age15to24 * 0.36; i = i + 2) {
         //Person lives with partner
         create_household({epi::AbmAgeGroup::Age15to34, epi::AbmAgeGroup::Age15to34});
     }
@@ -94,12 +101,12 @@ void create_people (epi::World& world, double num_total_people, double exposed_p
     int num_people_age35to59 = num_total_people * 0.35;
     //Assumption: Approx. 33% of people between 35 and 59 lives with their younger children and approx. 11% lives with their teenager (have been already added above)
     //39% lives with a partner and 17% lives alone
-    for (auto i = 0; i < num_people_age35to59 * 0.17; ++i){
+    for (auto i = 0; i < num_people_age35to59 * 0.17; ++i) {
         //Person lives alone
         create_household({epi::AbmAgeGroup::Age35to59});
     }
     // Increment increases by 2 since in each loop 2 people between 35 and 39 are added.
-    for (auto i = 0; i < num_people_age35to59 * 0.39; i=i+2){
+    for (auto i = 0; i < num_people_age35to59 * 0.39; i = i + 2) {
         //Person lives with partner
         create_household({epi::AbmAgeGroup::Age35to59, epi::AbmAgeGroup::Age35to59});
     }
@@ -109,7 +116,7 @@ void create_people (epi::World& world, double num_total_people, double exposed_p
     int num_people_age60to79 = num_total_people * 0.22;
     // Assumptions: 66 procent of people between 60 and 79 live with a partner, 33% lives alone
     // The increment is 3 since in every loop 3 people between 60 and 79 are added.
-    for (auto i = 0; i < num_people_age60to79; i=i+3){
+    for (auto i = 0; i < num_people_age60to79; i = i + 3) {
         //Two persons
         create_household({epi::AbmAgeGroup::Age60to79, epi::AbmAgeGroup::Age60to79});
         //Single person
@@ -123,25 +130,27 @@ void create_people (epi::World& world, double num_total_people, double exposed_p
     // In the home for senior citizens, effective contacs are 10.
     int counter;
     int num_added_persons = 0;
-    while (num_added_persons < num_people_age80plus * 0.15){
+    while (num_added_persons < num_people_age80plus * 0.15) {
         // create home for senior citizens
-        counter = 0;
+        counter   = 0;
         auto home = world.add_location(epi::LocationType::Home);
         world.get_individualized_location(home).get_infection_parameters().set<epi::EffectiveContacts>(10);
         // add 80 persons that live in the home
-        while (counter < 80 && num_added_persons < num_people_age80plus * 0.15){
-            auto& adult = world.add_person(home, determine_infection_state(exposed_pct, infected_pct, carrier_pct, recovered_pct), epi::AbmAgeGroup::Age80plus);
+        while (counter < 80 && num_added_persons < num_people_age80plus * 0.15) {
+            auto& adult =
+                world.add_person(home, determine_infection_state(exposed_pct, infected_pct, carrier_pct, recovered_pct),
+                                 epi::AbmAgeGroup::Age80plus);
             adult.set_assigned_location(home);
             counter++;
             num_added_persons++;
         }
     }
     // Live alone
-    for (auto i = 0; i < num_people_age80plus * 0.51; ++i){
+    for (auto i = 0; i < num_people_age80plus * 0.51; ++i) {
         create_household({epi::AbmAgeGroup::Age80plus});
     }
     // Live with a partner - per loop two people are added
-    for (auto i = 0; i < num_people_age80plus * 0.24; i=i+2){
+    for (auto i = 0; i < num_people_age80plus * 0.24; i = i + 2) {
         create_household({epi::AbmAgeGroup::Age80plus, epi::AbmAgeGroup::Age80plus});
     }
 }
@@ -149,36 +158,37 @@ void create_people (epi::World& world, double num_total_people, double exposed_p
 /**
  * Add locations to the world and assign locations to the people.
  */
-void create_assign_locations (epi::World& world){
-    // Add one social event with 100 effective contacts. 
+void create_assign_locations(epi::World& world)
+{
+    // Add one social event with 100 effective contacts.
     // Effective contacs limit the number of people that a person can infect while being at this location.
-    auto event  = world.add_location(epi::LocationType::SocialEvent);
+    auto event = world.add_location(epi::LocationType::SocialEvent);
     world.get_individualized_location(event).get_infection_parameters().set<epi::EffectiveContacts>(100);
-    
+
     // Add hospital and ICU with 5 effective contacs.
     auto hospital = world.add_location(epi::LocationType::Hospital);
     world.get_individualized_location(hospital).get_infection_parameters().set<epi::EffectiveContacts>(5);
     auto icu = world.add_location(epi::LocationType::ICU);
     world.get_individualized_location(icu).get_infection_parameters().set<epi::EffectiveContacts>(5);
 
-    // Add schools, workplaces and shops. 
+    // Add schools, workplaces and shops.
     // At every school there are 600 students. The effective contacs are 40.
     // At every workplace work 100 people (needs to be varified), effective contacts are 40.
     // Add one supermarked per 15.000 people, effective constacts are assumed to be 20.
-    auto shop  = world.add_location(epi::LocationType::BasicsShop);
+    auto shop = world.add_location(epi::LocationType::BasicsShop);
     world.get_individualized_location(shop).get_infection_parameters().set<epi::EffectiveContacts>(20);
-    
-    auto school  = world.add_location(epi::LocationType::School);
+
+    auto school = world.add_location(epi::LocationType::School);
     world.get_individualized_location(school).get_infection_parameters().set<epi::EffectiveContacts>(40);
-    
-    auto work  = world.add_location(epi::LocationType::Work);
+
+    auto work = world.add_location(epi::LocationType::Work);
     world.get_individualized_location(work).get_infection_parameters().set<epi::EffectiveContacts>(40);
     int counter_school = 0;
-    int counter_work = 0;
-    int counter_shop = 0;
+    int counter_work   = 0;
+    int counter_shop   = 0;
     //Assign locations to the people
     auto persons = world.get_persons();
-    for (auto& person: persons){
+    for (auto& person : persons) {
         //assign shop and event
         person.set_assigned_location(event);
         person.set_assigned_location(shop);
@@ -187,39 +197,50 @@ void create_assign_locations (epi::World& world){
         person.set_assigned_location(hospital);
         person.set_assigned_location(icu);
         //assign work/school to people depending on their age
-        if (person.get_age() == epi::AbmAgeGroup::Age5to14){
+        if (person.get_age() == epi::AbmAgeGroup::Age5to14) {
             person.set_assigned_location(school);
             counter_school++;
-        } 
-        if (person.get_age() == epi::AbmAgeGroup::Age15to34 || person.get_age() == epi::AbmAgeGroup::Age35to59){
+        }
+        if (person.get_age() == epi::AbmAgeGroup::Age15to34 || person.get_age() == epi::AbmAgeGroup::Age35to59) {
             person.set_assigned_location(work);
             counter_work++;
-        } 
+        }
         //add new school/work/shop if needed
-        if (counter_school == 600){
+        if (counter_school == 600) {
             counter_school = 0;
-            school  = world.add_location(epi::LocationType::School);
+            school         = world.add_location(epi::LocationType::School);
             world.get_individualized_location(school).get_infection_parameters().set<epi::EffectiveContacts>(40);
         }
-        if (counter_work == 100){
+        if (counter_work == 100) {
             counter_work = 0;
-            work  = world.add_location(epi::LocationType::Work);
+            work         = world.add_location(epi::LocationType::Work);
             world.get_individualized_location(work).get_infection_parameters().set<epi::EffectiveContacts>(40);
         }
-        if (counter_shop == 15000){
+        if (counter_shop == 15000) {
             counter_shop = 0;
-            shop  = world.add_location(epi::LocationType::BasicsShop);
+            shop         = world.add_location(epi::LocationType::BasicsShop);
             world.get_individualized_location(shop).get_infection_parameters().set<epi::EffectiveContacts>(20);
         }
     }
-
 }
 
 int main()
 {
+    //epi::set_log_level(epi::LogLevel::warn);
+
+    // Set seeds of previous run for debugging:
+    // epi::thread_local_rng().seed({...});
+
+    //Print seeds to be able to use them again for debugging:
+    //printf("Seeds: ");
+    //for (auto s : epi::thread_local_rng().get_seeds()) {
+    //    printf("%u, ", s);
+    //}
+    //printf("\n");
+
     //Parameters
     //total number of people
-    double num_total_people = 10000; 
+    double num_total_people = 50000;
     //assumed percentage of infection state at the beginning of the simulation
     double exposed_pct = 0.01, infected_pct = 0.008, carrier_pct = 0.005, recovered_pct = 0.001;
 
@@ -237,29 +258,30 @@ int main()
     abm_params.set<epi::CriticalToRecovered>({{epi::AbmAgeGroup::Count}, 0.02});
     abm_params.set<epi::CriticalToDead>({{epi::AbmAgeGroup::Count}, 0.06});
     abm_params.set<epi::RecoveredToSusceptible>({{epi::AbmAgeGroup::Count}, 0.});
-    
-    auto world    = epi::World(abm_params);
+
+    auto world = epi::World(abm_params);
 
     //Add people to the world.
-    create_people (world, num_total_people, exposed_pct, infected_pct, carrier_pct, recovered_pct);
-    
+    create_people(world, num_total_people, exposed_pct, infected_pct, carrier_pct, recovered_pct);
+
     //Add locations and assign locations to the people.
     create_assign_locations(world);
 
-    auto t0   = epi::TimePoint(0);
-    auto t_lockdown = epi::TimePoint(0)+epi::days(20);
-    auto tmax = epi::TimePoint(0) + epi::days(60);
+    auto t0         = epi::TimePoint(0);
+    auto t_lockdown = epi::TimePoint(0) + epi::days(20);
+    auto tmax       = epi::TimePoint(0) + epi::days(60);
 
     // During the lockdown, 60% of people work from home and schools are closed for 90% of students.
     // Social events are very rare.
-    epi::set_home_office(t_lockdown, 0.6, world.get_migration_parameters());
+    epi::set_home_office(t_lockdown, 0.25, world.get_migration_parameters());
     epi::set_school_closure(t_lockdown, 0.9, world.get_migration_parameters());
     epi::close_social_events(t_lockdown, 0.9, world.get_migration_parameters());
-    auto sim  = epi::AbmSimulation(t0, std::move(world));
+
+    auto sim = epi::AbmSimulation(t0, std::move(world));
 
     sim.advance(tmax);
 
-    // The results are saved in a table with 9 rows. 
+    // The results are saved in a table with 9 rows.
     // The first row is t = time, the others correspond to the number of people with a certain infection state at this time:
     // S = Susceptible, E = Exposed, C= Carrier, I_d = Infected_Detected, I_u = Infected_Undetected, I_s = Infected_Severe,
     // I_c = Infected_Critical, R_C = Recovered_Carrier, R_I = Recovered_Infected, D = Dead
@@ -271,7 +293,7 @@ int main()
     // set output "abm.png"
     // set terminal png
     // replot
-    auto f_abm = fopen("abm.txt", "w");
+    auto f_abm = fopen("abm1.txt", "w");
     fprintf(f_abm, "# t S E C I_d I_u I_s I_c R_C R_I D\n");
     for (auto i = 0; i < sim.get_result().get_num_time_points(); ++i) {
         fprintf(f_abm, "%f ", sim.get_result().get_time(i));
