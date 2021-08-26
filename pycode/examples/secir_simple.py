@@ -32,7 +32,7 @@ def run_secir_simulation():
     # Define Comartment names
     compartments = ['Susceptible', 'Exposed', 'Carrier', 'Infected', 'Hospitalized', 'ICU', 'Recovered', 'Dead']
     # Define population of age groups
-    populations = [82000]
+    populations = [83000]
 
     days = 100 # number of days to simulate
     start_day = 1

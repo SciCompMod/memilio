@@ -35,7 +35,7 @@ def run_secir_groups_simulation():
     # Define age Groups
     groups = ['0-4', '5-14', '15-34', '35-59', '60-79', '80+']
     # Define population of age groups
-    populations = [30000, 60000, 150000, 200000, 120000, 100000] #secir simple uses 820000 as pop size, this adds up to 660000
+    populations = [40000, 70000, 190000, 290000, 180000, 60000] 
 
     days = 100 # number of days to simulate
     start_day = 1
