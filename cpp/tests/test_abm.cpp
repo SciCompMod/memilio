@@ -62,12 +62,21 @@ TEST(TestLocation, addRemovePerson)
     ASSERT_EQ(location.get_subpopulation(epi::InfectionState::Exposed), 1);
 }
 
+TEST(TestLocation, setTestingScheme)
+{
+    auto location = epi::Location(epi::LocationType::Home, 0);
+    location.set_testing_scheme(epi::days(5), 0.9);
+    ASSERT_EQ(location.get_testing_scheme().get_interval(), epi::days(5));
+    ASSERT_EQ(location.get_testing_scheme().get_probability(), 0.9);
+}
+
 /**
  * mock of the generator function of DistributionAdapter<DistT>.
  * can't be used directly as a generator function because it is not copyable.
  * see MockDistributionRef
  */
-template <class DistT> struct MockDistribution {
+template <class DistT>
+struct MockDistribution {
     using Distribution = DistT;
     // using invoke() instead of operator() because operators cant be mocked in the GMock framework */
     MOCK_METHOD(typename Distribution::ResultType, invoke, (const typename Distribution::ParamType&), ());
@@ -79,7 +88,8 @@ template <class DistT> struct MockDistribution {
  * This wrapper is copyable and all copies redirect invocations to a shared underlying mock
  * so it can be used as a generator function.
  */
-template <class MockDistribution> struct MockDistributionRef {
+template <class MockDistribution>
+struct MockDistributionRef {
     using Distribution = typename MockDistribution::Distribution;
     typename Distribution::ResultType operator()(const typename Distribution::ParamType& p)
     {
@@ -92,7 +102,8 @@ template <class MockDistribution> struct MockDistributionRef {
  * Replaces the generator function in the static instance of DistributionAdapter with a mock.
  * On construction sets the generator and on destruction restores the previous generator.
  */
-template <class MockDistribution> struct ScopedMockDistribution {
+template <class MockDistribution>
+struct ScopedMockDistribution {
     using Distribution = typename MockDistribution::Distribution;
     /**
      * constructor replaces the generator function with a mock
@@ -378,6 +389,7 @@ TEST(TestPerson, get_tested)
     ASSERT_EQ(infected.get_tested(0.9, 0.99), false);
     ASSERT_EQ(susceptible.get_tested(0.9, 0.99), false);
     ASSERT_EQ(susceptible.get_tested(0.9, 0.99), true);
+    ASSERT_EQ(susceptible.get_time_since_test(), epi::days(0));
 }
 
 TEST(TestPerson, interact)
@@ -887,6 +899,22 @@ TEST(TestTestingScheme, init)
 
     tests.set_interval(epi::days(2));
     ASSERT_EQ(tests.get_interval(), epi::days(2));
+}
+
+TEST(TestTestingScheme, runScheme)
+{
+    auto loc     = epi::Location(epi::LocationType::Home, 0);
+    auto person  = epi::Person(loc, epi::InfectionState::Carrier, epi::AbmAgeGroup::Age5to14, {}, {});
+    auto testing = epi::TestingScheme(epi::days(5), 0.9);
+
+    ScopedMockDistribution<testing::StrictMock<MockDistribution<epi::UniformDistribution<double>>>> mock_uniform_dist;
+    EXPECT_CALL(mock_uniform_dist.get_mock(), invoke)
+        .Times(testing::AtLeast(2))
+        .WillOnce(testing::Return(0.7))
+        .WillOnce(testing::Return(0.5));
+    testing.run_scheme(person, {});
+    ASSERT_EQ(person.get_time_since_test(), epi::days(0));
+    ASSERT_EQ(person.is_in_quarantine(), true);
 }
 
 TEST(TestWorld, evolveMigration)

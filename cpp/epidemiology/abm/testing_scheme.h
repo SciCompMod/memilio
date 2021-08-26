@@ -33,32 +33,36 @@ public:
     /**
      * get the time interval of this testing scheme
      */
-    TimeSpan get_interval() const {
+    TimeSpan get_interval() const
+    {
         return m_time_interval;
     }
 
     /**
      * get probability of this testing scheme
      */
-    double get_probability() const {
+    double get_probability() const
+    {
         return m_probability;
     }
 
     /**
      * set the time interval of this testing scheme
      */
-    void set_interval (TimeSpan t) {
+    void set_interval(TimeSpan t)
+    {
         m_time_interval = t;
     }
 
     /**
      * set probability of this testing scheme
      */
-    void set_probability (double p) {
+    void set_probability(double p)
+    {
         m_probability = p;
     }
 
-    void run_scheme(Person& person, GlobalTestingParameters& params) const;
+    void run_scheme(Person& person, const GlobalTestingParameters& params) const;
 
 private:
     TimeSpan m_time_interval;
