@@ -186,6 +186,7 @@ void create_assign_locations(epi::World& world)
     world.get_individualized_location(school).get_infection_parameters().set<epi::EffectiveContacts>(40);
     world.get_individualized_location(school).set_testing_scheme(epi::days(7), 1);
 
+
     auto work = world.add_location(epi::LocationType::Work);
     world.get_individualized_location(work).get_infection_parameters().set<epi::EffectiveContacts>(40);
     world.get_individualized_location(work).set_testing_scheme(epi::days(7), 0.5);
@@ -232,9 +233,22 @@ void create_assign_locations(epi::World& world)
 
 int main()
 {
+    //epi::set_log_level(epi::LogLevel::warn);
+
+    // Set seeds of previous run for debugging:
+    // epi::thread_local_rng().seed({...});
+
+    //Print seeds to be able to use them again for debugging:
+    //printf("Seeds: ");
+    //for (auto s : epi::thread_local_rng().get_seeds()) {
+    //    printf("%u, ", s);
+    //}
+    //printf("\n");
+
     //Parameters
     //total number of people
-    double num_total_people = 10000;
+    double num_total_people = 50000;
+
     //assumed percentage of infection state at the beginning of the simulation
     double exposed_pct = 0.01, infected_pct = 0.008, carrier_pct = 0.005, recovered_pct = 0.001;
 
@@ -270,6 +284,7 @@ int main()
     epi::set_home_office(t_lockdown, 0.25, world.get_migration_parameters());
     epi::set_school_closure(t_lockdown, 0.9, world.get_migration_parameters());
     epi::close_social_events(t_lockdown, 0.9, world.get_migration_parameters());
+
     auto sim = epi::AbmSimulation(t0, std::move(world));
 
     sim.advance(tmax);

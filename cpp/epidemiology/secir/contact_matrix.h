@@ -300,14 +300,12 @@ public:
         assert(il.size() > 0);
     }
 
-private:    
     DampingMatrixExpressionGroup(const std::vector<value_type>& v)
         : m_matrices(v)
     {
         assert(v.size() > 0);
     }
 
-public:
     /**
      * access one matrix.
      */
