@@ -590,7 +590,7 @@ void create_world_from_statistical_data(epi::World& world, infectionStateParamet
     demograficParameters demo_par;
     setup_parameters(&demo_par);
     create_private_households(world, &demo_par, inf_state_par);
-    //create_community_households(world, &demo_par, inf_state_par);
+    create_community_households(world, &demo_par, inf_state_par);
 }
 
 /**
