@@ -205,12 +205,10 @@ auto map(const Rng& v, F f)
 namespace details
 {
     //true if elements returned by matrix(i, j) are references where matrix is of type M;
-    //false if the elements are temporaries, e.g. for expressions like Eigen::MatrixXd::Constant(r, c, v);
-    //Caution: This works only for matrix expressions having the LinearAccessBit:
-    // https://eigen.tuxfamily.org/dox/classEigen_1_1DenseCoeffsBase_3_01Derived_00_01ReadOnlyAccessors_01_4.html#a496672306836589fa04a6ab33cb0cf2a
+    //false if the elements are temporaries, e.g. for expressions like Eigen::MatrixXd::Constant(r, c, v).
     template <class M>
     using IsElementReference =
-        std::is_reference<decltype(std::declval<M>()[std::declval<Eigen::Index>()])>;
+        std::is_reference<decltype(std::declval<M>()(std::declval<Eigen::Index>(), std::declval<Eigen::Index>()))>;
 }
 
 /**
