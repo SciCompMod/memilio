@@ -41,7 +41,19 @@ enum class InfectionState : std::uint32_t
     Recovered_Carrier,
     Recovered_Infected,
     Dead,
+    //TODO: Add description of the different infection states
+    Count //last!!
+};
 
+/**
+ * vacination state in ABM.
+ * can be used as 0-based index.
+ */
+enum class VacinationState : std::uint32_t
+{
+    Unvacinated = 0,
+    Vacinated,
+    
     Count //last!!
 };
 

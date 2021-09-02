@@ -42,23 +42,33 @@ class Location;
 class Person
 {
 public:
+    
     /**
      * create a Person.
      * @param id index and type of the initial location of the person
-     * @param state the initial infection state of the person
+     * @param infection_state the initial infection state of the person
+     * @param vacination_state the initial infection state of the person
      * @param age the age group of the person
      * @param global_params the global infection parameters
      */
-    Person(LocationId id, InfectionState state, AbmAgeGroup age, const GlobalInfectionParameters& global_params);
+    Person(LocationId id, InfectionState infection_state,VacinationState vacination_state, AbmAgeGroup age, const GlobalInfectionParameters& global_params);
+    /**
+     * create a Person.
+     * @param id index and type of the initial location of the person
+     * @param infection_state the initial infection state of the person
+     * @param age the age group of the person
+     * @param global_params the global infection parameters
+     */
+    Person(LocationId id, InfectionState infection_state, AbmAgeGroup age, const GlobalInfectionParameters& global_params);
     
     /**
      * create a Person.
      * @param location the initial location of the person
-     * @param state the initial infection state of the person
+     * @param infection_state the initial infection state of the person
      * @param age the age group of the person
      * @param global_params the global infection parameters
      */
-    Person(Location& location, InfectionState state, AbmAgeGroup age, const GlobalInfectionParameters& global_params);
+    Person(Location& location,  InfectionState infection_state, AbmAgeGroup age, const GlobalInfectionParameters& global_params);
 
     /** 
      * Time passes and the person interacts with the population at its current location.
@@ -80,7 +90,16 @@ public:
      */
     InfectionState get_infection_state() const
     {
-        return m_state;
+        return m_infection_state;
+    }
+    
+    /**
+     * Get the current vaccination state of the person.
+     * @returns the current vacination state of the person
+     */
+    VacinationState get_vacination_state() const
+    {
+        return m_vacination_state;
     }
 
     /**
@@ -162,7 +181,8 @@ public:
 private:
     LocationId m_location_id;
     std::vector<uint32_t> m_assigned_locations;
-    InfectionState m_state;
+    InfectionState m_infection_state;
+    VacinationState m_vacination_state;
     TimeSpan m_time_until_carrier;
     bool m_quarantine;
     epi::Index<AbmAgeGroup> m_age;
