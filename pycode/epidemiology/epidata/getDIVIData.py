@@ -1,7 +1,7 @@
 #############################################################################
 # Copyright (C) 2020-2021 German Aerospace Center (DLR-SC)
 #
-# Authors: Kathrin Rack, Lena Ploetzke
+# Authors: Kathrin Rack, Lena Ploetzke, Martin J. Kuehn
 #
 # Contact: Martin J. Kuehn <Martin.Kuehn@DLR.de>
 #
@@ -58,10 +58,10 @@ def adjust_data(df, date_of_data):
     """!Adjusts data such that the data structure looks the same for all dates
 
     For the first available dates of year 2020, there are some differences and thus special treatment is needed:
-    - 24.4.: Rename column 'kreis' to 'gemeindeschluessel'
-    - 25.4.: Add id bundesland, which is extracted from the given column "gemeindeschluessel"
-    - 24.4.-27.4.: Add date as a column
-    - 29.9.: Empty column has to be removed
+    - April 24, 2020.: Rename column 'kreis' to 'gemeindeschluessel'
+    - April 25, 2020.: Add id bundesland, which is extracted from the given column "gemeindeschluessel"
+    - April 24-27, 2020.: Add date as a column
+    - April 29, 2020.: Empty column has to be removed
 
     @param df A pandas data frame
     @param date_of_data The date for the data stored in df
@@ -72,7 +72,8 @@ def adjust_data(df, date_of_data):
     if date_of_data == date(2020, 4, 24):
         df.rename({'kreis': 'gemeindeschluessel'}, axis=1, inplace=True)
         # Add empty column ICU_ventilated
-        df.insert(loc=len(df.columns), column='faelle_covid_aktuell_beatmet', value='')
+        df.insert(loc=len(df.columns),
+                  column='faelle_covid_aktuell_invasiv_beatmet', value='')
 
     # remove empty column
     if date_of_data == date(2020, 4, 29):
@@ -85,8 +86,10 @@ def adjust_data(df, date_of_data):
 
     # add 'bundesland' for data from 25.4.
     if date_of_data == date(2020, 4, 25):
-        df.insert(loc=0, column='bundesland', value=df['gemeindeschluessel'].floordiv(1000))
-        df.insert(loc=len(df.columns), column='faelle_covid_aktuell_beatmet', value='')
+        df.insert(loc=0, column='bundesland',
+                  value=df['gemeindeschluessel'].floordiv(1000))
+        df.insert(loc=len(df.columns),
+                  column='faelle_covid_aktuell_invasiv_beatmet', value='')
 
     return df
 
@@ -243,7 +246,61 @@ def download_data_for_one_day(last_number, download_date):
                         date(2020, 12, 19): 5326,
                         date(2020, 12, 22): 5333,
                         date(2020, 12, 30): 5350,
+                        date(2021, 1, 5): 5364,
+                        date(2021, 1, 6): 5367,
+                        date(2021, 1, 9): 5373,
+                        date(2021, 1, 16): 5387,
+                        date(2021, 1, 19): 5393,
+                        date(2021, 1, 20): 5396,
+                        date(2021, 1, 23): 5402,
+                        date(2021, 2, 2): 5422,
+                        date(2021, 2, 8): 5435,
+                        date(2021, 2, 13): 5446,
+                        date(2021, 2, 19): 5460,
+                        date(2021, 2, 23): 5468,
+                        date(2021, 2, 24): 5471,
+                        date(2021, 2, 25): 5478,
+                        date(2021, 2, 26): 5481,
+                        date(2021, 3, 1): 5487,
+                        date(2021, 3, 4): 5507,
+                        date(2021, 3, 8): 5517,
+                        date(2021, 3, 10): 5524,
+                        date(2021, 3, 16): 5536,
+                        date(2021, 3, 18): 5541,
+                        date(2021, 3, 19): 5544,
+                        date(2021, 3, 26): 5558,
+                        date(2021, 3, 28): 5563,
+                        date(2021, 3, 30): 5568,
+                        date(2021, 3, 31): 5571,
+                        date(2021, 4, 1): 5574,
+                        date(2021, 4, 5): 5583,
+                        date(2021, 4, 9): 5595,
+                        date(2021, 4, 26): 5629,
+                        date(2021, 5, 6): 5649,
+                        date(2021, 5, 7): 5652,
+                        date(2021, 5, 8): 5655,
+                        date(2021, 5, 14): 5667,
+                        date(2021, 5, 18): 5677,
+                        date(2021, 5, 25): 5692,
+                        date(2021, 5, 27): 5698,
+                        date(2021, 5, 30): 5705,
+                        date(2021, 6, 6): 5719,
+                        date(2021, 6, 8): 5748,
+                        date(2021, 6, 19): 5773,
+                        date(2021, 6, 21): 5777,
+                        date(2021, 6, 25): 5786,
+                        date(2021, 6, 26): 5789,
+                        date(2021, 7, 17): 5831,
+                        date(2021, 7, 24): 5845,
+                        date(2021, 8, 7): 5873,
+                        date(2021, 8, 10): 5879,
+                        date(2021, 8, 12): 5883,
+                        date(2021, 8, 14): 5888,
+                        date(2021, 8, 15): 5891,
+                        date(2021, 8, 18): 5897,
+                        date(2021, 9, 1): 5925
                         }
+
     start_date_differs = False
 
     call_date = download_date.strftime("%Y-%m-%d")
@@ -288,7 +345,8 @@ def download_data_for_one_day(last_number, download_date):
         # case where start_date is not 24-04-2020 and is not in dict
         # then we search to date which is closest to given date and smaller
         if last_number == 0:
-            nd = nearest_earlier_date(list(call_number_dict.keys()), download_date)
+            nd = nearest_earlier_date(
+                list(call_number_dict.keys()), download_date)
             last_number = call_number_dict[nd]
             # make sure no output about new drifting number is added for this case
             start_date_differs = True
@@ -311,7 +369,8 @@ def download_data_for_one_day(last_number, download_date):
 
         # case with same call_number, which is very unlikely
         call_number = last_number
-        call_string = "date(" + download_date.strftime("%Y, %-m, %-d") + "): " + str(call_number) + "," + "\n"
+        call_string = "date(" + download_date.strftime("%Y, %-m, %-d") + \
+            "): " + str(call_number) + "," + "\n"
         df = call_call_url(url_prefix, call_number)
 
     return [call_number, df, call_string]
@@ -397,17 +456,20 @@ def get_divi_data(read_data=dd.defaultDict['read_data'],
 
         if update_data:
             if not df.empty:
-                newest_date = pandas.to_datetime(df['daten_stand']).max().date()
+                newest_date = pandas.to_datetime(
+                    df['daten_stand']).max().date()
 
                 if (today - delta) == newest_date:
                     # just today's data is missing
                     # download data from today
                     # while loop to download further data will be skipped
-                    df2 = gd.loadCsv('DIVI-Intensivregister-Tagesreport', apiUrl='https://www.divi.de/')
+                    df2 = gd.loadCsv(
+                        'DIVI-Intensivregister-Tagesreport', apiUrl='https://www.divi.de/')
 
                     if not df2.empty:
                         # test if online data is already the one of today
-                        download_date = pandas.to_datetime(df2['daten_stand']).max().date()
+                        download_date = pandas.to_datetime(
+                            df2['daten_stand']).max().date()
 
                         if download_date == today:
                             df = df.append(df2, ignore_index=True)
@@ -432,7 +494,8 @@ def get_divi_data(read_data=dd.defaultDict['read_data'],
     new_dict_string = ""
     while start_date <= end_date:
 
-        [last_number, df2, new_string] = download_data_for_one_day(last_number, start_date)
+        [last_number, df2, new_string] = download_data_for_one_day(
+            last_number, start_date)
 
         if not df2.empty:
 
@@ -441,11 +504,20 @@ def get_divi_data(read_data=dd.defaultDict['read_data'],
             # data of first days needs adjustment
             if start_date <= date(2020, 4, 29):
                 df2 = adjust_data(df2, start_date)
+
+            # rename column names due to change in naming of files from March 31, 2021 onwards
+            if start_date <= date(2021, 3, 30):
+                df2.rename(columns={
+                           'faelle_covid_aktuell_beatmet': 'faelle_covid_aktuell_invasiv_beatmet'}, inplace=True)
+
+            # append to global data frame
             df = df.append(df2, ignore_index=True)
 
-            print("Success: Data of date " + start_date.strftime("%Y-%m-%d") + " has been added to dataframe")
+            print("Success: Data of date " +
+                  start_date.strftime("%Y-%m-%d") + " has been added to dataframe")
         else:
-            print("Warning: Data of date " + start_date.strftime("%Y-%m-%d") + " is not added to dataframe")
+            print("Warning: Data of date " +
+                  start_date.strftime("%Y-%m-%d") + " is not added to dataframe")
 
         start_date += delta
 
@@ -479,12 +551,14 @@ def get_divi_data(read_data=dd.defaultDict['read_data'],
         df.loc[df["County"] == key, ["County"]] = value
 
     # write data for counties to file
-    df_counties = df[["County", "ID_County", "ICU", "ICU_ventilated", "Date"]].copy()
+    df_counties = df[["County", "ID_County",
+                      "ICU", "ICU_ventilated", "Date"]].copy()
     filename = "county_divi"
     gd.write_dataframe(df_counties, directory, filename, file_format)
 
     # write data for states to file
-    df_states = df.groupby(["ID_State", "State", "Date"]).agg({"ICU": sum, "ICU_ventilated": sum})
+    df_states = df.groupby(["ID_State", "State", "Date"]).agg(
+        {"ICU": sum, "ICU_ventilated": sum})
     df_states = df_states.reset_index()
     df_states.sort_index(axis=1, inplace=True)
     # For the sum calculation Nan is used as a 0, thus some zeros have to be changed back to NaN
@@ -511,6 +585,7 @@ def get_divi_data(read_data=dd.defaultDict['read_data'],
     # TODO: Use also "faelle_covid_aktuell_im_bundesland" from 25.9.
     filename = "germany_divi"
     gd.write_dataframe(df_ger, directory, filename, file_format)
+
 
 def main():
     """ Main program entry."""
