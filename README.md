@@ -49,7 +49,7 @@ In addition, *epidemiology_io* is bundled with
 
 *Making and executing C++ code*
 
-* (Create a build folder and) do cmake .. (without IO library) or cmake -DEPI_BUILD_EPI_IO=ON .. (with IO library) in epidemiology-cpp/cpp/build
+* (Create a build folder and) do cmake .. (without IO library) or cmake -DEPI_BUILD_EPI_IO=ON .. (with IO library) in cpp/build/
 * Do cmake --build . 
 * Run 
   * an example via ./examples/secir_ageres
