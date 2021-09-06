@@ -11,7 +11,7 @@ The model consists of the following major classes:
 4. SEIR: implements a simple ODE-based SEIR model, uses the compartments 'Susceptible (S)', 'Exposed (E)', 'Infected (I)', and 'Recovered (R)'. Recovered people remain immune. Uses `populations` to model the different infection states. Parameters are set as SeirParams.
 5. SECIR: implements an *age-resolved ODE-model*, based on the non-age-resolved based model as described in https://www.medrxiv.org/content/10.1101/2020.04.04.20053637v2, uses the compartments 'Susceptible (S)', 'Exposed (E)', 'Carrier (C)', 'Infected (I)', 'Hospitalized (H)', 'ICU care (U)', 'Recovered (R)' and 'Dead'. Recovered people remain immune. Uses `populations` to model different 'groups' for a particular age-range (first dimension) and an infection state (second dimension). Parameters are set as SecirParams; they contain contact patterns in form of a UncertainContactMatrix and an extended set of epidemiologic parameters.
 6. Parameter Space: Factory class for the SecirParams to set distributions to the different parameters and providing the opportunity to sample from these parameter set containing random distributions.
-7. Parameter Studies: Method to be called on a set of SecirParams with a given set of random distributions to sample from the distributions and run ensemble run simulations with the obtained samples.
+7. Parameter Studies: Method to be called on a set of SecirParams with a given set of random distributions to sample from the distributions and run ensemble run simulations with the obtained samples. 
 
 ## Simulation
 
