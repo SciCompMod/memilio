@@ -193,30 +193,30 @@ TEST(TestLocation, interact)
     //test should work identically work with any age
     epi::AbmAgeGroup age = epi::AbmAgeGroup(epi::UniformIntDistribution<int>()(0, int(epi::AbmAgeGroup::Count) - 1));
     epi::GlobalInfectionParameters params;
-    params.set<epi::CarrierToInfected>({{epi::AbmAgeGroup::Count}, 0.});
-    params.get<epi::CarrierToInfected>()[{age}] = 0.5;
-    params.set<epi::CarrierToRecovered>({{epi::AbmAgeGroup::Count}, 0.});
-    params.get<epi::CarrierToRecovered>()[{age}] = 0.5;
-    params.set<epi::DetectInfection>({{epi::AbmAgeGroup::Count}, 0.});
-    params.get<epi::DetectInfection>()[{age}] = 0.5;
-    params.set<epi::InfectedToSevere>({{epi::AbmAgeGroup::Count}, 0.});
-    params.get<epi::InfectedToSevere>()[{age}] = 0.5;
-    params.set<epi::InfectedToRecovered>({{epi::AbmAgeGroup::Count}, 0.});
-    params.get<epi::InfectedToRecovered>()[{age}] = 0.5;
-    params.set<epi::SevereToCritical>({{epi::AbmAgeGroup::Count}, 0.});
-    params.get<epi::SevereToCritical>()[{age}] = 0.5;
-    params.set<epi::SevereToRecovered>({{epi::AbmAgeGroup::Count}, 0.});
-    params.get<epi::SevereToRecovered>()[{age}] = 0.5;
-    params.set<epi::CriticalToDead>({{epi::AbmAgeGroup::Count}, 0.});
-    params.get<epi::CriticalToDead>()[{age}] = 0.5;
-    params.set<epi::CriticalToRecovered>({{epi::AbmAgeGroup::Count}, 0.});
-    params.get<epi::CriticalToRecovered>()[{age}] = 0.5;
-    params.set<epi::RecoveredToSusceptible>({{epi::AbmAgeGroup::Count}, 0.});
-    params.get<epi::RecoveredToSusceptible>()[{age}] = 0.5;
-    params.set<epi::SusceptibleToExposedByCarrier>({{epi::AbmAgeGroup::Count}, 0.});
-    params.get<epi::SusceptibleToExposedByCarrier>()[{age}] = 0.5;
-    params.set<epi::SusceptibleToExposedByInfected>({{epi::AbmAgeGroup::Count}, 0.});
-    params.get<epi::SusceptibleToExposedByInfected>()[{age}] = 0.5;
+    params.set<epi::CarrierToInfected>({{epi::AbmAgeGroup::Count,epi::VaccinationState::Count}, 0.});
+    params.get<epi::CarrierToInfected>()[{age,epi::VaccinationState::Unvaccinated}] = 0.5;
+    params.set<epi::CarrierToRecovered>({{epi::AbmAgeGroup::Count,epi::VaccinationState::Count}, 0.});
+    params.get<epi::CarrierToRecovered>()[{age,epi::VaccinationState::Unvaccinated}] = 0.5;
+    params.set<epi::DetectInfection>({{epi::AbmAgeGroup::Count,epi::VaccinationState::Count}, 0.});
+    params.get<epi::DetectInfection>()[{age,epi::VaccinationState::Unvaccinated}] = 0.5;
+    params.set<epi::InfectedToSevere>({{epi::AbmAgeGroup::Count,epi::VaccinationState::Count}, 0.});
+    params.get<epi::InfectedToSevere>()[{age,epi::VaccinationState::Unvaccinated}] = 0.5;
+    params.set<epi::InfectedToRecovered>({{epi::AbmAgeGroup::Count,epi::VaccinationState::Count}, 0.});
+    params.get<epi::InfectedToRecovered>()[{age,epi::VaccinationState::Unvaccinated}] = 0.5;
+    params.set<epi::SevereToCritical>({{epi::AbmAgeGroup::Count,epi::VaccinationState::Count}, 0.});
+    params.get<epi::SevereToCritical>()[{age,epi::VaccinationState::Unvaccinated}] = 0.5;
+    params.set<epi::SevereToRecovered>({{epi::AbmAgeGroup::Count,epi::VaccinationState::Count}, 0.});
+    params.get<epi::SevereToRecovered>()[{age,epi::VaccinationState::Unvaccinated}] = 0.5;
+    params.set<epi::CriticalToDead>({{epi::AbmAgeGroup::Count,epi::VaccinationState::Count}, 0.});
+    params.get<epi::CriticalToDead>()[{age,epi::VaccinationState::Unvaccinated}] = 0.5;
+    params.set<epi::CriticalToRecovered>({{epi::AbmAgeGroup::Count,epi::VaccinationState::Count}, 0.});
+    params.get<epi::CriticalToRecovered>()[{age,epi::VaccinationState::Unvaccinated}] = 0.5;
+    params.set<epi::RecoveredToSusceptible>({{epi::AbmAgeGroup::Count,epi::VaccinationState::Count}, 0.});
+    params.get<epi::RecoveredToSusceptible>()[{age,epi::VaccinationState::Unvaccinated}] = 0.5;
+    params.set<epi::SusceptibleToExposedByCarrier>({{epi::AbmAgeGroup::Count,epi::VaccinationState::Count}, 0.});
+    params.get<epi::SusceptibleToExposedByCarrier>()[{age,epi::VaccinationState::Unvaccinated}] = 0.5;
+    params.set<epi::SusceptibleToExposedByInfected>({{epi::AbmAgeGroup::Count,epi::VaccinationState::Count}, 0.});
+    params.get<epi::SusceptibleToExposedByInfected>()[{age,epi::VaccinationState::Unvaccinated}] = 0.5;
 
     //setup location with some chance of exposure
     auto location  = epi::Location(epi::LocationType::Work, 0);
@@ -384,7 +384,7 @@ TEST(TestPerson, interact_exposed)
     using testing::Return;
 
     auto infection_parameters = epi::GlobalInfectionParameters();
-    infection_parameters.set<epi::IncubationPeriod>({{epi::AbmAgeGroup::Count}, 2.});
+    infection_parameters.set<epi::IncubationPeriod>({{epi::AbmAgeGroup::Count,epi::VaccinationState::Unvaccinated}, 2.});
 
     //setup location with some chance of exposure
     auto loc  = epi::Location(epi::LocationType::Work, 0);
