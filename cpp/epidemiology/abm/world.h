@@ -88,7 +88,7 @@ public:
      * @param state initial infection state of the person
      * @return reference to the newly created person
      */
-    Person& add_person(LocationId id, InfectionState state, AbmAgeGroup age = AbmAgeGroup::Age15to34);
+    Person& add_person(LocationId id, InfectionState infection_state, AbmAgeGroup age = AbmAgeGroup::Age15to34);
 
     /**
      * get a range of all locations in the world.

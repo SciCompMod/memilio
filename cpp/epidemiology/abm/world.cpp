@@ -36,9 +36,9 @@ LocationId World::add_location(LocationType type)
     return {index, type};
 }
 
-Person& World::add_person(LocationId id, InfectionState state, AbmAgeGroup age)
+Person& World::add_person(LocationId id, InfectionState infection_state, AbmAgeGroup age)
 {
-    m_persons.push_back(std::make_unique<Person>(id, state, age, m_infection_parameters));
+    m_persons.push_back(std::make_unique<Person>(id, infection_state, age, m_infection_parameters));
     auto& person = *m_persons.back();
     get_location(person).add_person(person);
     return person;
@@ -137,11 +137,11 @@ Location& World::get_location(const Person& person)
     return get_individualized_location(person.get_location_id());
 }
 
-int World::get_subpopulation_combined(InfectionState s, LocationType type) const
+int World::get_subpopulation_combined(InfectionState infection_state, LocationType type) const
 {
     auto& locs = m_locations[(uint32_t)type];
     return std::accumulate(locs.begin(), locs.end(), 0, [&](int running_sum, const Location& loc)
-           { return running_sum + loc.get_subpopulation(s); });
+           { return running_sum + loc.get_subpopulation(infection_state); });
 }
 
 AbmMigrationParameters& World::get_migration_parameters(){

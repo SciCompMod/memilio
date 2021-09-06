@@ -97,7 +97,7 @@ public:
      * @param person the person that changed infection state
      * @param old_state the previous infection state of the person
      */
-    void changed_state(const Person& person, InfectionState old_state);
+    void changed_state(const Person& person, InfectionState old_infection_state);
 
     /** 
      * prepare the location for the next simulation step.

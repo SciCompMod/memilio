@@ -46,13 +46,13 @@ enum class InfectionState : std::uint32_t
 };
 
 /**
- * vacination state in ABM.
+ * vaccination state in ABM.
  * can be used as 0-based index.
  */
-enum class VacinationState : std::uint32_t
+enum class VaccinationState : std::uint32_t
 {
-    Unvacinated = 0,
-    Vacinated,
+    Unvaccinated = 0,
+    Vaccinated,
     
     Count //last!!
 };
