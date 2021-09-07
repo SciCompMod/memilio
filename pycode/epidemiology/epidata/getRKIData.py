@@ -52,8 +52,8 @@ def check_for_completeness(df):
    """
 
     if not df.empty:
-        # check for 16 federal states and 400 counties outside Berlin plus 12 districts of Berlin
-        if len(df["IdBundesland"].unique()) < 16 or len(df["IdLandkreis"].unique()) < 412:
+        # check for 400 counties outside Berlin plus 12 districts of Berlin
+        if len(df["IdLandkreis"].unique()) < 412:
             print("Downloaded RKI data is not complete. Another option will be tested.")
             return False
 
