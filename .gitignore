@@ -265,8 +265,8 @@ dmypy.json
 .pyre/
 
 # Data output
-pycode/**/*.json
-pycode/**/*.h5
+pycode/epidemiology/**/*.json
+pycode/epidemiology/**/*.h5
 pycode/epi_venv/
 pycode/build_pylint/
 
