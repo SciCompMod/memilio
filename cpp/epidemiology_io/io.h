@@ -32,10 +32,19 @@ namespace epi
 std::string get_current_dir_name();
 
 /**
- * @brief Creates a directory on the file system
- * returns true if the creation was successful.
+ * @brief Creates a directory in the file system
+ * @param rel_path path of directory relative to current working directory.
+ * @param abs_path Will contain the absolute path of the directory.
+ * @return true if the directory was created, false if it already exists, or any errors that occured.
  */
 IOResult<bool> create_directory(std::string const& rel_path, std::string& abs_path);
+
+/**
+ * @brief Creates a directory in the file system
+ * @param rel_path path of directory relative to current working directory.
+ * @return true if the directory was created, false if it already exists, or any errors that occured.
+ */
+IOResult<bool> create_directory(std::string const& rel_path);
 
 bool file_exists(std::string const& rel_path, std::string& abs_path);
 

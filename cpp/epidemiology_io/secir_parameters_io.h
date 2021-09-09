@@ -38,9 +38,10 @@ namespace epi
  * Creates two files per node: one contains the models and its parameters, one contains the outgoing edges.
  * @param graph Graph which should be written
  * @param directory directory where files should be stored
+ * @param ioflags flags that set the behavior of serialization; see epi::IOFlags
  */
 template <class Model>
-IOResult<void> write_graph(const Graph<Model, MigrationParameters>& graph, const std::string& directory)
+IOResult<void> write_graph(const Graph<Model, MigrationParameters>& graph, const std::string& directory, int ioflags = IOF_None)
 {
     assert(graph.nodes().size() > 0 && "Graph Nodes are empty");
 
@@ -64,7 +65,7 @@ IOResult<void> write_graph(const Graph<Model, MigrationParameters>& graph, const
     {        
         //node
         auto& node = graph.nodes()[inode];
-        BOOST_OUTCOME_TRY(js_node_model, serialize_json(node.property));
+        BOOST_OUTCOME_TRY(js_node_model, serialize_json(node.property, ioflags));
         Json::Value js_node(Json::objectValue);
         js_node["NodeId"] = node.id;
         js_node["Model"] = js_node_model;
@@ -72,18 +73,20 @@ IOResult<void> write_graph(const Graph<Model, MigrationParameters>& graph, const
         BOOST_OUTCOME_TRY(write_json(node_filename, js_node));
 
         //list of edges
-        Json::Value js_edges(Json::arrayValue);
-        for (auto& e : graph.out_edges(inode))
-        {
-            BOOST_OUTCOME_TRY(js_edge_params, serialize_json(e.property));
-            Json::Value js_edge{Json::objectValue};
-            js_edge["StartNodeIndex"] = Json::UInt64(e.start_node_idx);
-            js_edge["EndNodeIndex"] = Json::UInt64(e.end_node_idx);
-            js_edge["Parameters"] = js_edge_params;
-            js_edges.append(std::move(js_edge));
+        auto out_edges = graph.out_edges(inode);
+        if (out_edges.size()) {
+            Json::Value js_edges(Json::arrayValue);
+            for (auto& e : graph.out_edges(inode)) {
+                BOOST_OUTCOME_TRY(js_edge_params, serialize_json(e.property, ioflags));
+                Json::Value js_edge{Json::objectValue};
+                js_edge["StartNodeIndex"] = Json::UInt64(e.start_node_idx);
+                js_edge["EndNodeIndex"]   = Json::UInt64(e.end_node_idx);
+                js_edge["Parameters"]     = js_edge_params;
+                js_edges.append(std::move(js_edge));
+            }
+            auto edge_filename = path_join(abs_path, "GraphEdges_node" + std::to_string(inode) + ".json");
+            BOOST_OUTCOME_TRY(write_json(edge_filename, js_edges));
         }
-        auto edge_filename = path_join(abs_path, "GraphEdges_node" + std::to_string(inode) + ".json");
-        BOOST_OUTCOME_TRY(write_json(edge_filename, js_edges));
     }
 
     return success();
@@ -96,7 +99,7 @@ IOResult<void> write_graph(const Graph<Model, MigrationParameters>& graph, const
  * @param directory directory from where graph should be read.
  */
 template <class Model>
-IOResult<Graph<Model, MigrationParameters>> read_graph(const std::string& directory)
+IOResult<Graph<Model, MigrationParameters>> read_graph(const std::string& directory, int ioflags = IOF_None)
 {
     std::string abs_path;
     if (!file_exists(directory, abs_path)) {
@@ -119,7 +122,7 @@ IOResult<Graph<Model, MigrationParameters>> read_graph(const std::string& direct
             return failure(StatusCode::InvalidType, node_filename + ", NodeId must be an integer.");
         }
         auto node_id = js_node["NodeId"].asInt();
-        BOOST_OUTCOME_TRY(model, deserialize_json(js_node["Model"], Tag<Model>{}));
+        BOOST_OUTCOME_TRY(model, deserialize_json(js_node["Model"], Tag<Model>{}, ioflags));
         graph.add_node(node_id, model);
     }
 
@@ -142,7 +145,7 @@ IOResult<Graph<Model, MigrationParameters>> read_graph(const std::string& direct
                 log_error("EndNodeIndex not in range of number of graph nodes.");
                 return failure(StatusCode::OutOfRange, edge_filename + ", EndNodeIndex not in range of number of graph nodes.");
             }
-            BOOST_OUTCOME_TRY(parameters, deserialize_json(e["Parameters"], Tag<MigrationParameters>{}));
+            BOOST_OUTCOME_TRY(parameters, deserialize_json(e["Parameters"], Tag<MigrationParameters>{}, ioflags));
             graph.add_edge(start_node_idx, end_node_idx, parameters);
         }
     }
@@ -497,7 +500,7 @@ IOResult<void> read_population_data_state(std::vector<Model>& model, Date date, 
  * @param dir directory of files
  */
 template <class Model>
-IOResult<void> read_population_data_county(std::vector<Model>& model, Date date, std::vector<int> county,
+IOResult<void> read_population_data_county(std::vector<Model>& model, Date date, const std::vector<int>& county,
                                            const std::vector<double>& scaling_factor_inf, double scaling_factor_icu,
                                            const std::string& dir)
 {
