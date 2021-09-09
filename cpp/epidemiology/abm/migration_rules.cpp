@@ -33,7 +33,7 @@ namespace epi
 
 LocationType random_migration(const Person& person, TimePoint t, TimeSpan dt, const AbmMigrationParameters& params)
 {
-    auto current_loc = person.get_location_id().type;
+    auto current_loc     = person.get_location_id().type;
     auto make_transition = [current_loc](auto l) {
         return std::make_pair(l, l == current_loc ? 0. : 1.);
     };
@@ -50,8 +50,8 @@ LocationType go_to_school(const Person& person, TimePoint t, TimeSpan /*dt*/, co
 {
     auto current_loc = person.get_location_id().type;
     if (current_loc == LocationType::Home && t < params.get<LockdownDate>() && t.day_of_week() < 5 &&
-        t.hour_of_day() >= 8 && person.get_age() == AbmAgeGroup::Age5to14 && person.goes_to_school(t, params)
-        && !person.is_in_quarantine()) {
+        t.hour_of_day() >= 8 && person.get_age() == AbmAgeGroup::Age5to14 && person.goes_to_school(t, params) &&
+        !person.is_in_quarantine()) {
         return epi::LocationType::School;
     }
     //return home
@@ -81,8 +81,8 @@ LocationType go_to_shop(const Person& person, TimePoint t, TimeSpan dt, const Ab
 {
     auto current_loc = person.get_location_id().type;
     //leave
-    if (t.day_of_week() < 6 && t.hour_of_day() > 7 && t.hour_of_day() < 22 && current_loc == LocationType::Home
-        && !person.is_in_quarantine()) {
+    if (t.day_of_week() < 6 && t.hour_of_day() > 7 && t.hour_of_day() < 22 && current_loc == LocationType::Home &&
+        !person.is_in_quarantine()) {
         return random_transition(current_loc, dt,
                                  {{LocationType::BasicsShop, params.get<BasicShoppingRate>()[person.get_age()]}});
     }
@@ -100,10 +100,11 @@ LocationType go_to_event(const Person& person, TimePoint t, TimeSpan dt, const A
     auto current_loc = person.get_location_id().type;
     //leave
     if (current_loc == LocationType::Home && t < params.get<LockdownDate>() &&
-        ((t.day_of_week() <= 4 && t.hour_of_day() >= 19) || (t.day_of_week() >= 5 && t.hour_of_day() >= 10))
-         && !person.is_in_quarantine()) {
+        ((t.day_of_week() <= 4 && t.hour_of_day() >= 19) || (t.day_of_week() >= 5 && t.hour_of_day() >= 10)) &&
+        !person.is_in_quarantine()) {
         return random_transition(current_loc, dt,
-                                 {{LocationType::SocialEvent, params.get<SocialEventRate>().get_matrix_at(t.days())[(size_t)person.get_age()]}});
+                                 {{LocationType::SocialEvent,
+                                   params.get<SocialEventRate>().get_matrix_at(t.days())[(size_t)person.get_age()]}});
     }
 
     //return home
@@ -115,7 +116,8 @@ LocationType go_to_event(const Person& person, TimePoint t, TimeSpan dt, const A
     return current_loc;
 }
 
-LocationType go_to_hospital(const Person& person, TimePoint /*t*/, TimeSpan /*dt*/, const AbmMigrationParameters& /*params*/)
+LocationType go_to_hospital(const Person& person, TimePoint /*t*/, TimeSpan /*dt*/,
+                            const AbmMigrationParameters& /*params*/)
 {
     auto current_loc = person.get_location_id().type;
     if (person.get_infection_state() == InfectionState::Infected_Severe) {

@@ -62,7 +62,12 @@ public:
         m_probability = p;
     }
 
-    void run_scheme(Person& person, const GlobalTestingParameters& params) const;
+    /**
+     * runs the testing scheme and tests a person if necessary
+     * @return if the person is allowed to enter the location
+     */
+
+    bool run_scheme(Person& person, const GlobalTestingParameters& params) const;
 
 private:
     TimeSpan m_time_interval;
