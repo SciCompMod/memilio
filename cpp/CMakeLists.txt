@@ -153,8 +153,8 @@ if (EPI_BUILD_EPI_IO)
         $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
     )
 
-    target_link_libraries(epidemiology_io PUBLIC epidemiology jsoncpp 
-                          PRIVATE ${HDF5_CXX_LIBRARIES} Boost::filesystem Boost::disable_autolinking)
+    target_link_libraries(epidemiology_io PUBLIC epidemiology jsoncpp Boost::disable_autolinking
+                          PRIVATE ${HDF5_CXX_LIBRARIES} Boost::filesystem)
     target_include_directories(epidemiology_io PRIVATE ${HDF5_INCLUDE_DIRS})
 
     target_compile_definitions(epidemiology_io PUBLIC "-DHAVE_EPI_IO")

@@ -152,7 +152,7 @@ TEST(ParameterStudies, sample_graph)
            num_rec_t0 = 10, num_dead_t0 = 0;
 
     size_t num_groups = 3;
-    epi::SecirModel model(num_groups);
+    epi::SecirModel model((int)num_groups);
     double fact       = 1.0 / (double)num_groups;
 
     auto& params = model.parameters;
