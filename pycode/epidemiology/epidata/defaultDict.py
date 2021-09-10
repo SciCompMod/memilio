@@ -35,20 +35,21 @@ from datetime import date
 default_file_path = os.path.dirname(os.path.abspath(__file__))
 dfp_vec = default_file_path.split("epidemiology")
 if len(dfp_vec) > 0:
-    default_file_path = os.path.join(dfp_vec[0], os.path.join('epidemiology', 'data'))
+    default_file_path = os.path.join(
+        dfp_vec[0], os.path.join('epidemiology', 'data'))
 
 defaultDict = {
-   'read_data': False,
-   'make_plot': False,
-   'out_folder': default_file_path,
-   'update_data': False,
-   'start_date': date(2020, 4, 24),
-   'end_date': date.today(),
-   'split_berlin': False,
-   'moving_average': False,
-   'fill_dates': False,
-   'file_format': 'json_timeasstring',
-   'no_raw': False
+    'read_data': False,
+    'make_plot': False,
+    'out_folder': default_file_path,
+    'update_data': False,
+    'start_date': date(2020, 4, 24),
+    'end_date': date.today(),
+    'split_berlin': False,
+    'moving_average': False,
+    'fill_dates': False,
+    'file_format': 'json_timeasstring',
+    'no_raw': False
 }
 
 # The following dict EngEng makes sure that for all
@@ -86,7 +87,8 @@ EngEng = {
     'free_ICU': 'free_ICU',
     'reporting_hospitals': 'reporting_hospitals',
     'ICU_ventilated': 'ICU_ventilated',
-    'population': 'Population'
+    'population': 'Population',
+    'number': 'Number'
 }
 
 GerEng = {
@@ -110,13 +112,18 @@ GerEng = {
     'gemeindeschluessel': EngEng['idCounty'],
     'anzahl_standorte': EngEng['reporting_hospitals'],
     'faelle_covid_aktuell': EngEng['intensive care unit'],
-    'faelle_covid_aktuell_beatmet': EngEng['ICU_ventilated'],
+    # Spaltenname neu (ab 31.03.2021): "faelle_covid_aktuell_invasiv_beatmet"
+    'faelle_covid_aktuell_invasiv_beatmet': EngEng['ICU_ventilated'],
     'LAN_ew_GEN': EngEng['state'],
     'LAN_ew_EWZ': EngEng['population'],
     'LAN_ew_RS': EngEng['idState'],
     'EWZ': EngEng['population'],
     'GEN': EngEng['county'],
-    'RS': EngEng['idCounty']
+    'RS': EngEng['idCounty'],
+    'Impfdatum': EngEng['date'],
+    'LandkreisId_Impfort': EngEng['idCounty'],
+    'Altersgruppe': EngEng['ageRKI'],
+    'Anzahl': EngEng['number']
 }
 
 EsEng = {'fecha': EngEng['date'],

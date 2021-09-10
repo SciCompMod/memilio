@@ -114,7 +114,8 @@ def loadExcel(targetFileName, apiUrl='https://opendata.arcgis.com/datasets/',
     url = apiUrl + targetFileName + extension
 
     try:
-        df = pandas.read_excel(url, sheet_name=sheet_name, header=header, engine=engine)
+        df = pandas.read_excel(url, sheet_name=sheet_name,
+                               header=header, engine=engine)
     except OSError as e:
         exit_string = "ERROR: URL " + url + " could not be opened."
         sys.exit(exit_string)
@@ -164,12 +165,12 @@ def cli(what):
     #                "start_date": ['divi'],
     #                "update": ['divi']                 }
 
-    cli_dict = {"divi": ['Downloads data from DIVI', 'start_date', 'end_date', 'update'],
+    cli_dict = {"divi": ['Downloads data from DIVI', 'start_date', 'end_date', 'update', 'fill_dates', 'moving_average'],
                 "rki": ['Download data from RKI', 'fill_dates', 'make_plot', 'moving_average', 'split_berlin'],
                 "rkiest": ['Download data from RKI and JH and estimate recovered and deaths', 'make_plot'],
                 "population": ['Download population data'],
-                "vaccine": ['Download vaccine data'],
-                "jh" : ['Downloads data from JH'],
+                "vaccine": ['Download vaccine data', 'start_date', 'end_date', 'moving_average'],
+                "jh": ['Downloads data from JH'],
                 "sim": ['Download all data needed for simulations', 'start_date', 'end_date', 'update',
                         'fill_dates', 'make_plot', 'moving_average', 'split_berlin']}
 
@@ -195,16 +196,18 @@ def cli(what):
                         choices=['json', 'hdf5', 'json_timeasstring'],
                         help='Defines output format for data files. Default is \"' + str(
                             dd.defaultDict['file_format'] + "\"."))
-    parser.add_argument('-o', '--out-folder', type=str, default=out_path_default, help='Defines folder for output.')
+    parser.add_argument('-o', '--out-folder', type=str,
+                        default=out_path_default, help='Defines folder for output.')
     parser.add_argument('-n', '--no-raw', default=dd.defaultDict['no_raw'],
-                        help='Defines if raw data fill be stored for further use.',
+                        help='Defines if raw data will be stored for further use.',
                         action='store_true')
 
     if 'end_date' in what_list:
         parser.add_argument('-e', '--end-date',
                             help='Defines date after which data download is stopped.'
                                  'Should have form: YYYY-mm-dd. Default is today',
-                            type=lambda s: datetime.datetime.strptime(s, '%Y-%m-%d').date(),
+                            type=lambda s: datetime.datetime.strptime(
+                                s, '%Y-%m-%d').date(),
                             default=dd.defaultDict['end_date'])
     if 'fill_dates' in what_list:
         parser.add_argument('-d', '--fill-dates',
@@ -227,7 +230,8 @@ def cli(what):
         parser.add_argument('-s', '--start-date',
                             help='Defines start date for data download. Should have form: YYYY-mm-dd.'
                                  'Default is 2020-04-24',
-                            type=lambda s: datetime.datetime.strptime(s, '%Y-%m-%d').date(),
+                            type=lambda s: datetime.datetime.strptime(
+                                s, '%Y-%m-%d').date(),
                             default=dd.defaultDict['start_date'])
     if 'update' in what_list:
         group.add_argument('-u', '--update-data',
@@ -281,7 +285,8 @@ def write_dataframe(df, directory, file_prefix, file_type):
         outFormEnd = outForm[file_type][0]
         outFormSpec = outForm[file_type][1]
     except KeyError:
-        exit_string = "Error: The file format: " + file_type + " does not exist. Use another one."
+        exit_string = "Error: The file format: " + \
+            file_type + " does not exist. Use another one."
         sys.exit(exit_string)
 
     out_path = os.path.join(directory, file_prefix + outFormEnd)
