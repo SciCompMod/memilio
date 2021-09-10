@@ -288,6 +288,12 @@ public:
      */
     double get_rand_sample() override
     {
+        //If ub = lb, sampling can only be succesful if mean = lb and dev = 0.
+        //But this degenerate normal distribution is not allowed by the c++ standard.
+        if (m_upper_bound == m_lower_bound) {
+            return m_lower_bound;
+        }
+
         if (check_quantiles(m_mean, m_standard_dev) || m_distribution.mean() != m_mean ||
             m_distribution.stddev() != m_standard_dev) {
             m_distribution = std::normal_distribution<double>{m_mean, m_standard_dev};

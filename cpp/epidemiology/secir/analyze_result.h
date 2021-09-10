@@ -113,11 +113,9 @@ interpolate_simulation_result(const Graph<SimulationNode<Simulation>, MigrationE
  * @param p percentile value in open interval (0, 1)
  * @return p percentile of the parameters over all runs
  */
-template <class Simulation>
-std::vector<Simulation> ensemble_params_percentile(const std::vector<std::vector<Simulation>>& ensemble_params,
-                                                   double p)
+template <class Model>
+std::vector<Model> ensemble_params_percentile(const std::vector<std::vector<Model>>& ensemble_params, double p)
 {
-
     assert(p > 0.0 && p < 1.0 && "Invalid percentile value.");
 
     auto num_runs   = ensemble_params.size();
@@ -127,7 +125,7 @@ std::vector<Simulation> ensemble_params_percentile(const std::vector<std::vector
     std::vector<double> single_element_ensemble(num_runs);
 
     // lamda function that calculates the percentile of a single paramter
-    std::vector<Simulation> percentile(num_nodes, Simulation((int)num_groups));
+    std::vector<Model> percentile(num_nodes, Model((int)num_groups));
     auto param_percentil = [&ensemble_params, p, num_runs, &percentile](auto n, auto get_param) mutable {
         std::vector<double> single_element(num_runs);
         for (size_t run = 0; run < num_runs; run++) {
