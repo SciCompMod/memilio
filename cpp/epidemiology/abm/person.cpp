@@ -37,10 +37,8 @@ Person::Person(LocationId id, InfectionProperties infection_properties, AbmAgeGr
 {
     m_random_workgroup   = UniformDistribution<double>::get_instance()();
     m_random_schoolgroup = UniformDistribution<double>::get_instance()();
-    if (infection_properties.state == InfectionState::Infected) {
-        if (infection_properties.detected) {
-            m_quarantine = true;
-        }
+    if (infection_properties.state == InfectionState::Infected && infection_properties.detected) {
+        m_quarantine = true;
     }
     if (infection_properties.state == InfectionState::Exposed) {
         m_time_until_carrier = hours(
@@ -78,7 +76,7 @@ void Person::interact(TimeSpan dt, const GlobalInfectionParameters& global_infec
     }
     else if (new_state == InfectionState::Infected) {
         double rand = UniformDistribution<double>::get_instance()();
-        if (rand < global_infection_params.get<TestWhileInfected>()[this->m_age] / dt.days()) {
+        if (rand < global_infection_params.get<TestWhileInfected>()[this->m_age] * dt.days()) {
             this->get_tested(global_testing_params.get<AntigenTest>());
         }
     }
