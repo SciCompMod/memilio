@@ -38,7 +38,7 @@ LocationId World::add_location(LocationType type)
 
 Person& World::add_person(LocationId id, InfectionState state, AbmAgeGroup age)
 {
-    m_persons.push_back(std::make_unique<Person>(id, state, age, m_infection_parameters, m_testing_parameters));
+    m_persons.push_back(std::make_unique<Person>(id, state, age, m_infection_parameters));
     auto& person = *m_persons.back();
     get_location(person).add_person(person);
     return person;
