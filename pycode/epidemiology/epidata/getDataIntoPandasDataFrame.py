@@ -165,7 +165,7 @@ def cli(what):
     #                "start_date": ['divi'],
     #                "update": ['divi']                 }
 
-    cli_dict = {"divi": ['Downloads data from DIVI', 'start_date', 'end_date', 'update', 'fill_dates', 'moving_average'],
+    cli_dict = {"divi": ['Downloads data from DIVI', 'start_date', 'end_date', 'update'],
                 "rki": ['Download data from RKI', 'fill_dates', 'make_plot', 'moving_average', 'split_berlin'],
                 "rkiest": ['Download data from RKI and JH and estimate recovered and deaths', 'make_plot'],
                 "population": ['Download population data'],
