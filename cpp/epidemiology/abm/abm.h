@@ -33,5 +33,6 @@
 #include "epidemiology/utils/random_number_generator.h"
 #include "epidemiology/abm/migration_rules.h"
 #include "epidemiology/abm/testing_scheme.h"
+#include "epidemiology/abm/world_builder.h"
 
 #endif

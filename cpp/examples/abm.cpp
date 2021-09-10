@@ -186,7 +186,6 @@ void create_assign_locations(epi::World& world)
     world.get_individualized_location(school).get_infection_parameters().set<epi::EffectiveContacts>(40);
     world.get_individualized_location(school).set_testing_scheme(epi::days(7), 1);
 
-
     auto work = world.add_location(epi::LocationType::Work);
     world.get_individualized_location(work).get_infection_parameters().set<epi::EffectiveContacts>(40);
     world.get_individualized_location(work).set_testing_scheme(epi::days(7), 0.5);
@@ -233,6 +232,8 @@ void create_assign_locations(epi::World& world)
 
 int main()
 {
+    epi::minimize();
+    return 0;
     //epi::set_log_level(epi::LogLevel::warn);
 
     // Set seeds of previous run for debugging:

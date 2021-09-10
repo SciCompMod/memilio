@@ -114,6 +114,8 @@ add_library(epidemiology
     epidemiology/abm/lockdown_rules.h
     epidemiology/abm/testing_scheme.cpp
     epidemiology/abm/testing_scheme.h
+    epidemiology/abm/world_builder.cpp
+    epidemiology/abm/world_builder.h
     epidemiology/secir/parameter_studies.h
     epidemiology/secir/analyze_result.h
     epidemiology/secir/analyze_result.cpp
