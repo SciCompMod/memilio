@@ -77,7 +77,7 @@ public:
      * @param dt length of the time step
      */
     void evolve(TimePoint t, TimeSpan dt);
-    
+
     /** 
      * add a location to the world.
      * @param type type of location to add
@@ -96,7 +96,9 @@ public:
      * get a range of all locations in the world.
      * @return a range of all locations.
      */
-    Range<std::pair<std::vector<std::vector<Location>>::const_iterator, std::vector<std::vector<Location>>::const_iterator>> get_locations() const;
+    Range<std::pair<std::vector<std::vector<Location>>::const_iterator,
+                    std::vector<std::vector<Location>>::const_iterator>>
+    get_locations() const;
 
     /**
      * get a range of all persons in the world.
@@ -134,7 +136,7 @@ public:
      * @return number of persons that are in the specified infection state
      */
     int get_subpopulation_combined(InfectionState s, LocationType type) const;
-     
+
     /** 
      *get migration parameters
      */
@@ -165,6 +167,8 @@ private:
     GlobalInfectionParameters m_infection_parameters;
     AbmMigrationParameters m_migration_parameters;
     GlobalTestingParameters m_testing_parameters;
+
+    std::vector<int> persons_4_15;
 };
 
 } // namespace epi
