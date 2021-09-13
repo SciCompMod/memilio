@@ -112,6 +112,8 @@ add_library(epidemiology
     epidemiology/abm/migration_rules.h
     epidemiology/abm/lockdown_rules.cpp
     epidemiology/abm/lockdown_rules.h
+    epidemiology/abm/testing_scheme.cpp
+    epidemiology/abm/testing_scheme.h
     epidemiology/secir/parameter_studies.h
     epidemiology/secir/analyze_result.h
     epidemiology/secir/analyze_result.cpp

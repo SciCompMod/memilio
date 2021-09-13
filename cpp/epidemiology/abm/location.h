@@ -21,6 +21,7 @@
 #define EPI_ABM_LOCATION_H
 
 #include "epidemiology/abm/parameters.h"
+#include "epidemiology/abm/testing_scheme.h"
 #include "epidemiology/abm/state.h"
 #include "epidemiology/abm/location_type.h"
 
@@ -132,6 +133,16 @@ public:
         return m_parameters;
     }
 
+    void set_testing_scheme (TimeSpan interval, double probability)
+    {
+        m_testing_scheme = TestingScheme(interval, probability);
+    }
+
+    const TestingScheme& get_testing_scheme() const
+    {
+        return m_testing_scheme;
+    }
+
 private:
     void change_subpopulation(InfectionState s, int delta);
 
@@ -142,6 +153,7 @@ private:
     std::array<int, size_t(InfectionState::Count)> m_subpopulations;
     LocalInfectionParameters m_parameters;
     CustomIndexArray<double, AbmAgeGroup> m_cached_exposure_rate;
+    TestingScheme m_testing_scheme;
 };
 } // namespace epi
 

@@ -33,8 +33,7 @@
 namespace epi
 {
 
-struct IncubationPeriod
-{
+struct IncubationPeriod {
     using Type = CustomIndexArray<double, AbmAgeGroup>;
     static Type get_default()
     {
@@ -42,8 +41,7 @@ struct IncubationPeriod
     }
 };
 
-struct SusceptibleToExposedByCarrier
-{
+struct SusceptibleToExposedByCarrier {
     using Type = CustomIndexArray<double, AbmAgeGroup>;
     static Type get_default()
     {
@@ -51,8 +49,7 @@ struct SusceptibleToExposedByCarrier
     }
 };
 
-struct SusceptibleToExposedByInfected
-{
+struct SusceptibleToExposedByInfected {
     using Type = CustomIndexArray<double, AbmAgeGroup>;
     static Type get_default()
     {
@@ -60,8 +57,7 @@ struct SusceptibleToExposedByInfected
     }
 };
 
-struct CarrierToInfected
-{
+struct CarrierToInfected {
     using Type = CustomIndexArray<double, AbmAgeGroup>;
     static Type get_default()
     {
@@ -69,8 +65,7 @@ struct CarrierToInfected
     }
 };
 
-struct CarrierToRecovered
-{
+struct CarrierToRecovered {
     using Type = CustomIndexArray<double, AbmAgeGroup>;
     static Type get_default()
     {
@@ -78,8 +73,7 @@ struct CarrierToRecovered
     }
 };
 
-struct InfectedToRecovered
-{
+struct InfectedToRecovered {
     using Type = CustomIndexArray<double, AbmAgeGroup>;
     static Type get_default()
     {
@@ -87,8 +81,7 @@ struct InfectedToRecovered
     }
 };
 
-struct InfectedToSevere
-{
+struct InfectedToSevere {
     using Type = CustomIndexArray<double, AbmAgeGroup>;
     static Type get_default()
     {
@@ -96,8 +89,7 @@ struct InfectedToSevere
     }
 };
 
-struct SevereToCritical
-{
+struct SevereToCritical {
     using Type = CustomIndexArray<double, AbmAgeGroup>;
     static Type get_default()
     {
@@ -105,8 +97,7 @@ struct SevereToCritical
     }
 };
 
-struct SevereToRecovered
-{
+struct SevereToRecovered {
     using Type = CustomIndexArray<double, AbmAgeGroup>;
     static Type get_default()
     {
@@ -114,8 +105,7 @@ struct SevereToRecovered
     }
 };
 
-struct CriticalToRecovered
-{
+struct CriticalToRecovered {
     using Type = CustomIndexArray<double, AbmAgeGroup>;
     static Type get_default()
     {
@@ -123,8 +113,7 @@ struct CriticalToRecovered
     }
 };
 
-struct CriticalToDead
-{
+struct CriticalToDead {
     using Type = CustomIndexArray<double, AbmAgeGroup>;
     static Type get_default()
     {
@@ -132,8 +121,7 @@ struct CriticalToDead
     }
 };
 
-struct RecoveredToSusceptible
-{
+struct RecoveredToSusceptible {
     using Type = CustomIndexArray<double, AbmAgeGroup>;
     static Type get_default()
     {
@@ -141,8 +129,7 @@ struct RecoveredToSusceptible
     }
 };
 
-struct DetectInfection
-{
+struct DetectInfection {
     using Type = CustomIndexArray<double, AbmAgeGroup>;
     static Type get_default()
     {
@@ -150,27 +137,23 @@ struct DetectInfection
     }
 };
 
+struct TestWhileInfected {
+    using Type = CustomIndexArray<double, AbmAgeGroup>;
+    static Type get_default()
+    {
+        return Type({AbmAgeGroup::Count}, 0.005);
+    }
+};
 
 /**
  * parameters of the infection that are the same everywhere within the world.
  */
-using GlobalInfectionParameters = ParameterSet<IncubationPeriod,
-                                               SusceptibleToExposedByCarrier,
-                                               SusceptibleToExposedByInfected,
-                                               CarrierToInfected,
-                                               CarrierToRecovered,
-                                               InfectedToRecovered,
-                                               InfectedToSevere,
-                                               SevereToCritical,
-                                               SevereToRecovered,
-                                               CriticalToDead,
-                                               CriticalToRecovered,
-                                               RecoveredToSusceptible,
-                                               DetectInfection>;
+using GlobalInfectionParameters =
+    ParameterSet<IncubationPeriod, SusceptibleToExposedByCarrier, SusceptibleToExposedByInfected, CarrierToInfected,
+                 CarrierToRecovered, InfectedToRecovered, InfectedToSevere, SevereToCritical, SevereToRecovered,
+                 CriticalToDead, CriticalToRecovered, RecoveredToSusceptible, DetectInfection, TestWhileInfected>;
 
-
-struct EffectiveContacts
-{
+struct EffectiveContacts {
     using Type = double;
     static constexpr Type get_default()
     {
@@ -182,6 +165,24 @@ struct EffectiveContacts
  * parameters of the infection that depend on the location.
  */
 using LocalInfectionParameters = ParameterSet<EffectiveContacts>;
+
+struct TestParameters {
+    double sensitivity;
+    double specificity;
+};
+
+struct AntigenTest {
+    using Type = TestParameters;
+    static constexpr Type get_default()
+    {
+        return Type{0.9, 0.99};
+    }
+};
+
+/**
+ * parameters of the testing that are the same everywhere in the world.
+ */
+using GlobalTestingParameters = ParameterSet<AntigenTest>;
 
 /**
  * parameters that govern the migration between locations
@@ -204,29 +205,28 @@ struct WorkRatio {
     using Type = DampingMatrixExpression<Dampings<Damping<ColumnVectorShape>>>;
     static auto get_default()
     {
-        return Type(Eigen::VectorXd::Constant(1,1.0));
+        return Type(Eigen::VectorXd::Constant(1, 1.0));
     }
 };
 struct SchoolRatio {
     using Type = DampingMatrixExpression<Dampings<Damping<ColumnVectorShape>>>;
     static auto get_default()
     {
-        return Type(Eigen::VectorXd::Constant(1,1.0));
+        return Type(Eigen::VectorXd::Constant(1, 1.0));
     }
 };
 struct SocialEventRate {
     using Type = DampingMatrixExpression<Dampings<Damping<ColumnVectorShape>>>;
     static auto get_default()
     {
-        return Type(Eigen::VectorXd::Constant((size_t)AbmAgeGroup::Count,1.0));
+        return Type(Eigen::VectorXd::Constant((size_t)AbmAgeGroup::Count, 1.0));
     }
 };
 
 /**
  * parameters that control the migration between locations.
  */
-using AbmMigrationParameters =
-    ParameterSet<LockdownDate, SocialEventRate, BasicShoppingRate, WorkRatio, SchoolRatio>;
+using AbmMigrationParameters = ParameterSet<LockdownDate, SocialEventRate, BasicShoppingRate, WorkRatio, SchoolRatio>;
 
 } // namespace epi
 #endif
