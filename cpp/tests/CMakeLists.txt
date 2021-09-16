@@ -61,8 +61,8 @@ add_executable(runUnitTests ${TESTSOURCES})
 target_include_directories(runUnitTests PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 target_link_libraries(runUnitTests PRIVATE epidemiology gtest_main)
 target_compile_options(runUnitTests PRIVATE
-    $<$<CXX_COMPILER_ID:GNU>: -Wall -Wextra -Werror -Wshadow --pedantic-errors -Wno-deprecated-copy>
-    $<$<CXX_COMPILER_ID:CLANG>: -Wall -Wextra -Werror -Wshadow --pedantic-errors -Wno-deprecated>
+    $<$<CXX_COMPILER_ID:GNU>: -Wall -Wextra -Werror -Wshadow --pedantic-errors -Wno-deprecated-copy -Wno-unknown-warning-option -Wno-unknown-warning-option>
+    $<$<CXX_COMPILER_ID:CLANG>: -Wall -Wextra -Werror -Wshadow --pedantic-errors -Wno-deprecated -Wno-unknown-warning-option -Wno-unknown-warning-option>
     $<$<CXX_COMPILER_ID:MSVC>: /W4 /WX>)
 target_compile_features(runUnitTests PUBLIC cxx_std_14)
 
