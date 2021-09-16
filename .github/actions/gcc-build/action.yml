@@ -5,6 +5,10 @@ inputs:
     description: "Configuration to build (Release or Debug, see CMAKE_BUILD_TYPE)"
     required: true
     default: "Release"
+  version:
+    description: "Version of the compiler to use (min or latest)."
+    required: true
+    default: "latest"
   coverage:
     description: "Turn coverage on (ON or OFF)"
     required: false
@@ -29,12 +33,19 @@ runs:
       shell: bash
       run: |
         cd cpp
+        if [[ "${{ inputs.coverage }}" == "min" ]]; then
+          export CC=/usr/bin/gcc-7
+          export CXX=/usr/bin/g++-7
+        else        
+          export CC=/usr/bin/gcc-10
+          export CXX=/usr/bin/g++-10
+        fi
         mkdir -p build && cd build
         cmake -DCMAKE_BUILD_TYPE=${{ inputs.config }} -DEPI_BUILD_EPI_IO=ON -DEPI_TEST_COVERAGE=${{ inputs.coverage }} ..
         make -j4
     - name: Upload built test directory
       uses: actions/upload-artifact@v2
       with:
-        name: build-cpp-linux-gcc-${{ inputs.config }}
+        name: build-cpp-linux-gcc-${{ inputs.version }}-${{ inputs.config }}
         path: cpp/build
         retention-days: 1

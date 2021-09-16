@@ -16,7 +16,7 @@ runs:
       shell: bash
       run: |
         sudo apt-get -qq update
-        sudo apt-get -qq -y install libhdf5-cpp-100 wget gnupg
+        sudo apt-get -qq -y install libhdf5-10* wget gnupg
         sudo apt-get -qq update
         sudo apt-get -qq -y install g++ python3-pip
         python3 -m pip install gcovr

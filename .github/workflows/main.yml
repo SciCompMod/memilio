@@ -11,40 +11,60 @@ on:
   pull_request:
 
 jobs:
-  build-cpp-gcc:
-    runs-on: ubuntu-18.04
+  build-cpp-gcc-latest:
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
       - uses: ./.github/actions/gcc-build
         with: 
           config: "Release"
+          version: "latest"
 
-  build-cpp-gcc-dbg:
-    runs-on: ubuntu-18.04
+  build-cpp-gcc-latest-dbg:
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
       - uses: ./.github/actions/gcc-build
         with: 
           config: "Debug"
+          version: "latest"
           coverage: "ON"
           sanitize-ub: "ON"
           sanitize-addr: "ON"
 
-  build-cpp-clang:
+  build-cpp-gcc-min:
     runs-on: ubuntu-18.04
     steps:
       - uses: actions/checkout@v2
-      - uses: ./.github/actions/clang-build
+      - uses: ./.github/actions/gcc-build
         with: 
           config: "Release"
+          version: "min"
 
-  build-cpp-clang-dbg:
+  build-cpp-gcc-min-dbg:
     runs-on: ubuntu-18.04
     steps:
       - uses: actions/checkout@v2
-      - uses: ./.github/actions/clang-build
+      - uses: ./.github/actions/gcc-build
         with: 
           config: "Debug"
+          version: "min"
+
+  # build-cpp-clang:
+  #   runs-on: ubuntu-18.04
+  #   steps:
+  #     - uses: actions/checkout@v2
+  #     - uses: ./.github/actions/clang-build
+  #       with: 
+  #         config: "Release"
+
+  # build-cpp-clang-dbg:
+  #   runs-on: ubuntu-18.04
+  #   steps:
+  #     - uses: actions/checkout@v2
+  #     - uses: ./.github/actions/clang-build
+  #       with: 
+  #         config: "Debug"
 
   build-cpp-msvc-latest:
     runs-on: windows-latest
@@ -82,43 +102,62 @@ jobs:
           version: "min"
           config: "Debug"
 
-  test-cpp-gcc:
-    needs: build-cpp-gcc
+  test-cpp-gcc-latest:
+    needs: build-cpp-gcc-latest
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: ./.github/actions/linux-test
+        with: 
+          build-artifact: build-cpp-linux-gcc-latest-Release
+
+  test-cpp-gcc-latest-dbg:
+    needs: build-cpp-gcc-latest-dbg
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: ./.github/actions/linux-test
+        with: 
+          coverage: "ON"
+          build-artifact: build-cpp-linux-gcc-latest-Debug
+
+  test-cpp-gcc-min:
+    needs: build-cpp-gcc-min
     runs-on: ubuntu-18.04
     steps:
       - uses: actions/checkout@v2
       - uses: ./.github/actions/linux-test
         with: 
-          build-artifact: build-cpp-linux-gcc-Release
+          build-artifact: build-cpp-linux-gcc-min-Release
 
   test-cpp-gcc-dbg:
-    needs: build-cpp-gcc-dbg
+    needs: build-cpp-gcc-min-dbg
     runs-on: ubuntu-18.04
     steps:
       - uses: actions/checkout@v2
       - uses: ./.github/actions/linux-test
         with: 
           coverage: "ON"
-          build-artifact: build-cpp-linux-gcc-Debug
+          build-artifact: build-cpp-linux-gcc-min-Debug
 
-  test-cpp-clang:
-    needs: build-cpp-clang
-    runs-on: ubuntu-18.04
-    steps:
-      - uses: actions/checkout@v2
-      - uses: ./.github/actions/linux-test
-        with: 
-          build-artifact: build-cpp-linux-clang-Release
+  # test-cpp-clang:
+  #   needs: build-cpp-clang
+  #   runs-on: ubuntu-18.04
+  #   steps:
+  #     - uses: actions/checkout@v2
+  #     - uses: ./.github/actions/linux-test
+  #       with: 
+  #         build-artifact: build-cpp-linux-clang-Release
 
-  test-cpp-clang-dbg:
-    needs: build-cpp-clang-dbg
-    runs-on: ubuntu-18.04
-    steps:
-      - uses: actions/checkout@v2
-      - uses: ./.github/actions/linux-test
-        with: 
-          coverage: "ON"
-          build-artifact: build-cpp-linux-clang-Debug
+  # test-cpp-clang-dbg:
+  #   needs: build-cpp-clang-dbg
+  #   runs-on: ubuntu-18.04
+  #   steps:
+  #     - uses: actions/checkout@v2
+  #     - uses: ./.github/actions/linux-test
+  #       with: 
+  #         coverage: "ON"
+  #         build-artifact: build-cpp-linux-clang-Debug
 
   test-cpp-msvc-latest:
     needs: build-cpp-msvc-latest
