@@ -43,6 +43,6 @@ runs:
     - name: Upload built test directory
       uses: actions/upload-artifact@v2
       with:
-        name: build-tests-windows-${{ inputs.config }}
+        name: build-cpp-windows-msvc-${{ inputs.config }}
         path: cpp/build-win/tests
         retention-days: 1

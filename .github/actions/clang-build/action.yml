@@ -25,6 +25,6 @@ runs:
     - name: Upload built test directory
       uses: actions/upload-artifact@v2
       with:
-        name: build-tests-linux-llvm-${{ inputs.config }}
+        name: build-cpp-linux-clang-${{ inputs.config }}
         path: cpp/build
         retention-days: 1

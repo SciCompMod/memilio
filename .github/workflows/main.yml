@@ -69,7 +69,7 @@ jobs:
       - uses: actions/checkout@v2
       - uses: ./.github/actions/linux-test
         with: 
-          build-artefact: build-cpp-linux-gcc-Release
+          build-artifact: build-cpp-linux-gcc-Release
 
   test-cpp-gcc-dbg:
     needs: build-cpp-gcc-dbg
@@ -79,29 +79,44 @@ jobs:
       - uses: ./.github/actions/linux-test
         with: 
           coverage: "ON"
-          build-artefact: build-cpp-linux-gcc-Debug
+          build-artifact: build-cpp-linux-gcc-Debug
 
-  test-cpp-win:
+  test-cpp-clang:
+    needs: build-cpp-clang
+    runs-on: ubuntu-18.04
+    steps:
+      - uses: actions/checkout@v2
+      - uses: ./.github/actions/linux-test
+        with: 
+          build-artifact: build-cpp-linux-clang-Release
+
+  test-cpp-clang-dbg:
+    needs: build-cpp-clang-dbg
+    runs-on: ubuntu-18.04
+    steps:
+      - uses: actions/checkout@v2
+      - uses: ./.github/actions/linux-test
+        with: 
+          coverage: "ON"
+          build-artifact: build-cpp-linux-clang-Debug
+
+  test-cpp-msvc:
     needs: build-cpp-msvc
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@v2
-      - name: Download built test directory
-        uses: actions/download-artifact@v2
+      - uses: ./.github/actions/windows-test
         with:
-          name: build-tests-windows-Debug
-          path: cpp/build-win/tests
-      - name: Run unit tests
-        run: |
-          cd cpp/build-win/tests
-          .\runUnitTests.exe --gtest_output="xml:report.xml"
-      - name: Upload report
-        uses: actions/upload-artifact@v2
+          build-artifact: build-cpp-windows-msvc-Release
+
+  test-cpp-msvc-dbg:
+    needs: build-cpp-msvc-dbg
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: ./.github/actions/windows-test
         with:
-          name: test-cpp-win-report
-          path: |
-            cpp/build-win/tests/report.xml
-          retention-days: 1
+          build-artifact: build-cpp-windows-msvc-Debug
 
   build-py:
     runs-on: ubuntu-latest

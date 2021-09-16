@@ -35,6 +35,6 @@ runs:
     - name: Upload built test directory
       uses: actions/upload-artifact@v2
       with:
-        name: build-tests-linux-gcc-${{ inputs.config }}
+        name: build-cpp-linux-gcc-${{ inputs.config }}
         path: cpp/build
         retention-days: 1
