@@ -46,20 +46,40 @@ jobs:
         with: 
           config: "Debug"
 
-  build-cpp-msvc:
+  build-cpp-msvc-latest:
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@v2
       - uses: ./.github/actions/msvc-build
         with:
+          version: "latest"
           config: "Release"
 
-  build-cpp-msvc-dbg:
+  build-cpp-msvc-latest-dbg:
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@v2
       - uses: ./.github/actions/msvc-build
         with:
+          version: "latest"
+          config: "Debug"
+
+  build-cpp-msvc-min:
+    runs-on: windows-2016
+    steps:
+      - uses: actions/checkout@v2
+      - uses: ./.github/actions/msvc-build
+        with:
+          version: "min"
+          config: "Release"
+
+  build-cpp-msvc-min-dbg:
+    runs-on: windows-2016
+    steps:
+      - uses: actions/checkout@v2
+      - uses: ./.github/actions/msvc-build
+        with:
+          version: "min"
           config: "Debug"
 
   test-cpp-gcc:
@@ -100,23 +120,41 @@ jobs:
           coverage: "ON"
           build-artifact: build-cpp-linux-clang-Debug
 
-  test-cpp-msvc:
-    needs: build-cpp-msvc
+  test-cpp-msvc-latest:
+    needs: build-cpp-msvc-latest
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@v2
       - uses: ./.github/actions/windows-test
         with:
-          build-artifact: build-cpp-windows-msvc-Release
+          build-artifact: build-cpp-windows-msvc-latest-Release
 
-  test-cpp-msvc-dbg:
-    needs: build-cpp-msvc-dbg
+  test-cpp-msvc-latest-dbg:
+    needs: build-cpp-msvc-latest-dbg
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@v2
       - uses: ./.github/actions/windows-test
         with:
-          build-artifact: build-cpp-windows-msvc-Debug
+          build-artifact: build-cpp-windows-msvc-latest-Debug
+
+  test-cpp-msvc-min:
+    needs: build-cpp-msvc-min
+    runs-on: windows-2016
+    steps:
+      - uses: actions/checkout@v2
+      - uses: ./.github/actions/windows-test
+        with:
+          build-artifact: build-cpp-windows-msvc-min-Release
+
+  test-cpp-msvc-min-dbg:
+    needs: build-cpp-msvc-min-dbg
+    runs-on: windows-2016
+    steps:
+      - uses: actions/checkout@v2
+      - uses: ./.github/actions/windows-test
+        with:
+          build-artifact: build-cpp-windows-msvc-min-Debug
 
   build-py:
     runs-on: ubuntu-latest

@@ -5,6 +5,11 @@ inputs:
     description: "Configuration to build (Release or Debug, see CMAKE_BUILD_TYPE)"
     required: true
     default: "Release"
+  version:
+    description: "Version of the compiler that is used (latest or min)."
+    required: true
+    default: "latest"
+
 runs:
   using: "composite"
   steps:
@@ -36,13 +41,17 @@ runs:
         cd cpp
         mkdir build-win
         cd build-win
-        call "C:\Program Files (x86)\Microsoft Visual Studio\2019\Enterprise\VC\Auxiliary\Build\vcvarsall.bat" amd64
+        if min==${{ inputs.version }} (
+          call "C:\Program Files (x86)\Microsoft Visual Studio\2017\Enterprise\VC\Auxiliary\Build\vcvarsall.bat" amd64
+        ) else (
+          call "C:\Program Files (x86)\Microsoft Visual Studio\2019\Enterprise\VC\Auxiliary\Build\vcvarsall.bat" amd64
+        )
         cmake --version
         cmake -G "Ninja" -DCMAKE_BUILD_TYPE=${{ inputs.config }} -DEPI_USE_BUNDLED_EIGEN=ON -DEPI_BUILD_EPI_IO=ON -DHDF5_USE_STATIC_LIBRARIES=ON -DHDF5_DIR="C:\Program Files\HDF_Group\HDF5\1.12.1\share\cmake\hdf5" ..
-        cmake --build .
+        cmake --build . -- -j 4
     - name: Upload built test directory
       uses: actions/upload-artifact@v2
       with:
-        name: build-cpp-windows-msvc-${{ inputs.config }}
+        name: build-cpp-windows-msvc-${{ inputs.version }}-${{ inputs.config }}
         path: cpp/build-win/tests
         retention-days: 1
