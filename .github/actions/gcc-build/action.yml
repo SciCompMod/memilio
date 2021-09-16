@@ -1,5 +1,5 @@
 name: "GCC Build"
-description: "Build memilio C++ library with GCC on Linux."
+description: "Build the C++ library with GCC on Linux."
 inputs:
   config: 
     description: "Configuration to build (Release or Debug, see CMAKE_BUILD_TYPE)"

@@ -1,5 +1,5 @@
 name: "Clang/LLVM Build"
-description: "Build memilio C++ library with Clang/LLVM on Linux."
+description: "Build the C++ library with Clang/LLVM on Linux."
 inputs:
   config: 
     description: "Configuration to build (Release or Debug, see CMAKE_BUILD_TYPE)"
@@ -21,7 +21,7 @@ runs:
         export CC=/usr/bin/clang
         export CXX=/usr/bin/clang++
         cmake -DCMAKE_BUILD_TYPE=${{ inputs.config }} -DEPI_BUILD_EPI_IO=ON ..
-        make
+        make -j4
     - name: Upload built test directory
       uses: actions/upload-artifact@v2
       with:
