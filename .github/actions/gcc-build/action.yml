@@ -1,0 +1,32 @@
+name: "GCC Build"
+description: "Build memilio cpp library with gcc."
+inputs:
+  config: 
+    description: "Configuration to build (Release or Debug, see CMAKE_BUILD_TYPE)"
+    required: false
+    default: "Release"
+  coverage:
+    description: "Turn coverage on (ON or OFF)"
+    required: false
+    default: "OFF"
+runs:
+  using: "composite"
+  steps:
+      - name: Install dependencies
+        shell: bash
+        run: |
+          sudo apt-get -qq update
+          sudo apt-get -qq -y install libhdf5-dev lcov
+      - name: Build
+        shell: bash
+        run: |
+          cd cpp
+          mkdir -p build && cd build
+          cmake -DCMAKE_BUILD_TYPE=${{ inputs.config }} -DCMAKE_CXX_FLAGS="-std=c++14 -pedantic" -DEPI_BUILD_EPI_IO=ON -DEPI_TEST_COVERAGE=${{ inputs.coverage }} ..
+          make
+      - name: Upload built test directory
+        uses: actions/upload-artifact@v2
+        with:
+          name: build-tests-linux
+          path: cpp/build
+          retention-days: 1

@@ -16,22 +16,9 @@ jobs:
     runs-on: ubuntu-18.04
     steps:
       - uses: actions/checkout@v2
-      - name: Install dependencies
-        run: |
-          sudo apt-get -qq update
-          sudo apt-get -qq -y install libhdf5-dev lcov
-      - name: Build
-        run: |
-          cd cpp
-          mkdir -p build && cd build
-          cmake -DCMAKE_BUILD_TYPE=Debug -DCMAKE_CXX_FLAGS="-std=c++14 -pedantic" -DEPI_BUILD_EPI_IO=ON -DEPI_TEST_COVERAGE=ON ..
-          make
-      - name: Upload built test directory
-        uses: actions/upload-artifact@v2
-        with:
-          name: build-tests-linux
-          path: cpp/build
-          retention-days: 1
+      - uses: ./.github/actions/gcc-build
+        with: 
+          config: "Debug"
 
   build-cpp-win:
     runs-on: windows-latest
