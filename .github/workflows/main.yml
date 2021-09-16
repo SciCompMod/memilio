@@ -62,42 +62,24 @@ jobs:
         with:
           config: "Debug"
 
-  test-cpp:
+  test-cpp-gcc:
+    needs: build-cpp-gcc
+    runs-on: ubuntu-18.04
+    steps:
+      - uses: actions/checkout@v2
+      - uses: ./.github/actions/linux-test
+        with: 
+          build-artefact: build-cpp-linux-gcc-Release
+
+  test-cpp-gcc-dbg:
     needs: build-cpp-gcc-dbg
     runs-on: ubuntu-18.04
     steps:
       - uses: actions/checkout@v2
-      - name: Install Dependencies
-        run: |
-          sudo apt-get -qq update
-          sudo apt-get -qq -y install libhdf5-cpp-100 wget gnupg
-          sudo apt-get -qq update
-          sudo apt-get -qq -y install g++ python3-pip
-          python3 -m pip install gcovr
-      - name: Download built test directory
-        uses: actions/download-artifact@v2
-        with:
-          name: build-tests-linux-gcc-Debug
-          path: cpp/build
-      - name: Run unit tests
-        run: |
-          cd cpp/build/tests
-          sudo chmod a+x runUnitTests
-          ./runUnitTests  --gtest_output="xml:report.xml"
-          cd ../../../
-          gcovr -f cpp/epidemiology
-          gcovr -f cpp/epidemiology --xml -o coverage.xml
-          mkdir coverage_report && cd coverage_report
-          gcovr -r .. -f ../cpp/epidemiology --exclude-throw-branches --html --html-details -o index.html
-      - name: Upload coverage reports
-        uses: actions/upload-artifact@v2
-        with:
-          name: test-cpp-coverage-reports
-          path: |
-            cpp/build/tests/report.xml
-            coverage.xml
-            coverage_report
-          retention-days: 1
+      - uses: ./.github/actions/linux-test
+        with: 
+          coverage: "ON"
+          build-artefact: build-cpp-linux-gcc-Debug
 
   test-cpp-win:
     needs: build-cpp-msvc
@@ -287,7 +269,7 @@ jobs:
           retention-days: 1
           
   codecov:
-    needs: [test-py, test-cpp]
+    needs: [test-py, test-cpp-gcc-dbg]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
@@ -310,7 +292,7 @@ jobs:
           verbose: true
 
   pages:
-    needs: [test-py, test-cpp, test-docs, test-pylint]
+    needs: [test-py, test-cpp-gcc-dbg, test-docs, test-pylint]
     runs-on: ubuntu-latest
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     steps:
