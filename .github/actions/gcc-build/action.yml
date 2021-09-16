@@ -1,5 +1,5 @@
 name: "GCC Build"
-description: "Build memilio cpp library with gcc."
+description: "Build memilio C++ library with GCC on Linux."
 inputs:
   config: 
     description: "Configuration to build (Release or Debug, see CMAKE_BUILD_TYPE)"
@@ -20,21 +20,21 @@ inputs:
 runs:
   using: "composite"
   steps:
-      - name: Install dependencies
-        shell: bash
-        run: |
-          sudo apt-get -qq update
-          sudo apt-get -qq -y install libhdf5-dev lcov
-      - name: Build
-        shell: bash
-        run: |
-          cd cpp
-          mkdir -p build && cd build
-          cmake -DCMAKE_BUILD_TYPE=${{ inputs.config }} -DEPI_BUILD_EPI_IO=ON -DEPI_TEST_COVERAGE=${{ inputs.coverage }} ..
-          make -j2
-      - name: Upload built test directory
-        uses: actions/upload-artifact@v2
-        with:
-          name: build-tests-linux-gcc-${{ inputs.config }}
-          path: cpp/build
-          retention-days: 1
+    - name: Install dependencies
+      shell: bash
+      run: |
+        sudo apt-get -qq update
+        sudo apt-get -qq -y install libhdf5-dev lcov
+    - name: Build
+      shell: bash
+      run: |
+        cd cpp
+        mkdir -p build && cd build
+        cmake -DCMAKE_BUILD_TYPE=${{ inputs.config }} -DEPI_BUILD_EPI_IO=ON -DEPI_TEST_COVERAGE=${{ inputs.coverage }} ..
+        make -j2
+    - name: Upload built test directory
+      uses: actions/upload-artifact@v2
+      with:
+        name: build-tests-linux-gcc-${{ inputs.config }}
+        path: cpp/build
+        retention-days: 1
