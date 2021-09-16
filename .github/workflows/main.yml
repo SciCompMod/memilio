@@ -30,6 +30,22 @@ jobs:
           sanitize-ub: "ON"
           sanitize-addr: "ON"
 
+  build-cpp-clang:
+    runs-on: ubuntu-18.04
+    steps:
+      - uses: actions/checkout@v2
+      - uses: ./.github/actions/clang-build
+        with: 
+          config: "Release"
+
+  build-cpp-clang-dbg:
+    runs-on: ubuntu-18.04
+    steps:
+      - uses: actions/checkout@v2
+      - uses: ./.github/actions/clang-build
+        with: 
+          config: "Debug"
+
   build-cpp-msvc:
     runs-on: windows-latest
     steps:

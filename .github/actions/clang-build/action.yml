@@ -1,0 +1,30 @@
+name: "Clang/LLVM Build"
+description: "Build memilio C++ library with Clang/LLVM on Linux."
+inputs:
+  config: 
+    description: "Configuration to build (Release or Debug, see CMAKE_BUILD_TYPE)"
+    required: true
+    default: "Release"
+runs:
+  using: "composite"
+  steps:
+    - name: Install dependencies
+      shell: bash
+      run: |
+        sudo apt-get -qq update
+        sudo apt-get -qq -y install libhdf5-dev
+    - name: Build
+      shell: bash
+      run: |
+        cd cpp
+        mkdir -p build && cd build
+        export CC=/usr/bin/clang
+        export CXX=/usr/bin/clang++
+        cmake -DCMAKE_BUILD_TYPE=${{ inputs.config }} -DEPI_BUILD_EPI_IO=ON ..
+        make
+    - name: Upload built test directory
+      uses: actions/upload-artifact@v2
+      with:
+        name: build-tests-linux-llvm-${{ inputs.config }}
+        path: cpp/build
+        retention-days: 1
