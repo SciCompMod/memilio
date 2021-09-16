@@ -421,7 +421,7 @@ void set_synthetic_population_data(std::vector<epi::SecirModel>& counties)
         double nb_total_t0 = 10000, nb_exp_t0 = 2, nb_inf_t0 = 0, nb_car_t0 = 0, nb_hosp_t0 = 0, nb_icu_t0 = 0,
                nb_rec_t0 = 0, nb_dead_t0 = 0;
 
-        nb_exp_t0 = (county_idx % 10 + 1) * 3;
+        nb_exp_t0 = (double)(county_idx % 10 + 1) * 3;
 
         for (epi::AgeGroup i = 0; i < counties[county_idx].parameters.get_num_groups(); i++) {
             counties[county_idx].populations[{i, epi::InfectionState::Exposed}]      = nb_exp_t0;
@@ -454,7 +454,7 @@ epi::IOResult<void> set_nodes(const epi::SecirParams& params, epi::Date start_da
     namespace de = epi::regions::de;
 
     BOOST_OUTCOME_TRY(county_ids, epi::get_county_ids((data_dir / "pydata" / "Germany").string()));
-    std::vector<epi::SecirModel> counties(county_ids.size(), epi::SecirModel(size_t(params.get_num_groups())));
+    std::vector<epi::SecirModel> counties(county_ids.size(), epi::SecirModel(int(size_t(params.get_num_groups()))));
     for (auto& county : counties) {
         county.parameters = params;
     }
@@ -514,10 +514,10 @@ epi::IOResult<void> set_edges(const fs::path& data_dir,
                       epi::read_mobility_plain((data_dir / "migration" / "commuter_migration_scaled.txt").string()));
     BOOST_OUTCOME_TRY(migration_data_twitter,
                       epi::read_mobility_plain((data_dir / "migration" / "twitter_scaled_1252.txt").string()));
-    if (migration_data_commuter.rows() != params_graph.nodes().size() ||
-        migration_data_commuter.cols() != params_graph.nodes().size() ||
-        migration_data_twitter.rows() != params_graph.nodes().size() ||
-        migration_data_twitter.cols() != params_graph.nodes().size()) {
+    if (size_t(migration_data_commuter.rows()) != params_graph.nodes().size() ||
+        size_t(migration_data_commuter.cols()) != params_graph.nodes().size() ||
+        size_t(migration_data_twitter.rows()) != params_graph.nodes().size() ||
+        size_t(migration_data_twitter.cols()) != params_graph.nodes().size()) {
         return epi::failure(epi::StatusCode::InvalidValue, "Migration matrices not the correct size.");
     }
 
@@ -792,7 +792,7 @@ epi::IOResult<void> run(RunMode mode, const fs::path& data_dir, const fs::path& 
     });
 
     //run parameter study
-    auto parameter_study  = epi::ParameterStudy<epi::SecirSimulation<>>{params_graph, 0.0, num_days_sim, 0.5, num_runs};
+    auto parameter_study  = epi::ParameterStudy<epi::SecirSimulation<>>{params_graph, 0.0, num_days_sim, 0.5, size_t(num_runs)};
     auto ensemble_results = std::vector<std::vector<epi::TimeSeries<double>>>{};
     ensemble_results.reserve(size_t(num_runs));
     auto ensemble_params = std::vector<std::vector<epi::SecirModel>>{};
