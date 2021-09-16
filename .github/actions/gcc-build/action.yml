@@ -3,10 +3,18 @@ description: "Build memilio cpp library with gcc."
 inputs:
   config: 
     description: "Configuration to build (Release or Debug, see CMAKE_BUILD_TYPE)"
-    required: false
+    required: true
     default: "Release"
   coverage:
     description: "Turn coverage on (ON or OFF)"
+    required: false
+    default: "OFF"
+  sanitize-ub:
+    description: "Turn on UB sanitzer (ON or OFF)"
+    required: false
+    default: "OFF"
+  sanitize-addr:
+    description: "Turn on address sanitzer (ON or OFF)"
     required: false
     default: "OFF"
 runs:
@@ -22,11 +30,11 @@ runs:
         run: |
           cd cpp
           mkdir -p build && cd build
-          cmake -DCMAKE_BUILD_TYPE=${{ inputs.config }} -DCMAKE_CXX_FLAGS="-std=c++14 -pedantic" -DEPI_BUILD_EPI_IO=ON -DEPI_TEST_COVERAGE=${{ inputs.coverage }} ..
-          make
+          cmake -DCMAKE_BUILD_TYPE=${{ inputs.config }} -DEPI_BUILD_EPI_IO=ON -DEPI_TEST_COVERAGE=${{ inputs.coverage }} ..
+          make -j2
       - name: Upload built test directory
         uses: actions/upload-artifact@v2
         with:
-          name: build-tests-linux
+          name: build-tests-linux-gcc-${{ inputs.config }}
           path: cpp/build
           retention-days: 1
