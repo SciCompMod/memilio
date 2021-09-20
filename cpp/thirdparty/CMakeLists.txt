@@ -105,6 +105,15 @@ if (EPI_BUILD_EPI_IO)
       endif()
 
     endif()
+    if (BUILD_SHARED_LIBS)
+        target_compile_options(jsoncpp_lib PRIVATE
+            $<$<CXX_COMPILER_ID:GNU>: -Wno-error>
+            $<$<CXX_COMPILER_ID:CLANG>: -Wno-error>)
+    else(BUILD_SHARED_LIBS)
+        target_compile_options(jsoncpp_lib_static PRIVATE
+            $<$<CXX_COMPILER_ID:GNU>: -Wno-error>
+            $<$<CXX_COMPILER_ID:CLANG>: -Wno-error>)
+    endif(BUILD_SHARED_LIBS)
   else(EPI_USE_BUNDLED_JSONCPP)
     find_package(jsoncpp REQUIRED CONFIG)
   endif(EPI_USE_BUNDLED_JSONCPP)
