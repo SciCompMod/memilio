@@ -170,7 +170,7 @@ if (EPI_BUILD_EPI_IO)
     )
 
     target_link_libraries(epidemiology_io PUBLIC epidemiology jsoncpp Boost::disable_autolinking
-                          PRIVATE ${HDF5_CXX_LIBRARIES} Boost::filesystem)
+                          PRIVATE ${HDF5_C_LIBRARIES} Boost::filesystem)
     target_include_directories(epidemiology_io PRIVATE ${HDF5_INCLUDE_DIRS})
 
     target_compile_definitions(epidemiology_io PUBLIC "-DHAVE_EPI_IO")
