@@ -402,7 +402,7 @@ jobs:
           retention-days: 1
           
   codecov:
-    needs: [test-py, test-cpp-gcc-dbg]
+    needs: [test-py, test-cpp-gcc-latest-dbg]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
@@ -425,7 +425,7 @@ jobs:
           verbose: true
 
   pages:
-    needs: [test-py, test-cpp-gcc-dbg, test-docs, test-pylint]
+    needs: [test-py, test-cpp-gcc-latest-dbg, test-docs, test-pylint]
     runs-on: ubuntu-latest
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     steps:
