@@ -7,6 +7,8 @@ option(EPI_USE_BUNDLED_EIGEN "Use eigen bundled with epi" ON)
 option(EPI_BUILD_EPI_IO "Build epidemiology_io library (requires HDF5)" OFF)
 option(EPI_USE_BUNDLED_BOOST "Use boost bundled with epi (only for epi-io)" ON)
 option(EPI_USE_BUNDLED_JSONCPP "Use jsoncpp bundled with epi (only for epi-io)" ON)
+option(EPI_SANITIZE_ADDRESS "Enable address sanitizer." OFF)
+option(EPI_SANITIZE_UNDEFINED "Enable undefined behavior sanitizer." OFF)
 
 mark_as_advanced(EPI_USE_BUNDLED_SPDLOG)
 
@@ -29,6 +31,16 @@ if(CMAKE_BUILD_TYPE STREQUAL "Debug")
         )
     endif()
 endif()
+
+if(EPI_SANITIZE_ADDRESS)
+    string(APPEND CMAKE_CXX_FLAGS_DEBUG $<$<CXX_COMPILER_ID:GNU>: -fsanitize=address -fno-omit-frame-pointer>)
+    string(APPEND CMAKE_LINKER_FLAGS_DEBUG  $<$<CXX_COMPILER_ID:GNU>: -fsanitize=address>)
+endif(EPI_SANITIZE_ADDRESS)
+
+if(EPI_SANITIZE_UNDEFINED)
+    string(APPEND CMAKE_CXX_FLAGS_DEBUG $<$<CXX_COMPILER_ID:GNU>: -fsanitize=undefined -fno-omit-frame-pointer>)
+    string(APPEND CMAKE_LINKER_FLAGS_DEBUG  $<$<CXX_COMPILER_ID:GNU>: -fsanitize=undefined>)
+endif(EPI_SANITIZE_UNDEFINED)
 
 include(thirdparty/CMakeLists.txt)
 
