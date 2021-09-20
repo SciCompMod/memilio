@@ -52,6 +52,7 @@ jobs:
 
   build-cpp-clang-latest:
     runs-on: ubuntu-latest
+    continue-on-error: true # temporarily allowed to fail because jsoncpp (the version we use) does not build with clang version beyond 10
     steps:
       - uses: actions/checkout@v2
       - uses: ./.github/actions/clang-build
@@ -61,6 +62,7 @@ jobs:
 
   build-cpp-clang-latest-dbg:
     runs-on: ubuntu-latest
+    continue-on-error: true # temporarily allowed to fail because jsoncpp (the version we use) does not build with clang version beyond 10
     steps:
       - uses: actions/checkout@v2
       - uses: ./.github/actions/clang-build
@@ -162,6 +164,7 @@ jobs:
 
   test-cpp-clang-latest:
     needs: build-cpp-clang-latest
+    continue-on-error: true
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
@@ -171,6 +174,7 @@ jobs:
 
   test-cpp-clang-latest-dbg:
     needs: build-cpp-clang-latest-dbg
+    continue-on-error: true
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
