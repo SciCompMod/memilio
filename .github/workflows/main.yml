@@ -50,21 +50,41 @@ jobs:
           config: "Debug"
           version: "min"
 
-  # build-cpp-clang:
-  #   runs-on: ubuntu-18.04
-  #   steps:
-  #     - uses: actions/checkout@v2
-  #     - uses: ./.github/actions/clang-build
-  #       with: 
-  #         config: "Release"
+  build-cpp-clang-latest:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: ./.github/actions/clang-build
+        with: 
+          config: "Release"
+          version: "latest"
 
-  # build-cpp-clang-dbg:
-  #   runs-on: ubuntu-18.04
-  #   steps:
-  #     - uses: actions/checkout@v2
-  #     - uses: ./.github/actions/clang-build
-  #       with: 
-  #         config: "Debug"
+  build-cpp-clang-latest-dbg:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: ./.github/actions/clang-build
+        with: 
+          config: "Debug"
+          version: "latest"
+
+  build-cpp-clang-min:
+    runs-on: ubuntu-18.04
+    steps:
+      - uses: actions/checkout@v2
+      - uses: ./.github/actions/clang-build
+        with: 
+          config: "Release"
+          version: "min"
+
+  build-cpp-clang-min-dbg:
+    runs-on: ubuntu-18.04
+    steps:
+      - uses: actions/checkout@v2
+      - uses: ./.github/actions/clang-build
+        with: 
+          config: "Debug"
+          version: "min"
 
   build-cpp-msvc-latest:
     runs-on: windows-latest
@@ -130,7 +150,7 @@ jobs:
         with: 
           build-artifact: build-cpp-linux-gcc-min-Release
 
-  test-cpp-gcc-dbg:
+  test-cpp-gcc-min-dbg:
     needs: build-cpp-gcc-min-dbg
     runs-on: ubuntu-18.04
     steps:
@@ -140,24 +160,41 @@ jobs:
           coverage: "ON"
           build-artifact: build-cpp-linux-gcc-min-Debug
 
-  # test-cpp-clang:
-  #   needs: build-cpp-clang
-  #   runs-on: ubuntu-18.04
-  #   steps:
-  #     - uses: actions/checkout@v2
-  #     - uses: ./.github/actions/linux-test
-  #       with: 
-  #         build-artifact: build-cpp-linux-clang-Release
+  test-cpp-clang-latest:
+    needs: build-cpp-clang-latest
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: ./.github/actions/linux-test
+        with:
+          build-artifact: build-cpp-linux-clang-latest-Release
 
-  # test-cpp-clang-dbg:
-  #   needs: build-cpp-clang-dbg
-  #   runs-on: ubuntu-18.04
-  #   steps:
-  #     - uses: actions/checkout@v2
-  #     - uses: ./.github/actions/linux-test
-  #       with: 
-  #         coverage: "ON"
-  #         build-artifact: build-cpp-linux-clang-Debug
+  test-cpp-clang-latest-dbg:
+    needs: build-cpp-clang-latest-dbg
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: ./.github/actions/linux-test
+        with:
+          build-artifact: build-cpp-linux-clang-latest-Debug
+
+  test-cpp-clang-min:
+    needs: build-cpp-clang-min
+    runs-on: ubuntu-18.04
+    steps:
+      - uses: actions/checkout@v2
+      - uses: ./.github/actions/linux-test
+        with: 
+          build-artifact: build-cpp-linux-clang-min-Release
+
+  test-cpp-clang-min-dbg:
+    needs: build-cpp-clang-min-dbg
+    runs-on: ubuntu-18.04
+    steps:
+      - uses: actions/checkout@v2
+      - uses: ./.github/actions/linux-test
+        with:
+          build-artifact: build-cpp-linux-clang-min-Debug
 
   test-cpp-msvc-latest:
     needs: build-cpp-msvc-latest

@@ -5,6 +5,10 @@ inputs:
     description: "Configuration to build (Release or Debug, see CMAKE_BUILD_TYPE)"
     required: true
     default: "Release"
+  version:
+    description: "Version of the compiler to use (min or latest)."
+    required: true
+    default: "latest"
 runs:
   using: "composite"
   steps:
@@ -18,13 +22,18 @@ runs:
       run: |
         cd cpp
         mkdir -p build && cd build
-        export CC=/usr/bin/clang
-        export CXX=/usr/bin/clang++
+        if [[ "${{ inputs.version }}" == "min" ]]; then
+          export CC=/usr/bin/clang-9
+          export CXX=/usr/bin/clang++-9
+        else
+          export CC=/usr/bin/clang-12
+          export CXX=/usr/bin/clang++-12
+        fi
         cmake -DCMAKE_BUILD_TYPE=${{ inputs.config }} -DEPI_BUILD_EPI_IO=ON ..
         make -j4
     - name: Upload built test directory
       uses: actions/upload-artifact@v2
       with:
-        name: build-cpp-linux-clang-${{ inputs.config }}
+        name: build-cpp-linux-clang-${{ inputs.version }}-${{ inputs.config }}
         path: cpp/build
         retention-days: 1
