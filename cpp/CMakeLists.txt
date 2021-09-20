@@ -141,8 +141,8 @@ target_compile_features(epidemiology PUBLIC cxx_std_14)
 target_link_libraries(epidemiology PUBLIC spdlog::spdlog Eigen3::Eigen Boost::boost)
 target_compile_options(epidemiology 
     PRIVATE
-    $<$<CXX_COMPILER_ID:GNU>: -Wall -Wextra -Werror -Wshadow --pedantic-errors -Wno-deprecated-copy -Wno-unknown-warning-option>
-    $<$<CXX_COMPILER_ID:CLANG>: -Wall -Wextra -Werror -Wshadow --pedantic-errors -Wno-deprecated -Wno-unknown-warning-option>
+    $<$<CXX_COMPILER_ID:GNU>: -Wno-unknown-warning -Wall -Wextra -Werror -Wshadow --pedantic-errors -Wno-deprecated-copy>
+    $<$<CXX_COMPILER_ID:CLANG>: -Wno-unknown-warning-option -Wall -Wextra -Werror -Wshadow --pedantic-errors -Wno-deprecated>
     $<$<CXX_COMPILER_ID:MSVC>: /W4 /WX>
     PUBLIC
     $<$<CXX_COMPILER_ID:MSVC>: /bigobj>)
@@ -175,8 +175,8 @@ if (EPI_BUILD_EPI_IO)
 
     target_compile_definitions(epidemiology_io PUBLIC "-DHAVE_EPI_IO")
     target_compile_options(epidemiology_io PRIVATE
-        $<$<CXX_COMPILER_ID:GNU>: -Wall -Wextra -Werror -Wshadow --pedantic-errors -Wno-deprecated-copy>
-        $<$<CXX_COMPILER_ID:CLANG>: -Wall -Wextra -Werror -Wshadow --pedantic-errors -Wno-deprecated>
+        $<$<CXX_COMPILER_ID:GNU>: -Wno-unknown-warning -Wall -Wextra -Werror -Wshadow --pedantic-errors -Wno-deprecated-copy>
+        $<$<CXX_COMPILER_ID:CLANG>: -Wno-unknown-warning-option -Wall -Wextra -Werror -Wshadow --pedantic-errors -Wno-deprecated>
         $<$<CXX_COMPILER_ID:MSVC>: /W4 /WX>)
 
 endif(EPI_BUILD_EPI_IO)
