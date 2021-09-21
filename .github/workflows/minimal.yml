@@ -1,0 +1,182 @@
+name: Minimal-CI
+
+on: 
+  push:
+    branches-ignore:
+      - 'main'
+  workflow_dispatch:
+
+jobs:
+  build-cpp-gcc:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: ./.github/actions/gcc-build
+        with: 
+          config: "Debug"
+          version: "latest"
+
+  build-cpp-clang:
+    runs-on: "ubuntu-18.04"
+    steps:
+      - uses: actions/checkout@v2
+      - uses: ./.github/actions/clang-build
+        with: 
+          config: "Debug"
+          version: "min"
+
+  build-cpp-msvc:
+    runs-on: "windows-latest"
+    steps:
+      - uses: actions/checkout@v2
+      - uses: ./.github/actions/msvc-build
+        with: 
+          config: "Debug"
+          version: "latest"
+
+  test-cpp-gcc:
+    needs: build-cpp-gcc
+    runs-on: "ubuntu-latest"
+    steps:
+      - uses: actions/checkout@v2
+      - uses: ./.github/actions/linux-test
+        with: 
+          build-artifact: build-cpp-linux-gcc-latest-Debug
+
+  test-cpp-clang:
+    needs: build-cpp-clang
+    runs-on: "ubuntu-18.04"
+    steps:
+      - uses: actions/checkout@v2
+      - uses: ./.github/actions/linux-test
+        with: 
+          build-artifact: build-cpp-linux-clang-min-Debug
+
+  test-cpp-msvc:
+    needs: build-cpp-msvc
+    runs-on: "windows-latest"
+    steps:
+      - uses: actions/checkout@v2
+      - uses: ./.github/actions/windows-test
+        with: 
+          build-artifact: build-cpp-windows-msvc-latest-Release
+
+  build-py:
+    runs-on: ubuntu-latest
+    container:
+      image: quay.io/pypa/manylinux2014_x86_64
+    steps:
+      - uses: actions/checkout@v2
+      - name: Install dependencies
+        run: yum install ninja-build -qy
+      - name: Build Python Wheels
+        run: |
+          cd pycode
+          /opt/python/cp36-cp36m/bin/python setup.py bdist_wheel
+          /opt/python/cp37-cp37m/bin/python setup.py bdist_wheel
+          /opt/python/cp38-cp38/bin/python setup.py bdist_wheel
+          for whl in dist/*.whl; do auditwheel repair "$whl"; done
+      - name: Upload Python Wheels
+        uses: actions/upload-artifact@v2
+        with:
+          name: python-wheels
+          path: pycode/wheelhouse
+          
+  test-docs:
+    needs: build-py
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Install dependencies
+        run: |
+          sudo apt-get -qq update
+          sudo apt-get -qq -y install doxygen
+      - name: Create documentation
+        run: |
+          cd docs
+          doxygen
+      - name: Upload Documentation
+        uses: actions/upload-artifact@v2
+        with:
+          name: documentation
+          path: docs/html
+          retention-days: 3
+
+  test-py:
+    needs: build-py
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Install dependencies
+        run: |
+          sudo apt-get -qq update
+          sudo apt-get -qq -y install python3-pip gnupg
+          python -m pip install --upgrade pip
+      - name: Download Python Wheels
+        uses: actions/download-artifact@v2
+        with:
+          name: python-wheels
+          path: pycode/wheelhouse
+      - name: Set up Python 3.6
+        uses: actions/setup-python@v2
+        with:
+          python-version: 3.6
+      - name: Install Python Wheels
+        run: |
+          for pkg in `ls pycode/wheelhouse/*36*.whl`; do python -m pip install $pkg; done
+          pip install -r pycode/requirements-dev.txt
+      - name: Run unit tests
+        run: |
+          cd pycode/test
+          python -W ignore::DeprecationWarning -m coverage run --include=*site-packages/epidemiology*,*dist-packages/epidemiology*,epidemiology* -m unittest
+          python -m coverage report
+          python -m coverage xml -o coverage_python.xml
+          python -m coverage html -d coverage_python
+          cp -r coverage_python ../../
+          getrkidata --help
+          getpopuldata --help
+          getjhdata --help
+          getdividata --help
+          getsimdata --help
+          cleandata --help
+      - name: Upload coverage reports
+        uses: actions/upload-artifact@v2
+        with:
+          name: test-py-coverage-reports
+          path: |
+            pycode/test/coverage_python.xml
+            coverage_python/
+          retention-days: 1
+
+  test-pylint:
+    needs: build-py
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Install dependencies
+        run: |
+          sudo apt-get -qq update
+          sudo apt-get -qq -y install python3-pip gnupg
+          python -m pip install --upgrade pip
+      - name: Download Python Wheels
+        uses: actions/download-artifact@v2
+        with:
+          name: python-wheels
+      - name: Install Python Wheels
+        run: |
+          for pkg in `ls pycode/wheelhouse/*36*.whl`; do python -m pip install $pkg; done
+          pip install -r pycode/requirements-dev.txt
+      - name: Run pylint
+        run: |
+          cd pycode
+          mkdir -p build_pylint
+          pip install pylint
+          pip install pylint-json2html
+          python setup.py pylint
+          pylint-json2html -f jsonextended -o build_pylint/pylint.html < build_pylint/pylint_extended.json
+      - name: Upload Pylint Report
+        uses: actions/upload-artifact@v2
+        with:
+          name: pylint-report
+          path: pycode/build_pylint/pylint.html
+          retention-days: 3
