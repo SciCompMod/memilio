@@ -41,7 +41,7 @@ runs:
           export CXX=/usr/bin/g++-10
         fi
         mkdir -p build && cd build
-        cmake -DCMAKE_BUILD_TYPE=${{ inputs.config }} -DEPI_BUILD_EPI_IO=ON -DEPI_TEST_COVERAGE=${{ inputs.coverage }} ..
+        cmake -DCMAKE_BUILD_TYPE=${{ inputs.config }} -DEPI_BUILD_EPI_IO=ON -DEPI_TEST_COVERAGE=${{ inputs.coverage }} -DEPI_SANITIZE_ADDRESS=${{ inputs.sanitize-addr }} -DEPI_SANITIZE_UNDEFINED=${{ inputs.sanitize-ub }} ..
         make -j4
     - name: Upload built test directory
       uses: actions/upload-artifact@v2
