@@ -11,230 +11,102 @@ on:
   pull_request:
 
 jobs:
-  build-cpp-gcc-latest:
-    runs-on: ubuntu-latest
+  build-cpp-gcc:
+    strategy:
+      matrix:
+        config: ["Debug", "Release"]
+        version: ["latest", "min"]
+        include:
+          - version: "latest" # our jsoncpp version does not build on clang above version 9
+            os: "ubuntu-latest"
+          - version: "min"
+            os: "ubuntu-18.04"
+    runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v2
       - uses: ./.github/actions/gcc-build
         with: 
-          config: "Release"
-          version: "latest"
+          config: ${{ matrix.config }}
+          version: ${{ matrix.version }}
+          coverage: ${{ (matrix.config == 'Debug' && matrix.version == 'latest') && 'ON' || 'OFF' }}
+          sanitize-addr: ${{ (matrix.config == 'Debug' && matrix.version == 'latest') && 'ON' || 'OFF' }}
+          sanitize-ub: ${{ (matrix.config == 'Debug' && matrix.version == 'latest') && 'ON' || 'OFF' }}
 
-  build-cpp-gcc-latest-dbg:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v2
-      - uses: ./.github/actions/gcc-build
-        with: 
-          config: "Debug"
-          version: "latest"
-          coverage: "ON"
-          sanitize-ub: "ON"
-          sanitize-addr: "ON"
-
-  build-cpp-gcc-min:
-    runs-on: ubuntu-18.04
-    steps:
-      - uses: actions/checkout@v2
-      - uses: ./.github/actions/gcc-build
-        with: 
-          config: "Release"
-          version: "min"
-
-  build-cpp-gcc-min-dbg:
-    runs-on: ubuntu-18.04
-    steps:
-      - uses: actions/checkout@v2
-      - uses: ./.github/actions/gcc-build
-        with: 
-          config: "Debug"
-          version: "min"
-
-  build-cpp-clang-latest:
-    runs-on: ubuntu-latest
-    continue-on-error: true # temporarily allowed to fail because jsoncpp (the version we use) does not build with clang version beyond 10
+  build-cpp-clang:
+    strategy:
+      matrix:
+        config: ["Debug", "Release"]
+        version: ["latest", "min"]
+        include:
+          - version: "latest" # our jsoncpp version does not build on clang above version 9
+            os: "ubuntu-latest"
+          - version: "min"
+            os: "ubuntu-18.04"
+    runs-on: ${{ matrix.os }}
+    continue-on-error: ${{ matrix.version == 'latest' }}
     steps:
       - uses: actions/checkout@v2
       - uses: ./.github/actions/clang-build
         with: 
-          config: "Release"
-          version: "latest"
+          config: ${{ matrix.config }}
+          version: ${{ matrix.version }}
 
-  build-cpp-clang-latest-dbg:
-    runs-on: ubuntu-latest
-    continue-on-error: true # temporarily allowed to fail because jsoncpp (the version we use) does not build with clang version beyond 10
-    steps:
-      - uses: actions/checkout@v2
-      - uses: ./.github/actions/clang-build
-        with: 
-          config: "Debug"
-          version: "latest"
-
-  build-cpp-clang-min:
-    runs-on: ubuntu-18.04
-    steps:
-      - uses: actions/checkout@v2
-      - uses: ./.github/actions/clang-build
-        with: 
-          config: "Release"
-          version: "min"
-
-  build-cpp-clang-min-dbg:
-    runs-on: ubuntu-18.04
-    steps:
-      - uses: actions/checkout@v2
-      - uses: ./.github/actions/clang-build
-        with: 
-          config: "Debug"
-          version: "min"
-
-  build-cpp-msvc-latest:
-    runs-on: windows-latest
+  build-cpp-msvc:
+    strategy:
+      matrix:
+        config: ["Debug", "Release"]
+        version: ["latest", "min"]
+        include:
+          - version: "latest"
+            os: "windows-latest"
+          - version: "min"
+            os: "windows-2016"
+    runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v2
       - uses: ./.github/actions/msvc-build
-        with:
-          version: "latest"
-          config: "Release"
+        with: 
+          config: ${{ matrix.config }}
+          version: ${{ matrix.version }}
 
-  build-cpp-msvc-latest-dbg:
-    runs-on: windows-latest
-    steps:
-      - uses: actions/checkout@v2
-      - uses: ./.github/actions/msvc-build
-        with:
-          version: "latest"
-          config: "Debug"
-
-  build-cpp-msvc-min:
-    runs-on: windows-2016
-    steps:
-      - uses: actions/checkout@v2
-      - uses: ./.github/actions/msvc-build
-        with:
-          version: "min"
-          config: "Release"
-
-  build-cpp-msvc-min-dbg:
-    runs-on: windows-2016
-    steps:
-      - uses: actions/checkout@v2
-      - uses: ./.github/actions/msvc-build
-        with:
-          version: "min"
-          config: "Debug"
-
-  test-cpp-gcc-latest:
-    needs: build-cpp-gcc-latest
-    runs-on: ubuntu-latest
+  test-cpp-gcc_clang:
+    needs: [build-cpp-gcc, build-cpp-clang]
+    strategy:
+      matrix:
+        compiler: ["gcc", "clang"]
+        config: ["Debug", "Release"]
+        version: ["latest", "min"]
+        include:
+          - version: "latest"
+            os: "ubuntu-latest"
+          - version: "min"
+            os: "ubuntu-18.04"
+    runs-on: ${{ matrix.os }}
+    continue-on-error: ${{ matrix.compiler == 'clang' && matrix.version == 'latest' }}
     steps:
       - uses: actions/checkout@v2
       - uses: ./.github/actions/linux-test
         with: 
-          build-artifact: build-cpp-linux-gcc-latest-Release
+          build-artifact: build-cpp-linux-${{ matrix.compiler }}-${{ matrix.version }}-${{ matrix.config }}
+          coverage: ${{ (matrix.compiler == 'gcc' && matrix.version == 'latest' && matrix.config == 'Debug') && 'ON' || 'OFF' }}
 
-  test-cpp-gcc-latest-dbg:
-    needs: build-cpp-gcc-latest-dbg
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v2
-      - uses: ./.github/actions/linux-test
-        with: 
-          coverage: "ON"
-          build-artifact: build-cpp-linux-gcc-latest-Debug
-
-  test-cpp-gcc-min:
-    needs: build-cpp-gcc-min
-    runs-on: ubuntu-18.04
-    steps:
-      - uses: actions/checkout@v2
-      - uses: ./.github/actions/linux-test
-        with: 
-          build-artifact: build-cpp-linux-gcc-min-Release
-
-  test-cpp-gcc-min-dbg:
-    needs: build-cpp-gcc-min-dbg
-    runs-on: ubuntu-18.04
-    steps:
-      - uses: actions/checkout@v2
-      - uses: ./.github/actions/linux-test
-        with: 
-          coverage: "ON"
-          build-artifact: build-cpp-linux-gcc-min-Debug
-
-  test-cpp-clang-latest:
-    needs: build-cpp-clang-latest
-    continue-on-error: true
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v2
-      - uses: ./.github/actions/linux-test
-        with:
-          build-artifact: build-cpp-linux-clang-latest-Release
-
-  test-cpp-clang-latest-dbg:
-    needs: build-cpp-clang-latest-dbg
-    continue-on-error: true
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v2
-      - uses: ./.github/actions/linux-test
-        with:
-          build-artifact: build-cpp-linux-clang-latest-Debug
-
-  test-cpp-clang-min:
-    needs: build-cpp-clang-min
-    runs-on: ubuntu-18.04
-    steps:
-      - uses: actions/checkout@v2
-      - uses: ./.github/actions/linux-test
-        with: 
-          build-artifact: build-cpp-linux-clang-min-Release
-
-  test-cpp-clang-min-dbg:
-    needs: build-cpp-clang-min-dbg
-    runs-on: ubuntu-18.04
-    steps:
-      - uses: actions/checkout@v2
-      - uses: ./.github/actions/linux-test
-        with:
-          build-artifact: build-cpp-linux-clang-min-Debug
-
-  test-cpp-msvc-latest:
-    needs: build-cpp-msvc-latest
-    runs-on: windows-latest
+  test-cpp-msvc:
+    needs: build-cpp-msvc
+    strategy:
+      matrix:
+        config: ["Debug", "Release"]
+        version: ["latest", "min"]
+        include:
+          - version: "latest"
+            os: "windows-latest"
+          - version: "min"
+            os: "windows-2016"
+    runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v2
       - uses: ./.github/actions/windows-test
-        with:
-          build-artifact: build-cpp-windows-msvc-latest-Release
-
-  test-cpp-msvc-latest-dbg:
-    needs: build-cpp-msvc-latest-dbg
-    runs-on: windows-latest
-    steps:
-      - uses: actions/checkout@v2
-      - uses: ./.github/actions/windows-test
-        with:
-          build-artifact: build-cpp-windows-msvc-latest-Debug
-
-  test-cpp-msvc-min:
-    needs: build-cpp-msvc-min
-    runs-on: windows-2016
-    steps:
-      - uses: actions/checkout@v2
-      - uses: ./.github/actions/windows-test
-        with:
-          build-artifact: build-cpp-windows-msvc-min-Release
-
-  test-cpp-msvc-min-dbg:
-    needs: build-cpp-msvc-min-dbg
-    runs-on: windows-2016
-    steps:
-      - uses: actions/checkout@v2
-      - uses: ./.github/actions/windows-test
-        with:
-          build-artifact: build-cpp-windows-msvc-min-Debug
+        with: 
+          build-artifact: build-cpp-windows-msvc-${{ matrix.version }}-${{ matrix.config }}
 
   build-py:
     runs-on: ubuntu-latest
@@ -402,7 +274,7 @@ jobs:
           retention-days: 1
           
   codecov:
-    needs: [test-py, test-cpp-gcc-latest-dbg]
+    needs: [test-py, test-cpp-gcc_clang]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
@@ -425,7 +297,7 @@ jobs:
           verbose: true
 
   pages:
-    needs: [test-py, test-cpp-gcc-latest-dbg, test-docs, test-pylint]
+    needs: [test-py, test-cpp-gcc_clang, test-docs, test-pylint]
     runs-on: ubuntu-latest
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     steps:
