@@ -9,6 +9,12 @@ on:
     tags:
       - version-*
   pull_request:
+  workflow_dispatch:
+    inputs:
+      job-set:
+        description: "minimal or full"
+        required: false
+        default: "full"
 
 jobs:
   build-cpp-gcc:
@@ -22,6 +28,11 @@ jobs:
           - version: "min"
             os: "ubuntu-18.04"
     runs-on: ${{ matrix.os }}
+    if: (github.event_name == 'push' && github.ref == 'refs/heads/main') || 
+        (github.event_name == 'pull_request') || 
+        (github.event_name == 'schedule') || 
+        (github.event_name == 'workflow_dispatch' && github.event.inputs.job-set == 'full') || 
+        (matrix.config == 'Debug' && matrix.version == 'latest')
     steps:
       - uses: actions/checkout@v2
       - uses: ./.github/actions/gcc-build
@@ -43,6 +54,7 @@ jobs:
           - version: "min"
             os: "ubuntu-18.04"
     runs-on: ${{ matrix.os }}
+    if: (github.event_name == 'push' && github.ref == 'refs/heads/main') || (github.event_name == 'pull_request') || (github.event_name == 'schedule') || (github.event_name == 'workflow_dispatch' && github.event.inputs.job-set == 'full') || (matrix.config == 'Debug' && matrix.version == 'latest')
     continue-on-error: ${{ matrix.version == 'latest' }}
     steps:
       - uses: actions/checkout@v2
@@ -62,6 +74,7 @@ jobs:
           - version: "min"
             os: "windows-2016"
     runs-on: ${{ matrix.os }}
+    if: (github.event_name == 'push' && github.ref == 'refs/heads/main') || (github.event_name == 'pull_request') || (github.event_name == 'schedule') || (github.event_name == 'workflow_dispatch' && github.event.inputs.job-set == 'full') || (matrix.config == 'Debug' && matrix.version == 'latest')
     steps:
       - uses: actions/checkout@v2
       - uses: ./.github/actions/msvc-build
@@ -82,6 +95,7 @@ jobs:
           - version: "min"
             os: "ubuntu-18.04"
     runs-on: ${{ matrix.os }}
+    if: (github.event_name == 'push' && github.ref == 'refs/heads/main') || (github.event_name == 'pull_request') || (github.event_name == 'schedule') || (github.event_name == 'workflow_dispatch' && github.event.inputs.job-set == 'full') || (matrix.config == 'Debug' && matrix.version == 'latest')
     continue-on-error: ${{ matrix.compiler == 'clang' && matrix.version == 'latest' }}
     steps:
       - uses: actions/checkout@v2
@@ -102,6 +116,7 @@ jobs:
           - version: "min"
             os: "windows-2016"
     runs-on: ${{ matrix.os }}
+    if: (github.event_name == 'push' && github.ref == 'refs/heads/main') || (github.event_name == 'pull_request') || (github.event_name == 'schedule') || (github.event_name == 'workflow_dispatch' && github.event.inputs.job-set == 'full') || (matrix.config == 'Debug' && matrix.version == 'latest')
     steps:
       - uses: actions/checkout@v2
       - uses: ./.github/actions/windows-test
@@ -232,6 +247,7 @@ jobs:
     needs: build-py
     runs-on: ubuntu-latest
     continue-on-error: true
+    if: (github.event_name == 'push' && github.ref == 'refs/heads/main') || (github.event_name == 'pull_request') || (github.event_name == 'schedule') || (github.event_name == 'workflow_dispatch' && github.event.inputs.job-set == 'full')
     steps:
       - uses: actions/checkout@v2
       - name: Install dependencies
@@ -276,6 +292,9 @@ jobs:
   codecov:
     needs: [test-py, test-cpp-gcc_clang]
     runs-on: ubuntu-latest
+    if: ((github.event_name == 'push' && github.ref == 'refs/heads/main') || 
+         (github.event_name == 'pull_request') || (github.event_name == 'schedule') || 
+         (github.event_name == 'workflow_dispatch' && github.event.inputs.job-set == 'full'))
     steps:
       - uses: actions/checkout@v2
       - name: Install dependencies
