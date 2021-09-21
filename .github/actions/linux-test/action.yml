@@ -23,7 +23,12 @@ runs:
       uses: actions/download-artifact@v2
       with:
         name: ${{ inputs.build-artifact }}
-        path: cpp/build
+        path: cpp
+    - name: extract build archive
+      shell: bash
+      run: |
+        cd cpp
+        tar -xzf build.tar.gz
     - name: Run unit tests
       shell: bash
       run: |

@@ -43,9 +43,14 @@ runs:
         mkdir -p build && cd build
         cmake -DCMAKE_BUILD_TYPE=${{ inputs.config }} -DEPI_BUILD_EPI_IO=ON -DEPI_TEST_COVERAGE=${{ inputs.coverage }} -DEPI_SANITIZE_ADDRESS=${{ inputs.sanitize-addr }} -DEPI_SANITIZE_UNDEFINED=${{ inputs.sanitize-ub }} ..
         make -j4
+    - name: create build dir archive
+      shell: bash
+      run: |
+        cd cpp
+        tar -czf build.tar.gz build
     - name: Upload built test directory
       uses: actions/upload-artifact@v2
       with:
         name: build-cpp-linux-gcc-${{ inputs.version }}-${{ inputs.config }}
-        path: cpp/build
+        path: cpp/build.tar.gz
         retention-days: 1
