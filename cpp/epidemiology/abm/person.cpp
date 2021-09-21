@@ -32,8 +32,8 @@ Person::Person(LocationId id, InfectionProperties infection_properties, AbmAgeGr
     , m_state(infection_properties.state)
     , m_quarantine(false)
     , m_age(age)
-    , m_time_at_location(std::numeric_limits<int>::max())
-    , m_time_since_negative_test(std::numeric_limits<int>::max())
+    , m_time_at_location(std::numeric_limits<int>::max() / 2)
+    , m_time_since_negative_test(std::numeric_limits<int>::max() / 2)
 {
     m_random_workgroup   = UniformDistribution<double>::get_instance()();
     m_random_schoolgroup = UniformDistribution<double>::get_instance()();
