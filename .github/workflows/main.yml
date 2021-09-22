@@ -12,9 +12,10 @@ on:
   workflow_dispatch:
 
 jobs:
-  build-cpp-gcc:
+  build-cpp-gcc_clang:
     strategy:
       matrix:
+        compiler: ["gcc", "clang"]
         config: ["Debug", "Release"]
         version: ["latest", "min"]
         include:
@@ -23,34 +24,17 @@ jobs:
           - version: "min"
             os: "ubuntu-18.04"
     runs-on: ${{ matrix.os }}
+    continue-on-error: ${{ matrix.compiler == 'clang' && matrix.version == 'latest' }} # our jsoncpp version does not build on clang above version 9
     steps:
       - uses: actions/checkout@v2
-      - uses: ./.github/actions/gcc-build
+      - uses: ./.github/actions/linux-build
         with: 
+          compiler: ${{ matrix.compiler }}
           config: ${{ matrix.config }}
           version: ${{ matrix.version }}
-          coverage: ${{ (matrix.config == 'Debug' && matrix.version == 'latest') && 'ON' || 'OFF' }}
-          sanitize-addr: ${{ (matrix.config == 'Debug' && matrix.version == 'latest') && 'ON' || 'OFF' }}
-          sanitize-ub: ${{ (matrix.config == 'Debug' && matrix.version == 'latest') && 'ON' || 'OFF' }}
-
-  build-cpp-clang:
-    strategy:
-      matrix:
-        config: ["Debug", "Release"]
-        version: ["latest", "min"]
-        include:
-          - version: "latest"
-            os: "ubuntu-latest"
-          - version: "min"
-            os: "ubuntu-18.04"
-    runs-on: ${{ matrix.os }}
-    continue-on-error: ${{ matrix.version == 'latest' }} # our jsoncpp version does not build on clang above version 9
-    steps:
-      - uses: actions/checkout@v2
-      - uses: ./.github/actions/clang-build
-        with: 
-          config: ${{ matrix.config }}
-          version: ${{ matrix.version }}
+          coverage: ${{ (matrix.compiler == 'gcc' && matrix.config == 'Debug' && matrix.version == 'latest') && 'ON' || 'OFF' }} # `c && t || f` is (usually) equivalent to `c ? t : f`
+          sanitize-addr: ${{ (matrix.compiler == 'gcc' && matrix.config == 'Debug' && matrix.version == 'latest') && 'ON' || 'OFF' }}
+          sanitize-ub: ${{ (matrix.compiler == 'gcc' && matrix.config == 'Debug' && matrix.version == 'latest') && 'ON' || 'OFF' }}
 
   build-cpp-msvc:
     strategy:
@@ -65,13 +49,13 @@ jobs:
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v2
-      - uses: ./.github/actions/msvc-build
+      - uses: ./.github/actions/windows-build
         with: 
           config: ${{ matrix.config }}
           version: ${{ matrix.version }}
 
   test-cpp-gcc_clang:
-    needs: [build-cpp-gcc, build-cpp-clang]
+    needs: build-cpp-gcc_clang
     strategy:
       matrix:
         compiler: ["gcc", "clang"]

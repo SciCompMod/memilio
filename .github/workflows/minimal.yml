@@ -11,8 +11,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
-      - uses: ./.github/actions/gcc-build
+      - uses: ./.github/actions/linux-build
         with: 
+          compiler: "gcc"
           config: "Debug"
           version: "latest"
 
@@ -20,8 +21,9 @@ jobs:
     runs-on: "ubuntu-18.04"
     steps:
       - uses: actions/checkout@v2
-      - uses: ./.github/actions/clang-build
+      - uses: ./.github/actions/linux-build
         with: 
+          compiler: "clang"
           config: "Debug"
           version: "min"
 
@@ -29,7 +31,7 @@ jobs:
     runs-on: "windows-latest"
     steps:
       - uses: actions/checkout@v2
-      - uses: ./.github/actions/msvc-build
+      - uses: ./.github/actions/windows-build
         with: 
           config: "Debug"
           version: "latest"

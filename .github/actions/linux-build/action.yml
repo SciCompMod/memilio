@@ -1,10 +1,14 @@
-name: "GCC Build"
-description: "Build the C++ library with GCC on Linux."
+name: "Linux Build"
+description: "Build the C++ library on Linux."
 inputs:
   config: 
     description: "Configuration to build (Release or Debug, see CMAKE_BUILD_TYPE)"
     required: true
     default: "Release"
+  compiler:
+    description: "Compiler to use (clang or gcc)."
+    required: true
+    default: "gcc"
   version:
     description: "Version of the compiler to use (min or latest)."
     required: true
@@ -33,12 +37,25 @@ runs:
       shell: bash
       run: |
         cd cpp
-        if [[ "${{ inputs.coverage }}" == "min" ]]; then
-          export CC=/usr/bin/gcc-7
-          export CXX=/usr/bin/g++-7
-        else        
-          export CC=/usr/bin/gcc-10
-          export CXX=/usr/bin/g++-10
+        if [[ "${{ inputs.compiler }}" == "gcc" ]]; then
+          if [[ "${{ inputs.version }}" == "min" ]]; then
+            export CC=/usr/bin/gcc-7
+            export CXX=/usr/bin/g++-7
+          else        
+            export CC=/usr/bin/gcc-10
+            export CXX=/usr/bin/g++-10
+          fi
+        elif [[ "${{ inputs.compiler }}" == "clang" ]]; then
+          if [[ "${{ inputs.version }}" == "min" ]]; then
+            export CC=/usr/bin/clang-9
+            export CXX=/usr/bin/clang++-9
+          else        
+            export CC=/usr/bin/clang-12
+            export CXX=/usr/bin/clang-12
+          fi
+        else
+          echo "unknown value for action input: compiler"
+          exit 1
         fi
         mkdir -p build && cd build
         cmake -DCMAKE_BUILD_TYPE=${{ inputs.config }} -DEPI_BUILD_EPI_IO=ON -DEPI_TEST_COVERAGE=${{ inputs.coverage }} -DEPI_SANITIZE_ADDRESS=${{ inputs.sanitize-addr }} -DEPI_SANITIZE_UNDEFINED=${{ inputs.sanitize-ub }} ..
@@ -51,6 +68,6 @@ runs:
     - name: Upload built test directory
       uses: actions/upload-artifact@v2
       with:
-        name: build-cpp-linux-gcc-${{ inputs.version }}-${{ inputs.config }}
+        name: build-cpp-linux-${{ inputs.compiler }}-${{ inputs.version }}-${{ inputs.config }}
         path: cpp/build.tar.gz
         retention-days: 1
