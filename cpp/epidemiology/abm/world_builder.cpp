@@ -28,7 +28,7 @@ struct MyFunc {
         Eigen::Map<const Eigen::MatrixXd> M(x.data(), m_n, m_l);
         // at every location contains a certain number of people
         // at the moment: every location has the same number of people
-        f.segment(0, m_l) = M.colwise().sum() - m_y.segment(0, m_l);
+        f.segment(0, m_l) = M.colwise().sum().transpose() - m_y.segment(0, m_l);
 
         // the number of people per age group is given
         f.segment(m_l, m_n) = M.rowwise().sum() - m_y.segment(m_l, m_n);
@@ -53,6 +53,8 @@ struct MyFunc {
             }
         }
 
+        f.segment(m_y.size(), inputs()) = 1e2 * x.array().min(0);
+
         return 0;
     }
 
@@ -62,7 +64,7 @@ struct MyFunc {
     }
     int values() const
     {
-        return m_y.size();
+        return m_y.size() + inputs();
     }
 };
 
@@ -82,29 +84,29 @@ Eigen::VectorXd find_optimal_locations(Eigen::VectorXd& num_people_sorted, int n
     Eigen::Map<Eigen::VectorXd> v(contact_matrix.data(), n * n);
     y.segment(l + n, n * n) = v;
 
-    std::cout << y << std::endl;
-
     MyFunc func{y, n, l};
 
     Eigen::NumericalDiff<MyFunc> func_with_num_diff(func);
     Eigen::LevenbergMarquardt<Eigen::NumericalDiff<MyFunc>> lm(func_with_num_diff);
-    Eigen::VectorXd x(n * l);
+    Eigen::VectorXd x;
+
+    //the following starting values provide a rough fit.
+    x.setConstant(n * l, num_people_sorted.sum() / (n * l));
+
     lm.minimize(x);
 
     return x;
 }
 
-/*
 void create_locations(uint32_t num_locs, LocationType type, World& world, Eigen::MatrixXd& contact_matrix)
 {
     uint32_t num_ages = uint32_t(AbmAgeGroup::Count);
     // sort people according to their age groups
     std::vector<std::vector<uint32_t>> people_sorted(num_ages);
 
-    auto personRange = world.get_persons();
-    uint32_t index   = 0;
-    for (auto it = personRange.begin(); it != personRange.end(); ++it) {
-        people_sorted[size_t(it->get_age())].push_back(index);
+    uint32_t index = 0;
+    for (auto& person : world.get_persons()) {
+        people_sorted[size_t(person.get_age())].push_back(index);
         ++index;
     }
 
@@ -130,9 +132,6 @@ void create_locations(uint32_t num_locs, LocationType type, World& world, Eigen:
             }
         }
     }
-
-    
 }
-*/
 
 } // namespace epi

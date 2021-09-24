@@ -57,7 +57,7 @@ public:
 
     pointer operator->() const
     {
-        return m_ptr_iter.operator*().operator*();
+        return &(m_ptr_iter.operator*().operator*());
     }
 
     PointerDereferencingIterator& operator++()
