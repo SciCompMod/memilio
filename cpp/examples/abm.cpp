@@ -259,20 +259,20 @@ int main()
     abm_params.set<epi::CriticalToRecovered>({{epi::AbmAgeGroup::Count,epi::VaccinationState::Count}, 0.02});
     abm_params.set<epi::CriticalToDead>({{epi::AbmAgeGroup::Count,epi::VaccinationState::Count}, 0.06});
     abm_params.set<epi::RecoveredToSusceptible>({{epi::AbmAgeGroup::Count,epi::VaccinationState::Count}, 0.1});
-
+ 
     // Set each parameter for vaccinated people
-    for (int i = 0; i < (int)epi::AbmAgeGroup::Count; i++) {
-        abm_params.get<epi::IncubationPeriod>()[{(epi::AbmAgeGroup)i,epi::VaccinationState::Vaccinated}] = 4.;
-        abm_params.get<epi::SusceptibleToExposedByCarrier>()[{(epi::AbmAgeGroup)i,epi::VaccinationState::Vaccinated}] = 0.02;
-        abm_params.get<epi::SusceptibleToExposedByInfected>()[{(epi::AbmAgeGroup)i,epi::VaccinationState::Vaccinated}] = 0.02;
-        abm_params.get<epi::CarrierToRecovered>()[{(epi::AbmAgeGroup)i,epi::VaccinationState::Vaccinated}] = 0.15;
-        abm_params.get<epi::InfectedToRecovered>()[{(epi::AbmAgeGroup)i,epi::VaccinationState::Vaccinated}] = 0.15;
-        abm_params.get<epi::InfectedToSevere>()[{(epi::AbmAgeGroup)i,epi::VaccinationState::Vaccinated}] = 0.05;
-        abm_params.get<epi::SevereToRecovered>()[{(epi::AbmAgeGroup)i,epi::VaccinationState::Vaccinated}] = 0.05;
-        abm_params.get<epi::SevereToCritical>()[{(epi::AbmAgeGroup)i,epi::VaccinationState::Vaccinated}] = 0.005;
-        abm_params.get<epi::CriticalToRecovered>()[{(epi::AbmAgeGroup)i,epi::VaccinationState::Vaccinated}] = 0.05;
-        abm_params.get<epi::CriticalToDead>()[{(epi::AbmAgeGroup)i,epi::VaccinationState::Vaccinated}] = 0.005;
-        abm_params.get<epi::RecoveredToSusceptible>()[{(epi::AbmAgeGroup)i,epi::VaccinationState::Vaccinated}] = 0.05;
+    for (auto age = epi::Index<epi::AbmAgeGroup>(0); age < epi::AbmAgeGroup::Count; ++age) {
+        abm_params.get<epi::IncubationPeriod>()[{age, epi::VaccinationState::Vaccinated}] = 4.;
+        abm_params.get<epi::SusceptibleToExposedByCarrier>()[{age, epi::VaccinationState::Vaccinated}] = 0.02;
+        abm_params.get<epi::SusceptibleToExposedByInfected>()[{age, epi::VaccinationState::Vaccinated}] = 0.02;
+        abm_params.get<epi::CarrierToRecovered>()[{age, epi::VaccinationState::Vaccinated}] = 0.15;
+        abm_params.get<epi::InfectedToRecovered>()[{age, epi::VaccinationState::Vaccinated}] = 0.15;
+        abm_params.get<epi::InfectedToSevere>()[{age, epi::VaccinationState::Vaccinated}] = 0.05;
+        abm_params.get<epi::SevereToRecovered>()[{age, epi::VaccinationState::Vaccinated}] = 0.05;
+        abm_params.get<epi::SevereToCritical>()[{age, epi::VaccinationState::Vaccinated}] = 0.005;
+        abm_params.get<epi::CriticalToRecovered>()[{age, epi::VaccinationState::Vaccinated}] = 0.05;
+        abm_params.get<epi::CriticalToDead>()[{age, epi::VaccinationState::Vaccinated}] = 0.005;
+        abm_params.get<epi::RecoveredToSusceptible>()[{age, epi::VaccinationState::Vaccinated}] = 0.05;
     }
     
     auto world = epi::World(abm_params);

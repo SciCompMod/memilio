@@ -41,7 +41,7 @@ enum class InfectionState : std::uint32_t
     Recovered_Carrier,
     Recovered_Infected,
     Dead,
-    //TODO: Add description of the different infection states
+    
     Count //last!!
 };
 
