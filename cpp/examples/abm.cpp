@@ -330,7 +330,7 @@ void assign_infection_state(epi::World& world, double exposed_pct, double infect
                             double carrier_pct, double recovered_pct){
     auto persons = world.get_persons();
     for (auto& person : persons) {
-        person.set_infection_state(determine_infection_state(exposed_pct, infected_pct, carrier_pct, recovered_pct));
+        world.set_infection_state(person, determine_infection_state(exposed_pct, infected_pct, carrier_pct, recovered_pct));
     }
 }
 
@@ -350,7 +350,7 @@ int main()
     //printf("\n");
 
     // Assumed percentage of infection state at the beginning of the simulation.
-    double exposed_pct = 0.01, infected_pct = 0.008, carrier_pct = 0.005, recovered_pct = 0.001;
+    double exposed_pct = 0.01, infected_pct = 0.08, carrier_pct = 0.05, recovered_pct = 0.01;
 
     //Set global infection parameters (similar to infection parameters in SECIR model) and initialize the world
     epi::GlobalInfectionParameters abm_params;
@@ -373,8 +373,7 @@ int main()
     create_world_from_statistical_data(world);
     
     // Assign an infection state to each person.
-    assign_infection_state(world, exposed_pct, infected_pct,
-                           carrier_pct, recovered_pct);
+    assign_infection_state(world, exposed_pct, infected_pct, carrier_pct, recovered_pct);
     
     // Add locations and assign locations to the people.
     create_assign_locations(world);
@@ -398,7 +397,7 @@ int main()
     // S = Susceptible, E = Exposed, C= Carrier, I_d = Infected_Detected, I_u = Infected_Undetected, I_s = Infected_Severe,
     // I_c = Infected_Critical, R_C = Recovered_Carrier, R_I = Recovered_Infected, D = Dead
     // E.g. the following gnuplot skrips plots detected infections and deaths.
-    // plot "abm.txt" using 1:5 with lines title "infected (detected)", "abm.txt" using 1:11 with lines title "dead"
+    // plot "abm1.txt" using 1:5 with lines title "infected (detected)", "abm1.txt" using 1:11 with lines title "dead"
     // set xlabel "days"
     // set ylabel "number of people"
     // set title "ABM Example"

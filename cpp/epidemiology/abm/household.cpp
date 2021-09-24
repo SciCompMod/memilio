@@ -93,7 +93,8 @@ void add_household_to_world(epi::World& world, epi::Household& household){
     auto members = household.get_members();
     for (int i = 0; i < household.get_number_of_members() ; i++) {
         auto age_group = pick_age_group_from_age_distribution(members.at(i).get_age_dist()); // Gets the age of a member from its age distribution.
-        world.add_person(home, epi::InfectionState::Susceptible, age_group); // Add person, always susceptible for now.
+        auto& person = world.add_person(home, epi::InfectionState::Susceptible, age_group); // Add person, always susceptible.
+        person.set_assigned_location(home);
     }
 }
 
