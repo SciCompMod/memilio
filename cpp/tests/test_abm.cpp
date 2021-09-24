@@ -1035,20 +1035,20 @@ TEST(TestWorldBuilder, create_locations)
     //assign social event
     create_locations(num_locs, epi::LocationType::SocialEvent, world, M);
 
-    //count people of each age gropo at the locations
+    //count people of each age group at the locations
     Eigen::VectorXi counter = Eigen::VectorXi::Zero(4);
     for (auto& p : world.get_persons()) {
         int index = p.get_assigned_location_index(epi::LocationType::SocialEvent);
-        if (index == 0 and (size_t) p.get_age() == 0) {
+        if (index == 0 && (size_t)p.get_age() == 0) {
             counter(0)++;
         }
-        else if (index == 0 and (size_t) p.get_age() == 1) {
+        else if (index == 0 && (size_t)p.get_age() == 1) {
             counter(1)++;
         }
-        else if (index == 1 and (size_t) p.get_age() == 0) {
+        else if (index == 1 && (size_t)p.get_age() == 0) {
             counter(2)++;
         }
-        else if (index == 1 and (size_t) p.get_age() == 1) {
+        else if (index == 1 && (size_t)p.get_age() == 1) {
             counter(3)++;
         }
     }

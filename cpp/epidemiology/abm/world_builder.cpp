@@ -133,6 +133,20 @@ void create_locations(uint32_t num_locs, LocationType type, World& world, Eigen:
             }
         }
     }
+    // add people that have not been assigned before
+    uint32_t loc_index = 0;
+    for (size_t j = 0; j < num_ages; j++) {
+        while (current_index(j) < num_people_sorted(j) - 1) {
+            auto person = world.get_persons().begin() + people_sorted[j][current_index(j)];
+            person->set_assigned_location({loc_index, type});
+            current_index(j)++;
+            if (loc_index < world.get_locations()[(size_t)type].size() - 1) {
+                loc_index++;
+            }
+            else {
+                loc_index = 0;
+            }
+        }
+    }
 }
-
 } // namespace epi
