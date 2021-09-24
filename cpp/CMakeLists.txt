@@ -98,6 +98,8 @@ add_library(epidemiology
     epidemiology/utils/random_number_generator.cpp
     epidemiology/abm/location.cpp
     epidemiology/abm/location.h
+    epidemiology/abm/household.h
+    epidemiology/abm/household.cpp
     epidemiology/abm/simulation.cpp
     epidemiology/abm/simulation.h
     epidemiology/abm/person.cpp

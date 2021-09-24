@@ -101,6 +101,11 @@ void Person::set_assigned_location (LocationId id)
     m_assigned_locations[(uint32_t)id.type] = id.index;
 }
 
+void Person::set_infection_state(InfectionState inf_state)
+{
+    m_state = inf_state;
+}
+
 uint32_t Person::get_assigned_location_index (LocationType type) const
 {
     return m_assigned_locations[(uint32_t)type];

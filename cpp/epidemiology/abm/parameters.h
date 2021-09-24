@@ -184,7 +184,7 @@ struct EffectiveContacts
 using LocalInfectionParameters = ParameterSet<EffectiveContacts>;
 
 /**
- * parameters that govern the migration between locations
+ * parameters that govern the migration between locations.
  */
 struct LockdownDate {
     using Type = TimePoint;
