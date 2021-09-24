@@ -3,6 +3,7 @@
 #include "epidemiology/utils/eigen.h"
 
 #include <unsupported/Eigen/NonLinearOptimization>
+#include <cmath>
 
 namespace epi
 {
@@ -100,10 +101,9 @@ Eigen::VectorXd find_optimal_locations(Eigen::VectorXd& num_people_sorted, int n
 
 void create_locations(uint32_t num_locs, LocationType type, World& world, Eigen::MatrixXd& contact_matrix)
 {
-    uint32_t num_ages = uint32_t(AbmAgeGroup::Count);
+    uint32_t num_ages = contact_matrix.rows();
     // sort people according to their age groups
     std::vector<std::vector<uint32_t>> people_sorted(num_ages);
-
     uint32_t index = 0;
     for (auto& person : world.get_persons()) {
         people_sorted[size_t(person.get_age())].push_back(index);
@@ -113,7 +113,7 @@ void create_locations(uint32_t num_locs, LocationType type, World& world, Eigen:
     // get vector with number of people per age group
     Eigen::VectorXd num_people_sorted(num_ages);
     for (size_t i = 0; i < num_ages; i++) {
-        num_people_sorted(i) = people_sorted[i].size();
+        num_people_sorted(i) = double(people_sorted[i].size());
     }
 
     // find optimal number of people per age group for every new location by minimizing nonlinear optimization problem
@@ -125,10 +125,11 @@ void create_locations(uint32_t num_locs, LocationType type, World& world, Eigen:
         auto loc = world.add_location(type);
         //add enough people of each age group
         for (size_t j = 0; j < num_ages; j++) {
-            int num = int(sol(j + num_ages * i));
-            for (; current_index(j) < num && current_index(j) < num_people_sorted(j); current_index(j)++) {
+            int num = round(sol(j + num_ages * i));
+            for (int counter = 0; counter < num && current_index(j) < num_people_sorted(j); counter++) {
                 auto person = world.get_persons().begin() + people_sorted[j][current_index(j)];
                 person->set_assigned_location(loc);
+                current_index(j)++;
             }
         }
     }

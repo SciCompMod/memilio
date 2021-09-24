@@ -992,3 +992,68 @@ TEST(TestDiscreteDistribution, generate)
         ASSERT_LE(d, 4);
     }
 }
+
+TEST(TestWorldBuilder, find_optimal_locations)
+{
+    Eigen::VectorXd num_people_sorted(2);
+    num_people_sorted << 40, 24;
+    Eigen::MatrixXd M(2, 2);
+    M(0, 0)      = 24;
+    M(0, 1)      = 7;
+    M(1, 0)      = 11.666666666;
+    M(1, 1)      = 19.333333333;
+    int num_locs = 2;
+
+    Eigen::VectorXd sol = epi::find_optimal_locations(num_people_sorted, num_locs, M);
+    ASSERT_TRUE(std::abs(sol(0) - 30) < 0.00001);
+    ASSERT_TRUE(std::abs(sol(1) - 2) < 0.00001);
+    ASSERT_TRUE(std::abs(sol(2) - 10) < 0.00001);
+    ASSERT_TRUE(std::abs(sol(3) - 22) < 0.00001);
+}
+
+TEST(TestWorldBuilder, create_locations)
+{
+    //create environment with only 2 age groups and small contact matrix
+    Eigen::MatrixXd M(2, 2);
+    M(0, 0)           = 24;
+    M(0, 1)           = 7;
+    M(1, 0)           = 11.666666666;
+    M(1, 1)           = 19.333333333;
+    uint32_t num_locs = 2;
+
+    auto world = epi::World();
+    auto home  = world.add_location(epi::LocationType::Home);
+    for (int i = 0; i < 40; i++) {
+        auto& p1 = world.add_person(home, epi::InfectionState::Carrier, epi::AbmAgeGroup::Age0to4);
+        p1.set_assigned_location(home);
+    }
+    for (int i = 0; i < 24; i++) {
+        auto& p1 = world.add_person(home, epi::InfectionState::Carrier, epi::AbmAgeGroup::Age5to14);
+        p1.set_assigned_location(home);
+    }
+
+    //assign social event
+    create_locations(num_locs, epi::LocationType::SocialEvent, world, M);
+
+    //count people of each age gropo at the locations
+    Eigen::VectorXi counter = Eigen::VectorXi::Zero(4);
+    for (auto& p : world.get_persons()) {
+        int index = p.get_assigned_location_index(epi::LocationType::SocialEvent);
+        if (index == 0 and (size_t) p.get_age() == 0) {
+            counter(0)++;
+        }
+        else if (index == 0 and (size_t) p.get_age() == 1) {
+            counter(1)++;
+        }
+        else if (index == 1 and (size_t) p.get_age() == 0) {
+            counter(2)++;
+        }
+        else if (index == 1 and (size_t) p.get_age() == 1) {
+            counter(3)++;
+        }
+    }
+    ASSERT_EQ(counter(0), 30);
+    ASSERT_EQ(counter(1), 2);
+    ASSERT_EQ(counter(2), 10);
+    ASSERT_EQ(counter(3), 22);
+}

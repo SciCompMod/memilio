@@ -232,19 +232,6 @@ void create_assign_locations(epi::World& world)
 
 int main()
 {
-    Eigen::VectorXd num_people_sorted(2);
-    num_people_sorted << 40, 24;
-    Eigen::MatrixXd M(2, 2);
-    M(0, 0)      = 24;
-    M(0, 1)      = 7;
-    M(1, 0)      = 11.666666666;
-    M(1, 1)      = 19.333333333;
-    int num_locs = 2;
-
-    Eigen::VectorXd sol = epi::find_optimal_locations(num_people_sorted, num_locs, M);
-    std::cout << sol << std::endl;
-
-    return 0;
 
     //epi::set_log_level(epi::LogLevel::warn);
 
