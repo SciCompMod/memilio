@@ -29,6 +29,7 @@ pybind11_add_module(_secir MODULE
   epidemiology/secir/secir_py.cpp
 )
 target_link_libraries(_secir PRIVATE epidemiology)
+target_include_directories(_secir PRIVATE epidemiology/secir)
 
 install(TARGETS _secir DESTINATION epidemiology)
 install(FILES epidemiology/secir/secir.py DESTINATION epidemiology)
