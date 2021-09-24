@@ -65,14 +65,14 @@ struct MyFunc {
     }
     int values() const
     {
-        return m_y.size() + inputs();
+        return int(m_y.size()) + inputs();
     }
 };
 
 Eigen::VectorXd find_optimal_locations(Eigen::VectorXd& num_people_sorted, int num_locs,
                                        Eigen::MatrixXd& contact_matrix)
 {
-    int n = contact_matrix.rows();
+    int n = int(contact_matrix.rows());
     int l = num_locs;
 
     Eigen::VectorXd y((n + 1) * n + l);
@@ -101,7 +101,7 @@ Eigen::VectorXd find_optimal_locations(Eigen::VectorXd& num_people_sorted, int n
 
 void create_locations(uint32_t num_locs, LocationType type, World& world, Eigen::MatrixXd& contact_matrix)
 {
-    uint32_t num_ages = contact_matrix.rows();
+    auto num_ages = uint32_t(contact_matrix.rows());
     // sort people according to their age groups
     std::vector<std::vector<uint32_t>> people_sorted(num_ages);
     uint32_t index = 0;
