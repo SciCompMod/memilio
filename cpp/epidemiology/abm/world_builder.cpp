@@ -125,7 +125,7 @@ void create_locations(uint32_t num_locs, LocationType type, World& world, Eigen:
         auto loc = world.add_location(type);
         //add enough people of each age group
         for (size_t j = 0; j < num_ages; j++) {
-            int num = round(sol(j + num_ages * i));
+            int num = (int)round(sol(j + num_ages * i));
             for (int counter = 0; counter < num && current_index(j) < num_people_sorted(j); counter++) {
                 auto person = world.get_persons().begin() + people_sorted[j][current_index(j)];
                 person->set_assigned_location(loc);
