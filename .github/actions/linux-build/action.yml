@@ -51,7 +51,7 @@ runs:
             export CXX=/usr/bin/clang++-9
           else        
             export CC=/usr/bin/clang-12
-            export CXX=/usr/bin/clang-12
+            export CXX=/usr/bin/clang++-12
           fi
         else
           echo "unknown value for action input: compiler"
