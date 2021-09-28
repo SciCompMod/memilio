@@ -55,6 +55,11 @@ Person::Person(Location& location, InfectionState infection_state, AbmAgeGroup a
 {
 }
 
+Person::Person(Location& location, InfectionState infection_state, VaccinationState vaccination_state, AbmAgeGroup age, const GlobalInfectionParameters& global_params)
+    : Person({location.get_index(), location.get_type()}, infection_state, vaccination_state, age, global_params)
+{
+}
+
 void Person::interact(TimeSpan dt, const GlobalInfectionParameters& global_infection_params, Location& loc)
 {
     auto infection_state     = m_infection_state;

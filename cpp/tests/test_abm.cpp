@@ -190,7 +190,7 @@ TEST(TestLocation, interact)
 {
     using testing::Return;
 
-    //test should work identically work with any age
+    // Test should work identically work with any age.
     epi::AbmAgeGroup age = epi::AbmAgeGroup(epi::UniformIntDistribution<int>()(0, int(epi::AbmAgeGroup::Count) - 1));
     epi::VaccinationState vaccination_state = epi::VaccinationState(epi::UniformIntDistribution<int>()(0, int(epi::VaccinationState::Count) - 1));
     
@@ -222,11 +222,11 @@ TEST(TestLocation, interact)
 
     //setup location with some chance of exposure
     auto location  = epi::Location(epi::LocationType::Work, 0);
-    auto infected1 = epi::Person(location, epi::InfectionState::Carrier, epi::AbmAgeGroup::Age15to34, params);
+    auto infected1 = epi::Person(location, epi::InfectionState::Carrier, vaccination_state, epi::AbmAgeGroup::Age15to34, params);
     location.add_person(infected1);
-    auto infected2 = epi::Person(location, epi::InfectionState::Infected_Detected, epi::AbmAgeGroup::Age80plus, params);
+    auto infected2 = epi::Person(location, epi::InfectionState::Infected_Detected, vaccination_state, epi::AbmAgeGroup::Age80plus, params);
     location.add_person(infected2);
-    auto infected3 = epi::Person(location, epi::InfectionState::Infected_Undetected, epi::AbmAgeGroup::Age5to14, params);
+    auto infected3 = epi::Person(location, epi::InfectionState::Infected_Undetected, vaccination_state, epi::AbmAgeGroup::Age5to14, params);
     location.add_person(infected3);
     
 
@@ -249,7 +249,7 @@ TEST(TestLocation, interact)
     }
 
     {
-        auto exposed = epi::Person(location, epi::InfectionState::Exposed, age, params);
+        auto exposed = epi::Person(location, epi::InfectionState::Exposed, vaccination_state, age, params);
         EXPECT_CALL(mock_exponential_dist.get_mock(), invoke).Times(0); //no transitions out of exposed state
         EXPECT_EQ(location.interact(exposed, dt, params), epi::InfectionState::Exposed);
     }

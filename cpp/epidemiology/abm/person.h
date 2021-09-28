@@ -69,6 +69,15 @@ public:
      * @param global_params the global infection parameters
      */
     Person(Location& location, InfectionState infection_state, AbmAgeGroup age, const GlobalInfectionParameters& global_params);
+    
+    /**
+     * create a Person.
+     * @param location the initial location of the person
+     * @param infection_state the initial infection state of the person
+     * @param age the age group of the person
+     * @param global_params the global infection parameters
+     */
+    Person(Location& location, InfectionState infection_state, VaccinationState vaccination_state, AbmAgeGroup age, const GlobalInfectionParameters& global_params);
 
     /** 
      * Time passes and the person interacts with the population at its current location.

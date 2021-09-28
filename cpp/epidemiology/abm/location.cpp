@@ -31,7 +31,7 @@ Location::Location(LocationType type, uint32_t index)
     : m_type(type)
     , m_index(index)
     , m_subpopulations{}
-    , m_cached_exposure_rate({AbmAgeGroup::Count})
+    , m_cached_exposure_rate({AbmAgeGroup::Count, epi::VaccinationState::Count})
 {
 }
 
@@ -40,9 +40,10 @@ InfectionState Location::interact(const Person& person, TimeSpan dt, const Globa
     auto infection_state = person.get_infection_state();
     auto vaccination_state = person.get_vaccination_state();
     auto age = person.get_age();
+    auto test = epi::Index<epi::VaccinationState>(vaccination_state);
     switch (infection_state) {
     case InfectionState::Susceptible:
-        return random_transition(infection_state, dt, {{InfectionState::Exposed, m_cached_exposure_rate[age]}});
+            return random_transition(infection_state, dt, {{InfectionState::Exposed, m_cached_exposure_rate[{age, epi::Index<epi::VaccinationState>(vaccination_state)}]}});
     case InfectionState::Carrier:
         return random_transition(
             infection_state, dt,
@@ -83,7 +84,7 @@ void Location::begin_step(TimeSpan /*dt*/, const GlobalInfectionParameters& glob
     auto num_carriers = get_subpopulation(InfectionState::Carrier);
     auto num_infected = get_subpopulation(InfectionState::Infected_Detected) + get_subpopulation(InfectionState::Infected_Undetected);
     if (m_num_persons == 0){
-        m_cached_exposure_rate = {{epi::AbmAgeGroup::Count}, 0.};
+        m_cached_exposure_rate = {{epi::AbmAgeGroup::Count, epi::VaccinationState::Count}, 0.};
     } 
     else{
         m_cached_exposure_rate.array()
@@ -91,7 +92,6 @@ void Location::begin_step(TimeSpan /*dt*/, const GlobalInfectionParameters& glob
                              (global_params.get<SusceptibleToExposedByCarrier>().array() * num_carriers +
                               global_params.get<SusceptibleToExposedByInfected>().array() * num_infected);
     }
-    
 }
 
 
