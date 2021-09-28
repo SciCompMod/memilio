@@ -40,7 +40,6 @@ InfectionState Location::interact(const Person& person, TimeSpan dt, const Globa
     auto infection_state = person.get_infection_state();
     auto vaccination_state = person.get_vaccination_state();
     auto age = person.get_age();
-    auto test = m_cached_exposure_rate[{age, epi::Index<epi::VaccinationState>(vaccination_state)}];
     switch (infection_state) {
     case InfectionState::Susceptible:
             return random_transition(infection_state, dt, {{InfectionState::Exposed, m_cached_exposure_rate[{age, epi::Index<epi::VaccinationState>(vaccination_state)}]}});
