@@ -1,0 +1,60 @@
+name: "Linux Test"
+description: "Run the C++ unit tests on linux."
+inputs:
+  build-artifact:
+    description: "Name of the build artifact that contains the unit test binary."
+    required: true
+  coverage:
+    description: "Create coverage report (ON or OFF)"
+    required: false
+    default: "OFF"
+runs:
+  using: "composite"
+  steps:
+    - name: Install Dependencies
+      shell: bash
+      run: |
+        sudo apt-get -qq update
+        sudo apt-get -qq -y install libhdf5-10* wget gnupg
+        sudo apt-get -qq update
+        sudo apt-get -qq -y install g++ python3-pip
+        python3 -m pip install gcovr
+    - name: Download built test directory
+      uses: actions/download-artifact@v2
+      with:
+        name: ${{ inputs.build-artifact }}
+        path: cpp
+    - name: extract build archive
+      shell: bash
+      run: |
+        cd cpp
+        tar -xzf build.tar.gz
+    - name: Run unit tests
+      shell: bash
+      run: |
+        cd cpp/build/tests
+        sudo chmod a+x runUnitTests
+        ./runUnitTests  --gtest_output="xml:report.xml"
+        if [[ "${{ inputs.coverage }}" == "ON" ]]; then
+          cd ../../../
+          gcovr -f cpp/epidemiology
+          gcovr -f cpp/epidemiology --xml -o coverage.xml
+          mkdir coverage_report && cd coverage_report
+          gcovr -r .. -f ../cpp/epidemiology --exclude-throw-branches --html --html-details -o index.html
+        fi
+    - name: Upload test report
+      uses: actions/upload-artifact@v2
+      with:
+        name: test-cpp-linux-report
+        path: cpp/build/tests/report.xml
+        if-no-files-found: error
+        retention-days: 1
+    - name: Upload coverage reports
+      uses: actions/upload-artifact@v2
+      with:
+        name: test-cpp-coverage-reports
+        path: |
+          coverage.xml
+          coverage_report
+        if-no-files-found: ignore
+        retention-days: 1

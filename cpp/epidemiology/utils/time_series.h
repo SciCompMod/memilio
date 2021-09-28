@@ -524,18 +524,18 @@ namespace details
             }
         };
 
-        reference operator*()
+        reference operator*() const
         {
             assert(m_col_idx >= 0 && m_col_idx < m_matrix->cols());
-            return static_cast<Derived&>(*this).get_reference();
+            return static_cast<const Derived&>(*this).get_reference();
         }
 
-        pointer operator->()
+        pointer operator->() const
         {
             return *(*this);
         }
 
-        reference operator[](difference_type i)
+        reference operator[](difference_type i) const
         {
             return *((*this) + i);
         }
@@ -668,7 +668,7 @@ public:
     using value_type        = typename Base::value_type;
     using pointer           = typename Base::pointer;
 
-    reference get_reference()
+    reference get_reference() const
     {
         return m_matrix->col(m_col_idx).tail(m_matrix->rows() - 1);
     }
@@ -700,7 +700,7 @@ public:
     using value_type        = typename Base::value_type;
     using pointer           = typename Base::pointer;
 
-    reference get_reference()
+    reference get_reference() const
     {
         return m_matrix->coeffRef(0, m_col_idx);
     }

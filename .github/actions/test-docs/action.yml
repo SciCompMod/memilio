@@ -1,0 +1,21 @@
+name: "Test Doc"
+description: "Create the documentation."
+runs:
+  using: "composite"
+  steps:
+    - name: Install dependencies
+      shell: bash
+      run: |
+        sudo apt-get -qq update
+        sudo apt-get -qq -y install doxygen
+    - name: Create documentation
+      shell: bash
+      run: |
+        cd docs
+        doxygen
+    - name: Upload Documentation
+      uses: actions/upload-artifact@v2
+      with:
+        name: documentation
+        path: docs/html
+        retention-days: 3
