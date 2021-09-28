@@ -194,6 +194,7 @@ TEST(TestLocation, interact)
     epi::AbmAgeGroup age = epi::AbmAgeGroup(epi::UniformIntDistribution<int>()(0, int(epi::AbmAgeGroup::Count) - 1));
     epi::VaccinationState vaccination_state = epi::VaccinationState(epi::UniformIntDistribution<int>()(0, int(epi::VaccinationState::Count) - 1));
     
+    
     epi::GlobalInfectionParameters params;
     params.set<epi::CarrierToInfected>({{epi::AbmAgeGroup::Count,epi::VaccinationState::Count}, 0.});
     params.get<epi::CarrierToInfected>()[{age, vaccination_state}] = 0.5;
@@ -239,7 +240,7 @@ TEST(TestLocation, interact)
     ScopedMockDistribution<testing::StrictMock<MockDistribution<epi::DiscreteDistribution<size_t>>>> mock_discrete_dist;
 
     {
-        auto susceptible = epi::Person(location, epi::InfectionState::Susceptible, age, params);
+        auto susceptible = epi::Person(location, epi::InfectionState::Susceptible, vaccination_state, age, params);
         EXPECT_CALL(mock_exponential_dist.get_mock(), invoke).Times(1).WillOnce(Return(0.05));
         EXPECT_CALL(mock_discrete_dist.get_mock(), invoke).Times(1).WillOnce(Return(0));
         EXPECT_EQ(location.interact(susceptible, dt, params), epi::InfectionState::Exposed);
@@ -255,7 +256,7 @@ TEST(TestLocation, interact)
     }
 
     {
-        auto carrier = epi::Person(location, epi::InfectionState::Carrier, age, params);
+        auto carrier = epi::Person(location, epi::InfectionState::Carrier, vaccination_state, age, params);
 
         EXPECT_CALL(mock_exponential_dist.get_mock(), invoke).Times(1).WillOnce(Return(0.05));
         EXPECT_CALL(mock_discrete_dist.get_mock(), invoke).Times(1).WillOnce(Return(0));
@@ -274,7 +275,7 @@ TEST(TestLocation, interact)
     }
 
     for (auto&& infected_state : {epi::InfectionState::Infected_Detected, epi::InfectionState::Infected_Undetected}) {
-        auto infected = epi::Person(location, infected_state, age, params);
+        auto infected = epi::Person(location, infected_state, vaccination_state, age, params);
 
         EXPECT_CALL(mock_exponential_dist.get_mock(), invoke).Times(1).WillOnce(Return(0.09));
         EXPECT_CALL(mock_discrete_dist.get_mock(), invoke).Times(1).WillOnce(Return(0));
@@ -289,7 +290,7 @@ TEST(TestLocation, interact)
     }
 
     {
-        auto severe = epi::Person(location, epi::InfectionState::Infected_Severe, age, params);
+        auto severe = epi::Person(location, epi::InfectionState::Infected_Severe, vaccination_state, age, params);
 
         EXPECT_CALL(mock_exponential_dist.get_mock(), invoke).Times(1).WillOnce(Return(0.09));
         EXPECT_CALL(mock_discrete_dist.get_mock(), invoke).Times(1).WillOnce(Return(0));
@@ -304,7 +305,7 @@ TEST(TestLocation, interact)
     }
 
     {
-        auto critical = epi::Person(location, epi::InfectionState::Infected_Critical, age, params);
+        auto critical = epi::Person(location, epi::InfectionState::Infected_Critical, vaccination_state, age, params);
 
         EXPECT_CALL(mock_exponential_dist.get_mock(), invoke).Times(1).WillOnce(Return(0.09));
         EXPECT_CALL(mock_discrete_dist.get_mock(), invoke).Times(1).WillOnce(Return(0));
@@ -319,7 +320,7 @@ TEST(TestLocation, interact)
     }
 
     for (auto&& recovered_state : {epi::InfectionState::Recovered_Carrier, epi::InfectionState::Recovered_Infected}) {
-        auto recovered = epi::Person(location, recovered_state, age, params);
+        auto recovered = epi::Person(location, recovered_state, vaccination_state, age, params);
 
         EXPECT_CALL(mock_exponential_dist.get_mock(), invoke).Times(1).WillOnce(Return(0.09));
         EXPECT_CALL(mock_discrete_dist.get_mock(), invoke).Times(1).WillOnce(Return(0));
