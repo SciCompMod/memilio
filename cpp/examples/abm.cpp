@@ -67,9 +67,9 @@ epi::HouseholdGroup make_household_group_from_one_member(const epi::HouseholdMem
     auto households_size_list = last_household_gets_the_rest(number_of_people, number_of_hh);
     
     auto householdGroup = epi::HouseholdGroup();
-    for (auto i = 0; i < households_size_list.size(); i++) {
+    for(auto &household_size : households_size_list) {
         auto household = epi::Household();
-        household.add_members(member, households_size_list.at(i)); // Add members according to the amount of people in the list.
+        household.add_members(member, household_size); // Add members according to the amount of people in the list.
         householdGroup.add_households_to_group(household, 1); // Add the household to the household group.
     }
     return householdGroup;
@@ -114,9 +114,9 @@ epi::HouseholdGroup make_homes_with_families(epi::HouseholdMember& child, epi::H
         auto households_size_list = last_household_gets_the_rest(people_left_size5, number_of_other_familes);
         
         auto household_rest = epi::HouseholdGroup();
-        for (auto i = 0; i < households_size_list.size(); i++) {
+        for(auto &household_size : households_size_list) {
             auto household = epi::Household();
-            household.add_members(random, households_size_list.at(i)); // Add members according to the amount of people in the list.
+            household.add_members(random, household_size); // Add members according to the amount of people in the list.
             household_rest.add_households_to_group(household, 1); // Add the household to the household group.
         }
     }
