@@ -79,7 +79,7 @@ std::vector<double> get_percentage_of_sum(const Eigen::Array<int, Eigen::Dynamic
 epi::AbmAgeGroup pick_age_group_from_age_distribution(const epi::CustomIndexArray<int, epi::AbmAgeGroup>& age_groups){
     auto age_group_weights = age_groups.array();
     auto weights = get_percentage_of_sum(age_group_weights);
-    uint32_t age_group = epi::DiscreteDistribution<size_t>::get_instance()(weights);
+    size_t age_group = epi::DiscreteDistribution<size_t>::get_instance()(weights);
     return (epi::AbmAgeGroup) age_group;
 }
 
