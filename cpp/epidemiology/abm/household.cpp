@@ -105,11 +105,11 @@ void add_household_to_world(epi::World& world, epi::Household& household){
  */
 void add_household_group_to_world(epi::World& world, epi::HouseholdGroup& household_group){
     auto households = household_group.get_households();
-    
-    for (auto i = 0; i < households.size(); i++) {
-        epi::Household household;
+   
+    for (auto &householdTuple : households){
         int count;
-        std::tie(household, count) = households.at(i); // Get the household (and the amount of times this household is in there) from the tuple.
+        epi::Household household;
+        std::tie(household, count) = householdTuple; // Get the household (and the amount of times this household is in there) from the tuple.
         for (int j = 0; j < count; j++) {
             add_household_to_world(world, household); // Add the household count amount of times.
         }
