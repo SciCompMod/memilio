@@ -17,7 +17,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #############################################################################
-import epidemiology.secir as secir
+from epidemiology.secir import (UncertainContactMatrix, ContactMatrix, Damping, SecirModel,
+                                simulate, AgeGroup, Index_InfectionState, SecirSimulation)
+from epidemiology.secir import InfectionState as State
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
@@ -43,54 +45,54 @@ def run_secir_simulation():
     num_compartments = len(compartments)
 
     # Initialize Parameters
-    model = secir.SecirModel(1)
+    model = SecirModel(1)
+
+    A0 = AgeGroup(0)
 
     # Set parameters
 
     # Compartment transition duration
-    model.parameters.times[0].set_incubation(5.2)
-    model.parameters.times[0].set_infectious_mild(6)
-    model.parameters.times[0].set_serialinterval(4.2)
-    model.parameters.times[0].set_hospitalized_to_home(12)
-    model.parameters.times[0].set_home_to_hospitalized(5)
-    model.parameters.times[0].set_hospitalized_to_icu(2)
-    model.parameters.times[0].set_icu_to_home(8)
-    model.parameters.times[0].set_icu_to_death(5)
+    model.parameters.IncubationTime[A0] = 5.2  # R_2^(-1)+R_3^(-1)
+    model.parameters.InfectiousTimeMild[A0] =  6.  # 4-14  (=R4^(-1))
+    model.parameters.SerialInterval[A0] = 4.2   # 4-4.4 // R_2^(-1)+0.5*R_3^(-1)
+    model.parameters.HospitalizedToHomeTime[A0] = 12.  # 7-16 (=R5^(-1))
+    model.parameters.HomeToHospitalizedTime[A0] = 5.  # 2.5-7 (=R6^(-1))
+    model.parameters.HospitalizedToICUTime[A0] = 2.  # 1-3.5 (=R7^(-1))
+    model.parameters.ICUToHomeTime[A0] = 8.  # 5-16 (=R8^(-1))
+    model.parameters.ICUToDeathTime[A0] = 5.  # 3.5-7 (=R5^(-1))
 
     # Initial number of people in each compartment
-    model.populations[secir.AgeGroup(0), secir.Index_InfectionState(secir.InfectionState.Exposed)] = 100
-    model.populations[secir.AgeGroup(0), secir.Index_InfectionState(secir.InfectionState.Carrier)] = 40
-    model.populations[secir.AgeGroup(0), secir.Index_InfectionState(secir.InfectionState.Infected)] = 80
-    model.populations[secir.AgeGroup(0), secir.Index_InfectionState(secir.InfectionState.Hospitalized)] = 40
-    model.populations[secir.AgeGroup(0), secir.Index_InfectionState(secir.InfectionState.ICU)] = 20
-    model.populations[secir.AgeGroup(0), secir.Index_InfectionState(secir.InfectionState.Recovered)] = 0
-    model.populations[secir.AgeGroup(0), secir.Index_InfectionState(secir.InfectionState.Dead)] = 0
-    # this is probably not correct.. is set_difference_from_group_total binded?
-    model.populations.set_difference_from_group_total_AgeGroup((secir.AgeGroup(0), 
-        secir.Index_InfectionState(secir.InfectionState.Susceptible)), populations[0])
-
+    model.populations[A0, Index_InfectionState(State.Exposed)] = 100
+    model.populations[A0, Index_InfectionState(State.Carrier)] = 50
+    model.populations[A0, Index_InfectionState(State.Infected)] = 50
+    model.populations[A0, Index_InfectionState(State.Hospitalized)] = 20
+    model.populations[A0, Index_InfectionState(State.ICU)] = 10
+    model.populations[A0, Index_InfectionState(State.Recovered)] = 10
+    model.populations[A0, Index_InfectionState(State.Dead)] = 0
+    model.populations.set_difference_from_total((A0, Index_InfectionState(State.Susceptible)), populations[0])
+    
     # Compartment transition propabilities
-    model.parameters.probabilities[0].set_infection_from_contact(1.0)
-    model.parameters.probabilities[0].set_carrier_infectability(0.67)
-    model.parameters.probabilities[0].set_asymp_per_infectious(0.09)
-    model.parameters.probabilities[0].set_risk_from_symptomatic(0.25)
-    model.parameters.probabilities[0].set_hospitalized_per_infectious(0.2)
-    model.parameters.probabilities[0].set_icu_per_hospitalized(0.25)
-    model.parameters.probabilities[0].set_dead_per_icu(0.3)
+    model.parameters.RelativeCarrierInfectability[A0] = 0.67 #TODO: must this parameter be set?
+    model.parameters.InfectionProbabilityFromContact[A0] = 1.0
+    model.parameters.AsymptoticCasesPerInfectious[A0] = 0.09  # 0.01-0.16
+    model.parameters.RiskOfInfectionFromSympomatic[A0] = 0.25  # 0.05-0.5
+    model.parameters.HospitalizedCasesPerInfectious[A0] = 0.2  # 0.1-0.35
+    model.parameters.ICUCasesPerHospitalized[A0] = 0.25  # 0.15-0.4
+    model.parameters.DeathsPerHospitalized[A0] = 0.3  # 0.15-0.77
+    #TODO what about MaxRiskOfInfectionFromSympomatic?
 
-    model.parameters.set_start_day(start_day + start_month * 30) # TODO: start day has to adapted more precisely!
+    #TODO how to do this: model.parameters.set_start_day(start_day + start_month * 30) # TODO: start day has to adapted more precisely!
 
-    model.parameters.get_contact_patterns().cont_freq_mat[0].baseline = np.ones((num_groups, num_groups)) * 1
-    model.parameters.get_contact_patterns().cont_freq_mat[0].minimum = np.ones((num_groups, num_groups)) * 0
-
-    # Define Damping on Contacts
-    model.parameters.get_contact_patterns().cont_freq_mat.add_damping(secir.Damping(np.ones((num_groups, num_groups)) * 0.9, 30, 0, 0))
+    #TODO use "contacts = ContactMatrix(np.r_[0.5])" or differ between baseline and minimum?
+    model.parameters.ContactPatterns.cont_freq_mat[0].baseline = np.ones((num_groups, num_groups)) * 1
+    model.parameters.ContactPatterns.cont_freq_mat[0].minimum = np.ones((num_groups, num_groups)) * 0
+    model.parameters.ContactPatterns.cont_freq_mat.add_damping(Damping(coeffs = np.r_[0.9], t = 30.0, level = 0, type = 0))
 
     # Apply mathematical constraints to parameters
     model.apply_constraints()
 
     # Run Simulation
-    result = secir.simulate(0, days, dt, model)
+    result = simulate(0, days, dt, model)
     print(result.get_last_value())
 
     num_time_points = result.get_num_time_points()
