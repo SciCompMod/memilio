@@ -81,21 +81,23 @@ def run_secir_groups_simulation():
 
         # Compartment transition propabilities
            
-        model.parameters.RelativeCarrierInfectability[AgeGroup(i)] = 0.67  #TODO: must this parameter be set? 
+        model.parameters.RelativeCarrierInfectability[AgeGroup(i)] = 0.67  
         model.parameters.InfectionProbabilityFromContact[AgeGroup(i)] = 1.0
         model.parameters.AsymptoticCasesPerInfectious[AgeGroup(i)] = 0.09  # 0.01-0.16
         model.parameters.RiskOfInfectionFromSympomatic[AgeGroup(i)] = 0.25  # 0.05-0.5
         model.parameters.HospitalizedCasesPerInfectious[AgeGroup(i)] = 0.2  # 0.1-0.35
         model.parameters.ICUCasesPerHospitalized[AgeGroup(i)] = 0.25  # 0.15-0.4
         model.parameters.DeathsPerHospitalized[AgeGroup(i)] = 0.3  # 0.15-0.77
-        #TODO what about MaxRiskOfInfectionFromSympomatic?
+        model.parameters.MaxRiskOfInfectionFromSympomatic[AgeGroup(i)] = 0.5
+    
+    model.parameters.StartDay = start_day + start_month * 30 # TODO: start day has to adapted more precisely!
     
     # set contact rates and emulate some mitigations
     # set contact frequency matrix
     model.parameters.ContactPatterns.cont_freq_mat[0].baseline = np.loadtxt(baseline_contact_matrix0) \
         + np.loadtxt(baseline_contact_matrix1) + np.loadtxt(baseline_contact_matrix2) + np.loadtxt(baseline_contact_matrix3)
     model.parameters.ContactPatterns.cont_freq_mat[0].minimum = np.ones((num_groups, num_groups)) * 0
-    model.parameters.ContactPatterns.cont_freq_mat.add_damping(Damping(coeffs = np.ones((num_groups, num_groups)) * 0.7, t = 30.0, level = 0, type = 0))
+    model.parameters.ContactPatterns.cont_freq_mat.add_damping(Damping(coeffs = np.ones((num_groups, num_groups)) * 0.9, t = 30.0, level = 0, type = 0))
 
     # Apply mathematical constraints to parameters
     model.apply_constraints()

@@ -72,18 +72,18 @@ def run_secir_simulation():
     model.populations.set_difference_from_total((A0, Index_InfectionState(State.Susceptible)), populations[0])
     
     # Compartment transition propabilities
-    model.parameters.RelativeCarrierInfectability[A0] = 0.67 #TODO: must this parameter be set?
+    model.parameters.RelativeCarrierInfectability[A0] = 0.67 
     model.parameters.InfectionProbabilityFromContact[A0] = 1.0
     model.parameters.AsymptoticCasesPerInfectious[A0] = 0.09  # 0.01-0.16
     model.parameters.RiskOfInfectionFromSympomatic[A0] = 0.25  # 0.05-0.5
     model.parameters.HospitalizedCasesPerInfectious[A0] = 0.2  # 0.1-0.35
     model.parameters.ICUCasesPerHospitalized[A0] = 0.25  # 0.15-0.4
     model.parameters.DeathsPerHospitalized[A0] = 0.3  # 0.15-0.77
-    #TODO what about MaxRiskOfInfectionFromSympomatic?
+    model.parameters.MaxRiskOfInfectionFromSympomatic[A0] = 0.5
 
-    #TODO how to do this: model.parameters.set_start_day(start_day + start_month * 30) # TODO: start day has to adapted more precisely!
+    model.parameters.StartDay = start_day + start_month * 30 # TODO: start day has to adapted more precisely!
 
-    #TODO use "contacts = ContactMatrix(np.r_[0.5])" or differ between baseline and minimum?
+    # model.parameters.ContactPatterns.cont_freq_mat[0] = ContactMatrix(np.r_[0.5])
     model.parameters.ContactPatterns.cont_freq_mat[0].baseline = np.ones((num_groups, num_groups)) * 1
     model.parameters.ContactPatterns.cont_freq_mat[0].minimum = np.ones((num_groups, num_groups)) * 0
     model.parameters.ContactPatterns.cont_freq_mat.add_damping(Damping(coeffs = np.r_[0.9], t = 30.0, level = 0, type = 0))
