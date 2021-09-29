@@ -15,10 +15,8 @@ runs:
       shell: bash
       run: |
         sudo apt-get -qq update
-        sudo apt-get -qq -y install libhdf5-10* wget gnupg
+        sudo apt-get -qq -y install libhdf5-10* wget gnupg lcov
         sudo apt-get -qq update
-        sudo apt-get -qq -y install g++ python3-pip
-        python3 -m pip install gcovr
     - name: Download built test directory
       uses: actions/download-artifact@v2
       with:
@@ -32,29 +30,27 @@ runs:
     - name: Run unit tests
       shell: bash
       run: |
-        cd cpp/build/tests
-        sudo chmod a+x runUnitTests
-        ./runUnitTests  --gtest_output="xml:report.xml"
         if [[ "${{ inputs.coverage }}" == "ON" ]]; then
-          cd ../../../
-          gcovr -f cpp/epidemiology
-          gcovr -f cpp/epidemiology --xml -o coverage.xml
-          mkdir coverage_report && cd coverage_report
-          gcovr -r .. -f ../cpp/epidemiology --exclude-throw-branches --html --html-details -o index.html
+          cd cpp/build
+          cmake --build . --target coverage/fast
+        else
+          cd cpp/build/tests
+          sudo chmod a+x runUnitTests
+          ./runUnitTests  --gtest_output="xml:report.xml"
         fi
     - name: Upload test report
       uses: actions/upload-artifact@v2
       with:
         name: test-cpp-linux-report
         path: cpp/build/tests/report.xml
-        if-no-files-found: error
+        if-no-files-found: ignore
         retention-days: 1
     - name: Upload coverage reports
       uses: actions/upload-artifact@v2
       with:
         name: test-cpp-coverage-reports
         path: |
-          coverage.xml
-          coverage_report
+          cpp/build/coverage.info
+          cpp/build/coverage
         if-no-files-found: ignore
         retention-days: 1
