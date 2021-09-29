@@ -79,7 +79,7 @@ def run_secir_simulation():
     model.parameters.HospitalizedCasesPerInfectious[A0] = 0.2  # 0.1-0.35
     model.parameters.ICUCasesPerHospitalized[A0] = 0.25  # 0.15-0.4
     model.parameters.DeathsPerHospitalized[A0] = 0.3  # 0.15-0.77
-    model.parameters.MaxRiskOfInfectionFromSympomatic[A0] = 0.5
+    model.parameters.MaxRiskOfInfectionFromSympomatic[A0] = 0.5 # twice the value of RiskOfInfectionFromSymptomatic
 
     model.parameters.StartDay = start_day + start_month * 30 # TODO: start day has to adapted more precisely!
 
