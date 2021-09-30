@@ -642,7 +642,7 @@ decltype(auto) pybind_pickle_class(py::module &m, const char* name)
                 auto tuple = epi::serialize_tuple(object);
                 if (tuple)
                 {
-                    return tuple.value();
+                    return std::move(tuple).value();
                 }
                 else
                 {
@@ -654,7 +654,7 @@ decltype(auto) pybind_pickle_class(py::module &m, const char* name)
                 auto object = epi::deserialize_tuple(t,epi::Tag<T>{});
                 if (object)
                 {
-                    return object.value();
+                    return std::move(object).value();
                 }
                 else
                 {

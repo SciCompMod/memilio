@@ -58,7 +58,7 @@ template <class T>
 using is_small_integral = std::integral_constant<bool, (std::is_integral<T>::value && sizeof(T) <= 4)>;
 //signed small ints
 template <class T>
-struct TupleType<T, std::enable_if_t<conjunction_v<is_small_integral<T>, std::is_signed<T>>>> : std::true_type {
+struct TupleType<T, std::enable_if_t<std::is_arithmetic<T>::value>> : std::true_type {
 };
 
 //unsigned small ints
@@ -463,7 +463,7 @@ template <class T, std::enable_if_t<TupleType<T>::value, void*> = nullptr>
 void TupleObject::add_element(const std::string& name, const T& value)
 {
     if (m_status->is_ok()) {
-        m_value = m_value + transform_serialize(value);
+        m_value += transform_serialize(value);
     }
 }
 
@@ -474,7 +474,7 @@ void TupleObject::add_element(const std::string& name, const T& value)
         auto ctxt = TupleContext(m_status, m_flags);
         epi::serialize(ctxt, value);
         if (m_status) {
-            m_value = m_value + py::make_tuple(std::move(ctxt).value());
+            m_value += py::make_tuple(std::move(ctxt).value());
         }
     }
 }
@@ -486,7 +486,7 @@ void TupleObject::add_optional(const std::string& name, const T* value)
         add_element(name, *value);
     }
     else {
-        m_value = m_value  + py::make_tuple(py::tuple(0));
+        m_value += py::make_tuple(py::tuple(0));
     }
 }
 
@@ -496,9 +496,9 @@ void TupleObject::add_list(const std::string& name, Iter b, Iter e)
     if (m_status->is_ok()) {
         auto new_tuple = py::tuple(0);
         for (auto it = b; it < e; ++it) {
-            new_tuple = new_tuple + (transform_serialize(*it));
+            new_tuple += (transform_serialize(*it));
         }
-        m_value = m_value + py::make_tuple(new_tuple);
+        m_value += py::make_tuple(new_tuple);
     }
 }
 
@@ -541,9 +541,7 @@ IOResult<T> TupleObject::expect_element(const std::string& name,Tag<T> tag)
     }
 
     auto ctxt = TupleContext(m_value[m_index++], m_status, m_flags);
-    auto r    = epi::deserialize(ctxt, tag);
-    return r;
-    //return success(transform_deserialize<T>(m_value[m_index]));
+    return epi::deserialize(ctxt, tag);
 }
 
 template <class T>
@@ -584,8 +582,7 @@ IOResult<std::vector<T>> TupleObject::expect_list(const std::string &name, Tag<T
     std::vector<T> v;
     v.reserve(py::len(tuple));
     for (size_t i = 0; i < py::len(tuple); ++i) {
-        auto r = success(transform_deserialize<T>(tuple[i]));
-        v.emplace_back(r.value());
+        v.emplace_back(transform_deserialize<T>(tuple[i]));
     }
     return success(std::move(v));
 }
@@ -606,7 +603,7 @@ IOResult<std::vector<T>> TupleObject::expect_list(const std::string &name, Tag<T
         auto ctxt = TupleContext(tuple[i], m_status, m_flags);
         auto r    = epi::deserialize(ctxt, tag);
         if (r) {
-            v.emplace_back(r.value());
+            v.emplace_back(std::move(r).value());
         }
         else {
             return failure(r.error());
