@@ -52,5 +52,5 @@ runs:
         path: |
           cpp/build/coverage.info
           cpp/build/coverage
-        if-no-files-found: ignore
+        if-no-files-found: ${{ inputs.coverage == 'OFF' && 'ignore' || 'error' }}
         retention-days: 1
