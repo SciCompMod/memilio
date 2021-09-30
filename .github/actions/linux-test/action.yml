@@ -43,7 +43,7 @@ runs:
       with:
         name: test-cpp-linux-report
         path: cpp/build/tests/report.xml
-        if-no-files-found: ignore
+        if-no-files-found: ${{ inputs.coverage == 'ON' && 'ignore' || 'error' }}
         retention-days: 1
     - name: Upload coverage reports
       uses: actions/upload-artifact@v2
