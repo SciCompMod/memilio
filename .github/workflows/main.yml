@@ -187,7 +187,7 @@ jobs:
       - name: Deploy to codecov.io
         uses: codecov/codecov-action@v2
         with:
-          files: ./pycode/test/coverage_python.xml,./coverage.xml
+          files: ./pycode/test/coverage_python.xml,./coverage.info
           verbose: true
 
   pages:
