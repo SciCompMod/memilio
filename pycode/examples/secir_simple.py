@@ -23,7 +23,7 @@ from epidemiology.secir import InfectionState as State
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
-from datetime import datetime
+from datetime import datetime, date
 
 def run_secir_simulation():
     """
@@ -81,7 +81,7 @@ def run_secir_simulation():
     model.parameters.DeathsPerHospitalized[A0] = 0.3  # 0.15-0.77
     model.parameters.MaxRiskOfInfectionFromSympomatic[A0] = 0.5 # twice the value of RiskOfInfectionFromSymptomatic
 
-    model.parameters.StartDay = start_day + start_month * 30 # TODO: start day has to adapted more precisely!
+    model.parameters.StartDay = (date(start_year, start_month, start_day) - date(start_year, 1, 1)).days
 
     # model.parameters.ContactPatterns.cont_freq_mat[0] = ContactMatrix(np.r_[0.5])
     model.parameters.ContactPatterns.cont_freq_mat[0].baseline = np.ones((num_groups, num_groups)) * 1
