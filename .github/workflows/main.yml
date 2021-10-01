@@ -193,7 +193,6 @@ jobs:
   pages:
     needs: [test-py, test-cpp-gcc_clang, test-docs, test-pylint]
     runs-on: ubuntu-latest
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     steps:
       - uses: actions/checkout@v2
       - name: Install dependencies
@@ -237,9 +236,18 @@ jobs:
           mkdir -p public/coverage/cpp
           mkdir -p public/coverage/python
           cp -r coverage_python/* public/coverage/python/
-          cp -r coverage_report/* public/coverage/cpp/
+          cp -r coverage/* public/coverage/cpp/
+      - name: Upload pages as artifact
+        uses: actions/upload-artifact@v2
+        if: github.event_name == 'pull_request' && github.ref != 'refs/heads/main'
+        with:
+          name: pages
+          path: public
+          if-no-files-found: error
+          retention-days: 1
       - name: Deploy to gh-pages branch
         uses: peaceiris/actions-gh-pages@v3
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_dir: ./public
