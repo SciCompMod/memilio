@@ -17,9 +17,9 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
-#include <epidemiology/utils/eigen_util.h>
-#include <epidemiology/utils/stl_util.h>
-#include "epidemiology/utils/compiler_diagnostics.h"
+#include "memilio/math/eigen_util.h"
+#include "memilio/utils/stl_util.h"
+#include "memilio/utils/compiler_diagnostics.h"
 #include "matchers.h"
 #include <gtest/gtest.h>
 

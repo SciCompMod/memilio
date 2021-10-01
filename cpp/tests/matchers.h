@@ -20,9 +20,9 @@
 #ifndef EPI_TESTS_MATCHERS_H
 #define EPI_TESTS_MATCHERS_H
 
-#include "epidemiology/utils/compiler_diagnostics.h"
-#include "epidemiology/math/floating_point.h"
-#include "epidemiology/utils/io.h"
+#include "memilio/utils/compiler_diagnostics.h"
+#include "memilio/math/floating_point.h"
+#include "memilio/io/io.h"
 #include "gmock/gmock.h"
 
 /**

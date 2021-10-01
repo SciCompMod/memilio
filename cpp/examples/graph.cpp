@@ -17,9 +17,9 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
-#include <epidemiology/migration/migration.h>
-#include <epidemiology/secir/seir.h>
-#include <epidemiology/model/simulation.h>
+#include "seir/seir.h"
+#include "memilio/mobility/migration.h"
+#include "memilio/epidemiology/simulation.h"
 
 #include <iostream>
 

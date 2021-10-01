@@ -17,9 +17,9 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
-#include <epidemiology/migration/migration.h>
-#include <epidemiology_io/secir_parameters_io.h>
-#include <epidemiology_io/mobility_io.h>
+#include "memilio/mobility/migration.h"
+#include "secir/secir_parameters_io.h"
+#include "memilio/io/mobility_io.h"
 #include <data_dir.h>
 #include <iostream>
 

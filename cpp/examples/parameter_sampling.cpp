@@ -17,9 +17,9 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
-#include <epidemiology/utils/parameter_distributions.h>
-#include <epidemiology/secir/parameter_space.h>
-#include <epidemiology/secir/secir.h>
+#include "memilio/utils/parameter_distributions.h"
+#include "secir/parameter_space.h"
+#include "secir/secir.h"
 
 #include <stdio.h>
 

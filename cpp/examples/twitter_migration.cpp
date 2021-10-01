@@ -17,7 +17,7 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
-#include <epidemiology_io/mobility_io.h>
+#include "memilio/io/mobility_io.h"
 
 // wrapper function to print out matrix entries by gdb's 'print get_element(M,1,1)'
 // (GDB doesn't support calling the overloaded operator())

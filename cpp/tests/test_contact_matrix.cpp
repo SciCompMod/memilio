@@ -17,7 +17,7 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
-#include "epidemiology/secir/contact_matrix.h"
+#include "memilio/epidemiology/contact_matrix.h"
 #include "matchers.h"
 #include "gtest/gtest.h"
 

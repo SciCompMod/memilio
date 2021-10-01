@@ -18,8 +18,9 @@
 * limitations under the License.
 */
 #include "load_test_data.h"
-#include "epidemiology/secir/secir.h"
-#include "epidemiology/secir/analyze_result.h"
+#include "secir/secir.h"
+#include "secir/parameter_space.h"
+#include "secir/analyze_result.h"
 #include <distributions_helpers.h>
 #include <gtest/gtest.h>
 

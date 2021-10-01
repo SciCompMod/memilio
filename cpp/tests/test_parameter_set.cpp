@@ -17,9 +17,9 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
-#include <epidemiology/utils/logging.h>
-#include <epidemiology/utils/parameter_set.h>
-#include <epidemiology/utils/custom_index_array.h>
+#include "memilio/utils/logging.h"
+#include "memilio/utils/parameter_set.h"
+#include "memilio/utils/custom_index_array.h"
 #include <gtest/gtest.h>
 #include <gmock/gmock.h>
 

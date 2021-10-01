@@ -17,8 +17,8 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
-#include "epidemiology/model/simulation.h"
-#include "epidemiology/secir/analyze_result.h"
+#include "memilio/epidemiology/simulation.h"
+#include "secir/analyze_result.h"
 #include "matchers.h"
 #include "gtest/gtest.h"
 #include "gmock/gmock.h"

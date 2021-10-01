@@ -19,12 +19,12 @@
 */
 #define _USE_MATH_DEFINES
 
-#include "epidemiology/migration/migration.h"
-#include "epidemiology/secir/seir.h"
-#include "epidemiology/secir/secir.h"
-#include "epidemiology/utils/eigen_util.h"
-#include "epidemiology/utils/eigen.h"
-#include "epidemiology/model/simulation.h"
+#include "memilio/mobility/migration.h"
+#include "seir/seir.h"
+#include "secir/secir.h"
+#include "memilio/math/eigen_util.h"
+#include "memilio/math/eigen.h"
+#include "memilio/epidemiology/simulation.h"
 #include "matchers.h"
 #include "gtest/gtest.h"
 

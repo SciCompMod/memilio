@@ -20,8 +20,8 @@
 #ifndef EPI_TEST_TMP_FILE_REGISTER_H
 #define EPI_TEST_TMP_FILE_REGISTER_H
 
-#include "epidemiology/utils/io.h"
-#include "epidemiology/utils/logging.h"
+#include "memilio/io/io.h"
+#include "memilio/utils/logging.h"
 #include "boost/filesystem.hpp"
 
 /**

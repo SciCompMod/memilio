@@ -17,7 +17,7 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
-#include "epidemiology/math/smoother.h"
+#include "memilio/math/smoother.h"
 #include <gtest/gtest.h>
 
 TEST(TestSmoother, CosineSmootherCheckValues)

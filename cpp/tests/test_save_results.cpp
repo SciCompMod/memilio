@@ -18,10 +18,10 @@
 * limitations under the License.
 */
 #include "load_test_data.h"
-#include "epidemiology/model/simulation.h"
-#include "epidemiology/secir/secir.h"
-#include "epidemiology/utils/time_series.h"
-#include <epidemiology_io/secir_result_io.h>
+#include "memilio/epidemiology/simulation.h"
+#include "secir/secir.h"
+#include "memilio/utils/time_series.h"
+#include "secir/secir_result_io.h"
 #include "temp_file_register.h"
 #include <gtest/gtest.h>
 

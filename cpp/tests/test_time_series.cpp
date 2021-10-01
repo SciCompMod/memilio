@@ -17,8 +17,8 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
-#include <epidemiology/utils/time_series.h>
-#include <epidemiology/utils/stl_util.h>
+#include "memilio/utils/time_series.h"
+#include "memilio/utils/stl_util.h"
 #include "matchers.h"
 #include <gtest/gtest.h>
 #include <gmock/gmock.h>

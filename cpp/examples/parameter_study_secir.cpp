@@ -17,10 +17,10 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
-#include <epidemiology_io/secir_parameters_io.h>
-#include <epidemiology/secir/parameter_space.h>
-#include <epidemiology/secir/parameter_studies.h>
-#include <epidemiology/migration/migration.h>
+#include "secir/secir_parameters_io.h"
+#include "secir/parameter_space.h"
+#include "secir/parameter_studies.h"
+#include "memilio/mobility/migration.h"
 
 int main()
 {

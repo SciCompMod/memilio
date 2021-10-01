@@ -1,0 +1,5 @@
+if(EPI_BUILD_EPI_IO)
+    add_executable(paper_202011 paper_202011.cpp)
+    target_link_libraries(paper_202011 PRIVATE memilio secir Boost::filesystem)
+    target_compile_options(paper_202011 PRIVATE ${_EPI_CXX_FLAGS_ENABLE_WARNING_ERRORS})
+endif(EPI_BUILD_EPI_IO)

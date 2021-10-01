@@ -17,8 +17,8 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
-#include "epidemiology/abm/household.h"
-#include "epidemiology/abm/abm.h"
+#include "abm/household.h"
+#include "abm/abm.h"
 #include <gtest/gtest.h>
 
 

@@ -17,11 +17,9 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
-
-#include "epidemiology/abm/household.h"
-#include "epidemiology/abm/abm.h"
+#include "abm/abm.h"
+#include "abm/household.h"
 #include <cstdio>
-
 /**
  * Determine the infection state of a person at the beginning of the simulation.
  * The infection states are chosen randomly. They are distributed according to the probabilites set in the example.

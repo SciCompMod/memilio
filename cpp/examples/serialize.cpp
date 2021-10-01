@@ -23,8 +23,8 @@
  * See epidemiology/utils/io.h for more information.
  */
 
-#include "epidemiology/utils/io.h"
-#include "epidemiology_io/json_serializer.h"
+#include "memilio/io/io.h"
+#include "memilio/io/json_serializer.h"
 
 namespace ioex
 {

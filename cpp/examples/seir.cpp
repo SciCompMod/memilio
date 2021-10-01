@@ -17,9 +17,9 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
-#include <epidemiology/secir/seir.h>
-#include <epidemiology/model/simulation.h>
-#include <epidemiology/utils/logging.h>
+#include "seir/seir.h"
+#include "memilio/epidemiology/simulation.h"
+#include "memilio/utils/logging.h"
 
 int main()
 {

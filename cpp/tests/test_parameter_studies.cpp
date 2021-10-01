@@ -18,11 +18,11 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
-#include <epidemiology/secir/secir.h>
-#include <epidemiology/secir/parameter_space.h>
-#include <epidemiology/secir/parameter_studies.h>
-#include <epidemiology/migration/migration.h>
-#include <epidemiology/utils/random_number_generator.h>
+#include "secir/secir.h"
+#include "secir/parameter_space.h"
+#include "secir/parameter_studies.h"
+#include "memilio/mobility/migration.h"
+#include "memilio/utils/random_number_generator.h"
 #include <gtest/gtest.h>
 #include <stdio.h>
 

@@ -18,9 +18,9 @@
 * limitations under the License.
 */
 #include "load_test_data.h"
-#include <epidemiology_io/mobility_io.h>
-#include <epidemiology/utils/logging.h>
-#include "epidemiology/utils/eigen.h"
+#include "memilio/io/mobility_io.h"
+#include "memilio/utils/logging.h"
+#include "memilio/math/eigen.h"
 #include "matchers.h"
 
 #include <gtest/gtest.h>

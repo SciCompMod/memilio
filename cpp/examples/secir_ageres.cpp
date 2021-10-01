@@ -17,10 +17,10 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
-#include <epidemiology/secir/secir.h>
-#include <epidemiology/utils/time_series.h>
-#include <epidemiology/utils/logging.h>
-#include <epidemiology/model/simulation.h>
+#include "secir/secir.h"
+#include "memilio/utils/time_series.h"
+#include "memilio/utils/logging.h"
+#include "memilio/epidemiology/simulation.h"
 
 int main()
 {

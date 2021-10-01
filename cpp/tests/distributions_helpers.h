@@ -20,7 +20,7 @@
 #ifndef DISTRIBUTIONS_HELPERS_H
 #define DISTRIBUTIONS_HELPERS_H
 
-#include <epidemiology/secir/parameter_studies.h>
+#include "memilio/utils/parameter_distributions.h"
 #include <gtest/gtest.h>
 #include <gmock/gmock.h>
 

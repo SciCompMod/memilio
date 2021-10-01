@@ -17,12 +17,12 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
-#include <epidemiology/utils/logging.h>
-#include <epidemiology/utils/random_number_generator.h>
+#include "memilio/utils/logging.h"
+#include "memilio/utils/random_number_generator.h"
 #include <gtest/gtest.h>
 
 #if HAVE_EPI_IO
-#include <epidemiology_io/io.h>
+#include "memilio/io/io.h"
 #endif
 
 int main(int argc, char** argv)

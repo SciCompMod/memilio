@@ -17,7 +17,7 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
-#include <epidemiology/utils/graph.h>
+#include "memilio/mobility/graph.h"
 #include <gtest/gtest.h>
 #include <gmock/gmock.h>
 

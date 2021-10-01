@@ -18,7 +18,7 @@
 * limitations under the License.
 */
 #include "test_data_dir.h"
-#include <epidemiology/utils/stl_util.h>
+#include "memilio/utils/stl_util.h"
 #include <string>
 #include <cstring>
 #include <vector>

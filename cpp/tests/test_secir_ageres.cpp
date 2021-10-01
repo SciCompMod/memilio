@@ -18,8 +18,8 @@
 * limitations under the License.
 */
 #include "load_test_data.h"
-#include "epidemiology/secir/secir.h"
-#include "epidemiology/model/simulation.h"
+#include "secir/secir.h"
+#include "memilio/epidemiology/simulation.h"
 #include <gtest/gtest.h>
 
 TEST(TestSecir, compareAgeResWithSingleRun)

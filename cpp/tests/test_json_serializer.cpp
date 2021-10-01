@@ -17,11 +17,11 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
-#include "epidemiology_io/json_serializer.h"
-#include "epidemiology/utils/type_safe.h"
-#include "epidemiology/utils/custom_index_array.h"
-#include "epidemiology/utils/parameter_set.h"
-#include "epidemiology/utils/uncertain_value.h"
+#include "memilio/io/json_serializer.h"
+#include "memilio/utils/type_safe.h"
+#include "memilio/utils/custom_index_array.h"
+#include "memilio/utils/parameter_set.h"
+#include "memilio/utils/uncertain_value.h"
 #include "matchers.h"
 #include "distributions_helpers.h"
 #include "gtest/gtest.h"

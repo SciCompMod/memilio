@@ -18,7 +18,7 @@
 * limitations under the License.
 */
 #include "load_test_data.h"
-#include "epidemiology/secir/implicit_euler.h"
+#include "secir/implicit_euler.h"
 #include <gtest/gtest.h>
 
 TEST(TestImplicitEuler, compareOneTimeStep)

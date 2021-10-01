@@ -17,9 +17,9 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
-#include "epidemiology/secir/dynamic_npis.h"
-#include "epidemiology/migration/migration.h"
-#include "epidemiology/secir/secir.h"
+#include "memilio/epidemiology/dynamic_npis.h"
+#include "memilio/mobility/migration.h"
+#include "secir/secir.h"
 #include "matchers.h"
 
 #include <gtest/gtest.h>

@@ -17,7 +17,7 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
-#include <epidemiology/utils/date.h>
+#include "memilio/utils/date.h"
 #include <gtest/gtest.h>
 
 TEST(TestDate, init)

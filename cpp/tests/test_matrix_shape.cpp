@@ -17,7 +17,7 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
-#include "epidemiology/utils/matrix_shape.h"
+#include "memilio/math/matrix_shape.h"
 #include "gtest/gtest.h"
 
 TEST(TestMatrixShape, Rect)

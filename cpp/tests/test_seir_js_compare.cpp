@@ -18,9 +18,9 @@
 * limitations under the License.
 */
 #include "load_test_data.h"
-#include <epidemiology/secir/seir.h>
-#include "epidemiology/math/euler.h"
-#include "epidemiology/model/simulation.h"
+#include "seir/seir.h"
+#include "memilio/math/euler.h"
+#include "memilio/epidemiology/simulation.h"
 #include <gtest/gtest.h>
 
 using real = double;

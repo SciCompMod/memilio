@@ -17,10 +17,10 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
-#include "epidemiology/abm/abm.h"
-#include "epidemiology/abm/migration_rules.h"
-#include "epidemiology/abm/lockdown_rules.h"
-#include "epidemiology/utils/eigen_util.h"
+#include "abm/abm.h"
+#include "abm/migration_rules.h"
+#include "abm/lockdown_rules.h"
+#include "memilio/math/eigen_util.h"
 #include "matchers.h"
 #include "gtest/gtest.h"
 #include "gmock/gmock.h"

@@ -19,7 +19,7 @@
 */
 #include <distributions_helpers.h>
 #include <matchers.h>
-#include <epidemiology/secir/parameter_studies.h>
+#include "secir/parameter_studies.h"
 #include <gtest/gtest.h>
 #include <gmock/gmock.h>
 

@@ -17,7 +17,7 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
-#include "epidemiology/utils/type_safe.h"
+#include "memilio/utils/type_safe.h"
 #include "gtest/gtest.h"
 
 TEST(TypeSafe, init)

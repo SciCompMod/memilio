@@ -17,10 +17,10 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
-#include "epidemiology/model/compartmentalmodel.h"
-#include "epidemiology/model/populations.h"
-#include "epidemiology/model/parameterset.h"
-#include "epidemiology/model/simulation.h"
+#include "memilio/epidemiology/compartmentalmodel.h"
+#include "memilio/epidemiology/populations.h"
+#include "memilio/epidemiology/parameterset.h"
+#include "memilio/epidemiology/simulation.h"
 #include "gtest/gtest.h"
 
 TEST(TestCompartmentalModel, secir)

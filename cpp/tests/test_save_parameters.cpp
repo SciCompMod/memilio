@@ -19,16 +19,16 @@
 */
 #include "load_test_data.h"
 #include "test_data_dir.h"
-#include "epidemiology/secir/secir.h"
-#include <epidemiology/secir/parameter_space.h>
-#include <epidemiology/secir/parameter_studies.h>
-#include <epidemiology_io/secir_result_io.h>
-#include <epidemiology_io/secir_parameters_io.h>
-#include <epidemiology/migration/migration.h>
+#include "secir/secir.h"
+#include "secir/parameter_space.h"
+#include "secir/parameter_studies.h"
+#include "secir/secir_result_io.h"
+#include "secir/secir_parameters_io.h"
+#include "memilio/mobility/migration.h"
 #include <distributions_helpers.h>
 #include <matchers.h>
 #include "temp_file_register.h"
-#include <epidemiology/utils/date.h>
+#include "memilio/utils/date.h"
 #include <gtest/gtest.h>
 
 TEST(TestSaveParameters, json_single_sim_write_read_compare)

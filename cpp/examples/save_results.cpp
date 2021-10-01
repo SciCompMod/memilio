@@ -17,8 +17,8 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
-#include "epidemiology/secir/secir.h"
-#include <epidemiology_io/secir_result_io.h>
+#include "secir/secir.h"
+#include "secir/secir_result_io.h"
 
 #include <iostream>
 

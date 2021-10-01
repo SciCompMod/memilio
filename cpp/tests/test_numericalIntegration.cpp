@@ -17,8 +17,8 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
-#include <epidemiology/math/euler.h>
-#include <epidemiology/math/adapt_rk.h>
+#include "memilio/math/euler.h"
+#include "memilio/math/adapt_rk.h"
 #include <actions.h>
 
 #include <gtest/gtest.h>

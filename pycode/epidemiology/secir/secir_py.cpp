@@ -23,13 +23,13 @@
 #include <pybind11/eigen.h>
 #include <pybind11/functional.h>
 
-#include <epidemiology/utils/custom_index_array.h>
-#include <epidemiology/secir/secir.h>
-#include <epidemiology/secir/damping.h>
-#include <epidemiology/utils/regions.h>
-#include <epidemiology/utils/time_series.h>
-#include <epidemiology/secir/parameter_studies.h>
-#include <epidemiology/secir/analyze_result.h>
+#include <memilio/utils/custom_index_array.h>
+#include <memilio/utils/time_series.h>
+#include <memilio/epidemiology/damping.h>
+#include <memilio/epidemiology/regions.h>
+#include <secir/secir.h>
+#include <secir/parameter_studies.h>
+#include <secir/analyze_result.h>
 
 #include <Eigen/Core>
 #include <vector>

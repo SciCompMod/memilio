@@ -17,10 +17,10 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
-#include <epidemiology/utils/memory.h>
-#include <epidemiology/utils/uncertain_value.h>
-#include <epidemiology/secir/uncertain_matrix.h>
-#include <epidemiology/utils/parameter_distributions.h>
+#include "memilio/utils/memory.h"
+#include "memilio/utils/uncertain_value.h"
+#include "memilio/epidemiology/uncertain_matrix.h"
+#include "memilio/utils/parameter_distributions.h"
 #include <distributions_helpers.h>
 #include <gtest/gtest.h>
 #include <gmock/gmock.h>
