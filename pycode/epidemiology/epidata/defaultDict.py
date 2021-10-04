@@ -111,7 +111,7 @@ GerEng = {
     'gemeindeschluessel': EngEng['idCounty'],
     'anzahl_standorte': EngEng['reporting_hospitals'],
     'faelle_covid_aktuell': EngEng['intensive care unit'],
-    # Spaltenname neu (ab 31.03.2021): "faelle_covid_aktuell_invasiv_beatmet"
+    # column name new (from 31.03.2021): "faelle_covid_aktuell_invasiv_beatmet"
     'faelle_covid_aktuell_invasiv_beatmet': EngEng['ICU_ventilated'],
     'LAN_ew_GEN': EngEng['state'],
     'LAN_ew_EWZ': EngEng['population'],

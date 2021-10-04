@@ -155,8 +155,9 @@ class TestGetDiviData(fake_filesystem_unittest.TestCase):
     # data for test dataframe to test the function adjust_data
     d24 = {'bundesland': [1, 2], 'kreis': [1001, 2000], 'ICU': [0, 7]}
     d25 = {'gemeindeschluessel': [1001, 2000], 'ICU': [0, 7]}
-    d262728 = {'bundesland': [1, 2], 'gemeindeschluessel': [
-        1001, 2000], 'ICU': [0, 7]}
+    d262728 = {'bundesland': [1, 2],
+               'gemeindeschluessel': [1001, 2000],
+               'ICU': [0, 7]}
     d29 = {'Unnamed: 0': [0, 0], 'bundesland': [1, 2],
            'gemeindeschluessel': [1001, 2000], 'ICU': [0, 7]}
     list_input = [d24, d25, d262728, d262728, d262728, d29]
