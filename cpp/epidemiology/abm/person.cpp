@@ -42,7 +42,7 @@ Person::Person(LocationId id, InfectionProperties infection_properties, Vaccinat
     }
     if (infection_properties.state == InfectionState::Exposed) {
         m_time_until_carrier = hours(
-            UniformIntDistribution<int>::get_instance()(0, int(global_params.get<IncubationPeriod>()[m_age] * 24)));
+                                     UniformIntDistribution<int>::get_instance()(0, int(global_params.get<IncubationPeriod>()[{m_age, m_vaccination_state}] * 24)));
     }
 }
 
