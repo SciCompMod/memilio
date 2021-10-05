@@ -30,7 +30,7 @@ if(CMAKE_BUILD_TYPE STREQUAL "Debug")
         append_coverage_compiler_flags()
         setup_target_for_coverage_lcov(
             NAME coverage
-            EXECUTABLE runUnitTests
+            EXECUTABLE memilio-test
             EXCLUDE "${CMAKE_SOURCE_DIR}/tests*" "${CMAKE_SOURCE_DIR}/simulations*" "${CMAKE_SOURCE_DIR}/examples*" "${CMAKE_BINARY_DIR}/*" "/usr*"
         )
     endif()

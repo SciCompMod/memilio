@@ -55,14 +55,14 @@ if (MEMILIO_HAS_JSONCPP AND MEMILIO_HAS_HDF5)
     )
 endif()
 
-add_executable(runUnitTests ${TESTSOURCES})
-target_include_directories(runUnitTests PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
-target_link_libraries(runUnitTests PRIVATE memilio secir seir abm gtest_main)
-target_compile_options(runUnitTests PRIVATE ${_EPI_CXX_FLAGS_ENABLE_WARNING_ERRORS})
+add_executable(memilio-test ${TESTSOURCES})
+target_include_directories(memilio-test PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
+target_link_libraries(memilio-test PRIVATE memilio secir seir abm gtest_main)
+target_compile_options(memilio-test PRIVATE ${_EPI_CXX_FLAGS_ENABLE_WARNING_ERRORS})
 
 #make unit tests find the test data files
 file(TO_CMAKE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/data" EPI_TEST_DATA_DIR)
 configure_file(test_data_dir.h.in test_data_dir.h)
-target_include_directories(runUnitTests PRIVATE ${CMAKE_CURRENT_BINARY_DIR})
+target_include_directories(memilio-test PRIVATE ${CMAKE_CURRENT_BINARY_DIR})
 
-add_gtest(runUnitTests)
+add_gtest(memilio-test)
