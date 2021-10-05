@@ -20,7 +20,7 @@
 #include "load_test_data.h"
 #include "seir/seir.h"
 #include "memilio/math/euler.h"
-#include "memilio/epidemiology/simulation.h"
+#include "memilio/compartments/simulation.h"
 #include <gtest/gtest.h>
 
 using real = double;

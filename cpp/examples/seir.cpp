@@ -18,7 +18,7 @@
 * limitations under the License.
 */
 #include "seir/seir.h"
-#include "memilio/epidemiology/simulation.h"
+#include "memilio/compartments/simulation.h"
 #include "memilio/utils/logging.h"
 
 int main()

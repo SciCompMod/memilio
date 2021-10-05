@@ -18,7 +18,7 @@
 * limitations under the License.
 */
 #include "memilio/epidemiology/dynamic_npis.h"
-#include "memilio/mobility/migration.h"
+#include "memilio/mobility/mobility.h"
 #include "secir/secir.h"
 #include "matchers.h"
 

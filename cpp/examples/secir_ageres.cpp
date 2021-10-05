@@ -20,7 +20,7 @@
 #include "secir/secir.h"
 #include "memilio/utils/time_series.h"
 #include "memilio/utils/logging.h"
-#include "memilio/epidemiology/simulation.h"
+#include "memilio/compartments/simulation.h"
 
 int main()
 {

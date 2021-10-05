@@ -19,12 +19,12 @@
 */
 #define _USE_MATH_DEFINES
 
-#include "memilio/mobility/migration.h"
+#include "memilio/mobility/mobility.h"
 #include "seir/seir.h"
 #include "secir/secir.h"
 #include "memilio/math/eigen_util.h"
 #include "memilio/math/eigen.h"
-#include "memilio/epidemiology/simulation.h"
+#include "memilio/compartments/simulation.h"
 #include "matchers.h"
 #include "gtest/gtest.h"
 

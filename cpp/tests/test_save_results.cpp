@@ -18,7 +18,7 @@
 * limitations under the License.
 */
 #include "load_test_data.h"
-#include "memilio/epidemiology/simulation.h"
+#include "memilio/compartments/simulation.h"
 #include "secir/secir.h"
 #include "memilio/utils/time_series.h"
 #include "secir/secir_result_io.h"

@@ -20,7 +20,7 @@
 #ifndef SEIR_H
 #define SEIR_H
 
-#include "memilio/epidemiology/compartmentalmodel.h"
+#include "memilio/compartments/compartmentalmodel.h"
 #include "memilio/epidemiology/populations.h"
 #include "memilio/utils/parameter_set.h"
 #include "memilio/epidemiology/contact_matrix.h"

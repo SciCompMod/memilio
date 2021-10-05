@@ -17,8 +17,8 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
-#ifndef EPI_MIGRATION_GRAPH_SIMULATION_H
-#define EPI_MIGRATION_GRAPH_SIMULATION_H
+#ifndef EPI_MOBILITY_GRAPH_SIMULATION_H
+#define EPI_MOBILITY_GRAPH_SIMULATION_H
 
 #include "memilio/mobility/graph.h"
 
@@ -113,4 +113,4 @@ auto make_graph_sim(double t0, double dt, Graph&& g, NodeF&& node_func, EdgeF&& 
 }
 
 } // namespace epi
-#endif //EPI_MIGRATION_GRAPH_SIMULATION_H
+#endif //EPI_MOBILITY_GRAPH_SIMULATION_H

@@ -21,7 +21,7 @@
 #include "secir/secir.h"
 #include "secir/parameter_space.h"
 #include "secir/parameter_studies.h"
-#include "memilio/mobility/migration.h"
+#include "memilio/mobility/mobility.h"
 #include "memilio/utils/random_number_generator.h"
 #include <gtest/gtest.h>
 #include <stdio.h>

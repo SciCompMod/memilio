@@ -2,9 +2,7 @@ configure_file(config_internal.h.in memilio/config_internal.h)
 
 add_library(memilio
     config.h
-    epidemiology/compartmentalmodel.h
     epidemiology/populations.h
-    epidemiology/simulation.h
     epidemiology/damping.cpp
     epidemiology/damping.h
     epidemiology/uncertain_matrix.h    
@@ -18,6 +16,8 @@ add_library(memilio
     epidemiology/regions.h
     epidemiology/regions.cpp
     epidemiology/holiday_data_de.ipp
+    compartments/compartmentalmodel.h
+    compartments/simulation.h
     io/io.h
     io/io.cpp
     io/hdf5_cpp.h
@@ -36,8 +36,8 @@ add_library(memilio
     math/eigen_util.h
     math/matrix_shape.h
     math/matrix_shape.cpp
-    mobility/migration.h
-    mobility/migration.cpp
+    mobility/mobility.h
+    mobility/mobility.cpp
     mobility/graph_simulation.h
     mobility/graph_simulation.cpp
     mobility/graph.h
@@ -76,10 +76,6 @@ target_compile_options(memilio
         ${_EPI_CXX_FLAGS_ENABLE_WARNING_ERRORS}
     PUBLIC
         $<$<CXX_COMPILER_ID:MSVC>: /bigobj>
-)
-set_target_properties(memilio PROPERTIES
-    POSITION_INDEPENDENT_CODE ON
-    INTERFACE_POSITION_INDEPENDENT_CODE ON
 )
 
 if (MEMILIO_HAS_HDF5)

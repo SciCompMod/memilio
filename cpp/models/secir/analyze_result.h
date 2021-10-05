@@ -22,7 +22,7 @@
 
 #include "memilio/utils/time_series.h"
 #include "secir/secir.h"
-#include "memilio/mobility/migration.h"
+#include "memilio/mobility/mobility.h"
 
 #include <functional>
 #include <vector>

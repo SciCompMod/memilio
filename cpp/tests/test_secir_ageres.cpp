@@ -19,7 +19,7 @@
 */
 #include "load_test_data.h"
 #include "secir/secir.h"
-#include "memilio/epidemiology/simulation.h"
+#include "memilio/compartments/simulation.h"
 #include <gtest/gtest.h>
 
 TEST(TestSecir, compareAgeResWithSingleRun)

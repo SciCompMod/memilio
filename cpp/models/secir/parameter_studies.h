@@ -23,8 +23,8 @@
 #include "secir/secir.h"
 #include "secir/parameter_space.h"
 #include "memilio/utils/time_series.h"
-#include "memilio/mobility/migration.h"
-#include "memilio/epidemiology/simulation.h"
+#include "memilio/mobility/mobility.h"
+#include "memilio/compartments/simulation.h"
 
 #include <cmath>
 

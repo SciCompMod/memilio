@@ -7,77 +7,26 @@ MEmilio is a common project between the Institute for Software Technology of the
 
 M. J. Kühn, D. Abele, T. Mitra, W. Koslow, M. Abedi, K. Rack, M. Siggel, S. Khailaie, M. Klitz, S. Binder, Luca Spataro, J. Gilg, J. Kleinert, M. Häberle, L. Plötzke, C. D. Spinner, M. Stecher, X. X. Zhu, A. Basermann, M. Meyer-Hermann, "Assessment of effective mitigation and prediction of the spread of SARS-CoV-2 in Germany using demographic information and spatial resolution". Mathematical Biosciences 339, 108648 (2021). https://www.sciencedirect.com/science/article/pii/S0025556421000845?via%3Dihub
 
-
 **Getting started**
 
-This project is divided into multiple building blocks. The implementation of the epidemiological models is to be found in cpp. Currently, there is an ODE-SECIR and an agent-based model. Data acquisition tools and data is to be found in data. 
+This project is divided into multiple building blocks. The C++ implementation of the epidemiological models can be found in the cpp directory (see the [README](cpp/README.md) there). Currently, there is an ODE-SECIR and an agent-based model. 
+
+Data acquisition tools and data is to be found in [data](data/README.md).
 
 In pycode, the epidemiology python package is defined. It consists of python bindings to call the C++ code available in cpp and the epidata subpackage which provides tools to download and structure important data. More about the python package can be found in [Python README](pycode/README.rst).
 
-The C++ code is divided into two libraries, *epidemiology* (models, math, ensemble runs etc.) and *epidemiology_io* (IO routines for parameter sets and simulation results). By standard, *epidemiology* is built without *epidemiology_io*.
-
-
 **Documentation**
 
-In each important part of the project, which are described above, there is a README, which contains more information about the structure of the particular part of the project, the instructions for the user and especially the instructions for the developer.
+Each important part of the project described above is described in detail in the README in the corresponding directory. The README contains e.g. configuration and usage instructions for users and developers.
 
 Also, the code is documented with doxygen and instructions on how to obtain it can be found in the docs folder.
-The documentation of the code of the master branch can be found here:
+The documentation of the code of the master branch can be found at the following URL:
+
 https://dlr-sc.github.io/memilio/documentation/index.html
 
+**Installation, Usage and Requirements**
 
-**Requirements**
-
-By standard *epidemiology* library is bundled with
- * spdlog (https://github.com/gabime/spdlog)
- * eigen v3.3 (http://gitlab.com/libeigen/eigen and http://eigen.tuxfamily.org)
- * boost outcome and optional (https://www.boost.org/)
-
-See thirdparty/CMakeLists.txt for details.
-
-In order to use IO of parameters and simulation results (*epidemiology_io* library), the tool HDF5 (https://www.hdfgroup.org/ e.g., via apt install libhdf5-serial-dev) needs to be installed.
-
-In addition, *epidemiology_io* is bundled with
- * jsoncpp (https://github.com/open-source-parsers/jsoncpp)
- * Boost Filesystem (https://www.boost.org/)
-
- All bundled libraries can be built as part of this project and don't need to be installed.
-
- See here for more information on 3rdparty-dependencies: [cpp/thirdparty/Readme.rst](cpp/thirdparty/Readme.rst)
-
-**Installation** 
-
-*Making and executing C++ code*
-
-* (Create a build folder and) do cmake .. (without IO library) or cmake -DEPI_BUILD_EPI_IO=ON .. (with IO library) in cpp/build/
-* Do cmake --build . 
-* Run 
-  * an example via ./examples/secir_ageres
-  * all unit tests via ./tests/runUnitTests
-
-*Running code coverage analysis*
-
-Code coverage analysis currently only works on linux with the "Makefile" generator and in Debug mode. To perform
-the analysis, configure cmake as follows
-
-    cmake -DCMAKE_BUILD_TYPE=Debug -DEPI_TEST_COVERAGE=ON ..
-
-This step needs to have the tool lcov installed. To execute the coverage, run
-
-    cmake --build . --target coverage
-
-It will generate a html report inside the `coverage` directory.
-
-*Steps to execute C++ code via python bindings*
-
-*  Create a python virtual environment via python3 -m venv virtualenv/ somewhere under the main epidemiology/ folder
-*  Activate the environment via source virtualenv/bin/activate
-*  Do pip3 install scikit-build
-*  In epidemiology/pycode do
-   *  python3 setup.py build
-   *  python3 setup.py install
-   *  execute some example
-*  Run the python tests in the pycode/test folder by typing python -m unittest
+Each part has different requirements and usage. Detailed instruction can be found in the corresponding READMEs.
 
 **Development**
 * [Git workflow and change process](https://github.com/DLR-SC/memilio/wiki/git-workflow)

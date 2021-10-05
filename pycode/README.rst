@@ -58,8 +58,10 @@ To install, just enter
 
     python setup.py install
 
-This builds the C++ extension and copies everything required to your site-packages.
+This builds the C++ extension and copies everything required to your site-packages. 
 
+All the requirements of the `C++ library <../cpp/README.md>`_ must to be met in order to build and use the python bindings.
+CMake is executed internally by the `setup.py` script.
 
 Testing and Coverage
 --------------------

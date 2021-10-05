@@ -20,8 +20,8 @@
 #ifndef SECIR_H
 #define SECIR_H
 
-#include "memilio/epidemiology/compartmentalmodel.h"
-#include "memilio/epidemiology/simulation.h"
+#include "memilio/compartments/compartmentalmodel.h"
+#include "memilio/compartments/simulation.h"
 #include "memilio/epidemiology/populations.h"
 #include "secir/infection_state.h"
 #include "secir/secir_params.h"

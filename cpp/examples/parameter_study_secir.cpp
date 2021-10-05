@@ -20,7 +20,7 @@
 #include "secir/secir_parameters_io.h"
 #include "secir/parameter_space.h"
 #include "secir/parameter_studies.h"
-#include "memilio/mobility/migration.h"
+#include "memilio/mobility/mobility.h"
 
 int main()
 {

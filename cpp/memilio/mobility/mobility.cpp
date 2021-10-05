@@ -17,7 +17,7 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
-#include "memilio/mobility/migration.h"
+#include "memilio/mobility/mobility.h"
 
 namespace epi
 {

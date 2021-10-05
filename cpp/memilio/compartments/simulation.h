@@ -21,7 +21,7 @@
 #define SIMULATION_H
 
 #include "memilio/config.h"
-#include "memilio/epidemiology/compartmentalmodel.h"
+#include "memilio/compartments/compartmentalmodel.h"
 #include "memilio/utils/metaprogramming.h"
 #include "memilio/utils/time_series.h"
 #include "memilio/math/adapt_rk.h"

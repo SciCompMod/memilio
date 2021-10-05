@@ -1,0 +1,1 @@
+This directory contains utility functions and classes that can be used in any type of epidemiological simulation.

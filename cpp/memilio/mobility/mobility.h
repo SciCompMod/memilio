@@ -17,19 +17,19 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
-#ifndef MIGRATION_H
-#define MIGRATION_H
+#ifndef MOBILITY_H
+#define MOBILITY_H
 
 #include "memilio/mobility/graph_simulation.h"
 #include "memilio/utils/time_series.h"
 #include "memilio/math/eigen.h"
 #include "memilio/math/eigen_util.h"
 #include "memilio/utils/metaprogramming.h"
-#include "memilio/epidemiology/simulation.h"
 #include "memilio/utils/compiler_diagnostics.h"
 #include "memilio/math/euler.h"
 #include "memilio/epidemiology/contact_matrix.h"
 #include "memilio/epidemiology/dynamic_npis.h"
+#include "memilio/compartments/simulation.h"
 
 #include <cassert>
 
@@ -480,4 +480,4 @@ make_migration_sim(double t0, double dt, Graph<SimulationNode<Sim>, MigrationEdg
 
 } // namespace epi
 
-#endif //MIGRATION_H
+#endif //MOBILITY_H

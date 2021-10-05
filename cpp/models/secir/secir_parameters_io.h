@@ -30,7 +30,7 @@
 #include "secir/parameter_studies.h"
 #include "memilio/math/eigen_util.h"
 #include "memilio/mobility/graph.h"
-#include "memilio/mobility/migration.h"
+#include "memilio/mobility/mobility.h"
 #include "memilio/io/io.h"
 #include "memilio/io/json_serializer.h"
 #include "memilio/utils/date.h"
