@@ -291,7 +291,7 @@ TEST(TestLocation, interact)
 
         EXPECT_CALL(mock_exponential_dist.get_mock(), invoke).Times(1).WillOnce(Return(0.1001));
         EXPECT_EQ(location.interact(infected, dt, params), epi::InfectionState::Infected);
-    
+    }
 
     {
         auto severe = epi::Person(location, epi::InfectionState::Infected_Severe, vaccination_state, age, params);
