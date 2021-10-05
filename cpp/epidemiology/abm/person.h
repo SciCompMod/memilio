@@ -58,7 +58,7 @@ public:
     /**
      * create a Person.
      * @param id index and type of the initial location of the person
-     * @param infection_state the initial infection state of the person
+     * @param infection_properties the initial infection state of the person and if infection is detected
      * @param vaccination_state the initial infection state of the person
      * @param age the age group of the person
      * @param global_params the global infection parameters
@@ -67,7 +67,7 @@ public:
     /**
      * create a Person.
      * @param id index and type of the initial location of the person
-     * @param infection_state the initial infection state of the person
+     * @param infection_properties the initial infection state of the person and if infection is detected
      * @param age the age group of the person
      * @param global_params the global infection parameters
      */
@@ -76,7 +76,7 @@ public:
     /**
      * create a Person.
      * @param location the initial location of the person
-     * @param infection_state the initial infection state of the person
+     * @param infection_properties the initial infection state of the person and if infection is detected
      * @param age the age group of the person
      * @param global_params the global infection parameters
      */
@@ -85,7 +85,7 @@ public:
     /**
      * create a Person.
      * @param location the initial location of the person
-     * @param infection_state the initial infection state of the person
+     * @param infection_properties the initial infection state of the person and if infection is detected
      * @param age the age group of the person
      * @param global_params the global infection parameters
      */
