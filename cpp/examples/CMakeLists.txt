@@ -26,17 +26,21 @@ target_link_libraries(graph_example PRIVATE memilio seir)
 add_executable(abm_example abm.cpp)
 target_link_libraries(abm_example PRIVATE memilio abm)
 
-if (EPI_BUILD_EPI_IO)
+if (MEMILIO_HAS_JSONCPP)
   add_executable(read_graph_example read_graph.cpp)
   target_link_libraries(read_graph_example PRIVATE memilio secir)
   target_include_directories(read_graph_example PRIVATE ${CMAKE_CURRENT_BINARY_DIR}) #configured headers
+endif()
 
-  add_executable(twitter_migration_example twitter_migration.cpp)
-  target_link_libraries(twitter_migration_example PRIVATE memilio secir)
+add_executable(twitter_migration_example twitter_migration.cpp)
+target_link_libraries(twitter_migration_example PRIVATE memilio secir)
 
+if (MEMILIO_HAS_HDF5 AND MEMILIO_HAS_JSONCPP)
   add_executable(parameter_study_secir_example parameter_study_secir.cpp)
   target_link_libraries(parameter_study_secir_example PRIVATE memilio secir)
+endif()
 
+if (MEMILIO_HAS_JSONCPP)
   add_executable(serialize_example serialize.cpp)
   target_link_libraries(serialize_example PRIVATE memilio)
 endif()

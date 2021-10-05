@@ -18,6 +18,9 @@
 * limitations under the License.
 */
 #include "secir/secir_result_io.h"
+
+#ifdef MEMILIO_HAS_HDF5
+
 #include "memilio/io/hdf5_cpp.h"
 #include "memilio/math/eigen_util.h"
 #include "memilio/epidemiology/damping.h"
@@ -178,3 +181,5 @@ IOResult<std::vector<SecirSimulationResult>> read_result(const std::string& file
 }
 
 } // namespace epi
+
+#endif //MEMILIO_HAS_HDF5

@@ -17,12 +17,16 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
-#ifndef SCALARTYPE_H
-#define SCALARTYPE_H
 
 /**
- * This is the scalar type used in all calculations.
+ * Configuration of memilio library.
  */
+
+#ifndef MIO_CONFIG_H
+#define MIO_CONFIG_H
+
+#include "memilio/config_internal.h"
+
 using ScalarType = double;
 
-#endif // POPULATIONS_H
+#endif

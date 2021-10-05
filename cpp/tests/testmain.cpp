@@ -21,10 +21,6 @@
 #include "memilio/utils/random_number_generator.h"
 #include <gtest/gtest.h>
 
-#if HAVE_EPI_IO
-#include "memilio/io/io.h"
-#endif
-
 int main(int argc, char** argv)
 {
     epi::set_log_level(epi::LogLevel::warn);

@@ -35,21 +35,24 @@ set(TESTSOURCES
   test_dynamic_npis.cpp
   test_regions.cpp
   test_io_framework.cpp
+  test_mobility_io.cpp
   distributions_helpers.h
   distributions_helpers.cpp
   actions.h
   matchers.h
-
+  temp_file_register.h
 )
 
-if (EPI_BUILD_EPI_IO)
-  set(TESTSOURCES ${TESTSOURCES}
-    temp_file_register.h
-    test_save_parameters.cpp
-    test_save_results.cpp
-    test_mobility_io.cpp
-    test_json_serializer.cpp
-  )
+if (MEMILIO_HAS_JSONCPP)
+    set(TESTSOURCES ${TESTSOURCES}
+        test_json_serializer.cpp
+    )
+endif()
+if (MEMILIO_HAS_JSONCPP AND MEMILIO_HAS_HDF5)        
+    set(TESTSOURCES ${TESTSOURCES}
+        test_save_parameters.cpp
+        test_save_results.cpp
+    )
 endif()
 
 add_executable(runUnitTests ${TESTSOURCES})

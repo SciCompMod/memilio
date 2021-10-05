@@ -20,9 +20,9 @@
 #ifndef UNCERTAINVALUE_H
 #define UNCERTAINVALUE_H
 
+#include "memilio/config.h"
 #include "memilio/utils/memory.h"
 #include "memilio/utils/parameter_distributions.h"
-#include "memilio/utils/ScalarType.h"
 
 #include <memory>
 #include <ostream>

@@ -1,4 +1,7 @@
+configure_file(config_internal.h.in memilio/config_internal.h)
+
 add_library(memilio
+    config.h
     epidemiology/compartmentalmodel.h
     epidemiology/populations.h
     epidemiology/simulation.h
@@ -39,7 +42,6 @@ add_library(memilio
     mobility/graph_simulation.cpp
     mobility/graph.h
     mobility/graph.cpp
-    utils/ScalarType.h
     utils/visitor.h
     utils/uncertain_value.h
     utils/uncertain_value.cpp
@@ -63,11 +65,12 @@ add_library(memilio
 
 target_include_directories(memilio PUBLIC
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/..>
-    $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}> #includes configured by cmake
+    $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>   
 )
 
 target_compile_features(memilio PUBLIC cxx_std_14)
-target_link_libraries(memilio PUBLIC spdlog::spdlog Eigen3::Eigen Boost::boost)
+target_link_libraries(memilio PUBLIC spdlog::spdlog Eigen3::Eigen Boost::boost Boost::filesystem Boost::disable_autolinking)
 target_compile_options(memilio 
     PRIVATE
         ${_EPI_CXX_FLAGS_ENABLE_WARNING_ERRORS}
@@ -79,11 +82,11 @@ set_target_properties(memilio PROPERTIES
     INTERFACE_POSITION_INDEPENDENT_CODE ON
 )
 
-if (EPI_BUILD_EPI_IO)
-    target_link_libraries(memilio
-        PUBLIC jsoncpp ${HDF5_C_LIBRARIES} Boost::disable_autolinking
-        PRIVATE Boost::filesystem
-    )
+if (MEMILIO_HAS_HDF5)
+    target_link_libraries(memilio PUBLIC ${HDF5_C_LIBRARIES})
     target_include_directories(memilio PUBLIC ${HDF5_INCLUDE_DIRS})
-    target_compile_definitions(memilio PUBLIC "-DEPI_BUILD_EPI_IO")
-endif(EPI_BUILD_EPI_IO)
+endif()
+
+if (MEMILIO_HAS_JSONCPP)
+    target_link_libraries(memilio PUBLIC JsonCpp::JsonCpp)
+endif()

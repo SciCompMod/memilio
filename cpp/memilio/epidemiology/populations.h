@@ -20,9 +20,9 @@
 #ifndef POPULATIONS_H
 #define POPULATIONS_H
 
+#include "memilio/config.h"
 #include "memilio/utils/uncertain_value.h"
 #include "memilio/utils/custom_index_array.h"
-#include "memilio/utils/ScalarType.h"
 #include "memilio/math/eigen.h"
 
 #include <vector>

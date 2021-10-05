@@ -20,6 +20,10 @@
 #ifndef EPI_IO_HDF5_CPP_H
 #define EPI_IO_HDF5_CPP_H
 
+#include "memilio/config.h"
+
+#ifdef MEMILIO_HAS_HDF5
+
 #include "memilio/utils/compiler_diagnostics.h"
 
 MSVC_WARNING_DISABLE_PUSH(4268 4251)
@@ -92,5 +96,7 @@ struct H5DataSet {
     } while (0)
 
 } // namespace epi
+
+#endif //MEMILIO_HAS_HDF5
 
 #endif //EPI_IO_HDF5_CPP_H

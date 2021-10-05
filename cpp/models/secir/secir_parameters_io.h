@@ -17,16 +17,20 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
-#ifndef SAVE_PARAMETERS_H
-#define SAVE_PARAMETERS_H
+#ifndef SECIR_PARAMETERS_IO_H
+#define SECIR_PARAMETERS_IO_H
+
+#include "memilio/config.h"
+
+#ifdef MEMILIO_HAS_JSONCPP
 
 #include "secir/secir.h"
 #include "secir/secir_result_io.h"
 #include "secir/analyze_result.h"
+#include "secir/parameter_studies.h"
 #include "memilio/math/eigen_util.h"
 #include "memilio/mobility/graph.h"
 #include "memilio/mobility/migration.h"
-#include "secir/parameter_studies.h"
 #include "memilio/io/io.h"
 #include "memilio/io/json_serializer.h"
 #include "memilio/utils/date.h"
@@ -154,6 +158,8 @@ IOResult<Graph<Model, MigrationParameters>> read_graph(const std::string& direct
     return success(graph);
 }
 
+#ifdef MEMILIO_HAS_HDF5
+
 /**
  * @brief creates xml file with a single run parameter study with std 0 (used to save parameters of individual runs)
  * @param filename Name of file
@@ -210,6 +216,8 @@ IOResult<void> write_single_run_result(const int run, const epi::Graph<epi::Simu
 
     return success();
 }
+
+#endif // MEMILIO_HAS_HDF5
 
 namespace details
 {
@@ -309,6 +317,8 @@ namespace details
     IOResult<void> set_population_data(std::vector<SecirModel>& model, const std::string& path, const std::string& id_name,
                              const std::vector<int>& vregion);
 } //namespace details
+
+#ifdef MEMILIO_HAS_HDF5
 
 /**
 * @brief sets populations data from RKI into a SecirModel
@@ -432,6 +442,8 @@ IOResult<void> extrapolate_rki_results(std::vector<Model>& model, const std::str
     return success();
 }
 
+#endif // MEMILIO_HAS_HDF5
+
 /**
  * @brief reads population data from population files for the whole country
  * @param model vector of model in which the data is set
@@ -530,4 +542,6 @@ IOResult<std::vector<int>> get_county_ids(const std::string& path);
 
 } // namespace epi
 
-#endif
+#endif // MEMILIO_HAS_JSONCPP
+
+#endif // SECIR_PARAMETERS_IO_H

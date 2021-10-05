@@ -20,6 +20,10 @@
 #ifndef EPI_IO_JSON_SERIALIZER_H
 #define EPI_IO_JSON_SERIALIZER_H
 
+#include "memilio/config.h"
+
+#ifdef MEMILIO_HAS_JSONCPP
+
 #include "memilio/io/io.h"
 #include "memilio/utils/metaprogramming.h"
 #include "json/json.h"
@@ -759,4 +763,6 @@ IOResult<std::vector<T>> JsonObject::expect_list(const std::string& name, Tag<T>
 
 } // namespace epi
 
-#endif
+#endif //MEMILIO_HAS_JSONCPP
+
+#endif //EPI_IO_JSON_SERIALIZER_H

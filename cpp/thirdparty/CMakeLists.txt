@@ -4,9 +4,8 @@ set(EPI_EIGEN_VERSION "3.3.9")
 set(EPI_SPDLOG_VERSION "1.5.0") 
 set(EPI_JSONCPP_VERSION "1.7.4")
 
-
+### SPDLOG
 set(SPDLOG_INSTALL ON)
-
 if(EPI_USE_BUNDLED_SPDLOG)
     message(STATUS "Downloading Spdlog library")
     if(CMAKE_VERSION VERSION_LESS 3.11)
@@ -38,6 +37,7 @@ else()
     find_package(spdlog REQUIRED)
 endif()
 
+### EIGEN
 if(EPI_USE_BUNDLED_EIGEN)
     message(STATUS "Downloading Eigen library")
     if(CMAKE_VERSION VERSION_LESS 3.11)
@@ -66,21 +66,23 @@ else()
     find_package(Eigen3 ${EPI_EIGEN_VERSION} REQUIRED NO_MODULE)
 endif()
 
+### BOOST
 if (EPI_USE_BUNDLED_BOOST)
     include(BuildBoost)
 else()
-    find_package(Boost REQUIRED COMPONENTS outcome optional)
+    find_package(Boost REQUIRED COMPONENTS outcome optional filesystem)
 endif(EPI_USE_BUNDLED_BOOST)
 
-if (EPI_BUILD_EPI_IO)
-  # TODO: support also HDF5 config mode
-  find_package(HDF5 REQUIRED COMPONENTS C)
+### HDF5
+find_package(HDF5 COMPONENTS C)
+if (HDF5_FOUND)
+    set(MEMILIO_HAS_HDF5 ON)
+else()
+    message(WARNING "HDF5 was not found. Memilio will be built without some IO features. Install HDF5 Libraries and set the HDF5_DIR cmake variable to the directory containing the hdf5-config.cmake file to build with HDF5.")
+endif()
 
-  if(NOT EPI_USE_BUNDLED_BOOST)
-    find_package(Boost REQUIRED COMPONENTS filesystem)
-  endif(NOT EPI_USE_BUNDLED_BOOST)
-
-  if(EPI_USE_BUNDLED_JSONCPP)
+### JSONCPP
+if(EPI_USE_BUNDLED_JSONCPP)
     message(STATUS "Downloading jsoncpp library")
     if(CMAKE_VERSION VERSION_LESS 3.11)
         set(UPDATE_DISCONNECTED_IF_AVAILABLE "UPDATE_DISCONNECTED 1")
@@ -103,16 +105,21 @@ if (EPI_BUILD_EPI_IO)
         FetchContent_Populate(jsoncpp)
         add_subdirectory(${jsoncpp_SOURCE_DIR} ${jsoncpp_BINARY_DIR} EXCLUDE_FROM_ALL)
       endif()
-
     endif()
-  else(EPI_USE_BUNDLED_JSONCPP)
-    find_package(jsoncpp REQUIRED CONFIG)
-  endif(EPI_USE_BUNDLED_JSONCPP)
 
-  if (BUILD_SHARED_LIBS)
-    add_library(jsoncpp ALIAS jsoncpp_lib)
-  else(BUILD_SHARED_LIBS)
-    add_library(jsoncpp ALIAS jsoncpp_lib_static)
-  endif(BUILD_SHARED_LIBS)
+    if (BUILD_SHARED_LIBS)
+        add_library(JsonCpp::JsonCpp ALIAS jsoncpp_lib)
+    else()
+        add_library(JsonCpp::JsonCpp ALIAS jsoncpp_lib_static)
+    endif()
+else()
+    find_package(jsoncpp CONFIG)
+endif()
 
-endif(EPI_BUILD_EPI_IO)
+if (TARGET JsonCpp::JsonCpp)
+    set(MEMILIO_HAS_JSONCPP ON)
+else()
+    message(WARNING "JsonCpp was not found. Memilio will be built without some IO features. 
+        Set CMake variable EPI_USE_BUNDLED_JSONCPP to ON or install JsonCpp and set the jsoncpp_DIR cmake variable 
+        to the directory containing the jsoncppConfig.cmake file to build with JsonCpp.")
+endif()

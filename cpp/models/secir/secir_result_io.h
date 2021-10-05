@@ -17,8 +17,12 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
-#ifndef SAVE_RESULT_H
-#define SAVE_RESULT_H
+#ifndef SECIR_RESULT_IO_H
+#define SECIR_RESULT_IO_H
+
+#include "memilio/config.h"
+
+#ifdef MEMILIO_HAS_HDF5
 
 #include "secir/secir.h"
 #include "memilio/math/eigen_util.h"
@@ -90,4 +94,6 @@ IOResult<std::vector<SecirSimulationResult>> read_result(const std::string& file
 
 } // namespace epi
 
-#endif
+#endif // MEMILIO_HAS_HDF5
+
+#endif // SECIR_RESULT_IO_H

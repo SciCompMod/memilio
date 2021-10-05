@@ -86,7 +86,8 @@ install(TARGETS memilio
         ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
 )
 
-install(DIRECTORY memilio DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
+install(DIRECTORY memilio DESTINATION ${CMAKE_INSTALL_INCLUDEDIR} FILES_MATCHING PATTERN memilio/*/*.h)
+install(DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/memilio DESTINATION ${CMAKE_INSTALL_INCLUDEDIR} FILES_MATCHING PATTERN memilio/*/*.h)
 
 include(CMakePackageConfigHelpers)
 
@@ -102,12 +103,6 @@ write_basic_package_version_file(
   VERSION ${PROJECT_VERSION}
   COMPATIBILITY AnyNewerVersion
 )
-
-#install(
-#    EXPORT memilio-targets
-#    FILE memilio-targets.cmake
-#    DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/memilio
-#)
 
 install (
   FILES

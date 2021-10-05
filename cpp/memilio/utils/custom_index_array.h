@@ -20,12 +20,10 @@
 #ifndef CUSTOMINDEXARRAY_H
 #define CUSTOMINDEXARRAY_H
 
+#include "memilio/config.h"
 #include "memilio/math/eigen.h"
 #include "memilio/math/eigen_util.h"
 #include "memilio/utils/index.h"
-
-#include "memilio/utils/ScalarType.h"
-#include "memilio/math/eigen.h"
 
 #include <vector>
 #include <array>

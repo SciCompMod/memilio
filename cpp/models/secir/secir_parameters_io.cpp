@@ -19,6 +19,9 @@
 */
 
 #include "secir/secir_parameters_io.h"
+
+#ifdef MEMILIO_HAS_JSONCPP
+
 #include "secir/secir_result_io.h"
 #include "memilio/io/io.h"
 #include "memilio/utils/memory.h"
@@ -590,3 +593,5 @@ IOResult<std::vector<int>> get_county_ids(const std::string& path)
 }
 
 } // namespace epi
+
+#endif // MEMILIO_HAS_JSONCPP

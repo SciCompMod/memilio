@@ -17,8 +17,15 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
-#include "memilio/io/json_serializer.h"
 
-#ifdef MEMILIO_HAS_JSONCPP 
+/**
+ * Configured by cmake.
+ */
 
-#endif //MEMILIO_HAS_JSONCPP
+#ifndef MIO_CONFIG_INTERNAL_H
+#define MIO_CONFIG_INTERNAL_H
+
+#cmakedefine MEMILIO_HAS_HDF5
+#cmakedefine MEMILIO_HAS_JSONCPP
+
+#endif

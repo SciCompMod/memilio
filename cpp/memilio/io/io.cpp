@@ -24,7 +24,6 @@
 
 MSVC_WARNING_DISABLE_PUSH(4268)
 #include <boost/filesystem.hpp>
-#include <hdf5.h>
 MSVC_WARNING_POP
 
 namespace epi
