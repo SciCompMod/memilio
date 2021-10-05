@@ -74,7 +74,7 @@ endif(EPI_USE_BUNDLED_BOOST)
 
 if (EPI_BUILD_EPI_IO)
   # TODO: support also HDF5 config mode
-  find_package(HDF5 REQUIRED COMPONENTS CXX)
+  find_package(HDF5 REQUIRED COMPONENTS C)
 
   if(NOT EPI_USE_BUNDLED_BOOST)
     find_package(Boost REQUIRED COMPONENTS filesystem)

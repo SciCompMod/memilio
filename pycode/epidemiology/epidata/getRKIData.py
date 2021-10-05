@@ -43,19 +43,17 @@ def check_for_completeness(df):
     """! Checks if all states are mentioned
 
    This check had to be added, due to incomplete data downloads because of changes from RKI-site
-   It is checked if 16 states are part of the data.
-   If data is incomplete the data is downloaded from another possibility
-   It would be useful to add even more checks
+   It is checked if all 16 federal states and all 401, resp. 412 (400+Berlin), counties are part of the data.
+   If data is incomplete the data is downloaded from another source.
+   Note: There is no check if data for every day and every county is available (which can happen).
 
    @param df pandas dataframe to check
    @return Boolean to say if data is complete or not
    """
 
     if not df.empty:
-        id_bundesland = df["IdBundesland"].max()
-
-        # in case data is incomplete
-        if id_bundesland < 16:
+        # check for 400 counties outside Berlin plus 12 districts of Berlin
+        if len(df["IdLandkreis"].unique()) < 412:
             print("Downloaded RKI data is not complete. Another option will be tested.")
             return False
 
@@ -213,9 +211,9 @@ def get_rki_data(read_data=dd.defaultDict['read_data'],
     @param file_format File format which is used for writing the data. Default defined in defaultDict.
     @param out_folder Path to folder where data is written in folder out_folder/Germany.
     @param no_raw True or False [Default]. Defines if unchanged raw data is saved or not.
-    @param fill_dates False [Default] or True. Defines if dates where nothing changed are added.
+    @param fill_dates False [Default] or True. Defines if values for dates without new information are imputed.
     @param make_plot False [Default] or True. Defines if plots are generated with matplotlib.
-    @param moving_average True or False [Default]. Defines if files for 7 day moving average should be created
+    @param moving_average True or False [Default]. Defines if files for 7 day moving average should be created.
     @param split_berlin True or False [Default]. Defines if Berlin counties is fused to just on county.
     """
 

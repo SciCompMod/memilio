@@ -32,6 +32,7 @@ Location::Location(LocationType type, uint32_t index)
     , m_index(index)
     , m_subpopulations{}
     , m_cached_exposure_rate({AbmAgeGroup::Count, epi::VaccinationState::Count})
+    , m_testing_scheme()
 {
 }
 
@@ -46,14 +47,13 @@ InfectionState Location::interact(const Person& person, TimeSpan dt, const Globa
     case InfectionState::Carrier:
         return random_transition(
             infection_state, dt,
-            {{InfectionState::Infected_Detected,
+            infection_state, dt,
+            {{InfectionState::Infected,
               global_params.get<DetectInfection>()[{age,vaccination_state}] * global_params.get<CarrierToInfected>()[{age,vaccination_state}]},
              {InfectionState::Infected_Undetected, (1 - global_params.get<DetectInfection>()[{age,vaccination_state}]) *
                                                        global_params.get<CarrierToInfected>()[{age,vaccination_state}]},
              {InfectionState::Recovered_Carrier, global_params.get<CarrierToRecovered>()[{age,vaccination_state}]}});
-    case InfectionState::Infected_Detected: //fallthrough!
-    case InfectionState::Infected_Undetected:
-        return random_transition(
+    case InfectionState::Infected:
             infection_state, dt,
             {{InfectionState::Recovered_Infected, global_params.get<InfectedToRecovered>()[{age,vaccination_state}]},
             {InfectionState::Infected_Severe, global_params.get<InfectedToSevere>()[{age,vaccination_state}]}});
@@ -81,7 +81,7 @@ void Location::begin_step(TimeSpan /*dt*/, const GlobalInfectionParameters& glob
     //cache for next step so it stays constant during the step while subpopulations change
     //otherwise we would have to cache all state changes during a step which uses more memory
     auto num_carriers = get_subpopulation(InfectionState::Carrier);
-    auto num_infected = get_subpopulation(InfectionState::Infected_Detected) + get_subpopulation(InfectionState::Infected_Undetected);
+    auto num_infected = get_subpopulation(InfectionState::Infected);
     if (m_num_persons == 0){
         m_cached_exposure_rate = {{epi::AbmAgeGroup::Count, epi::VaccinationState::Count}, 0.};
     } 

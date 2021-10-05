@@ -205,12 +205,10 @@ auto map(const Rng& v, F f)
 namespace details
 {
     //true if elements returned by matrix(i, j) are references where matrix is of type M;
-    //false if the elements are temporaries, e.g. for expressions like Eigen::MatrixXd::Constant(r, c, v);
-    //Caution: This works only for matrix expressions having the LinearAccessBit:
-    // https://eigen.tuxfamily.org/dox/classEigen_1_1DenseCoeffsBase_3_01Derived_00_01ReadOnlyAccessors_01_4.html#a496672306836589fa04a6ab33cb0cf2a
+    //false if the elements are temporaries, e.g. for expressions like Eigen::MatrixXd::Constant(r, c, v).
     template <class M>
     using IsElementReference =
-        std::is_reference<decltype(std::declval<M>()[std::declval<Eigen::Index>()])>;
+        std::is_reference<decltype(std::declval<M>()(std::declval<Eigen::Index>(), std::declval<Eigen::Index>()))>;
 }
 
 /**
@@ -222,8 +220,9 @@ template <class M, bool IsConst = false>
 class RowMajorIterator
 {
 public:
-    using MatrixReference = std::conditional_t<IsConst, const M&, M&>;
-    static_assert(IsConst || details::IsElementReference<MatrixReference>::value,
+    using MatrixRef = std::conditional_t<IsConst, const M&, M&>;
+    using MatrixPtr = std::conditional_t<IsConst, const M*, M*>;
+    static_assert(IsConst || details::IsElementReference<M>::value,
                   "Iterator must be const if matrix is not in memory.");
 
     using iterator_category = std::random_access_iterator_tag;
@@ -242,7 +241,7 @@ public:
             return &value;
         }
     };
-    using pointer = std::conditional_t<details::IsElementReference<MatrixReference>::value,
+    using pointer = std::conditional_t<details::IsElementReference<MatrixRef>::value,
                                        std::conditional_t<IsConst, const value_type*, value_type*>, Proxy>;
 
     /**
@@ -251,28 +250,11 @@ public:
      * @param m reference of a matrix expression. Only a reference is stored, mind the lifetime of the object.
      * @param i flat index of the element pointed to.
      */
-    RowMajorIterator(MatrixReference m, Eigen::Index i)
-        : m_matrix(m)
+    RowMajorIterator(MatrixRef m, Eigen::Index i)
+        : m_matrix(&m)
         , m_i(i)
     {
     }
-
-    /**
-     * Default copy constructor and copy assignment operator, default move constructor and move assignment operator
-     */
-    RowMajorIterator(const RowMajorIterator& other)
-        : m_matrix(other.m_matrix)
-        , m_i(other.m_i)
-    {
-    }
-    RowMajorIterator& operator=(const RowMajorIterator& other)
-    {
-        m_matrix = other.m_matrix;
-        m_i = other.m_i;
-        return *this;
-    };
-    RowMajorIterator(RowMajorIterator&&) = default;
-    RowMajorIterator& operator=(RowMajorIterator&&) = default;
 
     /**
      * pre increment operator.
@@ -296,14 +278,14 @@ public:
      */
     RowMajorIterator operator+(difference_type n) const
     {
-        return {const_cast<MatrixReference>(m_matrix), m_i + n};
+        return {*m_matrix, m_i + n};
     }
     /**
      * random access, add n to index of iterator.
      */
     friend RowMajorIterator operator+(difference_type n, const RowMajorIterator& iter)
     {
-        return {const_cast<MatrixReference>(iter.m_matrix), iter.m_i + n};
+        return {*iter.m_matrix, iter.m_i + n};
     }
     /**
      * add n to index of this.
@@ -335,7 +317,7 @@ public:
      */
     RowMajorIterator operator-(difference_type n) const
     {
-        return {const_cast<MatrixReference>(m_matrix), m_i - n};
+        return {*m_matrix, m_i - n};
     }
     /**
      * take n from the index of this.
@@ -360,7 +342,7 @@ public:
      */
     decltype(auto) operator*() const
     {
-        return m_matrix(m_i / m_matrix.cols(), m_i % m_matrix.cols());
+        return (*m_matrix)(m_i / m_matrix->cols(), m_i % m_matrix->cols());
     }
 
     /**
@@ -370,13 +352,13 @@ public:
      * The proxy stores a copy of the element and forwards the address of this copy.
      * @{
      */
-    template <class Dummy                                                        = MatrixReference,
+    template <class Dummy                                                        = MatrixRef,
               std::enable_if_t<details::IsElementReference<Dummy>::value, void*> = nullptr>
     pointer operator->() const
     {
         return &(**this);
     }
-    template <class Dummy                                                         = MatrixReference,
+    template <class Dummy                                                         = MatrixRef,
               std::enable_if_t<!details::IsElementReference<Dummy>::value, void*> = nullptr>
     pointer operator->() const
     {
@@ -428,7 +410,7 @@ public:
     }
 
 private:
-    MatrixReference m_matrix;
+    MatrixPtr m_matrix;
     Eigen::Index m_i;
 };
 

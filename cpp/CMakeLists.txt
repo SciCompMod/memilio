@@ -7,6 +7,8 @@ option(EPI_USE_BUNDLED_EIGEN "Use eigen bundled with epi" ON)
 option(EPI_BUILD_EPI_IO "Build epidemiology_io library (requires HDF5)" OFF)
 option(EPI_USE_BUNDLED_BOOST "Use boost bundled with epi (only for epi-io)" ON)
 option(EPI_USE_BUNDLED_JSONCPP "Use jsoncpp bundled with epi (only for epi-io)" ON)
+option(EPI_SANITIZE_ADDRESS "Enable address sanitizer." OFF)
+option(EPI_SANITIZE_UNDEFINED "Enable undefined behavior sanitizer." OFF)
 
 mark_as_advanced(EPI_USE_BUNDLED_SPDLOG)
 
@@ -25,10 +27,27 @@ if(CMAKE_BUILD_TYPE STREQUAL "Debug")
         setup_target_for_coverage_lcov(
             NAME coverage
             EXECUTABLE runUnitTests
-            EXCLUDE "${CMAKE_SOURCE_DIR}/tests*" "${CMAKE_SOURCE_DIR}/examples*" "${CMAKE_BINARY_DIR}/*" "/usr*"
+            EXCLUDE "${CMAKE_SOURCE_DIR}/tests*" "${CMAKE_SOURCE_DIR}/sims*" "${CMAKE_SOURCE_DIR}/examples*" "${CMAKE_BINARY_DIR}/*" "/usr*"
         )
     endif()
 endif()
+
+if ((CMAKE_CXX_COMPILER_ID STREQUAL "GNU") AND (CMAKE_CXX_COMPILER_VERSION VERSION_GREATER_EQUAL 7))
+    if(EPI_SANITIZE_ADDRESS)
+        string(APPEND CMAKE_CXX_FLAGS_DEBUG " -fsanitize=address")
+        string(APPEND CMAKE_LINKER_FLAGS_DEBUG  " -fsanitize=address")
+    endif(EPI_SANITIZE_ADDRESS)
+
+    if(EPI_SANITIZE_UNDEFINED)
+        string(APPEND CMAKE_CXX_FLAGS_DEBUG " -fsanitize=undefined")
+        string(APPEND CMAKE_LINKER_FLAGS_DEBUG  " -fsanitize=undefined")
+    endif(EPI_SANITIZE_UNDEFINED)
+    
+    if(EPI_SANITIZE_ADDRESS OR EPI_SANITIZE_UNDEFINED)
+        string(APPEND CMAKE_CXX_FLAGS_DEBUG " -fno-omit-frame-pointer -fno-sanitize-recover=all")
+        string(APPEND CMAKE_LINKER_FLAGS_DEBUG  " -fno-omit-frame-pointer -fno-sanitize-recover=all")
+    endif(EPI_SANITIZE_ADDRESS OR EPI_SANITIZE_UNDEFINED)
+endif((CMAKE_CXX_COMPILER_ID STREQUAL "GNU") AND (CMAKE_CXX_COMPILER_VERSION VERSION_GREATER_EQUAL 7))
 
 include(thirdparty/CMakeLists.txt)
 
@@ -112,6 +131,8 @@ add_library(epidemiology
     epidemiology/abm/migration_rules.h
     epidemiology/abm/lockdown_rules.cpp
     epidemiology/abm/lockdown_rules.h
+    epidemiology/abm/testing_scheme.cpp
+    epidemiology/abm/testing_scheme.h
     epidemiology/secir/parameter_studies.h
     epidemiology/secir/analyze_result.h
     epidemiology/secir/analyze_result.cpp
@@ -125,9 +146,13 @@ target_include_directories(epidemiology PUBLIC
 
 target_compile_features(epidemiology PUBLIC cxx_std_14)
 target_link_libraries(epidemiology PUBLIC spdlog::spdlog Eigen3::Eigen Boost::boost)
-target_compile_options(epidemiology PRIVATE
-    $<$<OR:$<CXX_COMPILER_ID:Clang>,$<CXX_COMPILER_ID:GNU>>: -Wall -Wextra -Werror -Wshadow --pedantic-errors -Wno-deprecated-copy>
-    $<$<CXX_COMPILER_ID:MSVC>: /W4 /WX>)
+target_compile_options(epidemiology 
+    PRIVATE
+    $<$<CXX_COMPILER_ID:GNU>: -Wno-unknown-warning -Wall -Wextra -Werror -Wshadow --pedantic-errors -Wno-deprecated-copy>
+    $<$<CXX_COMPILER_ID:CLANG>: -Wno-unknown-warning-option -Wall -Wextra -Werror -Wshadow --pedantic-errors -Wno-deprecated>
+    $<$<CXX_COMPILER_ID:MSVC>: /W4 /WX>
+    PUBLIC
+    $<$<CXX_COMPILER_ID:MSVC>: /bigobj>)
 
 if (EPI_BUILD_EPI_IO)
 
@@ -152,12 +177,13 @@ if (EPI_BUILD_EPI_IO)
     )
 
     target_link_libraries(epidemiology_io PUBLIC epidemiology jsoncpp Boost::disable_autolinking
-                          PRIVATE ${HDF5_CXX_LIBRARIES} Boost::filesystem)
+                          PRIVATE ${HDF5_C_LIBRARIES} Boost::filesystem)
     target_include_directories(epidemiology_io PRIVATE ${HDF5_INCLUDE_DIRS})
 
     target_compile_definitions(epidemiology_io PUBLIC "-DHAVE_EPI_IO")
     target_compile_options(epidemiology_io PRIVATE
-        $<$<OR:$<CXX_COMPILER_ID:Clang>,$<CXX_COMPILER_ID:GNU>>: -Wall -Wextra -Werror -Wshadow --pedantic-errors -Wno-deprecated-copy>
+        $<$<CXX_COMPILER_ID:GNU>: -Wno-unknown-warning -Wall -Wextra -Werror -Wshadow --pedantic-errors -Wno-deprecated-copy>
+        $<$<CXX_COMPILER_ID:CLANG>: -Wno-unknown-warning-option -Wall -Wextra -Werror -Wshadow --pedantic-errors -Wno-deprecated>
         $<$<CXX_COMPILER_ID:MSVC>: /W4 /WX>)
 
 endif(EPI_BUILD_EPI_IO)
@@ -166,6 +192,7 @@ include(GNUInstallDirs)
 
 add_subdirectory(examples)
 add_subdirectory(tests)
+add_subdirectory(sims)
 # add_subdirectory(docs)
 
 install(TARGETS epidemiology

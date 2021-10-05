@@ -1,0 +1,48 @@
+name: "Test Python"
+description: "Test the Python bindings and library."
+runs:
+  using: "composite"
+  steps:
+    - name: Install dependencies
+      shell: bash
+      run: |
+        sudo apt-get -qq update
+        sudo apt-get -qq -y install python3-pip gnupg
+        python -m pip install --upgrade pip
+    - name: Download Python Wheels
+      uses: actions/download-artifact@v2
+      with:
+        name: python-wheels
+        path: pycode/wheelhouse
+    - name: Set up Python 3.6
+      uses: actions/setup-python@v2
+      with:
+        python-version: 3.6
+    - name: Install Python Wheels
+      shell: bash
+      run: |
+        for pkg in `ls pycode/wheelhouse/*36*.whl`; do python -m pip install $pkg; done
+        pip install -r pycode/requirements-dev.txt
+    - name: Run unit tests
+      shell: bash
+      run: |
+        cd pycode/test
+        python -W ignore::DeprecationWarning -m coverage run --include=*site-packages/epidemiology*,*dist-packages/epidemiology*,epidemiology* -m unittest
+        python -m coverage report
+        python -m coverage xml -o coverage_python.xml
+        python -m coverage html -d coverage_python
+        cp -r coverage_python ../../
+        getrkidata --help
+        getpopuldata --help
+        getjhdata --help
+        getdividata --help
+        getsimdata --help
+        cleandata --help
+    - name: Upload coverage reports
+      uses: actions/upload-artifact@v2
+      with:
+        name: test-py-coverage-reports
+        path: |
+          pycode/test/coverage_python.xml
+          coverage_python/
+        retention-days: 1

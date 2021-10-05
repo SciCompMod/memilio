@@ -162,8 +162,10 @@ void create_assign_locations(epi::World& world)
 {
     // Add one social event with 100 effective contacts.
     // Effective contacs limit the number of people that a person can infect while being at this location.
+    // People have to get tested in the 2 days before the event
     auto event = world.add_location(epi::LocationType::SocialEvent);
     world.get_individualized_location(event).get_infection_parameters().set<epi::EffectiveContacts>(100);
+    world.get_individualized_location(event).set_testing_scheme(epi::days(2), 1);
 
     // Add hospital and ICU with 5 effective contacs.
     auto hospital = world.add_location(epi::LocationType::Hospital);
@@ -173,16 +175,21 @@ void create_assign_locations(epi::World& world)
 
     // Add schools, workplaces and shops.
     // At every school there are 600 students. The effective contacs are 40.
+    // Students have to get tested once a week.
     // At every workplace work 100 people (needs to be varified), effective contacts are 40.
+    // People can get tested at work (and do this with 0.5 probability).
     // Add one supermarked per 15.000 people, effective constacts are assumed to be 20.
     auto shop = world.add_location(epi::LocationType::BasicsShop);
     world.get_individualized_location(shop).get_infection_parameters().set<epi::EffectiveContacts>(20);
 
     auto school = world.add_location(epi::LocationType::School);
     world.get_individualized_location(school).get_infection_parameters().set<epi::EffectiveContacts>(40);
+    world.get_individualized_location(school).set_testing_scheme(epi::days(7), 1);
+
 
     auto work = world.add_location(epi::LocationType::Work);
     world.get_individualized_location(work).get_infection_parameters().set<epi::EffectiveContacts>(40);
+    world.get_individualized_location(work).set_testing_scheme(epi::days(7), 0.5);
     int counter_school = 0;
     int counter_work   = 0;
     int counter_shop   = 0;
@@ -241,6 +248,7 @@ int main()
     //Parameters
     //total number of people
     double num_total_people = 50000;
+
     //assumed percentage of infection state at the beginning of the simulation
     double exposed_pct = 0.01, infected_pct = 0.008, carrier_pct = 0.005, recovered_pct = 0.001;
 
@@ -299,18 +307,18 @@ int main()
 
     // The results are saved in a table with 9 rows.
     // The first row is t = time, the others correspond to the number of people with a certain infection state at this time:
-    // S = Susceptible, E = Exposed, C = Carrier, I_d = Infected_Detected, I_u = Infected_Undetected, I_s = Infected_Severe,
+    // S = Susceptible, E = Exposed, C= Carrier, I= Infected, I_s = Infected_Severe,
     // I_c = Infected_Critical, R_C = Recovered_Carrier, R_I = Recovered_Infected, D = Dead
     // E.g. the following gnuplot skrips plots detected infections and deaths.
-    // plot "abm.txt" using 1:5 with lines title "infected (detected)", "abm.txt" using 1:11 with lines title "dead"
+    // plot "abm.txt" using 1:5 with lines title "infected (detected)", "abm.txt" using 1:10 with lines title "dead"
     // set xlabel "days"
     // set ylabel "number of people"
     // set title "ABM Example"
     // set output "abm.png"
     // set terminal png
     // replot
-    auto f_abm = fopen("abm1.txt", "w");
-    fprintf(f_abm, "# t S E C I_d I_u I_s I_c R_C R_I D\n");
+    auto f_abm = fopen("abm.txt", "w");
+    fprintf(f_abm, "# t S E C I I_s I_c R_C R_I D\n");
     for (auto i = 0; i < sim.get_result().get_num_time_points(); ++i) {
         fprintf(f_abm, "%f ", sim.get_result().get_time(i));
         auto v = sim.get_result().get_value(i);
