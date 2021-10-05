@@ -1,6 +1,6 @@
 # Versions of the bundled libraries
 # If you like to upgrade, just change the number
-set(EPI_EIGEN_VERSION "3.3")
+set(EPI_EIGEN_VERSION "3.3.0")
 set(EPI_SPDLOG_VERSION "1.5.0") 
 set(EPI_JSONCPP_VERSION "1.7.4")
 
