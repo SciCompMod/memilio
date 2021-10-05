@@ -41,39 +41,37 @@ InfectionState Location::interact(const Person& person, TimeSpan dt, const Globa
     auto infection_state = person.get_infection_state();
     auto vaccination_state = person.get_vaccination_state();
     auto age = person.get_age();
-    switch (infection_state) {
-    case InfectionState::Susceptible:
-            return random_transition(infection_state, dt, {{InfectionState::Exposed, m_cached_exposure_rate[{age, epi::Index<epi::VaccinationState>(vaccination_state)}]}});
-    case InfectionState::Carrier:
-        return random_transition(
-            infection_state, dt,
-            {{InfectionState::Infected,
-              global_params.get<DetectInfection>()[{age,vaccination_state}] * global_params.get<CarrierToInfected>()[{age,vaccination_state}]},
-             {InfectionState::Infected, (1 - global_params.get<DetectInfection>()[{age,vaccination_state}]) *
-                                                       global_params.get<CarrierToInfected>()[{age,vaccination_state}]},
-             {InfectionState::Recovered_Carrier, global_params.get<CarrierToRecovered>()[{age,vaccination_state}]}});
-    case InfectionState::Infected:
+        switch (infection_state) {
+        case InfectionState::Susceptible:
+                return random_transition(infection_state, dt, {{InfectionState::Exposed, m_cached_exposure_rate[{age,vaccination_state}]}});
+        case InfectionState::Carrier:
             return random_transition(
-            infection_state, dt,
-            {{InfectionState::Recovered_Infected, global_params.get<InfectedToRecovered>()[{age,vaccination_state}]},
-            {InfectionState::Infected_Severe, global_params.get<InfectedToSevere>()[{age,vaccination_state}]}});
-    case InfectionState::Infected_Severe:
-        return random_transition(
-            infection_state, dt,
-            {{InfectionState::Recovered_Infected, global_params.get<SevereToRecovered>()[{age,vaccination_state}]},
-             {InfectionState::Infected_Critical, global_params.get<SevereToCritical>()[{age,vaccination_state}]}});
-    case InfectionState::Infected_Critical:
-        return random_transition(
-            infection_state, dt,
-            {{InfectionState::Recovered_Infected, global_params.get<CriticalToRecovered>()[{age,vaccination_state}]},
-             {InfectionState::Dead, global_params.get<CriticalToDead>()[{age,vaccination_state}]}});
-    case InfectionState::Recovered_Carrier: //fallthrough!
-    case InfectionState::Recovered_Infected:
-        return random_transition(
-            infection_state, dt, {{InfectionState::Susceptible, global_params.get<RecoveredToSusceptible>()[{age,vaccination_state}]}});
-    default:
-        return infection_state; //some states don't transition
-    }
+                infection_state, dt,
+                {{InfectionState::Infected, global_params.get<CarrierToInfected>()[{age,vaccination_state}]},
+                 {InfectionState::Recovered_Carrier, global_params.get<CarrierToRecovered>()[{age,vaccination_state}]}});
+        case InfectionState::Infected:
+            return random_transition(
+                infection_state, dt,
+                {{InfectionState::Recovered_Infected, global_params.get<InfectedToRecovered>()[{age,vaccination_state}]},
+                 {InfectionState::Infected_Severe, global_params.get<InfectedToSevere>()[{age,vaccination_state}]}});
+        case InfectionState::Infected_Severe:
+            return random_transition(
+                infection_state, dt,
+                {{InfectionState::Recovered_Infected, global_params.get<SevereToRecovered>()[{age,vaccination_state}]},
+                 {InfectionState::Infected_Critical, global_params.get<SevereToCritical>()[{age,vaccination_state}]}});
+        case InfectionState::Infected_Critical:
+            return random_transition(
+                infection_state, dt,
+                {{InfectionState::Recovered_Infected, global_params.get<CriticalToRecovered>()[{age,vaccination_state}]},
+                 {InfectionState::Dead, global_params.get<CriticalToDead>()[{age,vaccination_state}]}});
+        case InfectionState::Recovered_Carrier: //fallthrough!
+        case InfectionState::Recovered_Infected:
+            return random_transition(
+                infection_state, dt, {{InfectionState::Susceptible, global_params.get<RecoveredToSusceptible>()[{age,vaccination_state}]}});
+        default:
+            return infection_state; //some states don't transition
+        }
+    
 }
 
 void Location::begin_step(TimeSpan /*dt*/, const GlobalInfectionParameters& global_params)
