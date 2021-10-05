@@ -106,7 +106,7 @@ struct SevereToRecovered {
     }
 };
 
-struct CriticalToRecovere {
+struct CriticalToRecovered {
     using Type = CustomIndexArray<double, AbmAgeGroup, VaccinationState>;
     static Type get_default()
     {
