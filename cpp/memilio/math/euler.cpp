@@ -19,7 +19,7 @@
 */
 #include "memilio/math/euler.h"
 
-namespace epi
+namespace mio
 {
 
 bool EulerIntegratorCore::step(const DerivFunction& f, Eigen::Ref<const Eigen::VectorXd> yt, double& t, double& dt,
@@ -32,4 +32,4 @@ bool EulerIntegratorCore::step(const DerivFunction& f, Eigen::Ref<const Eigen::V
     return true;
 }
 
-} // namespace epi
+} // namespace mio

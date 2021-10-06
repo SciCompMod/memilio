@@ -23,7 +23,7 @@
 #include "memilio/io/io.h"
 #include <ostream>
 
-namespace epi
+namespace mio
 {
 
 /**
@@ -92,22 +92,22 @@ public:
 
     /**
      * serialize this. 
-     * @see epi::serialize
+     * @see mio::serialize
      */
     template<class IOContext>
     void serialize(IOContext& io) const
     {
-        epi::serialize(io, T(*this));
+        mio::serialize(io, T(*this));
     }
 
     /**
      * deserialize an object of this class.
-     * @see epi::deserialize
+     * @see mio::deserialize
      */
     template<class IOContext>
     static IOResult<Derived> deserialize(IOContext& io)
     {
-        BOOST_OUTCOME_TRY(t, epi::deserialize(io, Tag<T>{}));
+        BOOST_OUTCOME_TRY(t, mio::deserialize(io, Tag<T>{}));
         return success(Derived(t));
     }
 
@@ -228,10 +228,10 @@ class OperatorComparison
  * helper macro to declare a class that derives from TypeSafe.
  */
 #define DECL_TYPESAFE(T, Name)                                                                                         \
-    struct Name : public ::epi::TypeSafe<T, Name> {                                                                    \
+    struct Name : public ::mio::TypeSafe<T, Name> {                                                                    \
         using TypeSafe<T, Name>::TypeSafe;                                                                             \
     }
 
-} // namespace epi
+} // namespace mio
 
 #endif //EPI_UTILS_TYPE_SAFE_H

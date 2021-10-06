@@ -36,36 +36,36 @@ TEST(TestMigration, compareNoMigrationWithSingleIntegration)
     auto tmax = 5;
     auto dt   = 0.5;
 
-    epi::SeirModel model1;
-    model1.populations[{epi::Index<epi::SeirInfType>(epi::SeirInfType::S)}] = 0.9;
-    model1.populations[{epi::Index<epi::SeirInfType>(epi::SeirInfType::E)}] = 0.1;
+    mio::SeirModel model1;
+    model1.populations[{mio::Index<mio::SeirInfType>(mio::SeirInfType::S)}] = 0.9;
+    model1.populations[{mio::Index<mio::SeirInfType>(mio::SeirInfType::E)}] = 0.1;
     model1.populations.set_total(1000);
-    model1.parameters.get<epi::ContactFrequency>().get_baseline()(0, 0) = 10;
-    model1.parameters.set<epi::TransmissionRisk>(0.4);
-    model1.parameters.set<epi::StageTimeIncubationInv>(1./4);
-    model1.parameters.set<epi::StageTimeInfectiousInv>(1./10);
+    model1.parameters.get<mio::ContactFrequency>().get_baseline()(0, 0) = 10;
+    model1.parameters.set<mio::TransmissionRisk>(0.4);
+    model1.parameters.set<mio::StageTimeIncubationInv>(1./4);
+    model1.parameters.set<mio::StageTimeInfectiousInv>(1./10);
 
     auto model2 = model1;
-    model2.populations[{epi::Index<epi::SeirInfType>(epi::SeirInfType::S)}] = 1.;
+    model2.populations[{mio::Index<mio::SeirInfType>(mio::SeirInfType::S)}] = 1.;
     model2.populations.set_total(500);
 
-    auto graph_sim = epi::make_migration_sim(
+    auto graph_sim = mio::make_migration_sim(
         t0, dt,
-        epi::Graph<epi::SimulationNode<epi::Simulation<epi::SeirModel>>, epi::MigrationEdge>());
+        mio::Graph<mio::SimulationNode<mio::Simulation<mio::SeirModel>>, mio::MigrationEdge>());
     auto& g = graph_sim.get_graph();
     g.add_node(0, model1, t0);
     g.add_node(1, model2, t0);
 
-    g.nodes()[0].property.get_simulation().set_integrator(std::make_shared<epi::EulerIntegratorCore>());
-    g.nodes()[1].property.get_simulation().set_integrator(std::make_shared<epi::EulerIntegratorCore>());
+    g.nodes()[0].property.get_simulation().set_integrator(std::make_shared<mio::EulerIntegratorCore>());
+    g.nodes()[1].property.get_simulation().set_integrator(std::make_shared<mio::EulerIntegratorCore>());
 
     g.add_edge(0, 1, Eigen::VectorXd::Constant(4, 0)); //no migration along this edge
     g.add_edge(1, 0, Eigen::VectorXd::Constant(4, 0));
 
-    auto single_sim1 = epi::Simulation<epi::SeirModel>(model1, t0);
-    auto single_sim2 = epi::Simulation<epi::SeirModel>(model2, t0);
-    single_sim1.set_integrator(std::make_shared<epi::EulerIntegratorCore>());
-    single_sim2.set_integrator(std::make_shared<epi::EulerIntegratorCore>());
+    auto single_sim1 = mio::Simulation<mio::SeirModel>(model1, t0);
+    auto single_sim2 = mio::Simulation<mio::SeirModel>(model2, t0);
+    single_sim1.set_integrator(std::make_shared<mio::EulerIntegratorCore>());
+    single_sim2.set_integrator(std::make_shared<mio::EulerIntegratorCore>());
 
     graph_sim.advance(tmax);
     single_sim1.advance(tmax);
@@ -83,23 +83,23 @@ TEST(TestMigration, compareNoMigrationWithSingleIntegration)
 
 TEST(TestMigration, nodeEvolve)
 {
-    using Model = epi::SecirModel;
+    using Model = mio::SecirModel;
     Model model(1);
     auto& params = model.parameters;
 
-    auto& cm = static_cast<epi::ContactMatrixGroup&>(model.parameters.get<epi::ContactPatterns>());
+    auto& cm = static_cast<mio::ContactMatrixGroup&>(model.parameters.get<mio::ContactPatterns>());
     cm[0].get_minimum()(0, 0) = 5.0;
 
-    model.populations[{epi::AgeGroup(0), epi::InfectionState::Exposed}] = 100;
-    model.populations.set_difference_from_total({epi::AgeGroup(0), epi::InfectionState::Susceptible}, 1000);
-    params.get<epi::SerialInterval>()[(epi::AgeGroup)0] = 1.5;
-    params.get<epi::IncubationTime>()[(epi::AgeGroup)0] = 2.;
+    model.populations[{mio::AgeGroup(0), mio::InfectionState::Exposed}] = 100;
+    model.populations.set_difference_from_total({mio::AgeGroup(0), mio::InfectionState::Susceptible}, 1000);
+    params.get<mio::SerialInterval>()[(mio::AgeGroup)0] = 1.5;
+    params.get<mio::IncubationTime>()[(mio::AgeGroup)0] = 2.;
     params.apply_constraints();
 
     double t0 = 2.835;
     double dt = 0.5;
 
-    epi::SimulationNode<epi::Simulation<Model>> node(model, t0);
+    mio::SimulationNode<mio::Simulation<Model>> node(model, t0);
     node.evolve(t0, dt);
     ASSERT_DOUBLE_EQ(node.get_result().get_last_time(), t0 + dt);
     ASSERT_EQ(print_wrap(node.get_result().get_last_value()), print_wrap(node.get_last_state()));
@@ -107,29 +107,29 @@ TEST(TestMigration, nodeEvolve)
 
 TEST(TestMigration, edgeApplyMigration)
 {
-    using Model = epi::SecirModel;
+    using Model = mio::SecirModel;
 
     //setup nodes
     Model model(1);
     auto& params = model.parameters;
-    auto& cm = static_cast<epi::ContactMatrixGroup&>(model.parameters.get<epi::ContactPatterns>());
+    auto& cm = static_cast<mio::ContactMatrixGroup&>(model.parameters.get<mio::ContactPatterns>());
     cm[0].get_baseline()(0, 0) = 5.0;
 
-    model.populations[{epi::AgeGroup(0), epi::InfectionState::Infected}] = 10;
-    model.populations.set_difference_from_total({epi::AgeGroup(0), epi::InfectionState::Susceptible}, 1000);
-    params.get<epi::InfectionProbabilityFromContact>()[(epi::AgeGroup)0] = 1.;
-    params.get<epi::RiskOfInfectionFromSympomatic>()[(epi::AgeGroup)0] = 1.;
-    params.get<epi::RelativeCarrierInfectability>()[(epi::AgeGroup)0] = 1.;
-    params.get<epi::HospitalizedCasesPerInfectious>()[(epi::AgeGroup)0] = 0.5;
-    params.get<epi::SerialInterval>()[(epi::AgeGroup)0] = 1.5;
-    params.get<epi::IncubationTime>()[(epi::AgeGroup)0] = 2.;
+    model.populations[{mio::AgeGroup(0), mio::InfectionState::Infected}] = 10;
+    model.populations.set_difference_from_total({mio::AgeGroup(0), mio::InfectionState::Susceptible}, 1000);
+    params.get<mio::InfectionProbabilityFromContact>()[(mio::AgeGroup)0] = 1.;
+    params.get<mio::RiskOfInfectionFromSympomatic>()[(mio::AgeGroup)0] = 1.;
+    params.get<mio::RelativeCarrierInfectability>()[(mio::AgeGroup)0] = 1.;
+    params.get<mio::HospitalizedCasesPerInfectious>()[(mio::AgeGroup)0] = 0.5;
+    params.get<mio::SerialInterval>()[(mio::AgeGroup)0] = 1.5;
+    params.get<mio::IncubationTime>()[(mio::AgeGroup)0] = 2.;
     params.apply_constraints();
     double t = 3.125;
-    epi::SimulationNode<epi::Simulation<Model>> node1(model, t);
-    epi::SimulationNode<epi::Simulation<Model>> node2(model, t);
+    mio::SimulationNode<mio::Simulation<Model>> node1(model, t);
+    mio::SimulationNode<mio::Simulation<Model>> node2(model, t);
 
     //setup edge
-    epi::MigrationEdge edge(Eigen::VectorXd::Constant(8, 0.1));
+    mio::MigrationEdge edge(Eigen::VectorXd::Constant(8, 0.1));
 
     //forward migration
     edge.apply_migration(t, 0.5, node1, node2);

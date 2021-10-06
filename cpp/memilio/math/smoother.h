@@ -23,7 +23,7 @@
 #include "memilio/math/eigen.h"
 #include <cmath>
 
-namespace epi
+namespace mio
 {
 
 /**
@@ -70,6 +70,6 @@ auto smoother_cosine(double x, double xleft, double xright, const Eigen::MatrixB
     });
 }
 
-} // namespace epi
+} // namespace mio
 
 #endif //EPI_MATH_SMOOTHER_H

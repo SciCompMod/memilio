@@ -28,7 +28,7 @@
 #include <numeric>
 #include <vector>
 
-namespace epi {
+namespace mio {
 
 /**
  * Overview:
@@ -48,12 +48,12 @@ public:
     /**
      * Constructs a newhousehold member.
      */
-    HouseholdMember(): m_age_weights({epi::AbmAgeGroup::Count}, 0) {}
+    HouseholdMember(): m_age_weights({mio::AbmAgeGroup::Count}, 0) {}
     
     /**
      * @brief Sets the weight of an age group.
      */
-    void set_age_weight(epi::AbmAgeGroup age_group, int weight)
+    void set_age_weight(mio::AbmAgeGroup age_group, int weight)
     {
         m_age_weights[{age_group}] = weight;
     }
@@ -62,13 +62,13 @@ public:
      * @brief Returns the Array with the weight of each age group.
      * @returns An CustomIndexArray with the integer weights of the age groups.
      */
-    const epi::CustomIndexArray<int, epi::AbmAgeGroup>& get_age_weights() const
+    const mio::CustomIndexArray<int, mio::AbmAgeGroup>& get_age_weights() const
     {
         return m_age_weights;
     }
     
 private:
-    epi::CustomIndexArray<int, epi::AbmAgeGroup> m_age_weights;
+    mio::CustomIndexArray<int, mio::AbmAgeGroup> m_age_weights;
 };
 
 /**
@@ -100,7 +100,7 @@ public:
      * @brief Returns the number of households in the household group.
      * @return Integer of number of households.
      */
-    const std::vector<std::tuple<epi::HouseholdMember, int>>& get_members() const
+    const std::vector<std::tuple<mio::HouseholdMember, int>>& get_members() const
     {
         return m_household_member_list;
     }
@@ -114,7 +114,7 @@ public:
     
 private:
     int m_number_of_members;
-    std::vector<std::tuple<epi::HouseholdMember, int>> m_household_member_list;
+    std::vector<std::tuple<mio::HouseholdMember, int>> m_household_member_list;
 };
 
 
@@ -163,7 +163,7 @@ public:
 
 private:
     int m_number_of_households;
-    std::vector<std::tuple<epi::Household, int>> m_household_list;
+    std::vector<std::tuple<mio::Household, int>> m_household_list;
 };
 
 /**
@@ -171,14 +171,14 @@ private:
  * @param world The world class to which the household has to be added.
  * @param household The household to add to world.
  */
-void add_household_to_world(epi::World& world, const epi::Household& household);
+void add_household_to_world(mio::World& world, const mio::Household& household);
 
 /**
  * Adds households from a household group to the world modell.
  * @param world The world class to which the group has to be added.
  * @param household_group The household group to add.
  */
-void add_household_group_to_world(epi::World& world, const epi::HouseholdGroup& household_group);
+void add_household_group_to_world(mio::World& world, const mio::HouseholdGroup& household_group);
 
 
 

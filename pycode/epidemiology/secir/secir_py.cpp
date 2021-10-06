@@ -42,7 +42,7 @@ namespace
 //select only the first node of the graph of each run, used for parameterstudy with single nodes
 template<class Sim>
 std::vector<Sim> filter_graph_results(
-    const std::vector<epi::Graph<epi::SimulationNode<Sim>, epi::MigrationEdge>>& graph_results)
+    const std::vector<mio::Graph<mio::SimulationNode<Sim>, mio::MigrationEdge>>& graph_results)
 {
     std::vector<Sim> results;
     results.reserve(graph_results.size());
@@ -56,7 +56,7 @@ std::vector<Sim> filter_graph_results(
 template <class Tag> 
 void bind_Index(py::module& m, std::string const& name)
 {
-    py::class_<epi::Index<Tag>> c(m, name.c_str());
+    py::class_<mio::Index<Tag>> c(m, name.c_str());
     c.def(py::init<size_t>(), py::arg("value"));
 }
 
@@ -64,18 +64,18 @@ void bind_Index(py::module& m, std::string const& name)
 // This extracts an Index from a py::tuple of Indices from the correct position,
 // given the corresponding Index type
 template <typename Tag, class Tuple>
-epi::Index<Tag> extract_index(py::tuple& t)
+mio::Index<Tag> extract_index(py::tuple& t)
 {
-    return t[epi::details::IndexPosition<Tag, Tuple>::value].template cast<epi::Index<Tag>>();
+    return t[mio::details::IndexPosition<Tag, Tuple>::value].template cast<mio::Index<Tag>>();
 }
 
 // bind an index for more than one tag
 template <class... Tags>
 void bind_MultiIndex(py::module& m, std::string const& name)
 {
-    using C = epi::Index<Tags...>;
+    using C = mio::Index<Tags...>;
     py::class_<C> c(m, name.c_str());
-    c.def(py::init<epi::Index<Tags> const&...>()).def(py::init([](py::tuple t) {
+    c.def(py::init<mio::Index<Tags> const&...>()).def(py::init([](py::tuple t) {
         return C(extract_index<Tags, C>(t)...);
     }));
 
@@ -92,12 +92,12 @@ std::string pretty_name()
     return o.str();
 }
 template <>
-std::string pretty_name<epi::InfectionState>()
+std::string pretty_name<mio::InfectionState>()
 {
     return "InfectionState";
 }
 template <>
-std::string pretty_name<epi::AgeGroup>()
+std::string pretty_name<mio::AgeGroup>()
 {
     return "AgeGroup";
 }
@@ -120,8 +120,8 @@ void bind_templated_members_CustomIndexArray(py::class_<C>& c)
 template <class Type, class... Tags>
 void bind_CustomIndexArray(py::module& m, std::string const& name)
 {
-    using C     = typename epi::CustomIndexArray<Type, Tags...>;
-    using Index = typename epi::CustomIndexArray<Type, Tags...>::Index;
+    using C     = typename mio::CustomIndexArray<Type, Tags...>;
+    using Index = typename mio::CustomIndexArray<Type, Tags...>::Index;
     py::class_<C> c(m, name.c_str());
     c.def(py::init([](Index const& sizes, Type const& val) {
          return C(sizes, val);
@@ -174,13 +174,13 @@ void bind_templated_members_Population(py::class_<C, Base>& c)
 template <class... Cats>
 void bind_Population(py::module& m, std::string const& name)
 {
-    using C    = epi::Populations<Cats...>;
-    using Base = epi::CustomIndexArray<epi::UncertainValue, Cats...>;
+    using C    = mio::Populations<Cats...>;
+    using Base = mio::CustomIndexArray<mio::UncertainValue, Cats...>;
     py::class_<C, Base> c(m, name.c_str());
-    c.def(py::init([](epi::Index<Cats...> const& sizes, double val) {
+    c.def(py::init([](mio::Index<Cats...> const& sizes, double val) {
          return C(sizes, val);
      }))
-        .def(py::init([](epi::Index<Cats...> const& sizes) {
+        .def(py::init([](mio::Index<Cats...> const& sizes) {
             return C(sizes);
         }))
         .def("get_num_compartments", &C::get_num_compartments)
@@ -197,7 +197,7 @@ template <class ParameterSet>
 void bind_ParameterSet(py::module& m, std::string const& name)
 {
     py::class_<ParameterSet> c(m, name.c_str());
-    epi::foreach_tag<ParameterSet>([&c](auto t) {
+    mio::foreach_tag<ParameterSet>([&c](auto t) {
         using Tag = decltype(t);
 
         //CAUTION: This requires ParameterTag::name() to be unique within the ParameterSet
@@ -216,7 +216,7 @@ void bind_ParameterSet(py::module& m, std::string const& name)
 template <class Populations, class Parameters>
 void bind_CompartmentalModel(py::module& m, std::string const& name)
 {
-    using Model = epi::CompartmentalModel<Populations, Parameters>;
+    using Model = mio::CompartmentalModel<Populations, Parameters>;
     py::class_<Model>(m, name.c_str())
             .def(py::init<Populations const&, Parameters const&>())
             .def("apply_constraints", &Model::template apply_constraints<Parameters>)
@@ -249,27 +249,27 @@ void bind_Simulation(py::module& m, std::string const& name)
 template <typename Model>
 void bind_SecirModelNode(py::module& m, std::string const& name)
 {
-    py::class_<epi::Node<Model>>(m, name.c_str())
+    py::class_<mio::Node<Model>>(m, name.c_str())
         .def_property_readonly("id",
-                               [](const epi::Node<Model>& self) {
+                               [](const mio::Node<Model>& self) {
                                    return self.id;
                                })
         .def_property_readonly(
-            "property", [](const epi::Node<Model>& self) -> auto& { return self.property; },
+            "property", [](const mio::Node<Model>& self) -> auto& { return self.property; },
             py::return_value_policy::reference_internal);
 }
 
 template <typename Simulation>
 void bind_SecirSimulationNode(py::module& m, std::string const& name)
 {
-    py::class_<epi::Node<epi::SimulationNode<Simulation>>>(m, name.c_str())
+    py::class_<mio::Node<mio::SimulationNode<Simulation>>>(m, name.c_str())
         .def_property_readonly("id",
-                               [](const epi::Node<Simulation>& self) {
+                               [](const mio::Node<Simulation>& self) {
                                    return self.id;
                                })
         .def_property_readonly(
             "property",
-            [](const epi::Node<epi::SimulationNode<Simulation>>& self) -> auto& { return self.property.get_simulation(); },
+            [](const mio::Node<mio::SimulationNode<Simulation>>& self) -> auto& { return self.property.get_simulation(); },
             py::return_value_policy::reference_internal);
 }
 
@@ -279,11 +279,11 @@ void bind_SecirSimulationNode(py::module& m, std::string const& name)
 template <class Model>
 void bind_SecirModelGraph(py::module& m, std::string const& name)
 {
-    using G = epi::Graph<Model, epi::MigrationParameters>;
+    using G = mio::Graph<Model, mio::MigrationParameters>;
     py::class_<G>(m, name.c_str())
         .def(py::init<>())
         .def("add_node", &G::template add_node<const Model&>, py::return_value_policy::reference_internal)
-        .def("add_edge", &G::template add_edge<const epi::MigrationParameters&>,
+        .def("add_edge", &G::template add_edge<const mio::MigrationParameters&>,
              py::return_value_policy::reference_internal)
         .def("add_edge", &G::template add_edge<const Eigen::VectorXd&>, py::return_value_policy::reference_internal)
         .def_property_readonly("num_nodes",
@@ -313,7 +313,7 @@ void bind_SecirModelGraph(py::module& m, std::string const& name)
 template <class Simulation>
 void bind_MigrationGraph(py::module& m, std::string const& name)
 {
-    using G = epi::Graph<epi::SimulationNode<Simulation>, epi::MigrationEdge>;
+    using G = mio::Graph<mio::SimulationNode<Simulation>, mio::MigrationEdge>;
     py::class_<G>(m, name.c_str())
         .def(py::init<>())
         .def(
@@ -322,7 +322,7 @@ void bind_MigrationGraph(py::module& m, std::string const& name)
             },
             py::arg("id"), py::arg("model"), py::arg("t0") = 0.0, py::arg("dt") = 0.1,
             py::return_value_policy::reference_internal)
-        .def("add_edge", &G::template add_edge<const epi::MigrationEdge&>, py::return_value_policy::reference_internal)
+        .def("add_edge", &G::template add_edge<const mio::MigrationEdge&>, py::return_value_policy::reference_internal)
         .def("add_edge", &G::template add_edge<const Eigen::VectorXd&>, py::return_value_policy::reference_internal)
         .def_property_readonly("num_nodes",
                                [](const G& self) {
@@ -354,10 +354,10 @@ void bind_MigrationGraph(py::module& m, std::string const& name)
 template <class Graph>
 void bind_GraphSimulation(py::module& m, std::string const& name)
 {
-    using GS = epi::GraphSimulation<Graph>;
+    using GS = mio::GraphSimulation<Graph>;
     py::class_<GS>(m, name.c_str())
         .def(py::init([](const Graph& graph, double t0, double dt) {
-                 return std::make_unique<GS>(epi::make_migration_sim(t0, dt, graph));
+                 return std::make_unique<GS>(mio::make_migration_sim(t0, dt, graph));
              }),
              py::arg("graph"), py::arg("t0") = 0.0, py::arg("dt") = 1.0)
         .def_property_readonly(
@@ -373,47 +373,47 @@ void bind_GraphSimulation(py::module& m, std::string const& name)
 template <class Simulation>
 void bind_ParameterStudy(py::module& m, std::string const& name)
 {
-    py::class_<epi::ParameterStudy<Simulation>>(m, name.c_str())
+    py::class_<mio::ParameterStudy<Simulation>>(m, name.c_str())
         .def(py::init<const typename Simulation::Model&, double, double, size_t>(), py::arg("model"), py::arg("t0"),
              py::arg("tmax"), py::arg("num_runs"))
         .def(py::init<const typename Simulation::Model&, double, double, double, size_t>(), py::arg("model"),
              py::arg("t0"), py::arg("tmax"), py::arg("dev_rel"), py::arg("num_runs"))
-        .def(py::init<const epi::Graph<typename Simulation::Model, epi::MigrationParameters>&, double, double, double,
+        .def(py::init<const mio::Graph<typename Simulation::Model, mio::MigrationParameters>&, double, double, double,
                       size_t>(),
              py::arg("model_graph"), py::arg("t0"), py::arg("tmax"), py::arg("dt"), py::arg("num_runs"))
-        .def_property("num_runs", &epi::ParameterStudy<Simulation>::get_num_runs,
-                      &epi::ParameterStudy<Simulation>::set_num_runs)
-        .def_property("tmax", &epi::ParameterStudy<Simulation>::get_tmax, &epi::ParameterStudy<Simulation>::set_tmax)
-        .def_property("t0", &epi::ParameterStudy<Simulation>::get_t0, &epi::ParameterStudy<Simulation>::set_t0)
-        .def_property_readonly("model", py::overload_cast<>(&epi::ParameterStudy<Simulation>::get_model),
+        .def_property("num_runs", &mio::ParameterStudy<Simulation>::get_num_runs,
+                      &mio::ParameterStudy<Simulation>::set_num_runs)
+        .def_property("tmax", &mio::ParameterStudy<Simulation>::get_tmax, &mio::ParameterStudy<Simulation>::set_tmax)
+        .def_property("t0", &mio::ParameterStudy<Simulation>::get_t0, &mio::ParameterStudy<Simulation>::set_t0)
+        .def_property_readonly("model", py::overload_cast<>(&mio::ParameterStudy<Simulation>::get_model),
                                py::return_value_policy::reference_internal)
-        .def_property_readonly("model", py::overload_cast<>(&epi::ParameterStudy<Simulation>::get_model, py::const_),
-                               py::return_value_policy::reference_internal)
-        .def_property_readonly("secir_model_graph",
-                               py::overload_cast<>(&epi::ParameterStudy<Simulation>::get_secir_model_graph),
+        .def_property_readonly("model", py::overload_cast<>(&mio::ParameterStudy<Simulation>::get_model, py::const_),
                                py::return_value_policy::reference_internal)
         .def_property_readonly("secir_model_graph",
-                               py::overload_cast<>(&epi::ParameterStudy<Simulation>::get_secir_model_graph, py::const_),
+                               py::overload_cast<>(&mio::ParameterStudy<Simulation>::get_secir_model_graph),
+                               py::return_value_policy::reference_internal)
+        .def_property_readonly("secir_model_graph",
+                               py::overload_cast<>(&mio::ParameterStudy<Simulation>::get_secir_model_graph, py::const_),
                                py::return_value_policy::reference_internal)
         .def(
             "run",
-            [](epi::ParameterStudy<Simulation>& self, std::function<void(const epi::Graph<epi::SimulationNode<Simulation>, epi::MigrationEdge>&)> handle_result) {
+            [](mio::ParameterStudy<Simulation>& self, std::function<void(const mio::Graph<mio::SimulationNode<Simulation>, mio::MigrationEdge>&)> handle_result) {
                 self.run([&handle_result](auto&& g) { handle_result(g); });
             },
             py::arg("handle_result_func"))
         .def("run",
-             [](epi::ParameterStudy<Simulation>& self) { //default argument doesn't seem to work with functions
+             [](mio::ParameterStudy<Simulation>& self) { //default argument doesn't seem to work with functions
                  return self.run();
              })
         .def(
             "run_single",
-            [](epi::ParameterStudy<Simulation>& self, std::function<void(Simulation)> handle_result) {
+            [](mio::ParameterStudy<Simulation>& self, std::function<void(Simulation)> handle_result) {
                 self.run([handle_result](auto r) {
                     handle_result(r.nodes()[0].property.get_simulation());
                 });
             },
             py::arg("handle_result_func"))
-        .def("run_single", [](epi::ParameterStudy<Simulation>& self) {
+        .def("run_single", [](mio::ParameterStudy<Simulation>& self) {
             return filter_graph_results(self.run());
         });
 }
@@ -429,8 +429,8 @@ void bind_ParameterStudy(py::module& m, std::string const& name)
  *                   is a value of Type T, where T is the type of the argument.
  */
 template <class C, class... ArgTuples,
-          class = std::enable_if_t<(std::is_same<typename C::type::Shape, epi::SquareMatrixShape>::value ||
-                                    std::is_same<typename C::type::Shape, epi::ColumnVectorShape>::value),
+          class = std::enable_if_t<(std::is_same<typename C::type::Shape, mio::SquareMatrixShape>::value ||
+                                    std::is_same<typename C::type::Shape, mio::ColumnVectorShape>::value),
                                    void>>
 void bind_shape_constructor(C& cl, ArgTuples... arg_tuples)
 {
@@ -455,7 +455,7 @@ void bind_shape_property(C& cl)
 }
 
 /**
- * binds all members for an instance of epi::Damping.
+ * binds all members for an instance of mio::Damping.
  * @tparam DampingClass instance of pybind class_.
  * @param damping_class class that the members are added to.
  */
@@ -471,7 +471,7 @@ void bind_damping_members(DampingClass& damping_class)
 
     damping_class
         .def(py::init([](const Eigen::Ref<const Matrix>& c, double t, int level, int type) {
-                 return Damping(c, epi::DampingLevel(level), epi::DampingType(type), epi::SimulationTime(t));
+                 return Damping(c, mio::DampingLevel(level), mio::DampingType(type), mio::SimulationTime(t));
              }),
              py::arg("coeffs"), py::arg("t"), py::arg("level") = 0, py::arg("type") = 0)
         .def_property(
@@ -486,7 +486,7 @@ void bind_damping_members(DampingClass& damping_class)
                 return self.get_time();
             },
             [](Damping& self, double v) {
-                self.get_time() = epi::SimulationTime(v);
+                self.get_time() = mio::SimulationTime(v);
             },
             py::return_value_policy::reference_internal)
         .def_property(
@@ -495,7 +495,7 @@ void bind_damping_members(DampingClass& damping_class)
                 return self.get_type();
             },
             [](Damping& self, int v) {
-                self.get_type() = epi::DampingType(v);
+                self.get_type() = mio::DampingType(v);
             },
             py::return_value_policy::reference_internal)
         .def_property(
@@ -504,13 +504,13 @@ void bind_damping_members(DampingClass& damping_class)
                 return self.get_level();
             },
             [](Damping& self, int v) {
-                self.get_level() = epi::DampingLevel(v);
+                self.get_level() = mio::DampingLevel(v);
             },
             py::return_value_policy::reference_internal);
 }
 
 /**
- * binds all members for an instance of epi::Dampings.
+ * binds all members for an instance of mio::Dampings.
  * @tparam DampingsClass instance of pybind class_.
  * @param dampings_class class that the members are added to.
  */
@@ -536,7 +536,7 @@ void bind_dampings_members(DampingsClass& dampings_class)
 }
 
 /**
- * binds all members for an instance of epi::DampingExpression.
+ * binds all members for an instance of mio::DampingExpression.
  * @tparam DampingExpressionClass instance of pybind class_.
  * @param damping_expression_class class that the members are added to.
  */
@@ -585,7 +585,7 @@ void bind_damping_expression_members(DampingExpressionClass& damping_expression_
 }
 
 /**
- * binds all members for an instance of epi::DampingExpressionGroup.
+ * binds all members for an instance of mio::DampingExpressionGroup.
  * @tparam DampingExpressionGroupClass instance of pybind class_.
  * @param cl class that the members are added to.
  */
@@ -634,31 +634,31 @@ void bind_damping_expression_group_members(DampingExpressionGroupClass& cl)
 
 PYBIND11_MODULE(_secir, m)
 {
-    py::class_<epi::Date>(m, "Date")
+    py::class_<mio::Date>(m, "Date")
         .def(py::init<int, int, int>(), py::arg("year"), py::arg("month"), py::arg("day"))
-        .def_readwrite("year", &epi::Date::year)
-        .def_readwrite("month", &epi::Date::month)
-        .def_readwrite("day", &epi::Date::day)
+        .def_readwrite("year", &mio::Date::year)
+        .def_readwrite("month", &mio::Date::month)
+        .def_readwrite("day", &mio::Date::day)
         .def(py::self == py::self)
         .def(py::self != py::self);
 
-    auto damping_class = py::class_<epi::SquareDamping>(m, "Damping");
+    auto damping_class = py::class_<mio::SquareDamping>(m, "Damping");
     bind_damping_members(damping_class);
 
-    auto dampings_class = py::class_<epi::SquareDampings>(m, "Dampings");
+    auto dampings_class = py::class_<mio::SquareDampings>(m, "Dampings");
     bind_dampings_members(dampings_class);
 
-    py::class_<epi::TimeSeries<double>>(m, "TimeSeries")
+    py::class_<mio::TimeSeries<double>>(m, "TimeSeries")
         .def(py::init<Eigen::Index>(), py::arg("num_elements"))
-        .def("get_num_time_points", &epi::TimeSeries<double>::get_num_time_points)
-        .def("get_num_elements", &epi::TimeSeries<double>::get_num_elements)
-        .def("get_time", py::overload_cast<Eigen::Index>(&epi::TimeSeries<double>::get_time), py::arg("index"))
-        .def("get_last_time", py::overload_cast<>(&epi::TimeSeries<double>::get_last_time))
-        .def("get_value", py::overload_cast<Eigen::Index>(&epi::TimeSeries<double>::get_value), py::arg("index"))
-        .def("get_last_value", py::overload_cast<>(&epi::TimeSeries<double>::get_last_value))
+        .def("get_num_time_points", &mio::TimeSeries<double>::get_num_time_points)
+        .def("get_num_elements", &mio::TimeSeries<double>::get_num_elements)
+        .def("get_time", py::overload_cast<Eigen::Index>(&mio::TimeSeries<double>::get_time), py::arg("index"))
+        .def("get_last_time", py::overload_cast<>(&mio::TimeSeries<double>::get_last_time))
+        .def("get_value", py::overload_cast<Eigen::Index>(&mio::TimeSeries<double>::get_value), py::arg("index"))
+        .def("get_last_value", py::overload_cast<>(&mio::TimeSeries<double>::get_last_value))
         .def(
             "__getitem__",
-            [](epi::TimeSeries<double>& self, Eigen::Index i) {
+            [](mio::TimeSeries<double>& self, Eigen::Index i) {
                 if (i >= 0 && i < self.get_num_time_points()) {
                     return self[i];
                 }
@@ -669,7 +669,7 @@ PYBIND11_MODULE(_secir, m)
             py::is_operator(), py::arg("index"))
         .def(
             "__setitem__",
-            [](epi::TimeSeries<double>& self, Eigen::Index i, Eigen::Ref<const epi::TimeSeries<double>::Vector> expr) {
+            [](mio::TimeSeries<double>& self, Eigen::Index i, Eigen::Ref<const mio::TimeSeries<double>::Vector> expr) {
                 if (i >= 0 && i < self.get_num_time_points()) {
                     self[i] = expr;
                 }
@@ -679,139 +679,139 @@ PYBIND11_MODULE(_secir, m)
             },
             py::is_operator(), py::arg("index"), py::arg("v"))
         .def("add_time_point",
-             [](epi::TimeSeries<double>& self) {
+             [](mio::TimeSeries<double>& self) {
                  return self.add_time_point();
              })
         .def("add_time_point",
-             [](epi::TimeSeries<double>& self, double t) {
+             [](mio::TimeSeries<double>& self, double t) {
                  return self.add_time_point(t);
              })
         .def("add_time_point",
-             [](epi::TimeSeries<double>& self, double t, Eigen::Ref<const epi::TimeSeries<double>::Vector> expr) {
+             [](mio::TimeSeries<double>& self, double t, Eigen::Ref<const mio::TimeSeries<double>::Vector> expr) {
                  return self.add_time_point(t, expr);
              })
-        .def("as_ndarray", [](epi::TimeSeries<double>& self) {
-            auto m = Eigen::Map<epi::TimeSeries<double>::Matrix>(self.data(), self.get_num_rows(),
+        .def("as_ndarray", [](mio::TimeSeries<double>& self) {
+            auto m = Eigen::Map<mio::TimeSeries<double>::Matrix>(self.data(), self.get_num_rows(),
                                                                  self.get_num_time_points());
-            return Eigen::Ref<epi::TimeSeries<double>::Matrix>(m);
+            return Eigen::Ref<mio::TimeSeries<double>::Matrix>(m);
         });
 
-    py::class_<epi::ParameterDistribution>(m, "ParameterDistribution")
-        .def_property("lower_bound", &epi::ParameterDistribution::get_lower_bound,
-                      &epi::ParameterDistribution::set_lower_bound)
-        .def_property("upper_bound", &epi::ParameterDistribution::get_upper_bound,
-                      &epi::ParameterDistribution::set_upper_bound)
-        .def("add_predefined_sample", &epi::ParameterDistribution::add_predefined_sample)
-        .def("remove_predefined_samples", &epi::ParameterDistribution::remove_predefined_samples)
-        .def("get_sample", &epi::ParameterDistribution::get_sample);
+    py::class_<mio::ParameterDistribution>(m, "ParameterDistribution")
+        .def_property("lower_bound", &mio::ParameterDistribution::get_lower_bound,
+                      &mio::ParameterDistribution::set_lower_bound)
+        .def_property("upper_bound", &mio::ParameterDistribution::get_upper_bound,
+                      &mio::ParameterDistribution::set_upper_bound)
+        .def("add_predefined_sample", &mio::ParameterDistribution::add_predefined_sample)
+        .def("remove_predefined_samples", &mio::ParameterDistribution::remove_predefined_samples)
+        .def("get_sample", &mio::ParameterDistribution::get_sample);
 
-    py::class_<epi::ParameterDistributionNormal, epi::ParameterDistribution>(m, "ParameterDistributionNormal")
+    py::class_<mio::ParameterDistributionNormal, mio::ParameterDistribution>(m, "ParameterDistributionNormal")
         .def(py::init<double, double, double, double>(), py::arg("lb"), py::arg("ub"), py::arg("mean"),
              py::arg("std_dev"))
         .def(py::init<double, double, double>(), py::arg("lb"), py::arg("ub"), py::arg("mean"))
-        .def_property("mean", &epi::ParameterDistributionNormal::get_mean, &epi::ParameterDistributionNormal::set_mean)
-        .def_property("standard_dev", &epi::ParameterDistributionNormal::get_standard_dev,
-                      &epi::ParameterDistributionNormal::set_standard_dev);
+        .def_property("mean", &mio::ParameterDistributionNormal::get_mean, &mio::ParameterDistributionNormal::set_mean)
+        .def_property("standard_dev", &mio::ParameterDistributionNormal::get_standard_dev,
+                      &mio::ParameterDistributionNormal::set_standard_dev);
 
-    py::class_<epi::ParameterDistributionUniform, epi::ParameterDistribution>(m, "ParameterDistributionUniform")
+    py::class_<mio::ParameterDistributionUniform, mio::ParameterDistribution>(m, "ParameterDistributionUniform")
         .def(py::init<>())
         .def(py::init<double, double>(), py::arg("lb"), py::arg("ub"));
 
-    py::class_<epi::UncertainValue>(m, "UncertainValue")
+    py::class_<mio::UncertainValue>(m, "UncertainValue")
         .def(py::init<ScalarType>(), py::arg("value") = 0.0)
         .def_property(
             "value",
-            [](epi::UncertainValue& self) {
+            [](mio::UncertainValue& self) {
                 return ScalarType(self);
             },
-            [](epi::UncertainValue& self, ScalarType v) {
+            [](mio::UncertainValue& self, ScalarType v) {
                 self = v;
             })
         .def("set_distribution", //a property would be nicer but getter and setter use a different type
-             &epi::UncertainValue::set_distribution)
+             &mio::UncertainValue::set_distribution)
         .def(
             "get_distribution",
-            [](const epi::UncertainValue& self) {
+            [](const mio::UncertainValue& self) {
                 return self.get_distribution().get();
             },
             py::return_value_policy::reference_internal)
         .def(
             "get_distribution",
-            [](epi::UncertainValue& self) {
+            [](mio::UncertainValue& self) {
                 return self.get_distribution().get();
             },
             py::return_value_policy::reference_internal)
-        .def("draw_sample", &epi::UncertainValue::draw_sample);
+        .def("draw_sample", &mio::UncertainValue::draw_sample);
 
-    auto contact_matrix_class = py::class_<epi::ContactMatrix>(m, "ContactMatrix");
+    auto contact_matrix_class = py::class_<mio::ContactMatrix>(m, "ContactMatrix");
     bind_damping_expression_members(contact_matrix_class);
-    contact_matrix_class.def_property_readonly("num_groups", &epi::ContactMatrix::get_num_groups);
+    contact_matrix_class.def_property_readonly("num_groups", &mio::ContactMatrix::get_num_groups);
 
-    auto contact_matrix_group_class = py::class_<epi::ContactMatrixGroup>(m, "ContactMatrixGroup");
+    auto contact_matrix_group_class = py::class_<mio::ContactMatrixGroup>(m, "ContactMatrixGroup");
     bind_damping_expression_group_members(contact_matrix_group_class);
-    contact_matrix_group_class.def_property_readonly("num_groups", &epi::ContactMatrixGroup::get_num_groups);
+    contact_matrix_group_class.def_property_readonly("num_groups", &mio::ContactMatrixGroup::get_num_groups);
 
-    py::class_<epi::DampingSampling>(m, "DampingSampling")
-        .def(py::init([](const epi::UncertainValue& value, int level, int type, double time,
+    py::class_<mio::DampingSampling>(m, "DampingSampling")
+        .def(py::init([](const mio::UncertainValue& value, int level, int type, double time,
                          const std::vector<size_t>& matrices, const Eigen::Ref<const Eigen::VectorXd>& groups) {
-                 return epi::DampingSampling(value, epi::DampingLevel(level), epi::DampingType(type),
-                                             epi::SimulationTime(time), matrices, groups);
+                 return mio::DampingSampling(value, mio::DampingLevel(level), mio::DampingType(type),
+                                             mio::SimulationTime(time), matrices, groups);
              }),
              py::arg("value"), py::arg("level"), py::arg("type"), py::arg("time"), py::arg("matrix_indices"),
              py::arg("group_weights"))
-        .def_property("value", py::overload_cast<>(&epi::DampingSampling::get_value), &epi::DampingSampling::set_value,
+        .def_property("value", py::overload_cast<>(&mio::DampingSampling::get_value), &mio::DampingSampling::set_value,
                       py::return_value_policy::reference_internal)
         .def_property(
             "level",
-            [](const epi::DampingSampling& self) {
+            [](const mio::DampingSampling& self) {
                 return int(self.get_level());
             },
-            [](epi::DampingSampling& self, int lvl) {
-                self.set_level(epi::DampingLevel(lvl));
+            [](mio::DampingSampling& self, int lvl) {
+                self.set_level(mio::DampingLevel(lvl));
             })
         .def_property(
             "type",
-            [](const epi::DampingSampling& self) {
+            [](const mio::DampingSampling& self) {
                 return int(self.get_type());
             },
-            [](epi::DampingSampling& self, int typ) {
-                self.set_type(epi::DampingType(typ));
+            [](mio::DampingSampling& self, int typ) {
+                self.set_type(mio::DampingType(typ));
             })
         .def_property(
             "time",
-            [](const epi::DampingSampling& self) {
+            [](const mio::DampingSampling& self) {
                 return double(self.get_time());
             },
-            [](epi::DampingSampling& self, double t) {
-                self.set_time(epi::SimulationTime(t));
+            [](mio::DampingSampling& self, double t) {
+                self.set_time(mio::SimulationTime(t));
             })
-        .def_property("matrix_indices", &epi::DampingSampling::get_matrix_indices,
-                      &epi::DampingSampling::set_matrix_indices)
+        .def_property("matrix_indices", &mio::DampingSampling::get_matrix_indices,
+                      &mio::DampingSampling::set_matrix_indices)
         .def_property(
-            "group_weights", &epi::DampingSampling::get_group_weights,
-            [](epi::DampingSampling& self, const Eigen::Ref<const Eigen::VectorXd>& v) {
+            "group_weights", &mio::DampingSampling::get_group_weights,
+            [](mio::DampingSampling& self, const Eigen::Ref<const Eigen::VectorXd>& v) {
                 self.set_group_weights(v);
             },
             py::return_value_policy::reference_internal);
 
-    py::class_<epi::UncertainContactMatrix>(m, "UncertainContactMatrix")
+    py::class_<mio::UncertainContactMatrix>(m, "UncertainContactMatrix")
         .def(py::init<>())
-        .def(py::init<const epi::ContactMatrixGroup&>())
+        .def(py::init<const mio::ContactMatrixGroup&>())
         .def_property(
-            "cont_freq_mat", py::overload_cast<>(&epi::UncertainContactMatrix::get_cont_freq_mat),
-            [](epi::UncertainContactMatrix& self, const epi::ContactMatrixGroup& c) {
+            "cont_freq_mat", py::overload_cast<>(&mio::UncertainContactMatrix::get_cont_freq_mat),
+            [](mio::UncertainContactMatrix& self, const mio::ContactMatrixGroup& c) {
                 self.get_cont_freq_mat() = c;
             },
             py::return_value_policy::reference_internal)
         .def_property(
-            "dampings", py::overload_cast<>(&epi::UncertainContactMatrix::get_dampings),
-            [](epi::UncertainContactMatrix& self, const std::vector<epi::DampingSampling>& v) {
+            "dampings", py::overload_cast<>(&mio::UncertainContactMatrix::get_dampings),
+            [](mio::UncertainContactMatrix& self, const std::vector<mio::DampingSampling>& v) {
                 self.get_dampings() = v;
             },
             py::return_value_policy::reference_internal)
         .def_property(
             "school_holidays",
-            [](const epi::UncertainContactMatrix& self) {
+            [](const mio::UncertainContactMatrix& self) {
                 std::vector<std::pair<double, double>> v(self.get_school_holidays().size());
                 std::transform(self.get_school_holidays().begin(), self.get_school_holidays().end(), v.begin(),
                                [](auto& p) {
@@ -819,157 +819,157 @@ PYBIND11_MODULE(_secir, m)
                                });
                 return v;
             },
-            [](epi::UncertainContactMatrix& self, const std::vector<std::pair<double, double>>& v) {
+            [](mio::UncertainContactMatrix& self, const std::vector<std::pair<double, double>>& v) {
                 self.get_school_holidays().resize(v.size());
                 std::transform(v.begin(), v.end(), self.get_school_holidays().begin(), [](auto& p) {
-                    return std::make_pair(epi::SimulationTime(p.first), epi::SimulationTime(p.second));
+                    return std::make_pair(mio::SimulationTime(p.first), mio::SimulationTime(p.second));
                 });
             })
         .def_property("school_holiday_damping",
-                      py::overload_cast<>(&epi::UncertainContactMatrix::get_school_holiday_damping),
-                      [](epi::UncertainContactMatrix& self, const epi::DampingSampling& v) {
+                      py::overload_cast<>(&mio::UncertainContactMatrix::get_school_holiday_damping),
+                      [](mio::UncertainContactMatrix& self, const mio::DampingSampling& v) {
                           self.get_school_holiday_damping() = v;
                       });
 
-    auto migration_damping_class = py::class_<epi::VectorDamping>(m, "MigrationDamping");
+    auto migration_damping_class = py::class_<mio::VectorDamping>(m, "MigrationDamping");
     bind_damping_members(migration_damping_class);
 
-    auto migration_dampings_class = py::class_<epi::VectorDampings>(m, "MigrationDampings");
+    auto migration_dampings_class = py::class_<mio::VectorDampings>(m, "MigrationDampings");
     bind_dampings_members(migration_dampings_class);
 
-    auto migration_coeffs_class = py::class_<epi::MigrationCoefficients>(m, "MigrationCoefficients");
+    auto migration_coeffs_class = py::class_<mio::MigrationCoefficients>(m, "MigrationCoefficients");
     bind_damping_expression_members(migration_coeffs_class);
 
-    auto migration_coeff_group_class = py::class_<epi::MigrationCoefficientGroup>(m, "MigrationCoefficientGroup");
+    auto migration_coeff_group_class = py::class_<mio::MigrationCoefficientGroup>(m, "MigrationCoefficientGroup");
     bind_damping_expression_group_members(migration_coeff_group_class);
 
-    py::class_<epi::MigrationParameters>(m, "MigrationParameters")
+    py::class_<mio::MigrationParameters>(m, "MigrationParameters")
         .def(py::init<const Eigen::VectorXd&>(), py::arg("coeffs"))
-        .def(py::init<const epi::MigrationCoefficientGroup&>(), py::arg("coeffs"))
+        .def(py::init<const mio::MigrationCoefficientGroup&>(), py::arg("coeffs"))
         .def_property(
-            "coefficients", py::overload_cast<>(&epi::MigrationParameters::get_coefficients),
-            [](epi::MigrationParameters& self, const epi::MigrationCoefficientGroup& v) {
+            "coefficients", py::overload_cast<>(&mio::MigrationParameters::get_coefficients),
+            [](mio::MigrationParameters& self, const mio::MigrationCoefficientGroup& v) {
                 self.get_coefficients() = v;
             },
             py::return_value_policy::reference_internal);
 
-    py::class_<epi::Edge<epi::MigrationParameters>>(m, "MigrationParameterEdge")
+    py::class_<mio::Edge<mio::MigrationParameters>>(m, "MigrationParameterEdge")
         .def_property_readonly("start_node_idx",
-                               [](const epi::Edge<epi::MigrationParameters>& self) {
+                               [](const mio::Edge<mio::MigrationParameters>& self) {
                                    return self.start_node_idx;
                                })
         .def_property_readonly("end_node_idx",
-                               [](const epi::Edge<epi::MigrationParameters>& self) {
+                               [](const mio::Edge<mio::MigrationParameters>& self) {
                                    return self.end_node_idx;
                                })
         .def_property_readonly(
-            "property", [](const epi::Edge<epi::MigrationEdge>& self) -> auto& { return self.property; },
+            "property", [](const mio::Edge<mio::MigrationEdge>& self) -> auto& { return self.property; },
             py::return_value_policy::reference_internal);
 
-    py::class_<epi::MigrationEdge>(m, "Migration")
+    py::class_<mio::MigrationEdge>(m, "Migration")
         .def(py::init<const Eigen::VectorXd&>(), py::arg("coeffs"))
-        .def(py::init<const epi::MigrationParameters&>(), py::arg("params"))
+        .def(py::init<const mio::MigrationParameters&>(), py::arg("params"))
         .def_property_readonly(
-            "parameters", [](const epi::MigrationEdge& self) -> auto& { return self.get_parameters(); },
+            "parameters", [](const mio::MigrationEdge& self) -> auto& { return self.get_parameters(); },
             py::return_value_policy::reference_internal);
 
-    py::class_<epi::Edge<epi::MigrationEdge>>(m, "MigrationEdge")
+    py::class_<mio::Edge<mio::MigrationEdge>>(m, "MigrationEdge")
         .def_property_readonly("start_node_idx",
-                               [](const epi::Edge<epi::MigrationEdge>& self) {
+                               [](const mio::Edge<mio::MigrationEdge>& self) {
                                    return self.start_node_idx;
                                })
         .def_property_readonly("end_node_idx",
-                               [](const epi::Edge<epi::MigrationEdge>& self) {
+                               [](const mio::Edge<mio::MigrationEdge>& self) {
                                    return self.end_node_idx;
                                })
         .def_property_readonly(
-            "property", [](const epi::Edge<epi::MigrationEdge>& self) -> auto& { return self.property; },
+            "property", [](const mio::Edge<mio::MigrationEdge>& self) -> auto& { return self.property; },
             py::return_value_policy::reference_internal);
 
     // https://github.com/pybind/pybind11/issues/1153
-    m.def("interpolate_simulation_result", static_cast<epi::TimeSeries<double> (*)(const epi::TimeSeries<double>&)>(
-                                               &epi::interpolate_simulation_result));
+    m.def("interpolate_simulation_result", static_cast<mio::TimeSeries<double> (*)(const mio::TimeSeries<double>&)>(
+                                               &mio::interpolate_simulation_result));
 
-    m.def("interpolate_ensemble_results", &epi::interpolate_ensemble_results<epi::TimeSeries<double>>);
+    m.def("interpolate_ensemble_results", &mio::interpolate_ensemble_results<mio::TimeSeries<double>>);
 
-    m.def("ensemble_mean", &epi::ensemble_mean);
-    m.def("ensemble_percentile", &epi::ensemble_percentile);
+    m.def("ensemble_mean", &mio::ensemble_mean);
+    m.def("ensemble_percentile", &mio::ensemble_percentile);
 
-    py::enum_<epi::InfectionState>(m, "InfectionState")
-        .value("Susceptible", epi::InfectionState::Susceptible)
-        .value("Exposed", epi::InfectionState::Exposed)
-        .value("Carrier", epi::InfectionState::Carrier)
-        .value("Infected", epi::InfectionState::Infected)
-        .value("Hospitalized", epi::InfectionState::Hospitalized)
-        .value("ICU", epi::InfectionState::ICU)
-        .value("Recovered", epi::InfectionState::Recovered)
-        .value("Dead", epi::InfectionState::Dead)
-        .value("Count", epi::InfectionState::Count)
+    py::enum_<mio::InfectionState>(m, "InfectionState")
+        .value("Susceptible", mio::InfectionState::Susceptible)
+        .value("Exposed", mio::InfectionState::Exposed)
+        .value("Carrier", mio::InfectionState::Carrier)
+        .value("Infected", mio::InfectionState::Infected)
+        .value("Hospitalized", mio::InfectionState::Hospitalized)
+        .value("ICU", mio::InfectionState::ICU)
+        .value("Recovered", mio::InfectionState::Recovered)
+        .value("Dead", mio::InfectionState::Dead)
+        .value("Count", mio::InfectionState::Count)
         .export_values();
 
-    bind_Index<epi::InfectionState>(m, "Index_InfectionState");
-    bind_Index<epi::AgeGroup>(m, "Index_AgeGroup");
+    bind_Index<mio::InfectionState>(m, "Index_InfectionState");
+    bind_Index<mio::AgeGroup>(m, "Index_AgeGroup");
 
-    py::class_<epi::AgeGroup, epi::Index<epi::AgeGroup>>(m, "AgeGroup").def(py::init<size_t>());
+    py::class_<mio::AgeGroup, mio::Index<mio::AgeGroup>>(m, "AgeGroup").def(py::init<size_t>());
 
-    bind_MultiIndex<epi::AgeGroup, epi::InfectionState>(m, "Index_Agegroup_InfectionState");
-    bind_CustomIndexArray<epi::UncertainValue, epi::AgeGroup, epi::InfectionState>(m, "SecirPopulationArray");
-    bind_CustomIndexArray<epi::UncertainValue, epi::AgeGroup>(m, "AgeGroupArray");
+    bind_MultiIndex<mio::AgeGroup, mio::InfectionState>(m, "Index_Agegroup_InfectionState");
+    bind_CustomIndexArray<mio::UncertainValue, mio::AgeGroup, mio::InfectionState>(m, "SecirPopulationArray");
+    bind_CustomIndexArray<mio::UncertainValue, mio::AgeGroup>(m, "AgeGroupArray");
 
-    bind_ParameterSet<epi::SecirParamsBase>(m, "SecirParamsBase");
+    bind_ParameterSet<mio::SecirParamsBase>(m, "SecirParamsBase");
 
-    py::class_<epi::SecirParams, epi::SecirParamsBase>(m, "SecirParams")
-        .def(py::init<epi::AgeGroup>())
-        .def("check_constraints", &epi::SecirParams::check_constraints)
-        .def("apply_constraints", &epi::SecirParams::apply_constraints);
+    py::class_<mio::SecirParams, mio::SecirParamsBase>(m, "SecirParams")
+        .def(py::init<mio::AgeGroup>())
+        .def("check_constraints", &mio::SecirParams::check_constraints)
+        .def("apply_constraints", &mio::SecirParams::apply_constraints);
 
-    bind_Population<epi::AgeGroup, epi::InfectionState>(m, "SecirPopulation");
+    bind_Population<mio::AgeGroup, mio::InfectionState>(m, "SecirPopulation");
 
-    using SecirPopulations = epi::Populations<epi::AgeGroup, epi::InfectionState>;
-    bind_CompartmentalModel<SecirPopulations, epi::SecirParams>(m, "SecirModelBase");
-    py::class_<epi::SecirModel, epi::CompartmentalModel<SecirPopulations, epi::SecirParams>>(m, "SecirModel")
+    using SecirPopulations = mio::Populations<mio::AgeGroup, mio::InfectionState>;
+    bind_CompartmentalModel<SecirPopulations, mio::SecirParams>(m, "SecirModelBase");
+    py::class_<mio::SecirModel, mio::CompartmentalModel<SecirPopulations, mio::SecirParams>>(m, "SecirModel")
         .def(py::init<size_t>(), py::arg("num_agegroups"));
 
-    bind_Simulation<epi::SecirSimulation<>>(m, "SecirSimulation");
+    bind_Simulation<mio::SecirSimulation<>>(m, "SecirSimulation");
 
-    m.def("simulate", [](double t0, double tmax, double dt, const epi::SecirModel& model) { return epi::simulate(t0, tmax, dt, model); },
+    m.def("simulate", [](double t0, double tmax, double dt, const mio::SecirModel& model) { return mio::simulate(t0, tmax, dt, model); },
           "Simulates a SecirModel1 from t0 to tmax.", py::arg("t0"), py::arg("tmax"), py::arg("dt"),
           py::arg("model"));
 
-    bind_SecirModelNode<epi::SecirModel>(m, "SecirModelNode");
-    bind_SecirSimulationNode<epi::SecirSimulation<>>(m, "SecirSimulationNode");
-    bind_SecirModelGraph<epi::SecirModel>(m, "SecirModelGraph");
-    using Simulation = epi::SecirSimulation<>;
+    bind_SecirModelNode<mio::SecirModel>(m, "SecirModelNode");
+    bind_SecirSimulationNode<mio::SecirSimulation<>>(m, "SecirSimulationNode");
+    bind_SecirModelGraph<mio::SecirModel>(m, "SecirModelGraph");
+    using Simulation = mio::SecirSimulation<>;
     bind_MigrationGraph<Simulation>(m, "MigrationGraph");
-    using MigrationGraph = epi::Graph<epi::SimulationNode<Simulation>, epi::MigrationEdge>;
+    using MigrationGraph = mio::Graph<mio::SimulationNode<Simulation>, mio::MigrationEdge>;
     bind_GraphSimulation<MigrationGraph>(m, "MigrationSimulation");
 
-    bind_ParameterStudy<epi::SecirSimulation<>>(m, "ParameterStudy");
+    bind_ParameterStudy<mio::SecirSimulation<>>(m, "ParameterStudy");
 
-    m.def("set_params_distributions_normal", &epi::set_params_distributions_normal, py::arg("model"), py::arg("t0"),
+    m.def("set_params_distributions_normal", &mio::set_params_distributions_normal, py::arg("model"), py::arg("t0"),
           py::arg("tmax"), py::arg("dev_rel"));
 
-    m.def("draw_sample", &epi::draw_sample, py::arg("model"));
+    m.def("draw_sample", &mio::draw_sample, py::arg("model"));
 
     m.def("interpolate_simulation_result",
-          py::overload_cast<const MigrationGraph&>(&epi::interpolate_simulation_result<Simulation>));
+          py::overload_cast<const MigrationGraph&>(&mio::interpolate_simulation_result<Simulation>));
 
-    m.def("interpolate_ensemble_results", &epi::interpolate_ensemble_results<MigrationGraph>);
+    m.def("interpolate_ensemble_results", &mio::interpolate_ensemble_results<MigrationGraph>);
 
     m.def(
         "get_state_id_de",
         [](int county) {
-            return int(epi::regions::de::get_state_id(epi::regions::de::CountyId(county)));
+            return int(mio::regions::de::get_state_id(mio::regions::de::CountyId(county)));
         },
         py::arg("county_id"));
     m.def(
         "get_holidays_de",
-        [](int state, epi::Date start_date, epi::Date end_date) {
-            auto h = epi::regions::de::get_holidays(epi::regions::de::StateId(state), start_date, end_date);
-            return std::vector<std::pair<epi::Date, epi::Date>>(h.begin(), h.end());
+        [](int state, mio::Date start_date, mio::Date end_date) {
+            auto h = mio::regions::de::get_holidays(mio::regions::de::StateId(state), start_date, end_date);
+            return std::vector<std::pair<mio::Date, mio::Date>>(h.begin(), h.end());
         },
-        py::arg("state_id"), py::arg("start_date") = epi::Date(std::numeric_limits<int>::min(), 1, 1),
-        py::arg("end_date") = epi::Date(std::numeric_limits<int>::max(), 1, 1));
+        py::arg("state_id"), py::arg("start_date") = mio::Date(std::numeric_limits<int>::min(), 1, 1),
+        py::arg("end_date") = mio::Date(std::numeric_limits<int>::max(), 1, 1));
 
     m.attr("__version__") = "dev";
 }

@@ -20,7 +20,7 @@
 #ifndef EPI_MATH_FLOATING_POINT_H
 #define EPI_MATH_FLOATING_POINT_H
 
-namespace epi
+namespace mio
 {
     /**
      * maximum absolute value of two numbers.

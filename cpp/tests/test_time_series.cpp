@@ -32,7 +32,7 @@ TYPED_TEST_SUITE(TestTimeSeries, FloatingPointTypes);
 
 TYPED_TEST(TestTimeSeries, createEmpty)
 {
-    epi::TimeSeries<TypeParam> ts(10);
+    mio::TimeSeries<TypeParam> ts(10);
     ASSERT_EQ(ts.get_num_elements(), 10);
     ASSERT_EQ(ts.get_num_rows(), 11);
     ASSERT_EQ(ts.get_num_time_points(), 0);
@@ -41,8 +41,8 @@ TYPED_TEST(TestTimeSeries, createEmpty)
 
 TYPED_TEST(TestTimeSeries, createInit)
 {
-    auto v = epi::TimeSeries<TypeParam>::Vector::Random(5).eval();
-    epi::TimeSeries<TypeParam> ts(0.0, v);
+    auto v = mio::TimeSeries<TypeParam>::Vector::Random(5).eval();
+    mio::TimeSeries<TypeParam> ts(0.0, v);
     ASSERT_EQ(ts.get_num_elements(), 5);
     ASSERT_EQ(ts.get_num_rows(), 6);
     ASSERT_EQ(ts.get_num_time_points(), 1);
@@ -53,7 +53,7 @@ TYPED_TEST(TestTimeSeries, createInit)
 
 TYPED_TEST(TestTimeSeries, zeroElements)
 {
-    epi::TimeSeries<TypeParam> ts(0);
+    mio::TimeSeries<TypeParam> ts(0);
     ASSERT_EQ(ts.get_num_elements(), 0);
     ASSERT_EQ(ts.get_num_rows(), 1);
     ASSERT_EQ(ts.get_num_time_points(), 0);
@@ -63,7 +63,7 @@ TYPED_TEST(TestTimeSeries, zeroElements)
 
 TYPED_TEST(TestTimeSeries, addPoints)
 {
-    epi::TimeSeries<TypeParam> ts(5);
+    mio::TimeSeries<TypeParam> ts(5);
     ts.add_time_point(0.0);
     ASSERT_EQ(ts.get_num_time_points(), 1);
     ASSERT_EQ(ts.get_capacity(), 1 << 0);
@@ -92,14 +92,14 @@ TYPED_TEST(TestTimeSeries, addPoints)
 
 TYPED_TEST(TestTimeSeries, assignValues)
 {
-    epi::TimeSeries<TypeParam> ts(2);
-    auto v0               = epi::TimeSeries<TypeParam>::Vector::Random(2).eval();
+    mio::TimeSeries<TypeParam> ts(2);
+    auto v0               = mio::TimeSeries<TypeParam>::Vector::Random(2).eval();
     ts.add_time_point(0.) = v0;
-    auto v1               = epi::TimeSeries<TypeParam>::Vector::Random(2).eval();
+    auto v1               = mio::TimeSeries<TypeParam>::Vector::Random(2).eval();
     ts.add_time_point(1.);
     ts[1] = v1;
-    ts.add_time_point(2., epi::TimeSeries<TypeParam>::Vector::Constant(2, 1));
-    auto v2 = epi::TimeSeries<TypeParam>::Vector::Constant(2, 1);
+    ts.add_time_point(2., mio::TimeSeries<TypeParam>::Vector::Constant(2, 1));
+    auto v2 = mio::TimeSeries<TypeParam>::Vector::Constant(2, 1);
 
     ASSERT_EQ(print_wrap(ts[0]), print_wrap(v0));
     ASSERT_EQ(print_wrap(ts[1]), print_wrap(v1));
@@ -108,9 +108,9 @@ TYPED_TEST(TestTimeSeries, assignValues)
 
 TYPED_TEST(TestTimeSeries, copyEmpty)
 {
-    epi::TimeSeries<TypeParam> ts(10);
-    epi::TimeSeries<TypeParam> ts_copy1(ts);
-    epi::TimeSeries<TypeParam> ts_copy2(1);
+    mio::TimeSeries<TypeParam> ts(10);
+    mio::TimeSeries<TypeParam> ts_copy1(ts);
+    mio::TimeSeries<TypeParam> ts_copy2(1);
     ts_copy2 = ts;
 
     for (auto&& ts_copy : {&ts_copy1, &ts_copy2}) {
@@ -123,7 +123,7 @@ TYPED_TEST(TestTimeSeries, copyEmpty)
 
 TYPED_TEST(TestTimeSeries, reserve)
 {
-    epi::TimeSeries<TypeParam> ts(2);
+    mio::TimeSeries<TypeParam> ts(2);
     ts.reserve(10);
     ASSERT_EQ(ts.get_capacity(), 16);
     ts.reserve(200);
@@ -134,17 +134,17 @@ TYPED_TEST(TestTimeSeries, reserve)
 
 TYPED_TEST(TestTimeSeries, constAccess)
 {
-    epi::TimeSeries<TypeParam> ts(1);
-    ts.add_time_point(0., epi::TimeSeries<TypeParam>::Vector::Random(1));
+    mio::TimeSeries<TypeParam> ts(1);
+    ts.add_time_point(0., mio::TimeSeries<TypeParam>::Vector::Random(1));
     const auto& constref = ts;
     static_assert(
-        std::is_same<decltype(constref[0]), Eigen::Ref<const typename epi::TimeSeries<TypeParam>::Vector>>::value,
+        std::is_same<decltype(constref[0]), Eigen::Ref<const typename mio::TimeSeries<TypeParam>::Vector>>::value,
         "wrong type");
     static_assert(std::is_same<decltype(constref.get_value(0)),
-                               Eigen::Ref<const typename epi::TimeSeries<TypeParam>::Vector>>::value,
+                               Eigen::Ref<const typename mio::TimeSeries<TypeParam>::Vector>>::value,
                   "wrong type");
     static_assert(std::is_same<decltype(constref.get_last_value()),
-                               Eigen::Ref<const typename epi::TimeSeries<TypeParam>::Vector>>::value,
+                               Eigen::Ref<const typename mio::TimeSeries<TypeParam>::Vector>>::value,
                   "wrong type");
     ASSERT_EQ(print_wrap(ts[0]), print_wrap(constref[0]));
 }
@@ -153,7 +153,7 @@ TYPED_TEST(TestTimeSeries, createInvalidDim)
 {
     if (std::is_signed<Eigen::Index>::value) {
         auto create = []() {
-            epi::TimeSeries<TypeParam> ts(-1);
+            mio::TimeSeries<TypeParam> ts(-1);
             return ts;
         };
         ASSERT_DEBUG_DEATH(create(), ".*");
@@ -162,7 +162,7 @@ TYPED_TEST(TestTimeSeries, createInvalidDim)
 
 TYPED_TEST(TestTimeSeries, accessInvalidRange)
 {
-    epi::TimeSeries<TypeParam> ts(1);
+    mio::TimeSeries<TypeParam> ts(1);
     for (Eigen::Index i = 0; i < 123; i++) {
         ts.add_time_point();
     }
@@ -173,28 +173,28 @@ TYPED_TEST(TestTimeSeries, accessInvalidRange)
 
 TYPED_TEST(TestTimeSeries, data)
 {
-    epi::TimeSeries<TypeParam> ts(1);
-    auto v0 = epi::TimeSeries<TypeParam>::Vector::Constant(1, 0.5);
-    auto v1 = epi::TimeSeries<TypeParam>::Vector::Constant(1, 1.5);
-    auto v2 = epi::TimeSeries<TypeParam>::Vector::Constant(1, 2.5);
-    auto v3 = epi::TimeSeries<TypeParam>::Vector::Constant(1, 3.5);
+    mio::TimeSeries<TypeParam> ts(1);
+    auto v0 = mio::TimeSeries<TypeParam>::Vector::Constant(1, 0.5);
+    auto v1 = mio::TimeSeries<TypeParam>::Vector::Constant(1, 1.5);
+    auto v2 = mio::TimeSeries<TypeParam>::Vector::Constant(1, 2.5);
+    auto v3 = mio::TimeSeries<TypeParam>::Vector::Constant(1, 3.5);
     ts.add_time_point(0.0, v0);
     ts.add_time_point(1.0, v1);
     ts.add_time_point(2.0, v2);
     ts.add_time_point(3.0, v3);
 
-    auto data_range = epi::make_range(ts.data(), ts.data() + 8);
+    auto data_range = mio::make_range(ts.data(), ts.data() + 8);
     ASSERT_THAT(data_range, testing::ElementsAre(TypeParam(0.0), TypeParam(0.5), TypeParam(1.0), TypeParam(1.5),
                                                  TypeParam(2.0), TypeParam(2.5), TypeParam(3.0), TypeParam(3.5)));
 }
 
 TYPED_TEST(TestTimeSeries, iteratorsRange)
 {
-    epi::TimeSeries<TypeParam> ts(1);
-    auto v0 = epi::TimeSeries<TypeParam>::Vector::Constant(1, 0.5);
-    auto v1 = epi::TimeSeries<TypeParam>::Vector::Constant(1, 1.5);
-    auto v2 = epi::TimeSeries<TypeParam>::Vector::Constant(1, 2.5);
-    auto v3 = epi::TimeSeries<TypeParam>::Vector::Constant(1, 3.5);
+    mio::TimeSeries<TypeParam> ts(1);
+    auto v0 = mio::TimeSeries<TypeParam>::Vector::Constant(1, 0.5);
+    auto v1 = mio::TimeSeries<TypeParam>::Vector::Constant(1, 1.5);
+    auto v2 = mio::TimeSeries<TypeParam>::Vector::Constant(1, 2.5);
+    auto v3 = mio::TimeSeries<TypeParam>::Vector::Constant(1, 3.5);
     ts.add_time_point(0.0, v0);
     ts.add_time_point(1.0, v1);
     ts.add_time_point(2.0, v2);
@@ -213,22 +213,22 @@ TYPED_TEST(TestTimeSeries, iteratorsRange)
         ++i;
     }
     i = 3;
-    for (auto&& v : epi::make_range(ts.rbegin(), ts.rend())) {
+    for (auto&& v : mio::make_range(ts.rbegin(), ts.rend())) {
         ASSERT_EQ(print_wrap(v), print_wrap(ts[i]));
         --i;
     }
     ASSERT_THAT(ts, testing::ElementsAre(v0, v1, v2, v3));
     ASSERT_THAT(ts_constref, testing::ElementsAre(v0, v1, v2, v3));
-    ASSERT_THAT(epi::make_range(ts.rbegin(), ts.rend()), testing::ElementsAre(v3, v2, v1, v0));
+    ASSERT_THAT(mio::make_range(ts.rbegin(), ts.rend()), testing::ElementsAre(v3, v2, v1, v0));
 }
 
 TYPED_TEST(TestTimeSeries, timeIteratorsRange)
 {
-    epi::TimeSeries<TypeParam> ts(1);
-    auto v0 = epi::TimeSeries<TypeParam>::Vector::Constant(1, 0.5);
-    auto v1 = epi::TimeSeries<TypeParam>::Vector::Constant(1, 1.5);
-    auto v2 = epi::TimeSeries<TypeParam>::Vector::Constant(1, 2.5);
-    auto v3 = epi::TimeSeries<TypeParam>::Vector::Constant(1, 3.5);
+    mio::TimeSeries<TypeParam> ts(1);
+    auto v0 = mio::TimeSeries<TypeParam>::Vector::Constant(1, 0.5);
+    auto v1 = mio::TimeSeries<TypeParam>::Vector::Constant(1, 1.5);
+    auto v2 = mio::TimeSeries<TypeParam>::Vector::Constant(1, 2.5);
+    auto v3 = mio::TimeSeries<TypeParam>::Vector::Constant(1, 3.5);
     ts.add_time_point(0.0, v0);
     ts.add_time_point(1.0, v1);
     ts.add_time_point(2.0, v2);
@@ -260,11 +260,11 @@ TYPED_TEST(TestTimeSeries, timeIteratorsRange)
 
 TYPED_TEST(TestTimeSeries, iteratorsRandomAccess)
 {
-    epi::TimeSeries<TypeParam> ts(1);
-    auto v0 = epi::TimeSeries<TypeParam>::Vector::Constant(1, 0.5);
-    auto v1 = epi::TimeSeries<TypeParam>::Vector::Constant(1, 1.5);
-    auto v2 = epi::TimeSeries<TypeParam>::Vector::Constant(1, 2.5);
-    auto v3 = epi::TimeSeries<TypeParam>::Vector::Constant(1, 3.5);
+    mio::TimeSeries<TypeParam> ts(1);
+    auto v0 = mio::TimeSeries<TypeParam>::Vector::Constant(1, 0.5);
+    auto v1 = mio::TimeSeries<TypeParam>::Vector::Constant(1, 1.5);
+    auto v2 = mio::TimeSeries<TypeParam>::Vector::Constant(1, 2.5);
+    auto v3 = mio::TimeSeries<TypeParam>::Vector::Constant(1, 3.5);
     ts.add_time_point(0.0, v0);
     ts.add_time_point(1.0, v1);
     ts.add_time_point(2.0, v2);
@@ -312,7 +312,7 @@ TYPED_TEST(TestTimeSeries, iteratorsRandomAccess)
 
 TYPED_TEST(TestTimeSeries, create)
 {
-    auto ts = epi::TimeSeries<double>::zero(5, 10);
+    auto ts = mio::TimeSeries<double>::zero(5, 10);
     for (int i = 0; i < 5; i++) {
         ASSERT_EQ(ts.get_time(i), 0.0);
         for (int j = 0; j < 10; j++) {

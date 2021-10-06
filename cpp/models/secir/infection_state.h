@@ -20,7 +20,7 @@
 #ifndef INFECTIONSTATE_H
 #define INFECTIONSTATE_H
 
-namespace epi {
+namespace mio {
 
 
 /**

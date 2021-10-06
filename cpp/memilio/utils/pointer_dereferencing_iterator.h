@@ -20,7 +20,7 @@
 #ifndef EPI_DEREF_ITERATOR_H
 #define EPI_DEREF_ITERATOR_H
 
-namespace epi
+namespace mio
 {
 
     /**

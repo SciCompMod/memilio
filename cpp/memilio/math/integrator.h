@@ -28,7 +28,7 @@
 #include <functional>
 #include <algorithm>
 
-namespace epi
+namespace mio
 {
 
 /**
@@ -106,6 +106,6 @@ private:
     std::shared_ptr<IntegratorCore> m_core;
 };
 
-} // namespace epi
+} // namespace mio
 
 #endif // INTEGRATOR_H

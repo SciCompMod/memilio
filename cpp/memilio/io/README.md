@@ -45,15 +45,15 @@ as it was added since, e.g., binary format does not allow lookup by key. The fol
 for an IOObject `obj`:
 - `obj.add_element("Name", t)`: 
      Stores an object `t` in the IOObject under the key "Name". If `t` is of basic type (i.e., int, string), IOObject 
-     is expected to handle it directly. Otherwise, the object uses `epi::serialize` to get the data for `t`.
+     is expected to handle it directly. Otherwise, the object uses `mio::serialize` to get the data for `t`.
 - `obj.add_list("Name", b, e)`:
      Stores the elements in the range represented by iterators `b` and `e` under the key "Name". The individual elements are not named.
-     The elements are either handled directly by the IOObject or using `epi::serialize` just like `add_element`.
+     The elements are either handled directly by the IOObject or using `mio::serialize` just like `add_element`.
 - `obj.add_optional("Name", p)`:
      Stores the element pointed to by pointer `p` under the key "Name". The pointer may be null. Otherwise identical to add_element.
 - `obj.expect_element("Name", Tag<T>{})`:
      If an object of type T can be found under the key "Name" and can be deserialized, returns the object. Otherwise returns
-     an error. Analogously to serialization, the IOObject is expected to handle basic types directly and use `epi::deserialize`
+     an error. Analogously to serialization, the IOObject is expected to handle basic types directly and use `mio::deserialize`
      otherwise.
 - `obj.expect_list("Name", Tag<T>{})`:
      If a list of objects of type T can be found under the key "Name" and can be deserialized, returns a range that can be 
@@ -97,8 +97,8 @@ struct Foo {
   template<class IOContext>
   static IOResult<Foo> deserialize(IOContext& io) {
     auto obj = io.expect_object("Foo");
-    auto i_result = obj.expect_element("i", epi::Tag<int>{});
-    return epi::apply(io, [](auto&& i) { return Foo{i}; }, i_result);
+    auto i_result = obj.expect_element("i", mio::Tag<int>{});
+    return mio::apply(io, [](auto&& i) { return Foo{i}; }, i_result);
   }
 };
 ```

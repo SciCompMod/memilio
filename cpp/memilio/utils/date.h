@@ -29,7 +29,7 @@
 #include <algorithm>
 #include <cassert>
 
-namespace epi
+namespace mio
 {
 
 /**
@@ -104,7 +104,7 @@ struct Date {
 
     /**
      * serialize this. 
-     * @see epi::serialize
+     * @see mio::serialize
      */
     template <class IOContext>
     void serialize(IOContext& io) const
@@ -117,7 +117,7 @@ struct Date {
 
     /**
      * deserialize an object of this class.
-     * @see epi::deserialize
+     * @see mio::deserialize
      */
     template<class IOContext>
     static IOResult<Date> deserialize(IOContext& io)
@@ -295,6 +295,6 @@ inline int get_offset_in_days(Date date1, Date date2)
     }
 }
 
-} // end namespace epi
+} // end namespace mio
 
 #endif // EPI_UTILS_DATE_H

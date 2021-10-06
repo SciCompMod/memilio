@@ -23,7 +23,7 @@
 #include <utility>
 #include <cstddef>
 
-namespace epi
+namespace mio
 {
 
 /**
@@ -105,6 +105,6 @@ private:
     size_t m_size  = 0;
 };
 
-} // namespace epi
+} // namespace mio
 
 #endif //EPI_SPAN_H

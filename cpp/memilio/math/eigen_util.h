@@ -25,7 +25,7 @@
 #include <iostream>
 #include <iterator>
 
-namespace epi
+namespace mio
 {
 
 /**
@@ -473,4 +473,4 @@ std::enable_if_t<std::is_base_of<Eigen::EigenBase<M>, M>::value, RowMajorIterato
     return {m, m.size()};
 }
 
-} // namespace epi
+} // namespace mio

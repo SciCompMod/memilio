@@ -28,7 +28,7 @@
 
 #include <random>
 
-namespace epi
+namespace mio
 {
 
 LocationType random_migration(const Person& person, TimePoint t, TimeSpan dt, const AbmMigrationParameters& params)
@@ -52,11 +52,11 @@ LocationType go_to_school(const Person& person, TimePoint t, TimeSpan /*dt*/, co
     if (current_loc == LocationType::Home && t < params.get<LockdownDate>() && t.day_of_week() < 5 &&
         t.hour_of_day() >= 8 && person.get_age() == AbmAgeGroup::Age5to14 && person.goes_to_school(t, params) &&
         !person.is_in_quarantine()) {
-        return epi::LocationType::School;
+        return mio::LocationType::School;
     }
     //return home
-    if (current_loc == epi::LocationType::School && t.hour_of_day() >= 15) {
-        return epi::LocationType::Home;
+    if (current_loc == mio::LocationType::School && t.hour_of_day() >= 15) {
+        return mio::LocationType::Home;
     }
     return current_loc;
 }
@@ -68,11 +68,11 @@ LocationType go_to_work(const Person& person, TimePoint t, TimeSpan /*dt*/, cons
     if (current_loc == LocationType::Home && t < params.get<LockdownDate>() &&
         (person.get_age() == AbmAgeGroup::Age15to34 || person.get_age() == AbmAgeGroup::Age35to59) &&
         t.day_of_week() < 5 && t.hour_of_day() >= 8 && person.goes_to_work(t, params) && !person.is_in_quarantine()) {
-        return epi::LocationType::Work;
+        return mio::LocationType::Work;
     }
     //return home
-    if (current_loc == epi::LocationType::Work && t.hour_of_day() >= 17) {
-        return epi::LocationType::Home;
+    if (current_loc == mio::LocationType::Work && t.hour_of_day() >= 17) {
+        return mio::LocationType::Home;
     }
     return current_loc;
 }
@@ -146,4 +146,4 @@ LocationType return_home_when_recovered(const Person& person, TimePoint /*t*/, T
     return current_loc;
 }
 
-} // namespace epi
+} // namespace mio

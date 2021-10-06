@@ -20,6 +20,6 @@
 #ifndef TEST_DATA_DIR_H
 #define TEST_DATA_DIR_H
 
-const char* const TEST_DATA_DIR = "${EPI_TEST_DATA_DIR}";
+const char* const TEST_DATA_DIR = "${MEMILIO_TEST_DATA_DIR}";
 
 #endif //TEST_DATA_DIR_H

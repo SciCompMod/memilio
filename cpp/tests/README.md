@@ -13,7 +13,7 @@ Some tests write data to the filesystem. The tests try to use the temp directory
 Code coverage analysis currently only works on linux with the "Makefile" generator and in Debug mode. To perform
 the analysis, configure cmake as follows
 
-    cmake -DCMAKE_BUILD_TYPE=Debug -DEPI_TEST_COVERAGE=ON ..
+    cmake -DCMAKE_BUILD_TYPE=Debug -DMEMILIO_TEST_COVERAGE=ON ..
 
 This step needs to have the tool lcov installed. To execute the coverage, run
 
@@ -21,4 +21,4 @@ This step needs to have the tool lcov installed. To execute the coverage, run
 
 It will generate a html report inside the `coverage` directory.
 
-- EPI_TEST_COVERAGE: compile libraries and unit tests for coverage analysis, only available in Debug builds, ON or OFF, default OFF.
+- MEMILIO_TEST_COVERAGE: compile libraries and unit tests for coverage analysis, only available in Debug builds, ON or OFF, default OFF.

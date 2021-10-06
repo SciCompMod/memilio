@@ -25,7 +25,7 @@
 #include <tuple>
 #include <utility>
 
-namespace epi
+namespace mio
 {
 
 namespace details
@@ -321,7 +321,7 @@ public:
 
     /**
      * serialize this. 
-     * @see epi::serialize
+     * @see mio::serialize
      */
     template <class IOContext>
     void serialize(IOContext& io) const
@@ -342,7 +342,7 @@ private:
 public:
     /**
      * deserialize an object of this class.
-     * @see epi::deserialize
+     * @see mio::deserialize
      */
     template <class IOContext>
     static IOResult<ParameterSet> deserialize(IOContext& io)
@@ -450,6 +450,6 @@ void foreach (ParameterSet<Tags...>& p, F f)
     details::foreach_impl<Tags...>(p, f);
 }
 
-} // namespace epi
+} // namespace mio
 
 #endif //EPI_UTILS_PARAMETER_SET_H

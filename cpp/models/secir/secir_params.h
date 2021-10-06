@@ -31,7 +31,7 @@
 
 #include <vector>
 
-namespace epi
+namespace mio
 {
 
 /*******************************************
@@ -623,7 +623,7 @@ private:
 public:
     /**
      * deserialize an object of this class.
-     * @see epi::deserialize
+     * @see mio::deserialize
      */
     template<class IOContext>
     static IOResult<SecirParams> deserialize(IOContext& io)
@@ -643,6 +643,6 @@ private:
  */
 //double get_reprod_rate(SecirParams const& params, double t, std::vector<double> const& yt);
 
-} // namespace epi
+} // namespace mio
 
 #endif // SECIR_H

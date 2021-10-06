@@ -25,7 +25,7 @@
 #include "abm/parameters.h"
 #include "abm/time.h"
 
-namespace epi
+namespace mio
 {
 
 class Person;
@@ -83,6 +83,6 @@ LocationType return_home_when_recovered(const Person& person, TimePoint t, TimeS
                                         const AbmMigrationParameters& params);
 /**@}*/
 
-} // namespace epi
+} // namespace mio
 
 #endif //EPI_ABM_MIGRATION_RULES_H

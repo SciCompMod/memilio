@@ -19,7 +19,7 @@
 */
 #include "memilio/mobility/mobility.h"
 
-namespace epi
+namespace mio
 {
 
-} // namespace epi
+} // namespace mio

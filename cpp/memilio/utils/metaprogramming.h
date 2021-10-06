@@ -22,7 +22,7 @@
 
 #include <type_traits>
 
-namespace epi
+namespace mio
 {
 
 namespace details
@@ -90,6 +90,6 @@ template <class... Bs>
 constexpr bool conjunction_v = conjunction<Bs...>::value;
 /**@}*/
 
-} // namespace epi
+} // namespace mio
 
 #endif

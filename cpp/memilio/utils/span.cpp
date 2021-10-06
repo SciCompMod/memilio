@@ -19,7 +19,7 @@
 */
 #include "memilio/utils/span.h"
 
-namespace epi
+namespace mio
 {
 
 }

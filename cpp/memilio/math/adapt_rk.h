@@ -25,7 +25,7 @@
 #include <cstdio>
 #include <vector>
 
-namespace epi
+namespace mio
 {
 
 /**
@@ -162,6 +162,6 @@ private:
     double m_dt_min, m_dt_max;
 };
 
-} // namespace epi
+} // namespace mio
 
 #endif // ARK_H

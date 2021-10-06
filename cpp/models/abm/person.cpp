@@ -22,7 +22,7 @@
 #include "abm/location.h"
 #include "memilio/utils/random_number_generator.h"
 
-namespace epi
+namespace mio
 {
 
 Person::Person(LocationId id, InfectionProperties infection_properties, VaccinationState vaccination_state, AbmAgeGroup age, const GlobalInfectionParameters& global_params)
@@ -108,7 +108,7 @@ void Person::migrate_to(Location& loc_old, Location& loc_new)
         loc_old.remove_person(*this);
         m_location_id = {loc_new.get_index(), loc_new.get_type()};
         loc_new.add_person(*this);
-        m_time_at_location = epi::TimeSpan(0);
+        m_time_at_location = mio::TimeSpan(0);
     }
 }
 
@@ -168,4 +168,4 @@ bool Person::get_tested(const TestParameters& params)
         }
     }
 }
-} // namespace epi
+} // namespace mio

@@ -30,7 +30,7 @@
 #include "memilio/epidemiology/contact_matrix.h"
 #include <limits>
 
-namespace epi
+namespace mio
 {
 
 struct IncubationPeriod {
@@ -229,5 +229,5 @@ struct SocialEventRate {
  */
 using AbmMigrationParameters = ParameterSet<LockdownDate, SocialEventRate, BasicShoppingRate, WorkRatio, SchoolRatio>;
 
-} // namespace epi
+} // namespace mio
 #endif

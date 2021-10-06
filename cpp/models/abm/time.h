@@ -20,7 +20,7 @@
 #ifndef EPI_ABM_TIME_H
 #define EPI_ABM_TIME_H
 
-namespace epi
+namespace mio
 {
 
 /**
@@ -294,6 +294,6 @@ inline TimeSpan days(int days)
     return TimeSpan(days * 24 * 60 * 60);
 }
 
-} // namespace epi
+} // namespace mio
 
 #endif

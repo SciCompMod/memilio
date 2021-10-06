@@ -36,7 +36,7 @@
 #include "memilio/math/eigen_util.h"
 #include "memilio/io/io.h"
 
-namespace epi
+namespace mio
 {
 /**
  * shape of a rectangular matrix.
@@ -98,7 +98,7 @@ public:
 
     /**
      * serialize this. 
-     * @see epi::serialize
+     * @see mio::serialize
      */
     template <class IOContext>
     void serialize(IOContext& io) const
@@ -110,7 +110,7 @@ public:
 
     /**
      * deserialize an object of this class.
-     * @see epi::deserialize
+     * @see mio::deserialize
      */
     template<class IOContext>
     static IOResult<RectMatrixShape> deserialize(IOContext& io)
@@ -202,7 +202,7 @@ public:
 
     /**
      * serialize this. 
-     * @see epi::serialize
+     * @see mio::serialize
      */
     template <class IOContext>
     void serialize(IOContext& io) const
@@ -213,7 +213,7 @@ public:
 
     /**
      * deserialize an object of this class.
-     * @see epi::deserialize
+     * @see mio::deserialize
      */
     template<class IOContext>
     static IOResult<SquareMatrixShape> deserialize(IOContext& io)
@@ -303,7 +303,7 @@ public:
 
     /**
      * serialize this. 
-     * @see epi::serialize
+     * @see mio::serialize
      */
     template <class IOContext>
     void serialize(IOContext& io) const
@@ -314,7 +314,7 @@ public:
 
     /**
      * deserialize an object of this class.
-     * @see epi::deserialize
+     * @see mio::deserialize
      */
     template<class IOContext>
     static IOResult<ColumnVectorShape> deserialize(IOContext& io)
@@ -336,6 +336,6 @@ private:
     Eigen::Index m_rows;
 };
 
-} // namespace epi
+} // namespace mio
 
 #endif //EPI_UTILS_MATRIX_SHAPE_H

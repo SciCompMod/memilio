@@ -29,7 +29,7 @@
 #define USE_DERIV_FUNC 1
 
 
-namespace epi
+namespace mio
 {
 
 namespace details 
@@ -227,6 +227,6 @@ template <class M>
 using is_compartment_model = std::integral_constant<bool, (is_expression_valid<eval_right_hand_side_expr_t, M>::value &&
                                                            is_expression_valid<get_initial_values_expr_t, M>::value )>;
 
-} // namespace epi
+} // namespace mio
 
 #endif // COMPARTMENTALMODEL_H

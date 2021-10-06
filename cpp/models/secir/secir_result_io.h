@@ -29,7 +29,7 @@
 #include "memilio/utils/time_series.h"
 #include "memilio/io/io.h"
 
-namespace epi
+namespace mio
 {
 
 /**
@@ -92,7 +92,7 @@ private:
  */
 IOResult<std::vector<SecirSimulationResult>> read_result(const std::string& filename, int nb_groups);
 
-} // namespace epi
+} // namespace mio
 
 #endif // MEMILIO_HAS_HDF5
 

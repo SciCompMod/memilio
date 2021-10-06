@@ -24,7 +24,7 @@
 
 #include <vector>
 
-namespace epi
+namespace mio
 {
 
 /**
@@ -45,6 +45,6 @@ public:
               Eigen::Ref<Eigen::VectorXd> ytp1) const override;
 };
 
-} // namespace epi
+} // namespace mio
 
 #endif // EULER_H

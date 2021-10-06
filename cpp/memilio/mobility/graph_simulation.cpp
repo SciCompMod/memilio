@@ -19,7 +19,7 @@
 */
 #include "memilio/mobility/graph_simulation.h"
 
-namespace epi
+namespace mio
 {
 
 }

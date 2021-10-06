@@ -41,7 +41,7 @@ public:
             boost::filesystem::remove_all(file, ec);
             if (ec) {
                 //just log a warning, failed cleanup should not be considered a test failure.
-                epi::log_warning("Failed to remove temporary file {}:{}",file.string(), ec.message());
+                mio::log_warning("Failed to remove temporary file {}:{}",file.string(), ec.message());
             }
         }
     }

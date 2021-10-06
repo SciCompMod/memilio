@@ -28,7 +28,7 @@
 #include <numeric>
 #include <ostream>
 
-namespace epi
+namespace mio
 {
 
 /**
@@ -206,7 +206,7 @@ public:
 
     /**
      * serialize this. 
-     * @see epi::serialize
+     * @see mio::serialize
      */
     template<class IOContext>
     void serialize(IOContext& io) const
@@ -246,7 +246,7 @@ protected:
 public:
     /**
      * deserialize an object of this class.
-     * @see epi::deserialize
+     * @see mio::deserialize
      */
     template<class IOContext>
     static IOResult<DampingMatrixExpression> deserialize(IOContext& io)
@@ -428,7 +428,7 @@ public:
 
     /**
      * serialize this. 
-     * @see epi::serialize
+     * @see mio::serialize
      */
     template <class IOContext>
     void serialize(IOContext& io) const
@@ -440,7 +440,7 @@ public:
 protected:
     /**
      * deserialize an object of a class derived from this.
-     * @see epi::deserialize
+     * @see mio::deserialize
      */
     template <class IOContext, class Derived>
     static IOResult<Derived> deserialize(IOContext& io, Tag<Derived>)
@@ -469,7 +469,7 @@ protected:
 public:
     /**
      * deserialize an object of this class.
-     * @see epi::deserialize
+     * @see mio::deserialize
      */
     template <class IOContext>
     static IOResult<DampingMatrixExpressionGroup> deserialize(IOContext& io)
@@ -510,7 +510,7 @@ public:
     
     /**
      * deserialize an object of this class.
-     * @see epi::deserialize
+     * @see mio::deserialize
      */
     template <class IOContext>
     static IOResult<ContactMatrix> deserialize(IOContext& io)
@@ -540,7 +540,7 @@ public:
 
     /**
      * deserialize an object of this class.
-     * @see epi::deserialize
+     * @see mio::deserialize
      */
     template <class IOContext>
     static IOResult<ContactMatrixGroup> deserialize(IOContext& io)
@@ -549,6 +549,6 @@ public:
     }
 };
 
-} // namespace epi
+} // namespace mio
 
 #endif //EPI_SECIR_CONTACT_FREQUENCY_MATRIX_H

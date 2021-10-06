@@ -35,7 +35,7 @@
 #include "memilio/io/json_serializer.h"
 #include "memilio/utils/date.h"
 
-namespace epi
+namespace mio
 {
 
 /**
@@ -43,7 +43,7 @@ namespace epi
  * Creates two files per node: one contains the models and its parameters, one contains the outgoing edges.
  * @param graph Graph which should be written
  * @param directory directory where files should be stored
- * @param ioflags flags that set the behavior of serialization; see epi::IOFlags
+ * @param ioflags flags that set the behavior of serialization; see mio::IOFlags
  */
 template <class Model>
 IOResult<void> write_graph(const Graph<Model, MigrationParameters>& graph, const std::string& directory, int ioflags = IOF_None)
@@ -54,13 +54,13 @@ IOResult<void> write_graph(const Graph<Model, MigrationParameters>& graph, const
     BOOST_OUTCOME_TRY(created, create_directory(directory, abs_path));
 
     if (created) {
-        log_info("Results are stored in {:s}/results.", epi::get_current_dir_name());
+        log_info("Results are stored in {:s}/results.", mio::get_current_dir_name());
     }
     else {
         log_info("Results are stored in {:s}/results. Files from previous "
                  "graph will be "
                  "overwritten",
-                 epi::get_current_dir_name());
+                 mio::get_current_dir_name());
     }
 
     //write two files per node
@@ -168,7 +168,7 @@ IOResult<Graph<Model, MigrationParameters>> read_graph(const std::string& direct
  * @param tmax end point of simulation
  */
 template <class Simulation>
-IOResult<void> write_single_run_result(const int run, const epi::Graph<epi::SimulationNode<Simulation>, epi::MigrationEdge>& graph)
+IOResult<void> write_single_run_result(const int run, const mio::Graph<mio::SimulationNode<Simulation>, mio::MigrationEdge>& graph)
 {
     assert(graph.nodes().size() > 0 && "Graph Nodes are empty");
 
@@ -176,20 +176,20 @@ IOResult<void> write_single_run_result(const int run, const epi::Graph<epi::Simu
     BOOST_OUTCOME_TRY(created, create_directory("results", abs_path));
 
     if (created) {
-        log_info("Results are stored in {:s}/results.", epi::get_current_dir_name());
+        log_info("Results are stored in {:s}/results.", mio::get_current_dir_name());
     }
     else if (run == 0) {
         log_info(
             "Directory '{:s}' already exists. Results are stored in {:s}/results. Files from previous runs will be "
             "overwritten",
-            epi::get_current_dir_name());
+            mio::get_current_dir_name());
     }
 
     //write sampled parameters for this run
     //omit edges to save space as they are not sampled
     for (auto inode = size_t(0); inode < graph.nodes().size(); ++inode) {
         auto& node = graph.nodes()[inode];
-        BOOST_OUTCOME_TRY(js_node_model, serialize_json(node.property.get_result(), epi::IOF_OmitDistributions));
+        BOOST_OUTCOME_TRY(js_node_model, serialize_json(node.property.get_result(), mio::IOF_OmitDistributions));
         Json::Value js_node(Json::objectValue);
         js_node["NodeId"] = node.id;
         js_node["Model"]  = js_node_model;
@@ -414,7 +414,7 @@ IOResult<void> extrapolate_rki_results(std::vector<Model>& model, const std::str
 
         for (size_t i = 0; i < region.size(); i++) {
             for (size_t age = 0; age < age_ranges.size(); age++) {
-                rki_data[i][j]((size_t)InfectionState::Exposed + (size_t)epi::InfectionState::Count * age) =
+                rki_data[i][j]((size_t)InfectionState::Exposed + (size_t)mio::InfectionState::Count * age) =
                     num_exp[i][age];
                 rki_data[i][j]((size_t)InfectionState::Carrier + (size_t)InfectionState::Count * age) = num_car[i][age];
                 rki_data[i][j]((size_t)InfectionState::Infected + (size_t)InfectionState::Count * age) =
@@ -436,7 +436,7 @@ IOResult<void> extrapolate_rki_results(std::vector<Model>& model, const std::str
     }
     BOOST_OUTCOME_TRY(save_result(rki_data, region, path_join(results_dir, "Results_rki.h5")));
 
-    auto rki_data_sum = epi::sum_nodes(std::vector<std::vector<TimeSeries<double>>>{rki_data});
+    auto rki_data_sum = mio::sum_nodes(std::vector<std::vector<TimeSeries<double>>>{rki_data});
     BOOST_OUTCOME_TRY(save_result({rki_data_sum[0][0]}, {0}, path_join(results_dir, "Results_rki_sum.h5")));
 
     return success();
@@ -540,7 +540,7 @@ IOResult<void> read_population_data_county(std::vector<Model>& model, Date date,
  */
 IOResult<std::vector<int>> get_county_ids(const std::string& path);
 
-} // namespace epi
+} // namespace mio
 
 #endif // MEMILIO_HAS_JSONCPP
 

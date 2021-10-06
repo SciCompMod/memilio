@@ -19,7 +19,7 @@
 */
 #include "memilio/utils/uncertain_value.h"
 
-namespace epi
+namespace mio
 {
 
 void UncertainValue::set_distribution(const ParameterDistribution& dist)
@@ -46,4 +46,4 @@ double UncertainValue::draw_sample()
     return m_value;
 }
 
-} // namespace epi
+} // namespace mio

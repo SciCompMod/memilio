@@ -20,7 +20,7 @@
 #ifndef VISITOR_H
 #define VISITOR_H
 
-namespace epi
+namespace mio
 {
 
 /**
@@ -100,6 +100,6 @@ struct Visitable : public Base {
     }
 };
 
-} // namespace epi
+} // namespace mio
 
 #endif // VISITOR_H

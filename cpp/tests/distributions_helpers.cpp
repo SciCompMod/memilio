@@ -23,18 +23,18 @@
 #include <gtest/gtest.h>
 #include <gmock/gmock.h>
 
-void check_distribution(const epi::ParameterDistribution& dist, const epi::ParameterDistribution& dist_read)
+void check_distribution(const mio::ParameterDistribution& dist, const mio::ParameterDistribution& dist_read)
 {
 
-    struct CheckDistEqVisitor : public epi::ConstParameterDistributionVisitor {
-        CheckDistEqVisitor(const epi::ParameterDistribution& other_distribution)
+    struct CheckDistEqVisitor : public mio::ConstParameterDistributionVisitor {
+        CheckDistEqVisitor(const mio::ParameterDistribution& other_distribution)
             : other(other_distribution)
         {
         }
 
-        void visit(const epi::ParameterDistributionNormal& self) override
+        void visit(const mio::ParameterDistributionNormal& self) override
         {
-            auto p_other_normal_distribution = dynamic_cast<const epi::ParameterDistributionNormal*>(&other);
+            auto p_other_normal_distribution = dynamic_cast<const mio::ParameterDistributionNormal*>(&other);
             ASSERT_TRUE(p_other_normal_distribution != nullptr);
 
             EXPECT_THAT(self.get_mean(), FloatingPointEqual(p_other_normal_distribution->get_mean(), 1e-12, 1e-12));
@@ -52,9 +52,9 @@ void check_distribution(const epi::ParameterDistribution& dist, const epi::Param
                             FloatingPointEqual(p_other_normal_distribution->get_predefined_samples()[i], 1e-12, 1e-12));
             }
         }
-        void visit(const epi::ParameterDistributionUniform& self) override
+        void visit(const mio::ParameterDistributionUniform& self) override
         {
-            auto p_other_uniform_distribution = dynamic_cast<const epi::ParameterDistributionUniform*>(&other);
+            auto p_other_uniform_distribution = dynamic_cast<const mio::ParameterDistributionUniform*>(&other);
             ASSERT_TRUE(p_other_uniform_distribution != nullptr);
 
             EXPECT_THAT(self.get_lower_bound(),
@@ -69,7 +69,7 @@ void check_distribution(const epi::ParameterDistribution& dist, const epi::Param
                             FloatingPointEqual(p_other_uniform_distribution->get_predefined_samples()[i], 1e-12, 1e-12));
             }
         }
-        const epi::ParameterDistribution& other;
+        const mio::ParameterDistribution& other;
     };
 
     CheckDistEqVisitor visitor(dist_read);

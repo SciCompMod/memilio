@@ -38,7 +38,7 @@ void integration_test(std::vector<Eigen::VectorXd>& y, std::vector<Eigen::Vector
 {
     auto sine_deriv = [](auto&& y, auto&& t, auto&& dydt) { dydt[0] = std::cos(t); };
 
-    epi::RKIntegratorCore rkf45;
+    mio::RKIntegratorCore rkf45;
     rkf45.set_abs_tolerance(1e-7);
     rkf45.set_rel_tolerance(1e-7);
     rkf45.set_dt_min(1e-3);

@@ -31,7 +31,7 @@
 #include <map>
 #include <ostream>
 
-namespace epi
+namespace mio
 {
 
 namespace details
@@ -726,6 +726,6 @@ decltype(std::declval<TS>().rend()) find_value_reverse(TS&& ts, FP t_search, FP 
     return ts.rend();
 }
 
-} // namespace epi
+} // namespace mio
 
 #endif

@@ -20,7 +20,7 @@
 #include "memilio/math/integrator.h"
 #include "memilio/utils/logging.h"
 
-namespace epi
+namespace mio
 {
 
 Eigen::Ref<Eigen::VectorXd> OdeIntegrator::advance(double tmax)
@@ -68,4 +68,4 @@ Eigen::Ref<Eigen::VectorXd> OdeIntegrator::advance(double tmax)
     return m_result.get_last_value();
 }
 
-} // namespace epi
+} // namespace mio

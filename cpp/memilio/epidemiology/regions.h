@@ -21,7 +21,7 @@
 #include "memilio/utils/stl_util.h"
 #include "memilio/utils/type_safe.h"
 
-namespace epi
+namespace mio
 {
 /**
  * Contains utilities that depend on geographical regions.
@@ -91,4 +91,4 @@ namespace regions
 
     } // namespace de
 } // namespace regions
-} // namespace epi
+} // namespace mio

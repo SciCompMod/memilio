@@ -28,7 +28,7 @@
 #include <tuple>
 #include <iostream>
 
-namespace epi
+namespace mio
 {
 
 /**
@@ -71,19 +71,19 @@ enum IOFlags
     IOF_OmitValues = 1 << 1,
 };
 
-} // namespace epi
+} // namespace mio
 
 namespace std
 {
 
 //make enum compatible with std::error_code
 template <>
-struct is_error_code_enum<epi::StatusCode> : true_type {
+struct is_error_code_enum<mio::StatusCode> : true_type {
 };
 
 } // namespace std
 
-namespace epi
+namespace mio
 {
 
 namespace detail
@@ -172,7 +172,7 @@ inline std::error_code make_error_code(StatusCode e)
 /**
  * IOStatus represents the result of an operation.
  * Consists of an error code and additional information in a string message.
- * The error code may be a value from epi::StatusCode or from a dependency. 
+ * The error code may be a value from mio::StatusCode or from a dependency. 
  * The category of the error code can be inspected to see where the 
  * error code originated; see https://en.cppreference.com/w/cpp/error/error_code. 
  */
@@ -521,7 +521,7 @@ namespace details
         //end of recursion
         //number of arguments in rs is the same as the size of the tuple
         //no more elements to read, so finalize the object
-        return epi::apply(
+        return mio::apply(
             o,
             [](const Ts&... ts) {
                 return Tup(ts...);
@@ -608,7 +608,7 @@ IOResult<M> deserialize_internal(IOContext& io, Tag<M> /*tag*/)
     auto rows     = obj.expect_element("Rows", Tag<Eigen::Index>{});
     auto cols     = obj.expect_element("Columns", Tag<Eigen::Index>{});
     auto elements = obj.expect_list("Elements", Tag<typename M::Scalar>{});
-    return epi::apply(
+    return mio::apply(
         io,
         [](auto&& r, auto&& c, auto&& v) {
             auto m = M{r, c};
@@ -632,7 +632,7 @@ IOResult<M> deserialize_internal(IOContext& io, Tag<M> /*tag*/)
 template <class IOContext, class E, std::enable_if_t<std::is_enum<E>::value, void*> = nullptr>
 void serialize_internal(IOContext& io, E e)
 {
-    epi::serialize(io, std::underlying_type_t<E>(e));
+    mio::serialize(io, std::underlying_type_t<E>(e));
 }
 
 /**
@@ -648,7 +648,7 @@ void serialize_internal(IOContext& io, E e)
 template <class IOContext, class E, std::enable_if_t<std::is_enum<E>::value, void*> = nullptr>
 IOResult<E> deserialize_internal(IOContext& io, Tag<E> /*tag*/)
 {
-    BOOST_OUTCOME_TRY(i, epi::deserialize(io, epi::Tag<std::underlying_type_t<E>>{}));
+    BOOST_OUTCOME_TRY(i, mio::deserialize(io, mio::Tag<std::underlying_type_t<E>>{}));
     return success(E(i));
 }
 
@@ -770,7 +770,7 @@ IOResult<Container> deserialize_internal(IOContext& io, Tag<Container> /*tag*/)
 template <class IOContext, class T>
 void serialize(IOContext& io, const T& t)
 {
-    using epi::serialize_internal;
+    using mio::serialize_internal;
     serialize_internal(io, t);
 }
 
@@ -794,7 +794,7 @@ void serialize(IOContext& io, const T& t)
 template <class IOContext, class T>
 IOResult<T> deserialize(IOContext& io, Tag<T> tag)
 {
-    using epi::deserialize_internal;
+    using mio::deserialize_internal;
     return deserialize_internal(io, tag);
 }
 
@@ -827,6 +827,6 @@ IOResult<bool> create_directory(std::string const& rel_path);
  */
 bool file_exists(std::string const& rel_path, std::string& abs_path);
 
-} // namespace epi
+} // namespace mio
 
 #endif

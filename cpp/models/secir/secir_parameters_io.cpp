@@ -46,7 +46,7 @@
 #include <random>
 #include <fstream>
 
-namespace epi
+namespace mio
 {
 
 namespace details
@@ -346,28 +346,28 @@ namespace details
             for (size_t group = 0; group < age_ranges.size(); group++) {
 
                 t_car_to_inf[county].push_back(
-                    static_cast<int>(2 * (model[county].parameters.get<epi::IncubationTime>()[(epi::AgeGroup)group] -
-                                          model[county].parameters.get<epi::SerialInterval>()[(epi::AgeGroup)group])));
+                    static_cast<int>(2 * (model[county].parameters.get<mio::IncubationTime>()[(mio::AgeGroup)group] -
+                                          model[county].parameters.get<mio::SerialInterval>()[(mio::AgeGroup)group])));
                 t_car_to_rec[county].push_back(static_cast<int>(
-                    t_car_to_inf[county][group] + 0.5 * model[county].parameters.get<epi::InfectiousTimeMild>()[(epi::AgeGroup)group]));
+                    t_car_to_inf[county][group] + 0.5 * model[county].parameters.get<mio::InfectiousTimeMild>()[(mio::AgeGroup)group]));
                 t_exp_to_car[county].push_back(
-                    static_cast<int>(2 * model[county].parameters.get<epi::SerialInterval>()[(epi::AgeGroup)group] -
-                                     model[county].parameters.get<epi::IncubationTime>()[(epi::AgeGroup)group]));
+                    static_cast<int>(2 * model[county].parameters.get<mio::SerialInterval>()[(mio::AgeGroup)group] -
+                                     model[county].parameters.get<mio::IncubationTime>()[(mio::AgeGroup)group]));
                 t_inf_to_rec[county].push_back(
-                    static_cast<int>(model[county].parameters.get<epi::InfectiousTimeMild>()[(epi::AgeGroup)group]));
+                    static_cast<int>(model[county].parameters.get<mio::InfectiousTimeMild>()[(mio::AgeGroup)group]));
                 t_inf_to_hosp[county].push_back(
-                    static_cast<int>(model[county].parameters.get<epi::HomeToHospitalizedTime>()[(epi::AgeGroup)group]));
+                    static_cast<int>(model[county].parameters.get<mio::HomeToHospitalizedTime>()[(mio::AgeGroup)group]));
                 t_hosp_to_rec[county].push_back(
-                    static_cast<int>(model[county].parameters.get<epi::HospitalizedToHomeTime>()[(epi::AgeGroup)group]));
+                    static_cast<int>(model[county].parameters.get<mio::HospitalizedToHomeTime>()[(mio::AgeGroup)group]));
                 t_hosp_to_icu[county].push_back(
-                    static_cast<int>(model[county].parameters.get<epi::HospitalizedToICUTime>()[(epi::AgeGroup)group]));
+                    static_cast<int>(model[county].parameters.get<mio::HospitalizedToICUTime>()[(mio::AgeGroup)group]));
                 t_icu_to_dead[county].push_back(
-                    static_cast<int>(model[county].parameters.get<epi::ICUToDeathTime>()[(epi::AgeGroup)group]));
+                    static_cast<int>(model[county].parameters.get<mio::ICUToDeathTime>()[(mio::AgeGroup)group]));
 
-                mu_C_R[county].push_back(model[county].parameters.get<epi::AsymptoticCasesPerInfectious>()[(epi::AgeGroup)group]);
+                mu_C_R[county].push_back(model[county].parameters.get<mio::AsymptoticCasesPerInfectious>()[(mio::AgeGroup)group]);
                 mu_I_H[county].push_back(
-                    model[county].parameters.get<epi::HospitalizedCasesPerInfectious>()[(epi::AgeGroup)group]);
-                mu_H_U[county].push_back(model[county].parameters.get<epi::ICUCasesPerHospitalized>()[(epi::AgeGroup)group]);
+                    model[county].parameters.get<mio::HospitalizedCasesPerInfectious>()[(mio::AgeGroup)group]);
+                mu_H_U[county].push_back(model[county].parameters.get<mio::ICUCasesPerHospitalized>()[(mio::AgeGroup)group]);
             }
         }
         std::vector<std::vector<double>> num_inf(model.size(), std::vector<double>(age_ranges.size(), 0.0));
@@ -522,7 +522,7 @@ namespace details
             if (std::accumulate(num_population[region].begin(), num_population[region].end(), 0.0) > 0) {
                 auto num_groups = model[region].parameters.get_num_groups();
                 for (auto i = AgeGroup(0); i < num_groups; i++) {
-                    model[region].populations.set_difference_from_group_total<epi::AgeGroup>(
+                    model[region].populations.set_difference_from_group_total<mio::AgeGroup>(
                         {i, InfectionState::Susceptible}, num_population[region][size_t(i)]);
                 }
             }
@@ -542,11 +542,11 @@ namespace details
         std::vector<std::vector<double>> mu_I_U{model.size()};
         for (size_t region = 0; region < vregion.size(); region++) {
             auto num_groups = model[region].parameters.get_num_groups();
-            for (auto i = epi::AgeGroup(0); i < num_groups; i++) {
-                sum_mu_I_U[region] += model[region].parameters.get<epi::ICUCasesPerHospitalized>()[i] *
-                                      model[region].parameters.get<epi::HospitalizedCasesPerInfectious>()[i];
-                mu_I_U[region].push_back(model[region].parameters.get<epi::ICUCasesPerHospitalized>()[i] *
-                                         model[region].parameters.get<epi::HospitalizedCasesPerInfectious>()[i]);
+            for (auto i = mio::AgeGroup(0); i < num_groups; i++) {
+                sum_mu_I_U[region] += model[region].parameters.get<mio::ICUCasesPerHospitalized>()[i] *
+                                      model[region].parameters.get<mio::HospitalizedCasesPerInfectious>()[i];
+                mu_I_U[region].push_back(model[region].parameters.get<mio::ICUCasesPerHospitalized>()[i] *
+                                         model[region].parameters.get<mio::HospitalizedCasesPerInfectious>()[i]);
             }
         }
         std::vector<double> num_icu(model.size(), 0.0);
@@ -554,8 +554,8 @@ namespace details
 
         for (size_t region = 0; region < vregion.size(); region++) {
             auto num_groups = model[region].parameters.get_num_groups();
-            for (auto i = epi::AgeGroup(0); i < num_groups; i++) {
-                model[region].populations[{i, epi::InfectionState::ICU}] =
+            for (auto i = mio::AgeGroup(0); i < num_groups; i++) {
+                model[region].populations[{i, mio::InfectionState::ICU}] =
                     scaling_factor_icu * num_icu[region] * mu_I_U[region][(size_t)i] / sum_mu_I_U[region];
             }
         }
@@ -592,6 +592,6 @@ IOResult<std::vector<int>> get_county_ids(const std::string& path)
     return success(id);
 }
 
-} // namespace epi
+} // namespace mio
 
 #endif // MEMILIO_HAS_JSONCPP

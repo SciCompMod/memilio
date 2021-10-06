@@ -21,7 +21,7 @@
 #include "memilio/utils/parameter_distributions.h"
 #include "secir/secir.h"
 
-namespace epi
+namespace mio
 {
 
 void set_params_distributions_normal(
@@ -83,7 +83,7 @@ void set_params_distributions_normal(
     }
     auto groups = Eigen::VectorXd::Constant(Eigen::Index(model.parameters.get_num_groups().get()), 1.0);
     model.parameters.get<ContactPatterns>().get_dampings().emplace_back(
-        epi::UncertainValue(0.5), epi::DampingLevel(0), epi::DampingType(0), epi::SimulationTime(t0 + (tmax - t0) / 2),
+        mio::UncertainValue(0.5), mio::DampingLevel(0), mio::DampingType(0), mio::SimulationTime(t0 + (tmax - t0) / 2),
         matrices, groups);
     set_distribution(model.parameters.get<ContactPatterns>().get_dampings()[0].get_value(), 0.0);
 }
@@ -166,4 +166,4 @@ void draw_sample(SecirModel& model)
     model.apply_constraints();
 }
 
-} // namespace epi
+} // namespace mio

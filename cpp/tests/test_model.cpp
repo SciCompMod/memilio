@@ -72,7 +72,7 @@ TEST(TestCompartmentalModel, secir)
         Count = 2
     };
 
-    using Po = epi::Populations<InfectionType, AgeGroup, Gender, Income>;
+    using Po = mio::Populations<InfectionType, AgeGroup, Gender, Income>;
 
     /***********************************************
      * Define parameters and instantiate the model *
@@ -107,9 +107,9 @@ TEST(TestCompartmentalModel, secir)
 
     //ADD MORE PARAMETERS HERE
 
-    using Pa = epi::ParameterSet<IncubationTime, SerialInterval>;
+    using Pa = mio::ParameterSet<IncubationTime, SerialInterval>;
 
-    epi::CompartmentalModel<Po, Pa> model;
+    mio::CompartmentalModel<Po, Pa> model;
 
     /********************
      * Define the flows *
@@ -160,7 +160,7 @@ TEST(TestCompartmentalModel, secir)
     double t0 = 0, tmax = 10, dt = 0.01;
 
     std::vector<double> inc_times{2., 3., 4.};
-    std::vector<epi::TimeSeries<double>> results;
+    std::vector<mio::TimeSeries<double>> results;
 
     for (auto inc_time : inc_times) {
         model.parameters.set<IncubationTime>(inc_time);

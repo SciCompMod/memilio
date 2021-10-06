@@ -24,7 +24,7 @@
 #include "memilio/utils/stl_util.h"
 #include <iostream>
 
-namespace epi
+namespace mio
 {
 
 struct OutEdgeBase {
@@ -226,7 +226,7 @@ private:
 private:
     std::vector<Node<NodePropertyT>> m_nodes;
     std::vector<Edge<EdgePropertyT>> m_edges;
-}; // namespace epi
+}; // namespace mio
 
 template <class T>
 std::enable_if_t<!has_ostream_op<T>::value, void> print_graph_object(std::ostream& os, size_t idx, const T&)
@@ -263,6 +263,6 @@ void print_graph(std::ostream& os, const Graph& g)
     }
 }
 
-} // namespace epi
+} // namespace mio
 
 #endif //GRAPH_H

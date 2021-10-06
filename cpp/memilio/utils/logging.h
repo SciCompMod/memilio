@@ -29,7 +29,7 @@
 #include "memilio/utils/compiler_diagnostics.h"
 #include <spdlog/spdlog.h>
 
-namespace epi
+namespace mio
 {
 
 enum class LogLevel
@@ -116,6 +116,6 @@ inline void log(LogLevel level, spdlog::string_view_t fmt, const Args&... args)
     spdlog::default_logger_raw()->log(details::get_spdlog_level(level), fmt, args...);
 }
 
-} // namespace epi
+} // namespace mio
 
 #endif // LOGGING_H

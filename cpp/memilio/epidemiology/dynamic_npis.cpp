@@ -19,7 +19,7 @@
 */
 #include "memilio/epidemiology/dynamic_npis.h"
 
-namespace epi
+namespace mio
 {
 
 }

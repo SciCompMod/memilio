@@ -20,7 +20,7 @@
 #ifndef EPI_UTILS_UNUSED_H
 #define EPI_UTILS_UNUSED_H
 
-namespace epi
+namespace mio
 {
     /**
      * does nothing, can be used to mark variables as not used.

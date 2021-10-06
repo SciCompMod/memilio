@@ -23,7 +23,7 @@
 #include <cstdint>
 #include <limits>
 
-namespace epi
+namespace mio
 {
 
 /**
@@ -44,6 +44,6 @@ enum class LocationType : std::uint32_t
 
 static constexpr uint32_t INVALID_LOCATION_INDEX = std::numeric_limits<uint32_t>::max();
 
-}
+} // namespace mio
 
 #endif

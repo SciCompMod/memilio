@@ -37,21 +37,21 @@ protected:
 
         double total_population = 1061000;
 
-        model.populations[{epi::Index<epi::SeirInfType>(epi::SeirInfType::E)}] = 10000;
-        model.populations[{epi::Index<epi::SeirInfType>(epi::SeirInfType::I)}] = 1000;
-        model.populations[{epi::Index<epi::SeirInfType>(epi::SeirInfType::R)}] = 1000;
-        model.populations[{epi::Index<epi::SeirInfType>(epi::SeirInfType::S)}] = total_population
-                                                                                 - this->model.populations[{epi::Index<epi::SeirInfType>(epi::SeirInfType::E)}]
-                                                                                 - this->model.populations[{epi::Index<epi::SeirInfType>(epi::SeirInfType::I)}]
-                                                                                 - this->model.populations[{epi::Index<epi::SeirInfType>(epi::SeirInfType::R)}];
+        model.populations[{mio::Index<mio::SeirInfType>(mio::SeirInfType::E)}] = 10000;
+        model.populations[{mio::Index<mio::SeirInfType>(mio::SeirInfType::I)}] = 1000;
+        model.populations[{mio::Index<mio::SeirInfType>(mio::SeirInfType::R)}] = 1000;
+        model.populations[{mio::Index<mio::SeirInfType>(mio::SeirInfType::S)}] = total_population
+                                                                                 - this->model.populations[{mio::Index<mio::SeirInfType>(mio::SeirInfType::E)}]
+                                                                                 - this->model.populations[{mio::Index<mio::SeirInfType>(mio::SeirInfType::I)}]
+                                                                                 - this->model.populations[{mio::Index<mio::SeirInfType>(mio::SeirInfType::R)}];
         // suscetible now set with every other update
         // model.nb_sus_t0   = model.nb_total_t0 - model.nb_exp_t0 - model.nb_inf_t0 - model.nb_rec_t0;
-        model.parameters.set<epi::TransmissionRisk>(1.0);
-        model.parameters.set<epi::StageTimeIncubationInv>(1./5.2);
-        model.parameters.set<epi::StageTimeInfectiousInv>(1./2);;
+        model.parameters.set<mio::TransmissionRisk>(1.0);
+        model.parameters.set<mio::StageTimeIncubationInv>(1./5.2);
+        model.parameters.set<mio::StageTimeInfectiousInv>(1./2);;
 
-        model.parameters.get<epi::ContactFrequency>().get_baseline()(0, 0) = 2.7;
-        model.parameters.get<epi::ContactFrequency>().add_damping(0.6, epi::SimulationTime(12.5));
+        model.parameters.get<mio::ContactFrequency>().get_baseline()(0, 0) = 2.7;
+        model.parameters.get<mio::ContactFrequency>().add_damping(0.6, mio::SimulationTime(12.5));
     }
 
 public:
@@ -59,13 +59,13 @@ public:
     real t0;
     real tmax;
     real dt;
-    epi::SeirModel model;
+    mio::SeirModel model;
 };
 
 TEST_F(TestCompareSeirWithJS, integrate)
 {
-    auto integrator = std::make_shared<epi::EulerIntegratorCore>();
-    auto result = epi::simulate<epi::SeirModel>(t0, tmax, dt, model, integrator);
+    auto integrator = std::make_shared<mio::EulerIntegratorCore>();
+    auto result = mio::simulate<mio::SeirModel>(t0, tmax, dt, model, integrator);
 
     ASSERT_EQ(refData.size(), static_cast<size_t>(result.get_num_time_points()));
 

@@ -22,7 +22,7 @@
 
 #include <utility>
 
-namespace epi
+namespace mio
 {
 
 /**
@@ -93,6 +93,6 @@ observer_ptr<T> make_observer(T* p)
     return observer_ptr<T>(p);
 }
 
-} // namespace epi
+} // namespace mio
 
 #endif // MEMORY_H

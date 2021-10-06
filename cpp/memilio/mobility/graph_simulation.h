@@ -22,7 +22,7 @@
 
 #include "memilio/mobility/graph.h"
 
-namespace epi
+namespace mio
 {
 
 /**
@@ -112,5 +112,5 @@ auto make_graph_sim(double t0, double dt, Graph&& g, NodeF&& node_func, EdgeF&& 
                                                 std::forward<EdgeF>(edge_func));
 }
 
-} // namespace epi
+} // namespace mio
 #endif //EPI_MOBILITY_GRAPH_SIMULATION_H

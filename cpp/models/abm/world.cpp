@@ -25,7 +25,7 @@
 #include "memilio/utils/random_number_generator.h"
 #include "memilio/utils/stl_util.h"
 
-namespace epi
+namespace mio
 {
 
 LocationId World::add_location(LocationType type)
@@ -190,4 +190,4 @@ const GlobalTestingParameters& World::get_global_testing_parameters() const
     return m_testing_parameters;
 }
 
-} // namespace epi
+} // namespace mio

@@ -33,7 +33,7 @@
 
 #include <cassert>
 
-namespace epi
+namespace mio
 {
 
 /**
@@ -204,7 +204,7 @@ public:
 
     /**
      * serialize this. 
-     * @see epi::serialize
+     * @see mio::serialize
      */
     template<class IOContext>
     void serialize(IOContext& io) const
@@ -216,7 +216,7 @@ public:
 
     /**
      * deserialize an object of this class.
-     * @see epi::deserialize
+     * @see mio::deserialize
      */
     template<class IOContext>
     static IOResult<MigrationParameters> deserialize(IOContext& io)
@@ -293,7 +293,7 @@ private:
     TimeSeries<double> m_return_times;
     bool m_return_migrated;
     double m_t_last_dynamic_npi_check = -std::numeric_limits<double>::infinity();
-    std::pair<double, SimulationTime> m_dynamic_npi = {-std::numeric_limits<double>::max(), epi::SimulationTime(0)};
+    std::pair<double, SimulationTime> m_dynamic_npi = {-std::numeric_limits<double>::max(), mio::SimulationTime(0)};
 };
 
 /**
@@ -395,11 +395,11 @@ void MigrationEdge::apply_migration(double t, double dt, SimulationNode<Sim>& no
         if (exceeded_threshold != dyn_npis.get_thresholds().end() &&
             (exceeded_threshold->first > m_dynamic_npi.first ||
              t > double(m_dynamic_npi.second))) { //old NPI was weaker or is expired
-            auto t_end    = epi::SimulationTime(t + double(dyn_npis.get_duration()));
+            auto t_end    = mio::SimulationTime(t + double(dyn_npis.get_duration()));
             m_dynamic_npi = std::make_pair(exceeded_threshold->first, t_end);
-            epi::implement_dynamic_npis(
+            mio::implement_dynamic_npis(
                 m_parameters.get_coefficients(), exceeded_threshold->second, SimulationTime(t), t_end, [this](auto& g) {
-                    return epi::make_migration_damping_vector(m_parameters.get_coefficients().get_shape(), g);
+                    return mio::make_migration_damping_vector(m_parameters.get_coefficients().get_shape(), g);
                 });
         }
         m_t_last_dynamic_npi_check = t;
@@ -478,6 +478,6 @@ make_migration_sim(double t0, double dt, Graph<SimulationNode<Sim>, MigrationEdg
 }
 /** @} */
 
-} // namespace epi
+} // namespace mio
 
 #endif //MOBILITY_H

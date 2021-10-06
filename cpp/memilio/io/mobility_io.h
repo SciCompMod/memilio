@@ -27,7 +27,7 @@
 #include <string>
 #include <vector>
 
-namespace epi
+namespace mio
 {
 
 /**
@@ -60,6 +60,6 @@ IOResult<Eigen::MatrixXd> read_mobility_formatted(const std::string& filename);
  */
 IOResult<Eigen::MatrixXd> read_mobility_plain(const std::string& filename);
 
-} // namespace epi
+} // namespace mio
 
 #endif // READ_TWITTER_H

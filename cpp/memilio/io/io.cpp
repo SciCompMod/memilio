@@ -26,7 +26,7 @@ MSVC_WARNING_DISABLE_PUSH(4268)
 #include <boost/filesystem.hpp>
 MSVC_WARNING_POP
 
-namespace epi
+namespace mio
 {
 
 std::string get_current_dir_name()
@@ -51,7 +51,7 @@ IOResult<bool> create_directory(std::string const& rel_path, std::string& abs_pa
     else {
         log_info(
             "Directory '{:s}' already exists.",
-            dir.string(), epi::get_current_dir_name());
+            dir.string(), mio::get_current_dir_name());
     }
     
     return success(created);
@@ -70,4 +70,4 @@ bool file_exists(std::string const& rel_path, std::string& abs_path)
     return boost::filesystem::exists(dir);
 }
 
-} // namespace epi
+} // namespace mio

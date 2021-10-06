@@ -1,6 +1,6 @@
 #include "secir/implicit_euler.h"
 
-namespace epi
+namespace mio
 {
 
 ImplicitEulerIntegratorCore::ImplicitEulerIntegratorCore(SecirModel const& model)
@@ -14,7 +14,7 @@ bool ImplicitEulerIntegratorCore::step(const DerivFunction& /*f*/, Eigen::Ref<co
     // 0: S,      1: E,     2: C,     3: I,     4: H,     5: U,     6: R,     7: D
 
     const auto& params         = m_model.parameters;
-    const auto& contact_matrix = params.get<epi::ContactPatterns>().get_cont_freq_mat();
+    const auto& contact_matrix = params.get<mio::ContactPatterns>().get_cont_freq_mat();
 
     auto yt_eval = yt.eval();
 

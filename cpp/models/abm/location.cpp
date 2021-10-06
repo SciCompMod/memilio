@@ -24,14 +24,14 @@
 
 #include <numeric>
 
-namespace epi
+namespace mio
 {
 
 Location::Location(LocationType type, uint32_t index)
     : m_type(type)
     , m_index(index)
     , m_subpopulations{}
-    , m_cached_exposure_rate({AbmAgeGroup::Count, epi::VaccinationState::Count})
+    , m_cached_exposure_rate({AbmAgeGroup::Count, mio::VaccinationState::Count})
     , m_testing_scheme()
 {
 }
@@ -81,7 +81,7 @@ void Location::begin_step(TimeSpan /*dt*/, const GlobalInfectionParameters& glob
     auto num_carriers = get_subpopulation(InfectionState::Carrier);
     auto num_infected = get_subpopulation(InfectionState::Infected);
     if (m_num_persons == 0){
-        m_cached_exposure_rate = {{epi::AbmAgeGroup::Count, epi::VaccinationState::Count}, 0.};
+        m_cached_exposure_rate = {{mio::AbmAgeGroup::Count, mio::VaccinationState::Count}, 0.};
     } 
     else{
         m_cached_exposure_rate.array()
@@ -129,4 +129,4 @@ Eigen::Ref<const Eigen::VectorXi> Location::get_subpopulations() const
 }
 
 
-} // namespace epi
+} // namespace mio

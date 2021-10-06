@@ -19,7 +19,7 @@
 */
 #include "memilio/mobility/graph.h"
 
-namespace epi
+namespace mio
 {
 
 }

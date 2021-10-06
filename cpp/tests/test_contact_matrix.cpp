@@ -23,7 +23,7 @@
 
 TEST(TestContactMatrix, initZero)
 {
-    epi::ContactMatrix cm(Eigen::Index(3));
+    mio::ContactMatrix cm(Eigen::Index(3));
     EXPECT_EQ(print_wrap(cm.get_matrix_at(-1e5)), print_wrap(Eigen::MatrixXd::Zero(3, 3)));
     EXPECT_EQ(print_wrap(cm.get_matrix_at(0)), print_wrap(Eigen::MatrixXd::Zero(3, 3)));
     EXPECT_EQ(print_wrap(cm.get_matrix_at(1e-32)), print_wrap(Eigen::MatrixXd::Zero(3, 3)));
@@ -34,7 +34,7 @@ TEST(TestContactMatrix, initBaseAndMin)
 {
     auto B = (Eigen::MatrixXd(2, 2) << 1, 2, 3, 4).finished();
     auto M = Eigen::MatrixXd::Constant(2, 2, 0.1);
-    epi::ContactMatrix cm(B, M);
+    mio::ContactMatrix cm(B, M);
     EXPECT_EQ(print_wrap(cm.get_matrix_at(-1e5)), print_wrap(B));
     EXPECT_EQ(print_wrap(cm.get_matrix_at(0)), print_wrap(B));
     EXPECT_EQ(print_wrap(cm.get_matrix_at(1e-32)), print_wrap(B));
@@ -45,17 +45,17 @@ TEST(TestContactMatrix, dampings)
 {
     auto B = (Eigen::MatrixXd(2, 2) << 1, 2, 3, 4).finished();
     auto M = Eigen::MatrixXd::Constant(2, 2, 0.1);
-    epi::ContactMatrix cm(B, M);
+    mio::ContactMatrix cm(B, M);
     auto D1 = 0.25;
     auto D2 = (Eigen::MatrixXd(2, 2) << 0.0, 0.75, 0.5, 0.25).finished();
-    cm.add_damping(D1, epi::DampingLevel(7), epi::DampingType(3), epi::SimulationTime(0.5));
-    cm.add_damping(D2, epi::DampingLevel(7), epi::DampingType(2), epi::SimulationTime(2.0));
+    cm.add_damping(D1, mio::DampingLevel(7), mio::DampingType(3), mio::SimulationTime(0.5));
+    cm.add_damping(D2, mio::DampingLevel(7), mio::DampingType(2), mio::SimulationTime(2.0));
 
     EXPECT_EQ(cm.get_dampings().size(), 2);
     EXPECT_THAT(
         cm.get_dampings(),
-        testing::ElementsAre(epi::SquareDamping(D1, epi::DampingLevel(7), epi::DampingType(3), epi::SimulationTime(0.5), Eigen::Index(2)),
-                             epi::SquareDamping(D2, epi::DampingLevel(7), epi::DampingType(2), epi::SimulationTime(2.0))));
+        testing::ElementsAre(mio::SquareDamping(D1, mio::DampingLevel(7), mio::DampingType(3), mio::SimulationTime(0.5), Eigen::Index(2)),
+                             mio::SquareDamping(D2, mio::DampingLevel(7), mio::DampingType(2), mio::SimulationTime(2.0))));
 
     EXPECT_EQ(print_wrap(cm.get_matrix_at(-1e5)), print_wrap(B));
     EXPECT_EQ(print_wrap(cm.get_matrix_at(-0.5)), print_wrap(B));
@@ -65,11 +65,11 @@ TEST(TestContactMatrix, dampings)
 
 TEST(TestContactMatrixGroup, sum)
 {
-    epi::ContactMatrixGroup cmg(3, 2);
-    cmg[0] = epi::ContactMatrix(Eigen::MatrixXd::Constant(3, 3, 1.0));
-    cmg[1] = epi::ContactMatrix(Eigen::MatrixXd::Constant(3, 3, 2.0));
-    cmg[2] = epi::ContactMatrix(Eigen::MatrixXd::Constant(3, 3, 3.0));
-    cmg.add_damping(0.5, epi::DampingLevel(3), epi::DampingType(1), epi::SimulationTime(1.0));
+    mio::ContactMatrixGroup cmg(3, 2);
+    cmg[0] = mio::ContactMatrix(Eigen::MatrixXd::Constant(3, 3, 1.0));
+    cmg[1] = mio::ContactMatrix(Eigen::MatrixXd::Constant(3, 3, 2.0));
+    cmg[2] = mio::ContactMatrix(Eigen::MatrixXd::Constant(3, 3, 3.0));
+    cmg.add_damping(0.5, mio::DampingLevel(3), mio::DampingType(1), mio::SimulationTime(1.0));
 
     EXPECT_THAT(print_wrap(cmg.get_matrix_at(0.0)), MatrixNear(Eigen::MatrixXd::Constant(3, 3, 6.0)));
     EXPECT_THAT(print_wrap(cmg.get_matrix_at(1.0)), MatrixNear(Eigen::MatrixXd::Constant(3, 3, 3.0)));

@@ -22,7 +22,7 @@
 
 #include "memilio/utils/index.h"
 
-namespace epi {
+namespace mio {
 
 /**
  * @brief The AgeGroup struct is used as a dynamically

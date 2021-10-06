@@ -22,7 +22,7 @@
 
 #include <cstdint>
 
-namespace epi
+namespace mio
 {
 
 /** 
@@ -56,6 +56,6 @@ enum class VaccinationState : std::uint32_t
     Count //last!!
 };
 
-} // namespace epi
+} // namespace mio
 
 #endif

@@ -23,7 +23,7 @@
 #include <array>
 #include <numeric>
 
-namespace epi
+namespace mio
 {
 
 /**
@@ -70,4 +70,4 @@ T random_transition(T current_state, TimeSpan dt, const std::pair<T, double> (&t
     return current_state;
 }
 
-} // namespace epi
+} // namespace mio

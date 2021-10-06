@@ -19,7 +19,7 @@
 */
 #include "seir/seir.h"
 
-namespace epi
+namespace mio
 {
 void print_seir_params(const SeirModel& model)
 {
@@ -31,4 +31,4 @@ void print_seir_params(const SeirModel& model)
            (int)model.populations[{Index<SeirInfType>(SeirInfType::R)}]);
 }
 
-} // namespace epi
+} // namespace mio

@@ -22,7 +22,7 @@
 
 #include <tuple>
 
-namespace epi
+namespace mio
 {
 
 namespace regions
@@ -39,7 +39,7 @@ namespace regions
                         std::vector<std::pair<Date, Date>>::const_iterator>>
         get_holidays(StateId state)
         {
-            static const std::vector<std::pair<epi::Date, epi::Date>> def;
+            static const std::vector<std::pair<mio::Date, mio::Date>> def;
             assert(int(state) >= 1 && int(state) <= 16 && "invalid state_id");
 
             auto data = &def;
@@ -117,4 +117,4 @@ namespace regions
     } // namespace de
 } // namespace regions
 
-} // namespace epi
+} // namespace mio

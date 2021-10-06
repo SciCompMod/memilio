@@ -7,7 +7,7 @@
 #include <string>
 #include <vector>
 
-namespace epi
+namespace mio
 {
 
 std::vector<std::string> split(const std::string& s, char delimitor)
@@ -135,4 +135,4 @@ IOResult<Eigen::MatrixXd> read_mobility_plain(const std::string& filename)
     return success(migration);
 }
 
-} // namespace epi
+} // namespace mio

@@ -39,53 +39,53 @@ TEST(TestSaveResult, compareResultWithH5)
     double nb_total_t0 = 10000, nb_exp_t0 = 100, nb_inf_t0 = 50, nb_car_t0 = 50, nb_hosp_t0 = 20, nb_icu_t0 = 10,
            nb_rec_t0 = 10, nb_dead_t0 = 0;
 
-    epi::SecirModel model(1);
+    mio::SecirModel model(1);
     auto& params     = model.parameters;
-    epi::AgeGroup nb_groups = params.get_num_groups();;
+    mio::AgeGroup nb_groups = params.get_num_groups();;
 
-    for (auto i = epi::AgeGroup(0); i < nb_groups; i++) {
-        params.get<epi::IncubationTime>()[i] = tinc;
-        params.get<epi::InfectiousTimeMild>()[i] = tinfmild;
-        params.get<epi::SerialInterval>()[i] = tserint;
-        params.get<epi::HospitalizedToHomeTime>()[i] = thosp2home;
-        params.get<epi::HomeToHospitalizedTime>()[i] = thome2hosp;
-        params.get<epi::HospitalizedToICUTime>()[i] = thosp2icu;
-        params.get<epi::ICUToHomeTime>()[i] = ticu2home;
-        params.get<epi::InfectiousTimeAsymptomatic>()[i] = tinfasy;
-        params.get<epi::ICUToDeathTime>()[i] = ticu2death;
+    for (auto i = mio::AgeGroup(0); i < nb_groups; i++) {
+        params.get<mio::IncubationTime>()[i] = tinc;
+        params.get<mio::InfectiousTimeMild>()[i] = tinfmild;
+        params.get<mio::SerialInterval>()[i] = tserint;
+        params.get<mio::HospitalizedToHomeTime>()[i] = thosp2home;
+        params.get<mio::HomeToHospitalizedTime>()[i] = thome2hosp;
+        params.get<mio::HospitalizedToICUTime>()[i] = thosp2icu;
+        params.get<mio::ICUToHomeTime>()[i] = ticu2home;
+        params.get<mio::InfectiousTimeAsymptomatic>()[i] = tinfasy;
+        params.get<mio::ICUToDeathTime>()[i] = ticu2death;
 
-        model.populations[{i, epi::InfectionState::Exposed}] = nb_exp_t0;
-        model.populations[{i, epi::InfectionState::Carrier}] = nb_car_t0;
-        model.populations[{i, epi::InfectionState::Infected}] = nb_inf_t0;
-        model.populations[{i, epi::InfectionState::Hospitalized}] = nb_hosp_t0;
-        model.populations[{i, epi::InfectionState::ICU}] = nb_icu_t0;
-        model.populations[{i, epi::InfectionState::Recovered}] = nb_rec_t0;
-        model.populations[{i, epi::InfectionState::Dead}] = nb_dead_t0;
-        model.populations.set_difference_from_total({i, epi::InfectionState::Susceptible}, nb_total_t0);
+        model.populations[{i, mio::InfectionState::Exposed}] = nb_exp_t0;
+        model.populations[{i, mio::InfectionState::Carrier}] = nb_car_t0;
+        model.populations[{i, mio::InfectionState::Infected}] = nb_inf_t0;
+        model.populations[{i, mio::InfectionState::Hospitalized}] = nb_hosp_t0;
+        model.populations[{i, mio::InfectionState::ICU}] = nb_icu_t0;
+        model.populations[{i, mio::InfectionState::Recovered}] = nb_rec_t0;
+        model.populations[{i, mio::InfectionState::Dead}] = nb_dead_t0;
+        model.populations.set_difference_from_total({i, mio::InfectionState::Susceptible}, nb_total_t0);
 
-        params.get<epi::InfectionProbabilityFromContact>()[i] = 0.06;
-        params.get<epi::RelativeCarrierInfectability>()[i] = 0.67;
-        params.get<epi::AsymptoticCasesPerInfectious>()[i] = alpha;
-        params.get<epi::RiskOfInfectionFromSympomatic>()[i] = beta;
-        params.get<epi::HospitalizedCasesPerInfectious>()[i] = rho;
-        params.get<epi::ICUCasesPerHospitalized>()[i] = theta;
-        params.get<epi::DeathsPerHospitalized>()[i] = delta;
+        params.get<mio::InfectionProbabilityFromContact>()[i] = 0.06;
+        params.get<mio::RelativeCarrierInfectability>()[i] = 0.67;
+        params.get<mio::AsymptoticCasesPerInfectious>()[i] = alpha;
+        params.get<mio::RiskOfInfectionFromSympomatic>()[i] = beta;
+        params.get<mio::HospitalizedCasesPerInfectious>()[i] = rho;
+        params.get<mio::ICUCasesPerHospitalized>()[i] = theta;
+        params.get<mio::DeathsPerHospitalized>()[i] = delta;
     }
 
-    epi::ContactMatrixGroup& contact_matrix = params.get<epi::ContactPatterns>();
-    contact_matrix[0] = epi::ContactMatrix(Eigen::MatrixXd::Constant((size_t)nb_groups, (size_t)nb_groups, cont_freq));
-    contact_matrix[0].add_damping(0.7, epi::SimulationTime(30.));
+    mio::ContactMatrixGroup& contact_matrix = params.get<mio::ContactPatterns>();
+    contact_matrix[0] = mio::ContactMatrix(Eigen::MatrixXd::Constant((size_t)nb_groups, (size_t)nb_groups, cont_freq));
+    contact_matrix[0].add_damping(0.7, mio::SimulationTime(30.));
 
     auto result_from_sim                                  = simulate(t0, tmax, dt, model);
-    std::vector<epi::TimeSeries<double>> results_from_sim = {result_from_sim, result_from_sim};
+    std::vector<mio::TimeSeries<double>> results_from_sim = {result_from_sim, result_from_sim};
     std::vector<int> ids                                  = {1, 2};
 
     TempFileRegister file_register;
     auto results_file_path = file_register.get_unique_path("test_result-%%%%-%%%%.h5");
-    auto save_result_status = epi::save_result(results_from_sim, ids, results_file_path);
+    auto save_result_status = mio::save_result(results_from_sim, ids, results_file_path);
     ASSERT_TRUE(save_result_status);
 
-    auto results_from_file = epi::read_result(results_file_path, static_cast<int>(size_t(nb_groups)));
+    auto results_from_file = mio::read_result(results_file_path, static_cast<int>(size_t(nb_groups)));
     ASSERT_TRUE(results_from_file);
     auto result_from_file = results_from_file.value()[0];
 
@@ -102,9 +102,9 @@ TEST(TestSaveResult, compareResultWithH5)
         for (Eigen::Index l = 0; l < result_from_file.get_totals().get_num_elements(); l++) {
             double total = 0.0;
             for (Eigen::Index j = 0; j < Eigen::Index((size_t)nb_groups); j++) {
-                total += result_from_sim[i][j * (size_t)epi::InfectionState::Count + l];
-                EXPECT_NEAR(result_from_file.get_groups()[i][j * (size_t)epi::InfectionState::Count + l],
-                            result_from_sim[i][j * (size_t)epi::InfectionState::Count + l], 1e-10)
+                total += result_from_sim[i][j * (size_t)mio::InfectionState::Count + l];
+                EXPECT_NEAR(result_from_file.get_groups()[i][j * (size_t)mio::InfectionState::Count + l],
+                            result_from_sim[i][j * (size_t)mio::InfectionState::Count + l], 1e-10)
                     << " at row " << i << " at row " << l << " at Group " << j;
             }
             EXPECT_NEAR(result_from_file.get_totals()[i][l], total, 1e-10) << " at row " << i << " at row " << l;

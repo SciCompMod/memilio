@@ -19,7 +19,7 @@
 */
 #include "abm/simulation.h"
 
-namespace epi
+namespace mio
 {
 
 AbmSimulation::AbmSimulation(TimePoint t, World&& world)
@@ -53,4 +53,4 @@ void AbmSimulation::store_result_at(TimePoint t)
     }
 }
 
-} // namespace epi
+} // namespace mio

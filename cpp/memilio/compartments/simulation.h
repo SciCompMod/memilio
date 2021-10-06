@@ -27,7 +27,7 @@
 #include "memilio/math/adapt_rk.h"
 #include "memilio/math/euler.h"
 
-namespace epi
+namespace mio
 {
 
 /**
@@ -132,7 +132,7 @@ private:
     std::shared_ptr<IntegratorCore> m_integratorCore;
     Model m_model;
     OdeIntegrator m_integrator;
-}; // namespace epi
+}; // namespace mio
 
 /**
  * Defines the return type of the `advance` member function of a type.
@@ -177,6 +177,6 @@ TimeSeries<ScalarType> simulate(double t0, double tmax, double dt, Model const& 
     return sim.get_result();
 }
 
-} // namespace epi
+} // namespace mio
 
 #endif // POPULATIONS_H

@@ -26,7 +26,7 @@
 #include <stdio.h>
 #include <cmath>
 
-namespace epi
+namespace mio
 {
 
-} // namespace epi
+} // namespace mio

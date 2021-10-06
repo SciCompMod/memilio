@@ -22,7 +22,7 @@
 #include "memilio/math/eigen.h"
 #include <string>
 
-namespace epi {
+namespace mio {
 
 namespace{
 /**
@@ -30,10 +30,10 @@ namespace{
  * @param age_groups A custom index array with the weights.
  * @return The picked age group.
  */
-epi::AbmAgeGroup pick_age_group_from_age_distribution(const epi::CustomIndexArray<int, epi::AbmAgeGroup>& age_groups){
+mio::AbmAgeGroup pick_age_group_from_age_distribution(const mio::CustomIndexArray<int, mio::AbmAgeGroup>& age_groups){
     auto age_group_weights = age_groups.array().cast<double>().eval();
-    size_t age_group = epi::DiscreteDistribution<size_t>::get_instance()(age_group_weights);
-    return (epi::AbmAgeGroup) age_group;
+    size_t age_group = mio::DiscreteDistribution<size_t>::get_instance()(age_group_weights);
+    return (mio::AbmAgeGroup) age_group;
 }
 }
 
@@ -48,28 +48,28 @@ void HouseholdGroup::add_households(Household household, int number_of_household
     m_number_of_households += number_of_households;
 }
 
-void add_household_to_world(epi::World& world, const epi::Household& household){
-    auto home = world.add_location(epi::LocationType::Home);
+void add_household_to_world(mio::World& world, const mio::Household& household){
+    auto home = world.add_location(mio::LocationType::Home);
     auto members = household.get_members();
     
     for (auto &memberTouple : members){
         int count;
-        epi::HouseholdMember member;
+        mio::HouseholdMember member;
         std::tie(member, count) = memberTouple;
         for (int j = 0; j < count; j++) {
             auto age_group = pick_age_group_from_age_distribution(member.get_age_weights());
-            auto& person = world.add_person(home, epi::InfectionState::Susceptible, age_group);
+            auto& person = world.add_person(home, mio::InfectionState::Susceptible, age_group);
             person.set_assigned_location(home);
         }
     }
 }
 
-void add_household_group_to_world(epi::World& world, const epi::HouseholdGroup& household_group){
+void add_household_group_to_world(mio::World& world, const mio::HouseholdGroup& household_group){
     auto households = household_group.get_households();
    
     for (auto &householdTuple : households){
         int count;
-        epi::Household household;
+        mio::Household household;
         std::tie(household, count) = householdTuple;
         for (int j = 0; j < count; j++) {
             add_household_to_world(world, household);
@@ -77,4 +77,4 @@ void add_household_group_to_world(epi::World& world, const epi::HouseholdGroup& 
     }
 }
 
-} // namespace epi
+} // namespace mio

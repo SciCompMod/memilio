@@ -24,7 +24,7 @@
 #include "abm/time.h"
 #include "memilio/utils/time_series.h"
 
-namespace epi
+namespace mio
 {
 
 /**
@@ -67,6 +67,6 @@ private:
     TimeSpan m_dt;
 };
 
-} // namespace epi
+} // namespace mio
 
 #endif

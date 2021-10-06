@@ -7,7 +7,7 @@
 
 #include <functional>
 
-namespace epi
+namespace mio
 {
 
 class Person;
@@ -74,6 +74,6 @@ private:
     double m_probability;
 };
 
-} // namespace epi
+} // namespace mio
 
 #endif

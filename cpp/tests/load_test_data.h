@@ -27,7 +27,7 @@
 template <class String>
 std::string get_test_data_file_path(String&& filename)
 {
-    return epi::path_join(TEST_DATA_DIR, filename);
+    return mio::path_join(TEST_DATA_DIR, filename);
 }
 
 /**

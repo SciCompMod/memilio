@@ -28,7 +28,7 @@
 #include "memilio/epidemiology/damping.h"
 #include "memilio/epidemiology/contact_matrix.h"
 
-namespace epi
+namespace mio
 {
 
 /**
@@ -70,6 +70,6 @@ void close_social_events(TimePoint t_begin, double p, AbmMigrationParameters& pa
 
 
 
-} //namespace epi
+} //namespace mio
 
 #endif // LOCKDOWN_RULES_H

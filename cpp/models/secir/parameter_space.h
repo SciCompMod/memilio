@@ -31,7 +31,7 @@
 #include <random>
 #include <memory>
 
-namespace epi
+namespace mio
 {
 /* Sets alls SecirParams parameters normally distributed, 
 *  using the current value and a given standard deviation
@@ -62,6 +62,6 @@ void draw_sample_infection(SecirModel& model);
 */
 void draw_sample(SecirModel& model);
 
-} // namespace epi
+} // namespace mio
 
 #endif // PARAMETER_SPACE_H

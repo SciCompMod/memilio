@@ -25,7 +25,7 @@
 #include "memilio/utils/parameter_set.h"
 #include "memilio/epidemiology/contact_matrix.h"
 
-namespace epi
+namespace mio
 {
 
 /****************************************
@@ -150,6 +150,6 @@ public:
  */
 void print_seir_params(const SeirModel& model);
 
-} // namespace epi
+} // namespace mio
 
 #endif

@@ -29,7 +29,7 @@
 #include <random>
 #include <sstream>
 
-namespace epi
+namespace mio
 {
 
 /**
@@ -356,6 +356,6 @@ using UniformIntDistribution = DistributionAdapter<std::uniform_int_distribution
 template <class Real>
 using UniformDistribution = DistributionAdapter<std::uniform_real_distribution<Real>>;
 
-} // namespace epi
+} // namespace mio
 
 #endif

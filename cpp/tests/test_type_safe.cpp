@@ -29,12 +29,12 @@ TEST(TypeSafe, init)
 
 TEST(TypeSafe, numericOps)
 {
-    class TS : public epi::TypeSafe<int, TS>,
-               public epi::OperatorAdditionSubtraction<TS>,
-               public epi::OperatorScalarMultiplicationDivision<TS, int>
+    class TS : public mio::TypeSafe<int, TS>,
+               public mio::OperatorAdditionSubtraction<TS>,
+               public mio::OperatorScalarMultiplicationDivision<TS, int>
     {
     public:
-        using epi::TypeSafe<int, TS>::TypeSafe;
+        using mio::TypeSafe<int, TS>::TypeSafe;
     };
 
     {
@@ -77,10 +77,10 @@ TEST(TypeSafe, numericOps)
 
 TEST(TypeSafe, comparisonOps)
 {
-    class TS : public epi::TypeSafe<int, TS>, public epi::OperatorComparison<TS>
+    class TS : public mio::TypeSafe<int, TS>, public mio::OperatorComparison<TS>
     {
     public:
-        using epi::TypeSafe<int, TS>::TypeSafe;
+        using mio::TypeSafe<int, TS>::TypeSafe;
     };
 
     TS ts1(3), ts2(2), ts3(3);

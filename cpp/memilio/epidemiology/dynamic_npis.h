@@ -25,7 +25,7 @@
 #include "memilio/math/floating_point.h"
 #include "memilio/utils/stl_util.h"
 
-namespace epi
+namespace mio
 {
 
 /**
@@ -153,7 +153,7 @@ public:
 
     /**
      * serialize this. 
-     * @see epi::serialize
+     * @see mio::serialize
      */
     template <class IOContext>
     void serialize(IOContext& io) const
@@ -167,7 +167,7 @@ public:
 
     /**
      * deserialize an object of this class.
-     * @see epi::deserialize
+     * @see mio::deserialize
      */
     template <class IOContext>
     static IOResult<DynamicNPIs> deserialize(IOContext& io)
@@ -336,6 +336,6 @@ void implement_dynamic_npis(DampingExprGroup& damping_expr_group, const std::vec
     }
 }
 
-} // namespace epi
+} // namespace mio
 
 #endif

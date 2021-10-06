@@ -76,10 +76,10 @@ enum class InterventionLevel
  * @param min minimum of distribution.
  * @param max minimum of distribution.
  */
-void assign_uniform_distribution(epi::UncertainValue& p, double min, double max)
+void assign_uniform_distribution(mio::UncertainValue& p, double min, double max)
 {
-    p = epi::UncertainValue(0.5 * (max + min));
-    p.set_distribution(epi::ParameterDistributionUniform(min, max));
+    p = mio::UncertainValue(0.5 * (max + min));
+    p.set_distribution(mio::ParameterDistributionUniform(min, max));
 }
 
 /**
@@ -91,11 +91,11 @@ void assign_uniform_distribution(epi::UncertainValue& p, double min, double max)
  * @param max minimum of distribution for each element of array.
  */
 template <size_t N>
-void array_assign_uniform_distribution(epi::CustomIndexArray<epi::UncertainValue, epi::AgeGroup>& array,
+void array_assign_uniform_distribution(mio::CustomIndexArray<mio::UncertainValue, mio::AgeGroup>& array,
                                        const double (&min)[N], const double (&max)[N])
 {
     assert(N == array.numel());
-    for (auto i = epi::AgeGroup(0); i < epi::AgeGroup(N); ++i) {
+    for (auto i = mio::AgeGroup(0); i < mio::AgeGroup(N); ++i) {
         assign_uniform_distribution(array[i], min[size_t(i)], max[size_t(i)]);
     }
 }
@@ -107,10 +107,10 @@ void array_assign_uniform_distribution(epi::CustomIndexArray<epi::UncertainValue
  * @param min minimum of distribution.
  * @param max minimum of distribution.
  */
-void array_assign_uniform_distribution(epi::CustomIndexArray<epi::UncertainValue, epi::AgeGroup>& array, double min,
+void array_assign_uniform_distribution(mio::CustomIndexArray<mio::UncertainValue, mio::AgeGroup>& array, double min,
                                        double max)
 {
-    for (auto i = epi::AgeGroup(0); i < array.size<epi::AgeGroup>(); ++i) {
+    for (auto i = mio::AgeGroup(0); i < array.size<mio::AgeGroup>(); ++i) {
         assign_uniform_distribution(array[i], min, max);
     }
 }
@@ -120,7 +120,7 @@ void array_assign_uniform_distribution(epi::CustomIndexArray<epi::UncertainValue
  * @param params Object that the parameters will be added to.
  * @returns Currently generates no errors.
  */
-epi::IOResult<void> set_covid_parameters(epi::SecirParams& params)
+mio::IOResult<void> set_covid_parameters(mio::SecirParams& params)
 {
     //times
     const double tinc             = 5.2; // R_2^(-1)+R_3^(-1)
@@ -139,14 +139,14 @@ epi::IOResult<void> set_covid_parameters(epi::SecirParams& params)
     const double t_icu_dead_min[] = {4, 4, 4, 15, 15, 10}; // 5-16 (=R8^(-1) = T_U^R)
     const double t_icu_dead_max[] = {8, 8, 8, 18, 18, 12};
 
-    array_assign_uniform_distribution(params.get<epi::IncubationTime>(), tinc, tinc);
-    array_assign_uniform_distribution(params.get<epi::SerialInterval>(), tserint_min, tserint_max);
-    array_assign_uniform_distribution(params.get<epi::InfectiousTimeMild>(), t_inf_rec_min, t_inf_rec_max);
-    array_assign_uniform_distribution(params.get<epi::HomeToHospitalizedTime>(), t_inf_hosp_min, t_inf_hosp_max);
-    array_assign_uniform_distribution(params.get<epi::HospitalizedToHomeTime>(), t_hosp_rec_min, t_hosp_rec_max);
-    array_assign_uniform_distribution(params.get<epi::HospitalizedToICUTime>(), t_hosp_icu_min, t_hosp_icu_max);
-    array_assign_uniform_distribution(params.get<epi::ICUToHomeTime>(), t_icu_rec_min, t_icu_rec_max);
-    array_assign_uniform_distribution(params.get<epi::ICUToDeathTime>(), t_icu_dead_min, t_icu_dead_max);
+    array_assign_uniform_distribution(params.get<mio::IncubationTime>(), tinc, tinc);
+    array_assign_uniform_distribution(params.get<mio::SerialInterval>(), tserint_min, tserint_max);
+    array_assign_uniform_distribution(params.get<mio::InfectiousTimeMild>(), t_inf_rec_min, t_inf_rec_max);
+    array_assign_uniform_distribution(params.get<mio::HomeToHospitalizedTime>(), t_inf_hosp_min, t_inf_hosp_max);
+    array_assign_uniform_distribution(params.get<mio::HospitalizedToHomeTime>(), t_hosp_rec_min, t_hosp_rec_max);
+    array_assign_uniform_distribution(params.get<mio::HospitalizedToICUTime>(), t_hosp_icu_min, t_hosp_icu_max);
+    array_assign_uniform_distribution(params.get<mio::ICUToHomeTime>(), t_icu_rec_min, t_icu_rec_max);
+    array_assign_uniform_distribution(params.get<mio::ICUToDeathTime>(), t_icu_dead_min, t_icu_dead_max);
 
     //probabilities
     const double transmission_risk_min[] = {0.02, 0.05, 0.05, 0.05, 0.08, 0.15};
@@ -166,27 +166,27 @@ epi::IOResult<void> set_covid_parameters(epi::SecirParams& params)
     const double prob_icu_dead_min[]     = {0.00, 0.00, 0.10, 0.10, 0.30, 0.5}; // delta
     const double prob_icu_dead_max[]     = {0.10, 0.10, 0.18, 0.18, 0.50, 0.7};
 
-    array_assign_uniform_distribution(params.get<epi::InfectionProbabilityFromContact>(), transmission_risk_min,
+    array_assign_uniform_distribution(params.get<mio::InfectionProbabilityFromContact>(), transmission_risk_min,
                                       transmission_risk_max);
-    array_assign_uniform_distribution(params.get<epi::RelativeCarrierInfectability>(), carr_infec_min, carr_infec_max);
-    array_assign_uniform_distribution(params.get<epi::RiskOfInfectionFromSympomatic>(), beta_low_incidenc_min,
+    array_assign_uniform_distribution(params.get<mio::RelativeCarrierInfectability>(), carr_infec_min, carr_infec_max);
+    array_assign_uniform_distribution(params.get<mio::RiskOfInfectionFromSympomatic>(), beta_low_incidenc_min,
                                       beta_low_incidenc_max);
-    array_assign_uniform_distribution(params.get<epi::MaxRiskOfInfectionFromSympomatic>(), beta_high_incidence_min,
+    array_assign_uniform_distribution(params.get<mio::MaxRiskOfInfectionFromSympomatic>(), beta_high_incidence_min,
                                       beta_high_incidence_max);
-    array_assign_uniform_distribution(params.get<epi::AsymptoticCasesPerInfectious>(), prob_car_rec_min,
+    array_assign_uniform_distribution(params.get<mio::AsymptoticCasesPerInfectious>(), prob_car_rec_min,
                                       prob_car_rec_max);
-    array_assign_uniform_distribution(params.get<epi::HospitalizedCasesPerInfectious>(), prob_inf_hosp_min,
+    array_assign_uniform_distribution(params.get<mio::HospitalizedCasesPerInfectious>(), prob_inf_hosp_min,
                                       prob_inf_hosp_max);
-    array_assign_uniform_distribution(params.get<epi::ICUCasesPerHospitalized>(), prob_hosp_icu_min, prob_hosp_icu_max);
-    array_assign_uniform_distribution(params.get<epi::DeathsPerHospitalized>(), prob_icu_dead_min, prob_icu_dead_max);
+    array_assign_uniform_distribution(params.get<mio::ICUCasesPerHospitalized>(), prob_hosp_icu_min, prob_hosp_icu_max);
+    array_assign_uniform_distribution(params.get<mio::DeathsPerHospitalized>(), prob_icu_dead_min, prob_icu_dead_max);
 
     //sasonality
     const double seasonality_min = 0.1;
     const double seasonality_max = 0.3;
 
-    assign_uniform_distribution(params.get<epi::Seasonality>(), seasonality_min, seasonality_max);
+    assign_uniform_distribution(params.get<mio::Seasonality>(), seasonality_min, seasonality_max);
 
-    return epi::success();
+    return mio::success();
 }
 
 static const std::map<ContactLocation, std::string> contact_locations = {{ContactLocation::Home, "home"},
@@ -201,23 +201,23 @@ static const std::map<ContactLocation, std::string> contact_locations = {{Contac
  * @param params Object that the contact matrices will be added to.
  * @returns any io errors that happen during reading of the files.
  */
-epi::IOResult<void> set_contact_matrices(const fs::path& data_dir, epi::SecirParams& params)
+mio::IOResult<void> set_contact_matrices(const fs::path& data_dir, mio::SecirParams& params)
 {
     //TODO: io error handling
-    auto contact_matrices = epi::ContactMatrixGroup(contact_locations.size(), size_t(params.get_num_groups()));
+    auto contact_matrices = mio::ContactMatrixGroup(contact_locations.size(), size_t(params.get_num_groups()));
     for (auto&& contact_location : contact_locations) {
         BOOST_OUTCOME_TRY(baseline,
-                          epi::read_mobility_plain(
+                          mio::read_mobility_plain(
                               (data_dir / "contacts" / ("baseline_" + contact_location.second + ".txt")).string()));
         BOOST_OUTCOME_TRY(minimum,
-                          epi::read_mobility_plain(
+                          mio::read_mobility_plain(
                               (data_dir / "contacts" / ("minimum_" + contact_location.second + ".txt")).string()));
         contact_matrices[size_t(contact_location.first)].get_baseline() = baseline;
         contact_matrices[size_t(contact_location.first)].get_minimum()  = minimum;
     }
-    params.get<epi::ContactPatterns>() = epi::UncertainContactMatrix(contact_matrices);
+    params.get<mio::ContactPatterns>() = mio::UncertainContactMatrix(contact_matrices);
 
-    return epi::success();
+    return mio::success();
 }
 
 /**
@@ -227,9 +227,9 @@ epi::IOResult<void> set_contact_matrices(const fs::path& data_dir, epi::SecirPar
  * @param params Object that the NPIs will be added to.
  * @returns Currently generates no errors.
  */
-epi::IOResult<void> set_npis(epi::Date start_date, epi::Date end_date, epi::SecirParams& params)
+mio::IOResult<void> set_npis(mio::Date start_date, mio::Date end_date, mio::SecirParams& params)
 {
-    auto& contacts         = params.get<epi::ContactPatterns>();
+    auto& contacts         = params.get<mio::ContactPatterns>();
     auto& contact_dampings = contacts.get_dampings();
 
     //weights for age groups affected by an NPI
@@ -240,66 +240,66 @@ epi::IOResult<void> set_npis(epi::Date start_date, epi::Date end_date, epi::Seci
 
     //helper functions that create dampings for specific NPIs
     auto contacts_at_home = [=](auto t, auto min, auto max) {
-        auto v = epi::UncertainValue();
+        auto v = mio::UncertainValue();
         assign_uniform_distribution(v, min, max);
-        return epi::DampingSampling(v, epi::DampingLevel(int(InterventionLevel::Main)), epi::DampingType(int(Intervention::Home)), t,
+        return mio::DampingSampling(v, mio::DampingLevel(int(InterventionLevel::Main)), mio::DampingType(int(Intervention::Home)), t,
                                     {size_t(ContactLocation::Home)}, group_weights_all);
     };
     auto school_closure = [=](auto t, auto min, auto max) {
-        auto v = epi::UncertainValue();
+        auto v = mio::UncertainValue();
         assign_uniform_distribution(v, min, max);
-        return epi::DampingSampling(v, epi::DampingLevel(int(InterventionLevel::Main)),
-                                    epi::DampingType(int(Intervention::SchoolClosure)), t,
+        return mio::DampingSampling(v, mio::DampingLevel(int(InterventionLevel::Main)),
+                                    mio::DampingType(int(Intervention::SchoolClosure)), t,
                                     {size_t(ContactLocation::School)}, group_weights_all);
     };
     auto home_office = [=](auto t, auto min, auto max) {
-        auto v = epi::UncertainValue();
+        auto v = mio::UncertainValue();
         assign_uniform_distribution(v, min, max);
-        return epi::DampingSampling(v, epi::DampingLevel(int(InterventionLevel::Main)),
-                                    epi::DampingType(int(Intervention::HomeOffice)), t, {size_t(ContactLocation::Work)},
+        return mio::DampingSampling(v, mio::DampingLevel(int(InterventionLevel::Main)),
+                                    mio::DampingType(int(Intervention::HomeOffice)), t, {size_t(ContactLocation::Work)},
                                     group_weights_all);
     };
     auto social_events = [=](auto t, auto min, auto max) {
-        auto v = epi::UncertainValue();
+        auto v = mio::UncertainValue();
         assign_uniform_distribution(v, min, max);
-        return epi::DampingSampling(v, epi::DampingLevel(int(InterventionLevel::Main)),
-                                    epi::DampingType(int(Intervention::GatheringBanFacilitiesClosure)), t,
+        return mio::DampingSampling(v, mio::DampingLevel(int(InterventionLevel::Main)),
+                                    mio::DampingType(int(Intervention::GatheringBanFacilitiesClosure)), t,
                                     {size_t(ContactLocation::Other)}, group_weights_all);
     };
     auto social_events_work = [=](auto t, auto min, auto max) {
-        auto v = epi::UncertainValue();
+        auto v = mio::UncertainValue();
         assign_uniform_distribution(v, min, max);
-        return epi::DampingSampling(v, epi::DampingLevel(int(InterventionLevel::Main)),
-                                    epi::DampingType(int(Intervention::GatheringBanFacilitiesClosure)), t,
+        return mio::DampingSampling(v, mio::DampingLevel(int(InterventionLevel::Main)),
+                                    mio::DampingType(int(Intervention::GatheringBanFacilitiesClosure)), t,
                                     {size_t(ContactLocation::Work)}, group_weights_all);
     };
     auto physical_distancing_home_school = [=](auto t, auto min, auto max) {
-        auto v = epi::UncertainValue();
+        auto v = mio::UncertainValue();
         assign_uniform_distribution(v, min, max);
-        return epi::DampingSampling(
-            v, epi::DampingLevel(int(InterventionLevel::PhysicalDistanceAndMasks)), epi::DampingType(int(Intervention::PhysicalDistanceAndMasks)), t,
+        return mio::DampingSampling(
+            v, mio::DampingLevel(int(InterventionLevel::PhysicalDistanceAndMasks)), mio::DampingType(int(Intervention::PhysicalDistanceAndMasks)), t,
             {size_t(ContactLocation::Home), size_t(ContactLocation::School)}, group_weights_all);
     };
     auto physical_distancing_work_other = [=](auto t, auto min, auto max) {
-        auto v = epi::UncertainValue();
+        auto v = mio::UncertainValue();
         assign_uniform_distribution(v, min, max);
-        return epi::DampingSampling(v, epi::DampingLevel(int(InterventionLevel::PhysicalDistanceAndMasks)),
-                                    epi::DampingType(int(Intervention::PhysicalDistanceAndMasks)), t,
+        return mio::DampingSampling(v, mio::DampingLevel(int(InterventionLevel::PhysicalDistanceAndMasks)),
+                                    mio::DampingType(int(Intervention::PhysicalDistanceAndMasks)), t,
                                     {size_t(ContactLocation::Work), size_t(ContactLocation::Other)}, group_weights_all);
     };
     auto senior_awareness = [=](auto t, auto min, auto max) {
-        auto v = epi::UncertainValue();
+        auto v = mio::UncertainValue();
         assign_uniform_distribution(v, min, max);
-        return epi::DampingSampling(v, epi::DampingLevel(int(InterventionLevel::SeniorAwareness)),
-                                    epi::DampingType(int(Intervention::SeniorAwareness)), t,
+        return mio::DampingSampling(v, mio::DampingLevel(int(InterventionLevel::SeniorAwareness)),
+                                    mio::DampingType(int(Intervention::SeniorAwareness)), t,
                                     {size_t(ContactLocation::Home), size_t(ContactLocation::Other)},
                                     group_weights_seniors);
     };
 
     //SPRING 2020 LOCKDOWN SCENARIO
-    auto start_spring_date = epi::Date(2020, 3, 18);
+    auto start_spring_date = mio::Date(2020, 3, 18);
     if (start_spring_date < end_date) {
-        auto start_spring = epi::SimulationTime(epi::get_offset_in_days(start_spring_date, start_date));
+        auto start_spring = mio::SimulationTime(mio::get_offset_in_days(start_spring_date, start_date));
         contact_dampings.push_back(contacts_at_home(start_spring, 0.6, 0.8));
         contact_dampings.push_back(school_closure(start_spring, 1.0, 1.0));
         contact_dampings.push_back(home_office(start_spring, 0.2, 0.3));
@@ -311,10 +311,10 @@ epi::IOResult<void> set_npis(epi::Date start_date, epi::Date end_date, epi::Seci
     }
 
     // SUMMER 2020 SCENARIO
-    auto start_summer_date = epi::Date(2020, 5, 15);
+    auto start_summer_date = mio::Date(2020, 5, 15);
     if (start_summer_date < end_date) {
-        auto start_summer       = epi::SimulationTime(epi::get_offset_in_days(start_summer_date, start_date));
-        auto school_reopen_time = epi::SimulationTime(epi::get_offset_in_days(epi::Date(2020, 6, 15), start_date));
+        auto start_summer       = mio::SimulationTime(mio::get_offset_in_days(start_summer_date, start_date));
+        auto school_reopen_time = mio::SimulationTime(mio::get_offset_in_days(mio::Date(2020, 6, 15), start_date));
         contact_dampings.push_back(contacts_at_home(start_summer, 0.0, 0.2));
         contact_dampings.push_back(school_closure(start_summer, 0.5, 0.5)); //schools partially reopened
         contact_dampings.push_back(school_closure(school_reopen_time, 0.0, 0.0)); //school fully reopened
@@ -327,19 +327,19 @@ epi::IOResult<void> set_npis(epi::Date start_date, epi::Date end_date, epi::Seci
     }
 
     //autumn enforced attention
-    auto start_autumn_date = epi::Date(2020, 10, 1);
+    auto start_autumn_date = mio::Date(2020, 10, 1);
     if (start_autumn_date < end_date) {
-        auto start_autumn = epi::SimulationTime(epi::get_offset_in_days(start_autumn_date, start_date));
+        auto start_autumn = mio::SimulationTime(mio::get_offset_in_days(start_autumn_date, start_date));
         contact_dampings.push_back(contacts_at_home(start_autumn, 0.2, 0.4));
         contact_dampings.push_back(physical_distancing_home_school(start_autumn, 0.2, 0.4));
         contact_dampings.push_back(physical_distancing_work_other(start_autumn, 0.2, 0.4));
     }
 
     //autumn lockdown light
-    auto start_autumn_lockdown_date = epi::Date(2020, 11, 1);
+    auto start_autumn_lockdown_date = mio::Date(2020, 11, 1);
     if (start_autumn_lockdown_date < end_date) {
         auto start_autumn_lockdown =
-            epi::SimulationTime(epi::get_offset_in_days(start_autumn_lockdown_date, start_date));
+            mio::SimulationTime(mio::get_offset_in_days(start_autumn_lockdown_date, start_date));
         contact_dampings.push_back(contacts_at_home(start_autumn_lockdown, 0.4, 0.6));
         contact_dampings.push_back(school_closure(start_autumn_lockdown, 0.0, 0.0));
         contact_dampings.push_back(home_office(start_autumn_lockdown, 0.2, 0.3));
@@ -351,11 +351,11 @@ epi::IOResult<void> set_npis(epi::Date start_date, epi::Date end_date, epi::Seci
     }
 
     //winter lockdown
-    auto start_winter_lockdown_date = epi::Date(2020, 12, 16);
+    auto start_winter_lockdown_date = mio::Date(2020, 12, 16);
     if (start_winter_lockdown_date < end_date) {
         double min = 0.6, max = 0.8; //for strictest scenario: 0.8 - 1.0
         auto start_winter_lockdown =
-            epi::SimulationTime(epi::get_offset_in_days(start_winter_lockdown_date, start_date));
+            mio::SimulationTime(mio::get_offset_in_days(start_winter_lockdown_date, start_date));
         contact_dampings.push_back(contacts_at_home(start_winter_lockdown, min, max));
         contact_dampings.push_back(school_closure(start_winter_lockdown, 1.0, 1.0));
         contact_dampings.push_back(home_office(start_winter_lockdown, 0.2, 0.3));
@@ -366,8 +366,8 @@ epi::IOResult<void> set_npis(epi::Date start_date, epi::Date end_date, epi::Seci
         contact_dampings.push_back(senior_awareness(start_winter_lockdown, 0.0, 0.0));
 
         //relaxing of restrictions over christmas days
-        auto xmas_date = epi::Date(2020, 12, 24);
-        auto xmas      = epi::SimulationTime(epi::get_offset_in_days(xmas_date, start_date));
+        auto xmas_date = mio::Date(2020, 12, 24);
+        auto xmas      = mio::SimulationTime(mio::get_offset_in_days(xmas_date, start_date));
         contact_dampings.push_back(contacts_at_home(xmas, 0.0, 0.0));
         contact_dampings.push_back(home_office(xmas, 0.4, 0.5));
         contact_dampings.push_back(social_events(xmas, 0.4, 0.6));
@@ -375,8 +375,8 @@ epi::IOResult<void> set_npis(epi::Date start_date, epi::Date end_date, epi::Seci
         contact_dampings.push_back(physical_distancing_work_other(xmas, 0.4, 0.6));
 
         // after christmas
-        auto after_xmas_date = epi::Date(2020, 12, 27);
-        auto after_xmas      = epi::SimulationTime(epi::get_offset_in_days(after_xmas_date, start_date));
+        auto after_xmas_date = mio::Date(2020, 12, 27);
+        auto after_xmas      = mio::SimulationTime(mio::get_offset_in_days(after_xmas_date, start_date));
         contact_dampings.push_back(contacts_at_home(after_xmas, min, max));
         contact_dampings.push_back(home_office(after_xmas, 0.2, 0.3));
         contact_dampings.push_back(social_events(after_xmas, 0.6, 0.8));
@@ -385,29 +385,29 @@ epi::IOResult<void> set_npis(epi::Date start_date, epi::Date end_date, epi::Seci
     }
 
     //local dynamic NPIs
-    auto& dynamic_npis        = params.get<epi::DynamicNPIsInfected>();
-    auto dynamic_npi_dampings = std::vector<epi::DampingSampling>();
-    dynamic_npi_dampings.push_back(contacts_at_home(epi::SimulationTime(0), 0.2, 0.4));
-    dynamic_npi_dampings.push_back(school_closure(epi::SimulationTime(0), 1.0, 1.0)); //0.25 - 0.25 in autumn
-    dynamic_npi_dampings.push_back(home_office(epi::SimulationTime(0), 0.2, 0.3));
-    dynamic_npi_dampings.push_back(social_events(epi::SimulationTime(0), 0.2, 0.4));
-    dynamic_npi_dampings.push_back(social_events_work(epi::SimulationTime(0), 0.0, 0.0));
-    dynamic_npi_dampings.push_back(physical_distancing_home_school(epi::SimulationTime(0), 0.2, 0.4));
-    dynamic_npi_dampings.push_back(physical_distancing_work_other(epi::SimulationTime(0), 0.2, 0.4));
-    dynamic_npi_dampings.push_back(senior_awareness(epi::SimulationTime(0), 0.0, 0.0));
-    dynamic_npis.set_interval(epi::SimulationTime(3.0));
-    dynamic_npis.set_duration(epi::SimulationTime(14.0));
+    auto& dynamic_npis        = params.get<mio::DynamicNPIsInfected>();
+    auto dynamic_npi_dampings = std::vector<mio::DampingSampling>();
+    dynamic_npi_dampings.push_back(contacts_at_home(mio::SimulationTime(0), 0.2, 0.4));
+    dynamic_npi_dampings.push_back(school_closure(mio::SimulationTime(0), 1.0, 1.0)); //0.25 - 0.25 in autumn
+    dynamic_npi_dampings.push_back(home_office(mio::SimulationTime(0), 0.2, 0.3));
+    dynamic_npi_dampings.push_back(social_events(mio::SimulationTime(0), 0.2, 0.4));
+    dynamic_npi_dampings.push_back(social_events_work(mio::SimulationTime(0), 0.0, 0.0));
+    dynamic_npi_dampings.push_back(physical_distancing_home_school(mio::SimulationTime(0), 0.2, 0.4));
+    dynamic_npi_dampings.push_back(physical_distancing_work_other(mio::SimulationTime(0), 0.2, 0.4));
+    dynamic_npi_dampings.push_back(senior_awareness(mio::SimulationTime(0), 0.0, 0.0));
+    dynamic_npis.set_interval(mio::SimulationTime(3.0));
+    dynamic_npis.set_duration(mio::SimulationTime(14.0));
     dynamic_npis.set_base_value(100'000);
     dynamic_npis.set_threshold(10.0, dynamic_npi_dampings);
 
     //school holidays (holiday periods are set per node, see set_nodes)
-    auto school_holiday_value = epi::UncertainValue();
+    auto school_holiday_value = mio::UncertainValue();
     assign_uniform_distribution(school_holiday_value, 1.0, 1.0);
-    contacts.get_school_holiday_damping() = epi::DampingSampling(
-        school_holiday_value, epi::DampingLevel(int(InterventionLevel::Holidays)), epi::DampingType(int(Intervention::SchoolClosure)),
-        epi::SimulationTime(0.0), {size_t(ContactLocation::School)}, group_weights_all);
+    contacts.get_school_holiday_damping() = mio::DampingSampling(
+        school_holiday_value, mio::DampingLevel(int(InterventionLevel::Holidays)), mio::DampingType(int(Intervention::SchoolClosure)),
+        mio::SimulationTime(0.0), {size_t(ContactLocation::School)}, group_weights_all);
 
-    return epi::success();
+    return mio::success();
 }
 
 /**
@@ -415,7 +415,7 @@ epi::IOResult<void> set_npis(epi::Date start_date, epi::Date end_date, epi::Seci
  * Same total populaton but different spread of infection in each county.
  * @param counties parameters for each county.
  */
-void set_synthetic_population_data(std::vector<epi::SecirModel>& counties) 
+void set_synthetic_population_data(std::vector<mio::SecirModel>& counties) 
 {
     for (size_t county_idx = 0; county_idx < counties.size(); ++county_idx) {
         double nb_total_t0 = 10000, nb_exp_t0 = 2, nb_inf_t0 = 0, nb_car_t0 = 0, nb_hosp_t0 = 0, nb_icu_t0 = 0,
@@ -423,16 +423,16 @@ void set_synthetic_population_data(std::vector<epi::SecirModel>& counties)
 
         nb_exp_t0 = (double)(county_idx % 10 + 1) * 3;
 
-        for (epi::AgeGroup i = 0; i < counties[county_idx].parameters.get_num_groups(); i++) {
-            counties[county_idx].populations[{i, epi::InfectionState::Exposed}]      = nb_exp_t0;
-            counties[county_idx].populations[{i, epi::InfectionState::Carrier}]      = nb_car_t0;
-            counties[county_idx].populations[{i, epi::InfectionState::Infected}]     = nb_inf_t0;
-            counties[county_idx].populations[{i, epi::InfectionState::Hospitalized}] = nb_hosp_t0;
-            counties[county_idx].populations[{i, epi::InfectionState::ICU}]          = nb_icu_t0;
-            counties[county_idx].populations[{i, epi::InfectionState::Recovered}]    = nb_rec_t0;
-            counties[county_idx].populations[{i, epi::InfectionState::Dead}]         = nb_dead_t0;
-            counties[county_idx].populations.set_difference_from_group_total<epi::AgeGroup>(
-                {i, epi::InfectionState::Susceptible}, nb_total_t0);
+        for (mio::AgeGroup i = 0; i < counties[county_idx].parameters.get_num_groups(); i++) {
+            counties[county_idx].populations[{i, mio::InfectionState::Exposed}]      = nb_exp_t0;
+            counties[county_idx].populations[{i, mio::InfectionState::Carrier}]      = nb_car_t0;
+            counties[county_idx].populations[{i, mio::InfectionState::Infected}]     = nb_inf_t0;
+            counties[county_idx].populations[{i, mio::InfectionState::Hospitalized}] = nb_hosp_t0;
+            counties[county_idx].populations[{i, mio::InfectionState::ICU}]          = nb_icu_t0;
+            counties[county_idx].populations[{i, mio::InfectionState::Recovered}]    = nb_rec_t0;
+            counties[county_idx].populations[{i, mio::InfectionState::Dead}]         = nb_dead_t0;
+            counties[county_idx].populations.set_difference_from_group_total<mio::AgeGroup>(
+                {i, mio::InfectionState::Susceptible}, nb_total_t0);
         }
     }
 }
@@ -447,20 +447,20 @@ void set_synthetic_population_data(std::vector<epi::SecirModel>& counties)
  * @param params_graph graph object that the nodes will be added to.
  * @returns any io errors that happen during reading of the files.
  */
-epi::IOResult<void> set_nodes(const epi::SecirParams& params, epi::Date start_date, epi::Date end_date,
+mio::IOResult<void> set_nodes(const mio::SecirParams& params, mio::Date start_date, mio::Date end_date,
                               const fs::path& data_dir,
-                              epi::Graph<epi::SecirModel, epi::MigrationParameters>& params_graph)
+                              mio::Graph<mio::SecirModel, mio::MigrationParameters>& params_graph)
 {
-    namespace de = epi::regions::de;
+    namespace de = mio::regions::de;
 
-    BOOST_OUTCOME_TRY(county_ids, epi::get_county_ids((data_dir / "pydata" / "Germany").string()));
-    std::vector<epi::SecirModel> counties(county_ids.size(), epi::SecirModel(int(size_t(params.get_num_groups()))));
+    BOOST_OUTCOME_TRY(county_ids, mio::get_county_ids((data_dir / "pydata" / "Germany").string()));
+    std::vector<mio::SecirModel> counties(county_ids.size(), mio::SecirModel(int(size_t(params.get_num_groups()))));
     for (auto& county : counties) {
         county.parameters = params;
     }
     auto scaling_factor_infected = std::vector<double>(size_t(params.get_num_groups()), 2.5);
     auto scaling_factor_icu      = 1.0;
-    BOOST_OUTCOME_TRY(epi::read_population_data_county(counties, start_date, county_ids, scaling_factor_infected,
+    BOOST_OUTCOME_TRY(mio::read_population_data_county(counties, start_date, county_ids, scaling_factor_infected,
                                                        scaling_factor_icu, (data_dir / "pydata" / "Germany").string()));
     // set_synthetic_population_data(counties);
 
@@ -468,25 +468,25 @@ epi::IOResult<void> set_nodes(const epi::SecirParams& params, epi::Date start_da
 
         //local parameters
         auto tnt_capacity = counties[county_idx].populations.get_total() * 7.5 / 100000.;
-        assign_uniform_distribution(counties[county_idx].parameters.get<epi::TestAndTraceCapacity>(),
+        assign_uniform_distribution(counties[county_idx].parameters.get<mio::TestAndTraceCapacity>(),
                                     0.8 * tnt_capacity, 1.2 * tnt_capacity);
 
         //holiday periods (damping set globally, see set_npis)
         auto holiday_periods =
             de::get_holidays(de::get_state_id(de::CountyId(county_ids[county_idx])), start_date, end_date);
-        auto& contacts = counties[county_idx].parameters.get<epi::ContactPatterns>();
+        auto& contacts = counties[county_idx].parameters.get<mio::ContactPatterns>();
         contacts.get_school_holidays() =
-            std::vector<std::pair<epi::SimulationTime, epi::SimulationTime>>(holiday_periods.size());
+            std::vector<std::pair<mio::SimulationTime, mio::SimulationTime>>(holiday_periods.size());
         std::transform(
             holiday_periods.begin(), holiday_periods.end(), contacts.get_school_holidays().begin(), [=](auto& period) {
-                return std::make_pair(epi::SimulationTime(epi::get_offset_in_days(period.first, start_date)),
-                                      epi::SimulationTime(epi::get_offset_in_days(period.second, start_date)));
+                return std::make_pair(mio::SimulationTime(mio::get_offset_in_days(period.first, start_date)),
+                                      mio::SimulationTime(mio::get_offset_in_days(period.second, start_date)));
             });
 
         //uncertainty in populations
         //TODO: do we need uncertainty in age groups as well?
-        for (auto i = epi::AgeGroup(0); i < params.get_num_groups(); i++) {
-            for (auto j = epi::Index<epi::InfectionState>(0); j < epi::InfectionState::Count; ++j) {
+        for (auto i = mio::AgeGroup(0); i < params.get_num_groups(); i++) {
+            for (auto j = mio::Index<mio::InfectionState>(0); j < mio::InfectionState::Count; ++j) {
                 auto& compartment_value = counties[county_idx].populations[{i, j}];
                 assign_uniform_distribution(compartment_value, 0.9 * double(compartment_value),
                                             1.1 * double(compartment_value));
@@ -495,7 +495,7 @@ epi::IOResult<void> set_nodes(const epi::SecirParams& params, epi::Date start_da
 
         params_graph.add_node(county_ids[county_idx], counties[county_idx]);
     }
-    return epi::success();
+    return mio::success();
 }
 
 /**
@@ -506,35 +506,35 @@ epi::IOResult<void> set_nodes(const epi::SecirParams& params, epi::Date start_da
  * @param params_graph graph object that the nodes will be added to.
  * @returns any io errors that happen during reading of the files.
  */
-epi::IOResult<void> set_edges(const fs::path& data_dir,
-                              epi::Graph<epi::SecirModel, epi::MigrationParameters>& params_graph)
+mio::IOResult<void> set_edges(const fs::path& data_dir,
+                              mio::Graph<mio::SecirModel, mio::MigrationParameters>& params_graph)
 {
     //migration between nodes
     BOOST_OUTCOME_TRY(migration_data_commuter,
-                      epi::read_mobility_plain((data_dir / "mobility" / "commuter_migration_scaled.txt").string()));
+                      mio::read_mobility_plain((data_dir / "mobility" / "commuter_migration_scaled.txt").string()));
     BOOST_OUTCOME_TRY(migration_data_twitter,
-                      epi::read_mobility_plain((data_dir / "mobility" / "twitter_scaled_1252.txt").string()));
+                      mio::read_mobility_plain((data_dir / "mobility" / "twitter_scaled_1252.txt").string()));
     if (size_t(migration_data_commuter.rows()) != params_graph.nodes().size() ||
         size_t(migration_data_commuter.cols()) != params_graph.nodes().size() ||
         size_t(migration_data_twitter.rows()) != params_graph.nodes().size() ||
         size_t(migration_data_twitter.cols()) != params_graph.nodes().size()) {
-        return epi::failure(epi::StatusCode::InvalidValue, "Migration matrices not the correct size.");
+        return mio::failure(mio::StatusCode::InvalidValue, "Migration matrices not the correct size.");
     }
 
-    auto migrating_compartments = {epi::InfectionState::Susceptible, epi::InfectionState::Exposed,
-                                   epi::InfectionState::Carrier, epi::InfectionState::Infected,
-                                   epi::InfectionState::Recovered};
+    auto migrating_compartments = {mio::InfectionState::Susceptible, mio::InfectionState::Exposed,
+                                   mio::InfectionState::Carrier, mio::InfectionState::Infected,
+                                   mio::InfectionState::Recovered};
     for (size_t county_idx_i = 0; county_idx_i < params_graph.nodes().size(); ++county_idx_i) {
         for (size_t county_idx_j = 0; county_idx_j < params_graph.nodes().size(); ++county_idx_j) {
             auto& populations = params_graph.nodes()[county_idx_i].property.populations;
             //migration coefficients have the same number of components as the contact matrices.
             //so that the same NPIs/dampings can be used for both (e.g. more home office => fewer commuters)
-            auto migration_coeffs = epi::MigrationCoefficientGroup(contact_locations.size(), populations.numel());
+            auto migration_coeffs = mio::MigrationCoefficientGroup(contact_locations.size(), populations.numel());
 
             //commuters
             auto working_population = 0.0;
-            auto min_commuter_age   = epi::AgeGroup(2);
-            auto max_commuter_age   = epi::AgeGroup(4); //this group is partially retired, only partially commutes
+            auto min_commuter_age   = mio::AgeGroup(2);
+            auto max_commuter_age   = mio::AgeGroup(4); //this group is partially retired, only partially commutes
             for (auto age = min_commuter_age; age <= max_commuter_age; ++age) {
                 working_population += populations.get_group_total(age) * (age == max_commuter_age ? 0.33 : 1.0);
             }
@@ -551,7 +551,7 @@ epi::IOResult<void> set_edges(const fs::path& data_dir,
             auto total_population = populations.get_total();
             auto twitter_coeff    = migration_data_twitter(county_idx_i, county_idx_j) /
                                  total_population; //data is absolute numbers, we need relative
-            for (auto age = epi::AgeGroup(0); age < populations.size<epi::AgeGroup>(); ++age) {
+            for (auto age = mio::AgeGroup(0); age < populations.size<mio::AgeGroup>(); ++age) {
                 for (auto compartment : migrating_compartments) {
                     auto coeff_idx = populations.get_flat_index({age, compartment});
                     migration_coeffs[size_t(ContactLocation::Other)].get_baseline()[coeff_idx] = twitter_coeff;
@@ -566,7 +566,7 @@ epi::IOResult<void> set_edges(const fs::path& data_dir,
         }
     }
 
-    return epi::success();
+    return mio::success();
 }
 
 /**
@@ -577,26 +577,26 @@ epi::IOResult<void> set_edges(const fs::path& data_dir,
  * @param data_dir data directory.
  * @returns created graph or any io errors that happen during reading of the files.
  */
-epi::IOResult<epi::Graph<epi::SecirModel, epi::MigrationParameters>>
-create_graph(epi::Date start_date, epi::Date end_date, const fs::path& data_dir)
+mio::IOResult<mio::Graph<mio::SecirModel, mio::MigrationParameters>>
+create_graph(mio::Date start_date, mio::Date end_date, const fs::path& data_dir)
 {
-    const auto start_day = epi::get_day_in_year(start_date);
+    const auto start_day = mio::get_day_in_year(start_date);
 
     //global parameters
     const int num_age_groups = 6;
-    epi::SecirParams params(num_age_groups);
-    params.get<epi::StartDay>() = start_day;
+    mio::SecirParams params(num_age_groups);
+    params.get<mio::StartDay>() = start_day;
     BOOST_OUTCOME_TRY(set_covid_parameters(params));
     BOOST_OUTCOME_TRY(set_contact_matrices(data_dir, params));
     BOOST_OUTCOME_TRY(set_npis(start_date, end_date, params));
 
     //graph of counties with populations and local parameters
     //and migration between counties
-    epi::Graph<epi::SecirModel, epi::MigrationParameters> params_graph;
+    mio::Graph<mio::SecirModel, mio::MigrationParameters> params_graph;
     BOOST_OUTCOME_TRY(set_nodes(params, start_date, end_date, data_dir, params_graph));
     BOOST_OUTCOME_TRY(set_edges(data_dir, params_graph));
 
-    return epi::success(params_graph);
+    return mio::success(params_graph);
 }
 
 /**
@@ -604,9 +604,9 @@ create_graph(epi::Date start_date, epi::Date end_date, const fs::path& data_dir)
  * @param save_dir directory where the graph was saved.
  * @returns created graph or any io errors that happen during reading of the files.
  */
-epi::IOResult<epi::Graph<epi::SecirModel, epi::MigrationParameters>> load_graph(const fs::path& save_dir)
+mio::IOResult<mio::Graph<mio::SecirModel, mio::MigrationParameters>> load_graph(const fs::path& save_dir)
 {
-    return epi::read_graph<epi::SecirModel>(save_dir.string());
+    return mio::read_graph<mio::SecirModel>(save_dir.string());
 }
 
 /**
@@ -614,10 +614,10 @@ epi::IOResult<epi::Graph<epi::SecirModel, epi::MigrationParameters>> load_graph(
  * @param save_dir directory where the graph will be saved.
  * @returns any io errors that happen during writing of the files.
  */
-epi::IOResult<void> save_graph(const epi::Graph<epi::SecirModel, epi::MigrationParameters>& params_graph,
+mio::IOResult<void> save_graph(const mio::Graph<mio::SecirModel, mio::MigrationParameters>& params_graph,
                                const fs::path& save_dir)
 {
-    return epi::write_graph(params_graph, save_dir.string());
+    return mio::write_graph(params_graph, save_dir.string());
 }
 
 /**
@@ -627,10 +627,10 @@ epi::IOResult<void> save_graph(const epi::Graph<epi::SecirModel, epi::MigrationP
  * @param county_ids id of each county node.
  * @return graph with county nodes but no edges.
  */
-auto make_graph_no_edges(const std::vector<epi::SecirModel>& params, const std::vector<int>& county_ids)
+auto make_graph_no_edges(const std::vector<mio::SecirModel>& params, const std::vector<int>& county_ids)
 {        
     //make a graph without edges for writing to file
-    auto graph = epi::Graph<epi::SecirModel, epi::MigrationParameters>();
+    auto graph = mio::Graph<mio::SecirModel, mio::MigrationParameters>();
     for (auto i = size_t(0); i < county_ids.size(); ++i) {
         graph.add_node(county_ids[i], params[i]);
     }
@@ -647,15 +647,15 @@ auto make_graph_no_edges(const std::vector<epi::SecirModel>& params, const std::
  * @param run_idx index of the run.
  * @return any io errors that occur during writing of the files.
  */
-epi::IOResult<void> save_result(const std::vector<epi::TimeSeries<double>>& result,
-                                const std::vector<epi::SecirModel>& params, const std::vector<int>& county_ids,
+mio::IOResult<void> save_result(const std::vector<mio::TimeSeries<double>>& result,
+                                const std::vector<mio::SecirModel>& params, const std::vector<int>& county_ids,
                                 const fs::path& result_dir, size_t run_idx)
 {
     auto result_dir_run = result_dir / ("run" + std::to_string(run_idx));
-    BOOST_OUTCOME_TRY(epi::create_directory(result_dir_run.string()));
-    BOOST_OUTCOME_TRY(epi::save_result(result, county_ids, (result_dir_run / "Result.h5").string()));
-    BOOST_OUTCOME_TRY(epi::write_graph(make_graph_no_edges(params, county_ids), result_dir_run.string(), epi::IOF_OmitDistributions));
-    return epi::success();
+    BOOST_OUTCOME_TRY(mio::create_directory(result_dir_run.string()));
+    BOOST_OUTCOME_TRY(mio::save_result(result, county_ids, (result_dir_run / "Result.h5").string()));
+    BOOST_OUTCOME_TRY(mio::write_graph(make_graph_no_edges(params, county_ids), result_dir_run.string(), mio::IOF_OmitDistributions));
+    return mio::success();
 }
 
 /**
@@ -667,16 +667,16 @@ epi::IOResult<void> save_result(const std::vector<epi::TimeSeries<double>>& resu
  * @param result_dir top level directory for all results of the parameter study.
  * @return any io errors that occur during writing of the files.
  */
-epi::IOResult<void> save_results(const std::vector<std::vector<epi::TimeSeries<double>>>& ensemble_results,
-                                 const std::vector<std::vector<epi::SecirModel>>& ensemble_params,
+mio::IOResult<void> save_results(const std::vector<std::vector<mio::TimeSeries<double>>>& ensemble_results,
+                                 const std::vector<std::vector<mio::SecirModel>>& ensemble_params,
                                  const std::vector<int>& county_ids, const fs::path& result_dir)
 {
     //save results and sum of results over nodes
-    auto ensemble_result_sum = epi::sum_nodes(ensemble_results);
+    auto ensemble_result_sum = mio::sum_nodes(ensemble_results);
     for (size_t i = 0; i < ensemble_result_sum.size(); ++i) {
-        BOOST_OUTCOME_TRY(epi::save_result(ensemble_result_sum[i], {0},
+        BOOST_OUTCOME_TRY(mio::save_result(ensemble_result_sum[i], {0},
                                            (result_dir / ("results_run" + std::to_string(i) + "_sum.h5")).string()));
-        BOOST_OUTCOME_TRY(epi::save_result(ensemble_results[i], county_ids,
+        BOOST_OUTCOME_TRY(mio::save_result(ensemble_results[i], county_ids,
                                            (result_dir / ("results_run" + std::to_string(i) + ".h5")).string()));
     }
 
@@ -686,65 +686,65 @@ epi::IOResult<void> save_results(const std::vector<std::vector<epi::TimeSeries<d
     auto result_dir_p50 = result_dir / "p50";
     auto result_dir_p75 = result_dir / "p75";
     auto result_dir_p95 = result_dir / "p95";
-    BOOST_OUTCOME_TRY(epi::create_directory(result_dir_p05.string()));
-    BOOST_OUTCOME_TRY(epi::create_directory(result_dir_p25.string()));
-    BOOST_OUTCOME_TRY(epi::create_directory(result_dir_p50.string()));
-    BOOST_OUTCOME_TRY(epi::create_directory(result_dir_p75.string()));
-    BOOST_OUTCOME_TRY(epi::create_directory(result_dir_p95.string()));
+    BOOST_OUTCOME_TRY(mio::create_directory(result_dir_p05.string()));
+    BOOST_OUTCOME_TRY(mio::create_directory(result_dir_p25.string()));
+    BOOST_OUTCOME_TRY(mio::create_directory(result_dir_p50.string()));
+    BOOST_OUTCOME_TRY(mio::create_directory(result_dir_p75.string()));
+    BOOST_OUTCOME_TRY(mio::create_directory(result_dir_p95.string()));
 
     //save percentiles of results, summed over nodes
     {
-        auto ensemble_results_sum_p05 = epi::ensemble_percentile(ensemble_result_sum, 0.05);
-        auto ensemble_results_sum_p25 = epi::ensemble_percentile(ensemble_result_sum, 0.25);
-        auto ensemble_results_sum_p50 = epi::ensemble_percentile(ensemble_result_sum, 0.50);
-        auto ensemble_results_sum_p75 = epi::ensemble_percentile(ensemble_result_sum, 0.75);
-        auto ensemble_results_sum_p95 = epi::ensemble_percentile(ensemble_result_sum, 0.95);
+        auto ensemble_results_sum_p05 = mio::ensemble_percentile(ensemble_result_sum, 0.05);
+        auto ensemble_results_sum_p25 = mio::ensemble_percentile(ensemble_result_sum, 0.25);
+        auto ensemble_results_sum_p50 = mio::ensemble_percentile(ensemble_result_sum, 0.50);
+        auto ensemble_results_sum_p75 = mio::ensemble_percentile(ensemble_result_sum, 0.75);
+        auto ensemble_results_sum_p95 = mio::ensemble_percentile(ensemble_result_sum, 0.95);
 
         BOOST_OUTCOME_TRY(
-            epi::save_result(ensemble_results_sum_p05, {0}, (result_dir_p05 / "Results_sum.h5").string()));
+            mio::save_result(ensemble_results_sum_p05, {0}, (result_dir_p05 / "Results_sum.h5").string()));
         BOOST_OUTCOME_TRY(
-            epi::save_result(ensemble_results_sum_p25, {0}, (result_dir_p25 / "Results_sum.h5").string()));
+            mio::save_result(ensemble_results_sum_p25, {0}, (result_dir_p25 / "Results_sum.h5").string()));
         BOOST_OUTCOME_TRY(
-            epi::save_result(ensemble_results_sum_p50, {0}, (result_dir_p50 / "Results_sum.h5").string()));
+            mio::save_result(ensemble_results_sum_p50, {0}, (result_dir_p50 / "Results_sum.h5").string()));
         BOOST_OUTCOME_TRY(
-            epi::save_result(ensemble_results_sum_p75, {0}, (result_dir_p75 / "Results_sum.h5").string()));
+            mio::save_result(ensemble_results_sum_p75, {0}, (result_dir_p75 / "Results_sum.h5").string()));
         BOOST_OUTCOME_TRY(
-            epi::save_result(ensemble_results_sum_p95, {0}, (result_dir_p95 / "Results_sum.h5").string()));
+            mio::save_result(ensemble_results_sum_p95, {0}, (result_dir_p95 / "Results_sum.h5").string()));
     }
 
     //save percentiles of results
     {
-        auto ensemble_results_p05 = epi::ensemble_percentile(ensemble_results, 0.05);
-        auto ensemble_results_p25 = epi::ensemble_percentile(ensemble_results, 0.25);
-        auto ensemble_results_p50 = epi::ensemble_percentile(ensemble_results, 0.50);
-        auto ensemble_results_p75 = epi::ensemble_percentile(ensemble_results, 0.75);
-        auto ensemble_results_p95 = epi::ensemble_percentile(ensemble_results, 0.95);
+        auto ensemble_results_p05 = mio::ensemble_percentile(ensemble_results, 0.05);
+        auto ensemble_results_p25 = mio::ensemble_percentile(ensemble_results, 0.25);
+        auto ensemble_results_p50 = mio::ensemble_percentile(ensemble_results, 0.50);
+        auto ensemble_results_p75 = mio::ensemble_percentile(ensemble_results, 0.75);
+        auto ensemble_results_p95 = mio::ensemble_percentile(ensemble_results, 0.95);
 
-        BOOST_OUTCOME_TRY(epi::save_result(ensemble_results_p05, county_ids, (result_dir_p05 / "Results.h5").string()));
-        BOOST_OUTCOME_TRY(epi::save_result(ensemble_results_p25, county_ids, (result_dir_p25 / "Results.h5").string()));
-        BOOST_OUTCOME_TRY(epi::save_result(ensemble_results_p50, county_ids, (result_dir_p50 / "Results.h5").string()));
-        BOOST_OUTCOME_TRY(epi::save_result(ensemble_results_p75, county_ids, (result_dir_p75 / "Results.h5").string()));
-        BOOST_OUTCOME_TRY(epi::save_result(ensemble_results_p95, county_ids, (result_dir_p95 / "Results.h5").string()));
+        BOOST_OUTCOME_TRY(mio::save_result(ensemble_results_p05, county_ids, (result_dir_p05 / "Results.h5").string()));
+        BOOST_OUTCOME_TRY(mio::save_result(ensemble_results_p25, county_ids, (result_dir_p25 / "Results.h5").string()));
+        BOOST_OUTCOME_TRY(mio::save_result(ensemble_results_p50, county_ids, (result_dir_p50 / "Results.h5").string()));
+        BOOST_OUTCOME_TRY(mio::save_result(ensemble_results_p75, county_ids, (result_dir_p75 / "Results.h5").string()));
+        BOOST_OUTCOME_TRY(mio::save_result(ensemble_results_p95, county_ids, (result_dir_p95 / "Results.h5").string()));
     }
 
     //save percentiles of parameters
     {
-        auto ensemble_params_p05 = epi::ensemble_params_percentile(ensemble_params, 0.05);
-        auto ensemble_params_p25 = epi::ensemble_params_percentile(ensemble_params, 0.25);
-        auto ensemble_params_p50 = epi::ensemble_params_percentile(ensemble_params, 0.50);
-        auto ensemble_params_p75 = epi::ensemble_params_percentile(ensemble_params, 0.75);
-        auto ensemble_params_p95 = epi::ensemble_params_percentile(ensemble_params, 0.95);
+        auto ensemble_params_p05 = mio::ensemble_params_percentile(ensemble_params, 0.05);
+        auto ensemble_params_p25 = mio::ensemble_params_percentile(ensemble_params, 0.25);
+        auto ensemble_params_p50 = mio::ensemble_params_percentile(ensemble_params, 0.50);
+        auto ensemble_params_p75 = mio::ensemble_params_percentile(ensemble_params, 0.75);
+        auto ensemble_params_p95 = mio::ensemble_params_percentile(ensemble_params, 0.95);
 
         auto make_graph = [&county_ids](auto&& params) {
             return make_graph_no_edges(params, county_ids);
         };
-        BOOST_OUTCOME_TRY(epi::write_graph(make_graph(ensemble_params_p05), result_dir_p05.string(), epi::IOF_OmitDistributions));
-        BOOST_OUTCOME_TRY(epi::write_graph(make_graph(ensemble_params_p25), result_dir_p25.string(), epi::IOF_OmitDistributions));
-        BOOST_OUTCOME_TRY(epi::write_graph(make_graph(ensemble_params_p50), result_dir_p50.string(), epi::IOF_OmitDistributions));
-        BOOST_OUTCOME_TRY(epi::write_graph(make_graph(ensemble_params_p75), result_dir_p75.string(), epi::IOF_OmitDistributions));
-        BOOST_OUTCOME_TRY(epi::write_graph(make_graph(ensemble_params_p95), result_dir_p95.string(), epi::IOF_OmitDistributions));
+        BOOST_OUTCOME_TRY(mio::write_graph(make_graph(ensemble_params_p05), result_dir_p05.string(), mio::IOF_OmitDistributions));
+        BOOST_OUTCOME_TRY(mio::write_graph(make_graph(ensemble_params_p25), result_dir_p25.string(), mio::IOF_OmitDistributions));
+        BOOST_OUTCOME_TRY(mio::write_graph(make_graph(ensemble_params_p50), result_dir_p50.string(), mio::IOF_OmitDistributions));
+        BOOST_OUTCOME_TRY(mio::write_graph(make_graph(ensemble_params_p75), result_dir_p75.string(), mio::IOF_OmitDistributions));
+        BOOST_OUTCOME_TRY(mio::write_graph(make_graph(ensemble_params_p95), result_dir_p95.string(), mio::IOF_OmitDistributions));
     }
-    return epi::success();
+    return mio::success();
 }
 
 /**
@@ -767,15 +767,15 @@ enum class RunMode
  * @param result_dir directory where all results of the parameter study will be stored.
  * @returns any io error that occurs during reading or writing of files.
  */
-epi::IOResult<void> run(RunMode mode, const fs::path& data_dir, const fs::path& save_dir, const fs::path& result_dir)
+mio::IOResult<void> run(RunMode mode, const fs::path& data_dir, const fs::path& save_dir, const fs::path& result_dir)
 {
-    const auto start_date   = epi::Date(2020, 12, 12);
+    const auto start_date   = mio::Date(2020, 12, 12);
     const auto num_days_sim = 20.0;
-    const auto end_date     = epi::offset_date_by_days(start_date, int(std::ceil(num_days_sim)));
+    const auto end_date     = mio::offset_date_by_days(start_date, int(std::ceil(num_days_sim)));
     const auto num_runs     = 1;
 
     //create or load graph
-    epi::Graph<epi::SecirModel, epi::MigrationParameters> params_graph;
+    mio::Graph<mio::SecirModel, mio::MigrationParameters> params_graph;
     if (mode == RunMode::Save) {
         BOOST_OUTCOME_TRY(created, create_graph(start_date, end_date, data_dir));
         BOOST_OUTCOME_TRY(save_graph(created, save_dir));
@@ -792,15 +792,15 @@ epi::IOResult<void> run(RunMode mode, const fs::path& data_dir, const fs::path& 
     });
 
     //run parameter study
-    auto parameter_study  = epi::ParameterStudy<epi::SecirSimulation<>>{params_graph, 0.0, num_days_sim, 0.5, size_t(num_runs)};
-    auto ensemble_results = std::vector<std::vector<epi::TimeSeries<double>>>{};
+    auto parameter_study  = mio::ParameterStudy<mio::SecirSimulation<>>{params_graph, 0.0, num_days_sim, 0.5, size_t(num_runs)};
+    auto ensemble_results = std::vector<std::vector<mio::TimeSeries<double>>>{};
     ensemble_results.reserve(size_t(num_runs));
-    auto ensemble_params = std::vector<std::vector<epi::SecirModel>>{};
+    auto ensemble_params = std::vector<std::vector<mio::SecirModel>>{};
     ensemble_params.reserve(size_t(num_runs));
-    auto save_result_result = epi::IOResult<void>(epi::success());
+    auto save_result_result = mio::IOResult<void>(mio::success());
     auto run_idx            = size_t(0);
     parameter_study.run([&](auto results_graph) {
-        ensemble_results.push_back(epi::interpolate_simulation_result(results_graph));
+        ensemble_results.push_back(mio::interpolate_simulation_result(results_graph));
 
         ensemble_params.emplace_back();
         ensemble_params.back().reserve(results_graph.nodes().size());
@@ -818,7 +818,7 @@ epi::IOResult<void> run(RunMode mode, const fs::path& data_dir, const fs::path& 
     BOOST_OUTCOME_TRY(save_result_result);
     BOOST_OUTCOME_TRY(save_results(ensemble_results, ensemble_params, county_ids, result_dir));
 
-    return epi::success();
+    return mio::success();
 }
 
 int main(int argc, char** argv)
@@ -830,7 +830,7 @@ int main(int argc, char** argv)
     //- log level
     //- ...
 
-    epi::set_log_level(epi::LogLevel::warn);
+    mio::set_log_level(mio::LogLevel::warn);
 
     RunMode mode;
     std::string save_dir;
@@ -861,9 +861,9 @@ int main(int argc, char** argv)
     }
     printf("Saving results to \"%s\".\n", result_dir.c_str());
 
-    // epi::thread_local_rng().seed({...}); //set seeds, e.g., for debugging
+    // mio::thread_local_rng().seed({...}); //set seeds, e.g., for debugging
     printf("Seeds: ");
-    for (auto s : epi::thread_local_rng().get_seeds()) {
+    for (auto s : mio::thread_local_rng().get_seeds()) {
         printf("%u, ", s);
     }
     printf("\n");

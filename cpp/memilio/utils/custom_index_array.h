@@ -43,7 +43,7 @@ typename std::enable_if<(I == sizeof...(Ts)), size_t>::type product(Index<Ts...>
 template <int I, template <class...> class Index, class... Ts>
 typename std::enable_if<(I < sizeof...(Ts)), size_t>::type product(Index<Ts...> const& t)
 {
-    return (size_t)epi::get<I>(t)*product<I+1, Index, Ts...>(t);
+    return (size_t)mio::get<I>(t)*product<I+1, Index, Ts...>(t);
 }
 
 
@@ -55,7 +55,7 @@ size_t product(Index<Ts...> const& t)
 
 } // namespace
 
-namespace epi
+namespace mio
 {
 
 
@@ -80,18 +80,18 @@ namespace details {
     std::enable_if_t< (I == (Index::size - 1) ), std::pair<size_t, size_t>> flatten_index(Index const& indices, Index const& dimensions)
     {
         assert(get<I>(indices) < get<I>(dimensions));
-        return {(size_t)epi::get<I>(indices), (size_t)epi::get<I>(dimensions)};
+        return {(size_t)mio::get<I>(indices), (size_t)mio::get<I>(dimensions)};
     }
 
     template <size_t I, typename Index>
     std::enable_if_t< (I < (Index::size - 1) ), std::pair<size_t, size_t>> flatten_index(Index const& indices, Index const& dimensions)
     {
-        assert(epi::get<I>(indices) < epi::get<I>(dimensions));
+        assert(mio::get<I>(indices) < mio::get<I>(dimensions));
 
         size_t val, prod;
         std::tie(val, prod) = flatten_index<I+1>(indices, dimensions);
 
-        return {val + (size_t)epi::get<I>(indices)*prod, prod*(size_t)epi::get<I>(dimensions)};
+        return {val + (size_t)mio::get<I>(indices)*prod, prod*(size_t)mio::get<I>(dimensions)};
     }
 
     template <typename T>
@@ -158,7 +158,7 @@ class CustomIndexArray
 public:
 
     using Type              = Typ;
-    using Index             = ::epi::Index<Tags...>;
+    using Index             = ::mio::Index<Tags...>;
     using InternalArrayType = Eigen::Array<Type, Eigen::Dynamic, 1>;
 
     /**
@@ -197,7 +197,7 @@ public:
      * @return size along a specified dimension
      */
     template <typename Tag>
-    epi::Index<Tag> size() const {
+    mio::Index<Tag> size() const {
         return get<Tag>(m_dimensions);
     }
 
@@ -420,13 +420,13 @@ private:
             : data_begin(start_iter)
             , idx_sequence(idx_sequence_)
             , m_dimensions(dimensions)
-            , di(epi::get<Tag>(dimensions))
+            , di(mio::get<Tag>(dimensions))
             , dr(product<details::IndexPosition<Tag, Index>::value>(dimensions)/di)
             , dl(product(dimensions)/(di*dr))
         {
             assert( (size_t)idx_sequence.start + idx_sequence.n <= di );
 
-            epi::get<Tag>(m_dimensions) = epi::Index<Tag>(idx_sequence.n);
+            mio::get<Tag>(m_dimensions) = mio::Index<Tag>(idx_sequence.n);
         }
 
         // returns the number of elements in a slice
@@ -590,7 +590,7 @@ public:
 
     /**
      * serialize this. 
-     * @see epi::serialize
+     * @see mio::serialize
      */
     template<class IOContext>
     void serialize(IOContext& io) const
@@ -603,7 +603,7 @@ public:
 protected:
     /**
      * deserialize an object of a class derived from this class.
-     * @see epi::deserialize
+     * @see mio::deserialize
      */
     template<class IOContext, class Derived>
     static IOResult<Derived> deserialize(IOContext& io, Tag<Derived>)
@@ -617,7 +617,7 @@ protected:
                 auto a = Derived(d);
                 if (a.numel() != e.size())
                     return failure(StatusCode::OutOfRange, "Dimensions of Array don't match the number of elements.");
-                std::copy(e.begin(), e.end(), epi::begin(a.m_y));
+                std::copy(e.begin(), e.end(), mio::begin(a.m_y));
                 return success(a);
             },
             dims, els);
@@ -626,7 +626,7 @@ protected:
 public:
     /**
      * deserialize an object of this class.
-     * @see epi::deserialize
+     * @see mio::deserialize
      */
     template<class IOContext>
     static IOResult<CustomIndexArray> deserialize(IOContext& io)
@@ -635,6 +635,6 @@ public:
     }
 };
 
-} // namespace epi
+} // namespace mio
 
 #endif // CUSTOMINDEXARRAY_H

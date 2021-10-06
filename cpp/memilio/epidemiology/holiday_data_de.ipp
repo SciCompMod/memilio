@@ -28,7 +28,7 @@
 namespace
 {
 
-static const std::vector<std::pair<epi::Date, epi::Date>> holidays_01_sh = {
+static const std::vector<std::pair<mio::Date, mio::Date>> holidays_01_sh = {
     { {2017, 4, 7}, {2017, 4, 22} }, 
     { {2017, 5, 26}, {2017, 5, 27} }, 
     { {2017, 7, 24}, {2017, 9, 3} }, 
@@ -61,7 +61,7 @@ static const std::vector<std::pair<epi::Date, epi::Date>> holidays_01_sh = {
     { {2022, 12, 23}, {2023, 1, 8} }
 };
 
-static const std::vector<std::pair<epi::Date, epi::Date>> holidays_02_hh = {
+static const std::vector<std::pair<mio::Date, mio::Date>> holidays_02_hh = {
     { {2017, 1, 30}, {2017, 1, 31} }, 
     { {2017, 3, 6}, {2017, 3, 18} }, 
     { {2017, 5, 22}, {2017, 5, 27} }, 
@@ -100,7 +100,7 @@ static const std::vector<std::pair<epi::Date, epi::Date>> holidays_02_hh = {
     { {2022, 12, 23}, {2023, 1, 7} }
 };
 
-static const std::vector<std::pair<epi::Date, epi::Date>> holidays_03_ni = {
+static const std::vector<std::pair<mio::Date, mio::Date>> holidays_03_ni = {
     { {2017, 1, 30}, {2017, 2, 1} }, 
     { {2017, 4, 10}, {2017, 4, 23} }, 
     { {2017, 6, 6}, {2017, 6, 7} }, 
@@ -138,7 +138,7 @@ static const std::vector<std::pair<epi::Date, epi::Date>> holidays_03_ni = {
     { {2022, 12, 23}, {2023, 1, 7} }
 };
 
-static const std::vector<std::pair<epi::Date, epi::Date>> holidays_04_hb = {
+static const std::vector<std::pair<mio::Date, mio::Date>> holidays_04_hb = {
     { {2017, 1, 30}, {2017, 2, 1} }, 
     { {2017, 4, 10}, {2017, 4, 23} }, 
     { {2017, 6, 6}, {2017, 6, 7} }, 
@@ -177,7 +177,7 @@ static const std::vector<std::pair<epi::Date, epi::Date>> holidays_04_hb = {
     { {2022, 12, 23}, {2023, 1, 7} }
 };
 
-static const std::vector<std::pair<epi::Date, epi::Date>> holidays_05_nw = {
+static const std::vector<std::pair<mio::Date, mio::Date>> holidays_05_nw = {
     { {2017, 4, 10}, {2017, 4, 23} }, 
     { {2017, 6, 6}, {2017, 6, 7} }, 
     { {2017, 7, 17}, {2017, 8, 30} }, 
@@ -209,7 +209,7 @@ static const std::vector<std::pair<epi::Date, epi::Date>> holidays_05_nw = {
     { {2022, 12, 23}, {2023, 1, 7} }
 };
 
-static const std::vector<std::pair<epi::Date, epi::Date>> holidays_06_he = {
+static const std::vector<std::pair<mio::Date, mio::Date>> holidays_06_he = {
     { {2017, 4, 3}, {2017, 4, 16} }, 
     { {2017, 7, 3}, {2017, 8, 12} }, 
     { {2017, 10, 9}, {2017, 10, 22} }, 
@@ -240,7 +240,7 @@ static const std::vector<std::pair<epi::Date, epi::Date>> holidays_06_he = {
     { {2022, 12, 22}, {2023, 1, 8} }
 };
 
-static const std::vector<std::pair<epi::Date, epi::Date>> holidays_07_rp = {
+static const std::vector<std::pair<mio::Date, mio::Date>> holidays_07_rp = {
     { {2017, 4, 10}, {2017, 4, 22} }, 
     { {2017, 7, 3}, {2017, 8, 12} }, 
     { {2017, 10, 2}, {2017, 10, 14} }, 
@@ -271,7 +271,7 @@ static const std::vector<std::pair<epi::Date, epi::Date>> holidays_07_rp = {
     { {2022, 12, 23}, {2023, 1, 3} }
 };
 
-static const std::vector<std::pair<epi::Date, epi::Date>> holidays_08_bw = {
+static const std::vector<std::pair<mio::Date, mio::Date>> holidays_08_bw = {
     { {2017, 4, 10}, {2017, 4, 22} }, 
     { {2017, 6, 6}, {2017, 6, 17} }, 
     { {2017, 7, 27}, {2017, 9, 10} }, 
@@ -304,7 +304,7 @@ static const std::vector<std::pair<epi::Date, epi::Date>> holidays_08_bw = {
     { {2022, 12, 21}, {2023, 1, 8} }
 };
 
-static const std::vector<std::pair<epi::Date, epi::Date>> holidays_09_by = {
+static const std::vector<std::pair<mio::Date, mio::Date>> holidays_09_by = {
     { {2017, 2, 27}, {2017, 3, 4} }, 
     { {2017, 4, 10}, {2017, 4, 23} }, 
     { {2017, 6, 6}, {2017, 6, 17} }, 
@@ -343,7 +343,7 @@ static const std::vector<std::pair<epi::Date, epi::Date>> holidays_09_by = {
     { {2022, 12, 24}, {2023, 1, 8} }
 };
 
-static const std::vector<std::pair<epi::Date, epi::Date>> holidays_10_sl = {
+static const std::vector<std::pair<mio::Date, mio::Date>> holidays_10_sl = {
     { {2017, 2, 27}, {2017, 3, 5} }, 
     { {2017, 4, 10}, {2017, 4, 23} }, 
     { {2017, 7, 3}, {2017, 8, 15} }, 
@@ -376,7 +376,7 @@ static const std::vector<std::pair<epi::Date, epi::Date>> holidays_10_sl = {
     { {2022, 12, 22}, {2023, 1, 5} }
 };
 
-static const std::vector<std::pair<epi::Date, epi::Date>> holidays_11_be = {
+static const std::vector<std::pair<mio::Date, mio::Date>> holidays_11_be = {
     { {2017, 1, 30}, {2017, 2, 5} }, 
     { {2017, 4, 10}, {2017, 4, 19} }, 
     { {2017, 5, 24}, {2017, 5, 25} }, 
@@ -414,7 +414,7 @@ static const std::vector<std::pair<epi::Date, epi::Date>> holidays_11_be = {
     { {2022, 12, 22}, {2023, 1, 3} }
 };
 
-static const std::vector<std::pair<epi::Date, epi::Date>> holidays_12_bb = {
+static const std::vector<std::pair<mio::Date, mio::Date>> holidays_12_bb = {
     { {2017, 1, 30}, {2017, 2, 5} }, 
     { {2017, 4, 12}, {2017, 4, 23} }, 
     { {2017, 5, 26}, {2017, 5, 27} }, 
@@ -449,7 +449,7 @@ static const std::vector<std::pair<epi::Date, epi::Date>> holidays_12_bb = {
     { {2022, 12, 22}, {2023, 1, 4} }
 };
 
-static const std::vector<std::pair<epi::Date, epi::Date>> holidays_13_mv = {
+static const std::vector<std::pair<mio::Date, mio::Date>> holidays_13_mv = {
     { {2017, 2, 6}, {2017, 2, 19} }, 
     { {2017, 4, 10}, {2017, 4, 20} }, 
     { {2017, 6, 2}, {2017, 6, 7} }, 
@@ -488,7 +488,7 @@ static const std::vector<std::pair<epi::Date, epi::Date>> holidays_13_mv = {
     { {2022, 12, 22}, {2023, 1, 3} }
 };
 
-static const std::vector<std::pair<epi::Date, epi::Date>> holidays_14_sn = {
+static const std::vector<std::pair<mio::Date, mio::Date>> holidays_14_sn = {
     { {2017, 2, 13}, {2017, 2, 25} }, 
     { {2017, 4, 13}, {2017, 4, 23} }, 
     { {2017, 5, 26}, {2017, 5, 27} }, 
@@ -527,7 +527,7 @@ static const std::vector<std::pair<epi::Date, epi::Date>> holidays_14_sn = {
     { {2022, 12, 22}, {2023, 1, 3} }
 };
 
-static const std::vector<std::pair<epi::Date, epi::Date>> holidays_15_st = {
+static const std::vector<std::pair<mio::Date, mio::Date>> holidays_15_st = {
     { {2017, 2, 4}, {2017, 2, 12} }, 
     { {2017, 4, 10}, {2017, 4, 14} }, 
     { {2017, 5, 26}, {2017, 5, 27} }, 
@@ -566,7 +566,7 @@ static const std::vector<std::pair<epi::Date, epi::Date>> holidays_15_st = {
     { {2022, 12, 21}, {2023, 1, 6} }
 };
 
-static const std::vector<std::pair<epi::Date, epi::Date>> holidays_16_th = {
+static const std::vector<std::pair<mio::Date, mio::Date>> holidays_16_th = {
     { {2017, 2, 6}, {2017, 2, 12} }, 
     { {2017, 4, 10}, {2017, 4, 22} }, 
     { {2017, 5, 26}, {2017, 5, 27} }, 

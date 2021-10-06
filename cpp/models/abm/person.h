@@ -29,7 +29,7 @@
 
 #include <functional>
 
-namespace epi
+namespace mio
 {
 
 class Location;
@@ -133,7 +133,7 @@ public:
      * Get the age group of this person.
      * @return age.
      */
-    epi::Index<AbmAgeGroup> get_age() const
+    mio::Index<AbmAgeGroup> get_age() const
     {
         return m_age;
     }
@@ -232,13 +232,13 @@ private:
     VaccinationState m_vaccination_state;
     TimeSpan m_time_until_carrier;
     bool m_quarantine;
-    epi::Index<AbmAgeGroup> m_age;
+    mio::Index<AbmAgeGroup> m_age;
     TimeSpan m_time_at_location;
     double m_random_workgroup;
     double m_random_schoolgroup;
     TimeSpan m_time_since_negative_test;
 };
 
-} // namespace epi
+} // namespace mio
 
 #endif

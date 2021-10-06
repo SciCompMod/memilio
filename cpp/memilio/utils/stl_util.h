@@ -32,7 +32,7 @@
 #include <cassert>
 #include <memory>
 
-namespace epi
+namespace mio
 {
 
 /**

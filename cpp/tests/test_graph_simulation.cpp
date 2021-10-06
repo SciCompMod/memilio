@@ -46,7 +46,7 @@ TEST(TestGraphSimulation, simulate)
     using testing::_;
     using testing::Eq;
 
-    epi::Graph<int, int> g;
+    mio::Graph<int, int> g;
     g.add_node(6, 0);
     g.add_node(8, 1);
     g.add_node(4, 2);
@@ -85,7 +85,7 @@ TEST(TestGraphSimulation, simulate)
     EXPECT_CALL(edge_func, invoke(3, 1, Eq(1), Eq(1), Eq(2))).Times(1).After(node_func_calls);
     EXPECT_CALL(edge_func, invoke(3, 1, Eq(3), Eq(3), Eq(0))).Times(1).After(node_func_calls);
 
-    auto sim = epi::make_graph_sim(
+    auto sim = mio::make_graph_sim(
         t0, dt, g,
         [&node_func](auto&& t, auto&& dt_, auto&& n) {
             node_func(t, dt_, n);
@@ -104,7 +104,7 @@ TEST(TestGraphSimulation, stopsAtTmax)
     using testing::_;
     using testing::Eq;
 
-    epi::Graph<int, int> g;
+    mio::Graph<int, int> g;
     g.add_node(6, 0);
     g.add_node(8, 1);
     g.add_edge(0, 1, 0);
@@ -113,7 +113,7 @@ TEST(TestGraphSimulation, stopsAtTmax)
     const auto tmax = 3.123;
     const auto dt   = 0.076;
 
-    auto sim = epi::make_graph_sim(
+    auto sim = mio::make_graph_sim(
         t0, dt, g, [](auto&&, auto&&, auto&&) {}, [](auto&&, auto&&, auto&&, auto&&, auto&&) {});
 
     sim.advance(tmax);
@@ -123,7 +123,7 @@ TEST(TestGraphSimulation, stopsAtTmax)
 
 TEST(TestGraphSimulation, persistentChangesDuringSimulation)
 {
-    epi::Graph<int, int> g;
+    mio::Graph<int, int> g;
     g.add_node(0, 6);
     g.add_node(1, 4);
     g.add_node(2, 8);
@@ -141,13 +141,13 @@ TEST(TestGraphSimulation, persistentChangesDuringSimulation)
 
     auto t0 = 0;
     auto dt = 1;
-    auto sim      = epi::make_graph_sim(t0, dt, g, node_func, edge_func);
+    auto sim      = mio::make_graph_sim(t0, dt, g, node_func, edge_func);
     int num_steps = 2;
     sim.advance(t0 + num_steps * dt);
 
-    std::vector<epi::Node<int>> v_n = {{0, 6 + num_steps}, {1, 4 + 2*num_steps}, {2, 8 + 3* num_steps}};
+    std::vector<mio::Node<int>> v_n = {{0, 6 + num_steps}, {1, 4 + 2*num_steps}, {2, 8 + 3* num_steps}};
     EXPECT_THAT(sim.get_graph().nodes(), testing::ElementsAreArray(v_n));
-    std::vector<epi::Edge<int>> v_e = {{0, 1, 1 + num_steps}, {0, 2, 2 + num_steps}, {1, 2, 3 + num_steps}};
+    std::vector<mio::Edge<int>> v_e = {{0, 1, 1 + num_steps}, {0, 2, 2 + num_steps}, {1, 2, 3 + num_steps}};
     EXPECT_THAT(sim.get_graph().edges(), testing::ElementsAreArray(v_e));
 }
 
@@ -161,8 +161,8 @@ struct MoveOnly {
     MoveOnly(MoveOnly&&)                 = default;
     MoveOnly& operator=(MoveOnly&&) = default;
 };
-using MoveOnlyGraph    = epi::Graph<MoveOnly, MoveOnly>;
-using MoveOnlyGraphSim = epi::GraphSimulation<MoveOnlyGraph>;
+using MoveOnlyGraph    = mio::Graph<MoveOnly, MoveOnly>;
+using MoveOnlyGraphSim = mio::GraphSimulation<MoveOnlyGraph>;
 
 } // namespace
 

@@ -33,7 +33,7 @@
 #include <vector>
 #include <memory>
 
-namespace epi
+namespace mio
 {
 
 /**
@@ -175,6 +175,6 @@ private:
     GlobalTestingParameters m_testing_parameters;
 };
 
-} // namespace epi
+} // namespace mio
 
 #endif

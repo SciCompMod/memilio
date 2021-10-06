@@ -28,7 +28,7 @@
 #include "memilio/math/smoother.h"
 #include "memilio/math/eigen_util.h"
 
-namespace epi
+namespace mio
 {
 
 // Create template specializations for the age resolved
@@ -36,7 +36,7 @@ namespace epi
 
 class SecirModel : public CompartmentalModel<Populations<AgeGroup, InfectionState>, SecirParams>
 {
-    using Base = CompartmentalModel<epi::Populations<AgeGroup, InfectionState>, SecirParams>;
+    using Base = CompartmentalModel<mio::Populations<AgeGroup, InfectionState>, SecirParams>;
     using Pa = Base::ParameterSet;
     using Po = Base::Populations;
 
@@ -208,7 +208,7 @@ void get_derivatives(Eigen::Ref<const Eigen::VectorXd> pop,
     auto const& params = this->parameters;
     AgeGroup n_agegroups = params.get_num_groups();
 
-    ContactMatrixGroup const& contact_matrix = params.get<epi::ContactPatterns>();
+    ContactMatrixGroup const& contact_matrix = params.get<mio::ContactPatterns>();
 
     auto icu_occupancy           = 0.0;
     auto test_and_trace_required = 0.0;
@@ -254,8 +254,8 @@ void get_derivatives(Eigen::Ref<const Eigen::VectorXd> pop,
 
             // effective contact rate by contact rate between groups i and j and damping j
             double season_val =
-                (1 + params.get<epi::Seasonality>() *
-                         sin(3.141592653589793 * (std::fmod((params.get<epi::StartDay>() + t), 365.0) / 182.5 + 0.5)));
+                (1 + params.get<mio::Seasonality>() *
+                         sin(3.141592653589793 * (std::fmod((params.get<mio::StartDay>() + t), 365.0) / 182.5 + 0.5)));
             double cont_freq_eff = season_val * contact_matrix.get_matrix_at(t)(static_cast<Eigen::Index>((size_t)i),
                                                                                 static_cast<Eigen::Index>((size_t)j));
             double Nj      = pop[Sj] + pop[Ej] + pop[Cj] + pop[Ij] + pop[Hj] + pop[Uj] + pop[Rj]; // without died people
@@ -270,7 +270,7 @@ void get_derivatives(Eigen::Ref<const Eigen::VectorXd> pop,
 
         // ICU capacity shortage is close
         double prob_hosp2icu =
-            smoother_cosine(icu_occupancy, 0.90 * params.get<epi::ICUCapacity>(), params.get<epi::ICUCapacity>(),
+            smoother_cosine(icu_occupancy, 0.90 * params.get<mio::ICUCapacity>(), params.get<mio::ICUCapacity>(),
                             params.get<ICUCasesPerHospitalized>()[i], 0);
 
         double prob_hosp2dead = params.get<ICUCasesPerHospitalized>()[i] - prob_hosp2icu;
@@ -315,7 +315,7 @@ void get_derivatives(Eigen::Ref<const Eigen::VectorXd> pop,
 
     /**
      * serialize this. 
-     * @see epi::serialize
+     * @see mio::serialize
      */
     template<class IOContext>
     void serialize(IOContext& io) const
@@ -327,7 +327,7 @@ void get_derivatives(Eigen::Ref<const Eigen::VectorXd> pop,
 
     /**
      * deserialize an object of this class.
-     * @see epi::deserialize
+     * @see mio::deserialize
      */
     template<class IOContext>
     static IOResult<SecirModel> deserialize(IOContext& io)
@@ -357,7 +357,7 @@ double get_infections_relative(const SecirSimulation<Base>& model, double t, con
 
 /**
  * specialization of compartment model simulation for secir models.
- * @tparam Base simulation type that uses a secir compartment model. default epi::SecirSimulation. For testing purposes only!
+ * @tparam Base simulation type that uses a secir compartment model. default mio::SecirSimulation. For testing purposes only!
  */
 template <class Base>
 class SecirSimulation : public Base
@@ -403,11 +403,11 @@ public:
                     if (exceeded_threshold != dyn_npis.get_thresholds().end() &&
                         (exceeded_threshold->first > m_dynamic_npi.first ||
                          t > double(m_dynamic_npi.second))) { //old npi was weaker or is expired
-                        auto t_end    = epi::SimulationTime(t + double(dyn_npis.get_duration()));
+                        auto t_end    = mio::SimulationTime(t + double(dyn_npis.get_duration()));
                         m_dynamic_npi = std::make_pair(exceeded_threshold->first, t_end);
-                        epi::implement_dynamic_npis(contact_patterns.get_cont_freq_mat(), exceeded_threshold->second,
+                        mio::implement_dynamic_npis(contact_patterns.get_cont_freq_mat(), exceeded_threshold->second,
                                                     SimulationTime(t), t_end, [this](auto& g) {
-                                                        return epi::make_contact_damping_matrix(g);
+                                                        return mio::make_contact_damping_matrix(g);
                                                     });
                     }
 
@@ -424,7 +424,7 @@ public:
 
 private:
     double m_t_last_npi_check;
-    std::pair<double, SimulationTime> m_dynamic_npi = {-std::numeric_limits<double>::max(), epi::SimulationTime(0)};
+    std::pair<double, SimulationTime> m_dynamic_npi = {-std::numeric_limits<double>::max(), mio::SimulationTime(0)};
 };
 
 /**
@@ -493,6 +493,6 @@ auto get_migration_factors(const SecirSimulation<Base>& sim, double /*t*/, const
     return factors;
 }
 
-} // namespace epi
+} // namespace mio
 
 #endif

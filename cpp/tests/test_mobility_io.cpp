@@ -41,7 +41,7 @@ TEST(TestReadMigration, readFormatted)
     file.open("test_twitter.txt", std::ios::out);
 
     if (!file) {
-        epi::log_error("File was not created");
+        mio::log_error("File was not created");
     }
     else {
         file << "from_str\tto_str\tfrom_rs\tto_rs\tcount_abs\n";
@@ -61,7 +61,7 @@ TEST(TestReadMigration, readFormatted)
         file.close();
     }
 
-    auto matrix_read = epi::read_mobility_formatted("test_twitter.txt");
+    auto matrix_read = mio::read_mobility_formatted("test_twitter.txt");
     ASSERT_TRUE(matrix_read);
     ASSERT_EQ(test_matrix.rows(), matrix_read.value().rows());
     ASSERT_EQ(test_matrix.cols(), matrix_read.value().cols());
@@ -109,7 +109,7 @@ TEST(TestReadMigration, readPlain)
     test_matrix(5, 4) = 0.3497;
     test_matrix(5, 5) = 0.1544;
 
-    auto matrix_read = epi::read_mobility_plain(get_test_data_file_path("contacts.txt"));
+    auto matrix_read = mio::read_mobility_plain(get_test_data_file_path("contacts.txt"));
 
     ASSERT_TRUE(matrix_read);
     ASSERT_EQ(test_matrix.rows(), matrix_read.value().rows());

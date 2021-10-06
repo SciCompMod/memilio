@@ -22,7 +22,7 @@
 #include <algorithm>
 #include <cassert>
 
-namespace epi
+namespace mio
 {
 
 /**
@@ -144,8 +144,8 @@ std::vector<TimeSeries<double>> ensemble_percentile(const std::vector<std::vecto
     return percentile;
 }
 
-double result_distance_2norm(const std::vector<epi::TimeSeries<double>>& result1,
-                             const std::vector<epi::TimeSeries<double>>& result2)
+double result_distance_2norm(const std::vector<mio::TimeSeries<double>>& result1,
+                             const std::vector<mio::TimeSeries<double>>& result2)
 {
     assert(result1.size() == result2.size());
     assert(result1.size() > 0);
@@ -164,8 +164,8 @@ double result_distance_2norm(const std::vector<epi::TimeSeries<double>>& result1
     return std::sqrt(norm_sqr);
 }
 
-double result_distance_2norm(const std::vector<epi::TimeSeries<double>>& result1,
-                             const std::vector<epi::TimeSeries<double>>& result2, InfectionState compartment)
+double result_distance_2norm(const std::vector<mio::TimeSeries<double>>& result1,
+                             const std::vector<mio::TimeSeries<double>>& result2, InfectionState compartment)
 {
     assert(result1.size() == result2.size());
     assert(result1.size() > 0);
@@ -191,4 +191,4 @@ double result_distance_2norm(const std::vector<epi::TimeSeries<double>>& result1
     return std::sqrt(norm_sqr);
 }
 
-} // namespace epi
+} // namespace mio

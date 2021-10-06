@@ -19,7 +19,7 @@
 */
 #include "memilio/math/adapt_rk.h"
 
-namespace epi
+namespace mio
 {
 
 TableauFinal::TableauFinal()
@@ -191,4 +191,4 @@ bool RKIntegratorCore::step(const DerivFunction& f, Eigen::Ref<const Eigen::Vect
     return !failed_step_size_adapt;
 }
 
-} // namespace epi
+} // namespace mio

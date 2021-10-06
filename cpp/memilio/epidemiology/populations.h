@@ -29,7 +29,7 @@
 #include <array>
 #include <numeric>
 
-namespace epi
+namespace mio
 {
 
 /**
@@ -113,7 +113,7 @@ public:
      * @return total population of the group
      */
     template <class T>
-    ScalarType get_group_total(epi::Index<T> group_idx) const
+    ScalarType get_group_total(mio::Index<T> group_idx) const
     {
         auto const s = this->template slice<T>({(size_t)group_idx, 1});
         return std::accumulate(s.begin(), s.end(), 0.);
@@ -132,7 +132,7 @@ public:
      * @param value the new value for the total population
      */
     template <class T>
-    void set_group_total(epi::Index<T> group_idx, ScalarType value)
+    void set_group_total(mio::Index<T> group_idx, ScalarType value)
     {
         ScalarType current_population = get_group_total(group_idx);
         auto s = this->template slice<T>({(size_t)group_idx, 1});
@@ -174,7 +174,7 @@ public:
     void set_difference_from_group_total(Index const& midx, ScalarType total_group_population)
 
     {
-        auto group_idx = epi::get<T>(midx);
+        auto group_idx = mio::get<T>(midx);
         ScalarType current_population = get_group_total(group_idx);
         size_t idx                    = this->get_flat_index(midx);
         current_population -= this->array()[idx];
@@ -254,7 +254,7 @@ public:
 
     /**
      * deserialize an object of this class.
-     * @see epi::deserialize
+     * @see mio::deserialize
      */
     template<class IOContext>
     static IOResult<Populations> deserialize(IOContext& io)
@@ -264,6 +264,6 @@ public:
 };
 
 
-} // namespace epi
+} // namespace mio
 
 #endif // POPULATIONS_H

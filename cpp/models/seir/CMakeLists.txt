@@ -7,4 +7,4 @@ target_include_directories(seir PUBLIC
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/..>
     $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
 )
-target_compile_options(seir PRIVATE ${_EPI_CXX_FLAGS_ENABLE_WARNING_ERRORS})
+target_compile_options(seir PRIVATE ${_MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS})

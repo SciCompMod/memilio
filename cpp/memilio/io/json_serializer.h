@@ -32,7 +32,7 @@
 #include <utility>
 #include <limits>
 
-namespace epi
+namespace mio
 {
 
 /**
@@ -214,7 +214,7 @@ public:
 
     /**
      * Flags that determine the behavior of serialization.
-     * @see epi::IOFlags
+     * @see mio::IOFlags
      */
     int flags() const
     {
@@ -223,7 +223,7 @@ public:
 
     /**
      * Set flags that determine the behavior of serialization.
-     * @see epi::IOFlags
+     * @see mio::IOFlags
      */
     void set_flags(int f)
     {
@@ -331,7 +331,7 @@ public:
      * @return retrieved element if name is found and can be deserialized, empty optional if not found, error otherwise.
      */
     template <class T>
-    IOResult<boost::optional<T>> expect_optional(const std::string& name, epi::Tag<T> tag);
+    IOResult<boost::optional<T>> expect_optional(const std::string& name, mio::Tag<T> tag);
 
     /**
      * retrieve list of elements from the json value.
@@ -399,7 +399,7 @@ public:
      */
     JsonObject create_object(const std::string& type)
     {
-        epi::unused(type);
+        mio::unused(type);
         m_value = Json::Value(Json::objectValue);
         return {m_status, m_value, m_flags};
     }
@@ -413,7 +413,7 @@ public:
      */
     JsonObject expect_object(const std::string& type)
     {
-        epi::unused(type);
+        mio::unused(type);
         return JsonObject(m_status, m_value, m_flags);
     }
 
@@ -475,7 +475,7 @@ public:
     /**
      * Constructor for deserialization, sets the flags and value that contains serialized data.
      * @param value value that contains serialized data.
-     * @param flags flags that determine the behavior of serialization; see epi::IOFlags.
+     * @param flags flags that determine the behavior of serialization; see mio::IOFlags.
      */
     JsonSerializer(const Json::Value& value, int flags = IOF_None)
         : JsonContext(value, std::make_shared<IOStatus>(), flags)
@@ -485,7 +485,7 @@ public:
     /**
      * Constructor for serialization, sets the flags.
      * Starts with an empty json value that will store the serialized data.
-     * @param flags flags that determine the behavior of serialization; see epi::IOFlags.
+     * @param flags flags that determine the behavior of serialization; see mio::IOFlags.
      */
     JsonSerializer(int flags = IOF_None)
         : JsonSerializer(Json::Value{}, flags)
@@ -522,7 +522,7 @@ inline IOResult<void> write_json(const std::string& path, const Json::Value& js_
  * Serialize an object into json.
  * @tparam T the type of value to be serialized.
  * @param t the object to be serialized.
- * @param flags flags that determine the behavior of serialized; see epi::IOFlags.
+ * @param flags flags that determine the behavior of serialized; see mio::IOFlags.
  * @return json value if serialization is succesful, error code otherwise.
  */
 template <class T>
@@ -541,7 +541,7 @@ IOResult<Json::Value> serialize_json(const T& t, int flags = IOF_None)
  * @tparam T the type of value to be serialized.
  * @param path the path of the file.
  * @param t the object to be serialized.
- * @param flags flags that determine the behavior of the serialization; see epi::IOFlags.
+ * @param flags flags that determine the behavior of the serialization; see mio::IOFlags.
  * @return nothing if succesful, error code otherwise.
  */
 template <class T>
@@ -576,7 +576,7 @@ inline IOResult<Json::Value> read_json(const std::string& path)
  * @tparam T the type of value to be deserialized.
  * @param js the json value.
  * @param tag defines the type of the object for overload resolution.
- * @param flags define behavior of serialization; see epi::IOFlags.
+ * @param flags define behavior of serialization; see mio::IOFlags.
  * @return the deserialized object if succesful, error code otherwise.
  */
 template <class T>
@@ -591,7 +591,7 @@ IOResult<T> deserialize_json(const Json::Value& js, Tag<T> tag, int flags = IOF_
  * @tparam T the type of value to be deserialized.
  * @param path the path of the file.
  * @param tag defines the type of the object for overload resolution.
- * @param flags define behavior of serialization; see epi::IOFlags.
+ * @param flags define behavior of serialization; see mio::IOFlags.
  * @return the deserialized object if succesful, error code otherwise.
  */
 template <class T>
@@ -618,7 +618,7 @@ void JsonObject::add_element(const std::string& name, const T& value)
 {
     if (m_status->is_ok()) {
         auto ctxt = JsonContext(m_status, m_flags);
-        epi::serialize(ctxt, value);
+        mio::serialize(ctxt, value);
         if (m_status) {
             m_value[name] = std::move(ctxt).value();
         }
@@ -651,7 +651,7 @@ void JsonObject::add_list(const std::string& name, Iter b, Iter e)
         auto array = Json::Value(Json::arrayValue);
         for (auto it = b; it < e; ++it) {
             auto ctxt = JsonContext(m_status, m_flags);
-            epi::serialize(ctxt, *it);
+            mio::serialize(ctxt, *it);
             if (m_status) {
                 array.append(std::move(ctxt).value());
             }
@@ -689,14 +689,14 @@ IOResult<T> JsonObject::expect_element(const std::string& name, Tag<T> tag) cons
     const auto& element = m_value[name];
     if (!element.isNull()) {
         auto ctxt = JsonContext(element, m_status, m_flags);
-        auto r    = epi::deserialize(ctxt, tag);
+        auto r    = mio::deserialize(ctxt, tag);
         return r;
     }
     return failure(IOStatus{StatusCode::KeyNotFound, name});
 }
 
 template <class T>
-IOResult<boost::optional<T>> JsonObject::expect_optional(const std::string& name, epi::Tag<T> tag)
+IOResult<boost::optional<T>> JsonObject::expect_optional(const std::string& name, mio::Tag<T> tag)
 {
     if (m_status->is_error()) {
         return failure(*m_status);
@@ -748,7 +748,7 @@ IOResult<std::vector<T>> JsonObject::expect_list(const std::string& name, Tag<T>
         v.reserve(array.size());
         for (auto&& el : array) {
             auto ctxt = JsonContext(el, m_status, m_flags);
-            auto r    = epi::deserialize(ctxt, tag);
+            auto r    = mio::deserialize(ctxt, tag);
             if (r) {
                 v.emplace_back(r.value());
             }
@@ -761,7 +761,7 @@ IOResult<std::vector<T>> JsonObject::expect_list(const std::string& name, Tag<T>
     return failure(StatusCode::KeyNotFound, name);
 }
 
-} // namespace epi
+} // namespace mio
 
 #endif //MEMILIO_HAS_JSONCPP
 

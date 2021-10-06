@@ -28,7 +28,7 @@
 
 #include <cmath>
 
-namespace epi
+namespace mio
 {
 
 /**
@@ -50,7 +50,7 @@ public:
      * @param graph_sim_dt time step of graph simulation
      * @param num_runs number of runs
      */
-    ParameterStudy(const epi::Graph<typename Simulation::Model, epi::MigrationParameters>& graph, double t0, double tmax, double graph_sim_dt,
+    ParameterStudy(const mio::Graph<typename Simulation::Model, mio::MigrationParameters>& graph, double t0, double tmax, double graph_sim_dt,
                    size_t num_runs)
         : m_graph(graph)
         , m_num_runs(num_runs)
@@ -60,7 +60,7 @@ public:
     {
     }
 
-    ParameterStudy(const epi::Graph<typename Simulation::Model, epi::MigrationParameters>& graph, double t0, double tmax,
+    ParameterStudy(const mio::Graph<typename Simulation::Model, mio::MigrationParameters>& graph, double t0, double tmax,
                    double dev_rel, double graph_sim_dt, size_t num_runs)
         : m_graph(graph)
         , m_num_runs(num_runs)
@@ -127,9 +127,9 @@ public:
      * Convinience function for a few number of runs, but uses a lot of memory.
      * @return vector of results of each run.
      */
-    std::vector<epi::Graph<epi::SimulationNode<Simulation>, epi::MigrationEdge>> run()
+    std::vector<mio::Graph<mio::SimulationNode<Simulation>, mio::MigrationEdge>> run()
     {
-        std::vector<epi::Graph<epi::SimulationNode<Simulation>, epi::MigrationEdge>> ensemble_result;
+        std::vector<mio::Graph<mio::SimulationNode<Simulation>, mio::MigrationEdge>> ensemble_result;
         ensemble_result.reserve(m_num_runs);
 
         run([&ensemble_result](auto&& r) {
@@ -219,14 +219,14 @@ public:
 
 private:
     //sample parameters and create simulation
-    epi::GraphSimulation<epi::Graph<epi::SimulationNode<Simulation>, epi::MigrationEdge>> create_sampled_simulation()
+    mio::GraphSimulation<mio::Graph<mio::SimulationNode<Simulation>, mio::MigrationEdge>> create_sampled_simulation()
     {
-        epi::Graph<epi::SimulationNode<Simulation>, epi::MigrationEdge> sim_graph;
+        mio::Graph<mio::SimulationNode<Simulation>, mio::MigrationEdge> sim_graph;
 
         //sample global parameters
         auto& shared_params_model = m_graph.nodes()[0].property;
         draw_sample_infection(shared_params_model);
-        auto& shared_contacts = shared_params_model.parameters.template get<epi::ContactPatterns>();
+        auto& shared_contacts = shared_params_model.parameters.template get<mio::ContactPatterns>();
         shared_contacts.draw_sample_dampings();
         auto& shared_dynamic_npis = shared_params_model.parameters.template get<DynamicNPIsInfected>();
         shared_dynamic_npis.draw_sample();
@@ -267,7 +267,7 @@ private:
 
 private:
     // Stores Graph with the names and ranges of all parameters
-    epi::Graph<typename Simulation::Model, epi::MigrationParameters> m_graph;
+    mio::Graph<typename Simulation::Model, mio::MigrationParameters> m_graph;
 
     size_t m_num_runs;
 
@@ -281,6 +281,6 @@ private:
     double m_dt_integration = 0.1;
 };
 
-} // namespace epi
+} // namespace mio
 
 #endif // PARAMETER_STUDIES_H

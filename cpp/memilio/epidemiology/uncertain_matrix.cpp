@@ -19,7 +19,7 @@
 */
 #include "memilio/epidemiology/uncertain_matrix.h"
 
-namespace epi
+namespace mio
 {
 UncertainContactMatrix::UncertainContactMatrix(size_t num_matrices, Eigen::Index num_groups)
     : UncertainContactMatrix(ContactMatrixGroup(num_matrices, num_groups))
@@ -29,7 +29,7 @@ UncertainContactMatrix::UncertainContactMatrix(size_t num_matrices, Eigen::Index
 UncertainContactMatrix::UncertainContactMatrix(const ContactMatrixGroup& cont_freq)
     : m_cont_freq(cont_freq)
     , m_dampings()
-    , m_school_holiday_damping(0.0, epi::DampingLevel(0), epi::DampingType(0), epi::SimulationTime(0), {}, Eigen::VectorXd::Zero(cont_freq.get_num_groups()))
+    , m_school_holiday_damping(0.0, mio::DampingLevel(0), mio::DampingType(0), mio::SimulationTime(0), {}, Eigen::VectorXd::Zero(cont_freq.get_num_groups()))
     , m_school_holidays()
 {
 }
@@ -81,23 +81,23 @@ ContactMatrixGroup UncertainContactMatrix::make_matrix(bool accum)
     }
 
     auto make_matrix = [](auto&& v) {
-        return epi::make_contact_damping_matrix(v);
+        return mio::make_contact_damping_matrix(v);
     };
-    epi::apply_dampings(m_cont_freq, m_dampings, make_matrix);
+    mio::apply_dampings(m_cont_freq, m_dampings, make_matrix);
 
     for (auto h : m_school_holidays) {
         //enable damping at the start of the period
         auto damping = m_school_holiday_damping;
         damping.set_time(h.first);
-        epi::apply_dampings(m_cont_freq, make_range(&damping, &damping + 1), make_matrix);
+        mio::apply_dampings(m_cont_freq, make_range(&damping, &damping + 1), make_matrix);
 
         //disable damping at the end of the period
         damping.get_value() = 0.0;
         damping.set_time(h.second);
-        epi::apply_dampings(m_cont_freq, make_range(&damping, &damping + 1), make_matrix);
+        mio::apply_dampings(m_cont_freq, make_range(&damping, &damping + 1), make_matrix);
     }
 
     return m_cont_freq;
 }
 
-} // namespace epi
+} // namespace mio

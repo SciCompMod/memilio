@@ -23,7 +23,7 @@
 #include "memilio/math/euler.h"
 #include "secir/secir.h"
 
-namespace epi
+namespace mio
 {
 
 /**
@@ -67,6 +67,6 @@ private:
     double m_abs_tol = 1e-4;
 };
 
-} // namespace epi
+} // namespace mio
 
 #endif

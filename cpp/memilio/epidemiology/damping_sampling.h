@@ -24,7 +24,7 @@
 #include "memilio/utils/uncertain_value.h"
 #include <memory>
 
-namespace epi
+namespace mio
 {
 
 /**
@@ -200,7 +200,7 @@ public:
 
     /**
      * serialize this. 
-     * @see epi::serialize
+     * @see mio::serialize
      */
     template<class IOContext>
     void serialize(IOContext& io) const
@@ -216,7 +216,7 @@ public:
 
     /**
      * deserialize an object of this class.
-     * @see epi::deserialize
+     * @see mio::deserialize
      */
     template <class IOContext>
     static IOResult<DampingSampling> deserialize(IOContext& io)
@@ -303,6 +303,6 @@ auto make_migration_damping_vector(ColumnVectorShape shape, V&& groups)
     });
 }
 
-} // namespace epi
+} // namespace mio
 
 #endif //EPI_SECIR_DAMPING_SAMPLING_H

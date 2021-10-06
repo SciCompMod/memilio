@@ -1,5 +1,5 @@
 #configure directory that contains the data files used by examples
-file(TO_CMAKE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/../../data" EPI_DATA_DIR)
+file(TO_CMAKE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/../../data" MEMILIO_DATA_DIR)
 configure_file(data_dir.h.in data_dir.h)
 
 add_executable(euler_example euler_test.cpp)

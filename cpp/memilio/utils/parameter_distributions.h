@@ -28,7 +28,7 @@
 #include <vector>
 #include <random>
 
-namespace epi
+namespace mio
 {
 
 /**
@@ -134,7 +134,7 @@ public:
 
     /**
      * serialize this. 
-     * @see epi::serialize
+     * @see mio::serialize
      */
     template <class IOContext>
     void serialize(IOContext& io) const
@@ -385,7 +385,7 @@ void details::SerializationVisitor<IOObj>::visit(const ParameterDistributionUnif
 
 /**
  * deserialize a parameter distribution as a shared_ptr.
- * @see epi::deserialize
+ * @see mio::deserialize
  */
 template <class IOContext>
 IOResult<std::shared_ptr<ParameterDistribution>> deserialize_internal(IOContext& io,
@@ -445,6 +445,6 @@ IOResult<std::shared_ptr<ParameterDistribution>> deserialize_internal(IOContext&
     return failure(type.error());
 }
 
-} // namespace epi
+} // namespace mio
 
 #endif // PARAMETER_DISTRIBUTIONS_H

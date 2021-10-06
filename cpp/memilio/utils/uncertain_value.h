@@ -27,7 +27,7 @@
 #include <memory>
 #include <ostream>
 
-namespace epi
+namespace mio
 {
 
 /**
@@ -142,7 +142,7 @@ public:
 
     /**
      * serialize this. 
-     * @see epi::serialize
+     * @see mio::serialize
      */
     template<class IOContext>
     void serialize(IOContext& io) const
@@ -158,7 +158,7 @@ public:
 
     /**
      * deserialize an object of this class.
-     * @see epi::deserialize
+     * @see mio::deserialize
      */
     template <class IOContext>
     static IOResult<UncertainValue> deserialize(IOContext& io)
@@ -217,6 +217,6 @@ inline void PrintTo(const UncertainValue& uv, std::ostream* os)
     (*os) << uv.value();
 }
 
-} // namespace epi
+} // namespace mio
 
 #endif // UNCERTAINVALUE_H

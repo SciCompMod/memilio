@@ -65,7 +65,7 @@ runs:
           exit 1
         fi
         mkdir -p build && cd build
-        cmake -DCMAKE_BUILD_TYPE=${{ inputs.config }} -DEPI_TEST_COVERAGE=${{ inputs.coverage }} -DEPI_SANITIZE_ADDRESS=${{ inputs.sanitize-addr }} -DEPI_SANITIZE_UNDEFINED=${{ inputs.sanitize-ub }} -DEPI_USE_BUNDLED_JSONCPP=${{ inputs.optional-dependencies }} ..
+        cmake -DCMAKE_BUILD_TYPE=${{ inputs.config }} -DMEMILIO_TEST_COVERAGE=${{ inputs.coverage }} -DMEMILIO_SANITIZE_ADDRESS=${{ inputs.sanitize-addr }} -DMEMILIO_SANITIZE_UNDEFINED=${{ inputs.sanitize-ub }} -DMEMILIO_USE_BUNDLED_JSONCPP=${{ inputs.optional-dependencies }} ..
         make -j4
     - name: create build dir archive
       shell: bash

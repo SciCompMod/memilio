@@ -19,7 +19,7 @@
 */
 #include "memilio/utils/time_series.h"
 
-namespace epi
+namespace mio
 {
 
-} // namespace epi
+} // namespace mio

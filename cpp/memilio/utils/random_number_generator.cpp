@@ -19,7 +19,7 @@
 */
 #include "memilio/utils/random_number_generator.h"
 
-namespace epi
+namespace mio
 {
 
-} // namespace epi
+} // namespace mio

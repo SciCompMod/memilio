@@ -1,4 +1,4 @@
-# MEmilio C++ epidemiology framework #
+# MEmilio C++ modelling framework #
 
 This directory contains the framework used to build all our epidemiological models. 
 

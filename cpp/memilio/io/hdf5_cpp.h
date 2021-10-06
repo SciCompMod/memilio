@@ -32,7 +32,7 @@ MSVC_WARNING_DISABLE_PUSH(4268 4251)
 
 MSVC_WARNING_POP
 
-namespace epi
+namespace mio
 {
 
 /**
@@ -81,21 +81,21 @@ struct H5DataSet {
 
 /**
  * Verifies a return value from the HDF5 C API.
- * Uses epi::failure to report an error if the value (the first macro argument) is negative,
+ * Uses mio::failure to report an error if the value (the first macro argument) is negative,
  * so it must be used only in functions that return IOResult.
- * All additional macro arguments after the first are passed to an overload of epi::failure.
+ * All additional macro arguments after the first are passed to an overload of mio::failure.
  * Examples:
- * EPI_H5_CHECK(id, StatusCode::FileNotFound); // returns epi::failure(StatusCode::FileNotFound) if error
- * EPI_H5_CHECK(id, StatusCode::FileNotFound, filename) // returns epi::failure(StatusCode::FileNotFound, filename) if error
+ * MEMILIO_H5_CHECK(id, StatusCode::FileNotFound); // returns mio::failure(StatusCode::FileNotFound) if error
+ * MEMILIO_H5_CHECK(id, StatusCode::FileNotFound, filename) // returns mio::failure(StatusCode::FileNotFound, filename) if error
  */
-#define EPI_H5_CHECK(id, ...) \
+#define MEMILIO_H5_CHECK(id, ...) \
     do { \
         if (id < 0) { \
-            return ::epi::failure(__VA_ARGS__); \
+            return ::mio::failure(__VA_ARGS__); \
         } \
     } while (0)
 
-} // namespace epi
+} // namespace mio
 
 #endif //MEMILIO_HAS_HDF5
 

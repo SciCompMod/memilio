@@ -22,7 +22,7 @@
 
 #include "memilio/utils/type_safe.h"
 
-namespace epi
+namespace mio
 {
 
 template  <typename... CategoryTags> class Index;
@@ -76,22 +76,22 @@ public:
 
     /**
      * serialize this. 
-     * @see epi::serialize
+     * @see mio::serialize
      */
     template <class IOContext>
     void serialize(IOContext& io) const
     {
-        epi::serialize(io, size_t(*this));
+        mio::serialize(io, size_t(*this));
     }
 
     /**
      * deserialize an object of this class.
-     * @see epi::deserialize
+     * @see mio::deserialize
      */
     template<class IOContext>
     static IOResult<Index> deserialize(IOContext& io)
     {
-        BOOST_OUTCOME_TRY(i, epi::deserialize(io, Tag<size_t>{}));
+        BOOST_OUTCOME_TRY(i, mio::deserialize(io, Tag<size_t>{}));
         return success(Index(i));
     }
 };
@@ -128,7 +128,7 @@ public:
 
     /**
      * serialize this. 
-     * @see epi::serialize
+     * @see mio::serialize
      */
     template<class IOContext>
     void serialize(IOContext& io) const
@@ -139,14 +139,14 @@ public:
 
     /**
      * deserialize an object of this class.
-     * @see epi::deserialize
+     * @see mio::deserialize
      */
     template<class IOContext>
     static IOResult<Index> deserialize(IOContext& io)
     {
         auto obj = io.expect_object("MultiIndex");
         auto tup = obj.expect_element("Indices", Tag<decltype(indices)>{});
-        return epi::apply(io, [](auto&& tup_) { return Index(tup_); }, tup);
+        return mio::apply(io, [](auto&& tup_) { return Index(tup_); }, tup);
     }
 
     std::tuple<Index<CategoryTag>...> indices;
@@ -222,6 +222,6 @@ constexpr Index<Tag> const& get(Index<CategoryTags...> const& i) noexcept
     return i;
 }
 
-} // namespace epi
+} // namespace mio
 
 #endif

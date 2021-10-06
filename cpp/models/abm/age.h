@@ -20,7 +20,7 @@
 #ifndef EPI_ABM_AGE_H
 #define EPI_ABM_AGE_H
 
-namespace epi
+namespace mio
 {
 
 /**
@@ -39,6 +39,6 @@ enum class AbmAgeGroup
     Count
 };
 
-} // namespace epi
+} // namespace mio
 
 #endif //EPI_ABM_AGE_H
