@@ -99,6 +99,8 @@ public:
     {
     }
 
+    virtual ~CompartmentalModel() = default;
+
     /**
      * @brief add_flow defines a flow from compartment A to another compartment B
      * @param from is the index of the departure compartment A

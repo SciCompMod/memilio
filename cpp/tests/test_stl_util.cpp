@@ -18,6 +18,7 @@
 * limitations under the License.
 */
 #include "memilio/utils/stl_util.h"
+#include "memilio/utils/compiler_diagnostics.h"
 #include <gtest/gtest.h>
 #include <gmock/gmock.h>
 
@@ -79,10 +80,13 @@ namespace
 struct Foo {
 };
 
+GCC_CLANG_DIAGNOSTIC(push)
+GCC_CLANG_DIAGNOSTIC(ignored "-Wunneeded-internal-declaration")
 std::ostream& operator<<(std::ostream& os, const Foo&)
 {
     return os;
 }
+GCC_CLANG_DIAGNOSTIC(pop)
 
 struct Bar {
 };

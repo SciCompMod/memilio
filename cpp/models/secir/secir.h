@@ -406,7 +406,7 @@ public:
                         auto t_end    = mio::SimulationTime(t + double(dyn_npis.get_duration()));
                         m_dynamic_npi = std::make_pair(exceeded_threshold->first, t_end);
                         mio::implement_dynamic_npis(contact_patterns.get_cont_freq_mat(), exceeded_threshold->second,
-                                                    SimulationTime(t), t_end, [this](auto& g) {
+                                                    SimulationTime(t), t_end, [](auto& g) {
                                                         return mio::make_contact_damping_matrix(g);
                                                     });
                     }

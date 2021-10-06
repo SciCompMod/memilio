@@ -36,6 +36,7 @@ if(CMAKE_BUILD_TYPE STREQUAL "Debug")
     endif()
 endif()
 
+# set sanitizer compiler flags
 if ((CMAKE_CXX_COMPILER_ID STREQUAL "GNU") AND (CMAKE_CXX_COMPILER_VERSION VERSION_GREATER_EQUAL 7))
     if(MEMILIO_SANITIZE_ADDRESS)
         string(APPEND CMAKE_CXX_FLAGS_DEBUG " -fsanitize=address")
@@ -53,13 +54,21 @@ if ((CMAKE_CXX_COMPILER_ID STREQUAL "GNU") AND (CMAKE_CXX_COMPILER_VERSION VERSI
     endif(MEMILIO_SANITIZE_ADDRESS OR MEMILIO_SANITIZE_UNDEFINED)
 endif((CMAKE_CXX_COMPILER_ID STREQUAL "GNU") AND (CMAKE_CXX_COMPILER_VERSION VERSION_GREATER_EQUAL 7))
 
+# define flags to enable most warnings and treat them as errors for different compilers
+# add flags to each target separately instead of globally so users have the choice to use their own flags
+if (CMAKE_CXX_COMPILER_ID MATCHES "GNU")    
+    set(MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS
+        "-Wno-unknown-warning;-Wno-pragmas;-Wall;-Wextra;-Werror;-Wshadow;--pedantic-errors;-Wno-deprecated-copy")
+elseif(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+    set(MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS
+        "-Wno-unknown-warning-option;-Wall;-Wextra;-Werror;-Wshadow;--pedantic-errors;-Wno-deprecated;-Wno-gnu-zero-variadic-macro-arguments")
+elseif(CMAKE_CXX_COMPILER_ID MATCHES "MSVC")
+    set(MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS
+        "/W4;/WX")
+endif()
+
+# add parts of the project
 include(thirdparty/CMakeLists.txt)
-
-set(_MEMILIO_CXX_FLAG_ENABLE_WARNING_ERRORS
-    "$<$<CXX_COMPILER_ID:GNU>: -Wno-unknown-warning -Wall -Wextra -Werror -Wshadow --pedantic-errors -Wno-deprecated-copy>
-    $<$<CXX_COMPILER_ID:CLANG>: -Wno-unknown-warning-option -Wall -Wextra -Werror -Wshadow --pedantic-errors -Wno-deprecated>
-    $<$<CXX_COMPILER_ID:MSVC>: /W4 /WX>")
-
 add_subdirectory(memilio)
 if (MEMILIO_BUILD_MODELS)
     add_subdirectory(models/abm)
@@ -76,6 +85,7 @@ if (MEMILIO_BUILD_SIMULATIONS)
     add_subdirectory(simulations)
 endif()
 
+# install
 include(GNUInstallDirs)
 
 install(TARGETS memilio

@@ -58,7 +58,6 @@ public:
     std::string get_unique_path(const std::string& model = "%%%%-%%%%-%%%%-%%%%")
     {
         auto tmp_path = get_tmp_path();
-        boost::system::error_code ec;
         auto file_name = boost::filesystem::unique_path(model);
         auto file_path = tmp_path / file_name;
         m_files.push_back(file_path);
