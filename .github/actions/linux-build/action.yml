@@ -13,6 +13,10 @@ inputs:
     description: "Version of the compiler to use (min or latest)."
     required: true
     default: "latest"
+  optional-dependencies:
+    description: "Build the library with optional dependencies (ON or OFF)"
+    required: false
+    default: "ON"
   coverage:
     description: "Turn coverage on (ON or OFF)"
     required: false
@@ -32,7 +36,10 @@ runs:
       shell: bash
       run: |
         sudo apt-get -qq update
-        sudo apt-get -qq -y install libhdf5-dev lcov
+        sudo apt-get -qq -y install lcov
+        if [[ "${{ inputs.optional-dependencies }}" == "ON" ]]; then
+          sudo apt-get -qq -y install libhdf5-dev 
+        fi
     - name: Build
       shell: bash
       run: |
@@ -58,7 +65,7 @@ runs:
           exit 1
         fi
         mkdir -p build && cd build
-        cmake -DCMAKE_BUILD_TYPE=${{ inputs.config }} -DEPI_TEST_COVERAGE=${{ inputs.coverage }} -DEPI_SANITIZE_ADDRESS=${{ inputs.sanitize-addr }} -DEPI_SANITIZE_UNDEFINED=${{ inputs.sanitize-ub }} ..
+        cmake -DCMAKE_BUILD_TYPE=${{ inputs.config }} -DEPI_TEST_COVERAGE=${{ inputs.coverage }} -DEPI_SANITIZE_ADDRESS=${{ inputs.sanitize-addr }} -DEPI_SANITIZE_UNDEFINED=${{ inputs.sanitize-ub }} -DEPI_USE_BUNDLED_JSONCPP=${{ inputs.optional-dependencies }} ..
         make -j4
     - name: create build dir archive
       shell: bash
@@ -68,6 +75,6 @@ runs:
     - name: Upload built test directory
       uses: actions/upload-artifact@v2
       with:
-        name: build-cpp-linux-${{ inputs.compiler }}-${{ inputs.version }}-${{ inputs.config }}
+        name: build-cpp-linux-${{ inputs.compiler }}-${{ inputs.version }}-${{ inputs.config }}-${{ inputs.optional-dependencies == 'ON' && 'full' || 'part'}}
         path: cpp/build.tar.gz
         retention-days: 1

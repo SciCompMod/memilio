@@ -43,7 +43,7 @@ jobs:
       - uses: actions/checkout@v2
       - uses: ./.github/actions/linux-test
         with: 
-          build-artifact: build-cpp-linux-gcc-latest-Debug
+          build-artifact: build-cpp-linux-gcc-latest-Debug-full
 
   test-cpp-clang:
     needs: build-cpp-clang
@@ -52,7 +52,7 @@ jobs:
       - uses: actions/checkout@v2
       - uses: ./.github/actions/linux-test
         with: 
-          build-artifact: build-cpp-linux-clang-min-Debug
+          build-artifact: build-cpp-linux-clang-min-Debug-full
 
   test-cpp-msvc:
     needs: build-cpp-msvc
@@ -61,7 +61,7 @@ jobs:
       - uses: actions/checkout@v2
       - uses: ./.github/actions/windows-test
         with: 
-          build-artifact: build-cpp-windows-msvc-latest-Debug
+          build-artifact: build-cpp-windows-msvc-latest-Debug-full
 
   build-py:
     runs-on: ubuntu-latest
