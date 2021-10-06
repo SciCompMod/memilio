@@ -21,6 +21,7 @@
 #define EPI_ABM_PARAMETERS_H
 
 #include "epidemiology/abm/age.h"
+#include "state.h"
 #include "epidemiology/abm/time.h"
 #include "epidemiology/utils/custom_index_array.h"
 #include "epidemiology/utils/eigen.h"
@@ -34,106 +35,107 @@ namespace epi
 {
 
 struct IncubationPeriod {
-    using Type = CustomIndexArray<double, AbmAgeGroup>;
+    using Type = CustomIndexArray<double, AbmAgeGroup, VaccinationState>;
     static Type get_default()
     {
-        return Type({AbmAgeGroup::Count}, 1.);
+        return Type({AbmAgeGroup::Count, VaccinationState::Count}, 1.);
     }
 };
 
 struct SusceptibleToExposedByCarrier {
-    using Type = CustomIndexArray<double, AbmAgeGroup>;
+    using Type = CustomIndexArray<double, AbmAgeGroup, VaccinationState>;
     static Type get_default()
     {
-        return Type({AbmAgeGroup::Count}, 1.);
+        return Type({AbmAgeGroup::Count, VaccinationState::Count}, 1.);
     }
 };
 
 struct SusceptibleToExposedByInfected {
-    using Type = CustomIndexArray<double, AbmAgeGroup>;
+    using Type = CustomIndexArray<double, AbmAgeGroup, VaccinationState>;
     static Type get_default()
     {
-        return Type({AbmAgeGroup::Count}, 1.);
+        return Type({AbmAgeGroup::Count, VaccinationState::Count}, 1.);
     }
 };
 
 struct CarrierToInfected {
-    using Type = CustomIndexArray<double, AbmAgeGroup>;
+    using Type = CustomIndexArray<double, AbmAgeGroup, VaccinationState>;
     static Type get_default()
     {
-        return Type({AbmAgeGroup::Count}, 1.);
+        return Type({AbmAgeGroup::Count, VaccinationState::Count}, 1.);
     }
 };
 
 struct CarrierToRecovered {
-    using Type = CustomIndexArray<double, AbmAgeGroup>;
+    using Type = CustomIndexArray<double, AbmAgeGroup, VaccinationState>;
     static Type get_default()
     {
-        return Type({AbmAgeGroup::Count}, 1.);
+        return Type({AbmAgeGroup::Count, VaccinationState::Count}, 1.);
     }
 };
 
 struct InfectedToRecovered {
-    using Type = CustomIndexArray<double, AbmAgeGroup>;
+    using Type = CustomIndexArray<double, AbmAgeGroup, VaccinationState>;
     static Type get_default()
     {
-        return Type({AbmAgeGroup::Count}, 1.);
+        return Type({AbmAgeGroup::Count, VaccinationState::Count}, 1.);
     }
 };
 
 struct InfectedToSevere {
-    using Type = CustomIndexArray<double, AbmAgeGroup>;
+    using Type = CustomIndexArray<double, AbmAgeGroup, VaccinationState>;
     static Type get_default()
     {
-        return Type({AbmAgeGroup::Count}, 1.);
+        return Type({AbmAgeGroup::Count, VaccinationState::Count}, 1.);
     }
 };
 
 struct SevereToCritical {
-    using Type = CustomIndexArray<double, AbmAgeGroup>;
+    using Type = CustomIndexArray<double, AbmAgeGroup, VaccinationState>;
     static Type get_default()
     {
-        return Type({AbmAgeGroup::Count}, 1.);
+        return Type({AbmAgeGroup::Count, VaccinationState::Count}, 1.);
     }
 };
 
 struct SevereToRecovered {
-    using Type = CustomIndexArray<double, AbmAgeGroup>;
+    using Type = CustomIndexArray<double, AbmAgeGroup, VaccinationState>;
     static Type get_default()
     {
-        return Type({AbmAgeGroup::Count}, 1.);
+        return Type({AbmAgeGroup::Count, VaccinationState::Count}, 1.);
     }
 };
 
 struct CriticalToRecovered {
-    using Type = CustomIndexArray<double, AbmAgeGroup>;
+    using Type = CustomIndexArray<double, AbmAgeGroup, VaccinationState>;
     static Type get_default()
     {
-        return Type({AbmAgeGroup::Count}, 1.);
+        return Type({AbmAgeGroup::Count, VaccinationState::Count}, 1.);
     }
 };
 
+
 struct CriticalToDead {
-    using Type = CustomIndexArray<double, AbmAgeGroup>;
+    using Type = CustomIndexArray<double, AbmAgeGroup, VaccinationState>;
     static Type get_default()
     {
-        return Type({AbmAgeGroup::Count}, 1.);
+        return Type({AbmAgeGroup::Count, VaccinationState::Count}, 1.);
     }
 };
 
 struct RecoveredToSusceptible {
-    using Type = CustomIndexArray<double, AbmAgeGroup>;
+    using Type = CustomIndexArray<double, AbmAgeGroup, VaccinationState>;
     static Type get_default()
     {
-        return Type({AbmAgeGroup::Count}, 1.);
+        return Type({AbmAgeGroup::Count, VaccinationState::Count}, 1.);
     }
 };
 
 struct DetectInfection {
-    using Type = CustomIndexArray<double, AbmAgeGroup>;
+    using Type = CustomIndexArray<double, AbmAgeGroup, VaccinationState>;
     static Type get_default()
     {
-        return Type({AbmAgeGroup::Count}, 0.5);
+        return Type({AbmAgeGroup::Count, VaccinationState::Count}, 0.5);
     }
 };
 

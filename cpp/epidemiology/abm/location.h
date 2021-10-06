@@ -98,7 +98,7 @@ public:
      * @param person the person that changed infection state
      * @param old_state the previous infection state of the person
      */
-    void changed_state(const Person& person, InfectionState old_state);
+    void changed_state(const Person& person, InfectionState old_infection_state);
 
     /** 
      * prepare the location for the next simulation step.
@@ -152,7 +152,7 @@ private:
     int m_num_persons = 0;
     std::array<int, size_t(InfectionState::Count)> m_subpopulations;
     LocalInfectionParameters m_parameters;
-    CustomIndexArray<double, AbmAgeGroup> m_cached_exposure_rate;
+    CustomIndexArray<double, AbmAgeGroup, epi::VaccinationState> m_cached_exposure_rate;
     TestingScheme m_testing_scheme;
 };
 } // namespace epi
