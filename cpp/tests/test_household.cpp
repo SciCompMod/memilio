@@ -17,7 +17,6 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
-#include <stdio.h>
 #include "epidemiology/abm/household.h"
 #include "epidemiology/abm/abm.h"
 #include <gtest/gtest.h>
@@ -69,12 +68,12 @@ TEST(TestHouseholds, test_add_household_group_to_world)
     auto household1 = epi::Household();
     household1.add_members(member1, 10);
     household1.add_members(member2, 2);
-    household_group.add_households_to_group(household1, 5);
+    household_group.add_households(household1, 5);
 
     auto household2 = epi::Household();
     household2.add_members(member1, 2);
     household2.add_members(member2, 2);
-    household_group.add_households_to_group(household2, 10);
+    household_group.add_households(household2, 10);
     
     auto world = epi::World();
     

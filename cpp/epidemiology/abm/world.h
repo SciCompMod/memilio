@@ -91,7 +91,8 @@ public:
     Person& add_person(LocationId id, InfectionState state, AbmAgeGroup age = AbmAgeGroup::Age15to34);
     
     /**
-     * Sets the current infection state of the person. Only for setup purposes.
+     * Sets the current infection state of the person.
+     * Use only during setup, may distort the simulation results
      * @param person
      * @param inf_state
      */

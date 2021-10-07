@@ -19,58 +19,14 @@
 */
 
 
-#include "household.h"
+#include "epidemiology/abm/household.h"
 #include "epidemiology/utils/eigen.h"
 #include <string>
 
 
 namespace epi {
 
-/**
- * Function that adds a number of the same members to a household.
- * @param household_member A household member from the HouseholdMember class.
- * @param number_of_members The amount of members to be added.
- */
-void Household::add_members(HouseholdMember household_member, int number_of_members)
-{
-    for (auto i = 0; i < number_of_members; i++) {
-        m_household_members.push_back(household_member);
-    }
-    m_number_of_members += number_of_members;
-}
-
-/**
- * Function that adds a number of households of the same kind, e.g. same members, to a household group.
- * @param household A household.
- * @param count The amount of same kind households.
- */
-void HouseholdGroup::add_households_to_group(Household household, int count){
-    m_household_list.push_back(std::make_tuple(household, count));
-    m_number_of_households += count;
-}
-
-/**
- * Function that takes a array of integers and returns a vector which has the same length with decimals. This vector has the percentage of the row with respect to the whole vector sum in each row.
- * E.g. {1,1,2} would give back {0.25,0.25,0.5}.
- * @param absoluteValueVec Array with the absolute Values.
- * @return A vector with decimals describing the percentage.
- */
-std::vector<double> get_percentage_of_sum(const Eigen::Array<int, Eigen::Dynamic, 1>& absoluteValueVec){
-    int sumOfValues = 0;
-    std::vector<double> getPercentageOfSum;
-    // Calculate sum.
-    for (int i = 0; i < absoluteValueVec.size(); i++) {
-        sumOfValues += absoluteValueVec(i);
-    }
-    // Get the percentage of each entry of the total sum.
-    getPercentageOfSum.reserve(absoluteValueVec.size());
-    for (int i = 0; i<absoluteValueVec.size(); i++) {
-        getPercentageOfSum.push_back(((double)absoluteValueVec(i))/((double)sumOfValues));
-    }
-    return getPercentageOfSum;
-}
-
-
+namespace{
 /**
  * Picks an age from a custom index array with a weight for each age group according to a discrete distribution.
  * @param age_groups A custom index array with the weights.
@@ -78,40 +34,47 @@ std::vector<double> get_percentage_of_sum(const Eigen::Array<int, Eigen::Dynamic
  */
 epi::AbmAgeGroup pick_age_group_from_age_distribution(const epi::CustomIndexArray<int, epi::AbmAgeGroup>& age_groups){
     auto age_group_weights = age_groups.array();
-    auto weights = get_percentage_of_sum(age_group_weights);
-    size_t age_group = epi::DiscreteDistribution<size_t>::get_instance()(weights);
+    size_t age_group = epi::DiscreteDistribution<size_t>::get_instance()(age_group_weights);
     return (epi::AbmAgeGroup) age_group;
 }
+};
 
-/**
- * This function adds a specific household to the world class.
- * @param world The world class to which the household has to be added.
- * @param household The household to add to world.
- */
-void add_household_to_world(epi::World& world, epi::Household& household){
+void Household::add_members(HouseholdMember household_member, int number_of_members)
+{
+    m_household_member_list.push_back(std::make_tuple(household_member, number_of_members));
+    m_number_of_members += number_of_members;
+}
+
+void HouseholdGroup::add_households(Household household, int number_of_households){
+    m_household_list.push_back(std::make_tuple(household, number_of_households));
+    m_number_of_households += number_of_households;
+}
+
+void add_household_to_world(epi::World& world, const epi::Household& household){
     auto home = world.add_location(epi::LocationType::Home);
     auto members = household.get_members();
-    for (int i = 0; i < household.get_number_of_members() ; i++) {
-        auto age_group = pick_age_group_from_age_distribution(members.at(i).get_age_dist()); // Gets the age of a member from its age distribution.
-        auto& person = world.add_person(home, epi::InfectionState::Susceptible, age_group); // Add person, always susceptible.
-        person.set_assigned_location(home);
+    
+    for (auto &memberTouple : members){
+        int count;
+        epi::HouseholdMember member;
+        std::tie(member, count) = memberTouple;
+        for (int j = 0; j < count; j++) {
+            auto age_group = pick_age_group_from_age_distribution(member.get_age_weights());
+            auto& person = world.add_person(home, epi::InfectionState::Susceptible, age_group);
+            person.set_assigned_location(home);
+        }
     }
 }
 
-/**
- * This function adds households from a household group to the world modell.
- * @param world The world class to which the group has to be added.
- * @param household_group The household group to add.
- */
-void add_household_group_to_world(epi::World& world, epi::HouseholdGroup& household_group){
+void add_household_group_to_world(epi::World& world, const epi::HouseholdGroup& household_group){
     auto households = household_group.get_households();
    
     for (auto &householdTuple : households){
         int count;
         epi::Household household;
-        std::tie(household, count) = householdTuple; // Get the household (and the amount of times this household is in there) from the tuple.
+        std::tie(household, count) = householdTuple;
         for (int j = 0; j < count; j++) {
-            add_household_to_world(world, household); // Add the household count amount of times.
+            add_household_to_world(world, household);
         }
     }
 }

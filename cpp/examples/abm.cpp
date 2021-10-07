@@ -17,10 +17,10 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
-#include <stdio.h>
+
 #include "epidemiology/abm/household.h"
 #include "epidemiology/abm/abm.h"
-
+#include <stdio.h>
 
 /**
  * Determine the infection state of a person at the beginning of the simulation.
@@ -37,7 +37,8 @@ epi::InfectionState determine_infection_state(double exposed, double infected, d
 }
 
 /**
- * This function calculates a vector in which each entry describes the amount of people living in the corresponding household. This is done with equal distribution and if the number of people is not divisible by number of households the last one gets the rest. E.g. number_of_people = 10, number_of_households = 3. Then the vector household_sizes = {3,3,4}.
+ * Calculates a vector in which each entry describes the amount of people living in the corresponding household.
+ * This is done with equal distribution and if the number of people is not divisible by number of households the last one gets the rest. E.g. number_of_people = 10, number_of_households = 3. Then the vector household_sizes = {3,3,4}.
  * @param number_of_people The total amount of people to be distributed.
  * @param number_of_households The total amount of households.
  * @return A vector with the size of each household.
@@ -55,13 +56,13 @@ std::vector<int> last_household_gets_the_rest(int number_of_people, int number_o
 
 
 /**
- * Function which constructs a household group which has a single member to represent them all, e.g. all people have the same age distribution. 
+ * Constructs a household group which has a single member to represent them all, e.g. all people have the same age distribution.
  * @param age_dist A vector with the amount of people in each age group
  * @param number_of_people The total amount of people living in this household group.
  * @param number_of_hh The number of households in this household group.
  * @return householdGroup A Class Household Group.
  */
-epi::HouseholdGroup make_household_group_from_one_member(const epi::HouseholdMember& member, int number_of_people, int number_of_hh){
+epi::HouseholdGroup make_uniform_households(const epi::HouseholdMember& member, int number_of_people, int number_of_hh){
     
     // The size of each household is calculated in a vector household_size_list. 
     auto households_size_list = last_household_gets_the_rest(number_of_people, number_of_hh);
@@ -70,13 +71,13 @@ epi::HouseholdGroup make_household_group_from_one_member(const epi::HouseholdMem
     for(auto &household_size : households_size_list) {
         auto household = epi::Household();
         household.add_members(member, household_size); // Add members according to the amount of people in the list.
-        householdGroup.add_households_to_group(household, 1); // Add the household to the household group.
+        householdGroup.add_households(household, 1); // Add the household to the household group.
     }
     return householdGroup;
 }
 
 /**
- * This function constructs a household group with families.
+ * Constructs a household group with families.
  * @param child Child Household Member.
  * @param parent Parent Household Member.
  * @param random Random Household Member. This is for the rest Group where no exact age distribution can be found.
@@ -86,7 +87,7 @@ epi::HouseholdGroup make_household_group_from_one_member(const epi::HouseholdMem
  * @param number_of_other_familes number_of_persons_in_household random persons.
  * @return A Household group.
  */
-epi::HouseholdGroup make_homes_with_families(epi::HouseholdMember& child, epi::HouseholdMember& parent, epi::HouseholdMember& random, int number_of_persons_in_household, int number_of_full_familes, int number_of_half_familes, int number_of_other_familes){
+epi::HouseholdGroup make_homes_with_families(const epi::HouseholdMember& child, const epi::HouseholdMember& parent, const epi::HouseholdMember& random, int number_of_persons_in_household, int number_of_full_familes, int number_of_half_familes, int number_of_other_familes){
     
     auto private_household_group = epi::HouseholdGroup();
     
@@ -94,19 +95,19 @@ epi::HouseholdGroup make_homes_with_families(epi::HouseholdMember& child, epi::H
     auto household_full = epi::Household();
     household_full.add_members(child, number_of_persons_in_household - 2);
     household_full.add_members(parent, 2);
-    private_household_group.add_households_to_group(household_full, number_of_full_familes);
+    private_household_group.add_households(household_full, number_of_full_familes);
     
     // Add half families.
     auto household_half = epi::Household();
     household_half.add_members(child, number_of_persons_in_household - 1);
     household_half.add_members(parent, 1);
-    private_household_group.add_households_to_group(household_half, number_of_half_familes);
+    private_household_group.add_households(household_half, number_of_half_familes);
     
     // Add other families.
     if(number_of_persons_in_household < 5){
         auto household_others = epi::Household();
         household_others.add_members(random, number_of_persons_in_household);
-        private_household_group.add_households_to_group(household_others, number_of_other_familes);
+        private_household_group.add_households(household_others, number_of_other_familes);
     } else if (number_of_persons_in_household == 5) {
         // For 5 and more people in one household we have to distribute the rest onto the left over households.
         int people_left_size5 = 545;
@@ -117,7 +118,7 @@ epi::HouseholdGroup make_homes_with_families(epi::HouseholdMember& child, epi::H
         for(auto &household_size : households_size_list) {
             auto household = epi::Household();
             household.add_members(random, household_size); // Add members according to the amount of people in the list.
-            household_rest.add_households_to_group(household, 1); // Add the household to the household group.
+            household_rest.add_households(household, 1); // Add the household to the household group.
         }
     }
     return private_household_group;
@@ -143,7 +144,7 @@ void create_world_from_statistical_data(epi::World& world){
     refugee.set_age_weight(epi::AbmAgeGroup::Age80plus, 1);
     int refugee_number_of_people = 74;
     int refugee_number_of_households = 12;
-    auto refugeeGroup = make_household_group_from_one_member(refugee, refugee_number_of_people, refugee_number_of_households);
+    auto refugeeGroup = make_uniform_households(refugee, refugee_number_of_people, refugee_number_of_households);
     
     add_household_group_to_world(world, refugeeGroup);
     
@@ -158,7 +159,7 @@ void create_world_from_statistical_data(epi::World& world){
     int disabled_number_of_people = 194;
     int disabled_number_of_households = 8;
     
-    auto disabledGroup = make_household_group_from_one_member(disabled, disabled_number_of_people, disabled_number_of_households);
+    auto disabledGroup = make_uniform_households(disabled, disabled_number_of_people, disabled_number_of_households);
     
     add_household_group_to_world(world, disabledGroup);
     
@@ -171,7 +172,7 @@ void create_world_from_statistical_data(epi::World& world){
     int retirement_number_of_people = 744;
     int retirement_number_of_households = 16;
     
-    auto retirementGroup = make_household_group_from_one_member(retired, retirement_number_of_people, retirement_number_of_households);
+    auto retirementGroup = make_uniform_households(retired, retirement_number_of_people, retirement_number_of_households);
     
     add_household_group_to_world(world, retirementGroup);
     
@@ -186,7 +187,7 @@ void create_world_from_statistical_data(epi::World& world){
     int others_number_of_people = 222;
     int others_number_of_households = 20;
     
-    auto otherGroup = make_household_group_from_one_member(other, others_number_of_people, others_number_of_households);
+    auto otherGroup = make_uniform_households(other, others_number_of_people, others_number_of_households);
     
     add_household_group_to_world(world, otherGroup);
     
@@ -199,7 +200,7 @@ void create_world_from_statistical_data(epi::World& world){
     int one_person_number_of_people = 15387;
     int one_person_number_of_households = 15387;
     
-    auto onePersonGroup = make_household_group_from_one_member(one_person_household_member, one_person_number_of_people, one_person_number_of_households);
+    auto onePersonGroup = make_uniform_households(one_person_household_member, one_person_number_of_people, one_person_number_of_households);
     
     add_household_group_to_world(world, onePersonGroup);
     
@@ -397,7 +398,7 @@ int main()
     // S = Susceptible, E = Exposed, C= Carrier, I_d = Infected_Detected, I_u = Infected_Undetected, I_s = Infected_Severe,
     // I_c = Infected_Critical, R_C = Recovered_Carrier, R_I = Recovered_Infected, D = Dead
     // E.g. the following gnuplot skrips plots detected infections and deaths.
-    // plot "abm1.txt" using 1:5 with lines title "infected (detected)", "abm1.txt" using 1:11 with lines title "dead"
+    // plot "abm.txt" using 1:5 with lines title "infected (detected)", "abm.txt" using 1:11 with lines title "dead"
     // set xlabel "days"
     // set ylabel "number of people"
     // set title "ABM Example"
