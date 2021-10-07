@@ -1,6 +1,6 @@
 # MEmilio C++ mobility
 
-This directory contains a module to loosly couple multiple simulation instances and model the mobility between them. Each instance can e.g. represent a different geographical region. The regions are stored as nodes in a graph, with edges between them representing the mobility between the regions. Currently, only compartment models are supported as nodes, but it will be extended for any model.
+This directory contains a module to loosely couple multiple simulation instances and model the mobility between them. Each instance can e.g. represent a different geographical region. The regions are stored as nodes in a graph, with edges between them representing the mobility between the regions. Currently, only compartment models are supported as nodes, but it will be extended for any model.
 
 At each time step, the simulation executes two following phases:
 1. Evolve the simulation for each node independently

@@ -3,9 +3,9 @@
 The MEmilio C++ library contains the implementation of the epidemiological models. 
 
 Directory structure:
-- memilio: framework for developing epidemiological models, with mathematical, programming, and IO utilities.
+- memilio: framework for developing epidemiological models with, e.g., interregional mobility implementations, nonpharmaceutical interventions (NPIs), and  mathematical, programming, and IO utilities.
 - models: implementation of concrete models (ODE and ABM)
-- simulations: simulation applications that were used to generate the data for publications
+- simulations: simulation applications that were used to generate the scenarios and data for publications
 - examples: small applications that help with using the framework and models
 - tests: unit tests for framework and models.
 - cmake: build utility code
@@ -31,7 +31,7 @@ The following table lists the dependencies that are used. Most of them are requi
 | Boost   | 1.75.0   | Yes      | Yes (.tar.gz archive) | https://www.boost.org/ |
 | JsonCpp | 1.7.4    | No       | Yes (git repo)        | https://github.com/open-source-parsers/jsoncpp |
 | HDF5    | 1.12.0   | No       | No                    | https://www.hdfgroup.org/, package libhdf5-dev on apt (Ubuntu) |
-| GoogleTest | 1.10  | For Tests only | Yes             | https://github.com/google/googletest |
+| GoogleTest | 1.10  | For Tests only | Yes (git repo)  | https://github.com/google/googletest |
 
 See the [thirdparty](thirdparty/README.md) directory for more details.
 
@@ -98,7 +98,7 @@ If you installed the project, there is a `memilio-config.cmake` file included wi
 
 Alternatively, `MEmilio` can be integrated as a subdirectory of your project with `add_subdirectory(memilio/cpp)`, then you can use the same  `target_link_libraries` command as above.
 
-**Known Issues**
+## Known Issues
 
 - Installing currently is not tested and probably does not work as expected or at all. If you want to integrate the project into yours, use the `add_subdirectory` way.
 - On Windows, automatic detection of HDF5 installations does not work reliably. If you get HDF5 related errors during the build, you may have to supply the HDF5_DIR variable during CMake configuration, see above.
