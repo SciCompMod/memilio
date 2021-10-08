@@ -18,6 +18,11 @@ target_link_libraries(adapt_rk_test PRIVATE epidemiology)
 add_executable(seir seir.cpp)
 target_link_libraries(seir PRIVATE epidemiology)
 
+add_executable(sir sir.cpp)
+target_link_libraries(sir PRIVATE epidemiology)
+add_executable(secihurd secihurd.cpp)
+target_link_libraries(secihurd PRIVATE epidemiology)
+
 add_executable(secir secir.cpp)
 target_link_libraries(secir PRIVATE epidemiology)
 
