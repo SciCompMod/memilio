@@ -22,7 +22,6 @@
 #ifndef EPI_ABM_HOUSEHOLD_H
 #define EPI_ABM_HOUSEHOLD_H
 
-#endif
 
 
 #include "epidemiology/abm/age.h"
@@ -187,5 +186,6 @@ void add_household_group_to_world(epi::World& world, const epi::HouseholdGroup& 
 
 }
 
+#endif //EPI_ABM_HOUSEHOLD_H
 
 

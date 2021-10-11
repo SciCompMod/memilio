@@ -20,7 +20,7 @@
 
 #include "epidemiology/abm/household.h"
 #include "epidemiology/abm/abm.h"
-#include <stdio.h>
+#include <cstdio>
 
 /**
  * Determine the infection state of a person at the beginning of the simulation.
