@@ -14,7 +14,7 @@ add_library(secir
     secir_result_io.h
     secir_result_io.cpp
     secir.h
-    # secir.cpp
+    secir.cpp
 )
 target_link_libraries(secir PUBLIC memilio)
 target_include_directories(secir PUBLIC
