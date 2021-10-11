@@ -44,7 +44,7 @@ public:
      */
     template <class Cont>
     Span(const Cont& c)
-        : m_ptr(c.size() == 0 ? nullptr : std::addressof(*c.begin()))
+        : m_ptr(c.size() == 0 ? nullptr : c.data())
         , m_size(c.size())
     {
     }

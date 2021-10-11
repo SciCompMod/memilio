@@ -187,7 +187,7 @@ struct AntigenTest {
 using GlobalTestingParameters = ParameterSet<AntigenTest>;
 
 /**
- * parameters that govern the migration between locations
+ * parameters that govern the migration between locations.
  */
 struct LockdownDate {
     using Type = TimePoint;

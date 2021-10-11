@@ -44,6 +44,8 @@ Person& World::add_person(LocationId id, InfectionState infection_state, AbmAgeG
     return person;
 }
 
+
+
 void World::evolve(TimePoint t, TimeSpan dt)
 {
     begin_step(t, dt);
@@ -57,6 +59,13 @@ void World::interaction(TimePoint /*t*/, TimeSpan dt)
         auto& loc = get_location(*person);
         person->interact(dt, m_infection_parameters, loc, m_testing_parameters);
     }
+}
+
+void World::set_infection_state(Person& person, InfectionState inf_state){
+    auto& loc = get_location(person);
+    auto old_state = person.get_infection_state();
+    person.set_infection_state(inf_state);
+    loc.changed_state(person, old_state);
 }
 
 void World::migration(TimePoint t, TimeSpan dt)

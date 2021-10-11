@@ -123,7 +123,12 @@ public:
     {
         return m_vaccination_state;
     }
-
+    
+    /**
+     * Sets the current infection state of the person.
+     */
+    void set_infection_state(InfectionState inf_state);
+    
     /**
      * Get the age group of this person.
      * @return age.

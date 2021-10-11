@@ -12,6 +12,7 @@ set(GOOGLE_TEST_INDIVIDUAL ON)
 include(AddGoogleTest)
 
 set(TESTSOURCES
+  test_household.cpp
   testmain.cpp
   test_populations.cpp
   test_seir_js_compare.cpp
@@ -45,6 +46,7 @@ set(TESTSOURCES
   distributions_helpers.cpp
   actions.h
   matchers.h
+
 )
 
 if (TARGET epidemiology_io)

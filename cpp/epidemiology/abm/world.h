@@ -91,6 +91,14 @@ public:
      * @return reference to the newly created person
      */
     Person& add_person(LocationId id, InfectionState infection_state, AbmAgeGroup age = AbmAgeGroup::Age15to34);
+    
+    /**
+     * Sets the current infection state of the person.
+     * Use only during setup, may distort the simulation results
+     * @param person
+     * @param inf_state
+     */
+    void set_infection_state(Person& person, InfectionState inf_state);
 
     /**
      * get a range of all locations in the world.
