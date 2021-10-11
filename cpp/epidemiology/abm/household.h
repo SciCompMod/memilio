@@ -22,6 +22,8 @@
 #ifndef EPI_ABM_HOUSEHOLD_H
 #define EPI_ABM_HOUSEHOLD_H
 
+#endif
+
 
 #include "epidemiology/abm/age.h"
 #include "epidemiology/utils/custom_index_array.h"
@@ -63,7 +65,7 @@ public:
      * @brief Returns the Array with the weight of each age group.
      * @returns An CustomIndexArray with the integer weights of the age groups.
      */
-    const epi::CustomIndexArray<int, epi::AbmAgeGroup> get_age_weights() const
+    const epi::CustomIndexArray<int, epi::AbmAgeGroup>& get_age_weights() const
     {
         return m_age_weights;
     }
@@ -101,7 +103,7 @@ public:
      * @brief Returns the number of households in the household group.
      * @return Integer of number of households.
      */
-    const std::vector<std::tuple<epi::HouseholdMember, int>> get_members() const
+    const std::vector<std::tuple<epi::HouseholdMember, int>>& get_members() const
     {
         return m_household_member_list;
     }
@@ -150,7 +152,7 @@ public:
      * @brief Returns a vector of tuples. It contains the household and the amount of times that household is in the group.
      * @return std::vector of tuples.
      */
-    const std::vector<std::tuple<Household, int>> get_households() const
+    const std::vector<std::tuple<Household, int>>& get_households() const
     {
         return m_household_list;
     }
@@ -172,17 +174,18 @@ private:
  * @param world The world class to which the household has to be added.
  * @param household The household to add to world.
  */
-void add_household_to_world(epi::World& world, epi::Household& household);
+void add_household_to_world(epi::World& world, const epi::Household& household);
 
 /**
  * Adds households from a household group to the world modell.
  * @param world The world class to which the group has to be added.
  * @param household_group The household group to add.
  */
-void add_household_group_to_world(epi::World& world, epi::HouseholdGroup& household_group);
+void add_household_group_to_world(epi::World& world, const epi::HouseholdGroup& household_group);
+
 
 
 }
 
-#endif
+
 

@@ -33,11 +33,11 @@ namespace{
  * @return The picked age group.
  */
 epi::AbmAgeGroup pick_age_group_from_age_distribution(const epi::CustomIndexArray<int, epi::AbmAgeGroup>& age_groups){
-    auto age_group_weights = age_groups.array();
+    auto age_group_weights = age_groups.array().cast<double>().eval();
     size_t age_group = epi::DiscreteDistribution<size_t>::get_instance()(age_group_weights);
     return (epi::AbmAgeGroup) age_group;
 }
-};
+}
 
 void Household::add_members(HouseholdMember household_member, int number_of_members)
 {
