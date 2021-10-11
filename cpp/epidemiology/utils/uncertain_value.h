@@ -43,6 +43,12 @@ namespace epi
 class UncertainValue
 {
 public:
+
+    UncertainValue(ScalarType v, const ParameterDistribution& dist)
+        : m_value(v), m_dist(dist.clone())
+    {
+    }
+    
     UncertainValue(ScalarType v = 0.)
         : m_value(v)
     {

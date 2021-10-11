@@ -34,14 +34,25 @@ enum class InfectionState : std::uint32_t
     Susceptible = 0,
     Exposed,
     Carrier,
-    Infected_Detected,
-    Infected_Undetected,
+    Infected,
     Infected_Severe,
     Infected_Critical,
     Recovered_Carrier,
     Recovered_Infected,
     Dead,
+    
+    Count //last!!
+};
 
+/**
+ * vaccination state in ABM.
+ * can be used as 0-based index.
+ */
+enum class VaccinationState : std::uint32_t
+{
+    Unvaccinated = 0,
+    Vaccinated,
+    
     Count //last!!
 };
 

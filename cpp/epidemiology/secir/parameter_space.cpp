@@ -28,14 +28,11 @@ void set_params_distributions_normal(
     SecirModel& model, double t0,
     double tmax, double dev_rel)
 {
-    auto set_distribution = [dev_rel](UncertainValue& v, double min_val = 0.001){
-        v.set_distribution( ParameterDistributionNormal(std::max(min_val,
-                                                       (1 - dev_rel * 2.6) * v),
-                                                       (1 + dev_rel * 2.6) * v,
-                                                       v,
+    auto set_distribution = [dev_rel](UncertainValue& v, double min_val = 0.001) {
+        v.set_distribution(ParameterDistributionNormal(std::max(min_val, (1 - dev_rel * 2.6) * v),
+                                                       std::max(min_val, (1 + dev_rel * 2.6) * v), std::max(min_val, double(v)),
                                                        dev_rel * v));
     };
-
 
     set_distribution(model.parameters.get<Seasonality>(), 0.0);
     set_distribution(model.parameters.get<ICUCapacity>());
@@ -52,7 +49,7 @@ void set_params_distributions_normal(
 
 
             // variably sized groups
-            set_distribution(model.populations[{i, j}]);
+            set_distribution(model.populations[{i, j}], 0.0);
         }
     }
 

@@ -26,6 +26,7 @@
 #include "epidemiology/abm/location.h"
 #include "epidemiology/abm/person.h"
 #include "epidemiology/abm/lockdown_rules.h"
+#include "epidemiology/abm/testing_scheme.h"
 #include "epidemiology/utils/pointer_dereferencing_iterator.h"
 #include "epidemiology/utils/stl_util.h"
 
@@ -55,6 +56,7 @@ public:
         : m_locations((uint32_t)LocationType::Count)
         , m_infection_parameters(params)
         , m_migration_parameters()
+        , m_testing_parameters()
     {
     }
 
@@ -88,7 +90,7 @@ public:
      * @param state initial infection state of the person
      * @return reference to the newly created person
      */
-    Person& add_person(LocationId id, InfectionState state, AbmAgeGroup age = AbmAgeGroup::Age15to34);
+    Person& add_person(LocationId id, InfectionState infection_state, AbmAgeGroup age = AbmAgeGroup::Age15to34);
     
     /**
      * Sets the current infection state of the person.
@@ -155,6 +157,13 @@ public:
 
     const GlobalInfectionParameters& get_global_infection_parameters() const;
 
+    /** 
+     *get global testing parameters
+     */
+    GlobalTestingParameters& get_global_testing_parameters();
+
+    const GlobalTestingParameters& get_global_testing_parameters() const;
+
 private:
     void interaction(TimePoint t, TimeSpan dt);
     void migration(TimePoint t, TimeSpan dt);
@@ -163,6 +172,7 @@ private:
     std::vector<std::vector<Location>> m_locations;
     GlobalInfectionParameters m_infection_parameters;
     AbmMigrationParameters m_migration_parameters;
+    GlobalTestingParameters m_testing_parameters;
 };
 
 } // namespace epi

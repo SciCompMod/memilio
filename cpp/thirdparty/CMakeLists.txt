@@ -1,6 +1,6 @@
 # Versions of the bundled libraries
 # If you like to upgrade, just change the number
-set(EPI_EIGEN_VERSION "3.3")
+set(EPI_EIGEN_VERSION "3.3.9")
 set(EPI_SPDLOG_VERSION "1.5.0") 
 set(EPI_JSONCPP_VERSION "1.7.4")
 
@@ -74,7 +74,7 @@ endif(EPI_USE_BUNDLED_BOOST)
 
 if (EPI_BUILD_EPI_IO)
   # TODO: support also HDF5 config mode
-  find_package(HDF5 REQUIRED COMPONENTS CXX)
+  find_package(HDF5 REQUIRED COMPONENTS C)
 
   if(NOT EPI_USE_BUNDLED_BOOST)
     find_package(Boost REQUIRED COMPONENTS filesystem)

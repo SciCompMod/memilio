@@ -32,5 +32,6 @@
 #include "epidemiology/abm/location_type.h"
 #include "epidemiology/utils/random_number_generator.h"
 #include "epidemiology/abm/migration_rules.h"
+#include "epidemiology/abm/testing_scheme.h"
 
 #endif

@@ -1,0 +1,26 @@
+name: "Windows Test"
+description: "Run the C++ unit tests on Windows"
+inputs:
+  build-artifact:
+    description: "Name of the build artifact that contains the unit test binary."
+    required: true
+runs:
+  using: "composite"
+  steps:
+    - name: Download built test directory
+      uses: actions/download-artifact@v2
+      with:
+        name: ${{ inputs.build-artifact }}
+        path: cpp/build-win/tests
+    - name: Run unit tests
+      shell: pwsh
+      run: |
+        cd cpp/build-win/tests
+        .\runUnitTests.exe --gtest_output="xml:report.xml"
+    - name: Upload report
+      uses: actions/upload-artifact@v2
+      with:
+        name: test-cpp-win-report
+        path: |
+          cpp/build-win/tests/report.xml
+        retention-days: 1

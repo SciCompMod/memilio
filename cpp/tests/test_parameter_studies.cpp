@@ -245,6 +245,10 @@ TEST(ParameterStudies, test_normal_distribution)
         EXPECT_GE(parameter_dist_normal_2.get_upper_bound() + 1e-10, val);
         EXPECT_LE(parameter_dist_normal_2.get_lower_bound() - 1e-10, val);
     }
+
+    //degenerate case: ub == lb
+    epi::ParameterDistributionNormal dist3(3.0, 3.0, 3.0, 3.0);
+    EXPECT_EQ(dist3.get_sample(), 3.0);
 }
 
 TEST(ParameterStudies, test_uniform_distribution)
