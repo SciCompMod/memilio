@@ -124,7 +124,7 @@ void Person::set_assigned_location(LocationId id)
 
 void Person::set_infection_state(InfectionState inf_state)
 {
-    m_state = inf_state;
+    m_infection_state = inf_state;
 }
 
 uint32_t Person::get_assigned_location_index(LocationType type) const
