@@ -14,7 +14,7 @@ set(TESTSOURCES
   test_damping.cpp
   test_secir.cpp
   test_implicit_euler.cpp
-  test_migration.cpp
+  test_mobility.cpp
   test_date.cpp
   test_eigen_util.cpp
   test_secir_ageres.cpp

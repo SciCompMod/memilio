@@ -30,7 +30,7 @@
 
 #include <cmath>
 
-TEST(TestMigration, compareNoMigrationWithSingleIntegration)
+TEST(TestMobility, compareNoMigrationWithSingleIntegration)
 {
     auto t0   = 0;
     auto tmax = 5;
@@ -81,7 +81,7 @@ TEST(TestMigration, compareNoMigrationWithSingleIntegration)
                 0.0, 1e-6);
 }
 
-TEST(TestMigration, nodeEvolve)
+TEST(TestMobility, nodeEvolve)
 {
     using Model = mio::SecirModel;
     Model model(1);
@@ -105,7 +105,7 @@ TEST(TestMigration, nodeEvolve)
     ASSERT_EQ(print_wrap(node.get_result().get_last_value()), print_wrap(node.get_last_state()));
 }
 
-TEST(TestMigration, edgeApplyMigration)
+TEST(TestMobility, edgeApplyMigration)
 {
     using Model = mio::SecirModel;
 
