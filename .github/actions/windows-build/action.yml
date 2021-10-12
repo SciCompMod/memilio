@@ -9,7 +9,10 @@ inputs:
     description: "Version of the compiler that is used (latest or min)."
     required: true
     default: "latest"
-
+  optional-dependencies:
+    description: "Build the library with optional dependencies (ON or OFF)"
+    required: false
+    default: "ON"
 runs:
   using: "composite"
   steps:
@@ -19,22 +22,24 @@ runs:
     - name: Install hdf5
       shell: pwsh
       run: |
-        md -Force ${{github.workspace}}\tmp\
-        Write-Output "Downloading HDF5 1.12.1";
-        Invoke-WebRequest -Uri "https://support.hdfgroup.org/ftp/HDF5/releases/hdf5-1.12/hdf5-1.12.1/bin/windows/hdf5-1.12.1-Std-win10_64-vs16.zip" -OutFile "${{github.workspace}}\tmp\hdf5-1.12.1-Std-win10_64-vs16.zip";
-        Write-Output "Extract HDF5";
-        7z x -y "${{github.workspace}}\tmp\hdf5-1.12.1-Std-win10_64-vs16.zip" -o${{github.workspace}}\tmp\hdf5
-        Write-Output "Install HDF5";
-        $MSIArguments = @(
-          "/i"
-          "${{github.workspace}}\tmp\hdf5\hdf\HDF5-1.12.1-win64.msi"
-          "/qn"
-          "/norestart"
-          "/L*v"
-          "hdf5_install_log.txt"
-        )
-        Start-Process "msiexec.exe" -ArgumentList $MSIArguments -Wait -NoNewWindow
-        type hdf5_install_log.txt
+        if ("${{ inputs.optional-dependencies }}" -eq "ON") {
+          md -Force ${{github.workspace}}\tmp\
+          Write-Output "Downloading HDF5 1.12.1";
+          Invoke-WebRequest -Uri "https://support.hdfgroup.org/ftp/HDF5/releases/hdf5-1.12/hdf5-1.12.1/bin/windows/hdf5-1.12.1-Std-win10_64-vs16.zip" -OutFile "${{github.workspace}}\tmp\hdf5-1.12.1-Std-win10_64-vs16.zip";
+          Write-Output "Extract HDF5";
+          7z x -y "${{github.workspace}}\tmp\hdf5-1.12.1-Std-win10_64-vs16.zip" -o${{github.workspace}}\tmp\hdf5
+          Write-Output "Install HDF5";
+          $MSIArguments = @(
+            "/i"
+            "${{github.workspace}}\tmp\hdf5\hdf\HDF5-1.12.1-win64.msi"
+            "/qn"
+            "/norestart"
+            "/L*v"
+            "hdf5_install_log.txt"
+          )
+          Start-Process "msiexec.exe" -ArgumentList $MSIArguments -Wait -NoNewWindow
+          type hdf5_install_log.txt
+        }
     - name: Build
       shell: cmd /C call {0}
       run: |
@@ -47,11 +52,11 @@ runs:
           call "C:\Program Files (x86)\Microsoft Visual Studio\2019\Enterprise\VC\Auxiliary\Build\vcvarsall.bat" amd64
         )
         cmake --version
-        cmake -G "Ninja" -DCMAKE_BUILD_TYPE=${{ inputs.config }} -DEPI_USE_BUNDLED_EIGEN=ON -DEPI_BUILD_EPI_IO=ON -DHDF5_USE_STATIC_LIBRARIES=ON -DHDF5_DIR="C:\Program Files\HDF_Group\HDF5\1.12.1\share\cmake\hdf5" ..
+        cmake -G "Ninja" -DCMAKE_BUILD_TYPE=${{ inputs.config }} -DMEMILIO_USE_BUNDLED_JSONCPP=${{ inputs.optional-dependencies }} -DHDF5_USE_STATIC_LIBRARIES=ON -DHDF5_DIR="C:\Program Files\HDF_Group\HDF5\1.12.1\share\cmake\hdf5" ..
         cmake --build . -- -j 4
     - name: Upload built test directory
       uses: actions/upload-artifact@v2
       with:
-        name: build-cpp-windows-msvc-${{ inputs.version }}-${{ inputs.config }}
+        name: build-cpp-windows-msvc-${{ inputs.version }}-${{ inputs.config }}-${{ inputs.optional-dependencies == 'ON' && 'full' || 'part'}}
         path: cpp/build-win/tests
         retention-days: 1

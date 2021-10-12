@@ -16,7 +16,7 @@ runs:
       shell: pwsh
       run: |
         cd cpp/build-win/tests
-        .\runUnitTests.exe --gtest_output="xml:report.xml"
+        .\memilio-test.exe --gtest_output="xml:report.xml"
     - name: Upload report
       uses: actions/upload-artifact@v2
       with:

@@ -17,8 +17,8 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
-#include "epidemiology/secir/secir.h"
-#include <epidemiology_io/secir_result_io.h>
+#include "secir/secir.h"
+#include "secir/secir_result_io.h"
 
 #include <iostream>
 
@@ -40,7 +40,7 @@ int main(int argc, char** argv)
     int nb_groups = 1;
     double fact   = 1.0 / (double)nb_groups;
 
-    epi::SecirParams params(nb_groups);
+    mio::SecirParams params(nb_groups);
 
     params.set_start_day(0);
     params.set_seasonality(0);
@@ -56,14 +56,14 @@ int main(int argc, char** argv)
         params.times[i].set_infectious_asymp(tinfasy);
         params.times[i].set_icu_to_death(ticu2death);
 
-        params.populations.set({i, epi::SecirCompartments::E}, fact * nb_exp_t0);
-        params.populations.set({i, epi::SecirCompartments::C}, fact * nb_car_t0);
-        params.populations.set({i, epi::SecirCompartments::I}, fact * nb_inf_t0);
-        params.populations.set({i, epi::SecirCompartments::H}, fact * nb_hosp_t0);
-        params.populations.set({i, epi::SecirCompartments::U}, fact * nb_icu_t0);
-        params.populations.set({i, epi::SecirCompartments::R}, fact * nb_rec_t0);
-        params.populations.set({i, epi::SecirCompartments::D}, fact * nb_dead_t0);
-        params.populations.set_difference_from_group_total({i, epi::SecirCompartments::S}, epi::SecirCategory::AgeGroup,
+        params.populations.set({i, mio::SecirCompartments::E}, fact * nb_exp_t0);
+        params.populations.set({i, mio::SecirCompartments::C}, fact * nb_car_t0);
+        params.populations.set({i, mio::SecirCompartments::I}, fact * nb_inf_t0);
+        params.populations.set({i, mio::SecirCompartments::H}, fact * nb_hosp_t0);
+        params.populations.set({i, mio::SecirCompartments::U}, fact * nb_icu_t0);
+        params.populations.set({i, mio::SecirCompartments::R}, fact * nb_rec_t0);
+        params.populations.set({i, mio::SecirCompartments::D}, fact * nb_dead_t0);
+        params.populations.set_difference_from_group_total({i, mio::SecirCompartments::S}, mio::SecirCategory::AgeGroup,
                                                            i, fact * nb_total_t0);
 
         params.probabilities[i].set_infection_from_contact(0.98);
@@ -75,11 +75,11 @@ int main(int argc, char** argv)
         params.probabilities[i].set_dead_per_icu(delta);
     }
 
-    epi::ContactMatrixGroup& contact_matrix = params.get_contact_patterns();
-    contact_matrix[0] = epi::ContactMatrix(Eigen::MatrixXd::Constant(nb_groups, nb_groups, fact * cont_freq));
-    contact_matrix.add_damping(0.3, epi::SimulationTime(30.));
+    mio::ContactMatrixGroup& contact_matrix = params.get_contact_patterns();
+    contact_matrix[0] = mio::ContactMatrix(Eigen::MatrixXd::Constant(nb_groups, nb_groups, fact * cont_freq));
+    contact_matrix.add_damping(0.3, mio::SimulationTime(30.));
 
     auto result_from_sim = simulate(t0, tmax, dt, params);
 
-    epi::save_result(result_from_sim, "test_result.h5");
+    mio::save_result(result_from_sim, "test_result.h5");
 }

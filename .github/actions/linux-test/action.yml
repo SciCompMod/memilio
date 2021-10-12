@@ -35,8 +35,8 @@ runs:
           cmake --build . --target coverage/fast
         else
           cd cpp/build/tests
-          sudo chmod a+x runUnitTests
-          ./runUnitTests  --gtest_output="xml:report.xml"
+          sudo chmod a+x memilio-test
+          ./memilio-test  --gtest_output="xml:report.xml"
         fi
     - name: Upload test report
       uses: actions/upload-artifact@v2

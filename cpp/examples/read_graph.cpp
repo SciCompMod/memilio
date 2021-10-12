@@ -17,9 +17,9 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
-#include <epidemiology/migration/migration.h>
-#include <epidemiology_io/secir_parameters_io.h>
-#include <epidemiology_io/mobility_io.h>
+#include "memilio/mobility/mobility.h"
+#include "secir/secir_parameters_io.h"
+#include "memilio/io/mobility_io.h"
 #include <data_dir.h>
 #include <iostream>
 
@@ -41,7 +41,7 @@ int main(int argc, char** argv)
 
     std::string dir = DATA_DIR;
 
-    auto filename   = epi::path_join(dir, "migration", (std::string)argv[1]);
+    auto filename   = mio::path_join(dir, "migration", (std::string)argv[1]);
     const auto t0   = 0.;
     const auto tmax = 10.;
     const auto dt   = 1.; //time step of migration, not integration
@@ -67,54 +67,54 @@ int main(int argc, char** argv)
     double nb_total_t0 = 10000, nb_exp_t0 = 100, nb_inf_t0 = 50, nb_car_t0 = 50, nb_hosp_t0 = 20, nb_icu_t0 = 10,
            nb_rec_t0 = 10, nb_dead_t0 = 0;
 
-    epi::SecirModel model(1);
-    epi::AgeGroup nb_groups = model.parameters.get_num_groups();
+    mio::SecirModel model(1);
+    mio::AgeGroup nb_groups = model.parameters.get_num_groups();
     double fact   = 1.0 / (double)(size_t)nb_groups;
 
     auto& params = model.parameters;
 
-    params.set<epi::ICUCapacity>(std::numeric_limits<double>::max());
-    params.set<epi::StartDay>(0);
-    params.set<epi::Seasonality>(0);
+    params.set<mio::ICUCapacity>(std::numeric_limits<double>::max());
+    params.set<mio::StartDay>(0);
+    params.set<mio::Seasonality>(0);
 
-    for (auto i = epi::AgeGroup(0); i < nb_groups; i++) {
-        params.get<epi::IncubationTime>()[i] = tinc;
-        params.get<epi::InfectiousTimeMild>()[i] = tinfmild;
-        params.get<epi::SerialInterval>()[i] = tserint;
-        params.get<epi::HospitalizedToHomeTime>()[i] = thosp2home;
-        params.get<epi::HomeToHospitalizedTime>()[i] = thome2hosp;
-        params.get<epi::HospitalizedToICUTime>()[i] = thosp2icu;
-        params.get<epi::ICUToHomeTime>()[i] = ticu2home;
-        params.get<epi::ICUToDeathTime>()[i] = ticu2death;
+    for (auto i = mio::AgeGroup(0); i < nb_groups; i++) {
+        params.get<mio::IncubationTime>()[i] = tinc;
+        params.get<mio::InfectiousTimeMild>()[i] = tinfmild;
+        params.get<mio::SerialInterval>()[i] = tserint;
+        params.get<mio::HospitalizedToHomeTime>()[i] = thosp2home;
+        params.get<mio::HomeToHospitalizedTime>()[i] = thome2hosp;
+        params.get<mio::HospitalizedToICUTime>()[i] = thosp2icu;
+        params.get<mio::ICUToHomeTime>()[i] = ticu2home;
+        params.get<mio::ICUToDeathTime>()[i] = ticu2death;
 
-        model.populations[{i, epi::InfectionState::Exposed}] = fact * nb_exp_t0;
-        model.populations[{i, epi::InfectionState::Carrier}] = fact * nb_car_t0;
-        model.populations[{i, epi::InfectionState::Infected}] = fact * nb_inf_t0;
-        model.populations[{i, epi::InfectionState::Hospitalized}] = fact * nb_hosp_t0;
-        model.populations[{i, epi::InfectionState::ICU}] = fact * nb_icu_t0;
-        model.populations[{i, epi::InfectionState::Recovered}] = fact * nb_rec_t0;
-        model.populations[{i, epi::InfectionState::Dead}] = fact * nb_dead_t0;
-        model.populations.set_difference_from_group_total<epi::AgeGroup>({i, epi::InfectionState::Susceptible},
+        model.populations[{i, mio::InfectionState::Exposed}] = fact * nb_exp_t0;
+        model.populations[{i, mio::InfectionState::Carrier}] = fact * nb_car_t0;
+        model.populations[{i, mio::InfectionState::Infected}] = fact * nb_inf_t0;
+        model.populations[{i, mio::InfectionState::Hospitalized}] = fact * nb_hosp_t0;
+        model.populations[{i, mio::InfectionState::ICU}] = fact * nb_icu_t0;
+        model.populations[{i, mio::InfectionState::Recovered}] = fact * nb_rec_t0;
+        model.populations[{i, mio::InfectionState::Dead}] = fact * nb_dead_t0;
+        model.populations.set_difference_from_group_total<mio::AgeGroup>({i, mio::InfectionState::Susceptible},
                                                                          fact * nb_total_t0);
 
-        params.get<epi::InfectionProbabilityFromContact>()[i] = inf_prob;
-        params.get<epi::RelativeCarrierInfectability>()[i] = carr_infec;
-        params.get<epi::AsymptoticCasesPerInfectious>()[i] = alpha;
-        params.get<epi::RiskOfInfectionFromSympomatic>()[i] = beta;
-        params.get<epi::HospitalizedCasesPerInfectious>()[i] = rho;
-        params.get<epi::ICUCasesPerHospitalized>()[i] = theta;
-        params.get<epi::DeathsPerHospitalized>()[i] = delta;
+        params.get<mio::InfectionProbabilityFromContact>()[i] = inf_prob;
+        params.get<mio::RelativeCarrierInfectability>()[i] = carr_infec;
+        params.get<mio::AsymptoticCasesPerInfectious>()[i] = alpha;
+        params.get<mio::RiskOfInfectionFromSympomatic>()[i] = beta;
+        params.get<mio::HospitalizedCasesPerInfectious>()[i] = rho;
+        params.get<mio::ICUCasesPerHospitalized>()[i] = theta;
+        params.get<mio::DeathsPerHospitalized>()[i] = delta;
     }
 
     params.apply_constraints();
 
-    epi::ContactMatrixGroup& contact_matrix = params.get<epi::ContactPatterns>();
-    contact_matrix[0] = epi::ContactMatrix(Eigen::MatrixXd::Constant((size_t)nb_groups, (size_t)nb_groups, fact * cont_freq));
+    mio::ContactMatrixGroup& contact_matrix = params.get<mio::ContactPatterns>();
+    contact_matrix[0] = mio::ContactMatrix(Eigen::MatrixXd::Constant((size_t)nb_groups, (size_t)nb_groups, fact * cont_freq));
 
-    epi::set_params_distributions_normal(model, t0, tmax, 0.2);
+    mio::set_params_distributions_normal(model, t0, tmax, 0.2);
 
     std::cout << "Reading Migration File..." << std::flush;
-    auto read_mobility_result = epi::read_mobility_plain(filename);
+    auto read_mobility_result = mio::read_mobility_plain(filename);
     if (!read_mobility_result)
     {
         std::cout << read_mobility_result.error().formatted_message() << '\n';
@@ -124,7 +124,7 @@ int main(int argc, char** argv)
     std::cout << "Done" << std::endl;
 
     std::cout << "Intializing Graph..." << std::flush;
-    epi::Graph<epi::SecirModel, epi::MigrationParameters> graph;
+    mio::Graph<mio::SecirModel, mio::MigrationParameters> graph;
     for (int node = 0; node < twitter_migration_2018.rows(); node++) {
         graph.add_node(node, model);
     }
@@ -139,14 +139,14 @@ int main(int argc, char** argv)
     std::cout << "Done" << std::endl;
 
     std::cout << "Writing Json Files..." << std::flush;
-    auto write_status = epi::write_graph(graph, "graph_parameters");
+    auto write_status = mio::write_graph(graph, "graph_parameters");
     if (!write_status) {
         std::cout << "Error: " << write_status.error().formatted_message();
     }
     std::cout << "Done" << std::endl;
 
     std::cout << "Reading Json Files..." << std::flush;
-    auto graph_read_result = epi::read_graph<epi::SecirModel>("graph_parameters");
+    auto graph_read_result = mio::read_graph<mio::SecirModel>("graph_parameters");
         
     if (!graph_read_result) {
         std::cout << "Error: " << graph_read_result.error().formatted_message();
@@ -155,7 +155,7 @@ int main(int argc, char** argv)
     auto& graph_read = graph_read_result.value();
 
     std::cout << "Running Simulations..." << std::flush;
-    auto study = epi::ParameterStudy<epi::SecirSimulation<>>(graph_read, t0, tmax, 0.5, 2);
+    auto study = mio::ParameterStudy<mio::SecirSimulation<>>(graph_read, t0, tmax, 0.5, 2);
     std::cout << "Done" << std::endl;
 
     return 0;

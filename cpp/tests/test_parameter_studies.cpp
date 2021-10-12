@@ -18,17 +18,17 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
-#include <epidemiology/secir/secir.h>
-#include <epidemiology/secir/parameter_space.h>
-#include <epidemiology/secir/parameter_studies.h>
-#include <epidemiology/migration/migration.h>
-#include <epidemiology/utils/random_number_generator.h>
+#include "secir/secir.h"
+#include "secir/parameter_space.h"
+#include "secir/parameter_studies.h"
+#include "memilio/mobility/mobility.h"
+#include "memilio/utils/random_number_generator.h"
 #include <gtest/gtest.h>
 #include <stdio.h>
 
 TEST(ParameterStudies, sample_from_secir_params)
 {
-    epi::log_thread_local_rng_seeds(epi::LogLevel::warn);
+    mio::log_thread_local_rng_seeds(mio::LogLevel::warn);
 
     double t0   = 0;
     double tmax = 100;
@@ -54,74 +54,74 @@ TEST(ParameterStudies, sample_from_secir_params)
     double num_total_t0 = 10000, num_exp_t0 = 100, num_inf_t0 = 50, num_car_t0 = 50, num_hosp_t0 = 20, num_icu_t0 = 10,
            num_rec_t0 = 10, num_dead_t0 = 0;
 
-    epi::SecirModel model(3);
-    epi::AgeGroup num_groups = model.parameters.get_num_groups();
+    mio::SecirModel model(3);
+    mio::AgeGroup num_groups = model.parameters.get_num_groups();
     double fact       = 1.0 / (double)(size_t)num_groups;
 
     auto& params = model.parameters;
-    for (auto i = epi::AgeGroup(0); i < num_groups; i++) {
-        params.get<epi::IncubationTime>()[i] = tinc;
-        params.get<epi::InfectiousTimeMild>()[i] = tinfmild;
-        params.get<epi::SerialInterval>()[i] = tserint;
-        params.get<epi::HospitalizedToHomeTime>()[i] = thosp2home;
-        params.get<epi::HomeToHospitalizedTime>()[i] = thome2hosp;
-        params.get<epi::HospitalizedToICUTime>()[i] = thosp2icu;
-        params.get<epi::ICUToHomeTime>()[i] = ticu2home;
-        params.get<epi::InfectiousTimeAsymptomatic>()[i] = tinfasy;
-        params.get<epi::ICUToDeathTime>()[i] = ticu2death;
+    for (auto i = mio::AgeGroup(0); i < num_groups; i++) {
+        params.get<mio::IncubationTime>()[i] = tinc;
+        params.get<mio::InfectiousTimeMild>()[i] = tinfmild;
+        params.get<mio::SerialInterval>()[i] = tserint;
+        params.get<mio::HospitalizedToHomeTime>()[i] = thosp2home;
+        params.get<mio::HomeToHospitalizedTime>()[i] = thome2hosp;
+        params.get<mio::HospitalizedToICUTime>()[i] = thosp2icu;
+        params.get<mio::ICUToHomeTime>()[i] = ticu2home;
+        params.get<mio::InfectiousTimeAsymptomatic>()[i] = tinfasy;
+        params.get<mio::ICUToDeathTime>()[i] = ticu2death;
 
-        model.populations[{i, epi::InfectionState::Exposed}] = fact * num_exp_t0;
-        model.populations[{i, epi::InfectionState::Carrier}] = fact * num_car_t0;
-        model.populations[{i, epi::InfectionState::Infected}] = fact * num_inf_t0;
-        model.populations[{i, epi::InfectionState::Hospitalized}] = fact * num_hosp_t0;
-        model.populations[{i, epi::InfectionState::ICU}] = fact * num_icu_t0;
-        model.populations[{i, epi::InfectionState::Recovered}] = fact * num_rec_t0;
-        model.populations[{i, epi::InfectionState::Dead}] = fact * num_dead_t0;
-        model.populations.set_difference_from_group_total<epi::AgeGroup>({i, epi::InfectionState::Susceptible},
+        model.populations[{i, mio::InfectionState::Exposed}] = fact * num_exp_t0;
+        model.populations[{i, mio::InfectionState::Carrier}] = fact * num_car_t0;
+        model.populations[{i, mio::InfectionState::Infected}] = fact * num_inf_t0;
+        model.populations[{i, mio::InfectionState::Hospitalized}] = fact * num_hosp_t0;
+        model.populations[{i, mio::InfectionState::ICU}] = fact * num_icu_t0;
+        model.populations[{i, mio::InfectionState::Recovered}] = fact * num_rec_t0;
+        model.populations[{i, mio::InfectionState::Dead}] = fact * num_dead_t0;
+        model.populations.set_difference_from_group_total<mio::AgeGroup>({i, mio::InfectionState::Susceptible},
                                                           fact * num_total_t0);
 
-        params.get<epi::InfectionProbabilityFromContact>()[i] = inf_prob;
-        params.get<epi::RelativeCarrierInfectability>()[i] = carr_infec;
-        params.get<epi::AsymptoticCasesPerInfectious>()[i] = alpha;
-        params.get<epi::RiskOfInfectionFromSympomatic>()[i] = beta;
-        params.get<epi::HospitalizedCasesPerInfectious>()[i] = rho;
-        params.get<epi::ICUCasesPerHospitalized>()[i] = theta;
-        params.get<epi::DeathsPerHospitalized>()[i] = delta;
+        params.get<mio::InfectionProbabilityFromContact>()[i] = inf_prob;
+        params.get<mio::RelativeCarrierInfectability>()[i] = carr_infec;
+        params.get<mio::AsymptoticCasesPerInfectious>()[i] = alpha;
+        params.get<mio::RiskOfInfectionFromSympomatic>()[i] = beta;
+        params.get<mio::HospitalizedCasesPerInfectious>()[i] = rho;
+        params.get<mio::ICUCasesPerHospitalized>()[i] = theta;
+        params.get<mio::DeathsPerHospitalized>()[i] = delta;
     }
 
-    epi::ContactMatrixGroup& contact_matrix = params.get<epi::ContactPatterns>();
-    contact_matrix[0] = epi::ContactMatrix(Eigen::MatrixXd::Constant((size_t)num_groups, (size_t)num_groups, fact * cont_freq));
+    mio::ContactMatrixGroup& contact_matrix = params.get<mio::ContactPatterns>();
+    contact_matrix[0] = mio::ContactMatrix(Eigen::MatrixXd::Constant((size_t)num_groups, (size_t)num_groups, fact * cont_freq));
 
-    epi::set_params_distributions_normal(model, t0, tmax, 0.2);
+    mio::set_params_distributions_normal(model, t0, tmax, 0.2);
 
     draw_sample(model);
 
-    for (auto i = epi::AgeGroup(0); i < params.get_num_groups(); i++) {
-        ASSERT_EQ(params.get<epi::IncubationTime>()[epi::AgeGroup(0)].value(),
-                  params.get<epi::IncubationTime>()[i].value());
-        ASSERT_EQ(params.get<epi::SerialInterval>()[epi::AgeGroup(0)].value(),
-                  params.get<epi::SerialInterval>()[i].value());
-        ASSERT_EQ(params.get<epi::InfectiousTimeMild>()[epi::AgeGroup(0)].value(),
-                  params.get<epi::InfectiousTimeMild>()[i].value());
-        ASSERT_EQ(params.get<epi::HospitalizedToICUTime>()[epi::AgeGroup(0)].value(),
-                  params.get<epi::HospitalizedToICUTime>()[i].value());
-        ASSERT_EQ(params.get<epi::RelativeCarrierInfectability>()[epi::AgeGroup(0)].value(),
-                  params.get<epi::RelativeCarrierInfectability>()[i].value());
-        ASSERT_EQ(params.get<epi::RiskOfInfectionFromSympomatic>()[epi::AgeGroup(0)].value(),
-                  params.get<epi::RiskOfInfectionFromSympomatic>()[i].value());
-        ASSERT_EQ(params.get<epi::MaxRiskOfInfectionFromSympomatic>()[epi::AgeGroup(0)].value(),
-                  params.get<epi::MaxRiskOfInfectionFromSympomatic>()[i].value());
+    for (auto i = mio::AgeGroup(0); i < params.get_num_groups(); i++) {
+        ASSERT_EQ(params.get<mio::IncubationTime>()[mio::AgeGroup(0)].value(),
+                  params.get<mio::IncubationTime>()[i].value());
+        ASSERT_EQ(params.get<mio::SerialInterval>()[mio::AgeGroup(0)].value(),
+                  params.get<mio::SerialInterval>()[i].value());
+        ASSERT_EQ(params.get<mio::InfectiousTimeMild>()[mio::AgeGroup(0)].value(),
+                  params.get<mio::InfectiousTimeMild>()[i].value());
+        ASSERT_EQ(params.get<mio::HospitalizedToICUTime>()[mio::AgeGroup(0)].value(),
+                  params.get<mio::HospitalizedToICUTime>()[i].value());
+        ASSERT_EQ(params.get<mio::RelativeCarrierInfectability>()[mio::AgeGroup(0)].value(),
+                  params.get<mio::RelativeCarrierInfectability>()[i].value());
+        ASSERT_EQ(params.get<mio::RiskOfInfectionFromSympomatic>()[mio::AgeGroup(0)].value(),
+                  params.get<mio::RiskOfInfectionFromSympomatic>()[i].value());
+        ASSERT_EQ(params.get<mio::MaxRiskOfInfectionFromSympomatic>()[mio::AgeGroup(0)].value(),
+                  params.get<mio::MaxRiskOfInfectionFromSympomatic>()[i].value());
 
         EXPECT_GE(model.populations.get_group_total(i), 0);
 
         EXPECT_NEAR(model.populations.get_group_total(i), fact * num_total_t0, 1e-6);
 
-        EXPECT_GE(params.get<epi::IncubationTime>()[i], 0);
+        EXPECT_GE(params.get<mio::IncubationTime>()[i], 0);
 
-        EXPECT_GE(params.get<epi::InfectionProbabilityFromContact>()[i], 0);
+        EXPECT_GE(params.get<mio::InfectionProbabilityFromContact>()[i], 0);
     }
 
-    epi::ContactMatrixGroup& contact_matrix_sample = params.get<epi::ContactPatterns>();
+    mio::ContactMatrixGroup& contact_matrix_sample = params.get<mio::ContactPatterns>();
     EXPECT_EQ(contact_matrix_sample[0].get_dampings().size(), 1);
 }
 
@@ -152,64 +152,64 @@ TEST(ParameterStudies, sample_graph)
            num_rec_t0 = 10, num_dead_t0 = 0;
 
     size_t num_groups = 3;
-    epi::SecirModel model((int)num_groups);
+    mio::SecirModel model((int)num_groups);
     double fact       = 1.0 / (double)num_groups;
 
     auto& params = model.parameters;
-    for (auto i = epi::Index<epi::AgeGroup>(0); i.get() < num_groups; i++) {
-        params.get<epi::IncubationTime>()[i] = tinc;
-        params.get<epi::InfectiousTimeMild>()[i] = tinfmild;
-        params.get<epi::SerialInterval>()[i] = tserint;
-        params.get<epi::HospitalizedToHomeTime>()[i] = thosp2home;
-        params.get<epi::HomeToHospitalizedTime>()[i] = thome2hosp;
-        params.get<epi::HospitalizedToICUTime>()[i] = thosp2icu;
-        params.get<epi::ICUToHomeTime>()[i] = ticu2home;
-        params.get<epi::InfectiousTimeAsymptomatic>()[i] = tinfasy;
-        params.get<epi::ICUToDeathTime>()[i] = ticu2death;
+    for (auto i = mio::Index<mio::AgeGroup>(0); i.get() < num_groups; i++) {
+        params.get<mio::IncubationTime>()[i] = tinc;
+        params.get<mio::InfectiousTimeMild>()[i] = tinfmild;
+        params.get<mio::SerialInterval>()[i] = tserint;
+        params.get<mio::HospitalizedToHomeTime>()[i] = thosp2home;
+        params.get<mio::HomeToHospitalizedTime>()[i] = thome2hosp;
+        params.get<mio::HospitalizedToICUTime>()[i] = thosp2icu;
+        params.get<mio::ICUToHomeTime>()[i] = ticu2home;
+        params.get<mio::InfectiousTimeAsymptomatic>()[i] = tinfasy;
+        params.get<mio::ICUToDeathTime>()[i] = ticu2death;
 
-        model.populations[{i, epi::InfectionState::Exposed}] = fact * num_exp_t0;
-        model.populations[{i, epi::InfectionState::Carrier}] = fact * num_car_t0;
-        model.populations[{i, epi::InfectionState::Infected}] = fact * num_inf_t0;
-        model.populations[{i, epi::InfectionState::Hospitalized}] = fact * num_hosp_t0;
-        model.populations[{i, epi::InfectionState::ICU}] = fact * num_icu_t0;
-        model.populations[{i, epi::InfectionState::Recovered}] = fact * num_rec_t0;
-        model.populations[{i, epi::InfectionState::Dead}] = fact * num_dead_t0;
-        model.populations.set_difference_from_group_total<epi::AgeGroup>({i, epi::InfectionState::Susceptible}, fact * num_total_t0);
+        model.populations[{i, mio::InfectionState::Exposed}] = fact * num_exp_t0;
+        model.populations[{i, mio::InfectionState::Carrier}] = fact * num_car_t0;
+        model.populations[{i, mio::InfectionState::Infected}] = fact * num_inf_t0;
+        model.populations[{i, mio::InfectionState::Hospitalized}] = fact * num_hosp_t0;
+        model.populations[{i, mio::InfectionState::ICU}] = fact * num_icu_t0;
+        model.populations[{i, mio::InfectionState::Recovered}] = fact * num_rec_t0;
+        model.populations[{i, mio::InfectionState::Dead}] = fact * num_dead_t0;
+        model.populations.set_difference_from_group_total<mio::AgeGroup>({i, mio::InfectionState::Susceptible}, fact * num_total_t0);
 
-        params.get<epi::InfectionProbabilityFromContact>()[i] = inf_prob;
-        params.get<epi::RelativeCarrierInfectability>()[i] = carr_infec;
-        params.get<epi::AsymptoticCasesPerInfectious>()[i] = alpha;
-        params.get<epi::RiskOfInfectionFromSympomatic>()[i] = beta;
-        params.get<epi::HospitalizedCasesPerInfectious>()[i] = rho;
-        params.get<epi::ICUCasesPerHospitalized>()[i] = theta;
-        params.get<epi::DeathsPerHospitalized>()[i] = delta;
+        params.get<mio::InfectionProbabilityFromContact>()[i] = inf_prob;
+        params.get<mio::RelativeCarrierInfectability>()[i] = carr_infec;
+        params.get<mio::AsymptoticCasesPerInfectious>()[i] = alpha;
+        params.get<mio::RiskOfInfectionFromSympomatic>()[i] = beta;
+        params.get<mio::HospitalizedCasesPerInfectious>()[i] = rho;
+        params.get<mio::ICUCasesPerHospitalized>()[i] = theta;
+        params.get<mio::DeathsPerHospitalized>()[i] = delta;
     }
 
-    epi::ContactMatrixGroup& contact_matrix = params.get<epi::ContactPatterns>();
-    contact_matrix[0] = epi::ContactMatrix(Eigen::MatrixXd::Constant(num_groups, num_groups, fact * cont_freq));
+    mio::ContactMatrixGroup& contact_matrix = params.get<mio::ContactPatterns>();
+    contact_matrix[0] = mio::ContactMatrix(Eigen::MatrixXd::Constant(num_groups, num_groups, fact * cont_freq));
 
-    epi::set_params_distributions_normal(model, t0, tmax, 0.2);
+    mio::set_params_distributions_normal(model, t0, tmax, 0.2);
 
-    auto graph = epi::Graph<epi::SecirModel, epi::MigrationParameters>();
+    auto graph = mio::Graph<mio::SecirModel, mio::MigrationParameters>();
     graph.add_node(0, model);
     graph.add_node(1, model);
-    graph.add_edge(0, 1, epi::MigrationParameters(Eigen::VectorXd::Constant(Eigen::Index(num_groups * 8), 1.0)));
+    graph.add_edge(0, 1, mio::MigrationParameters(Eigen::VectorXd::Constant(Eigen::Index(num_groups * 8), 1.0)));
 
-    auto study   = epi::ParameterStudy<epi::SecirSimulation<>>(graph, 0.0, 0.0, 0.5, 1);
+    auto study   = mio::ParameterStudy<mio::SecirSimulation<>>(graph, 0.0, 0.0, 0.5, 1);
     auto results = study.run();
 
     EXPECT_EQ(results[0].edges()[0].property.get_parameters().get_coefficients()[0].get_dampings().size(), 1);
     for (auto& node : results[0].nodes()) {
         auto& result_model = node.property.get_simulation().get_model();
-        EXPECT_EQ(result_model.parameters.get<epi::ContactPatterns>().get_cont_freq_mat()[0].get_dampings().size(), 1);
+        EXPECT_EQ(result_model.parameters.get<mio::ContactPatterns>().get_cont_freq_mat()[0].get_dampings().size(), 1);
     }
 }
 
 TEST(ParameterStudies, test_normal_distribution)
 {
-    epi::log_thread_local_rng_seeds(epi::LogLevel::warn);
+    mio::log_thread_local_rng_seeds(mio::LogLevel::warn);
 
-    epi::ParameterDistributionNormal parameter_dist_normal_1;
+    mio::ParameterDistributionNormal parameter_dist_normal_1;
 
     // check if standard deviation is reduced if between too narrow interval [min,max] has to be sampled.
     parameter_dist_normal_1.set_upper_bound(1);
@@ -222,7 +222,7 @@ TEST(ParameterStudies, test_normal_distribution)
     EXPECT_GE(std_dev_demanded, parameter_dist_normal_1.get_standard_dev());
 
     // check if full argument constructor works correctly
-    epi::ParameterDistributionNormal parameter_dist_normal_2(-1.0, 1.0, 0, parameter_dist_normal_1.get_standard_dev());
+    mio::ParameterDistributionNormal parameter_dist_normal_2(-1.0, 1.0, 0, parameter_dist_normal_1.get_standard_dev());
 
     EXPECT_EQ(parameter_dist_normal_1.get_lower_bound(), parameter_dist_normal_2.get_lower_bound());
     EXPECT_EQ(parameter_dist_normal_1.get_upper_bound(), parameter_dist_normal_2.get_upper_bound());
@@ -247,16 +247,16 @@ TEST(ParameterStudies, test_normal_distribution)
     }
 
     //degenerate case: ub == lb
-    epi::ParameterDistributionNormal dist3(3.0, 3.0, 3.0, 3.0);
+    mio::ParameterDistributionNormal dist3(3.0, 3.0, 3.0, 3.0);
     EXPECT_EQ(dist3.get_sample(), 3.0);
 }
 
 TEST(ParameterStudies, test_uniform_distribution)
 {
-    epi::log_thread_local_rng_seeds(epi::LogLevel::warn);
+    mio::log_thread_local_rng_seeds(mio::LogLevel::warn);
 
     // check if full argument constructor works correctly
-    epi::ParameterDistributionUniform parameter_dist_unif(1.0, 10.0);
+    mio::ParameterDistributionUniform parameter_dist_unif(1.0, 10.0);
 
     EXPECT_EQ(parameter_dist_unif.get_lower_bound(), 1.0);
     EXPECT_EQ(parameter_dist_unif.get_upper_bound(), 10.0);
@@ -271,9 +271,9 @@ TEST(ParameterStudies, test_uniform_distribution)
 
 TEST(ParameterStudies, test_predefined_samples)
 {
-    epi::ParameterDistributionUniform parameter_dist_unif(1.0, 10.0);
+    mio::ParameterDistributionUniform parameter_dist_unif(1.0, 10.0);
 
-    epi::ParameterDistributionNormal parameter_dist_normal(-1.0, 1.0, 0, 0.1);
+    mio::ParameterDistributionNormal parameter_dist_normal(-1.0, 1.0, 0, 0.1);
 
     // set predefined sample (can be out of [min,max]) and get it
     parameter_dist_unif.add_predefined_sample(2);
@@ -296,7 +296,7 @@ TEST(ParameterStudies, test_predefined_samples)
 
 TEST(ParameterStudies, check_ensemble_run_result)
 {
-    epi::log_thread_local_rng_seeds(epi::LogLevel::warn);
+    mio::log_thread_local_rng_seeds(mio::LogLevel::warn);
     
     double t0   = 0;
     double tmax = 50;
@@ -322,66 +322,66 @@ TEST(ParameterStudies, check_ensemble_run_result)
     double num_total_t0 = 10000, num_exp_t0 = 100, num_inf_t0 = 50, num_car_t0 = 50, num_hosp_t0 = 20, num_icu_t0 = 10,
            num_rec_t0 = 10, num_dead_t0 = 0;
 
-    epi::SecirModel model(1);
-    epi::AgeGroup num_groups = model.parameters.get_num_groups();
+    mio::SecirModel model(1);
+    mio::AgeGroup num_groups = model.parameters.get_num_groups();
     double fact       = 1.0 / (double)(size_t)num_groups;
 
     auto& params = model.parameters;
 
-    for (auto i = epi::AgeGroup(0); i < num_groups; i++) {
-        params.get<epi::IncubationTime>()[i] = tinc;
-        params.get<epi::InfectiousTimeMild>()[i] = tinfmild;
-        params.get<epi::SerialInterval>()[i] = tserint;
-        params.get<epi::HospitalizedToHomeTime>()[i] = thosp2home;
-        params.get<epi::HomeToHospitalizedTime>()[i] = thome2hosp;
-        params.get<epi::HospitalizedToICUTime>()[i] = thosp2icu;
-        params.get<epi::ICUToHomeTime>()[i] = ticu2home;
-        params.get<epi::InfectiousTimeAsymptomatic>()[i] = tinfasy;
-        params.get<epi::ICUToDeathTime>()[i] = ticu2death;
+    for (auto i = mio::AgeGroup(0); i < num_groups; i++) {
+        params.get<mio::IncubationTime>()[i] = tinc;
+        params.get<mio::InfectiousTimeMild>()[i] = tinfmild;
+        params.get<mio::SerialInterval>()[i] = tserint;
+        params.get<mio::HospitalizedToHomeTime>()[i] = thosp2home;
+        params.get<mio::HomeToHospitalizedTime>()[i] = thome2hosp;
+        params.get<mio::HospitalizedToICUTime>()[i] = thosp2icu;
+        params.get<mio::ICUToHomeTime>()[i] = ticu2home;
+        params.get<mio::InfectiousTimeAsymptomatic>()[i] = tinfasy;
+        params.get<mio::ICUToDeathTime>()[i] = ticu2death;
 
         model.populations.set_total(num_total_t0);
-        model.populations[{i, epi::InfectionState::Exposed}] = num_exp_t0;
-        model.populations[{i, epi::InfectionState::Carrier}] = num_car_t0;
-        model.populations[{i, epi::InfectionState::Infected}] = num_inf_t0;
-        model.populations[{i, epi::InfectionState::Hospitalized}] = num_hosp_t0;
-        model.populations[{i, epi::InfectionState::ICU}] = num_icu_t0;
-        model.populations[{i, epi::InfectionState::Recovered}] = num_rec_t0;
-        model.populations[{i, epi::InfectionState::Dead}] = num_dead_t0;
-        model.populations.set_difference_from_total({i, epi::InfectionState::Susceptible}, num_total_t0);
+        model.populations[{i, mio::InfectionState::Exposed}] = num_exp_t0;
+        model.populations[{i, mio::InfectionState::Carrier}] = num_car_t0;
+        model.populations[{i, mio::InfectionState::Infected}] = num_inf_t0;
+        model.populations[{i, mio::InfectionState::Hospitalized}] = num_hosp_t0;
+        model.populations[{i, mio::InfectionState::ICU}] = num_icu_t0;
+        model.populations[{i, mio::InfectionState::Recovered}] = num_rec_t0;
+        model.populations[{i, mio::InfectionState::Dead}] = num_dead_t0;
+        model.populations.set_difference_from_total({i, mio::InfectionState::Susceptible}, num_total_t0);
 
-        params.get<epi::InfectionProbabilityFromContact>()[i] = inf_prob;
-        params.get<epi::RelativeCarrierInfectability>()[i] = carr_infec;
-        params.get<epi::AsymptoticCasesPerInfectious>()[i] = alpha;
-        params.get<epi::RiskOfInfectionFromSympomatic>()[i] = beta;
-        params.get<epi::HospitalizedCasesPerInfectious>()[i] = rho;
-        params.get<epi::ICUCasesPerHospitalized>()[i] = theta;
-        params.get<epi::DeathsPerHospitalized>()[i] = delta;
+        params.get<mio::InfectionProbabilityFromContact>()[i] = inf_prob;
+        params.get<mio::RelativeCarrierInfectability>()[i] = carr_infec;
+        params.get<mio::AsymptoticCasesPerInfectious>()[i] = alpha;
+        params.get<mio::RiskOfInfectionFromSympomatic>()[i] = beta;
+        params.get<mio::HospitalizedCasesPerInfectious>()[i] = rho;
+        params.get<mio::ICUCasesPerHospitalized>()[i] = theta;
+        params.get<mio::DeathsPerHospitalized>()[i] = delta;
     }
 
-    epi::ContactMatrixGroup& contact_matrix = params.get<epi::ContactPatterns>();
+    mio::ContactMatrixGroup& contact_matrix = params.get<mio::ContactPatterns>();
     contact_matrix[0] =
-        epi::ContactMatrix(Eigen::MatrixXd::Constant((size_t)num_groups, (size_t)num_groups, fact * cont_freq));
+        mio::ContactMatrix(Eigen::MatrixXd::Constant((size_t)num_groups, (size_t)num_groups, fact * cont_freq));
 
-    epi::ParameterStudy<epi::SecirSimulation<>> parameter_study(model, t0, tmax, 0.2, 1);
+    mio::ParameterStudy<mio::SecirSimulation<>> parameter_study(model, t0, tmax, 0.2, 1);
 
     // Run parameter study
     parameter_study.set_num_runs(1);
     auto graph_results = parameter_study.run();
 
-    std::vector<epi::TimeSeries<double>> results;
+    std::vector<mio::TimeSeries<double>> results;
     for (size_t i = 0; i < graph_results.size(); i++) {
         results.push_back(std::move(graph_results[i].nodes()[0].property.get_result()));
     }
 
     for (Eigen::Index i = 0; i < results[0].get_num_time_points(); i++) {
-        std::vector<double> total_at_ti((size_t)epi::InfectionState::Count, 0);
+        std::vector<double> total_at_ti((size_t)mio::InfectionState::Count, 0);
 
         for (Eigen::Index j = 0; j < results[0][i].size(); j++) { // number of compartments per time step
             EXPECT_GE(results[0][i][j], 0.0) << " day " << results[0].get_time(i) << " group " << j;
-            total_at_ti[static_cast<size_t>(j) / (size_t)epi::InfectionState::Count] += results[0][i][j];
+            total_at_ti[static_cast<size_t>(j) / (size_t)mio::InfectionState::Count] += results[0][i][j];
         }
 
-        for (auto j = epi::AgeGroup(0); j < params.get_num_groups(); j++) {
+        for (auto j = mio::AgeGroup(0); j < params.get_num_groups(); j++) {
             EXPECT_NEAR(total_at_ti[(size_t)j], model.populations.get_group_total(j), 1e-3)
                 << " day " << i << " group " << j;
         }

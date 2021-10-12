@@ -17,8 +17,8 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
-#include <epidemiology/math/euler.h>
-#include <epidemiology/math/adapt_rk.h>
+#include "memilio/math/euler.h"
+#include "memilio/math/adapt_rk.h"
 #include <actions.h>
 
 #include <gtest/gtest.h>
@@ -66,7 +66,7 @@ TEST_F(TestVerifyNumericalIntegrator, euler_sine)
     sol[n - 1][0] = std::sin((n - 1) * dt);
 
     auto f = [](auto&& /*y*/, auto&& t, auto&& dydt) { dydt[0] = std::cos(t); };
-    epi::EulerIntegratorCore euler;
+    mio::EulerIntegratorCore euler;
 
     auto t = t0;
     for (size_t i = 0; i < n - 1; i++) {
@@ -92,7 +92,7 @@ TEST_F(TestVerifyNumericalIntegrator, runge_kutta_fehlberg45_sine)
     y   = std::vector<Eigen::VectorXd>(n, Eigen::VectorXd::Constant(1, 0));
     sol = std::vector<Eigen::VectorXd>(n, Eigen::VectorXd::Constant(1, 0));
 
-    epi::RKIntegratorCore rkf45;
+    mio::RKIntegratorCore rkf45;
     rkf45.set_abs_tolerance(1e-7);
     rkf45.set_rel_tolerance(1e-7);
     rkf45.set_dt_min(1e-3);
@@ -134,7 +134,7 @@ auto DoStep()
                           testing::Return(true));
 }
 
-class MockIntegratorCore : public epi::IntegratorCore
+class MockIntegratorCore : public mio::IntegratorCore
 {
 public:
     MockIntegratorCore()
@@ -142,7 +142,7 @@ public:
         ON_CALL(*this, step).WillByDefault(DoStep());
     }
     MOCK_METHOD(bool, step,
-                (const epi::DerivFunction& f, Eigen::Ref<const Eigen::VectorXd> yt, double& t, double& dt,
+                (const mio::DerivFunction& f, Eigen::Ref<const Eigen::VectorXd> yt, double& t, double& dt,
                  Eigen::Ref<Eigen::VectorXd> ytp1),
                 (const));
 };
@@ -154,7 +154,7 @@ TEST(TestOdeIntegrator, integratorDoesTheRightNumberOfSteps)
     EXPECT_CALL(*mock_core, step).Times(100);
 
     auto f          = [](auto&&, auto&&, auto&&) {};
-    auto integrator = epi::OdeIntegrator(f, 0, Eigen::VectorXd::Constant(1, 0.0), 1e-2, mock_core);
+    auto integrator = mio::OdeIntegrator(f, 0, Eigen::VectorXd::Constant(1, 0.0), 1e-2, mock_core);
     integrator.advance(1);
     EXPECT_EQ(integrator.get_result().get_num_time_points(), 101);
 }
@@ -162,7 +162,7 @@ TEST(TestOdeIntegrator, integratorDoesTheRightNumberOfSteps)
 TEST(TestOdeIntegrator, integratorStopsAtTMax)
 {
     auto f          = [](auto&&, auto&&, auto&&) {};
-    auto integrator = epi::OdeIntegrator(f, 0, Eigen::VectorXd::Constant(1, 0.0), 0.137,
+    auto integrator = mio::OdeIntegrator(f, 0, Eigen::VectorXd::Constant(1, 0.0), 0.137,
                                          std::make_shared<testing::NiceMock<MockIntegratorCore>>());
     integrator.advance(2.34);
     EXPECT_DOUBLE_EQ(integrator.get_result().get_last_time(), 2.34);
@@ -205,7 +205,7 @@ TEST(TestOdeIntegrator, integratorUpdatesStepsize)
     }
 
     auto f          = [](auto&&, auto&&, auto&&) {};
-    auto integrator = epi::OdeIntegrator(f, 0, Eigen::VectorXd::Constant(1, 0), 1.0, mock_core);
+    auto integrator = mio::OdeIntegrator(f, 0, Eigen::VectorXd::Constant(1, 0), 1.0, mock_core);
     integrator.advance(10.0);
     integrator.advance(23.0);
 }
@@ -226,7 +226,7 @@ TEST(TestOdeIntegrator, integratorContinuesAtLastState)
     auto y0         = Eigen::VectorXd::Constant(1, 0);
     auto mock_core  = std::make_shared<testing::StrictMock<MockIntegratorCore>>();
     auto f          = [](auto&&, auto&&, auto&&) {};
-    auto integrator = epi::OdeIntegrator(f, 0, y0, dt, mock_core);
+    auto integrator = mio::OdeIntegrator(f, 0, y0, dt, mock_core);
 
     {
         testing::InSequence seq;
