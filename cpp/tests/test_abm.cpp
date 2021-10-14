@@ -343,6 +343,14 @@ TEST(TestPerson, quarantine)
     auto home                 = mio::Location(mio::LocationType::Home, 0);
     auto work                 = mio::Location(mio::LocationType::Work, 0);
 
+    ScopedMockDistribution<testing::StrictMock<MockDistribution<mio::UniformDistribution<double>>>> mock_uniform_dist;
+    EXPECT_CALL(mock_uniform_dist.get_mock(), invoke)
+        .Times(testing::AtLeast(2))
+        .WillOnce(testing::Return(0.6))
+        .WillOnce(testing::Return(0.6))
+        .WillOnce(testing::Return(0.6))
+        .WillRepeatedly(testing::Return(1.0));
+
     auto person = mio::Person(home, mio::InfectionProperties(mio::InfectionState::Infected, true),
                               mio::AbmAgeGroup::Age15to34, infection_parameters);
     home.add_person(person);
@@ -585,16 +593,34 @@ TEST(TestMigrationRules, school_return)
 TEST(TestMigrationRules, work)
 {
     auto home      = mio::Location(mio::LocationType::Home, 0);
+    ScopedMockDistribution<testing::StrictMock<MockDistribution<mio::UniformDistribution<double>>>> mock_uniform_dist;
+    EXPECT_CALL(mock_uniform_dist.get_mock(), invoke)
+        .Times(testing::AtLeast(2))
+        .WillOnce(testing::Return(0.6))
+        .WillOnce(testing::Return(0.6))
+        .WillOnce(testing::Return(0.6))
+        .WillOnce(testing::Return(0.))
+        .WillOnce(testing::Return(0.))
+        .WillOnce(testing::Return(0.))
+        .WillOnce(testing::Return(0.6))
+        .WillOnce(testing::Return(0.6))
+        .WillOnce(testing::Return(0.6))
+        
+        .WillRepeatedly(testing::Return(1.0));
+
     auto p_retiree = mio::Person(home, mio::InfectionState::Susceptible, mio::AbmAgeGroup::Age60to79, {});
-    auto p_adult   = mio::Person(home, mio::InfectionState::Susceptible, mio::AbmAgeGroup::Age15to34, {});
+    auto p_adult_goes_to_work_at_6   = mio::Person(home, mio::InfectionState::Susceptible, mio::AbmAgeGroup::Age15to34, {});
+    auto p_adult_goes_to_work_at_8   = mio::Person(home, mio::InfectionState::Susceptible, mio::AbmAgeGroup::Age15to34, {});
 
     auto t_morning = mio::TimePoint(0) + mio::hours(8);
     auto t_night   = mio::TimePoint(0) + mio::days(1) + mio::hours(4);
     auto dt        = mio::hours(1);
 
     ASSERT_EQ(mio::go_to_work(p_retiree, t_morning, dt, {}), mio::LocationType::Home);
-    ASSERT_EQ(mio::go_to_work(p_adult, t_morning, dt, {}), mio::LocationType::Work);
-    ASSERT_EQ(mio::go_to_work(p_adult, t_night, dt, {}), mio::LocationType::Home);
+    ASSERT_EQ(mio::go_to_work(p_adult_goes_to_work_at_6, t_morning, dt, {}), mio::LocationType::Home);
+    ASSERT_EQ(mio::go_to_work(p_adult_goes_to_work_at_6, t_night, dt, {}), mio::LocationType::Home);
+    ASSERT_EQ(mio::go_to_work(p_adult_goes_to_work_at_8, t_morning, dt, {}), mio::LocationType::Work);
+    ASSERT_EQ(mio::go_to_work(p_adult_goes_to_work_at_8, t_night, dt, {}), mio::LocationType::Home);
 }
 
 TEST(TestMigrationRules, work_return)
@@ -737,6 +763,8 @@ TEST(TestLockdownRules, school_closure)
         .Times(testing::AtLeast(4))
         .WillOnce(testing::Return(0.4))
         .WillOnce(testing::Return(0.4))
+        .WillOnce(testing::Return(0.4))
+        .WillOnce(testing::Return(0.2))
         .WillOnce(testing::Return(0.2))
         .WillOnce(testing::Return(0.2))
         .WillRepeatedly(testing::Return(1.0));
@@ -826,6 +854,7 @@ TEST(TestLockdownRules, no_home_office)
     ScopedMockDistribution<testing::StrictMock<MockDistribution<mio::UniformDistribution<double>>>> mock_uniform_dist;
     EXPECT_CALL(mock_uniform_dist.get_mock(), invoke)
         .Times(testing::AtLeast(2))
+        .WillOnce(testing::Return(0.7))
         .WillOnce(testing::Return(0.7))
         .WillOnce(testing::Return(0.7))
         .WillRepeatedly(testing::Return(1.0));
@@ -923,6 +952,17 @@ TEST(TestWorld, evolveMigration)
     auto home_id   = world.add_location(mio::LocationType::Home);
     auto school_id = world.add_location(mio::LocationType::School);
     auto work_id   = world.add_location(mio::LocationType::Work);
+    ScopedMockDistribution<testing::StrictMock<MockDistribution<mio::UniformDistribution<double>>>> mock_uniform_dist;
+    EXPECT_CALL(mock_uniform_dist.get_mock(), invoke)
+        .Times(testing::AtLeast(2))
+        .WillOnce(testing::Return(0.6))
+        .WillOnce(testing::Return(0.6))
+        .WillOnce(testing::Return(0.6))
+        .WillOnce(testing::Return(0.6))
+        .WillOnce(testing::Return(0.6))
+        .WillOnce(testing::Return(0.6))
+        .WillRepeatedly(testing::Return(1.0));
+
     auto& p1       = world.add_person(home_id, mio::InfectionState::Carrier, mio::AbmAgeGroup::Age15to34);
     auto& p2       = world.add_person(home_id, mio::InfectionState::Susceptible, mio::AbmAgeGroup::Age5to14);
     p1.set_assigned_location(school_id);

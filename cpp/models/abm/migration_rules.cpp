@@ -67,7 +67,7 @@ LocationType go_to_work(const Person& person, TimePoint t, TimeSpan /*dt*/, cons
 
     if (current_loc == LocationType::Home && t < params.get<LockdownDate>() &&
         (person.get_age() == AbmAgeGroup::Age15to34 || person.get_age() == AbmAgeGroup::Age35to59) &&
-        t.day_of_week() < 5 && t.hour_of_day() >= 8 && person.goes_to_work(t, params) && !person.is_in_quarantine()) {
+        t.day_of_week() < 5 && t.hour_of_day() == person.get_go_to_work_hour(params) && person.goes_to_work(t, params) && !person.is_in_quarantine()) {
         return mio::LocationType::Work;
     }
     //return home

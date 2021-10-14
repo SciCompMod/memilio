@@ -202,6 +202,13 @@ public:
     bool goes_to_work(TimePoint t, const AbmMigrationParameters& params) const;
 
     /**
+     * Every person has a random number to determine what time to go to work.
+     * Depending on this number person decides what time has to go to work;
+     * @return the hour of going to work
+     */
+    int get_go_to_work_hour(const AbmMigrationParameters& params) const;
+
+    /**
      * Every person has a random number that determines if they go to school in case of a lockdown.
      * @return if the person goes to school
      */
@@ -236,6 +243,7 @@ private:
     TimeSpan m_time_at_location;
     double m_random_workgroup;
     double m_random_schoolgroup;
+    double m_random_goto_work_hour;
     TimeSpan m_time_since_negative_test;
 };
 
