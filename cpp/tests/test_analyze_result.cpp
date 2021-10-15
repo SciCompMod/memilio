@@ -324,37 +324,37 @@ TEST(TestEnsembleParamsPercentile, basic)
     epi::SecirModel model(2);
     epi::SecirModel model2(2);
 
-    auto& params = model.parameters;
-    params.get<epi::ICUToDeathTime>()[epi::AgeGroup(0)] = 3;
-    params.get<epi::HospitalizedToICUTime>()[epi::AgeGroup(1)] = 5;
-    params.get<epi::RelativeCarrierInfectability>()[epi::AgeGroup(0)] = 0.2;
-    params.get<epi::ICUCasesPerHospitalized>()[epi::AgeGroup(1)] = 0.5;
+    auto& params                                                             = model.parameters;
+    params.get<epi::ICUToDeathTime>()[epi::AgeGroup(0)]                      = 3;
+    params.get<epi::HospitalizedToICUTime>()[epi::AgeGroup(1)]               = 5;
+    params.get<epi::RelativeCarrierInfectability>()[epi::AgeGroup(0)]        = 0.2;
+    params.get<epi::ICUCasesPerHospitalized>()[epi::AgeGroup(1)]             = 0.5;
     model.populations[{(epi::AgeGroup)0, epi::InfectionState::Exposed}]      = 10;
     model.populations[{(epi::AgeGroup)1, epi::InfectionState::Hospitalized}] = 10;
 
-    auto& params2 = model2.parameters;
-    params2.get<epi::ICUToDeathTime>()[epi::AgeGroup(0)] = 5;
-    params2.get<epi::HospitalizedToICUTime>()[epi::AgeGroup(1)] = 2;
-    params2.get<epi::RelativeCarrierInfectability>()[epi::AgeGroup(0)] = 0.4;
-    params2.get<epi::ICUCasesPerHospitalized>()[epi::AgeGroup(1)] = 0.2;
+    auto& params2                                                             = model2.parameters;
+    params2.get<epi::ICUToDeathTime>()[epi::AgeGroup(0)]                      = 5;
+    params2.get<epi::HospitalizedToICUTime>()[epi::AgeGroup(1)]               = 2;
+    params2.get<epi::RelativeCarrierInfectability>()[epi::AgeGroup(0)]        = 0.4;
+    params2.get<epi::ICUCasesPerHospitalized>()[epi::AgeGroup(1)]             = 0.2;
     model2.populations[{(epi::AgeGroup)0, epi::InfectionState::Exposed}]      = 20;
     model2.populations[{(epi::AgeGroup)1, epi::InfectionState::Hospitalized}] = 12;
 
     auto g = std::vector<epi::SecirModel>({model, model2});
 
     params.set<epi::Seasonality>(0.4);
-    params.get<epi::ICUToDeathTime>()[epi::AgeGroup(0)] = 4;
-    params.get<epi::HospitalizedToICUTime>()[epi::AgeGroup(1)] = 6;
-    params.get<epi::RelativeCarrierInfectability>()[epi::AgeGroup(0)] = 0.3;
-    params.get<epi::ICUCasesPerHospitalized>()[epi::AgeGroup(1)] = 0.6;
+    params.get<epi::ICUToDeathTime>()[epi::AgeGroup(0)]                      = 4;
+    params.get<epi::HospitalizedToICUTime>()[epi::AgeGroup(1)]               = 6;
+    params.get<epi::RelativeCarrierInfectability>()[epi::AgeGroup(0)]        = 0.3;
+    params.get<epi::ICUCasesPerHospitalized>()[epi::AgeGroup(1)]             = 0.6;
     model.populations[{(epi::AgeGroup)0, epi::InfectionState::Exposed}]      = 11;
     model.populations[{(epi::AgeGroup)1, epi::InfectionState::Hospitalized}] = 11;
 
     params2.set<epi::Seasonality>(0.4);
-    params2.get<epi::ICUToDeathTime>()[epi::AgeGroup(0)] = 6;
-    params2.get<epi::HospitalizedToICUTime>()[epi::AgeGroup(1)] = 1;
-    params2.get<epi::RelativeCarrierInfectability>()[epi::AgeGroup(0)] = 0.5;
-    params2.get<epi::ICUCasesPerHospitalized>()[epi::AgeGroup(1)] = 0.3;
+    params2.get<epi::ICUToDeathTime>()[epi::AgeGroup(0)]                      = 6;
+    params2.get<epi::HospitalizedToICUTime>()[epi::AgeGroup(1)]               = 1;
+    params2.get<epi::RelativeCarrierInfectability>()[epi::AgeGroup(0)]        = 0.5;
+    params2.get<epi::ICUCasesPerHospitalized>()[epi::AgeGroup(1)]             = 0.3;
     model2.populations[{(epi::AgeGroup)0, epi::InfectionState::Exposed}]      = 22;
     model2.populations[{(epi::AgeGroup)1, epi::InfectionState::Hospitalized}] = 14;
 

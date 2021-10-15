@@ -291,6 +291,8 @@ namespace details
 
             size_t num_groups = age_ranges.size();
             for (size_t i = 0; i < num_groups; i++) {
+                num_rec[i] -=
+                    (num_inf[i] + num_car[i] + num_exp[i] + num_hosp[i]) / scaling_factor_inf[i] + num_death[i];
                 auto try_fix_constraints = [region, &age_names, i](double& value, double error, auto str) {
                     if (value < error) {
                         //this should probably return a failure
@@ -316,94 +318,6 @@ namespace details
             }
         }
 
-        return success();
-    }
-
-    IOResult<void> set_rki_data(std::vector<SecirModel>& model, const std::string& path, const std::string& id_name,
-                      std::vector<int> const& region, Date date, const std::vector<double>& scaling_factor_inf)
-    {
-
-        std::vector<double> age_ranges = {5., 10., 20., 25., 20., 20.};
-        assert(scaling_factor_inf.size() == age_ranges.size());
-
-        std::vector<std::vector<int>> t_car_to_rec{model.size()}; // R9
-        std::vector<std::vector<int>> t_car_to_inf{model.size()}; // R3
-        std::vector<std::vector<int>> t_exp_to_car{model.size()}; // R2
-        std::vector<std::vector<int>> t_inf_to_rec{model.size()}; // R4
-        std::vector<std::vector<int>> t_inf_to_hosp{model.size()}; // R6
-        std::vector<std::vector<int>> t_hosp_to_rec{model.size()}; // R5
-        std::vector<std::vector<int>> t_hosp_to_icu{model.size()}; // R7
-        std::vector<std::vector<int>> t_icu_to_dead{model.size()}; // R10
-
-        std::vector<std::vector<double>> mu_C_R{model.size()};
-        std::vector<std::vector<double>> mu_I_H{model.size()};
-        std::vector<std::vector<double>> mu_H_U{model.size()};
-
-        for (size_t county = 0; county < model.size(); county++) {
-            for (size_t group = 0; group < age_ranges.size(); group++) {
-
-                t_car_to_inf[county].push_back(
-                    static_cast<int>(2 * (model[county].parameters.get<epi::IncubationTime>()[(epi::AgeGroup)group] -
-                                          model[county].parameters.get<epi::SerialInterval>()[(epi::AgeGroup)group])));
-                t_car_to_rec[county].push_back(static_cast<int>(
-                    t_car_to_inf[county][group] + 0.5 * model[county].parameters.get<epi::InfectiousTimeMild>()[(epi::AgeGroup)group]));
-                t_exp_to_car[county].push_back(
-                    static_cast<int>(2 * model[county].parameters.get<epi::SerialInterval>()[(epi::AgeGroup)group] -
-                                     model[county].parameters.get<epi::IncubationTime>()[(epi::AgeGroup)group]));
-                t_inf_to_rec[county].push_back(
-                    static_cast<int>(model[county].parameters.get<epi::InfectiousTimeMild>()[(epi::AgeGroup)group]));
-                t_inf_to_hosp[county].push_back(
-                    static_cast<int>(model[county].parameters.get<epi::HomeToHospitalizedTime>()[(epi::AgeGroup)group]));
-                t_hosp_to_rec[county].push_back(
-                    static_cast<int>(model[county].parameters.get<epi::HospitalizedToHomeTime>()[(epi::AgeGroup)group]));
-                t_hosp_to_icu[county].push_back(
-                    static_cast<int>(model[county].parameters.get<epi::HospitalizedToICUTime>()[(epi::AgeGroup)group]));
-                t_icu_to_dead[county].push_back(
-                    static_cast<int>(model[county].parameters.get<epi::ICUToDeathTime>()[(epi::AgeGroup)group]));
-
-                mu_C_R[county].push_back(model[county].parameters.get<epi::AsymptoticCasesPerInfectious>()[(epi::AgeGroup)group]);
-                mu_I_H[county].push_back(
-                    model[county].parameters.get<epi::HospitalizedCasesPerInfectious>()[(epi::AgeGroup)group]);
-                mu_H_U[county].push_back(model[county].parameters.get<epi::ICUCasesPerHospitalized>()[(epi::AgeGroup)group]);
-            }
-        }
-        std::vector<std::vector<double>> num_inf(model.size(), std::vector<double>(age_ranges.size(), 0.0));
-        std::vector<std::vector<double>> num_death(model.size(), std::vector<double>(age_ranges.size(), 0.0));
-        std::vector<std::vector<double>> num_rec(model.size(), std::vector<double>(age_ranges.size(), 0.0));
-        std::vector<std::vector<double>> num_exp(model.size(), std::vector<double>(age_ranges.size(), 0.0));
-        std::vector<std::vector<double>> num_car(model.size(), std::vector<double>(age_ranges.size(), 0.0));
-        std::vector<std::vector<double>> num_hosp(model.size(), std::vector<double>(age_ranges.size(), 0.0));
-        std::vector<std::vector<double>> num_icu(model.size(), std::vector<double>(age_ranges.size(), 0.0));
-
-        BOOST_OUTCOME_TRY(read_rki_data(path, id_name, region, date, num_exp, num_car, num_inf, num_hosp, num_icu,
-                                        num_death, num_rec, t_car_to_rec, t_car_to_inf, t_exp_to_car, t_inf_to_rec,
-                                        t_inf_to_hosp, t_hosp_to_rec, t_hosp_to_icu, t_icu_to_dead, mu_C_R, mu_I_H,
-                                        mu_H_U, scaling_factor_inf));
-
-        for (size_t county = 0; county < model.size(); county++) {
-            if (std::accumulate(num_inf[county].begin(), num_inf[county].end(), 0.0) > 0) {
-                size_t num_groups = (size_t)model[county].parameters.get_num_groups();
-                for (size_t i = 0; i < num_groups; i++) {
-                    model[county].populations[{AgeGroup(i), InfectionState::Exposed}] =
-                        num_exp[county][i];
-                    model[county].populations[{AgeGroup(i), InfectionState::Carrier}] =
-                        num_car[county][i];
-                    model[county].populations[{AgeGroup(i), InfectionState::Infected}] =
-                        num_inf[county][i];
-                    model[county].populations[{AgeGroup(i), InfectionState::Hospitalized}] =
-                        num_hosp[county][i];
-                    model[county].populations[{AgeGroup(i), InfectionState::Dead}] =
-                        num_death[county][i];
-                    model[county].populations[{AgeGroup(i), InfectionState::Recovered}] =
-                        num_rec[county][i];
-                }
-            }
-            else {
-                log_warning("No infections reported on date " + std::to_string(date.year) + "-" +
-                            std::to_string(date.month) + "-" + std::to_string(date.day) + " for region " +
-                            std::to_string(region[county]) + ". Population data has not been set.");
-            }
-        }
         return success();
     }
 
@@ -510,54 +424,164 @@ namespace details
         return success(interpol_population);
     }
 
-    IOResult<void> set_population_data(std::vector<SecirModel>& model, const std::string& path,
-                                       const std::string& id_name, const std::vector<int>& vregion)
+    void set_vaccine_data(std::vector<SecirModelV>& model, const std::string& path, const std::string& id_name,
+                          const std::vector<int>& vregion)
     {
-        BOOST_OUTCOME_TRY(num_population, read_population_data(path, id_name, vregion));
+        if (!boost::filesystem::exists(path)) {
+            log_error("Vaccine data file missing: {}.", path);
+            return;
+        }
+        Json::Reader reader;
+        Json::Value root;
 
-        for (size_t region = 0; region < vregion.size(); region++) {
-            if (std::accumulate(num_population[region].begin(), num_population[region].end(), 0.0) > 0) {
-                auto num_groups = model[region].parameters.get_num_groups();
-                for (auto i = AgeGroup(0); i < num_groups; i++) {
-                    model[region].populations.set_difference_from_group_total<epi::AgeGroup>(
-                        {i, InfectionState::Susceptible}, num_population[region][size_t(i)]);
+        std::ifstream vaccine(path);
+        reader.parse(vaccine, root);
+
+        std::vector<std::vector<double>> vnum_vaccine(model.size(), std::vector<double>(6, 0.0));
+        for (unsigned int i = 0; i < root.size(); i++) {
+            auto it = std::find_if(vregion.begin(), vregion.end(), [&root, i, &id_name](auto r) {
+                return r == 0 || r == root[i][id_name].asInt();
+            });
+            if (it != vregion.end()) {
+                auto region_idx                 = size_t(it - vregion.begin());
+                auto& num_first_vac             = vnum_vaccine[region_idx][0];
+                auto& num_full_vac              = vnum_vaccine[region_idx][1];
+                auto& num_vac_ratio_young_first = vnum_vaccine[region_idx][2];
+                auto& num_vac_ratio_old_first   = vnum_vaccine[region_idx][3];
+                auto& num_vac_ratio_young_full  = vnum_vaccine[region_idx][4];
+                auto& num_vac_ratio_old_full    = vnum_vaccine[region_idx][5];
+                num_first_vac                   = root[i]["First_Shot"].asDouble();
+                num_full_vac                    = root[i]["Full_Vaccination"].asDouble();
+                num_vac_ratio_young_first       = root[i]["Ratio_Young_First"].asDouble();
+                num_vac_ratio_old_first         = root[i]["Ratio_Old_First"].asDouble();
+                num_vac_ratio_young_full        = root[i]["Ratio_Young_Full"].asDouble();
+                num_vac_ratio_old_full          = root[i]["Ratio_Old_Full"].asDouble();
+            }
+        }
+        std::cout << "Hello World!" << std::endl;
+        for (size_t region_idx = 0; region_idx < model.size(); ++region_idx) {
+            auto& params      = model[region_idx];
+            auto& num_vaccine = vnum_vaccine[region_idx];
+
+            auto num_groups = params.parameters.get_num_groups();
+
+            double r_young_first = num_vaccine[2] / 100;
+            double r_old_first   = num_vaccine[3] / 100;
+            double r_young_full  = num_vaccine[4] / 100;
+            double r_old_full    = num_vaccine[5] / 100;
+            std::vector<double> num_vaccine_first((size_t)num_groups, 0);
+            std::vector<double> num_vaccine_full((size_t)num_groups, 0);
+            double sum_population = 0;
+            for (auto i = AgeGroup(0); i < num_groups; i++) {
+                sum_population += params.populations.get_group_total(i);
+            }
+            for (auto i = AgeGroup(0); i < num_groups; i++) {
+                if ((size_t)i < 4 && (size_t)i > 1) {
+                    num_vaccine_first[(size_t)i] = r_young_first * params.populations.get_group_total(i);
+                    num_vaccine_full[(size_t)i]  = r_young_full * params.populations.get_group_total(i);
+                }
+                else if ((size_t)i > 3) {
+                    num_vaccine_first[(size_t)i] = r_old_first * params.populations.get_group_total(i);
+                    num_vaccine_full[(size_t)i]  = r_old_full * params.populations.get_group_total(i);
+                }
+                if (num_vaccine_first[(size_t)i] < 0) {
+                    num_vaccine_first[(size_t)i] = 0;
+                }
+                if (num_vaccine_full[(size_t)i] < 0) {
+                    num_vaccine_full[(size_t)i] = 0;
                 }
             }
-            else {
-                log_warning("No population data available for region " + std::to_string(region) +
-                            ". Population data has not been set.");
+
+            for (auto i = AgeGroup(0); i < num_groups; i++) {
+                if (params.populations[{i, InfectionStateV::Susceptible}] < num_vaccine_first[(size_t)i]) {
+                    num_vaccine_first[(size_t)i] = params.populations[{i, InfectionStateV::Susceptible}];
+                }
+                params.populations[{i, InfectionStateV::Susceptible}] =
+                    params.populations[{i, InfectionStateV::Susceptible}] - num_vaccine_first[(size_t)i];
+                params.populations[{i, InfectionStateV::SusceptibleV1}] =
+                    params.populations[{i, InfectionStateV::SusceptibleV1}] + num_vaccine_first[(size_t)i] -
+                    num_vaccine_full[(size_t)i];
+                params.populations[{i, InfectionStateV::Recovered}] =
+                    params.populations[{i, epi::InfectionStateV::Recovered}] + num_vaccine_full[(size_t)i];
             }
         }
-
-        return success();
     }
 
-    IOResult<void> set_divi_data(std::vector<SecirModel>& model, const std::string& path, const std::string& id_name,
-                                 const std::vector<int>& vregion, Date date, double scaling_factor_icu)
+    void get_vaccine_growth(std::vector<SecirModelV>& model, const std::string& path, int window)
     {
-        std::vector<double> sum_mu_I_U(vregion.size(), 0);
-        std::vector<std::vector<double>> mu_I_U{model.size()};
-        for (size_t region = 0; region < vregion.size(); region++) {
-            auto num_groups = model[region].parameters.get_num_groups();
-            for (auto i = epi::AgeGroup(0); i < num_groups; i++) {
-                sum_mu_I_U[region] += model[region].parameters.get<epi::ICUCasesPerHospitalized>()[i] *
-                                      model[region].parameters.get<epi::HospitalizedCasesPerInfectious>()[i];
-                mu_I_U[region].push_back(model[region].parameters.get<epi::ICUCasesPerHospitalized>()[i] *
-                                         model[region].parameters.get<epi::HospitalizedCasesPerInfectious>()[i]);
-            }
-        }
-        std::vector<double> num_icu(model.size(), 0.0);
-        BOOST_OUTCOME_TRY(read_divi_data(path, id_name, vregion, date, num_icu));
 
-        for (size_t region = 0; region < vregion.size(); region++) {
-            auto num_groups = model[region].parameters.get_num_groups();
-            for (auto i = epi::AgeGroup(0); i < num_groups; i++) {
-                model[region].populations[{i, epi::InfectionState::ICU}] =
-                    scaling_factor_icu * num_icu[region] * mu_I_U[region][(size_t)i] / sum_mu_I_U[region];
-            }
+        if (!boost::filesystem::exists(path)) {
+            log_error("Vaccine data file missing: {}.", path);
+            return;
         }
 
-        return success();
+        auto num_groups = model[0].parameters.get_num_groups();
+
+        Json::Reader reader;
+        Json::Value root;
+
+        size_t vaccination_gap      = (size_t)(int)(double)model[0].parameters.get<VaccinationGap>()[AgeGroup(0)];
+        size_t days_until_effective = (size_t)(int)(double)model[0].parameters.get<DaysUntilEffective>()[AgeGroup(0)];
+
+        std::ifstream vaccine(path);
+        reader.parse(vaccine, root);
+        std::vector<double> vaccine_first(root.size(), 0);
+        std::vector<double> vaccine_full(root.size(), 0);
+        std::vector<double> daily_first_vaccination;
+        std::vector<double> daily_full_vaccination;
+        for (unsigned int i = 0; i < root.size(); i++) {
+            vaccine_first[i] = root[i]["Erstimpfung"].asDouble();
+            vaccine_full[i]  = root[i]["Zweitimpfung"].asDouble();
+        }
+
+        double vaccine_first_mean;
+        double vaccine_full_mean;
+        for (size_t j = 0; j < vaccination_gap + days_until_effective; ++j) {
+            vaccine_first_mean = 0;
+            vaccine_full_mean  = 0;
+            for (size_t i = root.size() - window + j - vaccination_gap - days_until_effective;
+                 i < root.size() + j - vaccination_gap - days_until_effective; ++i) {
+                vaccine_first_mean += vaccine_first[i] / window;
+                vaccine_full_mean += vaccine_full[i] / window;
+            }
+            daily_first_vaccination.push_back(vaccine_first_mean);
+            daily_full_vaccination.push_back(vaccine_full_mean);
+        }
+        double sum_population = 0;
+        for (auto& param : model) {
+            for (auto i = AgeGroup(2); i < num_groups; ++i) {
+                sum_population += param.populations.get_group_total(i);
+            }
+        }
+
+        for (auto& param : model) {
+
+            for (auto i = AgeGroup(2); i < num_groups; ++i) {
+                param.parameters.get<DailyFirstVaccination>()[i] = {};
+                param.parameters.get<DailyFullVaccination>()[i]  = {};
+                for (size_t j = 0; j < daily_first_vaccination.size(); ++j) {
+                    param.parameters.get<DailyFirstVaccination>()[i].push_back(
+                        daily_first_vaccination[j] * (param.populations.get_group_total(i) / sum_population));
+                    param.parameters.get<DailyFullVaccination>()[i].push_back(
+                        daily_full_vaccination[j] * (param.populations.get_group_total(i) / sum_population));
+                    std::cout << "daily_vaccinated_full[" << j << "]:"
+                              << daily_full_vaccination[j] * (param.populations.get_group_total(i) / sum_population)
+                              << std::endl;
+                }
+
+                double vaccine_growth_first =
+                    vaccine_first_mean * (param.populations.get_group_total(i) / sum_population);
+                double vaccine_growth_full =
+                    vaccine_full_mean * (param.populations.get_group_total(i) / sum_population);
+                param.parameters.get<VaccineGrowthFirst>()[i] = vaccine_growth_first;
+                param.parameters.get<VaccineGrowthFull>()[i]  = vaccine_growth_full;
+            }
+        }
+        for (size_t i = 0; i < daily_first_vaccination.size(); ++i) {
+            std::cout << "daily_first[" << i
+                      << "]: " << model[0].parameters.get<DailyFirstVaccination>()[AgeGroup(2)][i] << std::endl;
+            std::cout << "daily_first2[" << i << "]: " << daily_first_vaccination[i] << std::endl;
+        }
     }
 
 } // namespace details
@@ -578,8 +602,7 @@ IOResult<std::vector<int>> get_county_ids(const std::string& path)
 
     for (unsigned int i = 0; i < root.size(); i++) {
         auto val = root[i]["ID_County"];
-        if (!val.isInt())
-        {
+        if (!val.isInt()) {
             log_error("ID_County field must be an integer.");
             return failure(StatusCode::InvalidFileFormat, filename + ", ID_County field must be an integer.");
         }

@@ -30,6 +30,8 @@
 #include "epidemiology/math/euler.h"
 #include "epidemiology/secir/contact_matrix.h"
 #include "epidemiology/secir/dynamic_npis.h"
+#include "epidemiology/secir/secir_vaccinated.h"
+#include "epidemiology/secir/secir.h"
 
 #include <cassert>
 
@@ -72,7 +74,7 @@ public:
     Sim& get_simulation()
     {
         return m_simulation;
-    }    
+    }
     const Sim& get_simulation() const
     {
         return m_simulation;
@@ -95,7 +97,6 @@ public:
         m_last_state = m_simulation.get_result().get_last_value();
     }
 
-
 private:
     Sim m_simulation;
     Eigen::VectorXd m_last_state;
@@ -104,14 +105,14 @@ private:
 
 /**
  * time dependent migration coefficients.
- */ 
+ */
 using MigrationCoefficients = DampingMatrixExpression<VectorDampings>;
 
 /**
  * sum of time dependent migration coefficients.
  * differentiate between sources of migration.
- */ 
-using MigrationCoefficientGroup = DampingMatrixExpressionGroup<MigrationCoefficients>; 
+ */
+using MigrationCoefficientGroup = DampingMatrixExpressionGroup<MigrationCoefficients>;
 
 /**
  * parameters that influence migration.
@@ -206,7 +207,7 @@ public:
      * serialize this. 
      * @see epi::serialize
      */
-    template<class IOContext>
+    template <class IOContext>
     void serialize(IOContext& io) const
     {
         auto obj = io.create_object("MigrationParameters");
@@ -218,17 +219,20 @@ public:
      * deserialize an object of this class.
      * @see epi::deserialize
      */
-    template<class IOContext>
+    template <class IOContext>
     static IOResult<MigrationParameters> deserialize(IOContext& io)
     {
         auto obj = io.expect_object("MigrationParameters");
-        auto c = obj.expect_element("Coefficients", Tag<MigrationCoefficientGroup>{});
-        auto d = obj.expect_element("DynamicNPIs", Tag<DynamicNPIs>{});
-        return apply(io, [](auto && c_, auto&& d_) {
-            MigrationParameters params(c_);
-            params.set_dynamic_npis_infected(d_);
-            return params;
-        }, c, d);
+        auto c   = obj.expect_element("Coefficients", Tag<MigrationCoefficientGroup>{});
+        auto d   = obj.expect_element("DynamicNPIs", Tag<DynamicNPIs>{});
+        return apply(
+            io,
+            [](auto&& c_, auto&& d_) {
+                MigrationParameters params(c_);
+                params.set_dynamic_npis_infected(d_);
+                return params;
+            },
+            c, d);
     }
 
 private:
@@ -287,13 +291,15 @@ public:
     template <class Sim>
     void apply_migration(double t, double dt, SimulationNode<Sim>& node_from, SimulationNode<Sim>& node_to);
 
+    void condense_m_migrated(double t);
+
 private:
     MigrationParameters m_parameters;
     TimeSeries<double> m_migrated;
     TimeSeries<double> m_return_times;
     bool m_return_migrated;
-    double m_t_last_dynamic_npi_check = -std::numeric_limits<double>::infinity();
-    std::pair<double, SimulationTime> m_dynamic_npi = {-std::numeric_limits<double>::max(), epi::SimulationTime(0)};
+    double m_t_last_dynamic_npi_check               = -std::numeric_limits<double>::infinity();
+    std::pair<double, SimulationTime> m_dynamic_npi = {-std::numeric_limits<double>::max(), SimulationTime(0)};
 };
 
 /**
@@ -310,12 +316,12 @@ private:
 template <class Sim, class = std::enable_if_t<is_compartment_model_simulation<Sim>::value>>
 void calculate_migration_returns(Eigen::Ref<TimeSeries<double>::Vector> migrated, const Sim& sim,
                                  Eigen::Ref<const TimeSeries<double>::Vector> total, double t, double dt)
-{    
+{
     auto y0 = migrated.eval();
     auto y1 = migrated;
     EulerIntegratorCore().step(
         [&](auto&& y, auto&& t_, auto&& dydt) {
-        sim.get_model().get_derivatives(total, y, t_, dydt);
+            sim.get_model().get_derivatives(total, y, t_, dydt);
         },
         y0, t, dt, y1);
 }
@@ -341,12 +347,14 @@ template <class Sim,
 double get_infections_relative(const SimulationNode<Sim>& /*node*/, double /*t*/,
                                const Eigen::Ref<const Eigen::VectorXd>& /*y*/)
 {
+    std::cout << "InfectRel1" << std::endl;
     assert(false && "Overload get_infections_relative for your own model/simulation if you want to use dynamic NPIs.");
     return 0;
 }
 template <class Sim, std::enable_if_t<is_expression_valid<get_infections_relative_expr_t, Sim>::value, void*> = nullptr>
 double get_infections_relative(const SimulationNode<Sim>& node, double t, const Eigen::Ref<const Eigen::VectorXd>& y)
 {
+    std::cout << "InfectRel2" << std::endl;
     return get_infections_relative(node.get_simulation(), t, y);
 }
 
@@ -372,12 +380,44 @@ template <class Sim, std::enable_if_t<!is_expression_valid<get_migration_factors
 auto get_migration_factors(const SimulationNode<Sim>& /*node*/, double /*t*/,
                            const Eigen::Ref<const Eigen::VectorXd>& y)
 {
+    std::cout << "getMigFactors1" << std::endl;
     return Eigen::VectorXd::Ones(y.rows());
 }
 template <class Sim, std::enable_if_t<is_expression_valid<get_migration_factors_expr_t, Sim>::value, void*> = nullptr>
 auto get_migration_factors(const SimulationNode<Sim>& node, double t, const Eigen::Ref<const Eigen::VectorXd>& y)
 {
+    std::cout << "getMigFactors2" << std::endl;
     return get_migration_factors(node.get_simulation(), t, y);
+}
+
+/**
+ * detect a get_migration_factors function for the Model type.
+ */
+template <class Sim>
+using test_commuters_expr_t = decltype(
+    test_commuters(std::declval<Sim&>(), std::declval<Eigen::Ref<const Eigen::VectorXd>&>(), std::declval<double>()));
+
+/**
+ * Get an additional migration factor.
+ * The absolute migration for each compartment is computed by c_i * y_i * f_i, wher c_i is the coefficient set in
+ * MigrationParameters, y_i is the current compartment population, f_i is the factor returned by this function.
+ * This factor is optional, default 1.0. If you need to adjust migration in that way, overload get_migration_factors(model, t, y)
+ * for your Model type so that can be found with argument-dependent lookup.
+ * @param node a node of a migration graph.
+ * @param y the current value of the simulation.
+ * @param t the current simulation time
+ * @return a vector expression, same size as y, with the factor for each compartment.
+ */
+template <class Sim, std::enable_if_t<!is_expression_valid<test_commuters_expr_t, Sim>::value, void*> = nullptr>
+void test_commuters(SimulationNode<Sim>& /*node*/, Eigen::Ref<Eigen::VectorXd> /*migrated*/, double /*time*/)
+{
+    std::cout << "test_commuters1" << std::endl;
+}
+template <class Sim, std::enable_if_t<is_expression_valid<test_commuters_expr_t, Sim>::value, void*> = nullptr>
+void test_commuters(SimulationNode<Sim>& node, Eigen::Ref<Eigen::VectorXd> migrated, double time)
+{
+    std::cout << "test_commuters2" << std::endl;
+    return test_commuters(node.get_simulation(), migrated, time);
 }
 
 template <class Sim>
@@ -389,17 +429,18 @@ void MigrationEdge::apply_migration(double t, double dt, SimulationNode<Sim>& no
     }
 
     auto& dyn_npis = m_parameters.get_dynamic_npis_infected();
-    if (dyn_npis.get_thresholds().size() > 0 && floating_point_greater_equal(t, m_t_last_dynamic_npi_check + dyn_npis.get_interval().get())) {
-        auto inf_rel            = get_infections_relative(node_from, t, node_from.get_last_state()) * dyn_npis.get_base_value();
+    if (dyn_npis.get_thresholds().size() > 0 &&
+        floating_point_greater_equal(t, m_t_last_dynamic_npi_check + dyn_npis.get_interval().get())) {
+        auto inf_rel = get_infections_relative(node_from, t, node_from.get_last_state()) * dyn_npis.get_base_value();
         auto exceeded_threshold = dyn_npis.get_max_exceeded_threshold(inf_rel);
         if (exceeded_threshold != dyn_npis.get_thresholds().end() &&
             (exceeded_threshold->first > m_dynamic_npi.first ||
              t > double(m_dynamic_npi.second))) { //old NPI was weaker or is expired
-            auto t_end    = epi::SimulationTime(t + double(dyn_npis.get_duration()));
+            auto t_end    = SimulationTime(t + double(dyn_npis.get_duration()));
             m_dynamic_npi = std::make_pair(exceeded_threshold->first, t_end);
-            epi::implement_dynamic_npis(
+            implement_dynamic_npis(
                 m_parameters.get_coefficients(), exceeded_threshold->second, SimulationTime(t), t_end, [this](auto& g) {
-                    return epi::make_migration_damping_vector(m_parameters.get_coefficients().get_shape(), g);
+                    return make_migration_damping_vector(m_parameters.get_coefficients().get_shape(), g);
                 });
         }
         m_t_last_dynamic_npi_check = t;
@@ -426,8 +467,12 @@ void MigrationEdge::apply_migration(double t, double dt, SimulationNode<Sim>& no
                    .matrix());
         m_return_times.add_time_point(t + dt);
 
+        test_commuters(node_from, m_migrated.get_last_value(), t);
+
         node_to.get_result().get_last_value() += m_migrated.get_last_value();
         node_from.get_result().get_last_value() -= m_migrated.get_last_value();
+
+        //condense_m_migrated(t);
     }
     m_return_migrated = !m_return_migrated;
 }

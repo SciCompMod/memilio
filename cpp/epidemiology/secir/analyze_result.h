@@ -31,6 +31,16 @@ namespace epi
 {
 
 /**
+ * interpolate time series with evenly spaced, integer time points for each edge.
+ * @see interpolate_simulation_result
+ * @param graph_result graph of simulations whose results will be interpolated
+ * @return one interpolated time series per edge
+ */
+template <class Simulation>
+std::vector<TimeSeries<double>>
+interpolate_simulation_result_edges(const Graph<SimulationNode<Simulation>, MigrationEdge>& graph_result);
+
+/**
  * interpolate time series with evenly spaced, integer time points.
  * time points [t0, t1, t2, ..., tmax] interpolated as [floor(t0), floor(t0) + 1,...,ceil(tmax)].
  * values at new time points are linearly interpolated from their immediate neighbors from the old time points.
@@ -61,6 +71,14 @@ std::vector<InterpolateResultT<T>> interpolate_ensemble_results(const std::vecto
     });
     return interpolated;
 }
+
+/**
+ * @brief Sum over all time poimts.
+ * @param ensemble_result result of multiple simulations (single TimeSeries or Graph)
+ * @return single value (or as many as nodes in the graph) per result in the ensemble
+ */
+std::vector<std::vector<TimeSeries<double>>>
+ensemble_sum_times(const std::vector<std::vector<TimeSeries<double>>>& ensemble_result);
 
 std::vector<std::vector<TimeSeries<double>>>
 sum_nodes(const std::vector<std::vector<TimeSeries<double>>>& ensemble_result);
@@ -113,7 +131,7 @@ interpolate_simulation_result(const Graph<SimulationNode<Simulation>, MigrationE
  * @param p percentile value in open interval (0, 1)
  * @return p percentile of the parameters over all runs
  */
-template <class Model>
+template <class Model, class ModelType = InfectionState>
 std::vector<Model> ensemble_params_percentile(const std::vector<std::vector<Model>>& ensemble_params, double p)
 {
     assert(p > 0.0 && p < 1.0 && "Invalid percentile value.");
@@ -140,10 +158,10 @@ std::vector<Model> ensemble_params_percentile(const std::vector<std::vector<Mode
     for (size_t node = 0; node < num_nodes; node++) {
         for (auto i = AgeGroup(0); i < AgeGroup(num_groups); i++) {
             //Population
-            for (size_t compart = 0; compart < (size_t)InfectionState::Count; ++compart) {
+            for (size_t compart = 0; compart < (size_t)ModelType::Count; ++compart) {
                 param_percentil(
                     node, [ compart, i ](auto&& model) -> auto& {
-                        return model.populations[{i, (InfectionState)compart}];
+                        return model.populations[{i, (ModelType)compart}];
                     });
             }
             // times
@@ -156,9 +174,13 @@ std::vector<Model> ensemble_params_percentile(const std::vector<std::vector<Mode
             param_percentil(
                 node, [i](auto&& model) -> auto& { return model.parameters.template get<HospitalizedToICUTime>()[i]; });
             param_percentil(
-                node, [i](auto&& model) -> auto& { return model.parameters.template get<HospitalizedToHomeTime>()[i]; });
+                node, [i](auto&& model) -> auto& {
+                    return model.parameters.template get<HospitalizedToHomeTime>()[i];
+                });
             param_percentil(
-                node, [i](auto&& model) -> auto& { return model.parameters.template get<HomeToHospitalizedTime>()[i]; });
+                node, [i](auto&& model) -> auto& {
+                    return model.parameters.template get<HomeToHospitalizedTime>()[i];
+                });
             param_percentil(
                 node, [i](auto&& model) -> auto& { return model.parameters.template get<ICUToDeathTime>()[i]; });
             param_percentil(
@@ -189,7 +211,9 @@ std::vector<Model> ensemble_params_percentile(const std::vector<std::vector<Mode
                     return model.parameters.template get<ICUCasesPerHospitalized>()[i];
                 });
             param_percentil(
-                node, [i](auto&& model) -> auto& { return model.parameters.template get<epi::DeathsPerHospitalized>()[i]; });
+                node, [i](auto&& model) -> auto& {
+                    return model.parameters.template get<epi::DeathsPerHospitalized>()[i];
+                });
         }
         // group independent params
         param_percentil(
@@ -199,11 +223,13 @@ std::vector<Model> ensemble_params_percentile(const std::vector<std::vector<Mode
 
         for (size_t run = 0; run < num_runs; run++) {
 
-            auto const& params           = ensemble_params[run][node];
-            single_element_ensemble[run] = params.parameters.template get<epi::ICUCapacity>() * params.populations.get_total();
+            auto const& params = ensemble_params[run][node];
+            single_element_ensemble[run] =
+                params.parameters.template get<epi::ICUCapacity>() * params.populations.get_total();
         }
         std::sort(single_element_ensemble.begin(), single_element_ensemble.end());
-        percentile[node].parameters.template set<epi::ICUCapacity>(single_element_ensemble[static_cast<size_t>(num_runs * p)]);
+        percentile[node].parameters.template set<epi::ICUCapacity>(
+            single_element_ensemble[static_cast<size_t>(num_runs * p)]);
     }
     return percentile;
 }
@@ -216,7 +242,8 @@ std::vector<Model> ensemble_params_percentile(const std::vector<std::vector<Mode
  * @param result2 second result.
  * @return Computed distance between result1 and result2.
  */
-double result_distance_2norm(const std::vector<epi::TimeSeries<double>>& result1, const std::vector<epi::TimeSeries<double>>& result2);
+double result_distance_2norm(const std::vector<epi::TimeSeries<double>>& result1,
+                             const std::vector<epi::TimeSeries<double>>& result2);
 
 /**
  * Compute the distance between two SECIR simulation results in one compartment.
@@ -227,8 +254,33 @@ double result_distance_2norm(const std::vector<epi::TimeSeries<double>>& result1
  * @param compartment the compartment to compare.
  * @return Computed distance between result1 and result2.
  */
+template <class ModelType = InfectionState>
 double result_distance_2norm(const std::vector<epi::TimeSeries<double>>& result1,
-                             const std::vector<epi::TimeSeries<double>>& result2, InfectionState compartment);
+                             const std::vector<epi::TimeSeries<double>>& result2, ModelType compartment)
+{
+    assert(result1.size() == result2.size());
+    assert(result1.size() > 0);
+    assert(result1[0].get_num_time_points() > 0);
+    assert(result1[0].get_num_elements() > 0);
+
+    auto num_compartments = Eigen::Index(ModelType::Count);
+    auto num_age_groups   = result1[0].get_num_elements() / num_compartments;
+
+    auto norm_sqr = 0.0;
+    for (auto iter_node1 = result1.begin(), iter_node2 = result2.begin(); iter_node1 < result1.end();
+         ++iter_node1, ++iter_node2) {
+        for (Eigen::Index time_idx = 0; time_idx < iter_node1->get_num_time_points(); ++time_idx) {
+            auto v1 = (*iter_node1)[time_idx];
+            auto v2 = (*iter_node2)[time_idx];
+            for (Eigen::Index age_idx = 0; age_idx < num_age_groups; ++age_idx) {
+                auto d1 = v1[age_idx * num_compartments + Eigen::Index(compartment)];
+                auto d2 = v2[age_idx * num_compartments + Eigen::Index(compartment)];
+                norm_sqr += (d1 - d2) * (d1 - d2);
+            }
+        }
+    }
+    return std::sqrt(norm_sqr);
+}
 
 } // namespace epi
 

@@ -142,7 +142,7 @@ public:
     /**
      * draw a random sample from the damping distributions
      */
-    void draw_sample() 
+    void draw_sample()
     {
         for (auto&& t : m_thresholds) {
             for (auto&& d : t.second) {
@@ -226,6 +226,20 @@ std::vector<size_t> get_damping_indices(const DampingExpr& damping_expr, Damping
     return indices;
 }
 
+/*template <class DampingExpr>
+void sort_dampings(const DampingExpr& damping_expr)
+{
+    std::sort(begin(dampings), end(dampings), [](auto& tup1, auto& tup2) {
+        auto cmp = sign(double(tup1.get_time()) - double(tup2.get_time()));
+        if (cmp == 0) {
+            cmp = sign(int(tup1.get_level()) - int(tup2.get_level()));
+            if (cmp == 0) {
+                cmp = sign(int(tup1.get_type()) - int(tup2.get_type()));
+            }
+        }
+        return cmp < 0;
+    });
+}*/
 /**
  * Get the value of the damping that matches the given type and level and that is active at the specified time.
  * If no damping is found, returns a zero matrix of the correct shape.

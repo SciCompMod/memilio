@@ -20,8 +20,8 @@
 #ifndef INFECTIONSTATE_H
 #define INFECTIONSTATE_H
 
-namespace epi {
-
+namespace epi
+{
 
 /**
  * @brief The InfectionState enum describes the possible
@@ -37,9 +37,43 @@ enum class InfectionState
     ICU          = 5,
     Recovered    = 6,
     Dead         = 7,
-    Count = 8
+    Count        = 8
 };
 
-}
+/**
+ * @brief The InfectionState enum describes the possible
+ * categories for the infectious state of persons
+ */
+enum class InfectionStateV
+{
+    Susceptible   = 0,
+    SusceptibleV1 = 1,
+    //SusceptibleV2  = 2,
+    Exposed   = 2,
+    ExposedV1 = 3,
+    //ExposedV2      = 5,
+    Carrier   = 4,
+    CarrierV1 = 5,
+    //CarrierV2      = 8,
+    CarrierT   = 6,
+    CarrierTV1 = 7,
+    //CarrierTV2     = 11,
+    Infected   = 8,
+    InfectedV1 = 9,
+    //InfectedV2     = 14,
+    InfectedT   = 10,
+    InfectedTV1 = 11,
+    //InfectedTV2    = 17,
+    Hospitalized   = 12,
+    HospitalizedV1 = 13,
+    //HospitalizedV2 = 20,
+    ICU   = 14,
+    ICUV1 = 15,
+    //ICUV2          = 23,
+    Recovered = 16,
+    Dead      = 17,
+    Count     = 18
+};
+} // namespace epi
 
 #endif

@@ -46,37 +46,36 @@ TEST(TestSecir, compareWithPreviousRun)
     // theta = theta_in; // icu per hospitalized
     // delta = delta_in; // deaths per ICUs
 
-    model.parameters.get<epi::IncubationTime>()[(epi::AgeGroup)0] = tinc;
-    model.parameters.get<epi::InfectiousTimeMild>()[(epi::AgeGroup)0] = tinfmild;
-    model.parameters.get<epi::SerialInterval>()[(epi::AgeGroup)0] = tserint;
+    model.parameters.get<epi::IncubationTime>()[(epi::AgeGroup)0]         = tinc;
+    model.parameters.get<epi::InfectiousTimeMild>()[(epi::AgeGroup)0]     = tinfmild;
+    model.parameters.get<epi::SerialInterval>()[(epi::AgeGroup)0]         = tserint;
     model.parameters.get<epi::HospitalizedToHomeTime>()[(epi::AgeGroup)0] = thosp2home;
     model.parameters.get<epi::HomeToHospitalizedTime>()[(epi::AgeGroup)0] = thome2hosp;
-    model.parameters.get<epi::HospitalizedToICUTime>()[(epi::AgeGroup)0] = thosp2icu;
-    model.parameters.get<epi::ICUToHomeTime>()[(epi::AgeGroup)0] = ticu2home;
-    model.parameters.get<epi::ICUToDeathTime>()[(epi::AgeGroup)0] = ticu2death;
+    model.parameters.get<epi::HospitalizedToICUTime>()[(epi::AgeGroup)0]  = thosp2icu;
+    model.parameters.get<epi::ICUToHomeTime>()[(epi::AgeGroup)0]          = ticu2home;
+    model.parameters.get<epi::ICUToDeathTime>()[(epi::AgeGroup)0]         = ticu2death;
 
     epi::ContactMatrixGroup& contact_matrix = model.parameters.get<epi::ContactPatterns>();
     contact_matrix[0]                       = epi::ContactMatrix(Eigen::MatrixXd::Constant(1, 1, cont_freq));
     contact_matrix[0].add_damping(0.7, epi::SimulationTime(30.));
 
     model.populations.set_total(nb_total_t0);
-    model.populations[{epi::AgeGroup(0), epi::InfectionState::Exposed}] = nb_exp_t0;
-    model.populations[{epi::AgeGroup(0), epi::InfectionState::Carrier}] = nb_car_t0;
-    model.populations[{epi::AgeGroup(0), epi::InfectionState::Infected}] = nb_inf_t0;
+    model.populations[{epi::AgeGroup(0), epi::InfectionState::Exposed}]      = nb_exp_t0;
+    model.populations[{epi::AgeGroup(0), epi::InfectionState::Carrier}]      = nb_car_t0;
+    model.populations[{epi::AgeGroup(0), epi::InfectionState::Infected}]     = nb_inf_t0;
     model.populations[{epi::AgeGroup(0), epi::InfectionState::Hospitalized}] = nb_hosp_t0;
-    model.populations[{epi::AgeGroup(0), epi::InfectionState::ICU}] = nb_icu_t0;
-    model.populations[{epi::AgeGroup(0), epi::InfectionState::Recovered}] = nb_rec_t0;
-    model.populations[{epi::AgeGroup(0), epi::InfectionState::Dead}] = nb_dead_t0;
-    model.populations.set_difference_from_total({epi::AgeGroup(0), epi::InfectionState::Susceptible},
-                                                nb_total_t0);
+    model.populations[{epi::AgeGroup(0), epi::InfectionState::ICU}]          = nb_icu_t0;
+    model.populations[{epi::AgeGroup(0), epi::InfectionState::Recovered}]    = nb_rec_t0;
+    model.populations[{epi::AgeGroup(0), epi::InfectionState::Dead}]         = nb_dead_t0;
+    model.populations.set_difference_from_total({epi::AgeGroup(0), epi::InfectionState::Susceptible}, nb_total_t0);
 
     model.parameters.get<epi::InfectionProbabilityFromContact>()[(epi::AgeGroup)0] = inf_prob;
-    model.parameters.get<epi::RelativeCarrierInfectability>()[(epi::AgeGroup)0] = carr_infec;
-    model.parameters.get<epi::AsymptoticCasesPerInfectious>()[(epi::AgeGroup)0] = alpha;
-    model.parameters.get<epi::RiskOfInfectionFromSympomatic>()[(epi::AgeGroup)0] = beta;
-    model.parameters.get<epi::HospitalizedCasesPerInfectious>()[(epi::AgeGroup)0] = rho;
-    model.parameters.get<epi::ICUCasesPerHospitalized>()[(epi::AgeGroup)0] = theta;
-    model.parameters.get<epi::DeathsPerHospitalized>()[(epi::AgeGroup)0] = delta;
+    model.parameters.get<epi::RelativeCarrierInfectability>()[(epi::AgeGroup)0]    = carr_infec;
+    model.parameters.get<epi::AsymptoticCasesPerInfectious>()[(epi::AgeGroup)0]    = alpha;
+    model.parameters.get<epi::RiskOfInfectionFromSympomatic>()[(epi::AgeGroup)0]   = beta;
+    model.parameters.get<epi::HospitalizedCasesPerInfectious>()[(epi::AgeGroup)0]  = rho;
+    model.parameters.get<epi::ICUCasesPerHospitalized>()[(epi::AgeGroup)0]         = theta;
+    model.parameters.get<epi::DeathsPerHospitalized>()[(epi::AgeGroup)0]           = delta;
 
     model.apply_constraints();
 
@@ -120,33 +119,32 @@ TEST(TestSecir, testParamConstructors)
     model.parameters.set<epi::StartDay>(start_day);
     model.parameters.set<epi::Seasonality>(seasonality);
 
-    model.parameters.get<epi::IncubationTime>()[(epi::AgeGroup)0] = tinc;
-    model.parameters.get<epi::InfectiousTimeMild>()[(epi::AgeGroup)0] = tinfmild;
-    model.parameters.get<epi::SerialInterval>()[(epi::AgeGroup)0] = tserint;
+    model.parameters.get<epi::IncubationTime>()[(epi::AgeGroup)0]         = tinc;
+    model.parameters.get<epi::InfectiousTimeMild>()[(epi::AgeGroup)0]     = tinfmild;
+    model.parameters.get<epi::SerialInterval>()[(epi::AgeGroup)0]         = tserint;
     model.parameters.get<epi::HospitalizedToHomeTime>()[(epi::AgeGroup)0] = thosp2home;
     model.parameters.get<epi::HomeToHospitalizedTime>()[(epi::AgeGroup)0] = thome2hosp;
-    model.parameters.get<epi::HospitalizedToICUTime>()[(epi::AgeGroup)0] = thosp2icu;
-    model.parameters.get<epi::ICUToHomeTime>()[(epi::AgeGroup)0] = ticu2home;
-    model.parameters.get<epi::ICUToDeathTime>()[(epi::AgeGroup)0] = ticu2death;
+    model.parameters.get<epi::HospitalizedToICUTime>()[(epi::AgeGroup)0]  = thosp2icu;
+    model.parameters.get<epi::ICUToHomeTime>()[(epi::AgeGroup)0]          = ticu2home;
+    model.parameters.get<epi::ICUToDeathTime>()[(epi::AgeGroup)0]         = ticu2death;
 
     model.populations.set_total(nb_total_t0);
-    model.populations[{epi::AgeGroup(0), epi::InfectionState::Exposed}] = nb_exp_t0;
-    model.populations[{epi::AgeGroup(0), epi::InfectionState::Carrier}] = nb_car_t0;
-    model.populations[{epi::AgeGroup(0), epi::InfectionState::Infected}] = nb_inf_t0;
+    model.populations[{epi::AgeGroup(0), epi::InfectionState::Exposed}]      = nb_exp_t0;
+    model.populations[{epi::AgeGroup(0), epi::InfectionState::Carrier}]      = nb_car_t0;
+    model.populations[{epi::AgeGroup(0), epi::InfectionState::Infected}]     = nb_inf_t0;
     model.populations[{epi::AgeGroup(0), epi::InfectionState::Hospitalized}] = nb_hosp_t0;
-    model.populations[{epi::AgeGroup(0), epi::InfectionState::ICU}] = nb_icu_t0;
-    model.populations[{epi::AgeGroup(0), epi::InfectionState::Recovered}] = nb_rec_t0;
-    model.populations[{epi::AgeGroup(0), epi::InfectionState::Dead}] = nb_dead_t0;
-    model.populations.set_difference_from_total({epi::AgeGroup(0), epi::InfectionState::Susceptible},
-                                                nb_total_t0);
+    model.populations[{epi::AgeGroup(0), epi::InfectionState::ICU}]          = nb_icu_t0;
+    model.populations[{epi::AgeGroup(0), epi::InfectionState::Recovered}]    = nb_rec_t0;
+    model.populations[{epi::AgeGroup(0), epi::InfectionState::Dead}]         = nb_dead_t0;
+    model.populations.set_difference_from_total({epi::AgeGroup(0), epi::InfectionState::Susceptible}, nb_total_t0);
 
     model.parameters.get<epi::InfectionProbabilityFromContact>()[(epi::AgeGroup)0] = inf_prob;
-    model.parameters.get<epi::RelativeCarrierInfectability>()[(epi::AgeGroup)0] = carr_infec;
-    model.parameters.get<epi::AsymptoticCasesPerInfectious>()[(epi::AgeGroup)0] = alpha;
-    model.parameters.get<epi::RiskOfInfectionFromSympomatic>()[(epi::AgeGroup)0] = beta;
-    model.parameters.get<epi::HospitalizedCasesPerInfectious>()[(epi::AgeGroup)0] = rho;
-    model.parameters.get<epi::ICUCasesPerHospitalized>()[(epi::AgeGroup)0] = theta;
-    model.parameters.get<epi::DeathsPerHospitalized>()[(epi::AgeGroup)0] = delta;
+    model.parameters.get<epi::RelativeCarrierInfectability>()[(epi::AgeGroup)0]    = carr_infec;
+    model.parameters.get<epi::AsymptoticCasesPerInfectious>()[(epi::AgeGroup)0]    = alpha;
+    model.parameters.get<epi::RiskOfInfectionFromSympomatic>()[(epi::AgeGroup)0]   = beta;
+    model.parameters.get<epi::HospitalizedCasesPerInfectious>()[(epi::AgeGroup)0]  = rho;
+    model.parameters.get<epi::ICUCasesPerHospitalized>()[(epi::AgeGroup)0]         = theta;
+    model.parameters.get<epi::DeathsPerHospitalized>()[(epi::AgeGroup)0]           = delta;
 
     epi::ContactMatrixGroup& contact_matrix = model.parameters.get<epi::ContactPatterns>();
     contact_matrix[0]                       = epi::ContactMatrix(Eigen::MatrixXd::Constant(1, 1, cont_freq));
@@ -176,18 +174,24 @@ TEST(TestSecir, testParamConstructors)
     EXPECT_EQ((model.populations[{epi::AgeGroup(0), epi::InfectionState::Dead}]),
               (model.populations[{epi::AgeGroup(0), epi::InfectionState::Dead}]));
 
-    EXPECT_EQ(model.parameters.get<epi::IncubationTime>()[(epi::AgeGroup)0], model2.parameters.get<epi::IncubationTime>()[(epi::AgeGroup)0]);
-    EXPECT_EQ(model.parameters.get<epi::SerialInterval>()[(epi::AgeGroup)0], model2.parameters.get<epi::SerialInterval>()[(epi::AgeGroup)0]);
-    EXPECT_EQ(model.parameters.get<epi::InfectiousTimeMild>()[(epi::AgeGroup)0], model2.parameters.get<epi::InfectiousTimeMild>()[(epi::AgeGroup)0]);
-    EXPECT_EQ(model.parameters.get<epi::InfectiousTimeAsymptomatic>()[(epi::AgeGroup)0], model2.parameters.get<epi::InfectiousTimeAsymptomatic>()[(epi::AgeGroup)0]);
+    EXPECT_EQ(model.parameters.get<epi::IncubationTime>()[(epi::AgeGroup)0],
+              model2.parameters.get<epi::IncubationTime>()[(epi::AgeGroup)0]);
+    EXPECT_EQ(model.parameters.get<epi::SerialInterval>()[(epi::AgeGroup)0],
+              model2.parameters.get<epi::SerialInterval>()[(epi::AgeGroup)0]);
+    EXPECT_EQ(model.parameters.get<epi::InfectiousTimeMild>()[(epi::AgeGroup)0],
+              model2.parameters.get<epi::InfectiousTimeMild>()[(epi::AgeGroup)0]);
+    EXPECT_EQ(model.parameters.get<epi::InfectiousTimeAsymptomatic>()[(epi::AgeGroup)0],
+              model2.parameters.get<epi::InfectiousTimeAsymptomatic>()[(epi::AgeGroup)0]);
     EXPECT_EQ(model.parameters.get<epi::HomeToHospitalizedTime>()[(epi::AgeGroup)0],
               model2.parameters.get<epi::HomeToHospitalizedTime>()[(epi::AgeGroup)0]);
     EXPECT_EQ(model.parameters.get<epi::HospitalizedToHomeTime>()[(epi::AgeGroup)0],
               model2.parameters.get<epi::HospitalizedToHomeTime>()[(epi::AgeGroup)0]);
     EXPECT_EQ(model.parameters.get<epi::HospitalizedToICUTime>()[(epi::AgeGroup)0],
               model2.parameters.get<epi::HospitalizedToICUTime>()[(epi::AgeGroup)0]);
-    EXPECT_EQ(model.parameters.get<epi::ICUToDeathTime>()[(epi::AgeGroup)0], model2.parameters.get<epi::ICUToDeathTime>()[(epi::AgeGroup)0]);
-    EXPECT_EQ(model.parameters.get<epi::ICUToHomeTime>()[(epi::AgeGroup)0], model2.parameters.get<epi::ICUToHomeTime>()[(epi::AgeGroup)0]);
+    EXPECT_EQ(model.parameters.get<epi::ICUToDeathTime>()[(epi::AgeGroup)0],
+              model2.parameters.get<epi::ICUToDeathTime>()[(epi::AgeGroup)0]);
+    EXPECT_EQ(model.parameters.get<epi::ICUToHomeTime>()[(epi::AgeGroup)0],
+              model2.parameters.get<epi::ICUToHomeTime>()[(epi::AgeGroup)0]);
     EXPECT_EQ(model.parameters.get<epi::ContactPatterns>().get_cont_freq_mat(),
               model2.parameters.get<epi::ContactPatterns>().get_cont_freq_mat());
 
@@ -232,18 +236,24 @@ TEST(TestSecir, testParamConstructors)
     EXPECT_EQ((model3.populations[{epi::AgeGroup(0), epi::InfectionState::Dead}]),
               (model.populations[{epi::AgeGroup(0), epi::InfectionState::Dead}]));
 
-    EXPECT_EQ(model3.parameters.get<epi::IncubationTime>()[(epi::AgeGroup)0], model.parameters.get<epi::IncubationTime>()[(epi::AgeGroup)0]);
-    EXPECT_EQ(model3.parameters.get<epi::SerialInterval>()[(epi::AgeGroup)0], model.parameters.get<epi::SerialInterval>()[(epi::AgeGroup)0]);
-    EXPECT_EQ(model3.parameters.get<epi::InfectiousTimeMild>()[(epi::AgeGroup)0], model.parameters.get<epi::InfectiousTimeMild>()[(epi::AgeGroup)0]);
-    EXPECT_EQ(model3.parameters.get<epi::InfectiousTimeAsymptomatic>()[(epi::AgeGroup)0], model.parameters.get<epi::InfectiousTimeAsymptomatic>()[(epi::AgeGroup)0]);
+    EXPECT_EQ(model3.parameters.get<epi::IncubationTime>()[(epi::AgeGroup)0],
+              model.parameters.get<epi::IncubationTime>()[(epi::AgeGroup)0]);
+    EXPECT_EQ(model3.parameters.get<epi::SerialInterval>()[(epi::AgeGroup)0],
+              model.parameters.get<epi::SerialInterval>()[(epi::AgeGroup)0]);
+    EXPECT_EQ(model3.parameters.get<epi::InfectiousTimeMild>()[(epi::AgeGroup)0],
+              model.parameters.get<epi::InfectiousTimeMild>()[(epi::AgeGroup)0]);
+    EXPECT_EQ(model3.parameters.get<epi::InfectiousTimeAsymptomatic>()[(epi::AgeGroup)0],
+              model.parameters.get<epi::InfectiousTimeAsymptomatic>()[(epi::AgeGroup)0]);
     EXPECT_EQ(model3.parameters.get<epi::HomeToHospitalizedTime>()[(epi::AgeGroup)0],
               model.parameters.get<epi::HomeToHospitalizedTime>()[(epi::AgeGroup)0]);
     EXPECT_EQ(model3.parameters.get<epi::HospitalizedToHomeTime>()[(epi::AgeGroup)0],
               model.parameters.get<epi::HospitalizedToHomeTime>()[(epi::AgeGroup)0]);
     EXPECT_EQ(model3.parameters.get<epi::HospitalizedToICUTime>()[(epi::AgeGroup)0],
               model.parameters.get<epi::HospitalizedToICUTime>()[(epi::AgeGroup)0]);
-    EXPECT_EQ(model3.parameters.get<epi::ICUToDeathTime>()[(epi::AgeGroup)0], model.parameters.get<epi::ICUToDeathTime>()[(epi::AgeGroup)0]);
-    EXPECT_EQ(model3.parameters.get<epi::ICUToHomeTime>()[(epi::AgeGroup)0], model.parameters.get<epi::ICUToHomeTime>()[(epi::AgeGroup)0]);
+    EXPECT_EQ(model3.parameters.get<epi::ICUToDeathTime>()[(epi::AgeGroup)0],
+              model.parameters.get<epi::ICUToDeathTime>()[(epi::AgeGroup)0]);
+    EXPECT_EQ(model3.parameters.get<epi::ICUToHomeTime>()[(epi::AgeGroup)0],
+              model.parameters.get<epi::ICUToHomeTime>()[(epi::AgeGroup)0]);
 
     EXPECT_EQ(model3.parameters.get<epi::InfectionProbabilityFromContact>()[(epi::AgeGroup)0],
               model.parameters.get<epi::InfectionProbabilityFromContact>()[(epi::AgeGroup)0]);
@@ -287,18 +297,24 @@ TEST(TestSecir, testParamConstructors)
     EXPECT_EQ((model3.populations[{epi::AgeGroup(0), epi::InfectionState::Dead}]),
               (model4.populations[{epi::AgeGroup(0), epi::InfectionState::Dead}]));
 
-    EXPECT_EQ(model3.parameters.get<epi::IncubationTime>()[(epi::AgeGroup)0], model4.parameters.get<epi::IncubationTime>()[(epi::AgeGroup)0]);
-    EXPECT_EQ(model3.parameters.get<epi::SerialInterval>()[(epi::AgeGroup)0], model4.parameters.get<epi::SerialInterval>()[(epi::AgeGroup)0]);
-    EXPECT_EQ(model3.parameters.get<epi::InfectiousTimeMild>()[(epi::AgeGroup)0], model4.parameters.get<epi::InfectiousTimeMild>()[(epi::AgeGroup)0]);
-    EXPECT_EQ(model3.parameters.get<epi::InfectiousTimeAsymptomatic>()[(epi::AgeGroup)0], model4.parameters.get<epi::InfectiousTimeAsymptomatic>()[(epi::AgeGroup)0]);
+    EXPECT_EQ(model3.parameters.get<epi::IncubationTime>()[(epi::AgeGroup)0],
+              model4.parameters.get<epi::IncubationTime>()[(epi::AgeGroup)0]);
+    EXPECT_EQ(model3.parameters.get<epi::SerialInterval>()[(epi::AgeGroup)0],
+              model4.parameters.get<epi::SerialInterval>()[(epi::AgeGroup)0]);
+    EXPECT_EQ(model3.parameters.get<epi::InfectiousTimeMild>()[(epi::AgeGroup)0],
+              model4.parameters.get<epi::InfectiousTimeMild>()[(epi::AgeGroup)0]);
+    EXPECT_EQ(model3.parameters.get<epi::InfectiousTimeAsymptomatic>()[(epi::AgeGroup)0],
+              model4.parameters.get<epi::InfectiousTimeAsymptomatic>()[(epi::AgeGroup)0]);
     EXPECT_EQ(model3.parameters.get<epi::HomeToHospitalizedTime>()[(epi::AgeGroup)0],
               model4.parameters.get<epi::HomeToHospitalizedTime>()[(epi::AgeGroup)0]);
     EXPECT_EQ(model3.parameters.get<epi::HospitalizedToHomeTime>()[(epi::AgeGroup)0],
               model4.parameters.get<epi::HospitalizedToHomeTime>()[(epi::AgeGroup)0]);
     EXPECT_EQ(model3.parameters.get<epi::HospitalizedToICUTime>()[(epi::AgeGroup)0],
               model4.parameters.get<epi::HospitalizedToICUTime>()[(epi::AgeGroup)0]);
-    EXPECT_EQ(model3.parameters.get<epi::ICUToDeathTime>()[(epi::AgeGroup)0], model4.parameters.get<epi::ICUToDeathTime>()[(epi::AgeGroup)0]);
-    EXPECT_EQ(model3.parameters.get<epi::ICUToHomeTime>()[(epi::AgeGroup)0], model4.parameters.get<epi::ICUToHomeTime>()[(epi::AgeGroup)0]);
+    EXPECT_EQ(model3.parameters.get<epi::ICUToDeathTime>()[(epi::AgeGroup)0],
+              model4.parameters.get<epi::ICUToDeathTime>()[(epi::AgeGroup)0]);
+    EXPECT_EQ(model3.parameters.get<epi::ICUToHomeTime>()[(epi::AgeGroup)0],
+              model4.parameters.get<epi::ICUToHomeTime>()[(epi::AgeGroup)0]);
 
     EXPECT_EQ(model3.parameters.get<epi::InfectionProbabilityFromContact>()[(epi::AgeGroup)0],
               model4.parameters.get<epi::InfectionProbabilityFromContact>()[(epi::AgeGroup)0]);
@@ -342,18 +358,24 @@ TEST(TestSecir, testParamConstructors)
     EXPECT_EQ((model5.populations[{epi::AgeGroup(0), epi::InfectionState::Dead}]),
               (model3.populations[{epi::AgeGroup(0), epi::InfectionState::Dead}]));
 
-    EXPECT_EQ(model5.parameters.get<epi::IncubationTime>()[(epi::AgeGroup)0], model3.parameters.get<epi::IncubationTime>()[(epi::AgeGroup)0]);
-    EXPECT_EQ(model5.parameters.get<epi::SerialInterval>()[(epi::AgeGroup)0], model3.parameters.get<epi::SerialInterval>()[(epi::AgeGroup)0]);
-    EXPECT_EQ(model5.parameters.get<epi::InfectiousTimeMild>()[(epi::AgeGroup)0], model3.parameters.get<epi::InfectiousTimeMild>()[(epi::AgeGroup)0]);
-    EXPECT_EQ(model5.parameters.get<epi::InfectiousTimeAsymptomatic>()[(epi::AgeGroup)0], model3.parameters.get<epi::InfectiousTimeAsymptomatic>()[(epi::AgeGroup)0]);
+    EXPECT_EQ(model5.parameters.get<epi::IncubationTime>()[(epi::AgeGroup)0],
+              model3.parameters.get<epi::IncubationTime>()[(epi::AgeGroup)0]);
+    EXPECT_EQ(model5.parameters.get<epi::SerialInterval>()[(epi::AgeGroup)0],
+              model3.parameters.get<epi::SerialInterval>()[(epi::AgeGroup)0]);
+    EXPECT_EQ(model5.parameters.get<epi::InfectiousTimeMild>()[(epi::AgeGroup)0],
+              model3.parameters.get<epi::InfectiousTimeMild>()[(epi::AgeGroup)0]);
+    EXPECT_EQ(model5.parameters.get<epi::InfectiousTimeAsymptomatic>()[(epi::AgeGroup)0],
+              model3.parameters.get<epi::InfectiousTimeAsymptomatic>()[(epi::AgeGroup)0]);
     EXPECT_EQ(model5.parameters.get<epi::HomeToHospitalizedTime>()[(epi::AgeGroup)0],
               model3.parameters.get<epi::HomeToHospitalizedTime>()[(epi::AgeGroup)0]);
     EXPECT_EQ(model5.parameters.get<epi::HospitalizedToHomeTime>()[(epi::AgeGroup)0],
               model3.parameters.get<epi::HospitalizedToHomeTime>()[(epi::AgeGroup)0]);
     EXPECT_EQ(model5.parameters.get<epi::HospitalizedToICUTime>()[(epi::AgeGroup)0],
               model3.parameters.get<epi::HospitalizedToICUTime>()[(epi::AgeGroup)0]);
-    EXPECT_EQ(model5.parameters.get<epi::ICUToDeathTime>()[(epi::AgeGroup)0], model3.parameters.get<epi::ICUToDeathTime>()[(epi::AgeGroup)0]);
-    EXPECT_EQ(model5.parameters.get<epi::ICUToHomeTime>()[(epi::AgeGroup)0], model3.parameters.get<epi::ICUToHomeTime>()[(epi::AgeGroup)0]);
+    EXPECT_EQ(model5.parameters.get<epi::ICUToDeathTime>()[(epi::AgeGroup)0],
+              model3.parameters.get<epi::ICUToDeathTime>()[(epi::AgeGroup)0]);
+    EXPECT_EQ(model5.parameters.get<epi::ICUToHomeTime>()[(epi::AgeGroup)0],
+              model3.parameters.get<epi::ICUToHomeTime>()[(epi::AgeGroup)0]);
 
     EXPECT_EQ(model5.parameters.get<epi::InfectionProbabilityFromContact>()[(epi::AgeGroup)0],
               model3.parameters.get<epi::InfectionProbabilityFromContact>()[(epi::AgeGroup)0]);
@@ -396,31 +418,31 @@ TEST(TestSecir, testSettersAndGetters)
 
     model.parameters.set<epi::ICUCapacity>(vec[0]);
 
-    model.parameters.get<epi::IncubationTime>()[(epi::AgeGroup)0] = vec[1];
-    model.parameters.get<epi::InfectiousTimeMild>()[(epi::AgeGroup)0] = vec[2];
-    model.parameters.get<epi::SerialInterval>()[(epi::AgeGroup)0] = vec[3];
-    model.parameters.get<epi::HospitalizedToHomeTime>()[(epi::AgeGroup)0] = vec[4];
-    model.parameters.get<epi::HomeToHospitalizedTime>()[(epi::AgeGroup)0] = vec[5];
-    model.parameters.get<epi::HospitalizedToICUTime>()[(epi::AgeGroup)0] = vec[6];
-    model.parameters.get<epi::ICUToHomeTime>()[(epi::AgeGroup)0] = vec[7];
+    model.parameters.get<epi::IncubationTime>()[(epi::AgeGroup)0]             = vec[1];
+    model.parameters.get<epi::InfectiousTimeMild>()[(epi::AgeGroup)0]         = vec[2];
+    model.parameters.get<epi::SerialInterval>()[(epi::AgeGroup)0]             = vec[3];
+    model.parameters.get<epi::HospitalizedToHomeTime>()[(epi::AgeGroup)0]     = vec[4];
+    model.parameters.get<epi::HomeToHospitalizedTime>()[(epi::AgeGroup)0]     = vec[5];
+    model.parameters.get<epi::HospitalizedToICUTime>()[(epi::AgeGroup)0]      = vec[6];
+    model.parameters.get<epi::ICUToHomeTime>()[(epi::AgeGroup)0]              = vec[7];
     model.parameters.get<epi::InfectiousTimeAsymptomatic>()[(epi::AgeGroup)0] = vec[8];
-    model.parameters.get<epi::ICUToDeathTime>()[(epi::AgeGroup)0] = vec[9];
+    model.parameters.get<epi::ICUToDeathTime>()[(epi::AgeGroup)0]             = vec[9];
 
-    model.populations[{epi::AgeGroup(0), epi::InfectionState::Exposed}] = vec[10];
-    model.populations[{epi::AgeGroup(0), epi::InfectionState::Carrier}] = vec[11];
-    model.populations[{epi::AgeGroup(0), epi::InfectionState::Infected}] = vec[12];
+    model.populations[{epi::AgeGroup(0), epi::InfectionState::Exposed}]      = vec[10];
+    model.populations[{epi::AgeGroup(0), epi::InfectionState::Carrier}]      = vec[11];
+    model.populations[{epi::AgeGroup(0), epi::InfectionState::Infected}]     = vec[12];
     model.populations[{epi::AgeGroup(0), epi::InfectionState::Hospitalized}] = vec[13];
-    model.populations[{epi::AgeGroup(0), epi::InfectionState::ICU}] = vec[14];
-    model.populations[{epi::AgeGroup(0), epi::InfectionState::Recovered}] = vec[15];
-    model.populations[{epi::AgeGroup(0), epi::InfectionState::Dead}] = vec[16];
+    model.populations[{epi::AgeGroup(0), epi::InfectionState::ICU}]          = vec[14];
+    model.populations[{epi::AgeGroup(0), epi::InfectionState::Recovered}]    = vec[15];
+    model.populations[{epi::AgeGroup(0), epi::InfectionState::Dead}]         = vec[16];
 
     model.parameters.get<epi::InfectionProbabilityFromContact>()[(epi::AgeGroup)0] = vec[17];
-    model.parameters.get<epi::RelativeCarrierInfectability>()[(epi::AgeGroup)0] = vec[18];
-    model.parameters.get<epi::AsymptoticCasesPerInfectious>()[(epi::AgeGroup)0] = vec[19];
-    model.parameters.get<epi::RiskOfInfectionFromSympomatic>()[(epi::AgeGroup)0] = vec[20];
-    model.parameters.get<epi::HospitalizedCasesPerInfectious>()[(epi::AgeGroup)0] = vec[21];
-    model.parameters.get<epi::ICUCasesPerHospitalized>()[(epi::AgeGroup)0] = vec[22];
-    model.parameters.get<epi::DeathsPerHospitalized>()[(epi::AgeGroup)0] = vec[23];
+    model.parameters.get<epi::RelativeCarrierInfectability>()[(epi::AgeGroup)0]    = vec[18];
+    model.parameters.get<epi::AsymptoticCasesPerInfectious>()[(epi::AgeGroup)0]    = vec[19];
+    model.parameters.get<epi::RiskOfInfectionFromSympomatic>()[(epi::AgeGroup)0]   = vec[20];
+    model.parameters.get<epi::HospitalizedCasesPerInfectious>()[(epi::AgeGroup)0]  = vec[21];
+    model.parameters.get<epi::ICUCasesPerHospitalized>()[(epi::AgeGroup)0]         = vec[22];
+    model.parameters.get<epi::DeathsPerHospitalized>()[(epi::AgeGroup)0]           = vec[23];
 
     EXPECT_NE(model.parameters.get<epi::IncubationTime>()[(epi::AgeGroup)0].get_distribution().get(), nullptr);
 
@@ -431,19 +453,24 @@ TEST(TestSecir, testSettersAndGetters)
 
     EXPECT_NE(model.parameters.get<epi::IncubationTime>()[(epi::AgeGroup)0].get_distribution().get(), nullptr);
 
-    check_distribution(*vec[1].get_distribution(), *model.parameters.get<epi::IncubationTime>()[(epi::AgeGroup)0].get_distribution());
-    check_distribution(*vec[2].get_distribution(), *model.parameters.get<epi::InfectiousTimeMild>()[(epi::AgeGroup)0].get_distribution());
-    check_distribution(*vec[3].get_distribution(), *model.parameters.get<epi::SerialInterval>()[(epi::AgeGroup)0].get_distribution());
+    check_distribution(*vec[1].get_distribution(),
+                       *model.parameters.get<epi::IncubationTime>()[(epi::AgeGroup)0].get_distribution());
+    check_distribution(*vec[2].get_distribution(),
+                       *model.parameters.get<epi::InfectiousTimeMild>()[(epi::AgeGroup)0].get_distribution());
+    check_distribution(*vec[3].get_distribution(),
+                       *model.parameters.get<epi::SerialInterval>()[(epi::AgeGroup)0].get_distribution());
     check_distribution(*vec[4].get_distribution(),
                        *model.parameters.get<epi::HospitalizedToHomeTime>()[(epi::AgeGroup)0].get_distribution());
     check_distribution(*vec[5].get_distribution(),
                        *model.parameters.get<epi::HomeToHospitalizedTime>()[(epi::AgeGroup)0].get_distribution());
     check_distribution(*vec[6].get_distribution(),
                        *model.parameters.get<epi::HospitalizedToICUTime>()[(epi::AgeGroup)0].get_distribution());
-    check_distribution(*vec[7].get_distribution(), *model.parameters.get<epi::ICUToHomeTime>()[(epi::AgeGroup)0].get_distribution());
+    check_distribution(*vec[7].get_distribution(),
+                       *model.parameters.get<epi::ICUToHomeTime>()[(epi::AgeGroup)0].get_distribution());
     check_distribution(*vec[8].get_distribution(),
                        *model.parameters.get<epi::InfectiousTimeAsymptomatic>()[(epi::AgeGroup)0].get_distribution());
-    check_distribution(*vec[9].get_distribution(), *model.parameters.get<epi::ICUToDeathTime>()[(epi::AgeGroup)0].get_distribution());
+    check_distribution(*vec[9].get_distribution(),
+                       *model.parameters.get<epi::ICUToDeathTime>()[(epi::AgeGroup)0].get_distribution());
     check_distribution(*vec[10].get_distribution(),
                        *model.populations[{epi::AgeGroup(0), epi::InfectionState::Exposed}].get_distribution());
     check_distribution(*vec[11].get_distribution(),
@@ -458,16 +485,19 @@ TEST(TestSecir, testSettersAndGetters)
                        *model.populations[{epi::AgeGroup(0), epi::InfectionState::Recovered}].get_distribution());
     check_distribution(*vec[16].get_distribution(),
                        *model.populations[{epi::AgeGroup(0), epi::InfectionState::Dead}].get_distribution());
-    check_distribution(*vec[17].get_distribution(),
-                       *model.parameters.get<epi::InfectionProbabilityFromContact>()[(epi::AgeGroup)0].get_distribution());
+    check_distribution(
+        *vec[17].get_distribution(),
+        *model.parameters.get<epi::InfectionProbabilityFromContact>()[(epi::AgeGroup)0].get_distribution());
     check_distribution(*vec[18].get_distribution(),
                        *model.parameters.get<epi::RelativeCarrierInfectability>()[(epi::AgeGroup)0].get_distribution());
     check_distribution(*vec[19].get_distribution(),
                        *model.parameters.get<epi::AsymptoticCasesPerInfectious>()[(epi::AgeGroup)0].get_distribution());
-    check_distribution(*vec[20].get_distribution(),
-                       *model.parameters.get<epi::RiskOfInfectionFromSympomatic>()[(epi::AgeGroup)0].get_distribution());
-    check_distribution(*vec[21].get_distribution(),
-                       *model.parameters.get<epi::HospitalizedCasesPerInfectious>()[(epi::AgeGroup)0].get_distribution());
+    check_distribution(
+        *vec[20].get_distribution(),
+        *model.parameters.get<epi::RiskOfInfectionFromSympomatic>()[(epi::AgeGroup)0].get_distribution());
+    check_distribution(
+        *vec[21].get_distribution(),
+        *model.parameters.get<epi::HospitalizedCasesPerInfectious>()[(epi::AgeGroup)0].get_distribution());
     check_distribution(*vec[22].get_distribution(),
                        *model.parameters.get<epi::ICUCasesPerHospitalized>()[(epi::AgeGroup)0].get_distribution());
     check_distribution(*vec[23].get_distribution(),
@@ -533,37 +563,36 @@ TEST(TestSecir, testValueConstraints)
     // theta = theta_in; // icu per hospitalized
     // delta = delta_in; // deaths per ICUs
 
-    model.parameters.get<epi::IncubationTime>()[(epi::AgeGroup)0] = tinc;
-    model.parameters.get<epi::InfectiousTimeMild>()[(epi::AgeGroup)0] = tinfmild;
-    model.parameters.get<epi::SerialInterval>()[(epi::AgeGroup)0] = tserint;
+    model.parameters.get<epi::IncubationTime>()[(epi::AgeGroup)0]         = tinc;
+    model.parameters.get<epi::InfectiousTimeMild>()[(epi::AgeGroup)0]     = tinfmild;
+    model.parameters.get<epi::SerialInterval>()[(epi::AgeGroup)0]         = tserint;
     model.parameters.get<epi::HospitalizedToHomeTime>()[(epi::AgeGroup)0] = thosp2home;
     model.parameters.get<epi::HomeToHospitalizedTime>()[(epi::AgeGroup)0] = thome2hosp;
-    model.parameters.get<epi::HospitalizedToICUTime>()[(epi::AgeGroup)0] = thosp2icu;
-    model.parameters.get<epi::ICUToHomeTime>()[(epi::AgeGroup)0] = ticu2home;
-    model.parameters.get<epi::ICUToDeathTime>()[(epi::AgeGroup)0] = ticu2death;
+    model.parameters.get<epi::HospitalizedToICUTime>()[(epi::AgeGroup)0]  = thosp2icu;
+    model.parameters.get<epi::ICUToHomeTime>()[(epi::AgeGroup)0]          = ticu2home;
+    model.parameters.get<epi::ICUToDeathTime>()[(epi::AgeGroup)0]         = ticu2death;
 
     epi::ContactMatrixGroup& contact_matrix = model.parameters.get<epi::ContactPatterns>();
     contact_matrix[0]                       = epi::ContactMatrix(Eigen::MatrixXd::Constant(1, 1, cont_freq));
     contact_matrix[0].add_damping(0.7, epi::SimulationTime(30.));
 
     model.populations.set_total(nb_total_t0);
-    model.populations[{epi::AgeGroup(0), epi::InfectionState::Exposed}] = nb_exp_t0;
-    model.populations[{epi::AgeGroup(0), epi::InfectionState::Carrier}] = nb_car_t0;
-    model.populations[{epi::AgeGroup(0), epi::InfectionState::Infected}] = nb_inf_t0;
+    model.populations[{epi::AgeGroup(0), epi::InfectionState::Exposed}]      = nb_exp_t0;
+    model.populations[{epi::AgeGroup(0), epi::InfectionState::Carrier}]      = nb_car_t0;
+    model.populations[{epi::AgeGroup(0), epi::InfectionState::Infected}]     = nb_inf_t0;
     model.populations[{epi::AgeGroup(0), epi::InfectionState::Hospitalized}] = nb_hosp_t0;
-    model.populations[{epi::AgeGroup(0), epi::InfectionState::ICU}] = nb_icu_t0;
-    model.populations[{epi::AgeGroup(0), epi::InfectionState::Recovered}] = nb_rec_t0;
-    model.populations[{epi::AgeGroup(0), epi::InfectionState::Dead}] = nb_dead_t0;
-    model.populations.set_difference_from_total({epi::AgeGroup(0), epi::InfectionState::Susceptible},
-                                                nb_total_t0);
+    model.populations[{epi::AgeGroup(0), epi::InfectionState::ICU}]          = nb_icu_t0;
+    model.populations[{epi::AgeGroup(0), epi::InfectionState::Recovered}]    = nb_rec_t0;
+    model.populations[{epi::AgeGroup(0), epi::InfectionState::Dead}]         = nb_dead_t0;
+    model.populations.set_difference_from_total({epi::AgeGroup(0), epi::InfectionState::Susceptible}, nb_total_t0);
 
     model.parameters.get<epi::InfectionProbabilityFromContact>()[(epi::AgeGroup)0] = inf_prob;
-    model.parameters.get<epi::RelativeCarrierInfectability>()[(epi::AgeGroup)0] = carr_infec;
-    model.parameters.get<epi::AsymptoticCasesPerInfectious>()[(epi::AgeGroup)0] = alpha;
-    model.parameters.get<epi::RiskOfInfectionFromSympomatic>()[(epi::AgeGroup)0] = beta;
-    model.parameters.get<epi::HospitalizedCasesPerInfectious>()[(epi::AgeGroup)0] = rho;
-    model.parameters.get<epi::ICUCasesPerHospitalized>()[(epi::AgeGroup)0] = theta;
-    model.parameters.get<epi::DeathsPerHospitalized>()[(epi::AgeGroup)0] = delta;
+    model.parameters.get<epi::RelativeCarrierInfectability>()[(epi::AgeGroup)0]    = carr_infec;
+    model.parameters.get<epi::AsymptoticCasesPerInfectious>()[(epi::AgeGroup)0]    = alpha;
+    model.parameters.get<epi::RiskOfInfectionFromSympomatic>()[(epi::AgeGroup)0]   = beta;
+    model.parameters.get<epi::HospitalizedCasesPerInfectious>()[(epi::AgeGroup)0]  = rho;
+    model.parameters.get<epi::ICUCasesPerHospitalized>()[(epi::AgeGroup)0]         = theta;
+    model.parameters.get<epi::DeathsPerHospitalized>()[(epi::AgeGroup)0]           = delta;
 
     epi::set_log_level(epi::LogLevel::off);
     model.parameters.check_constraints();
@@ -597,38 +626,36 @@ TEST(TestSecir, testModelConstraints)
 
     epi::SecirModel model(1);
 
-    model.parameters.get<epi::IncubationTime>()[(epi::AgeGroup)0] = tinc;
-    model.parameters.get<epi::InfectiousTimeMild>()[(epi::AgeGroup)0] = tinfmild;
-    model.parameters.get<epi::SerialInterval>()[(epi::AgeGroup)0] = tserint;
+    model.parameters.get<epi::IncubationTime>()[(epi::AgeGroup)0]         = tinc;
+    model.parameters.get<epi::InfectiousTimeMild>()[(epi::AgeGroup)0]     = tinfmild;
+    model.parameters.get<epi::SerialInterval>()[(epi::AgeGroup)0]         = tserint;
     model.parameters.get<epi::HospitalizedToHomeTime>()[(epi::AgeGroup)0] = thosp2home;
     model.parameters.get<epi::HomeToHospitalizedTime>()[(epi::AgeGroup)0] = thome2hosp;
-    model.parameters.get<epi::HospitalizedToICUTime>()[(epi::AgeGroup)0] = thosp2icu;
-    model.parameters.get<epi::ICUToHomeTime>()[(epi::AgeGroup)0] = ticu2home;
-    model.parameters.get<epi::ICUToDeathTime>()[(epi::AgeGroup)0] = ticu2death;
+    model.parameters.get<epi::HospitalizedToICUTime>()[(epi::AgeGroup)0]  = thosp2icu;
+    model.parameters.get<epi::ICUToHomeTime>()[(epi::AgeGroup)0]          = ticu2home;
+    model.parameters.get<epi::ICUToDeathTime>()[(epi::AgeGroup)0]         = ticu2death;
 
-    model.populations[{epi::AgeGroup(0), epi::InfectionState::Exposed}] = nb_exp_t0;
-    model.populations[{epi::AgeGroup(0), epi::InfectionState::Carrier}] = nb_car_t0;
-    model.populations[{epi::AgeGroup(0), epi::InfectionState::Infected}] = nb_inf_t0;
+    model.populations[{epi::AgeGroup(0), epi::InfectionState::Exposed}]      = nb_exp_t0;
+    model.populations[{epi::AgeGroup(0), epi::InfectionState::Carrier}]      = nb_car_t0;
+    model.populations[{epi::AgeGroup(0), epi::InfectionState::Infected}]     = nb_inf_t0;
     model.populations[{epi::AgeGroup(0), epi::InfectionState::Hospitalized}] = nb_hosp_t0;
-    model.populations[{epi::AgeGroup(0), epi::InfectionState::ICU}] = nb_icu_t0;
-    model.populations[{epi::AgeGroup(0), epi::InfectionState::Recovered}] = nb_rec_t0;
-    model.populations[{epi::AgeGroup(0), epi::InfectionState::Dead}] = nb_dead_t0;
-    model.populations.set_difference_from_total({epi::AgeGroup(0), epi::InfectionState::Susceptible},
-                                                nb_total_t0);
+    model.populations[{epi::AgeGroup(0), epi::InfectionState::ICU}]          = nb_icu_t0;
+    model.populations[{epi::AgeGroup(0), epi::InfectionState::Recovered}]    = nb_rec_t0;
+    model.populations[{epi::AgeGroup(0), epi::InfectionState::Dead}]         = nb_dead_t0;
+    model.populations.set_difference_from_total({epi::AgeGroup(0), epi::InfectionState::Susceptible}, nb_total_t0);
 
     model.parameters.get<epi::InfectionProbabilityFromContact>()[(epi::AgeGroup)0] = inf_prob;
-    model.parameters.get<epi::RelativeCarrierInfectability>()[(epi::AgeGroup)0] = carr_infec;
-    model.parameters.get<epi::AsymptoticCasesPerInfectious>()[(epi::AgeGroup)0] = alpha;
-    model.parameters.get<epi::RiskOfInfectionFromSympomatic>()[(epi::AgeGroup)0] = beta;
-    model.parameters.get<epi::HospitalizedCasesPerInfectious>()[(epi::AgeGroup)0] = rho;
-    model.parameters.get<epi::ICUCasesPerHospitalized>()[(epi::AgeGroup)0] = theta;
-    model.parameters.get<epi::DeathsPerHospitalized>()[(epi::AgeGroup)0] = delta;
+    model.parameters.get<epi::RelativeCarrierInfectability>()[(epi::AgeGroup)0]    = carr_infec;
+    model.parameters.get<epi::AsymptoticCasesPerInfectious>()[(epi::AgeGroup)0]    = alpha;
+    model.parameters.get<epi::RiskOfInfectionFromSympomatic>()[(epi::AgeGroup)0]   = beta;
+    model.parameters.get<epi::HospitalizedCasesPerInfectious>()[(epi::AgeGroup)0]  = rho;
+    model.parameters.get<epi::ICUCasesPerHospitalized>()[(epi::AgeGroup)0]         = theta;
+    model.parameters.get<epi::DeathsPerHospitalized>()[(epi::AgeGroup)0]           = delta;
 
     epi::ContactMatrixGroup& contact_matrix = model.parameters.get<epi::ContactPatterns>();
-    contact_matrix[0]                           = epi::ContactMatrix(Eigen::MatrixXd::Constant(1, 1, cont_freq));
+    contact_matrix[0]                       = epi::ContactMatrix(Eigen::MatrixXd::Constant(1, 1, cont_freq));
 
     model.apply_constraints();
-
     epi::TimeSeries<double> secihurd = simulate(t0, tmax, dt, model);
     double max_icu_cap               = 0;
     for (Eigen::Index i = 0; i < secihurd.get_num_time_points(); i++) {
@@ -696,23 +723,22 @@ TEST(Secir, testAndTraceCapacity)
     epi::SecirModel model(1);
     auto& params = model.parameters;
 
-    params.get<epi::IncubationTime>()[(epi::AgeGroup)0] = tinc;
+    params.get<epi::IncubationTime>()[(epi::AgeGroup)0]     = tinc;
     params.get<epi::InfectiousTimeMild>()[(epi::AgeGroup)0] = tinfmild;
-    params.get<epi::SerialInterval>()[(epi::AgeGroup)0] = tserint;
+    params.get<epi::SerialInterval>()[(epi::AgeGroup)0]     = tserint;
 
     epi::ContactMatrixGroup& contact_matrix = params.get<epi::ContactPatterns>();
     contact_matrix[0]                       = epi::ContactMatrix(Eigen::MatrixXd::Constant(1, 1, cont_freq));
 
-    model.populations[{epi::AgeGroup(0), epi::InfectionState::Exposed}] = nb_exp_t0;
-    model.populations[{epi::AgeGroup(0), epi::InfectionState::Carrier}] = nb_car_t0;
+    model.populations[{epi::AgeGroup(0), epi::InfectionState::Exposed}]  = nb_exp_t0;
+    model.populations[{epi::AgeGroup(0), epi::InfectionState::Carrier}]  = nb_car_t0;
     model.populations[{epi::AgeGroup(0), epi::InfectionState::Infected}] = nb_inf_t0;
-    model.populations.set_difference_from_total({epi::AgeGroup(0), epi::InfectionState::Susceptible},
-                                                nb_total_t0);
+    model.populations.set_difference_from_total({epi::AgeGroup(0), epi::InfectionState::Susceptible}, nb_total_t0);
 
     params.get<epi::InfectionProbabilityFromContact>()[(epi::AgeGroup)0] = inf_prob;
-    params.get<epi::RelativeCarrierInfectability>()[(epi::AgeGroup)0] = carr_infec;
-    params.get<epi::AsymptoticCasesPerInfectious>()[(epi::AgeGroup)0] = alpha;
-    params.get<epi::RiskOfInfectionFromSympomatic>()[(epi::AgeGroup)0] = beta;
+    params.get<epi::RelativeCarrierInfectability>()[(epi::AgeGroup)0]    = carr_infec;
+    params.get<epi::AsymptoticCasesPerInfectious>()[(epi::AgeGroup)0]    = alpha;
+    params.get<epi::RiskOfInfectionFromSympomatic>()[(epi::AgeGroup)0]   = beta;
 
     params.apply_constraints();
 
@@ -731,8 +757,10 @@ TEST(Secir, testAndTraceCapacity)
     auto dydt_over_capacity = Eigen::VectorXd(Eigen::Index(epi::InfectionState::Count));
     model.get_derivatives(y, y, 0, dydt_over_capacity);
 
-    EXPECT_DOUBLE_EQ(dydt_under_capacity[(size_t)epi::InfectionState::Exposed], dydt_default[(size_t)epi::InfectionState::Exposed]);
-    EXPECT_GT(dydt_over_capacity[(size_t)epi::InfectionState::Exposed], dydt_default[(size_t)epi::InfectionState::Exposed]);
+    EXPECT_DOUBLE_EQ(dydt_under_capacity[(size_t)epi::InfectionState::Exposed],
+                     dydt_default[(size_t)epi::InfectionState::Exposed]);
+    EXPECT_GT(dydt_over_capacity[(size_t)epi::InfectionState::Exposed],
+              dydt_default[(size_t)epi::InfectionState::Exposed]);
 }
 
 TEST(Secir, getInfectionsRelative)
@@ -740,12 +768,16 @@ TEST(Secir, getInfectionsRelative)
     size_t num_groups = 3;
     epi::SecirModel model((int)num_groups);
     model.populations[{epi::AgeGroup(0), epi::InfectionState::Infected}] = 100.0;
-    model.populations.set_difference_from_group_total<epi::AgeGroup>({epi::AgeGroup(0), epi::InfectionState::Susceptible}, 10'000.0);
+    model.populations.set_difference_from_group_total<epi::AgeGroup>(
+        {epi::AgeGroup(0), epi::InfectionState::Susceptible}, 10'000.0);
     model.populations[{epi::AgeGroup(1), epi::InfectionState::Infected}] = 50.0;
-    model.populations.set_difference_from_group_total<epi::AgeGroup>({epi::AgeGroup(1), epi::InfectionState::Susceptible}, 20'000.0);
+    model.populations.set_difference_from_group_total<epi::AgeGroup>(
+        {epi::AgeGroup(1), epi::InfectionState::Susceptible}, 20'000.0);
     model.populations[{epi::AgeGroup(2), epi::InfectionState::Infected}] = 25.0;
-    model.populations.set_difference_from_group_total<epi::AgeGroup>({epi::AgeGroup(2), epi::InfectionState::Susceptible}, 40'000.0);
+    model.populations.set_difference_from_group_total<epi::AgeGroup>(
+        {epi::AgeGroup(2), epi::InfectionState::Susceptible}, 40'000.0);
 
     epi::SecirSimulation<> sim(model, 0.0);
-    ASSERT_EQ(epi::get_infections_relative(sim, 0.0, sim.get_result().get_last_value()), (100. + 50. + 25.) / (10'000 + 20'000 + 40'000));
+    ASSERT_EQ(epi::get_infections_relative(sim, 0.0, sim.get_result().get_last_value()),
+              (100. + 50. + 25.) / (10'000 + 20'000 + 40'000));
 }

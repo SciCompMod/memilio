@@ -46,6 +46,7 @@ add_library(epidemiology
     epidemiology/secir/damping.h
     epidemiology/secir/secir_params.h
     epidemiology/secir/secir.h
+    epidemiology/secir/secir_vaccinated.h
     epidemiology/secir/seir.h
     epidemiology/secir/seir.cpp
     epidemiology/math/adapt_rk.cpp
@@ -63,6 +64,8 @@ add_library(epidemiology
     epidemiology/utils/visitor.h
     epidemiology/secir/parameter_space.h
     epidemiology/secir/parameter_space.cpp
+    epidemiology/secir/parameter_space_vaccinated.h
+    epidemiology/secir/parameter_space_vaccinated.cpp
     epidemiology/utils/uncertain_value.h
     epidemiology/utils/uncertain_value.cpp
     epidemiology/secir/uncertain_matrix.h    
@@ -115,6 +118,7 @@ add_library(epidemiology
     epidemiology/abm/testing_scheme.cpp
     epidemiology/abm/testing_scheme.h
     epidemiology/secir/parameter_studies.h
+    epidemiology/secir/parameter_studies_vaccinated.h
     epidemiology/secir/analyze_result.h
     epidemiology/secir/analyze_result.cpp
 )
@@ -154,8 +158,8 @@ if (EPI_BUILD_EPI_IO)
     )
 
     target_link_libraries(epidemiology_io PUBLIC epidemiology jsoncpp Boost::disable_autolinking
-                          PRIVATE ${HDF5_CXX_LIBRARIES} Boost::filesystem)
-    target_include_directories(epidemiology_io PRIVATE ${HDF5_INCLUDE_DIRS})
+                          PUBLIC ${HDF5_CXX_LIBRARIES} Boost::filesystem)
+    target_include_directories(epidemiology_io PUBLIC ${HDF5_INCLUDE_DIRS})
 
     target_compile_definitions(epidemiology_io PUBLIC "-DHAVE_EPI_IO")
     target_compile_options(epidemiology_io PRIVATE

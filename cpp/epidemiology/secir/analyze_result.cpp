@@ -66,6 +66,18 @@ TimeSeries<double> interpolate_simulation_result(const TimeSeries<double>& simul
 
     return interpolated;
 }
+template <class Simulation>
+std::vector<TimeSeries<double>>
+interpolate_simulation_result_edges(const Graph<SimulationNode<Simulation>, MigrationEdge>& graph_result)
+{
+    std::vector<TimeSeries<double>> interpolated;
+    interpolated.reserve(graph_result.edges().size());
+    std::transform(graph_result.edges().begin(), graph_result.edges().end(), std::back_inserter(interpolated),
+                   [](auto& e) {
+                       return interpolate_simulation_result(e.property.get_migrated());
+                   });
+    return interpolated;
+}
 
 std::vector<std::vector<TimeSeries<double>>>
 sum_nodes(const std::vector<std::vector<TimeSeries<double>>>& ensemble_result)
@@ -83,6 +95,26 @@ sum_nodes(const std::vector<std::vector<TimeSeries<double>>>& ensemble_result)
             sum_result[run][0].get_time(time) = ensemble_result[run][0].get_time(time);
             for (size_t node = 0; node < num_nodes; node++) {
                 sum_result[run][0][time] += ensemble_result[run][node][time];
+            }
+        }
+    }
+    return sum_result;
+}
+
+std::vector<std::vector<TimeSeries<double>>>
+ensemble_sum_times(const std::vector<std::vector<TimeSeries<double>>>& ensemble_result)
+{
+    auto num_runs        = ensemble_result.size();
+    auto num_nodes       = ensemble_result[0].size();
+    auto num_time_points = ensemble_result[0][0].get_num_time_points();
+    auto num_elements    = ensemble_result[0][0].get_num_elements();
+
+    std::vector<std::vector<TimeSeries<double>>> sum_result(
+        num_runs, std::vector<TimeSeries<double>>(num_nodes, TimeSeries<double>::zero(1, num_elements)));
+    for (size_t run = 0; run < num_runs; run++) {
+        for (size_t node = 0; node < num_nodes; node++) {
+            for (Eigen::Index time = 0; time < num_time_points; time++) {
+                sum_result[run][node][0] += ensemble_result[run][node][time];
             }
         }
     }
@@ -159,33 +191,6 @@ double result_distance_2norm(const std::vector<epi::TimeSeries<double>>& result1
             auto v1 = (*iter_node1)[time_idx];
             auto v2 = (*iter_node2)[time_idx];
             norm_sqr += ((v1 - v2).array() * (v1 - v2).array()).sum();
-        }
-    }
-    return std::sqrt(norm_sqr);
-}
-
-double result_distance_2norm(const std::vector<epi::TimeSeries<double>>& result1,
-                             const std::vector<epi::TimeSeries<double>>& result2, InfectionState compartment)
-{
-    assert(result1.size() == result2.size());
-    assert(result1.size() > 0);
-    assert(result1[0].get_num_time_points() > 0);
-    assert(result1[0].get_num_elements() > 0);
-
-    auto num_compartments = Eigen::Index(InfectionState::Count);
-    auto num_age_groups   = result1[0].get_num_elements() / num_compartments;
-
-    auto norm_sqr = 0.0;
-    for (auto iter_node1 = result1.begin(), iter_node2 = result2.begin(); iter_node1 < result1.end();
-         ++iter_node1, ++iter_node2) {
-        for (Eigen::Index time_idx = 0; time_idx < iter_node1->get_num_time_points(); ++time_idx) {
-            auto v1 = (*iter_node1)[time_idx];
-            auto v2 = (*iter_node2)[time_idx];
-            for (Eigen::Index age_idx = 0; age_idx < num_age_groups; ++age_idx) {
-                auto d1 = v1[age_idx * num_compartments + Eigen::Index(compartment)];
-                auto d2 = v2[age_idx * num_compartments + Eigen::Index(compartment)];
-                norm_sqr += (d1 - d2) * (d1 - d2);
-            }
         }
     }
     return std::sqrt(norm_sqr);

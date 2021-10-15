@@ -46,41 +46,43 @@ TEST(TestSaveParameters, json_single_sim_write_read_compare)
 
     epi::SecirModel model(2);
     epi::AgeGroup num_groups = model.parameters.get_num_groups();
-    double fact       = 1.0 / (double)(size_t)num_groups;
+    double fact              = 1.0 / (double)(size_t)num_groups;
 
     auto& params = model.parameters;
 
     for (auto i = epi::AgeGroup(0); i < num_groups; i++) {
-        model.parameters.get<epi::IncubationTime>()[i] = tinc;
-        model.parameters.get<epi::InfectiousTimeMild>()[i] = tinfmild;
-        model.parameters.get<epi::SerialInterval>()[i] = tserint;
-        model.parameters.get<epi::HospitalizedToHomeTime>()[i] = thosp2home;
-        model.parameters.get<epi::HomeToHospitalizedTime>()[i] = thome2hosp;
-        model.parameters.get<epi::HospitalizedToICUTime>()[i] = thosp2icu;
-        model.parameters.get<epi::ICUToHomeTime>()[i] = ticu2home;
+        model.parameters.get<epi::IncubationTime>()[i]             = tinc;
+        model.parameters.get<epi::InfectiousTimeMild>()[i]         = tinfmild;
+        model.parameters.get<epi::SerialInterval>()[i]             = tserint;
+        model.parameters.get<epi::HospitalizedToHomeTime>()[i]     = thosp2home;
+        model.parameters.get<epi::HomeToHospitalizedTime>()[i]     = thome2hosp;
+        model.parameters.get<epi::HospitalizedToICUTime>()[i]      = thosp2icu;
+        model.parameters.get<epi::ICUToHomeTime>()[i]              = ticu2home;
         model.parameters.get<epi::InfectiousTimeAsymptomatic>()[i] = tinfasy;
-        model.parameters.get<epi::ICUToDeathTime>()[i] = ticu2death;
+        model.parameters.get<epi::ICUToDeathTime>()[i]             = ticu2death;
 
-        model.populations[{i, epi::InfectionState::Exposed}] = fact * num_exp_t0;
-        model.populations[{i, epi::InfectionState::Carrier}] = fact * num_car_t0;
-        model.populations[{i, epi::InfectionState::Infected}] = fact * num_inf_t0;
+        model.populations[{i, epi::InfectionState::Exposed}]      = fact * num_exp_t0;
+        model.populations[{i, epi::InfectionState::Carrier}]      = fact * num_car_t0;
+        model.populations[{i, epi::InfectionState::Infected}]     = fact * num_inf_t0;
         model.populations[{i, epi::InfectionState::Hospitalized}] = fact * num_hosp_t0;
-        model.populations[{i, epi::InfectionState::ICU}] = fact * num_icu_t0;
-        model.populations[{i, epi::InfectionState::Recovered}] = fact * num_rec_t0;
-        model.populations[{i, epi::InfectionState::Dead}] = fact * num_dead_t0;
-        model.populations.set_difference_from_group_total<epi::AgeGroup>({i, epi::InfectionState::Susceptible}, fact * num_total_t0);
+        model.populations[{i, epi::InfectionState::ICU}]          = fact * num_icu_t0;
+        model.populations[{i, epi::InfectionState::Recovered}]    = fact * num_rec_t0;
+        model.populations[{i, epi::InfectionState::Dead}]         = fact * num_dead_t0;
+        model.populations.set_difference_from_group_total<epi::AgeGroup>({i, epi::InfectionState::Susceptible},
+                                                                         fact * num_total_t0);
 
         model.parameters.get<epi::InfectionProbabilityFromContact>()[i] = 0.06;
-        model.parameters.get<epi::RelativeCarrierInfectability>()[i] = 0.67;
-        model.parameters.get<epi::AsymptoticCasesPerInfectious>()[i] = alpha;
-        model.parameters.get<epi::RiskOfInfectionFromSympomatic>()[i] = beta;
-        model.parameters.get<epi::HospitalizedCasesPerInfectious>()[i] = rho;
-        model.parameters.get<epi::ICUCasesPerHospitalized>()[i] = theta;
-        model.parameters.get<epi::DeathsPerHospitalized>()[i] = delta;
+        model.parameters.get<epi::RelativeCarrierInfectability>()[i]    = 0.67;
+        model.parameters.get<epi::AsymptoticCasesPerInfectious>()[i]    = alpha;
+        model.parameters.get<epi::RiskOfInfectionFromSympomatic>()[i]   = beta;
+        model.parameters.get<epi::HospitalizedCasesPerInfectious>()[i]  = rho;
+        model.parameters.get<epi::ICUCasesPerHospitalized>()[i]         = theta;
+        model.parameters.get<epi::DeathsPerHospitalized>()[i]           = delta;
     }
 
     epi::ContactMatrixGroup& contact_matrix = params.get<epi::ContactPatterns>();
-    contact_matrix[0] = epi::ContactMatrix(Eigen::MatrixXd::Constant((size_t)num_groups, (size_t)num_groups, fact * cont_freq));
+    contact_matrix[0] =
+        epi::ContactMatrix(Eigen::MatrixXd::Constant((size_t)num_groups, (size_t)num_groups, fact * cont_freq));
     contact_matrix.add_damping(0.7, epi::SimulationTime(30.));
     auto damping2  = Eigen::MatrixXd::Zero((size_t)num_groups, (size_t)num_groups).eval();
     damping2(0, 0) = 0.8;
@@ -89,9 +91,9 @@ TEST(TestSaveParameters, json_single_sim_write_read_compare)
     epi::set_params_distributions_normal(model, t0, tmax, 0.2);
 
     params.get<epi::IncubationTime>()[(epi::AgeGroup)0].get_distribution()->add_predefined_sample(4711.0);
-    
+
     TempFileRegister file_register;
-    auto filename = file_register.get_unique_path("TestParameters-%%%%-%%%%.json");
+    auto filename     = file_register.get_unique_path("TestParameters-%%%%-%%%%.json");
     auto write_status = epi::write_json(filename, model);
     ASSERT_THAT(print_wrap(write_status), IsSuccess());
 
@@ -102,7 +104,7 @@ TEST(TestSaveParameters, json_single_sim_write_read_compare)
     const epi::UncertainContactMatrix& contact      = model.parameters.get<epi::ContactPatterns>();
     const epi::UncertainContactMatrix& read_contact = read_model.parameters.get<epi::ContactPatterns>();
 
-    num_groups             = model.parameters.get_num_groups();
+    num_groups           = model.parameters.get_num_groups();
     auto num_groups_read = read_model.parameters.get_num_groups();
     ASSERT_EQ(num_groups, num_groups_read);
 
@@ -191,9 +193,8 @@ TEST(TestSaveParameters, json_single_sim_write_read_compare)
                            *read_model.parameters.get<epi::AsymptoticCasesPerInfectious>()[i].get_distribution());
         check_distribution(*model.parameters.get<epi::DeathsPerHospitalized>()[i].get_distribution(),
                            *read_model.parameters.get<epi::DeathsPerHospitalized>()[i].get_distribution());
-        check_distribution(
-            *model.parameters.get<epi::HospitalizedCasesPerInfectious>()[i].get_distribution(),
-            *read_model.parameters.get<epi::HospitalizedCasesPerInfectious>()[i].get_distribution());
+        check_distribution(*model.parameters.get<epi::HospitalizedCasesPerInfectious>()[i].get_distribution(),
+                           *read_model.parameters.get<epi::HospitalizedCasesPerInfectious>()[i].get_distribution());
         check_distribution(*model.parameters.get<epi::ICUCasesPerHospitalized>()[i].get_distribution(),
                            *read_model.parameters.get<epi::ICUCasesPerHospitalized>()[i].get_distribution());
 
@@ -217,44 +218,46 @@ TEST(TestSaveParameters, json_graphs_write_read_compare)
 
     epi::SecirModel model(2);
     epi::AgeGroup num_groups = model.parameters.get_num_groups();
-    double fact       = 1.0 / (double)(size_t)num_groups;
+    double fact              = 1.0 / (double)(size_t)num_groups;
 
     model.parameters.set<epi::TestAndTraceCapacity>(30);
 
     for (auto i = epi::AgeGroup(0); i < num_groups; i++) {
-        model.parameters.get<epi::IncubationTime>()[i] = tinc;
-        model.parameters.get<epi::InfectiousTimeMild>()[i] = tinfmild;
-        model.parameters.get<epi::SerialInterval>()[i] = tserint;
-        model.parameters.get<epi::HospitalizedToHomeTime>()[i] = thosp2home;
-        model.parameters.get<epi::HomeToHospitalizedTime>()[i] = thome2hosp;
-        model.parameters.get<epi::HospitalizedToICUTime>()[i] = thosp2icu;
-        model.parameters.get<epi::ICUToHomeTime>()[i] = ticu2home;
+        model.parameters.get<epi::IncubationTime>()[i]             = tinc;
+        model.parameters.get<epi::InfectiousTimeMild>()[i]         = tinfmild;
+        model.parameters.get<epi::SerialInterval>()[i]             = tserint;
+        model.parameters.get<epi::HospitalizedToHomeTime>()[i]     = thosp2home;
+        model.parameters.get<epi::HomeToHospitalizedTime>()[i]     = thome2hosp;
+        model.parameters.get<epi::HospitalizedToICUTime>()[i]      = thosp2icu;
+        model.parameters.get<epi::ICUToHomeTime>()[i]              = ticu2home;
         model.parameters.get<epi::InfectiousTimeAsymptomatic>()[i] = tinfasy;
-        model.parameters.get<epi::ICUToDeathTime>()[i] = ticu2death;
+        model.parameters.get<epi::ICUToDeathTime>()[i]             = ticu2death;
 
-        model.populations[{i, epi::InfectionState::Exposed}] = fact * num_exp_t0;
-        model.populations[{i, epi::InfectionState::Carrier}] = fact * num_car_t0;
-        model.populations[{i, epi::InfectionState::Infected}] = fact * num_inf_t0;
+        model.populations[{i, epi::InfectionState::Exposed}]      = fact * num_exp_t0;
+        model.populations[{i, epi::InfectionState::Carrier}]      = fact * num_car_t0;
+        model.populations[{i, epi::InfectionState::Infected}]     = fact * num_inf_t0;
         model.populations[{i, epi::InfectionState::Hospitalized}] = fact * num_hosp_t0;
-        model.populations[{i, epi::InfectionState::ICU}] = fact * num_icu_t0;
-        model.populations[{i, epi::InfectionState::Recovered}] = fact * num_rec_t0;
-        model.populations[{i, epi::InfectionState::Dead}] = fact * num_dead_t0;
+        model.populations[{i, epi::InfectionState::ICU}]          = fact * num_icu_t0;
+        model.populations[{i, epi::InfectionState::Recovered}]    = fact * num_rec_t0;
+        model.populations[{i, epi::InfectionState::Dead}]         = fact * num_dead_t0;
         model.populations.set_difference_from_group_total<epi::AgeGroup>({i, epi::InfectionState::Susceptible},
                                                                          fact * num_total_t0);
 
-        model.parameters.get<epi::InfectionProbabilityFromContact>()[i] = 0.06;
-        model.parameters.get<epi::RelativeCarrierInfectability>()[i] = 0.67;
-        model.parameters.get<epi::AsymptoticCasesPerInfectious>()[i] = alpha;
-        model.parameters.get<epi::RiskOfInfectionFromSympomatic>()[i] = beta;
+        model.parameters.get<epi::InfectionProbabilityFromContact>()[i]  = 0.06;
+        model.parameters.get<epi::RelativeCarrierInfectability>()[i]     = 0.67;
+        model.parameters.get<epi::AsymptoticCasesPerInfectious>()[i]     = alpha;
+        model.parameters.get<epi::RiskOfInfectionFromSympomatic>()[i]    = beta;
         model.parameters.get<epi::MaxRiskOfInfectionFromSympomatic>()[i] = beta * 3;
-        model.parameters.get<epi::HospitalizedCasesPerInfectious>()[i] = rho;
-        model.parameters.get<epi::ICUCasesPerHospitalized>()[i] = theta;
-        model.parameters.get<epi::DeathsPerHospitalized>()[i] = delta;
+        model.parameters.get<epi::HospitalizedCasesPerInfectious>()[i]   = rho;
+        model.parameters.get<epi::ICUCasesPerHospitalized>()[i]          = theta;
+        model.parameters.get<epi::DeathsPerHospitalized>()[i]            = delta;
     }
 
     epi::ContactMatrixGroup& contact_matrix = model.parameters.get<epi::ContactPatterns>();
-    contact_matrix[0] = epi::ContactMatrix(Eigen::MatrixXd::Constant((size_t)num_groups, (size_t)num_groups, fact * cont_freq));
-    Eigen::MatrixXd m = Eigen::MatrixXd::Constant((size_t)num_groups, (size_t)num_groups, 0.7).triangularView<Eigen::Upper>();
+    contact_matrix[0] =
+        epi::ContactMatrix(Eigen::MatrixXd::Constant((size_t)num_groups, (size_t)num_groups, fact * cont_freq));
+    Eigen::MatrixXd m =
+        Eigen::MatrixXd::Constant((size_t)num_groups, (size_t)num_groups, 0.7).triangularView<Eigen::Upper>();
     contact_matrix.add_damping(m, epi::SimulationTime(30.));
 
     epi::set_params_distributions_normal(model, t0, tmax, 0.15);
@@ -266,7 +269,7 @@ TEST(TestSaveParameters, json_graphs_write_read_compare)
     graph.add_edge(1, 0, Eigen::VectorXd::Constant(model.populations.get_num_compartments(), 0.01));
 
     TempFileRegister file_register;
-    auto graph_dir = file_register.get_unique_path("graph_parameters-%%%%-%%%%");
+    auto graph_dir    = file_register.get_unique_path("graph_parameters-%%%%-%%%%");
     auto write_status = epi::write_graph(graph, graph_dir);
     ASSERT_THAT(print_wrap(write_status), IsSuccess());
 
@@ -281,11 +284,11 @@ TEST(TestSaveParameters, json_graphs_write_read_compare)
     ASSERT_EQ(num_edges, graph_read.edges().size());
 
     for (size_t node = 0; node < num_nodes; node++) {
-        epi::SecirModel graph_model = graph.nodes()[0].property;
-        epi::ContactMatrixGroup& graph_cont_matrix  = graph_model.parameters.get<epi::ContactPatterns>();
+        epi::SecirModel graph_model                = graph.nodes()[0].property;
+        epi::ContactMatrixGroup& graph_cont_matrix = graph_model.parameters.get<epi::ContactPatterns>();
 
-        epi::SecirModel graph_read_model = graph_read.nodes()[0].property;
-        epi::ContactMatrixGroup& graph_read_cont_matrix  = graph_read_model.parameters.get<epi::ContactPatterns>();
+        epi::SecirModel graph_read_model                = graph_read.nodes()[0].property;
+        epi::ContactMatrixGroup& graph_read_cont_matrix = graph_read_model.parameters.get<epi::ContactPatterns>();
 
         ASSERT_EQ(graph_read_cont_matrix.get_num_groups(), static_cast<Eigen::Index>((size_t)num_groups));
         ASSERT_EQ(graph_read_cont_matrix, graph_cont_matrix);
@@ -389,12 +392,11 @@ TEST(TestSaveParameters, json_graphs_write_read_compare)
             check_distribution(
                 *graph_model.parameters.get<epi::HomeToHospitalizedTime>()[group].get_distribution().get(),
                 *graph_read_model.parameters.get<epi::HomeToHospitalizedTime>()[group].get_distribution().get());
-            check_distribution(*graph_model.parameters.get<epi::MaxRiskOfInfectionFromSympomatic>()[group]
-                                    .get_distribution()
-                                    .get(),
-                               *graph_read_model.parameters.get<epi::MaxRiskOfInfectionFromSympomatic>()[group]
-                                    .get_distribution()
-                                    .get());
+            check_distribution(
+                *graph_model.parameters.get<epi::MaxRiskOfInfectionFromSympomatic>()[group].get_distribution().get(),
+                *graph_read_model.parameters.get<epi::MaxRiskOfInfectionFromSympomatic>()[group]
+                     .get_distribution()
+                     .get());
             check_distribution(
                 *graph_model.parameters.get<epi::DeathsPerHospitalized>()[group].get_distribution().get(),
                 *graph_read_model.parameters.get<epi::DeathsPerHospitalized>()[group].get_distribution().get());
@@ -424,9 +426,9 @@ TEST(TestSaveParameters, ReadPopulationDataRKIAges)
     std::string path = TEST_DATA_DIR;
 
     for (auto group = epi::AgeGroup(0); group < epi::AgeGroup(6); group++) {
-        model[0].parameters.get<epi::AsymptoticCasesPerInfectious>()[group] = 0.1 * ((size_t)group + 1);
+        model[0].parameters.get<epi::AsymptoticCasesPerInfectious>()[group]   = 0.1 * ((size_t)group + 1);
         model[0].parameters.get<epi::HospitalizedCasesPerInfectious>()[group] = 0.11 * ((size_t)group + 1);
-        model[0].parameters.get<epi::ICUCasesPerHospitalized>()[group] = 0.12 * ((size_t)group + 1);
+        model[0].parameters.get<epi::ICUCasesPerHospitalized>()[group]        = 0.12 * ((size_t)group + 1);
     }
     auto read_result = epi::read_population_data_germany(model, date, scaling_factor_inf, scaling_factor_icu, path);
     ASSERT_THAT(print_wrap(read_result), IsSuccess());
@@ -467,11 +469,12 @@ TEST(TestSaveParameters, ReadPopulationDataStateAllAges)
     std::string path = TEST_DATA_DIR;
 
     for (auto group = epi::AgeGroup(0); group < epi::AgeGroup(6); group++) {
-        model[0].parameters.get<epi::AsymptoticCasesPerInfectious>()[group] = 0.1 * ((size_t)group + 1);
+        model[0].parameters.get<epi::AsymptoticCasesPerInfectious>()[group]   = 0.1 * ((size_t)group + 1);
         model[0].parameters.get<epi::HospitalizedCasesPerInfectious>()[group] = 0.11 * ((size_t)group + 1);
-        model[0].parameters.get<epi::ICUCasesPerHospitalized>()[group] = 0.12 * ((size_t)group + 1);
+        model[0].parameters.get<epi::ICUCasesPerHospitalized>()[group]        = 0.12 * ((size_t)group + 1);
     }
-    auto read_result = epi::read_population_data_state(model, date, state, scaling_factor_inf, scaling_factor_icu, path);
+    auto read_result =
+        epi::read_population_data_state(model, date, state, scaling_factor_inf, scaling_factor_icu, path);
     ASSERT_THAT(print_wrap(read_result), IsSuccess());
 
     std::vector<double> sus   = {116695.3, 283933, 622945.61, 1042462.09, 606578.8, 212990};
@@ -511,9 +514,9 @@ TEST(TestSaveParameters, ReadPopulationDataCountyAllAges)
     std::string path = TEST_DATA_DIR;
 
     for (auto group = epi::AgeGroup(0); group < epi::AgeGroup(6); group++) {
-        model[0].parameters.get<epi::AsymptoticCasesPerInfectious>()[group] = 0.1 * ((size_t)group + 1);
+        model[0].parameters.get<epi::AsymptoticCasesPerInfectious>()[group]   = 0.1 * ((size_t)group + 1);
         model[0].parameters.get<epi::HospitalizedCasesPerInfectious>()[group] = 0.11 * ((size_t)group + 1);
-        model[0].parameters.get<epi::ICUCasesPerHospitalized>()[group] = 0.12 * ((size_t)group + 1);
+        model[0].parameters.get<epi::ICUCasesPerHospitalized>()[group]        = 0.12 * ((size_t)group + 1);
     }
     auto read_result =
         epi::read_population_data_county(model, date, county, scaling_factor_inf, scaling_factor_icu, path);
@@ -591,22 +594,22 @@ TEST(TestSaveParameters, ExtrapolateRKI)
     std::vector<int> county = {1002};
 
     for (auto group = epi::AgeGroup(0); group < epi::AgeGroup(6); group++) {
-        model[0].parameters.get<epi::AsymptoticCasesPerInfectious>()[group] = 0.1 * ((size_t)group + 1);
+        model[0].parameters.get<epi::AsymptoticCasesPerInfectious>()[group]   = 0.1 * ((size_t)group + 1);
         model[0].parameters.get<epi::HospitalizedCasesPerInfectious>()[group] = 0.11 * ((size_t)group + 1);
-        model[0].parameters.get<epi::ICUCasesPerHospitalized>()[group] = 0.12 * ((size_t)group + 1);
+        model[0].parameters.get<epi::ICUCasesPerHospitalized>()[group]        = 0.12 * ((size_t)group + 1);
     }
 
     TempFileRegister file_register;
     auto results_dir = file_register.get_unique_path("ExtrapolateRKI-%%%%-%%%%");
     boost::filesystem::create_directory(results_dir);
-    auto extrapolate_result =
-        epi::extrapolate_rki_results(model, TEST_DATA_DIR, results_dir, county, date, scaling_factor_inf, scaling_factor_icu, 1);
+    auto extrapolate_result = epi::extrapolate_rki_results(model, TEST_DATA_DIR, results_dir, county, date,
+                                                           scaling_factor_inf, scaling_factor_icu, 1);
     ASSERT_THAT(print_wrap(extrapolate_result), IsSuccess());
 
     auto read_result = epi::read_result(epi::path_join(results_dir, "Results_rki.h5"), 6);
     ASSERT_THAT(print_wrap(read_result), IsSuccess());
     auto& file_results = read_result.value();
-    auto results = file_results[0].get_groups();
+    auto results       = file_results[0].get_groups();
 
     std::vector<double> sus   = {10284.4, 19086.2, 73805.3, 82522.6, 43731.9, 15620.2};
     std::vector<double> exp   = {0.571429, 3.8, 14.8286, 12.9429, 2.21429, 1.85714};

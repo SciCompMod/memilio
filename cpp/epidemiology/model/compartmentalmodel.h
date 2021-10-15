@@ -28,18 +28,17 @@
 
 #define USE_DERIV_FUNC 1
 
-
 namespace epi
 {
 
-namespace details 
+namespace details
 {
     //helpers for check_constraint
-    template<class T>
+    template <class T>
     using check_constraints_expr_t = decltype(std::declval<T>().check_constraints());
 
     //helpers for apply_constraints
-    template<class T>
+    template <class T>
     using apply_constraints_expr_t = decltype(std::declval<T>().apply_constraints());
 } //namespace details
 
@@ -74,14 +73,14 @@ using has_apply_constraints_member_function = is_expression_valid<details::apply
 template <class Pop, class Params>
 struct CompartmentalModel {
 public:
-    using Populations = Pop;
+    using Populations  = Pop;
     using ParameterSet = Params;
 
     // The flow function takes a set of parameters, the current time t and the
     // snapshot y of all population sizes at time t, represented as a flat array and returns a scalar value
     // that represents a flow going from one compartment to another.
-    using FlowFunction =
-        std::function<ScalarType(ParameterSet const& p, Eigen::Ref<const Eigen::VectorXd> pop, Eigen::Ref<const Eigen::VectorXd> y, double t)>;
+    using FlowFunction = std::function<ScalarType(ParameterSet const& p, Eigen::Ref<const Eigen::VectorXd> pop,
+                                                  Eigen::Ref<const Eigen::VectorXd> y, double t)>;
 
     // A flow is a tuple of a from-index corresponding to the departing compartment, a to-index
     // corresponding to the receiving compartment and a FlowFunction. The value returned by the flow
@@ -113,10 +112,9 @@ public:
 
 #if USE_DERIV_FUNC
     //REMARK: Not pure virtual for easier java/python bindings
-    virtual void get_derivatives(Eigen::Ref<const Eigen::VectorXd>,
-                                 Eigen::Ref<const Eigen::VectorXd> /*y*/, double /*t*/,
-                                 Eigen::Ref<Eigen::VectorXd> /*dydt*/) const {};
-#endif  // USE_DERIV_FUNC
+    virtual void get_derivatives(Eigen::Ref<const Eigen::VectorXd>, Eigen::Ref<const Eigen::VectorXd> /*y*/,
+                                 double /*t*/, Eigen::Ref<Eigen::VectorXd> /*dydt*/) const {};
+#endif // USE_DERIV_FUNC
 
     /**
      * @brief eval_right_hand_side evaulates the right-hand-side f of the ODE dydt = f(y, t)
@@ -130,7 +128,8 @@ public:
      * @param t the current time
      * @param dydt a reference to the calculated output
      */
-    void eval_right_hand_side(Eigen::Ref<const Eigen::VectorXd> pop, Eigen::Ref<const Eigen::VectorXd> y, double t, Eigen::Ref<Eigen::VectorXd> dydt) const
+    void eval_right_hand_side(Eigen::Ref<const Eigen::VectorXd> pop, Eigen::Ref<const Eigen::VectorXd> y, double t,
+                              Eigen::Ref<Eigen::VectorXd> dydt) const
     {
         dydt.setZero();
 
@@ -156,32 +155,28 @@ public:
     }
 
     // TODO: if constexpr as soon as we open for C++17
-    template<typename T = ParameterSet>
-    std::enable_if_t<has_apply_constraints_member_function<T>::value>
-    apply_constraints()
+    template <typename T = ParameterSet>
+    std::enable_if_t<has_apply_constraints_member_function<T>::value> apply_constraints()
     {
         populations.apply_constraints();
         parameters.apply_constraints();
     }
 
-    template<typename T = ParameterSet>
-    std::enable_if_t<!has_apply_constraints_member_function<T>::value>
-    apply_constraints()
+    template <typename T = ParameterSet>
+    std::enable_if_t<!has_apply_constraints_member_function<T>::value> apply_constraints()
     {
         populations.apply_constraints();
     }
 
-    template<typename T = ParameterSet>
-    std::enable_if_t<has_check_constraints_member_function<T>::value>
-    check_constraints() const
+    template <typename T = ParameterSet>
+    std::enable_if_t<has_check_constraints_member_function<T>::value> check_constraints() const
     {
         populations.check_constraints();
         parameters.check_constraints();
     }
 
-    template<typename T = ParameterSet>
-    std::enable_if_t<!has_check_constraints_member_function<T>::value>
-    check_constraints() const
+    template <typename T = ParameterSet>
+    std::enable_if_t<!has_check_constraints_member_function<T>::value> check_constraints() const
     {
         populations.check_constraints();
     }
@@ -225,7 +220,7 @@ using get_initial_values_expr_t =
  */
 template <class M>
 using is_compartment_model = std::integral_constant<bool, (is_expression_valid<eval_right_hand_side_expr_t, M>::value &&
-                                                           is_expression_valid<get_initial_values_expr_t, M>::value )>;
+                                                           is_expression_valid<get_initial_values_expr_t, M>::value)>;
 
 } // namespace epi
 
