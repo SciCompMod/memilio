@@ -47,10 +47,10 @@ namespace epi
  * @{
  */
 template <class T, class = void>
-struct TupleType : std::false_type {
+struct PickleType : std::false_type {
 };
 template <>
-struct TupleType<bool> : std::true_type {
+struct PickleType<bool> : std::true_type {
 };
 
 
@@ -58,42 +58,42 @@ template <class T>
 using is_small_integral = std::integral_constant<bool, (std::is_integral<T>::value && sizeof(T) <= 4)>;
 //signed small ints
 template <class T>
-struct TupleType<T, std::enable_if_t<std::is_arithmetic<T>::value>> : std::true_type {
+struct PickleType<T, std::enable_if_t<std::is_arithmetic<T>::value>> : std::true_type {
 };
 
 //unsigned small ints
 template <class T>
-struct TupleType<T, std::enable_if_t<conjunction_v<is_small_integral<T>, std::is_unsigned<T>>>> : std::true_type {
+struct PickleType<T, std::enable_if_t<conjunction_v<is_small_integral<T>, std::is_unsigned<T>>>> : std::true_type {
 };
 
 //signed big ints
 template <>
-struct TupleType<int64_t> : std::true_type {
+struct PickleType<int64_t> : std::true_type {
 };
 
 //unsigned big ints
 template <>
-struct TupleType<uint64_t> : std::true_type {
+struct PickleType<uint64_t> : std::true_type {
 };
 
 //double
 template <>
-struct TupleType<double> : std::true_type {
+struct PickleType<double> : std::true_type {
 };
 
 //float
 template <>
-struct TupleType<float> : std::true_type {
+struct PickleType<float> : std::true_type {
 };
 
 //string
 template <>
-struct TupleType<std::string> : std::true_type {
+struct PickleType<std::string> : std::true_type {
 };
 
 //string literals
 template <>
-struct TupleType<const char*> : std::true_type {
+struct PickleType<const char*> : std::true_type {
 };
 
 template<typename T, class V>
@@ -120,13 +120,13 @@ static py::tuple transform_serialize(const T& v)
  * Base class for implementations of serialization framework concepts.
  * Stores status and flags.
  */
-class TupleBase
+class PickleBase
 {
 public:
     /**
      * Constructor that sets status and flags.
      */
-    TupleBase(std::shared_ptr<IOStatus> status, int flags)
+    PickleBase(std::shared_ptr<IOStatus> status, int flags)
         : m_status(status)
         , m_flags(flags)
     {
@@ -178,7 +178,7 @@ protected:
 /**
  * Implementation of the IOObject concept for JSON format.
  */
-class TupleObject : public TupleBase
+class PickleObject : public PickleBase
 {
 public:
     /**
@@ -187,8 +187,8 @@ public:
      * @param value reference to the json value that will store the data.
      * @param flags flags to determine the behavior of serialization.
      */
-    TupleObject(const std::shared_ptr<IOStatus>& status, py::tuple& value, int flags)
-        : TupleBase{status, flags}
+    PickleObject(const std::shared_ptr<IOStatus>& status, py::tuple& value, int flags)
+        : PickleBase{status, flags}
         , m_value{value}
         , m_index(0)
     {
@@ -201,9 +201,9 @@ public:
      * @param value value of the element.
      * @{
      */
-    template <class T, std::enable_if_t<TupleType<T>::value, void*> = nullptr>
+    template <class T, std::enable_if_t<PickleType<T>::value, void*> = nullptr>
     void add_element( const std::string& name, const T& value);
-    template <class T, std::enable_if_t<!TupleType<T>::value, void*> = nullptr>
+    template <class T, std::enable_if_t<!PickleType<T>::value, void*> = nullptr>
     void add_element( const std::string& name, const T& value);
     /**@}*/
 
@@ -224,9 +224,9 @@ public:
      * @param e iterator to end of the list.
      * @{
      */
-    template <class Iter, std::enable_if_t<TupleType<typename Iter::value_type>::value, void*> = nullptr>
+    template <class Iter, std::enable_if_t<PickleType<typename Iter::value_type>::value, void*> = nullptr>
     void add_list( const std::string& name, Iter b, Iter e);
-    template <class Iter, std::enable_if_t<!TupleType<typename Iter::value_type>::value, void*> = nullptr>
+    template <class Iter, std::enable_if_t<!PickleType<typename Iter::value_type>::value, void*> = nullptr>
     void add_list( const std::string& name, Iter b, Iter e);
     /**@}*/
 
@@ -238,9 +238,9 @@ public:
      * @return retrieved element if succesful, error otherwise.
      * @{
      */
-    template <class T, std::enable_if_t<TupleType<T>::value, void*> = nullptr>
+    template <class T, std::enable_if_t<PickleType<T>::value, void*> = nullptr>
     IOResult<T> expect_element(const std::string& name, Tag<T> tag);
-    template <class T, std::enable_if_t<!TupleType<T>::value, void*> = nullptr>
+    template <class T, std::enable_if_t<!PickleType<T>::value, void*> = nullptr>
     IOResult<T> expect_element(const std::string& name, Tag<T> tag);
     /**@}*/
 
@@ -263,9 +263,9 @@ public:
      * @param return vector of deserialized elements if succesful, error otherwise.
      * @{
      */
-    template <class T, std::enable_if_t<TupleType<T>::value, void*> = nullptr>
+    template <class T, std::enable_if_t<PickleType<T>::value, void*> = nullptr>
     IOResult<std::vector<T>> expect_list(const std::string& name, Tag<T> tag);
-    template <class T, std::enable_if_t<!TupleType<T>::value, void*> = nullptr>
+    template <class T, std::enable_if_t<!PickleType<T>::value, void*> = nullptr>
     IOResult<std::vector<T>> expect_list(const std::string& name, Tag<T> tag);
     /**@}*/
 
@@ -285,7 +285,7 @@ private:
 /**
  * Implemenetation of IOContext concept for JSON format.
  */
-class TupleContext : public TupleBase
+class PickleContext : public PickleBase
 {
 public:
     /**
@@ -294,8 +294,8 @@ public:
      * @param status status of serialization, shared with parent IO contexts and objects.
      * @param flags flags to determine behavior of serialization.
      */
-    TupleContext(const std::shared_ptr<IOStatus>& status, int flags)
-        : TupleBase{status, flags}
+    PickleContext(const std::shared_ptr<IOStatus>& status, int flags)
+        : PickleBase{status, flags}
         , m_value{}
         , m_index(0) 
     {
@@ -308,8 +308,8 @@ public:
      * @param status status of serialization, shared with parent IO contexts and objects.
      * @param flags flags to determine behavior of serialization.
      */
-    TupleContext(const py::tuple& value, const std::shared_ptr<IOStatus>& status, int flags)
-        : TupleBase(status, flags)
+    PickleContext(const py::tuple& value, const std::shared_ptr<IOStatus>& status, int flags)
+        : PickleBase(status, flags)
         , m_value(value)
         , m_index(0)
     {
@@ -322,7 +322,7 @@ public:
      * @param type name of the type of the object.
      * @return new JsonObject for serialization.
      */
-    TupleObject create_object(const std::string& type)
+    PickleObject create_object(const std::string& type)
     {
         epi::unused(type);
         m_value = py::tuple();
@@ -336,10 +336,10 @@ public:
      * @param type name of the type of the object.
      * @return new JsonObject for deserialization.
      */
-    TupleObject expect_object(const std::string& type)
+    PickleObject expect_object(const std::string& type)
     {
         epi::unused(type);
-        return TupleObject(m_status, m_value, m_flags);
+        return PickleObject(m_status, m_value, m_flags);
     }
 
     /**
@@ -367,8 +367,8 @@ public:
      * @param io reference JsonContext.
      * @param t value to be serialized.
      */ 
-    template <class T, std::enable_if_t<TupleType<T>::value, void*> = nullptr>
-    friend void serialize_internal(TupleContext& io, const T& t)
+    template <class T, std::enable_if_t<PickleType<T>::value, void*> = nullptr>
+    friend void serialize_internal(PickleContext& io, const T& t)
     {
         io.m_value = transform_serialize(t);
     }
@@ -380,8 +380,8 @@ public:
      * @param io reference JsonContext.
      * @param t value to be serialized.
      */ 
-    template <class T, std::enable_if_t<TupleType<T>::value, void*> = nullptr>
-    friend IOResult<T> deserialize_internal(TupleContext& io, Tag<T>)
+    template <class T, std::enable_if_t<PickleType<T>::value, void*> = nullptr>
+    friend IOResult<T> deserialize_internal(PickleContext& io, Tag<T>)
     {
         return epi::success(transform_deserialize<T>(io.m_value));
     }
@@ -396,7 +396,7 @@ private:
  * Root IOContext for json serialization, so always
  * starts with a status without any errors.
  */
-class TupleSerializer : public TupleContext
+class PickleSerializer : public PickleContext
 {
 public:
     /**
@@ -404,8 +404,8 @@ public:
      * @param value value that contains serialized data.
      * @param flags flags that determine the behavior of serialization; see epi::IOFlags.
      */
-    TupleSerializer(const py::tuple& value, int flags = IOF_None)
-        : TupleContext(value, std::make_shared<IOStatus>(), flags)
+    PickleSerializer(const py::tuple& value, int flags = IOF_None)
+        : PickleContext(value, std::make_shared<IOStatus>(), flags)
     {
     }
 
@@ -414,8 +414,8 @@ public:
      * Starts with an empty json value that will store the serialized data.
      * @param flags flags that determine the behavior of serialization; see epi::IOFlags.
      */
-    TupleSerializer(int flags = IOF_None)
-        : TupleSerializer(py::tuple{}, flags)
+    PickleSerializer(int flags = IOF_None)
+        : PickleSerializer(py::tuple{}, flags)
     {
     }
 };
@@ -428,9 +428,9 @@ public:
  * @return json value if serialization is succesful, error code otherwise.
  */
 template <class T>
-IOResult<py::tuple> serialize_tuple(const T& v, int flags = IOF_None)
+IOResult<py::tuple> serialize_pickle(const T& v, int flags = IOF_None)
 {
-    TupleSerializer t{flags};
+    PickleSerializer t{flags};
     serialize(t, v);
     if (!t.status()) {
         return failure(t.status());
@@ -448,9 +448,9 @@ IOResult<py::tuple> serialize_tuple(const T& v, int flags = IOF_None)
  * @return the deserialized object if succesful, error code otherwise.
  */
 template <class T>
-IOResult<T> deserialize_tuple(const py::tuple& t, Tag<T> tag, int flags = IOF_None)
+IOResult<T> deserialize_pickle(const py::tuple& t, Tag<T> tag, int flags = IOF_None)
 {
-    TupleSerializer ctxt{t, flags};
+    PickleSerializer ctxt{t, flags};
     return deserialize(ctxt, tag);
 }
 
@@ -459,55 +459,55 @@ IOResult<T> deserialize_tuple(const py::tuple& t, Tag<T> tag, int flags = IOF_No
 //Implementations for JsonContext/Object member functions below//
 /////////////////////////////////////////////////////////////////
 
-template <class T, std::enable_if_t<TupleType<T>::value, void*> = nullptr>
-void TupleObject::add_element(const std::string& name, const T& value)
+template <class T, std::enable_if_t<PickleType<T>::value, void*> = nullptr>
+void PickleObject::add_element(const std::string& name, const T& value)
 {
     if (m_status->is_ok()) {
-        m_value += transform_serialize(value);
+        m_value = m_value + transform_serialize(value);
     }
 }
 
-template <class T, std::enable_if_t<!TupleType<T>::value, void*> = nullptr>
-void TupleObject::add_element(const std::string& name, const T& value)
+template <class T, std::enable_if_t<!PickleType<T>::value, void*> = nullptr>
+void PickleObject::add_element(const std::string& name, const T& value)
 {
     if (m_status->is_ok()) {
-        auto ctxt = TupleContext(m_status, m_flags);
+        auto ctxt = PickleContext(m_status, m_flags);
         epi::serialize(ctxt, value);
         if (m_status) {
-            m_value += py::make_tuple(std::move(ctxt).value());
+            m_value = m_value + py::make_tuple(std::move(ctxt).value());
         }
     }
 }
 
 template <class T>
-void TupleObject::add_optional(const std::string& name, const T* value)
+void PickleObject::add_optional(const std::string& name, const T* value)
 {
     if (value) {
         add_element(name, *value);
     }
     else {
-        m_value += py::make_tuple(py::tuple(0));
+        m_value = m_value + py::make_tuple(py::tuple(0));
     }
 }
 
-template <class Iter, std::enable_if_t<TupleType<typename Iter::value_type>::value, void*> = nullptr>
-void TupleObject::add_list(const std::string& name, Iter b, Iter e)
+template <class Iter, std::enable_if_t<PickleType<typename Iter::value_type>::value, void*> = nullptr>
+void PickleObject::add_list(const std::string& name, Iter b, Iter e)
 {
     if (m_status->is_ok()) {
         auto new_tuple = py::tuple(0);
         for (auto it = b; it < e; ++it) {
-            new_tuple += (transform_serialize(*it));
+            new_tuple = new_tuple + (transform_serialize(*it));
         }
-        m_value += py::make_tuple(new_tuple);
+        m_value = m_value + py::make_tuple(new_tuple);
     }
 }
 
-template <class Iter, std::enable_if_t<!TupleType<typename Iter::value_type>::value, void*> = nullptr>
-void TupleObject::add_list(const std::string &name, Iter b, Iter e)
+template <class Iter, std::enable_if_t<!PickleType<typename Iter::value_type>::value, void*> = nullptr>
+void PickleObject::add_list(const std::string &name, Iter b, Iter e)
 {
     if (m_status->is_ok()) {
         for (auto it = b; it < e; ++it) {
-            auto ctxt = TupleContext(m_status, m_flags);
+            auto ctxt = PickleContext(m_status, m_flags);
             epi::serialize(ctxt, *it);
             if (m_status) {
                 m_value = m_value + py::make_tuple(std::move(ctxt).value());
@@ -516,21 +516,22 @@ void TupleObject::add_list(const std::string &name, Iter b, Iter e)
     }
 }
 
-template <class T, std::enable_if_t<TupleType<T>::value, void*> = nullptr>
-IOResult<T> TupleObject::expect_element(const std::string& name,Tag<T> /*tag*/)
+template <class T, std::enable_if_t<PickleType<T>::value, void*> = nullptr>
+IOResult<T> PickleObject::expect_element(const std::string& name,Tag<T> /*tag*/)
 {
     if (m_status->is_error()) {
         return failure(*m_status);
     }
     if (py::len(m_value) <= m_index) {
+        std::cout << "len m_value:" << py::len(m_value) << "m_index: " << m_index << std::endl;
         return failure(StatusCode::OutOfRange, "Index of " + name + " ot of range.");
     }
 
     return success(transform_deserialize<T>(m_value[m_index++]));
 }
 
-template <class T, std::enable_if_t<!TupleType<T>::value, void*> = nullptr>
-IOResult<T> TupleObject::expect_element(const std::string& name,Tag<T> tag)
+template <class T, std::enable_if_t<!PickleType<T>::value, void*> = nullptr>
+IOResult<T> PickleObject::expect_element(const std::string& name,Tag<T> tag)
 {
     if (m_status->is_error()) {
         return failure(*m_status);
@@ -540,12 +541,12 @@ IOResult<T> TupleObject::expect_element(const std::string& name,Tag<T> tag)
         return failure(StatusCode::OutOfRange, "Index of " + name + " ot of range.");
     }
 
-    auto ctxt = TupleContext(m_value[m_index++], m_status, m_flags);
+    auto ctxt = PickleContext(m_value[m_index++], m_status, m_flags);
     return epi::deserialize(ctxt, tag);
 }
 
 template <class T>
-IOResult<boost::optional<T>> TupleObject::expect_optional(const std::string &name, epi::Tag<T> tag)
+IOResult<boost::optional<T>> PickleObject::expect_optional(const std::string &name, epi::Tag<T> tag)
 {
     if (m_status->is_error()) {
         return failure(*m_status);
@@ -569,8 +570,8 @@ IOResult<boost::optional<T>> TupleObject::expect_optional(const std::string &nam
     return failure(r.error());
 }
 
-template <class T, std::enable_if_t<TupleType<T>::value, void*> = nullptr>
-IOResult<std::vector<T>> TupleObject::expect_list(const std::string &name, Tag<T> /*tag*/)
+template <class T, std::enable_if_t<PickleType<T>::value, void*> = nullptr>
+IOResult<std::vector<T>> PickleObject::expect_list(const std::string &name, Tag<T> /*tag*/)
 {
     if (m_status->is_error()) {
         return failure(*m_status);
@@ -587,8 +588,8 @@ IOResult<std::vector<T>> TupleObject::expect_list(const std::string &name, Tag<T
     return success(std::move(v));
 }
 
-template <class T, std::enable_if_t<!TupleType<T>::value, void*> = nullptr>
-IOResult<std::vector<T>> TupleObject::expect_list(const std::string &name, Tag<T> tag)
+template <class T, std::enable_if_t<!PickleType<T>::value, void*> = nullptr>
+IOResult<std::vector<T>> PickleObject::expect_list(const std::string &name, Tag<T> tag)
 {
     if (m_status->is_error()) {
         return failure(*m_status);
@@ -600,7 +601,7 @@ IOResult<std::vector<T>> TupleObject::expect_list(const std::string &name, Tag<T
     std::vector<T> v;
     v.reserve(py::len(tuple));
     for (size_t i = 0; i < py::len(tuple); ++i) {
-        auto ctxt = TupleContext(tuple[i], m_status, m_flags);
+        auto ctxt = PickleContext(tuple[i], m_status, m_flags);
         auto r    = epi::deserialize(ctxt, tag);
         if (r) {
             v.emplace_back(std::move(r).value());

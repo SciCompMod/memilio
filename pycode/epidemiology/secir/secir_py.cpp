@@ -639,7 +639,7 @@ decltype(auto) pybind_pickle_class(py::module &m, const char* name)
     decltype(auto) pickle_class = py::class_<T, Args...>(m, name);
     pickle_class.def(py::pickle(
              [](const T &object) { // __getstate__
-                auto tuple = epi::serialize_tuple(object);
+                auto tuple = epi::serialize_pickle(object);
                 if (tuple)
                 {
                     return std::move(tuple).value();
@@ -651,7 +651,7 @@ decltype(auto) pybind_pickle_class(py::module &m, const char* name)
             },
             [](const py::tuple t) { // __setstate__
 
-                auto object = epi::deserialize_tuple(t,epi::Tag<T>{});
+                auto object = epi::deserialize_pickle(t,epi::Tag<T>{});
                 if (object)
                 {
                     return std::move(object).value();

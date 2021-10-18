@@ -318,6 +318,34 @@ public:
         return rnumb;
     }
 
+    template <class IOContext>
+    static IOResult<ParameterDistributionNormal> deserialize(IOContext& io)
+    {
+        auto obj  = io.expect_object("ParameterDistribution");
+        auto type = obj.expect_element("Type", Tag<std::string>{});
+        auto m      = obj.expect_element("Mean", Tag<double>{});
+        auto s      = obj.expect_element("StandardDev", Tag<double>{});
+        auto lb     = obj.expect_element("LowerBound", Tag<double>{});
+        auto ub     = obj.expect_element("UpperBound", Tag<double>{});
+        auto predef = obj.expect_list("PredefinedSamples", Tag<double>{});
+        auto p      = apply(
+            io,
+            [](auto&& lb_, auto&& ub_, auto&& m_, auto&& s_, auto&& predef_) {
+                auto distr = ParameterDistributionNormal(lb_, ub_, m_, s_);
+                for (auto&& e : predef_) {
+                    distr.add_predefined_sample(e);
+                }
+                return distr;
+            },
+            lb, ub, m, s, predef);
+        if (p) {
+            return success(p.value());
+        }
+        else {
+            return p.as_failure();
+        }
+    }
+
     ParameterDistribution* clone() const override
     {
         return new ParameterDistributionNormal(*this);
@@ -372,6 +400,32 @@ public:
         return new ParameterDistributionUniform(*this);
     }
 
+    template <class IOContext>
+    static IOResult<ParameterDistributionUniform> deserialize(IOContext& io)
+    {
+        auto obj  = io.expect_object("ParameterDistribution");
+        auto type = obj.expect_element("Type", Tag<std::string>{});
+        auto lb     = obj.expect_element("LowerBound", Tag<double>{});
+        auto ub     = obj.expect_element("UpperBound", Tag<double>{});
+        auto predef = obj.expect_list("PredefinedSamples", Tag<double>{});
+        auto p      = apply(
+            io,
+            [](auto&& lb_, auto&& ub_, auto&& predef_) {
+                auto distr = ParameterDistributionUniform(lb_, ub_);
+                for (auto&& e : predef_) {
+                    distr.add_predefined_sample(e);
+                }
+                return distr;
+            },
+            lb, ub, predef);
+        if (p) {
+            return success(p.value());
+        }
+        else {
+            return p.as_failure();
+        }
+    }
+
 private:
     std::uniform_real_distribution<double> m_distribution;
 };
@@ -382,62 +436,10 @@ void details::SerializationVisitor<IOObj>::visit(const ParameterDistributionUnif
     obj.add_element("Type", std::string("Uniform"));
 }
 
-template <class IOContext>
-IOResult<ParameterDistributionUniform> deserialize_internal(IOContext& io,
-                                                                      Tag<ParameterDistributionUniform>)
-{
-    auto obj  = io.expect_object("ParameterDistribution");
-    auto type = obj.expect_element("Type", Tag<std::string>{});
-    auto lb     = obj.expect_element("LowerBound", Tag<double>{});
-    auto ub     = obj.expect_element("UpperBound", Tag<double>{});
-    auto predef = obj.expect_list("PredefinedSamples", Tag<double>{});
-    auto p      = apply(
-        io,
-        [](auto&& lb_, auto&& ub_, auto&& predef_) {
-            auto distr = ParameterDistributionUniform(lb_, ub_);
-            for (auto&& e : predef_) {
-                distr.add_predefined_sample(e);
-            }
-            return distr;
-        },
-        lb, ub, predef);
-    if (p) {
-        return success(p.value());
-    }
-    else {
-        return p.as_failure();
-    }
-}
 
 
-template <class IOContext>
-IOResult<ParameterDistributionNormal> deserialize_internal(IOContext& io,
-                                                                      Tag<ParameterDistributionNormal>)
-{
-    auto obj  = io.expect_object("ParameterDistribution");
-    auto type = obj.expect_element("Type", Tag<std::string>{});
-    auto m      = obj.expect_element("Mean", Tag<double>{});
-    auto s      = obj.expect_element("StandardDev", Tag<double>{});
-    auto lb     = obj.expect_element("LowerBound", Tag<double>{});
-    auto ub     = obj.expect_element("UpperBound", Tag<double>{});
-    auto predef = obj.expect_list("PredefinedSamples", Tag<double>{});
-    auto p      = apply(
-        io,
-        [](auto&& lb_, auto&& ub_, auto&& m_, auto&& s_, auto&& predef_) {
-            auto distr = ParameterDistributionNormal(lb_, ub_, m_, s_);
-            for (auto&& e : predef_) {
-                distr.add_predefined_sample(e);
-            }
-            return distr;
-        },
-        lb, ub, m, s, predef);
-    if (p) {
-        return success(p.value());
-    }
-    else {
-        return p.as_failure();
-    }
-}
+
+
 
 /**
  * deserialize a parameter distribution as a shared_ptr.
@@ -451,11 +453,11 @@ IOResult<std::shared_ptr<ParameterDistribution>> deserialize_internal(IOContext&
     auto type = obj.expect_element("Type", Tag<std::string>{});
     if (type) {
         if (type.value() == "Uniform") {
-            BOOST_OUTCOME_TRY(r, deserialize_internal(io, epi::Tag<ParameterDistributionUniform>{}));
+            BOOST_OUTCOME_TRY(r, ParameterDistributionUniform::deserialize(io));
             return std::make_shared<ParameterDistributionUniform>(r);
         }
         else if (type.value() == "Normal") {
-            BOOST_OUTCOME_TRY(r, deserialize_internal(io, epi::Tag<ParameterDistributionNormal>{}));
+            BOOST_OUTCOME_TRY(r, ParameterDistributionNormal::deserialize(io));
             return std::make_shared<ParameterDistributionNormal>(r);
         }
         else {
