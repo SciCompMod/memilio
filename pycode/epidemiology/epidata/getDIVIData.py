@@ -292,6 +292,7 @@ def download_data_for_one_day(last_number, download_date):
                         date(2021, 5, 30): 5705,
                         date(2021, 6, 6): 5719,
                         date(2021, 6, 8): 5748,
+                        date(2021, 6, 15): 5764,
                         date(2021, 6, 19): 5773,
                         date(2021, 6, 21): 5777,
                         date(2021, 6, 25): 5786,
@@ -304,7 +305,19 @@ def download_data_for_one_day(last_number, download_date):
                         date(2021, 8, 14): 5888,
                         date(2021, 8, 15): 5891,
                         date(2021, 8, 18): 5897,
-                        date(2021, 9, 1): 5925
+                        date(2021, 9, 1): 5925,
+                        date(2021, 9, 6): 5936,
+                        date(2021, 9, 8): 5940,
+                        date(2021, 9, 9): 5943,
+                        date(2021, 9, 15): 5956,
+                        date(2021, 9, 18): 5962,
+                        date(2021, 9, 21): 5970,
+                        date(2021, 9, 23): 5975,
+                        date(2021, 9, 29): 5988,
+                        date(2021, 10, 2): 5995,
+                        date(2021, 10, 6): 6003,
+                        date(2021, 10, 8): 6008,
+                        date(2021, 10, 18): 6028,
                         }
 
     start_date_differs = False
