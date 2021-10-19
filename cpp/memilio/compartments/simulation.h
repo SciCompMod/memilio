@@ -50,10 +50,14 @@ public:
      */
     Simulation(Model const& model, double t0 = 0., double dt = 0.1)
         : m_integratorCore(std::make_shared<RKIntegratorCore>())
-        , m_model(model)
-        , m_integrator([model](auto&& y, auto&& t, auto&& dydt) { model.eval_right_hand_side(y, y, t, dydt); }, t0,
-                       m_model.get_initial_values(), dt, m_integratorCore)
-    {}
+        , m_model(std::make_unique<Model>(model))
+        , m_integrator(
+              [&model = *m_model](auto&& y, auto&& t, auto&& dydt) {
+                  model.eval_right_hand_side(y, y, t, dydt);
+              },
+              t0, m_model->get_initial_values(), dt, m_integratorCore)
+    {
+    }
 
     /**
      * @brief set the core integrator used in the simulation
@@ -116,7 +120,7 @@ public:
      */
     const Model& get_model() const
     {
-        return m_model;
+        return *m_model;
     }
 
     /**
@@ -124,13 +128,13 @@ public:
      */
     Model& get_model()
     {
-        return m_model;
+        return *m_model;
     }
 
 private:
 
     std::shared_ptr<IntegratorCore> m_integratorCore;
-    Model m_model;
+    std::unique_ptr<Model> m_model;
     OdeIntegrator m_integrator;
 }; // namespace mio
 

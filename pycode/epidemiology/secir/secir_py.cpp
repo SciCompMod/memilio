@@ -19,6 +19,7 @@
 */
 #include <pybind11/pybind11.h>
 #include <pybind11/stl.h>
+#include <pybind11/stl_bind.h>
 #include <pybind11/operators.h>
 #include <pybind11/eigen.h>
 #include <pybind11/functional.h>
@@ -42,16 +43,16 @@ namespace
 {
 
 //select only the first node of the graph of each run, used for parameterstudy with single nodes
-template<class Sim>
-std::vector<Sim> filter_graph_results(
-    const std::vector<mio::Graph<mio::SimulationNode<Sim>, mio::MigrationEdge>>& graph_results)
+template <class Sim>
+std::vector<Sim>
+filter_graph_results(std::vector<mio::Graph<mio::SimulationNode<Sim>, mio::MigrationEdge>>&& graph_results)
 {
     std::vector<Sim> results;
     results.reserve(graph_results.size());
-    std::transform(graph_results.begin(), graph_results.end(), std::back_inserter(results), [](auto&& graph) {
-        return graph.nodes()[0].property.get_simulation();
-    });
-    return results;
+    for (auto i = size_t(0); i < graph_results.size(); ++i) {
+        results.emplace_back(std::move(graph_results[i].nodes()[0].property.get_simulation()));
+    }
+    return std::move(results);
 }
 
 // bind an index for a single tag
@@ -358,12 +359,12 @@ void bind_GraphSimulation(py::module& m, std::string const& name)
 {
     using GS = mio::GraphSimulation<Graph>;
     py::class_<GS>(m, name.c_str())
-        .def(py::init([](const Graph& graph, double t0, double dt) {
-                 return std::make_unique<GS>(mio::make_migration_sim(t0, dt, graph));
+        .def(py::init([](Graph& graph, double t0, double dt) {
+                 return std::make_unique<GS>(mio::make_migration_sim(t0, dt, std::move(graph)));
              }),
              py::arg("graph"), py::arg("t0") = 0.0, py::arg("dt") = 1.0)
         .def_property_readonly(
-            "graph", [](const GS& self) -> const Graph& { return self.get_graph(); },
+            "graph", [](GS& self) -> Graph& { return self.get_graph(); },
             py::return_value_policy::reference_internal)
         .def_property_readonly("t", &GS::get_t)
         .def("advance", &GS::advance, py::arg("tmax"));
@@ -399,8 +400,8 @@ void bind_ParameterStudy(py::module& m, std::string const& name)
                                py::return_value_policy::reference_internal)
         .def(
             "run",
-            [](mio::ParameterStudy<Simulation>& self, std::function<void(const mio::Graph<mio::SimulationNode<Simulation>, mio::MigrationEdge>&)> handle_result) {
-                self.run([&handle_result](auto&& g) { handle_result(g); });
+            [](mio::ParameterStudy<Simulation>& self, std::function<void(mio::Graph<mio::SimulationNode<Simulation>, mio::MigrationEdge>)> handle_result) {
+                self.run([&handle_result](auto&& g) { handle_result(std::move(g)); });
             },
             py::arg("handle_result_func"))
         .def("run",
@@ -410,8 +411,8 @@ void bind_ParameterStudy(py::module& m, std::string const& name)
         .def(
             "run_single",
             [](mio::ParameterStudy<Simulation>& self, std::function<void(Simulation)> handle_result) {
-                self.run([handle_result](auto r) {
-                    handle_result(r.nodes()[0].property.get_simulation());
+                self.run([&handle_result](auto&& r) {
+                    handle_result(std::move(r.nodes()[0].property.get_simulation()));
                 });
             },
             py::arg("handle_result_func"))
@@ -632,6 +633,9 @@ void bind_damping_expression_group_members(DampingExpressionGroupClass& cl)
         });
 }
 
+using Simulation = mio::SecirSimulation<>;
+using MigrationGraph = mio::Graph<mio::SimulationNode<Simulation>, mio::MigrationEdge>;
+
 } // namespace
 
 template <class T, class ... Args>
@@ -665,6 +669,8 @@ decltype(auto) pybind_pickle_class(py::module &m, const char* name)
     ));
     return pickle_class;
 }
+
+PYBIND11_MAKE_OPAQUE(std::vector<MigrationGraph>);
 
 PYBIND11_MODULE(_secir, m)
 {
@@ -973,11 +979,13 @@ PYBIND11_MODULE(_secir, m)
     bind_SecirModelNode<mio::SecirModel>(m, "SecirModelNode");
     bind_SecirSimulationNode<mio::SecirSimulation<>>(m, "SecirSimulationNode");
     bind_SecirModelGraph<mio::SecirModel>(m, "SecirModelGraph");
-    using Simulation = mio::SecirSimulation<>;
     bind_MigrationGraph<Simulation>(m, "MigrationGraph");
-    using MigrationGraph = mio::Graph<mio::SimulationNode<Simulation>, mio::MigrationEdge>;
     bind_GraphSimulation<MigrationGraph>(m, "MigrationSimulation");
 
+    //normally, std::vector is bound to any python iterable, but this doesn't work for move-only elements
+    //Bound the vector as a custom type that serves as output of ParameterStudy::run and input to
+    //interpolate_ensemble_results
+    py::bind_vector<std::vector<MigrationGraph>>(m, "EnsembleGraphResults");
     bind_ParameterStudy<mio::SecirSimulation<>>(m, "ParameterStudy");
 
     m.def("set_params_distributions_normal", &mio::set_params_distributions_normal, py::arg("model"), py::arg("t0"),

@@ -44,13 +44,17 @@ class Test_AnalyzeResult(unittest.TestCase):
         self.assertEqual(interpolated[1].get_time(1), 1.0)
         self.assertEqual(interpolated[1].get_time(2), 2.0)
     
-    def test_ensemble_graph(self):
+    def test_ensemble_graph(self):      
         model = secir.SecirModel(1)
-        graph = secir.MigrationGraph()
+        graph = secir.SecirModelGraph()
         graph.add_node(0, model)
-        sim = secir.MigrationSimulation(graph, t0 = 0)
-        sim.advance(2)
-        interpolated = secir.interpolate_ensemble_results([sim.graph, sim.graph])
+        graph.add_node(1, model)
+        graph.add_edge(0, 1, 0.01 * np.ones(8))
+        graph.add_edge(1, 0, 0.01 * np.ones(8))
+
+        study = secir.ParameterStudy(graph, t0 = 0, tmax = 2, dt = 0.5, num_runs = 3)
+        r = study.run()
+        interpolated = secir.interpolate_ensemble_results(r)
         self.assertEqual(interpolated[0][0].get_time(0), 0.0)
         self.assertEqual(interpolated[0][0].get_time(1), 1.0)
         self.assertEqual(interpolated[0][0].get_time(2), 2.0)

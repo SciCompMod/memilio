@@ -35,6 +35,7 @@ set(TESTSOURCES
   test_dynamic_npis.cpp
   test_regions.cpp
   test_io_framework.cpp
+  test_compartmentsimulation.cpp
   test_mobility_io.cpp
   distributions_helpers.h
   distributions_helpers.cpp
