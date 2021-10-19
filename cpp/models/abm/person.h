@@ -215,6 +215,13 @@ public:
     bool goes_to_school(TimePoint t, const AbmMigrationParameters& params) const;
 
     /**
+     * Every person has a random number to determine what time to go to school.
+     * Depending on this number person decides what time has to go to school;
+     * @return the hour of going to school
+     */
+    int get_go_to_school_hour(const AbmMigrationParameters& params) const;
+
+    /**
      * Answers the question if a person is currently in quarantine.
      * @return if the person is in quarantine
      */
@@ -244,6 +251,7 @@ private:
     double m_random_workgroup;
     double m_random_schoolgroup;
     double m_random_goto_work_hour;
+    double m_random_goto_school_hour;
     TimeSpan m_time_since_negative_test;
 };
 

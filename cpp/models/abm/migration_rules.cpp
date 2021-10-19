@@ -49,8 +49,9 @@ LocationType random_migration(const Person& person, TimePoint t, TimeSpan dt, co
 LocationType go_to_school(const Person& person, TimePoint t, TimeSpan /*dt*/, const AbmMigrationParameters& params)
 {
     auto current_loc = person.get_location_id().type;
+
     if (current_loc == LocationType::Home && t < params.get<LockdownDate>() && t.day_of_week() < 5 &&
-        t.hour_of_day() >= 8 && person.get_age() == AbmAgeGroup::Age5to14 && person.goes_to_school(t, params) &&
+        t.hour_of_day() == person.get_go_to_school_hour(params) && person.get_age() == AbmAgeGroup::Age5to14 && person.goes_to_school(t, params) &&
         !person.is_in_quarantine()) {
         return mio::LocationType::School;
     }

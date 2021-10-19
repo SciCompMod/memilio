@@ -240,10 +240,27 @@ struct GotoWorkTimeMaximum {
     }
 };
 
+struct GotoSchoolTimeMinimum {
+    using Type = CustomIndexArray<int, AbmAgeGroup>;
+    static auto get_default()
+    {
+        return CustomIndexArray<int, AbmAgeGroup>(AbmAgeGroup::Count, 6);
+    }
+};
+
+struct GotoSchoolTimeMaximum {
+    using Type = CustomIndexArray<int, AbmAgeGroup>;
+    static auto get_default()
+    {
+        return CustomIndexArray<int, AbmAgeGroup>(AbmAgeGroup::Count, 9);
+    }
+};
+
+
 /**
  * parameters that control the migration between locations.
  */
-using AbmMigrationParameters = ParameterSet<LockdownDate, SocialEventRate, BasicShoppingRate, WorkRatio, SchoolRatio, GotoWorkTimeMinimum, GotoWorkTimeMaximum>;
+using AbmMigrationParameters = ParameterSet<LockdownDate, SocialEventRate, BasicShoppingRate, WorkRatio, SchoolRatio, GotoWorkTimeMinimum, GotoWorkTimeMaximum, GotoSchoolTimeMinimum, GotoSchoolTimeMaximum>;
 
 } // namespace mio
 #endif

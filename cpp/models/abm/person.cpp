@@ -38,6 +38,7 @@ Person::Person(LocationId id, InfectionProperties infection_properties, Vaccinat
     m_random_workgroup   = UniformDistribution<double>::get_instance()();
     m_random_schoolgroup = UniformDistribution<double>::get_instance()();
     m_random_goto_work_hour = UniformDistribution<double>::get_instance()();
+    m_random_goto_school_hour = UniformDistribution<double>::get_instance()();
 
     if (infection_properties.state == InfectionState::Infected && infection_properties.detected) {
         m_quarantine = true;
@@ -144,6 +145,13 @@ int Person::get_go_to_work_hour(const AbmMigrationParameters& params) const
     int Minimum_Goto_Work_time = params.get<GotoWorkTimeMinimum>()[m_age];
     int Maximum_Goto_Work_time = params.get<GotoWorkTimeMaximum>()[m_age];
     return Minimum_Goto_Work_time+(int) ((Maximum_Goto_Work_time-Minimum_Goto_Work_time+1)*m_random_goto_work_hour);
+}
+
+int Person::get_go_to_school_hour(const AbmMigrationParameters& params) const
+{
+    int Minimum_Goto_School_time = params.get<GotoSchoolTimeMinimum>()[m_age];
+    int Maximum_Goto_School_time = params.get<GotoSchoolTimeMaximum>()[m_age];
+    return Minimum_Goto_School_time+(int) ((Maximum_Goto_School_time-Minimum_Goto_School_time+1)*m_random_goto_school_hour);
 }
 
 bool Person::goes_to_school(TimePoint t, const AbmMigrationParameters& params) const
