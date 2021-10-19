@@ -45,36 +45,36 @@ class TestGetDiviData(fake_filesystem_unittest.TestCase):
 
     # strings for read, download and update data
     test_string1 = ("""{"bundesland":1,"gemeindeschluessel":1001,"anzahl_meldebereiche":2,"faelle_covid_aktuell":0,\
-"faelle_covid_aktuell_invasiv_beatmet":0,"anzahl_standorte":2,"betten_frei":48,"betten_belegt":34,\
+"faelle_covid_aktuell_beatmet":0,"anzahl_standorte":2,"betten_frei":48,"betten_belegt":34,\
 "daten_stand":"2020-07-07 12:15:00"},\
 {"bundesland":2,"gemeindeschluessel":2000,"anzahl_meldebereiche":28,"faelle_covid_aktuell":7,\
-"faelle_covid_aktuell_invasiv_beatmet":6,"anzahl_standorte":24,"betten_frei":396,"betten_belegt":574,\
+"faelle_covid_aktuell_beatmet":6,"anzahl_standorte":24,"betten_frei":396,"betten_belegt":574,\
 "daten_stand":"2020-07-07 12:15:00"},\
 {"bundesland":3,"gemeindeschluessel":3101,"anzahl_meldebereiche":5,"faelle_covid_aktuell":1,\
-"faelle_covid_aktuell_invasiv_beatmet":1,"anzahl_standorte":5,"betten_frei":60,"betten_belegt":96,\
+"faelle_covid_aktuell_beatmet":1,"anzahl_standorte":5,"betten_frei":60,"betten_belegt":96,\
 "daten_stand":"2020-07-07 12:15:00"},\
 {"bundesland":3,"gemeindeschluessel":3103,"anzahl_meldebereiche":1,"faelle_covid_aktuell":4,\
-"faelle_covid_aktuell_invasiv_beatmet":1,"anzahl_standorte":1,"betten_frei":11,"betten_belegt":23,\
+"faelle_covid_aktuell_beatmet":1,"anzahl_standorte":1,"betten_frei":11,"betten_belegt":23,\
 "daten_stand":"2020-07-07 12:15:00"}""")
 
     test_string2 = ("""{"bundesland":2,"gemeindeschluessel":2000,"anzahl_meldebereiche":28,"faelle_covid_aktuell":7,\
-"faelle_covid_aktuell_invasiv_beatmet":6,"anzahl_standorte":24,"betten_frei":397,"betten_belegt":579,\
+"faelle_covid_aktuell_beatmet":6,"anzahl_standorte":24,"betten_frei":397,"betten_belegt":579,\
 "daten_stand":"2020-07-08 12:15:00"},\
 {"bundesland":3,"gemeindeschluessel":3101,"anzahl_meldebereiche":5,"faelle_covid_aktuell":1,\
-"faelle_covid_aktuell_invasiv_beatmet":1,"anzahl_standorte":5,"betten_frei":65,"betten_belegt":91,\
+"faelle_covid_aktuell_beatmet":1,"anzahl_standorte":5,"betten_frei":65,"betten_belegt":91,\
 "daten_stand":"2020-07-08 12:15:00"}""")
 
     test_string3 = ("""{"bundesland":1,"gemeindeschluessel":1001,"anzahl_meldebereiche":2,"faelle_covid_aktuell":0,\
-"faelle_covid_aktuell_invasiv_beatmet":0,"anzahl_standorte":2,"betten_frei":48,"betten_belegt":34,\
+"faelle_covid_aktuell_beatmet":0,"anzahl_standorte":2,"betten_frei":48,"betten_belegt":34,\
 "daten_stand":"2020-07-06 12:15:00"}""")
 
 # The following are the same as test_string3 but with changed dates.
     test_string4 = ("""{"bundesland":1,"gemeindeschluessel":1001,"anzahl_meldebereiche":2,"faelle_covid_aktuell":0,\
-"faelle_covid_aktuell_invasiv_beatmet":0,"anzahl_standorte":2,"betten_frei":48,"betten_belegt":34,\
+"faelle_covid_aktuell_beatmet":0,"anzahl_standorte":2,"betten_frei":48,"betten_belegt":34,\
 "daten_stand":"2020-04-27 09:15:00"}""")
 
     test_string5 = ("""{"bundesland":1,"gemeindeschluessel":1001,"anzahl_meldebereiche":2,"faelle_covid_aktuell":0,\
-"faelle_covid_aktuell_invasiv_beatmet":0,"anzahl_standorte":2,"betten_frei":48,"betten_belegt":34,\
+"faelle_covid_aktuell_beatmet":0,"anzahl_standorte":2,"betten_frei":48,"betten_belegt":34,\
 "daten_stand":"2020-04-28 09:15:00"}""")
 
     test_string_read_fulldata = "[" + test_string1 + "," + test_string2 + "]"
@@ -165,10 +165,10 @@ class TestGetDiviData(fake_filesystem_unittest.TestCase):
     # data for result dataframe to test the function adjust_data
     dr24 = {'bundesland': [1, 2], 'gemeindeschluessel': [1001, 2000], 'ICU': [0, 7],
             'daten_stand': ["2020-04-24 09:15:00", "2020-04-24 09:15:00"],
-            'faelle_covid_aktuell_invasiv_beatmet': ['', '']}
+            'faelle_covid_aktuell_beatmet': ['', '']}
     dr25 = {'bundesland': [1, 2], 'gemeindeschluessel': [1001, 2000], 'ICU': [0, 7],
             'daten_stand': ["2020-04-25 09:15:00", "2020-04-25 09:15:00"],
-            'faelle_covid_aktuell_invasiv_beatmet': ['', '']}
+            'faelle_covid_aktuell_beatmet': ['', '']}
     dr26 = {'bundesland': [1, 2], 'gemeindeschluessel': [1001, 2000], 'ICU': [0, 7],
             'daten_stand': ["2020-04-26 09:15:00", "2020-04-26 09:15:00"]}
     dr27 = {'bundesland': [1, 2], 'gemeindeschluessel': [1001, 2000], 'ICU': [0, 7],
@@ -192,6 +192,13 @@ class TestGetDiviData(fake_filesystem_unittest.TestCase):
             df.sort_index(axis=1, inplace=True)
 
             # construct correct result
+            try:
+                # replace columns
+                self.list_result[i]['faelle_covid_aktuell_invasiv_beatmet'] = \
+                    self.list_result[i].pop('faelle_covid_aktuell_beatmet')
+            except KeyError:
+                pass
+
             df_res = pd.DataFrame(self.list_result[i])
             df_res.sort_index(axis=1, inplace=True)
 
@@ -200,6 +207,20 @@ class TestGetDiviData(fake_filesystem_unittest.TestCase):
 
             # increase date by one day
             start_date += timedelta(days=1)
+
+        # test that column 'faelle_covid_aktuell_beatmet' is replaced
+        df = pd.DataFrame({'faelle_covid_aktuell_beatmet': [3, 5],
+                           'daten_stand': ["2021-03-30 09:15:00", "2021-03-31 09:15:00"]})
+        start_date = date(2021, 3, 30)
+        df2 = gdd.adjust_data(df, start_date)
+
+        df_res = pd.DataFrame({'faelle_covid_aktuell_invasiv_beatmet': [3, 5],
+                               'daten_stand': ["2021-03-30 09:15:00", "2021-03-31 09:15:00"]})
+        self.assertTrue((df2 == df_res).all().all())
+
+        start_date = date(2021, 3, 31)
+        df2 = gdd.adjust_data(df, start_date)
+        self.assertTrue((df2 == df).all().all())
 
     # note: patches have to have the right order!
     @patch('epidemiology.epidata.getDIVIData.sys.exit')
@@ -454,7 +475,8 @@ class TestGetDiviData(fake_filesystem_unittest.TestCase):
         # check content of files
         f_path = os.path.join(directory, file)
         f = open(f_path, "r")
-        self.assertEqual(f.read(), self.test_string1)
+        self.assertEqual(f.read(), self.test_string1.replace("faelle_covid_aktuell_beatmet",
+                                                             "faelle_covid_aktuell_invasiv_beatmet"))
 
         f_path = os.path.join(directory, file_out1)
         f = open(f_path, "r")
@@ -500,7 +522,8 @@ class TestGetDiviData(fake_filesystem_unittest.TestCase):
         # check content of files
         f_path = os.path.join(directory, file)
         f = open(f_path, "r")
-        self.assertEqual(f.read(), self.test_string_read_fulldata)
+        self.assertEqual(f.read(), self.test_string_read_fulldata.replace("faelle_covid_aktuell_beatmet",
+                                                                          "faelle_covid_aktuell_invasiv_beatmet"))
         expected_calls.append(
             call("Information: Data has been written to", f_path))
 
@@ -642,8 +665,10 @@ class TestGetDiviData(fake_filesystem_unittest.TestCase):
                          "Something went wrong, dataframe is empty.")
 
         # Generate data to read in
+        # String has to be adjusted in this case
         with open(file_with_path, 'w') as f:
-            f.write(self.test_string_read_fulldata)
+            f.write(self.test_string_read_fulldata.replace("faelle_covid_aktuell_beatmet",
+                                                           "faelle_covid_aktuell_invasiv_beatmet"))
 
         gdd.get_divi_data(read_data, file_format, out_folder, no_raw,
                           end_date, start_date, update_data)
@@ -707,8 +732,10 @@ class TestGetDiviData(fake_filesystem_unittest.TestCase):
                          "Something went wrong, dataframe is empty.")
 
         # write file with data for one day
+        # string has to be adjusted, because it mimics written data
         with open(file_with_path, 'w') as f:
-            f.write(self.test_string1)
+            f.write(self.test_string1.replace("faelle_covid_aktuell_beatmet",
+                                              "faelle_covid_aktuell_invasiv_beatmet"))
 
         # test where "data of today" is missing, but data is not yet uploaded:
         mock_loadcsv.return_value = pd.read_json(self.test_string1)
@@ -721,6 +748,7 @@ class TestGetDiviData(fake_filesystem_unittest.TestCase):
                          + " has not yet uploaded. Please, try again later.")
 
         # case where data is online and just data of "today" is missing
+        # since we read in already written data we have to adjust string
         mock_loadcsv.return_value = pd.read_json(self.test_string2)
 
         gdd.get_divi_data(read_data, file_format, out_folder, no_raw,
@@ -734,9 +762,11 @@ class TestGetDiviData(fake_filesystem_unittest.TestCase):
         end_string = " has been added to dataframe"
         expected_calls = [
             call(start_string + date(2020, 7, 8).strftime("%Y-%m-%d") + end_string)]
+
         # check content of files
         f = open(file_with_path, "r")
-        self.assertEqual(f.read(), self.test_string_read_fulldata)
+        self.assertEqual(f.read(), self.test_string_read_fulldata.replace("faelle_covid_aktuell_beatmet",
+                                                                          "faelle_covid_aktuell_invasiv_beatmet"))
         expected_calls.append(
             call("Information: Data has been written to", file_with_path))
 
@@ -769,7 +799,8 @@ class TestGetDiviData(fake_filesystem_unittest.TestCase):
 
         # write data of 6.7.2020 to FullData_DIVI.json
         with open(file_with_path, 'w') as f:
-            f.write(self.test_string3)
+            f.write(self.test_string3.replace("faelle_covid_aktuell_beatmet",
+                                              "faelle_covid_aktuell_invasiv_beatmet"))
 
         mock_ddfod.side_effect = self.fake_download_data_for_one_day
 
@@ -790,7 +821,8 @@ class TestGetDiviData(fake_filesystem_unittest.TestCase):
         # check content of files
         f = open(file_with_path, "r")
         fread = f.read()
-        self.assertEqual(fread, self.test_string_read_fulldata_update)
+        self.assertEqual(fread, self.test_string_read_fulldata_update.replace("faelle_covid_aktuell_beatmet",
+                                                                              "faelle_covid_aktuell_invasiv_beatmet"))
         expected_calls.append(
             call("Information: Data has been written to", file_with_path))
 
@@ -827,7 +859,8 @@ class TestGetDiviData(fake_filesystem_unittest.TestCase):
 
         # write data which will be read in
         with open(file_with_path, 'w') as f:
-            f.write(self.test_string4)
+            f.write(self.test_string4.replace("faelle_covid_aktuell_beatmet",
+                                              "faelle_covid_aktuell_invasiv_beatmet"))
 
         mock_ddfod.side_effect = self.fake_download_data_for_one_day
 
@@ -844,10 +877,13 @@ class TestGetDiviData(fake_filesystem_unittest.TestCase):
         end_string = " has been added to dataframe"
         expected_calls = [
             call(start_string + date(2020, 4, 28).strftime("%Y-%m-%d") + end_string)]
+
         # check content of files
         f = open(file_with_path, "r")
         fread = f.read()
-        self.assertEqual(fread, self.test_string_read_fulldata_update_nondic)
+        self.assertEqual(fread,
+                         self.test_string_read_fulldata_update_nondic.replace("faelle_covid_aktuell_beatmet",
+                                                                              "faelle_covid_aktuell_invasiv_beatmet"))
         expected_calls.append(
             call("Information: Data has been written to", file_with_path))
 

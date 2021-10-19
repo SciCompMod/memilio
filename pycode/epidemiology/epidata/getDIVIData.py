@@ -62,11 +62,17 @@ def adjust_data(df, date_of_data):
     - April 25, 2020.: Add id bundesland, which is extracted from the given column "gemeindeschluessel"
     - April 24-27, 2020.: Add date as a column
     - April 29, 2020.: Empty column has to be removed
+    - Before March 31, 2021 rename faelle_covid_aktuell_beatmet' to  'faelle_covid_aktuell_invasiv_beatmet'
 
     @param df A pandas data frame
     @param date_of_data The date for the data stored in df
     @return changed pandas dataframe
     """
+
+    # rename column names due to change in naming of files from March 31, 2021 onwards
+
+    df.rename(columns={
+        'faelle_covid_aktuell_beatmet': 'faelle_covid_aktuell_invasiv_beatmet'}, inplace=True)
 
     # rename column 'kreis' of first date to match data of following days
     if date_of_data == date(2020, 4, 24):
@@ -472,6 +478,9 @@ def get_divi_data(read_data=dd.defaultDict['read_data'],
                             df2['daten_stand']).max().date()
 
                         if download_date == today:
+                            if today <= date(2021, 3, 30):
+                                df2 = adjust_data(df2, start_date)
+
                             df = df.append(df2, ignore_index=True)
                             print("Success: Data of date " + today.strftime("%Y-%m-%d")
                                   + " has been added to dataframe")
@@ -501,14 +510,9 @@ def get_divi_data(read_data=dd.defaultDict['read_data'],
 
             new_dict_string = new_dict_string + new_string
 
-            # data of first days needs adjustment
-            if start_date <= date(2020, 4, 29):
-                df2 = adjust_data(df2, start_date)
-
-            # rename column names due to change in naming of files from March 31, 2021 onwards
+            # data needs adjustment
             if start_date <= date(2021, 3, 30):
-                df2.rename(columns={
-                           'faelle_covid_aktuell_beatmet': 'faelle_covid_aktuell_invasiv_beatmet'}, inplace=True)
+                df2 = adjust_data(df2, start_date)
 
             # append to global data frame
             df = df.append(df2, ignore_index=True)
@@ -529,6 +533,7 @@ def get_divi_data(read_data=dd.defaultDict['read_data'],
                   "to the dictionary \"call_number_dict\" in the function \"download_data_for_one_day\": ")
             print(new_dict_string)
 
+        # Write dataframe to file
         if not no_raw:
             gd.write_dataframe(df, directory, filename, file_format)
     else:
