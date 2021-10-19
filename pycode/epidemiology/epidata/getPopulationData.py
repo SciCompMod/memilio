@@ -32,6 +32,7 @@ import numpy as np
 import pandas
 from epidemiology.epidata import getDataIntoPandasDataFrame as gd
 from epidemiology.epidata import defaultDict as dd
+from epidemiology.epidata import geoModificationGermany as geoger
 
 
 def get_population_data(read_data=dd.defaultDict['read_data'],
@@ -225,15 +226,16 @@ def load_age_population_data(out_folder):
         try:
             print('Trying to download from HPC server')
             path_counties = 'http://hpcagainstcorona.sc.bs.dlr.de/data/migration/'
-            counties = pandas.read_excel(os.path.join(path_counties, 'kreise_deu.xlsx'), sheet_name=1, header=3,
-                                         engine='openpyxl')
+            counties = gd.loadExcel(os.path.join(path_counties,'kreise_deu.xlsx'), apiUrl =  '', extension = '',
+                                param_dict = {"sheet_name": 1, "header": 3})
             gd.write_dataframe(counties, directory, filename_counties, "json")
         except:
             print('No access to HPC Server.')
             try:
                 print('Trying to download data from the internet')
                 path_counties = 'https://www.destatis.de/DE/Themen/Laender-Regionen/Regionales/Gemeindeverzeichnis/Administrativ/04-kreise.xlsx;?__blob=publicationFile'
-                counties = pandas.read_excel(os.path.join(path_counties), sheet_name=1, header=3, engine='openpyxl')
+                counties = gd.loadExcel(os.path.join(path_counties,'kreise_deu.xlsx'), apiUrl =  '', extension = '',
+                                param_dict = {"sheet_name": 1, "header": 3})
                 gd.write_dataframe(counties, directory, filename_counties, "json")
             except ValueError:
                 exit_string = "Error: The counties file does not exist."
@@ -262,7 +264,8 @@ def load_age_population_data(out_folder):
             path_reg_key = 'https://www.zensus2011.de/SharedDocs/Downloads/DE/Pressemitteilung/DemografischeGrunddaten/' \
                            '1A_EinwohnerzahlGeschlecht.xls?__blob=publicationFile&v=5'
             # read tables
-            reg_key = pandas.read_excel(path_reg_key, sheet_name='Tabelle_1A', header=12)
+            reg_key = gd.loadExcel(path_reg_key, apiUrl='', extension = '',
+                               param_dict = {"engine": None, "sheet_name": 'Tabelle_1A', "header": 12})
             gd.write_dataframe(reg_key, directory, filename_reg_key, "json")
         except ValueError:
             exit_string = "Error: The regional key file does not exist."
@@ -347,6 +350,11 @@ def get_age_population_data(read_data=dd.defaultDict['read_data'],
     #create dataframe
     df = pandas.DataFrame(data.astype(int), columns=columns)
     df_current = pandas.DataFrame(np.round(data_current).astype(int), columns=columns)
+    # From official county list, merge Eisenach and 
+    # Wartburgkreis for now (as of oct. 2021)
+    df_current = geoger.merge_df_counties_all(
+        df_current, sorting=[dd.EngEng["idCounty"]],
+        columns=dd.EngEng["idCounty"])
 
     directory = out_folder
     directory = os.path.join(directory, 'Germany/')

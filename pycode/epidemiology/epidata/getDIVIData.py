@@ -52,6 +52,8 @@ import pandas
 
 from epidemiology.epidata import getDataIntoPandasDataFrame as gd
 from epidemiology.epidata import defaultDict as dd
+from epidemiology.epidata import geoModificationGermany as geoger
+from epidemiology.epidata import modifyDataframeSeries
 
 
 def adjust_data(df, date_of_data):
@@ -378,7 +380,7 @@ def download_data_for_one_day(last_number, download_date):
                 # for delta 1 and 2 the number is not saved in dict,
                 # because it does not take so long to get those numbers
                 if sign == 0 and delta != 1 and delta != 2 and not start_date_differs:
-                    call_string = "date(" + download_date.strftime("%Y, %-m, %-d") + "): " + str(call_number) + "," \
+                    call_string = "date(" + download_date.strftime("%Y, %m, %d") + "): " + str(call_number) + "," \
                                   + "\n"
 
                 df = call_call_url(url_prefix, call_number)
@@ -388,12 +390,10 @@ def download_data_for_one_day(last_number, download_date):
 
         # case with same call_number, which is very unlikely
         call_number = last_number
-        call_string = "date(" + download_date.strftime("%Y, %-m, %-d") + \
-            "): " + str(call_number) + "," + "\n"
+        call_string = "date(" + download_date.strftime("%Y, %m, %d") + "): " + str(call_number) + "," + "\n"
         df = call_call_url(url_prefix, call_number)
 
     return [call_number, df, call_string]
-
 
 def get_divi_data(read_data=dd.defaultDict['read_data'],
                   file_format=dd.defaultDict['file_format'],
@@ -402,10 +402,12 @@ def get_divi_data(read_data=dd.defaultDict['read_data'],
                   end_date=dd.defaultDict['end_date'],
                   start_date=dd.defaultDict['start_date'],
                   update_data=dd.defaultDict['update_data'],
+                  impute_dates=dd.defaultDict['impute_dates'],
+                  moving_average=dd.defaultDict['moving_average']
                   ):
-    """!Function to get the divi data.
+    """! Downloads or reads the DIVI ICU data and writes them in different files.
 
-    Available data start from 2020-4-24.
+    Available data starts from 2020-04-24.
     If the given start_date is earlier, it is changed to this date and a warning is printed.
     If it does not already exist, the folder Germany is generated in the given out_folder.
     If read_data == True and the file "FullData_DIVI.json" exists, the data is read form this file
@@ -442,6 +444,9 @@ def get_divi_data(read_data=dd.defaultDict['read_data'],
     @param no_raw True or False [Default]. Defines if unchanged raw data is saved or not.
     @param start_date [Optional] Date to start to download data [Default = 2020.4.24].
     @param end_date [Optional] Date to stop to download data [Default = today].
+    @param impute_dates True or False [Default]. Defines if values for dates without new information are imputed.
+    @param moving_average 0 [Default] or >0. Applies an 'moving_average'-days moving average on all time series
+        to smooth out weekend effects.
     """
 
     delta = timedelta(days=1)
@@ -559,24 +564,45 @@ def get_divi_data(read_data=dd.defaultDict['read_data'],
     df.Date = pandas.to_datetime(df.Date, format='%Y-%m-%d %H:%M')
 
     # insert names of  states
-    df.insert(loc=0, column="State", value=df.ID_State)
-    for key, value in dd.State.items():
-        df.loc[df["State"] == key, ["State"]] = value
+    df.insert(loc=0, column=dd.EngEng["idState"], value=df[dd.EngEng["state"]])
+    for item in geoger.get_state_names_and_ids():
+        df.loc[df[dd.EngEng["idState"]] == item[1], [dd.EngEng["state"]]] = item[0]
 
     # insert names of counties
-    df.insert(loc=0, column="County", value=df.ID_County)
-    for key, value in dd.County.items():
-        df.loc[df["County"] == key, ["County"]] = value
+    df.insert(loc=3, column=dd.EngEng["county"], value=df[dd.EngEng["idCounty"]])
+    for item in geoger.get_county_names_and_ids(merge_eisenach=False):
+        df.loc[df[dd.EngEng["idCounty"]] == item[1], [dd.EngEng["county"]]] = item[0]
+
+    # remove leading zeros for ID_County (if not yet done)
+    df['ID_County'] = df['ID_County'].astype(int)     
+    # add missing dates (and compute moving average)
+    if impute_dates or moving_average > 0:
+        df = modifyDataframeSeries.impute_and_reduce_df(
+            df,
+            {dd.EngEng["idCounty"]: geoger.get_county_ids(merge_eisenach=False)},
+            [dd.EngEng["ICU"], dd.EngEng["ICU_ventilated"]],
+            impute='forward', moving_average=moving_average)  
 
     # write data for counties to file
-    df_counties = df[["County", "ID_County",
-                      "ICU", "ICU_ventilated", "Date"]].copy()
+    df_counties = df[[dd.EngEng["idCounty"],
+                      dd.EngEng["county"],
+                      dd.EngEng["ICU"],
+                      dd.EngEng["ICU_ventilated"],
+                      dd.EngEng["date"]]].copy()
+    # merge Eisenach and Wartburgkreis from DIVI data
+    df_counties = geoger.merge_df_counties_all(
+        df_counties, sorting=[dd.EngEng["idCounty"], dd.EngEng["date"]])
+    # save
     filename = "county_divi"
+    gd.append_filename(filename, impute_dates, moving_average)
     gd.write_dataframe(df_counties, directory, filename, file_format)
 
     # write data for states to file
-    df_states = df.groupby(["ID_State", "State", "Date"]).agg(
-        {"ICU": sum, "ICU_ventilated": sum})
+    df_states = df.groupby(
+        [dd.EngEng["idState"],
+         dd.EngEng["state"],
+         dd.EngEng["date"]]).agg(
+        {dd.EngEng["ICU"]: sum, dd.EngEng["ICU_ventilated"]: sum})
     df_states = df_states.reset_index()
     df_states.sort_index(axis=1, inplace=True)
     # For the sum calculation Nan is used as a 0, thus some zeros have to be changed back to NaN
@@ -590,6 +616,7 @@ def get_divi_data(read_data=dd.defaultDict['read_data'],
     # {"faelle_covid_aktuell_im_bundesland": max})[["faelle_covid_aktuell_im_bundesland"]])
 
     filename = "state_divi"
+    gd.append_filename(filename, impute_dates, moving_average)
     gd.write_dataframe(df_states, directory, filename, file_format)
 
     # write data for germany to file
@@ -602,8 +629,8 @@ def get_divi_data(read_data=dd.defaultDict['read_data'],
     # df_ger.loc[df_states["Date"] <= "2020-04-25 09:15:00", "ICU_ventilated"] = np.nan
     # TODO: Use also "faelle_covid_aktuell_im_bundesland" from 25.9.
     filename = "germany_divi"
+    gd.append_filename(filename, impute_dates, moving_average)
     gd.write_dataframe(df_ger, directory, filename, file_format)
-
 
 def main():
     """ Main program entry."""

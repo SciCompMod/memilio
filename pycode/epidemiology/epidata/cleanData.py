@@ -47,6 +47,7 @@ def clean_data(all_data, rki, john_hopkins, population, hdf5, out_path):
         @param hdf5 Defines if files with ending json [Default] or hdf5 should be deleted.
         @param out_path Defines path where data should be deleted.
         """
+	#TODO: clean new data: Vaccination, Testing
 
     ending = "json"
     if hdf5:
@@ -58,7 +59,8 @@ def clean_data(all_data, rki, john_hopkins, population, hdf5, out_path):
     if all_data:
 
         # TODO: make general dictionary with all countries used
-        directories = ['Germany/', 'Spain/', 'France/', 'Italy/', 'US/', 'SouthKorea/', 'China/']
+        directories = ['Germany/', 'Spain/', 'France/',
+                       'Italy/', 'US/', 'SouthKorea/', 'China/']
 
         # delete files in directory
         for cdir in directories:
@@ -139,7 +141,8 @@ def clean_data(all_data, rki, john_hopkins, population, hdf5, out_path):
 
         if john_hopkins:
             # TODO: make general dictionary with all countries used
-            directories = ['Germany/', 'Spain/', 'France/', 'Italy/', 'US/', 'SouthKorea/', 'China/']
+            directories = ['Germany/', 'Spain/', 'France/',
+                           'Italy/', 'US/', 'SouthKorea/', 'China/']
 
             # delete files in directory
             for cdir in directories:
@@ -208,7 +211,8 @@ def cli():
 
     parser.add_argument('-h5', '--hdf5', help='Deletes just hdf5 files.',
                         action='store_true')
-    parser.add_argument('-o', '--out_path', type=str, default=out_path_default, help='Defines folder for output.')
+    parser.add_argument('-o', '--out_path', type=str,
+                        default=out_path_default, help='Defines folder for output.')
 
     args = parser.parse_args()
 

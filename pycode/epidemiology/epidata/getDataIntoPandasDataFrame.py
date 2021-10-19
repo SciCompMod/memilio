@@ -96,7 +96,7 @@ def loadCsv(targetFileName, apiUrl='https://opendata.arcgis.com/datasets/', exte
 
 
 def loadExcel(targetFileName, apiUrl='https://opendata.arcgis.com/datasets/',
-              extension='.xls', sheet_name=0, header=0, engine='openpyxl'):
+              extension='.xls', param_dict = {}):
     """ Loads ArcGIS data sets in Excel formats (xls,xlsx,xlsm,xlsb,odf,ods,odt). (pandas DataFrame)
 
     This routine loads data sets (default from ArcGIS) in Excel format of the given public data
@@ -112,9 +112,14 @@ def loadExcel(targetFileName, apiUrl='https://opendata.arcgis.com/datasets/',
     header -- row to use for column labels (Use None if there is no header) (int, default 0)
     """
     url = apiUrl + targetFileName + extension
+    param_dict_default = {"sheet_name": 0, "header": 0, "engine": 'openpyxl'}
+
+    for k in param_dict_default:
+        if k not in param_dict:
+            param_dict[k] = param_dict_default[k]
 
     try:
-        df = pandas.read_excel(url, sheet_name=sheet_name, header=header, engine=engine)
+        df = pandas.read_excel(url, **param_dict)
     except OSError as e:
         exit_string = "ERROR: URL " + url + " could not be opened."
         sys.exit(exit_string)
@@ -164,14 +169,15 @@ def cli(what):
     #                "start_date": ['divi'],
     #                "update": ['divi']                 }
 
-    cli_dict = {"divi": ['Downloads data from DIVI', 'start_date', 'end_date', 'update'],
-                "rki": ['Download data from RKI', 'fill_dates', 'make_plot', 'moving_average', 'split_berlin'],
+    cli_dict = {"divi": ['Downloads data from DIVI', 'start_date', 'end_date', 'update', 'impute_dates', 'moving_average'],
+                "rki": ['Download data from RKI', 'impute_dates', 'make_plot', 'moving_average', 'split_berlin', 'rep_date'],
                 "rkiest": ['Download data from RKI and JH and estimate recovered and deaths', 'make_plot'],
                 "population": ['Download population data'],
-                "vaccine": ['Download vaccine data'],
+                "vaccination": ['Download vaccination data', 'start_date', 'end_date', 'make_plot', 'moving_average'],
+                "testing": ['Download testing data', 'start_date', 'end_date', 'make_plot', 'moving_average'],
                 "jh" : ['Downloads data from JH'],
                 "sim": ['Download all data needed for simulations', 'start_date', 'end_date', 'update',
-                        'fill_dates', 'make_plot', 'moving_average', 'split_berlin']}
+                        'impute_dates', 'make_plot', 'moving_average', 'split_berlin']}
 
     try:
         what_list = cli_dict[what]
@@ -197,7 +203,7 @@ def cli(what):
                             dd.defaultDict['file_format'] + "\"."))
     parser.add_argument('-o', '--out-folder', type=str, default=out_path_default, help='Defines folder for output.')
     parser.add_argument('-n', '--no-raw', default=dd.defaultDict['no_raw'],
-                        help='Defines if raw data fill be stored for further use.',
+                        help='Defines if raw data will be stored for further use.',
                         action='store_true')
 
     if 'end_date' in what_list:
@@ -206,23 +212,27 @@ def cli(what):
                                  'Should have form: YYYY-mm-dd. Default is today',
                             type=lambda s: datetime.datetime.strptime(s, '%Y-%m-%d').date(),
                             default=dd.defaultDict['end_date'])
-    if 'fill_dates' in what_list:
-        parser.add_argument('-d', '--fill-dates',
+    if 'impute_dates' in what_list:
+        parser.add_argument('-i', '--impute-dates',
                             help='the resulting dfs contain all dates instead of'
-                                 ' omitting dates where no new cases were reported',
+                                 ' omitting dates where no data was reported',
                             action='store_true')
     if 'make_plot' in what_list:
         parser.add_argument('-p', '--make-plot', help='Plots the data.',
                             action='store_true')
     if 'moving_average' in what_list:
-        parser.add_argument('-m', '--moving-average',
-                            help='The moving average is computed instead of the real values',
-                            action='store_true')
+        parser.add_argument('-m', '--moving-average', type=int, default=0,
+                            help='Compute a moving average of N days over the time series')
     if 'split_berlin' in what_list:
         parser.add_argument('-b', '--split-berlin',
                             help='Berlin data is split into different counties,'
                                  ' instead of having only one county for Berlin.',
                             action='store_true')
+    if 'rep_date' in what_list:
+        parser.add_argument('--rep-date', default=False,
+                            help='If reporting date is activated, the reporting date'
+                            'will be prefered over possibly given dates of disease onset.',
+                            action='store_true')                            
     if 'start_date' in what_list:
         parser.add_argument('-s', '--start-date',
                             help='Defines start date for data download. Should have form: YYYY-mm-dd.'
@@ -238,6 +248,15 @@ def cli(what):
 
     return vars(args)
 
+def append_filename(filename, impute_dates, moving_average):
+    """! Creates consistent file names for all output.
+    """
+    if moving_average > 0:
+        filename = filename + '_ma' + str(moving_average)
+    elif impute_dates:
+        filename = filename + '_all_dates'
+
+    return filename
 
 def check_dir(directory):
     """! Checks existence and creates folder
