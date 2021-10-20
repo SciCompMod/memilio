@@ -229,7 +229,9 @@ class TestCommuterMigration(fake_filesystem_unittest.TestCase):
         self.write_kreise_deu_data(self.path)
         self.write_commuter_all_federal_states(self.path)
         self.assertEqual(len(os.listdir(self.path)), 17)
-        counties = gD.loadExcel('kreise_deu', apiUrl=self.path, extension='.xlsx', sheet_name=1)
+        counties = gD.loadExcel(
+            'kreise_deu', apiUrl=self.path, extension='.xlsx',
+            param_dict={"sheet_name": 1})
         setup_dict = {'num_counties': 2,
                       'abs_tol': 100,
                       'rel_tol': 0.01,
@@ -265,7 +267,9 @@ class TestCommuterMigration(fake_filesystem_unittest.TestCase):
         self.write_kreise_deu_data(self.path)
         self.write_commuter_all_federal_states(self.path)
         self.assertEqual(len(os.listdir(self.path)), 17)
-        counties = gD.loadExcel('kreise_deu', apiUrl=self.path, extension='.xlsx', sheet_name=1)
+        counties = gD.loadExcel(
+            'kreise_deu', apiUrl=self.path, extension='.xlsx',
+            param_dict={"sheet_name": 1})
         setup_dict = {'num_counties': 21,
                       'abs_tol': 100,
                       'rel_tol': 0.01,
