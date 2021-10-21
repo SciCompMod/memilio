@@ -167,6 +167,13 @@ bool RKIntegratorCore::step(const DerivFunction& f, Eigen::Ref<const Eigen::Vect
             // if sufficiently exact, take 4th order approximation (do not take 5th order : Higher order is not always higher accuracy!)
             ytp1 = ytp1_low;
 
+            for (size_t i = 0; i < ytp1.size(); i++) {
+                if (ytp1[i] < -1) {
+                    log_warning("Compartment {:d} for Age Group {:d} is negative at time {:0.4f}: {:0.4f}", i % 6,
+                                (int)i / 6, t, ytp1[i]);
+                }
+            }
+
             if (dt < 2 * m_dt_min + 1e-6) {
                 failed_step_size_adapt = true;
             }

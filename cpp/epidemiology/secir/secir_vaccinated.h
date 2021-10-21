@@ -259,6 +259,15 @@ public:
             size_t CDVi = this->populations.get_flat_index({i, InfectionStateV::CarrierTV1});
             size_t IDVi = this->populations.get_flat_index({i, InfectionStateV::InfectedTV1});
 
+            size_t EV2i = this->populations.get_flat_index({i, InfectionStateV::ExposedV2});
+            size_t CV2i = this->populations.get_flat_index({i, InfectionStateV::CarrierV2});
+            size_t IV2i = this->populations.get_flat_index({i, InfectionStateV::InfectedV2});
+            size_t HV2i = this->populations.get_flat_index({i, InfectionStateV::HospitalizedV2});
+            size_t UV2i = this->populations.get_flat_index({i, InfectionStateV::ICUV2});
+
+            size_t CDV2i = this->populations.get_flat_index({i, InfectionStateV::CarrierTV2});
+            size_t IDV2i = this->populations.get_flat_index({i, InfectionStateV::InfectedTV2});
+
             dydt[Si] = 0;
             dydt[Ei] = 0;
 
@@ -270,11 +279,18 @@ public:
             double dummy_R3 =
                 0.5 / (params.get<IncubationTime>()[i] - params.get<SerialInterval>()[i]); // R3 = 1/(2(TINC-SI))
 
-            double risk_from_vacc = 1.0;
-            double risk_vacc_inf  = 0.5;
-            double reduc_inf_hosp = 0.25; // TODO
-            double reduc_hosp_icu = 0.4; // TODO
-            double reduc_icu_dead = 0.4; // TODO
+            double risk_from_vacc        = 1.0;
+            double risk_from_immune      = 1.0;
+            double risk_vacc_inf         = 0.8;
+            double risk_immune_inf       = 0.25;
+            double reduc_exp_inf         = 0.65;
+            double reduc_immune_exp_inf  = 0.15;
+            double reduc_inf_hosp        = 0.1; // TODO
+            double reduc_hosp_icu        = 0.1; // TODO
+            double reduc_icu_dead        = 0.1; // TODO
+            double reduc_immune_inf_hosp = 0.05; // TODO
+            double reduc_immune_hosp_icu = 0.05; // TODO
+            double reduc_immune_icu_dead = 0.05; // TODO
 
             //symptomatic are less well quarantined when testing and tracing is overwhelmed so they infect more people
             auto risk_from_symptomatic = smoother_cosine(
@@ -307,6 +323,15 @@ public:
                 size_t CDVj = this->populations.get_flat_index({j, InfectionStateV::CarrierTV1});
                 size_t IDVj = this->populations.get_flat_index({j, InfectionStateV::InfectedTV1});
 
+                size_t EV2j = this->populations.get_flat_index({j, InfectionStateV::ExposedV2});
+                size_t CV2j = this->populations.get_flat_index({j, InfectionStateV::CarrierV2});
+                size_t IV2j = this->populations.get_flat_index({j, InfectionStateV::InfectedV2});
+                size_t HV2j = this->populations.get_flat_index({j, InfectionStateV::HospitalizedV2});
+                size_t UV2j = this->populations.get_flat_index({j, InfectionStateV::ICUV2});
+
+                size_t CDV2j = this->populations.get_flat_index({j, InfectionStateV::CarrierTV2});
+                size_t IDV2j = this->populations.get_flat_index({j, InfectionStateV::InfectedTV2});
+
                 // effective contact rate by contact rate between groups i and j and damping j
                 double season_val = (1 + params.get<epi::Seasonality>() *
                                              sin(3.141592653589793 *
@@ -316,8 +341,9 @@ public:
                                                                  static_cast<Eigen::Index>((size_t)j));
 
                 double Nj = pop[Sj] + pop[Ej] + pop[Cj] + pop[Ij] + pop[Hj] + pop[Uj] + pop[Rj] + pop[CDj] + pop[IDj] +
-                            pop[SVj] + pop[EVj] + pop[CVj] + pop[IVj] + pop[HVj] + pop[UVj] + pop[CDVj] +
-                            pop[IDVj]; // without died people
+                            pop[SVj] + pop[EVj] + pop[CVj] + pop[IVj] + pop[HVj] + pop[UVj] + pop[CDVj] + pop[IDVj] +
+                            pop[EV2j] + pop[CV2j] + pop[IV2j] + pop[HV2j] + pop[UV2j] + pop[CDV2j] +
+                            pop[IDV2j]; // without died people
 
                 double divNj = 1.0 / Nj; // precompute 1.0/Nj
 
@@ -336,25 +362,34 @@ public:
                                            share_new_variant * params.template get<BaseInfB161>()[(AgeGroup)i];
                 unused(transmission_prob);
 
-                double dummy_S = y[Si] * cont_freq_eff * divNj *
-                                 params.template get<InfectionProbabilityFromContact>()[(AgeGroup)i] *
-                                 (risk_from_carrier * (pop[Cj] + risk_from_vacc * pop[CVj]) +
-                                  risk_from_symptomatic * (pop[Ij] + risk_from_vacc * pop[IVj]));
+                double dummy_S =
+                    y[Si] * cont_freq_eff * divNj *
+                    params.template get<InfectionProbabilityFromContact>()[(AgeGroup)i] *
+                    (risk_from_carrier * (pop[Cj] + risk_from_vacc * pop[CVj] + risk_from_immune * pop[CV2j]) +
+                     risk_from_symptomatic * (pop[Ij] + risk_from_vacc * pop[IVj] + risk_from_immune * pop[IV2j]));
 
-                double dummy_SV = y[SVi] * cont_freq_eff * divNj *
-                                  params.template get<InfectionProbabilityFromContact>()[(AgeGroup)i] * risk_vacc_inf *
-                                  (risk_from_carrier * (pop[Cj] + risk_from_vacc * pop[CVj]) +
-                                   risk_from_symptomatic * (pop[Ij] + risk_from_vacc * pop[IVj]));
+                double dummy_SV =
+                    y[SVi] * cont_freq_eff * divNj *
+                    params.template get<InfectionProbabilityFromContact>()[(AgeGroup)i] * risk_vacc_inf *
+                    (risk_from_carrier * (pop[Cj] + risk_from_vacc * pop[CVj] + risk_from_immune * pop[CV2j]) +
+                     risk_from_symptomatic * (pop[Ij] + risk_from_vacc * pop[IVj] + risk_from_immune * pop[IV2j]));
+
+                double dummy_R =
+                    y[Ri] * cont_freq_eff * divNj *
+                    params.template get<InfectionProbabilityFromContact>()[(AgeGroup)i] * risk_immune_inf *
+                    (risk_from_carrier * (pop[Cj] + risk_from_vacc * pop[CVj] + risk_from_immune * pop[CV2j]) +
+                     risk_from_symptomatic * (pop[Ij] + risk_from_vacc * pop[IVj] + risk_from_immune * pop[IV2j]));
 
                 dydt[Si] -= dummy_S; // -R1*(C+beta*I)*S/N0
                 dydt[Ei] += dummy_S; // R1*(C+beta*I)*S/N0-R2*E
 
                 dydt[SVi] -= dummy_SV; // -R1*(C+beta*I)*S/N0
                 dydt[EVi] += dummy_SV; // R1*(C+beta*I)*S/N0-R2*E
+
+                dydt[Ri] -= dummy_R; // -R1*(C+beta*I)*S/N0
+                dydt[EV2i] += dummy_R; // R1*(C+beta*I)*S/N0-R2*E
             }
 
-            std::cout << "Infection from Contact at time " << t << ": "
-                      << params.template get<InfectionProbabilityFromContact>()[AgeGroup(0)] << std::endl;
             // ICU capacity shortage is close
             double prob_hosp2icu =
                 smoother_cosine(icu_occupancy, 0.90 * params.get<epi::ICUCapacity>(), params.get<epi::ICUCapacity>(),
@@ -395,29 +430,34 @@ public:
             /**** path of vaccinated ***/
 
             dydt[EVi] -= dummy_R2 * y[EVi]; // only exchange of E and C done here
-            dydt[CVi] = dummy_R2 * y[EVi] -
-                        ((1 - params.get<AsymptoticCasesPerInfectious>()[i]) * dummy_R3 +
-                         params.get<AsymptoticCasesPerInfectious>()[i] / params.get<InfectiousTimeAsymptomatic>()[i]) *
-                            y[CVi];
+            dydt[CVi] =
+                dummy_R2 * y[EVi] -
+                (reduc_exp_inf / risk_vacc_inf * (1 - params.get<AsymptoticCasesPerInfectious>()[i]) * dummy_R3 +
+                 (1 - (reduc_exp_inf / risk_vacc_inf) * (1 - params.get<AsymptoticCasesPerInfectious>()[i])) /
+                     params.get<InfectiousTimeAsymptomatic>()[i]) *
+                    y[CVi];
             dydt[CDVi] =
-                -((1 - params.get<AsymptoticCasesPerInfectious>()[i]) * dummy_R3 +
-                  params.get<AsymptoticCasesPerInfectious>()[i] / params.get<InfectiousTimeAsymptomatic>()[i]) *
+                -((reduc_exp_inf / risk_vacc_inf) * (1 - params.get<AsymptoticCasesPerInfectious>()[i]) * dummy_R3 +
+                  (1 - (reduc_exp_inf / risk_vacc_inf) * (1 - params.get<AsymptoticCasesPerInfectious>()[i])) /
+                      params.get<InfectiousTimeAsymptomatic>()[i]) *
                 y[CDVi];
-            dydt[IVi] = (1 - params.get<AsymptoticCasesPerInfectious>()[i]) * dummy_R3 * y[CVi] -
-                        ((1 - reduc_inf_hosp / risk_vacc_inf * params.get<HospitalizedCasesPerInfectious>()[i]) /
+            dydt[IVi] = (reduc_exp_inf / risk_vacc_inf) * (1 - params.get<AsymptoticCasesPerInfectious>()[i]) *
+                            dummy_R3 * y[CVi] -
+                        ((1 - reduc_inf_hosp / reduc_exp_inf * params.get<HospitalizedCasesPerInfectious>()[i]) /
                              params.get<InfectiousTimeMild>()[i] +
-                         reduc_inf_hosp / risk_vacc_inf * params.get<HospitalizedCasesPerInfectious>()[i] /
+                         reduc_inf_hosp / reduc_exp_inf * params.get<HospitalizedCasesPerInfectious>()[i] /
                              params.get<HomeToHospitalizedTime>()[i]) *
                             y[IVi];
-            dydt[IDVi] = (1 - params.get<AsymptoticCasesPerInfectious>()[i]) * dummy_R3 * y[CDVi] -
-                         ((1 - reduc_inf_hosp / risk_vacc_inf * params.get<HospitalizedCasesPerInfectious>()[i]) /
+            dydt[IDVi] = (reduc_exp_inf / risk_vacc_inf) * (1 - params.get<AsymptoticCasesPerInfectious>()[i]) *
+                             dummy_R3 * y[CDVi] -
+                         ((1 - reduc_inf_hosp / reduc_exp_inf * params.get<HospitalizedCasesPerInfectious>()[i]) /
                               params.get<InfectiousTimeMild>()[i] +
-                          reduc_inf_hosp / risk_vacc_inf * params.get<HospitalizedCasesPerInfectious>()[i] /
+                          reduc_inf_hosp / reduc_exp_inf * params.get<HospitalizedCasesPerInfectious>()[i] /
                               params.get<HomeToHospitalizedTime>()[i]) *
                              y[IDVi];
-            dydt[HVi] = reduc_inf_hosp / risk_vacc_inf * params.get<HospitalizedCasesPerInfectious>()[i] /
+            dydt[HVi] = reduc_inf_hosp / reduc_exp_inf * params.get<HospitalizedCasesPerInfectious>()[i] /
                             params.get<HomeToHospitalizedTime>()[i] * y[IVi] +
-                        reduc_inf_hosp / risk_vacc_inf * params.get<HospitalizedCasesPerInfectious>()[i] /
+                        reduc_inf_hosp / reduc_exp_inf * params.get<HospitalizedCasesPerInfectious>()[i] /
                             params.get<HomeToHospitalizedTime>()[i] * y[IDVi] -
                         ((1 - reduc_hosp_icu / reduc_inf_hosp * params.get<ICUCasesPerHospitalized>()[i]) /
                              params.get<HospitalizedToHomeTime>()[i] +
@@ -433,31 +473,107 @@ public:
             dydt[UVi] +=
                 reduc_hosp_icu / reduc_inf_hosp * prob_hosp2icu / params.get<HospitalizedToICUTime>()[i] * y[HVi];
 
+            /**** path of immune ***/
+
+            dydt[EV2i] -= dummy_R2 * y[EV2i]; // only exchange of E and C done here
+            dydt[CV2i] =
+                dummy_R2 * y[EV2i] -
+                ((reduc_immune_exp_inf / risk_immune_inf) * (1 - params.get<AsymptoticCasesPerInfectious>()[i]) *
+                     dummy_R3 +
+                 (1 - (reduc_immune_exp_inf / risk_immune_inf) * (1 - params.get<AsymptoticCasesPerInfectious>()[i])) /
+                     params.get<InfectiousTimeAsymptomatic>()[i]) *
+                    y[CV2i];
+            dydt[CDV2i] =
+                -((reduc_immune_exp_inf / risk_immune_inf) * (1 - params.get<AsymptoticCasesPerInfectious>()[i]) *
+                      dummy_R3 +
+                  (1 - (reduc_immune_exp_inf / risk_immune_inf) * (1 - params.get<AsymptoticCasesPerInfectious>()[i])) /
+                      params.get<InfectiousTimeAsymptomatic>()[i]) *
+                y[CDV2i];
+            dydt[IV2i] =
+                (reduc_immune_exp_inf / risk_immune_inf) * (1 - params.get<AsymptoticCasesPerInfectious>()[i]) *
+                    dummy_R3 * y[CV2i] -
+                ((1 - reduc_immune_inf_hosp / reduc_immune_exp_inf * params.get<HospitalizedCasesPerInfectious>()[i]) /
+                     params.get<InfectiousTimeMild>()[i] +
+                 reduc_immune_inf_hosp / reduc_immune_exp_inf * params.get<HospitalizedCasesPerInfectious>()[i] /
+                     params.get<HomeToHospitalizedTime>()[i]) *
+                    y[IV2i];
+            dydt[IDV2i] =
+                (reduc_immune_exp_inf / risk_immune_inf) * (1 - params.get<AsymptoticCasesPerInfectious>()[i]) *
+                    dummy_R3 * y[CDV2i] -
+                ((1 - reduc_immune_inf_hosp / reduc_immune_exp_inf * params.get<HospitalizedCasesPerInfectious>()[i]) /
+                     params.get<InfectiousTimeMild>()[i] +
+                 reduc_immune_inf_hosp / reduc_immune_exp_inf * params.get<HospitalizedCasesPerInfectious>()[i] /
+                     params.get<HomeToHospitalizedTime>()[i]) *
+                    y[IDV2i];
+            dydt[HV2i] =
+                reduc_immune_inf_hosp / reduc_immune_exp_inf * params.get<HospitalizedCasesPerInfectious>()[i] /
+                    params.get<HomeToHospitalizedTime>()[i] * y[IV2i] +
+                reduc_immune_inf_hosp / reduc_immune_exp_inf * params.get<HospitalizedCasesPerInfectious>()[i] /
+                    params.get<HomeToHospitalizedTime>()[i] * y[IDV2i] -
+                ((1 - reduc_immune_hosp_icu / reduc_immune_inf_hosp * params.get<ICUCasesPerHospitalized>()[i]) /
+                     params.get<HospitalizedToHomeTime>()[i] +
+                 reduc_immune_hosp_icu / reduc_immune_inf_hosp * params.get<ICUCasesPerHospitalized>()[i] /
+                     params.get<HospitalizedToICUTime>()[i]) *
+                    y[HV2i];
+            dydt[UV2i] =
+                -((1 - reduc_immune_icu_dead / reduc_immune_hosp_icu * params.get<DeathsPerHospitalized>()[i]) /
+                      params.get<ICUToHomeTime>()[i] +
+                  reduc_immune_icu_dead / reduc_immune_hosp_icu * params.get<DeathsPerHospitalized>()[i] /
+                      params.get<ICUToDeathTime>()[i]) *
+                y[UV2i];
+            // add flow from hosp to icu according to potentially adjusted probability due to ICU limits
+            dydt[UV2i] += reduc_immune_hosp_icu / reduc_immune_inf_hosp * prob_hosp2icu /
+                          params.get<HospitalizedToICUTime>()[i] * y[HV2i];
+
             dydt[Ri] =
                 params.get<AsymptoticCasesPerInfectious>()[i] / params.get<InfectiousTimeAsymptomatic>()[i] * y[Ci] +
                 params.get<AsymptoticCasesPerInfectious>()[i] / params.get<InfectiousTimeAsymptomatic>()[i] * y[CDi] +
                 (1 - params.get<HospitalizedCasesPerInfectious>()[i]) / params.get<InfectiousTimeMild>()[i] * y[Ii] +
                 (1 - params.get<HospitalizedCasesPerInfectious>()[i]) / params.get<InfectiousTimeMild>()[i] * y[IDi] +
-                params.get<AsymptoticCasesPerInfectious>()[i] / params.get<InfectiousTimeAsymptomatic>()[i] * y[CVi] +
-                params.get<AsymptoticCasesPerInfectious>()[i] / params.get<InfectiousTimeAsymptomatic>()[i] * y[CDVi] +
-                (1 - (reduc_inf_hosp / risk_vacc_inf) * params.get<HospitalizedCasesPerInfectious>()[i]) /
-                    params.get<InfectiousTimeMild>()[i] * y[IVi] +
-                (1 - (reduc_inf_hosp / risk_vacc_inf) * params.get<HospitalizedCasesPerInfectious>()[i]) /
-                    params.get<InfectiousTimeMild>()[i] * y[IDVi] +
                 (1 - params.get<ICUCasesPerHospitalized>()[i]) / params.get<HospitalizedToHomeTime>()[i] * y[Hi] +
-                (1 - params.get<DeathsPerHospitalized>()[i]) / params.get<ICUToHomeTime>()[i] * y[Ui] +
-                (1 - (reduc_hosp_icu / reduc_inf_hosp) * params.get<ICUCasesPerHospitalized>()[i]) /
-                    params.get<HospitalizedToHomeTime>()[i] * y[HVi] +
-                (1 - (reduc_icu_dead / reduc_hosp_icu) * params.get<DeathsPerHospitalized>()[i]) /
-                    params.get<ICUToHomeTime>()[i] * y[UVi];
+                (1 - params.get<DeathsPerHospitalized>()[i]) / params.get<ICUToHomeTime>()[i] * y[Ui];
+
+            dydt[Ri] += (1 - (reduc_exp_inf / risk_vacc_inf) * (1 - params.get<AsymptoticCasesPerInfectious>()[i])) /
+                            params.get<InfectiousTimeAsymptomatic>()[i] * y[CVi] +
+                        (1 - (reduc_exp_inf / risk_vacc_inf) * (1 - params.get<AsymptoticCasesPerInfectious>()[i])) /
+                            params.get<InfectiousTimeAsymptomatic>()[i] * y[CDVi] +
+                        (1 - (reduc_inf_hosp / reduc_exp_inf) * params.get<HospitalizedCasesPerInfectious>()[i]) /
+                            params.get<InfectiousTimeMild>()[i] * y[IVi] +
+                        (1 - (reduc_inf_hosp / reduc_exp_inf) * params.get<HospitalizedCasesPerInfectious>()[i]) /
+                            params.get<InfectiousTimeMild>()[i] * y[IDVi] +
+                        (1 - (reduc_hosp_icu / reduc_inf_hosp) * params.get<ICUCasesPerHospitalized>()[i]) /
+                            params.get<HospitalizedToHomeTime>()[i] * y[HVi] +
+                        (1 - (reduc_icu_dead / reduc_hosp_icu) * params.get<DeathsPerHospitalized>()[i]) /
+                            params.get<ICUToHomeTime>()[i] * y[UVi];
+
+            dydt[Ri] +=
+                (1 - (reduc_immune_exp_inf / risk_immune_inf) * (1 - params.get<AsymptoticCasesPerInfectious>()[i])) /
+                    params.get<InfectiousTimeAsymptomatic>()[i] * y[CV2i] +
+                (1 - (reduc_immune_exp_inf / risk_immune_inf) * (1 - params.get<AsymptoticCasesPerInfectious>()[i])) /
+                    params.get<InfectiousTimeAsymptomatic>()[i] * y[CDV2i] +
+                (1 - (reduc_immune_inf_hosp / reduc_immune_exp_inf) * params.get<HospitalizedCasesPerInfectious>()[i]) /
+                    params.get<InfectiousTimeMild>()[i] * y[IV2i] +
+                (1 - (reduc_immune_inf_hosp / reduc_immune_exp_inf) * params.get<HospitalizedCasesPerInfectious>()[i]) /
+                    params.get<InfectiousTimeMild>()[i] * y[IDV2i] +
+                (1 - (reduc_immune_hosp_icu / reduc_immune_inf_hosp) * params.get<ICUCasesPerHospitalized>()[i]) /
+                    params.get<HospitalizedToHomeTime>()[i] * y[HV2i] +
+                (1 - (reduc_immune_icu_dead / reduc_immune_hosp_icu) * params.get<DeathsPerHospitalized>()[i]) /
+                    params.get<ICUToHomeTime>()[i] * y[UV2i];
 
             dydt[Di] = params.get<DeathsPerHospitalized>()[i] / params.get<ICUToDeathTime>()[i] * y[Ui] +
                        reduc_icu_dead / reduc_hosp_icu * params.get<DeathsPerHospitalized>()[i] /
-                           params.get<ICUToDeathTime>()[i] * y[UVi];
+                           params.get<ICUToDeathTime>()[i] * y[UVi] +
+                       reduc_immune_icu_dead / reduc_immune_hosp_icu * params.get<DeathsPerHospitalized>()[i] /
+                           params.get<ICUToDeathTime>()[i] * y[UV2i];
+            ;
             // add potential, additional deaths due to ICU overflow
             dydt[Di] += prob_hosp2dead / params.get<HospitalizedToICUTime>()[i] * y[Hi];
-            dydt[Di] += (params.get<ICUCasesPerHospitalized>()[i] - reduc_hosp_icu / reduc_inf_hosp * prob_hosp2icu) /
-                        params.get<HospitalizedToICUTime>()[i] * y[HVi];
+
+            dydt[Di] +=
+                (reduc_icu_dead / reduc_inf_hosp) * prob_hosp2dead / params.get<HospitalizedToICUTime>()[i] * y[HVi];
+
+            dydt[Di] += (reduc_immune_icu_dead / reduc_immune_inf_hosp) * prob_hosp2dead /
+                        params.get<HospitalizedToICUTime>()[i] * y[HV2i];
         }
     }
 
@@ -574,9 +690,9 @@ public:
                 daily_full_vaccinations[daily_first_vaccinations.size() -
                                         m_params.template get<DaysUntilEffective>()[(AgeGroup)i]] -
                 new_vaccinated_full;
-            /*if (new_vaccinated_first < 0) {
+            if (new_vaccinated_first < 0) {
                 new_vaccinated_first = 0;
-            }*/
+            }
             if (last_value((size_t)InfectionStateV::Count * i + (size_t)InfectionStateV::Susceptible) -
                     new_vaccinated_first >
                 (1 - threshhold) * population.get_group_total((AgeGroup)i)) {
@@ -647,7 +763,7 @@ public:
             Base::advance(t + dt_eff);
             if (t + dt_eff - std::floor(t) >= 1) {
                 this->apply_vaccination();
-                //this->apply_b161(t);
+                this->apply_b161(t);
             }
 
             if (t > 0) {
@@ -676,9 +792,12 @@ public:
                                                         });
                         }
                     }
+                    m_t_last_npi_check = t;
                 }
             }
-            m_t_last_npi_check = t;
+            else {
+                m_t_last_npi_check = t;
+            }
         }
         return this->get_result().get_last_value();
     }
@@ -712,9 +831,9 @@ double get_infections_relative(const SecirSimulationV<Base>& sim, double /*t*/,
         sum_inf += sim.get_model().populations.get_from(y, {i, InfectionStateV::Infected});
         sum_inf += sim.get_model().populations.get_from(y, {i, InfectionStateV::InfectedT});
         sum_inf += sim.get_model().populations.get_from(y, {i, InfectionStateV::InfectedV1});
-        //sum_inf += sim.get_model().populations.get_from(y, {i, InfectionStateV::InfectedV2});
+        sum_inf += sim.get_model().populations.get_from(y, {i, InfectionStateV::InfectedV2});
         sum_inf += sim.get_model().populations.get_from(y, {i, InfectionStateV::InfectedTV1});
-        //sum_inf += sim.get_model().populations.get_from(y, {i, InfectionStateV::InfectedTV2});
+        sum_inf += sim.get_model().populations.get_from(y, {i, InfectionStateV::InfectedTV2});
     }
     auto inf_rel = sum_inf / sim.get_model().populations.get_total();
 
@@ -745,6 +864,8 @@ auto get_migration_factors(const SecirSimulationV<Base>& sim, double /*t*/, cons
     auto y_car = slice(y, {Eigen::Index(InfectionStateV::Carrier), Eigen::Index(size_t(params.get_num_groups())),
                            Eigen::Index(InfectionStateV::Count)}) +
                  slice(y, {Eigen::Index(InfectionStateV::CarrierV1), Eigen::Index(size_t(params.get_num_groups())),
+                           Eigen::Index(InfectionStateV::Count)}) +
+                 slice(y, {Eigen::Index(InfectionStateV::CarrierV2), Eigen::Index(size_t(params.get_num_groups())),
                            Eigen::Index(InfectionStateV::Count)});
 
     //compute isolation, same as infection risk from main model
@@ -760,6 +881,9 @@ auto get_migration_factors(const SecirSimulationV<Base>& sim, double /*t*/, cons
                     Eigen::Index(InfectionStateV::Count)})
         .array() = risk_from_symptomatic;
     slice(factors, {Eigen::Index(InfectionStateV::InfectedV1), Eigen::Index(size_t(params.get_num_groups())),
+                    Eigen::Index(InfectionStateV::Count)})
+        .array() = risk_from_symptomatic;
+    slice(factors, {Eigen::Index(InfectionStateV::InfectedV2), Eigen::Index(size_t(params.get_num_groups())),
                     Eigen::Index(InfectionStateV::Count)})
         .array() = risk_from_symptomatic;
     return factors;
@@ -823,10 +947,10 @@ auto test_commuters(SecirSimulationV<Base>& sim, Eigen::Ref<Eigen::VectorXd> mig
         auto CV1i  = model.populations.get_flat_index({i, InfectionStateV::CarrierV1});
         auto CDV1i = model.populations.get_flat_index({i, InfectionStateV::CarrierTV1});
 
-        /*auto IV2i  = model.populations.get_flat_index({i, size_t(InfectionStateV::InfectedV2)});
-        auto IDV2i = model.populations.get_flat_index({i, size_t(InfectionStateV::InfectedTV2)});
-        auto CV2i  = model.populations.get_flat_index({i, size_t(InfectionStateV::CarrierV2)});
-        auto CDV2i = model.populations.get_flat_index({i, size_t(InfectionStateV::CarrierTV2)});*/
+        auto IV2i  = model.populations.get_flat_index({i, InfectionStateV::InfectedV2});
+        auto IDV2i = model.populations.get_flat_index({i, InfectionStateV::InfectedTV2});
+        auto CV2i  = model.populations.get_flat_index({i, InfectionStateV::CarrierV2});
+        auto CDV2i = model.populations.get_flat_index({i, InfectionStateV::CarrierTV2});
 
         //put detected commuters in their own compartment so they don't contribute to infections in their home node
         sim.get_result().get_last_value()[Ii] -= migrated[Ii] * (1 - nondetection);
@@ -839,10 +963,10 @@ auto test_commuters(SecirSimulationV<Base>& sim, Eigen::Ref<Eigen::VectorXd> mig
         sim.get_result().get_last_value()[CV1i] -= migrated[CV1i] * (1 - nondetection);
         sim.get_result().get_last_value()[CDV1i] += migrated[CV1i] * (1 - nondetection);
 
-        /*sim.get_result().get_last_value()[IV2i] -= migrated[IV2i] * (1 - nondetection);
+        sim.get_result().get_last_value()[IV2i] -= migrated[IV2i] * (1 - nondetection);
         sim.get_result().get_last_value()[IDV2i] += migrated[IV2i] * (1 - nondetection);
         sim.get_result().get_last_value()[CV2i] -= migrated[CV2i] * (1 - nondetection);
-        sim.get_result().get_last_value()[CDV2i] += migrated[CV2i] * (1 - nondetection);*/
+        sim.get_result().get_last_value()[CDV2i] += migrated[CV2i] * (1 - nondetection);
 
         //reduce the number of commuters
         migrated[Ii] *= nondetection;

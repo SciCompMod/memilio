@@ -347,14 +347,14 @@ template <class Sim,
 double get_infections_relative(const SimulationNode<Sim>& /*node*/, double /*t*/,
                                const Eigen::Ref<const Eigen::VectorXd>& /*y*/)
 {
-    std::cout << "InfectRel1" << std::endl;
+    //std::cout << "InfectRel1" << std::endl;
     assert(false && "Overload get_infections_relative for your own model/simulation if you want to use dynamic NPIs.");
     return 0;
 }
 template <class Sim, std::enable_if_t<is_expression_valid<get_infections_relative_expr_t, Sim>::value, void*> = nullptr>
 double get_infections_relative(const SimulationNode<Sim>& node, double t, const Eigen::Ref<const Eigen::VectorXd>& y)
 {
-    std::cout << "InfectRel2" << std::endl;
+    //std::cout << "InfectRel2" << std::endl;
     return get_infections_relative(node.get_simulation(), t, y);
 }
 
@@ -380,13 +380,13 @@ template <class Sim, std::enable_if_t<!is_expression_valid<get_migration_factors
 auto get_migration_factors(const SimulationNode<Sim>& /*node*/, double /*t*/,
                            const Eigen::Ref<const Eigen::VectorXd>& y)
 {
-    std::cout << "getMigFactors1" << std::endl;
+    //std::cout << "getMigFactors1" << std::endl;
     return Eigen::VectorXd::Ones(y.rows());
 }
 template <class Sim, std::enable_if_t<is_expression_valid<get_migration_factors_expr_t, Sim>::value, void*> = nullptr>
 auto get_migration_factors(const SimulationNode<Sim>& node, double t, const Eigen::Ref<const Eigen::VectorXd>& y)
 {
-    std::cout << "getMigFactors2" << std::endl;
+    //std::cout << "getMigFactors2" << std::endl;
     return get_migration_factors(node.get_simulation(), t, y);
 }
 
@@ -411,12 +411,12 @@ using test_commuters_expr_t = decltype(
 template <class Sim, std::enable_if_t<!is_expression_valid<test_commuters_expr_t, Sim>::value, void*> = nullptr>
 void test_commuters(SimulationNode<Sim>& /*node*/, Eigen::Ref<Eigen::VectorXd> /*migrated*/, double /*time*/)
 {
-    std::cout << "test_commuters1" << std::endl;
+    //std::cout << "test_commuters1" << std::endl;
 }
 template <class Sim, std::enable_if_t<is_expression_valid<test_commuters_expr_t, Sim>::value, void*> = nullptr>
 void test_commuters(SimulationNode<Sim>& node, Eigen::Ref<Eigen::VectorXd> migrated, double time)
 {
-    std::cout << "test_commuters2" << std::endl;
+    //std::cout << "test_commuters2" << std::endl;
     return test_commuters(node.get_simulation(), migrated, time);
 }
 

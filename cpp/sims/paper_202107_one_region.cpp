@@ -170,8 +170,8 @@ epi::IOResult<void> set_covid_parameters(epi::SecirParams& params)
     const double prob_icu_dead_min[]     = {0.00, 0.00, 0.10, 0.10, 0.30, 0.5}; // delta
     const double prob_icu_dead_max[]     = {0.10, 0.10, 0.18, 0.18, 0.50, 0.7};
 
-    array_assign_uniform_distribution(params.get<epi::InfectionProbabilityFromContact>(), transmission_risk_max,
-                                      transmission_risk_max);
+    array_assign_uniform_distribution(params.get<epi::InfectionProbabilityFromContact>(), transmission_risk_min,
+                                      transmission_risk_min);
     array_assign_uniform_distribution(params.get<epi::RelativeCarrierInfectability>(), carr_infec_max, carr_infec_max);
     array_assign_uniform_distribution(params.get<epi::RiskOfInfectionFromSympomatic>(), beta_low_incidenc_max,
                                       beta_low_incidenc_max);
@@ -390,8 +390,8 @@ epi::IOResult<void> set_npis(epi::Date start_date, epi::Date end_date, epi::Seci
     dynamic_npis.set_interval(epi::SimulationTime(1.0));
     dynamic_npis.set_duration(epi::SimulationTime(14.0));
     dynamic_npis.set_base_value(100'000);
-    dynamic_npis.set_threshold(100000000000.0, dynamic_npi_dampings);
-    dynamic_npis.set_threshold(100000000000.0, dynamic_npi_dampings2);
+    dynamic_npis.set_threshold(35.0, dynamic_npi_dampings);
+    dynamic_npis.set_threshold(100.0, dynamic_npi_dampings2);
 
     //school holidays (holiday periods are set per node, see set_nodes)
     auto school_holiday_value = epi::UncertainValue();

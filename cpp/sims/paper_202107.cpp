@@ -445,7 +445,6 @@ epi::IOResult<void> set_nodes(const epi::SecirParams& params, epi::Date start_da
                               const fs::path& data_dir,
                               epi::Graph<epi::SecirModelV, epi::MigrationParameters>& params_graph)
 {
-    std::cout << "Hello World!" << std::endl;
     namespace de = epi::regions::de;
 
     BOOST_OUTCOME_TRY(county_ids, epi::get_county_ids((data_dir / "pydata" / "Germany").string()));
@@ -458,10 +457,8 @@ epi::IOResult<void> set_nodes(const epi::SecirParams& params, epi::Date start_da
     BOOST_OUTCOME_TRY((epi::read_population_data_county<epi::SecirModelV, epi::InfectionStateV>(
         counties, start_date, county_ids, scaling_factor_infected, scaling_factor_icu,
         (data_dir / "pydata" / "Germany").string())));
-    std::cout << "Hello World!" << std::endl;
     BOOST_OUTCOME_TRY(
         epi::read_vaccine_data(counties, start_date, county_ids, (data_dir / "pydata" / "Germany").string()));
-    std::cout << "Hello World!" << std::endl;
     //set_synthetic_population_data(counties);
 
     for (size_t county_idx = 0; county_idx < counties.size(); ++county_idx) {
@@ -521,11 +518,11 @@ epi::IOResult<void> set_edges(const fs::path& data_dir,
         return epi::failure(epi::StatusCode::InvalidValue, "Migration matrices not the correct size.");
     }
 
-    auto migrating_compartments = {epi::InfectionStateV::Susceptible, epi::InfectionStateV::Exposed,
-                                   epi::InfectionStateV::Carrier,     epi::InfectionStateV::Infected,
-                                   epi::InfectionStateV::Recovered,   epi::InfectionStateV::SusceptibleV1,
-                                   epi::InfectionStateV::ExposedV1,   epi::InfectionStateV::CarrierV1,
-                                   epi::InfectionStateV::InfectedV1,  epi::InfectionStateV::Recovered};
+    auto migrating_compartments = {
+        epi::InfectionStateV::Susceptible, epi::InfectionStateV::Exposed,   epi::InfectionStateV::Carrier,
+        epi::InfectionStateV::Infected,    epi::InfectionStateV::Recovered, epi::InfectionStateV::SusceptibleV1,
+        epi::InfectionStateV::ExposedV1,   epi::InfectionStateV::CarrierV1, epi::InfectionStateV::InfectedV1,
+        epi::InfectionStateV::ExposedV2,   epi::InfectionStateV::CarrierV2, epi::InfectionStateV::InfectedV2};
     for (size_t county_idx_i = 0; county_idx_i < params_graph.nodes().size(); ++county_idx_i) {
         for (size_t county_idx_j = 0; county_idx_j < params_graph.nodes().size(); ++county_idx_j) {
             auto& populations = params_graph.nodes()[county_idx_i].property.populations;
@@ -607,13 +604,6 @@ create_graph(epi::Date start_date, epi::Date end_date, const fs::path& data_dir,
     BOOST_OUTCOME_TRY(set_edges(data_dir, params_graph));
 
     auto test = params_graph.nodes()[0].property;
-    for (int i = 0; i < 6; i++) {
-        std::cout << "AgeGroup: " << i << std::endl;
-        for (int j = 0; j < 18; j++) {
-
-            std::cout << j << ": " << test.populations[{epi::AgeGroup(i), epi::InfectionStateV(j)}] << std::endl;
-        }
-    }
 
     return epi::success(params_graph);
 }
@@ -809,7 +799,7 @@ epi::IOResult<void> run(RunMode mode, const fs::path& data_dir, const fs::path& 
     const auto start_date   = epi::Date(2021, 6, 6);
     const auto num_days_sim = 90.0;
     const auto end_date     = epi::offset_date_by_days(start_date, int(std::ceil(num_days_sim)));
-    const auto num_runs     = 100;
+    const auto num_runs     = 500;
 
     //create or load graph
     epi::Graph<epi::SecirModelV, epi::MigrationParameters> params_graph;
@@ -904,7 +894,7 @@ int main(int argc, char** argv)
     printf("Saving results to \"%s\".\n", result_dir.c_str());
 
     epi::thread_local_rng().seed(
-        {498689323, 2265517453, 1157186417, 3650550780, 284659318, 384497627}); //set seeds, e.g., for debugging
+        {114381446, 2427727386, 806223567, 832414962, 4121923627, 1581162203}); //set seeds, e.g., for debugging
     printf("Seeds: ");
     for (auto s : epi::thread_local_rng().get_seeds()) {
         printf("%u, ", s);

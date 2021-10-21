@@ -458,7 +458,6 @@ namespace details
                 num_vac_ratio_old_full          = root[i]["Ratio_Old_Full"].asDouble();
             }
         }
-        std::cout << "Hello World!" << std::endl;
         for (size_t region_idx = 0; region_idx < model.size(); ++region_idx) {
             auto& params      = model[region_idx];
             auto& num_vaccine = vnum_vaccine[region_idx];
@@ -564,9 +563,6 @@ namespace details
                         daily_first_vaccination[j] * (param.populations.get_group_total(i) / sum_population));
                     param.parameters.get<DailyFullVaccination>()[i].push_back(
                         daily_full_vaccination[j] * (param.populations.get_group_total(i) / sum_population));
-                    std::cout << "daily_vaccinated_full[" << j << "]:"
-                              << daily_full_vaccination[j] * (param.populations.get_group_total(i) / sum_population)
-                              << std::endl;
                 }
 
                 double vaccine_growth_first =
@@ -576,11 +572,6 @@ namespace details
                 param.parameters.get<VaccineGrowthFirst>()[i] = vaccine_growth_first;
                 param.parameters.get<VaccineGrowthFull>()[i]  = vaccine_growth_full;
             }
-        }
-        for (size_t i = 0; i < daily_first_vaccination.size(); ++i) {
-            std::cout << "daily_first[" << i
-                      << "]: " << model[0].parameters.get<DailyFirstVaccination>()[AgeGroup(2)][i] << std::endl;
-            std::cout << "daily_first2[" << i << "]: " << daily_first_vaccination[i] << std::endl;
         }
     }
 

@@ -40,10 +40,10 @@ void MigrationEdge::condense_m_migrated(double t)
             m_migrated.get_last_value()[(int)InfectionStateV::InfectedV1 + (int)InfectionStateV::Count * (int)i];
         carriers_over_age_groups +=
             m_migrated.get_last_value()[(int)InfectionStateV::CarrierV1 + (int)InfectionStateV::Count * (int)i];
-        /*infectious_vaccinated_over_age_groups +=
+        infectious_over_age_groups +=
             m_migrated.get_last_value()[(int)InfectionStateV::InfectedV2 + (int)InfectionStateV::Count * (int)i];
-        carriers_vaccinated_over_age_groups +=
-            m_migrated.get_last_value()[(int)InfectionStateV::CarrierV2 + (int)InfectionStateV::Count * (int)i];*/
+        carriers_over_age_groups +=
+            m_migrated.get_last_value()[(int)InfectionStateV::CarrierV2 + (int)InfectionStateV::Count * (int)i];
     }
     // now get the sum over all who are allowed to travel
     for (auto i = 0; i < m_migrated.get_num_elements(); i++) {
