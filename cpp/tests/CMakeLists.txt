@@ -37,6 +37,7 @@ set(TESTSOURCES
   test_io_framework.cpp
   test_compartmentsimulation.cpp
   test_mobility_io.cpp
+  test_transform_iterator.cpp
   distributions_helpers.h
   distributions_helpers.cpp
   actions.h
