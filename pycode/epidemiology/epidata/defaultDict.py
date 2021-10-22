@@ -33,10 +33,10 @@ import os
 from datetime import date
 
 default_file_path = os.path.dirname(os.path.abspath(__file__))
-dfp_vec = default_file_path.split("epidemiology")
+dfp_vec = default_file_path.split('memilio')
 if len(dfp_vec) > 0:
     default_file_path = os.path.join(
-        dfp_vec[0], os.path.join('epidemiology', 'data'))
+        dfp_vec[0], os.path.join('memilio', 'data/pydata'))
 
 defaultDict = {
     'read_data': False,
@@ -102,8 +102,8 @@ EngEng = {
     # mobility data refs
     'nuts3': 'NUTS3',
     'total_volume' : 'Unique_trips',
-    'region_name' : 'county',
-    'region_id' : 'idCounty'
+    'region_name' : 'County',
+    'region_id' : 'ID_County'
 }
 
 GerEng = {

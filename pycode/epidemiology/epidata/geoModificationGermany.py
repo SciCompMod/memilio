@@ -26,8 +26,9 @@
 
 import os
 import defaultDict as dd
-import getDataIntoPandasDataFrame as gd
+
 import pandas as pd
+from epidemiology.epidata import getDataIntoPandasDataFrame as gd
 
 # Merging of Counties that are reported differently, either separatedly or 
 # summed, in different data sources
@@ -39,28 +40,49 @@ CountyMerging = {
     16063 : [16063, 16056]
 }
 
-# get list of state IDs 
+
 def get_state_ids():
+    """"! Get list of federal state IDs sorted according to state ID.
+
+    @return List of federal IDs sorted according to state ID.
+    """         
     unique_geo_entities = sorted(set(dd.State.keys()))
 
     return unique_geo_entities
 
-# get list of state names sorted according to state ID
-def get_state_names():
 
+def get_state_names():
+    """"! Get list of federal state names sorted according to state ID.
+
+    @return List of federal names sorted according to state ID.
+    """            
     return [dd.State[i] for i in get_state_ids()]
 
-# get list of state names and IDs sorted according to state ID
-def get_state_names_and_ids():
 
+def get_state_names_and_ids():
+    """"! Get list of federal state names and IDs sorted according to state ID.
+
+    @return List of federal names and IDs sorted according to state ID.
+    """        
     stateids = get_state_ids()
 
     return [[dd.State[stateids[i]], stateids[i]] for i in range(len(stateids))]
 
-# get list of county IDs with certain counties either merged or kept separated
+
 # while reporting for Berlin is just different for different sources, Eisenach
 # was merged on political decision with Wartburgkreis on July 1, 2021
-def get_county_ids(merge_berlin=True, merge_eisenach=True):
+def get_county_ids(merge_berlin=True, merge_eisenach=True, zfill=False):
+    """"! Get list of county IDs sorted according to county ID.
+
+    @param merge_berlin [Default: True] Defines whether the different districts
+        are listed separately or combined as one entity 'Berlin'.
+    @param merge_eisenach [Default: True] Defines whether the counties 
+        'Wartburgkreis' and 'Eisenach' are listed separately or combined 
+        as one entity 'Wartburgkreis'.
+    @param zfill [Default: False] Defines whether county IDs are zero-filled to
+        five digits and returned as a string or returned as an integer.
+    @return List of county IDs sorted according to county ID.
+    """        
     unique_geo_entities = sorted(set(dd.County.keys()))
     # disregard different districts of Berlin and only take Berlin as one county
     if merge_berlin:
@@ -72,34 +94,57 @@ def get_county_ids(merge_berlin=True, merge_eisenach=True):
     if merge_eisenach:
         unique_geo_entities.remove(CountyMerging[16063][1])
 
-    return unique_geo_entities
+    if zfill:
+        return [str(id).zfill(5) for id in unique_geo_entities]
+    else:
+        return [id for id in unique_geo_entities]
 
-# get list of county names sorted according to county ID
+
 def get_county_names(merge_berlin=True, merge_eisenach=True):
+    """"! Get list of county names sorted according to county ID.
 
+    @param merge_berlin [Default: True] Defines whether the different districts
+        are listed separately or combined as one entity 'Berlin'.
+    @param merge_eisenach [Default: True] Defines whether the counties 
+        'Wartburgkreis' and 'Eisenach' are listed separately or combined 
+        as one entity 'Wartburgkreis'.
+    @return List of county names sorted according to county ID.
+    """    
     return [dd.County[i] for i in get_county_ids(merge_berlin, merge_eisenach)]
 
-# get list of county names and IDs sorted according to county ID
-def get_county_names_and_ids(merge_berlin=True, merge_eisenach=True):
+def get_county_names_and_ids(merge_berlin=True, merge_eisenach=True, zfill=False):
+    """"! Get list of county names and IDs sorted according to county ID.
 
+    @param merge_berlin [Default: True] Defines whether the different districts
+        are listed separately or combined as one entity 'Berlin'.
+    @param merge_eisenach [Default: True] Defines whether the counties 
+        'Wartburgkreis' and 'Eisenach' are listed separately or combined 
+        as one entity 'Wartburgkreis'.
+    @param zfill [Default: False] Defines whether county IDs are zero-filled to
+        five digits and returned as a string or returned as an integer.        
+    @return List of county names and IDs sorted according to county ID.
+    """
     countyids = get_county_ids(merge_berlin, merge_eisenach)
 
-    return [[dd.County[countyids[i]], countyids[i]] for i in range(len(countyids))]
+    if zfill:
+        return [[dd.County[countyids[i]], str(countyids[i]).zfill(5)] for i in range(len(countyids))]
+    else:
+        return [[dd.County[countyids[i]], countyids[i]] for i in range(len(countyids))]
 
 
 def check_for_all_counties(unique_county_list, merge_berlin=True, merge_eisenach=True):
     """! Checks if all states are mentioned
 
-   This function checks if all counties are available in the list provided.
-   If data is incomplete this function returns false and a parent function may 
-   try to download from another source.
-   Note 1: There is no check if data for every day of every county is available.
-   Note 2: If the source data file contains more local entities than the official 
-            county list True is returned and the user has to check on its own.
+    This function checks if all counties are available in the list provided.
+    If data is incomplete this function returns false and a parent function may 
+    try to download from another source.
+    Note 1: There is no check if data for every day of every county is available.
+    Note 2: If the source data file contains more local entities than the official 
+                county list True is returned and the user has to check on its own.
 
-   @param unique_county_list unique county list to check.
-   @return Boolean to say if data is complete or not.
-   """
+    @param unique_county_list unique county list to check.
+    @return Boolean to say if data is complete or not.
+    """
     # check for all counties outside Berlin plus districts of Berlin
     missing = len(get_county_ids(merge_berlin, merge_eisenach))-len(unique_county_list)
     if missing != 0:
@@ -119,15 +164,50 @@ def check_for_all_counties(unique_county_list, merge_berlin=True, merge_eisenach
     # if it seems complete
     return True
 
+def get_governing_regions(strict=True):
+    """! Creates a sorted list of governing regions which may simply be 
+    federal states or intermediate regions which themselves are a real 
+    subset of a federal state and to which a certain number of counties 
+    is attributed.
 
-def get_official_county_list():
-    """! Downloads county list file from destatis.
+    Governing regions are generally denoted by the first three digits of the   
+    belonging county IDs. In cases of a trailing zero, only two digits are
+    taken and for Rhineland Palatinate and Saxony, the strict definition
+    returns the two digit code of the federal state (i.e. 07 and 14).
 
-   @return County list with essential columns.
-   """
+    Note that this list may include former 'governing regions'. However, this 
+    function may only be used to equally distribute information which only exist 
+    on the 'governing region' level but not on county level itself or where the 
+    county level information seems to be wrong. Then, information is extrapolated 
+    with the help of governing regions.
 
+    @param strict [Default: True] Defines whether only regions currently 
+        considered as governing regions are returned.
+    @return List of governing regions.
+    """
+    # Take first three digits, apply set() to remove double appearances and
+    # sort again.
+    if strict == False:
+        return sorted(set([id[0:3] for id in get_county_ids(zfill=True)]))
+    else:
+        # make exceptions for Rhineland Palatinate and Saxony and remove 
+        # trailing zeros
+        return sorted(
+            set(
+                [id[0: 3]
+                 if
+                 not (id[0: 2] in ['07', '14'])
+                 and (id[2] != '0') else id[0: 2]
+                 for id in get_county_ids(zfill=True)]))
+
+
+def get_official_county_table():
+    """! Downloads a table with information on all German counties from destatis.
+
+    @return County table with essential columns.
+    """
     path_counties = 'https://www.destatis.de/DE/Themen/Laender-Regionen/Regionales/Gemeindeverzeichnis/Administrativ/'
-    counties = gd.loadExcel(os.path.join(path_counties, '04-kreise.xlsx?__blob=publicationFile'), extension='', apiUrl='',
+    county_table = gd.loadExcel(os.path.join(path_counties, '04-kreise.xlsx?__blob=publicationFile'), extension='', apiUrl='',
                             param_dict={'sheet_name' : 1, 'header' : 5, 'engine' : 'openpyxl'})
     rename_kreise_deu_dict = {
         1: dd.EngEng['idCounty'],
@@ -141,21 +221,21 @@ def get_official_county_list():
         9: "population_per_km2" # name not important, column not used so far
     }
     # rename columns
-    counties.rename(columns = rename_kreise_deu_dict, inplace = True)
+    county_table.rename(columns = rename_kreise_deu_dict, inplace = True)
 
-    return counties
+    return county_table
 
 def get_nuts3_county_id_map(merge_eisenach=True):
     """! Downloads county list file from destatis and creates hash map from 
     NUTS3 ID to county ID.
 
-   @return Hash map of NUTS3 ID to county ID
-   """
+    @return Hash map of NUTS3 ID to county ID
+    """
     # download county list
-    counties = get_official_county_list()
+    county_table = get_official_county_table()
     # delete rows with nuts3 = NaN
     # take just columns with name dd.EngEng['idCounty'] and dd.EngEng['nuts3']
-    key_nuts3 = counties.dropna(subset=[dd.EngEng['nuts3']])[[dd.EngEng['idCounty'], dd.EngEng['nuts3']]]
+    key_nuts3 = county_table.dropna(subset=[dd.EngEng['nuts3']])[[dd.EngEng['idCounty'], dd.EngEng['nuts3']]]
     # convert ID data types
     key_nuts3 = key_nuts3.astype({dd.EngEng['idCounty'] : int})
 
@@ -168,13 +248,7 @@ def get_nuts3_county_id_map(merge_eisenach=True):
 
     return nuts3_key_dict
 
-def merge_mat_counties(mat, separated_idxs, method='sum'):
-    """! Merges the matrix rows and columns of different local entities such as
-    counties that were merged on political decision in between.
 
-    @param mat Original matrix.
-    """
- #TODO
 
 def merge_df_counties(df, merged_id, separated_ids, sorting=[dd.EngEng['date']], columns=dd.EngEng['date'], method='sum'):
     """! Merges the data frame data of different local entities such as the districts of Berlin or

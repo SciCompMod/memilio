@@ -278,7 +278,8 @@ def get_age_population_data(read_data=dd.defaultDict['read_data'],
                             file_format=dd.defaultDict['file_format'],
                             out_folder=dd.defaultDict['out_folder'],
                             no_raw=dd.defaultDict['no_raw'],
-                            write_df=True):
+                            write_df=True,
+                            merge_eisenach=True):
     """! Download data with age splitting
 
    Data is downloaded from the following sources
@@ -352,19 +353,21 @@ def get_age_population_data(read_data=dd.defaultDict['read_data'],
     df_current = pandas.DataFrame(np.round(data_current).astype(int), columns=columns)
     # From official county list, merge Eisenach and 
     # Wartburgkreis for now (as of oct. 2021)
-    df_current = geoger.merge_df_counties_all(
-        df_current, sorting=[dd.EngEng["idCounty"]],
-        columns=dd.EngEng["idCounty"])
+    if merge_eisenach:
+        df_current = geoger.merge_df_counties_all(
+            df_current, sorting=[dd.EngEng["idCounty"]],
+            columns=dd.EngEng["idCounty"])
 
-    directory = out_folder
-    directory = os.path.join(directory, 'Germany/')
+    directory = os.path.join(out_folder, 'Germany/')
     gd.check_dir(directory)
 
     if write_df:
+        # TODO there should be a more elegant version to write different version with Eisenach merged or not
+        # or it should be prevented directly to write if Eisenach is not merged... to discuss...
         gd.write_dataframe(df, directory, 'county_population', file_format)
         gd.write_dataframe(df_current, directory, 'county_current_population', file_format)
-    else:
-        return df_current
+
+    return df_current
 
 
 def main():

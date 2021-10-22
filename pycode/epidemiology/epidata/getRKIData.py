@@ -1,7 +1,7 @@
 #############################################################################
 # Copyright (C) 2020-2021 German Aerospace Center (DLR-SC)
 #
-# Authors: Kathrin Rack, Wadim Koslow
+# Authors: Kathrin Rack, Wadim Koslow, Martin J. Kuehn
 #
 # Contact: Martin J. Kuehn <Martin.Kuehn@DLR.de>
 #

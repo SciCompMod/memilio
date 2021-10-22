@@ -23,156 +23,27 @@
 @brief gets data related to county migration from "Bundesagentur fuer Arbeit"
 """
 import collections
+import os
 import numpy as np
-from epidemiology.epidata import getDataIntoPandasDataFrame as gD
-
-
-def get_data(setup_dict):
-    """! Gets the matrix of commuter migration patterns and all additional helper variables.
-    Gets all data generated in this file
-
-    Keyword arguments:
-    @param setup_dict dictionary with necessary values:
-        'counties': Dataframe read from file 'kreise_deu.xlsx' with population data
-        'num_counties': number of counties in Dataframe counties,
-        'num_govregions': number of government regions in Dataframe counties,
-        'path': String with datapath where migration files can be found
-        'abs_tol': tolerated undetected people
-        'rel_tol': relative Tolerance to undetected people
-
-    @return Tuple with following content in this order
-    - countykey_list List of county regional keys
-    - countypop_list List of populations per counties.
-    - govkey_list List of governing regions regional keys.
-    - countykey2numlist Hash map from county regional keys to numbered list.
-    - govkey2numlist Hash map from governing region regional keys to numbered list.
-    - gov_county_table Table of county regional keys per governing region.
-    - countykey2govkey Hash map from county regional keys to governing region regional keys.
-    - countykey2localnumlist Hash map from county regional keys to local numbered list (per governing region).
-    - state_gov_table Table of governing region regional keys per federal state.
-    - mat_commuter_migration Matrix of commuter migration.
-    mat_commuter_migration[i][j]= number of commuters from county with numlist-key i to county with numlist-key j
-    """
-
-    (countykey_list, countypop_list, govkey_list) = get_key_and_population_lists(setup_dict)
-    (countykey2numlist, govkey2numlist) = map_keys_to_numlists(setup_dict, countykey_list, govkey_list)
-    (countykey2govkey, countykey2localnumlist, gov_county_table, state_gov_table) = assign_geographical_entities(
-        setup_dict,
-        countykey_list, govkey_list)
-    mat_commuter_migration = get_matrix_commuter_migration_patterns(setup_dict, countypop_list, govkey_list,
-                                                                    countykey2numlist,
-                                                                    govkey2numlist,
-                                                                    countykey2govkey, countykey2localnumlist,
-                                                                    gov_county_table, state_gov_table)
-    return (countykey_list, countypop_list, govkey_list, countykey2numlist, govkey2numlist, gov_county_table,
-            countykey2govkey, countykey2localnumlist, state_gov_table, mat_commuter_migration)
-
-
-def get_key_and_population_lists(setup_dict):
-    """! Get list of regional key identifiers and population sizes for counties.
-    @param setup_dict Dictionary with necessary values for 'counties', 'num_counties', 'num_govregions','path',
-    'abs_tol', 'rel_tol'
-
-    @return countykey_list List of county regional keys
-    @return countypop_list List of populations per counties.
-    @return govkey_list List of governing regions regional keys.
-    """
-    # get and store all regional (county) identifiers in a list; store county populations accordingly
-    # get a list of governing regions
-    countykey_list = []
-    countypop_list = []
-    govkey_list = []
-    counties = setup_dict['counties']
-    for i in range(0, counties.shape[0]):
-        # regional county identifieres (5 numbers)
-        if len(str(counties.iloc[i][0])) == 5 and counties.iloc[i][0].isdigit():
-            countykey_list.append(counties.iloc[i][0])
-            countypop_list.append(counties.iloc[i][5])
-            # government region keys (2 or 3 numbers)
-        elif i < counties.shape[0] - 1 and len(str(counties.iloc[i][0])) < len(str(counties.iloc[i + 1][0])):
-            # workaround for old gov. regions and Saxony
-            if (not str(counties.iloc[i][1]).startswith('früher') and not str(counties.iloc[i][1]).startswith(
-                    'Direktion')):
-                # only take those keys which have less numbers than the key in the next row
-                if len(str(counties.iloc[i][0])) != 4 and len(str(counties.iloc[i + 1][0])) == 5:
-                    # where string length is not 4 and next key has length four
-                    # these rows correspond to 'local government' regions (except for BW, RP and Saxony)
-                    govkey_list.append(counties.iloc[i][0])
-
-                elif i < counties.shape[0] - 2:
-                    if len(str(counties.iloc[i][0])) == 3 and len(str(counties.iloc[i + 2][0])) == 5:
-                        # workaround for BW; 'government regions' are again divided but do not appear as such in
-                        # documents of the Arbeitsagentur
-                        govkey_list.append(counties.iloc[i][0])
-
-                    if len(str(counties.iloc[i][0])) == 2 and len(str(counties.iloc[i + 2][0])) == 5:
-                        # workaround for RP and Saxony;
-                        if str(counties.iloc[i + 1][1]).startswith('früher'):
-                            # workaround for RP; 'government regions' were dissolved
-                            govkey_list.append(counties.iloc[i][0])
-                        elif str(counties.iloc[i + 1][1]).startswith('Direktion'):
-                            # workaround for Saxony; 'Direktionsbezirke' not referred in commuter migration
-                            govkey_list.append(counties.iloc[i][0])
-
-    if len(govkey_list) != setup_dict['num_govregions']:
-        print('Error. Number of government regions wrong. Having', len(govkey_list), 'instead of',
-              setup_dict['num_govregions'])
-
-    return countykey_list, countypop_list, govkey_list
+import pandas as pd
+from epidemiology.epidata import getDataIntoPandasDataFrame as gd
+from epidemiology.epidata import getPopulationData
+from epidemiology.epidata import geoModificationGermany as geoger
+from epidemiology.epidata import defaultDict as dd
 
 
 def verify_sorted(countykey_list):
     """! verify that read countykey_list is sorted
     @param countykey_list List of county regional keys
     """
-    sum_check = 0
-    countykey_list_unique = np.unique(np.array(countykey_list))
-    for i in range(0, len(countykey_list)):
-        sum_check = int(countykey_list_unique[i]) - int(countykey_list[i])
-        if sum_check > 0:
-            print('Error. Input list not sorted, population per county list had to be sorted accordingly.')
+    # np.unique() does the sorting
+    countykey_list_unique = np.unique(np.array(countykey_list).astype(int))
+    if abs(countykey_list_unique-np.array(countykey_list).astype(int)).max() > 0:
+        print('Error. Input list not sorted, population per county list had to '
+              'be sorted accordingly.')
 
 
-def map_keys_to_numlists(setup_dict, countykey_list=None, govkey_list=None):
-    """! Creates hash maps from from county regional keys and keys of its governing regions to numbered lists.
-
-    Keyword arguments:
-    @param setup_dict Dictionary with necessary values for 'counties', 'num_counties', 'num_govregions','path',
-    'abs_tol', 'rel_tol'
-    @param countykey_list List of county regional keys.
-    @param govkey_list List of governing regions regional keys.
-
-    @return countykey2numlist Hash map from county regional keys to numbered list.
-    @return govkey2numlist Hash map from governing region regional keys to numbered list.
-    """
-    # create a hashmap from sorted regional identifiers (01001 - ...) to 0 - num_counties
-    if countykey_list is None or govkey_list is None:
-        countykey_list, _, govkey_list = get_key_and_population_lists(setup_dict)
-    verify_sorted(countykey_list)
-
-    countykey2numlist = collections.OrderedDict()
-    i = 0
-    for index in countykey_list:
-        countykey2numlist[index] = i
-        i += 1
-
-    if i != setup_dict['num_counties']:
-        print("Error. Number of counties wrong.")
-
-    # create a hash map from sorted gov keys to local list
-    govkey2numlist = collections.OrderedDict()
-    i = 0
-    for index in govkey_list:
-        govkey2numlist[index] = i
-        i += 1
-
-    if i != setup_dict['num_govregions']:
-        print("Error. Number of governing regions wrong.")
-
-    return countykey2numlist, govkey2numlist
-
-
-def assign_geographical_entities(setup_dict, countykey_list=None, govkey_list=None):
+def assign_geographical_entities(countykey_list, govkey_list):
     """! Assigns counties to governing regions based on key comparison and creates list of governing regions per state.
 
     Only works with sorted key lists.
@@ -187,9 +58,6 @@ def assign_geographical_entities(setup_dict, countykey_list=None, govkey_list=No
     @return gov_county_table Table of county regional keys per governing region.
     @return state_gov_table Table of governing region regional keys per federal state.
     """
-
-    if govkey_list is None or countykey_list is None:
-        countykey_list, _, govkey_list = get_key_and_population_lists(setup_dict)
 
     verify_sorted(countykey_list)
 
@@ -217,7 +85,7 @@ def assign_geographical_entities(setup_dict, countykey_list=None, govkey_list=No
     # add last government region
     gov_county_table.append(col_list)
 
-    if len(gov_county_table) != setup_dict['num_govregions']:
+    if len(gov_county_table) != len(govkey_list):
         print('Error. Number of government regions wrong.')
 
     # create a unique hash map from county key to its government region and
@@ -249,21 +117,21 @@ def assign_geographical_entities(setup_dict, countykey_list=None, govkey_list=No
     return countykey2govkey, countykey2localnumlist, gov_county_table, state_gov_table
 
 
-def get_matrix_commuter_migration_patterns(setup_dict, countypop_list=None, govkey_list=None, countykey2numlist=None,
-                                           govkey2numlist=None, countykey2govkey=None, countykey2localnumlist=None,
-                                           gov_county_table=None, state_gov_table=None):
-    """! Computes matrix of commuter migration patterns.
+
+def get_commuter_data(setup_dict,
+                      read_data=dd.defaultDict['read_data'],
+                      file_format=dd.defaultDict['file_format'],
+                      out_folder=dd.defaultDict['out_folder'],
+                      make_plot=dd.defaultDict['make_plot'],
+                      no_raw=dd.defaultDict['no_raw']):
+    """! Computes matrix of commuter migration patterns based on the Federal
+    Agency of Work data.
 
     Keyword arguments:
-    @param setup_dict dictionary with necessary values
-    @param countypop_list List of populations per counties.
-    @param govkey_list List of governing regions regional keys.
-    @param countykey2numlist Hash map from county regional keys to numbered list.
-    @param govkey2numlist Hash map from governing region regional keys to numbered list.
-    @param countykey2govkey Hash map from county regional keys to governing region regional keys.
-    @param countykey2localnumlist Hash map from county regional keys to local numbered list (per governing region).
-    @param gov_county_table Table of county regional keys per governing region.
-    @param state_gov_table Table of governing region regional keys per federal state.
+    @param setup_dict dictionary with necessary values:
+        'path': String with datapath where migration files can be found
+        'abs_tol': tolerated undetected people
+        'rel_tol': relative Tolerance to undetected people
 
     @return mat_commuter_migration Matrix of commuter migration.
         mat_commuter_migration[i][j]= number of commuters from county with numlist-key i to county with numlist-key j
@@ -272,34 +140,54 @@ def get_matrix_commuter_migration_patterns(setup_dict, countypop_list=None, govk
     this cumulative values.
     """
 
-    if countypop_list is None or govkey_list is None:
-        (countykey_list, countypop_list, govkey_list) = get_key_and_population_lists(setup_dict)
-    if countykey2numlist is None or govkey2numlist is None:
-        (countykey2numlist, govkey2numlist) = map_keys_to_numlists(setup_dict, countykey_list, govkey_list)
-    if gov_county_table is None or countykey2govkey is None or countykey2localnumlist is None or \
-            state_gov_table is None:
-        (countykey2govkey, countykey2localnumlist, gov_county_table, state_gov_table) = assign_geographical_entities(
-            setup_dict,
-            countykey_list, govkey_list)
+    directory = os.path.join(out_folder, 'Germany/')
+    gd.check_dir(directory)
 
-    mat_commuter_migration = np.zeros((setup_dict['num_counties'], setup_dict['num_counties']))
+    countykey_list = geoger.get_county_ids(merge_eisenach=False, zfill=True)
+    govkey_list = geoger.get_governing_regions()
+
+    # get population data for all countys (TODO: better to provide a corresponding method for the following lines in getPopulationData itself)
+    # This is not very nice either to have the same file with either Eisenach merged or not...
+    try:
+        population = pd.read_json(directory + "county_current_population.json")
+        if len(population) != len(countykey_list):
+            population = getPopulationData.get_age_population_data(merge_eisenach=False, write_df=True)
+    except:
+        print("Population data was not found. Download it from the internet.")
+        population = getPopulationData.get_age_population_data(merge_eisenach=False, write_df=True)
+    
+    countypop_list = list(population["Total"])
+
+
+    countykey2numlist = collections.OrderedDict(zip(countykey_list, list(range(0,len(countykey_list)))))
+    govkey2numlist = collections.OrderedDict(zip(govkey_list, list(range(0,len(govkey_list)))))
+
+
+    (countykey2govkey, countykey2localnumlist, gov_county_table, state_gov_table) = assign_geographical_entities(
+        countykey_list, govkey_list)
+
+    mat_commuter_migration = np.zeros([len(countykey_list), len(countykey_list)])
 
     # maxium errors (of people not detected)
     max_abs_err = 0
     max_rel_err = 0
 
     files = []
-    for n in range(1, 10):
-        files.append('krpend_0' + str(n) + "_0.xlsx")
-    for n in range(10, 17):
-        files.append('krpend_' + str(n) + "_0.xlsx")
+    for n in range(1, 17):
+        # files.append('krpend_' + str(n).zfill(2) + "_0.xlsx")
+        files.append(
+            'krpend-' + str(n).zfill(2) + "-0-20" +
+            setup_dict['path'].split('/20')[1][0:4] + "-zip.zip")
 
     n = 0
 
     for item in files:
         # Using the 'Einpendler' sheet to correctly distribute summed values over counties of other gov. region
-        commuter_migration_file = gD.loadExcel(targetFileName=item, apiUrl=setup_dict['path'], extension='',
-                                               sheet_name=3)
+        commuter_migration_file = gd.loadExcel(
+            targetFileName=item.split('.')[0],
+            apiUrl=setup_dict['path'],
+            extension='.' + item.split('.')[1],
+            param_dict={"sheet_name": 3, "engine" : "pyxlsb"})
         # pd.read_excel(os.path.join(setup_dict['path'], item), sheet_name=3)
 
         counties_done = []  # counties considered as 'migration from'
@@ -334,6 +222,7 @@ def get_matrix_commuter_migration_patterns(setup_dict, countypop_list=None, govk
                     if len(str(commuter_migration_file.iloc[i][2])) == 5:
                         # check if entry refers to a specific county, then set matrix value
                         current_row = countykey2numlist[commuter_migration_file.iloc[i][2]]
+                        # TODO
                         val = commuter_migration_file.iloc[i][4]
                         mat_commuter_migration[current_row, current_col] = val
                         checksum += val
@@ -478,28 +367,55 @@ def get_matrix_commuter_migration_patterns(setup_dict, countypop_list=None, govk
 
     print('Maximum absolute error:', max_abs_err)
     print('Maximum relative error:', max_rel_err)
+
+    countykey_list = [int(id) for id in countykey_list]
+    df_commuter_migration = pd.DataFrame(columns=countykey_list)
+    df_commuter_migration[countykey_list] = mat_commuter_migration
+    df_commuter_migration.index = countykey_list
+    filename = 'migration_bfa_20' + files[0].split(
+        '20')[1][0:2] + '_dim' + str(mat_commuter_migration.shape[0])
+    gd.write_dataframe(df_commuter_migration, directory, filename, file_format)
+
+    # this is neither a very elegant nor a very general way to merge...
+    # better options to be searched for!
+    merge_id = 16063
+    new_idx = countykey_list.index(geoger.CountyMerging[merge_id][0])
+    old_idx = countykey_list.index(geoger.CountyMerging[merge_id][1])
+
+    mat_commuter_migration[new_idx, :] = mat_commuter_migration[new_idx, :] + mat_commuter_migration[old_idx, :]
+    mat_commuter_migration[:, new_idx] = mat_commuter_migration[:, new_idx] + mat_commuter_migration[:, old_idx]
+    mat_commuter_migration[new_idx,new_idx] = 0
+
+    mat_commuter_migration = np.delete(mat_commuter_migration, old_idx, axis=0)
+    mat_commuter_migration = np.delete(mat_commuter_migration, old_idx, axis=1)
+
+    countykey_list = geoger.get_county_ids()
+    df_commuter_migration = pd.DataFrame(columns=countykey_list)
+    df_commuter_migration[countykey_list] = mat_commuter_migration
+    df_commuter_migration.index = countykey_list
+    filename = 'migration_bfa_20' + files[0].split(
+        '20')[1][0:2] + '_dim' + str(mat_commuter_migration.shape[0])
+    gd.write_dataframe(df_commuter_migration, directory, filename, file_format)
+
     return mat_commuter_migration
 
 
 def main():
     """! Main program entry."""
 
-    num_counties = 401  # number of counties
-    num_govregions = 34  # number of local governing regions
+    arg_dict = gd.cli("commuter_official")
+    ref_year = '2020'
+
     abs_tol = 100  # maximum absolute error allowed per county migration
     rel_tol = 0.01  # maximum relative error allowed per county migration
-    print('Attention: You have to use your VPN access, otherwise this file is not working.')
-    path = 'http://hpcagainstcorona.sc.bs.dlr.de/data/migration/'
-    counties = gD.loadExcel(targetFileName='kreise_deu', apiUrl=path, extension='.xlsx', sheet_name=1)
+    path = 'https://statistik.arbeitsagentur.de/Statistikdaten/Detail/' + \
+        ref_year + '12/iiia6/beschaeftigung-sozbe-krpend/'
 
-    setup_dict = {'num_counties': num_counties,
-                  'num_govregions': num_govregions,
-                  'abs_tol': abs_tol,
+    setup_dict = {'abs_tol': abs_tol,
                   'rel_tol': rel_tol,
-                  'path': path,
-                  'counties': counties}
-    (countykey_list, countypop_list, govkey_list, countykey2numlist, govkey2numlist, gov_county_table, countykey2govkey,
-     countykey2localnumlist, state_gov_table, mat_commuter_migration) = get_data(setup_dict)
+                  'path': path}
+
+    mat_commuter_migration = get_commuter_data(setup_dict, **arg_dict)
 
 
 if __name__ == "__main__":
