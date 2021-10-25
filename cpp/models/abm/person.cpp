@@ -140,18 +140,23 @@ bool Person::goes_to_work(TimePoint t, const AbmMigrationParameters& params) con
     return m_random_workgroup < params.get<WorkRatio>().get_matrix_at(t.days())[0];
 }
 
-int Person::get_go_to_work_hour(const AbmMigrationParameters& params) const
+TimeSpan Person::get_go_to_work_time(const AbmMigrationParameters& params, TimeSpan dt) const
 {
-    int Minimum_Goto_Work_time = params.get<GotoWorkTimeMinimum>()[m_age];
-    int Maximum_Goto_Work_time = params.get<GotoWorkTimeMaximum>()[m_age];
-    return Minimum_Goto_Work_time+(int) ((Maximum_Goto_Work_time-Minimum_Goto_Work_time+1)*m_random_goto_work_hour);
+    TimeSpan Minimum_Goto_Work_time = params.get<GotoWorkTimeMinimum>()[m_age];
+    TimeSpan Maximum_Goto_Work_time = params.get<GotoWorkTimeMaximum>()[m_age];
+    int timeSlots = (Maximum_Goto_Work_time.seconds() - Minimum_Goto_Work_time.seconds()) / dt.seconds();
+    int secondsAfterMinimum = int (timeSlots * m_random_goto_work_hour) * dt.seconds();
+    return Minimum_Goto_Work_time+ mio::seconds(secondsAfterMinimum);
 }
 
-int Person::get_go_to_school_hour(const AbmMigrationParameters& params) const
+TimeSpan Person::get_go_to_school_time(const AbmMigrationParameters& params, TimeSpan dt) const
 {
-    int Minimum_Goto_School_time = params.get<GotoSchoolTimeMinimum>()[m_age];
-    int Maximum_Goto_School_time = params.get<GotoSchoolTimeMaximum>()[m_age];
-    return Minimum_Goto_School_time+(int) ((Maximum_Goto_School_time-Minimum_Goto_School_time+1)*m_random_goto_school_hour);
+    TimeSpan Minimum_Goto_School_time = params.get<GotoSchoolTimeMinimum>()[m_age];
+    TimeSpan Maximum_Goto_School_time = params.get<GotoSchoolTimeMaximum>()[m_age];
+    int timeSlots = (Maximum_Goto_School_time.seconds() - Minimum_Goto_School_time.seconds()) / dt.seconds();
+    int secondsAfterMinimum = int (timeSlots * m_random_goto_school_hour) * dt.seconds();
+    std::cout<<"sec after min :"<<secondsAfterMinimum<<std::endl;
+    return Minimum_Goto_School_time+ mio::seconds(secondsAfterMinimum);
 }
 
 bool Person::goes_to_school(TimePoint t, const AbmMigrationParameters& params) const

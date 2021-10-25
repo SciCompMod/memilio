@@ -225,34 +225,34 @@ struct SocialEventRate {
 };
 
 struct GotoWorkTimeMinimum {
-    using Type = CustomIndexArray<int, AbmAgeGroup>;
+    using Type = CustomIndexArray<TimeSpan, AbmAgeGroup>;
     static auto get_default()
     {
-        return CustomIndexArray<int, AbmAgeGroup>(AbmAgeGroup::Count, 6);
+        return CustomIndexArray<TimeSpan, AbmAgeGroup>(AbmAgeGroup::Count, mio::hours(6));
     }
 };
 
 struct GotoWorkTimeMaximum {
-    using Type = CustomIndexArray<int, AbmAgeGroup>;
+    using Type = CustomIndexArray<TimeSpan, AbmAgeGroup>;
     static auto get_default()
     {
-        return CustomIndexArray<int, AbmAgeGroup>(AbmAgeGroup::Count, 9);
+        return CustomIndexArray<TimeSpan, AbmAgeGroup>(AbmAgeGroup::Count, mio::hours(9));
     }
 };
 
 struct GotoSchoolTimeMinimum {
-    using Type = CustomIndexArray<int, AbmAgeGroup>;
+    using Type = CustomIndexArray<TimeSpan, AbmAgeGroup>;
     static auto get_default()
     {
-        return CustomIndexArray<int, AbmAgeGroup>(AbmAgeGroup::Count, 6);
+        return CustomIndexArray<TimeSpan, AbmAgeGroup>(AbmAgeGroup::Count, mio::hours(6));
     }
 };
 
 struct GotoSchoolTimeMaximum {
-    using Type = CustomIndexArray<int, AbmAgeGroup>;
+    using Type = CustomIndexArray<TimeSpan, AbmAgeGroup>;
     static auto get_default()
     {
-        return CustomIndexArray<int, AbmAgeGroup>(AbmAgeGroup::Count, 9);
+        return CustomIndexArray<TimeSpan, AbmAgeGroup>(AbmAgeGroup::Count, mio::hours(9));
     }
 };
 

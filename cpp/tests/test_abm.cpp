@@ -355,7 +355,7 @@ TEST(TestPerson, quarantine)
                               mio::AbmAgeGroup::Age15to34, infection_parameters);
     home.add_person(person);
 
-    auto t_morning = mio::TimePoint(0) + mio::hours(8);
+    auto t_morning = mio::TimePoint(0) + mio::hours(7);
     auto dt        = mio::hours(1);
 
     ASSERT_EQ(mio::go_to_work(person, t_morning, dt, {}), mio::LocationType::Home);
@@ -579,8 +579,8 @@ TEST(TestMigrationRules, student_goes_to_school)
     auto p_child = mio::Person(home, mio::InfectionState::Susceptible, mio::AbmAgeGroup::Age5to14, {});
     auto p_adult = mio::Person(home, mio::InfectionState::Susceptible, mio::AbmAgeGroup::Age15to34, {});
 
-    auto t_morning = mio::TimePoint(0) + mio::hours(8);
-    auto t_weekend = mio::TimePoint(0) + mio::days(5) + mio::hours(8);
+    auto t_morning = mio::TimePoint(0) + mio::hours(7);
+    auto t_weekend = mio::TimePoint(0) + mio::days(5) + mio::hours(7);
     auto dt        = mio::hours(1);
 
     ASSERT_EQ(mio::go_to_school(p_child, t_morning, dt, {}), mio::LocationType::School);
@@ -593,14 +593,18 @@ TEST(TestMigrationRules, students_go_to_school_in_different_times)
     ScopedMockDistribution<testing::StrictMock<MockDistribution<mio::UniformDistribution<double>>>> mock_uniform_dist;
     EXPECT_CALL(mock_uniform_dist.get_mock(), invoke)
         .Times(testing::AtLeast(8))
+        //Mocking the random values will define at what time the student should go to school, i.e:
+        // random is in [0,1/3] -> goes to school at 6
+        // random is in [1/3,2/3] -> goes to school at 7
+        // random is in [2/3,1.] -> goes to school at 8
         .WillOnce(testing::Return(0.0))
         .WillOnce(testing::Return(0.0))
         .WillOnce(testing::Return(0.0))
         .WillOnce(testing::Return(0.0))
-        .WillOnce(testing::Return(0.6))
-        .WillOnce(testing::Return(0.6))
-        .WillOnce(testing::Return(0.6))
-        .WillOnce(testing::Return(0.6))
+        .WillOnce(testing::Return(0.8))
+        .WillOnce(testing::Return(0.8))
+        .WillOnce(testing::Return(0.8))
+        .WillOnce(testing::Return(0.8))
         .WillRepeatedly(testing::Return(1.0));
 
     auto home    = mio::Location(mio::LocationType::Home, 0);
@@ -667,10 +671,10 @@ TEST(TestMigrationRules, workers_go_to_work_in_different_times)
         .WillOnce(testing::Return(0.))
         .WillOnce(testing::Return(0.))
         .WillOnce(testing::Return(0.))
-        .WillOnce(testing::Return(0.6))
-        .WillOnce(testing::Return(0.6))
-        .WillOnce(testing::Return(0.6))
-        .WillOnce(testing::Return(0.6))
+        .WillOnce(testing::Return(0.9))
+        .WillOnce(testing::Return(0.9))
+        .WillOnce(testing::Return(0.9))
+        .WillOnce(testing::Return(0.9))
         
         .WillRepeatedly(testing::Return(1.0));
 
@@ -857,7 +861,7 @@ TEST(TestLockdownRules, school_opening)
     auto t_closing = mio::TimePoint(0);
     auto t_opening = mio::TimePoint(0) + mio::days(1);
     auto dt        = mio::hours(1);
-    auto t_morning = mio::TimePoint(0) + mio::days(1) + mio::hours(8);
+    auto t_morning = mio::TimePoint(0) + mio::days(1) + mio::hours(7);
     auto home      = mio::Location(mio::LocationType::Home, 0);
     auto school    = mio::Location(mio::LocationType::School, 0);
     //setup rng mock so the person is homeschooled in case of lockdown
@@ -1026,14 +1030,14 @@ TEST(TestWorld, evolveMigration)
     ScopedMockDistribution<testing::StrictMock<MockDistribution<mio::UniformDistribution<double>>>> mock_uniform_dist;
     EXPECT_CALL(mock_uniform_dist.get_mock(), invoke)
         .Times(testing::AtLeast(2))
-        .WillOnce(testing::Return(0.6))
-        .WillOnce(testing::Return(0.6))
-        .WillOnce(testing::Return(0.6))
-        .WillOnce(testing::Return(0.6))
-        .WillOnce(testing::Return(0.6))
-        .WillOnce(testing::Return(0.6))
-        .WillOnce(testing::Return(0.6))
-        .WillOnce(testing::Return(0.6))
+        .WillOnce(testing::Return(0.8))
+        .WillOnce(testing::Return(0.8))
+        .WillOnce(testing::Return(0.8))
+        .WillOnce(testing::Return(0.8))
+        .WillOnce(testing::Return(0.8))
+        .WillOnce(testing::Return(0.8))
+        .WillOnce(testing::Return(0.8))
+        .WillOnce(testing::Return(0.8))
         .WillRepeatedly(testing::Return(1.0));
 
     auto& p1       = world.add_person(home_id, mio::InfectionState::Carrier, mio::AbmAgeGroup::Age15to34);
