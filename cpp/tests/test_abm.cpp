@@ -621,6 +621,43 @@ TEST(TestMigrationRules, students_go_to_school_in_different_times)
     ASSERT_EQ(mio::go_to_school(p_child_goes_to_school_at_8, t_morning_8, dt, {}), mio::LocationType::School);
 }
 
+
+TEST(TestMigrationRules, students_go_to_school_in_different_times_with_smaller_time_steps)
+{
+    ScopedMockDistribution<testing::StrictMock<MockDistribution<mio::UniformDistribution<double>>>> mock_uniform_dist;
+    EXPECT_CALL(mock_uniform_dist.get_mock(), invoke)
+        .Times(testing::AtLeast(8))
+        //Mocking the random values will define at what time the student should go to school, i.e:
+        // random is in [0,1/6] -> goes to school at 6
+        // random is in [1/6,2/6] -> goes to school at 6:30
+        // random is in [2/6,3/6] -> goes to school at 7:00
+        // random is in [3/6,4/6] -> goes to school at 7:30
+        // random is in [4/6,5/6] -> goes to school at 8:00
+        // random is in [5/6,6/6] -> goes to school at 8:30
+        .WillOnce(testing::Return(0.0))
+        .WillOnce(testing::Return(0.0))
+        .WillOnce(testing::Return(0.0))
+        .WillOnce(testing::Return(0.0))
+        .WillOnce(testing::Return(0.9))
+        .WillOnce(testing::Return(0.9))
+        .WillOnce(testing::Return(0.9))
+        .WillOnce(testing::Return(0.9))
+        .WillRepeatedly(testing::Return(1.0));
+
+    auto home    = mio::Location(mio::LocationType::Home, 0);
+    auto p_child_goes_to_school_at_6 = mio::Person(home, mio::InfectionState::Susceptible, mio::AbmAgeGroup::Age5to14, {});
+    auto p_child_goes_to_school_at_8_30 = mio::Person(home, mio::InfectionState::Susceptible, mio::AbmAgeGroup::Age5to14, {});
+
+    auto t_morning_6 = mio::TimePoint(0) + mio::hours(6);
+    auto t_morning_8_30 = mio::TimePoint(0) + mio::hours(8) + mio::seconds(1800);
+    auto dt        = mio::seconds(1800);
+
+    ASSERT_EQ(mio::go_to_school(p_child_goes_to_school_at_6, t_morning_6, dt, {}), mio::LocationType::School);
+    ASSERT_EQ(mio::go_to_school(p_child_goes_to_school_at_6, t_morning_8_30, dt, {}), mio::LocationType::Home);
+    ASSERT_EQ(mio::go_to_school(p_child_goes_to_school_at_8_30, t_morning_6, dt, {}), mio::LocationType::Home);
+    ASSERT_EQ(mio::go_to_school(p_child_goes_to_school_at_8_30, t_morning_8_30, dt, {}), mio::LocationType::School);
+}
+
 TEST(TestMigrationRules, school_return)
 {
     auto school  = mio::Location(mio::LocationType::School, 0);
