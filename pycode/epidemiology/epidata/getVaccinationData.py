@@ -238,10 +238,10 @@ def get_vaccination_data(read_data=dd.defaultDict['read_data'],
 
     # get population data for all countys (TODO: better to provide a corresponding method for the following lines in getPopulationData itself)
     try:
-        population = pd.read_json(directory + "county_current_population.json")
+        population = pd.read_json(directory + "county_current_population_dim401.json")
     except:
         print("Population data was not found. Download it from the internet.")
-        population = getPopulationData.get_age_population_data()
+        population = getPopulationData.get_age_population_data(merge_eisenach=False)
 
     min_age_pop = []
     extrapolate_agegroups = True
