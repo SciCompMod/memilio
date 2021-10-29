@@ -17,6 +17,7 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
+#include "matchers.h"
 #include "load_test_data.h"
 #include "secir/secir.h"
 #include "secir/parameter_space.h"
@@ -748,5 +749,39 @@ TEST(Secir, getInfectionsRelative)
     model.populations.set_difference_from_group_total<mio::AgeGroup>({mio::AgeGroup(2), mio::InfectionState::Susceptible}, 40'000.0);
 
     mio::SecirSimulation<> sim(model, 0.0);
-    ASSERT_EQ(mio::get_infections_relative(sim, 0.0, sim.get_result().get_last_value()), (100. + 50. + 25.) / (10'000 + 20'000 + 40'000));
+    ASSERT_EQ(get_infections_relative(sim, 0.0, sim.get_result().get_last_value()), (100. + 50. + 25.) / (10'000 + 20'000 + 40'000));
+}
+
+TEST(Secir, get_migration_factors)
+{
+    auto beta     = 0.25;
+    auto max_beta = 0.5;
+    auto model = mio::SecirModel(1);
+    model.parameters.get<mio::IncubationTime>().array()                   = 5.0;
+    model.parameters.get<mio::SerialInterval>().array()                   = 4.0;
+    model.parameters.get<mio::AsymptoticCasesPerInfectious>().array()     = 0.1;
+    model.parameters.get<mio::RiskOfInfectionFromSympomatic>().array()    = beta;
+    model.parameters.get<mio::MaxRiskOfInfectionFromSympomatic>().array() = max_beta;
+    model.populations[{mio::AgeGroup(0), mio::InfectionState::Carrier}]   = 100;
+    mio::SecirSimulation<> sim(model, 0.0);
+    {
+        sim.get_model().parameters.get<mio::TestAndTraceCapacity>() = 45. ;
+        auto factors = get_migration_factors(sim, 0.0, sim.get_result().get_last_value());
+        auto cmp     = Eigen::VectorXd::Ones(Eigen::Index(mio::InfectionState::Count)).eval();
+        cmp[Eigen::Index(mio::InfectionState::Infected)] = beta;
+        ASSERT_THAT(print_wrap(factors), MatrixNear(cmp));
+    }
+    {
+        sim.get_model().parameters.get<mio::TestAndTraceCapacity>() = 45. / 5.;
+        auto factors = get_migration_factors(sim, 0.0, sim.get_result().get_last_value());
+        auto cmp     = Eigen::VectorXd::Ones(Eigen::Index(mio::InfectionState::Count)).eval();
+        cmp[Eigen::Index(mio::InfectionState::Infected)] = max_beta;
+        ASSERT_THAT(print_wrap(factors), MatrixNear(cmp));
+    }
+    {
+        sim.get_model().parameters.get<mio::TestAndTraceCapacity>() = 20.;
+        auto factors = get_migration_factors(sim, 0.0, sim.get_result().get_last_value());
+        ASSERT_GT(factors[Eigen::Index(mio::InfectionState::Infected)], beta);
+        ASSERT_LT(factors[Eigen::Index(mio::InfectionState::Infected)], max_beta);
+    }
 }
