@@ -41,12 +41,16 @@ CountyMerging = {
 }
 
 
-def get_state_ids():
+def get_state_ids(zfill=False):
     """"! Get list of federal state IDs sorted according to state ID.
 
+    @param zfill [Default: False] Defines whether county IDs are zero-filled to
+        two digits and returned as a string or returned as an integer.
     @return List of federal IDs sorted according to state ID.
     """         
     unique_geo_entities = sorted(set(dd.State.keys()))
+    if zfill:
+        unique_geo_entities = [str(id).zfill(2) for id in unique_geo_entities]
 
     return unique_geo_entities
 
@@ -58,16 +62,16 @@ def get_state_names():
     """            
     return [dd.State[i] for i in get_state_ids()]
 
-
-def get_state_names_and_ids():
+def get_state_names_and_ids(zfill=False):
     """"! Get list of federal state names and IDs sorted according to state ID.
 
+    @param zfill [Default: False] Defines whether county IDs are zero-filled to
+        two digits and returned as a string or returned as an integer.
     @return List of federal names and IDs sorted according to state ID.
     """        
-    stateids = get_state_ids()
+    stateids = get_state_ids(zfill=zfill)
 
-    return [[dd.State[stateids[i]], stateids[i]] for i in range(len(stateids))]
-
+    return [[dd.State[int(stateids[i])], stateids[i]] for i in range(len(stateids))]
 
 # while reporting for Berlin is just different for different sources, Eisenach
 # was merged on political decision with Wartburgkreis on July 1, 2021
@@ -163,6 +167,46 @@ def check_for_all_counties(unique_county_list, merge_berlin=True, merge_eisenach
 
     # if it seems complete
     return True
+
+def get_countyid_to_stateid_map(merge_eisenach=True, zfill=False):
+    """! Creates a hash map from county IDs to state IDs
+
+    @param merge_eisenach [Default: True] Defines whether the counties 
+        'Wartburgkreis' and 'Eisenach' are listed separately or combined 
+        as one entity 'Wartburgkreis'.
+    @param zfill [Default: False]. Defines whether or not all IDs are returned
+        as zero-filled strings. By default, integer maps are returned.
+    @return County ID to state ID map.
+    """
+    county_ids = get_county_ids(merge_eisenach=merge_eisenach, zfill=zfill)
+
+    if zfill:
+        return {id : id[0:2] for id in county_ids}
+    else:
+        return {id : int(str(id).zfill(5)[0:2]) for id in county_ids}
+
+
+def get_stateid_to_countyids_map(merge_eisenach=True, zfill=False):
+    """! Creates a hash map from state IDs to lists of county IDs
+
+    @param merge_eisenach [Default: True] Defines whether the counties 
+        'Wartburgkreis' and 'Eisenach' are listed separately or combined 
+        as one entity 'Wartburgkreis'.
+    @param zfill [Default: False]. Defines whether or not all IDs are returned
+        as zero-filled strings. By default, integer maps are returned.
+    @return State IDs to lists of county IDs map
+    """
+    county_ids = get_county_ids(merge_eisenach=merge_eisenach, zfill=zfill)
+    state_ids = get_state_ids()
+    state_to_county_table = [[] for i in range(len(state_ids))]
+
+    for id in county_ids:
+        state_to_county_table[int(str(id).zfill(5)[0:2])-1].append(id)
+
+    return dict(zip(state_ids,state_to_county_table))
+
+
+get_stateid_to_countyids_map()
 
 def get_governing_regions(strict=True):
     """! Creates a sorted list of governing regions which may simply be 

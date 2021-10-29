@@ -18,19 +18,19 @@
 # limitations under the License.
 #############################################################################
 """
-@file commuter_migration_bfa.py
+@file getCommuterMobility.py
 
-@brief gets data related to county migration from "Bundesagentur fuer Arbeit"
+@brief gets data related to county mobility from "Bundesagentur fuer Arbeit"
 """
 import collections
 import os
+import sys
 import numpy as np
 import pandas as pd
-from epidemiology.epidata import getDataIntoPandasDataFrame as gd
-from epidemiology.epidata import getPopulationData
-from epidemiology.epidata import geoModificationGermany as geoger
-from epidemiology.epidata import defaultDict as dd
-
+import getPopulationData
+import getDataIntoPandasDataFrame as gd
+import geoModificationGermany as geoger
+import defaultDict as dd
 
 def verify_sorted(countykey_list):
     """! verify that read countykey_list is sorted
@@ -118,7 +118,7 @@ def assign_geographical_entities(countykey_list, govkey_list):
 
 
 
-def get_commuter_data(setup_dict,
+def get_commuter_data(setup_dict='',
                       read_data=dd.defaultDict['read_data'],
                       file_format=dd.defaultDict['file_format'],
                       out_folder=dd.defaultDict['out_folder'],
@@ -139,6 +139,16 @@ def get_commuter_data(setup_dict,
     The printed errors are refering to the absolute and relative errors from included numbers per county in matrix and
     this cumulative values.
     """
+    if setup_dict == '':
+        ref_year = 2020
+        abs_tol = 100  # maximum absolute error allowed per county migration
+        rel_tol = 0.01  # maximum relative error allowed per county migration
+        path = 'https://statistik.arbeitsagentur.de/Statistikdaten/Detail/' + \
+            str(ref_year) + '12/iiia6/beschaeftigung-sozbe-krpend/'
+
+        setup_dict = {'abs_tol': abs_tol,
+                    'rel_tol': rel_tol,
+                    'path': path}
 
     directory = os.path.join(out_folder, 'Germany/')
     gd.check_dir(directory)
@@ -362,6 +372,10 @@ def get_commuter_data(setup_dict,
 
         n += 1
         print('Federal state read. Progress ', n, '/ 16')
+        if len(np.where(np.isnan(mat_commuter_migration)==True)[0]) > 0:
+            sys.exit(
+                'NaN encountered in mobility matrix, exiting '
+                'getCommuterMobility(). Mobility data will be incomplete.')
     if n != 16:
         print('Error. Files missing.')
 
@@ -373,7 +387,7 @@ def get_commuter_data(setup_dict,
     df_commuter_migration[countykey_list] = mat_commuter_migration
     df_commuter_migration.index = countykey_list
     filename = 'migration_bfa_20' + files[0].split(
-        '20')[1][0:2] + '_dim' + str(mat_commuter_migration.shape[0])
+        '-20')[1][0:2] + '_dim' + str(mat_commuter_migration.shape[0])
     gd.write_dataframe(df_commuter_migration, directory, filename, file_format)
 
     # this is neither a very elegant nor a very general way to merge...
@@ -397,23 +411,113 @@ def get_commuter_data(setup_dict,
         '20')[1][0:2] + '_dim' + str(mat_commuter_migration.shape[0])
     gd.write_dataframe(df_commuter_migration, directory, filename, file_format)
 
-    return mat_commuter_migration
+    return df_commuter_migration
+
+
+def get_neighbors_mobility(
+        countyid, direction='both', abs_tol=0, rel_tol=0, tol_comb='or',
+        merge_eisenach=True, directory='data/pydata/Germany'):
+    '''! Returns the neighbors of a particular county ID depening on the
+    commuter mobility and given absolute and relative thresholds on the number
+    of commuters.
+
+    The parameters absolute and relative tolerance decide which connections and
+    neighbors are returned. If tol_comb='or', only one of this two criteria
+    has to be satisfied to count the edges. If 'and' is chosen, both criteria 
+    have to be satisfied.
+
+    @param countyid ID of the county where mobility is considered and for which
+        neighbors have to be returned.
+    @param direction 'both' [Default], 'in', or 'out'. Defines whether 'both' or  
+        'in' or 'out' commuters only are considered.
+    @param abs_tol Minimum number of commuters to count the connection.
+    @param rel_tol Relative tolerance with respect to the strongest connection 
+        of the county to count the connections.
+    @param tol_comb Defines whether absolute and relative thresholds are
+        combined such that only one criterion has to be satisfied ('or') or
+        both ('and').
+    @return Neighbors of the county with respect to mobility and the number of 
+        commuters from and to the neighbors.
+    '''
+    # This is not very nice either to have the same file with either Eisenach merged or not...
+    try:
+        if merge_eisenach:
+            commuter = pd.read_json(directory + "/migration_bfa_2020_dim400.json")
+        else:
+            commuter = pd.read_json(directory + "/migration_bfa_2020_dim401.json")
+    except:
+        print("Commuter data was not found. Download and process it from the internet.")
+        commuter = get_commuter_data()
+
+
+    countykey_list = commuter.columns
+    commuter.index = countykey_list
+
+    # compute in and out density
+    if direction == 'both':
+        commuter_all = commuter.loc[countyid,:] + commuter.loc[:,countyid]
+    elif direction == 'in':
+        commuter_all = commuter.loc[:,countyid]
+    elif direction == 'out':
+        commuter_all = commuter.loc[countyid,:]
+
+    neighbor_indices = np.where((commuter_all > abs_tol) & (
+        commuter_all > commuter_all.max()*rel_tol))[0]
+
+    return countykey_list[neighbor_indices], commuter_all.values[neighbor_indices]
+
+
+def get_neighbors_mobility_all(
+        direction='both', abs_tol=0, rel_tol=0, tol_comb='or',
+        merge_eisenach=True, directory='data/pydata/Germany'):
+    '''! Returns the neighbors of all counties ID depening on the
+    commuter mobility and given absolute and relative thresholds on the number
+    of commuters.
+
+    The parameters absolute and relative tolerance decide which connections and
+    neighbors are returned. If tol_comb='or', only one of this two criteria
+    has to be satisfied to count the edges. If 'and' is chosen, both criteria 
+    have to be satisfied.
+
+    @param direction 'both' [Default], 'in', or 'out'. Defines whether 'both' or  
+        'in' or 'out' commuters only are considered.
+    @param abs_tol Minimum number of commuters to count the connection.
+    @param rel_tol Relative tolerance with respect to the strongest connection 
+        of the county to count the connections.
+    @param tol_comb Defines whether absolute and relative thresholds are
+        combined such that only one criterion has to be satisfied ('or') or
+        both ('and')
+    @return Neighbors of all counties with respect to mobility.
+    '''
+    countyids = geoger.get_county_ids(merge_eisenach=merge_eisenach)
+    neighbors_table = []
+    for id in countyids:
+        neighbors_table.append(
+                               get_neighbors_mobility(
+                                   id, direction=direction, abs_tol=abs_tol,
+                                   rel_tol=rel_tol, tol_comb=tol_comb,
+                                   merge_eisenach=merge_eisenach))
+
+    return dict(zip(countyids, neighbors_table))
 
 
 def main():
     """! Main program entry."""
 
     arg_dict = gd.cli("commuter_official")
-    ref_year = '2020'
+    ref_year = 2020
 
     abs_tol = 100  # maximum absolute error allowed per county migration
     rel_tol = 0.01  # maximum relative error allowed per county migration
     path = 'https://statistik.arbeitsagentur.de/Statistikdaten/Detail/' + \
-        ref_year + '12/iiia6/beschaeftigung-sozbe-krpend/'
+        str(ref_year) + '12/iiia6/beschaeftigung-sozbe-krpend/'
 
     setup_dict = {'abs_tol': abs_tol,
                   'rel_tol': rel_tol,
                   'path': path}
+
+
+    get_neighbors_mobility(1001, abs_tol=0, rel_tol=0, tol_comb='or')
 
     mat_commuter_migration = get_commuter_data(setup_dict, **arg_dict)
 
