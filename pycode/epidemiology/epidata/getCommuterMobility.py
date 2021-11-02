@@ -383,8 +383,7 @@ def get_commuter_data(setup_dict='',
     print('Maximum relative error:', max_rel_err)
 
     countykey_list = [int(id) for id in countykey_list]
-    df_commuter_migration = pd.DataFrame(columns=countykey_list)
-    df_commuter_migration[countykey_list] = mat_commuter_migration
+    df_commuter_migration = pd.DataFrame(data=mat_commuter_migration, columns=countykey_list)    
     df_commuter_migration.index = countykey_list
     filename = 'migration_bfa_20' + files[0].split(
         '-20')[1][0:2] + '_dim' + str(mat_commuter_migration.shape[0])
@@ -404,8 +403,7 @@ def get_commuter_data(setup_dict='',
     mat_commuter_migration = np.delete(mat_commuter_migration, old_idx, axis=1)
 
     countykey_list = geoger.get_county_ids()
-    df_commuter_migration = pd.DataFrame(columns=countykey_list)
-    df_commuter_migration[countykey_list] = mat_commuter_migration
+    df_commuter_migration = pd.DataFrame(data=mat_commuter_migration, columns=countykey_list)  
     df_commuter_migration.index = countykey_list
     filename = 'migration_bfa_20' + files[0].split(
         '20')[1][0:2] + '_dim' + str(mat_commuter_migration.shape[0])
@@ -496,7 +494,8 @@ def get_neighbors_mobility_all(
                                get_neighbors_mobility(
                                    id, direction=direction, abs_tol=abs_tol,
                                    rel_tol=rel_tol, tol_comb=tol_comb,
-                                   merge_eisenach=merge_eisenach))
+                                   merge_eisenach=merge_eisenach,
+                                   directory=directory))
 
     return dict(zip(countyids, neighbors_table))
 

@@ -490,7 +490,7 @@ def get_vaccination_data(read_data=dd.defaultDict['read_data'],
         # commuter inflow from other counties as first weight to distribute
         # vaccinations from vaccination county to extrapolated home counties 
         neighbors_mobility = coMobi.get_neighbors_mobility_all(
-            direction='in', abs_tol=10, merge_eisenach=False)
+            direction='in', abs_tol=10, merge_eisenach=False, directory=directory)
 
         end_time = time.perf_counter()
         print("Time needed for preparing sanitizing: " + str(int(end_time - start_time)) + " sec")   
