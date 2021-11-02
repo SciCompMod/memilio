@@ -60,7 +60,7 @@ def get_simulation_data(read_data=dd.defaultDict['read_data'],
     The functions which are called are:
     - getRKIData.get_rki_data
     - getPopulationData.get_population_data
-    - getVaccineData.get_jh_data
+    - getVaccinationData.get_vaccination_data
     - getDIVIData.get_divi_data
 
     Keyword arguments:
@@ -91,7 +91,6 @@ def get_simulation_data(read_data=dd.defaultDict['read_data'],
                      "start_date": start_date, "update_data": update_data}
 
     arg_dict_vacc = {**arg_dict_all, "make_plot": make_plot,
-                     "impute_dates": impute_dates,
                      "moving_average": moving_average}
 
     try:
