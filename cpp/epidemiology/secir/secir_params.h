@@ -465,6 +465,78 @@ struct BaseInfB161 {
     }
 };
 
+struct ReducVaccExp {
+    using Type = CustomIndexArray<UncertainValue, AgeGroup>;
+    static Type get_default(AgeGroup size)
+    {
+        return Type(size, 0.0);
+    }
+    static std::string name()
+    {
+        return "ReducVaccExp";
+    }
+};
+
+struct ReducImmuneExp {
+    using Type = CustomIndexArray<UncertainValue, AgeGroup>;
+    static Type get_default(AgeGroup size)
+    {
+        return Type(size, 0.0);
+    }
+    static std::string name()
+    {
+        return "ReducImmuneExp";
+    }
+};
+
+struct ReducExpInf {
+    using Type = CustomIndexArray<UncertainValue, AgeGroup>;
+    static Type get_default(AgeGroup size)
+    {
+        return Type(size, 0.0);
+    }
+    static std::string name()
+    {
+        return "ReducExpInf";
+    }
+};
+
+struct ReducImmuneExpInf {
+    using Type = CustomIndexArray<UncertainValue, AgeGroup>;
+    static Type get_default(AgeGroup size)
+    {
+        return Type(size, 0.0);
+    }
+    static std::string name()
+    {
+        return "ReducImmuneExpInf";
+    }
+};
+
+struct ReducInfHosp {
+    using Type = CustomIndexArray<UncertainValue, AgeGroup>;
+    static Type get_default(AgeGroup size)
+    {
+        return Type(size, 0.0);
+    }
+    static std::string name()
+    {
+        return "ReducInfHosp";
+    }
+};
+
+struct ReducImmuneInfHosp {
+    using Type = CustomIndexArray<UncertainValue, AgeGroup>;
+    static Type get_default(AgeGroup size)
+    {
+        return Type(size, 0.0);
+    }
+    static std::string name()
+    {
+        return "ReducImmuneInfHosp";
+    }
+};
+
 /**
  * @brief capacity to test and trace contacts of infected for quarantine per day.
  */
@@ -487,11 +559,26 @@ struct DaysUntilEffective {
     using Type = CustomIndexArray<UncertainValue, AgeGroup>;
     static Type get_default(AgeGroup size)
     {
-        return Type(size, 21.0);
+        return Type(size, 14.0);
     }
     static std::string name()
     {
         return "DaysUntilEffective";
+    }
+};
+
+/**
+ * @brief capacity to test and trace contacts of infected for quarantine per day.
+ */
+struct DaysUntilEffectiveFull {
+    using Type = CustomIndexArray<UncertainValue, AgeGroup>;
+    static Type get_default(AgeGroup size)
+    {
+        return Type(size, 7.0);
+    }
+    static std::string name()
+    {
+        return "DaysUntilEffectiveFull";
     }
 };
 
@@ -547,8 +634,9 @@ using SecirParamsBase =
                  InfectionProbabilityFromContact, RelativeCarrierInfectability, AsymptoticCasesPerInfectious,
                  RiskOfInfectionFromSympomatic, MaxRiskOfInfectionFromSympomatic, HospitalizedCasesPerInfectious,
                  ICUCasesPerHospitalized, DeathsPerHospitalized, VaccineGrowthFirst, VaccineGrowthFull, VaccinationGap,
-                 DaysUntilEffective, BaseInfB117, BaseInfB161, DailyFullVaccination, DailyFirstVaccination,
-                 DynamicInfectionFromContact>;
+                 DaysUntilEffective, DaysUntilEffectiveFull, BaseInfB117, BaseInfB161, DailyFullVaccination,
+                 DailyFirstVaccination, DynamicInfectionFromContact, ReducVaccExp, ReducImmuneExp, ReducExpInf,
+                 ReducImmuneExpInf, ReducInfHosp, ReducImmuneInfHosp>;
 
 /**
  * @brief Parameters of an age-resolved SECIR/SECIHURD model.
@@ -572,14 +660,14 @@ public:
         return m_commuter_nondetection;
     }
 
-    double& get_start_commuter_nondetection()
+    double& get_start_commuter_detection()
     {
-        return m_start_commuter_nondetection;
+        return m_start_commuter_detection;
     }
 
-    double& get_end_commuter_nondetection()
+    double& get_end_commuter_detection()
     {
-        return m_end_commuter_nondetection;
+        return m_end_commuter_detection;
     }
 
     /**
@@ -836,9 +924,9 @@ public:
 
 private:
     AgeGroup m_num_groups;
-    double m_commuter_nondetection       = 0.0;
-    double m_start_commuter_nondetection = 0.0;
-    double m_end_commuter_nondetection   = 0.0;
+    double m_commuter_nondetection    = 0.0;
+    double m_start_commuter_detection = 0.0;
+    double m_end_commuter_detection   = 0.0;
 };
 
 /**

@@ -37,7 +37,8 @@ enum class InfectionState
     ICU          = 5,
     Recovered    = 6,
     Dead         = 7,
-    Count        = 8
+    InfTotal     = 8,
+    Count        = 9
 };
 
 /**
@@ -71,7 +72,8 @@ enum class InfectionStateV
     ICUV2          = 22,
     Recovered      = 23,
     Dead           = 24,
-    Count          = 25
+    InfTotal       = 25,
+    Count          = 26
 };
 } // namespace epi
 

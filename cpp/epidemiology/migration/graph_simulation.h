@@ -47,8 +47,7 @@ public:
     {
     }
 
-    GraphSimulation(double t0, double dt, Graph&& g, const node_function& node_func,
-                    const edge_function&& edge_func)
+    GraphSimulation(double t0, double dt, Graph&& g, const node_function& node_func, const edge_function&& edge_func)
         : m_t(t0)
         , m_dt(dt)
         , m_graph(std::move(g))
@@ -66,13 +65,22 @@ public:
             }
 
             for (auto& n : m_graph.nodes()) {
+                if (n.id == 16069) {
+                    std::cout << "arrived" << std::endl;
+                }
                 m_node_func(m_t, dt, n.property);
             }
 
             m_t += dt;
 
             for (auto& e : m_graph.edges()) {
-                m_edge_func(m_t, dt, e.property, m_graph.nodes()[e.start_node_idx].property, m_graph.nodes()[e.end_node_idx].property);
+                /*if (e.start_node_idx == 316 && e.end_node_idx == 259) {
+
+                    std::cout << "From ID: " << e.start_node_idx << " To ID: " << e.end_node_idx << ", t: " << m_t
+                              << std::endl;
+                }*/
+                m_edge_func(m_t, dt, e.property, m_graph.nodes()[e.start_node_idx].property,
+                            m_graph.nodes()[e.end_node_idx].property);
             }
         }
     }
@@ -87,12 +95,12 @@ public:
         return m_graph;
     }
 
-    const Graph& get_graph() const &
+    const Graph& get_graph() const&
     {
         return m_graph;
     }
 
-    Graph&& get_graph() && 
+    Graph&& get_graph() &&
     {
         return std::move(m_graph);
     }

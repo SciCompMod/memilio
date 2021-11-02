@@ -335,6 +335,11 @@ namespace details
                     model[county].populations[{AgeGroup(i), ModelType::Dead}]         = num_death[county][i];
                     model[county].populations[{AgeGroup(i), ModelType::Recovered}] =
                         num_rec[county][i] - model[county].populations[{AgeGroup(i), ModelType::ICU}];
+                    model[county].populations[{AgeGroup(i), ModelType::InfTotal}] =
+                        model[county].populations[{AgeGroup(i), ModelType::Recovered}] +
+                        model[county].populations[{AgeGroup(i), ModelType::Dead}] +
+                        model[county].populations[{AgeGroup(i), ModelType::Hospitalized}] +
+                        model[county].populations[{AgeGroup(i), ModelType::ICU}];
                 }
             }
             else {
@@ -444,6 +449,12 @@ namespace details
                           const std::vector<int>& vregion);
 
     void get_vaccine_growth(std::vector<SecirModelV>& model, const std::string& path, int window);
+
+    void set_new_vaccine_data(std::vector<SecirModelV>& model, const std::string& path, const std::string& id_name,
+                              const std::vector<int>& vregion);
+
+    void get_new_vaccine_growth(std::vector<SecirModelV>& model, const std::string& path, Date date,
+                                const std::string& id_name, const std::vector<int>& vregion, int num_days);
 } //namespace details
 
 /**
@@ -653,7 +664,7 @@ IOResult<void> read_population_data_county(std::vector<Model>& model, Date date,
     else {
         log_warning("No DIVI data available for this date");
     }
-    BOOST_OUTCOME_TRY((details::set_rki_data<Model, ModelType>(model, path_join(dir, "all_county_age_ma_rki.json"),
+    BOOST_OUTCOME_TRY((details::set_rki_data<Model, ModelType>(model, path_join(dir, "all_county_age_ma7_rki.json"),
                                                                id_name, county, date, scaling_factor_inf)));
     BOOST_OUTCOME_TRY((details::set_population_data<Model, ModelType>(
         model, path_join(dir, "county_current_population.json"), "ID_County", county)));
@@ -661,12 +672,13 @@ IOResult<void> read_population_data_county(std::vector<Model>& model, Date date,
 }
 template <class Model>
 IOResult<void> read_vaccine_data(std::vector<Model>& model, Date date, const std::vector<int>& county,
-                                 const std::string& dir)
+                                 const std::string& dir, int num_days)
 {
     std::string id_name = "ID_County";
 
-    details::get_vaccine_growth(model, path_join(dir, "daily_vaccine_data.json"), 7);
-    details::set_vaccine_data(model, path_join(dir, "vaccine_data.json"), id_name, county);
+    details::get_new_vaccine_growth(model, path_join(dir, "all_county_ageinf_vacc_all_dates.json"), date, id_name,
+                                    county, num_days);
+    //details::set_vaccine_data(model, path_join(dir, "vaccine_data.json"), id_name, county);
     return success();
 }
 

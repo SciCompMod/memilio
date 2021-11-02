@@ -134,6 +134,13 @@ void draw_sample_infection(SecirModelV& model)
     model.parameters.get<RiskOfInfectionFromSympomatic>()[AgeGroup(0)].draw_sample();
     model.parameters.get<MaxRiskOfInfectionFromSympomatic>()[AgeGroup(0)].draw_sample();
 
+    model.parameters.get<ReducVaccExp>()[AgeGroup(0)].draw_sample();
+    model.parameters.get<ReducImmuneExp>()[AgeGroup(0)].draw_sample();
+    model.parameters.get<ReducExpInf>()[AgeGroup(0)].draw_sample();
+    model.parameters.get<ReducImmuneExpInf>()[AgeGroup(0)].draw_sample();
+    model.parameters.get<ReducInfHosp>()[AgeGroup(0)].draw_sample();
+    model.parameters.get<ReducImmuneInfHosp>()[AgeGroup(0)].draw_sample();
+
     for (auto i = AgeGroup(0); i < model.parameters.get_num_groups(); i++) {
         //not age dependent
         model.parameters.get<IncubationTime>()[i]        = model.parameters.get<IncubationTime>()[AgeGroup(0)];
@@ -146,6 +153,13 @@ void draw_sample_infection(SecirModelV& model)
             model.parameters.get<RiskOfInfectionFromSympomatic>()[AgeGroup(0)];
         model.parameters.get<MaxRiskOfInfectionFromSympomatic>()[i] =
             model.parameters.get<MaxRiskOfInfectionFromSympomatic>()[AgeGroup(0)];
+
+        model.parameters.get<ReducVaccExp>()[i]       = model.parameters.get<ReducVaccExp>()[AgeGroup(0)];
+        model.parameters.get<ReducImmuneExp>()[i]     = model.parameters.get<ReducImmuneExp>()[AgeGroup(0)];
+        model.parameters.get<ReducExpInf>()[i]        = model.parameters.get<ReducExpInf>()[AgeGroup(0)];
+        model.parameters.get<ReducImmuneExpInf>()[i]  = model.parameters.get<ReducImmuneExpInf>()[AgeGroup(0)];
+        model.parameters.get<ReducInfHosp>()[i]       = model.parameters.get<ReducInfHosp>()[AgeGroup(0)];
+        model.parameters.get<ReducImmuneInfHosp>()[i] = model.parameters.get<ReducImmuneInfHosp>()[AgeGroup(0)];
 
         //age dependent
         model.parameters.get<HospitalizedToHomeTime>()[i].draw_sample(); // here: home=recovered

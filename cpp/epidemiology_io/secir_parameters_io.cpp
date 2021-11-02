@@ -493,7 +493,7 @@ namespace details
 
             for (auto i = AgeGroup(0); i < num_groups; i++) {
                 if (params.populations[{i, InfectionStateV::Susceptible}] < num_vaccine_first[(size_t)i]) {
-                    num_vaccine_first[(size_t)i] = params.populations[{i, InfectionStateV::Susceptible}];
+                    num_vaccine_first[(size_t)i] = 0.9 * params.populations[{i, InfectionStateV::Susceptible}];
                 }
                 params.populations[{i, InfectionStateV::Susceptible}] =
                     params.populations[{i, InfectionStateV::Susceptible}] - num_vaccine_first[(size_t)i];
@@ -502,6 +502,69 @@ namespace details
                     num_vaccine_full[(size_t)i];
                 params.populations[{i, InfectionStateV::Recovered}] =
                     params.populations[{i, epi::InfectionStateV::Recovered}] + num_vaccine_full[(size_t)i];
+            }
+        }
+    }
+
+    void get_new_vaccine_growth(std::vector<SecirModelV>& model, const std::string& path, Date date,
+                                const std::string& id_name, const std::vector<int>& vregion, int num_days)
+    {
+        if (!boost::filesystem::exists(path)) {
+            log_error("Vaccine data file missing: {}.", path);
+            return;
+        }
+
+        auto num_groups = model[0].parameters.get_num_groups();
+
+        Json::Reader reader;
+        Json::Value root;
+
+        size_t days_until_effective1 = (size_t)(int)(double)model[0].parameters.get<DaysUntilEffective>()[AgeGroup(0)];
+        size_t days_until_effective2 =
+            (size_t)(int)(double)model[0].parameters.get<DaysUntilEffectiveFull>()[AgeGroup(0)];
+
+        std::vector<std::string> age_names = {"0-4", "5-14", "15-34", "35-59", "60-79", "80-99"};
+
+        std::ifstream vaccine(path);
+        reader.parse(vaccine, root);
+
+        for (size_t i = 0; i < model.size(); ++i) {
+            for (auto g = AgeGroup(0); g < num_groups; ++g) {
+
+                model[i].parameters.template get<DailyFirstVaccination>()[g] = {};
+                model[i].parameters.template get<DailyFullVaccination>()[g]  = {};
+                for (int d = 0; d < num_days + 1; ++d) {
+                    model[i].parameters.template get<DailyFirstVaccination>()[g].push_back(0.0);
+                    model[i].parameters.template get<DailyFullVaccination>()[g].push_back(0.0);
+                }
+            }
+        }
+
+        for (unsigned int i = 0; i < root.size(); i++) {
+            auto it = std::find_if(vregion.begin(), vregion.end(), [&root, i, &id_name](auto r) {
+                return r == 0 || root[i][id_name].asInt() == r;
+            });
+            if (it != vregion.end()) {
+                auto region_idx = size_t(it - vregion.begin());
+
+                auto date_df = parse_date(root[i]["Date"].asString());
+
+                auto it_age = std::find(age_names.begin(), age_names.end() - 1, root[i]["Age_RKI"].asString());
+                if (it_age != age_names.end() - 1) {
+                    auto age = size_t(it_age - age_names.begin());
+
+                    for (size_t d = 0; d < (size_t)num_days + 1; ++d) {
+
+                        if (date_df == offset_date_by_days(date, d - days_until_effective1)) {
+                            model[region_idx].parameters.template get<DailyFirstVaccination>()[AgeGroup(age)][d] =
+                                root[i]["Vacc_partially"].asDouble();
+                        }
+                        if (date_df == offset_date_by_days(date, d - days_until_effective2)) {
+                            model[region_idx].parameters.template get<DailyFullVaccination>()[AgeGroup(age)][d] =
+                                root[i]["Vacc_completed"].asDouble();
+                        }
+                    }
+                }
             }
         }
     }

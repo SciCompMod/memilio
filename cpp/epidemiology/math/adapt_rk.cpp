@@ -18,6 +18,7 @@
 * limitations under the License.
 */
 #include "epidemiology/math/adapt_rk.h"
+#include <epidemiology/utils/logging.h>
 
 namespace epi
 {
@@ -81,9 +82,10 @@ bool RKIntegratorCore::step(const DerivFunction& f, Eigen::Ref<const Eigen::Vect
 
     bool failed_step_size_adapt = false;
 
-    dt = 2 * dt;
+    dt        = 2 * dt;
+    bool cond = false;
 
-    while (max_err > conv_crit && !failed_step_size_adapt) {
+    while (!cond && !failed_step_size_adapt) {
         dt = 0.5 * dt;
 
         kt_values.resize(0); // remove data from previous loop
@@ -163,14 +165,18 @@ bool RKIntegratorCore::step(const DerivFunction& f, Eigen::Ref<const Eigen::Vect
         // sleep(1);
         conv_crit = m_abs_tol + max_val * m_rel_tol;
 
-        if (max_err <= conv_crit || dt < 2 * m_dt_min + 1e-6) {
+        cond = true;
+        for (int i = 0; i < yt.size(); i++) {
+            cond = cond && (err[i] <= m_abs_tol + std::abs(ytp1_low[i]) * m_rel_tol);
+        }
+        if (cond || dt < 2 * m_dt_min + 1e-6) {
             // if sufficiently exact, take 4th order approximation (do not take 5th order : Higher order is not always higher accuracy!)
             ytp1 = ytp1_low;
 
-            for (size_t i = 0; i < ytp1.size(); i++) {
-                if (ytp1[i] < -1) {
-                    log_warning("Compartment {:d} for Age Group {:d} is negative at time {:0.4f}: {:0.4f}", i % 6,
-                                (int)i / 6, t, ytp1[i]);
+            for (int i = 0; i < ytp1.size(); i++) {
+                if (ytp1[i] < -0.1) {
+                    log_warning("Compartment {:d} for Age Group {:d} is negative at time {:0.4f}: {:0.4f}", i % 26,
+                                (int)i / 26, t, ytp1[i]);
                 }
             }
 
