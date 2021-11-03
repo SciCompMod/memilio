@@ -534,35 +534,40 @@ def get_divi_data(read_data=dd.defaultDict['read_data'],
         # start with empty dataframe
         df = pandas.DataFrame()
 
-    last_number = 0
+    last_number = 6072
 
     new_dict_string = ""
-    while start_date <= end_date:
+    # while start_date <= end_date:
 
-        [last_number, df2, new_string] = download_data_for_one_day(
-            last_number, start_date)
+    #     [last_number, df2, new_string] = download_data_for_one_day(
+    #         last_number, start_date)
 
-        if not df2.empty:
+    #     if not df2.empty:
 
-            new_dict_string = new_dict_string + new_string
+    #         new_dict_string = new_dict_string + new_string
 
-            # data needs adjustment
-            # if (today <= date(2021, 3, 30)) or (today >= date(2021, 10, 29)):
-            df2 = adjust_data(df2, start_date)
+    #         # data needs adjustment
+    #         # if (today <= date(2021, 3, 30)) or (today >= date(2021, 10, 29)):
+    #         df2 = adjust_data(df2, start_date)
             
-            if len(df2[df2.isnull().any(axis=1)]) > 0:
-                print("Error. Empty values in DataFrame.")
+    #         if len(df2[df2.isnull().any(axis=1)]) > 0:
+    #             print("Error. Empty values in DataFrame.")
 
-            # append to global data frame
-            df = df.append(df2, ignore_index=True)
+    #         if len(df2) > 400:
+    #             print(21)
 
-            print("Success: Data of date " +
-                  start_date.strftime("%Y-%m-%d") + " has been added to dataframe")
-        else:
-            print("Warning: Data of date " +
-                  start_date.strftime("%Y-%m-%d") + " is not added to dataframe")
+    #         # append to global data frame
+    #         df = df.append(df2, ignore_index=True)
 
-        start_date += delta
+    #         print("Success: Data of date " +
+    #               start_date.strftime("%Y-%m-%d") + " has been added to dataframe")
+    #     else:
+    #         print("Warning: Data of date " +
+    #               start_date.strftime("%Y-%m-%d") + " is not added to dataframe")
+
+    #     start_date += delta
+
+    [last_number, df, new_string] = download_data_for_one_day(last_number, today)    
 
     # output data before renaming
     if not df.empty:
@@ -615,7 +620,7 @@ def get_divi_data(read_data=dd.defaultDict['read_data'],
         df_counties, sorting=[dd.EngEng["idCounty"], dd.EngEng["date"]])
     # save
     filename = "county_divi"
-    gd.append_filename(filename, impute_dates, moving_average)
+    filename = gd.append_filename(filename, impute_dates, moving_average)
     gd.write_dataframe(df_counties, directory, filename, file_format)
 
     # write data for states to file
@@ -637,7 +642,7 @@ def get_divi_data(read_data=dd.defaultDict['read_data'],
     # {"faelle_covid_aktuell_im_bundesland": max})[["faelle_covid_aktuell_im_bundesland"]])
 
     filename = "state_divi"
-    gd.append_filename(filename, impute_dates, moving_average)
+    filename = gd.append_filename(filename, impute_dates, moving_average)
     gd.write_dataframe(df_states, directory, filename, file_format)
 
     # write data for germany to file
@@ -650,7 +655,7 @@ def get_divi_data(read_data=dd.defaultDict['read_data'],
     # df_ger.loc[df_states["Date"] <= "2020-04-25 09:15:00", "ICU_ventilated"] = np.nan
     # TODO: Use also "faelle_covid_aktuell_im_bundesland" from 25.9.
     filename = "germany_divi"
-    gd.append_filename(filename, impute_dates, moving_average)
+    filename = gd.append_filename(filename, impute_dates, moving_average)
     gd.write_dataframe(df_ger, directory, filename, file_format)
 
 def main():

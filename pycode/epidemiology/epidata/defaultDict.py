@@ -124,6 +124,7 @@ GerEng = {
     'betten_belegt': EngEng['occupied_ICU'],
     'betten_frei': EngEng['free_ICU'],
     'daten_stand': EngEng['date'],
+    'date': EngEng['date'],
     'gemeindeschluessel': EngEng['idCounty'],
     'anzahl_standorte': EngEng['reporting_hospitals'],
     'faelle_covid_aktuell': EngEng['intensive care unit'],

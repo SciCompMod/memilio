@@ -88,7 +88,7 @@ def get_simulation_data(read_data=dd.defaultDict['read_data'],
                     "split_berlin": split_berlin}
 
     arg_dict_divi = {**arg_dict_all, "end_date": end_date,
-                     "start_date": start_date, "update_data": update_data}
+                     "start_date": start_date, "moving_average": moving_average, "update_data": update_data}
 
     arg_dict_vacc = {**arg_dict_all, "make_plot": make_plot,
                      "moving_average": moving_average}
