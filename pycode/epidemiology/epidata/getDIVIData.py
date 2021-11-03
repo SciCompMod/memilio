@@ -72,9 +72,14 @@ def adjust_data(df, date_of_data):
     """
 
     # rename column names due to change in naming of files from March 31, 2021 onwards
-
     df.rename(columns={
         'faelle_covid_aktuell_beatmet': 'faelle_covid_aktuell_invasiv_beatmet'}, inplace=True)
+
+    # from October 29, 2021 'daten_stand' was renamed into 'date'
+    df.rename(columns={
+        'daten_stand': dd.EngEng['date']}, inplace=True)
+    df.rename(columns={
+        'date': dd.EngEng['date']}, inplace=True)               
 
     # rename column 'kreis' of first date to match data of following days
     if date_of_data == date(2020, 4, 24):
@@ -90,7 +95,7 @@ def adjust_data(df, date_of_data):
     # add dates for data until 27.4.
     if date_of_data <= date(2020, 4, 27):
         date_str = date_of_data.strftime("%Y-%m-%d") + " 09:15:00"
-        df.insert(loc=len(df.columns), column='daten_stand', value=date_str)
+        df.insert(loc=len(df.columns), column=dd.EngEng['date'], value=date_str)
 
     # add 'bundesland' for data from 25.4.
     if date_of_data == date(2020, 4, 25):
@@ -320,7 +325,18 @@ def download_data_for_one_day(last_number, download_date):
                         date(2021, 10, 6): 6003,
                         date(2021, 10, 8): 6008,
                         date(2021, 10, 18): 6028,
+                        date(2021, 10, 20): 6034,
+                        date(2021, 10, 21): 6041,
+                        date(2021, 10, 26): 6051,
+                        date(2021, 10, 28): 6057,
+                        date(2021, 10, 29): 6061,
+                        date(2021, 10, 30): 6064,
+                        date(2021, 10, 31): 6068                        
                         }
+                        # TODO: 1. Is there any way to do better than this list?
+                        #       2. What about updates of the files the same day? 
+                        #               e.g., October 29, 2021 has 6061 and 6063
+                        #                        with filename and filename-2
 
     start_date_differs = False
 
@@ -480,6 +496,8 @@ def get_divi_data(read_data=dd.defaultDict['read_data'],
 
         if update_data:
             if not df.empty:
+                # TODO: This has to be corrected! daten_stand does not exist anymore from October 29
+                # adjust_data would correct this too late. see below.
                 newest_date = pandas.to_datetime(
                     df['daten_stand']).max().date()
 
@@ -496,8 +514,8 @@ def get_divi_data(read_data=dd.defaultDict['read_data'],
                             df2['daten_stand']).max().date()
 
                         if download_date == today:
-                            if today <= date(2021, 3, 30):
-                                df2 = adjust_data(df2, start_date)
+                            # if (today <= date(2021, 3, 30)) or (today >= date(2021, 10, 29)):
+                            df2 = adjust_data(df2, start_date)
 
                             df = df.append(df2, ignore_index=True)
                             print("Success: Data of date " + today.strftime("%Y-%m-%d")
@@ -529,8 +547,11 @@ def get_divi_data(read_data=dd.defaultDict['read_data'],
             new_dict_string = new_dict_string + new_string
 
             # data needs adjustment
-            if start_date <= date(2021, 3, 30):
-                df2 = adjust_data(df2, start_date)
+            # if (today <= date(2021, 3, 30)) or (today >= date(2021, 10, 29)):
+            df2 = adjust_data(df2, start_date)
+            
+            if len(df2[df2.isnull().any(axis=1)]) > 0:
+                print("Error. Empty values in DataFrame.")
 
             # append to global data frame
             df = df.append(df2, ignore_index=True)

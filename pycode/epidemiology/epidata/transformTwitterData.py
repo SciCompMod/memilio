@@ -42,11 +42,11 @@ def transformTwitterData(file_format=dd.defaultDict['file_format'],
     directory = os.path.join(directory, 'mobility/')
 
     twitter = pd.read_csv(
-        directory + 'twitter_scaled_1252.txt', ' ', header=None)
+        directory + 'twitter_scaled_1252.txt', sep=' ', header=None)
 
     if len(twitter == 401):
         twitter.to_csv(
-            directory + 'twitter_scaled_1252_dim401.txt', ' ', header=None)
+            directory + 'twitter_scaled_1252_dim401.txt', sep=' ', header=None, index=False)
         # merge eisenach
         ids400 = geoger.get_county_ids()
         ids401 = geoger.get_county_ids(merge_eisenach=False)
@@ -62,7 +62,7 @@ def transformTwitterData(file_format=dd.defaultDict['file_format'],
         if abs(twitter_new.iloc[0:382, 0:382]-twitter.iloc[0:382, 0:382]).max().max() > 1e-10:
             print('Error...')
         twitter_new.to_csv(
-            directory + 'twitter_scaled_1252.txt', ' ', header=None)
+            directory + 'twitter_scaled_1252.txt', sep=' ', header=None, index=False)
 
 
 def main():

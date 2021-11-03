@@ -406,8 +406,11 @@ def get_commuter_data(setup_dict='',
     df_commuter_migration = pd.DataFrame(data=mat_commuter_migration, columns=countykey_list)  
     df_commuter_migration.index = countykey_list
     filename = 'migration_bfa_20' + files[0].split(
-        '20')[1][0:2] + '_dim' + str(mat_commuter_migration.shape[0])
+        '-20')[1][0:2] + '_dim' + str(mat_commuter_migration.shape[0])
     gd.write_dataframe(df_commuter_migration, directory, filename, file_format)
+
+    df_commuter_migration.to_csv(directory.split('pydata')[
+                                 0] + 'mobility/commuter_migration_scaled' + '_20' + files[0].split('-20')[1][0:2] + '.txt', sep=' ', index=False, header=False)
 
     return df_commuter_migration
 
