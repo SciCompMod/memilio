@@ -552,7 +552,7 @@ epi::IOResult<void> set_edges(const fs::path& data_dir,
 {
     //migration between nodes
     BOOST_OUTCOME_TRY(migration_data_commuter,
-                      epi::read_mobility_plain((data_dir / "migration" / "commuter_migration_scaled.txt").string()));
+                      epi::read_mobility_plain((data_dir / "migration" / "commuter_migration_scaled_2020.txt").string()));
     BOOST_OUTCOME_TRY(migration_data_twitter,
                       epi::read_mobility_plain((data_dir / "migration" / "twitter_scaled_1252.txt").string()));
     if (migration_data_commuter.rows() != params_graph.nodes().size() ||
