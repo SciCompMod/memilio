@@ -841,7 +841,7 @@ epi::IOResult<void> run(RunMode mode, const fs::path& data_dir, const fs::path& 
     const auto start_date   = epi::Date(2021, 6, 6);
     const auto num_days_sim = 90.0;
     const auto end_date     = epi::offset_date_by_days(start_date, int(std::ceil(num_days_sim)));
-    const auto num_runs     = 1;
+    const auto num_runs     = 500;
 
     //create or load graph
     epi::Graph<epi::SecirModelV, epi::MigrationParameters> params_graph;
@@ -903,19 +903,40 @@ int main(int argc, char** argv)
 
     epi::set_log_level(epi::LogLevel::warn);
 
-    bool late  = true;
+    bool late  = false;
     bool masks = true;
     bool test  = true;
+
 
     RunMode mode;
     std::string save_dir;
     std::string data_dir;
     std::string result_dir;
-    if (argc == 4) {
+    if (argc == 7) {
         mode       = RunMode::Save;
         data_dir   = argv[1];
         save_dir   = argv[2];
         result_dir = argv[3];
+	if (atoi(argv[4]) == 1) {
+	    late = true;
+	}
+	else {
+	    late = false;
+	}
+	if (atoi(argv[5]) == 1) {
+            masks = true;
+        }
+        else {
+            masks = false;
+        }
+	if (atoi(argv[6]) == 1) {
+            test = true;
+        }
+        else {
+            test = false;
+        }
+	printf("masks set to: %d, late set to: %d, test set to: %d\n", (int) masks, (int) late, (int) test) 
+
         printf("Reading data from \"%s\", saving graph to \"%s\".\n", data_dir.c_str(), save_dir.c_str());
     }
     else if (argc == 3) {
