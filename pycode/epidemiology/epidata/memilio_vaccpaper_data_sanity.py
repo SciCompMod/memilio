@@ -39,7 +39,7 @@ def create_intervals_mapping(from_lower_bounds, to_lower_bounds):
 
     return from_to_mapping
 
-mobi = 'mobility'
+mobi = 'migration'
 user = 'kueh_mj/'
 
 df1 = pd.read_csv('/home/' + user + 'memilio/data/' + mobi + '/twitter_scaled_1252.txt', sep=' ', header=None)
@@ -60,7 +60,7 @@ print('partially empty lines: ' + str(len(df3[df3.isnull().any(axis=1)])))
 df4 = pd.read_json('/home/' + user + 'memilio/data/pydata/Germany/all_county_age_ma7_rki.json')
 print("Size RKI infection data " + str(len(df4)) + " x " + str(len(df4.columns)) + ", division of length by 400: " + str(len(df4)/400))
 print(df4.columns)
-print('partially empty lines (without unknown columns): ' + str(len(df4[df4.Age_RKI!='unknown'])))
+print('partially empty lines (with unknown columns): ' + str(len(df4[df4.isnull().any(axis=1)])))
 df4a = df4[df4.isnull().any(axis=1)]
 print('partially empty lines (without unknown columns): ' + str(len(df4a[df4a.Age_RKI!='unknown'])))
 
@@ -71,7 +71,7 @@ print('partially empty lines: ' + str(len(df5[df5.isnull().any(axis=1)])))
 
 df6 = pd.read_json('/home/' + user + 'memilio/data/pydata/Germany/all_county_agevacc_vacc_ma7.json')
 
-print("Size RKI vaccination data " + str(len(df6)) + " x " + str(len(df6.columns)) + ", division of length by 400: " + str(len(df6)/400))
+print("Size RKI vaccination data " + str(len(df6)) + " x " + str(len(df6.columns)) + ", division of length by 400: " + str(len(df6)/400/3))
 print(df6.columns)
 print('partially empty lines: ' + str(len(df6[df6.isnull().any(axis=1)])))
 
@@ -93,7 +93,7 @@ for age in unique_age_groups_old:
         "can not extrapolate to infection number age groups.")
 min_age_old.append(max_age_all)
 
-population =df5
+population = df5
 
 min_age_pop = []
 extrapolate_agegroups = True
@@ -208,11 +208,14 @@ if True:
     
     if ratio[0] >= 1 or ratio[1] >= 1 or ratio[2] >= 1:
         print(ratio)'''
-
+i=0
 for id in ids:
     for age in unique_age_groups_old:
-        temp = df6.loc[(df6.ID_County==id) & (df6.Age_RKI==age), ['Vacc_partially', 'Vacc_completed', 'Vacc_refreshed']].values/population_old_ages.loc[population_old_ages.ID_County==id,age].values
+        temp = df6.loc[(df6.ID_County==id) & (df6.Age_RKI==age), ['Vacc_completed']].values/population_old_ages.loc[population_old_ages.ID_County==id,age].values
 
-        temp_where = np.where(temp >= 1)
+        temp_where = np.where(temp >= 0.97)
         if len(temp_where[0]) > 0:
-            print(id, age, ':', temp[temp_where])
+            i += 1
+            print(id, age)#, ':', temp[temp_where])
+
+print(i)
