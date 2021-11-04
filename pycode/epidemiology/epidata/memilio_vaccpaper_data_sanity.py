@@ -40,33 +40,36 @@ def create_intervals_mapping(from_lower_bounds, to_lower_bounds):
     return from_to_mapping
 
 mobi = 'mobility'
+user = 'kueh_mj/'
 
-df1 = pd.read_csv('/home/kosl_wa/final_simulation/final_data/memilio/data/' + mobi + '/twitter_scaled_1252.txt', sep=' ', header=None)
+df1 = pd.read_csv('/home/' + user + 'memilio/data/' + mobi + '/twitter_scaled_1252.txt', sep=' ', header=None)
 print("Size twitter data " + str(len(df1)) + " x " + str(len(df1.columns)))
-print(df1.iloc[0,1])
+print("Entry correct at [398,4]: " + str(df1.iloc[398,-4] == 12.52))
 print('partially empty lines: ' + str(len(df1[df1.isnull().any(axis=1)])))
 
-df2 = pd.read_csv('/home/kosl_wa/final_simulation/final_data/memilio/data/' + mobi + '/commuter_migration_scaled_2020.txt', sep=' ', header=None)
+df2 = pd.read_csv('/home/' + user + 'memilio/data/' + mobi + '/commuter_migration_scaled_2020.txt', sep=' ', header=None)
 print("Size commuter data " + str(len(df2)) + " x " + str(len(df2.columns)))
-print(df2.iloc[0,1])
+print("Entry correct at [0,1]: " + str(df2.iloc[0,1] == 710))
 print('partially empty lines: ' + str(len(df2[df2.isnull().any(axis=1)])))
 
-df3 = pd.read_json('/home/kosl_wa/final_simulation/final_data/memilio/data/pydata/Germany/county_divi_ma7.json')
+df3 = pd.read_json('/home/' + user + 'memilio/data/pydata/Germany/county_divi_ma7.json')
 print("Size DIVI infection data " + str(len(df3)) + " x " + str(len(df3.columns)) + ", division of length by 400: " + str(len(df3)/400))
 print(df3.columns)
 print('partially empty lines: ' + str(len(df3[df3.isnull().any(axis=1)])))
 
-df4 = pd.read_json('/home/kosl_wa/final_simulation/final_data/memilio/data/pydata/Germany/all_county_age_ma7_rki.json')
+df4 = pd.read_json('/home/' + user + 'memilio/data/pydata/Germany/all_county_age_ma7_rki.json')
 print("Size RKI infection data " + str(len(df4)) + " x " + str(len(df4.columns)) + ", division of length by 400: " + str(len(df4)/400))
 print(df4.columns)
-print('partially empty lines: ' + str(len(df4[df4.isnull().any(axis=1)])))
+print('partially empty lines (without unknown columns): ' + str(len(df4[df4.Age_RKI!='unknown'])))
+df4a = df4[df4.isnull().any(axis=1)]
+print('partially empty lines (without unknown columns): ' + str(len(df4a[df4a.Age_RKI!='unknown'])))
 
-df5 = pd.read_json('/home/kosl_wa/final_simulation/final_data/memilio/data/pydata/Germany/county_current_population.json')
+df5 = pd.read_json('/home/' + user + 'memilio/data/pydata/Germany/county_current_population.json')
 print("Size population data " + str(len(df5)) + " x " + str(len(df5.columns)) + ", division of length by 400: " + str(len(df5)/400))
 print(df5.columns)
 print('partially empty lines: ' + str(len(df5[df5.isnull().any(axis=1)])))
 
-df6 = pd.read_json('/home/kosl_wa/final_simulation/final_data/memilio/data/pydata/Germany/all_county_agevacc_vacc_ma7.json')
+df6 = pd.read_json('/home/' + user + 'memilio/data/pydata/Germany/all_county_agevacc_vacc_ma7.json')
 
 print("Size RKI vaccination data " + str(len(df6)) + " x " + str(len(df6.columns)) + ", division of length by 400: " + str(len(df6)/400))
 print(df6.columns)
