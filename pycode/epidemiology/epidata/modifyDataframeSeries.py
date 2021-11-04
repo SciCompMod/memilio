@@ -144,7 +144,9 @@ def impute_and_reduce_df(df_old, group_by_cols, mod_cols, impute='forward', movi
                 counter += 1
             for avg in mod_cols:
                 values[avg] = 0
-
+            # TODO: by this the corresponding columns will be zero-filled
+            #       other entries such as names etc will get lost here
+            #       any idea to introduce these names has to be found.
             df_local_new.fillna(values, inplace=True)
 
         # append current local entity (i.e., county or state)

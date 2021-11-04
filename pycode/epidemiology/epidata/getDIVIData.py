@@ -602,6 +602,15 @@ def get_divi_data(read_data=dd.defaultDict['read_data'],
             [dd.EngEng["ICU"], dd.EngEng["ICU_ventilated"]],
             impute='forward', moving_average=moving_average)  
 
+    # add names etc for empty frames (counties where no ICU beds are available)
+    countyid_to_name = geoger.get_countyid_to_name()
+    stateid_to_name = geoger.get_stateid_to_name()
+    countyid_to_stateid = geoger.get_countyid_to_stateid_map()
+    for id in df.loc[df.isnull().any(axis=1), dd.EngEng['idCounty']].unique():
+        stateid = countyid_to_stateid[id]
+        df.loc[df[dd.EngEng['idCounty']] == id, [dd.EngEng['idState'], dd.EngEng['state'],
+                                                 dd.EngEng['county']]] = [stateid, stateid_to_name[stateid], countyid_to_name[id]]
+
     # write data for counties to file
     df_counties = df[[dd.EngEng["idCounty"],
                       dd.EngEng["county"],

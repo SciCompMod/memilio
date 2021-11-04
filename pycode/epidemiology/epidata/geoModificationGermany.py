@@ -73,6 +73,13 @@ def get_state_names_and_ids(zfill=False):
 
     return [[dd.State[int(stateids[i])], stateids[i]] for i in range(len(stateids))]
 
+def get_stateid_to_name():
+    """"! Returns a hash map from federal state ID to state name.
+
+    @return hash map from federal state ID to state name.
+    """            
+    return dd.State
+
 # while reporting for Berlin is just different for different sources, Eisenach
 # was merged on political decision with Wartburgkreis on July 1, 2021
 def get_county_ids(merge_berlin=True, merge_eisenach=True, zfill=False):
@@ -134,6 +141,14 @@ def get_county_names_and_ids(merge_berlin=True, merge_eisenach=True, zfill=False
         return [[dd.County[countyids[i]], str(countyids[i]).zfill(5)] for i in range(len(countyids))]
     else:
         return [[dd.County[countyids[i]], countyids[i]] for i in range(len(countyids))]
+
+
+def get_countyid_to_name():
+    """"! Returns a hash map from county ID to county name.
+
+    @return hash map from county ID to county name.
+    """            
+    return dd.County
 
 
 def check_for_all_counties(unique_county_list, merge_berlin=True, merge_eisenach=True):
@@ -325,14 +340,14 @@ def merge_df_counties(df, merged_id, separated_ids, sorting=[dd.EngEng['date']],
         if not dd.EngEng['idCounty'] in columns:
             df_merged[dd.EngEng['idCounty']] = merged_id
         # check if column available
-        if dd.EngEng['county'] in df_merged.columns:
+        if dd.EngEng['county'] in df.columns:
             df_merged[dd.EngEng['county']] = dd.County[merged_id]
 
         # reset state ID and state name (only possible if idState and state
         # were already columns in the input data frame)
-        if dd.EngEng['idState'] in df_merged.columns:
+        if dd.EngEng['idState'] in df.columns:
             df_merged[dd.EngEng['idState']] = df[rows_merged][dd.EngEng['idState']].unique()[0]
-        if dd.EngEng['state'] in df_merged.columns:
+        if dd.EngEng['state'] in df.columns:
             df_merged[dd.EngEng['state']] = df[rows_merged][dd.EngEng['state']].unique()[0]
 
         # remove unmerged rows from old data frame
