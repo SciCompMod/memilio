@@ -548,11 +548,11 @@ IOResult<void> extrapolate_rki_results(std::vector<Model>& model, const std::str
         std::vector<double> num_icu(model.size(), 0.0);
 
         BOOST_OUTCOME_TRY(details::read_rki_data(
-            path_join(data_dir, "all_county_age_ma_rki.json"), id_name, region, date, num_exp, num_car, num_inf,
+            path_join(data_dir, "all_county_age_ma7_rki.json"), id_name, region, date, num_exp, num_car, num_inf,
             num_hosp, dummy_icu, num_death, num_rec, t_car_to_rec, t_car_to_inf, t_exp_to_car, t_inf_to_rec,
             t_inf_to_hosp, t_hosp_to_rec, t_hosp_to_icu, t_icu_to_dead, mu_C_R, mu_I_H, mu_H_U, scaling_factor_inf));
         BOOST_OUTCOME_TRY(
-            details::read_divi_data(path_join(data_dir, "county_divi.json"), id_name, region, date, num_icu));
+            details::read_divi_data(path_join(data_dir, "county_divi_ma7.json"), id_name, region, date, num_icu));
         BOOST_OUTCOME_TRY(num_population, details::read_population_data(
                                               path_join(data_dir, "county_current_population.json"), id_name, region));
 
@@ -658,7 +658,7 @@ IOResult<void> read_population_data_county(std::vector<Model>& model, Date date,
     std::string id_name = "ID_County";
 
     if (date > Date(2020, 4, 23)) {
-        BOOST_OUTCOME_TRY((details::set_divi_data<Model, ModelType>(model, path_join(dir, "county_divi.json"), id_name,
+        BOOST_OUTCOME_TRY((details::set_divi_data<Model, ModelType>(model, path_join(dir, "county_divi_ma7.json"), id_name,
                                                                     county, date, scaling_factor_icu)));
     }
     else {
@@ -676,7 +676,7 @@ IOResult<void> read_vaccine_data(std::vector<Model>& model, Date date, const std
 {
     std::string id_name = "ID_County";
 
-    details::get_new_vaccine_growth(model, path_join(dir, "all_county_ageinf_vacc_all_dates.json"), date, id_name,
+    details::get_new_vaccine_growth(model, path_join(dir, "all_county_ageinf_vacc_ma7.json"), date, id_name,
                                     county, num_days);
     //details::set_vaccine_data(model, path_join(dir, "vaccine_data.json"), id_name, county);
     return success();
