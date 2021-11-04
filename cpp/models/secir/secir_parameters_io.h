@@ -158,67 +158,6 @@ IOResult<Graph<Model, MigrationParameters>> read_graph(const std::string& direct
     return success(graph);
 }
 
-#ifdef MEMILIO_HAS_HDF5
-
-/**
- * @brief creates xml file with a single run parameter study with std 0 (used to save parameters of individual runs)
- * @param filename Name of file
- * @param params Secir parameters used during run
- * @param t0 starting point of simulation
- * @param tmax end point of simulation
- */
-template <class Simulation>
-IOResult<void> write_single_run_result(const int run, const mio::Graph<mio::SimulationNode<Simulation>, mio::MigrationEdge>& graph)
-{
-    assert(graph.nodes().size() > 0 && "Graph Nodes are empty");
-
-    std::string abs_path;
-    BOOST_OUTCOME_TRY(created, create_directory("results", abs_path));
-
-    if (created) {
-        log_info("Results are stored in {:s}/results.", mio::get_current_dir_name());
-    }
-    else if (run == 0) {
-        log_info(
-            "Directory '{:s}' already exists. Results are stored in {:s}/results. Files from previous runs will be "
-            "overwritten",
-            mio::get_current_dir_name());
-    }
-
-    //write sampled parameters for this run
-    //omit edges to save space as they are not sampled
-    for (auto inode = size_t(0); inode < graph.nodes().size(); ++inode) {
-        auto& node = graph.nodes()[inode];
-        BOOST_OUTCOME_TRY(js_node_model, serialize_json(node.property.get_result(), mio::IOF_OmitDistributions));
-        Json::Value js_node(Json::objectValue);
-        js_node["NodeId"] = node.id;
-        js_node["Model"]  = js_node_model;
-        auto node_filename =
-            path_join(abs_path, "Parameters_run" + std::to_string(run) + "_node" + std::to_string(inode) + ".json");
-        BOOST_OUTCOME_TRY(write_json(node_filename, js_node));
-    }
-
-    //write results for this run
-    std::vector<TimeSeries<double>> all_results;
-    std::vector<int> ids;
-
-    ids.reserve(graph.nodes().size());
-    all_results.reserve(graph.nodes().size());
-    std::transform(graph.nodes().begin(), graph.nodes().end(), std::back_inserter(all_results), [](auto& node) {
-        return node.property.get_result();
-    });
-    std::transform(graph.nodes().begin(), graph.nodes().end(), std::back_inserter(ids), [](auto& node) {
-        return node.id;
-    });
-    BOOST_OUTCOME_TRY(
-        save_result(all_results, ids,
-                    path_join(abs_path, ("Results_run" + std::to_string(run) + ".h5"))));
-
-    return success();
-}
-
-#endif // MEMILIO_HAS_HDF5
-
 namespace details
 {
     /**

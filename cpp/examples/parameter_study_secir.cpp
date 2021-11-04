@@ -22,6 +22,57 @@
 #include "secir/parameter_studies.h"
 #include "memilio/mobility/mobility.h"
 
+/**
+ * @brief creates xml file with a single run parameter study with std 0 (used to save parameters of individual runs)
+ * @param filename Name of file
+ * @param params Secir parameters used during run
+ * @param t0 starting point of simulation
+ * @param tmax end point of simulation
+ */
+mio::IOResult<void> write_single_run_result(const int run, const mio::Graph<mio::SimulationNode<mio::SecirSimulation<>>, mio::MigrationEdge>& graph)
+{
+    std::string abs_path;
+    BOOST_OUTCOME_TRY(created, mio::create_directory("results", abs_path));
+    
+    if (run == 0) {
+        std::cout << "Results are stored in " << abs_path << '\n';
+        if (!created) {
+            std::cout << "Directory already exists, files from previous runs will be overwritten." << '\n';
+        }
+    }
+
+    //write sampled parameters for this run
+    //omit edges to save space as they are not sampled
+    int inode = 0;
+    for (auto&& node : graph.nodes()) {
+        BOOST_OUTCOME_TRY(js_node_model, serialize_json(node.property.get_result(), mio::IOF_OmitDistributions));
+        Json::Value js_node(Json::objectValue);
+        js_node["NodeId"] = node.id;
+        js_node["Model"]  = js_node_model;
+        auto node_filename =
+            mio::path_join(abs_path, "Parameters_run" + std::to_string(run) + "_node" + std::to_string(inode++) + ".json");
+        BOOST_OUTCOME_TRY(mio::write_json(node_filename, js_node));
+    }
+
+    //write results for this run
+    std::vector<mio::TimeSeries<double>> all_results;
+    std::vector<int> ids;
+
+    ids.reserve(graph.nodes().size());
+    all_results.reserve(graph.nodes().size());
+    std::transform(graph.nodes().begin(), graph.nodes().end(), std::back_inserter(all_results), [](auto& node) {
+        return node.property.get_result();
+    });
+    std::transform(graph.nodes().begin(), graph.nodes().end(), std::back_inserter(ids), [](auto& node) {
+        return node.id;
+    });
+    BOOST_OUTCOME_TRY(
+        mio::save_result(all_results, ids,
+                    mio::path_join(abs_path, ("Results_run" + std::to_string(run) + ".h5"))));
+
+    return mio::success();
+}
+
 int main()
 {
     mio::set_log_level(mio::LogLevel::debug);
@@ -111,12 +162,13 @@ int main()
     }
 
     //create study
-    mio::ParameterStudy<mio::SecirSimulation<>> parameter_study(model, t0, tmax, 0.2, 1);
+    auto num_runs = size_t(1);
+    mio::ParameterStudy<mio::SecirSimulation<>> parameter_study(model, t0, tmax, 0.2, num_runs);
 
     //run study
     int run                        = 0;
     auto lambda                    = [&run](auto&& graph) {
-        auto write_result_status = mio::write_single_run_result(run++, graph);
+        auto write_result_status = write_single_run_result(run++, graph);
         if (!write_result_status) {            
             std::cout << "Error writing result: " << write_result_status.error().formatted_message(); 
         }

@@ -38,11 +38,14 @@ std::string get_current_dir_name()
 IOResult<bool> create_directory(std::string const& rel_path, std::string& abs_path)
 {
     boost::filesystem::path dir(rel_path);
-    abs_path = dir.string();
     boost::system::error_code ec;
     bool created =  boost::filesystem::create_directory(dir, ec);
     if (ec) {
-        return failure(ec, abs_path);
+        return failure(ec, rel_path);
+    }
+    abs_path = boost::filesystem::canonical(dir, ec).string();
+    if (ec) {
+        return failure(ec, rel_path);
     }
 
     if (created) {
