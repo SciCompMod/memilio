@@ -390,7 +390,7 @@ def download_data_for_one_day(last_number, download_date):
 
         # It is most likely that the difference is between 1 and 2
         for sign in range(2):
-            for delta in range(1, 300):
+            for delta in range(1, 50):
                 call_number = last_number + sign_dict[sign]*delta
 
                 # for delta 1 and 2 the number is not saved in dict,
@@ -537,37 +537,30 @@ def get_divi_data(read_data=dd.defaultDict['read_data'],
     last_number = 6072
 
     new_dict_string = ""
-    # while start_date <= end_date:
+    date_considered = date(2021, 11, 3)
+    date_download = date_considered
+    while date_considered <= today:
 
-    #     [last_number, df2, new_string] = download_data_for_one_day(
-    #         last_number, start_date)
+        [last_number, df2, new_string] = download_data_for_one_day(last_number, date_considered) 
 
-    #     if not df2.empty:
+        if not df2.empty:
 
-    #         new_dict_string = new_dict_string + new_string
-
-    #         # data needs adjustment
-    #         # if (today <= date(2021, 3, 30)) or (today >= date(2021, 10, 29)):
-    #         df2 = adjust_data(df2, start_date)
+            new_dict_string = new_dict_string + new_string
             
-    #         if len(df2[df2.isnull().any(axis=1)]) > 0:
-    #             print("Error. Empty values in DataFrame.")
+            if len(df[df.isnull().any(axis=1)]) > 0:
+                print("Error. Empty values in DataFrame.")
 
-    #         if len(df2) > 400:
-    #             print(21)
+            df = df2.copy()
+            date_download = date_considered
 
-    #         # append to global data frame
-    #         df = df.append(df2, ignore_index=True)
+        else:
+            print("Warning: Data of date " +
+                  date_considered.strftime("%Y-%m-%d") + " was not found.")
 
-    #         print("Success: Data of date " +
-    #               start_date.strftime("%Y-%m-%d") + " has been added to dataframe")
-    #     else:
-    #         print("Warning: Data of date " +
-    #               start_date.strftime("%Y-%m-%d") + " is not added to dataframe")
-
-    #     start_date += delta
-
-    [last_number, df, new_string] = download_data_for_one_day(last_number, today)    
+        date_considered += delta
+    
+    print("Success: Data of date " +
+        date_download.strftime("%Y-%m-%d") + " was found.")
 
     # output data before renaming
     if not df.empty:
