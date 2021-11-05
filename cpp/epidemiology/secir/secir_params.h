@@ -544,7 +544,7 @@ struct VaccinationGap {
     using Type = CustomIndexArray<UncertainValue, AgeGroup>;
     static Type get_default(AgeGroup size)
     {
-        return Type(size, 53.0);
+        return Type(size, 49.0);
     }
     static std::string name()
     {

@@ -180,8 +180,8 @@ epi::IOResult<void> set_covid_parameters(epi::SecirParams& params)
     const double reduc_immune_exp_inf_max  = 0.293;
     const double reduc_inf_hosp_min        = 0.05;
     const double reduc_inf_hosp_max        = 0.15;
-    const double reduc_immune_inf_hosp_min = 0.131;
-    const double reduc_immune_inf_hosp_max = 0.231;
+    const double reduc_immune_inf_hosp_min = 0.031;
+    const double reduc_immune_inf_hosp_max = 0.131;
 
     array_assign_uniform_distribution(params.get<epi::InfectionProbabilityFromContact>(), transmission_risk_min,
                                       transmission_risk_max);
@@ -551,8 +551,9 @@ epi::IOResult<void> set_edges(const fs::path& data_dir,
                               epi::Graph<epi::SecirModelV, epi::MigrationParameters>& params_graph)
 {
     //migration between nodes
-    BOOST_OUTCOME_TRY(migration_data_commuter,
-                      epi::read_mobility_plain((data_dir / "migration" / "commuter_migration_scaled_2020.txt").string()));
+    BOOST_OUTCOME_TRY(
+        migration_data_commuter,
+        epi::read_mobility_plain((data_dir / "migration" / "commuter_migration_scaled_2020.txt").string()));
     BOOST_OUTCOME_TRY(migration_data_twitter,
                       epi::read_mobility_plain((data_dir / "migration" / "twitter_scaled_1252.txt").string()));
     if (migration_data_commuter.rows() != params_graph.nodes().size() ||
@@ -907,7 +908,6 @@ int main(int argc, char** argv)
     bool masks = true;
     bool test  = true;
 
-
     RunMode mode;
     std::string save_dir;
     std::string data_dir;
@@ -917,27 +917,27 @@ int main(int argc, char** argv)
         data_dir   = argv[1];
         save_dir   = argv[2];
         result_dir = argv[3];
-	if (atoi(argv[4]) == 1) {
-	    late = true;
-	}
-	else {
-	    late = false;
-	}
-	if (atoi(argv[5]) == 1) {
+        if (atoi(argv[4]) == 1) {
+            late = true;
+        }
+        else {
+            late = false;
+        }
+        if (atoi(argv[5]) == 1) {
             masks = true;
         }
         else {
             masks = false;
         }
-	if (atoi(argv[6]) == 1) {
+        if (atoi(argv[6]) == 1) {
             test = true;
         }
         else {
             test = false;
         }
-	printf("masks set to: %d, late set to: %d, test set to: %d\n", (int) masks, (int) late, (int) test) 
+        printf("masks set to: %d, late set to: %d, test set to: %d\n", (int)masks, (int)late, (int)test)
 
-        printf("Reading data from \"%s\", saving graph to \"%s\".\n", data_dir.c_str(), save_dir.c_str());
+            printf("Reading data from \"%s\", saving graph to \"%s\".\n", data_dir.c_str(), save_dir.c_str());
     }
     else if (argc == 3) {
         mode       = RunMode::Load;
