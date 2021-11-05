@@ -469,11 +469,11 @@ auto get_migration_factors(const SecirSimulation<Base>& sim, double /*t*/, const
 {
     auto& params = sim.get_model().parameters;
     //parameters as arrays
-    auto& t_inc     = params.template get<IncubationTime>().array().template cast<double>();
-    auto& t_ser     = params.template get<SerialInterval>().array().template cast<double>();
-    auto& p_asymp   = params.template get<AsymptoticCasesPerInfectious>().array().template cast<double>();
-    auto& p_inf     = params.template get<RiskOfInfectionFromSympomatic>().array().template cast<double>();
-    auto& p_inf_max = params.template get<MaxRiskOfInfectionFromSympomatic>().array().template cast<double>();
+    auto&& t_inc     = params.template get<IncubationTime>().array().template cast<double>();
+    auto&& t_ser     = params.template get<SerialInterval>().array().template cast<double>();
+    auto&& p_asymp   = params.template get<AsymptoticCasesPerInfectious>().array().template cast<double>();
+    auto&& p_inf     = params.template get<RiskOfInfectionFromSympomatic>().array().template cast<double>();
+    auto&& p_inf_max = params.template get<MaxRiskOfInfectionFromSympomatic>().array().template cast<double>();
     //slice of carriers
     auto y_car = slice(y, {Eigen::Index(InfectionState::Carrier), Eigen::Index(size_t(params.get_num_groups())),
                            Eigen::Index(InfectionState::Count)});
@@ -481,9 +481,9 @@ auto get_migration_factors(const SecirSimulation<Base>& sim, double /*t*/, const
     //compute isolation, same as infection risk from main model
     auto R3                      = 0.5 / (t_inc - t_ser);
     auto test_and_trace_required = ((1 - p_asymp) * R3 * y_car.array()).sum();
-    auto risk_from_symptomatic =
-        smoother_cosine(test_and_trace_required, double(params.template get<TestAndTraceCapacity>()),
-                        params.template get<TestAndTraceCapacity>() * 5, p_inf.matrix(), p_inf_max.matrix());
+    auto test_and_trace_capacity = double(params.template get<TestAndTraceCapacity>());
+    auto risk_from_symptomatic   = smoother_cosine(test_and_trace_required, test_and_trace_capacity,
+                                                 test_and_trace_capacity * 5, p_inf.matrix(), p_inf_max.matrix());
 
     //set factor for infected
     auto factors = Eigen::VectorXd::Ones(y.rows()).eval();
