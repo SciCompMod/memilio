@@ -5,6 +5,8 @@ import itertools
 import numpy as np
 
 # creates a mapping from given intervals to new desired intervals
+
+
 def create_intervals_mapping(from_lower_bounds, to_lower_bounds):
     """! Creates a mapping from given intervals to new desired intervals
 
@@ -39,44 +41,57 @@ def create_intervals_mapping(from_lower_bounds, to_lower_bounds):
 
     return from_to_mapping
 
+
 mobi = 'migration'
 user = 'kueh_mj/'
 
-df1 = pd.read_csv('/home/' + user + 'memilio/data/' + mobi + '/twitter_scaled_1252.txt', sep=' ', header=None)
+df1 = pd.read_csv('/home/' + user + 'memilio/data/' + mobi +
+                  '/twitter_scaled_1252.txt', sep=' ', header=None)
 print("Size twitter data " + str(len(df1)) + " x " + str(len(df1.columns)))
-print("Entry correct at [398,4]: " + str(df1.iloc[398,-4] == 12.52))
+print("Entry correct at [398,4]: " + str(df1.iloc[398, -4] == 12.52))
 print('partially empty lines: ' + str(len(df1[df1.isnull().any(axis=1)])))
 
-df2 = pd.read_csv('/home/' + user + 'memilio/data/' + mobi + '/commuter_migration_scaled_2020.txt', sep=' ', header=None)
+df2 = pd.read_csv('/home/' + user + 'memilio/data/' + mobi +
+                  '/commuter_migration_scaled_2020.txt', sep=' ', header=None)
 print("Size commuter data " + str(len(df2)) + " x " + str(len(df2.columns)))
-print("Entry correct at [0,1]: " + str(df2.iloc[0,1] == 710))
+print("Entry correct at [0,1]: " + str(df2.iloc[0, 1] == 710))
 print('partially empty lines: ' + str(len(df2[df2.isnull().any(axis=1)])))
 
-df3 = pd.read_json('/home/' + user + 'memilio/data/pydata/Germany/county_divi_ma7.json')
-print("Size DIVI infection data " + str(len(df3)) + " x " + str(len(df3.columns)) + ", division of length by 400: " + str(len(df3)/400))
+df3 = pd.read_json('/home/' + user +
+                   'memilio/data/pydata/Germany/county_divi_ma7.json')
+print("Size DIVI infection data " + str(len(df3)) + " x " +
+      str(len(df3.columns)) + ", division of length by 400: " + str(len(df3)/400))
 print(df3.columns)
 print('partially empty lines: ' + str(len(df3[df3.isnull().any(axis=1)])))
 
-df4 = pd.read_json('/home/' + user + 'memilio/data/pydata/Germany/all_county_age_ma7_rki.json')
-print("Size RKI infection data " + str(len(df4)) + " x " + str(len(df4.columns)) + ", division of length by 400: " + str(len(df4)/400))
+df4 = pd.read_json('/home/' + user +
+                   'memilio/data/pydata/Germany/all_county_age_ma7_rki.json')
+print("Size RKI infection data " + str(len(df4)) + " x " +
+      str(len(df4.columns)) + ", division of length by 400: " + str(len(df4)/400))
 print(df4.columns)
-print('partially empty lines (with unknown columns): ' + str(len(df4[df4.isnull().any(axis=1)])))
+print('partially empty lines (with unknown columns): ' +
+      str(len(df4[df4.isnull().any(axis=1)])))
 df4a = df4[df4.isnull().any(axis=1)]
-print('partially empty lines (without unknown columns): ' + str(len(df4a[df4a.Age_RKI!='unknown'])))
+print('partially empty lines (without unknown columns): ' +
+      str(len(df4a[df4a.Age_RKI != 'unknown'])))
 
-df5 = pd.read_json('/home/' + user + 'memilio/data/pydata/Germany/county_current_population.json')
-print("Size population data " + str(len(df5)) + " x " + str(len(df5.columns)) + ", division of length by 400: " + str(len(df5)/400))
+df5 = pd.read_json(
+    '/home/' + user + 'memilio/data/pydata/Germany/county_current_population.json')
+print("Size population data " + str(len(df5)) + " x " +
+      str(len(df5.columns)) + ", division of length by 400: " + str(len(df5)/400))
 print(df5.columns)
 print('partially empty lines: ' + str(len(df5[df5.isnull().any(axis=1)])))
 
-df6 = pd.read_json('/home/' + user + 'memilio/data/pydata/Germany/all_county_agevacc_vacc_ma7.json')
+df6 = pd.read_json(
+    '/home/' + user + 'memilio/data/pydata/Germany/all_county_agevacc_vacc_ma7.json')
 
-print("Size RKI vaccination data " + str(len(df6)) + " x " + str(len(df6.columns)) + ", division of length by 400: " + str(len(df6)/400/3))
+print("Size RKI vaccination data " + str(len(df6)) + " x " +
+      str(len(df6.columns)) + ", division of length by 400: " + str(len(df6)/400/3))
 print(df6.columns)
 print('partially empty lines: ' + str(len(df6[df6.isnull().any(axis=1)])))
 
 unique_age_groups_old = sorted(df6[dd.EngEng['ageRKI']].unique())
-ids  = sorted(df6['ID_County'].unique())
+ids = sorted(df6['ID_County'].unique())
 
 max_age_all = 100
 # get age groups separators of original vaccination table
@@ -90,7 +105,7 @@ for age in unique_age_groups_old:
     else:
         extrapolate_agegroups = False
         print("Error in provided age groups from vaccination data; "
-        "can not extrapolate to infection number age groups.")
+              "can not extrapolate to infection number age groups.")
 min_age_old.append(max_age_all)
 
 population = df5
@@ -109,7 +124,7 @@ for age in unique_age_groups_pop:
     else:
         extrapolate_agegroups = False
         print("Error in provided age groups from population data;"
-        " can not extrapolate to infection number age groups.")
+              " can not extrapolate to infection number age groups.")
 min_age_pop.append(max_age_all)
 
 # new age groups, here taken from definition of RKI infection data
@@ -150,7 +165,7 @@ for i in range(0, len(unique_age_groups_old)):
         if all_ages_to_age_old_share[k][0][1] == i + new_age_not_vacc:
             age_old_to_all_ages_indices[i].append(k)
         elif k == len(all_ages_to_age_old_share) \
-            or all_ages_to_age_old_share[k][0][1] == i + new_age_not_vacc + 1:
+                or all_ages_to_age_old_share[k][0][1] == i + new_age_not_vacc + 1:
             break
 
 # get interval indices from all age groups that correspond to new age group
@@ -174,7 +189,7 @@ for i in range(0, len(population_to_all_ages_share)):
     for assign_share in population_to_all_ages_share[i]:
         # assign_share[0]: share / factor, assign_share[1]: column / age group
         population_all_ages[str(min_all_ages[assign_share[1]])
-                                ] += assign_share[0] * population[unique_age_groups_pop[i]]
+                            ] += assign_share[0] * population[unique_age_groups_pop[i]]
 
 # rename last column and save total number per county
 population_all_ages.rename(
@@ -195,7 +210,7 @@ if max(
 if True:
     population_old_ages = pd.DataFrame(population[dd.EngEng['idCounty']])
     for i in range(len(age_old_to_all_ages_indices)):
-        # access columns + start_age_data since county_ID (and maybe other) 
+        # access columns + start_age_data since county_ID (and maybe other)
         # is in first place
         start_age_data = list(population_all_ages.columns).index('0')
         population_old_ages[unique_age_groups_old[i]] = population_all_ages.iloc[:, np.array(
@@ -204,18 +219,104 @@ if True:
 '''for i in range(len(df6)):
     temp = population_old_ages[population_old_ages['ID_County']==df6['ID_County'].values[i]]
     ratio = df6[['Vacc_partially', 'Vacc_completed', 'Vacc_refreshed']].values[i,:] / population_old_ages[df6['Age_RKI'].values[i]].values[0]
-    
-    
+
+
     if ratio[0] >= 1 or ratio[1] >= 1 or ratio[2] >= 1:
         print(ratio)'''
-i=0
+i = 0
 for id in ids:
     for age in unique_age_groups_old:
-        temp = df6.loc[(df6.ID_County==id) & (df6.Age_RKI==age), ['Vacc_completed']].values/population_old_ages.loc[population_old_ages.ID_County==id,age].values
+        temp = df6.loc[(df6.ID_County == id) & (df6.Age_RKI == age), ['Vacc_completed']
+                       ].values/population_old_ages.loc[population_old_ages.ID_County == id, age].values
 
         temp_where = np.where(temp >= 0.97)
         if len(temp_where[0]) > 0:
             i += 1
-            print(id, age)#, ':', temp[temp_where])
+            print(id, age)  # , ':', temp[temp_where])
 
-print(i)
+print("Number of cases where >0.97: " + str(i))
+
+# Merging of Counties that are reported differently, either separatedly or
+# summed, in different data sources
+CountyMerging = {
+    # Different districts to Berlin; reporting differs according to source
+    11000: [11001, 11002, 11003, 11004, 11005, 11006, 11007, 11008, 11009,
+            11010, 11011, 11012],
+    # Wartburgkreis and Eisenach to Wartburgkreis (decision from July 1, 2021)
+    16063: [16063, 16056]
+}
+
+
+def get_state_ids(zfill=False):
+    """"! Get list of federal state IDs sorted according to state ID.
+
+    @param zfill [Default: False] Defines whether county IDs are zero-filled to
+        two digits and returned as a string or returned as an integer.
+    @return List of federal IDs sorted according to state ID.
+    """
+    unique_geo_entities = sorted(set(dd.State.keys()))
+    if zfill:
+        unique_geo_entities = [str(id).zfill(2) for id in unique_geo_entities]
+
+    return unique_geo_entities
+
+
+# while reporting for Berlin is just different for different sources, Eisenach
+# was merged on political decision with Wartburgkreis on July 1, 2021
+def get_county_ids(merge_berlin=True, merge_eisenach=True, zfill=False):
+    """"! Get list of county IDs sorted according to county ID.
+
+    @param merge_berlin [Default: True] Defines whether the different districts
+        are listed separately or combined as one entity 'Berlin'.
+    @param merge_eisenach [Default: True] Defines whether the counties 
+        'Wartburgkreis' and 'Eisenach' are listed separately or combined 
+        as one entity 'Wartburgkreis'.
+    @param zfill [Default: False] Defines whether county IDs are zero-filled to
+        five digits and returned as a string or returned as an integer.
+    @return List of county IDs sorted according to county ID.
+    """
+    unique_geo_entities = sorted(set(dd.County.keys()))
+    # disregard different districts of Berlin and only take Berlin as one county
+    if merge_berlin:
+        for i in CountyMerging[11000]:
+            unique_geo_entities.remove(i)
+    else:
+        unique_geo_entities.remove(11000)
+
+    if merge_eisenach:
+        unique_geo_entities.remove(CountyMerging[16063][1])
+
+    if zfill:
+        return [str(id).zfill(5) for id in unique_geo_entities]
+    else:
+        return [id for id in unique_geo_entities]
+
+
+def get_stateid_to_countyids_map(merge_eisenach=True, zfill=False):
+    """! Creates a hash map from state IDs to lists of county IDs
+
+    @param merge_eisenach [Default: True] Defines whether the counties 
+        'Wartburgkreis' and 'Eisenach' are listed separately or combined 
+        as one entity 'Wartburgkreis'.
+    @param zfill [Default: False]. Defines whether or not all IDs are returned
+        as zero-filled strings. By default, integer maps are returned.
+    @return State IDs to lists of county IDs map
+    """
+    county_ids = get_county_ids(merge_eisenach=merge_eisenach, zfill=zfill)
+    state_ids = get_state_ids()
+    state_to_county_table = [[] for i in range(len(state_ids))]
+
+    for id in county_ids:
+        state_to_county_table[int(str(id).zfill(5)[0:2])-1].append(id)
+
+    return dict(zip(state_ids, state_to_county_table))
+
+
+state_to_county = get_stateid_to_countyids_map()
+for stateid in range(1, 17):
+
+    print('Vacc ratios for state ' + str(stateid))
+    abc = np.array(df6.loc[(df6.ID_County.isin(state_to_county[stateid])) & (df6.Date == '2021-11-04'), 'Vacc_completed']).reshape(
+        len(state_to_county[stateid]),
+        len(unique_age_groups_old)) / population_old_ages.loc[population_old_ages.ID_County.isin(state_to_county[stateid]), unique_age_groups_old]
+    print(abc)
