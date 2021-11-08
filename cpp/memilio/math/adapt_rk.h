@@ -62,7 +62,7 @@ namespace mio
 class Tableau
 {
 public:
-    std::vector<std::vector<double>> entries;
+    std::vector<Eigen::VectorXd> entries;
 
     /**
      * @brief default is Runge-Kutta-Fehlberg4(5) tableau
@@ -82,8 +82,8 @@ public:
 class TableauFinal
 {
 public:
-    std::vector<double> entries_low;
-    std::vector<double> entries_high;
+    Eigen::VectorXd entries_low;
+    Eigen::VectorXd entries_high;
 
     /**
      * @brief default is Runge-Kutta-Fehlberg4(5) tableau
@@ -155,7 +155,7 @@ public:
     bool step(const DerivFunction& f, Eigen::Ref<Eigen::VectorXd const> yt, double& t, double& dt,
               Eigen::Ref<Eigen::VectorXd> ytp1) const override;
 
-private:
+protected:
     Tableau m_tab;
     TableauFinal m_tab_final;
     double m_abs_tol, m_rel_tol;

@@ -111,7 +111,7 @@ bool RKIntegratorCore::step(const DerivFunction& f, Eigen::Ref<const Eigen::Vect
                 // go through the variables of the system: S, E, I, ....
                 for (int j = 0; j < yt_eval.size(); j++) {
                     // go through the different kt_1, kt_2, ..., kt_i-1 and add them onto yt: y_eval = yt + h * \sum_{j=1}^{i-1} a_{i,j} kt_j
-                    for (size_t k = 1; k < m_tab.entries[i - 1].size(); k++) {
+                    for (Eigen::Index k = 1; k < m_tab.entries[i - 1].size(); k++) {
                         yt_eval[j] +=
                             (dt * m_tab.entries[i - 1][k] *
                              kt_values
