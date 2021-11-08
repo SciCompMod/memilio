@@ -142,21 +142,20 @@ bool Person::goes_to_work(TimePoint t, const AbmMigrationParameters& params) con
 
 TimeSpan Person::get_go_to_work_time(const AbmMigrationParameters& params, TimeSpan dt) const
 {
-    TimeSpan Minimum_Goto_Work_time = params.get<GotoWorkTimeMinimum>()[m_age];
-    TimeSpan Maximum_Goto_Work_time = params.get<GotoWorkTimeMaximum>()[m_age];
-    int timeSlots = (Maximum_Goto_Work_time.seconds() - Minimum_Goto_Work_time.seconds()) / dt.seconds();
-    int secondsAfterMinimum = int (timeSlots * m_random_goto_work_hour) * dt.seconds();
-    return Minimum_Goto_Work_time+ mio::seconds(secondsAfterMinimum);
+    TimeSpan minimum_goto_work_time = params.get<GotoWorkTimeMinimum>()[m_age];
+    TimeSpan maximum_goto_work_time = params.get<GotoWorkTimeMaximum>()[m_age];
+    int timeSlots = (maximum_goto_work_time.seconds() - minimum_goto_work_time.seconds()) / dt.seconds();
+    int seconds_after_minimum = int (timeSlots * m_random_goto_work_hour) * dt.seconds();
+    return minimum_goto_work_time+ mio::seconds(seconds_after_minimum);
 }
 
 TimeSpan Person::get_go_to_school_time(const AbmMigrationParameters& params, TimeSpan dt) const
 {
-    TimeSpan Minimum_Goto_School_time = params.get<GotoSchoolTimeMinimum>()[m_age];
-    TimeSpan Maximum_Goto_School_time = params.get<GotoSchoolTimeMaximum>()[m_age];
-    int timeSlots = (Maximum_Goto_School_time.seconds() - Minimum_Goto_School_time.seconds()) / dt.seconds();
-    int secondsAfterMinimum = int (timeSlots * m_random_goto_school_hour) * dt.seconds();
-    std::cout<<"sec after min :"<<secondsAfterMinimum<<std::endl;
-    return Minimum_Goto_School_time+ mio::seconds(secondsAfterMinimum);
+    TimeSpan minimum_goto_school_time = params.get<GotoSchoolTimeMinimum>()[m_age];
+    TimeSpan maximum_goto_school_time = params.get<GotoSchoolTimeMaximum>()[m_age];
+    int timeSlots = (maximum_goto_school_time.seconds() - minimum_goto_school_time.seconds()) / dt.seconds();
+    int seconds_after_minimum = int (timeSlots * m_random_goto_school_hour) * dt.seconds();
+    return minimum_goto_school_time+ mio::seconds(seconds_after_minimum);
 }
 
 bool Person::goes_to_school(TimePoint t, const AbmMigrationParameters& params) const
