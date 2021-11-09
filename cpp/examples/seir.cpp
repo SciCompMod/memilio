@@ -17,35 +17,35 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
-#include <epidemiology/secir/seir.h>
-#include <epidemiology/model/simulation.h>
-#include <epidemiology/utils/logging.h>
+#include "seir/seir.h"
+#include "memilio/compartments/simulation.h"
+#include "memilio/utils/logging.h"
 
 int main()
 {
-    epi::set_log_level(epi::LogLevel::debug);
+    mio::set_log_level(mio::LogLevel::debug);
 
     double t0   = 0;
     double tmax = 1;
     double dt   = 0.001;
 
-    epi::log_info("Simulating SEIR; t={} ... {} with dt = {}.", t0, tmax, dt);
+    mio::log_info("Simulating SEIR; t={} ... {} with dt = {}.", t0, tmax, dt);
 
-    epi::SeirModel model;
+    mio::SeirModel model;
 
     double total_population = 10000;
-    model.populations[{epi::Index<epi::SeirInfType>(epi::SeirInfType::E)}] = 100;
-    model.populations[{epi::Index<epi::SeirInfType>(epi::SeirInfType::I)}] = 100;
-    model.populations[{epi::Index<epi::SeirInfType>(epi::SeirInfType::R)}] = 100;
-    model.populations[{epi::Index<epi::SeirInfType>(epi::SeirInfType::S)}] = total_population - model.populations[{epi::Index<epi::SeirInfType>(epi::SeirInfType::E)}]
-                                                                                              - model.populations[{epi::Index<epi::SeirInfType>(epi::SeirInfType::I)}]
-                                                                                              - model.populations[{epi::Index<epi::SeirInfType>(epi::SeirInfType::R)}];
+    model.populations[{mio::Index<mio::SeirInfType>(mio::SeirInfType::E)}] = 100;
+    model.populations[{mio::Index<mio::SeirInfType>(mio::SeirInfType::I)}] = 100;
+    model.populations[{mio::Index<mio::SeirInfType>(mio::SeirInfType::R)}] = 100;
+    model.populations[{mio::Index<mio::SeirInfType>(mio::SeirInfType::S)}] = total_population - model.populations[{mio::Index<mio::SeirInfType>(mio::SeirInfType::E)}]
+                                                                                              - model.populations[{mio::Index<mio::SeirInfType>(mio::SeirInfType::I)}]
+                                                                                              - model.populations[{mio::Index<mio::SeirInfType>(mio::SeirInfType::R)}];
     // suscetible now set with every other update
     // params.nb_sus_t0   = params.nb_total_t0 - params.nb_exp_t0 - params.nb_inf_t0 - params.nb_rec_t0;
-    model.parameters.set<epi::StageTimeIncubationInv>(1./5.2);
-    model.parameters.set<epi::StageTimeInfectiousInv>(1./6);
-    model.parameters.set<epi::TransmissionRisk>(0.04);
-    model.parameters.get<epi::ContactFrequency>().get_baseline()(0, 0) = 10;
+    model.parameters.set<mio::StageTimeIncubationInv>(1./5.2);
+    model.parameters.set<mio::StageTimeInfectiousInv>(1./6);
+    model.parameters.set<mio::TransmissionRisk>(0.04);
+    model.parameters.get<mio::ContactFrequency>().get_baseline()(0, 0) = 10;
 
     print_seir_params(model);
 

@@ -17,7 +17,7 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
-#include <epidemiology_io/mobility_io.h>
+#include "memilio/io/mobility_io.h"
 
 // wrapper function to print out matrix entries by gdb's 'print get_element(M,1,1)'
 // (GDB doesn't support calling the overloaded operator())
@@ -30,5 +30,5 @@ int main()
 {
     // Place text file needs to be in working directory build/examples/ and
     // start from within examples folder in build directory
-    auto twitter_migration_2018 = epi::read_mobility_formatted("2018_lk_matrix.txt");
+    auto twitter_migration_2018 = mio::read_mobility_formatted("2018_lk_matrix.txt");
 }

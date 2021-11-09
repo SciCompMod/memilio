@@ -17,8 +17,8 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
-#include <epidemiology/math/euler.h>
-#include <epidemiology/math/adapt_rk.h>
+#include "memilio/math/euler.h"
+#include "memilio/math/adapt_rk.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -38,7 +38,7 @@ void integration_test(std::vector<Eigen::VectorXd>& y, std::vector<Eigen::Vector
 {
     auto sine_deriv = [](auto&& y, auto&& t, auto&& dydt) { dydt[0] = std::cos(t); };
 
-    epi::RKIntegratorCore rkf45;
+    mio::RKIntegratorCore rkf45;
     rkf45.set_abs_tolerance(1e-7);
     rkf45.set_rel_tolerance(1e-7);
     rkf45.set_dt_min(1e-3);

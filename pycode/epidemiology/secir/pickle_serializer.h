@@ -25,8 +25,8 @@
 #include <pybind11/eigen.h>
 #include <pybind11/functional.h>
 
-#include "epidemiology/utils/io.h"
-#include "epidemiology/utils/metaprogramming.h"
+#include "memilio/io/io.h"
+#include "memilio/utils/metaprogramming.h"
 #include "boost/optional.hpp"
 #include <fstream>
 #include <utility>
@@ -34,7 +34,7 @@
 
 namespace py = pybind11;
 
-namespace epi
+namespace mio
 {
 
 /**
@@ -138,7 +138,7 @@ public:
 
     /**
      * Flags that determine the behavior of serialization.
-     * @see epi::IOFlags
+     * @see mio::IOFlags
      */
     int flags() const
     {
@@ -147,7 +147,7 @@ public:
 
     /**
      * Set flags that determine the behavior of serialization.
-     * @see epi::IOFlags
+     * @see mio::IOFlags
      */
     void set_flags(int f)
     {
@@ -255,7 +255,7 @@ public:
      * @return retrieved element if name is found and can be deserialized, empty optional if not found, error otherwise.
      */
     template <class T>
-    IOResult<boost::optional<T>> expect_optional(const std::string& name, epi::Tag<T> tag);
+    IOResult<boost::optional<T>> expect_optional(const std::string& name, mio::Tag<T> tag);
 
     /**
      * retrieve list of elements from the tuple.
@@ -326,7 +326,7 @@ public:
      */
     PickleObject create_object(const std::string& type)
     {
-        epi::unused(type);
+        mio::unused(type);
         m_value = py::tuple();
         return {m_status, m_value, m_flags};
     }
@@ -340,7 +340,7 @@ public:
      */
     PickleObject expect_object(const std::string& type)
     {
-        epi::unused(type);
+        mio::unused(type);
         return PickleObject(m_status, m_value, m_flags);
     }
 
@@ -385,7 +385,7 @@ public:
     template <class T, std::enable_if_t<PickleType<T>::value, void*> = nullptr>
     friend IOResult<T> deserialize_internal(PickleContext& io, Tag<T>)
     {
-        return epi::success(from_tuple_element<T>(io.m_value[0]));
+        return mio::success(from_tuple_element<T>(io.m_value[0]));
     }
 
 private:
@@ -404,7 +404,7 @@ public:
     /**
      * Constructor for deserialization, sets the flags and value that contains serialized data.
      * @param value value that contains serialized data.
-     * @param flags flags that determine the behavior of serialization; see epi::IOFlags.
+     * @param flags flags that determine the behavior of serialization; see mio::IOFlags.
      */
     PickleSerializer(const py::tuple& value, int flags = IOF_None)
         : PickleContext(value, std::make_shared<IOStatus>(), flags)
@@ -414,7 +414,7 @@ public:
     /**
      * Constructor for serialization, sets the flags.
      * Starts with an empty tuple that will store the serialized data.
-     * @param flags flags that determine the behavior of serialization; see epi::IOFlags.
+     * @param flags flags that determine the behavior of serialization; see mio::IOFlags.
      */
     PickleSerializer(int flags = IOF_None)
         : PickleSerializer(py::tuple{}, flags)
@@ -426,7 +426,7 @@ public:
  * Serialize an object into a tuple.
  * @tparam T the type of value to be serialized.
  * @param t the object to be serialized.
- * @param flags flags that determine the behavior of serialized; see epi::IOFlags.
+ * @param flags flags that determine the behavior of serialized; see mio::IOFlags.
  * @return py::tuple if serialization is succesful, error code otherwise.
  */
 template <class T>
@@ -446,7 +446,7 @@ IOResult<py::tuple> serialize_pickle(const T& v, int flags = IOF_None)
  * @tparam T the type of value to be deserialized.
  * @param t the tuple.
  * @param tag defines the type of the object for overload resolution.
- * @param flags define behavior of serialization; see epi::IOFlags.
+ * @param flags define behavior of serialization; see mio::IOFlags.
  * @return the deserialized object if succesful, error code otherwise.
  */
 template <class T>
@@ -474,7 +474,7 @@ void PickleObject::add_element(const std::string& name, const T& value)
 {
     if (m_status->is_ok()) {
         auto ctxt = PickleContext(m_status, m_flags);
-        epi::serialize(ctxt, value);
+        mio::serialize(ctxt, value);
         if (m_status) {
             m_value = m_value + py::make_tuple(std::move(ctxt).value());
         }
@@ -513,7 +513,7 @@ void PickleObject::add_list(const std::string &name, Iter b, Iter e)
         auto new_tuple = py::tuple(0);
         for (auto it = b; it < e; ++it) {
             auto ctxt = PickleContext(m_status, m_flags);
-            epi::serialize(ctxt, *it);
+            mio::serialize(ctxt, *it);
             if (m_status) {
                 new_tuple = new_tuple + py::make_tuple(std::move(ctxt).value());
             }
@@ -547,11 +547,11 @@ IOResult<T> PickleObject::expect_element(const std::string& name,Tag<T> tag)
     }
 
     auto ctxt = PickleContext(m_value[m_index++].template cast<py::tuple>(), m_status, m_flags);
-    return epi::deserialize(ctxt, tag);
+    return mio::deserialize(ctxt, tag);
 }
 
 template <class T>
-IOResult<boost::optional<T>> PickleObject::expect_optional(const std::string &name, epi::Tag<T> tag)
+IOResult<boost::optional<T>> PickleObject::expect_optional(const std::string &name, mio::Tag<T> tag)
 {
     if (m_status->is_error()) {
         return failure(*m_status);
@@ -602,7 +602,7 @@ IOResult<std::vector<T>> PickleObject::expect_list(const std::string &name, Tag<
     v.reserve(py::len(tuple));
     for (size_t i = 0; i < py::len(tuple); ++i) {
         auto ctxt = PickleContext(tuple[i], m_status, m_flags);
-        auto r    = epi::deserialize(ctxt, tag);
+        auto r    = mio::deserialize(ctxt, tag);
         if (r) {
             v.emplace_back(std::move(r).value());
         }

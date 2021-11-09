@@ -1,0 +1,21 @@
+name: "Build Python"
+description: "Build the Python bindings"
+runs:
+  using: "composite"
+  steps:    
+    - name: Install dependencies
+      shell: bash
+      run: yum install ninja-build -qy
+    - name: Build Python Wheels
+      shell: bash
+      run: |
+        cd pycode
+        /opt/python/cp36-cp36m/bin/python setup.py bdist_wheel
+        /opt/python/cp37-cp37m/bin/python setup.py bdist_wheel
+        /opt/python/cp38-cp38/bin/python setup.py bdist_wheel
+        for whl in dist/*.whl; do auditwheel repair "$whl"; done
+    - name: Upload Python Wheels
+      uses: actions/upload-artifact@v2
+      with:
+        name: python-wheels
+        path: pycode/wheelhouse

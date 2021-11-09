@@ -20,8 +20,8 @@
 #ifndef EPI_TEST_TMP_FILE_REGISTER_H
 #define EPI_TEST_TMP_FILE_REGISTER_H
 
-#include "epidemiology/utils/io.h"
-#include "epidemiology/utils/logging.h"
+#include "memilio/io/io.h"
+#include "memilio/utils/logging.h"
 #include "boost/filesystem.hpp"
 
 /**
@@ -41,7 +41,7 @@ public:
             boost::filesystem::remove_all(file, ec);
             if (ec) {
                 //just log a warning, failed cleanup should not be considered a test failure.
-                epi::log_warning("Failed to remove temporary file {}:{}",file.string(), ec.message());
+                mio::log_warning("Failed to remove temporary file {}:{}",file.string(), ec.message());
             }
         }
     }
@@ -58,7 +58,6 @@ public:
     std::string get_unique_path(const std::string& model = "%%%%-%%%%-%%%%-%%%%")
     {
         auto tmp_path = get_tmp_path();
-        boost::system::error_code ec;
         auto file_name = boost::filesystem::unique_path(model);
         auto file_path = tmp_path / file_name;
         m_files.push_back(file_path);

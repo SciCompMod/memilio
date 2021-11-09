@@ -1,0 +1,93 @@
+name: Minimal-CI
+
+on: 
+  push:
+    branches-ignore:
+      - 'main'
+  workflow_dispatch:
+
+jobs:
+  build-cpp-gcc:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: ./.github/actions/linux-build
+        with: 
+          compiler: "gcc"
+          config: "Debug"
+          version: "latest"
+
+  build-cpp-clang:
+    runs-on: "ubuntu-18.04"
+    steps:
+      - uses: actions/checkout@v2
+      - uses: ./.github/actions/linux-build
+        with: 
+          compiler: "clang"
+          config: "Debug"
+          version: "min"
+
+  build-cpp-msvc:
+    runs-on: "windows-latest"
+    steps:
+      - uses: actions/checkout@v2
+      - uses: ./.github/actions/windows-build
+        with: 
+          config: "Debug"
+          version: "latest"
+
+  test-cpp-gcc:
+    needs: build-cpp-gcc
+    runs-on: "ubuntu-latest"
+    steps:
+      - uses: actions/checkout@v2
+      - uses: ./.github/actions/linux-test
+        with: 
+          build-artifact: build-cpp-linux-gcc-latest-Debug-full
+
+  test-cpp-clang:
+    needs: build-cpp-clang
+    runs-on: "ubuntu-18.04"
+    steps:
+      - uses: actions/checkout@v2
+      - uses: ./.github/actions/linux-test
+        with: 
+          build-artifact: build-cpp-linux-clang-min-Debug-full
+
+  test-cpp-msvc:
+    needs: build-cpp-msvc
+    runs-on: "windows-latest"
+    steps:
+      - uses: actions/checkout@v2
+      - uses: ./.github/actions/windows-test
+        with: 
+          build-artifact: build-cpp-windows-msvc-latest-Debug-full
+
+  build-py:
+    runs-on: ubuntu-latest
+    container:
+      image: quay.io/pypa/manylinux2014_x86_64
+    steps:
+      - uses: actions/checkout@v2
+      - uses: ./.github/actions/build-py
+
+  test-py:
+    needs: build-py
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: ./.github/actions/test-py
+
+  test-pylint:
+    needs: build-py
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: ./.github/actions/test-pylint
+          
+  test-docs:
+    needs: build-py
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: ./.github/actions/test-docs

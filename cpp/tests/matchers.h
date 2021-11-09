@@ -20,9 +20,9 @@
 #ifndef EPI_TESTS_MATCHERS_H
 #define EPI_TESTS_MATCHERS_H
 
-#include "epidemiology/utils/compiler_diagnostics.h"
-#include "epidemiology/math/floating_point.h"
-#include "epidemiology/utils/io.h"
+#include "memilio/utils/compiler_diagnostics.h"
+#include "memilio/math/floating_point.h"
+#include "memilio/io/io.h"
 #include "gmock/gmock.h"
 
 /**
@@ -72,7 +72,7 @@ MATCHER_P3(MatrixNear, other, rtol, atol,
            "approx. equal to " + testing::PrintToString(print_wrap(other)) + " (rtol = " + testing::PrintToString(rtol) +
                ", atol = " + testing::PrintToString(atol) + ")")
 {
-    epi::unused(result_listener);
+    mio::unused(result_listener);
     return ((arg - other).array().abs() <= (atol + rtol * other.array().abs())).all();
 }
 
@@ -84,7 +84,7 @@ MATCHER_P3(MatrixNear, other, rtol, atol,
 MATCHER_P(MatrixNear, other,
            "approx. equal to " + testing::PrintToString(print_wrap(other)) + " (rtol = 1e-15, atol = 1e-15)")
 {
-    epi::unused(result_listener);
+    mio::unused(result_listener);
     return ((arg - other).array().abs() <= (1e-15 + 1e-15 * other.array().abs())).all();
 }
 
@@ -99,8 +99,8 @@ MATCHER_P3(FloatingPointEqual, other, atol, rtol,
            "approx. equal to " + testing::PrintToString(other) + " (rtol = " + testing::PrintToString(rtol) +
                ", atol = " + testing::PrintToString(atol) + ")")
 {
-    epi::unused(result_listener);
-    return epi::floating_point_equal(arg, other, atol, rtol);
+    mio::unused(result_listener);
+    return mio::floating_point_equal(arg, other, atol, rtol);
 }
 
 /**
@@ -108,7 +108,7 @@ MATCHER_P3(FloatingPointEqual, other, atol, rtol,
  * @note see https://stackoverflow.com/questions/25146997/teach-google-test-how-to-print-eigen-matrix
  */
 template <class T>
-struct IOResultPrintWrap : public epi::IOResult<T> {
+struct IOResultPrintWrap : public mio::IOResult<T> {
     friend void PrintTo(const IOResultPrintWrap& m, std::ostream* os)
     {
         if (m) {
@@ -125,7 +125,7 @@ struct IOResultPrintWrap : public epi::IOResult<T> {
  * returns a reference to the original object, no copying or moving, mind the lifetime!
  */
 template<class T>
-const IOResultPrintWrap<T>& print_wrap(const epi::IOResult<T>& r)
+const IOResultPrintWrap<T>& print_wrap(const mio::IOResult<T>& r)
 {
     return static_cast<const IOResultPrintWrap<T>&>(r);
 }
@@ -137,7 +137,7 @@ const IOResultPrintWrap<T>& print_wrap(const epi::IOResult<T>& r)
  */
 MATCHER(IsSuccess, std::string(negation ? "isn't" : "is") + " successful. ")
 {
-    epi::unused(result_listener);
+    mio::unused(result_listener);
     return bool(arg);
 }
 

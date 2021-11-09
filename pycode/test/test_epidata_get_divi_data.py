@@ -1,7 +1,7 @@
 #############################################################################
 # Copyright (C) 2020-2021 German Aerospace Center (DLR-SC)
 #
-# Authors: 
+# Authors:
 #
 # Contact: Martin J. Kuehn <Martin.Kuehn@DLR.de>
 #
@@ -78,8 +78,10 @@ class TestGetDiviData(fake_filesystem_unittest.TestCase):
 "daten_stand":"2020-04-28 09:15:00"}""")
 
     test_string_read_fulldata = "[" + test_string1 + "," + test_string2 + "]"
-    test_string_read_fulldata_update = "[" + test_string3 + "," + test_string1 + "," + test_string2 + "]"
-    test_string_read_fulldata_update_nondic = "[" + test_string4 + "," + test_string5 + "]"
+    test_string_read_fulldata_update = "[" + test_string3 + \
+        "," + test_string1 + "," + test_string2 + "]"
+    test_string_read_fulldata_update_nondic = "[" + \
+        test_string4 + "," + test_string5 + "]"
 
     test_string1 = "[" + test_string1 + "]"
     test_string2 = "[" + test_string2 + "]"
@@ -153,8 +155,11 @@ class TestGetDiviData(fake_filesystem_unittest.TestCase):
     # data for test dataframe to test the function adjust_data
     d24 = {'bundesland': [1, 2], 'kreis': [1001, 2000], 'ICU': [0, 7]}
     d25 = {'gemeindeschluessel': [1001, 2000], 'ICU': [0, 7]}
-    d262728 = {'bundesland': [1, 2], 'gemeindeschluessel': [1001, 2000], 'ICU': [0, 7]}
-    d29 = {'Unnamed: 0': [0, 0], 'bundesland': [1, 2], 'gemeindeschluessel': [1001, 2000], 'ICU': [0, 7]}
+    d262728 = {'bundesland': [1, 2],
+               'gemeindeschluessel': [1001, 2000],
+               'ICU': [0, 7]}
+    d29 = {'Unnamed: 0': [0, 0], 'bundesland': [1, 2],
+           'gemeindeschluessel': [1001, 2000], 'ICU': [0, 7]}
     list_input = [d24, d25, d262728, d262728, d262728, d29]
 
     # data for result dataframe to test the function adjust_data
@@ -168,7 +173,8 @@ class TestGetDiviData(fake_filesystem_unittest.TestCase):
             'daten_stand': ["2020-04-26 09:15:00", "2020-04-26 09:15:00"]}
     dr27 = {'bundesland': [1, 2], 'gemeindeschluessel': [1001, 2000], 'ICU': [0, 7],
             'daten_stand': ["2020-04-27 09:15:00", "2020-04-27 09:15:00"]}
-    dr2829 = {'bundesland': [1, 2], 'gemeindeschluessel': [1001, 2000], 'ICU': [0, 7]}
+    dr2829 = {'bundesland': [1, 2],
+              'gemeindeschluessel': [1001, 2000], 'ICU': [0, 7]}
     list_result = [dr24, dr25, dr26, dr27, dr2829, dr2829]
 
     def setUp(self):
@@ -186,6 +192,13 @@ class TestGetDiviData(fake_filesystem_unittest.TestCase):
             df.sort_index(axis=1, inplace=True)
 
             # construct correct result
+            try:
+                # replace columns
+                self.list_result[i]['faelle_covid_aktuell_invasiv_beatmet'] = \
+                    self.list_result[i].pop('faelle_covid_aktuell_beatmet')
+            except KeyError:
+                pass
+
             df_res = pd.DataFrame(self.list_result[i])
             df_res.sort_index(axis=1, inplace=True)
 
@@ -194,6 +207,20 @@ class TestGetDiviData(fake_filesystem_unittest.TestCase):
 
             # increase date by one day
             start_date += timedelta(days=1)
+
+        # test that column 'faelle_covid_aktuell_beatmet' is replaced
+        df = pd.DataFrame({'faelle_covid_aktuell_beatmet': [3, 5],
+                           'daten_stand': ["2021-03-30 09:15:00", "2021-03-31 09:15:00"]})
+        start_date = date(2021, 3, 30)
+        df2 = gdd.adjust_data(df, start_date)
+
+        df_res = pd.DataFrame({'faelle_covid_aktuell_invasiv_beatmet': [3, 5],
+                               'daten_stand': ["2021-03-30 09:15:00", "2021-03-31 09:15:00"]})
+        self.assertTrue((df2 == df_res).all().all())
+
+        start_date = date(2021, 3, 31)
+        df2 = gdd.adjust_data(df, start_date)
+        self.assertTrue((df2 == df).all().all())
 
     # note: patches have to have the right order!
     @patch('epidemiology.epidata.getDIVIData.sys.exit')
@@ -312,9 +339,11 @@ class TestGetDiviData(fake_filesystem_unittest.TestCase):
 
         # test cases, where date is part of call_number_dict
         for test_date in self.test_url_in_call_number_dict.keys():
-            [call_number, df, call_string] = gdd.download_data_for_one_day(last_number, test_date)
+            [call_number, df, call_string] = gdd.download_data_for_one_day(
+                last_number, test_date)
 
-            self.assertTrue(call_number == self.test_url_in_call_number_dict[test_date][1])
+            self.assertTrue(
+                call_number == self.test_url_in_call_number_dict[test_date][1])
             self.assertTrue(call_string == "")
             # dataframe should be filled
             self.assertFalse(df.empty)
@@ -328,7 +357,8 @@ class TestGetDiviData(fake_filesystem_unittest.TestCase):
 
             [call_number, df, call_string] = gdd.download_data_for_one_day(self.test_url_ending_else[test_date][1] - 1,
                                                                            test_date)
-            self.assertTrue(call_number == self.test_url_ending_else[test_date][1])
+            self.assertTrue(
+                call_number == self.test_url_ending_else[test_date][1])
             self.assertTrue(call_string == "")
             self.assertFalse(df.empty)
 
@@ -341,7 +371,8 @@ class TestGetDiviData(fake_filesystem_unittest.TestCase):
         test_date_str = self.test_url_ending_else[test_date][0]
         test_call_number = self.test_url_ending_else[test_date][1]
 
-        [call_number, df, call_string] = gdd.download_data_for_one_day(test_call_number - 2, test_date)
+        [call_number, df, call_string] = gdd.download_data_for_one_day(
+            test_call_number - 2, test_date)
 
         self.assertTrue(call_number == test_call_number)
         self.assertTrue(call_string == "")
@@ -356,17 +387,21 @@ class TestGetDiviData(fake_filesystem_unittest.TestCase):
         self.assertTrue(mock_ccu.mock_calls[-2:] == expected_calls)
 
         # test case where given number has a difference larger than 2 to call_number, namely 4
-        call_string_correct = "date(" + test_date.strftime("%Y, %-m, %-d") + "): " + str(test_call_number) + "," + "\n"
+        call_string_correct = "date(" + test_date.strftime("%Y, %-m, %-d") + \
+            "): " + str(test_call_number) + "," + "\n"
 
-        [call_number, df, call_string] = gdd.download_data_for_one_day(self.test_url_ending_else[test_date][1] - 4, test_date)
+        [call_number, df, call_string] = gdd.download_data_for_one_day(
+            self.test_url_ending_else[test_date][1] - 4, test_date)
 
         self.assertEqual(call_number, test_call_number)
         self.assertEqual(call_string, call_string_correct)
         self.assertFalse(df.empty)
 
         expected_calls = [call.call_call_url(test_date_str, test_call_number - 3),
-                          call.call_call_url(test_date_str, test_call_number - 2),
-                          call.call_call_url(test_date_str, test_call_number - 1),
+                          call.call_call_url(
+                              test_date_str, test_call_number - 2),
+                          call.call_call_url(
+                              test_date_str, test_call_number - 1),
                           call.call_call_url(test_date_str, test_call_number)]
 
         # check if expected_calls is part of calls
@@ -385,13 +420,13 @@ class TestGetDiviData(fake_filesystem_unittest.TestCase):
         download_date = date(2020, 4, 24)
 
         with self.assertRaises(SystemExit) as cm:
-            [call_number, df, call_string] = gdd.download_data_for_one_day(0, download_date)
+            [call_number, df, call_string] = gdd.download_data_for_one_day(
+                0, download_date)
 
         exit_string = "Something went wrong with download of data for date " + str(download_date) \
-                          + ", although it is part of the call_number_dict."
+            + ", although it is part of the call_number_dict."
 
         self.assertEqual(cm.exception.code, exit_string)
-
 
     def fake_download_data_for_one_day(self, last_number, start_date):
         data_dict = {
@@ -400,7 +435,7 @@ class TestGetDiviData(fake_filesystem_unittest.TestCase):
             date(2020, 7, 7): [3961, pd.read_json(self.test_string1), ""],
             date(2020, 7, 8): [3964, pd.read_json(self.test_string2), ""],
             date(2020, 7, 9): [0, pd.DataFrame(), ""],
-            date(2020, 7, 10): [3987, pd.read_json(self.test_string2), "date(2020, 7, 9): 3987," + "\n"  ]
+            date(2020, 7, 10): [3987, pd.read_json(self.test_string2), "date(2020, 7, 9): 3987," + "\n"]
         }
 
         return data_dict[start_date]
@@ -434,12 +469,14 @@ class TestGetDiviData(fake_filesystem_unittest.TestCase):
 
         # check that four files are generated
         self.assertEqual(len(os.listdir(directory)), 4)
-        self.assertEqual(os.listdir(directory).sort(), [file, file_out1, file_out2, file_out3].sort())
+        self.assertEqual(os.listdir(directory).sort(), [
+                         file, file_out1, file_out2, file_out3].sort())
 
         # check content of files
         f_path = os.path.join(directory, file)
         f = open(f_path, "r")
-        self.assertEqual(f.read(), self.test_string1)
+        self.assertEqual(f.read(), self.test_string1.replace("faelle_covid_aktuell_beatmet",
+                                                             "faelle_covid_aktuell_invasiv_beatmet"))
 
         f_path = os.path.join(directory, file_out1)
         f = open(f_path, "r")
@@ -471,36 +508,45 @@ class TestGetDiviData(fake_filesystem_unittest.TestCase):
 
         # check that four files are generated
         self.assertEqual(len(os.listdir(directory)), 4)
-        self.assertEqual(os.listdir(directory).sort(), [file, file_out1, file_out2, file_out3].sort())
+        self.assertEqual(os.listdir(directory).sort(), [
+                         file, file_out1, file_out2, file_out3].sort())
 
         start_string = "Success: Data of date "
         end_string = " has been added to dataframe"
         expected_calls = [call(start_string + date(2020, 7, 7).strftime("%Y-%m-%d") + end_string),
-                          call(start_string + date(2020, 7, 8).strftime("%Y-%m-%d") + end_string),
+                          call(start_string + date(2020, 7,
+                               8).strftime("%Y-%m-%d") + end_string),
                           call("Warning: Data of date " + date(2020, 7, 9).strftime("%Y-%m-%d")
                                + " is not added to dataframe")]
 
         # check content of files
         f_path = os.path.join(directory, file)
         f = open(f_path, "r")
-        self.assertEqual(f.read(), self.test_string_read_fulldata)
-        expected_calls.append(call("Information: Data has been written to", f_path))
+        self.assertEqual(f.read(), self.test_string_read_fulldata.replace("faelle_covid_aktuell_beatmet",
+                                                                          "faelle_covid_aktuell_invasiv_beatmet"))
+        expected_calls.append(
+            call("Information: Data has been written to", f_path))
 
         f_path = os.path.join(directory, file_out1)
         f = open(f_path, "r")
         fread = f.read()
-        self.assertEqual(fread, "[" + self.test_stringr1_county + "," + self.test_stringr2_county + "]")
-        expected_calls.append(call("Information: Data has been written to", f_path))
+        self.assertEqual(
+            fread, "[" + self.test_stringr1_county + "," + self.test_stringr2_county + "]")
+        expected_calls.append(
+            call("Information: Data has been written to", f_path))
 
         f_path = os.path.join(directory, file_out2)
         f = open(f_path, "r")
         self.assertEqual(f.read(), "[" + self.test_stringr2_state + "]")
-        expected_calls.append(call("Information: Data has been written to", f_path))
+        expected_calls.append(
+            call("Information: Data has been written to", f_path))
 
         f_path = os.path.join(directory, file_out3)
         f = open(f_path, "r")
-        self.assertEqual(f.read(), "[" + self.test_stringr1_country + "," + self.test_stringr2_country + "]")
-        expected_calls.append(call("Information: Data has been written to", f_path))
+        self.assertEqual(
+            f.read(), "[" + self.test_stringr1_country + "," + self.test_stringr2_country + "]")
+        expected_calls.append(
+            call("Information: Data has been written to", f_path))
 
         # check if expected_calls is part of calls
         mock_print.assert_has_calls(expected_calls)
@@ -513,7 +559,8 @@ class TestGetDiviData(fake_filesystem_unittest.TestCase):
             end_date = date(2020, 7, 9)
             gdd.get_divi_data(read_data, file_format, out_folder, no_raw,
                               end_date, start_date, update_data)
-        self.assertEqual(cm.exception.code, "Something went wrong, dataframe is empty.")
+        self.assertEqual(cm.exception.code,
+                         "Something went wrong, dataframe is empty.")
 
         # Check warning for wrong start_date
         with self.assertRaises(SystemExit) as cm:
@@ -521,9 +568,11 @@ class TestGetDiviData(fake_filesystem_unittest.TestCase):
             end_date = date(2020, 4, 24)
             gdd.get_divi_data(read_data, file_format, out_folder, no_raw,
                               end_date, start_date, update_data)
-        self.assertEqual(cm.exception.code, "Something went wrong, dataframe is empty.")
+        self.assertEqual(cm.exception.code,
+                         "Something went wrong, dataframe is empty.")
 
-        expected_call = call("Warning: First data available on 2020-04-24. You asked for 2020-04-23.")
+        expected_call = call(
+            "Warning: First data available on 2020-04-24. You asked for 2020-04-23.")
 
         # check if second last call is the expected warning
         self.assertTrue(mock_print.mock_calls[-2] == expected_call)
@@ -539,9 +588,12 @@ class TestGetDiviData(fake_filesystem_unittest.TestCase):
                                "To decrease runtime, please copy the following "
                                "to the dictionary \"call_number_dict\" in the function \"download_data_for_one_day\": "),
                           call("date(2020, 7, 9): 3987," + "\n"),
-                          call('Information: Data has been written to', '/home/DiviData/Germany/FullData_DIVI.json'),
-                          call('Information: Data has been written to', '/home/DiviData/Germany/county_divi.json'),
-                          call('Information: Data has been written to', '/home/DiviData/Germany/state_divi.json'),
+                          call('Information: Data has been written to',
+                               '/home/DiviData/Germany/FullData_DIVI.json'),
+                          call('Information: Data has been written to',
+                               '/home/DiviData/Germany/county_divi.json'),
+                          call('Information: Data has been written to',
+                               '/home/DiviData/Germany/state_divi.json'),
                           call('Information: Data has been written to', '/home/DiviData/Germany/germany_divi.json')]
 
         # check if expected_calls is part of calls
@@ -554,7 +606,8 @@ class TestGetDiviData(fake_filesystem_unittest.TestCase):
         @patch('builtins.print')
         @patch('epidemiology.epidata.getDIVIData.download_data_for_one_day')
         def test_gdd_download_data_no_raw(self, mock_ddfod, mock_print):
-            mock_ddfod.return_value = [3961, pd.read_json(self.test_string1), ""]
+            mock_ddfod.return_value = [
+                3961, pd.read_json(self.test_string1), ""]
 
             # case simple download
             [read_data, update_data, file_format, out_folder, start_date, end_date, no_raw] \
@@ -575,7 +628,8 @@ class TestGetDiviData(fake_filesystem_unittest.TestCase):
 
             # check that four files are generated
             self.assertEqual(len(os.listdir(directory)), 3)
-            self.assertEqual(os.listdir(directory).sort(), [file_out1, file_out2, file_out3].sort())
+            self.assertEqual(os.listdir(directory).sort(), [
+                             file_out1, file_out2, file_out3].sort())
 
     def test_gdd_read_data(self):
 
@@ -607,22 +661,27 @@ class TestGetDiviData(fake_filesystem_unittest.TestCase):
             gdd.get_divi_data(read_data, file_format, out_folder, no_raw,
 
                               end_date, start_date, update_data)
-        self.assertEqual(cm.exception.code, "Something went wrong, dataframe is empty.")
+        self.assertEqual(cm.exception.code,
+                         "Something went wrong, dataframe is empty.")
 
         # Generate data to read in
+        # String has to be adjusted in this case
         with open(file_with_path, 'w') as f:
-            f.write(self.test_string_read_fulldata)
+            f.write(self.test_string_read_fulldata.replace("faelle_covid_aktuell_beatmet",
+                                                           "faelle_covid_aktuell_invasiv_beatmet"))
 
         gdd.get_divi_data(read_data, file_format, out_folder, no_raw,
                           end_date, start_date, update_data)
 
         self.assertEqual(len(os.listdir(directory)), 4)
-        self.assertEqual(os.listdir(directory).sort(), [file, file_out1, file_out2, file_out3].sort())
+        self.assertEqual(os.listdir(directory).sort(), [
+                         file, file_out1, file_out2, file_out3].sort())
 
         f_path = os.path.join(directory, file_out1)
         f = open(f_path, "r")
         fread = f.read()
-        self.assertEqual(fread, "[" + self.test_stringr1_county + "," + self.test_stringr2_county + "]")
+        self.assertEqual(
+            fread, "[" + self.test_stringr1_county + "," + self.test_stringr2_county + "]")
 
         f_path = os.path.join(directory, file_out2)
         f = open(f_path, "r")
@@ -630,7 +689,8 @@ class TestGetDiviData(fake_filesystem_unittest.TestCase):
 
         f_path = os.path.join(directory, file_out3)
         f = open(f_path, "r")
-        self.assertEqual(f.read(), "[" + self.test_stringr1_country + "," + self.test_stringr2_country + "]")
+        self.assertEqual(
+            f.read(), "[" + self.test_stringr1_country + "," + self.test_stringr2_country + "]")
 
     # freeze_time changes the output of date.today() from today to the given date
     @freeze_time("2020-7-8")
@@ -639,7 +699,8 @@ class TestGetDiviData(fake_filesystem_unittest.TestCase):
     @patch('epidemiology.epidata.getDIVIData.gd.loadCsv')
     def test_gdd_update_data(self, mock_loadcsv, mock_print, mock_ddfod):
 
-        [read_data, file_format, out_folder, no_raw] = [False, "json", self.path, False]
+        [read_data, file_format, out_folder, no_raw] = [
+            False, "json", self.path, False]
 
         directory = os.path.join(out_folder, 'Germany/')
         gd.check_dir(directory)
@@ -656,7 +717,7 @@ class TestGetDiviData(fake_filesystem_unittest.TestCase):
             gdd.get_divi_data(read_data, file_format, out_folder,
                               end_date=dd.defaultDict['end_date'], start_date=dd.defaultDict['start_date'],
                               update_data=True)
-        self.assertEqual(cm.exception.code, "Error: The file: " + file_with_path + 
+        self.assertEqual(cm.exception.code, "Error: The file: " + file_with_path +
                          " does not exist. Call program without -r or -u flag to get it.")
 
         # Test case with empty file
@@ -667,11 +728,14 @@ class TestGetDiviData(fake_filesystem_unittest.TestCase):
             gdd.get_divi_data(read_data, file_format, out_folder, no_raw,
                               end_date=dd.defaultDict['end_date'], start_date=dd.defaultDict['start_date'],
                               update_data=True)
-        self.assertEqual(cm.exception.code, "Something went wrong, dataframe is empty.")
+        self.assertEqual(cm.exception.code,
+                         "Something went wrong, dataframe is empty.")
 
         # write file with data for one day
+        # string has to be adjusted, because it mimics written data
         with open(file_with_path, 'w') as f:
-            f.write(self.test_string1)
+            f.write(self.test_string1.replace("faelle_covid_aktuell_beatmet",
+                                              "faelle_covid_aktuell_invasiv_beatmet"))
 
         # test where "data of today" is missing, but data is not yet uploaded:
         mock_loadcsv.return_value = pd.read_json(self.test_string1)
@@ -684,37 +748,48 @@ class TestGetDiviData(fake_filesystem_unittest.TestCase):
                          + " has not yet uploaded. Please, try again later.")
 
         # case where data is online and just data of "today" is missing
+        # since we read in already written data we have to adjust string
         mock_loadcsv.return_value = pd.read_json(self.test_string2)
 
         gdd.get_divi_data(read_data, file_format, out_folder, no_raw,
                           end_date=dd.defaultDict['end_date'], start_date=dd.defaultDict['start_date'],
                           update_data=True)
 
-        mock_loadcsv.assert_called_with('DIVI-Intensivregister-Tagesreport', apiUrl='https://www.divi.de/')
+        mock_loadcsv.assert_called_with(
+            'DIVI-Intensivregister-Tagesreport', apiUrl='https://www.divi.de/')
 
         start_string = "Success: Data of date "
         end_string = " has been added to dataframe"
-        expected_calls = [call(start_string + date(2020, 7, 8).strftime("%Y-%m-%d") + end_string)]
-                          # check content of files
+        expected_calls = [
+            call(start_string + date(2020, 7, 8).strftime("%Y-%m-%d") + end_string)]
+
+        # check content of files
         f = open(file_with_path, "r")
-        self.assertEqual(f.read(), self.test_string_read_fulldata)
-        expected_calls.append(call("Information: Data has been written to", file_with_path))
+        self.assertEqual(f.read(), self.test_string_read_fulldata.replace("faelle_covid_aktuell_beatmet",
+                                                                          "faelle_covid_aktuell_invasiv_beatmet"))
+        expected_calls.append(
+            call("Information: Data has been written to", file_with_path))
 
         f_path = os.path.join(directory, file_out1)
         f = open(f_path, "r")
         fread = f.read()
-        self.assertEqual(fread, "[" + self.test_stringr1_county + "," + self.test_stringr2_county + "]")
-        expected_calls.append(call("Information: Data has been written to", f_path))
+        self.assertEqual(
+            fread, "[" + self.test_stringr1_county + "," + self.test_stringr2_county + "]")
+        expected_calls.append(
+            call("Information: Data has been written to", f_path))
 
         f_path = os.path.join(directory, file_out2)
         f = open(f_path, "r")
         self.assertEqual(f.read(), "[" + self.test_stringr2_state + "]")
-        expected_calls.append(call("Information: Data has been written to", f_path))
+        expected_calls.append(
+            call("Information: Data has been written to", f_path))
 
         f_path = os.path.join(directory, file_out3)
         f = open(f_path, "r")
-        self.assertEqual(f.read(), "[" + self.test_stringr1_country + "," + self.test_stringr2_country + "]")
-        expected_calls.append(call("Information: Data has been written to", f_path))
+        self.assertEqual(
+            f.read(), "[" + self.test_stringr1_country + "," + self.test_stringr2_country + "]")
+        expected_calls.append(
+            call("Information: Data has been written to", f_path))
 
         # check if expected_calls is part of calls
         mock_print.assert_has_calls(expected_calls)
@@ -724,7 +799,8 @@ class TestGetDiviData(fake_filesystem_unittest.TestCase):
 
         # write data of 6.7.2020 to FullData_DIVI.json
         with open(file_with_path, 'w') as f:
-            f.write(self.test_string3)
+            f.write(self.test_string3.replace("faelle_covid_aktuell_beatmet",
+                                              "faelle_covid_aktuell_invasiv_beatmet"))
 
         mock_ddfod.side_effect = self.fake_download_data_for_one_day
 
@@ -734,37 +810,43 @@ class TestGetDiviData(fake_filesystem_unittest.TestCase):
 
         # check that four files are generated
         self.assertEqual(len(os.listdir(directory)), 4)
-        self.assertEqual(os.listdir(directory).sort(), [file, file_out1, file_out2, file_out3].sort())
+        self.assertEqual(os.listdir(directory).sort(), [
+                         file, file_out1, file_out2, file_out3].sort())
 
         start_string = "Success: Data of date "
         end_string = " has been added to dataframe"
         expected_calls = [call(start_string + date(2020, 7, 7).strftime("%Y-%m-%d") + end_string),
                           call(start_string + date(2020, 7, 8).strftime("%Y-%m-%d") + end_string)]
 
-                          # check content of files
+        # check content of files
         f = open(file_with_path, "r")
         fread = f.read()
-        self.assertEqual(fread, self.test_string_read_fulldata_update)
-        expected_calls.append(call("Information: Data has been written to", file_with_path))
+        self.assertEqual(fread, self.test_string_read_fulldata_update.replace("faelle_covid_aktuell_beatmet",
+                                                                              "faelle_covid_aktuell_invasiv_beatmet"))
+        expected_calls.append(
+            call("Information: Data has been written to", file_with_path))
 
         f_path = os.path.join(directory, file_out1)
         f = open(f_path, "r")
         fread = f.read()
         self.assertEqual(fread, "[" + self.test_stringr3_county + "," + self.test_stringr1_county + ","
                          + self.test_stringr2_county + "]")
-        expected_calls.append(call("Information: Data has been written to", f_path))
+        expected_calls.append(
+            call("Information: Data has been written to", f_path))
 
         f_path = os.path.join(directory, file_out2)
         f = open(f_path, "r")
         self.assertEqual(f.read(), "[" + self.test_stringr3_state + "]")
-        expected_calls.append(call("Information: Data has been written to", f_path))
+        expected_calls.append(
+            call("Information: Data has been written to", f_path))
 
         f_path = os.path.join(directory, file_out3)
         f = open(f_path, "r")
         self.assertEqual(f.read(),
-                         "[" + self.test_stringr3_country + "," + self.test_stringr1_country + 
+                         "[" + self.test_stringr3_country + "," + self.test_stringr1_country +
                          "," + self.test_stringr2_country + "]")
-        expected_calls.append(call("Information: Data has been written to", f_path))
+        expected_calls.append(
+            call("Information: Data has been written to", f_path))
 
         # check if expected_calls is part of calls
         mock_print.assert_has_calls(expected_calls)
@@ -777,46 +859,58 @@ class TestGetDiviData(fake_filesystem_unittest.TestCase):
 
         # write data which will be read in
         with open(file_with_path, 'w') as f:
-            f.write(self.test_string4)
+            f.write(self.test_string4.replace("faelle_covid_aktuell_beatmet",
+                                              "faelle_covid_aktuell_invasiv_beatmet"))
 
         mock_ddfod.side_effect = self.fake_download_data_for_one_day
 
         gdd.get_divi_data(read_data, file_format, out_folder, no_raw,
-                          end_date=date(2020,4,28), start_date=date(2020,4,24),
+                          end_date=date(2020, 4, 28), start_date=date(2020, 4, 24),
                           update_data=True)
 
         # check that four files are generated
         self.assertEqual(len(os.listdir(directory)), 4)
-        self.assertEqual(os.listdir(directory).sort(), [file, file_out1, file_out2, file_out3].sort())
+        self.assertEqual(os.listdir(directory).sort(), [
+                         file, file_out1, file_out2, file_out3].sort())
 
         start_string = "Success: Data of date "
         end_string = " has been added to dataframe"
-        expected_calls = [call(start_string + date(2020, 4, 28).strftime("%Y-%m-%d") + end_string)]
-                          # check content of files
+        expected_calls = [
+            call(start_string + date(2020, 4, 28).strftime("%Y-%m-%d") + end_string)]
+
+        # check content of files
         f = open(file_with_path, "r")
         fread = f.read()
-        self.assertEqual(fread, self.test_string_read_fulldata_update_nondic)
-        expected_calls.append(call("Information: Data has been written to", file_with_path))
+        self.assertEqual(fread,
+                         self.test_string_read_fulldata_update_nondic.replace("faelle_covid_aktuell_beatmet",
+                                                                              "faelle_covid_aktuell_invasiv_beatmet"))
+        expected_calls.append(
+            call("Information: Data has been written to", file_with_path))
 
         # compare county data
         f_path = os.path.join(directory, file_out1)
         f = open(f_path, "r")
         fread = f.read()
-        self.assertEqual(fread, "[" + self.test_stringr4_county + "," + self.test_stringr5_county + "]")
-        expected_calls.append(call("Information: Data has been written to", f_path))
+        self.assertEqual(
+            fread, "[" + self.test_stringr4_county + "," + self.test_stringr5_county + "]")
+        expected_calls.append(
+            call("Information: Data has been written to", f_path))
 
         # compare state data
         f_path = os.path.join(directory, file_out2)
         f = open(f_path, "r")
-        self.assertEqual(f.read(), "[" + self.test_stringr4_state + "," + self.test_stringr5_state + "]")
-        expected_calls.append(call("Information: Data has been written to", f_path))
+        self.assertEqual(
+            f.read(), "[" + self.test_stringr4_state + "," + self.test_stringr5_state + "]")
+        expected_calls.append(
+            call("Information: Data has been written to", f_path))
 
         # compare country data
         f_path = os.path.join(directory, file_out3)
         f = open(f_path, "r")
         self.assertEqual(f.read(),
                          "[" + self.test_stringr4_country + "," + self.test_stringr5_country + "]")
-        expected_calls.append(call("Information: Data has been written to", f_path))
+        expected_calls.append(
+            call("Information: Data has been written to", f_path))
 
         # check if expected_calls is part of calls
         mock_print.assert_has_calls(expected_calls)

@@ -17,88 +17,88 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
-#include "epidemiology/utils/io.h"
+#include "memilio/io/io.h"
 #include "matchers.h"
 #include "gtest/gtest.h"
 
 namespace iotest
 {
 struct Context {
-    void set_error(const epi::IOStatus& err)
+    void set_error(const mio::IOStatus& err)
     {
         status = err;
     }
-    epi::IOStatus status;
+    mio::IOStatus status;
 };
 } // namespace iotest
 
 TEST(IO, apply)
 {
-    epi::IOResult<int> i{epi::Tag<int>{}, 3};
-    epi::IOResult<double> d{epi::Tag<double>{}, 4.0};
+    mio::IOResult<int> i{mio::Tag<int>{}, 3};
+    mio::IOResult<double> d{mio::Tag<double>{}, 4.0};
     iotest::Context io;
-    auto r = epi::apply(
+    auto r = mio::apply(
         io,
         [](int i_, double d_) {
             return i_ * d_;
         },
         i, d);
-    EXPECT_EQ(r, epi::IOResult<double>(epi::success(12.0)));
+    EXPECT_EQ(r, mio::IOResult<double>(mio::success(12.0)));
 }
 
 TEST(IO, apply_with_validation_success)
 {
-    epi::IOResult<int> i{epi::Tag<int>{}, 3};
-    epi::IOResult<double> d{epi::Tag<double>{}, 4.0};
+    mio::IOResult<int> i{mio::Tag<int>{}, 3};
+    mio::IOResult<double> d{mio::Tag<double>{}, 4.0};
     iotest::Context io;
-    auto r = epi::apply(
+    auto r = mio::apply(
         io,
-        [](int i_, double d_) -> epi::IOResult<double> {
-            return epi::success(i_ * d_);
+        [](int i_, double d_) -> mio::IOResult<double> {
+            return mio::success(i_ * d_);
         },
         i, d);
-    EXPECT_EQ(r, epi::IOResult<double>(epi::success(12.0)));
+    EXPECT_EQ(r, mio::IOResult<double>(mio::success(12.0)));
 }
 
 TEST(IO, apply_with_arg_error)
 {
-    epi::IOResult<int> i{epi::success(3)};
-    epi::IOResult<double> d{epi::failure(epi::StatusCode::OutOfRange, "")};
+    mio::IOResult<int> i{mio::success(3)};
+    mio::IOResult<double> d{mio::failure(mio::StatusCode::OutOfRange, "")};
     iotest::Context io;
-    auto r = epi::apply(
+    auto r = mio::apply(
         io,
         [](int i_, double d_) {
             return i_ * d_;
         },
         i, d);
-    EXPECT_EQ(r, epi::IOResult<double>(epi::failure(epi::StatusCode::OutOfRange, "")));
+    EXPECT_EQ(r, mio::IOResult<double>(mio::failure(mio::StatusCode::OutOfRange, "")));
 }
 
 TEST(IO, apply_with_multiple_arg_errors)
 {
-    epi::IOResult<int> i{epi::failure(epi::StatusCode::InvalidValue, "")};
-    epi::IOResult<double> d{epi::failure(epi::StatusCode::OutOfRange, "")};
+    mio::IOResult<int> i{mio::failure(mio::StatusCode::InvalidValue, "")};
+    mio::IOResult<double> d{mio::failure(mio::StatusCode::OutOfRange, "")};
     iotest::Context io;
-    auto r = epi::apply(
+    auto r = mio::apply(
         io,
         [](int i_, double d_) {
             return i_ * d_;
         },
         i, d);
-    EXPECT_EQ(r, epi::IOResult<double>(epi::failure(epi::StatusCode::InvalidValue, "")));
+    EXPECT_EQ(r, mio::IOResult<double>(mio::failure(mio::StatusCode::InvalidValue, "")));
 }
 
 TEST(IO, apply_with_validation_error)
 {
-    epi::IOResult<int> i{epi::Tag<int>{}, 3};
-    epi::IOResult<double> d{epi::Tag<double>{}, 4.0};
+    mio::IOResult<int> i{mio::Tag<int>{}, 3};
+    mio::IOResult<double> d{mio::Tag<double>{}, 4.0};
     iotest::Context io;
-    auto r = epi::apply(
+    auto r = mio::apply(
         io,
-        [](int, double) -> epi::IOResult<double> {
-            return epi::failure(epi::StatusCode::InvalidValue, "");
+        [](int, double) -> mio::IOResult<double> {
+            return mio::failure(mio::StatusCode::InvalidValue, "");
         },
         i, d);
-    EXPECT_EQ(r, epi::IOResult<double>(epi::failure(epi::StatusCode::InvalidValue, "")));
-    EXPECT_EQ(io.status, epi::IOStatus(epi::StatusCode::InvalidValue, ""));
+    EXPECT_EQ(r, mio::IOResult<double>(mio::failure(mio::StatusCode::InvalidValue, "")));
+    EXPECT_EQ(io.status, mio::IOStatus(mio::StatusCode::InvalidValue, ""));
 }

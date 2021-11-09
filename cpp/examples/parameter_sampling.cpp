@@ -17,9 +17,9 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
-#include <epidemiology/utils/parameter_distributions.h>
-#include <epidemiology/secir/parameter_space.h>
-#include <epidemiology/secir/secir.h>
+#include "memilio/utils/parameter_distributions.h"
+#include "secir/parameter_space.h"
+#include "secir/secir.h"
 
 #include <stdio.h>
 
@@ -34,9 +34,9 @@ int main()
     double min    = 1;
     double max    = 10;
     // check if constructor works correctly
-    epi::ParameterDistributionNormal some_parameter(min, max, mean, stddev);
+    mio::ParameterDistributionNormal some_parameter(min, max, mean, stddev);
     // "some parameter",
-    // std::make_unique<epi::ParameterDistributionNormal>(epi::ParameterDistributionNormal(min, max, mean, stddev))};
+    // std::make_unique<mio::ParameterDistributionNormal>(mio::ParameterDistributionNormal(min, max, mean, stddev))};
 
     printf("\n N(%.0f,%.0f)-distribution with sampling only in [%.0f,%.0f]", mean, stddev, min, max);
     int counter[10] = {0};
@@ -55,7 +55,7 @@ int main()
 
     // check if constructor works correctly
     printf("\n U(%.0f,%.0f)-distribution", min, max);
-    epi::ParameterDistributionUniform some_other_parameter(1.0, 10.0);
+    mio::ParameterDistributionUniform some_other_parameter(1.0, 10.0);
 
     double counter_unif[10] = {0};
     for (int i = 0; i < 1000; i++) {
@@ -73,24 +73,24 @@ int main()
     /*
      * Contact frequency and dampings variable element
      */
-    epi::SecirModel model(3);
+    mio::SecirModel model(3);
     auto& params = model.parameters;
 
-    epi::AgeGroup nb_groups = params.get_num_groups();
-    epi::ContactMatrixGroup cm_group{epi::ContactMatrix(Eigen::MatrixXd::Constant((size_t)nb_groups, (size_t)nb_groups, 0.5))};
-    params.get<epi::ContactPatterns>() = cm_group;
+    mio::AgeGroup nb_groups = params.get_num_groups();
+    mio::ContactMatrixGroup cm_group{mio::ContactMatrix(Eigen::MatrixXd::Constant((size_t)nb_groups, (size_t)nb_groups, 0.5))};
+    params.get<mio::ContactPatterns>() = cm_group;
 
     double t0   = 0;
     double tmax = 100;
 
-    params.get<epi::ContactPatterns>().get_dampings().push_back(epi::DampingSampling(
-        epi::UncertainValue(0.5), epi::DampingLevel(0), epi::DampingType(0), epi::SimulationTime(30.),
+    params.get<mio::ContactPatterns>().get_dampings().push_back(mio::DampingSampling(
+        mio::UncertainValue(0.5), mio::DampingLevel(0), mio::DampingType(0), mio::SimulationTime(30.),
         std::vector<size_t>(1, size_t(0)), Eigen::VectorXd::Constant(Eigen::Index(nb_groups.get()), 1.0)));
-    params.get<epi::ContactPatterns>().get_dampings()[0].get_value().set_distribution(
-        epi::ParameterDistributionNormal(0.0, 1.0, 0.5, 0.2));
+    params.get<mio::ContactPatterns>().get_dampings()[0].get_value().set_distribution(
+        mio::ParameterDistributionNormal(0.0, 1.0, 0.5, 0.2));
 
     draw_sample(model);
-    auto& cfmat_sample = params.get<epi::ContactPatterns>().get_cont_freq_mat();
+    auto& cfmat_sample = params.get<mio::ContactPatterns>().get_cont_freq_mat();
 
     printf("\n\n Number of dampings: %zu\n", cfmat_sample[0].get_dampings().size());
 

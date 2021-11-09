@@ -17,9 +17,9 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
-#include <epidemiology/utils/logging.h>
-#include <epidemiology/utils/parameter_set.h>
-#include <epidemiology/utils/custom_index_array.h>
+#include "memilio/utils/logging.h"
+#include "memilio/utils/parameter_set.h"
+#include "memilio/utils/custom_index_array.h"
 #include <gtest/gtest.h>
 #include <gmock/gmock.h>
 
@@ -116,35 +116,35 @@ struct MoveOnlyParam {
 
 TEST(TestParameterSet, defaultConstructor)
 {
-    static_assert(!std::is_constructible<epi::ParameterSet<NotDefaultConstructibleParam>, epi::NoDefaultInit>::value,
+    static_assert(!std::is_constructible<mio::ParameterSet<NotDefaultConstructibleParam>, mio::NoDefaultInit>::value,
                   "default constructor missing");
-    static_assert(std::is_default_constructible<epi::ParameterSet<DefaultConstructibleParam>>::value,
+    static_assert(std::is_default_constructible<mio::ParameterSet<DefaultConstructibleParam>>::value,
                   "default constructor missing");
-    ASSERT_NO_THROW(epi::ParameterSet<NotDefaultConstructibleParam>());
-    ASSERT_NO_THROW(epi::ParameterSet<DefaultConstructibleParam>(epi::NoDefaultInit{}));
+    ASSERT_NO_THROW(mio::ParameterSet<NotDefaultConstructibleParam>());
+    ASSERT_NO_THROW(mio::ParameterSet<DefaultConstructibleParam>(mio::NoDefaultInit{}));
 }
 
 TEST(TestParameterSet, defaultInitConstructor)
 {
-    auto params1 = epi::ParameterSet<IntParam1>();
+    auto params1 = mio::ParameterSet<IntParam1>();
     ASSERT_EQ(params1.get<IntParam1>(), 1);
 
-    auto params2 = epi::ParameterSet<IntParam1, DoubleParam>();
+    auto params2 = mio::ParameterSet<IntParam1, DoubleParam>();
     ASSERT_EQ(params2.get<IntParam1>(), 1);
     ASSERT_EQ(params2.get<DoubleParam>(), 1.0);
 
-    auto params3 = epi::ParameterSet<IntParam1, DoubleParam, IntParam2>();
+    auto params3 = mio::ParameterSet<IntParam1, DoubleParam, IntParam2>();
     ASSERT_EQ(params3.get<IntParam1>(), 1);
     ASSERT_EQ(params3.get<DoubleParam>(), 1.0);
     ASSERT_EQ(params3.get<IntParam2>(), 2);
 
-    auto params4 = epi::ParameterSet<NoDefaultMemberFunctionParam>();
+    auto params4 = mio::ParameterSet<NoDefaultMemberFunctionParam>();
     ASSERT_EQ(params4.get<NoDefaultMemberFunctionParam>(), DefaultConstructible());
 }
 
 TEST(TestParameterSet, setDefault)
 {
-    auto params1 = epi::ParameterSet<IntParam1, DoubleParam>(epi::NoDefaultInit{});
+    auto params1 = mio::ParameterSet<IntParam1, DoubleParam>(mio::NoDefaultInit{});
     ASSERT_EQ(params1.get<IntParam1>(), 0);
     params1.set_default<IntParam1>();
     ASSERT_EQ(params1.get<IntParam1>(), 1);
@@ -152,19 +152,19 @@ TEST(TestParameterSet, setDefault)
 
 TEST(TestParameterSet, set)
 {
-    epi::ParameterSet<IntParam1, DoubleParam, IntParam2> params;
+    mio::ParameterSet<IntParam1, DoubleParam, IntParam2> params;
     params.set<IntParam1>(3);
     ASSERT_EQ(params.get<IntParam1>(), 3);
 }
 
 TEST(TestParameterSet, moveOnly)
 {
-    static_assert(std::is_default_constructible<epi::ParameterSet<MoveOnlyParam>>::value,
+    static_assert(std::is_default_constructible<mio::ParameterSet<MoveOnlyParam>>::value,
                   "move only parameter not default constructible");
-    static_assert(std::is_constructible<epi::ParameterSet<MoveOnlyParam>>::value,
+    static_assert(std::is_constructible<mio::ParameterSet<MoveOnlyParam>>::value,
                   "move only parameter not default initializable");
 
-    epi::ParameterSet<MoveOnlyParam> params;
+    mio::ParameterSet<MoveOnlyParam> params;
     params.set<MoveOnlyParam>(MoveOnly());
     params.get<MoveOnlyParam>() = MoveOnly();
     params.set<MoveOnlyParam>(MoveOnly());
@@ -190,37 +190,37 @@ TEST(TestParameterSet, customIndexArray)
     struct Income{};
 
     struct ParamType1 {
-        using Type = epi::CustomIndexArray<double, AgeGroup>;
-        static Type get_default(epi::Index<AgeGroup> n_agegroups, epi::Index<Income>)
+        using Type = mio::CustomIndexArray<double, AgeGroup>;
+        static Type get_default(mio::Index<AgeGroup> n_agegroups, mio::Index<Income>)
         {
             return Type({n_agegroups}, 0.5);
         }
     };
 
     struct ParamType2 {
-        using Type = epi::CustomIndexArray<int, AgeGroup, Income>;
-        static Type get_default(epi::Index<AgeGroup> n_agegroups, epi::Index<Income> n_incomegroups)
+        using Type = mio::CustomIndexArray<int, AgeGroup, Income>;
+        static Type get_default(mio::Index<AgeGroup> n_agegroups, mio::Index<Income> n_incomegroups)
         {
             return Type({n_agegroups, n_incomegroups}, 42);
         }
     };
 
-    auto params = epi::ParameterSet<ParamType1, ParamType2>(epi::Index<AgeGroup>(2), epi::Index<Income>(3));
-    params.get<ParamType1>()[{epi::Index<AgeGroup>(0)}] = 0.5;
-    params.get<ParamType1>()[{epi::Index<AgeGroup>(1)}] = 1.5;
-    EXPECT_NEAR(params.get<ParamType1>()[{epi::Index<AgeGroup>(0)}], 0.5, 1e-14);
-    EXPECT_NEAR(params.get<ParamType1>()[{epi::Index<AgeGroup>(1)}], 1.5, 1e-14);
-    EXPECT_EQ((params.get<ParamType2>()[{epi::Index<AgeGroup>(0), epi::Index<Income>(0)}]), 42);
-    EXPECT_EQ((params.get<ParamType2>()[{epi::Index<AgeGroup>(0), epi::Index<Income>(1)}]), 42);
-    params.get<ParamType2>()[{epi::Index<AgeGroup>(0), epi::Index<Income>(1)}] = -42;
-    EXPECT_EQ((params.get<ParamType2>()[{epi::Index<AgeGroup>(0), epi::Index<Income>(1)}]), -42);
+    auto params = mio::ParameterSet<ParamType1, ParamType2>(mio::Index<AgeGroup>(2), mio::Index<Income>(3));
+    params.get<ParamType1>()[{mio::Index<AgeGroup>(0)}] = 0.5;
+    params.get<ParamType1>()[{mio::Index<AgeGroup>(1)}] = 1.5;
+    EXPECT_NEAR(params.get<ParamType1>()[{mio::Index<AgeGroup>(0)}], 0.5, 1e-14);
+    EXPECT_NEAR(params.get<ParamType1>()[{mio::Index<AgeGroup>(1)}], 1.5, 1e-14);
+    EXPECT_EQ((params.get<ParamType2>()[{mio::Index<AgeGroup>(0), mio::Index<Income>(0)}]), 42);
+    EXPECT_EQ((params.get<ParamType2>()[{mio::Index<AgeGroup>(0), mio::Index<Income>(1)}]), 42);
+    params.get<ParamType2>()[{mio::Index<AgeGroup>(0), mio::Index<Income>(1)}] = -42;
+    EXPECT_EQ((params.get<ParamType2>()[{mio::Index<AgeGroup>(0), mio::Index<Income>(1)}]), -42);
 
 }
 
 TEST(TestParameterSet, foreach)
 {
     using testing::An;
-    epi::ParameterSet<IntParam1, DoubleParam, IntParam2> params;
+    mio::ParameterSet<IntParam1, DoubleParam, IntParam2> params;
 
     struct MockForeachFunc {
         MOCK_METHOD(void, invoke, (int, IntParam1), ());
@@ -236,7 +236,7 @@ TEST(TestParameterSet, foreach)
         EXPECT_CALL(mock, invoke(An<int>(), An<IntParam2>())).Times(1);
     }
 
-    epi::foreach (params, MockForeachFuncRef<MockForeachFunc>{mock});
+    mio::foreach (params, MockForeachFuncRef<MockForeachFunc>{mock});
 }
 
 template <class Mock>
@@ -255,7 +255,7 @@ struct MockForeachTagFuncRef {
 
 TEST(TestParameterSet, foreach_tag)
 {
-    epi::ParameterSet<IntParam1, DoubleParam> params;
+    mio::ParameterSet<IntParam1, DoubleParam> params;
     struct MockForeachTagFunc {
         MOCK_METHOD(void, invoke, (IntParam1), ());
         MOCK_METHOD(void, invoke, (DoubleParam), ());
@@ -266,7 +266,7 @@ TEST(TestParameterSet, foreach_tag)
         EXPECT_CALL(mock, invoke(testing::An<IntParam1>())).Times(1);
         EXPECT_CALL(mock, invoke(testing::An<DoubleParam>())).Times(1);
     }
-    epi::foreach_tag<epi::ParameterSet<IntParam1, DoubleParam>>(MockForeachTagFuncRef<MockForeachTagFunc>{mock});
+    mio::foreach_tag<mio::ParameterSet<IntParam1, DoubleParam>>(MockForeachTagFuncRef<MockForeachTagFunc>{mock});
 }
 
 struct ConstTypeParam {
@@ -279,27 +279,27 @@ struct ConstTypeParam {
 
 TEST(TestParameterSet, constType)
 {
-    static_assert(std::is_default_constructible<epi::ParameterSet<ConstTypeParam>>::value,
+    static_assert(std::is_default_constructible<mio::ParameterSet<ConstTypeParam>>::value,
                   "const parameter not default constructible");
-    static_assert(std::is_constructible<epi::ParameterSet<ConstTypeParam>>::value,
+    static_assert(std::is_constructible<mio::ParameterSet<ConstTypeParam>>::value,
                   "const parameter not default initializable");
 }
 
 TEST(TestParameterSet, equality)
 {
-    epi::ParameterSet<IntParam1, DoubleParam> a;
+    mio::ParameterSet<IntParam1, DoubleParam> a;
     a.set<IntParam1>(1);
     a.set<DoubleParam>(0.5);
 
-    epi::ParameterSet<IntParam1, DoubleParam> b;
+    mio::ParameterSet<IntParam1, DoubleParam> b;
     b.set<IntParam1>(1);
     b.set<DoubleParam>(0.5);
 
-    epi::ParameterSet<IntParam1, DoubleParam> c;
+    mio::ParameterSet<IntParam1, DoubleParam> c;
     c.set<IntParam1>(1);
     c.set<DoubleParam>(0.6);
 
-    epi::ParameterSet<IntParam1, DoubleParam> d;
+    mio::ParameterSet<IntParam1, DoubleParam> d;
     d.set<IntParam1>(2);
     d.set<DoubleParam>(0.5);
     

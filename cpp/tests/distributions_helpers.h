@@ -20,11 +20,11 @@
 #ifndef DISTRIBUTIONS_HELPERS_H
 #define DISTRIBUTIONS_HELPERS_H
 
-#include <epidemiology/secir/parameter_studies.h>
+#include "memilio/utils/parameter_distributions.h"
 #include <gtest/gtest.h>
 #include <gmock/gmock.h>
 
-void check_distribution(const epi::ParameterDistribution& dist, const epi::ParameterDistribution& dist_read);
+void check_distribution(const mio::ParameterDistribution& dist, const mio::ParameterDistribution& dist_read);
 
 //Mocks are not copyable because they need to store the call counters etc.
 //ParameterDistribution must be copyable (for clone)
@@ -40,17 +40,17 @@ public:
 //inherits from ParameterDistributionNormal instead of the base class so it is visitable
 //all copies of an instance of this class will share the same mock and call counters etc.
 template <class Mock = MockParameterDistribution>
-class MockParameterDistributionRef : public epi::ParameterDistributionNormal
+class MockParameterDistributionRef : public mio::ParameterDistributionNormal
 {
 public:
-    using epi::ParameterDistributionNormal::ParameterDistributionNormal;
+    using mio::ParameterDistributionNormal::ParameterDistributionNormal;
 
     double get_rand_sample() override
     {
         return mock->get_rand_sample();
     }
 
-    epi::ParameterDistribution* clone() const override
+    mio::ParameterDistribution* clone() const override
     {
         return new MockParameterDistributionRef(*this);
     }
