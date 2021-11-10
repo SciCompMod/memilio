@@ -340,14 +340,13 @@ def get_vaccination_data(read_data=dd.defaultDict['read_data'],
                 axis=1))) > 1e-8:
         print("ERROR")
 
-    if sanitize_data:
-        population_old_ages = pd.DataFrame(population[dd.EngEng['idCounty']])
-        for i in range(len(age_old_to_all_ages_indices)):
-            # access columns + start_age_data since county_ID (and maybe other) 
-            # is in first place
-            start_age_data = list(population_all_ages.columns).index('0')
-            population_old_ages[unique_age_groups_old[i]] = population_all_ages.iloc[:, np.array(
-                age_old_to_all_ages_indices[i])+start_age_data].sum(axis=1)
+    population_old_ages = pd.DataFrame(population[dd.EngEng['idCounty']])
+    for i in range(len(age_old_to_all_ages_indices)):
+        # access columns + start_age_data since county_ID (and maybe other) 
+        # is in first place
+        start_age_data = list(population_all_ages.columns).index('0')
+        population_old_ages[unique_age_groups_old[i]] = population_all_ages.iloc[:, np.array(
+            age_old_to_all_ages_indices[i])+start_age_data].sum(axis=1)
     ############## end of potential outsourcing #####################
 
     # df_data now becomes an array
