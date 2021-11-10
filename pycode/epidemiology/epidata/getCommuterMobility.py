@@ -27,10 +27,10 @@ import os
 import sys
 import numpy as np
 import pandas as pd
-import getPopulationData
-import getDataIntoPandasDataFrame as gd
-import geoModificationGermany as geoger
-import defaultDict as dd
+import epidemiology.epidata.getPopulationData as getPopulationData
+import epidemiology.epidata.getDataIntoPandasDataFrame as gd
+import epidemiology.epidata.geoModificationGermany as geoger
+import epidemiology.epidata.defaultDict as dd
 
 def verify_sorted(countykey_list):
     """! verify that read countykey_list is sorted

@@ -25,7 +25,7 @@
 """
 
 import os
-import defaultDict as dd
+import epidemiology.epidata.defaultDict as dd
 
 import pandas as pd
 from epidemiology.epidata import getDataIntoPandasDataFrame as gd
