@@ -23,6 +23,7 @@
 #include <pybind11/eigen.h>
 #include <pybind11/functional.h>
 
+
 #include <memilio/utils/custom_index_array.h>
 #include <memilio/utils/time_series.h>
 #include <memilio/epidemiology/damping.h>
@@ -30,6 +31,7 @@
 #include <secir/secir.h>
 #include <secir/parameter_studies.h>
 #include <secir/analyze_result.h>
+#include <pickle_serializer.h>
 
 #include <Eigen/Core>
 #include <vector>
@@ -632,9 +634,41 @@ void bind_damping_expression_group_members(DampingExpressionGroupClass& cl)
 
 } // namespace
 
+template <class T, class ... Args>
+decltype(auto) pybind_pickle_class(py::module &m, const char* name)
+{
+    decltype(auto) pickle_class = py::class_<T, Args...>(m, name);
+    pickle_class.def(py::pickle(
+             [](const T &object) { // __getstate__
+                auto tuple = mio::serialize_pickle(object);
+                if (tuple)
+                {
+                    return std::move(tuple).value();
+                }
+                else
+                {
+                    throw std::runtime_error(tuple.error().formatted_message());
+                }
+            },
+            [](const py::tuple t) { // __setstate__
+
+                auto object = mio::deserialize_pickle(t,mio::Tag<T>{});
+                if (object)
+                {
+                    return std::move(object).value();
+                }
+                else
+                {
+                    throw std::runtime_error(object.error().formatted_message());
+                }
+            }
+    ));
+    return pickle_class;
+}
+
 PYBIND11_MODULE(_secir, m)
 {
-    py::class_<mio::Date>(m, "Date")
+    pybind_pickle_class<mio::Date>(m, "Date")
         .def(py::init<int, int, int>(), py::arg("year"), py::arg("month"), py::arg("day"))
         .def_readwrite("year", &mio::Date::year)
         .def_readwrite("month", &mio::Date::month)
@@ -705,7 +739,7 @@ PYBIND11_MODULE(_secir, m)
         .def("remove_predefined_samples", &mio::ParameterDistribution::remove_predefined_samples)
         .def("get_sample", &mio::ParameterDistribution::get_sample);
 
-    py::class_<mio::ParameterDistributionNormal, mio::ParameterDistribution>(m, "ParameterDistributionNormal")
+    pybind_pickle_class<mio::ParameterDistributionNormal, mio::ParameterDistribution>(m, "ParameterDistributionNormal")
         .def(py::init<double, double, double, double>(), py::arg("lb"), py::arg("ub"), py::arg("mean"),
              py::arg("std_dev"))
         .def(py::init<double, double, double>(), py::arg("lb"), py::arg("ub"), py::arg("mean"))
@@ -713,11 +747,11 @@ PYBIND11_MODULE(_secir, m)
         .def_property("standard_dev", &mio::ParameterDistributionNormal::get_standard_dev,
                       &mio::ParameterDistributionNormal::set_standard_dev);
 
-    py::class_<mio::ParameterDistributionUniform, mio::ParameterDistribution>(m, "ParameterDistributionUniform")
+    pybind_pickle_class<mio::ParameterDistributionUniform, mio::ParameterDistribution>(m, "ParameterDistributionUniform")
         .def(py::init<>())
         .def(py::init<double, double>(), py::arg("lb"), py::arg("ub"));
 
-    py::class_<mio::UncertainValue>(m, "UncertainValue")
+    pybind_pickle_class<mio::UncertainValue>(m, "UncertainValue")
         .def(py::init<ScalarType>(), py::arg("value") = 0.0)
         .def_property(
             "value",
@@ -751,7 +785,7 @@ PYBIND11_MODULE(_secir, m)
     bind_damping_expression_group_members(contact_matrix_group_class);
     contact_matrix_group_class.def_property_readonly("num_groups", &mio::ContactMatrixGroup::get_num_groups);
 
-    py::class_<mio::DampingSampling>(m, "DampingSampling")
+    pybind_pickle_class<mio::DampingSampling>(m, "DampingSampling")
         .def(py::init([](const mio::UncertainValue& value, int level, int type, double time,
                          const std::vector<size_t>& matrices, const Eigen::Ref<const Eigen::VectorXd>& groups) {
                  return mio::DampingSampling(value, mio::DampingLevel(level), mio::DampingType(type),
