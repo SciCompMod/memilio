@@ -26,7 +26,6 @@ jobs:
           - version: "min"
             os: "ubuntu-18.04"
     runs-on: ${{ matrix.os }}
-    continue-on-error: ${{ matrix.compiler == 'clang' && matrix.version == 'latest' }} # our jsoncpp version does not build on clang above version 9
     steps:
       - uses: actions/checkout@v2
       - uses: ./.github/actions/linux-build
@@ -94,7 +93,6 @@ jobs:
           - version: "min"
             os: "ubuntu-18.04"
     runs-on: ${{ matrix.os }}
-    continue-on-error: ${{ matrix.compiler == 'clang' && matrix.version == 'latest' }}
     steps:
       - uses: actions/checkout@v2
       - uses: ./.github/actions/linux-test

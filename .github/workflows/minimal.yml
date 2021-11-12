@@ -24,7 +24,7 @@ jobs:
         with: 
           compiler: "clang"
           config: "Debug"
-          version: "min"
+          version: "latest"
 
   build-cpp-msvc:
     runs-on: "windows-latest"
@@ -51,7 +51,7 @@ jobs:
       - uses: actions/checkout@v2
       - uses: ./.github/actions/linux-test
         with: 
-          build-artifact: build-cpp-linux-clang-min-Debug-full
+          build-artifact: build-cpp-linux-clang-latest-Debug-full
 
   test-cpp-msvc:
     needs: build-cpp-msvc
