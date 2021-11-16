@@ -1,5 +1,9 @@
 name: "Pylint"
 description: "Run lint rules on the python library."
+inputs:
+  package:
+    description: "Name of the package to lint."
+    required: true
 runs:
   using: "composite"
   steps:
@@ -12,16 +16,17 @@ runs:
     - name: Download Python Wheels
       uses: actions/download-artifact@v2
       with:
-        name: python-wheels
+        name: python-wheels-${{ inputs.package }}
     - name: Install Python Wheels
       shell: bash
       run: |
-        for pkg in `ls pycode/wheelhouse/*36*.whl`; do python -m pip install $pkg; done
-        pip install -r pycode/requirements-dev.txt
+        for pkg in `ls pycode/wheelhouse/*cp36*.whl`; do python -m pip install $pkg; done # packages that contain native extensions are version specific
+        for pkg in `ls pycode/wheelhouse/*py3*.whl`; do python -m pip install $pkg; done # pure python packages are not version specific
+        pip install -r pycode/memilio-${{ inputs.package }}/requirements-dev.txt
     - name: Run pylint
       shell: bash
       run: |
-        cd pycode
+        cd pycode/memilio-${{ inputs.package }}
         mkdir -p build_pylint
         pip install pylint
         pip install pylint-json2html
@@ -31,5 +36,5 @@ runs:
       uses: actions/upload-artifact@v2
       with:
         name: pylint-report
-        path: pycode/build_pylint/pylint.html
+        path: pycode/memilio-${{ inputs.package }}/build_pylint/pylint.html
         retention-days: 3

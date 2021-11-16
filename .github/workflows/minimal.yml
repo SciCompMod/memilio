@@ -62,30 +62,55 @@ jobs:
         with: 
           build-artifact: build-cpp-windows-msvc-latest-Debug-full
 
-  build-py:
+  build-py-epidata:
     runs-on: ubuntu-latest
     container:
       image: quay.io/pypa/manylinux2014_x86_64
     steps:
       - uses: actions/checkout@v2
       - uses: ./.github/actions/build-py
+        with:
+          package: epidata
 
-  test-py:
-    needs: build-py
+  test-py-epidata:
+    needs: build-py-epidata
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
       - uses: ./.github/actions/test-py
+        with: 
+          package: epidata
+  
+  build-py-simulation:
+    runs-on: ubuntu-latest
+    container:
+      image: quay.io/pypa/manylinux2014_x86_64
+    steps:
+      - uses: actions/checkout@v2
+      - uses: ./.github/actions/build-py
+        with:
+          package: simulation
 
-  test-pylint:
-    needs: build-py
+  test-py-simulation:
+    needs: build-py-simulation
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: ./.github/actions/test-py
+        with: 
+          package: simulation
+
+  test-pylint-epidata:
+    needs: build-py-epidata
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
       - uses: ./.github/actions/test-pylint
+        with:
+          package: epidata
           
   test-docs:
-    needs: build-py
+    needs: build-py-epidata
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
