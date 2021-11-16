@@ -13,7 +13,7 @@ This project is divided into multiple building blocks. The C++ implementation of
 
 Data acquisition tools and data is to be found in [data](data/README.md).
 
-In pycode, the epidemiology python package is defined. It consists of python bindings to call the C++ code available in cpp and the epidata subpackage which provides tools to download and structure important data. More about the python package can be found in [Python README](pycode/README.rst).
+In pycode, the MEmilio python packages are defined. One package contains the python bindings to call the C++ code available in cpp from python. The  epidata package provides tools to download and structure important data. More about the python packages can be found in [Python README](pycode/README.rst).
 
 **Documentation**
 

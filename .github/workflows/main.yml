@@ -139,7 +139,7 @@ jobs:
         with: 
           build-artifact: build-cpp-windows-msvc-latest-Release-part
 
-  build-py:
+  build-py-epidata:
     if: github.event.pull_request.draft == false
     runs-on: ubuntu-latest
     container:
@@ -147,34 +147,61 @@ jobs:
     steps:
       - uses: actions/checkout@v2
       - uses: ./.github/actions/build-py
+        with:
+          package: epidata
+
+  test-py-epidata:
+    if: github.event.pull_request.draft == false
+    needs: build-py-epidata
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: ./.github/actions/test-py
+        with: 
+          package: epidata
+          coverage: ON
+  
+  build-py-simulation:
+    if: github.event.pull_request.draft == false
+    runs-on: ubuntu-latest
+    container:
+      image: quay.io/pypa/manylinux2014_x86_64
+    steps:
+      - uses: actions/checkout@v2
+      - uses: ./.github/actions/build-py
+        with:
+          package: simulation
+
+  test-py-simulation:
+    if: github.event.pull_request.draft == false
+    needs: build-py-simulation
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: ./.github/actions/test-py
+        with: 
+          package: simulation
           
   test-docs:
     if: github.event.pull_request.draft == false
-    needs: build-py
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
       - uses: ./.github/actions/test-docs
 
-  test-py:
+  test-pylint-epidata:
     if: github.event.pull_request.draft == false
-    needs: build-py
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v2
-      - uses: ./.github/actions/test-py
-
-  test-pylint:
-    if: github.event.pull_request.draft == false
-    needs: build-py
+    needs: build-py-epidata
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
       - uses: ./.github/actions/test-pylint
+        with:
+          package: epidata
 
   dowload-data:
     if: github.event.pull_request.draft == false
-    needs: build-py
+    needs: build-py-epidata
     runs-on: ubuntu-latest
     continue-on-error: true
     steps:
@@ -187,7 +214,7 @@ jobs:
       - name: Download Python Wheels
         uses: actions/download-artifact@v2
         with:
-          name: python-wheels
+          name: python-wheels-epidata
           path: pycode/wheelhouse
       - name: Set up Python 3.6
         uses: actions/setup-python@v2
@@ -195,7 +222,8 @@ jobs:
           python-version: 3.6
       - name: Install Python Wheels
         run: |
-          for pkg in `ls pycode/wheelhouse/*36*.whl`; do python -m pip install $pkg; done
+          for pkg in `ls pycode/wheelhouse/*cp36*.whl`; do python -m pip install $pkg; done # packages that contain native extensions are version specific
+          for pkg in `ls pycode/wheelhouse/*py3*.whl`; do python -m pip install $pkg; done # pure python packages are not version specific
       - name: Dowload Data
         run: |
           mkdir -p data_dl
@@ -220,7 +248,7 @@ jobs:
           
   codecov:
     if: github.event.pull_request.draft == false
-    needs: [test-py, test-cpp-gcc_clang]
+    needs: [test-py-epidata, test-cpp-gcc_clang]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
@@ -244,7 +272,7 @@ jobs:
 
   pages:
     if: github.event.pull_request.draft == false
-    needs: [test-py, test-cpp-gcc_clang, test-docs, test-pylint]
+    needs: [test-py-epidata, test-cpp-gcc_clang, test-docs, test-pylint-epidata]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
