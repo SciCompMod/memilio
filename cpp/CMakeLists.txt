@@ -2,21 +2,22 @@ cmake_minimum_required(VERSION 3.10)
 
 project(memilio VERSION 0.1.0)
 
+
 option(MEMILIO_BUILD_TESTS "Build memilio unit tests." ON)
 option(MEMILIO_BUILD_EXAMPLES "Build memilio examples." ON)
 option(MEMILIO_BUILD_MODELS "Build memilio models." ON)
 option(MEMILIO_BUILD_SIMULATIONS "Build memilio simulations that were used for scientific articles." ON)
-option(MEMILIO_USE_BUNDLED_SPDLOG "Use spdlog bundled with epi" ON)
-option(MEMILIO_USE_BUNDLED_EIGEN "Use eigen bundled with epi" ON)
-option(MEMILIO_USE_BUNDLED_BOOST "Use boost bundled with epi (only for epi-io)" ON)
-option(MEMILIO_USE_BUNDLED_JSONCPP "Use jsoncpp bundled with epi (only for epi-io)" ON)
+# option(MEMILIO_USE_BUNDLED_SPDLOG "Use spdlog bundled with epi" ON)
+# option(MEMILIO_USE_BUNDLED_EIGEN "Use eigen bundled with epi" ON)
+# option(MEMILIO_USE_BUNDLED_BOOST "Use boost bundled with epi (only for epi-io)" ON)
+# option(MEMILIO_USE_BUNDLED_JSONCPP "Use jsoncpp bundled with epi (only for epi-io)" ON)
 option(MEMILIO_SANITIZE_ADDRESS "Enable address sanitizer." OFF)
 option(MEMILIO_SANITIZE_UNDEFINED "Enable undefined behavior sanitizer." OFF)
 
-mark_as_advanced(MEMILIO_USE_BUNDLED_SPDLOG MEMILIO_SANITIZE_ADDRESS MEMILIO_SANITIZE_UNDEFINED)
+# mark_as_advanced(MEMILIO_USE_BUNDLED_SPDLOG MEMILIO_SANITIZE_ADDRESS MEMILIO_SANITIZE_UNDEFINED)
 
 set(CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake" ${CMAKE_MODULE_PATH})
-set(CMAKE_POSITION_INDEPENDENT_CODE ON)
+# set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
 # code coverage analysis
 # Note: this only works under linux and with make
@@ -68,7 +69,16 @@ elseif(CMAKE_CXX_COMPILER_ID MATCHES "MSVC")
 endif()
 
 # add parts of the project
-include(thirdparty/CMakeLists.txt)
+list(APPEND CMAKE_MODULE_PATH ${CMAKE_BINARY_DIR})
+list(APPEND CMAKE_PREFIX_PATH ${CMAKE_BINARY_DIR})
+find_package(Eigen3 REQUIRED CONFIG)
+find_package(Boost REQUIRED CONFIG COMPONENTS filesystem)
+find_package(HDF5 COMPONENTS C CONFIG)
+find_package(jsoncpp REQUIRED CONFIG)
+find_package(spdlog REQUIRED CONFIG)
+set(MEMILIO_HAS_HDF5 ON)
+set(MEMILIO_HAS_JSONCPP ON)
+
 add_subdirectory(memilio)
 if (MEMILIO_BUILD_MODELS)
     add_subdirectory(models/abm)
