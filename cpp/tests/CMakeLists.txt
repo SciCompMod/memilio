@@ -1,4 +1,6 @@
 enable_testing()
+include(GoogleTest)
+find_package(GTest 1.10.0 CONFIG REQUIRED)
 
 set(TESTSOURCES
   test_household.cpp
@@ -53,12 +55,11 @@ if (MEMILIO_HAS_JSONCPP AND MEMILIO_HAS_HDF5)
     )
 endif()
 
-find_package(GTest 1.10.0 REQUIRED)
 add_executable(memilio-test ${TESTSOURCES})
 target_include_directories(memilio-test PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 target_link_libraries(memilio-test PRIVATE memilio secir seir abm GTest::gtest GTest::gmock) 
 target_compile_options(memilio-test PRIVATE ${MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS})            
-gtest_discover_tests(memilio-test)
+gtest_discover_tests(memilio-test DISCOVERY_TIMEOUT 30)
 
 #make unit tests find the test data files
 file(TO_CMAKE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/data" MEMILIO_TEST_DATA_DIR)
