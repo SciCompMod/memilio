@@ -293,6 +293,9 @@ public:
         if (m_upper_bound == m_lower_bound) {
             return m_lower_bound;
         }
+        if (m_standard_dev == 0) {
+            return std::min(m_upper_bound, std::max(m_lower_bound, m_mean));
+        }
 
         if (check_quantiles(m_mean, m_standard_dev) || m_distribution.mean() != m_mean ||
             m_distribution.stddev() != m_standard_dev) {
