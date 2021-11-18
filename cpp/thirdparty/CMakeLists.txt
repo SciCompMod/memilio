@@ -13,6 +13,7 @@ set(_MEMILIO_HDF5_VERSION 1.12.0)
 set(_MEMILIO_GTEST_VERSION 1.10.0)
 
 if (MEMILIO_USE_CONAN)
+    message(STATUS "Memilio: Checking required dependencies.")
     include(conan)
 
     set(_MEMILIO_REQUIRES "")
@@ -41,8 +42,9 @@ if (MEMILIO_USE_CONAN)
         GENERATORS cmake_find_package_multi)
 
     # install conan packages
-    if (CMAKE_IS_MULTI_CONFIG)
-        # install packages for all configurations of e.g. Visual Studio 
+    get_property(_MULTI_CONFIG GLOBAL PROPERTY GENERATOR_IS_MULTI_CONFIG)
+    if (_MULTI_CONFIG)
+        message(STATUS "Memilio: Downloading packages for all configurations.")
         foreach(TYPE ${CMAKE_CONFIGURATION_TYPES})
             conan_cmake_autodetect(_MEMILIO_SETTINGS BUILD_TYPE ${TYPE})
             conan_cmake_install(
@@ -52,15 +54,17 @@ if (MEMILIO_USE_CONAN)
                 SETTINGS ${_MEMILIO_SETTINGS})
         endforeach()
     else()
+        message(STATUS "Memilio: Downloading packages.")
         if (NOT CMAKE_BUILD_TYPE)
             message(STATUS "MEMILIO WORKAROUND: Conan requires CMAKE_BUILD_TYPE to be set. Setting default to Release. Overwrite with e.g. -DCMAKE_BUILD_TYPE=<Debug>")
             set(CMAKE_BUILD_TYPE Release CACHE STRING "" FORCE)
         endif()
         conan_cmake_autodetect(_MEMILIO_SETTINGS)
-        conan_cmake_install(PATH_OR_REFERENCE .
-                            BUILD missing
-                            REMOTE conancenter
-                            SETTINGS ${_MEMILIO_SETTINGS})
+        conan_cmake_install(
+            PATH_OR_REFERENCE .
+            BUILD missing
+            REMOTE conancenter
+            SETTINGS ${_MEMILIO_SETTINGS})
     endif()
 
     list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_BINARY_DIR})
