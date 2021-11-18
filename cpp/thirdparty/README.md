@@ -18,7 +18,9 @@ python -m venv venv
 source ./venv/bin/activate
 ```
 
-Conan caches packages in your user directory (even if using a virtual environment), so packages only need to be downloaded once. However, multiple downloads are required for different compilers and configurations, e.g. one set of packages for Debug builds and one set for Release builds. The configuration is detected automatically and logged by CMake, no action is required by the user. For multi-configuration CMake generators (e.g. Visual Studio, XCode), packages for all configurations in the CMAKE_CONFIGURATION_TYPES variable are downloaded.
+Conan caches packages in your user directory (even if using a virtual environment), so packages only need to be downloaded once. However, multiple downloads are required for different compilers and configurations, e.g. one set of packages for Debug builds and one set for Release builds. The configuration is detected automatically and logged by CMake, no action is required by the user. 
+
+For multi-configuration CMake generators (e.g. Visual Studio, XCode), packages for all configurations in the `CMAKE_CONFIGURATION_TYPES` variable are downloaded. Note that prebuilt packages are usually only available for Release and Debug configurations. Missing packages are built by Conan on demand, which can take a long time. It is recommended to set `CMAKE_CONFIGURATION_TYPES` to only the configurations you really require, e.g., `cmake .. "-DCMAKE_CONFIGURATION_TYPES=Debug;Release"`.
 
 There is a CMake option `MEMILIO_USE_SYSTEM_<XYZ>` for each dependency. This stops Conan from downloading and using the package for the specified dependency. This is not recommended but may be required, e.g., to use a specific version of the dependency optimized for your system. 
 
