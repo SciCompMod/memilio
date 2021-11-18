@@ -698,6 +698,35 @@ TEST(TestMigrationRules, worker_goes_to_work)
 
 }
 
+TEST(TestMigrationRules, worker_goes_to_work_with_non_dividable_timespan)
+{
+    auto home      = mio::Location(mio::LocationType::Home, 0);
+    ScopedMockDistribution<testing::StrictMock<MockDistribution<mio::UniformDistribution<double>>>> mock_uniform_dist;
+    EXPECT_CALL(mock_uniform_dist.get_mock(), invoke)
+        .Times(testing::AtLeast(8))
+        .WillOnce(testing::Return(0.6))
+        .WillOnce(testing::Return(0.6))
+        .WillOnce(testing::Return(0.6))
+        .WillOnce(testing::Return(0.6))
+        .WillOnce(testing::Return(0.))
+        .WillOnce(testing::Return(0.))
+        .WillOnce(testing::Return(0.))
+        .WillOnce(testing::Return(0.))
+        .WillRepeatedly(testing::Return(1.0));
+
+    auto p_retiree = mio::Person(home, mio::InfectionState::Susceptible, mio::AbmAgeGroup::Age60to79, {});
+    auto p_adult   = mio::Person(home, mio::InfectionState::Susceptible, mio::AbmAgeGroup::Age15to34, {});
+
+    auto t_morning = mio::TimePoint(0) + mio::hours(8);
+    auto t_night   = mio::TimePoint(0) + mio::days(1) + mio::hours(4);
+    auto dt        = mio::minutes(53);
+
+    ASSERT_EQ(mio::go_to_work(p_retiree, t_morning, dt, {}), mio::LocationType::Home);
+    ASSERT_EQ(mio::go_to_work(p_adult, t_morning, dt, {}), mio::LocationType::Home);
+    ASSERT_EQ(mio::go_to_work(p_adult, t_night, dt, {}), mio::LocationType::Home);
+
+}
+
 TEST(TestMigrationRules, workers_go_to_work_in_different_times)
 {
     auto home      = mio::Location(mio::LocationType::Home, 0);

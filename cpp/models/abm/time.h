@@ -285,6 +285,16 @@ inline TimeSpan seconds(int seconds)
 }
 
 /**
+ * create a TimeSpan of a specified number of minutes.
+ * @param minutes number of minutes in the time span.
+ */
+inline TimeSpan minutes(int minutes)
+{
+    return TimeSpan(minutes * 60);
+}
+
+
+/**
  * create a TimeSpan of a specified number of hours.
  * @param seconds number of hours in the time span.
  */
