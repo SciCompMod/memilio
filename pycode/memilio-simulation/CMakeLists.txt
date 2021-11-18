@@ -1,28 +1,26 @@
 cmake_minimum_required(VERSION 3.4)
 project(memilio-python)
 
-option(MEMILIO_USE_BUNDLED_PYBIND11 "Use pybind11 bundled with this library." ON)
-mark_as_advanced(MEMILIO_USE_BUNDLED_PYBIND11)
-
-if(MEMILIO_USE_BUNDLED_PYBIND11)
-  # Fetch pybind11
-  include(FetchContent)
-  FetchContent_Declare(
-    pybind11
-    GIT_REPOSITORY https://github.com/pybind/pybind11
-    GIT_TAG v2.5
-  )
-  FetchContent_GetProperties(pybind11)
-  if(NOT pybind11_POPULATED)
-    FetchContent_Populate(pybind11)
-    add_subdirectory(${pybind11_SOURCE_DIR} ${pybind11_BINARY_DIR})
-  endif()
-else()
-    find_package(pybind11 REQUIRED)
-endif()
-
 # add in C++ library
 add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/../../cpp ${CMAKE_CURRENT_BINARY_DIR}/cpp EXCLUDE_FROM_ALL)
+
+option(MEMILIO_USE_SYSTEM_PYBIND11 "Use pybind11 installed on the system instead of Conan package." OFF)
+
+set(_MEMILIO_PYBIND11_VERSION 2.5.0)
+if (MEMILIO_USE_CONAN)
+    message(STATUS "Memilio: Installing required dependencies for python bindings with Conan.")
+    
+    include(memilio-conan)
+
+    set(_MEMILIO_REQUIRES "")
+    if (NOT MEMILIO_USE_SYSTEM_PYBIND11)
+        list(APPEND _MEMILIO_REQUIRES pybind11/${_MEMILIO_PYBIND11_VERSION})
+    endif()
+
+    memilio_conan_install(REQUIRES ${_MEMILIO_REQUIRES})
+endif()
+
+find_package(pybind11 ${_MEMILIO_PYBIND11_VERSION} REQUIRED)
 
 # build python extensions
 pybind11_add_module(_simulation_secir MODULE
