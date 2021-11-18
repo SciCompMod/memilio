@@ -26,10 +26,11 @@ namespace mio
 
 void set_params_distributions_normal(SecirModel& model, double t0, double tmax, double dev_rel)
 {
-    auto set_distribution = [dev_rel](UncertainValue& v, double min_val = 0.001) {
-        v.set_distribution(ParameterDistributionNormal(std::max(min_val, (1 - dev_rel * 2.6) * v),
-                                                       std::max(min_val, (1 + dev_rel * 2.6) * v),
-                                                       std::max(min_val, double(v)), dev_rel * v));
+    auto set_distribution = [dev_rel](UncertainValue& v, double min_val = 0.001,
+                                      double max_val = std::numeric_limits<double>::max()) {
+        v.set_distribution(ParameterDistributionNormal(std::min(max_val, std::max(min_val, (1 - dev_rel * 2.6) * v)),
+                                                       std::min(max_val, std::max(min_val, (1 + dev_rel * 2.6) * v)),
+                                                       std::min(max_val, std::max(min_val, double(v))), dev_rel * v));
     };
 
     set_distribution(model.parameters.get<Seasonality>(), 0.0);
