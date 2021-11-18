@@ -22,7 +22,11 @@ setup(
     url='https://github.com/DLR-SC/memilio',
     description='Part of MEmilio project, python bindings to the C++ libraries that contain the models and simulations.',
     packages=find_packages(where = os.path.dirname(os.path.abspath(__file__))),
-    setup_requires=['cmake'],
+    setup_requires=['cmake', 'conan'],
+    cmake_args=[
+        '-DCMAKE_CONFIGURATION_TYPES=Release',
+        '-DCMAKE_BUILD_TYPE=Release'
+        ],
     install_requires= [],
     extras_require={
         'dev': ['numpy <= 1.19.4'],
