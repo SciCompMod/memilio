@@ -23,7 +23,7 @@
 #ifdef MEMILIO_HAS_JSONCPP
 
 #include "secir/secir_result_io.h"
-#include "memilio/io/io.h"
+#include "memilio/io/json_serializer.h"
 #include "memilio/utils/memory.h"
 #include "memilio/utils/uncertain_value.h"
 #include "memilio/utils/stl_util.h"
@@ -34,8 +34,6 @@
 #include "memilio/epidemiology/uncertain_matrix.h"
 #include "memilio/utils/compiler_diagnostics.h"
 #include "memilio/utils/date.h"
-
-#include <json/json.h>
 
 #include <boost/filesystem.hpp>
 
@@ -140,15 +138,8 @@ namespace details
             log_error("RKI data file not found: {}.", path);
             return failure(StatusCode::FileNotFound, path);
         }
-
-        Json::Reader reader;
-        Json::Value root;
-
-        std::ifstream rki(path);
-        if (!reader.parse(rki, root)) {
-            log_error(reader.getFormattedErrorMessages());
-            return failure(StatusCode::UnknownError, path + ", " + reader.getFormattedErrorMessages());
-        }
+        
+        BOOST_OUTCOME_TRY(root, read_json(path));
 
         BOOST_OUTCOME_TRY(max_date, get_max_date(root));
         if (max_date == Date(0, 1, 1)) {
@@ -418,14 +409,7 @@ namespace details
             return failure(StatusCode::FileNotFound, path);
         }
 
-        Json::Reader reader;
-        Json::Value root;
-
-        std::ifstream divi(path);
-        if (!reader.parse(divi, root)) {
-            log_error(reader.getFormattedErrorMessages());
-            return failure(StatusCode::UnknownError, path + ", " + reader.getFormattedErrorMessages());
-        }
+        BOOST_OUTCOME_TRY(root, read_json(path));
 
         BOOST_OUTCOME_TRY(max_date, get_max_date(root));
         if (max_date == Date(0, 1, 1)) {
@@ -460,14 +444,7 @@ namespace details
             return failure(StatusCode::FileNotFound, path);
         }
 
-        Json::Reader reader;
-        Json::Value root;
-
-        std::ifstream census(path);
-        if (!reader.parse(census, root)) {
-            log_error(reader.getFormattedErrorMessages());
-            return failure(StatusCode::UnknownError, path + ", " + reader.getFormattedErrorMessages());
-        }
+        BOOST_OUTCOME_TRY(root, read_json(path));
 
         std::vector<std::string> age_names = {"<3 years",    "3-5 years",   "6-14 years",  "15-17 years",
                                               "18-24 years", "25-29 years", "30-39 years", "40-49 years",
@@ -567,17 +544,10 @@ namespace details
 
 IOResult<std::vector<int>> get_county_ids(const std::string& path)
 {
-    Json::Reader reader;
-    Json::Value root;
-
     std::vector<int> id;
 
     auto filename = path_join(path, "county_current_population.json");
-    std::ifstream census(filename);
-    if (!reader.parse(census, root)) {
-        log_error(reader.getFormattedErrorMessages());
-        return failure(StatusCode::UnknownError, filename + ", " + reader.getFormattedErrorMessages());
-    }
+    BOOST_OUTCOME_TRY(root, read_json(filename));
 
     for (unsigned int i = 0; i < root.size(); i++) {
         auto val = root[i]["ID_County"];

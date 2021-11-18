@@ -1,4 +1,6 @@
 enable_testing()
+include(GoogleTest)
+find_package(GTest 1.10.0 CONFIG REQUIRED)
 
 set(TESTSOURCES
   test_household.cpp
@@ -53,7 +55,6 @@ if (MEMILIO_HAS_JSONCPP AND MEMILIO_HAS_HDF5)
     )
 endif()
 
-find_package(GTest 1.10.0 REQUIRED)
 add_executable(memilio-test ${TESTSOURCES})
 target_include_directories(memilio-test PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 target_link_libraries(memilio-test PRIVATE memilio secir seir abm GTest::gtest GTest::gmock) 

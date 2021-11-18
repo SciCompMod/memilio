@@ -79,8 +79,7 @@ target_compile_options(memilio
 )
 
 if (MEMILIO_HAS_HDF5)
-    target_link_libraries(memilio PUBLIC ${HDF5_C_LIBRARIES})
-    target_include_directories(memilio PUBLIC ${HDF5_INCLUDE_DIRS})
+    target_link_libraries(memilio PUBLIC HDF5::C)
 endif()
 
 if (MEMILIO_HAS_JSONCPP)
