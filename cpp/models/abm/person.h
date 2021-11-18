@@ -206,7 +206,7 @@ public:
      * Depending on this number person decides what time has to go to work;
      * @return the time of going to work
      */
-    TimeSpan get_go_to_work_time(const AbmMigrationParameters& params, TimeSpan dt) const;
+    TimeSpan get_go_to_work_time(const AbmMigrationParameters& params) const;
 
     /**
      * Every person has a random number that determines if they go to school in case of a lockdown.
@@ -219,7 +219,7 @@ public:
      * Depending on this number person decides what time has to go to school;
      * @return the time of going to school
      */
-    TimeSpan get_go_to_school_time(const AbmMigrationParameters& params, TimeSpan dt) const;
+    TimeSpan get_go_to_school_time(const AbmMigrationParameters& params) const;
 
     /**
      * Answers the question if a person is currently in quarantine.

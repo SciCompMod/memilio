@@ -202,6 +202,14 @@ public:
     }
 
     /**
+     * time since midnight
+     */
+    TimeSpan time_since_midnight() const
+    {
+        return  TimeSpan(seconds() - ((int)days())*60*60*24);
+    }
+
+    /**
      * comparison operators.
      * @{
      */
