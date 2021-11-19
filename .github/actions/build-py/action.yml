@@ -11,7 +11,7 @@ runs:
       shell: bash
       run: |
         yum install ninja-build -qy
-        pip install conan
+        /opt/python/cp36-cp36m/bin/pip install conan
     - name: Make artifact dir
       shell: bash
       run: |
@@ -21,7 +21,7 @@ runs:
       shell: bash
       run: |
         cd pycode/memilio-${{ inputs.package }}/
-        python setup.py bdist_wheel
+        /opt/python/cp36-cp36m/bin/python setup.py bdist_wheel
         if [[ -f "CMakeLists.txt" ]]; then 
           # includes native dependencies in the wheel
           for whl in dist/*.whl; do auditwheel repair "$whl"; done
