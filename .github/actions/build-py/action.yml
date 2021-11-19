@@ -7,9 +7,15 @@ inputs:
 runs:
   using: "composite"
   steps:    
+    - name: Set up Python 3.6
+      uses: actions/setup-python@v2
+      with:
+        python-version: 3.6
     - name: Install dependencies
       shell: bash
-      run: yum install ninja-build -qy
+      run: |
+        yum install ninja-build -qy
+        pip install conan
     - name: Make artifact dir
       shell: bash
       run: |
@@ -19,9 +25,7 @@ runs:
       shell: bash
       run: |
         cd pycode/memilio-${{ inputs.package }}/
-        /opt/python/cp36-cp36m/bin/python setup.py bdist_wheel
-        /opt/python/cp37-cp37m/bin/python setup.py bdist_wheel
-        /opt/python/cp38-cp38/bin/python setup.py bdist_wheel
+        python setup.py bdist_wheel
         if [[ -f "CMakeLists.txt" ]]; then 
           # includes native dependencies in the wheel
           for whl in dist/*.whl; do auditwheel repair "$whl"; done
