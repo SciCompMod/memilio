@@ -19,23 +19,6 @@ runs:
     - name: Install ninja
       shell: pwsh
       run: choco install -y ninja
-    - name: Install hdf5
-      shell: pwsh
-      run: |
-        if ("${{ inputs.optional-dependencies }}" -eq "ON") {
-          Write-Output "Downloading HDF5 1.12.1";
-          Invoke-WebRequest -Uri "https://support.hdfgroup.org/ftp/HDF5/releases/hdf5-1.12/hdf5-1.12.1/src/hdf5-1.12.1.zip" -OutFile "hdf5-1.12.1.zip";
-          Write-Output "Extract HDF5";
-          7z x -y "hdf5-1.12.1.zip" "-o."
-          Write-Output "Build HDF5";
-          cd hdf5-1.12.1
-          md build
-          cd build
-          cmake .. "-DCMAKE_CONFIGURATION_TYPES=${{ inputs.config }}" "-DCMAKE_INSTALL_PREFIX=${{github.workspace}}/hdf5" -DHDF5_BUILD_HL_LIB=OFF -DHDF5_BUILD_CPP_LIB=OFF -DHDF5_BUILD_TOOLS=OFF -DHDF5_BUILD_UTILS=OFF
-          cmake --build . --config ${{ inputs.config }}
-          Write-Output "Install HDF5";
-          cmake --install .
-        }
     - name: Build
       shell: cmd /C call {0}
       run: |
@@ -48,7 +31,7 @@ runs:
           call "C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Auxiliary\Build\vcvarsall.bat" amd64
         )
         cmake --version
-        cmake -G "Ninja" -DCMAKE_BUILD_TYPE=${{ inputs.config }} -DMEMILIO_USE_BUNDLED_JSONCPP=${{ inputs.optional-dependencies }} -DHDF5_USE_STATIC_LIBRARIES=ON -DHDF5_DIR="${{github.workspace}}/hdf5/share/cmake/hdf5" ..
+        cmake -G "Ninja" -DCMAKE_BUILD_TYPE=${{ inputs.config }} -DMEMILIO_USE_SYSTEM_JSONCPP=${{ inputs.optional-dependencies == 'ON' && 'OFF' || 'ON'}} -DMEMILIO_USE_SYSTEM_HDF5=${{ inputs.optional-dependencies == 'ON' && 'OFF' || 'ON'}}
         cmake --build . -- -j 4
     - name: Upload built test directory
       uses: actions/upload-artifact@v2
