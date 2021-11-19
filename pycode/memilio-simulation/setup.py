@@ -10,6 +10,14 @@ except ImportError:
     print('Installation:  python -m pip install scikit-build')
     subprocess.check_call([sys.executable, "-m", "pip", "install", "scikit-build"])
     from skbuild import setup
+    
+try:
+    import conan
+except ImportError:
+    print('conan is required to build from source.')
+    print('Installation:  python -m pip install conan')
+    subprocess.check_call([sys.executable, "-m", "pip", "install", "conan"])
+    from skbuild import setup
 
 __version__ = '0.1.0'
 
