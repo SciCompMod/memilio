@@ -32,6 +32,10 @@ inputs:
 runs:
   using: "composite"
   steps:
+    - name: Set up Python 3.6
+      uses: actions/setup-python@v2
+      with:
+        python-version: 3.6
     - name: Install dependencies
       shell: bash
       run: |
@@ -44,6 +48,7 @@ runs:
             sudo apt-get -qq -y install clang-9
           fi
         fi
+        pip install conan
     - name: Build
       shell: bash
       run: |

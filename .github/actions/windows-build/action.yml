@@ -16,9 +16,15 @@ inputs:
 runs:
   using: "composite"
   steps:
-    - name: Install ninja
+    - name: Set up Python 3.6
+      uses: actions/setup-python@v2
+      with:
+        python-version: 3.6
+    - name: Install build tools
       shell: pwsh
-      run: choco install -y ninja
+      run: |
+        choco install -y ninja
+        pip install conan
     - name: Build
       shell: cmd /C call {0}
       run: |
