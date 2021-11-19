@@ -20,7 +20,7 @@ if (MEMILIO_USE_CONAN)
     memilio_conan_install(REQUIRES ${_MEMILIO_REQUIRES})
 endif()
 
-find_package(pybind11 ${_MEMILIO_PYBIND11_VERSION} REQUIRED)
+find_package(pybind11 REQUIRED)
 
 # build python extensions
 pybind11_add_module(_simulation_secir MODULE
