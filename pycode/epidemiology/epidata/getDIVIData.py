@@ -79,7 +79,7 @@ def adjust_data(df, date_of_data):
     df.rename(columns={
         'daten_stand': dd.EngEng['date']}, inplace=True)
     df.rename(columns={
-        'date': dd.EngEng['date']}, inplace=True)               
+        'date': dd.EngEng['date']}, inplace=True)
 
     # rename column 'kreis' of first date to match data of following days
     if date_of_data == date(2020, 4, 24):
@@ -95,7 +95,8 @@ def adjust_data(df, date_of_data):
     # add dates for data until 27.4.
     if date_of_data <= date(2020, 4, 27):
         date_str = date_of_data.strftime("%Y-%m-%d") + " 09:15:00"
-        df.insert(loc=len(df.columns), column=dd.EngEng['date'], value=date_str)
+        df.insert(loc=len(df.columns),
+                  column=dd.EngEng['date'], value=date_str)
 
     # add 'bundesland' for data from 25.4.
     if date_of_data == date(2020, 4, 25):
@@ -331,12 +332,12 @@ def download_data_for_one_day(last_number, download_date):
                         date(2021, 10, 28): 6057,
                         date(2021, 10, 29): 6061,
                         date(2021, 10, 30): 6064,
-                        date(2021, 10, 31): 6068                        
+                        date(2021, 10, 31): 6068
                         }
-                        # TODO: 1. Is there any way to do better than this list?
-                        #       2. What about updates of the files the same day? 
-                        #               e.g., October 29, 2021 has 6061 and 6063
-                        #                        with filename and filename-2
+    # TODO: 1. Is there any way to do better than this list?
+    #       2. What about updates of the files the same day?
+    #               e.g., October 29, 2021 has 6061 and 6063
+    #                        with filename and filename-2
 
     start_date_differs = False
 
@@ -390,7 +391,7 @@ def download_data_for_one_day(last_number, download_date):
 
         # It is most likely that the difference is between 1 and 2
         for sign in range(2):
-            for delta in range(1, 50):
+            for delta in range(1, 300):
                 call_number = last_number + sign_dict[sign]*delta
 
                 # for delta 1 and 2 the number is not saved in dict,
@@ -406,10 +407,12 @@ def download_data_for_one_day(last_number, download_date):
 
         # case with same call_number, which is very unlikely
         call_number = last_number
-        call_string = "date(" + download_date.strftime("%Y, %m, %d") + "): " + str(call_number) + "," + "\n"
+        call_string = "date(" + download_date.strftime("%Y, %m, %d") + \
+            "): " + str(call_number) + "," + "\n"
         df = call_call_url(url_prefix, call_number)
 
     return [call_number, df, call_string]
+
 
 def get_divi_data(read_data=dd.defaultDict['read_data'],
                   file_format=dd.defaultDict['file_format'],
@@ -541,12 +544,13 @@ def get_divi_data(read_data=dd.defaultDict['read_data'],
     date_download = date_considered
     while date_considered <= today:
 
-        [last_number, df2, new_string] = download_data_for_one_day(last_number, date_considered) 
+        [last_number, df2, new_string] = download_data_for_one_day(
+            last_number, date_considered)
 
         if not df2.empty:
 
             new_dict_string = new_dict_string + new_string
-            
+
             if len(df[df.isnull().any(axis=1)]) > 0:
                 print("Error. Empty values in DataFrame.")
 
@@ -558,9 +562,9 @@ def get_divi_data(read_data=dd.defaultDict['read_data'],
                   date_considered.strftime("%Y-%m-%d") + " was not found.")
 
         date_considered += delta
-    
+
     print("Success: Data of date " +
-        date_download.strftime("%Y-%m-%d") + " was found.")
+          date_download.strftime("%Y-%m-%d") + " was found.")
 
     # output data before renaming
     if not df.empty:
@@ -585,22 +589,26 @@ def get_divi_data(read_data=dd.defaultDict['read_data'],
     # insert names of  states
     df.insert(loc=0, column=dd.EngEng["idState"], value=df[dd.EngEng["state"]])
     for item in geoger.get_state_names_and_ids():
-        df.loc[df[dd.EngEng["idState"]] == item[1], [dd.EngEng["state"]]] = item[0]
+        df.loc[df[dd.EngEng["idState"]] == item[1],
+               [dd.EngEng["state"]]] = item[0]
 
     # insert names of counties
-    df.insert(loc=3, column=dd.EngEng["county"], value=df[dd.EngEng["idCounty"]])
+    df.insert(loc=3, column=dd.EngEng["county"],
+              value=df[dd.EngEng["idCounty"]])
     for item in geoger.get_county_names_and_ids(merge_eisenach=False):
-        df.loc[df[dd.EngEng["idCounty"]] == item[1], [dd.EngEng["county"]]] = item[0]
+        df.loc[df[dd.EngEng["idCounty"]] == item[1],
+               [dd.EngEng["county"]]] = item[0]
 
     # remove leading zeros for ID_County (if not yet done)
-    df['ID_County'] = df['ID_County'].astype(int)     
+    df['ID_County'] = df['ID_County'].astype(int)
     # add missing dates (and compute moving average)
     if impute_dates or moving_average > 0:
         df = modifyDataframeSeries.impute_and_reduce_df(
             df,
-            {dd.EngEng["idCounty"]: geoger.get_county_ids(merge_eisenach=False)},
+            {dd.EngEng["idCounty"]: geoger.get_county_ids(
+                merge_eisenach=False)},
             [dd.EngEng["ICU"], dd.EngEng["ICU_ventilated"]],
-            impute='forward', moving_average=moving_average)  
+            impute='forward', moving_average=moving_average)
 
     # add names etc for empty frames (counties where no ICU beds are available)
     countyid_to_name = geoger.get_countyid_to_name()
@@ -659,6 +667,7 @@ def get_divi_data(read_data=dd.defaultDict['read_data'],
     filename = "germany_divi"
     filename = gd.append_filename(filename, impute_dates, moving_average)
     gd.write_dataframe(df_ger, directory, filename, file_format)
+
 
 def main():
     """ Main program entry."""
