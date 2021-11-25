@@ -296,7 +296,7 @@ public:
             double reduc_immune_hosp_icu = params.get<ReducImmuneInfHosp>()[i];
             double reduc_immune_icu_dead = params.get<ReducImmuneInfHosp>()[i];
 
-            double reduc_t = 0.5;
+            double reduc_t = params.get<ReducTime>()[i];
 
             //symptomatic are less well quarantined when testing and tracing is overwhelmed so they infect more people
             auto risk_from_symptomatic = smoother_cosine(
@@ -360,13 +360,6 @@ public:
                     infection_rate = params.get<InfectionProbabilityFromContact>()[i];
                 }*/
 
-                auto start_day   = params.template get<StartDay>();
-                auto b161_growth = (start_day - get_day_in_year(Date(2021, 6, 6))) * 0.1666667;
-                // 2 equal to the share of the delta variant on June 6
-                double share_new_variant = std::min(1.0, pow(2, t * 0.1666667 + b161_growth) * 0.01);
-                double transmission_prob = (1 - share_new_variant) * params.template get<BaseInfB117>()[(AgeGroup)i] +
-                                           share_new_variant * params.template get<BaseInfB161>()[(AgeGroup)i];
-                unused(transmission_prob);
 
                 double dummy_S =
                     y[Si] * cont_freq_eff * divNj *
@@ -686,9 +679,13 @@ public:
     void apply_b161(double t)
     {
 
+
+        auto start_day   = this->get_model().parameters.template get<StartDay>();
+        auto b161_growth = (start_day - get_day_in_year(Date(2021, 6, 6))) * 0.1666667;
+        // 2 equal to the share of the delta variant on June 6
+        double share_new_variant = std::min(1.0, pow(2, t * 0.1666667 + b161_growth) * 0.01);
         size_t num_groups = this->get_model().parameters.get_num_groups();
         for (size_t i = 0; i < num_groups; ++i) {
-            double share_new_variant = std::min(1.0, pow(2, t / 7) / 100.0);
             double new_transmission =
                 (1 - share_new_variant) * this->get_model().parameters.template get<BaseInfB117>()[(AgeGroup)i] +
                 share_new_variant * this->get_model().parameters.template get<BaseInfB161>()[(AgeGroup)i];
@@ -730,12 +727,6 @@ public:
                              params.template get<DailyFirstVaccination>()[(AgeGroup)i][index - 1];
                 full_vacc = params.template get<DailyFullVaccination>()[(AgeGroup)i][index] -
                             params.template get<DailyFullVaccination>()[(AgeGroup)i][index - 1];
-            }
-
-            if (first_vacc < 0) {
-                std::cout << "first_vacc is neagtive: " << first_vacc << std::endl;
-            }
-            if (full_vacc < 0) {
             }
 
             if (last_value(count * i + S) - first_vacc < 0) {

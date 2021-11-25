@@ -483,21 +483,6 @@ void MigrationEdge::apply_migration(double t, double dt, SimulationNode<Sim>& no
             }
             node_from.get_result().get_last_value() += m_migrated[i];
             node_to.get_result().get_last_value() -= m_migrated[i];
-            for (Eigen::Index j = 0; j < node_to.get_result().get_last_value().size(); ++j) {
-                if (node_to.get_result().get_last_value()(j) < 0) {
-                    std::cout << "return last value of node_to has negative valuein compartment " << j << std::endl;
-                    std::cout << "Before Return: " << last_value_to[(size_t)j] << std::endl;
-                    std::cout << "After Return: " << node_to.get_result().get_last_value()(j) << std::endl;
-                }
-                if (node_from.get_result().get_last_value()(j) < 0) {
-                    std::cout << "return last value of node_from has negative value in compartment " << j << std::endl;
-                    std::cout << "Before Return: " << last_value_from[(size_t)j] << std::endl;
-                    std::cout << "After Return: " << node_from.get_result().get_last_value()(j) << std::endl;
-                }
-                if (node_from.get_result().get_last_value()(j) < 0 || node_to.get_result().get_last_value()(j) < 0) {
-                    std::cout << "m_migrated: " << m_migrated.get_last_value()(j) << std::endl;
-                }
-            }
             m_migrated.remove_time_point(i);
             m_return_times.remove_time_point(i);
         }
@@ -515,22 +500,6 @@ void MigrationEdge::apply_migration(double t, double dt, SimulationNode<Sim>& no
 
         node_to.get_result().get_last_value() += m_migrated.get_last_value();
         node_from.get_result().get_last_value() -= m_migrated.get_last_value();
-
-        for (Eigen::Index j = 0; j < node_to.get_result().get_last_value().size(); ++j) {
-            if (node_to.get_result().get_last_value()(j) < 0) {
-                std::cout << "migration last value of node_to has negative valuein compartment " << j << std::endl;
-                std::cout << "Before Return: " << last_value_to[(size_t)j] << std::endl;
-                std::cout << "After Return: " << node_to.get_result().get_last_value()(j) << std::endl;
-            }
-            if (node_from.get_result().get_last_value()(j) < 0) {
-                std::cout << "migration last value of node_from has negative value in compartment " << j << std::endl;
-                std::cout << "Before Return: " << last_value_from[(size_t)j] << std::endl;
-                std::cout << "After Return: " << node_from.get_result().get_last_value()(j) << std::endl;
-            }
-            if (node_from.get_result().get_last_value()(j) < 0 || node_to.get_result().get_last_value()(j) < 0) {
-                std::cout << "m_migrated: " << m_migrated.get_last_value()(j) << std::endl;
-            }
-        }
 
         //condense_m_migrated(t);
     }

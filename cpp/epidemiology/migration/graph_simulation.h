@@ -65,20 +65,12 @@ public:
             }
 
             for (auto& n : m_graph.nodes()) {
-                if (n.id == 16069) {
-                    std::cout << "arrived" << std::endl;
-                }
                 m_node_func(m_t, dt, n.property);
             }
 
             m_t += dt;
 
             for (auto& e : m_graph.edges()) {
-                /*if (e.start_node_idx == 316 && e.end_node_idx == 259) {
-
-                    std::cout << "From ID: " << e.start_node_idx << " To ID: " << e.end_node_idx << ", t: " << m_t
-                              << std::endl;
-                }*/
                 m_edge_func(m_t, dt, e.property, m_graph.nodes()[e.start_node_idx].property,
                             m_graph.nodes()[e.end_node_idx].property);
             }

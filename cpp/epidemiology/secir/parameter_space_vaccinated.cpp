@@ -140,6 +140,7 @@ void draw_sample_infection(SecirModelV& model)
     model.parameters.get<ReducImmuneExpInf>()[AgeGroup(0)].draw_sample();
     model.parameters.get<ReducInfHosp>()[AgeGroup(0)].draw_sample();
     model.parameters.get<ReducImmuneInfHosp>()[AgeGroup(0)].draw_sample();
+    model.parameters.get<ReducTime>()[AgeGroup(0)].draw_sample();
 
     for (auto i = AgeGroup(0); i < model.parameters.get_num_groups(); i++) {
         //not age dependent
@@ -160,6 +161,7 @@ void draw_sample_infection(SecirModelV& model)
         model.parameters.get<ReducImmuneExpInf>()[i]  = model.parameters.get<ReducImmuneExpInf>()[AgeGroup(0)];
         model.parameters.get<ReducInfHosp>()[i]       = model.parameters.get<ReducInfHosp>()[AgeGroup(0)];
         model.parameters.get<ReducImmuneInfHosp>()[i] = model.parameters.get<ReducImmuneInfHosp>()[AgeGroup(0)];
+        model.parameters.get<ReducTime>()[i] = model.parameters.get<ReducTime>()[AgeGroup(0)];
 
         //age dependent
         model.parameters.get<HospitalizedToHomeTime>()[i].draw_sample(); // here: home=recovered

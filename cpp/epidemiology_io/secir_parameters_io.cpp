@@ -522,6 +522,8 @@ namespace details
         size_t days_until_effective1 = (size_t)(int)(double)model[0].parameters.get<DaysUntilEffective>()[AgeGroup(0)];
         size_t days_until_effective2 =
             (size_t)(int)(double)model[0].parameters.get<DaysUntilEffectiveFull>()[AgeGroup(0)];
+        size_t vaccination_gap =  
+            (size_t)(int)(double)model[0].parameters.get<VaccinationGap>()[AgeGroup(0)];
 
         std::vector<std::string> age_names = {"0-4", "5-14", "15-34", "35-59", "60-79", "80-99"};
 
@@ -540,14 +542,23 @@ namespace details
             }
         }
 
+        Date max_date = Date(2020, 1, 1);
+        for (unsigned int i = 0; i < root.size(); i++) {
+            auto date_df = parse_date(root[i]["Date"].asString());
+            if (date_df > max_date){
+                max_date = date_df;
+            }
+        }
+        auto max_full_date = offset_date_by_days(max_date,  days_until_effective1 - days_until_effective2 - vaccination_gap);
+
         for (unsigned int i = 0; i < root.size(); i++) {
             auto it = std::find_if(vregion.begin(), vregion.end(), [&root, i, &id_name](auto r) {
                 return r == 0 || root[i][id_name].asInt() == r;
             });
+            auto date_df = parse_date(root[i]["Date"].asString());
             if (it != vregion.end()) {
                 auto region_idx = size_t(it - vregion.begin());
 
-                auto date_df = parse_date(root[i]["Date"].asString());
 
                 auto it_age = std::find(age_names.begin(), age_names.end() - 1, root[i]["Age_RKI"].asString());
                 if (it_age != age_names.end() - 1) {
@@ -555,13 +566,32 @@ namespace details
 
                     for (size_t d = 0; d < (size_t)num_days + 1; ++d) {
 
-                        if (date_df == offset_date_by_days(date, d - days_until_effective1)) {
+                        auto offset_first_date = offset_date_by_days(date, d - days_until_effective1 + vaccination_gap);
+                        if (date_df == offset_first_date && max_date >= offset_first_date) {
                             model[region_idx].parameters.template get<DailyFirstVaccination>()[AgeGroup(age)][d] =
-                                root[i]["Vacc_partially"].asDouble();
+                                root[i]["Vacc_completed"].asDouble();
                         }
-                        if (date_df == offset_date_by_days(date, d - days_until_effective2)) {
+                        else if(max_date < offset_first_date && date_df == offset_date_by_days(max_date, -1)){
+                            model[region_idx].parameters.template get<DailyFirstVaccination>()[AgeGroup(age)][d] -=
+                                root[i]["Vacc_completed"].asDouble();
+                        }
+                        else if(max_date < offset_first_date && date_df == max_date){
+                            model[region_idx].parameters.template get<DailyFirstVaccination>()[AgeGroup(age)][d] +=
+                                2*root[i]["Vacc_completed"].asDouble();
+                        }
+                        
+                        auto offset_full_date = offset_date_by_days(date, d - days_until_effective2);
+                        if (date_df == offset_full_date && max_full_date >= offset_full_date) {
                             model[region_idx].parameters.template get<DailyFullVaccination>()[AgeGroup(age)][d] =
                                 root[i]["Vacc_completed"].asDouble();
+                        }
+                        else if (max_full_date < offset_full_date && date_df == offset_date_by_days(max_full_date, -1)) {
+                            model[region_idx].parameters.template get<DailyFullVaccination>()[AgeGroup(age)][d] -=
+                                root[i]["Vacc_completed"].asDouble();
+                        }
+                        else if (max_full_date < offset_full_date && date_df == max_full_date) {
+                            model[region_idx].parameters.template get<DailyFullVaccination>()[AgeGroup(age)][d] +=
+                                2*root[i]["Vacc_completed"].asDouble();
                         }
                     }
                 }

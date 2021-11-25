@@ -537,6 +537,18 @@ struct ReducImmuneInfHosp {
     }
 };
 
+struct ReducTime {
+    using Type = CustomIndexArray<UncertainValue, AgeGroup>;
+    static Type get_default(AgeGroup size)
+    {
+        return Type(size, 0.5);
+    }
+    static std::string name()
+    {
+        return "ReducTime";
+    }
+};
+
 /**
  * @brief capacity to test and trace contacts of infected for quarantine per day.
  */
@@ -636,7 +648,7 @@ using SecirParamsBase =
                  ICUCasesPerHospitalized, DeathsPerHospitalized, VaccineGrowthFirst, VaccineGrowthFull, VaccinationGap,
                  DaysUntilEffective, DaysUntilEffectiveFull, BaseInfB117, BaseInfB161, DailyFullVaccination,
                  DailyFirstVaccination, DynamicInfectionFromContact, ReducVaccExp, ReducImmuneExp, ReducExpInf,
-                 ReducImmuneExpInf, ReducInfHosp, ReducImmuneInfHosp>;
+                 ReducImmuneExpInf, ReducInfHosp, ReducImmuneInfHosp, ReducTime>;
 
 /**
  * @brief Parameters of an age-resolved SECIR/SECIHURD model.

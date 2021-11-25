@@ -170,6 +170,21 @@ epi::IOResult<void> set_covid_parameters(epi::SecirParams& params)
     const double prob_icu_dead_min[]     = {0.00, 0.00, 0.10, 0.10, 0.30, 0.5}; // delta
     const double prob_icu_dead_max[]     = {0.10, 0.10, 0.18, 0.18, 0.50, 0.7};
 
+        const double reduc_vacc_exp_min        = 0.75;
+    const double reduc_vacc_exp_max        = 0.85;
+    const double reduc_immune_exp_min      = 0.281;
+    const double reduc_immune_exp_max      = 0.381;
+    const double reduc_exp_inf_min         = 0.6;
+    const double reduc_exp_inf_max         = 0.7;
+    const double reduc_immune_exp_inf_min  = 0.193;
+    const double reduc_immune_exp_inf_max  = 0.293;
+    const double reduc_inf_hosp_min        = 0.05;
+    const double reduc_inf_hosp_max        = 0.15;
+    const double reduc_immune_inf_hosp_min = 0.041;
+    const double reduc_immune_inf_hosp_max = 0.141;
+
+    const double reduc_time = 0.5;
+
     array_assign_uniform_distribution(params.get<epi::InfectionProbabilityFromContact>(), transmission_risk_min,
                                       transmission_risk_min);
     array_assign_uniform_distribution(params.get<epi::RelativeCarrierInfectability>(), carr_infec_max, carr_infec_max);
@@ -183,6 +198,17 @@ epi::IOResult<void> set_covid_parameters(epi::SecirParams& params)
                                       prob_inf_hosp_max);
     array_assign_uniform_distribution(params.get<epi::ICUCasesPerHospitalized>(), prob_hosp_icu_max, prob_hosp_icu_max);
     array_assign_uniform_distribution(params.get<epi::DeathsPerHospitalized>(), prob_icu_dead_max, prob_icu_dead_max);
+
+    array_assign_uniform_distribution(params.get<epi::ReducVaccExp>(), reduc_vacc_exp_min, reduc_vacc_exp_max);
+    array_assign_uniform_distribution(params.get<epi::ReducImmuneExp>(), reduc_immune_exp_min, reduc_immune_exp_max);
+    array_assign_uniform_distribution(params.get<epi::ReducExpInf>(), reduc_exp_inf_min, reduc_exp_inf_max);
+    array_assign_uniform_distribution(params.get<epi::ReducImmuneExpInf>(), reduc_immune_exp_inf_min,
+                                      reduc_immune_exp_inf_max);
+    array_assign_uniform_distribution(params.get<epi::ReducInfHosp>(), reduc_inf_hosp_min, reduc_inf_hosp_max);
+    array_assign_uniform_distribution(params.get<epi::ReducImmuneInfHosp>(), reduc_immune_inf_hosp_min,
+                                      reduc_immune_inf_hosp_max);
+    array_assign_uniform_distribution(params.get<epi::ReducTime>(), reduc_time,
+                                      reduc_time);
 
     //sasonality
     const double seasonality_min = 0.1;
@@ -217,7 +243,7 @@ epi::IOResult<void> set_contact_matrices(const fs::path& data_dir, epi::SecirPar
                           epi::read_mobility_plain(
                               (data_dir / "contacts" / ("minimum_" + contact_location.second + ".txt")).string()));
         contact_matrices[size_t(contact_location.first)].get_baseline() = baseline;
-        contact_matrices[size_t(contact_location.first)].get_minimum()  = minimum;
+        contact_matrices[size_t(contact_location.first)].get_minimum()  = Eigen::MatrixXd::Zero(6,6);;
     }
     params.get<epi::ContactPatterns>() = epi::UncertainContactMatrix(contact_matrices);
 
@@ -451,7 +477,6 @@ epi::IOResult<void> set_nodes(const epi::SecirParams& params, epi::Date start_da
                               const fs::path& data_dir,
                               epi::Graph<epi::SecirModelV, epi::MigrationParameters>& params_graph)
 {
-    std::cout << "Hello World!" << std::endl;
     namespace de = epi::regions::de;
 
     BOOST_OUTCOME_TRY(county_ids, epi::get_county_ids((data_dir / "pydata" / "Germany").string()));
@@ -460,7 +485,6 @@ epi::IOResult<void> set_nodes(const epi::SecirParams& params, epi::Date start_da
     for (auto& county : counties) {
         county.parameters = params;
     }
-    std::cout << "Hello World!" << std::endl;
     auto scaling_factor_infected = std::vector<double>(size_t(params.get_num_groups()), 1.0);
     auto scaling_factor_icu      = 1.0;
     BOOST_OUTCOME_TRY((epi::read_population_data_county<epi::SecirModelV, epi::InfectionStateV>(
@@ -468,8 +492,7 @@ epi::IOResult<void> set_nodes(const epi::SecirParams& params, epi::Date start_da
         (data_dir / "pydata" / "Germany").string())));
     BOOST_OUTCOME_TRY(epi::read_vaccine_data(counties, start_date, county_ids,
                                              (data_dir / "pydata" / "Germany").string(),
-                                             epi::get_offset_in_days(start_date, end_date)));
-    std::cout << counties.size() << std::endl;
+                                             epi::get_offset_in_days(end_date, start_date)));
     //set_synthetic_population_data(counties);
 
     for (size_t county_idx = 0; county_idx < counties.size(); ++county_idx) {
@@ -606,7 +629,7 @@ create_graph(epi::Date start_date, epi::Date end_date, const fs::path& data_dir,
     params.get<epi::StartSummer>() = start_summer;
     BOOST_OUTCOME_TRY(set_covid_parameters(params));
     BOOST_OUTCOME_TRY(set_contact_matrices(data_dir, params));
-    //BOOST_OUTCOME_TRY(set_npis(start_date, end_date, params, late, masks));
+    BOOST_OUTCOME_TRY(set_npis(start_date, end_date, params, late, masks));
 
     //graph of counties with populations and local parameters
     //and migration between counties
@@ -614,14 +637,6 @@ create_graph(epi::Date start_date, epi::Date end_date, const fs::path& data_dir,
     BOOST_OUTCOME_TRY(set_nodes(params, start_date, end_date, data_dir, params_graph));
     //BOOST_OUTCOME_TRY(set_edges(data_dir, params_graph));
 
-    auto test = params_graph.nodes()[0].property;
-    for (int i = 0; i < 6; i++) {
-        std::cout << "AgeGroup: " << i << std::endl;
-        for (int j = 0; j < 18; j++) {
-
-            std::cout << j << ": " << test.populations[{epi::AgeGroup(i), epi::InfectionStateV(j)}] << std::endl;
-        }
-    }
 
     return epi::success(params_graph);
 }
@@ -908,6 +923,15 @@ int main(int argc, char** argv)
         printf("paper1 <load_dir> <result_dir>\n");
         printf("\tLoad graph from <load_dir>, then run the simulation.\n");
         return 0;
+    }
+    
+    result_dir += "_one_region";
+    
+    boost::filesystem::path dir(result_dir);
+    bool created = boost::filesystem::create_directories(dir);
+
+    if (created) {
+        epi::log_info("Directory '{:s}' was created.", dir.string());
     }
     printf("Saving results to \"%s\".\n", result_dir.c_str());
 

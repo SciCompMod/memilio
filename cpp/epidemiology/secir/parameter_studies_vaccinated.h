@@ -111,11 +111,11 @@ public:
      *                                   Receives the result after each run is completed.
      */
     template <class HandleSimulationResultFunction>
-    void run(HandleSimulationResultFunction result_processing_function)
+    void run(HandleSimulationResultFunction result_processing_function, bool high=false)
     {
         // Iterate over all parameters in the parameter space
         for (size_t i = 0; i < m_num_runs; i++) {
-            auto sim = create_sampled_simulation();
+            auto sim = create_sampled_simulation(high);
             sim.advance(m_tmax);
 
             result_processing_function(std::move(sim).get_graph());
@@ -219,7 +219,7 @@ public:
 
 private:
     //sample parameters and create simulation
-    epi::GraphSimulation<epi::Graph<epi::SimulationNode<Simulation>, epi::MigrationEdge>> create_sampled_simulation()
+    epi::GraphSimulation<epi::Graph<epi::SimulationNode<Simulation>, epi::MigrationEdge>> create_sampled_simulation(bool high=false)
     {
         epi::Graph<epi::SimulationNode<Simulation>, epi::MigrationEdge> sim_graph;
 
@@ -231,11 +231,19 @@ private:
         auto& shared_dynamic_npis = shared_params_model.parameters.template get<DynamicNPIsInfected>();
         shared_dynamic_npis.draw_sample();
 
+        double delta_fac;
+        if (high) {
+            delta_fac = 1.6;
+        }
+        else {
+            delta_fac = 1.4;
+        }
+
         for (auto i = AgeGroup(0); i < shared_params_model.parameters.get_num_groups(); ++i) {
             shared_params_model.parameters.template get<BaseInfB117>()[i] =
                 shared_params_model.parameters.template get<InfectionProbabilityFromContact>()[i];
             shared_params_model.parameters.template get<BaseInfB161>()[i] =
-                shared_params_model.parameters.template get<InfectionProbabilityFromContact>()[i] * 1.4;
+                shared_params_model.parameters.template get<InfectionProbabilityFromContact>()[i] * delta_fac;
             shared_params_model.parameters.template get<DynamicInfectionFromContact>()[i] = {};
             for (size_t t = 0; t < (size_t)m_tmax; ++t) {
                 double share_new_variant = std::min(1.0, pow(2, (double)t / 7) / 100.0);
