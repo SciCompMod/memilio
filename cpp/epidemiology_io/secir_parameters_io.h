@@ -572,12 +572,13 @@ IOResult<void> extrapolate_rki_results(std::vector<Model>& model, const std::str
                     rki_data[i][j]((size_t)ModelType::ICU + (size_t)ModelType::Count * age);
             }
         }
+        std::cout << "extrapolated rki data for date: " << date.day << "." << date.month << "." << date.year << std::endl;
         date = offset_date_by_days(date, 1);
     }
-    BOOST_OUTCOME_TRY(save_result(rki_data, region, path_join(results_dir, "Results_rki.h5")));
+    BOOST_OUTCOME_TRY(save_result<ModelType>(rki_data, region, path_join(results_dir, "Results_rki.h5")));
 
     auto rki_data_sum = epi::sum_nodes(std::vector<std::vector<TimeSeries<double>>>{rki_data});
-    BOOST_OUTCOME_TRY(save_result({rki_data_sum[0][0]}, {0}, path_join(results_dir, "Results_rki_sum.h5")));
+    BOOST_OUTCOME_TRY(save_result<ModelType>({rki_data_sum[0][0]}, {0}, path_join(results_dir, "Results_rki_sum.h5")));
 
     return success();
 }
@@ -666,6 +667,7 @@ IOResult<void> read_population_data_county(std::vector<Model>& model, Date date,
     }
     BOOST_OUTCOME_TRY((details::set_rki_data<Model, ModelType>(model, path_join(dir, "all_county_age_ma7_rki.json"),
                                                                id_name, county, date, scaling_factor_inf)));
+    BOOST_OUTCOME_TRY((extrapolate_rki_results<Model, ModelType>(model, dir, dir, county, date, scaling_factor_inf, scaling_factor_icu, 5)));
     BOOST_OUTCOME_TRY((details::set_population_data<Model, ModelType>(
         model, path_join(dir, "county_current_population.json"), "ID_County", county)));
     return success();

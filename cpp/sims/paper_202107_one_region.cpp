@@ -151,10 +151,10 @@ epi::IOResult<void> set_covid_parameters(epi::SecirParams& params)
     //probabilities
     double fac_variant                   = 1.4;
     const double transmission_risk_min[] = {0.02 * fac_variant, 0.05 * fac_variant, 0.05 * fac_variant,
-                                            0.05 * fac_variant, 0.08 * fac_variant, 0.15 * fac_variant};
+                                            0.05 * fac_variant, 0.08 * fac_variant, 0.1 * fac_variant};
 
     const double transmission_risk_max[] = {0.04 * fac_variant, 0.07 * fac_variant, 0.07 * fac_variant,
-                                            0.07 * fac_variant, 0.10 * fac_variant, 0.20 * fac_variant};
+                                            0.07 * fac_variant, 0.10 * fac_variant, 0.15 * fac_variant};
     const double carr_infec_min          = 0.5;
     const double carr_infec_max          = 0.5;
     const double beta_low_incidenc_min   = 0.0; // beta (depends on incidence and test and trace capacity)
