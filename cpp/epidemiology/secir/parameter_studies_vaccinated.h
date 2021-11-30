@@ -233,7 +233,7 @@ private:
 
         double delta_fac;
         if (high) {
-            delta_fac = 1.6;
+            delta_fac = 1.5;
         }
         else {
             delta_fac = 1.4;
@@ -244,15 +244,15 @@ private:
                 shared_params_model.parameters.template get<InfectionProbabilityFromContact>()[i];
             shared_params_model.parameters.template get<BaseInfB161>()[i] =
                 shared_params_model.parameters.template get<InfectionProbabilityFromContact>()[i] * delta_fac;
-            shared_params_model.parameters.template get<DynamicInfectionFromContact>()[i] = {};
-            for (size_t t = 0; t < (size_t)m_tmax; ++t) {
-                double share_new_variant = std::min(1.0, pow(2, (double)t / 7) / 100.0);
-                double new_transmission =
-                    (1 - share_new_variant) * shared_params_model.parameters.template get<BaseInfB117>()[(AgeGroup)i] +
-                    share_new_variant * shared_params_model.parameters.template get<BaseInfB161>()[(AgeGroup)i];
-                shared_params_model.parameters.template get<DynamicInfectionFromContact>()[i].push_back(
-                    new_transmission);
-            }
+            // shared_params_model.parameters.template get<DynamicInfectionFromContact>()[i] = {};
+            // for (size_t t = 0; t < (size_t)m_tmax; ++t) {
+            //     double share_new_variant = std::min(1.0, pow(2, (double)t / 7) / 100.0);
+            //     double new_transmission =
+            //         (1 - share_new_variant) * shared_params_model.parameters.template get<BaseInfB117>()[(AgeGroup)i] +
+            //         share_new_variant * shared_params_model.parameters.template get<BaseInfB161>()[(AgeGroup)i];
+            //     shared_params_model.parameters.template get<DynamicInfectionFromContact>()[i].push_back(
+            //         new_transmission);
+            // }
         }
 
         for (auto& params_node : m_graph.nodes()) {

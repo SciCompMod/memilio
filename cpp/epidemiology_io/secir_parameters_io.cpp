@@ -519,11 +519,11 @@ namespace details
         Json::Reader reader;
         Json::Value root;
 
-        size_t days_until_effective1 = (size_t)(int)(double)model[0].parameters.get<DaysUntilEffective>()[AgeGroup(0)];
-        size_t days_until_effective2 =
-            (size_t)(int)(double)model[0].parameters.get<DaysUntilEffectiveFull>()[AgeGroup(0)];
-        size_t vaccination_gap =  
-            (size_t)(int)(double)model[0].parameters.get<VaccinationGap>()[AgeGroup(0)];
+        auto days_until_effective1 = (int)(double)model[0].parameters.get<DaysUntilEffective>()[AgeGroup(0)];
+        auto days_until_effective2 =
+            (int)(double)model[0].parameters.get<DaysUntilEffectiveFull>()[AgeGroup(0)];
+        auto vaccination_gap =  
+            (int)(double)model[0].parameters.get<VaccinationGap>()[AgeGroup(0)];
 
         std::vector<std::string> age_names = {"0-4", "5-14", "15-34", "35-59", "60-79", "80-99"};
 
@@ -564,7 +564,7 @@ namespace details
                 if (it_age != age_names.end() - 1) {
                     auto age = size_t(it_age - age_names.begin());
 
-                    for (size_t d = 0; d < (size_t)num_days + 1; ++d) {
+                    for (int d = 0; d < num_days + 1; ++d) {
 
                         auto offset_first_date = offset_date_by_days(date, d - days_until_effective1 + vaccination_gap);
                         if (date_df == offset_first_date && max_date >= offset_first_date) {
@@ -659,9 +659,9 @@ namespace details
                 }
 
                 double vaccine_growth_first =
-                    vaccine_first_mean * (param.populations.get_group_total(i) / sum_population);
+                    daily_first_vaccination.back() * (param.populations.get_group_total(i) / sum_population);
                 double vaccine_growth_full =
-                    vaccine_full_mean * (param.populations.get_group_total(i) / sum_population);
+                    daily_full_vaccination.back() * (param.populations.get_group_total(i) / sum_population);
                 param.parameters.get<VaccineGrowthFirst>()[i] = vaccine_growth_first;
                 param.parameters.get<VaccineGrowthFull>()[i]  = vaccine_growth_full;
             }

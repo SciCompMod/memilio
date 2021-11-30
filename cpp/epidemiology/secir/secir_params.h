@@ -56,6 +56,18 @@ struct StartDay {
     }
 };
 
+struct AvgSecondVaccDay {
+    using Type = CustomIndexArray<double, AgeGroup>;
+    static Type get_default(AgeGroup c)
+    {
+        return Type{c, 0.0};
+    }
+    static std::string name()
+    {
+        return "AvgSecondVaccDay";
+    }
+};
+
 struct StartSummer {
     using Type = double;
     static Type get_default(AgeGroup)
@@ -640,7 +652,7 @@ struct DynamicInfectionFromContact {
 };
 
 using SecirParamsBase =
-    ParameterSet<StartDay, StartSummer, Seasonality, ICUCapacity, TestAndTraceCapacity, ContactPatterns,
+    ParameterSet<StartDay, AvgSecondVaccDay, StartSummer, Seasonality, ICUCapacity, TestAndTraceCapacity, ContactPatterns,
                  DynamicNPIsInfected, IncubationTime, InfectiousTimeMild, InfectiousTimeAsymptomatic, SerialInterval,
                  HospitalizedToHomeTime, HomeToHospitalizedTime, HospitalizedToICUTime, ICUToHomeTime, ICUToDeathTime,
                  InfectionProbabilityFromContact, RelativeCarrierInfectability, AsymptoticCasesPerInfectious,
