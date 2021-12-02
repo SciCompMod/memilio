@@ -77,8 +77,8 @@ setup(
             'pyfakefs==4.1.0',
             'freezegun',
             'coverage',
-            'pylint', 
-            'pylint_json2html',
+            'pylint<=2.11.1', 
+            'pylint_json2html<=0.3.0',
         ],
     },
     cmdclass={
