@@ -186,17 +186,19 @@ def get_vaccination_data(read_data=dd.defaultDict['read_data'],
 
     df_data.rename(dd.GerEng, axis=1, inplace=True)
 
-    # remove unknown locations if only modest number
-    if df_data[df_data[dd.EngEng['idCounty']] == 'u'].agg({'Number': sum}).Number < 10000:
+    # remove unknown locations if only modest number (i.e. less than 0.1%)
+    if df_data[df_data[dd.EngEng['idCounty']] == 'u'].agg({'Number': sum}).Number \
+        / df_data[df_data[dd.EngEng['idCounty']] != 'u'].agg({'Number': sum}).Number < 0.001:
         df_data = df_data[df_data[dd.EngEng['idCounty']] != 'u']
     else:
-        print('Too many data items with unknown vaccination location, '
+        sys.exit('Too many data items with unknown vaccination location, '
         'please check source data.')
 
-    if df_data[df_data[dd.EngEng['ageRKI']] == 'u'].agg({'Number': sum}).Number < 10000:
+    if df_data[df_data[dd.EngEng['ageRKI']] == 'u'].agg({'Number': sum}).Number \
+         / df_data[df_data[dd.EngEng['ageRKI']] != 'u'].agg({'Number': sum}).Number < 0.001:
         df_data = df_data[df_data[dd.EngEng['ageRKI']] != 'u']
     else:
-        print('Too many data items with unknown vaccination age, '
+        sys.exit('Too many data items with unknown vaccination age, '
         'please check source data.')
 
     # remove leading zeros for ID_County (if not yet done)
