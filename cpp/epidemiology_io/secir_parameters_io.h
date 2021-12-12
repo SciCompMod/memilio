@@ -682,7 +682,7 @@ IOResult<void> read_vaccine_data(std::vector<Model>& model, Date date, const std
 {
     std::string id_name = "ID_County";
 
-    details::get_new_vaccine_growth(model, path_join(dir, "sn_all_county_ageinf_vacc_ma7.json"), date, id_name,
+    details::get_new_vaccine_growth(model, path_join(dir, "ni_all_county_ageinf_vacc_ma7.json"), date, id_name,
                                     county, num_days);
     //details::set_vaccine_data(model, path_join(dir, "vaccine_data.json"), id_name, county);
     return success();

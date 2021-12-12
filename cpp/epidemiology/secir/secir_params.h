@@ -453,7 +453,7 @@ struct VaccineGrowthFull {
 /**
  * @brief capacity to test and trace contacts of infected for quarantine per day.
  */
-struct BaseInfB117 {
+struct BaseInfOmikron {
     using Type = CustomIndexArray<double, AgeGroup>;
     static Type get_default(AgeGroup size)
     {
@@ -461,7 +461,7 @@ struct BaseInfB117 {
     }
     static std::string name()
     {
-        return "BaseInfB117";
+        return "BaseInfOmikron";
     }
 };
 
@@ -658,7 +658,7 @@ using SecirParamsBase =
                  InfectionProbabilityFromContact, RelativeCarrierInfectability, AsymptoticCasesPerInfectious,
                  RiskOfInfectionFromSympomatic, MaxRiskOfInfectionFromSympomatic, HospitalizedCasesPerInfectious,
                  ICUCasesPerHospitalized, DeathsPerHospitalized, VaccineGrowthFirst, VaccineGrowthFull, VaccinationGap,
-                 DaysUntilEffective, DaysUntilEffectiveFull, BaseInfB117, BaseInfB161, DailyFullVaccination,
+                 DaysUntilEffective, DaysUntilEffectiveFull, BaseInfOmikron, BaseInfB161, DailyFullVaccination,
                  DailyFirstVaccination, DynamicInfectionFromContact, ReducVaccExp, ReducImmuneExp, ReducExpInf,
                  ReducImmuneExpInf, ReducInfHosp, ReducImmuneInfHosp, ReducTime>;
 

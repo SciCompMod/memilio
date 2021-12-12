@@ -576,18 +576,18 @@ public:
     {
     }
 
-    void apply_b161(double)
+    void apply_b161(double t)
     {
-        // auto start_day   = this->get_model().parameters.template get<StartDay>();
-        // auto b161_growth = (start_day - get_day_in_year(Date(2021, 6, 6))) * 0.1666667;
-        // // 2 equal to the share of the delta variant on June 6
-        // double share_new_variant = std::min(1.0, pow(2, t * 0.1666667 + b161_growth) * 0.01);
-        auto share_new_variant = 1.0;
+        auto start_day   = this->get_model().parameters.template get<StartDay>();
+        // // 0.03 equal to the share of the Omikron variant after week 48, doubling each 4 days
+        double share_new_variant = std::min(1.0, pow(2, (start_day + t - get_day_in_year(Date(2021, 12, 4))) * 0.25) * 0.03);
+        // std::cout << "\n at t=" << t << " new variant share " << share_new_variant;
+        // auto share_new_variant = 1.0;
         size_t num_groups = (size_t)this->get_model().parameters.get_num_groups();
         for (size_t i = 0; i < num_groups; ++i) {
             double new_transmission =
-                (1 - share_new_variant) * this->get_model().parameters.template get<BaseInfB117>()[(AgeGroup)i] +
-                share_new_variant * this->get_model().parameters.template get<BaseInfB161>()[(AgeGroup)i];
+                (1 - share_new_variant) * this->get_model().parameters.template get<BaseInfB161>()[(AgeGroup)i] +
+                share_new_variant * this->get_model().parameters.template get<BaseInfOmikron>()[(AgeGroup)i];
             this->get_model().parameters.template get<InfectionProbabilityFromContact>()[(AgeGroup)i] =
                 new_transmission;
         }
@@ -601,7 +601,7 @@ public:
         auto last_value   = this->get_result().get_last_value();
 
         for (int i = 0; i < last_value.size(); ++i) {
-            if (last_value(i) < 0) {
+            if (last_value(i) < -10) {
                 std::cout << "compartment i is negative: " << last_value(i) << std::endl;
             }
         }
@@ -629,8 +629,8 @@ public:
             }
 
             if (last_value(count * i + S) - first_vacc < 0) {
-                std::cout << "too many first vaccinated at time" << t << ": setting first_vacc from" << first_vacc
-                          << " to " << 0.99 * last_value(count * i + S) << std::endl;
+                // std::cout << "too many first vaccinated at time" << t << ": setting first_vacc from" << first_vacc
+                //           << " to " << 0.99 * last_value(count * i + S) << std::endl;
                 first_vacc = 0.99 * last_value(count * i + S);
             }
 
@@ -638,8 +638,8 @@ public:
             last_value(count * i + SV) += first_vacc;
 
             if (last_value(count * i + SV) - full_vacc < 0) {
-                std::cout << "too many fully vaccinated at time" << t << ": setting full_vacc from" << full_vacc
-                          << " to " << 0.99 * last_value(count * i + SV) << std::endl;
+                // std::cout << "too many fully vaccinated at time" << t << ": setting full_vacc from" << full_vacc
+                //           << " to " << 0.99 * last_value(count * i + SV) << std::endl;
                 full_vacc = 0.99 * last_value(count * i + SV);
             }
 
@@ -736,8 +736,6 @@ public:
     Eigen::Ref<Eigen::VectorXd> advance(double tmax)
     {
 
-        auto& start_day        = this->get_model().parameters.template get<StartDay>();
-        auto& start_summer     = this->get_model().parameters.template get<StartSummer>();
         auto& dyn_npis         = this->get_model().parameters.template get<DynamicNPIsInfected>();
         auto& contact_patterns = this->get_model().parameters.template get<ContactPatterns>();
 
@@ -762,7 +760,7 @@ public:
             }
 
             if (t > 0) {
-                delay_lockdown = 7;
+                delay_lockdown = 5;
             }
             else {
                 delay_lockdown = 0;
@@ -771,25 +769,25 @@ public:
 
             if (dyn_npis.get_thresholds().size() > 0) {
                 if (floating_point_greater_equal(t, m_t_last_npi_check + dt)) {
-                    if (Base::get_result().get_last_time() < start_summer - start_day) {
-                        auto inf_rel = get_infections_relative(*this, t, this->get_result().get_last_value()) *
-                                       dyn_npis.get_base_value();
-                        auto exceeded_threshold = dyn_npis.get_max_exceeded_threshold(inf_rel);
-                        if (exceeded_threshold != dyn_npis.get_thresholds().end() &&
-                            (exceeded_threshold->first > m_dynamic_npi.first ||
-                             t > double(m_dynamic_npi.second))) { //old npi was weaker or is expired
 
-                            auto t_start = SimulationTime(t + delay_lockdown);
-                            auto t_end   = t_start + SimulationTime(dyn_npis.get_duration());
-                            this->get_model().parameters.get_start_commuter_detection() = (double)t_start;
-                            this->get_model().parameters.get_end_commuter_detection()   = (double)t_end;
-                            m_dynamic_npi = std::make_pair(exceeded_threshold->first, t_end);
-                            implement_dynamic_npis(contact_patterns.get_cont_freq_mat(), exceeded_threshold->second,
-                                                   t_start, t_end, [this](auto& g) {
-                                                       return make_contact_damping_matrix(g);
-                                                   });
-                        }
+                    auto inf_rel = get_infections_relative(*this, t, this->get_result().get_last_value()) *
+                                    dyn_npis.get_base_value();
+                    auto exceeded_threshold = dyn_npis.get_max_exceeded_threshold(inf_rel);
+                    if (exceeded_threshold != dyn_npis.get_thresholds().end() &&
+                        (exceeded_threshold->first > m_dynamic_npi.first ||
+                            t > double(m_dynamic_npi.second))) { //old npi was weaker or is expired
+
+                        auto t_start = SimulationTime(t + delay_lockdown);
+                        auto t_end   = t_start + SimulationTime(dyn_npis.get_duration());
+                        this->get_model().parameters.get_start_commuter_detection() = (double)t_start;
+                        this->get_model().parameters.get_end_commuter_detection()   = (double)t_end;
+                        m_dynamic_npi = std::make_pair(exceeded_threshold->first, t_end);
+                        implement_dynamic_npis(contact_patterns.get_cont_freq_mat(), exceeded_threshold->second,
+                                                t_start, t_end, [this](auto& g) {
+                                                    return make_contact_damping_matrix(g);
+                                                });
                     }
+
                     m_t_last_npi_check = t;
                 }
             }

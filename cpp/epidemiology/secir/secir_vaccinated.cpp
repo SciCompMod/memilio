@@ -930,69 +930,69 @@ SecirSimulation::SecirSimulation(SecirParams const& params, double t0, double dt
     m_integratorCore->set_abs_tolerance(1e-1);
 }
 
-Eigen::Ref<Eigen::VectorXd> SecirSimulation::advance(double tmax)
-{
-    double threshhold = 0.8;
-    size_t num_groups = m_params.get_num_groups();
-    double t          = m_integrator.get_result().get_time(m_integrator.get_result().get_num_time_points() - 1);
+// Eigen::Ref<Eigen::VectorXd> SecirSimulation::advance(double tmax)
+// {
+//     double threshhold = 0.8;
+//     size_t num_groups = m_params.get_num_groups();
+//     double t          = m_integrator.get_result().get_time(m_integrator.get_result().get_num_time_points() - 1);
 
-    std::vector<bool> saturated(num_groups, false);
-    while (t < tmax) {
-        bool apply_vaccination = tmax - std::floor(t) >= 1;
-        t                      = std::min(t + 1, tmax);
+//     std::vector<bool> saturated(num_groups, false);
+//     while (t < tmax) {
+//         bool apply_vaccination = tmax - std::floor(t) >= 1;
+//         t                      = std::min(t + 1, tmax);
 
-        auto last_value = m_integrator.advance(t);
-        if (apply_vaccination) {
+//         auto last_value = m_integrator.advance(t);
+//         if (apply_vaccination) {
 
-            for (size_t i = 0; i < num_groups; ++i) {
-                double share_new_variant = std::min(1.0, pow(2, t / 7) / 100.0);
-                double new_transmission  = (1 - share_new_variant) * m_params.get<BaseInfB117>()[i] +
-                                          share_new_variant * m_params.get<BaseInfB161>()[i];
-                m_params.get<InfectionProbabilityFromContact>()[i] = new_transmission;
-            }
-            double leftover = 0;
-            size_t count    = 0;
-            for (size_t i = 2; i < num_groups; ++i) {
-                std::vector<double> daily_first_vaccinations = m_params.get_daily_first_vaccinations();
-                std::vector<double> daily_first_vaccinations = m_params.get_daily_full_vaccinations();
-                double new_vaccinated_full  = daily_first_vaccinations[daily_first_vaccinations.size() - 42];
-                double new_vaccinated_first = m_params.get<VaccineGrowthFirst>()[i] +
-                                              m_params.get<VaccineGrowthFull>()[i] - new_vaccinated_full;
-                if (last_value(InfectionStateV::Count * i + InfectionStateV::Susceptible) - new_vaccinated_first >
-                    (1 - threshhold) * m_params.populations.get_group_total(i)) {
-                    last_value(InfectionStateV::Count * i + InfectionStateV::Susceptible) -= new_vaccinated_first;
-                    last_value(InfectionStateV::Count * i + InfectionStateV::SusceptibleV1) += new_vaccinated_first;
-                    m_params.add_daily_first_vaccinations(new_vaccinated_first);
-                }
-                else {
-                    m_params.add_daily_first_vaccinations(0);
-                    saturated[i] = true;
-                    count++;
-                    leftover += new_vaccinated_first;
-                }
+//             for (size_t i = 0; i < num_groups; ++i) {
+//                 double share_new_variant = std::min(1.0, pow(2, t / 7) / 100.0);
+//                 double new_transmission  = (1 - share_new_variant) * m_params.get<BaseInfB161>()[i] +
+//                                           share_new_variant * m_params.get<BaseInfOmikron>()[i];
+//                 m_params.get<InfectionProbabilityFromContact>()[i] = new_transmission;
+//             }
+//             double leftover = 0;
+//             size_t count    = 0;
+//             for (size_t i = 2; i < num_groups; ++i) {
+//                 std::vector<double> daily_first_vaccinations = m_params.get_daily_first_vaccinations();
+//                 std::vector<double> daily_first_vaccinations = m_params.get_daily_full_vaccinations();
+//                 double new_vaccinated_full  = daily_first_vaccinations[daily_first_vaccinations.size() - 42];
+//                 double new_vaccinated_first = m_params.get<VaccineGrowthFirst>()[i] +
+//                                               m_params.get<VaccineGrowthFull>()[i] - new_vaccinated_full;
+//                 if (last_value(InfectionStateV::Count * i + InfectionStateV::Susceptible) - new_vaccinated_first >
+//                     (1 - threshhold) * m_params.populations.get_group_total(i)) {
+//                     last_value(InfectionStateV::Count * i + InfectionStateV::Susceptible) -= new_vaccinated_first;
+//                     last_value(InfectionStateV::Count * i + InfectionStateV::SusceptibleV1) += new_vaccinated_first;
+//                     m_params.add_daily_first_vaccinations(new_vaccinated_first);
+//                 }
+//                 else {
+//                     m_params.add_daily_first_vaccinations(0);
+//                     saturated[i] = true;
+//                     count++;
+//                     leftover += new_vaccinated_first;
+//                 }
 
-                if (last_value(InfectionStateV::Count * i + InfectionStateV::SusceptibleV1) - new_vaccinated_full > 0) {
-                    last_value(InfectionStateV::Count * i + InfectionStateV::SusceptibleV1) -= new_vaccinated_full;
-                    last_value(InfectionStateV::Count * i + InfectionStateV::Recovered) += new_vaccinated_full;
-                }
-                else {
-                    leftover += new_vaccinated_full;
-                }
-            }
-            for (size_t i = 2; i < num_groups; ++i) {
-                if (!saturated[i] && count > 0) {
-                    last_value(InfectionStateV::Count * i + InfectionStateV::Susceptible) -= leftover / count;
-                    last_value(InfectionStateV::Count * i + InfectionStateV::SusceptibleV1) += leftover / count;
-                    m_params.get<DailyFirstVaccination>()[i]
-                        [m_params.get<DailyFirstVaccination>()[i].size() - 1] += leftover / count;
-                }
-            }
-            //m_integrator.get_result().get_last_value() = last_value;
-        }
-    }
+//                 if (last_value(InfectionStateV::Count * i + InfectionStateV::SusceptibleV1) - new_vaccinated_full > 0) {
+//                     last_value(InfectionStateV::Count * i + InfectionStateV::SusceptibleV1) -= new_vaccinated_full;
+//                     last_value(InfectionStateV::Count * i + InfectionStateV::Recovered) += new_vaccinated_full;
+//                 }
+//                 else {
+//                     leftover += new_vaccinated_full;
+//                 }
+//             }
+//             for (size_t i = 2; i < num_groups; ++i) {
+//                 if (!saturated[i] && count > 0) {
+//                     last_value(InfectionStateV::Count * i + InfectionStateV::Susceptible) -= leftover / count;
+//                     last_value(InfectionStateV::Count * i + InfectionStateV::SusceptibleV1) += leftover / count;
+//                     m_params.get<DailyFirstVaccination>()[i]
+//                         [m_params.get<DailyFirstVaccination>()[i].size() - 1] += leftover / count;
+//                 }
+//             }
+//             //m_integrator.get_result().get_last_value() = last_value;
+//         }
+//     }
 
-    return m_integrator.get_result().get_last_value();
+//     return m_integrator.get_result().get_last_value();
 
-}
+// }
 
 } // namespace epi

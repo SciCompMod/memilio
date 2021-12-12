@@ -231,19 +231,21 @@ private:
         auto& shared_dynamic_npis = shared_params_model.parameters.template get<DynamicNPIsInfected>();
         shared_dynamic_npis.draw_sample();
 
-        double delta_fac;
+        double omikron_fac;
         if (high) {
-            delta_fac = 1.5;
+            omikron_fac = 1.5;
         }
         else {
-            delta_fac = 1.4;
+            omikron_fac = 1.25;
         }
+        std::cout << "Setting Omikron to " << omikron_fac;
+        // double delta_fac = 1.5;
 
         for (auto i = AgeGroup(0); i < shared_params_model.parameters.get_num_groups(); ++i) {
-            shared_params_model.parameters.template get<BaseInfB117>()[i] =
-                shared_params_model.parameters.template get<InfectionProbabilityFromContact>()[i];
             shared_params_model.parameters.template get<BaseInfB161>()[i] =
-                shared_params_model.parameters.template get<InfectionProbabilityFromContact>()[i] * delta_fac;
+                shared_params_model.parameters.template get<InfectionProbabilityFromContact>()[i];
+            shared_params_model.parameters.template get<BaseInfOmikron>()[i] =
+                shared_params_model.parameters.template get<InfectionProbabilityFromContact>()[i] * omikron_fac;
             // shared_params_model.parameters.template get<DynamicInfectionFromContact>()[i] = {};
             // for (size_t t = 0; t < (size_t)m_tmax; ++t) {
             //     double share_new_variant = std::min(1.0, pow(2, (double)t / 7) / 100.0);
