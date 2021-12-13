@@ -23,7 +23,7 @@
 """
 import matplotlib.pyplot as plt 
 import numpy as np
-import epidemiology.epidata.getDataIntoPandasDataFrame as gd
+from epidemiology.epidata import getDataIntoPandasDataFrame as gd
 import pandas as pd
 
 

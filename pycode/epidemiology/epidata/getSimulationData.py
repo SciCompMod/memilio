@@ -25,7 +25,7 @@
 The functions which are called are:
 - getRKIData.get_rki_data
 - getPopulationData.get_population_data
-- getVacccineData.get_vaccine_data
+- getVacccinationData.get_vaccination_data
 - getDIVIData.get_divi_data
 """
 
@@ -52,8 +52,7 @@ def get_simulation_data(read_data=dd.defaultDict['read_data'],
                         make_plot=dd.defaultDict['make_plot'],
                         moving_average=dd.defaultDict['moving_average'],
                         split_berlin=dd.defaultDict['split_berlin'],
-                        start_date=dd.defaultDict['start_date'],
-                        update_data=dd.defaultDict['update_data']
+                        start_date=dd.defaultDict['start_date']
                         ):
     """! Downloads all data from external sources
 
@@ -74,8 +73,6 @@ def get_simulation_data(read_data=dd.defaultDict['read_data'],
     @param moving_average True or False [Default]. Defines if files for 7 day moving average should be created
     @param split_berlin True [Default] or False. Defines if Berlin counties is fused to just on county.
     @param start_date [Optional] Date to start to download data [Default = 2020-04-24].
-    @param update_data "True" if existing data is updated or
-    "False [Default]" if it is downloaded for all dates from start_date to end_date.
     """
 
     arg_dict_all = {
@@ -88,7 +85,7 @@ def get_simulation_data(read_data=dd.defaultDict['read_data'],
                     "split_berlin": split_berlin}
 
     arg_dict_divi = {**arg_dict_all, "end_date": end_date,
-                     "start_date": start_date, "moving_average": moving_average, "update_data": update_data}
+                     "start_date": start_date, "moving_average": moving_average}
 
     arg_dict_vacc = {**arg_dict_all, "make_plot": make_plot,
                      "moving_average": moving_average}

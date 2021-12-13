@@ -209,7 +209,7 @@ def get_testing_data(read_data=dd.defaultDict['read_data'],
     # replace state names with IDs
     df_test[1] = df_test[1].rename(
         columns={dd.EngEng['state']: dd.EngEng['idState']})
-    for stateName, stateID in dd.get_state_names_and_ids():
+    for stateName, stateID in geoger.get_state_names_and_ids():
         df_test[1].loc[df_test[1][dd.EngEng['idState']]
                        == stateName, dd.EngEng['idState']] = stateID
 
@@ -261,7 +261,7 @@ def get_testing_data(read_data=dd.defaultDict['read_data'],
 
     # store positive rates of federal states on county level
     # get county ids
-    unique_geo_entities = dd.get_county_ids()
+    unique_geo_entities = geoger.get_county_ids()
 
     df_test_counties = pd.DataFrame()
     states_str = dict(zip([str(state).zfill(

@@ -25,7 +25,7 @@
 import pandas as pd
 import itertools
 
-import epidemiology.epidata.defaultDict as dd
+from epidemiology.epidata import defaultDict as dd
 
 
 def impute_and_reduce_df(df_old, group_by_cols, mod_cols, impute='forward', moving_average=0, min_date='', max_date='', start_w_firstval=False):

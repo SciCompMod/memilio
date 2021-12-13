@@ -20,18 +20,21 @@
 from datetime import datetime, timedelta
 import time
 import os
+import sys
+import csv
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
+import urllib.request   
 from matplotlib import colors
 from scipy.spatial.distance import pdist
 from scipy.cluster import hierarchy
 from sklearn.cluster import KMeans
-
-import getDataIntoPandasDataFrame as gd
-import defaultDict as dd
-import customPlot
-import modifyDataframeSeries
+from epidemiology.epidata.defaultDict import County
+from epidemiology.epidata import geoModificationGermany as geoger
+from epidemiology.epidata  import getDataIntoPandasDataFrame as gd
+from epidemiology.epidata import defaultDict as dd
+from epidemiology.epidata import modifyDataframeSeries
 
 
 def transformWeatherData(read_data=dd.defaultDict['read_data'],
@@ -41,6 +44,8 @@ def transformWeatherData(read_data=dd.defaultDict['read_data'],
                          end_date=dd.defaultDict['end_date'],
                          make_plot=dd.defaultDict['make_plot'],
                          moving_average=dd.defaultDict['moving_average'],
+                         merge_berlin=True,
+                         merge_eisenach=False
                          ):
     """! ...
     @param file_format File format which is used for writing the data. 
@@ -63,7 +68,7 @@ def transformWeatherData(read_data=dd.defaultDict['read_data'],
 
     if not read_data:
 
-        df_weather_old = pd.read_csv('raw_data/wetterdaten.csv')
+        df_weather_old = pd.read_csv('wetterdaten.csv')
         df_weather_old.rename(dd.GerEng, axis=1, inplace=True)
         col_old = ['kr_tamm_',  # average temperature
                    'kr_tadn_',  # temperature minimum
@@ -82,11 +87,15 @@ def transformWeatherData(read_data=dd.defaultDict['read_data'],
     # transform data from original format to desired format
     if not read_data:
         # get county ids
-        unique_geo_entities = dd.get_county_ids()
+        unique_geo_entities = geoger.get_county_ids(merge_berlin, merge_eisenach, zfill=False)
 
         start_weather_cols = list(
             df_weather_old.columns).index(
             dd.EngEng['county']) + 1
+
+        if len(unique_geo_entities) < len(df_weather_old):
+            exit_string = 'Error: County-IDs do not match with file'
+            sys.exit(exit_string)
 
         # create new data frame for all NPIs given in the columns, resolved by
         # county and day
@@ -108,7 +117,7 @@ def transformWeatherData(read_data=dd.defaultDict['read_data'],
                  for str_col in df_weather_old.iloc
                  [:, start_weather_cols:].columns]))
         # convert string dates into other format
-        dates_new = [datetime.strptime(old_date, "%Y%m%d")
+        dates_new = [datetime.strptime(old_date, "%Y-%m-%d")
                      for old_date in str_dates]
         min_date = dates_new[0]+timedelta(days=-14)
         max_date = dates_new[-1]+timedelta(days=14)
@@ -148,7 +157,7 @@ def transformWeatherData(read_data=dd.defaultDict['read_data'],
             df_local_new[dd.EngEng['idCounty']] = countyID
             # possible resorting of rows such that they are sorted according to
             # a literal sorting of the code strings
-            df_local_new[col_new] = np.transpose(weather_vals)
+            df_local_new[col_new] = pd.DataFrame(np.transpose(weather_vals))
 
             df_local_new = modifyDataframeSeries.impute_and_reduce_df(
                                                                       df_local_new,

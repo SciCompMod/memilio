@@ -226,7 +226,7 @@ def load_age_population_data(out_folder):
         try:
             print('Trying to download from HPC server')
             path_counties = 'http://hpcagainstcorona.sc.bs.dlr.de/data/migration/'
-            counties = gd.loadExcel(os.path.join(path_counties,'kreise_deu.xlsx'), apiUrl =  '', extension = '',
+            counties = gd.loadExcel(targetFileName = 'kreise_deu', apiUrl =  path_counties, extension = '.xlsx',
                                 param_dict = {"sheet_name": 1, "header": 3})
             gd.write_dataframe(counties, directory, filename_counties, "json")
         except:
@@ -234,8 +234,8 @@ def load_age_population_data(out_folder):
             try:
                 print('Trying to download data from the internet')
                 path_counties = 'https://www.destatis.de/DE/Themen/Laender-Regionen/Regionales/Gemeindeverzeichnis/Administrativ/04-kreise.xlsx;?__blob=publicationFile'
-                counties = gd.loadExcel(os.path.join(path_counties,'kreise_deu.xlsx'), apiUrl =  '', extension = '',
-                                param_dict = {"sheet_name": 1, "header": 3})
+                counties = gd.loadExcel(targetFileName= '', apiUrl =  path_counties, extension = '',
+                                param_dict = {"sheet_name": 1, "header": 3, "engine": 'openpyxl'})
                 gd.write_dataframe(counties, directory, filename_counties, "json")
             except ValueError:
                 exit_string = "Error: The counties file does not exist."
@@ -299,7 +299,7 @@ def get_age_population_data(read_data=dd.defaultDict['read_data'],
    @param read_data False [Default] or True. Defines if data is read from file or downloaded.
    @param file_format File format which is used for writing the data. Default defined in defaultDict.
    @param out_folder Path to folder where data is written in folder out_folder/Germany.
-"""
+    """
     counties, reg_key, zensus = load_age_population_data(out_folder)
 
     # find region keys for census population data

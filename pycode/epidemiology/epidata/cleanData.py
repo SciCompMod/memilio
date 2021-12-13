@@ -118,27 +118,6 @@ def clean_data(all_data, rki, john_hopkins, population, hdf5, out_path):
             except OSError:
                 pass
 
-        if population:
-            directory = os.path.join(out_path, 'Germany/')
-            files = []
-            try:
-                files = os.listdir(directory)
-            except FileNotFoundError:
-                pass
-
-            for item in files:
-                if item.endswith(ending):
-                    if "Popul" in item or "FullDataB" in item or "FullDataL" in item:
-                        print("Deleting file ", os.path.join(directory, item))
-                        os.remove(os.path.join(directory, item))
-
-            # delete directory if empty
-            try:
-                os.rmdir(directory)
-                print("Deleting directory ", directory)
-            except OSError:
-                pass
-
         if john_hopkins:
             # TODO: make general dictionary with all countries used
             directories = ['Germany/', 'Spain/', 'France/',
@@ -178,6 +157,26 @@ def clean_data(all_data, rki, john_hopkins, population, hdf5, out_path):
                     if "_jh" in item or "JohnHopkins" in item:
                         print("Deleting file ", os.path.join(out_path, item))
                         os.remove(os.path.join(out_path, item))
+        if population:
+            directory = os.path.join(out_path, 'Germany/')
+            files = []
+            try:
+                files = os.listdir(directory)
+            except FileNotFoundError:
+                pass
+
+            for item in files:
+                if item.endswith(ending):
+                    if "Popul" in item or "FullDataB" in item or "FullDataL" in item:
+                        print("Deleting file ", os.path.join(directory, item))
+                        os.remove(os.path.join(directory, item))
+
+            # delete directory if empty
+            try:
+                os.rmdir(directory)
+                print("Deleting directory ", directory)
+            except OSError:
+                pass
 
     else:
         print("Please specify what should be deleted. See --help for details.")

@@ -17,6 +17,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #############################################################################
+from logging import exception
+from sys import exec_prefix
 import unittest
 from pyfakefs import fake_filesystem_unittest
 from collections import namedtuple
@@ -121,8 +123,8 @@ class Test_getPopulationData(fake_filesystem_unittest.TestCase):
     data = np.zeros((5, len(columns)))
     for i in range(len(data)):
         data[i, 0] = 1001 + i
-        data[i, 1] = 22*(i+1)
-        data[i, 2:] = 2*(i+1)
+        data[i, 1] = 2*22*(i+1)
+        data[i, 2:] = 2*2*(i+1)
     test_population_result = pd.DataFrame(data, columns=columns)
     test_population_result = test_population_result.astype('int64')
 
@@ -276,18 +278,12 @@ class Test_getPopulationData(fake_filesystem_unittest.TestCase):
 
         gpd.get_population_data(read_data, file_format, out_folder)
 
-        #self.assertEqual(len(os.listdir(directory)), 4)
         self.assertEqual(len(os.listdir(directory)), 3)
-        #self.assertEqual(os.listdir(directory), [file1, file2, file_out1, file_out2])
         self.assertEqual(os.listdir(directory), [file1, file2, file_out1])
 
         f_path = os.path.join(directory, file_out1)
         f = open(f_path, "r")
         self.assertEqual(f.read(), self.test_string1r)
-
-        #f_path = os.path.join(directory, file_out2)
-        #f = open(f_path, "r")
-        #self.assertEqual(f.read(), self.test_string2r)
 
     def test_get_new_counties(self):
         test = gpd.get_new_counties(self.test_old_counties)
@@ -320,7 +316,36 @@ class Test_getPopulationData(fake_filesystem_unittest.TestCase):
         pd.testing.assert_frame_equal(reg_key_read, reg_key_write, check_dtype=False)
         pd.testing.assert_frame_equal(zensus_read, zensus_write, check_dtype=False)
 
-# TODO: How to test hdf5 export?
+    @patch('epidemiology.epidata.getPopulationData.gd.loadCsv')
+    @patch('epidemiology.epidata.getPopulationData.pandas.read_json')
+    @patch('epidemiology.epidata.getPopulationData.gd.loadExcel')
+    def test_errors(self, mocklexcel, mockrjson, mocklcsv):
+        mockrjson.side_effect = ValueError
+        [read_data, file_format, out_folder, no_raw] = [True, "json", self.path, True]
+
+        directory = os.path.join(out_folder, 'Germany/')
+        gd.check_dir(directory)
+        with self.assertRaises(SystemExit) as cm:
+            gpd.get_one_data_set(read_data, file_format, no_raw, directory, self.d1)
+        file_in = os.path.join(self.path, "Germany/FullDataB.json")
+        exit_string = "Error: The file: " + file_in + " does not exist. "\
+            "Call program without -r flag to get it."
+        self.assertEqual(cm.exception.code, exit_string)
+
+        mocklexcel.side_effect = ValueError
+        with self.assertRaises(SystemExit) as cm:
+            gpd.load_age_population_data(self.path)
+        exit_string = "Error: The counties file does not exist."
+        self.assertEqual(cm.exception.code, exit_string)
+
+        mocklexcel.side_effect = None
+        mocklexcel.return_value = self.test_zensus.copy()
+        mocklcsv.side_effect = ValueError
+        with self.assertRaises(SystemExit) as cm:
+            gpd.load_age_population_data(self.path)
+        exit_string = "Error: The zensus file does not exist."
+        self.assertEqual(cm.exception.code, exit_string)
+
 
 if __name__ == '__main__':
     unittest.main()

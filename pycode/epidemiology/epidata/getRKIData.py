@@ -41,7 +41,7 @@ from epidemiology.epidata import modifyDataframeSeries
 from epidemiology.epidata import geoModificationGermany as geoger
 
 
-def check_for_completeness(df):
+def check_for_completeness(df, merge_berlin = False, merge_eisenach = False):
     """! Checks if all counties are mentioned in the RKI data set
 
    This check had to be added due to incomplete data downloads
@@ -54,13 +54,11 @@ def check_for_completeness(df):
    """
 
     if not df.empty:
-        return geoger.check_for_all_counties(df["IdLandkreis"].unique(), merge_berlin=False)
-
+        return geoger.check_for_all_counties(
+            df["IdLandkreis"].unique(),
+            merge_berlin, merge_eisenach)
     # if it is empty
     return False
-
-
-
 
 
 def get_rki_data(read_data=dd.defaultDict['read_data'],
@@ -147,7 +145,7 @@ def get_rki_data(read_data=dd.defaultDict['read_data'],
         # Get data:
         df = load['csv'](itemId)
 
-        complete = check_for_completeness(df)
+        complete = check_for_completeness(df, merge_eisenach=True)
 
         # try another possibility if df was empty or incomplete
         if not complete:
@@ -157,7 +155,7 @@ def get_rki_data(read_data=dd.defaultDict['read_data'],
                                  "f10774f1c63e40168479a1feb6c7ca74/data", "")
 
             df.rename(columns={'FID': "ObjectId"}, inplace=True)
-            complete = check_for_completeness(df)
+            complete = check_for_completeness(df, merge_eisenach=True)
 
         if complete:
             # output data to not always download it
@@ -167,7 +165,7 @@ def get_rki_data(read_data=dd.defaultDict['read_data'],
             print("Information: dataframe was incomplete for csv. Trying geojson.")
             df = load['geojson'](itemId)
 
-            complete = check_for_completeness(df)
+            complete = check_for_completeness(df, merge_eisenach=True)
 
             if not df.empty and complete:
                 if not no_raw:

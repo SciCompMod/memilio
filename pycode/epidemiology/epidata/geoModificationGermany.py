@@ -25,7 +25,7 @@
 """
 
 import os
-import epidemiology.epidata.defaultDict as dd
+from epidemiology.epidata import defaultDict as dd
 
 import pandas as pd
 from epidemiology.epidata import getDataIntoPandasDataFrame as gd
@@ -266,7 +266,7 @@ def get_official_county_table():
     @return County table with essential columns.
     """
     path_counties = 'https://www.destatis.de/DE/Themen/Laender-Regionen/Regionales/Gemeindeverzeichnis/Administrativ/'
-    county_table = gd.loadExcel(os.path.join(path_counties, '04-kreise.xlsx?__blob=publicationFile'), extension='', apiUrl='',
+    county_table = gd.loadExcel(targetFileName='04-kreise.xlsx?__blob=publicationFile', apiUrl=path_counties, extension='',
                             param_dict={'sheet_name' : 1, 'header' : 5, 'engine' : 'openpyxl'})
     rename_kreise_deu_dict = {
         1: dd.EngEng['idCounty'],
@@ -294,7 +294,8 @@ def get_nuts3_county_id_map(merge_eisenach=True):
     county_table = get_official_county_table()
     # delete rows with nuts3 = NaN
     # take just columns with name dd.EngEng['idCounty'] and dd.EngEng['nuts3']
-    key_nuts3 = county_table.dropna(subset=[dd.EngEng['nuts3']])[[dd.EngEng['idCounty'], dd.EngEng['nuts3']]]
+    key_nuts3 = county_table.dropna(subset=[dd.EngEng['nuts3']])[
+        [dd.EngEng['idCounty'], dd.EngEng['nuts3']]]
     # convert ID data types
     key_nuts3 = key_nuts3.astype({dd.EngEng['idCounty'] : int})
 
@@ -303,7 +304,9 @@ def get_nuts3_county_id_map(merge_eisenach=True):
         return dict()
 
     # make dictionary / hash map from data frame
-    nuts3_key_dict = dict(zip(key_nuts3[dd.EngEng['nuts3']], key_nuts3[dd.EngEng['idCounty']]))
+    nuts3_key_dict = dict(
+        zip(key_nuts3[dd.EngEng['nuts3']],
+            key_nuts3[dd.EngEng['idCounty']]))
 
     return nuts3_key_dict
 
