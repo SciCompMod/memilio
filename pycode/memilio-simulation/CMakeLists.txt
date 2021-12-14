@@ -2,7 +2,9 @@ cmake_minimum_required(VERSION 3.4)
 project(memilio-python)
 
 # add in C++ library
-add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/../../cpp ${CMAKE_CURRENT_BINARY_DIR}/cpp EXCLUDE_FROM_ALL)
+set(MEMILIO_CPP_DIR ${CMAKE_CURRENT_SOURCE_DIR}/../../cpp)
+add_subdirectory(${MEMILIO_CPP_DIR} ${CMAKE_CURRENT_BINARY_DIR}/cpp EXCLUDE_FROM_ALL)
+set(CMAKE_MODULE_PATH "${MEMILIO_CPP_DIR}/cmake" ${CMAKE_MODULE_PATH})
 
 option(MEMILIO_USE_SYSTEM_PYBIND11 "Use pybind11 installed on the system instead of Conan package." OFF)
 
