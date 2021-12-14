@@ -32,6 +32,10 @@ inputs:
 runs:
   using: "composite"
   steps:
+    - name: Setup Python #required for conan install
+      uses: actions/setup-python@v2
+      with:
+        python-version: '>=3.6'
     - name: Install dependencies
       shell: bash
       run: |
