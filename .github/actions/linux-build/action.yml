@@ -47,6 +47,11 @@ runs:
           fi
         fi
         pip install conan
+    - name: Cache Conan packages
+      uses: actions/cache@v2
+      with:
+        path: ~/.conan/data
+        key: conan-data-${{ inputs.compiler }}-${{ inputs.config }}-${{ inputs.version}}
     - name: Build
       shell: bash
       run: |

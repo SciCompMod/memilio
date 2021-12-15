@@ -21,6 +21,11 @@ runs:
       run: |
         choco install -y ninja
         pip install conan
+    - name: Cache Conan packages
+      uses: actions/cache@v2
+      with:
+        path: ~/.conan/data
+        key: conan-data-msvc-${{ inputs.config }}-${{ inputs.version}}
     - name: Build
       shell: cmd /C call {0}
       run: |

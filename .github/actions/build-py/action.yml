@@ -16,6 +16,11 @@ runs:
           /opt/python/cp37-cp37m/bin/pip install conan
           /opt/python/cp38-cp38/bin/pip install conan
         fi
+    - name: Cache Conan packages
+      uses: actions/cache@v2
+      with:
+        path: ~/.conan/data
+        key: conan-data-py-${{ inputs.package }}
     - name: Make artifact dir
       shell: bash
       run: |
