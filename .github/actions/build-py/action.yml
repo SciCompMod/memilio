@@ -11,9 +11,11 @@ runs:
       shell: bash
       run: |
         yum install ninja-build -qy
-        /opt/python/cp36-cp36m/bin/pip install conan
-        /opt/python/cp37-cp37m/bin/pip install conan
-        /opt/python/cp38-cp38/bin/pip install conan
+        if [[ "${{ inputs.package }}" == "simulation" ]]; then
+          /opt/python/cp36-cp36m/bin/pip install conan
+          /opt/python/cp37-cp37m/bin/pip install conan
+          /opt/python/cp38-cp38/bin/pip install conan
+        fi
     - name: Make artifact dir
       shell: bash
       run: |
@@ -23,9 +25,14 @@ runs:
       shell: bash
       run: |
         cd pycode/memilio-${{ inputs.package }}/
-        /opt/python/cp36-cp36m/bin/python setup.py bdist_wheel -- -DCONAN_COMMAND=/opt/python/cp36-cp36m/conan
-        /opt/python/cp37-cp37m/bin/python setup.py bdist_wheel -- -DCONAN_COMMAND=/opt/python/cp37-cp37m/conan
-        /opt/python/cp38-cp38/bin/python setup.py bdist_wheel -- -DCONAN_COMMAND=/opt/python/cp36-cp38/conan
+        if [[ "${{ inputs.package }}" == "simulation" ]]; then
+          SETUP36ARGS="-DCONAN_COMMAND=/opt/python/cp36-cp36m/bin/conan -DPYTHON_EXECUTABLE=/opt/python/cp36-cp36m/bin/python"
+          SETUP37ARGS="-DCONAN_COMMAND=/opt/python/cp37-cp37m/bin/conan -DPYTHON_EXECUTABLE=/opt/python/cp37-cp37m/bin/python"
+          SETUP38ARGS="-DCONAN_COMMAND=/opt/python/cp38-cp38/bin/conan -DPYTHON_EXECUTABLE=/opt/python/cp38-cp38/bin/python"
+        fi
+        /opt/python/cp36-cp36m/bin/python setup.py bdist_wheel -- $SETUP36ARGS
+        /opt/python/cp37-cp37m/bin/python setup.py bdist_wheel -- $SETUP37ARGS
+        /opt/python/cp38-cp38/bin/python setup.py bdist_wheel -- $SETUP38ARGS
         if [[ -f "CMakeLists.txt" ]]; then 
           # includes native dependencies in the wheel
           for whl in dist/*.whl; do auditwheel repair "$whl"; done
