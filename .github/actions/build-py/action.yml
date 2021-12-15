@@ -26,13 +26,14 @@ runs:
       run: |
         cd pycode/memilio-${{ inputs.package }}/
         if [[ "${{ inputs.package }}" == "simulation" ]]; then
-          SETUP36ARGS="-DCONAN_COMMAND=/opt/python/cp36-cp36m/bin/conan -DPYTHON_EXECUTABLE=/opt/python/cp36-cp36m/bin/python"
-          SETUP37ARGS="-DCONAN_COMMAND=/opt/python/cp37-cp37m/bin/conan -DPYTHON_EXECUTABLE=/opt/python/cp37-cp37m/bin/python"
-          SETUP38ARGS="-DCONAN_COMMAND=/opt/python/cp38-cp38/bin/conan -DPYTHON_EXECUTABLE=/opt/python/cp38-cp38/bin/python"
+          SETUP36ARGS="-DCONAN_COMMAND=/opt/python/cp36-cp36m/bin/conan -DPython_ROOT_DIR=/opt/python/cp36-cp36m"
+          SETUP37ARGS="-DCONAN_COMMAND=/opt/python/cp37-cp37m/bin/conan -DPython_ROOT_DIR=/opt/python/cp37-cp37m"
+          SETUP38ARGS="-DCONAN_COMMAND=/opt/python/cp38-cp38/bin/conan -DPython_ROOT_DIR=/opt/python/cp38-cp38"
+          SETUPARGS="-DPython_FIND_STRATEGY=LOCATION"
         fi
-        /opt/python/cp36-cp36m/bin/python setup.py bdist_wheel -- $SETUP36ARGS
-        /opt/python/cp37-cp37m/bin/python setup.py bdist_wheel -- $SETUP37ARGS
-        /opt/python/cp38-cp38/bin/python setup.py bdist_wheel -- $SETUP38ARGS
+        /opt/python/cp36-cp36m/bin/python setup.py bdist_wheel -- $SETUP36ARGS $SETUPARGS
+        /opt/python/cp37-cp37m/bin/python setup.py bdist_wheel -- $SETUP37ARGS $SETUPARGS
+        /opt/python/cp38-cp38/bin/python setup.py bdist_wheel -- $SETUP38ARGS $SETUPARGS
         if [[ -f "CMakeLists.txt" ]]; then 
           # includes native dependencies in the wheel
           for whl in dist/*.whl; do auditwheel repair "$whl"; done

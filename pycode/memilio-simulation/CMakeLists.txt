@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.10)
+cmake_minimum_required(VERSION 3.15)
 project(memilio-python LANGUAGES CXX C)
 
 # add in C++ library
@@ -26,6 +26,7 @@ if (MEMILIO_USE_CONAN)
     endif()
 endif()
 
+find_package(Python REQUIRED COMPONENTS Interpreter Development.Module) #help pybind find the right python, fails on multilinux2014 docker images
 find_package(pybind11 CONFIG REQUIRED)
 
 # build python extensions
