@@ -22,13 +22,16 @@ if(CMAKE_BUILD_TYPE STREQUAL "Debug")
     option (MEMILIO_TEST_COVERAGE "Enable GCov coverage analysis (adds a 'coverage' target)" OFF)
     mark_as_advanced(MEMILIO_TEST_COVERAGE)
     if (MEMILIO_TEST_COVERAGE)
+        if (NOT CMAKE_GENERATOR STREQUAL "Unix Makefiles")
+            message(FATAL_ERROR "Memilio: Coverage only available with Unix Makefiles generator.")
+        endif()
         message(STATUS "Coverage enabled")
         include(CodeCoverage)
         append_coverage_compiler_flags()
         setup_target_for_coverage_lcov(
             NAME coverage
             EXECUTABLE memilio-test
-            EXCLUDE "${CMAKE_SOURCE_DIR}/tests*" "${CMAKE_SOURCE_DIR}/simulations*" "${CMAKE_SOURCE_DIR}/examples*" "${CMAKE_BINARY_DIR}/*" "/usr*"
+            INCLUDE "${CMAKE_SOURCE_DIR}/memilio/*" "${CMAKE_SOURCE_DIR}/models/*"
         )
     endif()
 endif()
