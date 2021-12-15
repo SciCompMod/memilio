@@ -32,13 +32,13 @@ find_package(pybind11 CONFIG REQUIRED)
 pybind11_add_module(_simulation_secir MODULE
     memilio/simulation/secir.cpp
 )
-target_link_libraries(_simulation_secir PRIVATE memilio secir pybind11::pybind11)
+target_link_libraries(_simulation_secir PRIVATE secir)
 target_include_directories(_simulation_secir PRIVATE memilio/simulation)
 install(TARGETS _simulation_secir LIBRARY DESTINATION memilio)
 
 pybind11_add_module(_simulation MODULE
     memilio/simulation/simulation.cpp
 )
-target_link_libraries(_simulation PRIVATE memilio pybind11::pybind11)
+target_link_libraries(_simulation PRIVATE memilio)
 target_include_directories(_simulation PRIVATE memilio/simulation)
 install(TARGETS _simulation LIBRARY DESTINATION memilio)
