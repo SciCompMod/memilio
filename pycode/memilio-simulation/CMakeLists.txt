@@ -22,12 +22,11 @@ if (MEMILIO_USE_CONAN)
     memilio_conan_install(REQUIRES ${_MEMILIO_REQUIRES})
 
     if (NOT MEMILIO_USE_SYSTEM_PYBIND11)
-        set(_MEMILIO_PYBIND11_IMPORT CONFIG)
         set(pybind11_DIR ${CMAKE_CURRENT_BINARY_DIR} CACHE PATH "" FORCE)
     endif()
 endif()
 
-find_package(pybind11 ${_MEMILIO_PYBIND11_IMPORT} REQUIRED)
+find_package(pybind11 CONFIG REQUIRED)
 
 # build python extensions
 pybind11_add_module(_simulation_secir MODULE
