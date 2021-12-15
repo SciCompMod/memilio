@@ -13,7 +13,7 @@ set(_MEMILIO_HDF5_VERSION 1.12.0)
 set(_MEMILIO_GTEST_VERSION 1.10.0)
 
 if (MEMILIO_USE_CONAN)
-message(STATUS "Memilio: Installing required dependencies with Conan.")
+    message(STATUS "Memilio: Installing required dependencies with Conan.")
     
     include(memilio-conan)
 
@@ -69,10 +69,7 @@ find_package(Eigen3 REQUIRED ${_MEMILIO_EIGEN_IMPORT})
 find_package(spdlog REQUIRED ${_MEMILIO_SPDLOG_IMPORT})
 
 find_package(jsoncpp ${_MEMILIO_JSONCPP_IMPORT})
-if (TARGET jsoncpp::jsoncpp)
-    message(STATUS "MEMILIO WORKAROUND: Creating ALIAS Target JsonCpp::JsonCpp. Target names in the Conan package are lower-case.")
-    add_library(JsonCpp::JsonCpp ALIAS jsoncpp::jsoncpp)
-endif()
+memilio_target_alternatives(TARGET JsonCpp::JsonCpp ALTERNATIVES jsoncpp::jsoncpp)
 if (TARGET JsonCpp::JsonCpp)
     set(MEMILIO_HAS_JSONCPP ON)
 else()

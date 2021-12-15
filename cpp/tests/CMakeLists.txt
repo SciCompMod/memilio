@@ -1,6 +1,31 @@
 enable_testing()
 include(GoogleTest)
-find_package(GTest 1.10.0 CONFIG REQUIRED)
+
+option(MEMILIO_USE_SYSTEM_GTEST "Use Gtest installed on the system instead of Conan package." OFF)
+
+set(_MEMILIO_GTEST_VERSION 1.10.0)
+
+if (MEMILIO_USE_CONAN)
+    message(STATUS "Memilio: Installing required dependencies for tests with Conan.")
+    
+    include(memilio-conan)
+
+    set(_MEMILIO_REQUIRES "")
+    if (NOT MEMILIO_USE_SYSTEM_GTEST)
+        list(APPEND _MEMILIO_REQUIRES gtest/${_MEMILIO_GTEST_VERSION})
+    endif()
+
+    memilio_conan_install(REQUIRES ${_MEMILIO_REQUIRES})
+
+    # force find_package to use the Conan packages instead of other distributions on the system
+    if (NOT MEMILIO_USE_SYSTEM_GTEST)
+        set(_MEMILIO_GTEST_IMPORT CONFIG)
+        set(Gtest_DIR ${CMAKE_CURRENT_BINARY_DIR} CACHE PATH "" FORCE)
+    endif()
+endif()
+find_package(GTest 1.10.0 ${_MEMILIO_GTEST_IMPORT} REQUIRED)
+memilio_target_alternatives(TARGET GTest::gtest ALTERNATIVES gtest::gtest)
+memilio_target_alternatives(TARGET GTest::gmock ALTERNATIVES gtest::gmock)
 
 set(TESTSOURCES
   test_household.cpp

@@ -1,5 +1,28 @@
 include(conan)
 
+#memilio_target_alternatives(TARGET x ALTERNATIVES z y) creates library x as an alias for one of the
+#alternative targets z or y if they exist, e.g. in case of inconsistent upper/lower case names.
+#conan packages sometimes define different target names than regular installed packages.
+macro(memilio_target_alternatives)
+    cmake_parse_arguments(_MTA "" "TARGET" "ALTERNATIVES" ${ARGN})
+    unset (_ALT_FOUND)
+    if (NOT TARGET ${_MTA_TARGET})
+        foreach(ALT ${_MTA_ALTERNATIVES})
+            if (TARGET ${ALT})
+                message(STATUS "Memilio: Found alternative ${ALT} for target ${_MTA_TARGET}.")
+                add_library(${_MTA_TARGET} ALIAS ${ALT})
+                set (_ALT_FOUND 1)
+                break()
+            endif()
+        endforeach()
+        if (NOT _ALT_FOUND)
+            message(STATUS "Memilio: No alternative in ${_MTA_ALTERNATIVES} found for target ${_MTA_TARGET}")
+        endif()
+    endif()
+endmacro()
+
+#memilio_conan_install(REQUIRES x y z) installs the conan packages x, y, and z.
+#packages are given as the usual conan package reference, i.e. <name>/<version>.
 macro(memilio_conan_install)
     cmake_parse_arguments(_MCI "" "" "REQUIRES" ${ARGN})
 
