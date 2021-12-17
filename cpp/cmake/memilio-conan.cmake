@@ -1,5 +1,8 @@
 include(conan)
 
+set(MEMILIO_CONAN_BUILD "missing" CACHE STRING "Semicolon-separated list of packages that are built from source by conan instead of loaded as binary packages. Equivalent to 'conan install --build <package>', see conan documentation. Default 'missing', i.e. packages are only built if binary package is not available.")
+mark_as_advanced(MEMILIO_CONAN_BUILD)
+
 #memilio_target_alternatives(TARGET x ALTERNATIVES z y) creates library x as an alias for one of the
 #alternative targets z or y if they exist, e.g. in case of inconsistent upper/lower case names.
 #conan packages sometimes define different target names than regular installed packages.
@@ -27,11 +30,14 @@ endmacro()
 #memilio_conan_install(REQUIRES x y z) installs the conan packages x, y, and z.
 #packages are given as the usual conan package reference, i.e. <name>/<version>.
 macro(memilio_conan_install)
-    cmake_parse_arguments(_MCI "" "" "REQUIRES" ${ARGN})
+    cmake_parse_arguments(_MCI "" "" "REQUIRES;OPTIONS" ${ARGN})
+    message(STATUS ${_MCI_REQUIRES})
+    message(STATUS ${_MCI_OPTIONS})
 
     conan_cmake_configure(
         REQUIRES ${_MCI_REQUIRES}
-        GENERATORS cmake_find_package_multi)
+        GENERATORS cmake_find_package_multi
+        OPTIONS ${_MCI_OPTIONS})
 
     # install conan packages
     get_property(_MULTI_CONFIG GLOBAL PROPERTY GENERATOR_IS_MULTI_CONFIG)
@@ -41,7 +47,7 @@ macro(memilio_conan_install)
             conan_cmake_autodetect(_MEMILIO_SETTINGS BUILD_TYPE ${TYPE})
             conan_cmake_install(
                 PATH_OR_REFERENCE .
-                BUILD missing
+                BUILD ${MEMILIO_CONAN_BUILD}
                 REMOTE conancenter
                 SETTINGS ${_MEMILIO_SETTINGS})
         endforeach()
@@ -54,7 +60,7 @@ macro(memilio_conan_install)
         conan_cmake_autodetect(_MEMILIO_SETTINGS)
         conan_cmake_install(
             PATH_OR_REFERENCE .
-            BUILD missing
+            BUILD ${MEMILIO_CONAN_BUILD}
             REMOTE conancenter
             SETTINGS ${_MEMILIO_SETTINGS})
     endif()
