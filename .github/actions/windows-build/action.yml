@@ -19,7 +19,7 @@ runs:
     - name: Install build tools
       shell: pwsh
       run: |
-        choco install -y ninja
+        pip install ninja
         pip install conan
     - name: Cache Conan packages
       uses: actions/cache@v2
