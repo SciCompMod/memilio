@@ -78,6 +78,8 @@ target_compile_options(memilio
         $<$<CXX_COMPILER_ID:MSVC>: /bigobj>
 )
 
+target_compile_options(memilio PRIVATE $<$<CXX_COMPILER_ID:MSVC>: /MP>)
+
 if (MEMILIO_HAS_HDF5)
     target_link_libraries(memilio PUBLIC HDF5::C)
 endif()
