@@ -19,8 +19,12 @@ add_library(abm
     lockdown_rules.h
     testing_scheme.cpp
     testing_scheme.h
+    world_builder.cpp
+    world_builder.h
 )
+find_package(NLopt REQUIRED)
 target_link_libraries(abm PUBLIC memilio)
+target_link_libraries(abm PRIVATE NLopt::nlopt)
 target_include_directories(abm PUBLIC
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/..>
     $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
