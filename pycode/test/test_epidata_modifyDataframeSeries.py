@@ -1,7 +1,7 @@
 #############################################################################
 # Copyright (C) 2020-2021 German Aerospace Center (DLR-SC)
 #
-# Authors:
+# Authors: Sascha Korf, Patrick Lenz
 #
 # Contact: Martin J. Kuehn <Martin.Kuehn@DLR.de>
 #
@@ -19,71 +19,89 @@
 #############################################################################
 
 from datetime import datetime
+from epidemiology.epidata import defaultDict as dd
 import unittest
+import os
 import numpy as np
 import pandas as pd
 import pandas.testing as pd_testing
 from unittest.mock import patch
 from pyfakefs import fake_filesystem_unittest
 from epidemiology.epidata import modifyDataframeSeries as mDfS
+from epidemiology.epidata import getRKIData as rki
 
 
 class Test_modifyDataframeSeries(fake_filesystem_unittest.TestCase):
-    filldates_df = pd.DataFrame(
-        {'Date': ['2021-01-05', '2021-01-06', '2021-01-08'],
-         'test_col1': [11, 3, 6],
-         'test_col2': ['a', 'x', 't']})
     test_df1 = pd.DataFrame(
-        {'Date': 
-        [datetime(2021, 1, 5),
-         datetime(2021, 1, 6),
-         datetime(2021, 1, 7),
-         datetime(2021, 1, 8)],
-         'test_col1': [11.0, 3.0, 3.0, 6.0],
-         'test_col2': ['a', 'x', 'x', 't']})
-    test_df2 = pd.DataFrame({
-        'Date':
-        [datetime(2021, 1, 4),
-         datetime(2021, 1, 5),
-         datetime(2021, 1, 6),
-         datetime(2021, 1, 7),
-         datetime(2021, 1, 8)],
-        'test_col1': [11.0, 11.0, 3.0, 3.0, 6.0],
-        'test_col2': ['a', 'a', 'x', 'x', 't']})
-    test_df3 = pd.DataFrame({
-        'Date':
-        [datetime(2021, 1, 4),
-         datetime(2021, 1, 5),
-         datetime(2021, 1, 6),
-         datetime(2021, 1, 7),
-         datetime(2021, 1, 8)],
-        'test_col1': [11.0, 11.0, 3.0, 3.0, 6.0],
-        'test_col2': ['a', 'a', 'x', 'x', 't']})
+        {
+         'Date':
+         ['2021-01-06', '2021-01-06', '2021-01-06', '2021-01-07', '2021-01-07',
+          '2021-01-07', '2021-01-08', '2021-01-08', '2021-01-08', '2021-01-09',
+          '2021-01-09', '2021-01-09', '2021-01-10', '2021-01-10',
+          '2021-01-10'],
+         'test_col1': [12, 3, 6, 0, 3, 1, 4, 7, 11, 15, 19, 19, 27, 13, 5],
+         'test_col2': ['a', 'x', 't', 'a', 'b', 'a', 'x', 't', 'a', 'b', 'a', 'x', 't', 'a', 'b'],
+         'test_col3': [1, 0, 1, 9, 4, 3, 2, 1, 1, 1, 0, 6, 5, 3, 1],
+         'ID': [1, 2, 3, 1, 2, 3, 1, 2, 3, 1, 2, 3, 1, 2, 3]})
+    test_df2 = pd.DataFrame(
+        {
+         'Date':
+         ['2021-01-06', '2021-01-06', '2021-01-06', '2021-01-07', '2021-01-07',
+          '2021-01-07', '2021-01-08', '2021-01-08', '2021-01-08', '2021-01-09',
+          '2021-01-09', '2021-01-09', '2021-01-13', '2021-01-13',
+          '2021-01-13'],
+         'test_col1': [12, 3, 6, 0, 3, 1, 4, 7, 11, 15, 19, 19, 27, 13, 5],
+         'test_col2': ['a', 'x', 't', 'a', 'b', 'a', 'x', 't', 'a', 'b', 'a', 'x', 't', 'a', 'b'],
+         'test_col3': [1, 0, 1, 9, 4, 3, 2, 1, 1, 1, 0, 6, 5, 3, 1],
+         'ID': [1, 2, 3, 1, 2, 3, 1, 2, 3, 1, 2, 3, 1, 2, 3]})
+
 
     def setUp(self):
         self.setUpPyfakefs()
 
     def test_impute_and_reduce_df(self):
-        group_by_cols = {}
-        mod_cols = ''
-        # test fill date
-        test_df_new = mDfS.impute_and_reduce_df(
-            self.filldates_df, group_by_cols, mod_cols, impute='forward',
-            moving_average=0, min_date='2021-01-05', max_date='2021-01-08',
+        group_by_cols = {'ID': sorted(set(self.test_df1['ID'].unique()))}
+        mod_cols = ['test_col1', 'test_col3']
+        # test impute forward and fill dates with moving average = 3
+        df = mDfS.impute_and_reduce_df(
+            self.test_df1, group_by_cols, mod_cols, impute='forward',
+            moving_average=3, min_date='2021-01-05', max_date='2021-01-11',
             start_w_firstval=False)
-        pd_testing.assert_frame_equal(test_df_new, self.test_df1)
+        self.assertAlmostEqual(df[(df['Date'] == "2021-01-06") & (df['ID'] == 3.0)]['test_col3'].item(), 1 + 1 / 3)
+        self.assertAlmostEqual(df[(df['Date'] == "2021-01-06") & (df['ID'] == 3.0)]['test_col1'].item(), 2 + 1 / 3)
+        self.assertAlmostEqual(df[(df['Date'] == "2021-01-05") & (df['ID'] == 2.0)]['test_col3'].item(), 0)
+        self.assertAlmostEqual(df[(df['Date'] == "2021-01-05") & (df['ID'] == 2.0)]['test_col1'].item(), 0)
+        self.assertAlmostEqual(df[(df['Date'] == "2021-01-11") & (df['ID'] == 3.0)]['test_col3'].item(), 1)
+        self.assertAlmostEqual(df[(df['Date'] == "2021-01-10") & (df['ID'] == 1.0)]['test_col1'].item(), 23)
+        self.assertAlmostEqual(df[(df['Date'] == "2021-01-10") & (df['ID'] == 1.0)]['test_col3'].item(), 3+2/3)
+        # test impute zeros with moving average = 3
+        df = mDfS.impute_and_reduce_df(
+            self.test_df1, group_by_cols, mod_cols, impute='zeros',
+            moving_average=3, min_date='2021-01-05', max_date='2021-01-11',
+            start_w_firstval=False)
+        self.assertAlmostEqual(df[(df['Date'] == "2021-01-06") & (df['ID'] == 3.0)]['test_col3'].item(), 1 + 1 / 3)
+        self.assertAlmostEqual(df[(df['Date'] == "2021-01-06") & (df['ID'] == 3.0)]['test_col1'].item(), 2 + 1 / 3)
+        self.assertAlmostEqual(df[(df['Date'] == "2021-01-05") & (df['ID'] == 2.0)]['test_col3'].item(), 0)
+        self.assertAlmostEqual(df[(df['Date'] == "2021-01-05") & (df['ID'] == 2.0)]['test_col1'].item(), 0)
+        self.assertAlmostEqual(df[(df['Date'] == "2021-01-11") & (df['ID'] == 3.0)]['test_col3'].item(), 0)
+        self.assertAlmostEqual(df[(df['Date'] == "2021-01-11") & (df['ID'] == 3.0)]['test_col1'].item(), 0)
+        self.assertAlmostEqual(df[(df['Date'] == "2021-01-10") & (df['ID'] == 1.0)]['test_col1'].item(), 14)
+        self.assertAlmostEqual(df[(df['Date'] == "2021-01-10") & (df['ID'] == 1.0)]['test_col3'].item(), 2)
+        # test fill missing dates moving average = 2
+        # if moving average is an even number it always should calculate with one more earlier date
+        df = mDfS.impute_and_reduce_df(
+            self.test_df1, group_by_cols, mod_cols, impute='forward',
+            moving_average=4, min_date='2021-01-06', max_date='2021-01-13',
+            start_w_firstval=False)
+        self.assertAlmostEqual(df[(df['Date'] == "2021-01-08") & (df['ID'] == 3.0)]['test_col3'].item(), 2 + 3 / 4)
+        self.assertAlmostEqual(df[(df['Date'] == "2021-01-08") & (df['ID'] == 3.0)]['test_col1'].item(), 9 + 1 / 4)
+        self.assertAlmostEqual(df[(df['Date'] == "2021-01-06") & (df['ID'] == 2.0)]['test_col3'].item(), 0)
+        self.assertAlmostEqual(df[(df['Date'] == "2021-01-06") & (df['ID'] == 2.0)]['test_col1'].item(), 3)
+        self.assertAlmostEqual(df[(df['Date'] == "2021-01-13") & (df['ID'] == 3.0)]['test_col3'].item(), 1)
+        self.assertAlmostEqual(df[(df['Date'] == "2021-01-13") & (df['ID'] == 3.0)]['test_col1'].item(), 5)
+        self.assertAlmostEqual(df[(df['Date'] == "2021-01-10") & (df['ID'] == 1.0)]['test_col1'].item(), 18 + 1/4)
+        self.assertAlmostEqual(df[(df['Date'] == "2021-01-10") & (df['ID'] == 1.0)]['test_col3'].item(), 3 + 1/4)
 
-        # test start_w_firstval
-        test_df_new = mDfS.impute_and_reduce_df(
-            self.filldates_df, group_by_cols, mod_cols, impute='forward',
-            moving_average=0, min_date='2021-01-04', max_date='2021-01-08',
-            start_w_firstval=True)
-        pd_testing.assert_frame_equal(test_df_new, self.test_df2)
-        test_df_new = mDfS.impute_and_reduce_df(
-            self.filldates_df, group_by_cols, mod_cols, impute='forward',
-            moving_average=0, min_date='2021-01-04', max_date='2021-01-08',
-            start_w_firstval=False)
-        pd_testing.assert_frame_equal(test_df_new, self.test_df3)
 
 
 if __name__ == '__main__':

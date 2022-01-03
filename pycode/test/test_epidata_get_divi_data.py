@@ -60,6 +60,7 @@ class TestGetDiviData(fake_filesystem_unittest.TestCase):
 
     def setUp(self):
         self.setUpPyfakefs()
+        
 
     def gdd_calls(self,text=''):
         directory = os.path.join(self.path, 'Germany/')
@@ -76,9 +77,9 @@ class TestGetDiviData(fake_filesystem_unittest.TestCase):
             os.path.join(directory, 'germany_divi'+text+'.json'))]
         return gdd_calls 
 
-    def test_cut_of_dates(self):
+    def test_extract_subframe_based_on_dates(self):
         # test if only dates from 08-09-2021 are returned
-        df_state_testdate = gdd.cut_of_dates(
+        df_state_testdate = gdd.extract_subframe_based_on_dates(
             self.df_states, date(2021, 9, 8),
             date(2021, 9, 8))
         pd.testing.assert_frame_equal(self.test_df, df_state_testdate)
@@ -147,13 +148,13 @@ class TestGetDiviData(fake_filesystem_unittest.TestCase):
         mock_print.assert_has_calls(expected_calls)
 
     @patch('epidemiology.epidata.getDIVIData.pd.read_json', return_value=test_df.copy())
-    def test_gdd_sanity_checks(self, mockrjson3):
+    def test_divi_data_sanity_checks(self, mockrjson3):
 
         # first test
         # get random dataframe
         df = pd.DataFrame({'a': [1, 2, 3], 'b': [4, 5, 6]})
         with self.assertRaises(SystemExit) as cm:
-            gdd.gdd_sanity_checks(df)
+            gdd.divi_data_sanity_checks(df)
         exit_string = "Error: Number of data categories changed."
         self.assertEqual(cm.exception.code, exit_string)
 
@@ -172,7 +173,7 @@ class TestGetDiviData(fake_filesystem_unittest.TestCase):
              'faelle_covid_aktuell_fake': [4, 5, 6],
              'faelle_covid_aktuell_invasiv_beatmet': [5, 6, 7]})
         with self.assertRaises(SystemExit) as cm:
-            gdd.gdd_sanity_checks(df)
+            gdd.divi_data_sanity_checks(df)
         exit_string = "Error: Data categories have changed."
         self.assertEqual(cm.exception.code, exit_string)
 
@@ -191,7 +192,7 @@ class TestGetDiviData(fake_filesystem_unittest.TestCase):
              'faelle_covid_aktuell': [4, 5, 6],
              'faelle_covid_aktuell_invasiv_beatmet': [5, 6, 7]})
         with self.assertRaises(SystemExit) as cm:
-            gdd.gdd_sanity_checks(df)
+            gdd.divi_data_sanity_checks(df)
         exit_string = "Error: unexpected length of dataframe."
         self.assertEqual(cm.exception.code, exit_string)
 

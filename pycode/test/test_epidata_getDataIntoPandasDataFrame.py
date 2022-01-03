@@ -95,7 +95,7 @@ class Test_getDataIntoPandasDataFrame(fake_filesystem_unittest.TestCase):
         expected_call = [
             call(
                 'https://opendata.arcgis.com/datasets/' +
-                "targetFileName" + '.csv')]
+                "targetFileName" + '.csv', encoding=None)]
         mock_csv.assert_has_calls(expected_call)
 
         assert df_test.empty
@@ -107,7 +107,7 @@ class Test_getDataIntoPandasDataFrame(fake_filesystem_unittest.TestCase):
         expected_call = [
             call(
                 'https://opendata.arcgis.com/datasets/different/' +
-                "targetFileName" + '.notcsv')]
+                "targetFileName" + '.notcsv', encoding=None)]
         mock_csv.assert_has_calls(expected_call)
 
         assert df_test.empty

@@ -137,7 +137,7 @@ def get_commuter_data(setup_dict='',
                       out_folder=dd.defaultDict['out_folder'],
                       make_plot=dd.defaultDict['make_plot'],
                       no_raw=dd.defaultDict['no_raw']):
-    """! Computes matrix of commuter migration patterns based on the Federal
+    """! Computes DataFrame of commuter migration patterns based on the Federal
     Agency of Work data.
 
     Keyword arguments:
@@ -146,10 +146,10 @@ def get_commuter_data(setup_dict='',
         'abs_tol': tolerated undetected people
         'rel_tol': relative Tolerance to undetected people
 
-    @return mat_commuter_migration Matrix of commuter migration.
-        mat_commuter_migration[i][j]= number of commuters from county with numlist-key i to county with numlist-key j
+    @return df_commuter_migration DataFrame of commuter migration.
+        df_commuter_migration[i][j]= number of commuters from county with numlist-key i to county with numlist-key j
     In commuter migration files is a cumulative value per county for number of commuters from whole Germany given.
-    The printed errors are refering to the absolute and relative errors from included numbers per county in matrix and
+    The printed errors are refering to the absolute and relative errors from included numbers per county in DataFrame and
     this cumulative values.
     """
     if setup_dict == '':
@@ -426,7 +426,7 @@ def get_commuter_data(setup_dict='',
     filename = 'migration_bfa_20' + files[0].split(
         '-20')[1][0:2] + '_dim' + str(mat_commuter_migration.shape[0])
     gd.write_dataframe(df_commuter_migration, directory, filename, file_format)
-    gd.check_dir(os.path.join(directory, 'mobility'))
+    gd.check_dir(os.path.join(directory.split('pydata') [0], 'mobility'))
     df_commuter_migration.to_csv(
         directory.split('pydata') [0] +'mobility/commuter_migration_scaled' +
         '_20' +files[0].split('-20') [1] [0: 2] +'.txt', sep=' ', index=False,
@@ -436,13 +436,16 @@ def get_commuter_data(setup_dict='',
     return df_commuter_migration
 
 def commuter_sanity_checks(df):
+    # Check if return value is a dataframe
     if not isinstance(df, pd.DataFrame):
         exit_string = ("Error. Data should be a dataframe")
         sys.exit(exit_string)
+    # Dataframe should be squared
     if len(df.index) != len(df.columns):
         exit_string = "Error. "
         sys.exit(exit_string)
-    if (len(df.index) < 40) or (len(df.index) > 500):
+    # There are 401 Counties. Check if either far more than expected or less than 10% are in the dataframe.
+    if (len(df.index) < 40) or (len(df.index) > 500): 
         exit_string = "Error. Size of dataframe unexpected."
         sys.exit(exit_string)
 

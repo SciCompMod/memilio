@@ -1,7 +1,7 @@
 #############################################################################
 # Copyright (C) 2020-2021 German Aerospace Center (DLR-SC)
 #
-# Authors:
+# Authors: Patrick Lenz
 #
 # Contact: Martin J. Kuehn <Martin.Kuehn@DLR.de>
 #
@@ -17,10 +17,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #############################################################################
-from collections import defaultdict
-from typing import DefaultDict
 import unittest
-import os
 from datetime import date
 from epidemiology.epidata import defaultDict as dd
 from pyfakefs import fake_filesystem_unittest

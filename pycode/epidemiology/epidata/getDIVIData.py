@@ -56,20 +56,25 @@ from epidemiology.epidata import geoModificationGermany as geoger
 from epidemiology.epidata import modifyDataframeSeries
 
 
-def cut_of_dates(df, start_date, end_date):
+def extract_subframe_based_on_dates(df, start_date, end_date):
+    """! removes all data with date lower than start date and higher than end date.
 
-    startdelta = (start_date - dd.defaultDict['start_date']).days
-    enddelta = (dd.defaultDict['end_date'] - end_date).days
-    for i in range(startdelta):
-        lowest_date = dd.defaultDict['start_date'] + timedelta(i)
-        dt = lowest_date
-        df_new = df[df.Date != datetime.strftime(dt, '%Y-%m-%d')]
-        df = df_new
-    for i in range(enddelta):
-        highest_date = dd.defaultDict['end_date'] - timedelta(i)
-        dt = highest_date
-        df_new = df[df.Date != datetime.strftime(dt, '%Y-%m-%d')]
-        df = df_new
+    Retruns the Dataframe with only dates between start date and end date.
+    Resets the Index of the Dataframe.
+
+    @param df The dataframe which has to be edited
+    @param start_date Date of first date in dataframe
+    @param end_date Date of last date in dataframe
+    """
+
+    upperdate = datetime.strftime(end_date, '%Y-%m-%d')
+    lowerdate = datetime.strftime(start_date, '%Y-%m-%d')
+
+    # Removes dates higher than end_date
+    df = df[df[dd.EngEng['date']] <= upperdate]
+    # Removes dates lower than start_date
+    df = df[df[dd.EngEng['date']] >= lowerdate]
+
     df.reset_index(drop=True, inplace=True)
 
     return df
@@ -105,8 +110,8 @@ def get_divi_data(read_data=dd.defaultDict['read_data'],
     "False [Default]" if it is downloaded for all dates from start_date to end_date.
     @param out_folder Folder where data is written to.
     @param no_raw True or False [Default]. Defines if unchanged raw data is saved or not.
-    @param start_date [Optional] Date of first data in dataframe[Default = 2020.4.24].
-    @param end_date [Optional] Date to last data in dataframe [Default = today].
+    @param start_date [Optional] Date of first date in dataframe[Default = 2020.4.24].
+    @param end_date [Optional] Date of last date in dataframe [Default = today].
     @param impute_dates True or False [Default]. Defines if values for dates without new information are imputed.
     @param moving_average 0 [Default] or >0. Applies an 'moving_average'-days moving average on all time series
         to smooth out weekend effects.
@@ -150,12 +155,12 @@ def get_divi_data(read_data=dd.defaultDict['read_data'],
         exit_string = "Something went wrong, dataframe is empty."
         sys.exit(exit_string)
     df_raw = df.copy()
-    gdd_sanity_checks(df_raw)
+    divi_data_sanity_checks(df_raw)
     df.rename(columns={'date': dd.EngEng['date']}, inplace=True)
     df.rename(dd.GerEng, axis=1, inplace=True)
 
-    df['Date'] = pd.to_datetime(df['Date'], format='%Y-%m-%d %H:%M:%S')
-    df = cut_of_dates(df, start_date, end_date)
+    df[dd.EngEng['date']] = pd.to_datetime(df[dd.EngEng['date']], format='%Y-%m-%d %H:%M:%S')
+    df = extract_subframe_based_on_dates(df, start_date, end_date)
 
     # insert names of  states
     df.insert(loc=0, column=dd.EngEng["idState"], value=df[dd.EngEng["state"]])
@@ -232,15 +237,23 @@ def get_divi_data(read_data=dd.defaultDict['read_data'],
     return(df_raw, df_counties, df_states, df_ger)
 
 
-def gdd_sanity_checks(df = pd.DataFrame()):
+def divi_data_sanity_checks(df = pd.DataFrame()):
+    """! Checks the sanity of the divi_data dataframe
 
+    Checks if type of the given data is a dataframe
+    Checks if the headers of the dataframe are those which are needed
+    Checks if the size of the dataframe is expectable
+
+    @param df The dataframe which has to be checked
+    """
     # get actual headers
     try:
         actual_strings_list = df.columns.tolist()
+    # check if data is a dataframe
     except:
         exit_string = "Error: no dataframe given."
         sys.exit(exit_string)
-
+    # check number of data categories
     if len(actual_strings_list) != 11:
         exit_string = "Error: Number of data categories changed."
         sys.exit(exit_string)
@@ -250,12 +263,15 @@ def gdd_sanity_checks(df = pd.DataFrame()):
         "date", "bundesland", "gemeindeschluessel", "faelle_covid_aktuell",
         "faelle_covid_aktuell_invasiv_beatmet"}
 
-    # Compare
+    # check if headers are those we want
     for name in test_strings:
         if(name not in actual_strings_list):
             exit_string = "Error: Data categories have changed."
             sys.exit(exit_string)
 
+    # check if size of dataframe is expectable
+    # Size of dataframe on 2021-12-20 is 240407
+    # check if less dates or far more are given
     if (len(df.index) < 200000) or (len(df.index) > 500000):
         exit_string = "Error: unexpected length of dataframe."
         sys.exit(exit_string)

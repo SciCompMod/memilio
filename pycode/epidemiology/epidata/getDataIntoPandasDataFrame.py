@@ -74,7 +74,7 @@ def loadGeojson(targetFileName, apiUrl='https://opendata.arcgis.com/datasets/', 
     return df
 
 
-def loadCsv(targetFileName, apiUrl='https://opendata.arcgis.com/datasets/', extension='.csv'):
+def loadCsv(targetFileName, apiUrl='https://opendata.arcgis.com/datasets/', extension='.csv', encoding = None):
     """! Loads data sets in CSV format. (pandas DataFrame)
     This routine loads data sets (default from ArcGIS) in CSV format of the given public data
     item ID into a pandas DataFrame and returns the DataFrame.
@@ -83,13 +83,14 @@ def loadCsv(targetFileName, apiUrl='https://opendata.arcgis.com/datasets/', exte
     @param apiUrl -- API URL (string, default
               'https://opendata.arcgis.com/datasets/')
     @param extension -- Data format extension (string, default 'csv')
+    @param encoding -- CSV Encoding format (string, default None)
     return dataframe
     """
 
     url = apiUrl + targetFileName + extension
 
     try:
-        df = pd.read_csv(url)
+        df = pd.read_csv(url, encoding = encoding)
     except OSError:
         exit_string = "ERROR: URL " + url + " could not be opened."
         sys.exit(exit_string)

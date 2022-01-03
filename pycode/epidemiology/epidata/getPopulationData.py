@@ -248,7 +248,9 @@ def load_age_population_data(out_folder):
         print('Local zensus Dataframe not found.')
         try:
             print('Trying to download from the internet')
-            zensus = gd.loadCsv("abad92e8eead46a4b0d252ee9438eb53_1")
+            # if this file is encoded with utf-8  the Umlauts ä,ö,ü are not displayed correctly because they take two bytes
+            # utf_8_sig can identify those bytes as one sign and display it correctly
+            zensus = gd.loadCsv("abad92e8eead46a4b0d252ee9438eb53_1", encoding='utf_8_sig')
             gd.write_dataframe(zensus, directory, filename_zensus, "json")
         except ValueError:
             exit_string = "Error: The zensus file does not exist."
