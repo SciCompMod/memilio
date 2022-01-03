@@ -36,18 +36,19 @@ def verify_sorted(countykey_list):
     """! verify that read countykey_list is sorted
     @param countykey_list List of county regional keys
     """
-    if countykey_list == ():
-        print("Error. Can't sort empty lists.")
+    try:
+        test_if_array_like = np.array(countykey_list)
+    except:
+        print("Not an array like object.")
         return False
+        
     else:
-    # np.unique() does the sorting
-        countykey_list_unique = np.unique(np.array(countykey_list).astype(int))
-        if abs(countykey_list_unique-np.array(countykey_list).astype(int)).max() > 0:
-            print('Error. Input list not sorted, population per county list had to '
-                  'be sorted accordingly.')
-            return False
-        else:
+        countykey_list_is_sorted = np.all(np.array(countykey_list[:-1]) <=np.array(countykey_list[1:])) #this checks if it is sorted
+        if countykey_list_is_sorted:
             return True
+        else:
+            print('Error. Input list not sorted.')
+            return False
 
 
 def assign_geographical_entities(countykey_list, govkey_list):
@@ -66,7 +67,7 @@ def assign_geographical_entities(countykey_list, govkey_list):
     @return state_gov_table Table of governing region regional keys per federal state.
     """
 
-    if verify_sorted(countykey_list) == False:
+    if  verify_sorted(countykey_list) == False:
         exit_string = "Error. Input list not sorted."
         sys.exit(exit_string)
 

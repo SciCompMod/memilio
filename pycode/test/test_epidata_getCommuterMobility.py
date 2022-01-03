@@ -261,13 +261,7 @@ class TestCommuterMigration(fake_filesystem_unittest.TestCase):
     def test_verify_sorted(self, mock_print):
         self.assertEqual(True, gcm.verify_sorted(self.test_countykey_list))
         self.assertEqual(False, gcm.verify_sorted(self.test_countykey_list2))
-        Errorcall = ('Error. Input list not sorted, population per county list had to '
-                     'be sorted accordingly.')
-        mock_print.assert_called_with(Errorcall)
-        # test case with empty list
-
-        gcm.verify_sorted(())
-        Errorcall = ("Error. Can't sort empty lists.")
+        Errorcall = ('Error. Input list not sorted.')
         mock_print.assert_called_with(Errorcall)
 
     @patch('builtins.print')
