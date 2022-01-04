@@ -45,162 +45,6 @@ public:
     SecirModelV(const Populations& pop, const ParameterSet& params)
         : Base(pop, params)
     {
-
-#if !USE_DERIV_FUNC
-        size_t n_agegroups = (size_t)AgeGroup::Count;
-        for (size_t i = 0; i < n_agegroups; i++) {
-            for (size_t j = 0; j < n_agegroups; j++) {
-
-                // Si to Ei individually for each age group j
-                this->add_flow(
-                    std::make_tuple((AgeGroup)i, InfectionState::S), std::make_tuple((AgeGroup)i, InfectionState::E),
-                    [i, j](Pa const& p, Eigen::Ref<const Eigen::VectorXd> pop, Eigen::Ref<const Eigen::VectorXd> y,
-                           double t) {
-                        //symptomatic are less well quarantined when testing and tracing is overwhelmed so they infect more people
-                        auto test_and_trace_required = (1 - params.probabilities[i].get_asymp_per_infectious()) *
-                                                       dummy_R3 * Po::get_from(pop, (AgeGroup)i, InfectionState::C);
-                        auto risk_from_symptomatic =
-                            smoother_cosine(test_and_trace_required, params.get_test_and_trace_capacity(),
-                                            params.get_test_and_trace_capacity() * 5,
-                                            params.probabilities[i].get_risk_from_symptomatic(),
-                                            params.probabilities[i].get_test_and_trace_max_risk_from_symptomatic());
-
-                        // effective contact rate by contact rate between groups i and j and damping j
-                        ScalarType season_val =
-                            (1 + p.get_seasonality() * sin(3.141592653589793 *
-                                                           (std::fmod((p.get_start_day() + t), 365.0) / 182.5 + 0.5)));
-                        ScalarType cont_freq_eff =
-                            season_val *
-                            contact_matrix.get_matrix_at(t)(static_cast<Eigen::Index>(i), static_cast<Eigen::Index>(j));
-                        ScalarType Nj = Po::get_from(pop, (AgeGroup)j, InfectionState::S) +
-                                        Po::get_from(pop, (AgeGroup)j, InfectionState::E) +
-                                        Po::get_from(pop, (AgeGroup)j, InfectionState::C) +
-                                        Po::get_from(pop, (AgeGroup)j, InfectionState::I) +
-                                        Po::get_from(pop, (AgeGroup)j, InfectionState::H) +
-                                        Po::get_from(pop, (AgeGroup)j, InfectionState::U) +
-                                        Po::get_from(pop, (AgeGroup)j, InfectionState::R); // without died people
-                        ScalarType divNj = 1.0 / Nj; // precompute 1.0/Nj
-                        ScalarType Si    = Po::get_from(y, (AgeGroup)i, InfectionState::S);
-                        ScalarType Cj    = Po::get_from(pop, (AgeGroup)j, InfectionState::C);
-                        ScalarType Ij    = Po::get_from(pop, (AgeGroup)j, InfectionState::I);
-                        return Si * cont_freq_eff * divNj * p.probabilities[i].get_infection_from_contact() *
-                               (p.probabilities[j].get_carrier_infectability() * Cj + risk_from_symptomatic * Ij);
-                    });
-            }
-
-            // Ei to Ci
-            this->add_flow(std::make_tuple((AgeGroup)i, InfectionState::E),
-                           std::make_tuple((AgeGroup)i, InfectionState::C),
-                           [i](Pa const& p, Eigen::Ref<const Eigen::VectorXd> /*pop*/,
-                               Eigen::Ref<const Eigen::VectorXd> y, double /*t*/) {
-                               return Po::get_from(y, (AgeGroup)i, InfectionState::E) /
-                                      (2 * p.times[i].get_serialinterval() - p.times[i].get_incubation());
-                           });
-
-            // Ci to Ii
-            this->add_flow(std::make_tuple((AgeGroup)i, InfectionState::C),
-                           std::make_tuple((AgeGroup)i, InfectionState::I),
-                           [i](Pa const& p, Eigen::Ref<const Eigen::VectorXd> /*pop*/,
-                               Eigen::Ref<const Eigen::VectorXd> y, double /*t*/) {
-                               double dummy_R3 = 0.5 / (p.times[i].get_incubation() - p.times[i].get_serialinterval());
-                               double alpha    = p.probabilities[i].get_asymp_per_infectious();
-                               return ((1 - alpha) * dummy_R3) * Po::get_from(y, (AgeGroup)i, InfectionState::C);
-                           });
-
-            // Ci to Ri
-            this->add_flow(std::make_tuple((AgeGroup)i, InfectionState::C),
-                           std::make_tuple((AgeGroup)i, InfectionState::R),
-                           [i](Pa const& p, Eigen::Ref<const Eigen::VectorXd> /*pop*/,
-                               Eigen::Ref<const Eigen::VectorXd> y, double /*t*/) {
-                               double alpha = p.probabilities[i].get_asymp_per_infectious();
-                               return (alpha / p.times[i].get_infectious_asymp()) *
-                                      Po::get_from(y, (AgeGroup)i, InfectionState::C);
-                           });
-
-            // Ii to Ri
-            this->add_flow(std::make_tuple((AgeGroup)i, InfectionState::I),
-                           std::make_tuple((AgeGroup)i, InfectionState::R),
-                           [i](Pa const& p, Eigen::Ref<const Eigen::VectorXd> /*pop*/,
-                               Eigen::Ref<const Eigen::VectorXd> y, double /*t*/) {
-                               return Po::get_from(y, (AgeGroup)i, InfectionState::I) *
-                                      (1 - p.probabilities[i].get_hospitalized_per_infectious()) /
-                                      p.times[i].get_infectious_mild();
-                           });
-
-            // Ii to Hi
-            this->add_flow(
-                std::make_tuple((AgeGroup)i, InfectionState::I), std::make_tuple((AgeGroup)i, InfectionState::H),
-                [i](Pa const& p, Eigen::Ref<const Eigen::VectorXd> /*pop*/, Eigen::Ref<const Eigen::VectorXd> y,
-                    double /*t*/) {
-                    return Po::get_from(y, (AgeGroup)i, InfectionState::I) *
-                           p.probabilities[i].get_hospitalized_per_infectious() / p.times[i].get_home_to_hospitalized();
-                });
-
-            // Hi to Ui
-            this->add_flow(std::make_tuple((AgeGroup)i, InfectionState::H),
-                           std::make_tuple((AgeGroup)i, InfectionState::U),
-                           [i](Pa const& p, Eigen::Ref<const Eigen::VectorXd> /*pop*/,
-                               Eigen::Ref<const Eigen::VectorXd> y, double /*t*/) {
-                               ScalarType icu_occupancy = 0;
-                               for (size_t j = 0; j < (size_t)AgeGroup::Count; ++j) {
-                                   icu_occupancy += Po::get_from(y, (AgeGroup)j, InfectionState::U);
-                               }
-
-                               ScalarType prob_hosp2icu =
-                                   smoother_cosine(icu_occupancy, 0.90 * p.get_icu_capacity(), p.get_icu_capacity(),
-                                                   p.probabilities[i].get_icu_per_hospitalized(), 0);
-
-                               return Po::get_from(y, (AgeGroup)i, InfectionState::H) * prob_hosp2icu /
-                                      p.times[i].get_hospitalized_to_icu();
-                           });
-
-            // Hi to Di
-            this->add_flow(
-                std::make_tuple((AgeGroup)i, InfectionState::H), std::make_tuple((AgeGroup)i, InfectionState::D),
-                [i](Pa const& p, Eigen::Ref<const Eigen::VectorXd> /*pop*/, Eigen::Ref<const Eigen::VectorXd> y,
-                    double /*t*/) {
-                    ScalarType icu_occupancy = 0;
-                    for (size_t j = 0; j < (size_t)AgeGroup::Count; ++j) {
-                        icu_occupancy += Po::get_from(y, (AgeGroup)j, InfectionState::U);
-                    }
-
-                    ScalarType prob_hosp2icu =
-                        smoother_cosine(icu_occupancy, 0.90 * p.get_icu_capacity(), p.get_icu_capacity(),
-                                        p.probabilities[i].get_icu_per_hospitalized(), 0);
-                    ScalarType prob_hosp2dead = p.probabilities[i].get_icu_per_hospitalized() - prob_hosp2icu;
-
-                    return Po::get_from(y, (AgeGroup)i, InfectionState::H) * prob_hosp2dead /
-                           p.times[i].get_hospitalized_to_icu();
-                });
-
-            // Hi to Ri
-            this->add_flow(
-                std::make_tuple((AgeGroup)i, InfectionState::H), std::make_tuple((AgeGroup)i, InfectionState::R),
-                [i](Pa const& p, Eigen::Ref<const Eigen::VectorXd> /*pop*/, Eigen::Ref<const Eigen::VectorXd> y,
-                    double /*t*/) {
-                    return Po::get_from(y, (AgeGroup)i, InfectionState::H) *
-                           (1 - p.probabilities[i].get_icu_per_hospitalized()) / p.times[i].get_hospitalized_to_home();
-                });
-
-            // Ui to Ri
-            this->add_flow(std::make_tuple((AgeGroup)i, InfectionState::U),
-                           std::make_tuple((AgeGroup)i, InfectionState::R),
-                           [i](Pa const& p, Eigen::Ref<const Eigen::VectorXd> /*pop*/,
-                               Eigen::Ref<const Eigen::VectorXd> y, double /*t*/) {
-                               return Po::get_from(y, (AgeGroup)i, InfectionState::U) *
-                                      (1 - p.probabilities[i].get_dead_per_icu()) / p.times[i].get_icu_to_home();
-                           });
-
-            // Ui to Di
-            this->add_flow(std::make_tuple((AgeGroup)i, InfectionState::U),
-                           std::make_tuple((AgeGroup)i, InfectionState::D),
-                           [i](Pa const& p, Eigen::Ref<const Eigen::VectorXd> /*pop*/,
-                               Eigen::Ref<const Eigen::VectorXd> y, double /*t*/) {
-                               return Po::get_from(y, (AgeGroup)i, InfectionState::U) *
-                                      p.probabilities[i].get_dead_per_icu() / p.times[i].get_icu_to_dead();
-                           });
-        }
-#endif
     }
 
     SecirModelV(int num_agegroups)
@@ -286,15 +130,15 @@ public:
             double risk_from_vacc        = 1.0;
             double risk_from_immune      = 1.0;
             double risk_vacc_inf         = params.get<ReducVaccExp>()[i];
-            double risk_immune_inf       = params.get<ReducImmuneExp>()[i];
             double reduc_exp_inf         = params.get<ReducExpInf>()[i];
-            double reduc_immune_exp_inf  = params.get<ReducImmuneExpInf>()[i];
             double reduc_inf_hosp        = params.get<ReducInfHosp>()[i];
             double reduc_hosp_icu        = params.get<ReducInfHosp>()[i];
             double reduc_icu_dead        = params.get<ReducInfHosp>()[i];
-            double reduc_immune_inf_hosp = params.get<ReducImmuneInfHosp>()[i];
-            double reduc_immune_hosp_icu = params.get<ReducImmuneInfHosp>()[i];
-            double reduc_immune_icu_dead = params.get<ReducImmuneInfHosp>()[i];
+            double risk_immune_inf       = smoother_cosine(t, params.get<AvgSecondVaccDay>()[i], params.get<AvgSecondVaccDay>()[i] + 365, params.get<ReducImmuneExp>()[i], 1.0);
+            double reduc_immune_exp_inf  = smoother_cosine(t, params.get<AvgSecondVaccDay>()[i], params.get<AvgSecondVaccDay>()[i] + 365, params.get<ReducImmuneExpInf>()[i], 1.0);
+            double reduc_immune_inf_hosp = smoother_cosine(t, params.get<AvgSecondVaccDay>()[i], params.get<AvgSecondVaccDay>()[i] + 500, params.get<ReducImmuneInfHosp>()[i], 1.0);
+            double reduc_immune_hosp_icu = smoother_cosine(t, params.get<AvgSecondVaccDay>()[i], params.get<AvgSecondVaccDay>()[i] + 500, params.get<ReducImmuneInfHosp>()[i], 1.0);
+            double reduc_immune_icu_dead = smoother_cosine(t, params.get<AvgSecondVaccDay>()[i], params.get<AvgSecondVaccDay>()[i] + 500, params.get<ReducImmuneInfHosp>()[i], 1.0);
 
             double reduc_t = params.get<ReducTime>()[i];
 
@@ -608,6 +452,62 @@ public:
         }
     }
 
+    void get_derivatives_postprocess(const Eigen::Ref<Eigen::VectorXd>& y, double t, Eigen::Ref<Eigen::VectorXd> dydt)
+    {
+        // alpha  // percentage of asymptomatic cases
+        // beta // risk of infection from the infected symptomatic patients
+        // rho   // hospitalized per infectious
+        // theta // icu per hospitalized
+        // delta  // deaths per ICUs
+        // 0: S,      1: E,     2: C,     3: I,     4: H,     5: U,     6: R,     7: D
+        auto const& params   = this->parameters;
+        AgeGroup n_agegroups = params.get_num_groups();
+
+        dydt.setConstant(0.0);
+
+        for (auto i = AgeGroup(0); i < n_agegroups; i++) {
+
+            size_t Ci  = this->populations.get_flat_index({i, InfectionStateV::Carrier});
+            size_t Ii  = this->populations.get_flat_index({i, InfectionStateV::Infected});
+
+            size_t CVi = this->populations.get_flat_index({i, InfectionStateV::CarrierV1});
+            size_t IVi = this->populations.get_flat_index({i, InfectionStateV::InfectedV1});
+
+            size_t CDi = this->populations.get_flat_index({i, InfectionStateV::CarrierT});
+            size_t IDi = this->populations.get_flat_index({i, InfectionStateV::InfectedT});
+
+            size_t CDVi = this->populations.get_flat_index({i, InfectionStateV::CarrierTV1});
+            size_t IDVi = this->populations.get_flat_index({i, InfectionStateV::InfectedTV1});
+
+            size_t CV2i = this->populations.get_flat_index({i, InfectionStateV::CarrierV2});
+            size_t IV2i = this->populations.get_flat_index({i, InfectionStateV::InfectedV2});
+
+            size_t CDV2i = this->populations.get_flat_index({i, InfectionStateV::CarrierTV2});
+            size_t IDV2i = this->populations.get_flat_index({i, InfectionStateV::InfectedTV2});
+
+            double dummy_R3 =
+                0.5 / (params.get<IncubationTime>()[i] - params.get<SerialInterval>()[i]); // R3 = 1/(2(TINC-SI))
+
+            double risk_vacc_inf         = params.get<ReducVaccExp>()[i];
+            double reduc_exp_inf         = params.get<ReducExpInf>()[i];
+            double risk_immune_inf       = smoother_cosine(t, params.get<AvgSecondVaccDay>()[i], params.get<AvgSecondVaccDay>()[i] + 365, params.get<ReducImmuneExp>()[i], 1.0);
+            double reduc_immune_exp_inf  = smoother_cosine(t, params.get<AvgSecondVaccDay>()[i], params.get<AvgSecondVaccDay>()[i] + 365, params.get<ReducImmuneExpInf>()[i], 1.0);
+
+            dydt[Ii]  = (1 - params.get<AsymptoticCasesPerInfectious>()[i]) * dummy_R3 * y[Ci];
+            dydt[IDi] = (1 - params.get<AsymptoticCasesPerInfectious>()[i]) * dummy_R3 * y[CDi];
+
+            dydt[IVi] = (reduc_exp_inf / risk_vacc_inf) * (1 - params.get<AsymptoticCasesPerInfectious>()[i]) *
+                        dummy_R3 * y[CVi];
+            dydt[IDVi] = (reduc_exp_inf / risk_vacc_inf) * (1 - params.get<AsymptoticCasesPerInfectious>()[i]) *
+                         dummy_R3 * y[CDVi];
+
+            dydt[IV2i] = (reduc_immune_exp_inf / risk_immune_inf) *
+                         (1 - params.get<AsymptoticCasesPerInfectious>()[i]) * dummy_R3 * y[CV2i];
+            dydt[IDV2i] = (reduc_immune_exp_inf / risk_immune_inf) *
+                          (1 - params.get<AsymptoticCasesPerInfectious>()[i]) * dummy_R3 * y[CDV2i];
+        }
+    }
+
 #endif // USE_DERIV_FUNC
 
     /**
@@ -678,17 +578,16 @@ public:
 
     void apply_b161(double t)
     {
-
-
         auto start_day   = this->get_model().parameters.template get<StartDay>();
-        auto b161_growth = (start_day - get_day_in_year(Date(2021, 6, 6))) * 0.1666667;
-        // 2 equal to the share of the delta variant on June 6
-        double share_new_variant = std::min(1.0, pow(2, t * 0.1666667 + b161_growth) * 0.01);
-        size_t num_groups = this->get_model().parameters.get_num_groups();
+        // // 0.03 equal to the share of the Omikron variant after week 48, doubling each 4 days
+        double share_new_variant = std::min(1.0, pow(2, (start_day + t - get_day_in_year(Date(2021, 12, 4))) * 0.25) * 0.03);
+        // std::cout << "\n at t=" << t << " new variant share " << share_new_variant;
+        // auto share_new_variant = 1.0;
+        size_t num_groups = (size_t)this->get_model().parameters.get_num_groups();
         for (size_t i = 0; i < num_groups; ++i) {
             double new_transmission =
-                (1 - share_new_variant) * this->get_model().parameters.template get<BaseInfB117>()[(AgeGroup)i] +
-                share_new_variant * this->get_model().parameters.template get<BaseInfB161>()[(AgeGroup)i];
+                (1 - share_new_variant) * this->get_model().parameters.template get<BaseInfB161>()[(AgeGroup)i] +
+                share_new_variant * this->get_model().parameters.template get<BaseInfOmikron>()[(AgeGroup)i];
             this->get_model().parameters.template get<InfectionProbabilityFromContact>()[(AgeGroup)i] =
                 new_transmission;
         }
@@ -698,11 +597,11 @@ public:
     {
         size_t index      = (size_t)(int)t;
         auto& params      = this->get_model().parameters;
-        size_t num_groups = params.get_num_groups();
+        size_t num_groups = (size_t)params.get_num_groups();
         auto last_value   = this->get_result().get_last_value();
 
         for (int i = 0; i < last_value.size(); ++i) {
-            if (last_value(i) < 0) {
+            if (last_value(i) < -10) {
                 std::cout << "compartment i is negative: " << last_value(i) << std::endl;
             }
         }
@@ -730,8 +629,8 @@ public:
             }
 
             if (last_value(count * i + S) - first_vacc < 0) {
-                std::cout << "too many first vaccinated at time" << t << ": setting first_vacc from" << first_vacc
-                          << " to " << 0.99 * last_value(count * i + S) << std::endl;
+                // std::cout << "too many first vaccinated at time" << t << ": setting first_vacc from" << first_vacc
+                //           << " to " << 0.99 * last_value(count * i + S) << std::endl;
                 first_vacc = 0.99 * last_value(count * i + S);
             }
 
@@ -739,8 +638,8 @@ public:
             last_value(count * i + SV) += first_vacc;
 
             if (last_value(count * i + SV) - full_vacc < 0) {
-                std::cout << "too many fully vaccinated at time" << t << ": setting full_vacc from" << full_vacc
-                          << " to " << 0.99 * last_value(count * i + SV) << std::endl;
+                // std::cout << "too many fully vaccinated at time" << t << ": setting full_vacc from" << full_vacc
+                //           << " to " << 0.99 * last_value(count * i + SV) << std::endl;
                 full_vacc = 0.99 * last_value(count * i + SV);
             }
 
@@ -837,8 +736,6 @@ public:
     Eigen::Ref<Eigen::VectorXd> advance(double tmax)
     {
 
-        auto& start_day        = this->get_model().parameters.template get<StartDay>();
-        auto& start_summer     = this->get_model().parameters.template get<StartSummer>();
         auto& dyn_npis         = this->get_model().parameters.template get<DynamicNPIsInfected>();
         auto& contact_patterns = this->get_model().parameters.template get<ContactPatterns>();
 
@@ -863,7 +760,7 @@ public:
             }
 
             if (t > 0) {
-                delay_lockdown = 7;
+                delay_lockdown = 5;
             }
             else {
                 delay_lockdown = 0;
@@ -872,25 +769,25 @@ public:
 
             if (dyn_npis.get_thresholds().size() > 0) {
                 if (floating_point_greater_equal(t, m_t_last_npi_check + dt)) {
-                    if (Base::get_result().get_last_time() < start_summer - start_day) {
-                        auto inf_rel = get_infections_relative(*this, t, this->get_result().get_last_value()) *
-                                       dyn_npis.get_base_value();
-                        auto exceeded_threshold = dyn_npis.get_max_exceeded_threshold(inf_rel);
-                        if (exceeded_threshold != dyn_npis.get_thresholds().end() &&
-                            (exceeded_threshold->first > m_dynamic_npi.first ||
-                             t > double(m_dynamic_npi.second))) { //old npi was weaker or is expired
 
-                            auto t_start = SimulationTime(t + delay_lockdown);
-                            auto t_end   = t_start + SimulationTime(dyn_npis.get_duration());
-                            this->get_model().parameters.get_start_commuter_detection() = (double)t_start;
-                            this->get_model().parameters.get_end_commuter_detection()   = (double)t_end;
-                            m_dynamic_npi = std::make_pair(exceeded_threshold->first, t_end);
-                            implement_dynamic_npis(contact_patterns.get_cont_freq_mat(), exceeded_threshold->second,
-                                                   t_start, t_end, [this](auto& g) {
-                                                       return make_contact_damping_matrix(g);
-                                                   });
-                        }
+                    auto inf_rel = get_infections_relative(*this, t, this->get_result().get_last_value()) *
+                                    dyn_npis.get_base_value();
+                    auto exceeded_threshold = dyn_npis.get_max_exceeded_threshold(inf_rel);
+                    if (exceeded_threshold != dyn_npis.get_thresholds().end() &&
+                        (exceeded_threshold->first > m_dynamic_npi.first ||
+                            t > double(m_dynamic_npi.second))) { //old npi was weaker or is expired
+
+                        auto t_start = SimulationTime(t + delay_lockdown);
+                        auto t_end   = t_start + SimulationTime(dyn_npis.get_duration());
+                        this->get_model().parameters.get_start_commuter_detection() = (double)t_start;
+                        this->get_model().parameters.get_end_commuter_detection()   = (double)t_end;
+                        m_dynamic_npi = std::make_pair(exceeded_threshold->first, t_end);
+                        implement_dynamic_npis(contact_patterns.get_cont_freq_mat(), exceeded_threshold->second,
+                                                t_start, t_end, [this](auto& g) {
+                                                    return make_contact_damping_matrix(g);
+                                                });
                     }
+
                     m_t_last_npi_check = t;
                 }
             }

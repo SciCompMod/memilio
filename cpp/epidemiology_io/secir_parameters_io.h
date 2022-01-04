@@ -75,7 +75,7 @@ IOResult<void> write_graph(const Graph<Model, MigrationParameters>& graph, const
 
         //list of edges
         auto out_edges = graph.out_edges(inode);
-        if (out_edges.size()) {
+        if (out_edges.end() != out_edges.begin()) {
             Json::Value js_edges(Json::arrayValue);
             for (auto& e : graph.out_edges(inode)) {
                 BOOST_OUTCOME_TRY(js_edge_params, serialize_json(e.property, ioflags));
@@ -130,6 +130,10 @@ IOResult<Graph<Model, MigrationParameters>> read_graph(const std::string& direct
     for (auto inode = size_t(0); inode < graph.nodes().size(); ++inode) {
         //list of edges
         auto edge_filename = path_join(abs_path, "GraphEdges_node" + std::to_string(inode) + ".json");
+        if (!file_exists(edge_filename, edge_filename))
+        {
+            continue; //node has no edges
+        }
         BOOST_OUTCOME_TRY(js_edges, read_json(edge_filename));
 
         for (auto& e : js_edges) {
@@ -667,7 +671,7 @@ IOResult<void> read_population_data_county(std::vector<Model>& model, Date date,
     }
     BOOST_OUTCOME_TRY((details::set_rki_data<Model, ModelType>(model, path_join(dir, "all_county_age_ma7_rki.json"),
                                                                id_name, county, date, scaling_factor_inf)));
-    BOOST_OUTCOME_TRY((extrapolate_rki_results<Model, ModelType>(model, dir, dir, county, date, scaling_factor_inf, scaling_factor_icu, 5)));
+    // BOOST_OUTCOME_TRY((extrapolate_rki_results<Model, ModelType>(model, dir, dir, county, date, scaling_factor_inf, scaling_factor_icu, 5)));
     BOOST_OUTCOME_TRY((details::set_population_data<Model, ModelType>(
         model, path_join(dir, "county_current_population.json"), "ID_County", county)));
     return success();
@@ -678,7 +682,7 @@ IOResult<void> read_vaccine_data(std::vector<Model>& model, Date date, const std
 {
     std::string id_name = "ID_County";
 
-    details::get_new_vaccine_growth(model, path_join(dir, "all_county_ageinf_vacc_ma7.json"), date, id_name,
+    details::get_new_vaccine_growth(model, path_join(dir, "ni_all_county_ageinf_vacc_ma7.json"), date, id_name,
                                     county, num_days);
     //details::set_vaccine_data(model, path_join(dir, "vaccine_data.json"), id_name, county);
     return success();

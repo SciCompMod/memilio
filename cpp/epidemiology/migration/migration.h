@@ -465,20 +465,20 @@ void MigrationEdge::apply_migration(double t, double dt, SimulationNode<Sim>& no
                 if (dummy(j) < 0) {
                     int num_comparts     = (int)InfectionStateV::Count;
                     Eigen::Index group   = Eigen::Index((int)(j / num_comparts));
-                    Eigen::Index compart = j % num_comparts;
-                    std::cout << "Too many returns in migration at time " << t << " in compartment " << compart
-                              << ", age group " << group << std::endl;
-                    if (dummy(j) < -1e-3) {
-                        std::cout << "Negative value is larger then 10^-3: " << dummy(j) << std::endl;
+                    // Eigen::Index compart = j % num_comparts;
+                    // std::cout << "Too many returns in migration at time " << t << " in compartment " << compart
+                    //           << ", age group " << group << std::endl;
+                    if (dummy(j) < -30) {
+                        std::cout << "Negative value is larger then -30: " << dummy(j) << std::endl;
                     }
                     Eigen::Index max_index;
                     slice(dummy, {group * num_comparts, num_comparts}).maxCoeff(&max_index);
-                    std::cout << "Transferring to largest compartment: " << max_index << std::endl;
+                    // std::cout << "Transferring to largest compartment: " << max_index << std::endl;
                     max_index += group * num_comparts;
                     m_migrated[i](max_index) -= dummy(j);
                     m_migrated[i](j) += dummy(j);
 
-                    std::cout << std::endl;
+                    // std::cout << std::endl;
                 }
             }
             node_from.get_result().get_last_value() += m_migrated[i];

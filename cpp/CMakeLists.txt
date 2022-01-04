@@ -133,7 +133,9 @@ target_compile_features(epidemiology PUBLIC cxx_std_14)
 target_link_libraries(epidemiology PUBLIC spdlog::spdlog Eigen3::Eigen Boost::boost)
 target_compile_options(epidemiology PRIVATE
     $<$<OR:$<CXX_COMPILER_ID:Clang>,$<CXX_COMPILER_ID:GNU>>: -Wall -Wextra -Werror -Wshadow --pedantic-errors -Wno-deprecated-copy>
-    $<$<CXX_COMPILER_ID:MSVC>: /W4 /WX>)
+    $<$<CXX_COMPILER_ID:MSVC>: /W4 /WX>
+    PUBLIC
+    $<$<CXX_COMPILER_ID:MSVC>: /bigobj>)
 
 if (EPI_BUILD_EPI_IO)
 
