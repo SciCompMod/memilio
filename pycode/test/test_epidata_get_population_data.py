@@ -315,6 +315,8 @@ class Test_getPopulationData(fake_filesystem_unittest.TestCase):
         pd.testing.assert_frame_equal(counties_read, counties_write, check_dtype=False)
         pd.testing.assert_frame_equal(reg_key_read, reg_key_write, check_dtype=False)
         pd.testing.assert_frame_equal(zensus_read, zensus_write, check_dtype=False)
+        
+        # TODO: How to test hdf5 export?
 
     @patch('epidemiology.epidata.getPopulationData.gd.loadCsv')
     @patch('epidemiology.epidata.getPopulationData.pandas.read_json')

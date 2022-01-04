@@ -18,9 +18,8 @@
 # limitations under the License.
 #############################################################################
 
-from pyfakefs.fake_filesystem_unittest import TestCase
 from pyfakefs import fake_filesystem_unittest
-from unittest.mock import patch, call
+from unittest.mock import patch
 import unittest
 import pandas as pd
 import os
@@ -28,13 +27,11 @@ import collections
 from epidemiology.epidata import getCommuterMobility as gcm
 from epidemiology.epidata import geoModificationGermany as geoger
 from epidemiology.epidata import getDataIntoPandasDataFrame as gD
-from epidemiology.epidata import defaultDict as dd
+from epidemiology.epidata import getPopulationData as gpd
 
 
 class TestCommuterMigration(fake_filesystem_unittest.TestCase):
     path = '/home/CMData/'
-
-    
 
     setup_dict = {'num_counties': 2, 'abs_tol': 100, 'rel_tol': 0.01,
                   'num_govregions': 2, 'counties': 'empty', 'path': path}
@@ -63,11 +60,6 @@ class TestCommuterMigration(fake_filesystem_unittest.TestCase):
          '05570'],
         ['05711', '05754', '05758', '05762', '05766', '05770', '05774'])
     
-    (countykey2govkey, countykey2localnumlist, gov_county_table,
-         state_gov_table) = gcm.assign_geographical_entities(countykey_list, govkey_list)
-    df_commuter_migration = gcm.get_commuter_data(out_folder=path)
-    mat_commuter_migration = df_commuter_migration.iloc[: , 0:]
-    mat_commuter_migration = mat_commuter_migration.iloc[0: , :]
     
     def setUp(self):
         self.setUpPyfakefs()
@@ -280,22 +272,24 @@ class TestCommuterMigration(fake_filesystem_unittest.TestCase):
 
     @patch('builtins.print')
     def test_assign_geographical_entities(self, mock_print):
+        (countykey2govkey, countykey2localnumlist, gov_county_table,
+         state_gov_table) = gcm.assign_geographical_entities(self.countykey_list, self.govkey_list)
         for item in self.test_countykey2govkey.keys():
             self.assertEqual(
                 self.test_countykey2govkey.get(item),
-                self.countykey2govkey.get(item))
+                countykey2govkey.get(item))
 
         #check if all countyIDs are in countykey2govkey
         for key in geoger.get_county_ids(True,False,True):
-            self.assertIn(key, self.countykey2govkey.keys())
-            self.assertIn(key, self.countykey2localnumlist.keys())
+            self.assertIn(key, countykey2govkey.keys())
+            self.assertIn(key, countykey2localnumlist.keys())
         for item in self.test_countykey2localnumlist.keys():
             self.assertEqual(self.test_countykey2localnumlist.get(
-                item), self.countykey2localnumlist.get(item))
+                item), countykey2localnumlist.get(item))
         for item in self.test_state_gov_table:
-            self.assertIn(item, self.state_gov_table)
+            self.assertIn(item, state_gov_table)
         for item in self.test_gov_county_table:
-            self.assertIn(item, self.gov_county_table)
+            self.assertIn(item, gov_county_table)
         
         # test case with not matching countykey and govkey lists
         (countykey2govkey, countykey2localnumlist, gov_county_table,
@@ -329,40 +323,49 @@ class TestCommuterMigration(fake_filesystem_unittest.TestCase):
     def test_commuter_data(self):
         """! Tests migration data by some randomly chosen tests.
         """
-        
+
+        df_commuter_migration = gcm.get_commuter_data(out_folder=self.path)
+        # the first column and first row are just the county IDs
+        # mat_commuter_migration is the real Data that should be tested
+        mat_commuter_migration = df_commuter_migration.iloc[: , 0:]
+        mat_commuter_migration = mat_commuter_migration.iloc[0: , :]
+
         countykey2numlist = collections.OrderedDict(
             zip(self.countykey_list, list(range(0, len(self.countykey_list)))))
 
         gD.check_dir(self.path)
         self.write_kreise_deu_data(self.path)
         self.write_commuter_all_federal_states(self.path)
-        self.assertEqual(len(os.listdir(self.path)), 17)
+        self.assertEqual(len(os.listdir(self.path)), 18)
         
         # just do some tests on randomly chosen migrations
+
+        # check migration from Leverkusen (averaged from NRW, 05) to Hildburghausen
+        city_from = countykey2numlist['05316']
+        city_to = countykey2numlist['16069']
+        population = gpd.get_age_population_data(
+            out_folder=self.path, merge_eisenach=False, write_df=True)
+        countypop_list = list(population["Total"])
+        self.assertEqual(countypop_list[city_from], 163905)
+        self.assertAlmostEqual(mat_commuter_migration.iat[city_from, city_to], 1.5265, 3)
 
         # check migration from Duisburg to Oberspreewald-Lausitz
         city_from = countykey2numlist['05112']
         city_to = countykey2numlist['12066']
-        self.assertEqual(self.mat_commuter_migration.iat[city_from, city_to], 11)
+        self.assertEqual(mat_commuter_migration.iat[city_from, city_to], 11)
 
         # check migration from Lahn-Dill-Kreis to Hamburg
         city_from = countykey2numlist['06532']
         city_to = countykey2numlist['02000']
-        no2 = self.mat_commuter_migration.iat[city_from, city_to]
-        self.assertEqual(self.mat_commuter_migration.iat[city_from, city_to], 96)
+        self.assertEqual(mat_commuter_migration.iat[city_from, city_to], 96)
 
         # check migration from Herzogtum Lauenburg to Flensburg, Stadt
         city_from = countykey2numlist['01001']
         city_to = countykey2numlist['01053']
-        self.assertEqual(self.mat_commuter_migration.iat[city_from, city_to], 14)
-
-    def fake_commuter_data(self):
-        val = self.df_commuter_migration
-        return(val)
+        self.assertEqual(mat_commuter_migration.iat[city_from, city_to], 14)
     
     @patch('builtins.print')
-    @patch('epidemiology.epidata.getCommuterMobility.get_commuter_data', return_value= df_commuter_migration)
-    def test_get_neighbors_mobility(self, mock_print, mock_gcd):
+    def test_get_neighbors_mobility(self, mock_print):
 
         testcountyid = 1051
         tci = testcountyid
@@ -372,7 +375,7 @@ class TestCommuterMigration(fake_filesystem_unittest.TestCase):
             tci, direction='both', abs_tol=0, rel_tol=0,
             tol_comb='or', merge_eisenach=True, out_folder='')
         expected_call = "Commuter data was not found. Download and process it from the internet."
-        mock_gcd.assert_called_with(expected_call)
+        #mock_print.assert_has_calls(expected_call)
         self.assertEqual(len(countykey_list), 398)
         self.assertAlmostEqual(228, commuter_all[0], 2)
         self.assertAlmostEqual(2146, commuter_all[9], 2)

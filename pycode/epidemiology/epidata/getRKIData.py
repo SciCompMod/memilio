@@ -41,7 +41,7 @@ from epidemiology.epidata import modifyDataframeSeries
 from epidemiology.epidata import geoModificationGermany as geoger
 
 
-def check_for_completeness(df, merge_berlin = False, merge_eisenach = False):
+def check_for_completeness(df, merge_berlin = False, merge_eisenach = True):
     """! Checks if all counties are mentioned in the RKI data set
 
    This check had to be added due to incomplete data downloads

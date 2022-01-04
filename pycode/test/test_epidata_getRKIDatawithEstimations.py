@@ -309,7 +309,6 @@ class TestGetRKIDatawithEstimations(fake_filesystem_unittest.TestCase):
         # 1 jh-file, 2*len(rki): original+estimated, 4 weekly deaths original+original&estimated+ageresolved+genderresolved
         self.assertEqual(len(os.listdir(directory)), 1 + 2 * len(self.rki_files_to_change) + 4)
 
-        """
         f_read = os.path.join(directory, "all_age_rki_estimated.json")
         df = pd.read_json(f_read)
 
@@ -320,7 +319,7 @@ class TestGetRKIDatawithEstimations(fake_filesystem_unittest.TestCase):
         recovered_estimated = recovered + "_estimated"
         deaths_estimated = deaths + "_estimated"
 
-        ages = dd.age_rki_list
+        ages = ["A0-A04", "A05-A14", "A15-A34", "A35-A59", "A60-A79", "A80+"]
 
         data_list = df.columns.values.tolist()
 
@@ -339,7 +338,7 @@ class TestGetRKIDatawithEstimations(fake_filesystem_unittest.TestCase):
             except ValueError:
                 pass
 
-            index = index + 1"""
+            index = index + 1
 
 
     @patch('epidemiology.epidata.getRKIDatawithEstimations.grd.get_rki_data')

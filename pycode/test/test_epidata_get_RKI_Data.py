@@ -246,7 +246,7 @@ class test_get_RKI_Data(fake_filesystem_unittest.TestCase):
         # checks if Berlins districts are concatenated
 
         self.assertEqual(
-            df_gender[(df_gender['County'] == "SK Berlin") & (df_gender['Gender'] == 'male')]['Confirmed'].shape[0], 0)
+            df_gender[(df_gender['County'] == "Berlin") & (df_gender['Gender'] == 'male')]['Confirmed'].shape[0], 10)
 
         file = 'infected_county_rki.json'
         f_read = os.path.join(directory, file)

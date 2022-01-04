@@ -21,16 +21,8 @@ from datetime import datetime, timedelta
 import time
 import os
 import sys
-import csv
 import pandas as pd
 import numpy as np
-import matplotlib.pyplot as plt
-import urllib.request   
-from matplotlib import colors
-from scipy.spatial.distance import pdist
-from scipy.cluster import hierarchy
-from sklearn.cluster import KMeans
-from epidemiology.epidata.defaultDict import County
 from epidemiology.epidata import geoModificationGermany as geoger
 from epidemiology.epidata  import getDataIntoPandasDataFrame as gd
 from epidemiology.epidata import defaultDict as dd
@@ -117,7 +109,7 @@ def transformWeatherData(read_data=dd.defaultDict['read_data'],
                  for str_col in df_weather_old.iloc
                  [:, start_weather_cols:].columns]))
         # convert string dates into other format
-        dates_new = [datetime.strptime(old_date, "%Y-%m-%d")
+        dates_new = [datetime.strptime(old_date, "%Y%m%d")
                      for old_date in str_dates]
         min_date = dates_new[0]+timedelta(days=-14)
         max_date = dates_new[-1]+timedelta(days=14)
@@ -157,7 +149,7 @@ def transformWeatherData(read_data=dd.defaultDict['read_data'],
             df_local_new[dd.EngEng['idCounty']] = countyID
             # possible resorting of rows such that they are sorted according to
             # a literal sorting of the code strings
-            df_local_new[col_new] = pd.DataFrame(np.transpose(weather_vals))
+            df_local_new[col_new] = np.transpose(weather_vals)
 
             df_local_new = modifyDataframeSeries.impute_and_reduce_df(
                                                                       df_local_new,

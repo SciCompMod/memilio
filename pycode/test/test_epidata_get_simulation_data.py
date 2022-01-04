@@ -45,17 +45,17 @@ class TestGetSimulationData(fake_filesystem_unittest.TestCase):
     def setUp(self):
         self.setUpPyfakefs()
 
+    @patch('epidemiology.epidata.getVaccinationData.get_vaccination_data')
     @patch('epidemiology.epidata.getDIVIData.get_divi_data')
     @patch('epidemiology.epidata.getRKIData.get_rki_data')
     @patch('epidemiology.epidata.getPopulationData.get_population_data')
     @patch('epidemiology.epidata.getPopulationData.get_age_population_data')
-    @patch('epidemiology.epidata.getVaccinationData.get_vaccination_data')
-    def test_get_call_sub_functions(self, mock_vaccination, mock_agep,
-                                    mock_popul, mock_rki, mock_divi):
+    def test_get_call_sub_functions(self, mock_agep, mock_popul, mock_rki,
+                                    mock_divi, mock_vaccination):
 
         [read_data, file_format, out_folder, no_raw, end_date, impute_dates,
          make_plot, moving_average, split_berlin, start_date] = [False,
-                                                                 "json_timeasstring", os.path.join(dd.defaultDict['out_folder']),
+                                                                 "json_timeasstring", self.path,
                                                                  False, dd.defaultDict['end_date'],
                                                                  dd.defaultDict['impute_dates'],
                                                                  dd.defaultDict['make_plot'],
@@ -70,7 +70,7 @@ class TestGetSimulationData(fake_filesystem_unittest.TestCase):
         arg_dict_all = {
             "read_data": dd.defaultDict['read_data'],
             "file_format": dd.defaultDict['file_format'],
-            "out_folder": os.path.join(dd.defaultDict['out_folder']),
+            "out_folder": self.path,
             'no_raw': dd.defaultDict["no_raw"]}
 
         arg_dict_rki = {
@@ -89,9 +89,6 @@ class TestGetSimulationData(fake_filesystem_unittest.TestCase):
             "make_plot": dd.defaultDict['make_plot'],
             "moving_average": dd.defaultDict['moving_average']}
 
-        mock_vaccination.assert_called()
-        mock_vaccination.assert_called_with(**arg_dict_vaccination)
-
         mock_agep.assert_called()
         mock_agep.assert_called_with(**arg_dict_all)
 
@@ -104,26 +101,24 @@ class TestGetSimulationData(fake_filesystem_unittest.TestCase):
         mock_divi.assert_called()
         mock_divi.assert_called_with(**arg_dict_divi)
 
+        mock_vaccination.assert_called()
+        mock_vaccination.assert_called_with(**arg_dict_vaccination)
+
     @patch('builtins.print')
+    @patch('epidemiology.epidata.getVaccinationData.get_vaccination_data')
     @patch('epidemiology.epidata.getDIVIData.get_divi_data')
     @patch('epidemiology.epidata.getRKIData.get_rki_data')
     @patch('epidemiology.epidata.getPopulationData.get_population_data')
     @patch('epidemiology.epidata.getPopulationData.get_age_population_data')
-    @patch('epidemiology.epidata.getVaccinationData.get_vaccination_data')
     def test_errors(
-            self, mock_vaccination, mock_agep, mock_popul, mock_rki, mock_divi,
+            self, mock_agep, mock_popul, mock_rki, mock_divi, mock_vaccination,
             mock_print):
-        mock_vaccination.side_effect = Exception
         mock_agep.side_effect = Exception
         mock_popul.side_effect = Exception
         mock_rki.side_effect = Exception
         mock_divi.side_effect = Exception
+        mock_vaccination.side_effect = Exception
         gsd.get_simulation_data()
-        vaccprint = call(
-            'Error: Something went wrong while getting ' + 'vaccination' +
-            ' data. This was likely caused by a changed file format'
-            ' of the source material. Please report this as an issue. ' +
-            'vaccination' + ' data could not be stored correctly.')
         agepprint = call(
             'Error: Something went wrong while getting ' +
             'age-resolved population' +
@@ -144,6 +139,11 @@ class TestGetSimulationData(fake_filesystem_unittest.TestCase):
             ' data. This was likely caused by a changed file format'
             ' of the source material. Please report this as an issue. ' +
             'DIVI' + ' data could not be stored correctly.')
+        vaccprint = call(
+            'Error: Something went wrong while getting ' + 'vaccination' +
+            ' data. This was likely caused by a changed file format'
+            ' of the source material. Please report this as an issue. ' +
+            'vaccination' + ' data could not be stored correctly.')
         expected_calls = [rkiprint, populprint,
                           agepprint, diviprint, vaccprint]
         mock_print.assert_has_calls(expected_calls)

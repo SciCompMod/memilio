@@ -56,31 +56,30 @@ class TestGetDiviData(fake_filesystem_unittest.TestCase):
                 'Baden-Württemberg', 'Bayern', 'Saarland', 'Berlin', 'Brandenburg',
                 'Mecklenburg-Vorpommern', 'Sachsen', 'Sachsen-Anhalt', 'Thüringen']})
 
-    (df_raw, df_counties, df_states, df_ger) = gdd.get_divi_data(out_folder=path)
-
     def setUp(self):
         self.setUpPyfakefs()
-        
 
-    def gdd_calls(self,text=''):
+    def gdd_calls(self, text=''):
         directory = os.path.join(self.path, 'Germany/')
-        gdd_calls= [
-        call('Information: Data has been written to',
-            os.path.join(directory, 'FullData_DIVI.json')),
-        call('Information: Data has been written to',
-            os.path.join(directory, 'county_divi'+text+'.json')),
-        call(
-            'Information: Data has been written to',
-            os.path.join(directory, 'state_divi'+text+'.json')),
-        call(
-            'Information: Data has been written to',
-            os.path.join(directory, 'germany_divi'+text+'.json'))]
-        return gdd_calls 
+        gdd_calls = [
+            call('Information: Data has been written to',
+                 os.path.join(directory, 'FullData_DIVI.json')),
+            call('Information: Data has been written to',
+                 os.path.join(directory, 'county_divi'+text+'.json')),
+            call(
+                'Information: Data has been written to',
+                os.path.join(directory, 'state_divi'+text+'.json')),
+            call(
+                'Information: Data has been written to',
+                os.path.join(directory, 'germany_divi'+text+'.json'))]
+        return gdd_calls
 
     def test_extract_subframe_based_on_dates(self):
+        (df_raw, df_counties, df_states, df_ger) = gdd.get_divi_data(
+            out_folder=self.path)
         # test if only dates from 08-09-2021 are returned
         df_state_testdate = gdd.extract_subframe_based_on_dates(
-            self.df_states, date(2021, 9, 8),
+            df_states, date(2021, 9, 8),
             date(2021, 9, 8))
         pd.testing.assert_frame_equal(self.test_df, df_state_testdate)
 
@@ -116,9 +115,7 @@ class TestGetDiviData(fake_filesystem_unittest.TestCase):
         self.assertEqual(cm.exception.code, exit_string)
 
     @patch('builtins.print')
-    @patch('epidemiology.epidata.getDataIntoPandasDataFrame.loadCsv', return_value = df_raw.copy())
-    def test_det_divi_data_prints(self, mocklcsv, mock_print):
-
+    def test_det_divi_data_prints(self, mock_print):
         # case with start_date before 2020-04-24
         gdd.get_divi_data(out_folder=self.path, start_date=date(2020, 1, 1))
         expected_call = [
@@ -129,21 +126,16 @@ class TestGetDiviData(fake_filesystem_unittest.TestCase):
         mock_print.assert_has_calls(expected_calls)
 
     @patch('builtins.print')
-    @patch('epidemiology.epidata.getDIVIData.pd.read_json', return_value= df_raw.copy())
-    def test_gdd_ma(self, mockrjson2, mock_print):
-
+    def test_gdd_ma(self, mock_print):
         # test case with moving average
-        gdd.get_divi_data(
-            read_data=True, out_folder=self.path, moving_average=3)
+        gdd.get_divi_data(out_folder=self.path, moving_average=3)
         expected_calls = self.gdd_calls('_ma3')
         mock_print.assert_has_calls(expected_calls)
 
     @patch('builtins.print')
-    @patch('epidemiology.epidata.getDIVIData.pd.read_json', return_value= df_raw.copy())
-    def test_gdd_all_dates(self, mockrjson2, mock_print):
+    def test_gdd_all_dates(self, mock_print):
         # test case with impute dates is True
-        gdd.get_divi_data(
-            read_data=True, out_folder=self.path, impute_dates=True)
+        gdd.get_divi_data(out_folder=self.path, impute_dates=True)
         expected_calls = self.gdd_calls(text='_all_dates')
         mock_print.assert_has_calls(expected_calls)
 

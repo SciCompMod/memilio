@@ -20,7 +20,8 @@ INSTALL_REQUIRES = ['pandas<1.2.0',
                     'numpy<=1.19.4',
                     'openpyxl',
                     'xlrd', 
-		            'requests']
+		            'requests',
+                    'pyxlsb']
 
 EXTRAS_REQUIRE = {"pylint": ["pylint", "pylint_json2html"]}
 
@@ -79,7 +80,7 @@ setup(
             'getsimdata = epidemiology.epidata.getSimulationData:main',
             'cleandata = epidemiology.epidata.cleanData:main',
             'getrkiestimation = epidemiology.epidata.getRKIDatawithEstimations:main',
-            'getcommutermigration = epidemiology.epidata.commuter_migration_bfa:main'
+            'getcommutermobility = epidemiology.epidata.getCommuterMobility:main'
         ],
     },
     package_dir={
