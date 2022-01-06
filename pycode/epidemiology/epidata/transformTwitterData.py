@@ -44,7 +44,7 @@ def transformTwitterData(file_format=dd.defaultDict['file_format'],
     twitter = pd.read_csv(
         directory + 'twitter_scaled_1252.txt', sep=' ', header=None)
 
-    if len(twitter == 401):
+    if len(twitter) == 401:
         twitter.to_csv(
             directory + 'twitter_scaled_1252_dim401.txt', sep=' ', header=None, index=False)
         # merge eisenach

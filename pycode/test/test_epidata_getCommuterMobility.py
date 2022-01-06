@@ -63,7 +63,7 @@ class TestCommuterMigration(fake_filesystem_unittest.TestCase):
     
     def setUp(self):
         self.setUpPyfakefs()
-        
+    
     def write_kreise_deu_data(self, out_folder):
         # sheet 0 is unused in commuter_migration_bfa, but other one has to have index 1
         sheet0 = pd.DataFrame({'0': ['0', '0', '0', '0'], '1': ['1', '2', '3', '4']})
@@ -256,7 +256,7 @@ class TestCommuterMigration(fake_filesystem_unittest.TestCase):
                 sheets[sheet_name].to_excel(dummy, sheet_name=sheet_name, index=False)
             dummy.save()
             dummy.close()
-
+    
     @patch('builtins.print')
     def test_verify_sorted(self, mock_print):
         self.assertEqual(True, gcm.verify_sorted(self.test_countykey_list))
@@ -294,13 +294,6 @@ class TestCommuterMigration(fake_filesystem_unittest.TestCase):
         self.assertEqual(gov_county_table, [[], [], [], [], [], [], [], [], [], [], [], []])
         self.assertEqual(state_gov_table, self.test_state_gov_table)
 
-        # test case with empty lists
-        with self.assertRaises(SystemExit) as cm:
-            (countykey2govkey, countykey2localnumlist, gov_county_table,
-            state_gov_table) = gcm.assign_geographical_entities((),())
-            exit_string = ("Error. Input list not sorted.")
-            self.assertEqual(cm.exception.code, exit_string)
-        
         # test case with different number of data
         gcm.assign_geographical_entities(self.test_countykey_list, self.govkey_list)
         Errorcall = ('Error. Number of government regions wrong.')
@@ -363,13 +356,10 @@ class TestCommuterMigration(fake_filesystem_unittest.TestCase):
 
         testcountyid = 1051
         tci = testcountyid
-        #test case with empty directory
         #direction = both
         (countykey_list, commuter_all) = gcm.get_neighbors_mobility(
             tci, direction='both', abs_tol=0, rel_tol=0,
-            tol_comb='or', merge_eisenach=True, out_folder='')
-        expected_call = "Commuter data was not found. Download and process it from the internet."
-        #mock_print.assert_has_calls(expected_call)
+            tol_comb='or', merge_eisenach=True, out_folder=self.path)
         self.assertEqual(len(countykey_list), 398)
         self.assertAlmostEqual(228, commuter_all[0], 2)
         self.assertAlmostEqual(2146, commuter_all[9], 2)
@@ -379,7 +369,7 @@ class TestCommuterMigration(fake_filesystem_unittest.TestCase):
         # direction = in
         (countykey_list, commuter_all) = gcm.get_neighbors_mobility(
             tci, direction='in', abs_tol=0, rel_tol=0,
-            tol_comb='or', merge_eisenach=True, out_folder='')
+            tol_comb='or', merge_eisenach=True, out_folder=self.path)
         self.assertEqual(len(countykey_list), 393)
         self.assertAlmostEqual(48, commuter_all[0], 2)
         self.assertAlmostEqual(842, commuter_all[9], 2)
@@ -388,7 +378,7 @@ class TestCommuterMigration(fake_filesystem_unittest.TestCase):
         # direction = out
         (countykey_list, commuter_all) = gcm.get_neighbors_mobility(
             tci, direction='out', abs_tol=0, rel_tol=0,
-            tol_comb='or', merge_eisenach=True, out_folder='')
+            tol_comb='or', merge_eisenach=True, out_folder=self.path)
         self.assertEqual(len(countykey_list), 375)
         self.assertAlmostEqual(180, commuter_all[0], 2)
         self.assertAlmostEqual(1304, commuter_all[9], 2)

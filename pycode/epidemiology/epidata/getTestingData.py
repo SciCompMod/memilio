@@ -22,7 +22,6 @@ import os
 import requests
 import io
 import pandas as pd
-
 import getDataIntoPandasDataFrame as gd
 import defaultDict as dd
 import modifyDataframeSeries
@@ -30,7 +29,6 @@ import customPlot
 import geoModificationGermany as geoger
 
 # Downloads testing data from RKI
-
 
 def download_testing_data():
     """! Downloads the Sars-CoV-2 test data sets from RKI on country 
@@ -54,7 +52,6 @@ def download_testing_data():
             df, sheet_name=sheet_names[1],
             dtype={'Positivenanteil (%)': float})
         # start on calender week 12/2020 as in federal states sheet,
-            
         # below and remove sum at bottom
         df_test[0] = df_test[0][2:-1].reset_index()
         df_test[0] = df_test[0].drop(columns='index')
@@ -71,7 +68,6 @@ def download_testing_data():
             dtype={'Anteil positiv': float})
 
     return df_test
-
 
 # transform calender weeks of data frames to dates using Thursday
 # as the representation of each week
@@ -109,8 +105,6 @@ def transform_weeks_to_dates(df_test):
 # gets rki testing monitoring data resolved by federal states (which only
 # is a subset of the total conducted tests)
 # extrapolates the values for counties according to their population
-
-
 def get_testing_data(read_data=dd.defaultDict['read_data'],
                      file_format=dd.defaultDict['file_format'],
                      out_folder=dd.defaultDict['out_folder'],
@@ -142,7 +136,7 @@ def get_testing_data(read_data=dd.defaultDict['read_data'],
             for all counties of Germany, only taken from the
             values of the federal states. No extrapolation applied.
                 
-    - Missing dates are imputed for all data frames ('fillDates' is 
+    - Missing dates are imputed for all data frames ('impute_dates' is 
         not optional but always executed). 
     - A central moving average of N days is optional.
 
@@ -254,8 +248,8 @@ def get_testing_data(read_data=dd.defaultDict['read_data'],
             df_test[0][dd.EngEng['date']],
             [df_test[1].loc
              [df_test[1][dd.EngEng['idState']] == stateID,
-              [dd.EngEng['positiveRate']]] for stateID in dd.get_state_ids()],
-            [stateName for stateName in dd.get_state_names()],
+              [dd.EngEng['positiveRate']]] for stateID in geoger.get_state_ids()],
+            [stateName for stateName in geoger.get_state_names()],
             'Positive rate for Sars-CoV-2 testing', 'Date', 'Positive rate',
             "FederalStates_Testing_positive_rate")
 
@@ -264,8 +258,7 @@ def get_testing_data(read_data=dd.defaultDict['read_data'],
     unique_geo_entities = geoger.get_county_ids()
 
     df_test_counties = pd.DataFrame()
-    states_str = dict(zip([str(state).zfill(
-        2) for state in geoger.get_state_ids()], range(1,
+    states_str = dict(zip((geoger.get_state_ids(zfill=True)), range(1,
                                                       1+len(geoger.get_state_ids()))))
     for county in unique_geo_entities:
         county_str = str(county).zfill(5)
@@ -284,13 +277,11 @@ def get_testing_data(read_data=dd.defaultDict['read_data'],
     filename = gd.append_filename(filename, impute_dates, moving_average)
     gd.write_dataframe(df_test_counties, directory, filename, file_format)
 
-
 def main():
     """! Main program entry."""
 
     arg_dict = gd.cli("testing")
     get_testing_data(**arg_dict)
-
 
 if __name__ == "__main__":
 

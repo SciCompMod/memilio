@@ -67,7 +67,7 @@ def assign_geographical_entities(countykey_list, govkey_list):
     @return state_gov_table Table of governing region regional keys per federal state.
     """
 
-    if  verify_sorted(countykey_list) == False:
+    if verify_sorted(countykey_list) == False:
         exit_string = "Error. Input list not sorted."
         sys.exit(exit_string)
 
@@ -388,7 +388,7 @@ def get_commuter_data(setup_dict='',
 
         n += 1
         print('Federal state read. Progress ', n, '/ 16')
-        if len(np.where(np.isnan(mat_commuter_migration)==True)[0]) > 0:
+        if np.isnan(mat_commuter_migration).any():
             sys.exit(
                 'NaN encountered in mobility matrix, exiting '
                 'getCommuterMobility(). Mobility data will be incomplete.')
@@ -441,11 +441,12 @@ def commuter_sanity_checks(df):
     if not isinstance(df, pd.DataFrame):
         exit_string = ("Error. Data should be a dataframe")
         sys.exit(exit_string)
-    # Dataframe should be squared
+    # Dataframe should be of squared form
     if len(df.index) != len(df.columns):
         exit_string = "Error. "
         sys.exit(exit_string)
-    # There are 401 Counties. Check if either far more than expected or less than 10% are in the dataframe.
+    # There were 401 counties at beginning of 2021 and 400 at end of 2021. 
+    # Check if either far more than expected or less than 10% are in the dataframe.
     if (len(df.index) < 40) or (len(df.index) > 500): 
         exit_string = "Error. Size of dataframe unexpected."
         sys.exit(exit_string)
@@ -499,9 +500,12 @@ def get_neighbors_mobility(
         commuter_all = commuter.loc[:,countyid]
     elif direction == 'out':
         commuter_all = commuter.loc[countyid,:]
-
-    neighbor_indices = np.where((commuter_all > abs_tol) & (
-        commuter_all > commuter_all.max()*rel_tol))[0]
+    if tol_comb == 'and':
+        neighbor_indices = np.where((commuter_all > abs_tol) & (
+            commuter_all > commuter_all.max()*rel_tol))[0]
+    elif tol_comb == 'or':
+        neighbor_indices = np.where((commuter_all > abs_tol) | (
+            commuter_all > commuter_all.max()*rel_tol))[0]
 
     return countykey_list[neighbor_indices], commuter_all.values[neighbor_indices]
 

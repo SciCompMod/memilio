@@ -42,7 +42,7 @@ def impute_and_reduce_df(df_old, group_by_cols, mod_cols, impute='forward', movi
         of the first date will be repeated backwards. If False, then zero is set there.
     @return dataframe with imputed dates (and moving average if requested)
     """
-    # derive time from date
+    # derive date from time
     try:
         df_old.Date = df_old.Date.dt.date
     except:
@@ -75,7 +75,7 @@ def impute_and_reduce_df(df_old, group_by_cols, mod_cols, impute='forward', movi
     # create list of keys/group_by column names
     group_by = list(group_by_cols.keys())
 
-    #loop over all regions/ages/gender
+    # loop over all items in columns that are given to group by (i.e. regions/ages/gender)
     for ids in unique_ids_comb:
         df_local = df_old.copy()
         counter = 0

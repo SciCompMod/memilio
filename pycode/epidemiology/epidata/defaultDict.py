@@ -610,7 +610,5 @@ County = {
 }
 
 # invert a dictionary
-
-
 def invert_dict(dict_to_invert):
     return dict([(val, key) for key, val in dict_to_invert.items()])

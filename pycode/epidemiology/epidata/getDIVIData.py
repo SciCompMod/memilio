@@ -57,9 +57,9 @@ from epidemiology.epidata import modifyDataframeSeries
 
 
 def extract_subframe_based_on_dates(df, start_date, end_date):
-    """! removes all data with date lower than start date and higher than end date.
+    """! Removes all data with date lower than start date or higher than end date.
 
-    Retruns the Dataframe with only dates between start date and end date.
+    Returns the Dataframe with only dates between start date and end date.
     Resets the Index of the Dataframe.
 
     @param df The dataframe which has to be edited
@@ -110,8 +110,8 @@ def get_divi_data(read_data=dd.defaultDict['read_data'],
     "False [Default]" if it is downloaded for all dates from start_date to end_date.
     @param out_folder Folder where data is written to.
     @param no_raw True or False [Default]. Defines if unchanged raw data is saved or not.
-    @param start_date [Optional] Date of first date in dataframe[Default = 2020.4.24].
-    @param end_date [Optional] Date of last date in dataframe [Default = today].
+    @param start_date [Optional] Date of first date in dataframe. Default defined in defaultDict.
+    @param end_date [Optional] Date of last date in dataframe. Default defined in defaultDict.
     @param impute_dates True or False [Default]. Defines if values for dates without new information are imputed.
     @param moving_average 0 [Default] or >0. Applies an 'moving_average'-days moving average on all time series
         to smooth out weekend effects.
@@ -242,7 +242,7 @@ def divi_data_sanity_checks(df = pd.DataFrame()):
 
     Checks if type of the given data is a dataframe
     Checks if the headers of the dataframe are those which are needed
-    Checks if the size of the dataframe is expectable
+    Checks if the size of the dataframe is not unusual
 
     @param df The dataframe which has to be checked
     """

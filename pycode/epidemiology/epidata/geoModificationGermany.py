@@ -220,9 +220,6 @@ def get_stateid_to_countyids_map(merge_eisenach=True, zfill=False):
 
     return dict(zip(state_ids,state_to_county_table))
 
-
-get_stateid_to_countyids_map()
-
 def get_governing_regions(strict=True):
     """! Creates a sorted list of governing regions which may simply be 
     federal states or intermediate regions which themselves are a real 

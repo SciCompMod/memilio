@@ -92,11 +92,11 @@ def create_intervals_mapping(from_lower_bounds, to_lower_bounds):
 
 def split_column_based_on_values(
         df_to_split, column_to_split, column_vals_name, new_column_labels):
-    """! Splits a dataframe into seperate dataframes for each unique value in a column. 
+    """! Splits a dataframe into separate dataframes. For each unique value that appears in a selected column, the corresponding value in another column is transfered to a new dataframe.
 
     @param df_to_split global pandas dataframe
-    @param column_to_split identifier of the column in which seperate values are split into seperate dataframes
-    @param column_vals_name name of the column where the values of column_to_split are stored. This column will be renamed to new_column_labels
+    @param column_to_split identifier of the column for which separate values will define separate dataframes 
+    @param column_vals_name The name of the original column which will be renamed in the separate dataframes according to new_column_labels.
     @param new_column_labels new labels for resulting columns. There have to be the same amount of names and unique values.
     @return an array with the new splitted dataframes
     """
@@ -179,8 +179,6 @@ def get_vaccination_data(read_data=dd.defaultDict['read_data'],
 
     df_data = download_vaccination_data()
 
-    df_old = df_data.copy()
-
     if not no_raw:
         gd.write_dataframe(df_data, directory, "RKIVaccFull", "json")
 
@@ -188,14 +186,14 @@ def get_vaccination_data(read_data=dd.defaultDict['read_data'],
 
     # remove unknown locations if only modest number (i.e. less than 0.1%)
     if df_data[df_data[dd.EngEng['idCounty']] == 'u'].agg({'Number': sum}).Number \
-        / df_data[df_data[dd.EngEng['idCounty']] != 'u'].agg({'Number': sum}).Number < 0.001:
+        / df_data.agg({'Number': sum}).Number < 0.001:
         df_data = df_data[df_data[dd.EngEng['idCounty']] != 'u']
     else:
         sys.exit('Too many data items with unknown vaccination location, '
         'please check source data.')
 
     if df_data[df_data[dd.EngEng['ageRKI']] == 'u'].agg({'Number': sum}).Number \
-         / df_data[df_data[dd.EngEng['ageRKI']] != 'u'].agg({'Number': sum}).Number < 0.001:
+         / df_data.agg({'Number': sum}).Number < 0.001:
         df_data = df_data[df_data[dd.EngEng['ageRKI']] != 'u']
     else:
         sys.exit('Too many data items with unknown vaccination age, '
@@ -541,7 +539,7 @@ def get_vaccination_data(read_data=dd.defaultDict['read_data'],
                     chk_err_idx = 0
                     while (chk_err_idx == 0) or (len(np.where(cap_chck > 1e-10)[0]) > 0):
                         neighb_cap_reached = np.where(cap_chck > -1e-10)[0]
-                        neighb_open = np.where(cap_chck < -1e-10)[0]
+                        neighb_open = np.where(cap_chck <= -1e-10)[0]
                         # maximum the neighbor takes before exceeding
                         # the average
                         vacc_nshare_max = df_fullsum.loc[df_fullsum[dd.EngEng['idCounty']].isin(neighbors_mobility[id][0]), [
@@ -590,8 +588,7 @@ def get_vaccination_data(read_data=dd.defaultDict['read_data'],
                         vacc_nshare_pot > 0)]
 
                     # get vaccination shares to distribute
-                    reduc_shares = vacc_nshare_pot / \
-                        df_fullsum.loc[ii, unique_age_groups_old[ageidx]]
+                    reduc_shares = vacc_nshare_pot / df_fullsum.loc[ii, unique_age_groups_old[ageidx]]
 
                     # sum up new additions
                     df_fullsum.loc[df_fullsum[dd.EngEng['idCounty']].isin(neighbors_mobility[id][0]), [
@@ -621,7 +618,6 @@ def get_vaccination_data(read_data=dd.defaultDict['read_data'],
                     + str(id) + '. Exiting program.')
 
         # create copy only for possible comparison reasons now
-        dummy = df_data_agevacc_county_cs.copy()
         df_data_agevacc_county_cs = df_san.copy()
 
         # create cumulative sum
@@ -854,8 +850,8 @@ def get_vaccination_data(read_data=dd.defaultDict['read_data'],
 
     # check for now, to be removed for production...
     for id in geoger.get_county_ids():
-         if abs(df_data_ageinf_county_cs[df_data_ageinf_county_cs.ID_County==1001].groupby(['Date']).sum()-df_data_agevacc_county_cs[df_data_agevacc_county_cs.ID_County==1001].groupby(['Date']).sum()[column_names_new]).max().max() > 1e-8:
-             print('Error in ' + str(id))
+        if abs(df_data_ageinf_county_cs[df_data_ageinf_county_cs.ID_County==1001].groupby(['Date']).sum()-df_data_agevacc_county_cs[df_data_agevacc_county_cs.ID_County==1001].groupby(['Date']).sum()[column_names_new]).max().max() > 1e-8:
+            print('Error in ' + str(id))
     ### end of to be removed ###
 
     filename = 'all_county_ageinf_vacc'
