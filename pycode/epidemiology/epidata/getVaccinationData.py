@@ -38,7 +38,9 @@ from epidemiology.epidata import getCommuterMobility as gcm
 
 def download_vaccination_data():
     # RKI content from github
-    url = 'https://raw.githubusercontent.com/robert-koch-institut/COVID-19-Impfungen_in_Deutschland/master/Aktuell_Deutschland_Landkreise_COVID-19-Impfungen.csv'
+    # From Dec 21, 2021, the age group 05-11 was added. This is not yet taken into account in this function.
+    url = 'https://raw.githubusercontent.com/robert-koch-institut/COVID-19-Impfungen_in_Deutschland/9ca33409a4899ab56cec65c2169ae073df1603c0/Archiv/2021-12-20_Deutschland_Landkreise_COVID-19-Impfungen.csv'
+    # url = 'https://raw.githubusercontent.com/robert-koch-institut/COVID-19-Impfungen_in_Deutschland/master/Aktuell_Deutschland_Landkreise_COVID-19-Impfungen.csv'
     # empty data frame to return if not read correctly
     df = pd.DataFrame()
     # try to read csv
@@ -53,6 +55,8 @@ def download_vaccination_data():
     return df
 
 # creates a mapping from given intervals to new desired intervals
+
+
 def create_intervals_mapping(from_lower_bounds, to_lower_bounds):
     """! Creates a mapping from given intervals to new desired intervals
 
@@ -77,7 +81,7 @@ def create_intervals_mapping(from_lower_bounds, to_lower_bounds):
             # if not, the remaining share will be assigned all ages j
             while from_lower_bounds[i+1] > to_lower_bounds[j+1]:
                 share += (to_lower_bounds[j+1] - to_lower_bounds[j]
-                         ) / (from_lower_bounds[i+1] - from_lower_bounds[i])
+                          ) / (from_lower_bounds[i+1] - from_lower_bounds[i])
                 from_to_mapping[i].append([share, j])
                 j += 1
             from_to_mapping[i].append([1-share, j])
@@ -186,18 +190,18 @@ def get_vaccination_data(read_data=dd.defaultDict['read_data'],
 
     # remove unknown locations if only modest number (i.e. less than 0.1%)
     if df_data[df_data[dd.EngEng['idCounty']] == 'u'].agg({'Number': sum}).Number \
-        / df_data.agg({'Number': sum}).Number < 0.001:
+            / df_data.agg({'Number': sum}).Number < 0.001:
         df_data = df_data[df_data[dd.EngEng['idCounty']] != 'u']
     else:
         sys.exit('Too many data items with unknown vaccination location, '
-        'please check source data.')
+                 'please check source data.')
 
     if df_data[df_data[dd.EngEng['ageRKI']] == 'u'].agg({'Number': sum}).Number \
-         / df_data.agg({'Number': sum}).Number < 0.001:
+            / df_data.agg({'Number': sum}).Number < 0.001:
         df_data = df_data[df_data[dd.EngEng['ageRKI']] != 'u']
     else:
         sys.exit('Too many data items with unknown vaccination age, '
-        'please check source data.')
+                 'please check source data.')
 
     # remove leading zeros for ID_County (if not yet done)
     try:
@@ -243,11 +247,11 @@ def get_vaccination_data(read_data=dd.defaultDict['read_data'],
     except:
         print("Population data was not found. Download it from the internet.")
         population = getPopulationData.get_age_population_data(read_data=False,
-                            file_format = file_format,
-                            out_folder = out_folder,
-                            no_raw=no_raw,
-                            write_df=True,
-                            merge_eisenach=False)
+                                                               file_format=file_format,
+                                                               out_folder=out_folder,
+                                                               no_raw=no_raw,
+                                                               write_df=True,
+                                                               merge_eisenach=False)
 
     min_age_pop = []
     extrapolate_agegroups = True
@@ -434,7 +438,8 @@ def get_vaccination_data(read_data=dd.defaultDict['read_data'],
             dd.County))
 
     end_time = time.perf_counter()
-    print("Time needed initial phase: " + str(int(end_time - start_time)) + " sec")
+    print("Time needed initial phase: " +
+          str(int(end_time - start_time)) + " sec")
 
     if sanitize_data:
         start_time = time.perf_counter()
@@ -502,10 +507,10 @@ def get_vaccination_data(read_data=dd.defaultDict['read_data'],
 
         # get neighbors based on mobility pattern and store
         # commuter inflow from other counties as first weight to distribute
-        # vaccinations from vaccination county to extrapolated home counties 
+        # vaccinations from vaccination county to extrapolated home counties
         neighbors_mobility = gcm.get_neighbors_mobility_all(
-            direction='in', abs_tol=10, merge_eisenach=False, 
-            out_folder = out_folder)
+            direction='in', abs_tol=10, merge_eisenach=False,
+            out_folder=out_folder)
 
         end_time = time.perf_counter()
         print("Time needed for preparing sanitizing: " +
@@ -588,7 +593,8 @@ def get_vaccination_data(read_data=dd.defaultDict['read_data'],
                         vacc_nshare_pot > 0)]
 
                     # get vaccination shares to distribute
-                    reduc_shares = vacc_nshare_pot / df_fullsum.loc[ii, unique_age_groups_old[ageidx]]
+                    reduc_shares = vacc_nshare_pot / \
+                        df_fullsum.loc[ii, unique_age_groups_old[ageidx]]
 
                     # sum up new additions
                     df_fullsum.loc[df_fullsum[dd.EngEng['idCounty']].isin(neighbors_mobility[id][0]), [
@@ -663,23 +669,24 @@ def get_vaccination_data(read_data=dd.defaultDict['read_data'],
         columns=[dd.EngEng["ageRKI"],
                  dd.EngEng["date"]])
 
-   
     if make_plot:
         # have a look extrapolated vaccination ratios (TODO: to be removed or outsourced with plotting for production)
         # aggregate total number of vaccinations per county and age group
-        latest_date=df_data_agevacc_county_cs[dd.EngEng["date"]][len(df_data_agevacc_county_cs.index)-1].strftime("%Y-%m-%d")
+        latest_date = df_data_agevacc_county_cs[dd.EngEng["date"]][len(
+            df_data_agevacc_county_cs.index)-1].strftime("%Y-%m-%d")
         vacc_sums_nonsanit = df_data_agevacc_county_cs.loc[(
             df_data_agevacc_county_cs.Date == latest_date), ['ID_County', column_names_new[1]]]
         # create new data frame and reshape it
-        df_fullsum = pd.DataFrame(columns=[dd.EngEng['idCounty']] + unique_age_groups_old)
+        df_fullsum = pd.DataFrame(
+            columns=[dd.EngEng['idCounty']] + unique_age_groups_old)
         df_fullsum[dd.EngEng['idCounty']
-                        ] = vacc_sums_nonsanit[dd.EngEng['idCounty']].unique()
+                   ] = vacc_sums_nonsanit[dd.EngEng['idCounty']].unique()
         df_fullsum[unique_age_groups_old] = np.array(
             vacc_sums_nonsanit[column_names_new[1]]).reshape(
             len(vacc_sums_nonsanit[dd.EngEng['idCounty']].unique()),
             len(unique_age_groups_old))
         # compute county and age-group-specific vaccination ratios
-        df_fullsum[['r'+age for age in unique_age_groups_old] ] = df_fullsum[unique_age_groups_old] / geoger.merge_df_counties_all(
+        df_fullsum[['r'+age for age in unique_age_groups_old]] = df_fullsum[unique_age_groups_old] / geoger.merge_df_counties_all(
             population_old_ages, sorting=[dd.EngEng["idCounty"]], columns=dd.EngEng["idCounty"])[unique_age_groups_old].values
         ## end of the be removed ###
 
@@ -850,7 +857,7 @@ def get_vaccination_data(read_data=dd.defaultDict['read_data'],
 
     # check for now, to be removed for production...
     for id in geoger.get_county_ids():
-        if abs(df_data_ageinf_county_cs[df_data_ageinf_county_cs.ID_County==1001].groupby(['Date']).sum()-df_data_agevacc_county_cs[df_data_agevacc_county_cs.ID_County==1001].groupby(['Date']).sum()[column_names_new]).max().max() > 1e-8:
+        if abs(df_data_ageinf_county_cs[df_data_ageinf_county_cs.ID_County == 1001].groupby(['Date']).sum()-df_data_agevacc_county_cs[df_data_agevacc_county_cs.ID_County == 1001].groupby(['Date']).sum()[column_names_new]).max().max() > 1e-8:
             print('Error in ' + str(id))
     ### end of to be removed ###
 
