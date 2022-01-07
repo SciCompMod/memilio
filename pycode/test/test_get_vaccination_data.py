@@ -17,8 +17,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 ######################################################################
-import sys
-
 import unittest
 from unittest.mock import patch
 from pyfakefs import fake_filesystem_unittest
@@ -74,19 +72,31 @@ class TestGetVaccinationData(fake_filesystem_unittest.TestCase):
 
     def setUp(self):
         self.setUpPyfakefs()
-
+    
     @patch('epidemiology.epidata.getVaccinationData.download_vaccination_data',
            return_value=df_vacc_data)
     def test_get_standart_vaccination_data_no_errors_with_plots(
             self, mockv):
         gvd.get_vaccination_data(out_folder=self.path)
-
+    
     def test_download_vaccination_data(self):
         df = gvd.download_vaccination_data()
         self.assertFalse(
             df.empty,
             "Vaccination Data is empty. Should'nt be.")
 
+        # test agegroups in raw dataframe
+        agegr_arr = df['Altersgruppe'].unique()
+        self.assertIn('12-17', agegr_arr)
+        self.assertIn('18-59', agegr_arr)
+        self.assertIn('60+', agegr_arr)
+
+        if 'u' in agegr_arr:
+            self.assertEqual(len(agegr_arr), 4)
+        if not 'u' in agegr_arr:
+            self.assertEqual(len(agegr_arr), 3)
+
+    
     @patch('epidemiology.epidata.getVaccinationData.pd.read_csv',
            side_effect=ImportError())
     def test_download_not_working(self, mock_download):
@@ -274,7 +284,7 @@ class TestGetVaccinationData(fake_filesystem_unittest.TestCase):
                         np.array(calculated_map),
                         rtol=1e-05),
                     "Not the same Arrays")
-
+    
 
 if __name__ == '__main__':
     unittest.main()
