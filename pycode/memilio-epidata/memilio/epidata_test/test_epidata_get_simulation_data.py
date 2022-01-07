@@ -25,14 +25,14 @@ from datetime import date, timedelta
 import os
 import pandas as pd
 
-from epidemiology.epidata import getDIVIData as gdd
-from epidemiology.epidata import getRKIData as grki
-from epidemiology.epidata import getVaccinationData as gvd
-from epidemiology.epidata import getPopulationData as gpd
-from epidemiology.epidata import getSimulationData as gsd
+from memilio.epidata import getDIVIData as gdd
+from memilio.epidata import getRKIData as grki
+from memilio.epidata import getVaccinationData as gvd
+from memilio.epidata import getPopulationData as gpd
+from memilio.epidata import getSimulationData as gsd
 
-from epidemiology.epidata import getDataIntoPandasDataFrame as gd
-from epidemiology.epidata import defaultDict as dd
+from memilio.epidata import getDataIntoPandasDataFrame as gd
+from memilio.epidata import defaultDict as dd
 from unittest.mock import patch, call
 
 
@@ -45,11 +45,11 @@ class TestGetSimulationData(fake_filesystem_unittest.TestCase):
     def setUp(self):
         self.setUpPyfakefs()
 
-    @patch('epidemiology.epidata.getVaccinationData.get_vaccination_data')
-    @patch('epidemiology.epidata.getDIVIData.get_divi_data')
-    @patch('epidemiology.epidata.getRKIData.get_rki_data')
-    @patch('epidemiology.epidata.getPopulationData.get_population_data')
-    @patch('epidemiology.epidata.getPopulationData.get_age_population_data')
+    @patch('memilio.epidata.getVaccinationData.get_vaccination_data')
+    @patch('memilio.epidata.getDIVIData.get_divi_data')
+    @patch('memilio.epidata.getRKIData.get_rki_data')
+    @patch('memilio.epidata.getPopulationData.get_population_data')
+    @patch('memilio.epidata.getPopulationData.get_age_population_data')
     def test_get_call_sub_functions(self, mock_agep, mock_popul, mock_rki,
                                     mock_divi, mock_vaccination):
 
@@ -105,11 +105,11 @@ class TestGetSimulationData(fake_filesystem_unittest.TestCase):
         mock_vaccination.assert_called_with(**arg_dict_vaccination)
 
     @patch('builtins.print')
-    @patch('epidemiology.epidata.getVaccinationData.get_vaccination_data')
-    @patch('epidemiology.epidata.getDIVIData.get_divi_data')
-    @patch('epidemiology.epidata.getRKIData.get_rki_data')
-    @patch('epidemiology.epidata.getPopulationData.get_population_data')
-    @patch('epidemiology.epidata.getPopulationData.get_age_population_data')
+    @patch('memilio.epidata.getVaccinationData.get_vaccination_data')
+    @patch('memilio.epidata.getDIVIData.get_divi_data')
+    @patch('memilio.epidata.getRKIData.get_rki_data')
+    @patch('memilio.epidata.getPopulationData.get_population_data')
+    @patch('memilio.epidata.getPopulationData.get_age_population_data')
     def test_errors(
             self, mock_agep, mock_popul, mock_rki, mock_divi, mock_vaccination,
             mock_print):

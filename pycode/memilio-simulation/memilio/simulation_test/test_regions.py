@@ -18,7 +18,7 @@
 # limitations under the License.
 #############################################################################
 import unittest
-import epidemiology.secir as secir
+import memilio.simulation.secir as secir
 
 class Test_Regions(unittest.TestCase):
     def test_get_holidays(self):

@@ -50,10 +50,10 @@ import bisect
 from datetime import timedelta, date, datetime
 import pandas as pd
 
-from epidemiology.epidata import getDataIntoPandasDataFrame as gd
-from epidemiology.epidata import defaultDict as dd
-from epidemiology.epidata import geoModificationGermany as geoger
-from epidemiology.epidata import modifyDataframeSeries
+from memilio.epidata import getDataIntoPandasDataFrame as gd
+from memilio.epidata import defaultDict as dd
+from memilio.epidata import geoModificationGermany as geoger
+from memilio.epidata import modifyDataframeSeries
 
 
 def extract_subframe_based_on_dates(df, start_date, end_date):

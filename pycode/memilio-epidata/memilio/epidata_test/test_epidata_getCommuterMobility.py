@@ -24,10 +24,10 @@ import unittest
 import pandas as pd
 import os
 import collections
-from epidemiology.epidata import getCommuterMobility as gcm
-from epidemiology.epidata import geoModificationGermany as geoger
-from epidemiology.epidata import getDataIntoPandasDataFrame as gD
-from epidemiology.epidata import getPopulationData as gpd
+from memilio.epidata import getCommuterMobility as gcm
+from memilio.epidata import geoModificationGermany as geoger
+from memilio.epidata import getDataIntoPandasDataFrame as gD
+from memilio.epidata import getPopulationData as gpd
 
 
 class TestCommuterMigration(fake_filesystem_unittest.TestCase):

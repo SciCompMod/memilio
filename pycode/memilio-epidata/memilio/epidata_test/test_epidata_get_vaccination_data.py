@@ -24,10 +24,10 @@ from pyfakefs import fake_filesystem_unittest
 import pandas as pd
 import numpy as np
 
-from epidemiology.epidata import getDataIntoPandasDataFrame as gd
-from epidemiology.epidata import getCommuterMobility as gcm
-from epidemiology.epidata import getVaccinationData as gvd
-from epidemiology.epidata import defaultDict as dd
+from memilio.epidata import getDataIntoPandasDataFrame as gd
+from memilio.epidata import getCommuterMobility as gcm
+from memilio.epidata import getVaccinationData as gvd
+from memilio.epidata import defaultDict as dd
 
 
 class TestGetVaccinationData(fake_filesystem_unittest.TestCase):
@@ -73,7 +73,7 @@ class TestGetVaccinationData(fake_filesystem_unittest.TestCase):
     def setUp(self):
         self.setUpPyfakefs()
     
-    @patch('epidemiology.epidata.getVaccinationData.download_vaccination_data',
+    @patch('memilio.epidata.getVaccinationData.download_vaccination_data',
            return_value=df_vacc_data)
     def test_get_standart_vaccination_data_no_errors_with_plots(
             self, mockv):
@@ -97,7 +97,7 @@ class TestGetVaccinationData(fake_filesystem_unittest.TestCase):
             self.assertEqual(len(agegr_arr), 3)
 
     
-    @patch('epidemiology.epidata.getVaccinationData.pd.read_csv',
+    @patch('memilio.epidata.getVaccinationData.pd.read_csv',
            side_effect=ImportError())
     def test_download_not_working(self, mock_download):
         df = gvd.download_vaccination_data()

@@ -26,9 +26,9 @@ import os
 import matplotlib.pyplot as plt
 import datetime
 
-import epidemiology.epidata.getDIVIData as getDIVIData
-import epidemiology.epidata.getRKIData as getRKIData
-import epidemiology.epidata.defaultDict as dd
+import memilio.epidata.getDIVIData as getDIVIData
+import memilio.epidata.getRKIData as getRKIData
+import memilio.epidata.defaultDict as dd
 
 yesterday = pd.Timestamp(datetime.date.today()) - pd.DateOffset(days=1)
 

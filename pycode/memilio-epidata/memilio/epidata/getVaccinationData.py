@@ -25,13 +25,13 @@ import itertools
 import pandas as pd
 import numpy as np
 
-from epidemiology.epidata import getDataIntoPandasDataFrame as gd
-from epidemiology.epidata import defaultDict as dd
-from epidemiology.epidata import getPopulationData
-from epidemiology.epidata import modifyDataframeSeries
-from epidemiology.epidata import customPlot
-from epidemiology.epidata import geoModificationGermany as geoger
-from epidemiology.epidata import getCommuterMobility as gcm
+from memilio.epidata import getDataIntoPandasDataFrame as gd
+from memilio.epidata import defaultDict as dd
+from memilio.epidata import getPopulationData
+from memilio.epidata import modifyDataframeSeries
+from memilio.epidata import customPlot
+from memilio.epidata import geoModificationGermany as geoger
+from memilio.epidata import getCommuterMobility as gcm
 
 # Downloads vaccination data from RKI
 

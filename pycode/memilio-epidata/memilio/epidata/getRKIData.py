@@ -35,10 +35,10 @@ import pandas
 import numpy as np
 import matplotlib.pyplot as plt
 
-from epidemiology.epidata import getDataIntoPandasDataFrame as gd
-from epidemiology.epidata import defaultDict as dd
-from epidemiology.epidata import modifyDataframeSeries
-from epidemiology.epidata import geoModificationGermany as geoger
+from memilio.epidata import getDataIntoPandasDataFrame as gd
+from memilio.epidata import defaultDict as dd
+from memilio.epidata import modifyDataframeSeries
+from memilio.epidata import geoModificationGermany as geoger
 
 
 def check_for_completeness(df, merge_berlin = False, merge_eisenach = True):

@@ -17,7 +17,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #############################################################################
-import epidemiology.secir as secir
+import memilio.simulation.secir as secir
 import numpy as np
 
 def parameter_study():

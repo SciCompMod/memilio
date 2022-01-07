@@ -21,7 +21,7 @@
 import unittest
 import pandas as pd
 from pyfakefs import fake_filesystem_unittest
-from epidemiology.epidata import modifyDataframeSeries as mDfS
+from memilio.epidata import modifyDataframeSeries as mDfS
 
 class Test_modifyDataframeSeries(fake_filesystem_unittest.TestCase):
     test_df1 = pd.DataFrame(

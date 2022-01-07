@@ -2,8 +2,8 @@
 # data for test_epidata_get_RKI_Data.py which is not to large
 
 import pandas as pd
-from epidemiology.epidata import defaultDict as dd
-from epidemiology.epidata import getDataIntoPandasDataFrame as gd
+from memilio.epidata import defaultDict as dd
+from memilio.epidata import getDataIntoPandasDataFrame as gd
 
 
 # Put any FullDataRkI.json file or Update file has below here

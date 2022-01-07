@@ -17,9 +17,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #############################################################################
-# import epidemiology.secir as secir
+# import memilio.simulation.secir as secir
 import numpy as np
-from epidemiology.secir import InfectionState as State
+from memilio.simulation.secir import InfectionState as State
 def parameter_study():    
     #setup basic parameters
     num_groups = 6

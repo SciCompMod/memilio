@@ -23,10 +23,10 @@ import os
 import sys
 import pandas as pd
 import numpy as np
-from epidemiology.epidata import geoModificationGermany as geoger
-from epidemiology.epidata  import getDataIntoPandasDataFrame as gd
-from epidemiology.epidata import defaultDict as dd
-from epidemiology.epidata import modifyDataframeSeries
+from memilio.epidata import geoModificationGermany as geoger
+from memilio.epidata  import getDataIntoPandasDataFrame as gd
+from memilio.epidata import defaultDict as dd
+from memilio.epidata import modifyDataframeSeries
 
 
 def transformWeatherData(read_data=dd.defaultDict['read_data'],

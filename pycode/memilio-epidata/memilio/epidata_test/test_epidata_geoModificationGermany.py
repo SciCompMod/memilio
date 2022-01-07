@@ -21,7 +21,7 @@ import unittest
 import numpy as np
 from unittest.mock import patch
 from pyfakefs import fake_filesystem_unittest
-from epidemiology.epidata import geoModificationGermany as geoger
+from memilio.epidata import geoModificationGermany as geoger
 
 class Test_geoModificationGermany(fake_filesystem_unittest.TestCase):
 

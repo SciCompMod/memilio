@@ -26,9 +26,9 @@ from datetime import date, datetime, time, timedelta
 import os
 import pandas as pd
 
-from epidemiology.epidata import getDIVIData as gdd
-from epidemiology.epidata import getDataIntoPandasDataFrame as gd
-from epidemiology.epidata import defaultDict as dd
+from memilio.epidata import getDIVIData as gdd
+from memilio.epidata import getDataIntoPandasDataFrame as gd
+from memilio.epidata import defaultDict as dd
 from unittest.mock import patch, call
 
 
@@ -83,8 +83,8 @@ class TestGetDiviData(fake_filesystem_unittest.TestCase):
             date(2021, 9, 8))
         pd.testing.assert_frame_equal(self.test_df, df_state_testdate)
 
-    @patch('epidemiology.epidata.getDIVIData.pd.read_json')
-    @patch('epidemiology.epidata.getDataIntoPandasDataFrame.loadCsv')
+    @patch('memilio.epidata.getDIVIData.pd.read_json')
+    @patch('memilio.epidata.getDataIntoPandasDataFrame.loadCsv')
     def test_exit_strings(self, mocklcsv, mockrjson):
 
         # test read_data Error call if json file is not found
@@ -103,7 +103,7 @@ class TestGetDiviData(fake_filesystem_unittest.TestCase):
         exit_string = "Error: Download link for Divi data has changed."
         self.assertEqual(cm.exception.code, exit_string)
 
-    @patch('epidemiology.epidata.getDataIntoPandasDataFrame.loadCsv')
+    @patch('memilio.epidata.getDataIntoPandasDataFrame.loadCsv')
     def test_df_empty(self, mocklcsv):
 
         # new test function because of the new mock value
@@ -139,7 +139,7 @@ class TestGetDiviData(fake_filesystem_unittest.TestCase):
         expected_calls = self.gdd_calls(text='_all_dates')
         mock_print.assert_has_calls(expected_calls)
 
-    @patch('epidemiology.epidata.getDIVIData.pd.read_json', return_value=test_df.copy())
+    @patch('memilio.epidata.getDIVIData.pd.read_json', return_value=test_df.copy())
     def test_divi_data_sanity_checks(self, mockrjson3):
 
         # first test

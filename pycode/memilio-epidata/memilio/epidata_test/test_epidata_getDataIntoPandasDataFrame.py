@@ -26,15 +26,15 @@ from unittest.mock import patch, call, mock_open
 from datetime import date, datetime
 import pandas as pd
 
-from epidemiology.epidata import getDataIntoPandasDataFrame as gd
-from epidemiology.epidata import defaultDict as dd
+from memilio.epidata import getDataIntoPandasDataFrame as gd
+from memilio.epidata import defaultDict as dd
 
-from epidemiology.epidata import getVaccinationData
-from epidemiology.epidata import getPopulationData
-from epidemiology.epidata import getRKIData
-from epidemiology.epidata import getDIVIData
-from epidemiology.epidata import getRKIDatawithEstimations
-from epidemiology.epidata import getJHData
+from memilio.epidata import getVaccinationData
+from memilio.epidata import getPopulationData
+from memilio.epidata import getRKIData
+from memilio.epidata import getDIVIData
+from memilio.epidata import getRKIDatawithEstimations
+from memilio.epidata import getJHData
 
 
 class Test_getDataIntoPandasDataFrame(fake_filesystem_unittest.TestCase):
@@ -60,7 +60,7 @@ class Test_getDataIntoPandasDataFrame(fake_filesystem_unittest.TestCase):
         del sys.argv[1:] # In this unit tests parse_args is called when it is called through unittests. This has a lot of command lines which lead to errors in getDataIntoPandasDataframe.
         # TODO:Is this is a good way to solve this?
 
-    @patch('epidemiology.epidata.getDataIntoPandasDataFrame.urlopen')
+    @patch('memilio.epidata.getDataIntoPandasDataFrame.urlopen')
     def test_load_geojson_error(self, mock_urlopen):
 
         mock_urlopen.side_effect = OSError
@@ -73,7 +73,7 @@ class Test_getDataIntoPandasDataFrame(fake_filesystem_unittest.TestCase):
 
         self.assertEqual(cm.exception.code, exit_string)
 
-    @patch('epidemiology.epidata.getDataIntoPandasDataFrame.pd.read_excel')
+    @patch('memilio.epidata.getDataIntoPandasDataFrame.pd.read_excel')
     def test_load_Excel_error(self, mock_urlopen):
 
         mock_urlopen.side_effect = OSError
@@ -86,7 +86,7 @@ class Test_getDataIntoPandasDataFrame(fake_filesystem_unittest.TestCase):
 
         self.assertEqual(cm.exception.code, exit_string)
 
-    @patch('epidemiology.epidata.getDataIntoPandasDataFrame.pd.read_csv')
+    @patch('memilio.epidata.getDataIntoPandasDataFrame.pd.read_csv')
     def test_load_csv_error(self, mock_csv):
         # return an empty dataframe
         mock_csv.return_value = pd.DataFrame()
@@ -112,7 +112,7 @@ class Test_getDataIntoPandasDataFrame(fake_filesystem_unittest.TestCase):
 
         assert df_test.empty
 
-    @patch('epidemiology.epidata.getDataIntoPandasDataFrame.pd.read_csv')
+    @patch('memilio.epidata.getDataIntoPandasDataFrame.pd.read_csv')
     def test_load_csv_working(self, mock_csv):
         mock_csv.side_effect = OSError
 
@@ -529,13 +529,13 @@ class Test_getDataIntoPandasDataFrame(fake_filesystem_unittest.TestCase):
         exit_string = "Error: The file format: " + 'wrong' + " does not exist. Use another one."
         self.assertEqual(cm.exception.code, exit_string)
 
-    @patch('epidemiology.epidata.getDIVIData.get_divi_data')
-    @patch('epidemiology.epidata.getRKIData.get_rki_data')
-    @patch('epidemiology.epidata.getPopulationData.get_population_data')
-    @patch('epidemiology.epidata.getPopulationData.get_age_population_data')
-    @patch('epidemiology.epidata.getVaccinationData.get_vaccination_data')
-    @patch('epidemiology.epidata.getRKIDatawithEstimations.get_rki_data_with_estimations')
-    @patch('epidemiology.epidata.getJHData.get_jh_data')
+    @patch('memilio.epidata.getDIVIData.get_divi_data')
+    @patch('memilio.epidata.getRKIData.get_rki_data')
+    @patch('memilio.epidata.getPopulationData.get_population_data')
+    @patch('memilio.epidata.getPopulationData.get_age_population_data')
+    @patch('memilio.epidata.getVaccinationData.get_vaccination_data')
+    @patch('memilio.epidata.getRKIDatawithEstimations.get_rki_data_with_estimations')
+    @patch('memilio.epidata.getJHData.get_jh_data')
     def test_call_functions(
             self, mock_jh, mock_rkiwe, mock_vaccination, mock_agep, mock_popul,
             mock_rki, mock_divi):

@@ -23,8 +23,8 @@ import os
 import sys
 from unittest.mock import patch
 
-from epidemiology.epidata import cleanData as cd
-from epidemiology.epidata import defaultDict as dd
+from memilio.epidata import cleanData as cd
+from memilio.epidata import defaultDict as dd
 
 
 class Test_cleanData(fake_filesystem_unittest.TestCase):

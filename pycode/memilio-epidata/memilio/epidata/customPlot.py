@@ -23,7 +23,7 @@
 """
 import matplotlib.pyplot as plt 
 import numpy as np
-from epidemiology.epidata import getDataIntoPandasDataFrame as gd
+from memilio.epidata import getDataIntoPandasDataFrame as gd
 import pandas as pd
 
 

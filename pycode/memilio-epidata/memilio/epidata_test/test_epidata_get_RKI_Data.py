@@ -25,8 +25,8 @@ import json
 import pandas as pd
 import numpy as np
 
-from epidemiology.epidata import getRKIData as grki
-from epidemiology.epidata import getDataIntoPandasDataFrame as gd
+from memilio.epidata import getRKIData as grki
+from memilio.epidata import getDataIntoPandasDataFrame as gd
 from unittest.mock import patch
 
 
@@ -268,8 +268,8 @@ class test_get_RKI_Data(fake_filesystem_unittest.TestCase):
                          df_infected[(df_infected["ID_State"] == 1) &
                                      (df_infected['Date'] == "2020-08-07")]['Confirmed'].item())
 
-    @patch('epidemiology.epidata.getRKIData.gd.loadGeojson')
-    @patch('epidemiology.epidata.getRKIData.gd.loadCsv')
+    @patch('memilio.epidata.getRKIData.gd.loadGeojson')
+    @patch('memilio.epidata.getRKIData.gd.loadCsv')
     def test_get_rki_data_dowload(self, mock_loadCsv, mock_loadGeojson):
         # Test with downloading data
         read_data = False
@@ -344,8 +344,8 @@ class test_get_RKI_Data(fake_filesystem_unittest.TestCase):
         # do not test all cases tested above because same input dataframe is used -> if test without downloading pass,
         # these files are correct too
 
-    @patch('epidemiology.epidata.getRKIData.gd.loadGeojson')
-    @patch('epidemiology.epidata.getRKIData.gd.loadCsv')
+    @patch('memilio.epidata.getRKIData.gd.loadGeojson')
+    @patch('memilio.epidata.getRKIData.gd.loadCsv')
     def test_get_rki_data_dowload_split_berlin(self, mock_loadCsv, mock_loadGeojson):
         # Test case with downloading data where first csv-source is incomplete and second one is used
         # and split_berlin = True
@@ -740,7 +740,7 @@ class test_get_RKI_Data(fake_filesystem_unittest.TestCase):
         for file in files:
             self.assertTrue(file in os.listdir(directory))
 
-    @patch('epidemiology.epidata.getRKIData.gd.loadCsv')
+    @patch('memilio.epidata.getRKIData.gd.loadCsv')
     def test_no_raw(self, mock_loadCsv):
         # Test with downloading data
         read_data = False
@@ -796,7 +796,7 @@ class test_get_RKI_Data(fake_filesystem_unittest.TestCase):
         self.assertEqual(df[(df['Date'] == "2020-06-10")]['Deaths'].item(), 1)
         self.assertEqual(df[(df['Date'] == "2020-06-10")]["Recovered"].item(), 8)
 
-    @patch('epidemiology.epidata.getRKIData.gd.cli')
+    @patch('memilio.epidata.getRKIData.gd.cli')
     def test_main(self, mock_cli):
 
 
@@ -825,7 +825,7 @@ class test_get_RKI_Data(fake_filesystem_unittest.TestCase):
         empty_df = pd.DataFrame()
         self.assertEqual(grki.check_for_completeness(empty_df), False)
     
-    @patch('epidemiology.epidata.getRKIData.gd.loadCsv')
+    @patch('memilio.epidata.getRKIData.gd.loadCsv')
     def test_rep_date(self, mocklcsv):
 
         mocklcsv.return_value = pd.read_json(self.test_string_all_federal_states_and_counties)

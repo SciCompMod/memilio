@@ -19,7 +19,7 @@
 #############################################################################
 import unittest
 from datetime import date
-from epidemiology.epidata import defaultDict as dd
+from memilio.epidata import defaultDict as dd
 from pyfakefs import fake_filesystem_unittest
 
 

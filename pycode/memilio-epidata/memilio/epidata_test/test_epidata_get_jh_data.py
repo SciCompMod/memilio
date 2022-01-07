@@ -22,8 +22,8 @@ from pyfakefs import fake_filesystem_unittest
 import os
 import pandas as pd
 
-from epidemiology.epidata import getJHData as gJHD
-from epidemiology.epidata import getDataIntoPandasDataFrame as gD
+from memilio.epidata import getJHData as gJHD
+from memilio.epidata import getDataIntoPandasDataFrame as gD
 from unittest.mock import patch
 
 
@@ -186,7 +186,7 @@ class TestGetJHData(fake_filesystem_unittest.TestCase):
         self.assertEqual(df[(df["CountryRegion"] == 'France') & (df["Date"] == "2020-09-26") & (
                 df['ProvinceState'] == 'Martinique')]["Deaths"].item(), 20)
 
-    @patch('epidemiology.epidata.getJHData.gd.loadCsv')
+    @patch('memilio.epidata.getJHData.gd.loadCsv')
     def test_get_JH_Data_Download(self, mock_loadcsv):
         # Test without downloading data
         [read_data, file_format, out_folder, no_raw] \
@@ -280,7 +280,7 @@ class TestGetJHData(fake_filesystem_unittest.TestCase):
         self.assertEqual(df[(df["CountryRegion"] == 'France') & (df["Date"] == "2020-09-26") & (
                 df['ProvinceState'] == 'Martinique')]["Deaths"].item(), 20)
 
-    @patch('epidemiology.epidata.getJHData.gd.loadCsv')
+    @patch('memilio.epidata.getJHData.gd.loadCsv')
     def test_get_JH_Data_Download_omit_raw(self, mock_loadcsv):
         # Test without downloading data
         [read_data, file_format, out_folder, no_raw] \

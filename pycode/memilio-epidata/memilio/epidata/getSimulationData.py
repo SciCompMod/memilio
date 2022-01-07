@@ -30,12 +30,12 @@ The functions which are called are:
 """
 
 
-from epidemiology.epidata import getDataIntoPandasDataFrame as gd
-from epidemiology.epidata import defaultDict as dd
-from epidemiology.epidata import getVaccinationData
-from epidemiology.epidata import getPopulationData
-from epidemiology.epidata import getRKIData
-from epidemiology.epidata import getDIVIData
+from memilio.epidata import getDataIntoPandasDataFrame as gd
+from memilio.epidata import defaultDict as dd
+from memilio.epidata import getVaccinationData
+from memilio.epidata import getPopulationData
+from memilio.epidata import getRKIData
+from memilio.epidata import getDIVIData
 
 def print_error(text):
     print('Error: Something went wrong while getting ' + text +

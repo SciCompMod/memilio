@@ -19,9 +19,9 @@
 #############################################################################
 import unittest
 
-from epidemiology.secir import (UncertainContactMatrix, ContactMatrix, Damping, SecirModel,
+from memilio.simulation.secir import (UncertainContactMatrix, ContactMatrix, Damping, SecirModel,
                                 simulate, AgeGroup, Index_InfectionState, SecirSimulation)
-from epidemiology.secir import InfectionState as State
+from memilio.simulation.secir import InfectionState as State
 import numpy as np
 
 class Test_secir_integration(unittest.TestCase):

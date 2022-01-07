@@ -30,9 +30,9 @@ import sys
 from collections import namedtuple
 import numpy as np
 import pandas
-from epidemiology.epidata import getDataIntoPandasDataFrame as gd
-from epidemiology.epidata import defaultDict as dd
-from epidemiology.epidata import geoModificationGermany as geoger
+from memilio.epidata import getDataIntoPandasDataFrame as gd
+from memilio.epidata import defaultDict as dd
+from memilio.epidata import geoModificationGermany as geoger
 
 
 def get_population_data(read_data=dd.defaultDict['read_data'],

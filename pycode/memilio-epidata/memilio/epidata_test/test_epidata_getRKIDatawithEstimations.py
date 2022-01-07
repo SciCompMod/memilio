@@ -26,9 +26,9 @@ from datetime import date, timedelta
 import os
 import pandas as pd
 
-from epidemiology.epidata import getRKIDatawithEstimations as grdwd
-from epidemiology.epidata import getDataIntoPandasDataFrame as gd
-from epidemiology.epidata import defaultDict as dd
+from memilio.epidata import getRKIDatawithEstimations as grdwd
+from memilio.epidata import getDataIntoPandasDataFrame as gd
+from memilio.epidata import defaultDict as dd
 from unittest.mock import patch, call
 
 
@@ -341,9 +341,9 @@ class TestGetRKIDatawithEstimations(fake_filesystem_unittest.TestCase):
             index = index + 1
 
 
-    @patch('epidemiology.epidata.getRKIDatawithEstimations.grd.get_rki_data')
-    @patch('epidemiology.epidata.getRKIDatawithEstimations.gjd.get_jh_data')
-    @patch('epidemiology.epidata.getRKIDatawithEstimations.download_weekly_deaths_numbers_rki')
+    @patch('memilio.epidata.getRKIDatawithEstimations.grd.get_rki_data')
+    @patch('memilio.epidata.getRKIDatawithEstimations.gjd.get_jh_data')
+    @patch('memilio.epidata.getRKIDatawithEstimations.download_weekly_deaths_numbers_rki')
     def test_get_rki_data_with_estimations_download(self, mock_get_jh_data, mock_get_rki_data,
                                                     mock_download_weekly_deaths_numbers_rki):
 

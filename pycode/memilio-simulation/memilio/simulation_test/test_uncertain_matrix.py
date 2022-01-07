@@ -18,7 +18,7 @@
 # limitations under the License.
 #############################################################################
 import unittest
-import epidemiology.secir as secir
+import memilio.simulation.secir as secir
 import numpy as np
 
 class Test_UncertainMatrix(unittest.TestCase):

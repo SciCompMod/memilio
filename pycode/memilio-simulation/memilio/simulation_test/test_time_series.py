@@ -19,7 +19,7 @@
 #############################################################################
 import unittest
 from numpy.testing import assert_array_equal
-import epidemiology.secir as secir
+import memilio.simulation.secir as secir
 import numpy as np
 
 class Test_TimeSeries(unittest.TestCase):

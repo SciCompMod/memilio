@@ -27,8 +27,8 @@ import os
 import pandas as pd
 import numpy as np
 
-from epidemiology.epidata import getPopulationData as gpd
-from epidemiology.epidata import getDataIntoPandasDataFrame as gd
+from memilio.epidata import getPopulationData as gpd
+from memilio.epidata import getDataIntoPandasDataFrame as gd
 from unittest.mock import patch
 
 
@@ -140,7 +140,7 @@ class Test_getPopulationData(fake_filesystem_unittest.TestCase):
     def setUp(self):
             self.setUpPyfakefs()
 
-    @patch('epidemiology.epidata.getPopulationData.gd.loadCsv')
+    @patch('memilio.epidata.getPopulationData.gd.loadCsv')
     def test_gpd_download_data1(self, mock_loadCSV):
 
         mock_loadCSV.return_value = pd.read_json(self.test_string1)
@@ -166,7 +166,7 @@ class Test_getPopulationData(fake_filesystem_unittest.TestCase):
         f = open(f_path, "r")
         self.assertEqual(f.read(), self.test_string1r)
 
-    @patch('epidemiology.epidata.getPopulationData.gd.loadCsv')
+    @patch('memilio.epidata.getPopulationData.gd.loadCsv')
     def test_gpd_download_data1_no_raw(self, mock_loadCSV):
 
         mock_loadCSV.return_value = pd.read_json(self.test_string1)
@@ -206,7 +206,7 @@ class Test_getPopulationData(fake_filesystem_unittest.TestCase):
         f = open(f_path, "r")
         self.assertEqual(f.read(), self.test_string1r)
 
-    @patch('epidemiology.epidata.getPopulationData.gd.loadCsv')
+    @patch('memilio.epidata.getPopulationData.gd.loadCsv')
     def test_gpd_download_data2(self, mock_loadCSV):
 
         mock_loadCSV.return_value = pd.read_json(self.test_string2)
@@ -289,7 +289,7 @@ class Test_getPopulationData(fake_filesystem_unittest.TestCase):
         test = gpd.get_new_counties(self.test_old_counties)
         self.assertTrue(np.array_equal(test, self.test_new_counties))
 
-    @patch('epidemiology.epidata.getPopulationData.load_age_population_data', return_value=(test_counties, test_reg_key, test_zensus))
+    @patch('memilio.epidata.getPopulationData.load_age_population_data', return_value=(test_counties, test_reg_key, test_zensus))
     def test_get_age_population(self, mock_data):
 
         gpd.get_age_population_data(False, 'json', self.path)
@@ -302,7 +302,7 @@ class Test_getPopulationData(fake_filesystem_unittest.TestCase):
 
     @patch('pandas.read_excel', return_value=test_counties)
     @patch('pandas.read_excel', return_value=test_reg_key)
-    @patch('epidemiology.epidata.getDataIntoPandasDataFrame.loadCsv', return_value=test_zensus)
+    @patch('memilio.epidata.getDataIntoPandasDataFrame.loadCsv', return_value=test_zensus)
     def test_load_age_population_data(self, mock_read_excel1, mock_read_excel2, mock_read_csv):
 
         directory = os.path.join(self.path, 'Germany/')
@@ -318,9 +318,9 @@ class Test_getPopulationData(fake_filesystem_unittest.TestCase):
         
         # TODO: How to test hdf5 export?
 
-    @patch('epidemiology.epidata.getPopulationData.gd.loadCsv')
-    @patch('epidemiology.epidata.getPopulationData.pandas.read_json')
-    @patch('epidemiology.epidata.getPopulationData.gd.loadExcel')
+    @patch('memilio.epidata.getPopulationData.gd.loadCsv')
+    @patch('memilio.epidata.getPopulationData.pandas.read_json')
+    @patch('memilio.epidata.getPopulationData.gd.loadExcel')
     def test_errors(self, mocklexcel, mockrjson, mocklcsv):
         mockrjson.side_effect = ValueError
         [read_data, file_format, out_folder, no_raw] = [True, "json", self.path, True]

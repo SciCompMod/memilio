@@ -18,8 +18,8 @@
 # limitations under the License.
 #############################################################################
 import unittest
-import epidemiology.secir as secir
-from epidemiology.secir import InfectionState as State
+import memilio.simulation.secir as secir
+from memilio.simulation.secir import InfectionState as State
 import numpy as np
 
 class Test_ParameterStudy(unittest.TestCase):

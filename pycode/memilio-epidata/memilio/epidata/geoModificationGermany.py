@@ -25,10 +25,10 @@
 """
 
 import os
-from epidemiology.epidata import defaultDict as dd
+from memilio.epidata import defaultDict as dd
 
 import pandas as pd
-from epidemiology.epidata import getDataIntoPandasDataFrame as gd
+from memilio.epidata import getDataIntoPandasDataFrame as gd
 
 # Merging of Counties that are reported differently, either separatedly or 
 # summed, in different data sources

@@ -27,8 +27,8 @@ import os
 import sys
 import pandas
 
-from epidemiology.epidata import getDataIntoPandasDataFrame as gd
-from epidemiology.epidata import defaultDict as dd
+from memilio.epidata import getDataIntoPandasDataFrame as gd
+from memilio.epidata import defaultDict as dd
 
 
 def get_jh_data(read_data=dd.defaultDict['read_data'],
