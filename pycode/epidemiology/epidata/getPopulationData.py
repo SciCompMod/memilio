@@ -374,7 +374,7 @@ def get_age_population_data(read_data=dd.defaultDict['read_data'],
         gd.write_dataframe(df_current, directory, 'county_current_population', file_format)
         # TODO there should be a more elegant version to write different version with Eisenach merged or not
         # or it should be prevented directly to write if Eisenach is not merged... to discuss...    
-        gd.write_dataframe(df_401, directory, 'county_population', file_format)    
+        gd.write_dataframe(df_401, directory, 'county_population_dim401', file_format)    
         gd.write_dataframe(df_current_401, directory, 'county_current_population_dim401', file_format)
 
     if merge_eisenach:

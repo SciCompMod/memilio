@@ -424,6 +424,7 @@ def get_commuter_data(setup_dict='',
     countykey_list = geoger.get_county_ids()
     df_commuter_migration = pd.DataFrame(data=mat_commuter_migration, columns=countykey_list)  
     df_commuter_migration.index = countykey_list
+    commuter_sanity_checks(df_commuter_migration)
     filename = 'migration_bfa_20' + files[0].split(
         '-20')[1][0:2] + '_dim' + str(mat_commuter_migration.shape[0])
     gd.write_dataframe(df_commuter_migration, directory, filename, file_format)
@@ -432,7 +433,6 @@ def get_commuter_data(setup_dict='',
         directory.split('pydata') [0] +'mobility/commuter_migration_scaled' +
         '_20' +files[0].split('-20') [1] [0: 2] +'.txt', sep=' ', index=False,
         header=False)
-    commuter_sanity_checks(df_commuter_migration)
 
     return df_commuter_migration
 
@@ -446,8 +446,8 @@ def commuter_sanity_checks(df):
         exit_string = "Error. "
         sys.exit(exit_string)
     # There were 401 counties at beginning of 2021 and 400 at end of 2021. 
-    # Check if either far more than expected or less than 10% are in the dataframe.
-    if (len(df.index) < 40) or (len(df.index) > 500): 
+    # Check if exactly 400 counties are in dataframe.
+    if not len(df) == 400: 
         exit_string = "Error. Size of dataframe unexpected."
         sys.exit(exit_string)
 

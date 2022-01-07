@@ -58,7 +58,7 @@ def transformTwitterData(file_format=dd.defaultDict['file_format'],
                          :] += twitter.iloc[idx_eisenach_old, indices].values
         twitter_new.iloc[:, idx_wartburg_new] += twitter.iloc[indices,
                                                               idx_eisenach_old].values
-
+        # TODO: this file is generally to be optimized
         if abs(twitter_new.iloc[0:382, 0:382]-twitter.iloc[0:382, 0:382]).max().max() > 1e-10:
             print('Error...')
         twitter_new.to_csv(
