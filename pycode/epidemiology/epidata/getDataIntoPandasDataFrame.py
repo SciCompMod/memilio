@@ -110,7 +110,8 @@ def loadExcel(targetFileName, apiUrl='https://opendata.arcgis.com/datasets/',
     apiUrl -- API URL (string, default
               'https://opendata.arcgis.com/datasets/')
     extension -- Data format extension (string, default '.xls')
-    param_dict -- Defines the parameter for read_excel: "sheetname": sheet from Excel file which should be in DataFrame
+    param_dict -- Defines the parameter for read_excel:
+            "sheetname": sheet from Excel file which should be in DataFrame
             (string (sheetname) or integer (zero-indexed sheet position), default 0)
             "header": row to use for column labels (Use None if there is no header) (int, default 0)
             "engine": defines engine for reading (str, default 'openpyxl')
