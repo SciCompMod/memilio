@@ -1,110 +1,36 @@
-Python packages / bindings for the corona project
-=================================================
+MEmilio Python packages
+=======================
 
-This package collects the python modules for the corona project. Currently, it contains three modules:
+This directory collects the python packages for the MEmilio project. Currently, it contains the following packages:
 
-* ``memilio.epidata``: Contains scripts to download different kinds of data as RKI, John Hopkins, Population, DIVI.
+* ``memilio-epidata``: Contains scripts to download different kinds of data as RKI, John Hopkins, Population, DIVI. See `epidata README <memilio-epidata/README.rst>`_.
 
-To do so, install the package (see below) and than the following executables are available:
-     
-      * getrkidata
-      * getpopuldata
-      * getjhdata
-      * getdividata
-      * getsimdata
-      * cleandata
-      * memilio-epidata/memilio/epidata//defaultDict.py
-      * getcommutermigration
+* ``memilio-simulation``: Contains a python/pybind11 wrapper to the MEmilio C++ library. See `simulation README <memilio-simulation/README.md>`_.
 
-For all executables there are several run options.
-Use -h for more information or the `epidata-readme <memilio-epidata/memilio/epidata//README.rst>`_ in the corresponding subdirectory.
+See the corresponding directory for detailed installation and usage instruction.
 
-* ``memilio.simulation.secir``: Contains a python/pybind11 wrapper to the C++ code. An example is provided
-
-More details can be found in the corresponding subdirectories.
-
-Environment
------------
-
-We recommend to use a virtual environment.
-Therefore, do the following.
-
-Create virtiual environment with name "epi_venv" [name can be changed as you want] somewhere into the epidemiology folder(!) 
+We recommend to use a virtual python environment to avoid dependency conflicts with other installed packages. On Linux, use the following commands to create and activate a virtual environment in directory called `epi_venv`:
 
 .. code:: sh
 
-   # Setup virtual environment
+    python -m venv epi_venv
+    source epi_venv/bin/activate
+    pip install --upgrade pip
 
-   python -m venv epi_venv
-   source epi_venv/bin/activate
-   pip install --upgrade pip
+Refer to the `Python documentation <https://docs.python.org/3/library/venv.html>`_ for more information about virtual environments.
 
-If the virtual env is not created in the epidemiology-folder the default folder for writing and reading data files of the pidata package is in the site-package folder of the env, see output while writing the data. To avoid this use the -o flag, for details see `epidata-readme <memilio-epidata/memilio/epidata//README.rst>`_  or the `Documentation <https://hpc-against-corona.pages.gitlab.dlr.de/epidemiology/master/documentation/index.html>`_.
-
-
-Installation
-------------
-
-For developement of code use
+Each package provides its own ``setup.py``, so they can be installed seperately with pip:
 
 .. code:: sh
 
-    python setup.py develop
+    cd <package directory>
+    pip install .
 
-
-To install, just enter
-
-.. code:: sh
-
-    python setup.py install
-
-This builds the C++ extension and copies everything required to your site-packages. 
-
-All the requirements of the `C++ library <../cpp/README.md>`_ must be met in order to build and use the python bindings.
-CMake is executed internally by the `setup.py` script.
-
-Testing and Coverage
---------------------
-
-The following packages have to be installed to run the tests:
-
-- pyfakefs (creates fake directory to test that expected folders are created and data is written)
-- freezegun (freezes the time. Thus, the call today can be changed to a specific date.)
-
-To run the tests make 
+Each package contains a test suite that can be run with
 
 .. code:: sh
 
+    cd <package directory>
     python -m unittest
 
-To get the coverage report do
-
-.. code:: sh
-
-    python -m coverage run -m unittest
-    python -m coverage report
-    python -m coverage xml -o coverage_python.xml
-    python -m coverage html -d coverage_python
-
-Coverage report for actual master:
-
-:Coverage Report: https://hpc-against-corona.pages.gitlab.dlr.de/epidemiology/master/coverage/python/index.html
-
-
-Inspection via pylint
----------------------
-The following packages have to be installed to run pylint:
-
-* pylint
-* pylint-json2html
-
-After installing the package, run
-
-.. code:: sh
-
-    python setup.py pylint
-    pylint-json2html -f jsonextended -o build_pylint/pylint.html < build_pylint/pylint_extended.json
-
-Pylint report for actual master:
-
-:Pylint Report: https://hpc-against-corona.pages.gitlab.dlr.de/epidemiology/master/pylint/pylint.html
+If you are a developer, use ``pip install -e .[dev]`` instead when you are working on the code. This also installs additional dependencies used in the unit test suite or for maintenance.

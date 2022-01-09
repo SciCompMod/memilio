@@ -1,10 +1,10 @@
 cmake_minimum_required(VERSION 3.4)
-project(epi-py)
+project(memilio-python)
 
-option(EPIPY_USE_SYSTEM_PYBIND11 "Use pybind11 installed in the system" OFF)
-mark_as_advanced(EPIPY_USE_SYSTEM_PYBIND11)
+option(MEMILIO_USE_BUNDLED_PYBIND11 "Use pybind11 bundled with this library." ON)
+mark_as_advanced(MEMILIO_USE_BUNDLED_PYBIND11)
 
-if(NOT EPIPY_USE_SYSTEM_PYBIND11)
+if(MEMILIO_USE_BUNDLED_PYBIND11)
   # Fetch pybind11
   include(FetchContent)
   FetchContent_Declare(
@@ -22,13 +22,19 @@ else()
 endif()
 
 # add in C++ library
-add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/../cpp ${CMAKE_CURRENT_BINARY_DIR}/cpp EXCLUDE_FROM_ALL)
+add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/../../cpp ${CMAKE_CURRENT_BINARY_DIR}/cpp EXCLUDE_FROM_ALL)
 
-# build secir python extension
-pybind11_add_module(_secir MODULE
-  epidemiology/secir/secir_py.cpp
+# build python extensions
+pybind11_add_module(_simulation_secir MODULE
+    memilio/simulation/secir.cpp
 )
-target_link_libraries(_secir PRIVATE memilio secir)
+target_link_libraries(_simulation_secir PRIVATE memilio secir)
+target_include_directories(_simulation_secir PRIVATE memilio/simulation)
+install(TARGETS _simulation_secir LIBRARY DESTINATION memilio)
 
-install(TARGETS _secir DESTINATION epidemiology)
-install(FILES epidemiology/secir/secir.py DESTINATION epidemiology)
+pybind11_add_module(_simulation MODULE
+    memilio/simulation/simulation.cpp
+)
+target_link_libraries(_simulation PRIVATE memilio)
+target_include_directories(_simulation PRIVATE memilio/simulation)
+install(TARGETS _simulation LIBRARY DESTINATION memilio)

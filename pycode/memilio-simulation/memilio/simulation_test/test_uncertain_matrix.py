@@ -18,14 +18,14 @@
 # limitations under the License.
 #############################################################################
 import unittest
-import memilio.simulation.secir as secir
+import memilio.simulation as mio
 import numpy as np
 
 class Test_UncertainMatrix(unittest.TestCase):
     def test_dampings(self):        
-        m = secir.UncertainContactMatrix(secir.ContactMatrixGroup(num_matrices = 2, size = 2))
-        d = secir.DampingSampling(
-            value = secir.UncertainValue(3.0), 
+        m = mio.UncertainContactMatrix(mio.ContactMatrixGroup(num_matrices = 2, size = 2))
+        d = mio.DampingSampling(
+            value = mio.UncertainValue(3.0), 
             level = 1, 
             type = 2, 
             time = 10.0, 

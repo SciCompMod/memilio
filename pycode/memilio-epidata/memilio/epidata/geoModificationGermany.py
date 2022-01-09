@@ -23,12 +23,15 @@
 @brief Provides methods to return lists of local entities such as federal states
     and counties and geographical merging criteria.
 """
-
 import os
+import pandas as pd
+
+
 from memilio.epidata import defaultDict as dd
 
-import pandas as pd
+
 from memilio.epidata import getDataIntoPandasDataFrame as gd
+
 
 # Merging of Counties that are reported differently, either separatedly or 
 # summed, in different data sources

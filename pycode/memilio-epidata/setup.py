@@ -1,32 +1,11 @@
 import sys
 import os
 import subprocess
-import distutils.cmd
-
-try:
-    from skbuild import setup
-except ImportError:
-    print('scikit-build is required to build from source.')
-    print('Installation:  python -m pip install scikit-build')
-    subprocess.check_call([sys.executable, "-m", "pip", "install", "scikit-build"])
-    from skbuild import setup
-
+from setuptools import setup, find_packages, Command
 
 __version__ = '0.1.0'
 
-INSTALL_REQUIRES = ['pandas<1.2.0',
-                    'matplotlib<3.4',
-                    'tables',
-                    'numpy<=1.19.4',
-                    'openpyxl',
-                    'xlrd', 
-		            'requests',
-                    'pyxlsb']
-
-EXTRAS_REQUIRE = {"pylint": ["pylint", "pylint_json2html"]}
-
-
-class PylintCommand(distutils.cmd.Command):
+class PylintCommand(Command):
     """
     Custom command to run pylint and get a report as html.
     """
@@ -38,8 +17,7 @@ class PylintCommand(distutils.cmd.Command):
         from pylint.reporters.json_reporter import JSONReporter
         from pylint_json2html import JsonExtendedReporter
 
-        self.lint_modules = ["epidemiology/"]
-
+        self.lint_modules = ["memilio/"]
         self.out_format = "extendedjson"
 
         self.REPORTERS = {
@@ -58,19 +36,18 @@ class PylintCommand(distutils.cmd.Command):
         # Run pylint
         from pylint import lint
         with open(self.out_file, "w", encoding="utf-8") as report_file:
-            options = ["--rcfile=pylintrc", *self.lint_modules]
+            options = ["--rcfile=../pylintrc", *self.lint_modules]
 
             lint.Run(options, reporter=self.reporter(report_file), do_exit=False)
 
-
 setup(
-    name='epidemiology',
+    name='memilio-epidata',
     version=__version__,
     author='DLR-SC',
-    author_email='martin.siggel@dlr.de',
-    maintainer_email='kathrin.rack@dlr.de',
-    url='https://gitlab.dlr.de/hpc-against-corona/epidemiology',
-    description='The python package for the HPC corona project',
+    author_email='daniel.abele@dlr.de',
+    maintainer_email='martin.kuehn@dlr.de',
+    url='https://github.com/DLR-SC/memilio',
+    description='Part of MEmilio project, reads epidemiological data from different official and unofficial sources.',
     entry_points={
         'console_scripts': [
             'getrkidata=memilio.epidata.getRKIData:main',
@@ -80,22 +57,31 @@ setup(
             'getsimdata = memilio.epidata.getSimulationData:main',
             'cleandata = memilio.epidata.cleanData:main',
             'getrkiestimation = memilio.epidata.getRKIDatawithEstimations:main',
-            'getcommutermobility = memilio.epidata.getCommuterMobility:main'
+            'getcommutermigration = memilio.epidata.commuter_migration_bfa:main'
         ],
     },
-    package_dir={
-       'epidemiology': 'epidemiology',
-       'memilio.simulation.secir': os.path.join('epidemiology', 'secir'),
-       'memilio.epidata': os.path.join('epidemiology', 'epidata')},
-    packages=['epidemiology', 
-              'memilio.simulation.secir',
-              'memilio.epidata'],
+    packages=find_packages(where = os.path.dirname(os.path.abspath(__file__))),
     long_description='',
-    setup_requires=['cmake'],
-    test_suite='test',
-    install_requires=INSTALL_REQUIRES,
-    extras_require=EXTRAS_REQUIRE,
+    test_suite='memilio.epidata_test',
+    install_requires= [
+        'pandas<1.2.0',
+        'matplotlib<3.4',
+        'tables',
+        'numpy<=1.19.4',
+        'openpyxl',
+        'xlrd', 
+        'requests'
+    ],
+    extras_require={
+        'dev': [
+            'pyfakefs==4.1.0',
+            'freezegun',
+            'coverage',
+            'pylint<=2.11.1', 
+            'pylint_json2html<=0.3.0',
+        ],
+    },
     cmdclass={
-            'pylint': PylintCommand,
-        },
+        'pylint': PylintCommand
+    },
 )

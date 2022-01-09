@@ -17,8 +17,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #############################################################################
-from memilio.simulation.secir import (UncertainContactMatrix, ContactMatrix, Damping, SecirModel,
-                                simulate, AgeGroup, Index_InfectionState, SecirSimulation)
+from memilio.simulation import UncertainContactMatrix, ContactMatrix, Damping
+from memilio.simulation.secir import SecirModel, simulate, AgeGroup, Index_InfectionState, SecirSimulation
 from memilio.simulation.secir import InfectionState as State
 import numpy as np
 import pandas as pd

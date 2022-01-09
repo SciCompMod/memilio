@@ -17,14 +17,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #############################################################################
-from memilio.simulation.secir import (UncertainContactMatrix, ContactMatrix, Damping, SecirModel,
-                                simulate, AgeGroup, Index_InfectionState, SecirSimulation)
+from memilio.simulation import UncertainContactMatrix, ContactMatrix, Damping
+from memilio.simulation.secir import SecirModel, simulate, AgeGroup, Index_InfectionState, SecirSimulation
 from memilio.simulation.secir import InfectionState as State
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 from datetime import datetime, date
-
+import os
 
 def run_secir_groups_simulation():
     """
@@ -48,10 +48,11 @@ def run_secir_groups_simulation():
     num_compartments = len(compartments)
 
     # set contact frequency matrix
-    baseline_contact_matrix0 = "../../data/contacts/baseline_home.txt"
-    baseline_contact_matrix1 = "../../data/contacts/baseline_school_pf_eig.txt"
-    baseline_contact_matrix2 = "../../data/contacts/baseline_work.txt"
-    baseline_contact_matrix3 = "../../data/contacts/baseline_other.txt"
+    data_dir = os.path.join(os.path.dirname(__file__), "..", "..", "..", "data")
+    baseline_contact_matrix0 = os.path.join(data_dir, "contacts/baseline_home.txt")
+    baseline_contact_matrix1 = os.path.join(data_dir, "contacts/baseline_school_pf_eig.txt")
+    baseline_contact_matrix2 = os.path.join(data_dir, "contacts/baseline_work.txt")
+    baseline_contact_matrix3 = os.path.join(data_dir, "contacts/baseline_other.txt")
 
     # Initialize Parameters
     model = SecirModel(len(populations))

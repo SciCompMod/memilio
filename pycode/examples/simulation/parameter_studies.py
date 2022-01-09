@@ -17,9 +17,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #############################################################################
-# import memilio.simulation.secir as secir
+
 import numpy as np
-from memilio.simulation.secir import InfectionState as State
+import memilio.simulation as mio
+import memilio.simulation.secir as secir
+
 def parameter_study():    
     #setup basic parameters
     num_groups = 6
@@ -37,17 +39,17 @@ def parameter_study():
         model.parameters.ICUToHomeTime[group] = 8
         model.parameters.ICUToDeathTime[group] = 5
 
-        model.populations[group, secir.Index_InfectionState(State.Exposed)] = 100
-        model.populations[group, secir.Index_InfectionState(State.Carrier)] = 50
-        model.populations[group, secir.Index_InfectionState(State.Infected)] = 20
-        model.populations[group, secir.Index_InfectionState(State.Hospitalized)] = 20
-        model.populations[group, secir.Index_InfectionState(State.ICU)] = 10
-        model.populations[group, secir.Index_InfectionState(State.Recovered)] = 50
-        model.populations[group, secir.Index_InfectionState(State.Dead)] = 10
-        model.populations.set_difference_from_group_total_AgeGroup((group, secir.Index_InfectionState(State.Susceptible)), 10000)
+        model.populations[group, secir.Index_InfectionState(secir.InfectionState.Exposed)] = 100
+        model.populations[group, secir.Index_InfectionState(secir.InfectionState.Carrier)] = 50
+        model.populations[group, secir.Index_InfectionState(secir.InfectionState.Infected)] = 20
+        model.populations[group, secir.Index_InfectionState(secir.InfectionState.Hospitalized)] = 20
+        model.populations[group, secir.Index_InfectionState(secir.InfectionState.ICU)] = 10
+        model.populations[group, secir.Index_InfectionState(secir.InfectionState.Recovered)] = 50
+        model.populations[group, secir.Index_InfectionState(secir.InfectionState.Dead)] = 10
+        model.populations.set_difference_from_group_total_AgeGroup((group, secir.Index_InfectionState(secir.InfectionState.Susceptible)), 10000)
 
 
-        model.parameters.InfectionProbabilityFromContact[group].set_distribution(secir.ParameterDistributionUniform(0.1, 0.2))
+        model.parameters.InfectionProbabilityFromContact[group].set_distribution(mio.ParameterDistributionUniform(0.1, 0.2))
         model.parameters.AsymptoticCasesPerInfectious[group] = 0.09
         model.parameters.RiskOfInfectionFromSympomatic[group] = 0.25
         model.parameters.HospitalizedCasesPerInfectious[group] = 0.2
@@ -55,12 +57,12 @@ def parameter_study():
         model.parameters.DeathsPerHospitalized[group] = 0.3
 
 
-    model.parameters.ContactPatterns.cont_freq_mat = secir.ContactMatrixGroup(4,num_groups)
-    model.parameters.ContactPatterns.cont_freq_mat[0] = secir.ContactMatrix(np.ones((num_groups, num_groups))*0.5)
-    model.parameters.ContactPatterns.cont_freq_mat[1] = secir.ContactMatrix(np.ones((num_groups, num_groups))*0.5)
-    model.parameters.ContactPatterns.cont_freq_mat[2] = secir.ContactMatrix(np.ones((num_groups, num_groups))*0.5)
-    model.parameters.ContactPatterns.cont_freq_mat[3] = secir.ContactMatrix(np.ones((num_groups, num_groups))*0.5)
-    model.parameters.ContactPatterns.cont_freq_mat.add_damping(secir.Damping(np.ones((num_groups, num_groups))*0.7, 30.0))
+    model.parameters.ContactPatterns.cont_freq_mat = mio.ContactMatrixGroup(4,num_groups)
+    model.parameters.ContactPatterns.cont_freq_mat[0] = mio.ContactMatrix(np.ones((num_groups, num_groups))*0.5)
+    model.parameters.ContactPatterns.cont_freq_mat[1] = mio.ContactMatrix(np.ones((num_groups, num_groups))*0.5)
+    model.parameters.ContactPatterns.cont_freq_mat[2] = mio.ContactMatrix(np.ones((num_groups, num_groups))*0.5)
+    model.parameters.ContactPatterns.cont_freq_mat[3] = mio.ContactMatrix(np.ones((num_groups, num_groups))*0.5)
+    model.parameters.ContactPatterns.cont_freq_mat.add_damping(mio.Damping(np.ones((num_groups, num_groups))*0.7, 30.0))
     print(model.parameters.ContactPatterns.cont_freq_mat[1].baseline)
     #process the result of one run
     parameter_study.c = 0

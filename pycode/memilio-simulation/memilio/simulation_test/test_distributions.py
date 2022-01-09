@@ -18,11 +18,11 @@
 # limitations under the License.
 #############################################################################
 import unittest
-import memilio.simulation.secir as secir
+import memilio.simulation as mio
 
 class Test_ParameterDistribution(unittest.TestCase):
     def test_uniform(self):
-        U = secir.ParameterDistributionUniform(1.0, 2.0)
+        U = mio.ParameterDistributionUniform(1.0, 2.0)
         #properties
         self.assertEqual(U.lower_bound, 1.0)
         self.assertEqual(U.upper_bound, 2.0)
@@ -32,7 +32,7 @@ class Test_ParameterDistribution(unittest.TestCase):
         self.assertLessEqual(u, 2.0)
 
     def test_normal(self):
-        N = secir.ParameterDistributionNormal(-1.0, 1.0, 0.0, 1.0)        
+        N = mio.ParameterDistributionNormal(-1.0, 1.0, 0.0, 1.0)        
         #properties
         self.assertEqual(N.mean, 0.0)#std_dev automatically adapted
         self.assertEqual(N.lower_bound, -1.0)
@@ -43,12 +43,12 @@ class Test_ParameterDistribution(unittest.TestCase):
         self.assertLessEqual(n, 1)
 
     def test_polymorphic(self):
-        uv = secir.UncertainValue()
-        N = secir.ParameterDistributionNormal(0, 2, 1.0)
+        uv = mio.UncertainValue()
+        N = mio.ParameterDistributionNormal(0, 2, 1.0)
         uv.set_distribution(N)
         self.assertIsNot(uv.get_distribution(), N)
-        self.assertIsInstance(uv.get_distribution(), secir.ParameterDistributionNormal)
-        self.assertIsInstance(uv.get_distribution(), secir.ParameterDistribution)
+        self.assertIsInstance(uv.get_distribution(), mio.ParameterDistributionNormal)
+        self.assertIsInstance(uv.get_distribution(), mio.ParameterDistribution)
         self.assertEqual(uv.get_distribution().mean, 1.0)
         
 if __name__ == '__main__':

@@ -20,9 +20,9 @@
 import os
 import pandas as pd
 
-import getDataIntoPandasDataFrame as gd
-import defaultDict as dd
-import geoModificationGermany as geoger
+from memilio.epidata import getDataIntoPandasDataFrame as gd
+from memilio.epidata import defaultDict as dd
+from memilio.epidata import geoModificationGermany as geoger
 
 
 def transformTwitterData(file_format=dd.defaultDict['file_format'],

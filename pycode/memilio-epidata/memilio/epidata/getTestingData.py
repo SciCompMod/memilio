@@ -22,11 +22,11 @@ import os
 import requests
 import io
 import pandas as pd
-import getDataIntoPandasDataFrame as gd
-import defaultDict as dd
-import modifyDataframeSeries
-import customPlot
-import geoModificationGermany as geoger
+from memilio.epidata import getDataIntoPandasDataFrame as gd
+from memilio.epidata import defaultDict as dd
+from memilio.epidata import modifyDataframeSeries
+from memilio.epidata import customPlot
+from memilio.epidata import geoModificationGermany as geoger
 
 # Downloads testing data from RKI
 

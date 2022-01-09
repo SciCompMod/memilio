@@ -17,6 +17,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #############################################################################
+import memilio.simulation as mio
 import memilio.simulation.secir as secir
 import numpy as np
 
@@ -37,7 +38,7 @@ def parameter_study():
     model.parameters.times[0].set_icu_to_death(5)
 
     model.parameters.get_contact_patterns().get_cont_freq_mat().set_cont_freq(0.5, 0, 0)
-    model.parameters.get_contact_patterns().get_cont_freq_mat().add_damping(secir.Damping(30, 0.3), 0, 0)
+    model.parameters.get_contact_patterns().get_cont_freq_mat().add_damping(mio.Damping(30, 0.3), 0, 0)
 
     model.parameters.probabilities[0].set_infection_from_contact(1.0)
     model.parameters.probabilities[0].set_carrier_infectability(0.67)
@@ -70,7 +71,7 @@ def parameter_study():
     model.apply_constraints()
     graph.add_node(model, t0)
     migration_coefficients = 0.1 * np.ones(8)
-    migration_params = secir.MigrationParams(migration_coefficients)
+    migration_params = mio.MigrationParams(migration_coefficients)
     graph.add_edge(0, 1, migration_params) #one coefficient per (age group x compartment)
     graph.add_edge(1, 0, migration_params) #directed graph -> add both directions so coefficients can be different
     
