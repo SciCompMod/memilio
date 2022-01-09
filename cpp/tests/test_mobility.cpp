@@ -125,8 +125,8 @@ TEST(TestMobility, edgeApplyMigration)
     params.get<mio::IncubationTime>()[(mio::AgeGroup)0] = 2.;
     params.apply_constraints();
     double t = 3.125;
-    mio::SimulationNode<mio::Simulation<Model>> node1(model, t);
-    mio::SimulationNode<mio::Simulation<Model>> node2(model, t);
+    mio::SimulationNode<mio::SecirSimulation<>> node1(model, t);
+    mio::SimulationNode<mio::SecirSimulation<>> node2(model, t);
 
     //setup edge
     mio::MigrationEdge edge(Eigen::VectorXd::Constant(8, 0.1));

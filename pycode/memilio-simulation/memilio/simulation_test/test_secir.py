@@ -1,7 +1,7 @@
 #############################################################################
 # Copyright (C) 2020-2021 German Aerospace Center (DLR-SC)
 #
-# Authors: 
+# Authors:
 #
 # Contact: Martin J. Kuehn <Martin.Kuehn@DLR.de>
 #
@@ -24,6 +24,7 @@ from memilio.simulation.secir import SecirModel, simulate, AgeGroup, Index_Infec
 from memilio.simulation.secir import InfectionState as State
 import numpy as np
 
+
 class Test_secir_integration(unittest.TestCase):
 
     def setUp(self):
@@ -33,8 +34,9 @@ class Test_secir_integration(unittest.TestCase):
         A0 = AgeGroup(0)
 
         model.parameters.IncubationTime[A0] = 5.2  # R_2^(-1)+R_3^(-1)
-        model.parameters.InfectiousTimeMild[A0] =  6.  # 4-14  (=R4^(-1))
-        model.parameters.SerialInterval[A0] = 4.2   # 4-4.4 // R_2^(-1)+0.5*R_3^(-1)
+        model.parameters.InfectiousTimeMild[A0] = 6.  # 4-14  (=R4^(-1))
+        # 4-4.4 // R_2^(-1)+0.5*R_3^(-1)
+        model.parameters.SerialInterval[A0] = 4.2
         model.parameters.HospitalizedToHomeTime[A0] = 12.  # 7-16 (=R5^(-1))
         model.parameters.HomeToHospitalizedTime[A0] = 5.  # 2.5-7 (=R6^(-1))
         model.parameters.HospitalizedToICUTime[A0] = 2.  # 1-3.5 (=R7^(-1))
@@ -58,7 +60,8 @@ class Test_secir_integration(unittest.TestCase):
         model.populations[A0, Index_InfectionState(State.Dead)] = 0
 
         contacts = ContactMatrix(np.r_[0.5])
-        contacts.add_damping(Damping(coeffs = np.r_[0.0], t = 0.0, level = 0, type = 0))
+        contacts.add_damping(
+            Damping(coeffs=np.r_[0.0], t=0.0, level=0, type=0))
         model.parameters.ContactPatterns.cont_freq_mat[0] = contacts
 
         model.apply_constraints()
@@ -66,18 +69,19 @@ class Test_secir_integration(unittest.TestCase):
         self.model = model
 
     def test_simulate_simple(self):
-      result = simulate(t0=0., tmax=100., dt=0.1, model=self.model)
-      self.assertAlmostEqual(result.get_time(0), 0.)
-      self.assertAlmostEqual(result.get_time(1), 0.1)
-      self.assertAlmostEqual(result.get_last_time(), 100.)
+        result = simulate(t0=0., tmax=100., dt=0.1, model=self.model)
+        self.assertAlmostEqual(result.get_time(0), 0.)
+        self.assertAlmostEqual(result.get_time(1), 0.1)
+        self.assertAlmostEqual(result.get_last_time(), 100.)
 
     def test_simulation_simple(self):
-        sim = SecirSimulation(self.model, t0 = 0., dt = 0.1)
-        sim.advance(tmax = 100.)
+        sim = SecirSimulation(self.model, t0=0., dt=0.1)
+        sim.advance(tmax=100.)
         result = sim.result
         self.assertAlmostEqual(result.get_time(0), 0.)
         self.assertAlmostEqual(result.get_time(1), 0.1)
         self.assertAlmostEqual(result.get_last_time(), 100.)
+
 
 if __name__ == '__main__':
     unittest.main()

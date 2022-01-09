@@ -202,6 +202,14 @@ public:
     }
 
     /**
+     * time since midnight
+     */
+    TimeSpan time_since_midnight() const
+    {
+        return  TimeSpan(seconds() - ((int)days())*60*60*24);
+    }
+
+    /**
      * comparison operators.
      * @{
      */
@@ -275,6 +283,16 @@ inline TimeSpan seconds(int seconds)
 {
     return TimeSpan(seconds);
 }
+
+/**
+ * create a TimeSpan of a specified number of minutes.
+ * @param minutes number of minutes in the time span.
+ */
+inline TimeSpan minutes(int minutes)
+{
+    return TimeSpan(minutes * 60);
+}
+
 
 /**
  * create a TimeSpan of a specified number of hours.

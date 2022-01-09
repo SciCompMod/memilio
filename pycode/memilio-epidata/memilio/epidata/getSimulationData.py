@@ -37,11 +37,13 @@ from memilio.epidata import getPopulationData
 from memilio.epidata import getRKIData
 from memilio.epidata import getDIVIData
 
+
 def print_error(text):
     print('Error: Something went wrong while getting ' + text +
           ' data. This was likely caused by a changed file format'
           ' of the source material. Please report this as an issue. ' + text +
           ' data could not be stored correctly.')
+
 
 def get_simulation_data(read_data=dd.defaultDict['read_data'],
                         file_format=dd.defaultDict['file_format'],
@@ -114,6 +116,7 @@ def get_simulation_data(read_data=dd.defaultDict['read_data'],
         getVaccinationData.get_vaccination_data(**arg_dict_vacc)
     except:
         print_error('vaccination')
+
 
 def main():
     """! Main program entry."""

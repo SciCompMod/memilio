@@ -8,7 +8,8 @@ try:
 except ImportError:
     print('scikit-build is required to build from source.')
     print('Installation:  python -m pip install scikit-build')
-    subprocess.check_call([sys.executable, "-m", "pip", "install", "scikit-build"])
+    subprocess.check_call(
+        [sys.executable, "-m", "pip", "install", "scikit-build"])
     from skbuild import setup
 
 __version__ = '0.1.0'
@@ -21,9 +22,9 @@ setup(
     maintainer_email='daniel.abele@dlr.de',
     url='https://github.com/DLR-SC/memilio',
     description='Part of MEmilio project, python bindings to the C++ libraries that contain the models and simulations.',
-    packages=find_packages(where = os.path.dirname(os.path.abspath(__file__))),
+    packages=find_packages(where=os.path.dirname(os.path.abspath(__file__))),
     setup_requires=['cmake'],
-    install_requires= [],
+    install_requires=[],
     extras_require={
         'dev': ['numpy <= 1.19.4'],
     },

@@ -5,6 +5,7 @@ from setuptools import setup, find_packages, Command
 
 __version__ = '0.1.0'
 
+
 class PylintCommand(Command):
     """
     Custom command to run pylint and get a report as html.
@@ -28,7 +29,8 @@ class PylintCommand(Command):
         }
 
     def finalize_options(self):
-        self.reporter, self.out_file = self.REPORTERS.get(self.out_format)  # , self.REPORTERS.get("parseable"))
+        self.reporter, self.out_file = self.REPORTERS.get(
+            self.out_format)  # , self.REPORTERS.get("parseable"))
 
     def run(self):
         os.makedirs("build_pylint", exist_ok=True)
@@ -38,7 +40,9 @@ class PylintCommand(Command):
         with open(self.out_file, "w", encoding="utf-8") as report_file:
             options = ["--rcfile=../pylintrc", *self.lint_modules]
 
-            lint.Run(options, reporter=self.reporter(report_file), do_exit=False)
+            lint.Run(options, reporter=self.reporter(
+                report_file), do_exit=False)
+
 
 setup(
     name='memilio-epidata',
@@ -60,16 +64,16 @@ setup(
             'getcommutermigration = memilio.epidata.commuter_migration_bfa:main'
         ],
     },
-    packages=find_packages(where = os.path.dirname(os.path.abspath(__file__))),
+    packages=find_packages(where=os.path.dirname(os.path.abspath(__file__))),
     long_description='',
     test_suite='memilio.epidata_test',
-    install_requires= [
+    install_requires=[
         'pandas<1.2.0',
         'matplotlib<3.4',
         'tables',
         'numpy<=1.19.4',
         'openpyxl',
-        'xlrd', 
+        'xlrd',
         'requests'
     ],
     extras_require={
@@ -77,7 +81,7 @@ setup(
             'pyfakefs==4.1.0',
             'freezegun',
             'coverage',
-            'pylint<=2.11.1', 
+            'pylint<=2.11.1',
             'pylint_json2html<=0.3.0',
         ],
     },

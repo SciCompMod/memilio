@@ -1,7 +1,7 @@
 #############################################################################
 # Copyright (C) 2020-2021 German Aerospace Center (DLR-SC)
 #
-# Authors: 
+# Authors:
 #
 # Contact: Martin J. Kuehn <Martin.Kuehn@DLR.de>
 #
@@ -43,13 +43,16 @@ class TestCommuterMigration(fake_filesystem_unittest.TestCase):
     countykey_list = geoger.get_county_ids(merge_eisenach=False, zfill=True)
     govkey_list = geoger.get_governing_regions()
 
-    test_countykey_list = [1001, 1002, 1003, 1004, 1051, 1053, 1054, 1055, 1056, 1057, 1058, 3159]
-    
-    test_countykey_list2 = [1001, 1002, 1003, 1051, 1053, 1004, 1055, 1054, 1056, 1057, 1058]
+    test_countykey_list = [1001, 1002, 1003, 1004,
+                           1051, 1053, 1054, 1055, 1056, 1057, 1058, 3159]
+
+    test_countykey_list2 = [1001, 1002, 1003, 1051,
+                            1053, 1004, 1055, 1054, 1056, 1057, 1058]
 
     test_countykey2govkey = {'01055': 0, '02000': 1, '03101': 2}
 
-    test_countykey2localnumlist = {'01001': 0, '01004': 3, '01060' : 12, '10045': 4, '11000': 0}
+    test_countykey2localnumlist = {
+        '01001': 0, '01004': 3, '01060': 12, '10045': 4, '11000': 0}
 
     test_state_gov_table = [['01'], ['02'], ['031', '032', '033', '034'], [
                             '04'], ['051', '053', '055', '057', '059']]
@@ -59,14 +62,14 @@ class TestCommuterMigration(fake_filesystem_unittest.TestCase):
         ['05512', '05513', '05515', '05554', '05558', '05562', '05566',
          '05570'],
         ['05711', '05754', '05758', '05762', '05766', '05770', '05774'])
-    
-    
+
     def setUp(self):
         self.setUpPyfakefs()
-    
+
     def write_kreise_deu_data(self, out_folder):
         # sheet 0 is unused in commuter_migration_bfa, but other one has to have index 1
-        sheet0 = pd.DataFrame({'0': ['0', '0', '0', '0'], '1': ['1', '2', '3', '4']})
+        sheet0 = pd.DataFrame(
+            {'0': ['0', '0', '0', '0'], '1': ['1', '2', '3', '4']})
         # 'nothing' strings used to interpret keys as Strings instead of numbers
         sheet1 = pd.DataFrame({'Schlüssel-nummer': ['nothing', '01', '01001', '01053', '02', '02000', '03', '03101',
                                                     '04', '04012', '05', '051', '05112', '053', '05316', '06', '06532',
@@ -135,17 +138,20 @@ class TestCommuterMigration(fake_filesystem_unittest.TestCase):
                                              158486,
                                              '', 63197]})
 
-        sheets = {'Deckblatt': sheet0, 'Kreisfreie Städte u. Landkreise': sheet1}
+        sheets = {'Deckblatt': sheet0,
+                  'Kreisfreie Städte u. Landkreise': sheet1}
         data_path = os.path.join(out_folder, 'kreise_deu.xlsx')
         dummy = pd.ExcelWriter(data_path)
         for sheet_name in sheets.keys():
-            sheets[sheet_name].to_excel(dummy, sheet_name=sheet_name, index=False)
+            sheets[sheet_name].to_excel(
+                dummy, sheet_name=sheet_name, index=False)
         dummy.save()
         dummy.close()
 
     def write_commuter_all_federal_states(self, out_folder):
         # just 3rd sheet is interesting
-        sheet0 = pd.DataFrame({'0': ['0', '0', '0', '0'], '1': ['1', '2', '3', '4']})
+        sheet0 = pd.DataFrame(
+            {'0': ['0', '0', '0', '0'], '1': ['1', '2', '3', '4']})
 
         sheet1 = pd.DataFrame({'Arbeitsort': ['nothing', '01001', '', '', '', '', '', '', '', '', '', '', '01053', ''],
                                'Arbeitsort2': ['', 'Flensburg, Stadt', '', '', '', '', '', '', '', '', '', '',
@@ -253,10 +259,11 @@ class TestCommuterMigration(fake_filesystem_unittest.TestCase):
             data_path = os.path.join(out_folder, name)
             dummy = pd.ExcelWriter(data_path)
             for sheet_name in sheets.keys():
-                sheets[sheet_name].to_excel(dummy, sheet_name=sheet_name, index=False)
+                sheets[sheet_name].to_excel(
+                    dummy, sheet_name=sheet_name, index=False)
             dummy.save()
             dummy.close()
-    
+
     @patch('builtins.print')
     def test_verify_sorted(self, mock_print):
         self.assertEqual(True, gcm.verify_sorted(self.test_countykey_list))
@@ -273,8 +280,8 @@ class TestCommuterMigration(fake_filesystem_unittest.TestCase):
                 self.test_countykey2govkey.get(item),
                 countykey2govkey.get(item))
 
-        #check if all countyIDs are in countykey2govkey
-        for key in geoger.get_county_ids(True,False,True):
+        # check if all countyIDs are in countykey2govkey
+        for key in geoger.get_county_ids(True, False, True):
             self.assertIn(key, countykey2govkey.keys())
             self.assertIn(key, countykey2localnumlist.keys())
         for item in self.test_countykey2localnumlist.keys():
@@ -284,29 +291,30 @@ class TestCommuterMigration(fake_filesystem_unittest.TestCase):
             self.assertIn(item, state_gov_table)
         for item in self.test_gov_county_table:
             self.assertIn(item, gov_county_table)
-        
+
         # test case with not matching countykey and govkey lists
         (countykey2govkey, countykey2localnumlist, gov_county_table,
          state_gov_table) = gcm.assign_geographical_entities(
-         self.test_countykey_list, self.test_govkey_list)
+            self.test_countykey_list, self.test_govkey_list)
         self.assertEqual(countykey2govkey, collections.OrderedDict())
         self.assertEqual(countykey2localnumlist, collections.OrderedDict())
-        self.assertEqual(gov_county_table, [[], [], [], [], [], [], [], [], [], [], [], []])
+        self.assertEqual(gov_county_table, [
+                         [], [], [], [], [], [], [], [], [], [], [], []])
         self.assertEqual(state_gov_table, self.test_state_gov_table)
 
         # test case with different number of data
-        gcm.assign_geographical_entities(self.test_countykey_list, self.govkey_list)
+        gcm.assign_geographical_entities(
+            self.test_countykey_list, self.govkey_list)
         Errorcall = ('Error. Number of government regions wrong.')
         mock_print.assert_called_with(Errorcall)
 
-    
     @patch('builtins.print')
     def test_some_errors(self, mock_print):
         gD.check_dir(self.path)
         self.write_kreise_deu_data(self.path)
         self.write_commuter_all_federal_states(self.path)
         self.assertEqual(len(os.listdir(self.path)), 17)
-    
+
     def test_commuter_data(self):
         """! Tests migration data by some randomly chosen tests.
         """
@@ -314,8 +322,8 @@ class TestCommuterMigration(fake_filesystem_unittest.TestCase):
         df_commuter_migration = gcm.get_commuter_data(out_folder=self.path)
         # the first column and first row are just the county IDs
         # mat_commuter_migration is the real Data that should be tested
-        mat_commuter_migration = df_commuter_migration.iloc[: , 0:]
-        mat_commuter_migration = mat_commuter_migration.iloc[0: , :]
+        mat_commuter_migration = df_commuter_migration.iloc[:, 0:]
+        mat_commuter_migration = mat_commuter_migration.iloc[0:, :]
 
         countykey2numlist = collections.OrderedDict(
             zip(self.countykey_list, list(range(0, len(self.countykey_list)))))
@@ -324,7 +332,7 @@ class TestCommuterMigration(fake_filesystem_unittest.TestCase):
         self.write_kreise_deu_data(self.path)
         self.write_commuter_all_federal_states(self.path)
         self.assertEqual(len(os.listdir(self.path)), 18)
-        
+
         # just do some tests on randomly chosen migrations
 
         # check migration from Leverkusen (averaged from NRW, 05) to Hildburghausen
@@ -334,7 +342,8 @@ class TestCommuterMigration(fake_filesystem_unittest.TestCase):
             out_folder=self.path, merge_eisenach=False, write_df=True)
         countypop_list = list(population["Total"])
         self.assertEqual(countypop_list[city_from], 163905)
-        self.assertAlmostEqual(mat_commuter_migration.iat[city_from, city_to], 1.5265, 3)
+        self.assertAlmostEqual(
+            mat_commuter_migration.iat[city_from, city_to], 1.5265, 3)
 
         # check migration from Duisburg to Oberspreewald-Lausitz
         city_from = countykey2numlist['05112']
@@ -350,7 +359,7 @@ class TestCommuterMigration(fake_filesystem_unittest.TestCase):
         city_from = countykey2numlist['01001']
         city_to = countykey2numlist['01053']
         self.assertEqual(mat_commuter_migration.iat[city_from, city_to], 14)
-    
+
     @patch('builtins.print')
     def test_get_neighbors_mobility(self, mock_print):
 
@@ -383,7 +392,6 @@ class TestCommuterMigration(fake_filesystem_unittest.TestCase):
         self.assertAlmostEqual(180, commuter_all[0], 2)
         self.assertAlmostEqual(1304, commuter_all[9], 2)
         self.assertAlmostEqual(201, commuter_all[11], 2)
-
 
 
 if __name__ == '__main__':

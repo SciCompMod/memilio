@@ -99,6 +99,10 @@ public:
     {
     }
 
+    CompartmentalModel(const CompartmentalModel&) = default;
+    CompartmentalModel(CompartmentalModel&&) = default;
+    CompartmentalModel& operator=(const CompartmentalModel&) = default;
+    CompartmentalModel& operator=(CompartmentalModel&&) = default;
     virtual ~CompartmentalModel() = default;
 
     /**

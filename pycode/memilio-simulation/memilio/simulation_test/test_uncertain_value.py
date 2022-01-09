@@ -1,7 +1,7 @@
 #############################################################################
 # Copyright (C) 2020-2021 German Aerospace Center (DLR-SC)
 #
-# Authors: 
+# Authors:
 #
 # Contact: Martin J. Kuehn <Martin.Kuehn@DLR.de>
 #
@@ -20,6 +20,7 @@
 import unittest
 import memilio.simulation as mio
 
+
 class Test_UncertainValue(unittest.TestCase):
     def test_value(self):
         uv = mio.UncertainValue(0)
@@ -32,6 +33,7 @@ class Test_UncertainValue(unittest.TestCase):
         uv.set_distribution(mio.ParameterDistributionUniform(2, 2))
         uv.draw_sample()
         self.assertEqual(uv.value, 2.0)
-        
+
+
 if __name__ == '__main__':
     unittest.main()

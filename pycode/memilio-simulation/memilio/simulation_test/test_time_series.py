@@ -1,7 +1,7 @@
 #############################################################################
 # Copyright (C) 2020-2021 German Aerospace Center (DLR-SC)
 #
-# Authors: 
+# Authors:
 #
 # Contact: Martin J. Kuehn <Martin.Kuehn@DLR.de>
 #
@@ -22,6 +22,7 @@ from numpy.testing import assert_array_equal
 import memilio.simulation as mio
 import numpy as np
 
+
 class Test_TimeSeries(unittest.TestCase):
     def test_add_time_point(self):
         ts = mio.TimeSeries(1)
@@ -33,7 +34,7 @@ class Test_TimeSeries(unittest.TestCase):
         ts.add_time_point(3.5)
         self.assertEqual(ts.get_num_time_points(), 2)
         self.assertEqual(ts.get_last_time(), 3.5)
-    
+
     def test_set_value(self):
         ts = mio.TimeSeries(1)
         ts.add_time_point(0.0, np.r_[1.0])
@@ -49,6 +50,7 @@ class Test_TimeSeries(unittest.TestCase):
         arr[:, 1] = np.r_[1.0, 1.1, 1.2]
         assert_array_equal(ts.get_last_value(), np.r_[1.1, 1.2])
         assert_array_equal(ts.get_last_time(), 1.0)
+
 
 if __name__ == '__main__':
     unittest.main()

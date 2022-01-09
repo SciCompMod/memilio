@@ -72,7 +72,6 @@ def get_population_data(read_data=dd.defaultDict['read_data'],
     directory = os.path.join(out_folder, 'Germany/')
     gd.check_dir(directory)
 
-
     for d_i in d:
         get_one_data_set(read_data, file_format, no_raw, directory, d_i)
 
@@ -98,7 +97,8 @@ def get_one_data_set(read_data, file_format, no_raw, directory, d):
             df = pandas.read_json(file)
 
         except ValueError:
-            exit_string = "Error: The file: " + file + " does not exist. Call program without -r flag to get it."
+            exit_string = "Error: The file: " + file + \
+                " does not exist. Call program without -r flag to get it."
             sys.exit(exit_string)
     else:
 
@@ -226,17 +226,18 @@ def load_age_population_data(out_folder):
         try:
             print('Trying to download from HPC server')
             path_counties = 'http://hpcagainstcorona.sc.bs.dlr.de/data/migration/'
-            counties = gd.loadExcel(targetFileName = 'kreise_deu', apiUrl =  path_counties, extension = '.xlsx',
-                                param_dict = {"sheet_name": 1, "header": 3})
+            counties = gd.loadExcel(targetFileName='kreise_deu', apiUrl=path_counties, extension='.xlsx',
+                                    param_dict={"sheet_name": 1, "header": 3})
             gd.write_dataframe(counties, directory, filename_counties, "json")
         except:
             print('No access to HPC Server.')
             try:
                 print('Trying to download data from the internet')
                 path_counties = 'https://www.destatis.de/DE/Themen/Laender-Regionen/Regionales/Gemeindeverzeichnis/Administrativ/04-kreise.xlsx;?__blob=publicationFile'
-                counties = gd.loadExcel(targetFileName= '', apiUrl =  path_counties, extension = '',
-                                param_dict = {"sheet_name": 1, "header": 3, "engine": 'openpyxl'})
-                gd.write_dataframe(counties, directory, filename_counties, "json")
+                counties = gd.loadExcel(targetFileName='', apiUrl=path_counties, extension='',
+                                        param_dict={"sheet_name": 1, "header": 3, "engine": 'openpyxl'})
+                gd.write_dataframe(counties, directory,
+                                   filename_counties, "json")
             except ValueError:
                 exit_string = "Error: The counties file does not exist."
                 sys.exit(exit_string)
@@ -250,7 +251,8 @@ def load_age_population_data(out_folder):
             print('Trying to download from the internet')
             # if this file is encoded with utf-8 German umlauts are not displayed correctly because they take two bytes
             # utf_8_sig can identify those bytes as one sign and display it correctly
-            zensus = gd.loadCsv("abad92e8eead46a4b0d252ee9438eb53_1", encoding='utf_8_sig')
+            zensus = gd.loadCsv(
+                "abad92e8eead46a4b0d252ee9438eb53_1", encoding='utf_8_sig')
             gd.write_dataframe(zensus, directory, filename_zensus, "json")
         except ValueError:
             exit_string = "Error: The zensus file does not exist."
@@ -266,8 +268,8 @@ def load_age_population_data(out_folder):
             path_reg_key = 'https://www.zensus2011.de/SharedDocs/Downloads/DE/Pressemitteilung/DemografischeGrunddaten/' \
                            '1A_EinwohnerzahlGeschlecht.xls?__blob=publicationFile&v=5'
             # read tables
-            reg_key = gd.loadExcel(path_reg_key, apiUrl='', extension = '',
-                               param_dict = {"engine": None, "sheet_name": 'Tabelle_1A', "header": 12})
+            reg_key = gd.loadExcel(path_reg_key, apiUrl='', extension='',
+                                   param_dict={"engine": None, "sheet_name": 'Tabelle_1A', "header": 12})
             gd.write_dataframe(reg_key, directory, filename_reg_key, "json")
         except ValueError:
             exit_string = "Error: The regional key file does not exist."
@@ -326,20 +328,21 @@ def get_age_population_data(read_data=dd.defaultDict['read_data'],
 
     # add male and female population data
     data = np.zeros((len(inds), len(male)+2))
-    data[:,0] = key[inds].astype(int)
-    data[:,1] = zensus['EWZ'].values[inds].astype(int)
+    data[:, 0] = key[inds].astype(int)
+    data[:, 1] = zensus['EWZ'].values[inds].astype(int)
     for i in range(len(male)):
-        data[:, i+2] = zensus[male[i]].values[inds].astype(int) + zensus[female[i]].values[inds].astype(int)
+        data[:, i+2] = zensus[male[i]
+                              ].values[inds].astype(int) + zensus[female[i]].values[inds].astype(int)
 
     data = get_new_counties(data)
 
     # compute ratio of current and 2011 population data
-    ratio = np.ones(len(data[:,0]))
+    ratio = np.ones(len(data[:, 0]))
     for i in range(len(ratio)):
         for j in range(len(counties)):
             if not counties['Schlüssel-nummer'].isnull().values[j]:
                 try:
-                    if data[i,0] == int(counties['Schlüssel-nummer'].values[j]):
+                    if data[i, 0] == int(counties['Schlüssel-nummer'].values[j]):
                         ratio[i] = counties['Bevölkerung2)'].values[j]/data[i, 1]
                 except:
                     dummy = 0
@@ -350,12 +353,13 @@ def get_age_population_data(read_data=dd.defaultDict['read_data'],
     for i in range(len(data[0, :]) - 1):
         data_current[:, i + 1] = np.multiply(data[:, i + 1], ratio)
 
-    #create dataframe
+    # create dataframe
     df = pandas.DataFrame(data.astype(int), columns=columns)
-    df_current = pandas.DataFrame(np.round(data_current).astype(int), columns=columns)
-    df_401 = df_current.copy()    
+    df_current = pandas.DataFrame(
+        np.round(data_current).astype(int), columns=columns)
+    df_401 = df_current.copy()
     df_current_401 = df_current.copy()
-    # From official county list, merge Eisenach and 
+    # From official county list, merge Eisenach and
     # Wartburgkreis for now (as of oct. 2021)
     df_current = geoger.merge_df_counties_all(
         df_current, sorting=[dd.EngEng["idCounty"]],
@@ -365,17 +369,19 @@ def get_age_population_data(read_data=dd.defaultDict['read_data'],
         df, sorting=[dd.EngEng["idCounty"]],
         columns=dd.EngEng["idCounty"])
 
-
     directory = os.path.join(out_folder, 'Germany/')
     gd.check_dir(directory)
 
     if write_df:
         gd.write_dataframe(df, directory, 'county_population', file_format)
-        gd.write_dataframe(df_current, directory, 'county_current_population', file_format)
+        gd.write_dataframe(df_current, directory,
+                           'county_current_population', file_format)
         # TODO there should be a more elegant version to write different version with Eisenach merged or not
-        # or it should be prevented directly to write if Eisenach is not merged... to discuss...    
-        gd.write_dataframe(df_401, directory, 'county_population_dim401', file_format)    
-        gd.write_dataframe(df_current_401, directory, 'county_current_population_dim401', file_format)
+        # or it should be prevented directly to write if Eisenach is not merged... to discuss...
+        gd.write_dataframe(df_401, directory,
+                           'county_population_dim401', file_format)
+        gd.write_dataframe(df_current_401, directory,
+                           'county_current_population_dim401', file_format)
 
     if merge_eisenach:
         return df_current
