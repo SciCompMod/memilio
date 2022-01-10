@@ -24,9 +24,11 @@
 """
 import collections
 import os
+import wget
 import sys
 import numpy as np
 import pandas as pd
+from zipfile import ZipFile
 from memilio.epidata import getPopulationData
 from memilio.epidata import getDataIntoPandasDataFrame as gd
 from memilio.epidata import geoModificationGermany as geoger
@@ -212,11 +214,18 @@ def get_commuter_data(setup_dict='',
 
     for item in files:
         # Using the 'Einpendler' sheet to correctly distribute summed values over counties of other gov. region
-        commuter_migration_file = gd.loadExcel(
-            targetFileName=item.split('.')[0],
-            apiUrl=setup_dict['path'],
-            extension='.' + item.split('.')[1],
-            param_dict={"sheet_name": 3, "engine": "pyxlsb"})
+        # This File is in a zip folder so it has to be unzipped first before it can be read.
+        param_dict={"sheet_name": 3, "engine": "pyxlsb"}
+        filepath = os.path.join(out_folder, 'Germany/')
+        url = setup_dict['path'] + item.split('.')[0] + '.zip'
+        # Unzip it
+        zipfile = wget.download(url)
+        with ZipFile(zipfile, 'r') as zipObj:
+            zipObj.extractall(path = filepath)
+        # Read the file
+        filename = item.split('-20')[0] + '.xlsb'
+        file = filename.replace('-','_')
+        commuter_migration_file = pd.read_excel(filepath + file, **param_dict)
         # pd.read_excel(os.path.join(setup_dict['path'], item), sheet_name=3)
 
         counties_done = []  # counties considered as 'migration from'
