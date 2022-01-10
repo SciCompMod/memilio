@@ -27,10 +27,8 @@
 namespace mio
 {
 
-void compute_f(const Eigen::VectorXd& x, Eigen::VectorXd& f, Eigen::VectorXd& y)
+void compute_f(const Eigen::VectorXd& x, Eigen::VectorXd& f, Eigen::VectorXd& y, int l, int n)
 {
-    int l = y(y.size() - 1);
-    int n = y(y.size() - 2);
     // reshape x to get a matrix for easier notation
     Eigen::Map<const Eigen::MatrixXd> M(x.data(), n, l);
 
@@ -58,10 +56,8 @@ void compute_f(const Eigen::VectorXd& x, Eigen::VectorXd& f, Eigen::VectorXd& y)
 }
 
 // implement Jacobian manually for better runtime
-void compute_df(const Eigen::VectorXd& x, Eigen::MatrixXd& fjac, Eigen::VectorXd& y)
+void compute_df(const Eigen::VectorXd& x, Eigen::MatrixXd& fjac, Eigen::VectorXd& y, int l, int n)
 {
-    int l = y(y.size() - 1);
-    int n = y(y.size() - 2);
     fjac.setZero();
     // reshape x to get a matrix for easier notation
     Eigen::Map<const Eigen::MatrixXd> M(x.data(), n, l);
@@ -121,24 +117,30 @@ void compute_df(const Eigen::VectorXd& x, Eigen::MatrixXd& fjac, Eigen::VectorXd
     }
 }
 
-double myfunc(const std::vector<double>& x, std::vector<double>& grad, void* my_func_data)
+struct Data {
+    int l, n;
+    Eigen::VectorXd y;
+};
+
+double myfunc(const std::vector<double>& x, std::vector<double>& grad, void* erased_data)
 {
     // x in Eigen vector
     const double* ptr = &x[0];
     Eigen::Map<const Eigen::VectorXd> x_eigen(ptr, x.size());
     // remap my_func_data
-    Eigen::VectorXd* data = reinterpret_cast<Eigen::VectorXd*>(my_func_data);
-    int l                 = (*data)(data->size() - 1);
-    int n                 = (*data)(data->size() - 2);
+    Data* data = reinterpret_cast<Data*>(erased_data);
+    Eigen::VectorXd& y = data->y;
+    int l              = data->l;
+    int n              = data->n;
 
     // computation using Eigen of multidimensional functional
     Eigen::VectorXd f(n * n);
-    compute_f(x_eigen, f, *data);
+    compute_f(x_eigen, f, y, l, n);
 
     if (!grad.empty()) {
         // compute Jacobi matrix of f using Eigen
         Eigen::MatrixXd fjac(n * n, n * l + 1);
-        compute_df(x_eigen, fjac, *data);
+        compute_df(x_eigen, fjac, y, l, n);
         // compute gradient of norm of f
         for (int i = 0; i < n * n; i++) {
             double sum = 0;
@@ -153,27 +155,26 @@ double myfunc(const std::vector<double>& x, std::vector<double>& grad, void* my_
     return f.norm();
 }
 
-void constraints(unsigned m, double* result, unsigned x_len, const double* x, double* grad, void* data)
+
+
+void constraints(unsigned /*m*/, double* result, unsigned /*x_len*/, const double* x, double* grad, void* erased_data)
 {
-    // remap my_func_data
-    Eigen::VectorXd* y = reinterpret_cast<Eigen::VectorXd*>(data);
-    int l              = (*y)(y->size() - 1);
-    int n              = (*y)(y->size() - 2);
+    Data* data = reinterpret_cast<Data*>(erased_data);
+    Eigen::VectorXd& y = data->y;
+    int l              = data->l;
+    int n              = data->n;
     // reshape x to get a matrix for easier notation
     Eigen::Map<const Eigen::MatrixXd> M(x, n, l);
 
-    Eigen::VectorXd g(l + n);
-    if (grad != NULL) {
+    Eigen::Map<Eigen::VectorXd> g(result, n + l);
+    if (grad != nullptr) {
         // at every location contains a certain number of people
         // at the moment: every location has the same number of people
-        g.segment(0, l) = (M.colwise().sum().transpose() - y->segment(0, l));
+        g.segment(0, l) = (M.colwise().sum().transpose() - y.segment(0, l));
 
         // the number of people per age group is given
-        g.segment(l, n) = (M.rowwise().sum() - y->segment(l, n));
+        g.segment(l, n) = (M.rowwise().sum() - y.segment(l, n));
     }
-    // remap g to std::vector
-    std::vector<double> g_vec(g.data(), g.data() + g.size());
-    result = &g_vec[0];
 }
 
 Eigen::VectorXd find_optimal_locations(Eigen::VectorXd& num_people_sorted, int num_locs,
@@ -182,7 +183,7 @@ Eigen::VectorXd find_optimal_locations(Eigen::VectorXd& num_people_sorted, int n
     int n = int(contact_matrix.rows());
     int l = num_locs;
 
-    Eigen::VectorXd y((n + 1) * n + l + 2);
+    Eigen::VectorXd y((n + 1) * n + l);
 
     // size of the new locations
     y.segment(0, l) = size_locs;
@@ -191,9 +192,7 @@ Eigen::VectorXd find_optimal_locations(Eigen::VectorXd& num_people_sorted, int n
     // entries of contact matrix (entry (i,j) goes to (j*n + i))
     Eigen::Map<Eigen::VectorXd> v(contact_matrix.data(), n * n);
     y.segment(l + n, n * n) = v;
-    // last entries of y: n and l
-    y(y.size() - 1) = l;
-    y(y.size() - 2) = n;
+    Data data{l, n, std::move(y)};
 
     //last entry of x: effective contacts
     // set the following starting values provide a rough fit.
@@ -201,26 +200,29 @@ Eigen::VectorXd find_optimal_locations(Eigen::VectorXd& num_people_sorted, int n
     x[n * l] = 100;
 
     //get instance of optimization problem
-    //TODO: Methode ändern
-    nlopt::opt opt(nlopt::LD_MMA, n * l + 1);
+    nlopt::opt opt(nlopt::GN_ISRES, n * l + 1);
 
     //set lower bounds for variables: number of people at a location are nonnegative
     std::vector<double> lb(n * l + 1, 0);
     // effective contacts are at least 5
     lb[n * l] = 5;
+    std::vector<double> ub(n * l + 1, num_people_sorted.sum());
+    ub[n*l] = 1000;
     opt.set_lower_bounds(lb);
+    opt.set_upper_bounds(ub);
 
-    opt.set_min_objective(myfunc, NULL);
-    const std::vector<double> tol(1e-8, n * l);
-    std::vector<double> data(&y[0], y.data() + y.size());
 
-    opt.add_equality_mconstraint(constraints, &data[0], tol);
-    opt.set_xtol_rel(1e-4);
+    opt.set_min_objective(myfunc, &data);
+    const std::vector<double> tol(n * l+1, 1e-8);
+
+    opt.add_equality_mconstraint(constraints, &data, tol);
+    opt.set_xtol_rel(1e-10);
+    opt.set_ftol_abs(1e-10);
     double minf;
 
     try {
         nlopt::result result = opt.optimize(x, minf);
-        std::cout << int(result) << std::endl;
+        std::cout << "result : "<< int(result) << std::endl;
     }
     catch (std::exception& e) {
         std::cout << "nlopt failed: " << e.what() << std::endl;

@@ -131,7 +131,7 @@ public:
     }
     TransformIterator operator+(difference_type d) const
     {
-        return {m_underlying_iter + d, m_transform};
+        return TransformIterator{m_underlying_iter + d, m_transform};
     }
     friend TransformIterator operator+(difference_type d, const TransformIterator& i)
     {
