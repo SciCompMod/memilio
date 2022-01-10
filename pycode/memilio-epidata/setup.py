@@ -75,7 +75,8 @@ setup(
         'openpyxl',
         'xlrd',
         'requests',
-	'pyxlsb'
+	    'pyxlsb',
+        'wget'
     ],
     extras_require={
         'dev': [
