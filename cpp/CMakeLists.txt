@@ -121,3 +121,13 @@ install (
   DESTINATION
     ${CMAKE_INSTALL_LIBDIR}/cmake/memilio
 )
+
+add_subdirectory(benchmark)
+add_executable(bench bench.cpp)
+target_link_libraries(bench PRIVATE memilio secir benchmark::benchmark)
+
+add_executable(bench_step bench_step.cpp)
+target_link_libraries(bench_step PRIVATE memilio secir benchmark::benchmark)
+
+add_executable(bench_rnd bench_rnd.cpp)
+target_link_libraries(bench_rnd PRIVATE memilio secir benchmark::benchmark)
