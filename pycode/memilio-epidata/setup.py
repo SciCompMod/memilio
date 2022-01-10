@@ -61,7 +61,7 @@ setup(
             'getsimdata = memilio.epidata.getSimulationData:main',
             'cleandata = memilio.epidata.cleanData:main',
             'getrkiestimation = memilio.epidata.getRKIDatawithEstimations:main',
-            'getcommutermigration = memilio.epidata.commuter_migration_bfa:main'
+            'getcommutermobility = memilio.epidata.getCommuterMobility:main'
         ],
     },
     packages=find_packages(where=os.path.dirname(os.path.abspath(__file__))),
