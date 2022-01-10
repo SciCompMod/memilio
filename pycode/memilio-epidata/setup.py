@@ -74,7 +74,8 @@ setup(
         'numpy<=1.19.4',
         'openpyxl',
         'xlrd',
-        'requests'
+        'requests',
+	'pyxlsb'
     ],
     extras_require={
         'dev': [

@@ -1,7 +1,7 @@
 #############################################################################
 # Copyright (C) 2020-2021 German Aerospace Center (DLR-SC)
 #
-# Authors: 
+# Authors:
 #
 # Contact: Martin J. Kuehn <Martin.Kuehn@DLR.de>
 #
@@ -39,8 +39,9 @@ class Test_getPopulationData(fake_filesystem_unittest.TestCase):
     Data = namedtuple("Data", "filename item columns_wanted filename_out")
 
     d1 = Data("FullDataB", '5dc2fc92850241c3be3d704aa0945d9c_2', ["LAN_ew_RS", 'LAN_ew_GEN', 'LAN_ew_EWZ'],
-                  "PopulStates")
-    d2 = Data("FullDataL", 'b2e6d8854d9744ca88144d30bef06a76_1', ['RS', 'GEN', 'EWZ'], "PopulCounties")
+              "PopulStates")
+    d2 = Data("FullDataL", 'b2e6d8854d9744ca88144d30bef06a76_1',
+              ['RS', 'GEN', 'EWZ'], "PopulCounties")
 
     test_string1 = ("""[\
 {"FID":1,"LAN_ew_RS":1,"LAN_ew_AGS":1,"LAN_ew_SDV_RS":10020000000,"LAN_ew_GEN":"Schleswig-Holstein",\
@@ -69,52 +70,55 @@ class Test_getPopulationData(fake_filesystem_unittest.TestCase):
 {"FID":2,"RS":1002,"AGS":1002,"SDV_RS":10020000000,"GEN":"Kiel","BEZ":"Kreisfreie Stadt","IBZ":40,"BEM":"--",\
 "SN_L":1,"SN_R":0,"SN_K":2,"SN_V1":0,"SN_V2":0,"SN_G":0,"FK_S3":"R","NUTS":"DEF02","WSK":"2006\/01\/01 00:00:00",\
 "EWZ":247943,"KFL":118.65,"Kennziffer":1002,"EWZ_18":null,"SHAPE_Length":1.2755450552,"SHAPE_Area":0.0155057123}]"""
-#{"FID":3,"RS":1003,"AGS":1003,"SDV_RS":10030000000,"GEN":"L\u00fcbeck","BEZ":"Kreisfreie Stadt","IBZ":40,"BEM":"--",
-#"SN_L":1,"SN_R":0,"SN_K":3,"SN_V1":0,"SN_V2":0,"SN_G":0,"FK_S3":"R","NUTS":"DEF03","WSK":"2006\/02\/01 00:00:00",
-#"EWZ":216318,"KFL":214.19,"Kennziffer":1003,"EWZ_18":null,"SHAPE_Length":1.8350372077,"SHAPE_Area":0.0289309207}
+# {"FID":3,"RS":1003,"AGS":1003,"SDV_RS":10030000000,"GEN":"L\u00fcbeck","BEZ":"Kreisfreie Stadt","IBZ":40,"BEM":"--",
+# "SN_L":1,"SN_R":0,"SN_K":3,"SN_V1":0,"SN_V2":0,"SN_G":0,"FK_S3":"R","NUTS":"DEF03","WSK":"2006\/02\/01 00:00:00",
+# "EWZ":216318,"KFL":214.19,"Kennziffer":1003,"EWZ_18":null,"SHAPE_Length":1.8350372077,"SHAPE_Area":0.0289309207}
 
     test_string2r = """[{"ID_County":1001,"County":"Flensburg","Population":88519},\
 {"ID_County":1002,"County":"Kiel","Population":247943}]"""
-#{"ID_County":1003,"County":"L\u00fcbeck","Population":216318}
+# {"ID_County":1003,"County":"L\u00fcbeck","Population":216318}
 
-    test_old_counties = np.zeros((18,2))
-    test_old_counties[:,0] = [3152, 3156, 13056, 13002, 13055, 13052, 13051, 13053, 13061, 13005, 13057, 13006, 13058,
-                              13059, 13062, 13001, 13054, 13060]
-    test_old_counties[:,1] = np.arange(len(test_old_counties))
+    test_old_counties = np.zeros((18, 2))
+    test_old_counties[:, 0] = [3152, 3156, 13056, 13002, 13055, 13052, 13051, 13053, 13061, 13005, 13057, 13006, 13058,
+                               13059, 13062, 13001, 13054, 13060]
+    test_old_counties[:, 1] = np.arange(len(test_old_counties))
 
-    test_new_counties = np.zeros((7,2))
-    test_new_counties[:,0] = [3159, 13071, 13072, 13073, 13074, 13075, 13076]
-    test_new_counties[:,1] = [1,14,13,27,23, 42, 33]
+    test_new_counties = np.zeros((7, 2))
+    test_new_counties[:, 0] = [3159, 13071, 13072, 13073, 13074, 13075, 13076]
+    test_new_counties[:, 1] = [1, 14, 13, 27, 23, 42, 33]
 
     data = np.zeros((5, 30))
-    data[:,0] = np.arange(1,6)
+    data[:, 0] = np.arange(1, 6)
     for i in range(len(data)):
         data[i, 3] = 22*(i+1)
         data[i, 4] = 11*(i+1)
-        data[i,5:-2] = 1*(i+1)
+        data[i, 5:-2] = 1*(i+1)
         data[i, 16] = 11*(i+1)
 
     test_zensus = pd.DataFrame(data, columns=["FID", "DES", "Name", "EWZ", "Gesamt_Maennlich", 'M_Unter_3', 'M_3_bis_5',
-                                              'M_6_bis_14', 'M_15_bis_17', 'M_18_bis_24','M_25_bis_29', 'M_30_bis_39',
-                                              'M_40_bis_49', 'M_50_bis_64','M_65_bis_74', 'M_75_und_aelter', "Gesamt_Weiblich",
+                                              'M_6_bis_14', 'M_15_bis_17', 'M_18_bis_24', 'M_25_bis_29', 'M_30_bis_39',
+                                              'M_40_bis_49', 'M_50_bis_64', 'M_65_bis_74', 'M_75_und_aelter', "Gesamt_Weiblich",
                                               'W_Unter_3', 'W_3_bis_5', 'W_6_bis_14', 'W_15_bis_17', 'W_18_bis_24',
                                               'W_25_bis_29', 'W_30_bis_39', 'W_40_bis_49', 'W_50_bis_64',
                                               'W_65_bis_74', 'W_75_und_aelter', 'SHAPE_Length', 'SHAPE_Area'])
     test_zensus["DES"] = "Kreis"
-    test_zensus["Name"] = ["Hogwarts", "Narnia", "MittelErde", "Westeros", "Wakanda"]
+    test_zensus["Name"] = ["Hogwarts", "Narnia",
+                           "MittelErde", "Westeros", "Wakanda"]
 
     data = np.zeros((5, 3))
     data[:, 0] = [1001, 1002, 1003, 1004, 1005]
     data[:, 2] = [(x+1)*22/1000 for x in range(len(data))]
 
     test_reg_key = pd.DataFrame(data, columns=['AGS', 'NAME', 'Zensus_EWZ'])
-    test_reg_key['NAME'] = ["Hogwarts", "Narnia", "MittelErde", "Westeros", "Wakanda"]
+    test_reg_key['NAME'] = ["Hogwarts", "Narnia",
+                            "MittelErde", "Westeros", "Wakanda"]
 
-    data = np.zeros((5,2))
+    data = np.zeros((5, 2))
     data[:, 0] = [1001, 1002, 1003, 1004, 1005]
     data[:, 1] = [(x+1)*44 for x in range(len(data))]
 
-    test_counties = pd.DataFrame(data, columns=['Schlüssel-nummer', 'Bevölkerung2)'])
+    test_counties = pd.DataFrame(
+        data, columns=['Schlüssel-nummer', 'Bevölkerung2)'])
 
     columns = ['ID_County', 'Total', '<3 years', '3-5 years', '6-14 years', '15-17 years', '18-24 years',
                '25-29 years', '30-39 years', '40-49 years', '50-64 years',
@@ -123,8 +127,8 @@ class Test_getPopulationData(fake_filesystem_unittest.TestCase):
     data = np.zeros((5, len(columns)))
     for i in range(len(data)):
         data[i, 0] = 1001 + i
-        data[i, 1] = 2*22*(i+1)
-        data[i, 2:] = 2*2*(i+1)
+        data[i, 1] = 22*(i+1)
+        data[i, 2:] = 2*(i+1)
     test_population_result = pd.DataFrame(data, columns=columns)
     test_population_result = test_population_result.astype('int64')
 
@@ -135,28 +139,32 @@ class Test_getPopulationData(fake_filesystem_unittest.TestCase):
         data[i, 2:] = 4 * (i+1)
 
     test_current_population_result = pd.DataFrame(data, columns=columns)
-    test_current_population_result = test_current_population_result.astype('int64')
+    test_current_population_result = test_current_population_result.astype(
+        'int64')
 
     def setUp(self):
-            self.setUpPyfakefs()
+        self.setUpPyfakefs()
 
     @patch('memilio.epidata.getPopulationData.gd.loadCsv')
     def test_gpd_download_data1(self, mock_loadCSV):
 
         mock_loadCSV.return_value = pd.read_json(self.test_string1)
 
-        [read_data, file_format, out_folder, no_raw] = [False, "json", self.path, False]
+        [read_data, file_format, out_folder, no_raw] = [
+            False, "json", self.path, False]
 
         directory = os.path.join(out_folder, 'Germany/')
         gd.check_dir(directory)
 
-        gpd.get_one_data_set(read_data, file_format, no_raw, directory, self.d1)
+        gpd.get_one_data_set(read_data, file_format,
+                             no_raw, directory, self.d1)
 
         self.assertEqual(len(os.listdir(self.path)), 1)
         self.assertEqual(os.listdir(self.path), ["Germany"])
 
         self.assertEqual(len(os.listdir(directory)), 2)
-        self.assertEqual(os.listdir(directory), ["FullDataB.json", "PopulStates.json"])
+        self.assertEqual(os.listdir(directory), [
+                         "FullDataB.json", "PopulStates.json"])
 
         f_path = os.path.join(directory, "FullDataB.json")
         f = open(f_path, "r")
@@ -171,12 +179,14 @@ class Test_getPopulationData(fake_filesystem_unittest.TestCase):
 
         mock_loadCSV.return_value = pd.read_json(self.test_string1)
 
-        [read_data, file_format, out_folder, no_raw] = [False, "json", self.path, True]
+        [read_data, file_format, out_folder, no_raw] = [
+            False, "json", self.path, True]
 
         directory = os.path.join(out_folder, 'Germany/')
         gd.check_dir(directory)
 
-        gpd.get_one_data_set(read_data, file_format, no_raw, directory, self.d1)
+        gpd.get_one_data_set(read_data, file_format,
+                             no_raw, directory, self.d1)
 
         self.assertEqual(len(os.listdir(self.path)), 1)
         self.assertEqual(os.listdir(self.path), ["Germany"])
@@ -186,7 +196,8 @@ class Test_getPopulationData(fake_filesystem_unittest.TestCase):
 
     def test_gpd_read_data1(self):
 
-        [read_data, file_format, out_folder, no_raw] = [True,  "json", self.path, False]
+        [read_data, file_format, out_folder, no_raw] = [
+            True,  "json", self.path, False]
 
         directory = os.path.join(out_folder, 'Germany/')
         gd.check_dir(directory)
@@ -194,13 +205,15 @@ class Test_getPopulationData(fake_filesystem_unittest.TestCase):
         with open(os.path.join(directory, "FullDataB.json"), 'w') as f:
             f.write(self.test_string1)
 
-        gpd.get_one_data_set(read_data, file_format, no_raw, directory, self.d1)
+        gpd.get_one_data_set(read_data, file_format,
+                             no_raw, directory, self.d1)
 
         self.assertEqual(len(os.listdir(self.path)), 1)
         self.assertEqual(os.listdir(self.path), ["Germany"])
 
         self.assertEqual(len(os.listdir(directory)), 2)
-        self.assertEqual(os.listdir(directory), ["FullDataB.json", "PopulStates.json"])
+        self.assertEqual(os.listdir(directory), [
+                         "FullDataB.json", "PopulStates.json"])
 
         f_path = os.path.join(directory, "PopulStates.json")
         f = open(f_path, "r")
@@ -211,7 +224,8 @@ class Test_getPopulationData(fake_filesystem_unittest.TestCase):
 
         mock_loadCSV.return_value = pd.read_json(self.test_string2)
 
-        [read_data, file_format, out_folder, no_raw] = [False, "json", self.path, False]
+        [read_data, file_format, out_folder, no_raw] = [
+            False, "json", self.path, False]
 
         directory = os.path.join(out_folder, 'Germany/')
         gd.check_dir(directory)
@@ -224,7 +238,8 @@ class Test_getPopulationData(fake_filesystem_unittest.TestCase):
         self.assertEqual(os.listdir(self.path), ["Germany"])
 
         self.assertEqual(len(os.listdir(directory)), 2)
-        self.assertEqual(os.listdir(directory), [d.filename + ".json", d.filename_out + ".json"])
+        self.assertEqual(os.listdir(directory), [
+                         d.filename + ".json", d.filename_out + ".json"])
 
         f_path = os.path.join(directory, d.filename + ".json")
         f = open(f_path, "r")
@@ -236,14 +251,15 @@ class Test_getPopulationData(fake_filesystem_unittest.TestCase):
 
     def test_gpd_read_data2(self):
 
-        [read_data, file_format, out_folder, no_raw] = [True, "json", self.path, False]
+        [read_data, file_format, out_folder, no_raw] = [
+            True, "json", self.path, False]
 
         directory = os.path.join(out_folder, 'Germany/')
         gd.check_dir(directory)
 
         d = self.d2
 
-        with open(os.path.join(directory, d.filename + ".json" ), 'w') as f:
+        with open(os.path.join(directory, d.filename + ".json"), 'w') as f:
             f.write(self.test_string2)
 
         gpd.get_one_data_set(read_data, file_format, no_raw, directory, d)
@@ -252,7 +268,8 @@ class Test_getPopulationData(fake_filesystem_unittest.TestCase):
         self.assertEqual(os.listdir(self.path), ["Germany"])
 
         self.assertEqual(len(os.listdir(directory)), 2)
-        self.assertEqual(os.listdir(directory), [d.filename + ".json", d.filename_out + ".json"])
+        self.assertEqual(os.listdir(directory), [
+                         d.filename + ".json", d.filename_out + ".json"])
 
         f_path = os.path.join(directory, d.filename_out + ".json")
         f = open(f_path, "r")
@@ -260,7 +277,8 @@ class Test_getPopulationData(fake_filesystem_unittest.TestCase):
 
     def test_gpd_read_data_full(self):
 
-        [read_data, file_format, out_folder, no_raw] = [True, "json", self.path, False]
+        [read_data, file_format, out_folder, no_raw] = [
+            True, "json", self.path, False]
 
         directory = os.path.join(out_folder, 'Germany/')
         gd.check_dir(directory)
@@ -294,11 +312,14 @@ class Test_getPopulationData(fake_filesystem_unittest.TestCase):
 
         gpd.get_age_population_data(False, 'json', self.path)
 
-        test_df = pd.read_json(os.path.join(self.path, 'Germany/', 'county_population.json'))
+        test_df = pd.read_json(os.path.join(
+            self.path, 'Germany/', 'county_population.json'))
         pd.testing.assert_frame_equal(test_df, self.test_population_result)
 
-        test_df = pd.read_json(os.path.join(self.path, 'Germany/', 'county_current_population.json'))
-        pd.testing.assert_frame_equal(test_df, self.test_current_population_result)
+        test_df = pd.read_json(os.path.join(
+            self.path, 'Germany/', 'county_current_population.json'))
+        pd.testing.assert_frame_equal(
+            test_df, self.test_current_population_result)
 
     @patch('pandas.read_excel', return_value=test_counties)
     @patch('pandas.read_excel', return_value=test_reg_key)
@@ -307,15 +328,20 @@ class Test_getPopulationData(fake_filesystem_unittest.TestCase):
 
         directory = os.path.join(self.path, 'Germany/')
 
-        counties_write, reg_key_write, zensus_write = gpd.load_age_population_data(self.path)
+        counties_write, reg_key_write, zensus_write = gpd.load_age_population_data(
+            self.path)
         self.assertEqual(len(os.listdir(directory)), 3)
 
-        counties_read, reg_key_read, zensus_read = gpd.load_age_population_data(self.path)
+        counties_read, reg_key_read, zensus_read = gpd.load_age_population_data(
+            self.path)
 
-        pd.testing.assert_frame_equal(counties_read, counties_write, check_dtype=False)
-        pd.testing.assert_frame_equal(reg_key_read, reg_key_write, check_dtype=False)
-        pd.testing.assert_frame_equal(zensus_read, zensus_write, check_dtype=False)
-        
+        pd.testing.assert_frame_equal(
+            counties_read, counties_write, check_dtype=False)
+        pd.testing.assert_frame_equal(
+            reg_key_read, reg_key_write, check_dtype=False)
+        pd.testing.assert_frame_equal(
+            zensus_read, zensus_write, check_dtype=False)
+
         # TODO: How to test hdf5 export?
 
     @patch('memilio.epidata.getPopulationData.gd.loadCsv')
@@ -323,12 +349,14 @@ class Test_getPopulationData(fake_filesystem_unittest.TestCase):
     @patch('memilio.epidata.getPopulationData.gd.loadExcel')
     def test_errors(self, mocklexcel, mockrjson, mocklcsv):
         mockrjson.side_effect = ValueError
-        [read_data, file_format, out_folder, no_raw] = [True, "json", self.path, True]
+        [read_data, file_format, out_folder, no_raw] = [
+            True, "json", self.path, True]
 
         directory = os.path.join(out_folder, 'Germany/')
         gd.check_dir(directory)
         with self.assertRaises(SystemExit) as cm:
-            gpd.get_one_data_set(read_data, file_format, no_raw, directory, self.d1)
+            gpd.get_one_data_set(read_data, file_format,
+                                 no_raw, directory, self.d1)
         file_in = os.path.join(self.path, "Germany/FullDataB.json")
         exit_string = "Error: The file: " + file_in + " does not exist. "\
             "Call program without -r flag to get it."
