@@ -24,21 +24,32 @@ namespace mio
 
 class RKIntegratorCore3 : public RKIntegratorCore {
 
+private:
+    mutable Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::ColMajor> kt_values;
+    mutable Eigen::VectorXd yt_eval, ytp1_low;//, ytp1_high; // lower and higher order approximation
+    mutable Eigen::ArrayXd eps, error_estimate; // tolerance and estimate used for time step adaption
+
 public:
+    RKIntegratorCore3() : RKIntegratorCore() {}
+    RKIntegratorCore3(const double abs_tol, const double rel_tol, const double dt_min, const double dt_max) :
+        RKIntegratorCore(abs_tol, rel_tol, dt_min, dt_max)
+    {}
+
     bool step(const DerivFunction& f, Eigen::Ref<const Eigen::VectorXd> yt, double& t, double& dt,
                                 Eigen::Ref<Eigen::VectorXd> ytp1) const
     {
         double t_eval; // shifted time for evaluating yt
         double dt_new; // updated dt
-
-        Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::ColMajor> kt_values(yt.size(), m_tab_final.entries_low.size());
-
-        Eigen::ArrayXd eps, error_estimate; // tolerance and estimate used for time step adaption
-
+        
         bool converged = false; // carry for convergence criterion
         bool failed_step_size_adapt = false;
 
-        Eigen::VectorXd yt_eval = yt.eval(), ytp1_low;//, ytp1_high; // lower and higher order approximation (e.g., order 4)
+        if (yt_eval.size() == 0) {
+            yt_eval.resize(yt.size());
+            kt_values.resize(yt.size(), m_tab_final.entries_low.size());
+        }
+
+        yt_eval = yt;
 
         while (!converged && !failed_step_size_adapt) {
             // compute first column of kt, i.e. kt_0 for each y in yt_eval
@@ -55,13 +66,14 @@ public:
                     ytp1_low += (dt * m_tab.entries[i - 1][k]) * kt_values.col(k-1);
                 }
                 // get the derivatives, i.e., compute kt_i for all y in ytp1_low: kt_i = f(t_eval, ytp1_low)
-                f(ytp1_low.eval(), t_eval, kt_values.col(i));
+                f(ytp1_low, t_eval, kt_values.col(i));
 
             }
             // calculate low order estimate
-            ytp1_low  = yt_eval + (dt * (kt_values *  m_tab_final.entries_low));
+            ytp1_low = yt_eval;
+            ytp1_low += (dt * (kt_values * m_tab_final.entries_low)); // TODO ?combine with assignment?
             // truncation error estimate: yt_low - yt_high = O(h^(p+1)) where p = order of convergence 
-            error_estimate = (kt_values * (m_tab_final.entries_high - m_tab_final.entries_low)).array().abs();
+            error_estimate = dt * (kt_values * (m_tab_final.entries_high - m_tab_final.entries_low)).array().abs();
 
             // calculate mixed tolerance
             eps = m_abs_tol + ytp1_low.array().abs() * m_rel_tol;//1e-6;
@@ -70,12 +82,12 @@ public:
             
             if (converged) {
                 // if sufficiently exact, take lower order approximation (higher order is not always higher accuracy!)
-                ytp1 = ytp1_low.eval();
+                ytp1 = ytp1_low;
                 t += dt; // this is the t where ytp1 belongs to
             }
-            // else: repeat the calculation with updated dt
+            // else: repeat the calculation (with updated dt)
 
-            // compute scaling factor for dt
+            // compute new value for dt
             // converged implies eps/error_estimate >= 1, so dt will be increased for the next step
             // hence !converged implies 0 < eps/error_estimate < 1, strictly decreasing dt
             dt_new = dt * std::pow((eps / error_estimate).minCoeff(), (1. / (m_tab_final.entries_low.size() - 1)));

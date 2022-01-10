@@ -112,6 +112,21 @@ public:
         , m_dt_max(std::numeric_limits<double>::max())
     {
     }
+    
+    /**
+     * @brief Set up the integrator
+     * @param abs_tol absolute tolerance
+     * @param rel_tol relative tolerance 
+     * @param dt_min lower bound for time step dt
+     * @param dt_max upper bound for time step dt
+     */
+    RKIntegratorCore(const double abs_tol, const double rel_tol, const double dt_min, const double dt_max)
+        : m_abs_tol(abs_tol)
+        , m_rel_tol(rel_tol)
+        , m_dt_min(dt_min)
+        , m_dt_max(dt_max)
+    {
+    }
 
     /// @param tol the required absolute tolerance for the comparison with the Fehlberg approximation
     void set_abs_tolerance(double tol)

@@ -25,6 +25,10 @@ namespace mio
 class RKIntegratorCore2 : public RKIntegratorCore {
 
 public:
+    RKIntegratorCore2() : RKIntegratorCore() {}
+    RKIntegratorCore2(const double abs_tol, const double rel_tol, const double dt_min, const double dt_max) :
+        RKIntegratorCore(abs_tol, rel_tol, dt_min, dt_max) {}
+
     bool step(const DerivFunction& f, Eigen::Ref<const Eigen::VectorXd> yt, double& t, double& dt,
                                 Eigen::Ref<Eigen::VectorXd> ytp1) const
     {
@@ -33,7 +37,7 @@ public:
 
         Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::ColMajor> kt_values(yt.size(), m_tab_final.entries_low.size());
 
-        Eigen::VectorXd yt_eval = yt.eval(), ytp1_low, ytp1_high; // lower and higher order approximation (e.g., order 4)
+        Eigen::VectorXd ytp1_low, ytp1_high; // lower and higher order approximation (e.g., order 4)
 
         bool failed_step_size_adapt = false;
         //bool crit2 = false;
@@ -43,8 +47,8 @@ public:
         while (max_err > conv_crit && !failed_step_size_adapt) {
         //while (!crit2 && !failed_step_size_adapt) {
             dt *= 0.5;
-            // compute first column of kt, i.e. kt_0 for each y in yt_eval
-            f(yt_eval, t, kt_values.col(0));
+            // compute first column of kt, i.e. kt_0 for each y in yt
+            f(yt, t, kt_values.col(0));
 
             for (Eigen::Index i = 1; i < kt_values.cols(); i++) {
                 // we first compute k_n1 for each y_j, then k_n2 for each y_j, etc.
@@ -52,17 +56,17 @@ public:
                 t_eval += m_tab.entries[i - 1][0] *
                             dt; // t_eval = t + c_i * h // note: line zero of Butcher tableau not stored in array !
                 // use ytp1_low as temporary storage for evaluating kt_values[i]
-                ytp1_low = yt_eval;
+                ytp1_low = yt;
                 for (Eigen::VectorXd::Index k = 1; k < m_tab.entries[i - 1].size(); k++) {
                     ytp1_low += (dt * m_tab.entries[i - 1][k]) * kt_values.col(k-1);
                 }
                 // get the derivatives, i.e., compute kt_i for all y in ytp1_low: kt_i = f(t_eval, ytp1_low)
-                f(ytp1_low.eval(), t_eval, kt_values.col(i));
+                f(ytp1_low, t_eval, kt_values.col(i));
 
             }
             // calculate low order estimate
-            ytp1_low  = yt_eval + (dt * (kt_values * m_tab_final.entries_low ));
-            ytp1_high = yt_eval + (dt * (kt_values * m_tab_final.entries_high));
+            ytp1_low  = yt + (dt * (kt_values * m_tab_final.entries_low ));
+            ytp1_high = yt + (dt * (kt_values * m_tab_final.entries_high));
             
             max_err = (ytp1_low - ytp1_high).lpNorm<Eigen::Infinity>();
             double max_val = ytp1_low.lpNorm<Eigen::Infinity>();
