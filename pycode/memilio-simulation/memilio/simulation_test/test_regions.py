@@ -1,7 +1,7 @@
 #############################################################################
 # Copyright (C) 2020-2021 German Aerospace Center (DLR-SC)
 #
-# Authors: 
+# Authors:
 #
 # Contact: Martin J. Kuehn <Martin.Kuehn@DLR.de>
 #
@@ -20,9 +20,11 @@
 import unittest
 import memilio.simulation as mio
 
+
 class Test_Regions(unittest.TestCase):
     def test_get_holidays(self):
-        holidays = mio.get_holidays_de(9, start_date = mio.Date(2020, 10, 15), end_date = mio.Date(2020, 11, 15))
+        holidays = mio.get_holidays_de(9, start_date=mio.Date(
+            2020, 10, 15), end_date=mio.Date(2020, 11, 15))
         self.assertEqual(len(holidays), 1)
         self.assertEqual(holidays[0][0], mio.Date(2020, 10, 31))
         self.assertEqual(holidays[0][1], mio.Date(2020, 11, 7))
@@ -31,6 +33,7 @@ class Test_Regions(unittest.TestCase):
         self.assertEqual(mio.get_state_id_de(1001), 1)
         self.assertEqual(mio.get_state_id_de(2000), 2)
         self.assertEqual(mio.get_state_id_de(9161), 9)
+
 
 if __name__ == '__main__':
     unittest.main()
