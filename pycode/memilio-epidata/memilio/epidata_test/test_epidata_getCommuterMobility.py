@@ -341,9 +341,9 @@ class TestCommuterMigration(fake_filesystem_unittest.TestCase):
         population = gpd.get_age_population_data(
             out_folder=self.path, merge_eisenach=False, write_df=True)
         countypop_list = list(population["Total"])
-        self.assertEqual(countypop_list[city_from], 163729)
+        self.assertEqual(countypop_list[city_from], 163905)
         self.assertAlmostEqual(
-            mat_commuter_migration.iat[city_from, city_to], 1.5256, 3)
+            mat_commuter_migration.iat[city_from, city_to], 1.526, 2)
 
         # check migration from Duisburg to Oberspreewald-Lausitz
         city_from = countykey2numlist['05112']
