@@ -17,12 +17,15 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
+#ifndef VADAPT_RK_OPT_H_
+#define VADAPT_RK_OPT_H_
+
 #include "memilio/math/adapt_rk.h"
 
 namespace mio
 {
 
-class RKIntegratorCore3 : public RKIntegratorCore {
+class VRKOptIntegratorCore : public RKIntegratorCore {
 
 private:
     mutable Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::ColMajor> kt_values;
@@ -30,8 +33,8 @@ private:
     mutable Eigen::ArrayXd eps, error_estimate; // tolerance and estimate used for time step adaption
 
 public:
-    RKIntegratorCore3() : RKIntegratorCore() {}
-    RKIntegratorCore3(const double abs_tol, const double rel_tol, const double dt_min, const double dt_max) :
+    VRKOptIntegratorCore() : RKIntegratorCore() {}
+    VRKOptIntegratorCore(const double abs_tol, const double rel_tol, const double dt_min, const double dt_max) :
         RKIntegratorCore(abs_tol, rel_tol, dt_min, dt_max)
     {}
 
@@ -108,3 +111,5 @@ public:
 };
 
 } // namespace mio
+
+#endif
