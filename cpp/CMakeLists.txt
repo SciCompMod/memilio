@@ -6,6 +6,7 @@ option(MEMILIO_BUILD_TESTS "Build memilio unit tests." ON)
 option(MEMILIO_BUILD_EXAMPLES "Build memilio examples." ON)
 option(MEMILIO_BUILD_MODELS "Build memilio models." ON)
 option(MEMILIO_BUILD_SIMULATIONS "Build memilio unit tests." ON)
+option(MEMILIO_BUILD_BENCHMARKS "Build memilio benchmarks with google benchmark." OFF)
 option(MEMILIO_USE_BUNDLED_SPDLOG "Use spdlog bundled with epi" ON)
 option(MEMILIO_USE_BUNDLED_EIGEN "Use eigen bundled with epi" ON)
 option(MEMILIO_USE_BUNDLED_BOOST "Use boost bundled with epi (only for epi-io)" ON)
@@ -84,6 +85,9 @@ endif()
 if (MEMILIO_BUILD_SIMULATIONS)
     add_subdirectory(simulations)
 endif()
+if (MEMILIO_BUILD_BENCHMARKS)
+    add_subdirectory(benchmarks)
+endif()
 
 # install
 include(GNUInstallDirs)
@@ -121,13 +125,3 @@ install (
   DESTINATION
     ${CMAKE_INSTALL_LIBDIR}/cmake/memilio
 )
-
-add_subdirectory(benchmark)
-add_executable(bench bench.cpp)
-target_link_libraries(bench PRIVATE memilio secir benchmark::benchmark)
-
-add_executable(bench_step bench_step.cpp)
-target_link_libraries(bench_step PRIVATE memilio secir benchmark::benchmark)
-
-add_executable(bench_rnd bench_rnd.cpp)
-target_link_libraries(bench_rnd PRIVATE memilio secir benchmark::benchmark)
