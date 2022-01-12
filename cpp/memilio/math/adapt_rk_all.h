@@ -17,16 +17,19 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
+#ifndef ADAPT_RK_ALL_H_
+#define ADAPT_RK_ALL_H_
+
 #include "memilio/math/adapt_rk.h"
 
 namespace mio
 {
 
-class RKIntegratorCoreAll : public RKIntegratorCore {
+class RKAllIntegratorCore : public RKIntegratorCore {
 
 public:
-    RKIntegratorCoreAll() : RKIntegratorCore() {}
-    RKIntegratorCoreAll(const double abs_tol, const double rel_tol, const double dt_min, const double dt_max) :
+    RKAllIntegratorCore() : RKIntegratorCore() {}
+    RKAllIntegratorCore(const double abs_tol, const double rel_tol, const double dt_min, const double dt_max) :
         RKIntegratorCore(abs_tol, rel_tol, dt_min, dt_max) {}
 
     bool step(const DerivFunction& f, Eigen::Ref<const Eigen::VectorXd> yt, double& t, double& dt,
@@ -159,3 +162,5 @@ public:
 };
 
 } // namespace mio
+
+#endif
