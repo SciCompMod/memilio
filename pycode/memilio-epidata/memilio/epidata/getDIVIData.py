@@ -171,7 +171,7 @@ def get_divi_data(read_data=dd.defaultDict['read_data'],
     # insert names of counties
     df.insert(loc=3, column=dd.EngEng["county"],
               value=df[dd.EngEng["idCounty"]])
-    for item in geoger.get_county_names_and_ids(merge_eisenach=False):
+    for item in geoger.get_county_names_and_ids():
         df.loc[df[dd.EngEng["idCounty"]] == item[1],
                [dd.EngEng["county"]]] = item[0]
 
@@ -181,8 +181,7 @@ def get_divi_data(read_data=dd.defaultDict['read_data'],
     if (impute_dates == True) or (moving_average > 0):
         df = modifyDataframeSeries.impute_and_reduce_df(
             df,
-            {dd.EngEng["idCounty"]: geoger.get_county_ids(
-                merge_eisenach=False)},
+            {dd.EngEng["idCounty"]: geoger.get_county_ids()},
             [dd.EngEng["ICU"], dd.EngEng["ICU_ventilated"]],
             impute='forward', moving_average=moving_average)
 
