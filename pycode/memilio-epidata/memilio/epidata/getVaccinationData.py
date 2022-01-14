@@ -246,11 +246,11 @@ def get_vaccination_data(read_data=dd.defaultDict['read_data'],
             directory + "county_current_population_dim401.json")
     except:
         print("Population data was not found. Download it from the internet.")
-        population = getPopulationData.get_age_population_data(read_data=False,
+        population = getPopulationData.get_population_data(read_data=False,
                                                                file_format=file_format,
                                                                out_folder=out_folder,
                                                                no_raw=no_raw,
-                                                               write_df=True,
+                                                               split_gender=False,
                                                                merge_eisenach=False)
 
     min_age_pop = []

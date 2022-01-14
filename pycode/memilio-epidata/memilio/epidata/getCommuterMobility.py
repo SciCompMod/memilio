@@ -29,7 +29,7 @@ import sys
 import numpy as np
 import pandas as pd
 from zipfile import ZipFile
-from memilio.epidata import getPopulationData
+from memilio.epidata import getPopulationData as gPd
 from memilio.epidata import getDataIntoPandasDataFrame as gd
 from memilio.epidata import geoModificationGermany as geoger
 from memilio.epidata import defaultDict as dd
@@ -179,14 +179,14 @@ def get_commuter_data(setup_dict='',
     try:
         population = pd.read_json(directory + "county_current_population.json")
         if len(population) != len(countykey_list):
-            population = getPopulationData.get_age_population_data(
-                out_folder=out_folder, merge_eisenach=False, write_df=True)
+            population = gPd.get_population_data(
+                out_folder=out_folder, merge_eisenach=True, read_data=read_data)
     except:
         print("Population data was not found. Download it from the internet.")
-        population = getPopulationData.get_age_population_data(
-            out_folder=out_folder, merge_eisenach=False, write_df=True)
+        population = gPd.get_population_data(
+            out_folder=out_folder, merge_eisenach=True, read_data=read_data)
 
-    countypop_list = list(population["Total"])
+    countypop_list = list(population[dd.EngEng["population"]])
 
     countykey2numlist = collections.OrderedDict(
         zip(countykey_list, list(range(0, len(countykey_list)))))
@@ -219,7 +219,7 @@ def get_commuter_data(setup_dict='',
         filepath = os.path.join(out_folder, 'Germany/')
         url = setup_dict['path'] + item.split('.')[0] + '.zip'
         # Unzip it
-        zipfile = wget.download(url)
+        zipfile = wget.download(url, filepath)
         with ZipFile(zipfile, 'r') as zipObj:
             zipObj.extractall(path = filepath)
         # Read the file

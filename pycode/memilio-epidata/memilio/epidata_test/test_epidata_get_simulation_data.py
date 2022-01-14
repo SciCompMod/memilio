@@ -48,8 +48,7 @@ class TestGetSimulationData(fake_filesystem_unittest.TestCase):
     @patch('memilio.epidata.getDIVIData.get_divi_data')
     @patch('memilio.epidata.getRKIData.get_rki_data')
     @patch('memilio.epidata.getPopulationData.get_population_data')
-    @patch('memilio.epidata.getPopulationData.get_age_population_data')
-    def test_get_call_sub_functions(self, mock_agep, mock_popul, mock_rki,
+    def test_get_call_sub_functions(self, mock_popul, mock_rki,
                                     mock_divi, mock_vaccination):
 
         [read_data, file_format, out_folder, no_raw, end_date, impute_dates,
@@ -88,9 +87,6 @@ class TestGetSimulationData(fake_filesystem_unittest.TestCase):
             "make_plot": dd.defaultDict['make_plot'],
             "moving_average": dd.defaultDict['moving_average']}
 
-        mock_agep.assert_called()
-        mock_agep.assert_called_with(**arg_dict_all)
-
         mock_popul.assert_called()
         mock_popul.assert_called_with(**arg_dict_all)
 
@@ -108,22 +104,14 @@ class TestGetSimulationData(fake_filesystem_unittest.TestCase):
     @patch('memilio.epidata.getDIVIData.get_divi_data')
     @patch('memilio.epidata.getRKIData.get_rki_data')
     @patch('memilio.epidata.getPopulationData.get_population_data')
-    @patch('memilio.epidata.getPopulationData.get_age_population_data')
     def test_errors(
-            self, mock_agep, mock_popul, mock_rki, mock_divi, mock_vaccination,
+            self, mock_popul, mock_rki, mock_divi, mock_vaccination,
             mock_print):
-        mock_agep.side_effect = Exception
         mock_popul.side_effect = Exception
         mock_rki.side_effect = Exception
         mock_divi.side_effect = Exception
         mock_vaccination.side_effect = Exception
         gsd.get_simulation_data()
-        agepprint = call(
-            'Error: Something went wrong while getting ' +
-            'age-resolved population' +
-            ' data. This was likely caused by a changed file format'
-            ' of the source material. Please report this as an issue. ' +
-            'age-resolved population' + ' data could not be stored correctly.')
         populprint = call(
             'Error: Something went wrong while getting ' + 'population' +
             ' data. This was likely caused by a changed file format'
@@ -143,8 +131,7 @@ class TestGetSimulationData(fake_filesystem_unittest.TestCase):
             ' data. This was likely caused by a changed file format'
             ' of the source material. Please report this as an issue. ' +
             'vaccination' + ' data could not be stored correctly.')
-        expected_calls = [rkiprint, populprint,
-                          agepprint, diviprint, vaccprint]
+        expected_calls = [rkiprint, populprint, diviprint, vaccprint]
         mock_print.assert_has_calls(expected_calls)
 
 
