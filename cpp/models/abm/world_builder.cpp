@@ -20,7 +20,6 @@
 #include "abm/world_builder.h"
 #include "memilio/math/eigen.h"
 
-#include <unsupported/Eigen/NonLinearOptimization>
 #include "nlopt.hpp"
 #include <cmath>
 
@@ -128,17 +127,17 @@ double myfunc(const std::vector<double>& x, std::vector<double>& grad, void* era
     const double* ptr = &x[0];
     Eigen::Map<const Eigen::VectorXd> x_eigen(ptr, x.size());
     // remap my_func_data
-    Data* data = reinterpret_cast<Data*>(erased_data);
+    Data* data         = reinterpret_cast<Data*>(erased_data);
     Eigen::VectorXd& y = data->y;
     int l              = data->l;
     int n              = data->n;
 
-    // computation using Eigen of multidimensional functional
+    // computation of multidimensional functional
     Eigen::VectorXd f(n * n);
     compute_f(x_eigen, f, y, l, n);
 
     if (!grad.empty()) {
-        // compute Jacobi matrix of f using Eigen
+        // compute Jacobi matrix of f
         Eigen::MatrixXd fjac(n * n, n * l + 1);
         compute_df(x_eigen, fjac, y, l, n);
         // compute gradient of norm of f
@@ -155,11 +154,9 @@ double myfunc(const std::vector<double>& x, std::vector<double>& grad, void* era
     return f.norm();
 }
 
-
-
 void constraints(unsigned /*m*/, double* result, unsigned /*x_len*/, const double* x, double* grad, void* erased_data)
 {
-    Data* data = reinterpret_cast<Data*>(erased_data);
+    Data* data         = reinterpret_cast<Data*>(erased_data);
     Eigen::VectorXd& y = data->y;
     int l              = data->l;
     int n              = data->n;
@@ -204,25 +201,24 @@ Eigen::VectorXd find_optimal_locations(Eigen::VectorXd& num_people_sorted, int n
 
     //set lower bounds for variables: number of people at a location are nonnegative
     std::vector<double> lb(n * l + 1, 0);
-    // effective contacts are at least 5
-    lb[n * l] = 5;
+    // effective contacts are at least 1
+    lb[n * l] = 1;
     std::vector<double> ub(n * l + 1, num_people_sorted.sum());
-    ub[n*l] = 1000;
+    ub[n * l] = 1000;
     opt.set_lower_bounds(lb);
     opt.set_upper_bounds(ub);
 
-
     opt.set_min_objective(myfunc, &data);
-    const std::vector<double> tol(n * l+1, 1e-8);
+    const std::vector<double> tol(n * l + 1, 1e-8);
 
     opt.add_equality_mconstraint(constraints, &data, tol);
-    opt.set_xtol_rel(1e-10);
-    opt.set_ftol_abs(1e-10);
+    opt.set_xtol_rel(1e-6);
+    opt.set_ftol_abs(1e-6);
     double minf;
 
     try {
-        nlopt::result result = opt.optimize(x, minf);
-        std::cout << "result : "<< int(result) << std::endl;
+        /*nlopt::result result = */ opt.optimize(x, minf);
+        //std::cout << "result : " << int(result) << std::endl;
     }
     catch (std::exception& e) {
         std::cout << "nlopt failed: " << e.what() << std::endl;

@@ -358,17 +358,16 @@ void assign_infection_state(mio::World& world, double exposed_pct, double infect
 
 int main()
 {
+    /*
     Eigen::VectorXd people(6);
-    people << 10,18,30,18,18,6;
-    Eigen::MatrixXd contact_matrix (6,6);
-    contact_matrix << 2.8, 4.3, 1.7, 4.4, 4.3, 1.5,
-                      2.3888888, 3.777777, 6.222222, 3.8333333, 2.277777, 0.5,
-                      0.5666666, 3.733333, 10.4, 3.23333, 1.03333, 0.03333,
-                      2.44444, 3.833333, 5.388888, 4, 2.72222, 0.611111,
-                      2.388888, 2.277777, 1.72222, 2.722222, 6.66666, 3.22222,
-                      2.5, 1.5, 0.166666, 1.833333, 9.66666, 3.33333;
-    int num_locs = 5;
+    people << 10, 18, 30, 18, 18, 6;
+    Eigen::MatrixXd contact_matrix(6, 6);
+    contact_matrix << 2.8, 4.3, 1.7, 4.4, 4.3, 1.5, 2.3888888, 3.777777, 6.222222, 3.8333333, 2.277777, 0.5, 0.5666666,
+        3.733333, 10.4, 3.23333, 1.03333, 0.03333, 2.44444, 3.833333, 5.388888, 4, 2.72222, 0.611111, 2.388888,
+        2.277777, 1.72222, 2.722222, 6.66666, 3.22222, 2.5, 1.5, 0.166666, 1.833333, 9.66666, 3.33333;
+    int num_locs              = 5;
     Eigen::VectorXd size_locs = Eigen::VectorXd::Constant(5, 20);
+    */
 
     /*
     Eigen::VectorXd people(2);
@@ -379,12 +378,22 @@ int main()
     Eigen::VectorXd size_locs = Eigen::VectorXd::Constant(2, 32);
      */
 
-    Eigen::VectorXd x_sol = mio::find_optimal_locations(people, num_locs, contact_matrix, size_locs);
-    std::cout<<x_sol<<std::endl;
-    Eigen::MatrixXd average_contacs(6,6);
-    mio::compute_average_contact_matrix(average_contacs, x_sol, num_locs);
-    std::cout<<"Differenz zur gegebenen Matrix: "<<average_contacs.norm()<<std::endl;
+    Eigen::VectorXd people(6);
+    people << 4091, 6983, 24611, 35921, 10238, 8319;
 
+    Eigen::MatrixXd contact_matrix(6, 6);
+    contact_matrix << 0.5170, 0.3997, 0.7957, 0.9958, 0.3239, 0.0428, 0.0632, 0.9121, 0.3254, 0.4731, 0.2355, 0.0148,
+        0.0336, 0.1604, 1.7529, 0.8622, 0.1440, 0.0077, 0.0204, 0.1444, 0.5738, 1.2127, 0.3433, 0.0178, 0.0371, 0.0393,
+        0.4171, 0.9666, 0.7495, 0.0257, 0.0791, 0.0800, 0.3480, 0.5588, 0.2769, 0.0180;
+    int num_locs              = 10;
+    Eigen::VectorXd size_locs = Eigen::VectorXd::Constant(num_locs, people.sum() / num_locs);
+
+    Eigen::VectorXd x_sol = mio::find_optimal_locations(people, num_locs, contact_matrix, size_locs);
+    //std::cout << x_sol << std::endl;
+    Eigen::MatrixXd average_contacs(6, 6);
+    mio::compute_average_contact_matrix(average_contacs, x_sol, num_locs);
+    std::cout << " Average Matrix: " << average_contacs << std::endl;
+    std::cout << "Differenz zur gegebenen Matrix: " << (average_contacs - contact_matrix).norm() << std::endl;
 
     /*
     //mio::set_log_level(mio::LogLevel::warn);
