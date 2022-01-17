@@ -24,6 +24,28 @@ from memilio.epidata import getDataIntoPandasDataFrame as gd
 from memilio.epidata import defaultDict as dd
 from memilio.epidata import geoModificationGermany as geoger
 
+def createFederalStatesMobility(mobility_file, file_format=dd.defaultDict['file_format'],
+                         out_folder=dd.defaultDict['out_folder'].split('/pydata')[0]):
+    """! Creates mobility matrices for German federal states based on
+    county mobility.
+
+    @param file_format File format which is used for writing the data. 
+        Default defined in defaultDict.
+    @param out_folder Path to folder where data is read and written.
+        Default is data/mobility folder in root directory of MEmilio.
+    """
+    directory = out_folder
+    directory = os.path.join(directory, 'mobility/')
+
+    directory = directory.replace('memilio','memilio-fed-state')
+
+    mobility_matrix = pd.read_csv(
+        directory + mobility_file + '.txt', sep=' ', header=None)   
+
+    if(len(mobility_matrix) == geoger.get_county_ids()):
+
+        x=15
+
 def updateMobility2022(mobility_file, file_format=dd.defaultDict['file_format'],
                          out_folder=dd.defaultDict['out_folder'].split(
     '/pydata')[0]
