@@ -221,31 +221,28 @@ def load_age_population_data(out_folder):
     file_in = os.path.join(directory, filename_counties + ".json")
     try:
         counties = pandas.read_json(file_in)
-    except:
+    except ValueError:
         print('Local counties dataframe not found.')
         try:
             print('Trying to download from HPC server')
             path_counties = 'http://hpcagainstcorona.sc.bs.dlr.de/data/migration/'
             counties = gd.loadExcel(targetFileName='kreise_deu', apiUrl=path_counties, extension='.xlsx',
                                     param_dict={"sheet_name": 1, "header": 3})
-            gd.write_dataframe(counties, directory, filename_counties, "json")
-        except:
+        except Exception:
             print('No access to HPC Server.')
             try:
                 print('Trying to download data from the internet')
                 path_counties = 'https://www.destatis.de/DE/Themen/Laender-Regionen/Regionales/Gemeindeverzeichnis/Administrativ/04-kreise.xlsx;?__blob=publicationFile'
                 counties = gd.loadExcel(targetFileName='', apiUrl=path_counties, extension='',
                                         param_dict={"sheet_name": 1, "header": 3, "engine": 'openpyxl'})
-                gd.write_dataframe(counties, directory,
-                                   filename_counties, "json")
-            except ValueError:
-                exit_string = "Error: The counties file does not exist."
-                sys.exit(exit_string)
+            except Exception as err:
+                raise FileNotFoundError("Error: The counties file does not exist.") from err
+        gd.write_dataframe(counties, directory, filename_counties, "json")
 
     file_in = os.path.join(directory, filename_zensus + ".json")
     try:
         zensus = pandas.read_json(file_in)
-    except:
+    except ValueError:
         print('Local zensus Dataframe not found.')
         try:
             print('Trying to download from the internet')
@@ -253,15 +250,15 @@ def load_age_population_data(out_folder):
             # utf_8_sig can identify those bytes as one sign and display it correctly
             zensus = gd.loadCsv(
                 "abad92e8eead46a4b0d252ee9438eb53_1", encoding='utf_8_sig')
-            gd.write_dataframe(zensus, directory, filename_zensus, "json")
-        except ValueError:
-            exit_string = "Error: The zensus file does not exist."
-            sys.exit(exit_string)
+        except Exception as err:
+            raise FileNotFoundError("Error: The zensus file does not exist.") \
+                from err
+        gd.write_dataframe(zensus, directory, filename_zensus, "json")
 
     file_in = os.path.join(directory, filename_reg_key + ".json")
     try:
         reg_key = pandas.read_json(file_in)
-    except:
+    except ValueError:
         print('Local reg_key Dataframe not found.')
         try:
             print('Trying to download from the internet')
@@ -270,10 +267,10 @@ def load_age_population_data(out_folder):
             # read tables
             reg_key = gd.loadExcel(path_reg_key, apiUrl='', extension='',
                                    param_dict={"engine": None, "sheet_name": 'Tabelle_1A', "header": 12})
-            gd.write_dataframe(reg_key, directory, filename_reg_key, "json")
-        except ValueError:
-            exit_string = "Error: The regional key file does not exist."
-            sys.exit(exit_string)
+        except Exception as err:
+            raise FileNotFoundError("Error: The regional key file does not exist.") \
+                from err
+        gd.write_dataframe(reg_key, directory, filename_reg_key, "json")
 
     return counties, reg_key, zensus
 
@@ -344,8 +341,8 @@ def get_age_population_data(read_data=dd.defaultDict['read_data'],
                 try:
                     if data[i, 0] == int(counties['Schlüssel-nummer'].values[j]):
                         ratio[i] = counties['Bevölkerung2)'].values[j]/data[i, 1]
-                except:
-                    dummy = 0
+                except ValueError:
+                    pass
 
     # adjust population data for all ages to current level
     data_current = np.zeros(data.shape)

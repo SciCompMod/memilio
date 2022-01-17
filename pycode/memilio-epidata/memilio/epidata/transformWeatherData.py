@@ -167,11 +167,11 @@ def transformWeatherData(read_data=dd.defaultDict['read_data'],
         df_weather.reset_index(inplace=True)
         try:
             df_weather = df_weather.drop(columns='index')
-        except:
+        except KeyError:
             pass
         try:
             df_weather = df_weather.drop(columns='level_0')
-        except:
+        except KeyError:
             pass
 
         print(

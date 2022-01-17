@@ -39,20 +39,13 @@ def verify_sorted(countykey_list):
     """! verify that read countykey_list is sorted
     @param countykey_list List of county regional keys
     """
-    try:
-        test_if_array_like = np.array(countykey_list)
-    except:
-        print("Not an array like object.")
-        return False
-
+    countykey_list_is_sorted = np.all(np.array(
+        countykey_list[:-1]) <= np.array(countykey_list[1:]))  # this checks if it is sorted
+    if countykey_list_is_sorted:
+        return True
     else:
-        countykey_list_is_sorted = np.all(np.array(
-            countykey_list[:-1]) <= np.array(countykey_list[1:]))  # this checks if it is sorted
-        if countykey_list_is_sorted:
-            return True
-        else:
-            print('Error. Input list not sorted.')
-            return False
+        print('Error. Input list not sorted.')
+        return False
 
 
 def assign_geographical_entities(countykey_list, govkey_list):
@@ -178,13 +171,15 @@ def get_commuter_data(setup_dict='',
     # This is not very nice either to have the same file with either Eisenach merged or not...
     try:
         population = pd.read_json(directory + "county_current_population.json")
-        if len(population) != len(countykey_list):
-            population = getPopulationData.get_age_population_data(
-                out_folder=out_folder, merge_eisenach=False, write_df=True)
-    except:
+    except ValueError:
         print("Population data was not found. Download it from the internet.")
         population = getPopulationData.get_age_population_data(
             out_folder=out_folder, merge_eisenach=False, write_df=True)
+    else:
+        if len(population) != len(countykey_list):
+            print("Population data incomplete. Download it from the internet.")
+            population = getPopulationData.get_age_population_data(
+                out_folder=out_folder, merge_eisenach=False, write_df=True)
 
     countypop_list = list(population["Total"])
 
@@ -512,7 +507,7 @@ def get_neighbors_mobility(
         else:
             commuter = pd.read_json(os.path.join(
                 directory, "migration_bfa_2020_dim401.json"))
-    except:
+    except ValueError:
         print("Commuter data was not found. Download and process it from the internet.")
         commuter = get_commuter_data(out_folder=out_folder)
 

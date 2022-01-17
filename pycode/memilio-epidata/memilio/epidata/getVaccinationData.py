@@ -33,6 +33,10 @@ from memilio.epidata import customPlot
 from memilio.epidata import geoModificationGermany as geoger
 from memilio.epidata import getCommuterMobility as gcm
 
+class DataError(Exception):
+    """ Error for handling incomplete Data """
+    pass
+
 # Downloads vaccination data from RKI
 
 
@@ -49,8 +53,9 @@ def download_vaccination_data():
             url,
             dtype={'LandkreisId_Impfort': "string", 'Altersgruppe': "string",
                    'Impfschutz': int, 'Anzahl': int})
-    except:
-        print("Error in reading csv. Returning empty data frame.")
+    except Exception:
+        print("Error in reading csv while downloading vaccination data.")
+        raise
 
     return df
 
@@ -207,9 +212,10 @@ def get_vaccination_data(read_data=dd.defaultDict['read_data'],
     try:
         df_data[dd.EngEng['idCounty']
                 ] = df_data[dd.EngEng['idCounty']].astype(int)
-    except:
+    except ValueError:
         print('Data items in ID_County could not be converted to integer. '
               'Imputation and/or moving_average computation will FAIL.')
+        raise
 
     # NOTE: the RKI vaccination table contains about
     # 180k 'complete' vaccinations in id 17000 Bundesressorts, which
@@ -244,7 +250,7 @@ def get_vaccination_data(read_data=dd.defaultDict['read_data'],
     try:
         population = pd.read_json(
             directory + "county_current_population_dim401.json")
-    except:
+    except ValueError:
         print("Population data was not found. Download it from the internet.")
         population = getPopulationData.get_age_population_data(read_data=False,
                                                                file_format=file_format,
