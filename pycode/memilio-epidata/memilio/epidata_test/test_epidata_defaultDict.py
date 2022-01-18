@@ -74,5 +74,10 @@ class Test_defaultDict(unittest.TestCase):
         for value in self.test_values_notin_dd:
             self.assertNotIn(value, inv_dd.values())
 
+    def test_uniqueness(self):
+        # tests whether the names of counties and states are unique
+        self.assertEqual(dd.invert_dict(dd.invert_dict(dd.County)), dd.County)
+        self.assertEqual(dd.invert_dict(dd.invert_dict(dd.State)), dd.State)
+
 if __name__ == '__main__':
     unittest.main()
