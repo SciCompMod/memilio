@@ -93,11 +93,12 @@ class TestGetJHData(fake_filesystem_unittest.TestCase):
         file = "FullData_JohnHopkins.json"
         file_with_path = os.path.join(out_folder, file)
 
-        with self.assertRaises(SystemExit) as cm:
+        with self.assertRaises(FileExistsError) as error:
             gJHD.get_jh_data(read_data, file_format, out_folder, no_raw)
-        self.assertEqual(cm.exception.code,
-                         "Error: The file: " + file_with_path + " does not exist. Call program without -r "
-                                                                "flag to get it.")
+        self.assertEqual(str(error.exception),
+                         "Error: The file: " + file_with_path + \
+                         " does not exist. Call program without -r "
+                         "flag to get it.")
 
         # Test case where file exists
 

@@ -26,7 +26,6 @@ To download the data two functions are called
 """
 
 import os
-import sys
 from collections import namedtuple
 import numpy as np
 import pandas
@@ -95,11 +94,10 @@ def get_one_data_set(read_data, file_format, no_raw, directory, d):
 
         try:
             df = pandas.read_json(file)
-
-        except ValueError:
-            exit_string = "Error: The file: " + file + \
-                " does not exist. Call program without -r flag to get it."
-            sys.exit(exit_string)
+        except ValueError as err:
+            raise FileExistsError("Error: The file: " + file + \
+                " does not exist. Call program without -r flag to get it.") \
+                from err
     else:
 
         # Supported data formats:

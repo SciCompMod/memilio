@@ -25,7 +25,6 @@
 import collections
 import os
 import wget
-import sys
 import numpy as np
 import pandas as pd
 from zipfile import ZipFile
@@ -65,8 +64,7 @@ def assign_geographical_entities(countykey_list, govkey_list):
     """
 
     if verify_sorted(countykey_list) == False:
-        exit_string = "Error. Input list not sorted."
-        sys.exit(exit_string)
+        raise AssertionError("Error. Input list not sorted.")
 
     # Create list of government regions with lists of counties that belong to them and list of states with government
     # regions that belong to them; only works with sorted lists of keys.
@@ -407,7 +405,7 @@ def get_commuter_data(setup_dict='',
         n += 1
         print('Federal state read. Progress ', n, '/ 16')
         if np.isnan(mat_commuter_migration).any():
-            sys.exit(
+            raise ValueError(
                 'NaN encountered in mobility matrix, exiting '
                 'getCommuterMobility(). Mobility data will be incomplete.')
     if n != 16:
@@ -459,17 +457,14 @@ def get_commuter_data(setup_dict='',
 def commuter_sanity_checks(df):
     # Check if return value is a dataframe
     if not isinstance(df, pd.DataFrame):
-        exit_string = ("Error. Data should be a dataframe")
-        sys.exit(exit_string)
+        raise TypeError("Error. Data should be a dataframe")
     # Dataframe should be of squared form
     if len(df.index) != len(df.columns):
-        exit_string = "Error. "
-        sys.exit(exit_string)
+        raise AssertionError("Error. ")
     # There were 401 counties at beginning of 2021 and 400 at end of 2021.
     # Check if exactly 400 counties are in dataframe.
     if not len(df) == 400:
-        exit_string = "Error. Size of dataframe unexpected."
-        sys.exit(exit_string)
+        raise AssertionError("Error. Size of dataframe unexpected.")
 
 
 def get_neighbors_mobility(

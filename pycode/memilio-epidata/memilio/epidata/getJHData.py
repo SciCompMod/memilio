@@ -24,7 +24,6 @@
 """
 
 import os
-import sys
 import pandas
 
 from memilio.epidata import getDataIntoPandasDataFrame as gd
@@ -61,9 +60,11 @@ def get_jh_data(read_data=dd.defaultDict['read_data'],
         # if once dowloaded just read json file
         try:
             df = pandas.read_json(file_in)
-        except ValueError:
-            exit_string = "Error: The file: " + file_in + " does not exist. Call program without -r flag to get it."
-            sys.exit(exit_string)
+        except ValueError as err:
+            raise FileExistsError("Error: The file: " + file_in + \
+                                  " does not exist." + \
+                                  " Call program without -r flag to get it.") \
+                from err
     else:
         # Get data:
         # https://raw.githubusercontent.com/datasets/covid-19/master/data/time-series-19-covid-combined.csv

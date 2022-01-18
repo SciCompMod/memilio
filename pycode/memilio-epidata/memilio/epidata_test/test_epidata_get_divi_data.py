@@ -89,19 +89,19 @@ class TestGetDiviData(fake_filesystem_unittest.TestCase):
 
         # test read_data Error call if json file is not found
         mockrjson.side_effect = ValueError
-        with self.assertRaises(SystemExit) as cm:
+        with self.assertRaises(FileExistsError) as error:
             gdd.get_divi_data(read_data=True, out_folder=self.path)
         file_in = os.path.join(self.path, "Germany/FullData_DIVI.json")
-        exit_string = "Error: The file: " + file_in + " does not exist. "\
+        error_message = "Error: The file: " + file_in + " does not exist. "\
             "Call program without -r flag to get it."
-        self.assertEqual(cm.exception.code, exit_string)
+        self.assertEqual(str(error.exception), error_message)
 
         # test loadCsv Error if file can't be downloaded
         mocklcsv.side_effect = Exception
-        with self.assertRaises(SystemExit) as cm:
+        with self.assertRaises(FileNotFoundError) as error:
             gdd.get_divi_data(read_data=False)
-        exit_string = "Error: Download link for Divi data has changed."
-        self.assertEqual(cm.exception.code, exit_string)
+        error_message = "Error: Download link for Divi data has changed."
+        self.assertEqual(str(error.exception), error_message)
 
     @patch('memilio.epidata.getDataIntoPandasDataFrame.loadCsv')
     def test_df_empty(self, mocklcsv):
@@ -109,10 +109,10 @@ class TestGetDiviData(fake_filesystem_unittest.TestCase):
         # new test function because of the new mock value
         # test Error for empty returned dataframe
         mocklcsv.value = pd.DataFrame()
-        with self.assertRaises(SystemExit) as cm:
+        with self.assertRaises(AssertionError) as error:
             gdd.get_divi_data(read_data=False)
-        exit_string = "Something went wrong, dataframe is empty."
-        self.assertEqual(cm.exception.code, exit_string)
+        error_message = "Something went wrong, dataframe is empty."
+        self.assertEqual(str(error.exception), error_message)
 
     @patch('builtins.print')
     def test_det_divi_data_prints(self, mock_print):
@@ -145,10 +145,10 @@ class TestGetDiviData(fake_filesystem_unittest.TestCase):
         # first test
         # get random dataframe
         df = pd.DataFrame({'a': [1, 2, 3], 'b': [4, 5, 6]})
-        with self.assertRaises(SystemExit) as cm:
+        with self.assertRaises(AssertionError) as error:
             gdd.divi_data_sanity_checks(df)
-        exit_string = "Error: Number of data categories changed."
-        self.assertEqual(cm.exception.code, exit_string)
+        error_message = "Error: Number of data categories changed."
+        self.assertEqual(str(error.exception), error_message)
 
         # second test
         # get dataframe with 11 columns but different names
@@ -164,10 +164,10 @@ class TestGetDiviData(fake_filesystem_unittest.TestCase):
              'gemeindeschluessel_fake': [3, 4, 5],
              'faelle_covid_aktuell_fake': [4, 5, 6],
              'faelle_covid_aktuell_invasiv_beatmet': [5, 6, 7]})
-        with self.assertRaises(SystemExit) as cm:
+        with self.assertRaises(AssertionError) as error:
             gdd.divi_data_sanity_checks(df)
-        exit_string = "Error: Data categories have changed."
-        self.assertEqual(cm.exception.code, exit_string)
+        error_message = "Error: Data categories have changed."
+        self.assertEqual(str(error.exception), error_message)
 
         # third test
         # get dataframe with 11 columns and same headers but only 3 rows
@@ -183,16 +183,16 @@ class TestGetDiviData(fake_filesystem_unittest.TestCase):
              'gemeindeschluessel': [3, 4, 5],
              'faelle_covid_aktuell': [4, 5, 6],
              'faelle_covid_aktuell_invasiv_beatmet': [5, 6, 7]})
-        with self.assertRaises(SystemExit) as cm:
+        with self.assertRaises(AssertionError) as error:
             gdd.divi_data_sanity_checks(df)
-        exit_string = "Error: unexpected length of dataframe."
-        self.assertEqual(cm.exception.code, exit_string)
+        error_message = "Error: unexpected length of dataframe."
+        self.assertEqual(str(error.exception), error_message)
 
         # test if it works in main
-        with self.assertRaises(SystemExit) as cm:
+        with self.assertRaises(AssertionError) as error:
             gdd.get_divi_data(read_data=True, out_folder=self.path)
-        exit_string = "Error: Number of data categories changed."
-        self.assertEqual(cm.exception.code, exit_string)
+        error_message = "Error: Number of data categories changed."
+        self.assertEqual(str(error.exception), error_message)
 
 
 if __name__ == '__main__':

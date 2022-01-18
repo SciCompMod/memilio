@@ -18,7 +18,6 @@
 # limitations under the License.
 #############################################################################
 from datetime import date
-import sys
 import time
 import os
 import itertools
@@ -198,15 +197,15 @@ def get_vaccination_data(read_data=dd.defaultDict['read_data'],
             / df_data.agg({'Number': sum}).Number < 0.001:
         df_data = df_data[df_data[dd.EngEng['idCounty']] != 'u']
     else:
-        sys.exit('Too many data items with unknown vaccination location, '
-                 'please check source data.')
+        raise DataError('Too many data items with unknown vaccination location, '
+                        'please check source data.')
 
     if df_data[df_data[dd.EngEng['ageRKI']] == 'u'].agg({'Number': sum}).Number \
             / df_data.agg({'Number': sum}).Number < 0.001:
         df_data = df_data[df_data[dd.EngEng['ageRKI']] != 'u']
     else:
-        sys.exit('Too many data items with unknown vaccination age, '
-                 'please check source data.')
+        raise DataError('Too many data items with unknown vaccination age, '
+                        'please check source data.')
 
     # remove leading zeros for ID_County (if not yet done)
     try:
@@ -586,11 +585,11 @@ def get_vaccination_data(read_data=dd.defaultDict['read_data'],
 
                         chk_err_idx += 1
                         if chk_err_idx > len(neighbors_mobility[id][0]):
-                            sys.exit(
+                            raise AssertionError(
                                 'Error in functionality of vaccine distribution, exiting.')
 
                     if abs(vacc_dist[ageidx] - sum(vacc_nshare_pot)) > 0.01 * vacc_dist[ageidx]:
-                        sys.exit(
+                        raise AssertionError(
                             'Error in functionality of vaccine distribution, exiting.')
                     # sort weights from max to min and return indices
                     order_dist = np.argsort(vacc_dist_weight)[::-1]
@@ -625,7 +624,7 @@ def get_vaccination_data(read_data=dd.defaultDict['read_data'],
 
             if len(
                     np.where(np.isnan(df_san[column_names_new]) == True)[0]) > 0:
-                sys.exit(
+                raise ValueError(
                     'Error in functionality of vaccine distribution, NaN found after county '
                     + str(id) + '. Exiting program.')
 
