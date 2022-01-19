@@ -1,3 +1,22 @@
+/* 
+* Copyright (C) 2020-2021 German Aerospace Center (DLR-SC)
+*
+* Authors: Rene Schmieding
+*
+* Contact: Martin J. Kuehn <Martin.Kuehn@DLR.de>
+*
+* Licensed under the Apache License, Version 2.0 (the "License");
+* you may not use this file except in compliance with the License.
+* You may obtain a copy of the License at
+*
+*     http://www.apache.org/licenses/LICENSE-2.0
+*
+* Unless required by applicable law or agreed to in writing, software
+* distributed under the License is distributed on an "AS IS" BASIS,
+* WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+* See the License for the specific language governing permissions and
+* limitations under the License.
+*/
 #ifndef STEPPER_WRAPPER_H_
 #define STEPPER_WRAPPER_H_
 
@@ -22,11 +41,6 @@ Eigen::VectorXd abs(Eigen::VectorXd x) {
 #include <boost/numeric/odeint/stepper/runge_kutta_cash_karp54.hpp>
 #include <boost/numeric/odeint/stepper/runge_kutta_dopri5.hpp>
 #include <boost/numeric/odeint/stepper/bulirsch_stoer.hpp>
-//#include <boost/numeric/odeint/stepper/base/explicit_stepper_base.hpp>
-//#include <boost/boost/numeric/odeint/algebra/algebra_dispatcher.hpp>
-//#include <boost/boost/numeric/odeint/algebra/operations_dispatcher.hpp>
-
-
 
 Eigen::VectorXd operator+ (const double s, const Eigen::VectorXd& v) {
     return (v.array() + s).matrix();
@@ -52,7 +66,8 @@ struct vector_space_norm_inf<Eigen::VectorXd>
 
 // Wrappers implementing IntegratorCore for boost::numeric::odeint Steppers (Controlled, Explicit and adams_bashforth_moulton)
 
-namespace mio {
+namespace mio
+{
 
 template<
     size_t Steps,
@@ -155,8 +170,11 @@ template<
 >
 class ControlledStepperWrapper : public mio::IntegratorCore {
 public:
-    ControlledStepperWrapper(double abs_tol = 1e-6, double rel_tol = 1e-6, double unused_dt_min=0, double dt_max=std::numeric_limits<double>::max()) :
-        m_dt_min(std::numeric_limits<double>::min()),
+    ControlledStepperWrapper(double abs_tol = 1e-6,
+                             double rel_tol = 1e-6,
+                             double dt_min=std::numeric_limits<double>::min(),
+                             double dt_max=std::numeric_limits<double>::max()) :
+        m_dt_min(dt_min),
         m_stepper(
             boost::numeric::odeint::default_error_checker<
                 typename ControlledStepper<>::value_type,
