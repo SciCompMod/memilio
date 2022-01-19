@@ -1,3 +1,22 @@
+/* 
+* Copyright (C) 2020-2021 German Aerospace Center (DLR-SC)
+*
+* Authors: Rene Schmieding
+*
+* Contact: Martin J. Kuehn <Martin.Kuehn@DLR.de>
+*
+* Licensed under the Apache License, Version 2.0 (the "License");
+* you may not use this file except in compliance with the License.
+* You may obtain a copy of the License at
+*
+*     http://www.apache.org/licenses/LICENSE-2.0
+*
+* Unless required by applicable law or agreed to in writing, software
+* distributed under the License is distributed on an "AS IS" BASIS,
+* WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+* See the License for the specific language governing permissions and
+* limitations under the License.
+*/
 #ifndef BENCH_MODEL_H_
 #define BENCH_MODEL_H_
 
@@ -7,10 +26,15 @@
 #include "secir/parameter_studies.h"
 #include "memilio/mobility/mobility.h"
 
-namespace mio {
-
-namespace benchmark {
-    namespace detail {
+namespace mio
+{
+namespace benchmark
+{
+    namespace detail
+    {
+        /**
+         * @brief Helper function to create a secir model with consistent setup for use in benchmarking.
+         */
         mio::SecirModel make_model(int num) {
             double tinc    = 5.2, // R_2^(-1)+R_3^(-1)
                 tinfmild   = 6, // 4-14  (=R4^(-1))
@@ -81,8 +105,15 @@ namespace benchmark {
             return model;
         }
     } // namespace detail
-    namespace model {
-        struct SecirAgeres {
+
+    namespace model
+    {
+        /**
+         * @brief Secir model with consistent setup for use in benchmarking.
+         * May be called by an Initializer
+         */
+        struct SecirAgeres
+        {
             typedef mio::SecirModel type;
 
             mio::SecirModel operator() (size_t num_agegroups) {
@@ -98,8 +129,12 @@ namespace benchmark {
                 return model;
             }
         };
-
-        struct SecirAgeresDampings {
+        /**
+         * @brief Secir model with consistent setup for use in benchmarking with added dampings.
+         * May be called by an Initializer
+         */
+        struct SecirAgeresDampings
+        {
             typedef mio::SecirModel type;
 
             mio::SecirModel operator() (size_t num_agegroups) {
@@ -119,8 +154,13 @@ namespace benchmark {
                 return model;
             }
         };
-
-        struct SecirAgeresAbsurdDampings {
+        /**
+         * @brief Secir model with consistent setup for use in benchmarking with added dampings.
+         * Dampings are set up to challenge the integrator, not to be realistic.
+         * May be called by an Initializer
+         */
+        struct SecirAgeresAbsurdDampings
+        {
             typedef mio::SecirModel type;
 
             mio::SecirModel operator() (size_t num_agegroups) {

@@ -1,3 +1,22 @@
+/* 
+* Copyright (C) 2020-2021 German Aerospace Center (DLR-SC)
+*
+* Authors: Rene Schmieding
+*
+* Contact: Martin J. Kuehn <Martin.Kuehn@DLR.de>
+*
+* Licensed under the Apache License, Version 2.0 (the "License");
+* you may not use this file except in compliance with the License.
+* You may obtain a copy of the License at
+*
+*     http://www.apache.org/licenses/LICENSE-2.0
+*
+* Unless required by applicable law or agreed to in writing, software
+* distributed under the License is distributed on an "AS IS" BASIS,
+* WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+* See the License for the specific language governing permissions and
+* limitations under the License.
+*/
 #ifndef BENCH_CORE_H_
 #define BENCH_CORE_H_
 
@@ -18,54 +37,96 @@
 #include <sstream>
 #include <stdio.h>
 
-namespace mio {
-
-namespace benchmark {
-
-    namespace detail {
-        inline void reset_time(double& t, double& dt, const double t_init, const double dt_init) {
-            t       = t_init;
-            dt      = dt_init;
+namespace mio
+{
+namespace benchmark
+{
+    namespace detail
+    {
+        inline void reset_time(double& t, double& dt, const double& t_init, const double& dt_init) {
+            t  = t_init;
+            dt = dt_init;
         }
-
-        template <class dtype>
-        void read(dtype& data, std::ifstream& stream) {
-            std::string reader;
-            if (!std::getline(stream, reader)) abort();
-            std::stringstream parser;
-            parser << reader;
-            parser >> data;
-        }
-
-        void read(double& data, std::ifstream& stream) {
-            std::string reader;
-            if (!std::getline(stream, reader)) abort();
-            if (reader.compare("max") == 0) {
-                data = std::numeric_limits<double>::max();
+        /**
+         * @brief Basic file handler to read parameters from a config file.
+         */
+        class ConfigReader
+        {
+        public:
+            ConfigReader(char const *filepath) : m_file(filepath), m_filename(filepath) {
+                if (!m_file.good()) {
+                    mio::log(mio::LogLevel::critical,
+                             " Could not open config file \'{:s}\'.\n",
+                             m_filename);
+                    abort();
+                }
             }
-            else if (reader.compare("min") == 0) {
-                data = std::numeric_limits<double>::min();
+            ~ConfigReader() {
+                m_file.close();
             }
-            else {
+            /**
+             * @brief Converts a line from the provided config file into data
+             */
+            template <class dtype>
+            void read(dtype& data) {
+                std::string reader;
+                getline<dtype>(reader);
+                // use stringstream to convert to various data types
                 std::stringstream parser;
                 parser << reader;
                 parser >> data;
             }
-        }
-
-        void read(std::vector<double>& data, std::ifstream& stream) {
-            std::string reader;
-            std::stringstream parser;
-            if (!std::getline(stream, reader)) abort();
-            parser << reader;
-            for (double& d : data) {
-                parser >> d;
+            /**
+             * @brief Converts a line from the provided config file into data
+             */
+            void read(double& data) {
+                std::string reader;
+                getline<double>(reader);
+                if (reader.compare("max") == 0) {
+                    data = std::numeric_limits<double>::max();
+                }
+                else if (reader.compare("min") == 0) {
+                    data = std::numeric_limits<double>::min();
+                }
+                else {
+                    std::stringstream parser;
+                    parser << reader;
+                    parser >> data;
+                }
             }
-        }
-    }
+            /**
+             * @brief Converts a line from the provided config file into data
+             */
+            void read(std::vector<double>& data) {
+                std::string reader;
+                std::stringstream parser;
+                getline<double>(reader);
+                parser << reader;
+                for (double& d : data) {
+                    parser >> d;
+                }
+            }
+        private:
+            std::ifstream m_file;
+            char const *m_filename;
+            /**
+             * @brief calls std::getline with internal filestream and logs / aborts on failure
+             */
+            template <class dtype>
+            void getline(std::string& reader) {
+                if (!std::getline(m_file, reader)) {
+                    mio::log(mio::LogLevel::critical,
+                             " Unexpected end of file in \'{:s}\'.\n Expected a value of type \'{:s}\'.\n",
+                             m_filename, typeid(dtype).name());
+                    abort();
+                }
+            }
+        }; // class ConfigReader
+    } // namespace detail
 
-    template <class Model=model::SecirAgeres, size_t num_agegroups=1>
-    struct default_simulation_init {
+    template <class Model=mio::benchmark::model::SecirAgeres, size_t num_agegroups=1>
+    struct default_simulation_init
+    {
         typename Model::type operator () (
             double& abs_tol, double& rel_tol, double& dt_min, double& dt_max,
             double& t, double& t_max, double& dt
@@ -81,31 +142,34 @@ namespace benchmark {
         }
     };
 
-    template <char const *filepath, class Model=model::SecirAgeres>
-    struct simulation_file_init {
+    template <char const *filepath, class Model=mio::benchmark::model::SecirAgeres>
+    struct simulation_file_init
+    {
         typename Model::type operator () (
             double& abs_tol, double& rel_tol, double& dt_min, double& dt_max,
             double& t, double& t_max, double& dt
         ) {
-            std::ifstream file(filepath);
-            if (!file.good()) abort();
+            // read configuration file
+            mio::benchmark::detail::ConfigReader config(filepath);
             size_t num_agegroups;
-            detail::read(num_agegroups, file);
-            detail::read(t, file);
-            detail::read(t_max, file);
-            detail::read(dt, file);
-            detail::read(abs_tol, file);
-            detail::read(rel_tol, file);
-            detail::read(dt_min, file);
-            detail::read(dt_max, file);
-            file.close();
+            config.read(num_agegroups);
+            config.read(t);
+            config.read(t_max);
+            config.read(dt);
+            config.read(abs_tol);
+            config.read(rel_tol);
+            config.read(dt_min);
+            config.read(dt_max);
             return Model()(num_agegroups);
         }
     };
 
     template <class Integrator, class Initializer=default_simulation_init<>>
-    void simulation(::benchmark::State& state) {
-        mio::set_log_level(mio::LogLevel::off);
+    void simulation(::benchmark::State& state)
+    {
+        // suppress non-critical messages
+        mio::set_log_level(mio::LogLevel::critical);
+        // benchmark setup
         double abs_tol, rel_tol, dt_min, dt_max, t, t_max, dt;
 
         auto model = Initializer()(abs_tol, rel_tol, dt_min, dt_max, t, t_max, dt);
@@ -117,8 +181,9 @@ namespace benchmark {
         }
     }
 
-    template <class Model=model::SecirAgeres>
-    struct default_integrator_step_init {
+    template <class Model=mio::benchmark::model::SecirAgeres>
+    struct default_integrator_step_init
+    {
         typename Model::type operator () (
             double& abs_tol, double& rel_tol, double& dt_min, double& dt_max,
             double& t_init, double& dt_init,
@@ -144,27 +209,29 @@ namespace benchmark {
         }
     };
 
-    template <char const *filepath, class Model=model::SecirAgeres>
-    struct integrator_step_file_init {
+    template <char const *filepath, class Model=mio::benchmark::model::SecirAgeres>
+    struct integrator_step_file_init
+    {
         typename Model::type operator () (
             double& abs_tol, double& rel_tol, double& dt_min, double& dt_max,
             double& t_init, double& dt_init,
             mio::DerivFunction& f, Eigen::VectorXd& yt, Eigen::VectorXd& ytp1
         ) {
-            std::ifstream file(filepath);
-            if (!file.good()) abort();
+            // read configuration file
+            mio::benchmark::detail::ConfigReader config(filepath);
             size_t num_agegroups;
-            detail::read(num_agegroups, file);
+            config.read(num_agegroups);
+            config.read(t_init);
+            config.read(dt_init);
+            config.read(abs_tol);
+            config.read(rel_tol);
+            config.read(dt_min);
+            config.read(dt_max);
+            // create model and read initial yt values
             typename Model::type model = Model()(num_agegroups);
-            detail::read(t_init, file);
-            detail::read(dt_init, file);
-            detail::read(abs_tol, file);
-            detail::read(rel_tol, file);
-            detail::read(dt_min, file);
-            detail::read(dt_max, file);
             std::vector<double> yt_vals(model.get_initial_values().size());
-            detail::read(yt_vals, file);
-            file.close();
+            config.read(yt_vals);
+            // initialize remaining components
             f     = [model](Eigen::Ref<const Eigen::VectorXd> y_f, double t_f, Eigen::Ref<Eigen::VectorXd> dydt_f) { model.eval_right_hand_side(y_f, y_f, t_f, dydt_f); };
             yt    = Eigen::VectorXd::Zero(yt_vals.size());
             ytp1  = Eigen::VectorXd::Zero(yt_vals.size());
@@ -176,8 +243,11 @@ namespace benchmark {
     };
 
     template <class Integrator, class Initializer=default_integrator_step_init<>>
-    void integrator_step(::benchmark::State& state) {
-        mio::set_log_level(mio::LogLevel::off);
+    void integrator_step(::benchmark::State& state)
+    {
+        // suppress non-critical messages
+        mio::set_log_level(mio::LogLevel::critical);
+        // benchmark setup
         double abs_tol, rel_tol, dt_min, dt_max, t_init, dt_init;
         mio::DerivFunction f;
         Eigen::VectorXd yt, ytp1;
@@ -189,7 +259,7 @@ namespace benchmark {
         double t, dt;
         for (auto _ : state) {
             // This code gets timed
-            detail::reset_time(t, dt, t_init, dt_init);
+            mio::benchmark::detail::reset_time(t, dt, t_init, dt_init);
             I.step(f, yt, t, dt, ytp1);
         }
     }
