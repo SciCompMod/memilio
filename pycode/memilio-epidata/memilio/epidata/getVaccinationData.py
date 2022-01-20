@@ -27,7 +27,7 @@ import numpy as np
 
 from memilio.epidata import getDataIntoPandasDataFrame as gd
 from memilio.epidata import defaultDict as dd
-from memilio.epidata import getPopulationData
+from memilio.epidata import getPopulationData as gpd
 from memilio.epidata import modifyDataframeSeries
 from memilio.epidata import customPlot
 from memilio.epidata import geoModificationGermany as geoger
@@ -246,12 +246,9 @@ def get_vaccination_data(read_data=dd.defaultDict['read_data'],
             directory + "county_current_population_dim401.json")
     except:
         print("Population data was not found. Download it from the internet.")
-        population = getPopulationData.get_population_data(read_data=False,
-                                                               file_format=file_format,
-                                                               out_folder=out_folder,
-                                                               no_raw=no_raw,
-                                                               split_gender=False,
-                                                               merge_eisenach=False)
+        population = gpd.get_population_data(
+            read_data=False, file_format=file_format, out_folder=out_folder,
+            no_raw=no_raw, split_gender=False, merge_eisenach=False)
 
     min_age_pop = []
     extrapolate_agegroups = True

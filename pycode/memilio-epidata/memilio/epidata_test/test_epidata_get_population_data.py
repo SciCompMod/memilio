@@ -119,7 +119,7 @@ class Test_getPopulationData(fake_filesystem_unittest.TestCase):
     test_current_population_gender_result = pd.DataFrame(
         data, columns=columns_gender)
     test_current_population_gender_result = test_current_population_gender_result.astype(
-        'int32')
+        'int64')
 
     def setUp(self):
         self.setUpPyfakefs()
@@ -139,11 +139,11 @@ class Test_getPopulationData(fake_filesystem_unittest.TestCase):
             merge_eisenach)
 
         test_df = pd.read_json(os.path.join(
-            self.path, 'Germany/', 'county_current_population.json'))
+            self.path, 'Germany/', 'county_current_population_dim401.json'))
         test_df = test_df.drop(
             test_df[test_df[dd.EngEng['population']] == 0].index)
         pd.testing.assert_frame_equal(
-            test_df, self.test_current_population_result)
+            test_df.astype('int64'), self.test_current_population_result)
 
     @patch('memilio.epidata.getPopulationData.load_age_population_data',
            return_value=(test_counties, test_zensus, test_reg_key))
@@ -159,7 +159,7 @@ class Test_getPopulationData(fake_filesystem_unittest.TestCase):
         test_df = test_df.drop(
             test_df[test_df[dd.EngEng['population']] == 0].index)
         pd.testing.assert_frame_equal(
-            test_df, self.test_current_population_gender_result)
+            test_df.astype('int64'), self.test_current_population_gender_result)
 
     @ patch('pandas.read_excel', return_value=test_counties)
     @ patch('pandas.read_excel', return_value=test_reg_key)

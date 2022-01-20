@@ -69,7 +69,7 @@ def get_new_counties(data):
     # Ludwigslust-Parchim
     data_temp[-1, 0] = 13076
 
-    to_delete=[]
+    to_delete = []
 
     for i in range(len(data_temp[:, 0])):
         # fuse "Göttingen" and "Osterode am Harz" into Göttingen
@@ -216,11 +216,11 @@ def load_age_population_data(out_folder=dd.defaultDict['out_folder'],
 
 
 def get_population_data(read_data=dd.defaultDict['read_data'],
-                            file_format=dd.defaultDict['file_format'],
-                            out_folder=dd.defaultDict['out_folder'],
-                            no_raw=dd.defaultDict['no_raw'],
-                            split_gender=False,
-                            merge_eisenach=True):
+                        file_format=dd.defaultDict['file_format'],
+                        out_folder=dd.defaultDict['out_folder'],
+                        no_raw=dd.defaultDict['no_raw'],
+                        split_gender=False,
+                        merge_eisenach=True):
     """! Download data with age splitting
 
    Data is downloaded from the following sources
@@ -304,7 +304,7 @@ def get_population_data(read_data=dd.defaultDict['read_data'],
                    'F 6-14 years', 'F 15-17 years', 'F 18-24 years',
                    'F 25-29 years', 'F 30-39 years', 'F 40-49 years',
                    'F 50-64 years', 'F 65-74 years', 'F >74 years']
-    
+
     data = get_new_counties(data)
 
     # compute ratio of current and 2011 population data
@@ -330,7 +330,7 @@ def get_population_data(read_data=dd.defaultDict['read_data'],
     # create dataframe
     df_current = pd.DataFrame(
         np.round(data_current).astype(int), columns=columns)
-    if merge_eisenach == False:
+    if merge_eisenach == True:
         # Merge Eisenach and Wartburgkreis
         df_current = geoger.merge_df_counties_all(
             df_current, sorting=[dd.EngEng["idCounty"]],
