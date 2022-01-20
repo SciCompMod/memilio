@@ -162,7 +162,7 @@ def get_divi_data(read_data=dd.defaultDict['read_data'],
     df[dd.EngEng['date']] = pd.to_datetime(df[dd.EngEng['date']], format='%Y-%m-%d %H:%M:%S')
     df = extract_subframe_based_on_dates(df, start_date, end_date)
 
-    # insert names of  states
+    # insert names of states
     df.insert(loc=0, column=dd.EngEng["idState"], value=df[dd.EngEng["state"]])
     for item in geoger.get_state_names_and_ids():
         df.loc[df[dd.EngEng["idState"]] == item[1],
