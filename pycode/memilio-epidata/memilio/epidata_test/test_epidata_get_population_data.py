@@ -127,9 +127,9 @@ class Test_getPopulationData(fake_filesystem_unittest.TestCase):
         test = gpd.get_new_counties(self.test_old_counties)
         self.assertTrue(np.array_equal(test, self.test_new_counties))
     
-    @patch('memilio.epidata.getPopulationData.load_age_population_data',
+    @patch('memilio.epidata.getPopulationData.load_population_data',
            return_value=(test_counties, test_zensus, test_reg_key))
-    def test_get_age_population(self, mock_data):
+    def test_get_population(self, mock_data):
 
         [read_data, file_format, out_folder, no_raw, split_gender,
          merge_eisenach] = [True, "json", self.path, False, False, False]
@@ -145,7 +145,7 @@ class Test_getPopulationData(fake_filesystem_unittest.TestCase):
         pd.testing.assert_frame_equal(
             test_df.astype('int64'), self.test_current_population_result)
 
-    @patch('memilio.epidata.getPopulationData.load_age_population_data',
+    @patch('memilio.epidata.getPopulationData.load_population_data',
            return_value=(test_counties, test_zensus, test_reg_key))
     def test_popul_split_gender(self, mock_data):
 
@@ -165,16 +165,16 @@ class Test_getPopulationData(fake_filesystem_unittest.TestCase):
     @ patch('pandas.read_excel', return_value=test_reg_key)
     @ patch('memilio.epidata.getDataIntoPandasDataFrame.loadCsv',
             return_value=test_zensus)
-    def test_load_age_population_data(
+    def test_load_population_data(
             self, mock_read_excel1, mock_read_excel2, mock_read_csv):
 
         directory = os.path.join(self.path, 'Germany/')
 
-        counties_write, zensus_write, reg_key_write = gpd.load_age_population_data(
+        counties_write, zensus_write, reg_key_write = gpd.load_population_data(
             out_folder=self.path, read_data=False)
         self.assertEqual(len(os.listdir(directory)), 3)
 
-        counties_read, zensus_read, reg_key_read = gpd.load_age_population_data(
+        counties_read, zensus_read, reg_key_read = gpd.load_population_data(
             out_folder=self.path, read_data=True)
 
         pd.testing.assert_frame_equal(
@@ -195,7 +195,7 @@ class Test_getPopulationData(fake_filesystem_unittest.TestCase):
         mocklcsv.side_effect = ValueError
 
         with self.assertRaises(SystemExit) as cm:
-            gpd.load_age_population_data(self.path)
+            gpd.load_population_data(self.path)
         exit_string = "Error: The counties file does not exist."
         self.assertEqual(cm.exception.code, exit_string)
 
@@ -203,7 +203,7 @@ class Test_getPopulationData(fake_filesystem_unittest.TestCase):
         mocklexcel.return_value = self.test_zensus.copy()
         mocklcsv.side_effect = ValueError
         with self.assertRaises(SystemExit) as cm:
-            gpd.load_age_population_data(self.path)
+            gpd.load_population_data(self.path)
         exit_string = "Error: The zensus file does not exist."
         self.assertEqual(cm.exception.code, exit_string)
 

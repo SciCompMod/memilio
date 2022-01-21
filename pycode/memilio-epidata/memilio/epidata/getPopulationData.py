@@ -41,7 +41,6 @@ def get_new_counties(data):
    Thus, the new ones have to be added, the data has to be calculated and the old counties have to be deleted.
 
    @param data_temp Pandas dataframe
-   @param to_delete list of counties that have to be deleted.
    @return Changed data
    """
 
@@ -117,15 +116,22 @@ def get_new_counties(data):
     return data_temp
 
 
-def load_age_population_data(out_folder=dd.defaultDict['out_folder'],
-                             read_data=dd.defaultDict['read_data'],
-                             no_raw=dd.defaultDict['no_raw'],
-                             file_format=dd.defaultDict['file_format']):
+def load_population_data(out_folder=dd.defaultDict['out_folder'],
+                         read_data=dd.defaultDict['read_data'],
+                         no_raw=dd.defaultDict['no_raw'],
+                         file_format=dd.defaultDict['file_format']):
     """! Load of counties, zensus and reg_key files
+
+    Data is downloaded from the following sources
+   - Federal Statistical Office of Germany (Destatis), Genesis-Online
+   current data for population per county [stored in "counties"]
+   - Zensus2011 data splitted by gender for whole germany, states, counties in xls
+   with additional data from 30.04.2011 (just used for reg_key?) [stored in "reg_key"]
+   - Zensus2011 data from opendata splitted for age and gender [stored in "zensus"]
 
    Data is either downloaded or read from "out_folder"/Germany/.
 
-   @param out_folder Path to folder where data is written in folder out_folder/Germany.
+   @param out_folder Path to folder where data is written in folder out_folder/Germany. Default defined in defaultDict.
    @param read_data False or True. Defines if data is read from file or downloaded. Default defined in defaultDict.
    @param no_raw True or False. Defines if unchanged raw data is written or not. Default defined in defaultDict.
    @param file_format File format which is used for writing the data. Default defined in defaultDict.
@@ -224,7 +230,8 @@ def get_population_data(read_data=dd.defaultDict['read_data'],
     """! Download data with age splitting
 
    Data is downloaded from the following sources
-   - our own migration [stored in "counties"]
+   - Federal Statistical Office of Germany (Destatis), Genesis-Online
+   current data for population per county [stored in "counties"]
    - Zensus2011 data splitted by gender for whole germany, states, counties in xls
    with additional data from 30.04.2011 (just used for reg_key?) [stored in "reg_key"]
    - Zensus2011 data from opendata splitted for age and gender [stored in "zensus"]
@@ -245,8 +252,9 @@ def get_population_data(read_data=dd.defaultDict['read_data'],
    @param merge_eisenach [Default: True] or False. Defines whether the counties 'Wartburgkreis' and 'Eisenach' are listed separately or combined as one entity 'Wartburgkreis'.
    @return DataFrame with adjusted population data for all ages to current level.
     """
-    counties, zensus, reg_key = load_age_population_data(
-        out_folder, read_data=read_data, no_raw=no_raw, file_format=file_format)
+    counties, zensus, reg_key = load_population_data(
+        out_folder, read_data=read_data, no_raw=no_raw,
+        file_format=file_format)
 
     # find region keys for census population data
     key = np.zeros((len(zensus)))
@@ -259,7 +267,7 @@ def get_population_data(read_data=dd.defaultDict['read_data'],
                     key[i] = reg_key['AGS'].values[j]
 
     inds = np.unique(key, return_index=True)[1]
-
+    # columns of downloaded data which should be replaced
     male = ['M_Unter_3', 'M_3_bis_5', 'M_6_bis_14', 'M_15_bis_17',
             'M_18_bis_24', 'M_25_bis_29', 'M_30_bis_39', 'M_40_bis_49',
             'M_50_bis_64', 'M_65_bis_74', 'M_75_und_aelter']
@@ -268,7 +276,7 @@ def get_population_data(read_data=dd.defaultDict['read_data'],
               'W_50_bis_64', 'W_65_bis_74', 'W_75_und_aelter']
 
     if not split_gender:
-        # add male and female population data
+        # get data from zensus file and add male and female population data
         data = np.zeros((len(inds), len(male)+2))
         data[:, 0] = key[inds].astype(int)
         data[:, 1] = zensus[dd.invert_dict(
@@ -277,7 +285,7 @@ def get_population_data(read_data=dd.defaultDict['read_data'],
             data[:, i+2] = zensus[male[i]].values[inds].astype(
                 int) + zensus[female[i]].values[inds].astype(int)
 
-        # define columns for dataframe
+        # define new columns for dataframe
         columns = [
             dd.EngEng['idCounty'],
             dd.EngEng['population'],
@@ -285,6 +293,7 @@ def get_population_data(read_data=dd.defaultDict['read_data'],
             '18-24 years', '25-29 years', '30-39 years', '40-49 years',
             '50-64 years', '65-74 years', '>74 years']
     else:
+        # get data from zensus file
         data = np.zeros((len(inds), len(male)+len(female)+2))
         data[:, 0] = key[inds].astype(int)
         data[:, 1] = zensus[dd.invert_dict(
@@ -294,7 +303,7 @@ def get_population_data(read_data=dd.defaultDict['read_data'],
         for i in range(len(female)):
             data[:, i+len(male)+2] = zensus[female[i]].values[inds].astype(int)
 
-        # define columns for dataframe
+        # define new columns for dataframe
         columns = [dd.EngEng['idCounty'],
                    dd.EngEng['population'],
                    'M <3 years', 'M 3-5 years', 'M 6-14 years',
@@ -335,15 +344,12 @@ def get_population_data(read_data=dd.defaultDict['read_data'],
         df_current = geoger.merge_df_counties_all(
             df_current, sorting=[dd.EngEng["idCounty"]],
             columns=dd.EngEng["idCounty"])
-
-        # Write Dataframe
-        gd.write_dataframe(df_current, directory,
-                           'county_current_population', file_format)
+        filename = 'county_current_population'
 
     else:
         # Write Dataframe without merging
-        gd.write_dataframe(df_current, directory,
-                           'county_current_population_dim401', file_format)
+        filename = 'county_current_population_dim401'
+    gd.write_dataframe(df_current, directory, filename, file_format)
 
     return df_current
 
