@@ -19,6 +19,7 @@
 #############################################################################
 import os
 import pandas as pd
+import numpy as np
 
 from memilio.epidata import getDataIntoPandasDataFrame as gd
 from memilio.epidata import defaultDict as dd
@@ -42,9 +43,34 @@ def createFederalStatesMobility(mobility_file, file_format=dd.defaultDict['file_
     mobility_matrix = pd.read_csv(
         directory + mobility_file + '.txt', sep=' ', header=None)   
 
-    if(len(mobility_matrix) == geoger.get_county_ids()):
+    if(len(mobility_matrix) == len(geoger.get_county_ids())):
+        # get county and state IDs
+        countyIDs = geoger.get_county_ids()
+        stateIDs = geoger.get_state_ids()
+        # get state ID to county ID map
+        stateID_to_countyID = geoger.get_stateid_to_countyids_map()
+        # initialize federal states mobility matrix
+        mobility_matrix_states = np.zeros((len(stateID_to_countyID), len(stateID_to_countyID)))
 
-        x=15
+        # iterate over state_to_county map and replace IDs by numbering 0, ..., n
+        state_indices = []
+        county_indices = []
+        for state, counties in stateID_to_countyID.items():
+            state_indices.append(stateIDs.index(state))
+            county_indices.append(np.array([countyIDs.index(county) for county in counties]))
+
+        state_to_county = dict(zip(state_indices, county_indices))
+        # iterate over all states
+        for state, counties in state_to_county.items():
+            # iterate over all neighbors
+            for state_neighb, counties_neighb in state_to_county.items():
+                
+                if state != state_neighb:
+
+                    mobility_matrix_states[state, state_neighb] = mobility_matrix.iloc[counties, counties_neighb].sum(axis=0).sum()
+                    mobility_matrix_states[state_neighb, state] = mobility_matrix.iloc[counties_neighb, counties].sum(axis=1).sum()
+
+
 
 def updateMobility2022(mobility_file, file_format=dd.defaultDict['file_format'],
                          out_folder=dd.defaultDict['out_folder'].split(
@@ -75,17 +101,17 @@ def updateMobility2022(mobility_file, file_format=dd.defaultDict['file_format'],
         ids400 = geoger.get_county_ids()
         ids401 = geoger.get_county_ids(merge_eisenach=False)
         indices = [ids401.index(i) for i in ids400]
-        twitter_new = mobility_matrix.iloc[indices, indices]
+        mobility_matrix_new = mobility_matrix.iloc[indices, indices]
         idx_eisenach_old = ids401.index(geoger.CountyMerging[16063][1])
         idx_wartburg_new = ids400.index(geoger.CountyMerging[16063][0])
-        twitter_new.iloc[idx_wartburg_new,
+        mobility_matrix_new.iloc[idx_wartburg_new,
                          :] += mobility_matrix.iloc[idx_eisenach_old, indices].values
-        twitter_new.iloc[:, idx_wartburg_new] += mobility_matrix.iloc[indices,
+        mobility_matrix_new.iloc[:, idx_wartburg_new] += mobility_matrix.iloc[indices,
                                                               idx_eisenach_old].values
         # TODO: this file is generally to be optimized
-        if abs(twitter_new.iloc[0:382, 0:382]-mobility_matrix.iloc[0:382, 0:382]).max().max() > 1e-10:
+        if abs(mobility_matrix_new.iloc[0:382, 0:382]-mobility_matrix.iloc[0:382, 0:382]).max().max() > 1e-10:
             print('Error...')
-        twitter_new.to_csv(
+        mobility_matrix_new.to_csv(
             directory + mobility_file + '.txt', sep=' ', header=None, index=False)
 
 
