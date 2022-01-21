@@ -157,8 +157,7 @@ def get_vaccination_data(read_data=dd.defaultDict['read_data'],
                          end_date=dd.defaultDict['end_date'],
                          make_plot=dd.defaultDict['make_plot'],
                          moving_average=dd.defaultDict['moving_average'],
-                         sanitize_data=True,
-                         max_sanit_threshold=0.95):
+                         sanitize_data=True):
     """! Downloads the RKI vaccination data and provides different kind of structured data.
 
     The data is read from the internet.
@@ -170,8 +169,8 @@ def get_vaccination_data(read_data=dd.defaultDict['read_data'],
     - The column "Date" provides information on the date of each data point given in the corresponding columns.
 
     - The data is exported in three different ways:
-        - all_county_vacc: Resolved per county by grouping all original age groups (12-17, 18-59, 60+)
-        - all_county_agevacc_vacc: Resolved per county and original age group (12-17, 18-59, 60+)
+        - all_county_vacc: Resolved per county by grouping all original age groups (05-11, 12-17, 18-59, 60+)
+        - all_county_agevacc_vacc: Resolved per county and original age group (05-11, 12-17, 18-59, 60+)
         - all_county_ageinf_vacc: Resolved per county and infection data age group (0-4, 5-14, 15-34, 35-59, 60-79, 80+)
             - To do so getPopulationData is used and age group specific date from the original source
                 is extrapolated on the new age groups on county level.
@@ -193,8 +192,7 @@ def get_vaccination_data(read_data=dd.defaultDict['read_data'],
         all counties with vaccination quotas of more than 'sanitizing_threshold' will be adjusted to the average of its
         federal state and remaining vaccinations will be distributed to closely connected neighboring regions 
         using commuter mobility networks. The sanitizing threshold will be defined by the age group-specific average
-        on the corresponding federal state level + 5 % or max_sanit_threshold if this number exceeds max_sanit_threshold.
-    @param max_sanit_threshold [Default: 0.95] Maximum relative number of vaccinations per county and age group.
+        on the corresponding vaccination ratios on county and federal state level.
     @param moving_average 0 [Default] or Number>0. Defines the number of days for which a centered moving average is computed.
     """
     start_time = time.perf_counter()
@@ -418,7 +416,7 @@ def get_vaccination_data(read_data=dd.defaultDict['read_data'],
 
     ######## data with age resolution as provided in original frame ########
     # transform and write data frame resolved per county and age (with age
-    # classes as provided in vaccination tables: 12-17, 18-59, 60+)
+    # classes as provided in vaccination tables: 05-11, 12-17, 18-59, 60+)
     df_data_agevacc_county_cs = []
     for i in range(0, len(df_data_array)):
         df_data_array[i] = df_data_array[i].reset_index()
@@ -483,10 +481,10 @@ def get_vaccination_data(read_data=dd.defaultDict['read_data'],
     aver_ratio = df_data_agevacc_county_cs.groupby(dd.EngEng['ageRKI']).agg({column_names_new[1]: sum})[
         column_names_new[1]].values/population_old_ages[unique_age_groups_old].sum().values
     max_sanit_threshold_arr = np.zeros((len(unique_age_groups_old)))
-    # compute maximum_sanitizing threshold per age group as maxmimum of country-wide ratio + 5%
+    # compute maximum_sanitizing threshold per age group as maxmimum of country-wide ratio + 10%
     # and predefined maximum value; threshold from becoming larger than 1
     for kk in range(len(unique_age_groups_old)):
-        max_sanit_threshold_arr[kk] = min(1, max(max_sanit_threshold, aver_ratio[kk]+0.05))
+        max_sanit_threshold_arr[kk] = min(1, aver_ratio[kk]+0.1)
     
     end_time = time.perf_counter()
     print("Time needed initial phase: " +
