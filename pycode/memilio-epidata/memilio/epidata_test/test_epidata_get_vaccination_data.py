@@ -52,6 +52,9 @@ class TestGetVaccinationData(fake_filesystem_unittest.TestCase):
 
     for county in counties:
         vacc_data = [
+            ('2020-12-27', str(county), '05-11', 1, 3),
+            ('2020-12-27', str(county), '05-11', 2, 2),
+            ('2020-12-27', str(county), '05-11', 3, 1),            
             ('2020-12-27', str(county), '12-17', 1, 10),
             ('2020-12-27', str(county), '12-17', 2, 15),
             ('2020-12-27', str(county), '12-17', 3, 72),
@@ -75,7 +78,7 @@ class TestGetVaccinationData(fake_filesystem_unittest.TestCase):
     
     @patch('memilio.epidata.getVaccinationData.download_vaccination_data',
            return_value=df_vacc_data)
-    def test_get_standart_vaccination_data_no_errors_with_plots(
+    def test_get_standard_vaccination_data_no_errors_with_plots(
             self, mockv):
         gvd.get_vaccination_data(out_folder=self.path)
     
@@ -87,14 +90,15 @@ class TestGetVaccinationData(fake_filesystem_unittest.TestCase):
 
         # test agegroups in raw dataframe
         agegr_arr = df['Altersgruppe'].unique()
+        self.assertIn('05-11', agegr_arr)
         self.assertIn('12-17', agegr_arr)
         self.assertIn('18-59', agegr_arr)
         self.assertIn('60+', agegr_arr)
 
         if 'u' in agegr_arr:
-            self.assertEqual(len(agegr_arr), 4)
+            self.assertEqual(len(agegr_arr), 5)
         if not 'u' in agegr_arr:
-            self.assertEqual(len(agegr_arr), 3)
+            self.assertEqual(len(agegr_arr), 4)
 
     
     @patch('memilio.epidata.getVaccinationData.pd.read_csv',
@@ -109,6 +113,9 @@ class TestGetVaccinationData(fake_filesystem_unittest.TestCase):
             'Anzahl']
 
         vacc_data = [
+            ('2020-12-27', '1001', '05-11', 1, 3),
+            ('2020-12-27', '1001', '05-11', 2, 2),
+            ('2020-12-27', '1001', '05-11', 3, 1),            
             ('2020-12-27', '1001', '12-17', 1, 10),
             ('2020-12-27', '1001', '12-17', 2, 15),
             ('2020-12-27', '1001', '12-17', 3, 72),
@@ -156,7 +163,7 @@ class TestGetVaccinationData(fake_filesystem_unittest.TestCase):
 
         self.assertEqual(
             len(df_split),
-            3, 'Did not divide dataframe in three sperate ones.')
+            3, 'Did not divide dataframe in three separate ones.')
         for i in range(0, len(new_col_labels)):
             self.assertEqual(
                 number_unique_idents_df[i],
@@ -175,6 +182,9 @@ class TestGetVaccinationData(fake_filesystem_unittest.TestCase):
             'Anzahl']
 
         vacc_data = [
+            ('2020-12-27', '1001', '05-11', 1, 3),
+            ('2020-12-27', '1001', '05-11', 2, 2),
+            ('2020-12-27', '1001', '05-11', 3, 1),              
             ('2020-12-27', '1001', '12-17', 1, 10),
             ('2020-12-27', '1001', '12-17', 2, 15),
             ('2020-12-27', '1001', '12-17', 3, 72),
@@ -223,7 +233,7 @@ class TestGetVaccinationData(fake_filesystem_unittest.TestCase):
 
         self.assertEqual(
             len(df_split),
-            3, 'Did not divide dataframe in three sperate ones.')
+            3, 'Did not divide dataframe in three separate ones.')
         for i in range(0, len(new_col_labels)):
             self.assertEqual(
                 number_unique_idents_df[i],
