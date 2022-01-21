@@ -25,21 +25,15 @@ from memilio.epidata import getDataIntoPandasDataFrame as gd
 from memilio.epidata import defaultDict as dd
 from memilio.epidata import geoModificationGermany as geoger
 
-def createFederalStatesMobility(mobility_file, file_format=dd.defaultDict['file_format'],
-                         out_folder=dd.defaultDict['out_folder'].split('/pydata')[0]):
+def createFederalStatesMobility(directory, mobility_file, file_format=dd.defaultDict['file_format']):
     """! Creates mobility matrices for German federal states based on
     county mobility.
 
+    @param directory Path to folder where data is read and written.
+    @param mobility_file Mobility matrix file which has to be updated.
     @param file_format File format which is used for writing the data. 
         Default defined in defaultDict.
-    @param out_folder Path to folder where data is read and written.
-        Default is data/mobility folder in root directory of MEmilio.
     """
-    directory = out_folder
-    directory = os.path.join(directory, 'mobility/')
-
-    directory = directory.replace('memilio','memilio-fed-state')
-
     mobility_matrix = pd.read_csv(
         directory + mobility_file + '.txt', sep=' ', header=None)   
 
@@ -72,25 +66,15 @@ def createFederalStatesMobility(mobility_file, file_format=dd.defaultDict['file_
 
 
 
-def updateMobility2022(mobility_file, file_format=dd.defaultDict['file_format'],
-                         out_folder=dd.defaultDict['out_folder'].split(
-    '/pydata')[0]
-):
+def updateMobility2022(directory, mobility_file, file_format=dd.defaultDict['file_format']):
     """! Merges rows and columns of Eisenach to Wartburgkreis which has
     become one single county by July 2021. To be optimized for production code.
 
+    @param directory Path to folder where data is read and written.
     @param mobility_file Mobility matrix file which has to be updated.
     @param file_format File format which is used for writing the data. 
         Default defined in defaultDict.
-    @param out_folder Path to folder where data is read and written.
-        Default is data/mobility folder in root directory of MEmilio.
     """
-
-    directory = out_folder
-    directory = os.path.join(directory, 'mobility/')
-
-    directory = directory.replace('memilio','memilio-fed-state')
-
     mobility_matrix = pd.read_csv(
         directory + mobility_file + '.txt', sep=' ', header=None)
 
@@ -117,13 +101,17 @@ def updateMobility2022(mobility_file, file_format=dd.defaultDict['file_format'],
 
 def main():
     """! Main program entry."""
+    directory = dd.defaultDict['out_folder'].split('/pydata')[0]
+    directory = os.path.join(directory, 'mobility/')
+
+    directory = directory.replace('memilio','memilio-fed-state')
 
     # Merge Eisenach and Wartbugkreis in Input Data if need be
-    updateMobility2022(mobility_file='twitter_scaled_1252')
-    updateMobility2022(mobility_file='commuter_migration_scaled')
+    updateMobility2022(directory, mobility_file='twitter_scaled_1252')
+    updateMobility2022(directory, mobility_file='commuter_migration_scaled')
     # create federal states mobility matrix (not used in simulation for now)
-    createFederalStatesMobility(mobility_file='twitter_scaled_1252')
-    createFederalStatesMobility(mobility_file='commuter_migration_scaled')
+    createFederalStatesMobility(directory, mobility_file='twitter_scaled_1252')
+    createFederalStatesMobility(directory, mobility_file='commuter_migration_scaled')
 
 
 if __name__ == "__main__":
