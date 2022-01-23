@@ -5,3 +5,10 @@ if(NOT TARGET @PROJECT_NAME@::@PROJECT_NAME@)
 endif()
 
 set(MEMILIO_LIBRARIES @PROJECT_NAME@::@PROJECT_NAME@)
+
+include(CMakeFindDependencyMacro)
+find_dependency(Boost REQUIRED CONFIG COMPONENTS filesystem)
+find_dependency(Eigen3 REQUIRED CONFIG)
+find_dependency(spdlog REQUIRED CONFIG)
+find_dependency(jsoncpp REQUIRED CONFIG)
+find_dependency(HDF5 REQUIRED CONFIG COMPONENTS C)

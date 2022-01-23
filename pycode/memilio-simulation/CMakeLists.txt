@@ -6,25 +6,10 @@ set(MEMILIO_CPP_DIR ${CMAKE_CURRENT_SOURCE_DIR}/../../cpp)
 add_subdirectory(${MEMILIO_CPP_DIR} ${CMAKE_CURRENT_BINARY_DIR}/cpp EXCLUDE_FROM_ALL)
 set(CMAKE_MODULE_PATH "${MEMILIO_CPP_DIR}/cmake" ${CMAKE_MODULE_PATH})
 
-option(MEMILIO_USE_SYSTEM_PYBIND11 "Use pybind11 installed on the system instead of Conan package." OFF)
-
-set(_MEMILIO_PYBIND11_VERSION 2.7.1)
-if (MEMILIO_USE_CONAN)
-    message(STATUS "Memilio: Installing required dependencies for python bindings with Conan.")
-    
-    include(memilio-conan)
-
-    set(_MEMILIO_REQUIRES "")
-    if (NOT MEMILIO_USE_SYSTEM_PYBIND11)
-        list(APPEND _MEMILIO_REQUIRES pybind11/${_MEMILIO_PYBIND11_VERSION})
-    endif()
-
-    memilio_conan_install(REQUIRES ${_MEMILIO_REQUIRES})
-
-    if (NOT MEMILIO_USE_SYSTEM_PYBIND11)
-        set(pybind11_DIR ${CMAKE_CURRENT_BINARY_DIR} CACHE PATH "" FORCE)
-    endif()
-endif()
+message(STATUS "Memilio: Installing required dependencies for python bindings with Conan.")
+include(memilio-conan)
+memilio_conan_install(REQUIRES pybind11/2.7.1)
+set(pybind11_DIR ${CMAKE_CURRENT_BINARY_DIR} CACHE PATH "" FORCE)
 
 find_package(Python REQUIRED COMPONENTS Interpreter Development.Module) #help pybind find the right python, fails on multilinux2014 docker images
 find_package(pybind11 CONFIG REQUIRED)

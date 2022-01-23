@@ -77,15 +77,17 @@ runs:
           exit 1
         fi
         mkdir -p build && cd build
-        cmake -DCMAKE_BUILD_TYPE=${{ inputs.config }} -DMEMILIO_TEST_COVERAGE=${{ inputs.coverage }} -DMEMILIO_SANITIZE_ADDRESS=${{ inputs.sanitize-addr }} -DMEMILIO_SANITIZE_UNDEFINED=${{ inputs.sanitize-ub }} -DMEMILIO_USE_SYSTEM_JSONCPP=${{ inputs.optional-dependencies == 'ON' && 'OFF' || 'ON' }} -DMEMILIO_USE_SYSTEM_HDF5=${{ inputs.optional-dependencies == 'ON' && 'OFF' || 'ON' }} ..
+        cmake -DCMAKE_BUILD_TYPE=${{ inputs.config }} -DMEMILIO_TEST_COVERAGE=${{ inputs.coverage }} -DMEMILIO_SANITIZE_ADDRESS=${{ inputs.sanitize-addr }} -DMEMILIO_SANITIZE_UNDEFINED=${{ inputs.sanitize-ub }} ..
         make -j4
     - name: create build dir archive
       shell: bash
+      if: always()
       run: |
         cd cpp
         tar -czf build.tar.gz build
     - name: Upload built test directory
       uses: actions/upload-artifact@v2
+      if: always()
       with:
         name: build-cpp-linux-${{ inputs.compiler }}-${{ inputs.version }}-${{ inputs.config }}-${{ inputs.optional-dependencies == 'ON' && 'full' || 'part'}}
         path: cpp/build.tar.gz

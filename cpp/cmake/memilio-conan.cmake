@@ -3,36 +3,11 @@ include(conan)
 set(MEMILIO_CONAN_BUILD "missing" CACHE STRING "Semicolon-separated list of packages that are built from source by conan instead of loaded as binary packages. Equivalent to 'conan install --build <package>', see conan documentation. Default 'missing', i.e. packages are only built if binary package is not available.")
 mark_as_advanced(MEMILIO_CONAN_BUILD)
 
-#memilio_target_alternatives(TARGET x ALTERNATIVES z y) creates library x as an alias for one of the
-#alternative targets z or y if they exist, e.g. in case of inconsistent upper/lower case names.
-#conan packages sometimes define different target names than regular installed packages.
-macro(memilio_target_alternatives)
-    cmake_parse_arguments(_MTA "" "TARGET" "ALTERNATIVES" ${ARGN})
-    unset (_ALT_FOUND)
-    if (NOT TARGET ${_MTA_TARGET})
-        foreach(ALT ${_MTA_ALTERNATIVES})
-            if (TARGET ${ALT})
-                message(STATUS "Memilio: Found alternative ${ALT} for target ${_MTA_TARGET}.")
-                string(REPLACE "::" "_" _MTA_TARGET_CLEAN "memilio_${_MTA_TARGET}_alt")
-                add_library(${_MTA_TARGET_CLEAN} INTERFACE)
-                target_link_libraries(${_MTA_TARGET_CLEAN} INTERFACE ${ALT})
-                add_library(${_MTA_TARGET} ALIAS ${_MTA_TARGET_CLEAN})
-                set (_ALT_FOUND 1)
-                break()
-            endif()
-        endforeach()
-        if (NOT _ALT_FOUND)
-            message(STATUS "Memilio: No alternative in ${_MTA_ALTERNATIVES} found for target ${_MTA_TARGET}")
-        endif()
-    endif()
-endmacro()
-
-#memilio_conan_install(REQUIRES x y z) installs the conan packages x, y, and z.
-#packages are given as the usual conan package reference, i.e. <name>/<version>.
+#memilio_conan_install(REQUIRES x y z OPTIONS a b c) installs the conan packages x, y, and z with options a, b, and c.
+#packages are specified as the usual conan package reference, i.e. <name>/<version>.
+#options are specified the usual conan way, i.e. <packagename>:<option>=<value>.
 macro(memilio_conan_install)
     cmake_parse_arguments(_MCI "" "" "REQUIRES;OPTIONS" ${ARGN})
-    message(STATUS ${_MCI_REQUIRES})
-    message(STATUS ${_MCI_OPTIONS})
 
     conan_cmake_configure(
         REQUIRES ${_MCI_REQUIRES}

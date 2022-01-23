@@ -66,7 +66,7 @@ add_library(memilio
 target_include_directories(memilio PUBLIC
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/..>
     $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}> #includes configured by cmake
-    $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>   
+    $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
 )
 set_target_properties(memilio PROPERTIES POSITION_INDEPENDENT_CODE ON INTERFACE_POSITION_INDEPENDENT_CODE ON)
 target_compile_features(memilio PUBLIC cxx_std_14)
@@ -74,16 +74,59 @@ target_link_libraries(memilio PUBLIC spdlog::spdlog Eigen3::Eigen Boost::boost B
 target_compile_options(memilio 
     PRIVATE 
         ${MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS}
+        $<$<CXX_COMPILER_ID:MSVC>: /MP>
     PUBLIC
         $<$<CXX_COMPILER_ID:MSVC>: /bigobj>
 )
-
-target_compile_options(memilio PRIVATE $<$<CXX_COMPILER_ID:MSVC>: /MP>)
 
 if (MEMILIO_HAS_HDF5)
     target_link_libraries(memilio PUBLIC HDF5::C)
 endif()
 
 if (MEMILIO_HAS_JSONCPP)
-    target_link_libraries(memilio PUBLIC JsonCpp::JsonCpp)
+    target_link_libraries(memilio PUBLIC jsoncpp::jsoncpp)
 endif()
+
+# install
+include(GNUInstallDirs)
+
+#define targets to install and directory structure
+install(TARGETS memilio
+        EXPORT memilio-targets
+        INCLUDES DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
+        RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+        LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+        ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
+)
+
+#copy headers (including those configured by cmake)
+install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} DESTINATION ${CMAKE_INSTALL_INCLUDEDIR} FILES_MATCHING PATTERN *.h)
+install(DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/memilio DESTINATION ${CMAKE_INSTALL_INCLUDEDIR} FILES_MATCHING PATTERN *.h)
+
+#install set of config files for importing our library with find_package
+include(CMakePackageConfigHelpers)
+configure_package_config_file(
+    ${CMAKE_CURRENT_LIST_DIR}/../cmake/memilio-config.cmake.in
+    ${CMAKE_CURRENT_BINARY_DIR}/memilio-config.cmake
+INSTALL_DESTINATION
+    ${CMAKE_INSTALL_LIBDIR}/cmake/memilio
+)
+write_basic_package_version_file(
+  "${CMAKE_CURRENT_BINARY_DIR}/memilio-config-version.cmake"
+  VERSION ${PROJECT_VERSION}
+  COMPATIBILITY AnyNewerVersion
+)
+install(
+    EXPORT memilio-targets
+    FILE memilio-targets.cmake
+    DESTINATION lib/cmake/memilio
+)
+
+#copy config files
+install (
+  FILES
+    "${CMAKE_CURRENT_BINARY_DIR}/memilio-config-version.cmake"
+    "${CMAKE_CURRENT_BINARY_DIR}/memilio-config.cmake"
+  DESTINATION
+    ${CMAKE_INSTALL_LIBDIR}/cmake/memilio
+)
