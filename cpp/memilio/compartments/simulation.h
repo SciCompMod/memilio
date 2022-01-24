@@ -23,8 +23,8 @@
 #include "memilio/config.h"
 #include "memilio/compartments/compartmentalmodel.h"
 #include "memilio/utils/metaprogramming.h"
+#include "memilio/math/stepper_wrapper.h"
 #include "memilio/utils/time_series.h"
-#include "memilio/math/adapt_rk.h"
 #include "memilio/math/euler.h"
 
 namespace mio
@@ -49,7 +49,7 @@ public:
      * @param[in] dt initial step size of integration
      */
     Simulation(Model const& model, double t0 = 0., double dt = 0.1)
-        : m_integratorCore(std::make_shared<RKIntegratorCore>())
+        : m_integratorCore(std::make_shared<mio::ControlledStepperWrapper<boost::numeric::odeint::runge_kutta_cash_karp54>>())
         , m_model(model)
         , m_integrator([model](auto&& y, auto&& t, auto&& dydt) { model.eval_right_hand_side(y, y, t, dydt); }, t0,
                        m_model.get_initial_values(), dt, m_integratorCore)
