@@ -1,4 +1,4 @@
-/* 
+/*
 * Copyright (C) 2020-2021 German Aerospace Center (DLR-SC)
 *
 * Authors: Rene Schmieding
@@ -25,192 +25,151 @@
 // functions and operators neccessary for a Contolled Stepper to work with Eigen::VectorXd
 // these have to be declared *before* the includes
 
-namespace std {
-Eigen::VectorXd abs(Eigen::VectorXd x) {
-    // elementwise operations are defined on arrays within Eigen
-    // casts to and from array supposedly cost no runtime when using compiler optimisation 
-    return x.array().abs().matrix();
-}
-}
+namespace std
+{
+/// @brief elementwise absolute values of an Eigen::VextorXd
+Eigen::VectorXd abs(Eigen::VectorXd x);
+} // namespace std
 
 #include <boost/numeric/odeint/algebra/vector_space_algebra.hpp>
 #include <boost/numeric/odeint/stepper/controlled_runge_kutta.hpp>
 #include <boost/numeric/odeint/stepper/runge_kutta4.hpp>
-#include <boost/numeric/odeint/stepper/adams_bashforth_moulton.hpp>
 #include <boost/numeric/odeint/stepper/runge_kutta_fehlberg78.hpp>
 #include <boost/numeric/odeint/stepper/runge_kutta_cash_karp54.hpp>
 #include <boost/numeric/odeint/stepper/runge_kutta_dopri5.hpp>
-#include <boost/numeric/odeint/stepper/bulirsch_stoer.hpp>
 
-Eigen::VectorXd operator+ (const double s, const Eigen::VectorXd& v) {
-    return (v.array() + s).matrix();
-}
+/// @brief elementwise addition of a scalar and an Eigen::VextorXd
+Eigen::VectorXd operator+(const double s, const Eigen::VectorXd& v);
+/// @brief elementwise division of two Eigen::VextorXd
+Eigen::VectorXd operator/(const Eigen::VectorXd& v, const Eigen::VectorXd& w);
 
-Eigen::VectorXd operator/ (const Eigen::VectorXd& v, const Eigen::VectorXd& w) {
-    return (v.array() / w.array()).matrix();
-}
-
-namespace boost { namespace numeric { namespace odeint {
-// create struct specialization for Eigen::VectorXd of
-// the l-infinity norm used by controlled_runge_kutter
-template<>
-struct vector_space_norm_inf<Eigen::VectorXd>
+namespace boost
 {
-    typedef double result_type; // = Eigen::VectorXd::Scalar
-    double operator() (Eigen::VectorXd x) const
+namespace numeric
+{
+    namespace odeint
     {
-        return x.lpNorm<Eigen::Infinity>();
-    }
-};
-}}} // namespace boost::numeric::odeint
+        // create struct specialization for Eigen::VectorXd of
+        // the l-infinity norm used by controlled_runge_kutter
+        template <>
+        struct vector_space_norm_inf<Eigen::VectorXd> {
+            typedef double result_type; // = Eigen::VectorXd::Scalar
+            double operator()(Eigen::VectorXd x) const
+            {
+                return x.lpNorm<Eigen::Infinity>();
+            }
+        };
+    } // namespace odeint
+} // namespace numeric
+} // namespace boost
 
-// Wrappers implementing IntegratorCore for boost::numeric::odeint Steppers (Controlled, Explicit and adams_bashforth_moulton)
+// Wrapper implementing IntegratorCore, can be used for several boost::numeric::odeint Controlled Steppers
 
 namespace mio
 {
 
-template<
-    size_t Steps,
-    template<
-        size_t InternalSteps = Steps,
-        class State = Eigen::VectorXd,
-        class Value = double,
-        class Deriv = State,
-        class Time = Value,
-        class Algebra = boost::numeric::odeint::vector_space_algebra,
-        class Operations = typename boost::numeric::odeint::operations_dispatcher<State>::operations_type,
-        class Resizer = boost::numeric::odeint::never_resizer,
-        class InitializingStepper = boost::numeric::odeint::runge_kutta4<State, Value, Deriv, Time, Algebra, Operations, Resizer>
-    > class ABMStepper
->
-class ABMStepperWrapper : public mio::IntegratorCore {
+/**
+ * @brief Creates and manages an instance of a boost::numeric::odeint::controlled_runge_kutta
+ * integrator, wrapped as mio::IntegratorCore.
+ */
+template <template <class State = Eigen::VectorXd, class Value = double, class Deriv = State, class Time = double,
+                    class Algebra    = boost::numeric::odeint::vector_space_algebra,
+                    class Operations = typename boost::numeric::odeint::operations_dispatcher<State>::operations_type,
+                    class Resizer    = boost::numeric::odeint::never_resizer>
+          class ControlledStepper>
+class ControlledStepperWrapper : public mio::IntegratorCore
+{
 public:
-    bool step(const mio::DerivFunction& f, Eigen::Ref<Eigen::VectorXd const> yt, double& t, double& dt,
-              Eigen::Ref<Eigen::VectorXd> ytp1) const override {
-        // reorder arguments of the DerivFunction f for the stepper
-        std::function<void(const Eigen::VectorXd& x, Eigen::VectorXd& dxdt, double t)> sys =
-            [&](const Eigen::VectorXd& x, Eigen::VectorXd& dxdt, double t){
-                dxdt.resizeLike(x); // do_step calls sys with a vector of size 0 for some reason
-                f(x, t, dxdt);
-            };
-        // copy y(t) to dxdt, since we use the scheme do_step(sys, inout, t, dt) with sys=f, inout=y(t) for
-        // in-place computation - also, this form is shared by several (all?) steppers in boost
-        Eigen::VectorXd dxdt = yt.eval();
-        /* ABM has Steps internal states. according to the odeint guide on boost.org the stepper
-         * should be called multiple times, but this loop gives incorrect results for the ode
-        m_stepper.reset();
-        for (size_t i = 0; i <= Steps; i++) {
-            m_stepper.do_step(sys, dxdt, t, dt / Steps);
-            //m_stepper.do_step(sys, dxdt, t, dt);
-        }*/
-        m_stepper.do_step(
-            // reorder arguments of the DerivFunction f for the stepper
-            [&](const Eigen::VectorXd& x, Eigen::VectorXd& dxdt, double t){
-                dxdt.resizeLike(x); // do_step calls sys with a vector of size 0 for some reason
-                f(x, t, dxdt);
-            },
-            dxdt,
-            t,
-            dt
-        );
-        ytp1 = dxdt;
-        t += dt;
-        return true; // no step size adaption
+    /**
+     * @brief Set up the integrator
+     * @param abs_tol absolute tolerance
+     * @param rel_tol relative tolerance 
+     * @param dt_min lower bound for time step dt
+     * @param dt_max upper bound for time step dt
+     */
+    ControlledStepperWrapper(double abs_tol = 1e-10, double rel_tol = 1e-5,
+                             double dt_min = std::numeric_limits<double>::min(),
+                             double dt_max = std::numeric_limits<double>::max())
+        : m_abs_tol(abs_tol)
+        , m_rel_tol(rel_tol)
+        , m_dt_min(dt_min)
+        , m_dt_max(dt_max)
+        , m_stepper(boost::numeric::odeint::default_error_checker<typename ControlledStepper<>::value_type,
+                                                                  typename ControlledStepper<>::algebra_type,
+                                                                  typename ControlledStepper<>::operations_type>(
+                        abs_tol, rel_tol),
+                    boost::numeric::odeint::default_step_adjuster<typename ControlledStepper<>::value_type,
+                                                                  typename ControlledStepper<>::time_type>(dt_max))
+    // for more options see: boost/boost/numeric/odeint/stepper/controlled_runge_kutta.hpp
+    {
     }
-private:
-    mutable ABMStepper<> m_stepper;
-};
 
-template<
-    template<
-        class State = Eigen::VectorXd,
-        class Value = double,
-        class Deriv = State,
-        class Time = double,
-        class Algebra = boost::numeric::odeint::vector_space_algebra,
-        class Operations = typename boost::numeric::odeint::operations_dispatcher<State>::operations_type,
-        class Resizer = boost::numeric::odeint::never_resizer
-    > class ExplicitStepper
->
-class ExplicitStepperWrapper : public mio::IntegratorCore {
-public:
+    /**
+    * @brief Make a single integration step of a system of ODEs and adapt step width
+    * @param[in] yt value of y at t, y(t)
+    * @param[in,out] t current time step h=dt
+    * @param[in,out] dt current time step h=dt
+    * @param[out] ytp1 approximated value y(t+1)
+    */
     bool step(const mio::DerivFunction& f, Eigen::Ref<Eigen::VectorXd const> yt, double& t, double& dt,
-              Eigen::Ref<Eigen::VectorXd> ytp1) const override {
-        // copy y(t) to dxdt, since we use the scheme do_step(sys, inout, t, dt) with sys=f, inout=y(t) for
-        // in-place computation - also, this form is shared by several (all?) steppers in boost
-        Eigen::VectorXd dxdt = yt.eval();
-        m_stepper.do_step(
-            // reorder arguments of the DerivFunction f for the stepper
-            [&](const Eigen::VectorXd& x, Eigen::VectorXd& dxdt, double t){
-                dxdt.resizeLike(x); // do_step calls sys with a vector of size 0 for some reason
-                f(x, t, dxdt);
-            },
-            dxdt,
-            t,
-            dt
-        );
-        ytp1 = dxdt;
-        t += dt;
-        return true; // no step size adaption
-    }
-private:
-    mutable ExplicitStepper<> m_stepper;
-};
-
-template<
-    template<
-        class State = Eigen::VectorXd,
-        class Value = double,
-        class Deriv = State,
-        class Time = double,
-        class Algebra = boost::numeric::odeint::vector_space_algebra,
-        class Operations = typename boost::numeric::odeint::operations_dispatcher<State>::operations_type,
-        class Resizer = boost::numeric::odeint::never_resizer
-    > class ControlledStepper
->
-class ControlledStepperWrapper : public mio::IntegratorCore {
-public:
-    ControlledStepperWrapper(double abs_tol = 1e-6,
-                             double rel_tol = 1e-6,
-                             double dt_min=std::numeric_limits<double>::min(),
-                             double dt_max=std::numeric_limits<double>::max()) :
-        m_dt_min(dt_min),
-        m_stepper(
-            boost::numeric::odeint::default_error_checker<
-                typename ControlledStepper<>::value_type,
-                typename ControlledStepper<>::algebra_type,
-                typename ControlledStepper<>::operations_type
-            > (abs_tol, rel_tol),
-            boost::numeric::odeint::default_step_adjuster<
-                typename ControlledStepper<>::value_type,
-                typename ControlledStepper<>::time_type
-            > (dt_max)
-        )
-        // for more options see: boost/boost/numeric/odeint/stepper/controlled_runge_kutta.hpp
-    {}
-    bool step(const mio::DerivFunction& f, Eigen::Ref<Eigen::VectorXd const> yt, double& t, double& dt,
-              Eigen::Ref<Eigen::VectorXd> ytp1) const override {
+              Eigen::Ref<Eigen::VectorXd> ytp1) const override
+    {
         // copy y(t) to dxdt, since we use the scheme try_step(sys, inout, t, dt) with sys=f, inout=y(t) for
         // in-place computation. This is similiar to do_step, but it updates t and dt
-        Eigen::VectorXd dxdt = yt.eval();
-        const double t_old = t; // t is updated by try_step on a successfull step
-        while (t == t_old && dt > m_dt_min) {
+        Eigen::VectorXd dxdt = yt;
+        const double t_old   = t; // t is updated by try_step on a successfull step
+        do {
             m_stepper.try_step(
                 // reorder arguments of the DerivFunction f for the stepper
-                [&](const Eigen::VectorXd& x, Eigen::VectorXd& dxdt, double t){
-                    dxdt.resizeLike(x); // do_step calls sys with a vector of size 0 for some reason
-                    f(x, t, dxdt);
+                [&](const Eigen::VectorXd& x, Eigen::VectorXd& dxds, double s) {
+                    dxds.resizeLike(x); // try_step calls sys with a vector of size 0 for some reason
+                    f(x, s, dxds);
                 },
-                dxdt,
-                t,
-                dt
-            );
-        }
+                dxdt, t, dt);
+        } while (t == t_old && dt > m_dt_min);
         ytp1 = dxdt;
         return dt > m_dt_min;
     }
+
+    /// @param tol the required absolute tolerance for comparison of the iterative approximation
+    void set_abs_tolerance(double abs_tol)
+    {
+        m_abs_tol = abs_tol;
+        set_stepper(); // TODO : replace this call using a custom version of default_error_checker and default_step_adjuster
+    }
+
+    /// @param tol the required relative tolerance for comparison of the iterative approximation
+    void set_rel_tolerance(double rel_tol)
+    {
+        m_rel_tol = rel_tol;
+        set_stepper(); // TODO : replace this call using a custom version of default_error_checker and default_step_adjuster
+    }
+
+    /// @param dt_min sets the minimum step size
+    void set_dt_min(double dt_min)
+    {
+        m_dt_min = dt_min;
+    }
+
+    /// @param dt_max sets the maximum step size
+    void set_dt_max(double dt_max)
+    {
+        m_dt_max = dt_max;
+        set_stepper(); // TODO : replace this call using a custom version of default_error_checker and default_step_adjuster
+    }
+
 private:
-    const double m_dt_min;
+    void set_stepper()
+    {
+        m_stepper = boost::numeric::odeint::controlled_runge_kutta<ControlledStepper<>>(
+            boost::numeric::odeint::default_error_checker<typename ControlledStepper<>::value_type,
+                                                          typename ControlledStepper<>::algebra_type,
+                                                          typename ControlledStepper<>::operations_type>(m_abs_tol,
+                                                                                                         m_rel_tol),
+            boost::numeric::odeint::default_step_adjuster<typename ControlledStepper<>::value_type,
+                                                          typename ControlledStepper<>::time_type>(m_dt_max));
+    }
+    double m_abs_tol, m_rel_tol, m_dt_min, m_dt_max;
     mutable boost::numeric::odeint::controlled_runge_kutta<ControlledStepper<>> m_stepper;
 };
 
