@@ -1,39 +1,44 @@
 #include "IDE/IDE.h"
 #include <math.h>
+#include <cmath>
 
 namespace mio{
 
-    IdeModel::Beta(double tau, double p=3, double q=10) const{
+    IdeModel::IdeModel(std::vector<Eigen::VectorXd> init, int length_init, double dt_init)
+    :result(init),length(length_init), dt(dt_init){
+        l=(int) std::floor(timelatency/dt);
+        k=(int) std::ceil((timeinfectious+timelatency)/dt);
+    }
+
+    void IdeModel::set_latencytime(double latency){
+        timelatency=latency;
+        l=(int) std::floor(timelatency/dt);
+        k=(int) std::ceil((timeinfectious+timelatency)/dt);
+    }
+
+    void IdeModel::set_infectioustime(double infectious){
+        timeinfectious=infectious;
+        k=(int) std::ceil((timeinfectious+timelatency)/dt);
+    }
+
+    double IdeModel::Beta(double tau, double p, double q) const{
         if((timelatency<tau) && (timeinfectious+timelatency>tau)){
             return tgamma(p+q)*pow(tau-timelatency,p-1)*pow(timeinfectious+timelatency-tau,q-1)/(tgamma(p)*tgamma(q)*pow(timeinfectious,p+q-1));
         }
-        return 0;
+        return 0.0;
     }
 
-    IdeModel::S_derivative(int idx) const{
-        return (s[idx+1]-S[idx-1])/(2*dt);
+    double IdeModel::S_derivative(int idx) const{
+        return (result[idx+1][1]-result[idx-1][1])/(2*dt);
     }
 
-    IdeModel::num_integration_inner_integral(double time) const{
-        double a=time-(timelatency+timeinfectious);
-        double b=time-timelatency;
-
-        int k=0,l=0,i=0;
-        while (t[i+1]<=tx0l){
-            if (t[i]<=a){
-                k=i;
-                l=i;
-            } else if(t[i]<=b){
-                l=i;
-            }
+    double IdeModel::num_integration_inner_integral(int idx) const{
+        double res=0.5 * (Beta(result[idx][0] -result[idx-k][0]) * S_derivative(k) + 
+                Beta(result[idx][0]-result[idx-l][0]) * S_derivative(idx-l));
+        int i=idx-k+1;
+        while (i<=idx-l-2){
+            res+=(Beta(result[idx][0]-result[i][0])*S_derivative(i));
             i++;
-        }
-        double res=0.5 * (IdeModel::Beta(time - t[k], latent_period, x1) * S_derivative(k,dt_inverse) + 
-                IdeModel::Beta(time - t[l], latent_period, x1) * S_derivative(l,dt_inverse));
-        k++;
-        while (k<=l-1){
-            res+=(IdeModel::Beta(time-t[k],latent_period,x1)*S_derivative(k,dt_inverse));
-            k++;
         }
     
     return res;

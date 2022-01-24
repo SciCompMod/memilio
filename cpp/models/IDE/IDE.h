@@ -12,17 +12,23 @@ namespace mio
 
 class IdeModel{
     public:
-        IdeModel();
+        IdeModel(std::vector<Eigen::VectorXd> init, int length_init, double dt_init);
+        void set_latencytime(double latency);
+        void set_infectioustime(double infectious);
     private:
-        double Beta(double tau, int p=3, int q=10) const;
+        double Beta(double tau, double p=3.0, double q=10.0) const;
         double S_derivative(int idx) const;
-        double num_integration_inner_integral(double time) const;
+        double num_integration_inner_integral(int idx) const;
 
         double timelatency=3.3;
-        double timestepinfectious=8.2;
+        double timeinfectious=8.2;
+
+        std::vector<Eigen::VectorXd> result; // vector mit Eigen 2 (t, S) und davon dann im vec bel viele einträge
+        int length;
+
         double dt;
-        std::vector<Eigen::VectorXd> result;
-        
+        int k;
+        int l;
         };
 }// namespace mio
 #endif
