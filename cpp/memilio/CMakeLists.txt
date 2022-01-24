@@ -28,12 +28,14 @@ add_library(memilio
     math/euler.cpp
     math/euler.h
     math/smoother.h
-    math/adapt_rk.cpp
     math/adapt_rk.h
-    math/adapt_rk_all.h
-    math/vadapt_rk.h
-    math/vadapt_rk_all.h
-    math/vadapt_rk_opt.h
+    math/adapt_rk.cpp
+    math/adapt_rk_fast.cpp
+    math/vadapt_rk.cpp
+    math/vadapt_rk_fast.cpp
+    math/vadapt_rk_opt.cpp
+    math/stepper_wrapper.h
+    math/stepper_wrapper.cpp
     math/integrator.h
     math/integrator.cpp
     math/eigen.h

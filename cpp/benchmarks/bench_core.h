@@ -23,12 +23,8 @@
 #include "bench_model.h"
 
 #include "memilio/utils/logging.h"
-#include "memilio/math/adapt_rk_all.h"
-#include "memilio/math/vadapt_rk.h"
-#include "memilio/math/vadapt_rk_all.h"
-#include "memilio/math/vadapt_rk_opt.h"
+#include "memilio/math/adapt_rk.h"
 #include "memilio/math/stepper_wrapper.h"
-#include "memilio/utils/random_number_generator.h"
 
 #include <benchmark/benchmark.h>
 

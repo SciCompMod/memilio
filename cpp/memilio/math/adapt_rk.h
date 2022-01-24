@@ -101,9 +101,6 @@ class RKIntegratorCore : public IntegratorCore
 public:
     /**
      * @brief Setting up the integrator
-     * @param func The right hand side of the ODE
-     * @param dt_min Mininum time step
-     * @param dt_max Maximum time step
      */
     RKIntegratorCore()
         : m_abs_tol(1e-10)
@@ -112,7 +109,7 @@ public:
         , m_dt_max(std::numeric_limits<double>::max())
     {
     }
-    
+
     /**
      * @brief Set up the integrator
      * @param abs_tol absolute tolerance
@@ -140,13 +137,13 @@ public:
         m_rel_tol = tol;
     }
 
-    /// sets the minimum step size
+    /// @param dt_min sets the minimum step size
     void set_dt_min(double dt_min)
     {
         m_dt_min = dt_min;
     }
 
-    /// sets the minimum step size
+    /// @param dt_max sets the maximum step size
     void set_dt_max(double dt_max)
     {
         m_dt_max = dt_max;
@@ -175,6 +172,131 @@ protected:
     TableauFinal m_tab_final;
     double m_abs_tol, m_rel_tol;
     double m_dt_min, m_dt_max;
+};
+
+class VRKIntegratorCore : public RKIntegratorCore
+{
+public:
+    /// @brief Set up the integrator
+    VRKIntegratorCore()
+        : RKIntegratorCore()
+    {
+    }
+    /**
+     * @brief Set up the integrator
+     * @param abs_tol absolute tolerance
+     * @param rel_tol relative tolerance 
+     * @param dt_min lower bound for time step dt
+     * @param dt_max upper bound for time step dt
+     */
+    VRKIntegratorCore(const double abs_tol, const double rel_tol, const double dt_min, const double dt_max)
+        : RKIntegratorCore(abs_tol, rel_tol, dt_min, dt_max)
+    {
+    }
+    /**
+    * @brief Make a single integration step of a system of ODEs and adapt step width
+    * @param[in] yt value of y at t, y(t)
+    * @param[in,out] t current time step h=dt
+    * @param[in,out] dt current time step h=dt
+    * @param[out] ytp1 approximated value y(t+1)
+    */
+    bool step(const DerivFunction& f, Eigen::Ref<const Eigen::VectorXd> yt, double& t, double& dt,
+              Eigen::Ref<Eigen::VectorXd> ytp1) const override;
+};
+
+class RKFastIntegratorCore : public RKIntegratorCore
+{
+public:
+    /// @brief Set up the integrator
+    RKFastIntegratorCore()
+        : RKIntegratorCore()
+    {
+    }
+    /**
+     * @brief Set up the integrator
+     * @param abs_tol absolute tolerance
+     * @param rel_tol relative tolerance 
+     * @param dt_min lower bound for time step dt
+     * @param dt_max upper bound for time step dt
+     */
+    RKFastIntegratorCore(const double abs_tol, const double rel_tol, const double dt_min, const double dt_max)
+        : RKIntegratorCore(abs_tol, rel_tol, dt_min, dt_max)
+    {
+    }
+    /**
+    * @brief Make a single integration step of a system of ODEs and adapt step width
+    * @param[in] yt value of y at t, y(t)
+    * @param[in,out] t current time step h=dt
+    * @param[in,out] dt current time step h=dt
+    * @param[out] ytp1 approximated value y(t+1)
+    */
+    bool step(const DerivFunction& f, Eigen::Ref<const Eigen::VectorXd> yt, double& t, double& dt,
+              Eigen::Ref<Eigen::VectorXd> ytp1) const override;
+};
+
+class VRKFastIntegratorCore : public RKIntegratorCore
+{
+public:
+    /// @brief Set up the integrator
+    VRKFastIntegratorCore()
+        : RKIntegratorCore()
+    {
+    }
+    /**
+     * @brief Set up the integrator
+     * @param abs_tol absolute tolerance
+     * @param rel_tol relative tolerance 
+     * @param dt_min lower bound for time step dt
+     * @param dt_max upper bound for time step dt
+     */
+    VRKFastIntegratorCore(const double abs_tol, const double rel_tol, const double dt_min, const double dt_max)
+        : RKIntegratorCore(abs_tol, rel_tol, dt_min, dt_max)
+    {
+    }
+    /**
+    * @brief Make a single integration step of a system of ODEs and adapt step width
+    * @param[in] yt value of y at t, y(t)
+    * @param[in,out] t current time step h=dt
+    * @param[in,out] dt current time step h=dt
+    * @param[out] ytp1 approximated value y(t+1)
+    */
+    bool step(const DerivFunction& f, Eigen::Ref<const Eigen::VectorXd> yt, double& t, double& dt,
+              Eigen::Ref<Eigen::VectorXd> ytp1) const override;
+};
+
+class VRKOptIntegratorCore : public RKIntegratorCore
+{
+private:
+    mutable Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::ColMajor> kt_values;
+    mutable Eigen::VectorXd m_yt_eval, m_ytp1_low;
+    mutable Eigen::ArrayXd m_eps, m_error_estimate; // tolerance and estimate used for time step adaption
+
+public:
+    /// @brief Set up the integrator
+    VRKOptIntegratorCore()
+        : RKIntegratorCore()
+    {
+    }
+    /**
+     * @brief Set up the integrator
+     * @param abs_tol absolute tolerance
+     * @param rel_tol relative tolerance 
+     * @param dt_min lower bound for time step dt
+     * @param dt_max upper bound for time step dt
+     */
+    VRKOptIntegratorCore(const double abs_tol, const double rel_tol, const double dt_min, const double dt_max)
+        : RKIntegratorCore(abs_tol, rel_tol, dt_min, dt_max)
+    {
+    }
+    /**
+    * @brief Make a single integration step of a system of ODEs and adapt step width
+    * @param[in] yt value of y at t, y(t)
+    * @param[in,out] t current time step h=dt
+    * @param[in,out] dt current time step h=dt
+    * @param[out] ytp1 approximated value y(t+1)
+    */
+    bool step(const DerivFunction& f, Eigen::Ref<const Eigen::VectorXd> yt, double& t, double& dt,
+              Eigen::Ref<Eigen::VectorXd> ytp1) const override;
 };
 
 } // namespace mio

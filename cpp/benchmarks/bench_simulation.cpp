@@ -40,10 +40,10 @@ BENCHMARK_TEMPLATE(simulation, mio::RKIntegratorCore, init)
     ->Name("simulate SecirModel adapt_rk");
 BENCHMARK_TEMPLATE(simulation, mio::VRKIntegratorCore, init)
     ->Name("simulate SecirModel vadapt_rk");
-BENCHMARK_TEMPLATE(simulation, mio::RKAllIntegratorCore, init)
-    ->Name("simulate SecirModel adapt_rk_all");
-BENCHMARK_TEMPLATE(simulation, mio::VRKAllIntegratorCore, init)
-    ->Name("simulate SecirModel vadapt_rk_all");
+BENCHMARK_TEMPLATE(simulation, mio::RKFastIntegratorCore, init)
+    ->Name("simulate SecirModel adapt_rk_fast");
+BENCHMARK_TEMPLATE(simulation, mio::VRKFastIntegratorCore, init)
+    ->Name("simulate SecirModel vadapt_rk_fast");
 BENCHMARK_TEMPLATE(simulation, mio::VRKOptIntegratorCore, init)
     ->Name("simulate SecirModel vadapt_rk_opt");
 BENCHMARK_TEMPLATE(simulation, mio::ControlledStepperWrapper<boost::numeric::odeint::runge_kutta_cash_karp54>, init)

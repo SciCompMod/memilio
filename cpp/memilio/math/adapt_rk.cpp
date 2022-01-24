@@ -1,7 +1,7 @@
 /* 
 * Copyright (C) 2020-2021 German Aerospace Center (DLR-SC)
 *
-* Authors: Martin J. Kuehn, Daniel Abele
+* Authors: Martin J. Kuehn, Daniel Abele, Rene Schmieding
 *
 * Contact: Martin J. Kuehn <Martin.Kuehn@DLR.de>
 *
@@ -73,17 +73,14 @@ Tableau::Tableau()
 bool RKIntegratorCore::step(const DerivFunction& f, Eigen::Ref<const Eigen::VectorXd> yt, double& t, double& dt,
                             Eigen::Ref<Eigen::VectorXd> ytp1) const
 {
-
-    double max_err   = 1e10;
-    double conv_crit = 1e9;
-
     std::vector<Eigen::VectorXd> kt_values;
 
     bool failed_step_size_adapt = false;
+    bool converged              = false;
 
     dt = 2 * dt;
 
-    while (max_err > conv_crit && !failed_step_size_adapt) {
+    while (!converged && !failed_step_size_adapt) {
         dt = 0.5 * dt;
 
         kt_values.resize(0); // remove data from previous loop
@@ -132,8 +129,6 @@ bool RKIntegratorCore::step(const DerivFunction& f, Eigen::Ref<const Eigen::Vect
         auto ytp1_high = yt.eval(); // higher order approximation (e.g., order 5)
 
         std::vector<double> err(yt.size(), 0);
-        double max_val = 0;
-        max_err        = 0;
 
         for (int i = 0; i < yt.size(); i++) {
 
@@ -142,28 +137,16 @@ bool RKIntegratorCore::step(const DerivFunction& f, Eigen::Ref<const Eigen::Vect
                 ytp1_low[i] += (dt * m_tab_final.entries_low[j] * kt_values[j][i]);
                 ytp1_high[i] += (dt * m_tab_final.entries_high[j] * kt_values[j][i]);
             }
-
-            err[i] =
-                1 / dt *
-                std::abs(ytp1_low[i] -
-                         ytp1_high[i]); // divide by h=dt since the local error is one order higher than the global one
-
-            // printf("\n i: %lu,\t err_abs %e, err_rel %e\n", i,  err[i], max_val);
-            if (err[i] > max_err) {
-                max_err = err[i];
-            }
-            if (max_val < std::abs(ytp1_low[i])) {
-                max_val = std::abs(ytp1_low[i]);
-            }
         }
 
         // printf("\n low %.8f\t high %.8f\t max_err: %.8f,\t val: %.8f,\t crit: %.8f,\t %d t: %.8f\t dt: %.8f ",
         //    ytp1_low[0], ytp1_high[0], max_err, max_val, m_abs_tol + max_val * m_rel_tol,
         //    max_err <= (m_abs_tol + max_val * m_rel_tol), t, dt);
         // sleep(1);
-        conv_crit = m_abs_tol + max_val * m_rel_tol;
+        converged =
+            ((ytp1_low - ytp1_high).array().abs() <= dt * (m_abs_tol + ytp1_low.array().abs() * m_rel_tol)).all();
 
-        if (max_err <= conv_crit || dt < 2 * m_dt_min + 1e-6) {
+        if (converged || dt < 2 * m_dt_min + 1e-6) {
             // if sufficiently exact, take 4th order approximation (do not take 5th order : Higher order is not always higher accuracy!)
             ytp1 = ytp1_low;
 
@@ -181,8 +164,12 @@ bool RKIntegratorCore::step(const DerivFunction& f, Eigen::Ref<const Eigen::Vect
 
             t += dt; // this is the t where ytp1 belongs to
 
-            if (max_err <= 0.03 * conv_crit &&
-                2 * dt < m_dt_max) { // error of doubled step size is about 32 times as large
+            // decide whether convergence admits an increased step size
+            bool increase_dt =
+                ((ytp1_low - ytp1_high).array().abs() <= 0.03 * dt * (m_abs_tol + ytp1_low.array().abs() * m_rel_tol))
+                    .all();
+
+            if (increase_dt && 2 * dt < m_dt_max) { // error of doubled step size is about 32 times as large
                 dt = 2 * dt;
             }
         }
