@@ -19,6 +19,7 @@
 */
 #include "memilio/math/euler.h"
 #include "memilio/math/adapt_rk.h"
+#include "memilio/math/stepper_wrapper.h"
 #include <actions.h>
 
 #include <gtest/gtest.h>
@@ -84,48 +85,81 @@ TEST_F(TestVerifyNumericalIntegrator, euler_sine)
     EXPECT_NEAR(err, 0.0, 1e-3);
 }
 
-TEST_F(TestVerifyNumericalIntegrator, runge_kutta_fehlberg45_sine)
-{
+template <class RKIntegrator>
+void verify_numerical_integrator(TestVerifyNumericalIntegrator& T) {
+    T.n   = 10;
+    T.dt  = (T.tmax - T.t0) / T.n;
+    T.y   = std::vector<Eigen::VectorXd>(T.n, Eigen::VectorXd::Constant(1, 0));
+    T.sol = std::vector<Eigen::VectorXd>(T.n, Eigen::VectorXd::Constant(1, 0));
 
-    n   = 10;
-    dt  = (tmax - t0) / n;
-    y   = std::vector<Eigen::VectorXd>(n, Eigen::VectorXd::Constant(1, 0));
-    sol = std::vector<Eigen::VectorXd>(n, Eigen::VectorXd::Constant(1, 0));
+    RKIntegrator rk;
+    rk.set_abs_tolerance(1e-7);
+    rk.set_rel_tolerance(1e-7);
+    rk.set_dt_min(1e-3);
+    rk.set_dt_max(1.0);
 
-    mio::RKIntegratorCore rkf45;
-    rkf45.set_abs_tolerance(1e-7);
-    rkf45.set_rel_tolerance(1e-7);
-    rkf45.set_dt_min(1e-3);
-    rkf45.set_dt_max(1.0);
-
-    sol[0][0] = std::sin(0);
+    T.sol[0][0] = std::sin(0);
 
     size_t i      = 0;
-    double t_eval = t0;
+    double t_eval = T.t0;
     // printf("\n t: %.8f\t sol %.8f\t rkf %.8f", t, sol[0][0], y[0][0]);
-    while (t_eval - tmax < 1e-10) {
+    while (t_eval - T.tmax < 1e-10) {
 
-        if (i + 1 >= sol.size()) {
-            sol.push_back(Eigen::VectorXd::Constant(1, 0));
-            y.push_back(Eigen::VectorXd::Constant(1, 0));
+        if (i + 1 >= T.sol.size()) {
+            T.sol.push_back(Eigen::VectorXd::Constant(1, 0));
+            T.y.push_back(Eigen::VectorXd::Constant(1, 0));
         }
 
-        rkf45.step(&sin_deriv, y[i], t_eval, dt, y[i + 1]); //
+        rk.step(&sin_deriv, T.y[i], t_eval, T.dt, T.y[i + 1]); //
 
-        sol[i + 1][0] = std::sin(t_eval);
+        T.sol[i + 1][0] = std::sin(t_eval);
 
         // printf("\n t: %.8f (dt %.8f)\t sol %.8f\t rkf %.8f", t_eval, dt, sol[i + 1][0], y[i + 1][0]);
         // printf("\n approx: %.4e, sol: %.4e, error %.4e", y[i+1][0], sol[i+1][0], err);
 
-        err += std::pow(std::abs(y[i + 1][0] - sol[i + 1][0]), 2.0);
+        T.err += std::pow(std::abs(T.y[i + 1][0] - T.sol[i + 1][0]), 2.0);
         i++;
     }
 
-    n = i;
+    T.n = i;
 
-    err = std::sqrt(err) / n;
+    T.err = std::sqrt(T.err) / T.n;
 
-    EXPECT_NEAR(err, 0.0, 1e-7);
+    EXPECT_NEAR(T.err, 0.0, 1e-7);
+}
+
+TEST_F(TestVerifyNumericalIntegrator, runge_kutta_fehlberg45_fast_sine)
+{
+    verify_numerical_integrator<mio::RKFastIntegratorCore>(*this);
+}
+
+TEST_F(TestVerifyNumericalIntegrator, runge_kutta_fehlberg45_sine)
+{
+    verify_numerical_integrator<mio::RKIntegratorCore>(*this);
+}
+TEST_F(TestVerifyNumericalIntegrator, runge_kutta_fehlberg45_vector_fast_sine)
+{
+    verify_numerical_integrator<mio::VRKFastIntegratorCore>(*this);
+}
+TEST_F(TestVerifyNumericalIntegrator, runge_kutta_fehlberg45_vector_sine)
+{
+    verify_numerical_integrator<mio::VRKFastIntegratorCore>(*this);
+}
+TEST_F(TestVerifyNumericalIntegrator, runge_kutta_fehlberg45_opt_sine)
+{
+    verify_numerical_integrator<mio::VRKOptIntegratorCore>(*this);
+}
+TEST_F(TestVerifyNumericalIntegrator, runge_kutta_cash_carp_sine)
+{
+    verify_numerical_integrator<mio::ControlledStepperWrapper<boost::numeric::odeint::runge_kutta_cash_karp54>>(*this);
+}
+TEST_F(TestVerifyNumericalIntegrator, runge_kutta_dopri_sine)
+{
+    verify_numerical_integrator<mio::ControlledStepperWrapper<boost::numeric::odeint::runge_kutta_dopri5>>(*this);
+}
+TEST_F(TestVerifyNumericalIntegrator, runge_kutta_fehlberg78_sine)
+{
+    verify_numerical_integrator<mio::ControlledStepperWrapper<boost::numeric::odeint::runge_kutta_fehlberg78>>(*this);
 }
 
 auto DoStep()
