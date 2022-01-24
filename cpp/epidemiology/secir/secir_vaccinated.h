@@ -360,7 +360,6 @@ public:
                     infection_rate = params.get<InfectionProbabilityFromContact>()[i];
                 }*/
 
-
                 double dummy_S =
                     y[Si] * cont_freq_eff * divNj *
                     params.template get<InfectionProbabilityFromContact>()[(AgeGroup)i] *
@@ -679,12 +678,11 @@ public:
     void apply_b161(double t)
     {
 
-
         auto start_day   = this->get_model().parameters.template get<StartDay>();
         auto b161_growth = (start_day - get_day_in_year(Date(2021, 6, 6))) * 0.1666667;
         // 2 equal to the share of the delta variant on June 6
         double share_new_variant = std::min(1.0, pow(2, t * 0.1666667 + b161_growth) * 0.01);
-        size_t num_groups = this->get_model().parameters.get_num_groups();
+        size_t num_groups        = this->get_model().parameters.get_num_groups();
         for (size_t i = 0; i < num_groups; ++i) {
             double new_transmission =
                 (1 - share_new_variant) * this->get_model().parameters.template get<BaseInfB117>()[(AgeGroup)i] +
@@ -853,7 +851,7 @@ public:
             }
 
             if (t == 0) {
-                this->apply_vaccination(t);
+                //this->apply_vaccination(t);
                 this->apply_b161(t);
             }
             Base::advance(t + dt_eff);

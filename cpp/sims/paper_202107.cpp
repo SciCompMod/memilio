@@ -184,7 +184,7 @@ epi::IOResult<void> set_covid_parameters(epi::SecirParams& params, bool long_tim
     const double reduc_immune_inf_hosp_max = 0.141;
 
     double temp_reduc_time;
-    if (long_time){
+    if (long_time) {
         temp_reduc_time = 1.0;
     }
     else {
@@ -214,8 +214,7 @@ epi::IOResult<void> set_covid_parameters(epi::SecirParams& params, bool long_tim
     array_assign_uniform_distribution(params.get<epi::ReducInfHosp>(), reduc_inf_hosp_min, reduc_inf_hosp_max);
     array_assign_uniform_distribution(params.get<epi::ReducImmuneInfHosp>(), reduc_immune_inf_hosp_min,
                                       reduc_immune_inf_hosp_max);
-    array_assign_uniform_distribution(params.get<epi::ReducTime>(), reduc_time,
-                                      reduc_time);
+    array_assign_uniform_distribution(params.get<epi::ReducTime>(), reduc_time, reduc_time);
 
     //sasonality
     const double seasonality_min = 0.1;
@@ -246,9 +245,9 @@ epi::IOResult<void> set_contact_matrices(const fs::path& data_dir, epi::SecirPar
         BOOST_OUTCOME_TRY(baseline,
                           epi::read_mobility_plain(
                               (data_dir / "contacts" / ("baseline_" + contact_location.second + ".txt")).string()));
-        
+
         contact_matrices[size_t(contact_location.first)].get_baseline() = baseline;
-        contact_matrices[size_t(contact_location.first)].get_minimum()  = Eigen::MatrixXd::Zero(6,6);
+        contact_matrices[size_t(contact_location.first)].get_minimum()  = Eigen::MatrixXd::Zero(6, 6);
     }
     params.get<epi::ContactPatterns>() = epi::UncertainContactMatrix(contact_matrices);
 
@@ -322,16 +321,14 @@ epi::IOResult<void> set_npis(epi::Date start_date, epi::Date end_date, epi::Seci
         assign_uniform_distribution(v, min, max);
         return epi::DampingSampling(v, epi::DampingLevel(int(InterventionLevel::PhysicalDistanceAndMasks)),
                                     epi::DampingType(int(Intervention::PhysicalDistanceAndMasks)), t,
-                                    {size_t(ContactLocation::Home)},
-                                    group_weights_all);
+                                    {size_t(ContactLocation::Home)}, group_weights_all);
     };
     auto physical_distancing_school = [=](auto t, auto min, auto max) {
         auto v = epi::UncertainValue();
         assign_uniform_distribution(v, min, max);
         return epi::DampingSampling(v, epi::DampingLevel(int(InterventionLevel::PhysicalDistanceAndMasks)),
                                     epi::DampingType(int(Intervention::PhysicalDistanceAndMasks)), t,
-                                    {size_t(ContactLocation::School)},
-                                    group_weights_all);
+                                    {size_t(ContactLocation::School)}, group_weights_all);
     };
     auto physical_distancing_work = [=](auto t, auto min, auto max) {
         auto v = epi::UncertainValue();
@@ -383,19 +380,19 @@ epi::IOResult<void> set_npis(epi::Date start_date, epi::Date end_date, epi::Seci
     }
     double masks_low, masks_high, masks_low_school, masks_high_school, masks_narrow;
     if (masks) {
-        masks_low_school = 0.2;
-        masks_high_school   = 0.4;
-        masks_low    = 0.2;
-        masks_high   = 0.4;
-        masks_narrow = narrow;
+        masks_low_school  = 0.2;
+        masks_high_school = 0.4;
+        masks_low         = 0.2;
+        masks_high        = 0.4;
+        masks_narrow      = narrow;
     }
     else {
 
-        masks_low_school   = 0.0;
-        masks_high_school   = 0.0;
-        masks_low    = 0.0;
-        masks_high   = 0.0;
-        masks_narrow = 0.0;
+        masks_low_school  = 0.0;
+        masks_high_school = 0.0;
+        masks_low         = 0.0;
+        masks_high        = 0.0;
+        masks_narrow      = 0.0;
     }
     auto start_open = epi::Date(2021, month_open, 1);
     if (start_open < end_date) {
@@ -406,9 +403,12 @@ epi::IOResult<void> set_npis(epi::Date start_date, epi::Date end_date, epi::Seci
         contact_dampings.push_back(social_events(start_summer, 0.0, 0.0));
         contact_dampings.push_back(social_events_work(start_summer, 0.0, 0.0));
         contact_dampings.push_back(physical_distancing_home(start_summer, 0.0, 0.0));
-        contact_dampings.push_back(physical_distancing_school(start_summer, masks_low_school + masks_narrow, masks_high_school - masks_narrow));
-        contact_dampings.push_back(physical_distancing_work(start_summer, masks_low + masks_narrow, masks_high - masks_narrow));
-        contact_dampings.push_back(physical_distancing_other(start_summer, masks_low + masks_narrow, masks_high - masks_narrow));
+        contact_dampings.push_back(physical_distancing_school(start_summer, masks_low_school + masks_narrow,
+                                                              masks_high_school - masks_narrow));
+        contact_dampings.push_back(
+            physical_distancing_work(start_summer, masks_low + masks_narrow, masks_high - masks_narrow));
+        contact_dampings.push_back(
+            physical_distancing_other(start_summer, masks_low + masks_narrow, masks_high - masks_narrow));
         contact_dampings.push_back(senior_awareness(start_summer, 0.0, 0.0));
     }
 
@@ -416,50 +416,43 @@ epi::IOResult<void> set_npis(epi::Date start_date, epi::Date end_date, epi::Seci
     contact_dampings.push_back(contacts_at_home(start_autumn, 0.0, 0.0));
     contact_dampings.push_back(school_closure(start_autumn, 0.3 + narrow, 0.5 - narrow));
     contact_dampings.push_back(home_office(start_autumn, 0.3 + narrow, 0.5 - narrow));
-    contact_dampings.push_back(social_events(start_autumn,  0.3 + narrow, 0.5 - narrow));
+    contact_dampings.push_back(social_events(start_autumn, 0.3 + narrow, 0.5 - narrow));
     contact_dampings.push_back(social_events_work(start_autumn, 0.0, 0.0));
 
     //contact_dampings.push_back(home_office(start_autumn, 0.0 + narrow, 0.2 - narrow));
 
-    
     //contact_dampings.push_back(school_closure(start_autumn, 0.0 + narrow, 0.2 - narrow));
     //contact_dampings.push_back(home_office(start_autumn, 0.0 + narrow, 0.2 - narrow));
     //contact_dampings.push_back(social_events(start_autumn,  0.0 + narrow, 0.2 - narrow));
 
-    narrow                = 0.0;
+    narrow = 0.0;
     //local dynamic NPIs
     auto& dynamic_npis        = params.get<epi::DynamicNPIsInfected>();
     auto dynamic_npi_dampings = std::vector<epi::DampingSampling>();
 
-    dynamic_npi_dampings.push_back(
-        contacts_at_home(epi::SimulationTime(0), 0.1 + narrow , 0.3 - narrow ));
-    dynamic_npi_dampings.push_back(school_closure(epi::SimulationTime(0), 0.2 + narrow ,
+    dynamic_npi_dampings.push_back(contacts_at_home(epi::SimulationTime(0), 0.1 + narrow, 0.3 - narrow));
+    dynamic_npi_dampings.push_back(school_closure(epi::SimulationTime(0), 0.2 + narrow,
                                                   0.4 - narrow)); //0.25 - 0.25 in autumn
-    dynamic_npi_dampings.push_back(
-        home_office(epi::SimulationTime(0), 0.1 + narrow , 0.3 - narrow ));
-    dynamic_npi_dampings.push_back(
-        social_events(epi::SimulationTime(0), 0.2 + narrow , 0.4 - narrow ));
+    dynamic_npi_dampings.push_back(home_office(epi::SimulationTime(0), 0.1 + narrow, 0.3 - narrow));
+    dynamic_npi_dampings.push_back(social_events(epi::SimulationTime(0), 0.2 + narrow, 0.4 - narrow));
     dynamic_npi_dampings.push_back(social_events_work(epi::SimulationTime(0), 0.0, 0.0));
     dynamic_npi_dampings.push_back(physical_distancing_home(epi::SimulationTime(0), 0.0, 0.0));
-    dynamic_npi_dampings.push_back(physical_distancing_school(epi::SimulationTime(0), 0.2 + narrow , 0.4 - narrow ));
-    dynamic_npi_dampings.push_back(physical_distancing_work(epi::SimulationTime(0), 0.2 + narrow ,0.4 - narrow ));
-    dynamic_npi_dampings.push_back(physical_distancing_other(epi::SimulationTime(0), 0.2 + narrow ,0.4 - narrow ));
+    dynamic_npi_dampings.push_back(physical_distancing_school(epi::SimulationTime(0), 0.2 + narrow, 0.4 - narrow));
+    dynamic_npi_dampings.push_back(physical_distancing_work(epi::SimulationTime(0), 0.2 + narrow, 0.4 - narrow));
+    dynamic_npi_dampings.push_back(physical_distancing_other(epi::SimulationTime(0), 0.2 + narrow, 0.4 - narrow));
     dynamic_npi_dampings.push_back(senior_awareness(epi::SimulationTime(0), 0.0, 0.0));
 
     auto dynamic_npi_dampings2 = std::vector<epi::DampingSampling>();
-    dynamic_npi_dampings2.push_back(
-        contacts_at_home(epi::SimulationTime(0), 0.5 + narrow , 0.7 - narrow ));
-    dynamic_npi_dampings2.push_back(school_closure(epi::SimulationTime(0), 0.4 + narrow ,
-                                                   0.6 - narrow )); //0.25 - 0.25 in autumn
-    dynamic_npi_dampings2.push_back(
-        home_office(epi::SimulationTime(0), 0.2 + narrow , 0.4 - narrow ));
-    dynamic_npi_dampings2.push_back(
-        social_events(epi::SimulationTime(0), 0.7 + narrow , 0.9 - narrow ));
+    dynamic_npi_dampings2.push_back(contacts_at_home(epi::SimulationTime(0), 0.5 + narrow, 0.7 - narrow));
+    dynamic_npi_dampings2.push_back(school_closure(epi::SimulationTime(0), 0.4 + narrow,
+                                                   0.6 - narrow)); //0.25 - 0.25 in autumn
+    dynamic_npi_dampings2.push_back(home_office(epi::SimulationTime(0), 0.2 + narrow, 0.4 - narrow));
+    dynamic_npi_dampings2.push_back(social_events(epi::SimulationTime(0), 0.7 + narrow, 0.9 - narrow));
     dynamic_npi_dampings2.push_back(social_events_work(epi::SimulationTime(0), 0.0, 0.0));
-    dynamic_npi_dampings2.push_back(physical_distancing_home(epi::SimulationTime(0), 0.0 + narrow , 0.2 - narrow ));
-    dynamic_npi_dampings2.push_back(physical_distancing_school(epi::SimulationTime(0), 0.2 + narrow , 0.4 - narrow ));
-    dynamic_npi_dampings2.push_back(physical_distancing_work(epi::SimulationTime(0), 0.2 + narrow , 0.4 - narrow ));
-    dynamic_npi_dampings2.push_back(physical_distancing_other(epi::SimulationTime(0), 0.2 + narrow , 0.4 - narrow ));
+    dynamic_npi_dampings2.push_back(physical_distancing_home(epi::SimulationTime(0), 0.0 + narrow, 0.2 - narrow));
+    dynamic_npi_dampings2.push_back(physical_distancing_school(epi::SimulationTime(0), 0.2 + narrow, 0.4 - narrow));
+    dynamic_npi_dampings2.push_back(physical_distancing_work(epi::SimulationTime(0), 0.2 + narrow, 0.4 - narrow));
+    dynamic_npi_dampings2.push_back(physical_distancing_other(epi::SimulationTime(0), 0.2 + narrow, 0.4 - narrow));
     dynamic_npi_dampings2.push_back(senior_awareness(epi::SimulationTime(0), 0.0, 0.0));
 
     dynamic_npis.set_interval(epi::SimulationTime(1.0));
@@ -530,9 +523,9 @@ epi::IOResult<void> set_nodes(const epi::SecirParams& params, epi::Date start_da
     }
     auto scaling_factor_infected = std::vector<double>(size_t(params.get_num_groups()), 1.0);
     auto scaling_factor_icu      = 1.0;
-    BOOST_OUTCOME_TRY((epi::read_population_data_county<epi::SecirModelV, epi::InfectionStateV>(
+    /*BOOST_OUTCOME_TRY((epi::read_population_data_county<epi::SecirModelV, epi::InfectionStateV>(
         counties, start_date, county_ids, scaling_factor_infected, scaling_factor_icu,
-        (data_dir / "pydata" / "Germany").string())));
+        (data_dir / "pydata" / "Germany").string())));*/
     BOOST_OUTCOME_TRY(epi::read_vaccine_data(counties, start_date, county_ids,
                                              (data_dir / "pydata" / "Germany").string(),
                                              epi::get_offset_in_days(end_date, start_date)));
@@ -667,7 +660,8 @@ epi::IOResult<void> set_edges(const fs::path& data_dir,
  * @returns created graph or any io errors that happen during reading of the files.
  */
 epi::IOResult<epi::Graph<epi::SecirModelV, epi::MigrationParameters>>
-create_graph(epi::Date start_date, epi::Date end_date, const fs::path& data_dir, bool late, bool masks, bool test, bool long_time)
+create_graph(epi::Date start_date, epi::Date end_date, const fs::path& data_dir, bool late, bool masks, bool test,
+             bool long_time)
 {
     const auto start_day = epi::get_day_in_year(start_date);
     int start_summer;
@@ -922,23 +916,25 @@ epi::IOResult<void> run(RunMode mode, const fs::path& data_dir, const fs::path& 
     ensemble_params.reserve(size_t(num_runs));
     auto save_result_result = epi::IOResult<void>(epi::success());
     auto run_idx            = size_t(0);
-    parameter_study.run([&](auto results_graph) {
-        ensemble_results.push_back(epi::interpolate_simulation_result(results_graph));
+    parameter_study.run(
+        [&](auto results_graph) {
+            ensemble_results.push_back(epi::interpolate_simulation_result(results_graph));
 
-        ensemble_params.emplace_back();
-        ensemble_params.back().reserve(results_graph.nodes().size());
-        std::transform(results_graph.nodes().begin(), results_graph.nodes().end(),
-                       std::back_inserter(ensemble_params.back()), [](auto&& node) {
-                           return node.property.get_simulation().get_model();
-                       });
+            ensemble_params.emplace_back();
+            ensemble_params.back().reserve(results_graph.nodes().size());
+            std::transform(results_graph.nodes().begin(), results_graph.nodes().end(),
+                           std::back_inserter(ensemble_params.back()), [](auto&& node) {
+                               return node.property.get_simulation().get_model();
+                           });
 
-        if (save_result_result) {
-            save_result_result =
-                save_result(ensemble_results.back(), ensemble_params.back(), county_ids, result_dir, run_idx);
-        }
-        std::cout << "run " << run_idx << " complete." << std::endl;
-        ++run_idx;
-    }, high);
+            if (save_result_result) {
+                save_result_result =
+                    save_result(ensemble_results.back(), ensemble_params.back(), county_ids, result_dir, run_idx);
+            }
+            std::cout << "run " << run_idx << " complete." << std::endl;
+            ++run_idx;
+        },
+        high);
     BOOST_OUTCOME_TRY(save_result_result);
     BOOST_OUTCOME_TRY(save_results(ensemble_results, ensemble_params, county_ids, result_dir));
 
@@ -956,12 +952,12 @@ int main(int argc, char** argv)
 
     epi::set_log_level(epi::LogLevel::warn);
 
-    bool late  = false;
-    bool masks = true;
-    bool test  = true;
-    bool high = false;
+    bool late      = false;
+    bool masks     = true;
+    bool test      = true;
+    bool high      = false;
     bool long_time = false;
-    bool future = false;
+    bool future    = false;
 
     RunMode mode;
     std::string save_dir;
@@ -986,11 +982,11 @@ int main(int argc, char** argv)
         }
         if (atoi(argv[6]) == 1) {
             masks = true;
-            test = true;
+            test  = true;
         }
         else {
             masks = false;
-            test = false;
+            test  = false;
         }
         if (atoi(argv[7]) == 1) {
             long_time = true;
@@ -1004,9 +1000,10 @@ int main(int argc, char** argv)
         else {
             future = false;
         }
-        printf("masks set to: %d, late set to: %d, high set to: %d, long set to: %d, future set to: %d\n", (int)masks, (int)late, (int)high, (int)long_time, (int)future);
+        printf("masks set to: %d, late set to: %d, high set to: %d, long set to: %d, future set to: %d\n", (int)masks,
+               (int)late, (int)high, (int)long_time, (int)future);
 
-            printf("Reading data from \"%s\", saving graph to \"%s\".\n", data_dir.c_str(), save_dir.c_str());
+        printf("Reading data from \"%s\", saving graph to \"%s\".\n", data_dir.c_str(), save_dir.c_str());
     }
     else if (argc == 3) {
         mode       = RunMode::Load;
@@ -1024,15 +1021,15 @@ int main(int argc, char** argv)
         printf("\tLoad graph from <load_dir>, then run the simulation.\n");
         return 0;
     }
-    
-    result_dir += "";
-    if (future){
+
+    result_dir += "test_init";
+    if (future) {
         result_dir += "_future";
     }
     if (long_time) {
         result_dir += "_long";
     }
-    if (high){
+    if (high) {
         result_dir += "_high";
     }
     if (late) {

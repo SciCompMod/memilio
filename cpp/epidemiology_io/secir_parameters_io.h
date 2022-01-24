@@ -247,6 +247,10 @@ namespace details
                   const std::vector<std::vector<double>>& mu_I_H, const std::vector<std::vector<double>>& mu_H_U,
                   const std::vector<double>& scaling_factor_inf);
 
+    IOResult<void> read_rki_recovered_data(std::string const& path, const std::string& id_name,
+                                           std::vector<int> const& vregion, Date date,
+                                           std::vector<std::vector<double>>& vnum_rec);
+
     /**
      * @brief sets populations data from RKI into a SecirModel
      * @param model vector of objects in which the data is set
@@ -256,7 +260,8 @@ namespace details
      * @param year Specifies year at which the data is read
      * @param month Specifies month at which the data is read
      * @param day Specifies day at which the data is read
-     * @param scaling_factor_inf factors by which to scale the confirmed cases of rki data
+     * @param scaling_factor_inf factors by which to scale the confirmed cases of
+     * rki data
      */
     template <class Model, class ModelType = InfectionState>
     IOResult<void> set_rki_data(std::vector<Model>& model, const std::string& path, const std::string& id_name,
@@ -352,6 +357,292 @@ namespace details
     }
 
     /**
+     * @brief sets populations data from RKI into a SecirModel
+     * @param model vector of objects in which the data is set
+     * @param path Path to RKI file
+     * @param id_name Name of region key column
+     * @param region vector of keys of the region of interest
+     * @param year Specifies year at which the data is read
+     * @param month Specifies month at which the data is read
+     * @param day Specifies day at which the data is read
+     * @param scaling_factor_inf factors by which to scale the confirmed cases of
+     * rki data
+     */
+    template <class Model, class ModelType = InfectionStateV>
+    IOResult<void> set_rki_data_vaccine(std::vector<Model>& model, const std::string& path, const std::string& id_name,
+                                        std::vector<int> const& region, Date date,
+                                        const std::vector<double>& scaling_factor_inf)
+    {
+
+        std::vector<double> age_ranges = {5., 10., 20., 25., 20., 20.};
+        assert(scaling_factor_inf.size() == age_ranges.size());
+
+        std::vector<std::vector<int>> t_car_to_rec{model.size()}; // R9
+        std::vector<std::vector<int>> t_car_to_inf{model.size()}; // R3
+        std::vector<std::vector<int>> t_exp_to_car{model.size()}; // R2
+        std::vector<std::vector<int>> t_inf_to_rec{model.size()}; // R4
+        std::vector<std::vector<int>> t_inf_to_hosp{model.size()}; // R6
+        std::vector<std::vector<int>> t_hosp_to_rec{model.size()}; // R5
+        std::vector<std::vector<int>> t_hosp_to_icu{model.size()}; // R7
+        std::vector<std::vector<int>> t_icu_to_dead{model.size()}; // R10
+
+        std::vector<std::vector<double>> mu_C_R{model.size()};
+        std::vector<std::vector<double>> mu_I_H{model.size()};
+        std::vector<std::vector<double>> mu_H_U{model.size()};
+
+        std::vector<std::vector<double>> num_inf(model.size());
+        std::vector<std::vector<double>> num_death(model.size());
+        std::vector<std::vector<double>> num_rec(model.size());
+        std::vector<std::vector<double>> num_exp(model.size());
+        std::vector<std::vector<double>> num_car(model.size());
+        std::vector<std::vector<double>> num_hosp(model.size());
+        std::vector<std::vector<double>> num_icu(model.size());
+
+        /*----------- UNVACCINATED -----------*/
+        for (size_t county = 0; county < model.size(); county++) {
+            for (size_t group = 0; group < age_ranges.size(); group++) {
+
+                num_inf[county].push_back(0);
+                num_death[county].push_back(0);
+                num_rec[county].push_back(0);
+                num_exp[county].push_back(0);
+                num_car[county].push_back(0);
+                num_hosp[county].push_back(0);
+                num_icu[county].push_back(0);
+
+                t_car_to_inf[county].push_back(static_cast<int>(
+                    2 * (model[county].parameters.template get<epi::IncubationTime>()[(epi::AgeGroup)group] -
+                         model[county].parameters.template get<epi::SerialInterval>()[(epi::AgeGroup)group])));
+                t_car_to_rec[county].push_back(static_cast<int>(
+                    t_car_to_inf[county][group] +
+                    0.5 * model[county].parameters.template get<epi::InfectiousTimeMild>()[(epi::AgeGroup)group]));
+                t_exp_to_car[county].push_back(static_cast<int>(
+                    2 * model[county].parameters.template get<epi::SerialInterval>()[(epi::AgeGroup)group] -
+                    model[county].parameters.template get<epi::IncubationTime>()[(epi::AgeGroup)group]));
+                t_inf_to_rec[county].push_back(static_cast<int>(
+                    model[county].parameters.template get<epi::InfectiousTimeMild>()[(epi::AgeGroup)group]));
+                t_inf_to_hosp[county].push_back(static_cast<int>(
+                    model[county].parameters.template get<epi::HomeToHospitalizedTime>()[(epi::AgeGroup)group]));
+                t_hosp_to_rec[county].push_back(static_cast<int>(
+                    model[county].parameters.template get<epi::HospitalizedToHomeTime>()[(epi::AgeGroup)group]));
+                t_hosp_to_icu[county].push_back(static_cast<int>(
+                    model[county].parameters.template get<epi::HospitalizedToICUTime>()[(epi::AgeGroup)group]));
+                t_icu_to_dead[county].push_back(static_cast<int>(
+                    model[county].parameters.template get<epi::ICUToDeathTime>()[(epi::AgeGroup)group]));
+
+                mu_C_R[county].push_back(
+                    model[county].parameters.template get<epi::AsymptoticCasesPerInfectious>()[(epi::AgeGroup)group]);
+                mu_I_H[county].push_back(
+                    model[county].parameters.template get<epi::HospitalizedCasesPerInfectious>()[(epi::AgeGroup)group]);
+                mu_H_U[county].push_back(
+                    model[county].parameters.template get<epi::ICUCasesPerHospitalized>()[(epi::AgeGroup)group]);
+            }
+        }
+
+        BOOST_OUTCOME_TRY(read_rki_data(path, id_name, region, date, num_exp, num_car, num_inf, num_hosp, num_icu,
+                                        num_death, num_rec, t_car_to_rec, t_car_to_inf, t_exp_to_car, t_inf_to_rec,
+                                        t_inf_to_hosp, t_hosp_to_rec, t_hosp_to_icu, t_icu_to_dead, mu_C_R, mu_I_H,
+                                        mu_H_U, scaling_factor_inf));
+
+        for (size_t county = 0; county < model.size(); county++) {
+            if (std::accumulate(num_inf[county].begin(), num_inf[county].end(), 0.0) > 0) {
+                size_t num_groups = (size_t)model[county].parameters.get_num_groups();
+                for (size_t i = 0; i < num_groups; i++) {
+                    model[county].populations[{AgeGroup(i), ModelType::Exposed}]      = num_exp[county][i];
+                    model[county].populations[{AgeGroup(i), ModelType::Carrier}]      = num_car[county][i];
+                    model[county].populations[{AgeGroup(i), ModelType::Infected}]     = num_inf[county][i];
+                    model[county].populations[{AgeGroup(i), ModelType::Hospitalized}] = num_hosp[county][i];
+                    model[county].populations[{AgeGroup(i), ModelType::Recovered}]    = num_rec[county][i];
+                }
+            }
+            else {
+                log_warning("No infections reported on date " + std::to_string(date.year) + "-" +
+                            std::to_string(date.month) + "-" + std::to_string(date.day) + " for region " +
+                            std::to_string(region[county]) + ". Population data has not been set.");
+            }
+        }
+
+        /*----------- PARTIALLY VACCINATED -----------*/
+        for (size_t county = 0; county < model.size(); county++) {
+            t_car_to_rec[county].clear();
+            t_car_to_inf[county].clear();
+            t_exp_to_car[county].clear();
+            t_inf_to_rec[county].clear();
+            t_inf_to_hosp[county].clear();
+            t_hosp_to_rec[county].clear();
+            t_hosp_to_icu[county].clear();
+            t_icu_to_dead[county].clear();
+
+            mu_C_R[county].clear();
+            mu_I_H[county].clear();
+            mu_H_U[county].clear();
+
+            num_inf[county].clear();
+            num_death[county].clear();
+            num_rec[county].clear();
+            num_exp[county].clear();
+            num_car[county].clear();
+            num_hosp[county].clear();
+            num_icu[county].clear();
+            for (size_t group = 0; group < age_ranges.size(); group++) {
+
+                num_inf[county].push_back(0);
+                num_death[county].push_back(0);
+                num_rec[county].push_back(0);
+                num_exp[county].push_back(0);
+                num_car[county].push_back(0);
+                num_hosp[county].push_back(0);
+                num_icu[county].push_back(0);
+
+                double reduc_t = model[0].parameters.template get<epi::ReducTime>()[(epi::AgeGroup)group];
+                t_car_to_inf[county].push_back(static_cast<int>(
+                    2 * (model[county].parameters.template get<epi::IncubationTime>()[(epi::AgeGroup)group] -
+                         model[county].parameters.template get<epi::SerialInterval>()[(epi::AgeGroup)group])));
+                t_car_to_rec[county].push_back(static_cast<int>(
+                    t_car_to_inf[county][group] +
+                    0.5 * model[county].parameters.template get<epi::InfectiousTimeMild>()[(epi::AgeGroup)group] *
+                        reduc_t));
+                t_exp_to_car[county].push_back(static_cast<int>(
+                    2 * model[county].parameters.template get<epi::SerialInterval>()[(epi::AgeGroup)group] -
+                    model[county].parameters.template get<epi::IncubationTime>()[(epi::AgeGroup)group]));
+                t_inf_to_rec[county].push_back(static_cast<int>(
+                    model[county].parameters.template get<epi::InfectiousTimeMild>()[(epi::AgeGroup)group] * reduc_t));
+                t_inf_to_hosp[county].push_back(static_cast<int>(
+                    model[county].parameters.template get<epi::HomeToHospitalizedTime>()[(epi::AgeGroup)group]));
+                t_hosp_to_rec[county].push_back(static_cast<int>(
+                    model[county].parameters.template get<epi::HospitalizedToHomeTime>()[(epi::AgeGroup)group]));
+                t_hosp_to_icu[county].push_back(static_cast<int>(
+                    model[county].parameters.template get<epi::HospitalizedToICUTime>()[(epi::AgeGroup)group]));
+                t_icu_to_dead[county].push_back(static_cast<int>(
+                    model[county].parameters.template get<epi::ICUToDeathTime>()[(epi::AgeGroup)group]));
+
+                mu_C_R[county].push_back(
+                    (1 - model[county].parameters.template get<epi::ReducExpInf>()[(epi::AgeGroup)group] *
+                             (1 - model[county].parameters.template get<epi::AsymptoticCasesPerInfectious>()[(
+                                      epi::AgeGroup)group])));
+                mu_I_H[county].push_back(
+                    model[county].parameters.template get<epi::HospitalizedCasesPerInfectious>()[(epi::AgeGroup)group] *
+                    model[county].parameters.template get<epi::ReducInfHosp>()[(epi::AgeGroup)group]);
+                mu_H_U[county].push_back(
+                    model[county].parameters.template get<epi::ICUCasesPerHospitalized>()[(epi::AgeGroup)group] *
+                    model[county].parameters.template get<epi::ReducInfHosp>()[(epi::AgeGroup)group]);
+            }
+        }
+
+        BOOST_OUTCOME_TRY(read_rki_data(path, id_name, region, date, num_exp, num_car, num_inf, num_hosp, num_icu,
+                                        num_death, num_rec, t_car_to_rec, t_car_to_inf, t_exp_to_car, t_inf_to_rec,
+                                        t_inf_to_hosp, t_hosp_to_rec, t_hosp_to_icu, t_icu_to_dead, mu_C_R, mu_I_H,
+                                        mu_H_U, scaling_factor_inf));
+
+        for (size_t county = 0; county < model.size(); county++) {
+            if (std::accumulate(num_inf[county].begin(), num_inf[county].end(), 0.0) > 0) {
+                size_t num_groups = (size_t)model[county].parameters.get_num_groups();
+                for (size_t i = 0; i < num_groups; i++) {
+                    model[county].populations[{AgeGroup(i), ModelType::ExposedV1}]      = num_exp[county][i];
+                    model[county].populations[{AgeGroup(i), ModelType::CarrierV1}]      = num_car[county][i];
+                    model[county].populations[{AgeGroup(i), ModelType::InfectedV1}]     = num_inf[county][i];
+                    model[county].populations[{AgeGroup(i), ModelType::HospitalizedV1}] = num_hosp[county][i];
+                }
+            }
+            else {
+                log_warning("No infections reported on date " + std::to_string(date.year) + "-" +
+                            std::to_string(date.month) + "-" + std::to_string(date.day) + " for region " +
+                            std::to_string(region[county]) + ". Population data has not been set.");
+            }
+        }
+
+        /*----------- FULLY VACCINATED -----------*/
+        for (size_t county = 0; county < model.size(); county++) {
+            t_car_to_rec[county].clear();
+            t_car_to_inf[county].clear();
+            t_exp_to_car[county].clear();
+            t_inf_to_rec[county].clear();
+            t_inf_to_hosp[county].clear();
+            t_hosp_to_rec[county].clear();
+            t_hosp_to_icu[county].clear();
+            t_icu_to_dead[county].clear();
+
+            mu_C_R[county].clear();
+            mu_I_H[county].clear();
+            mu_H_U[county].clear();
+
+            num_inf[county].clear();
+            num_death[county].clear();
+            num_rec[county].clear();
+            num_exp[county].clear();
+            num_car[county].clear();
+            num_hosp[county].clear();
+            num_icu[county].clear();
+            for (size_t group = 0; group < age_ranges.size(); group++) {
+
+                num_inf[county].push_back(0);
+                num_death[county].push_back(0);
+                num_rec[county].push_back(0);
+                num_exp[county].push_back(0);
+                num_car[county].push_back(0);
+                num_hosp[county].push_back(0);
+                num_icu[county].push_back(0);
+
+                double reduc_t = model[0].parameters.template get<epi::ReducTime>()[(epi::AgeGroup)group];
+                t_car_to_inf[county].push_back(static_cast<int>(
+                    2 * (model[county].parameters.template get<epi::IncubationTime>()[(epi::AgeGroup)group] -
+                         model[county].parameters.template get<epi::SerialInterval>()[(epi::AgeGroup)group])));
+                t_car_to_rec[county].push_back(static_cast<int>(
+                    t_car_to_inf[county][group] +
+                    0.5 * model[county].parameters.template get<epi::InfectiousTimeMild>()[(epi::AgeGroup)group] *
+                        reduc_t));
+                t_exp_to_car[county].push_back(static_cast<int>(
+                    2 * model[county].parameters.template get<epi::SerialInterval>()[(epi::AgeGroup)group] -
+                    model[county].parameters.template get<epi::IncubationTime>()[(epi::AgeGroup)group]));
+                t_inf_to_rec[county].push_back(static_cast<int>(
+                    model[county].parameters.template get<epi::InfectiousTimeMild>()[(epi::AgeGroup)group] * reduc_t));
+                t_inf_to_hosp[county].push_back(static_cast<int>(
+                    model[county].parameters.template get<epi::HomeToHospitalizedTime>()[(epi::AgeGroup)group]));
+                t_hosp_to_rec[county].push_back(static_cast<int>(
+                    model[county].parameters.template get<epi::HospitalizedToHomeTime>()[(epi::AgeGroup)group]));
+                t_hosp_to_icu[county].push_back(static_cast<int>(
+                    model[county].parameters.template get<epi::HospitalizedToICUTime>()[(epi::AgeGroup)group]));
+                t_icu_to_dead[county].push_back(static_cast<int>(
+                    model[county].parameters.template get<epi::ICUToDeathTime>()[(epi::AgeGroup)group]));
+
+                mu_C_R[county].push_back(
+                    (1 - model[county].parameters.template get<epi::ReducImmuneExpInf>()[(epi::AgeGroup)group] *
+                             (1 - model[county].parameters.template get<epi::AsymptoticCasesPerInfectious>()[(
+                                      epi::AgeGroup)group])));
+                mu_I_H[county].push_back(
+                    model[county].parameters.template get<epi::HospitalizedCasesPerInfectious>()[(epi::AgeGroup)group] *
+                    model[county].parameters.template get<epi::ReducImmuneInfHosp>()[(epi::AgeGroup)group]);
+                mu_H_U[county].push_back(
+                    model[county].parameters.template get<epi::ICUCasesPerHospitalized>()[(epi::AgeGroup)group] *
+                    model[county].parameters.template get<epi::ReducImmuneInfHosp>()[(epi::AgeGroup)group]);
+            }
+        }
+
+        BOOST_OUTCOME_TRY(read_rki_data(path, id_name, region, date, num_exp, num_car, num_inf, num_hosp, num_icu,
+                                        num_death, num_rec, t_car_to_rec, t_car_to_inf, t_exp_to_car, t_inf_to_rec,
+                                        t_inf_to_hosp, t_hosp_to_rec, t_hosp_to_icu, t_icu_to_dead, mu_C_R, mu_I_H,
+                                        mu_H_U, scaling_factor_inf));
+
+        for (size_t county = 0; county < model.size(); county++) {
+            if (std::accumulate(num_inf[county].begin(), num_inf[county].end(), 0.0) > 0) {
+                size_t num_groups = (size_t)model[county].parameters.get_num_groups();
+                for (size_t i = 0; i < num_groups; i++) {
+                    model[county].populations[{AgeGroup(i), ModelType::ExposedV2}]      = num_exp[county][i];
+                    model[county].populations[{AgeGroup(i), ModelType::CarrierV2}]      = num_car[county][i];
+                    model[county].populations[{AgeGroup(i), ModelType::InfectedV2}]     = num_inf[county][i];
+                    model[county].populations[{AgeGroup(i), ModelType::HospitalizedV2}] = num_hosp[county][i];
+                }
+            }
+            else {
+                log_warning("No infections reported on date " + std::to_string(date.year) + "-" +
+                            std::to_string(date.month) + "-" + std::to_string(date.day) + " for region " +
+                            std::to_string(region[county]) + ". Population data has not been set.");
+            }
+        } // namespace details
+        return success();
+    } // namespace epi
+
+    /**
      * @brief reads number of ICU patients from DIVI register into SecirParams
      * @param path Path to DIVI file
      * @param id_name Name of region key column
@@ -434,6 +725,142 @@ namespace details
                 for (auto i = AgeGroup(0); i < num_groups; i++) {
                     model[region].populations.template set_difference_from_group_total<epi::AgeGroup>(
                         {i, ModelType::Susceptible}, num_population[region][size_t(i)]);
+                }
+            }
+            else {
+                log_warning("No population data available for region " + std::to_string(region) +
+                            ". Population data has not been set.");
+            }
+        }
+
+        return success();
+    }
+
+    template <class Model>
+    IOResult<void> set_population_data_vaccine(std::vector<Model>& model, const std::string& path,
+                                               const std::string& path_rki, const std::string& id_name,
+                                               const std::vector<int>& vregion, Date date)
+    {
+
+        BOOST_OUTCOME_TRY(num_population, read_population_data(path, id_name, vregion));
+
+        std::vector<double> age_ranges = {5., 10., 20., 25., 20., 20.};
+        std::vector<std::vector<double>> num_rec(model.size(), std::vector<double>(age_ranges.size(), 0.0));
+
+        BOOST_OUTCOME_TRY(read_rki_recovered_data(path_rki, id_name, vregion, date, num_rec));
+
+        for (size_t region = 0; region < vregion.size(); region++) {
+            if (std::accumulate(num_population[region].begin(), num_population[region].end(), 0.0) > 0) {
+                auto num_groups = model[region].parameters.get_num_groups();
+                for (auto i = AgeGroup(0); i < num_groups; i++) {
+
+                    double S_v = model[region].parameters.template get<DailyFullVaccination>()[i][0] +
+                                 num_rec[region][size_t(i)];
+                    double S_pv = model[region].parameters.template get<DailyFirstVaccination>()[i][0] -
+                                  model[region].parameters.template get<DailyFullVaccination>()[i][0];
+                    double S;
+                    if (num_population[region][size_t(i)] - S_pv - S_v < 0.0) {
+                        std::cout << "county: " << region << ", AgeGroup: " << size_t(i) << std::endl;
+                        std::cout << "num pop: " << num_population[region][size_t(i)] << std::endl;
+                        std::cout << "S_pv: " << S_pv << std::endl;
+                        std::cout << "S_v (V,rec): " << S_v << " ("
+                                  << model[region].parameters.template get<DailyFullVaccination>()[i][0] << ", "
+                                  << num_rec[region][size_t(i)] << ")" << std::endl;
+                        std::cout << std::endl;
+                        S = 0.0;
+                        S_v += num_population[region][size_t(i)] - S_pv - S_v;
+                    }
+                    else {
+                        S = num_population[region][size_t(i)] - S_pv - S_v;
+                    }
+
+                    double ratio_E  = 1 / (S + S_pv * model[region].parameters.template get<ReducVaccExp>()[i] +
+                                          S_v * model[region].parameters.template get<ReducImmuneExp>()[i]);
+                    double ratio_C  = 1 / (S + S_pv + S_v);
+                    double ratio_I  = 1 / (S + S_pv * model[region].parameters.template get<ReducExpInf>()[i] +
+                                          S_v * model[region].parameters.template get<ReducImmuneExpInf>()[i]);
+                    double ratio_HU = 1 / (S + S_pv * model[region].parameters.template get<ReducInfHosp>()[i] +
+                                           S_v * model[region].parameters.template get<ReducImmuneInfHosp>()[i]);
+
+                    model[region].populations[{i, InfectionStateV::Exposed}] =
+                        S * ratio_E * model[region].populations[{i, InfectionStateV::Exposed}];
+                    model[region].populations[{i, InfectionStateV::ExposedV1}] =
+                        S_pv * model[region].parameters.template get<ReducVaccExp>()[i] * ratio_E *
+                        model[region].populations[{i, InfectionStateV::ExposedV1}];
+                    model[region].populations[{i, InfectionStateV::ExposedV2}] =
+                        S_v * model[region].parameters.template get<ReducImmuneExp>()[i] * ratio_E *
+                        model[region].populations[{i, InfectionStateV::ExposedV2}];
+
+                    model[region].populations[{i, InfectionStateV::Carrier}] =
+                        S * ratio_C * model[region].populations[{i, InfectionStateV::Carrier}];
+                    model[region].populations[{i, InfectionStateV::CarrierV1}] =
+                        S_pv * ratio_C * model[region].populations[{i, InfectionStateV::CarrierV1}];
+                    model[region].populations[{i, InfectionStateV::CarrierV2}] =
+                        S_v * ratio_C * model[region].populations[{i, InfectionStateV::CarrierV2}];
+
+                    model[region].populations[{i, InfectionStateV::Infected}] =
+                        S * ratio_I * model[region].populations[{i, InfectionStateV::Infected}];
+                    model[region].populations[{i, InfectionStateV::InfectedV1}] =
+                        S_pv * model[region].parameters.template get<ReducExpInf>()[i] * ratio_I *
+                        model[region].populations[{i, InfectionStateV::InfectedV1}];
+                    model[region].populations[{i, InfectionStateV::InfectedV2}] =
+                        S_v * model[region].parameters.template get<ReducImmuneExpInf>()[i] * ratio_I *
+                        model[region].populations[{i, InfectionStateV::InfectedV2}];
+
+                    model[region].populations[{i, InfectionStateV::Hospitalized}] =
+                        S * ratio_HU * model[region].populations[{i, InfectionStateV::Hospitalized}];
+                    model[region].populations[{i, InfectionStateV::HospitalizedV1}] =
+                        S_pv * model[region].parameters.template get<ReducInfHosp>()[i] * ratio_HU *
+                        model[region].populations[{i, InfectionStateV::HospitalizedV1}];
+                    model[region].populations[{i, InfectionStateV::HospitalizedV2}] =
+                        S_v * model[region].parameters.template get<ReducImmuneInfHosp>()[i] * ratio_HU *
+                        model[region].populations[{i, InfectionStateV::HospitalizedV2}];
+
+                    model[region].populations[{i, InfectionStateV::ICUV1}] =
+                        S_pv * model[region].parameters.template get<ReducInfHosp>()[i] * ratio_HU *
+                        model[region].populations[{i, InfectionStateV::ICU}];
+                    model[region].populations[{i, InfectionStateV::ICUV2}] =
+                        S_v * model[region].parameters.template get<ReducImmuneInfHosp>()[i] * ratio_HU *
+                        model[region].populations[{i, InfectionStateV::ICU}];
+                    model[region].populations[{i, InfectionStateV::ICU}] =
+                        S * ratio_HU * model[region].populations[{i, InfectionStateV::ICU}];
+
+                    model[region].populations[{i, InfectionStateV::Recovered}] =
+                        model[region].parameters.template get<DailyFullVaccination>()[i][0] +
+                        model[region].populations[{i, InfectionStateV::Recovered}] -
+                        (model[region].populations[{i, InfectionStateV::Infected}] +
+                         model[region].populations[{i, InfectionStateV::InfectedV1}] +
+                         model[region].populations[{i, InfectionStateV::InfectedV2}] +
+                         model[region].populations[{i, InfectionStateV::Hospitalized}] +
+                         model[region].populations[{i, InfectionStateV::HospitalizedV1}] +
+                         model[region].populations[{i, InfectionStateV::HospitalizedV2}] +
+                         model[region].populations[{i, InfectionStateV::ICU}] +
+                         model[region].populations[{i, InfectionStateV::ICUV1}] +
+                         model[region].populations[{i, InfectionStateV::ICUV1}]) -
+                        model[region].populations[{i, InfectionStateV::Dead}];
+
+                    model[region].populations[{i, InfectionStateV::Recovered}] =
+                        std::min(S + S_pv + S_v,
+                                 std::max(0.0, double(model[region].populations[{i, InfectionStateV::Recovered}])));
+
+                    model[region].populations[{i, InfectionStateV::SusceptibleV1}] =
+                        S_pv - model[region].populations[{i, InfectionStateV::ExposedV1}] -
+                        model[region].populations[{i, InfectionStateV::InfectedV1}] -
+                        model[region].populations[{i, InfectionStateV::HospitalizedV1}] -
+                        model[region].populations[{i, InfectionStateV::ICUV1}];
+
+                    model[region].populations.template set_difference_from_group_total<epi::AgeGroup>(
+                        {i, InfectionStateV::Susceptible}, num_population[region][size_t(i)]);
+                }
+
+                for (auto i = epi::AgeGroup(0); i < AgeGroup(6); i++) {
+                    for (auto j = epi::Index<epi::InfectionStateV>(0); j < epi::InfectionStateV::Count; ++j) {
+                        if (model[region].populations[{i, j}] < 0) {
+                            std::cout << "populations(" << i << ", " << j << ") is negative:"
+                                      << model[region].populations[{i, j}] / num_population[region][size_t(i)]
+                                      << std::endl;
+                        }
+                    }
                 }
             }
             else {
@@ -572,7 +999,8 @@ IOResult<void> extrapolate_rki_results(std::vector<Model>& model, const std::str
                     rki_data[i][j]((size_t)ModelType::ICU + (size_t)ModelType::Count * age);
             }
         }
-        std::cout << "extrapolated rki data for date: " << date.day << "." << date.month << "." << date.year << std::endl;
+        std::cout << "extrapolated rki data for date: " << date.day << "." << date.month << "." << date.year
+                  << std::endl;
         date = offset_date_by_days(date, 1);
     }
     BOOST_OUTCOME_TRY(save_result<ModelType>(rki_data, region, path_join(results_dir, "Results_rki.h5")));
@@ -659,28 +1087,45 @@ IOResult<void> read_population_data_county(std::vector<Model>& model, Date date,
     std::string id_name = "ID_County";
 
     if (date > Date(2020, 4, 23)) {
-        BOOST_OUTCOME_TRY((details::set_divi_data<Model, ModelType>(model, path_join(dir, "county_divi_ma7.json"), id_name,
-                                                                    county, date, scaling_factor_icu)));
+        BOOST_OUTCOME_TRY((details::set_divi_data<Model, ModelType>(model, path_join(dir, "county_divi_ma7.json"),
+                                                                    id_name, county, date, scaling_factor_icu)));
     }
     else {
         log_warning("No DIVI data available for this date");
     }
     BOOST_OUTCOME_TRY((details::set_rki_data<Model, ModelType>(model, path_join(dir, "all_county_age_ma7_rki.json"),
                                                                id_name, county, date, scaling_factor_inf)));
-    BOOST_OUTCOME_TRY((extrapolate_rki_results<Model, ModelType>(model, dir, dir, county, date, scaling_factor_inf, scaling_factor_icu, 5)));
+    BOOST_OUTCOME_TRY((extrapolate_rki_results<Model, ModelType>(model, dir, dir, county, date, scaling_factor_inf,
+                                                                 scaling_factor_icu, 5)));
     BOOST_OUTCOME_TRY((details::set_population_data<Model, ModelType>(
         model, path_join(dir, "county_current_population.json"), "ID_County", county)));
     return success();
 }
-template <class Model>
+template <class Model, class ModelType = InfectionStateV>
 IOResult<void> read_vaccine_data(std::vector<Model>& model, Date date, const std::vector<int>& county,
                                  const std::string& dir, int num_days)
 {
-    std::string id_name = "ID_County";
+    std::string id_name       = "ID_County";
+    double scaling_factor_icu = 1;
+    std::vector<double> scaling_factor_inf(6, 1);
+    details::get_new_vaccine_growth(model, path_join(dir, "all_county_ageinf_vacc_ma7.json"), date, id_name, county,
+                                    num_days);
 
-    details::get_new_vaccine_growth(model, path_join(dir, "all_county_ageinf_vacc_ma7.json"), date, id_name,
-                                    county, num_days);
-    //details::set_vaccine_data(model, path_join(dir, "vaccine_data.json"), id_name, county);
+    if (date > Date(2020, 4, 23)) {
+        BOOST_OUTCOME_TRY((details::set_divi_data<Model, ModelType>(model, path_join(dir, "county_divi_ma7.json"),
+                                                                    id_name, county, date, scaling_factor_icu)));
+    }
+    else {
+        log_warning("No DIVI data available for this date");
+    }
+
+    BOOST_OUTCOME_TRY((details::set_rki_data_vaccine<Model, ModelType>(
+        model, path_join(dir, "all_county_age_ma7_rki.json"), id_name, county, date, scaling_factor_inf)));
+    BOOST_OUTCOME_TRY((details::set_population_data_vaccine<Model>(
+        model, path_join(dir, "county_current_population.json"), path_join(dir, "all_county_age_ma7_rki.json"),
+        "ID_County", county, date)));
+    // details::set_vaccine_data(model, path_join(dir, "vaccine_data.json"),
+    // id_name, county);
     return success();
 }
 
