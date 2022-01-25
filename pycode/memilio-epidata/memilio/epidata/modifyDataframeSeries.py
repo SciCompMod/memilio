@@ -45,7 +45,7 @@ def impute_and_reduce_df(df_old, group_by_cols, mod_cols, impute='forward', movi
     # derive date from time
     try:
         df_old.Date = df_old.Date.dt.date
-    except:
+    except AttributeError:
         df_old[dd.EngEng['date']] = pd.to_datetime(df_old[dd.EngEng['date']])
         df_old.Date = df_old.Date.dt.date
 
@@ -57,7 +57,7 @@ def impute_and_reduce_df(df_old, group_by_cols, mod_cols, impute='forward', movi
     # remove 'index' column if available
     try:
         df_new = df_new.drop(columns='index')
-    except:
+    except KeyError:
         pass
 
     # range of dates which should be filled

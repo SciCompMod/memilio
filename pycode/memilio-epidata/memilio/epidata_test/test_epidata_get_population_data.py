@@ -354,27 +354,27 @@ class Test_getPopulationData(fake_filesystem_unittest.TestCase):
 
         directory = os.path.join(out_folder, 'Germany/')
         gd.check_dir(directory)
-        with self.assertRaises(SystemExit) as cm:
+        with self.assertRaises(FileNotFoundError) as error:
             gpd.get_one_data_set(read_data, file_format,
                                  no_raw, directory, self.d1)
         file_in = os.path.join(self.path, "Germany/FullDataB.json")
-        exit_string = "Error: The file: " + file_in + " does not exist. "\
+        error_message = "Error: The file: " + file_in + " does not exist. "\
             "Call program without -r flag to get it."
-        self.assertEqual(cm.exception.code, exit_string)
+        self.assertEqual(str(error.exception), error_message)
 
         mocklexcel.side_effect = ValueError
-        with self.assertRaises(SystemExit) as cm:
+        with self.assertRaises(FileNotFoundError) as error:
             gpd.load_age_population_data(self.path)
-        exit_string = "Error: The counties file does not exist."
-        self.assertEqual(cm.exception.code, exit_string)
+        error_message = "Error: The counties file does not exist."
+        self.assertEqual(str(error.exception), error_message)
 
         mocklexcel.side_effect = None
         mocklexcel.return_value = self.test_zensus.copy()
         mocklcsv.side_effect = ValueError
-        with self.assertRaises(SystemExit) as cm:
+        with self.assertRaises(FileNotFoundError) as error:
             gpd.load_age_population_data(self.path)
-        exit_string = "Error: The zensus file does not exist."
-        self.assertEqual(cm.exception.code, exit_string)
+        error_message = "Error: The zensus file does not exist."
+        self.assertEqual(str(error.exception), error_message)
 
 
 if __name__ == '__main__':

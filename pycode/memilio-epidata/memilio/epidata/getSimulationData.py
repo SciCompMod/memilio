@@ -94,27 +94,32 @@ def get_simulation_data(read_data=dd.defaultDict['read_data'],
 
     try:
         getRKIData.get_rki_data(**arg_dict_rki)
-    except:
+    except Exception as exp:
+        print(str(type(exp).__name__) + ": " + str(exp))
         print_error('RKI')
 
     try:
         getPopulationData.get_population_data(**arg_dict_all)
-    except:
+    except Exception as exp:
+        print(str(type(exp).__name__) + ": " + str(exp))
         print_error('population')
 
     try:
         getPopulationData.get_age_population_data(**arg_dict_all)
-    except:
+    except Exception as exp:
+        print(str(type(exp).__name__) + ": " + str(exp))
         print_error('age-resolved population')
 
     try:
         getDIVIData.get_divi_data(**arg_dict_divi)
-    except:
+    except Exception as exp:
+        print(str(type(exp).__name__) + ": " + str(exp))
         print_error('DIVI')
 
     try:
         getVaccinationData.get_vaccination_data(**arg_dict_vacc)
-    except:
+    except Exception as exp:
+        print(str(type(exp).__name__) + ": " + str(exp))
         print_error('vaccination')
 
 
