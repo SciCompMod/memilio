@@ -87,7 +87,7 @@ class TestGetVaccinationData(fake_filesystem_unittest.TestCase):
         df_vacc_data_altern = df_vacc_data_altern.append(
             df_to_append, ignore_index=True)
 
-    df_vacc_data = df_vacc_data.astype({'LandkreisId_Impfort': 'string', 'Altersgruppe': "string",
+    df_vacc_data_altern = df_vacc_data_altern.astype({'LandkreisId_Impfort': 'string', 'Altersgruppe': "string",
                    'Impfschutz': int, 'Anzahl': int})                   
 
     def setUp(self):
