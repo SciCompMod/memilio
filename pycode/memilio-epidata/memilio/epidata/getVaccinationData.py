@@ -38,8 +38,6 @@ from memilio.epidata import getCommuterMobility as gcm
 
 def download_vaccination_data():
     # RKI content from github
-    # From Dec 21, 2021, the age group 05-11 was added. This is not yet taken into account in this function.
-    # url = 'https://raw.githubusercontent.com/robert-koch-institut/COVID-19-Impfungen_in_Deutschland/9ca33409a4899ab56cec65c2169ae073df1603c0/Archiv/2021-12-20_Deutschland_Landkreise_COVID-19-Impfungen.csv'
     url = 'https://raw.githubusercontent.com/robert-koch-institut/COVID-19-Impfungen_in_Deutschland/master/Aktuell_Deutschland_Landkreise_COVID-19-Impfungen.csv'
     # empty data frame to return if not read correctly
     df = pd.DataFrame()
@@ -90,7 +88,7 @@ def create_intervals_mapping(from_lower_bounds, to_lower_bounds):
     return from_to_mapping
 
 
-def compute_vaccination_ratios(age_group_list, vaccinations_table, column_name, region_column, population, merge_2022=False):
+def compute_vaccination_ratios(age_group_list, vaccinations_table, vacc_column, region_column, population, merge_2022=False):
     """! Computes vaccination ratios based on the number of vaccinations 
     and the corresponding population data
 
@@ -98,7 +96,8 @@ def compute_vaccination_ratios(age_group_list, vaccinations_table, column_name, 
     @param vaccinations_table Table of vaccinations (possible multiple columns
         for different number of doses)
     @param vacc_column Column name of vaccinations_table to be considered.
-    @param region_column Column of regions in vaccinations table, e.g., ID_County or ID_State.  
+    @param region_column Column of regions in vaccinations table, e.g., ID_County or ID_State.
+    @param population Table of population data for the given regions and considered age groups.
     @param merge_2022 [Default: False] Defines whether population data has to be merged to counties as of 2022.
     @return All vaccination ratios per region and age group.
     """
@@ -106,7 +105,7 @@ def compute_vaccination_ratios(age_group_list, vaccinations_table, column_name, 
     df_vacc_ratios = pd.DataFrame(columns=[region_column] + age_group_list)
     df_vacc_ratios[region_column] = vaccinations_table[region_column].unique()
     df_vacc_ratios[age_group_list] = np.array(
-        vaccinations_table[column_name]).reshape(
+        vaccinations_table[vacc_column]).reshape(
         len(vaccinations_table[region_column].unique()),
         len(age_group_list))
     # compute county and age-group-specific vaccination ratios
