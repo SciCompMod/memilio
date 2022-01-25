@@ -36,42 +36,44 @@ Location::Location(LocationType type, uint32_t index)
 {
 }
 
-InfectionState Location::interact(const Person& person, TimeSpan dt, const GlobalInfectionParameters& global_params) const
+InfectionState Location::interact(const Person& person, TimeSpan dt,
+                                  const GlobalInfectionParameters& global_params) const
 {
-    auto infection_state = person.get_infection_state();
+    auto infection_state   = person.get_infection_state();
     auto vaccination_state = person.get_vaccination_state();
-    auto age = person.get_age();
-        switch (infection_state) {
-        case InfectionState::Susceptible:
-                return random_transition(infection_state, dt, {{InfectionState::Exposed, m_cached_exposure_rate[{age,vaccination_state}]}});
-        case InfectionState::Carrier:
-            return random_transition(
-                infection_state, dt,
-                {{InfectionState::Infected, global_params.get<CarrierToInfected>()[{age,vaccination_state}]},
-                 {InfectionState::Recovered_Carrier, global_params.get<CarrierToRecovered>()[{age,vaccination_state}]}});
-        case InfectionState::Infected:
-            return random_transition(
-                infection_state, dt,
-                {{InfectionState::Recovered_Infected, global_params.get<InfectedToRecovered>()[{age,vaccination_state}]},
-                 {InfectionState::Infected_Severe, global_params.get<InfectedToSevere>()[{age,vaccination_state}]}});
-        case InfectionState::Infected_Severe:
-            return random_transition(
-                infection_state, dt,
-                {{InfectionState::Recovered_Infected, global_params.get<SevereToRecovered>()[{age,vaccination_state}]},
-                 {InfectionState::Infected_Critical, global_params.get<SevereToCritical>()[{age,vaccination_state}]}});
-        case InfectionState::Infected_Critical:
-            return random_transition(
-                infection_state, dt,
-                {{InfectionState::Recovered_Infected, global_params.get<CriticalToRecovered>()[{age,vaccination_state}]},
-                 {InfectionState::Dead, global_params.get<CriticalToDead>()[{age,vaccination_state}]}});
-        case InfectionState::Recovered_Carrier: //fallthrough!
-        case InfectionState::Recovered_Infected:
-            return random_transition(
-                infection_state, dt, {{InfectionState::Susceptible, global_params.get<RecoveredToSusceptible>()[{age,vaccination_state}]}});
-        default:
-            return infection_state; //some states don't transition
-        }
-    
+    auto age               = person.get_age();
+    switch (infection_state) {
+    case InfectionState::Susceptible:
+        return random_transition(infection_state, dt,
+                                 {{InfectionState::Exposed, m_cached_exposure_rate[{age, vaccination_state}]}});
+    case InfectionState::Carrier:
+        return random_transition(
+            infection_state, dt,
+            {{InfectionState::Infected, global_params.get<CarrierToInfected>()[{age, vaccination_state}]},
+             {InfectionState::Recovered_Carrier, global_params.get<CarrierToRecovered>()[{age, vaccination_state}]}});
+    case InfectionState::Infected:
+        return random_transition(
+            infection_state, dt,
+            {{InfectionState::Recovered_Infected, global_params.get<InfectedToRecovered>()[{age, vaccination_state}]},
+             {InfectionState::Infected_Severe, global_params.get<InfectedToSevere>()[{age, vaccination_state}]}});
+    case InfectionState::Infected_Severe:
+        return random_transition(
+            infection_state, dt,
+            {{InfectionState::Recovered_Infected, global_params.get<SevereToRecovered>()[{age, vaccination_state}]},
+             {InfectionState::Infected_Critical, global_params.get<SevereToCritical>()[{age, vaccination_state}]}});
+    case InfectionState::Infected_Critical:
+        return random_transition(
+            infection_state, dt,
+            {{InfectionState::Recovered_Infected, global_params.get<CriticalToRecovered>()[{age, vaccination_state}]},
+             {InfectionState::Dead, global_params.get<CriticalToDead>()[{age, vaccination_state}]}});
+    case InfectionState::Recovered_Carrier: //fallthrough!
+    case InfectionState::Recovered_Infected:
+        return random_transition(
+            infection_state, dt,
+            {{InfectionState::Susceptible, global_params.get<RecoveredToSusceptible>()[{age, vaccination_state}]}});
+    default:
+        return infection_state; //some states don't transition
+    }
 }
 
 void Location::begin_step(TimeSpan /*dt*/, const GlobalInfectionParameters& global_params)
@@ -80,17 +82,16 @@ void Location::begin_step(TimeSpan /*dt*/, const GlobalInfectionParameters& glob
     //otherwise we would have to cache all state changes during a step which uses more memory
     auto num_carriers = get_subpopulation(InfectionState::Carrier);
     auto num_infected = get_subpopulation(InfectionState::Infected);
-    if (m_num_persons == 0){
+    if (m_num_persons == 0) {
         m_cached_exposure_rate = {{mio::AbmAgeGroup::Count, mio::VaccinationState::Count}, 0.};
-    } 
-    else{
-        m_cached_exposure_rate.array()
-            = std::min(m_parameters.get<EffectiveContacts>(), double(m_num_persons)) / m_num_persons *
-                             (global_params.get<SusceptibleToExposedByCarrier>().array() * num_carriers +
-                              global_params.get<SusceptibleToExposedByInfected>().array() * num_infected);
+    }
+    else {
+        m_cached_exposure_rate.array() = std::min(m_parameters.get<MaximumContacts>(), double(m_num_persons)) /
+                                         m_num_persons *
+                                         (global_params.get<SusceptibleToExposedByCarrier>().array() * num_carriers +
+                                          global_params.get<SusceptibleToExposedByInfected>().array() * num_infected);
     }
 }
-
 
 void Location::add_person(const Person& p)
 {
@@ -115,7 +116,7 @@ void Location::changed_state(const Person& p, InfectionState old_infection_state
 void Location::change_subpopulation(InfectionState s, int delta)
 {
     m_subpopulations[size_t(s)] += delta;
-    assert(m_subpopulations[size_t(s)]>=0 && "subpopulations must be non-negative");
+    assert(m_subpopulations[size_t(s)] >= 0 && "subpopulations must be non-negative");
 }
 
 int Location::get_subpopulation(InfectionState s) const
@@ -127,6 +128,5 @@ Eigen::Ref<const Eigen::VectorXi> Location::get_subpopulations() const
 {
     return Eigen::Map<const Eigen::VectorXi>(m_subpopulations.data(), m_subpopulations.size());
 }
-
 
 } // namespace mio

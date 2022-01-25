@@ -29,7 +29,6 @@ Be careful: Recovered and deaths are not correct set in this case
 
 # Imports
 import os
-import sys
 import itertools
 import pandas
 import numpy as np
@@ -128,9 +127,10 @@ def get_rki_data(read_data=dd.defaultDict['read_data'],
         file_in = os.path.join(directory, filename + ".json")
         try:
             df = pandas.read_json(file_in)
-        except ValueError:
-            exit_string = "Error: The file: " + file_in + " does not exist. Call program without -r flag to get it."
-            sys.exit(exit_string)
+        except ValueError as err:
+            raise FileNotFoundError("Error: The file: " + file_in + \
+                " does not exist. Call program without -r flag to get it.") \
+                from err
     else:
 
         # Supported data formats:
@@ -171,8 +171,7 @@ def get_rki_data(read_data=dd.defaultDict['read_data'],
                 if not no_raw:
                     gd.write_dataframe(df, directory, filename, "json")
             else:
-                exit_string = "Something went wrong, dataframe is empty for csv and geojson!"
-                sys.exit(exit_string)
+                raise FileNotFoundError("Something went wrong, dataframe is empty for csv and geojson!")
 
     # store dict values in parameter to not always call dict itself
     Altersgruppe2 = dd.GerEng['Altersgruppe2']

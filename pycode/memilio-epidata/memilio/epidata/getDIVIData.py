@@ -45,7 +45,6 @@ ICU_ventilated does not exist for the 24.4. and 25.4.
 """
 
 import os
-import sys
 import bisect
 from datetime import timedelta, date, datetime
 import pandas as pd
@@ -135,25 +134,25 @@ def get_divi_data(read_data=dd.defaultDict['read_data'],
         try:
             df = pd.read_json(file_in)
         except ValueError:
-            exit_string = "Error: The file: " + file_in + " does not exist. "\
-                          "Call program without -r flag to get it."
-            sys.exit(exit_string)
+            raise FileNotFoundError("Error: The file: " + file_in + \
+                                  " does not exist. Call program without" \
+                                  " -r flag to get it.")
     else:
         try:
             df = gd.loadCsv(
                 'zeitreihe-tagesdaten',
                 apiUrl='https://diviexchange.blob.core.windows.net/%24web/',
                 extension='.csv')
-        except:
-            exit_string = "Error: Download link for Divi data has changed."
-            sys.exit(exit_string)
+        except Exception as err:
+            raise FileNotFoundError("Error: " \
+                                    "Download link for Divi data has changed.") \
+                  from err
 
     if not df.empty:
         if not no_raw:
             gd.write_dataframe(df, directory, filename, file_format)
     else:
-        exit_string = "Something went wrong, dataframe is empty."
-        sys.exit(exit_string)
+        raise gd.DataError("Something went wrong, dataframe is empty.")
     df_raw = df.copy()
     divi_data_sanity_checks(df_raw)
     df.rename(columns={'date': dd.EngEng['date']}, inplace=True)
@@ -246,16 +245,10 @@ def divi_data_sanity_checks(df = pd.DataFrame()):
     @param df The dataframe which has to be checked
     """
     # get actual headers
-    try:
-        actual_strings_list = df.columns.tolist()
-    # check if data is a dataframe
-    except:
-        exit_string = "Error: no dataframe given."
-        sys.exit(exit_string)
+    actual_strings_list = df.columns.tolist()
     # check number of data categories
     if len(actual_strings_list) != 11:
-        exit_string = "Error: Number of data categories changed."
-        sys.exit(exit_string)
+        raise gd.DataError("Error: Number of data categories changed.")
 
     # These strings need to be in the header
     test_strings = {
@@ -265,15 +258,12 @@ def divi_data_sanity_checks(df = pd.DataFrame()):
     # check if headers are those we want
     for name in test_strings:
         if(name not in actual_strings_list):
-            exit_string = "Error: Data categories have changed."
-            sys.exit(exit_string)
-
+            raise gd.DataError("Error: Data categories have changed.")
     # check if size of dataframe is expectable
     # Size of dataframe on 2021-12-20 is 240407
     # check if less dates or far more are given
     if (len(df.index) < 200000) or (len(df.index) > 500000):
-        exit_string = "Error: unexpected length of dataframe."
-        sys.exit(exit_string)
+        raise gd.DataError("Error: unexpected length of dataframe.")
 
 
 def main():

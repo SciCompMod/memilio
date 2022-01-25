@@ -65,26 +65,26 @@ class Test_getDataIntoPandasDataFrame(fake_filesystem_unittest.TestCase):
 
         mock_urlopen.side_effect = OSError
 
-        with self.assertRaises(SystemExit) as cm:
+        with self.assertRaises(FileNotFoundError) as error:
             gd.loadGeojson("targetFileName")
 
-        exit_string = "ERROR: URL " + 'https://opendata.arcgis.com/datasets/' + \
+        error_message = "ERROR: URL " + 'https://opendata.arcgis.com/datasets/' + \
             "targetFileName" + '.geojson' + " could not be opened."
 
-        self.assertEqual(cm.exception.code, exit_string)
+        self.assertEqual(str(error.exception), error_message)
 
     @patch('memilio.epidata.getDataIntoPandasDataFrame.pd.read_excel')
     def test_load_Excel_error(self, mock_urlopen):
 
         mock_urlopen.side_effect = OSError
 
-        with self.assertRaises(SystemExit) as cm:
+        with self.assertRaises(FileNotFoundError) as error:
             gd.loadExcel("targetFileName")
 
-        exit_string = "ERROR: URL " + 'https://opendata.arcgis.com/datasets/' + \
+        error_message = "ERROR: URL " + 'https://opendata.arcgis.com/datasets/' + \
             "targetFileName" + '.xls' + " could not be opened."
 
-        self.assertEqual(cm.exception.code, exit_string)
+        self.assertEqual(str(error.exception), error_message)
 
     @patch('memilio.epidata.getDataIntoPandasDataFrame.pd.read_csv')
     def test_load_csv_error(self, mock_csv):
@@ -116,13 +116,13 @@ class Test_getDataIntoPandasDataFrame(fake_filesystem_unittest.TestCase):
     def test_load_csv_working(self, mock_csv):
         mock_csv.side_effect = OSError
 
-        with self.assertRaises(SystemExit) as cm:
+        with self.assertRaises(FileNotFoundError) as error:
             gd.loadCsv("targetFileName")
 
-        exit_string = "ERROR: URL " + 'https://opendata.arcgis.com/datasets/' + \
+        error_message = "ERROR: URL " + 'https://opendata.arcgis.com/datasets/' + \
             "targetFileName" + '.csv' + " could not be opened."
 
-        self.assertEqual(cm.exception.code, exit_string)
+        self.assertEqual(str(error.exception), error_message)
 
     def test_cli_correct_default(self):
         
@@ -242,11 +242,11 @@ class Test_getDataIntoPandasDataFrame(fake_filesystem_unittest.TestCase):
     @patch('sys.stderr', new_callable=StringIO)
     def test_cli_correct_raise_exit(self, mock_stderr):
 
-        with self.assertRaises(SystemExit) as cm:
+        with self.assertRaises(ValueError) as error:
             gd.cli("wrong_key")
 
-        the_exception = cm.exception
-        self.assertEqual(the_exception.code, "Wrong key or cli_dict.")
+        the_exception = error.exception
+        self.assertEqual(str(the_exception), "Wrong key or cli_dict.")
 
         test_args = ["prog", '-f', 'wrong_format']
         with patch.object(sys, 'argv', test_args):
@@ -523,11 +523,12 @@ class Test_getDataIntoPandasDataFrame(fake_filesystem_unittest.TestCase):
         d = {'Date': [d1, d2], 'col2': ["d1", "d2"]}
         df = pd.DataFrame(data=d)
 
-        with self.assertRaises(SystemExit) as cm:
+        with self.assertRaises(ValueError) as error:
             gd.write_dataframe(df, self.path, "test_json", 'wrong')
 
-        exit_string = "Error: The file format: " + 'wrong' + " does not exist. Use another one."
-        self.assertEqual(cm.exception.code, exit_string)
+        error_message = "Error: The file format: " + 'wrong' + \
+                        " does not exist. Use json, json_timeasstring or hdf5."
+        self.assertEqual(str(error.exception), error_message)
 
     @patch('memilio.epidata.getDIVIData.get_divi_data')
     @patch('memilio.epidata.getRKIData.get_rki_data')

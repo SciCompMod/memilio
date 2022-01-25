@@ -47,8 +47,9 @@ def download_vaccination_data():
             url,
             dtype={'LandkreisId_Impfort': "string", 'Altersgruppe': "string",
                    'Impfschutz': int, 'Anzahl': int})
-    except:
-        print("Error in reading csv. Returning empty data frame.")
+    except Exception:
+        print("Error in reading csv while downloading vaccination data.")
+        raise
 
     return df
 
@@ -213,23 +214,24 @@ def get_vaccination_data(read_data=dd.defaultDict['read_data'],
             / df_data.agg({'Number': sum}).Number < 0.001:
         df_data = df_data[df_data[dd.EngEng['idCounty']] != 'u']
     else:
-        sys.exit('Too many data items with unknown vaccination location, '
-                 'please check source data.')
+        raise gd.DataError('Too many data items with unknown vaccination location, '
+                        'please check source data.')
 
     if df_data[df_data[dd.EngEng['ageRKI']] == 'u'].agg({'Number': sum}).Number \
             / df_data.agg({'Number': sum}).Number < 0.001:
         df_data = df_data[df_data[dd.EngEng['ageRKI']] != 'u']
     else:
-        sys.exit('Too many data items with unknown vaccination age, '
-                 'please check source data.')
+        raise gd.DataError('Too many data items with unknown vaccination age, '
+                        'please check source data.')
 
     # remove leading zeros for ID_County (if not yet done)
     try:
         df_data[dd.EngEng['idCounty']
                 ] = df_data[dd.EngEng['idCounty']].astype(int)
-    except:
+    except ValueError:
         print('Data items in ID_County could not be converted to integer. '
               'Imputation and/or moving_average computation will FAIL.')
+        raise
 
     # NOTE: the RKI vaccination table contains about
     # 180k 'complete' vaccinations in id 17000 Bundesressorts, which
@@ -264,7 +266,7 @@ def get_vaccination_data(read_data=dd.defaultDict['read_data'],
     try:
         population = pd.read_json(
             directory + "county_current_population_dim401.json")
-    except:
+    except ValueError:
         print("Population data was not found. Download it from the internet.")
         population = getPopulationData.get_age_population_data(read_data=False,
                                                                file_format=file_format,
@@ -618,11 +620,11 @@ def get_vaccination_data(read_data=dd.defaultDict['read_data'],
 
                         chk_err_idx += 1
                         if chk_err_idx > len(neighbors_mobility[id][0]):
-                            sys.exit(
+                            raise gd.DataError(
                                 'Error in functionality of vaccine distribution, exiting.')
 
                     if abs(vacc_dist[ageidx] - sum(vacc_nshare_pot)) > 0.01 * vacc_dist[ageidx]:
-                        sys.exit(
+                        raise gd.DataError(
                             'Error in functionality of vaccine distribution, exiting.')
                     # sort weights from max to min and return indices
                     order_dist = np.argsort(vacc_dist_weight)[::-1]
@@ -657,7 +659,7 @@ def get_vaccination_data(read_data=dd.defaultDict['read_data'],
 
             if len(
                     np.where(np.isnan(df_san[column_names_new]) == True)[0]) > 0:
-                sys.exit(
+                raise gd.DataError(
                     'Error in functionality of vaccine distribution, NaN found after county '
                     + str(id) + '. Exiting program.')
 

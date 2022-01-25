@@ -30,7 +30,6 @@ This tool contains
 """
 
 import os
-import sys
 from urllib.request import urlopen
 import json
 import argparse
@@ -60,9 +59,9 @@ def loadGeojson(targetFileName, apiUrl='https://opendata.arcgis.com/datasets/', 
     try:
         with urlopen(url) as res:
             data = json.loads(res.read().decode())
-    except OSError:
-        exit_string = "ERROR: URL " + url + " could not be opened."
-        sys.exit(exit_string)
+    except OSError as err:
+        raise FileNotFoundError("ERROR: URL " + url + " could not be opened.") \
+            from err
 
     # Shape data:
     df = pd.json_normalize(data, 'features')
@@ -91,9 +90,9 @@ def loadCsv(targetFileName, apiUrl='https://opendata.arcgis.com/datasets/', exte
 
     try:
         df = pd.read_csv(url, encoding = encoding)
-    except OSError:
-        exit_string = "ERROR: URL " + url + " could not be opened."
-        sys.exit(exit_string)
+    except OSError as err:
+        raise FileNotFoundError("ERROR: URL " + url + " could not be opened.") \
+            from err
 
     return df
 
@@ -129,9 +128,9 @@ def loadExcel(targetFileName, apiUrl='https://opendata.arcgis.com/datasets/',
             df = pd.read_excel(ZipFile(BytesIO(urlopen(url).read())).open(file_compressed), **param_dict)
         else:
             df = pd.read_excel(url, **param_dict)
-    except OSError:
-        exit_string = "ERROR: URL " + url + " could not be opened."
-        sys.exit(exit_string)
+    except OSError as err:
+        raise FileNotFoundError("ERROR: URL " + url + " could not be opened.") \
+            from err
 
     return df
 
@@ -181,8 +180,7 @@ def cli(what):
     try:
         what_list = cli_dict[what]
     except KeyError:
-        exit_string = "Wrong key or cli_dict."
-        sys.exit(exit_string)
+        raise ValueError("Wrong key or cli_dict.")
 
     out_path_default = dd.defaultDict['out_folder']
 
@@ -298,9 +296,8 @@ def write_dataframe(df, directory, file_prefix, file_type):
         outFormEnd = outForm[file_type][0]
         outFormSpec = outForm[file_type][1]
     except KeyError:
-        exit_string = "Error: The file format: " + \
-            file_type + " does not exist. Use another one."
-        sys.exit(exit_string)
+        raise ValueError("Error: The file format: " + file_type + \
+        " does not exist. Use json, json_timeasstring or hdf5.")
 
     out_path = os.path.join(directory, file_prefix + outFormEnd)
 
@@ -315,3 +312,7 @@ def write_dataframe(df, directory, file_prefix, file_type):
         df.to_hdf(out_path, **outFormSpec)
 
     print("Information: Data has been written to", out_path)
+
+class DataError(Exception):
+    """ Error for handling incomplete or unexpected Data """
+    pass

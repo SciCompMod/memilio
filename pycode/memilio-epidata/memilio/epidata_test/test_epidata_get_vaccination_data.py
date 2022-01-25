@@ -18,7 +18,7 @@
 # limitations under the License.
 ######################################################################
 import unittest
-from unittest.mock import patch
+from unittest.mock import patch, call
 from pyfakefs import fake_filesystem_unittest
 
 import pandas as pd
@@ -126,11 +126,15 @@ class TestGetVaccinationData(fake_filesystem_unittest.TestCase):
             self.assertEqual(len(agegr_arr), 4)
 
     
+    @patch('builtins.print')
     @patch('memilio.epidata.getVaccinationData.pd.read_csv',
            side_effect=ImportError())
-    def test_download_not_working(self, mock_download):
-        df = gvd.download_vaccination_data()
-        self.assertTrue(df.empty, "Vaccination Data is empty.")
+    def test_download_not_working(self, mock_download, mock_print):
+        with self.assertRaises(ImportError):
+            df = gvd.download_vaccination_data()
+        expected_call = call(
+            "Error in reading csv while downloading vaccination data.")
+        mock_print.assert_has_calls([expected_call])
 
     def test_split_column_based_on_values(self):
         col_names_vacc_data = [
