@@ -28,7 +28,7 @@ import numpy as np
 from memilio.epidata import getDataIntoPandasDataFrame as gd
 from memilio.epidata import defaultDict as dd
 from memilio.epidata import geoModificationGermany as geoger
-from memilio.epidata import transformMoblityData as tfmd
+from memilio.epidata import transformMobilityData as tfmd
 
 
 class TestTransformMobilityData(fake_filesystem_unittest.TestCase):
@@ -47,13 +47,12 @@ class TestTransformMobilityData(fake_filesystem_unittest.TestCase):
 
     def setUp(self):
         self.setUpPyfakefs()
-
-    def write_mobility_data(self, out_folder):
-        file_mobility = 'mobility.txt'
-        file_mobility = os.path.join(out_folder, file_mobility)
-        self.df.to_csv(file_mobility, header=None, index=False)
     
-    def test_update_mobility_reduction(self):
+    @patch('memilio.epidata.transformMobilityData.getMobilityFromFile',
+           return_value=df)
+    def test_update_mobility_reduction(self, mock_load_file):
+
+        gd.check_dir(self.path)
         tfmd.updateMobility2022(self.path, mobility_file='mobility')
 
     

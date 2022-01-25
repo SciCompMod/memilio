@@ -25,6 +25,20 @@ from memilio.epidata import getDataIntoPandasDataFrame as gd
 from memilio.epidata import defaultDict as dd
 from memilio.epidata import geoModificationGermany as geoger
 
+def getMobilityFromFile(directory, mobility_file):
+    """! Gets a mobility matrix that is written in a plain txt file
+    under the given directory into a pandas data frame.
+
+    @param directory Path to folder where data is read.
+    @param mobility_file Mobility matrix file which has to be updated.
+    @return Mobility matrix data frame.
+    """    
+    mobility_matrix = pd.read_csv(
+        directory + mobility_file + '.txt', sep=' ', header=None)  
+
+    return mobility_matrix
+
+
 def createFederalStatesMobility(directory, mobility_file, file_format=dd.defaultDict['file_format']):
     """! Creates mobility matrices for German federal states based on
     county mobility.
@@ -34,8 +48,7 @@ def createFederalStatesMobility(directory, mobility_file, file_format=dd.default
     @param file_format File format which is used for writing the data. 
         Default defined in defaultDict.
     """
-    mobility_matrix = pd.read_csv(
-        directory + mobility_file + '.txt', sep=' ', header=None)   
+    mobility_matrix = getMobilityFromFile(directory, mobility_file)
 
     if(len(mobility_matrix) == len(geoger.get_county_ids())):
         # get county and state IDs
@@ -75,8 +88,7 @@ def updateMobility2022(directory, mobility_file, file_format=dd.defaultDict['fil
     @param file_format File format which is used for writing the data. 
         Default defined in defaultDict.
     """
-    mobility_matrix = pd.read_csv(
-        directory + mobility_file + '.txt', sep=' ', header=None)
+    mobility_matrix = getMobilityFromFile(directory, mobility_file)
 
     if len(mobility_matrix) == 401:
         mobility_matrix.to_csv(
