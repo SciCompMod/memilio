@@ -128,7 +128,7 @@ def get_rki_data(read_data=dd.defaultDict['read_data'],
         try:
             df = pandas.read_json(file_in)
         except ValueError as err:
-            raise FileExistsError("Error: The file: " + file_in + \
+            raise FileNotFoundError("Error: The file: " + file_in + \
                 " does not exist. Call program without -r flag to get it.") \
                 from err
     else:

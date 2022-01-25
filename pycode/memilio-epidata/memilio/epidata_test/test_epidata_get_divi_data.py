@@ -89,7 +89,7 @@ class TestGetDiviData(fake_filesystem_unittest.TestCase):
 
         # test read_data Error call if json file is not found
         mockrjson.side_effect = ValueError
-        with self.assertRaises(FileExistsError) as error:
+        with self.assertRaises(FileNotFoundError) as error:
             gdd.get_divi_data(read_data=True, out_folder=self.path)
         file_in = os.path.join(self.path, "Germany/FullData_DIVI.json")
         error_message = "Error: The file: " + file_in + " does not exist. "\
@@ -109,7 +109,7 @@ class TestGetDiviData(fake_filesystem_unittest.TestCase):
         # new test function because of the new mock value
         # test Error for empty returned dataframe
         mocklcsv.value = pd.DataFrame()
-        with self.assertRaises(AssertionError) as error:
+        with self.assertRaises(gd.DataError) as error:
             gdd.get_divi_data(read_data=False)
         error_message = "Something went wrong, dataframe is empty."
         self.assertEqual(str(error.exception), error_message)
@@ -145,7 +145,7 @@ class TestGetDiviData(fake_filesystem_unittest.TestCase):
         # first test
         # get random dataframe
         df = pd.DataFrame({'a': [1, 2, 3], 'b': [4, 5, 6]})
-        with self.assertRaises(AssertionError) as error:
+        with self.assertRaises(gd.DataError) as error:
             gdd.divi_data_sanity_checks(df)
         error_message = "Error: Number of data categories changed."
         self.assertEqual(str(error.exception), error_message)
@@ -164,7 +164,7 @@ class TestGetDiviData(fake_filesystem_unittest.TestCase):
              'gemeindeschluessel_fake': [3, 4, 5],
              'faelle_covid_aktuell_fake': [4, 5, 6],
              'faelle_covid_aktuell_invasiv_beatmet': [5, 6, 7]})
-        with self.assertRaises(AssertionError) as error:
+        with self.assertRaises(gd.DataError) as error:
             gdd.divi_data_sanity_checks(df)
         error_message = "Error: Data categories have changed."
         self.assertEqual(str(error.exception), error_message)
@@ -183,13 +183,13 @@ class TestGetDiviData(fake_filesystem_unittest.TestCase):
              'gemeindeschluessel': [3, 4, 5],
              'faelle_covid_aktuell': [4, 5, 6],
              'faelle_covid_aktuell_invasiv_beatmet': [5, 6, 7]})
-        with self.assertRaises(AssertionError) as error:
+        with self.assertRaises(gd.DataError) as error:
             gdd.divi_data_sanity_checks(df)
         error_message = "Error: unexpected length of dataframe."
         self.assertEqual(str(error.exception), error_message)
 
         # test if it works in main
-        with self.assertRaises(AssertionError) as error:
+        with self.assertRaises(gd.DataError) as error:
             gdd.get_divi_data(read_data=True, out_folder=self.path)
         error_message = "Error: Number of data categories changed."
         self.assertEqual(str(error.exception), error_message)

@@ -32,10 +32,6 @@ from memilio.epidata import customPlot
 from memilio.epidata import geoModificationGermany as geoger
 from memilio.epidata import getCommuterMobility as gcm
 
-class DataError(Exception):
-    """ Error for handling incomplete Data """
-    pass
-
 # Downloads vaccination data from RKI
 
 
@@ -197,14 +193,14 @@ def get_vaccination_data(read_data=dd.defaultDict['read_data'],
             / df_data.agg({'Number': sum}).Number < 0.001:
         df_data = df_data[df_data[dd.EngEng['idCounty']] != 'u']
     else:
-        raise DataError('Too many data items with unknown vaccination location, '
+        raise gd.DataError('Too many data items with unknown vaccination location, '
                         'please check source data.')
 
     if df_data[df_data[dd.EngEng['ageRKI']] == 'u'].agg({'Number': sum}).Number \
             / df_data.agg({'Number': sum}).Number < 0.001:
         df_data = df_data[df_data[dd.EngEng['ageRKI']] != 'u']
     else:
-        raise DataError('Too many data items with unknown vaccination age, '
+        raise gd.DataError('Too many data items with unknown vaccination age, '
                         'please check source data.')
 
     # remove leading zeros for ID_County (if not yet done)
@@ -585,11 +581,11 @@ def get_vaccination_data(read_data=dd.defaultDict['read_data'],
 
                         chk_err_idx += 1
                         if chk_err_idx > len(neighbors_mobility[id][0]):
-                            raise AssertionError(
+                            raise gd.DataError(
                                 'Error in functionality of vaccine distribution, exiting.')
 
                     if abs(vacc_dist[ageidx] - sum(vacc_nshare_pot)) > 0.01 * vacc_dist[ageidx]:
-                        raise AssertionError(
+                        raise gd.DataError(
                             'Error in functionality of vaccine distribution, exiting.')
                     # sort weights from max to min and return indices
                     order_dist = np.argsort(vacc_dist_weight)[::-1]
@@ -624,7 +620,7 @@ def get_vaccination_data(read_data=dd.defaultDict['read_data'],
 
             if len(
                     np.where(np.isnan(df_san[column_names_new]) == True)[0]) > 0:
-                raise ValueError(
+                raise gd.DataError(
                     'Error in functionality of vaccine distribution, NaN found after county '
                     + str(id) + '. Exiting program.')
 

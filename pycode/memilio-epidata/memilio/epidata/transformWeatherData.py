@@ -85,7 +85,7 @@ def transformWeatherData(read_data=dd.defaultDict['read_data'],
             dd.EngEng['county']) + 1
 
         if len(unique_geo_entities) < len(df_weather_old):
-            raise AssertionError('Error: County-IDs do not match with file')
+            raise gd.DataError('Error: County-IDs do not match with file')
 
         # create new data frame for all NPIs given in the columns, resolved by
         # county and day

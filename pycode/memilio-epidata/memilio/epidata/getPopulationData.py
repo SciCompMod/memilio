@@ -95,7 +95,7 @@ def get_one_data_set(read_data, file_format, no_raw, directory, d):
         try:
             df = pandas.read_json(file)
         except ValueError as err:
-            raise FileExistsError("Error: The file: " + file + \
+            raise FileNotFoundError("Error: The file: " + file + \
                 " does not exist. Call program without -r flag to get it.") \
                 from err
     else:

@@ -173,7 +173,7 @@ class test_get_RKI_Data(fake_filesystem_unittest.TestCase):
         file = "FullDataRKI.json"
         file_with_path = os.path.join(directory, file)
 
-        with self.assertRaises(FileExistsError) as error:
+        with self.assertRaises(FileNotFoundError) as error:
             grki.get_rki_data(read_data, file_format, out_folder, no_raw, 
                               impute_dates, make_plot, moving_average,
                               split_berlin,rep_date)

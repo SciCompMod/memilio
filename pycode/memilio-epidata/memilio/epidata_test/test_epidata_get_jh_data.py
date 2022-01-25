@@ -93,7 +93,7 @@ class TestGetJHData(fake_filesystem_unittest.TestCase):
         file = "FullData_JohnHopkins.json"
         file_with_path = os.path.join(out_folder, file)
 
-        with self.assertRaises(FileExistsError) as error:
+        with self.assertRaises(FileNotFoundError) as error:
             gJHD.get_jh_data(read_data, file_format, out_folder, no_raw)
         self.assertEqual(str(error.exception),
                          "Error: The file: " + file_with_path + \

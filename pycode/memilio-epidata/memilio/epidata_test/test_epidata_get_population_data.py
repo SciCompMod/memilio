@@ -354,7 +354,7 @@ class Test_getPopulationData(fake_filesystem_unittest.TestCase):
 
         directory = os.path.join(out_folder, 'Germany/')
         gd.check_dir(directory)
-        with self.assertRaises(FileExistsError) as error:
+        with self.assertRaises(FileNotFoundError) as error:
             gpd.get_one_data_set(read_data, file_format,
                                  no_raw, directory, self.d1)
         file_in = os.path.join(self.path, "Germany/FullDataB.json")

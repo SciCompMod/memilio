@@ -134,7 +134,7 @@ def get_divi_data(read_data=dd.defaultDict['read_data'],
         try:
             df = pd.read_json(file_in)
         except ValueError:
-            raise FileExistsError("Error: The file: " + file_in + \
+            raise FileNotFoundError("Error: The file: " + file_in + \
                                   " does not exist. Call program without" \
                                   " -r flag to get it.")
     else:
@@ -152,7 +152,7 @@ def get_divi_data(read_data=dd.defaultDict['read_data'],
         if not no_raw:
             gd.write_dataframe(df, directory, filename, file_format)
     else:
-        raise AssertionError("Something went wrong, dataframe is empty.")
+        raise gd.DataError("Something went wrong, dataframe is empty.")
     df_raw = df.copy()
     divi_data_sanity_checks(df_raw)
     df.rename(columns={'date': dd.EngEng['date']}, inplace=True)
@@ -245,14 +245,10 @@ def divi_data_sanity_checks(df = pd.DataFrame()):
     @param df The dataframe which has to be checked
     """
     # get actual headers
-    try:
-        actual_strings_list = df.columns.tolist()
-    # check if data is a dataframe
-    except Exception as err:
-        raise TypeError("Error: no dataframe given.") from err
+    actual_strings_list = df.columns.tolist()
     # check number of data categories
     if len(actual_strings_list) != 11:
-        raise AssertionError("Error: Number of data categories changed.")
+        raise gd.DataError("Error: Number of data categories changed.")
 
     # These strings need to be in the header
     test_strings = {
@@ -262,12 +258,12 @@ def divi_data_sanity_checks(df = pd.DataFrame()):
     # check if headers are those we want
     for name in test_strings:
         if(name not in actual_strings_list):
-            raise AssertionError("Error: Data categories have changed.")
+            raise gd.DataError("Error: Data categories have changed.")
     # check if size of dataframe is expectable
     # Size of dataframe on 2021-12-20 is 240407
     # check if less dates or far more are given
     if (len(df.index) < 200000) or (len(df.index) > 500000):
-        raise AssertionError("Error: unexpected length of dataframe.")
+        raise gd.DataError("Error: unexpected length of dataframe.")
 
 
 def main():

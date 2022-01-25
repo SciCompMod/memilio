@@ -64,7 +64,7 @@ def assign_geographical_entities(countykey_list, govkey_list):
     """
 
     if verify_sorted(countykey_list) == False:
-        raise AssertionError("Error. Input list not sorted.")
+        raise gd.DataError("Error. Input list not sorted.")
 
     # Create list of government regions with lists of counties that belong to them and list of states with government
     # regions that belong to them; only works with sorted lists of keys.
@@ -167,17 +167,15 @@ def get_commuter_data(setup_dict='',
 
     # get population data for all countys (TODO: better to provide a corresponding method for the following lines in getPopulationData itself)
     # This is not very nice either to have the same file with either Eisenach merged or not...
+    population = pd.DataFrame()
     try:
         population = pd.read_json(directory + "county_current_population.json")
     except ValueError:
-        print("Population data was not found. Download it from the internet.")
+        pass
+    if len(population) != len(countykey_list):
+        print("Local population data incomplete. Download it from the internet.")
         population = getPopulationData.get_age_population_data(
             out_folder=out_folder, merge_eisenach=False, write_df=True)
-    else:
-        if len(population) != len(countykey_list):
-            print("Population data incomplete. Download it from the internet.")
-            population = getPopulationData.get_age_population_data(
-                out_folder=out_folder, merge_eisenach=False, write_df=True)
 
     countypop_list = list(population["Total"])
 
@@ -405,7 +403,7 @@ def get_commuter_data(setup_dict='',
         n += 1
         print('Federal state read. Progress ', n, '/ 16')
         if np.isnan(mat_commuter_migration).any():
-            raise ValueError(
+            raise gd.DataError(
                 'NaN encountered in mobility matrix, exiting '
                 'getCommuterMobility(). Mobility data will be incomplete.')
     if n != 16:
@@ -455,16 +453,13 @@ def get_commuter_data(setup_dict='',
 
 
 def commuter_sanity_checks(df):
-    # Check if return value is a dataframe
-    if not isinstance(df, pd.DataFrame):
-        raise TypeError("Error. Data should be a dataframe")
     # Dataframe should be of squared form
     if len(df.index) != len(df.columns):
-        raise AssertionError("Error. ")
+        raise gd.DataError("Error. Dataframe should be of squared form.")
     # There were 401 counties at beginning of 2021 and 400 at end of 2021.
     # Check if exactly 400 counties are in dataframe.
     if not len(df) == 400:
-        raise AssertionError("Error. Size of dataframe unexpected.")
+        raise gd.DataError("Error. Size of dataframe unexpected.")
 
 
 def get_neighbors_mobility(
