@@ -25,6 +25,7 @@ from memilio.epidata import getDataIntoPandasDataFrame as gd
 from memilio.epidata import defaultDict as dd
 from memilio.epidata import geoModificationGermany as geoger
 
+
 def getMobilityFromFile(directory, mobility_file):
     """! Gets a mobility matrix that is written in a plain txt file
     under the given directory into a pandas data frame.
@@ -32,9 +33,9 @@ def getMobilityFromFile(directory, mobility_file):
     @param directory Path to folder where data is read.
     @param mobility_file Mobility matrix file which has to be updated.
     @return Mobility matrix data frame.
-    """    
+    """
     mobility_matrix = pd.read_csv(
-        directory + mobility_file + '.txt', sep=' ', header=None)  
+        directory + mobility_file + '.txt', sep=' ', header=None)
 
     return mobility_matrix
 
@@ -59,33 +60,37 @@ def createFederalStatesMobility(directory, mobility_file, file_format=dd.default
         # get state ID to county ID map
         stateID_to_countyID = geoger.get_stateid_to_countyids_map()
         # initialize federal states mobility matrix
-        mobility_matrix_states = np.zeros((len(stateID_to_countyID), len(stateID_to_countyID)))
+        mobility_matrix_states = np.zeros(
+            (len(stateID_to_countyID), len(stateID_to_countyID)))
 
         # iterate over state_to_county map and replace IDs by numbering 0, ..., n
         state_indices = []
         county_indices = []
         for state, counties in stateID_to_countyID.items():
             state_indices.append(stateIDs.index(state))
-            county_indices.append(np.array([countyIDs.index(county) for county in counties]))
+            county_indices.append(
+                np.array([countyIDs.index(county) for county in counties]))
 
         state_to_county = dict(zip(state_indices, county_indices))
         # iterate over all states
         for state, counties in state_to_county.items():
             # iterate over all neighbors
             for state_neighb, counties_neighb in state_to_county.items():
-                
+
                 if state != state_neighb:
 
-                    mobility_matrix_states[state, state_neighb] = mobility_matrix.iloc[counties, counties_neighb].sum(axis=0).sum()
-                    mobility_matrix_states[state_neighb, state] = mobility_matrix.iloc[counties_neighb, counties].sum(axis=1).sum()
+                    mobility_matrix_states[state, state_neighb] = mobility_matrix.iloc[counties, counties_neighb].sum(
+                        axis=0).sum()
+                    mobility_matrix_states[state_neighb, state] = mobility_matrix.iloc[counties_neighb, counties].sum(
+                        axis=1).sum()
 
-        pd.DataFrame(mobility_matrix_states).to_csv(
+        mobility_matrix_states = pd.DataFrame(mobility_matrix_states)
+        mobility_matrix_states.to_csv(
             directory + mobility_file + '_states.txt', sep=' ', header=None, index=False)
         return mobility_matrix_states
 
     else:
-        return np.zeros((0,0))
-
+        return pd.DataFrame()
 
 
 def updateMobility2022(directory, mobility_file, file_format=dd.defaultDict['file_format']):
@@ -112,9 +117,9 @@ def updateMobility2022(directory, mobility_file, file_format=dd.defaultDict['fil
         idx_eisenach_old = ids401.index(geoger.CountyMerging[16063][1])
         idx_wartburg_new = ids400.index(geoger.CountyMerging[16063][0])
         mobility_matrix_new.iloc[idx_wartburg_new,
-                         :] += mobility_matrix.iloc[idx_eisenach_old, indices].values
+                                 :] += mobility_matrix.iloc[idx_eisenach_old, indices].values
         mobility_matrix_new.iloc[:, idx_wartburg_new] += mobility_matrix.iloc[indices,
-                                                              idx_eisenach_old].values
+                                                                              idx_eisenach_old].values
 
         mobility_matrix_new.to_csv(
             directory + mobility_file + '.txt', sep=' ', header=None, index=False)
@@ -130,14 +135,15 @@ def main():
     directory = dd.defaultDict['out_folder'].split('/pydata')[0]
     directory = os.path.join(directory, 'mobility/')
 
-    directory = directory.replace('memilio','memilio-fed-state')
+    directory = directory.replace('memilio', 'memilio-fed-state')
 
     # Merge Eisenach and Wartbugkreis in Input Data if need be
     updateMobility2022(directory, mobility_file='twitter_scaled_1252')
     updateMobility2022(directory, mobility_file='commuter_migration_scaled')
     # create federal states mobility matrix (not used in simulation for now)
     createFederalStatesMobility(directory, mobility_file='twitter_scaled_1252')
-    createFederalStatesMobility(directory, mobility_file='commuter_migration_scaled')
+    createFederalStatesMobility(
+        directory, mobility_file='commuter_migration_scaled')
 
 
 if __name__ == "__main__":
