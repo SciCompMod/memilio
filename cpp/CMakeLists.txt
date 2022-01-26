@@ -92,36 +92,36 @@ endif()
 # install
 include(GNUInstallDirs)
 
-install(TARGETS memilio
-        EXPORT memilio-targets
-        INCLUDES DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
-        RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
-        LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
-        ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
-)
+#install(TARGETS memilio
+#        EXPORT memilio-targets
+#        INCLUDES DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
+#        RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+#        LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+#        ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
+#)
 
-install(DIRECTORY memilio DESTINATION ${CMAKE_INSTALL_INCLUDEDIR} FILES_MATCHING PATTERN memilio/*/*.h)
-install(DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/memilio DESTINATION ${CMAKE_INSTALL_INCLUDEDIR} FILES_MATCHING PATTERN memilio/*/*.h)
+#install(DIRECTORY memilio DESTINATION ${CMAKE_INSTALL_INCLUDEDIR} FILES_MATCHING PATTERN memilio/*/*.h)
+#install(DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/memilio DESTINATION ${CMAKE_INSTALL_INCLUDEDIR} FILES_MATCHING PATTERN memilio/*/*.h)
 
-include(CMakePackageConfigHelpers)
+#include(CMakePackageConfigHelpers)
 
-configure_package_config_file(
-    ${CMAKE_CURRENT_LIST_DIR}/cmake/memilio-config.cmake.in
-    ${CMAKE_CURRENT_BINARY_DIR}/memilio-config.cmake
-INSTALL_DESTINATION
-    ${CMAKE_INSTALL_LIBDIR}/cmake/memilio
-)
+#configure_package_config_file(
+#    ${CMAKE_CURRENT_LIST_DIR}/cmake/memilio-config.cmake.in
+#    ${CMAKE_CURRENT_BINARY_DIR}/memilio-config.cmake
+#INSTALL_DESTINATION
+#    ${CMAKE_INSTALL_LIBDIR}/cmake/memilio
+#)
 
-write_basic_package_version_file(
-  "${CMAKE_CURRENT_BINARY_DIR}/memilio-config-version.cmake"
-  VERSION ${PROJECT_VERSION}
-  COMPATIBILITY AnyNewerVersion
-)
+#write_basic_package_version_file(
+#  "${CMAKE_CURRENT_BINARY_DIR}/memilio-config-version.cmake"
+#  VERSION ${PROJECT_VERSION}
+#  COMPATIBILITY AnyNewerVersion
+#)
 
-install (
-  FILES
-    "${CMAKE_CURRENT_BINARY_DIR}/memilio-config-version.cmake"
-    "${CMAKE_CURRENT_BINARY_DIR}/memilio-config.cmake"
-  DESTINATION
-    ${CMAKE_INSTALL_LIBDIR}/cmake/memilio
-)
+#install (
+#  FILES
+#    "${CMAKE_CURRENT_BINARY_DIR}/memilio-config-version.cmake"
+#    "${CMAKE_CURRENT_BINARY_DIR}/memilio-config.cmake"
+#  DESTINATION
+#    ${CMAKE_INSTALL_LIBDIR}/cmake/memilio
+#)
