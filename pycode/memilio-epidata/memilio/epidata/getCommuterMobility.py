@@ -219,7 +219,7 @@ def get_commuter_data(setup_dict='',
         filepath = os.path.join(out_folder, 'Germany/')
         url = setup_dict['path'] + item.split('.')[0] + '.zip'
         # Unzip it
-        zipfile = wget.download(url)
+        zipfile = wget.download(url, filepath)
         with ZipFile(zipfile, 'r') as zipObj:
             zipObj.extractall(path = filepath)
         # Read the file
@@ -227,6 +227,11 @@ def get_commuter_data(setup_dict='',
         file = filename.replace('-','_')
         commuter_migration_file = pd.read_excel(filepath + file, **param_dict)
         # pd.read_excel(os.path.join(setup_dict['path'], item), sheet_name=3)
+
+        # delete zip folder after extracting
+        os.remove(os.path.join(filepath, item))
+        # delete file after reading
+        os.remove(os.path.join(filepath, file))
 
         counties_done = []  # counties considered as 'migration from'
         # current_row = -1  # row of matrix that belongs to county migrated from
