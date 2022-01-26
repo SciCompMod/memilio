@@ -176,15 +176,9 @@ def get_commuter_data(setup_dict='',
 
     # get population data for all countys (TODO: better to provide a corresponding method for the following lines in getPopulationData itself)
     # This is not very nice either to have the same file with either Eisenach merged or not...
-    try:
-        population = pd.read_json(directory + "county_current_population.json")
-        if len(population) != len(countykey_list):
-            population = gPd.get_population_data(
-                out_folder=out_folder, merge_eisenach=False, read_data=read_data)
-    except:
-        print("Population data was not found. Download it from the internet.")
-        population = gPd.get_population_data(
-            out_folder=out_folder, merge_eisenach=False, read_data=read_data)
+    
+    population = gPd.get_population_data(
+        out_folder=out_folder, merge_eisenach=False, read_data=read_data)
 
     countypop_list = list(population[dd.EngEng["population"]])
 
@@ -227,9 +221,6 @@ def get_commuter_data(setup_dict='',
         file = filename.replace('-','_')
         commuter_migration_file = pd.read_excel(filepath + file, **param_dict)
         # pd.read_excel(os.path.join(setup_dict['path'], item), sheet_name=3)
-        
-        # delete zip folder after extracting
-        os.remove(os.path.join(filepath, item))
 
         counties_done = []  # counties considered as 'migration from'
         # current_row = -1  # row of matrix that belongs to county migrated from

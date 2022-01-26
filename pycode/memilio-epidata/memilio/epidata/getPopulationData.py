@@ -152,39 +152,37 @@ def load_population_data(out_folder=dd.defaultDict['out_folder'],
         try:
             counties = pd.read_json(file_in)
         except ValueError:
-            exit_string = "Error: The file: " + file_in + " does not exist. "\
-                          "Call program without -r flag to get it."
-            sys.exit(exit_string)
+            error_message = "Error: The file: " + file_in + \
+                "could not be read. Call program without -r flag to get it."
+            raise FileNotFoundError(error_message)
 
         # Read Zensus File
         file_in = os.path.join(directory, filename_zensus + ".json")
         try:
             zensus = pd.read_json(file_in)
         except ValueError:
-            exit_string = "Error: The file: " + file_in + " does not exist. "\
-                          "Call program without -r flag to get it."
-            sys.exit(exit_string)
+            error_message = "Error: The file: " + file_in + \
+                "could not be read. Call program without -r flag to get it."
+            raise FileNotFoundError(error_message)
 
         # Read reg_key File
         file_in = os.path.join(directory, filename_reg_key + ".json")
         try:
             reg_key = pd.read_json(file_in)
         except ValueError:
-            exit_string = "Error: The file: " + file_in + " does not exist. "\
-                          "Call program without -r flag to get it."
-            sys.exit(exit_string)
-
+            error_message = "Error: The file: " + file_in + \
+                "could not be read. Call program without -r flag to get it."
+            raise FileNotFoundError(error_message)
     else:
         try:
-            print('Trying to download data from the internet')
             path_counties = 'https://www.destatis.de/DE/Themen/Laender-Regionen/Regionales/Gemeindeverzeichnis/Administrativ/04-kreise.xlsx;?__blob=publicationFile'
             counties = gd.loadExcel(
                 targetFileName='', apiUrl=path_counties, extension='',
                 param_dict={"sheet_name": 1, "header": 3,
                             "engine": 'openpyxl'})
         except ValueError:
-            exit_string = "Error: The counties file does not exist."
-            sys.exit(exit_string)
+            error_message = "Error: The counties file does not exist."
+            raise FileNotFoundError(error_message)
 
         # Download zensus
         try:
@@ -193,8 +191,8 @@ def load_population_data(out_folder=dd.defaultDict['out_folder'],
             zensus = gd.loadCsv(
                 "abad92e8eead46a4b0d252ee9438eb53_1", encoding='utf_8_sig')
         except ValueError:
-            exit_string = "Error: The zensus file does not exist."
-            sys.exit(exit_string)
+            error_message = "Error: The zensus file does not exist."
+            raise FileNotFoundError(error_message)
 
         # Download reg_key
         try:
@@ -204,8 +202,8 @@ def load_population_data(out_folder=dd.defaultDict['out_folder'],
             reg_key = gd.loadExcel(path_reg_key, apiUrl='', extension='', param_dict={
                                    "engine": None, "sheet_name": 'Tabelle_1A', "header": 12})
         except ValueError:
-            exit_string = "Error: The regional key file does not exist."
-            sys.exit(exit_string)
+            error_message = "Error: The reg-key file does not exist."
+            raise FileNotFoundError(error_message)
 
         if not no_raw:
             if not counties.empty:
@@ -316,6 +314,9 @@ def get_population_data(read_data=dd.defaultDict['read_data'],
 
     data = get_new_counties(data)
 
+    # create Dataframe of raw data without adjusting population
+    df = pd.DataFrame(data.astype(int), columns=columns)
+
     # compute ratio of current and 2011 population data
     ratio = np.ones(len(data[:, 0]))
     for i in range(len(ratio)):
@@ -344,12 +345,19 @@ def get_population_data(read_data=dd.defaultDict['read_data'],
         df_current = geoger.merge_df_counties_all(
             df_current, sorting=[dd.EngEng["idCounty"]],
             columns=dd.EngEng["idCounty"])
+        df = geoger.merge_df_counties_all(
+            df, sorting=[dd.EngEng["idCounty"]],
+            columns=dd.EngEng["idCounty"])
         filename = 'county_current_population'
+        filename_raw = 'county_population'
 
     else:
         # Write Dataframe without merging
         filename = 'county_current_population_dim401'
+        filename_raw ='county_population_dim401'
+
     gd.write_dataframe(df_current, directory, filename, file_format)
+    gd.write_dataframe(df, directory, filename_raw, file_format)
 
     return df_current
 

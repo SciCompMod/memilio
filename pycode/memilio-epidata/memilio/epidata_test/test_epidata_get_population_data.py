@@ -131,12 +131,9 @@ class Test_getPopulationData(fake_filesystem_unittest.TestCase):
            return_value=(test_counties, test_zensus, test_reg_key))
     def test_get_population(self, mock_data):
 
-        [read_data, file_format, out_folder, no_raw, split_gender,
-         merge_eisenach] = [True, "json", self.path, False, False, False]
-
         gpd.get_population_data(
-            read_data, file_format, out_folder, no_raw, split_gender,
-            merge_eisenach)
+            read_data=True, file_format='json', out_folder=self.path,
+            no_raw=False, split_gender=False, merge_eisenach=False)
 
         test_df = pd.read_json(os.path.join(
             self.path, 'Germany/', 'county_current_population_dim401.json'))
@@ -149,12 +146,9 @@ class Test_getPopulationData(fake_filesystem_unittest.TestCase):
            return_value=(test_counties, test_zensus, test_reg_key))
     def test_popul_split_gender(self, mock_data):
 
-        [read_data, file_format, out_folder, no_raw, split_gender,
-         merge_eisenach] = [False, "json", self.path, False, True, False]
-
         test_df = gpd.get_population_data(
-            read_data, file_format, out_folder, no_raw, split_gender,
-            merge_eisenach)
+            read_data=False, file_format='json', out_folder=self.path,
+            no_raw=False, split_gender=True, merge_eisenach=False)
 
         test_df = test_df.drop(
             test_df[test_df[dd.EngEng['population']] == 0].index)
@@ -187,25 +181,22 @@ class Test_getPopulationData(fake_filesystem_unittest.TestCase):
         # TODO: How to test hdf5 export?
 
     @ patch('memilio.epidata.getPopulationData.gd.loadCsv')
-    @ patch('memilio.epidata.getPopulationData.pd.read_json')
     @ patch('memilio.epidata.getPopulationData.gd.loadExcel')
-    def test_errors(self, mocklexcel, mockrjson, mocklcsv):
-        mockrjson.side_effect = ValueError
+    def test_errors(self, mocklexcel, mocklcsv):
         mocklexcel.side_effect = ValueError
         mocklcsv.side_effect = ValueError
 
-        with self.assertRaises(SystemExit) as cm:
+        with self.assertRaises(FileNotFoundError) as error:
             gpd.load_population_data(self.path)
-        exit_string = "Error: The counties file does not exist."
-        self.assertEqual(cm.exception.code, exit_string)
+        error_message = "Error: The counties file does not exist."
+        self.assertEqual(str(error.exception), error_message)
 
         mocklexcel.side_effect = None
-        mocklexcel.return_value = self.test_zensus.copy()
-        mocklcsv.side_effect = ValueError
-        with self.assertRaises(SystemExit) as cm:
+        mocklexcel.return_value = self.test_counties.copy()
+        with self.assertRaises(FileNotFoundError) as error:
             gpd.load_population_data(self.path)
-        exit_string = "Error: The zensus file does not exist."
-        self.assertEqual(cm.exception.code, exit_string)
+        error_message = "Error: The zensus file does not exist."
+        self.assertEqual(str(error.exception), error_message)
 
 
 if __name__ == '__main__':
