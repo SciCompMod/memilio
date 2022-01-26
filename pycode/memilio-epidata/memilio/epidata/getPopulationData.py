@@ -33,6 +33,7 @@ from memilio.epidata import defaultDict as dd
 from memilio.epidata import geoModificationGermany as geoger
 
 
+
 def get_new_counties(data):
     """! Creates 7 new counties that were formed since 2011 and deletes old counties
 
@@ -185,6 +186,7 @@ def load_population_data(out_folder=dd.defaultDict['out_folder'],
             raise FileNotFoundError(error_message)
 
         # Download zensus
+        
         try:
             # if this file is encoded with utf-8 German umlauts are not displayed correctly because they take two bytes
             # utf_8_sig can identify those bytes as one sign and display it correctly
@@ -195,6 +197,7 @@ def load_population_data(out_folder=dd.defaultDict['out_folder'],
             raise FileNotFoundError(error_message)
 
         # Download reg_key
+
         try:
             path_reg_key = 'https://www.zensus2011.de/SharedDocs/Downloads/DE/Pressemitteilung/DemografischeGrunddaten/' \
                            '1A_EinwohnerzahlGeschlecht.xls?__blob=publicationFile&v=5'
@@ -215,6 +218,7 @@ def load_population_data(out_folder=dd.defaultDict['out_folder'],
             if not reg_key.empty:
                 gd.write_dataframe(reg_key, directory,
                                    filename_reg_key, file_format)
+
 
     return counties, zensus, reg_key
 
@@ -325,7 +329,8 @@ def get_population_data(read_data=dd.defaultDict['read_data'],
                 try:
                     if data[i, 0] == int(counties['Schlüssel-nummer'].values[j]):
                         ratio[i] = counties['Bevölkerung2)'].values[j]/data[i, 1]
-                except:
+
+                except ValueError:
                     pass
 
     # adjust population data for all ages to current level

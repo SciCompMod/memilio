@@ -131,7 +131,10 @@ class TestGetSimulationData(fake_filesystem_unittest.TestCase):
             ' data. This was likely caused by a changed file format'
             ' of the source material. Please report this as an issue. ' +
             'vaccination' + ' data could not be stored correctly.')
-        expected_calls = [rkiprint, populprint, diviprint, vaccprint]
+        
+        exceptionprint = call('Exception: ')
+        expected_calls = [exceptionprint, rkiprint, exceptionprint, populprint,
+                          exceptionprint, diviprint, exceptionprint, vaccprint]
         mock_print.assert_has_calls(expected_calls)
 
 

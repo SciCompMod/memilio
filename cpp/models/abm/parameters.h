@@ -1,7 +1,7 @@
 /* 
 * Copyright (C) 2020-2021 German Aerospace Center (DLR-SC)
 *
-* Authors: Daniel Abele
+* Authors: Daniel Abele, Elisabeth Kluth
 *
 * Contact: Martin J. Kuehn <Martin.Kuehn@DLR.de>
 *
@@ -113,7 +113,6 @@ struct CriticalToRecovered {
     }
 };
 
-
 struct CriticalToDead {
     using Type = CustomIndexArray<double, AbmAgeGroup, VaccinationState>;
     static Type get_default()
@@ -154,7 +153,7 @@ using GlobalInfectionParameters =
                  CarrierToRecovered, InfectedToRecovered, InfectedToSevere, SevereToCritical, SevereToRecovered,
                  CriticalToDead, CriticalToRecovered, RecoveredToSusceptible, DetectInfection, TestWhileInfected>;
 
-struct EffectiveContacts {
+struct MaximumContacts {
     using Type = double;
     static constexpr Type get_default()
     {
@@ -165,7 +164,7 @@ struct EffectiveContacts {
 /**
  * parameters of the infection that depend on the location.
  */
-using LocalInfectionParameters = ParameterSet<EffectiveContacts>;
+using LocalInfectionParameters = ParameterSet<MaximumContacts>;
 
 struct TestParameters {
     double sensitivity;
@@ -256,11 +255,12 @@ struct GotoSchoolTimeMaximum {
     }
 };
 
-
 /**
  * parameters that control the migration between locations.
  */
-using AbmMigrationParameters = ParameterSet<LockdownDate, SocialEventRate, BasicShoppingRate, WorkRatio, SchoolRatio, GotoWorkTimeMinimum, GotoWorkTimeMaximum, GotoSchoolTimeMinimum, GotoSchoolTimeMaximum>;
+using AbmMigrationParameters =
+    ParameterSet<LockdownDate, SocialEventRate, BasicShoppingRate, WorkRatio, SchoolRatio, GotoWorkTimeMinimum,
+                 GotoWorkTimeMaximum, GotoSchoolTimeMinimum, GotoSchoolTimeMaximum>;
 
 } // namespace mio
 #endif

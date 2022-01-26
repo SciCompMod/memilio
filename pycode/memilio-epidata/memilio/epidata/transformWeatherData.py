@@ -20,7 +20,6 @@
 from datetime import datetime, timedelta
 import time
 import os
-import sys
 import pandas as pd
 import numpy as np
 from memilio.epidata import geoModificationGermany as geoger
@@ -86,8 +85,7 @@ def transformWeatherData(read_data=dd.defaultDict['read_data'],
             dd.EngEng['county']) + 1
 
         if len(unique_geo_entities) < len(df_weather_old):
-            exit_string = 'Error: County-IDs do not match with file'
-            sys.exit(exit_string)
+            raise gd.DataError('Error: County-IDs do not match with file')
 
         # create new data frame for all NPIs given in the columns, resolved by
         # county and day
@@ -167,11 +165,11 @@ def transformWeatherData(read_data=dd.defaultDict['read_data'],
         df_weather.reset_index(inplace=True)
         try:
             df_weather = df_weather.drop(columns='index')
-        except:
+        except KeyError:
             pass
         try:
             df_weather = df_weather.drop(columns='level_0')
-        except:
+        except KeyError:
             pass
 
         print(

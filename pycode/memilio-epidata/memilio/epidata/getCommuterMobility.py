@@ -25,7 +25,6 @@
 import collections
 import os
 import wget
-import sys
 import numpy as np
 import pandas as pd
 from zipfile import ZipFile
@@ -39,20 +38,13 @@ def verify_sorted(countykey_list):
     """! verify that read countykey_list is sorted
     @param countykey_list List of county regional keys
     """
-    try:
-        test_if_array_like = np.array(countykey_list)
-    except:
-        print("Not an array like object.")
-        return False
-
+    countykey_list_is_sorted = np.all(np.array(
+        countykey_list[:-1]) <= np.array(countykey_list[1:]))  # this checks if it is sorted
+    if countykey_list_is_sorted:
+        return True
     else:
-        countykey_list_is_sorted = np.all(np.array(
-            countykey_list[:-1]) <= np.array(countykey_list[1:]))  # this checks if it is sorted
-        if countykey_list_is_sorted:
-            return True
-        else:
-            print('Error. Input list not sorted.')
-            return False
+        print('Error. Input list not sorted.')
+        return False
 
 
 def assign_geographical_entities(countykey_list, govkey_list):
@@ -72,8 +64,7 @@ def assign_geographical_entities(countykey_list, govkey_list):
     """
 
     if verify_sorted(countykey_list) == False:
-        exit_string = "Error. Input list not sorted."
-        sys.exit(exit_string)
+        raise gd.DataError("Error. Input list not sorted.")
 
     # Create list of government regions with lists of counties that belong to them and list of states with government
     # regions that belong to them; only works with sorted lists of keys.
@@ -406,7 +397,7 @@ def get_commuter_data(setup_dict='',
         n += 1
         print(' Federal state read. Progress ', n, '/ 16')
         if np.isnan(mat_commuter_migration).any():
-            sys.exit(
+            raise gd.DataError(
                 'NaN encountered in mobility matrix, exiting '
                 'getCommuterMobility(). Mobility data will be incomplete.')
     if n != 16:
@@ -456,19 +447,13 @@ def get_commuter_data(setup_dict='',
 
 
 def commuter_sanity_checks(df):
-    # Check if return value is a dataframe
-    if not isinstance(df, pd.DataFrame):
-        exit_string = ("Error. Data should be a dataframe")
-        sys.exit(exit_string)
     # Dataframe should be of squared form
     if len(df.index) != len(df.columns):
-        exit_string = "Error. "
-        sys.exit(exit_string)
+        raise gd.DataError("Error. Dataframe should be of squared form.")
     # There were 401 counties at beginning of 2021 and 400 at end of 2021.
     # Check if exactly 400 counties are in dataframe.
     if not len(df) == 400:
-        exit_string = "Error. Size of dataframe unexpected."
-        sys.exit(exit_string)
+        raise gd.DataError("Error. Size of dataframe unexpected.")
 
 
 def get_neighbors_mobility(
@@ -506,7 +491,7 @@ def get_neighbors_mobility(
         else:
             commuter = pd.read_json(os.path.join(
                 directory, "migration_bfa_2020_dim401.json"))
-    except:
+    except ValueError:
         print("Commuter data was not found. Download and process it from the internet.")
         commuter = get_commuter_data(out_folder=out_folder)
 
