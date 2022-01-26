@@ -132,65 +132,65 @@ def get_rki_data(read_data=dd.defaultDict['read_data'],
                 " does not exist. Call program without -r flag to get it.") \
                 from err
     else:
-
-        # Supported data formats:
-        load = {
-            'csv': gd.loadCsv,
-            'geojson': gd.loadGeojson
-        }
-
-        # ArcGIS public data item ID:
-        itemId = 'dd4580c810204019a7b8eb3e0b329dd6_0'
-
-        # Get data:
-        df = load['csv'](itemId)
-
-        complete = check_for_completeness(df, merge_eisenach=True)
-
+        # download data
+        try:
+            url = "https://media.githubusercontent.com/media/" + \
+                  "robert-koch-institut/" + \
+                  "SARS-CoV-2_Infektionen_in_Deutschland/master/"
+            source_filename = "Aktuell_Deutschland_SarsCov2_Infektionen"
+            df = gd.loadCsv(targetFileName = source_filename, apiUrl = url,
+                             extension = ".csv")
+            if not check_for_completeness(df, merge_eisenach=True):
+                raise gd.DataError
         # try another possibility if df was empty or incomplete
-        if not complete:
+        except Exception:
             print("Note: RKI data is incomplete. Trying another source.")
-
-            df = load['csv']("", "https://npgeo-de.maps.arcgis.com/sharing/rest/content/items/"
-                                 "f10774f1c63e40168479a1feb6c7ca74/data", "")
-
-            df.rename(columns={'FID': "ObjectId"}, inplace=True)
+            # ArcGIS public data item ID:
+            itemId = 'dd4580c810204019a7b8eb3e0b329dd6_0'
+            df = gd.loadCsv(itemId)
             complete = check_for_completeness(df, merge_eisenach=True)
 
-        if complete:
-            # output data to not always download it
-            if not no_raw:
-                gd.write_dataframe(df, directory, filename, "json")
+            if not complete:
+                print("Note: RKI data is still incomplete. Trying a thrid source.")
+                df = gd.loadCsv("", "https://npgeo-de.maps.arcgis.com/sharing/rest/content/items/"
+                                "f10774f1c63e40168479a1feb6c7ca74/data", "")
+                df.rename(columns={'FID': "ObjectId"}, inplace=True)
+                complete = check_for_completeness(df, merge_eisenach=True)
+
+            if not complete:
+                print("Information: dataframe was incomplete for csv. Trying geojson.")
+                df = gd.loadGeojson(itemId)
+                complete = check_for_completeness(df, merge_eisenach=True)
+                if df.empty or not complete:
+                    raise FileNotFoundError("Something went wrong, " + \
+                        "dataframe is empty for csv and geojson!")
+            # drop columns that do not exist in data from github
+            df = df.drop(["Altersgruppe2", "Datenstand", "ObjectId",
+                          "Bundesland", "Landkreis"],1)
         else:
-            print("Information: dataframe was incomplete for csv. Trying geojson.")
-            df = load['geojson'](itemId)
+            # add column with state ids
+            county_to_state_map = geoger.get_countyid_to_stateid_map()
+            df["IdBundesland"] = df["IdLandkreis"].map(county_to_state_map)
+    df = df.convert_dtypes()
 
-            complete = check_for_completeness(df, merge_eisenach=True)
-
-            if not df.empty and complete:
-                if not no_raw:
-                    gd.write_dataframe(df, directory, filename, "json")
-            else:
-                raise FileNotFoundError("Something went wrong, dataframe is empty for csv and geojson!")
+    # output data to not always download it
+    if not no_raw:
+        gd.write_dataframe(df, directory, filename, "json")
 
     # store dict values in parameter to not always call dict itself
-    Altersgruppe2 = dd.GerEng['Altersgruppe2']
     Altersgruppe = dd.GerEng['Altersgruppe']
     Geschlecht = dd.GerEng['Geschlecht']
     AnzahlFall = dd.GerEng['AnzahlFall']
     AnzahlGenesen = dd.GerEng['AnzahlGenesen']
     AnzahlTodesfall = dd.GerEng['AnzahlTodesfall']
     IdBundesland = dd.GerEng['IdBundesland']
-    Bundesland = dd.GerEng['Bundesland']
     IdLandkreis = dd.GerEng['IdLandkreis']
-    Landkreis = dd.GerEng['Landkreis']
 
     # translate column gender from German to English and standardize
     df.loc[df.Geschlecht == 'unbekannt', ['Geschlecht']] = dd.GerEng['unbekannt']
     df.loc[df.Geschlecht == 'W', ['Geschlecht']] = dd.GerEng['W']
     df.loc[df.Geschlecht == 'M', ['Geschlecht']] = dd.GerEng['M']
     df.loc[df.Altersgruppe == 'unbekannt', ['Altersgruppe']] = dd.GerEng['unbekannt']
-    df.loc[df.Altersgruppe2 == 'unbekannt', ['Altersgruppe2']] = dd.GerEng['unbekannt']
 
     # change names of columns
     df.rename(dd.GerEng, axis=1, inplace=True)
@@ -203,28 +203,6 @@ def get_rki_data(read_data=dd.defaultDict['read_data'],
         df['Date'] = df['Meldedatum']
     else:
         df['Date'] = np.where(df['IstErkrankungsbeginn'] == 1, df['Refdatum'], df['Meldedatum'])
-
-    # remove leading zeros for ID_County (if not yet done)
-    df['ID_County'] = df['ID_County'].astype(int)
-
-    # TODO: uncomment if ALtersgruppe2 will again be provided
-    # Add new column with Age with range 10 as spain data
-    # conditions = [
-    #   (df[Altersgruppe2] == '0-4') & (df[Altersgruppe2] == '5-9'),
-    #   (df[Altersgruppe2] == '10-14') & (df[Altersgruppe2] == '15-19'),
-    #   (df[Altersgruppe2] == '20-24') & (df[Altersgruppe2] == '25-29'),
-    #   (df[Altersgruppe2] == '30-34') & (df[Altersgruppe2] == '35-39'),
-    #   (df[Altersgruppe2] == '40-44') & (df[Altersgruppe2] == '45-49'),
-    #   (df[Altersgruppe2] == '50-54') & (df[Altersgruppe2] == '55-59'),
-    #   (df[Altersgruppe2] == '60-64') & (df[Altersgruppe2] == '65-69'),
-    #   (df[Altersgruppe2] == '70-74') & (df[Altersgruppe2] == '75-79'),
-    # ]
-
-    # choices = ['0-9', '10-19', '20-29', '30-39', '40-49', '50-59', '60-69', '70-79']
-    # df['Age10'] = np.select(conditions, choices, default=dd.GerEng['unbekannt'])
-
-    # convert "Datenstand" to real date:
-    df.Datenstand = pandas.to_datetime(df.Datenstand, format='%d.%m.%Y, %H:%M Uhr')
 
     # Correct Timestamps:
     for col in ['Date']:
@@ -244,8 +222,8 @@ def get_rki_data(read_data=dd.defaultDict['read_data'],
     dfF.loc[dfF.NeuGenesen < 0, [AnzahlGenesen]] = 0
 
     # get rid of unnecessary columns
-    dfF = dfF.drop(['NeuerFall', 'NeuerTodesfall', 'NeuGenesen', "IstErkrankungsbeginn", "ObjectId",
-                    "Meldedatum", "Datenstand", "Refdatum", Altersgruppe2], 1)
+    dfF = dfF.drop(['NeuerFall', 'NeuerTodesfall', 'NeuGenesen', "IstErkrankungsbeginn",
+                    "Meldedatum", "Refdatum"], 1)
 
     print("Available columns:", df.columns)
 
@@ -348,8 +326,8 @@ def get_rki_data(read_data=dd.defaultDict['read_data'],
     ############## Data for states all ages ################
 
     # NeuerFall: Infected (incl. recovered) over "dateToUse" for every state ("Bundesland"):
-    # gbNFst = df[df.NeuerFall >= 0].groupby( [IdBundesland','Bundesland', dateToUse]).AnzahlFall.sum()
-    gbNFst = df[df.NeuerFall >= 0].groupby([IdBundesland, Bundesland, dateToUse])\
+    # gbNFst = df[df.NeuerFall >= 0].groupby( [IdBundesland', dateToUse]).AnzahlFall.sum()
+    gbNFst = df[df.NeuerFall >= 0].groupby([IdBundesland, dateToUse])\
         .agg({AnzahlFall: sum})
 
     gbNFst_cs = gbNFst.groupby(level=1).cumsum().reset_index()
@@ -374,14 +352,14 @@ def get_rki_data(read_data=dd.defaultDict['read_data'],
         gd.write_dataframe(gbNFst_cs, directory, filename + '_rki', file_format)
 
     # output nested json
-    # gbNFst_cs.groupby(['IdBundesland', 'Bundesland'], as_index=False) \
+    # gbNFst_cs.groupby(['IdBundesland'], as_index=False) \
     #            .apply(lambda x: x[[dateToUse,'AnzahlFall']].to_dict('r')) \
     #            .reset_index().rename(columns={0:'Dates'})\
     #            .to_json(directory + "gbNF_state_nested.json", orient='records')
 
     # infected (incl recovered), deaths and recovered together
 
-    gbAllSt = dfF.groupby([IdBundesland, Bundesland, dateToUse]) \
+    gbAllSt = dfF.groupby([IdBundesland, dateToUse]) \
         .agg({AnzahlFall: sum, AnzahlTodesfall: sum, AnzahlGenesen: sum})
     gbAllSt_cs = gbAllSt.groupby(level=1).cumsum().reset_index()
 
@@ -413,12 +391,10 @@ def get_rki_data(read_data=dd.defaultDict['read_data'],
             columns=[dd.EngEng['date'],
                      dd.EngEng['gender'],
                      dd.EngEng['idState'],
-                     dd.EngEng['state'],
-                     dd.EngEng['county'],
                      dd.EngEng['ageRKI']])
 
     # NeuerFall: Infected (incl. recovered) over "dateToUse" for every county ("Landkreis"):
-    gbNFc = df[df.NeuerFall >= 0].groupby([IdLandkreis, Landkreis, dateToUse]) \
+    gbNFc = df[df.NeuerFall >= 0].groupby([IdLandkreis, dateToUse]) \
         .agg({AnzahlFall: sum})
     gbNFc_cs = gbNFc.groupby(level=1).cumsum().reset_index()
 
@@ -469,10 +445,8 @@ def get_rki_data(read_data=dd.defaultDict['read_data'],
             columns=[dd.EngEng['date'],
                      dd.EngEng['gender'],
                      dd.EngEng['idState'],
-                     dd.EngEng['state'],
-                     dd.EngEng['county'],
                      dd.EngEng['ageRKI']])
-    gbAllC = dfF.groupby([IdLandkreis, Landkreis, dateToUse]).\
+    gbAllC = dfF.groupby([IdLandkreis, dateToUse]).\
         agg({AnzahlFall: sum, AnzahlTodesfall: sum, AnzahlGenesen: sum})
     gbAllC_cs = gbAllC.groupby(level=1).cumsum().reset_index()
 
@@ -554,7 +528,7 @@ def get_rki_data(read_data=dd.defaultDict['read_data'],
 
     # infected (incl recovered), deaths and recovered together
 
-    gbAllGState = dfF.groupby([IdBundesland, Bundesland, Geschlecht, dateToUse]) \
+    gbAllGState = dfF.groupby([IdBundesland, Geschlecht, dateToUse]) \
         .agg({AnzahlFall: sum, AnzahlTodesfall: sum, AnzahlGenesen: sum})
     gbAllGState_cs = gbAllGState.groupby(level=[1, 2]).cumsum().reset_index()
 
@@ -580,7 +554,7 @@ def get_rki_data(read_data=dd.defaultDict['read_data'],
 
     ############# Gender and County #####################
 
-    gbAllGCounty = dfF.groupby([IdLandkreis, Landkreis, Geschlecht, dateToUse]) \
+    gbAllGCounty = dfF.groupby([IdLandkreis, Geschlecht, dateToUse]) \
         .agg({AnzahlFall: sum, AnzahlTodesfall: sum, AnzahlGenesen: sum})
     gbAllGCounty_cs = gbAllGCounty.groupby(level=[1, 2]).cumsum().reset_index()
 
@@ -673,7 +647,7 @@ def get_rki_data(read_data=dd.defaultDict['read_data'],
 
     # infected (incl recovered), deaths and recovered together
 
-    gbAllAgeState = dfF.groupby([IdBundesland, Bundesland, Altersgruppe, dateToUse]) \
+    gbAllAgeState = dfF.groupby([IdBundesland, Altersgruppe, dateToUse]) \
         .agg({AnzahlFall: sum, AnzahlTodesfall: sum, AnzahlGenesen: sum})
     gbAllAgeState_cs = gbAllAgeState.groupby(level=[1, 2]).cumsum().reset_index()
 
@@ -697,31 +671,9 @@ def get_rki_data(read_data=dd.defaultDict['read_data'],
             filename = filename + '_repdate'
         gd.write_dataframe(gbAllAgeState_cs, directory, filename + '_rki', file_format)                                   
 
-    # TODO: uncomment if ALtersgruppe2 will again be provided
-    ##### Age5 and Age10#####
-
-    # infected (incl recovered), deaths and recovered together
-    # gbAllAgeState = dfF.groupby([IdBundesland, Bundesland, dd.GerEng['Altersgruppe2'], dateToUse]) \
-    #   .agg({AnzahlFall: sum, AnzahlTodesfall: sum, AnzahlGenesen: sum})
-
-    # gbAllAgeState_cs = gbAllAgeState.groupby(level=[1, 2]).cumsum().reset_index()
-
-    # output
-    # gd.write_dataframe(gbAllAgeState_cs, directory, "all_state_age5_rki", file_format)
-
-    ##### Age10 #####
-
-    # gbAllAgeState = dfF.groupby([IdBundesland, Bundesland, 'Age10', dateToUse]) \
-    #   .agg({AnzahlFall: sum, AnzahlTodesfall: sum, AnzahlGenesen: sum})
-
-    # gbAllAgeState_cs = gbAllAgeState.groupby(level=[1, 2]).cumsum().reset_index()
-
-    # output
-    # gd.write_dataframe(gbAllAgeState_cs, directory, "all_state_age10_rki", file_format)
-
     ############# Age and County #####################
 
-    gbAllAgeCounty = dfF.groupby([IdLandkreis, Landkreis, Altersgruppe, dateToUse]) \
+    gbAllAgeCounty = dfF.groupby([IdLandkreis, Altersgruppe, dateToUse]) \
         .agg({AnzahlFall: sum, AnzahlTodesfall: sum, AnzahlGenesen: sum})
     gbAllAgeCounty_cs = gbAllAgeCounty.groupby(level=[1, 2]).cumsum().reset_index()
 
