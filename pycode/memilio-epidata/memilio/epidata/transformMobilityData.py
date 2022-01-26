@@ -135,8 +135,6 @@ def main():
     directory = dd.defaultDict['out_folder'].split('/pydata')[0]
     directory = os.path.join(directory, 'mobility/')
 
-    directory = directory.replace('memilio', 'memilio-fed-state')
-
     # Merge Eisenach and Wartbugkreis in Input Data if need be
     updateMobility2022(directory, mobility_file='twitter_scaled_1252')
     updateMobility2022(directory, mobility_file='commuter_migration_scaled')

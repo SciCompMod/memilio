@@ -37,10 +37,8 @@ class TestTransformMobilityData(fake_filesystem_unittest.TestCase):
     path = '/home/Mobility/'
 
     counties = geoger.get_county_ids(merge_eisenach=False)
-    idx_cols = [i for i in range(len(counties))]
 
-    df_401 = pd.DataFrame(columns=idx_cols)
-    df_401[idx_cols] = np.zeros((len(counties), len(counties)))
+    df_401 = pd.DataFrame(np.zeros((len(counties), len(counties))))
 
     # two neighboring counties (state 0) to one county (state 1)
     df_401.iloc[0, 15] = 2
