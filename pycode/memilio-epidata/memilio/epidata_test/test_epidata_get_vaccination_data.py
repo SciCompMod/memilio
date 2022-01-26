@@ -52,6 +52,9 @@ class TestGetVaccinationData(fake_filesystem_unittest.TestCase):
 
     for county in counties:
         vacc_data = [
+            ('2020-12-27', str(county), '05-11', 1, 3),
+            ('2020-12-27', str(county), '05-11', 2, 2),
+            ('2020-12-27', str(county), '05-11', 3, 1),            
             ('2020-12-27', str(county), '12-17', 1, 10),
             ('2020-12-27', str(county), '12-17', 2, 15),
             ('2020-12-27', str(county), '12-17', 3, 72),
@@ -70,31 +73,57 @@ class TestGetVaccinationData(fake_filesystem_unittest.TestCase):
     df_vacc_data = df_vacc_data.astype({'LandkreisId_Impfort': 'string', 'Altersgruppe': "string",
                    'Impfschutz': int, 'Anzahl': int})
 
+    df_vacc_data_altern = pd.DataFrame(columns=col_names_vacc_data)
+    for i in range(len(counties)):
+        vacc_data_altern = [
+            ('2020-12-27', str(counties[i]), '02-03', 2, i),
+            ('2020-12-27', str(counties[i]), '04-10', 2, i),
+            ('2020-12-27', str(counties[i]), '11-17', 2, i),
+            ('2020-12-27', str(counties[i]), '18-55', 2, i),
+            ('2020-12-27', str(counties[i]), '56+', 1, i),
+            ('2020-12-27', str(counties[i]), '56+', 2, i),            
+            ('2020-12-27', str(counties[i]), '56+', 3, i)
+        ]
+        df_to_append = pd.DataFrame(
+            vacc_data_altern, columns=col_names_vacc_data)
+        df_vacc_data_altern = df_vacc_data_altern.append(
+            df_to_append, ignore_index=True)
+
+    df_vacc_data_altern = df_vacc_data_altern.astype({'LandkreisId_Impfort': 'string', 'Altersgruppe': "string",
+                   'Impfschutz': int, 'Anzahl': int})                   
+
     def setUp(self):
         self.setUpPyfakefs()
     
     @patch('memilio.epidata.getVaccinationData.download_vaccination_data',
-           return_value=df_vacc_data)
-    def test_get_standart_vaccination_data_no_errors_with_plots(
+           return_value=df_vacc_data_altern)
+    def test_get_vaccination_data_alternative_ages_no_errors_with_plots(
             self, mockv):
         gvd.get_vaccination_data(out_folder=self.path)
+
+    @patch('memilio.epidata.getVaccinationData.download_vaccination_data',
+           return_value=df_vacc_data)
+    def test_get_standard_vaccination_data_no_errors_with_plots(
+            self, mockv):
+        gvd.get_vaccination_data(out_folder=self.path)  
     
     def test_download_vaccination_data(self):
         df = gvd.download_vaccination_data()
         self.assertFalse(
             df.empty,
-            "Vaccination Data is empty. Should'nt be.")
+            "Vaccination Data is empty. Shouldn't be.")
 
         # test agegroups in raw dataframe
         agegr_arr = df['Altersgruppe'].unique()
+        self.assertIn('05-11', agegr_arr)
         self.assertIn('12-17', agegr_arr)
         self.assertIn('18-59', agegr_arr)
         self.assertIn('60+', agegr_arr)
 
         if 'u' in agegr_arr:
-            self.assertEqual(len(agegr_arr), 4)
+            self.assertEqual(len(agegr_arr), 5)
         if not 'u' in agegr_arr:
-            self.assertEqual(len(agegr_arr), 3)
+            self.assertEqual(len(agegr_arr), 4)
 
     
     @patch('builtins.print')
@@ -113,6 +142,9 @@ class TestGetVaccinationData(fake_filesystem_unittest.TestCase):
             'Anzahl']
 
         vacc_data = [
+            ('2020-12-27', '1001', '05-11', 1, 3),
+            ('2020-12-27', '1001', '05-11', 2, 2),
+            ('2020-12-27', '1001', '05-11', 3, 1),            
             ('2020-12-27', '1001', '12-17', 1, 10),
             ('2020-12-27', '1001', '12-17', 2, 15),
             ('2020-12-27', '1001', '12-17', 3, 72),
@@ -160,7 +192,7 @@ class TestGetVaccinationData(fake_filesystem_unittest.TestCase):
 
         self.assertEqual(
             len(df_split),
-            3, 'Did not divide dataframe in three sperate ones.')
+            3, 'Did not divide dataframe in three separate ones.')
         for i in range(0, len(new_col_labels)):
             self.assertEqual(
                 number_unique_idents_df[i],
@@ -179,6 +211,9 @@ class TestGetVaccinationData(fake_filesystem_unittest.TestCase):
             'Anzahl']
 
         vacc_data = [
+            ('2020-12-27', '1001', '05-11', 1, 3),
+            ('2020-12-27', '1001', '05-11', 2, 2),
+            ('2020-12-27', '1001', '05-11', 3, 1),              
             ('2020-12-27', '1001', '12-17', 1, 10),
             ('2020-12-27', '1001', '12-17', 2, 15),
             ('2020-12-27', '1001', '12-17', 3, 72),
@@ -227,7 +262,7 @@ class TestGetVaccinationData(fake_filesystem_unittest.TestCase):
 
         self.assertEqual(
             len(df_split),
-            3, 'Did not divide dataframe in three sperate ones.')
+            3, 'Did not divide dataframe in three separate ones.')
         for i in range(0, len(new_col_labels)):
             self.assertEqual(
                 number_unique_idents_df[i],

@@ -25,11 +25,7 @@
 """
 import os
 import pandas as pd
-
-
 from memilio.epidata import defaultDict as dd
-
-
 from memilio.epidata import getDataIntoPandasDataFrame as gd
 
 
@@ -309,7 +305,6 @@ def get_nuts3_county_id_map(merge_eisenach=True):
             key_nuts3[dd.EngEng['idCounty']]))
 
     return nuts3_key_dict
-
 
 
 def merge_df_counties(df, merged_id, separated_ids, sorting=[dd.EngEng['date']], columns=dd.EngEng['date'], method='sum'):
