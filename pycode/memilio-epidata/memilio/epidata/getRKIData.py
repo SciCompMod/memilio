@@ -118,12 +118,10 @@ def get_rki_data(read_data=dd.defaultDict['read_data'],
 
     directory = os.path.join(out_folder, 'Germany/')
     gd.check_dir(directory)
-
     filename = "FullDataRKI"
 
     if read_data:
         # if once dowloaded just read json file
-
         file_in = os.path.join(directory, filename + ".json")
         try:
             df = pandas.read_json(file_in)
@@ -254,7 +252,6 @@ def get_rki_data(read_data=dd.defaultDict['read_data'],
             {},
             ['Confirmed'],
             impute='forward', moving_average=moving_average)
-
         filename = gd.append_filename(filename, impute_dates, moving_average)
         if rep_date:
             filename = filename + '_repdate'
@@ -284,7 +281,6 @@ def get_rki_data(read_data=dd.defaultDict['read_data'],
             {},
             ['Deaths'],
             impute='forward', moving_average=moving_average)
-
         filename = gd.append_filename(filename, impute_dates, moving_average)
         if rep_date:
             filename = filename + '_repdate'
@@ -317,7 +313,6 @@ def get_rki_data(read_data=dd.defaultDict['read_data'],
             {},
             ['Confirmed', 'Deaths', 'Recovered'],
             impute='forward', moving_average=moving_average)    
-
         filename = gd.append_filename(filename, impute_dates, moving_average)
         if rep_date:
             filename = filename + '_repdate'
@@ -345,7 +340,6 @@ def get_rki_data(read_data=dd.defaultDict['read_data'],
             {dd.EngEng["idState"]: [k for k, v in dd.State.items()]},
             ['Confirmed'],
             impute='forward', moving_average=moving_average)  
-
         filename = gd.append_filename(filename, impute_dates, moving_average)
         if rep_date:
             filename = filename + '_repdate'
@@ -376,7 +370,6 @@ def get_rki_data(read_data=dd.defaultDict['read_data'],
             {dd.EngEng["idState"]: [k for k, v in dd.State.items()]},
             ['Confirmed', 'Deaths', 'Recovered'],
             impute='forward', moving_average=moving_average)
-  
         filename = gd.append_filename(filename, impute_dates, moving_average)
         if rep_date:
             filename = filename + '_repdate'
@@ -401,40 +394,23 @@ def get_rki_data(read_data=dd.defaultDict['read_data'],
     # output
     if split_berlin:
         filename = 'infected_county_split_berlin'
-        if rep_date:
-            filename_orig = filename + '_repdate' 
-        else:
-            filename_orig = filename        
-        gd.write_dataframe(gbNFc_cs, directory, filename_orig + '_rki', file_format)
-        if impute_dates or moving_average > 0:
-            gbNFc_cs = modifyDataframeSeries.impute_and_reduce_df(
-                gbNFc_cs,
-                {dd.EngEng["idCounty"]: sorted(set(df[dd.EngEng["idCounty"]].unique()))},
-                ['Confirmed'],
-                impute='forward', moving_average=moving_average)
-
-            filename = gd.append_filename(filename, impute_dates, moving_average)
-            if rep_date:
-                filename = filename + '_repdate'
-            gd.write_dataframe(gbNFc_cs, directory, filename + '_rki', file_format)
     else:
         filename = 'infected_county'
+    if rep_date:
+        filename_orig = filename + '_repdate'
+    else:
+        filename_orig = filename
+    gd.write_dataframe(gbNFc_cs, directory, filename_orig + '_rki', file_format)
+    if impute_dates or moving_average > 0:
+        gbNFc_cs = modifyDataframeSeries.impute_and_reduce_df(
+            gbNFc_cs,
+            {dd.EngEng["idCounty"]: sorted(set(df[dd.EngEng["idCounty"]].unique()))},
+            ['Confirmed'],
+            impute='forward', moving_average=moving_average)
+        filename = gd.append_filename(filename, impute_dates, moving_average)
         if rep_date:
-            filename_orig = filename + '_repdate' 
-        else:
-            filename_orig = filename        
-        gd.write_dataframe(gbNFc_cs, directory, filename_orig + '_rki', file_format)
-        if impute_dates or moving_average > 0:
-            gbNFc_cs = modifyDataframeSeries.impute_and_reduce_df(
-                gbNFc_cs,
-                {dd.EngEng["idCounty"]: sorted(set(df[dd.EngEng["idCounty"]].unique()))},
-                ['Confirmed'],
-                impute='forward', moving_average=moving_average)
-          
-            filename = gd.append_filename(filename, impute_dates, moving_average)
-            if rep_date:
-                filename = filename + '_repdate'
-            gd.write_dataframe(gbNFc_cs, directory, filename + '_rki', file_format)            
+            filename = filename + '_repdate'
+        gd.write_dataframe(gbNFc_cs, directory, filename + '_rki', file_format)
 
     # infected (incl recovered), deaths and recovered together
 
@@ -453,40 +429,23 @@ def get_rki_data(read_data=dd.defaultDict['read_data'],
     # output
     if split_berlin:
         filename = 'all_county_split_berlin'
-        if rep_date:
-            filename_orig = filename + '_repdate' 
-        else:
-            filename_orig = filename
-        gd.write_dataframe(gbAllC_cs, directory, filename_orig + '_rki', file_format)
-        if impute_dates or moving_average > 0:
-            gbAllC_cs = modifyDataframeSeries.impute_and_reduce_df(
-                gbAllC_cs,
-                {dd.EngEng["idCounty"]: sorted(set(df[dd.EngEng["idCounty"]].unique()))},
-                ['Confirmed', 'Deaths', 'Recovered'],
-                impute='forward', moving_average=moving_average)
-
-            filename = gd.append_filename(filename, impute_dates, moving_average)
-            if rep_date:
-                filename = filename + '_repdate'
-            gd.write_dataframe(gbAllC_cs, directory, filename + '_rki', file_format)
     else:
         filename = 'all_county'
+    if rep_date:
+        filename_orig = filename + '_repdate'
+    else:
+        filename_orig = filename
+    gd.write_dataframe(gbAllC_cs, directory, filename_orig + '_rki', file_format)
+    if impute_dates or moving_average > 0:
+        gbAllC_cs = modifyDataframeSeries.impute_and_reduce_df(
+            gbAllC_cs,
+            {dd.EngEng["idCounty"]: sorted(set(df[dd.EngEng["idCounty"]].unique()))},
+            ['Confirmed', 'Deaths', 'Recovered'],
+            impute='forward', moving_average=moving_average)
+        filename = gd.append_filename(filename, impute_dates, moving_average)
         if rep_date:
-            filename_orig = filename + '_repdate' 
-        else:
-            filename_orig = filename        
-        gd.write_dataframe(gbAllC_cs, directory, filename_orig + '_rki', file_format)
-        if impute_dates or moving_average > 0:
-            gbAllC_cs = modifyDataframeSeries.impute_and_reduce_df(
-                gbAllC_cs,
-                {dd.EngEng["idCounty"]: sorted(set(df[dd.EngEng["idCounty"]].unique()))},
-                ['Confirmed', 'Deaths', 'Recovered'],
-                impute='forward', moving_average=moving_average)
-                       
-            filename = gd.append_filename(filename, impute_dates, moving_average)
-            if rep_date:
-                filename = filename + '_repdate'
-            gd.write_dataframe(gbAllC_cs, directory, filename + '_rki', file_format)
+            filename = filename + '_repdate'
+        gd.write_dataframe(gbAllC_cs, directory, filename + '_rki', file_format)
 
     ######### Data whole Germany different gender ##################
 
@@ -510,7 +469,6 @@ def get_rki_data(read_data=dd.defaultDict['read_data'],
             {dd.EngEng["gender"]: list(df[dd.EngEng["gender"]].unique())},
             ['Confirmed', 'Deaths', 'Recovered'],
             impute='forward', moving_average=moving_average)
-           
         filename = gd.append_filename(filename, impute_dates, moving_average)
         if rep_date:
             filename = filename + '_repdate'
@@ -546,7 +504,6 @@ def get_rki_data(read_data=dd.defaultDict['read_data'],
              dd.EngEng["gender"]: list(df[dd.EngEng["gender"]].unique())},
             ['Confirmed', 'Deaths', 'Recovered'],
             impute='forward', moving_average=moving_average)
-                              
         filename = gd.append_filename(filename, impute_dates, moving_average)
         if rep_date:
             filename = filename + '_repdate'
@@ -561,42 +518,24 @@ def get_rki_data(read_data=dd.defaultDict['read_data'],
     # output
     if split_berlin:
         filename = 'all_county_gender_split_berlin'
-        if rep_date:
-            filename_orig = filename + '_repdate' 
-        else:
-            filename_orig = filename        
-        gd.write_dataframe(gbAllGCounty_cs, directory, filename_orig + '_rki', file_format)
-        if impute_dates or moving_average > 0:
-            gbAllGCounty_cs = modifyDataframeSeries.impute_and_reduce_df(
-                gbAllGCounty_cs,
-                {dd.EngEng["idCounty"]: sorted(set(df[dd.EngEng["idCounty"]].unique())),
-                dd.EngEng["gender"]: list(df[dd.EngEng["gender"]].unique())},
-                ['Confirmed', 'Deaths', 'Recovered'],
-                impute='forward', moving_average=moving_average)
-            
-            filename = gd.append_filename(filename, impute_dates, moving_average)
-            if rep_date:
-                filename = filename + '_repdate'
-            gd.write_dataframe(gbAllGCounty_cs, directory, filename + '_rki', file_format)
     else:
         filename = 'all_county_gender'
+    if rep_date:
+        filename_orig = filename + '_repdate'
+    else:
+        filename_orig = filename
+    gd.write_dataframe(gbAllGCounty_cs, directory, filename_orig + '_rki', file_format)
+    if impute_dates or moving_average > 0:
+        gbAllGCounty_cs = modifyDataframeSeries.impute_and_reduce_df(
+            gbAllGCounty_cs,
+            {dd.EngEng["idCounty"]: sorted(set(df[dd.EngEng["idCounty"]].unique())),
+            dd.EngEng["gender"]: list(df[dd.EngEng["gender"]].unique())},
+            ['Confirmed', 'Deaths', 'Recovered'],
+            impute='forward', moving_average=moving_average)
+        filename = gd.append_filename(filename, impute_dates, moving_average)
         if rep_date:
-            filename_orig = filename + '_repdate' 
-        else:
-            filename_orig = filename        
-        gd.write_dataframe(gbAllGCounty_cs, directory, filename_orig + '_rki', file_format)
-        if impute_dates or moving_average > 0:
-            gbAllGCounty_cs = modifyDataframeSeries.impute_and_reduce_df(
-                gbAllGCounty_cs,
-                {dd.EngEng["idCounty"]: sorted(set(df[dd.EngEng["idCounty"]].unique())),
-                dd.EngEng["gender"]: list(df[dd.EngEng["gender"]].unique())},
-                ['Confirmed', 'Deaths', 'Recovered'],
-                impute='forward', moving_average=moving_average)
-
-            filename = gd.append_filename(filename, impute_dates, moving_average)
-            if rep_date:
-                filename = filename + '_repdate'
-            gd.write_dataframe(gbAllGCounty_cs, directory, filename + '_rki', file_format)
+            filename = filename + '_repdate'
+        gd.write_dataframe(gbAllGCounty_cs, directory, filename + '_rki', file_format)
 
     ######### Data whole Germany different ages ####################
 
@@ -619,7 +558,6 @@ def get_rki_data(read_data=dd.defaultDict['read_data'],
             {dd.EngEng["ageRKI"]: sorted(set(df[dd.EngEng["ageRKI"]].unique()))},
             ['Confirmed', 'Deaths', 'Recovered'],
             impute='forward', moving_average=moving_average)
-                       
         filename = gd.append_filename(filename, impute_dates, moving_average)
         if rep_date:
             filename = filename + '_repdate'
@@ -665,7 +603,6 @@ def get_rki_data(read_data=dd.defaultDict['read_data'],
              dd.EngEng["ageRKI"]: sorted(set(df[dd.EngEng["ageRKI"]].unique()))},
             ['Confirmed', 'Deaths', 'Recovered'],
             impute='forward', moving_average=moving_average)
-
         filename = gd.append_filename(filename, impute_dates, moving_average)
         if rep_date:
             filename = filename + '_repdate'
@@ -680,70 +617,24 @@ def get_rki_data(read_data=dd.defaultDict['read_data'],
     # output
     if split_berlin:
         filename = 'all_county_age_split_berlin'
-        if rep_date:
-            filename_orig = filename + '_repdate' 
-        else:
-            filename_orig = filename        
-        gd.write_dataframe(gbAllAgeCounty_cs, directory, filename_orig + '_rki', file_format)
-        if impute_dates or moving_average > 0:
-            gbAllAgeCounty_cs = modifyDataframeSeries.impute_and_reduce_df(
-                gbAllAgeCounty_cs,
-                {dd.EngEng["idCounty"]: sorted(set(df[dd.EngEng["idCounty"]].unique())),
-                dd.EngEng["ageRKI"]: sorted(set(df[dd.EngEng["ageRKI"]].unique()))},
-                ['Confirmed', 'Deaths', 'Recovered'],
-                impute='forward', moving_average=moving_average)
-                                         
-            filename = gd.append_filename(filename, impute_dates, moving_average)
-            if rep_date:
-                filename = filename + '_repdate'
-            gd.write_dataframe(gbAllAgeCounty_cs, directory, filename + '_rki', file_format)                                          
     else:
         filename = 'all_county_age'
+    if rep_date:
+        filename_orig = filename + '_repdate'
+    else:
+        filename_orig = filename
+    gd.write_dataframe(gbAllAgeCounty_cs, directory, filename_orig + '_rki', file_format)
+    if impute_dates or moving_average > 0:
+        gbAllAgeCounty_cs = modifyDataframeSeries.impute_and_reduce_df(
+            gbAllAgeCounty_cs,
+            {dd.EngEng["idCounty"]: sorted(set(df[dd.EngEng["idCounty"]].unique())),
+            dd.EngEng["ageRKI"]: sorted(set(df[dd.EngEng["ageRKI"]].unique()))},
+            ['Confirmed', 'Deaths', 'Recovered'],
+            impute='forward', moving_average=moving_average)
+        filename = gd.append_filename(filename, impute_dates, moving_average)
         if rep_date:
-            filename_orig = filename + '_repdate' 
-        else:
-            filename_orig = filename        
-        gd.write_dataframe(gbAllAgeCounty_cs, directory, filename_orig + '_rki', file_format)
-        if impute_dates or moving_average > 0:
-            gbAllAgeCounty_cs = modifyDataframeSeries.impute_and_reduce_df(
-                gbAllAgeCounty_cs,
-                {dd.EngEng["idCounty"]: sorted(set(df[dd.EngEng["idCounty"]].unique())),
-                dd.EngEng["ageRKI"]: sorted(set(df[dd.EngEng["ageRKI"]].unique()))},
-                ['Confirmed', 'Deaths', 'Recovered'],
-                impute='forward', moving_average=moving_average)
-                                      
-            if moving_average > 0:
-                filename = filename + '_ma' + str(moving_average)
-            elif impute_dates:
-                filename = filename + '_all_dates'
-            if rep_date:
-                filename = filename + '_repdate'
-            gd.write_dataframe(gbAllAgeCounty_cs, directory, filename + '_rki', file_format)
-
-    # TODO: uncomment if ALtersgruppe2 will again be provided
-    #### age5 ####
-
-    # gbAllAgeCounty = dfF.groupby([IdLandkreis, Landkreis, Altersgruppe2, dateToUse]) \
-    #   .agg({AnzahlFall: sum, AnzahlTodesfall: sum, AnzahlGenesen: sum})
-    # gbAllAgeCounty_cs = gbAllAgeCounty.groupby(level=[1, 2]).cumsum().reset_index()
-
-    # if split_berlin:
-    #   gd.write_dataframe(gbAllAgeCounty_cs, directory, "all_county_age5_split_berlin_rki", file_format)
-    # else:
-    #   gd.write_dataframe(gbAllAgeCounty_cs, directory, "all_county_age5_rki", file_format)
-
-    #### age10 ####
-
-    # gbAllAgeCounty = dfF.groupby( [IdLandkreis, Landkreis, 'Age10', dateToUse])\
-    #                  .agg({AnzahlFall: sum, AnzahlTodesfall: sum, AnzahlGenesen: sum})
-    # gbAllAgeCounty_cs = gbAllAgeCounty.groupby(level=[1,2]).cumsum().reset_index()
-
-    # output
-
-    # if split_berlin:
-    #    gd.write_dataframe(gbAllAgeCounty_cs, directory, "all_county_age10_split_berlin_rki", file_format)
-    # else:
-    #    gd.write_dataframe(gbAllAgeCounty_cs, directory, "all_county_age10_rki", file_format)
+            filename = filename + '_repdate'
+        gd.write_dataframe(gbAllAgeCounty_cs, directory, filename + '_rki', file_format)
 
 
 def main():
