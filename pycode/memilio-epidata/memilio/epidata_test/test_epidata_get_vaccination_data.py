@@ -28,6 +28,7 @@ from memilio.epidata import getDataIntoPandasDataFrame as gd
 from memilio.epidata import getCommuterMobility as gcm
 from memilio.epidata import getVaccinationData as gvd
 from memilio.epidata import defaultDict as dd
+from memilio.epidata import geoModificationGermany as geoger
 
 
 class TestGetVaccinationData(fake_filesystem_unittest.TestCase):
@@ -39,16 +40,8 @@ class TestGetVaccinationData(fake_filesystem_unittest.TestCase):
         'Impfdatum', 'LandkreisId_Impfort', 'Altersgruppe', 'Impfschutz',
         'Anzahl']
     df_vacc_data = pd.DataFrame(columns=col_names_vacc_data)
-    CountyMerging = {
-        # Different districts to Berlin; reporting differs according to source
-        11000: [11001, 11002, 11003, 11004, 11005, 11006, 11007, 11008, 11009,
-                11010, 11011, 11012],
-        # Wartburgkreis and Eisenach to Wartburgkreis (decision from July 1, 2021)
-        16063: [16063, 16056]
-    }
-    counties = sorted(set(dd.County.keys()))
-    for i in CountyMerging[11000]:
-        counties.remove(i)
+    
+    counties = geoger.get_county_ids(merge_eisenach=False)
 
     for county in counties:
         vacc_data = [

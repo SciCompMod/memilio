@@ -22,103 +22,16 @@
 
 @brief Downloads data about population statistic
 
-To download the data two functions are called
 """
 
 import os
-from collections import namedtuple
+import sys
 import numpy as np
-import pandas
+import pandas as pd
 from memilio.epidata import getDataIntoPandasDataFrame as gd
 from memilio.epidata import defaultDict as dd
 from memilio.epidata import geoModificationGermany as geoger
 
-
-def get_population_data(read_data=dd.defaultDict['read_data'],
-                        file_format=dd.defaultDict['file_format'],
-                        out_folder=dd.defaultDict['out_folder'],
-                        no_raw=dd.defaultDict['no_raw']):
-    """! Downloads population data
-
-   A list of all datasets with population data is composed.
-
-   In a loop over this list, the different datasets are downloaded.
-   The dataset consists of:
-   - filename to store unchanged data
-   - arcis opendata number (identifier of data)
-   - Wanted columns
-   - filename for results
-
-   Data is stored and perhaps loaded from out_folder/Germany.
-
-   @param read_data False [Default] or True. Defines if data is read from file or downloaded.
-   @param file_format File format which is used for writing the data. Default defined in defaultDict.
-   @param out_folder Path to folder where data is written in folder out_folder/Germany.
-   @param no_raw True or False [Default]. Defines if unchanged raw data is saved or not.
-   """
-
-    print("Warning: getpopulationdata is not working correctly. A bug workaround has been applied.")
-
-    Data = namedtuple("Data", "filename item columns_wanted filename_out")
-
-    d1 = Data("FullDataB", '5dc2fc92850241c3be3d704aa0945d9c_2', ["LAN_ew_RS", 'LAN_ew_GEN', 'LAN_ew_EWZ'],
-              "PopulStates")
-    # d2 = Data("FullDataL", 'b2e6d8854d9744ca88144d30bef06a76_1', ['RS', 'GEN', 'EWZ'], "PopulCounties")
-
-    # d = [d1, d2]
-    d = [d1]
-
-    directory = os.path.join(out_folder, 'Germany/')
-    gd.check_dir(directory)
-
-    for d_i in d:
-        get_one_data_set(read_data, file_format, no_raw, directory, d_i)
-
-
-def get_one_data_set(read_data, file_format, no_raw, directory, d):
-    """! download one dataset
-
-   Data is either downloaded from website or loaded as specific json file from the given "directory".
-   The final data is also stored in "directory".
-   After load or download the columns are renamed.
-
-   @param read_data False [Default] or True. Defines if data is read from file or downloaded.
-   @param file_format File format which is used for writing the data. Default defined in defaultDict.
-   @param directory Directory which wiles should be stored and loaded (out_folder/Germany).
-   @param d Dataset with (filename to store unchanged data, arcis opendata number, wanted columns, filename for results)
-   """
-
-    if read_data:
-        # if once dowloaded just read json file
-        file = os.path.join(directory, d.filename + ".json")
-
-        try:
-            df = pandas.read_json(file)
-        except ValueError as err:
-            raise FileNotFoundError("Error: The file: " + file + \
-                " does not exist. Call program without -r flag to get it.") \
-                from err
-    else:
-
-        # Supported data formats:
-        load = {
-            'csv': gd.loadCsv,
-            'geojson': gd.loadGeojson
-        }
-
-        # Get data:
-        df = load['csv'](d.item)
-
-        # output data to not always download it
-        if not no_raw:
-            gd.write_dataframe(df, directory, d.filename, "json")
-
-    print("Available columns:", df.columns)
-
-    # Filter data for Bundesland/Landkreis and Einwohnerzahl (EWZ)
-    dfo = df[d.columns_wanted]
-    dfo = dfo.rename(columns=dd.GerEng)
-    gd.write_dataframe(dfo, directory, d.filename_out, file_format)
 
 
 def get_new_counties(data):
@@ -201,88 +114,126 @@ def get_new_counties(data):
     data_temp = np.delete(data_temp, to_delete, 0)
     sorted_inds = np.argsort(data_temp[:, 0])
     data_temp = data_temp[sorted_inds, :]
-    if to_delete == []:
-        return data
-    else:
-        return data_temp
+    return data_temp
 
 
-def load_age_population_data(out_folder):
+def load_population_data(out_folder=dd.defaultDict['out_folder'],
+                         read_data=dd.defaultDict['read_data'],
+                         no_raw=dd.defaultDict['no_raw'],
+                         file_format=dd.defaultDict['file_format']):
+    """! Load of counties, zensus and reg_key files
+
+    Data is downloaded from the following sources
+   - Federal Statistical Office of Germany (Destatis), Genesis-Online
+   current data for population per county [stored in "counties"]
+   - Zensus2011 data splitted by gender for whole germany, states, counties in xls
+   with additional data from 30.04.2011 (just used for reg_key?) [stored in "reg_key"]
+   - Zensus2011 data from opendata splitted for age and gender [stored in "zensus"]
+
+   Data is either downloaded or read from "out_folder"/Germany/.
+
+   @param out_folder Path to folder where data is written in folder out_folder/Germany. Default defined in defaultDict.
+   @param read_data False or True. Defines if data is read from file or downloaded. Default defined in defaultDict.
+   @param no_raw True or False. Defines if unchanged raw data is written or not. Default defined in defaultDict.
+   @param file_format File format which is used for writing the data. Default defined in defaultDict.
+   @return 3 Dataframes of migration, reg_key and zensus
+    """
 
     directory = os.path.join(out_folder, 'Germany/')
     gd.check_dir(directory)
 
     filename_counties = 'migration'
-    filename_reg_key = 'reg_key'
     filename_zensus = 'zensus'
+    filename_reg_key = 'reg_key'
 
-    file_in = os.path.join(directory, filename_counties + ".json")
-    try:
-        counties = pandas.read_json(file_in)
-    except ValueError:
-        print('Local counties dataframe not found.')
-        try:
-            print('Trying to download from HPC server')
-            path_counties = 'http://hpcagainstcorona.sc.bs.dlr.de/data/migration/'
-            counties = gd.loadExcel(targetFileName='kreise_deu', apiUrl=path_counties, extension='.xlsx',
-                                    param_dict={"sheet_name": 1, "header": 3})
-        except Exception:
-            print('No access to HPC Server.')
-            try:
-                print('Trying to download data from the internet')
-                path_counties = 'https://www.destatis.de/DE/Themen/Laender-Regionen/Regionales/Gemeindeverzeichnis/Administrativ/04-kreise.xlsx;?__blob=publicationFile'
-                counties = gd.loadExcel(targetFileName='', apiUrl=path_counties, extension='',
-                                        param_dict={"sheet_name": 1, "header": 3, "engine": 'openpyxl'})
-            except Exception as err:
-                raise FileNotFoundError("Error: The counties file does not exist.") from err
-        gd.write_dataframe(counties, directory, filename_counties, "json")
+    if read_data:
 
-    file_in = os.path.join(directory, filename_zensus + ".json")
-    try:
-        zensus = pandas.read_json(file_in)
-    except ValueError:
-        print('Local zensus Dataframe not found.')
+        # Read counties File
+        file_in = os.path.join(directory, filename_counties + ".json")
         try:
-            print('Trying to download from the internet')
+            counties = pd.read_json(file_in)
+        except ValueError:
+            error_message = "Error: The file: " + file_in + \
+                "could not be read. Call program without -r flag to get it."
+            raise FileNotFoundError(error_message)
+
+        # Read Zensus File
+        file_in = os.path.join(directory, filename_zensus + ".json")
+        try:
+            zensus = pd.read_json(file_in)
+        except ValueError:
+            error_message = "Error: The file: " + file_in + \
+                "could not be read. Call program without -r flag to get it."
+            raise FileNotFoundError(error_message)
+
+        # Read reg_key File
+        file_in = os.path.join(directory, filename_reg_key + ".json")
+        try:
+            reg_key = pd.read_json(file_in)
+        except ValueError:
+            error_message = "Error: The file: " + file_in + \
+                "could not be read. Call program without -r flag to get it."
+            raise FileNotFoundError(error_message)
+    else:
+        try:
+            path_counties = 'https://www.destatis.de/DE/Themen/Laender-Regionen/Regionales/Gemeindeverzeichnis/Administrativ/04-kreise.xlsx;?__blob=publicationFile'
+            counties = gd.loadExcel(
+                targetFileName='', apiUrl=path_counties, extension='',
+                param_dict={"sheet_name": 1, "header": 3,
+                            "engine": 'openpyxl'})
+        except ValueError:
+            error_message = "Error: The counties file does not exist."
+            raise FileNotFoundError(error_message)
+
+        # Download zensus
+        
+        try:
             # if this file is encoded with utf-8 German umlauts are not displayed correctly because they take two bytes
             # utf_8_sig can identify those bytes as one sign and display it correctly
             zensus = gd.loadCsv(
                 "abad92e8eead46a4b0d252ee9438eb53_1", encoding='utf_8_sig')
-        except Exception as err:
-            raise FileNotFoundError("Error: The zensus file does not exist.") \
-                from err
-        gd.write_dataframe(zensus, directory, filename_zensus, "json")
+        except ValueError:
+            error_message = "Error: The zensus file does not exist."
+            raise FileNotFoundError(error_message)
 
-    file_in = os.path.join(directory, filename_reg_key + ".json")
-    try:
-        reg_key = pandas.read_json(file_in)
-    except ValueError:
-        print('Local reg_key Dataframe not found.')
+        # Download reg_key
+
         try:
-            print('Trying to download from the internet')
             path_reg_key = 'https://www.zensus2011.de/SharedDocs/Downloads/DE/Pressemitteilung/DemografischeGrunddaten/' \
                            '1A_EinwohnerzahlGeschlecht.xls?__blob=publicationFile&v=5'
             # read tables
-            reg_key = gd.loadExcel(path_reg_key, apiUrl='', extension='',
-                                   param_dict={"engine": None, "sheet_name": 'Tabelle_1A', "header": 12})
-        except Exception as err:
-            raise FileNotFoundError("Error: The regional key file does not exist.") \
-                from err
-        gd.write_dataframe(reg_key, directory, filename_reg_key, "json")
+            reg_key = gd.loadExcel(path_reg_key, apiUrl='', extension='', param_dict={
+                                   "engine": None, "sheet_name": 'Tabelle_1A', "header": 12})
+        except ValueError:
+            error_message = "Error: The reg-key file does not exist."
+            raise FileNotFoundError(error_message)
 
-    return counties, reg_key, zensus
+        if not no_raw:
+            if not counties.empty:
+                gd.write_dataframe(counties, directory,
+                                   filename_counties, file_format)
+            if not zensus.empty:
+                gd.write_dataframe(zensus, directory,
+                                   filename_zensus, file_format)
+            if not reg_key.empty:
+                gd.write_dataframe(reg_key, directory,
+                                   filename_reg_key, file_format)
 
 
-def get_age_population_data(read_data=dd.defaultDict['read_data'],
-                            file_format=dd.defaultDict['file_format'],
-                            out_folder=dd.defaultDict['out_folder'],
-                            no_raw=dd.defaultDict['no_raw'],
-                            write_df=True,
-                            merge_eisenach=True):
+    return counties, zensus, reg_key
+
+
+def get_population_data(read_data=dd.defaultDict['read_data'],
+                        file_format=dd.defaultDict['file_format'],
+                        out_folder=dd.defaultDict['out_folder'],
+                        no_raw=dd.defaultDict['no_raw'],
+                        split_gender=False,
+                        merge_eisenach=True):
     """! Download data with age splitting
 
    Data is downloaded from the following sources
-   - our own migration [stored in "counties"]
+   - Federal Statistical Office of Germany (Destatis), Genesis-Online
+   current data for population per county [stored in "counties"]
    - Zensus2011 data splitted by gender for whole germany, states, counties in xls
    with additional data from 30.04.2011 (just used for reg_key?) [stored in "reg_key"]
    - Zensus2011 data from opendata splitted for age and gender [stored in "zensus"]
@@ -295,41 +246,80 @@ def get_age_population_data(read_data=dd.defaultDict['read_data'],
    data by a factor which represents the relative increase/decrease in population size
    between 2011 and 2019 for each county"
 
-   @param read_data False [Default] or True. Defines if data is read from file or downloaded.
+   @param read_data False or True. Defines if data is read from file or downloaded. Default defined in defaultDict.
    @param file_format File format which is used for writing the data. Default defined in defaultDict.
-   @param out_folder Path to folder where data is written in folder out_folder/Germany.
+   @param out_folder Path to folder where data is written in folder out_folder/Germany. Default defined in defaultDict.
+   @param no_raw True or False. Defines if unchanged raw data is written or not. Default defined in defaultDict.
+   @param split_gender [Default: False] or True. Defines whether data is splitted by gender
+   @param merge_eisenach [Default: True] or False. Defines whether the counties 'Wartburgkreis' and 'Eisenach' are listed separately or combined as one entity 'Wartburgkreis'.
+   @return DataFrame with adjusted population data for all ages to current level.
     """
-    counties, reg_key, zensus = load_age_population_data(out_folder)
+    counties, zensus, reg_key = load_population_data(
+        out_folder, read_data=read_data, no_raw=no_raw,
+        file_format=file_format)
 
     # find region keys for census population data
     key = np.zeros((len(zensus)))
     for i in range(len(key)):
         for j in range(len(reg_key)):
-            if zensus.Name.values[i] == reg_key['NAME'].values.astype(str)[j]:
-                if zensus.EWZ.values[i] == round(reg_key['Zensus_EWZ'].values[j]*1000):
+            if zensus['Name'].values[i] == reg_key['NAME'].values.astype(str)[
+                    j]:
+                if zensus[dd.invert_dict(dd.GerEng)[dd.EngEng['population']]].values[i] == round(
+                        reg_key['Zensus_EWZ'].values[j] * 1000):
                     key[i] = reg_key['AGS'].values[j]
 
-    unique, inds, count = np.unique(key, return_index=True, return_counts=True)
+    inds = np.unique(key, return_index=True)[1]
+    # columns of downloaded data which should be replaced
+    male = ['M_Unter_3', 'M_3_bis_5', 'M_6_bis_14', 'M_15_bis_17',
+            'M_18_bis_24', 'M_25_bis_29', 'M_30_bis_39', 'M_40_bis_49',
+            'M_50_bis_64', 'M_65_bis_74', 'M_75_und_aelter']
+    female = ['W_Unter_3', 'W_3_bis_5', 'W_6_bis_14', 'W_15_bis_17',
+              'W_18_bis_24', 'W_25_bis_29', 'W_30_bis_39', 'W_40_bis_49',
+              'W_50_bis_64', 'W_65_bis_74', 'W_75_und_aelter']
 
-    male = ['M_Unter_3', 'M_3_bis_5', 'M_6_bis_14', 'M_15_bis_17', 'M_18_bis_24',
-            'M_25_bis_29', 'M_30_bis_39', 'M_40_bis_49', 'M_50_bis_64',
-            'M_65_bis_74', 'M_75_und_aelter']
-    female = ['W_Unter_3', 'W_3_bis_5', 'W_6_bis_14', 'W_15_bis_17', 'W_18_bis_24',
-              'W_25_bis_29', 'W_30_bis_39', 'W_40_bis_49', 'W_50_bis_64',
-              'W_65_bis_74', 'W_75_und_aelter']
-    columns = [dd.EngEng['idCounty'], 'Total', '<3 years', '3-5 years', '6-14 years', '15-17 years', '18-24 years',
-               '25-29 years', '30-39 years', '40-49 years', '50-64 years',
-               '65-74 years', '>74 years']
+    if not split_gender:
+        # get data from zensus file and add male and female population data
+        data = np.zeros((len(inds), len(male)+2))
+        data[:, 0] = key[inds].astype(int)
+        data[:, 1] = zensus[dd.invert_dict(
+            dd.GerEng)[dd.EngEng['population']]].values[inds].astype(int)
+        for i in range(len(male)):
+            data[:, i+2] = zensus[male[i]].values[inds].astype(
+                int) + zensus[female[i]].values[inds].astype(int)
 
-    # add male and female population data
-    data = np.zeros((len(inds), len(male)+2))
-    data[:, 0] = key[inds].astype(int)
-    data[:, 1] = zensus['EWZ'].values[inds].astype(int)
-    for i in range(len(male)):
-        data[:, i+2] = zensus[male[i]
-                              ].values[inds].astype(int) + zensus[female[i]].values[inds].astype(int)
+        # define new columns for dataframe
+        columns = [
+            dd.EngEng['idCounty'],
+            dd.EngEng['population'],
+            '<3 years', '3-5 years', '6-14 years', '15-17 years',
+            '18-24 years', '25-29 years', '30-39 years', '40-49 years',
+            '50-64 years', '65-74 years', '>74 years']
+    else:
+        # get data from zensus file
+        data = np.zeros((len(inds), len(male)+len(female)+2))
+        data[:, 0] = key[inds].astype(int)
+        data[:, 1] = zensus[dd.invert_dict(
+            dd.GerEng)[dd.EngEng['population']]].values[inds].astype(int)
+        for i in range(len(male)):
+            data[:, i+2] = zensus[male[i]].values[inds].astype(int)
+        for i in range(len(female)):
+            data[:, i+len(male)+2] = zensus[female[i]].values[inds].astype(int)
+
+        # define new columns for dataframe
+        columns = [dd.EngEng['idCounty'],
+                   dd.EngEng['population'],
+                   'M <3 years', 'M 3-5 years', 'M 6-14 years',
+                   'M 15-17 years', 'M 18-24 years', 'M 25-29 years',
+                   'M 30-39 years', 'M 40-49 years', 'M 50-64 years',
+                   'M 65-74 years', 'M >74 years', 'F <3 years', 'F 3-5 years',
+                   'F 6-14 years', 'F 15-17 years', 'F 18-24 years',
+                   'F 25-29 years', 'F 30-39 years', 'F 40-49 years',
+                   'F 50-64 years', 'F 65-74 years', 'F >74 years']
 
     data = get_new_counties(data)
+
+    # create Dataframe of raw data without adjusting population
+    df = pd.DataFrame(data.astype(int), columns=columns)
 
     # compute ratio of current and 2011 population data
     ratio = np.ones(len(data[:, 0]))
@@ -339,6 +329,7 @@ def get_age_population_data(read_data=dd.defaultDict['read_data'],
                 try:
                     if data[i, 0] == int(counties['Schlüssel-nummer'].values[j]):
                         ratio[i] = counties['Bevölkerung2)'].values[j]/data[i, 1]
+
                 except ValueError:
                     pass
 
@@ -348,47 +339,38 @@ def get_age_population_data(read_data=dd.defaultDict['read_data'],
     for i in range(len(data[0, :]) - 1):
         data_current[:, i + 1] = np.multiply(data[:, i + 1], ratio)
 
-    # create dataframe
-    df = pandas.DataFrame(data.astype(int), columns=columns)
-    df_current = pandas.DataFrame(
-        np.round(data_current).astype(int), columns=columns)
-    df_401 = df_current.copy()
-    df_current_401 = df_current.copy()
-    # From official county list, merge Eisenach and
-    # Wartburgkreis for now (as of oct. 2021)
-    df_current = geoger.merge_df_counties_all(
-        df_current, sorting=[dd.EngEng["idCounty"]],
-        columns=dd.EngEng["idCounty"])
-
-    df = geoger.merge_df_counties_all(
-        df, sorting=[dd.EngEng["idCounty"]],
-        columns=dd.EngEng["idCounty"])
-
     directory = os.path.join(out_folder, 'Germany/')
     gd.check_dir(directory)
 
-    if write_df:
-        gd.write_dataframe(df, directory, 'county_population', file_format)
-        gd.write_dataframe(df_current, directory,
-                           'county_current_population', file_format)
-        # TODO there should be a more elegant version to write different version with Eisenach merged or not
-        # or it should be prevented directly to write if Eisenach is not merged... to discuss...
-        gd.write_dataframe(df_401, directory,
-                           'county_population_dim401', file_format)
-        gd.write_dataframe(df_current_401, directory,
-                           'county_current_population_dim401', file_format)
+    # create dataframe
+    df_current = pd.DataFrame(
+        np.round(data_current).astype(int), columns=columns)
+    if merge_eisenach == True:
+        # Merge Eisenach and Wartburgkreis
+        df_current = geoger.merge_df_counties_all(
+            df_current, sorting=[dd.EngEng["idCounty"]],
+            columns=dd.EngEng["idCounty"])
+        df = geoger.merge_df_counties_all(
+            df, sorting=[dd.EngEng["idCounty"]],
+            columns=dd.EngEng["idCounty"])
+        filename = 'county_current_population'
+        filename_raw = 'county_population'
 
-    if merge_eisenach:
-        return df_current
     else:
-        return df_current_401
+        # Write Dataframe without merging
+        filename = 'county_current_population_dim401'
+        filename_raw ='county_population_dim401'
+
+    gd.write_dataframe(df_current, directory, filename, file_format)
+    gd.write_dataframe(df, directory, filename_raw, file_format)
+
+    return df_current
 
 
 def main():
     """! Main program entry."""
 
     arg_dict = gd.cli("population")
-    get_age_population_data(**arg_dict)
     get_population_data(**arg_dict)
 
 

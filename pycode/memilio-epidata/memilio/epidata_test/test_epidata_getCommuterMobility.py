@@ -27,6 +27,7 @@ import collections
 from memilio.epidata import getCommuterMobility as gcm
 from memilio.epidata import geoModificationGermany as geoger
 from memilio.epidata import getDataIntoPandasDataFrame as gD
+from memilio.epidata import defaultDict as dd
 from memilio.epidata import getPopulationData as gpd
 
 
@@ -338,9 +339,9 @@ class TestCommuterMigration(fake_filesystem_unittest.TestCase):
         # check migration from Leverkusen (averaged from NRW, 05) to Hildburghausen
         city_from = countykey2numlist['05316']
         city_to = countykey2numlist['16069']
-        population = gpd.get_age_population_data(
-            out_folder=self.path, merge_eisenach=False, write_df=True)
-        countypop_list = list(population["Total"])
+        population = gpd.get_population_data(
+            out_folder=self.path, merge_eisenach=False)
+        countypop_list = list(population[dd.EngEng['population']])
         self.assertEqual(countypop_list[city_from], 163905)
         self.assertAlmostEqual(
             mat_commuter_migration.iat[city_from, city_to], 1.526, 2)
