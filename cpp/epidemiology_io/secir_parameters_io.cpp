@@ -129,8 +129,9 @@ namespace details
         const std::vector<std::vector<int>>& vt_car_to_inf, const std::vector<std::vector<int>>& vt_exp_to_car,
         const std::vector<std::vector<int>>& vt_inf_to_rec, const std::vector<std::vector<int>>& vt_inf_to_hosp,
         const std::vector<std::vector<int>>& vt_hosp_to_rec, const std::vector<std::vector<int>>& vt_hosp_to_icu,
-        const std::vector<std::vector<int>>& vt_icu_to_dead, const std::vector<std::vector<double>>& vmu_C_R,
-        const std::vector<std::vector<double>>& vmu_I_H, const std::vector<std::vector<double>>& vmu_H_U,
+        const std::vector<std::vector<int>>& vt_icu_to_dead, const std::vector<std::vector<int>>& vt_icu_to_rec,
+        const std::vector<std::vector<double>>& vmu_C_R, const std::vector<std::vector<double>>& vmu_I_H,
+        const std::vector<std::vector<double>>& vmu_H_U, const std::vector<std::vector<double>>& vmu_U_D,
         const std::vector<double>& scaling_factor_inf)
     {
         if (!boost::filesystem::exists(path)) {
@@ -156,8 +157,10 @@ namespace details
             log_error("Specified date does not exist in RKI data");
             return failure(StatusCode::OutOfRange, path + ", specified date does not exist in RKI data.");
         }
-        auto days_surplus = get_offset_in_days(max_date, date) - 6;
-
+        // shifts the initilization to the recent past if simulation starts
+        // around current day and data of the future would be required.
+        // Only needed for preinfection compartments, exposed and carrier.
+        auto days_surplus = get_offset_in_days(max_date, date) - 6; // 6 > T_E^C + T_C^I
         if (days_surplus > 0) {
             days_surplus = 0;
         }
@@ -180,6 +183,7 @@ namespace details
                 auto& t_hosp_to_rec = vt_hosp_to_rec[region_idx];
                 auto& t_hosp_to_icu = vt_hosp_to_icu[region_idx];
                 auto& t_icu_to_dead = vt_icu_to_dead[region_idx];
+                auto& t_icu_to_rec = vt_icu_to_rec[region_idx];
 
                 auto& num_car   = vnum_car[region_idx];
                 auto& num_inf   = vnum_inf[region_idx];
@@ -192,6 +196,7 @@ namespace details
                 auto& mu_C_R = vmu_C_R[region_idx];
                 auto& mu_I_H = vmu_I_H[region_idx];
                 auto& mu_H_U = vmu_H_U[region_idx];
+                auto& mu_U_D = vmu_U_D[region_idx];                
 
                 auto date_df = parse_date(root[i]["Date"].asString());
 
@@ -244,29 +249,30 @@ namespace details
                         num_hosp[age] -=
                             mu_I_H[age] * mu_H_U[age] * scaling_factor_inf[age] * root[i]["Confirmed"].asDouble();
                         if (read_icu) {
-                            num_icu[age] +=
-                                mu_H_U[age] * mu_I_H[age] * scaling_factor_inf[age] * root[i]["Confirmed"].asDouble();
+                            num_icu[age] += mu_I_H[age] * mu_H_U[age] * mu_U_D[age] * scaling_factor_inf[age] *
+                                            root[i]["Confirmed"].asDouble();                           
+                            num_icu[age] += mu_I_H[age] * mu_H_U[age] * (1 - mu_U_D[age]) * scaling_factor_inf[age] *
+                                            root[i]["Confirmed"].asDouble();                                               
                         }
                     }
                     // -R6 - R5
                     if (date_df == offset_date_by_days(date, -t_inf_to_hosp[age] - t_hosp_to_rec[age])) {
                         num_hosp[age] -=
                             mu_I_H[age] * (1 - mu_H_U[age]) * scaling_factor_inf[age] * root[i]["Confirmed"].asDouble();
-                    }
-                    // -R10 - R6 - R7
+                    }       
+                    // -R10 - R6 - R7 // - T_I^H - T_H^U - T_U^D
                     if (date_df ==
-                        offset_date_by_days(date, -t_icu_to_dead[age] - t_inf_to_hosp[age] - t_hosp_to_icu[age])) {
+                        offset_date_by_days(date, -t_inf_to_hosp[age] - t_hosp_to_icu[age] - t_icu_to_dead[age])) {
                         num_death[age] += root[i]["Deaths"].asDouble();
-                    }
-                    if (read_icu) {
-                        // -R6 - R7 - R7
-                        if (date_df == offset_date_by_days(date, -t_inf_to_hosp[age] - 2 * t_hosp_to_icu[age])) {
-                            num_icu[age] -= mu_I_H[age] * mu_H_U[age] * mu_H_U[age] * scaling_factor_inf[age] *
+                        if (read_icu) {
+                            num_icu[age] -= mu_I_H[age] * mu_H_U[age] * mu_U_D[age] * scaling_factor_inf[age] *
                                             root[i]["Confirmed"].asDouble();
-                        }
-                        // -R6 - R5 - R7
-                        if (date_df == offset_date_by_days(date, -t_inf_to_hosp[age] - t_hosp_to_icu[age])) {
-                            num_icu[age] -= mu_I_H[age] * mu_H_U[age] * (1 - mu_H_U[age]) * scaling_factor_inf[age] *
+                        }                        
+                    }
+                    // - T_I^H - T_H^U - T_U^D       
+                    if (date_df == offset_date_by_days(date, -t_inf_to_hosp[age] - t_hosp_to_icu[age] - t_icu_to_rec[age])) { 
+                        if (read_icu) {
+                            num_icu[age] -= mu_I_H[age] * mu_H_U[age] * (1 - mu_U_D[age]) * scaling_factor_inf[age] *
                                             root[i]["Confirmed"].asDouble();
                         }
                     }
@@ -287,6 +293,12 @@ namespace details
 
             size_t num_groups = age_ranges.size();
             for (size_t i = 0; i < num_groups; i++) {
+                // subtract infected confirmed cases which are not yet recovered
+                num_rec[i] -= num_inf[age]
+                num_rec[i] -= num_hosp[age]
+                num_rec[i] -= num_icu[age]
+                num_rec[i] -= num_death[age]
+                // remove dark figure scaling factor
                 num_rec[i] /= scaling_factor_inf[i];
                 auto try_fix_constraints = [region, &age_names, i](double& value, double error, auto str) {
                     if (value < error) {
@@ -346,8 +358,10 @@ namespace details
             log_error("Specified date does not exist in RKI data");
             return failure(StatusCode::OutOfRange, path + ", specified date does not exist in RKI data.");
         }
-        auto days_surplus = get_offset_in_days(max_date, date) - 6;
-
+        // shifts the initilization to the recent past if simulation starts
+        // around current day and data of the future would be required.
+        // Only needed for preinfection compartments, exposed and carrier.        
+        auto days_surplus = get_offset_in_days(max_date, date) - 6; // 6 > T_E^C + T_C^I
         if (days_surplus > 0) {
             days_surplus = 0;
         }

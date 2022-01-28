@@ -730,7 +730,7 @@ public:
             if (last_value(count * i + S) - first_vacc < 0) {
                 std::cout << "too many first vaccinated at time" << t << ": setting first_vacc from" << first_vacc
                           << " to " << 0.99 * last_value(count * i + S) << std::endl;
-                first_vacc = 0.99 * last_value(count * i + S);
+                first_vacc = 0.99 * last_value(count * i + S); 
             }
 
             last_value(count * i + S) -= first_vacc;
@@ -851,7 +851,7 @@ public:
             }
 
             if (t == 0) {
-                //this->apply_vaccination(t);
+                //this->apply_vaccination(t); // done in init now?
                 this->apply_b161(t);
             }
             Base::advance(t + dt_eff);
