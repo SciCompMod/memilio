@@ -52,8 +52,11 @@ class TestGetSimulationData(fake_filesystem_unittest.TestCase):
                                                                  dd.defaultDict['start_date']]
 
         gsd.get_simulation_data(
-            read_data, file_format, out_folder, no_raw, end_date, impute_dates,
-            make_plot, moving_average, split_berlin, start_date)
+            read_data=read_data, file_format=file_format,
+            out_folder=out_folder, no_raw=no_raw, end_date=end_date,
+            impute_dates=impute_dates, make_plot=make_plot,
+            moving_average=moving_average, split_berlin=split_berlin,
+            start_date=start_date)
 
         arg_dict_all = {
             "read_data": dd.defaultDict['read_data'],

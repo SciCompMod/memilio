@@ -22,9 +22,11 @@
 @brief Tools modify data frame series like imputing zeros for unknown dates, 
     copying previous values, and/or computing moving averages
 """
+from memilio.epidata.getDataIntoPandasDataFrame import DataError
 import pandas as pd
+import numpy as np
 import itertools
-from datetime import datetime
+from datetime import datetime, timedelta
 
 from memilio.epidata import defaultDict as dd
 
@@ -200,7 +202,7 @@ def split_column_based_on_values(
 
     return new_column_labels, df_joined
 
-def extract_subframe_based_on_dates(df, start_date, end_date):
+def extract_subframe_based_on_dates(df, start_date, end_date, moving_average = 0):
     """! Removes all data with date lower than start date or higher than end date.
 
     Returns the Dataframe with only dates between start date and end date.
@@ -209,7 +211,12 @@ def extract_subframe_based_on_dates(df, start_date, end_date):
     @param df The dataframe which has to be edited
     @param start_date Date of first date in dataframe
     @param end_date Date of last date in dataframe
+    @param moving_average start_date and end_date are extended by half of moving_average to ensure an accurate calculation.
     """
+
+    if moving_average > 0:
+        end_date = end_date - timedelta(int(np.ceil(moving_average/2)))
+        start_date = start_date + timedelta(int(np.ceil(moving_average/2)))
 
     upperdate = datetime.strftime(end_date, '%Y-%m-%d')
     lowerdate = datetime.strftime(start_date, '%Y-%m-%d')

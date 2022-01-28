@@ -23,7 +23,6 @@ import pandas as pd
 import numpy as np
 from pyfakefs import fake_filesystem_unittest
 from datetime import date
-
 from memilio.epidata import modifyDataframeSeries as mDfS
 
 class Test_modifyDataframeSeries(fake_filesystem_unittest.TestCase):
@@ -71,6 +70,30 @@ class Test_modifyDataframeSeries(fake_filesystem_unittest.TestCase):
                 'A', 'B'],
         name = 'inserted_col')
 
+    date_df = pd.DataFrame(
+        {
+        'Date':
+        ['2021-09-08', '2021-09-08', '2021-09-09', '2021-09-09', '2021-09-10',
+         '2021-09-10', '2021-09-11', '2021-09-11', '2021-09-12', '2021-09-12',
+         '2021-09-13', '2021-09-13', '2021-09-14', '2021-09-14', '2021-09-14',
+         '2021-09-15'],
+        'test_col1':
+        [16, 52, 111, 7, 432, 126, 74, 175, 208, 33, 79, 16, 11, 27, 5, 15],
+        'test_col2':
+        [13, 34, 63, 5, 220, 53, 38, 79, 111, 15, 53, 8, 7, 13, 2, 9],
+        'test_col_str':
+        ['SH', 'H', 'N', 'B', 'NW', 'H', 'RP', 'BW', 'B', 'S', 'B', 'B',
+         'MV', 'S', 'S', 'T']})
+    test_date_df1 = pd.DataFrame({
+        'Date': ['2021-09-12', '2021-09-12', '2021-09-13', '2021-09-13', '2021-09-14', '2021-09-14', '2021-09-14'],
+        'test_col1': [208, 33, 79, 16, 11, 27, 5], 
+        'test_col2': [111, 15, 53, 8, 7, 13, 2],
+        'test_col_str': ['B', 'S', 'B', 'B', 'MV', 'S', 'S']})
+    test_date_df2 = pd.DataFrame({
+        'Date': ['2021-09-09', '2021-09-09'],
+        'test_col1': [111, 7], 
+        'test_col2': [63, 5],
+        'test_col_str': ['N', 'B']})
 
     def setUp(self):
         self.setUpPyfakefs()
@@ -361,6 +384,19 @@ class Test_modifyDataframeSeries(fake_filesystem_unittest.TestCase):
         pd.testing.assert_frame_equal(df[old_cols], self.test_df1)
         pd.testing.assert_series_equal(df['inserted_col'], self.df_str_map_col)
 
+    def test_extract_subframe_based_on_dates_single_date(self):
+        # test if only dates from 2021-09-09 are returned
+        extracted_df = mDfS.extract_subframe_based_on_dates(
+            self.date_df, date(2021, 9, 9),
+            date(2021, 9, 9))
+        pd.testing.assert_frame_equal(self.test_date_df2, extracted_df)
+    
+    def test_extract_subframe_based_on_dates_multiple_dates(self):
+        # test if only dates from 2021-09-12 to 2021-09-14 are returned
+        extracted_df = mDfS.extract_subframe_based_on_dates(
+            self.date_df, date(2021, 9, 12),
+            date(2021, 9, 14))
+        pd.testing.assert_frame_equal(self.test_date_df1, extracted_df)
 
 if __name__ == '__main__':
     unittest.main()

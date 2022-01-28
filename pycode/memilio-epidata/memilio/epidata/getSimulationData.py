@@ -45,16 +45,16 @@ def print_error(text):
           ' data could not be stored correctly.')
 
 
-def get_simulation_data(read_data=dd.defaultDict['read_data'],
+def get_simulation_data(split_berlin=dd.defaultDict['split_berlin'],
+                        read_data=dd.defaultDict['read_data'],
                         file_format=dd.defaultDict['file_format'],
                         out_folder=dd.defaultDict['out_folder'],
                         no_raw=dd.defaultDict['no_raw'],
+                        start_date=dd.defaultDict['start_date'],
                         end_date=dd.defaultDict['end_date'],
                         impute_dates=dd.defaultDict['impute_dates'],
                         make_plot=dd.defaultDict['make_plot'],
-                        moving_average=dd.defaultDict['moving_average'],
-                        split_berlin=dd.defaultDict['split_berlin'],
-                        start_date=dd.defaultDict['start_date']
+                        moving_average=dd.defaultDict['moving_average']
                         ):
     """! Downloads all data from external sources
 
@@ -65,16 +65,17 @@ def get_simulation_data(read_data=dd.defaultDict['read_data'],
     - getDIVIData.get_divi_data
 
     Keyword arguments:
-    @param read_data False [Default] or True. Defines if data is read from file or downloaded.
+    @param split_berlin True or False. Defines if Berlin's disctricts are kept separated or get merged. Default defined in defaultDict.
+    @param read_data True or False. Defines if data is read from file or downloaded.  Default defined in defaultDict.
     @param file_format File format which is used for writing the data. Default defined in defaultDict.
-    @param out_folder Path to folder where data is written in folder out_folder/Germany.
-    @param no_raw True or False [Default]. Defines if unchanged raw data is saved or not.
-    @param end_date [Optional] Date to stop to download data [Default = today].
-    @param impute_dates False [Default] or True. Defines if dates where nothing changed are added.
-    @param make_plot False [Default] or True. Defines if plots are generated with matplotlib.
-    @param moving_average True or False [Default]. Defines if files for 7 day moving average should be created
-    @param split_berlin True [Default] or False. Defines if Berlin counties is fused to just on county.
-    @param start_date [Optional] Date to start to download data [Default = 2020-04-24].
+    @param out_folder Folder where data is written to. Default defined in defaultDict.
+    @param no_raw True or False. Defines if unchanged raw data is saved or not. Default defined in defaultDict.
+    @param start_date Date of first date in dataframe. Default 2020-01-01.
+    @param end_date Date of last date in dataframe. Default defined in defaultDict.
+    @param impute_dates True or False. Defines if values for dates without new information are imputed. Default defined in defaultDict.
+    @param moving_average Integers >=0. Applies an 'moving_average'-days moving average on all time series
+        to smooth out weekend effects.  Default defined in defaultDict.
+    @param make_plot True or False. Defines if plots are generated with matplotlib. Default defined in defaultDict.
     """
 
     arg_dict_all = {

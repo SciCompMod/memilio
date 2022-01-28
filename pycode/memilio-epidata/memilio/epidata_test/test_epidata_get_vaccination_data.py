@@ -18,8 +18,10 @@
 # limitations under the License.
 ######################################################################
 import unittest
+import os
 from unittest.mock import patch, call
 from pyfakefs import fake_filesystem_unittest
+from datetime import date,datetime
 
 import pandas as pd
 
@@ -100,6 +102,12 @@ class TestGetVaccinationData(fake_filesystem_unittest.TestCase):
     @patch('memilio.epidata.getVaccinationData.download_vaccination_data',
            return_value=df_vacc_data_altern)
     def test_get_vaccination_data_alternative_ages_no_errors_with_plots(
+            self, mockv):
+        gvd.get_vaccination_data(out_folder=self.path)
+    
+    @patch('memilio.epidata.getVaccinationData.download_vaccination_data',
+           return_value=df_vacc_data)
+    def test_get_standard_vaccination_data_no_errors_with_plots(
             self, mockv):
         gvd.get_vaccination_data(out_folder=self.path)
 

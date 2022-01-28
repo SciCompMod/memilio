@@ -142,6 +142,7 @@ def run_secir_simulation(show_plot = True):
         plt.close()
 
 
+
 if __name__ == "__main__":
     arg_parser = argparse.ArgumentParser(
         'secir_simple', 

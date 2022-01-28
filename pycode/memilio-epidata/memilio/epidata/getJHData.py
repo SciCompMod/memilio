@@ -25,7 +25,9 @@
 
 import os
 import pandas
+from datetime import date
 
+from memilio.epidata import modifyDataframeSeries as mDfS
 from memilio.epidata import getDataIntoPandasDataFrame as gd
 from memilio.epidata import defaultDict as dd
 
@@ -33,7 +35,12 @@ from memilio.epidata import defaultDict as dd
 def get_jh_data(read_data=dd.defaultDict['read_data'],
                 file_format=dd.defaultDict['file_format'],
                 out_folder=dd.defaultDict['out_folder'],
-                no_raw=dd.defaultDict['no_raw']):
+                no_raw=dd.defaultDict['no_raw'],
+                start_date=date(2020,1,22),
+                end_date=dd.defaultDict['end_date'],
+                impute_dates=dd.defaultDict['impute_dates'],
+                moving_average=dd.defaultDict['moving_average'],
+                make_plot=dd.defaultDict['make_plot']):
     """! Download data from John Hopkins University
 
    Data is either downloaded and afterwards stored or loaded from a stored filed.
@@ -47,10 +54,16 @@ def get_jh_data(read_data=dd.defaultDict['read_data'],
        - Germany, SouthKorea, Spain, France, Italy, US, China
    - furthermore, all countries, for which provinces are added, are written to a file
 
-   @param read_data False [Default] or True. Defines if data is read from file or downloaded.
-   @param file_format File format which is used for writing the data. Default defined in defaultDict.
-   @param out_folder Path to folder where data is written in folder out_folder/Germany.
-   @param no_raw True or False [Default]. Defines if unchanged raw data is saved or not.
+    @param read_data True or False. Defines if data is read from file or downloaded.  Default defined in defaultDict.
+    @param file_format File format which is used for writing the data. Default defined in defaultDict.
+    @param out_folder Folder where data is written to. Default defined in defaultDict.
+    @param no_raw True or False. Defines if unchanged raw data is saved or not. Default defined in defaultDict.
+    @param start_date Date of first date in dataframe. Default defined in defaultDict.
+    @param end_date Date of last date in dataframe. Default defined in defaultDict.
+    @param impute_dates [Currently not used] True or False. Defines if values for dates without new information are imputed. Default defined in defaultDict.
+    @param moving_average [Currently not used] Integers >=0. Applies an 'moving_average'-days moving average on all time series
+        to smooth out weekend effects.  Default defined in defaultDict.
+    @param make_plot [Currently not used] True or False. Defines if plots are generated with matplotlib. Default defined in defaultDict.
    """
 
     filename = "FullData_JohnHopkins"
@@ -81,6 +94,10 @@ def get_jh_data(read_data=dd.defaultDict['read_data'],
 
     df.rename({'Country/Region': 'CountryRegion', 'Province/State': 'ProvinceState'}, axis=1, inplace=True)
     print("Available columns:", df.columns)
+    
+    # extract subframe of dates
+    df=mDfS.extract_subframe_based_on_dates(df, start_date, end_date)
+
 
     # Change "Korea, South" to SouthKorea
     df.loc[df['CountryRegion'] == "Korea, South", ['CountryRegion']] = 'SouthKorea'

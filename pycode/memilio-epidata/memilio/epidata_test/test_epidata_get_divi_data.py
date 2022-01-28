@@ -105,7 +105,7 @@ class TestGetDiviData(fake_filesystem_unittest.TestCase):
         gdd.get_divi_data(out_folder=self.path, start_date=date(2020, 1, 1))
         expected_call = [
             call(
-                'Warning: First data available on 2020-04-24. You asked for 2020-01-01.')]
+                'Warning: First data available on 2020-04-24. You asked for 2020-01-01. Changed it to 2020-4-24.')]
         gdd_calls = self.gdd_calls(text='')
         expected_calls = expected_call + gdd_calls
         mock_print.assert_has_calls(expected_calls)
