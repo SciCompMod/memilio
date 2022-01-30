@@ -79,7 +79,7 @@ TEST(TestImplicitEuler, compareOneTimeStep)
     params.get<epi::RiskOfInfectionFromSympomatic>()[(epi::AgeGroup)0] = beta;
     params.get<epi::HospitalizedCasesPerInfectious>()[(epi::AgeGroup)0] = rho;
     params.get<epi::ICUCasesPerHospitalized>()[(epi::AgeGroup)0] = theta;
-    params.get<epi::DeathsPerHospitalized>()[(epi::AgeGroup)0] = delta;
+    params.get<epi::DeathsPerICU>()[(epi::AgeGroup)0] = delta;
 
     epi::DerivFunction dummy_f; // only required for explicit time integrators
 

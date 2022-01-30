@@ -49,8 +49,8 @@ bool ImplicitEulerIntegratorCore::step(const DerivFunction& /*f*/, Eigen::Ref<co
                params.get<ICUCasesPerHospitalized>()[AgeGroup(0)] / params.get<HospitalizedToICUTime>()[AgeGroup(0)]));
 
     double dummy_U =
-        1. / (1. + dt * ((1 - params.get<DeathsPerHospitalized>()[AgeGroup(0)]) / params.get<ICUToHomeTime>()[AgeGroup(0)] +
-                         params.get<DeathsPerHospitalized>()[AgeGroup(0)] / params.get<ICUToDeathTime>()[AgeGroup(0)]));
+        1. / (1. + dt * ((1 - params.get<DeathsPerICU>()[AgeGroup(0)]) / params.get<ICUToHomeTime>()[AgeGroup(0)] +
+                         params.get<DeathsPerICU>()[AgeGroup(0)] / params.get<ICUToDeathTime>()[AgeGroup(0)]));
 
     // these temporary variables are used for the fix-point iteration
     double y_temp_C;
@@ -108,12 +108,12 @@ bool ImplicitEulerIntegratorCore::step(const DerivFunction& /*f*/, Eigen::Ref<co
                   yt_tilde[(size_t)InfectionState::Infected] +
               (1 - params.get<ICUCasesPerHospitalized>()[AgeGroup(0)]) / params.get<HospitalizedToHomeTime>()[AgeGroup(0)] *
                   yt_tilde[(size_t)InfectionState::Hospitalized] +
-              (1 - params.get<DeathsPerHospitalized>()[AgeGroup(0)]) / params.get<ICUToHomeTime>()[AgeGroup(0)] *
+              (1 - params.get<DeathsPerICU>()[AgeGroup(0)]) / params.get<ICUToHomeTime>()[AgeGroup(0)] *
                   yt_tilde[(size_t)InfectionState::ICU]);
 
     // D (use new value for U, i.e. U^{n+1})
     yt_tilde[(size_t)InfectionState::Dead] =
-        yt_eval[(size_t)InfectionState::Dead] + dt * params.get<DeathsPerHospitalized>()[AgeGroup(0)] /
+        yt_eval[(size_t)InfectionState::Dead] + dt * params.get<DeathsPerICU>()[AgeGroup(0)] /
                                                 params.get<ICUToDeathTime>()[AgeGroup(0)] * yt_tilde[(size_t)InfectionState::ICU];
 
     ytp1 = yt_tilde;

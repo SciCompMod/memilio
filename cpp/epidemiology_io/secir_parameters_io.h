@@ -321,7 +321,7 @@ namespace details
                 mu_H_U[county].push_back(
                     model[county].parameters.template get<epi::ICUCasesPerHospitalized>()[(epi::AgeGroup)group]);
                 mu_U_D[county].push_back(
-                    model[county].parameters.template get<epi::DeathsPerHospitalized>()[(epi::AgeGroup)group]);                    
+                    model[county].parameters.template get<epi::DeathsPerICU>()[(epi::AgeGroup)group]);                    
             }
         }
         std::vector<std::vector<double>> num_inf(model.size(), std::vector<double>(age_ranges.size(), 0.0));
@@ -449,7 +449,7 @@ namespace details
                 mu_H_U[county].push_back(
                     model[county].parameters.template get<epi::ICUCasesPerHospitalized>()[(epi::AgeGroup)group]);
                 mu_U_D[county].push_back(
-                    model[county].parameters.template get<epi::DeathsPerHospitalized>()[(epi::AgeGroup)group]);                         
+                    model[county].parameters.template get<epi::DeathsPerICU>()[(epi::AgeGroup)group]);                         
             }
         }
 
@@ -545,7 +545,7 @@ namespace details
                     model[county].parameters.template get<epi::ICUCasesPerHospitalized>()[(epi::AgeGroup)group] *
                     model[county].parameters.template get<epi::ReducInfHosp>()[(epi::AgeGroup)group]);
                 mu_U_D[county].push_back(
-                    model[county].parameters.template get<epi::DeathsPerHospitalized>()[(epi::AgeGroup)group]);                       
+                    model[county].parameters.template get<epi::DeathsPerICU>()[(epi::AgeGroup)group]);                       
             }
         }
 
@@ -640,7 +640,7 @@ namespace details
                     model[county].parameters.template get<epi::ICUCasesPerHospitalized>()[(epi::AgeGroup)group] *
                     model[county].parameters.template get<epi::ReducImmuneInfHosp>()[(epi::AgeGroup)group]);
                 mu_U_D[county].push_back(
-                    model[county].parameters.template get<epi::DeathsPerHospitalized>()[(epi::AgeGroup)group]);                       
+                    model[county].parameters.template get<epi::DeathsPerICU>()[(epi::AgeGroup)group]);                       
             }
         }
 
@@ -991,7 +991,7 @@ IOResult<void> set_rki_data_export_timeseries(std::vector<Model>& model, const s
                 model[county].parameters.template get<ICUCasesPerHospitalized>()[AgeGroup(group)] *
                 model[county].parameters.template get<HospitalizedCasesPerInfectious>()[AgeGroup(group)]);
             mu_U_D[county].push_back(
-                model[county].parameters.template get<epi::DeathsPerHospitalized>()[AgeGroup(group)]);                  
+                model[county].parameters.template get<epi::DeathsPerICU>()[AgeGroup(group)]);                  
         }
     }
 

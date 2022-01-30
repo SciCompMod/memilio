@@ -77,7 +77,7 @@ TEST(TestSaveParameters, json_single_sim_write_read_compare)
         model.parameters.get<epi::RiskOfInfectionFromSympomatic>()[i]   = beta;
         model.parameters.get<epi::HospitalizedCasesPerInfectious>()[i]  = rho;
         model.parameters.get<epi::ICUCasesPerHospitalized>()[i]         = theta;
-        model.parameters.get<epi::DeathsPerHospitalized>()[i]           = delta;
+        model.parameters.get<epi::DeathsPerICU>()[i]           = delta;
     }
 
     epi::ContactMatrixGroup& contact_matrix = params.get<epi::ContactPatterns>();
@@ -178,8 +178,8 @@ TEST(TestSaveParameters, json_single_sim_write_read_compare)
                   read_model.parameters.get<epi::RiskOfInfectionFromSympomatic>()[i]);
         ASSERT_EQ(model.parameters.get<epi::AsymptoticCasesPerInfectious>()[i],
                   read_model.parameters.get<epi::AsymptoticCasesPerInfectious>()[i]);
-        ASSERT_EQ(model.parameters.get<epi::DeathsPerHospitalized>()[i],
-                  read_model.parameters.get<epi::DeathsPerHospitalized>()[i]);
+        ASSERT_EQ(model.parameters.get<epi::DeathsPerICU>()[i],
+                  read_model.parameters.get<epi::DeathsPerICU>()[i]);
         ASSERT_EQ(model.parameters.get<epi::HospitalizedCasesPerInfectious>()[i],
                   read_model.parameters.get<epi::HospitalizedCasesPerInfectious>()[i]);
         ASSERT_EQ(model.parameters.get<epi::ICUCasesPerHospitalized>()[i],
@@ -191,8 +191,8 @@ TEST(TestSaveParameters, json_single_sim_write_read_compare)
                            *read_model.parameters.get<epi::RiskOfInfectionFromSympomatic>()[i].get_distribution());
         check_distribution(*model.parameters.get<epi::AsymptoticCasesPerInfectious>()[i].get_distribution(),
                            *read_model.parameters.get<epi::AsymptoticCasesPerInfectious>()[i].get_distribution());
-        check_distribution(*model.parameters.get<epi::DeathsPerHospitalized>()[i].get_distribution(),
-                           *read_model.parameters.get<epi::DeathsPerHospitalized>()[i].get_distribution());
+        check_distribution(*model.parameters.get<epi::DeathsPerICU>()[i].get_distribution(),
+                           *read_model.parameters.get<epi::DeathsPerICU>()[i].get_distribution());
         check_distribution(*model.parameters.get<epi::HospitalizedCasesPerInfectious>()[i].get_distribution(),
                            *read_model.parameters.get<epi::HospitalizedCasesPerInfectious>()[i].get_distribution());
         check_distribution(*model.parameters.get<epi::ICUCasesPerHospitalized>()[i].get_distribution(),
@@ -250,7 +250,7 @@ TEST(TestSaveParameters, json_graphs_write_read_compare)
         model.parameters.get<epi::MaxRiskOfInfectionFromSympomatic>()[i] = beta * 3;
         model.parameters.get<epi::HospitalizedCasesPerInfectious>()[i]   = rho;
         model.parameters.get<epi::ICUCasesPerHospitalized>()[i]          = theta;
-        model.parameters.get<epi::DeathsPerHospitalized>()[i]            = delta;
+        model.parameters.get<epi::DeathsPerICU>()[i]            = delta;
     }
 
     epi::ContactMatrixGroup& contact_matrix = model.parameters.get<epi::ContactPatterns>();
@@ -352,8 +352,8 @@ TEST(TestSaveParameters, json_graphs_write_read_compare)
                       graph_read_model.parameters.get<epi::MaxRiskOfInfectionFromSympomatic>()[group]);
             ASSERT_EQ(graph_model.parameters.get<epi::AsymptoticCasesPerInfectious>()[group],
                       graph_read_model.parameters.get<epi::AsymptoticCasesPerInfectious>()[group]);
-            ASSERT_EQ(graph_model.parameters.get<epi::DeathsPerHospitalized>()[group],
-                      graph_read_model.parameters.get<epi::DeathsPerHospitalized>()[group]);
+            ASSERT_EQ(graph_model.parameters.get<epi::DeathsPerICU>()[group],
+                      graph_read_model.parameters.get<epi::DeathsPerICU>()[group]);
             ASSERT_EQ(graph_model.parameters.get<epi::HospitalizedCasesPerInfectious>()[group],
                       graph_read_model.parameters.get<epi::HospitalizedCasesPerInfectious>()[group]);
             ASSERT_EQ(graph_model.parameters.get<epi::ICUCasesPerHospitalized>()[group],
@@ -398,8 +398,8 @@ TEST(TestSaveParameters, json_graphs_write_read_compare)
                      .get_distribution()
                      .get());
             check_distribution(
-                *graph_model.parameters.get<epi::DeathsPerHospitalized>()[group].get_distribution().get(),
-                *graph_read_model.parameters.get<epi::DeathsPerHospitalized>()[group].get_distribution().get());
+                *graph_model.parameters.get<epi::DeathsPerICU>()[group].get_distribution().get(),
+                *graph_read_model.parameters.get<epi::DeathsPerICU>()[group].get_distribution().get());
             check_distribution(
                 *graph_model.parameters.get<epi::InfectiousTimeAsymptomatic>()[group].get_distribution().get(),
                 *graph_read_model.parameters.get<epi::InfectiousTimeAsymptomatic>()[group].get_distribution().get());

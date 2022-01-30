@@ -67,7 +67,7 @@ TEST(TestSecir, compareAgeResWithSingleRun)
         params.get<epi::RiskOfInfectionFromSympomatic>()[i] = beta;
         params.get<epi::HospitalizedCasesPerInfectious>()[i] = rho;
         params.get<epi::ICUCasesPerHospitalized>()[i] = theta;
-        params.get<epi::DeathsPerHospitalized>()[i] = delta;
+        params.get<epi::DeathsPerICU>()[i] = delta;
     }
 
     params.apply_constraints();

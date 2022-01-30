@@ -88,7 +88,7 @@ int main()
     model.parameters.get<epi::RiskOfInfectionFromSympomatic>()[(epi::AgeGroup)0] = beta;
     model.parameters.get<epi::HospitalizedCasesPerInfectious>()[(epi::AgeGroup)0] = rho;
     model.parameters.get<epi::ICUCasesPerHospitalized>()[(epi::AgeGroup)0] = theta;
-    model.parameters.get<epi::DeathsPerHospitalized>()[(epi::AgeGroup)0] = delta;
+    model.parameters.get<epi::DeathsPerICU>()[(epi::AgeGroup)0] = delta;
 
     model.apply_constraints();
 

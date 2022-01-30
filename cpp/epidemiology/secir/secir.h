@@ -302,8 +302,8 @@ public:
                 ((1 - params.get<ICUCasesPerHospitalized>()[i]) / params.get<HospitalizedToHomeTime>()[i] +
                  params.get<ICUCasesPerHospitalized>()[i] / params.get<HospitalizedToICUTime>()[i]) *
                     y[Hi];
-            dydt[Ui] = -((1 - params.get<DeathsPerHospitalized>()[i]) / params.get<ICUToHomeTime>()[i] +
-                         params.get<DeathsPerHospitalized>()[i] / params.get<ICUToDeathTime>()[i]) *
+            dydt[Ui] = -((1 - params.get<DeathsPerICU>()[i]) / params.get<ICUToHomeTime>()[i] +
+                         params.get<DeathsPerICU>()[i] / params.get<ICUToDeathTime>()[i]) *
                        y[Ui];
             // add flow from hosp to icu according to potentially adjusted probability due to ICU limits
             dydt[Ui] += prob_hosp2icu / params.get<HospitalizedToICUTime>()[i] * y[Hi];
@@ -312,9 +312,9 @@ public:
                 params.get<AsymptoticCasesPerInfectious>()[i] / params.get<InfectiousTimeAsymptomatic>()[i] * y[Ci] +
                 (1 - params.get<HospitalizedCasesPerInfectious>()[i]) / params.get<InfectiousTimeMild>()[i] * y[Ii] +
                 (1 - params.get<ICUCasesPerHospitalized>()[i]) / params.get<HospitalizedToHomeTime>()[i] * y[Hi] +
-                (1 - params.get<DeathsPerHospitalized>()[i]) / params.get<ICUToHomeTime>()[i] * y[Ui];
+                (1 - params.get<DeathsPerICU>()[i]) / params.get<ICUToHomeTime>()[i] * y[Ui];
 
-            dydt[Di] = params.get<DeathsPerHospitalized>()[i] / params.get<ICUToDeathTime>()[i] * y[Ui];
+            dydt[Di] = params.get<DeathsPerICU>()[i] / params.get<ICUToDeathTime>()[i] * y[Ui];
             // add potential, additional deaths due to ICU overflow
             dydt[Di] += prob_hosp2dead / params.get<HospitalizedToICUTime>()[i] * y[Hi];
         }

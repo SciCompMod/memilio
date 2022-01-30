@@ -68,7 +68,7 @@ void set_params_distributions_normal(SecirModel& model, double t0, double tmax, 
         set_distribution(model.parameters.get<AsymptoticCasesPerInfectious>()[i]);
         set_distribution(model.parameters.get<RiskOfInfectionFromSympomatic>()[i]);
         set_distribution(model.parameters.get<MaxRiskOfInfectionFromSympomatic>()[i]);
-        set_distribution(model.parameters.get<DeathsPerHospitalized>()[i]);
+        set_distribution(model.parameters.get<DeathsPerICU>()[i]);
         set_distribution(model.parameters.get<HospitalizedCasesPerInfectious>()[i]);
         set_distribution(model.parameters.get<ICUCasesPerHospitalized>()[i]);
     }
@@ -144,7 +144,7 @@ void draw_sample_infection(SecirModel& model)
 
         model.parameters.get<InfectionProbabilityFromContact>()[i].draw_sample();
         model.parameters.get<AsymptoticCasesPerInfectious>()[i].draw_sample();
-        model.parameters.get<DeathsPerHospitalized>()[i].draw_sample();
+        model.parameters.get<DeathsPerICU>()[i].draw_sample();
         model.parameters.get<HospitalizedCasesPerInfectious>()[i].draw_sample();
         model.parameters.get<ICUCasesPerHospitalized>()[i].draw_sample();
     }

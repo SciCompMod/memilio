@@ -75,7 +75,7 @@ TEST(TestSecir, compareWithPreviousRun)
     model.parameters.get<epi::RiskOfInfectionFromSympomatic>()[(epi::AgeGroup)0]   = beta;
     model.parameters.get<epi::HospitalizedCasesPerInfectious>()[(epi::AgeGroup)0]  = rho;
     model.parameters.get<epi::ICUCasesPerHospitalized>()[(epi::AgeGroup)0]         = theta;
-    model.parameters.get<epi::DeathsPerHospitalized>()[(epi::AgeGroup)0]           = delta;
+    model.parameters.get<epi::DeathsPerICU>()[(epi::AgeGroup)0]           = delta;
 
     model.apply_constraints();
 
@@ -144,7 +144,7 @@ TEST(TestSecir, testParamConstructors)
     model.parameters.get<epi::RiskOfInfectionFromSympomatic>()[(epi::AgeGroup)0]   = beta;
     model.parameters.get<epi::HospitalizedCasesPerInfectious>()[(epi::AgeGroup)0]  = rho;
     model.parameters.get<epi::ICUCasesPerHospitalized>()[(epi::AgeGroup)0]         = theta;
-    model.parameters.get<epi::DeathsPerHospitalized>()[(epi::AgeGroup)0]           = delta;
+    model.parameters.get<epi::DeathsPerICU>()[(epi::AgeGroup)0]           = delta;
 
     epi::ContactMatrixGroup& contact_matrix = model.parameters.get<epi::ContactPatterns>();
     contact_matrix[0]                       = epi::ContactMatrix(Eigen::MatrixXd::Constant(1, 1, cont_freq));
@@ -207,8 +207,8 @@ TEST(TestSecir, testParamConstructors)
               model2.parameters.get<epi::HospitalizedCasesPerInfectious>()[(epi::AgeGroup)0]);
     EXPECT_EQ(model.parameters.get<epi::ICUCasesPerHospitalized>()[(epi::AgeGroup)0],
               model2.parameters.get<epi::ICUCasesPerHospitalized>()[(epi::AgeGroup)0]);
-    EXPECT_EQ(model.parameters.get<epi::DeathsPerHospitalized>()[(epi::AgeGroup)0],
-              model2.parameters.get<epi::DeathsPerHospitalized>()[(epi::AgeGroup)0]);
+    EXPECT_EQ(model.parameters.get<epi::DeathsPerICU>()[(epi::AgeGroup)0],
+              model2.parameters.get<epi::DeathsPerICU>()[(epi::AgeGroup)0]);
     EXPECT_EQ(model.parameters.get<epi::ContactPatterns>().get_cont_freq_mat(),
               model2.parameters.get<epi::ContactPatterns>().get_cont_freq_mat());
 
@@ -267,8 +267,8 @@ TEST(TestSecir, testParamConstructors)
               model.parameters.get<epi::HospitalizedCasesPerInfectious>()[(epi::AgeGroup)0]);
     EXPECT_EQ(model3.parameters.get<epi::ICUCasesPerHospitalized>()[(epi::AgeGroup)0],
               model.parameters.get<epi::ICUCasesPerHospitalized>()[(epi::AgeGroup)0]);
-    EXPECT_EQ(model3.parameters.get<epi::DeathsPerHospitalized>()[(epi::AgeGroup)0],
-              model.parameters.get<epi::DeathsPerHospitalized>()[(epi::AgeGroup)0]);
+    EXPECT_EQ(model3.parameters.get<epi::DeathsPerICU>()[(epi::AgeGroup)0],
+              model.parameters.get<epi::DeathsPerICU>()[(epi::AgeGroup)0]);
 
     EXPECT_EQ(model.parameters.get<epi::ContactPatterns>().get_cont_freq_mat(),
               model3.parameters.get<epi::ContactPatterns>().get_cont_freq_mat());
@@ -328,8 +328,8 @@ TEST(TestSecir, testParamConstructors)
               model4.parameters.get<epi::HospitalizedCasesPerInfectious>()[(epi::AgeGroup)0]);
     EXPECT_EQ(model3.parameters.get<epi::ICUCasesPerHospitalized>()[(epi::AgeGroup)0],
               model4.parameters.get<epi::ICUCasesPerHospitalized>()[(epi::AgeGroup)0]);
-    EXPECT_EQ(model3.parameters.get<epi::DeathsPerHospitalized>()[(epi::AgeGroup)0],
-              model4.parameters.get<epi::DeathsPerHospitalized>()[(epi::AgeGroup)0]);
+    EXPECT_EQ(model3.parameters.get<epi::DeathsPerICU>()[(epi::AgeGroup)0],
+              model4.parameters.get<epi::DeathsPerICU>()[(epi::AgeGroup)0]);
 
     EXPECT_EQ(model4.parameters.get<epi::ContactPatterns>().get_cont_freq_mat(),
               model3.parameters.get<epi::ContactPatterns>().get_cont_freq_mat());
@@ -389,8 +389,8 @@ TEST(TestSecir, testParamConstructors)
               model3.parameters.get<epi::HospitalizedCasesPerInfectious>()[(epi::AgeGroup)0]);
     EXPECT_EQ(model5.parameters.get<epi::ICUCasesPerHospitalized>()[(epi::AgeGroup)0],
               model3.parameters.get<epi::ICUCasesPerHospitalized>()[(epi::AgeGroup)0]);
-    EXPECT_EQ(model5.parameters.get<epi::DeathsPerHospitalized>()[(epi::AgeGroup)0],
-              model3.parameters.get<epi::DeathsPerHospitalized>()[(epi::AgeGroup)0]);
+    EXPECT_EQ(model5.parameters.get<epi::DeathsPerICU>()[(epi::AgeGroup)0],
+              model3.parameters.get<epi::DeathsPerICU>()[(epi::AgeGroup)0]);
 
     EXPECT_EQ(model5.parameters.get<epi::ContactPatterns>().get_cont_freq_mat(),
               model3.parameters.get<epi::ContactPatterns>().get_cont_freq_mat());
@@ -442,7 +442,7 @@ TEST(TestSecir, testSettersAndGetters)
     model.parameters.get<epi::RiskOfInfectionFromSympomatic>()[(epi::AgeGroup)0]   = vec[20];
     model.parameters.get<epi::HospitalizedCasesPerInfectious>()[(epi::AgeGroup)0]  = vec[21];
     model.parameters.get<epi::ICUCasesPerHospitalized>()[(epi::AgeGroup)0]         = vec[22];
-    model.parameters.get<epi::DeathsPerHospitalized>()[(epi::AgeGroup)0]           = vec[23];
+    model.parameters.get<epi::DeathsPerICU>()[(epi::AgeGroup)0]           = vec[23];
 
     EXPECT_NE(model.parameters.get<epi::IncubationTime>()[(epi::AgeGroup)0].get_distribution().get(), nullptr);
 
@@ -501,7 +501,7 @@ TEST(TestSecir, testSettersAndGetters)
     check_distribution(*vec[22].get_distribution(),
                        *model.parameters.get<epi::ICUCasesPerHospitalized>()[(epi::AgeGroup)0].get_distribution());
     check_distribution(*vec[23].get_distribution(),
-                       *model.parameters.get<epi::DeathsPerHospitalized>()[(epi::AgeGroup)0].get_distribution());
+                       *model.parameters.get<epi::DeathsPerICU>()[(epi::AgeGroup)0].get_distribution());
     // no dist for start day
     check_distribution(*vec[25].get_distribution(), *model.parameters.get<epi::Seasonality>().get_distribution());
 
@@ -528,7 +528,7 @@ TEST(TestSecir, testSettersAndGetters)
     EXPECT_EQ(vec[20], model.parameters.get<epi::RiskOfInfectionFromSympomatic>()[(epi::AgeGroup)0]);
     EXPECT_EQ(vec[21], model.parameters.get<epi::HospitalizedCasesPerInfectious>()[(epi::AgeGroup)0]);
     EXPECT_EQ(vec[22], model.parameters.get<epi::ICUCasesPerHospitalized>()[(epi::AgeGroup)0]);
-    EXPECT_EQ(vec[23], model.parameters.get<epi::DeathsPerHospitalized>()[(epi::AgeGroup)0]);
+    EXPECT_EQ(vec[23], model.parameters.get<epi::DeathsPerICU>()[(epi::AgeGroup)0]);
     EXPECT_EQ(vec[24], model.parameters.get<epi::StartDay>());
     EXPECT_EQ(vec[25], model.parameters.get<epi::Seasonality>());
 }
@@ -592,7 +592,7 @@ TEST(TestSecir, testValueConstraints)
     model.parameters.get<epi::RiskOfInfectionFromSympomatic>()[(epi::AgeGroup)0]   = beta;
     model.parameters.get<epi::HospitalizedCasesPerInfectious>()[(epi::AgeGroup)0]  = rho;
     model.parameters.get<epi::ICUCasesPerHospitalized>()[(epi::AgeGroup)0]         = theta;
-    model.parameters.get<epi::DeathsPerHospitalized>()[(epi::AgeGroup)0]           = delta;
+    model.parameters.get<epi::DeathsPerICU>()[(epi::AgeGroup)0]           = delta;
 
     epi::set_log_level(epi::LogLevel::off);
     model.parameters.check_constraints();
@@ -650,7 +650,7 @@ TEST(TestSecir, testModelConstraints)
     model.parameters.get<epi::RiskOfInfectionFromSympomatic>()[(epi::AgeGroup)0]   = beta;
     model.parameters.get<epi::HospitalizedCasesPerInfectious>()[(epi::AgeGroup)0]  = rho;
     model.parameters.get<epi::ICUCasesPerHospitalized>()[(epi::AgeGroup)0]         = theta;
-    model.parameters.get<epi::DeathsPerHospitalized>()[(epi::AgeGroup)0]           = delta;
+    model.parameters.get<epi::DeathsPerICU>()[(epi::AgeGroup)0]           = delta;
 
     epi::ContactMatrixGroup& contact_matrix = model.parameters.get<epi::ContactPatterns>();
     contact_matrix[0]                       = epi::ContactMatrix(Eigen::MatrixXd::Constant(1, 1, cont_freq));

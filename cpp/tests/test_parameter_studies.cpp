@@ -86,7 +86,7 @@ TEST(ParameterStudies, sample_from_secir_params)
         params.get<epi::RiskOfInfectionFromSympomatic>()[i] = beta;
         params.get<epi::HospitalizedCasesPerInfectious>()[i] = rho;
         params.get<epi::ICUCasesPerHospitalized>()[i] = theta;
-        params.get<epi::DeathsPerHospitalized>()[i] = delta;
+        params.get<epi::DeathsPerICU>()[i] = delta;
     }
 
     epi::ContactMatrixGroup& contact_matrix = params.get<epi::ContactPatterns>();
@@ -182,7 +182,7 @@ TEST(ParameterStudies, sample_graph)
         params.get<epi::RiskOfInfectionFromSympomatic>()[i] = beta;
         params.get<epi::HospitalizedCasesPerInfectious>()[i] = rho;
         params.get<epi::ICUCasesPerHospitalized>()[i] = theta;
-        params.get<epi::DeathsPerHospitalized>()[i] = delta;
+        params.get<epi::DeathsPerICU>()[i] = delta;
     }
 
     epi::ContactMatrixGroup& contact_matrix = params.get<epi::ContactPatterns>();
@@ -355,7 +355,7 @@ TEST(ParameterStudies, check_ensemble_run_result)
         params.get<epi::RiskOfInfectionFromSympomatic>()[i] = beta;
         params.get<epi::HospitalizedCasesPerInfectious>()[i] = rho;
         params.get<epi::ICUCasesPerHospitalized>()[i] = theta;
-        params.get<epi::DeathsPerHospitalized>()[i] = delta;
+        params.get<epi::DeathsPerICU>()[i] = delta;
     }
 
     epi::ContactMatrixGroup& contact_matrix = params.get<epi::ContactPatterns>();

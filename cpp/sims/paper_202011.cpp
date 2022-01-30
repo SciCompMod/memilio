@@ -178,7 +178,7 @@ epi::IOResult<void> set_covid_parameters(epi::SecirParams& params)
     array_assign_uniform_distribution(params.get<epi::HospitalizedCasesPerInfectious>(), prob_inf_hosp_min,
                                       prob_inf_hosp_max);
     array_assign_uniform_distribution(params.get<epi::ICUCasesPerHospitalized>(), prob_hosp_icu_min, prob_hosp_icu_max);
-    array_assign_uniform_distribution(params.get<epi::DeathsPerHospitalized>(), prob_icu_dead_min, prob_icu_dead_max);
+    array_assign_uniform_distribution(params.get<epi::DeathsPerICU>(), prob_icu_dead_min, prob_icu_dead_max);
 
     //sasonality
     const double seasonality_min = 0.1;

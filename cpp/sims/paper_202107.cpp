@@ -204,7 +204,7 @@ epi::IOResult<void> set_covid_parameters(epi::SecirParams& params, bool long_tim
     array_assign_uniform_distribution(params.get<epi::HospitalizedCasesPerInfectious>(), prob_inf_hosp_min,
                                       prob_inf_hosp_max);
     array_assign_uniform_distribution(params.get<epi::ICUCasesPerHospitalized>(), prob_hosp_icu_min, prob_hosp_icu_max);
-    array_assign_uniform_distribution(params.get<epi::DeathsPerHospitalized>(), prob_icu_dead_min, prob_icu_dead_max);
+    array_assign_uniform_distribution(params.get<epi::DeathsPerICU>(), prob_icu_dead_min, prob_icu_dead_max);
 
     array_assign_uniform_distribution(params.get<epi::ReducVaccExp>(), reduc_vacc_exp_min, reduc_vacc_exp_max);
     array_assign_uniform_distribution(params.get<epi::ReducImmuneExp>(), reduc_immune_exp_min, reduc_immune_exp_max);

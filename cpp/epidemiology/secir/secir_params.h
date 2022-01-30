@@ -351,7 +351,7 @@ struct ICUCasesPerHospitalized {
 /**
 * @brief the percentage of dead patients per ICU patients in the SECIR model
 */
-struct DeathsPerHospitalized {
+struct DeathsPerICU {
     using Type = CustomIndexArray<UncertainValue, AgeGroup>;
     static Type get_default(AgeGroup size)
     {
@@ -359,7 +359,7 @@ struct DeathsPerHospitalized {
     }
     static std::string name()
     {
-        return "DeathsPerHospitalized";
+        return "DeathsPerICU";
     }
 };
 
@@ -645,7 +645,7 @@ using SecirParamsBase =
                  HospitalizedToHomeTime, HomeToHospitalizedTime, HospitalizedToICUTime, ICUToHomeTime, ICUToDeathTime,
                  InfectionProbabilityFromContact, RelativeCarrierInfectability, AsymptoticCasesPerInfectious,
                  RiskOfInfectionFromSympomatic, MaxRiskOfInfectionFromSympomatic, HospitalizedCasesPerInfectious,
-                 ICUCasesPerHospitalized, DeathsPerHospitalized, VaccineGrowthFirst, VaccineGrowthFull, VaccinationGap,
+                 ICUCasesPerHospitalized, DeathsPerICU, VaccineGrowthFirst, VaccineGrowthFull, VaccinationGap,
                  DaysUntilEffective, DaysUntilEffectiveFull, BaseInfB117, BaseInfB161, DailyFullVaccination,
                  DailyFirstVaccination, DynamicInfectionFromContact, ReducVaccExp, ReducImmuneExp, ReducExpInf,
                  ReducImmuneExpInf, ReducInfHosp, ReducImmuneInfHosp, ReducTime>;
@@ -804,10 +804,10 @@ public:
                 this->get<ICUCasesPerHospitalized>()[i] = 0;
             }
 
-            if (this->get<DeathsPerHospitalized>()[i] < 0.0 || this->get<DeathsPerHospitalized>()[i] > 1.0) {
-                log_warning("Constraint check: Parameter DeathsPerHospitalized changed from {:0.4f} to {:d}",
-                            this->get<DeathsPerHospitalized>()[i], 0);
-                this->get<DeathsPerHospitalized>()[i] = 0;
+            if (this->get<DeathsPerICU>()[i] < 0.0 || this->get<DeathsPerICU>()[i] > 1.0) {
+                log_warning("Constraint check: Parameter DeathsPerICU changed from {:0.4f} to {:d}",
+                            this->get<DeathsPerICU>()[i], 0);
+                this->get<DeathsPerICU>()[i] = 0;
             }
         }
     }
@@ -909,8 +909,8 @@ public:
                 log_warning("Constraint check: Parameter ICUCasesPerHospitalized smaller {:d} or larger {:d}", 0, 1);
             }
 
-            if (this->get<DeathsPerHospitalized>()[i] < 0.0 || this->get<DeathsPerHospitalized>()[i] > 1.0) {
-                log_warning("Constraint check: Parameter DeathsPerHospitalized smaller {:d} or larger {:d}", 0, 1);
+            if (this->get<DeathsPerICU>()[i] < 0.0 || this->get<DeathsPerICU>()[i] > 1.0) {
+                log_warning("Constraint check: Parameter DeathsPerICU smaller {:d} or larger {:d}", 0, 1);
             }
         }
     }

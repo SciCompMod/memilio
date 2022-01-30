@@ -212,7 +212,7 @@ std::vector<Model> ensemble_params_percentile(const std::vector<std::vector<Mode
                 });
             param_percentil(
                 node, [i](auto&& model) -> auto& {
-                    return model.parameters.template get<epi::DeathsPerHospitalized>()[i];
+                    return model.parameters.template get<epi::DeathsPerICU>()[i];
                 });
         }
         // group independent params
