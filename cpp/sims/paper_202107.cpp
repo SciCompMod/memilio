@@ -526,7 +526,8 @@ epi::IOResult<void> set_nodes(const epi::SecirParams& params, epi::Date start_da
     /*BOOST_OUTCOME_TRY((epi::read_population_data_county<epi::SecirModelV, epi::InfectionStateV>(
         counties, start_date, county_ids, scaling_factor_infected, scaling_factor_icu,
         (data_dir / "pydata" / "Germany").string())));*/
-    BOOST_OUTCOME_TRY(epi::read_vaccine_data(counties, start_date, county_ids,
+    BOOST_OUTCOME_TRY(epi::read_population_data_county_vaccmodel(counties, start_date, county_ids,
+                                             scaling_factor_infected, scaling_factor_icu, 
                                              (data_dir / "pydata" / "Germany").string(),
                                              epi::get_offset_in_days(end_date, start_date)));
     //set_synthetic_population_data(counties);
@@ -1022,7 +1023,7 @@ int main(int argc, char** argv)
         return 0;
     }
 
-    result_dir += "test_init";
+    result_dir += "_test_init";
     if (future) {
         result_dir += "_future";
     }
