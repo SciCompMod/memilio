@@ -24,14 +24,12 @@
 namespace mio
 {
 
-void set_params_distributions_normal(
-    SecirModel& model, double t0,
-    double tmax, double dev_rel)
+void set_params_distributions_normal(SecirModel& model, double t0, double tmax, double dev_rel)
 {
     auto set_distribution = [dev_rel](UncertainValue& v, double min_val = 0.001) {
         v.set_distribution(ParameterDistributionNormal(std::max(min_val, (1 - dev_rel * 2.6) * v),
-                                                       std::max(min_val, (1 + dev_rel * 2.6) * v), std::max(min_val, double(v)),
-                                                       dev_rel * v));
+                                                       std::max(min_val, (1 + dev_rel * 2.6) * v),
+                                                       std::max(min_val, double(v)), dev_rel * v));
     };
 
     set_distribution(model.parameters.get<Seasonality>(), 0.0);
@@ -43,10 +41,9 @@ void set_params_distributions_normal(
         for (auto j = Index<InfectionState>(0); j < Index<InfectionState>(InfectionState::Count); j++) {
 
             // don't touch S and D
-            if ( j == InfectionState::Susceptible || j == InfectionState::Dead) {
+            if (j == InfectionState::Susceptible || j == InfectionState::Dead) {
                 continue;
             }
-
 
             // variably sized groups
             set_distribution(model.populations[{i, j}], 0.0);
@@ -71,7 +68,7 @@ void set_params_distributions_normal(
         set_distribution(model.parameters.get<AsymptoticCasesPerInfectious>()[i]);
         set_distribution(model.parameters.get<RiskOfInfectionFromSympomatic>()[i]);
         set_distribution(model.parameters.get<MaxRiskOfInfectionFromSympomatic>()[i]);
-        set_distribution(model.parameters.get<DeathsPerHospitalized>()[i]);
+        set_distribution(model.parameters.get<DeathsPerICU>()[i]);
         set_distribution(model.parameters.get<HospitalizedCasesPerInfectious>()[i]);
         set_distribution(model.parameters.get<ICUCasesPerHospitalized>()[i]);
     }
@@ -87,7 +84,6 @@ void set_params_distributions_normal(
         matrices, groups);
     set_distribution(model.parameters.get<ContactPatterns>().get_dampings()[0].get_value(), 0.0);
 }
-
 
 void draw_sample_demographics(SecirModel& model)
 {
@@ -128,14 +124,10 @@ void draw_sample_infection(SecirModel& model)
 
     for (auto i = AgeGroup(0); i < model.parameters.get_num_groups(); i++) {
         //not age dependent
-        model.parameters.get<IncubationTime>()[i] =
-            model.parameters.get<IncubationTime>()[AgeGroup(0)];
-        model.parameters.get<SerialInterval>()[i] =
-            model.parameters.get<SerialInterval>()[AgeGroup(0)];
-        model.parameters.get<InfectiousTimeMild>()[i] =
-            model.parameters.get<InfectiousTimeMild>()[AgeGroup(0)];
-        model.parameters.get<HospitalizedToICUTime>()[i] =
-            model.parameters.get<HospitalizedToICUTime>()[AgeGroup(0)];
+        model.parameters.get<IncubationTime>()[i]        = model.parameters.get<IncubationTime>()[AgeGroup(0)];
+        model.parameters.get<SerialInterval>()[i]        = model.parameters.get<SerialInterval>()[AgeGroup(0)];
+        model.parameters.get<InfectiousTimeMild>()[i]    = model.parameters.get<InfectiousTimeMild>()[AgeGroup(0)];
+        model.parameters.get<HospitalizedToICUTime>()[i] = model.parameters.get<HospitalizedToICUTime>()[AgeGroup(0)];
         model.parameters.get<RelativeCarrierInfectability>()[i] =
             model.parameters.get<RelativeCarrierInfectability>()[AgeGroup(0)];
         model.parameters.get<RiskOfInfectionFromSympomatic>()[i] =
@@ -152,7 +144,7 @@ void draw_sample_infection(SecirModel& model)
 
         model.parameters.get<InfectionProbabilityFromContact>()[i].draw_sample();
         model.parameters.get<AsymptoticCasesPerInfectious>()[i].draw_sample();
-        model.parameters.get<DeathsPerHospitalized>()[i].draw_sample();
+        model.parameters.get<DeathsPerICU>()[i].draw_sample();
         model.parameters.get<HospitalizedCasesPerInfectious>()[i].draw_sample();
         model.parameters.get<ICUCasesPerHospitalized>()[i].draw_sample();
     }

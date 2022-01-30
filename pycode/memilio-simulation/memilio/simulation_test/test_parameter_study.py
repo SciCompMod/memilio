@@ -66,7 +66,7 @@ class Test_ParameterStudy(unittest.TestCase):
         model.parameters.RiskOfInfectionFromSympomatic[A0] = 0.25
         model.parameters.HospitalizedCasesPerInfectious[A0] = 0.2
         model.parameters.ICUCasesPerHospitalized[A0] = 0.25
-        model.parameters.DeathsPerHospitalized[A0] = 0.3
+        model.parameters.DeathsPerICU[A0] = 0.3
 
         model.apply_constraints()
         return model

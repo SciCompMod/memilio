@@ -69,7 +69,7 @@ int main(int argc, char** argv)
 
     mio::SecirModel model(1);
     mio::AgeGroup nb_groups = model.parameters.get_num_groups();
-    double fact   = 1.0 / (double)(size_t)nb_groups;
+    double fact             = 1.0 / (double)(size_t)nb_groups;
 
     auto& params = model.parameters;
 
@@ -78,45 +78,45 @@ int main(int argc, char** argv)
     params.set<mio::Seasonality>(0);
 
     for (auto i = mio::AgeGroup(0); i < nb_groups; i++) {
-        params.get<mio::IncubationTime>()[i] = tinc;
-        params.get<mio::InfectiousTimeMild>()[i] = tinfmild;
-        params.get<mio::SerialInterval>()[i] = tserint;
+        params.get<mio::IncubationTime>()[i]         = tinc;
+        params.get<mio::InfectiousTimeMild>()[i]     = tinfmild;
+        params.get<mio::SerialInterval>()[i]         = tserint;
         params.get<mio::HospitalizedToHomeTime>()[i] = thosp2home;
         params.get<mio::HomeToHospitalizedTime>()[i] = thome2hosp;
-        params.get<mio::HospitalizedToICUTime>()[i] = thosp2icu;
-        params.get<mio::ICUToHomeTime>()[i] = ticu2home;
-        params.get<mio::ICUToDeathTime>()[i] = ticu2death;
+        params.get<mio::HospitalizedToICUTime>()[i]  = thosp2icu;
+        params.get<mio::ICUToHomeTime>()[i]          = ticu2home;
+        params.get<mio::ICUToDeathTime>()[i]         = ticu2death;
 
-        model.populations[{i, mio::InfectionState::Exposed}] = fact * nb_exp_t0;
-        model.populations[{i, mio::InfectionState::Carrier}] = fact * nb_car_t0;
-        model.populations[{i, mio::InfectionState::Infected}] = fact * nb_inf_t0;
+        model.populations[{i, mio::InfectionState::Exposed}]      = fact * nb_exp_t0;
+        model.populations[{i, mio::InfectionState::Carrier}]      = fact * nb_car_t0;
+        model.populations[{i, mio::InfectionState::Infected}]     = fact * nb_inf_t0;
         model.populations[{i, mio::InfectionState::Hospitalized}] = fact * nb_hosp_t0;
-        model.populations[{i, mio::InfectionState::ICU}] = fact * nb_icu_t0;
-        model.populations[{i, mio::InfectionState::Recovered}] = fact * nb_rec_t0;
-        model.populations[{i, mio::InfectionState::Dead}] = fact * nb_dead_t0;
+        model.populations[{i, mio::InfectionState::ICU}]          = fact * nb_icu_t0;
+        model.populations[{i, mio::InfectionState::Recovered}]    = fact * nb_rec_t0;
+        model.populations[{i, mio::InfectionState::Dead}]         = fact * nb_dead_t0;
         model.populations.set_difference_from_group_total<mio::AgeGroup>({i, mio::InfectionState::Susceptible},
                                                                          fact * nb_total_t0);
 
         params.get<mio::InfectionProbabilityFromContact>()[i] = inf_prob;
-        params.get<mio::RelativeCarrierInfectability>()[i] = carr_infec;
-        params.get<mio::AsymptoticCasesPerInfectious>()[i] = alpha;
-        params.get<mio::RiskOfInfectionFromSympomatic>()[i] = beta;
-        params.get<mio::HospitalizedCasesPerInfectious>()[i] = rho;
-        params.get<mio::ICUCasesPerHospitalized>()[i] = theta;
-        params.get<mio::DeathsPerHospitalized>()[i] = delta;
+        params.get<mio::RelativeCarrierInfectability>()[i]    = carr_infec;
+        params.get<mio::AsymptoticCasesPerInfectious>()[i]    = alpha;
+        params.get<mio::RiskOfInfectionFromSympomatic>()[i]   = beta;
+        params.get<mio::HospitalizedCasesPerInfectious>()[i]  = rho;
+        params.get<mio::ICUCasesPerHospitalized>()[i]         = theta;
+        params.get<mio::DeathsPerICU>()[i]                    = delta;
     }
 
     params.apply_constraints();
 
     mio::ContactMatrixGroup& contact_matrix = params.get<mio::ContactPatterns>();
-    contact_matrix[0] = mio::ContactMatrix(Eigen::MatrixXd::Constant((size_t)nb_groups, (size_t)nb_groups, fact * cont_freq));
+    contact_matrix[0] =
+        mio::ContactMatrix(Eigen::MatrixXd::Constant((size_t)nb_groups, (size_t)nb_groups, fact * cont_freq));
 
     mio::set_params_distributions_normal(model, t0, tmax, 0.2);
 
     std::cout << "Reading Migration File..." << std::flush;
     auto read_mobility_result = mio::read_mobility_plain(filename);
-    if (!read_mobility_result)
-    {
+    if (!read_mobility_result) {
         std::cout << read_mobility_result.error().formatted_message() << '\n';
         return -1;
     }
@@ -130,10 +130,10 @@ int main(int argc, char** argv)
     }
     for (int row = 0; row < twitter_migration_2018.rows(); row++) {
         for (int col = 0; col < twitter_migration_2018.cols(); col++) {
-            graph.add_edge(
-                row, col,
-                Eigen::VectorXd::Constant(8 * (size_t)nb_groups, twitter_migration_2018(row, col) /
-                                                             graph.nodes()[row].property.populations.get_total()));
+            graph.add_edge(row, col,
+                           Eigen::VectorXd::Constant(8 * (size_t)nb_groups,
+                                                     twitter_migration_2018(row, col) /
+                                                         graph.nodes()[row].property.populations.get_total()));
         }
     }
     std::cout << "Done" << std::endl;
@@ -147,7 +147,7 @@ int main(int argc, char** argv)
 
     std::cout << "Reading Json Files..." << std::flush;
     auto graph_read_result = mio::read_graph<mio::SecirModel>("graph_parameters");
-        
+
     if (!graph_read_result) {
         std::cout << "Error: " << graph_read_result.error().formatted_message();
     }
