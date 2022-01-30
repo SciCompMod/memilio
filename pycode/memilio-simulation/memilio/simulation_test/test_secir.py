@@ -48,7 +48,7 @@ class Test_secir_integration(unittest.TestCase):
         model.parameters.RiskOfInfectionFromSympomatic[A0] = 0.25  # 0.05-0.5
         model.parameters.HospitalizedCasesPerInfectious[A0] = 0.2  # 0.1-0.35
         model.parameters.ICUCasesPerHospitalized[A0] = 0.25  # 0.15-0.4
-        model.parameters.DeathsPerHospitalized[A0] = 0.3  # 0.15-0.77
+        model.parameters.DeathsPerICU[A0] = 0.3  # 0.15-0.77
 
         model.populations[A0, Index_InfectionState(State.Susceptible)] = 7600
         model.populations[A0, Index_InfectionState(State.Exposed)] = 100
