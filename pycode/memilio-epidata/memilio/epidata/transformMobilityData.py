@@ -21,7 +21,6 @@ import os
 import pandas as pd
 import numpy as np
 
-from memilio.epidata import getDataIntoPandasDataFrame as gd
 from memilio.epidata import defaultDict as dd
 from memilio.epidata import geoModificationGermany as geoger
 
@@ -40,15 +39,13 @@ def getMobilityFromFile(directory, mobility_file):
     return mobility_matrix
 
 
-def createFederalStatesMobility(directory, mobility_file, file_format=dd.defaultDict['file_format']):
+def createFederalStatesMobility(directory, mobility_file):
     """! Creates mobility matrices for German federal states based on
     county mobility. If mobility matrix dimensions are different from the
     number of German counties, nothing is done.
 
     @param directory Path to folder where data is read and written.
     @param mobility_file Mobility matrix file which has to be updated.
-    @param file_format File format which is used for writing the data. 
-        Default defined in defaultDict.
     @return State-aggregated mobility matrix if input matrix is sized correctly, zero otherwise.
     """
     mobility_matrix = getMobilityFromFile(directory, mobility_file)
@@ -93,15 +90,13 @@ def createFederalStatesMobility(directory, mobility_file, file_format=dd.default
         return pd.DataFrame()
 
 
-def updateMobility2022(directory, mobility_file, file_format=dd.defaultDict['file_format']):
+def updateMobility2022(directory, mobility_file):
     """! Merges rows and columns of Eisenach to Wartburgkreis which has
     become one single county by July 2021. If mobility matrix dimension is different
     from 401x401, nothing is done.
 
     @param directory Path to folder where data is read and written.
     @param mobility_file Mobility matrix file which has to be updated.
-    @param file_format File format which is used for writing the data. 
-        Default defined in defaultDict.
     @return Reduced mobility matrix or input mobility matrix if matrix was already reduced.
     """
     mobility_matrix = getMobilityFromFile(directory, mobility_file)

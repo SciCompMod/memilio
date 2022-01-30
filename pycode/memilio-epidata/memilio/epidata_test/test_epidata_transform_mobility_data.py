@@ -26,7 +26,6 @@ import pandas as pd
 import numpy as np
 
 from memilio.epidata import getDataIntoPandasDataFrame as gd
-from memilio.epidata import defaultDict as dd
 from memilio.epidata import geoModificationGermany as geoger
 from memilio.epidata import transformMobilityData as tfmd
 
@@ -59,7 +58,10 @@ class TestTransformMobilityData(fake_filesystem_unittest.TestCase):
     df_401.iloc[399, 399] = 27
     df_401.iloc[399, 24] = 11
     # state 2 to state 15
-    df_401.iloc[55, 387] = 11    
+    df_401.iloc[55, 387] = 11
+
+    # take reduced dataframe to check functionality
+    df_400 = df_401.iloc[0:400,0:400].copy()
 
     def setUp(self):
         self.setUpPyfakefs()
@@ -98,7 +100,7 @@ class TestTransformMobilityData(fake_filesystem_unittest.TestCase):
 
     # Test that data frame of size 400 is not reduced
     @patch('memilio.epidata.transformMobilityData.getMobilityFromFile',
-           return_value=df_401.iloc[0:400,0:400].copy())
+           return_value=df_400.copy())
     def test_update_mobility_reduction_400to400(self, mock_load_file):
         # read is mocked
         df_read = tfmd.getMobilityFromFile(self.path, 'mobility')
@@ -123,7 +125,7 @@ class TestTransformMobilityData(fake_filesystem_unittest.TestCase):
 
     # Test that data frame of size 400 will be aggregated to federal state mobility
     @patch('memilio.epidata.transformMobilityData.getMobilityFromFile',
-           return_value=df_401.iloc[0:400,0:400].copy())
+           return_value=df_400.copy())
     def test_create_federal_states_mobility(self, mock_load_file):
         # create folder where new file can be stored and run createFederalStatesMobility
         gd.check_dir(self.path)
