@@ -1,7 +1,7 @@
 /* 
 * Copyright (C) 2020-2021 German Aerospace Center (DLR-SC)
 *
-* Authors: Daniel Abele
+* Authors: Daniel Abele, Elisabeth Kluth
 *
 * Contact: Martin J. Kuehn <Martin.Kuehn@DLR.de>
 *
@@ -25,7 +25,8 @@
 namespace mio
 {
 
-Person::Person(LocationId id, InfectionProperties infection_properties, VaccinationState vaccination_state, AbmAgeGroup age, const GlobalInfectionParameters& global_params)
+Person::Person(LocationId id, InfectionProperties infection_properties, VaccinationState vaccination_state,
+               AbmAgeGroup age, const GlobalInfectionParameters& global_params)
     : m_location_id(id)
     , m_assigned_locations((uint32_t)LocationType::Count, INVALID_LOCATION_INDEX)
     , m_infection_state(infection_properties.state)
@@ -35,32 +36,35 @@ Person::Person(LocationId id, InfectionProperties infection_properties, Vaccinat
     , m_time_at_location(std::numeric_limits<int>::max() / 2) //avoid overflow on next steps
     , m_time_since_negative_test(std::numeric_limits<int>::max() / 2)
 {
-    m_random_workgroup   = UniformDistribution<double>::get_instance()();
-    m_random_schoolgroup = UniformDistribution<double>::get_instance()();
-    m_random_goto_work_hour = UniformDistribution<double>::get_instance()();
+    m_random_workgroup        = UniformDistribution<double>::get_instance()();
+    m_random_schoolgroup      = UniformDistribution<double>::get_instance()();
+    m_random_goto_work_hour   = UniformDistribution<double>::get_instance()();
     m_random_goto_school_hour = UniformDistribution<double>::get_instance()();
 
     if (infection_properties.state == InfectionState::Infected && infection_properties.detected) {
         m_quarantine = true;
     }
     if (infection_properties.state == InfectionState::Exposed) {
-        m_time_until_carrier = hours(
-                                     UniformIntDistribution<int>::get_instance()(0, int(global_params.get<IncubationPeriod>()[{m_age, m_vaccination_state}] * 24)));
+        m_time_until_carrier = hours(UniformIntDistribution<int>::get_instance()(
+            0, int(global_params.get<IncubationPeriod>()[{m_age, m_vaccination_state}] * 24)));
     }
 }
 
-
-Person::Person(LocationId id, InfectionProperties infection_properties, AbmAgeGroup age, const GlobalInfectionParameters& global_params)
-    :  Person(id, infection_properties, VaccinationState::Unvaccinated, age, global_params)
+Person::Person(LocationId id, InfectionProperties infection_properties, AbmAgeGroup age,
+               const GlobalInfectionParameters& global_params)
+    : Person(id, infection_properties, VaccinationState::Unvaccinated, age, global_params)
 {
 }
 
-Person::Person(Location& location, InfectionProperties infection_properties, AbmAgeGroup age, const GlobalInfectionParameters& global_params)
-    : Person({location.get_index(), location.get_type()}, infection_properties, VaccinationState::Unvaccinated, age, global_params)
+Person::Person(Location& location, InfectionProperties infection_properties, AbmAgeGroup age,
+               const GlobalInfectionParameters& global_params)
+    : Person({location.get_index(), location.get_type()}, infection_properties, VaccinationState::Unvaccinated, age,
+             global_params)
 {
 }
 
-Person::Person(Location& location, InfectionProperties infection_properties, VaccinationState vaccination_state, AbmAgeGroup age, const GlobalInfectionParameters& global_params)
+Person::Person(Location& location, InfectionProperties infection_properties, VaccinationState vaccination_state,
+               AbmAgeGroup age, const GlobalInfectionParameters& global_params)
     : Person({location.get_index(), location.get_type()}, infection_properties, vaccination_state, age, global_params)
 {
 }
@@ -80,11 +84,13 @@ void Person::interact(TimeSpan dt, const GlobalInfectionParameters& global_infec
     else {
         new_infection_state = loc.interact(*this, dt, global_infection_params);
         if (new_infection_state == InfectionState::Exposed) {
-            m_time_until_carrier = hours(int(global_infection_params.get<IncubationPeriod>()[{this->m_age, this->m_vaccination_state}] * 24));
+            m_time_until_carrier = hours(
+                int(global_infection_params.get<IncubationPeriod>()[{this->m_age, this->m_vaccination_state}] * 24));
         }
     }
 
-    if (new_infection_state == InfectionState::Infected || new_infection_state == InfectionState::Infected_Severe || new_infection_state == InfectionState::Infected_Critical) {
+    if (new_infection_state == InfectionState::Infected_Severe ||
+        new_infection_state == InfectionState::Infected_Critical) {
         m_quarantine = true;
     }
     else if (new_infection_state == InfectionState::Infected) {
@@ -144,18 +150,18 @@ TimeSpan Person::get_go_to_work_time(const AbmMigrationParameters& params) const
 {
     TimeSpan minimum_goto_work_time = params.get<GotoWorkTimeMinimum>()[m_age];
     TimeSpan maximum_goto_work_time = params.get<GotoWorkTimeMaximum>()[m_age];
-    int timeSlots = (maximum_goto_work_time.seconds() - minimum_goto_work_time.seconds());
-    int seconds_after_minimum = int (timeSlots * m_random_goto_work_hour);
-    return minimum_goto_work_time+ mio::seconds(seconds_after_minimum);
+    int timeSlots                   = (maximum_goto_work_time.seconds() - minimum_goto_work_time.seconds());
+    int seconds_after_minimum       = int(timeSlots * m_random_goto_work_hour);
+    return minimum_goto_work_time + mio::seconds(seconds_after_minimum);
 }
 
 TimeSpan Person::get_go_to_school_time(const AbmMigrationParameters& params) const
 {
     TimeSpan minimum_goto_school_time = params.get<GotoSchoolTimeMinimum>()[m_age];
     TimeSpan maximum_goto_school_time = params.get<GotoSchoolTimeMaximum>()[m_age];
-    int timeSlots = (maximum_goto_school_time.seconds() - minimum_goto_school_time.seconds());
-    int seconds_after_minimum = int (timeSlots * m_random_goto_school_hour);
-    return minimum_goto_school_time+ mio::seconds(seconds_after_minimum);
+    int timeSlots                     = (maximum_goto_school_time.seconds() - minimum_goto_school_time.seconds());
+    int seconds_after_minimum         = int(timeSlots * m_random_goto_school_hour);
+    return minimum_goto_school_time + mio::seconds(seconds_after_minimum);
 }
 
 bool Person::goes_to_school(TimePoint t, const AbmMigrationParameters& params) const
@@ -167,7 +173,8 @@ bool Person::get_tested(const TestParameters& params)
 {
     double random = UniformDistribution<double>::get_instance()();
     if (m_infection_state == InfectionState::Carrier || m_infection_state == InfectionState::Infected ||
-        m_infection_state == InfectionState::Infected_Severe || m_infection_state == InfectionState::Infected_Critical) {
+        m_infection_state == InfectionState::Infected_Severe ||
+        m_infection_state == InfectionState::Infected_Critical) {
         if (random < params.sensitivity) {
             m_quarantine = true;
             return true;

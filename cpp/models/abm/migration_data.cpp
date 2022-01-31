@@ -1,7 +1,7 @@
 /* 
 * Copyright (C) 2020-2021 German Aerospace Center (DLR-SC)
 *
-* Authors: Daniel Abele, Elisabeth Kluth
+* Authors: Elisabeth Kluth
 *
 * Contact: Martin J. Kuehn <Martin.Kuehn@DLR.de>
 *
@@ -17,36 +17,38 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
-#ifndef EPI_ABM_LOCATION_TYPE_H
-#define EPI_ABM_LOCATION_TYPE_H
+#include "abm/migration_data.h"
+#include "abm/location.h"
+#include "abm/random_events.h"
 
-#include <cstdint>
-#include <limits>
+#include <numeric>
 
 namespace mio
 {
 
-/**
- * type of a location.
- */
-enum class LocationType : std::uint32_t
+MigrationData::MigrationData()
+    : m_trips({})
+    , m_current_index(0)
 {
-    Home = 0,
-    School,
-    Work,
-    SocialEvent, // TODO: differentiate different kinds
-    BasicsShop, // groceries and other necessities
-    Hospital,
-    ICU,
-    Car,
-    PublicTransport,
-    Bike,
+}
 
-    Count //last!
-};
+Trip& MigrationData::get_next_trip()
+{
+    return m_trips[m_current_index];
+}
 
-static constexpr uint32_t INVALID_LOCATION_INDEX = std::numeric_limits<uint32_t>::max();
+TimePoint MigrationData::get_next_trip_time()
+{
+    return m_trips[m_current_index].migration_time;
+}
+
+void MigrationData::sort_trips()
+{
+}
+
+void MigrationData::add_trip(Trip trip)
+{
+    m_trips.push_back(trip);
+}
 
 } // namespace mio
-
-#endif

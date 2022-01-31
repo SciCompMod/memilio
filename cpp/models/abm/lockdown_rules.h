@@ -1,7 +1,7 @@
 /* 
 * Copyright (C) 2020-2021 German Aerospace Center (DLR-SC)
 *
-* Authors: Daniel Abele
+* Authors: Daniel Abele, Elisabeth Kluth
 *
 * Contact: Martin J. Kuehn <Martin.Kuehn@DLR.de>
 *
@@ -38,7 +38,6 @@ namespace mio
  * in probabilty is implemented by using dampings.
  */
 
-    
 /**
  * Persons who are in home office are staying at home instead of going to work.
  * @param t_begin begin of the intervention
@@ -46,7 +45,7 @@ namespace mio
  * @param params migration parameters that include damping
  */
 void set_home_office(TimePoint t_begin, double p, AbmMigrationParameters& params);
- 
+
 /**
  * If schools are closed, students stay at home instead of going to school.
  * @param t_begin begin of the intervention
@@ -54,8 +53,6 @@ void set_home_office(TimePoint t_begin, double p, AbmMigrationParameters& params
  * @param params migration parameters that include damping
  */
 void set_school_closure(TimePoint t_begin, double p, AbmMigrationParameters& params);
-
-
 
 /** 
  * During lockdown people join social events less often.
@@ -67,8 +64,6 @@ void set_school_closure(TimePoint t_begin, double p, AbmMigrationParameters& par
  * @param params migration parameters that include damping
  */
 void close_social_events(TimePoint t_begin, double p, AbmMigrationParameters& params);
-
-
 
 } //namespace mio
 

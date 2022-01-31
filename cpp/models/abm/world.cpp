@@ -44,8 +44,6 @@ Person& World::add_person(LocationId id, InfectionState infection_state, AbmAgeG
     return person;
 }
 
-
-
 void World::evolve(TimePoint t, TimeSpan dt)
 {
     begin_step(t, dt);
@@ -61,8 +59,9 @@ void World::interaction(TimePoint /*t*/, TimeSpan dt)
     }
 }
 
-void World::set_infection_state(Person& person, InfectionState inf_state){
-    auto& loc = get_location(person);
+void World::set_infection_state(Person& person, InfectionState inf_state)
+{
+    auto& loc      = get_location(person);
     auto old_state = person.get_infection_state();
     person.set_infection_state(inf_state);
     loc.changed_state(person, old_state);
@@ -70,6 +69,7 @@ void World::set_infection_state(Person& person, InfectionState inf_state){
 
 void World::migration(TimePoint t, TimeSpan dt)
 {
+    // check if a person has to go to the hospital, ICU or home due to quarantine/recovery
     using migration_rule = LocationType (*)(const Person&, TimePoint, TimeSpan, const AbmMigrationParameters&);
     const std::pair<migration_rule, std::vector<LocationType>> rules[] = {
         std::make_pair(&return_home_when_recovered,
@@ -78,13 +78,9 @@ void World::migration(TimePoint t, TimeSpan dt)
                            LocationType::Hospital}), //assumption: if there is an ICU, there is also an hospital
         std::make_pair(&go_to_hospital, std::vector<LocationType>{LocationType::Home, LocationType::Hospital}),
         std::make_pair(&go_to_icu, std::vector<LocationType>{LocationType::Hospital, LocationType::ICU}),
-        std::make_pair(&go_to_school, std::vector<LocationType>{LocationType::School, LocationType::Home}),
-        std::make_pair(&go_to_work, std::vector<LocationType>{LocationType::Home, LocationType::Work}),
-        std::make_pair(&go_to_shop, std::vector<LocationType>{LocationType::Home, LocationType::BasicsShop}),
-        std::make_pair(&go_to_event, std::vector<LocationType>{LocationType::Home, LocationType::SocialEvent})};
+        std::make_pair(&go_to_quarantine, std::vector<LocationType>{LocationType::Home})};
     for (auto&& person : m_persons) {
         for (auto rule : rules) {
-
             //check if transition rule can be applied
             const auto& locs = rule.second;
             bool nonempty    = !locs.empty();
@@ -100,6 +96,19 @@ void World::migration(TimePoint t, TimeSpan dt)
                     }
                     break;
                 }
+            }
+        }
+    }
+    // check if a person makes a trip
+    size_t num_trips = m_migration_data.get_trips().size();
+    if (num_trips != 0) {
+        while (m_migration_data.get_next_trip_time() < t + dt && m_migration_data.get_current_index() < num_trips) {
+            auto& trip   = m_migration_data.get_next_trip();
+            auto& person = m_persons[trip.person_id];
+            if (!person->is_in_quarantine()) {
+                Location& target = get_individualized_location(trip.migration_target);
+                person->migrate_to(get_location(*person), target);
+                m_migration_data.increase_index();
             }
         }
     }
@@ -188,6 +197,16 @@ GlobalTestingParameters& World::get_global_testing_parameters()
 const GlobalTestingParameters& World::get_global_testing_parameters() const
 {
     return m_testing_parameters;
+}
+
+MigrationData& World::get_migration_data()
+{
+    return m_migration_data;
+}
+
+const MigrationData& World::get_migration_data() const
+{
+    return m_migration_data;
 }
 
 } // namespace mio

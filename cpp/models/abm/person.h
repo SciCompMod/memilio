@@ -35,8 +35,7 @@ namespace mio
 class Location;
 
 /**
- * LocationId identifies a Location uniquely. It consists of the LocationType of the Location and an Index.
- * The index corresponds to the index into the structure m_locations from world, where all Locations are saved.
+ * Infection properties describe the infection state of a person and if a infection is detected
  */
 struct InfectionProperties {
     InfectionProperties(InfectionState infection_state, bool infection_detected = false)
@@ -54,7 +53,6 @@ struct InfectionProperties {
 class Person
 {
 public:
-    
     /**
      * create a Person.
      * @param id index and type of the initial location of the person
@@ -63,7 +61,8 @@ public:
      * @param age the age group of the person
      * @param global_params the global infection parameters
      */
-    Person(LocationId id, InfectionProperties infection_properties, VaccinationState vaccination_state, AbmAgeGroup age, const GlobalInfectionParameters& global_params);
+    Person(LocationId id, InfectionProperties infection_properties, VaccinationState vaccination_state, AbmAgeGroup age,
+           const GlobalInfectionParameters& global_params);
     /**
      * create a Person.
      * @param id index and type of the initial location of the person
@@ -71,8 +70,9 @@ public:
      * @param age the age group of the person
      * @param global_params the global infection parameters
      */
-    Person(LocationId id, InfectionProperties infection_properties, AbmAgeGroup age, const GlobalInfectionParameters& global_params);
-    
+    Person(LocationId id, InfectionProperties infection_properties, AbmAgeGroup age,
+           const GlobalInfectionParameters& global_params);
+
     /**
      * create a Person.
      * @param location the initial location of the person
@@ -80,8 +80,9 @@ public:
      * @param age the age group of the person
      * @param global_params the global infection parameters
      */
-    Person(Location& location, InfectionProperties infection_properties, AbmAgeGroup age, const GlobalInfectionParameters& global_params);
-    
+    Person(Location& location, InfectionProperties infection_properties, AbmAgeGroup age,
+           const GlobalInfectionParameters& global_params);
+
     /**
      * create a Person.
      * @param location the initial location of the person
@@ -89,7 +90,8 @@ public:
      * @param age the age group of the person
      * @param global_params the global infection parameters
      */
-    Person(Location& location, InfectionProperties infection_properties, VaccinationState vaccination_state, AbmAgeGroup age, const GlobalInfectionParameters& global_params);
+    Person(Location& location, InfectionProperties infection_properties, VaccinationState vaccination_state,
+           AbmAgeGroup age, const GlobalInfectionParameters& global_params);
 
     /** 
      * Time passes and the person interacts with the population at its current location.
@@ -114,7 +116,7 @@ public:
     {
         return m_infection_state;
     }
-    
+
     /**
      * Get the current vaccination state of the person.
      * @returns the current vaccination state of the person
@@ -123,12 +125,12 @@ public:
     {
         return m_vaccination_state;
     }
-    
+
     /**
      * Sets the current infection state of the person.
      */
     void set_infection_state(InfectionState inf_state);
-    
+
     /**
      * Get the age group of this person.
      * @return age.

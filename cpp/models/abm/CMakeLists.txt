@@ -15,6 +15,8 @@ add_library(abm
     parameters.cpp
     migration_rules.cpp
     migration_rules.h
+    migration_data.cpp
+    migration_data.h
     lockdown_rules.cpp
     lockdown_rules.h
     testing_scheme.cpp

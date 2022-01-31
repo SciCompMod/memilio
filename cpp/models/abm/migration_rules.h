@@ -2,7 +2,7 @@
 * Copyright (C) 2020-2021 German Aerospace Center (DLR-SC)
 *        & Helmholtz Centre for Infection Research (HZI)
 *
-* Authors: Daniel Abele, Majid Abedi
+* Authors: Daniel Abele, Majid Abedi, Elisabeth Kluth
 *
 * Contact: Martin J. Kuehn <Martin.Kuehn@DLR.de>
 *
@@ -47,24 +47,10 @@ class Person;
 LocationType random_migration(const Person& p, TimePoint t, TimeSpan dt, const AbmMigrationParameters& params);
 
 /**
- * school age children go to school in the morning and return later in the day.
+ * people who are in quarantine should go gome
  */
-LocationType go_to_school(const Person& p, TimePoint t, TimeSpan dt, const AbmMigrationParameters& params);
-
-/**
- * working age adults go to work in the morning and return later in the day.
- */
-LocationType go_to_work(const Person& p, TimePoint t, TimeSpan dt, const AbmMigrationParameters& params);
-
-/**
- * people go to the shop outside work/school except on sunday.
- */
-LocationType go_to_shop(const Person& p, TimePoint t, TimeSpan dt, const AbmMigrationParameters& params);
-
-/**
- * people go to social events outside work/school.
- */
-LocationType go_to_event(const Person& p, TimePoint t, TimeSpan dt, const AbmMigrationParameters& params);
+LocationType go_to_quarantine(const Person& person, TimePoint /*t*/, TimeSpan /*dt*/,
+                              const AbmMigrationParameters& /*params*/);
 
 /**
  * infected people may be hospitalized.

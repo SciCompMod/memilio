@@ -27,6 +27,7 @@
 #include "abm/person.h"
 #include "abm/lockdown_rules.h"
 #include "abm/testing_scheme.h"
+#include "abm/migration_data.h"
 #include "memilio/utils/pointer_dereferencing_iterator.h"
 #include "memilio/utils/stl_util.h"
 
@@ -57,6 +58,7 @@ public:
         , m_infection_parameters(params)
         , m_migration_parameters()
         , m_testing_parameters()
+        , m_migration_data()
     {
     }
 
@@ -77,7 +79,7 @@ public:
      * @param dt length of the time step
      */
     void evolve(TimePoint t, TimeSpan dt);
-    
+
     /** 
      * add a location to the world.
      * @param type type of location to add
@@ -91,7 +93,7 @@ public:
      * @return reference to the newly created person
      */
     Person& add_person(LocationId id, InfectionState infection_state, AbmAgeGroup age = AbmAgeGroup::Age15to34);
-    
+
     /**
      * Sets the current infection state of the person.
      * Use only during setup, may distort the simulation results
@@ -104,7 +106,9 @@ public:
      * get a range of all locations in the world.
      * @return a range of all locations.
      */
-    Range<std::pair<std::vector<std::vector<Location>>::const_iterator, std::vector<std::vector<Location>>::const_iterator>> get_locations() const;
+    Range<std::pair<std::vector<std::vector<Location>>::const_iterator,
+                    std::vector<std::vector<Location>>::const_iterator>>
+    get_locations() const;
 
     /**
      * get a range of all persons in the world.
@@ -142,7 +146,7 @@ public:
      * @return number of persons that are in the specified infection state
      */
     int get_subpopulation_combined(InfectionState s, LocationType type) const;
-     
+
     /** 
      *get migration parameters
      */
@@ -164,6 +168,13 @@ public:
 
     const GlobalTestingParameters& get_global_testing_parameters() const;
 
+    /**
+     * get migration data
+     */
+    MigrationData& get_migration_data();
+
+    const MigrationData& get_migration_data() const;
+
 private:
     void interaction(TimePoint t, TimeSpan dt);
     void migration(TimePoint t, TimeSpan dt);
@@ -173,6 +184,7 @@ private:
     GlobalInfectionParameters m_infection_parameters;
     AbmMigrationParameters m_migration_parameters;
     GlobalTestingParameters m_testing_parameters;
+    MigrationData m_migration_data;
 };
 
 } // namespace mio
