@@ -68,7 +68,7 @@ def clean_data(
 
         # TODO: make general dictionary with all countries used
         directories = ['Germany/', 'Spain/', 'France/',
-                       'Italy/', 'US/', 'SouthKorea/', 'China/', 'Mobility/']
+                       'Italy/', 'US/', 'SouthKorea/', 'China/']
 
         # delete files in directory
         for cdir in directories:
@@ -159,7 +159,7 @@ def clean_data(
         rki_filenames = ["rki", "RKI"]
         divi_filenames = ["divi", "DIVI"]
         vaccination_filenames = ["vacc", "Vacc"]
-        population_filenames = ["Popul", "FullDataB", "FullDataL"]
+        population_filenames = ["Popul", "popul", "migration.", "reg_key", "zensus"]
         commuter_filenames = ["bfa"]            
         testing_filenames = ["testpos"]
 
@@ -192,38 +192,8 @@ def clean_data(
             except OSError:
                 pass
 
-        # getCommuterData creates additional folder
-        if commuter:
-            files = []
-            directory_c = os.path.join(out_path, 'Mobility/')
-            try:
-                files = os.listdir(directory_c)
-            except FileNotFoundError:
-                pass
-            for item in files:
-                if item.endswith(ending):
-                    for file in commuter_filenames:
-                        if file in item:
-                            print(
-                                "Deleting file ", os.path.join(
-                                    directory, item))
-                            os.remove(os.path.join(directory_c, item))
-            # delete commuter directory if empty
-            try:
-                os.rmdir(directory_c)
-                print("Deleting directory ", directory_c)
-            except OSError:
-                    pass
-            
-                # delete directory if empty
-            try:
-                os.rmdir(directory)
-                print("Deleting directory ", directory)
-            except OSError:
-                pass
-
-            if filenames == []:
-                print("Please specify what should be deleted. See --help for details.")
+        if filenames == []:
+            print("Please specify what should be deleted. See --help for details.")
 
 
 def cli():
