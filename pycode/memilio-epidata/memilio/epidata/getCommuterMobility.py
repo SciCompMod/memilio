@@ -213,6 +213,11 @@ def get_commuter_data(setup_dict='',
         commuter_migration_file = pd.read_excel(filepath + file, **param_dict)
         # pd.read_excel(os.path.join(setup_dict['path'], item), sheet_name=3)
 
+        # delete zip folder after extracting
+        os.remove(os.path.join(filepath, item))
+        # delete file after reading
+        os.remove(os.path.join(filepath, file))
+
         counties_done = []  # counties considered as 'migration from'
         # current_row = -1  # row of matrix that belongs to county migrated from
         current_col = -1  # column of matrix that belongs to county migrated to
