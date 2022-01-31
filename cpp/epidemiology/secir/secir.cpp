@@ -792,122 +792,122 @@ void SecirParams::check_constraints() const
     }
 }
 
-void secir_get_derivatives(SecirParams const& params, Eigen::Ref<const Eigen::VectorXd> pop,
-                           Eigen::Ref<const Eigen::VectorXd> y, double t, Eigen::Ref<Eigen::VectorXd> dydt)
-{
-    // alpha  // percentage of asymptomatic cases
-    // beta // risk of infection from the infected symptomatic patients
-    // rho   // hospitalized per infectious
-    // theta // icu per hospitalized
-    // delta  // deaths per ICUs
-    // 0: S,      1: E,     2: C,     3: I,     4: H,     5: U,     6: R,     7: D
-    size_t n_agegroups = params.get_num_groups();
+// void secir_get_derivatives(SecirParams const& params, Eigen::Ref<const Eigen::VectorXd> pop,
+//                            Eigen::Ref<const Eigen::VectorXd> y, double t, Eigen::Ref<Eigen::VectorXd> dydt)
+// {
+//     // alpha  // percentage of asymptomatic cases
+//     // beta // risk of infection from the infected symptomatic patients
+//     // rho   // hospitalized per infectious
+//     // theta // icu per hospitalized
+//     // delta  // deaths per ICUs
+//     // 0: S,      1: E,     2: C,     3: I,     4: H,     5: U,     6: R,     7: D
+//     size_t n_agegroups = params.get_num_groups();
 
-    ContactMatrixGroup const& contact_matrix = params.get_contact_patterns();
+//     ContactMatrixGroup const& contact_matrix = params.get_contact_patterns();
     
-    auto test_and_trace_required = 0;
-    for (size_t i = 0; i < n_agegroups; i++) {
-        size_t Ci = params.populations.get_flat_index({i, C});
-        double R3 =
-            0.5 / (params.times[i].get_incubation() - params.times[i].get_serialinterval());
-        test_and_trace_required += (1 - params.probabilities[i].get_asymp_per_infectious()) * R3 * pop[Ci];
-    }
+//     auto test_and_trace_required = 0;
+//     for (size_t i = 0; i < n_agegroups; i++) {
+//         size_t Ci = params.populations.get_flat_index({i, C});
+//         double R3 =
+//             0.5 / (params.times[i].get_incubation() - params.times[i].get_serialinterval());
+//         test_and_trace_required += (1 - params.probabilities[i].get_asymp_per_infectious()) * R3 * pop[Ci];
+//     }
 
-    for (size_t i = 0; i < n_agegroups; i++) {
+//     for (size_t i = 0; i < n_agegroups; i++) {
 
-        size_t Si = params.populations.get_flat_index({i, S});
-        size_t Ei = params.populations.get_flat_index({i, E});
-        size_t Ci = params.populations.get_flat_index({i, C});
-        size_t Ii = params.populations.get_flat_index({i, I});
-        size_t Hi = params.populations.get_flat_index({i, H});
-        size_t Ui = params.populations.get_flat_index({i, U});
-        size_t Ri = params.populations.get_flat_index({i, R});
-        size_t Di = params.populations.get_flat_index({i, D});
+//         size_t Si = params.populations.get_flat_index({i, S});
+//         size_t Ei = params.populations.get_flat_index({i, E});
+//         size_t Ci = params.populations.get_flat_index({i, C});
+//         size_t Ii = params.populations.get_flat_index({i, I});
+//         size_t Hi = params.populations.get_flat_index({i, H});
+//         size_t Ui = params.populations.get_flat_index({i, U});
+//         size_t Ri = params.populations.get_flat_index({i, R});
+//         size_t Di = params.populations.get_flat_index({i, D});
 
-        dydt[Si] = 0;
-        dydt[Ei] = 0;
+//         dydt[Si] = 0;
+//         dydt[Ei] = 0;
 
-        //symptomatic are less well quarantined when testing and tracing is overwhelmed so they infect more people
-        auto risk_from_symptomatic   = smoother_cosine(
-            test_and_trace_required, params.get_test_and_trace_capacity(), params.get_test_and_trace_capacity() * 5,
-            params.probabilities[i].get_risk_from_symptomatic(),
-            params.probabilities[i].get_test_and_trace_max_risk_from_symptomatic());
+//         //symptomatic are less well quarantined when testing and tracing is overwhelmed so they infect more people
+//         auto risk_from_symptomatic   = smoother_cosine(
+//             test_and_trace_required, params.get_test_and_trace_capacity(), params.get_test_and_trace_capacity() * 5,
+//             params.probabilities[i].get_risk_from_symptomatic(),
+//             params.probabilities[i].get_test_and_trace_max_risk_from_symptomatic());
 
-        double icu_occupancy = 0;
+//         double icu_occupancy = 0;
 
-        for (size_t j = 0; j < n_agegroups; j++) {
-            size_t Sj = params.populations.get_flat_index({j, S});
-            size_t Ej = params.populations.get_flat_index({j, E});
-            size_t Cj = params.populations.get_flat_index({j, C});
-            size_t Ij = params.populations.get_flat_index({j, I});
-            size_t Hj = params.populations.get_flat_index({j, H});
-            size_t Uj = params.populations.get_flat_index({j, U});
-            size_t Rj = params.populations.get_flat_index({j, R});
+//         for (size_t j = 0; j < n_agegroups; j++) {
+//             size_t Sj = params.populations.get_flat_index({j, S});
+//             size_t Ej = params.populations.get_flat_index({j, E});
+//             size_t Cj = params.populations.get_flat_index({j, C});
+//             size_t Ij = params.populations.get_flat_index({j, I});
+//             size_t Hj = params.populations.get_flat_index({j, H});
+//             size_t Uj = params.populations.get_flat_index({j, U});
+//             size_t Rj = params.populations.get_flat_index({j, R});
 
-            // effective contact rate by contact rate between groups i and j and damping j
-            double season_val =
-                (1 + params.get_seasonality() *
-                         sin(3.141592653589793 * (std::fmod((params.get_start_day() + t), 365.0) / 182.5 + 0.5)));
-            double cont_freq_eff = season_val * contact_matrix.get_matrix_at(t)(static_cast<Eigen::Index>(i),
-                                                                                static_cast<Eigen::Index>(j));
-            double Nj      = pop[Sj] + pop[Ej] + pop[Cj] + pop[Ij] + pop[Hj] + pop[Uj] + pop[Rj]; // without died people
-            double divNj   = 1.0 / Nj; // precompute 1.0/Nj
-            double dummy_S = y[Si] * cont_freq_eff * divNj * params.probabilities[i].get_infection_from_contact() *
-                             (params.probabilities[j].get_carrier_infectability() * pop[Cj] +
-                              risk_from_symptomatic * pop[Ij]);
+//             // effective contact rate by contact rate between groups i and j and damping j
+//             double season_val =
+//                 (1 + params.get_seasonality() *
+//                          sin(3.141592653589793 * (std::fmod((params.get_start_day() + t), 365.0) / 182.5 + 0.5)));
+//             double cont_freq_eff = season_val * contact_matrix.get_matrix_at(t)(static_cast<Eigen::Index>(i),
+//                                                                                 static_cast<Eigen::Index>(j));
+//             double Nj      = pop[Sj] + pop[Ej] + pop[Cj] + pop[Ij] + pop[Hj] + pop[Uj] + pop[Rj]; // without died people
+//             double divNj   = 1.0 / Nj; // precompute 1.0/Nj
+//             double dummy_S = y[Si] * cont_freq_eff * divNj * params.probabilities[i].get_infection_from_contact() *
+//                              (params.probabilities[j].get_carrier_infectability() * pop[Cj] +
+//                               risk_from_symptomatic * pop[Ij]);
 
-            dydt[Si] -= dummy_S; // -R1*(C+beta*I)*S/N0
-            dydt[Ei] += dummy_S; // R1*(C+beta*I)*S/N0-R2*E
+//             dydt[Si] -= dummy_S; // -R1*(C+beta*I)*S/N0
+//             dydt[Ei] += dummy_S; // R1*(C+beta*I)*S/N0-R2*E
 
-            icu_occupancy += y[Uj];
-        }
+//             icu_occupancy += y[Uj];
+//         }
 
-        double dummy_R2 =
-            1.0 / (2 * params.times[i].get_serialinterval() - params.times[i].get_incubation()); // R2 = 1/(2SI-TINC)
-        double dummy_R3 =
-            0.5 / (params.times[i].get_incubation() - params.times[i].get_serialinterval()); // R3 = 1/(2(TINC-SI))
+//         double dummy_R2 =
+//             1.0 / (2 * params.times[i].get_serialinterval() - params.times[i].get_incubation()); // R2 = 1/(2SI-TINC)
+//         double dummy_R3 =
+//             0.5 / (params.times[i].get_incubation() - params.times[i].get_serialinterval()); // R3 = 1/(2(TINC-SI))
             
-        // ICU capacity shortage is close
-        double prob_hosp2icu =
-            smoother_cosine(icu_occupancy, 0.90 * params.get_icu_capacity(), params.get_icu_capacity(),
-                            params.probabilities[i].get_icu_per_hospitalized(), 0);
+//         // ICU capacity shortage is close
+//         double prob_hosp2icu =
+//             smoother_cosine(icu_occupancy, 0.90 * params.get_icu_capacity(), params.get_icu_capacity(),
+//                             params.probabilities[i].get_icu_per_hospitalized(), 0);
 
-        double prob_hosp2dead = params.probabilities[i].get_icu_per_hospitalized() - prob_hosp2icu;
+//         double prob_hosp2dead = params.probabilities[i].get_icu_per_hospitalized() - prob_hosp2icu;
 
-        dydt[Ei] -= dummy_R2 * y[Ei]; // only exchange of E and C done here
-        dydt[Ci] = dummy_R2 * y[Ei] -
-                   ((1 - params.probabilities[i].get_asymp_per_infectious()) * dummy_R3 +
-                    params.probabilities[i].get_asymp_per_infectious() / params.times[i].get_infectious_asymp()) *
-                       y[Ci];
-        dydt[Ii] =
-            (1 - params.probabilities[i].get_asymp_per_infectious()) * dummy_R3 * y[Ci] -
-            ((1 - params.probabilities[i].get_hospitalized_per_infectious()) / params.times[i].get_infectious_mild() +
-             params.probabilities[i].get_hospitalized_per_infectious() / params.times[i].get_home_to_hospitalized()) *
-                y[Ii];
-        dydt[Hi] =
-            params.probabilities[i].get_hospitalized_per_infectious() / params.times[i].get_home_to_hospitalized() *
-                y[Ii] -
-            ((1 - params.probabilities[i].get_icu_per_hospitalized()) / params.times[i].get_hospitalized_to_home() +
-             params.probabilities[i].get_icu_per_hospitalized() / params.times[i].get_hospitalized_to_icu()) *
-                y[Hi];
-        dydt[Ui] = -((1 - params.probabilities[i].get_dead_per_icu()) / params.times[i].get_icu_to_home() +
-                     params.probabilities[i].get_dead_per_icu() / params.times[i].get_icu_to_dead()) *
-                   y[Ui];
-        // add flow from hosp to icu according to potentially adjusted probability due to ICU limits
-        dydt[Ui] += prob_hosp2icu / params.times[i].get_hospitalized_to_icu() * y[Hi];
+//         dydt[Ei] -= dummy_R2 * y[Ei]; // only exchange of E and C done here
+//         dydt[Ci] = dummy_R2 * y[Ei] -
+//                    ((1 - params.probabilities[i].get_asymp_per_infectious()) * dummy_R3 +
+//                     params.probabilities[i].get_asymp_per_infectious() / params.times[i].get_infectious_asymp()) *
+//                        y[Ci];
+//         dydt[Ii] =
+//             (1 - params.probabilities[i].get_asymp_per_infectious()) * dummy_R3 * y[Ci] -
+//             ((1 - params.probabilities[i].get_hospitalized_per_infectious()) / params.times[i].get_infectious_mild() +
+//              params.probabilities[i].get_hospitalized_per_infectious() / params.times[i].get_home_to_hospitalized()) *
+//                 y[Ii];
+//         dydt[Hi] =
+//             params.probabilities[i].get_hospitalized_per_infectious() / params.times[i].get_home_to_hospitalized() *
+//                 y[Ii] -
+//             ((1 - params.probabilities[i].get_icu_per_hospitalized()) / params.times[i].get_hospitalized_to_home() +
+//              params.probabilities[i].get_icu_per_hospitalized() / params.times[i].get_hospitalized_to_icu()) *
+//                 y[Hi];
+//         dydt[Ui] = -((1 - params.probabilities[i].get_dead_per_icu()) / params.times[i].get_icu_to_home() +
+//                      params.probabilities[i].get_dead_per_icu() / params.times[i].get_icu_to_dead()) *
+//                    y[Ui];
+//         // add flow from hosp to icu according to potentially adjusted probability due to ICU limits
+//         dydt[Ui] += prob_hosp2icu / params.times[i].get_hospitalized_to_icu() * y[Hi];
 
-        dydt[Ri] = params.probabilities[i].get_asymp_per_infectious() / params.times[i].get_infectious_asymp() * y[Ci] +
-                   (1 - params.probabilities[i].get_hospitalized_per_infectious()) /
-                       params.times[i].get_infectious_mild() * y[Ii] +
-                   (1 - params.probabilities[i].get_icu_per_hospitalized()) /
-                       params.times[i].get_hospitalized_to_home() * y[Hi] +
-                   (1 - params.probabilities[i].get_dead_per_icu()) / params.times[i].get_icu_to_home() * y[Ui];
+//         dydt[Ri] = params.probabilities[i].get_asymp_per_infectious() / params.times[i].get_infectious_asymp() * y[Ci] +
+//                    (1 - params.probabilities[i].get_hospitalized_per_infectious()) /
+//                        params.times[i].get_infectious_mild() * y[Ii] +
+//                    (1 - params.probabilities[i].get_icu_per_hospitalized()) /
+//                        params.times[i].get_hospitalized_to_home() * y[Hi] +
+//                    (1 - params.probabilities[i].get_dead_per_icu()) / params.times[i].get_icu_to_home() * y[Ui];
 
-        dydt[Di] = params.probabilities[i].get_dead_per_icu() / params.times[i].get_icu_to_dead() * y[Ui];
-        // add potential, additional deaths due to ICU overflow
-        dydt[Di] += prob_hosp2dead / params.times[i].get_hospitalized_to_icu() * y[Hi];
-    }
-}
+//         dydt[Di] = params.probabilities[i].get_dead_per_icu() / params.times[i].get_icu_to_dead() * y[Ui];
+//         // add potential, additional deaths due to ICU overflow
+//         dydt[Di] += prob_hosp2dead / params.times[i].get_hospitalized_to_icu() * y[Hi];
+//     }
+// }
 
 TimeSeries<double> simulate(double t0, double tmax, double dt, SecirParams const& params)
 {
@@ -917,18 +917,18 @@ TimeSeries<double> simulate(double t0, double tmax, double dt, SecirParams const
     return sim.get_result();
 }
 
-SecirSimulation::SecirSimulation(SecirParams const& params, double t0, double dt)
-    : m_integratorCore(std::make_shared<RKIntegratorCore>(1e-3, 1.))
-    , m_integrator(
-          [params](auto&& y, auto&& t, auto&& dydt) {
-              secir_get_derivatives(params, y, t, dydt);
-          },
-          t0, params.populations.get_compartments(), dt, m_integratorCore)
-    , m_params(params)
-{
-    m_integratorCore->set_rel_tolerance(1e-4);
-    m_integratorCore->set_abs_tolerance(1e-1);
-}
+// SecirSimulation::SecirSimulation(SecirParams const& params, double t0, double dt)
+//     : m_integratorCore(std::make_shared<RKIntegratorCore>(1e-3, 1.))
+//     , m_integrator(
+//           [params](auto&& y, auto&& t, auto&& dydt) {
+//               secir_get_derivatives(params, y, t, dydt);
+//           },
+//           t0, params.populations.get_compartments(), dt, m_integratorCore)
+//     , m_params(params)
+// {
+//     m_integratorCore->set_rel_tolerance(1e-4);
+//     m_integratorCore->set_abs_tolerance(1e-1);
+// }
 
 Eigen::Ref<Eigen::VectorXd> SecirSimulation::advance(double tmax)
 {

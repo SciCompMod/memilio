@@ -225,17 +225,14 @@ namespace details
      * @brief reads populations data from RKI
      * @param path Path to RKI file
      * @param id_name Name of region key column
+     * @param vregion vector of keys of the region of interest     
      * @param date Date for which the arrays are initialized
-     * @param region vector of keys of the region of interest
-     * @param year Specifies year at which the data is read
-     * @param month Specifies month at which the data is read
-     * @param day Specifies day at which the data is read
      * @param num_* output vector for number of people in the corresponding compartement
      * @param t_* vector average time it takes to get from one compartement to another for each age group
      * @param mu_* vector probabilities to get from one compartement to another for each age group
      */
     IOResult<void>
-    read_rki_data(std::string const& path, const std::string& id_name, std::vector<int> const& region, Date date,
+    read_rki_data(std::string const& path, const std::string& id_name, std::vector<int> const& vregion, Date date,
                   std::vector<std::vector<double>>& num_exp, std::vector<std::vector<double>>& num_car,
                   std::vector<std::vector<double>>& num_inf, std::vector<std::vector<double>>& num_hosp,
                   std::vector<std::vector<double>>& num_icu, std::vector<std::vector<double>>& num_death,
@@ -249,9 +246,18 @@ namespace details
                   const std::vector<std::vector<double>>& mu_H_U, const std::vector<std::vector<double>>& mu_U_D,
                   const std::vector<double>& scaling_factor_inf);
 
-    IOResult<void> read_rki_recovered_data(std::string const& path, const std::string& id_name,
+    /**
+     * @brief reads confirmed cases data and translates data of day t0-delay to recovered compartment,
+     * @param path Path to RKI file
+     * @param id_name Name of region key column
+     * @param vregion vector of keys of the region of interest     
+     * @param date Date for which the arrays are initialized
+     * @param num_rec output vector for number of people in the compartement recovered
+     * @param delay number of days in the past the are used to set recovered compartment.
+     */
+    IOResult<void> read_rki_data_confirmed_to_recovered(std::string const& path, const std::string& id_name,
                                            std::vector<int> const& vregion, Date date,
-                                           std::vector<std::vector<double>>& vnum_rec);
+                                           std::vector<std::vector<double>>& vnum_rec, double delay=14.);
 
     /**
      * @brief sets populations data from RKI into a SecirModel
@@ -259,9 +265,7 @@ namespace details
      * @param path Path to RKI file
      * @param id_name Name of region key column
      * @param region vector of keys of the region of interest
-     * @param year Specifies year at which the data is read
-     * @param month Specifies month at which the data is read
-     * @param day Specifies day at which the data is read
+     * @param date Date for which the arrays are initialized
      * @param scaling_factor_inf factors by which to scale the confirmed cases of
      * rki data
      */
@@ -346,8 +350,7 @@ namespace details
                     model[county].populations[{AgeGroup(i), ModelType::Infected}]     = num_inf[county][i];
                     model[county].populations[{AgeGroup(i), ModelType::Hospitalized}] = num_hosp[county][i];
                     model[county].populations[{AgeGroup(i), ModelType::Dead}]         = num_death[county][i];
-                    model[county].populations[{AgeGroup(i), ModelType::Recovered}] =
-                        num_rec[county][i] - model[county].populations[{AgeGroup(i), ModelType::ICU}];
+                    model[county].populations[{AgeGroup(i), ModelType::Recovered}]    = num_rec[county][i];
                     model[county].populations[{AgeGroup(i), ModelType::InfTotal}] =
                         model[county].populations[{AgeGroup(i), ModelType::Recovered}] +
                         model[county].populations[{AgeGroup(i), ModelType::Dead}] +
@@ -369,16 +372,14 @@ namespace details
      * @param model vector of objects in which the data is set
      * @param path Path to RKI file
      * @param id_name Name of region key column
-     * @param region vector of keys of the region of interest
-     * @param year Specifies year at which the data is read
-     * @param month Specifies month at which the data is read
-     * @param day Specifies day at which the data is read
+     * @param vregion vector of keys of the region of interest
+     * @param date Date for which the arrays are initialized
      * @param scaling_factor_inf factors by which to scale the confirmed cases of
      * rki data
      */
     template <class Model, class ModelType = InfectionStateV>
     IOResult<void> set_rki_data_vaccmodel(std::vector<Model>& model, const std::string& path, const std::string& id_name,
-                                        std::vector<int> const& region, Date date,
+                                        std::vector<int> const& vregion, Date date,
                                         const std::vector<double>& scaling_factor_inf)
     {
 
@@ -673,9 +674,7 @@ namespace details
      * @param path Path to DIVI file
      * @param id_name Name of region key column
      * @param vregion Keys of the region of interest
-     * @param year Specifies year at which the data is read
-     * @param month Specifies month at which the data is read
-     * @param day Specifies day at which the data is read
+     * @param date Date for which the arrays are initialized
      * @param vnum_icu number of ICU patients
      */
     IOResult<void> read_divi_data(const std::string& path, const std::string& id_name, const std::vector<int>& vregion,
@@ -687,9 +686,7 @@ namespace details
      * @param path Path to DIVI file
      * @param id_name Name of region key column
      * @param vregion vector of keys of the regions of interest
-     * @param year Specifies year at which the data is read
-     * @param month Specifies month at which the data is read
-     * @param day Specifies day at which the data is read
+     * @param date Date for which the arrays are initialized
      * @param scaling_factor_icu factor by which to scale the icu cases of divi data
      */
     template <class Model, class ModelType = InfectionState>
@@ -773,7 +770,7 @@ namespace details
         std::vector<double> age_ranges = {5., 10., 20., 25., 20., 20.};
         std::vector<std::vector<double>> num_rec(model.size(), std::vector<double>(age_ranges.size(), 0.0));
 
-        BOOST_OUTCOME_TRY(read_rki_recovered_data(path_rki, id_name, vregion, date, num_rec));
+        BOOST_OUTCOME_TRY(read_rki_data_confirmed_to_recovered(path_rki, id_name, vregion, date, num_rec, 14.));
 
         for (size_t region = 0; region < vregion.size(); region++) {
             if (std::accumulate(num_population[region].begin(), num_population[region].end(), 0.0) > 0) {
@@ -919,9 +916,7 @@ namespace details
 * @param results_dir Path to result files
 * @param id_name Name of region key column
 * @param region vector of keys of the region of interest
-* @param year Specifies year at which the data is read
-* @param month Specifies month at which the data is read
-* @param day Specifies day at which the data is read
+* @param date Date for which the arrays are initialized
 * @param scaling_factor_inf factors by which to scale the confirmed cases of rki data
 */
 template <class Model, class ModelType = InfectionState>

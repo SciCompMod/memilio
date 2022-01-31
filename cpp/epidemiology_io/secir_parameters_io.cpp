@@ -294,12 +294,11 @@ namespace details
             size_t num_groups = age_ranges.size();
             for (size_t i = 0; i < num_groups; i++) {
                 // subtract infected confirmed cases which are not yet recovered
-                num_rec[i] -= num_inf[age]
-                num_rec[i] -= num_hosp[age]
-                num_rec[i] -= num_icu[age]
-                num_rec[i] -= num_death[age]
-                // remove dark figure scaling factor
-                num_rec[i] /= scaling_factor_inf[i];
+                // and remove dark figure scaling factor
+                num_rec[i] -= num_inf[i] / scaling_factor_inf[i];
+                num_rec[i] -= num_hosp[i] / scaling_factor_inf[i];
+                num_rec[i] -= num_icu[i] / scaling_factor_inf[i]; // TODO: this has to be adapted for scaling_factor_inf != 1 or != ***_icu
+                num_rec[i] -= num_death[i] / scaling_factor_inf[i];
                 auto try_fix_constraints = [region, &age_names, i](double& value, double error, auto str) {
                     if (value < error) {
                         // this should probably return a failure
@@ -331,9 +330,9 @@ namespace details
         return success();
     }
 
-    IOResult<void> read_rki_recovered_data(std::string const& path, const std::string& id_name,
+    IOResult<void> read_rki_data_confirmed_to_recovered(std::string const& path, const std::string& id_name,
                                            std::vector<int> const& vregion, Date date,
-                                           std::vector<std::vector<double>>& vnum_rec)
+                                           std::vector<std::vector<double>>& vnum_rec, double delay)
     {
         if (!boost::filesystem::exists(path)) {
             log_error("RKI data file not found: {}.", path);
@@ -384,7 +383,7 @@ namespace details
                 if (it_age != age_names.end() - 1) {
                     auto age = size_t(it_age - age_names.begin());
 
-                    if (date_df == offset_date_by_days(date, -14)) {
+                    if (date_df == offset_date_by_days(date, -delay)) {
                         num_rec[age] = root[i]["Confirmed"].asDouble();
                     }
                 }
