@@ -50,7 +50,7 @@ def createFederalStatesMobility(directory, mobility_file):
     """
     mobility_matrix = getMobilityFromFile(directory, mobility_file)
 
-    if(len(mobility_matrix) == len(geoger.get_county_ids())):
+    if (len(mobility_matrix.index) == len(geoger.get_county_ids())) and (len(mobility_matrix.columns) == len(geoger.get_county_ids())):
         # get county and state IDs
         countyIDs = geoger.get_county_ids()
         stateIDs = geoger.get_state_ids()
@@ -101,7 +101,7 @@ def updateMobility2022(directory, mobility_file):
     """
     mobility_matrix = getMobilityFromFile(directory, mobility_file)
 
-    if len(mobility_matrix) == 401:
+    if (len(mobility_matrix.index) == 401) and (len(mobility_matrix.columns) == 401):
         mobility_matrix.to_csv(
             directory + mobility_file + '_dim401.txt', sep=' ', header=None, index=False)
         # merge eisenach
