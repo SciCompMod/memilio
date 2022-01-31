@@ -29,11 +29,13 @@
  * @param t0 starting point of simulation
  * @param tmax end point of simulation
  */
-mio::IOResult<void> write_single_run_result(const int run, const mio::Graph<mio::SimulationNode<mio::SecirSimulation<>>, mio::MigrationEdge>& graph)
+mio::IOResult<void>
+write_single_run_result(const int run,
+                        const mio::Graph<mio::SimulationNode<mio::SecirSimulation<>>, mio::MigrationEdge>& graph)
 {
     std::string abs_path;
     BOOST_OUTCOME_TRY(created, mio::create_directory("results", abs_path));
-    
+
     if (run == 0) {
         std::cout << "Results are stored in " << abs_path << '\n';
         if (!created) {
@@ -47,10 +49,10 @@ mio::IOResult<void> write_single_run_result(const int run, const mio::Graph<mio:
     for (auto&& node : graph.nodes()) {
         BOOST_OUTCOME_TRY(js_node_model, serialize_json(node.property.get_result(), mio::IOF_OmitDistributions));
         Json::Value js_node(Json::objectValue);
-        js_node["NodeId"] = node.id;
-        js_node["Model"]  = js_node_model;
-        auto node_filename =
-            mio::path_join(abs_path, "Parameters_run" + std::to_string(run) + "_node" + std::to_string(inode++) + ".json");
+        js_node["NodeId"]  = node.id;
+        js_node["Model"]   = js_node_model;
+        auto node_filename = mio::path_join(abs_path, "Parameters_run" + std::to_string(run) + "_node" +
+                                                          std::to_string(inode++) + ".json");
         BOOST_OUTCOME_TRY(mio::write_json(node_filename, js_node));
     }
 
@@ -67,8 +69,7 @@ mio::IOResult<void> write_single_run_result(const int run, const mio::Graph<mio:
         return node.id;
     });
     BOOST_OUTCOME_TRY(
-        mio::save_result(all_results, ids,
-                    mio::path_join(abs_path, ("Results_run" + std::to_string(run) + ".h5"))));
+        mio::save_result(all_results, ids, mio::path_join(abs_path, ("Results_run" + std::to_string(run) + ".h5"))));
 
     return mio::success();
 }
@@ -109,7 +110,7 @@ int main()
 
     mio::SecirModel model(1);
     mio::AgeGroup num_groups = model.parameters.get_num_groups();
-    double fact    = 1.0 / (double)(size_t)num_groups;
+    double fact              = 1.0 / (double)(size_t)num_groups;
 
     auto& params = model.parameters;
 
@@ -118,46 +119,45 @@ int main()
     params.set<mio::Seasonality>(0);
 
     for (auto i = mio::AgeGroup(0); i < num_groups; i++) {
-        params.get<mio::IncubationTime>()[i] = tinc;
-        params.get<mio::InfectiousTimeMild>()[i] = tinfmild;
-        params.get<mio::SerialInterval>()[i] = tserint;
+        params.get<mio::IncubationTime>()[i]         = tinc;
+        params.get<mio::InfectiousTimeMild>()[i]     = tinfmild;
+        params.get<mio::SerialInterval>()[i]         = tserint;
         params.get<mio::HospitalizedToHomeTime>()[i] = thosp2home;
         params.get<mio::HomeToHospitalizedTime>()[i] = thome2hosp;
-        params.get<mio::HospitalizedToICUTime>()[i] = thosp2icu;
-        params.get<mio::ICUToHomeTime>()[i] = ticu2home;
-        params.get<mio::ICUToDeathTime>()[i] = ticu2death;
+        params.get<mio::HospitalizedToICUTime>()[i]  = thosp2icu;
+        params.get<mio::ICUToHomeTime>()[i]          = ticu2home;
+        params.get<mio::ICUToDeathTime>()[i]         = ticu2death;
 
-        model.populations[{i,mio::InfectionState::Exposed}] = fact * num_exp_t0;
-        model.populations[{i,mio::InfectionState::Carrier}] = fact * num_car_t0;
-        model.populations[{i,mio::InfectionState::Infected}] = fact * num_inf_t0;
-        model.populations[{i,mio::InfectionState::Hospitalized}] = fact * num_hosp_t0;
-        model.populations[{i,mio::InfectionState::ICU}] = fact * num_icu_t0;
-        model.populations[{i,mio::InfectionState::Recovered}] = fact * num_rec_t0;
-        model.populations[{i,mio::InfectionState::Dead}] = fact * num_dead_t0;
+        model.populations[{i, mio::InfectionState::Exposed}]      = fact * num_exp_t0;
+        model.populations[{i, mio::InfectionState::Carrier}]      = fact * num_car_t0;
+        model.populations[{i, mio::InfectionState::Infected}]     = fact * num_inf_t0;
+        model.populations[{i, mio::InfectionState::Hospitalized}] = fact * num_hosp_t0;
+        model.populations[{i, mio::InfectionState::ICU}]          = fact * num_icu_t0;
+        model.populations[{i, mio::InfectionState::Recovered}]    = fact * num_rec_t0;
+        model.populations[{i, mio::InfectionState::Dead}]         = fact * num_dead_t0;
         model.populations.set_difference_from_group_total<mio::AgeGroup>({i, mio::InfectionState::Susceptible},
                                                                          fact * num_total_t0);
 
         params.get<mio::InfectionProbabilityFromContact>()[i] = inf_prob;
-        params.get<mio::RelativeCarrierInfectability>()[i] = carr_infec;
-        params.get<mio::AsymptoticCasesPerInfectious>()[i] = alpha;
-        params.get<mio::RiskOfInfectionFromSympomatic>()[i] = beta;
-        params.get<mio::HospitalizedCasesPerInfectious>()[i] = rho;
-        params.get<mio::ICUCasesPerHospitalized>()[i] = theta;
-        params.get<mio::DeathsPerHospitalized>()[i] = delta;
+        params.get<mio::RelativeCarrierInfectability>()[i]    = carr_infec;
+        params.get<mio::AsymptoticCasesPerInfectious>()[i]    = alpha;
+        params.get<mio::RiskOfInfectionFromSympomatic>()[i]   = beta;
+        params.get<mio::HospitalizedCasesPerInfectious>()[i]  = rho;
+        params.get<mio::ICUCasesPerHospitalized>()[i]         = theta;
+        params.get<mio::DeathsPerICU>()[i]                    = delta;
     }
 
     params.apply_constraints();
 
     mio::ContactMatrixGroup& contact_matrix = params.get<mio::ContactPatterns>();
-    contact_matrix[0] = mio::ContactMatrix(Eigen::MatrixXd::Constant((size_t)num_groups,
-                                                                     (size_t)num_groups, fact * cont_freq));
+    contact_matrix[0] =
+        mio::ContactMatrix(Eigen::MatrixXd::Constant((size_t)num_groups, (size_t)num_groups, fact * cont_freq));
 
     mio::set_params_distributions_normal(model, t0, tmax, 0.2);
 
     auto write_parameters_status = mio::write_json("parameters.json", model);
-    if (!write_parameters_status)
-    {
-        std::cout << "Error writing parameters: " << write_parameters_status.error().formatted_message(); 
+    if (!write_parameters_status) {
+        std::cout << "Error writing parameters: " << write_parameters_status.error().formatted_message();
         return -1;
     }
 
@@ -166,11 +166,11 @@ int main()
     mio::ParameterStudy<mio::SecirSimulation<>> parameter_study(model, t0, tmax, 0.2, num_runs);
 
     //run study
-    int run                        = 0;
-    auto lambda                    = [&run](auto&& graph) {
+    int run     = 0;
+    auto lambda = [&run](auto&& graph) {
         auto write_result_status = write_single_run_result(run++, graph);
-        if (!write_result_status) {            
-            std::cout << "Error writing result: " << write_result_status.error().formatted_message(); 
+        if (!write_result_status) {
+            std::cout << "Error writing result: " << write_result_status.error().formatted_message();
         }
     };
     parameter_study.run(lambda);
