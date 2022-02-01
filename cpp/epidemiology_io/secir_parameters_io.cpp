@@ -628,7 +628,9 @@ namespace details
         std::ifstream vaccine(path);
         reader.parse(vaccine, root);
 
+        // iterate over regions (e.g., counties)
         for (size_t i = 0; i < model.size(); ++i) {
+            // iterate over age groups in region
             for (auto g = AgeGroup(0); g < num_groups; ++g) {
 
                 model[i].parameters.template get<DailyFirstVaccination>()[g] = {};

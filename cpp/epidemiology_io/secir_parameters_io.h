@@ -526,17 +526,21 @@ namespace details
                 t_icu_to_rec[county].push_back(static_cast<int>(
                     model[county].parameters.template get<epi::ICUToHomeTime>()[(epi::AgeGroup)group]));
 
+                double reduc_vacc_exp  = model[county].parameters.template get<epi::ReducVaccExp>()[(epi::AgeGroup)group];
+                double reduc_vacc_inf  = model[county].parameters.template get<epi::ReducVaccInf>()[(epi::AgeGroup)group];
+                double reduc_vacc_hosp = model[county].parameters.template get<epi::ReducVaccHosp>()[(epi::AgeGroup)group];
+                double reduc_vacc_icu  = model[county].parameters.template get<epi::ReducVaccHosp>()[(epi::AgeGroup)group];
+                double reduc_vacc_dead = model[county].parameters.template get<epi::ReducVaccHosp>()[(epi::AgeGroup)group];
                 mu_C_R[county].push_back(
-                    (1 - model[county].parameters.template get<epi::ReducVaccInf>()[(epi::AgeGroup)group] *
+                    (1 - reduc_vacc_inf / reduc_vacc_exp *
                              (1 - model[county].parameters.template get<epi::AsymptoticCasesPerInfectious>()[(
                                       epi::AgeGroup)group])));
-                mu_I_H[county].push_back(
-                    model[county].parameters.template get<epi::HospitalizedCasesPerInfectious>()[(epi::AgeGroup)group] *
-                    model[county].parameters.template get<epi::ReducVaccHosp>()[(epi::AgeGroup)group]);
+                mu_I_H[county].push_back(reduc_vacc_hosp / reduc_vacc_inf *
+                    model[county].parameters.template get<epi::HospitalizedCasesPerInfectious>()[(epi::AgeGroup)group]);
                 // transfer from H to U, D unchanged.
-                mu_H_U[county].push_back(
+                mu_H_U[county].push_back(reduc_vacc_icu / reduc_vacc_hosp *
                     model[county].parameters.template get<epi::ICUCasesPerHospitalized>()[(epi::AgeGroup)group]);
-                mu_U_D[county].push_back(
+                mu_U_D[county].push_back(reduc_vacc_dead / reduc_vacc_icu *
                     model[county].parameters.template get<epi::DeathsPerICU>()[(epi::AgeGroup)group]);                       
             }
         }
@@ -580,22 +584,14 @@ namespace details
             mu_H_U[county].clear();
             mu_U_D[county].clear();
 
-            num_inf[county].clear();
-            num_death[county].clear();
-            num_rec[county].clear();
-            num_exp[county].clear();
-            num_car[county].clear();
-            num_hosp[county].clear();
-            num_icu[county].clear();
+            num_inf[county]   = std::vector<double>(age_ranges.size(), 0.0);
+            num_death[county] = std::vector<double>(age_ranges.size(), 0.0);
+            num_rec[county]   = std::vector<double>(age_ranges.size(), 0.0);
+            num_exp[county]   = std::vector<double>(age_ranges.size(), 0.0);
+            num_car[county]   = std::vector<double>(age_ranges.size(), 0.0);
+            num_hosp[county]  = std::vector<double>(age_ranges.size(), 0.0);
+            num_icu[county]   = std::vector<double>(age_ranges.size(), 0.0);              
             for (size_t group = 0; group < age_ranges.size(); group++) {
-
-                num_inf[county].push_back(0);
-                num_death[county].push_back(0);
-                num_rec[county].push_back(0);
-                num_exp[county].push_back(0);
-                num_car[county].push_back(0);
-                num_hosp[county].push_back(0);
-                num_icu[county].push_back(0);
 
                 double reduc_t = model[0].parameters.template get<epi::ReducMildRecTime>()[(epi::AgeGroup)group];
                 t_car_to_inf[county].push_back(static_cast<int>(
@@ -621,17 +617,21 @@ namespace details
                 t_icu_to_rec[county].push_back(static_cast<int>(
                     model[county].parameters.template get<epi::ICUToHomeTime>()[(epi::AgeGroup)group]));                    
 
+                double reduc_immune_exp  = model[county].parameters.template get<ReducImmuneExp>()[(epi::AgeGroup)group];
+                double reduc_immune_inf  = model[county].parameters.template get<ReducImmuneInf>()[(epi::AgeGroup)group];
+                double reduc_immune_hosp = model[county].parameters.template get<ReducImmuneHosp>()[(epi::AgeGroup)group];
+                double reduc_immune_icu  = model[county].parameters.template get<ReducImmuneHosp>()[(epi::AgeGroup)group];
+                double reduc_immune_dead = model[county].parameters.template get<ReducImmuneHosp>()[(epi::AgeGroup)group];
                 mu_C_R[county].push_back(
-                    (1 - model[county].parameters.template get<epi::ReducImmuneInf>()[(epi::AgeGroup)group] *
+                    (1 - reduc_immune_inf / reduc_immune_exp *
                              (1 - model[county].parameters.template get<epi::AsymptoticCasesPerInfectious>()[(
                                       epi::AgeGroup)group])));
-                mu_I_H[county].push_back(
-                    model[county].parameters.template get<epi::HospitalizedCasesPerInfectious>()[(epi::AgeGroup)group] *
-                    model[county].parameters.template get<epi::ReducImmuneHosp>()[(epi::AgeGroup)group]);
+                mu_I_H[county].push_back(reduc_immune_hosp / reduc_immune_inf *
+                    model[county].parameters.template get<epi::HospitalizedCasesPerInfectious>()[(epi::AgeGroup)group]);
                 // transfer from H to U, D unchanged.
-                mu_H_U[county].push_back(
+                mu_H_U[county].push_back(reduc_immune_icu / reduc_immune_hosp *
                     model[county].parameters.template get<epi::ICUCasesPerHospitalized>()[(epi::AgeGroup)group]);
-                mu_U_D[county].push_back(
+                mu_U_D[county].push_back(reduc_immune_dead / reduc_immune_icu *
                     model[county].parameters.template get<epi::DeathsPerICU>()[(epi::AgeGroup)group]);                       
             }
         }
@@ -911,7 +911,7 @@ namespace details
 * @param scaling_factor_inf factors by which to scale the confirmed cases of rki data
 */
 template <class Model, class ModelType = InfectionState>
-IOResult<void> set_rki_data_export_timeseries(std::vector<Model>& model, const std::string& data_dir,
+IOResult<void> export_input_data_county_timeseries(std::vector<Model>& model, const std::string& data_dir,
                                        const std::string& results_dir, std::vector<int> const& region, Date date,
                                        const std::vector<double>& scaling_factor_inf, double scaling_factor_icu,
                                        int num_days)
@@ -1117,10 +1117,15 @@ IOResult<void> read_input_data_county(std::vector<Model>& model, Date date, cons
     }
     BOOST_OUTCOME_TRY((details::set_rki_data<Model, ModelType>(model, path_join(dir, "all_county_age_ma7_rki.json"),
                                                                id_name, county, date, scaling_factor_inf)));
-    BOOST_OUTCOME_TRY((details::set_rki_data_export_timeseries<Model, ModelType>(model, dir, dir, county, date, scaling_factor_inf,
-                                                                 scaling_factor_icu, 5)));
     BOOST_OUTCOME_TRY((details::set_population_data<Model, ModelType>(
         model, path_join(dir, "county_current_population.json"), "ID_County", county)));
+
+    // Use only if extrapolated real data is needed for comparison. EXPENSIVE !
+    // Run time equals run time of the previous  functions times the num_days !
+    int num_days = 90
+    BOOST_OUTCOME_TRY((details::export_input_data_county_timeseries<Model, ModelType>(model, dir, dir, county, date, scaling_factor_inf,
+                                                                 scaling_factor_icu, num_days)));
+
     return success();
 }
 template <class Model, class ModelType = InfectionStateV>
@@ -1146,8 +1151,7 @@ IOResult<void> read_input_data_county_vaccmodel(std::vector<Model>& model, Date 
     BOOST_OUTCOME_TRY((details::set_population_data_vaccmodel<Model>(
         model, path_join(dir, "county_current_population.json"), path_join(dir, "all_county_age_ma7_rki.json"),
         "ID_County", county, date)));
-    // details::set_vaccine_data(model, path_join(dir, "vaccine_data.json"),
-    // id_name, county);
+
     return success();
 }
 
