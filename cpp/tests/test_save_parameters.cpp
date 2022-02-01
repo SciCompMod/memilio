@@ -519,7 +519,7 @@ TEST(TestSaveParameters, ReadPopulationDataCountyAllAges)
         model[0].parameters.get<epi::ICUCasesPerHospitalized>()[group]        = 0.12 * ((size_t)group + 1);
     }
     auto read_result =
-        epi::read_population_data_county(model, date, county, scaling_factor_inf, scaling_factor_icu, path);
+        epi::read_input_data_county(model, date, county, scaling_factor_inf, scaling_factor_icu, path);
     ASSERT_THAT(print_wrap(read_result), IsSuccess());
 
     std::vector<double> sus   = {10284.4, 19086.2, 73805.3, 82522.6, 43731.9, 15620.2};

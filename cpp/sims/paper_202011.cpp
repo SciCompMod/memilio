@@ -460,7 +460,7 @@ epi::IOResult<void> set_nodes(const epi::SecirParams& params, epi::Date start_da
     }
     auto scaling_factor_infected = std::vector<double>(size_t(params.get_num_groups()), 2.5);
     auto scaling_factor_icu      = 1.0;
-    BOOST_OUTCOME_TRY(epi::read_population_data_county(counties, start_date, county_ids, scaling_factor_infected,
+    BOOST_OUTCOME_TRY(epi::read_input_data_county(counties, start_date, county_ids, scaling_factor_infected,
                                                        scaling_factor_icu, (data_dir / "pydata" / "Germany").string()));
     // set_synthetic_population_data(counties);
 

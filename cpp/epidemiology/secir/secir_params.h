@@ -489,7 +489,7 @@ struct ReducImmuneExp {
     }
 };
 
-struct ReducExpInf {
+struct ReducVaccInf {
     using Type = CustomIndexArray<UncertainValue, AgeGroup>;
     static Type get_default(AgeGroup size)
     {
@@ -497,11 +497,11 @@ struct ReducExpInf {
     }
     static std::string name()
     {
-        return "ReducExpInf";
+        return "ReducVaccInf";
     }
 };
 
-struct ReducImmuneExpInf {
+struct ReducImmuneInf {
     using Type = CustomIndexArray<UncertainValue, AgeGroup>;
     static Type get_default(AgeGroup size)
     {
@@ -509,11 +509,11 @@ struct ReducImmuneExpInf {
     }
     static std::string name()
     {
-        return "ReducImmuneExpInf";
+        return "ReducImmuneInf";
     }
 };
 
-struct ReducInfHosp {
+struct ReducVaccHosp {
     using Type = CustomIndexArray<UncertainValue, AgeGroup>;
     static Type get_default(AgeGroup size)
     {
@@ -521,11 +521,11 @@ struct ReducInfHosp {
     }
     static std::string name()
     {
-        return "ReducInfHosp";
+        return "ReducVaccHosp";
     }
 };
 
-struct ReducImmuneInfHosp {
+struct ReducImmuneHosp {
     using Type = CustomIndexArray<UncertainValue, AgeGroup>;
     static Type get_default(AgeGroup size)
     {
@@ -533,11 +533,11 @@ struct ReducImmuneInfHosp {
     }
     static std::string name()
     {
-        return "ReducImmuneInfHosp";
+        return "ReducImmuneHosp";
     }
 };
 
-struct ReducTime {
+struct ReducMildRecTime {
     using Type = CustomIndexArray<UncertainValue, AgeGroup>;
     static Type get_default(AgeGroup size)
     {
@@ -545,7 +545,7 @@ struct ReducTime {
     }
     static std::string name()
     {
-        return "ReducTime";
+        return "ReducMildRecTime";
     }
 };
 
@@ -647,8 +647,8 @@ using SecirParamsBase =
                  RiskOfInfectionFromSympomatic, MaxRiskOfInfectionFromSympomatic, HospitalizedCasesPerInfectious,
                  ICUCasesPerHospitalized, DeathsPerICU, VaccineGrowthFirst, VaccineGrowthFull, VaccinationGap,
                  DaysUntilEffective, DaysUntilEffectiveFull, BaseInfB117, BaseInfB161, DailyFullVaccination,
-                 DailyFirstVaccination, DynamicInfectionFromContact, ReducVaccExp, ReducImmuneExp, ReducExpInf,
-                 ReducImmuneExpInf, ReducInfHosp, ReducImmuneInfHosp, ReducTime>;
+                 DailyFirstVaccination, DynamicInfectionFromContact, ReducVaccExp, ReducImmuneExp, ReducVaccInf,
+                 ReducImmuneInf, ReducVaccHosp, ReducImmuneHosp, ReducMildRecTime>;
 
 /**
  * @brief Parameters of an age-resolved SECIR/SECIHURD model.

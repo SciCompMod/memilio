@@ -174,23 +174,23 @@ epi::IOResult<void> set_covid_parameters(epi::SecirParams& params, bool long_tim
     const double reduc_vacc_exp_max        = 0.85;
     const double reduc_immune_exp_min      = 0.281;
     const double reduc_immune_exp_max      = 0.381;
-    const double reduc_exp_inf_min         = 0.6;
-    const double reduc_exp_inf_max         = 0.7;
-    const double reduc_immune_exp_inf_min  = 0.193;
-    const double reduc_immune_exp_inf_max  = 0.293;
-    const double reduc_inf_hosp_min        = 0.05;
-    const double reduc_inf_hosp_max        = 0.15;
-    const double reduc_immune_inf_hosp_min = 0.041;
-    const double reduc_immune_inf_hosp_max = 0.141;
+    const double reduc_vacc_inf_min        = 0.6;
+    const double reduc_vacc_inf_max        = 0.7;
+    const double reduc_immune_inf_min      = 0.193;
+    const double reduc_immune_inf_max      = 0.293;
+    const double reduc_vacc_hosp_min       = 0.05;
+    const double reduc_vacc_hosp_max       = 0.15;
+    const double reduc_immune_hosp_min     = 0.041;
+    const double reduc_immune_hosp_max     = 0.141;
 
-    double temp_reduc_time;
+    double temp_reduc_mild_rec_time;
     if (long_time) {
-        temp_reduc_time = 1.0;
+        temp_reduc_mild_rec_time = 1.0;
     }
     else {
-        temp_reduc_time = 0.5;
+        temp_reduc_mild_rec_time = 0.5;
     }
-    const double reduc_time = temp_reduc_time;
+    const double reduc_mild_rec_time = temp_reduc_mild_rec_time;
 
     array_assign_uniform_distribution(params.get<epi::InfectionProbabilityFromContact>(), transmission_risk_min,
                                       transmission_risk_max);
@@ -208,13 +208,13 @@ epi::IOResult<void> set_covid_parameters(epi::SecirParams& params, bool long_tim
 
     array_assign_uniform_distribution(params.get<epi::ReducVaccExp>(), reduc_vacc_exp_min, reduc_vacc_exp_max);
     array_assign_uniform_distribution(params.get<epi::ReducImmuneExp>(), reduc_immune_exp_min, reduc_immune_exp_max);
-    array_assign_uniform_distribution(params.get<epi::ReducExpInf>(), reduc_exp_inf_min, reduc_exp_inf_max);
-    array_assign_uniform_distribution(params.get<epi::ReducImmuneExpInf>(), reduc_immune_exp_inf_min,
-                                      reduc_immune_exp_inf_max);
-    array_assign_uniform_distribution(params.get<epi::ReducInfHosp>(), reduc_inf_hosp_min, reduc_inf_hosp_max);
-    array_assign_uniform_distribution(params.get<epi::ReducImmuneInfHosp>(), reduc_immune_inf_hosp_min,
-                                      reduc_immune_inf_hosp_max);
-    array_assign_uniform_distribution(params.get<epi::ReducTime>(), reduc_time, reduc_time);
+    array_assign_uniform_distribution(params.get<epi::ReducVaccInf>(), reduc_vacc_inf_min, reduc_vacc_inf_max);
+    array_assign_uniform_distribution(params.get<epi::ReducImmuneInf>(), reduc_immune_inf_min,
+                                      reduc_immune_inf_max);
+    array_assign_uniform_distribution(params.get<epi::ReducVaccHosp>(), reduc_vacc_hosp_min, reduc_vacc_hosp_max);
+    array_assign_uniform_distribution(params.get<epi::ReducImmuneHosp>(), reduc_immune_hosp_min,
+                                      reduc_immune_hosp_max);
+    array_assign_uniform_distribution(params.get<epi::ReducMildRecTime>(), reduc_mild_rec_time, reduc_mild_rec_time);
 
     //sasonality
     const double seasonality_min = 0.1;
@@ -523,10 +523,10 @@ epi::IOResult<void> set_nodes(const epi::SecirParams& params, epi::Date start_da
     }
     auto scaling_factor_infected = std::vector<double>(size_t(params.get_num_groups()), 1.0);
     auto scaling_factor_icu      = 1.0;
-    /*BOOST_OUTCOME_TRY((epi::read_population_data_county<epi::SecirModelV, epi::InfectionStateV>(
+    /*BOOST_OUTCOME_TRY((epi::read_input_data_county<epi::SecirModelV, epi::InfectionStateV>(
         counties, start_date, county_ids, scaling_factor_infected, scaling_factor_icu,
         (data_dir / "pydata" / "Germany").string())));*/
-    BOOST_OUTCOME_TRY(epi::read_population_data_county_vaccmodel(counties, start_date, county_ids,
+    BOOST_OUTCOME_TRY(epi::read_input_data_county_vaccmodel(counties, start_date, county_ids,
                                              scaling_factor_infected, scaling_factor_icu, 
                                              (data_dir / "pydata" / "Germany").string(),
                                              epi::get_offset_in_days(end_date, start_date)));
