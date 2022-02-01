@@ -71,7 +71,7 @@ setup(
         'pandas<1.2.0',
         'matplotlib<3.4',
         'tables',
-        'numpy<=1.19.4',
+        'numpy>=1.21',
         'openpyxl',
         'xlrd',
         'requests',
