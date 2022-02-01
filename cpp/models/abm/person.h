@@ -1,7 +1,7 @@
 /* 
 * Copyright (C) 2020-2021 German Aerospace Center (DLR-SC)
 *
-* Authors: Daniel Abele
+* Authors: Daniel Abele, Elisabeth Kluth
 *
 * Contact: Martin J. Kuehn <Martin.Kuehn@DLR.de>
 *
@@ -47,6 +47,8 @@ struct InfectionProperties {
     bool detected;
 };
 
+static constexpr uint32_t INVALID_PERSON_INDEX = std::numeric_limits<uint32_t>::max();
+
 /**
  * Agents in the simulated world that can carry and spread the infection.
  */
@@ -60,18 +62,12 @@ public:
      * @param vaccination_state the initial infection state of the person
      * @param age the age group of the person
      * @param global_params the global infection parameters
-     */
-    Person(LocationId id, InfectionProperties infection_properties, VaccinationState vaccination_state, AbmAgeGroup age,
-           const GlobalInfectionParameters& global_params);
-    /**
-     * create a Person.
-     * @param id index and type of the initial location of the person
-     * @param infection_properties the initial infection state of the person and if infection is detected
-     * @param age the age group of the person
-     * @param global_params the global infection parameters
+     * @param person_id index of the person
      */
     Person(LocationId id, InfectionProperties infection_properties, AbmAgeGroup age,
-           const GlobalInfectionParameters& global_params);
+           const GlobalInfectionParameters& global_params,
+           VaccinationState vaccination_state = VaccinationState::Unvaccinated,
+           uint32_t person_id                 = INVALID_PERSON_INDEX);
 
     /**
      * create a Person.
@@ -79,19 +75,12 @@ public:
      * @param infection_properties the initial infection state of the person and if infection is detected
      * @param age the age group of the person
      * @param global_params the global infection parameters
+     * @param person_id index of the person
      */
     Person(Location& location, InfectionProperties infection_properties, AbmAgeGroup age,
-           const GlobalInfectionParameters& global_params);
-
-    /**
-     * create a Person.
-     * @param location the initial location of the person
-     * @param infection_properties the initial infection state of the person and if infection is detected
-     * @param age the age group of the person
-     * @param global_params the global infection parameters
-     */
-    Person(Location& location, InfectionProperties infection_properties, VaccinationState vaccination_state,
-           AbmAgeGroup age, const GlobalInfectionParameters& global_params);
+           const GlobalInfectionParameters& global_params,
+           VaccinationState vaccination_state = VaccinationState::Unvaccinated,
+           uint32_t person_id                 = INVALID_PERSON_INDEX);
 
     /** 
      * Time passes and the person interacts with the population at its current location.
@@ -241,6 +230,12 @@ public:
      */
     bool get_tested(const TestParameters& params);
 
+    /**
+     * get the person id of the person
+     * the person id should correspondet to the index in m_persons in world
+     */
+    uint32_t get_person_id();
+
 private:
     LocationId m_location_id;
     std::vector<uint32_t> m_assigned_locations;
@@ -255,6 +250,7 @@ private:
     double m_random_goto_work_hour;
     double m_random_goto_school_hour;
     TimeSpan m_time_since_negative_test;
+    uint32_t m_person_id;
 };
 
 } // namespace mio

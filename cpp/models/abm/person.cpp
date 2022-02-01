@@ -25,8 +25,8 @@
 namespace mio
 {
 
-Person::Person(LocationId id, InfectionProperties infection_properties, VaccinationState vaccination_state,
-               AbmAgeGroup age, const GlobalInfectionParameters& global_params)
+Person::Person(LocationId id, InfectionProperties infection_properties, AbmAgeGroup age,
+               const GlobalInfectionParameters& global_params, VaccinationState vaccination_state, uint32_t person_id)
     : m_location_id(id)
     , m_assigned_locations((uint32_t)LocationType::Count, INVALID_LOCATION_INDEX)
     , m_infection_state(infection_properties.state)
@@ -35,6 +35,7 @@ Person::Person(LocationId id, InfectionProperties infection_properties, Vaccinat
     , m_age(age)
     , m_time_at_location(std::numeric_limits<int>::max() / 2) //avoid overflow on next steps
     , m_time_since_negative_test(std::numeric_limits<int>::max() / 2)
+    , m_person_id(person_id)
 {
     m_random_workgroup        = UniformDistribution<double>::get_instance()();
     m_random_schoolgroup      = UniformDistribution<double>::get_instance()();
@@ -50,22 +51,10 @@ Person::Person(LocationId id, InfectionProperties infection_properties, Vaccinat
     }
 }
 
-Person::Person(LocationId id, InfectionProperties infection_properties, AbmAgeGroup age,
-               const GlobalInfectionParameters& global_params)
-    : Person(id, infection_properties, VaccinationState::Unvaccinated, age, global_params)
-{
-}
-
 Person::Person(Location& location, InfectionProperties infection_properties, AbmAgeGroup age,
-               const GlobalInfectionParameters& global_params)
-    : Person({location.get_index(), location.get_type()}, infection_properties, VaccinationState::Unvaccinated, age,
-             global_params)
-{
-}
-
-Person::Person(Location& location, InfectionProperties infection_properties, VaccinationState vaccination_state,
-               AbmAgeGroup age, const GlobalInfectionParameters& global_params)
-    : Person({location.get_index(), location.get_type()}, infection_properties, vaccination_state, age, global_params)
+               const GlobalInfectionParameters& global_params, VaccinationState vaccination_state, uint32_t person_id)
+    : Person({location.get_index(), location.get_type()}, infection_properties, age, global_params, vaccination_state,
+             person_id)
 {
 }
 
@@ -195,5 +184,10 @@ bool Person::get_tested(const TestParameters& params)
             return true;
         }
     }
+}
+
+uint32_t Person::get_person_id()
+{
+    return m_person_id;
 }
 } // namespace mio
