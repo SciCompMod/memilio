@@ -200,6 +200,7 @@ namespace details
 
                 auto date_df = parse_date(root[i]["Date"].asString());
 
+                // only up to age_names.end() - 1 since "unknown" is in list
                 auto it_age = std::find(age_names.begin(), age_names.end() - 1, root[i]["Age_RKI"].asString());
                 if (it_age != age_names.end() - 1) {
                     auto age = size_t(it_age - age_names.begin());
@@ -379,6 +380,7 @@ namespace details
 
                 auto date_df = parse_date(root[i]["Date"].asString());
 
+                // only up to age_names.end() - 1 since "unknown" is in list
                 auto it_age = std::find(age_names.begin(), age_names.end() - 1, root[i]["Age_RKI"].asString());
                 if (it_age != age_names.end() - 1) {
                     auto age = size_t(it_age - age_names.begin());
@@ -621,7 +623,7 @@ namespace details
         size_t days_until_effective1 = (size_t)(int)(double)model[0].parameters.get<DaysUntilEffective>()[AgeGroup(0)];
         size_t days_until_effective2 =
             (size_t)(int)(double)model[0].parameters.get<DaysUntilEffectiveFull>()[AgeGroup(0)];
-        size_t vaccination_gap = (size_t)(int)(double)model[0].parameters.get<VaccinationGap>()[AgeGroup(0)];
+        size_t vaccination_distance = (size_t)(int)(double)model[0].parameters.get<VaccinationGap>()[AgeGroup(0)];
 
         std::vector<std::string> age_names = {"0-4", "5-14", "15-34", "35-59", "60-79", "80-99"};
 
@@ -650,7 +652,7 @@ namespace details
             }
         }
         auto max_full_date =
-            offset_date_by_days(max_date, days_until_effective1 - days_until_effective2 - vaccination_gap);
+            offset_date_by_days(max_date, days_until_effective1 - days_until_effective2 - vaccination_distance);
 
         for (unsigned int i = 0; i < root.size(); i++) {
             auto it      = std::find_if(vregion.begin(), vregion.end(), [&root, i, &id_name](auto r) {
@@ -660,26 +662,35 @@ namespace details
             if (it != vregion.end()) {
                 auto region_idx = size_t(it - vregion.begin());
 
-                auto it_age = std::find(age_names.begin(), age_names.end() - 1, root[i]["Age_RKI"].asString());
-                if (it_age != age_names.end() - 1) {
+                // "unknown" is not in age_names list, go up to age_names.end()
+                auto it_age = std::find(age_names.begin(), age_names.end(), root[i]["Age_RKI"].asString()); 
+                if (it_age != age_names.end()) {
                     auto age = size_t(it_age - age_names.begin());
 
                     for (size_t d = 0; d < (size_t)num_days + 1; ++d) {
-
-                        auto offset_first_date = offset_date_by_days(date, d - days_until_effective1 + vaccination_gap);
+                        // a person who is reported as fully vaccinated at start_date + simulation_day - days_until_effective1 + vaccination_distance
+                        // had the first dose on start_date + simulation_day - days_until_effective1 and had the 'full' effect of the first
+                        // dose at day=simulation_day (neglecting start_date here)
+                        auto offset_first_date = offset_date_by_days(date, d - days_until_effective1 + vaccination_distance);
                         if (date_df == offset_first_date && max_date >= offset_first_date) {
                             model[region_idx].parameters.template get<DailyFirstVaccination>()[AgeGroup(age)][d] =
                                 root[i]["Vacc_completed"].asDouble();
                         }
-                        else if (max_date < offset_first_date && date_df == offset_date_by_days(max_date, -1)) {
+                        // if start_date + simulation_day - days_until_effective1 + vaccination_distance is not anymore in the
+                        // database (i.e., offset_first_date > max_date), 
+                        else if (offset_first_date > max_date && date_df == offset_date_by_days(max_date, -1)) {
                             model[region_idx].parameters.template get<DailyFirstVaccination>()[AgeGroup(age)][d] -=
                                 root[i]["Vacc_completed"].asDouble();
                         }
-                        else if (max_date < offset_first_date && date_df == max_date) {
+                        // if start_date + simulation_day - days_until_effective1 + vaccination_distance is not anymore in the
+                        // database (i.e., offset_first_date > max_date),                         
+                        else if (offset_first_date > max_date && date_df == max_date) {
                             model[region_idx].parameters.template get<DailyFirstVaccination>()[AgeGroup(age)][d] +=
                                 2 * root[i]["Vacc_completed"].asDouble();
                         }
 
+                        // a person who is reported as fully vaccinated at start_date + simulation_day - days_until_effective2
+                        // had the full effect of the second dose at day=simulation_day (neglecting start_date here)
                         auto offset_full_date = offset_date_by_days(date, d - days_until_effective2);
                         if (date_df == offset_full_date && max_full_date >= offset_full_date) {
                             model[region_idx].parameters.template get<DailyFullVaccination>()[AgeGroup(age)][d] =
@@ -713,7 +724,7 @@ namespace details
         Json::Reader reader;
         Json::Value root;
 
-        size_t vaccination_gap      = (size_t)(int)(double)model[0].parameters.get<VaccinationGap>()[AgeGroup(0)];
+        size_t vaccination_distance      = (size_t)(int)(double)model[0].parameters.get<VaccinationGap>()[AgeGroup(0)];
         size_t days_until_effective = (size_t)(int)(double)model[0].parameters.get<DaysUntilEffective>()[AgeGroup(0)];
 
         std::ifstream vaccine(path);
@@ -729,11 +740,11 @@ namespace details
 
         double vaccine_first_mean;
         double vaccine_full_mean;
-        for (size_t j = 0; j < vaccination_gap + days_until_effective; ++j) {
+        for (size_t j = 0; j < vaccination_distance + days_until_effective; ++j) {
             vaccine_first_mean = 0;
             vaccine_full_mean  = 0;
-            for (size_t i = root.size() - window + j - vaccination_gap - days_until_effective;
-                 i < root.size() + j - vaccination_gap - days_until_effective; ++i) {
+            for (size_t i = root.size() - window + j - vaccination_distance - days_until_effective;
+                 i < root.size() + j - vaccination_distance - days_until_effective; ++i) {
                 vaccine_first_mean += vaccine_first[i] / window;
                 vaccine_full_mean += vaccine_full[i] / window;
             }
