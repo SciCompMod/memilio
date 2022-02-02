@@ -89,7 +89,7 @@ Required python packages:
 - pandas<1.2.0
 - matplotlib
 - tables
-- numpy<=1.19.4
+- numpy>=1.21
 - openpyxl
 - xlrd
 - requests
