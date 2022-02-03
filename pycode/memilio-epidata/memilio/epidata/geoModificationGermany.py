@@ -47,7 +47,7 @@ def get_state_ids(zfill=False):
         two digits and returned as a string or returned as an integer.
     @return List of federal IDs sorted according to state ID.
     """
-    unique_geo_entities = sorted(set(dd.State.keys()))
+    unique_geo_entities = list(sorted(set(dd.State.keys())))
     if zfill:
         unique_geo_entities = [str(id).zfill(2) for id in unique_geo_entities]
 
@@ -220,7 +220,7 @@ def get_stateid_to_countyids_map(merge_eisenach=True, zfill=False):
     @return State IDs to lists of county IDs map
     """
     county_ids = get_county_ids(merge_eisenach=merge_eisenach, zfill=zfill)
-    state_ids = get_state_ids()
+    state_ids = get_state_ids(zfill=zfill)
     state_to_county_table = [[] for i in range(len(state_ids))]
 
     for id in county_ids:
@@ -333,7 +333,7 @@ def create_intermediateregion_level(merge_eisenach=True):
     Kropp/Schwengler (2016) https://doi.org/10.1080/00343404.2014.923093
     Kropp/Schwengler (2011) https://doi.org/10.1007/s13147-011-0076-4
     """
-    if(False):
+    if(True):
         directory_path = os.getcwd()
         county_region_assignment = gd.loadExcel(
             targetFileName='Kreis_ID_AMR', apiUrl=os.path.join(
@@ -349,7 +349,7 @@ def create_intermediateregion_level(merge_eisenach=True):
             zip([i for i in range(len(intermed_regions))], intermed_regions))
 
         # get county IDs
-        counties = get_county_ids(merge_eisenach)
+        counties = get_county_ids(merge_eisenach=merge_eisenach)
         county_region_assignment = county_region_assignment[county_region_assignment['Kreis'].isin(
             counties)]
 
@@ -370,7 +370,7 @@ def get_intermediateregion_ids(zfill=False):
         two digits and returned as a string or returned as an integer.
     @return List of intermediate region IDs sorted according to ID.
     """
-    unique_geo_entities = sorted(set(dd.IntermediateRegions.keys()))
+    unique_geo_entities = list(sorted(set(dd.IntermediateRegions.keys())))
     if zfill:
         unique_geo_entities = [str(id).zfill(2) for id in unique_geo_entities]
 
@@ -382,7 +382,7 @@ def get_intermediateregion_names():
 
     @return List of intermediate region names sorted according to ID.
     """
-    return [dd.IntermediateRegions[i] for i in get_intermediateregion_ids()]
+    return list(dd.IntermediateRegions.values())
 
 
 def get_intermediateregion_names_and_ids(zfill=False):
@@ -390,12 +390,11 @@ def get_intermediateregion_names_and_ids(zfill=False):
 
     @param zfill [Default: False] Defines whether IDs are zero-filled to
         two digits and returned as a string or returned as an integer.
-    @return List of intermediate region names and IDs sorted according to state ID.
+    @return List of intermediate region names and IDs sorted according to region ID.
     """
     intermediateregionids = get_intermediateregion_ids(zfill=zfill)
 
-    return [[dd.IntermediateRegions[int(intermediateregionids[i])],
-             intermediateregionids[i]] for i in range(len(intermediateregionids))]
+    return [[dd.IntermediateRegions[int(id)], id] for id in intermediateregionids]
 
 
 def get_intermediateregion_to_name():
@@ -416,7 +415,7 @@ def get_countyid_to_intermediateregionid_map(merge_eisenach=True, zfill=False):
         as zero-filled strings. By default, integer maps are returned.
     @return County ID to intermediate region ID map.
     """
-    county_ids = get_county_ids(merge_eisenach)
+    county_ids = get_county_ids(merge_eisenach=merge_eisenach)
     regions_to_county = dd.IntermediateRegionIDsToCountyIDs
 
     regions_sorted = [0 for i in range(len(county_ids))]
@@ -424,17 +423,17 @@ def get_countyid_to_intermediateregionid_map(merge_eisenach=True, zfill=False):
 
     idx = 0
     # region will be a list of region id first and a list of counties ids second
-    for region in regions_to_county.items():
-        if merge_eisenach and CountyMerging[16063][1] in region[1]:
-            region[1].remove(CountyMerging[16063][1])
-        for j in range(len(region[1])):
-            regions_sorted[idx] = region[0]
-            if zfill:
-                counties_sorted[idx] = str(region[1][j]).zfill(5)
-            else:
-                counties_sorted[idx] = region[1][j]
+    for region, county_list in regions_to_county.items():
+        for county in county_list:
+            if not merge_eisenach or not CountyMerging[16063][1] == county:
+                if zfill:
+                    regions_sorted[idx] = str(region).zfill(2)
+                    counties_sorted[idx] = str(county).zfill(5)
+                else:
+                    regions_sorted[idx] = region
+                    counties_sorted[idx] = county
 
-            idx += 1
+                idx += 1
 
     return dict(zip(counties_sorted, regions_sorted))
 
@@ -451,16 +450,27 @@ def get_intermediateregionid_to_countyids_map(
     @return Intermediate region IDs to lists of county IDs map
     """
     regions_to_county = dd.IntermediateRegionIDsToCountyIDs
-    if zfill or merge_eisenach:
-        for i in range(len(regions_to_county)):
-            if merge_eisenach and CountyMerging[16063][1] in regions_to_county[i]:
-                regions_to_county[i].remove(CountyMerging[16063][1])
-            if zfill:
-                for j in range(len(regions_to_county[i])):
-                    regions_to_county[i][j] = str(
-                        regions_to_county[i][j]).zfill(5)
+    regions_list = []
+    counties_list = []
+    for region, counties in regions_to_county.items():
+        if zfill:
+            regions_list.append(str(region).zfill(2))
+        else:
+            regions_list.append(region)
 
-    return regions_to_county
+        if merge_eisenach and CountyMerging[16063][1] in counties:
+            counties.remove(CountyMerging[16063][1])
+
+        county_list = []
+        for county in counties:
+            if not merge_eisenach or not CountyMerging[16063][1] == county:
+                if zfill:
+                    county_list.append(str(county).zfill(5))
+                else:
+                    county_list.append(county)
+        counties_list.append(county_list)
+
+    return dict(zip(regions_list, counties_list))
 
 
 def merge_df_counties(
