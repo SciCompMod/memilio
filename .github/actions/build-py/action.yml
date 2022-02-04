@@ -12,9 +12,8 @@ runs:
       run: |
         yum install ninja-build -qy
         if [[ "${{ inputs.package }}" == "simulation" ]]; then
-          /opt/python/cp36-cp36m/bin/pip install conan
           /opt/python/cp37-cp37m/bin/pip install conan
-          /opt/python/cp38-cp38/bin/pip install conan
+          /opt/python/cp310-cp310/bin/pip install conan
         fi
     - name: Cache Conan packages
       uses: actions/cache@v2
@@ -31,14 +30,13 @@ runs:
       run: |
         cd pycode/memilio-${{ inputs.package }}/
         if [[ "${{ inputs.package }}" == "simulation" ]]; then
-          SETUP36ARGS="-DCONAN_COMMAND=/opt/python/cp36-cp36m/bin/conan -DPython_ROOT_DIR=/opt/python/cp36-cp36m"
           SETUP37ARGS="-DCONAN_COMMAND=/opt/python/cp37-cp37m/bin/conan -DPython_ROOT_DIR=/opt/python/cp37-cp37m"
-          SETUP38ARGS="-DCONAN_COMMAND=/opt/python/cp38-cp38/bin/conan -DPython_ROOT_DIR=/opt/python/cp38-cp38"
+          SETUP310ARGS="-DCONAN_COMMAND=/opt/python/cp310-cp310/bin/conan -DPython_ROOT_DIR=/opt/python/cp310-cp310"
+          #pre-built b2 package (required for building boost) doesn't work on manylinux image
           SETUPARGS="-DPython_FIND_STRATEGY=LOCATION -DMEMILIO_CONAN_BUILD=missing;b2"
         fi
-        /opt/python/cp36-cp36m/bin/python setup.py bdist_wheel -- $SETUP36ARGS $SETUPARGS
         /opt/python/cp37-cp37m/bin/python setup.py bdist_wheel -- $SETUP37ARGS $SETUPARGS
-        /opt/python/cp38-cp38/bin/python setup.py bdist_wheel -- $SETUP38ARGS $SETUPARGS
+        /opt/python/cp310-cp310/bin/python setup.py bdist_wheel -- $SETUP310ARGS $SETUPARGS
         if [[ -f "CMakeLists.txt" ]]; then 
           # includes native dependencies in the wheel
           for whl in dist/*.whl; do auditwheel repair "$whl"; done
