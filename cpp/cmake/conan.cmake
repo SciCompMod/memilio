@@ -61,7 +61,7 @@ function(_get_msvc_ide_version result)
 endfunction()
 
 macro(_conan_detect_build_type)
-    conan_parse_arguments(${ARGV})
+    conan_parse_arguments(${ARGN})
 
     if(ARGUMENTS_BUILD_TYPE)
         set(_CONAN_SETTING_BUILD_TYPE ${ARGUMENTS_BUILD_TYPE})
@@ -234,15 +234,15 @@ function(conan_cmake_settings result)
 
     message(STATUS "Conan: Automatic detection of conan settings from cmake")
 
-    conan_parse_arguments(${ARGV})
+    conan_parse_arguments(${ARGN})
 
-    _conan_detect_build_type(${ARGV})
+    _conan_detect_build_type(${ARGN})
 
     _conan_check_system_name()
 
     _conan_check_language()
 
-    _conan_detect_compiler(${ARGV})
+    _conan_detect_compiler(${ARGN})
 
     # If profile is defined it is used
     if(CMAKE_BUILD_TYPE STREQUAL "Debug" AND ARGUMENTS_DEBUG_PROFILE)
@@ -427,10 +427,10 @@ function(_collect_settings result)
 endfunction()
 
 function(conan_cmake_autodetect detected_settings)
-    _conan_detect_build_type()
-    _conan_check_system_name()
-    _conan_check_language()
-    _conan_detect_compiler()
+    _conan_detect_build_type(${ARGN})
+    _conan_check_system_name(${ARGN})
+    _conan_check_language(${ARGN})
+    _conan_detect_compiler(${ARGN})
     _collect_settings(collected_settings)
     set(${detected_settings} ${collected_settings} PARENT_SCOPE)
 endfunction()
