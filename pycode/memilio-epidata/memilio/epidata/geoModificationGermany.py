@@ -333,7 +333,7 @@ def create_intermediateregion_level(merge_eisenach=True):
     Kropp/Schwengler (2016) https://doi.org/10.1080/00343404.2014.923093
     Kropp/Schwengler (2011) https://doi.org/10.1007/s13147-011-0076-4
     """
-    if(True):
+    if(False):
         directory_path = os.getcwd()
         county_region_assignment = gd.loadExcel(
             targetFileName='Kreis_ID_AMR', apiUrl=os.path.join(
