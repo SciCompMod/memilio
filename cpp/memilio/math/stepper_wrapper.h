@@ -20,6 +20,7 @@
 #ifndef STEPPER_WRAPPER_H_
 #define STEPPER_WRAPPER_H_
 
+#include "memilio/utils/compiler_diagnostics.h"
 #include "memilio/math/integrator.h"
 
 // functions and operators neccessary for a Contolled Stepper to work with Eigen::VectorXd
@@ -31,17 +32,24 @@ namespace std
 Eigen::VectorXd abs(Eigen::VectorXd x);
 } // namespace std
 
-#include <boost/numeric/odeint/algebra/vector_space_algebra.hpp>
-#include <boost/numeric/odeint/stepper/controlled_runge_kutta.hpp>
-#include <boost/numeric/odeint/stepper/runge_kutta4.hpp>
-#include <boost/numeric/odeint/stepper/runge_kutta_fehlberg78.hpp>
-#include <boost/numeric/odeint/stepper/runge_kutta_cash_karp54.hpp>
-#include <boost/numeric/odeint/stepper/runge_kutta_dopri5.hpp>
-
 /// @brief elementwise addition of a scalar and an Eigen::VextorXd
 Eigen::VectorXd operator+(const double s, const Eigen::VectorXd& v);
+
 /// @brief elementwise division of two Eigen::VextorXd
 Eigen::VectorXd operator/(const Eigen::VectorXd& v, const Eigen::VectorXd& w);
+
+GCC_CLANG_DIAGNOSTIC(push)
+GCC_CLANG_DIAGNOSTIC(ignored "-Wshadow")
+GCC_CLANG_DIAGNOSTIC(ignored "-Wlanguage-extension-token")
+MSVC_WARNING_DISABLE_PUSH(4127)
+#include "boost/numeric/odeint/algebra/vector_space_algebra.hpp"
+#include "boost/numeric/odeint/stepper/controlled_runge_kutta.hpp"
+#include "boost/numeric/odeint/stepper/runge_kutta4.hpp"
+#include "boost/numeric/odeint/stepper/runge_kutta_fehlberg78.hpp"
+#include "boost/numeric/odeint/stepper/runge_kutta_cash_karp54.hpp"
+#include "boost/numeric/odeint/stepper/runge_kutta_dopri5.hpp"
+MSVC_WARNING_POP
+GCC_CLANG_DIAGNOSTIC(pop)
 
 namespace boost
 {
