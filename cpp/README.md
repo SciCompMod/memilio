@@ -39,6 +39,8 @@ mkdir build && cd build
 cmake ..
 ```
 
+Downloading and/or building all dependencies with Conan during the first cmake configure run takes a few minutes. Subsequent configure runs will be quick as Conan caches the packages in your user directory.
+
 Options can be specified with `cmake .. -D<OPTION>=<VALUE>` or by editing the `build/CMakeCache.txt` file after running cmake. The following options are known to the library:
 - `MEMILIO_BUILD_TESTS`: build unit tests in the test directory, ON or OFF, default ON.
 - `MEMILIO_BUILD_EXAMPLES`: build the example applications in the examples directory, ON or OFF, default ON.
