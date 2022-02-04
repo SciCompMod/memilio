@@ -28,7 +28,7 @@ runs:
         path: |
           ~/.conan
           C:/.conan
-        key: conan-data-msvc-${{ inputs.config }}-${{ inputs.version}}-5 #bump number to clear cache
+        key: conan-data-msvc-${{ inputs.config }}-${{ inputs.version}}-6 #bump number to clear cache
     - name: Build
       shell: cmd /C call {0}
       run: |
