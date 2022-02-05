@@ -39,7 +39,7 @@ IOResult<int> count_lines(const std::string& filename)
 
 IOResult<Eigen::MatrixXd> read_mobility_formatted(const std::string& filename)
 {
-    BOOST_OUTCOME_TRY(num_lines, count_lines(filename));
+    MEMILIO_TRY(num_lines, count_lines(filename));
 
     if (num_lines == 0) {
         return success(Eigen::MatrixXd(0, 0));
@@ -99,7 +99,7 @@ IOResult<Eigen::MatrixXd> read_mobility_formatted(const std::string& filename)
 
 IOResult<Eigen::MatrixXd> read_mobility_plain(const std::string& filename)
 {
-    BOOST_OUTCOME_TRY(num_lines, count_lines(filename));
+    MEMILIO_TRY(num_lines, count_lines(filename));
 
     if (num_lines == 0) {
         return success(Eigen::MatrixXd(0, 0));

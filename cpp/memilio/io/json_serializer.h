@@ -547,7 +547,7 @@ IOResult<Json::Value> serialize_json(const T& t, int flags = IOF_None)
 template <class T>
 IOResult<void> write_json(const std::string& path, const T& t, int flags = IOF_None)
 {
-    BOOST_OUTCOME_TRY(js, serialize_json(t, flags));
+    MEMILIO_TRY(js, serialize_json(t, flags));
     return write_json(path, js);
 }
 
@@ -597,7 +597,7 @@ IOResult<T> deserialize_json(const Json::Value& js, Tag<T> tag, int flags = IOF_
 template <class T>
 IOResult<T> read_json(const std::string& path, Tag<T> tag, int flags = IOF_None)
 {
-    BOOST_OUTCOME_TRY(js, read_json(path));
+    MEMILIO_TRY(js, read_json(path));
     return deserialize_json(js, tag, flags);
 }
 

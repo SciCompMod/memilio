@@ -4,7 +4,7 @@ message(STATUS "Memilio: Installing required dependencies with Conan.")
 
 memilio_conan_install(
     REQUIRES 
-        boost/1.75.0
+        boost/1.78.0
         eigen/3.3.9
         spdlog/1.5.0
         jsoncpp/1.9.5
@@ -12,7 +12,7 @@ memilio_conan_install(
     OPTIONS
         *:shared=False
         *:fPIC=True
-        boost:without_atomic=True
+        boost:without_atomic=False
         boost:without_chrono=True
         boost:without_container=True
         boost:without_context=True

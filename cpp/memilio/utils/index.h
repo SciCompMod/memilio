@@ -91,7 +91,7 @@ public:
     template<class IOContext>
     static IOResult<Index> deserialize(IOContext& io)
     {
-        BOOST_OUTCOME_TRY(i, mio::deserialize(io, Tag<size_t>{}));
+        MEMILIO_TRY(i, mio::deserialize(io, Tag<size_t>{}));
         return success(Index(i));
     }
 };

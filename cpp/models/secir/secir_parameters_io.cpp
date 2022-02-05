@@ -139,9 +139,9 @@ namespace details
             return failure(StatusCode::FileNotFound, path);
         }
         
-        BOOST_OUTCOME_TRY(root, read_json(path));
+        MEMILIO_TRY(root, read_json(path));
 
-        BOOST_OUTCOME_TRY(max_date, get_max_date(root));
+        MEMILIO_TRY(max_date, get_max_date(root));
         if (max_date == Date(0, 1, 1)) {
             log_error("RKI data file is empty.");
             return failure(StatusCode::InvalidFileFormat, path + ", file is empty.");
@@ -369,7 +369,7 @@ namespace details
         std::vector<std::vector<double>> num_hosp(model.size(), std::vector<double>(age_ranges.size(), 0.0));
         std::vector<std::vector<double>> num_icu(model.size(), std::vector<double>(age_ranges.size(), 0.0));
 
-        BOOST_OUTCOME_TRY(read_rki_data(path, id_name, region, date, num_exp, num_car, num_inf, num_hosp, num_icu,
+        MEMILIO_TRY(read_rki_data(path, id_name, region, date, num_exp, num_car, num_inf, num_hosp, num_icu,
                                         num_death, num_rec, t_car_to_rec, t_car_to_inf, t_exp_to_car, t_inf_to_rec,
                                         t_inf_to_hosp, t_hosp_to_rec, t_hosp_to_icu, t_icu_to_dead, mu_C_R, mu_I_H,
                                         mu_H_U, scaling_factor_inf));
@@ -409,9 +409,9 @@ namespace details
             return failure(StatusCode::FileNotFound, path);
         }
 
-        BOOST_OUTCOME_TRY(root, read_json(path));
+        MEMILIO_TRY(root, read_json(path));
 
-        BOOST_OUTCOME_TRY(max_date, get_max_date(root));
+        MEMILIO_TRY(max_date, get_max_date(root));
         if (max_date == Date(0, 1, 1)) {
             log_error("DIVI data file is empty.");
             return failure(StatusCode::InvalidFileFormat, path + ", file is empty.");
@@ -444,7 +444,7 @@ namespace details
             return failure(StatusCode::FileNotFound, path);
         }
 
-        BOOST_OUTCOME_TRY(root, read_json(path));
+        MEMILIO_TRY(root, read_json(path));
 
         std::vector<std::string> age_names = {"<3 years",    "3-5 years",   "6-14 years",  "15-17 years",
                                               "18-24 years", "25-29 years", "30-39 years", "40-49 years",
@@ -493,7 +493,7 @@ namespace details
     IOResult<void> set_population_data(std::vector<SecirModel>& model, const std::string& path,
                                        const std::string& id_name, const std::vector<int>& vregion)
     {
-        BOOST_OUTCOME_TRY(num_population, read_population_data(path, id_name, vregion));
+        MEMILIO_TRY(num_population, read_population_data(path, id_name, vregion));
 
         for (size_t region = 0; region < vregion.size(); region++) {
             if (std::accumulate(num_population[region].begin(), num_population[region].end(), 0.0) > 0) {
@@ -527,7 +527,7 @@ namespace details
             }
         }
         std::vector<double> num_icu(model.size(), 0.0);
-        BOOST_OUTCOME_TRY(read_divi_data(path, id_name, vregion, date, num_icu));
+        MEMILIO_TRY(read_divi_data(path, id_name, vregion, date, num_icu));
 
         for (size_t region = 0; region < vregion.size(); region++) {
             auto num_groups = model[region].parameters.get_num_groups();
@@ -547,7 +547,7 @@ IOResult<std::vector<int>> get_county_ids(const std::string& path)
     std::vector<int> id;
 
     auto filename = path_join(path, "county_current_population.json");
-    BOOST_OUTCOME_TRY(root, read_json(filename));
+    MEMILIO_TRY(root, read_json(filename));
 
     for (unsigned int i = 0; i < root.size(); i++) {
         auto val = root[i]["ID_County"];

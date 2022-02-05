@@ -107,7 +107,7 @@ public:
     template<class IOContext>
     static IOResult<Derived> deserialize(IOContext& io)
     {
-        BOOST_OUTCOME_TRY(t, mio::deserialize(io, Tag<T>{}));
+        MEMILIO_TRY(t, mio::deserialize(io, Tag<T>{}));
         return success(Derived(t));
     }
 

@@ -51,7 +51,7 @@ IOResult<void> write_graph(const Graph<Model, MigrationParameters>& graph, const
     assert(graph.nodes().size() > 0 && "Graph Nodes are empty");
 
     std::string abs_path;
-    BOOST_OUTCOME_TRY(created, create_directory(directory, abs_path));
+    MEMILIO_TRY(created, create_directory(directory, abs_path));
 
     if (created) {
         log_info("Results are stored in {:s}/results.", mio::get_current_dir_name());
@@ -70,19 +70,19 @@ IOResult<void> write_graph(const Graph<Model, MigrationParameters>& graph, const
     {        
         //node
         auto& node = graph.nodes()[inode];
-        BOOST_OUTCOME_TRY(js_node_model, serialize_json(node.property, ioflags));
+        MEMILIO_TRY(js_node_model, serialize_json(node.property, ioflags));
         Json::Value js_node(Json::objectValue);
         js_node["NodeId"] = node.id;
         js_node["Model"] = js_node_model;
         auto node_filename = path_join(abs_path, "GraphNode" + std::to_string(inode) + ".json");
-        BOOST_OUTCOME_TRY(write_json(node_filename, js_node));
+        MEMILIO_TRY(write_json(node_filename, js_node));
 
         //list of edges
         auto out_edges = graph.out_edges(inode);
         if (out_edges.size()) {
             Json::Value js_edges(Json::arrayValue);
             for (auto& e : graph.out_edges(inode)) {
-                BOOST_OUTCOME_TRY(js_edge_params, serialize_json(e.property, ioflags));
+                MEMILIO_TRY(js_edge_params, serialize_json(e.property, ioflags));
                 Json::Value js_edge{Json::objectValue};
                 js_edge["StartNodeIndex"] = Json::UInt64(e.start_node_idx);
                 js_edge["EndNodeIndex"]   = Json::UInt64(e.end_node_idx);
@@ -90,7 +90,7 @@ IOResult<void> write_graph(const Graph<Model, MigrationParameters>& graph, const
                 js_edges.append(std::move(js_edge));
             }
             auto edge_filename = path_join(abs_path, "GraphEdges_node" + std::to_string(inode) + ".json");
-            BOOST_OUTCOME_TRY(write_json(edge_filename, js_edges));
+            MEMILIO_TRY(write_json(edge_filename, js_edges));
         }
     }
 
@@ -120,14 +120,14 @@ IOResult<Graph<Model, MigrationParameters>> read_graph(const std::string& direct
         if (!file_exists(node_filename, node_filename)) {
             break;
         }
-        BOOST_OUTCOME_TRY(js_node, read_json(node_filename));
+        MEMILIO_TRY(js_node, read_json(node_filename));
         if (!js_node["NodeId"].isInt())
         {
             log_error("NodeId field must be an integer.");
             return failure(StatusCode::InvalidType, node_filename + ", NodeId must be an integer.");
         }
         auto node_id = js_node["NodeId"].asInt();
-        BOOST_OUTCOME_TRY(model, deserialize_json(js_node["Model"], Tag<Model>{}, ioflags));
+        MEMILIO_TRY(model, deserialize_json(js_node["Model"], Tag<Model>{}, ioflags));
         graph.add_node(node_id, model);
     }
 
@@ -136,7 +136,7 @@ IOResult<Graph<Model, MigrationParameters>> read_graph(const std::string& direct
     {
         //list of edges
         auto edge_filename = path_join(abs_path, "GraphEdges_node" + std::to_string(inode) + ".json");
-        BOOST_OUTCOME_TRY(js_edges, read_json(edge_filename));
+        MEMILIO_TRY(js_edges, read_json(edge_filename));
 
         for (auto& e : js_edges) {
             auto start_node_idx = inode;
@@ -150,7 +150,7 @@ IOResult<Graph<Model, MigrationParameters>> read_graph(const std::string& direct
                 log_error("EndNodeIndex not in range of number of graph nodes.");
                 return failure(StatusCode::OutOfRange, edge_filename + ", EndNodeIndex not in range of number of graph nodes.");
             }
-            BOOST_OUTCOME_TRY(parameters, deserialize_json(e["Parameters"], Tag<MigrationParameters>{}, ioflags));
+            MEMILIO_TRY(parameters, deserialize_json(e["Parameters"], Tag<MigrationParameters>{}, ioflags));
             graph.add_edge(start_node_idx, end_node_idx, parameters);
         }
     }
@@ -343,12 +343,12 @@ IOResult<void> extrapolate_rki_results(std::vector<Model>& model, const std::str
         std::vector<std::vector<double>> dummy_icu(model.size(), std::vector<double>(age_ranges.size(), 0.0));
         std::vector<double> num_icu(model.size(), 0.0);
 
-        BOOST_OUTCOME_TRY(details::read_rki_data(
+        MEMILIO_TRY(details::read_rki_data(
             path_join(data_dir, "all_county_age_ma_rki.json"), id_name, region, date, num_exp, num_car, num_inf, num_hosp,
             dummy_icu, num_death, num_rec, t_car_to_rec, t_car_to_inf, t_exp_to_car, t_inf_to_rec, t_inf_to_hosp,
             t_hosp_to_rec, t_hosp_to_icu, t_icu_to_dead, mu_C_R, mu_I_H, mu_H_U, scaling_factor_inf));
-        BOOST_OUTCOME_TRY(details::read_divi_data(path_join(data_dir, "county_divi.json"), id_name, region, date, num_icu));
-        BOOST_OUTCOME_TRY(num_population, 
+        MEMILIO_TRY(details::read_divi_data(path_join(data_dir, "county_divi.json"), id_name, region, date, num_icu));
+        MEMILIO_TRY(num_population, 
             details::read_population_data(path_join(data_dir, "county_current_population.json"), id_name, region));
 
         for (size_t i = 0; i < region.size(); i++) {
@@ -373,10 +373,10 @@ IOResult<void> extrapolate_rki_results(std::vector<Model>& model, const std::str
         }
         date = offset_date_by_days(date, 1);
     }
-    BOOST_OUTCOME_TRY(save_result(rki_data, region, path_join(results_dir, "Results_rki.h5")));
+    MEMILIO_TRY(save_result(rki_data, region, path_join(results_dir, "Results_rki.h5")));
 
     auto rki_data_sum = mio::sum_nodes(std::vector<std::vector<TimeSeries<double>>>{rki_data});
-    BOOST_OUTCOME_TRY(save_result({rki_data_sum[0][0]}, {0}, path_join(results_dir, "Results_rki_sum.h5")));
+    MEMILIO_TRY(save_result({rki_data_sum[0][0]}, {0}, path_join(results_dir, "Results_rki_sum.h5")));
 
     return success();
 }
@@ -399,15 +399,15 @@ IOResult<void> read_population_data_germany(std::vector<Model>& model, Date date
     std::string id_name;
     std::vector<int> region(1, 0);
     if (date > Date(2020, 4, 23)) {
-        BOOST_OUTCOME_TRY(
+        MEMILIO_TRY(
             details::set_divi_data(model, path_join(dir, "germany_divi.json"), id_name, {0}, date, scaling_factor_icu));
     }
     else {
         log_warning("No DIVI data available for this date");
     }
-    BOOST_OUTCOME_TRY(
+    MEMILIO_TRY(
         details::set_rki_data(model, path_join(dir, "all_age_ma_rki.json"), id_name, {0}, date, scaling_factor_inf));
-    BOOST_OUTCOME_TRY(
+    MEMILIO_TRY(
         details::set_population_data(model, path_join(dir, "county_current_population.json"), "ID_County", {0}));
     return success();
 }
@@ -428,16 +428,16 @@ IOResult<void> read_population_data_state(std::vector<Model>& model, Date date, 
 {
     std::string id_name = "ID_State";
     if (date > Date(2020, 4, 23)) {
-        BOOST_OUTCOME_TRY(
+        MEMILIO_TRY(
             details::set_divi_data(model, path_join(dir, "state_divi.json"), id_name, state, date, scaling_factor_icu));
     }
     else {
         log_warning("No DIVI data available for this date");
     }
 
-    BOOST_OUTCOME_TRY(details::set_rki_data(model, path_join(dir, "all_state_age_ma_rki.json"), id_name, state, date,
+    MEMILIO_TRY(details::set_rki_data(model, path_join(dir, "all_state_age_ma_rki.json"), id_name, state, date,
                                             scaling_factor_inf));
-    BOOST_OUTCOME_TRY(
+    MEMILIO_TRY(
         details::set_population_data(model, path_join(dir, "county_current_population.json"), "ID_County", state));
     return success();
 }
@@ -459,15 +459,15 @@ IOResult<void> read_population_data_county(std::vector<Model>& model, Date date,
     std::string id_name = "ID_County";
 
     if (date > Date(2020, 4, 23)) {
-        BOOST_OUTCOME_TRY(details::set_divi_data(model, path_join(dir, "county_divi.json"), id_name, county, date,
+        MEMILIO_TRY(details::set_divi_data(model, path_join(dir, "county_divi.json"), id_name, county, date,
                                                  scaling_factor_icu));
     }
     else {
         log_warning("No DIVI data available for this date");
     }
-    BOOST_OUTCOME_TRY(details::set_rki_data(model, path_join(dir, "all_county_age_ma_rki.json"), id_name, county, date,
+    MEMILIO_TRY(details::set_rki_data(model, path_join(dir, "all_county_age_ma_rki.json"), id_name, county, date,
                                             scaling_factor_inf));
-    BOOST_OUTCOME_TRY(
+    MEMILIO_TRY(
         details::set_population_data(model, path_join(dir, "county_current_population.json"), "ID_County", county));
     return success();
 }

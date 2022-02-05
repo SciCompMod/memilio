@@ -34,7 +34,7 @@ write_single_run_result(const int run,
                         const mio::Graph<mio::SimulationNode<mio::SecirSimulation<>>, mio::MigrationEdge>& graph)
 {
     std::string abs_path;
-    BOOST_OUTCOME_TRY(created, mio::create_directory("results", abs_path));
+    MEMILIO_TRY(created, mio::create_directory("results", abs_path));
 
     if (run == 0) {
         std::cout << "Results are stored in " << abs_path << '\n';
@@ -47,13 +47,13 @@ write_single_run_result(const int run,
     //omit edges to save space as they are not sampled
     int inode = 0;
     for (auto&& node : graph.nodes()) {
-        BOOST_OUTCOME_TRY(js_node_model, serialize_json(node.property.get_result(), mio::IOF_OmitDistributions));
+        MEMILIO_TRY(js_node_model, serialize_json(node.property.get_result(), mio::IOF_OmitDistributions));
         Json::Value js_node(Json::objectValue);
         js_node["NodeId"]  = node.id;
         js_node["Model"]   = js_node_model;
         auto node_filename = mio::path_join(abs_path, "Parameters_run" + std::to_string(run) + "_node" +
                                                           std::to_string(inode++) + ".json");
-        BOOST_OUTCOME_TRY(mio::write_json(node_filename, js_node));
+        MEMILIO_TRY(mio::write_json(node_filename, js_node));
     }
 
     //write results for this run
@@ -68,7 +68,7 @@ write_single_run_result(const int run,
     std::transform(graph.nodes().begin(), graph.nodes().end(), std::back_inserter(ids), [](auto& node) {
         return node.id;
     });
-    BOOST_OUTCOME_TRY(
+    MEMILIO_TRY(
         mio::save_result(all_results, ids, mio::path_join(abs_path, ("Results_run" + std::to_string(run) + ".h5"))));
 
     return mio::success();

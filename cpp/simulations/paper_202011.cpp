@@ -206,10 +206,10 @@ mio::IOResult<void> set_contact_matrices(const fs::path& data_dir, mio::SecirPar
     //TODO: io error handling
     auto contact_matrices = mio::ContactMatrixGroup(contact_locations.size(), size_t(params.get_num_groups()));
     for (auto&& contact_location : contact_locations) {
-        BOOST_OUTCOME_TRY(baseline,
+        MEMILIO_TRY(baseline,
                           mio::read_mobility_plain(
                               (data_dir / "contacts" / ("baseline_" + contact_location.second + ".txt")).string()));
-        BOOST_OUTCOME_TRY(minimum,
+        MEMILIO_TRY(minimum,
                           mio::read_mobility_plain(
                               (data_dir / "contacts" / ("minimum_" + contact_location.second + ".txt")).string()));
         contact_matrices[size_t(contact_location.first)].get_baseline() = baseline;
@@ -456,14 +456,14 @@ mio::IOResult<void> set_nodes(const mio::SecirParams& params, mio::Date start_da
 {
     namespace de = mio::regions::de;
 
-    BOOST_OUTCOME_TRY(county_ids, mio::get_county_ids((data_dir / "pydata" / "Germany").string()));
+    MEMILIO_TRY(county_ids, mio::get_county_ids((data_dir / "pydata" / "Germany").string()));
     std::vector<mio::SecirModel> counties(county_ids.size(), mio::SecirModel(int(size_t(params.get_num_groups()))));
     for (auto& county : counties) {
         county.parameters = params;
     }
     auto scaling_factor_infected = std::vector<double>(size_t(params.get_num_groups()), 2.5);
     auto scaling_factor_icu      = 1.0;
-    BOOST_OUTCOME_TRY(mio::read_population_data_county(counties, start_date, county_ids, scaling_factor_infected,
+    MEMILIO_TRY(mio::read_population_data_county(counties, start_date, county_ids, scaling_factor_infected,
                                                        scaling_factor_icu, (data_dir / "pydata" / "Germany").string()));
     // set_synthetic_population_data(counties);
 
@@ -513,9 +513,9 @@ mio::IOResult<void> set_edges(const fs::path& data_dir,
                               mio::Graph<mio::SecirModel, mio::MigrationParameters>& params_graph)
 {
     //migration between nodes
-    BOOST_OUTCOME_TRY(migration_data_commuter,
+    MEMILIO_TRY(migration_data_commuter,
                       mio::read_mobility_plain((data_dir / "mobility" / "commuter_migration_scaled.txt").string()));
-    BOOST_OUTCOME_TRY(migration_data_twitter,
+    MEMILIO_TRY(migration_data_twitter,
                       mio::read_mobility_plain((data_dir / "mobility" / "twitter_scaled_1252.txt").string()));
     if (size_t(migration_data_commuter.rows()) != params_graph.nodes().size() ||
         size_t(migration_data_commuter.cols()) != params_graph.nodes().size() ||
@@ -589,15 +589,15 @@ create_graph(mio::Date start_date, mio::Date end_date, const fs::path& data_dir)
     const int num_age_groups = 6;
     mio::SecirParams params(num_age_groups);
     params.get<mio::StartDay>() = start_day;
-    BOOST_OUTCOME_TRY(set_covid_parameters(params));
-    BOOST_OUTCOME_TRY(set_contact_matrices(data_dir, params));
-    BOOST_OUTCOME_TRY(set_npis(start_date, end_date, params));
+    MEMILIO_TRY(set_covid_parameters(params));
+    MEMILIO_TRY(set_contact_matrices(data_dir, params));
+    MEMILIO_TRY(set_npis(start_date, end_date, params));
 
     //graph of counties with populations and local parameters
     //and migration between counties
     mio::Graph<mio::SecirModel, mio::MigrationParameters> params_graph;
-    BOOST_OUTCOME_TRY(set_nodes(params, start_date, end_date, data_dir, params_graph));
-    BOOST_OUTCOME_TRY(set_edges(data_dir, params_graph));
+    MEMILIO_TRY(set_nodes(params, start_date, end_date, data_dir, params_graph));
+    MEMILIO_TRY(set_edges(data_dir, params_graph));
 
     return mio::success(params_graph);
 }
@@ -655,9 +655,9 @@ mio::IOResult<void> save_result(const std::vector<mio::TimeSeries<double>>& resu
                                 const fs::path& result_dir, size_t run_idx)
 {
     auto result_dir_run = result_dir / ("run" + std::to_string(run_idx));
-    BOOST_OUTCOME_TRY(mio::create_directory(result_dir_run.string()));
-    BOOST_OUTCOME_TRY(mio::save_result(result, county_ids, (result_dir_run / "Result.h5").string()));
-    BOOST_OUTCOME_TRY(
+    MEMILIO_TRY(mio::create_directory(result_dir_run.string()));
+    MEMILIO_TRY(mio::save_result(result, county_ids, (result_dir_run / "Result.h5").string()));
+    MEMILIO_TRY(
         mio::write_graph(make_graph_no_edges(params, county_ids), result_dir_run.string(), mio::IOF_OmitDistributions));
     return mio::success();
 }
@@ -678,9 +678,9 @@ mio::IOResult<void> save_results(const std::vector<std::vector<mio::TimeSeries<d
     //save results and sum of results over nodes
     auto ensemble_result_sum = mio::sum_nodes(ensemble_results);
     for (size_t i = 0; i < ensemble_result_sum.size(); ++i) {
-        BOOST_OUTCOME_TRY(mio::save_result(ensemble_result_sum[i], {0},
+        MEMILIO_TRY(mio::save_result(ensemble_result_sum[i], {0},
                                            (result_dir / ("results_run" + std::to_string(i) + "_sum.h5")).string()));
-        BOOST_OUTCOME_TRY(mio::save_result(ensemble_results[i], county_ids,
+        MEMILIO_TRY(mio::save_result(ensemble_results[i], county_ids,
                                            (result_dir / ("results_run" + std::to_string(i) + ".h5")).string()));
     }
 
@@ -690,11 +690,11 @@ mio::IOResult<void> save_results(const std::vector<std::vector<mio::TimeSeries<d
     auto result_dir_p50 = result_dir / "p50";
     auto result_dir_p75 = result_dir / "p75";
     auto result_dir_p95 = result_dir / "p95";
-    BOOST_OUTCOME_TRY(mio::create_directory(result_dir_p05.string()));
-    BOOST_OUTCOME_TRY(mio::create_directory(result_dir_p25.string()));
-    BOOST_OUTCOME_TRY(mio::create_directory(result_dir_p50.string()));
-    BOOST_OUTCOME_TRY(mio::create_directory(result_dir_p75.string()));
-    BOOST_OUTCOME_TRY(mio::create_directory(result_dir_p95.string()));
+    MEMILIO_TRY(mio::create_directory(result_dir_p05.string()));
+    MEMILIO_TRY(mio::create_directory(result_dir_p25.string()));
+    MEMILIO_TRY(mio::create_directory(result_dir_p50.string()));
+    MEMILIO_TRY(mio::create_directory(result_dir_p75.string()));
+    MEMILIO_TRY(mio::create_directory(result_dir_p95.string()));
 
     //save percentiles of results, summed over nodes
     {
@@ -704,15 +704,15 @@ mio::IOResult<void> save_results(const std::vector<std::vector<mio::TimeSeries<d
         auto ensemble_results_sum_p75 = mio::ensemble_percentile(ensemble_result_sum, 0.75);
         auto ensemble_results_sum_p95 = mio::ensemble_percentile(ensemble_result_sum, 0.95);
 
-        BOOST_OUTCOME_TRY(
+        MEMILIO_TRY(
             mio::save_result(ensemble_results_sum_p05, {0}, (result_dir_p05 / "Results_sum.h5").string()));
-        BOOST_OUTCOME_TRY(
+        MEMILIO_TRY(
             mio::save_result(ensemble_results_sum_p25, {0}, (result_dir_p25 / "Results_sum.h5").string()));
-        BOOST_OUTCOME_TRY(
+        MEMILIO_TRY(
             mio::save_result(ensemble_results_sum_p50, {0}, (result_dir_p50 / "Results_sum.h5").string()));
-        BOOST_OUTCOME_TRY(
+        MEMILIO_TRY(
             mio::save_result(ensemble_results_sum_p75, {0}, (result_dir_p75 / "Results_sum.h5").string()));
-        BOOST_OUTCOME_TRY(
+        MEMILIO_TRY(
             mio::save_result(ensemble_results_sum_p95, {0}, (result_dir_p95 / "Results_sum.h5").string()));
     }
 
@@ -724,11 +724,11 @@ mio::IOResult<void> save_results(const std::vector<std::vector<mio::TimeSeries<d
         auto ensemble_results_p75 = mio::ensemble_percentile(ensemble_results, 0.75);
         auto ensemble_results_p95 = mio::ensemble_percentile(ensemble_results, 0.95);
 
-        BOOST_OUTCOME_TRY(mio::save_result(ensemble_results_p05, county_ids, (result_dir_p05 / "Results.h5").string()));
-        BOOST_OUTCOME_TRY(mio::save_result(ensemble_results_p25, county_ids, (result_dir_p25 / "Results.h5").string()));
-        BOOST_OUTCOME_TRY(mio::save_result(ensemble_results_p50, county_ids, (result_dir_p50 / "Results.h5").string()));
-        BOOST_OUTCOME_TRY(mio::save_result(ensemble_results_p75, county_ids, (result_dir_p75 / "Results.h5").string()));
-        BOOST_OUTCOME_TRY(mio::save_result(ensemble_results_p95, county_ids, (result_dir_p95 / "Results.h5").string()));
+        MEMILIO_TRY(mio::save_result(ensemble_results_p05, county_ids, (result_dir_p05 / "Results.h5").string()));
+        MEMILIO_TRY(mio::save_result(ensemble_results_p25, county_ids, (result_dir_p25 / "Results.h5").string()));
+        MEMILIO_TRY(mio::save_result(ensemble_results_p50, county_ids, (result_dir_p50 / "Results.h5").string()));
+        MEMILIO_TRY(mio::save_result(ensemble_results_p75, county_ids, (result_dir_p75 / "Results.h5").string()));
+        MEMILIO_TRY(mio::save_result(ensemble_results_p95, county_ids, (result_dir_p95 / "Results.h5").string()));
     }
 
     //save percentiles of parameters
@@ -742,15 +742,15 @@ mio::IOResult<void> save_results(const std::vector<std::vector<mio::TimeSeries<d
         auto make_graph = [&county_ids](auto&& params) {
             return make_graph_no_edges(params, county_ids);
         };
-        BOOST_OUTCOME_TRY(
+        MEMILIO_TRY(
             mio::write_graph(make_graph(ensemble_params_p05), result_dir_p05.string(), mio::IOF_OmitDistributions));
-        BOOST_OUTCOME_TRY(
+        MEMILIO_TRY(
             mio::write_graph(make_graph(ensemble_params_p25), result_dir_p25.string(), mio::IOF_OmitDistributions));
-        BOOST_OUTCOME_TRY(
+        MEMILIO_TRY(
             mio::write_graph(make_graph(ensemble_params_p50), result_dir_p50.string(), mio::IOF_OmitDistributions));
-        BOOST_OUTCOME_TRY(
+        MEMILIO_TRY(
             mio::write_graph(make_graph(ensemble_params_p75), result_dir_p75.string(), mio::IOF_OmitDistributions));
-        BOOST_OUTCOME_TRY(
+        MEMILIO_TRY(
             mio::write_graph(make_graph(ensemble_params_p95), result_dir_p95.string(), mio::IOF_OmitDistributions));
     }
     return mio::success();
@@ -786,12 +786,12 @@ mio::IOResult<void> run(RunMode mode, const fs::path& data_dir, const fs::path& 
     //create or load graph
     mio::Graph<mio::SecirModel, mio::MigrationParameters> params_graph;
     if (mode == RunMode::Save) {
-        BOOST_OUTCOME_TRY(created, create_graph(start_date, end_date, data_dir));
-        BOOST_OUTCOME_TRY(save_graph(created, save_dir));
+        MEMILIO_TRY(created, create_graph(start_date, end_date, data_dir));
+        MEMILIO_TRY(save_graph(created, save_dir));
         params_graph = created;
     }
     else {
-        BOOST_OUTCOME_TRY(loaded, load_graph(save_dir));
+        MEMILIO_TRY(loaded, load_graph(save_dir));
         params_graph = loaded;
     }
 
@@ -825,8 +825,8 @@ mio::IOResult<void> run(RunMode mode, const fs::path& data_dir, const fs::path& 
         }
         ++run_idx;
     });
-    BOOST_OUTCOME_TRY(save_result_result);
-    BOOST_OUTCOME_TRY(save_results(ensemble_results, ensemble_params, county_ids, result_dir));
+    MEMILIO_TRY(save_result_result);
+    MEMILIO_TRY(save_results(ensemble_results, ensemble_params, county_ids, result_dir));
 
     return mio::success();
 }
