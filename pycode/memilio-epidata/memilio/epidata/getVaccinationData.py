@@ -163,7 +163,7 @@ def get_vaccination_data(read_data=dd.defaultDict['read_data'],
                          end_date=dd.defaultDict['end_date'],
                          make_plot=dd.defaultDict['make_plot'],
                          moving_average=dd.defaultDict['moving_average'],
-                         sanitize_data=3):
+                         sanitize_data=1):
     """! Downloads the RKI vaccination data and provides different kind of structured data.
 
     The data is read from the internet.
@@ -193,7 +193,7 @@ def get_vaccination_data(read_data=dd.defaultDict['read_data'],
     @param start_date [Default = '', taken from read data] Start date of stored data frames.
     @param end_date [Default = '', taken from read data] End date of stored data frames.
     @param make_plot False [Default] or True. Defines if plots are generated with matplotlib.
-    @param sanitize_data Value in {0,1,2,3}; Default: 3. For many counties, 
+    @param sanitize_data Value in {0,1,2,3}; Default: 1. For many counties, 
         vaccination data is not correctly attributed to home locations of 
         vaccinated persons. If 'sanitize_data' is set to larger 0, this is
         corrected. 
