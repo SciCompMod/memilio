@@ -40,14 +40,14 @@ class TestGetVaccinationData(fake_filesystem_unittest.TestCase):
         'Impfdatum', 'LandkreisId_Impfort', 'Altersgruppe', 'Impfschutz',
         'Anzahl']
     df_vacc_data = pd.DataFrame(columns=col_names_vacc_data)
-    
+
     counties = geoger.get_county_ids(merge_eisenach=False)
 
     for county in counties:
         vacc_data = [
             ('2020-12-27', str(county), '05-11', 1, 3),
             ('2020-12-27', str(county), '05-11', 2, 2),
-            ('2020-12-27', str(county), '05-11', 3, 1),            
+            ('2020-12-27', str(county), '05-11', 3, 1),
             ('2020-12-27', str(county), '12-17', 1, 10),
             ('2020-12-27', str(county), '12-17', 2, 15),
             ('2020-12-27', str(county), '12-17', 3, 72),
@@ -63,8 +63,9 @@ class TestGetVaccinationData(fake_filesystem_unittest.TestCase):
         df_vacc_data = df_vacc_data.append(
             df_to_append, ignore_index=True)
 
-    df_vacc_data = df_vacc_data.astype({'LandkreisId_Impfort': 'string', 'Altersgruppe': "string",
-                   'Impfschutz': int, 'Anzahl': int})
+    df_vacc_data = df_vacc_data.astype(
+        {'LandkreisId_Impfort': 'string', 'Altersgruppe': "string",
+         'Impfschutz': int, 'Anzahl': int})
 
     df_vacc_data_altern = pd.DataFrame(columns=col_names_vacc_data)
     for i in range(len(counties)):
@@ -74,7 +75,7 @@ class TestGetVaccinationData(fake_filesystem_unittest.TestCase):
             ('2020-12-27', str(counties[i]), '11-17', 2, i),
             ('2020-12-27', str(counties[i]), '18-55', 2, i),
             ('2020-12-27', str(counties[i]), '56+', 1, i),
-            ('2020-12-27', str(counties[i]), '56+', 2, i),            
+            ('2020-12-27', str(counties[i]), '56+', 2, i),
             ('2020-12-27', str(counties[i]), '56+', 3, i)
         ]
         df_to_append = pd.DataFrame(
@@ -82,12 +83,13 @@ class TestGetVaccinationData(fake_filesystem_unittest.TestCase):
         df_vacc_data_altern = df_vacc_data_altern.append(
             df_to_append, ignore_index=True)
 
-    df_vacc_data_altern = df_vacc_data_altern.astype({'LandkreisId_Impfort': 'string', 'Altersgruppe': "string",
-                   'Impfschutz': int, 'Anzahl': int})                   
+    df_vacc_data_altern = df_vacc_data_altern.astype(
+        {'LandkreisId_Impfort': 'string', 'Altersgruppe': "string",
+         'Impfschutz': int, 'Anzahl': int})
 
     def setUp(self):
         self.setUpPyfakefs()
-    
+
     @patch('memilio.epidata.getVaccinationData.download_vaccination_data',
            return_value=df_vacc_data_altern)
     def test_get_vaccination_data_alternative_ages_no_errors_with_plots(
@@ -98,8 +100,32 @@ class TestGetVaccinationData(fake_filesystem_unittest.TestCase):
            return_value=df_vacc_data)
     def test_get_standard_vaccination_data_no_errors_with_plots(
             self, mockv):
-        gvd.get_vaccination_data(out_folder=self.path)  
-    
+        gvd.get_vaccination_data(out_folder=self.path)
+
+    @patch('memilio.epidata.getVaccinationData.download_vaccination_data',
+           return_value=df_vacc_data)
+    def test_get_standard_vaccination_data_no_errors_with_plots(
+            self, mockv):
+        gvd.get_vaccination_data(out_folder=self.path, sanitize_data=1)
+
+    @patch('memilio.epidata.getVaccinationData.download_vaccination_data',
+           return_value=df_vacc_data)
+    def test_get_standard_vaccination_data_no_errors_with_plots(
+            self, mockv):
+        gvd.get_vaccination_data(out_folder=self.path, sanitize_data=2)
+
+    @patch('memilio.epidata.getVaccinationData.download_vaccination_data',
+           return_value=df_vacc_data)
+    def test_get_standard_vaccination_data_no_errors_with_plots(
+            self, mockv):
+        gvd.get_vaccination_data(out_folder=self.path, sanitize_data=3)
+
+    @patch('memilio.epidata.getVaccinationData.download_vaccination_data',
+           return_value=df_vacc_data)
+    def test_get_standard_vaccination_data_no_errors_with_plots(
+            self, mockv):
+        gvd.get_vaccination_data(out_folder=self.path, sanitize_data=0)
+
     def test_download_vaccination_data(self):
         df = gvd.download_vaccination_data()
         self.assertFalse(
@@ -118,7 +144,6 @@ class TestGetVaccinationData(fake_filesystem_unittest.TestCase):
         if not 'u' in agegr_arr:
             self.assertEqual(len(agegr_arr), 4)
 
-    
     @patch('builtins.print')
     @patch('memilio.epidata.getVaccinationData.pd.read_csv',
            side_effect=ImportError())
@@ -137,7 +162,7 @@ class TestGetVaccinationData(fake_filesystem_unittest.TestCase):
         vacc_data = [
             ('2020-12-27', '1001', '05-11', 1, 3),
             ('2020-12-27', '1001', '05-11', 2, 2),
-            ('2020-12-27', '1001', '05-11', 3, 1),            
+            ('2020-12-27', '1001', '05-11', 3, 1),
             ('2020-12-27', '1001', '12-17', 1, 10),
             ('2020-12-27', '1001', '12-17', 2, 15),
             ('2020-12-27', '1001', '12-17', 3, 72),
@@ -206,7 +231,7 @@ class TestGetVaccinationData(fake_filesystem_unittest.TestCase):
         vacc_data = [
             ('2020-12-27', '1001', '05-11', 1, 3),
             ('2020-12-27', '1001', '05-11', 2, 2),
-            ('2020-12-27', '1001', '05-11', 3, 1),              
+            ('2020-12-27', '1001', '05-11', 3, 1),
             ('2020-12-27', '1001', '12-17', 1, 10),
             ('2020-12-27', '1001', '12-17', 2, 15),
             ('2020-12-27', '1001', '12-17', 3, 72),
@@ -301,22 +326,22 @@ class TestGetVaccinationData(fake_filesystem_unittest.TestCase):
         map_bounds2 = gvd.create_intervals_mapping(
             lower_bounds2, upper_bounds2)
 
-        for test_map,calculated_map in zip(test_map1,map_bounds1):
-                self.assertTrue(
-                    np.allclose(
-                        np.array(test_map),
-                        np.array(calculated_map),
-                        rtol=1e-05),
-                    "Not the same Arrays")
+        for test_map, calculated_map in zip(test_map1, map_bounds1):
+            self.assertTrue(
+                np.allclose(
+                    np.array(test_map),
+                    np.array(calculated_map),
+                    rtol=1e-05),
+                "Not the same Arrays")
 
-        for test_map,calculated_map in zip(test_map2,map_bounds2):
-                self.assertTrue(
-                    np.allclose(
-                        np.array(test_map),
-                        np.array(calculated_map),
-                        rtol=1e-05),
-                    "Not the same Arrays")
-    
+        for test_map, calculated_map in zip(test_map2, map_bounds2):
+            self.assertTrue(
+                np.allclose(
+                    np.array(test_map),
+                    np.array(calculated_map),
+                    rtol=1e-05),
+                "Not the same Arrays")
+
 
 if __name__ == '__main__':
     unittest.main()
