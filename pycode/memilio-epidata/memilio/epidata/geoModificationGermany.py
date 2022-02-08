@@ -491,6 +491,8 @@ def merge_df_counties(
     @return Reduced data frame with separated_ids information merged to 
         merged_id rows.
     """
+    # verify that IDs are integers
+    df[dd.EngEng['idCounty']] = df[dd.EngEng['idCounty']].astype(int)
     # extract rows of IDs that will be merged
     rows_merged = df[dd.EngEng['idCounty']].isin(separated_ids)
     df_merged = df[rows_merged].copy()
