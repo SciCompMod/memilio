@@ -265,6 +265,7 @@ def get_population_data(read_data=dd.defaultDict['read_data'],
     new_data_avail = os.path.isfile(new_data_file + '.xlsx')
 
     if new_data_avail:
+        print('Information: Using new population data file ' + filename)
         df_pop_raw = gd.loadExcel(
             new_data_file, apiUrl='', extension='.xlsx',
             param_dict={"engine": None, "sheet_name": filename, "header": 3})
