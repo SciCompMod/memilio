@@ -668,42 +668,72 @@ namespace details
                     auto age = size_t(it_age - age_names.begin());
 
                     for (size_t d = 0; d < (size_t)num_days + 1; ++d) {
-                        // a person who is reported as fully vaccinated at start_date + simulation_day - days_until_effective1 + vaccination_distance
-                        // had the first dose on start_date + simulation_day - days_until_effective1 and had the 'full' effect of the first
-                        // dose at day=simulation_day (neglecting start_date here)
-                        auto offset_first_date = offset_date_by_days(date, d - days_until_effective1 + vaccination_distance);
-                        if (date_df == offset_first_date && max_date >= offset_first_date) {
-                            model[region_idx].parameters.template get<DailyFirstVaccination>()[AgeGroup(age)][d] =
-                                root[i]["Vacc_completed"].asDouble();
+                        int days_plus;
+                        // In the following, second dose means previous 'full immunization', now 'Grundimmunisierung'.
+                        // ---
+                        // date: start_date of the simulation (Input from IO call read_input_data_county_vaccmodel())
+                        // d: day of simulation, counted from 0 to num_days (for which we need (approximated) vaccination numbers)
+                        // root[i]["Vacc_completed"]: accumulated number of total second doses up to day date_df;
+                        //                               taken from input dataframe, single value, per county and age group
+                        // ----
+                        // An averaged distance between first and second doses (vaccination_distance) is assumed in the following
+                        // and the first doses are computed based on the second doses given 'vaccination_distance' days later.
+                        // ----                      
+                        // a person whose second dose is reported at start_date + simulation_day - days_until_effective1 + vaccination_distance
+                        // had the first dose on start_date + simulation_day - days_until_effective1. Furthermore, he/she has the full protection 
+                        // of the first dose at day X = start_date + simulation_day
+                        // Storing its value in get<DailyFirstVaccination>() will eventually (in the simulation)
+                        // transfer the difference (between get<DailyFirstVaccination>() at d and d-1) of 
+                        // N susceptible individuals to 'Susceptible Partially Vaccinated' state at day d; see secir_vaccinated.h
+                        auto offset_first_date = offset_date_by_days(date, + d - days_until_effective1 + vaccination_distance);
+                        if (max_full_date >= offset_first_date) {    
+                            // Option 1: considered offset_first_date is available in input data frame                    
+                            if (date_df == offset_first_date) {
+                                model[region_idx].parameters.template get<DailyFirstVaccination>()[AgeGroup(age)][d] =
+                                    root[i]["Vacc_completed"].asDouble();
+                            }
                         }
-                        // if start_date + simulation_day - days_until_effective1 + vaccination_distance is not anymore in the
-                        // database (i.e., offset_first_date > max_date), 
-                        else if (offset_first_date > max_date && date_df == offset_date_by_days(max_date, -1)) {
-                            model[region_idx].parameters.template get<DailyFirstVaccination>()[AgeGroup(age)][d] -=
-                                root[i]["Vacc_completed"].asDouble();
-                        }
-                        // if start_date + simulation_day - days_until_effective1 + vaccination_distance is not anymore in the
-                        // database (i.e., offset_first_date > max_date),                         
-                        else if (offset_first_date > max_date && date_df == max_date) {
-                            model[region_idx].parameters.template get<DailyFirstVaccination>()[AgeGroup(age)][d] +=
-                                2 * root[i]["Vacc_completed"].asDouble();
+                        else { // offset_first_date > max_date
+                            // Option 2: considered offset_first_date is NOT available in input data frame
+                            // Here, a constant number of first and second doses is assumed, i.e.,
+                            // the the number of vaccinationes at day d (N days after max_date) will be:
+                            // total number of vaccinations up to day max_date + N * number of vaccinations ON max_date
+                            // (where the latter is computed as the difference between the total number at max_date and max_date-1)
+                            days_plus = get_offset_in_days(offset_first_date, max_date);
+                            if (date_df == offset_date_by_days(max_date, -1)) {
+                                model[region_idx].parameters.template get<DailyFirstVaccination>()[AgeGroup(age)][d] -=
+                                    (days_plus - 1) * root[i]["Vacc_completed"].asDouble();
+                            }
+                            else if (date_df == max_date) {
+                                model[region_idx].parameters.template get<DailyFirstVaccination>()[AgeGroup(age)][d] +=
+                                    days_plus * root[i]["Vacc_completed"].asDouble();
+                            }
                         }
 
-                        // a person who is reported as fully vaccinated at start_date + simulation_day - days_until_effective2
-                        // had the full effect of the second dose at day=simulation_day (neglecting start_date here)
-                        auto offset_full_date = offset_date_by_days(date, d - days_until_effective2);
-                        if (date_df == offset_full_date && max_full_date >= offset_full_date) {
-                            model[region_idx].parameters.template get<DailyFullVaccination>()[AgeGroup(age)][d] =
-                                root[i]["Vacc_completed"].asDouble();
+                        // a person whose second dose is reported at start_date + simulation_day - days_until_effective2
+                        // has the full protection of the second dose at day X = start_date + simulation_day
+                        // Storing its value in get<DailyFullVaccination>() will eventually (in the simulation)
+                        // transfer the difference (between get<DailyFullVaccination>() at d and d-1) of
+                        // N susceptible, partially vaccinated individuals to 'Immune/Recovered' state at day d; see secir_vaccinated.h
+                        auto offset_full_date = offset_date_by_days(date, + d - days_until_effective2);
+                        if (max_full_date >= offset_full_date) {
+                            // Option 1: considered offset_full_date is available in input data frame
+                            if (date_df == offset_full_date) {
+                                model[region_idx].parameters.template get<DailyFullVaccination>()[AgeGroup(age)][d] =
+                                    root[i]["Vacc_completed"].asDouble();
+                            }
                         }
-                        else if (max_full_date < offset_full_date &&
-                                 date_df == offset_date_by_days(max_full_date, -1)) {
-                            model[region_idx].parameters.template get<DailyFullVaccination>()[AgeGroup(age)][d] -=
-                                root[i]["Vacc_completed"].asDouble();
-                        }
-                        else if (max_full_date < offset_full_date && date_df == max_full_date) {
-                            model[region_idx].parameters.template get<DailyFullVaccination>()[AgeGroup(age)][d] +=
-                                2 * root[i]["Vacc_completed"].asDouble();
+                        else { // offset_full_date > max_full_date
+                            // Option 2: considered offset_full_date is NOT available in input data frame
+                            days_plus = get_offset_in_days(offset_full_date, max_date);
+                            if (date_df == offset_date_by_days(max_full_date, -1)) {
+                                model[region_idx].parameters.template get<DailyFullVaccination>()[AgeGroup(age)][d] -=
+                                    (days_plus - 1) * root[i]["Vacc_completed"].asDouble();
+                            }
+                            else if (date_df == max_full_date) {
+                                model[region_idx].parameters.template get<DailyFullVaccination>()[AgeGroup(age)][d] +=
+                                    days_plus * root[i]["Vacc_completed"].asDouble();
+                            }
                         }
                     }
                 }
@@ -711,76 +741,76 @@ namespace details
         }
     }
 
-    void get_vaccine_growth(std::vector<SecirModelV>& model, const std::string& path, int window)
-    {
+//     void get_vaccine_growth(std::vector<SecirModelV>& model, const std::string& path, int window)
+//     {
 
-        if (!boost::filesystem::exists(path)) {
-            log_error("Vaccine data file missing: {}.", path);
-            return;
-        }
+//         if (!boost::filesystem::exists(path)) {
+//             log_error("Vaccine data file missing: {}.", path);
+//             return;
+//         }
 
-        auto num_groups = model[0].parameters.get_num_groups();
+//         auto num_groups = model[0].parameters.get_num_groups();
 
-        Json::Reader reader;
-        Json::Value root;
+//         Json::Reader reader;
+//         Json::Value root;
 
-        size_t vaccination_distance      = (size_t)(int)(double)model[0].parameters.get<VaccinationGap>()[AgeGroup(0)];
-        size_t days_until_effective = (size_t)(int)(double)model[0].parameters.get<DaysUntilEffective>()[AgeGroup(0)];
+//         size_t vaccination_distance      = (size_t)(int)(double)model[0].parameters.get<VaccinationGap>()[AgeGroup(0)];
+//         size_t days_until_effective = (size_t)(int)(double)model[0].parameters.get<DaysUntilEffective>()[AgeGroup(0)];
 
-        std::ifstream vaccine(path);
-        reader.parse(vaccine, root);
-        std::vector<double> vaccine_first(root.size(), 0);
-        std::vector<double> vaccine_full(root.size(), 0);
-        std::vector<double> daily_first_vaccination;
-        std::vector<double> daily_full_vaccination;
-        for (unsigned int i = 0; i < root.size(); i++) {
-            vaccine_first[i] = root[i]["Erstimpfung"].asDouble();
-            vaccine_full[i]  = root[i]["Zweitimpfung"].asDouble();
-        }
+//         std::ifstream vaccine(path);
+//         reader.parse(vaccine, root);
+//         std::vector<double> vaccine_first(root.size(), 0);
+//         std::vector<double> vaccine_full(root.size(), 0);
+//         std::vector<double> daily_first_vaccination;
+//         std::vector<double> daily_full_vaccination;
+//         for (unsigned int i = 0; i < root.size(); i++) {
+//             vaccine_first[i] = root[i]["Erstimpfung"].asDouble();
+//             vaccine_full[i]  = root[i]["Zweitimpfung"].asDouble();
+//         }
 
-        double vaccine_first_mean;
-        double vaccine_full_mean;
-        for (size_t j = 0; j < vaccination_distance + days_until_effective; ++j) {
-            vaccine_first_mean = 0;
-            vaccine_full_mean  = 0;
-            for (size_t i = root.size() - window + j - vaccination_distance - days_until_effective;
-                 i < root.size() + j - vaccination_distance - days_until_effective; ++i) {
-                vaccine_first_mean += vaccine_first[i] / window;
-                vaccine_full_mean += vaccine_full[i] / window;
-            }
-            daily_first_vaccination.push_back(vaccine_first_mean);
-            daily_full_vaccination.push_back(vaccine_full_mean);
-        }
-        double sum_population = 0;
-        for (auto& param : model) {
-            for (auto i = AgeGroup(2); i < num_groups; ++i) {
-                sum_population += param.populations.get_group_total(i);
-            }
-        }
+//         double vaccine_first_mean;
+//         double vaccine_full_mean;
+//         for (size_t j = 0; j < vaccination_distance + days_until_effective; ++j) {
+//             vaccine_first_mean = 0;
+//             vaccine_full_mean  = 0;
+//             for (size_t i = root.size() - window + j - vaccination_distance - days_until_effective;
+//                  i < root.size() + j - vaccination_distance - days_until_effective; ++i) {
+//                 vaccine_first_mean += vaccine_first[i] / window;
+//                 vaccine_full_mean += vaccine_full[i] / window;
+//             }
+//             daily_first_vaccination.push_back(vaccine_first_mean);
+//             daily_full_vaccination.push_back(vaccine_full_mean);
+//         }
+//         double sum_population = 0;
+//         for (auto& param : model) {
+//             for (auto i = AgeGroup(2); i < num_groups; ++i) {
+//                 sum_population += param.populations.get_group_total(i);
+//             }
+//         }
 
-        for (auto& param : model) {
+//         for (auto& param : model) {
 
-            for (auto i = AgeGroup(2); i < num_groups; ++i) {
-                param.parameters.get<DailyFirstVaccination>()[i] = {};
-                param.parameters.get<DailyFullVaccination>()[i]  = {};
-                for (size_t j = 0; j < daily_first_vaccination.size(); ++j) {
-                    param.parameters.get<DailyFirstVaccination>()[i].push_back(
-                        daily_first_vaccination[j] * (param.populations.get_group_total(i) / sum_population));
-                    param.parameters.get<DailyFullVaccination>()[i].push_back(
-                        daily_full_vaccination[j] * (param.populations.get_group_total(i) / sum_population));
-                }
+//             for (auto i = AgeGroup(2); i < num_groups; ++i) {
+//                 param.parameters.get<DailyFirstVaccination>()[i] = {};
+//                 param.parameters.get<DailyFullVaccination>()[i]  = {};
+//                 for (size_t j = 0; j < daily_first_vaccination.size(); ++j) {
+//                     param.parameters.get<DailyFirstVaccination>()[i].push_back(
+//                         daily_first_vaccination[j] * (param.populations.get_group_total(i) / sum_population));
+//                     param.parameters.get<DailyFullVaccination>()[i].push_back(
+//                         daily_full_vaccination[j] * (param.populations.get_group_total(i) / sum_population));
+//                 }
 
-                double vaccine_growth_first =
-                    vaccine_first_mean * (param.populations.get_group_total(i) / sum_population);
-                double vaccine_growth_full =
-                    vaccine_full_mean * (param.populations.get_group_total(i) / sum_population);
-                param.parameters.get<VaccineGrowthFirst>()[i] = vaccine_growth_first;
-                param.parameters.get<VaccineGrowthFull>()[i]  = vaccine_growth_full;
-            }
-        }
-    }
+//                 double vaccine_growth_first =
+//                     vaccine_first_mean * (param.populations.get_group_total(i) / sum_population);
+//                 double vaccine_growth_full =
+//                     vaccine_full_mean * (param.populations.get_group_total(i) / sum_population);
+//                 param.parameters.get<VaccineGrowthFirst>()[i] = vaccine_growth_first;
+//                 param.parameters.get<VaccineGrowthFull>()[i]  = vaccine_growth_full;
+//             }
+//         }
+//     }
 
-} // namespace details
+// } // namespace details
 
 IOResult<std::vector<int>> get_county_ids(const std::string& path)
 {

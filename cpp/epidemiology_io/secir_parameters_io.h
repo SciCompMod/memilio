@@ -889,7 +889,7 @@ namespace details
     void set_vaccine_data(std::vector<SecirModelV>& model, const std::string& path, const std::string& id_name,
                           const std::vector<int>& vregion);
 
-    void get_vaccine_growth(std::vector<SecirModelV>& model, const std::string& path, int window);
+    // void get_vaccine_growth(std::vector<SecirModelV>& model, const std::string& path, int window);
 
     void get_new_vaccine_growth(std::vector<SecirModelV>& model, const std::string& path, Date date,
                                 const std::string& id_name, const std::vector<int>& vregion, int num_days);
