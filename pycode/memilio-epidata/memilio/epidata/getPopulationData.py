@@ -247,8 +247,11 @@ def get_population_data(read_data=dd.defaultDict['read_data'],
     Altersgruppen (17) - Stichtag 31.12. - regionale Tiefe: Kreise und
     krfr. Städte". 
 
-    Download the xlsx file and put it under Memilio/data. Then this script can
-    be run.
+    Download the xlsx file and put it under dd.defaultDict['out_folder'], 
+    this normally is Memilio/data/pydata/Germany. 
+    The folders 'pydata/Germany' have to be created if they do not exist yet. 
+    Then this script can be run.
+    TODO: The following parameters have no effect for this source.
 
     2.) Combination of data from Federal Statistical Office of Germany and 
     Zensus2011 to compute very simple approximations of age-stratified number
@@ -274,7 +277,7 @@ def get_population_data(read_data=dd.defaultDict['read_data'],
         combined as one entity 'Wartburgkreis'.
     @return DataFrame with adjusted population data for all ages to current level.
     """
-    directory = dd.defaultDict['out_folder'].split('/pydata')[0]
+    directory = os.path.join(dd.defaultDict['out_folder'], 'Germany')
     filename = '12411-02-03-4'  # '12411-09-01-4-B'
     new_data_file = os.path.join(directory, filename)
     new_data_avail = os.path.isfile(new_data_file + '.xlsx')
@@ -283,7 +286,7 @@ def get_population_data(read_data=dd.defaultDict['read_data'],
         print('Information: Using new population data file ' + filename)
         df_pop_raw = gd.loadExcel(
             new_data_file, apiUrl='', extension='.xlsx',
-            param_dict={"engine": None, "sheet_name": filename, "header": 3})
+            param_dict={"engine": None, "sheet_name": filename, "header": 4})
         column_names = list(df_pop_raw.columns)
         # rename columns
         rename_columns = {
@@ -296,7 +299,6 @@ def get_population_data(read_data=dd.defaultDict['read_data'],
         }
         df_pop_raw.rename(columns=rename_columns, inplace=True)
         # remove date and explanation rows at end of table
-        df_pop_raw = df_pop_raw[1:]
         # -33 for '12411-09-01-4-B', -38 for '12411-02-03-4'
         df_pop_raw = df_pop_raw[:-38].reset_index(drop=True)
         # get indices of counties first lines
@@ -404,7 +406,8 @@ def get_population_data(read_data=dd.defaultDict['read_data'],
         # >74
         df_pop_export[df_pop_export.columns[12]] = df_pop[df_pop.columns[18]]
 
-        df_pop_export['Population'] = df_pop_export.iloc[:, 2:].sum(axis=1)
+        df_pop_export[dd.defaultDict['population']
+                      ] = df_pop_export.iloc[:, 2:].sum(axis=1)
 
         directory = os.path.join(out_folder, 'Germany/')
         gd.check_dir(directory)
