@@ -123,11 +123,12 @@ def load_population_data(out_folder=dd.defaultDict['out_folder'],
     """! Load of counties, zensus and reg_key files
 
     Data is downloaded from the following sources
-   - Federal Statistical Office of Germany (Destatis), Genesis-Online
-   current data for population per county [stored in "counties"]
-   - Zensus2011 data splitted by gender for whole germany, states, counties in xls
-   with additional data from 30.04.2011 (just used for reg_key?) [stored in "reg_key"]
-   - Zensus2011 data from opendata splitted for age and gender [stored in "zensus"]
+   - Federal Statistical Office of Germany (Destatis/Genesis-Online), current
+        data for population per county [stored in "counties"]
+   - Zensus2011 data with additional information on regional keys
+        [stored in "reg_key"]
+   - Zensus2011 data from opendata splitted for age and gender
+        [stored in "zensus"]
 
    Data is either downloaded or read from "out_folder"/Germany/.
 
@@ -227,22 +228,36 @@ def get_population_data(read_data=dd.defaultDict['read_data'],
                         no_raw=dd.defaultDict['no_raw'],
                         split_gender=False,
                         merge_eisenach=True):
-    """! Download population data with age groups.
+    """! Download age-stratified population data for the German counties.
 
-    Data is downloaded from the following sources
-    - Federal Statistical Office of Germany (Destatis), Genesis-Online
-    current data for population per county [stored in "counties"]
-    - Zensus2011 data splitted by gender for whole germany, states, counties in xls
-    with additional data from 30.04.2011 (just used for reg_key?) [stored in "reg_key"]
-    - Zensus2011 data from opendata splitted for age and gender [stored in "zensus"]
+    There are two different data sources that can be transformed in a simple
+    data file with age-resolved information per county and on which our other
+    tools can continue to operate on.
 
-    Data is either downloaded or read from "out_folder"/Germany/.
+    1.) Official 'Bevölkerungsfortschreibung' 12411-02-03-4:
+    'Bevölkerung nach Geschlecht und Altersgruppen (17)' 
+    of regionalstatistik.de. 
+    ATTENTION: The raw file cannot be downloaded 
+    automatically by our scripts without an Genesis Online account. In order to
+    work on this dataset, please manually download it from:
 
-    Working with the data includes:
-    - For the Zensus data the male and female data is added to get just the age dependence
-    - Population from the Zensus data of all age groups is scaled to the total population of our more recent migration
-    data by a factor which represents the relative increase/decrease in population size
+    https://www.regionalstatistik.de/genesis/online -> "1: Gebiet, Bevölkerung,
+    Arbeitsmarkt, Wahlen" -> "12: Bevölkerung" -> "12411 Fortschreibung des
+    Bevölkerungsstandes" ->  "12411-02-03-4: Bevölkerung nach Geschlecht und 
+    Altersgruppen (17) - Stichtag 31.12. - regionale Tiefe: Kreise und
+    krfr. Städte". 
+
+    Download the xlsx file and put it under Memilio/data. Then this script can
+    be run.
+
+    2.) Combination of data from Federal Statistical Office of Germany and 
+    Zensus2011 to compute very simple approximations of age-stratified number
+    of inhabitants per county. Population from the Zensus data of all age groups is scaled to the
+    total population of our more recent migration data by a factor which
+    represents the relative increase/decrease in population size
     between 2011 and 2019 for each county"
+    This data can either be downloaded automatically or read from
+    "out_folder"/Germany/ if it was downloaded before.
 
     @param read_data False or True. Defines if data is read from file or
         downloaded. Default defined in defaultDict.
