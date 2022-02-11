@@ -4,8 +4,6 @@
 #include "memilio/math/eigen.h"
 
 #include <vector>
-#include <array>
-#include <numeric>
 
 namespace mio
 {
@@ -15,7 +13,7 @@ class IdeModel{
         IdeModel(std::vector<Eigen::Vector2d> init, int length_init, double dt_init, int N_init);
         void set_latencytime(double latency);
         void set_infectioustime(double infectious);
-        std::vector<Eigen::Vector2d> simulate(int duration);
+        std::vector<Eigen::Vector2d> simulate(int t_max);
         void print_result() const;
 
     private:
@@ -26,7 +24,8 @@ class IdeModel{
         double timelatency=3.3;
         double timeinfectious=8.2;
 
-        std::vector<Eigen::Vector2d> result; // vector mit Eigen 2 (t, S) und davon dann im vec bel viele einträge
+        // vector containing one time Step per entry stored in an Eigen Vector (time, number of Susceptible at time t)
+        std::vector<Eigen::Vector2d> result; 
         int length;
 
         double dt;

@@ -2,9 +2,9 @@
 #include "memilio/math/eigen.h"
 
 #include <vector>
-#include<cmath>
-int main(){
 
+int main(){
+    // example to demonstrate how the IDE-Model can be used 
     int tmax=15;
     int N=800000;
     double dt=1.0/10.0;

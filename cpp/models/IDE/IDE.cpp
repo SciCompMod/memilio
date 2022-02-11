@@ -1,10 +1,9 @@
 #include "IDE/IDE.h"
-#include <math.h>
-#include <cmath>
 #include <iostream>
 
 namespace mio{
-    //TODO: R0 einbauen, austesten ob funktioniert( in examples), check if all includes necessary(array?)
+    //TODO: R0 einbauen
+
     /**
     * Constructor of IDEModel
     * @param init Vector with 2d Vectors in its entries containing the initial (time, quantity of susceptible) values
@@ -26,6 +25,7 @@ namespace mio{
     */
     void IdeModel::set_latencytime(double latency){
         timelatency=latency;
+        //initialize parameters k and  l used for numerical calculations in the simulation
         l=(int) std::floor(timelatency/dt);
         k=(int) std::ceil((timeinfectious+timelatency)/dt);
     }
@@ -48,7 +48,8 @@ namespace mio{
     */
     double IdeModel::Beta(double tau, double p, double q) const{
         if((timelatency<tau) && (timeinfectious+timelatency>tau)){
-            return tgamma(p+q)*pow(tau-timelatency,p-1)*pow(timeinfectious+timelatency-tau,q-1)/(tgamma(p)*tgamma(q)*pow(timeinfectious,p+q-1));
+            return tgamma(p+q)*pow(tau-timelatency,p-1)*pow(timeinfectious+timelatency-tau,q-1)/
+                (tgamma(p)*tgamma(q)*pow(timeinfectious,p+q-1));
         }
         return 0.0;
     }
@@ -80,12 +81,12 @@ namespace mio{
 
     /**
     * Simulation of the course of infection
-    * @param duration duration of the simulation in days
+    * @param t_max last simulation day
     * @return result of the simulation, stored in an vector with 2d vectors in each entry. 
     *   These 2d vectors contains the time values in the first entry and the S (susceptible) values in the second one.
     */
-    std::vector<Eigen::Vector2d> IdeModel::simulate(int duration){
-        while (result[length-1][0]<duration){
+    std::vector<Eigen::Vector2d> IdeModel::simulate(int t_max){
+        while (result[length-1][0]<t_max){
             result.push_back(Eigen::Vector2d (round((result[length-1][0]+dt)*10000.0)/10000.0,0));
             length++;
             result[length-1][1]=result[length-2][1] * exp(dt/(2*N)*(num_integration_inner_integral(length-1)+num_integration_inner_integral(length-2)));
