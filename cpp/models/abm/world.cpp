@@ -107,11 +107,11 @@ void World::migration(TimePoint t, TimeSpan dt)
         while (m_migration_data.get_next_trip_time() < t + dt && m_migration_data.get_current_index() < num_trips) {
             auto& trip   = m_migration_data.get_next_trip();
             auto& person = m_persons[trip.person_id];
-            if (!person->is_in_quarantine()) {
+            if (!person->is_in_quarantine() && person->get_location_id() == trip.migration_start) {
                 Location& target = get_individualized_location(trip.migration_target);
-                person->migrate_to(get_location(*person), target);
-                m_migration_data.increase_index();
+                person->migrate_to(get_location(*person), target, trip.cells);
             }
+            m_migration_data.increase_index();
         }
     }
 }

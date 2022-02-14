@@ -100,11 +100,12 @@ void Person::interact(TimeSpan dt, const GlobalInfectionParameters& global_infec
     m_time_at_location += dt;
 }
 
-void Person::migrate_to(Location& loc_old, Location& loc_new)
+void Person::migrate_to(Location& loc_old, Location& loc_new, const std::vector<uint32_t>& cells_new)
 {
     if (&loc_old != &loc_new) {
         loc_old.remove_person(*this);
         m_location_id = {loc_new.get_index(), loc_new.get_type()};
+        m_cells       = cells_new;
         loc_new.add_person(*this);
         m_time_at_location = mio::TimeSpan(0);
     }
@@ -189,5 +190,20 @@ bool Person::get_tested(const TestParameters& params)
 uint32_t Person::get_person_id()
 {
     return m_person_id;
+}
+
+void Person::set_cells(std::vector<uint32_t>& cells)
+{
+    m_cells = cells;
+}
+
+std::vector<uint32_t>& Person::get_cells()
+{
+    return m_cells;
+}
+
+const std::vector<uint32_t>& Person::get_cells() const
+{
+    return m_cells;
 }
 } // namespace mio

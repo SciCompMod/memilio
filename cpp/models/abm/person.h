@@ -94,8 +94,9 @@ public:
     /** 
      * migrate to a different location.
      * @param loc_new the new location of the person.
+     * @param cells_new the new cells of the person.
      * */
-    void migrate_to(Location& loc_old, Location& loc_new);
+    void migrate_to(Location& loc_old, Location& loc_new, const std::vector<uint32_t>& cells_new = {});
 
     /**
      * Get the current infection state of the person.
@@ -236,6 +237,18 @@ public:
      */
     uint32_t get_person_id();
 
+    /**
+     * set index of cells of the person
+     */
+    void set_cells(std::vector<uint32_t>& cell);
+
+    /**
+     * get index of cells of the person
+     */
+    std::vector<uint32_t>& get_cells();
+
+    const std::vector<uint32_t>& get_cells() const;
+
 private:
     LocationId m_location_id;
     std::vector<uint32_t> m_assigned_locations;
@@ -251,6 +264,7 @@ private:
     double m_random_goto_school_hour;
     TimeSpan m_time_since_negative_test;
     uint32_t m_person_id;
+    std::vector<uint32_t> m_cells;
 };
 
 } // namespace mio

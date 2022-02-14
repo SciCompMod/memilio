@@ -37,10 +37,22 @@ class Person;
  * LocationId identifies a Location uniquely. It consists of the LocationType of the Location and an Index.
  * The index corresponds to the index into the structure m_locations from world, where all Locations are saved.
  */
-struct LocationId
-{
+struct LocationId {
     uint32_t index;
     LocationType type;
+};
+
+inline bool operator==(const LocationId& lhs, const LocationId& rhs)
+{
+    return (lhs.index == rhs.index && lhs.type == rhs.type);
+}
+
+/**
+ * The location can be split up into several cells. This allows a finer division of the people in public transport.
+ */
+struct Cell {
+    uint32_t num_people;
+    uint32_t index;
 };
 
 /**
@@ -49,7 +61,7 @@ struct LocationId
 class Location
 {
 public:
-   /**
+    /**
      * construct a Location of a certain type.
      * @param type the type of the location
      * @param index the index of the location
@@ -59,7 +71,7 @@ public:
     /**
      * get the type of this location.
      */
-    LocationType get_type() const 
+    LocationType get_type() const
     {
         return m_type;
     }
@@ -127,13 +139,13 @@ public:
     {
         return m_parameters;
     }
-    
+
     const LocalInfectionParameters& get_infection_parameters() const
     {
         return m_parameters;
     }
 
-    void set_testing_scheme (TimeSpan interval, double probability)
+    void set_testing_scheme(TimeSpan interval, double probability)
     {
         m_testing_scheme = TestingScheme(interval, probability);
     }
@@ -146,7 +158,7 @@ public:
 private:
     void change_subpopulation(InfectionState s, int delta);
 
-private: 
+private:
     LocationType m_type;
     uint32_t m_index;
     int m_num_persons = 0;
@@ -154,6 +166,7 @@ private:
     LocalInfectionParameters m_parameters;
     CustomIndexArray<double, AbmAgeGroup, mio::VaccinationState> m_cached_exposure_rate;
     TestingScheme m_testing_scheme;
+    std::vector<Cell> m_cells;
 };
 } // namespace mio
 

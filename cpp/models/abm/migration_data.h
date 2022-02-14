@@ -37,17 +37,24 @@ namespace mio
  * @param person_index describes the person that makes the trip and corresponds to the index into the structure m_persons from world, where all people are saved.
  * @param migration_time is the time at which a person changes the location.
  * @param migration_target is the location where the person migrates to.
+ * @param migration_start is the location where te person starts the trip.
+ * @param cells If migration_target consists of different cells, this gives the index of the cells the person migrates to.
  */
 struct Trip {
     uint32_t person_id;
     TimePoint migration_time;
     LocationId migration_target;
+    LocationId migration_start;
+    std::vector<uint32_t> cells;
 
-    Trip(uint32_t id, TimePoint time, LocationId target)
+    Trip(uint32_t id, TimePoint time, LocationId target, LocationId start,
+         const std::vector<uint32_t>& input_cells = {})
     {
         person_id        = id;
         migration_time   = time;
         migration_target = target;
+        migration_start  = start;
+        cells            = input_cells;
     }
 };
 

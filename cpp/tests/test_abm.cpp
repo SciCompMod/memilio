@@ -638,6 +638,7 @@ TEST(TestWorld, evolveMigration)
     auto& p2 = world.add_person(home_id, mio::InfectionState::Susceptible, mio::AbmAgeGroup::Age5to14);
     auto& p3 = world.add_person(home_id, mio::InfectionState::Infected_Severe, mio::AbmAgeGroup::Age5to14);
     auto& p4 = world.add_person(hospital_id, mio::InfectionState::Recovered_Infected, mio::AbmAgeGroup::Age5to14);
+    auto& p5 = world.add_person(home_id, mio::InfectionState::Susceptible, mio::AbmAgeGroup::Age15to34);
     p1.set_assigned_location(school_id);
     p2.set_assigned_location(school_id);
     p1.set_assigned_location(work_id);
@@ -647,12 +648,17 @@ TEST(TestWorld, evolveMigration)
     p3.set_assigned_location(home_id);
     p4.set_assigned_location(home_id);
     p3.set_assigned_location(hospital_id);
+    p5.set_assigned_location(school_id);
+    p5.set_assigned_location(work_id);
+    p5.set_assigned_location(home_id);
 
     mio::MigrationData& data = world.get_migration_data();
-    mio::Trip trip1(p1.get_person_id(), mio::TimePoint(8) + mio::hours(9), work_id);
-    mio::Trip trip2(p2.get_person_id(), mio::TimePoint(8) + mio::hours(9), school_id);
+    mio::Trip trip1(p1.get_person_id(), mio::TimePoint(8) + mio::hours(9), work_id, home_id);
+    mio::Trip trip2(p2.get_person_id(), mio::TimePoint(8) + mio::hours(9), school_id, home_id);
+    mio::Trip trip3(p5.get_person_id(), mio::TimePoint(8) + mio::hours(9), school_id, work_id);
     data.add_trip(trip1);
     data.add_trip(trip2);
+    data.add_trip(trip3);
 
     ScopedMockDistribution<testing::StrictMock<MockDistribution<mio::ExponentialDistribution<double>>>>
         mock_exponential_dist;
@@ -669,9 +675,10 @@ TEST(TestWorld, evolveMigration)
     EXPECT_EQ(p2.get_location_id().type, mio::LocationType::School);
     EXPECT_EQ(p3.get_location_id().type, mio::LocationType::Hospital);
     EXPECT_EQ(p4.get_location_id().type, mio::LocationType::Home);
+    EXPECT_EQ(p5.get_location_id().type, mio::LocationType::Home);
     EXPECT_EQ(school.get_subpopulations().sum(), 1);
     EXPECT_EQ(work.get_subpopulations().sum(), 1);
-    EXPECT_EQ(home.get_subpopulations().sum(), 1);
+    EXPECT_EQ(home.get_subpopulations().sum(), 2);
     EXPECT_EQ(hospital.get_subpopulations().sum(), 1);
 }
 

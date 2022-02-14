@@ -42,6 +42,9 @@ InfectionState Location::interact(const Person& person, TimeSpan dt,
     auto infection_state   = person.get_infection_state();
     auto vaccination_state = person.get_vaccination_state();
     auto age               = person.get_age();
+    //if (this->get_type() == LocationType::PublicTransport) {
+    //}
+    //else {
     switch (infection_state) {
     case InfectionState::Susceptible:
         return random_transition(infection_state, dt,
@@ -74,6 +77,7 @@ InfectionState Location::interact(const Person& person, TimeSpan dt,
     default:
         return infection_state; //some states don't transition
     }
+    //}
 }
 
 void Location::begin_step(TimeSpan /*dt*/, const GlobalInfectionParameters& global_params)
@@ -98,6 +102,11 @@ void Location::add_person(const Person& p)
     ++m_num_persons;
     InfectionState s = p.get_infection_state();
     change_subpopulation(s, +1);
+    if (m_type == LocationType::PublicTransport) {
+        for (auto i : p.get_cells()) {
+            ++m_cells[i].num_people;
+        }
+    }
 }
 
 void Location::remove_person(const Person& p)
@@ -105,6 +114,9 @@ void Location::remove_person(const Person& p)
     --m_num_persons;
     InfectionState s = p.get_infection_state();
     change_subpopulation(s, -1);
+    for (auto i : p.get_cells()) {
+        --m_cells[i].num_people;
+    }
 }
 
 void Location::changed_state(const Person& p, InfectionState old_infection_state)
