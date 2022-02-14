@@ -41,7 +41,9 @@ from zipfile import ZipFile
 from memilio.epidata import defaultDict as dd
 
 
-def loadGeojson(targetFileName, apiUrl='https://opendata.arcgis.com/datasets/', extension='geojson'):
+def loadGeojson(
+        targetFileName, apiUrl='https://opendata.arcgis.com/datasets/',
+        extension='geojson'):
     """! Loads data default: ArcGIS data sets in GeoJSON format. (pandas DataFrame)
     This routine loads datasets default: ArcGIS data sets in GeoJSON format of the given public
     data item ID into a pandas DataFrame and returns the DataFrame. Trivial
@@ -60,8 +62,8 @@ def loadGeojson(targetFileName, apiUrl='https://opendata.arcgis.com/datasets/', 
         with urlopen(url) as res:
             data = json.loads(res.read().decode())
     except OSError as err:
-        raise FileNotFoundError("ERROR: URL " + url + " could not be opened.") \
-            from err
+        raise FileNotFoundError(
+            "ERROR: URL " + url + " could not be opened.") from err
 
     # Shape data:
     df = pd.json_normalize(data, 'features')
@@ -73,7 +75,9 @@ def loadGeojson(targetFileName, apiUrl='https://opendata.arcgis.com/datasets/', 
     return df
 
 
-def loadCsv(targetFileName, apiUrl='https://opendata.arcgis.com/datasets/', extension='.csv', encoding = None):
+def loadCsv(
+        targetFileName, apiUrl='https://opendata.arcgis.com/datasets/',
+        extension='.csv', encoding=None):
     """! Loads data sets in CSV format. (pandas DataFrame)
     This routine loads data sets (default from ArcGIS) in CSV format of the given public data
     item ID into a pandas DataFrame and returns the DataFrame.
@@ -89,16 +93,16 @@ def loadCsv(targetFileName, apiUrl='https://opendata.arcgis.com/datasets/', exte
     url = apiUrl + targetFileName + extension
 
     try:
-        df = pd.read_csv(url, encoding = encoding)
+        df = pd.read_csv(url, encoding=encoding)
     except OSError as err:
-        raise FileNotFoundError("ERROR: URL " + url + " could not be opened.") \
-            from err
+        raise FileNotFoundError(
+            "ERROR: URL " + url + " could not be opened.") from err
 
     return df
 
 
 def loadExcel(targetFileName, apiUrl='https://opendata.arcgis.com/datasets/',
-              extension='.xls', param_dict = {}):
+              extension='.xls', param_dict={}):
     """ Loads ArcGIS data sets in Excel formats (xls,xlsx,xlsm,xlsb,odf,ods,odt). (pandas DataFrame)
 
     This routine loads data sets (default from ArcGIS) in Excel format of the given public data
@@ -124,13 +128,16 @@ def loadExcel(targetFileName, apiUrl='https://opendata.arcgis.com/datasets/',
 
     try:
         if extension == '.zip':
-            file_compressed = ZipFile(BytesIO(urlopen(url).read())).filelist[0].filename
-            df = pd.read_excel(ZipFile(BytesIO(urlopen(url).read())).open(file_compressed), **param_dict)
+            file_compressed = ZipFile(
+                BytesIO(urlopen(url).read())).filelist[0].filename
+            df = pd.read_excel(
+                ZipFile(BytesIO(urlopen(url).read())).open(file_compressed),
+                **param_dict)
         else:
             df = pd.read_excel(url, **param_dict)
     except OSError as err:
-        raise FileNotFoundError("ERROR: URL " + url + " could not be opened.") \
-            from err
+        raise FileNotFoundError(
+            "ERROR: URL " + url + " could not be opened.") from err
 
     return df
 
@@ -170,10 +177,10 @@ def cli(what):
                 "rki": ['Download data from RKI', 'impute_dates', 'make_plot', 'moving_average', 'split_berlin', 'rep_date'],
                 "rkiest": ['Download data from RKI and JHU and estimate recovered and deaths', 'make_plot'],
                 "population": ['Download population data from official sources'],
-                "commuter_official": ['Download commuter data from official sources', 'make_plot'],                
+                "commuter_official": ['Download commuter data from official sources', 'make_plot'],
                 "vaccination": ['Download vaccination data', 'start_date', 'end_date', 'make_plot', 'moving_average'],
                 "testing": ['Download testing data', 'start_date', 'end_date', 'make_plot', 'moving_average'],
-                "jh" : ['Downloads data from Johns Hopkins University'],
+                "jh": ['Downloads data from Johns Hopkins University'],
                 "sim": ['Download all data needed for simulations', 'start_date', 'end_date',
                         'impute_dates', 'make_plot', 'moving_average', 'split_berlin']}
 
@@ -189,55 +196,63 @@ def cli(what):
     parser = argparse.ArgumentParser(description=what_list[0])
     group = parser.add_mutually_exclusive_group()
 
-    group.add_argument('-r', '--read-data',
-                       help='Reads the data from file "json" instead of downloading it.',
-                       action='store_true')
+    group.add_argument(
+        '-r', '--read-data',
+        help='Reads the data from file "json" instead of downloading it.',
+        action='store_true')
 
-    parser.add_argument('-f', '--file-format', type=str, default=dd.defaultDict['file_format'],
-                        choices=['json', 'hdf5', 'json_timeasstring'],
-                        help='Defines output format for data files. Default is \"' + str(
-                            dd.defaultDict['file_format'] + "\"."))
+    parser.add_argument(
+        '-f', '--file-format', type=str, default=dd.defaultDict
+        ['file_format'],
+        choices=['json', 'hdf5', 'json_timeasstring'],
+        help='Defines output format for data files. Default is \"' +
+        str(dd.defaultDict['file_format'] + "\"."))
     parser.add_argument('-o', '--out-folder', type=str,
-                        default=out_path_default, help='Defines folder for output.')
-    parser.add_argument('-n', '--no-raw', default=dd.defaultDict['no_raw'],
-                        help='Defines if raw data will be stored for further use.',
-                        action='store_true')
+                        default=out_path_default,
+                        help='Defines folder for output.')
+    parser.add_argument(
+        '-n', '--no-raw', default=dd.defaultDict['no_raw'],
+        help='Defines if raw data will be stored for further use.',
+        action='store_true')
 
     if 'end_date' in what_list:
-        parser.add_argument('-e', '--end-date',
-                            help='Defines date after which data download is stopped.'
-                                 'Should have form: YYYY-mm-dd. Default is today',
-                            type=lambda s: datetime.datetime.strptime(
-                                s, '%Y-%m-%d').date(),
-                            default=dd.defaultDict['end_date'])
+        parser.add_argument(
+            '-e', '--end-date',
+            help='Defines date after which data download is stopped.'
+            'Should have form: YYYY-mm-dd. Default is today',
+            type=lambda s: datetime.datetime.strptime(s, '%Y-%m-%d').date(),
+            default=dd.defaultDict['end_date'])
     if 'impute_dates' in what_list:
-        parser.add_argument('-i', '--impute-dates',
-                            help='the resulting dfs contain all dates instead of'
-                                 ' omitting dates where no data was reported',
-                            action='store_true')
+        parser.add_argument(
+            '-i', '--impute-dates',
+            help='the resulting dfs contain all dates instead of'
+            ' omitting dates where no data was reported', action='store_true')
     if 'make_plot' in what_list:
         parser.add_argument('-p', '--make-plot', help='Plots the data.',
                             action='store_true')
     if 'moving_average' in what_list:
-        parser.add_argument('-m', '--moving-average', type=int, default=0,
-                            help='Compute a moving average of N days over the time series')
+        parser.add_argument(
+            '-m', '--moving-average', type=int, default=0,
+            help='Compute a moving average of N days over the time series')
     if 'split_berlin' in what_list:
-        parser.add_argument('-b', '--split-berlin',
-                            help='Berlin data is split into different counties,'
-                                 ' instead of having only one county for Berlin.',
-                            action='store_true')
+        parser.add_argument(
+            '-b', '--split-berlin',
+            help='Berlin data is split into different counties,'
+            ' instead of having only one county for Berlin.',
+            action='store_true')
     if 'rep_date' in what_list:
-        parser.add_argument('--rep-date', default=False,
-                            help='If reporting date is activated, the reporting date'
-                            'will be prefered over possibly given dates of disease onset.',
-                            action='store_true')
+        parser.add_argument(
+            '--rep-date', default=False,
+            help='If reporting date is activated, the reporting date'
+            'will be prefered over possibly given dates of disease onset.',
+            action='store_true')
     if 'start_date' in what_list:
-        parser.add_argument('-s', '--start-date',
-                            help='Defines start date for data download. Should have form: YYYY-mm-dd.'
-                                 'Default is 2020-04-24',
-                            type=lambda s: datetime.datetime.strptime(
-                                s, '%Y-%m-%d').date(),
-                            default=dd.defaultDict['start_date'])
+        parser.add_argument(
+            '-s', '--start-date',
+            help='Defines start date for data download. Should have form: YYYY-mm-dd.'
+            'Default is 2020-04-24',
+            type=lambda s: datetime.datetime.strptime(s, '%Y-%m-%d').date(),
+            default=dd.defaultDict['start_date'])
     args = parser.parse_args()
 
     return vars(args)
@@ -296,8 +311,9 @@ def write_dataframe(df, directory, file_prefix, file_type):
         outFormEnd = outForm[file_type][0]
         outFormSpec = outForm[file_type][1]
     except KeyError:
-        raise ValueError("Error: The file format: " + file_type + \
-        " does not exist. Use json, json_timeasstring or hdf5.")
+        raise ValueError(
+            "Error: The file format: " + file_type +
+            " does not exist. Use json, json_timeasstring or hdf5.")
 
     out_path = os.path.join(directory, file_prefix + outFormEnd)
 
@@ -312,6 +328,7 @@ def write_dataframe(df, directory, file_prefix, file_type):
         df.to_hdf(out_path, **outFormSpec)
 
     print("Information: Data has been written to", out_path)
+
 
 class DataError(Exception):
     """ Error for handling incomplete or unexpected Data """
