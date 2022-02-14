@@ -19,6 +19,8 @@ int main(){
         length_res++;
     }
     mio::IdeModel model(result, length_res, dt, N);
+    model.add_damping(5.0,0.5);
+    model.add_damping(7,3.5);
     model.simulate(tmax);
     model.print_result();
 }

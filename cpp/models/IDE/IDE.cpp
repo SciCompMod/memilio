@@ -2,11 +2,9 @@
 #include <iostream>
 
 namespace mio{
-    //TODO: R0 einbauen
-
     /**
     * Constructor of IDEModel
-    * @param init Vector with 2d Vectors in its entries containing the initial (time, quantity of susceptible) values
+    * @param init Vector with 3d Vectors in its entries containing the initial (time, quantity of susceptible, R0t) values
     *   the time values should have a distance of dt_init; we need time values from -(k-1)*dt until 0 -> condition: length_init>= k
     *   (with k=std::ceil((timeinfectious+timelatency)/dt)) with default values: take 11.6 and you are safe
     * @param length_init length of the vector containing the inital values
@@ -14,7 +12,7 @@ namespace mio{
     * @param N population of the considered Region 
     */
     IdeModel::IdeModel(std::vector<Eigen::Vector2d> init, int length_init, double dt_init, int N_init)
-    :result(init),length(length_init), dt(dt_init),N(N_init){
+    :result(init),length_result(length_init), dt(dt_init),N(N_init){
         l=(int) std::floor(timelatency/dt);
         k=(int) std::ceil((timeinfectious+timelatency)/dt);
     }
@@ -86,12 +84,52 @@ namespace mio{
     *   These 2d vectors contains the time values in the first entry and the S (susceptible) values in the second one.
     */
     std::vector<Eigen::Vector2d> IdeModel::simulate(int t_max){
-        while (result[length-1][0]<t_max){
-            result.push_back(Eigen::Vector2d (round((result[length-1][0]+dt)*10000.0)/10000.0,0));
-            length++;
-            result[length-1][1]=result[length-2][1] * exp(dt/(2*N)*(num_integration_inner_integral(length-1)+num_integration_inner_integral(length-2)));
+        double R0t_last=1.0;
+        double R0t_current=1.0;
+        int idx_R0t=0;
+        bool next=false;
+        //set initial R0t
+        if (idx_R0t<length_R0t && R0t[idx_R0t][0]<=0.0){
+            
+            std::cout<<"here"<<std::endl;
+            R0t_last=R0t[idx_R0t][1];
+            R0t_current=R0t[idx_R0t][1];
+            idx_R0t++;
+        }
+
+        while (result[length_result-1][0]<t_max){
+            //change last R0t if it was changed in the last timestep
+            if(next){
+                next=false;
+                R0t_last=R0t_current;
+            }
+
+            if(idx_R0t<length_R0t && R0t[idx_R0t][0]<=round((result[length_result-1][0]+dt)*10000.0)/10000.0){
+                R0t_current=R0t[idx_R0t][1];
+                idx_R0t++;
+                // remembering, that R0t_last has to be changed in the next time step
+                next=true;
+                //std::cout<<"here"<<std::endl;
+            }
+
+            result.push_back(Eigen::Vector2d (round((result[length_result-1][0]+dt)*10000.0)/10000.0,0));
+            length_result++;
+            result[length_result-1][1]=result[length_result-2][1] * exp(
+                    dt/(2*N)*(R0t_last* num_integration_inner_integral(length_result-2)+
+                    R0t_current* num_integration_inner_integral(length_result-1)));
         }
         return result;
+    }
+
+    /**
+    * add a damping to simulate a new NPI;
+    * dampings has to be added in ascending chronological order 
+    * @param time time at which new damping should start. prerequisite: time>=0
+    * @param R0t_time new R0t value. Is used from "time" until next time, a damping is set
+    */
+    void IdeModel::add_damping(double time, double R0t_time){
+        R0t.push_back(Eigen::Vector2d(time,R0t_time)); 
+        length_R0t++;
     }
 
     /**
@@ -99,7 +137,7 @@ namespace mio{
     */
     void IdeModel::print_result() const{
         std::cout<<"time  |  number of susceptibles"<<std::endl;
-        for (int i=0;i<length;i++){
+        for (int i=0;i<length_result;i++){
             std::cout<<result[i][0]<<"  |  "<<result[i][1]<<std::endl;
         }
         

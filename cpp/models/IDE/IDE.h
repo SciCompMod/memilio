@@ -15,6 +15,7 @@ class IdeModel{
         void set_infectioustime(double infectious);
         std::vector<Eigen::Vector2d> simulate(int t_max);
         void print_result() const;
+        void add_damping(double time, double R0t_time);
 
     private:
         double Beta(double tau, double p=3.0, double q=10.0) const;
@@ -24,9 +25,12 @@ class IdeModel{
         double timelatency=3.3;
         double timeinfectious=8.2;
 
-        // vector containing one time Step per entry stored in an Eigen Vector (time, number of Susceptible at time t)
+        // vector containing one time Step per entry stored in an Eigen Vector (time, number of Susceptible at time t, R0t)
         std::vector<Eigen::Vector2d> result; 
-        int length;
+        int length_result;
+
+        std::vector<Eigen::Vector2d> R0t; 
+        int length_R0t=0;
 
         double dt;
         int k;
