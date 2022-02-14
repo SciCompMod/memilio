@@ -44,22 +44,22 @@ class Test_geoModificationGermany(fake_filesystem_unittest.TestCase):
         'Berlin Neukölln', 'Berlin Treptow-Köpenick',
         'Berlin Marzahn-Hellersdorf', 'Berlin Lichtenberg',
         'Berlin Reinickendorf']
-    countytostate_string = {
+    countytostate_string = [
         '1001: 1', '11000: 11', '5362: 5', '3452: 3', '1054: 1',
-        '16077: 16'}
-    countytostate_zfill_string = {
+        '16077: 16']
+    countytostate_zfill_string = [
         "'01001': '01'", "'11000': '11'", "'05362': '05'", "'03452': '03'",
-        "'01054': '01'", "'16077': '16'"}
-    statetocounty_string = {
+        "'01054': '01'", "'16077': '16'"]
+    statetocounty_string = [
         '1: [1001,', '2: [2000], 3: [', '4: [', '5: [', '6: [', '7: [',
         '8: [', '9: [', '10: [', '11: [', '12: [',
         '13: [13003, 13004, 13071, 13072, 13073, 13074, 13075, 13076], 14: [',
-        '15: [', '16: ['}
-    statetocounty_zfill_string = {
+        '15: [', '16: [']
+    statetocounty_zfill_string = [
         "'01': ['01001',", "'02': ['02000'], '03': [", "'04': [", "'05': [", "'06': [",
         "'07': [", "'08': [", "'09': [", "'10': [", "'11': [", "'12': [",
         "'13': ['13003', '13004', '13071', '13072', '13073', '13074', '13075', '13076'], '14': [",
-        "'15': [", "'16': ["}
+        "'15': [", "'16': ["]
     stc_merge_eisenach_true_list = [
         16051, 16052, 16053, 16054, 16055, 16061, 16062, 16063, 16064, 16065,
         16066, 16067, 16068, 16069, 16070, 16071, 16072, 16073, 16074, 16075,
@@ -84,9 +84,9 @@ class Test_geoModificationGermany(fake_filesystem_unittest.TestCase):
         '057', '059', '064', '065', '066', '071', '072', '073', '081', '082',
         '083', '084', '091', '092', '093', '094', '095', '096', '097', '100',
         '110', '120', '130', '145', '146', '147', '150', '160']
-    county_table_test_headers = {
+    county_table_test_headers = [
         'ID_County', 'type', 'County', 'NUTS3', 'Area', 'Population',
-        'population_male', 'population_female', 'population_per_km2'}
+        'population_male', 'population_female', 'population_per_km2']
     test_list_regions1 = list(range(32))+[33]
     test_list_regions2 = [str(i).zfill(2) for i in range(32)]+['33']
     test_list_regions3 = [
@@ -107,12 +107,12 @@ class Test_geoModificationGermany(fake_filesystem_unittest.TestCase):
         'Nuernberg', 'Passau', 'Ravensburg', 'Regensburg', 'Rostock',
         'Saarbruecken', 'SchweinfurtWuerzburg', 'Siegen', 'Stuttgart', 'Trier',
         'Ulm', 'VillingenSchwenningen']
-    countytoregion_string = {
+    countytoregion_string = [
         '1001: 11', '11000: 0', '5362: 16', '3452: 2', '1054: 11',
-        '16077: 17'}
-    countytoregion_zfill_string = {
+        '16077: 17']
+    countytoregion_zfill_string = [
         "'01001': '11'", "'11000': '00'", "'05362': '16'", "'03452': '02'",
-        "'01054': '11'", "'16077': '17'"}
+        "'01054': '11'", "'16077': '17'"]
     regiontocounty_string = [
         '0: [11000,', '1: [3255,', '2: [', '3: [', '4: [', '5: [', '6: [',
         '7: [', '8: [', '9: [13073, 13075]', '10: [3155, 3159, 16061, 16062]',
