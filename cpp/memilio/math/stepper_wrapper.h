@@ -65,12 +65,7 @@ public:
         , m_rel_tol(rel_tol)
         , m_dt_min(dt_min)
         , m_dt_max(dt_max)
-        , m_stepper(boost::numeric::odeint::default_error_checker<typename ControlledStepper<>::value_type,
-                                                                  typename ControlledStepper<>::algebra_type,
-                                                                  typename ControlledStepper<>::operations_type>(
-                        abs_tol, rel_tol),
-                    boost::numeric::odeint::default_step_adjuster<typename ControlledStepper<>::value_type,
-                                                                  typename ControlledStepper<>::time_type>(dt_max))
+        , m_stepper(create_stepper())
     // for more options see: boost/boost/numeric/odeint/stepper/controlled_runge_kutta.hpp
     {
     }
@@ -106,14 +101,14 @@ public:
     void set_abs_tolerance(double abs_tol)
     {
         m_abs_tol = abs_tol;
-        set_stepper(); // TODO : replace this call using a custom version of default_error_checker and default_step_adjuster
+        m_stepper = create_stepper();
     }
 
     /// @param tol the required relative tolerance for comparison of the iterative approximation
     void set_rel_tolerance(double rel_tol)
     {
         m_rel_tol = rel_tol;
-        set_stepper(); // TODO : replace this call using a custom version of default_error_checker and default_step_adjuster
+        m_stepper = create_stepper();
     }
 
     /// @param dt_min sets the minimum step size
@@ -125,14 +120,14 @@ public:
     /// @param dt_max sets the maximum step size
     void set_dt_max(double dt_max)
     {
-        m_dt_max = dt_max;
-        set_stepper(); // TODO : replace this call using a custom version of default_error_checker and default_step_adjuster
+        m_dt_max  = dt_max;
+        m_stepper = create_stepper();
     }
 
 private:
-    void set_stepper()
+    boost::numeric::odeint::controlled_runge_kutta<ControlledStepper<>> create_stepper()
     {
-        m_stepper = boost::numeric::odeint::controlled_runge_kutta<ControlledStepper<>>(
+        return boost::numeric::odeint::controlled_runge_kutta<ControlledStepper<>>(
             boost::numeric::odeint::default_error_checker<typename ControlledStepper<>::value_type,
                                                           typename ControlledStepper<>::algebra_type,
                                                           typename ControlledStepper<>::operations_type>(m_abs_tol,
