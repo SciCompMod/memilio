@@ -23,26 +23,11 @@
 #include "memilio/utils/compiler_diagnostics.h"
 #include "memilio/math/integrator.h"
 
-// functions and operators neccessary for a Contolled Stepper to work with Eigen::VectorXd
-// these have to be declared *before* the includes
-
-namespace std
-{
-/// @brief elementwise absolute values of an Eigen::VextorXd
-Eigen::VectorXd abs(Eigen::VectorXd x);
-} // namespace std
-
-/// @brief elementwise addition of a scalar and an Eigen::VextorXd
-Eigen::VectorXd operator+(const double s, const Eigen::VectorXd& v);
-
-/// @brief elementwise division of two Eigen::VextorXd
-Eigen::VectorXd operator/(const Eigen::VectorXd& v, const Eigen::VectorXd& w);
-
 GCC_CLANG_DIAGNOSTIC(push)
 GCC_CLANG_DIAGNOSTIC(ignored "-Wshadow")
 GCC_CLANG_DIAGNOSTIC(ignored "-Wlanguage-extension-token")
 MSVC_WARNING_DISABLE_PUSH(4127)
-#include "boost/numeric/odeint/algebra/vector_space_algebra.hpp"
+#include "boost/numeric/odeint/external/eigen/eigen_algebra.hpp"
 #include "boost/numeric/odeint/stepper/controlled_runge_kutta.hpp"
 #include "boost/numeric/odeint/stepper/runge_kutta4.hpp"
 #include "boost/numeric/odeint/stepper/runge_kutta_fehlberg78.hpp"
@@ -50,28 +35,6 @@ MSVC_WARNING_DISABLE_PUSH(4127)
 #include "boost/numeric/odeint/stepper/runge_kutta_dopri5.hpp"
 MSVC_WARNING_POP
 GCC_CLANG_DIAGNOSTIC(pop)
-
-namespace boost
-{
-namespace numeric
-{
-    namespace odeint
-    {
-        // create struct specialization for Eigen::VectorXd of
-        // the l-infinity norm used by controlled_runge_kutter
-        template <>
-        struct vector_space_norm_inf<Eigen::VectorXd> {
-            typedef double result_type; // = Eigen::VectorXd::Scalar
-            double operator()(Eigen::VectorXd x) const
-            {
-                return x.lpNorm<Eigen::Infinity>();
-            }
-        };
-    } // namespace odeint
-} // namespace numeric
-} // namespace boost
-
-// Wrapper implementing IntegratorCore, can be used for several boost::numeric::odeint Controlled Steppers
 
 namespace mio
 {

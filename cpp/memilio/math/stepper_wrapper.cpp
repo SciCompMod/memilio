@@ -17,25 +17,4 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
-// functions and operators neccessary for a Contolled Stepper to work with Eigen::VectorXd
-// these have to be declared *before* the includes
-
-#include "memilio/math/eigen.h"
-
-namespace std {
-Eigen::VectorXd abs(Eigen::VectorXd x) {
-    // elementwise operations are defined on arrays within Eigen
-    // casts to and from array supposedly cost no runtime when using compiler optimisation 
-    return x.array().abs().matrix();
-}
-}
-
 #include "memilio/math/stepper_wrapper.h"
-
-Eigen::VectorXd operator+ (const double s, const Eigen::VectorXd& v) {
-    return (v.array() + s).matrix();
-}
-
-Eigen::VectorXd operator/ (const Eigen::VectorXd& v, const Eigen::VectorXd& w) {
-    return (v.array() / w.array()).matrix();
-}
