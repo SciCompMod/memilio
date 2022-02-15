@@ -167,7 +167,7 @@ TEST(TestPerson, init)
 
     auto person2 = mio::Person(location, mio::InfectionState::Exposed, mio::AbmAgeGroup::Age60to79, {},
                                mio::VaccinationState::Unvaccinated, 0);
-    ASSERT_EQ(person2.get_person_id(), 0);
+    ASSERT_EQ(person2.get_person_id(), 0u);
 
     mio::TimeSpan dt = mio::hours(1);
     person.interact(dt, {}, location, {});
@@ -196,8 +196,8 @@ TEST(TestPerson, migrate)
     ASSERT_EQ(loc3.get_cells()[0].num_people, 1);
     ASSERT_EQ(loc3.get_cells()[1].num_people, 1);
     ASSERT_EQ(person.get_cells().size(), 2);
-    ASSERT_EQ(person.get_cells()[0], 0);
-    ASSERT_EQ(person.get_cells()[1], 1);
+    ASSERT_EQ(person.get_cells()[0], 0u);
+    ASSERT_EQ(person.get_cells()[1], 1u);
 }
 
 TEST(TestPerson, setGetAssignedLocation)
@@ -303,17 +303,17 @@ TEST(TestLocation, changedState)
     p3.set_cells({0});
     location.add_person(p3);
 
-    ASSERT_EQ(location.get_cells()[0].num_carriers, 1);
-    ASSERT_EQ(location.get_cells()[0].num_infected, 1);
+    ASSERT_EQ(location.get_cells()[0].num_carriers, 1u);
+    ASSERT_EQ(location.get_cells()[0].num_infected, 1u);
     location.changed_state(p1, mio::InfectionState::Susceptible);
-    ASSERT_EQ(location.get_cells()[0].num_carriers, 2);
-    ASSERT_EQ(location.get_cells()[0].num_infected, 1);
+    ASSERT_EQ(location.get_cells()[0].num_carriers, 2u);
+    ASSERT_EQ(location.get_cells()[0].num_infected, 1u);
     location.changed_state(p2, mio::InfectionState::Carrier);
-    ASSERT_EQ(location.get_cells()[0].num_carriers, 1);
-    ASSERT_EQ(location.get_cells()[0].num_infected, 2);
+    ASSERT_EQ(location.get_cells()[0].num_carriers, 1u);
+    ASSERT_EQ(location.get_cells()[0].num_infected, 2u);
     location.changed_state(p3, mio::InfectionState::Infected);
-    ASSERT_EQ(location.get_cells()[0].num_carriers, 1);
-    ASSERT_EQ(location.get_cells()[0].num_infected, 1);
+    ASSERT_EQ(location.get_cells()[0].num_carriers, 1u);
+    ASSERT_EQ(location.get_cells()[0].num_infected, 1u);
 }
 
 TEST(TestLocation, interact)
