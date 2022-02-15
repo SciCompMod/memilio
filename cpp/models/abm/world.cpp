@@ -38,7 +38,7 @@ LocationId World::add_location(LocationType type, uint32_t num_cells)
 
 Person& World::add_person(LocationId id, InfectionState infection_state, AbmAgeGroup age)
 {
-    uint32_t person_index = m_persons.size();
+    uint32_t person_index = static_cast<uint32_t>(m_persons.size());
     m_persons.push_back(std::make_unique<Person>(id, infection_state, age, m_infection_parameters,
                                                  VaccinationState::Unvaccinated, person_index));
     auto& person = *m_persons.back();
