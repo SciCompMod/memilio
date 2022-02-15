@@ -406,7 +406,7 @@ def get_population_data(read_data=dd.defaultDict['read_data'],
         # >74
         df_pop_export[df_pop_export.columns[12]] = df_pop[df_pop.columns[18]]
 
-        df_pop_export[dd.defaultDict['population']
+        df_pop_export[dd.EngEng['population']
                       ] = df_pop_export.iloc[:, 2:].sum(axis=1)
 
         directory = os.path.join(out_folder, 'Germany/')
