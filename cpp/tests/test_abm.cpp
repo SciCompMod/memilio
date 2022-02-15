@@ -189,12 +189,12 @@ TEST(TestPerson, migrate)
     ASSERT_EQ(person.get_location_id().type, loc2.get_type());
     ASSERT_EQ(loc2.get_subpopulation(mio::InfectionState::Recovered_Carrier), 1);
     ASSERT_EQ(loc1.get_subpopulation(mio::InfectionState::Recovered_Carrier), 0);
-    ASSERT_EQ(loc1.get_cells()[0].num_people, 0);
+    ASSERT_EQ(loc1.get_cells()[0].num_people, 0u);
 
     person.migrate_to(loc2, loc3, {0, 1});
 
-    ASSERT_EQ(loc3.get_cells()[0].num_people, 1);
-    ASSERT_EQ(loc3.get_cells()[1].num_people, 1);
+    ASSERT_EQ(loc3.get_cells()[0].num_people, 1u);
+    ASSERT_EQ(loc3.get_cells()[1].num_people, 1u);
     ASSERT_EQ(person.get_cells().size(), 2);
     ASSERT_EQ(person.get_cells()[0], 0u);
     ASSERT_EQ(person.get_cells()[1], 1u);
