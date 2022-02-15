@@ -1,7 +1,7 @@
 /* 
 * Copyright (C) 2020-2021 German Aerospace Center (DLR-SC)
 *
-* Authors: Daniel Abele
+* Authors: Daniel Abele, Elisabeth Kluth
 *
 * Contact: Martin J. Kuehn <Martin.Kuehn@DLR.de>
 *
@@ -26,6 +26,7 @@
 #include "abm/location_type.h"
 
 #include "memilio/math/eigen.h"
+#include "memilio/utils/custom_index_array.h"
 #include <array>
 #include <random>
 
@@ -49,11 +50,32 @@ inline bool operator==(const LocationId& lhs, const LocationId& rhs)
 
 /**
  * The location can be split up into several cells. This allows a finer division of the people in public transport.
+
  */
 struct Cell {
     uint32_t num_people;
-    uint32_t index;
-};
+    uint32_t num_carriers;
+    uint32_t num_infected;
+    CustomIndexArray<double, AbmAgeGroup, mio::VaccinationState> cached_exposure_rate;
+
+    Cell()
+        : num_people(0)
+        , num_carriers(0)
+        , num_infected(0)
+        , cached_exposure_rate({{mio::AbmAgeGroup::Count, mio::VaccinationState::Count}, 0.})
+    {
+    }
+
+    Cell(uint32_t num_p, uint32_t num_c, uint32_t num_i,
+         CustomIndexArray<double, AbmAgeGroup, mio::VaccinationState> cached_exposure_rate_new)
+        : num_people(num_p)
+        , num_carriers(num_c)
+        , num_infected(num_i)
+        , cached_exposure_rate(cached_exposure_rate_new)
+    {
+    }
+
+}; // namespace mio
 
 /**
  * all locations in the simulated world where persons gather.
@@ -65,8 +87,9 @@ public:
      * construct a Location of a certain type.
      * @param type the type of the location
      * @param index the index of the location
+     * @param num_cells the number of cells in which the location is divided
      */
-    Location(LocationType type, uint32_t index);
+    Location(LocationType type, uint32_t index, uint32_t num_cells = 0);
 
     /**
      * get the type of this location.
@@ -153,6 +176,11 @@ public:
     const TestingScheme& get_testing_scheme() const
     {
         return m_testing_scheme;
+    }
+
+    const std::vector<Cell>& get_cells() const
+    {
+        return m_cells;
     }
 
 private:

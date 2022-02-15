@@ -2,7 +2,7 @@
 * Copyright (C) 2020-2021 German Aerospace Center (DLR-SC)
 *        & Helmholtz Centre for Infection Research (HZI)
 *
-* Authors: Daniel Abele, Majid Abedi
+* Authors: Daniel Abele, Majid Abedi, Elisabeth Kluth
 *
 * Contact: Martin J. Kuehn <Martin.Kuehn@DLR.de>
 *
@@ -28,11 +28,11 @@
 namespace mio
 {
 
-LocationId World::add_location(LocationType type)
+LocationId World::add_location(LocationType type, uint32_t num_cells)
 {
     auto& locations = m_locations[(uint32_t)type];
     uint32_t index  = static_cast<uint32_t>(locations.size());
-    locations.emplace_back(Location(type, index));
+    locations.emplace_back(Location(type, index, num_cells));
     return {index, type};
 }
 

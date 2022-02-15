@@ -240,7 +240,7 @@ public:
     /**
      * set index of cells of the person
      */
-    void set_cells(std::vector<uint32_t>& cell);
+    void set_cells(const std::vector<uint32_t>& cell);
 
     /**
      * get index of cells of the person

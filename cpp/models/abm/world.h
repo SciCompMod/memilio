@@ -2,7 +2,7 @@
 * Copyright (C) 2020-2021 German Aerospace Center (DLR-SC)
 *        & Helmholtz Centre for Infection Research (HZI)
 *
-* Authors: Daniel Abele, Majid Abedi
+* Authors: Daniel Abele, Majid Abedi, Elisabeth Kluth
 *
 * Contact: Martin J. Kuehn <Martin.Kuehn@DLR.de>
 *
@@ -83,9 +83,10 @@ public:
     /** 
      * add a location to the world.
      * @param type type of location to add
+     * @param num_cells number of cells that the location is divided into
      * @return index and type of the newly created location
      */
-    LocationId add_location(LocationType type);
+    LocationId add_location(LocationType type, uint32_t num_cells = 0);
 
     /** add a person to the world 
      * @param id index and type of the initial location of the person
