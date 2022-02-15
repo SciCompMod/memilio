@@ -525,87 +525,87 @@ namespace details
         return success(interpol_population);
     }
 
-    void set_vaccine_data(std::vector<SecirModelV>& model, const std::string& path, const std::string& id_name,
-                          const std::vector<int>& vregion)
-    {
-        if (!boost::filesystem::exists(path)) {
-            log_error("Vaccine data file missing: {}.", path);
-            return;
-        }
-        Json::Reader reader;
-        Json::Value root;
+    // void set_vaccine_data(std::vector<SecirModelV>& model, const std::string& path, const std::string& id_name,
+    //                       const std::vector<int>& vregion)
+    // {
+    //     if (!boost::filesystem::exists(path)) {
+    //         log_error("Vaccine data file missing: {}.", path);
+    //         return;
+    //     }
+    //     Json::Reader reader;
+    //     Json::Value root;
 
-        std::ifstream vaccine(path);
-        reader.parse(vaccine, root);
+    //     std::ifstream vaccine(path);
+    //     reader.parse(vaccine, root);
 
-        std::vector<std::vector<double>> vnum_vaccine(model.size(), std::vector<double>(6, 0.0));
-        for (unsigned int i = 0; i < root.size(); i++) {
-            auto it = std::find_if(vregion.begin(), vregion.end(), [&root, i, &id_name](auto r) {
-                return r == 0 || r == root[i][id_name].asInt();
-            });
-            if (it != vregion.end()) {
-                auto region_idx                 = size_t(it - vregion.begin());
-                auto& num_first_vac             = vnum_vaccine[region_idx][0];
-                auto& num_full_vac              = vnum_vaccine[region_idx][1];
-                auto& num_vac_ratio_young_first = vnum_vaccine[region_idx][2];
-                auto& num_vac_ratio_old_first   = vnum_vaccine[region_idx][3];
-                auto& num_vac_ratio_young_full  = vnum_vaccine[region_idx][4];
-                auto& num_vac_ratio_old_full    = vnum_vaccine[region_idx][5];
-                num_first_vac                   = root[i]["First_Shot"].asDouble();
-                num_full_vac                    = root[i]["Full_Vaccination"].asDouble();
-                num_vac_ratio_young_first       = root[i]["Ratio_Young_First"].asDouble();
-                num_vac_ratio_old_first         = root[i]["Ratio_Old_First"].asDouble();
-                num_vac_ratio_young_full        = root[i]["Ratio_Young_Full"].asDouble();
-                num_vac_ratio_old_full          = root[i]["Ratio_Old_Full"].asDouble();
-            }
-        }
-        for (size_t region_idx = 0; region_idx < model.size(); ++region_idx) {
-            auto& params      = model[region_idx];
-            auto& num_vaccine = vnum_vaccine[region_idx];
+    //     std::vector<std::vector<double>> vnum_vaccine(model.size(), std::vector<double>(6, 0.0));
+    //     for (unsigned int i = 0; i < root.size(); i++) {
+    //         auto it = std::find_if(vregion.begin(), vregion.end(), [&root, i, &id_name](auto r) {
+    //             return r == 0 || r == root[i][id_name].asInt();
+    //         });
+    //         if (it != vregion.end()) {
+    //             auto region_idx                 = size_t(it - vregion.begin());
+    //             auto& num_first_vac             = vnum_vaccine[region_idx][0];
+    //             auto& num_full_vac              = vnum_vaccine[region_idx][1];
+    //             auto& num_vac_ratio_young_first = vnum_vaccine[region_idx][2];
+    //             auto& num_vac_ratio_old_first   = vnum_vaccine[region_idx][3];
+    //             auto& num_vac_ratio_young_full  = vnum_vaccine[region_idx][4];
+    //             auto& num_vac_ratio_old_full    = vnum_vaccine[region_idx][5];
+    //             num_first_vac                   = root[i]["First_Shot"].asDouble();
+    //             num_full_vac                    = root[i]["Full_Vaccination"].asDouble();
+    //             num_vac_ratio_young_first       = root[i]["Ratio_Young_First"].asDouble();
+    //             num_vac_ratio_old_first         = root[i]["Ratio_Old_First"].asDouble();
+    //             num_vac_ratio_young_full        = root[i]["Ratio_Young_Full"].asDouble();
+    //             num_vac_ratio_old_full          = root[i]["Ratio_Old_Full"].asDouble();
+    //         }
+    //     }
+    //     for (size_t region_idx = 0; region_idx < model.size(); ++region_idx) {
+    //         auto& params      = model[region_idx];
+    //         auto& num_vaccine = vnum_vaccine[region_idx];
 
-            auto num_groups = params.parameters.get_num_groups();
+    //         auto num_groups = params.parameters.get_num_groups();
 
-            double r_young_first = num_vaccine[2] / 100;
-            double r_old_first   = num_vaccine[3] / 100;
-            double r_young_full  = num_vaccine[4] / 100;
-            double r_old_full    = num_vaccine[5] / 100;
-            std::vector<double> num_vaccine_first((size_t)num_groups, 0);
-            std::vector<double> num_vaccine_full((size_t)num_groups, 0);
-            double sum_population = 0;
-            for (auto i = AgeGroup(0); i < num_groups; i++) {
-                sum_population += params.populations.get_group_total(i);
-            }
-            for (auto i = AgeGroup(0); i < num_groups; i++) {
-                if ((size_t)i < 4 && (size_t)i > 1) {
-                    num_vaccine_first[(size_t)i] = r_young_first * params.populations.get_group_total(i);
-                    num_vaccine_full[(size_t)i]  = r_young_full * params.populations.get_group_total(i);
-                }
-                else if ((size_t)i > 3) {
-                    num_vaccine_first[(size_t)i] = r_old_first * params.populations.get_group_total(i);
-                    num_vaccine_full[(size_t)i]  = r_old_full * params.populations.get_group_total(i);
-                }
-                if (num_vaccine_first[(size_t)i] < 0) {
-                    num_vaccine_first[(size_t)i] = 0;
-                }
-                if (num_vaccine_full[(size_t)i] < 0) {
-                    num_vaccine_full[(size_t)i] = 0;
-                }
-            }
+    //         double r_young_first = num_vaccine[2] / 100;
+    //         double r_old_first   = num_vaccine[3] / 100;
+    //         double r_young_full  = num_vaccine[4] / 100;
+    //         double r_old_full    = num_vaccine[5] / 100;
+    //         std::vector<double> num_vaccine_first((size_t)num_groups, 0);
+    //         std::vector<double> num_vaccine_full((size_t)num_groups, 0);
+    //         double sum_population = 0;
+    //         for (auto i = AgeGroup(0); i < num_groups; i++) {
+    //             sum_population += params.populations.get_group_total(i);
+    //         }
+    //         for (auto i = AgeGroup(0); i < num_groups; i++) {
+    //             if ((size_t)i < 4 && (size_t)i > 1) {
+    //                 num_vaccine_first[(size_t)i] = r_young_first * params.populations.get_group_total(i);
+    //                 num_vaccine_full[(size_t)i]  = r_young_full * params.populations.get_group_total(i);
+    //             }
+    //             else if ((size_t)i > 3) {
+    //                 num_vaccine_first[(size_t)i] = r_old_first * params.populations.get_group_total(i);
+    //                 num_vaccine_full[(size_t)i]  = r_old_full * params.populations.get_group_total(i);
+    //             }
+    //             if (num_vaccine_first[(size_t)i] < 0) {
+    //                 num_vaccine_first[(size_t)i] = 0;
+    //             }
+    //             if (num_vaccine_full[(size_t)i] < 0) {
+    //                 num_vaccine_full[(size_t)i] = 0;
+    //             }
+    //         }
 
-            for (auto i = AgeGroup(0); i < num_groups; i++) {
-                if (params.populations[{i, InfectionStateV::Susceptible}] < num_vaccine_first[(size_t)i]) {
-                    num_vaccine_first[(size_t)i] = 0.9 * params.populations[{i, InfectionStateV::Susceptible}];
-                }
-                params.populations[{i, InfectionStateV::Susceptible}] =
-                    params.populations[{i, InfectionStateV::Susceptible}] - num_vaccine_first[(size_t)i];
-                params.populations[{i, InfectionStateV::SusceptibleV1}] =
-                    params.populations[{i, InfectionStateV::SusceptibleV1}] + num_vaccine_first[(size_t)i] -
-                    num_vaccine_full[(size_t)i];
-                params.populations[{i, InfectionStateV::Recovered}] =
-                    params.populations[{i, epi::InfectionStateV::Recovered}] + num_vaccine_full[(size_t)i];
-            }
-        }
-    }
+    //         for (auto i = AgeGroup(0); i < num_groups; i++) {
+    //             if (params.populations[{i, InfectionStateV::Susceptible}] < num_vaccine_first[(size_t)i]) {
+    //                 num_vaccine_first[(size_t)i] = 0.9 * params.populations[{i, InfectionStateV::Susceptible}];
+    //             }
+    //             params.populations[{i, InfectionStateV::Susceptible}] =
+    //                 params.populations[{i, InfectionStateV::Susceptible}] - num_vaccine_first[(size_t)i];
+    //             params.populations[{i, InfectionStateV::SusceptibleV1}] =
+    //                 params.populations[{i, InfectionStateV::SusceptibleV1}] + num_vaccine_first[(size_t)i] -
+    //                 num_vaccine_full[(size_t)i];
+    //             params.populations[{i, InfectionStateV::Recovered}] =
+    //                 params.populations[{i, epi::InfectionStateV::Recovered}] + num_vaccine_full[(size_t)i];
+    //         }
+    //     }
+    // }
 
     void get_new_vaccine_growth(std::vector<SecirModelV>& model, const std::string& path, Date date,
                                 const std::string& id_name, const std::vector<int>& vregion, int num_days)
