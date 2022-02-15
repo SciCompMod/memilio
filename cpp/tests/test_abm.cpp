@@ -75,12 +75,12 @@ TEST(TestLocation, addRemovePerson)
 
     ASSERT_EQ(location.get_subpopulation(mio::InfectionState::Infected), 1);
     ASSERT_EQ(location.get_subpopulation(mio::InfectionState::Exposed), 1);
-    ASSERT_EQ(location.get_cells()[0].num_people, 2);
-    ASSERT_EQ(location.get_cells()[1].num_people, 2);
-    ASSERT_EQ(location.get_cells()[2].num_people, 0);
-    ASSERT_EQ(location.get_cells()[0].num_infected, 1);
-    ASSERT_EQ(location.get_cells()[1].num_infected, 1);
-    ASSERT_EQ(location.get_cells()[2].num_infected, 0);
+    ASSERT_EQ(location.get_cells()[0].num_people, 2u);
+    ASSERT_EQ(location.get_cells()[1].num_people, 2u);
+    ASSERT_EQ(location.get_cells()[2].num_people, 0u);
+    ASSERT_EQ(location.get_cells()[0].num_infected, 1u);
+    ASSERT_EQ(location.get_cells()[1].num_infected, 1u);
+    ASSERT_EQ(location.get_cells()[2].num_infected, 0u);
 }
 
 TEST(TestLocation, setTestingScheme)
