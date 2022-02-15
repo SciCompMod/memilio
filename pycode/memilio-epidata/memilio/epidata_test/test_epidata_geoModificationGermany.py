@@ -44,22 +44,22 @@ class Test_geoModificationGermany(fake_filesystem_unittest.TestCase):
         'Berlin Neukölln', 'Berlin Treptow-Köpenick',
         'Berlin Marzahn-Hellersdorf', 'Berlin Lichtenberg',
         'Berlin Reinickendorf']
-    countytostate_string = {
+    countytostate_string = [
         '1001: 1', '11000: 11', '5362: 5', '3452: 3', '1054: 1',
-        '16077: 16'}
-    countytostate_zfill_string = {
+        '16077: 16']
+    countytostate_zfill_string = [
         "'01001': '01'", "'11000': '11'", "'05362': '05'", "'03452': '03'",
-        "'01054': '01'", "'16077': '16'"}
-    statetocounty_string = {
+        "'01054': '01'", "'16077': '16'"]
+    statetocounty_string = [
         '1: [1001,', '2: [2000], 3: [', '4: [', '5: [', '6: [', '7: [',
         '8: [', '9: [', '10: [', '11: [', '12: [',
         '13: [13003, 13004, 13071, 13072, 13073, 13074, 13075, 13076], 14: [',
-        '15: [', '16: ['}
-    statetocounty_zfill_string = {
+        '15: [', '16: [']
+    statetocounty_zfill_string = [
         "'01': ['01001',", "'02': ['02000'], '03': [", "'04': [", "'05': [", "'06': [",
         "'07': [", "'08': [", "'09': [", "'10': [", "'11': [", "'12': [",
         "'13': ['13003', '13004', '13071', '13072', '13073', '13074', '13075', '13076'], '14': [",
-        "'15': [", "'16': ["}
+        "'15': [", "'16': ["]
     stc_merge_eisenach_true_list = [
         16051, 16052, 16053, 16054, 16055, 16061, 16062, 16063, 16064, 16065,
         16066, 16067, 16068, 16069, 16070, 16071, 16072, 16073, 16074, 16075,
@@ -84,12 +84,21 @@ class Test_geoModificationGermany(fake_filesystem_unittest.TestCase):
         '057', '059', '064', '065', '066', '071', '072', '073', '081', '082',
         '083', '084', '091', '092', '093', '094', '095', '096', '097', '100',
         '110', '120', '130', '145', '146', '147', '150', '160']
-    county_table_test_headers = {
+    county_table_test_headers = [
         'ID_County', 'type', 'County', 'NUTS3', 'Area', 'Population',
-        'population_male', 'population_female', 'population_per_km2'}
-    test_list_regions1 = list(range(34))
-    test_list_regions2 = [str(i).zfill(2) for i in range(34)]
+        'population_male', 'population_female', 'population_per_km2']
+    test_list_regions1 = list(range(32))+[33]
+    test_list_regions2 = [str(i).zfill(2) for i in range(32)]+['33']
     test_list_regions3 = [
+        'Berlin', 'BielefeldPaderborn', 'Bremen', 'Chemnitz', 'Dresden',
+        'DuesseldorfRuhr', 'Erfurt', 'Frankfurt', 'Freiburg',
+        'GreifswaldStralsund', 'Göttingen', 'Hamburg', 'Hannover',
+        'KarlsruheMannheim', 'Kassel', 'Konstanz', 'Köln', 'Leipzig',
+        'Magdeburg', 'MuensterOsnabrueck', 'München', 'Neubrandenburg',
+        'Nuernberg', 'Passau', 'Ravensburg', 'Regensburg', 'Rostock',
+        'Saarbruecken', 'SchweinfurtWuerzburg', 'Siegen', 'StuttgartUlm',
+        'Trier', 'VillingenSchwenningen']
+    test_list_regions3_ulm = [
         'Berlin', 'BielefeldPaderborn', 'Bremen', 'Chemnitz', 'Dresden',
         'DuesseldorfRuhr', 'Erfurt', 'Frankfurt', 'Freiburg',
         'GreifswaldStralsund', 'Göttingen', 'Hamburg', 'Hannover',
@@ -98,21 +107,20 @@ class Test_geoModificationGermany(fake_filesystem_unittest.TestCase):
         'Nuernberg', 'Passau', 'Ravensburg', 'Regensburg', 'Rostock',
         'Saarbruecken', 'SchweinfurtWuerzburg', 'Siegen', 'Stuttgart', 'Trier',
         'Ulm', 'VillingenSchwenningen']
-    countytoregion_string = {
+    countytoregion_string = [
         '1001: 11', '11000: 0', '5362: 16', '3452: 2', '1054: 11',
-        '16077: 17'}
-    countytoregion_zfill_string = {
+        '16077: 17']
+    countytoregion_zfill_string = [
         "'01001': '11'", "'11000': '00'", "'05362': '16'", "'03452': '02'",
-        "'01054': '11'", "'16077': '17'"}
-    regiontocounty_string = {
+        "'01054': '11'", "'16077': '17'"]
+    regiontocounty_string = [
         '0: [11000,', '1: [3255,', '2: [', '3: [', '4: [', '5: [', '6: [',
         '7: [', '8: [', '9: [13073, 13075]', '10: [3155, 3159, 16061, 16062]',
         '11: [', '12: [', '13: [', '14: [', '15: [8335]', '16: [', '17: [',
         '18: [', '19: [', '20: [', '21: [', '22: [', '23: [', '24: [', '25: [',
         '26: [', '27: [', '28: [', '29: [5966, 5970, 7132]', '30: [',
-        '31: [7211, 7231, 7232, 7233, 7235]',
-        '32: [8421, 8425, 8426, 8437, 9775]', '33: [8325, 8326, 8327]'}
-    regiontocounty_zfill_string = {
+        '31: [7211, 7231, 7232, 7233, 7235]', '33: [8325, 8326, 8327]']
+    regiontocounty_zfill_string = [
         "'00': ['11000',", "'01': ['03255',", "'02': [", "'03': [", "'04': [",
         "'05': [", "'06': [", "'07': [", "'08': [", "'09': ['13073', '13075']",
         "'10': ['03155', '03159', '16061', '16062']", "'11': [", "'12': [",
@@ -121,8 +129,8 @@ class Test_geoModificationGermany(fake_filesystem_unittest.TestCase):
         "'24': [", "'25': [", "'26': [", "'27': [", "'28': [",
         "'29': ['05966', '05970', '07132']", "'30': [",
         "'31': ['07211', '07231', '07232', '07233', '07235']",
-        "'32': ['08421', '08425', '08426', '08437', '09775']",
-        "'33': ['08325', '08326', '08327']"}
+        "'33': ['08325', '08326', '08327']"]
+
     rtc_merge_eisenach_true_list = [
         16051, 16052, 16053, 16054, 16055, 16063, 16064, 16065, 16066,
         16067, 16068, 16069, 16070, 16071, 16073, 16074, 16075, 16076]
@@ -346,77 +354,141 @@ class Test_geoModificationGermany(fake_filesystem_unittest.TestCase):
             ' county list. This could be OK, please verify yourself.')
 
     def test_get_intermediateregion_IDs(self):
-        # zfill is false
-        unique_geo_entitites = geoger.get_intermediateregion_ids(False)
+        # Ulm is merged with StuttgartRegion, zfill is false
+        unique_geo_entitites = geoger.get_intermediateregion_ids(True, False)
         self.assertEqual(unique_geo_entitites, self.test_list_regions1)
 
+        # test default
+        self.assertEqual(
+            unique_geo_entitites, geoger.get_intermediateregion_ids())
+
         # zfill is true
-        unique_geo_entitites = geoger.get_intermediateregion_ids(True)
+        unique_geo_entitites = geoger.get_intermediateregion_ids(True, True)
         self.assertEqual(unique_geo_entitites, self.test_list_regions2)
 
-    def test_get_intermediateregion_names(self):
+        # Ulm not merged
+        unique_geo_entitites = geoger.get_intermediateregion_ids(False)
+        self.assertEqual(unique_geo_entitites, list(range(34)))
 
-        region_names = geoger.get_intermediateregion_names()
+    def test_get_intermediateregion_names(self):
+        # Ulm merged
+        region_names = geoger.get_intermediateregion_names(True)
         self.assertEqual(region_names, self.test_list_regions3)
+        self.assertFalse('Stuttgart' in region_names)
+        self.assertFalse('Ulm' in region_names)
+
+        # test default
+        self.assertEqual(
+            region_names, geoger.get_intermediateregion_names())
+
+        # Ulm not merged
+        region_names = geoger.get_intermediateregion_names(False)
+        self.assertTrue('Stuttgart' in region_names)
+        self.assertTrue('Ulm' in region_names)
 
     def get_intermediateregion_to_name(self):
 
-        region_to_name = geoger.get_intermediateregion_to_name()
+        region_to_name = geoger.get_intermediateregion_to_name(True)
         self.assertEqual(region_to_name, dict(zip(self.test_list_regions1,
                                                   self.test_list_regions3)))
+        # test default
+        self.assertEqual(
+            region_to_name, geoger.get_intermediateregionid_to_countyids_map())
+
+        region_to_name = geoger.get_intermediateregion_to_name(False)
+        self.assertEqual(region_to_name, dict(
+            zip(list(range(34)), self.test_list_regions3_ulm)))
 
     def test_get_intermediateregion_names_and_ids(self):
 
-        # zfill is false
-        regionnamesandids = geoger.get_intermediateregion_names_and_ids(False)
+        # Ulm is merged, zfill is false
+        regionnamesandids = geoger.get_intermediateregion_names_and_ids(
+            True, False)
         testregionnamesandids = []
         for i in range(0, len(self.test_list_regions1)):
             combined = [self.test_list_regions3[i], self.test_list_regions1[i]]
             testregionnamesandids.append(combined)
         self.assertEqual(regionnamesandids, testregionnamesandids)
 
-        # zfill is true
-        regionnamesandids = geoger.get_intermediateregion_names_and_ids(True)
+        # test default
+        self.assertEqual(regionnamesandids,
+                         geoger.get_intermediateregion_names_and_ids())
+
+        # Ulm is merged, zfill is true
+        regionnamesandids = geoger.get_intermediateregion_names_and_ids(
+            True, True)
         testregionnamesandids = []
         for i in range(0, len(self.test_list_regions2)):
             combined = [self.test_list_regions3[i], self.test_list_regions2[i]]
             testregionnamesandids.append(combined)
         self.assertEqual(regionnamesandids, testregionnamesandids)
 
-    def test_get_countyid_to_intermediateregionid_map(self):
+        # Ulm not merged
+        regionnamesandids = geoger.get_intermediateregion_names_and_ids(
+            False, False)
+        self.assertTrue(regionnamesandids[30], ['Stuttgart', 30])
+        self.assertTrue(regionnamesandids[32], ['Ulm', 32])
 
+    def test_get_countyid_to_intermediateregionid_map(self):
+        # Ulm is merged, Eisenach is merged, zfill is false
         countytoregion = geoger.get_countyid_to_intermediateregionid_map(
-            merge_eisenach=True, zfill=False)
+            True, True, False)
         self.assertTrue(all([countytoregionstr in str(countytoregion)
                              for countytoregionstr in self.countytoregion_string]))
         self.assertTrue('16063: 6' in str(countytoregion))
         self.assertFalse('16056: 6' in str(countytoregion))
 
+        # test default
+        self.assertEqual(
+            countytoregion, geoger.get_countyid_to_intermediateregionid_map())
+
         countytoregion = geoger.get_countyid_to_intermediateregionid_map(
-            merge_eisenach=False, zfill=True)
+            True, False, True)
         self.assertTrue(all([countytoregionstr in str(countytoregion)
                              for countytoregionstr in self.countytoregion_zfill_string]))
         self.assertTrue("'16063': '06'" in str(countytoregion))
         self.assertTrue("'16056': '06'" in str(countytoregion))
 
+        # Ulm is not merged, Eisenach is merged, zfill is false
+        countytoregion = geoger.get_countyid_to_intermediateregionid_map(
+            False, True, False)
+        self.assertTrue('8421: 32' in str(countytoregion))
+
     def test_get_intermediateregionid_to_countyids_map(self):
 
-        # test merge_eisenach = true and zfill = false
+        # Ulm merged, Eisenach merged, and zfill is false
         regiontocounty = geoger.get_intermediateregionid_to_countyids_map(
-            merge_eisenach=True, zfill=False)
+            True, True, False)
         self.assertTrue(all([regiontocountystr in str(regiontocounty)
                              for regiontocountystr in self.regiontocounty_string]))
         self.assertEqual(self.rtc_merge_eisenach_true_list, regiontocounty[6])
         self.assertNotEqual(
             self.rtc_merge_eisenach_false_list, regiontocounty[6])
         self.assertEqual(self.rtc_zfill_false_list, regiontocounty[1])
+        self.assertFalse(
+            '32: [8421, 8425, 8426, 8437, 9775]'
+            in str(regiontocounty))
 
-        # test without merge_eisenach and zfill = true
+        # test default
+        self.assertEqual(
+            regiontocounty, geoger.get_intermediateregionid_to_countyids_map())
+
+        # Ulm merged, Eisenach not merged, and zfill is true
         regiontocounty = geoger.get_intermediateregionid_to_countyids_map(
-            merge_eisenach=False, zfill=True)
+            True, False, True)
         self.assertTrue(all([regiontocountystr in str(regiontocounty)
                              for regiontocountystr in self.regiontocounty_zfill_string]))
         self.assertEqual(self.rtc_zfill_true_list, regiontocounty['01'])
+        self.assertFalse(
+            '32: [8421, 8425, 8426, 8437, 9775]'
+            in str(regiontocounty))
+
+        # Ulm is not merged, Eisenach is merged, zfill is false
+        regiontocounty = geoger.get_intermediateregionid_to_countyids_map(
+            False, True, False)
+        self.assertTrue(
+            '32: [8421, 8425, 8426, 8437, 9775]'
+            in str(regiontocounty))
 
 
 if __name__ == '__main__':

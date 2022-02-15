@@ -90,8 +90,8 @@ def get_county_ids(merge_berlin=True, merge_eisenach=True, zfill=False):
 
     @param merge_berlin [Default: True] Defines whether the different districts
         are listed separately or combined as one entity 'Berlin'.
-    @param merge_eisenach [Default: True] Defines whether the counties 
-        'Wartburgkreis' and 'Eisenach' are listed separately or combined 
+    @param merge_eisenach [Default: True] Defines whether the counties
+        'Wartburgkreis' and 'Eisenach' are listed separately or combined
         as one entity 'Wartburgkreis'.
     @param zfill [Default: False] Defines whether county IDs are zero-filled to
         five digits and returned as a string or returned as an integer.
@@ -119,8 +119,8 @@ def get_county_names(merge_berlin=True, merge_eisenach=True):
 
     @param merge_berlin [Default: True] Defines whether the different districts
         are listed separately or combined as one entity 'Berlin'.
-    @param merge_eisenach [Default: True] Defines whether the counties 
-        'Wartburgkreis' and 'Eisenach' are listed separately or combined 
+    @param merge_eisenach [Default: True] Defines whether the counties
+        'Wartburgkreis' and 'Eisenach' are listed separately or combined
         as one entity 'Wartburgkreis'.
     @return List of county names sorted according to county ID.
     """
@@ -133,11 +133,11 @@ def get_county_names_and_ids(
 
     @param merge_berlin [Default: True] Defines whether the different districts
         are listed separately or combined as one entity 'Berlin'.
-    @param merge_eisenach [Default: True] Defines whether the counties 
-        'Wartburgkreis' and 'Eisenach' are listed separately or combined 
+    @param merge_eisenach [Default: True] Defines whether the counties
+        'Wartburgkreis' and 'Eisenach' are listed separately or combined
         as one entity 'Wartburgkreis'.
     @param zfill [Default: False] Defines whether county IDs are zero-filled to
-        five digits and returned as a string or returned as an integer.        
+        five digits and returned as a string or returned as an integer.
     @return List of county names and IDs sorted according to county ID.
     """
     countyids = get_county_ids(merge_berlin, merge_eisenach)
@@ -161,10 +161,10 @@ def check_for_all_counties(
     """! Checks if all states are mentioned
 
     This function checks if all counties are available in the list provided.
-    If data is incomplete this function returns false and a parent function may 
+    If data is incomplete this function returns false and a parent function may
     try to download from another source.
     Note 1: There is no check if data for every day of every county is available.
-    Note 2: If the source data file contains more local entities than the official 
+    Note 2: If the source data file contains more local entities than the official
                 county list True is returned and the user has to check on its own.
 
     @param unique_county_list unique county list to check.
@@ -194,8 +194,8 @@ def check_for_all_counties(
 def get_countyid_to_stateid_map(merge_eisenach=True, zfill=False):
     """! Creates a hash map from county IDs to state IDs
 
-    @param merge_eisenach [Default: True] Defines whether the counties 
-        'Wartburgkreis' and 'Eisenach' are listed separately or combined 
+    @param merge_eisenach [Default: True] Defines whether the counties
+        'Wartburgkreis' and 'Eisenach' are listed separately or combined
         as one entity 'Wartburgkreis'.
     @param zfill [Default: False]. Defines whether or not all IDs are returned
         as zero-filled strings. By default, integer maps are returned.
@@ -212,8 +212,8 @@ def get_countyid_to_stateid_map(merge_eisenach=True, zfill=False):
 def get_stateid_to_countyids_map(merge_eisenach=True, zfill=False):
     """! Creates a hash map from state IDs to lists of county IDs
 
-    @param merge_eisenach [Default: True] Defines whether the counties 
-        'Wartburgkreis' and 'Eisenach' are listed separately or combined 
+    @param merge_eisenach [Default: True] Defines whether the counties
+        'Wartburgkreis' and 'Eisenach' are listed separately or combined
         as one entity 'Wartburgkreis'.
     @param zfill [Default: False]. Defines whether or not all IDs are returned
         as zero-filled strings. By default, integer maps are returned.
@@ -230,23 +230,23 @@ def get_stateid_to_countyids_map(merge_eisenach=True, zfill=False):
 
 
 def get_governing_regions(strict=True):
-    """! Creates a sorted list of governing regions which may simply be 
-    federal states or intermediate regions which themselves are a real 
-    subset of a federal state and to which a certain number of counties 
+    """! Creates a sorted list of governing regions which may simply be
+    federal states or intermediate regions which themselves are a real
+    subset of a federal state and to which a certain number of counties
     is attributed.
 
-    Governing regions are generally denoted by the first three digits of the   
+    Governing regions are generally denoted by the first three digits of the
     belonging county IDs. In cases of a trailing zero, only two digits are
     taken and for Rhineland Palatinate and Saxony, the strict definition
     returns the two digit code of the federal state (i.e. 07 and 14).
 
-    Note that this list may include former 'governing regions'. However, this 
-    function may only be used to equally distribute information which only exist 
-    on the 'governing region' level but not on county level itself or where the 
-    county level information seems to be wrong. Then, information is extrapolated 
+    Note that this list may include former 'governing regions'. However, this
+    function may only be used to equally distribute information which only exist
+    on the 'governing region' level but not on county level itself or where the
+    county level information seems to be wrong. Then, information is extrapolated
     with the help of governing regions.
 
-    @param strict [Default: True] Defines whether only regions currently 
+    @param strict [Default: True] Defines whether only regions currently
         considered as governing regions are returned.
     @return List of governing regions.
     """
@@ -294,7 +294,7 @@ def get_official_county_table():
 
 
 def get_nuts3_county_id_map(merge_eisenach=True):
-    """! Downloads county list file from destatis and creates hash map from 
+    """! Downloads county list file from destatis and creates hash map from
     NUTS3 ID to county ID.
 
     @return Hash map of NUTS3 ID to county ID
@@ -326,7 +326,7 @@ def create_intermediateregion_level(merge_eisenach=True):
     The new regions aggregate a certain level of counties. For more
     information, see the following references.
 
-    IMPORTANT: This function does not need to be executed. Since the input file 
+    IMPORTANT: This function does not need to be executed. Since the input file
     is not publicly available, the results have been copied to defaultDict.
 
     Zika et al. (2020) https://www.iab.de/897/section.aspx/Publikation/k200206302
@@ -363,60 +363,86 @@ def create_intermediateregion_level(merge_eisenach=True):
             zip(intermed_regions, region_to_county_table))
 
 
-def get_intermediateregion_ids(zfill=False):
+def get_intermediateregion_ids(merge_ulm=True, zfill=False):
     """"! Get list of intermediate region IDs sorted according to ID.
 
+    @param merge_ulm Combines region of Ulm (32) with region of Stuttgart (30).
     @param zfill [Default: False] Defines whether IDs are zero-filled to
         two digits and returned as a string or returned as an integer.
     @return List of intermediate region IDs sorted according to ID.
     """
     unique_geo_entities = list(sorted(set(dd.IntermediateRegions.keys())))
+    if merge_ulm:
+        unique_geo_entities.remove(32)
     if zfill:
         unique_geo_entities = [str(id).zfill(2) for id in unique_geo_entities]
 
     return unique_geo_entities
 
 
-def get_intermediateregion_names():
+def get_intermediateregion_names(merge_ulm=True):
     """"! Get list of intermediate region names sorted according to ID.
 
+    @param merge_ulm Combines region of Ulm (32) with region of Stuttgart (30).
     @return List of intermediate region names sorted according to ID.
     """
-    return list(dd.IntermediateRegions.values())
+    unique_geo_entities = list(dd.IntermediateRegions.values())
+    if merge_ulm:
+        unique_geo_entities[30] = unique_geo_entities[30] + 'Ulm'
+        unique_geo_entities.remove('Ulm')
+
+    return unique_geo_entities
 
 
-def get_intermediateregion_names_and_ids(zfill=False):
+def get_intermediateregion_names_and_ids(merge_ulm=True, zfill=False):
     """"! Get list of intermediate region names and IDs sorted according to ID.
 
+    @param merge_ulm Combines region of Ulm (32) with region of Stuttgart (30).
     @param zfill [Default: False] Defines whether IDs are zero-filled to
         two digits and returned as a string or returned as an integer.
     @return List of intermediate region names and IDs sorted according to region ID.
     """
-    intermediateregionids = get_intermediateregion_ids(zfill=zfill)
+    ids = get_intermediateregion_ids(
+        merge_ulm=merge_ulm, zfill=zfill)
+    names = get_intermediateregion_names(merge_ulm=merge_ulm)
 
-    return [[dd.IntermediateRegions[int(id)], id] for id in intermediateregionids]
+    if len(ids) != len(names):
+        gd.DataError('Region names and IDs do not coincide.')
+
+    return [[names[i], ids[i]] for i in range(len(ids))]
 
 
-def get_intermediateregion_to_name():
+def get_intermediateregion_to_name(merge_ulm=True):
     """"! Returns a hash map from federal state ID to state name.
 
+    @param merge_ulm Combines region of Ulm (32) with region of Stuttgart (30).
     @return hash map from federal state ID to state name.
     """
-    return dd.IntermediateRegions
+    region_to_name = dd.IntermediateRegions.copy()
+    if merge_ulm:
+        region_to_name[30] = region_to_name[30]+region_to_name[32]
+        region_to_name.pop(32)
+
+    return region_to_name
 
 
-def get_countyid_to_intermediateregionid_map(merge_eisenach=True, zfill=False):
+def get_countyid_to_intermediateregionid_map(merge_ulm=True,
+                                             merge_eisenach=True, zfill=False):
     """! Creates a hash map from county IDs to intermediate region IDs
 
-    @param merge_eisenach [Default: True] Defines whether the counties 
-        'Wartburgkreis' and 'Eisenach' are listed separately or combined 
+    @param merge_ulm Combines region of Ulm (32) with region of Stuttgart (30).
+    @param merge_eisenach [Default: True] Defines whether the counties
+        'Wartburgkreis' and 'Eisenach' are listed separately or combined
         as one entity 'Wartburgkreis'.
     @param zfill [Default: False]. Defines whether or not all IDs are returned
         as zero-filled strings. By default, integer maps are returned.
     @return County ID to intermediate region ID map.
     """
     county_ids = get_county_ids(merge_eisenach=merge_eisenach)
-    regions_to_county = dd.IntermediateRegionIDsToCountyIDs
+    regions_to_county = dd.IntermediateRegionIDsToCountyIDs.copy()
+    if merge_ulm:
+        regions_to_county[30] = regions_to_county[30] + regions_to_county[32]
+        regions_to_county.pop(32)
 
     regions_sorted = [0 for i in range(len(county_ids))]
     counties_sorted = [0 for i in range(len(county_ids))]
@@ -439,17 +465,22 @@ def get_countyid_to_intermediateregionid_map(merge_eisenach=True, zfill=False):
 
 
 def get_intermediateregionid_to_countyids_map(
-        merge_eisenach=True, zfill=False):
+        merge_ulm=True, merge_eisenach=True, zfill=False):
     """! Creates a hash map from intermediate region IDs to lists of county IDs
 
-    @param merge_eisenach [Default: True] Defines whether the counties 
-        'Wartburgkreis' and 'Eisenach' are listed separately or combined 
+    @param merge_ulm Combines region of Ulm (32) with region of Stuttgart (30).
+    @param merge_eisenach [Default: True] Defines whether the counties
+        'Wartburgkreis' and 'Eisenach' are listed separately or combined
         as one entity 'Wartburgkreis'.
     @param zfill [Default: False]. Defines whether or not all IDs are returned
         as zero-filled strings. By default, integer maps are returned.
     @return Intermediate region IDs to lists of county IDs map
     """
-    regions_to_county = dd.IntermediateRegionIDsToCountyIDs
+    regions_to_county = dd.IntermediateRegionIDsToCountyIDs.copy()
+    if merge_ulm:
+        regions_to_county[30] = regions_to_county[30] + regions_to_county[32]
+        regions_to_county.pop(32)
+
     regions_list = []
     counties_list = []
     for region, counties in regions_to_county.items():
@@ -481,14 +512,14 @@ def merge_df_counties(
     counties that were merged on political decision in between.
 
     @param df Original pandas dataframe.
-    @param merged_id One new ID or old ID that is part of the list in 
+    @param merged_id One new ID or old ID that is part of the list in
         separated_ids that will be used in the returned data frame.
     @param separated_ids List of old IDs that will be merged.
     @param sorting Column or criterion on how to sort the rearranged frame.
     @param columns columns to be grouped by, Default: 'Date'.
-    @param method Method of merging ('sum' [default], 'mean', 'median', 'min', 
+    @param method Method of merging ('sum' [default], 'mean', 'median', 'min',
         'max')
-    @return Reduced data frame with separated_ids information merged to 
+    @return Reduced data frame with separated_ids information merged to
         merged_id rows.
     """
     # ensure that separated_ids and dataframe ids can be compared
@@ -539,14 +570,14 @@ def merge_df_counties_all(
         columns=dd.EngEng['date'],
         method='sum'):
     """! Merges the data frame data of different local entities such as the districts
-    of Berlin or counties that were merged on political decision in between according 
+    of Berlin or counties that were merged on political decision in between according
     to the lists provided in the dictionary geoModificationGermany.CountyMerging.
 
     @param df Original pandas dataframe.
     @param columns columns to be grouped by, Default: 'Date'.
-    @param sorting Column or criterion on how to sort the rearranged frame. 
-        Default: ['Date']   
-    @param method Method of merging ('sum' [default], 'mean', 'median', 'min', 
+    @param sorting Column or criterion on how to sort the rearranged frame.
+        Default: ['Date']
+    @param method Method of merging ('sum' [default], 'mean', 'median', 'min',
         'max')
     @return Reduced data frame with IDs merged as given in CountyMerging dict.
     """
