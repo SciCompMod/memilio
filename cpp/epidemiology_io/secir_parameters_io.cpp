@@ -810,7 +810,7 @@ namespace details
 //         }
 //     }
 
-// } // namespace details
+} // namespace details
 
 IOResult<std::vector<int>> get_county_ids(const std::string& path)
 {

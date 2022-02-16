@@ -409,7 +409,7 @@ struct TestAndTraceCapacity {
 };
 
 /**
- * @brief capacity to test and trace contacts of infected for quarantine per day.
+ * @brief ...
  */
 struct VaccineGrowthFirst {
     using Type = CustomIndexArray<UncertainValue, AgeGroup>;
@@ -424,7 +424,7 @@ struct VaccineGrowthFirst {
 };
 
 /**
- * @brief capacity to test and trace contacts of infected for quarantine per day.
+ * @brief ...
  */
 struct VaccineGrowthFull {
     using Type = CustomIndexArray<UncertainValue, AgeGroup>;
@@ -439,7 +439,7 @@ struct VaccineGrowthFull {
 };
 
 /**
- * @brief capacity to test and trace contacts of infected for quarantine per day.
+ * @brief ...
  */
 struct BaseInfB117 {
     using Type = CustomIndexArray<double, AgeGroup>;
@@ -550,7 +550,7 @@ struct ReducMildRecTime {
 };
 
 /**
- * @brief capacity to test and trace contacts of infected for quarantine per day.
+ * @brief Time in days between first and second vaccine dose.
  */
 struct VaccinationGap {
     using Type = CustomIndexArray<UncertainValue, AgeGroup>;
@@ -565,7 +565,7 @@ struct VaccinationGap {
 };
 
 /**
- * @brief capacity to test and trace contacts of infected for quarantine per day.
+ * @brief Time in days until first vaccine dose takes full effect.
  */
 struct DaysUntilEffective {
     using Type = CustomIndexArray<UncertainValue, AgeGroup>;
@@ -580,7 +580,7 @@ struct DaysUntilEffective {
 };
 
 /**
- * @brief capacity to test and trace contacts of infected for quarantine per day.
+ * @brief Time in days until second vaccine dose takes full effect.
  */
 struct DaysUntilEffectiveFull {
     using Type = CustomIndexArray<UncertainValue, AgeGroup>;
@@ -595,7 +595,7 @@ struct DaysUntilEffectiveFull {
 };
 
 /**
- * @brief capacity to test and trace contacts of infected for quarantine per day.
+ * @brief Total number of first vaccinations up to the given day.
  */
 struct DailyFirstVaccination {
     using Type = CustomIndexArray<std::vector<double>, AgeGroup>;
@@ -610,7 +610,7 @@ struct DailyFirstVaccination {
 };
 
 /**
- * @brief capacity to test and trace contacts of infected for quarantine per day.
+ * @brief Total number of full vaccinations up to the given day.
  */
 struct DailyFullVaccination {
     using Type = CustomIndexArray<std::vector<double>, AgeGroup>;
@@ -625,7 +625,7 @@ struct DailyFullVaccination {
 };
 
 /**
- * @brief capacity to test and trace contacts of infected for quarantine per day.
+ * @brief ...
  */
 struct DynamicInfectionFromContact {
     using Type = CustomIndexArray<std::vector<double>, AgeGroup>;
