@@ -57,8 +57,8 @@ public:
     double err;
 };
 
-using EulerTest = TestVerifyNumericalIntegrator<::testing::Types<mio::EulerIntegratorCore>>;
-TEST_F(EulerTest, euler_sine)
+using TestVerifyNumericalIntegratorEuler = TestVerifyNumericalIntegrator<::testing::Types<mio::EulerIntegratorCore>>;
+TEST_F(TestVerifyNumericalIntegratorEuler, euler_sine)
 {
     n   = 1000;
     dt  = (tmax - t0) / n;

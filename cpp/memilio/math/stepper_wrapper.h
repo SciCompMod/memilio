@@ -66,7 +66,6 @@ public:
         , m_dt_min(dt_min)
         , m_dt_max(dt_max)
         , m_stepper(create_stepper())
-    // for more options see: boost/boost/numeric/odeint/stepper/controlled_runge_kutta.hpp
     {
     }
 
@@ -80,20 +79,22 @@ public:
     bool step(const mio::DerivFunction& f, Eigen::Ref<Eigen::VectorXd const> yt, double& t, double& dt,
               Eigen::Ref<Eigen::VectorXd> ytp1) const override
     {
-        // copy y(t) to dxdt, since we use the scheme try_step(sys, inout, t, dt) with sys=f, inout=y(t) for
-        // in-place computation. This is similiar to do_step, but it updates t and dt
-        Eigen::VectorXd dxdt = yt;
-        const double t_old   = t; // t is updated by try_step on a successfull step
+        // copy y(t) to dydt, to retrieve the VectorXd from the Ref
+        dydt               = yt;
+        const double t_old = t; // t is updated by try_step on a successfull step
         do {
+            // we use the scheme try_step(sys, inout, t, dt) with sys=f, inout=y(t) for
+            // in-place computation. This is similiar to do_step, but it can update t and dt
             m_stepper.try_step(
                 // reorder arguments of the DerivFunction f for the stepper
                 [&](const Eigen::VectorXd& x, Eigen::VectorXd& dxds, double s) {
                     dxds.resizeLike(x); // try_step calls sys with a vector of size 0 for some reason
                     f(x, s, dxds);
                 },
-                dxdt, t, dt);
+                dydt, t, dt);
+            // stop on a successfull step or a failed step size adaption (w.r.t. the minimal step size)
         } while (t == t_old && dt > m_dt_min);
-        ytp1 = dxdt;
+        ytp1 = dydt; // output new y(t)
         return dt > m_dt_min;
     }
 
@@ -127,6 +128,7 @@ public:
 private:
     boost::numeric::odeint::controlled_runge_kutta<ControlledStepper<>> create_stepper()
     {
+        // for more options see: boost/boost/numeric/odeint/stepper/controlled_runge_kutta.hpp
         return boost::numeric::odeint::controlled_runge_kutta<ControlledStepper<>>(
             boost::numeric::odeint::default_error_checker<typename ControlledStepper<>::value_type,
                                                           typename ControlledStepper<>::algebra_type,
@@ -135,7 +137,9 @@ private:
             boost::numeric::odeint::default_step_adjuster<typename ControlledStepper<>::value_type,
                                                           typename ControlledStepper<>::time_type>(m_dt_max));
     }
-    double m_abs_tol, m_rel_tol, m_dt_min, m_dt_max;
+
+    double m_abs_tol, m_rel_tol, m_dt_min, m_dt_max; // integrator parameters
+    mutable Eigen::VectorXd dydt;
     mutable boost::numeric::odeint::controlled_runge_kutta<ControlledStepper<>> m_stepper;
 };
 
