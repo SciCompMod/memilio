@@ -28,7 +28,7 @@ import wget
 import numpy as np
 import pandas as pd
 from zipfile import ZipFile
-from memilio.epidata import getPopulationData
+from memilio.epidata import getPopulationData as gPd
 from memilio.epidata import getDataIntoPandasDataFrame as gd
 from memilio.epidata import geoModificationGermany as geoger
 from memilio.epidata import defaultDict as dd
@@ -167,17 +167,11 @@ def get_commuter_data(setup_dict='',
 
     # get population data for all countys (TODO: better to provide a corresponding method for the following lines in getPopulationData itself)
     # This is not very nice either to have the same file with either Eisenach merged or not...
-    population = pd.DataFrame()
-    try:
-        population = pd.read_json(directory + "county_current_population.json")
-    except ValueError:
-        pass
-    if len(population) != len(countykey_list):
-        print("Local population data incomplete. Download it from the internet.")
-        population = getPopulationData.get_age_population_data(
-            out_folder=out_folder, merge_eisenach=False, write_df=True)
+    
+    population = gPd.get_population_data(
+        out_folder=out_folder, merge_eisenach=False, read_data=read_data)
 
-    countypop_list = list(population["Total"])
+    countypop_list = list(population[dd.EngEng["population"]])
 
     countykey2numlist = collections.OrderedDict(
         zip(countykey_list, list(range(0, len(countykey_list)))))
@@ -210,7 +204,7 @@ def get_commuter_data(setup_dict='',
         filepath = os.path.join(out_folder, 'Germany/')
         url = setup_dict['path'] + item.split('.')[0] + '.zip'
         # Unzip it
-        zipfile = wget.download(url)
+        zipfile = wget.download(url, filepath)
         with ZipFile(zipfile, 'r') as zipObj:
             zipObj.extractall(path = filepath)
         # Read the file
@@ -218,6 +212,11 @@ def get_commuter_data(setup_dict='',
         file = filename.replace('-','_')
         commuter_migration_file = pd.read_excel(filepath + file, **param_dict)
         # pd.read_excel(os.path.join(setup_dict['path'], item), sheet_name=3)
+
+        # delete zip folder after extracting
+        os.remove(os.path.join(filepath, item))
+        # delete file after reading
+        os.remove(os.path.join(filepath, file))
 
         counties_done = []  # counties considered as 'migration from'
         # current_row = -1  # row of matrix that belongs to county migrated from
@@ -401,7 +400,7 @@ def get_commuter_data(setup_dict='',
                           ', relative error:', abs_err / checksum)
 
         n += 1
-        print('Federal state read. Progress ', n, '/ 16')
+        print(' Federal state read. Progress ', n, '/ 16')
         if np.isnan(mat_commuter_migration).any():
             raise gd.DataError(
                 'NaN encountered in mobility matrix, exiting '

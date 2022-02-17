@@ -44,9 +44,9 @@ Our sources are:
 
 - Population data (P) like "Einwoherzahl" for Bundesländer and Landkreise:
 
-  https://opendata.arcgis.com/datasets/5dc2fc92850241c3be3d704aa0945d9c_2.csv
+  https://opendata.arcgis.com/datasets/abad92e8eead46a4b0d252ee9438eb53_1.csv
 
-  https://opendata.arcgis.com/datasets/b2e6d8854d9744ca88144d30bef06a76_1.geojson
+  https://www.destatis.de/DE/Themen/Laender-Regionen/Regionales/Gemeindeverzeichnis/Administrativ/04-kreise.xlsx;?__blob=publicationFile
 
   https://www.zensus2011.de/SharedDocs/Downloads/DE/Pressemitteilung/DemografischeGrunddaten/1A_EinwohnerzahlGeschlecht.xls?__blob=publicationFile&v=5
 
@@ -89,7 +89,7 @@ Required python packages:
 - pandas<1.2.0
 - matplotlib
 - tables
-- numpy<=1.19.4
+- numpy>=1.21
 - openpyxl
 - xlrd
 - requests
@@ -185,11 +185,6 @@ RKI-Estimation Germany     all_state_gender_rki_estimated     infected, deaths, 
 RKI-Estimation Germany     all_county_age_rki_estimated       infected, deaths, recovered, recovered_estimated, deaths_estimated over time for different age ranges and counties
 RKI-Estimation Germany     all_county_gender_rki_estimated    infected, deaths, recovered, recovered_estimated, deaths_estimated over time for different genders counties
 
-P              Germany     FullDataB                          Full data for Bundesländer
-P              Germany     FullDataL                          Full data for Landkreise
-P              Germany     PopulStates                        Einwohnerzahl (EWZ) for all Bundesländer
-P              Germany     PopulCounties                      Einwohnerzahl (EWZ) for all Landkreise (however some are missing compared to RKI data)
-P              Germany     county_population                  Einwohnerzahl for different age groups from the 2011 census
 P              Germany     county_current_population          Einwohnerzahl for different age groups from the 2011 census, extrapolated to the current level
 P              Germany     migration                          Unchanged migration data
 P              Germany     reg_key                            Unchangenged regional keys from excel table

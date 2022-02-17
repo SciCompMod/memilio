@@ -17,7 +17,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #############################################################################
-from datetime import date
+from datetime import date, datetime
+import sys
 import time
 import os
 import itertools
@@ -26,7 +27,7 @@ import numpy as np
 
 from memilio.epidata import getDataIntoPandasDataFrame as gd
 from memilio.epidata import defaultDict as dd
-from memilio.epidata import getPopulationData
+from memilio.epidata import getPopulationData as gpd
 from memilio.epidata import modifyDataframeSeries
 from memilio.epidata import customPlot
 from memilio.epidata import geoModificationGermany as geoger
@@ -37,9 +38,7 @@ from memilio.epidata import getCommuterMobility as gcm
 
 def download_vaccination_data():
     # RKI content from github
-    # From Dec 21, 2021, the age group 05-11 was added. This is not yet taken into account in this function.
-    url = 'https://raw.githubusercontent.com/robert-koch-institut/COVID-19-Impfungen_in_Deutschland/9ca33409a4899ab56cec65c2169ae073df1603c0/Archiv/2021-12-20_Deutschland_Landkreise_COVID-19-Impfungen.csv'
-    # url = 'https://raw.githubusercontent.com/robert-koch-institut/COVID-19-Impfungen_in_Deutschland/master/Aktuell_Deutschland_Landkreise_COVID-19-Impfungen.csv'
+    url = 'https://raw.githubusercontent.com/robert-koch-institut/COVID-19-Impfungen_in_Deutschland/master/Aktuell_Deutschland_Landkreise_COVID-19-Impfungen.csv'
     # empty data frame to return if not read correctly
     df = pd.DataFrame()
     # try to read csv
@@ -53,8 +52,6 @@ def download_vaccination_data():
         raise
 
     return df
-
-# creates a mapping from given intervals to new desired intervals
 
 
 def create_intervals_mapping(from_lower_bounds, to_lower_bounds):
@@ -91,7 +88,38 @@ def create_intervals_mapping(from_lower_bounds, to_lower_bounds):
 
     return from_to_mapping
 
-# splits a column based on its values to multiple columns
+
+def compute_vaccination_ratios(
+        age_group_list, vaccinations_table, vacc_column, region_column,
+        population, merge_2022=False):
+    """! Computes vaccination ratios based on the number of vaccinations 
+    and the corresponding population data
+
+    @param age_group_list List of age groups considered.
+    @param vaccinations_table Table of vaccinations (possible multiple columns
+        for different number of doses)
+    @param vacc_column Column name of vaccinations_table to be considered.
+    @param region_column Column of regions in vaccinations table, e.g., ID_County or ID_State.
+    @param population Table of population data for the given regions and considered age groups.
+    @param merge_2022 [Default: False] Defines whether population data has to be merged to counties as of 2022.
+    @return All vaccination ratios per region and age group.
+    """
+    # create new data frame and reshape it
+    df_vacc_ratios = pd.DataFrame(columns=[region_column] + age_group_list)
+    df_vacc_ratios[region_column] = vaccinations_table[region_column].unique()
+    df_vacc_ratios[age_group_list] = np.array(
+        vaccinations_table[vacc_column]).reshape(
+        len(vaccinations_table[region_column].unique()),
+        len(age_group_list))
+    # compute county and age-group-specific vaccination ratios
+    if merge_2022:
+        population = geoger.merge_df_counties_all(
+            population, sorting=[region_column],
+            columns=region_column)
+    df_vacc_ratios[['r'+age for age in age_group_list]
+                   ] = df_vacc_ratios[age_group_list] / population[age_group_list].values
+
+    return df_vacc_ratios
 
 
 def split_column_based_on_values(
@@ -116,7 +144,8 @@ def split_column_based_on_values(
     df_subset = []
     for i in range(0, len(column_identifiers)):
         df_subset.append(
-            df_to_split[df_to_split[column_to_split] == column_identifiers[i]].copy())
+            df_to_split
+            [df_to_split[column_to_split] == column_identifiers[i]].copy())
         df_subset[i] = df_subset[i].drop(columns=column_to_split)
         df_subset[i] = df_subset[i].rename(
             columns={column_vals_name: new_column_labels[i]})
@@ -134,8 +163,7 @@ def get_vaccination_data(read_data=dd.defaultDict['read_data'],
                          end_date=dd.defaultDict['end_date'],
                          make_plot=dd.defaultDict['make_plot'],
                          moving_average=dd.defaultDict['moving_average'],
-                         sanitize_data=True,
-                         max_sanit_threshold=0.95):
+                         sanitize_data=1):
     """! Downloads the RKI vaccination data and provides different kind of structured data.
 
     The data is read from the internet.
@@ -147,8 +175,8 @@ def get_vaccination_data(read_data=dd.defaultDict['read_data'],
     - The column "Date" provides information on the date of each data point given in the corresponding columns.
 
     - The data is exported in three different ways:
-        - all_county_vacc: Resolved per county by grouping all original age groups (12-17, 18-59, 60+)
-        - all_county_agevacc_vacc: Resolved per county and original age group (12-17, 18-59, 60+)
+        - all_county_vacc: Resolved per county by grouping all original age groups (05-11, 12-17, 18-59, 60+)
+        - all_county_agevacc_vacc: Resolved per county and original age group (05-11, 12-17, 18-59, 60+)
         - all_county_ageinf_vacc: Resolved per county and infection data age group (0-4, 5-14, 15-34, 35-59, 60-79, 80+)
             - To do so getPopulationData is used and age group specific date from the original source
                 is extrapolated on the new age groups on county level.
@@ -165,13 +193,20 @@ def get_vaccination_data(read_data=dd.defaultDict['read_data'],
     @param start_date [Default = '', taken from read data] Start date of stored data frames.
     @param end_date [Default = '', taken from read data] End date of stored data frames.
     @param make_plot False [Default] or True. Defines if plots are generated with matplotlib.
-    @param sanitize_data True [Default] or False. For certain federal states and counties, vaccination data
-        is not correctly attributed to home locations of vaccinated persons. If 'sanitize_data' is set, 
-        all counties with vaccination quotas of more than 'sanitizing_threshold' will be adjusted to the average of its
-        federal state and remaining vaccinations will be distributed to closely connected neighboring regions 
-        using commuter mobility networks. The sanitizing threshold will be defined by the age group-specific average
-        on the corresponding federal state level + 5 % or max_sanit_threshold if this number exceeds max_sanit_threshold.
-    @param max_sanit_threshold [Default: 0.95] Maximum relative number of vaccinations per county and age group.
+    @param sanitize_data Value in {0,1,2,3}; Default: 1. For many counties, 
+        vaccination data is not correctly attributed to home locations of 
+        vaccinated persons. If 'sanitize_data' is set to larger 0, this is
+        corrected. 
+        0: No sanitizing applied.
+        1: Averaging ratios over federal states.
+        2: Averaging ratios over intermediate regions.
+        3: All counties with vaccination quotas of more than 
+        'sanitizing_threshold' will be adjusted to the average of its
+        federal state and remaining vaccinations will be distributed to
+        closely connected neighboring regions using commuter mobility networks.
+        The sanitizing threshold will be defined by the age group-specific
+        average on the corresponding vaccination ratios on county and federal
+        state level.
     @param moving_average 0 [Default] or Number>0. Defines the number of days for which a centered moving average is computed.
     """
     start_time = time.perf_counter()
@@ -189,19 +224,22 @@ def get_vaccination_data(read_data=dd.defaultDict['read_data'],
     df_data.rename(dd.GerEng, axis=1, inplace=True)
 
     # remove unknown locations if only modest number (i.e. less than 0.1%)
-    if df_data[df_data[dd.EngEng['idCounty']] == 'u'].agg({'Number': sum}).Number \
-            / df_data.agg({'Number': sum}).Number < 0.001:
+    if df_data[
+            df_data[dd.EngEng['idCounty']] == 'u'].agg(
+            {'Number': sum}).Number / df_data.agg(
+            {'Number': sum}).Number < 0.001:
         df_data = df_data[df_data[dd.EngEng['idCounty']] != 'u']
     else:
-        raise gd.DataError('Too many data items with unknown vaccination location, '
-                        'please check source data.')
+        raise gd.DataError(
+            'Too many data items with unknown vaccination location, '
+            'please check source data.')
 
     if df_data[df_data[dd.EngEng['ageRKI']] == 'u'].agg({'Number': sum}).Number \
             / df_data.agg({'Number': sum}).Number < 0.001:
         df_data = df_data[df_data[dd.EngEng['ageRKI']] != 'u']
     else:
         raise gd.DataError('Too many data items with unknown vaccination age, '
-                        'please check source data.')
+                           'please check source data.')
 
     # remove leading zeros for ID_County (if not yet done)
     try:
@@ -247,12 +285,9 @@ def get_vaccination_data(read_data=dd.defaultDict['read_data'],
             directory + "county_current_population_dim401.json")
     except ValueError:
         print("Population data was not found. Download it from the internet.")
-        population = getPopulationData.get_age_population_data(read_data=False,
-                                                               file_format=file_format,
-                                                               out_folder=out_folder,
-                                                               no_raw=no_raw,
-                                                               write_df=True,
-                                                               merge_eisenach=False)
+        population = gpd.get_population_data(
+            read_data=False, file_format=file_format, out_folder=out_folder,
+            no_raw=no_raw, split_gender=False, merge_eisenach=False)
 
     min_age_pop = []
     extrapolate_agegroups = True
@@ -281,7 +316,7 @@ def get_vaccination_data(read_data=dd.defaultDict['read_data'],
     # get number of new age groups that are not vaccinated at all
     j = 0
     new_age_not_vacc = 0
-    while min_age_new[j+1] < min_age_old[0]:
+    while min_age_new[j+1] <= min_age_old[0]:
         new_age_not_vacc += 1
         j += 1
 
@@ -359,15 +394,28 @@ def get_vaccination_data(read_data=dd.defaultDict['read_data'],
         start_age_data = list(population_all_ages.columns).index('0')
         population_old_ages[unique_age_groups_old[i]] = population_all_ages.iloc[:, np.array(
             age_old_to_all_ages_indices[i])+start_age_data].sum(axis=1)
-    ############## end of potential outsourcing #####################
+
+    ## only for output meta information purposes ##
+    # create hashes to access columns of new age group intervals
+    unique_age_groups_new = [
+        str(min_age_new[i]) + "-" + str(min_age_new[i + 1] - 1)
+        for i in range(len(min_age_new) - 1)]
+    population_new_ages = pd.DataFrame(population[dd.EngEng['idCounty']])
+    for i in range(len(age_new_to_all_ages_indices)):
+        # access columns + start_age_data since county_ID (and maybe other)
+        # is in first place
+        start_age_data = list(population_all_ages.columns).index('0')
+        population_new_ages[unique_age_groups_new[i]] = population_all_ages.iloc[:, np.array(
+            age_new_to_all_ages_indices[i])+start_age_data].sum(axis=1)
+    # end of output meta information purposes
 
     # df_data now becomes an array
-    column_names_new = [
+    vacc_column_names = [
         dd.EngEng['vaccPartial'],
         dd.EngEng['vaccComplete'],
         dd.EngEng['vaccRefresh']]
     df_data_array = split_column_based_on_values(
-        df_data, "Impfschutz", "Number", column_names_new)
+        df_data, "Impfschutz", "Number", vacc_column_names)
 
     # extract min, max dates and all possible values for groups
     # from all data frames
@@ -383,27 +431,30 @@ def get_vaccination_data(read_data=dd.defaultDict['read_data'],
 
     ######## data with age resolution as provided in original frame ########
     # transform and write data frame resolved per county and age (with age
-    # classes as provided in vaccination tables: 12-17, 18-59, 60+)
+    # classes as provided in vaccination tables: 05-11, 12-17, 18-59, 60+)
     df_data_agevacc_county_cs = []
     for i in range(0, len(df_data_array)):
         df_data_array[i] = df_data_array[i].reset_index()
         # group by date and county
+        groupby_list = [dd.EngEng['date'],
+                        dd.EngEng['idCounty'], dd.EngEng['ageRKI']]
         df_data_reduced = df_data_array[i].groupby(
-            [dd.EngEng['date'],
-             dd.EngEng['idCounty'],
-             dd.EngEng['ageRKI']]).agg(
-            {column_names_new[i]: sum})
-        if not sanitize_data:
-            # compute cummulative sum over level index 1 (ID_County) and level
-            # index 2 (Age_RKI)
-            df_data_reduced = df_data_reduced.groupby(
-                level=[1, 2]).cumsum().reset_index()
+            groupby_list).agg(
+            {vacc_column_names[i]: sum})
+        if sanitize_data < 3:
+            # compute cummulative sum over level index of ID_County and level
+            # index of Age_RKI
+
+            df_data_reduced = df_data_reduced.groupby(level=[
+                groupby_list.index(dd.EngEng['idCounty']), groupby_list.index(
+                    dd.EngEng['ageRKI'])]).cumsum().reset_index()
+
             df_data_agevacc_county_cs.append(
                 modifyDataframeSeries.impute_and_reduce_df(
                     df_data_reduced,
                     {dd.EngEng['idCounty']: df_data_reduced[dd.EngEng['idCounty']].unique(),
                      dd.EngEng['ageRKI']: unique_age_groups_old},
-                    [column_names_new[i]],
+                    [vacc_column_names[i]],
                     impute='forward', moving_average=moving_average,
                     min_date=min_date, max_date=max_date))
         else:
@@ -417,7 +468,7 @@ def get_vaccination_data(read_data=dd.defaultDict['read_data'],
                     df_data_reduced,
                     {dd.EngEng['idCounty']: df_data_reduced[dd.EngEng['idCounty']].unique(),
                      dd.EngEng['ageRKI']: unique_age_groups_old},
-                    [column_names_new[i]],
+                    [vacc_column_names[i]],
                     impute='zeros', moving_average=0,
                     min_date=min_date, max_date=max_date))
         # merge all data of vaccinations
@@ -438,11 +489,85 @@ def get_vaccination_data(read_data=dd.defaultDict['read_data'],
         value=df_data_agevacc_county_cs[dd.EngEng["idCounty"]].replace(
             dd.County))
 
+    # insert corresponding state IDs
+    df_data_agevacc_county_cs.insert(
+        loc=1, column=dd.EngEng["idState"],
+        value=df_data_agevacc_county_cs[dd.EngEng["idCounty"]])
+    county_to_state = geoger.get_countyid_to_stateid_map(merge_eisenach=False)
+    for countyid in df_data_agevacc_county_cs[dd.EngEng["idState"]].unique():
+        df_data_agevacc_county_cs.loc[df_data_agevacc_county_cs[dd.EngEng["idState"]]
+                                      == countyid, dd.EngEng["idState"]] = county_to_state[countyid]
+
+    # compute average vaccination ratio per age group for full vaccinations
+    aver_ratio = df_data_agevacc_county_cs.groupby(dd.EngEng['ageRKI']).agg({vacc_column_names[1]: sum})[
+        vacc_column_names[1]].values/population_old_ages[unique_age_groups_old].sum().values
+
     end_time = time.perf_counter()
     print("Time needed initial phase: " +
           str(int(end_time - start_time)) + " sec")
 
-    if sanitize_data:
+    start_time = time.perf_counter()
+    if sanitize_data == 1 or sanitize_data == 2:
+
+        if sanitize_data == 1:
+            print('Sanitizing activated: Using federal state average values.')
+            to_county_map = geoger.get_stateid_to_countyids_map(
+                merge_eisenach=False)
+        else:
+            print('Sanitizing activated: Using intermediate region average values.')
+            to_county_map = geoger.get_intermediateregionid_to_countyids_map(
+                merge_eisenach=False)
+
+        vacc_ratio_regions = pd.DataFrame(np.zeros(
+            (len(to_county_map) * len(unique_age_groups_old), 5)),
+            columns=['RegionID', dd.EngEng['ageRKI']] +
+            [col + '_ratio' for col in vacc_column_names])
+        vacc_ratio_regions_idx = 0
+
+        # region is either a federal state or an intermediate region
+        for region, counties_list in to_county_map.items():
+
+            # extract information on all counties of the region
+            df_data_agevacc_county_cs_region = df_data_agevacc_county_cs[
+                df_data_agevacc_county_cs[dd.EngEng['idCounty']].isin(
+                    counties_list)].copy()
+
+            # sum over all counties of the region
+            vacc_sums = df_data_agevacc_county_cs_region.groupby(
+                [dd.EngEng['date'], dd.EngEng['ageRKI']]).agg(
+                {col: sum for col in vacc_column_names}).reset_index()
+
+            for age in unique_age_groups_old:
+                # compute age-dependent vaccination ratio for region
+                vacc_sums_ratios = (vacc_sums.loc[vacc_sums[
+                    dd.EngEng['ageRKI']] == age, vacc_column_names] /
+                    population_old_ages[
+                    population_old_ages[dd.EngEng['idCounty']].isin(
+                        counties_list)][age].sum()).values
+
+                #  store condensed information for output
+                vacc_ratio_regions.iloc[vacc_ratio_regions_idx] = \
+                    [region, age] + list(np.round(vacc_sums_ratios[-1, :], 4))
+                vacc_ratio_regions_idx += 1
+
+                for county in counties_list:
+                    age_population_county = population_old_ages.loc[
+                        population_old_ages[dd.EngEng['idCounty']] == county,
+                        age].sum()
+                    df_data_agevacc_county_cs.loc[(df_data_agevacc_county_cs[
+                        dd.EngEng['idCounty']] == county) & (
+                        df_data_agevacc_county_cs[dd.EngEng['ageRKI']] == age),
+                        vacc_column_names] = \
+                        age_population_county * vacc_sums_ratios
+
+    elif sanitize_data == 3:
+        print('Sanitizing activated: Using mobility-based vaccination redistribution approach.')
+        max_sanit_threshold_arr = np.zeros((len(unique_age_groups_old)))
+        # compute maximum_sanitizing threshold per age group as maxmimum of country-wide ratio + 10%
+        # and predefined maximum value; threshold from becoming larger than 1
+        for kk in range(len(unique_age_groups_old)):
+            max_sanit_threshold_arr[kk] = min(1, aver_ratio[kk]+0.1)
+
         start_time = time.perf_counter()
         # create copy of dataframe
         df_san = df_data_agevacc_county_cs.copy()
@@ -451,19 +576,12 @@ def get_vaccination_data(read_data=dd.defaultDict['read_data'],
         vacc_sums_nonsanit = df_data_agevacc_county_cs.groupby(
             [dd.EngEng['idCounty'],
              dd.EngEng['ageRKI']]).agg(
-            {column_names_new[1]: sum}).reset_index()
+            {vacc_column_names[1]: sum}).reset_index()
         # create new data frame and reshape it
-        df_fullsum = pd.DataFrame(
-            columns=[dd.EngEng['idCounty']] + unique_age_groups_old)
-        df_fullsum[dd.EngEng['idCounty']
-                   ] = vacc_sums_nonsanit[dd.EngEng['idCounty']].unique()
-        df_fullsum[unique_age_groups_old] = np.array(
-            vacc_sums_nonsanit[column_names_new[1]]).reshape(
-            len(vacc_sums_nonsanit[dd.EngEng['idCounty']].unique()),
-            len(unique_age_groups_old))
-        # compute county and age-group-specific vaccination ratios
-        df_fullsum[['r'+age for age in unique_age_groups_old]
-                   ] = df_fullsum[unique_age_groups_old] / population_old_ages[unique_age_groups_old].values
+        df_fullsum = compute_vaccination_ratios(
+            unique_age_groups_old, vacc_sums_nonsanit, vacc_column_names[1],
+            dd.EngEng['idCounty'],
+            population_old_ages)
 
         # compute average federal state and age-group-specific vaccination ratios
         state_to_county = geoger.get_stateid_to_countyids_map(
@@ -479,11 +597,11 @@ def get_vaccination_data(read_data=dd.defaultDict['read_data'],
                 vaccsum_state.values / popsum_state.values)
             # set sanitizing threshold on federal state level as average + 5% or
             # as max_sanit_threshold (e.g., 95%) if average + 5% exceeds this
-            # value
+            # value; computation done separately for each age group
             for ii in range(len(sanitizing_thresholds[stateidx])):
                 sanitizing_thresholds[stateidx][ii] = min(
                     sanitizing_thresholds[stateidx][ii] + 0.05,
-                    max_sanit_threshold)
+                    max_sanit_threshold_arr[ii])
 
             # compute capacity weight for all counties of the federal state by
             # federal state and age-group-specific sanitizing threshold minus
@@ -607,11 +725,11 @@ def get_vaccination_data(read_data=dd.defaultDict['read_data'],
                     nidx = 0
                     for neighb_id in neighbors_mobility[id][0][order_dist][
                             np.where(vacc_nshare_pot > 0)]:
-                        df_san.loc[(df_san[dd.EngEng['idCounty']] == neighb_id) & (df_san[dd.EngEng['ageRKI']] == unique_age_groups_old[ageidx]), column_names_new] += reduc_shares[nidx]*df_san.loc[(
-                            df_san[dd.EngEng['idCounty']] == id) & (df_san[dd.EngEng['ageRKI']] == unique_age_groups_old[ageidx]), column_names_new].values
+                        df_san.loc[(df_san[dd.EngEng['idCounty']] == neighb_id) & (df_san[dd.EngEng['ageRKI']] == unique_age_groups_old[ageidx]), vacc_column_names] += reduc_shares[nidx]*df_san.loc[(
+                            df_san[dd.EngEng['idCounty']] == id) & (df_san[dd.EngEng['ageRKI']] == unique_age_groups_old[ageidx]), vacc_column_names].values
                         nidx += 1
-                    df_san.loc[(df_san[dd.EngEng['idCounty']] == id) & (df_san[dd.EngEng['ageRKI']] == unique_age_groups_old[ageidx]), column_names_new] -= sum(
-                        reduc_shares)*df_san.loc[(df_san[dd.EngEng['idCounty']] == id) & (df_san[dd.EngEng['ageRKI']] == unique_age_groups_old[ageidx]), column_names_new].values
+                    df_san.loc[(df_san[dd.EngEng['idCounty']] == id) & (df_san[dd.EngEng['ageRKI']] == unique_age_groups_old[ageidx]), vacc_column_names] -= sum(
+                        reduc_shares)*df_san.loc[(df_san[dd.EngEng['idCounty']] == id) & (df_san[dd.EngEng['ageRKI']] == unique_age_groups_old[ageidx]), vacc_column_names].values
 
             if ii < 401:
                 end_time = time.perf_counter()
@@ -619,7 +737,7 @@ def get_vaccination_data(read_data=dd.defaultDict['read_data'],
                       str(int(end_time - start_time_county)) + " sec")
 
             if len(
-                    np.where(np.isnan(df_san[column_names_new]) == True)[0]) > 0:
+                    np.where(np.isnan(df_san[vacc_column_names]) == True)[0]) > 0:
                 raise gd.DataError(
                     'Error in functionality of vaccine distribution, NaN found after county '
                     + str(id) + '. Exiting program.')
@@ -628,21 +746,21 @@ def get_vaccination_data(read_data=dd.defaultDict['read_data'],
         df_data_agevacc_county_cs = df_san.copy()
 
         # create cumulative sum
+        groupby_list = [dd.EngEng['date'], dd.EngEng['idState'],
+                        dd.EngEng['idCounty'], dd.EngEng['ageRKI']]
         df_data_agevacc_county_cs = df_data_agevacc_county_cs.groupby(
-            [dd.EngEng['date'],
-             dd.EngEng['idCounty'],
-             dd.EngEng['ageRKI']]).agg(
-            {column_new: sum for column_new in column_names_new})
-        df_data_agevacc_county_cs = df_data_agevacc_county_cs.groupby(
-            level=[1, 2]).cumsum().reset_index()
+            groupby_list).agg(
+            {column_new: sum for column_new in vacc_column_names})
+        df_data_agevacc_county_cs = df_data_agevacc_county_cs.groupby(level=[groupby_list.index(
+            dd.EngEng['idCounty']), groupby_list.index(dd.EngEng['ageRKI'])]).cumsum().reset_index()
 
         # check that cumulative sum was done correctly (TODO: to be removed in production)
         for id in geoger.get_county_ids():
             for age in unique_age_groups_old:
                 a = df_san[(df_san.ID_County == id) & (
-                    df_san.Age_RKI == age)].sum()[column_names_new]
+                    df_san.Age_RKI == age)].sum()[vacc_column_names]
                 b = df_data_agevacc_county_cs[(df_data_agevacc_county_cs.ID_County == id) & (
-                    df_data_agevacc_county_cs.Age_RKI == age)].loc[:, column_names_new].iloc[-1]
+                    df_data_agevacc_county_cs.Age_RKI == age)].loc[:, vacc_column_names].iloc[-1]
                 if sum(a-b) > 1e-8:
                     print("Error in: " + str(id) + " " + str(age))
         ### end of to be removed ###
@@ -652,11 +770,14 @@ def get_vaccination_data(read_data=dd.defaultDict['read_data'],
             df_data_agevacc_county_cs,
             {dd.EngEng['idCounty']: df_data_agevacc_county_cs[dd.EngEng['idCounty']].unique(),
              dd.EngEng['ageRKI']: unique_age_groups_old},
-            [column_names_new[i]],
+            [vacc_column_names[i]],
             impute='forward', moving_average=moving_average,
             min_date=min_date, max_date=max_date)
 
-        end_time = time.perf_counter()
+    else:
+        print('Sanitizing deactivated.')
+    end_time = time.perf_counter()
+    if sanitize_data > 0:
         print(
             "Time needed for sanitizing: " + str(int(end_time - start_time)) +
             " sec")
@@ -671,31 +792,36 @@ def get_vaccination_data(read_data=dd.defaultDict['read_data'],
                  dd.EngEng["date"]])
 
     if make_plot:
-        # have a look extrapolated vaccination ratios (TODO: to be removed or outsourced with plotting for production)
+        # have a look extrapolated vaccination ratios (TODO: create plotting for production)
         # aggregate total number of vaccinations per county and age group
         latest_date = df_data_agevacc_county_cs[dd.EngEng["date"]][len(
             df_data_agevacc_county_cs.index)-1].strftime("%Y-%m-%d")
         vacc_sums_nonsanit = df_data_agevacc_county_cs.loc[(
-            df_data_agevacc_county_cs.Date == latest_date), ['ID_County', column_names_new[1]]]
+            df_data_agevacc_county_cs.Date == latest_date), ['ID_County', vacc_column_names[1]]]
         # create new data frame and reshape it
-        df_fullsum = pd.DataFrame(
-            columns=[dd.EngEng['idCounty']] + unique_age_groups_old)
-        df_fullsum[dd.EngEng['idCounty']
-                   ] = vacc_sums_nonsanit[dd.EngEng['idCounty']].unique()
-        df_fullsum[unique_age_groups_old] = np.array(
-            vacc_sums_nonsanit[column_names_new[1]]).reshape(
-            len(vacc_sums_nonsanit[dd.EngEng['idCounty']].unique()),
-            len(unique_age_groups_old))
-        # compute county and age-group-specific vaccination ratios
-        df_fullsum[['r'+age for age in unique_age_groups_old]] = df_fullsum[unique_age_groups_old] / geoger.merge_df_counties_all(
-            population_old_ages, sorting=[dd.EngEng["idCounty"]], columns=dd.EngEng["idCounty"])[unique_age_groups_old].values
-        ## end of the be removed ###
+        df_fullsum = compute_vaccination_ratios(
+            unique_age_groups_old, vacc_sums_nonsanit, vacc_column_names[1],
+            dd.EngEng['idCounty'],
+            population_old_ages, merge_2022=True)
 
-    # store data
+    # store data for all counties
     filename = 'all_county_agevacc_vacc'
     filename = gd.append_filename(filename, impute_dates, moving_average)
     gd.write_dataframe(df_data_agevacc_county_cs,
                        directory, filename, file_format)
+
+    # store data for all federal states: group information on date, state and age level
+    # (i.e., aggregate information of all counties per federal state)
+    filename = 'all_states_agevacc_vacc'
+    filename = gd.append_filename(filename, impute_dates, moving_average)
+    df_data_agevacc_state_cs = df_data_agevacc_county_cs.groupby(
+        [dd.EngEng['date'],
+         dd.EngEng['idState'],
+         dd.EngEng['ageRKI']]).agg(
+        {column: sum for column in vacc_column_names}).reset_index()
+    gd.write_dataframe(df_data_agevacc_state_cs,
+                       directory, filename, file_format)
+
     # make plot of absolute numbers original age resolution
     if make_plot:
         # extract (dummy) date column to plt
@@ -734,13 +860,26 @@ def get_vaccination_data(read_data=dd.defaultDict['read_data'],
     start_time = time.perf_counter()
     df_data_county_cs = df_data_agevacc_county_cs.groupby(
         [dd.EngEng['date'],
+         dd.EngEng['idState'],
          dd.EngEng['idCounty']]).agg(
-        {col_new: sum for col_new in column_names_new}).reset_index()
+        {col_new: sum for col_new in vacc_column_names}).reset_index()
 
-    # store data
+    # store data for all counties
     filename = 'all_county_vacc'
     filename = gd.append_filename(filename, impute_dates, moving_average)
     gd.write_dataframe(df_data_county_cs, directory, filename, file_format)
+
+    # store data for all federal states: group information on date, state and age level
+    # (i.e., aggregate information of all counties per federal state)
+    filename = 'all_states_vacc'
+    filename = gd.append_filename(filename, impute_dates, moving_average)
+    df_data_state_cs = df_data_county_cs.groupby(
+        [dd.EngEng['date'],
+         dd.EngEng['idState']]).agg(
+        {column: sum for column in vacc_column_names}).reset_index()
+    gd.write_dataframe(df_data_state_cs,
+                       directory, filename, file_format)
+
     end_time = time.perf_counter()
     print("Time needed: " + str(int(end_time - start_time)) + " sec")
 
@@ -781,12 +920,13 @@ def get_vaccination_data(read_data=dd.defaultDict['read_data'],
                     [df_data_agevacc_county_cs[dd.EngEng['ageRKI']] ==
                      unique_age_groups_old[0],
                      [dd.EngEng['date'],
+                      dd.EngEng['idState'],
                       dd.EngEng['idCounty']]].copy())
                 # add age group column
                 df_local_age_new[i][dd.EngEng['ageRKI']] = str(
                     min_age_new[i])+"-"+str(min_age_new[i+1]-1)
                 # add specific zero columns
-                df_local_age_new[i][column_names_new] = 0
+                df_local_age_new[i][vacc_column_names] = 0
                 # reset indices to 0,...,length to be able to sum up columns correctly
                 df_local_age_new[i] = df_local_age_new[i].reset_index(
                     drop=True)
@@ -830,10 +970,10 @@ def get_vaccination_data(read_data=dd.defaultDict['read_data'],
                         total_old += float(
                             pop_state[str(min_all_ages[age_group])])
                     # second add share to new column
-                    dummy_frame = df_local_age_old[column_names_new].copy()
+                    dummy_frame = df_local_age_old[vacc_column_names].copy()
                     dummy_frame = dummy_frame.reset_index()
-                    df_local_age_new[k][column_names_new] += share_new / \
-                        total_old * dummy_frame[column_names_new]
+                    df_local_age_new[k][vacc_column_names] += share_new / \
+                        total_old * dummy_frame[vacc_column_names]
 
             for k in range(j, len(min_age_new)-1):
                 # append summed vaccination age group to local,
@@ -856,17 +996,38 @@ def get_vaccination_data(read_data=dd.defaultDict['read_data'],
             df_data_ageinf_county_cs = df_data_ageinf_county_cs.append(
                 df_local_new.copy())
 
+    df_data_ageinf_county_cs = df_data_ageinf_county_cs.reset_index()
+
     # check for now, to be removed for production...
     for id in geoger.get_county_ids():
-        if abs(df_data_ageinf_county_cs[df_data_ageinf_county_cs.ID_County == 1001].groupby(['Date']).sum()-df_data_agevacc_county_cs[df_data_agevacc_county_cs.ID_County == 1001].groupby(['Date']).sum()[column_names_new]).max().max() > 1e-8:
+        if abs(
+            df_data_ageinf_county_cs
+            [df_data_ageinf_county_cs.ID_County == 1001].groupby(['Date']).
+            sum() -
+            df_data_agevacc_county_cs
+            [df_data_agevacc_county_cs.ID_County == 1001].
+                groupby(['Date']).sum()[vacc_column_names]).max().max() > 1e-8:
             print('Error in ' + str(id))
     ### end of to be removed ###
 
+    # store data for all counties
     filename = 'all_county_ageinf_vacc'
     filename = gd.append_filename(filename, impute_dates, moving_average)
-
     gd.write_dataframe(df_data_ageinf_county_cs,
                        directory, filename, file_format)
+
+    # store data for all federal states: group information on date, state and age level
+    # (i.e., aggregate information of all counties per federal state)
+    filename = 'all_states_ageinf_vacc'
+    filename = gd.append_filename(filename, impute_dates, moving_average)
+    df_data_ageinf_state_cs = df_data_ageinf_county_cs.groupby(
+        [dd.EngEng['date'],
+         dd.EngEng['idState'],
+         dd.EngEng['ageRKI']]).agg(
+        {column: sum for column in vacc_column_names}).reset_index()
+    gd.write_dataframe(df_data_ageinf_state_cs,
+                       directory, filename, file_format)
+
     end_time = time.perf_counter()
     print("Time needed for age extrapolation: " +
           str(int(end_time - start_time)) + " sec")
@@ -874,17 +1035,60 @@ def get_vaccination_data(read_data=dd.defaultDict['read_data'],
 
     # make plot of relative numbers of original and extrapolated age resolution
     if make_plot:
+        # merge Eisenach...
+        population_new_ages = geoger.merge_df_counties_all(
+            population_new_ages, sorting=[dd.EngEng["idCounty"]],
+            columns=dd.EngEng["idCounty"])
+
+        # have a look extrapolated vaccination ratios (TODO: create plotting for production)
+        # aggregate total number of vaccinations per county and age group
+        latest_date = datetime.strptime(
+            df_data_ageinf_county_cs[dd.EngEng["date"]]
+            [len(df_data_ageinf_county_cs.index) - 1],
+            "%Y-%m-%d")
+        vacc_sums = df_data_ageinf_county_cs.loc[(df_data_ageinf_county_cs.Date == latest_date.strftime(
+            "%Y-%m-%d")), [dd.EngEng['idCounty'], vacc_column_names[1]]]
+        df_fullsum_county = compute_vaccination_ratios(
+            unique_age_groups_new, vacc_sums, vacc_column_names[1],
+            dd.EngEng['idCounty'],
+            population_new_ages, merge_2022=True)
+
+        # TODO: Plot information on vaccination ratios of df_fullsum_county
+
+        # have a look extrapolated vaccination ratios (TODO: create plotting for production)
+        # aggregate total number of vaccinations per county and age group
+        latest_date = datetime.strptime(
+            df_data_ageinf_state_cs[dd.EngEng["date"]]
+            [len(df_data_ageinf_state_cs.index) - 1],
+            "%Y-%m-%d")
+        vacc_sums = df_data_ageinf_state_cs.loc[(df_data_ageinf_state_cs.Date == latest_date.strftime(
+            "%Y-%m-%d")), [dd.EngEng['idState'], vacc_column_names[1]]]
+
+        # get population per federal state
+        population_new_ages.insert(
+            loc=1, column=dd.EngEng["idState"],
+            value=population_new_ages[dd.EngEng["idCounty"]])
+        county_to_state = geoger.get_countyid_to_stateid_map(
+            merge_eisenach=True)
+        for countyid in population_new_ages[dd.EngEng["idState"]].unique():
+            population_new_ages.loc[population_new_ages[dd.EngEng["idState"]]
+                                    == countyid, dd.EngEng["idState"]] = county_to_state[countyid]
+        population_new_ages_states = population_new_ages.groupby(dd.EngEng['idState']).agg(
+            {age_group: sum for age_group in unique_age_groups_new}).reset_index()
+
+        df_fullsum_state = compute_vaccination_ratios(
+            unique_age_groups_new, vacc_sums, vacc_column_names[1],
+            dd.EngEng['idState'],
+            population_new_ages_states)
+
+        # TODO: Plot information on vaccination ratios of df_fullsum_state
+
         # extract (dummy) date column to plt
         date_vals = df_data_agevacc_county_cs.loc[
             (df_data_agevacc_county_cs[dd.EngEng['ageRKI']] ==
              unique_age_groups_old[0]) &
             (df_data_agevacc_county_cs[dd.EngEng['idCounty']] ==
              geoger.get_county_ids()[0])][dd.EngEng['date']]
-
-        # create hashes to access columns of new age group intervals
-        unique_age_groups_new = [
-            str(min_age_new[i]) + "-" + str(min_age_new[i + 1] - 1)
-            for i in range(len(min_age_new) - 1)]
 
         # consider first vaccination for new age groups
         yvals = [

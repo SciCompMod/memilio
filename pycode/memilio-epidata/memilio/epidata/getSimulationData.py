@@ -105,12 +105,6 @@ def get_simulation_data(read_data=dd.defaultDict['read_data'],
         print_error('population')
 
     try:
-        getPopulationData.get_age_population_data(**arg_dict_all)
-    except Exception as exp:
-        print(str(type(exp).__name__) + ": " + str(exp))
-        print_error('age-resolved population')
-
-    try:
         getDIVIData.get_divi_data(**arg_dict_divi)
     except Exception as exp:
         print(str(type(exp).__name__) + ": " + str(exp))

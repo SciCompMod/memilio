@@ -533,12 +533,11 @@ class Test_getDataIntoPandasDataFrame(fake_filesystem_unittest.TestCase):
     @patch('memilio.epidata.getDIVIData.get_divi_data')
     @patch('memilio.epidata.getRKIData.get_rki_data')
     @patch('memilio.epidata.getPopulationData.get_population_data')
-    @patch('memilio.epidata.getPopulationData.get_age_population_data')
     @patch('memilio.epidata.getVaccinationData.get_vaccination_data')
     @patch('memilio.epidata.getRKIDatawithEstimations.get_rki_data_with_estimations')
     @patch('memilio.epidata.getJHData.get_jh_data')
     def test_call_functions(
-            self, mock_jh, mock_rkiwe, mock_vaccination, mock_agep, mock_popul,
+            self, mock_jh, mock_rkiwe, mock_vaccination, mock_popul,
             mock_rki, mock_divi):
 
         arg_dict_all = {
@@ -576,8 +575,6 @@ class Test_getDataIntoPandasDataFrame(fake_filesystem_unittest.TestCase):
         mock_vaccination.assert_called_with(**arg_dict_vaccination)
 
         getPopulationData.main()
-        mock_agep.assert_called()
-        mock_agep.assert_called_with(**arg_dict_all)
         mock_popul.assert_called()
         mock_popul.assert_called_with(**arg_dict_all)
 
