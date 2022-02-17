@@ -186,9 +186,13 @@ def check_for_all_counties(unique_county_list, merge_berlin=True, merge_eisenach
     # if it seems complete
     return True
 
-def get_countyid_to_stateid_map(merge_eisenach=True, zfill=False):
+
+def get_countyid_to_stateid_map(
+        merge_berlin=True, merge_eisenach=True, zfill=False):
     """! Creates a hash map from county IDs to state IDs
 
+    @param merge_berlin [Default: True] Defines whether the different districts
+        are listed separately or combined as one entity 'Berlin'.
     @param merge_eisenach [Default: True] Defines whether the counties 
         'Wartburgkreis' and 'Eisenach' are listed separately or combined 
         as one entity 'Wartburgkreis'.
@@ -196,7 +200,8 @@ def get_countyid_to_stateid_map(merge_eisenach=True, zfill=False):
         as zero-filled strings. By default, integer maps are returned.
     @return County ID to state ID map.
     """
-    county_ids = get_county_ids(merge_eisenach=merge_eisenach, zfill=zfill)
+    county_ids = get_county_ids(
+        merge_berlin=merge_berlin, merge_eisenach=merge_eisenach, zfill=zfill)
 
     if zfill:
         return {id : id[0:2] for id in county_ids}

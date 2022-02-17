@@ -22,7 +22,7 @@
 @brief Downloads the data of the Robert-Koch-Institut (RKI) and provides it in different ways.
 
 The RKI data we download can be found at
-https://npgeo-corona-npgeo-de.hub.arcgis.com/datasets/dd4580c810204019a7b8eb3e0b329dd6_0
+https://github.com/robert-koch-institut/SARS-CoV-2_Infektionen_in_Deutschland
 
 Be careful: Recovered and deaths are not correct set in this case
 """
@@ -30,7 +30,7 @@ Be careful: Recovered and deaths are not correct set in this case
 # Imports
 import os
 import itertools
-import pandas
+import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 
@@ -74,10 +74,10 @@ def get_rki_data(read_data=dd.defaultDict['read_data'],
 
     The data is read either from the internet or from a json file (FullDataRKI.json), stored in an earlier run.
     If the data is read from the internet, before changing anything the data is stored in FullDataRKI.json.
-    If data should be downloaded, it is checked if data contains all 16 states.
-    If not a different source is tried, in this case a column has to be renamed.
+    If data should be downloaded, it is checked if data contains all counties.
+    If not a different source is tried.
     The file is read in or stored at the folder "out_folder"/Germany/.
-    To store and change the data we use pandas
+    To store and change the data we use pandas.
 
     While working with the data
     - the column names are changed to english depending on defaultDict
@@ -124,51 +124,64 @@ def get_rki_data(read_data=dd.defaultDict['read_data'],
         # if once dowloaded just read json file
         file_in = os.path.join(directory, filename + ".json")
         try:
-            df = pandas.read_json(file_in)
+            df = pd.read_json(file_in)
         except ValueError as err:
             raise FileNotFoundError("Error: The file: " + file_in + \
                 " does not exist. Call program without -r flag to get it.") \
                 from err
     else:
         # download data
+        df = pd.DataFrame()
+        url = "https://media.githubusercontent.com/media/robert-koch-institut/" + \
+              "SARS-CoV-2_Infektionen_in_Deutschland/master/"
+        source_filename = "Aktuell_Deutschland_SarsCov2_Infektionen"
         try:
-            url = "https://media.githubusercontent.com/media/" + \
-                  "robert-koch-institut/" + \
-                  "SARS-CoV-2_Infektionen_in_Deutschland/master/"
-            source_filename = "Aktuell_Deutschland_SarsCov2_Infektionen"
             df = gd.loadCsv(targetFileName = source_filename, apiUrl = url,
                              extension = ".csv")
-            if not check_for_completeness(df, merge_eisenach=True):
-                raise gd.DataError
-        # try another possibility if df was empty or incomplete
         except Exception:
+            pass
+        complete = check_for_completeness(df, merge_eisenach=True)
+        if complete:
+            # add column with state ids
+            county_to_state_map = geoger.get_countyid_to_stateid_map(
+                merge_berlin=False)
+            df["IdBundesland"] = df["IdLandkreis"].map(county_to_state_map)
+        else:
+            # try another possibility if df was empty or incomplete
             print("Note: RKI data is incomplete. Trying another source.")
             # ArcGIS public data item ID:
-            itemId = 'dd4580c810204019a7b8eb3e0b329dd6_0'
-            df = gd.loadCsv(itemId)
+            itemId = '66876b81065340a4a48710b062319336_0'
+            try:
+                df = gd.loadCsv(itemId)
+            except Exception:
+                pass
             complete = check_for_completeness(df, merge_eisenach=True)
 
             if not complete:
                 print("Note: RKI data is still incomplete. Trying a thrid source.")
-                df = gd.loadCsv("", "https://npgeo-de.maps.arcgis.com/sharing/rest/content/items/"
-                                "f10774f1c63e40168479a1feb6c7ca74/data", "")
-                df.rename(columns={'FID': "ObjectId"}, inplace=True)
+                try:
+                    df = gd.loadCsv(
+                        "",
+                        "https://npgeo-de.maps.arcgis.com/sharing/rest/content/items/"
+                        "f10774f1c63e40168479a1feb6c7ca74/data", "")
+                    df.rename(columns={'FID': "OBJECTID"}, inplace=True)
+                except Exception:
+                    pass
                 complete = check_for_completeness(df, merge_eisenach=True)
 
             if not complete:
                 print("Information: dataframe was incomplete for csv. Trying geojson.")
-                df = gd.loadGeojson(itemId)
+                try:
+                    df = gd.loadGeojson(itemId)
+                except Exception:
+                    pass
                 complete = check_for_completeness(df, merge_eisenach=True)
                 if df.empty or not complete:
                     raise FileNotFoundError("Something went wrong, " + \
                         "dataframe is empty for csv and geojson!")
             # drop columns that do not exist in data from github
-            df = df.drop(["Altersgruppe2", "Datenstand", "ObjectId",
-                          "Bundesland", "Landkreis"],1)
-        else:
-            # add column with state ids
-            county_to_state_map = geoger.get_countyid_to_stateid_map()
-            df["IdBundesland"] = df["IdLandkreis"].map(county_to_state_map)
+            df = df.drop(["Altersgruppe2", "Datenstand", "OBJECTID",
+                          "Bundesland", "Landkreis"], 1)
     df = df.convert_dtypes()
 
     # output data to not always download it
@@ -198,7 +211,7 @@ def get_rki_data(read_data=dd.defaultDict['read_data'],
     # = reference date (date of disease onset) if IstErkrankungsbeginn = 1 else 
     #       take Meldedatum (reporting date)
     if rep_date:
-        df['Date'] = df['Meldedatum']
+        df['Date'] = df['Meldedatum'].astype('object')
     else:
         df['Date'] = np.where(df['IstErkrankungsbeginn'] == 1, df['Refdatum'], df['Meldedatum'])
 
@@ -316,7 +329,7 @@ def get_rki_data(read_data=dd.defaultDict['read_data'],
     ############## Data for states all ages ################
 
     # NeuerFall: Infected (incl. recovered) over "dateToUse" for every state ("Bundesland"):
-    gbNFst = df.groupby([IdBundesland, dateToUse]).agg({AnzahlFall: sum})
+    gbNFst = df.groupby([dateToUse, IdBundesland]).agg({AnzahlFall: sum})
     gbNFst_cs = gbNFst.groupby(level=1).cumsum().reset_index()
 
     # output
@@ -345,7 +358,7 @@ def get_rki_data(read_data=dd.defaultDict['read_data'],
 
     # infected (incl recovered), deaths and recovered together
 
-    gbAllSt = df.groupby([IdBundesland, dateToUse]) \
+    gbAllSt = df.groupby([dateToUse, IdBundesland]) \
         .agg({AnzahlFall: sum, AnzahlTodesfall: sum, AnzahlGenesen: sum})
     gbAllSt_cs = gbAllSt.groupby(level=1).cumsum().reset_index()
 
@@ -379,7 +392,7 @@ def get_rki_data(read_data=dd.defaultDict['read_data'],
                      dd.EngEng['ageRKI']])
 
     # NeuerFall: Infected (incl. recovered) over "dateToUse" for every county ("Landkreis"):
-    gbNFc = df.groupby([IdLandkreis, dateToUse]).agg({AnzahlFall: sum})
+    gbNFc = df.groupby([dateToUse, IdLandkreis]).agg({AnzahlFall: sum})
     gbNFc_cs = gbNFc.groupby(level=1).cumsum().reset_index()
 
     # output
@@ -404,7 +417,7 @@ def get_rki_data(read_data=dd.defaultDict['read_data'],
         gd.write_dataframe(gbNFc_cs, directory, filename + '_rki', file_format)
 
     # infected (incl recovered), deaths and recovered together
-    gbAllC = df.groupby([IdLandkreis, dateToUse]).\
+    gbAllC = df.groupby([dateToUse, IdLandkreis]).\
         agg({AnzahlFall: sum, AnzahlTodesfall: sum, AnzahlGenesen: sum})
     gbAllC_cs = gbAllC.groupby(level=1).cumsum().reset_index()
 
@@ -468,7 +481,7 @@ def get_rki_data(read_data=dd.defaultDict['read_data'],
 
     # infected (incl recovered), deaths and recovered together
 
-    gbAllGState = df.groupby([IdBundesland, Geschlecht, dateToUse]) \
+    gbAllGState = df.groupby([dateToUse, IdBundesland, Geschlecht]) \
         .agg({AnzahlFall: sum, AnzahlTodesfall: sum, AnzahlGenesen: sum})
     gbAllGState_cs = gbAllGState.groupby(level=[1, 2]).cumsum().reset_index()
 
@@ -493,7 +506,7 @@ def get_rki_data(read_data=dd.defaultDict['read_data'],
 
     ############# Gender and County #####################
 
-    gbAllGCounty = df.groupby([IdLandkreis, Geschlecht, dateToUse]) \
+    gbAllGCounty = df.groupby([dateToUse, IdLandkreis, Geschlecht]) \
         .agg({AnzahlFall: sum, AnzahlTodesfall: sum, AnzahlGenesen: sum})
     gbAllGCounty_cs = gbAllGCounty.groupby(level=[1, 2]).cumsum().reset_index()
 
@@ -567,7 +580,7 @@ def get_rki_data(read_data=dd.defaultDict['read_data'],
 
     # infected (incl recovered), deaths and recovered together
 
-    gbAllAgeState = df.groupby([IdBundesland, Altersgruppe, dateToUse]) \
+    gbAllAgeState = df.groupby([dateToUse, IdBundesland, Altersgruppe]) \
         .agg({AnzahlFall: sum, AnzahlTodesfall: sum, AnzahlGenesen: sum})
     gbAllAgeState_cs = gbAllAgeState.groupby(level=[1, 2]).cumsum().reset_index()
 
@@ -592,7 +605,7 @@ def get_rki_data(read_data=dd.defaultDict['read_data'],
 
     ############# Age and County #####################
 
-    gbAllAgeCounty = df.groupby([IdLandkreis, Altersgruppe, dateToUse]) \
+    gbAllAgeCounty = df.groupby([dateToUse, IdLandkreis, Altersgruppe]) \
         .agg({AnzahlFall: sum, AnzahlTodesfall: sum, AnzahlGenesen: sum})
     gbAllAgeCounty_cs = gbAllAgeCounty.groupby(level=[1, 2]).cumsum().reset_index()
 

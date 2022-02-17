@@ -35,118 +35,119 @@ class test_get_RKI_Data(fake_filesystem_unittest.TestCase):
 
     # strings for read, download and update data
     # be careful: not completely realistic data
+    # In the json file there is one data set for each county (ensuring that the
+    # completeness check evaluates to true) that is combined with some addional
+    # test data sets defined below
+
     # Get a file object with write permission.
     here = os.path.dirname(os.path.abspath(__file__))
-    filename = os.path.join(here, 'test_epidata_get_RKI_Data_data.json')
+
+    # load test data for read
+    filename = os.path.join(here, 'test_epidata_get_RKI_Data_data_read.json')
     file_object = open(filename, 'r')
     # Load JSON file data to a python dict object.
     dict_object = json.load(file_object)
+    test_string_all_federal_states_and_counties_read = json.dumps(dict_object)[:-1] +\
+        (""",{"Altersgruppe":"A60-A79","Geschlecht":"M","AnzahlFall":1,"AnzahlTodesfall":0,"Meldedatum":"2020-08-11",\
+    "IdLandkreis":1002,"NeuerFall":0,"NeuerTodesfall":-9,"Refdatum":"2020-08-07","NeuGenesen":0,"AnzahlGenesen":1,\
+    "IstErkrankungsbeginn":1,"IdBundesland":1},\
+    {"Altersgruppe":"A60-A79","Geschlecht":"M","AnzahlFall":1,"AnzahlTodesfall":1,"Meldedatum":"2020-03-24",\
+    "IdLandkreis":1001,"NeuerFall":0,"NeuerTodesfall":0,"Refdatum":"2020-08-07","NeuGenesen":-9,"AnzahlGenesen":0,\
+    "IstErkrankungsbeginn":1,"IdBundesland":1},\
+    {"Altersgruppe":"A15-A34","Geschlecht":"W","AnzahlFall":1,"AnzahlTodesfall":0,"Meldedatum":"2020-08-13",\
+    "IdLandkreis":2000,"NeuerFall":0,"NeuerTodesfall":-9,"Refdatum":"2020-08-07","NeuGenesen":0,"AnzahlGenesen":1,\
+    "IstErkrankungsbeginn":1,"IdBundesland":2},\
+    {"Altersgruppe":"A60-A79","Geschlecht":"M","AnzahlFall":1,"AnzahlTodesfall":0,"Meldedatum":"2020-08-07",\
+    "IdLandkreis":3462,"NeuerFall":0,"NeuerTodesfall":-9,"Refdatum":"2021-01-09","NeuGenesen":0,"AnzahlGenesen":1,\
+    "IstErkrankungsbeginn":0,"IdBundesland":3},\
+    {"Altersgruppe":"A15-A34","Geschlecht":"W","AnzahlFall":1,"AnzahlTodesfall":0,"Meldedatum":"2021-04-04",\
+    "IdLandkreis":4011,"NeuerFall":0,"NeuerTodesfall":-9,"Refdatum":"2020-08-07","NeuGenesen":0,"AnzahlGenesen":1,\
+    "IstErkrankungsbeginn":1,"IdBundesland":4},\
+    {"Altersgruppe":"A15-A34","Geschlecht":"M","AnzahlFall":1,"AnzahlTodesfall":0,"Meldedatum":"2020-08-07",\
+    "IdLandkreis":5111,"NeuerFall":0,"NeuerTodesfall":-9,"Refdatum":"2020-06-22","NeuGenesen":0,"AnzahlGenesen":1,\
+    "IstErkrankungsbeginn":0,"IdBundesland":5},\
+    {"Altersgruppe":"A60-A79","Geschlecht":"W","AnzahlFall":1,"AnzahlTodesfall":1,"Meldedatum":"2020-04-21",\
+    "IdLandkreis":6531,"NeuerFall":0,"NeuerTodesfall":0,"Refdatum":"2020-04-13","NeuGenesen":0,"AnzahlGenesen":1,\
+    "IstErkrankungsbeginn":1,"IdBundesland":6},\
+    {"Altersgruppe":"A35-A59","Geschlecht":"W","AnzahlFall":1,"AnzahlTodesfall":0,"Meldedatum":"2020-08-08",\
+    "IdLandkreis":7231,"NeuerFall":0,"NeuerTodesfall":-9,"Refdatum":"2020-08-08","NeuGenesen":-9,"AnzahlGenesen":0,\
+    "IstErkrankungsbeginn":1,"IdBundesland":7},\
+    {"Altersgruppe":"A15-A34","Geschlecht":"W","AnzahlFall":2,"AnzahlTodesfall":0,"Meldedatum":"2020-03-25",\
+    "IdLandkreis":8118,"NeuerFall":0,"NeuerTodesfall":-9,"Refdatum":"2020-03-25","NeuGenesen":0,"AnzahlGenesen":2,\
+    "IstErkrankungsbeginn":0,"IdBundesland":8},\
+    {"Altersgruppe":"A35-A59","Geschlecht":"M","AnzahlFall":1,"AnzahlTodesfall":0,"Meldedatum":"2020-08-11",\
+    "IdLandkreis":9186,"NeuerFall":0,"NeuerTodesfall":-9,"Refdatum":"2020-08-11","NeuGenesen":0,"AnzahlGenesen":1,\
+    "IstErkrankungsbeginn":1,"IdBundesland":9},\
+    {"Altersgruppe":"A60-A79","Geschlecht":"W","AnzahlFall":1,"AnzahlTodesfall":0,"Meldedatum":"2020-06-10",\
+    "IdLandkreis":10042,"NeuerFall":0,"NeuerTodesfall":-9,"Refdatum":"2020-06-10","NeuGenesen":0,"AnzahlGenesen":1,\
+    "IstErkrankungsbeginn":0,"IdBundesland":10},\
+    {"Altersgruppe":"A60-A79","Geschlecht":"M","AnzahlFall":1,"AnzahlTodesfall":0,"Meldedatum":"2020-06-04",\
+    "IdLandkreis":11004,"NeuerFall":0,"NeuerTodesfall" :-9,"Refdatum":"2020-06-04","NeuGenesen":0,"AnzahlGenesen":1,\
+    "IstErkrankungsbeginn":1,"IdBundesland":11},\
+    {"Altersgruppe":"A60-A79","Geschlecht":"M","AnzahlFall":1,"AnzahlTodesfall":0,"Meldedatum":"2020-06-04",\
+    "IdLandkreis":11011,"NeuerFall":0,"NeuerTodesfall":-9,"Refdatum":"2020-06-04","NeuGenesen":0,"AnzahlGenesen":1,\
+    "IstErkrankungsbeginn":0,"IdBundesland":11},\
+    {"Altersgruppe":"A35-A59","Geschlecht":"M","AnzahlFall":5,"AnzahlTodesfall":3,"Meldedatum":"2020-08-10",\
+    "IdLandkreis":12066,"NeuerFall":0,"NeuerTodesfall":3,"Refdatum":"2020-08-10","NeuGenesen":0,"AnzahlGenesen":2,\
+    "IstErkrankungsbeginn":1,"IdBundesland":12},\
+    {"Altersgruppe": "A35-A59","Geschlecht":"M","AnzahlFall":2,"AnzahlTodesfall":0,"Meldedatum":"2021-01-12",\
+    "IdLandkreis":13074,"NeuerFall":0,"NeuerTodesfall":-9,"Refdatum":"2020-08-09","NeuGenesen":0,"AnzahlGenesen":2,\
+    "IstErkrankungsbeginn":1,"IdBundesland":13},\
+    {"Altersgruppe":"A05-A14","Geschlecht":"M","AnzahlFall":4,"AnzahlTodesfall":0,"Meldedatum":"2020-08-09",\
+    "IdLandkreis":14511,"NeuerFall":0,"NeuerTodesfall":-9,"Refdatum":"2020-12-10","NeuGenesen":0,"AnzahlGenesen":4,\
+    "IstErkrankungsbeginn":0,"IdBundesland":14},\
+    {"Altersgruppe":"A05-A14","Geschlecht":"M","AnzahlFall":1,"AnzahlTodesfall":0,"Meldedatum":"2020-08-09",\
+    "IdLandkreis":15003,"NeuerFall":0,"NeuerTodesfall":-9,"Refdatum":"2020-08-09","NeuGenesen":0,"AnzahlGenesen":1,\
+    "IstErkrankungsbeginn":1,"IdBundesland":15},\
+    {"Altersgruppe":"A35-A59","Geschlecht":"M","AnzahlFall":1,"AnzahlTodesfall":0,"Meldedatum":"2020-08-09",\
+    "IdLandkreis":16061,"NeuerFall":0,"NeuerTodesfall":-9,"Refdatum":"2020-08-09","NeuGenesen":0,"AnzahlGenesen":1,\
+    "IstErkrankungsbeginn":1,"IdBundesland":16},\
+    {"Altersgruppe":"A35-A59","Geschlecht":"M","AnzahlFall":1,"AnzahlTodesfall":1,"Meldedatum":"2021-01-21",\
+    "IdLandkreis":16061,"NeuerFall":0,"NeuerTodesfall":0,"Refdatum":"2021-01-21","NeuGenesen":0,"AnzahlGenesen":1,\
+    "IstErkrankungsbeginn":1,"IdBundesland":16}]""")
 
-    # Add aldo test data to new data with every county to reduce changes in tests to an minimum
-    # With new data there are three additional cases with 1 case and 1 recovered for
-    # 15.04.2020 (male, A0-A4), 15.03.2020 (male, A05-A14), 15.06.2020 (female, A15-A34)
-    # All three cases are recovered
-    test_string_all_federal_states_and_counties = json.dumps(dict_object)[:-1] +\
-    (""",{"IdBundesland":1,"Bundesland":"Schleswig-Holstein","Landkreis":"SK Kiel",
-    "Altersgruppe":"A60-A79" ,"Geschlecht":"M","AnzahlFall":1,"AnzahlTodesfall":0,"ObjectId":1,
+    # load test data for download formatted as data from github
+    # (https://github.com/robert-koch-institut/SARS-CoV-2_Infektionen_in_Deutschland)
+    filename = os.path.join(here, 'test_epidata_get_RKI_Data_data_github.json')
+    file_object = open(filename, 'r')
+    # Load JSON file data to a python dict object.
+    dict_object_github = json.load(file_object)
+
+    test_string_all_federal_states_and_counties_github = json.dumps(
+        dict_object_github)[:-1] + ("""]""")
+
+    # load test data for download formatted as data from arcgis
+    # (https://npgeo-corona-npgeo-de.hub.arcgis.com/datasets/66876b81065340a4a48710b062319336/about)
+    filename = os.path.join(here, 'test_epidata_get_RKI_Data_data_arcgis.json')
+    file_object = open(filename, 'r')
+    # Load JSON file data to a python dict object.
+    dict_object_arcgis = json.load(file_object)
+
+    test_string_all_federal_states_and_counties_arcgis = json.dumps(
+        dict_object_arcgis)[:-1] + ("""]""")
+
+    string_not_all_states = (
+        """[{"Altersgruppe":"A60-A79" ,"Geschlecht":"M","AnzahlFall":1,"AnzahlTodesfall":0,
     "Meldedatum":"2020\/08\/11 00:00:00+00", "IdLandkreis":1002,"Datenstand":"25.01.2021, 00:00 Uhr","NeuerFall":0,
     "NeuerTodesfall":-9, "Refdatum":"2020\/08\/07 00:00:00+00","NeuGenesen":0,"AnzahlGenesen":1,
-    "IstErkrankungsbeginn":1, "Altersgruppe2":"Nicht \\u00fcbermittelt"},
-    {"IdBundesland":1,
-    "Bundesland":"Schleswig-Holstein","Landkreis":"SK Flensburg","Altersgruppe":"A60-A79", "Geschlecht":"M",
-    "AnzahlFall":1,"AnzahlTodesfall":1,"ObjectId":617,"Meldedatum":"2020\/03\/24 00:00:00+00", "IdLandkreis":1001,
-    "Datenstand":"25.01.2021, 00:00 Uhr","NeuerFall":0,"NeuerTodesfall":0, "Refdatum":"2020\/08\/07 00:00:00+00",
-    "NeuGenesen":-9,"AnzahlGenesen":0,"IstErkrankungsbeginn":1, "Altersgruppe2":"Nicht \\u00fcbermittelt"},
-    {"IdBundesland":2,"Bundesland":"Hamburg", "Landkreis":"SK Hamburg","Altersgruppe":"A15-A34","Geschlecht":"W",
-    "AnzahlFall":1,"AnzahlTodesfall":0, "ObjectId":26489,"Meldedatum":"2020\/08\/13 00:00:00+00","IdLandkreis":2000,
-    "Datenstand":"25.01.2021, 00:00 Uhr", "NeuerFall":0,"NeuerTodesfall":-9,"Refdatum":"2020\/08\/07 00:00:00+00",
-    "NeuGenesen":0,"AnzahlGenesen":1, "IstErkrankungsbeginn":1,"Altersgruppe2":"Nicht \\u00fcbermittelt"},
-    {"IdBundesland":3, "Bundesland":"Niedersachsen","Landkreis":"LK Wittmund","Altersgruppe":"A60-A79",
-    "Geschlecht":"M","AnzahlFall":1, "AnzahlTodesfall":0,"ObjectId":121122,"Meldedatum":"2020\/08\/07 00:00:00+00",
-    "IdLandkreis":3462, "Datenstand":"25.01.2021, 00:00 Uhr","NeuerFall":0,"NeuerTodesfall":-9,
-    "Refdatum":"2021\/01\/09 00:00:00+00", "NeuGenesen":0,"AnzahlGenesen":1,"IstErkrankungsbeginn":0,
-    "Altersgruppe2":"Nicht \\u00fcbermittelt"}, {"IdBundesland":4,"Bundesland":"Bremen","Landkreis":"SK Bremen",
-    "Altersgruppe":"A15-A34","Geschlecht":"W", "AnzahlFall":1,"AnzahlTodesfall":0,"ObjectId":123459,
-    "Meldedatum":"2021\/04\/04 00:00:00+00","IdLandkreis":4011, "Datenstand":"25.01.2021, 00:00 Uhr","NeuerFall":0,
-    "NeuerTodesfall":-9,"Refdatum":"2020\/08\/07 00:00:00+00", "NeuGenesen":0,"AnzahlGenesen":1,
-    "IstErkrankungsbeginn":1,"Altersgruppe2":"Nicht \\u00fcbermittelt"}, {"IdBundesland":5,
-    "Bundesland":"Nordrhein-Westfalen","Landkreis":"SK D\\u00fcsseldorf","Altersgruppe":"A15-A34", "Geschlecht":"M",
-    "AnzahlFall":1,"AnzahlTodesfall":0,"ObjectId":125996,"Meldedatum":"2020\/08\/07 00:00:00+00", "IdLandkreis":5111,
-    "Datenstand":"25.01.2021, 00:00 Uhr","NeuerFall":0,"NeuerTodesfall":-9, "Refdatum":"2020\/06\/22 00:00:00+00",
-    "NeuGenesen":0,"AnzahlGenesen":1,"IstErkrankungsbeginn":0, "Altersgruppe2":"Nicht \\u00fcbermittelt"},
-    {"IdBundesland":6,"Bundesland":"Hessen", "Landkreis":"LK Gie\\u00dfen", "Altersgruppe":"A60-A79",
-    "Geschlecht":"W", "AnzahlFall":1,"AnzahlTodesfall":1, "ObjectId":408175, "Meldedatum":"2020\/04\/21 00:00:00+00",
-    "IdLandkreis":6531, "Datenstand":"25.01.2021, 00:00 Uhr","NeuerFall":0, "NeuerTodesfall":0,
-    "Refdatum":"2020\/04\/13 00:00:00+00", "NeuGenesen":0, "AnzahlGenesen":1, "IstErkrankungsbeginn":1,
-    "Altersgruppe2":"Nicht \\u00fcbermittelt"}, {"IdBundesland":7, "Bundesland":"Rheinland-Pfalz","Landkreis":\
-    "LK Bernkastel-Wittlich","Altersgruppe":"A35-A59", "Geschlecht":"W", "AnzahlFall":1,"AnzahlTodesfall":0,
-    "ObjectId":453169,"Meldedatum":"2020\/08\/08 00:00:00+00", "IdLandkreis":7231, "Datenstand":"25.01.2021,
-    00:00 Uhr","NeuerFall":0,"NeuerTodesfall":-9,"Refdatum": "2020\/08\/08 00:00:00+00", "NeuGenesen":-9,
-    "AnzahlGenesen":0,"IstErkrankungsbeginn":1, "Altersgruppe2":"Nicht \\u00fcbermittelt"}, {"IdBundesland":8,
-    "Bundesland":"Baden-W\\u00fcrttemberg", "Landkreis":"LK Ludwigsburg","Altersgruppe":"A15-A34", "Geschlecht":"W",
-    "AnzahlFall":2,"AnzahlTodesfall":0, "ObjectId":512433,"Meldedatum":"2020\/03\/25 00:00:00+00",
-    "IdLandkreis":8118,"Datenstand":"25.01.2021, 00:00 Uhr", "NeuerFall":0,"NeuerTodesfall":-9,
-    "Refdatum":"2020\/03\/25 00:00:00+00","NeuGenesen":0,"AnzahlGenesen":2, "IstErkrankungsbeginn":0,
-    "Altersgruppe2":"Nicht \\u00fcbermittelt"}, {"IdBundesland":9, "Bundesland":"Bayern","Landkreis":\
-    "LK Pfaffenhofen a.d.Ilm", "Altersgruppe":"A35-A59", "Geschlecht":"M", "AnzahlFall":1,"AnzahlTodesfall":0,
-    "ObjectId":694772, "Meldedatum":"2020\/08\/11 00:00:00+00", "IdLandkreis":9186, "Datenstand":"25.01.2021, 00:00 Uhr"
-    ,"NeuerFall":0, "NeuerTodesfall":-9,"Refdatum": "2020\/08\/11 00:00:00+00", "NeuGenesen":0,"AnzahlGenesen":1,
-    "IstErkrankungsbeginn":1,"Altersgruppe2": "Nicht \\u00fcbermittelt"}, {"IdBundesland":10,"Bundesland":"Saarland",
-    "Landkreis":"LK Merzig-Wadern","Altersgruppe":"A60-A79","Geschlecht":"W", "AnzahlFall":1,"AnzahlTodesfall":0,
-    "ObjectId":853265,"Meldedatum":"2020\/06\/10 00:00:00+00","IdLandkreis":10042, "Datenstand":"25.01.2021,
-    00:00 Uhr", "NeuerFall":0,"NeuerTodesfall":-9,"Refdatum":"2020\/06\/10 00:00:00+00", "NeuGenesen":0,
-    "AnzahlGenesen":1,"IstErkrankungsbeginn":0,"Altersgruppe2":"Nicht \\u00fcbermittelt"}, {"IdBundesland":11,
-    "Bundesland":"Berlin","Landkreis":"SK Berlin Charlottenburg-Wilmersdorf", "Altersgruppe": "A60-A79",
-    "Geschlecht":"M","AnzahlFall":1,"AnzahlTodesfall":0,"ObjectId":879504,"Meldedatum": "2020\/06\/04 00:00:00+00",
-    "IdLandkreis":11004,"Datenstand":"25.01.2021, 00:00 Uhr","NeuerFall":0, "NeuerTodesfall" :-9,
-    "Refdatum":"2020\/06\/04 00:00:00+00","NeuGenesen":0,"AnzahlGenesen":1, "IstErkrankungsbeginn":1,
-    "Altersgruppe2": "Nicht \\u00fcbermittelt"}, {"IdBundesland":11, "Bundesland":"Berlin", "Landkreis":\
-    "SK Berlin Lichtenberg","Altersgruppe":"A60-A79", "Geschlecht": "M","AnzahlFall":1, "AnzahlTodesfall":0,\
-    "ObjectId":907757, "Meldedatum":"2020\/06\/04 00:00:00+00", "IdLandkreis":11011 , "Datenstand":\
-    "25.01.2021, 00:00 Uhr","NeuerFall":0, "NeuerTodesfall":-9, "Refdatum":"2020\/06\/04 00:00:00+00", "NeuGenesen":0,\
-    "AnzahlGenesen":1, "IstErkrankungsbeginn":0, "Altersgruppe2":"Nicht \\u00fcbermittelt"}, {"IdBundesland":12,
-    "Bundesland":"Brandenburg","Landkreis":"LK Oberspreewald-Lausitz","Altersgruppe":"A35-A59", "Geschlecht":"M",
-    "AnzahlFall":5,"AnzahlTodesfall":3,"ObjectId":941060,"Meldedatum":"2020\/08\/10 00:00:00+00",
-    "IdLandkreis":12066, "Datenstand":"25.01.2021, 00:00 Uhr","NeuerFall":0,"NeuerTodesfall":3,"Refdatum":
-    "2020\/08\/10 00:00:00+00", "NeuGenesen":0,"AnzahlGenesen":2,"IstErkrankungsbeginn":1,"Altersgruppe2":
-    "Nicht \\u00fcbermittelt"}, {"IdBundesland":13,"Bundesland":"Mecklenburg-Vorpommern","Landkreis":
-    "LK Nordwestmecklenburg", "Altersgruppe": "A35-A59","Geschlecht":"M","AnzahlFall":2,"AnzahlTodesfall":0,
-    "ObjectId":962502,"Meldedatum": "2021\/01\/12 00:00:00+00","IdLandkreis":13074,"Datenstand":"25.01.2021,
-    00:00 Uhr","NeuerFall":0,"NeuerTodesfall" :-9, "Refdatum":"2020\/08\/09 00:00:00+00","NeuGenesen":0,
-    "AnzahlGenesen":2,"IstErkrankungsbeginn":1, "Altersgruppe2": "Nicht \\u00fcbermittelt"}, {"IdBundesland":14,
-    "Bundesland":"Sachsen","Landkreis":"SK Chemnitz", "Altersgruppe":"A05-A14","Geschlecht":"M", "AnzahlFall":4,
-    "AnzahlTodesfall":0,"ObjectId":967744, "Meldedatum":"2020\/08\/09 00:00:00+00", "IdLandkreis":14511,
-    "Datenstand":"25.01.2021, 00:00 Uhr","NeuerFall":0, "NeuerTodesfall":-9,"Refdatum": "2020\/12\/10 00:00:00+00",
-    "NeuGenesen":0,"AnzahlGenesen":4, "IstErkrankungsbeginn":0,"Altersgruppe2": "Nicht \\u00fcbermittelt"},
-    {"IdBundesland":15, "Bundesland":"Sachsen-Anhalt","Landkreis":"SK Magdeburg","Altersgruppe":"A05-A14",
-    "Geschlecht": "M", "AnzahlFall":1,"AnzahlTodesfall":0,"ObjectId":1032741,"Meldedatum":"2020\/08\/09 00:00:00+00",
-    "IdLandkreis":15003,"Datenstand":"25.01.2021, 00:00 Uhr","NeuerFall":0,"NeuerTodesfall":-9,
-    "Refdatum":"2020\/08\/09 00:00:00+00","NeuGenesen":0,"AnzahlGenesen":1,"IstErkrankungsbeginn":1,
-    "Altersgruppe2":"Nicht \\u00fcbermittelt"}, {"IdBundesland":16, "Bundesland":"Th\\u00fcringen","Landkreis":\
-    "LK Eichsfeld","Altersgruppe":"A35-A59","Geschlecht" :"M", "AnzahlFall":1,"AnzahlTodesfall":0,"ObjectId":1066020,
-    "Meldedatum":"2020\/08\/09 00:00:00+00", "IdLandkreis" :16061,"Datenstand":"25.01.2021, 00:00 Uhr","NeuerFall":0,
-    "NeuerTodesfall":-9, "Refdatum": "2020\/08\/09 00:00:00+00","NeuGenesen":0,"AnzahlGenesen":1,
-    "IstErkrankungsbeginn":1, "Altersgruppe2": "Nicht \\u00fcbermittelt"}, {"IdBundesland":16,
-    "Bundesland":"Th\\u00fcringen","Landkreis":"LK Eichsfeld","Altersgruppe":"A35-A59","Geschlecht" :"M",
-    "AnzahlFall":1,"AnzahlTodesfall":1,"ObjectId":1066020, "Meldedatum":"2021\/01\/21 00:00:00+00", "IdLandkreis"
-    :16061,"Datenstand":"25.01.2021, 00:00 Uhr","NeuerFall":0, "NeuerTodesfall":0, "Refdatum": "2021\/01\/21
-    00:00:00+00","NeuGenesen":0,"AnzahlGenesen":1, "IstErkrankungsbeginn":1, "Altersgruppe2":
-    "Nicht \\u00fcbermittelt"}]""")
-
-    string_not_all_states = ("""[{"IdBundesland":1,"Bundesland":"Schleswig-Holstein","Landkreis":"SK Kiel", 
-    "Altersgruppe":"A60-A79" ,"Geschlecht":"M","AnzahlFall":1,"AnzahlTodesfall":0,"ObjectId":1, 
-    "Meldedatum":"2020\/08\/11 00:00:00+00", "IdLandkreis":1002,"Datenstand":"25.01.2021, 00:00 Uhr","NeuerFall":0, 
-    "NeuerTodesfall":-9, "Refdatum":"2020\/08\/07 00:00:00+00","NeuGenesen":0,"AnzahlGenesen":1, 
     "IstErkrankungsbeginn":1, "Altersgruppe2":"Nicht \\u00fcbermittelt"}]""")
 
     def setUp(self):
         self.setUpPyfakefs()
-    
+
     def write_rki_data(self, out_folder):
+        # write dataset for reading data
         file_rki = "FullDataRKI.json"
         file_rki_with_path = os.path.join(out_folder, file_rki)
         with open(file_rki_with_path, 'w') as f:
-            f.write(self.test_string_all_federal_states_and_counties)
+            f.write(self.test_string_all_federal_states_and_counties_read)
+
+    def write_rki_data_arcgis(self, out_folder):
+        # write dataset from source for mocking download from arcgis
+        file_rki = "RKIDataArcgis.json"
+        file_rki_with_path = os.path.join(out_folder, file_rki)
+        with open(file_rki_with_path, 'w') as f:
+            f.write(self.test_string_all_federal_states_and_counties_arcgis)
 
     def write_rki_data_not_all_states(self, out_folder):
         file_rki = "notFullDataRKI.json"
@@ -243,24 +244,27 @@ class test_get_RKI_Data(fake_filesystem_unittest.TestCase):
         file = 'all_county_gender_rki.json'
         f_read = os.path.join(directory, file)
         df_gender = pd.read_json(f_read)
-        self.assertEqual(df_gender.shape[0], 18+412)
+        self.assertEqual(df_gender.shape[0], 17+411)
         # checks if Berlins districts are concatenated
 
-        self.assertEqual(
-            df_gender[(df_gender['County'] == "Berlin") & (df_gender['Gender'] == 'male')]['Confirmed'].shape[0], 10)
+        self.assertEqual(df_gender[(df_gender['ID_County'] == 11000) & (
+            df_gender['Gender'] == 'male')]['Confirmed'].shape[0], 9)
 
         file = 'infected_county_rki.json'
         f_read = os.path.join(directory, file)
         df_infected = pd.read_json(f_read)
-        self.assertEqual(df_infected[(df_infected['County'] == "LK Ludwigsburg")]['Confirmed'].shape[0], 2)
+        self.assertEqual(
+            df_infected[(df_infected['ID_County'] == 8118)]
+            ['Confirmed'].shape[0],
+            2)
 
         file = 'all_state_age_rki.json'
         f_read = os.path.join(directory, file)
         df_state = pd.read_json(f_read)
         # for every state one line + state 16 has two dates in string
-        self.assertEqual(df_state.shape[0], 362)
-        self.assertEqual(df_state[(df_state["ID_State"] == 1) &
-                                  (df_state['Date'] == "2020-08-07")]['Confirmed'].item(), 2)
+        self.assertEqual(df_state.shape[0], 361)
+        self.assertEqual(df_state[(df_state["ID_State"] == 1) & (
+            df_state['Date'] == "2020-08-07")]['Confirmed'].item(), 2)
 
         file = 'infected_state_rki.json'
         f_read = os.path.join(directory, file)
@@ -271,7 +275,7 @@ class test_get_RKI_Data(fake_filesystem_unittest.TestCase):
 
     @patch('memilio.epidata.getRKIData.gd.loadGeojson')
     @patch('memilio.epidata.getRKIData.gd.loadCsv')
-    def test_get_rki_data_dowload(self, mock_loadCsv, mock_loadGeojson):
+    def test_get_rki_data_download(self, mock_loadCsv, mock_loadGeojson):
         # Test with downloading data
         read_data = False
         file_format = 'json_timeasstring'
@@ -286,7 +290,7 @@ class test_get_RKI_Data(fake_filesystem_unittest.TestCase):
         directory = os.path.join(out_folder, 'Germany/')
         gd.check_dir(directory)
 
-        self.write_rki_data(directory)
+        self.write_rki_data_arcgis(directory)
         self.write_rki_data_not_all_states(directory)
         # check if expected files are written
         self.assertEqual(len(os.listdir(directory)), 2)
@@ -304,8 +308,10 @@ class test_get_RKI_Data(fake_filesystem_unittest.TestCase):
         mock_loadCsv.assert_called()
 
         # test case where csv files are incorrect
-        mock_loadCsv.side_effect = [pd.DataFrame(), pd.read_json(os.path.join(directory, "notFullDataRKI.json"))]
-        mock_loadGeojson.return_value = pd.read_json(os.path.join(directory, "FullDataRKI.json"))
+        mock_loadCsv.side_effect = [pd.DataFrame(), pd.read_json(
+            os.path.join(directory, "notFullDataRKI.json"))]
+        mock_loadGeojson.return_value = pd.read_json(
+            os.path.join(directory, "RKIDataArcgis.json"))
 
         grki.get_rki_data(read_data, file_format, out_folder, no_raw, impute_dates, make_plot, moving_average,
                           split_berlin, rep_date)
@@ -314,8 +320,8 @@ class test_get_RKI_Data(fake_filesystem_unittest.TestCase):
         mock_loadCsv.assert_called()
 
         # check if expected files are written
-        # now 15 because file notFullDataRKI is written
-        self.assertEqual(len(os.listdir(directory)), 15)
+        # (14 written files + 2 source files: "notFullDataRKI.json" and "RKIDataArcgis.json")
+        self.assertEqual(len(os.listdir(directory)), 14+2)
 
         # test output files
         file = "all_germany_rki.json"
@@ -331,24 +337,28 @@ class test_get_RKI_Data(fake_filesystem_unittest.TestCase):
         df_deaths = pd.read_json(f_read)
 
         data_list = df.columns.values.tolist()
-        self.assertEqual(data_list, ["Date", "Confirmed", "Deaths", "Recovered"])
-        self.assertEqual(df[(df['Date'] == "2020-08-07")]['Confirmed'].item(),
-                         df_infected[(df_infected['Date'] == "2020-08-07")]['Confirmed'].item())
-        self.assertEqual(df[(df['Date'] == "2020-08-07")]['Confirmed'].item(), 15)
-        self.assertEqual(df[(df['Date'] == "2020-08-07")]['Deaths'].item(),
-                         df_deaths[(df_deaths['Date'] == "2020-08-07")]['Deaths'].item())
-        self.assertEqual(df[(df['Date'] == "2020-08-07")]['Deaths'].item(), 2)
-        self.assertEqual(df[(df['Date'] == "2020-08-07")]["Recovered"].item(), 14)
-        self.assertEqual(df[(df['Date'] == "2020-06-10")]['Confirmed'].item(), 8)
-        self.assertEqual(df[(df['Date'] == "2020-06-10")]['Deaths'].item(), 1)
-        self.assertEqual(df[(df['Date'] == "2020-06-10")]["Recovered"].item(), 8)
-
-        # do not test all cases tested above because same input dataframe is used -> if test without downloading pass,
-        # these files are correct too
+        self.assertEqual(
+            data_list, ["Date", "Confirmed", "Deaths", "Recovered"])
+        self.assertEqual(df[(df['Date'] == "2020-06-15")]['Confirmed'].item(),
+                         df_infected[(df_infected['Date'] == "2020-06-15")]['Confirmed'].item())
+        self.assertEqual(df[(df['Date'] == "2020-06-15")]
+                         ['Confirmed'].item(), 3)
+        self.assertEqual(
+            df[(df['Date'] == "2021-01-06")]['Deaths'].item(),
+            df_deaths[(df_deaths['Date'] == "2021-01-06")]['Deaths'].item())
+        self.assertEqual(df[(df['Date'] == "2021-01-06")]['Deaths'].item(), 1)
+        self.assertEqual(df[(df['Date'] == "2020-06-15")]
+                         ["Recovered"].item(), 3)
+        self.assertEqual(df[(df['Date'] == "2020-04-06")]
+                         ['Confirmed'].item(), 2)
+        self.assertEqual(df[(df['Date'] == "2021-03-31")]['Deaths'].item(), 2)
+        self.assertEqual(df[(df['Date'] == "2020-04-06")]
+                         ["Recovered"].item(), 2)
 
     @patch('memilio.epidata.getRKIData.gd.loadGeojson')
     @patch('memilio.epidata.getRKIData.gd.loadCsv')
-    def test_get_rki_data_dowload_split_berlin(self, mock_loadCsv, mock_loadGeojson):
+    def test_get_rki_data_download_split_berlin(
+            self, mock_loadCsv, mock_loadGeojson):
         # Test case with downloading data where first csv-source is incomplete and second one is used
         # and split_berlin = True
         read_data = False
@@ -365,22 +375,24 @@ class test_get_RKI_Data(fake_filesystem_unittest.TestCase):
         gd.check_dir(directory)
 
         # write file
-        self.write_rki_data(directory)
+        self.write_rki_data_arcgis(directory)
         # check if expected file is written
         self.assertEqual(len(os.listdir(directory)), 1)
 
         # test case where first csv file is empty and second one is complete
-        mock_loadCsv.side_effect = [pd.DataFrame(), pd.read_json(os.path.join(directory, "FullDataRKI.json"))]
+        mock_loadCsv.side_effect = [pd.DataFrame(), pd.read_json(
+            os.path.join(directory, "RKIDataArcgis.json"))]
         mock_loadGeojson.return_value = pd.DataFrame()
 
-        grki.get_rki_data(read_data, file_format, out_folder, no_raw, impute_dates, make_plot, moving_average,
-                          split_berlin, rep_date)
+        grki.get_rki_data(
+            read_data, file_format, out_folder, no_raw, impute_dates,
+            make_plot, moving_average, split_berlin, rep_date)
 
         mock_loadGeojson.assert_not_called()
         mock_loadCsv.assert_called()
 
-        # check if expected files are written
-        self.assertEqual(len(os.listdir(directory)), 14)
+        # check if expected files are written (14 files written + 1 source file "RKIDataArcgis.json")
+        self.assertEqual(len(os.listdir(directory)), 14+1)
 
         # test output files (if all_germany is the same as without splitting Berlin)
         file = "all_germany_rki.json"
@@ -396,49 +408,58 @@ class test_get_RKI_Data(fake_filesystem_unittest.TestCase):
         df_deaths = pd.read_json(f_read)
 
         data_list = df.columns.values.tolist()
-        self.assertEqual(data_list, ["Date", "Confirmed", "Deaths", "Recovered"])
-        self.assertEqual(df[(df['Date'] == "2020-08-07")]['Confirmed'].item(),
-                         df_infected[(df_infected['Date'] == "2020-08-07")]['Confirmed'].item())
-        self.assertEqual(df[(df['Date'] == "2020-08-07")]['Confirmed'].item(), 15)
-        self.assertEqual(df[(df['Date'] == "2020-08-07")]['Deaths'].item(),
-                         df_deaths[(df_deaths['Date'] == "2020-08-07")]['Deaths'].item())
-        self.assertEqual(df[(df['Date'] == "2020-08-07")]['Deaths'].item(), 2)
-        self.assertEqual(df[(df['Date'] == "2020-08-07")]["Recovered"].item(), 14)
-        self.assertEqual(df[(df['Date'] == "2020-06-10")]['Confirmed'].item(), 8)
-        self.assertEqual(df[(df['Date'] == "2020-06-10")]['Deaths'].item(), 1)
-        self.assertEqual(df[(df['Date'] == "2020-06-10")]["Recovered"].item(), 8)
+        self.assertEqual(
+            data_list, ["Date", "Confirmed", "Deaths", "Recovered"])
+        self.assertEqual(df[(df['Date'] == "2020-06-15")]['Confirmed'].item(),
+                         df_infected[(df_infected['Date'] == "2020-06-15")]['Confirmed'].item())
+        self.assertEqual(df[(df['Date'] == "2020-06-15")]
+                         ['Confirmed'].item(), 3)
+        self.assertEqual(
+            df[(df['Date'] == "2021-01-06")]['Deaths'].item(),
+            df_deaths[(df_deaths['Date'] == "2021-01-06")]['Deaths'].item())
+        self.assertEqual(df[(df['Date'] == "2021-01-06")]['Deaths'].item(), 1)
+        self.assertEqual(df[(df['Date'] == "2020-06-15")]
+                         ["Recovered"].item(), 3)
+        self.assertEqual(df[(df['Date'] == "2020-04-06")]
+                         ['Confirmed'].item(), 2)
+        self.assertEqual(df[(df['Date'] == "2021-03-31")]['Deaths'].item(), 2)
+        self.assertEqual(df[(df['Date'] == "2020-04-06")]
+                         ["Recovered"].item(), 2)
 
         # test files that should be different as in other cases
         file = 'all_county_split_berlin_rki.json'
         f_read = os.path.join(directory, file)
         df_county = pd.read_json(f_read)
 
-        file = 'infected_county_split_berlin_rki.json'
-        f_read = os.path.join(directory, file)
-        df_infected = pd.read_json(f_read)
-
-        self.assertEqual(df_county.shape[0], 19+412)
+        self.assertEqual(df_county.shape[0], 411)
 
         self.assertEqual(
-            df_county[df_county['County'] == "SK Berlin Charlottenburg-Wilmersdorf"]['Recovered'].shape[0], 2)
-        self.assertEqual(df_county[df_county['County'] == "SK Berlin Lichtenberg"]['Recovered'].shape[0], 2)
+            df_county[df_county['ID_County'] == 11004]
+            ['Recovered'].shape[0],
+            1)
+        self.assertEqual(
+            df_county[df_county['ID_County'] == 11011]
+            ['Recovered'].shape[0],
+            1)
 
         file = 'all_county_gender_split_berlin_rki.json'
         f_read = os.path.join(directory, file)
         df_gender = pd.read_json(f_read)
 
-        self.assertEqual(df_gender[(df_gender['Date'] == "2020-06-04") & (df_gender['Gender'] == "male")].shape[0], 2)
+        self.assertEqual(
+            df_gender[(df_gender['Date'] == "2020-12-28") &
+                      (df_gender['Gender'] == "male")].shape[0], 2)
 
         # check if in state file the counties of Berlin are not splitted
         file = 'all_state_rki.json'
         f_read = os.path.join(directory, file)
         df_state = pd.read_json(f_read)
         # last state has 2 different dates -> two rows
-        self.assertEqual(df_state.shape[0], 304)
+        self.assertEqual(df_state.shape[0], 285)
 
     def test_get_rki_data_read_moving_average(self):
         # Test without downloading data
-        
+
         read_data = True
         file_format = 'json_timeasstring'
         out_folder = self.path
@@ -683,31 +704,25 @@ class test_get_RKI_Data(fake_filesystem_unittest.TestCase):
         file = 'all_county_split_berlin_rki.json'
         f_read = os.path.join(directory, file)
         df_county = pd.read_json(f_read)
-        self.assertEqual(df_county[(df_county['County'] == "SK Berlin Charlottenburg-Wilmersdorf") & (
-                    df_county['Date'] == '2020-06-04')]['Confirmed'].item(),
-                         1)
-        self.assertEqual(
-            df_county[(df_county['County'] == "SK Berlin Lichtenberg") & (df_county['Date'] == '2020-06-04')][
-                'Confirmed'].item(), 1)
+        self.assertEqual(df_county[(df_county['ID_County'] == 11004) & (
+            df_county['Date'] == '2020-06-04')]['Confirmed'].item(),
+            1)
+        self.assertEqual(df_county[(df_county['ID_County'] == 11011) & (
+            df_county['Date'] == '2020-06-04')]['Confirmed'].item(), 1)
 
         file = 'all_county_split_berlin_ma7_rki.json'
         f_read = os.path.join(directory, file)
         df_county = pd.read_json(f_read)
-        self.assertAlmostEqual(df_county[(df_county['County'] == "SK Berlin Charlottenburg-Wilmersdorf") & (
-                    df_county['Date'] == '2020-06-04')]['Confirmed'].item(),
-                         4/7  )
-        self.assertAlmostEqual(
-            df_county[(df_county['County'] == "SK Berlin Lichtenberg") & (df_county['Date'] == '2020-06-04')][
-                'Confirmed'].item(), 4/7  )
-        self.assertAlmostEqual(df_county[(df_county['County'] == "SK Berlin Charlottenburg-Wilmersdorf") & (
-                    df_county['Date'] == '2020-06-09')]['Recovered'].item(),
-                         1)
-        self.assertEqual(
-            df_county[(df_county['County'] == "SK Berlin Lichtenberg") & (df_county['Date'] == '2020-06-09')][
-                'Recovered'].item(), 1)
-        self.assertAlmostEqual(
-            df_county[(df_county['County'] == "SK Berlin Lichtenberg") & (df_county['Date'] == '2020-06-09')][
-                'Deaths'].item(), 0)
+        self.assertAlmostEqual(df_county[(df_county['ID_County'] == 11004) & (
+            df_county['Date'] == '2020-06-04')]['Confirmed'].item(), 4/7)
+        self.assertAlmostEqual(df_county[(df_county['ID_County'] == 11011) & (
+            df_county['Date'] == '2020-06-04')]['Confirmed'].item(), 4/7)
+        self.assertAlmostEqual(df_county[(df_county['ID_County'] == 11004) & (
+            df_county['Date'] == '2020-06-09')]['Recovered'].item(), 1)
+        self.assertEqual(df_county[(df_county['ID_County'] == 11011) & (
+            df_county['Date'] == '2020-06-09')]['Recovered'].item(), 1)
+        self.assertAlmostEqual(df_county[(df_county['ID_County'] == 11011) & (
+            df_county['Date'] == '2020-06-09')]['Deaths'].item(), 0)
 
     def test_get_rki_data_read_all_dates_and_split_berlin(self):
         # test if split_berlin and moving_average = True are working together
@@ -759,7 +774,8 @@ class test_get_RKI_Data(fake_filesystem_unittest.TestCase):
         gd.check_dir(directory)
 
         # check if expected files are written
-        mock_loadCsv.return_value = pd.read_json(self.test_string_all_federal_states_and_counties)
+        mock_loadCsv.return_value = pd.read_json(
+            self.test_string_all_federal_states_and_counties_github)
 
         grki.get_rki_data(read_data, file_format, out_folder, no_raw, impute_dates, make_plot, moving_average,
                           split_berlin, rep_date)
@@ -786,17 +802,23 @@ class test_get_RKI_Data(fake_filesystem_unittest.TestCase):
         df_deaths = pd.read_json(f_read)
 
         data_list = df.columns.values.tolist()
-        self.assertEqual(data_list, ["Date", "Confirmed", "Deaths", "Recovered"])
-        self.assertEqual(df[(df['Date'] == "2020-08-07")]['Confirmed'].item(),
-                         df_infected[(df_infected['Date'] == "2020-08-07")]['Confirmed'].item())
-        self.assertEqual(df[(df['Date'] == "2020-08-07")]['Confirmed'].item(), 15)
-        self.assertEqual(df[(df['Date'] == "2020-08-07")]['Deaths'].item(),
-                         df_deaths[(df_deaths['Date'] == "2020-08-07")]['Deaths'].item())
-        self.assertEqual(df[(df['Date'] == "2020-08-07")]['Deaths'].item(), 2)
-        self.assertEqual(df[(df['Date'] == "2020-08-07")]["Recovered"].item(), 14)
-        self.assertEqual(df[(df['Date'] == "2020-06-10")]['Confirmed'].item(), 8)
-        self.assertEqual(df[(df['Date'] == "2020-06-10")]['Deaths'].item(), 1)
-        self.assertEqual(df[(df['Date'] == "2020-06-10")]["Recovered"].item(), 8)
+        self.assertEqual(
+            data_list, ["Date", "Confirmed", "Deaths", "Recovered"])
+        self.assertEqual(df[(df['Date'] == "2020-06-15")]['Confirmed'].item(),
+                         df_infected[(df_infected['Date'] == "2020-06-15")]['Confirmed'].item())
+        self.assertEqual(df[(df['Date'] == "2020-06-15")]
+                         ['Confirmed'].item(), 3)
+        self.assertEqual(
+            df[(df['Date'] == "2021-01-06")]['Deaths'].item(),
+            df_deaths[(df_deaths['Date'] == "2021-01-06")]['Deaths'].item())
+        self.assertEqual(df[(df['Date'] == "2021-01-06")]['Deaths'].item(), 1)
+        self.assertEqual(df[(df['Date'] == "2020-06-15")]
+                         ["Recovered"].item(), 3)
+        self.assertEqual(df[(df['Date'] == "2020-04-06")]
+                         ['Confirmed'].item(), 2)
+        self.assertEqual(df[(df['Date'] == "2021-03-31")]['Deaths'].item(), 2)
+        self.assertEqual(df[(df['Date'] == "2020-04-06")]
+                         ["Recovered"].item(), 2)
 
     @patch('memilio.epidata.getRKIData.gd.cli')
     def test_main(self, mock_cli):
@@ -822,15 +844,15 @@ class test_get_RKI_Data(fake_filesystem_unittest.TestCase):
         # check if expected files are written
         self.assertEqual(len(os.listdir(directory)), 14)
 
-
     def test_check_for_completeness(self):
         empty_df = pd.DataFrame()
         self.assertEqual(grki.check_for_completeness(empty_df), False)
-    
+
     @patch('memilio.epidata.getRKIData.gd.loadCsv')
     def test_rep_date(self, mocklcsv):
 
-        mocklcsv.return_value = pd.read_json(self.test_string_all_federal_states_and_counties)
+        mocklcsv.return_value = pd.read_json(
+            self.test_string_all_federal_states_and_counties_github)
 
         read_data = False
         file_format = 'json_timeasstring'
