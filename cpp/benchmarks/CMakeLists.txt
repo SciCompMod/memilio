@@ -35,8 +35,8 @@ endif()
 
 set_target_properties(benchmark PROPERTIES FOLDER "Extern")
 
-add_executable(bench_simulation bench_simulation.cpp)
-target_link_libraries(bench_simulation PRIVATE memilio secir benchmark::benchmark)
+add_executable(simulation_benchmark simulation.cpp)
+target_link_libraries(simulation_benchmark PRIVATE memilio secir benchmark::benchmark)
 
-add_executable(bench_step bench_step.cpp)
-target_link_libraries(bench_step PRIVATE memilio secir benchmark::benchmark)
+add_executable(integrator_step_benchmark integrator_step.cpp)
+target_link_libraries(integrator_step_benchmark PRIVATE memilio secir benchmark::benchmark)
