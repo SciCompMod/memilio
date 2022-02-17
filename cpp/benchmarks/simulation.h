@@ -41,7 +41,7 @@ namespace benchmark
          * @param num_agegroups number of agegroups
          * @return configuration for simulation benchmark
          */
-        static SimulationConfig initialize(int num_agegroups=10)
+        static SimulationConfig initialize(int num_agegroups = 10)
         {
             return SimulationConfig{num_agegroups,
                                     0,
