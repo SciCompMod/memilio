@@ -771,8 +771,8 @@ namespace details
 
                     double S_v = std::min(model[region].parameters.template get<DailyFullVaccination>()[i][0] +
                                  num_rec[region][size_t(i)], num_population[region][size_t(i)]);
-                    double S_pv = std::min(model[region].parameters.template get<DailyFirstVaccination>()[i][0] -
-                                  model[region].parameters.template get<DailyFullVaccination>()[i][0], 0.0); // use std::min with 0
+                    double S_pv = std::max(model[region].parameters.template get<DailyFirstVaccination>()[i][0] -
+                                  model[region].parameters.template get<DailyFullVaccination>()[i][0], 0.0); // use std::max with 0
                     double S;
                     if (num_population[region][size_t(i)] - S_pv - S_v < 0.0) {
                         std::cout << "county: " << region << ", AgeGroup: " << size_t(i) << std::endl;
@@ -1383,8 +1383,8 @@ IOResult<void> export_input_data_county_timeseries_vaccmodel(std::vector<Model>&
 
                     double S_v = std::min(model[county].parameters.template get<DailyFullVaccination>()[AgeGroup(age)][j] +
                                  num_rec[county][age], num_population[county][age]);
-                    double S_pv = std::min(model[county].parameters.template get<DailyFirstVaccination>()[AgeGroup(age)][j] -
-                                  model[county].parameters.template get<DailyFullVaccination>()[AgeGroup(age)][j], 0.0); // use std::min with 0
+                    double S_pv = std::max(model[county].parameters.template get<DailyFirstVaccination>()[AgeGroup(age)][j] -
+                                  model[county].parameters.template get<DailyFullVaccination>()[AgeGroup(age)][j], 0.0); // use std::max with 0
                     double S;
                     if (num_population[county][age] - S_pv - S_v < 0.0) {
                         std::cout << "county: " << county << ", AgeGroup: " << age << std::endl;
@@ -1473,7 +1473,6 @@ IOResult<void> export_input_data_county_timeseries_vaccmodel(std::vector<Model>&
                          rki_data[county][j]((size_t)ModelType::ICUV2 + (size_t)ModelType::Count * age) +
                          rki_data[county][j]((size_t)ModelType::Dead + (size_t)ModelType::Count * age));
 
-                    // TODO ab hier:
                     rki_data[county][j]((size_t)ModelType::Recovered + (size_t)ModelType::Count * age) = std::min(
                         S + S_pv + S_v, std::max(0.0, double(rki_data[county][j]((size_t)ModelType::Recovered +
                                                                                  (size_t)ModelType::Count * age))));
