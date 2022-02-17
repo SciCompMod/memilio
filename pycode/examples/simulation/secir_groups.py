@@ -95,7 +95,7 @@ def run_secir_groups_simulation():
         model.populations[AgeGroup(
             i), Index_InfectionState(State.Recovered)] = 10
         model.populations[AgeGroup(i), Index_InfectionState(State.Dead)] = 0
-        model.populations.set_difference_from_total(
+        model.populations.set_difference_from_group_total_AgeGroup(
             (AgeGroup(i), Index_InfectionState(State.Susceptible)), populations[i])
 
         # Compartment transition propabilities
@@ -146,8 +146,10 @@ def run_secir_groups_simulation():
         data += group_data[:, i * num_compartments: (i + 1) * num_compartments]
 
     # Plot Results
-    datelist = np.array(pd.date_range(datetime(start_year, start_month,
-                        start_day), periods=days, freq='D').strftime('%m-%d').tolist())
+    datelist = np.array(
+        pd.date_range(
+            datetime(start_year, start_month, start_day),
+            periods=days, freq='D').strftime('%m-%d').tolist())
 
     tick_range = (np.arange(int(days / 10) + 1) * 10)
     tick_range[-1] -= 1
