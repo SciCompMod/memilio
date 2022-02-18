@@ -1651,8 +1651,8 @@ IOResult<void> read_input_data_county_vaccmodel(std::vector<Model>& model, Date 
     // Use only if extrapolated real data is needed for comparison. EXPENSIVE !
     // Run time equals run time of the previous functions times the num_days !
     // (This only represents the vectorization of the previous function over all simulation days...)
-    BOOST_OUTCOME_TRY((export_input_data_county_timeseries_vaccmodel<Model, ModelType>(model, dir, dir, county, date, scaling_factor_inf,
-                                                                 scaling_factor_icu, num_days)));        
+    // BOOST_OUTCOME_TRY((export_input_data_county_timeseries_vaccmodel<Model, ModelType>(model, dir, dir, county, date, scaling_factor_inf,
+    //                                                              scaling_factor_icu, num_days)));        
 
     return success();
 }

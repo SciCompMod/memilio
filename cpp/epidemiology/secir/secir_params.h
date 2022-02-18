@@ -755,7 +755,7 @@ public:
             }
 
             if (abs(this->get<InfectiousTimeAsymptomatic>()[i] -
-                    1.0 / (0.5 / (this->get<IncubationTime>()[i] - this->get<SerialInterval>()[i])) +
+                    1.0 / (0.5 / (this->get<IncubationTime>()[i] - this->get<SerialInterval>()[i])) -
                     0.5 * this->get<InfectiousTimeMild>()[i]) > 1e-12) {
                 log_info("Constraint check: Parameter InfectiousTimeAsymptomatic set as fully dependent on tinc, "
                          "tserint and tinfmild, as proposed by "
@@ -867,7 +867,7 @@ public:
             }
 
             if (abs(this->get<InfectiousTimeAsymptomatic>()[i] -
-                    1.0 / (0.5 / (this->get<IncubationTime>()[i] - this->get<SerialInterval>()[i])) +
+                    1.0 / (0.5 / (this->get<IncubationTime>()[i] - this->get<SerialInterval>()[i])) -
                     0.5 * this->get<InfectiousTimeMild>()[i]) > 1e-12) {
                 log_warning("Constraint check: Parameter InfectiousTimeAsymptomatic not set as fully dependent on "
                             "tinc, tserint and tinfmild, as proposed by "
