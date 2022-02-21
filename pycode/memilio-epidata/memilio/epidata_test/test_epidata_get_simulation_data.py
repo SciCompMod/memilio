@@ -1,7 +1,7 @@
 #############################################################################
 # Copyright (C) 2020-2021 German Aerospace Center (DLR-SC)
 #
-# Authors: 
+# Authors:
 #
 # Contact: Martin J. Kuehn <Martin.Kuehn@DLR.de>
 #
@@ -19,21 +19,11 @@
 #############################################################################
 import unittest
 from pyfakefs import fake_filesystem_unittest
-from freezegun import freeze_time
-from datetime import date, timedelta
 
-import os
-import pandas as pd
-
-from memilio.epidata import getDIVIData as gdd
-from memilio.epidata import getRKIData as grki
-from memilio.epidata import getVaccinationData as gvd
-from memilio.epidata import getPopulationData as gpd
 from memilio.epidata import getSimulationData as gsd
-
-from memilio.epidata import getDataIntoPandasDataFrame as gd
 from memilio.epidata import defaultDict as dd
 from unittest.mock import patch, call
+
 
 class TestGetSimulationData(fake_filesystem_unittest.TestCase):
     # construct fake directory for testing
@@ -46,9 +36,9 @@ class TestGetSimulationData(fake_filesystem_unittest.TestCase):
 
     @patch('memilio.epidata.getVaccinationData.get_vaccination_data')
     @patch('memilio.epidata.getDIVIData.get_divi_data')
-    @patch('memilio.epidata.getRKIData.get_rki_data')
+    @patch('memilio.epidata.getCaseData.get_case_data')
     @patch('memilio.epidata.getPopulationData.get_population_data')
-    def test_get_call_sub_functions(self, mock_popul, mock_rki,
+    def test_get_call_sub_functions(self, mock_popul, mock_cases,
                                     mock_divi, mock_vaccination):
 
         [read_data, file_format, out_folder, no_raw, end_date, impute_dates,
@@ -71,7 +61,7 @@ class TestGetSimulationData(fake_filesystem_unittest.TestCase):
             "out_folder": self.path,
             'no_raw': dd.defaultDict["no_raw"]}
 
-        arg_dict_rki = {
+        arg_dict_cases = {
             **arg_dict_all, "make_plot": dd.defaultDict['make_plot'],
             "impute_dates": dd.defaultDict['impute_dates'],
             "moving_average": dd.defaultDict['moving_average'],
@@ -90,8 +80,8 @@ class TestGetSimulationData(fake_filesystem_unittest.TestCase):
         mock_popul.assert_called()
         mock_popul.assert_called_with(**arg_dict_all)
 
-        mock_rki.assert_called()
-        mock_rki.assert_called_with(**arg_dict_rki)
+        mock_cases.assert_called()
+        mock_cases.assert_called_with(**arg_dict_cases)
 
         mock_divi.assert_called()
         mock_divi.assert_called_with(**arg_dict_divi)
@@ -102,13 +92,13 @@ class TestGetSimulationData(fake_filesystem_unittest.TestCase):
     @patch('builtins.print')
     @patch('memilio.epidata.getVaccinationData.get_vaccination_data')
     @patch('memilio.epidata.getDIVIData.get_divi_data')
-    @patch('memilio.epidata.getRKIData.get_rki_data')
+    @patch('memilio.epidata.getCaseData.get_case_data')
     @patch('memilio.epidata.getPopulationData.get_population_data')
     def test_errors(
-            self, mock_popul, mock_rki, mock_divi, mock_vaccination,
+            self, mock_popul, mock_cases, mock_divi, mock_vaccination,
             mock_print):
         mock_popul.side_effect = Exception
-        mock_rki.side_effect = Exception
+        mock_cases.side_effect = Exception
         mock_divi.side_effect = Exception
         mock_vaccination.side_effect = Exception
         gsd.get_simulation_data()
@@ -117,10 +107,11 @@ class TestGetSimulationData(fake_filesystem_unittest.TestCase):
             ' data. This was likely caused by a changed file format'
             ' of the source material. Please report this as an issue. ' +
             'population' + ' data could not be stored correctly.')
-        rkiprint = call('Error: Something went wrong while getting ' + 'RKI' +
-                        ' data. This was likely caused by a changed file format'
-                        ' of the source material. Please report this as an issue. ' + 'RKI' +
-                        ' data could not be stored correctly.')
+        casesprint = call(
+            'Error: Something went wrong while getting ' + 'case' +
+            ' data. This was likely caused by a changed file format'
+            ' of the source material. Please report this as an issue. ' +
+            'case' + ' data could not be stored correctly.')
         diviprint = call(
             'Error: Something went wrong while getting ' + 'DIVI' +
             ' data. This was likely caused by a changed file format'
@@ -131,10 +122,11 @@ class TestGetSimulationData(fake_filesystem_unittest.TestCase):
             ' data. This was likely caused by a changed file format'
             ' of the source material. Please report this as an issue. ' +
             'vaccination' + ' data could not be stored correctly.')
-        
+
         exceptionprint = call('Exception: ')
-        expected_calls = [exceptionprint, rkiprint, exceptionprint, populprint,
-                          exceptionprint, diviprint, exceptionprint, vaccprint]
+        expected_calls = [
+            exceptionprint, casesprint, exceptionprint, populprint,
+            exceptionprint, diviprint, exceptionprint, vaccprint]
         mock_print.assert_has_calls(expected_calls)
 
 

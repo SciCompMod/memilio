@@ -18,10 +18,10 @@
 # limitations under the License.
 #############################################################################
 """
-@file getRKIData.py
-@brief Downloads the data of the Robert-Koch-Institut (RKI) and provides it in different ways.
+@file getCaseData.py
+@brief Downloads the case data of the Robert-Koch-Institut (RKI) and provides it in different ways.
 
-The RKI data we download can be found at
+The case data we download can be found at
 https://github.com/robert-koch-institut/SARS-CoV-2_Infektionen_in_Deutschland
 
 Be careful: Recovered and deaths are not correct set in this case
@@ -40,8 +40,8 @@ from memilio.epidata import modifyDataframeSeries
 from memilio.epidata import geoModificationGermany as geoger
 
 
-def check_for_completeness(df, merge_berlin = False, merge_eisenach = True):
-    """! Checks if all counties are mentioned in the RKI data set
+def check_for_completeness(df, merge_berlin=False, merge_eisenach=True):
+    """! Checks if all counties are mentioned in the case data set
 
    This check had to be added due to incomplete data downloads
    It is checked if all all counties are part of the data.
@@ -60,20 +60,20 @@ def check_for_completeness(df, merge_berlin = False, merge_eisenach = True):
     return False
 
 
-def get_rki_data(read_data=dd.defaultDict['read_data'],
-                 file_format=dd.defaultDict['file_format'],
-                 out_folder=dd.defaultDict['out_folder'],
-                 no_raw=dd.defaultDict['no_raw'],
-                 impute_dates=dd.defaultDict['impute_dates'],
-                 make_plot=dd.defaultDict['make_plot'],
-                 moving_average=dd.defaultDict['moving_average'],
-                 split_berlin=dd.defaultDict['split_berlin'],
-                 rep_date=dd.defaultDict['rep_date']
-                 ):
-    """! Downloads the RKI data and provides different kind of structured data
+def get_case_data(read_data=dd.defaultDict['read_data'],
+                  file_format=dd.defaultDict['file_format'],
+                  out_folder=dd.defaultDict['out_folder'],
+                  no_raw=dd.defaultDict['no_raw'],
+                  impute_dates=dd.defaultDict['impute_dates'],
+                  make_plot=dd.defaultDict['make_plot'],
+                  moving_average=dd.defaultDict['moving_average'],
+                  split_berlin=dd.defaultDict['split_berlin'],
+                  rep_date=dd.defaultDict['rep_date']
+                  ):
+    """! Downloads the case data and provides different kind of structured data
 
-    The data is read either from the internet or from a json file (FullDataRKI.json), stored in an earlier run.
-    If the data is read from the internet, before changing anything the data is stored in FullDataRKI.json.
+    The data is read either from the internet or from a json file (CaseDataFull.json), stored in an earlier run.
+    If the data is read from the internet, before changing anything the data is stored in CaseDataFull.json.
     If data should be downloaded, it is checked if data contains all counties.
     If not a different source is tried.
     The file is read in or stored at the folder "out_folder"/Germany/.
@@ -91,19 +91,19 @@ def get_rki_data(read_data=dd.defaultDict['read_data'],
     - For Berlin all districts can be merged into one [Default]. Otherwise, Berlin is divided into multiple districts and
         different file names are used.
     - Following data is generated and written to the mentioned filename
-        - All infected (current and past) for whole germany are stored in "infected_rki"
-        - All deaths whole germany are stored in "deaths_rki"
-        - Infected, deaths and recovered for whole germany are stored in "all_germany_rki"
-        - Infected split for states are stored in "infected_state_rki"
-        - Infected, deaths and recovered split for states are stored in "all_state_rki"
-        - Infected split for counties are stored in "infected_county_rki(_split_berlin)"
-        - Infected, deaths and recovered split for county are stored in "all_county_rki(_split_berlin)"
-        - Infected, deaths and recovered split for gender are stored in "all_gender_rki"
-        - Infected, deaths and recovered split for state and gender are stored in "all_state_gender_rki"
-        - Infected, deaths and recovered split for county and gender are stored in "all_county_gender_rki(_split_berlin)"
-        - Infected, deaths and recovered split for age are stored in "all_age_rki"
-        - Infected, deaths and recovered split for state and age are stored in "all_state_age_rki"
-        - Infected, deaths and recovered split for county and age are stored in "all_county_age_rki(_split_berlin)"
+        - All infected (current and past) for whole germany are stored in "cases_infected"
+        - All deaths whole germany are stored in "cases_deaths"
+        - Infected, deaths and recovered for whole germany are stored in "cases_all_germany"
+        - Infected split for states are stored in "cases_infected_state"
+        - Infected, deaths and recovered split for states are stored in "cases_all_state"
+        - Infected split for counties are stored in "cases_infected_county(_split_berlin)"
+        - Infected, deaths and recovered split for county are stored in "cases_all_county(_split_berlin)"
+        - Infected, deaths and recovered split for gender are stored in "cases_all_gender"
+        - Infected, deaths and recovered split for state and gender are stored in "cases_all_state_gender"
+        - Infected, deaths and recovered split for county and gender are stored in "cases_all_county_gender(_split_berlin)"
+        - Infected, deaths and recovered split for age are stored in "cases_all_age"
+        - Infected, deaths and recovered split for state and age are stored in "cases_all_state_age"
+        - Infected, deaths and recovered split for county and age are stored in "cases_all_county_age(_split_berlin)"
 
     @param read_data False [Default] or True. Defines if data is read from file or downloaded.
     @param file_format File format which is used for writing the data. Default defined in defaultDict.
@@ -118,7 +118,7 @@ def get_rki_data(read_data=dd.defaultDict['read_data'],
 
     directory = os.path.join(out_folder, 'Germany/')
     gd.check_dir(directory)
-    filename = "FullDataRKI"
+    filename = "CaseDataFull"
 
     if read_data:
         # if once dowloaded just read json file
@@ -126,8 +126,8 @@ def get_rki_data(read_data=dd.defaultDict['read_data'],
         try:
             df = pd.read_json(file_in)
         except ValueError as err:
-            raise FileNotFoundError("Error: The file: " + file_in + \
-                " does not exist. Call program without -r flag to get it.") \
+            raise FileNotFoundError("Error: The file: " + file_in +
+                                    " does not exist. Call program without -r flag to get it.") \
                 from err
     else:
         # download data
@@ -136,8 +136,8 @@ def get_rki_data(read_data=dd.defaultDict['read_data'],
               "SARS-CoV-2_Infektionen_in_Deutschland/master/"
         source_filename = "Aktuell_Deutschland_SarsCov2_Infektionen"
         try:
-            df = gd.loadCsv(targetFileName = source_filename, apiUrl = url,
-                             extension = ".csv")
+            df = gd.loadCsv(targetFileName=source_filename, apiUrl=url,
+                            extension=".csv")
         except Exception:
             pass
         complete = check_for_completeness(df, merge_eisenach=True)
@@ -148,7 +148,7 @@ def get_rki_data(read_data=dd.defaultDict['read_data'],
             df["IdBundesland"] = df["IdLandkreis"].map(county_to_state_map)
         else:
             # try another possibility if df was empty or incomplete
-            print("Note: RKI data is incomplete. Trying another source.")
+            print("Note: Case data is incomplete. Trying another source.")
             # ArcGIS public data item ID:
             itemId = '66876b81065340a4a48710b062319336_0'
             try:
@@ -158,7 +158,7 @@ def get_rki_data(read_data=dd.defaultDict['read_data'],
             complete = check_for_completeness(df, merge_eisenach=True)
 
             if not complete:
-                print("Note: RKI data is still incomplete. Trying a thrid source.")
+                print("Note: Case data is still incomplete. Trying a thrid source.")
                 try:
                     df = gd.loadCsv(
                         "",
@@ -177,7 +177,8 @@ def get_rki_data(read_data=dd.defaultDict['read_data'],
                     pass
                 complete = check_for_completeness(df, merge_eisenach=True)
                 if df.empty or not complete:
-                    raise FileNotFoundError("Something went wrong, " + \
+                    raise FileNotFoundError(
+                        "Something went wrong, " +
                         "dataframe is empty for csv and geojson!")
             # drop columns that do not exist in data from github
             df = df.drop(["Altersgruppe2", "Datenstand", "OBJECTID",
@@ -198,28 +199,32 @@ def get_rki_data(read_data=dd.defaultDict['read_data'],
     IdLandkreis = dd.GerEng['IdLandkreis']
 
     # translate column gender from German to English and standardize
-    df.loc[df.Geschlecht == 'unbekannt', ['Geschlecht']] = dd.GerEng['unbekannt']
+    df.loc[df.Geschlecht == 'unbekannt', [
+        'Geschlecht']] = dd.GerEng['unbekannt']
     df.loc[df.Geschlecht == 'W', ['Geschlecht']] = dd.GerEng['W']
     df.loc[df.Geschlecht == 'M', ['Geschlecht']] = dd.GerEng['M']
-    df.loc[df.Altersgruppe == 'unbekannt', ['Altersgruppe']] = dd.GerEng['unbekannt']
+    df.loc[df.Altersgruppe == 'unbekannt', [
+        'Altersgruppe']] = dd.GerEng['unbekannt']
 
     # change names of columns
     df.rename(dd.GerEng, axis=1, inplace=True)
 
     # Add column 'Date' with Date
     # = reporting date if rep_date is set
-    # = reference date (date of disease onset) if IstErkrankungsbeginn = 1 else 
+    # = reference date (date of disease onset) if IstErkrankungsbeginn = 1 else
     #       take Meldedatum (reporting date)
     if rep_date:
         df['Date'] = df['Meldedatum'].astype('object')
     else:
-        df['Date'] = np.where(df['IstErkrankungsbeginn'] == 1, df['Refdatum'], df['Meldedatum'])
+        df['Date'] = np.where(
+            df['IstErkrankungsbeginn'] == 1, df['Refdatum'],
+            df['Meldedatum'])
 
     # Correct Timestamps:
     for col in ['Date']:
         df[col] = df[col].astype('datetime64[ns]')
 
-    # Date is either Refdatum or Meldedatum after column 
+    # Date is either Refdatum or Meldedatum after column
     # 'IstErkrankungsbeginn' has been added. See also rep_date option.
     dateToUse = 'Date'
     df.sort_values(dateToUse, inplace=True)
@@ -231,8 +236,8 @@ def get_rki_data(read_data=dd.defaultDict['read_data'],
     df.loc[df.NeuGenesen < 0, [AnzahlGenesen]] = 0
 
     # get rid of unnecessary columns
-    df = df.drop(['NeuerFall', 'NeuerTodesfall', 'NeuGenesen', "IstErkrankungsbeginn",
-                    "Meldedatum", "Refdatum"], 1)
+    df = df.drop(['NeuerFall', 'NeuerTodesfall', 'NeuGenesen',
+                 "IstErkrankungsbeginn", "Meldedatum", "Refdatum"], 1)
 
     print("Available columns:", df.columns)
 
@@ -247,12 +252,15 @@ def get_rki_data(read_data=dd.defaultDict['read_data'],
     gbNF_cs = gbNF.cumsum()
 
     # output to json file
+    # prefix for all files about cases data (apart from raw data)
+    prefix = "cases_"
     filename = 'infected'
     if rep_date:
-        filename_orig = filename + '_repdate' 
+        filename_orig = filename + '_repdate'
     else:
         filename_orig = filename
-    gd.write_dataframe(gbNF_cs.reset_index(), directory, filename_orig + '_rki', file_format)
+    gd.write_dataframe(gbNF_cs.reset_index(), directory,
+                       prefix + filename_orig, file_format)
     if impute_dates or moving_average > 0:
         gbNF_cs = modifyDataframeSeries.impute_and_reduce_df(
             gbNF_cs.reset_index(),
@@ -262,7 +270,7 @@ def get_rki_data(read_data=dd.defaultDict['read_data'],
         filename = gd.append_filename(filename, impute_dates, moving_average)
         if rep_date:
             filename = filename + '_repdate'
-        gd.write_dataframe(gbNF_cs, directory, filename + '_rki', file_format)
+        gd.write_dataframe(gbNF_cs, directory, prefix + filename, file_format)
 
     if make_plot:
         # make plot
@@ -279,10 +287,11 @@ def get_rki_data(read_data=dd.defaultDict['read_data'],
     # output
     filename = 'deaths'
     if rep_date:
-        filename_orig = filename + '_repdate' 
+        filename_orig = filename + '_repdate'
     else:
-        filename_orig = filename    
-    gd.write_dataframe(gbNT_cs.reset_index(), directory, filename_orig + '_rki', file_format)
+        filename_orig = filename
+    gd.write_dataframe(gbNT_cs.reset_index(), directory,
+                       prefix + filename_orig, file_format)
     if impute_dates or moving_average > 0:
         gbNT_cs = modifyDataframeSeries.impute_and_reduce_df(
             gbNT_cs.reset_index(),
@@ -292,7 +301,8 @@ def get_rki_data(read_data=dd.defaultDict['read_data'],
         filename = gd.append_filename(filename, impute_dates, moving_average)
         if rep_date:
             filename = filename + '_repdate'
-        gd.write_dataframe(gbNT_cs.reset_index(), directory, filename + '_rki', file_format)      
+        gd.write_dataframe(gbNT_cs.reset_index(), directory,
+                           prefix + filename, file_format)
 
     if make_plot:
         gbNT_cs.plot(title='COVID-19 deaths', grid=True,
@@ -306,25 +316,27 @@ def get_rki_data(read_data=dd.defaultDict['read_data'],
         plt.tight_layout()
         plt.show()
 
-    gbNF = df.groupby(dateToUse).agg({AnzahlFall: sum, AnzahlTodesfall: sum, AnzahlGenesen: sum})
+    gbNF = df.groupby(dateToUse).agg(
+        {AnzahlFall: sum, AnzahlTodesfall: sum, AnzahlGenesen: sum})
     gbNF_cs = gbNF.cumsum()
 
     filename = 'all_germany'
     if rep_date:
-        filename_orig = filename + '_repdate' 
+        filename_orig = filename + '_repdate'
     else:
-        filename_orig = filename    
-    gd.write_dataframe(gbNF_cs.reset_index(), directory, filename_orig + '_rki', file_format)
+        filename_orig = filename
+    gd.write_dataframe(gbNF_cs.reset_index(), directory,
+                       prefix + filename_orig, file_format)
     if impute_dates or moving_average > 0:
         gbNF_cs = modifyDataframeSeries.impute_and_reduce_df(
             gbNF_cs.reset_index(),
             {},
             ['Confirmed', 'Deaths', 'Recovered'],
-            impute='forward', moving_average=moving_average)    
+            impute='forward', moving_average=moving_average)
         filename = gd.append_filename(filename, impute_dates, moving_average)
         if rep_date:
             filename = filename + '_repdate'
-        gd.write_dataframe(gbNF_cs, directory, filename + '_rki', file_format)
+        gd.write_dataframe(gbNF_cs, directory, prefix + filename, file_format)
 
     ############## Data for states all ages ################
 
@@ -335,20 +347,22 @@ def get_rki_data(read_data=dd.defaultDict['read_data'],
     # output
     filename = 'infected_state'
     if rep_date:
-        filename_orig = filename + '_repdate' 
+        filename_orig = filename + '_repdate'
     else:
-        filename_orig = filename    
-    gd.write_dataframe(gbNFst_cs, directory, filename_orig + '_rki', file_format)
+        filename_orig = filename
+    gd.write_dataframe(gbNFst_cs, directory,
+                       prefix + filename_orig, file_format)
     if impute_dates or moving_average > 0:
         gbNFst_cs = modifyDataframeSeries.impute_and_reduce_df(
             gbNFst_cs,
             {dd.EngEng["idState"]: [k for k, v in dd.State.items()]},
             ['Confirmed'],
-            impute='forward', moving_average=moving_average)  
+            impute='forward', moving_average=moving_average)
         filename = gd.append_filename(filename, impute_dates, moving_average)
         if rep_date:
             filename = filename + '_repdate'
-        gd.write_dataframe(gbNFst_cs, directory, filename + '_rki', file_format)
+        gd.write_dataframe(gbNFst_cs, directory,
+                           prefix + filename, file_format)
 
     # output nested json
     # gbNFst_cs.groupby(['IdBundesland'], as_index=False) \
@@ -365,10 +379,11 @@ def get_rki_data(read_data=dd.defaultDict['read_data'],
     # output
     filename = 'all_state'
     if rep_date:
-        filename_orig = filename + '_repdate' 
+        filename_orig = filename + '_repdate'
     else:
-        filename_orig = filename    
-    gd.write_dataframe(gbAllSt_cs, directory, filename_orig + '_rki', file_format)
+        filename_orig = filename
+    gd.write_dataframe(gbAllSt_cs, directory,
+                       prefix + filename_orig, file_format)
     if impute_dates or moving_average > 0:
         gbAllSt_cs = modifyDataframeSeries.impute_and_reduce_df(
             gbAllSt_cs,
@@ -378,7 +393,8 @@ def get_rki_data(read_data=dd.defaultDict['read_data'],
         filename = gd.append_filename(filename, impute_dates, moving_average)
         if rep_date:
             filename = filename + '_repdate'
-        gd.write_dataframe(gbAllSt_cs, directory, filename + '_rki', file_format)
+        gd.write_dataframe(gbAllSt_cs, directory,
+                           prefix + filename, file_format)
 
     ############# Data for counties all ages ######################
 
@@ -404,7 +420,8 @@ def get_rki_data(read_data=dd.defaultDict['read_data'],
         filename_orig = filename + '_repdate'
     else:
         filename_orig = filename
-    gd.write_dataframe(gbNFc_cs, directory, filename_orig + '_rki', file_format)
+    gd.write_dataframe(gbNFc_cs, directory,
+                       prefix + filename_orig, file_format)
     if impute_dates or moving_average > 0:
         gbNFc_cs = modifyDataframeSeries.impute_and_reduce_df(
             gbNFc_cs,
@@ -414,7 +431,7 @@ def get_rki_data(read_data=dd.defaultDict['read_data'],
         filename = gd.append_filename(filename, impute_dates, moving_average)
         if rep_date:
             filename = filename + '_repdate'
-        gd.write_dataframe(gbNFc_cs, directory, filename + '_rki', file_format)
+        gd.write_dataframe(gbNFc_cs, directory, prefix + filename, file_format)
 
     # infected (incl recovered), deaths and recovered together
     gbAllC = df.groupby([dateToUse, IdLandkreis]).\
@@ -430,7 +447,8 @@ def get_rki_data(read_data=dd.defaultDict['read_data'],
         filename_orig = filename + '_repdate'
     else:
         filename_orig = filename
-    gd.write_dataframe(gbAllC_cs, directory, filename_orig + '_rki', file_format)
+    gd.write_dataframe(gbAllC_cs, directory,
+                       prefix + filename_orig, file_format)
     if impute_dates or moving_average > 0:
         gbAllC_cs = modifyDataframeSeries.impute_and_reduce_df(
             gbAllC_cs,
@@ -440,7 +458,8 @@ def get_rki_data(read_data=dd.defaultDict['read_data'],
         filename = gd.append_filename(filename, impute_dates, moving_average)
         if rep_date:
             filename = filename + '_repdate'
-        gd.write_dataframe(gbAllC_cs, directory, filename + '_rki', file_format)
+        gd.write_dataframe(gbAllC_cs, directory,
+                           prefix + filename, file_format)
 
     ######### Data whole Germany different gender ##################
 
@@ -454,10 +473,11 @@ def get_rki_data(read_data=dd.defaultDict['read_data'],
     # output
     filename = 'all_gender'
     if rep_date:
-        filename_orig = filename + '_repdate' 
+        filename_orig = filename + '_repdate'
     else:
-        filename_orig = filename    
-    gd.write_dataframe(gbAllG_cs, directory, filename_orig + '_rki', file_format)
+        filename_orig = filename
+    gd.write_dataframe(gbAllG_cs, directory,
+                       prefix + filename_orig, file_format)
     if impute_dates or moving_average > 0:
         gbAllG_cs = modifyDataframeSeries.impute_and_reduce_df(
             gbAllG_cs,
@@ -467,7 +487,8 @@ def get_rki_data(read_data=dd.defaultDict['read_data'],
         filename = gd.append_filename(filename, impute_dates, moving_average)
         if rep_date:
             filename = filename + '_repdate'
-        gd.write_dataframe(gbAllG_cs, directory, filename + '_rki', file_format)
+        gd.write_dataframe(gbAllG_cs, directory,
+                           prefix + filename, file_format)
 
     if make_plot:
         df.groupby(Geschlecht) \
@@ -488,10 +509,11 @@ def get_rki_data(read_data=dd.defaultDict['read_data'],
     # output
     filename = 'all_state_gender'
     if rep_date:
-        filename_orig = filename + '_repdate' 
+        filename_orig = filename + '_repdate'
     else:
-        filename_orig = filename    
-    gd.write_dataframe(gbAllGState_cs, directory, filename_orig + '_rki', file_format)
+        filename_orig = filename
+    gd.write_dataframe(gbAllGState_cs, directory,
+                       prefix + filename_orig, file_format)
     if impute_dates or moving_average > 0:
         gbAllGState_cs = modifyDataframeSeries.impute_and_reduce_df(
             gbAllGState_cs,
@@ -502,7 +524,8 @@ def get_rki_data(read_data=dd.defaultDict['read_data'],
         filename = gd.append_filename(filename, impute_dates, moving_average)
         if rep_date:
             filename = filename + '_repdate'
-        gd.write_dataframe(gbAllGState_cs, directory, filename + '_rki', file_format)
+        gd.write_dataframe(gbAllGState_cs, directory,
+                           prefix + filename, file_format)
 
     ############# Gender and County #####################
 
@@ -519,18 +542,20 @@ def get_rki_data(read_data=dd.defaultDict['read_data'],
         filename_orig = filename + '_repdate'
     else:
         filename_orig = filename
-    gd.write_dataframe(gbAllGCounty_cs, directory, filename_orig + '_rki', file_format)
+    gd.write_dataframe(gbAllGCounty_cs, directory,
+                       prefix + filename_orig, file_format)
     if impute_dates or moving_average > 0:
         gbAllGCounty_cs = modifyDataframeSeries.impute_and_reduce_df(
             gbAllGCounty_cs,
             {dd.EngEng["idCounty"]: sorted(set(df[dd.EngEng["idCounty"]].unique())),
-            dd.EngEng["gender"]: list(df[dd.EngEng["gender"]].unique())},
+             dd.EngEng["gender"]: list(df[dd.EngEng["gender"]].unique())},
             ['Confirmed', 'Deaths', 'Recovered'],
             impute='forward', moving_average=moving_average)
         filename = gd.append_filename(filename, impute_dates, moving_average)
         if rep_date:
             filename = filename + '_repdate'
-        gd.write_dataframe(gbAllGCounty_cs, directory, filename + '_rki', file_format)
+        gd.write_dataframe(gbAllGCounty_cs, directory,
+                           prefix + filename, file_format)
 
     ######### Data whole Germany different ages ####################
 
@@ -543,10 +568,11 @@ def get_rki_data(read_data=dd.defaultDict['read_data'],
     # output
     filename = 'all_age'
     if rep_date:
-        filename_orig = filename + '_repdate' 
+        filename_orig = filename + '_repdate'
     else:
-        filename_orig = filename    
-    gd.write_dataframe(gbAllA_cs, directory, filename_orig + '_rki', file_format)
+        filename_orig = filename
+    gd.write_dataframe(gbAllA_cs, directory,
+                       prefix + filename_orig, file_format)
     if impute_dates or moving_average > 0:
         gbAllA_cs = modifyDataframeSeries.impute_and_reduce_df(
             gbAllA_cs,
@@ -556,13 +582,14 @@ def get_rki_data(read_data=dd.defaultDict['read_data'],
         filename = gd.append_filename(filename, impute_dates, moving_average)
         if rep_date:
             filename = filename + '_repdate'
-        gd.write_dataframe(gbAllA_cs, directory, filename + '_rki', file_format)
+        gd.write_dataframe(gbAllA_cs, directory,
+                           prefix + filename, file_format)
 
     if make_plot:
-        df.groupby(Altersgruppe) \
-            .agg({AnzahlFall: sum, AnzahlTodesfall: sum, AnzahlGenesen: sum}) \
-            .plot(title='COVID-19 infections, deaths, recovered for diff ages', grid=True,
-                  kind='bar')
+        df.groupby(Altersgruppe).agg(
+            {AnzahlFall: sum, AnzahlTodesfall: sum, AnzahlGenesen: sum}).plot(
+            title='COVID-19 infections, deaths, recovered for diff ages',
+            grid=True, kind='bar')
         plt.tight_layout()
         plt.show()
 
@@ -582,15 +609,17 @@ def get_rki_data(read_data=dd.defaultDict['read_data'],
 
     gbAllAgeState = df.groupby([dateToUse, IdBundesland, Altersgruppe]) \
         .agg({AnzahlFall: sum, AnzahlTodesfall: sum, AnzahlGenesen: sum})
-    gbAllAgeState_cs = gbAllAgeState.groupby(level=[1, 2]).cumsum().reset_index()
+    gbAllAgeState_cs = gbAllAgeState.groupby(
+        level=[1, 2]).cumsum().reset_index()
 
     # output
     filename = 'all_state_age'
     if rep_date:
-        filename_orig = filename + '_repdate' 
+        filename_orig = filename + '_repdate'
     else:
         filename_orig = filename
-    gd.write_dataframe(gbAllAgeState_cs, directory, filename_orig + '_rki', file_format)
+    gd.write_dataframe(gbAllAgeState_cs, directory,
+                       prefix + filename_orig, file_format)
     if impute_dates or moving_average > 0:
         gbAllAgeState_cs = modifyDataframeSeries.impute_and_reduce_df(
             gbAllAgeState_cs,
@@ -601,13 +630,15 @@ def get_rki_data(read_data=dd.defaultDict['read_data'],
         filename = gd.append_filename(filename, impute_dates, moving_average)
         if rep_date:
             filename = filename + '_repdate'
-        gd.write_dataframe(gbAllAgeState_cs, directory, filename + '_rki', file_format)                                   
+        gd.write_dataframe(gbAllAgeState_cs, directory,
+                           prefix + filename, file_format)
 
     ############# Age and County #####################
 
     gbAllAgeCounty = df.groupby([dateToUse, IdLandkreis, Altersgruppe]) \
         .agg({AnzahlFall: sum, AnzahlTodesfall: sum, AnzahlGenesen: sum})
-    gbAllAgeCounty_cs = gbAllAgeCounty.groupby(level=[1, 2]).cumsum().reset_index()
+    gbAllAgeCounty_cs = gbAllAgeCounty.groupby(
+        level=[1, 2]).cumsum().reset_index()
 
     # output
     if split_berlin:
@@ -618,25 +649,27 @@ def get_rki_data(read_data=dd.defaultDict['read_data'],
         filename_orig = filename + '_repdate'
     else:
         filename_orig = filename
-    gd.write_dataframe(gbAllAgeCounty_cs, directory, filename_orig + '_rki', file_format)
+    gd.write_dataframe(gbAllAgeCounty_cs, directory,
+                       prefix + filename_orig, file_format)
     if impute_dates or moving_average > 0:
         gbAllAgeCounty_cs = modifyDataframeSeries.impute_and_reduce_df(
             gbAllAgeCounty_cs,
             {dd.EngEng["idCounty"]: sorted(set(df[dd.EngEng["idCounty"]].unique())),
-            dd.EngEng["ageRKI"]: sorted(set(df[dd.EngEng["ageRKI"]].unique()))},
+             dd.EngEng["ageRKI"]: sorted(set(df[dd.EngEng["ageRKI"]].unique()))},
             ['Confirmed', 'Deaths', 'Recovered'],
             impute='forward', moving_average=moving_average)
         filename = gd.append_filename(filename, impute_dates, moving_average)
         if rep_date:
             filename = filename + '_repdate'
-        gd.write_dataframe(gbAllAgeCounty_cs, directory, filename + '_rki', file_format)
+        gd.write_dataframe(gbAllAgeCounty_cs, directory,
+                           prefix + filename, file_format)
 
 
 def main():
     """! Main program entry."""
 
-    arg_dict = gd.cli("rki")
-    get_rki_data(**arg_dict)
+    arg_dict = gd.cli("cases")
+    get_case_data(**arg_dict)
 
 
 if __name__ == "__main__":
