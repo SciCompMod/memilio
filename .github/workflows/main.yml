@@ -227,7 +227,7 @@ jobs:
       - name: Dowload Data
         run: |
           mkdir -p data_dl
-          getrkidata -o data_dl
+          getcasedata -o data_dl
           getpopuldata -o data_dl
           getjhdata -o data_dl
           getdividata -o data_dl

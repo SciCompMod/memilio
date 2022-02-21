@@ -58,7 +58,7 @@ def plot_cases(
         @param daystart Day at which should be started in timestamp format
         @param simulationperiod number in integer format of days for which data should be plotted
         @param saveplot boolean value; says if plot should be saved """
-    df = pd.read_json(os.path.join(data_folder, "infected_rki.json"))
+    df = pd.read_json(os.path.join(data_folder, "cases_infected.json"))
     if not (daystart + pd.DateOffset(days=simulationperiod) <= yesterday):
         simulationperiod = (yesterday - daystart).days
     mask = (
