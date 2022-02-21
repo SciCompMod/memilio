@@ -8,7 +8,8 @@
 
 namespace mio
 {
-
+/*TODO: add_damping-Funktion aus projekt (siehe contact_matrix.h)
+    */
 class IdeModel{
     public:
         IdeModel(TimeSeries<double> init, double dt_init, int N_init);
@@ -17,7 +18,7 @@ class IdeModel{
         TimeSeries<double> simulate(int t_max);
         void print_result(bool calculated_SEIR=false) const;
         void add_damping(double time, double R0t_time);
-        void calculate_EIR();
+        TimeSeries<double> calculate_EIR();
 
     private:
         double Beta(double tau, double p=3.0, double q=10.0) const;

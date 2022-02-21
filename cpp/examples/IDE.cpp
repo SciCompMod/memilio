@@ -1,6 +1,7 @@
 #include "IDE/IDE.h"
 #include "memilio/math/eigen.h"
 #include "memilio/utils/time_series.h"
+//#include "secir/secir_result_io.h"
 
 #include <vector>
 #include <iostream>
@@ -24,6 +25,7 @@ int main(){
     model.add_damping(5.0,0.5);
     model.add_damping(7,3.5);
     model.simulate(tmax);
-    model.calculate_EIR();
+    model.calculate_EIR(); //uto res =
     model.print_result(true);
+   // mio::save_result(res, "test_result.h5");
 }

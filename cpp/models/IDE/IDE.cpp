@@ -82,8 +82,7 @@ namespace mio{
     /**
     * Simulation of the course of infection
     * @param t_max last simulation day
-    * @return result of the simulation, stored in an vector with 2d vectors in each entry. 
-    *   These 2d vectors contains the time values in the first entry and the S (susceptible) values in the second one.
+    * @return result of the simulation, stored in a TimeSeries with simulation time and associated number of susceptibles (S).
     */
     TimeSeries<double> IdeModel::simulate(int t_max){
         double R0t_last=1.0;
@@ -122,7 +121,14 @@ namespace mio{
         return result;
     }
 
-    void IdeModel::calculate_EIR(){
+    /**
+    * Calculate the distribution of the population in E,I and R based on the calculated values for S.
+    * Here average values are calculated using the average latency and infectious time and not the distributions 
+    * actually used by the model. (because they are not explicitly calculable)
+    * @return result of the calculation stored in an TimeSeries. The TimeSeries contains the simulation time and an associated Vector 
+    * with values for S, E, I and R 
+    */
+    TimeSeries<double> IdeModel::calculate_EIR(){
         Eigen::Index num_points=result.get_num_time_points();
         double S,E,I,R;
         for (int i = k; i < num_points; i++) {
@@ -132,8 +138,9 @@ namespace mio{
             R=N-S-E-I;
             result_SEIR.add_time_point(result.get_time(i),(Vec(4) << S,E,I,R).finished());
         }
-
+        return result_SEIR;
     }
+    
     /**
     * add a damping to simulate a new NPI;
     * dampings has to be added in ascending chronological order 
@@ -147,6 +154,8 @@ namespace mio{
 
     /**
     * print simulation result
+    * @param calculated_SEIR if the values for E,I and R are calculated before with function "calculate_EIR",
+    * one may want to print out these values too.
     */
     void IdeModel::print_result(bool calculated_SEIR) const{
         if (calculated_SEIR){
