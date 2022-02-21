@@ -83,10 +83,9 @@ bool VRKOptIntegratorCore::step(const DerivFunction& f, Eigen::Ref<const Eigen::
         // safety factor for more conservative step increases,
         // and to avoid dt_new -> dt for step decreases when |error_estimate - eps| -> 0
         dt_new *= 0.9;
-        // check if updated dt stays within desired bounds
-        // this check should be fine even if dt_new == inf; comparing with NaN should also work, since it is always false
-        if (m_dt_min < dt_new && dt_new < m_dt_max) {
-            dt = dt_new; // update dt for next step
+        // check if updated dt stays within desired bounds and update dt for next step
+        if (m_dt_min < dt_new) {
+            dt = std::min(dt_new, m_dt_max);
         }
         else {
             failed_step_size_adapt = true;
