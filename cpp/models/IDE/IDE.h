@@ -15,8 +15,9 @@ class IdeModel{
         void set_latencytime(double latency);
         void set_infectioustime(double infectious);
         TimeSeries<double> simulate(int t_max);
-        void print_result() const;
+        void print_result(bool calculated_SEIR=false) const;
         void add_damping(double time, double R0t_time);
+        void calculate_EIR();
 
     private:
         double Beta(double tau, double p=3.0, double q=10.0) const;
@@ -28,6 +29,7 @@ class IdeModel{
 
         // vector containing one time Step per entry stored in an Eigen Vector (time, number of Susceptible at time t, R0t)
         TimeSeries<double> result; 
+        TimeSeries<double> result_SEIR=TimeSeries<double>(4); 
 
         std::vector<Eigen::Vector2d> R0t; 
         int length_R0t=0;

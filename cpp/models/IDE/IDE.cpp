@@ -116,12 +116,24 @@ namespace mio{
             result.add_time_point(round((result.get_last_time()+dt)*10000.0)/10000.0);
             Eigen::Index idx=result.get_num_time_points();
             result.get_last_value()=Vec::Constant(1,result[idx-2][0]* exp(
-                    dt/(2*N)*(R0t_last* num_integration_inner_integral(idx-2)+
+                    dt/(2*N)*(R0t_last * num_integration_inner_integral(idx-2)+
                     R0t_current* num_integration_inner_integral(idx-1))));
         }
         return result;
     }
 
+    void IdeModel::calculate_EIR(){
+        Eigen::Index num_points=result.get_num_time_points();
+        double S,E,I,R;
+        for (int i = k; i < num_points; i++) {
+            S=result[i][0];
+            E=result[i-l][0]-S;
+            I=result[i-k][0]-result[i-l][0];
+            R=N-S-E-I;
+            result_SEIR.add_time_point(result.get_time(i),(Vec(4) << S,E,I,R).finished());
+        }
+
+    }
     /**
     * add a damping to simulate a new NPI;
     * dampings has to be added in ascending chronological order 
@@ -136,11 +148,20 @@ namespace mio{
     /**
     * print simulation result
     */
-    void IdeModel::print_result() const{
-        std::cout<<"time  |  number of susceptibles"<<std::endl;
-        Eigen::Index num_points=result.get_num_time_points();
-        for (int i = 0; i < num_points; i++) {
-            std::cout<<result.get_time(i)<<"  |  "<<result[i][0]<<std::endl;
+    void IdeModel::print_result(bool calculated_SEIR) const{
+        if (calculated_SEIR){
+            std::cout<<"time  |  S  |  E  |  I  |  R"<<std::endl;
+            Eigen::Index num_points=result_SEIR.get_num_time_points();
+            for (int i = 0; i < num_points; i++) {
+                std::cout<<result_SEIR.get_time(i)<<"  |  "<<result_SEIR[i][0]<<"  |  "<<result_SEIR[i][1]
+                    <<"  |  "<<result_SEIR[i][2]<<"  |  "<<result_SEIR[i][3]<<std::endl;
+            }
+        }else{
+            std::cout<<"time  |  number of susceptibles"<<std::endl;
+            Eigen::Index num_points=result.get_num_time_points();
+            for (int i = 0; i < num_points; i++) {
+                std::cout<<result.get_time(i)<<"  |  "<<result[i][0]<<std::endl;
+            }
         }
     }
 
