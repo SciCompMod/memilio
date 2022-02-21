@@ -3,8 +3,6 @@ add_library(secir_vaccine
     infection_state.h
     analyze_result.h
     analyze_result.cpp
-    implicit_euler.h
-    implicit_euler.cpp
     parameter_space.h
     parameter_space.cpp
     parameter_studies.h
