@@ -32,15 +32,15 @@ Getting data from different sources and convert them to usable data using the py
 
 Our sources are:
 
-- Robert Koch institute (RKI) For German data:
+- Robert Koch institute (RKI) for case data in Germany:
 
-  RKI Dashboard: https://experience.arcgis.com/experience/478220a4c454480e823b17327b2bf1d4/page/page_1/
+  Robert Koch-Institut (2021): SARS-CoV-2 Infektionen in Deutschland, Berlin: Zenodo. DOI:10.5281/zenodo.4681153.
 
-  You can find the data also on:
+  We download the data from github: https://github.com/robert-koch-institut/SARS-CoV-2_Infektionen_in_Deutschland
 
-  https://npgeo-corona-npgeo-de.hub.arcgis.com/datasets/dd4580c810204019a7b8eb3e0b329dd6_0
-
-  The provided data is either geojson or csv.
+  If the data on github is not available we download the case data from rki from
+  https://npgeo-corona-npgeo-de.hub.arcgis.com/datasets/66876b81065340a4a48710b062319336/about
+  In this case the provided data is either geojson or csv.
 
 - Population data (P) like "Einwoherzahl" for Bundesländer and Landkreise:
 
@@ -132,15 +132,15 @@ optional arguments working for some are:
 |                                             | where new cases have been reported.                       |
 |                                             |  Note that this option will have a negative impact        |
 |                                             |  on performance as well as on the storage space needed.   |
-|                                             |  [rki]                                                    |
+|                                             |  [cases]                                                    |
 +---------------------------------------------+-----------------------------------------------------------+
 | -ma, --moving-average                       | The 7 day moving average is computed for the data.        |
 |                                             |  Note that the --fill_dates option will be implicitly     |
 |                                             |  turned on, as computing the moving average requires all  |
-|                                             |  dates to be available. [rki]                             |
+|                                             |  dates to be available. [cases]                             |
 +---------------------------------------------+-----------------------------------------------------------+
 | -sb, --split-berlin                         | Berlin data is split into different counties              |
-|                                             |  , instead of having only one county for Berlin. [rki]    |
+|                                             |  , instead of having only one county for Berlin. [cases]    |
 +---------------------------------------------+-----------------------------------------------------------+
 | -u, -- update-data                          | Just chronological missing data is added,                 |
 |                                             | **after** the existing ones [divi]                        |
@@ -159,31 +159,31 @@ When speaking about infected, means always infected inclusive the already recove
 ============== ==========  ================================== =================
 Source         Folder      Files                              Data description
 ============== ==========  ================================== =================
-RKI            Germany     infected_rki                       Numbers of infected over time for whole Germany
-RKI            Germany     deaths_rki                         Numbers of deaths over time for whole Germany
-RKI            Germany     all_germany_rki                    infected, deaths, recovered over time for whole Germany
-RKI            Germany     infected_state_rki                 infected over time for different states (Bundesländer)
-RKI            Germany     all_state_rki                      infected, deaths, recovered over time for different states (Bundesländer)
-RKI            Germany     infected_county_rki                infected over time for different counties (Landkreise)
-RKI            Germany     all_county_rki                     infected, deaths, recovered over time for different counties (Landkreise)
-RKI            Germany     all_gender_rki                     infected, deaths, recovered over time for different gender
-RKI            Germany     all_age_rki                        infected, deaths, recovered over time for different age ranges
-RKI            Germany     all_state_age_rki                  infected, deaths, recovered over time for different age ranges and states
-RKI            Germany     all_state_gender_rki               infected, deaths, recovered over time for different genders and states
-RKI            Germany     all_county_age_rki                 infected, deaths, recovered over time for different age ranges and counties
-RKI            Germany     all_county_gender_rki              infected, deaths, recovered over time for different genders counties
+RKI            Germany     cases_infected                     Numbers of infected over time for whole Germany
+RKI            Germany     cases_deaths                       Numbers of deaths over time for whole Germany
+RKI            Germany     cases_all_germany                  infected, deaths, recovered over time for whole Germany
+RKI            Germany     cases_infected_state               infected over time for different states (Bundesländer)
+RKI            Germany     cases_all_state                    infected, deaths, recovered over time for different states (Bundesländer)
+RKI            Germany     cases_infected_county              infected over time for different counties (Landkreise)
+RKI            Germany     cases_all_county                   infected, deaths, recovered over time for different counties (Landkreise)
+RKI            Germany     cases_all_gender                   infected, deaths, recovered over time for different gender
+RKI            Germany     cases_all_age                      infected, deaths, recovered over time for different age ranges
+RKI            Germany     cases_all_state_age                infected, deaths, recovered over time for different age ranges and states
+RKI            Germany     cases_all_state_gender             infected, deaths, recovered over time for different genders and states
+RKI            Germany     cases_all_county_age               infected, deaths, recovered over time for different age ranges and counties
+RKI            Germany     cases_all_county_gender            infected, deaths, recovered over time for different genders counties
 
-RKI            Germany     vaccine_data_[DATE]                administered vaccines, first shot, full vaccination, vaccination ratio, vacc ratio young, vacc ratio old
+RKI            Germany     vaccine_data_[DATE]       administered vaccines, first shot, full vaccination, vaccination ratio, vacc ratio young, vacc ratio old
 
-RKI-Estimation Germany     all_germany_rki_estimated          infected, deaths, recovered, recovered_estimated, deaths_estimated over time for whole Germany
-RKI-Estimation Germany     all_state_rki_estimated            infected, deaths, recovered, recovered_estimated, deaths_estimated over time for different states (Bundesländer)
-RKI-Estimation Germany     all_county_rki_estimated           infected, deaths, recovered, recovered_estimated, deaths_estimated over time for different counties (Landkreise)
-RKI-Estimation Germany     all_gender_rki_estimated           infected, deaths, recovered, recovered_estimated, deaths_estimated over time for different gender
-RKI-Estimation Germany     all_age_rki_estimated              infected, deaths, recovered, recovered_estimated, deaths_estimated over time for different age ranges
-RKI-Estimation Germany     all_state_age_rki_estimated        infected, deaths, recovered, recovered_estimated, deaths_estimated over time for different age ranges and states
-RKI-Estimation Germany     all_state_gender_rki_estimated     infected, deaths, recovered, recovered_estimated, deaths_estimated over time for different genders and states
-RKI-Estimation Germany     all_county_age_rki_estimated       infected, deaths, recovered, recovered_estimated, deaths_estimated over time for different age ranges and counties
-RKI-Estimation Germany     all_county_gender_rki_estimated    infected, deaths, recovered, recovered_estimated, deaths_estimated over time for different genders counties
+RKI-Estimation Germany     cases_all_germany_estimated        infected, deaths, recovered, recovered_estimated, deaths_estimated over time for whole Germany
+RKI-Estimation Germany     cases_all_state_estimated          infected, deaths, recovered, recovered_estimated, deaths_estimated over time for different states (Bundesländer)
+RKI-Estimation Germany     cases_all_county_estimated         infected, deaths, recovered, recovered_estimated, deaths_estimated over time for different counties (Landkreise)
+RKI-Estimation Germany     cases_all_gender_estimated         infected, deaths, recovered, recovered_estimated, deaths_estimated over time for different gender
+RKI-Estimation Germany     cases_all_age_estimated            infected, deaths, recovered, recovered_estimated, deaths_estimated over time for different age ranges
+RKI-Estimation Germany     cases_all_state_age_estimated      infected, deaths, recovered, recovered_estimated, deaths_estimated over time for different age ranges and states
+RKI-Estimation Germany     cases_all_state_gender_estimated   infected, deaths, recovered, recovered_estimated, deaths_estimated over time for different genders and states
+RKI-Estimation Germany     cases_all_county_age_estimated     infected, deaths, recovered, recovered_estimated, deaths_estimated over time for different age ranges and counties
+RKI-Estimation Germany     cases_all_county_gender_estimated  infected, deaths, recovered, recovered_estimated, deaths_estimated over time for different genders counties
 
 P              Germany     county_current_population          Einwohnerzahl for different age groups from the 2011 census, extrapolated to the current level
 P              Germany     migration                          Unchanged migration data
