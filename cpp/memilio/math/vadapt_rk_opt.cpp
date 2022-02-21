@@ -17,9 +17,6 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
-#ifndef VADAPT_RK_OPT_H_
-#define VADAPT_RK_OPT_H_
-
 #include "memilio/math/adapt_rk.h"
 
 namespace mio
@@ -34,44 +31,43 @@ bool VRKOptIntegratorCore::step(const DerivFunction& f, Eigen::Ref<const Eigen::
     bool converged              = false; // carry for convergence criterion
     bool failed_step_size_adapt = false;
 
-    if (m_yt_eval.size() == 0) {
+    if (m_kt_values.size() == 0) {
         m_yt_eval.resize(yt.size());
-        kt_values.resize(yt.size(), m_tab_final.entries_low.size());
+        m_kt_values.resize(yt.size(), m_tab_final.entries_low.size());
     }
 
     m_yt_eval = yt;
 
     while (!converged && !failed_step_size_adapt) {
         // compute first column of kt, i.e. kt_0 for each y in yt_eval
-        f(m_yt_eval, t, kt_values.col(0));
+        f(m_yt_eval, t, m_kt_values.col(0));
 
-        for (Eigen::Index i = 1; i < kt_values.cols(); i++) {
+        for (Eigen::Index i = 1; i < m_kt_values.cols(); i++) {
             // we first compute k_n1 for each y_j, then k_n2 for each y_j, etc.
             t_eval = t;
             t_eval += m_tab.entries[i - 1][0] *
-                      dt; // t_eval = t + c_i * h // note: line zero of Butcher tableau not stored in array !
-            // use ytp1_low as temporary storage for evaluating kt_values[i]
-            m_ytp1_low = m_yt_eval;
+                      dt; // t_eval = t + c_i * h // note: line zero of Butcher tableau not stored in array
+            // use ytp1 as temporary storage for evaluating m_kt_values[i]
+            ytp1 = m_yt_eval;
             for (Eigen::VectorXd::Index k = 1; k < m_tab.entries[i - 1].size(); k++) {
-                m_ytp1_low += (dt * m_tab.entries[i - 1][k]) * kt_values.col(k - 1);
+                ytp1 += (dt * m_tab.entries[i - 1][k]) * m_kt_values.col(k - 1);
             }
-            // get the derivatives, i.e., compute kt_i for all y in ytp1_low: kt_i = f(t_eval, ytp1_low)
-            f(m_ytp1_low, t_eval, kt_values.col(i));
+            // get the derivatives, i.e., compute kt_i for all y in ytp1: kt_i = f(t_eval, ytp1_low)
+            f(ytp1, t_eval, m_kt_values.col(i));
         }
         // calculate low order estimate
-        m_ytp1_low = m_yt_eval;
-        m_ytp1_low += (dt * (kt_values * m_tab_final.entries_low)); // combine with assignment?
+        ytp1 = m_yt_eval;
+        ytp1 += (dt * (m_kt_values * m_tab_final.entries_low));
         // truncation error estimate: yt_low - yt_high = O(h^(p+1)) where p = order of convergence
-        m_error_estimate = dt * (kt_values * (m_tab_final.entries_high - m_tab_final.entries_low)).array().abs();
-
+        m_error_estimate = dt * (m_kt_values * (m_tab_final.entries_high - m_tab_final.entries_low)).array().abs();
         // calculate mixed tolerance
-        m_eps = m_abs_tol + m_ytp1_low.array().abs() * m_rel_tol; //1e-6;
+        m_eps = m_abs_tol + ytp1.array().abs() * m_rel_tol;
 
         converged = (m_error_estimate <= m_eps).all(); // convergence criterion
 
         if (converged) {
-            // if sufficiently exact, take lower order approximation (higher order is not always higher accuracy!)
-            ytp1 = m_ytp1_low;
+            // if sufficiently exact, return ytp1, which currently contains the lower order approximation
+            // (higher order is not always higher accuracy!)
             t += dt; // this is the t where ytp1 belongs to
         }
         // else: repeat the calculation (with updated dt)
@@ -95,5 +91,3 @@ bool VRKOptIntegratorCore::step(const DerivFunction& f, Eigen::Ref<const Eigen::
 }
 
 } // namespace mio
-
-#endif
