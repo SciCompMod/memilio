@@ -20,13 +20,20 @@
 #include "benchmarks/simulation.h"
 #include "benchmarks/secir_ageres_setups.h"
 
+#include "memilio/math/adapt_rk.h"
+#include "memilio/math/adapt_rk_fast.h"
+#include "memilio/math/vadapt_rk.h"
+#include "memilio/math/vadapt_rk_opt.h"
+#include "memilio/math/vadapt_rk_fast.h"
+#include "memilio/math/stepper_wrapper.h"
+
 template <class Integrator>
 void simulation(::benchmark::State& state)
 {
     // suppress non-critical messages
     mio::set_log_level(mio::LogLevel::critical);
     // setup benchmark parameters
-    auto cfg = mio::benchmark::SimulationConfig::initialize("benchmarks/bench_simulation.config");
+    auto cfg = mio::benchmark::SimulationConfig::initialize("benchmarks/simulation.config");
     //auto cfg = mio::benchmark::SimulationConfig::initialize(10);
     auto model = mio::benchmark::model::SecirAgeres(cfg.num_agegroups);
 

@@ -19,6 +19,10 @@
 */
 #include "memilio/math/euler.h"
 #include "memilio/math/adapt_rk.h"
+#include "memilio/math/adapt_rk_fast.h"
+#include "memilio/math/vadapt_rk.h"
+#include "memilio/math/vadapt_rk_opt.h"
+#include "memilio/math/vadapt_rk_fast.h"
 #include "memilio/math/stepper_wrapper.h"
 #include <actions.h>
 

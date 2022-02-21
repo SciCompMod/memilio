@@ -21,10 +21,7 @@
 #define INTEGRATOR_STEP_H_
 
 #include "memilio/io/json_serializer.h"
-
 #include "memilio/utils/logging.h"
-#include "memilio/math/adapt_rk.h"
-#include "memilio/math/stepper_wrapper.h"
 
 #include "benchmark/benchmark.h"
 

@@ -17,8 +17,15 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
-#include "integrator_step.h"
-#include "secir_ageres_setups.h"
+#include "benchmarks/integrator_step.h"
+#include "benchmarks/secir_ageres_setups.h"
+
+#include "memilio/math/adapt_rk.h"
+#include "memilio/math/adapt_rk_fast.h"
+#include "memilio/math/vadapt_rk.h"
+#include "memilio/math/vadapt_rk_opt.h"
+#include "memilio/math/vadapt_rk_fast.h"
+#include "memilio/math/stepper_wrapper.h"
 
 template <class Integrator>
 void integrator_step(::benchmark::State& state)
