@@ -297,7 +297,7 @@ def get_vaccination_data(read_data=dd.defaultDict['read_data'],
         if '-' in age:
             min_age_pop.append(int(age.split('-')[0]))
         elif '>' in age:
-            min_age_pop.append(int(age.split('>')[1]))
+            min_age_pop.append(int(age.split('>')[1])+1)
         elif '<' in age:
             min_age_pop.append(0)
         else:
