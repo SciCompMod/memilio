@@ -73,108 +73,68 @@ Tableau::Tableau()
 bool RKIntegratorCore::step(const DerivFunction& f, Eigen::Ref<const Eigen::VectorXd> yt, double& t, double& dt,
                             Eigen::Ref<Eigen::VectorXd> ytp1) const
 {
-    std::vector<Eigen::VectorXd> kt_values;
+    double t_eval; // shifted time for evaluating yt
+    double dt_new; // updated dt
 
+    bool converged              = false; // carry for convergence criterion
     bool failed_step_size_adapt = false;
-    bool converged              = false;
 
-    dt = 2 * dt;
-
-    while (!converged && !failed_step_size_adapt) {
-        dt = 0.5 * dt;
-
-        kt_values.resize(0); // remove data from previous loop
-        kt_values.resize(m_tab_final.entries_low.size()); // these are the k_ni per y_t, used to compute y_t+1
-
-        for (size_t i = 0; i < kt_values.size();
-             i++) { // we first compute k_n1 for each y_j, then k_n2 for each y_j, etc.
-            kt_values[i].resizeLike(yt); // note: yt contains more than one variable since we solve a system of ODEs
-
-            if (i == 0) { // for i==0, we have kt_i=f(t,y(t))
-                f(yt, t, kt_values[i]);
-                // printf("\n\n t = %.4f\t kn1 = %.4f", t, kt_values[i][0]);
-            }
-            else {
-
-                double t_eval = t;
-
-                t_eval += m_tab.entries[i - 1][0] *
-                          dt; // t_eval = t + c_i * h // note: line zero of Butcher tableau not stored in array !
-
-                // printf("\n t = %.4f", t_eval);
-
-                auto yt_eval = yt.eval();
-
-                // go through the variables of the system: S, E, I, ....
-                for (int j = 0; j < yt_eval.size(); j++) {
-                    // go through the different kt_1, kt_2, ..., kt_i-1 and add them onto yt: y_eval = yt + h * \sum_{j=1}^{i-1} a_{i,j} kt_j
-                    for (Eigen::Index k = 1; k < m_tab.entries[i - 1].size(); k++) {
-                        yt_eval[j] +=
-                            (dt * m_tab.entries[i - 1][k] *
-                             kt_values
-                                 [k - 1]
-                                 [j]); // note the shift in k and k-1 since the first column of 'tab' corresponds to 'b_i' and 'a_ij' starts with the second column
-                    }
-                }
-
-                // get the derivatives, i.e., compute kt_i for all y at yt_eval: kt_i = f(t_eval, yt_eval)
-                f(yt_eval, t_eval, kt_values[i]);
-
-                // printf("\t kn%d = %.4f", i+1, kt_values[i][0]);
-            }
-        }
-
-        // copy actual yt to compare both new iterates
-        auto ytp1_low  = yt.eval(); // lower order approximation (e.g., order 4)
-        auto ytp1_high = yt.eval(); // higher order approximation (e.g., order 5)
-
-        std::vector<double> err(yt.size(), 0);
-
-        for (int i = 0; i < yt.size(); i++) {
-
-            for (size_t j = 0; j < kt_values.size();
-                 j++) { // we first compute k_n1 for each y_j, then k_n2 for each y_j, etc.
-                ytp1_low[i] += (dt * m_tab_final.entries_low[j] * kt_values[j][i]);
-                ytp1_high[i] += (dt * m_tab_final.entries_high[j] * kt_values[j][i]);
-            }
-        }
-
-        // printf("\n low %.8f\t high %.8f\t max_err: %.8f,\t val: %.8f,\t crit: %.8f,\t %d t: %.8f\t dt: %.8f ",
-        //    ytp1_low[0], ytp1_high[0], max_err, max_val, m_abs_tol + max_val * m_rel_tol,
-        //    max_err <= (m_abs_tol + max_val * m_rel_tol), t, dt);
-        // sleep(1);
-        converged =
-            ((ytp1_low - ytp1_high).array().abs() <= dt * (m_abs_tol + ytp1_low.array().abs() * m_rel_tol)).all();
-
-        if (converged || dt < 2 * m_dt_min + 1e-6) {
-            // if sufficiently exact, take 4th order approximation (do not take 5th order : Higher order is not always higher accuracy!)
-            ytp1 = ytp1_low;
-
-            if (dt < 2 * m_dt_min + 1e-6) {
-                failed_step_size_adapt = true;
-            }
-
-            // printf("\n succ: %d t: %.2e dt: %.2e \t ", !failed_step_size_adapt, t, dt);
-            // double sum = 0;
-            // for (size_t kkk = 0; kkk < (size_t)ytp1.size(); kkk++) {
-            //     printf(" [%lu] %.2e ", kkk, ytp1[kkk]);
-            //     sum += ytp1[kkk];
-            // }
-            // printf(" %.2e ", sum);
-
-            t += dt; // this is the t where ytp1 belongs to
-
-            // decide whether convergence admits an increased step size
-            bool increase_dt =
-                ((ytp1_low - ytp1_high).array().abs() <= 0.03 * dt * (m_abs_tol + ytp1_low.array().abs() * m_rel_tol))
-                    .all();
-
-            if (increase_dt && 2 * dt < m_dt_max) { // error of doubled step size is about 32 times as large
-                dt = 2 * dt;
-            }
-        }
+    if (m_kt_values.size() == 0) {
+        m_yt_eval.resize(yt.size());
+        m_kt_values.resize(yt.size(), m_tab_final.entries_low.size());
     }
 
+    m_yt_eval = yt;
+
+    while (!converged && !failed_step_size_adapt) {
+        // compute first column of kt, i.e. kt_0 for each y in yt_eval
+        f(m_yt_eval, t, m_kt_values.col(0));
+
+        for (Eigen::Index i = 1; i < m_kt_values.cols(); i++) {
+            // we first compute k_n1 for each y_j, then k_n2 for each y_j, etc.
+            t_eval = t;
+            t_eval += m_tab.entries[i - 1][0] *
+                      dt; // t_eval = t + c_i * h // note: line zero of Butcher tableau not stored in array
+            // use ytp1 as temporary storage for evaluating m_kt_values[i]
+            ytp1 = m_yt_eval;
+            for (Eigen::VectorXd::Index k = 1; k < m_tab.entries[i - 1].size(); k++) {
+                ytp1 += (dt * m_tab.entries[i - 1][k]) * m_kt_values.col(k - 1);
+            }
+            // get the derivatives, i.e., compute kt_i for all y in ytp1: kt_i = f(t_eval, ytp1_low)
+            f(ytp1, t_eval, m_kt_values.col(i));
+        }
+        // calculate low order estimate
+        ytp1 = m_yt_eval;
+        ytp1 += (dt * (m_kt_values * m_tab_final.entries_low));
+        // truncation error estimate: yt_low - yt_high = O(h^(p+1)) where p = order of convergence
+        m_error_estimate = dt * (m_kt_values * (m_tab_final.entries_high - m_tab_final.entries_low)).array().abs();
+        // calculate mixed tolerance
+        m_eps = m_abs_tol + ytp1.array().abs() * m_rel_tol;
+
+        converged = (m_error_estimate <= m_eps).all(); // convergence criterion
+
+        if (converged) {
+            // if sufficiently exact, return ytp1, which currently contains the lower order approximation
+            // (higher order is not always higher accuracy)
+            t += dt; // this is the t where ytp1 belongs to
+        }
+        // else: repeat the calculation above (with updated dt)
+
+        // compute new value for dt
+        // converged implies eps/error_estimate >= 1, so dt will be increased for the next step
+        // hence !converged implies 0 < eps/error_estimate < 1, strictly decreasing dt
+        dt_new = dt * std::pow((m_eps / m_error_estimate).minCoeff(), (1. / (m_tab_final.entries_low.size() - 1)));
+        // safety factor for more conservative step increases,
+        // and to avoid dt_new -> dt for step decreases when |error_estimate - eps| -> 0
+        dt_new *= 0.9;
+        // check if updated dt stays within desired bounds and update dt for next step
+        if (m_dt_min < dt_new) {
+            dt = std::min(dt_new, m_dt_max);
+        }
+        else {
+            failed_step_size_adapt = true;
+        }
+    }
     return !failed_step_size_adapt;
 }
 

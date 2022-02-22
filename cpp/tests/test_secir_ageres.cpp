@@ -20,6 +20,7 @@
 #include "load_test_data.h"
 #include "secir/secir.h"
 #include "memilio/compartments/simulation.h"
+#include "memilio/math/adapt_rk_fast.h"
 #include "memilio/math/stepper_wrapper.h"
 #include <gtest/gtest.h>
 
@@ -78,7 +79,7 @@ TEST(TestSecir, compareAgeResWithSingleRun)
         mio::ContactMatrix(Eigen::MatrixXd::Constant((size_t)nb_groups, (size_t)nb_groups, fact * cont_freq));
     contact_matrix[0].add_damping(0.7, mio::SimulationTime(30.));
 
-    auto integrator = std::make_shared<mio::RKIntegratorCore>();
+    auto integrator = std::make_shared<mio::FastRKIntegratorCore>();
     integrator->set_dt_min(0.3);
     integrator->set_dt_max(1.0);
     integrator->set_rel_tolerance(1e-4);

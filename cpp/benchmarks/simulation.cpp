@@ -22,9 +22,6 @@
 
 #include "memilio/math/adapt_rk.h"
 #include "memilio/math/adapt_rk_fast.h"
-#include "memilio/math/vadapt_rk.h"
-#include "memilio/math/vadapt_rk_opt.h"
-#include "memilio/math/vadapt_rk_fast.h"
 #include "memilio/math/stepper_wrapper.h"
 
 template <class Integrator>
@@ -51,10 +48,7 @@ BENCHMARK_TEMPLATE(simulation, mio::RKIntegratorCore)->Name("Dummy 2/3");
 BENCHMARK_TEMPLATE(simulation, mio::RKIntegratorCore)->Name("Dummy 3/3");
 // register functions as a benchmarks and set a name
 BENCHMARK_TEMPLATE(simulation, mio::RKIntegratorCore)->Name("simulate SecirModel adapt_rk");
-BENCHMARK_TEMPLATE(simulation, mio::VRKIntegratorCore)->Name("simulate SecirModel vadapt_rk");
-BENCHMARK_TEMPLATE(simulation, mio::RKFastIntegratorCore)->Name("simulate SecirModel adapt_rk_fast");
-BENCHMARK_TEMPLATE(simulation, mio::VRKFastIntegratorCore)->Name("simulate SecirModel vadapt_rk_fast");
-BENCHMARK_TEMPLATE(simulation, mio::VRKOptIntegratorCore)->Name("simulate SecirModel vadapt_rk_opt");
+BENCHMARK_TEMPLATE(simulation, mio::FastRKIntegratorCore)->Name("simulate SecirModel adapt_rk_fast");
 BENCHMARK_TEMPLATE(simulation, mio::ControlledStepperWrapper<boost::numeric::odeint::runge_kutta_cash_karp54>)
     ->Name("simulate SecirModel boost rk_ck54");
 BENCHMARK_TEMPLATE(simulation, mio::ControlledStepperWrapper<boost::numeric::odeint::runge_kutta_dopri5>)

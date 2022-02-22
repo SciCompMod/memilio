@@ -25,11 +25,11 @@
 namespace mio
 {
 
-class RKFastIntegratorCore : public RKIntegratorCore
+class FastRKIntegratorCore : public RKIntegratorCore
 {
 public:
     /// @brief Set up the integrator
-    RKFastIntegratorCore()
+    FastRKIntegratorCore()
         : RKIntegratorCore()
     {
     }
@@ -40,17 +40,17 @@ public:
      * @param dt_min lower bound for time step dt
      * @param dt_max upper bound for time step dt
      */
-    RKFastIntegratorCore(const double abs_tol, const double rel_tol, const double dt_min, const double dt_max)
+    FastRKIntegratorCore(const double abs_tol, const double rel_tol, const double dt_min, const double dt_max)
         : RKIntegratorCore(abs_tol, rel_tol, dt_min, dt_max)
     {
     }
     /**
-    * @brief Make a single integration step of a system of ODEs and adapt step width
-    * @param[in] yt value of y at t, y(t)
-    * @param[in,out] t current time step h=dt
-    * @param[in,out] dt current time step h=dt
-    * @param[out] ytp1 approximated value y(t+1)
-    */
+     * @brief Make a single integration step of a system of ODEs and adapt the step size
+     * @param[in] yt value of y at t, y(t)
+     * @param[in,out] t current time
+     * @param[in,out] dt current time step size h=dt
+     * @param[out] ytp1 approximated value y(t+1)
+     */
     bool step(const DerivFunction& f, Eigen::Ref<const Eigen::VectorXd> yt, double& t, double& dt,
               Eigen::Ref<Eigen::VectorXd> ytp1) const override;
 };

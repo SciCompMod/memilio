@@ -157,13 +157,12 @@ public:
     }
 
     /**
-    * Adaptive step width of the integration
-    * This method integrates a system of ODEs
-    * @param[in] yt value of y at t, y(t)
-    * @param[in,out] t current time step h=dt
-    * @param[in,out] dt current time step h=dt
-    * @param[out] ytp1 approximated value y(t+1)
-    */
+     * @brief Make a single integration step of a system of ODEs and adapt the step size
+     * @param[in] yt value of y at t, y(t)
+     * @param[in,out] t current time
+     * @param[in,out] dt current time step size h=dt
+     * @param[out] ytp1 approximated value y(t+1)
+     */
     bool step(const DerivFunction& f, Eigen::Ref<Eigen::VectorXd const> yt, double& t, double& dt,
               Eigen::Ref<Eigen::VectorXd> ytp1) const override;
 
@@ -172,6 +171,11 @@ protected:
     TableauFinal m_tab_final;
     double m_abs_tol, m_rel_tol;
     double m_dt_min, m_dt_max;
+    mutable Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::ColMajor> m_kt_values;
+    mutable Eigen::VectorXd m_yt_eval;
+
+private:
+    mutable Eigen::ArrayXd m_eps, m_error_estimate; // tolerance and estimate used for time step adaption
 };
 
 } // namespace mio

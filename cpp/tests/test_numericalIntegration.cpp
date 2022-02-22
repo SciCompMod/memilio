@@ -20,9 +20,6 @@
 #include "memilio/math/euler.h"
 #include "memilio/math/adapt_rk.h"
 #include "memilio/math/adapt_rk_fast.h"
-#include "memilio/math/vadapt_rk.h"
-#include "memilio/math/vadapt_rk_opt.h"
-#include "memilio/math/vadapt_rk_fast.h"
 #include "memilio/math/stepper_wrapper.h"
 #include <actions.h>
 
@@ -93,8 +90,7 @@ TEST_F(TestVerifyNumericalIntegratorEuler, euler_sine)
     EXPECT_NEAR(err, 0.0, 1e-3);
 }
 
-using TestTypes = ::testing::Types<mio::RKFastIntegratorCore, mio::RKIntegratorCore, mio::VRKFastIntegratorCore,
-                                   mio::VRKFastIntegratorCore, mio::VRKOptIntegratorCore,
+using TestTypes = ::testing::Types<mio::RKIntegratorCore, mio::FastRKIntegratorCore,
                                    mio::ControlledStepperWrapper<boost::numeric::odeint::runge_kutta_cash_karp54>,
                                    mio::ControlledStepperWrapper<boost::numeric::odeint::runge_kutta_dopri5>,
                                    mio::ControlledStepperWrapper<boost::numeric::odeint::runge_kutta_fehlberg78>>;

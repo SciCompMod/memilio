@@ -19,6 +19,7 @@
 */
 #include "load_test_data.h"
 #include "secir/secir.h"
+#include "memilio/math/adapt_rk_fast.h"
 #include "secir/parameter_space.h"
 #include "secir/analyze_result.h"
 #include <distributions_helpers.h>
@@ -81,7 +82,7 @@ TEST(TestSecir, compareWithPreviousRun)
 
     model.apply_constraints();
 
-    auto integrator = std::make_shared<mio::RKIntegratorCore>();
+    auto integrator = std::make_shared<mio::FastRKIntegratorCore>();
     integrator->set_dt_min(0.3);
     integrator->set_dt_max(1.0);
     integrator->set_rel_tolerance(1e-4);
