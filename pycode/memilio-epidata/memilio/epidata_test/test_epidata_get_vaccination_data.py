@@ -293,14 +293,15 @@ class TestGetVaccinationData(fake_filesystem_unittest.TestCase):
                     column_names_i[j],
                     'Column names do not match.')
 
-    @unittest.skip("Skip Test till create_intervals_mapping is fixed")
-    def test_intervall_mapping(self):
-        lower_bounds1 = np.array(
+    def test_interval_mapping(self):
+        from_lower_bounds1 = np.array(
             [0, 3, 6, 15, 18, 25, 30, 40, 50, 65, 74, 100])
-        upper_bounds1 = np.array(
+        to_lower_bounds1 = np.array(
             [0, 3, 5, 6, 12, 15, 18, 25, 30, 35, 40, 50, 60, 65, 74, 80, 100])
-        lower_bounds2 = np.array([0, 10, 20, 70, 100])
-        upper_bounds2 = np.array([0, 5, 15, 20, 50, 60, 70, 85, 90, 100])
+        from_lower_bounds2 = np.array([0, 10, 20, 70, 100])
+        to_lower_bounds2 = np.array([0, 5, 15, 20, 50, 60, 70, 85, 90, 100])
+        from_lower_bounds3 = np.array([0, 20, 100])
+        to_lower_bounds3 = np.array([0, 50, 60, 80, 100])
 
         test_map1 = [
             [[1, 0]],
@@ -317,31 +318,35 @@ class TestGetVaccinationData(fake_filesystem_unittest.TestCase):
 
         test_map2 = [
             [[1 / 2, 0], [1 / 2, 1]],
-            [[1.0, 1], [0.0, 2]],
+            [[0.5, 1], [0.5, 2]],
             [[0.6, 3], [0.2, 4], [0.2, 5]],
             [[1/2, 6], [1/6, 7], [1/3, 8]]]
 
+        test_map3 = [
+            [[1, 0]], [[0.375, 0], [0.125, 1], [0.25, 2], [0.25, 3]]
+        ]
+
         map_bounds1 = gvd.create_intervals_mapping(
-            lower_bounds1, upper_bounds1)
+            from_lower_bounds1, to_lower_bounds1)
         map_bounds2 = gvd.create_intervals_mapping(
-            lower_bounds2, upper_bounds2)
+            from_lower_bounds2, to_lower_bounds2)
+        map_bounds3 = gvd.create_intervals_mapping(
+            from_lower_bounds3, to_lower_bounds3)
 
         for test_map, calculated_map in zip(test_map1, map_bounds1):
-            self.assertTrue(
-                np.allclose(
-                    np.array(test_map),
-                    np.array(calculated_map),
-                    rtol=1e-05),
-                "Not the same Arrays")
+            for test_val, calculated_val in zip(test_map, calculated_map):
+                self.assertEqual(test_val[1], calculated_val[1])
+                self.assertAlmostEqual(test_val[0], calculated_val[0])
 
         for test_map, calculated_map in zip(test_map2, map_bounds2):
-            self.assertTrue(
-                np.allclose(
-                    np.array(test_map),
-                    np.array(calculated_map),
-                    rtol=1e-05),
-                "Not the same Arrays")
+            for test_val, calculated_val in zip(test_map, calculated_map):
+                self.assertEqual(test_val[1], calculated_val[1])
+                self.assertAlmostEqual(test_val[0], calculated_val[0])
 
+        for test_map, calculated_map in zip(test_map3, map_bounds3):
+            for test_val, calculated_val in zip(test_map, calculated_map):
+                self.assertEqual(test_val[1], calculated_val[1])
+                self.assertAlmostEqual(test_val[0], calculated_val[0])
 
 if __name__ == '__main__':
     unittest.main()

@@ -60,32 +60,32 @@ def create_intervals_mapping(from_lower_bounds, to_lower_bounds):
     @param from_lower_bounds lower bounds of original intervals
     @param to_lower_bounds desired lower bounds of new intervals
     @return mapping from intervals to intervals
+        The mapping is given as a list containing for every original interval a
+        list of tupels of the share of the original interval that is mapped to
+        the new interval and the index of the new interval
     """
-    # compute share of all_ages intervals from population intervals
+    # compute the shares of the original intervals mapped to the new intervals
     from_to_mapping = [[] for i in range(0, len(from_lower_bounds)-1)]
-    j = 0  # iterator over all age breaks
-    for i in range(0, len(from_lower_bounds)-1):
-        # check if lower bound is larger in lower resolved data
-        if from_lower_bounds[i] >= to_lower_bounds[j]:
-            # Example: min_age_pop[i]=3 and min_age_pop[i+1]=6 shall be mapped on all_ages[j]=3 and all_ages[j+1]=5
-            #   Then the all ages interval from j to j+1 will obtain the share
-            #       x = (all_ages[j+1] - all_ages[j]) / (min_age_pop[i+1] - min_age_pop[i])
-            #   of population age group 3-6
-            #   in the next step, check if 6 is larger than all_ages[j+2]=Y
-            #       if no: add the remaining part 1-x to j+1
-            #       if yes: compute the corresponding share and go through it iteratively
-            share = 0
-            # if not, the remaining share will be assigned all ages j
-            while from_lower_bounds[i+1] > to_lower_bounds[j+1]:
-                share += (to_lower_bounds[j+1] - to_lower_bounds[j]
-                          ) / (from_lower_bounds[i+1] - from_lower_bounds[i])
-                from_to_mapping[i].append([share, j])
-                j += 1
-            from_to_mapping[i].append([1-share, j])
-            # if both upper bounds are equal, then all ages j will not get any more share from any old group
-            if from_lower_bounds[i+1] == to_lower_bounds[j+1]:
-                j += 1
-
+    j = 0  # iterator over new intervals
+    # iterate over original intervals
+    for i in range(0, len(from_lower_bounds) - 1):
+        remaining_share = 1  # share of original interval i to be distributed
+        # position up to which the distribution is already computed
+        pos = from_lower_bounds[i]
+        # find first new interval j insecting original interval i
+        while from_lower_bounds[i] >= to_lower_bounds[j+1]:
+            j += 1
+        while from_lower_bounds[i+1] > to_lower_bounds[j+1]:
+            # compute share of interval i that is send to interval j
+            len_interval_i = from_lower_bounds[i+1] - from_lower_bounds[i]
+            share = (to_lower_bounds[j+1] - pos) / len_interval_i
+            from_to_mapping[i].append([share, j])
+            remaining_share -= share
+            pos = to_lower_bounds[j+1]
+            j += 1
+        # if upper bound of new interval j is not smaller than upper bound of
+        # original interval i assign remaining share of interval i to interval j
+        from_to_mapping[i].append([remaining_share, j])
     return from_to_mapping
 
 
