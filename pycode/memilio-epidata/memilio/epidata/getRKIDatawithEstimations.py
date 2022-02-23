@@ -143,7 +143,7 @@ def get_rki_data_with_estimations(read_data=dd.defaultDict['read_data'],
             df_rki.loc[(df_rki[dstr] == date_jh), deaths_estimated] \
                 = np.round(fraction_deaths_conf * df_rki.loc[(df_rki[dstr] == date_jh), confirmed])
 
-        df_rki = df_rki.drop([dstr], 1)
+        df_rki = df_rki.drop([dstr], axis=1)
         gd.write_dataframe(df_rki, data_path, file_to_change + "_estimated", file_format)
 
         # check if calculation is meaningful

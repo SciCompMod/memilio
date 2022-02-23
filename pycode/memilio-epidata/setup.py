@@ -68,8 +68,8 @@ setup(
     long_description='',
     test_suite='memilio.epidata_test',
     install_requires=[
-        'pandas<1.2.0',
-        'matplotlib<3.4',
+        'pandas>=1.2.2',
+        'matplotlib',
         'tables',
         'numpy>=1.21',
         'openpyxl',
@@ -80,7 +80,7 @@ setup(
     ],
     extras_require={
         'dev': [
-            'pyfakefs==4.1.0',
+            'pyfakefs>=4.2.1',
             'freezegun',
             'coverage',
             'pylint<=2.11.1',

@@ -244,8 +244,10 @@ def get_rki_data(read_data=dd.defaultDict['read_data'],
     dfF.loc[dfF.NeuGenesen < 0, [AnzahlGenesen]] = 0
 
     # get rid of unnecessary columns
-    dfF = dfF.drop(['NeuerFall', 'NeuerTodesfall', 'NeuGenesen', "IstErkrankungsbeginn", "ObjectId",
-                    "Meldedatum", "Datenstand", "Refdatum", Altersgruppe2], 1)
+    dfF = dfF.drop(
+        ['NeuerFall', 'NeuerTodesfall', 'NeuGenesen', "IstErkrankungsbeginn",
+         "ObjectId", "Meldedatum", "Datenstand", "Refdatum", Altersgruppe2],
+        axis=1)
 
     print("Available columns:", df.columns)
 

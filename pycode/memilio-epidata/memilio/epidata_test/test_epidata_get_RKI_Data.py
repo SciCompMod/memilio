@@ -38,9 +38,9 @@ class test_get_RKI_Data(fake_filesystem_unittest.TestCase):
     # Get a file object with write permission.
     here = os.path.dirname(os.path.abspath(__file__))
     filename = os.path.join(here, 'test_epidata_get_RKI_Data_data.json')
-    file_object = open(filename, 'r')
     # Load JSON file data to a python dict object.
-    dict_object = json.load(file_object)
+    with open(filename, 'r') as file_object:
+        dict_object = json.load(file_object)
 
     # Add aldo test data to new data with every county to reduce changes in tests to an minimum
     # With new data there are three additional cases with 1 case and 1 recovered for
