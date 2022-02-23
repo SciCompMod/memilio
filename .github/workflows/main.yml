@@ -37,18 +37,6 @@ jobs:
           sanitize-addr: ${{ (matrix.compiler == 'gcc' && matrix.config == 'Debug' && matrix.version == 'latest') && 'ON' || 'OFF' }}
           sanitize-ub: ${{ (matrix.compiler == 'gcc' && matrix.config == 'Debug' && matrix.version == 'latest') && 'ON' || 'OFF' }}
 
-  build-cpp-gcc-no-optional-deps:
-    if: github.event.pull_request.draft == false
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v2
-      - uses: ./.github/actions/linux-build
-        with:
-          compiler: gcc
-          version: latest
-          config: Release
-          optional-dependencies: OFF
-
   build-cpp-msvc:
     if: github.event.pull_request.draft == false
     strategy:
@@ -67,17 +55,6 @@ jobs:
         with: 
           config: ${{ matrix.config }}
           version: ${{ matrix.version }}
-
-  build-cpp-msvc-no-optional-deps:
-    if: github.event.pull_request.draft == false
-    runs-on: windows-2022
-    steps:
-      - uses: actions/checkout@v2
-      - uses: ./.github/actions/windows-build
-        with: 
-          config: Release
-          version: latest
-          optional-dependencies: OFF
 
   test-cpp-gcc_clang:
     if: github.event.pull_request.draft == false
@@ -99,16 +76,6 @@ jobs:
         with: 
           build-artifact: build-cpp-linux-${{ matrix.compiler }}-${{ matrix.version }}-${{ matrix.config }}-full
           coverage: ${{ (matrix.compiler == 'gcc' && matrix.version == 'latest' && matrix.config == 'Debug') && 'ON' || 'OFF' }}
-  
-  test-linux-no-optional-deps:
-    if: github.event.pull_request.draft == false
-    needs: build-cpp-gcc-no-optional-deps
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v2
-      - uses: ./.github/actions/linux-test
-        with: 
-          build-artifact: build-cpp-linux-gcc-latest-Release-part
 
   test-cpp-msvc:
     if: github.event.pull_request.draft == false
@@ -128,16 +95,6 @@ jobs:
       - uses: ./.github/actions/windows-test
         with: 
           build-artifact: build-cpp-windows-msvc-${{ matrix.version }}-${{ matrix.config }}-full
-
-  test-windows-no-optional-deps:
-    if: github.event.pull_request.draft == false
-    needs: build-cpp-msvc-no-optional-deps
-    runs-on: windows-latest
-    steps:
-      - uses: actions/checkout@v2
-      - uses: ./.github/actions/windows-test
-        with: 
-          build-artifact: build-cpp-windows-msvc-latest-Release-part
 
   build-py-epidata:
     if: github.event.pull_request.draft == false

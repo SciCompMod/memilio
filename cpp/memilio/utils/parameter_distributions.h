@@ -293,6 +293,9 @@ public:
         if (m_upper_bound == m_lower_bound) {
             return m_lower_bound;
         }
+        if (m_standard_dev == 0) {
+            return std::min(m_upper_bound, std::max(m_lower_bound, m_mean));
+        }
 
         if (check_quantiles(m_mean, m_standard_dev) || m_distribution.mean() != m_mean ||
             m_distribution.stddev() != m_standard_dev) {
@@ -453,11 +456,11 @@ IOResult<std::shared_ptr<ParameterDistribution>> deserialize_internal(IOContext&
     auto type = obj.expect_element("Type", Tag<std::string>{});
     if (type) {
         if (type.value() == "Uniform") {
-            BOOST_OUTCOME_TRY(r, ParameterDistributionUniform::deserialize(io));
+            MEMILIO_TRY(r, ParameterDistributionUniform::deserialize(io));
             return std::make_shared<ParameterDistributionUniform>(r);
         }
         else if (type.value() == "Normal") {
-            BOOST_OUTCOME_TRY(r, ParameterDistributionNormal::deserialize(io));
+            MEMILIO_TRY(r, ParameterDistributionNormal::deserialize(io));
             return std::make_shared<ParameterDistributionNormal>(r);
         }
         else {

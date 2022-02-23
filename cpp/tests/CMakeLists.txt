@@ -1,8 +1,13 @@
 enable_testing()
-list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
+include(GoogleTest)
+include(memilio-conan)
 
-set(GOOGLE_TEST_INDIVIDUAL ON)
-include(AddGoogleTest)
+message(STATUS "Memilio: Installing required dependencies for tests with Conan.")
+    
+memilio_conan_install(REQUIRES gtest/1.10.0)
+set(Gtest_DIR ${CMAKE_CURRENT_BINARY_DIR} CACHE PATH "" FORCE)
+
+find_package(GTest 1.10.0 CONFIG REQUIRED)
 
 set(TESTSOURCES
   test_household.cpp
@@ -59,12 +64,14 @@ endif()
 
 add_executable(memilio-test ${TESTSOURCES})
 target_include_directories(memilio-test PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
-target_link_libraries(memilio-test PRIVATE memilio secir seir abm gtest_main)
-target_compile_options(memilio-test PRIVATE ${MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS})
+target_link_libraries(memilio-test PRIVATE memilio secir seir abm GTest::gtest GTest::gmock) 
+target_compile_options(memilio-test 
+    PRIVATE 
+        ${MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS}
+        $<$<CXX_COMPILER_ID:MSVC>: /MP>)
+gtest_discover_tests(memilio-test DISCOVERY_TIMEOUT 30)
 
 #make unit tests find the test data files
 file(TO_CMAKE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/data" MEMILIO_TEST_DATA_DIR)
 configure_file(test_data_dir.h.in test_data_dir.h)
 target_include_directories(memilio-test PRIVATE ${CMAKE_CURRENT_BINARY_DIR})
-
-add_gtest(memilio-test)

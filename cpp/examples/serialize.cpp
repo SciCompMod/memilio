@@ -109,12 +109,12 @@ mio::IOResult<void> print_json()
     //IOResult can be inspected manually e.g. 
     //if (rslt) { do_something(rslt.value()); return success(); }
     //else { return rslt.as_failure(); }
-    //For convenience, the BOOST_OUTCOME_TRY macro can be used. 
+    //For convenience, the MEMILIO_TRY macro can be used. 
     //If the operation failed, the error is returned immediately.
     //If the operation was succesful, the result is unpacked and assigned to a new variable.
     //e.g.
-    BOOST_OUTCOME_TRY(js, rslt);
-    //could also be BOOST_OUTCOME_TRY(js, mio::serialize_json(b)) in one line
+    MEMILIO_TRY(js, rslt);
+    //could also be MEMILIO_TRY(js, mio::serialize_json(b)) in one line
     
     //print json (Json::Value) to console
     //could also write to file or do anything else.

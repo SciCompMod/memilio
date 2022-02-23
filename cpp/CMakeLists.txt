@@ -1,22 +1,19 @@
 cmake_minimum_required(VERSION 3.10)
 
-project(memilio VERSION 0.1.0)
+project(memilio 
+    VERSION 0.1.0
+    LANGUAGES CXX C)
 
 option(MEMILIO_BUILD_TESTS "Build memilio unit tests." ON)
 option(MEMILIO_BUILD_EXAMPLES "Build memilio examples." ON)
 option(MEMILIO_BUILD_MODELS "Build memilio models." ON)
 option(MEMILIO_BUILD_SIMULATIONS "Build memilio simulations that were used for scientific articles." ON)
-option(MEMILIO_USE_BUNDLED_SPDLOG "Use spdlog bundled with epi" ON)
-option(MEMILIO_USE_BUNDLED_EIGEN "Use eigen bundled with epi" ON)
-option(MEMILIO_USE_BUNDLED_BOOST "Use boost bundled with epi (only for epi-io)" ON)
-option(MEMILIO_USE_BUNDLED_JSONCPP "Use jsoncpp bundled with epi (only for epi-io)" ON)
 option(MEMILIO_SANITIZE_ADDRESS "Enable address sanitizer." OFF)
 option(MEMILIO_SANITIZE_UNDEFINED "Enable undefined behavior sanitizer." OFF)
 
-mark_as_advanced(MEMILIO_USE_BUNDLED_SPDLOG MEMILIO_SANITIZE_ADDRESS MEMILIO_SANITIZE_UNDEFINED)
+mark_as_advanced(MEMILIO_SANITIZE_ADDRESS MEMILIO_SANITIZE_UNDEFINED)
 
 set(CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake" ${CMAKE_MODULE_PATH})
-set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
 # code coverage analysis
 # Note: this only works under linux and with make
@@ -25,13 +22,16 @@ if(CMAKE_BUILD_TYPE STREQUAL "Debug")
     option (MEMILIO_TEST_COVERAGE "Enable GCov coverage analysis (adds a 'coverage' target)" OFF)
     mark_as_advanced(MEMILIO_TEST_COVERAGE)
     if (MEMILIO_TEST_COVERAGE)
+        if (NOT CMAKE_GENERATOR STREQUAL "Unix Makefiles")
+            message(FATAL_ERROR "Memilio: Coverage only available with Unix Makefiles generator.")
+        endif()
         message(STATUS "Coverage enabled")
         include(CodeCoverage)
         append_coverage_compiler_flags()
         setup_target_for_coverage_lcov(
             NAME coverage
             EXECUTABLE memilio-test
-            EXCLUDE "${CMAKE_SOURCE_DIR}/tests*" "${CMAKE_SOURCE_DIR}/simulations*" "${CMAKE_SOURCE_DIR}/examples*" "${CMAKE_BINARY_DIR}/*" "/usr*"
+            INCLUDE "${CMAKE_SOURCE_DIR}/memilio/*" "${CMAKE_SOURCE_DIR}/models/*"
         )
     endif()
 endif()
@@ -84,40 +84,3 @@ endif()
 if (MEMILIO_BUILD_SIMULATIONS)
     add_subdirectory(simulations)
 endif()
-
-# install
-include(GNUInstallDirs)
-
-install(TARGETS memilio
-        EXPORT memilio-targets
-        INCLUDES DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
-        RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
-        LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
-        ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
-)
-
-install(DIRECTORY memilio DESTINATION ${CMAKE_INSTALL_INCLUDEDIR} FILES_MATCHING PATTERN memilio/*/*.h)
-install(DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/memilio DESTINATION ${CMAKE_INSTALL_INCLUDEDIR} FILES_MATCHING PATTERN memilio/*/*.h)
-
-include(CMakePackageConfigHelpers)
-
-configure_package_config_file(
-    ${CMAKE_CURRENT_LIST_DIR}/cmake/memilio-config.cmake.in
-    ${CMAKE_CURRENT_BINARY_DIR}/memilio-config.cmake
-INSTALL_DESTINATION
-    ${CMAKE_INSTALL_LIBDIR}/cmake/memilio
-)
-
-write_basic_package_version_file(
-  "${CMAKE_CURRENT_BINARY_DIR}/memilio-config-version.cmake"
-  VERSION ${PROJECT_VERSION}
-  COMPATIBILITY AnyNewerVersion
-)
-
-install (
-  FILES
-    "${CMAKE_CURRENT_BINARY_DIR}/memilio-config-version.cmake"
-    "${CMAKE_CURRENT_BINARY_DIR}/memilio-config.cmake"
-  DESTINATION
-    ${CMAKE_INSTALL_LIBDIR}/cmake/memilio
-)

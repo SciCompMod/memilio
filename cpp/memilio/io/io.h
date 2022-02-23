@@ -311,8 +311,32 @@ inline const std::error_code& make_error_code(const IOStatus& status)
  * the result is not succesful/not an error.
  * 
  * When nesting functions that return IOResult, it is also possible to unpack the value
- * and forward errors using the macro BOOST_OUTCOME_TRY. 
- * The statement `BOOST_OUTCOME_TRY(x, try_get_x());` is equivalent to the statements
+ * and forward errors using the macro MEMILIO_TRY below.
+ * 
+ * @see https://www.boost.org/doc/libs/1_75_0/libs/outcome/doc/html/index.html
+ * @see MEMILIO_TRY
+ * @tparam the type produced by an opertion that can fail.
+ */
+template <class T>
+using IOResult = boost::outcome_v2::unchecked<T, IOStatus>;
+
+//helper macros for MEMILIO_TRY
+#define MEMILIO_TRY2(v, expr) BOOST_OUTCOME_TRY2_SUCCESS_LIKELY(BOOST_OUTCOME_TRY_UNIQUE_NAME, return, auto &&v, expr)
+#define MEMILIO_TRY1(expr) BOOST_OUTCOME_TRYV(expr)
+
+/**
+ * Macro to inspect and unpack the result of an operation that returns IOResult.
+ * The macro can be used to conveniently propagate errors up the call stack without visible branches
+ * in your code. It inspects the result of an operation, returning errors to the caller of the function 
+ * if the operation failed, unpacking the result and assigning it to a new variable if the operation
+ * succeeded. Note that this only works if the current function also returns IOResult, i.e., errors are
+ * propagated up the stack.
+ * 
+ * There are two variants:
+ * - MEMILIO_TRY(x, expr)
+ * - MEMILIO_TRY(expr)
+ * 
+ * In the first variant, `MEMILIO_TRY(x, try_get_x());` is equivalent to the statements
  * ```
  * auto result = try_get_x();
  * if (!result) {
@@ -320,24 +344,32 @@ inline const std::error_code& make_error_code(const IOStatus& status)
  * }
  * auto&& x = result.value();
  * ``` 
- * This way, code the branches that are added for error handling are not visible in 
- * your code, the logic looks completely linear, e.g.:
+ * When used in a function that returns an IOResult, the branches that are added for error handling 
+ * are not visible in your code, the logic looks completely linear, e.g.
  * ```
- * extern void use_int(int i);
  * IOResult<void> parse_and_use_int(const std::string& s)
  * {
- *   BOOST_OUTCOME_TRY(i, parse_int(s));
+ *   MEMILIO_TRY(i, parse_int(s));
  *   use_int(i);
  *   return success();
  * }
  * ```
- * The variable name can be omitted for operations that return IOResult<void>.
  * 
- * @see https://www.boost.org/doc/libs/1_75_0/libs/outcome/doc/html/index.html
- * @tparam the type produced by an opertion that can fail.
+ * The second variant, MEMILIO_TRY(expr) is for operations that return IOResult<void> or if you want to
+ * ignore the result value, e.g.
+ * ```
+ * IOResult<void> create_file(const std::string& filename);
+ * 
+ * IOResult<void> foo()
+ * {
+ *   //...
+ *   MEMILIO_TRY(create_file("foo.txt"));
+ *   //...
+ *   return success();
+ * }
+ * ```
  */
-template <class T>
-using IOResult = boost::outcome_v2::unchecked<T, IOStatus>;
+#define MEMILIO_TRY(...) BOOST_OUTCOME_TRY_CALL_OVERLOAD(MEMILIO_TRY, __VA_ARGS__)
 
 /**
  * Create an object that is implicitly convertible to a succesful IOResult<void>.
@@ -652,7 +684,7 @@ void serialize_internal(IOContext& io, E e)
 template <class IOContext, class E, std::enable_if_t<std::is_enum<E>::value, void*> = nullptr>
 IOResult<E> deserialize_internal(IOContext& io, Tag<E> /*tag*/)
 {
-    BOOST_OUTCOME_TRY(i, mio::deserialize(io, mio::Tag<std::underlying_type_t<E>>{}));
+    MEMILIO_TRY(i, mio::deserialize(io, mio::Tag<std::underlying_type_t<E>>{}));
     return success(E(i));
 }
 

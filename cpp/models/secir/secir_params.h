@@ -667,7 +667,7 @@ public:
     template <class IOContext>
     static IOResult<SecirParams> deserialize(IOContext& io)
     {
-        BOOST_OUTCOME_TRY(base, SecirParamsBase::deserialize(io));
+        MEMILIO_TRY(base, SecirParamsBase::deserialize(io));
         return success(SecirParams(std::move(base)));
     }
 
