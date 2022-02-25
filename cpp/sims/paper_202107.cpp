@@ -415,15 +415,15 @@ epi::IOResult<void> set_npis(epi::Date start_date, epi::Date end_date, epi::Seci
     auto start_autumn = epi::SimulationTime(epi::get_offset_in_days(epi::Date(2021, 10, 1), start_date));
     contact_dampings.push_back(contacts_at_home(start_autumn, 0.0, 0.0));
     contact_dampings.push_back(school_closure(start_autumn, 0.3 + narrow, 0.5 - narrow));
-    contact_dampings.push_back(home_office(start_autumn, 0.3 + narrow, 0.5 - narrow));
+    // contact_dampings.push_back(home_office(start_autumn, 0.3 + narrow, 0.5 - narrow)); // S3F only
     contact_dampings.push_back(social_events(start_autumn, 0.3 + narrow, 0.5 - narrow));
     contact_dampings.push_back(social_events_work(start_autumn, 0.0, 0.0));
 
-    //contact_dampings.push_back(home_office(start_autumn, 0.0 + narrow, 0.2 - narrow));
+    contact_dampings.push_back(home_office(start_autumn, 0.0 + narrow, 0.2 - narrow)); // S2F
 
-    //contact_dampings.push_back(school_closure(start_autumn, 0.0 + narrow, 0.2 - narrow));
-    //contact_dampings.push_back(home_office(start_autumn, 0.0 + narrow, 0.2 - narrow));
-    //contact_dampings.push_back(social_events(start_autumn,  0.0 + narrow, 0.2 - narrow));
+    //contact_dampings.push_back(school_closure(start_autumn, 0.0 + narrow, 0.2 - narrow)); // S1F
+    //contact_dampings.push_back(home_office(start_autumn, 0.0 + narrow, 0.2 - narrow)); // S1F
+    //contact_dampings.push_back(social_events(start_autumn,  0.0 + narrow, 0.2 - narrow)); // S1F
 
     narrow = 0.0;
     //local dynamic NPIs
@@ -1023,7 +1023,7 @@ int main(int argc, char** argv)
         return 0;
     }
 
-    result_dir += "_test_init";
+    result_dir += "_rev2";
     if (future) {
         result_dir += "_future";
     }
