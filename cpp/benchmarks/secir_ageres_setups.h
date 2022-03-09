@@ -94,7 +94,7 @@ namespace benchmark
                 params.get<mio::RiskOfInfectionFromSympomatic>()[i]   = beta;
                 params.get<mio::HospitalizedCasesPerInfectious>()[i]  = rho;
                 params.get<mio::ICUCasesPerHospitalized>()[i]         = theta;
-                params.get<mio::DeathsPerHospitalized>()[i]           = delta;
+                params.get<mio::DeathsPerICU>()[i]                    = delta;
             }
 
             mio::ContactMatrixGroup& contact_matrix = params.get<mio::ContactPatterns>();
