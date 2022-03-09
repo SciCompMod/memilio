@@ -94,7 +94,7 @@ public:
 /**
  * @brief Two scheme Runge-Kutta numerical integrator with adaptive step width
  *
- * This method integrates a system of ODEs
+ * This class integrates a system of ODEs via the step method
  */
 class RKIntegratorCore : public IntegratorCore
 {

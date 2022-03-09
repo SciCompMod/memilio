@@ -17,19 +17,29 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
-#ifndef ADAPT_RK_FAST_H_
-#define ADAPT_RK_FAST_H_
+#ifndef adapt_rk_hasty_H_
+#define adapt_rk_hasty_H_
 
 #include "memilio/math/adapt_rk.h"
 
 namespace mio
 {
 
-class FastRKIntegratorCore : public RKIntegratorCore
+/**
+ * @brief Two scheme Runge-Kutta numerical integrator with adaptive step width; faster, but no gurantee for convergence
+ *
+ * This class is a variation of mio::RKIntegratorCore. Instead of using an elementwise convergence criterion in the
+ * step method, only the maximum error is compared against the maximum (mixed) tolerance of all equations. Since
+ * these maxima can come from different equations, this is not a valid criterion and cannot guarantee convergence.
+ *
+ * However, in practice this criterion seems to suffice e.g. for the secir models, and it
+ * can be about twice as fast as the regular RKIntegratorCore.
+ */
+class HastyRKIntegratorCore : public RKIntegratorCore
 {
 public:
     /// @brief Set up the integrator
-    FastRKIntegratorCore()
+    HastyRKIntegratorCore()
         : RKIntegratorCore()
     {
     }
@@ -40,7 +50,7 @@ public:
      * @param dt_min lower bound for time step dt
      * @param dt_max upper bound for time step dt
      */
-    FastRKIntegratorCore(const double abs_tol, const double rel_tol, const double dt_min, const double dt_max)
+    HastyRKIntegratorCore(const double abs_tol, const double rel_tol, const double dt_min, const double dt_max)
         : RKIntegratorCore(abs_tol, rel_tol, dt_min, dt_max)
     {
     }
@@ -50,6 +60,8 @@ public:
      * @param[in,out] t current time
      * @param[in,out] dt current time step size h=dt
      * @param[out] ytp1 approximated value y(t+1)
+     * 
+     * This is variation of mio::RKIntegratorCore::step cannot guarantee convergence but is faster.
      */
     bool step(const DerivFunction& f, Eigen::Ref<const Eigen::VectorXd> yt, double& t, double& dt,
               Eigen::Ref<Eigen::VectorXd> ytp1) const override;

@@ -17,12 +17,12 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
-#include "memilio/math/adapt_rk_fast.h"
+#include "memilio/math/adapt_rk_hasty.h"
 
 namespace mio
 {
 
-bool FastRKIntegratorCore::step(const DerivFunction& f, Eigen::Ref<const Eigen::VectorXd> yt, double& t, double& dt,
+bool HastyRKIntegratorCore::step(const DerivFunction& f, Eigen::Ref<const Eigen::VectorXd> yt, double& t, double& dt,
                                 Eigen::Ref<Eigen::VectorXd> ytp1) const
 {
     double conv_crit = 0, max_err = 1, t_eval; // shifted time for evaluating yt
