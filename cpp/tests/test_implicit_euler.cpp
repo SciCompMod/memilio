@@ -50,36 +50,36 @@ TEST(TestImplicitEuler, compareOneTimeStep)
     mio::SecirModel model(1);
     auto& params = model.parameters;
 
-    params.get<mio::IncubationTime>()[(mio::AgeGroup)0] = tinc;
-    params.get<mio::InfectiousTimeMild>()[(mio::AgeGroup)0] = tinfmild;
-    params.get<mio::SerialInterval>()[(mio::AgeGroup)0] = tserint;
-    params.get<mio::HospitalizedToHomeTime>()[(mio::AgeGroup)0] = thosp2home;
-    params.get<mio::HomeToHospitalizedTime>()[(mio::AgeGroup)0] = thome2hosp;
-    params.get<mio::HospitalizedToICUTime>()[(mio::AgeGroup)0] = thosp2icu;
-    params.get<mio::ICUToHomeTime>()[(mio::AgeGroup)0] = ticu2home;
+    params.get<mio::IncubationTime>()[(mio::AgeGroup)0]             = tinc;
+    params.get<mio::InfectiousTimeMild>()[(mio::AgeGroup)0]         = tinfmild;
+    params.get<mio::SerialInterval>()[(mio::AgeGroup)0]             = tserint;
+    params.get<mio::HospitalizedToHomeTime>()[(mio::AgeGroup)0]     = thosp2home;
+    params.get<mio::HomeToHospitalizedTime>()[(mio::AgeGroup)0]     = thome2hosp;
+    params.get<mio::HospitalizedToICUTime>()[(mio::AgeGroup)0]      = thosp2icu;
+    params.get<mio::ICUToHomeTime>()[(mio::AgeGroup)0]              = ticu2home;
     params.get<mio::InfectiousTimeAsymptomatic>()[(mio::AgeGroup)0] = tinfasy;
-    params.get<mio::ICUToDeathTime>()[(mio::AgeGroup)0] = ticu2death;
+    params.get<mio::ICUToDeathTime>()[(mio::AgeGroup)0]             = ticu2death;
 
     mio::ContactMatrixGroup& contact_matrix = params.get<mio::ContactPatterns>();
     contact_matrix[0]                       = mio::ContactMatrix(Eigen::MatrixXd::Constant(1, 1, cont_freq));
     contact_matrix.add_damping(0.7, mio::SimulationTime(30.));
 
     model.populations.set_total(nb_total_t0);
-    model.populations[{mio::AgeGroup(0), mio::InfectionState::Exposed}] = nb_exp_t0;
-    model.populations[{mio::AgeGroup(0), mio::InfectionState::Carrier}] = nb_car_t0;
-    model.populations[{mio::AgeGroup(0), mio::InfectionState::Infected}] = nb_inf_t0;
+    model.populations[{mio::AgeGroup(0), mio::InfectionState::Exposed}]      = nb_exp_t0;
+    model.populations[{mio::AgeGroup(0), mio::InfectionState::Carrier}]      = nb_car_t0;
+    model.populations[{mio::AgeGroup(0), mio::InfectionState::Infected}]     = nb_inf_t0;
     model.populations[{mio::AgeGroup(0), mio::InfectionState::Hospitalized}] = nb_hosp_t0;
-    model.populations[{mio::AgeGroup(0), mio::InfectionState::ICU}] = nb_icu_t0;
-    model.populations[{mio::AgeGroup(0), mio::InfectionState::Recovered}] = nb_rec_t0;
-    model.populations[{mio::AgeGroup(0), mio::InfectionState::Dead}] = nb_dead_t0;
+    model.populations[{mio::AgeGroup(0), mio::InfectionState::ICU}]          = nb_icu_t0;
+    model.populations[{mio::AgeGroup(0), mio::InfectionState::Recovered}]    = nb_rec_t0;
+    model.populations[{mio::AgeGroup(0), mio::InfectionState::Dead}]         = nb_dead_t0;
     model.populations.set_difference_from_total({mio::AgeGroup(0), mio::InfectionState::Susceptible}, nb_total_t0);
 
     params.get<mio::InfectionProbabilityFromContact>()[(mio::AgeGroup)0] = 1.;
-    params.get<mio::AsymptoticCasesPerInfectious>()[(mio::AgeGroup)0] = alpha;
-    params.get<mio::RiskOfInfectionFromSympomatic>()[(mio::AgeGroup)0] = beta;
-    params.get<mio::HospitalizedCasesPerInfectious>()[(mio::AgeGroup)0] = rho;
-    params.get<mio::ICUCasesPerHospitalized>()[(mio::AgeGroup)0] = theta;
-    params.get<mio::DeathsPerHospitalized>()[(mio::AgeGroup)0] = delta;
+    params.get<mio::AsymptoticCasesPerInfectious>()[(mio::AgeGroup)0]    = alpha;
+    params.get<mio::RiskOfInfectionFromSympomatic>()[(mio::AgeGroup)0]   = beta;
+    params.get<mio::HospitalizedCasesPerInfectious>()[(mio::AgeGroup)0]  = rho;
+    params.get<mio::ICUCasesPerHospitalized>()[(mio::AgeGroup)0]         = theta;
+    params.get<mio::DeathsPerICU>()[(mio::AgeGroup)0]                    = delta;
 
     mio::DerivFunction dummy_f; // only required for explicit time integrators
 

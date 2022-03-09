@@ -20,6 +20,10 @@
 #ifndef EPI_MATH_FLOATING_POINT_H
 #define EPI_MATH_FLOATING_POINT_H
 
+#include <algorithm>
+#include <cmath>
+#include <limits>
+
 namespace mio
 {
     /**

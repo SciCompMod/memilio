@@ -1,5 +1,13 @@
 name: "Test Python"
 description: "Test the Python bindings and library."
+inputs:
+  package:
+    description: "Package to run the tests for."
+    required: true
+  coverage:
+    description: "Generate coverage report from running the tests, ON or OFF, default OFF."
+    required: false
+    default: "OFF"
 runs:
   using: "composite"
   steps:
@@ -12,37 +20,46 @@ runs:
     - name: Download Python Wheels
       uses: actions/download-artifact@v2
       with:
-        name: python-wheels
+        name: python-wheels-${{ inputs.package }}
         path: pycode/wheelhouse
-    - name: Set up Python 3.6
+    - name: Set up Python 3.7
       uses: actions/setup-python@v2
       with:
-        python-version: 3.6
+        python-version: 3.7
     - name: Install Python Wheels
       shell: bash
       run: |
-        for pkg in `ls pycode/wheelhouse/*36*.whl`; do python -m pip install $pkg; done
-        pip install -r pycode/requirements-dev.txt
+        for pkg in `ls pycode/wheelhouse/*cp37*.whl`; do python -m pip install $pkg; done # packages that contain native extensions are version specific
+        for pkg in `ls pycode/wheelhouse/*py3*.whl`; do python -m pip install $pkg; done # pure python packages are not version specific
+        pip install -r pycode/memilio-${{ inputs.package }}/requirements-dev.txt
     - name: Run unit tests
       shell: bash
       run: |
-        cd pycode/test
-        python -W ignore::DeprecationWarning -m coverage run --include=*site-packages/epidemiology*,*dist-packages/epidemiology*,epidemiology* -m unittest
-        python -m coverage report
-        python -m coverage xml -o coverage_python.xml
-        python -m coverage html -d coverage_python
-        cp -r coverage_python ../../
-        getrkidata --help
-        getpopuldata --help
-        getjhdata --help
-        getdividata --help
-        getsimdata --help
-        cleandata --help
+        cd pycode/memilio-${{inputs.package}}/memilio/${{inputs.package}}_test
+        if [[ "${{ inputs.coverage }}" == "ON" ]]; then
+          python -W ignore::DeprecationWarning -m coverage run --include=*site-packages/memilio*,*dist-packages/memilio*,../../memilio* -m unittest
+          python -m coverage report
+          python -m coverage xml -o coverage_python.xml
+          python -m coverage html -d coverage_python
+          cp -r coverage_python ../../../../
+        else
+          python -m unittest
+        fi
+        
+        if [[ "${{ inputs.package }}" == "epidata" ]]; then
+          getrkidata --help
+          getpopuldata --help
+          getjhdata --help
+          getdividata --help
+          getsimdata --help
+          cleandata --help
+        fi
     - name: Upload coverage reports
       uses: actions/upload-artifact@v2
       with:
         name: test-py-coverage-reports
         path: |
-          pycode/test/coverage_python.xml
-          coverage_python/
+          pycode/coverage_python.xml
+          coverage_python
         retention-days: 1
+        if-no-files-found: ${{ inputs.coverage == 'ON' && 'error' || 'ignore' }}

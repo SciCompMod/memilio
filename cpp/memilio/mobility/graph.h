@@ -133,6 +133,9 @@ std::enable_if_t<!has_ostream_op<T>::value, std::ostream&> operator<<(std::ostre
  */
 template <class NodePropertyT, class EdgePropertyT>
 class Graph
+    //ensure correct std::is_copy_constructible; it's not correct by default because the nodes and edges are stored in std::vector
+    : not_copyable_if_t<
+          !conjunction<std::is_copy_constructible<NodePropertyT>, std::is_copy_constructible<EdgePropertyT>>::value>
 {
 public:
     using NodeProperty = NodePropertyT;

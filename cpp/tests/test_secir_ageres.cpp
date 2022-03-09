@@ -69,7 +69,7 @@ TEST(TestSecir, compareAgeResWithSingleRun)
         params.get<mio::RiskOfInfectionFromSympomatic>()[i]   = beta;
         params.get<mio::HospitalizedCasesPerInfectious>()[i]  = rho;
         params.get<mio::ICUCasesPerHospitalized>()[i]         = theta;
-        params.get<mio::DeathsPerHospitalized>()[i]           = delta;
+        params.get<mio::DeathsPerICU>()[i]                    = delta;
     }
 
     params.apply_constraints();
@@ -147,7 +147,7 @@ TEST(TestSecir, compareAgeResWithSingleRunCashKarp)
         params.get<mio::RiskOfInfectionFromSympomatic>()[i]   = beta;
         params.get<mio::HospitalizedCasesPerInfectious>()[i]  = rho;
         params.get<mio::ICUCasesPerHospitalized>()[i]         = theta;
-        params.get<mio::DeathsPerHospitalized>()[i]           = delta;
+        params.get<mio::DeathsPerICU>()[i]                    = delta;
     }
 
     params.apply_constraints();

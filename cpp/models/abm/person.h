@@ -202,10 +202,24 @@ public:
     bool goes_to_work(TimePoint t, const AbmMigrationParameters& params) const;
 
     /**
+     * Every person has a random number to determine what time to go to work.
+     * Depending on this number person decides what time has to go to work;
+     * @return the time of going to work
+     */
+    TimeSpan get_go_to_work_time(const AbmMigrationParameters& params) const;
+
+    /**
      * Every person has a random number that determines if they go to school in case of a lockdown.
      * @return if the person goes to school
      */
     bool goes_to_school(TimePoint t, const AbmMigrationParameters& params) const;
+
+    /**
+     * Every person has a random number to determine what time to go to school.
+     * Depending on this number person decides what time has to go to school;
+     * @return the time of going to school
+     */
+    TimeSpan get_go_to_school_time(const AbmMigrationParameters& params) const;
 
     /**
      * Answers the question if a person is currently in quarantine.
@@ -236,6 +250,8 @@ private:
     TimeSpan m_time_at_location;
     double m_random_workgroup;
     double m_random_schoolgroup;
+    double m_random_goto_work_hour;
+    double m_random_goto_school_hour;
     TimeSpan m_time_since_negative_test;
 };
 

@@ -9,10 +9,12 @@ on:
     tags:
       - version-*
   pull_request:
+    types: [opened, reopened, synchronize, ready_for_review]
   workflow_dispatch:
 
 jobs:
   build-cpp-gcc_clang:
+    if: github.event.pull_request.draft == false
     strategy:
       matrix:
         compiler: ["gcc", "clang"]
@@ -24,7 +26,6 @@ jobs:
           - version: "min"
             os: "ubuntu-18.04"
     runs-on: ${{ matrix.os }}
-    continue-on-error: ${{ matrix.compiler == 'clang' && matrix.version == 'latest' }} # our jsoncpp version does not build on clang above version 9
     steps:
       - uses: actions/checkout@v2
       - uses: ./.github/actions/linux-build
@@ -37,6 +38,7 @@ jobs:
           sanitize-ub: ${{ (matrix.compiler == 'gcc' && matrix.config == 'Debug' && matrix.version == 'latest') && 'ON' || 'OFF' }}
 
   build-cpp-gcc-no-optional-deps:
+    if: github.event.pull_request.draft == false
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
@@ -48,15 +50,16 @@ jobs:
           optional-dependencies: OFF
 
   build-cpp-msvc:
+    if: github.event.pull_request.draft == false
     strategy:
       matrix:
         config: ["Debug", "Release"]
         version: ["latest", "min"]
         include:
           - version: "latest"
-            os: "windows-latest"
+            os: "windows-2022"
           - version: "min"
-            os: "windows-2016"
+            os: "windows-2019"
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v2
@@ -66,7 +69,8 @@ jobs:
           version: ${{ matrix.version }}
 
   build-cpp-msvc-no-optional-deps:
-    runs-on: windows-latest
+    if: github.event.pull_request.draft == false
+    runs-on: windows-2022
     steps:
       - uses: actions/checkout@v2
       - uses: ./.github/actions/windows-build
@@ -76,6 +80,7 @@ jobs:
           optional-dependencies: OFF
 
   test-cpp-gcc_clang:
+    if: github.event.pull_request.draft == false
     needs: build-cpp-gcc_clang
     strategy:
       matrix:
@@ -88,7 +93,6 @@ jobs:
           - version: "min"
             os: "ubuntu-18.04"
     runs-on: ${{ matrix.os }}
-    continue-on-error: ${{ matrix.compiler == 'clang' && matrix.version == 'latest' }}
     steps:
       - uses: actions/checkout@v2
       - uses: ./.github/actions/linux-test
@@ -97,6 +101,7 @@ jobs:
           coverage: ${{ (matrix.compiler == 'gcc' && matrix.version == 'latest' && matrix.config == 'Debug') && 'ON' || 'OFF' }}
   
   test-linux-no-optional-deps:
+    if: github.event.pull_request.draft == false
     needs: build-cpp-gcc-no-optional-deps
     runs-on: ubuntu-latest
     steps:
@@ -106,6 +111,7 @@ jobs:
           build-artifact: build-cpp-linux-gcc-latest-Release-part
 
   test-cpp-msvc:
+    if: github.event.pull_request.draft == false
     needs: build-cpp-msvc
     strategy:
       matrix:
@@ -113,9 +119,9 @@ jobs:
         version: ["latest", "min"]
         include:
           - version: "latest"
-            os: "windows-latest"
+            os: "windows-2022"
           - version: "min"
-            os: "windows-2016"
+            os: "windows-2019"
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v2
@@ -124,6 +130,7 @@ jobs:
           build-artifact: build-cpp-windows-msvc-${{ matrix.version }}-${{ matrix.config }}-full
 
   test-windows-no-optional-deps:
+    if: github.event.pull_request.draft == false
     needs: build-cpp-msvc-no-optional-deps
     runs-on: windows-latest
     steps:
@@ -132,37 +139,69 @@ jobs:
         with: 
           build-artifact: build-cpp-windows-msvc-latest-Release-part
 
-  build-py:
+  build-py-epidata:
+    if: github.event.pull_request.draft == false
     runs-on: ubuntu-latest
     container:
       image: quay.io/pypa/manylinux2014_x86_64
     steps:
       - uses: actions/checkout@v2
       - uses: ./.github/actions/build-py
+        with:
+          package: epidata
+
+  test-py-epidata:
+    if: github.event.pull_request.draft == false
+    needs: build-py-epidata
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: ./.github/actions/test-py
+        with: 
+          package: epidata
+          coverage: ON
+  
+  build-py-simulation:
+    if: github.event.pull_request.draft == false
+    runs-on: ubuntu-latest
+    container:
+      image: quay.io/pypa/manylinux2014_x86_64
+    steps:
+      - uses: actions/checkout@v2
+      - uses: ./.github/actions/build-py
+        with:
+          package: simulation
+
+  test-py-simulation:
+    if: github.event.pull_request.draft == false
+    needs: build-py-simulation
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: ./.github/actions/test-py
+        with: 
+          package: simulation
           
   test-docs:
-    needs: build-py
+    if: github.event.pull_request.draft == false
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
       - uses: ./.github/actions/test-docs
 
-  test-py:
-    needs: build-py
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v2
-      - uses: ./.github/actions/test-py
-
-  test-pylint:
-    needs: build-py
+  test-pylint-epidata:
+    if: github.event.pull_request.draft == false
+    needs: build-py-epidata
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
       - uses: ./.github/actions/test-pylint
+        with:
+          package: epidata
 
   dowload-data:
-    needs: build-py
+    if: github.event.pull_request.draft == false
+    needs: build-py-epidata
     runs-on: ubuntu-latest
     continue-on-error: true
     steps:
@@ -175,15 +214,16 @@ jobs:
       - name: Download Python Wheels
         uses: actions/download-artifact@v2
         with:
-          name: python-wheels
+          name: python-wheels-epidata
           path: pycode/wheelhouse
-      - name: Set up Python 3.6
+      - name: Set up Python 3.7
         uses: actions/setup-python@v2
         with:
-          python-version: 3.6
+          python-version: 3.7
       - name: Install Python Wheels
         run: |
-          for pkg in `ls pycode/wheelhouse/*36*.whl`; do python -m pip install $pkg; done
+          for pkg in `ls pycode/wheelhouse/*cp37*.whl`; do python -m pip install $pkg; done # packages that contain native extensions are version specific
+          for pkg in `ls pycode/wheelhouse/*py3*.whl`; do python -m pip install $pkg; done # pure python packages are not version specific
       - name: Dowload Data
         run: |
           mkdir -p data_dl
@@ -207,7 +247,8 @@ jobs:
           retention-days: 1
           
   codecov:
-    needs: [test-py, test-cpp-gcc_clang]
+    if: github.event.pull_request.draft == false
+    needs: [test-py-epidata, test-cpp-gcc_clang]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
@@ -230,7 +271,8 @@ jobs:
           verbose: true
 
   pages:
-    needs: [test-py, test-cpp-gcc_clang, test-docs, test-pylint]
+    if: github.event.pull_request.draft == false
+    needs: [test-py-epidata, test-cpp-gcc_clang, test-docs, test-pylint-epidata]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2

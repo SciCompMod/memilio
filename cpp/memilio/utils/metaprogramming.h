@@ -90,6 +90,41 @@ template <class... Bs>
 constexpr bool conjunction_v = conjunction<Bs...>::value;
 /**@}*/
 
+namespace details
+{
+    //non-copyable but trivally constructible and moveable type
+    struct NoCopy {
+        NoCopy(const NoCopy&) = delete;
+        NoCopy()              = default;
+        NoCopy(NoCopy&&)      = default;
+        NoCopy& operator=(const NoCopy&) = delete;
+        NoCopy& operator=(NoCopy&&) = default;
+    };
+
+    //trivially constructible, copyable, moveable type
+    struct Empty {
+    };
+} // namespace details
+
+/**
+ * Defines a type that is not copy constructible or assignable if the specified condition is true.
+ * Otherwise, defines a type that is copyable.
+ * In both cases, the type will be trivially moveable and constructible.
+ * To be used as a base type to make a class conditionally copyable.
+ * Can be used to e.g. ensure that std::is_copy_constructible and std::is_copy_assignable is true only if 
+ * the type can actually be copied (Note: this is not true for some STL containers, e.g., std::vector).
+ */
+template<bool Cond>
+using not_copyable_if = std::conditional<Cond, details::NoCopy, details::Empty>;
+
+/**
+ * equivalent to not_copyable_if<Cond>::type. 
+ * @see not_copyable_if
+ */
+template<bool Cond>
+using not_copyable_if_t = typename not_copyable_if<Cond>::type;
+
+
 } // namespace mio
 
 #endif
