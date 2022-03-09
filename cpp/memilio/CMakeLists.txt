@@ -30,8 +30,6 @@ add_library(memilio
     math/smoother.h
     math/adapt_rk.h
     math/adapt_rk.cpp
-    math/adapt_rk_hasty.h
-    math/adapt_rk_hasty.cpp
     math/stepper_wrapper.h
     math/stepper_wrapper.cpp
     math/integrator.h

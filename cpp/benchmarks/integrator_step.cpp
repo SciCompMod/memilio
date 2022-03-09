@@ -21,7 +21,6 @@
 #include "benchmarks/secir_ageres_setups.h"
 
 #include "memilio/math/adapt_rk.h"
-#include "memilio/math/adapt_rk_hasty.h"
 #include "memilio/math/stepper_wrapper.h"
 
 template <class Integrator>
@@ -57,7 +56,6 @@ BENCHMARK_TEMPLATE(integrator_step, mio::RKIntegratorCore)->Name("Dummy 2/3");
 BENCHMARK_TEMPLATE(integrator_step, mio::RKIntegratorCore)->Name("Dummy 3/3");
 // register functions as a benchmarks and set a name
 BENCHMARK_TEMPLATE(integrator_step, mio::RKIntegratorCore)->Name("simulate SecirModel adapt_rk");
-BENCHMARK_TEMPLATE(integrator_step, mio::HastyRKIntegratorCore)->Name("simulate SecirModel adapt_rk_hasty");
 BENCHMARK_TEMPLATE(integrator_step, mio::ControlledStepperWrapper<boost::numeric::odeint::runge_kutta_cash_karp54>)
     ->Name("simulate SecirModel boost rk_ck54");
 BENCHMARK_TEMPLATE(integrator_step, mio::ControlledStepperWrapper<boost::numeric::odeint::runge_kutta_dopri5>)
