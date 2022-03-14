@@ -93,6 +93,8 @@ Required python packages:
 - openpyxl
 - xlrd
 - requests
+- pyxlsb
+- wget
 
 Running the scripts
 -------------------
@@ -118,6 +120,8 @@ optional arguments working for all are:
 | -ff {json,hdf5,json_timeasstring}           | Defines output format for data files.                     |
 | --file-format {json,hdf5,json_timeasstring} | Default is "json_timeasstring".                           |
 +---------------------------------------------+-----------------------------------------------------------+
+| -n, --no-raw                                | Defines if raw data will be stored for further use.       |
++---------------------------------------------+-----------------------------------------------------------+
 
 optional arguments working for some are:
 
@@ -128,22 +132,22 @@ optional arguments working for some are:
 +---------------------------------------------+-----------------------------------------------------------+
 | -sd, --start-date                           | Changes date for which data collection is started [divi]  |
 +---------------------------------------------+-----------------------------------------------------------+
-| -fd, --fill-dates                           | Returns dataframes with all dates instead of only dates   |
+| -i, --impute-dates                          | Returns dataframes with all dates instead of only dates   |
 |                                             | where new cases have been reported.                       |
 |                                             |  Note that this option will have a negative impact        |
 |                                             |  on performance as well as on the storage space needed.   |
 |                                             |  [rki]                                                    |
 +---------------------------------------------+-----------------------------------------------------------+
 | -ma, --moving-average                       | The 7 day moving average is computed for the data.        |
-|                                             |  Note that the --fill_dates option will be implicitly     |
+|                                             |  Note that the --impute-dates option will be implicitly   |
 |                                             |  turned on, as computing the moving average requires all  |
 |                                             |  dates to be available. [rki]                             |
 +---------------------------------------------+-----------------------------------------------------------+
 | -sb, --split-berlin                         | Berlin data is split into different counties              |
 |                                             |  , instead of having only one county for Berlin. [rki]    |
 +---------------------------------------------+-----------------------------------------------------------+
-| -u, -- update-data                          | Just chronological missing data is added,                 |
-|                                             | **after** the existing ones [divi]                        |
+| -- rep-date                                 | The reporting date will be prefered over possibly given   |
+|                                             |  dates of disease onset. [rki]                            |
 +---------------------------------------------+-----------------------------------------------------------+
 
 Hint:
@@ -214,6 +218,7 @@ The following packages are used by the tests:
 
 - pyfakefs (creates fake directory to test that expected folders are created and data is written)
 - freezegun (freezes the time. Thus, the call today can be changed to a specific date.)
+- coverage
 
 See Installation on how to install all these dependencies automatically.
 
@@ -264,7 +269,7 @@ Some additional tools for processing or analysing data can be found in the `tool
 Notes for developers
 --------------------
 
-If a new functionality shell be added please stick to the following instructions:
+If a new functionality shall be added please stick to the following instructions:
 
 When you start creating a new script:
 
@@ -298,8 +303,8 @@ When you add a new script
     - as the value add a list in the form [comment to print when script is started, list of used parser arguments (optional)]
     - if more than the default parser should be added, add these parser to the  list of used parser
 - add tests
-- add an entry "executablename -h" to the .gitlab-ci.yml
-- add it to getAll.py
+- add an entry "executablename -h" to the .github/test-py/action.yml
+- add an entry "executablename -o data_dl" to the .github/workflows/main.yml
 - add generated data to cleanData
 
 Adding a new parser:
@@ -329,12 +334,6 @@ There are different columns of infected:
 
 For DIVI:
 
-For everyday there is one file, from which we extract the date.
-However, in the beginning the data was different to the later ones.
-For the first two dates, 24.4. and 25.4., there is no data for ICU_ventilated (faelle_covid_aktuell_beatmet).
-For the 24.4. even has the ICU data only for each state (faelle_covid_aktuell_im_bundesland) but not for every county.
-Thus, it is not yet considered in the summarized data for counties, states and whole Germany. (There are
-zero entries for these dates).
 Not every hospital is reporting the number of corona patients in intensive care units (ICU). The number of
 reporting hospitals differs from day to day and is given in FullData_DIVI.
 

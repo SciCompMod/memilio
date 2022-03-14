@@ -155,14 +155,17 @@ def cli(what):
     Three default arguments are added to the parser:
     - read-from-disk, Default = False
     - file-format, Default = json_timeasstring, choices = ['json', 'hdf5', 'json_timeasstring']
-    - out_path Default = data/pydata/
+    - out_path Default defined in default dict
+    - no_raw
 
     Depending on what following parser can be added:
+    - start_date
     - end_date
     - plot
     - split_berlin
-    - moving-average
-    - start_date
+    - moving_average
+    - impute_dates
+    - rep-date
 
     @param what Defines what packages calls and thus what kind of command line arguments should be defined.
     """
