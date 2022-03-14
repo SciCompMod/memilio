@@ -32,15 +32,27 @@ Getting data from different sources and convert them to usable data using the py
 
 Our sources are:
 
-- Robert Koch institute (RKI) For German data:
+- Robert Koch institute (RKI):
 
-  RKI Dashboard: https://experience.arcgis.com/experience/478220a4c454480e823b17327b2bf1d4/page/page_1/
+  - Case data (RKI-C)
 
-  You can find the data also on:
+    RKI Dashboard: https://experience.arcgis.com/experience/478220a4c454480e823b17327b2bf1d4/page/page_1/
 
-  https://npgeo-corona-npgeo-de.hub.arcgis.com/datasets/dd4580c810204019a7b8eb3e0b329dd6_0
+    You can find the data also on:
 
-  The provided data is either geojson or csv.
+    https://npgeo-corona-npgeo-de.hub.arcgis.com/datasets/dd4580c810204019a7b8eb3e0b329dd6_0
+
+    The provided data is either geojson or csv.
+
+  - Vaccination data (RKI-V)
+
+    https://github.com/robert-koch-institut/COVID-19-Impfungen_in_Deutschland
+
+    Robert Koch-Institut (2021): COVID-19-Impfungen in Deutschland, Berlin: Zenodo. DOI:10.5281/zenodo.5126652
+
+  - Testing Data (RKI-T)
+
+    https://www.rki.de/DE/Content/InfAZ/N/Neuartiges_Coronavirus/Daten/Testzahlen-gesamt.xlsx
 
 - Population data (P) like "Einwoherzahl" for Bundesländer and Landkreise:
 
@@ -50,15 +62,21 @@ Our sources are:
 
   https://www.zensus2011.de/SharedDocs/Downloads/DE/Pressemitteilung/DemografischeGrunddaten/1A_EinwohnerzahlGeschlecht.xls?__blob=publicationFile&v=5
 
-- Data from John Hopkins University (JH)
-
-  We want to get data from the Spanish Ministery of Health (MISAN) provided in the github repo:
-
-  https://github.com/datadista/datasets/tree/master/COVID%2019
+  https://www.regionalstatistik.de/genesis/online
 
 - Data from DIVI Intensivregister (DIVI)
 
-- (MISAN)
+  https://www.intensivregister.de/#/aktuelle-lage/downloads
+
+- Commuter Data from "Bundesagentur fuer Arbeit" (BAA)
+
+  https://statistik.arbeitsagentur.de/SiteGlobals/Forms/Suche/Einzelheftsuche_Formular.html?submit=Suchen&topic_f=beschaeftigung-sozbe-krpend
+
+- Data from "Stastistischen Bundesamt" destatis (DES)
+
+  https://www.destatis.de/DE/Themen/Laender-Regionen/Regionales/Gemeindeverzeichnis/_inhalt.html
+
+- Data from John Hopkins University (JH)
 
 Installation
 ------------
@@ -163,21 +181,30 @@ When speaking about infected, means always infected inclusive the already recove
 ============== ==========  ================================== =================
 Source         Folder      Files                              Data description
 ============== ==========  ================================== =================
-RKI            Germany     infected_rki                       Numbers of infected over time for whole Germany
-RKI            Germany     deaths_rki                         Numbers of deaths over time for whole Germany
-RKI            Germany     all_germany_rki                    infected, deaths, recovered over time for whole Germany
-RKI            Germany     infected_state_rki                 infected over time for different states (Bundesländer)
-RKI            Germany     all_state_rki                      infected, deaths, recovered over time for different states (Bundesländer)
-RKI            Germany     infected_county_rki                infected over time for different counties (Landkreise)
-RKI            Germany     all_county_rki                     infected, deaths, recovered over time for different counties (Landkreise)
-RKI            Germany     all_gender_rki                     infected, deaths, recovered over time for different gender
-RKI            Germany     all_age_rki                        infected, deaths, recovered over time for different age ranges
-RKI            Germany     all_state_age_rki                  infected, deaths, recovered over time for different age ranges and states
-RKI            Germany     all_state_gender_rki               infected, deaths, recovered over time for different genders and states
-RKI            Germany     all_county_age_rki                 infected, deaths, recovered over time for different age ranges and counties
-RKI            Germany     all_county_gender_rki              infected, deaths, recovered over time for different genders counties
+RKI-C          Germany     infected_rki                       Numbers of infected over time for whole Germany
+RKI-C          Germany     deaths_rki                         Numbers of deaths over time for whole Germany
+RKI-C          Germany     all_germany_rki                    infected, deaths, recovered over time for whole Germany
+RKI-C          Germany     infected_state_rki                 infected over time for different states (Bundesländer)
+RKI-C          Germany     all_state_rki                      infected, deaths, recovered over time for different states (Bundesländer)
+RKI-C          Germany     infected_county_rki                infected over time for different counties (Landkreise)
+RKI-C          Germany     all_county_rki                     infected, deaths, recovered over time for different counties (Landkreise)
+RKI-C          Germany     all_gender_rki                     infected, deaths, recovered over time for different gender
+RKI-C          Germany     all_age_rki                        infected, deaths, recovered over time for different age ranges
+RKI-C          Germany     all_state_age_rki                  infected, deaths, recovered over time for different age ranges and states
+RKI-C          Germany     all_state_gender_rki               infected, deaths, recovered over time for different genders and states
+RKI-C          Germany     all_county_age_rki                 infected, deaths, recovered over time for different age ranges and counties
+RKI-C          Germany     all_county_gender_rki              infected, deaths, recovered over time for different genders counties
 
-RKI            Germany     vaccine_data_[DATE]                administered vaccines, first shot, full vaccination, vaccination ratio, vacc ratio young, vacc ratio old
+RKI-V          Germany     all_county_agevacc_vacc_all_dates  vaccinations over time for different age ranges(from original data) and counties
+RKI-V          Germany     all_states_agevacc_vacc_all_dates  vaccinations over time for different age ranges(from original data) and states
+RKI-V          Germany     all_county_vacc_all_dates          vaccinations over time for different counties
+RKI-V          Germany     all_states_vacc_all_dates          vaccinations over time for different states
+RKI-V          Germany     all_county_ageinf_vacc_all_dates   vaccinations over time for different age ranges(matching case data) and counties
+RKI-V          Germany     all_states_ageinf_vacc_all_dates   vaccinations over time for different age ranges(matching case data) and states
+
+RKI-T          Germany     germany_testpos                    potive rates of tests over time for germany
+RKI-T          Germany     germany_states_testpos             positve rates of tests over time for different states
+RKI-T          Germany     germany_conties_from_states_testpos positive rates of tests over time for different counties from positive rate for states
 
 RKI-Estimation Germany     all_germany_rki_estimated          infected, deaths, recovered, recovered_estimated, deaths_estimated over time for whole Germany
 RKI-Estimation Germany     all_state_rki_estimated            infected, deaths, recovered, recovered_estimated, deaths_estimated over time for different states (Bundesländer)
@@ -189,7 +216,8 @@ RKI-Estimation Germany     all_state_gender_rki_estimated     infected, deaths, 
 RKI-Estimation Germany     all_county_age_rki_estimated       infected, deaths, recovered, recovered_estimated, deaths_estimated over time for different age ranges and counties
 RKI-Estimation Germany     all_county_gender_rki_estimated    infected, deaths, recovered, recovered_estimated, deaths_estimated over time for different genders counties
 
-P              Germany     county_current_population          Einwohnerzahl for different age groups from the 2011 census, extrapolated to the current level
+P              Germany     county_current_population_dim401   Einwohnerzahl for different age groups from the 2011 census, extrapolated to the current level
+P              Germany     county_population_dim401           Einwohnerzahl for different age groups from the 2011 census
 P              Germany     migration                          Unchanged migration data
 P              Germany     reg_key                            Unchangenged regional keys from excel table
 P              Germany     zensus                             Unchanged Zensus data
@@ -209,6 +237,9 @@ DIVI           Germany     FullData_DIVI                      Full data as downl
 DIVI           Germany     county_divi                        ICU, ICU_ventilated over time for different counties (Landkreise) with columns ['County', 'ID_County', 'ICU', 'ICU_ventilated', 'Date']
 DIVI           Germany     state_divi                         ICU, ICU_ventilated over time for different states (Bundesländer) with columns ['Date', 'ICU', 'ICU_ventilated', 'ID_State', 'State']
 DIVI           Germany     germany_divi                       ICU, ICU_ventilated over time for whole Germany with columns ['Date', 'ICU', 'ICU_ventilated']
+
+BAA            Germany     migration_bfa_2020_dim401          number of commuters from one county into another indexed by county ids (with eisenach)
+BAA            Germany     migration_bfa_2020_dim400          number of commuters from one county into another indexed by county ids (with eisenach merged into wartburgkreis)
 ============== ==========  ================================== =================
 
 Testing and Coverage
