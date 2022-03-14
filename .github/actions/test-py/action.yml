@@ -53,6 +53,9 @@ runs:
           getdividata --help
           getsimdata --help
           cleandata --help
+          getrkiestimation --help
+          getcommutermobility --help
+          getvaccinationdata --help
         fi
     - name: Upload coverage reports
       uses: actions/upload-artifact@v2

@@ -231,6 +231,8 @@ jobs:
           getpopuldata -o data_dl
           getjhdata -o data_dl
           getdividata -o data_dl
+          getcommutermobility -o data_dl
+          getvaccinationdata -o data_dl
       - name: Upload Data
         uses: actions/upload-artifact@v2
         with:
