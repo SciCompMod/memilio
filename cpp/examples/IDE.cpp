@@ -1,7 +1,6 @@
 #include "IDE/IDE.h"
 #include "memilio/math/eigen.h"
 #include "memilio/utils/time_series.h"
-//#include "secir/secir_result_io.h"
 
 #include <vector>
 #include <iostream>
@@ -22,10 +21,12 @@ int main(){
     }
 
     mio::IdeModel model(result, dt, N);
-    model.add_damping(5.0,0.5);
-    model.add_damping(7,3.5);
+    
+    mio::ContactMatrix& contact_matrix=model.get_contact_matrix();
+    contact_matrix = mio::ContactMatrix(Eigen::MatrixXd::Constant(1,1,1/8.2),Eigen::MatrixXd::Constant(1,1,0.5/8.2));
+    contact_matrix.add_damping(0.7, mio::SimulationTime(3.0));
+
     model.simulate(tmax);
-    model.calculate_EIR(); //uto res =
+    model.calculate_EIR(); 
     model.print_result(true);
-   // mio::save_result(res, "test_result.h5");
 }

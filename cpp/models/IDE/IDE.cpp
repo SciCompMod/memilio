@@ -1,4 +1,5 @@
 #include "IDE/IDE.h"
+#include "memilio/epidemiology/contact_matrix.h"
 #include <iostream>
 
 namespace mio{
@@ -7,16 +8,16 @@ namespace mio{
 
     /**
     * Constructor of IDEModel
-    * @param init Vector with 3d Vectors in its entries containing the initial (time, quantity of susceptible, R0t) values
+    * @param init TimeSeries with 3d Vectors in its entries containing the initial (time, quantity of susceptible, R0t) values
     *   the time values should have a distance of dt_init; we need time values from -(k-1)*dt until 0 -> condition: length_init>= k
-    *   (with k=std::ceil((timeinfectious+timelatency)/dt)) with default values: take 11.6 and you are safe
+    *   (with k=std::ceil((infectiousTime+latencyTime)/dt)) with default values: take 11.6 and you are safe
     * @param dt_init size of the time step used for numerical integration
     * @param N population of the considered Region 
     */
     IdeModel::IdeModel(TimeSeries<double> init, double dt_init, int N_init)
     :result(init), dt(dt_init),N(N_init){
-        l=(int) std::floor(timelatency/dt);
-        k=(int) std::ceil((timeinfectious+timelatency)/dt);
+        l=(int) std::floor(latencyTime/dt);
+        k=(int) std::ceil((infectiousTime+latencyTime)/dt);
     }
 
     /**
@@ -24,10 +25,10 @@ namespace mio{
     * @param latency The value of the new latency time
     */
     void IdeModel::set_latencytime(double latency){
-        timelatency=latency;
+        latencyTime=latency;
         //initialize parameters k and  l used for numerical calculations in the simulation
-        l=(int) std::floor(timelatency/dt);
-        k=(int) std::ceil((timeinfectious+timelatency)/dt);
+        l=(int) std::floor(latencyTime/dt);
+        k=(int) std::ceil((infectiousTime+latencyTime)/dt);
     }
 
     /**
@@ -35,21 +36,28 @@ namespace mio{
     * @param infectious The value of the new infectious time
     */
     void IdeModel::set_infectioustime(double infectious){
-        timeinfectious=infectious;
-        k=(int) std::ceil((timeinfectious+timelatency)/dt);
+        infectiousTime=infectious;
+        k=(int) std::ceil((infectiousTime+latencyTime)/dt);
+    }
+
+    /**
+    * Get Reference to used ContactMatrix
+    */
+    ContactMatrix& IdeModel::get_contact_matrix(){
+        return contact_matrix;
     }
 
     /**
     * Density of the generalized beta distribution used for the function f_{beta} of the IDGL model.
     * 
-    * @param tau: Function  of 
+    * @param tau Functionparameter
     * @param p parameter p of the generalized Beta distribution
     * @param q parameter q of the generalized Beta distribution
     */
     double IdeModel::Beta(double tau, double p, double q) const{
-        if((timelatency<tau) && (timeinfectious+timelatency>tau)){
-            return tgamma(p+q)*pow(tau-timelatency,p-1)*pow(timeinfectious+timelatency-tau,q-1)/
-                (tgamma(p)*tgamma(q)*pow(timeinfectious,p+q-1));
+        if((latencyTime<tau) && (infectiousTime+latencyTime>tau)){
+            return tgamma(p+q)*pow(tau-latencyTime,p-1)*pow(infectiousTime+latencyTime-tau,q-1)/
+                (tgamma(p)*tgamma(q)*pow(infectiousTime,p+q-1));
         }
         return 0.0;
     }
@@ -74,7 +82,7 @@ namespace mio{
         int i=idx-k+1;
         while (i<=idx-l-2){
             res+=(Beta(result.get_time(idx) - result.get_time(i))*S_derivative(i));
-            i++;
+            ++i;
         }
         return res;
     }
@@ -84,39 +92,19 @@ namespace mio{
     * @param t_max last simulation day
     * @return result of the simulation, stored in a TimeSeries with simulation time and associated number of susceptibles (S).
     */
-    TimeSeries<double> IdeModel::simulate(int t_max){
-        double R0t_last=1.0;
-        double R0t_current=1.0;
-        int idx_R0t=0;
-        bool next=false;
-        //set initial R0t
-        if (idx_R0t<length_R0t && R0t[idx_R0t][0]<=0.0){
-            
-            std::cout<<"here"<<std::endl;
-            R0t_last=R0t[idx_R0t][1];
-            R0t_current=R0t[idx_R0t][1];
-            idx_R0t++;
-        }
-
+    const TimeSeries<double>& IdeModel::simulate(int t_max){
         while (result.get_last_time()<t_max){
-            //change last R0t if it was changed in the last timestep
-            if(next){
-                next=false;
-                R0t_last=R0t_current;
-            }
-
-            if(idx_R0t<length_R0t && R0t[idx_R0t][0]<=round((result.get_last_time()+dt)*10000.0)/10000.0){
-                R0t_current=R0t[idx_R0t][1];
-                idx_R0t++;
-                // remembering, that R0t_last has to be changed in the next time step
-                next=true;
-            }
-
             result.add_time_point(round((result.get_last_time()+dt)*10000.0)/10000.0);
-            Eigen::Index idx=result.get_num_time_points();
-            result.get_last_value()=Vec::Constant(1,result[idx-2][0]* exp(
-                    dt/(2*N)*(R0t_last * num_integration_inner_integral(idx-2)+
-                    R0t_current* num_integration_inner_integral(idx-1))));
+            Eigen::Index idx = result.get_num_time_points();
+
+            //R0t = effective contactfrequency at time t * timeinfectious
+            auto R0t1 = contact_matrix.get_matrix_at(result.get_time(idx-2))(0,0) * infectiousTime;
+            auto R0t2 = contact_matrix.get_matrix_at(result.get_last_time())(0,0) * infectiousTime;
+
+            result.get_last_value()=Vec::Constant(1,
+                    result[idx-2][0] * exp( dt * (0.5 * 1/N) * ( 
+                        R0t1 * num_integration_inner_integral(idx-2) + 
+                        R0t2 * num_integration_inner_integral(idx-1) )));
         }
         return result;
     }
@@ -128,10 +116,10 @@ namespace mio{
     * @return result of the calculation stored in an TimeSeries. The TimeSeries contains the simulation time and an associated Vector 
     * with values for S, E, I and R 
     */
-    TimeSeries<double> IdeModel::calculate_EIR(){
+    const TimeSeries<double>& IdeModel::calculate_EIR(){
         Eigen::Index num_points=result.get_num_time_points();
         double S,E,I,R;
-        for (int i = k; i < num_points; i++) {
+        for (int i = k; i < num_points; ++i) {
             S=result[i][0];
             E=result[i-l][0]-S;
             I=result[i-k][0]-result[i-l][0];
@@ -139,17 +127,6 @@ namespace mio{
             result_SEIR.add_time_point(result.get_time(i),(Vec(4) << S,E,I,R).finished());
         }
         return result_SEIR;
-    }
-    
-    /**
-    * add a damping to simulate a new NPI;
-    * dampings has to be added in ascending chronological order 
-    * @param time time at which new damping should start. prerequisite: time>=0
-    * @param R0t_time new R0t value. Is used from "time" until next time, a damping is set
-    */
-    void IdeModel::add_damping(double time, double R0t_time){
-        R0t.push_back(Eigen::Vector2d(time,R0t_time)); 
-        length_R0t++;
     }
 
     /**
@@ -161,14 +138,14 @@ namespace mio{
         if (calculated_SEIR){
             std::cout<<"time  |  S  |  E  |  I  |  R"<<std::endl;
             Eigen::Index num_points=result_SEIR.get_num_time_points();
-            for (int i = 0; i < num_points; i++) {
+            for (int i = 0; i < num_points; ++i) {
                 std::cout<<result_SEIR.get_time(i)<<"  |  "<<result_SEIR[i][0]<<"  |  "<<result_SEIR[i][1]
                     <<"  |  "<<result_SEIR[i][2]<<"  |  "<<result_SEIR[i][3]<<std::endl;
             }
         }else{
             std::cout<<"time  |  number of susceptibles"<<std::endl;
             Eigen::Index num_points=result.get_num_time_points();
-            for (int i = 0; i < num_points; i++) {
+            for (int i = 0; i < num_points; ++i) {
                 std::cout<<result.get_time(i)<<"  |  "<<result[i][0]<<std::endl;
             }
         }
