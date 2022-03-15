@@ -224,8 +224,8 @@ RKI-Estimation Germany     all_state_gender_rki_estimated     infected, deaths, 
 RKI-Estimation Germany     all_county_age_rki_estimated       infected, deaths, recovered, recovered_estimated, deaths_estimated over time for different age ranges and counties
 RKI-Estimation Germany     all_county_gender_rki_estimated    infected, deaths, recovered, recovered_estimated, deaths_estimated over time for different genders counties
 
-P              Germany     county_current_population_dim401   Einwohnerzahl for different age groups from the 2011 census, extrapolated to the current level
-P              Germany     county_population_dim401           Einwohnerzahl for different age groups from the 2011 census
+P              Germany     county_current_population[_dim401] Einwohnerzahl for different age groups from the 2011 census, extrapolated to the current level [with Wartburgkreis and Eisenach separated]
+P              Germany     county_population[_dim401]         Einwohnerzahl for different age groups from the 2011 census [with Wartburgkreis and Eisenach separated]
 P              Germany     migration                          Unchanged migration data
 P              Germany     reg_key                            Unchangenged regional keys from excel table
 P              Germany     zensus                             Unchanged Zensus data
