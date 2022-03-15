@@ -9,36 +9,38 @@
 
 namespace mio
 {
-class IdeModel{
-    public:
-        IdeModel(TimeSeries<double> init, double dt_init, int N_init);
+class IdeModel
+{
+public:
+    IdeModel(TimeSeries<double>&& init, double dt_init, int N_init);
 
-        ContactMatrix& get_contact_matrix();
-        void set_latencytime(double latency);
-        void set_infectioustime(double infectious);
+    ContactMatrix& get_contact_matrix();
+    void set_latencytime(double latency);
+    void set_infectioustime(double infectious);
 
-        const TimeSeries<double>& simulate(int t_max);
-        const TimeSeries<double>& calculate_EIR();
-        void print_result(bool calculated_SEIR=false) const;
-        
-    private:
-        double Beta(double tau, double p=3.0, double q=10.0) const;
-        double S_derivative(int idx) const;
-        double num_integration_inner_integral(int idx) const;
+    const TimeSeries<double>& simulate(int t_max);
+    const TimeSeries<double>& calculate_EIR();
+    void print_result(bool calculated_SEIR = false) const;
 
-        // vector containing one time Step per entry stored in an Eigen Vector (time, number of Susceptible at time t, R0t)
-        TimeSeries<double> result; 
-        TimeSeries<double> result_SEIR=TimeSeries<double>(4); 
+private:
+    double Beta(double tau, double p = 3.0, double q = 10.0) const;
+    double S_derivative(Eigen::Index idx) const;
+    double num_integration_inner_integral(Eigen::Index idx) const;
 
-        ContactMatrix contact_matrix=ContactMatrix(Eigen::MatrixXd::Constant(1,1,10),Eigen::MatrixXd::Constant(1,1,1));
+    // vector containing one time Step per entry stored in an Eigen Vector (time, number of Susceptible at time t, R0t)
+    TimeSeries<double> result;
+    TimeSeries<double> result_SEIR = TimeSeries<double>(4);
 
-        double latencyTime=3.3;
-        double infectiousTime=8.2;
+    ContactMatrix contact_matrix{
+        ContactMatrix(Eigen::MatrixXd::Constant(1, 1, 10), Eigen::MatrixXd::Constant(1, 1, 1))};
 
-        double dt=0;
-        int k=0;
-        int l=0;
-        int N=0;
-        };
-}// namespace mio
+    double latencyTime{3.3};
+    double infectiousTime{8.2};
+
+    double dt{0};
+    Eigen::Index k{0};
+    Eigen::Index l{0};
+    int N{0};
+};
+} // namespace mio
 #endif
