@@ -18,7 +18,6 @@
 # limitations under the License.
 #############################################################################
 from datetime import date, datetime
-import sys
 import time
 import os
 import itertools
@@ -60,32 +59,47 @@ def create_intervals_mapping(from_lower_bounds, to_lower_bounds):
     @param from_lower_bounds lower bounds of original intervals
     @param to_lower_bounds desired lower bounds of new intervals
     @return mapping from intervals to intervals
-        The mapping is given as a list containing for every original interval a
-        list of tupels of the share of the original interval that is mapped to
-        the new interval and the index of the new interval
+        The mapping is given as a list of tupels for every original interval.
+        The list contains a tuple for every new interval intersecting the 
+        original interval. Each tuple defines the share of the original interval
+        that is mapped to the new interval and the index of the new interval. We
+        assume that the range of the intervals mapped from is contained in the 
+        range of the intervals mapped to.
+        For example for from_lower_bounds = [5,20,30,80,85,90] and 
+        to_lower_bounds=[0,15,20,60,100] given the mapping would be
+        [[[2/3,0], [1/3,1]],
+         [[1,2]],
+         [[3/5,2], [2/5,3]],
+         [[1,3]],
+         [[1,3]]]
     """
+    if (from_lower_bounds[0] < to_lower_bounds[0] or
+            from_lower_bounds[-1] > to_lower_bounds[-1]):
+        raise ValueError("Range of intervals mapped from exeeds range of" +
+                         "intervals mapped to.")
     # compute the shares of the original intervals mapped to the new intervals
     from_to_mapping = [[] for i in range(0, len(from_lower_bounds)-1)]
-    j = 0  # iterator over new intervals
+    to_idx = 0  # iterator over new intervals
     # iterate over original intervals
-    for i in range(0, len(from_lower_bounds) - 1):
-        remaining_share = 1  # share of original interval i to be distributed
+    for from_idx in range(0, len(from_lower_bounds) - 1):
+        remaining_share = 1  # share of original interval to be distributed
         # position up to which the distribution is already computed
-        pos = from_lower_bounds[i]
-        # find first new interval j insecting original interval i
-        while from_lower_bounds[i] >= to_lower_bounds[j+1]:
-            j += 1
-        while from_lower_bounds[i+1] > to_lower_bounds[j+1]:
-            # compute share of interval i that is send to interval j
-            len_interval_i = from_lower_bounds[i+1] - from_lower_bounds[i]
-            share = (to_lower_bounds[j+1] - pos) / len_interval_i
-            from_to_mapping[i].append([share, j])
+        pos = from_lower_bounds[from_idx]
+        len_orig_interval = from_lower_bounds[from_idx+1] - pos
+        # find first new interval intersecting the original interval
+        while pos >= to_lower_bounds[to_idx+1]:
+            to_idx += 1
+        while from_lower_bounds[from_idx+1] > to_lower_bounds[to_idx+1]:
+            # compute share of original interval that is send to new interval
+            share = (to_lower_bounds[to_idx+1] - pos) / len_orig_interval
+            from_to_mapping[from_idx].append([share, to_idx])
             remaining_share -= share
-            pos = to_lower_bounds[j+1]
-            j += 1
-        # if upper bound of new interval j is not smaller than upper bound of
-        # original interval i assign remaining share of interval i to interval j
-        from_to_mapping[i].append([remaining_share, j])
+            pos = to_lower_bounds[to_idx+1]
+            to_idx += 1
+        # if upper bound of the new interval is not smaller than upper bound of
+        # the original interval assign remaining share of the original interval
+        # to the new interval
+        from_to_mapping[from_idx].append([remaining_share, to_idx])
     return from_to_mapping
 
 

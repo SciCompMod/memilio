@@ -294,14 +294,15 @@ class TestGetVaccinationData(fake_filesystem_unittest.TestCase):
                     'Column names do not match.')
 
     def test_interval_mapping(self):
-        from_lower_bounds1 = np.array(
-            [0, 3, 6, 15, 18, 25, 30, 40, 50, 65, 74, 100])
-        to_lower_bounds1 = np.array(
-            [0, 3, 5, 6, 12, 15, 18, 25, 30, 35, 40, 50, 60, 65, 74, 80, 100])
-        from_lower_bounds2 = np.array([0, 10, 20, 70, 100])
-        to_lower_bounds2 = np.array([0, 5, 15, 20, 50, 60, 70, 85, 90, 100])
-        from_lower_bounds3 = np.array([0, 20, 100])
-        to_lower_bounds3 = np.array([0, 50, 60, 80, 100])
+        from_lower_bounds1 = [0, 3, 6, 15, 18, 25, 30, 40, 50, 65, 74, 100]
+        to_lower_bounds1 = [0, 3, 5, 6, 12, 15, 18, 25, 30, 35, 40, 50, 60, 65,
+                            74, 80, 100]
+        from_lower_bounds2 = [0, 10, 20, 70, 100]
+        to_lower_bounds2 = [0, 5, 15, 20, 50, 60, 70, 85, 90, 100]
+        from_lower_bounds3 = [5, 20, 30, 80, 85, 90]
+        to_lower_bounds3 = [0, 15, 20, 60, 100]
+        from_lower_bounds4 = [0, 10, 100]
+        to_lower_bounds4 = [10, 20, 90]
 
         test_map1 = [
             [[1, 0]],
@@ -323,8 +324,11 @@ class TestGetVaccinationData(fake_filesystem_unittest.TestCase):
             [[1/2, 6], [1/6, 7], [1/3, 8]]]
 
         test_map3 = [
-            [[1, 0]], [[0.375, 0], [0.125, 1], [0.25, 2], [0.25, 3]]
-        ]
+            [[2/3, 0], [1/3, 1]],
+            [[1, 2]],
+            [[3/5, 2], [2/5, 3]],
+            [[1, 3]],
+            [[1, 3]]]
 
         map_bounds1 = gvd.create_intervals_mapping(
             from_lower_bounds1, to_lower_bounds1)
@@ -332,6 +336,8 @@ class TestGetVaccinationData(fake_filesystem_unittest.TestCase):
             from_lower_bounds2, to_lower_bounds2)
         map_bounds3 = gvd.create_intervals_mapping(
             from_lower_bounds3, to_lower_bounds3)
+        with self.assertRaises(ValueError):
+            gvd.create_intervals_mapping(from_lower_bounds4, to_lower_bounds4)
 
         for test_map, calculated_map in zip(test_map1, map_bounds1):
             for test_val, calculated_val in zip(test_map, calculated_map):
