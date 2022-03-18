@@ -24,7 +24,7 @@
 #include "secir/parameter_studies.h"
 #include "secir/secir_result_io.h"
 #include "secir/secir_parameters_io.h"
-#include "memilio/mobility/mobility.h"
+#include "memilio/io/mobility_io.h"
 #include <distributions_helpers.h>
 #include <matchers.h>
 #include "temp_file_register.h"
