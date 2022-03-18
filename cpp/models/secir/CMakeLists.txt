@@ -1,5 +1,4 @@
 add_library(secir
-    age_group.h
     infection_state.h
     analyze_result.h
     analyze_result.cpp

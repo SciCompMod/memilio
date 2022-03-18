@@ -4,6 +4,7 @@ add_library(memilio
     config.h
     data/analyze_result.h
     data/analyze_result.cpp
+    epidemiology/age_group.h
     epidemiology/populations.h
     epidemiology/damping.cpp
     epidemiology/damping.h
