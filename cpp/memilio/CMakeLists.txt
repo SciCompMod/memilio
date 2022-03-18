@@ -2,6 +2,8 @@ configure_file(config_internal.h.in memilio/config_internal.h)
 
 add_library(memilio
     config.h
+    data/analyze_result.h
+    data/analyze_result.cpp
     epidemiology/populations.h
     epidemiology/damping.cpp
     epidemiology/damping.h
