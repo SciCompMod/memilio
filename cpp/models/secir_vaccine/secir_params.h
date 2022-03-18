@@ -36,10 +36,6 @@ namespace mio
 namespace vaccinated
 {
 
-    /*******************************************
- * Define Parameters of the SECIHURD model *
- *******************************************/
-
     /**
  * @brief the start day in the SECIR model
  * The start day defines in which season the simulation can be started

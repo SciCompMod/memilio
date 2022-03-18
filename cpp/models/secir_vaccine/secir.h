@@ -32,10 +32,6 @@ namespace mio
 {
 namespace vaccinated
 {
-
-    // Create template specializations for the age resolved
-    // SECIHURD model
-
     class SecirModel : public CompartmentalModel<Populations<AgeGroup, InfectionState>, SecirParams>
     {
         using Base = CompartmentalModel<mio::Populations<AgeGroup, InfectionState>, SecirParams>;
@@ -46,173 +42,12 @@ namespace vaccinated
         SecirModel(const Populations& pop, const ParameterSet& params)
             : Base(pop, params)
         {
-#if !USE_DERIV_FUNC
-            size_t n_agegroups = (size_t)AgeGroup::Count;
-            for (size_t i = 0; i < n_agegroups; i++) {
-                for (size_t j = 0; j < n_agegroups; j++) {
-
-                    // Si to Ei individually for each age group j
-                    this->add_flow(
-                        std::make_tuple((AgeGroup)i, InfectionState::S),
-                        std::make_tuple((AgeGroup)i, InfectionState::E),
-                        [i, j](Pa const& p, Eigen::Ref<const Eigen::VectorXd> pop, Eigen::Ref<const Eigen::VectorXd> y,
-                               double t) {
-                            //symptomatic are less well quarantined when testing and tracing is overwhelmed so they infect more people
-                            auto test_and_trace_required = (1 - params.probabilities[i].get_asymp_per_infectious()) *
-                                                           dummy_R3 * Po::get_from(pop, (AgeGroup)i, InfectionState::C);
-                            auto risk_from_symptomatic =
-                                smoother_cosine(test_and_trace_required, params.get_test_and_trace_capacity(),
-                                                params.get_test_and_trace_capacity() * 5,
-                                                params.probabilities[i].get_risk_from_symptomatic(),
-                                                params.probabilities[i].get_test_and_trace_max_risk_from_symptomatic());
-
-                            // effective contact rate by contact rate between groups i and j and damping j
-                            ScalarType season_val =
-                                (1 +
-                                 p.get_seasonality() * sin(3.141592653589793 *
-                                                           (std::fmod((p.get_start_day() + t), 365.0) / 182.5 + 0.5)));
-                            ScalarType cont_freq_eff =
-                                season_val * contact_matrix.get_matrix_at(t)(static_cast<Eigen::Index>(i),
-                                                                             static_cast<Eigen::Index>(j));
-                            ScalarType Nj = Po::get_from(pop, (AgeGroup)j, InfectionState::S) +
-                                            Po::get_from(pop, (AgeGroup)j, InfectionState::E) +
-                                            Po::get_from(pop, (AgeGroup)j, InfectionState::C) +
-                                            Po::get_from(pop, (AgeGroup)j, InfectionState::I) +
-                                            Po::get_from(pop, (AgeGroup)j, InfectionState::H) +
-                                            Po::get_from(pop, (AgeGroup)j, InfectionState::U) +
-                                            Po::get_from(pop, (AgeGroup)j, InfectionState::R); // without died people
-                            ScalarType divNj = 1.0 / Nj; // precompute 1.0/Nj
-                            ScalarType Si    = Po::get_from(y, (AgeGroup)i, InfectionState::S);
-                            ScalarType Cj    = Po::get_from(pop, (AgeGroup)j, InfectionState::C);
-                            ScalarType Ij    = Po::get_from(pop, (AgeGroup)j, InfectionState::I);
-                            return Si * cont_freq_eff * divNj * p.probabilities[i].get_infection_from_contact() *
-                                   (p.probabilities[j].get_carrier_infectability() * Cj + risk_from_symptomatic * Ij);
-                        });
-                }
-
-                // Ei to Ci
-                this->add_flow(std::make_tuple((AgeGroup)i, InfectionState::E),
-                               std::make_tuple((AgeGroup)i, InfectionState::C),
-                               [i](Pa const& p, Eigen::Ref<const Eigen::VectorXd> /*pop*/,
-                                   Eigen::Ref<const Eigen::VectorXd> y, double /*t*/) {
-                                   return Po::get_from(y, (AgeGroup)i, InfectionState::E) /
-                                          (2 * p.times[i].get_serialinterval() - p.times[i].get_incubation());
-                               });
-
-                // Ci to Ii
-                this->add_flow(
-                    std::make_tuple((AgeGroup)i, InfectionState::C), std::make_tuple((AgeGroup)i, InfectionState::I),
-                    [i](Pa const& p, Eigen::Ref<const Eigen::VectorXd> /*pop*/, Eigen::Ref<const Eigen::VectorXd> y,
-                        double /*t*/) {
-                        double dummy_R3 = 0.5 / (p.times[i].get_incubation() - p.times[i].get_serialinterval());
-                        double alpha    = p.probabilities[i].get_asymp_per_infectious();
-                        return ((1 - alpha) * dummy_R3) * Po::get_from(y, (AgeGroup)i, InfectionState::C);
-                    });
-
-                // Ci to Ri
-                this->add_flow(std::make_tuple((AgeGroup)i, InfectionState::C),
-                               std::make_tuple((AgeGroup)i, InfectionState::R),
-                               [i](Pa const& p, Eigen::Ref<const Eigen::VectorXd> /*pop*/,
-                                   Eigen::Ref<const Eigen::VectorXd> y, double /*t*/) {
-                                   double alpha = p.probabilities[i].get_asymp_per_infectious();
-                                   return (alpha / p.times[i].get_infectious_asymp()) *
-                                          Po::get_from(y, (AgeGroup)i, InfectionState::C);
-                               });
-
-                // Ii to Ri
-                this->add_flow(std::make_tuple((AgeGroup)i, InfectionState::I),
-                               std::make_tuple((AgeGroup)i, InfectionState::R),
-                               [i](Pa const& p, Eigen::Ref<const Eigen::VectorXd> /*pop*/,
-                                   Eigen::Ref<const Eigen::VectorXd> y, double /*t*/) {
-                                   return Po::get_from(y, (AgeGroup)i, InfectionState::I) *
-                                          (1 - p.probabilities[i].get_hospitalized_per_infectious()) /
-                                          p.times[i].get_infectious_mild();
-                               });
-
-                // Ii to Hi
-                this->add_flow(std::make_tuple((AgeGroup)i, InfectionState::I),
-                               std::make_tuple((AgeGroup)i, InfectionState::H),
-                               [i](Pa const& p, Eigen::Ref<const Eigen::VectorXd> /*pop*/,
-                                   Eigen::Ref<const Eigen::VectorXd> y, double /*t*/) {
-                                   return Po::get_from(y, (AgeGroup)i, InfectionState::I) *
-                                          p.probabilities[i].get_hospitalized_per_infectious() /
-                                          p.times[i].get_home_to_hospitalized();
-                               });
-
-                // Hi to Ui
-                this->add_flow(std::make_tuple((AgeGroup)i, InfectionState::H),
-                               std::make_tuple((AgeGroup)i, InfectionState::U),
-                               [i](Pa const& p, Eigen::Ref<const Eigen::VectorXd> /*pop*/,
-                                   Eigen::Ref<const Eigen::VectorXd> y, double /*t*/) {
-                                   ScalarType icu_occupancy = 0;
-                                   for (size_t j = 0; j < (size_t)AgeGroup::Count; ++j) {
-                                       icu_occupancy += Po::get_from(y, (AgeGroup)j, InfectionState::U);
-                                   }
-
-                                   ScalarType prob_hosp2icu =
-                                       smoother_cosine(icu_occupancy, 0.90 * p.get_icu_capacity(), p.get_icu_capacity(),
-                                                       p.probabilities[i].get_icu_per_hospitalized(), 0);
-
-                                   return Po::get_from(y, (AgeGroup)i, InfectionState::H) * prob_hosp2icu /
-                                          p.times[i].get_hospitalized_to_icu();
-                               });
-
-                // Hi to Di
-                this->add_flow(
-                    std::make_tuple((AgeGroup)i, InfectionState::H), std::make_tuple((AgeGroup)i, InfectionState::D),
-                    [i](Pa const& p, Eigen::Ref<const Eigen::VectorXd> /*pop*/, Eigen::Ref<const Eigen::VectorXd> y,
-                        double /*t*/) {
-                        ScalarType icu_occupancy = 0;
-                        for (size_t j = 0; j < (size_t)AgeGroup::Count; ++j) {
-                            icu_occupancy += Po::get_from(y, (AgeGroup)j, InfectionState::U);
-                        }
-
-                        ScalarType prob_hosp2icu =
-                            smoother_cosine(icu_occupancy, 0.90 * p.get_icu_capacity(), p.get_icu_capacity(),
-                                            p.probabilities[i].get_icu_per_hospitalized(), 0);
-                        ScalarType prob_hosp2dead = p.probabilities[i].get_icu_per_hospitalized() - prob_hosp2icu;
-
-                        return Po::get_from(y, (AgeGroup)i, InfectionState::H) * prob_hosp2dead /
-                               p.times[i].get_hospitalized_to_icu();
-                    });
-
-                // Hi to Ri
-                this->add_flow(std::make_tuple((AgeGroup)i, InfectionState::H),
-                               std::make_tuple((AgeGroup)i, InfectionState::R),
-                               [i](Pa const& p, Eigen::Ref<const Eigen::VectorXd> /*pop*/,
-                                   Eigen::Ref<const Eigen::VectorXd> y, double /*t*/) {
-                                   return Po::get_from(y, (AgeGroup)i, InfectionState::H) *
-                                          (1 - p.probabilities[i].get_icu_per_hospitalized()) /
-                                          p.times[i].get_hospitalized_to_home();
-                               });
-
-                // Ui to Ri
-                this->add_flow(std::make_tuple((AgeGroup)i, InfectionState::U),
-                               std::make_tuple((AgeGroup)i, InfectionState::R),
-                               [i](Pa const& p, Eigen::Ref<const Eigen::VectorXd> /*pop*/,
-                                   Eigen::Ref<const Eigen::VectorXd> y, double /*t*/) {
-                                   return Po::get_from(y, (AgeGroup)i, InfectionState::U) *
-                                          (1 - p.probabilities[i].get_dead_per_icu()) / p.times[i].get_icu_to_home();
-                               });
-
-                // Ui to Di
-                this->add_flow(std::make_tuple((AgeGroup)i, InfectionState::U),
-                               std::make_tuple((AgeGroup)i, InfectionState::D),
-                               [i](Pa const& p, Eigen::Ref<const Eigen::VectorXd> /*pop*/,
-                                   Eigen::Ref<const Eigen::VectorXd> y, double /*t*/) {
-                                   return Po::get_from(y, (AgeGroup)i, InfectionState::U) *
-                                          p.probabilities[i].get_dead_per_icu() / p.times[i].get_icu_to_dead();
-                               });
-            }
-#endif
         }
 
         SecirModel(int num_agegroups)
             : SecirModel(Po({AgeGroup(num_agegroups), InfectionState::Count}), Pa(AgeGroup(num_agegroups)))
         {
         }
-
-#if USE_DERIV_FUNC
 
         void get_derivatives(Eigen::Ref<const Eigen::VectorXd> pop, Eigen::Ref<const Eigen::VectorXd> y, double t,
                              Eigen::Ref<Eigen::VectorXd> dydt) const override
@@ -634,8 +469,6 @@ namespace vaccinated
                             params.get<HospitalizedToICUTime>()[i] * y[HV2i];
             }
         }
-
-#endif // USE_DERIV_FUNC
 
         /**
      * serialize this. 
