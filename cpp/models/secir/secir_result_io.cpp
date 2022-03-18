@@ -147,14 +147,14 @@ IOResult<std::vector<SecirSimulationResult>> read_result(const std::string& file
             hsize_t dims_values[n_dims_values];
             H5Sget_simple_extent_dims(dataspace_values.id, dims_values, NULL);
 
-            auto group_values = std::vector<double[nb_compart]>(dims_values[0]);
+            auto group_values = Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>(dims_values[0], nb_compart);
             MEMILIO_H5_CHECK(
                 H5Dread(dataset_values.id, H5T_NATIVE_DOUBLE, H5S_ALL, H5S_ALL, H5P_DEFAULT, group_values.data()),
                 StatusCode::UnknownError, "Values data could not be read");
 
             for (size_t j = 0; j < dims_values[0]; j++) {
                 for (size_t k = 0; k < nb_compart; k++) {
-                    groups[j][nb_compart * i + k] = group_values[j][k];
+                    groups[j][nb_compart * i + k] = group_values(j, k);
                 }
             }
         }
