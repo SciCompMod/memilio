@@ -267,10 +267,11 @@ namespace vaccinated
             }
             date = offset_date_by_days(date, 1);
         }
-        BOOST_OUTCOME_TRY(save_result(rki_data, region, path_join(results_dir, "Results_rki.h5")));
+        auto num_groups = (int)(size_t)model[0].parameters.get_num_groups();
+        BOOST_OUTCOME_TRY(save_result(rki_data, region, num_groups, path_join(results_dir, "Results_rki.h5")));
 
         auto rki_data_sum = mio::sum_nodes(std::vector<std::vector<TimeSeries<double>>>{rki_data});
-        BOOST_OUTCOME_TRY(save_result({rki_data_sum[0][0]}, {0}, path_join(results_dir, "Results_rki_sum.h5")));
+        BOOST_OUTCOME_TRY(save_result({rki_data_sum[0][0]}, {0}, num_groups, path_join(results_dir, "Results_rki_sum.h5")));
 
         return success();
     }

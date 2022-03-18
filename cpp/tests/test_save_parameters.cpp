@@ -22,9 +22,9 @@
 #include "secir/secir.h"
 #include "secir/parameter_space.h"
 #include "secir/parameter_studies.h"
-#include "secir/secir_result_io.h"
 #include "secir/secir_parameters_io.h"
 #include "memilio/io/mobility_io.h"
+#include "memilio/io/result_io.h"
 #include <distributions_helpers.h>
 #include <matchers.h>
 #include "temp_file_register.h"
@@ -604,7 +604,7 @@ TEST(TestSaveParameters, ExtrapolateRKI)
                                                            scaling_factor_inf, scaling_factor_icu, 1);
     ASSERT_THAT(print_wrap(extrapolate_result), IsSuccess());
 
-    auto read_result = mio::read_result(mio::path_join(results_dir, "Results_rki.h5"), 6);
+    auto read_result = mio::read_result(mio::path_join(results_dir, "Results_rki.h5"));
     ASSERT_THAT(print_wrap(read_result), IsSuccess());
     auto& file_results = read_result.value();
     auto results       = file_results[0].get_groups();

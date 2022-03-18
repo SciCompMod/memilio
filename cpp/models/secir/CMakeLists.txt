@@ -11,8 +11,6 @@ add_library(secir
     secir_params.h
     secir_parameters_io.h
     secir_parameters_io.cpp
-    secir_result_io.h
-    secir_result_io.cpp
     secir.h
     secir.cpp
 )

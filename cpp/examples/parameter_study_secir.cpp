@@ -21,6 +21,7 @@
 #include "secir/parameter_space.h"
 #include "secir/parameter_studies.h"
 #include "memilio/mobility/mobility.h"
+#include "memilio/io/result_io.h"
 
 /**
  * @brief creates xml file with a single run parameter study with std 0 (used to save parameters of individual runs)
@@ -68,8 +69,10 @@ write_single_run_result(const int run,
     std::transform(graph.nodes().begin(), graph.nodes().end(), std::back_inserter(ids), [](auto& node) {
         return node.id;
     });
+    auto num_groups = (int)(size_t)graph.nodes()[0].property.get_simulation().get_model().parameters.get_num_groups();
     BOOST_OUTCOME_TRY(
-        mio::save_result(all_results, ids, mio::path_join(abs_path, ("Results_run" + std::to_string(run) + ".h5"))));
+        mio::save_result(all_results, ids, num_groups,
+                    mio::path_join(abs_path, ("Results_run" + std::to_string(run) + ".h5"))));
 
     return mio::success();
 }

@@ -22,7 +22,6 @@
 
 #ifdef MEMILIO_HAS_JSONCPP
 
-#include "secir/secir_result_io.h"
 #include "memilio/io/io.h"
 #include "memilio/utils/memory.h"
 #include "memilio/utils/uncertain_value.h"

@@ -27,6 +27,8 @@ add_library(memilio
     io/json_serializer.cpp
     io/mobility_io.h
     io/mobility_io.cpp
+    io/result_io.h
+    io/result_io.cpp
     math/euler.cpp
     math/euler.h
     math/smoother.h

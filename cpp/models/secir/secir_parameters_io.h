@@ -25,7 +25,6 @@
 #ifdef MEMILIO_HAS_JSONCPP
 
 #include "secir/secir.h"
-#include "secir/secir_result_io.h"
 #include "secir/analyze_result.h"
 #include "secir/parameter_studies.h"
 #include "memilio/math/eigen_util.h"
@@ -33,6 +32,7 @@
 #include "memilio/mobility/mobility.h"
 #include "memilio/io/io.h"
 #include "memilio/io/json_serializer.h"
+#include "memilio/io/result_io.h"
 #include "memilio/utils/date.h"
 
 namespace mio
@@ -253,10 +253,11 @@ IOResult<void> extrapolate_rki_results(std::vector<Model>& model, const std::str
         }
         date = offset_date_by_days(date, 1);
     }
-    BOOST_OUTCOME_TRY(save_result(rki_data, region, path_join(results_dir, "Results_rki.h5")));
+    auto num_groups = (int)(size_t)model[0].parameters.get_num_groups();
+    BOOST_OUTCOME_TRY(save_result(rki_data, region, num_groups, path_join(results_dir, "Results_rki.h5")));
 
     auto rki_data_sum = mio::sum_nodes(std::vector<std::vector<TimeSeries<double>>>{rki_data});
-    BOOST_OUTCOME_TRY(save_result({rki_data_sum[0][0]}, {0}, path_join(results_dir, "Results_rki_sum.h5")));
+    BOOST_OUTCOME_TRY(save_result({rki_data_sum[0][0]}, {0}, num_groups, path_join(results_dir, "Results_rki_sum.h5")));
 
     return success();
 }
