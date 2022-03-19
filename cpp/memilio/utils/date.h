@@ -145,17 +145,32 @@ struct Date {
 
 /**
  * parses a date from a string.
- * uses fixed format YYYY.MM.DD.
+ * uses fixed format YYYY.MM.DD or YYYY-MM-DD.
  * @param date_str date as a string.
  * @return parsed date.
  */
-inline Date parse_date(const std::string& date_str)
+inline Date parse_date_unsafe(const std::string& date_str)
 {
     Date date;
     date.year  = std::stoi(date_str.substr(0, 4));
     date.month = std::stoi(date_str.substr(5, 2));
     date.day   = std::stoi(date_str.substr(8, 2));
     return date;
+}
+inline IOResult<Date> parse_date(const std::string& date_str)
+{
+    try {
+        Date date;
+        date.year  = std::stoi(date_str.substr(0, 4));
+        date.month = std::stoi(date_str.substr(5, 2));
+        date.day   = std::stoi(date_str.substr(8, 2));
+        if (date.month < 1 || date.month > 12 || date.day < 1 || date.day > 31) {
+            return failure(StatusCode::OutOfRange, "Argument is not a valid date.");
+        }
+        return success(date);
+    } catch (const std::invalid_argument&) {
+        return failure(StatusCode::InvalidValue, "Argument ist not a valid date string.");
+    }
 }
 
 /**

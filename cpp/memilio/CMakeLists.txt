@@ -30,6 +30,8 @@ add_library(memilio
     io/mobility_io.cpp
     io/result_io.h
     io/result_io.cpp
+    io/rki_data.h
+    io/rki_data.cpp
     math/euler.cpp
     math/euler.h
     math/smoother.h

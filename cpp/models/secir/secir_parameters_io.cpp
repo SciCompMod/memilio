@@ -59,7 +59,7 @@ namespace details
                 log_error("Date element must be a string.");
                 return failure(StatusCode::InvalidType, "Date element must be a string.");
             }
-            auto date_temp = parse_date(js_date.asString());
+            auto date_temp = parse_date_unsafe(js_date.asString());
             if (date_temp > max_date) {
                 max_date = date_temp;
             }
@@ -195,7 +195,7 @@ namespace details
                 auto& mu_I_H = vmu_I_H[region_idx];
                 auto& mu_H_U = vmu_H_U[region_idx];
 
-                auto date_df = parse_date(root[i]["Date"].asString());
+                auto date_df = parse_date_unsafe(root[i]["Date"].asString());
 
                 auto it_age = std::find(age_names.begin(), age_names.end() - 1, root[i]["Age_RKI"].asString());
                 if (it_age != age_names.end() - 1) {
@@ -440,7 +440,7 @@ namespace details
             auto it      = std::find_if(vregion.begin(), vregion.end(), [&root, i, &id_name](auto r) {
                 return r == 0 || r == root[i][id_name].asInt();
             });
-            auto date_df = parse_date(root[i]["Date"].asString());
+            auto date_df = parse_date_unsafe(root[i]["Date"].asString());
             if (it != vregion.end() && date_df == date) {
                 auto region_idx = size_t(it - vregion.begin());
                 auto& num_icu   = vnum_icu[region_idx];

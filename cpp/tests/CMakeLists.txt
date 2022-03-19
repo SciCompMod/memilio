@@ -48,6 +48,7 @@ set(TESTSOURCES
 if (MEMILIO_HAS_JSONCPP)
     set(TESTSOURCES ${TESTSOURCES}
         test_json_serializer.cpp
+        test_rki_data_io.cpp
     )
 endif()
 if (MEMILIO_HAS_JSONCPP AND MEMILIO_HAS_HDF5)        
