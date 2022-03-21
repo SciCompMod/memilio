@@ -45,7 +45,7 @@ InfectionState Location::interact(const Person& person, TimeSpan dt,
     auto age               = person.get_age();
     switch (infection_state) {
     case InfectionState::Susceptible:
-        if (this->get_type() == LocationType::PublicTransport) {
+        if (!person.get_cells().empty()) {
             for (auto cell_index : person.get_cells()) {
                 InfectionState new_state = random_transition(
                     infection_state, dt,
@@ -94,10 +94,10 @@ void Location::begin_step(TimeSpan /*dt*/, const GlobalInfectionParameters& glob
 {
     //cache for next step so it stays constant during the step while subpopulations change
     //otherwise we would have to cache all state changes during a step which uses more memory
-    if (m_type != LocationType::PublicTransport && m_num_persons == 0) {
+    if (m_cells.empty() && m_num_persons == 0) {
         m_cached_exposure_rate = {{mio::AbmAgeGroup::Count, mio::VaccinationState::Count}, 0.};
     }
-    else if (m_type != LocationType::PublicTransport) {
+    else if (m_cells.empty()) {
         auto num_carriers              = get_subpopulation(InfectionState::Carrier);
         auto num_infected              = get_subpopulation(InfectionState::Infected);
         m_cached_exposure_rate.array() = std::min(m_parameters.get<MaximumContacts>(), double(m_num_persons)) /
@@ -125,7 +125,7 @@ void Location::add_person(const Person& p)
     ++m_num_persons;
     InfectionState s = p.get_infection_state();
     change_subpopulation(s, +1);
-    if (m_type == LocationType::PublicTransport) {
+    if (!m_cells.empty()) {
         for (auto i : p.get_cells()) {
             ++m_cells[i].num_people;
             if (s == InfectionState::Carrier) {
