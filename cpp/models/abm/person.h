@@ -236,11 +236,6 @@ public:
     uint32_t get_person_id();
 
     /**
-     * set index of cells of the person
-     */
-    void set_cells(const std::vector<uint32_t>& cell);
-
-    /**
      * get index of cells of the person
      */
     std::vector<uint32_t>& get_cells();
