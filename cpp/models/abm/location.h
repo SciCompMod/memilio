@@ -41,12 +41,17 @@ class Person;
 struct LocationId {
     uint32_t index;
     LocationType type;
-};
 
-inline bool operator==(const LocationId& lhs, const LocationId& rhs)
-{
-    return (lhs.index == rhs.index && lhs.type == rhs.type);
-}
+    bool operator==(const LocationId& rhs) const
+    {
+        return (index == rhs.index && type == rhs.type);
+    }
+
+    bool operator!=(const LocationId& rhs) const
+    {
+        return not(index == rhs.index && type == rhs.type);
+    }
+};
 
 /**
  * The location can be split up into several cells. This allows a finer division of the people in public transport.

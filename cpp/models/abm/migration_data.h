@@ -34,17 +34,17 @@ namespace mio
 
 /**
  * A trip describes a migration from one location to another location.
- * @param person_id describes the person that makes the trip and corresponds to the index into the structure m_persons from world, where all people are saved.
- * @param time is the time at which a person changes the location.
- * @param migration_destination is the location where the person migrates to.
- * @param migration_origin is the location where te person starts the trip.
- * @param cells If migration_destination consists of different cells, this gives the index of the cells the person migrates to.
  */
 struct Trip {
+    /** person that makes the trip and corresponds to the index into the structure m_persons from world, where all people are saved*/
     uint32_t person_id;
+    /** time at which a person changes the location*/
     TimePoint time;
+    /**location where the person migrates to */
     LocationId migration_destination;
+    /**location where te person starts the trip*/
     LocationId migration_origin;
+    /**If migration_destination consists of different cells, this gives the index of the cells the person migrates to.*/
     std::vector<uint32_t> cells;
 
     Trip(uint32_t id, TimePoint time_new, LocationId destination, LocationId origin,
@@ -95,11 +95,11 @@ public:
     }
 
     /* 
-     * returns vector of trips
+     * returns the length of the TripList
      */
-    std::vector<Trip>& get_trips()
+    size_t num_trips()
     {
-        return m_trips;
+        return m_trips.size();
     }
 
     /* 
