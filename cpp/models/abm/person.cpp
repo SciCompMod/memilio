@@ -100,12 +100,12 @@ void Person::interact(TimeSpan dt, const GlobalInfectionParameters& global_infec
     m_time_at_location += dt;
 }
 
-void Person::migrate_to(Location& loc_old, Location& loc_new, const std::vector<uint32_t>& cells_new)
+void Person::migrate_to(Location& loc_old, Location& loc_new, const std::vector<uint32_t>& cells)
 {
     if (&loc_old != &loc_new) {
         loc_old.remove_person(*this);
         m_location_id = {loc_new.get_index(), loc_new.get_type()};
-        m_cells       = cells_new;
+        m_cells       = cells;
         loc_new.add_person(*this);
         m_time_at_location = mio::TimeSpan(0);
     }

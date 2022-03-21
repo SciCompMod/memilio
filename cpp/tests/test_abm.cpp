@@ -163,7 +163,7 @@ TEST(TestPerson, init)
     ASSERT_EQ(person.get_infection_state(), mio::InfectionState::Exposed);
     ASSERT_EQ(person.get_location_id().index, location.get_index());
     ASSERT_EQ(person.get_location_id().type, location.get_type());
-    ASSERT_EQ(person.get_person_id(), mio::INVALID_PERSON_INDEX);
+    ASSERT_EQ(person.get_person_id(), mio::INVALID_PERSON_ID);
 
     auto person2 = mio::Person(location, mio::InfectionState::Exposed, mio::AbmAgeGroup::Age60to79, {},
                                mio::VaccinationState::Unvaccinated, 0);
@@ -811,7 +811,7 @@ TEST(TestWorld, evolveMigration)
     p5.set_assigned_location(work_id);
     p5.set_assigned_location(home_id);
 
-    mio::MigrationData& data = world.get_migration_data();
+    mio::TripList& data = world.get_trip_list();
     mio::Trip trip1(p1.get_person_id(), mio::TimePoint(8) + mio::hours(9), work_id, home_id);
     mio::Trip trip2(p2.get_person_id(), mio::TimePoint(8) + mio::hours(9), school_id, home_id);
     mio::Trip trip3(p5.get_person_id(), mio::TimePoint(8) + mio::hours(9), school_id, work_id);

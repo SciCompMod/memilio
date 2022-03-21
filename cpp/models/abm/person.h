@@ -47,7 +47,7 @@ struct InfectionProperties {
     bool detected;
 };
 
-static constexpr uint32_t INVALID_PERSON_INDEX = std::numeric_limits<uint32_t>::max();
+static constexpr uint32_t INVALID_PERSON_ID = std::numeric_limits<uint32_t>::max();
 
 /**
  * Agents in the simulated world that can carry and spread the infection.
@@ -66,8 +66,7 @@ public:
      */
     Person(LocationId id, InfectionProperties infection_properties, AbmAgeGroup age,
            const GlobalInfectionParameters& global_params,
-           VaccinationState vaccination_state = VaccinationState::Unvaccinated,
-           uint32_t person_id                 = INVALID_PERSON_INDEX);
+           VaccinationState vaccination_state = VaccinationState::Unvaccinated, uint32_t person_id = INVALID_PERSON_ID);
 
     /**
      * create a Person.
@@ -79,8 +78,7 @@ public:
      */
     Person(Location& location, InfectionProperties infection_properties, AbmAgeGroup age,
            const GlobalInfectionParameters& global_params,
-           VaccinationState vaccination_state = VaccinationState::Unvaccinated,
-           uint32_t person_id                 = INVALID_PERSON_INDEX);
+           VaccinationState vaccination_state = VaccinationState::Unvaccinated, uint32_t person_id = INVALID_PERSON_ID);
 
     /** 
      * Time passes and the person interacts with the population at its current location.

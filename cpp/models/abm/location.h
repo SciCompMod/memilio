@@ -50,7 +50,6 @@ inline bool operator==(const LocationId& lhs, const LocationId& rhs)
 
 /**
  * The location can be split up into several cells. This allows a finer division of the people in public transport.
-
  */
 struct Cell {
     uint32_t num_people;

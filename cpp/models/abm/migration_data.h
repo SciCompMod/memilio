@@ -34,47 +34,47 @@ namespace mio
 
 /**
  * A trip describes a migration from one location to another location.
- * @param person_index describes the person that makes the trip and corresponds to the index into the structure m_persons from world, where all people are saved.
- * @param migration_time is the time at which a person changes the location.
- * @param migration_target is the location where the person migrates to.
- * @param migration_start is the location where te person starts the trip.
- * @param cells If migration_target consists of different cells, this gives the index of the cells the person migrates to.
+ * @param person_id describes the person that makes the trip and corresponds to the index into the structure m_persons from world, where all people are saved.
+ * @param time is the time at which a person changes the location.
+ * @param migration_destination is the location where the person migrates to.
+ * @param migration_origin is the location where te person starts the trip.
+ * @param cells If migration_destination consists of different cells, this gives the index of the cells the person migrates to.
  */
 struct Trip {
     uint32_t person_id;
-    TimePoint migration_time;
-    LocationId migration_target;
-    LocationId migration_start;
+    TimePoint time;
+    LocationId migration_destination;
+    LocationId migration_origin;
     std::vector<uint32_t> cells;
 
-    Trip(uint32_t id, TimePoint time, LocationId target, LocationId start,
+    Trip(uint32_t id, TimePoint time_new, LocationId destination, LocationId origin,
          const std::vector<uint32_t>& input_cells = {})
     {
-        person_id        = id;
-        migration_time   = time;
-        migration_target = target;
-        migration_start  = start;
-        cells            = input_cells;
+        person_id             = id;
+        time                  = time_new;
+        migration_destination = destination;
+        migration_origin      = origin;
+        cells                 = input_cells;
     }
 };
 
-class MigrationData
+class TripList
 {
 public:
     /**
      * construct Migration data
      */
-    MigrationData();
+    TripList();
 
     /*
      * returns the next trip
      */
-    Trip& get_next_trip();
+    const Trip& get_next_trip() const;
 
     /*
      * returns the time at which the next trip will happen
      */
-    TimePoint get_next_trip_time();
+    TimePoint get_next_trip_time() const;
 
     /**
      * sort the trips by migration time
@@ -105,7 +105,7 @@ public:
     /* 
      * returns currents index
      */
-    uint32_t get_current_index()
+    uint32_t get_current_index() const
     {
         return m_current_index;
     }

@@ -40,7 +40,7 @@ enum class LocationType : std::uint32_t
     ICU,
     Car,
     PublicTransport,
-    Transport_No_Contact, // all ways of travel with no contact to other people, e.g. biking or walking
+    TransportWithoutContact, // all ways of travel with no contact to other people, e.g. biking or walking
 
     Count //last!
 };

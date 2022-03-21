@@ -58,7 +58,7 @@ public:
         , m_infection_parameters(params)
         , m_migration_parameters()
         , m_testing_parameters()
-        , m_migration_data()
+        , m_trip_list()
     {
     }
 
@@ -172,9 +172,9 @@ public:
     /**
      * get migration data
      */
-    MigrationData& get_migration_data();
+    TripList& get_trip_list();
 
-    const MigrationData& get_migration_data() const;
+    const TripList& get_trip_list() const;
 
 private:
     void interaction(TimePoint t, TimeSpan dt);
@@ -185,7 +185,7 @@ private:
     GlobalInfectionParameters m_infection_parameters;
     AbmMigrationParameters m_migration_parameters;
     GlobalTestingParameters m_testing_parameters;
-    MigrationData m_migration_data;
+    TripList m_trip_list;
 };
 
 } // namespace mio

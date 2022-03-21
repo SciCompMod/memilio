@@ -38,9 +38,9 @@ LocationId World::add_location(LocationType type, uint32_t num_cells)
 
 Person& World::add_person(LocationId id, InfectionState infection_state, AbmAgeGroup age)
 {
-    uint32_t person_index = static_cast<uint32_t>(m_persons.size());
+    uint32_t person_id = static_cast<uint32_t>(m_persons.size());
     m_persons.push_back(std::make_unique<Person>(id, infection_state, age, m_infection_parameters,
-                                                 VaccinationState::Unvaccinated, person_index));
+                                                 VaccinationState::Unvaccinated, person_id));
     auto& person = *m_persons.back();
     get_location(person).add_person(person);
     return person;
@@ -102,16 +102,16 @@ void World::migration(TimePoint t, TimeSpan dt)
         }
     }
     // check if a person makes a trip
-    size_t num_trips = m_migration_data.get_trips().size();
+    size_t num_trips = m_trip_list.get_trips().size();
     if (num_trips != 0) {
-        while (m_migration_data.get_next_trip_time() < t + dt && m_migration_data.get_current_index() < num_trips) {
-            auto& trip   = m_migration_data.get_next_trip();
+        while (m_trip_list.get_next_trip_time() < t + dt && m_trip_list.get_current_index() < num_trips) {
+            auto& trip   = m_trip_list.get_next_trip();
             auto& person = m_persons[trip.person_id];
-            if (!person->is_in_quarantine() && person->get_location_id() == trip.migration_start) {
-                Location& target = get_individualized_location(trip.migration_target);
+            if (!person->is_in_quarantine() && person->get_location_id() == trip.migration_origin) {
+                Location& target = get_individualized_location(trip.migration_destination);
                 person->migrate_to(get_location(*person), target, trip.cells);
             }
-            m_migration_data.increase_index();
+            m_trip_list.increase_index();
         }
     }
 }
@@ -201,14 +201,14 @@ const GlobalTestingParameters& World::get_global_testing_parameters() const
     return m_testing_parameters;
 }
 
-MigrationData& World::get_migration_data()
+TripList& World::get_trip_list()
 {
-    return m_migration_data;
+    return m_trip_list;
 }
 
-const MigrationData& World::get_migration_data() const
+const TripList& World::get_trip_list() const
 {
-    return m_migration_data;
+    return m_trip_list;
 }
 
 } // namespace mio

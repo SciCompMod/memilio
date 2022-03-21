@@ -26,27 +26,23 @@
 namespace mio
 {
 
-MigrationData::MigrationData()
+TripList::TripList()
     : m_trips({})
     , m_current_index(0)
 {
 }
 
-Trip& MigrationData::get_next_trip()
+const Trip& TripList::get_next_trip() const
 {
     return m_trips[m_current_index];
 }
 
-TimePoint MigrationData::get_next_trip_time()
+TimePoint TripList::get_next_trip_time() const
 {
-    return m_trips[m_current_index].migration_time;
+    return m_trips[m_current_index].time;
 }
 
-void MigrationData::sort_trips()
-{
-}
-
-void MigrationData::add_trip(Trip trip)
+void TripList::add_trip(Trip trip)
 {
     m_trips.push_back(trip);
 }

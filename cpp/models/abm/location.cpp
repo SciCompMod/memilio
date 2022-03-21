@@ -46,9 +46,8 @@ InfectionState Location::interact(const Person& person, TimeSpan dt,
     switch (infection_state) {
     case InfectionState::Susceptible:
         if (this->get_type() == LocationType::PublicTransport) {
-            InfectionState new_state;
             for (auto cell_index : person.get_cells()) {
-                new_state = random_transition(
+                InfectionState new_state = random_transition(
                     infection_state, dt,
                     {{InfectionState::Exposed, m_cells[cell_index].cached_exposure_rate[{age, vaccination_state}]}});
                 if (new_state != infection_state) {
