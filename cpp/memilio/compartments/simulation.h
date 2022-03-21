@@ -23,8 +23,8 @@
 #include "memilio/config.h"
 #include "memilio/compartments/compartmentalmodel.h"
 #include "memilio/utils/metaprogramming.h"
+#include "memilio/math/stepper_wrapper.h"
 #include "memilio/utils/time_series.h"
-#include "memilio/math/adapt_rk.h"
 #include "memilio/math/euler.h"
 
 namespace mio
@@ -38,7 +38,7 @@ template <class M>
 class Simulation
 {
     static_assert(is_compartment_model<M>::value, "Template parameter must be a compartment model.");
-    
+
 public:
     using Model = M;
 
@@ -49,7 +49,8 @@ public:
      * @param[in] dt initial step size of integration
      */
     Simulation(Model const& model, double t0 = 0., double dt = 0.1)
-        : m_integratorCore(std::make_shared<RKIntegratorCore>())
+        : m_integratorCore(
+              std::make_shared<mio::ControlledStepperWrapper<boost::numeric::odeint::runge_kutta_cash_karp54>>())
         , m_model(std::make_unique<Model>(model))
         , m_integrator(
               [&model = *m_model](auto&& y, auto&& t, auto&& dydt) {
@@ -85,7 +86,6 @@ public:
     {
         return *m_integratorCore;
     }
-
 
     /**
      * @brief advance simulation to tmax
@@ -132,7 +132,6 @@ public:
     }
 
 private:
-
     std::shared_ptr<IntegratorCore> m_integratorCore;
     std::unique_ptr<Model> m_model;
     OdeIntegrator m_integrator;

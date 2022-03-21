@@ -20,6 +20,7 @@
 #include "matchers.h"
 #include "load_test_data.h"
 #include "secir/secir.h"
+#include "memilio/math/adapt_rk.h"
 #include "secir/parameter_space.h"
 #include "secir/analyze_result.h"
 #include <distributions_helpers.h>

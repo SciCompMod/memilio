@@ -17,8 +17,8 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
-#ifndef ARK_H
-#define ARK_H
+#ifndef ADAPT_RK_H_
+#define ADAPT_RK_H_
 
 #include "memilio/math/integrator.h"
 
@@ -62,7 +62,7 @@ namespace mio
 class Tableau
 {
 public:
-    std::vector<std::vector<double>> entries;
+    std::vector<Eigen::VectorXd> entries;
 
     /**
      * @brief default is Runge-Kutta-Fehlberg4(5) tableau
@@ -82,8 +82,8 @@ public:
 class TableauFinal
 {
 public:
-    std::vector<double> entries_low;
-    std::vector<double> entries_high;
+    Eigen::VectorXd entries_low;
+    Eigen::VectorXd entries_high;
 
     /**
      * @brief default is Runge-Kutta-Fehlberg4(5) tableau
@@ -94,22 +94,34 @@ public:
 /**
  * @brief Two scheme Runge-Kutta numerical integrator with adaptive step width
  *
- * This method integrates a system of ODEs
+ * This class integrates a system of ODEs via the step method
  */
 class RKIntegratorCore : public IntegratorCore
 {
 public:
     /**
      * @brief Setting up the integrator
-     * @param func The right hand side of the ODE
-     * @param dt_min Mininum time step
-     * @param dt_max Maximum time step
      */
     RKIntegratorCore()
         : m_abs_tol(1e-10)
         , m_rel_tol(1e-5)
         , m_dt_min(std::numeric_limits<double>::min())
         , m_dt_max(std::numeric_limits<double>::max())
+    {
+    }
+
+    /**
+     * @brief Set up the integrator
+     * @param abs_tol absolute tolerance
+     * @param rel_tol relative tolerance 
+     * @param dt_min lower bound for time step dt
+     * @param dt_max upper bound for time step dt
+     */
+    RKIntegratorCore(const double abs_tol, const double rel_tol, const double dt_min, const double dt_max)
+        : m_abs_tol(abs_tol)
+        , m_rel_tol(rel_tol)
+        , m_dt_min(dt_min)
+        , m_dt_max(dt_max)
     {
     }
 
@@ -125,13 +137,13 @@ public:
         m_rel_tol = tol;
     }
 
-    /// sets the minimum step size
+    /// @param dt_min sets the minimum step size
     void set_dt_min(double dt_min)
     {
         m_dt_min = dt_min;
     }
 
-    /// sets the minimum step size
+    /// @param dt_max sets the maximum step size
     void set_dt_max(double dt_max)
     {
         m_dt_max = dt_max;
@@ -145,23 +157,27 @@ public:
     }
 
     /**
-    * Adaptive step width of the integration
-    * This method integrates a system of ODEs
-    * @param[in] yt value of y at t, y(t)
-    * @param[in,out] t current time step h=dt
-    * @param[in,out] dt current time step h=dt
-    * @param[out] ytp1 approximated value y(t+1)
-    */
+     * @brief Make a single integration step of a system of ODEs and adapt the step size
+     * @param[in] yt value of y at t, y(t)
+     * @param[in,out] t current time
+     * @param[in,out] dt current time step size h=dt
+     * @param[out] ytp1 approximated value y(t+1)
+     */
     bool step(const DerivFunction& f, Eigen::Ref<Eigen::VectorXd const> yt, double& t, double& dt,
               Eigen::Ref<Eigen::VectorXd> ytp1) const override;
 
-private:
+protected:
     Tableau m_tab;
     TableauFinal m_tab_final;
     double m_abs_tol, m_rel_tol;
     double m_dt_min, m_dt_max;
+    mutable Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::ColMajor> m_kt_values;
+    mutable Eigen::VectorXd m_yt_eval;
+
+private:
+    mutable Eigen::ArrayXd m_eps, m_error_estimate; // tolerance and estimate used for time step adaption
 };
 
 } // namespace mio
 
-#endif // ARK_H
+#endif // ADAPT_RK_H_
