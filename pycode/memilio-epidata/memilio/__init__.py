@@ -23,3 +23,18 @@ MEmilio main namespace package.
 """
 
 __path__ = __import__('pkgutil').extend_path(__path__, __name__)
+
+import os
+if os.name == 'nt': # can be nt, posix, or java
+    # Windows uses nt, which does not support carriage returns by default
+    # the following Windows specific module should fix this
+    try:
+        from ctypes import windll
+        k = windll.kernel32
+        # GetStdHandle(-11) is the standart output device, the flag 7 is equal to
+        # ENABLE_PROCESSED_OUTPUT | ENABLE_WRAP_AT_EOL_OUTPUT | ENABLE_VIRTUAL_TERMINAL_PROCESSING
+        # where the last flag enables several control sequences, like \r
+        k.SetConsoleMode(k.GetStdHandle(-11), 7)
+    except:
+        print("Error: Failed to set console mode for 'nt' system (e.g. Windows).")
+        print("       Some output may be displayed incorrectly.")
