@@ -49,7 +49,7 @@ struct LocationId {
 
     bool operator!=(const LocationId& rhs) const
     {
-        return not(index == rhs.index && type == rhs.type);
+        return !(index == rhs.index && type == rhs.type);
     }
 };
 
