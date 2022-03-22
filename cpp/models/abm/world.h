@@ -59,6 +59,7 @@ public:
         , m_migration_parameters()
         , m_testing_parameters()
         , m_trip_list()
+        , m_use_migration_rules(true)
     {
     }
 
@@ -176,6 +177,12 @@ public:
 
     const TripList& get_trip_list() const;
 
+    /** 
+     * decide if migration rules (like go to school/work) are used or not
+     * the migration rules regarding hospitalization/ICU/quarantine are always used
+     */
+    void use_migration_rules(bool param);
+
 private:
     void interaction(TimePoint t, TimeSpan dt);
     void migration(TimePoint t, TimeSpan dt);
@@ -186,6 +193,7 @@ private:
     AbmMigrationParameters m_migration_parameters;
     GlobalTestingParameters m_testing_parameters;
     TripList m_trip_list;
+    bool m_use_migration_rules;
 };
 
 } // namespace mio

@@ -47,6 +47,26 @@ class Person;
 LocationType random_migration(const Person& p, TimePoint t, TimeSpan dt, const AbmMigrationParameters& params);
 
 /**
+ * school age children go to school in the morning and return later in the day.
+ */
+LocationType go_to_school(const Person& p, TimePoint t, TimeSpan dt, const AbmMigrationParameters& params);
+
+/** 
+ adults may go shopping in their free time
+ */
+LocationType go_to_shop(const Person& person, TimePoint t, TimeSpan dt, const AbmMigrationParameters& params);
+
+/**
+ people might go to social events
+ */
+LocationType go_to_event(const Person& person, TimePoint t, TimeSpan dt, const AbmMigrationParameters& params);
+
+/**
+ adults go to worl in the mornign and return later in the day.
+ */
+LocationType go_to_work(const Person& person, TimePoint t, TimeSpan dt, const AbmMigrationParameters& params);
+
+/**
  * people who are in quarantine should go gome
  */
 LocationType go_to_quarantine(const Person& person, TimePoint /*t*/, TimeSpan /*dt*/,
