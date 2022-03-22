@@ -18,6 +18,7 @@
 * limitations under the License.
 */
 #include "memilio/io/json_serializer.h"
+#include "memilio/utils/stl_util.h"
 #include "memilio/utils/type_safe.h"
 #include "memilio/utils/custom_index_array.h"
 #include "memilio/utils/parameter_set.h"
@@ -26,8 +27,7 @@
 #include "distributions_helpers.h"
 #include "gtest/gtest.h"
 #include "json/config.h"
-#include <gtest/gtest-typed-test.h>
-#include <gtest/internal/gtest-type-util.h>
+#include "gmock/gmock.h"
 #include <limits>
 #include <vector>
 #include <unordered_set>
@@ -444,7 +444,9 @@ TEST(TestJsonSerializer, container_of_objects)
     Json::Value expected_value;
     expected_value[0]["i"] = 1;
     expected_value[1]["i"] = 2;
-    EXPECT_EQ(js.value(), expected_value);
+    Json::Value x;
+    EXPECT_THAT(mio::make_range(js.value().begin(), js.value().end()),
+                testing::UnorderedElementsAre(expected_value[0], expected_value[1]));
 
     auto r = mio::deserialize_json(expected_value, mio::Tag<std::unordered_set<jsontest::Foo>>{});
     ASSERT_THAT(print_wrap(r), IsSuccess());

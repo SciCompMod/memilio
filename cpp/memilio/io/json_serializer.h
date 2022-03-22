@@ -495,7 +495,7 @@ public:
             Container v;
             for (auto&& el : array) {
                 auto ctxt = JsonContext(el, io.m_status, io.m_flags);
-                BOOST_OUTCOME_TRY(val, mio::deserialize(ctxt, Tag<Container::value_type>{}));
+                BOOST_OUTCOME_TRY(val, mio::deserialize(ctxt, Tag<typename Container::value_type>{}));
                 v.insert(v.end(), val);
             }
             return success(std::move(v));

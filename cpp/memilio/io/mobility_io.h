@@ -21,7 +21,7 @@
 #define READ_TWITTER_H
 
 #include "memilio/math/eigen.h"
-#include "memilio/io/io.h"
+#include "memilio/io/json_serializer.h"
 #include "memilio/mobility/mobility.h"
 #include <iostream>
 #include <fstream>

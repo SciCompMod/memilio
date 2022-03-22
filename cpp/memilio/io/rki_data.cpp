@@ -19,3 +19,9 @@
 */
 
 #include "memilio/io/rki_data.h"
+
+namespace mio
+{
+const std::array<const char*, 7> StringRkiAgeGroup::age_names = {"A00-A04", "A05-A14", "A15-A34", "A35-A59",
+                                                                 "A60-A79", "A80+",    "unknown"};
+}
