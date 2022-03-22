@@ -826,8 +826,8 @@ TEST(TestWorld, evolveMigration)
 
     mio::TripList& data = world.get_trip_list();
     mio::Trip trip1(p1.get_person_id(), mio::TimePoint(0) + mio::hours(9), work_id, home_id);
-    mio::Trip trip2(p2.get_person_id(), mio::TimePoint(0) + mio::hours(9), school_id, home_id);
-    mio::Trip trip3(p5.get_person_id(), mio::TimePoint(0) + mio::hours(9), school_id, work_id);
+    mio::Trip trip2(p2.get_person_id(), mio::TimePoint(1) + mio::hours(9), school_id, home_id);
+    mio::Trip trip3(p5.get_person_id(), mio::TimePoint(2) + mio::hours(9), school_id, work_id);
     data.add_trip(trip1);
     data.add_trip(trip2);
     data.add_trip(trip3);

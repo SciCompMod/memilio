@@ -44,7 +44,9 @@ TimePoint TripList::get_next_trip_time() const
 
 void TripList::add_trip(Trip trip)
 {
-    m_trips.push_back(trip);
+    insert_sorted_replace(m_trips, trip, [](auto& trip1, auto& trip2) {
+        return trip1.time < trip2.time;
+    });
 }
 
 } // namespace mio
