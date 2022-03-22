@@ -69,7 +69,7 @@ setup(
     test_suite='memilio.epidata_test',
     install_requires=[
         # smaller pandas versions contain a bug that sometimes prevents reading
-        # some exel files (e.g. population or twitter data)
+        # some excel files (e.g. population or twitter data)
         'pandas>=1.2.2',
         'matplotlib',
         'tables',
