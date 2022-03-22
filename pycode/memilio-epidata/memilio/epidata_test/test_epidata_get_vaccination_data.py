@@ -294,13 +294,17 @@ class TestGetVaccinationData(fake_filesystem_unittest.TestCase):
                     'Column names do not match.')
 
     def test_interval_mapping(self):
+        # testing refinement
         from_lower_bounds1 = [0, 3, 6, 15, 18, 25, 30, 40, 50, 65, 74, 100]
         to_lower_bounds1 = [0, 3, 5, 6, 12, 15, 18, 25, 30, 35, 40, 50, 60, 65,
                             74, 80, 100]
+        # testing if the lists of bounds are not contained in one another
         from_lower_bounds2 = [0, 10, 20, 70, 100]
         to_lower_bounds2 = [0, 5, 15, 20, 50, 60, 70, 85, 90, 100]
+        # testing with different boundaries
         from_lower_bounds3 = [5, 20, 30, 80, 85, 90]
         to_lower_bounds3 = [0, 15, 20, 60, 100]
+        # testing error handling for invalid combination of boundaries
         from_lower_bounds4 = [0, 10, 100]
         to_lower_bounds4 = [10, 20, 90]
 
