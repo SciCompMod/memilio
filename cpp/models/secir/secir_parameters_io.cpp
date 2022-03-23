@@ -19,10 +19,12 @@
 */
 
 #include "secir/secir_parameters_io.h"
+#include "memilio/utils/logging.h"
+#include <iterator>
 
 #ifdef MEMILIO_HAS_JSONCPP
 
-#include "memilio/io/io.h"
+#include "memilio/io/epi_data.h"
 #include "memilio/utils/memory.h"
 #include "memilio/utils/uncertain_value.h"
 #include "memilio/utils/stl_util.h"
@@ -122,8 +124,20 @@ namespace details
         carry_over.push_back(true);
     }
 
+    template<class EpiDataEntry>
+    int get_region_id(const EpiDataEntry& rki_entry)
+    {
+        return rki_entry.state_id ? rki_entry.state_id->get() : (rki_entry.county_id ? rki_entry.county_id->get() : 0);
+    }
+
+    //used to compare RkiEntry to integer ids
+    int get_region_id(int id)
+    {
+        return id;
+    }
+
     IOResult<void> read_rki_data(
-        std::string const& path, const std::string& id_name, std::vector<int> const& vregion, Date date,
+        std::string const& path, std::vector<int> const& vregion, Date date,
         std::vector<std::vector<double>>& vnum_exp, std::vector<std::vector<double>>& vnum_car,
         std::vector<std::vector<double>>& vnum_inf, std::vector<std::vector<double>>& vnum_hosp,
         std::vector<std::vector<double>>& vnum_icu, std::vector<std::vector<double>>& vnum_death,
@@ -135,44 +149,34 @@ namespace details
         const std::vector<std::vector<double>>& vmu_I_H, const std::vector<std::vector<double>>& vmu_H_U,
         const std::vector<double>& scaling_factor_inf)
     {
-        if (!boost::filesystem::exists(path)) {
-            log_error("RKI data file not found: {}.", path);
-            return failure(StatusCode::FileNotFound, path);
-        }
-
-        Json::Reader reader;
-        Json::Value root;
-
-        std::ifstream rki(path);
-        if (!reader.parse(rki, root)) {
-            log_error(reader.getFormattedErrorMessages());
-            return failure(StatusCode::UnknownError, path + ", " + reader.getFormattedErrorMessages());
-        }
-
-        BOOST_OUTCOME_TRY(max_date, get_max_date(root));
-        if (max_date == Date(0, 1, 1)) {
+        BOOST_OUTCOME_TRY(rki_data, ::mio::read_rki_data(path));
+        auto max_date_entry = std::max_element(rki_data.begin(), rki_data.end(), [](auto&& a, auto&& b) { return a.date < b.date; }); 
+        if (max_date_entry == rki_data.end()) {
             log_error("RKI data file is empty.");
             return failure(StatusCode::InvalidFileFormat, path + ", file is empty.");
         }
+        auto max_date = max_date_entry->date;
         if (max_date < date) {
             log_error("Specified date does not exist in RKI data");
             return failure(StatusCode::OutOfRange, path + ", specified date does not exist in RKI data.");
         }
-        auto days_surplus = get_offset_in_days(max_date, date) - 6;
+        auto days_surplus = std::min(get_offset_in_days(max_date, date) - 6, 0);
 
-        if (days_surplus > 0) {
-            days_surplus = 0;
-        }
+        std::sort(rki_data.begin(), rki_data.end(), [](auto&& a, auto&& b) {
+            return std::make_tuple(get_region_id(a), a.date) < std::make_tuple(get_region_id(b), b.date);
+        });
 
-        std::vector<std::string> age_names = {"A00-A04", "A05-A14", "A15-A34", "A35-A59", "A60-A79", "A80+", "unknown"};
-        std::vector<double> age_ranges     = {5., 10., 20., 25., 20., 20.};
-
-        for (unsigned int i = 0; i < root.size(); i++) {
-            auto it = std::find_if(vregion.begin(), vregion.end(), [&root, i, &id_name](auto r) {
-                return r == 0 || root[i][id_name].asInt() == r;
-            });
-            if (it != vregion.end()) {
-                auto region_idx = size_t(it - vregion.begin());
+        for (auto region_idx = size_t(0); region_idx < vregion.size(); ++region_idx) {
+            auto region_entry_range_it = std::equal_range(rki_data.begin(), rki_data.end(), vregion[region_idx],
+                                                          [](auto&& a, auto&& b) {
+                                                              return get_region_id(a) < get_region_id(b);
+                                                          });
+            auto region_entry_range = make_range(region_entry_range_it);
+            if (region_entry_range.begin() == region_entry_range.end()) {
+                log_error("No entries found for region {}", vregion[region_idx]);
+                return failure(StatusCode::InvalidFileFormat, "No entries found for region " + std::to_string(vregion[region_idx]));
+            }
+            for (auto&& region_entry : region_entry_range) {
 
                 auto& t_exp_to_car  = vt_exp_to_car[region_idx];
                 auto& t_car_to_rec  = vt_car_to_rec[region_idx];
@@ -195,86 +199,82 @@ namespace details
                 auto& mu_I_H = vmu_I_H[region_idx];
                 auto& mu_H_U = vmu_H_U[region_idx];
 
-                auto date_df = parse_date_unsafe(root[i]["Date"].asString());
+                auto date_df = region_entry.date;
+                auto age = size_t(region_entry.age_group);
 
-                auto it_age = std::find(age_names.begin(), age_names.end() - 1, root[i]["Age_RKI"].asString());
-                if (it_age != age_names.end() - 1) {
-                    auto age = size_t(it_age - age_names.begin());
+                bool read_icu = false; //params.populations.get({age, SecirCompartments::U}) == 0;
 
-                    bool read_icu = false; //params.populations.get({age, SecirCompartments::U}) == 0;
-
-                    if (date_df == offset_date_by_days(date, 0)) {
-                        num_inf[age] += (1 - mu_C_R[age]) * scaling_factor_inf[age] * root[i]["Confirmed"].asDouble();
-                        num_rec[age] += root[i]["Confirmed"].asDouble();
-                    }
-                    if (date_df == offset_date_by_days(date, days_surplus)) {
-                        num_car[age] +=
-                            (2 * mu_C_R[age] - 1) * scaling_factor_inf[age] * root[i]["Confirmed"].asDouble();
-                    }
-                    // -R9
-                    if (date_df == offset_date_by_days(date, -t_car_to_rec[age] + days_surplus)) {
-                        num_car[age] -= mu_C_R[age] * scaling_factor_inf[age] * root[i]["Confirmed"].asDouble();
-                    }
-                    // +R2
-                    if (date_df == offset_date_by_days(date, +t_exp_to_car[age] + days_surplus)) {
-                        num_exp[age] += mu_C_R[age] * scaling_factor_inf[age] * root[i]["Confirmed"].asDouble();
-                    }
-                    // +R3
-                    if (date_df == offset_date_by_days(date, +t_car_to_inf[age] + days_surplus)) {
-                        num_car[age] += (1 - mu_C_R[age]) * scaling_factor_inf[age] * root[i]["Confirmed"].asDouble();
-                        num_exp[age] -= (1 - mu_C_R[age]) * scaling_factor_inf[age] * root[i]["Confirmed"].asDouble();
-                    }
-                    // R2 - R9
-                    if (date_df == offset_date_by_days(date, t_exp_to_car[age] - t_car_to_rec[age] + days_surplus)) {
-                        num_exp[age] -= mu_C_R[age] * scaling_factor_inf[age] * root[i]["Confirmed"].asDouble();
-                    }
-                    // R2 + R3
-                    if (date_df == offset_date_by_days(date, t_exp_to_car[age] + t_car_to_inf[age] + days_surplus)) {
-                        num_exp[age] += (1 - mu_C_R[age]) * scaling_factor_inf[age] * root[i]["Confirmed"].asDouble();
-                    }
-                    // -R4
-                    if (date_df == offset_date_by_days(date, -t_inf_to_rec[age])) {
-                        num_inf[age] -= (1 - mu_C_R[age]) * scaling_factor_inf[age] * root[i]["Confirmed"].asDouble();
-                    }
-                    // -R6
-                    if (date_df == offset_date_by_days(date, -t_inf_to_hosp[age])) {
-                        num_inf[age] -= mu_I_H[age] * scaling_factor_inf[age] * root[i]["Confirmed"].asDouble();
-                        num_hosp[age] += mu_I_H[age] * scaling_factor_inf[age] * root[i]["Confirmed"].asDouble();
-                    }
-                    // -R6 - R7
-                    if (date_df == offset_date_by_days(date, -t_inf_to_hosp[age] - t_hosp_to_icu[age])) {
-                        num_inf[age] +=
-                            mu_I_H[age] * mu_H_U[age] * scaling_factor_inf[age] * root[i]["Confirmed"].asDouble();
-                        num_hosp[age] -=
-                            mu_I_H[age] * mu_H_U[age] * scaling_factor_inf[age] * root[i]["Confirmed"].asDouble();
-                        if (read_icu) {
-                            num_icu[age] +=
-                                mu_H_U[age] * mu_I_H[age] * scaling_factor_inf[age] * root[i]["Confirmed"].asDouble();
-                        }
-                    }
-                    // -R6 - R5
-                    if (date_df == offset_date_by_days(date, -t_inf_to_hosp[age] - t_hosp_to_rec[age])) {
-                        num_inf[age] +=
-                            mu_I_H[age] * (1 - mu_H_U[age]) * scaling_factor_inf[age] * root[i]["Confirmed"].asDouble();
-                        num_hosp[age] -=
-                            mu_I_H[age] * (1 - mu_H_U[age]) * scaling_factor_inf[age] * root[i]["Confirmed"].asDouble();
-                    }
-                    // -R10 - R6 - R7
-                    if (date_df ==
-                        offset_date_by_days(date, -t_icu_to_dead[age] - t_inf_to_hosp[age] - t_hosp_to_icu[age])) {
-                        num_death[age] += root[i]["Deaths"].asDouble();
-                    }
+                if (date_df == offset_date_by_days(date, 0)) {
+                    num_inf[age] += (1 - mu_C_R[age]) * scaling_factor_inf[age] * region_entry.num_confirmed;
+                    num_rec[age] += region_entry.num_confirmed;
+                }
+                if (date_df == offset_date_by_days(date, days_surplus)) {
+                    num_car[age] +=
+                        (2 * mu_C_R[age] - 1) * scaling_factor_inf[age] * region_entry.num_confirmed;
+                }
+                // -R9
+                if (date_df == offset_date_by_days(date, -t_car_to_rec[age] + days_surplus)) {
+                    num_car[age] -= mu_C_R[age] * scaling_factor_inf[age] * region_entry.num_confirmed;
+                }
+                // +R2
+                if (date_df == offset_date_by_days(date, +t_exp_to_car[age] + days_surplus)) {
+                    num_exp[age] += mu_C_R[age] * scaling_factor_inf[age] * region_entry.num_confirmed;
+                }
+                // +R3
+                if (date_df == offset_date_by_days(date, +t_car_to_inf[age] + days_surplus)) {
+                    num_car[age] += (1 - mu_C_R[age]) * scaling_factor_inf[age] * region_entry.num_confirmed;
+                    num_exp[age] -= (1 - mu_C_R[age]) * scaling_factor_inf[age] * region_entry.num_confirmed;
+                }
+                // R2 - R9
+                if (date_df == offset_date_by_days(date, t_exp_to_car[age] - t_car_to_rec[age] + days_surplus)) {
+                    num_exp[age] -= mu_C_R[age] * scaling_factor_inf[age] * region_entry.num_confirmed;
+                }
+                // R2 + R3
+                if (date_df == offset_date_by_days(date, t_exp_to_car[age] + t_car_to_inf[age] + days_surplus)) {
+                    num_exp[age] += (1 - mu_C_R[age]) * scaling_factor_inf[age] * region_entry.num_confirmed;
+                }
+                // -R4
+                if (date_df == offset_date_by_days(date, -t_inf_to_rec[age])) {
+                    num_inf[age] -= (1 - mu_C_R[age]) * scaling_factor_inf[age] * region_entry.num_confirmed;
+                }
+                // -R6
+                if (date_df == offset_date_by_days(date, -t_inf_to_hosp[age])) {
+                    num_inf[age] -= mu_I_H[age] * scaling_factor_inf[age] * region_entry.num_confirmed;
+                    num_hosp[age] += mu_I_H[age] * scaling_factor_inf[age] * region_entry.num_confirmed;
+                }
+                // -R6 - R7
+                if (date_df == offset_date_by_days(date, -t_inf_to_hosp[age] - t_hosp_to_icu[age])) {
+                    num_inf[age] +=
+                        mu_I_H[age] * mu_H_U[age] * scaling_factor_inf[age] * region_entry.num_confirmed;
+                    num_hosp[age] -=
+                        mu_I_H[age] * mu_H_U[age] * scaling_factor_inf[age] * region_entry.num_confirmed;
                     if (read_icu) {
-                        // -R6 - R7 - R7
-                        if (date_df == offset_date_by_days(date, -t_inf_to_hosp[age] - 2 * t_hosp_to_icu[age])) {
-                            num_icu[age] -= mu_I_H[age] * mu_H_U[age] * mu_H_U[age] * scaling_factor_inf[age] *
-                                            root[i]["Confirmed"].asDouble();
-                        }
-                        // -R6 - R5 - R7
-                        if (date_df == offset_date_by_days(date, -t_inf_to_hosp[age] - t_hosp_to_icu[age])) {
-                            num_icu[age] -= mu_I_H[age] * mu_H_U[age] * (1 - mu_H_U[age]) * scaling_factor_inf[age] *
-                                            root[i]["Confirmed"].asDouble();
-                        }
+                        num_icu[age] +=
+                            mu_H_U[age] * mu_I_H[age] * scaling_factor_inf[age] * region_entry.num_confirmed;
+                    }
+                }
+                // -R6 - R5
+                if (date_df == offset_date_by_days(date, -t_inf_to_hosp[age] - t_hosp_to_rec[age])) {
+                    num_inf[age] +=
+                        mu_I_H[age] * (1 - mu_H_U[age]) * scaling_factor_inf[age] * region_entry.num_confirmed;
+                    num_hosp[age] -=
+                        mu_I_H[age] * (1 - mu_H_U[age]) * scaling_factor_inf[age] * region_entry.num_confirmed;
+                }
+                // -R10 - R6 - R7
+                if (date_df ==
+                    offset_date_by_days(date, -t_icu_to_dead[age] - t_inf_to_hosp[age] - t_hosp_to_icu[age])) {
+                    num_death[age] += region_entry.num_deceased;
+                }
+                if (read_icu) {
+                    // -R6 - R7 - R7
+                    if (date_df == offset_date_by_days(date, -t_inf_to_hosp[age] - 2 * t_hosp_to_icu[age])) {
+                        num_icu[age] -= mu_I_H[age] * mu_H_U[age] * mu_H_U[age] * scaling_factor_inf[age] *
+                                        region_entry.num_confirmed;
+                    }
+                    // -R6 - R5 - R7
+                    if (date_df == offset_date_by_days(date, -t_inf_to_hosp[age] - t_hosp_to_icu[age])) {
+                        num_icu[age] -= mu_I_H[age] * mu_H_U[age] * (1 - mu_H_U[age]) * scaling_factor_inf[age] *
+                                        region_entry.num_confirmed;
                     }
                 }
             }
@@ -291,19 +291,18 @@ namespace details
             auto& num_death = vnum_death[region_idx];
             auto& num_icu   = vnum_icu[region_idx];
 
-            size_t num_groups = age_ranges.size();
-            for (size_t i = 0; i < num_groups; i++) {
-                auto try_fix_constraints = [region, &age_names, i](double& value, double error, auto str) {
+            for (size_t i = 0; i < StringRkiAgeGroup::age_group_names.size(); i++) {
+                auto try_fix_constraints = [region, i](double& value, double error, auto str) {
                     if (value < error) {
                         //this should probably return a failure
                         //but the algorithm is not robust enough to avoid large negative values and there are tests that rely on it
                         log_error("{:s} for age group {:s} is {:.4f} for region {:d}, exceeds expected negative value.",
-                                  str, age_names[i], value, region);
+                                  str, StringRkiAgeGroup::age_group_names[i], value, region);
                         value = 0.0;
                     }
                     else if (value < 0) {
                         log_info("{:s} for age group {:s} is {:.4f} for region {:d}, automatically corrected", str,
-                                 age_names[i], value, region);
+                                 StringRkiAgeGroup::age_group_names[i], value, region);
                         value = 0.0;
                     }
                 };
@@ -321,8 +320,8 @@ namespace details
         return success();
     }
 
-    IOResult<void> set_rki_data(std::vector<SecirModel>& model, const std::string& path, const std::string& id_name,
-                      std::vector<int> const& region, Date date, const std::vector<double>& scaling_factor_inf)
+    IOResult<void> set_rki_data(std::vector<SecirModel>& model, const std::string& path, std::vector<int> const& region,
+                                Date date, const std::vector<double>& scaling_factor_inf)
     {
 
         std::vector<double> age_ranges = {5., 10., 20., 25., 20., 20.};
@@ -377,7 +376,7 @@ namespace details
         std::vector<std::vector<double>> num_hosp(model.size(), std::vector<double>(age_ranges.size(), 0.0));
         std::vector<std::vector<double>> num_icu(model.size(), std::vector<double>(age_ranges.size(), 0.0));
 
-        BOOST_OUTCOME_TRY(read_rki_data(path, id_name, region, date, num_exp, num_car, num_inf, num_hosp, num_icu,
+        BOOST_OUTCOME_TRY(read_rki_data(path, region, date, num_exp, num_car, num_inf, num_hosp, num_icu,
                                         num_death, num_rec, t_car_to_rec, t_car_to_inf, t_exp_to_car, t_inf_to_rec,
                                         t_inf_to_hosp, t_hosp_to_rec, t_hosp_to_icu, t_icu_to_dead, mu_C_R, mu_I_H,
                                         mu_H_U, scaling_factor_inf));
@@ -409,92 +408,67 @@ namespace details
         return success();
     }
 
-    IOResult<void> read_divi_data(const std::string& path, const std::string& id_name, const std::vector<int>& vregion,
+    IOResult<void> read_divi_data(const std::string& path, const std::vector<int>& vregion,
                                   Date date, std::vector<double>& vnum_icu)
     {
-        if (!boost::filesystem::exists(path)) {
-            log_error("DIVI data file not found: {}.", path);
-            return failure(StatusCode::FileNotFound, path);
-        }
+        BOOST_OUTCOME_TRY(divi_data, mio::read_divi_data(path));
 
-        Json::Reader reader;
-        Json::Value root;
-
-        std::ifstream divi(path);
-        if (!reader.parse(divi, root)) {
-            log_error(reader.getFormattedErrorMessages());
-            return failure(StatusCode::UnknownError, path + ", " + reader.getFormattedErrorMessages());
-        }
-
-        BOOST_OUTCOME_TRY(max_date, get_max_date(root));
-        if (max_date == Date(0, 1, 1)) {
+        auto max_date_entry = std::max_element(divi_data.begin(), divi_data.end(), [](auto&& a, auto&& b) { return a.date < b.date; }); 
+        if (max_date_entry == divi_data.end()) {
             log_error("DIVI data file is empty.");
             return failure(StatusCode::InvalidFileFormat, path + ", file is empty.");
         }
+        auto max_date = max_date_entry->date;
         if (max_date < date) {
             log_error("Specified date does not exist in DIVI data.");
             return failure(StatusCode::OutOfRange, path + ", specified date does not exist in DIVI data.");
         }
 
-        for (unsigned int i = 0; i < root.size(); i++) {
-            auto it      = std::find_if(vregion.begin(), vregion.end(), [&root, i, &id_name](auto r) {
-                return r == 0 || r == root[i][id_name].asInt();
+        for (auto&& entry : divi_data) {            
+            auto it      = std::find_if(vregion.begin(), vregion.end(), [&entry](auto r) {
+                return r == 0 || r == get_region_id(entry);
             });
-            auto date_df = parse_date_unsafe(root[i]["Date"].asString());
+            auto date_df = entry.date;
             if (it != vregion.end() && date_df == date) {
                 auto region_idx = size_t(it - vregion.begin());
-                auto& num_icu   = vnum_icu[region_idx];
-                num_icu         = root[i]["ICU"].asDouble();
+                vnum_icu[region_idx] = entry.num_icu;
             }
         }
 
         return success();
     }
 
-    IOResult<std::vector<std::vector<double>>> read_population_data(const std::string& path, const std::string& id_name,
+    IOResult<std::vector<std::vector<double>>> read_population_data(const std::string& path,
                                                                     const std::vector<int>& vregion)
     {
-        if (!boost::filesystem::exists(path)) {
-            log_error("Population data file not found: {}.", path);
-            return failure(StatusCode::FileNotFound, path);
-        }
+        BOOST_OUTCOME_TRY(population_data, mio::read_population_data(path));
 
-        Json::Reader reader;
-        Json::Value root;
-
-        std::ifstream census(path);
-        if (!reader.parse(census, root)) {
-            log_error(reader.getFormattedErrorMessages());
-            return failure(StatusCode::UnknownError, path + ", " + reader.getFormattedErrorMessages());
-        }
-
-        std::vector<std::string> age_names = {"<3 years",    "3-5 years",   "6-14 years",  "15-17 years",
-                                              "18-24 years", "25-29 years", "30-39 years", "40-49 years",
-                                              "50-64 years", "65-74 years", ">74 years"};
         std::vector<double> age_ranges     = {3., 3., 9., 3., 7., 5., 10., 10., 15., 10., 25.};
 
-        std::vector<std::vector<double>> interpolation(age_names.size());
+        std::vector<std::vector<double>> interpolation(age_ranges.size());
         std::vector<bool> carry_over;
 
         interpolate_ages(age_ranges, interpolation, carry_over);
 
-        std::vector<std::vector<double>> vnum_population(vregion.size(), std::vector<double>(age_names.size(), 0.0));
+        std::vector<std::vector<double>> vnum_population(vregion.size(), std::vector<double>(age_ranges.size(), 0.0));
 
-        for (unsigned int i = 0; i < root.size(); i++) {
-            auto it = std::find_if(vregion.begin(), vregion.end(), [&root, i, &id_name](auto r) {
-                return r == 0 || (int)root[i][id_name].asDouble() / 1000 == r || root[i][id_name] == r;
+        for (auto&& entry : population_data) {
+            auto it = std::find_if(vregion.begin(), vregion.end(), [&entry](auto r) {
+                return r == 0 ||
+                       (entry.county_id && regions::de::StateId(r) == regions::de::get_state_id(*entry.county_id)) ||
+                       (entry.county_id && regions::de::CountyId(r) == *entry.county_id);
             });
             if (it != vregion.end()) {
                 auto region_idx      = size_t(it - vregion.begin());
                 auto& num_population = vnum_population[region_idx];
-                for (size_t age = 0; age < age_names.size(); age++) {
-                    num_population[age] += root[i][age_names[age]].asDouble();
+                for (size_t age = 0; age < age_ranges.size(); age++) {
+                    num_population[age] += entry.population[AgeGroup(age)];
                 }
             }
         }
 
         std::vector<std::vector<double>> interpol_population(vregion.size(),
-                                                             std::vector<double>(age_names.size(), 0.0));
+                                                             std::vector<double>(interpolation.size(), 0.0));
         for (size_t region_idx = 0; region_idx < vregion.size(); ++region_idx) {
             auto& num_population = vnum_population[region_idx];
 
@@ -513,9 +487,9 @@ namespace details
     }
 
     IOResult<void> set_population_data(std::vector<SecirModel>& model, const std::string& path,
-                                       const std::string& id_name, const std::vector<int>& vregion)
+                                       const std::vector<int>& vregion)
     {
-        BOOST_OUTCOME_TRY(num_population, read_population_data(path, id_name, vregion));
+        BOOST_OUTCOME_TRY(num_population, read_population_data(path, vregion));
 
         for (size_t region = 0; region < vregion.size(); region++) {
             if (std::accumulate(num_population[region].begin(), num_population[region].end(), 0.0) > 0) {
@@ -534,7 +508,7 @@ namespace details
         return success();
     }
 
-    IOResult<void> set_divi_data(std::vector<SecirModel>& model, const std::string& path, const std::string& id_name,
+    IOResult<void> set_divi_data(std::vector<SecirModel>& model, const std::string& path,
                                  const std::vector<int>& vregion, Date date, double scaling_factor_icu)
     {
         std::vector<double> sum_mu_I_U(vregion.size(), 0);
@@ -549,7 +523,7 @@ namespace details
             }
         }
         std::vector<double> num_icu(model.size(), 0.0);
-        BOOST_OUTCOME_TRY(read_divi_data(path, id_name, vregion, date, num_icu));
+        BOOST_OUTCOME_TRY(read_divi_data(path, vregion, date, num_icu));
 
         for (size_t region = 0; region < vregion.size(); region++) {
             auto num_groups = model[region].parameters.get_num_groups();
@@ -566,28 +540,20 @@ namespace details
 
 IOResult<std::vector<int>> get_county_ids(const std::string& path)
 {
+    BOOST_OUTCOME_TRY(population_data, read_population_data(path_join(path, "county_current_population.json")));
     Json::Reader reader;
     Json::Value root;
 
     std::vector<int> id;
-
-    auto filename = path_join(path, "county_current_population.json");
-    std::ifstream census(filename);
-    if (!reader.parse(census, root)) {
-        log_error(reader.getFormattedErrorMessages());
-        return failure(StatusCode::UnknownError, filename + ", " + reader.getFormattedErrorMessages());
-    }
-
-    for (unsigned int i = 0; i < root.size(); i++) {
-        auto val = root[i]["ID_County"];
-        if (!val.isInt())
-        {
-            log_error("ID_County field must be an integer.");
-            return failure(StatusCode::InvalidFileFormat, filename + ", ID_County field must be an integer.");
+    id.reserve(population_data.size());
+    for (auto&& entry : population_data) {
+        if (entry.county_id) {
+            id.push_back(entry.county_id->get());
+        } else {
+            return failure(StatusCode::InvalidValue, "County Id not available.");
         }
-        id.push_back(val.asInt());
     }
-
+    id.erase(std::unique(id.begin(), id.end()), id.end());
     return success(id);
 }
 

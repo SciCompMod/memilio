@@ -18,7 +18,7 @@
 * limitations under the License.
 */
 
-#include "memilio/io/rki_data.h"
+#include "memilio/io/epi_data.h"
 #include "matchers.h"
 #include "gtest/gtest.h"
 
@@ -27,25 +27,25 @@ TEST(TestRkiDataIo, read) {
     js[0]["ID_County"] = 1001;
     js[0]["Date"] = "2021-12-01";
     js[0]["Confirmed"] = 1;
-    js[0]["Dead"] = 2;
+    js[0]["Deaths"] = 2;
     js[0]["Recovered"] = 3;
     js[0]["Age_RKI"] = "A80+";
 
     js[1]["ID_County"] = 1001;
     js[1]["Date"] = "2021-12-02";
     js[1]["Confirmed"] = 3;
-    js[1]["Dead"] = 4;
+    js[1]["Deaths"] = 4;
     js[1]["Recovered"] = 5;
     js[1]["Age_RKI"] = "A00-A04";
 
     js[2]["ID_County"] = 1002;
     js[2]["Date"] = "2021-12-02";
     js[2]["Confirmed"] = 3;
-    js[2]["Dead"] = 4;
+    js[2]["Deaths"] = 4;
     js[2]["Recovered"] = 5;
     js[2]["Age_RKI"] = "unknown";
 
-    auto result = mio::read_rki_data(js);
+    auto result = mio::deserialize_rki_data(js);
     ASSERT_THAT(print_wrap(result), IsSuccess());
     auto rki_data = result.value();
     ASSERT_EQ(rki_data.size(), 2);

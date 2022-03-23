@@ -52,7 +52,6 @@ namespace details
     /**
      * @brief reads populations data from RKI
      * @param path Path to RKI file
-     * @param id_name Name of region key column
      * @param region vector of keys of the region of interest
      * @param year Specifies year at which the data is read
      * @param month Specifies month at which the data is read
@@ -61,7 +60,7 @@ namespace details
      * @param t_* vector average time it takes to get from one compartement to another for each age group
      * @param mu_* vector probabilities to get from one compartement to another for each age group
      */
-    IOResult<void> read_rki_data(std::string const& path, const std::string& id_name, std::vector<int> const& region, Date date,
+    IOResult<void> read_rki_data(std::string const& path, std::vector<int> const& region, Date date,
                        std::vector<std::vector<double>>& num_exp, std::vector<std::vector<double>>& num_car,
                        std::vector<std::vector<double>>& num_inf, std::vector<std::vector<double>>& num_hosp,
                        std::vector<std::vector<double>>& num_icu, std::vector<std::vector<double>>& num_death,
@@ -80,61 +79,56 @@ namespace details
      * @brief sets populations data from RKI into a SecirModel
      * @param model vector of objects in which the data is set
      * @param path Path to RKI file
-     * @param id_name Name of region key column
      * @param region vector of keys of the region of interest
      * @param year Specifies year at which the data is read
      * @param month Specifies month at which the data is read
      * @param day Specifies day at which the data is read
      * @param scaling_factor_inf factors by which to scale the confirmed cases of rki data
      */
-    IOResult<void> set_rki_data(std::vector<SecirModel>& model, const std::string& path, const std::string& id_name,
-                      std::vector<int> const& region, Date date, const std::vector<double>& scaling_factor_inf);
+    IOResult<void> set_rki_data(std::vector<SecirModel>& model, const std::string& path, std::vector<int> const& region,
+                                Date date, const std::vector<double>& scaling_factor_inf);
 
     /**
      * @brief reads number of ICU patients from DIVI register into SecirParams
      * @param path Path to DIVI file
-     * @param id_name Name of region key column
      * @param vregion Keys of the region of interest
      * @param year Specifies year at which the data is read
      * @param month Specifies month at which the data is read
      * @param day Specifies day at which the data is read
      * @param vnum_icu number of ICU patients
      */
-    IOResult<void> read_divi_data(const std::string& path, const std::string& id_name, const std::vector<int>& vregion, Date date,
-                        std::vector<double>& vnum_icu);
+    IOResult<void> read_divi_data(const std::string& path, const std::vector<int>& vregion, Date date,
+                                  std::vector<double>& vnum_icu);
 
     /**
      * @brief sets populations data from DIVI register into Model
      * @param model vector of objects in which the data is set
      * @param path Path to DIVI file
-     * @param id_name Name of region key column
      * @param vregion vector of keys of the regions of interest
      * @param year Specifies year at which the data is read
      * @param month Specifies month at which the data is read
      * @param day Specifies day at which the data is read
      * @param scaling_factor_icu factor by which to scale the icu cases of divi data
      */
-    IOResult<void> set_divi_data(std::vector<SecirModel>& model, const std::string& path, const std::string& id_name,
-                       const std::vector<int>& vregion, Date date, double scaling_factor_icu);
+    IOResult<void> set_divi_data(std::vector<SecirModel>& model, const std::string& path,
+                                 const std::vector<int>& vregion, Date date, double scaling_factor_icu);
 
     /**
      * @brief reads population data from census data
      * @param path Path to RKI file
-     * @param id_name Name of region key column
      * @param vregion vector of keys of the regions of interest
      */
-    IOResult<std::vector<std::vector<double>>> read_population_data(const std::string& path, const std::string& id_name,
-                                                          const std::vector<int>& vregion);
+    IOResult<std::vector<std::vector<double>>> read_population_data(const std::string& path,
+                                                                    const std::vector<int>& vregion);
 
     /**
      * @brief sets population data from census data
      * @param model vector of objects in which the data is set
      * @param path Path to RKI file
-     * @param id_name Name of region key column
      * @param vregion vector of keys of the regions of interest
      */
-    IOResult<void> set_population_data(std::vector<SecirModel>& model, const std::string& path, const std::string& id_name,
-                             const std::vector<int>& vregion);
+    IOResult<void> set_population_data(std::vector<SecirModel>& model, const std::string& path,
+                                       const std::vector<int>& vregion);
 } //namespace details
 
 #ifdef MEMILIO_HAS_HDF5
@@ -144,7 +138,6 @@ namespace details
 * @param model vector of objects in which the data is set
 * @param data_dir Path to RKI files
 * @param results_dir Path to result files
-* @param id_name Name of region key column
 * @param region vector of keys of the region of interest
 * @param year Specifies year at which the data is read
 * @param month Specifies month at which the data is read
@@ -157,8 +150,6 @@ IOResult<void> extrapolate_rki_results(std::vector<Model>& model, const std::str
                                        const std::vector<double>& scaling_factor_inf, double scaling_factor_icu,
                                        int num_days)
 {
-
-    std::string id_name            = "ID_County";
     std::vector<double> age_ranges = {5., 10., 20., 25., 20., 20.};
     assert(scaling_factor_inf.size() == age_ranges.size());
 
@@ -224,12 +215,12 @@ IOResult<void> extrapolate_rki_results(std::vector<Model>& model, const std::str
         std::vector<double> num_icu(model.size(), 0.0);
 
         BOOST_OUTCOME_TRY(details::read_rki_data(
-            path_join(data_dir, "cases_all_county_age_ma7.json"), id_name, region, date, num_exp, num_car, num_inf, num_hosp,
+            path_join(data_dir, "cases_all_county_age_ma7.json"), region, date, num_exp, num_car, num_inf, num_hosp,
             dummy_icu, num_death, num_rec, t_car_to_rec, t_car_to_inf, t_exp_to_car, t_inf_to_rec, t_inf_to_hosp,
             t_hosp_to_rec, t_hosp_to_icu, t_icu_to_dead, mu_C_R, mu_I_H, mu_H_U, scaling_factor_inf));
-        BOOST_OUTCOME_TRY(details::read_divi_data(path_join(data_dir, "county_divi.json"), id_name, region, date, num_icu));
+        BOOST_OUTCOME_TRY(details::read_divi_data(path_join(data_dir, "county_divi.json"), region, date, num_icu));
         BOOST_OUTCOME_TRY(num_population, 
-            details::read_population_data(path_join(data_dir, "county_current_population.json"), id_name, region));
+            details::read_population_data(path_join(data_dir, "county_current_population.json"), region));
 
         for (size_t i = 0; i < region.size(); i++) {
             for (size_t age = 0; age < age_ranges.size(); age++) {
@@ -277,19 +268,18 @@ IOResult<void> read_population_data_germany(std::vector<Model>& model, Date date
                                             const std::vector<double>& scaling_factor_inf, double scaling_factor_icu,
                                             const std::string& dir)
 {
-    std::string id_name;
     std::vector<int> region(1, 0);
     if (date > Date(2020, 4, 23)) {
         BOOST_OUTCOME_TRY(
-            details::set_divi_data(model, path_join(dir, "germany_divi.json"), id_name, {0}, date, scaling_factor_icu));
+            details::set_divi_data(model, path_join(dir, "germany_divi.json"), {0}, date, scaling_factor_icu));
     }
     else {
         log_warning("No DIVI data available for this date");
     }
     BOOST_OUTCOME_TRY(
-        details::set_rki_data(model, path_join(dir, "cases_all_age_ma7.json"), id_name, {0}, date, scaling_factor_inf));
+        details::set_rki_data(model, path_join(dir, "cases_all_age_ma7.json"), {0}, date, scaling_factor_inf));
     BOOST_OUTCOME_TRY(
-        details::set_population_data(model, path_join(dir, "county_current_population.json"), "ID_County", {0}));
+        details::set_population_data(model, path_join(dir, "county_current_population.json"), {0}));
     return success();
 }
 
@@ -307,19 +297,18 @@ IOResult<void> read_population_data_state(std::vector<Model>& model, Date date, 
                                 const std::vector<double>& scaling_factor_inf, double scaling_factor_icu,
                                 const std::string& dir)
 {
-    std::string id_name = "ID_State";
     if (date > Date(2020, 4, 23)) {
         BOOST_OUTCOME_TRY(
-            details::set_divi_data(model, path_join(dir, "state_divi.json"), id_name, state, date, scaling_factor_icu));
+            details::set_divi_data(model, path_join(dir, "state_divi.json"), state, date, scaling_factor_icu));
     }
     else {
         log_warning("No DIVI data available for this date");
     }
 
-    BOOST_OUTCOME_TRY(details::set_rki_data(model, path_join(dir, "cases_all_state_age_ma7.json"), id_name, state, date,
+    BOOST_OUTCOME_TRY(details::set_rki_data(model, path_join(dir, "cases_all_state_age_ma7.json"), state, date,
                                             scaling_factor_inf));
     BOOST_OUTCOME_TRY(
-        details::set_population_data(model, path_join(dir, "county_current_population.json"), "ID_County", state));
+        details::set_population_data(model, path_join(dir, "county_current_population.json"), state));
     return success();
 }
 
@@ -337,19 +326,17 @@ IOResult<void> read_population_data_county(std::vector<Model>& model, Date date,
                                            const std::vector<double>& scaling_factor_inf, double scaling_factor_icu,
                                            const std::string& dir)
 {
-    std::string id_name = "ID_County";
-
     if (date > Date(2020, 4, 23)) {
-        BOOST_OUTCOME_TRY(details::set_divi_data(model, path_join(dir, "county_divi.json"), id_name, county, date,
+        BOOST_OUTCOME_TRY(details::set_divi_data(model, path_join(dir, "county_divi.json"), county, date,
                                                  scaling_factor_icu));
     }
     else {
         log_warning("No DIVI data available for this date");
     }
-    BOOST_OUTCOME_TRY(details::set_rki_data(model, path_join(dir, "cases_all_county_age_ma7.json"), id_name, county, date,
+    BOOST_OUTCOME_TRY(details::set_rki_data(model, path_join(dir, "cases_all_county_age_ma7.json"), county, date,
                                             scaling_factor_inf));
     BOOST_OUTCOME_TRY(
-        details::set_population_data(model, path_join(dir, "county_current_population.json"), "ID_County", county));
+        details::set_population_data(model, path_join(dir, "county_current_population.json"), county));
     return success();
 }
 
