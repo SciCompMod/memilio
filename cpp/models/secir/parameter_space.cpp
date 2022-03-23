@@ -158,4 +158,50 @@ void draw_sample(SecirModel& model)
     model.apply_constraints();
 }
 
+Graph<SecirModel, MigrationParameters> draw_sample(Graph<SecirModel, MigrationParameters>& graph)
+{
+    Graph<SecirModel, MigrationParameters> sampled_graph;
+
+    //sample global parameters
+    auto& shared_params_model = graph.nodes()[0].property;
+    draw_sample_infection(shared_params_model);
+    auto& shared_contacts = shared_params_model.parameters.template get<mio::ContactPatterns>();
+    shared_contacts.draw_sample_dampings();
+    auto& shared_dynamic_npis = shared_params_model.parameters.template get<DynamicNPIsInfected>();
+    shared_dynamic_npis.draw_sample();
+
+    for (auto& params_node : graph.nodes()) {
+        auto& node_model = params_node.property;
+
+        //sample local parameters
+        draw_sample_demographics(params_node.property);
+
+        //copy global parameters
+        //save demographic parameters so they aren't overwritten
+        auto local_icu_capacity = node_model.parameters.template get<ICUCapacity>();
+        auto local_tnt_capacity = node_model.parameters.template get<TestAndTraceCapacity>();
+        auto local_holidays     = node_model.parameters.template get<ContactPatterns>().get_school_holidays();
+        node_model.parameters   = shared_params_model.parameters;
+        node_model.parameters.template get<ICUCapacity>()                           = local_icu_capacity;
+        node_model.parameters.template get<TestAndTraceCapacity>()                  = local_tnt_capacity;
+        node_model.parameters.template get<ContactPatterns>().get_school_holidays() = local_holidays;
+
+        node_model.parameters.template get<ContactPatterns>().make_matrix();
+        node_model.apply_constraints();
+
+        sampled_graph.add_node(params_node.id, node_model);
+    }
+
+    for (auto& edge : graph.edges()) {
+        auto edge_params = edge.property;
+        apply_dampings(edge_params.get_coefficients(), shared_contacts.get_dampings(), [&edge_params](auto& v) {
+            return make_migration_damping_vector(edge_params.get_coefficients().get_shape(), v);
+        });
+        edge_params.set_dynamic_npis_infected(shared_dynamic_npis);
+        sampled_graph.add_edge(edge.start_node_idx, edge.end_node_idx, edge_params);
+    }
+
+    return sampled_graph;
+}
+
 } // namespace mio

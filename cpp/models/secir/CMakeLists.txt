@@ -6,7 +6,6 @@ add_library(secir
     implicit_euler.cpp
     parameter_space.h
     parameter_space.cpp
-    parameter_studies.h
     secir_params.h
     secir_parameters_io.h
     secir_parameters_io.cpp

@@ -21,7 +21,6 @@
 #include "test_data_dir.h"
 #include "secir/secir.h"
 #include "secir/parameter_space.h"
-#include "secir/parameter_studies.h"
 #include "secir/secir_parameters_io.h"
 #include "memilio/io/mobility_io.h"
 #include "memilio/io/result_io.h"

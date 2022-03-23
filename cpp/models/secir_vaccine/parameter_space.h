@@ -20,6 +20,7 @@
 #ifndef PARAMETER_SPACE_H
 #define PARAMETER_SPACE_H
 
+#include "memilio/mobility/mobility.h"
 #include "memilio/utils/memory.h"
 #include "memilio/utils/logging.h"
 #include "memilio/utils/parameter_distributions.h"
@@ -52,6 +53,8 @@ namespace vaccinated
     * @param[inout] model SecirModel including contact patterns for alle age groups
     */
     void draw_sample(SecirModel& model);
+
+    Graph<SecirModel, MigrationParameters> draw_sample(Graph<SecirModel, MigrationParameters>& graph);
 
 } // namespace vaccinated
 } // namespace mio

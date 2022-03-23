@@ -19,7 +19,7 @@
 */
 #include "secir/secir_parameters_io.h"
 #include "secir/parameter_space.h"
-#include "secir/parameter_studies.h"
+#include "memilio/compartments/parameter_studies.h"
 #include "memilio/mobility/mobility.h"
 #include "memilio/io/result_io.h"
 

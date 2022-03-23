@@ -21,6 +21,7 @@ add_library(memilio
     epidemiology/holiday_data_de.ipp
     compartments/compartmentalmodel.h
     compartments/simulation.h
+    compartments/parameter_studies.h
     io/io.h
     io/io.cpp
     io/hdf5_cpp.h
