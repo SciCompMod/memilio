@@ -366,6 +366,13 @@ inline IOResult<std::vector<PopulationDataEntry>> read_population_data(const std
     return deserialize_population_data(jsvalue);
 }
 
+/**
+ * @brief returns a vector with the ids of all german counties
+ * @param path directory to population data
+ * @return
+ */
+IOResult<std::vector<int>> get_county_ids(const std::string& path);
+
 } // namespace mio
 
 #endif //MEMILIO_IO_EPI_DATA_H

@@ -576,32 +576,6 @@ namespace vaccinated
 
     } // namespace details
 
-    IOResult<std::vector<int>> get_county_ids(const std::string& path)
-    {
-        Json::Reader reader;
-        Json::Value root;
-
-        std::vector<int> id;
-
-        auto filename = path_join(path, "county_current_population.json");
-        std::ifstream census(filename);
-        if (!reader.parse(census, root)) {
-            log_error(reader.getFormattedErrorMessages());
-            return failure(StatusCode::UnknownError, filename + ", " + reader.getFormattedErrorMessages());
-        }
-
-        for (unsigned int i = 0; i < root.size(); i++) {
-            auto val = root[i]["ID_County"];
-            if (!val.isInt()) {
-                log_error("ID_County field must be an integer.");
-                return failure(StatusCode::InvalidFileFormat, filename + ", ID_County field must be an integer.");
-            }
-            id.push_back(val.asInt());
-        }
-
-        return success(id);
-    }
-
 } // namespace vaccinated
 } // namespace mio
 

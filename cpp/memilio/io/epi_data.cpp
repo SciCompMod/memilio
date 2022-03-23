@@ -28,4 +28,25 @@ const std::array<const char*, 6> StringRkiAgeGroup::age_group_names = {"A00-A04"
 const std::array<const char*, 11> PopulationDataEntry::age_group_names = {
     "<3 years",    "3-5 years",   "6-14 years",  "15-17 years", "18-24 years", "25-29 years",
     "30-39 years", "40-49 years", "50-64 years", "65-74 years", ">74 years"};
+
+IOResult<std::vector<int>> get_county_ids(const std::string& path)
+{
+    BOOST_OUTCOME_TRY(population_data, read_population_data(path_join(path, "county_current_population.json")));
+    Json::Reader reader;
+    Json::Value root;
+
+    std::vector<int> id;
+    id.reserve(population_data.size());
+    for (auto&& entry : population_data) {
+        if (entry.county_id) {
+            id.push_back(entry.county_id->get());
+        }
+        else {
+            return failure(StatusCode::InvalidValue, "County Id not available.");
+        }
+    }
+    id.erase(std::unique(id.begin(), id.end()), id.end());
+    return success(id);
+}
+
 } // namespace mio

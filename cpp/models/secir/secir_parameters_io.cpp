@@ -462,25 +462,6 @@ namespace details
 
 } // namespace details
 
-IOResult<std::vector<int>> get_county_ids(const std::string& path)
-{
-    BOOST_OUTCOME_TRY(population_data, read_population_data(path_join(path, "county_current_population.json")));
-    Json::Reader reader;
-    Json::Value root;
-
-    std::vector<int> id;
-    id.reserve(population_data.size());
-    for (auto&& entry : population_data) {
-        if (entry.county_id) {
-            id.push_back(entry.county_id->get());
-        } else {
-            return failure(StatusCode::InvalidValue, "County Id not available.");
-        }
-    }
-    id.erase(std::unique(id.begin(), id.end()), id.end());
-    return success(id);
-}
-
 } // namespace mio
 
 #endif // MEMILIO_HAS_JSONCPP

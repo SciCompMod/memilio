@@ -25,6 +25,7 @@
 #include "secir/parameter_studies.h"
 #include "memilio/epidemiology/regions.h"
 #include "secir/secir_parameters_io.h"
+#include "memilio/io/epi_data.h"
 #include "memilio/io/result_io.h"
 #include "memilio/io/mobility_io.h"
 #include "boost/filesystem.hpp"

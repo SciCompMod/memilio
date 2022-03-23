@@ -367,13 +367,6 @@ namespace vaccinated
         return success();
     }
 
-    /**
- * @brief returns a vector with the ids of all german counties
- * @param path directory to population data
- * @return
- */
-    IOResult<std::vector<int>> get_county_ids(const std::string& path);
-
 } // namespace vaccinated
 } // namespace mio
 

@@ -268,7 +268,6 @@ IOResult<void> read_population_data_germany(std::vector<Model>& model, Date date
                                             const std::vector<double>& scaling_factor_inf, double scaling_factor_icu,
                                             const std::string& dir)
 {
-    std::vector<int> region(1, 0);
     if (date > Date(2020, 4, 23)) {
         BOOST_OUTCOME_TRY(
             details::set_divi_data(model, path_join(dir, "germany_divi.json"), {0}, date, scaling_factor_icu));
@@ -339,13 +338,6 @@ IOResult<void> read_population_data_county(std::vector<Model>& model, Date date,
         details::set_population_data(model, path_join(dir, "county_current_population.json"), county));
     return success();
 }
-
-/**
- * @brief returns a vector with the ids of all german counties
- * @param path directory to population data
- * @return
- */
-IOResult<std::vector<int>> get_county_ids(const std::string& path);
 
 } // namespace mio
 
