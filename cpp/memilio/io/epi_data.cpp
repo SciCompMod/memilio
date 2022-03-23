@@ -22,8 +22,8 @@
 
 namespace mio
 {
-const std::array<const char*, 7> StringRkiAgeGroup::age_group_names = {"A00-A04", "A05-A14", "A15-A34", "A35-A59",
-                                                                 "A60-A79", "A80+",    "unknown"};
+const std::array<const char*, 6> StringRkiAgeGroup::age_group_names = {"A00-A04", "A05-A14", "A15-A34",
+                                                                       "A35-A59", "A60-A79", "A80+"};
 
 const std::array<const char*, 11> PopulationDataEntry::age_group_names = {
     "<3 years",    "3-5 years",   "6-14 years",  "15-17 years", "18-24 years", "25-29 years",

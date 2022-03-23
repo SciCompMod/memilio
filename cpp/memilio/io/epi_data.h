@@ -73,7 +73,7 @@ public:
     {
     }
 
-    static const std::array<const char*, 7> age_group_names;
+    static const std::array<const char*, 6> age_group_names;
 
     template <class IoContext>
     static IOResult<StringRkiAgeGroup> deserialize(IoContext& io)
@@ -85,6 +85,8 @@ public:
                 auto it = std::find(age_group_names.begin(), age_group_names.end(), str_);
                 if (it != age_group_names.end()) {
                     return success(size_t(it - age_group_names.begin()));
+                } else if (str_ == "unknown") {
+                    return success(size_t(age_group_names.size()));
                 }
                 return failure(StatusCode::InvalidValue, "Invalid age group.");
             },
@@ -139,7 +141,7 @@ inline IOResult<std::vector<RkiEntry>> deserialize_rki_data(const Json::Value& j
     BOOST_OUTCOME_TRY(rki_data, deserialize_json(jsvalue, Tag<std::vector<RkiEntry>>{}));
     //filter unknown age group
     auto it = std::remove_if(rki_data.begin(), rki_data.end(), [](auto&& rki_entry) {
-        return rki_entry.age_group >= AgeGroup(StringRkiAgeGroup::age_group_names.size() - 1);
+        return rki_entry.age_group >= AgeGroup(StringRkiAgeGroup::age_group_names.size());
     });
     rki_data.erase(it, rki_data.end());
     return success(std::move(rki_data));
@@ -256,24 +258,112 @@ public:
     }
 };
 
+namespace details
+{
+    inline void get_rki_age_interpolation_coefficients(const std::vector<double>& age_ranges,
+                                                       std::vector<std::vector<double>>& interpolation,
+                                                       std::vector<bool>& carry_over)
+    {
+        std::array<double, 6> param_ranges = {5., 10., 20., 25., 20., 20.};
+        static_assert(param_ranges.size() == StringRkiAgeGroup::age_group_names.size(), "RKI age group mismatch.");
+
+        //counter for parameter age groups
+        size_t counter = 0;
+
+        //residual of param age groups
+        double res = 0.0;
+        for (size_t i = 0; i < age_ranges.size(); i++) {
+
+            // if current param age group didn't fit into previous rki age group, transfer residual to current age group
+            if (res < 0) {
+                interpolation[i].push_back(std::min(-res / age_ranges[i], 1.0));
+            }
+
+            if (counter < param_ranges.size() - 1) {
+                res += age_ranges[i];
+                if (std::abs(res) < age_ranges[i]) {
+                    counter++;
+                }
+                // iterate over param age groups while there is still room in the current rki age group
+                while (res > 0) {
+                    res -= param_ranges[counter];
+                    interpolation[i].push_back((param_ranges[counter] + std::min(res, 0.0)) / age_ranges[i]);
+                    if (res >= 0) {
+                        counter++;
+                    }
+                }
+                if (res < 0) {
+                    carry_over.push_back(true);
+                }
+                else if (res == 0) {
+                    carry_over.push_back(false);
+                }
+            }
+            // if last param age group is reached
+            else {
+                interpolation[i].push_back((age_ranges[i] + res) / age_ranges[i]);
+                if (res < 0 || counter == 0) {
+                    carry_over.push_back(true);
+                }
+                else if (res == 0) {
+                    carry_over.push_back(false);
+                }
+                res = 0;
+            }
+        }
+    }
+
+    inline std::vector<PopulationDataEntry>
+    interpolate_to_rki_age_groups(const std::vector<PopulationDataEntry>& population_data)
+    {
+        std::vector<double> age_ranges     = {3., 3., 9., 3., 7., 5., 10., 10., 15., 10., 25.};
+        std::vector<std::vector<double>> coefficients{ age_ranges.size() };
+        std::vector<bool> carry_over{};
+        get_rki_age_interpolation_coefficients(age_ranges, coefficients, carry_over);
+
+        std::vector<PopulationDataEntry> interpolated{population_data};
+        for (auto entry_idx = size_t(0); entry_idx < population_data.size(); ++entry_idx) {
+            interpolated[entry_idx].population =
+                CustomIndexArray<double, AgeGroup>(AgeGroup(StringRkiAgeGroup::age_group_names.size()), 0.0);
+
+            size_t interpolated_age_idx = 0;
+            for (size_t age_idx = 0; age_idx < coefficients.size(); age_idx++) {
+                for (size_t coeff_idx = 0; coeff_idx < coefficients[age_idx].size(); coeff_idx++) {
+                    interpolated[entry_idx].population[AgeGroup(interpolated_age_idx)] +=
+                        coefficients[age_idx][coeff_idx] * population_data[entry_idx].population[AgeGroup(age_idx)];
+                    if (coeff_idx < coefficients[age_idx].size() - 1 || !carry_over[age_idx]) {
+                        interpolated_age_idx++;
+                    }
+                }
+            }
+        }
+
+        return interpolated;
+    }
+}
+
 /**
  * Deserialize population data from a JSON value.
+ * Age groups are interpolated to RKI age groups.
  * @param jsvalue JSON value that contains the population data.
  * @return list of population data.
  */
 inline IOResult<std::vector<PopulationDataEntry>> deserialize_population_data(const Json::Value& jsvalue) 
 {
-    return deserialize_json(jsvalue, Tag<std::vector<PopulationDataEntry>>{});
+    BOOST_OUTCOME_TRY(population_data, deserialize_json(jsvalue, Tag<std::vector<PopulationDataEntry>>{}));
+    return success(details::interpolate_to_rki_age_groups(population_data));
 }
 
 /**
  * Deserialize population data from a JSON file.
+ * Age groups are interpolated to RKI age groups.
  * @param filename JSON file that contains the population data.
  * @return list of population data.
  */
 inline IOResult<std::vector<PopulationDataEntry>> read_population_data(const std::string& filename) 
 {
-    return read_json(filename, Tag<std::vector<PopulationDataEntry>>{});
+    BOOST_OUTCOME_TRY(jsvalue, read_json(filename));
+    return deserialize_population_data(jsvalue);
 }
 
 } // namespace mio

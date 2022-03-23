@@ -70,60 +70,6 @@ namespace details
         return success(max_date);
     }
 
-    void interpolate_ages(const std::vector<double>& age_ranges, std::vector<std::vector<double>>& interpolation,
-                          std::vector<bool>& carry_over)
-    {
-        std::vector<double> param_ranges = {5., 10., 20., 25., 20., 20.};
-
-        //counter for parameter age groups
-        size_t counter = 0;
-
-        //residual of param age groups
-        double res = 0.0;
-        for (size_t i = 0; i < age_ranges.size(); i++) {
-
-            // if current param age group didn't fit into previous rki age group, transfer residual to current age group
-            if (res < 0) {
-                interpolation[i].push_back(std::min(-res / age_ranges[i], 1.0));
-            }
-
-            if (counter < param_ranges.size() - 1) {
-                res += age_ranges[i];
-                if (std::abs(res) < age_ranges[i]) {
-                    counter++;
-                }
-                // iterate over param age groups while there is still room in the current rki age group
-                while (res > 0) {
-                    res -= param_ranges[counter];
-                    interpolation[i].push_back((param_ranges[counter] + std::min(res, 0.0)) / age_ranges[i]);
-                    if (res >= 0) {
-                        counter++;
-                    }
-                }
-                if (res < 0) {
-                    carry_over.push_back(true);
-                }
-                else if (res == 0) {
-                    carry_over.push_back(false);
-                }
-            }
-            // if last param age group is reached
-            else {
-                interpolation[i].push_back((age_ranges[i] + res) / age_ranges[i]);
-                if (res < 0 || counter == 0) {
-                    carry_over.push_back(true);
-                }
-                else if (res == 0) {
-                    carry_over.push_back(false);
-                }
-                res = 0;
-            }
-        }
-        // last entries for "unknown" age group
-        interpolation.push_back({1.0});
-        carry_over.push_back(true);
-    }
-
     template<class EpiDataEntry>
     int get_region_id(const EpiDataEntry& rki_entry)
     {
@@ -443,14 +389,8 @@ namespace details
     {
         BOOST_OUTCOME_TRY(population_data, mio::read_population_data(path));
 
-        std::vector<double> age_ranges     = {3., 3., 9., 3., 7., 5., 10., 10., 15., 10., 25.};
-
-        std::vector<std::vector<double>> interpolation(age_ranges.size());
-        std::vector<bool> carry_over;
-
-        interpolate_ages(age_ranges, interpolation, carry_over);
-
-        std::vector<std::vector<double>> vnum_population(vregion.size(), std::vector<double>(age_ranges.size(), 0.0));
+        std::vector<std::vector<double>> vnum_population(
+            vregion.size(), std::vector<double>(StringRkiAgeGroup::age_group_names.size(), 0.0));
 
         for (auto&& entry : population_data) {
             auto it = std::find_if(vregion.begin(), vregion.end(), [&entry](auto r) {
@@ -461,29 +401,13 @@ namespace details
             if (it != vregion.end()) {
                 auto region_idx      = size_t(it - vregion.begin());
                 auto& num_population = vnum_population[region_idx];
-                for (size_t age = 0; age < age_ranges.size(); age++) {
+                for (size_t age = 0; age < num_population.size(); age++) {
                     num_population[age] += entry.population[AgeGroup(age)];
                 }
             }
         }
 
-        std::vector<std::vector<double>> interpol_population(vregion.size(),
-                                                             std::vector<double>(interpolation.size(), 0.0));
-        for (size_t region_idx = 0; region_idx < vregion.size(); ++region_idx) {
-            auto& num_population = vnum_population[region_idx];
-
-            int counter = 0;
-            for (size_t i = 0; i < interpolation.size() - 1; i++) {
-                for (size_t j = 0; j < interpolation[i].size(); j++) {
-                    interpol_population[region_idx][counter] += interpolation[i][j] * num_population[i];
-                    if (j < interpolation[i].size() - 1 || !carry_over[i]) {
-                        counter++;
-                    }
-                }
-            }
-        }
-
-        return success(interpol_population);
+        return success(vnum_population);
     }
 
     IOResult<void> set_population_data(std::vector<SecirModel>& model, const std::string& path,
