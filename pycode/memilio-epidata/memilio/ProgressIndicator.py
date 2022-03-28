@@ -26,9 +26,11 @@ from os import get_terminal_size
 class ProgressIndicator:
     """! Print an animation to show that something is happening.
 
-    Animations are rendered in a new thread, which is set up as deamon so that it stops on main thread exit.
+    Animations are rendered in a new thread, which is set up as deamon so that
+    it stops on main thread exit.
     The methods Dots, Spinner and Percentage provide some default animations.
-    Start the animation by either using the `start`/`stop` functions or a 'with as' block, e.g
+    Start the animation by either using the `start`/`stop` functions or a
+    'with as' block, e.g
     ```
     import memilio.ProgressIndicator
     with ProgressIndicator.Spinner():
@@ -45,8 +47,11 @@ class ProgressIndicator:
     def __init__(self, animator, delay):
         """! Create an ProgressIndicator.
 
-        @param animator generator expression. `next(animator)` must be a string
-        @param delay positive real number. Sets delay in seconds between drawing animation frames.
+        @param animator generator expression. The expression must loop, i.e.
+            it should never return StopIteration. `next(animator)` must be a
+            string of length < os.get_terminal_size().columns
+        @param delay positive real number. Sets delay in seconds between
+            drawing animation frames.
         """
         assert(delay > 0)
         self._animator = animator
@@ -75,12 +80,15 @@ class ProgressIndicator:
         sys.stdout.flush()
 
     def start(self):
-        """! Start the animation in a new thread. Must call stop() afterwards. """
+        """! Start the animation in a new thread.
+
+        Must call stop() afterwards.
+        """
         if not self._enabled:
             self._enabled = True
             # start new threat to render the animator in the background
             self._thread = threading.Thread(target=self._render)
-            self._thread.setDaemon(True) # stop this thread on main thread exit
+            self._thread.setDaemon(True) # stops thread on main thread exit
             self._thread.start()
 
     def stop(self):
@@ -95,10 +103,13 @@ def Spinner(delay=0.1, message=""):
     """! initializes a ProgressIndicator with a rotating line animation.
 
     This method spawns a new thread to print the animation.
-    Start the animation by either using the `start`/`stop` functions or a 'with' block.
+    Start the animation by either using the `start`/`stop` functions or a
+    'with' block.
 
-    @param delay [Default: 0.1] positive real number. Sets delay in seconds between drawing animation frames.
-    @param message [Default: ""] string. Text shown before the indicator (consider appeding a space as separator).
+    @param delay [Default: 0.1] positive real number. Sets delay in seconds
+        between drawing animation frames.
+    @param message [Default: ""] string. Text shown before the indicator
+        (consider appeding a space as separator).
 
     @return ProgressIndicator, with a rotating line animation.
     """
@@ -117,13 +128,18 @@ def Dots(delay=1, message="", num_dots=3, dot=".", blank=" "):
     """! initializes ProgressIndicator with a 'dot, dot, dot' animation.
 
     This method spawns a new thread to print the animation.
-    Start the animation by either using the `start`/`stop` functions or a 'with' block.
+    Start the animation by either using the `start`/`stop` functions or a
+    'with' block.
 
-    @param delay [Default: 1] positive real number. Sets delay in seconds between drawing animation frames.
-    @param message [Default: ""] string. Text shown before the indicator (consider appeding a space as separator).
-    @param num_dots [Default: 3] positive integer. Determines maximum number of dots drawn.
+    @param delay [Default: 1] positive real number. Sets delay in seconds
+        between drawing animation frames.
+    @param message [Default: ""] string. Text shown before the indicator
+        (consider appeding a space as separator).
+    @param num_dots [Default: 3] positive integer. Determines maximum number
+        of dots drawn before clearing them with blanks.
     @param dot [Default: "."] string. Drawn sequentially up to num_dots times.
-    @param blank [Default: " "] string. Placeholder for yet to be drawn dots. Must have same length as dot.
+    @param blank [Default: " "] string. Placeholder for yet to be drawn dots.
+        Must have same length as dot.
 
     @return ProgressIndicator, with a 'dot, dot, dot' animation.
     """
@@ -137,26 +153,36 @@ def Dots(delay=1, message="", num_dots=3, dot=".", blank=" "):
     def _dots():
         while True: # loop animation
             for n in range(1, num_dots+1): # iterate animation frames
-                yield "{}{}{}".format(message, dot*n, blank*(num_dots-n)) # return single frame
+                # return single frame
+                yield "{}{}{}".format(message, dot*n, blank*(num_dots-n))
     return ProgressIndicator(_dots(), delay)
 
 class Percentage:
-    def __init__(self, delay=1, message="", percentage=0, use_bar=False, use_delayed_output=True, keep_output=True):
-        """! initializes ProgressIndicator showing a percantage, updated by 'set_progress'.
+    def __init__(self, delay=1, message="", percentage=0, use_bar=False,
+            use_delayed_output=True, keep_output=True):
+        """! initializes ProgressIndicator displaying a percentage.
 
+        The percentage can be updated using the `set_progress` method.
         By default, this method spawns a new thread to print the animation.
-        If use_delayed_output is set to False, the delay is ignored, and no new thread is spawned. The output is
-        then updated in the main thread, whenever 'set_progress' is called.
-        Start the animation by either using the `start`/`stop` functions or a 'with as' block.
-        The percentage can be updated using the set_progress member function.
+        If use_delayed_output is set to False, the delay is ignored, and no
+        new thread is spawned. The output is then updated in the main thread,
+        whenever 'set_progress' is called.
+        Start the animation by either using the `start`/`stop` functions or a
+        `with` `as` block.
 
-        @param delay [Default: 1] positive real number. Sets delay in seconds between drawing animation frames.
-        @param message [Default: ""] string. Text shown before the indicator (consider appeding a space as separator).
-        @param percentage [Default: 0] real number in [0, 1]. Initial percentage for animation.
-        @param use_bar [Default: False] bool. If True, adds a bar plotting the current progress.
-        @param use_delayed_output [Default: True] bool. If False, delay is ignored and the animation is drawn in the
-            main thread whenever set_progress() is called.
-        @param keep_output [Default: True] bool. Set F if the last animation frame should be kept as a new line.
+        @param delay [Default: 1] positive real number. Sets delay in seconds
+            between drawing animation frames.
+        @param message [Default: ""] string. Text shown before the indicator
+            (consider appeding a space as separator).
+        @param percentage [Default: 0] real number in [0, 1]. Initial
+            percentage shown in the animation.
+        @param use_bar [Default: False] bool. If True, adds a bar plotting
+            the current progress.
+        @param use_delayed_output [Default: True] bool. If False, delay is
+            ignored and the animation is drawn in the main thread whenever
+            set_progress() is called.
+        @param keep_output [Default: True] bool. Set F if the last animation
+            frame should be kept as a new line.
         """
         self._use_thread = use_delayed_output
         self._keep_output = keep_output
@@ -175,7 +201,8 @@ class Percentage:
                 sys.stdout.write(message)
                 message = ""
             self._message = [message]
-        self._indicator = ProgressIndicator(self._perc(self._progress, self._message), delay)
+        animator = self._perc(self._progress, self._message)
+        self._indicator = ProgressIndicator(animator, delay)
 
     def __enter__(self):
         self.start()
@@ -187,7 +214,8 @@ class Percentage:
     def start(self):
         """! Start the animation. Must call stop() afterwards.
         
-        By default, this method spawns a new thread. See option use_delayed_output in the class constructor.
+        By default, this method spawns a new thread. See option
+        use_delayed_output in the class constructor.
         """
         if self._use_thread:
             self._indicator.start()
@@ -214,36 +242,41 @@ class Percentage:
 
     @staticmethod
     def _perc(p, message):
-        """! Method to create animator function. Uses lists to get parameters by reference. """
+        """! Method to create internal animator function.
+        
+        Uses lists to get parameters by reference.
+        """
         while True:
             yield "{}{:6.2f}%".format(message[0], 100*p[0])
 
     class _bar:
-        """! Uses [] to return a progress bar string if use_bar is enabled. """
+        """! Uses [] to return a progress bar string if use_bar is enabled."""
         def __init__(self, percentage, message, width):
             self.p = percentage
             self.m = message
-            self.w = width - len(message) - 11 # collected offset by percentage/extra characters
+            # collected offset by percentage/extra characters from bar = 11
+            self.w = width - len(message) - 11
         def __getitem__(self, _): # ignore key
             n = int(self.w * self.p[0])
             return self.m + "[" + "#" * n + " " * (self.w - n) + "] "
 
 if __name__ == "__main__":
     print("This is only a usage example, and does not actually do anything.")
-    # start/stop
+    # using start/stop
     p = Dots(message="waiting", delay=0.5)
     p.start()
     time.sleep(1.6)
     p.stop()
-    # with as
+    # using with as block
     with Percentage(message="download 1 ", use_bar=True, delay=0.4) as p:
         for i in range(13):
             time.sleep(0.1467)
             p.set_progress((i+1)/13)
-    with Percentage(message="download 2 ", use_delayed_output=False, keep_output=False) as p:
+    with Percentage(message="download 2 ", use_delayed_output=False,
+            keep_output=False) as p:
         for i in range(97):
             time.sleep(0.0367)
             p.set_progress((i+1)/97)
-    # with
+    # using with block ('as' is not usefull without Percentage)
     with Spinner(message="finish "):
         time.sleep(2)
