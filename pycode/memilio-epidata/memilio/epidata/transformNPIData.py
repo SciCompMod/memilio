@@ -183,7 +183,7 @@ def print_manual_download(filename, url):
     print(
         'This script needs manual downloading of files. Please register'
         ' at corona-datenplatform.com and download ' + filename + ' from ' + url +
-        '. Then move it to a folder named npi_raw in this directory.')
+        '. Then move it to a folder named raw_data in this directory.')
 
 
 def transform_npi_data(fine_resolution=2,
@@ -205,7 +205,7 @@ def transform_npi_data(fine_resolution=2,
     and
     - kr_massnahmen_oberkategorien.csv
     from https://www.corona-datenplattform.de/dataset/massnahmen_oberkategorien_kreise
-    and move it to a folder named *npi_raw* in the current directory.
+    and move it to the *directory*-path mentioned in the beginning of the function.
 
     @param fine_resolution 2 [Default] or 0 or 1. Defines which categories
         are considered. 
@@ -236,7 +236,9 @@ def transform_npi_data(fine_resolution=2,
         if fine_resolution > 0:
             try:
                 df_npis_old = pd.read_csv(
-                    'npi_raw/kr_massnahmen_unterkategorien.csv', sep=';')
+                    os.path.join(
+                        directory, 'kr_massnahmen_unterkategorien.csv'),
+                    sep=',')
             except FileNotFoundError:
                 print_manual_download(
                     'kr_massnahmen_unterkategorien.csv',
@@ -246,7 +248,8 @@ def transform_npi_data(fine_resolution=2,
 
             try:
                 df_npis_desc = pd.read_excel(
-                    'npi_raw/datensatzbeschreibung_massnahmen.xlsx',
+                    os.path.join(
+                        directory, 'datensatzbeschreibung_massnahmen.xlsx'),
                     sheet_name=2)
             except FileNotFoundError:
                 print_manual_download(
@@ -266,8 +269,8 @@ def transform_npi_data(fine_resolution=2,
 
         else:
             try:
-                df_npis_old = pd.read_csv(
-                    'npi_raw/kr_massnahmen_oberkategorien.csv')
+                df_npis_old = pd.read_csv(os.path.join(
+                    directory, 'kr_massnahmen_oberkategorien.csv'))
             except FileNotFoundError:
                 print_manual_download(
                     'datensatzbeschreibung_massnahmen.xlsx',
@@ -277,7 +280,8 @@ def transform_npi_data(fine_resolution=2,
 
             try:
                 df_npis_desc = pd.read_excel(
-                    'npi_raw/datensatzbeschreibung_massnahmen.xlsx',
+                    os.path.join(
+                        directory, 'datensatzbeschreibung_massnahmen.xlsx'),
                     sheet_name=3)
             except FileNotFoundError:
                 print_manual_download(
@@ -300,10 +304,14 @@ def transform_npi_data(fine_resolution=2,
     try:
         if fine_resolution > 0:
             df_npis_desc = pd.read_excel(
-                'npi_raw/datensatzbeschreibung_massnahmen.xlsx', sheet_name=2)
+                os.path.join(
+                    directory, 'datensatzbeschreibung_massnahmen.xlsx'),
+                sheet_name=2)
         else:
             df_npis_desc = pd.read_excel(
-                'npi_raw/datensatzbeschreibung_massnahmen.xlsx', sheet_name=3)
+                os.path.join(
+                    directory, 'datensatzbeschreibung_massnahmen.xlsx'),
+                sheet_name=3)
     except FileNotFoundError:
         print_manual_download(
             'datensatzbeschreibung_massnahmen.xlsx',
