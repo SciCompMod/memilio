@@ -27,7 +27,7 @@
 #include "abm/person.h"
 #include "abm/lockdown_rules.h"
 #include "abm/testing_scheme.h"
-#include "abm/migration_data.h"
+#include "abm/trip_list.h"
 #include "memilio/utils/pointer_dereferencing_iterator.h"
 #include "memilio/utils/stl_util.h"
 

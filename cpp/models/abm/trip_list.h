@@ -17,8 +17,8 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
-#ifndef EPI_ABM_MIGRATION_DATA_H
-#define EPI_ABM_MIGRATION_DATA_H
+#ifndef EPI_ABM_TRPI_LIST_H
+#define EPI_ABM_TRIP_LIST_H
 
 #include "abm/parameters.h"
 #include "abm/location.h"
@@ -77,11 +77,6 @@ public:
     TimePoint get_next_trip_time() const;
 
     /**
-     * sort the trips by migration time
-     */
-    void sort_trips();
-
-    /**
      * add a trip to migration data
      */
     void add_trip(Trip trip);
@@ -97,7 +92,7 @@ public:
     /* 
      * returns the length of the TripList
      */
-    size_t num_trips()
+    size_t num_trips() const
     {
         return m_trips.size();
     }

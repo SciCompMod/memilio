@@ -17,7 +17,7 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
-#include "abm/migration_data.h"
+#include "abm/trip_list.h"
 #include "abm/location.h"
 #include "abm/random_events.h"
 
