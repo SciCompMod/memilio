@@ -19,9 +19,9 @@
 #############################################################################
 """
 @file getCaseData.py
-@brief Downloads the case data of the Robert-Koch-Institut (RKI) and provides it in different ways.
+@brief Downloads the case data of the Robert Koch-Institute (RKI) and provides it in different ways.
 
-The case data we download can be found at
+The raw case data we download can be found at
 https://github.com/robert-koch-institut/SARS-CoV-2_Infektionen_in_Deutschland
 
 Be careful: Recovered and deaths are not correct set in this case
@@ -138,7 +138,7 @@ def get_case_data(read_data=dd.defaultDict['read_data'],
         try:
             df = gd.loadCsv(targetFileName=source_filename, apiUrl=url,
                             extension=".csv")
-        except Exception:
+        except FileNotFoundError:
             pass
         complete = check_for_completeness(df, merge_eisenach=True)
         if complete:
@@ -153,7 +153,7 @@ def get_case_data(read_data=dd.defaultDict['read_data'],
             itemId = '66876b81065340a4a48710b062319336_0'
             try:
                 df = gd.loadCsv(itemId)
-            except Exception:
+            except FileNotFoundError:
                 pass
             complete = check_for_completeness(df, merge_eisenach=True)
 
@@ -165,7 +165,7 @@ def get_case_data(read_data=dd.defaultDict['read_data'],
                         "https://npgeo-de.maps.arcgis.com/sharing/rest/content/items/"
                         "f10774f1c63e40168479a1feb6c7ca74/data", "")
                     df.rename(columns={'FID': "OBJECTID"}, inplace=True)
-                except Exception:
+                except FileNotFoundError:
                     pass
                 complete = check_for_completeness(df, merge_eisenach=True)
 
