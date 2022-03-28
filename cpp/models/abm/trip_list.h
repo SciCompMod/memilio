@@ -17,7 +17,7 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
-#ifndef EPI_ABM_TRPI_LIST_H
+#ifndef EPI_ABM_TRIP_LIST_H
 #define EPI_ABM_TRIP_LIST_H
 
 #include "abm/parameters.h"
