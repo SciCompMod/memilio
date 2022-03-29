@@ -29,6 +29,8 @@ const std::array<const char*, 11> PopulationDataEntry::age_group_names = {
     "<3 years",    "3-5 years",   "6-14 years",  "15-17 years", "18-24 years", "25-29 years",
     "30-39 years", "40-49 years", "50-64 years", "65-74 years", ">74 years"};
 
+const std::array<const char*, 6> StringVaccinationDataAgeGroup::age_group_names = {"0-4", "5-14", "15-34", "35-59", "60-79", "80-99"};
+
 IOResult<std::vector<int>> get_county_ids(const std::string& path)
 {
     BOOST_OUTCOME_TRY(population_data, read_population_data(path_join(path, "county_current_population.json")));

@@ -17,49 +17,52 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
-#ifndef INFECTIONSTATE_H
-#define INFECTIONSTATE_H
+#ifndef SECIRV_INFECTIONSTATE_H
+#define SECIRV_INFECTIONSTATE_H
 namespace mio
 {
 namespace vaccinated
 {
 
     /**
- * @brief The InfectionState enum describes the possible
- * categories for the infectious state of persons
- */
+    * @brief The InfectionState enum describes the possible
+    * categories for the infectious state of persons.
+    * Usable as an index.
+    */
     enum class InfectionState
     {
-        Susceptible    = 0,
-        SusceptibleV1  = 1,
-        Exposed        = 2,
-        ExposedV1      = 3,
-        ExposedV2      = 4,
-        Carrier        = 5,
-        CarrierV1      = 6,
-        CarrierV2      = 7,
-        CarrierT       = 8,
-        CarrierTV1     = 9,
-        CarrierTV2     = 10,
-        Infected       = 11,
-        InfectedV1     = 12,
-        InfectedV2     = 13,
-        InfectedT      = 14,
-        InfectedTV1    = 15,
-        InfectedTV2    = 16,
-        Hospitalized   = 17,
-        HospitalizedV1 = 18,
-        HospitalizedV2 = 19,
-        ICU            = 20,
-        ICUV1          = 21,
-        ICUV2          = 22,
-        Recovered      = 23,
-        Dead           = 24,
-        InfTotal       = 25,
-        Count          = 26
+        Susceptible = 0,
+        SusceptiblePartiallyImmune, 
+        //SusceptibleFullyImmune == Recovered
+        Exposed,
+        ExposedPartiallyImmune, //vaccinated once
+        ExposedFullyImmune, //vaccinated twice or recovered
+        Carrier,
+        CarrierPartiallyImmune,
+        CarrierFullyImmune ,
+        CarrierTested, //tested in the zero-covid scheme during commute
+        CarrierPartiallyImmuneTested,
+        CarrierFullyImmuneTested,
+        Infected,
+        InfectedPartiallyImmune,
+        InfectedFullyImmune,
+        InfectedTested,
+        InfectedPartiallyImmuneTested,
+        InfectedFullyImmuneTested,
+        Hospitalized,
+        HospitalizedPartiallyImmune,
+        HospitalizedFullyImmune,
+        ICU,
+        ICUPartiallyImmune,
+        ICUFullyImmune,
+        Recovered,
+        Dead,
+        InfTotal,
+        
+        Count
     };
 
 } // namespace vaccinated
 } // namespace mio
 
-#endif
+#endif //SECIRV_INFECTIONSTATE_H

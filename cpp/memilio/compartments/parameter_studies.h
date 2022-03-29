@@ -108,12 +108,12 @@ public:
      * @param result_processing_function Processing function for simulation results, e.g., output function.
      *                                   Receives the result after each run is completed.
      */
-    template<class HandleSimulationResultFunction>
-    void run(HandleSimulationResultFunction result_processing_function)
+    template <class SampleGraphFunction, class HandleSimulationResultFunction>
+    void run(SampleGraphFunction sample_graph, HandleSimulationResultFunction result_processing_function)
     {
         // Iterate over all parameters in the parameter space
         for (size_t i = 0; i < m_num_runs; i++) {
-            auto sim = create_sampled_simulation();
+            auto sim = create_sampled_simulation(sample_graph);
             sim.advance(m_tmax);
 
             result_processing_function(std::move(sim).get_graph());
@@ -125,12 +125,13 @@ public:
      * Convinience function for a few number of runs, but uses a lot of memory.
      * @return vector of results of each run.
      */
-    std::vector<mio::Graph<mio::SimulationNode<Simulation>, mio::MigrationEdge>> run()
+    template <class SampleGraphFunction>
+    std::vector<mio::Graph<mio::SimulationNode<Simulation>, mio::MigrationEdge>> run(SampleGraphFunction sample_graph)
     {
         std::vector<mio::Graph<mio::SimulationNode<Simulation>, mio::MigrationEdge>> ensemble_result;
         ensemble_result.reserve(m_num_runs);
 
-        run([&ensemble_result](auto&& r) {
+        run(sample_graph, [&ensemble_result](auto&& r) {
             ensemble_result.emplace_back(std::move(r));
         });
 
@@ -217,11 +218,13 @@ public:
 
 private:
     //sample parameters and create simulation
-    mio::GraphSimulation<mio::Graph<mio::SimulationNode<Simulation>, mio::MigrationEdge>> create_sampled_simulation()
+    template <class SampleGraphFunction>
+    mio::GraphSimulation<mio::Graph<mio::SimulationNode<Simulation>, mio::MigrationEdge>>
+    create_sampled_simulation(SampleGraphFunction sample_graph)
     {
         mio::Graph<mio::SimulationNode<Simulation>, mio::MigrationEdge> sim_graph;
 
-        auto sampled_graph = draw_sample(m_graph);
+        auto sampled_graph = sample_graph(m_graph);
         for (auto&& node : sampled_graph.nodes()) {
             sim_graph.add_node(node.id, node.property, m_t0, m_dt_integration);
         }

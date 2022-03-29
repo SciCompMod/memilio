@@ -54,7 +54,7 @@ namespace vaccinated
     */
     void draw_sample(SecirModel& model);
 
-    Graph<SecirModel, MigrationParameters> draw_sample(Graph<SecirModel, MigrationParameters>& graph);
+    Graph<SecirModel, MigrationParameters> draw_sample(Graph<SecirModel, MigrationParameters>& graph, double tmax, bool high);
 
 } // namespace vaccinated
 } // namespace mio

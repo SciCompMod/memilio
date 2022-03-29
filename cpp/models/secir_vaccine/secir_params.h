@@ -54,6 +54,18 @@ namespace vaccinated
         }
     };
 
+    struct StartSummer {
+        using Type = double;
+        static Type get_default(AgeGroup)
+        {
+            return 0.;
+        }
+        static std::string name()
+        {
+            return "StartSummer";
+        }
+    };
+
     /**
  * @brief the seasonality in the SECIR model
  * the seasonality is given as (1+k*sin()) where the sine
@@ -337,7 +349,7 @@ namespace vaccinated
     /**
 * @brief the percentage of dead patients per ICU patients in the SECIR model
 */
-    struct DeathsPerHospitalized {
+    struct DeathsPerICU {
         using Type = CustomIndexArray<UncertainValue, AgeGroup>;
         static Type get_default(AgeGroup size)
         {
@@ -345,7 +357,7 @@ namespace vaccinated
         }
         static std::string name()
         {
-            return "DeathsPerHospitalized";
+            return "DeathsPerICU";
         }
     };
 
@@ -395,7 +407,7 @@ namespace vaccinated
     };
 
     /**
- * @brief capacity to test and trace contacts of infected for quarantine per day.
+ * @brief ...
  */
     struct VaccineGrowthFirst {
         using Type = CustomIndexArray<UncertainValue, AgeGroup>;
@@ -410,7 +422,7 @@ namespace vaccinated
     };
 
     /**
- * @brief capacity to test and trace contacts of infected for quarantine per day.
+ * @brief ...
  */
     struct VaccineGrowthFull {
         using Type = CustomIndexArray<UncertainValue, AgeGroup>;
@@ -425,7 +437,7 @@ namespace vaccinated
     };
 
     /**
- * @brief capacity to test and trace contacts of infected for quarantine per day.
+ * @brief ...
  */
     struct BaseInfB117 {
         using Type = CustomIndexArray<double, AgeGroup>;
@@ -475,7 +487,7 @@ namespace vaccinated
         }
     };
 
-    struct ReducExpInf {
+    struct ReducVaccInf {
         using Type = CustomIndexArray<UncertainValue, AgeGroup>;
         static Type get_default(AgeGroup size)
         {
@@ -483,11 +495,11 @@ namespace vaccinated
         }
         static std::string name()
         {
-            return "ReducExpInf";
+            return "ReducVaccInf";
         }
     };
 
-    struct ReducImmuneExpInf {
+    struct ReducImmuneInf {
         using Type = CustomIndexArray<UncertainValue, AgeGroup>;
         static Type get_default(AgeGroup size)
         {
@@ -495,11 +507,11 @@ namespace vaccinated
         }
         static std::string name()
         {
-            return "ReducImmuneExpInf";
+            return "ReducImmuneInf";
         }
     };
 
-    struct ReducInfHosp {
+    struct ReducVaccHosp {
         using Type = CustomIndexArray<UncertainValue, AgeGroup>;
         static Type get_default(AgeGroup size)
         {
@@ -507,11 +519,11 @@ namespace vaccinated
         }
         static std::string name()
         {
-            return "ReducInfHosp";
+            return "ReducVaccHosp";
         }
     };
 
-    struct ReducImmuneInfHosp {
+    struct ReducImmuneHosp {
         using Type = CustomIndexArray<UncertainValue, AgeGroup>;
         static Type get_default(AgeGroup size)
         {
@@ -519,11 +531,11 @@ namespace vaccinated
         }
         static std::string name()
         {
-            return "ReducImmuneInfHosp";
+            return "ReducImmuneHosp";
         }
     };
 
-    struct ReducTime {
+    struct ReducMildRecTime {
         using Type = CustomIndexArray<UncertainValue, AgeGroup>;
         static Type get_default(AgeGroup size)
         {
@@ -531,12 +543,12 @@ namespace vaccinated
         }
         static std::string name()
         {
-            return "ReducTime";
+            return "ReducMildRecTime";
         }
     };
 
     /**
- * @brief capacity to test and trace contacts of infected for quarantine per day.
+ * @brief Time in days between first and second vaccine dose.
  */
     struct VaccinationGap {
         using Type = CustomIndexArray<UncertainValue, AgeGroup>;
@@ -551,7 +563,7 @@ namespace vaccinated
     };
 
     /**
- * @brief capacity to test and trace contacts of infected for quarantine per day.
+ * @brief Time in days until first vaccine dose takes full effect.
  */
     struct DaysUntilEffective {
         using Type = CustomIndexArray<UncertainValue, AgeGroup>;
@@ -566,7 +578,7 @@ namespace vaccinated
     };
 
     /**
- * @brief capacity to test and trace contacts of infected for quarantine per day.
+ * @brief Time in days until second vaccine dose takes full effect.
  */
     struct DaysUntilEffectiveFull {
         using Type = CustomIndexArray<UncertainValue, AgeGroup>;
@@ -581,7 +593,7 @@ namespace vaccinated
     };
 
     /**
- * @brief capacity to test and trace contacts of infected for quarantine per day.
+ * @brief Total number of first vaccinations up to the given day.
  */
     struct DailyFirstVaccination {
         using Type = CustomIndexArray<std::vector<double>, AgeGroup>;
@@ -596,7 +608,7 @@ namespace vaccinated
     };
 
     /**
- * @brief capacity to test and trace contacts of infected for quarantine per day.
+ * @brief Total number of full vaccinations up to the given day.
  */
     struct DailyFullVaccination {
         using Type = CustomIndexArray<std::vector<double>, AgeGroup>;
@@ -610,16 +622,30 @@ namespace vaccinated
         }
     };
 
-    using SecirParamsBase =
-        ParameterSet<StartDay, Seasonality, ICUCapacity, TestAndTraceCapacity, ContactPatterns, DynamicNPIsInfected,
-                     IncubationTime, InfectiousTimeMild, InfectiousTimeAsymptomatic, SerialInterval,
-                     HospitalizedToHomeTime, HomeToHospitalizedTime, HospitalizedToICUTime, ICUToHomeTime,
-                     ICUToDeathTime, InfectionProbabilityFromContact, RelativeCarrierInfectability,
-                     AsymptoticCasesPerInfectious, RiskOfInfectionFromSympomatic, MaxRiskOfInfectionFromSympomatic,
-                     HospitalizedCasesPerInfectious, ICUCasesPerHospitalized, DeathsPerHospitalized, VaccineGrowthFirst,
-                     VaccineGrowthFull, VaccinationGap, DaysUntilEffective, DaysUntilEffectiveFull, BaseInfB117,
-                     BaseInfB161, DailyFullVaccination, DailyFirstVaccination, ReducVaccExp, ReducImmuneExp,
-                     ReducExpInf, ReducImmuneExpInf, ReducInfHosp, ReducImmuneInfHosp, ReducTime>;
+    /**
+ * @brief ...
+ */
+    struct DynamicInfectionFromContact {
+        using Type = CustomIndexArray<std::vector<double>, AgeGroup>;
+        static Type get_default(AgeGroup size)
+        {
+            return Type(size);
+        }
+        static std::string name()
+        {
+            return "DynamicInfectionFromContact";
+        }
+    };
+
+    using SecirParamsBase = ParameterSet<
+        StartDay, StartSummer, Seasonality, ICUCapacity, TestAndTraceCapacity, ContactPatterns, DynamicNPIsInfected,
+        IncubationTime, InfectiousTimeMild, InfectiousTimeAsymptomatic, SerialInterval, HospitalizedToHomeTime,
+        HomeToHospitalizedTime, HospitalizedToICUTime, ICUToHomeTime, ICUToDeathTime, InfectionProbabilityFromContact,
+        RelativeCarrierInfectability, AsymptoticCasesPerInfectious, RiskOfInfectionFromSympomatic,
+        MaxRiskOfInfectionFromSympomatic, HospitalizedCasesPerInfectious, ICUCasesPerHospitalized, DeathsPerICU,
+        VaccineGrowthFirst, VaccineGrowthFull, VaccinationGap, DaysUntilEffective, DaysUntilEffectiveFull, BaseInfB117,
+        BaseInfB161, DailyFullVaccination, DailyFirstVaccination, DynamicInfectionFromContact, ReducVaccExp,
+        ReducImmuneExp, ReducVaccInf, ReducImmuneInf, ReducVaccHosp, ReducImmuneHosp, ReducMildRecTime>;
 
     /**
  * @brief Parameters of an age-resolved SECIR/SECIHURD model.
@@ -636,6 +662,21 @@ namespace vaccinated
         AgeGroup get_num_groups() const
         {
             return m_num_groups;
+        }
+
+        double& get_commuter_nondetection()
+        {
+            return m_commuter_nondetection;
+        }
+
+        double& get_start_commuter_detection()
+        {
+            return m_start_commuter_detection;
+        }
+
+        double& get_end_commuter_detection()
+        {
+            return m_end_commuter_detection;
         }
 
         /**
@@ -710,13 +751,15 @@ namespace vaccinated
                     this->get<ICUToDeathTime>()[i] = 1.0;
                 }
 
-                auto t_inf_asymp = 1.0 / (0.5 / (this->get<IncubationTime>()[i] - this->get<SerialInterval>()[i])) +
-                                   0.5 * this->get<InfectiousTimeMild>()[i];
-                if (abs(this->get<InfectiousTimeAsymptomatic>()[i] - t_inf_asymp) > 1e-12) {
+                if (abs(this->get<InfectiousTimeAsymptomatic>()[i] -
+                        1.0 / (0.5 / (this->get<IncubationTime>()[i] - this->get<SerialInterval>()[i])) -
+                        0.5 * this->get<InfectiousTimeMild>()[i]) > 1e-12) {
                     log_info("Constraint check: Parameter InfectiousTimeAsymptomatic set as fully dependent on tinc, "
                              "tserint and tinfmild, as proposed by "
                              "https://www.medrxiv.org/content/10.1101/2020.04.04.20053637v1.");
-                    this->get<InfectiousTimeAsymptomatic>()[i] = t_inf_asymp;
+                    this->get<InfectiousTimeAsymptomatic>()[i] =
+                        1.0 / (0.5 / (this->get<IncubationTime>()[i] - this->get<SerialInterval>()[i])) +
+                        0.5 * this->get<InfectiousTimeMild>()[i];
                 }
 
                 if (this->get<InfectionProbabilityFromContact>()[i] < 0.0) {
@@ -763,10 +806,10 @@ namespace vaccinated
                     this->get<ICUCasesPerHospitalized>()[i] = 0;
                 }
 
-                if (this->get<DeathsPerHospitalized>()[i] < 0.0 || this->get<DeathsPerHospitalized>()[i] > 1.0) {
-                    log_warning("Constraint check: Parameter DeathsPerHospitalized changed from {:0.4f} to {:d}",
-                                this->get<DeathsPerHospitalized>()[i], 0);
-                    this->get<DeathsPerHospitalized>()[i] = 0;
+                if (this->get<DeathsPerICU>()[i] < 0.0 || this->get<DeathsPerICU>()[i] > 1.0) {
+                    log_warning("Constraint check: Parameter DeathsPerICU changed from {:0.4f} to {:d}",
+                                this->get<DeathsPerICU>()[i], 0);
+                    this->get<DeathsPerICU>()[i] = 0;
                 }
             }
         }
@@ -826,7 +869,7 @@ namespace vaccinated
                 }
 
                 if (abs(this->get<InfectiousTimeAsymptomatic>()[i] -
-                        1.0 / (0.5 / (this->get<IncubationTime>()[i] - this->get<SerialInterval>()[i])) +
+                        1.0 / (0.5 / (this->get<IncubationTime>()[i] - this->get<SerialInterval>()[i])) -
                         0.5 * this->get<InfectiousTimeMild>()[i]) > 1e-12) {
                     log_warning("Constraint check: Parameter InfectiousTimeAsymptomatic not set as fully dependent on "
                                 "tinc, tserint and tinfmild, as proposed by "
@@ -869,8 +912,8 @@ namespace vaccinated
                                 1);
                 }
 
-                if (this->get<DeathsPerHospitalized>()[i] < 0.0 || this->get<DeathsPerHospitalized>()[i] > 1.0) {
-                    log_warning("Constraint check: Parameter DeathsPerHospitalized smaller {:d} or larger {:d}", 0, 1);
+                if (this->get<DeathsPerICU>()[i] < 0.0 || this->get<DeathsPerICU>()[i] > 1.0) {
+                    log_warning("Constraint check: Parameter DeathsPerICU smaller {:d} or larger {:d}", 0, 1);
                 }
             }
         }
@@ -885,7 +928,7 @@ namespace vaccinated
     public:
         /**
      * deserialize an object of this class.
-     * @see mio::deserialize
+     * @see epi::deserialize
      */
         template <class IOContext>
         static IOResult<SecirParams> deserialize(IOContext& io)
@@ -900,11 +943,6 @@ namespace vaccinated
         double m_start_commuter_detection = 0.0;
         double m_end_commuter_detection   = 0.0;
     };
-
-    /**
- * @brief WIP !! TO DO: returns the actual, approximated reproduction rate 
- */
-    //double get_reprod_rate(SecirParams const& params, double t, std::vector<double> const& yt);
 
 } // namespace vaccinated
 } // namespace mio

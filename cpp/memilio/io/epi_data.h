@@ -22,6 +22,7 @@
 
 #include "memilio/epidemiology/age_group.h"
 #include "memilio/epidemiology/regions.h"
+#include "memilio/io/io.h"
 #include "memilio/io/json_serializer.h"
 #include "memilio/utils/custom_index_array.h"
 #include "memilio/utils/date.h"
@@ -369,9 +370,84 @@ inline IOResult<std::vector<PopulationDataEntry>> read_population_data(const std
 /**
  * @brief returns a vector with the ids of all german counties
  * @param path directory to population data
- * @return
+ * @return list of county ids.
  */
 IOResult<std::vector<int>> get_county_ids(const std::string& path);
+
+/**
+ * Represents an age group string in vaccination data.
+ */
+class StringVaccinationDataAgeGroup : public AgeGroup
+{
+public:
+    using AgeGroup::AgeGroup;
+
+    static const std::array<const char*, 6> age_group_names;   
+
+    template <class IoContext>
+    static IOResult<StringVaccinationDataAgeGroup> deserialize(IoContext& io)
+    {
+        auto str = mio::deserialize(io, Tag<std::string>{});
+        return apply(
+            io,
+            [](auto&& str_) -> IOResult<StringVaccinationDataAgeGroup> {
+                auto it = std::find(age_group_names.begin(), age_group_names.end(), str_);
+                if (it != age_group_names.end()) {
+                    return success(size_t(it - age_group_names.begin()));
+                }
+                return failure(StatusCode::InvalidValue, "Invalid age group.");
+            },
+            str);
+    }
+};
+
+/**
+ * Represents an entry in a vaccination data file.
+ */
+class VaccinationDataEntry
+{
+public:
+    double num_full;
+    Date date;
+    AgeGroup age_group;
+    boost::optional<regions::de::StateId> state_id;
+    boost::optional<regions::de::CountyId> county_id;
+
+    template<class IoContext>
+    static IOResult<VaccinationDataEntry> deserialize(IoContext& io)
+    {
+        auto obj = io.expect_object("VaccinationDataEntry");
+        auto num_full = obj.expect_element("Vacc_completed", Tag<double>{});
+        auto date = obj.expect_element("Date", Tag<StringDate>{});
+        auto age_group = obj.expect_element("Age_RKI", Tag<StringVaccinationDataAgeGroup>{});
+        auto state_id = obj.expect_optional("ID_County", Tag<regions::de::StateId>{});
+        auto county_id = obj.expect_optional("ID_County", Tag<regions::de::CountyId>{});
+        return mio::apply(io, [](auto nf, auto d, auto a, auto sid, auto cid) {
+            return VaccinationDataEntry{nf, d, a, sid, cid};
+        }, num_full, date, age_group, state_id, county_id);
+    }
+};
+
+/**
+ * Deserialize vaccination data from a JSON value.
+ * @param jsvalue JSON value that contains the vaccination data.
+ * @return list of vaccination data.
+ */
+inline IOResult<std::vector<VaccinationDataEntry>> deserialize_vaccination_data(const Json::Value& jsvalue)
+{
+    return deserialize_json(jsvalue, Tag<std::vector<VaccinationDataEntry>>{});
+}
+
+/**
+ * Read vaccination data from a JSON file.
+ * @param filename JSON file that contains the vaccination data.
+ * @return list of vaccination data.
+ */
+inline IOResult<std::vector<VaccinationDataEntry>> read_vaccination_data(const std::string& filename)
+{
+    BOOST_OUTCOME_TRY(jsvalue, read_json(filename));
+    return deserialize_vaccination_data(jsvalue);
+}
 
 } // namespace mio
 

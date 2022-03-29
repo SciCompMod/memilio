@@ -198,7 +198,9 @@ TEST(ParameterStudies, sample_graph)
     graph.add_edge(0, 1, mio::MigrationParameters(Eigen::VectorXd::Constant(Eigen::Index(num_groups * 8), 1.0)));
 
     auto study   = mio::ParameterStudy<mio::SecirSimulation<>>(graph, 0.0, 0.0, 0.5, 1);
-    auto results = study.run();
+    auto results = study.run([](auto&& g) {
+        return draw_sample(g);
+    });
 
     EXPECT_EQ(results[0].edges()[0].property.get_parameters().get_coefficients()[0].get_dampings().size(), 1);
     for (auto& node : results[0].nodes()) {
@@ -368,7 +370,9 @@ TEST(ParameterStudies, check_ensemble_run_result)
 
     // Run parameter study
     parameter_study.set_num_runs(1);
-    auto graph_results = parameter_study.run();
+    auto graph_results = parameter_study.run([](auto&& g) {
+        return draw_sample(g);
+    });
 
     std::vector<mio::TimeSeries<double>> results;
     for (size_t i = 0; i < graph_results.size(); i++) {

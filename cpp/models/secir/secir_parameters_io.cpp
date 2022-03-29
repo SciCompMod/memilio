@@ -52,24 +52,6 @@ namespace mio
 
 namespace details
 {
-    IOResult<Date> get_max_date(const Json::Value& root)
-    {
-        Date max_date = Date(0, 1, 1);
-        for (unsigned int i = 0; i < root.size(); i++) {
-            auto js_date = root[i]["Date"];
-            if (!js_date.isString()) {
-                log_error("Date element must be a string.");
-                return failure(StatusCode::InvalidType, "Date element must be a string.");
-            }
-            auto date_temp = parse_date_unsafe(js_date.asString());
-            if (date_temp > max_date) {
-                max_date = date_temp;
-            }
-        }
-
-        return success(max_date);
-    }
-
     template<class EpiDataEntry>
     int get_region_id(const EpiDataEntry& rki_entry)
     {

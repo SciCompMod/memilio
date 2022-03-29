@@ -18,8 +18,11 @@
 * limitations under the License.
 */
 
+#include "memilio/epidemiology/age_group.h"
+#include "memilio/epidemiology/regions.h"
 #include "memilio/io/epi_data.h"
 #include "matchers.h"
+#include "memilio/io/mobility_io.h"
 #include "test_data_dir.h"
 #include "gtest/gtest.h"
 #include "json/value.h"
@@ -185,4 +188,34 @@ TEST(TestEpiDataIo, get_county_ids)
     ASSERT_THAT(print_wrap(read_ids), IsSuccess());
 
     EXPECT_THAT(read_ids.value(), testing::ElementsAreArray(true_ids));
+}
+
+TEST(TestEpiData, vaccination_data)
+{
+    auto js = Json::Value(Json::arrayValue);
+    js[0]["Date"] = "2021-12-01";
+    js[0]["ID_County"] = 1011;
+    js[0]["Vacc_completed"] = 23.05;
+    js[0]["Age_RKI"] = "5-14";
+
+    js[1]["Date"] = "2021-12-02";
+    js[1]["ID_County"] = 1012;
+    js[1]["Vacc_completed"] = 12.0;
+    js[1]["Age_RKI"] = "80-99";
+
+    auto r = mio::deserialize_vaccination_data(js);
+    ASSERT_THAT(print_wrap(r), IsSuccess());
+
+    auto&& vacc_data = r.value();
+    ASSERT_EQ(vacc_data.size(), 2);
+
+    ASSERT_EQ(vacc_data[0].date, mio::Date(2021, 12, 1));
+    ASSERT_EQ(vacc_data[0].age_group, mio::AgeGroup(1));
+    ASSERT_EQ(vacc_data[0].county_id, mio::regions::de::CountyId(1011));
+    ASSERT_EQ(vacc_data[0].num_full, 23.05); 
+
+    ASSERT_EQ(vacc_data[1].date, mio::Date(2021, 12, 2));
+    ASSERT_EQ(vacc_data[1].age_group, mio::AgeGroup(5));
+    ASSERT_EQ(vacc_data[1].county_id, mio::regions::de::CountyId(1012));
+    ASSERT_EQ(vacc_data[1].num_full, 12.0); 
 }
