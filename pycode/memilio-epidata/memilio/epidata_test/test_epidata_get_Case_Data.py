@@ -349,8 +349,12 @@ class test_get_Case_Data(fake_filesystem_unittest.TestCase):
         mock_loadCsv.assert_called()
 
         # test case where csv files are incorrect
-        mock_loadCsv.side_effect = [pd.DataFrame(), pd.read_json(
-            os.path.join(directory, "CaseDataNotFull.json"))]
+        mock_loadCsv.side_effect = [pd.DataFrame(),
+                                    pd.DataFrame(),
+                                    pd.read_json(
+                                        os.path.join(
+                                            directory,
+                                            "CaseDataNotFull.json"))]
         mock_loadGeojson.return_value = pd.read_json(
             os.path.join(directory, "CaseDataArcgis.json"))
 

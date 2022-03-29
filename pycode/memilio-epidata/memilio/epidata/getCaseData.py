@@ -173,7 +173,7 @@ def get_case_data(read_data=dd.defaultDict['read_data'],
                 print("Information: dataframe was incomplete for csv. Trying geojson.")
                 try:
                     df = gd.loadGeojson(itemId)
-                except Exception:
+                except FileNotFoundError:
                     pass
                 complete = check_for_completeness(df, merge_eisenach=True)
                 if df.empty or not complete:
