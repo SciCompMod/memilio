@@ -87,21 +87,6 @@ public:
         m_graph.add_node(0, model);
     }
 
-    /**
-     * @brief create study for single compartment model with normal distributions.
-     * Sets all parameters to normal distribution with specified relative deviation.
-     * @param params SecirParams object 
-     * @param t0 start time of simulations
-     * @param tmax end time of simulations
-     * @param dev_rel relative deviation of parameters distributions
-     * @param num_runs number of runs in ensemble run
-     */
-    ParameterStudy(typename Simulation::Model const& model, double t0, double tmax, double dev_rel, size_t num_runs)
-        : ParameterStudy(model, t0, tmax, num_runs)
-    {
-        set_params_distributions_normal(m_graph.nodes()[0].property, t0, tmax, dev_rel);
-    }
-
     /*
      * @brief Carry out all simulations in the parameter study.
      * Save memory and enable more runs by immediately processing and/or discarding the result.

@@ -20,8 +20,9 @@
 
 #include "templates.h"
 #include "secir/secir.h"
-#include "secir/parameter_studies.h"
 #include "secir/analyze_result.h"
+#include "secir/parameter_space.h"
+#include "memilio/compartments/parameter_studies.h"
 #include "Eigen/Core"
 #include "pybind11/stl_bind.h"
 #include <vector>
@@ -53,8 +54,6 @@ void bind_ParameterStudy(py::module& m, std::string const& name)
     py::class_<mio::ParameterStudy<Simulation>>(m, name.c_str())
         .def(py::init<const typename Simulation::Model&, double, double, size_t>(), py::arg("model"), py::arg("t0"),
              py::arg("tmax"), py::arg("num_runs"))
-        .def(py::init<const typename Simulation::Model&, double, double, double, size_t>(), py::arg("model"),
-             py::arg("t0"), py::arg("tmax"), py::arg("dev_rel"), py::arg("num_runs"))
         .def(py::init<const mio::Graph<typename Simulation::Model, mio::MigrationParameters>&, double, double, double,
                       size_t>(),
              py::arg("model_graph"), py::arg("t0"), py::arg("tmax"), py::arg("dt"), py::arg("num_runs"))
@@ -74,24 +73,39 @@ void bind_ParameterStudy(py::module& m, std::string const& name)
                                py::return_value_policy::reference_internal)
         .def(
             "run",
-            [](mio::ParameterStudy<Simulation>& self, std::function<void(mio::Graph<mio::SimulationNode<Simulation>, mio::MigrationEdge>)> handle_result) {
-                self.run([&handle_result](auto&& g) { handle_result(std::move(g)); });
+            [](mio::ParameterStudy<Simulation>& self,
+               std::function<void(mio::Graph<mio::SimulationNode<Simulation>, mio::MigrationEdge>)> handle_result) {
+                self.run(
+                    [](auto&& g) {
+                        return draw_sample(g);
+                    },
+                    [&handle_result](auto&& g) {
+                        handle_result(std::move(g));
+                    });
             },
             py::arg("handle_result_func"))
         .def("run",
              [](mio::ParameterStudy<Simulation>& self) { //default argument doesn't seem to work with functions
-                 return self.run();
+                 return self.run([](auto&& g) {
+                     return draw_sample(g);
+                 });
              })
         .def(
             "run_single",
             [](mio::ParameterStudy<Simulation>& self, std::function<void(Simulation)> handle_result) {
-                self.run([&handle_result](auto&& r) {
-                    handle_result(std::move(r.nodes()[0].property.get_simulation()));
-                });
+                self.run(
+                    [](auto&& g) {
+                        return draw_sample(g);
+                    },
+                    [&handle_result](auto&& r) {
+                        handle_result(std::move(r.nodes()[0].property.get_simulation()));
+                    });
             },
             py::arg("handle_result_func"))
         .def("run_single", [](mio::ParameterStudy<Simulation>& self) {
-            return filter_graph_results(self.run());
+            return filter_graph_results(self.run([](auto&& g) {
+                return draw_sample(g);
+            }));
         });
 }
 
@@ -186,7 +200,7 @@ PYBIND11_MODULE(_simulation_secir, m)
     m.def("set_params_distributions_normal", &mio::set_params_distributions_normal, py::arg("model"), py::arg("t0"),
           py::arg("tmax"), py::arg("dev_rel"));
 
-    m.def("draw_sample", &mio::draw_sample, py::arg("model"));
+    m.def("draw_sample", [](mio::SecirModel& model) { return mio::draw_sample(model); }, py::arg("model"));
 
     m.def("interpolate_simulation_result",
           py::overload_cast<const MigrationGraph&>(&mio::interpolate_simulation_result<Simulation>));
