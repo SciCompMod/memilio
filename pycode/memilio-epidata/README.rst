@@ -32,17 +32,17 @@ Getting data from different sources and convert them to usable data using the py
 
 Our sources are:
 
-- Robert Koch institute (RKI) for case data in Germany:
+- Robert Koch Institute (RKI) for case data in Germany:
 
   Robert Koch-Institut (2021): SARS-CoV-2 Infektionen in Deutschland, Berlin: Zenodo. DOI:10.5281/zenodo.4681153.
 
-  We download the data from github: https://github.com/robert-koch-institut/SARS-CoV-2_Infektionen_in_Deutschland
+  Data is downloaded from github: https://github.com/robert-koch-institut/SARS-CoV-2_Infektionen_in_Deutschland
 
-  If the data on github is not available we download the case data from rki from
+  If the data on github is not available, downloading case data is tried from
   https://npgeo-corona-npgeo-de.hub.arcgis.com/datasets/66876b81065340a4a48710b062319336/about
   In this case the provided data is either geojson or csv.
 
-- Population data (P) like "Einwoherzahl" for Bundesländer and Landkreise:
+- Population data (P) like "Einwohnerzahl" for Bundesländer and Landkreise:
 
   https://opendata.arcgis.com/datasets/abad92e8eead46a4b0d252ee9438eb53_1.csv
 
@@ -134,8 +134,8 @@ optional arguments working for some are:
 |                                             |  on performance as well as on the storage space needed.   |
 |                                             |  [cases]                                                    |
 +---------------------------------------------+-----------------------------------------------------------+
-| -ma, --moving-average                       | The 7 day moving average is computed for the data.        |
-|                                             |  Note that the --fill_dates option will be implicitly     |
+| -m N, --moving-average N                       | The central N days moving average is computed for the data.        |
+|                                             |  Note that the --impute_dates option will be implicitly     |
 |                                             |  turned on, as computing the moving average requires all  |
 |                                             |  dates to be available. [cases]                             |
 +---------------------------------------------+-----------------------------------------------------------+

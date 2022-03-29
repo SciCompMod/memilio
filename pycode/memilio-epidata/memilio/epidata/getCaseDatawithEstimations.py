@@ -43,9 +43,9 @@ def get_case_data_with_estimations(read_data=dd.defaultDict['read_data'],
                                    no_raw=dd.defaultDict['no_raw'],
                                    make_plot=dd.defaultDict['make_plot']):
     """! Function to estimate recovered and deaths from combination of case data from RKI and JH data
-
+WARNING: This file is experimental and has not been tested.
     From the John-Hopkins (JH) data the fraction recovered/confirmed and deaths/confirmed
-    are calculated for whole germany
+    are calculated for whole Germany
     With this fraction every existing case data from RKI is scaled.
     The new columns recovered_estimated and deaths_estimated are added.
 

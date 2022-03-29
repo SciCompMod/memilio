@@ -79,14 +79,14 @@ def plot_cases(
         plt.savefig(os.path.join('Plots', fig_name+".png"))
 
     if moving_average:
-        df = pd.read_json(os.path.join(data_folder, "cases_infected_ma.json"))
+        df = pd.read_json(os.path.join(data_folder, "cases_infected_ma7.json"))
         mask = (
             df['Date'] >= daystart) & (
             df['Date'] <= daystart + pd.DateOffset(days=simulationperiod))
-        fig_name = 'cases_moving_average_confirmed'
+        fig_name = 'cases_confirmed_infections_ma7'
         plt.figure(fig_name)
         plt.plot(df.loc[mask]['Date'], df.loc[mask]["Confirmed"])
-        plt.title('7-days moving average cumulative Confirmed cases')
+        plt.title('7-days moving average cumulative confirmed infections')
         plt.xlabel('Date')
         plt.xticks(rotation=25)
         plt.ylabel('Confirmed cases')
@@ -94,7 +94,7 @@ def plot_cases(
         plt.grid(True, linestyle='--')
         plt.tight_layout()
         if saveplot:
-            plt.savefig('Plots/plot_cases_ma_Confirmed.png')
+            plt.savefig('Plots/plot_cases_confirmed_infections_ma7.png')
 
     df = pd.read_json(os.path.join(data_folder, "cases_deaths.json"))
     mask = (
@@ -115,14 +115,14 @@ def plot_cases(
         plt.savefig(os.path.join('Plots', fig_name+".png"))
 
     if moving_average:
-        df = pd.read_json(os.path.join(data_folder, "cases_deaths_ma.json"))
+        df = pd.read_json(os.path.join(data_folder, "cases_deaths_ma7.json"))
         mask = (
             df['Date'] >= daystart) & (
             df['Date'] <= daystart + pd.DateOffset(days=simulationperiod))
-        fig_name = 'cases_moving_average_deaths'
+        fig_name = 'cases_deaths_ma7'
         plt.figure(fig_name)
         plt.plot(df.loc[mask]["Date"], df.loc[mask]["Deaths"])
-        plt.title('7-days moving average cumulative Deaths cases')
+        plt.title('7-days moving average cumulative deaths')
         plt.xlabel('Date')
         plt.xticks(rotation=25)
         plt.ylabel('Deaths')
@@ -136,7 +136,7 @@ def plot_cases(
 def plot_cases_age(
         moving_average, daystart=pd.Timestamp('2020.01.28'),
         simulationperiod=100, saveplot=False):
-    """plot case data age resolved: Cumulative Cofirmed Cases, Deaths and for each 7-days moving average
+    """plot case data age resolved: Cumulative confirmed infections and deaths as well as 7-days moving average for both data sets.
     @param moving_average Defines if moving-average is used
     @param daystart Day at which should be started in timestamp format
     @param simulationperiod number in integer format of days for which data should be plotted
@@ -148,13 +148,13 @@ def plot_cases_age(
         df['Date'] >= daystart) & (
         df['Date'] <= daystart + pd.DateOffset(days=simulationperiod))
     ages = dd.age_rki_list
-    fig_name = 'cases_confirmed_ageresolved'
+    fig_name = 'cases_confirmed_infections_ageres'
     plt.figure(fig_name)
     for value in ages:
         plt.plot(df.loc[mask & (df["Age_RKI"] == value)]['Date'],
                  df.loc[mask & (df["Age_RKI"] == value)]["Confirmed"])
     plt.legend(ages)
-    plt.title('cumulative Confirmed cases age resolved')
+    plt.title('Age-resolved cumulative confirmed infections')
     plt.xlabel('Date')
     plt.xticks(rotation=25)
     plt.ylabel('Confirmed cases')
@@ -164,13 +164,13 @@ def plot_cases_age(
     if saveplot:
         plt.savefig(os.path.join('Plots', fig_name+".png"))
 
-    fig_name = 'cases_deaths_ageresolved'
+    fig_name = 'cases_deaths_ageres'
     plt.figure(fig_name)
     for value in ages:
         plt.plot(df.loc[mask & (df["Age_RKI"] == value)]['Date'],
                  df.loc[mask & (df["Age_RKI"] == value)]["Deaths"])
     plt.legend(ages)
-    plt.title('cumulative deaths age resolved')
+    plt.title('Age-resolved cumulative deaths')
     plt.xlabel('Date')
     plt.xticks(rotation=25)
     plt.ylabel('Deaths')
@@ -181,18 +181,18 @@ def plot_cases_age(
         plt.savefig(os.path.join('Plots', fig_name+".png"))
 
     if moving_average:
-        df = pd.read_json(os.path.join(data_folder, "cases_all_age_ma.json"))
+        df = pd.read_json(os.path.join(data_folder, "cases_all_age_ma7.json"))
         mask = (
             df['Date'] >= daystart) & (
             df['Date'] <= daystart + pd.DateOffset(days=simulationperiod))
-        fig_name = 'cases_ma_confirmed_ageresolved'
+        fig_name = 'cases_confirmed_infections_ageres_ma7'
         plt.figure(fig_name)
         for value in ages:
             plt.plot(
                 df.loc[mask & (df["Age_RKI"] == value)]['Date'],
                 df.loc[mask & (df["Age_RKI"] == value)]["Confirmed"])
         plt.legend(ages)
-        plt.title('7-days moving average cumulative Confirmed cases age resolved')
+        plt.title('7-days moving average of age-resolved cumulative confirmed infections')
         plt.xlabel('Date')
         plt.xticks(rotation=25)
         plt.ylabel('Confirmed cases')
@@ -202,14 +202,14 @@ def plot_cases_age(
         if saveplot:
             plt.savefig(os.path.join('Plots', fig_name+".png"))
 
-        fig_name = 'cases_ma_deaths_ageresolved'
+        fig_name = 'cases_deaths_ageres_ma7'
         plt.figure(fig_name)
         for value in ages:
             plt.plot(
                 df.loc[mask & (df["Age_RKI"] == value)]['Date'],
                 df.loc[mask & (df["Age_RKI"] == value)]["Deaths"])
         plt.legend(ages)
-        plt.title('7-days moving average cumulative deaths age resolved')
+        plt.title('7-days moving average of age-resolved cumulative deaths')
         plt.xlabel('Date')
         plt.xticks(rotation=25)
         plt.ylabel('Deaths')
@@ -223,7 +223,7 @@ def plot_cases_age(
 def plot_cases_county(
         moving_average, daystart=pd.Timestamp('2020.01.28'),
         simulationperiod=100, county='SK Köln', saveplot=False):
-    """plot case data for one county: Cumulative Cofirmed Cases, Deaths and for each 7-days moving average
+    """plot case data for one county: Cumulative confirmed infections and deaths as well as 7-days moving average for both data sets.
     @param moving_average Defines if moving-average is used
     @param daystart Day at which should be started in timestamp format
     @param simulationperiod number in integer format of days for which data should be plotted
@@ -234,10 +234,10 @@ def plot_cases_county(
     df = pd.read_json(os.path.join(data_folder, "cases_all_county.json"))
     mask = (df['Date'] >= daystart) & (
         df['Date'] <= daystart + pd.DateOffset(days=simulationperiod)) & (df["County"] == county)
-    fig_name = 'cases_confirmed_county_' + county.replace(" ", "_")
+    fig_name = 'cases_confirmed_infections_county_' + county.replace(" ", "_")
     plt.figure(fig_name)
     plt.plot(df.loc[mask]["Date"], df.loc[mask]["Confirmed"])
-    plt.title('cumulative Confirmed cases ' + county)
+    plt.title('Cumulative confirmed infections in ' + county)
     plt.xlabel('Date')
     plt.xticks(rotation=25)
     plt.ylabel('Confirmed cases')
@@ -250,7 +250,7 @@ def plot_cases_county(
     fig_name = 'cases_deaths_county_' + county.replace(" ", "_")
     plt.figure(fig_name)
     plt.plot(df.loc[mask]["Date"], df.loc[mask]["Deaths"])
-    plt.title('cumulative deaths ' + county)
+    plt.title('Cumulative deaths in ' + county)
     plt.xlabel('Date')
     plt.xticks(rotation=25)
     plt.ylabel('Deaths')
@@ -262,13 +262,13 @@ def plot_cases_county(
 
     if moving_average:
         df = pd.read_json(os.path.join(
-            data_folder, "cases_all_county_ma.json"))
+            data_folder, "cases_all_county_ma7.json"))
         mask = (df['Date'] >= daystart) & (
             df['Date'] <= daystart + pd.DateOffset(days=simulationperiod)) & (df["County"] == county)
-        fig_name = 'cases_ma_confirmed_county_' + county.replace(" ", "_")
+        fig_name = 'cases_confirmed_infections_county_' + county.replace(" ", "_") + '_ma7'
         plt.figure(fig_name)
         plt.plot(df.loc[mask]["Date"], df.loc[mask]["Confirmed"])
-        plt.title('7-days moving average cumulative Confirmed cases ' + county)
+        plt.title('7-days moving average of cumulative confirmed infections in ' + county)
         plt.xlabel('Date')
         plt.xticks(rotation=25)
         plt.ylabel('Confirmed cases')
@@ -278,7 +278,7 @@ def plot_cases_county(
         if saveplot:
             plt.savefig(os.path.join('Plots', fig_name+".png"))
 
-        fig_name = 'cases_ma_deaths_county_' + county.replace(" ", "_")
+        fig_name = 'cases_deaths_county_' + county.replace(" ", "_") + '_ma7'
         plt.figure(fig_name)
         plt.plot(df.loc[mask]["Date"], df.loc[mask]["Deaths"])
         plt.title('7-days moving average cumulative deaths ' + county)
@@ -302,9 +302,9 @@ def plot_DIVI_data(
         @param saveplot boolean value; says if plot should be saved """
     if daystart < pd.Timestamp('2020.04.26'):
         print(
-            "error: DIVI dataset including ventilated data starts on 26.04.2020; you asked for "
+            "error: DIVI data set starts on April 26, 2020; you asked for start date "
             + daystart.strftime("%d.%m.%Y") +
-            " please search for another solution")
+            ". Data for this date is not available.")
     else:
         df = pd.read_json(os.path.join(data_folder, "germany_divi.json"))
         if not (daystart + pd.DateOffset(days=simulationperiod) <= endday_divi):
