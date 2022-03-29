@@ -26,7 +26,7 @@ from datetime import date, timedelta
 import os
 import pandas as pd
 
-from memilio.epidata import getCaseDatawithEstimations as gcdwd
+from memilio.epidata import getCaseDatawithEstimations as gcdwe
 from memilio.epidata import getDataIntoPandasDataFrame as gd
 from memilio.epidata import defaultDict as dd
 from unittest.mock import patch, call
@@ -248,7 +248,7 @@ class TestGetCaseDatawithEstimations(fake_filesystem_unittest.TestCase):
             len(os.listdir(directory)),
             2 + len(self.case_files_to_change))
 
-        gcdwd.get_case_data_with_estimations(
+        gcdwe.get_case_data_with_estimations(
             read_data, file_format, out_folder, no_raw, make_plot)
 
         # check if expected files are written
@@ -354,7 +354,7 @@ class TestGetCaseDatawithEstimations(fake_filesystem_unittest.TestCase):
             len(os.listdir(directory)),
             2 + len(self.case_files_to_change))
 
-        gcdwd.get_case_data_with_estimations(
+        gcdwe.get_case_data_with_estimations(
             read_data, file_format, out_folder, no_raw, make_plot)
 
         # check if expected files are written
@@ -454,7 +454,7 @@ class TestGetCaseDatawithEstimations(fake_filesystem_unittest.TestCase):
             len(os.listdir(directory)),
             2 + len(case_files_to_change))
 
-        gcdwd.get_case_data_with_estimations(
+        gcdwe.get_case_data_with_estimations(
             read_data, file_format, out_folder, no_raw, make_plot)
 
         # check if expected files are written
@@ -558,7 +558,7 @@ class TestGetCaseDatawithEstimations(fake_filesystem_unittest.TestCase):
             df.to_excel(towrite, index=False)
             towrite.seek(0)
             mock_request.return_value.content = towrite.read()
-            gcdwd.download_weekly_deaths_numbers(directory)
+            gcdwe.download_weekly_deaths_numbers(directory)
         self.assertEqual(len(os.listdir(self.path)), 1)
         self.assertEqual(len(os.listdir(directory)), 2)
 
@@ -581,7 +581,7 @@ class TestGetCaseDatawithEstimations(fake_filesystem_unittest.TestCase):
         gd.check_dir(directory)
         self.write_jh_data(directory)
 
-        gcdwd.get_case_data_with_estimations(
+        gcdwe.get_case_data_with_estimations(
             read_data, file_format, out_folder, no_raw, make_plot)
 
         # print is called 9 times, because no file exists

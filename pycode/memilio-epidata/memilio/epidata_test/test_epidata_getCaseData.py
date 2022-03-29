@@ -30,7 +30,7 @@ from memilio.epidata import getDataIntoPandasDataFrame as gd
 from unittest.mock import patch
 
 
-class test_get_Case_Data(fake_filesystem_unittest.TestCase):
+class TestGetCaseData(fake_filesystem_unittest.TestCase):
     path = '/home/Case_Data'
 
     # strings for read, download and update data
@@ -43,7 +43,7 @@ class test_get_Case_Data(fake_filesystem_unittest.TestCase):
     here = os.path.dirname(os.path.abspath(__file__))
 
     # load test data for read
-    filename = os.path.join(here, 'test_epidata_get_Case_Data_data_read.json')
+    filename = os.path.join(here, 'test_epidata_getCaseData_data_read.json')
     file_object = open(filename, 'r')
     # Load JSON file data to a python dict object.
     dict_object = json.load(file_object)
@@ -109,7 +109,7 @@ class test_get_Case_Data(fake_filesystem_unittest.TestCase):
     # load test data for download formatted as data from github
     # (https://github.com/robert-koch-institut/SARS-CoV-2_Infektionen_in_Deutschland)
     filename = os.path.join(
-        here, 'test_epidata_get_Case_Data_data_github.json')
+        here, 'test_epidata_getCaseData_data_github.json')
     file_object = open(filename, 'r')
     # Load JSON file data to a python dict object.
     dict_object_github = json.load(file_object)
@@ -120,7 +120,7 @@ class test_get_Case_Data(fake_filesystem_unittest.TestCase):
     # load test data for download formatted as data from arcgis
     # (https://npgeo-corona-npgeo-de.hub.arcgis.com/datasets/66876b81065340a4a48710b062319336/about)
     filename = os.path.join(
-        here, 'test_epidata_get_Case_Data_data_arcgis.json')
+        here, 'test_epidata_getCaseData_data_arcgis.json')
     file_object = open(filename, 'r')
     # Load JSON file data to a python dict object.
     dict_object_arcgis = json.load(file_object)

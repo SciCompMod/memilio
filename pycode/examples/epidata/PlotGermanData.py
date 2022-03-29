@@ -17,6 +17,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #############################################################################
+"""@PlotGermanData.py
+WARNING: This file is currently not tested and maintained.
+"""
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt

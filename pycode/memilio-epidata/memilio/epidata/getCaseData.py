@@ -1,7 +1,7 @@
 #############################################################################
 # Copyright (C) 2020-2021 German Aerospace Center (DLR-SC)
 #
-# Authors: Kathrin Rack, Wadim Koslow, Martin J. Kuehn
+# Authors: Kathrin Rack, Wadim Koslow, Martin J. Kuehn, Annette Lutz
 #
 # Contact: Martin J. Kuehn <Martin.Kuehn@DLR.de>
 #
@@ -24,7 +24,8 @@
 The raw case data we download can be found at
 https://github.com/robert-koch-institut/SARS-CoV-2_Infektionen_in_Deutschland
 
-Be careful: Recovered and deaths are not correct set in this case
+Be careful: Date of deaths or recovery is not reported in original case data and will be
+extrapolated in this script.
 """
 
 # Imports
@@ -281,8 +282,8 @@ def get_case_data(read_data=dd.defaultDict['read_data'],
 
     # Dead over Date:
     gbNT = df.groupby(dateToUse).agg({AnzahlTodesfall: sum})
+    gbNT = gbNT[gbNT[AnzahlTodesfall] != 0]
     gbNT_cs = gbNT.cumsum()
-    gbNT_cs = gbNT_cs[gbNT_cs[AnzahlTodesfall] != 0]
 
     # output
     filename = 'deaths'
@@ -341,8 +342,10 @@ def get_case_data(read_data=dd.defaultDict['read_data'],
     ############## Data for states all ages ################
 
     # NeuerFall: Infected (incl. recovered) over "dateToUse" for every state ("Bundesland"):
-    gbNFst = df.groupby([dateToUse, IdBundesland]).agg({AnzahlFall: sum})
-    gbNFst_cs = gbNFst.groupby(level=1).cumsum().reset_index()
+    groupby_list = [dateToUse, IdBundesland]
+    gbNFst = df.groupby(groupby_list).agg({AnzahlFall: sum})
+    gbNFst_cs = gbNFst.groupby(
+        level=groupby_list.index(IdBundesland)).cumsum().reset_index()
 
     # output
     filename = 'infected_state'
@@ -371,10 +374,11 @@ def get_case_data(read_data=dd.defaultDict['read_data'],
     #            .to_json(directory + "gbNF_state_nested.json", orient='records')
 
     # infected (incl recovered), deaths and recovered together
-
-    gbAllSt = df.groupby([dateToUse, IdBundesland]) \
+    groupby_list = [dateToUse, IdBundesland]
+    gbAllSt = df.groupby(groupby_list) \
         .agg({AnzahlFall: sum, AnzahlTodesfall: sum, AnzahlGenesen: sum})
-    gbAllSt_cs = gbAllSt.groupby(level=1).cumsum().reset_index()
+    gbAllSt_cs = gbAllSt.groupby(
+        level=groupby_list.index(IdBundesland)).cumsum().reset_index()
 
     # output
     filename = 'all_state'
@@ -408,8 +412,10 @@ def get_case_data(read_data=dd.defaultDict['read_data'],
                      dd.EngEng['ageRKI']])
 
     # NeuerFall: Infected (incl. recovered) over "dateToUse" for every county ("Landkreis"):
-    gbNFc = df.groupby([dateToUse, IdLandkreis]).agg({AnzahlFall: sum})
-    gbNFc_cs = gbNFc.groupby(level=1).cumsum().reset_index()
+    groupby_list = [dateToUse, IdLandkreis]
+    gbNFc = df.groupby(groupby_list).agg({AnzahlFall: sum})
+    gbNFc_cs = gbNFc.groupby(
+        level=groupby_list.index(IdLandkreis)).cumsum().reset_index()
 
     # output
     if split_berlin:
@@ -434,9 +440,11 @@ def get_case_data(read_data=dd.defaultDict['read_data'],
         gd.write_dataframe(gbNFc_cs, directory, prefix + filename, file_format)
 
     # infected (incl recovered), deaths and recovered together
-    gbAllC = df.groupby([dateToUse, IdLandkreis]).\
+    groupby_list = [dateToUse, IdLandkreis]
+    gbAllC = df.groupby(groupby_list).\
         agg({AnzahlFall: sum, AnzahlTodesfall: sum, AnzahlGenesen: sum})
-    gbAllC_cs = gbAllC.groupby(level=1).cumsum().reset_index()
+    gbAllC_cs = gbAllC.groupby(
+        level=groupby_list.index(IdLandkreis)).cumsum().reset_index()
 
     # output
     if split_berlin:
@@ -464,11 +472,12 @@ def get_case_data(read_data=dd.defaultDict['read_data'],
     ######### Data whole Germany different gender ##################
 
     # infected (incl recovered), deaths and recovered together
-
-    gbAllG = df.groupby([Geschlecht, dateToUse]) \
+    groupby_list = [dateToUse, Geschlecht]
+    gbAllG = df.groupby(groupby_list) \
         .agg({AnzahlFall: sum, AnzahlTodesfall: sum, AnzahlGenesen: sum})
 
-    gbAllG_cs = gbAllG.groupby(level=0).cumsum().reset_index()
+    gbAllG_cs = gbAllG.groupby(
+        level=groupby_list.index(Geschlecht)).cumsum().reset_index()
 
     # output
     filename = 'all_gender'
@@ -501,10 +510,12 @@ def get_case_data(read_data=dd.defaultDict['read_data'],
     ############################# Gender and State ######################################################
 
     # infected (incl recovered), deaths and recovered together
-
-    gbAllGState = df.groupby([dateToUse, IdBundesland, Geschlecht]) \
+    groupby_list = [dateToUse, IdBundesland, Geschlecht]
+    gbAllGState = df.groupby(groupby_list) \
         .agg({AnzahlFall: sum, AnzahlTodesfall: sum, AnzahlGenesen: sum})
-    gbAllGState_cs = gbAllGState.groupby(level=[1, 2]).cumsum().reset_index()
+    gbAllGState_cs = gbAllGState.groupby(
+        level=[groupby_list.index(IdBundesland),
+               groupby_list.index(Geschlecht)]).cumsum().reset_index()
 
     # output
     filename = 'all_state_gender'
@@ -528,10 +539,12 @@ def get_case_data(read_data=dd.defaultDict['read_data'],
                            prefix + filename, file_format)
 
     ############# Gender and County #####################
-
-    gbAllGCounty = df.groupby([dateToUse, IdLandkreis, Geschlecht]) \
+    groupby_list = [dateToUse, IdLandkreis, Geschlecht]
+    gbAllGCounty = df.groupby(groupby_list) \
         .agg({AnzahlFall: sum, AnzahlTodesfall: sum, AnzahlGenesen: sum})
-    gbAllGCounty_cs = gbAllGCounty.groupby(level=[1, 2]).cumsum().reset_index()
+    gbAllGCounty_cs = gbAllGCounty.groupby(
+        level=[groupby_list.index(IdLandkreis),
+               groupby_list.index(Geschlecht)]).cumsum().reset_index()
 
     # output
     if split_berlin:
@@ -560,10 +573,11 @@ def get_case_data(read_data=dd.defaultDict['read_data'],
     ######### Data whole Germany different ages ####################
 
     # infected (incl recovered), deaths and recovered together
-
-    gbAllA = df.groupby([Altersgruppe, dateToUse]) \
+    groupby_list = [dateToUse, Altersgruppe]
+    gbAllA = df.groupby(groupby_list) \
         .agg({AnzahlFall: sum, AnzahlTodesfall: sum, AnzahlGenesen: sum})
-    gbAllA_cs = gbAllA.groupby(level=0).cumsum().reset_index()
+    gbAllA_cs = gbAllA.groupby(
+        level=groupby_list.index(Altersgruppe)).cumsum().reset_index()
 
     # output
     filename = 'all_age'
@@ -606,11 +620,12 @@ def get_case_data(read_data=dd.defaultDict['read_data'],
     ##### Age_RKI #####
 
     # infected (incl recovered), deaths and recovered together
-
-    gbAllAgeState = df.groupby([dateToUse, IdBundesland, Altersgruppe]) \
+    groupby_list = [dateToUse, IdBundesland, Altersgruppe]
+    gbAllAgeState = df.groupby(groupby_list) \
         .agg({AnzahlFall: sum, AnzahlTodesfall: sum, AnzahlGenesen: sum})
     gbAllAgeState_cs = gbAllAgeState.groupby(
-        level=[1, 2]).cumsum().reset_index()
+        level=[groupby_list.index(IdBundesland),
+               groupby_list.index(Altersgruppe)]).cumsum().reset_index()
 
     # output
     filename = 'all_state_age'
@@ -634,11 +649,12 @@ def get_case_data(read_data=dd.defaultDict['read_data'],
                            prefix + filename, file_format)
 
     ############# Age and County #####################
-
-    gbAllAgeCounty = df.groupby([dateToUse, IdLandkreis, Altersgruppe]) \
+    groupby_list = [dateToUse, IdLandkreis, Altersgruppe]
+    gbAllAgeCounty = df.groupby(groupby_list) \
         .agg({AnzahlFall: sum, AnzahlTodesfall: sum, AnzahlGenesen: sum})
     gbAllAgeCounty_cs = gbAllAgeCounty.groupby(
-        level=[1, 2]).cumsum().reset_index()
+        level=[groupby_list.index(IdLandkreis),
+               groupby_list.index(Altersgruppe)]).cumsum().reset_index()
 
     # output
     if split_berlin:

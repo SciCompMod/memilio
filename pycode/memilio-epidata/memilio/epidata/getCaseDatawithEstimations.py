@@ -59,14 +59,14 @@ WARNING: This file is experimental and has not been tested.
     data_path = os.path.join(out_folder, 'Germany/')
 
     if not read_data:
-        fill_dates = False
+        impute_dates = False
         make_plot_cases = False
         moving_average = False
         split_berlin = False
 
         # get case data
         gcd.get_case_data(
-            read_data, file_format, out_folder, no_raw, fill_dates,
+            read_data, file_format, out_folder, no_raw, impute_dates,
             make_plot_cases, moving_average, no_raw, split_berlin)
 
         # get data from John Hopkins University
@@ -113,8 +113,7 @@ WARNING: This file is experimental and has not been tested.
         try:
             df_cases = pd.read_json(case_data_file)
         except ValueError as e:
-            print("WARNING: Following the file ",
-                  file_to_change + ".json does not exist.")
+            print("WARNING: The file ", file_to_change + ".json does not exist.")
             continue
 
         # generate new columns to store estimated values

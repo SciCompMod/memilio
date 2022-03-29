@@ -1,7 +1,7 @@
 #############################################################################
 # Copyright (C) 2020-2021 German Aerospace Center (DLR-SC)
 #
-# Authors:
+# Authors: Kathrin Rack, Annette Lutz
 #
 # Contact: Martin J. Kuehn <Martin.Kuehn@DLR.de>
 #
@@ -19,6 +19,8 @@
 #############################################################################
 """@PlotCaseData.py
 function to get cases (data from RKI) and DIVI data plots
+
+WARNING: This file is currently not tested and maintained.
 """
 
 import pandas as pd
