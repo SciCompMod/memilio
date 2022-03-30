@@ -202,10 +202,10 @@ void bind_ParameterSet(pybind11::module& m, std::string const& name)
 /*
  * @brief bind a compartmental model for any Populations and Parameters class
  */
-template <class Populations, class Parameters>
+template <class InfectionState, class Populations, class Parameters>
 void bind_CompartmentalModel(pybind11::module& m, std::string const& name)
 {
-    using Model = mio::CompartmentalModel<Populations, Parameters>;
+    using Model = mio::CompartmentalModel<InfectionState, Populations, Parameters>;
     pybind11::class_<Model>(m, name.c_str())
             .def(pybind11::init<Populations const&, Parameters const&>())
             .def("apply_constraints", &Model::template apply_constraints<Parameters>)

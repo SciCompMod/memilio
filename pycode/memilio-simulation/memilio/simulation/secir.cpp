@@ -175,8 +175,8 @@ PYBIND11_MODULE(_simulation_secir, m)
     pymio::bind_Population<mio::AgeGroup, mio::InfectionState>(m, "SecirPopulation");
 
     using SecirPopulations = mio::Populations<mio::AgeGroup, mio::InfectionState>;
-    pymio::bind_CompartmentalModel<SecirPopulations, mio::SecirParams>(m, "SecirModelBase");
-    py::class_<mio::SecirModel, mio::CompartmentalModel<SecirPopulations, mio::SecirParams>>(m, "SecirModel")
+    pymio::bind_CompartmentalModel<mio::InfectionState, SecirPopulations, mio::SecirParams>(m, "SecirModelBase");
+    py::class_<mio::SecirModel, mio::CompartmentalModel<mio::InfectionState, SecirPopulations, mio::SecirParams>>(m, "SecirModel")
         .def(py::init<int>(), py::arg("num_agegroups"));
 
     pymio::bind_Simulation<mio::SecirSimulation<>>(m, "SecirSimulation");

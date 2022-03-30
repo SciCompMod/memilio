@@ -527,7 +527,7 @@ namespace secirv
             auto b161_growth = (start_day - get_day_in_year(Date(2021, 6, 6))) * 0.1666667;
             // 2 equal to the share of the delta variant on June 6
             double share_new_variant = std::min(1.0, pow(2, t * 0.1666667 + b161_growth) * 0.01);
-            size_t num_groups        = this->get_model().parameters.get_num_groups();
+            size_t num_groups        = (size_t)this->get_model().parameters.get_num_groups();
             for (size_t i = 0; i < num_groups; ++i) {
                 double new_transmission =
                     (1 - share_new_variant) *
@@ -541,9 +541,9 @@ namespace secirv
 
         void apply_vaccination(double t)
         {
-            size_t index      = (size_t)(int)t;
+            size_t index      = (size_t)t;
             auto& params      = this->get_model().parameters;
-            size_t num_groups = params.get_num_groups();
+            size_t num_groups = (size_t)params.get_num_groups();
             auto last_value   = this->get_result().get_last_value();
 
             auto count = (size_t)InfectionState::Count;
@@ -649,7 +649,7 @@ namespace secirv
                                 this->get_model().parameters.get_end_commuter_detection()   = (double)t_end;
                                 m_dynamic_npi = std::make_pair(exceeded_threshold->first, t_end);
                                 implement_dynamic_npis(contact_patterns.get_cont_freq_mat(), exceeded_threshold->second,
-                                                       t_start, t_end, [this](auto& g) {
+                                                       t_start, t_end, [](auto& g) {
                                                            return make_contact_damping_matrix(g);
                                                        });
                             }

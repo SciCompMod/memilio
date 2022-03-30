@@ -286,7 +286,7 @@ private:
         Iterator(pointer ptr) : m_ptr(ptr) {}
 
         Iterator& operator=(pointer rhs) { m_ptr = rhs; return *this;}
-        Iterator& operator=(const Iterator &rhs) { m_ptr = rhs._ptr; return *this;}
+        Iterator& operator=(const Iterator &rhs) { m_ptr = rhs.m_ptr; return *this;}
         Iterator& operator+=(const int& rhs) { m_ptr += rhs; return *this;}
         Iterator& operator-=(const int& rhs) { m_ptr -= rhs; return *this;}
 
