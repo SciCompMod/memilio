@@ -492,7 +492,7 @@ void set_synthetic_population_data(std::vector<mio::secirv::SecirModel>& countie
         double nb_total_t0 = 10000, nb_exp_t0 = 2, nb_inf_t0 = 0, nb_car_t0 = 0, nb_hosp_t0 = 0, nb_icu_t0 = 0,
                nb_rec_t0 = 0, nb_dead_t0 = 0;
 
-        nb_exp_t0 = (county_idx % 10 + 1) * 3;
+        nb_exp_t0 = (double)((county_idx % 10 + 1) * 3);
 
         for (mio::AgeGroup i = 0; i < counties[county_idx].parameters.get_num_groups(); i++) {
             counties[county_idx].populations[{i, mio::secirv::InfectionState::Exposed}]      = nb_exp_t0;
@@ -524,18 +524,14 @@ mio::IOResult<void> set_nodes(const mio::secirv::SecirParams& params, mio::Date 
 {
     namespace de = mio::regions::de;
 
-    double new_people = 0;
     BOOST_OUTCOME_TRY(county_ids, mio::get_county_ids((data_dir / "pydata" / "Germany").string()));
     std::vector<mio::secirv::SecirModel> counties(county_ids.size(),
-                                                  mio::secirv::SecirModel(size_t(params.get_num_groups())));
+                                                  mio::secirv::SecirModel((int)size_t(params.get_num_groups())));
     for (auto& county : counties) {
         county.parameters = params;
     }
     auto scaling_factor_infected = std::vector<double>(size_t(params.get_num_groups()), 1.0);
     auto scaling_factor_icu      = 1.0;
-    /*BOOST_OUTCOME_TRY((mio::read_input_data_county<mio::secirv::SecirModel, mio::secirv::InfectionState>(
-        counties, start_date, county_ids, scaling_factor_infected, scaling_factor_icu,
-        (data_dir / "pydata" / "Germany").string())));*/
     BOOST_OUTCOME_TRY(mio::secirv::read_input_data_county(
         counties, start_date, county_ids, scaling_factor_infected, scaling_factor_icu,
         (data_dir / "pydata" / "Germany").string(), mio::get_offset_in_days(end_date, start_date)));
@@ -563,18 +559,6 @@ mio::IOResult<void> set_nodes(const mio::secirv::SecirParams& params, mio::Date 
         //uncertainty in populations
         for (auto i = mio::AgeGroup(0); i < params.get_num_groups(); i++) {
             for (auto j = mio::Index<mio::secirv::InfectionState>(0); j < mio::secirv::InfectionState::Count; ++j) {
-                if (counties[county_idx].populations[{i, j}] < 0)
-                /*&&
-                    (j == mio::secirv::InfectionState::Infected || j == mio::secirv::InfectionState::Exposed ||
-                     j == mio::secirv::InfectionState::Carrier))*{
-
-                    new_people += 1e-2;
-                    counties[county_idx].populations[{i, j}] +=
-                        1e-2; // Add small value to avoid negative values in first commuting step
-                }*/
-                {
-                    std::cout << "populations(" << i << ", " << j << ") is negative" << std::endl;
-                }
                 auto& compartment_value = counties[county_idx].populations[{i, j}];
                 assign_uniform_distribution(compartment_value, 0.9 * double(compartment_value),
                                             1.1 * double(compartment_value));
@@ -583,7 +567,6 @@ mio::IOResult<void> set_nodes(const mio::secirv::SecirParams& params, mio::Date 
 
         params_graph.add_node(county_ids[county_idx], counties[county_idx]);
     }
-    std::cout << "added population: " << new_people << std::endl;
     return mio::success();
 }
 
