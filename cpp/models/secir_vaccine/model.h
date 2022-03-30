@@ -24,7 +24,7 @@
 #include "memilio/compartments/simulation.h"
 #include "memilio/epidemiology/populations.h"
 #include "secir_vaccine/infection_state.h"
-#include "secir_vaccine/secir_params.h"
+#include "secir_vaccine/parameters.h"
 #include "memilio/math/smoother.h"
 #include "memilio/math/eigen_util.h"
 

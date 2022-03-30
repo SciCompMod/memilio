@@ -19,7 +19,7 @@
 */
 #include "secir_vaccine/parameter_space.h"
 #include "memilio/utils/parameter_distributions.h"
-#include "secir_vaccine/secir.h"
+#include "secir_vaccine/model.h"
 
 namespace mio
 {

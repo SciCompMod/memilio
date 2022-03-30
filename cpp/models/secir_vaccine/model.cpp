@@ -17,7 +17,7 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
-#include "secir_vaccine/secir.h"
+#include "secir_vaccine/model.h"
 
 namespace mio
 {

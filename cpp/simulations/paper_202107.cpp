@@ -27,7 +27,7 @@
 #include "memilio/io/epi_data.h"
 #include "memilio/io/result_io.h"
 #include "memilio/io/mobility_io.h"
-#include "secir_vaccine/secir_parameters_io.h"
+#include "secir_vaccine/parameters_io.h"
 #include "secir_vaccine/parameter_space.h"
 #include "boost/filesystem.hpp"
 #include <cstdio>

@@ -24,7 +24,7 @@
 #include "memilio/utils/memory.h"
 #include "memilio/utils/logging.h"
 #include "memilio/utils/parameter_distributions.h"
-#include "secir_vaccine/secir.h"
+#include "secir_vaccine/model.h"
 
 #include <assert.h>
 #include <string>

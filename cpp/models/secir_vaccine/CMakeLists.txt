@@ -4,11 +4,11 @@ add_library(secir_vaccine
     analyze_result.cpp
     parameter_space.h
     parameter_space.cpp
-    secir_params.h
-    secir_parameters_io.h
-    secir_parameters_io.cpp
-    secir.h
-    secir.cpp
+    parameters.h
+    parameters_io.h
+    parameters_io.cpp
+    model.h
+    model.cpp
 )
 target_link_libraries(secir_vaccine PUBLIC memilio)
 target_include_directories(secir_vaccine PUBLIC

@@ -26,7 +26,7 @@
 
 #ifdef MEMILIO_HAS_JSONCPP
 
-#include "secir_vaccine/secir.h"
+#include "secir_vaccine/model.h"
 #include "secir_vaccine/analyze_result.h"
 #include "memilio/math/eigen_util.h"
 #include "memilio/mobility/graph.h"

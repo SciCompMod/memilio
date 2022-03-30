@@ -18,7 +18,7 @@
 * limitations under the License.
 */
 
-#include "secir_vaccine/secir_parameters_io.h"
+#include "secir_vaccine/parameters_io.h"
 #include "memilio/epidemiology/regions.h"
 
 #ifdef MEMILIO_HAS_JSONCPP

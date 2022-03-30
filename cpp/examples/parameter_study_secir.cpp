@@ -166,7 +166,7 @@ int main()
 
     //create study
     auto num_runs = size_t(1);
-    mio::ParameterStudy<mio::SecirSimulation<>> parameter_study(model, t0, tmax, 0.2, num_runs);
+    mio::ParameterStudy<mio::SecirSimulation<>> parameter_study(model, t0, tmax, num_runs);
 
     //run study
     int run           = 0;

@@ -20,7 +20,7 @@
 #ifndef MEMILIO_SECIR_VACC_ANALYZE_RESULT_H
 #define MEMILIO_SECIR_VACC_ANALYZE_RESULT_H
 
-#include "secir_vaccine/secir.h"
+#include "secir_vaccine/model.h"
 #include "memilio/data/analyze_result.h"
 
 #include <functional>
