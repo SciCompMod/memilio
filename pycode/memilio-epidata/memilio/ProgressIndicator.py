@@ -21,7 +21,7 @@ import memilio
 import sys
 import time
 import threading
-from os import get_terminal_size
+from os import name, get_terminal_size
 
 class ProgressIndicator:
     """! Print an animation to show that something is happening.
@@ -44,6 +44,9 @@ class ProgressIndicator:
             indicator.set_progress((i+1)/n)
     ```
     """
+
+    _first_init = True
+
     def __init__(self, animator, delay):
         """! Create an ProgressIndicator.
 
@@ -58,6 +61,9 @@ class ProgressIndicator:
         self._delay = delay
         self._thread = None
         self._enabled = False
+        if ProgressIndicator._first_init:
+            ProgressIndicator._first_init = False
+            ProgressIndicator._console_setup()
 
     def __enter__(self):
         self.start()
@@ -65,6 +71,27 @@ class ProgressIndicator:
 
     def __exit__(self, exception, value, trace):
         self.stop()
+
+    @staticmethod
+    def _console_setup():
+        if name == 'nt': # os name can be nt, posix, or java
+            # Windows uses nt, which does not support carriage returns by
+            # default. the following Windows specific module should fix this.
+            try:
+                from ctypes import windll
+                k = windll.kernel32
+                # GetStdHandle(-11) is the standart output device, the flag 7
+                # is equal to
+                #    ENABLE_PROCESSED_OUTPUT | ENABLE_WRAP_AT_EOL_OUTPUT
+                #        | ENABLE_VIRTUAL_TERMINAL_PROCESSING
+                # the last flag enables several control sequences, like \r
+                k.SetConsoleMode(k.GetStdHandle(-11), 7)
+            except ImportError as import_error:
+                msg = "\nFailed to set console mode for 'nt' system (e.g."\
+                    " Windows). This exception can be safely caught, but "\
+                    "ProgressIndicator(s) may be displayed incorrectly."
+                import_error.msg += msg
+                raise import_error
 
     def _render(self):
         """! Regularly update the animation. Do not call manually!"""
