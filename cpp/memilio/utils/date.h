@@ -149,14 +149,6 @@ struct Date {
  * @param date_str date as a string.
  * @return parsed date.
  */
-inline Date parse_date_unsafe(const std::string& date_str)
-{
-    Date date;
-    date.year  = std::stoi(date_str.substr(0, 4));
-    date.month = std::stoi(date_str.substr(5, 2));
-    date.day   = std::stoi(date_str.substr(8, 2));
-    return date;
-}
 inline IOResult<Date> parse_date(const std::string& date_str)
 {
     try {
