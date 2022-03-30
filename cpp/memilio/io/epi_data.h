@@ -110,7 +110,7 @@ public:
     Date date;
     AgeGroup age_group;
     boost::optional<regions::de::StateId> state_id;
-    boost::optional<regions::de::CountyId> county_id;    
+    boost::optional<regions::de::CountyId> county_id;
 
     template <class IoContext>
     static IOResult<RkiEntry> deserialize(IoContext& io)

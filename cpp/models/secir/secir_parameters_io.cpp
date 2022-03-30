@@ -18,6 +18,12 @@
 * limitations under the License.
 */
 
+#include "memilio/utils/compiler_diagnostics.h"
+
+//see below for line that causes this warning
+GCC_CLANG_DIAGNOSTIC(push)
+GCC_CLANG_DIAGNOSTIC(ignored "-Wmaybe-uninitialized")
+
 #include "secir/secir_parameters_io.h"
 #include "memilio/utils/logging.h"
 #include <iterator>
@@ -33,7 +39,6 @@
 #include "memilio/epidemiology/damping.h"
 #include "memilio/epidemiology/populations.h"
 #include "memilio/epidemiology/uncertain_matrix.h"
-#include "memilio/utils/compiler_diagnostics.h"
 #include "memilio/utils/date.h"
 
 #include <json/json.h>
@@ -90,6 +95,8 @@ namespace details
         }
         auto days_surplus = std::min(get_offset_in_days(max_date, date) - 6, 0);
 
+        //this statement causes maybe-uninitialized warning for some versions of gcc.
+        //the error is reported in an included header, so the warning is disabled for the whole file
         std::sort(rki_data.begin(), rki_data.end(), [](auto&& a, auto&& b) {
             return std::make_tuple(get_region_id(a), a.date) < std::make_tuple(get_region_id(b), b.date);
         });
@@ -447,3 +454,5 @@ namespace details
 } // namespace mio
 
 #endif // MEMILIO_HAS_JSONCPP
+
+GCC_CLANG_DIAGNOSTIC(pop)
