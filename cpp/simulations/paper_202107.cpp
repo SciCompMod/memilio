@@ -1,11 +1,11 @@
 /**
 * Simulation application that was used to produce results of the following publication(s):
-* M. J. Kühn et al, 2021: Assessment of effective mitigation and prediction of the spread of SARS-CoV-2 in Germany 
-* using demographic information and spatial resolution
+* W. Koslow et al, 2022: Appropriate relaxation of non-pharmaceutical interventions minimizes 
+* the risk of a resurgence in SARS-CoV-2 infections in spite of the Delta variant
 * 
 * Copyright (C) 2020-2021 German Aerospace Center (DLR-SC)
 *
-* Authors: Daniel Abele
+* Authors: Daniel Abele, Wadim Koslow, Martin Kühn
 *
 * Contact: Martin J. Kuehn <Martin.Kuehn@DLR.de>
 *
