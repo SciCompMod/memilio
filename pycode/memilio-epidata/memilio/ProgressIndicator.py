@@ -99,65 +99,66 @@ class ProgressIndicator:
                 self._thread.join()
             sys.stdout.write("\033[K") # clear line
 
-def Spinner(delay=0.1, message=""):
-    """! initializes a ProgressIndicator with a rotating line animation.
+class Spinner(ProgressIndicator):
+    """! Subclass of ProgressIndicator with a predefined animation. """
+    def __init__(self, delay=0.1, message=""):
+        """! initializes a ProgressIndicator with a rotating line animation.
 
-    This method spawns a new thread to print the animation.
-    Start the animation by either using the `start`/`stop` functions or a
-    'with' block.
+        This method spawns a new thread to print the animation.
+        Start the animation by either using the `start`/`stop` functions or a
+        'with' block.
 
-    @param delay [Default: 0.1] positive real number. Sets delay in seconds
-        between drawing animation frames.
-    @param message [Default: ""] string. Text shown before the indicator
-        (consider appeding a space as separator).
+        @param delay [Default: 0.1] positive real number. Sets delay in
+            seconds between drawing animation frames.
+        @param message [Default: ""] string. Text shown before the indicator
+            (consider appeding a space as separator).
+        """
+        # prevent spamming output with messages longer than a single line
+        if get_terminal_size().columns < len(message) + 2:
+            sys.stdout.write(message)
+            message = ""
 
-    @return ProgressIndicator, with a rotating line animation.
-    """
-    # prevent spamming output with messages longer than a single line
-    if get_terminal_size().columns < len(message) + 2:
-        sys.stdout.write(message)
-        message = ""
+        def _spin():
+            while True: # loop animation
+                for s in "|/-\\": # iterate animation frames
+                    yield "{}{}".format(message, s) # return single frame
+        super().__init__(_spin(), delay)
 
-    def _spin():
-        while True: # loop animation
-            for s in "|/-\\": # iterate animation frames
-                yield "{}{}".format(message, s) # return single frame
-    return ProgressIndicator(_spin(), delay)
+class Dots(ProgressIndicator):
+    """! Subclass of ProgressIndicator with a predefined animation. """
+    def __init__(self, delay=1, message="", num_dots=3, dot=".", blank=" "):
+        """! initializes ProgressIndicator with a 'dot, dot, dot' animation.
 
-def Dots(delay=1, message="", num_dots=3, dot=".", blank=" "):
-    """! initializes ProgressIndicator with a 'dot, dot, dot' animation.
+        This method spawns a new thread to print the animation.
+        Start the animation by either using the `start`/`stop` functions or a
+        'with' block.
 
-    This method spawns a new thread to print the animation.
-    Start the animation by either using the `start`/`stop` functions or a
-    'with' block.
+        @param delay [Default: 1] positive real number. Sets delay in seconds
+            between drawing animation frames.
+        @param message [Default: ""] string. Text shown before the indicator
+            (consider appeding a space as separator).
+        @param num_dots [Default: 3] positive integer. Determines maximum
+            number of dots drawn before clearing them with blanks.
+        @param dot [Default: "."] string. Drawn up to num_dots times.
+        @param blank [Default: " "] string. Placeholder for yet to be drawn
+            dots. Must have same length as dot.
+        """
+        assert(len(dot) == len(blank))
+        assert(num_dots > 0)
+        # prevent spamming output with messages longer than a single line
+        if get_terminal_size().columns < num_dots + len(message) + 1:
+            sys.stdout.write(message)
+            message = ""
 
-    @param delay [Default: 1] positive real number. Sets delay in seconds
-        between drawing animation frames.
-    @param message [Default: ""] string. Text shown before the indicator
-        (consider appeding a space as separator).
-    @param num_dots [Default: 3] positive integer. Determines maximum number
-        of dots drawn before clearing them with blanks.
-    @param dot [Default: "."] string. Drawn sequentially up to num_dots times.
-    @param blank [Default: " "] string. Placeholder for yet to be drawn dots.
-        Must have same length as dot.
-
-    @return ProgressIndicator, with a 'dot, dot, dot' animation.
-    """
-    assert(len(dot) == len(blank))
-    assert(num_dots > 0)
-    # prevent spamming output with messages longer than a single line
-    if get_terminal_size().columns < num_dots + len(message) + 1:
-        sys.stdout.write(message)
-        message = ""
-
-    def _dots():
-        while True: # loop animation
-            for n in range(1, num_dots+1): # iterate animation frames
-                # return single frame
-                yield "{}{}{}".format(message, dot*n, blank*(num_dots-n))
-    return ProgressIndicator(_dots(), delay)
+        def _dots():
+            while True: # loop animation
+                for n in range(1, num_dots+1): # iterate animation frames
+                    # return single frame
+                    yield "{}{}{}".format(message, dot*n, blank*(num_dots-n))
+        super().__init__(_dots(), delay)
 
 class Percentage:
+    """! Manages a ProgressIndicator with a predefined animation. """
     def __init__(self, delay=1, message="", percentage=0, use_bar=False,
             use_delayed_output=True, keep_output=True):
         """! initializes ProgressIndicator displaying a percentage.
