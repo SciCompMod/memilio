@@ -296,3 +296,19 @@ TEST(CustomIndexArray, chained_slice)
     ASSERT_DOUBLE_EQ((array[{Tag0(0), Tag1(1), Tag2(2), Tag3(0)}]), 42);
     ASSERT_DOUBLE_EQ((array[{Tag0(0), Tag1(1), Tag2(2), Tag3(1)}]), 42);
 }
+
+TEST(CustomIndexArray, resize_all)
+{
+    mio::CustomIndexArray<double, Tag0, Tag1> array{{Tag0(1), Tag1(2)}, 1.23};
+    array.resize({Tag0(2), Tag1(4)});
+    ASSERT_EQ(array.size().indices, std::make_tuple(Tag0{2}, Tag1{4}));
+    ASSERT_EQ(array.numel(), 8);
+}
+
+TEST(CustomIndexArray, resize_one_dimension)
+{
+    mio::CustomIndexArray<double, Tag0, Tag1> array{{Tag0(1), Tag1(2)}, 1.23};
+    array.resize(Tag0(3));
+    ASSERT_EQ(array.size().indices, std::make_tuple(Tag0{3}, Tag1{2}));
+    ASSERT_EQ(array.numel(), 6);
+}

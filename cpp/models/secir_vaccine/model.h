@@ -541,7 +541,7 @@ namespace secirv
 
         void apply_vaccination(double t)
         {
-            size_t index      = (size_t)t;
+            auto t_idx        = SimulationDay(t);
             auto& params      = this->get_model().parameters;
             size_t num_groups = (size_t)params.get_num_groups();
             auto last_value   = this->get_result().get_last_value();
@@ -553,19 +553,17 @@ namespace secirv
 
             for (size_t i = 0; i < num_groups; ++i) {
 
-                auto temp1 = params.template get<DailyFirstVaccination>()[(AgeGroup)i];
-                auto temp2 = params.template get<DailyFullVaccination>()[(AgeGroup)i];
                 double first_vacc;
                 double full_vacc;
-                if (index == 0) {
-                    first_vacc = params.template get<DailyFirstVaccination>()[(AgeGroup)i][index];
-                    full_vacc  = params.template get<DailyFullVaccination>()[(AgeGroup)i][index];
+                if (t_idx == SimulationDay(0)) {
+                    first_vacc = params.template get<DailyFirstVaccination>()[{(AgeGroup)i, t_idx}];
+                    full_vacc  = params.template get<DailyFullVaccination>()[{(AgeGroup)i, t_idx}];
                 }
                 else {
-                    first_vacc = params.template get<DailyFirstVaccination>()[(AgeGroup)i][index] -
-                                 params.template get<DailyFirstVaccination>()[(AgeGroup)i][index - 1];
-                    full_vacc = params.template get<DailyFullVaccination>()[(AgeGroup)i][index] -
-                                params.template get<DailyFullVaccination>()[(AgeGroup)i][index - 1];
+                    first_vacc = params.template get<DailyFirstVaccination>()[{(AgeGroup)i, t_idx}] -
+                                 params.template get<DailyFirstVaccination>()[{(AgeGroup)i, t_idx - SimulationDay(1)}];
+                    full_vacc = params.template get<DailyFullVaccination>()[{(AgeGroup)i, t_idx}] -
+                                params.template get<DailyFullVaccination>()[{(AgeGroup)i, t_idx - SimulationDay(1)}];
                 }
 
                 if (last_value(count * i + S) - first_vacc < 0) {

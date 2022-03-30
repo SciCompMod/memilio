@@ -311,7 +311,7 @@ namespace secirv
                 });
                 if (it != vregion.end()) {
                     auto region_idx = size_t(it - vregion.begin());
-                    if (rki_entry.date == offset_date_by_days(date, -delay)) {
+                    if (rki_entry.date == offset_date_by_days(date, int(-delay))) {
                         vnum_rec[region_idx][size_t(rki_entry.age_group)] = rki_entry.num_confirmed;
                     }
                 }
@@ -423,22 +423,20 @@ namespace secirv
 
             auto num_groups = model[0].parameters.get_num_groups();
 
-            size_t days_until_effective1 =
-                (size_t)(int)(double)model[0].parameters.get<DaysUntilEffective>()[AgeGroup(0)];
-            size_t days_until_effective2 =
-                (size_t)(int)(double)model[0].parameters.get<DaysUntilEffectiveFull>()[AgeGroup(0)];
-            size_t vaccination_distance = (size_t)(int)(double)model[0].parameters.get<VaccinationGap>()[AgeGroup(0)];
+            auto days_until_effective1 = (int)(double)model[0].parameters.get<DaysUntilEffective>()[AgeGroup(0)];
+            auto days_until_effective2 = (int)(double)model[0].parameters.get<DaysUntilEffectiveFull>()[AgeGroup(0)];
+            auto vaccination_distance  = (int)(double)model[0].parameters.get<VaccinationGap>()[AgeGroup(0)];
 
             // iterate over regions (e.g., counties)
             for (size_t i = 0; i < model.size(); ++i) {
                 // iterate over age groups in region
                 for (auto g = AgeGroup(0); g < num_groups; ++g) {
 
-                    model[i].parameters.template get<DailyFirstVaccination>()[g] = {};
-                    model[i].parameters.template get<DailyFullVaccination>()[g]  = {};
-                    for (int d = 0; d < num_days + 1; ++d) {
-                        model[i].parameters.template get<DailyFirstVaccination>()[g].push_back(0.0);
-                        model[i].parameters.template get<DailyFullVaccination>()[g].push_back(0.0);
+                    model[i].parameters.template get<DailyFirstVaccination>().resize(SimulationDay(num_days));
+                    model[i].parameters.template get<DailyFullVaccination>().resize(SimulationDay(num_days));
+                    for (auto d = SimulationDay(0); d < SimulationDay(num_days + 1); ++d) {
+                        model[i].parameters.template get<DailyFirstVaccination>()[{g, d}] = 0.0;
+                        model[i].parameters.template get<DailyFullVaccination>()[{g, d}] = 0.0;
                     }
                 }
             }
@@ -487,7 +485,7 @@ namespace secirv
                         if (max_full_date >= offset_first_date) {
                             // Option 1: considered offset_first_date is available in input data frame
                             if (date_df == offset_first_date) {
-                                model[region_idx].parameters.template get<DailyFirstVaccination>()[age][d] =
+                                model[region_idx].parameters.template get<DailyFirstVaccination>()[{age, SimulationDay(d)}] =
                                     vacc_data_entry.num_full;
                             }
                         }
@@ -499,11 +497,11 @@ namespace secirv
                             // (where the latter is computed as the difference between the total number at max_date and max_date-1)
                             days_plus = get_offset_in_days(offset_first_date, max_date);
                             if (date_df == offset_date_by_days(max_date, -1)) {
-                                model[region_idx].parameters.template get<DailyFirstVaccination>()[age][d] -=
+                                model[region_idx].parameters.template get<DailyFirstVaccination>()[{age, SimulationDay(d)}] -=
                                     (days_plus - 1) * vacc_data_entry.num_full;
                             }
                             else if (date_df == max_date) {
-                                model[region_idx].parameters.template get<DailyFirstVaccination>()[age][d] +=
+                                model[region_idx].parameters.template get<DailyFirstVaccination>()[{age, SimulationDay(d)}] +=
                                     days_plus * vacc_data_entry.num_full;
                             }
                         }
@@ -517,7 +515,7 @@ namespace secirv
                         if (max_full_date >= offset_full_date) {
                             // Option 1: considered offset_full_date is available in input data frame
                             if (date_df == offset_full_date) {
-                                model[region_idx].parameters.template get<DailyFullVaccination>()[age][d] =
+                                model[region_idx].parameters.template get<DailyFullVaccination>()[{age, SimulationDay(d)}] =
                                     vacc_data_entry.num_full;
                             }
                         }
@@ -525,11 +523,11 @@ namespace secirv
                             // Option 2: considered offset_full_date is NOT available in input data frame
                             days_plus = get_offset_in_days(offset_full_date, max_date);
                             if (date_df == offset_date_by_days(max_full_date, -1)) {
-                                model[region_idx].parameters.template get<DailyFullVaccination>()[age][d] -=
+                                model[region_idx].parameters.template get<DailyFullVaccination>()[{age, SimulationDay(d)}] -=
                                     (days_plus - 1) * vacc_data_entry.num_full;
                             }
                             else if (date_df == max_full_date) {
-                                model[region_idx].parameters.template get<DailyFullVaccination>()[age][d] +=
+                                model[region_idx].parameters.template get<DailyFullVaccination>()[{age, SimulationDay(d)}] +=
                                     days_plus * vacc_data_entry.num_full;
                             }
                         }

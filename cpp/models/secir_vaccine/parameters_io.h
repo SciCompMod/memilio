@@ -487,11 +487,11 @@ namespace secirv
                     auto num_groups = model[region].parameters.get_num_groups();
                     for (auto i = AgeGroup(0); i < num_groups; i++) {
 
-                        double S_v  = std::min(model[region].parameters.template get<DailyFullVaccination>()[i][0] +
+                        double S_v  = std::min(model[region].parameters.template get<DailyFullVaccination>()[{i, SimulationDay(0)}] +
                                                   num_rec[region][size_t(i)],
                                               num_population[region][size_t(i)]);
-                        double S_pv = std::max(model[region].parameters.template get<DailyFirstVaccination>()[i][0] -
-                                                   model[region].parameters.template get<DailyFullVaccination>()[i][0],
+                        double S_pv = std::max(model[region].parameters.template get<DailyFirstVaccination>()[{i, SimulationDay(0)}] -
+                                                   model[region].parameters.template get<DailyFullVaccination>()[{i, SimulationDay(0)}],
                                                0.0); // use std::max with 0
                         double S;
                         if (num_population[region][size_t(i)] - S_pv - S_v < 0.0) {
@@ -557,7 +557,7 @@ namespace secirv
                             model[region].populations[{i, InfectionState::ICU}] * denom_HU;
 
                         model[region].populations[{i, InfectionState::Recovered}] =
-                            model[region].parameters.template get<DailyFullVaccination>()[i][0] +
+                            model[region].parameters.template get<DailyFullVaccination>()[{i, SimulationDay(0)}] +
                             model[region].populations[{i, InfectionState::Recovered}] -
                             (model[region].populations[{i, InfectionState::Infected}] +
                              model[region].populations[{i, InfectionState::InfectedPartiallyImmune}] +
@@ -951,12 +951,12 @@ namespace secirv
                     for (size_t age = 0; age < num_age_groups; age++) {
                         auto age_group_offset = age * (size_t)InfectionState::Count;
                         double S_v =
-                            std::min(model[county].parameters.template get<DailyFullVaccination>()[AgeGroup(age)][day] +
+                            std::min(model[county].parameters.template get<DailyFullVaccination>()[{AgeGroup(age), SimulationDay(day)}] +
                                          num_rec[county][age],
                                      num_population[county][age]);
                         double S_pv = std::max(
-                            model[county].parameters.template get<DailyFirstVaccination>()[AgeGroup(age)][day] -
-                                model[county].parameters.template get<DailyFullVaccination>()[AgeGroup(age)][day],
+                            model[county].parameters.template get<DailyFirstVaccination>()[{AgeGroup(age), SimulationDay(day)}] -
+                                model[county].parameters.template get<DailyFullVaccination>()[{AgeGroup(age), SimulationDay(day)}],
                             0.0); // use std::max with 0
                         double S;
                         if (num_population[county][age] - S_pv - S_v < 0.0) {
@@ -1036,7 +1036,7 @@ namespace secirv
                             num_death_uv[county][age];
 
                         extrapolated_rki[county][day]((size_t)InfectionState::Recovered + age_group_offset) =
-                            model[county].parameters.template get<DailyFullVaccination>()[AgeGroup(age)][day] +
+                            model[county].parameters.template get<DailyFullVaccination>()[{AgeGroup(age), SimulationDay(day)}] +
                             num_rec_uv[county][age] -
                             (extrapolated_rki[county][day]((size_t)InfectionState::Infected + age_group_offset) +
                              extrapolated_rki[county][day]((size_t)InfectionState::InfectedPartiallyImmune +

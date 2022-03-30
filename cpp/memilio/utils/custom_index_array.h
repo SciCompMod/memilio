@@ -226,6 +226,27 @@ public:
     }
 
     /**
+     * Resize all dimensions.
+     * @param new_dims new dimensions.
+     */
+    void resize(Index new_dims) {
+        m_dimensions = new_dims;
+        m_numel = product(m_dimensions);
+        m_y.conservativeResize(m_numel);
+    }
+
+    /**
+     * Resize a single dimension.
+     * @param new dimension.
+     */
+    template<class Tag>
+    void resize(mio::Index<Tag> new_dim) {
+        std::get<mio::Index<Tag>>(m_dimensions.indices) = new_dim;
+        m_numel = product(m_dimensions);
+        m_y.conservativeResize(m_numel);
+    }
+
+    /**
      * @brief array returns a reference to the internally stored flat array.
      * @return const reference to the CustomIndexArray::InternalArrayType instance
      */

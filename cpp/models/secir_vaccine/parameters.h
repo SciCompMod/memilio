@@ -593,13 +593,22 @@ namespace secirv
     };
 
     /**
- * @brief Total number of first vaccinations up to the given day.
- */
+     * Represents the simulation time as an integer index.
+     */ 
+    class SimulationDay : public Index<SimulationDay>
+    {
+    public:
+        using Index<SimulationDay>::Index;
+    };
+
+    /**
+    * @brief Total number of first vaccinations up to the given day.
+    */
     struct DailyFirstVaccination {
-        using Type = CustomIndexArray<std::vector<double>, AgeGroup>;
+        using Type = CustomIndexArray<double, AgeGroup, SimulationDay>;
         static Type get_default(AgeGroup size)
         {
-            return Type(size);
+            return Type({size, SimulationDay(0)});
         }
         static std::string name()
         {
@@ -608,13 +617,13 @@ namespace secirv
     };
 
     /**
- * @brief Total number of full vaccinations up to the given day.
- */
+    * @brief Total number of full vaccinations up to the given day.
+    */
     struct DailyFullVaccination {
-        using Type = CustomIndexArray<std::vector<double>, AgeGroup>;
+        using Type = CustomIndexArray<double, AgeGroup, SimulationDay>;
         static Type get_default(AgeGroup size)
         {
-            return Type(size);
+            return Type({size, SimulationDay(0)});
         }
         static std::string name()
         {
