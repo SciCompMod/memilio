@@ -20,6 +20,8 @@
 
 #include "memilio/io/epi_data.h"
 
+#ifdef MEMILIO_HAS_JSONCPP
+
 namespace mio
 {
 const std::array<const char*, 6> StringRkiAgeGroup::age_group_names = {"A00-A04", "A05-A14", "A15-A34",
@@ -52,3 +54,5 @@ IOResult<std::vector<int>> get_county_ids(const std::string& path)
 }
 
 } // namespace mio
+
+#endif //MEMILIO_HAS_JSONCPP

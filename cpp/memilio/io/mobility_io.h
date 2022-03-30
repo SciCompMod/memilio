@@ -20,6 +20,7 @@
 #ifndef READ_TWITTER_H
 #define READ_TWITTER_H
 
+#include "memilio/config.h"
 #include "memilio/math/eigen.h"
 #include "memilio/io/json_serializer.h"
 #include "memilio/mobility/mobility.h"
@@ -61,7 +62,7 @@ IOResult<Eigen::MatrixXd> read_mobility_formatted(const std::string& filename);
  */
 IOResult<Eigen::MatrixXd> read_mobility_plain(const std::string& filename);
 
-
+#ifdef MEMILIO_HAS_JSONCPP
 
 /**
  * @brief creates json files for each node in a simulation graph.
@@ -181,6 +182,8 @@ IOResult<Graph<Model, MigrationParameters>> read_graph(const std::string& direct
 
     return success(graph);
 }
+
+#endif //MEMILIO_HAS_JSONCPP
 
 } // namespace mio
 

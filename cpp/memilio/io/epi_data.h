@@ -20,6 +20,10 @@
 #ifndef MEMILIO_IO_EPI_DATA_H
 #define MEMILIO_IO_EPI_DATA_H
 
+#include "memilio/config.h"
+
+#ifdef MEMILIO_HAS_JSONCPP
+
 #include "memilio/epidemiology/age_group.h"
 #include "memilio/epidemiology/regions.h"
 #include "memilio/io/io.h"
@@ -450,5 +454,7 @@ inline IOResult<std::vector<VaccinationDataEntry>> read_vaccination_data(const s
 }
 
 } // namespace mio
+
+#endif //MEMILIO_HAS_JSONCPP
 
 #endif //MEMILIO_IO_EPI_DATA_H
