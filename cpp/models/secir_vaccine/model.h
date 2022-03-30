@@ -127,18 +127,18 @@ namespace secirv
 
                 double risk_from_vacc    = 1.0;
                 double risk_from_immune  = 1.0;
-                double reduc_vacc_exp    = params.get<ReducVaccExp>()[i];
-                double reduc_immune_exp  = params.get<ReducImmuneExp>()[i];
-                double reduc_vacc_inf    = params.get<ReducVaccInf>()[i];
-                double reduc_immune_inf  = params.get<ReducImmuneInf>()[i];
-                double reduc_vacc_hosp   = params.get<ReducVaccHosp>()[i];
-                double reduc_vacc_icu    = params.get<ReducVaccHosp>()[i];
-                double reduc_vacc_dead   = params.get<ReducVaccHosp>()[i];
-                double reduc_immune_hosp = params.get<ReducImmuneHosp>()[i];
-                double reduc_immune_icu  = params.get<ReducImmuneHosp>()[i];
-                double reduc_immune_dead = params.get<ReducImmuneHosp>()[i];
+                double reduc_vacc_exp    = params.get<ExposedFactorPartiallyImmune>()[i];
+                double reduc_immune_exp  = params.get<ExposedFactorFullyImmune>()[i];
+                double reduc_vacc_inf    = params.get<InfectedFactorPartiallyImmune>()[i];
+                double reduc_immune_inf  = params.get<InfectedFactorFullyImmune>()[i];
+                double reduc_vacc_hosp   = params.get<HospitalizedFactorPartiallyImmune>()[i];
+                double reduc_vacc_icu    = params.get<HospitalizedFactorPartiallyImmune>()[i];
+                double reduc_vacc_dead   = params.get<HospitalizedFactorPartiallyImmune>()[i];
+                double reduc_immune_hosp = params.get<HospitalizedFactorFullyImmune>()[i];
+                double reduc_immune_icu  = params.get<HospitalizedFactorFullyImmune>()[i];
+                double reduc_immune_dead = params.get<HospitalizedFactorFullyImmune>()[i];
 
-                double reduc_t = params.get<ReducMildRecTime>()[i];
+                double reduc_t = params.get<InfectiousTimeFactorImmune>()[i];
 
                 //symptomatic are less well quarantined when testing and tracing is overwhelmed so they infect more people
                 auto risk_from_symptomatic = smoother_cosine(
@@ -530,8 +530,10 @@ namespace secirv
             size_t num_groups        = this->get_model().parameters.get_num_groups();
             for (size_t i = 0; i < num_groups; ++i) {
                 double new_transmission =
-                    (1 - share_new_variant) * this->get_model().parameters.template get<BaseInfB117>()[(AgeGroup)i] +
-                    share_new_variant * this->get_model().parameters.template get<BaseInfB161>()[(AgeGroup)i];
+                    (1 - share_new_variant) *
+                        this->get_model().parameters.template get<BaseInfectiousnessB117>()[(AgeGroup)i] +
+                    share_new_variant *
+                        this->get_model().parameters.template get<BaseInfectiousnessB161>()[(AgeGroup)i];
                 this->get_model().parameters.template get<InfectionProbabilityFromContact>()[(AgeGroup)i] =
                     new_transmission;
             }
@@ -587,7 +589,7 @@ namespace secirv
                 last_value(count * i + R) += full_vacc;
             }
         }
-        
+
         /**
         * @brief advance simulation to tmax.
         * Overwrites Simulation::advance and includes a check for dynamic NPIs in regular intervals.

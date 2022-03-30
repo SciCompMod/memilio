@@ -439,7 +439,7 @@ namespace secirv
     /**
  * @brief ...
  */
-    struct BaseInfB117 {
+    struct BaseInfectiousnessB117 {
         using Type = CustomIndexArray<double, AgeGroup>;
         static Type get_default(AgeGroup size)
         {
@@ -447,11 +447,11 @@ namespace secirv
         }
         static std::string name()
         {
-            return "BaseInfB117";
+            return "BaseInfectiousnessB117";
         }
     };
 
-    struct BaseInfB161 {
+    struct BaseInfectiousnessB161 {
         using Type = CustomIndexArray<double, AgeGroup>;
         static Type get_default(AgeGroup size)
         {
@@ -459,11 +459,11 @@ namespace secirv
         }
         static std::string name()
         {
-            return "BaseInfB161";
+            return "BaseInfectiousnessB161";
         }
     };
 
-    struct ReducVaccExp {
+    struct ExposedFactorPartiallyImmune {
         using Type = CustomIndexArray<UncertainValue, AgeGroup>;
         static Type get_default(AgeGroup size)
         {
@@ -471,11 +471,11 @@ namespace secirv
         }
         static std::string name()
         {
-            return "ReducVaccExp";
+            return "ExposedFactorPartiallyImmune";
         }
     };
 
-    struct ReducImmuneExp {
+    struct ExposedFactorFullyImmune {
         using Type = CustomIndexArray<UncertainValue, AgeGroup>;
         static Type get_default(AgeGroup size)
         {
@@ -483,11 +483,11 @@ namespace secirv
         }
         static std::string name()
         {
-            return "ReducImmuneExp";
+            return "ExposedFactorFullyImmune";
         }
     };
 
-    struct ReducVaccInf {
+    struct InfectedFactorPartiallyImmune {
         using Type = CustomIndexArray<UncertainValue, AgeGroup>;
         static Type get_default(AgeGroup size)
         {
@@ -495,11 +495,11 @@ namespace secirv
         }
         static std::string name()
         {
-            return "ReducVaccInf";
+            return "InfectedFactorPartiallyImmune";
         }
     };
 
-    struct ReducImmuneInf {
+    struct InfectedFactorFullyImmune {
         using Type = CustomIndexArray<UncertainValue, AgeGroup>;
         static Type get_default(AgeGroup size)
         {
@@ -507,11 +507,11 @@ namespace secirv
         }
         static std::string name()
         {
-            return "ReducImmuneInf";
+            return "InfectedFactorFullyImmune";
         }
     };
 
-    struct ReducVaccHosp {
+    struct HospitalizedFactorPartiallyImmune {
         using Type = CustomIndexArray<UncertainValue, AgeGroup>;
         static Type get_default(AgeGroup size)
         {
@@ -519,11 +519,11 @@ namespace secirv
         }
         static std::string name()
         {
-            return "ReducVaccHosp";
+            return "HospitalizedFactorPartiallyImmune";
         }
     };
 
-    struct ReducImmuneHosp {
+    struct HospitalizedFactorFullyImmune {
         using Type = CustomIndexArray<UncertainValue, AgeGroup>;
         static Type get_default(AgeGroup size)
         {
@@ -531,11 +531,11 @@ namespace secirv
         }
         static std::string name()
         {
-            return "ReducImmuneHosp";
+            return "HospitalizedFactorFullyImmune";
         }
     };
 
-    struct ReducMildRecTime {
+    struct InfectiousTimeFactorImmune {
         using Type = CustomIndexArray<UncertainValue, AgeGroup>;
         static Type get_default(AgeGroup size)
         {
@@ -543,7 +543,7 @@ namespace secirv
         }
         static std::string name()
         {
-            return "ReducMildRecTime";
+            return "InfectiousTimeFactorImmune";
         }
     };
 
@@ -637,15 +637,18 @@ namespace secirv
         }
     };
 
-    using SecirParamsBase = ParameterSet<
-        StartDay, StartSummer, Seasonality, ICUCapacity, TestAndTraceCapacity, ContactPatterns, DynamicNPIsInfected,
-        IncubationTime, InfectiousTimeMild, InfectiousTimeAsymptomatic, SerialInterval, HospitalizedToHomeTime,
-        HomeToHospitalizedTime, HospitalizedToICUTime, ICUToHomeTime, ICUToDeathTime, InfectionProbabilityFromContact,
-        RelativeCarrierInfectability, AsymptoticCasesPerInfectious, RiskOfInfectionFromSympomatic,
-        MaxRiskOfInfectionFromSympomatic, HospitalizedCasesPerInfectious, ICUCasesPerHospitalized, DeathsPerICU,
-        VaccineGrowthFirst, VaccineGrowthFull, VaccinationGap, DaysUntilEffective, DaysUntilEffectiveFull, BaseInfB117,
-        BaseInfB161, DailyFullVaccination, DailyFirstVaccination, DynamicInfectionFromContact, ReducVaccExp,
-        ReducImmuneExp, ReducVaccInf, ReducImmuneInf, ReducVaccHosp, ReducImmuneHosp, ReducMildRecTime>;
+    using SecirParamsBase =
+        ParameterSet<StartDay, StartSummer, Seasonality, ICUCapacity, TestAndTraceCapacity, ContactPatterns,
+                     DynamicNPIsInfected, IncubationTime, InfectiousTimeMild, InfectiousTimeAsymptomatic,
+                     SerialInterval, HospitalizedToHomeTime, HomeToHospitalizedTime, HospitalizedToICUTime,
+                     ICUToHomeTime, ICUToDeathTime, InfectionProbabilityFromContact, RelativeCarrierInfectability,
+                     AsymptoticCasesPerInfectious, RiskOfInfectionFromSympomatic, MaxRiskOfInfectionFromSympomatic,
+                     HospitalizedCasesPerInfectious, ICUCasesPerHospitalized, DeathsPerICU, VaccineGrowthFirst,
+                     VaccineGrowthFull, VaccinationGap, DaysUntilEffective, DaysUntilEffectiveFull,
+                     BaseInfectiousnessB117, BaseInfectiousnessB161, DailyFullVaccination, DailyFirstVaccination,
+                     DynamicInfectionFromContact, ExposedFactorPartiallyImmune, ExposedFactorFullyImmune,
+                     InfectedFactorPartiallyImmune, InfectedFactorFullyImmune, HospitalizedFactorPartiallyImmune,
+                     HospitalizedFactorFullyImmune, InfectiousTimeFactorImmune>;
 
     /**
  * @brief Parameters of an age-resolved SECIR/SECIHURD model.

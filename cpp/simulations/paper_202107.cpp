@@ -212,17 +212,17 @@ mio::IOResult<void> set_covid_parameters(mio::secirv::SecirParams& params, bool 
                                       prob_hosp_icu_max);
     array_assign_uniform_distribution(params.get<mio::secirv::DeathsPerICU>(), prob_icu_dead_min, prob_icu_dead_max);
 
-    array_assign_uniform_distribution(params.get<mio::secirv::ReducVaccExp>(), reduc_vacc_exp_min, reduc_vacc_exp_max);
-    array_assign_uniform_distribution(params.get<mio::secirv::ReducImmuneExp>(), reduc_immune_exp_min,
+    array_assign_uniform_distribution(params.get<mio::secirv::ExposedFactorPartiallyImmune>(), reduc_vacc_exp_min, reduc_vacc_exp_max);
+    array_assign_uniform_distribution(params.get<mio::secirv::ExposedFactorFullyImmune>(), reduc_immune_exp_min,
                                       reduc_immune_exp_max);
-    array_assign_uniform_distribution(params.get<mio::secirv::ReducVaccInf>(), reduc_vacc_inf_min, reduc_vacc_inf_max);
-    array_assign_uniform_distribution(params.get<mio::secirv::ReducImmuneInf>(), reduc_immune_inf_min,
+    array_assign_uniform_distribution(params.get<mio::secirv::InfectedFactorPartiallyImmune>(), reduc_vacc_inf_min, reduc_vacc_inf_max);
+    array_assign_uniform_distribution(params.get<mio::secirv::InfectedFactorFullyImmune>(), reduc_immune_inf_min,
                                       reduc_immune_inf_max);
-    array_assign_uniform_distribution(params.get<mio::secirv::ReducVaccHosp>(), reduc_vacc_hosp_min,
+    array_assign_uniform_distribution(params.get<mio::secirv::HospitalizedFactorPartiallyImmune>(), reduc_vacc_hosp_min,
                                       reduc_vacc_hosp_max);
-    array_assign_uniform_distribution(params.get<mio::secirv::ReducImmuneHosp>(), reduc_immune_hosp_min,
+    array_assign_uniform_distribution(params.get<mio::secirv::HospitalizedFactorFullyImmune>(), reduc_immune_hosp_min,
                                       reduc_immune_hosp_max);
-    array_assign_uniform_distribution(params.get<mio::secirv::ReducMildRecTime>(), reduc_mild_rec_time,
+    array_assign_uniform_distribution(params.get<mio::secirv::InfectiousTimeFactorImmune>(), reduc_mild_rec_time,
                                       reduc_mild_rec_time);
 
     //sasonality

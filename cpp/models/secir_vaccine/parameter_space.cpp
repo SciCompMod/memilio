@@ -75,13 +75,13 @@ namespace secirv
         model.parameters.get<RiskOfInfectionFromSympomatic>()[AgeGroup(0)].draw_sample();
         model.parameters.get<MaxRiskOfInfectionFromSympomatic>()[AgeGroup(0)].draw_sample();
 
-        model.parameters.get<ReducVaccExp>()[AgeGroup(0)].draw_sample();
-        model.parameters.get<ReducImmuneExp>()[AgeGroup(0)].draw_sample();
-        model.parameters.get<ReducVaccInf>()[AgeGroup(0)].draw_sample();
-        model.parameters.get<ReducImmuneInf>()[AgeGroup(0)].draw_sample();
-        model.parameters.get<ReducVaccHosp>()[AgeGroup(0)].draw_sample();
-        model.parameters.get<ReducImmuneHosp>()[AgeGroup(0)].draw_sample();
-        model.parameters.get<ReducMildRecTime>()[AgeGroup(0)].draw_sample();
+        model.parameters.get<ExposedFactorPartiallyImmune>()[AgeGroup(0)].draw_sample();
+        model.parameters.get<ExposedFactorFullyImmune>()[AgeGroup(0)].draw_sample();
+        model.parameters.get<InfectedFactorPartiallyImmune>()[AgeGroup(0)].draw_sample();
+        model.parameters.get<InfectedFactorFullyImmune>()[AgeGroup(0)].draw_sample();
+        model.parameters.get<HospitalizedFactorPartiallyImmune>()[AgeGroup(0)].draw_sample();
+        model.parameters.get<HospitalizedFactorFullyImmune>()[AgeGroup(0)].draw_sample();
+        model.parameters.get<InfectiousTimeFactorImmune>()[AgeGroup(0)].draw_sample();
 
         for (auto i = AgeGroup(0); i < model.parameters.get_num_groups(); i++) {
             //not age dependent
@@ -97,13 +97,13 @@ namespace secirv
             model.parameters.get<MaxRiskOfInfectionFromSympomatic>()[i] =
                 model.parameters.get<MaxRiskOfInfectionFromSympomatic>()[AgeGroup(0)];
 
-            model.parameters.get<ReducVaccExp>()[i]     = model.parameters.get<ReducVaccExp>()[AgeGroup(0)];
-            model.parameters.get<ReducImmuneExp>()[i]   = model.parameters.get<ReducImmuneExp>()[AgeGroup(0)];
-            model.parameters.get<ReducVaccInf>()[i]     = model.parameters.get<ReducVaccInf>()[AgeGroup(0)];
-            model.parameters.get<ReducImmuneInf>()[i]   = model.parameters.get<ReducImmuneInf>()[AgeGroup(0)];
-            model.parameters.get<ReducVaccHosp>()[i]    = model.parameters.get<ReducVaccHosp>()[AgeGroup(0)];
-            model.parameters.get<ReducImmuneHosp>()[i]  = model.parameters.get<ReducImmuneHosp>()[AgeGroup(0)];
-            model.parameters.get<ReducMildRecTime>()[i] = model.parameters.get<ReducMildRecTime>()[AgeGroup(0)];
+            model.parameters.get<ExposedFactorPartiallyImmune>()[i]     = model.parameters.get<ExposedFactorPartiallyImmune>()[AgeGroup(0)];
+            model.parameters.get<ExposedFactorFullyImmune>()[i]   = model.parameters.get<ExposedFactorFullyImmune>()[AgeGroup(0)];
+            model.parameters.get<InfectedFactorPartiallyImmune>()[i]     = model.parameters.get<InfectedFactorPartiallyImmune>()[AgeGroup(0)];
+            model.parameters.get<InfectedFactorFullyImmune>()[i]   = model.parameters.get<InfectedFactorFullyImmune>()[AgeGroup(0)];
+            model.parameters.get<HospitalizedFactorPartiallyImmune>()[i]    = model.parameters.get<HospitalizedFactorPartiallyImmune>()[AgeGroup(0)];
+            model.parameters.get<HospitalizedFactorFullyImmune>()[i]  = model.parameters.get<HospitalizedFactorFullyImmune>()[AgeGroup(0)];
+            model.parameters.get<InfectiousTimeFactorImmune>()[i] = model.parameters.get<InfectiousTimeFactorImmune>()[AgeGroup(0)];
 
             //age dependent
             model.parameters.get<HospitalizedToHomeTime>()[i].draw_sample(); // here: home=recovered
@@ -150,16 +150,16 @@ namespace secirv
 
         //dynamic share of virus variants 
         for (auto i = AgeGroup(0); i < shared_params_model.parameters.get_num_groups(); ++i) {
-            shared_params_model.parameters.template get<BaseInfB117>()[i] =
+            shared_params_model.parameters.template get<BaseInfectiousnessB117>()[i] =
                 shared_params_model.parameters.template get<InfectionProbabilityFromContact>()[i];
-            shared_params_model.parameters.template get<BaseInfB161>()[i] =
+            shared_params_model.parameters.template get<BaseInfectiousnessB161>()[i] =
                 shared_params_model.parameters.template get<InfectionProbabilityFromContact>()[i] * delta_fac;
             shared_params_model.parameters.template get<DynamicInfectionFromContact>()[i] = {};
             for (size_t t = 0; t < (size_t)tmax; ++t) {
                 double share_new_variant = std::min(1.0, pow(2, (double)t / 7) / 100.0);
                 double new_transmission =
-                    (1 - share_new_variant) * shared_params_model.parameters.template get<BaseInfB117>()[(AgeGroup)i] +
-                    share_new_variant * shared_params_model.parameters.template get<BaseInfB161>()[(AgeGroup)i];
+                    (1 - share_new_variant) * shared_params_model.parameters.template get<BaseInfectiousnessB117>()[(AgeGroup)i] +
+                    share_new_variant * shared_params_model.parameters.template get<BaseInfectiousnessB161>()[(AgeGroup)i];
                 shared_params_model.parameters.template get<DynamicInfectionFromContact>()[i].push_back(
                     new_transmission);
             }
