@@ -21,8 +21,8 @@
 
 namespace mio
 {
-namespace vaccinated
+namespace secirv
 {
 
-} // namespace vaccinated
+} // namespace secirv
 } // namespace mio

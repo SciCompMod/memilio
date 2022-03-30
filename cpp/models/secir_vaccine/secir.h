@@ -30,7 +30,7 @@
 
 namespace mio
 {
-namespace vaccinated
+namespace secirv
 {
     class SecirModel : public CompartmentalModel<Populations<AgeGroup, InfectionState>, SecirParams>
     {
@@ -890,7 +890,7 @@ namespace vaccinated
         }
     }
 
-} // namespace vaccinated
+} // namespace secirv
 } // namespace mio
 
 #endif

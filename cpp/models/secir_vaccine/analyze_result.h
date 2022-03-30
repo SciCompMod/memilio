@@ -28,7 +28,7 @@
 
 namespace mio
 {
-namespace vaccinated
+namespace secirv
 {
     /**
     * @brief computes the p percentile of the parameters for each node.
@@ -141,7 +141,7 @@ namespace vaccinated
         return percentile;
     }
 
-} // namespace vaccinated
+} // namespace secirv
 } // namespace mio
 
 #endif //MEMILIO_SECIR_VACC_ANALYZE_RESULT_H

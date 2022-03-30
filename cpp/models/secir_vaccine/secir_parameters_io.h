@@ -38,7 +38,7 @@
 
 namespace mio
 {
-namespace vaccinated
+namespace secirv
 {
 
     namespace details
@@ -1146,7 +1146,7 @@ namespace vaccinated
         return success();
     }
 
-} // namespace vaccinated
+} // namespace secirv
 } // namespace mio
 
 #endif // MEMILIO_HAS_JSONCPP

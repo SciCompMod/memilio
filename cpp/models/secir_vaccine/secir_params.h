@@ -33,7 +33,7 @@
 
 namespace mio
 {
-namespace vaccinated
+namespace secirv
 {
 
     /**
@@ -944,7 +944,7 @@ namespace vaccinated
         double m_end_commuter_detection   = 0.0;
     };
 
-} // namespace vaccinated
+} // namespace secirv
 } // namespace mio
 
 #endif // SECIR_H

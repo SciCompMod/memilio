@@ -21,7 +21,7 @@
 #define SECIRV_INFECTIONSTATE_H
 namespace mio
 {
-namespace vaccinated
+namespace secirv
 {
 
     /**
@@ -62,7 +62,7 @@ namespace vaccinated
         Count
     };
 
-} // namespace vaccinated
+} // namespace secirv
 } // namespace mio
 
 #endif //SECIRV_INFECTIONSTATE_H

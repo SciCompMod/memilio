@@ -23,7 +23,7 @@
 
 namespace mio
 {
-namespace vaccinated
+namespace secirv
 {
 
     void draw_sample_demographics(SecirModel& model)
@@ -200,5 +200,5 @@ namespace vaccinated
         return sampled_graph;
     }
 
-} // namespace vaccinated
+} // namespace secirv
 } // namespace mio

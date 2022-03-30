@@ -34,7 +34,7 @@
 
 namespace mio
 {
-namespace vaccinated
+namespace secirv
 {
     /**
      * draws a sample from the specified distributions for all parameters related to the demographics, e.g. population.
@@ -56,7 +56,7 @@ namespace vaccinated
 
     Graph<SecirModel, MigrationParameters> draw_sample(Graph<SecirModel, MigrationParameters>& graph, double tmax, bool high);
 
-} // namespace vaccinated
+} // namespace secirv
 } // namespace mio
 
 #endif // PARAMETER_SPACE_H
