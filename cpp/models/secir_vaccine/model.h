@@ -541,7 +541,7 @@ namespace secirv
 
         void apply_vaccination(double t)
         {
-            auto t_idx        = SimulationDay(t);
+            auto t_idx        = SimulationDay((size_t)t);
             auto& params      = this->get_model().parameters;
             size_t num_groups = (size_t)params.get_num_groups();
             auto last_value   = this->get_result().get_last_value();

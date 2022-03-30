@@ -481,7 +481,7 @@ namespace secirv
                         // transfer the difference (between get<DailyFirstVaccination>() at d and d-1) of
                         // N susceptible individuals to 'Susceptible Partially Vaccinated' state at day d; see secir_vaccinated.h
                         auto offset_first_date =
-                            offset_date_by_days(date, +d - days_until_effective1 + vaccination_distance);
+                            offset_date_by_days(date, (int)d - days_until_effective1 + vaccination_distance);
                         if (max_full_date >= offset_first_date) {
                             // Option 1: considered offset_first_date is available in input data frame
                             if (date_df == offset_first_date) {
@@ -511,7 +511,7 @@ namespace secirv
                         // Storing its value in get<DailyFullVaccination>() will eventually (in the simulation)
                         // transfer the difference (between get<DailyFullVaccination>() at d and d-1) of
                         // N susceptible, partially vaccinated individuals to 'Immune/Recovered' state at day d; see secir_vaccinated.h
-                        auto offset_full_date = offset_date_by_days(date, +d - days_until_effective2);
+                        auto offset_full_date = offset_date_by_days(date, (int)d - days_until_effective2);
                         if (max_full_date >= offset_full_date) {
                             // Option 1: considered offset_full_date is available in input data frame
                             if (date_df == offset_full_date) {
