@@ -51,6 +51,8 @@ namespace secirv
         * @param num_* output vector for number of people in the corresponding compartement
         * @param t_* vector average time it takes to get from one compartement to another for each age group
         * @param mu_* vector probabilities to get from one compartement to another for each age group
+        * @see mio::read_rki_data
+        * @{
         */
         IOResult<void> read_rki_data(
             std::string const& path, std::vector<int> const& vregion, Date date,
@@ -79,6 +81,7 @@ namespace secirv
             const std::vector<std::vector<double>>& mu_C_R, const std::vector<std::vector<double>>& mu_I_H,
             const std::vector<std::vector<double>>& mu_H_U, const std::vector<std::vector<double>>& mu_U_D,
             const std::vector<double>& scaling_factor_inf);
+        /**@}*/
 
         /**
         * @brief reads confirmed cases data and translates data of day t0-delay to recovered compartment,
@@ -87,6 +90,8 @@ namespace secirv
         * @param date Date for which the arrays are initialized
         * @param num_rec output vector for number of people in the compartement recovered
         * @param delay number of days in the past the are used to set recovered compartment.
+        * @see mio::read_rki_data
+        * @{
         */
         IOResult<void> read_rki_data_confirmed_to_recovered(const std::vector<RkiEntry>& rki_data,
                                                             std::vector<int> const& vregion, Date date,
@@ -95,6 +100,7 @@ namespace secirv
         IOResult<void> read_rki_data_confirmed_to_recovered(std::string const& path, std::vector<int> const& vregion,
                                                             Date date, std::vector<std::vector<double>>& vnum_rec,
                                                             double delay = 14.);
+        /**@}*/
 
         /**
         * @brief sets populations data from RKI into a SecirModel
@@ -405,11 +411,14 @@ namespace secirv
         * @param vregion Keys of the region of interest
         * @param date Date for which the arrays are initialized
         * @param vnum_icu number of ICU patients
+        * @see mio::read_divi_data
+        * @{
         */
         IOResult<void> read_divi_data(const std::string& path, const std::vector<int>& vregion, Date date,
                                       std::vector<double>& vnum_icu);
         IOResult<void> read_divi_data(const std::vector<DiviEntry>& divi_data, const std::vector<int>& vregion,
                                       Date date, std::vector<double>& vnum_icu);
+        /**@}*/
 
         /**
         * @brief sets populations data from DIVI register into Model
@@ -453,12 +462,14 @@ namespace secirv
         * @brief reads population data from census data
         * @param path Path to RKI file
         * @param vregion vector of keys of the regions of interest
+        * @see mio::read_population_data
+        * @{
         */
         IOResult<std::vector<std::vector<double>>> read_population_data(const std::string& path,
                                                                         const std::vector<int>& vregion);
-
         IOResult<std::vector<std::vector<double>>>
         read_population_data(const std::vector<PopulationDataEntry>& population_data, const std::vector<int>& vregion);
+        /**@}*/
 
         template <class Model>
         IOResult<void> set_population_data(std::vector<Model>& model, const std::string& path,
@@ -1099,8 +1110,7 @@ namespace secirv
                                 ". Population data has not been set.");
                 }
             }
-            std::cout << "extrapolated real data for date: " << date.day << "." << date.month << "." << date.year
-                      << std::endl;
+            log_info("extrapolated real data for date: {}-{}-{}", date.day, date.month, date.year);
             date = offset_date_by_days(date, 1);
         }
         /* end: similar functionality in set_rki_data(), here only for vector of TimeSeries */

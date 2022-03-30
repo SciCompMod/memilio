@@ -34,9 +34,9 @@ namespace mio
 // Create template specializations for the age resolved
 // SECIHURD model
 
-class SecirModel : public CompartmentalModel<Populations<AgeGroup, InfectionState>, SecirParams>
+class SecirModel : public CompartmentalModel<InfectionState, Populations<AgeGroup, InfectionState>, SecirParams>
 {
-    using Base = CompartmentalModel<mio::Populations<AgeGroup, InfectionState>, SecirParams>;
+    using Base = CompartmentalModel<InfectionState, mio::Populations<AgeGroup, InfectionState>, SecirParams>;
     using Pa   = Base::ParameterSet;
     using Po   = Base::Populations;
 

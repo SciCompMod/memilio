@@ -32,9 +32,9 @@ namespace mio
 {
 namespace secirv
 {
-    class SecirModel : public CompartmentalModel<Populations<AgeGroup, InfectionState>, SecirParams>
+    class SecirModel : public CompartmentalModel<InfectionState, Populations<AgeGroup, InfectionState>, SecirParams>
     {
-        using Base = CompartmentalModel<mio::Populations<AgeGroup, InfectionState>, SecirParams>;
+        using Base = CompartmentalModel<InfectionState, mio::Populations<AgeGroup, InfectionState>, SecirParams>;
         using Pa   = Base::ParameterSet;
         using Po   = Base::Populations;
 
@@ -214,9 +214,6 @@ namespace secirv
 
                     double dummy_R = y[Ri] * reduc_immune_exp * ext_inf_force_dummy;
 
-                    if (dummy_R < 0) {
-                        std::cout << "dummy_R is: " << dummy_R << std::endl;
-                    }
                     dydt[Si] -= dummy_S; // -R1*(C+beta*I)*S/N0
                     dydt[Ei] += dummy_S; // R1*(C+beta*I)*S/N0-R2*E
 
@@ -547,12 +544,6 @@ namespace secirv
             size_t num_groups = params.get_num_groups();
             auto last_value   = this->get_result().get_last_value();
 
-            for (int i = 0; i < last_value.size(); ++i) {
-                if (last_value(i) < 0) {
-                    std::cout << "compartment i is negative: " << last_value(i) << std::endl;
-                }
-            }
-
             auto count = (size_t)InfectionState::Count;
             auto S     = (size_t)InfectionState::Susceptible;
             auto SV    = (size_t)InfectionState::SusceptiblePartiallyImmune;
@@ -576,105 +567,27 @@ namespace secirv
                 }
 
                 if (last_value(count * i + S) - first_vacc < 0) {
-                    std::cout << "too many first vaccinated at time" << t << ": setting first_vacc from" << first_vacc
-                              << " to " << 0.99 * last_value(count * i + S) << std::endl;
-                    first_vacc = 0.99 * last_value(count * i + S);
+                    auto corrected = 0.99 * last_value(count * i + S);
+                    log_warning("too many first vaccinated at time {}: setting first_vacc from {} to {}", t, first_vacc,
+                                corrected);
+                    first_vacc = corrected;
                 }
 
                 last_value(count * i + S) -= first_vacc;
                 last_value(count * i + SV) += first_vacc;
 
                 if (last_value(count * i + SV) - full_vacc < 0) {
-                    std::cout << "too many fully vaccinated at time" << t << ": setting full_vacc from" << full_vacc
-                              << " to " << 0.99 * last_value(count * i + SV) << std::endl;
-                    full_vacc = 0.99 * last_value(count * i + SV);
+                    auto corrected = 0.99 * last_value(count * i + SV);
+                    log_warning("too many fully vaccinated at time {}: setting full_vacc from {} to {}", t, full_vacc,
+                                corrected);
+                    full_vacc = corrected;
                 }
 
                 last_value(count * i + SV) -= full_vacc;
                 last_value(count * i + R) += full_vacc;
             }
         }
-
-        void apply_vaccination_old(double t)
-        {
-            size_t index      = (size_t)(int)t;
-            double threshhold = 0.8;
-            auto& m_params    = this->get_model().parameters;
-            auto& population  = this->get_model().populations;
-            size_t num_groups = m_params.get_num_groups();
-            auto last_value   = this->get_result().get_last_value();
-
-            std::vector<bool> saturated(num_groups, false);
-
-            double leftover = 0;
-            size_t count    = 0;
-            for (size_t i = 2; i < num_groups; ++i) {
-                std::vector<double> daily_first_vaccinations =
-                    m_params.template get<DailyFirstVaccination>()[(AgeGroup)i];
-                std::vector<double> daily_full_vaccinations =
-                    m_params.template get<DailyFullVaccination>()[(AgeGroup)i];
-                double new_vaccinated_full =
-                    daily_first_vaccinations[daily_first_vaccinations.size() -
-                                             m_params.template get<VaccinationGap>()[(AgeGroup)i] -
-                                             m_params.template get<DaysUntilEffective>()[(AgeGroup)i]];
-
-                /*std::cout << "size of ag " << i << ": " << daily_first_vaccinations.size() << ", value: "
-                      << daily_first_vaccinations[daily_first_vaccinations.size() -
-                                                  m_params.template get<VaccinationGap>()[(AgeGroup)i] -
-                                                  m_params.template get<DaysUntilEffective>()[(AgeGroup)i]]
-                      << std::endl;*/
-                double new_vaccinated_first =
-                    daily_first_vaccinations[daily_first_vaccinations.size() -
-                                             m_params.template get<DaysUntilEffective>()[(AgeGroup)i]] +
-                    daily_full_vaccinations[daily_first_vaccinations.size() -
-                                            m_params.template get<DaysUntilEffective>()[(AgeGroup)i]] -
-                    new_vaccinated_full;
-                if (new_vaccinated_first < 0) {
-                    new_vaccinated_first = 0;
-                }
-                if (last_value((size_t)InfectionState::Count * i + (size_t)InfectionState::Susceptible) -
-                        new_vaccinated_first >
-                    (1 - threshhold) * population.get_group_total((AgeGroup)i)) {
-                    last_value((size_t)InfectionState::Count * i + (size_t)InfectionState::Susceptible) -=
-                        new_vaccinated_first;
-                    last_value((size_t)InfectionState::Count * i +
-                               (size_t)InfectionState::SusceptiblePartiallyImmune) += new_vaccinated_first;
-                    m_params.template get<DailyFirstVaccination>()[(AgeGroup)i].push_back(new_vaccinated_first);
-                }
-                else {
-                    m_params.template get<DailyFirstVaccination>()[(AgeGroup)i].push_back(0);
-                    saturated[i] = true;
-                    count++;
-                    leftover += new_vaccinated_first;
-                }
-
-                if (last_value((size_t)InfectionState::Count * i + (size_t)InfectionState::SusceptiblePartiallyImmune) -
-                        new_vaccinated_full >
-                    0) {
-                    last_value((size_t)InfectionState::Count * i +
-                               (size_t)InfectionState::SusceptiblePartiallyImmune) -= new_vaccinated_full;
-                    last_value((size_t)InfectionState::Count * i + (size_t)InfectionState::Recovered) +=
-                        new_vaccinated_full;
-
-                    m_params.template get<DailyFullVaccination>()[(AgeGroup)i].push_back(new_vaccinated_full);
-                }
-                else {
-                    leftover += new_vaccinated_full;
-                    m_params.template get<DailyFullVaccination>()[(AgeGroup)i].push_back(0);
-                }
-            }
-            for (size_t i = 2; i < num_groups; ++i) {
-                if (!saturated[i] && count > 0 && leftover >= 0) {
-                    last_value((size_t)InfectionState::Count * i + (size_t)InfectionState::Susceptible) -=
-                        leftover / count;
-                    last_value((size_t)InfectionState::Count * i +
-                               (size_t)InfectionState::SusceptiblePartiallyImmune) += leftover / count;
-                    m_params.template get<DailyFirstVaccination>()[(
-                        AgeGroup)i][m_params.template get<DailyFirstVaccination>()[(AgeGroup)i].size() - 1] +=
-                        leftover / count;
-                }
-            }
-        }
+        
         /**
         * @brief advance simulation to tmax.
         * Overwrites Simulation::advance and includes a check for dynamic NPIs in regular intervals.

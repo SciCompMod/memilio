@@ -211,14 +211,26 @@ TEST(DynamicNPIs, implement)
 namespace mio_test
 {
 
+enum class Compartments
+{
+    A = 0,
+    B,
+    Count,
+};
+
+struct DummyModel {
+    using Compartments = mio_test::Compartments;
+};
+
 struct DummySim {
+    using Model = DummyModel;
     template <class V>
     DummySim(V&& y0)
         : result(0.0, std::forward<V>(y0))
     {
-        ON_CALL(*this, advance).WillByDefault([this](auto t) {  
-            result.reserve(result.get_num_time_points() + 1); 
-            result.add_time_point(t, result.get_last_value()); 
+        ON_CALL(*this, advance).WillByDefault([this](auto t) {
+            result.reserve(result.get_num_time_points() + 1);
+            result.add_time_point(t, result.get_last_value());
         });
         ON_CALL(*this, get_result).WillByDefault(testing::ReturnRef(result));
     }
@@ -227,6 +239,7 @@ struct DummySim {
     MOCK_METHOD(mio::TimeSeries<double>&, get_result, ());
 
     mio::TimeSeries<double> result;
+    DummyModel model;
 };
 
 //overload required for dynamic NPIs
@@ -247,8 +260,8 @@ void calculate_migration_returns(Eigen::Ref<mio::TimeSeries<double>::Vector>, co
 
 TEST(DynamicNPIs, migration)
 {
-    mio::SimulationNode<testing::NiceMock<mio_test::DummySim>> node_from((Eigen::VectorXd(2) << 0.0, 1.0).finished());
-    mio::SimulationNode<testing::NiceMock<mio_test::DummySim>> node_to((Eigen::VectorXd(2) << 0.0, 1.0).finished());
+    mio::SimulationNode<mio_test::DummySim> node_from((Eigen::VectorXd(2) << 0.0, 1.0).finished());
+    mio::SimulationNode<mio_test::DummySim> node_to((Eigen::VectorXd(2) << 0.0, 1.0).finished());
 
     auto last_state_safe = (Eigen::VectorXd(2) << 0.01, 0.99).finished();
     auto last_state_crit = (Eigen::VectorXd(2) << 0.02, 0.98).finished();

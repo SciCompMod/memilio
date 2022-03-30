@@ -71,9 +71,10 @@ using has_apply_constraints_member_function = is_expression_valid<details::apply
  * studies
  *
  */
-template <class Pop, class Params>
+template <class Comp, class Pop, class Params>
 struct CompartmentalModel {
 public:
+    using Compartments = Comp;
     using Populations = Pop;
     using ParameterSet = Params;
 

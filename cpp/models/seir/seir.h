@@ -87,15 +87,15 @@ using SeirParameters = ParameterSet<TransmissionRisk,
  * define the model *
  ********************/
 
-class SeirModel : public CompartmentalModel<SeirPopulations, SeirParameters>
+class SeirModel : public CompartmentalModel<SeirInfType, SeirPopulations, SeirParameters>
 {
-    using Base = CompartmentalModel<SeirPopulations, SeirParameters>;
+    using Base = CompartmentalModel<SeirInfType, SeirPopulations, SeirParameters>;
     using Po = SeirPopulations;
     using Pa = SeirParameters;
 
 public:
     SeirModel()
-        : CompartmentalModel<SeirPopulations, SeirParameters>(Po({Index<SeirInfType>((size_t)SeirInfType::Count)}, 0.), Pa())
+        : Base(Po({Index<SeirInfType>((size_t)SeirInfType::Count)}, 0.), Pa())
     {
 #if !USE_DERIV_FUNC
         //S to E
