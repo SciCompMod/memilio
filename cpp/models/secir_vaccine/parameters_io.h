@@ -1,7 +1,7 @@
 /* 
-* Copyright (C) 2020-2021 German Aerospace Center (DLR-SC)
+* Copyright (C) 2020-2022 German Aerospace Center (DLR-SC)
 *
-* Authors: Wadim Koslow, Daniel Abele, Martin J. Kuehn, Lena Ploetzke
+* Authors: Wadim Koslow, Daniel Abele
 *
 * Contact: Martin J. Kuehn <Martin.Kuehn@DLR.de>
 *
