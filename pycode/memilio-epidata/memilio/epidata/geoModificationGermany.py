@@ -535,8 +535,10 @@ def merge_df_counties(
     df_merged = df[rows_merged].copy()
     if not df_merged.empty:
         # set merged ID and county name
-        if dd.EngEng['idCounty'] == columns:
+        if dd.EngEng['idCounty'] in columns:
             df_merged[dd.EngEng['idCounty']] = merged_id
+        if dd.EngEng['county'] in columns:
+            df_merged[dd.EngEng['county']] = dd.County[merged_id]
         df_merged = df_merged.groupby(columns).agg(method)
         # bring 'columns' which have been transfered to 'index' back as real
         # columns
@@ -545,7 +547,7 @@ def merge_df_counties(
         # reset countyID if not in columns
         if not dd.EngEng['idCounty'] in columns:
             df_merged[dd.EngEng['idCounty']] = merged_id
-        # check if column available
+        # check if column available (needs to be set again if county is not in columns but in df.columns)
         if dd.EngEng['county'] in df.columns:
             df_merged[dd.EngEng['county']] = dd.County[merged_id]
 

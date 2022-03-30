@@ -108,15 +108,15 @@ optional arguments working for some are:
 |                                             | where new cases have been reported.                       |
 |                                             |  Note that this option will have a negative impact        |
 |                                             |  on performance as well as on the storage space needed.   |
-|                                             |  [cases]                                                    |
+|                                             |  [cases]                                                  |
 +---------------------------------------------+-----------------------------------------------------------+
 | -ma, --moving-average                       | The 7 day moving average is computed for the data.        |
 |                                             |  Note that the --fill_dates option will be implicitly     |
 |                                             |  turned on, as computing the moving average requires all  |
-|                                             |  dates to be available. [cases]                             |
+|                                             |  dates to be available. [cases]                           |
 +---------------------------------------------+-----------------------------------------------------------+
 | -sb, --split-berlin                         | Berlin data is split into different counties              |
-|                                             |  , instead of having only one county for Berlin. [cases]    |
+|                                             |  , instead of having only one county for Berlin. [cases]  |
 +---------------------------------------------+-----------------------------------------------------------+
 | -u, -- update-data                          | Just chronological missing data is added,                 |
 |                                             | **after** the existing ones [divi]                        |
@@ -149,7 +149,7 @@ When speaking about infected, means always infected inclusive the already recove
  RKI            Germany     cases_all_county_age               infected, deaths, recovered over time for different age ranges and counties
  RKI            Germany     cases_all_county_gender            infected, deaths, recovered over time for different genders counties
 
- RKI            Germany     vaccine_data_[DATE]       administered vaccines, first shot, full vaccination, vaccination ratio, vacc ratio young, vacc ratio old
+ RKI            Germany     vaccine_data_[DATE]                administered vaccines, first shot, full vaccination, vaccination ratio, vacc ratio young, vacc ratio old
 
  RKI-Estimation Germany     cases_all_germany_estimated        infected, deaths, recovered, recovered_estimated, deaths_estimated over time for whole Germany
  RKI-Estimation Germany     cases_all_state_estimated          infected, deaths, recovered, recovered_estimated, deaths_estimated over time for different states (Bundesländer)
@@ -202,7 +202,8 @@ When you start creating a new script:
       - for non-english languages always use the EngEng dictionary as the key, thus we can easily change names with just changing one line.
       - in defaultDict.py a dictionary with id and state and county name, respectivly exists. Please use it.
 - After renaming columns, you should not use the possibilities of pandas the access the column with dataframe.column but instead use
-datafram[column] and use th dictionaries to define the column-name. Example: Altersgruppe2 = dd.GerEng['Altersgruppe2']; again in this way it is easier to change the column names.
+  datafram[column] and use th dictionaries to define the column-name.
+  Example: Altersgruppe2 = dd.GerEng['Altersgruppe2']; again in this way it is easier to change the column names.
 - use check_dir of getDataIntoPandasDataFrame.py if you want to create a new folder to write data to
 - use write_dataframe of getDataIntoPandasDataFrame.py to write the pandas dataframe to file.
 - use doxygen like comments in code as
