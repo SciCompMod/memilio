@@ -246,18 +246,8 @@ def transform_npi_data(fine_resolution=2,
                 raise FileNotFoundError
             df_npis_old.rename(dd.GerEng, axis=1, inplace=True)
 
-            try:
-                df_npis_desc = pd.read_excel(
-                    os.path.join(
-                        directory, 'datensatzbeschreibung_massnahmen.xlsx'),
-                    sheet_name=2)
-            except FileNotFoundError:
-                print_manual_download(
-                    'datensatzbeschreibung_massnahmen.xlsx',
-                    'https://www.corona-datenplattform.de/dataset/massnahmen_unterkategorien_kreise')
-                raise FileNotFoundError
-
-            # check on Krankenhaeuser and Pflege
+            # check if rows hospitals and geriatric care are still empty
+            # these fields have been empty so far and are thus not used
             test_codes = ['M23_010', 'M23_020', 'M23_030', 'M23_040',
                           'M23_050', 'M23_060', 'M24_010', 'M24_020',
                           'M24_030', 'M24_040', 'M24_050', 'M24_060']
@@ -267,7 +257,8 @@ def transform_npi_data(fine_resolution=2,
                         print(tcode+i + " used.")
             # end check
 
-        else:
+        else:  # read aggregated NPIs
+
             try:
                 df_npis_old = pd.read_csv(os.path.join(
                     directory, 'kr_massnahmen_oberkategorien.csv'))
@@ -277,17 +268,6 @@ def transform_npi_data(fine_resolution=2,
                     'https://www.corona-datenplattform.de/dataset/massnahmen_oberkategorien_kreise')
                 raise FileNotFoundError
             df_npis_old.rename(dd.GerEng, axis=1, inplace=True)
-
-            try:
-                df_npis_desc = pd.read_excel(
-                    os.path.join(
-                        directory, 'datensatzbeschreibung_massnahmen.xlsx'),
-                    sheet_name=3)
-            except FileNotFoundError:
-                print_manual_download(
-                    'datensatzbeschreibung_massnahmen.xlsx',
-                    'https://www.corona-datenplattform.de/dataset/massnahmen_oberkategorien_kreise')
-                raise FileNotFoundError
 
     else:  # read formatted file
 
