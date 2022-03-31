@@ -104,32 +104,34 @@ struct JsonType<T, std::enable_if_t<conjunction_v<is_small_integral<T>, std::is_
         return Json::Value(Json::UInt(i));
     }
 };
+template <class T>
+using is_64bit_integral = std::integral_constant<bool, (std::is_integral<T>::value && sizeof(T) == 8)>;
 //signed big ints
-template <>
-struct JsonType<int64_t> : std::true_type {
-    static IOResult<int64_t> transform(const Json::Value& js)
+template <class T>
+struct JsonType<T, std::enable_if_t<conjunction_v<is_64bit_integral<T>, std::is_signed<T>>>> : std::true_type {
+    static IOResult<T> transform(const Json::Value& js)
     {
         if (js.isInt64()) {
             return success(js.asInt64());
         }
         return failure(StatusCode::InvalidType, "Json value is not a 64 bit integer.");
     }
-    static Json::Value transform(int64_t i)
+    static Json::Value transform(T i)
     {
         return Json::Value(Json::Int64(i));
     }
 };
 //unsigned big ints
-template <>
-struct JsonType<uint64_t> : std::true_type {
-    static IOResult<uint64_t> transform(const Json::Value& js)
+template <class T>
+struct JsonType<T, std::enable_if_t<conjunction_v<is_64bit_integral<T>, std::is_unsigned<T>>>> : std::true_type {
+    static IOResult<T> transform(const Json::Value& js)
     {
         if (js.isUInt64()) {
             return success(js.asUInt64());
         }
         return failure(StatusCode::InvalidType, "Json value is not an unsigned 64bit integer.");
     }
-    static Json::Value transform(uint64_t i)
+    static Json::Value transform(T i)
     {
         return Json::Value(Json::UInt64(i));
     }
