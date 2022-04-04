@@ -34,7 +34,7 @@ Our sources are:
 
   You can find the data also on:
 
-  https://npgeo-corona-npgeo-de.hub.arcgis.com/datasets/dd4580c810204019a7b8eb3e0b329dd6_0
+  https://npgeo-corona-npgeo-de.hub.arcgis.com/datasets/e408ccf8878541a7ab6f6077a42fd811_0
 
   The provided data is either geojson or csv.
 
