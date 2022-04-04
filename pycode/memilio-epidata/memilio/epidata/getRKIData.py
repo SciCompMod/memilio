@@ -140,7 +140,7 @@ def get_rki_data(read_data=dd.defaultDict['read_data'],
         }
 
         # ArcGIS public data item ID:
-        itemId = 'dd4580c810204019a7b8eb3e0b329dd6_0'
+        itemId = 'e408ccf8878541a7ab6f6077a42fd811_0'
 
         # Get data:
         df = load['csv'](itemId)

@@ -25,6 +25,10 @@
 #include "matchers.h"
 #include "distributions_helpers.h"
 #include "gtest/gtest.h"
+#include "json/config.h"
+#include <gtest/gtest-typed-test.h>
+#include <gtest/internal/gtest-type-util.h>
+#include <limits>
 #include <vector>
 
 namespace jsontest
@@ -112,31 +116,74 @@ struct DoubleList {
 
 } // namespace jsontest
 
-TEST(TestJsonSerializer, basic_type)
-{
+//checks round trip (de)serialization and intermediate value
+template<class T, class StoredType = T>
+void check_serialization_of_basic_type(T t)
+{        
     mio::JsonSerializer js;
-    serialize(js, 3);
-    ASSERT_EQ(js.value(), Json::Value(3));
+    serialize(js, t);
+    EXPECT_EQ(js.value(), Json::Value(StoredType(t)));
 
-    mio::JsonSerializer js2{Json::Value(3)};
-    auto r = deserialize(js2, mio::Tag<int>{});
+    mio::JsonSerializer js2{Json::Value(StoredType(t))};
+    auto r = deserialize(js2, mio::Tag<T>{});
     ASSERT_THAT(print_wrap(r), IsSuccess());
-    ASSERT_EQ(r.value(), 3);
+    EXPECT_EQ(r.value(), t);
 }
 
-TEST(TestJsonSerializer, basic_type_float)
+using SmallIntegerTypes = testing::Types<char, unsigned char, signed char, short, unsigned short, int, unsigned int>;
+template<class T>
+class TestJsonSerializerSmallInts : public testing::Test
+{};
+TYPED_TEST_SUITE(TestJsonSerializerSmallInts, SmallIntegerTypes);
+TYPED_TEST(TestJsonSerializerSmallInts, full_domain)
 {
+    //all small integers are stored as 32 bit int with the corresponding signedness
+    using StorageType = typename std::conditional<std::is_signed<TypeParam>::value, Json::Int, Json::UInt>::type;
+    check_serialization_of_basic_type<TypeParam, StorageType>(std::numeric_limits<TypeParam>::min());
+    check_serialization_of_basic_type<TypeParam, StorageType>(std::numeric_limits<TypeParam>::max());
+    check_serialization_of_basic_type<TypeParam, StorageType>(TypeParam(3));
+}
+
+using BigIntegerTypes = testing::Types<long, unsigned long, long long, unsigned long long>;template<class T>
+class TestJsonSerializerBigInts : public testing::Test
+{};
+TYPED_TEST_SUITE(TestJsonSerializerBigInts, BigIntegerTypes);
+TYPED_TEST(TestJsonSerializerBigInts, full_domain)
+{
+    using StorageType = typename std::conditional<std::is_signed<TypeParam>::value, Json::Int64, Json::UInt64>::type;
+    check_serialization_of_basic_type<TypeParam, StorageType>(std::numeric_limits<TypeParam>::min());
+    check_serialization_of_basic_type<TypeParam, StorageType>(std::numeric_limits<TypeParam>::max());
+    check_serialization_of_basic_type<TypeParam, StorageType>(TypeParam(3));
+}
+
+using FloatingPointTypes = testing::Types<float, double>;
+template<class T>
+class TestJsonSerializerFloats : public testing::Test
+{};
+TYPED_TEST_SUITE(TestJsonSerializerFloats, FloatingPointTypes);
+TYPED_TEST(TestJsonSerializerFloats, full_domain)
+{
+    //all floating points are stored as double
+    check_serialization_of_basic_type<TypeParam, double>(std::numeric_limits<TypeParam>::max());
+    check_serialization_of_basic_type<TypeParam, double>(std::numeric_limits<TypeParam>::min());
+    check_serialization_of_basic_type<TypeParam, double>(std::numeric_limits<TypeParam>::lowest());
+    check_serialization_of_basic_type<TypeParam, double>(TypeParam(3.12));
+}
+
+TEST(TestJsonSerializer, string)
+{
+    // TODO: currently does not work, single strings (i.e. not part of a composite class) 
+    // are wrongly stored as arrays of characters instead of json strings because
+    // the wrong (de)serialize_internal overload is selected by the compiler.
+    // check_serialization_of_basic_type(std::string());
+    // check_serialization_of_basic_type(std::string("Hello, World!"));
+
+    //round trip serialization still works without loss, but intermediate value is not as expected
     mio::JsonSerializer js;
-    serialize(js, 3.0f);
-    ASSERT_EQ(js.value(), Json::Value(3.0));
-
-    mio::JsonSerializer js2{Json::Value(3.0)};
-    auto r = deserialize(js2, mio::Tag<float>{});
+    mio::serialize(js, std::string("Hello"));
+    auto r = deserialize(js, mio::Tag<std::string>{});
     ASSERT_THAT(print_wrap(r), IsSuccess());
-    ASSERT_EQ(r.value(), 3.0f);
-
-    mio::JsonSerializer js3{Json::Value(1e200)};
-    ASSERT_THAT(print_wrap(deserialize(js3, mio::Tag<float>{})), testing::Not(IsSuccess()));
+    EXPECT_EQ(r.value(), "Hello");
 }
 
 namespace jsontest
@@ -151,14 +198,8 @@ enum class E : int
 
 TEST(TestJsonSerializer, enum)
 {
-    mio::JsonSerializer js;
-    serialize(js, jsontest::E::E1);
-    ASSERT_EQ(js.value(), Json::Value(1));
-
-    mio::JsonSerializer js2{Json::Value(1)};
-    auto r = deserialize(js2, mio::Tag<jsontest::E>{});
-    ASSERT_THAT(print_wrap(r), IsSuccess());
-    EXPECT_EQ(r.value(), jsontest::E::E1);
+    check_serialization_of_basic_type<jsontest::E, int>(jsontest::E::E0);
+    check_serialization_of_basic_type<jsontest::E, int>(jsontest::E::E2);
 }
 
 TEST(TestJsonSerializer, tuple)
@@ -220,14 +261,7 @@ DECL_TYPESAFE(int, TypeSafeInt);
 
 TEST(TestJsonSerializer, typesafe)
 {
-    mio::JsonSerializer js;
-    serialize(js, jsontest::TypeSafeInt(1));
-    ASSERT_EQ(js.value(), Json::Value(1));
-
-    mio::JsonSerializer js2{Json::Value(1)};
-    auto r = deserialize(js2, mio::Tag<jsontest::TypeSafeInt>{});
-    EXPECT_TRUE(r);
-    EXPECT_EQ(r.value(), jsontest::TypeSafeInt(1));
+    check_serialization_of_basic_type<jsontest::TypeSafeInt, int>(jsontest::TypeSafeInt(3));
 }
 
 namespace jsontest
