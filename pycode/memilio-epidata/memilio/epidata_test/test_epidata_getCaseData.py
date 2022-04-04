@@ -23,7 +23,6 @@ from pyfakefs import fake_filesystem_unittest
 import os
 import json
 import pandas as pd
-import numpy as np
 
 from memilio.epidata import getCaseData as gcd
 from memilio.epidata import getDataIntoPandasDataFrame as gd
@@ -277,11 +276,12 @@ class TestGetCaseData(fake_filesystem_unittest.TestCase):
         file = 'cases_all_county_gender.json'
         f_read = os.path.join(directory, file)
         df_gender = pd.read_json(f_read)
-        self.assertEqual(df_gender.shape[0], 17+411)
+        # 17 cases from data defined in this file and 411 from .json file
+        self.assertEqual(df_gender.shape[0], 18+411)
         # checks if Berlins districts are concatenated
 
         self.assertEqual(df_gender[(df_gender['ID_County'] == 11000) & (
-            df_gender['Gender'] == 'male')]['Confirmed'].shape[0], 9)
+            df_gender['Gender'] == 'male')]['Confirmed'].shape[0], 10)
 
         file = 'cases_infected_county.json'
         f_read = os.path.join(directory, file)
@@ -294,7 +294,6 @@ class TestGetCaseData(fake_filesystem_unittest.TestCase):
         file = 'cases_all_state_age.json'
         f_read = os.path.join(directory, file)
         df_state = pd.read_json(f_read)
-        # for every state one line + state 16 has two dates in string
         self.assertEqual(df_state.shape[0], 361)
         self.assertEqual(df_state[(df_state["ID_State"] == 1) & (
             df_state['Date'] == "2020-08-07")]['Confirmed'].item(), 2)
@@ -494,14 +493,13 @@ class TestGetCaseData(fake_filesystem_unittest.TestCase):
 
         self.assertEqual(
             df_gender[(df_gender['Date'] == "2020-12-28") &
-                      (df_gender['Gender'] == "male")].shape[0], 2)
+                      (df_gender['Gender'] == "male")].shape[0], 1)
 
         # check if in state file the counties of Berlin are not splitted
         file = 'cases_all_state.json'
         f_read = os.path.join(directory, file)
         df_state = pd.read_json(f_read)
-        # last state has 2 different dates -> two rows
-        self.assertEqual(df_state.shape[0], 285)
+        self.assertEqual(df_state.shape[0], 286)
 
     def test_get_case_data_read_moving_average(self):
         # Test without downloading data
