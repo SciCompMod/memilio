@@ -1,7 +1,7 @@
 #############################################################################
 # Copyright (C) 2020-2021 German Aerospace Center (DLR-SC)
 #
-# Authors: 
+# Authors: Kathrin Rack, Annette Lutz
 #
 # Contact: Martin J. Kuehn <Martin.Kuehn@DLR.de>
 #
@@ -17,8 +17,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #############################################################################
-"""@plot_RKI_data.py
-function to get RKI and DIVI data plots
+"""@PlotCaseData.py
+function to get cases (data from RKI) and DIVI data plots
+
+WARNING: This file is currently not tested and maintained.
 """
 
 import pandas as pd
@@ -27,40 +29,48 @@ import matplotlib.pyplot as plt
 import datetime
 
 import memilio.epidata.getDIVIData as getDIVIData
-import memilio.epidata.getRKIData as getRKIData
+import memilio.epidata.getCaseData as getCaseData
 import memilio.epidata.defaultDict as dd
 
 yesterday = pd.Timestamp(datetime.date.today()) - pd.DateOffset(days=1)
 
-# folder where divi and rki data can be found after downloading with default out_folder
-data_folder = os.path.join(dd.defaultDict['out_folder'],"pydata", "Germany")
+# folder where divi and case data can be found after downloading with default out_folder
+data_folder = os.path.join(dd.defaultDict['out_folder'], "pydata", "Germany")
 
 
 def get_Data(endday_divi=yesterday, moving_average=True):
-    """function to get DIVI and RKI data
+    """function to get DIVI and case data
     @param endday_divi divi data will be loaded until this day
     @param moving_average Defines if moving average is used"""
-    print('Download RKI Data from the Internet, takes some time')
-    getRKIData.get_rki_data(out_folder=dd.defaultDict['out_folder'], moving_average=moving_average)
+    print('Download case data from the Internet, takes some time')
+    getCaseData.get_case_data(
+        out_folder=dd.defaultDict['out_folder'],
+        moving_average=moving_average)
     print('Download DIVI Data from the Internet, takes some time')
-    getDIVIData.get_divi_data(out_folder=dd.defaultDict['out_folder'], end_date=endday_divi)
+    getDIVIData.get_divi_data(
+        out_folder=dd.defaultDict['out_folder'],
+        end_date=endday_divi)
 
 
-def plot_RKI(moving_average, daystart=pd.Timestamp('2020.01.28'), simulationperiod=100, saveplot=False):
-    """plot RKI data: Cumulative Cofirmed Cases, Deaths and for each 7-days moving average
+def plot_cases(
+        moving_average, daystart=pd.Timestamp('2020.01.28'),
+        simulationperiod=100, saveplot=False):
+    """plot case data: Cumulative Cofirmed Cases, Deaths and for each 7-days moving average
         @param moving_average Defines if moving-average is used
         @param daystart Day at which should be started in timestamp format
         @param simulationperiod number in integer format of days for which data should be plotted
         @param saveplot boolean value; says if plot should be saved """
-    df = pd.read_json(os.path.join(data_folder, "infected_rki.json"))
+    df = pd.read_json(os.path.join(data_folder, "cases_infected.json"))
     if not (daystart + pd.DateOffset(days=simulationperiod) <= yesterday):
         simulationperiod = (yesterday - daystart).days
-    mask = (df['Date'] >= daystart) & (df['Date'] <= daystart + pd.DateOffset(days=simulationperiod))
+    mask = (
+        df['Date'] >= daystart) & (
+        df['Date'] <= daystart + pd.DateOffset(days=simulationperiod))
 
-    fig_name = 'RKI_confirmed'
+    fig_name = 'cases_confirmed'
     plt.figure(fig_name)
     plt.plot(df.loc[mask]['Date'], df.loc[mask]["Confirmed"])
-    plt.title('Cumulative Confirmed cases RKI')
+    plt.title('Cumulative Confirmed cases')
     plt.xlabel('Date')
     plt.xticks(rotation=25)
     plt.ylabel('Confirmed cases')
@@ -71,12 +81,14 @@ def plot_RKI(moving_average, daystart=pd.Timestamp('2020.01.28'), simulationperi
         plt.savefig(os.path.join('Plots', fig_name+".png"))
 
     if moving_average:
-        df = pd.read_json(os.path.join(data_folder, "infected_ma_rki.json"))
-        mask = (df['Date'] >= daystart) & (df['Date'] <= daystart + pd.DateOffset(days=simulationperiod))
-        fig_name = 'RKI_moving_average_confirmed'
+        df = pd.read_json(os.path.join(data_folder, "cases_infected_ma7.json"))
+        mask = (
+            df['Date'] >= daystart) & (
+            df['Date'] <= daystart + pd.DateOffset(days=simulationperiod))
+        fig_name = 'cases_confirmed_infections_ma7'
         plt.figure(fig_name)
         plt.plot(df.loc[mask]['Date'], df.loc[mask]["Confirmed"])
-        plt.title('7-days moving average cumulative Confirmed cases RKI')
+        plt.title('7-days moving average cumulative confirmed infections')
         plt.xlabel('Date')
         plt.xticks(rotation=25)
         plt.ylabel('Confirmed cases')
@@ -84,15 +96,17 @@ def plot_RKI(moving_average, daystart=pd.Timestamp('2020.01.28'), simulationperi
         plt.grid(True, linestyle='--')
         plt.tight_layout()
         if saveplot:
-            plt.savefig('Plots/plot_RKI_ma_Confirmed.png')
+            plt.savefig('Plots/plot_cases_confirmed_infections_ma7.png')
 
-    df = pd.read_json(os.path.join(data_folder, "deaths_rki.json"))
-    mask = (df['Date'] >= daystart) & (df['Date'] <= daystart + pd.DateOffset(days=simulationperiod))
+    df = pd.read_json(os.path.join(data_folder, "cases_deaths.json"))
+    mask = (
+        df['Date'] >= daystart) & (
+        df['Date'] <= daystart + pd.DateOffset(days=simulationperiod))
 
-    fig_name = 'RKI_deaths'
+    fig_name = 'cases_deaths'
     plt.figure(fig_name)
     plt.plot(df.loc[mask]['Date'], df.loc[mask]["Deaths"])
-    plt.title('Cumulative Deaths RKI')
+    plt.title('Cumulative Deaths')
     plt.xlabel('Date')
     plt.xticks(rotation=25)
     plt.ylabel('Deaths')
@@ -103,12 +117,14 @@ def plot_RKI(moving_average, daystart=pd.Timestamp('2020.01.28'), simulationperi
         plt.savefig(os.path.join('Plots', fig_name+".png"))
 
     if moving_average:
-        df = pd.read_json(os.path.join(data_folder, "deaths_ma_rki.json"))
-        mask = (df['Date'] >= daystart) & (df['Date'] <= daystart + pd.DateOffset(days=simulationperiod))
-        fig_name = 'RKI_moving_average_deaths'
+        df = pd.read_json(os.path.join(data_folder, "cases_deaths_ma7.json"))
+        mask = (
+            df['Date'] >= daystart) & (
+            df['Date'] <= daystart + pd.DateOffset(days=simulationperiod))
+        fig_name = 'cases_deaths_ma7'
         plt.figure(fig_name)
         plt.plot(df.loc[mask]["Date"], df.loc[mask]["Deaths"])
-        plt.title('7-days moving average cumulative Deaths cases RKI')
+        plt.title('7-days moving average cumulative deaths')
         plt.xlabel('Date')
         plt.xticks(rotation=25)
         plt.ylabel('Deaths')
@@ -119,23 +135,28 @@ def plot_RKI(moving_average, daystart=pd.Timestamp('2020.01.28'), simulationperi
             plt.savefig(os.path.join('Plots', fig_name+".png"))
 
 
-def plot_RKI_age(moving_average, daystart=pd.Timestamp('2020.01.28'), simulationperiod=100, saveplot=False):
-    """plot RKI data age resolved: Cumulative Cofirmed Cases, Deaths and for each 7-days moving average
+def plot_cases_age(
+        moving_average, daystart=pd.Timestamp('2020.01.28'),
+        simulationperiod=100, saveplot=False):
+    """plot case data age resolved: Cumulative confirmed infections and deaths as well as 7-days moving average for both data sets.
     @param moving_average Defines if moving-average is used
     @param daystart Day at which should be started in timestamp format
     @param simulationperiod number in integer format of days for which data should be plotted
     @param saveplot boolean value; says if plot should be saved """
     if not (daystart + pd.DateOffset(days=simulationperiod) <= yesterday):
         simulationperiod = (yesterday - daystart).days
-    df = pd.read_json(os.path.join(data_folder, "all_age_rki.json"))
-    mask = (df['Date'] >= daystart) & (df['Date'] <= daystart + pd.DateOffset(days=simulationperiod))
+    df = pd.read_json(os.path.join(data_folder, "cases_all_age.json"))
+    mask = (
+        df['Date'] >= daystart) & (
+        df['Date'] <= daystart + pd.DateOffset(days=simulationperiod))
     ages = dd.age_rki_list
-    fig_name = 'RKI_confirmed_ageresolved'
+    fig_name = 'cases_confirmed_infections_ageres'
     plt.figure(fig_name)
     for value in ages:
-        plt.plot(df.loc[mask & (df["Age_RKI"] == value)]['Date'], df.loc[mask & (df["Age_RKI"] == value)]["Confirmed"])
+        plt.plot(df.loc[mask & (df["Age_RKI"] == value)]['Date'],
+                 df.loc[mask & (df["Age_RKI"] == value)]["Confirmed"])
     plt.legend(ages)
-    plt.title('cumulative Confirmed cases RKI age resolved')
+    plt.title('Age-resolved cumulative confirmed infections')
     plt.xlabel('Date')
     plt.xticks(rotation=25)
     plt.ylabel('Confirmed cases')
@@ -145,12 +166,13 @@ def plot_RKI_age(moving_average, daystart=pd.Timestamp('2020.01.28'), simulation
     if saveplot:
         plt.savefig(os.path.join('Plots', fig_name+".png"))
 
-    fig_name = 'RKI_deaths_ageresolved'
+    fig_name = 'cases_deaths_ageres'
     plt.figure(fig_name)
     for value in ages:
-        plt.plot(df.loc[mask & (df["Age_RKI"] == value)]['Date'], df.loc[mask & (df["Age_RKI"] == value)]["Deaths"])
+        plt.plot(df.loc[mask & (df["Age_RKI"] == value)]['Date'],
+                 df.loc[mask & (df["Age_RKI"] == value)]["Deaths"])
     plt.legend(ages)
-    plt.title('cumulative deaths RKI age resolved')
+    plt.title('Age-resolved cumulative deaths')
     plt.xlabel('Date')
     plt.xticks(rotation=25)
     plt.ylabel('Deaths')
@@ -161,14 +183,18 @@ def plot_RKI_age(moving_average, daystart=pd.Timestamp('2020.01.28'), simulation
         plt.savefig(os.path.join('Plots', fig_name+".png"))
 
     if moving_average:
-        df = pd.read_json(os.path.join(data_folder, "all_age_ma_rki.json"))
-        mask = (df['Date'] >= daystart) & (df['Date'] <= daystart + pd.DateOffset(days=simulationperiod))
-        fig_name = 'RKI_ma_confirmed_ageresolved'
+        df = pd.read_json(os.path.join(data_folder, "cases_all_age_ma7.json"))
+        mask = (
+            df['Date'] >= daystart) & (
+            df['Date'] <= daystart + pd.DateOffset(days=simulationperiod))
+        fig_name = 'cases_confirmed_infections_ageres_ma7'
         plt.figure(fig_name)
         for value in ages:
-            plt.plot(df.loc[mask & (df["Age_RKI"] == value)]['Date'], df.loc[mask & (df["Age_RKI"] == value)]["Confirmed"])
+            plt.plot(
+                df.loc[mask & (df["Age_RKI"] == value)]['Date'],
+                df.loc[mask & (df["Age_RKI"] == value)]["Confirmed"])
         plt.legend(ages)
-        plt.title('7-days moving average cumulative Confirmed cases RKI age resolved')
+        plt.title('7-days moving average of age-resolved cumulative confirmed infections')
         plt.xlabel('Date')
         plt.xticks(rotation=25)
         plt.ylabel('Confirmed cases')
@@ -178,12 +204,14 @@ def plot_RKI_age(moving_average, daystart=pd.Timestamp('2020.01.28'), simulation
         if saveplot:
             plt.savefig(os.path.join('Plots', fig_name+".png"))
 
-        fig_name = 'RKI_ma_deaths_ageresolved'
+        fig_name = 'cases_deaths_ageres_ma7'
         plt.figure(fig_name)
         for value in ages:
-            plt.plot(df.loc[mask & (df["Age_RKI"] == value)]['Date'], df.loc[mask & (df["Age_RKI"] == value)]["Deaths"])
+            plt.plot(
+                df.loc[mask & (df["Age_RKI"] == value)]['Date'],
+                df.loc[mask & (df["Age_RKI"] == value)]["Deaths"])
         plt.legend(ages)
-        plt.title('7-days moving average cumulative deaths RKI age resolved')
+        plt.title('7-days moving average of age-resolved cumulative deaths')
         plt.xlabel('Date')
         plt.xticks(rotation=25)
         plt.ylabel('Deaths')
@@ -194,8 +222,10 @@ def plot_RKI_age(moving_average, daystart=pd.Timestamp('2020.01.28'), simulation
             plt.savefig(os.path.join('Plots', fig_name+".png"))
 
 
-def plot_RKI_county(moving_average, daystart=pd.Timestamp('2020.01.28'), simulationperiod=100, county='SK Köln', saveplot=False):
-    """plot RKI data for one county: Cumulative Cofirmed Cases, Deaths and for each 7-days moving average
+def plot_cases_county(
+        moving_average, daystart=pd.Timestamp('2020.01.28'),
+        simulationperiod=100, county='SK Köln', saveplot=False):
+    """plot case data for one county: Cumulative confirmed infections and deaths as well as 7-days moving average for both data sets.
     @param moving_average Defines if moving-average is used
     @param daystart Day at which should be started in timestamp format
     @param simulationperiod number in integer format of days for which data should be plotted
@@ -203,13 +233,13 @@ def plot_RKI_county(moving_average, daystart=pd.Timestamp('2020.01.28'), simulat
     @param saveplot boolean value; says if plot should be saved """
     if not (daystart + pd.DateOffset(days=simulationperiod) <= yesterday):
         simulationperiod = (yesterday - daystart).days
-    df = pd.read_json(os.path.join(data_folder, "all_county_rki.json"))
-    mask = (df['Date'] >= daystart) & (df['Date'] <= daystart + pd.DateOffset(days=simulationperiod)) & (
-            df["County"] == county)
-    fig_name = 'RKI_confirmed_county_' + county.replace(" ", "_")
+    df = pd.read_json(os.path.join(data_folder, "cases_all_county.json"))
+    mask = (df['Date'] >= daystart) & (
+        df['Date'] <= daystart + pd.DateOffset(days=simulationperiod)) & (df["County"] == county)
+    fig_name = 'cases_confirmed_infections_county_' + county.replace(" ", "_")
     plt.figure(fig_name)
     plt.plot(df.loc[mask]["Date"], df.loc[mask]["Confirmed"])
-    plt.title('cumulative Confirmed cases ' + county)
+    plt.title('Cumulative confirmed infections in ' + county)
     plt.xlabel('Date')
     plt.xticks(rotation=25)
     plt.ylabel('Confirmed cases')
@@ -219,10 +249,10 @@ def plot_RKI_county(moving_average, daystart=pd.Timestamp('2020.01.28'), simulat
     if saveplot:
         plt.savefig(os.path.join('Plots', fig_name+".png"))
 
-    fig_name = 'RKI_deaths_county_' + county.replace(" ", "_")
+    fig_name = 'cases_deaths_county_' + county.replace(" ", "_")
     plt.figure(fig_name)
     plt.plot(df.loc[mask]["Date"], df.loc[mask]["Deaths"])
-    plt.title('cumulative deaths ' + county)
+    plt.title('Cumulative deaths in ' + county)
     plt.xlabel('Date')
     plt.xticks(rotation=25)
     plt.ylabel('Deaths')
@@ -233,13 +263,14 @@ def plot_RKI_county(moving_average, daystart=pd.Timestamp('2020.01.28'), simulat
         plt.savefig(os.path.join('Plots', fig_name+".png"))
 
     if moving_average:
-        df = pd.read_json(os.path.join(data_folder, "all_county_ma_rki.json"))
-        mask = (df['Date'] >= daystart) & (df['Date'] <= daystart + pd.DateOffset(days=simulationperiod)) & (
-                df["County"] == county)
-        fig_name = 'RKI_ma_confirmed_county_' + county.replace(" ", "_")
+        df = pd.read_json(os.path.join(
+            data_folder, "cases_all_county_ma7.json"))
+        mask = (df['Date'] >= daystart) & (
+            df['Date'] <= daystart + pd.DateOffset(days=simulationperiod)) & (df["County"] == county)
+        fig_name = 'cases_confirmed_infections_county_' + county.replace(" ", "_") + '_ma7'
         plt.figure(fig_name)
         plt.plot(df.loc[mask]["Date"], df.loc[mask]["Confirmed"])
-        plt.title('7-days moving average cumulative Confirmed cases ' + county)
+        plt.title('7-days moving average of cumulative confirmed infections in ' + county)
         plt.xlabel('Date')
         plt.xticks(rotation=25)
         plt.ylabel('Confirmed cases')
@@ -249,7 +280,7 @@ def plot_RKI_county(moving_average, daystart=pd.Timestamp('2020.01.28'), simulat
         if saveplot:
             plt.savefig(os.path.join('Plots', fig_name+".png"))
 
-        fig_name = 'RKI_ma_deaths_county_' + county.replace(" ", "_")
+        fig_name = 'cases_deaths_county_' + county.replace(" ", "_") + '_ma7'
         plt.figure(fig_name)
         plt.plot(df.loc[mask]["Date"], df.loc[mask]["Deaths"])
         plt.title('7-days moving average cumulative deaths ' + county)
@@ -263,20 +294,26 @@ def plot_RKI_county(moving_average, daystart=pd.Timestamp('2020.01.28'), simulat
             plt.savefig(os.path.join('Plots', fig_name+".png"))
 
 
-def plot_DIVI_data(daystart=pd.Timestamp('2020.04.26'), simulationperiod=100, endday_divi=yesterday, saveplot=False):
+def plot_DIVI_data(
+        daystart=pd.Timestamp('2020.04.26'),
+        simulationperiod=100, endday_divi=yesterday, saveplot=False):
     """plot DIVI data
         @param daystart Day at which should be started in timestamp format
         @param simulationperiod number in integer format of days for which data should be plotted
         @param endday_divi last available day of divi data in timestamp format
         @param saveplot boolean value; says if plot should be saved """
     if daystart < pd.Timestamp('2020.04.26'):
-        print("error: DIVI dataset including ventilated data starts on 26.04.2020; you asked for " + daystart.strftime(
-            "%d.%m.%Y") + " please search for another solution")
+        print(
+            "error: DIVI data set starts on April 26, 2020; you asked for start date "
+            + daystart.strftime("%d.%m.%Y") +
+            ". Data for this date is not available.")
     else:
         df = pd.read_json(os.path.join(data_folder, "germany_divi.json"))
         if not (daystart + pd.DateOffset(days=simulationperiod) <= endday_divi):
             simulationperiod = (endday_divi - daystart).days
-        mask = (df['Date'] >= daystart) & (df['Date'] <= daystart + pd.DateOffset(days=simulationperiod))
+        mask = (
+            df['Date'] >= daystart) & (
+            df['Date'] <= daystart + pd.DateOffset(days=simulationperiod))
         fig_name = 'DIVI_plot'
         plt.figure(fig_name)
         plt.plot(df.loc[mask]['Date'], df.loc[mask]["ICU"])
@@ -312,10 +349,12 @@ def main():
 
     simulationperiod = 400
     daystart = pd.Timestamp('2020.03.02')
-    plot_RKI(moving_average, daystart, simulationperiod, saveplot)
-    plot_RKI_age(moving_average, daystart, simulationperiod, saveplot)
-    plot_RKI_county(moving_average, daystart, simulationperiod, county='SK Köln', saveplot=saveplot)
-    plot_DIVI_data(simulationperiod=simulationperiod, saveplot=saveplot, endday_divi=endday_divi)
+    plot_cases(moving_average, daystart, simulationperiod, saveplot)
+    plot_cases_age(moving_average, daystart, simulationperiod, saveplot)
+    plot_cases_county(moving_average, daystart, simulationperiod,
+                      county='SK Köln', saveplot=saveplot)
+    plot_DIVI_data(simulationperiod=simulationperiod,
+                   saveplot=saveplot, endday_divi=endday_divi)
     if not saveplot:
         plt.show()
 

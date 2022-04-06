@@ -1,7 +1,7 @@
 #############################################################################
 # Copyright (C) 2020-2021 German Aerospace Center (DLR-SC)
 #
-# Authors: 
+# Authors:
 #
 # Contact: Martin J. Kuehn <Martin.Kuehn@DLR.de>
 #
@@ -26,14 +26,14 @@ from datetime import date, timedelta
 import os
 import pandas as pd
 
-from memilio.epidata import getRKIDatawithEstimations as grdwd
+from memilio.epidata import getCaseDatawithEstimations as gcdwe
 from memilio.epidata import getDataIntoPandasDataFrame as gd
 from memilio.epidata import defaultDict as dd
 from unittest.mock import patch, call
 
 
-class TestGetRKIDatawithEstimations(fake_filesystem_unittest.TestCase):
-    path = '/home/RKIEstimationData'
+class TestGetCaseDatawithEstimations(fake_filesystem_unittest.TestCase):
+    path = '/home/CaseEstimationData'
 
     # Notice data is not realistic
     str_whole_country_Germany_jh = \
@@ -48,7 +48,8 @@ class TestGetRKIDatawithEstimations(fake_filesystem_unittest.TestCase):
 {"CountryRegion":"Germany","Date":"2020-01-30","Confirmed":8,"Recovered":3.0,"Deaths":1.0},\
 {"CountryRegion":"Germany","Date":"2020-01-31","Confirmed":9,"Recovered":3.0,"Deaths":2.0}]""")
 
-    str_all_germany_rki = ("""[{"Date":1577836800000,"Confirmed":21,"Deaths":0,"Recovered":21},
+    str_cases_all_germany = (
+        """[{"Date":1577836800000,"Confirmed":21,"Deaths":0,"Recovered":21},
 {"Date":1577923200000,"Confirmed":23,"Deaths":0,"Recovered":23},
 {"Date":1578009600000,"Confirmed":28,"Deaths":0,"Recovered":28},
 {"Date":1578096000000,"Confirmed":32,"Deaths":0,"Recovered":32},
@@ -77,7 +78,8 @@ class TestGetRKIDatawithEstimations(fake_filesystem_unittest.TestCase):
 {"Date":1580342400000,"Confirmed":84,"Deaths":1,"Recovered":83},
 {"Date":1580428800000,"Confirmed":96,"Deaths":1,"Recovered":95}]""")
 
-    str_all_gender_rki = (""" [{"Gender": "female", "Date": 1577836800000, "Confirmed": 7, "Deaths": 0, "Recovered": 7},
+    str_cases_all_gender = (
+        """ [{"Gender": "female", "Date": 1577836800000, "Confirmed": 7, "Deaths": 0, "Recovered": 7},
 {"Gender": "female", "Date": 1577923200000, "Confirmed": 9, "Deaths": 0, "Recovered": 9},
 {"Gender": "female", "Date": 1578009600000, "Confirmed": 13, "Deaths": 0, "Recovered": 13},
 {"Gender": "female", "Date": 1578096000000, "Confirmed": 16, "Deaths": 0, "Recovered": 16},
@@ -149,31 +151,30 @@ class TestGetRKIDatawithEstimations(fake_filesystem_unittest.TestCase):
 {"Age_RKI":"A80+","Date":1580083200000,"Confirmed":22,"Deaths":1,"Recovered":21},
 {"Age_RKI":"A80+","Date":1580256000000,"Confirmed":23,"Deaths":1,"Recovered":22}]""")
 
-
-
-    rki_files_to_change = ["all_germany_rki", "all_gender_rki", "all_age_rki",
-                           "all_state_rki", "all_state_gender_rki", "all_state_age_rki",
-                           "all_county_rki", "all_county_gender_rki", "all_county_age_rki"]
+    case_files_to_change = [
+        "cases_all_germany", "cases_all_gender", "cases_all_age",
+        "cases_all_state", "cases_all_state_gender", "cases_all_state_age",
+        "cases_all_county", "cases_all_county_gender", "cases_all_county_age"]
 
     def setUp(self):
         self.setUpPyfakefs()
 
-    def write_rki_data(self, out_folder):
+    def write_case_data(self, out_folder):
 
-        for file_to_change in self.rki_files_to_change:
+        for file_to_change in self.case_files_to_change:
 
-            file_rki = file_to_change + ".json"
-            file_rki_with_path = os.path.join(out_folder, file_rki)
+            case_file = file_to_change + ".json"
+            case_file_with_path = os.path.join(out_folder, case_file)
 
-            if file_to_change == "all_gender_rki":
-                with open(file_rki_with_path, 'w') as f:
-                    f.write(self.str_all_gender_rki)
-            elif file_to_change == "all_age_rki":
-                with open(file_rki_with_path, 'w') as f:
+            if file_to_change == "cases_all_gender":
+                with open(case_file_with_path, 'w') as f:
+                    f.write(self.str_cases_all_gender)
+            elif file_to_change == "cases_all_age":
+                with open(case_file_with_path, 'w') as f:
                     f.write(self.str_age_germany)
             else:
-                with open(file_rki_with_path, 'w') as f:
-                    f.write(self.str_all_germany_rki)
+                with open(case_file_with_path, 'w') as f:
+                    f.write(self.str_cases_all_germany)
 
     def write_jh_data(self, out_folder):
         file_jh = "whole_country_Germany_jh.json"
@@ -182,38 +183,52 @@ class TestGetRKIDatawithEstimations(fake_filesystem_unittest.TestCase):
         with open(file_jh_with_path, 'w') as f:
             f.write(self.str_whole_country_Germany_jh)
 
-    def write_weekly_deaths_xlsx_data(self, out_folder, file_name='RKI_deaths_weekly.xlsx'):
-        sheet1 = pd.DataFrame({'Sterbejahr': ['2020', '2020', '2020', '2020'], 'Sterbewoche': ['1', '3', '10', '51'],
-                               'Anzahl verstorbene COVID-19 Fälle': ['0', '<4', '18', '3000']})
-        sheet2 = pd.DataFrame({'Sterbejahr': ['2020', '2020', '2020', '2020'], 'Sterbewoche': ['1', '3', '10', '51'],
-                               'AG 0-9 Jahre': ['0', '<4', '30', '10'], 'AG 10-19 Jahre': ['0', '<4', '30', '10'],
-                               'AG 20-29 Jahre': ['0', '<4', '30', '10'], 'AG 30-39 Jahre': ['0', '<4', '30', '10'],
-                               'AG 40-49 Jahre': ['0', '<4', '30', '10'], 'AG 50-59 Jahre': ['0', '<4', '30', '10'],
-                               'AG 60-69 Jahre': ['0', '<4', '30', '10'], 'AG 70-79 Jahre': ['0', '<4', '30', '10'],
-                               'AG 80-89 Jahre': ['0', '<4', '30', '10'], 'AG 90+ Jahre': ['0', '<4', '30', '10']})
-        sheet3 = pd.DataFrame({'Sterbejahr': ['2020', '2020', '2020', '2020'], 'Sterbewoche': ['1', '3', '10', '51'],
-                               'Männer, AG 0-19 Jahre': ['0', '<4', '30', '10'],
-                               'Männer, AG 20-39 Jahre': ['0', '<4', '30', '10'],
-                               'Männer, AG 40-59 Jahre': ['0', '<4', '30', '10'],
-                               'Männer, AG 60-79 Jahre': ['0', '<4', '30', '10'],
-                               'Männer, AG 80+ Jahre': ['0', '<4', '30', '10'],
-                               'Frauen, AG 0-19 Jahre': ['0', '<4', '30', '10'],
-                               'Frauen, AG 20-39 Jahre': ['0', '<4', '30', '10'],
-                               'Frauen, AG 40-59 Jahre': ['0', '<4', '30', '10'],
-                               'Frauen, AG 60-79 Jahre': ['0', '<4', '30', '10'],
-                               'Frauen, AG 80+ Jahre': ['0', '<4', '30', '10']})
+    def write_weekly_deaths_xlsx_data(
+            self, out_folder, file_name='Cases_deaths_weekly.xlsx'):
+        sheet1 = pd.DataFrame(
+            {'Sterbejahr': ['2020', '2020', '2020', '2020'],
+             'Sterbewoche': ['1', '3', '10', '51'],
+             'Anzahl verstorbene COVID-19 Fälle': ['0', '<4', '18', '3000']})
+        sheet2 = pd.DataFrame(
+            {'Sterbejahr': ['2020', '2020', '2020', '2020'],
+             'Sterbewoche': ['1', '3', '10', '51'],
+             'AG 0-9 Jahre': ['0', '<4', '30', '10'],
+             'AG 10-19 Jahre': ['0', '<4', '30', '10'],
+             'AG 20-29 Jahre': ['0', '<4', '30', '10'],
+             'AG 30-39 Jahre': ['0', '<4', '30', '10'],
+             'AG 40-49 Jahre': ['0', '<4', '30', '10'],
+             'AG 50-59 Jahre': ['0', '<4', '30', '10'],
+             'AG 60-69 Jahre': ['0', '<4', '30', '10'],
+             'AG 70-79 Jahre': ['0', '<4', '30', '10'],
+             'AG 80-89 Jahre': ['0', '<4', '30', '10'],
+             'AG 90+ Jahre': ['0', '<4', '30', '10']})
+        sheet3 = pd.DataFrame(
+            {'Sterbejahr': ['2020', '2020', '2020', '2020'],
+             'Sterbewoche': ['1', '3', '10', '51'],
+             'Männer, AG 0-19 Jahre': ['0', '<4', '30', '10'],
+             'Männer, AG 20-39 Jahre': ['0', '<4', '30', '10'],
+             'Männer, AG 40-59 Jahre': ['0', '<4', '30', '10'],
+             'Männer, AG 60-79 Jahre': ['0', '<4', '30', '10'],
+             'Männer, AG 80+ Jahre': ['0', '<4', '30', '10'],
+             'Frauen, AG 0-19 Jahre': ['0', '<4', '30', '10'],
+             'Frauen, AG 20-39 Jahre': ['0', '<4', '30', '10'],
+             'Frauen, AG 40-59 Jahre': ['0', '<4', '30', '10'],
+             'Frauen, AG 60-79 Jahre': ['0', '<4', '30', '10'],
+             'Frauen, AG 80+ Jahre': ['0', '<4', '30', '10']})
 
-        income_sheets = {'COVID_Todesfälle': sheet1, 'COVID_Todesfälle_KW_AG10': sheet2,
+        income_sheets = {'COVID_Todesfälle': sheet1,
+                         'COVID_Todesfälle_KW_AG10': sheet2,
                          'COVID_Todesfälle_KW_AG20_G': sheet3}
         path = os.path.join(out_folder, file_name)
         dummy = pd.ExcelWriter(path)
 
         for sheet_name in income_sheets.keys():
-            income_sheets[sheet_name].to_excel(dummy, sheet_name=sheet_name, index=False)
+            income_sheets[sheet_name].to_excel(
+                dummy, sheet_name=sheet_name, index=False)
 
         dummy.save()
 
-    def test_get_rki_data_with_estimations(self):
+    def test_get_case_data_with_estimations(self):
 
         [read_data, make_plot, file_format, out_folder, no_raw] \
             = [True, False, "json", self.path, False]
@@ -223,22 +238,27 @@ class TestGetRKIDatawithEstimations(fake_filesystem_unittest.TestCase):
         directory = os.path.join(out_folder, 'Germany/')
         gd.check_dir(directory)
 
-        self.write_rki_data(directory)
+        self.write_case_data(directory)
         self.write_jh_data(directory)
         self.write_weekly_deaths_xlsx_data(directory)
 
         # check if expected files are written
         self.assertEqual(len(os.listdir(self.path)), 1)
-        self.assertEqual(len(os.listdir(directory)), 2 + len(self.rki_files_to_change))
+        self.assertEqual(
+            len(os.listdir(directory)),
+            2 + len(self.case_files_to_change))
 
-        grdwd.get_rki_data_with_estimations(read_data, file_format, out_folder, no_raw, make_plot)
+        gcdwe.get_case_data_with_estimations(
+            read_data, file_format, out_folder, no_raw, make_plot)
 
         # check if expected files are written
         self.assertEqual(len(os.listdir(self.path)), 1)
-        # 1 jh-file, 2*len(rki): original+estimated, 4 weekly deaths original+original&estimated+ageresolved+genderresolved
-        self.assertEqual(len(os.listdir(directory)), 1 + 2 * len(self.rki_files_to_change) + 4)
+        # 1 jh-file, 2*len(case file): original+estimated, 4 weekly deaths original+original&estimated+ageresolved+genderresolved
+        self.assertEqual(
+            len(os.listdir(directory)),
+            1 + 2 * len(self.case_files_to_change) + 4)
 
-        f_read = os.path.join(directory, "all_germany_rki_estimated.json")
+        f_read = os.path.join(directory, "cases_all_germany_estimated.json")
         df = pd.read_json(f_read)
 
         confirmed = dd.EngEng['confirmed']
@@ -250,41 +270,71 @@ class TestGetRKIDatawithEstimations(fake_filesystem_unittest.TestCase):
 
         data_list = df.columns.values.tolist()
 
-        self.assertEqual(data_list, [date, confirmed, deaths, recovered, recovered_estimated, deaths_estimated])
+        self.assertEqual(
+            data_list,
+            [date, confirmed, deaths, recovered, recovered_estimated,
+             deaths_estimated])
 
-        self.assertEqual(df[(df[date] == "2020-01-30")][recovered_estimated].item(), np.round(84 * 3. / 8.))
-        self.assertEqual(df[(df[date] == "2020-01-31")][recovered_estimated].item(), np.round(96 * 3. / 9.))
-        self.assertEqual(df[(df[date] == "2020-01-30")][deaths_estimated].item(), np.round(84 * 1. / 8.))
-        self.assertEqual(df[(df[date] == "2020-01-31")][deaths_estimated].item(), np.round(96 * 2. / 9.))
+        self.assertEqual(
+            df[(df[date] == "2020-01-30")][recovered_estimated].item(),
+            np.round(84 * 3. / 8.))
+        self.assertEqual(
+            df[(df[date] == "2020-01-31")][recovered_estimated].item(),
+            np.round(96 * 3. / 9.))
+        self.assertEqual(
+            df[(df[date] == "2020-01-30")][deaths_estimated].item(),
+            np.round(84 * 1. / 8.))
+        self.assertEqual(
+            df[(df[date] == "2020-01-31")][deaths_estimated].item(),
+            np.round(96 * 2. / 9.))
 
         # gender specific data
         gender = dd.EngEng['gender']
 
-        f_read = os.path.join(directory, "all_gender_rki_estimated.json")
+        f_read = os.path.join(directory, "cases_all_gender_estimated.json")
         df = pd.read_json(f_read)
 
         data_list = df.columns.values.tolist()
 
-        self.assertEqual(data_list, [gender, date, confirmed, deaths, recovered, recovered_estimated, deaths_estimated])
+        self.assertEqual(
+            data_list,
+            [gender, date, confirmed, deaths, recovered, recovered_estimated,
+             deaths_estimated])
 
-        self.assertEqual(df[(df[date] == "2020-01-28") & (df[gender] == "male")][recovered_estimated].item(),
-                         np.round(40 * 3. / 6.))
-        self.assertEqual(df[(df[date] == "2020-01-29") & (df[gender] == "female")][recovered_estimated].item(),
-                         np.round(33 * 3. / 7.))
-        self.assertEqual(df[(df[date] == "2020-01-31") & (df[gender] == "male")][recovered_estimated].item(),
-                         np.round(53 * 3. / 9.))
-        self.assertEqual(df[(df[date] == "2020-01-31") & (df[gender] == "female")][recovered_estimated].item(),
-                         np.round(43 * 3. / 9.))
-        self.assertEqual(df[(df[date] == "2020-01-28") & (df[gender] == "male")][deaths_estimated].item(),
-                         np.round(40 * 1. / 6.))
-        self.assertEqual(df[(df[date] == "2020-01-29") & (df[gender] == "female")][deaths_estimated].item(),
-                         np.round(33 * 1. / 7.))
-        self.assertEqual(df[(df[date] == "2020-01-31") & (df[gender] == "male")][deaths_estimated].item(),
-                         np.round(53 * 2. / 9.))
-        self.assertEqual(df[(df[date] == "2020-01-31") & (df[gender] == "female")][deaths_estimated].item(),
-                         np.round(43 * 2. / 9.))
+        self.assertEqual(
+            df[(df[date] == "2020-01-28") & (df[gender] == "male")]
+            [recovered_estimated].item(),
+            np.round(40 * 3. / 6.))
+        self.assertEqual(
+            df[(df[date] == "2020-01-29") & (df[gender] == "female")]
+            [recovered_estimated].item(),
+            np.round(33 * 3. / 7.))
+        self.assertEqual(
+            df[(df[date] == "2020-01-31") & (df[gender] == "male")]
+            [recovered_estimated].item(),
+            np.round(53 * 3. / 9.))
+        self.assertEqual(
+            df[(df[date] == "2020-01-31") & (df[gender] == "female")]
+            [recovered_estimated].item(),
+            np.round(43 * 3. / 9.))
+        self.assertEqual(
+            df[(df[date] == "2020-01-28") & (df[gender] == "male")]
+            [deaths_estimated].item(),
+            np.round(40 * 1. / 6.))
+        self.assertEqual(
+            df[(df[date] == "2020-01-29") & (df[gender] == "female")]
+            [deaths_estimated].item(),
+            np.round(33 * 1. / 7.))
+        self.assertEqual(
+            df[(df[date] == "2020-01-31") & (df[gender] == "male")]
+            [deaths_estimated].item(),
+            np.round(53 * 2. / 9.))
+        self.assertEqual(
+            df[(df[date] == "2020-01-31") & (df[gender] == "female")]
+            [deaths_estimated].item(),
+            np.round(43 * 2. / 9.))
 
-    def test_get_rki_data_with_estimations_age_data(self):
+    def test_get_case_data_with_estimations_age_data(self):
 
         [read_data, make_plot, file_format, out_folder, no_raw] \
             = [True, False, "json", self.path, False]
@@ -294,22 +344,27 @@ class TestGetRKIDatawithEstimations(fake_filesystem_unittest.TestCase):
         directory = os.path.join(out_folder, 'Germany/')
         gd.check_dir(directory)
 
-        self.write_rki_data(directory)
+        self.write_case_data(directory)
         self.write_jh_data(directory)
         self.write_weekly_deaths_xlsx_data(directory)
 
         # check if expected files are written
         self.assertEqual(len(os.listdir(self.path)), 1)
-        self.assertEqual(len(os.listdir(directory)), 2 + len(self.rki_files_to_change))
+        self.assertEqual(
+            len(os.listdir(directory)),
+            2 + len(self.case_files_to_change))
 
-        grdwd.get_rki_data_with_estimations(read_data, file_format, out_folder, no_raw, make_plot)
+        gcdwe.get_case_data_with_estimations(
+            read_data, file_format, out_folder, no_raw, make_plot)
 
         # check if expected files are written
         self.assertEqual(len(os.listdir(self.path)), 1)
-        # 1 jh-file, 2*len(rki): original+estimated, 4 weekly deaths original+original&estimated+ageresolved+genderresolved
-        self.assertEqual(len(os.listdir(directory)), 1 + 2 * len(self.rki_files_to_change) + 4)
+        # 1 jh-file, 2*len(case file): original+estimated, 4 weekly deaths original+original&estimated+ageresolved+genderresolved
+        self.assertEqual(
+            len(os.listdir(directory)),
+            1 + 2 * len(self.case_files_to_change) + 4)
 
-        f_read = os.path.join(directory, "all_age_rki_estimated.json")
+        f_read = os.path.join(directory, "cases_all_age_estimated.json")
         df = pd.read_json(f_read)
 
         confirmed = dd.EngEng['confirmed']
@@ -323,8 +378,10 @@ class TestGetRKIDatawithEstimations(fake_filesystem_unittest.TestCase):
 
         data_list = df.columns.values.tolist()
 
-        self.assertEqual(data_list.sort(),
-                         [date, confirmed, deaths, recovered, recovered_estimated, deaths_estimated, "Age_RKI"].sort())
+        self.assertEqual(
+            data_list.sort(),
+            [date, confirmed, deaths, recovered, recovered_estimated,
+             deaths_estimated, "Age_RKI"].sort())
 
         age_values_rec = [3, 12, 58, 86]
         index = 0
@@ -333,19 +390,23 @@ class TestGetRKIDatawithEstimations(fake_filesystem_unittest.TestCase):
             mask = (df['Age_RKI'] == value) & (df[date] == "2020-01-31")
 
             try:
-                self.assertEqual(df.loc[mask][recovered_estimated].item(), np.round(age_values_rec[index] * 3. / 9.))
-                self.assertEqual(df.loc[mask][deaths_estimated].item(), np.round(age_values_rec[index] * 2. / 9.))
+                self.assertEqual(
+                    df.loc[mask][recovered_estimated].item(),
+                    np.round(age_values_rec[index] * 3. / 9.))
+                self.assertEqual(
+                    df.loc[mask][deaths_estimated].item(),
+                    np.round(age_values_rec[index] * 2. / 9.))
             except ValueError:
                 pass
 
             index = index + 1
 
-
-    @patch('memilio.epidata.getRKIDatawithEstimations.grd.get_rki_data')
-    @patch('memilio.epidata.getRKIDatawithEstimations.gjd.get_jh_data')
-    @patch('memilio.epidata.getRKIDatawithEstimations.download_weekly_deaths_numbers_rki')
-    def test_get_rki_data_with_estimations_download(self, mock_get_jh_data, mock_get_rki_data,
-                                                    mock_download_weekly_deaths_numbers_rki):
+    @patch('memilio.epidata.getCaseDatawithEstimations.gcd.get_case_data')
+    @patch('memilio.epidata.getCaseDatawithEstimations.gjd.get_jh_data')
+    @patch('memilio.epidata.getCaseDatawithEstimations.download_weekly_deaths_numbers')
+    def test_get_case_data_with_estimations_download(
+            self, mock_get_jh_data, mock_get_case_data,
+            mock_download_weekly_deaths_numbers):
 
         [read_data, make_plot, file_format, out_folder, no_raw] \
             = [False, False, "json", self.path, False]
@@ -353,30 +414,33 @@ class TestGetRKIDatawithEstimations(fake_filesystem_unittest.TestCase):
         directory = os.path.join(out_folder, 'Germany/')
         gd.check_dir(directory)
 
-        mock_get_rki_data.side_effect = self.write_rki_data(directory)
+        mock_get_case_data.side_effect = self.write_case_data(directory)
         mock_get_jh_data.side_effect = self.write_jh_data(directory)
-        mock_download_weekly_deaths_numbers_rki.side_effect = self.write_weekly_deaths_xlsx_data(directory)
+        mock_download_weekly_deaths_numbers.side_effect = self.write_weekly_deaths_xlsx_data(
+            directory)
 
         # write files which should be read in by program
 
         directory = os.path.join(out_folder, 'Germany/')
         gd.check_dir(directory)
 
-        rki_files_to_change = ["all_germany_rki", "all_gender_rki", "all_age_rki",
-                               "all_state_rki", "all_state_gender_rki", "all_state_age_rki",
-                               "all_county_rki", "all_county_gender_rki", "all_county_age_rki"]
+        case_files_to_change = [
+            "cases_all_germany", "cases_all_gender", "cases_all_age",
+            "cases_all_state", "cases_all_state_gender", "cases_all_state_age",
+            "cases_all_county", "cases_all_county_gender",
+            "cases_all_county_age"]
 
-        for file_to_change in rki_files_to_change:
+        for file_to_change in case_files_to_change:
 
-            file_rki = file_to_change + ".json"
-            file_rki_with_path = os.path.join(directory, file_rki)
+            case_file = file_to_change + ".json"
+            case_file_with_path = os.path.join(directory, case_file)
 
-            if file_to_change == "all_gender_rki":
-                with open(file_rki_with_path, 'w') as f:
-                    f.write(self.str_all_gender_rki)
+            if file_to_change == "cases_all_gender":
+                with open(case_file_with_path, 'w') as f:
+                    f.write(self.str_cases_all_gender)
             else:
-                with open(file_rki_with_path, 'w') as f:
-                    f.write(self.str_all_germany_rki)
+                with open(case_file_with_path, 'w') as f:
+                    f.write(self.str_cases_all_germany)
 
         file_jh = "whole_country_Germany_jh.json"
         file_jh_with_path = os.path.join(directory, file_jh)
@@ -386,13 +450,18 @@ class TestGetRKIDatawithEstimations(fake_filesystem_unittest.TestCase):
 
         # check if expected files are written
         self.assertEqual(len(os.listdir(self.path)), 1)
-        self.assertEqual(len(os.listdir(directory)), 2 + len(rki_files_to_change))
+        self.assertEqual(
+            len(os.listdir(directory)),
+            2 + len(case_files_to_change))
 
-        grdwd.get_rki_data_with_estimations(read_data, file_format, out_folder, no_raw, make_plot)
+        gcdwe.get_case_data_with_estimations(
+            read_data, file_format, out_folder, no_raw, make_plot)
 
         # check if expected files are written
         self.assertEqual(len(os.listdir(self.path)), 1)
-        self.assertEqual(len(os.listdir(directory)), 1 + 2 * len(rki_files_to_change) + 4)
+        self.assertEqual(
+            len(os.listdir(directory)),
+            1 + 2 * len(case_files_to_change) + 4)
 
         confirmed = dd.EngEng['confirmed']
         recovered = dd.EngEng['recovered']
@@ -401,71 +470,104 @@ class TestGetRKIDatawithEstimations(fake_filesystem_unittest.TestCase):
         recovered_estimated = recovered + "_estimated"
         deaths_estimated = deaths + "_estimated"
 
-        f_read = os.path.join(directory, "all_germany_rki_estimated.json")
+        f_read = os.path.join(directory, "cases_all_germany_estimated.json")
         df = pd.read_json(f_read)
 
         data_list = df.columns.values.tolist()
 
-        self.assertEqual(data_list, [date, confirmed, deaths, recovered, recovered_estimated, deaths_estimated])
+        self.assertEqual(
+            data_list,
+            [date, confirmed, deaths, recovered, recovered_estimated,
+             deaths_estimated])
 
-        self.assertEqual(df[(df[date] == "2020-01-30")][recovered_estimated].item(), np.round(84 * 3. / 8.))
-        self.assertEqual(df[(df[date] == "2020-01-31")][recovered_estimated].item(), np.round(96 * 3. / 9.))
-        self.assertEqual(df[(df[date] == "2020-01-30")][deaths_estimated].item(), np.round(84 * 1. / 8.))
-        self.assertEqual(df[(df[date] == "2020-01-31")][deaths_estimated].item(), np.round(96 * 2. / 9.))
+        self.assertEqual(
+            df[(df[date] == "2020-01-30")][recovered_estimated].item(),
+            np.round(84 * 3. / 8.))
+        self.assertEqual(
+            df[(df[date] == "2020-01-31")][recovered_estimated].item(),
+            np.round(96 * 3. / 9.))
+        self.assertEqual(
+            df[(df[date] == "2020-01-30")][deaths_estimated].item(),
+            np.round(84 * 1. / 8.))
+        self.assertEqual(
+            df[(df[date] == "2020-01-31")][deaths_estimated].item(),
+            np.round(96 * 2. / 9.))
 
         # gender specific data
         gender = dd.EngEng['gender']
 
-        f_read = os.path.join(directory, "all_gender_rki_estimated.json")
+        f_read = os.path.join(directory, "cases_all_gender_estimated.json")
         df = pd.read_json(f_read)
 
         data_list = df.columns.values.tolist()
 
-        self.assertEqual(data_list, [gender, date, confirmed, deaths, recovered, recovered_estimated, deaths_estimated])
+        self.assertEqual(
+            data_list,
+            [gender, date, confirmed, deaths, recovered, recovered_estimated,
+             deaths_estimated])
 
-        self.assertEqual(df[(df[date] == "2020-01-28") & (df[gender] == "male")][recovered_estimated].item(),
-                         np.round(40 * 3. / 6.))
-        self.assertEqual(df[(df[date] == "2020-01-29") & (df[gender] == "female")][recovered_estimated].item(),
-                         np.round(33 * 3. / 7.))
-        self.assertEqual(df[(df[date] == "2020-01-31") & (df[gender] == "male")][recovered_estimated].item(),
-                         np.round(53 * 3. / 9.))
-        self.assertEqual(df[(df[date] == "2020-01-31") & (df[gender] == "female")][recovered_estimated].item(),
-                         np.round(43 * 3. / 9.))
-        self.assertEqual(df[(df[date] == "2020-01-28") & (df[gender] == "male")][deaths_estimated].item(),
-                         np.round(40 * 1. / 6.))
-        self.assertEqual(df[(df[date] == "2020-01-29") & (df[gender] == "female")][deaths_estimated].item(),
-                         np.round(33 * 1. / 7.))
-        self.assertEqual(df[(df[date] == "2020-01-31") & (df[gender] == "male")][deaths_estimated].item(),
-                         np.round(53 * 2. / 9.))
-        self.assertEqual(df[(df[date] == "2020-01-31") & (df[gender] == "female")][deaths_estimated].item(),
-                         np.round(43 * 2. / 9.))
+        self.assertEqual(
+            df[(df[date] == "2020-01-28") & (df[gender] == "male")]
+            [recovered_estimated].item(),
+            np.round(40 * 3. / 6.))
+        self.assertEqual(
+            df[(df[date] == "2020-01-29") & (df[gender] == "female")]
+            [recovered_estimated].item(),
+            np.round(33 * 3. / 7.))
+        self.assertEqual(
+            df[(df[date] == "2020-01-31") & (df[gender] == "male")]
+            [recovered_estimated].item(),
+            np.round(53 * 3. / 9.))
+        self.assertEqual(
+            df[(df[date] == "2020-01-31") & (df[gender] == "female")]
+            [recovered_estimated].item(),
+            np.round(43 * 3. / 9.))
+        self.assertEqual(
+            df[(df[date] == "2020-01-28") & (df[gender] == "male")]
+            [deaths_estimated].item(),
+            np.round(40 * 1. / 6.))
+        self.assertEqual(
+            df[(df[date] == "2020-01-29") & (df[gender] == "female")]
+            [deaths_estimated].item(),
+            np.round(33 * 1. / 7.))
+        self.assertEqual(
+            df[(df[date] == "2020-01-31") & (df[gender] == "male")]
+            [deaths_estimated].item(),
+            np.round(53 * 2. / 9.))
+        self.assertEqual(
+            df[(df[date] == "2020-01-31") & (df[gender] == "female")]
+            [deaths_estimated].item(),
+            np.round(43 * 2. / 9.))
 
-    def test_download_weekly_rki(self):
+    def test_download_weekly(self):
         directory = os.path.join(self.path, 'Germany/')
         gd.check_dir(directory)
 
-        self.write_weekly_deaths_xlsx_data(directory, file_name='RKI_deaths_weekly_fake.xlsx')
+        self.write_weekly_deaths_xlsx_data(
+            directory, file_name='Cases_deaths_weekly_fake.xlsx')
         self.assertEqual(len(os.listdir(self.path)), 1)
         self.assertEqual(len(os.listdir(directory)), 1)
 
         with patch('requests.get') as mock_request:
             df = gd.loadExcel(
-                'RKI_deaths_weekly_fake', apiUrl=directory, extension='.xlsx',
+                'Cases_deaths_weekly_fake', apiUrl=directory,
+                extension='.xlsx',
                 param_dict={"sheet_name": 'COVID_Todesfälle', "header": 0,
                             "engine": 'openpyxl'})
             towrite = io.BytesIO()
             df.to_excel(towrite, index=False)
             towrite.seek(0)
             mock_request.return_value.content = towrite.read()
-            grdwd.download_weekly_deaths_numbers_rki(directory)
+            gcdwe.download_weekly_deaths_numbers(directory)
         self.assertEqual(len(os.listdir(self.path)), 1)
         self.assertEqual(len(os.listdir(directory)), 2)
 
         df_real_deaths_per_week = gd.loadExcel(
-            'RKI_deaths_weekly', apiUrl=directory, extension='.xlsx',
+            'Cases_deaths_weekly', apiUrl=directory, extension='.xlsx',
             param_dict={"sheet_name": 0, "header": 0, "engine": 'openpyxl'})
         self.assertEqual(df_real_deaths_per_week.shape, (4, 3))
-        self.assertEqual(pd.to_numeric(df_real_deaths_per_week['Sterbejahr'])[0], 2020)
+        self.assertEqual(pd.to_numeric(
+            df_real_deaths_per_week['Sterbejahr'])[0], 2020)
 
     @patch('builtins.print')
     def test_except_non_existing_file(self, mock_print):
@@ -479,11 +581,11 @@ class TestGetRKIDatawithEstimations(fake_filesystem_unittest.TestCase):
         gd.check_dir(directory)
         self.write_jh_data(directory)
 
-        grdwd.get_rki_data_with_estimations(read_data, file_format, out_folder, no_raw, make_plot)
+        gcdwe.get_case_data_with_estimations(
+            read_data, file_format, out_folder, no_raw, make_plot)
 
         # print is called 9 times, because no file exists
         self.assertEqual(len(mock_print.mock_calls), 9)
-
 
 
 if __name__ == '__main__':
