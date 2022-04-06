@@ -465,7 +465,7 @@ IOResult<void> read_population_data_county(std::vector<Model>& model, Date date,
     else {
         log_warning("No DIVI data available for this date");
     }
-    BOOST_OUTCOME_TRY(details::set_rki_data(model, path_join(dir, "cases_all_county_age_7.json"), id_name, county, date,
+    BOOST_OUTCOME_TRY(details::set_rki_data(model, path_join(dir, "cases_all_county_age_ma7.json"), id_name, county, date,
                                             scaling_factor_inf));
     BOOST_OUTCOME_TRY(
         details::set_population_data(model, path_join(dir, "county_current_population.json"), "ID_County", county));
