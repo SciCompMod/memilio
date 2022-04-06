@@ -130,7 +130,8 @@ Results
 
 The data is written either in json or hdf5 format
 
-When speaking about infected, means always infected inclusive the already recovered persons
+The number of "infected" persons is exported as cumulative sum such that "infected" also includes already recovered or deceased persons.
+Note that for Germany, vaccinations were not reported with the home county of the vaccinated persons but with the county of vaccination.
 
 ============== ==========  ================================== =================
 Source         Folder      Files                              Data description
@@ -204,7 +205,6 @@ DIVI           Germany     state_divi                         ICU, ICU_ventilate
 DIVI           Germany     germany_divi                       ICU, ICU_ventilated over time for whole Germany with columns ['Date', 'ICU', 'ICU_ventilated']
 ============== ==========  ================================== =================
 
-Note that vaccinations were not reported with home county of the vaccinated persons but with the county of vaccination.
 
 Notes for developers
 --------------------
