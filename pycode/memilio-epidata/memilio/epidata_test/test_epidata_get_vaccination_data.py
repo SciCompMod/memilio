@@ -129,24 +129,65 @@ class TestGetVaccinationData(fake_filesystem_unittest.TestCase):
     def test_get_standard_vaccination_sanitize_0(
             self, mockv):
         gvd.get_vaccination_data(out_folder=self.path, sanitize_data=0)
+    
+    @patch('memilio.epidata.getVaccinationData.pd.read_csv',
+           return_value=df_vacc_data_altern)
+    def test_sanity_checks(self, mockv):
 
-    def test_download_vaccination_data(self):
-        df = gvd.download_vaccination_data()
-        self.assertFalse(
-            df.empty,
-            "Vaccination Data is empty. Shouldn't be.")
+        # test empty dataframe
+        df = pd.DataFrame()
+        with self.assertRaises(gd.DataError) as error:
+            gvd.sanity_checks(df)
+        error_message = "Download of Vaccination Data failed. File is empty."
+        self.assertEqual(str(error.exception), error_message)
 
-        # test agegroups in raw dataframe
-        agegr_arr = df['Altersgruppe'].unique()
-        self.assertIn('05-11', agegr_arr)
-        self.assertIn('12-17', agegr_arr)
-        self.assertIn('18-59', agegr_arr)
-        self.assertIn('60+', agegr_arr)
+        # test more agegroups than expected
+        df = pd.DataFrame(
+            {'Altersgruppe': ['02-04', '05-11', '12-17', '18-59', '60+'],
+             'b': [4, 5, 6, 7, 8]})
+        with self.assertRaises(gd.DataError) as error:
+            gvd.sanity_checks(df)
+        error_message = "Number of agegroups has changed. Please report this as an issue."
+        self.assertEqual(str(error.exception), error_message)
 
-        if 'u' in agegr_arr:
-            self.assertEqual(len(agegr_arr), 5)
-        if not 'u' in agegr_arr:
-            self.assertEqual(len(agegr_arr), 4)
+        # test different agegroups 
+        df = pd.DataFrame(
+            {'Altersgruppe': ['02-04', '05-12', '13-17', '18+'],
+             'b': [4, 5, 6, 7]})
+        with self.assertRaises(gd.DataError) as error:
+            gvd.sanity_checks(df)
+        error_message = "Agegroups have changed. Please report this as an issue."
+        self.assertEqual(str(error.exception), error_message)
+
+        # test if sanity checks are executed
+        with self.assertRaises(gd.DataError) as error:
+            gvd.download_vaccination_data()
+        error_message = "Number of agegroups has changed. Please report this as an issue."
+        self.assertEqual(str(error.exception), error_message)
+
+
+        # Following test should not raise any errors
+        
+        # test actual agegroups
+        df = pd.DataFrame(
+            {'Altersgruppe': ['05-11', '12-17', '18-59', '60+'],
+             'b': [4, 5, 6, 7]})
+        gvd.sanity_checks
+
+        # test actual agegroups with unknown
+        df = pd.DataFrame(
+            {'Altersgruppe': ['05-11', '12-17', '18-59', '60+', 'u'],
+             'b': [4, 5, 6, 7, 8]})
+        gvd.sanity_checks
+
+        # test uniqueness
+        df = pd.DataFrame({
+            'Altersgruppe':
+            ['05-11', '60+', '12-17', '05-11', 'u', '12-17',
+             '18-59', '18-59', '60+', 'u', 'u', 'u', 'u'],
+            'b': [1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 1, 2, 3]})
+        gvd.sanity_checks
+
 
     @patch('builtins.print')
     @patch('memilio.epidata.getVaccinationData.pd.read_csv',
