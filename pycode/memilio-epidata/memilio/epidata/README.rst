@@ -149,7 +149,13 @@ When speaking about infected, means always infected inclusive the already recove
  RKI            Germany     cases_all_county_age               infected, deaths, recovered over time for different age ranges and counties
  RKI            Germany     cases_all_county_gender            infected, deaths, recovered over time for different genders counties
 
- RKI            Germany     vaccine_data_[DATE]                administered vaccines, first shot, full vaccination, vaccination ratio, vacc ratio young, vacc ratio old
+ RKI            Germany     all_county_vacc                administered vaccinations per county (first, second and third shot without age resolution)
+  RKI            Germany     all_states_vacc                administered vaccinations per state (first, second and third shot without age resolution)
+ RKI            Germany     all_county_agevacc_vacc                administered vaccinations per county (first, second and third shot for age groups as in input data frame, i.e., 5-11, 12-17, 18-59, 60+)
+  RKI            Germany     all_states_agevacc_vacc                administered vaccinations per state (first, second and third shot for age groups as in input data frame, i.e., 5-11, 12-17, 18-59, 60+)
+  RKI            Germany     all_county_ageinf_vacc                administered vaccinations per county (first, second and third shot for age groups as in cases data frame, i.e., 0-4, 5-14, 15-34, 35-59, 60-79, 80+)
+    RKI            Germany     all_states_ageinf_vacc                administered vaccinations per county (first, second and third shot for age groups as in cases data frame, i.e., 0-4, 5-14, 15-34, 35-59, 60-79, 80+)
+Note that vaccinations were not reported with home county of the vaccinated persons but with the county of vaccination.
 
  RKI-Estimation Germany     cases_all_germany_estimated        infected, deaths, recovered, recovered_estimated, deaths_estimated over time for whole Germany
  RKI-Estimation Germany     cases_all_state_estimated          infected, deaths, recovered, recovered_estimated, deaths_estimated over time for different states (Bundesländer)
@@ -201,9 +207,9 @@ When you start creating a new script:
       - add new column names to one of the existing languages; english, german and spanish translation exists at the moment.
       - for non-english languages always use the EngEng dictionary as the key, thus we can easily change names with just changing one line.
       - in defaultDict.py a dictionary with id and state and county name, respectivly exists. Please use it.
-- After renaming columns, you should not use the possibilities of pandas the access the column with dataframe.column but instead use
-  datafram[column] and use th dictionaries to define the column-name.
-  Example: Altersgruppe2 = dd.GerEng['Altersgruppe2']; again in this way it is easier to change the column names.
+- After renaming columns, you should not use pandas dataframe.column but instead use
+  dataframe[column] where column is given by the dictionaries in defaultDict.py.
+  Example: ID_County = dd.GerEng['IdLandkreis'] or dd.EngEng['idCounty'].
 - use check_dir of getDataIntoPandasDataFrame.py if you want to create a new folder to write data to
 - use write_dataframe of getDataIntoPandasDataFrame.py to write the pandas dataframe to file.
 - use doxygen like comments in code as
