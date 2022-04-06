@@ -173,12 +173,12 @@ def cli(what):
     # TODO: may it would be easier to make a dict like the following one together with a function to get key:
     # TODO: all should automatically do everything
     # cli_dict2 = {"end_date": ['divi'],
-    #                "plot": ['rki'],
+    #                "plot": ['cases'],
     #                "start_date": ['divi']                 }
 
     cli_dict = {"divi": ['Downloads data from DIVI', 'start_date', 'end_date', 'impute_dates', 'moving_average'],
-                "rki": ['Download data from RKI', 'impute_dates', 'make_plot', 'moving_average', 'split_berlin', 'rep_date'],
-                "rkiest": ['Download data from RKI and JHU and estimate recovered and deaths', 'make_plot'],
+                "cases": ['Download case data from RKI', 'impute_dates', 'make_plot', 'moving_average', 'split_berlin', 'rep_date'],
+                "cases_est": ['Download case data from RKI and JHU and estimate recovered and deaths', 'make_plot'],
                 "population": ['Download population data from official sources'],
                 "commuter_official": ['Download commuter data from official sources', 'make_plot'],
                 "vaccination": ['Download vaccination data', 'start_date', 'end_date', 'make_plot', 'moving_average'],

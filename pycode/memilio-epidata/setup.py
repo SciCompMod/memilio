@@ -54,13 +54,13 @@ setup(
     description='Part of MEmilio project, reads epidemiological data from different official and unofficial sources.',
     entry_points={
         'console_scripts': [
-            'getrkidata=memilio.epidata.getRKIData:main',
+            'getcasedata=memilio.epidata.getCaseData:main',
             'getpopuldata=memilio.epidata.getPopulationData:main',
             'getjhdata = memilio.epidata.getJHData:main',
             'getdividata = memilio.epidata.getDIVIData:main',
             'getsimdata = memilio.epidata.getSimulationData:main',
             'cleandata = memilio.epidata.cleanData:main',
-            'getrkiestimation = memilio.epidata.getRKIDatawithEstimations:main',
+            'getcasesestimation = memilio.epidata.getRKIDatawithEstimations:main',
             'getcommutermobility = memilio.epidata.getCommuterMobility:main',
             'getvaccinationdata = memilio.epidata.getVaccinationData:main'
         ],

@@ -47,7 +47,7 @@ runs:
         fi
         
         if [[ "${{ inputs.package }}" == "epidata" ]]; then
-          getrkidata --help
+          getcasedata --help
           getpopuldata --help
           getjhdata --help
           getdividata --help

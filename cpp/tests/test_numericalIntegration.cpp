@@ -19,6 +19,7 @@
 */
 #include "memilio/math/euler.h"
 #include "memilio/math/adapt_rk.h"
+#include "memilio/math/stepper_wrapper.h"
 #include <actions.h>
 
 #include <gtest/gtest.h>
@@ -34,6 +35,7 @@ void sin_deriv(Eigen::Ref<Eigen::VectorXd const> /*y*/, const double t, Eigen::R
     dydt[0] = std::cos(t);
 }
 
+template <class TestType>
 class TestVerifyNumericalIntegrator : public testing::Test
 {
 protected:
@@ -55,7 +57,8 @@ public:
     double err;
 };
 
-TEST_F(TestVerifyNumericalIntegrator, euler_sine)
+using TestVerifyNumericalIntegratorEuler = TestVerifyNumericalIntegrator<::testing::Types<mio::EulerIntegratorCore>>;
+TEST_F(TestVerifyNumericalIntegratorEuler, euler_sine)
 {
     n   = 1000;
     dt  = (tmax - t0) / n;
@@ -65,7 +68,9 @@ TEST_F(TestVerifyNumericalIntegrator, euler_sine)
     sol[0][0]     = std::sin(0);
     sol[n - 1][0] = std::sin((n - 1) * dt);
 
-    auto f = [](auto&& /*y*/, auto&& t, auto&& dydt) { dydt[0] = std::cos(t); };
+    auto f = [](auto&& /*y*/, auto&& t, auto&& dydt) {
+        dydt[0] = std::cos(t);
+    };
     mio::EulerIntegratorCore euler;
 
     auto t = t0;
@@ -84,48 +89,54 @@ TEST_F(TestVerifyNumericalIntegrator, euler_sine)
     EXPECT_NEAR(err, 0.0, 1e-3);
 }
 
-TEST_F(TestVerifyNumericalIntegrator, runge_kutta_fehlberg45_sine)
+using TestTypes = ::testing::Types<mio::RKIntegratorCore,
+                                   mio::ControlledStepperWrapper<boost::numeric::odeint::runge_kutta_cash_karp54>,
+                                   mio::ControlledStepperWrapper<boost::numeric::odeint::runge_kutta_dopri5>,
+                                   mio::ControlledStepperWrapper<boost::numeric::odeint::runge_kutta_fehlberg78>>;
+
+TYPED_TEST_SUITE(TestVerifyNumericalIntegrator, TestTypes);
+
+TYPED_TEST(TestVerifyNumericalIntegrator, sine)
 {
+    this->n   = 10;
+    this->dt  = (this->tmax - this->t0) / this->n;
+    this->y   = std::vector<Eigen::VectorXd>(this->n, Eigen::VectorXd::Constant(1, 0));
+    this->sol = std::vector<Eigen::VectorXd>(this->n, Eigen::VectorXd::Constant(1, 0));
 
-    n   = 10;
-    dt  = (tmax - t0) / n;
-    y   = std::vector<Eigen::VectorXd>(n, Eigen::VectorXd::Constant(1, 0));
-    sol = std::vector<Eigen::VectorXd>(n, Eigen::VectorXd::Constant(1, 0));
+    TypeParam rk;
+    rk.set_abs_tolerance(1e-7);
+    rk.set_rel_tolerance(1e-7);
+    rk.set_dt_min(1e-3);
+    rk.set_dt_max(1.0);
 
-    mio::RKIntegratorCore rkf45;
-    rkf45.set_abs_tolerance(1e-7);
-    rkf45.set_rel_tolerance(1e-7);
-    rkf45.set_dt_min(1e-3);
-    rkf45.set_dt_max(1.0);
-
-    sol[0][0] = std::sin(0);
+    this->sol[0][0] = std::sin(0);
 
     size_t i      = 0;
-    double t_eval = t0;
+    double t_eval = this->t0;
     // printf("\n t: %.8f\t sol %.8f\t rkf %.8f", t, sol[0][0], y[0][0]);
-    while (t_eval - tmax < 1e-10) {
+    while (t_eval - this->tmax < 1e-10) {
 
-        if (i + 1 >= sol.size()) {
-            sol.push_back(Eigen::VectorXd::Constant(1, 0));
-            y.push_back(Eigen::VectorXd::Constant(1, 0));
+        if (i + 1 >= this->sol.size()) {
+            this->sol.push_back(Eigen::VectorXd::Constant(1, 0));
+            this->y.push_back(Eigen::VectorXd::Constant(1, 0));
         }
 
-        rkf45.step(&sin_deriv, y[i], t_eval, dt, y[i + 1]); //
+        rk.step(&sin_deriv, this->y[i], t_eval, this->dt, this->y[i + 1]); //
 
-        sol[i + 1][0] = std::sin(t_eval);
+        this->sol[i + 1][0] = std::sin(t_eval);
 
         // printf("\n t: %.8f (dt %.8f)\t sol %.8f\t rkf %.8f", t_eval, dt, sol[i + 1][0], y[i + 1][0]);
         // printf("\n approx: %.4e, sol: %.4e, error %.4e", y[i+1][0], sol[i+1][0], err);
 
-        err += std::pow(std::abs(y[i + 1][0] - sol[i + 1][0]), 2.0);
+        this->err += std::pow(std::abs(this->y[i + 1][0] - this->sol[i + 1][0]), 2.0);
         i++;
     }
 
-    n = i;
+    this->n = i;
 
-    err = std::sqrt(err) / n;
+    this->err = std::sqrt(this->err) / this->n;
 
-    EXPECT_NEAR(err, 0.0, 1e-7);
+    EXPECT_NEAR(this->err, 0.0, 1e-7);
 }
 
 auto DoStep()
