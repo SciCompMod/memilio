@@ -18,7 +18,6 @@
 # limitations under the License.
 #############################################################################
 from datetime import date, datetime
-import sys
 import time
 import os
 import itertools
@@ -60,32 +59,47 @@ def create_intervals_mapping(from_lower_bounds, to_lower_bounds):
     @param from_lower_bounds lower bounds of original intervals
     @param to_lower_bounds desired lower bounds of new intervals
     @return mapping from intervals to intervals
+        The mapping is given as a list of tupels for every original interval.
+        The list contains a tuple for every new interval intersecting the 
+        original interval. Each tuple defines the share of the original interval
+        that is mapped to the new interval and the index of the new interval. We
+        assume that the range of the intervals mapped from is contained in the 
+        range of the intervals mapped to.
+        For example for from_lower_bounds = [5,20,30,80,85,90] and 
+        to_lower_bounds=[0,15,20,60,100] given the mapping would be
+        [[[2/3,0], [1/3,1]],
+         [[1,2]],
+         [[3/5,2], [2/5,3]],
+         [[1,3]],
+         [[1,3]]]
     """
-    # compute share of all_ages intervals from population intervals
+    if (from_lower_bounds[0] < to_lower_bounds[0] or
+            from_lower_bounds[-1] > to_lower_bounds[-1]):
+        raise ValueError("Range of intervals mapped from exeeds range of" +
+                         "intervals mapped to.")
+    # compute the shares of the original intervals mapped to the new intervals
     from_to_mapping = [[] for i in range(0, len(from_lower_bounds)-1)]
-    j = 0  # iterator over all age breaks
-    for i in range(0, len(from_lower_bounds)-1):
-        # check if lower bound is larger in lower resolved data
-        if from_lower_bounds[i] >= to_lower_bounds[j]:
-            # Example: min_age_pop[i]=3 and min_age_pop[i+1]=6 shall be mapped on all_ages[j]=3 and all_ages[j+1]=5
-            #   Then the all ages interval from j to j+1 will obtain the share
-            #       x = (all_ages[j+1] - all_ages[j]) / (min_age_pop[i+1] - min_age_pop[i])
-            #   of population age group 3-6
-            #   in the next step, check if 6 is larger than all_ages[j+2]=Y
-            #       if no: add the remaining part 1-x to j+1
-            #       if yes: compute the corresponding share and go through it iteratively
-            share = 0
-            # if not, the remaining share will be assigned all ages j
-            while from_lower_bounds[i+1] > to_lower_bounds[j+1]:
-                share += (to_lower_bounds[j+1] - to_lower_bounds[j]
-                          ) / (from_lower_bounds[i+1] - from_lower_bounds[i])
-                from_to_mapping[i].append([share, j])
-                j += 1
-            from_to_mapping[i].append([1-share, j])
-            # if both upper bounds are equal, then all ages j will not get any more share from any old group
-            if from_lower_bounds[i+1] == to_lower_bounds[j+1]:
-                j += 1
-
+    to_idx = 0  # iterator over new intervals
+    # iterate over original intervals
+    for from_idx in range(0, len(from_lower_bounds) - 1):
+        remaining_share = 1  # share of original interval to be distributed
+        # position up to which the distribution is already computed
+        pos = from_lower_bounds[from_idx]
+        len_orig_interval = from_lower_bounds[from_idx+1] - pos
+        # find first new interval intersecting the original interval
+        while pos >= to_lower_bounds[to_idx+1]:
+            to_idx += 1
+        while from_lower_bounds[from_idx+1] > to_lower_bounds[to_idx+1]:
+            # compute share of original interval that is send to new interval
+            share = (to_lower_bounds[to_idx+1] - pos) / len_orig_interval
+            from_to_mapping[from_idx].append([share, to_idx])
+            remaining_share -= share
+            pos = to_lower_bounds[to_idx+1]
+            to_idx += 1
+        # if upper bound of the new interval is not smaller than upper bound of
+        # the original interval assign remaining share of the original interval
+        # to the new interval
+        from_to_mapping[from_idx].append([remaining_share, to_idx])
     return from_to_mapping
 
 
@@ -297,7 +311,7 @@ def get_vaccination_data(read_data=dd.defaultDict['read_data'],
         if '-' in age:
             min_age_pop.append(int(age.split('-')[0]))
         elif '>' in age:
-            min_age_pop.append(int(age.split('>')[1]))
+            min_age_pop.append(int(age.split('>')[1])+1)
         elif '<' in age:
             min_age_pop.append(0)
         else:
