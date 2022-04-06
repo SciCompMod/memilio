@@ -1,13 +1,13 @@
 # Script to extract one data row for every countx each to generate test
-# data for test_epidata_get_RKI_Data.py which is not to large
+# data for test_epidata_get_Case_Data_read.py which is not to large
 
 import pandas as pd
 from memilio.epidata import defaultDict as dd
 from memilio.epidata import getDataIntoPandasDataFrame as gd
 
 
-# Put any FullDataRkI.json file or Update file has below here
-file_name = "UpdateDataRKI2021-07-08.json"
+# Put any CaseDataFull.json file or Update file has below here
+file_name = "UpdateDataCases2021-07-08.json"
 
 # read in
 df = pd.read_json(file_name)
@@ -29,4 +29,4 @@ for k in dd.County.keys():
 print("Number of counties in data:", len(df_neu))
 
 
-gd.write_dataframe(df_neu, ".", "test_epidata_get_RKI_Data_data", "json")
+gd.write_dataframe(df_neu, ".", "test_epidata_get_Case_Data_data_read", "json")
