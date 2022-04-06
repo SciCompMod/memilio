@@ -103,7 +103,8 @@ EngEng = {
     'nuts3': 'NUTS3',
     'total_volume': 'Unique_trips',
     'region_name': 'County',
-    'region_id': 'ID_County'
+    'region_id': 'ID_County',
+    'desc': 'description'
 }
 
 GerEng = {
