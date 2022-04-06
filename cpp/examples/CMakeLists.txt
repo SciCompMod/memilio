@@ -45,5 +45,5 @@ if (MEMILIO_HAS_JSONCPP)
   target_link_libraries(serialize_example PRIVATE memilio)
 endif()
 
-add_executable(IDE_example IDE.cpp)
-target_link_libraries(IDE_example PRIVATE memilio IDE)
+add_executable(seir_ide_example seir_ide.cpp)
+target_link_libraries(seir_ide_example PRIVATE memilio seir_ide)
