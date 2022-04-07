@@ -104,7 +104,8 @@ EngEng = {
     'total_volume': 'Unique_trips',
     'region_name': 'County',
     'region_id': 'ID_County',
-    'desc': 'description'
+    'desc': 'Description',
+    'incidence': 'Incidence'
 }
 
 GerEng = {

@@ -473,13 +473,20 @@ def transform_npi_data(fine_resolution=2,
                 directory, 'all_county_all_dates_repdate_rki.json'))
             df_population = pd.read_json(
                 directory + "county_current_population.json")
-            # compute incidence based on previous data frames
-            # TODO
 
         # iterate over countyIDs
         counters = np.zeros(4)  # time counter for output only
         cid = 0
         for countyID in [1001]:  # unique_geo_entities:
+
+            # compute incidence based on previous data frames
+            df_infec_local = df_infec_rki[df_infec_rki[dd.EngEng['idCounty']] == countyID].copy(
+            )
+            pop_local = df_population.loc[df_population[dd.EngEng['idCounty']]
+                                          == countyID, dd.EngEng['population']].values[0]
+            incidence_local = df_infec_local[dd.EngEng['confirmed']].diff(
+                periods=7).fillna(df_infec_local[dd.EngEng['confirmed']])
+            df_infec_local['Incidence'] = incidence_local / pop_local * 100000
 
             # get county-local data frame
             start_time = time.perf_counter()
