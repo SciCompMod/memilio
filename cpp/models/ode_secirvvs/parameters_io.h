@@ -633,7 +633,7 @@ namespace osecirvvs
         assert(num_age_groups == StringRkiAgeGroup::age_group_names.size());
         assert(model.size() == region.size());
 
-        BOOST_OUTCOME_TRY(rki_data, read_rki_data(path_join(data_dir, "all_county_age_ma7_rki.json")));
+        BOOST_OUTCOME_TRY(rki_data, read_rki_data(path_join(data_dir, "cases_all_county_age_ma7.json")));
         BOOST_OUTCOME_TRY(population_data, read_population_data(path_join(data_dir, "county_current_population.json")));
         BOOST_OUTCOME_TRY(divi_data, read_divi_data(path_join(data_dir, "county_divi_ma7.json")));
 
@@ -1142,10 +1142,10 @@ namespace osecirvvs
             log_warning("No DIVI data available for this date");
         }
 
-        BOOST_OUTCOME_TRY(details::set_rki_data(model, path_join(dir, "all_county_age_ma7_rki.json"), county, date,
+        BOOST_OUTCOME_TRY(details::set_rki_data(model, path_join(dir, "cases_all_county_age_ma7.json"), county, date,
                                                 scaling_factor_inf));
         BOOST_OUTCOME_TRY(details::set_population_data(model, path_join(dir, "county_current_population.json"),
-                                                       path_join(dir, "all_county_age_ma7_rki.json"), county, date));
+                                                       path_join(dir, "cases_all_county_age_ma7.json"), county, date));
 
         // Use only if extrapolated real data is needed for comparison. EXPENSIVE !
         // Run time equals run time of the previous functions times the num_days !
