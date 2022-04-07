@@ -461,7 +461,7 @@ IOResult<T> deserialize_pickle(const py::tuple& t, Tag<T> tag, int flags = IOF_N
 //Implementations for PickleContext/Object member functions below //
 ///////////////////////////////////////////////////////////////////
 
-template <class T, std::enable_if_t<PickleType<T>::value, void*> = nullptr>
+template <class T, std::enable_if_t<PickleType<T>::value, void*>>
 void PickleObject::add_element(const std::string& name, const T& value)
 {
     if (m_status->is_ok()) {
@@ -469,7 +469,7 @@ void PickleObject::add_element(const std::string& name, const T& value)
     }
 }
 
-template <class T, std::enable_if_t<!PickleType<T>::value, void*> = nullptr>
+template <class T, std::enable_if_t<!PickleType<T>::value, void*>>
 void PickleObject::add_element(const std::string& name, const T& value)
 {
     if (m_status->is_ok()) {
@@ -491,7 +491,7 @@ void PickleObject::add_optional(const std::string& name, const T* value)
     add_list(name,value, end);
 }
 
-template <class Iter, std::enable_if_t<PickleType<typename std::iterator_traits<Iter>::value_type>::value, void*> = nullptr>
+template <class Iter, std::enable_if_t<PickleType<typename std::iterator_traits<Iter>::value_type>::value, void*>>
 void PickleObject::add_list(const std::string& name, Iter b, Iter e)
 {
 
@@ -506,7 +506,7 @@ void PickleObject::add_list(const std::string& name, Iter b, Iter e)
     }
 }
 
-template <class Iter, std::enable_if_t<!PickleType<typename std::iterator_traits<Iter>::value_type>::value, void*> = nullptr>
+template <class Iter, std::enable_if_t<!PickleType<typename std::iterator_traits<Iter>::value_type>::value, void*>>
 void PickleObject::add_list(const std::string &name, Iter b, Iter e)
 {
     if (m_status->is_ok()) {
@@ -522,7 +522,7 @@ void PickleObject::add_list(const std::string &name, Iter b, Iter e)
     }
 }
 
-template <class T, std::enable_if_t<PickleType<T>::value, void*> = nullptr>
+template <class T, std::enable_if_t<PickleType<T>::value, void*>>
 IOResult<T> PickleObject::expect_element(const std::string& name,Tag<T> /*tag*/)
 {
     if (m_status->is_error()) {
@@ -535,7 +535,7 @@ IOResult<T> PickleObject::expect_element(const std::string& name,Tag<T> /*tag*/)
     return success(from_tuple_element<T>(m_value[m_index++]));
 }
 
-template <class T, std::enable_if_t<!PickleType<T>::value, void*> = nullptr>
+template <class T, std::enable_if_t<!PickleType<T>::value, void*>>
 IOResult<T> PickleObject::expect_element(const std::string& name,Tag<T> tag)
 {
     if (m_status->is_error()) {
@@ -570,7 +570,7 @@ IOResult<boost::optional<T>> PickleObject::expect_optional(const std::string &na
     return failure(StatusCode::OutOfRange, "Optional must be a tuple with only one element");
 }
 
-template <class T, std::enable_if_t<PickleType<T>::value, void*> = nullptr>
+template <class T, std::enable_if_t<PickleType<T>::value, void*>>
 IOResult<std::vector<T>> PickleObject::expect_list(const std::string &name, Tag<T> /*tag*/)
 {
     if (m_status->is_error()) {
@@ -588,7 +588,7 @@ IOResult<std::vector<T>> PickleObject::expect_list(const std::string &name, Tag<
     return success(std::move(v));
 }
 
-template <class T, std::enable_if_t<!PickleType<T>::value, void*> = nullptr>
+template <class T, std::enable_if_t<!PickleType<T>::value, void*>>
 IOResult<std::vector<T>> PickleObject::expect_list(const std::string &name, Tag<T> tag)
 {
     if (m_status->is_error()) {
