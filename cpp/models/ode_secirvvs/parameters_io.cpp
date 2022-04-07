@@ -18,7 +18,7 @@
 * limitations under the License.
 */
 
-#include "secir_vaccine/parameters_io.h"
+#include "ode_secirvvs/parameters_io.h"
 #include "memilio/epidemiology/regions.h"
 
 #ifdef MEMILIO_HAS_JSONCPP
@@ -46,7 +46,7 @@
 
 namespace mio
 {
-namespace secirv
+namespace osecirvvs
 {
     namespace details
     {
@@ -416,7 +416,7 @@ namespace secirv
             return success(vnum_population);
         }
 
-        IOResult<void> set_vaccination_data(std::vector<SecirModel>& model, const std::string& path, Date date,
+        IOResult<void> set_vaccination_data(std::vector<Model>& model, const std::string& path, Date date,
                                             const std::vector<int>& vregion, int num_days)
         {
             BOOST_OUTCOME_TRY(vacc_data, read_vaccination_data(path));
@@ -538,7 +538,7 @@ namespace secirv
         }
 
     } // namespace details
-} // namespace secirv
+} // namespace osecirvvs
 } // namespace mio
 
 #endif // MEMILIO_HAS_JSONCPP

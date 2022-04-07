@@ -33,7 +33,7 @@
 
 namespace mio
 {
-namespace secirv
+namespace osecirvvs
 {
 
     /**
@@ -646,7 +646,7 @@ namespace secirv
         }
     };
 
-    using SecirParamsBase =
+    using ParametersBase =
         ParameterSet<StartDay, StartSummer, Seasonality, ICUCapacity, TestAndTraceCapacity, ContactPatterns,
                      DynamicNPIsInfected, IncubationTime, InfectiousTimeMild, InfectiousTimeAsymptomatic,
                      SerialInterval, HospitalizedToHomeTime, HomeToHospitalizedTime, HospitalizedToICUTime,
@@ -662,11 +662,11 @@ namespace secirv
     /**
  * @brief Parameters of an age-resolved SECIR/SECIHURD model.
  */
-    class SecirParams : public SecirParamsBase
+    class Parameters : public ParametersBase
     {
     public:
-        SecirParams(AgeGroup num_agegroups)
-            : SecirParamsBase(num_agegroups)
+        Parameters(AgeGroup num_agegroups)
+            : ParametersBase(num_agegroups)
             , m_num_groups{num_agegroups}
         {
         }
@@ -931,8 +931,8 @@ namespace secirv
         }
 
     private:
-        SecirParams(SecirParamsBase&& base)
-            : SecirParamsBase(std::move(base))
+        Parameters(ParametersBase&& base)
+            : ParametersBase(std::move(base))
             , m_num_groups(get<ContactPatterns>().get_cont_freq_mat().get_num_groups())
         {
         }
@@ -943,10 +943,10 @@ namespace secirv
      * @see epi::deserialize
      */
         template <class IOContext>
-        static IOResult<SecirParams> deserialize(IOContext& io)
+        static IOResult<Parameters> deserialize(IOContext& io)
         {
-            BOOST_OUTCOME_TRY(base, SecirParamsBase::deserialize(io));
-            return success(SecirParams(std::move(base)));
+            BOOST_OUTCOME_TRY(base, ParametersBase::deserialize(io));
+            return success(Parameters(std::move(base)));
         }
 
     private:
@@ -956,7 +956,7 @@ namespace secirv
         double m_end_commuter_detection   = 0.0;
     };
 
-} // namespace secirv
+} // namespace osecirvvs
 } // namespace mio
 
 #endif // SECIR_H

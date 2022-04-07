@@ -17,16 +17,16 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
-#include "secir_vaccine/parameter_space.h"
+#include "ode_secirvvs/parameter_space.h"
 #include "memilio/utils/parameter_distributions.h"
-#include "secir_vaccine/model.h"
+#include "ode_secirvvs/model.h"
 
 namespace mio
 {
-namespace secirv
+namespace osecirvvs
 {
 
-    void draw_sample_demographics(SecirModel& model)
+    void draw_sample_demographics(Model& model)
     {
         model.parameters.get<ICUCapacity>().draw_sample();
         model.parameters.get<TestAndTraceCapacity>().draw_sample();
@@ -62,7 +62,7 @@ namespace secirv
         }
     }
 
-    void draw_sample_infection(SecirModel& model)
+    void draw_sample_infection(Model& model)
     {
         model.parameters.get<Seasonality>().draw_sample();
 
@@ -120,7 +120,7 @@ namespace secirv
         }
     }
 
-    void draw_sample(SecirModel& model)
+    void draw_sample(Model& model)
     {
         draw_sample_infection(model);
         draw_sample_demographics(model);
@@ -128,9 +128,9 @@ namespace secirv
         model.apply_constraints();
     }
 
-    Graph<SecirModel, MigrationParameters> draw_sample(Graph<SecirModel, MigrationParameters>& graph, double tmax, bool high)
+    Graph<Model, MigrationParameters> draw_sample(Graph<Model, MigrationParameters>& graph, double tmax, bool high)
     {
-        Graph<SecirModel, MigrationParameters> sampled_graph;
+        Graph<Model, MigrationParameters> sampled_graph;
 
         //sample global parameters
         auto& shared_params_model = graph.nodes()[0].property;
@@ -200,5 +200,5 @@ namespace secirv
         return sampled_graph;
     }
 
-} // namespace secirv
+} // namespace osecirvvs
 } // namespace mio

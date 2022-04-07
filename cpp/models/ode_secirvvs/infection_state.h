@@ -21,7 +21,7 @@
 #define SECIRV_INFECTIONSTATE_H
 namespace mio
 {
-namespace secirv
+namespace osecirvvs
 {
 
     /**
@@ -62,7 +62,7 @@ namespace secirv
         Count
     };
 
-} // namespace secirv
+} // namespace osecirvvs
 } // namespace mio
 
 #endif //SECIRV_INFECTIONSTATE_H

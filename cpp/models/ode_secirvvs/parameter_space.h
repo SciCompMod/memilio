@@ -24,7 +24,7 @@
 #include "memilio/utils/memory.h"
 #include "memilio/utils/logging.h"
 #include "memilio/utils/parameter_distributions.h"
-#include "secir_vaccine/model.h"
+#include "ode_secirvvs/model.h"
 
 #include <assert.h>
 #include <string>
@@ -34,29 +34,29 @@
 
 namespace mio
 {
-namespace secirv
+namespace osecirvvs
 {
     /**
      * draws a sample from the specified distributions for all parameters related to the demographics, e.g. population.
-     * @param[inout] model SecirModel including contact patterns for alle age groups
+     * @param[inout] model Model including contact patterns for alle age groups
      */
-    void draw_sample_demographics(SecirModel& model);
+    void draw_sample_demographics(Model& model);
 
     /**
      * draws a sample from the specified distributions for all parameters related to the infection.
-     * @param[inout] model SecirModel including contact patterns for alle age groups
+     * @param[inout] model Model including contact patterns for alle age groups
      */
-    void draw_sample_infection(SecirModel& model);
+    void draw_sample_infection(Model& model);
 
-    /** Draws a sample from SecirModel parameter distributions and stores sample values
-    * as SecirParams parameter values (cf. UncertainValue and SecirParams classes)
-    * @param[inout] model SecirModel including contact patterns for alle age groups
+    /** Draws a sample from Model parameter distributions and stores sample values
+    * as Parameters parameter values (cf. UncertainValue and Parameters classes)
+    * @param[inout] model Model including contact patterns for alle age groups
     */
-    void draw_sample(SecirModel& model);
+    void draw_sample(Model& model);
 
-    Graph<SecirModel, MigrationParameters> draw_sample(Graph<SecirModel, MigrationParameters>& graph, double tmax, bool high);
+    Graph<Model, MigrationParameters> draw_sample(Graph<Model, MigrationParameters>& graph, double tmax, bool high);
 
-} // namespace secirv
+} // namespace osecirvvs
 } // namespace mio
 
 #endif // PARAMETER_SPACE_H

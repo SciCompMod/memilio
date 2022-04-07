@@ -1,4 +1,4 @@
-add_library(secir_vaccine
+add_library(ode_secirvvs
     infection_state.h
     analyze_result.h
     analyze_result.cpp
@@ -10,9 +10,9 @@ add_library(secir_vaccine
     model.h
     model.cpp
 )
-target_link_libraries(secir_vaccine PUBLIC memilio)
-target_include_directories(secir_vaccine PUBLIC
+target_link_libraries(ode_secirvvs PUBLIC memilio)
+target_include_directories(ode_secirvvs PUBLIC
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/..>
     $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
 )
-target_compile_options(secir_vaccine PRIVATE ${MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS})
+target_compile_options(ode_secirvvs PRIVATE ${MEMILIO_CXX_FLAGS_ENABLE_WARNING_ERRORS})

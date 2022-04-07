@@ -20,7 +20,7 @@
 #ifndef MEMILIO_SECIR_VACC_ANALYZE_RESULT_H
 #define MEMILIO_SECIR_VACC_ANALYZE_RESULT_H
 
-#include "secir_vaccine/model.h"
+#include "ode_secirvvs/model.h"
 #include "memilio/data/analyze_result.h"
 
 #include <functional>
@@ -28,7 +28,7 @@
 
 namespace mio
 {
-namespace secirv
+namespace osecirvvs
 {
     /**
     * @brief computes the p percentile of the parameters for each node.
@@ -141,7 +141,7 @@ namespace secirv
         return percentile;
     }
 
-} // namespace secirv
+} // namespace osecirvvs
 } // namespace mio
 
 #endif //MEMILIO_SECIR_VACC_ANALYZE_RESULT_H

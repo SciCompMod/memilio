@@ -23,29 +23,29 @@
 #include "memilio/compartments/compartmentalmodel.h"
 #include "memilio/compartments/simulation.h"
 #include "memilio/epidemiology/populations.h"
-#include "secir_vaccine/infection_state.h"
-#include "secir_vaccine/parameters.h"
+#include "ode_secirvvs/infection_state.h"
+#include "ode_secirvvs/parameters.h"
 #include "memilio/math/smoother.h"
 #include "memilio/math/eigen_util.h"
 
 namespace mio
 {
-namespace secirv
+namespace osecirvvs
 {
-    class SecirModel : public CompartmentalModel<InfectionState, Populations<AgeGroup, InfectionState>, SecirParams>
+    class Model : public CompartmentalModel<InfectionState, Populations<AgeGroup, InfectionState>, Parameters>
     {
-        using Base = CompartmentalModel<InfectionState, mio::Populations<AgeGroup, InfectionState>, SecirParams>;
+        using Base = CompartmentalModel<InfectionState, mio::Populations<AgeGroup, InfectionState>, Parameters>;
         using Pa   = Base::ParameterSet;
         using Po   = Base::Populations;
 
     public:
-        SecirModel(const Populations& pop, const ParameterSet& params)
+        Model(const Populations& pop, const ParameterSet& params)
             : Base(pop, params)
         {
         }
 
-        SecirModel(int num_agegroups)
-            : SecirModel(Po({AgeGroup(num_agegroups), InfectionState::Count}), Pa(AgeGroup(num_agegroups)))
+        Model(int num_agegroups)
+            : Model(Po({AgeGroup(num_agegroups), InfectionState::Count}), Pa(AgeGroup(num_agegroups)))
         {
         }
 
@@ -461,7 +461,7 @@ namespace secirv
         template <class IOContext>
         void serialize(IOContext& io) const
         {
-            auto obj = io.create_object("Secir");
+            auto obj = io.create_object("Model");
             obj.add_element("Parameters", parameters);
             obj.add_element("Populations", populations);
         }
@@ -471,41 +471,41 @@ namespace secirv
         * @see mio::deserialize
         */
         template <class IOContext>
-        static IOResult<SecirModel> deserialize(IOContext& io)
+        static IOResult<Model> deserialize(IOContext& io)
         {
-            auto obj = io.expect_object("Secir");
+            auto obj = io.expect_object("Model");
             auto par = obj.expect_element("Parameters", Tag<ParameterSet>{});
             auto pop = obj.expect_element("Populations", Tag<Populations>{});
             return apply(
                 io,
                 [](auto&& par_, auto&& pop_) {
-                    return SecirModel{pop_, par_};
+                    return Model{pop_, par_};
                 },
                 par, pop);
         }
     };
 
     //forward declaration, see below.
-    template <class Base = Simulation<SecirModel>>
-    class SecirSimulation;
+    template <class Base = mio::Simulation<Model>>
+    class Simulation;
 
     /**
     * get percentage of infections per total population.
     * @param model the compartment model with initial values.
     * @param t current simulation time.
     * @param y current value of compartments.
-    * @tparam Base simulation type that uses a secir compartment model. see SecirSimulation.
+    * @tparam Base simulation type that uses a secir compartment model. see Simulation.
     */
-    template <class Base = Simulation<SecirModel>>
-    double get_infections_relative(const SecirSimulation<Base>& model, double t,
+    template <class Base = mio::Simulation<Model>>
+    double get_infections_relative(const Simulation<Base>& model, double t,
                                    const Eigen::Ref<const Eigen::VectorXd>& y);
 
     /**
     * specialization of compartment model simulation for secir models.
-    * @tparam Base simulation type that uses a secir compartment model. default mio::SecirSimulation. For testing purposes only!
+    * @tparam Base simulation type that uses a secir compartment model. default mio::Simulation. For testing purposes only!
     */
     template <class Base>
-    class SecirSimulation : public Base
+    class Simulation : public Base
     {
     public:
         /**
@@ -514,7 +514,7 @@ namespace secirv
         * @param t0 start time
         * @param dt time steps
         */
-        SecirSimulation(SecirModel const& model, double t0 = 0., double dt = 0.1)
+        Simulation(Model const& model, double t0 = 0., double dt = 0.1)
             : Base(model, t0, dt)
             , m_t_last_npi_check(t0)
         {
@@ -668,22 +668,22 @@ namespace secirv
     };
 
     /**
-    * specialization of simulate for secir models using SecirSimulation.
+    * specialization of simulate for secir models using Simulation.
     * @param t0 start time.
     * @param tmax end time.
     * @param dt time step.
     * @param model secir model to simulate.
     * @param integrator optional integrator, uses rk45 if nullptr.
     */
-    inline auto simulate(double t0, double tmax, double dt, const SecirModel& model,
+    inline auto simulate(double t0, double tmax, double dt, const Model& model,
                          std::shared_ptr<IntegratorCore> integrator = nullptr)
     {
-        return mio::simulate<SecirModel, SecirSimulation<>>(t0, tmax, dt, model, integrator);
+        return mio::simulate<Model, Simulation<>>(t0, tmax, dt, model, integrator);
     }
 
     //see declaration above.
     template <class Base>
-    double get_infections_relative(const SecirSimulation<Base>& sim, double /*t*/,
+    double get_infections_relative(const Simulation<Base>& sim, double /*t*/,
                                    const Eigen::Ref<const Eigen::VectorXd>& y)
     {
         double sum_inf = 0;
@@ -708,10 +708,10 @@ namespace secirv
     * @param t current simulation time.
     * @param y current value of compartments.
     * @return vector expression, same size as y, with migration factors per compartment.
-    * @tparam Base simulation type that uses a secir compartment model. see SecirSimulation.
+    * @tparam Base simulation type that uses a secir compartment model. see Simulation.
     */
-    template <class Base = Simulation<SecirModel>>
-    auto get_migration_factors(const SecirSimulation<Base>& sim, double /*t*/,
+    template <class Base = mio::Simulation<Model>>
+    auto get_migration_factors(const Simulation<Base>& sim, double /*t*/,
                                const Eigen::Ref<const Eigen::VectorXd>& y)
     {
         auto& params = sim.get_model().parameters;
@@ -750,8 +750,8 @@ namespace secirv
         return factors;
     }
 
-    template <class Base = Simulation<SecirModel>>
-    auto test_commuters(SecirSimulation<Base>& sim, Eigen::Ref<Eigen::VectorXd> migrated, double time)
+    template <class Base = mio::Simulation<Model>>
+    auto test_commuters(Simulation<Base>& sim, Eigen::Ref<Eigen::VectorXd> migrated, double time)
     {
         auto& model       = sim.get_model();
         auto nondetection = 1.0;
@@ -803,7 +803,7 @@ namespace secirv
         }
     }
 
-} // namespace secirv
+} // namespace osecirvvs
 } // namespace mio
 
 #endif

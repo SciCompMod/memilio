@@ -17,12 +17,12 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
-#include "secir_vaccine/model.h"
+#include "ode_secirvvs/analyze_result.h"
 
 namespace mio
 {
-namespace secirv
+namespace osecirvvs
 {
 
-} // namespace secirv
+} // namespace osecirvvs
 } // namespace mio

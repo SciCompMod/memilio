@@ -26,8 +26,8 @@
 
 #ifdef MEMILIO_HAS_JSONCPP
 
-#include "secir_vaccine/model.h"
-#include "secir_vaccine/analyze_result.h"
+#include "ode_secirvvs/model.h"
+#include "ode_secirvvs/analyze_result.h"
 #include "memilio/math/eigen_util.h"
 #include "memilio/mobility/graph.h"
 #include "memilio/mobility/mobility.h"
@@ -38,7 +38,7 @@
 
 namespace mio
 {
-namespace secirv
+namespace osecirvvs
 {
 
     namespace details
@@ -103,7 +103,7 @@ namespace secirv
         /**@}*/
 
         /**
-        * @brief sets populations data from RKI into a SecirModel
+        * @brief sets populations data from RKI into a Model
         * @param model vector of objects in which the data is set
         * @param path Path to RKI file
         * @param region vector of keys of the region of interest
@@ -406,7 +406,7 @@ namespace secirv
         }
 
         /**
-        * @brief reads number of ICU patients from DIVI register into SecirParams
+        * @brief reads number of ICU patients from DIVI register into Parameters
         * @param path Path to DIVI file
         * @param vregion Keys of the region of interest
         * @param date Date for which the arrays are initialized
@@ -604,7 +604,7 @@ namespace secirv
             return success();
         }
 
-        IOResult<void> set_vaccination_data(std::vector<SecirModel>& model, const std::string& path, Date date,
+        IOResult<void> set_vaccination_data(std::vector<Model>& model, const std::string& path, Date date,
                                             const std::vector<int>& vregion, int num_days);
     } // namespace details
 
@@ -1156,7 +1156,7 @@ namespace secirv
         return success();
     }
 
-} // namespace secirv
+} // namespace osecirvvs
 } // namespace mio
 
 #endif // MEMILIO_HAS_JSONCPP

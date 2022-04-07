@@ -27,8 +27,8 @@
 #include "memilio/io/epi_data.h"
 #include "memilio/io/result_io.h"
 #include "memilio/io/mobility_io.h"
-#include "secir_vaccine/parameters_io.h"
-#include "secir_vaccine/parameter_space.h"
+#include "ode_secirvvs/parameters_io.h"
+#include "ode_secirvvs/parameter_space.h"
 #include "boost/filesystem.hpp"
 #include <cstdio>
 #include <iomanip>
@@ -122,7 +122,7 @@ void array_assign_uniform_distribution(mio::CustomIndexArray<mio::UncertainValue
  * @param params Object that the parameters will be added to.
  * @returns Currently generates no errors.
  */
-mio::IOResult<void> set_covid_parameters(mio::secirv::SecirParams& params, bool long_time)
+mio::IOResult<void> set_covid_parameters(mio::osecirvvs::Parameters& params, bool long_time)
 {
     //times
     const double tinc             = 5.2; // R_2^(-1)+R_3^(-1)
@@ -141,16 +141,16 @@ mio::IOResult<void> set_covid_parameters(mio::secirv::SecirParams& params, bool 
     const double t_icu_dead_min[] = {4, 4, 4, 15, 15, 10}; // 5-16 (=R8^(-1) = T_U^R)
     const double t_icu_dead_max[] = {8, 8, 8, 18, 18, 12};
 
-    array_assign_uniform_distribution(params.get<mio::secirv::IncubationTime>(), tinc, tinc);
-    array_assign_uniform_distribution(params.get<mio::secirv::SerialInterval>(), tserint_min, tserint_max);
-    array_assign_uniform_distribution(params.get<mio::secirv::InfectiousTimeMild>(), t_inf_rec_min, t_inf_rec_max);
-    array_assign_uniform_distribution(params.get<mio::secirv::HomeToHospitalizedTime>(), t_inf_hosp_min,
+    array_assign_uniform_distribution(params.get<mio::osecirvvs::IncubationTime>(), tinc, tinc);
+    array_assign_uniform_distribution(params.get<mio::osecirvvs::SerialInterval>(), tserint_min, tserint_max);
+    array_assign_uniform_distribution(params.get<mio::osecirvvs::InfectiousTimeMild>(), t_inf_rec_min, t_inf_rec_max);
+    array_assign_uniform_distribution(params.get<mio::osecirvvs::HomeToHospitalizedTime>(), t_inf_hosp_min,
                                       t_inf_hosp_max);
-    array_assign_uniform_distribution(params.get<mio::secirv::HospitalizedToHomeTime>(), t_hosp_rec_min,
+    array_assign_uniform_distribution(params.get<mio::osecirvvs::HospitalizedToHomeTime>(), t_hosp_rec_min,
                                       t_hosp_rec_max);
-    array_assign_uniform_distribution(params.get<mio::secirv::HospitalizedToICUTime>(), t_hosp_icu_min, t_hosp_icu_max);
-    array_assign_uniform_distribution(params.get<mio::secirv::ICUToHomeTime>(), t_icu_rec_min, t_icu_rec_max);
-    array_assign_uniform_distribution(params.get<mio::secirv::ICUToDeathTime>(), t_icu_dead_min, t_icu_dead_max);
+    array_assign_uniform_distribution(params.get<mio::osecirvvs::HospitalizedToICUTime>(), t_hosp_icu_min, t_hosp_icu_max);
+    array_assign_uniform_distribution(params.get<mio::osecirvvs::ICUToHomeTime>(), t_icu_rec_min, t_icu_rec_max);
+    array_assign_uniform_distribution(params.get<mio::osecirvvs::ICUToDeathTime>(), t_icu_dead_min, t_icu_dead_max);
 
     //probabilities
     double fac_variant                   = 1.4;
@@ -196,40 +196,40 @@ mio::IOResult<void> set_covid_parameters(mio::secirv::SecirParams& params, bool 
     }
     const double reduc_mild_rec_time = temp_reduc_mild_rec_time;
 
-    array_assign_uniform_distribution(params.get<mio::secirv::InfectionProbabilityFromContact>(), transmission_risk_min,
+    array_assign_uniform_distribution(params.get<mio::osecirvvs::InfectionProbabilityFromContact>(), transmission_risk_min,
                                       transmission_risk_max);
-    array_assign_uniform_distribution(params.get<mio::secirv::RelativeCarrierInfectability>(), carr_infec_min,
+    array_assign_uniform_distribution(params.get<mio::osecirvvs::RelativeCarrierInfectability>(), carr_infec_min,
                                       carr_infec_max);
-    array_assign_uniform_distribution(params.get<mio::secirv::RiskOfInfectionFromSympomatic>(), beta_low_incidenc_min,
+    array_assign_uniform_distribution(params.get<mio::osecirvvs::RiskOfInfectionFromSympomatic>(), beta_low_incidenc_min,
                                       beta_low_incidenc_max);
-    array_assign_uniform_distribution(params.get<mio::secirv::MaxRiskOfInfectionFromSympomatic>(),
+    array_assign_uniform_distribution(params.get<mio::osecirvvs::MaxRiskOfInfectionFromSympomatic>(),
                                       beta_high_incidence_min, beta_high_incidence_max);
-    array_assign_uniform_distribution(params.get<mio::secirv::AsymptoticCasesPerInfectious>(), prob_car_rec_min,
+    array_assign_uniform_distribution(params.get<mio::osecirvvs::AsymptoticCasesPerInfectious>(), prob_car_rec_min,
                                       prob_car_rec_max);
-    array_assign_uniform_distribution(params.get<mio::secirv::HospitalizedCasesPerInfectious>(), prob_inf_hosp_min,
+    array_assign_uniform_distribution(params.get<mio::osecirvvs::HospitalizedCasesPerInfectious>(), prob_inf_hosp_min,
                                       prob_inf_hosp_max);
-    array_assign_uniform_distribution(params.get<mio::secirv::ICUCasesPerHospitalized>(), prob_hosp_icu_min,
+    array_assign_uniform_distribution(params.get<mio::osecirvvs::ICUCasesPerHospitalized>(), prob_hosp_icu_min,
                                       prob_hosp_icu_max);
-    array_assign_uniform_distribution(params.get<mio::secirv::DeathsPerICU>(), prob_icu_dead_min, prob_icu_dead_max);
+    array_assign_uniform_distribution(params.get<mio::osecirvvs::DeathsPerICU>(), prob_icu_dead_min, prob_icu_dead_max);
 
-    array_assign_uniform_distribution(params.get<mio::secirv::ExposedFactorPartiallyImmune>(), reduc_vacc_exp_min, reduc_vacc_exp_max);
-    array_assign_uniform_distribution(params.get<mio::secirv::ExposedFactorFullyImmune>(), reduc_immune_exp_min,
+    array_assign_uniform_distribution(params.get<mio::osecirvvs::ExposedFactorPartiallyImmune>(), reduc_vacc_exp_min, reduc_vacc_exp_max);
+    array_assign_uniform_distribution(params.get<mio::osecirvvs::ExposedFactorFullyImmune>(), reduc_immune_exp_min,
                                       reduc_immune_exp_max);
-    array_assign_uniform_distribution(params.get<mio::secirv::InfectedFactorPartiallyImmune>(), reduc_vacc_inf_min, reduc_vacc_inf_max);
-    array_assign_uniform_distribution(params.get<mio::secirv::InfectedFactorFullyImmune>(), reduc_immune_inf_min,
+    array_assign_uniform_distribution(params.get<mio::osecirvvs::InfectedFactorPartiallyImmune>(), reduc_vacc_inf_min, reduc_vacc_inf_max);
+    array_assign_uniform_distribution(params.get<mio::osecirvvs::InfectedFactorFullyImmune>(), reduc_immune_inf_min,
                                       reduc_immune_inf_max);
-    array_assign_uniform_distribution(params.get<mio::secirv::HospitalizedFactorPartiallyImmune>(), reduc_vacc_hosp_min,
+    array_assign_uniform_distribution(params.get<mio::osecirvvs::HospitalizedFactorPartiallyImmune>(), reduc_vacc_hosp_min,
                                       reduc_vacc_hosp_max);
-    array_assign_uniform_distribution(params.get<mio::secirv::HospitalizedFactorFullyImmune>(), reduc_immune_hosp_min,
+    array_assign_uniform_distribution(params.get<mio::osecirvvs::HospitalizedFactorFullyImmune>(), reduc_immune_hosp_min,
                                       reduc_immune_hosp_max);
-    array_assign_uniform_distribution(params.get<mio::secirv::InfectiousTimeFactorImmune>(), reduc_mild_rec_time,
+    array_assign_uniform_distribution(params.get<mio::osecirvvs::InfectiousTimeFactorImmune>(), reduc_mild_rec_time,
                                       reduc_mild_rec_time);
 
     //sasonality
     const double seasonality_min = 0.1;
     const double seasonality_max = 0.3;
 
-    assign_uniform_distribution(params.get<mio::secirv::Seasonality>(), seasonality_min, seasonality_max);
+    assign_uniform_distribution(params.get<mio::osecirvvs::Seasonality>(), seasonality_min, seasonality_max);
 
     return mio::success();
 }
@@ -246,7 +246,7 @@ static const std::map<ContactLocation, std::string> contact_locations = {{Contac
  * @param params Object that the contact matrices will be added to.
  * @returns any io errors that happen during reading of the files.
  */
-mio::IOResult<void> set_contact_matrices(const fs::path& data_dir, mio::secirv::SecirParams& params)
+mio::IOResult<void> set_contact_matrices(const fs::path& data_dir, mio::osecirvvs::Parameters& params)
 {
     //TODO: io error handling
     auto contact_matrices = mio::ContactMatrixGroup(contact_locations.size(), size_t(params.get_num_groups()));
@@ -258,7 +258,7 @@ mio::IOResult<void> set_contact_matrices(const fs::path& data_dir, mio::secirv::
         contact_matrices[size_t(contact_location.first)].get_baseline() = baseline;
         contact_matrices[size_t(contact_location.first)].get_minimum()  = Eigen::MatrixXd::Zero(6, 6);
     }
-    params.get<mio::secirv::ContactPatterns>() = mio::UncertainContactMatrix(contact_matrices);
+    params.get<mio::osecirvvs::ContactPatterns>() = mio::UncertainContactMatrix(contact_matrices);
 
     return mio::success();
 }
@@ -270,10 +270,10 @@ mio::IOResult<void> set_contact_matrices(const fs::path& data_dir, mio::secirv::
  * @param params Object that the NPIs will be added to.
  * @returns Currently generates no errors.
  */
-mio::IOResult<void> set_npis(mio::Date start_date, mio::Date end_date, mio::secirv::SecirParams& params, bool late,
+mio::IOResult<void> set_npis(mio::Date start_date, mio::Date end_date, mio::osecirvvs::Parameters& params, bool late,
                              bool masks, bool test)
 {
-    auto& contacts         = params.get<mio::secirv::ContactPatterns>();
+    auto& contacts         = params.get<mio::osecirvvs::ContactPatterns>();
     auto& contact_dampings = contacts.get_dampings();
 
     if (test) {
@@ -436,7 +436,7 @@ mio::IOResult<void> set_npis(mio::Date start_date, mio::Date end_date, mio::seci
 
     narrow = 0.0;
     //local dynamic NPIs
-    auto& dynamic_npis        = params.get<mio::secirv::DynamicNPIsInfected>();
+    auto& dynamic_npis        = params.get<mio::osecirvvs::DynamicNPIsInfected>();
     auto dynamic_npi_dampings = std::vector<mio::DampingSampling>();
 
     dynamic_npi_dampings.push_back(contacts_at_home(mio::SimulationTime(0), 0.1 + narrow, 0.3 - narrow));
@@ -486,7 +486,7 @@ mio::IOResult<void> set_npis(mio::Date start_date, mio::Date end_date, mio::seci
  * Same total populaton but different spread of infection in each county.
  * @param counties parameters for each county.
  */
-void set_synthetic_population_data(std::vector<mio::secirv::SecirModel>& counties)
+void set_synthetic_population_data(std::vector<mio::osecirvvs::Model>& counties)
 {
     for (size_t county_idx = 0; county_idx < counties.size(); ++county_idx) {
         double nb_total_t0 = 10000, nb_exp_t0 = 2, nb_inf_t0 = 0, nb_car_t0 = 0, nb_hosp_t0 = 0, nb_icu_t0 = 0,
@@ -495,15 +495,15 @@ void set_synthetic_population_data(std::vector<mio::secirv::SecirModel>& countie
         nb_exp_t0 = (double)((county_idx % 10 + 1) * 3);
 
         for (mio::AgeGroup i = 0; i < counties[county_idx].parameters.get_num_groups(); i++) {
-            counties[county_idx].populations[{i, mio::secirv::InfectionState::Exposed}]      = nb_exp_t0;
-            counties[county_idx].populations[{i, mio::secirv::InfectionState::Carrier}]      = nb_car_t0;
-            counties[county_idx].populations[{i, mio::secirv::InfectionState::Infected}]     = nb_inf_t0;
-            counties[county_idx].populations[{i, mio::secirv::InfectionState::Hospitalized}] = nb_hosp_t0;
-            counties[county_idx].populations[{i, mio::secirv::InfectionState::ICU}]          = nb_icu_t0;
-            counties[county_idx].populations[{i, mio::secirv::InfectionState::Recovered}]    = nb_rec_t0;
-            counties[county_idx].populations[{i, mio::secirv::InfectionState::Dead}]         = nb_dead_t0;
+            counties[county_idx].populations[{i, mio::osecirvvs::InfectionState::Exposed}]      = nb_exp_t0;
+            counties[county_idx].populations[{i, mio::osecirvvs::InfectionState::Carrier}]      = nb_car_t0;
+            counties[county_idx].populations[{i, mio::osecirvvs::InfectionState::Infected}]     = nb_inf_t0;
+            counties[county_idx].populations[{i, mio::osecirvvs::InfectionState::Hospitalized}] = nb_hosp_t0;
+            counties[county_idx].populations[{i, mio::osecirvvs::InfectionState::ICU}]          = nb_icu_t0;
+            counties[county_idx].populations[{i, mio::osecirvvs::InfectionState::Recovered}]    = nb_rec_t0;
+            counties[county_idx].populations[{i, mio::osecirvvs::InfectionState::Dead}]         = nb_dead_t0;
             counties[county_idx].populations.set_difference_from_group_total<mio::AgeGroup>(
-                {i, mio::secirv::InfectionState::Susceptible}, nb_total_t0);
+                {i, mio::osecirvvs::InfectionState::Susceptible}, nb_total_t0);
         }
     }
 }
@@ -518,21 +518,21 @@ void set_synthetic_population_data(std::vector<mio::secirv::SecirModel>& countie
  * @param params_graph graph object that the nodes will be added to.
  * @returns any io errors that happen during reading of the files.
  */
-mio::IOResult<void> set_nodes(const mio::secirv::SecirParams& params, mio::Date start_date, mio::Date end_date,
+mio::IOResult<void> set_nodes(const mio::osecirvvs::Parameters& params, mio::Date start_date, mio::Date end_date,
                               const fs::path& data_dir,
-                              mio::Graph<mio::secirv::SecirModel, mio::MigrationParameters>& params_graph)
+                              mio::Graph<mio::osecirvvs::Model, mio::MigrationParameters>& params_graph)
 {
     namespace de = mio::regions::de;
 
     BOOST_OUTCOME_TRY(county_ids, mio::get_county_ids((data_dir / "pydata" / "Germany").string()));
-    std::vector<mio::secirv::SecirModel> counties(county_ids.size(),
-                                                  mio::secirv::SecirModel((int)size_t(params.get_num_groups())));
+    std::vector<mio::osecirvvs::Model> counties(county_ids.size(),
+                                                  mio::osecirvvs::Model((int)size_t(params.get_num_groups())));
     for (auto& county : counties) {
         county.parameters = params;
     }
     auto scaling_factor_infected = std::vector<double>(size_t(params.get_num_groups()), 1.0);
     auto scaling_factor_icu      = 1.0;
-    BOOST_OUTCOME_TRY(mio::secirv::read_input_data_county(
+    BOOST_OUTCOME_TRY(mio::osecirvvs::read_input_data_county(
         counties, start_date, county_ids, scaling_factor_infected, scaling_factor_icu,
         (data_dir / "pydata" / "Germany").string(), mio::get_offset_in_days(end_date, start_date)));
     //set_synthetic_population_data(counties);
@@ -541,13 +541,13 @@ mio::IOResult<void> set_nodes(const mio::secirv::SecirParams& params, mio::Date 
 
         //local parameters
         auto tnt_capacity = counties[county_idx].populations.get_total() * 1.43 / 100000.;
-        assign_uniform_distribution(counties[county_idx].parameters.get<mio::secirv::TestAndTraceCapacity>(),
+        assign_uniform_distribution(counties[county_idx].parameters.get<mio::osecirvvs::TestAndTraceCapacity>(),
                                     0.8 * tnt_capacity, 1.2 * tnt_capacity);
 
         //holiday periods (damping set globally, see set_npis)
         auto holiday_periods =
             de::get_holidays(de::get_state_id(de::CountyId(county_ids[county_idx])), start_date, end_date);
-        auto& contacts = counties[county_idx].parameters.get<mio::secirv::ContactPatterns>();
+        auto& contacts = counties[county_idx].parameters.get<mio::osecirvvs::ContactPatterns>();
         contacts.get_school_holidays() =
             std::vector<std::pair<mio::SimulationTime, mio::SimulationTime>>(holiday_periods.size());
         std::transform(
@@ -558,7 +558,7 @@ mio::IOResult<void> set_nodes(const mio::secirv::SecirParams& params, mio::Date 
 
         //uncertainty in populations
         for (auto i = mio::AgeGroup(0); i < params.get_num_groups(); i++) {
-            for (auto j = mio::Index<mio::secirv::InfectionState>(0); j < mio::secirv::InfectionState::Count; ++j) {
+            for (auto j = mio::Index<mio::osecirvvs::InfectionState>(0); j < mio::osecirvvs::InfectionState::Count; ++j) {
                 auto& compartment_value = counties[county_idx].populations[{i, j}];
                 assign_uniform_distribution(compartment_value, 0.9 * double(compartment_value),
                                             1.1 * double(compartment_value));
@@ -579,7 +579,7 @@ mio::IOResult<void> set_nodes(const mio::secirv::SecirParams& params, mio::Date 
  * @returns any io errors that happen during reading of the files.
  */
 mio::IOResult<void> set_edges(const fs::path& data_dir,
-                              mio::Graph<mio::secirv::SecirModel, mio::MigrationParameters>& params_graph)
+                              mio::Graph<mio::osecirvvs::Model, mio::MigrationParameters>& params_graph)
 {
     //migration between nodes
     BOOST_OUTCOME_TRY(
@@ -594,18 +594,18 @@ mio::IOResult<void> set_edges(const fs::path& data_dir,
         return mio::failure(mio::StatusCode::InvalidValue, "Migration matrices not the correct size.");
     }
 
-    auto migrating_compartments = {mio::secirv::InfectionState::Susceptible,
-                                   mio::secirv::InfectionState::Exposed,
-                                   mio::secirv::InfectionState::Carrier,
-                                   mio::secirv::InfectionState::Infected,
-                                   mio::secirv::InfectionState::Recovered,
-                                   mio::secirv::InfectionState::SusceptiblePartiallyImmune,
-                                   mio::secirv::InfectionState::ExposedPartiallyImmune,
-                                   mio::secirv::InfectionState::CarrierPartiallyImmune,
-                                   mio::secirv::InfectionState::InfectedPartiallyImmune,
-                                   mio::secirv::InfectionState::ExposedFullyImmune,
-                                   mio::secirv::InfectionState::CarrierFullyImmune,
-                                   mio::secirv::InfectionState::InfectedFullyImmune};
+    auto migrating_compartments = {mio::osecirvvs::InfectionState::Susceptible,
+                                   mio::osecirvvs::InfectionState::Exposed,
+                                   mio::osecirvvs::InfectionState::Carrier,
+                                   mio::osecirvvs::InfectionState::Infected,
+                                   mio::osecirvvs::InfectionState::Recovered,
+                                   mio::osecirvvs::InfectionState::SusceptiblePartiallyImmune,
+                                   mio::osecirvvs::InfectionState::ExposedPartiallyImmune,
+                                   mio::osecirvvs::InfectionState::CarrierPartiallyImmune,
+                                   mio::osecirvvs::InfectionState::InfectedPartiallyImmune,
+                                   mio::osecirvvs::InfectionState::ExposedFullyImmune,
+                                   mio::osecirvvs::InfectionState::CarrierFullyImmune,
+                                   mio::osecirvvs::InfectionState::InfectedFullyImmune};
     for (size_t county_idx_i = 0; county_idx_i < params_graph.nodes().size(); ++county_idx_i) {
         for (size_t county_idx_j = 0; county_idx_j < params_graph.nodes().size(); ++county_idx_j) {
             auto& populations = params_graph.nodes()[county_idx_i].property.populations;
@@ -659,7 +659,7 @@ mio::IOResult<void> set_edges(const fs::path& data_dir,
  * @param data_dir data directory.
  * @returns created graph or any io errors that happen during reading of the files.
  */
-mio::IOResult<mio::Graph<mio::secirv::SecirModel, mio::MigrationParameters>>
+mio::IOResult<mio::Graph<mio::osecirvvs::Model, mio::MigrationParameters>>
 create_graph(mio::Date start_date, mio::Date end_date, const fs::path& data_dir, bool late, bool masks, bool test,
              bool long_time)
 {
@@ -674,16 +674,16 @@ create_graph(mio::Date start_date, mio::Date end_date, const fs::path& data_dir,
 
     //global parameters
     const int num_age_groups = 6;
-    mio::secirv::SecirParams params(num_age_groups);
-    params.get<mio::secirv::StartDay>()    = start_day;
-    params.get<mio::secirv::StartSummer>() = start_summer;
+    mio::osecirvvs::Parameters params(num_age_groups);
+    params.get<mio::osecirvvs::StartDay>()    = start_day;
+    params.get<mio::osecirvvs::StartSummer>() = start_summer;
     BOOST_OUTCOME_TRY(set_covid_parameters(params, long_time));
     BOOST_OUTCOME_TRY(set_contact_matrices(data_dir, params));
     BOOST_OUTCOME_TRY(set_npis(start_date, end_date, params, late, masks, test));
 
     //graph of counties with populations and local parameters
     //and migration between counties
-    mio::Graph<mio::secirv::SecirModel, mio::MigrationParameters> params_graph;
+    mio::Graph<mio::osecirvvs::Model, mio::MigrationParameters> params_graph;
     BOOST_OUTCOME_TRY(set_nodes(params, start_date, end_date, data_dir, params_graph));
     BOOST_OUTCOME_TRY(set_edges(data_dir, params_graph));
 
@@ -695,9 +695,9 @@ create_graph(mio::Date start_date, mio::Date end_date, const fs::path& data_dir,
  * @param save_dir directory where the graph was saved.
  * @returns created graph or any io errors that happen during reading of the files.
  */
-mio::IOResult<mio::Graph<mio::secirv::SecirModel, mio::MigrationParameters>> load_graph(const fs::path& save_dir)
+mio::IOResult<mio::Graph<mio::osecirvvs::Model, mio::MigrationParameters>> load_graph(const fs::path& save_dir)
 {
-    return mio::read_graph<mio::secirv::SecirModel>(save_dir.string());
+    return mio::read_graph<mio::osecirvvs::Model>(save_dir.string());
 }
 
 /**
@@ -705,7 +705,7 @@ mio::IOResult<mio::Graph<mio::secirv::SecirModel, mio::MigrationParameters>> loa
  * @param save_dir directory where the graph will be saved.
  * @returns any io errors that happen during writing of the files.
  */
-mio::IOResult<void> save_graph(const mio::Graph<mio::secirv::SecirModel, mio::MigrationParameters>& params_graph,
+mio::IOResult<void> save_graph(const mio::Graph<mio::osecirvvs::Model, mio::MigrationParameters>& params_graph,
                                const fs::path& save_dir)
 {
     return mio::write_graph(params_graph, save_dir.string());
@@ -718,10 +718,10 @@ mio::IOResult<void> save_graph(const mio::Graph<mio::secirv::SecirModel, mio::Mi
  * @param county_ids id of each county node.
  * @return graph with county nodes but no edges.
  */
-auto make_graph_no_edges(const std::vector<mio::secirv::SecirModel>& params, const std::vector<int>& county_ids)
+auto make_graph_no_edges(const std::vector<mio::osecirvvs::Model>& params, const std::vector<int>& county_ids)
 {
     //make a graph without edges for writing to file
-    auto graph = mio::Graph<mio::secirv::SecirModel, mio::MigrationParameters>();
+    auto graph = mio::Graph<mio::osecirvvs::Model, mio::MigrationParameters>();
     for (auto i = size_t(0); i < county_ids.size(); ++i) {
         graph.add_node(county_ids[i], params[i]);
     }
@@ -739,7 +739,7 @@ auto make_graph_no_edges(const std::vector<mio::secirv::SecirModel>& params, con
  * @return any io errors that occur during writing of the files.
  */
 mio::IOResult<void> save_result(const std::vector<mio::TimeSeries<double>>& result,
-                                const std::vector<mio::secirv::SecirModel>& params, const std::vector<int>& county_ids,
+                                const std::vector<mio::osecirvvs::Model>& params, const std::vector<int>& county_ids,
                                 const fs::path& result_dir, size_t run_idx)
 {
     auto result_dir_run = result_dir / ("run" + std::to_string(run_idx));
@@ -761,7 +761,7 @@ mio::IOResult<void> save_result(const std::vector<mio::TimeSeries<double>>& resu
  * @return any io errors that occur during writing of the files.
  */
 mio::IOResult<void> save_results(const std::vector<std::vector<mio::TimeSeries<double>>>& ensemble_results,
-                                 const std::vector<std::vector<mio::secirv::SecirModel>>& ensemble_params,
+                                 const std::vector<std::vector<mio::osecirvvs::Model>>& ensemble_params,
                                  const std::vector<int>& county_ids, const fs::path& result_dir)
 {
     //save results and sum of results over nodes
@@ -887,7 +887,7 @@ mio::IOResult<void> run(RunMode mode, const fs::path& data_dir, const fs::path& 
     const auto num_runs     = 500;
 
     //create or load graph
-    mio::Graph<mio::secirv::SecirModel, mio::MigrationParameters> params_graph;
+    mio::Graph<mio::osecirvvs::Model, mio::MigrationParameters> params_graph;
     if (mode == RunMode::Save) {
         BOOST_OUTCOME_TRY(created, create_graph(start_date, end_date, data_dir, late, masks, test, long_time));
         BOOST_OUTCOME_TRY(save_graph(created, save_dir));
@@ -905,10 +905,10 @@ mio::IOResult<void> run(RunMode mode, const fs::path& data_dir, const fs::path& 
 
     //run parameter study
     auto parameter_study =
-        mio::ParameterStudy<mio::secirv::SecirSimulation<>>{params_graph, 0.0, num_days_sim, 0.5, num_runs};
+        mio::ParameterStudy<mio::osecirvvs::Simulation<>>{params_graph, 0.0, num_days_sim, 0.5, num_runs};
     auto ensemble_results = std::vector<std::vector<mio::TimeSeries<double>>>{};
     ensemble_results.reserve(size_t(num_runs));
-    auto ensemble_params = std::vector<std::vector<mio::secirv::SecirModel>>{};
+    auto ensemble_params = std::vector<std::vector<mio::osecirvvs::Model>>{};
     ensemble_params.reserve(size_t(num_runs));
     auto save_result_result = mio::IOResult<void>(mio::success());
     auto run_idx            = size_t(0);
