@@ -389,18 +389,19 @@ mio::IOResult<void> set_npis(mio::Date start_date, mio::Date end_date, mio::Seci
     //local dynamic NPIs
     auto& dynamic_npis        = params.get<mio::DynamicNPIsInfected>();
     auto dynamic_npi_dampings = std::vector<mio::DampingSampling>();
-    dynamic_npi_dampings.push_back(contacts_at_home(mio::SimulationTime(0), 0.2, 0.4));
-    dynamic_npi_dampings.push_back(school_closure(mio::SimulationTime(0), 1.0, 1.0)); //0.25 - 0.25 in autumn
-    dynamic_npi_dampings.push_back(home_office(mio::SimulationTime(0), 0.2, 0.3));
-    dynamic_npi_dampings.push_back(social_events(mio::SimulationTime(0), 0.2, 0.4));
-    dynamic_npi_dampings.push_back(social_events_work(mio::SimulationTime(0), 0.0, 0.0));
-    dynamic_npi_dampings.push_back(physical_distancing_home_school(mio::SimulationTime(0), 0.2, 0.4));
-    dynamic_npi_dampings.push_back(physical_distancing_work_other(mio::SimulationTime(0), 0.2, 0.4));
+    dynamic_npi_dampings.push_back(
+        contacts_at_home(mio::SimulationTime(0), 0.6, 0.8)); // increased from [0.4, 0.6] in Nov
+    dynamic_npi_dampings.push_back(school_closure(mio::SimulationTime(0), 0.25, 0.25)); // see paper
+    dynamic_npi_dampings.push_back(home_office(mio::SimulationTime(0), 0.2, 0.3)); // ...
+    dynamic_npi_dampings.push_back(social_events(mio::SimulationTime(0), 0.6, 0.8));
+    dynamic_npi_dampings.push_back(social_events_work(mio::SimulationTime(0), 0.1, 0.2));
+    dynamic_npi_dampings.push_back(physical_distancing_home_school(mio::SimulationTime(0), 0.6, 0.8));
+    dynamic_npi_dampings.push_back(physical_distancing_work_other(mio::SimulationTime(0), 0.6, 0.8));
     dynamic_npi_dampings.push_back(senior_awareness(mio::SimulationTime(0), 0.0, 0.0));
     dynamic_npis.set_interval(mio::SimulationTime(3.0));
     dynamic_npis.set_duration(mio::SimulationTime(14.0));
     dynamic_npis.set_base_value(100'000);
-    dynamic_npis.set_threshold(10.0, dynamic_npi_dampings);
+    dynamic_npis.set_threshold(200.0, dynamic_npi_dampings);
 
     //school holidays (holiday periods are set per node, see set_nodes)
     auto school_holiday_value = mio::UncertainValue();
