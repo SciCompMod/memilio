@@ -235,6 +235,10 @@ def transform_npi_data(fine_resolution=2,
     if not read_data:
 
         if fine_resolution > 0:
+            # defines delay in number of days between exceeding
+            # incidence threshold and NPI getting active
+            npi_activation_delay = 0
+
             try:
                 df_npis_old = pd.read_csv(
                     os.path.join(
@@ -466,27 +470,49 @@ def transform_npi_data(fine_resolution=2,
                     str(dates_new[i] + timedelta(date_diff[i] - 1)))
             sys.exit('Exiting. Dates missing in data frame.')
 
+        min_date = []
+        max_date = []
+
         # get RKI infectious numbers to find dates where incidence-dependent
         # NPIs were active
         if fine_resolution > 0:
             df_infec_rki = pd.read_json(os.path.join(
                 directory, 'all_county_all_dates_repdate_rki.json'))
+            df_infec_rki[dd.EngEng['date']] = pd.to_datetime(
+                df_infec_rki[dd.EngEng['date']])
             df_population = pd.read_json(
                 directory + "county_current_population.json")
+            min_date.append(
+                df_infec_rki[dd.EngEng['date']].min().to_pydatetime())
+            max_date.append(
+                df_infec_rki[dd.EngEng['date']].max().to_pydatetime())
+
+        # adapt time series according to available dates and start_date,
+        # end_date input parameter
+        start_date_new = max(
+            min_date + [min(dates_new), pd.to_datetime(start_date)])
+        end_date_new = min(
+            max_date + [max(dates_new),
+                        pd.to_datetime(end_date)])
 
         # iterate over countyIDs
         counters = np.zeros(4)  # time counter for output only
         cid = 0
         for countyID in [1001]:  # unique_geo_entities:
 
-            # compute incidence based on previous data frames
-            df_infec_local = df_infec_rki[df_infec_rki[dd.EngEng['idCounty']] == countyID].copy(
-            )
-            pop_local = df_population.loc[df_population[dd.EngEng['idCounty']]
-                                          == countyID, dd.EngEng['population']].values[0]
-            incidence_local = df_infec_local[dd.EngEng['confirmed']].diff(
-                periods=7).fillna(df_infec_local[dd.EngEng['confirmed']])
-            df_infec_local['Incidence'] = incidence_local / pop_local * 100000
+            if fine_resolution > 0:
+                # compute incidence based on previous data frames
+                df_infec_local = df_infec_rki[df_infec_rki[dd.EngEng['idCounty']] == countyID].copy(
+                )
+                pop_local = df_population.loc[df_population[dd.EngEng['idCounty']]
+                                              == countyID, dd.EngEng['population']].values[0]
+                incidence_local = df_infec_local[dd.EngEng['confirmed']].diff(
+                    periods=7).fillna(df_infec_local[dd.EngEng['confirmed']])
+                df_infec_local['Incidence'] = incidence_local / pop_local * 100000
+
+                # cut infection information at start_date_new and end_date_new
+                df_infec_local = df_infec_local.loc[(df_infec_local[dd.EngEng['date']] >= start_date_new) & (
+                    df_infec_local[dd.EngEng['date']] <= end_date_new), :].reset_index()
 
             # get county-local data frame
             start_time = time.perf_counter()
@@ -545,9 +571,29 @@ def transform_npi_data(fine_resolution=2,
             #       active and evaluation has to be conducted against confirmed
             #       infections to determine whether the NPI was active
             start_time = time.perf_counter()
-            # TODO
-            for incidval, npi_indices in incidence_thresholds_to_npis.items():
-                print(incidval)
+            if fine_resolution > 0:
+                # cut NPI information at start_date_new and end_date_new
+                df_local_new = df_local_new.loc[(df_local_new[dd.EngEng['date']] >= start_date_new) & (
+                    df_local_new[dd.EngEng['date']] <= end_date_new), :].reset_index()
+                # get index of first NPI column in local data frame
+                npis_idx_start = list(
+                    df_local_new.columns).index(
+                    npis_considered[dd.EngEng['npiCode']][0])
+
+                # iterate through all NPIs and activate if incidence threshold
+                # is exceeded
+                for incidval, npi_indices in incidence_thresholds_to_npis.items():
+                    if incidval >= 0:
+                        int_active = (
+                            df_infec_local['Incidence'] >= incidval).astype(int)
+                        # multiply rows of data frame by either 1 if threshold
+                        # passed (i.e., mentioned NPI is active) or zero
+                        # (i.e., mentioned NPI is not active)
+                        # 'mul' multiplies the original data frame row by row
+                        # with the respective value in int_active
+                        df_local_new.iloc[:, npis_idx_start + np.array(npi_indices)] \
+                            = df_local_new.iloc[:, npis_idx_start + np.array(npi_indices)].mul(int_active, axis=0)
+
             counters[cid] += time.perf_counter()-start_time
             cid += 1
             ### ###
