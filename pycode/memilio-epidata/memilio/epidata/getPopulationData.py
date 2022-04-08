@@ -286,7 +286,7 @@ def get_population_data(read_data=dd.defaultDict['read_data'],
         print('Information: Using new population data file ' + filename)
         df_pop_raw = gd.loadExcel(
             new_data_file, apiUrl='', extension='.xlsx',
-            param_dict={"engine": None, "sheet_name": filename, "header": 4})
+            param_dict={"engine": "openpyxl", "sheet_name": filename, "header": 4})
         column_names = list(df_pop_raw.columns)
         # rename columns
         rename_columns = {

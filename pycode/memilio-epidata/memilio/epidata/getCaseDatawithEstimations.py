@@ -143,7 +143,7 @@ WARNING: This file is experimental and has not been tested.
             df_cases.loc[(df_cases[dstr] == date_jh), deaths_estimated] = np.round(
                 fraction_deaths_conf * df_cases.loc[(df_cases[dstr] == date_jh), confirmed])
 
-        df_cases = df_cases.drop([dstr], 1)
+        df_cases = df_cases.drop([dstr], axis=1)
         gd.write_dataframe(df_cases, data_path,
                            file_to_change + "_estimated", file_format)
 

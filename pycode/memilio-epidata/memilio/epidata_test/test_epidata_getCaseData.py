@@ -43,9 +43,9 @@ class TestGetCaseData(fake_filesystem_unittest.TestCase):
 
     # load test data for read
     filename = os.path.join(here, 'test_epidata_getCaseData_data_read.json')
-    file_object = open(filename, 'r')
     # Load JSON file data to a python dict object.
-    dict_object = json.load(file_object)
+    with open(filename, 'r') as file_object:
+        dict_object = json.load(file_object)
     test_string_all_federal_states_and_counties_read = json.dumps(dict_object)[:-1] +\
         (""",{"Altersgruppe":"A60-A79","Geschlecht":"M","AnzahlFall":1,"AnzahlTodesfall":0,"Meldedatum":"2020-08-11",\
     "IdLandkreis":1002,"NeuerFall":0,"NeuerTodesfall":-9,"Refdatum":"2020-08-07","NeuGenesen":0,"AnzahlGenesen":1,\
@@ -109,9 +109,9 @@ class TestGetCaseData(fake_filesystem_unittest.TestCase):
     # (https://github.com/robert-koch-institut/SARS-CoV-2_Infektionen_in_Deutschland)
     filename = os.path.join(
         here, 'test_epidata_getCaseData_data_github.json')
-    file_object = open(filename, 'r')
     # Load JSON file data to a python dict object.
-    dict_object_github = json.load(file_object)
+    with open(filename, 'r') as file_object:
+        dict_object_github = json.load(file_object)
 
     test_string_all_federal_states_and_counties_github = json.dumps(
         dict_object_github)[:-1] + ("""]""")
@@ -120,9 +120,9 @@ class TestGetCaseData(fake_filesystem_unittest.TestCase):
     # (https://npgeo-corona-npgeo-de.hub.arcgis.com/datasets/66876b81065340a4a48710b062319336/about)
     filename = os.path.join(
         here, 'test_epidata_getCaseData_data_arcgis.json')
-    file_object = open(filename, 'r')
     # Load JSON file data to a python dict object.
-    dict_object_arcgis = json.load(file_object)
+    with open(filename, 'r') as file_object:
+        dict_object_arcgis = json.load(file_object)
 
     test_string_all_federal_states_and_counties_arcgis = json.dumps(
         dict_object_arcgis)[:-1] + ("""]""")
