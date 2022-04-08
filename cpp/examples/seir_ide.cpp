@@ -39,10 +39,9 @@ int main()
     mio::TimeSeries<double> result(1);
 
     /*  construct initial TimeSeries with initial times and related quantity of Susceptibles. 
-    *   The first time point should satisfy the condition of the IDE model 
-    *   (should be earlier than time -(k-1)*dt with k=std::ceil((infectiousTime+latencyTime)/dt))
-     */
-    result.add_time_point<Eigen::VectorXd>(-16.5, Vec::Constant(1, N * 0.95));
+    *   The TimeSeries should satisfy the conditions of the IDEmodel. Accordingly, the first time point is set to -15.
+    */
+    result.add_time_point<Eigen::VectorXd>(-15.0, Vec::Constant(1, N * 0.95));
     while (result.get_last_time() < 0) {
         result.add_time_point(result.get_last_time() + dt,
                               Vec::Constant(1, (double)result.get_last_value()[0] + result.get_last_time() / 10.0));

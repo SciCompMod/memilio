@@ -36,8 +36,8 @@ public:
     * Constructor of IDEModel
     * @param init TimeSeries containing the initial (time, quantity of susceptible) values
     *   the initial time steps should be equidistant with distance dt_init; 
-    *   we need values from time -(m_k-1)*dt until 0 for our calculation (with m_k=std::ceil((m_infectious_time+m_latency_time)/dt)) 
-    *   -> first initial time point should be earlier than -(m_k-1)*dt
+    *   the first point of time should be earlier than -(m_k-1)*dt with m_k=std::ceil((m_infectious_time+m_latency_time)/dt)
+    *   the last point of time should be 0
     * @param dt_init size of the time step used for numerical integration.
     * @param N_init Population of the considered region. 
     */
@@ -66,7 +66,7 @@ public:
     * @param t_max last simulation day
     * @return result of the simulation, stored in a TimeSeries with simulation time and associated number of susceptibles (S).
     */
-    const TimeSeries<double>& simulate(int t_max);
+    TimeSeries<double> const& simulate(int t_max);
 
     /**
     * Calculate the distribution of the population in E,I and R based on the calculated values for S.
@@ -75,7 +75,7 @@ public:
     * @return result of the calculation stored in an TimeSeries. The TimeSeries contains the simulation time and an associated Vector 
     * with values for S, E, I and R 
     */
-    const TimeSeries<double>& calculate_EIR();
+    TimeSeries<double> const& calculate_EIR();
 
     /**
     * print simulation result

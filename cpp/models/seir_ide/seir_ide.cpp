@@ -20,15 +20,15 @@
 
 #include "seir_ide/seir_ide.h"
 #include "memilio/epidemiology/contact_matrix.h"
+#include "memilio/utils/logging.h"
 #include <iostream>
 
 namespace mio
 {
-/* TODO east coast const
-    logging in constructor (include)
-    constructor umformulieren ( no we need, ->)
+/* TODO 
     Test schreiben
-    genug Kommentare im Bsp?*/
+    parameters in struct
+    statt effective contact, contacts+ transmission prob*/
 
 using Vec = TimeSeries<double>::Vector;
 
@@ -39,6 +39,11 @@ IdeModel::IdeModel(TimeSeries<double>&& init, double dt_init, int N_init)
 {
     m_l = (int)std::floor(m_latency_time / m_dt);
     m_k = (int)std::ceil((m_infectious_time + m_latency_time) / m_dt);
+    if (m_result.get_time(0) > -(m_k - 1) * m_dt) {
+        log_warning("Constraint check: Initial data starts later than necessary. The simulation may be distorted. "
+                    "Start the data at time {:.4f} at the latest.",
+                    -(m_k - 1) * m_dt);
+    }
 }
 
 void IdeModel::set_latency_time(double latency)
@@ -90,7 +95,7 @@ double IdeModel::num_integration_inner_integral(Eigen::Index idx) const
     return res;
 }
 
-const TimeSeries<double>& IdeModel::simulate(int t_max)
+TimeSeries<double> const& IdeModel::simulate(int t_max)
 {
     while (m_result.get_last_time() < t_max) {
         m_result.add_time_point(round((m_result.get_last_time() + m_dt) * 10000.0) / 10000.0);
@@ -108,7 +113,7 @@ const TimeSeries<double>& IdeModel::simulate(int t_max)
     return m_result;
 }
 
-const TimeSeries<double>& IdeModel::calculate_EIR()
+TimeSeries<double> const& IdeModel::calculate_EIR()
 {
     Eigen::Index num_points = m_result.get_num_time_points();
     double S, E, I, R;
