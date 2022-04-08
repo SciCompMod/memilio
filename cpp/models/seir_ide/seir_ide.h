@@ -44,24 +44,25 @@ public:
     IdeModel(TimeSeries<double>&& init, double dt_init, int N_init);
 
     /**
-    * Change m_latency_time, default value: 3.3
-    * @param latency The value of the new latency time
+    * @brief Changes the latency time of the considered IDE model.
+    * @param latency Latency time value.
     */
     void set_latency_time(double latency);
 
     /**
-    * Change m_infectious_time, default value: 8.2
-    * @param infectious The value of the new infectious time
+    * @brief Changes the infectious period of the considered IDE model.
+    * @param infectious Infectious period value.
     */
     void set_infectious_time(double infectious);
 
     /**
-    * Get Reference to used ContactMatrix (effective Contactfrequency is used = quantity of Contacts * probability of infection in case of contact)
+    * Returns the ContactMatrix of the IDE model. (effective Contactfrequency is used = quantity of 
+    * Contacts * probability of infection in case of contact)
     */
     ContactMatrix& get_contact_matrix();
 
     /**
-    * Simulation of the course of infection
+    * @brief Simulates the course of infection with the given IDE model.
     * @param t_max last simulation day
     * @return result of the simulation, stored in a TimeSeries with simulation time and associated number of susceptibles (S).
     */
@@ -99,7 +100,8 @@ private:
     * @param compartment Index of the compartment in m_result for which the numerical differentiation is to be performed.
     * @return compartment'(t[idx]) numerically approximated
     */
-    double central_difference_quotient(Eigen::Index compartment, Eigen::Index idx) const;
+    double central_difference_quotient(TimeSeries<double> const& ts_ide, Eigen::Index compartment,
+                                       Eigen::Index idx) const;
 
     /**
     * Numerical integration of the inner integral of the integro-differential equation for the group S using a trapezoidal sum.
@@ -112,7 +114,7 @@ private:
     TimeSeries<double> m_result;
     TimeSeries<double> m_result_SEIR = TimeSeries<double>(4);
 
-    //effective contacts (quantity of contacts * probability of infection in case of contact)
+    // effective contacts (quantity of contacts * probability of infection in case of contact)
     ContactMatrix m_contact_matrix{
         ContactMatrix(Eigen::MatrixXd::Constant(1, 1, 0.5), Eigen::MatrixXd::Constant(1, 1, 0.2))};
 

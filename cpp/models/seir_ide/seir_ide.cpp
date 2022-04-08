@@ -27,7 +27,8 @@ namespace mio
 /* TODO east coast const
     logging in constructor (include)
     constructor umformulieren ( no we need, ->)
-    Test schreiben*/
+    Test schreiben
+    genug Kommentare im Bsp?*/
 
 using Vec = TimeSeries<double>::Vector;
 
@@ -68,21 +69,22 @@ double IdeModel::generalized_beta_distribution(double tau, double p, double q) c
     return 0.0;
 }
 
-double IdeModel::central_difference_quotient(Eigen::Index compartment, Eigen::Index idx) const
+double IdeModel::central_difference_quotient(TimeSeries<double> const& ts_ide, Eigen::Index compartment,
+                                             Eigen::Index idx) const
 {
-    return (m_result[idx + 1][compartment] - m_result[idx - 1][compartment]) / (2 * m_dt);
+    return (ts_ide[idx + 1][compartment] - ts_ide[idx - 1][compartment]) / (2 * m_dt);
 }
 
 double IdeModel::num_integration_inner_integral(Eigen::Index idx) const
 {
     double res     = 0.5 * (generalized_beta_distribution(m_result.get_time(idx) - m_result.get_time(idx - m_k)) *
-                            central_difference_quotient(0, m_k) +
+                            central_difference_quotient(m_result, 0, m_k) +
                         generalized_beta_distribution(m_result.get_time(idx) - m_result.get_time(idx - m_l)) *
-                            central_difference_quotient(0, idx - m_l));
+                            central_difference_quotient(m_result, 0, idx - m_l));
     Eigen::Index i = idx - m_k + 1;
     while (i <= idx - m_l - 2) {
         res += (generalized_beta_distribution(m_result.get_time(idx) - m_result.get_time(i)) *
-                central_difference_quotient(0, i));
+                central_difference_quotient(m_result, 0, i));
         ++i;
     }
     return res;

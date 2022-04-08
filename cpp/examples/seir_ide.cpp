@@ -48,7 +48,7 @@ int main()
                               Vec::Constant(1, (double)result.get_last_value()[0] + result.get_last_time() / 10.0));
     }
 
-    // Initialize model
+    // initialize model
     mio::IdeModel model(std::move(result), dt, N);
 
     // set contact matrix as well as dampings; Note: use effective contacts (quantity of Contacts * probability of infection in case of contact)
@@ -58,9 +58,9 @@ int main()
         mio::ContactMatrix(Eigen::MatrixXd::Constant(1, 1, 1 / 8.2), Eigen::MatrixXd::Constant(1, 1, 0.5 / 8.2));
     contact_matrix.add_damping(0.7, mio::SimulationTime(3.0));
 
-    //Carry out simulation
+    // carry out simulation
     model.simulate(tmax);
-    //calculate values for compartments EIR as well
+    // calculate values for compartments EIR as well
     model.calculate_EIR();
     model.print_result(true);
 }
