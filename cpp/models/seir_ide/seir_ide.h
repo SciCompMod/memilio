@@ -36,7 +36,7 @@ public:
     * Constructor of IDEModel
     * @param init TimeSeries containing the initial (time, quantity of susceptible) values
     *   the initial time steps should be equidistant with distance dt_init; 
-    *   the first point of time should be earlier than -(m_k-1)*dt with m_k=std::ceil((m_infectious_time+m_latency_time)/dt)
+    *   the first point of time should be earlier than -(k-1)*TimeStep with k=ceil((InfectiousTime + LatencyTime)/TimeStep)
     *   the last point of time should be 0
     * @param dt_init size of the time step used for numerical integration.
     * @param N_init Population of the considered region. 
