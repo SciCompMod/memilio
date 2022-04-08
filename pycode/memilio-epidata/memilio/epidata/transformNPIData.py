@@ -243,7 +243,7 @@ def transform_npi_data(fine_resolution=2,
                 df_npis_old = pd.read_csv(
                     os.path.join(
                         directory, 'kr_massnahmen_unterkategorien.csv'),
-                    sep=',', nrows=1248)  # 1248 for debugging, only reading Flensburg
+                    sep=',')  # , nrows=1248)  # 1248 for debugging, only reading Flensburg
             except FileNotFoundError:
                 print_manual_download(
                     'kr_massnahmen_unterkategorien.csv',
@@ -258,7 +258,7 @@ def transform_npi_data(fine_resolution=2,
                           'M24_030', 'M24_040', 'M24_050', 'M24_060']
             for tcode in test_codes:
                 for i in [''] + ["_" + str(i) for i in range(1, 6)]:
-                    if(df_npis_old[df_npis_old.NPI_code == tcode+i].iloc[:, 6:].max().max() > 0):
+                    if(df_npis_old[df_npis_old[dd.EngEng['npiCode']] == tcode+i].iloc[:, 6:].max().max() > 0):
                         print(tcode+i + " used.")
             # end check
 
@@ -389,35 +389,63 @@ def transform_npi_data(fine_resolution=2,
     npis_dummy = {dd.EngEng['npiCode']: npi_codes, dd.EngEng['desc']: npi_desc}
     npis = pd.DataFrame(npis_dummy)
 
-    # extract incidence-threshold for NPIs
-    if fine_resolution > 0:
-        npi_incid_start = dict()
-        for i in range(len(npis)):
-            incid_threshold = 1e10
-            if npis.loc[i, dd.EngEng['desc']].split(' ')[0] == 'Unabhängig':
-                # set -1 for incidence-independent NPIs
-                incid_threshold = -1
-            elif npis.loc[i, dd.EngEng['desc']].split(' ')[0] == 'Ab':
-                incid_threshold = int(
-                    npis.loc[i, dd.EngEng['desc']].split(' ')[1])
-            else:
-                sys.exit('Error in description file. NPI activation can not '
-                         'be computed. Exiting.')
-            npi_incid_start[npis.loc[i, dd.EngEng['npiCode']]
-                            ] = incid_threshold
-
-        # get all incidence thresholds
-        incidence_thresholds = sorted(set(npi_incid_start.values()))
-
     # transform data from original format to desired format
     if not read_data:
-        # could be used to reduced NPIs to be considered
-        # NEITHER used NOR tested with subset of NPIs so far.
-        npis_considered = npis.copy()
+        # prepare grouping of NPIs to reduce product space of
+        # NPI x active_from_inc (with values "incidence does not matter", and
+        # incidence 0, 10, 35, 50, 100) to NPI
+        if fine_resolution == 1:
+            # create hash table from parental or main code/main category
+            # to list of subcodes/subcategories
+            maincode_to_npicodes_map = dict()
+            npicodes_to_maincode_map = dict()
+            major_code = npi_codes[0]
+            maincode_to_npicodes_map[major_code] = []
+            for code in npi_codes:
+                npicodes_to_maincode_map[code] = major_code
+                if major_code in code:
+                    maincode_to_npicodes_map[major_code].append(code)
+                else:
+                    major_code = code
+                    maincode_to_npicodes_map[major_code] = [code]
+
+            npi_codes_aggregated = []
+            for main_code in maincode_to_npicodes_map.keys():
+                if main_code.count('_') > 1:
+                    sys.exit('Error. Subcode assigned as main code.')
+                npi_codes_aggregated.append(main_code)
+
+            npis_final = npis[npis[dd.EngEng['npiCode']].isin(
+                npi_codes_aggregated)].reset_index()
+        else:
+            npis_final = npis
+
+        # extract incidence-threshold for NPIs
+        if fine_resolution > 0:
+            npi_incid_start = dict()
+            for i in range(len(npis)):
+                incid_threshold = 1e10
+                if npis.loc[i, dd.EngEng['desc']].split(' ')[0] == 'Unabhängig':
+                    # set -1 for incidence-independent NPIs
+                    incid_threshold = -1
+                elif npis.loc[i, dd.EngEng['desc']].split(' ')[0] == 'Ab':
+                    incid_threshold = int(
+                        npis.loc[i, dd.EngEng['desc']].split(' ')[1])
+                else:
+                    sys.exit(
+                        'Error in description file. NPI activation can not '
+                        'be computed. Exiting.')
+                npi_incid_start[npis.loc[i, dd.EngEng['npiCode']]
+                                ] = incid_threshold
+
+            # get all incidence thresholds
+            incidence_thresholds = sorted(set(npi_incid_start.values()))
+
+        # create hash map from thresholds to NPI indices
         incidence_thresholds_to_npis = dict(
             zip(incidence_thresholds, [[] for i in range(len(incidence_thresholds))]))
-        for i in range(len(npis_considered)):
-            incval = npi_incid_start[npis_considered.loc
+        for i in range(len(npis)):
+            incval = npi_incid_start[npis.loc
                                      [i, dd.EngEng['npiCode']]]
             incidence_thresholds_to_npis[incval].append(i)
 
@@ -442,14 +470,14 @@ def transform_npi_data(fine_resolution=2,
         # resolved by county and day
         df_npis = pd.DataFrame(
             columns=[dd.EngEng['date']] + [dd.EngEng['idCounty']] +
-            list(npis_considered[dd.EngEng['npiCode']]))
+            list(npis_final[dd.EngEng['npiCode']]))
         # convert NPI data from object to int such that correlations can be
         # computed
         df_npis = df_npis.astype(dict(
             zip(
                 [dd.EngEng['date']] + [dd.EngEng['idCounty']] +
-                list(npis_considered[dd.EngEng['npiCode']]), ['str', 'int'] +
-                ['int' for i in npis_considered[dd.EngEng['npiCode']]])))
+                list(npis_final[dd.EngEng['npiCode']]), ['str', 'int'] +
+                ['int' for i in npis_final[dd.EngEng['npiCode']]])))
 
         # store string dates 'dYYYYMMDD' in list before parsing
         str_dates = list(df_npis_old.iloc[:, start_npi_cols:].columns)
@@ -497,8 +525,10 @@ def transform_npi_data(fine_resolution=2,
 
         # iterate over countyIDs
         counters = np.zeros(4)  # time counter for output only
-        cid = 0
-        for countyID in [1001]:  # unique_geo_entities:
+        countyidx = 0
+        for countyID in unique_geo_entities:
+            cid = 0
+            countyidx += 1
 
             if fine_resolution > 0:
                 # compute incidence based on previous data frames
@@ -520,7 +550,7 @@ def transform_npi_data(fine_resolution=2,
                                        == countyID].copy()
 
             # remove potential rows of which codes are not in npi_codes_considered
-            npi_rows = [i in npis_considered[dd.EngEng['npiCode']].values
+            npi_rows = [i in npis[dd.EngEng['npiCode']].values
                         for i in df_local_old[dd.EngEng['npiCode']]]
 
             # get list of NPI codes, ordered as the rows in the current data frame
@@ -531,7 +561,7 @@ def transform_npi_data(fine_resolution=2,
             # may be superfluous if NPI code rows are sorted correctly
             npi_code_rows_to_sorted = [
                 npi_codes_ordered_as_rows.index(i) for i in
-                npis_considered[dd.EngEng['npiCode']].values]
+                npis[dd.EngEng['npiCode']].values]
 
             # access NPI values matrix and store it as integers
             npi_vals = df_local_old.iloc[npi_rows, start_npi_cols:].astype(int)
@@ -539,14 +569,14 @@ def transform_npi_data(fine_resolution=2,
             # create columns for date, county ID and NPI code
             df_local_new = pd.DataFrame(
                 columns=[dd.EngEng['date']] + [dd.EngEng['idCounty']] +
-                list(npis_considered[dd.EngEng['npiCode']]))
+                list(npis[dd.EngEng['npiCode']]))
 
             # fill in NPI values by transposing from columns to rows
             df_local_new[dd.EngEng['date']] = dates_new
             df_local_new[dd.EngEng['idCounty']] = countyID
             # possible resorting of rows such that they are sorted according to
             # a literal sorting of the code strings
-            df_local_new[npis_considered[dd.EngEng['npiCode']]] = np.transpose(
+            df_local_new[npis[dd.EngEng['npiCode']]] = np.transpose(
                 npi_vals.iloc[npi_code_rows_to_sorted, :].values)
 
             counters[cid] += time.perf_counter()-start_time
@@ -555,11 +585,11 @@ def transform_npi_data(fine_resolution=2,
             start_time = time.perf_counter()
 
             # replace -99 ("not used anymore") by 0 ("not used")
-            df_local_new[npis_considered[dd.EngEng['npiCode']]
-                         ] = df_local_new[npis_considered[dd.EngEng['npiCode']]].replace(-99, 0)
+            df_local_new[npis[dd.EngEng['npiCode']]
+                         ] = df_local_new[npis[dd.EngEng['npiCode']]].replace(-99, 0)
             # replace 2,3,4,5 ("mentioned in ...") by 1 ("mentioned")
-            df_local_new[npis_considered[dd.EngEng['npiCode']]
-                         ] = df_local_new[npis_considered[dd.EngEng['npiCode']]].replace([2, 3, 4, 5], 1)
+            df_local_new[npis[dd.EngEng['npiCode']]
+                         ] = df_local_new[npis[dd.EngEng['npiCode']]].replace([2, 3, 4, 5], 1)
 
             counters[cid] += time.perf_counter()-start_time
             cid += 1
@@ -578,14 +608,22 @@ def transform_npi_data(fine_resolution=2,
                 # get index of first NPI column in local data frame
                 npis_idx_start = list(
                     df_local_new.columns).index(
-                    npis_considered[dd.EngEng['npiCode']][0])
+                    npis[dd.EngEng['npiCode']][0])
 
                 # iterate through all NPIs and activate if incidence threshold
                 # is exceeded
-                for incidval, npi_indices in incidence_thresholds_to_npis.items():
-                    if incidval >= 0:
+                for incidvalthrsh, npi_indices in incidence_thresholds_to_npis.items():
+                    if incidvalthrsh >= 0:
+                        local_incid = df_infec_local['Incidence'].copy()
+                        if npi_activation_delay > 0:
+                            # shift values to npi_activation_delay days later
+                            local_incid.iloc[npi_activation_delay:
+                                             ] = local_incid.iloc[0:-npi_activation_delay].values
+                            # take constant value of day 0 for first delay days
+                            local_incid.iloc[:npi_activation_delay] = local_incid.iloc[0]
+                        # compare incidence against threshold
                         int_active = (
-                            df_infec_local['Incidence'] >= incidval).astype(int)
+                            local_incid >= incidvalthrsh).astype(int)
                         # multiply rows of data frame by either 1 if threshold
                         # passed (i.e., mentioned NPI is active) or zero
                         # (i.e., mentioned NPI is not active)
@@ -593,6 +631,18 @@ def transform_npi_data(fine_resolution=2,
                         # with the respective value in int_active
                         df_local_new.iloc[:, npis_idx_start + np.array(npi_indices)] \
                             = df_local_new.iloc[:, npis_idx_start + np.array(npi_indices)].mul(int_active, axis=0)
+
+                # reduction of factor space NPI x incidence threshold to NPI
+                # by max aggregation of all incidence threshold columns per NPI
+                if fine_resolution == 1:
+                    for main_code, codes_group in maincode_to_npicodes_map.items():
+                        # group by incidence (former codes X1_Y, X1_Z were transformed
+                        # to X1, X2) and write max value to main code column
+                        df_local_new.loc[:, main_code] = df_local_new.loc[:, codes_group].max(
+                            axis=1)
+                    # remove subcategory columns
+                    df_local_new = df_local_new.loc[:, [
+                        dd.EngEng['date'], dd.EngEng['idCounty']] + npi_codes_aggregated].copy()
 
             counters[cid] += time.perf_counter()-start_time
             cid += 1
@@ -603,16 +653,6 @@ def transform_npi_data(fine_resolution=2,
             counters[cid] += time.perf_counter()-start_time
             cid += 1
 
-            # TODO: aggregation now here
-            if fine_resolution == 1:
-                # group by incidence (former codes X1_Y, X1_Z were transformed
-                # to X1, X2) and take max value
-                df_local_old = df_local_old.groupby(dd.EngEng['npiCode']).max()
-                # insert aggregated NPI code column
-                df_local_old.insert(
-                    loc=start_npi_cols - 1, column=dd.EngEng['npiCode'],
-                    value=df_local_old.index)
-
             # kita
             # figcode = ["M03_0" + str(i)+str(j) for i in range(10,70,10) for j in [''] + ['_'+str(k) for k in range(1,6)]]
             # # school
@@ -622,36 +662,19 @@ def transform_npi_data(fine_resolution=2,
             #     print('')
             # customPlot.plotList(df_npis.loc[:,"Date"], [df_npis.loc[:,bb] for bb in figcode],  legend=figcode, title='asd', xlabel='asd', ylabel='ad', fig_name='asd')
 
-            print(counters)
+            # divide working time by completed number of counties and multiply
+            # by remaining number of counties to estimate time remaining
+            time_remain = sum(
+                counters) / countyidx * (len(unique_geo_entities) - countyidx)
+            # print progress
+            print(
+                'Progress ' + str(countyidx) + ' / ' +
+                str(len(unique_geo_entities)) + '. Estimated time remaining: ' +
+                str(int(time_remain / 60)) + ' min.')
 
-        # TODO: aggregation now here
-        # group incidence NPIs to remove product space of
-        # NPI x active_from_inc (with values "incidence does not matter", and
-        # incidence 0, 10, 35, 50, 100)
-        if fine_resolution == 1:
-            # create hash table from subcode/subcategory to parental or main code/main category
-            npi_codes_to_maincode_map = dict()
-            major_code = npi_codes[0]
-            for code in npi_codes:
-                if major_code in code:
-                    npi_codes_to_maincode_map[code] = major_code
-                else:
-                    major_code = code
-                    npi_codes_to_maincode_map[code] = code
-
-            # get unique list of main codes
-            npi_codes_incgrouped_list = sorted(
-                set(npi_codes_to_maincode_map.values()))
-
-            if not read_data:
-                # replace more detailed code names X_Y with major code X
-                df_npis_old[dd.EngEng['npiCode']] = df_npis_old[dd.EngEng[
-                    'npiCode']].replace(npi_codes_to_maincode_map)
-
-        if fine_resolution == 1:
-            npi_codes_considered = npi_codes_incgrouped_list
-        else:
-            npi_codes_considered = npi_codes
+        # print sub counters
+        print('Sub task counters are: ')
+        print(counters)
 
         # reset index and drop old index column
         df_npis.reset_index(inplace=True)
@@ -669,123 +692,142 @@ def transform_npi_data(fine_resolution=2,
             str(counters[2]) + " sec")
 
         #### start validation ####
-        if fine_resolution > 1:
+        if fine_resolution == 2:
             # Cologne for M01a_010 and all dates (no changes)
-            dummy_old = df_npis_old[(df_npis_old.ID_County == 5315) & (
-                df_npis_old.NPI_code == 'M01a_010')].values[0][start_npi_cols:]
-            dummy_new = df_npis.loc[df_npis.ID_County ==
+            dummy_old = df_npis_old[(df_npis_old[dd.EngEng['idCounty']] == 5315) & (
+                df_npis_old[dd.EngEng['npiCode']] == 'M01a_010')].values[0][start_npi_cols:]
+            dummy_new = df_npis.loc[df_npis[dd.EngEng['idCounty']] ==
                                     5315, 'M01a_010'].values
             print(abs(dummy_old-dummy_new).sum() == 0)
 
             # Flensburg for M05_120 and all dates ('2's become '1's)
-            dummy_old = df_npis_old[(df_npis_old.ID_County == 1001) & (
-                df_npis_old.NPI_code == 'M05_120')].values[0][start_npi_cols:]
-            dummy_new = df_npis.loc[df_npis.ID_County ==
+            dummy_old = df_npis_old[(df_npis_old[dd.EngEng['idCounty']] == 1001) & (
+                df_npis_old[dd.EngEng['npiCode']] == 'M05_120')].values[0][start_npi_cols:]
+            dummy_new = df_npis.loc[df_npis[dd.EngEng['idCounty']] ==
                                     1001, 'M05_120'].values
             print(abs(dummy_old-dummy_new).sum() == 5)
 
             # Munich for M01a_010_4 and all dates (-99 becomes 0, 0 stays 0)
-            dummy_old = df_npis_old[(df_npis_old.ID_County == 9162) & (
-                df_npis_old.NPI_code == 'M01a_010_4')].values[0][start_npi_cols:]
-            dummy_new = df_npis.loc[df_npis.ID_County ==
+            dummy_old = df_npis_old[(df_npis_old[dd.EngEng['idCounty']] == 9162) & (
+                df_npis_old[dd.EngEng['npiCode']] == 'M01a_010_4')].values[0][start_npi_cols:]
+            dummy_new = df_npis.loc[df_npis[dd.EngEng['idCounty']] ==
                                     9162, 'M01a_010_4'].values
             print(abs(dummy_old-dummy_new).sum() == 422*99)
 
             # Weimar for M12_030_3 and all dates (-99 becomes 0, 1 stays 1, 0 stays 0)
-            dummy_old = df_npis_old[(df_npis_old.ID_County == 16071) & (
-                df_npis_old.NPI_code == 'M12_030_3')].values[0][start_npi_cols:]
-            dummy_new = df_npis.loc[df_npis.ID_County ==
+            dummy_old = df_npis_old[(df_npis_old[dd.EngEng['idCounty']] == 16071) & (
+                df_npis_old[dd.EngEng['npiCode']] == 'M12_030_3')].values[0][start_npi_cols:]
+            dummy_new = df_npis.loc[df_npis[dd.EngEng['idCounty']] ==
                                     16071, 'M12_030_3'].values
             print(abs(dummy_old-dummy_new).sum() == 422*99)
 
             # Berlin for M01b_020 and all dates (2 becomes 1, 1 stays 1, 0 stays 0)
-            dummy_old = df_npis_old[(df_npis_old.ID_County == 11000) & (
-                df_npis_old.NPI_code == 'M01b_020')].values[0][start_npi_cols:]
-            dummy_new = df_npis.loc[df_npis.ID_County ==
+            dummy_old = df_npis_old[(df_npis_old[dd.EngEng['idCounty']] == 11000) & (
+                df_npis_old[dd.EngEng['npiCode']] == 'M01b_020')].values[0][start_npi_cols:]
+            dummy_new = df_npis.loc[df_npis[dd.EngEng['idCounty']] ==
                                     11000, 'M01b_020'].values
             print(abs(dummy_old-dummy_new).sum() == 82)
 
             # Segeberg for M02b_035 and all dates (2 -> 1, 3 -> 1, 5 -> 1)
-            dummy_old = df_npis_old[(df_npis_old.ID_County == 1060) & (
-                df_npis_old.NPI_code == 'M02b_035')].values[0][start_npi_cols:]
-            dummy_new = df_npis.loc[df_npis.ID_County ==
+            dummy_old = df_npis_old[(df_npis_old[dd.EngEng['idCounty']] == 1060) & (
+                df_npis_old[dd.EngEng['npiCode']] == 'M02b_035')].values[0][start_npi_cols:]
+            dummy_new = df_npis.loc[df_npis[dd.EngEng['idCounty']] ==
                                     1060, 'M02b_035'].values
             print(abs(dummy_old-dummy_new).sum() == 151+2*53+4*22)
 
             # Steinfurt for M16_050 and all dates (4 -> 1, ...)
-            dummy_old = df_npis_old[(df_npis_old.ID_County == 5566) & (
-                df_npis_old.NPI_code == 'M16_050')].values[0][start_npi_cols:]
-            dummy_new = df_npis.loc[df_npis.ID_County ==
+            dummy_old = df_npis_old[(df_npis_old[dd.EngEng['idCounty']] == 5566) & (
+                df_npis_old[dd.EngEng['npiCode']] == 'M16_050')].values[0][start_npi_cols:]
+            dummy_new = df_npis.loc[df_npis[dd.EngEng['idCounty']] ==
                                     5566, 'M16_050'].values
             print(abs(dummy_old-dummy_new).sum() == 32+2*20+3*22)
-        elif fine_resolution == 2:
+        elif fine_resolution == 1:
+            # replace more detailed code names X_Y with major code X
+            df_npis_old[dd.EngEng['npiCode']] = df_npis_old[dd.EngEng[
+                'npiCode']].replace(npicodes_to_maincode_map)
+
             # Cologne for M01a_010 and all dates (no changes)
-            dummy_old = df_npis_old[(df_npis_old.ID_County == 5315) & (
-                df_npis_old.NPI_code == 'M01a_010')].values[0][start_npi_cols:]
+            dummy_old = df_npis_old[(df_npis_old[dd.EngEng['idCounty']] == 5315) & (
+                df_npis_old[dd.EngEng['npiCode']] == 'M01a_010')].values[0][start_npi_cols:]
             for subcode in range(1, 6):  # add subcode values
-                dummy_old = np.maximum(dummy_old, df_npis_old[(df_npis_old.ID_County == 5315) & (
-                    df_npis_old.NPI_code == 'M01a_010')].values[subcode][start_npi_cols:])
-            dummy_new = df_npis.loc[df_npis.ID_County ==
+                dummy_old = np.maximum(dummy_old, df_npis_old[(df_npis_old[dd.EngEng['idCounty']] == 5315) & (
+                    df_npis_old[dd.EngEng['npiCode']] == 'M01a_010')].values[subcode][start_npi_cols:])
+            dummy_new = df_npis.loc[df_npis[dd.EngEng['idCounty']] ==
                                     5315, 'M01a_010'].values
             print(abs(dummy_old-dummy_new).sum() == 0)
 
             # Flensburg for M05_120 and all dates ('2's become '1's)
-            dummy_old = df_npis_old[(df_npis_old.ID_County == 1001) & (
-                df_npis_old.NPI_code == 'M05_120')].values[0][start_npi_cols:]
+            dummy_old = df_npis_old[(df_npis_old[dd.EngEng['idCounty']] == 1001) & (
+                df_npis_old[dd.EngEng['npiCode']] == 'M05_120')].values[0][start_npi_cols:]
             for subcode in range(1, 6):  # add subcode values
-                dummy_old = np.maximum(dummy_old, df_npis_old[(df_npis_old.ID_County == 1001) & (
-                    df_npis_old.NPI_code == 'M05_120')].values[subcode][start_npi_cols:])
-            dummy_new = df_npis.loc[df_npis.ID_County ==
+                dummy_old = np.maximum(dummy_old,
+                                       df_npis_old
+                                       [(df_npis_old
+                                         [dd.EngEng['idCounty']] == 1001) &
+                                        (df_npis_old[dd.EngEng['npiCode']] ==
+                                         'M05_120')].values[subcode]
+                                       [start_npi_cols:])
+            dummy_new = df_npis.loc[df_npis[dd.EngEng['idCounty']] ==
                                     1001, 'M05_120'].values
             print(abs(dummy_old-dummy_new).sum() == 5)
 
             # Munich for M01a_010 and all dates (-99 becomes 0, 0 stays 0)
-            dummy_old = df_npis_old[(df_npis_old.ID_County == 9162) & (
-                df_npis_old.NPI_code == 'M01a_010')].values[0][start_npi_cols:]
+            dummy_old = df_npis_old[(df_npis_old[dd.EngEng['idCounty']] == 9162) & (
+                df_npis_old[dd.EngEng['npiCode']] == 'M01a_010')].values[0][start_npi_cols:]
             for subcode in range(1, 6):  # add subcode values
-                dummy_old = np.maximum(dummy_old, df_npis_old[(df_npis_old.ID_County == 9162) & (
-                    df_npis_old.NPI_code == 'M01a_010')].values[subcode][start_npi_cols:])
-            dummy_new = df_npis.loc[df_npis.ID_County ==
+                dummy_old = np.maximum(dummy_old, df_npis_old[(df_npis_old[dd.EngEng['idCounty']] == 9162) & (
+                    df_npis_old[dd.EngEng['npiCode']] == 'M01a_010')].values[subcode][start_npi_cols:])
+            dummy_new = df_npis.loc[df_npis[dd.EngEng['idCounty']] ==
                                     9162, 'M01a_010'].values
             print(abs(dummy_old-dummy_new).sum() == 0)
 
             # Weimar for M12_030_3 and all dates (-99 becomes 0, 1 stays 1, 0 stays 0)
-            dummy_old = df_npis_old[(df_npis_old.ID_County == 16071) & (
-                df_npis_old.NPI_code == 'M12_030')].values[0][start_npi_cols:]
+            dummy_old = df_npis_old[(df_npis_old[dd.EngEng['idCounty']] == 16071) & (
+                df_npis_old[dd.EngEng['npiCode']] == 'M12_030')].values[0][start_npi_cols:]
             for subcode in range(1, 6):  # add subcode values
-                dummy_old = np.maximum(dummy_old, df_npis_old[(df_npis_old.ID_County == 16071) & (
-                    df_npis_old.NPI_code == 'M12_030')].values[subcode][start_npi_cols:])
-            dummy_new = df_npis.loc[df_npis.ID_County ==
+                dummy_old = np.maximum(dummy_old,
+                                       df_npis_old
+                                       [(df_npis_old
+                                         [dd.EngEng['idCounty']] == 16071) &
+                                        (df_npis_old[dd.EngEng['npiCode']] ==
+                                         'M12_030')].values[subcode]
+                                       [start_npi_cols:])
+            dummy_new = df_npis.loc[df_npis[dd.EngEng['idCounty']] ==
                                     16071, 'M12_030'].values
             print(abs(dummy_old-dummy_new).sum() == 19)
 
             # Berlin for M01b_020 and all dates (2 becomes 1, 1 stays 1, 0 stays 0)
-            dummy_old = df_npis_old[(df_npis_old.ID_County == 11000) & (
-                df_npis_old.NPI_code == 'M01b_020')].values[0][start_npi_cols:]
+            dummy_old = df_npis_old[(df_npis_old[dd.EngEng['idCounty']] == 11000) & (
+                df_npis_old[dd.EngEng['npiCode']] == 'M01b_020')].values[0][start_npi_cols:]
             for subcode in range(1, 6):  # add subcode values
-                dummy_old = np.maximum(dummy_old, df_npis_old[(df_npis_old.ID_County == 11000) & (
-                    df_npis_old.NPI_code == 'M01b_020')].values[subcode][start_npi_cols:])
-            dummy_new = df_npis.loc[df_npis.ID_County ==
+                dummy_old = np.maximum(dummy_old, df_npis_old[(df_npis_old[dd.EngEng['idCounty']] == 11000) & (
+                    df_npis_old[dd.EngEng['npiCode']] == 'M01b_020')].values[subcode][start_npi_cols:])
+            dummy_new = df_npis.loc[df_npis[dd.EngEng['idCounty']] ==
                                     11000, 'M01b_020'].values
             print(abs(dummy_old-dummy_new).sum() == 82)
 
             # Segeberg for M02b_035 and all dates (2 -> 1, 3 -> 1, 5 -> 1)
-            dummy_old = df_npis_old[(df_npis_old.ID_County == 1060) & (
-                df_npis_old.NPI_code == 'M02b_035')].values[0][start_npi_cols:]
+            dummy_old = df_npis_old[(df_npis_old[dd.EngEng['idCounty']] == 1060) & (
+                df_npis_old[dd.EngEng['npiCode']] == 'M02b_035')].values[0][start_npi_cols:]
             for subcode in range(1, 6):  # add subcode values
-                dummy_old = np.maximum(dummy_old, df_npis_old[(df_npis_old.ID_County == 1060) & (
-                    df_npis_old.NPI_code == 'M02b_035')].values[subcode][start_npi_cols:])
-            dummy_new = df_npis.loc[df_npis.ID_County ==
+                dummy_old = np.maximum(dummy_old, df_npis_old[(df_npis_old[dd.EngEng['idCounty']] == 1060) & (
+                    df_npis_old[dd.EngEng['npiCode']] == 'M02b_035')].values[subcode][start_npi_cols:])
+            dummy_new = df_npis.loc[df_npis[dd.EngEng['idCounty']] ==
                                     1060, 'M02b_035'].values
             print(abs(dummy_old-dummy_new).sum() == 151+2*53+4*22)
 
             # Steinfurt for M16_050 and all dates (4 -> 1, ...)
-            dummy_old = df_npis_old[(df_npis_old.ID_County == 5566) & (
-                df_npis_old.NPI_code == 'M16_050')].values[0][start_npi_cols:]
+            dummy_old = df_npis_old[(df_npis_old[dd.EngEng['idCounty']] == 5566) & (
+                df_npis_old[dd.EngEng['npiCode']] == 'M16_050')].values[0][start_npi_cols:]
             for subcode in range(1, 6):  # add subcode values
-                dummy_old = np.maximum(dummy_old, df_npis_old[(df_npis_old.ID_County == 5566) & (
-                    df_npis_old.NPI_code == 'M16_050')].values[subcode][start_npi_cols:])
-            dummy_new = df_npis.loc[df_npis.ID_County ==
+                dummy_old = np.maximum(dummy_old,
+                                       df_npis_old
+                                       [(df_npis_old
+                                         [dd.EngEng['idCounty']] == 5566) &
+                                        (df_npis_old[dd.EngEng['npiCode']] ==
+                                         'M16_050')].values[subcode]
+                                       [start_npi_cols:])
+            dummy_new = df_npis.loc[df_npis[dd.EngEng['idCounty']] ==
                                     5566, 'M16_050'].values
             print(abs(dummy_old-dummy_new).sum() == 32+2*20+3*22)
         #### end validation ####
@@ -1073,7 +1115,7 @@ def main():
     """! Main program entry."""
 
     # arg_dict = gd.cli("testing")
-    transform_npi_data(fine_resolution=2, read_data=False, make_plot=True)
+    transform_npi_data(fine_resolution=1, read_data=False, make_plot=True)
 
 
 if __name__ == "__main__":
