@@ -99,7 +99,8 @@ optional arguments working for some are:
 |                                             |  on performance as well as on the storage space needed.   |
 |                                             |  [cases]                                                  |
 +---------------------------------------------+-----------------------------------------------------------+
-| -m N, --moving-average N                    | The central N days moving average is computed for the data.|
+| -m N, --moving-average N                    | The central N days moving average is computed for the     |
+|                                             | data.                                                     |
 |                                             |  Note that the --impute_dates option will be implicitly   |
 |                                             |  turned on, as computing the moving average requires all  |
 |                                             |  dates to be available. [cases]                           |
@@ -127,73 +128,73 @@ Note for DIVI:
 Not every hospital is reporting the number of corona patients in intensive care units (ICU). The number of
 reporting hospitals differs from day to day and is given in FullData_DIVI.
 
-============== ==========  ================================== =================
-Source         Folder      Files                              Data description
-============== ==========  ================================== =================
-RKI-C          Germany     cases_infected                     Numbers of infected over time for whole Germany
-RKI-C          Germany     cases_deaths                       Numbers of deaths over time for whole Germany
-RKI-C          Germany     cases_all_germany                  infected, deaths, recovered over time for whole Germany
-RKI-C          Germany     cases_infected_state               infected over time for different states (Bundesländer)
-RKI-C          Germany     cases_all_state                    infected, deaths, recovered over time for different states (Bundesländer)
-RKI-C          Germany     cases_infected_county              infected over time for different counties (Landkreise)
-RKI-C          Germany     cases_all_county                   infected, deaths, recovered over time for different counties (Landkreise)
-RKI-C          Germany     cases_all_gender                   infected, deaths, recovered over time for different gender
-RKI-C          Germany     cases_all_age                      infected, deaths, recovered over time for different age ranges
-RKI-C          Germany     cases_all_state_age                infected, deaths, recovered over time for different age ranges and states
-RKI-C          Germany     cases_all_state_gender             infected, deaths, recovered over time for different genders and states
-RKI-C          Germany     cases_all_county_age               infected, deaths, recovered over time for different age ranges and counties
-RKI-C          Germany     cases_all_county_gender            infected, deaths, recovered over time for different genders counties
+============== ==========  =================================== =================
+Source         Folder      Files                               Data description
+============== ==========  =================================== =================
+RKI-C          Germany     cases_infected                      Numbers of infected over time for whole Germany
+RKI-C          Germany     cases_deaths                        Numbers of deaths over time for whole Germany
+RKI-C          Germany     cases_all_germany                   infected, deaths, recovered over time for whole Germany
+RKI-C          Germany     cases_infected_state                infected over time for different states (Bundesländer)
+RKI-C          Germany     cases_all_state                     infected, deaths, recovered over time for different states (Bundesländer)
+RKI-C          Germany     cases_infected_county               infected over time for different counties (Landkreise)
+RKI-C          Germany     cases_all_county                    infected, deaths, recovered over time for different counties (Landkreise)
+RKI-C          Germany     cases_all_gender                    infected, deaths, recovered over time for different gender
+RKI-C          Germany     cases_all_age                       infected, deaths, recovered over time for different age ranges
+RKI-C          Germany     cases_all_state_age                 infected, deaths, recovered over time for different age ranges and states
+RKI-C          Germany     cases_all_state_gender              infected, deaths, recovered over time for different genders and states
+RKI-C          Germany     cases_all_county_age                infected, deaths, recovered over time for different age ranges and counties
+RKI-C          Germany     cases_all_county_gender             infected, deaths, recovered over time for different genders counties
 
-RKI-V          Germany     all_county_vacc                    administered vaccinations per county (first, second and third shot without age resolution)
-RKI-V          Germany     all_states_vacc                    administered vaccinations per state (first, second and third shot without age resolution)
-RKI-V          Germany     all_county_agevacc_vacc            administered vaccinations per county (first, second and third shot for age groups as in input
-                                                              data frame, i.e., 5-11, 12-17, 18-59, 60+)
-RKI-V          Germany     all_states_agevacc_vacc            administered vaccinations per state (first, second and third shot for age groups as in input
-                                                              data frame, i.e., 5-11, 12-17, 18-59, 60+)
-RKI-V          Germany     all_county_ageinf_vacc             administered vaccinations per county (first, second and third shot for age groups as in cases
-                                                              data frame, i.e., 0-4, 5-14, 15-34, 35-59, 60-79, 80+)
-RKI-V          Germany     all_states_ageinf_vacc             administered vaccinations per state (first, second and third shot for age groups as in cases
-                                                              data frame, i.e., 0-4, 5-14, 15-34, 35-59, 60-79, 80+)
+RKI-V          Germany     all_county_vacc                     administered vaccinations per county (first, second and third shot without age resolution)
+RKI-V          Germany     all_states_vacc                     administered vaccinations per state (first, second and third shot without age resolution)
+RKI-V          Germany     all_county_agevacc_vacc             administered vaccinations per county (first, second and third shot for age groups as in input
+                                                               data frame, i.e., 5-11, 12-17, 18-59, 60+)
+RKI-V          Germany     all_states_agevacc_vacc             administered vaccinations per state (first, second and third shot for age groups as in input
+                                                               data frame, i.e., 5-11, 12-17, 18-59, 60+)
+RKI-V          Germany     all_county_ageinf_vacc              administered vaccinations per county (first, second and third shot for age groups as in cases
+                                                               data frame, i.e., 0-4, 5-14, 15-34, 35-59, 60-79, 80+)
+RKI-V          Germany     all_states_ageinf_vacc              administered vaccinations per state (first, second and third shot for age groups as in cases
+                                                               data frame, i.e., 0-4, 5-14, 15-34, 35-59, 60-79, 80+)
 
-RKI-T          Germany     germany_testpos                    potive rates of tests over time for germany
-RKI-T          Germany     germany_states_testpos             positve rates of tests over time for different states
+RKI-T          Germany     germany_testpos                     potive rates of tests over time for germany
+RKI-T          Germany     germany_states_testpos              positve rates of tests over time for different states
 RKI-T          Germany     germany_conties_from_states_testpos positive rates of tests over time for different counties from positive rate for states
 
-RKI-Estimation Germany     cases_all_germany_estimated        infected, deaths, recovered, recovered_estimated, deaths_estimated over time for whole Germany
-RKI-Estimation Germany     cases_all_state_estimated          infected, deaths, recovered, recovered_estimated, deaths_estimated over time for different states (Bundesländer)
-RKI-Estimation Germany     cases_all_county_estimated         infected, deaths, recovered, recovered_estimated, deaths_estimated over time for different counties (Landkreise)
-RKI-Estimation Germany     cases_all_gender_estimated         infected, deaths, recovered, recovered_estimated, deaths_estimated over time for different gender
-RKI-Estimation Germany     cases_all_age_estimated            infected, deaths, recovered, recovered_estimated, deaths_estimated over time for different age ranges
-RKI-Estimation Germany     cases_all_state_age_estimated      infected, deaths, recovered, recovered_estimated, deaths_estimated over time for different age ranges and states
-RKI-Estimation Germany     cases_all_state_gender_estimated   infected, deaths, recovered, recovered_estimated, deaths_estimated over time for different genders and states
-RKI-Estimation Germany     cases_all_county_age_estimated     infected, deaths, recovered, recovered_estimated, deaths_estimated over time for different age ranges and counties
-RKI-Estimation Germany     cases_all_county_gender_estimated  infected, deaths, recovered, recovered_estimated, deaths_estimated over time for different genders counties
+RKI-Estimation Germany     cases_all_germany_estimated         infected, deaths, recovered, recovered_estimated, deaths_estimated over time for whole Germany
+RKI-Estimation Germany     cases_all_state_estimated           infected, deaths, recovered, recovered_estimated, deaths_estimated over time for different states    (Bundesländer)
+RKI-Estimation Germany     cases_all_county_estimated          infected, deaths, recovered, recovered_estimated, deaths_estimated over time for different counties   (Landkreise)
+RKI-Estimation Germany     cases_all_gender_estimated          infected, deaths, recovered, recovered_estimated, deaths_estimated over time for different gender
+RKI-Estimation Germany     cases_all_age_estimated             infected, deaths, recovered, recovered_estimated, deaths_estimated over time for different age ranges
+RKI-Estimation Germany     cases_all_state_age_estimated       infected, deaths, recovered, recovered_estimated, deaths_estimated over time for different age ranges and states
+RKI-Estimation Germany     cases_all_state_gender_estimated    infected, deaths, recovered, recovered_estimated, deaths_estimated over time for different genders and states
+RKI-Estimation Germany     cases_all_county_age_estimated      infected, deaths, recovered, recovered_estimated, deaths_estimated over time for different age ranges and counties
+RKI-Estimation Germany     cases_all_county_gender_estimated   infected, deaths, recovered, recovered_estimated, deaths_estimated over time for different genders and counties
 
-P              Germany     county_current_population[_dim401] Einwohnerzahl for different age groups from the 2011 census, extrapolated to the current level [with Wartburgkreis and Eisenach separated]
-P              Germany     county_population[_dim401]         Einwohnerzahl for different age groups from the 2011 census [with Wartburgkreis and Eisenach separated]
-P              Germany     migration                          Unchanged migration data
-P              Germany     reg_key                            Unchangenged regional keys from excel table
-P              Germany     zensus                             Unchanged Zensus data
+P              Germany     county_current_population[_dim401]  Einwohnerzahl for different age groups from the 2011 census, extrapolated to the current level [with Wartburgkreis and Eisenach separated]
+P              Germany     county_population[_dim401]          Einwohnerzahl for different age groups from the 2011 census [with Wartburgkreis and Eisenach separated]
+P              Germany     migration                           Unchanged migration data
+P              Germany     reg_key                             Unchangenged regional keys from excel table
+P              Germany     zensus                              Unchanged Zensus data
 
-JH             .           FullData_JohnHopkins               Data as downloaded from github
-JH             .           all_provincestate                  Time-cumsum of confirmed, recovered, death for states or provinces if they where given
-JH             .           all_countries                      Time-cumsum of confirmed, recovered, death for every country
-JH             Germany     whole_country_Germany_jh           Time-cumsum of confirmed, recovered, death for Germany
-JH             Spain       whole_country_Spain_jh             Time-cumsum of confirmed, recovered, death for Spain
-JH             France      whole_country_France_jh            Time-cumsum of confirmed, recovered, death for France
-JH             Italy       whole_country_Italy_jh             Time-cumsum of confirmed, recovered, death for Italy
-JH             SouthKorea  whole_country_SouthKorea_jh        Time-cumsum of confirmed, recovered, death for SouthKorea
-JH             China       whole_country_China_jh             Time-cumsum of confirmed, recovered, death for China
-JH             US          whole_country_US_jh                Time-cumsum of confirmed, recovered, death for US
+JH             .           FullData_JohnHopkins                Data as downloaded from github
+JH             .           all_provincestate                   Time-cumsum of confirmed, recovered, death for states or provinces if they where given
+JH             .           all_countries                       Time-cumsum of confirmed, recovered, death for every country
+JH             Germany     whole_country_Germany_jh            Time-cumsum of confirmed, recovered, death for Germany
+JH             Spain       whole_country_Spain_jh              Time-cumsum of confirmed, recovered, death for Spain
+JH             France      whole_country_France_jh             Time-cumsum of confirmed, recovered, death for France
+JH             Italy       whole_country_Italy_jh              Time-cumsum of confirmed, recovered, death for Italy
+JH             SouthKorea  whole_country_SouthKorea_jh         Time-cumsum of confirmed, recovered, death for SouthKorea
+JH             China       whole_country_China_jh              Time-cumsum of confirmed, recovered, death for China
+JH             US          whole_country_US_jh                 Time-cumsum of confirmed, recovered, death for US
 
-DIVI           Germany     FullData_DIVI                      Full data as downloaded from archive with columns ['County', 'State', 'anzahl_meldebereiche', 'reporting_hospitals', 'occupied_ICU', 'free_ICU', 'ID_State', 'Date', 'ICU', 'ICU_ventilated', 'faelle_covid_aktuell_im_bundesland', 'ID_County']
-DIVI           Germany     county_divi                        ICU, ICU_ventilated over time for different counties (Landkreise) with columns ['County', 'ID_County', 'ICU', 'ICU_ventilated', 'Date']
-DIVI           Germany     state_divi                         ICU, ICU_ventilated over time for different states (Bundesländer) with columns ['Date', 'ICU', 'ICU_ventilated', 'ID_State', 'State']
-DIVI           Germany     germany_divi                       ICU, ICU_ventilated over time for whole Germany with columns ['Date', 'ICU', 'ICU_ventilated']
+DIVI           Germany     FullData_DIVI                       Full data as downloaded from archive with columns ['County', 'State', 'anzahl_meldebereiche', 'reporting_hospitals', 'occupied_ICU', 'free_ICU', 'ID_State', 'Date', 'ICU', 'ICU_ventilated', 'faelle_covid_aktuell_im_bundesland', 'ID_County']
+DIVI           Germany     county_divi                         ICU, ICU_ventilated over time for different counties (Landkreise) with columns ['County', 'ID_County', 'ICU', 'ICU_ventilated', 'Date']
+DIVI           Germany     state_divi                          ICU, ICU_ventilated over time for different states (Bundesländer) with columns ['Date', 'ICU', 'ICU_ventilated', 'ID_State', 'State']
+DIVI           Germany     germany_divi                        ICU, ICU_ventilated over time for whole Germany with columns ['Date', 'ICU', 'ICU_ventilated']
 
-BAA            Germany     migration_bfa_2020_dim401          number of commuters from one county into another indexed by county ids (with eisenach)
-BAA            Germany     migration_bfa_2020_dim400          number of commuters from one county into another indexed by county ids (with eisenach merged into wartburgkreis)
-============== ==========  ================================== =================
+BAA            Germany     migration_bfa_2020_dim401           number of commuters from one county into another indexed by county ids (with eisenach)
+BAA            Germany     migration_bfa_2020_dim400           number of commuters from one county into another indexed by county ids (with eisenach merged into wartburgkreis)
+============== ==========  =================================== =================
 
 More detailed information can be found in the documentation of the different functions in
 
