@@ -95,21 +95,23 @@ optional arguments working for some are:
 +---------------------------------------------+-----------------------------------------------------------+
 | -i, --impute-dates                          | Returns dataframes with all dates instead of only dates   |
 |                                             | where new cases have been reported.                       |
-|                                             |  Note that this option will have a negative impact        |
-|                                             |  on performance as well as on the storage space needed.   |
-|                                             |  [cases]                                                  |
+|                                             |                                                           |
+|                                             | Note that this option will have a negative impact         |
+|                                             | on performance as well as on the storage space needed.    |
+|                                             | [cases]                                                   |
 +---------------------------------------------+-----------------------------------------------------------+
 | -m N, --moving-average N                    | The central N days moving average is computed for the     |
 |                                             | data.                                                     |
-|                                             |  Note that the --impute_dates option will be implicitly   |
-|                                             |  turned on, as computing the moving average requires all  |
-|                                             |  dates to be available. [cases]                           |
+|                                             |                                                           |
+|                                             | Note that the --impute_dates option will be implicitly    |
+|                                             | turned on, as computing the moving average requires all   |
+|                                             | dates to be available. [cases]                            |
 +---------------------------------------------+-----------------------------------------------------------+
-| -sb, --split-berlin                         | Berlin data is split into different counties              |
-|                                             |  , instead of having only one county for Berlin. [cases]  |
+| -sb, --split-berlin                         | Berlin data is split into different counties,             |
+|                                             | instead of having only one county for Berlin. [cases]     |
 +---------------------------------------------+-----------------------------------------------------------+
 | -- rep-date                                 | The reporting date will be prefered over possibly given   |
-|                                             |  dates of disease onset. [cases]                          |
+|                                             | dates of disease onset. [cases]                           |
 +---------------------------------------------+-----------------------------------------------------------+
 
 Hint:
