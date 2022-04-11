@@ -174,7 +174,7 @@ optional arguments working for some are:
 |                                             |  , instead of having only one county for Berlin. [cases]  |
 +---------------------------------------------+-----------------------------------------------------------+
 | -- rep-date                                 | The reporting date will be prefered over possibly given   |
-|                                             |  dates of disease onset. [rki]                            |
+|                                             |  dates of disease onset. [cases]                          |
 +---------------------------------------------+-----------------------------------------------------------+
 
 Hint:
@@ -207,12 +207,13 @@ RKI-C          Germany     cases_all_county_gender            infected, deaths, 
 
 RKI-V          Germany     all_county_vacc                    administered vaccinations per county (first, second and third shot without age resolution)
 RKI-V          Germany     all_states_vacc                    administered vaccinations per state (first, second and third shot without age resolution)
-RKI-V          Germany     all_county_agevacc_vacc            administered vaccinations per county (first, second and third shot for age groups as in input 
+RKI-V          Germany     all_county_agevacc_vacc            administered vaccinations per county (first, second and third shot for age groups as in input
                                                               data frame, i.e., 5-11, 12-17, 18-59, 60+)
-RKI-V          Germany     all_states_agevacc_vacc            administered vaccinations per state (first, second and third shot for age groups as in input                                                                 data frame, i.e., 5-11, 12-17, 18-59, 60+)
-RKI-V          Germany     all_county_ageinf_vacc             administered vaccinations per county (first, second and third shot for age groups as in cases 
+RKI-V          Germany     all_states_agevacc_vacc            administered vaccinations per state (first, second and third shot for age groups as in input
+                                                              data frame, i.e., 5-11, 12-17, 18-59, 60+)
+RKI-V          Germany     all_county_ageinf_vacc             administered vaccinations per county (first, second and third shot for age groups as in cases
                                                               data frame, i.e., 0-4, 5-14, 15-34, 35-59, 60-79, 80+)
-RKI-V          Germany     all_states_ageinf_vacc             administered vaccinations per state (first, second and third shot for age groups as in cases 
+RKI-V          Germany     all_states_ageinf_vacc             administered vaccinations per state (first, second and third shot for age groups as in cases
                                                               data frame, i.e., 0-4, 5-14, 15-34, 35-59, 60-79, 80+)
 
 RKI-T          Germany     germany_testpos                    potive rates of tests over time for germany
