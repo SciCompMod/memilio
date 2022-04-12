@@ -53,7 +53,7 @@ runs:
           getdividata --help
           getsimdata --help
           cleandata --help
-          getrkiestimation --help
+          getcasesestimation --help
           getcommutermobility --help
           getvaccinationdata --help
         fi
