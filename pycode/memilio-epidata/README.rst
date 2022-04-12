@@ -101,7 +101,7 @@ To get the coverage report do
 
 Coverage report for actual master:
 
-:Coverage Report: https://hpc-against-corona.pages.gitlab.dlr.de/epidemiology/master/coverage/python/index.html
+:Coverage Report: https://dlr-sc.github.io/memilio/coverage/python/
 
 Inspection via pylint
 ---------------------
@@ -121,7 +121,7 @@ Run pylint with the commands
 
 Pylint report for actual master:
 
-:Pylint Report: https://hpc-against-corona.pages.gitlab.dlr.de/epidemiology/master/pylint/pylint.html
+:Pylint Report: https://dlr-sc.github.io/memilio/pylint/
 
 Additional Tools
 ----------------
@@ -160,7 +160,7 @@ When you start creating a new script:
 
 When you add a new script
 
-- add a executable to the setup.py in "epidemiology/pycode/"
+- add a executable to the setup.py in "pycode/memilio-epidata"
 - add it to the cli_dict in getDataIntoPandasDataFrame.py
     - add a meaningfull key for the new script
     - as the value add a list in the form [comment to print when script is started, list of used parser arguments (optional)]

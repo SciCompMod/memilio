@@ -58,10 +58,13 @@ Sources
 
 - Data from John Hopkins University (JH)
 
+  https://github.com/datasets/covid-19
+
 Running the scripts
 -------------------
 
-For informations on the scripts and how to rum them, see `epidata README <../../README.rst>`_ of the above folder.
+For informations on installation, dependencies and how to rum the scripts,
+see `epidata README <../../README.rst>`_ of the above folder.
 
 Run options
 ~~~~~~~~~~~
@@ -198,12 +201,12 @@ BAA            Germany     migration_bfa_2020_dim401           number of commute
 BAA            Germany     migration_bfa_2020_dim400           number of commuters from one county into another indexed by county ids (with eisenach merged into wartburgkreis)
 ============== ==========  =================================== =================
 
-More detailed information can be found in the documentation of the different functions in
-
-https://dlr-sc.github.io/memilio/documentation/index.html
-
+More detailed information can be found in the
+`documentation <https://dlr-sc.github.io/memilio/documentation/index.html>`_  of the different functions.
 
 Notes for developers
 --------------------
 
 If a new functionality shall be added please stick to the instructions in `epidata README <../../README.rst>`_ of the above folder.
+
+For information about testing, coverage, pylint and tools see also the `epidata README <../../README.rst>`_ of the above folder.
