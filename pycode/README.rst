@@ -18,19 +18,3 @@ We recommend to use a virtual python environment to avoid dependency conflicts w
     pip install --upgrade pip
 
 Refer to the `Python documentation <https://docs.python.org/3/library/venv.html>`_ for more information about virtual environments.
-
-Each package provides its own ``setup.py``, so they can be installed seperately with pip:
-
-.. code:: sh
-
-    cd <package directory>
-    pip install .
-
-Each package contains a test suite that can be run with
-
-.. code:: sh
-
-    cd <package directory>
-    python -m unittest
-
-If you are a developer, use ``pip install -e .[dev]`` instead when you are working on the code. This also installs additional dependencies used in the unit test suite or for maintenance.
