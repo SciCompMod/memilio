@@ -60,13 +60,13 @@ Running the scripts
 -------------------
 
 To run the scripts use the setup.py and everything is installed (see Installation) and useable via the following entry points.
-  - getrkidata (get case data from rki, see Results: RKI-C)
+  - getcasedata (get case data from rki, see Results: RKI-C)
   - getpopuldata (get population data, see Results: P)
   - getjhdata (get case data from john hopkins university, see Results: JH)
   - getdividata (get ICU data from DIVI, see Results: DIVI)
   - getsimdata (get simulation data including case and vaccination data from rki, population data and ICU data, see Results: RKI-C, RKI-V, P, DIVI)
   - cleandata (deletes written files)
-  - getrkiestimation (get case data with estimations from rki, see Results: RKI-Estimation)
+  - getcasesestimation (get case data with estimations from rki, see Results: RKI-Estimation)
   - getcommutermobility (get data about commuter mobility, see Results: BAA)
   - gettestingdata (get data about number of tests, see Results: RKI-T)
 
