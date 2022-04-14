@@ -24,6 +24,7 @@
 """
 import pandas as pd
 import itertools
+from datetime import datetime
 
 from memilio.epidata import defaultDict as dd
 
@@ -155,3 +156,27 @@ def impute_and_reduce_df(df_old, group_by_cols, mod_cols, impute='forward', movi
         df_new.index = (range(len(df_new)))
 
     return df_new
+
+
+def extract_subframe_based_on_dates(df, start_date, end_date):
+    """! Removes all data with date lower than start date or higher than end date.
+
+    Returns the Dataframe with only dates between start date and end date.
+    Resets the Index of the Dataframe.
+
+    @param df The dataframe which has to be edited
+    @param start_date Date of first date in dataframe
+    @param end_date Date of last date in dataframe
+    """
+
+    upperdate = datetime.strftime(end_date, '%Y-%m-%d')
+    lowerdate = datetime.strftime(start_date, '%Y-%m-%d')
+
+    # Removes dates higher than end_date
+    df = df[df[dd.EngEng['date']] <= upperdate]
+    # Removes dates lower than start_date
+    df = df[df[dd.EngEng['date']] >= lowerdate]
+
+    df.reset_index(drop=True, inplace=True)
+
+    return df

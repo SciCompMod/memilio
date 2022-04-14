@@ -21,6 +21,8 @@
 import unittest
 import pandas as pd
 from pyfakefs import fake_filesystem_unittest
+from datetime import date
+
 from memilio.epidata import modifyDataframeSeries as mDfS
 
 class Test_modifyDataframeSeries(fake_filesystem_unittest.TestCase):
@@ -46,6 +48,21 @@ class Test_modifyDataframeSeries(fake_filesystem_unittest.TestCase):
          'test_col2': ['a', 'x', 't', 'a', 'b', 'a', 'x', 't', 'a', 'b', 'a', 'x', 't', 'a', 'b'],
          'test_col3': [1, 0, 1, 9, 4, 3, 2, 1, 1, 1, 0, 6, 5, 3, 1],
          'ID': [1, 2, 3, 1, 2, 3, 1, 2, 3, 1, 2, 3, 1, 2, 3]})
+    df_dates = pd.DataFrame({
+        'Date':[
+            '2022-01-01', '2022-01-01', '2022-01-03', '2022-01-03',
+            '2022-01-04', '2022-01-06'],
+        'col_int': [1, 10, 3, 3, 4, 6],
+        'col_str': ['a', 'a', 'b', 'c', 'd', 'e']})
+    df_dates_unsorted = pd.DataFrame({
+        'Date':[
+            '2022-01-06', '2022-01-03', '2022-01-01', '2022-01-06',
+            '2022-01-03', '2022-01-04'],
+        'col_int': [60, 3, 1, 6, 3, 4],
+        'col_str': ['a', 'b', 'a', 'e', 'c', 'd']})
+    df_dates_result = pd.DataFrame({
+        'Date': ['2022-01-03', '2022-01-03', '2022-01-04'],
+        'col_int': [3, 3, 4], 'col_str': ['b', 'c', 'd']})
 
 
     def setUp(self):
@@ -167,6 +184,21 @@ class Test_modifyDataframeSeries(fake_filesystem_unittest.TestCase):
         self.assertAlmostEqual(df[(df['Date'] == "2021-01-06") & (df['ID'] == 3.0)]['test_col1'].item(), 4 + 1 / 3)
         # (1+ 1 + 3) / 3 = 1 + 2 / 3
         self.assertAlmostEqual(df[(df['Date'] == "2021-01-06") & (df['ID'] == 3.0)]['test_col3'].item(), 1 + 2 / 3)
+
+
+    def test_extract_subframe_based_on_dates(self):
+        # test with start and end value in dataframe
+        extracted_df = mDfS.extract_subframe_based_on_dates(
+            self.df_dates, date(2022, 1, 3), date(2022, 1, 4))
+        pd.testing.assert_frame_equal(self.df_dates_result, extracted_df)
+        # test with start and end value not in dataframe
+        extracted_df = mDfS.extract_subframe_based_on_dates(
+            self.df_dates, date(2022, 1, 2), date(2022, 1, 5))
+        pd.testing.assert_frame_equal(self.df_dates_result, extracted_df)
+        # test with unsorted dataframe
+        extracted_df = mDfS.extract_subframe_based_on_dates(
+            self.df_dates_unsorted, date(2022, 1, 3), date(2022, 1, 5))
+        pd.testing.assert_frame_equal(self.df_dates_result, extracted_df)
 
 
 if __name__ == '__main__':
