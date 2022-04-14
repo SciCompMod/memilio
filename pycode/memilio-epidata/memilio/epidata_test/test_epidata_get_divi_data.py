@@ -1,7 +1,7 @@
 #############################################################################
 # Copyright (C) 2020-2021 German Aerospace Center (DLR-SC)
 #
-# Authors:
+# Authors: Patrick Lenz, Annette Lutz
 #
 # Contact: Martin J. Kuehn <Martin.Kuehn@DLR.de>
 #
@@ -18,17 +18,14 @@
 # limitations under the License.
 #############################################################################
 import unittest
-from pandas.core.indexes.base import Index
 from pyfakefs import fake_filesystem_unittest
-from freezegun import freeze_time
-from datetime import date, datetime, time, timedelta
+from datetime import date
 
 import os
 import pandas as pd
 
 from memilio.epidata import getDIVIData as gdd
 from memilio.epidata import getDataIntoPandasDataFrame as gd
-from memilio.epidata import defaultDict as dd
 from unittest.mock import patch, call
 
 
@@ -38,23 +35,22 @@ class TestGetDiviData(fake_filesystem_unittest.TestCase):
 
     path = '/home/DiviData'
 
-    test_df = pd.DataFrame(
-        {
-            'Date':
-            ['2021-09-08', '2021-09-08', '2021-09-08', '2021-09-08', '2021-09-08',
-             '2021-09-08', '2021-09-08', '2021-09-08', '2021-09-08', '2021-09-08',
-             '2021-09-08', '2021-09-08', '2021-09-08', '2021-09-08', '2021-09-08',
-             '2021-09-08'],
-            'ICU':
-            [16, 52, 111, 7, 432, 126, 74, 175, 208, 33, 79, 16, 11, 27, 5, 15],
-            'ICU_ventilated':
-            [13, 34, 63, 5, 220, 53, 38, 79, 111, 15, 53, 8, 7, 13, 2, 9],
-            'ID_State': [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16],
-            'State':
-            ['Schleswig-Holstein', 'Hamburg', 'Niedersachsen', 'Bremen',
-                'Nordrhein-Westfalen', 'Hessen', 'Rheinland-Pfalz',
-                'Baden-Württemberg', 'Bayern', 'Saarland', 'Berlin', 'Brandenburg',
-                'Mecklenburg-Vorpommern', 'Sachsen', 'Sachsen-Anhalt', 'Thüringen']})
+    df_result = pd.DataFrame({
+        'Date':
+        ['2021-09-08', '2021-09-08', '2021-09-08', '2021-09-08', '2021-09-08',
+         '2021-09-08', '2021-09-08', '2021-09-08', '2021-09-08', '2021-09-08',
+         '2021-09-08', '2021-09-08', '2021-09-08', '2021-09-08', '2021-09-08',
+         '2021-09-08'],
+        'ICU':
+        [16, 52, 111, 7, 432, 126, 74, 175, 208, 33, 79, 16, 11, 27, 5, 15],
+        'ICU_ventilated':
+        [13, 34, 63, 5, 220, 53, 38, 79, 111, 15, 53, 8, 7, 13, 2, 9],
+        'ID_State': [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16],
+        'State':
+        ['Schleswig-Holstein', 'Hamburg', 'Niedersachsen', 'Bremen',
+         'Nordrhein-Westfalen', 'Hessen', 'Rheinland-Pfalz',
+         'Baden-Württemberg', 'Bayern', 'Saarland', 'Berlin', 'Brandenburg',
+         'Mecklenburg-Vorpommern', 'Sachsen', 'Sachsen-Anhalt', 'Thüringen']})
 
     def setUp(self):
         self.setUpPyfakefs()
@@ -74,14 +70,13 @@ class TestGetDiviData(fake_filesystem_unittest.TestCase):
                 os.path.join(directory, 'germany_divi'+text+'.json'))]
         return gdd_calls
 
-    def test_extract_subframe_based_on_dates(self):
-        (df_raw, df_counties, df_states, df_ger) = gdd.get_divi_data(
-            out_folder=self.path)
+    def test_extracted_state_subframe(self):
+        df_states = gdd.get_divi_data(out_folder=self.path)[2]
         # test if only dates from 08-09-2021 are returned
         df_state_testdate = gdd.extract_subframe_based_on_dates(
             df_states, date(2021, 9, 8),
             date(2021, 9, 8))
-        pd.testing.assert_frame_equal(self.test_df, df_state_testdate)
+        pd.testing.assert_frame_equal(self.df_result, df_state_testdate)
 
     @patch('memilio.epidata.getDIVIData.pd.read_json')
     @patch('memilio.epidata.getDataIntoPandasDataFrame.loadCsv')
@@ -115,7 +110,7 @@ class TestGetDiviData(fake_filesystem_unittest.TestCase):
         self.assertEqual(str(error.exception), error_message)
 
     @patch('builtins.print')
-    def test_det_divi_data_prints(self, mock_print):
+    def test_get_divi_data_prints(self, mock_print):
         # case with start_date before 2020-04-24
         gdd.get_divi_data(out_folder=self.path, start_date=date(2020, 1, 1))
         expected_call = [
@@ -139,7 +134,8 @@ class TestGetDiviData(fake_filesystem_unittest.TestCase):
         expected_calls = self.gdd_calls(text='_all_dates')
         mock_print.assert_has_calls(expected_calls)
 
-    @patch('memilio.epidata.getDIVIData.pd.read_json', return_value=test_df.copy())
+    @patch('memilio.epidata.getDIVIData.pd.read_json',
+           return_value=df_result.copy())
     def test_divi_data_sanity_checks(self, mockrjson3):
 
         # first test

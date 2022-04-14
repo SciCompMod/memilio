@@ -45,8 +45,7 @@ ICU_ventilated does not exist for the 24.4. and 25.4.
 """
 
 import os
-import bisect
-from datetime import timedelta, date, datetime
+from datetime import date, datetime
 import pandas as pd
 
 from memilio.epidata import getDataIntoPandasDataFrame as gd
@@ -134,9 +133,9 @@ def get_divi_data(read_data=dd.defaultDict['read_data'],
         try:
             df = pd.read_json(file_in)
         except ValueError:
-            raise FileNotFoundError("Error: The file: " + file_in + \
-                                  " does not exist. Call program without" \
-                                  " -r flag to get it.")
+            raise FileNotFoundError("Error: The file: " + file_in +
+                                    " does not exist. Call program without"
+                                    " -r flag to get it.")
     else:
         try:
             df = gd.loadCsv(
@@ -144,9 +143,8 @@ def get_divi_data(read_data=dd.defaultDict['read_data'],
                 apiUrl='https://diviexchange.blob.core.windows.net/%24web/',
                 extension='.csv')
         except Exception as err:
-            raise FileNotFoundError("Error: " \
-                                    "Download link for Divi data has changed.") \
-                  from err
+            raise FileNotFoundError(
+                "Error: Download link for Divi data has changed.") from err
 
     if not df.empty:
         if not no_raw:
