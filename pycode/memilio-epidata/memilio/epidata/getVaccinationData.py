@@ -350,7 +350,7 @@ def get_vaccination_data(read_data=dd.defaultDict['read_data'],
         index_shift + min_age_old, min_age_new)
     if old_age_not_vacc == 1:
         age_old_to_age_new_share[0] = []
-    for i in range(old_age_not_vacc, len(age_old_to_age_new_share)-old_age_not_vacc):
+    for i in range(old_age_not_vacc, len(age_old_to_age_new_share)):
         age_old_to_age_new_share[i] = [x[1]
                                        for x in age_old_to_age_new_share[i]]
 
