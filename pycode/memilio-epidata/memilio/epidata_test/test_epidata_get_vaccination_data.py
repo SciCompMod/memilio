@@ -70,16 +70,16 @@ class TestGetVaccinationData(fake_filesystem_unittest.TestCase):
             ('2020-12-27', str(counties[i]), '04-10', 1, 10),
             ('2020-12-27', str(counties[i]), '11-17', 1, 2),
             ('2020-12-27', str(counties[i]), '18-55', 1, 5),
+            ('2020-12-27', str(counties[i]), '56+', 1, 7),
             ('2020-12-27', str(counties[i]), '02-03', 2, 17),
             ('2020-12-27', str(counties[i]), '04-10', 2, 36),
             ('2020-12-27', str(counties[i]), '11-17', 2, 40),
             ('2020-12-27', str(counties[i]), '18-55', 2, 6),
+            ('2020-12-27', str(counties[i]), '56+', 2, 11),
             ('2020-12-27', str(counties[i]), '02-03', 3, 20),
             ('2020-12-27', str(counties[i]), '04-10', 3, 40),
             ('2020-12-27', str(counties[i]), '11-17', 3, 40),
             ('2020-12-27', str(counties[i]), '18-55', 3, 6),
-            ('2020-12-27', str(counties[i]), '56+', 1, 7),
-            ('2020-12-27', str(counties[i]), '56+', 2, 11),
             ('2020-12-27', str(counties[i]), '56+', 3, 57)
         ]
         df_to_append = pd.DataFrame(

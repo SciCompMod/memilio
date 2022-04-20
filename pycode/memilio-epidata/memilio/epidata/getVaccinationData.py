@@ -327,11 +327,13 @@ def get_vaccination_data(read_data=dd.defaultDict['read_data'],
     min_all_ages = sorted(pd.unique(list(itertools.chain(
         min_age_old, min_age_pop, min_age_new))))
 
-    # check if there is an agegroup not vaccinized in old age groups
+    # check if there is an age group not vaccinated in old age groups
     if min_age_old[0] == 0:
         old_age_not_vacc = 0
+        index_shift = []
     else:
         old_age_not_vacc = 1
+        index_shift = [0]
 
     # compute share of all_ages intervals from population intervals
     population_to_all_ages_share = create_intervals_mapping(
@@ -339,15 +341,16 @@ def get_vaccination_data(read_data=dd.defaultDict['read_data'],
 
     # compute mappings from all ages to old and new intervals
     all_ages_to_age_old_share = create_intervals_mapping(
-        min_all_ages, [0] + min_age_old)
+        min_all_ages, index_shift + min_age_old)
     all_ages_to_age_new_share = create_intervals_mapping(
         min_all_ages, min_age_new)
 
     # compute indices of (partially) shared intervals from old to new
     age_old_to_age_new_share = create_intervals_mapping(
-        [0] + min_age_old, min_age_new)
-    age_old_to_age_new_share[0] = []
-    for i in range(1, len(age_old_to_age_new_share)):
+        index_shift + min_age_old, min_age_new)
+    if old_age_not_vacc == 1:
+        age_old_to_age_new_share[0] = []
+    for i in range(old_age_not_vacc, len(age_old_to_age_new_share)-old_age_not_vacc):
         age_old_to_age_new_share[i] = [x[1]
                                        for x in age_old_to_age_new_share[i]]
 
