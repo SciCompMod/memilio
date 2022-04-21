@@ -22,12 +22,8 @@ from unittest.mock import patch, call
 from pyfakefs import fake_filesystem_unittest
 
 import pandas as pd
-import numpy as np
 
-from memilio.epidata import getDataIntoPandasDataFrame as gd
-from memilio.epidata import getCommuterMobility as gcm
 from memilio.epidata import getVaccinationData as gvd
-from memilio.epidata import defaultDict as dd
 from memilio.epidata import geoModificationGermany as geoger
 
 
@@ -70,13 +66,21 @@ class TestGetVaccinationData(fake_filesystem_unittest.TestCase):
     df_vacc_data_altern = pd.DataFrame(columns=col_names_vacc_data)
     for i in range(len(counties)):
         vacc_data_altern = [
-            ('2020-12-27', str(counties[i]), '02-03', 2, i),
-            ('2020-12-27', str(counties[i]), '04-10', 2, i),
-            ('2020-12-27', str(counties[i]), '11-17', 2, i),
-            ('2020-12-27', str(counties[i]), '18-55', 2, i),
-            ('2020-12-27', str(counties[i]), '56+', 1, i),
-            ('2020-12-27', str(counties[i]), '56+', 2, i),
-            ('2020-12-27', str(counties[i]), '56+', 3, i)
+            ('2020-12-27', str(counties[i]), '02-03', 1, 3),
+            ('2020-12-27', str(counties[i]), '04-10', 1, 10),
+            ('2020-12-27', str(counties[i]), '11-17', 1, 2),
+            ('2020-12-27', str(counties[i]), '18-55', 1, 5),
+            ('2020-12-27', str(counties[i]), '56+', 1, 7),
+            ('2020-12-27', str(counties[i]), '02-03', 2, 17),
+            ('2020-12-27', str(counties[i]), '04-10', 2, 36),
+            ('2020-12-27', str(counties[i]), '11-17', 2, 40),
+            ('2020-12-27', str(counties[i]), '18-55', 2, 6),
+            ('2020-12-27', str(counties[i]), '56+', 2, 11),
+            ('2020-12-27', str(counties[i]), '02-03', 3, 20),
+            ('2020-12-27', str(counties[i]), '04-10', 3, 40),
+            ('2020-12-27', str(counties[i]), '11-17', 3, 40),
+            ('2020-12-27', str(counties[i]), '18-55', 3, 6),
+            ('2020-12-27', str(counties[i]), '56+', 3, 57)
         ]
         df_to_append = pd.DataFrame(
             vacc_data_altern, columns=col_names_vacc_data)
@@ -104,25 +108,25 @@ class TestGetVaccinationData(fake_filesystem_unittest.TestCase):
 
     @patch('memilio.epidata.getVaccinationData.download_vaccination_data',
            return_value=df_vacc_data)
-    def test_get_standard_vaccination_data_no_errors_with_plots(
+    def test_get_standard_vaccination_sanitize_1(
             self, mockv):
         gvd.get_vaccination_data(out_folder=self.path, sanitize_data=1)
 
     @patch('memilio.epidata.getVaccinationData.download_vaccination_data',
            return_value=df_vacc_data)
-    def test_get_standard_vaccination_data_no_errors_with_plots(
+    def test_get_standard_vaccination_sanitize_2(
             self, mockv):
         gvd.get_vaccination_data(out_folder=self.path, sanitize_data=2)
 
     @patch('memilio.epidata.getVaccinationData.download_vaccination_data',
            return_value=df_vacc_data)
-    def test_get_standard_vaccination_data_no_errors_with_plots(
+    def test_get_standard_vaccination_sanitize_3(
             self, mockv):
         gvd.get_vaccination_data(out_folder=self.path, sanitize_data=3)
 
     @patch('memilio.epidata.getVaccinationData.download_vaccination_data',
            return_value=df_vacc_data)
-    def test_get_standard_vaccination_data_no_errors_with_plots(
+    def test_get_standard_vaccination_sanitize_0(
             self, mockv):
         gvd.get_vaccination_data(out_folder=self.path, sanitize_data=0)
 
