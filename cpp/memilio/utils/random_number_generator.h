@@ -23,6 +23,10 @@
 #include "memilio/utils/logging.h"
 #include "memilio/utils/span.h"
 
+#ifdef MEMILIO_HAS_MPI
+#include "mpi.h"
+#endif
+
 #include <cassert>
 #include <functional>
 #include <numeric>
@@ -84,14 +88,121 @@ private:
 };
 
 /**
- * get a random number generator that is static and local to this thread.
- * @return a random number generator that is static and local to this thread.
+ * models a uniform_random_bit_generator, using cached numbers instead of generating on demand.
+ * @see thread_local_rng for a static instance when MPI is enabled.
  */
-inline RandomNumberGenerator& thread_local_rng()
+class CachedRNG : public mio::RandomNumberGenerator
 {
-    static thread_local auto rng = RandomNumberGenerator();
-    return rng;
+public:
+    using result_type = mio::RandomNumberGenerator::result_type;
+
+    CachedRNG(const size_t cache_size, const std::vector<result_type>& predrawn_samples)
+        : RandomNumberGenerator()
+        , m_counter(0)
+        , m_index(0)
+        , m_cache(predrawn_samples)
+    {
+        assert(cache_size > 0);
+        m_cache.resize(cache_size);
+        // fill remaining cache using RandomNumberGenerator::operator()
+        for (size_t i = predrawn_samples.size(); i < m_cache.size(); i++) {
+            m_cache[i] = (*this)();
+        }
+    };
+
+    ~CachedRNG()
+    {
+        mio::log_info("CachedRNG used {} out of {} cached numbers, looped cache {} time(s).",
+                      m_index + m_counter * (long long int)m_cache.size(), m_cache.size(), m_counter);
+    }
+
+    result_type operator()()
+    {
+        if (m_index >= m_cache.size()) {
+            m_counter++;
+            m_index = 0;
+            mio::log_warning("CachedRNG has too few cached numbers! The cache will be looped on subsequent calls. Increase the cache size to avoid degraded RNG.");
+        }
+        return m_cache[m_index++];
+    }
+    size_t cache_size() const
+    {
+        return m_cache.size();
+    }
+
+protected:
+    size_t m_counter, m_index;
+    std::vector<result_type> m_cache;
+};
+
+#ifndef MIO_GLOBAL_RANDOM_NUMBER_GENERATOR
+    #define MIO_GLOBAL_RANDOM_NUMBER_GENERATOR
+    #ifdef MEMILIO_HAS_MPI
+        /**
+         * @brief get a random number generator using cached numbers that is static and local to this thread.
+         * 
+         * The first call to this function can be used to set the cache size, and optionally predrawn samples.
+         * All subsequent calls ignore these parameters, and only return the thread_local CachedRNG instance.
+         * The cache is reused after running out of numbers, logging a warning. To avoid degraded random numbers,
+         * increase the cache size if such a warning occurs.
+         * 
+         * @param cache_size number of random numbers to be drawn and stored.  
+         * @param samples 
+         * @return a random number generator that is static and local to this thread.
+         */
+        inline CachedRNG& thread_local_rng(const size_t cache_size=100000, const std::vector<mio::CachedRNG::result_type>& samples={})
+        {
+            static thread_local auto rng = CachedRNG(cache_size, samples);
+            return rng;
+        }
+    #else
+        /**
+         * get a random number generator that is static and local to this thread.
+         * @return a random number generator that is static and local to this thread.
+         */
+        inline RandomNumberGenerator& thread_local_rng()
+        {
+            static thread_local auto rng = RandomNumberGenerator();
+            return rng;
+        }
+    #endif
+#endif
+
+#ifdef MEMILIO_HAS_MPI
+/**
+ * @brief Draws local_cache_size random numbers for each rank on comm from the root rank, and distributes them.
+ *
+ * This function must be called after MPI_Init and before any call to mio::thread_local_rng.
+ * Draws numbers using a RandomNumberGenerator instance on root, then scatters them across all ranks on comm.
+ * Expects the default definition of thread_local_rng with MEMILIO_HAS_MPI enabled.
+ *
+ * @param local_cache_size The size of the cache on each rank. Must be the same across all ranks.
+ * @param seeds Vector of seeds for the RandomNumberGenerator.
+ * @param root The rank that draws and distibutes all random numbers.
+ * @param comm MPI Communicator where the numbers should be distributed on.
+ */
+void initialize_rng_cache(const size_t local_cache_size, const std::vector<unsigned int>& seeds={}, const int root=0,
+                          const MPI_Comm comm=MPI_COMM_WORLD)
+{
+    int my_rank, my_size;
+    MPI_Comm_rank(comm, &my_rank);
+    MPI_Comm_size(comm, &my_size);
+
+    std::vector<CachedRNG::result_type> buffer, rng_cache(local_cache_size);
+    RandomNumberGenerator rng;
+    if (seeds.size() != 0) {
+        rng.seed(seeds);
+    }
+    if (my_rank == root) {
+        buffer.resize(local_cache_size * my_size);
+        for (auto& rn : buffer)
+            rn = rng();
+    }
+    MPI_Scatter(buffer.data(), local_cache_size, MPI_UINT64_T, rng_cache.data(), local_cache_size, MPI_UINT64_T, 0,
+                comm);
+    mio::thread_local_rng(local_cache_size, rng_cache);
 }
+#endif
 
 inline void log_rng_seeds(const RandomNumberGenerator& rng, LogLevel level)
 {
