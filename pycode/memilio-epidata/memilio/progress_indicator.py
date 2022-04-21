@@ -90,7 +90,7 @@ class ProgressIndicator:
                 msg = "Failed to set console mode for 'nt' system (e.g."\
                       " Windows). ProgressIndicator(s) may be displayed"\
                       " incorrectly." 
-                warn(msg, category=RuntimeWarning, stacklevel=4)
+                warn(msg, category=RuntimeWarning, stacklevel=2)
 
     def _render(self):
         """! Regularly update the animation. Do not call manually!"""
