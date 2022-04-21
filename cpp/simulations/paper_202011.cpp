@@ -31,6 +31,12 @@
 #include <cstdio>
 #include <iomanip>
 
+#ifdef MEMILIO_HAS_MPI
+#include "mpi.h"
+#endif
+
+#include "memilio/utils/random_number_generator.h"
+
 namespace fs = boost::filesystem;
 
 /**
@@ -756,6 +762,76 @@ mio::IOResult<void> save_results(const std::vector<std::vector<mio::TimeSeries<d
     return mio::success();
 }
 
+#ifdef MEMILIO_HAS_MPI
+/**
+ * @brief Gather the results of a parallel ensemble run on a single rank.
+ *
+ * @param ensemble_results [INOUT] Local results. On the root rank this will accumulate all local results.
+ * @param root Rank on comm that should gather all local results.
+ * @param comm Communicator to gather results on.
+ * @param tag Tag to use for communication.
+ */
+void gather_results(std::vector<std::vector<mio::TimeSeries<double>>>& ensemble_results, const int root = 0,
+                    const MPI_Comm comm = MPI_COMM_WORLD, const int tag = 7)
+{
+    int my_size, my_rank;
+    MPI_Comm_size(comm, &my_size);
+    MPI_Comm_rank(comm, &my_rank);
+    if (my_size == 1)
+        return; // no gathering needed with a single rank
+
+    // store some sizes
+    const Eigen::Index num_rows       = ensemble_results[0][0].get_num_rows();
+    const Eigen::Index num_timepoints = ensemble_results[0][0].get_num_time_points();
+    const Eigen::Index ts_size = num_rows * num_timepoints; // number of doubles in a time series (stored contiguously)
+    const size_t num_runs      = ensemble_results.size();
+    const size_t num_nodes     = ensemble_results[0].size();
+    const size_t num_ts        = num_runs * num_nodes;
+
+    // assert that each TimeSeries has the same dimensions
+    // this should be true after interpolate_simulation_result()
+    for (auto& run_result : ensemble_results) {
+        for (auto& node_result : run_result) {
+            assert(num_rows == node_result.get_num_rows());
+            assert(num_timepoints == node_result.get_num_time_points());
+        }
+    }
+
+    //std::vector<std::vector<mio::TimeSeries<double>>> global_results;
+    std::vector<double> buffer(ts_size * num_ts);
+    // send all local ensemble_results to root, using buffer
+    if (my_rank != root) {
+        auto itr = buffer.begin();
+        for (auto& run_result : ensemble_results) {
+            for (auto& node_result : run_result) {
+                itr = std::copy(node_result.data(), node_result.data() + ts_size, itr);
+            }
+        }
+        MPI_Send(buffer.data(), buffer.size(), MPI_DOUBLE, root, tag, comm);
+    }
+    // recieve and fill all local results into ensemble_results
+    else { // my_size > 1
+        // reserve space for each rank
+        ensemble_results.reserve(ensemble_results.size() * my_size);
+        // create buffer of TimeSeries with correct data size
+        std::vector<mio::TimeSeries<double>> ts_copy_buffer(ensemble_results[0]);
+        for (int rank_itr = 0; rank_itr < my_size - 1; rank_itr++) {
+            auto itr = buffer.begin();
+            // recieve local results in any order
+            MPI_Recv(buffer.data(), buffer.size(), MPI_DOUBLE, MPI_ANY_SOURCE, tag, comm, MPI_STATUS_IGNORE);
+            // copy the recieved data into ensemble_results via ts_copy_buffer
+            for (size_t i = 0; i < num_runs; i++) {
+                for (size_t j = 0; j < num_nodes; j++) {
+                    std::copy(itr, itr + ts_size, ts_copy_buffer[j].data());
+                    itr += ts_size;
+                }
+                ensemble_results.push_back(ts_copy_buffer);
+            }
+        }
+    }
+}
+#endif
+
 /**
  * Different modes for running the parameter study.
  */
@@ -767,21 +843,37 @@ enum class RunMode
 
 /**
  * Run the parameter study.
- * Load a previously stored graph or create a new one from data. 
+ * Load a previously stored graph or create a new one from data.
  * The graph is the input for the parameter study.
  * A newly created graph is saved and can be reused.
  * @param mode Mode for running the parameter study.
  * @param data_dir data directory. Not used if mode is RunMode::Load.
  * @param save_dir directory where the graph is loaded from if mode is RunMOde::Load or save to if mode is RunMode::Save.
  * @param result_dir directory where all results of the parameter study will be stored.
+ * @param root Optional parameter if MPI is enabled. Determines the root process for gathering data etc.
+ * @param comm Optional parameter if MPI is enabled. Sets the MPI communicator.
  * @returns any io error that occurs during reading or writing of files.
  */
+#ifdef MEMILIO_HAS_MPI
+mio::IOResult<void> run(RunMode mode, const fs::path& data_dir, const fs::path& save_dir, const fs::path& result_dir,
+                        int root = 0, MPI_Comm comm = MPI_COMM_WORLD)
+#else
 mio::IOResult<void> run(RunMode mode, const fs::path& data_dir, const fs::path& save_dir, const fs::path& result_dir)
+#endif
 {
     const auto start_date   = mio::Date(2020, 12, 12);
     const auto num_days_sim = 20.0;
     const auto end_date     = mio::offset_date_by_days(start_date, int(std::ceil(num_days_sim)));
     const auto num_runs     = 1;
+
+#ifdef MEMILIO_HAS_MPI
+    int my_rank;
+    MPI_Comm_rank(comm, &my_rank);
+    // shift run index so that results are saved in different directories for each run
+    auto run_idx = size_t(num_runs * my_rank);
+#else
+    auto run_idx = size_t(0);
+#endif
 
     //create or load graph
     mio::Graph<mio::SecirModel, mio::MigrationParameters> params_graph;
@@ -808,7 +900,6 @@ mio::IOResult<void> run(RunMode mode, const fs::path& data_dir, const fs::path& 
     auto ensemble_params = std::vector<std::vector<mio::SecirModel>>{};
     ensemble_params.reserve(size_t(num_runs));
     auto save_result_result = mio::IOResult<void>(mio::success());
-    auto run_idx            = size_t(0);
     parameter_study.run([&](auto results_graph) {
         ensemble_results.push_back(mio::interpolate_simulation_result(results_graph));
 
@@ -826,13 +917,33 @@ mio::IOResult<void> run(RunMode mode, const fs::path& data_dir, const fs::path& 
         ++run_idx;
     });
     BOOST_OUTCOME_TRY(save_result_result);
-    BOOST_OUTCOME_TRY(save_results(ensemble_results, ensemble_params, county_ids, result_dir));
 
+#ifdef MEMILIO_HAS_MPI
+    //auto global_results = gather_results(ensemble_results, root, comm);
+    gather_results(ensemble_results, root, comm);
+    if (my_rank == root) {
+        BOOST_OUTCOME_TRY(save_results(ensemble_results, ensemble_params, county_ids, result_dir));
+    }
+#else
+    BOOST_OUTCOME_TRY(save_results(ensemble_results, ensemble_params, county_ids, result_dir));
+#endif
     return mio::success();
 }
 
 int main(int argc, char** argv)
 {
+#ifdef MEMILIO_HAS_MPI
+    MPI_Init(&argc, &argv);
+    MPI_Comm comm = MPI_COMM_WORLD;
+
+    int my_rank, my_size;
+    MPI_Comm_rank(comm, &my_rank);
+    MPI_Comm_size(comm, &my_size);
+
+    // currently, 14899 random numbers are generated on SAVE, and 14898 on LOAD
+    const size_t rng_cache_size = 20000;
+    mio::initialize_rng_cache(rng_cache_size);
+#endif
     //TODO: proper command line interface to set:
     //- number of runs
     //- start and end date (may be incompatible with runmode::load)
@@ -840,7 +951,7 @@ int main(int argc, char** argv)
     //- log level
     //- ...
 
-    mio::set_log_level(mio::LogLevel::warn);
+    mio::set_log_level(mio::LogLevel::info);
 
     RunMode mode;
     std::string save_dir;
@@ -867,21 +978,38 @@ int main(int argc, char** argv)
         printf("\tStore the results in <result_dir>\n");
         printf("paper1 <load_dir> <result_dir>\n");
         printf("\tLoad graph from <load_dir>, then run the simulation.\n");
+
+#ifdef MEMILIO_HAS_MPI
+        MPI_Finalize();
+#endif
         return 0;
     }
     printf("Saving results to \"%s\".\n", result_dir.c_str());
 
-    // mio::thread_local_rng().seed({...}); //set seeds, e.g., for debugging
-    printf("Seeds: ");
-    for (auto s : mio::thread_local_rng().get_seeds()) {
-        printf("%u, ", s);
+// mio::thread_local_rng().seed({...}); //set seeds, e.g., for debugging
+#ifdef MEMILIO_HAS_MPI
+    if (my_rank == 0)
+#endif
+    {
+        printf("Seeds: ");
+        for (auto s : mio::thread_local_rng().get_seeds()) {
+            printf("%u, ", s);
+        }
+        printf("\n");
     }
-    printf("\n");
 
     auto result = run(mode, data_dir, save_dir, result_dir);
     if (!result) {
         printf("%s\n", result.error().formatted_message().c_str());
+
+#ifdef MEMILIO_HAS_MPI
+        MPI_Finalize();
+#endif
         return -1;
     }
+
+#ifdef MEMILIO_HAS_MPI
+    MPI_Finalize();
+#endif
     return 0;
 }
