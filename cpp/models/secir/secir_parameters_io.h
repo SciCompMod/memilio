@@ -54,13 +54,10 @@ IOResult<void> write_graph(const Graph<Model, MigrationParameters>& graph, const
     BOOST_OUTCOME_TRY(created, create_directory(directory, abs_path));
 
     if (created) {
-        log_info("Results are stored in {:s}/results.", mio::get_current_dir_name());
+        log_info("Results are stored in \'{:s}/\'.", abs_path);
     }
     else {
-        log_info("Results are stored in {:s}/results. Files from previous "
-                 "graph will be "
-                 "overwritten",
-                 mio::get_current_dir_name());
+        log_info("Results are stored in \'{:s}/\'. Files from previous graph will be overwritten", abs_path);
     }
 
     //write two files per node
