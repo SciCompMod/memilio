@@ -27,6 +27,7 @@ import os
 import pandas as pd
 from memilio.epidata import defaultDict as dd
 from memilio.epidata import getDataIntoPandasDataFrame as gd
+from memilio.epidata import modifyDataframeSeries
 
 
 # Merging of Counties that are reported differently, either separatedly or
@@ -80,6 +81,18 @@ def get_stateid_to_name():
     @return hash map from federal state ID to state name.
     """
     return dd.State
+
+
+def insert_names_of_states(df, state_id_col = dd.EngEng["idState"]):
+    """! Adds a column with names of states given a dataframe with state ids
+
+    @param df dataframe with state ids and missing state names
+    @param state_id_col column name of the column containing the state ids
+    @return dataframe df with column of state names corresponding to county ids
+    """
+    df = modifyDataframeSeries.insert_column_by_map(
+        df, state_id_col, dd.EngEng["state"], get_state_names_and_ids())
+    return df
 
 # while reporting for Berlin is just different for different sources, Eisenach
 # was merged on political decision with Wartburgkreis on July 1, 2021
@@ -154,6 +167,21 @@ def get_countyid_to_name():
     @return hash map from county ID to county name.
     """
     return dd.County
+
+
+def insert_names_of_counties(
+    df, county_id_col = dd.EngEng["idCounty"], merge_berlin=True):
+    """! Adds a column with names of counties given a dataframe with state ids
+
+    @param df dataframe with county ids and missing county names
+    @param county_id_col column name of the column containing the county ids
+    @return dataframe df with column of state names corresponding to county ids
+    """
+    county_id_map = get_county_names_and_ids(
+        merge_berlin=merge_berlin, merge_eisenach=False)
+    df = modifyDataframeSeries.insert_column_by_map(
+        df, county_id_col, dd.EngEng["county"], county_id_map)
+    return df
 
 
 def check_for_all_counties(

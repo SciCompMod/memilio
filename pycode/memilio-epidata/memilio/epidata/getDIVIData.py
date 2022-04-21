@@ -137,18 +137,8 @@ def get_divi_data(read_data=dd.defaultDict['read_data'],
     df = modifyDataframeSeries.extract_subframe_based_on_dates(
         df, start_date, end_date)
 
-    # insert names of states
-    df.insert(loc=0, column=dd.EngEng["idState"], value=df[dd.EngEng["state"]])
-    for item in geoger.get_state_names_and_ids():
-        df.loc[df[dd.EngEng["idState"]] == item[1],
-               [dd.EngEng["state"]]] = item[0]
-
-    # insert names of counties
-    df.insert(loc=3, column=dd.EngEng["county"],
-              value=df[dd.EngEng["idCounty"]])
-    for item in geoger.get_county_names_and_ids():
-        df.loc[df[dd.EngEng["idCounty"]] == item[1],
-               [dd.EngEng["county"]]] = item[0]
+    df = geoger.insert_names_of_states(df)
+    df = geoger.insert_names_of_counties(df)
 
     # remove leading zeros for ID_County (if not yet done)
     df['ID_County'] = df['ID_County'].astype(int)

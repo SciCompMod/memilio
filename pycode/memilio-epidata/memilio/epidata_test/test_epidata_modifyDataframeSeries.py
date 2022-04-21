@@ -63,6 +63,12 @@ class Test_modifyDataframeSeries(fake_filesystem_unittest.TestCase):
     df_dates_result = pd.DataFrame({
         'Date': ['2022-01-03', '2022-01-03', '2022-01-04'],
         'col_int': [3, 3, 4], 'col_str': ['b', 'c', 'd']})
+    int_map = [(10*i, i) for i in range(10)]
+    str_map = [('A','a'), ('X','x'), ('T','t'), ('B','b')]
+    df_str_map_col = pd.Series(
+        data = ['A', 'X', 'T', 'A', 'B', 'A', 'X', 'T', 'A', 'B', 'A', 'X', 'T',
+                'A', 'B'],
+        name = 'inserted_col')
 
 
     def setUp(self):
@@ -187,18 +193,47 @@ class Test_modifyDataframeSeries(fake_filesystem_unittest.TestCase):
 
 
     def test_extract_subframe_based_on_dates(self):
+        test_df = self.df_dates.copy()
         # test with start and end value in dataframe
         extracted_df = mDfS.extract_subframe_based_on_dates(
             self.df_dates, date(2022, 1, 3), date(2022, 1, 4))
-        pd.testing.assert_frame_equal(self.df_dates_result, extracted_df)
+        pd.testing.assert_frame_equal(extracted_df, self.df_dates_result)
+        # check that input frame is unchanged
+        pd.testing.assert_frame_equal(self.df_dates, test_df)
         # test with start and end value not in dataframe
         extracted_df = mDfS.extract_subframe_based_on_dates(
             self.df_dates, date(2022, 1, 2), date(2022, 1, 5))
-        pd.testing.assert_frame_equal(self.df_dates_result, extracted_df)
+        pd.testing.assert_frame_equal(extracted_df, self.df_dates_result)
+        pd.testing.assert_frame_equal(self.df_dates, test_df)
         # test with unsorted dataframe
         extracted_df = mDfS.extract_subframe_based_on_dates(
             self.df_dates_unsorted, date(2022, 1, 3), date(2022, 1, 5))
-        pd.testing.assert_frame_equal(self.df_dates_result, extracted_df)
+        pd.testing.assert_frame_equal(extracted_df, self.df_dates_result)
+
+
+    def test_insert_column_by_map(self):
+        old_cols = self.test_df1.columns.to_list()
+
+        #test with integer mapping
+        df = mDfS.insert_column_by_map(
+            self.test_df1, 'test_col3', 'inserted_col', self.int_map)
+        new_cols = df.columns.to_list()
+        exp_cols = ['Date', 'test_col1', 'test_col2', 'test_col3',
+            'inserted_col', 'ID']
+        self.assertEqual(new_cols, exp_cols)
+        pd.testing.assert_frame_equal(df[old_cols], self.test_df1)
+        exp_new_col = (10*self.test_df1['test_col3']).rename('inserted_col')
+        pd.testing.assert_series_equal(df['inserted_col'], exp_new_col)
+
+        # test with string mapping
+        df = mDfS.insert_column_by_map(
+            self.test_df1, 'test_col2', 'inserted_col', self.str_map)
+        new_cols = df.columns.to_list()
+        exp_cols = ['Date', 'test_col1', 'test_col2', 'inserted_col',
+            'test_col3', 'ID']
+        self.assertEqual(new_cols, exp_cols)
+        pd.testing.assert_frame_equal(df[old_cols], self.test_df1)
+        pd.testing.assert_series_equal(df['inserted_col'], self.df_str_map_col)
 
 
 if __name__ == '__main__':

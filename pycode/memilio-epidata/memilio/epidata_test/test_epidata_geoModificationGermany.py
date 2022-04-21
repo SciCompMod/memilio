@@ -18,7 +18,7 @@
 # limitations under the License.
 #############################################################################
 import unittest
-import numpy as np
+import pandas as pd
 from unittest.mock import patch
 from pyfakefs import fake_filesystem_unittest
 from memilio.epidata import geoModificationGermany as geoger
@@ -26,10 +26,9 @@ from memilio.epidata import geoModificationGermany as geoger
 
 class Test_geoModificationGermany(fake_filesystem_unittest.TestCase):
 
-    test_list1 = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16]
-    test_list2 = ['01', '02', '03', '04', '05', '06', '07',
-                  '08', '09', '10', '11', '12', '13', '14', '15', '16']
-    test_list3 = [
+    list_int_state_ids = [i+1 for i in range(16)]
+    list_str_state_ids = [str(i+1).zfill(2) for i in range(16)]
+    list_str_states = [
         'Schleswig-Holstein', 'Hamburg', 'Niedersachsen', 'Bremen',
         'Nordrhein-Westfalen', 'Hessen', 'Rheinland-Pfalz',
         'Baden-Württemberg', 'Bayern', 'Saarland', 'Berlin', 'Brandenburg',
@@ -141,40 +140,63 @@ class Test_geoModificationGermany(fake_filesystem_unittest.TestCase):
     rtc_zfill_true_list = ['03255', '05711', '05754',
                            '05758', '05762', '05766', '05770', '05774']
 
+    eisenach_unmerged_ids_list = [2000, 16056, 16063, 1001]
+    eisenach_unmerged_list = [
+        'Hamburg, Freie und Hansestadt', 'Eisenach, Stadt', 'Wartburgkreis',
+        'Flensburg, Stadt']
+    eisenach_merged_ids_list = [2000, 1001, 16063]
+    eisenach_merged_list = [
+        'Hamburg, Freie und Hansestadt', 'Flensburg, Stadt', 'Wartburgkreis']
+
     def setUp(self):
         self.setUpPyfakefs()
 
     def test_get_state_IDs(self):
         # zfill is false
         unique_geo_entitites = geoger.get_state_ids(False)
-        self.assertEqual(unique_geo_entitites, self.test_list1)
+        self.assertEqual(unique_geo_entitites, self.list_int_state_ids)
 
         # zfill is true
         unique_geo_entitites = geoger.get_state_ids(True)
-        self.assertEqual(unique_geo_entitites, self.test_list2)
+        self.assertEqual(unique_geo_entitites, self.list_str_state_ids)
 
     def test_get_state_names(self):
 
         state_names = geoger.get_state_names()
-        self.assertEqual(state_names, self.test_list3)
+        self.assertEqual(state_names, self.list_str_states)
 
     def test_get_state_names_and_ids(self):
 
         # zfill is false
         statenamesandids = geoger.get_state_names_and_ids(False)
         teststatenamesandids = []
-        for i in range(0, len(self.test_list1)):
-            combined = [self.test_list3[i], self.test_list1[i]]
+        for i in range(0, len(self.list_int_state_ids)):
+            combined = [self.list_str_states[i], self.list_int_state_ids[i]]
             teststatenamesandids.append(combined)
         self.assertEqual(statenamesandids, teststatenamesandids)
 
         # zfill is true
         statenamesandids = geoger.get_state_names_and_ids(True)
         teststatenamesandids = []
-        for i in range(0, len(self.test_list2)):
-            combined = [self.test_list3[i], self.test_list2[i]]
+        for i in range(0, len(self.list_str_state_ids)):
+            combined = [self.list_str_states[i], self.list_str_state_ids[i]]
             teststatenamesandids.append(combined)
         self.assertEqual(statenamesandids, teststatenamesandids)
+
+    def test_insert_names_of_states(self):
+
+        test_data = {
+            'ID_State': [1, 2, 2, 4, 3, 2],
+            'test_col': [1, 2, 3, 4, 5, 6]}
+        result_data = {
+            'ID_State': [1, 2, 2, 4, 3, 2],
+            'State': ['Schleswig-Holstein', 'Hamburg', 'Hamburg',
+                'Bremen', 'Niedersachsen', 'Hamburg'],
+            'test_col': [1, 2, 3, 4, 5, 6]}
+        test_df = pd.DataFrame(test_data)
+        result_df = geoger.insert_names_of_states(test_df)
+        pd.testing.assert_frame_equal(test_df, pd.DataFrame(test_data))
+        pd.testing.assert_frame_equal(result_df, pd.DataFrame(result_data))
 
     def test_get_county_ids(self):
 
@@ -246,6 +268,21 @@ class Test_geoModificationGermany(fake_filesystem_unittest.TestCase):
             all(county in countynamesandids for county in testcountynamesandids))
         zfilltest = ['Osnabrück, Stadt', '03404']
         self.assertIn(zfilltest, countynamesandids)
+
+    def test_insert_county_names(self):
+
+        test_data = {
+            'ID_County': [11000, 5314, 5382, 6635, 16063],
+            'test_col': list(range(5))}
+        result_data = {
+            'ID_County': [11000, 5314, 5382, 6635, 16063],
+            'County': ['Berlin', 'Bonn, Stadt', 'Rhein-Sieg-Kreis',
+                'Waldeck-Frankenberg', 'Wartburgkreis'],
+            'test_col': list(range(5))}
+        test_df = pd.DataFrame(test_data)
+        result_df = geoger.insert_names_of_counties(test_df)
+        pd.testing.assert_frame_equal(test_df, pd.DataFrame(test_data))
+        pd.testing.assert_frame_equal(result_df, pd.DataFrame(result_data))
 
     @patch('builtins.print')
     def test_check_for_all_counties(self, mock_print):
@@ -489,6 +526,26 @@ class Test_geoModificationGermany(fake_filesystem_unittest.TestCase):
         self.assertTrue(
             '32: [8421, 8425, 8426, 8437, 9775]'
             in str(regiontocounty))
+
+    def test_merge_df_counties(self):
+        test_data = {
+            'ID_County': 4*self.eisenach_unmerged_ids_list,
+            'County': 4*self.eisenach_unmerged_list,
+            'labels': 2*(4*['a']+4*['b']),
+            'Date': 8*["2022-03-01"]+8*["2022-03-02"],
+            'numbers': range(16)}
+        test_df = pd.DataFrame(test_data)
+        ex_result_df = pd.DataFrame({
+            'ID_County': 4*self.eisenach_merged_ids_list,
+            'County': 4*self.eisenach_merged_list,
+            'labels': 2*(3*['a']+3*['b']),
+            'Date': 6*["2022-03-01"]+6*["2022-03-02"],
+            'numbers': [0,3,3,4,7,11,8,11,19,12,15,27]})
+        group_columns = ['Date', 'labels']
+        result_df = geoger.merge_df_counties(
+            test_df, 16063, [16063, 16056], group_columns, group_columns)
+        pd.testing.assert_frame_equal(result_df, ex_result_df)
+        pd.testing.assert_frame_equal(test_df, pd.DataFrame(test_data))
 
 
 if __name__ == '__main__':

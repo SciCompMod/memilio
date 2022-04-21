@@ -26,6 +26,7 @@ import pandas as pd
 
 from memilio.epidata import getDIVIData as gdd
 from memilio.epidata import getDataIntoPandasDataFrame as gd
+from memilio.epidata import modifyDataframeSeries as mDfS
 from unittest.mock import patch, call
 
 
@@ -73,9 +74,8 @@ class TestGetDiviData(fake_filesystem_unittest.TestCase):
     def test_extracted_state_subframe(self):
         df_states = gdd.get_divi_data(out_folder=self.path)[2]
         # test if only dates from 08-09-2021 are returned
-        df_state_testdate = gdd.extract_subframe_based_on_dates(
-            df_states, date(2021, 9, 8),
-            date(2021, 9, 8))
+        df_state_testdate = mDfS.extract_subframe_based_on_dates(
+            df_states, date(2021, 9, 8), date(2021, 9, 8))
         pd.testing.assert_frame_equal(self.df_result, df_state_testdate)
 
     @patch('memilio.epidata.getDIVIData.pd.read_json')

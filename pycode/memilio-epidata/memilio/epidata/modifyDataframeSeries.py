@@ -173,10 +173,29 @@ def extract_subframe_based_on_dates(df, start_date, end_date):
     lowerdate = datetime.strftime(start_date, '%Y-%m-%d')
 
     # Removes dates higher than end_date
-    df = df[df[dd.EngEng['date']] <= upperdate]
+    df_new = df[df[dd.EngEng['date']] <= upperdate]
     # Removes dates lower than start_date
-    df = df[df[dd.EngEng['date']] >= lowerdate]
+    df_new = df_new[df_new[dd.EngEng['date']] >= lowerdate]
 
-    df.reset_index(drop=True, inplace=True)
+    df_new.reset_index(drop=True, inplace=True)
 
-    return df
+    return df_new
+
+def insert_column_by_map(df, col_to_map, new_col_name, map):
+    """! Adds a column to a given dataframe based on a mapping of values of a given column
+
+    The mapping is defined by a list containing tupels of the form (new_value, old_value)
+    where old_value is a value in the col_to_map and new_value the value
+    that is added in the new column if col_to_map contains the old_value.
+    @param df dataframe to modify
+    @param col_to_map column containing values to be mapped
+    @param new_col_name name of the new column containing the mapped values
+    @param map List of tuples of values in the column to be added and values in the given column
+    @return dataframe df with column of state names correspomding to state ids
+    """
+    df_new = df.copy()
+    loc_new_col = df_new.columns.get_loc(col_to_map)+1
+    df_new.insert(loc=loc_new_col, column=new_col_name, value=df_new[col_to_map])
+    for item in map:
+        df_new.loc[df_new[col_to_map] == item[1], [new_col_name]] = item[0]
+    return df_new

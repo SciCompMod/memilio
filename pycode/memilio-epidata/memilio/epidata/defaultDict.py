@@ -140,7 +140,7 @@ GerEng = {
     'Anzahl': EngEng['number'],
     'Positivenanteil (%)': EngEng['positiveRate'],
     'Anteil positiv': EngEng['positiveRate'],
-    'bundesland': EngEng['state'],
+    'bundesland': EngEng['idState'],
     'ags2': EngEng['idState'],
     'kreis': EngEng['county'],
     'ags5': EngEng['idCounty'],
