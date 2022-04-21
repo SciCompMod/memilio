@@ -17,11 +17,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #############################################################################
-import memilio
 import sys
 import time
 import threading
-from os import name, get_terminal_size
+from os import get_terminal_size, name as os_name
+from warnings import warn
 
 class ProgressIndicator:
     """! Print an animation to show that something is happening.
@@ -74,7 +74,7 @@ class ProgressIndicator:
 
     @staticmethod
     def _console_setup():
-        if name == 'nt': # os name can be nt, posix, or java
+        if os_name == 'nt': # os name can be nt, posix, or java
             # Windows uses nt, which does not support carriage returns by
             # default. the following Windows specific module should fix this.
             try:
@@ -86,12 +86,11 @@ class ProgressIndicator:
                 #        | ENABLE_VIRTUAL_TERMINAL_PROCESSING
                 # the last flag enables several control sequences, like \r
                 k.SetConsoleMode(k.GetStdHandle(-11), 7)
-            except ImportError as import_error:
-                msg = "\nFailed to set console mode for 'nt' system (e.g."\
-                    " Windows). This exception can be safely caught, but "\
-                    "ProgressIndicator(s) may be displayed incorrectly."
-                import_error.msg += msg
-                raise import_error
+            except (ImportError):
+                msg = "Failed to set console mode for 'nt' system (e.g."\
+                      " Windows). ProgressIndicator(s) may be displayed"\
+                      " incorrectly." 
+                warn(msg, category=RuntimeWarning, stacklevel=4)
 
     def _render(self):
         """! Regularly update the animation. Do not call manually!"""
