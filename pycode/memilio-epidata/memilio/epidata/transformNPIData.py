@@ -17,7 +17,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #############################################################################
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, date
 import sys
 import time
 import os
@@ -238,6 +238,8 @@ def transform_npi_data(fine_resolution=2,
             # defines delay in number of days between exceeding
             # incidence threshold and NPI getting active
             npi_activation_delay = 0
+            print('Using a delay of NPI activation of ' +
+                  str(npi_activation_delay) + ' days.')
 
             try:
                 df_npis_old = pd.read_csv(
@@ -466,19 +468,6 @@ def transform_npi_data(fine_resolution=2,
             df_npis_old.columns).index(
             dd.EngEng['npiCode']) + 1
 
-        # create new data frame for all NPIs given in the columns,
-        # resolved by county and day
-        df_npis = pd.DataFrame(
-            columns=[dd.EngEng['date']] + [dd.EngEng['idCounty']] +
-            list(npis_final[dd.EngEng['npiCode']]))
-        # convert NPI data from object to int such that correlations can be
-        # computed
-        df_npis = df_npis.astype(dict(
-            zip(
-                [dd.EngEng['date']] + [dd.EngEng['idCounty']] +
-                list(npis_final[dd.EngEng['npiCode']]), ['str', 'int'] +
-                ['int' for i in npis_final[dd.EngEng['npiCode']]])))
-
         # store string dates 'dYYYYMMDD' in list before parsing
         str_dates = list(df_npis_old.iloc[:, start_npi_cols:].columns)
         # convert string dates into other format
@@ -523,10 +512,24 @@ def transform_npi_data(fine_resolution=2,
             max_date + [max(dates_new),
                         pd.to_datetime(end_date)])
 
+        # create new data frame for all NPIs given in the columns,
+        # resolved by county and day
+        df_npis = pd.DataFrame(
+            columns=[dd.EngEng['date']] + [dd.EngEng['idCounty']] +
+            list(npis_final[dd.EngEng['npiCode']]))
+        # convert NPI data from object to int such that correlations can be
+        # computed
+        df_npis = df_npis.astype(dict(
+            zip(
+                [dd.EngEng['date']] + [dd.EngEng['idCounty']] +
+                list(npis_final[dd.EngEng['npiCode']]), ['str', 'int'] +
+                ['int' for i in npis_final[dd.EngEng['npiCode']]])))
+
         # iterate over countyIDs
-        counters = np.zeros(4)  # time counter for output only
+        counters = np.zeros(5)  # time counter for output only
         countyidx = 0
-        for countyID in unique_geo_entities:
+        # unique_geo_entities:
+        for countyID in [5315, 1001, 9162, 16071, 11000, 1060, 5566]:
             cid = 0
             countyidx += 1
 
@@ -539,6 +542,10 @@ def transform_npi_data(fine_resolution=2,
                 incidence_local = df_infec_local[dd.EngEng['confirmed']].diff(
                     periods=7).fillna(df_infec_local[dd.EngEng['confirmed']])
                 df_infec_local['Incidence'] = incidence_local / pop_local * 100000
+
+                # set to main data frame
+                df_infec_rki.loc[df_infec_rki[dd.EngEng['idCounty']] ==
+                                 countyID, 'Incidence'] = df_infec_local['Incidence'].values
 
                 # cut infection information at start_date_new and end_date_new
                 df_infec_local = df_infec_local.loc[(df_infec_local[dd.EngEng['date']] >= start_date_new) & (
@@ -570,6 +577,11 @@ def transform_npi_data(fine_resolution=2,
             df_local_new = pd.DataFrame(
                 columns=[dd.EngEng['date']] + [dd.EngEng['idCounty']] +
                 list(npis[dd.EngEng['npiCode']]))
+
+            counters[cid] += time.perf_counter()-start_time
+            cid += 1
+
+            start_time = time.perf_counter()
 
             # fill in NPI values by transposing from columns to rows
             df_local_new[dd.EngEng['date']] = dates_new
@@ -605,6 +617,10 @@ def transform_npi_data(fine_resolution=2,
                 # cut NPI information at start_date_new and end_date_new
                 df_local_new = df_local_new.loc[(df_local_new[dd.EngEng['date']] >= start_date_new) & (
                     df_local_new[dd.EngEng['date']] <= end_date_new), :].reset_index()
+                try:
+                    df_local_new = df_local_new.drop(columns='index')
+                except:
+                    pass
                 # get index of first NPI column in local data frame
                 npis_idx_start = list(
                     df_local_new.columns).index(
@@ -649,28 +665,22 @@ def transform_npi_data(fine_resolution=2,
             ### ###
 
             start_time = time.perf_counter()
-            df_npis = df_npis.append(df_local_new.copy())
+            df_npis = df_npis.append(df_local_new,
+                                     ignore_index=True).copy()
             counters[cid] += time.perf_counter()-start_time
             cid += 1
-
-            # kita
-            # figcode = ["M03_0" + str(i)+str(j) for i in range(10,70,10) for j in [''] + ['_'+str(k) for k in range(1,6)]]
-            # # school
-            # figcode = ["M02a_0" + str(i)+str(j) for i in [10,20,30,31,32,33,34,35,36] for j in [''] + ['_'+str(k) for k in range(1,6)]]
-            # for bb in figcode:
-            #     dates_mentioned = np.array(dates_new)[list(np.where(df_npis.loc[:,bb]>0)[0])]
-            #     print('')
-            # customPlot.plotList(df_npis.loc[:,"Date"], [df_npis.loc[:,bb] for bb in figcode],  legend=figcode, title='asd', xlabel='asd', ylabel='ad', fig_name='asd')
 
             # divide working time by completed number of counties and multiply
             # by remaining number of counties to estimate time remaining
             time_remain = sum(
                 counters) / countyidx * (len(unique_geo_entities) - countyidx)
             # print progress
-            print(
-                'Progress ' + str(countyidx) + ' / ' +
-                str(len(unique_geo_entities)) + '. Estimated time remaining: ' +
-                str(int(time_remain / 60)) + ' min.')
+            if countyidx == 1 or countyidx % int(
+                    len(unique_geo_entities) / 10) == 0:
+                print('Progress ' + str(countyidx) + ' / ' +
+                      str(len(unique_geo_entities)) +
+                      '. Estimated time remaining: ' +
+                      str(int(time_remain / 60)) + ' min.')
 
         # print sub counters
         print('Sub task counters are: ')
@@ -687,60 +697,222 @@ def transform_npi_data(fine_resolution=2,
         except:
             pass
 
-        print(
-            "Time needed: " + str(counters[0]) + ", " + str(counters[1]) + ", " +
-            str(counters[2]) + " sec")
-
         #### start validation ####
         if fine_resolution == 2:
-            # Cologne for M01a_010 and all dates (no changes)
-            dummy_old = df_npis_old[(df_npis_old[dd.EngEng['idCounty']] == 5315) & (
-                df_npis_old[dd.EngEng['npiCode']] == 'M01a_010')].values[0][start_npi_cols:]
-            dummy_new = df_npis.loc[df_npis[dd.EngEng['idCounty']] ==
-                                    5315, 'M01a_010'].values
-            print(abs(dummy_old-dummy_new).sum() == 0)
+            # the following validation is only valid for end_date May 14, 2021
+            # and data frames of mentioned NPIs, not active NPIs
+            start_date_validation = datetime(2020, 3, 1)
+            end_date_validation = datetime(2022, 2, 15)
+            end_date_validation_str = 'd20220215'
+
+            # Cologne for M01a_010 and all dates (no changes, 0 to 0)
+            dummy_old = df_npis_old[(df_npis_old[dd.EngEng['idCounty']] == 5315) & (df_npis_old[dd.EngEng['npiCode']] == 'M01a_010')].iloc[:, :list(
+                df_npis_old.columns).index(end_date_validation_str)+1].values[0][start_npi_cols:]
+            dummy_new = df_npis.loc[(df_npis[dd.EngEng['idCounty']] == 5315) & (
+                df_npis[dd.EngEng['date']] <= end_date_validation), 'M01a_010'].values
+            valdiff = 0
+            for i in range(2, 6):
+                valdiff += (i-1)*len(np.where(dummy_old == i)[0])
+            valdiff += 99*len(np.where(dummy_old == -99)[0])
+            print(abs(dummy_old-dummy_new).sum() == valdiff)
+
+            # Cologne for M01a_150_2 and all dates (no changes, 0 to 0, 1 to 1)
+            dummy_old = df_npis_old[(df_npis_old[dd.EngEng['idCounty']] == 5315) & (df_npis_old[dd.EngEng['npiCode']] == 'M01a_150_2')].iloc[:, :list(
+                df_npis_old.columns).index(end_date_validation_str)+1].values[0][start_npi_cols:]
+            dummy_new = df_npis.loc[(df_npis[dd.EngEng['idCounty']] == 5315) & (
+                df_npis[dd.EngEng['date']] <= end_date_validation), 'M01a_150_2'].values
+            incid = df_infec_rki[(df_infec_rki[dd.EngEng['idCounty']] == 5315) &
+                                 (df_infec_rki[dd.EngEng['date']] <=
+                                  end_date_validation) &
+                                 (df_infec_rki[dd.EngEng['date']] >=
+                                  start_date_validation)]['Incidence'].values
+            npi_index = np.where(dummy_old >= 1)[0]
+            incid_index = np.where(incid >= 10)[0]
+            active_index = np.sort(
+                list(set(npi_index).intersection(incid_index)))
+            nonactive_index = np.sort(
+                list(set(npi_index).difference(active_index)))
+            valdiff = 0
+            for i in range(2, 6):
+                # these values >=1 are set to 1
+                valdiff += (i-1)*len(
+                    np.where(dummy_old[list(active_index)] == i)[0])
+                # these values >=1 are set to 0
+                valdiff += i * len(
+                    np.where(dummy_old[list(nonactive_index)] == i)[0])
+            # -99 always set to 0
+            valdiff += 99*len(np.where(dummy_old == -99)[0])
+            print(abs(dummy_old-dummy_new).sum() == valdiff)
 
             # Flensburg for M05_120 and all dates ('2's become '1's)
-            dummy_old = df_npis_old[(df_npis_old[dd.EngEng['idCounty']] == 1001) & (
-                df_npis_old[dd.EngEng['npiCode']] == 'M05_120')].values[0][start_npi_cols:]
-            dummy_new = df_npis.loc[df_npis[dd.EngEng['idCounty']] ==
-                                    1001, 'M05_120'].values
-            print(abs(dummy_old-dummy_new).sum() == 5)
+            dummy_old = df_npis_old[(df_npis_old[dd.EngEng['idCounty']] == 1001) & (df_npis_old[dd.EngEng['npiCode']] == 'M05_120')].iloc[:, :list(
+                df_npis_old.columns).index(end_date_validation_str)+1].values[0][start_npi_cols:]
+            dummy_new = df_npis.loc[(df_npis[dd.EngEng['idCounty']] == 1001) & (
+                df_npis[dd.EngEng['date']] <= end_date_validation), 'M05_120'].values
+            incid = df_infec_rki[(df_infec_rki[dd.EngEng['idCounty']] == 1001) &
+                                 (df_infec_rki[dd.EngEng['date']] <=
+                                  end_date_validation) &
+                                 (df_infec_rki[dd.EngEng['date']] >=
+                                  start_date_validation)]['Incidence'].values
+            npi_index = np.where(dummy_old >= 1)[0]
+            incid_index = np.where(incid >= 10)[0]
+            active_index = np.sort(
+                list(set(npi_index).intersection(incid_index)))
+            nonactive_index = np.sort(
+                list(set(npi_index).difference(active_index)))
+            valdiff = 0
+            for i in range(2, 6):
+                # these values >=1 are set to 1
+                valdiff += (i-1)*len(
+                    np.where(dummy_old[list(active_index)] == i)[0])
+                # these values >=1 are set to 0
+                valdiff += i * len(
+                    np.where(dummy_old[list(nonactive_index)] == i)[0])
+            # -99 always set to 0
+            valdiff += 99*len(np.where(dummy_old == -99)[0])
+            print(abs(dummy_old-dummy_new).sum() == valdiff)
 
             # Munich for M01a_010_4 and all dates (-99 becomes 0, 0 stays 0)
-            dummy_old = df_npis_old[(df_npis_old[dd.EngEng['idCounty']] == 9162) & (
-                df_npis_old[dd.EngEng['npiCode']] == 'M01a_010_4')].values[0][start_npi_cols:]
-            dummy_new = df_npis.loc[df_npis[dd.EngEng['idCounty']] ==
-                                    9162, 'M01a_010_4'].values
-            print(abs(dummy_old-dummy_new).sum() == 422*99)
+            dummy_old = df_npis_old[(df_npis_old[dd.EngEng['idCounty']] == 9162) & (df_npis_old[dd.EngEng['npiCode']] == 'M01a_010_4')].iloc[:, :list(
+                df_npis_old.columns).index(end_date_validation_str)+1].values[0][start_npi_cols:]
+            dummy_new = df_npis.loc[(df_npis[dd.EngEng['idCounty']] == 9162) & (
+                df_npis[dd.EngEng['date']] <= end_date_validation), 'M01a_010_4'].values
+            incid = df_infec_rki[(df_infec_rki[dd.EngEng['idCounty']] == 9162) &
+                                 (df_infec_rki[dd.EngEng['date']] <=
+                                  end_date_validation) &
+                                 (df_infec_rki[dd.EngEng['date']] >=
+                                  start_date_validation)]['Incidence'].values
+            npi_index = np.where(dummy_old >= 1)[0]
+            incid_index = np.where(incid >= 10)[0]
+            active_index = np.sort(
+                list(set(npi_index).intersection(incid_index)))
+            nonactive_index = np.sort(
+                list(set(npi_index).difference(active_index)))
+            valdiff = 0
+            for i in range(2, 6):
+                # these values >=1 are set to 1
+                valdiff += (i-1)*len(
+                    np.where(dummy_old[list(active_index)] == i)[0])
+                # these values >=1 are set to 0
+                valdiff += i * len(
+                    np.where(dummy_old[list(nonactive_index)] == i)[0])
+            # -99 always set to 0
+            valdiff += 99*len(np.where(dummy_old == -99)[0])
+            print(abs(dummy_old-dummy_new).sum() == valdiff)
 
             # Weimar for M12_030_3 and all dates (-99 becomes 0, 1 stays 1, 0 stays 0)
-            dummy_old = df_npis_old[(df_npis_old[dd.EngEng['idCounty']] == 16071) & (
-                df_npis_old[dd.EngEng['npiCode']] == 'M12_030_3')].values[0][start_npi_cols:]
-            dummy_new = df_npis.loc[df_npis[dd.EngEng['idCounty']] ==
-                                    16071, 'M12_030_3'].values
-            print(abs(dummy_old-dummy_new).sum() == 422*99)
+            dummy_old = df_npis_old[(df_npis_old[dd.EngEng['idCounty']] == 16071) & (df_npis_old[dd.EngEng['npiCode']] == 'M18_030_4')].iloc[:, :list(
+                df_npis_old.columns).index(end_date_validation_str)+1].values[0][start_npi_cols:]
+            dummy_new = df_npis.loc[(df_npis[dd.EngEng['idCounty']] == 16071) & (
+                df_npis[dd.EngEng['date']] <= end_date_validation), 'M18_030_4'].values
+            incid = df_infec_rki[(df_infec_rki[dd.EngEng['idCounty']] == 16071) &
+                                 (df_infec_rki[dd.EngEng['date']] <=
+                                  end_date_validation) &
+                                 (df_infec_rki[dd.EngEng['date']] >=
+                                  start_date_validation)]['Incidence'].values
+            npi_index = np.where(dummy_old >= 1)[0]
+            incid_index = np.where(incid >= 50)[0]
+            active_index = np.sort(
+                list(set(npi_index).intersection(incid_index)))
+            nonactive_index = np.sort(
+                list(set(npi_index).difference(active_index)))
+            valdiff = 0
+            for i in range(2, 6):
+                # these values >=1 are set to 1
+                valdiff += (i-1)*len(
+                    np.where(dummy_old[list(active_index)] == i)[0])
+                # these values >=1 are set to 0
+                valdiff += i * len(
+                    np.where(dummy_old[list(nonactive_index)] == i)[0])
+            # -99 always set to 0
+            valdiff += 99*len(np.where(dummy_old == -99)[0])
+            print(abs(dummy_old-dummy_new).sum() == valdiff)  # TODO
 
             # Berlin for M01b_020 and all dates (2 becomes 1, 1 stays 1, 0 stays 0)
-            dummy_old = df_npis_old[(df_npis_old[dd.EngEng['idCounty']] == 11000) & (
-                df_npis_old[dd.EngEng['npiCode']] == 'M01b_020')].values[0][start_npi_cols:]
-            dummy_new = df_npis.loc[df_npis[dd.EngEng['idCounty']] ==
-                                    11000, 'M01b_020'].values
-            print(abs(dummy_old-dummy_new).sum() == 82)
+            dummy_old = df_npis_old[(df_npis_old[dd.EngEng['idCounty']] == 11000) & (df_npis_old[dd.EngEng['npiCode']] == 'M01b_020')].iloc[:, :list(
+                df_npis_old.columns).index(end_date_validation_str)+1].values[0][start_npi_cols:]
+            dummy_new = df_npis.loc[(df_npis[dd.EngEng['idCounty']] == 11000) & (
+                df_npis[dd.EngEng['date']] <= end_date_validation), 'M01b_020'].values
+            incid = df_infec_rki[(df_infec_rki[dd.EngEng['idCounty']] == 11000) &
+                                 (df_infec_rki[dd.EngEng['date']] <=
+                                  end_date_validation) &
+                                 (df_infec_rki[dd.EngEng['date']] >=
+                                  start_date_validation)]['Incidence'].values
+            npi_index = np.where(dummy_old >= 1)[0]
+            incid_index = np.where(incid >= 10)[0]
+            active_index = np.sort(
+                list(set(npi_index).intersection(incid_index)))
+            nonactive_index = np.sort(
+                list(set(npi_index).difference(active_index)))
+            valdiff = 0
+            for i in range(2, 6):
+                # these values >=1 are set to 1
+                valdiff += (i-1)*len(
+                    np.where(dummy_old[list(active_index)] == i)[0])
+                # these values >=1 are set to 0
+                valdiff += i * len(
+                    np.where(dummy_old[list(nonactive_index)] == i)[0])
+            # -99 always set to 0
+            valdiff += 99*len(np.where(dummy_old == -99)[0])
+            print(abs(dummy_old-dummy_new).sum() == valdiff)  # TODO
 
             # Segeberg for M02b_035 and all dates (2 -> 1, 3 -> 1, 5 -> 1)
-            dummy_old = df_npis_old[(df_npis_old[dd.EngEng['idCounty']] == 1060) & (
-                df_npis_old[dd.EngEng['npiCode']] == 'M02b_035')].values[0][start_npi_cols:]
-            dummy_new = df_npis.loc[df_npis[dd.EngEng['idCounty']] ==
-                                    1060, 'M02b_035'].values
-            print(abs(dummy_old-dummy_new).sum() == 151+2*53+4*22)
+            dummy_old = df_npis_old[(df_npis_old[dd.EngEng['idCounty']] == 1060) & (df_npis_old[dd.EngEng['npiCode']] == 'M02b_035')].iloc[:, :list(
+                df_npis_old.columns).index(end_date_validation_str)+1].values[0][start_npi_cols:]
+            dummy_new = df_npis.loc[(df_npis[dd.EngEng['idCounty']] == 1060) & (
+                df_npis[dd.EngEng['date']] <= end_date_validation), 'M02b_035'].values
+            incid = df_infec_rki[(df_infec_rki[dd.EngEng['idCounty']] == 1060) &
+                                 (df_infec_rki[dd.EngEng['date']] <=
+                                  end_date_validation) &
+                                 (df_infec_rki[dd.EngEng['date']] >=
+                                  start_date_validation)]['Incidence'].values
+            npi_index = np.where(dummy_old >= 1)[0]
+            incid_index = np.where(incid >= 10)[0]
+            active_index = np.sort(
+                list(set(npi_index).intersection(incid_index)))
+            nonactive_index = np.sort(
+                list(set(npi_index).difference(active_index)))
+            valdiff = 0
+            for i in range(2, 6):
+                # these values >=1 are set to 1
+                valdiff += (i-1)*len(
+                    np.where(dummy_old[list(active_index)] == i)[0])
+                # these values >=1 are set to 0
+                valdiff += i * len(
+                    np.where(dummy_old[list(nonactive_index)] == i)[0])
+            # -99 always set to 0
+            valdiff += 99*len(np.where(dummy_old == -99)[0])
+            print(abs(dummy_old-dummy_new).sum() == valdiff)  # TODO
 
             # Steinfurt for M16_050 and all dates (4 -> 1, ...)
-            dummy_old = df_npis_old[(df_npis_old[dd.EngEng['idCounty']] == 5566) & (
-                df_npis_old[dd.EngEng['npiCode']] == 'M16_050')].values[0][start_npi_cols:]
-            dummy_new = df_npis.loc[df_npis[dd.EngEng['idCounty']] ==
-                                    5566, 'M16_050'].values
-            print(abs(dummy_old-dummy_new).sum() == 32+2*20+3*22)
+            dummy_old = df_npis_old[(df_npis_old[dd.EngEng['idCounty']] == 5566) & (df_npis_old[dd.EngEng['npiCode']] == 'M16_050')].iloc[:, :list(
+                df_npis_old.columns).index(end_date_validation_str)+1].values[0][start_npi_cols:]
+            dummy_new = df_npis.loc[(df_npis[dd.EngEng['idCounty']] == 5566) & (
+                df_npis[dd.EngEng['date']] <= end_date_validation), 'M16_050'].values
+            incid = df_infec_rki[(df_infec_rki[dd.EngEng['idCounty']] == 5566) &
+                                 (df_infec_rki[dd.EngEng['date']] <=
+                                  end_date_validation) &
+                                 (df_infec_rki[dd.EngEng['date']] >=
+                                  start_date_validation)]['Incidence'].values
+            npi_index = np.where(dummy_old >= 1)[0]
+            incid_index = np.where(incid >= 10)[0]
+            active_index = np.sort(
+                list(set(npi_index).intersection(incid_index)))
+            nonactive_index = np.sort(
+                list(set(npi_index).difference(active_index)))
+            valdiff = 0
+            for i in range(2, 6):
+                # these values >=1 are set to 1
+                valdiff += (i-1)*len(
+                    np.where(dummy_old[list(active_index)] == i)[0])
+                # these values >=1 are set to 0
+                valdiff += i * len(
+                    np.where(dummy_old[list(nonactive_index)] == i)[0])
+            # -99 always set to 0
+            valdiff += 99*len(np.where(dummy_old == -99)[0])
+            print(abs(dummy_old-dummy_new).sum() == valdiff)
+
+            x = 15
         elif fine_resolution == 1:
             # replace more detailed code names X_Y with major code X
             df_npis_old[dd.EngEng['npiCode']] = df_npis_old[dd.EngEng[
@@ -1115,7 +1287,7 @@ def main():
     """! Main program entry."""
 
     # arg_dict = gd.cli("testing")
-    transform_npi_data(fine_resolution=1, read_data=False, make_plot=True)
+    transform_npi_data(fine_resolution=2, read_data=False, make_plot=True)
 
 
 if __name__ == "__main__":
