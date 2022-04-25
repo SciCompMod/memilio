@@ -1,8 +1,7 @@
 /* 
 * Copyright (C) 2020-2021 German Aerospace Center (DLR-SC)
-*        & Helmholtz Centre for Infection Research (HZI)
 *
-* Authors: Daniel Abele, Majid Abedi, Elisabeth Kluth
+* Authors: Elisabeth Kluth
 *
 * Contact: Martin J. Kuehn <Martin.Kuehn@DLR.de>
 *
@@ -18,20 +17,36 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
-/** single include header for ABM */
-
-#ifndef EPI_ABM_H
-#define EPI_ABM_H
-
-#include "abm/parameters.h"
-#include "abm/simulation.h"
-#include "abm/world.h"
-#include "abm/person.h"
+#include "abm/trip_list.h"
 #include "abm/location.h"
-#include "abm/state.h"
-#include "abm/location_type.h"
-#include "memilio/utils/random_number_generator.h"
-#include "abm/migration_rules.h"
-#include "abm/testing_scheme.h"
+#include "abm/random_events.h"
 
-#endif
+#include <numeric>
+
+namespace mio
+{
+
+TripList::TripList()
+    : m_trips({})
+    , m_current_index(0)
+{
+}
+
+const Trip& TripList::get_next_trip() const
+{
+    return m_trips[m_current_index];
+}
+
+TimePoint TripList::get_next_trip_time() const
+{
+    return m_trips[m_current_index].time;
+}
+
+void TripList::add_trip(Trip trip)
+{
+    insert_sorted_replace(m_trips, trip, [](auto& trip1, auto& trip2) {
+        return trip1.time < trip2.time;
+    });
+}
+
+} // namespace mio

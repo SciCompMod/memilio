@@ -2,7 +2,7 @@
 * Copyright (C) 2020-2021 German Aerospace Center (DLR-SC)
 *        & Helmholtz Centre for Infection Research (HZI)
 *
-* Authors: Daniel Abele, Majid Abedi
+* Authors: Daniel Abele, Majid Abedi, Elisabeth Kluth
 *
 * Contact: Martin J. Kuehn <Martin.Kuehn@DLR.de>
 *
@@ -117,6 +117,16 @@ LocationType go_to_event(const Person& person, TimePoint t, TimeSpan dt, const A
         return LocationType::Home;
     }
 
+    return current_loc;
+}
+
+LocationType go_to_quarantine(const Person& person, TimePoint /*t*/, TimeSpan /*dt*/,
+                              const AbmMigrationParameters& /*params*/)
+{
+    auto current_loc = person.get_location_id().type;
+    if (person.is_in_quarantine()) {
+        return LocationType::Home;
+    }
     return current_loc;
 }
 

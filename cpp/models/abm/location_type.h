@@ -1,7 +1,7 @@
 /* 
 * Copyright (C) 2020-2021 German Aerospace Center (DLR-SC)
 *
-* Authors: Daniel Abele
+* Authors: Daniel Abele, Elisabeth Kluth
 *
 * Contact: Martin J. Kuehn <Martin.Kuehn@DLR.de>
 *
@@ -38,6 +38,9 @@ enum class LocationType : std::uint32_t
     BasicsShop, // groceries and other necessities
     Hospital,
     ICU,
+    Car,
+    PublicTransport,
+    TransportWithoutContact, // all ways of travel with no contact to other people, e.g. biking or walking
 
     Count //last!
 };

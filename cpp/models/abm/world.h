@@ -2,7 +2,7 @@
 * Copyright (C) 2020-2021 German Aerospace Center (DLR-SC)
 *        & Helmholtz Centre for Infection Research (HZI)
 *
-* Authors: Daniel Abele, Majid Abedi
+* Authors: Daniel Abele, Majid Abedi, Elisabeth Kluth
 *
 * Contact: Martin J. Kuehn <Martin.Kuehn@DLR.de>
 *
@@ -27,6 +27,7 @@
 #include "abm/person.h"
 #include "abm/lockdown_rules.h"
 #include "abm/testing_scheme.h"
+#include "abm/trip_list.h"
 #include "memilio/utils/pointer_dereferencing_iterator.h"
 #include "memilio/utils/stl_util.h"
 
@@ -57,6 +58,8 @@ public:
         , m_infection_parameters(params)
         , m_migration_parameters()
         , m_testing_parameters()
+        , m_trip_list()
+        , m_use_migration_rules(true)
     {
     }
 
@@ -77,13 +80,14 @@ public:
      * @param dt length of the time step
      */
     void evolve(TimePoint t, TimeSpan dt);
-    
+
     /** 
      * add a location to the world.
      * @param type type of location to add
+     * @param num_cells number of cells that the location is divided into
      * @return index and type of the newly created location
      */
-    LocationId add_location(LocationType type);
+    LocationId add_location(LocationType type, uint32_t num_cells = 0);
 
     /** add a person to the world 
      * @param id index and type of the initial location of the person
@@ -91,7 +95,7 @@ public:
      * @return reference to the newly created person
      */
     Person& add_person(LocationId id, InfectionState infection_state, AbmAgeGroup age = AbmAgeGroup::Age15to34);
-    
+
     /**
      * Sets the current infection state of the person.
      * Use only during setup, may distort the simulation results
@@ -104,7 +108,9 @@ public:
      * get a range of all locations in the world.
      * @return a range of all locations.
      */
-    Range<std::pair<std::vector<std::vector<Location>>::const_iterator, std::vector<std::vector<Location>>::const_iterator>> get_locations() const;
+    Range<std::pair<std::vector<std::vector<Location>>::const_iterator,
+                    std::vector<std::vector<Location>>::const_iterator>>
+    get_locations() const;
 
     /**
      * get a range of all persons in the world.
@@ -142,7 +148,7 @@ public:
      * @return number of persons that are in the specified infection state
      */
     int get_subpopulation_combined(InfectionState s, LocationType type) const;
-     
+
     /** 
      *get migration parameters
      */
@@ -164,6 +170,19 @@ public:
 
     const GlobalTestingParameters& get_global_testing_parameters() const;
 
+    /**
+     * get migration data
+     */
+    TripList& get_trip_list();
+
+    const TripList& get_trip_list() const;
+
+    /** 
+     * decide if migration rules (like go to school/work) are used or not
+     * the migration rules regarding hospitalization/ICU/quarantine are always used
+     */
+    void use_migration_rules(bool param);
+
 private:
     void interaction(TimePoint t, TimeSpan dt);
     void migration(TimePoint t, TimeSpan dt);
@@ -173,6 +192,8 @@ private:
     GlobalInfectionParameters m_infection_parameters;
     AbmMigrationParameters m_migration_parameters;
     GlobalTestingParameters m_testing_parameters;
+    TripList m_trip_list;
+    bool m_use_migration_rules;
 };
 
 } // namespace mio

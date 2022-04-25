@@ -2,7 +2,7 @@
 * Copyright (C) 2020-2021 German Aerospace Center (DLR-SC)
 *        & Helmholtz Centre for Infection Research (HZI)
 *
-* Authors: Daniel Abele, Majid Abedi
+* Authors: Daniel Abele, Majid Abedi, Elisabeth Kluth
 *
 * Contact: Martin J. Kuehn <Martin.Kuehn@DLR.de>
 *
@@ -28,23 +28,23 @@
 namespace mio
 {
 
-LocationId World::add_location(LocationType type)
+LocationId World::add_location(LocationType type, uint32_t num_cells)
 {
     auto& locations = m_locations[(uint32_t)type];
     uint32_t index  = static_cast<uint32_t>(locations.size());
-    locations.emplace_back(Location(type, index));
+    locations.emplace_back(Location(type, index, num_cells));
     return {index, type};
 }
 
 Person& World::add_person(LocationId id, InfectionState infection_state, AbmAgeGroup age)
 {
-    m_persons.push_back(std::make_unique<Person>(id, infection_state, age, m_infection_parameters));
+    uint32_t person_id = static_cast<uint32_t>(m_persons.size());
+    m_persons.push_back(std::make_unique<Person>(id, infection_state, age, m_infection_parameters,
+                                                 VaccinationState::Unvaccinated, person_id));
     auto& person = *m_persons.back();
     get_location(person).add_person(person);
     return person;
 }
-
-
 
 void World::evolve(TimePoint t, TimeSpan dt)
 {
@@ -61,8 +61,9 @@ void World::interaction(TimePoint /*t*/, TimeSpan dt)
     }
 }
 
-void World::set_infection_state(Person& person, InfectionState inf_state){
-    auto& loc = get_location(person);
+void World::set_infection_state(Person& person, InfectionState inf_state)
+{
+    auto& loc      = get_location(person);
     auto old_state = person.get_infection_state();
     person.set_infection_state(inf_state);
     loc.changed_state(person, old_state);
@@ -70,21 +71,35 @@ void World::set_infection_state(Person& person, InfectionState inf_state){
 
 void World::migration(TimePoint t, TimeSpan dt)
 {
+    // check if a person has to go to the hospital, ICU or home due to quarantine/recovery
     using migration_rule = LocationType (*)(const Person&, TimePoint, TimeSpan, const AbmMigrationParameters&);
-    const std::pair<migration_rule, std::vector<LocationType>> rules[] = {
-        std::make_pair(&return_home_when_recovered,
-                       std::vector<LocationType>{
-                           LocationType::Home,
-                           LocationType::Hospital}), //assumption: if there is an ICU, there is also an hospital
-        std::make_pair(&go_to_hospital, std::vector<LocationType>{LocationType::Home, LocationType::Hospital}),
-        std::make_pair(&go_to_icu, std::vector<LocationType>{LocationType::Hospital, LocationType::ICU}),
-        std::make_pair(&go_to_school, std::vector<LocationType>{LocationType::School, LocationType::Home}),
-        std::make_pair(&go_to_work, std::vector<LocationType>{LocationType::Home, LocationType::Work}),
-        std::make_pair(&go_to_shop, std::vector<LocationType>{LocationType::Home, LocationType::BasicsShop}),
-        std::make_pair(&go_to_event, std::vector<LocationType>{LocationType::Home, LocationType::SocialEvent})};
+    std::vector<std::pair<migration_rule, std::vector<LocationType>>> rules;
+    if (m_use_migration_rules) {
+        rules = {
+            std::make_pair(&return_home_when_recovered,
+                           std::vector<LocationType>{
+                               LocationType::Home,
+                               LocationType::Hospital}), //assumption: if there is an ICU, there is also an hospital
+            std::make_pair(&go_to_hospital, std::vector<LocationType>{LocationType::Home, LocationType::Hospital}),
+            std::make_pair(&go_to_icu, std::vector<LocationType>{LocationType::Hospital, LocationType::ICU}),
+            std::make_pair(&go_to_school, std::vector<LocationType>{LocationType::School, LocationType::Home}),
+            std::make_pair(&go_to_work, std::vector<LocationType>{LocationType::Home, LocationType::Work}),
+            std::make_pair(&go_to_shop, std::vector<LocationType>{LocationType::Home, LocationType::BasicsShop}),
+            std::make_pair(&go_to_event, std::vector<LocationType>{LocationType::Home, LocationType::SocialEvent}),
+            std::make_pair(&go_to_quarantine, std::vector<LocationType>{LocationType::Home})};
+    }
+    else {
+        rules = {
+            std::make_pair(&return_home_when_recovered,
+                           std::vector<LocationType>{
+                               LocationType::Home,
+                               LocationType::Hospital}), //assumption: if there is an ICU, there is also an hospital
+            std::make_pair(&go_to_hospital, std::vector<LocationType>{LocationType::Home, LocationType::Hospital}),
+            std::make_pair(&go_to_icu, std::vector<LocationType>{LocationType::Hospital, LocationType::ICU}),
+            std::make_pair(&go_to_quarantine, std::vector<LocationType>{LocationType::Home})};
+    }
     for (auto&& person : m_persons) {
         for (auto rule : rules) {
-
             //check if transition rule can be applied
             const auto& locs = rule.second;
             bool nonempty    = !locs.empty();
@@ -101,6 +116,19 @@ void World::migration(TimePoint t, TimeSpan dt)
                     break;
                 }
             }
+        }
+    }
+    // check if a person makes a trip
+    size_t num_trips = m_trip_list.num_trips();
+    if (num_trips != 0) {
+        while (m_trip_list.get_next_trip_time() < t + dt && m_trip_list.get_current_index() < num_trips) {
+            auto& trip   = m_trip_list.get_next_trip();
+            auto& person = m_persons[trip.person_id];
+            if (!person->is_in_quarantine() && person->get_location_id() == trip.migration_origin) {
+                Location& target = get_individualized_location(trip.migration_destination);
+                person->migrate_to(get_location(*person), target, trip.cells);
+            }
+            m_trip_list.increase_index();
         }
     }
 }
@@ -188,6 +216,21 @@ GlobalTestingParameters& World::get_global_testing_parameters()
 const GlobalTestingParameters& World::get_global_testing_parameters() const
 {
     return m_testing_parameters;
+}
+
+TripList& World::get_trip_list()
+{
+    return m_trip_list;
+}
+
+const TripList& World::get_trip_list() const
+{
+    return m_trip_list;
+}
+
+void World::use_migration_rules(bool param)
+{
+    m_use_migration_rules = param;
 }
 
 } // namespace mio

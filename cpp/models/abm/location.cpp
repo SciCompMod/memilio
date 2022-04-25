@@ -1,7 +1,7 @@
 /* 
 * Copyright (C) 2020-2021 German Aerospace Center (DLR-SC)
 *
-* Authors: Daniel Abele
+* Authors: Daniel Abele, Elisabeth Kluth
 *
 * Contact: Martin J. Kuehn <Martin.Kuehn@DLR.de>
 *
@@ -27,12 +27,13 @@
 namespace mio
 {
 
-Location::Location(LocationType type, uint32_t index)
+Location::Location(LocationType type, uint32_t index, uint32_t num_cells)
     : m_type(type)
     , m_index(index)
     , m_subpopulations{}
     , m_cached_exposure_rate({AbmAgeGroup::Count, mio::VaccinationState::Count})
     , m_testing_scheme()
+    , m_cells(std::vector<Cell>(num_cells))
 {
 }
 
@@ -44,8 +45,21 @@ InfectionState Location::interact(const Person& person, TimeSpan dt,
     auto age               = person.get_age();
     switch (infection_state) {
     case InfectionState::Susceptible:
-        return random_transition(infection_state, dt,
-                                 {{InfectionState::Exposed, m_cached_exposure_rate[{age, vaccination_state}]}});
+        if (!person.get_cells().empty()) {
+            for (auto cell_index : person.get_cells()) {
+                InfectionState new_state = random_transition(
+                    infection_state, dt,
+                    {{InfectionState::Exposed, m_cells[cell_index].cached_exposure_rate[{age, vaccination_state}]}});
+                if (new_state != infection_state) {
+                    return new_state;
+                }
+            }
+            return infection_state;
+        }
+        else {
+            return random_transition(infection_state, dt,
+                                     {{InfectionState::Exposed, m_cached_exposure_rate[{age, vaccination_state}]}});
+        }
     case InfectionState::Carrier:
         return random_transition(
             infection_state, dt,
@@ -80,16 +94,29 @@ void Location::begin_step(TimeSpan /*dt*/, const GlobalInfectionParameters& glob
 {
     //cache for next step so it stays constant during the step while subpopulations change
     //otherwise we would have to cache all state changes during a step which uses more memory
-    auto num_carriers = get_subpopulation(InfectionState::Carrier);
-    auto num_infected = get_subpopulation(InfectionState::Infected);
-    if (m_num_persons == 0) {
+    if (m_cells.empty() && m_num_persons == 0) {
         m_cached_exposure_rate = {{mio::AbmAgeGroup::Count, mio::VaccinationState::Count}, 0.};
     }
-    else {
+    else if (m_cells.empty()) {
+        auto num_carriers              = get_subpopulation(InfectionState::Carrier);
+        auto num_infected              = get_subpopulation(InfectionState::Infected);
         m_cached_exposure_rate.array() = std::min(m_parameters.get<MaximumContacts>(), double(m_num_persons)) /
                                          m_num_persons *
                                          (global_params.get<SusceptibleToExposedByCarrier>().array() * num_carriers +
                                           global_params.get<SusceptibleToExposedByInfected>().array() * num_infected);
+    }
+    else {
+        for (auto& cell : m_cells) {
+            if (cell.num_people == 0) {
+                cell.cached_exposure_rate = {{mio::AbmAgeGroup::Count, mio::VaccinationState::Count}, 0.};
+            }
+            else {
+                cell.cached_exposure_rate.array() =
+                    std::min(m_parameters.get<MaximumContacts>(), double(cell.num_people)) / cell.num_people *
+                    (global_params.get<SusceptibleToExposedByCarrier>().array() * cell.num_carriers +
+                     global_params.get<SusceptibleToExposedByInfected>().array() * cell.num_infected);
+            }
+        }
     }
 }
 
@@ -98,6 +125,18 @@ void Location::add_person(const Person& p)
     ++m_num_persons;
     InfectionState s = p.get_infection_state();
     change_subpopulation(s, +1);
+    if (!m_cells.empty()) {
+        for (auto i : p.get_cells()) {
+            ++m_cells[i].num_people;
+            if (s == InfectionState::Carrier) {
+                ++m_cells[i].num_carriers;
+            }
+            else if (s == InfectionState::Infected || s == InfectionState::Infected_Severe ||
+                     s == InfectionState::Infected_Critical) {
+                ++m_cells[i].num_infected;
+            }
+        }
+    }
 }
 
 void Location::remove_person(const Person& p)
@@ -105,12 +144,40 @@ void Location::remove_person(const Person& p)
     --m_num_persons;
     InfectionState s = p.get_infection_state();
     change_subpopulation(s, -1);
+    for (auto i : p.get_cells()) {
+        --m_cells[i].num_people;
+        if (s == InfectionState::Carrier) {
+            --m_cells[i].num_carriers;
+        }
+        else if (s == InfectionState::Infected || s == InfectionState::Infected_Severe ||
+                 s == InfectionState::Infected_Critical) {
+            --m_cells[i].num_infected;
+        }
+    }
 }
 
 void Location::changed_state(const Person& p, InfectionState old_infection_state)
 {
     change_subpopulation(old_infection_state, -1);
     change_subpopulation(p.get_infection_state(), +1);
+    for (auto i : p.get_cells()) {
+        if (old_infection_state == InfectionState::Carrier) {
+            --m_cells[i].num_carriers;
+        }
+        else if (old_infection_state == InfectionState::Infected ||
+                 old_infection_state == InfectionState::Infected_Severe ||
+                 old_infection_state == InfectionState::Infected_Critical) {
+            --m_cells[i].num_infected;
+        }
+        if (p.get_infection_state() == InfectionState::Carrier) {
+            ++m_cells[i].num_carriers;
+        }
+        else if (p.get_infection_state() == InfectionState::Infected ||
+                 p.get_infection_state() == InfectionState::Infected_Severe ||
+                 p.get_infection_state() == InfectionState::Infected_Critical) {
+            ++m_cells[i].num_infected;
+        }
+    }
 }
 
 void Location::change_subpopulation(InfectionState s, int delta)

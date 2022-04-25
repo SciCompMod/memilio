@@ -1,7 +1,7 @@
 /* 
 * Copyright (C) 2020-2021 German Aerospace Center (DLR-SC)
 *
-* Authors: Daniel Abele
+* Authors: Daniel Abele, Elisabeth Kluth
 *
 * Contact: Martin J. Kuehn <Martin.Kuehn@DLR.de>
 *
@@ -21,24 +21,25 @@
 #include "abm/person.h"
 #include "abm/time.h"
 
-
 namespace mio
 {
 
-void set_home_office(TimePoint t_begin, double p, AbmMigrationParameters& params){
+void set_home_office(TimePoint t_begin, double p, AbmMigrationParameters& params)
+{
     auto damping1 = Eigen::VectorXd::Constant(1, p);
     params.get<WorkRatio>().add_damping(damping1, mio::SimulationTime(t_begin.days()));
 }
 
-void set_school_closure(TimePoint t_begin, double p, AbmMigrationParameters& params){
+void set_school_closure(TimePoint t_begin, double p, AbmMigrationParameters& params)
+{
     auto damping1 = Eigen::VectorXd::Constant(1, p);
     params.get<SchoolRatio>().add_damping(damping1, mio::SimulationTime(t_begin.days()));
 }
 
-void close_social_events(TimePoint t_begin, double p, AbmMigrationParameters& params){
+void close_social_events(TimePoint t_begin, double p, AbmMigrationParameters& params)
+{
     auto damping1 = Eigen::VectorXd::Constant((size_t)AbmAgeGroup::Count, p);
     params.get<SocialEventRate>().add_damping(damping1, mio::SimulationTime(t_begin.days()));
 }
-
 
 } //namespace mio

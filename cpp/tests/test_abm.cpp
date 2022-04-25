@@ -1,7 +1,7 @@
 /* 
 * Copyright (C) 2020-2021 German Aerospace Center (DLR-SC)
 *
-* Authors: Daniel Abele
+* Authors: Daniel Abele, Elisabeth Kluth
 *
 * Contact: Martin J. Kuehn <Martin.Kuehn@DLR.de>
 *
@@ -37,6 +37,12 @@ TEST(TestLocation, init)
               print_wrap(Eigen::VectorXi::Zero(Eigen::Index(mio::InfectionState::Count))));
 }
 
+TEST(TestLocation, initCell)
+{
+    auto location = mio::Location(mio::LocationType::PublicTransport, 0, 2);
+    ASSERT_EQ(location.get_cells().size(), 2);
+}
+
 TEST(TestLocation, GetIndex)
 {
     auto location = mio::Location(mio::LocationType::Home, 0);
@@ -45,21 +51,37 @@ TEST(TestLocation, GetIndex)
 
 TEST(TestLocation, addRemovePerson)
 {
-    auto location = mio::Location(mio::LocationType::Home, 0);
-    auto person1  = mio::Person(location, mio::InfectionState::Susceptible, mio::AbmAgeGroup::Age5to14, {});
-    location.add_person(person1);
-    auto person2 = mio::Person(location, mio::InfectionState::Susceptible, mio::AbmAgeGroup::Age15to34, {});
-    location.add_person(person2);
-    auto person3 = mio::Person(location, mio::InfectionState::Exposed, mio::AbmAgeGroup::Age35to59, {});
-    location.add_person(person3);
+    auto home     = mio::Location(mio::LocationType::Home, 0, 0);
+    auto location = mio::Location(mio::LocationType::PublicTransport, 0, 3);
+    auto person1  = mio::Person(home, mio::InfectionState::Infected, mio::AbmAgeGroup::Age5to14, {});
+    home.add_person(person1);
+    person1.migrate_to(home, location, {0, 1});
+    auto person2 = mio::Person(home, mio::InfectionState::Infected, mio::AbmAgeGroup::Age15to34, {});
+    home.add_person(person2);
+    person2.migrate_to(home, location, {0});
+    auto person3 = mio::Person(home, mio::InfectionState::Exposed, mio::AbmAgeGroup::Age35to59, {});
+    home.add_person(person3);
+    person3.migrate_to(home, location, {0, 1});
 
-    ASSERT_EQ(location.get_subpopulation(mio::InfectionState::Susceptible), 2);
+    ASSERT_EQ(location.get_subpopulation(mio::InfectionState::Infected), 2);
     ASSERT_EQ(location.get_subpopulation(mio::InfectionState::Exposed), 1);
+    ASSERT_EQ(location.get_cells()[0].num_people, 3u);
+    ASSERT_EQ(location.get_cells()[1].num_people, 2u);
+    ASSERT_EQ(location.get_cells()[2].num_people, 0u);
+    ASSERT_EQ(location.get_cells()[0].num_infected, 2u);
+    ASSERT_EQ(location.get_cells()[1].num_infected, 1u);
+    ASSERT_EQ(location.get_cells()[2].num_infected, 0u);
 
     location.remove_person(person2);
 
-    ASSERT_EQ(location.get_subpopulation(mio::InfectionState::Susceptible), 1);
+    ASSERT_EQ(location.get_subpopulation(mio::InfectionState::Infected), 1);
     ASSERT_EQ(location.get_subpopulation(mio::InfectionState::Exposed), 1);
+    ASSERT_EQ(location.get_cells()[0].num_people, 2u);
+    ASSERT_EQ(location.get_cells()[1].num_people, 2u);
+    ASSERT_EQ(location.get_cells()[2].num_people, 0u);
+    ASSERT_EQ(location.get_cells()[0].num_infected, 1u);
+    ASSERT_EQ(location.get_cells()[1].num_infected, 1u);
+    ASSERT_EQ(location.get_cells()[2].num_infected, 0u);
 }
 
 TEST(TestLocation, setTestingScheme)
@@ -134,7 +156,7 @@ TEST(TestPerson, init)
     //setup rng mock so the time_until_carrier is 1.
     ScopedMockDistribution<testing::StrictMock<MockDistribution<mio::UniformIntDistribution<int>>>>
         mock_uniform_int_dist;
-    EXPECT_CALL(mock_uniform_int_dist.get_mock(), invoke).Times(1).WillOnce(Return(0));
+    EXPECT_CALL(mock_uniform_int_dist.get_mock(), invoke).Times(testing::AtLeast(1)).WillRepeatedly(Return(0));
 
     auto person = mio::Person(location, mio::InfectionState::Exposed, mio::AbmAgeGroup::Age60to79, {});
     location.add_person(person);
@@ -142,7 +164,11 @@ TEST(TestPerson, init)
     ASSERT_EQ(person.get_infection_state(), mio::InfectionState::Exposed);
     ASSERT_EQ(person.get_location_id().index, location.get_index());
     ASSERT_EQ(person.get_location_id().type, location.get_type());
-    ASSERT_EQ(person.get_age(), mio::AbmAgeGroup::Age60to79);
+    ASSERT_EQ(person.get_person_id(), mio::INVALID_PERSON_ID);
+
+    auto person2 = mio::Person(location, mio::InfectionState::Exposed, mio::AbmAgeGroup::Age60to79, {},
+                               mio::VaccinationState::Unvaccinated, 0);
+    ASSERT_EQ(person2.get_person_id(), 0u);
 
     mio::TimeSpan dt = mio::hours(1);
     person.interact(dt, {}, location, {});
@@ -151,10 +177,19 @@ TEST(TestPerson, init)
 
 TEST(TestPerson, migrate)
 {
-    auto loc1   = mio::Location(mio::LocationType::Work, 0);
+    auto home   = mio::Location(mio::LocationType::Home, 0, 0);
+    auto loc1   = mio::Location(mio::LocationType::PublicTransport, 0, 1);
     auto loc2   = mio::Location(mio::LocationType::School, 0);
-    auto person = mio::Person(loc1, mio::InfectionState::Recovered_Carrier, mio::AbmAgeGroup::Age0to4, {});
-    loc1.add_person(person);
+    auto loc3   = mio::Location(mio::LocationType::PublicTransport, 0, 2);
+    auto person = mio::Person(home, mio::InfectionState::Recovered_Carrier, mio::AbmAgeGroup::Age0to4, {});
+    home.add_person(person);
+    person.migrate_to(home, loc1, {0});
+
+    ASSERT_EQ(person.get_location_id().index, loc1.get_index());
+    ASSERT_EQ(person.get_location_id().type, loc1.get_type());
+    ASSERT_EQ(loc1.get_subpopulation(mio::InfectionState::Recovered_Carrier), 1);
+    ASSERT_EQ(home.get_subpopulation(mio::InfectionState::Recovered_Carrier), 0);
+    ASSERT_EQ(loc1.get_cells()[0].num_people, 1u);
 
     person.migrate_to(loc1, loc2);
 
@@ -162,6 +197,15 @@ TEST(TestPerson, migrate)
     ASSERT_EQ(person.get_location_id().type, loc2.get_type());
     ASSERT_EQ(loc2.get_subpopulation(mio::InfectionState::Recovered_Carrier), 1);
     ASSERT_EQ(loc1.get_subpopulation(mio::InfectionState::Recovered_Carrier), 0);
+    ASSERT_EQ(loc1.get_cells()[0].num_people, 0u);
+
+    person.migrate_to(loc2, loc3, {0, 1});
+
+    ASSERT_EQ(loc3.get_cells()[0].num_people, 1u);
+    ASSERT_EQ(loc3.get_cells()[1].num_people, 1u);
+    ASSERT_EQ(person.get_cells().size(), 2);
+    ASSERT_EQ(person.get_cells()[0], 0u);
+    ASSERT_EQ(person.get_cells()[1], 1u);
 }
 
 TEST(TestPerson, setGetAssignedLocation)
@@ -195,48 +239,138 @@ TEST(TestWorld, findLocation)
     ASSERT_EQ(world.find_location(mio::LocationType::Home, person), &home);
 }
 
+TEST(TestLocation, beginStep)
+{
+    using testing::Return;
+
+    // Test should work identically work with any age.
+    mio::AbmAgeGroup age = mio::AbmAgeGroup(mio::UniformIntDistribution<int>()(0, int(mio::AbmAgeGroup::Count) - 1));
+    mio::VaccinationState vaccination_state =
+        mio::VaccinationState(mio::UniformIntDistribution<int>()(0, int(mio::VaccinationState::Count) - 1));
+
+    mio::GlobalInfectionParameters params;
+    params.set<mio::CarrierToInfected>({{mio::AbmAgeGroup::Count, mio::VaccinationState::Count}, 0.});
+    params.get<mio::CarrierToInfected>()[{age, vaccination_state}] = 0.5;
+    params.set<mio::CarrierToRecovered>({{mio::AbmAgeGroup::Count, mio::VaccinationState::Count}, 0.});
+    params.get<mio::CarrierToRecovered>()[{age, vaccination_state}] = 0.5;
+    params.set<mio::DetectInfection>({{mio::AbmAgeGroup::Count, mio::VaccinationState::Count}, 0.});
+    params.get<mio::DetectInfection>()[{age, vaccination_state}] = 0.5;
+    params.set<mio::InfectedToSevere>({{mio::AbmAgeGroup::Count, mio::VaccinationState::Count}, 0.});
+    params.get<mio::InfectedToSevere>()[{age, vaccination_state}] = 0.5;
+    params.set<mio::InfectedToRecovered>({{mio::AbmAgeGroup::Count, mio::VaccinationState::Count}, 0.});
+    params.get<mio::InfectedToRecovered>()[{age, vaccination_state}] = 0.5;
+    params.set<mio::SevereToCritical>({{mio::AbmAgeGroup::Count, mio::VaccinationState::Count}, 0.});
+    params.get<mio::SevereToCritical>()[{age, vaccination_state}] = 0.5;
+    params.set<mio::SevereToRecovered>({{mio::AbmAgeGroup::Count, mio::VaccinationState::Count}, 0.});
+    params.get<mio::SevereToRecovered>()[{age, vaccination_state}] = 0.5;
+    params.set<mio::CriticalToDead>({{mio::AbmAgeGroup::Count, mio::VaccinationState::Count}, 0.});
+    params.get<mio::CriticalToDead>()[{age, vaccination_state}] = 0.5;
+    params.set<mio::CriticalToRecovered>({{mio::AbmAgeGroup::Count, mio::VaccinationState::Count}, 0.});
+    params.get<mio::CriticalToRecovered>()[{age, vaccination_state}] = 0.5;
+    params.set<mio::RecoveredToSusceptible>({{mio::AbmAgeGroup::Count, mio::VaccinationState::Count}, 0.});
+    params.get<mio::RecoveredToSusceptible>()[{age, vaccination_state}] = 0.5;
+    params.set<mio::SusceptibleToExposedByCarrier>({{mio::AbmAgeGroup::Count, mio::VaccinationState::Count}, 0.});
+    params.get<mio::SusceptibleToExposedByCarrier>()[{age, vaccination_state}] = 0.4;
+    params.set<mio::SusceptibleToExposedByInfected>({{mio::AbmAgeGroup::Count, mio::VaccinationState::Count}, 0.});
+    params.get<mio::SusceptibleToExposedByInfected>()[{age, vaccination_state}] = 0.5;
+
+    //setup location with some chance of exposure
+    auto home      = mio::Location(mio::LocationType::Home, 0, 0);
+    auto location1 = mio::Location(mio::LocationType::PublicTransport, 0, 3);
+    auto infected1 =
+        mio::Person(home, mio::InfectionState::Carrier, mio::AbmAgeGroup::Age15to34, params, vaccination_state);
+    home.add_person(infected1);
+    infected1.migrate_to(home, location1, {0});
+    auto infected2 =
+        mio::Person(home, mio::InfectionState::Infected, mio::AbmAgeGroup::Age80plus, params, vaccination_state);
+    home.add_person(infected2);
+    infected2.migrate_to(home, location1, {0, 1});
+    auto infected3 =
+        mio::Person(home, mio::InfectionState::Infected, mio::AbmAgeGroup::Age5to14, params, vaccination_state);
+    home.add_person(infected3);
+    infected3.migrate_to(home, location1, {1});
+
+    //cache precomputed results
+    auto dt = mio::seconds(8640);
+    location1.begin_step(dt, params);
+
+    ASSERT_TRUE(std::abs(location1.get_cells()[0].cached_exposure_rate[{age, vaccination_state}] - 0.9) < 0.001);
+    ASSERT_TRUE(std::abs(location1.get_cells()[1].cached_exposure_rate[{age, vaccination_state}] - 1) < 0.001);
+    ASSERT_TRUE(std::abs(location1.get_cells()[2].cached_exposure_rate[{age, vaccination_state}]) < 0.001);
+}
+
+TEST(TestLocation, changedState)
+{
+    auto home     = mio::Location(mio::LocationType::Home, 0, 0);
+    auto location = mio::Location(mio::LocationType::PublicTransport, 0, 1);
+    auto p1       = mio::Person(home, mio::InfectionState::Carrier, mio::AbmAgeGroup::Age15to34, {});
+    home.add_person(p1);
+    p1.migrate_to(home, location, {0});
+    auto p2 = mio::Person(home, mio::InfectionState::Infected, mio::AbmAgeGroup::Age80plus, {});
+    home.add_person(p2);
+    p2.migrate_to(home, location, {0});
+    auto p3 = mio::Person(home, mio::InfectionState::Susceptible, mio::AbmAgeGroup::Age80plus, {});
+    home.add_person(p3);
+    p3.migrate_to(home, location, {0});
+
+    ASSERT_EQ(location.get_cells()[0].num_carriers, 1u);
+    ASSERT_EQ(location.get_cells()[0].num_infected, 1u);
+    location.changed_state(p1, mio::InfectionState::Susceptible);
+    ASSERT_EQ(location.get_cells()[0].num_carriers, 2u);
+    ASSERT_EQ(location.get_cells()[0].num_infected, 1u);
+    location.changed_state(p2, mio::InfectionState::Carrier);
+    ASSERT_EQ(location.get_cells()[0].num_carriers, 1u);
+    ASSERT_EQ(location.get_cells()[0].num_infected, 2u);
+    location.changed_state(p3, mio::InfectionState::Infected);
+    ASSERT_EQ(location.get_cells()[0].num_carriers, 1u);
+    ASSERT_EQ(location.get_cells()[0].num_infected, 1u);
+}
+
 TEST(TestLocation, interact)
 {
     using testing::Return;
 
     // Test should work identically work with any age.
     mio::AbmAgeGroup age = mio::AbmAgeGroup(mio::UniformIntDistribution<int>()(0, int(mio::AbmAgeGroup::Count) - 1));
-    mio::VaccinationState vaccination_state = mio::VaccinationState(mio::UniformIntDistribution<int>()(0, int(mio::VaccinationState::Count) - 1));
-    
-    
+    mio::VaccinationState vaccination_state =
+        mio::VaccinationState(mio::UniformIntDistribution<int>()(0, int(mio::VaccinationState::Count) - 1));
+
     mio::GlobalInfectionParameters params;
-    params.set<mio::CarrierToInfected>({{mio::AbmAgeGroup::Count,mio::VaccinationState::Count}, 0.});
+    params.set<mio::CarrierToInfected>({{mio::AbmAgeGroup::Count, mio::VaccinationState::Count}, 0.});
     params.get<mio::CarrierToInfected>()[{age, vaccination_state}] = 0.5;
-    params.set<mio::CarrierToRecovered>({{mio::AbmAgeGroup::Count,mio::VaccinationState::Count}, 0.});
-    params.get<mio::CarrierToRecovered>()[{age,vaccination_state}] = 0.5;
-    params.set<mio::DetectInfection>({{mio::AbmAgeGroup::Count,mio::VaccinationState::Count}, 0.});
-    params.get<mio::DetectInfection>()[{age,vaccination_state}] = 0.5;
-    params.set<mio::InfectedToSevere>({{mio::AbmAgeGroup::Count,mio::VaccinationState::Count}, 0.});
-    params.get<mio::InfectedToSevere>()[{age,vaccination_state}] = 0.5;
-    params.set<mio::InfectedToRecovered>({{mio::AbmAgeGroup::Count,mio::VaccinationState::Count}, 0.});
-    params.get<mio::InfectedToRecovered>()[{age,vaccination_state}] = 0.5;
-    params.set<mio::SevereToCritical>({{mio::AbmAgeGroup::Count,mio::VaccinationState::Count}, 0.});
-    params.get<mio::SevereToCritical>()[{age,vaccination_state}] = 0.5;
-    params.set<mio::SevereToRecovered>({{mio::AbmAgeGroup::Count,mio::VaccinationState::Count}, 0.});
-    params.get<mio::SevereToRecovered>()[{age,vaccination_state}] = 0.5;
-    params.set<mio::CriticalToDead>({{mio::AbmAgeGroup::Count,mio::VaccinationState::Count}, 0.});
-    params.get<mio::CriticalToDead>()[{age,vaccination_state}] = 0.5;
-    params.set<mio::CriticalToRecovered>({{mio::AbmAgeGroup::Count,mio::VaccinationState::Count}, 0.});
-    params.get<mio::CriticalToRecovered>()[{age,vaccination_state}] = 0.5;
-    params.set<mio::RecoveredToSusceptible>({{mio::AbmAgeGroup::Count,mio::VaccinationState::Count}, 0.});
-    params.get<mio::RecoveredToSusceptible>()[{age,vaccination_state}] = 0.5;
-    params.set<mio::SusceptibleToExposedByCarrier>({{mio::AbmAgeGroup::Count,mio::VaccinationState::Count}, 0.});
-    params.get<mio::SusceptibleToExposedByCarrier>()[{age,vaccination_state}] = 0.5;
-    params.set<mio::SusceptibleToExposedByInfected>({{mio::AbmAgeGroup::Count,mio::VaccinationState::Count}, 0.});
-    params.get<mio::SusceptibleToExposedByInfected>()[{age,vaccination_state}] = 0.5;
+    params.set<mio::CarrierToRecovered>({{mio::AbmAgeGroup::Count, mio::VaccinationState::Count}, 0.});
+    params.get<mio::CarrierToRecovered>()[{age, vaccination_state}] = 0.5;
+    params.set<mio::DetectInfection>({{mio::AbmAgeGroup::Count, mio::VaccinationState::Count}, 0.});
+    params.get<mio::DetectInfection>()[{age, vaccination_state}] = 0.5;
+    params.set<mio::InfectedToSevere>({{mio::AbmAgeGroup::Count, mio::VaccinationState::Count}, 0.});
+    params.get<mio::InfectedToSevere>()[{age, vaccination_state}] = 0.5;
+    params.set<mio::InfectedToRecovered>({{mio::AbmAgeGroup::Count, mio::VaccinationState::Count}, 0.});
+    params.get<mio::InfectedToRecovered>()[{age, vaccination_state}] = 0.5;
+    params.set<mio::SevereToCritical>({{mio::AbmAgeGroup::Count, mio::VaccinationState::Count}, 0.});
+    params.get<mio::SevereToCritical>()[{age, vaccination_state}] = 0.5;
+    params.set<mio::SevereToRecovered>({{mio::AbmAgeGroup::Count, mio::VaccinationState::Count}, 0.});
+    params.get<mio::SevereToRecovered>()[{age, vaccination_state}] = 0.5;
+    params.set<mio::CriticalToDead>({{mio::AbmAgeGroup::Count, mio::VaccinationState::Count}, 0.});
+    params.get<mio::CriticalToDead>()[{age, vaccination_state}] = 0.5;
+    params.set<mio::CriticalToRecovered>({{mio::AbmAgeGroup::Count, mio::VaccinationState::Count}, 0.});
+    params.get<mio::CriticalToRecovered>()[{age, vaccination_state}] = 0.5;
+    params.set<mio::RecoveredToSusceptible>({{mio::AbmAgeGroup::Count, mio::VaccinationState::Count}, 0.});
+    params.get<mio::RecoveredToSusceptible>()[{age, vaccination_state}] = 0.5;
+    params.set<mio::SusceptibleToExposedByCarrier>({{mio::AbmAgeGroup::Count, mio::VaccinationState::Count}, 0.});
+    params.get<mio::SusceptibleToExposedByCarrier>()[{age, vaccination_state}] = 0.5;
+    params.set<mio::SusceptibleToExposedByInfected>({{mio::AbmAgeGroup::Count, mio::VaccinationState::Count}, 0.});
+    params.get<mio::SusceptibleToExposedByInfected>()[{age, vaccination_state}] = 0.5;
 
     //setup location with some chance of exposure
-    auto location  = mio::Location(mio::LocationType::Work, 0);
-    auto infected1 = mio::Person(location, mio::InfectionState::Carrier, vaccination_state, mio::AbmAgeGroup::Age15to34, params);
+    auto location = mio::Location(mio::LocationType::Work, 0);
+    auto infected1 =
+        mio::Person(location, mio::InfectionState::Carrier, mio::AbmAgeGroup::Age15to34, params, vaccination_state);
     location.add_person(infected1);
-    auto infected2 = mio::Person(location, mio::InfectionState::Infected, vaccination_state, mio::AbmAgeGroup::Age80plus, params);
+    auto infected2 =
+        mio::Person(location, mio::InfectionState::Infected, mio::AbmAgeGroup::Age80plus, params, vaccination_state);
     location.add_person(infected2);
-    auto infected3 = mio::Person(location, mio::InfectionState::Infected, vaccination_state, mio::AbmAgeGroup::Age5to14, params);
+    auto infected3 =
+        mio::Person(location, mio::InfectionState::Infected, mio::AbmAgeGroup::Age5to14, params, vaccination_state);
     location.add_person(infected3);
 
     //cache precomputed results
@@ -248,7 +382,7 @@ TEST(TestLocation, interact)
     ScopedMockDistribution<testing::StrictMock<MockDistribution<mio::DiscreteDistribution<size_t>>>> mock_discrete_dist;
 
     {
-        auto susceptible = mio::Person(location, mio::InfectionState::Susceptible, vaccination_state, age, params);
+        auto susceptible = mio::Person(location, mio::InfectionState::Susceptible, age, params, vaccination_state);
         EXPECT_CALL(mock_exponential_dist.get_mock(), invoke).Times(1).WillOnce(Return(0.05));
         EXPECT_CALL(mock_discrete_dist.get_mock(), invoke).Times(1).WillOnce(Return(0));
         EXPECT_EQ(location.interact(susceptible, dt, params), mio::InfectionState::Exposed);
@@ -258,13 +392,13 @@ TEST(TestLocation, interact)
     }
 
     {
-        auto exposed = mio::Person(location, mio::InfectionState::Exposed, vaccination_state, age, params);
+        auto exposed = mio::Person(location, mio::InfectionState::Exposed, age, params, vaccination_state);
         EXPECT_CALL(mock_exponential_dist.get_mock(), invoke).Times(0); //no transitions out of exposed state
         EXPECT_EQ(location.interact(exposed, dt, params), mio::InfectionState::Exposed);
     }
 
     {
-        auto carrier = mio::Person(location, mio::InfectionState::Carrier, vaccination_state, age, params);
+        auto carrier = mio::Person(location, mio::InfectionState::Carrier, age, params, vaccination_state);
 
         EXPECT_CALL(mock_exponential_dist.get_mock(), invoke).Times(1).WillOnce(Return(0.05));
         EXPECT_CALL(mock_discrete_dist.get_mock(), invoke).Times(1).WillOnce(Return(0));
@@ -279,7 +413,7 @@ TEST(TestLocation, interact)
     }
 
     {
-        auto infected = mio::Person(location, mio::InfectionState::Infected, vaccination_state, age, params);
+        auto infected = mio::Person(location, mio::InfectionState::Infected, age, params, vaccination_state);
 
         EXPECT_CALL(mock_exponential_dist.get_mock(), invoke).Times(1).WillOnce(Return(0.09));
         EXPECT_CALL(mock_discrete_dist.get_mock(), invoke).Times(1).WillOnce(Return(0));
@@ -294,7 +428,7 @@ TEST(TestLocation, interact)
     }
 
     {
-        auto severe = mio::Person(location, mio::InfectionState::Infected_Severe, vaccination_state, age, params);
+        auto severe = mio::Person(location, mio::InfectionState::Infected_Severe, age, params, vaccination_state);
 
         EXPECT_CALL(mock_exponential_dist.get_mock(), invoke).Times(1).WillOnce(Return(0.09));
         EXPECT_CALL(mock_discrete_dist.get_mock(), invoke).Times(1).WillOnce(Return(0));
@@ -309,7 +443,7 @@ TEST(TestLocation, interact)
     }
 
     {
-        auto critical = mio::Person(location, mio::InfectionState::Infected_Critical, vaccination_state, age, params);
+        auto critical = mio::Person(location, mio::InfectionState::Infected_Critical, age, params, vaccination_state);
 
         EXPECT_CALL(mock_exponential_dist.get_mock(), invoke).Times(1).WillOnce(Return(0.09));
         EXPECT_CALL(mock_discrete_dist.get_mock(), invoke).Times(1).WillOnce(Return(0));
@@ -324,7 +458,7 @@ TEST(TestLocation, interact)
     }
 
     for (auto&& recovered_state : {mio::InfectionState::Recovered_Carrier, mio::InfectionState::Recovered_Infected}) {
-        auto recovered = mio::Person(location, recovered_state, vaccination_state, age, params);
+        auto recovered = mio::Person(location, recovered_state, age, params, vaccination_state);
 
         EXPECT_CALL(mock_exponential_dist.get_mock(), invoke).Times(1).WillOnce(Return(0.09));
         EXPECT_CALL(mock_discrete_dist.get_mock(), invoke).Times(1).WillOnce(Return(0));
@@ -332,6 +466,41 @@ TEST(TestLocation, interact)
 
         EXPECT_CALL(mock_exponential_dist.get_mock(), invoke).Times(1).WillOnce(Return(0.11));
         EXPECT_EQ(location.interact(recovered, dt, params), recovered_state);
+    }
+
+    //setup location with 2 cells with some chance of exposure
+    auto home      = mio::Location(mio::LocationType::Home, 0, 0);
+    auto location2 = mio::Location(mio::LocationType::PublicTransport, 0, 2);
+    auto infected4 =
+        mio::Person(home, mio::InfectionState::Carrier, mio::AbmAgeGroup::Age15to34, params, vaccination_state);
+    home.add_person(infected4);
+    infected4.migrate_to(home, location2, {0, 1});
+    auto infected5 =
+        mio::Person(home, mio::InfectionState::Infected, mio::AbmAgeGroup::Age80plus, params, vaccination_state);
+    home.add_person(infected5);
+    infected5.migrate_to(home, location2, {0});
+    auto infected6 =
+        mio::Person(home, mio::InfectionState::Infected, mio::AbmAgeGroup::Age5to14, params, vaccination_state);
+    home.add_person(infected6);
+    infected6.migrate_to(home, location2, {1});
+
+    //cache precomputed results
+    location2.begin_step(dt, params);
+
+    {
+        auto susceptible = mio::Person(home, mio::InfectionState::Susceptible, age, params, vaccination_state);
+        home.add_person(susceptible);
+        susceptible.migrate_to(home, location2, {0, 1});
+        EXPECT_CALL(mock_exponential_dist.get_mock(), invoke).Times(1).WillOnce(Return(0.05));
+        EXPECT_CALL(mock_discrete_dist.get_mock(), invoke).Times(1).WillOnce(Return(0));
+        EXPECT_EQ(location2.interact(susceptible, dt, params), mio::InfectionState::Exposed);
+
+        EXPECT_CALL(mock_exponential_dist.get_mock(), invoke).Times(2).WillOnce(Return(0.2)).WillOnce(Return(0.07));
+        EXPECT_CALL(mock_discrete_dist.get_mock(), invoke).Times(1).WillOnce(Return(0));
+        EXPECT_EQ(location2.interact(susceptible, dt, params), mio::InfectionState::Exposed);
+
+        EXPECT_CALL(mock_exponential_dist.get_mock(), invoke).Times(2).WillOnce(Return(0.15)).WillOnce(Return(0.15));
+        EXPECT_EQ(location2.interact(susceptible, dt, params), mio::InfectionState::Susceptible);
     }
 }
 
@@ -354,19 +523,15 @@ TEST(TestPerson, quarantine)
     auto person = mio::Person(home, mio::InfectionProperties(mio::InfectionState::Infected, true),
                               mio::AbmAgeGroup::Age15to34, infection_parameters);
     home.add_person(person);
-
     auto t_morning = mio::TimePoint(0) + mio::hours(7);
     auto dt        = mio::hours(1);
-
     ASSERT_EQ(mio::go_to_work(person, t_morning, dt, {}), mio::LocationType::Home);
-
     //setup rng mock so the person has a state transition to Recovered_Infected
     ScopedMockDistribution<testing::StrictMock<MockDistribution<mio::ExponentialDistribution<double>>>>
         mock_exponential_dist;
     ScopedMockDistribution<testing::StrictMock<MockDistribution<mio::DiscreteDistribution<size_t>>>> mock_discrete_dist;
     EXPECT_CALL(mock_exponential_dist.get_mock(), invoke).Times(1).WillOnce(Return(0.04));
     EXPECT_CALL(mock_discrete_dist.get_mock(), invoke).Times(1).WillOnce(Return(0));
-
     person.interact(dt, infection_parameters, home, {});
     ASSERT_EQ(person.get_infection_state(), mio::InfectionState::Recovered_Infected);
     ASSERT_EQ(mio::go_to_work(person, t_morning, dt, {}), mio::LocationType::Work);
@@ -392,6 +557,16 @@ TEST(TestPerson, get_tested)
     ASSERT_EQ(susceptible.get_tested({0.9, 0.99}), false);
     ASSERT_EQ(susceptible.get_tested({0.9, 0.99}), true);
     ASSERT_EQ(susceptible.get_time_since_negative_test(), mio::days(0));
+}
+
+TEST(TestPerson, getCells)
+{
+    auto home     = mio::Location(mio::LocationType::Home, 0, 0);
+    auto location = mio::Location(mio::LocationType::PublicTransport, 0, 2);
+    auto person   = mio::Person(home, mio::InfectionState::Carrier, mio::AbmAgeGroup::Age15to34, {});
+    home.add_person(person);
+    person.migrate_to(home, location, {0, 1});
+    ASSERT_EQ(person.get_cells().size(), 2);
 }
 
 TEST(TestPerson, interact)
@@ -607,20 +782,21 @@ TEST(TestMigrationRules, students_go_to_school_in_different_times)
         .WillOnce(testing::Return(0.8))
         .WillRepeatedly(testing::Return(1.0));
 
-    auto home    = mio::Location(mio::LocationType::Home, 0);
-    auto p_child_goes_to_school_at_6 = mio::Person(home, mio::InfectionState::Susceptible, mio::AbmAgeGroup::Age5to14, {});
-    auto p_child_goes_to_school_at_8 = mio::Person(home, mio::InfectionState::Susceptible, mio::AbmAgeGroup::Age5to14, {});
+    auto home = mio::Location(mio::LocationType::Home, 0);
+    auto p_child_goes_to_school_at_6 =
+        mio::Person(home, mio::InfectionState::Susceptible, mio::AbmAgeGroup::Age5to14, {});
+    auto p_child_goes_to_school_at_8 =
+        mio::Person(home, mio::InfectionState::Susceptible, mio::AbmAgeGroup::Age5to14, {});
 
     auto t_morning_6 = mio::TimePoint(0) + mio::hours(6);
     auto t_morning_8 = mio::TimePoint(0) + mio::hours(8);
-    auto dt        = mio::hours(1);
+    auto dt          = mio::hours(1);
 
     ASSERT_EQ(mio::go_to_school(p_child_goes_to_school_at_6, t_morning_6, dt, {}), mio::LocationType::School);
     ASSERT_EQ(mio::go_to_school(p_child_goes_to_school_at_6, t_morning_8, dt, {}), mio::LocationType::Home);
     ASSERT_EQ(mio::go_to_school(p_child_goes_to_school_at_8, t_morning_6, dt, {}), mio::LocationType::Home);
     ASSERT_EQ(mio::go_to_school(p_child_goes_to_school_at_8, t_morning_8, dt, {}), mio::LocationType::School);
 }
-
 
 TEST(TestMigrationRules, students_go_to_school_in_different_times_with_smaller_time_steps)
 {
@@ -644,13 +820,15 @@ TEST(TestMigrationRules, students_go_to_school_in_different_times_with_smaller_t
         .WillOnce(testing::Return(0.9))
         .WillRepeatedly(testing::Return(1.0));
 
-    auto home    = mio::Location(mio::LocationType::Home, 0);
-    auto p_child_goes_to_school_at_6 = mio::Person(home, mio::InfectionState::Susceptible, mio::AbmAgeGroup::Age5to14, {});
-    auto p_child_goes_to_school_at_8_30 = mio::Person(home, mio::InfectionState::Susceptible, mio::AbmAgeGroup::Age5to14, {});
+    auto home = mio::Location(mio::LocationType::Home, 0);
+    auto p_child_goes_to_school_at_6 =
+        mio::Person(home, mio::InfectionState::Susceptible, mio::AbmAgeGroup::Age5to14, {});
+    auto p_child_goes_to_school_at_8_30 =
+        mio::Person(home, mio::InfectionState::Susceptible, mio::AbmAgeGroup::Age5to14, {});
 
-    auto t_morning_6 = mio::TimePoint(0) + mio::hours(6);
+    auto t_morning_6    = mio::TimePoint(0) + mio::hours(6);
     auto t_morning_8_30 = mio::TimePoint(0) + mio::hours(8) + mio::seconds(1800);
-    auto dt        = mio::seconds(1800);
+    auto dt             = mio::seconds(1800);
 
     ASSERT_EQ(mio::go_to_school(p_child_goes_to_school_at_6, t_morning_6, dt, {}), mio::LocationType::School);
     ASSERT_EQ(mio::go_to_school(p_child_goes_to_school_at_6, t_morning_8_30, dt, {}), mio::LocationType::Home);
@@ -671,7 +849,7 @@ TEST(TestMigrationRules, school_return)
 
 TEST(TestMigrationRules, worker_goes_to_work)
 {
-    auto home      = mio::Location(mio::LocationType::Home, 0);
+    auto home = mio::Location(mio::LocationType::Home, 0);
     ScopedMockDistribution<testing::StrictMock<MockDistribution<mio::UniformDistribution<double>>>> mock_uniform_dist;
     EXPECT_CALL(mock_uniform_dist.get_mock(), invoke)
         .Times(testing::AtLeast(8))
@@ -695,12 +873,11 @@ TEST(TestMigrationRules, worker_goes_to_work)
     ASSERT_EQ(mio::go_to_work(p_retiree, t_morning, dt, {}), mio::LocationType::Home);
     ASSERT_EQ(mio::go_to_work(p_adult, t_morning, dt, {}), mio::LocationType::Home);
     ASSERT_EQ(mio::go_to_work(p_adult, t_night, dt, {}), mio::LocationType::Home);
-
 }
 
 TEST(TestMigrationRules, worker_goes_to_work_with_non_dividable_timespan)
 {
-    auto home      = mio::Location(mio::LocationType::Home, 0);
+    auto home = mio::Location(mio::LocationType::Home, 0);
     ScopedMockDistribution<testing::StrictMock<MockDistribution<mio::UniformDistribution<double>>>> mock_uniform_dist;
     EXPECT_CALL(mock_uniform_dist.get_mock(), invoke)
         .Times(testing::AtLeast(8))
@@ -724,12 +901,11 @@ TEST(TestMigrationRules, worker_goes_to_work_with_non_dividable_timespan)
     ASSERT_EQ(mio::go_to_work(p_retiree, t_morning, dt, {}), mio::LocationType::Home);
     ASSERT_EQ(mio::go_to_work(p_adult, t_morning, dt, {}), mio::LocationType::Home);
     ASSERT_EQ(mio::go_to_work(p_adult, t_night, dt, {}), mio::LocationType::Home);
-
 }
 
 TEST(TestMigrationRules, workers_go_to_work_in_different_times)
 {
-    auto home      = mio::Location(mio::LocationType::Home, 0);
+    auto home = mio::Location(mio::LocationType::Home, 0);
     ScopedMockDistribution<testing::StrictMock<MockDistribution<mio::UniformDistribution<double>>>> mock_uniform_dist;
     EXPECT_CALL(mock_uniform_dist.get_mock(), invoke)
         .Times(testing::AtLeast(8))
@@ -741,16 +917,18 @@ TEST(TestMigrationRules, workers_go_to_work_in_different_times)
         .WillOnce(testing::Return(0.9))
         .WillOnce(testing::Return(0.9))
         .WillOnce(testing::Return(0.9))
-        
+
         .WillRepeatedly(testing::Return(1.0));
 
-    auto p_adult_goes_to_work_at_6   = mio::Person(home, mio::InfectionState::Susceptible, mio::AbmAgeGroup::Age15to34, {});
-    auto p_adult_goes_to_work_at_8   = mio::Person(home, mio::InfectionState::Susceptible, mio::AbmAgeGroup::Age15to34, {});
+    auto p_adult_goes_to_work_at_6 =
+        mio::Person(home, mio::InfectionState::Susceptible, mio::AbmAgeGroup::Age15to34, {});
+    auto p_adult_goes_to_work_at_8 =
+        mio::Person(home, mio::InfectionState::Susceptible, mio::AbmAgeGroup::Age15to34, {});
 
     auto t_morning_6 = mio::TimePoint(0) + mio::hours(6);
     auto t_morning_8 = mio::TimePoint(0) + mio::hours(8);
-    auto t_night   = mio::TimePoint(0) + mio::days(1) + mio::hours(4);
-    auto dt        = mio::hours(1);
+    auto t_night     = mio::TimePoint(0) + mio::days(1) + mio::hours(4);
+    auto dt          = mio::hours(1);
 
     ASSERT_EQ(mio::go_to_work(p_adult_goes_to_work_at_6, t_morning_6, dt, {}), mio::LocationType::Work);
     ASSERT_EQ(mio::go_to_work(p_adult_goes_to_work_at_6, t_morning_8, dt, {}), mio::LocationType::Home);
@@ -764,11 +942,25 @@ TEST(TestMigrationRules, work_return)
 {
     auto work    = mio::Location(mio::LocationType::Work, 0);
     auto p_adult = mio::Person(work, mio::InfectionState::Susceptible, mio::AbmAgeGroup::Age35to59, {});
-
-    auto t  = mio::TimePoint(0) + mio::hours(17);
-    auto dt = mio::hours(1);
-
+    auto t       = mio::TimePoint(0) + mio::hours(17);
+    auto dt      = mio::hours(1);
     ASSERT_EQ(mio::go_to_work(p_adult, t, dt, {}), mio::LocationType::Home);
+}
+
+TEST(TestMigrationRules, quarantine)
+{
+    auto home   = mio::Location(mio::LocationType::Home, 0);
+    auto work   = mio::Location(mio::LocationType::Work, 0);
+    auto p_inf1 = mio::Person(work, {mio::InfectionState::Infected, true}, mio::AbmAgeGroup::Age15to34, {});
+    auto t      = mio::TimePoint(12346);
+    auto dt     = mio::hours(1);
+    p_inf1.set_assigned_location(home);
+
+    ASSERT_EQ(mio::go_to_quarantine(p_inf1, t, dt, {}), mio::LocationType::Home);
+
+    auto p_inf2 = mio::Person(work, mio::InfectionState::Infected, mio::AbmAgeGroup::Age15to34, {});
+    p_inf2.set_assigned_location(home);
+    ASSERT_EQ(mio::go_to_quarantine(p_inf2, t, dt, {}), mio::LocationType::Work);
 }
 
 TEST(TestMigrationRules, hospital)
@@ -782,32 +974,6 @@ TEST(TestMigrationRules, hospital)
 
     auto p_car = mio::Person(home, mio::InfectionState::Infected, mio::AbmAgeGroup::Age15to34, {});
     ASSERT_EQ(mio::go_to_hospital(p_car, t, dt, {}), mio::LocationType::Home);
-}
-
-TEST(TestMigrationRules, icu)
-{
-    auto hospital = mio::Location(mio::LocationType::Hospital, 0);
-    auto p_hosp   = mio::Person(hospital, mio::InfectionState::Infected_Critical, mio::AbmAgeGroup::Age15to34, {});
-    auto t        = mio::TimePoint(12346);
-    auto dt       = mio::hours(1);
-
-    ASSERT_EQ(mio::go_to_icu(p_hosp, t, dt, {}), mio::LocationType::ICU);
-
-    auto work   = mio::Location(mio::LocationType::Work, 0);
-    auto p_work = mio::Person(work, mio::InfectionState::Infected, mio::AbmAgeGroup::Age15to34, {});
-    ASSERT_EQ(mio::go_to_icu(p_work, t, dt, {}), mio::LocationType::Work);
-}
-
-TEST(TestMigrationRules, recover)
-{
-    auto hospital = mio::Location(mio::LocationType::Hospital, 0);
-    auto p_rec    = mio::Person(hospital, mio::InfectionState::Recovered_Infected, mio::AbmAgeGroup::Age60to79, {});
-    auto p_inf    = mio::Person(hospital, mio::InfectionState::Infected_Severe, mio::AbmAgeGroup::Age60to79, {});
-    auto t        = mio::TimePoint(12346);
-    auto dt       = mio::hours(1);
-
-    ASSERT_EQ(mio::return_home_when_recovered(p_rec, t, dt, {}), mio::LocationType::Home);
-    ASSERT_EQ(mio::return_home_when_recovered(p_inf, t, dt, {}), mio::LocationType::Hospital);
 }
 
 TEST(TestMigrationRules, go_shopping)
@@ -1050,6 +1216,32 @@ TEST(TestLockdownRules, social_events_opening)
     ASSERT_EQ(mio::go_to_event(p, t_evening, dt, params), mio::LocationType::SocialEvent);
 }
 
+TEST(TestMigrationRules, icu)
+{
+    auto hospital = mio::Location(mio::LocationType::Hospital, 0);
+    auto p_hosp   = mio::Person(hospital, mio::InfectionState::Infected_Critical, mio::AbmAgeGroup::Age15to34, {});
+    auto t        = mio::TimePoint(12346);
+    auto dt       = mio::hours(1);
+
+    ASSERT_EQ(mio::go_to_icu(p_hosp, t, dt, {}), mio::LocationType::ICU);
+
+    auto work   = mio::Location(mio::LocationType::Work, 0);
+    auto p_work = mio::Person(work, mio::InfectionState::Infected, mio::AbmAgeGroup::Age15to34, {});
+    ASSERT_EQ(mio::go_to_icu(p_work, t, dt, {}), mio::LocationType::Work);
+}
+
+TEST(TestMigrationRules, recover)
+{
+    auto hospital = mio::Location(mio::LocationType::Hospital, 0);
+    auto p_rec    = mio::Person(hospital, mio::InfectionState::Recovered_Infected, mio::AbmAgeGroup::Age60to79, {});
+    auto p_inf    = mio::Person(hospital, mio::InfectionState::Infected_Severe, mio::AbmAgeGroup::Age60to79, {});
+    auto t        = mio::TimePoint(12346);
+    auto dt       = mio::hours(1);
+
+    ASSERT_EQ(mio::return_home_when_recovered(p_rec, t, dt, {}), mio::LocationType::Home);
+    ASSERT_EQ(mio::return_home_when_recovered(p_inf, t, dt, {}), mio::LocationType::Hospital);
+}
+
 TEST(TestTestingScheme, init)
 {
     auto tests = mio::TestingScheme(mio::days(7), 0.8);
@@ -1089,45 +1281,107 @@ TEST(TestWorld, evolveMigration)
 {
     using testing::Return;
 
-    auto world     = mio::World();
-    auto home_id   = world.add_location(mio::LocationType::Home);
-    auto school_id = world.add_location(mio::LocationType::School);
-    auto work_id   = world.add_location(mio::LocationType::Work);
-    ScopedMockDistribution<testing::StrictMock<MockDistribution<mio::UniformDistribution<double>>>> mock_uniform_dist;
-    EXPECT_CALL(mock_uniform_dist.get_mock(), invoke)
-        .Times(testing::AtLeast(2))
-        .WillOnce(testing::Return(0.8))
-        .WillOnce(testing::Return(0.8))
-        .WillOnce(testing::Return(0.8))
-        .WillOnce(testing::Return(0.8))
-        .WillOnce(testing::Return(0.8))
-        .WillOnce(testing::Return(0.8))
-        .WillOnce(testing::Return(0.8))
-        .WillOnce(testing::Return(0.8))
-        .WillRepeatedly(testing::Return(1.0));
+    {
+        auto world     = mio::World();
+        auto home_id   = world.add_location(mio::LocationType::Home);
+        auto school_id = world.add_location(mio::LocationType::School);
+        auto work_id   = world.add_location(mio::LocationType::Work);
 
-    auto& p1       = world.add_person(home_id, mio::InfectionState::Carrier, mio::AbmAgeGroup::Age15to34);
-    auto& p2       = world.add_person(home_id, mio::InfectionState::Susceptible, mio::AbmAgeGroup::Age5to14);
-    p1.set_assigned_location(school_id);
-    p2.set_assigned_location(school_id);
-    p1.set_assigned_location(work_id);
-    p2.set_assigned_location(work_id);
-    p1.set_assigned_location(home_id);
-    p2.set_assigned_location(home_id);
+        ScopedMockDistribution<testing::StrictMock<MockDistribution<mio::UniformDistribution<double>>>>
+            mock_uniform_dist;
+        EXPECT_CALL(mock_uniform_dist.get_mock(), invoke)
+            .Times(testing::AtLeast(2))
+            .WillOnce(testing::Return(0.8))
+            .WillOnce(testing::Return(0.8))
+            .WillOnce(testing::Return(0.8))
+            .WillOnce(testing::Return(0.8))
+            .WillOnce(testing::Return(0.8))
+            .WillOnce(testing::Return(0.8))
+            .WillOnce(testing::Return(0.8))
+            .WillOnce(testing::Return(0.8))
+            .WillRepeatedly(testing::Return(1.0));
 
-    auto& school = world.get_individualized_location(school_id);
-    auto& work   = world.get_individualized_location(work_id);
+        auto& p1 = world.add_person(home_id, mio::InfectionState::Carrier, mio::AbmAgeGroup::Age15to34);
+        auto& p2 = world.add_person(home_id, mio::InfectionState::Susceptible, mio::AbmAgeGroup::Age5to14);
 
-    ScopedMockDistribution<testing::StrictMock<MockDistribution<mio::ExponentialDistribution<double>>>>
-        mock_exponential_dist;
-    EXPECT_CALL(mock_exponential_dist.get_mock(), invoke).WillRepeatedly(Return(1.)); //no state transitions
+        p1.set_assigned_location(school_id);
+        p2.set_assigned_location(school_id);
+        p1.set_assigned_location(work_id);
+        p2.set_assigned_location(work_id);
+        p1.set_assigned_location(home_id);
+        p2.set_assigned_location(home_id);
 
-    world.evolve(mio::TimePoint(0) + mio::hours(8), mio::hours(1));
+        auto& school = world.get_individualized_location(school_id);
+        auto& work   = world.get_individualized_location(work_id);
 
-    EXPECT_EQ(p1.get_location_id().type, mio::LocationType::Work);
-    EXPECT_EQ(p2.get_location_id().type, mio::LocationType::School);
-    EXPECT_EQ(school.get_subpopulations().sum(), 1);
-    EXPECT_EQ(work.get_subpopulations().sum(), 1);
+        ScopedMockDistribution<testing::StrictMock<MockDistribution<mio::ExponentialDistribution<double>>>>
+            mock_exponential_dist;
+        EXPECT_CALL(mock_exponential_dist.get_mock(), invoke).WillRepeatedly(Return(1.)); //no state transitions
+
+        world.evolve(mio::TimePoint(0) + mio::hours(8), mio::hours(1));
+
+        EXPECT_EQ(p1.get_location_id().type, mio::LocationType::Work);
+        EXPECT_EQ(p2.get_location_id().type, mio::LocationType::School);
+        EXPECT_EQ(school.get_subpopulations().sum(), 1);
+        EXPECT_EQ(work.get_subpopulations().sum(), 1);
+    }
+
+    {
+        auto world = mio::World();
+        world.use_migration_rules(false);
+
+        auto home_id     = world.add_location(mio::LocationType::Home);
+        auto event_id    = world.add_location(mio::LocationType::SocialEvent);
+        auto work_id     = world.add_location(mio::LocationType::Work);
+        auto hospital_id = world.add_location(mio::LocationType::Hospital);
+
+        auto& p1 = world.add_person(home_id, mio::InfectionState::Carrier, mio::AbmAgeGroup::Age15to34);
+        auto& p2 = world.add_person(home_id, mio::InfectionState::Susceptible, mio::AbmAgeGroup::Age5to14);
+        auto& p3 = world.add_person(home_id, mio::InfectionState::Infected_Severe, mio::AbmAgeGroup::Age5to14);
+        auto& p4 = world.add_person(hospital_id, mio::InfectionState::Recovered_Infected, mio::AbmAgeGroup::Age5to14);
+        auto& p5 = world.add_person(home_id, mio::InfectionState::Susceptible, mio::AbmAgeGroup::Age15to34);
+        p1.set_assigned_location(event_id);
+        p2.set_assigned_location(event_id);
+        p1.set_assigned_location(work_id);
+        p2.set_assigned_location(work_id);
+        p1.set_assigned_location(home_id);
+        p2.set_assigned_location(home_id);
+        p3.set_assigned_location(home_id);
+        p4.set_assigned_location(home_id);
+        p3.set_assigned_location(hospital_id);
+        p5.set_assigned_location(event_id);
+        p5.set_assigned_location(work_id);
+        p5.set_assigned_location(home_id);
+
+        mio::TripList& data = world.get_trip_list();
+        mio::Trip trip1(p1.get_person_id(), mio::TimePoint(0) + mio::hours(9), work_id, home_id);
+        mio::Trip trip2(p2.get_person_id(), mio::TimePoint(1) + mio::hours(9), event_id, home_id);
+        mio::Trip trip3(p5.get_person_id(), mio::TimePoint(2) + mio::hours(9), event_id, work_id);
+        data.add_trip(trip1);
+        data.add_trip(trip2);
+        data.add_trip(trip3);
+
+        ScopedMockDistribution<testing::StrictMock<MockDistribution<mio::ExponentialDistribution<double>>>>
+            mock_exponential_dist;
+        EXPECT_CALL(mock_exponential_dist.get_mock(), invoke).WillRepeatedly(Return(1.)); //no state transitions
+
+        world.evolve(mio::TimePoint(0) + mio::hours(8), mio::hours(2));
+
+        auto& event    = world.get_individualized_location(event_id);
+        auto& work     = world.get_individualized_location(work_id);
+        auto& home     = world.get_individualized_location(home_id);
+        auto& hospital = world.get_individualized_location(hospital_id);
+
+        EXPECT_EQ(p1.get_location_id().type, mio::LocationType::Work);
+        EXPECT_EQ(p2.get_location_id().type, mio::LocationType::SocialEvent);
+        EXPECT_EQ(p3.get_location_id().type, mio::LocationType::Hospital);
+        EXPECT_EQ(p4.get_location_id().type, mio::LocationType::Home);
+        EXPECT_EQ(p5.get_location_id().type, mio::LocationType::Home);
+        EXPECT_EQ(event.get_subpopulations().sum(), 1);
+        EXPECT_EQ(work.get_subpopulations().sum(), 1);
+        EXPECT_EQ(home.get_subpopulations().sum(), 2);
+        EXPECT_EQ(hospital.get_subpopulations().sum(), 1);
+    }
 }
 
 TEST(TestSimulation, advance_random)
