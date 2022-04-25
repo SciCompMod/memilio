@@ -28,14 +28,11 @@
 #include "secir/secir_result_io.h"
 #include "memilio/io/mobility_io.h"
 #include "boost/filesystem.hpp"
-#include <cstdio>
-#include <iomanip>
-
 #ifdef MEMILIO_HAS_MPI
 #include "mpi.h"
 #endif
-
-#include "memilio/utils/random_number_generator.h"
+#include <cstdio>
+#include <iomanip>
 
 namespace fs = boost::filesystem;
 
@@ -797,7 +794,6 @@ void gather_results(std::vector<std::vector<mio::TimeSeries<double>>>& ensemble_
         }
     }
 
-    //std::vector<std::vector<mio::TimeSeries<double>>> global_results;
     std::vector<double> buffer(ts_size * num_ts);
     // send all local ensemble_results to root, using buffer
     if (my_rank != root) {
@@ -919,7 +915,6 @@ mio::IOResult<void> run(RunMode mode, const fs::path& data_dir, const fs::path& 
     BOOST_OUTCOME_TRY(save_result_result);
 
 #ifdef MEMILIO_HAS_MPI
-    //auto global_results = gather_results(ensemble_results, root, comm);
     gather_results(ensemble_results, root, comm);
     if (my_rank == root) {
         BOOST_OUTCOME_TRY(save_results(ensemble_results, ensemble_params, county_ids, result_dir));
@@ -951,7 +946,7 @@ int main(int argc, char** argv)
     //- log level
     //- ...
 
-    mio::set_log_level(mio::LogLevel::info);
+    mio::set_log_level(mio::LogLevel::warn);
 
     RunMode mode;
     std::string save_dir;
