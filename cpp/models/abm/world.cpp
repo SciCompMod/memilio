@@ -126,7 +126,9 @@ void World::migration(TimePoint t, TimeSpan dt)
             auto& person = m_persons[trip.person_id];
             if (!person->is_in_quarantine() && person->get_location_id() == trip.migration_origin) {
                 Location& target = get_individualized_location(trip.migration_destination);
-                person->migrate_to(get_location(*person), target, trip.cells);
+                if (target.get_testing_scheme().run_scheme(*person, m_testing_parameters)) {
+                    person->migrate_to(get_location(*person), target);
+                }
             }
             m_trip_list.increase_index();
         }
@@ -231,6 +233,11 @@ const TripList& World::get_trip_list() const
 void World::use_migration_rules(bool param)
 {
     m_use_migration_rules = param;
+}
+
+bool World::use_migration_rules() const
+{
+    return m_use_migration_rules;
 }
 
 } // namespace mio

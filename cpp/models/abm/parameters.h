@@ -39,6 +39,10 @@ struct IncubationPeriod {
     {
         return Type({AbmAgeGroup::Count, VaccinationState::Count}, 1.);
     }
+    static std::string name()
+    {
+        return "IncubationPeriod";
+    }
 };
 
 struct SusceptibleToExposedByCarrier {
@@ -46,6 +50,10 @@ struct SusceptibleToExposedByCarrier {
     static Type get_default()
     {
         return Type({AbmAgeGroup::Count, VaccinationState::Count}, 1.);
+    }
+    static std::string name()
+    {
+        return "SusceptibleToExposedByCarrier";
     }
 };
 
@@ -55,6 +63,10 @@ struct SusceptibleToExposedByInfected {
     {
         return Type({AbmAgeGroup::Count, VaccinationState::Count}, 1.);
     }
+    static std::string name()
+    {
+        return "SusceptibleToExposedByInfected";
+    }
 };
 
 struct CarrierToInfected {
@@ -62,6 +74,10 @@ struct CarrierToInfected {
     static Type get_default()
     {
         return Type({AbmAgeGroup::Count, VaccinationState::Count}, 1.);
+    }
+    static std::string name()
+    {
+        return "CarrierToInfected";
     }
 };
 
@@ -71,6 +87,10 @@ struct CarrierToRecovered {
     {
         return Type({AbmAgeGroup::Count, VaccinationState::Count}, 1.);
     }
+    static std::string name()
+    {
+        return "CarrierToRecovered";
+    }
 };
 
 struct InfectedToRecovered {
@@ -78,6 +98,10 @@ struct InfectedToRecovered {
     static Type get_default()
     {
         return Type({AbmAgeGroup::Count, VaccinationState::Count}, 1.);
+    }
+    static std::string name()
+    {
+        return "InfectedToRecovered";
     }
 };
 
@@ -87,6 +111,10 @@ struct InfectedToSevere {
     {
         return Type({AbmAgeGroup::Count, VaccinationState::Count}, 1.);
     }
+    static std::string name()
+    {
+        return "InfectedToSevere";
+    }
 };
 
 struct SevereToCritical {
@@ -94,6 +122,10 @@ struct SevereToCritical {
     static Type get_default()
     {
         return Type({AbmAgeGroup::Count, VaccinationState::Count}, 1.);
+    }
+    static std::string name()
+    {
+        return "SevereToCritical";
     }
 };
 
@@ -103,6 +135,10 @@ struct SevereToRecovered {
     {
         return Type({AbmAgeGroup::Count, VaccinationState::Count}, 1.);
     }
+    static std::string name()
+    {
+        return "SevereToRecovered";
+    }
 };
 
 struct CriticalToRecovered {
@@ -110,6 +146,10 @@ struct CriticalToRecovered {
     static Type get_default()
     {
         return Type({AbmAgeGroup::Count, VaccinationState::Count}, 1.);
+    }
+    static std::string name()
+    {
+        return "CriticalToRecovered";
     }
 };
 
@@ -119,13 +159,21 @@ struct CriticalToDead {
     {
         return Type({AbmAgeGroup::Count, VaccinationState::Count}, 1.);
     }
+    static std::string name()
+    {
+        return "CriticalToDead";
+    }
 };
 
 struct RecoveredToSusceptible {
     using Type = CustomIndexArray<double, AbmAgeGroup, VaccinationState>;
     static Type get_default()
     {
-        return Type({AbmAgeGroup::Count, VaccinationState::Count}, 1.);
+        return Type({AbmAgeGroup::Count, VaccinationState::Count}, 0.);
+    }
+    static std::string name()
+    {
+        return "RecoveredToSusceptible";
     }
 };
 
@@ -135,6 +183,10 @@ struct DetectInfection {
     {
         return Type({AbmAgeGroup::Count, VaccinationState::Count}, 0.5);
     }
+    static std::string name()
+    {
+        return "DetectInfection";
+    }
 };
 
 struct TestWhileInfected {
@@ -142,6 +194,10 @@ struct TestWhileInfected {
     static Type get_default()
     {
         return Type({AbmAgeGroup::Count}, 0.005);
+    }
+    static std::string name()
+    {
+        return "TestWhileInfected";
     }
 };
 
@@ -158,6 +214,10 @@ struct MaximumContacts {
     static constexpr Type get_default()
     {
         return std::numeric_limits<double>::max();
+    }
+    static std::string name()
+    {
+        return "MaximumContacts";
     }
 };
 
@@ -177,6 +237,10 @@ struct AntigenTest {
     {
         return Type{0.9, 0.99};
     }
+    static std::string name()
+    {
+        return "AntigenTest";
+    }
 };
 
 /**
@@ -193,12 +257,20 @@ struct LockdownDate {
     {
         return TimePoint(std::numeric_limits<int>::max());
     }
+    static std::string name()
+    {
+        return "LockdownDate";
+    }
 };
 struct BasicShoppingRate {
     using Type = CustomIndexArray<double, AbmAgeGroup>;
     static auto get_default()
     {
         return CustomIndexArray<double, AbmAgeGroup>(AbmAgeGroup::Count, 1.0);
+    }
+    static std::string name()
+    {
+        return "BasicShoppingRate";
     }
 };
 struct WorkRatio {
@@ -207,6 +279,10 @@ struct WorkRatio {
     {
         return Type(Eigen::VectorXd::Constant(1, 1.0));
     }
+    static std::string name()
+    {
+        return "WorkRatio";
+    }
 };
 struct SchoolRatio {
     using Type = DampingMatrixExpression<Dampings<Damping<ColumnVectorShape>>>;
@@ -214,12 +290,20 @@ struct SchoolRatio {
     {
         return Type(Eigen::VectorXd::Constant(1, 1.0));
     }
+    static std::string name()
+    {
+        return "SchoolRatio";
+    }
 };
 struct SocialEventRate {
     using Type = DampingMatrixExpression<Dampings<Damping<ColumnVectorShape>>>;
     static auto get_default()
     {
         return Type(Eigen::VectorXd::Constant((size_t)AbmAgeGroup::Count, 1.0));
+    }
+    static std::string name()
+    {
+        return "SocialEventRate";
     }
 };
 
@@ -229,6 +313,10 @@ struct GotoWorkTimeMinimum {
     {
         return CustomIndexArray<TimeSpan, AbmAgeGroup>(AbmAgeGroup::Count, mio::hours(6));
     }
+    static std::string name()
+    {
+        return "GotoWorkTimeMinimum";
+    }
 };
 
 struct GotoWorkTimeMaximum {
@@ -236,6 +324,10 @@ struct GotoWorkTimeMaximum {
     static auto get_default()
     {
         return CustomIndexArray<TimeSpan, AbmAgeGroup>(AbmAgeGroup::Count, mio::hours(9));
+    }
+    static std::string name()
+    {
+        return "GotoWorkTimeMaximum";
     }
 };
 
@@ -245,6 +337,10 @@ struct GotoSchoolTimeMinimum {
     {
         return CustomIndexArray<TimeSpan, AbmAgeGroup>(AbmAgeGroup::Count, mio::hours(6));
     }
+    static std::string name()
+    {
+        return "GotoSchoolTimeMinimum";
+    }
 };
 
 struct GotoSchoolTimeMaximum {
@@ -252,6 +348,10 @@ struct GotoSchoolTimeMaximum {
     static auto get_default()
     {
         return CustomIndexArray<TimeSpan, AbmAgeGroup>(AbmAgeGroup::Count, mio::hours(9));
+    }
+    static std::string name()
+    {
+        return "GotoSchoolTimeMaximum";
     }
 };
 

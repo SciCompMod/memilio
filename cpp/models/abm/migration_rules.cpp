@@ -124,7 +124,7 @@ LocationType go_to_quarantine(const Person& person, TimePoint /*t*/, TimeSpan /*
                               const AbmMigrationParameters& /*params*/)
 {
     auto current_loc = person.get_location_id().type;
-    if (person.is_in_quarantine()) {
+    if (person.is_in_quarantine() && current_loc != LocationType::Hospital && current_loc != LocationType::ICU) {
         return LocationType::Home;
     }
     return current_loc;

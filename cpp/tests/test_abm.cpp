@@ -18,6 +18,8 @@
 * limitations under the License.
 */
 #include "abm/abm.h"
+#include "abm/age.h"
+#include "abm/location_type.h"
 #include "abm/migration_rules.h"
 #include "abm/lockdown_rules.h"
 #include "memilio/math/eigen_util.h"
@@ -949,18 +951,24 @@ TEST(TestMigrationRules, work_return)
 
 TEST(TestMigrationRules, quarantine)
 {
-    auto home   = mio::Location(mio::LocationType::Home, 0);
-    auto work   = mio::Location(mio::LocationType::Work, 0);
-    auto p_inf1 = mio::Person(work, {mio::InfectionState::Infected, true}, mio::AbmAgeGroup::Age15to34, {});
     auto t      = mio::TimePoint(12346);
     auto dt     = mio::hours(1);
-    p_inf1.set_assigned_location(home);
 
-    ASSERT_EQ(mio::go_to_quarantine(p_inf1, t, dt, {}), mio::LocationType::Home);
+    auto home     = mio::Location(mio::LocationType::Home, 0);
+    auto work     = mio::Location(mio::LocationType::Work, 0);
+    auto hospital = mio::Location(mio::LocationType::Hospital, 0);
 
-    auto p_inf2 = mio::Person(work, mio::InfectionState::Infected, mio::AbmAgeGroup::Age15to34, {});
-    p_inf2.set_assigned_location(home);
-    ASSERT_EQ(mio::go_to_quarantine(p_inf2, t, dt, {}), mio::LocationType::Work);
+    auto p_inf1 = mio::Person(work, {mio::InfectionState::Infected, true}, mio::AbmAgeGroup::Age15to34, {});
+    ASSERT_EQ(mio::go_to_quarantine(p_inf1, t, dt, {}),
+              mio::LocationType::Home); //detected infected person quarantines at home
+
+    auto p_inf2 = mio::Person(work, {mio::InfectionState::Infected, false}, mio::AbmAgeGroup::Age15to34, {});
+    ASSERT_EQ(mio::go_to_quarantine(p_inf2, t, dt, {}),
+              mio::LocationType::Work); //undetected infected person does not quaratine
+
+    auto p_inf3 = mio::Person(hospital, {mio::InfectionState::Infected_Severe, true}, mio::AbmAgeGroup::Age15to34, {});
+    ASSERT_EQ(mio::go_to_quarantine(p_inf3, t, dt, {}),
+              mio::LocationType::Hospital); //detected infected person does not leave hospital to quarantine
 }
 
 TEST(TestMigrationRules, hospital)
@@ -1355,8 +1363,8 @@ TEST(TestWorld, evolveMigration)
 
         mio::TripList& data = world.get_trip_list();
         mio::Trip trip1(p1.get_person_id(), mio::TimePoint(0) + mio::hours(9), work_id, home_id);
-        mio::Trip trip2(p2.get_person_id(), mio::TimePoint(1) + mio::hours(9), event_id, home_id);
-        mio::Trip trip3(p5.get_person_id(), mio::TimePoint(2) + mio::hours(9), event_id, work_id);
+        mio::Trip trip2(p2.get_person_id(), mio::TimePoint(0) + mio::hours(9), event_id, home_id);
+        mio::Trip trip3(p5.get_person_id(), mio::TimePoint(0) + mio::hours(9), event_id, work_id);
         data.add_trip(trip1);
         data.add_trip(trip2);
         data.add_trip(trip3);

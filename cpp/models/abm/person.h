@@ -45,6 +45,15 @@ struct InfectionProperties {
     }
     InfectionState state;
     bool detected;
+
+    bool operator==(const InfectionProperties& other) const
+    {
+        return std::tie(state, detected) == std::tie(other.state, detected);
+    }
+    bool operator!=(const InfectionProperties& other) const
+    {
+        return std::tie(state, detected) != std::tie(other.state, detected);
+    }
 };
 
 static constexpr uint32_t INVALID_PERSON_ID = std::numeric_limits<uint32_t>::max();
@@ -123,7 +132,7 @@ public:
      * Get the age group of this person.
      * @return age.
      */
-    mio::Index<AbmAgeGroup> get_age() const
+    AbmAgeGroup get_age() const
     {
         return m_age;
     }
@@ -249,7 +258,7 @@ private:
     VaccinationState m_vaccination_state;
     TimeSpan m_time_until_carrier;
     bool m_quarantine;
-    mio::Index<AbmAgeGroup> m_age;
+    AbmAgeGroup m_age;
     TimeSpan m_time_at_location;
     double m_random_workgroup;
     double m_random_schoolgroup;

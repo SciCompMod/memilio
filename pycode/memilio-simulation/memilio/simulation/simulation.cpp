@@ -52,6 +52,7 @@ PYBIND11_MODULE(_simulation, m)
         .def("get_last_time", py::overload_cast<>(&mio::TimeSeries<double>::get_last_time))
         .def("get_value", py::overload_cast<Eigen::Index>(&mio::TimeSeries<double>::get_value), py::arg("index"))
         .def("get_last_value", py::overload_cast<>(&mio::TimeSeries<double>::get_last_value))
+        .def("__len__", &mio::TimeSeries<double>::get_num_time_points)
         .def(
             "__getitem__",
             [](mio::TimeSeries<double>& self, Eigen::Index i) {

@@ -1,7 +1,7 @@
 /* 
 * Copyright (C) 2020-2021 German Aerospace Center (DLR-SC)
 *
-* Authors: Elisabeth Kluth
+* Authors: Elisabeth Kluth, Daniel Abele
 *
 * Contact: Martin J. Kuehn <Martin.Kuehn@DLR.de>
 *
@@ -44,8 +44,11 @@ TimePoint TripList::get_next_trip_time() const
 
 void TripList::add_trip(Trip trip)
 {
+    //trips are sorted by time
+    //also include the person id in the comparison so different persons can make trips at the same time
+    //same person can only make one trip at the same time
     insert_sorted_replace(m_trips, trip, [](auto& trip1, auto& trip2) {
-        return trip1.time < trip2.time;
+        return std::tie(trip1.time, trip1.person_id) < std::tie(trip2.time, trip2.person_id);
     });
 }
 

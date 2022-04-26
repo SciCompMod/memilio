@@ -182,6 +182,7 @@ public:
      * the migration rules regarding hospitalization/ICU/quarantine are always used
      */
     void use_migration_rules(bool param);
+    bool use_migration_rules() const;
 
 private:
     void interaction(TimePoint t, TimeSpan dt);
