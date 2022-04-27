@@ -107,14 +107,14 @@ def get_divi_data(read_data=dd.defaultDict['read_data'],
         file_in = os.path.join(directory, filename + ".json")
 
         try:
-            df = pd.read_json(file_in)
+            df_raw = pd.read_json(file_in)
         except ValueError:
             raise FileNotFoundError("Error: The file: " + file_in +
                                     " does not exist. Call program without"
                                     " -r flag to get it.")
     else:
         try:
-            df = gd.loadCsv(
+            df_raw = gd.loadCsv(
                 'zeitreihe-tagesdaten',
                 apiUrl='https://diviexchange.blob.core.windows.net/%24web/',
                 extension='.csv')
@@ -122,12 +122,12 @@ def get_divi_data(read_data=dd.defaultDict['read_data'],
             raise FileNotFoundError(
                 "Error: Download link for Divi data has changed.") from err
 
-    if not df.empty:
+    if not df_raw.empty:
         if not no_raw:
-            gd.write_dataframe(df, directory, filename, file_format)
+            gd.write_dataframe(df_raw, directory, filename, file_format)
     else:
         raise gd.DataError("Something went wrong, dataframe is empty.")
-    df_raw = df.copy()
+    df = df_raw.copy()
     divi_data_sanity_checks(df_raw)
     df.rename(columns={'date': dd.EngEng['date']}, inplace=True)
     df.rename(dd.GerEng, axis=1, inplace=True)
