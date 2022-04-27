@@ -160,14 +160,17 @@ def compute_vaccination_ratios(
 
 
 def split_column_based_on_values(
-        df_to_split, column_to_split, column_vals_name, new_column_labels):
-    """! Splits a dataframe into separate dataframes. For each unique value that appears in a selected column, the corresponding value in another column is transfered to a new dataframe.
+        df_to_split, column_to_split, column_vals_name, groupby_list, new_column_labels, compute_cumsum):
+    """! Splits a column in a dataframe into separate columns. For each unique value that appears in a selected column,
+    all corresponding values in another column are transfered to a new column.
 
     @param df_to_split global pandas dataframe
     @param column_to_split identifier of the column for which separate values will define separate dataframes 
-    @param column_vals_name The name of the original column which will be renamed in the separate dataframes according to new_column_labels.
-    @param new_column_labels new labels for resulting columns. There have to be the same amount of names and unique values.
-    @return an array with the new splitted dataframes
+    @param column_vals_name The name of the original column which will be split into separate columns named according to new_column_labels.
+    @param groupby_list The name of the original columns with which data of new_column_labels can be joined.
+    @param new_column_labels New labels for resulting columns. There have to be the same amount of names and unique values as in groupby_list.
+    @param compute_cumsum Computes cumsum in new generated columns
+    @return a dataframe with the new splitted columns
     """
     # TODO: Maybe we should input a map e.g. 1->Vacc_partially, 2->Vacc_completed etc. This is more future proof.
     # check number of given names and correct if necessary
@@ -178,16 +181,27 @@ def split_column_based_on_values(
         for i in column_identifiers:
             new_column_labels.append('new_column_'+str(i))
 
-    df_subset = []
-    for i in range(0, len(column_identifiers)):
-        df_subset.append(
-            df_to_split
-            [df_to_split[column_to_split] == column_identifiers[i]].copy())
-        df_subset[i] = df_subset[i].drop(columns=column_to_split)
-        df_subset[i] = df_subset[i].rename(
-            columns={column_vals_name: new_column_labels[i]})
+    # create empty copy of the df_to_split
+    df_joined = pd.DataFrame(
+        columns=df_to_split.columns).drop(
+        columns=[column_to_split, column_vals_name])
 
-    return df_subset
+    for i in range(0, len(column_identifiers)):
+        df_reduced = df_to_split[df_to_split[column_to_split] == column_identifiers[i]].rename(
+            columns={column_vals_name: new_column_labels[i]}).drop(columns=column_to_split)
+        df_reduced = df_reduced.groupby(
+            groupby_list).agg({new_column_labels[i]: sum})
+        if compute_cumsum:
+            # compute cummulative sum over level index of ID_County and level
+            # index of Age_RKI
+            df_reduced = df_reduced.groupby(level=[groupby_list.index(
+                dd.EngEng['idCounty']), groupby_list.index(dd.EngEng['ageRKI'])]).cumsum().reset_index()
+        # joins new generated column to dataframe
+        df_joined = df_reduced.join(
+            df_joined.set_index(groupby_list),
+            on=groupby_list, how='outer')
+
+    return df_joined
 
 def sanitizing_based_on_regions(to_county_map, df, age_groups, column_names, age_population):
 
@@ -704,78 +718,51 @@ def get_vaccination_data(read_data=dd.defaultDict['read_data'],
             age_new_to_all_ages_indices[i])+start_age_data].sum(axis=1)
     # end of output meta information purposes
 
-    # df_data now becomes an array
     vacc_column_names = [
         dd.EngEng['vaccPartial'],
         dd.EngEng['vaccComplete'],
         dd.EngEng['vaccRefresh']]
-    df_data_array = split_column_based_on_values(
-        df_data, "Impfschutz", "Number", vacc_column_names)
+    
+    groupby_list = [
+        dd.EngEng['date'],
+        dd.EngEng['idCounty'],
+        dd.EngEng['ageRKI']]
 
-    # extract min, max dates and all possible values for groups
-    # from all data frames
-    min_date = date.today()
-    max_date = date(1, 1, 1)
-    for i in range(0, len(df_data_array)):
-        # pandas internally creates timestamps with to_datetime; to
-        # avoid warnings, convert to datetime again
-        if pd.to_datetime(min(df_data_array[i].Date)).date() < min_date:
-            min_date = pd.to_datetime(min(df_data_array[i].Date)).date()
-        if pd.to_datetime(min(df_data_array[i].Date)).date() > max_date:
-            max_date = pd.to_datetime(max(df_data_array[i].Date)).date()
+    # extract min and max dates
+    min_date = pd.to_datetime(min(df_data.Date)).date()
+    max_date = pd.to_datetime(max(df_data.Date)).date()
+
+    if sanitize_data < 3:
+        moving_average_sanit = moving_average
+        impute_sanit = 'forward'
+        compute_cumsum = True
+    else:
+        # do not sum vaccinations for sanitize_data = 3 since these have to
+        # be redistributed in sanitizing data approach. Do not impute 'forward' used for
+        # cumulative sums but impute 'zeros', i.e., zero vaccinations for
+        # missing dates.
+        compute_cumsum = False
+        moving_average_sanit = 0
+        impute_sanit = 'zeros'
+
+    df_data_joined = split_column_based_on_values(
+        df_data, "Impfschutz", "Number", groupby_list, vacc_column_names,
+        compute_cumsum)
 
     ######## data with age resolution as provided in original frame ########
     # transform and write data frame resolved per county and age (with age
     # classes as provided in vaccination tables: 05-11, 12-17, 18-59, 60+)
-    df_data_agevacc_county_cs = []
-    for i in range(0, len(df_data_array)):
-        df_data_array[i] = df_data_array[i].reset_index()
-        # group by date and county
-        groupby_list = [dd.EngEng['date'],
-                        dd.EngEng['idCounty'], dd.EngEng['ageRKI']]
-        df_data_reduced = df_data_array[i].groupby(
-            groupby_list).agg(
-            {vacc_column_names[i]: sum})
-        if sanitize_data < 3:
-            # compute cummulative sum over level index of ID_County and level
-            # index of Age_RKI
 
-            df_data_reduced = df_data_reduced.groupby(level=[
-                groupby_list.index(dd.EngEng['idCounty']), groupby_list.index(
-                    dd.EngEng['ageRKI'])]).cumsum().reset_index()
-
-            df_data_agevacc_county_cs.append(
-                modifyDataframeSeries.impute_and_reduce_df(
-                    df_data_reduced,
-                    {dd.EngEng['idCounty']: df_data_reduced[dd.EngEng['idCounty']].unique(),
-                     dd.EngEng['ageRKI']: unique_age_groups_old},
-                    [vacc_column_names[i]],
-                    impute='forward', moving_average=moving_average,
-                    min_date=min_date, max_date=max_date))
-        else:
-            # do not sum vaccinations since these have to be redistributed in
-            # sanitizing data approach. Also do not imput 'forward' used for
-            # cumulative sums but impute 'zeros', i.e., zero vaccinations for
-            # missing dates.
-            df_data_reduced = df_data_reduced.reset_index()
-            df_data_agevacc_county_cs.append(
-                modifyDataframeSeries.impute_and_reduce_df(
-                    df_data_reduced,
-                    {dd.EngEng['idCounty']: df_data_reduced[dd.EngEng['idCounty']].unique(),
-                     dd.EngEng['ageRKI']: unique_age_groups_old},
-                    [vacc_column_names[i]],
-                    impute='zeros', moving_average=0,
-                    min_date=min_date, max_date=max_date))
-        # merge all data of vaccinations
-        if i > 0:
-            df_data_agevacc_county_cs[0] = df_data_agevacc_county_cs[0].merge(
-                df_data_agevacc_county_cs[i],
-                on=[dd.EngEng['date'],
-                    dd.EngEng['idCounty'],
-                    dd.EngEng['ageRKI']])
+    df_data_agevacc_county_cs = modifyDataframeSeries.impute_and_reduce_df(
+            df_data_joined,
+            {dd.EngEng['idCounty']: df_data_joined[dd.EngEng['idCounty']].unique(),
+             dd.EngEng['ageRKI']: unique_age_groups_old},
+            vacc_column_names,
+            impute=impute_sanit, moving_average=moving_average_sanit,
+            min_date=min_date, max_date=max_date)
 
     # remove merged information and convert ID from float
-    df_data_agevacc_county_cs = df_data_agevacc_county_cs[0].astype(
+    df_data_agevacc_county_cs = df_data_agevacc_county_cs.astype(
         {dd.EngEng['idCounty']: int})
 
     # insert county names
@@ -796,7 +783,6 @@ def get_vaccination_data(read_data=dd.defaultDict['read_data'],
     end_time = time.perf_counter()
     print("Time needed initial phase: " +
           str(int(end_time - start_time)) + " sec")
-    sanitize_data = 3
     start_time = time.perf_counter()
     if sanitize_data == 1 or sanitize_data == 2:
 
@@ -825,7 +811,7 @@ def get_vaccination_data(read_data=dd.defaultDict['read_data'],
             df_data_agevacc_county_cs,
             {dd.EngEng['idCounty']: df_data_agevacc_county_cs[dd.EngEng['idCounty']].unique(),
                 dd.EngEng['ageRKI']: unique_age_groups_old},
-            [vacc_column_names[i]],
+            vacc_column_names,
             impute='forward', moving_average=moving_average,
             min_date=min_date, max_date=max_date)
     else:

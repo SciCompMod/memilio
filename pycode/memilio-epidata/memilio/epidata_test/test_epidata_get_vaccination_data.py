@@ -17,12 +17,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 ######################################################################
+from itertools import groupby
 import unittest
 from unittest.mock import patch, call
 from pyfakefs import fake_filesystem_unittest
 
 import pandas as pd
 
+from memilio.epidata import getDataIntoPandasDataFrame as gd
 from memilio.epidata import getVaccinationData as gvd
 from memilio.epidata import geoModificationGermany as geoger
 
@@ -221,11 +223,12 @@ class TestGetVaccinationData(fake_filesystem_unittest.TestCase):
         df_to_split = pd.DataFrame(
             vacc_data, columns=col_names_vacc_data)
 
+        groupby_list = ['Impfdatum', 'LandkreisId_Impfort', 'Altersgruppe']
         column_ident = 'Impfschutz'
         column_vals_name = 'Anzahl'
         new_col_labels = ['Vacc_partially', 'Vacc_completed', 'Vacc_refreshed']
         df_split = gvd.split_column_based_on_values(
-            df_to_split, column_ident, column_vals_name, new_col_labels)
+            df_to_split, column_ident, column_vals_name, groupby_list, new_col_labels, compute_cumsum=False)
 
         new_column_names1 = [
             'Impfdatum',
@@ -290,12 +293,13 @@ class TestGetVaccinationData(fake_filesystem_unittest.TestCase):
         df_to_split = pd.DataFrame(
             vacc_data, columns=col_names_vacc_data)
 
+        groupby_list = ['Impfdatum', 'LandkreisId_Impfort', 'Altersgruppe']
         column_ident = 'Impfschutz'
         column_vals_name = 'Anzahl'
         # wrong amount for data
         new_col_labels = ['Vacc_partially', 'Vacc_completed']
         df_split = gvd.split_column_based_on_values(
-            df_to_split, column_ident, column_vals_name, new_col_labels)
+            df_to_split, column_ident, column_vals_name, groupby_list, new_col_labels, compute_cumsum=False)
 
         new_column_names1 = [
             'Impfdatum',
