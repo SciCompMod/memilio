@@ -33,15 +33,6 @@ data explanation:
 - ICU_ventilated is the number of ventilated covid patients in reporting hospitals
 - free_ICU is the number of free ICUs in reporting hospitals
 - occupied_ICU is the number of occupied ICUs in in reporting hospitals
-
-ID_County and ID_State is defined by the "Amtlicher Gemeindeschlüssel (AGS)"
-which is also used in the RKI data as ID_County and ID_State
-https://de.wikipedia.org/wiki/Liste_der_Landkreise_in_Deutschland.
-
-Specific features about the data:
-The column "faelle_covid_im_bundesland" exits only in the data from the first day (24.4)
-The column ICU does not exist for the 24.4.
-ICU_ventilated does not exist for the 24.4. and 25.4.
 """
 
 import os
@@ -69,11 +60,10 @@ def get_divi_data(read_data=dd.defaultDict['read_data'],
     If the given start_date is earlier, it is changed to this date and a warning is printed.
     If it does not already exist, the folder Germany is generated in the given out_folder.
     If read_data == True and the file "FullData_DIVI.json" exists, the data is read form this file
-    and stored in a pandas dataframe.
-    Otherwise the program is stopped.
+    and stored in a pandas dataframe. If read_data = True and the file does not exist the program is stopped.
 
-    The dataframe is written to the file filename = "FullData_DIVI".
-    Than the columns are renamed to English and the state and county names are added.
+    The downloaded dataframe is written to the file "FullData_DIVI".
+    After that, the columns are renamed to English and the state and county names are added.
     Afterwards, three kinds of structuring of the data are done.
     We obtain the chronological sequence of ICU and ICU_ventilated
     stored in the files "county_divi".json", "state_divi.json" and "germany_divi.json"
@@ -225,10 +215,12 @@ def divi_data_sanity_checks(df = pd.DataFrame()):
     for name in test_strings:
         if(name not in actual_strings_list):
             raise gd.DataError("Error: Data categories have changed.")
-    # check if size of dataframe is expectable
-    # Size of dataframe on 2021-12-20 is 240407
-    # check if less dates or far more are given
-    if (len(df.index) < 200000) or (len(df.index) > 500000):
+    # check if size of dataframe is not unusal
+    # data colletion starts at 24.04.2020
+    num_dates = (date.today() - date(2020, 4, 24)).days
+    min_num_data = 390*num_dates  # not all 400 counties report every day
+    max_num_data = 400*num_dates
+    if (len(df) < min_num_data) or (len(df) > max_num_data):
         raise gd.DataError("Error: unexpected length of dataframe.")
 
 
