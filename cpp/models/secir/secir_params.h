@@ -23,7 +23,7 @@
 #include "memilio/math/eigen.h"
 #include "memilio/utils/uncertain_value.h"
 #include "memilio/math/adapt_rk.h"
-#include "secir/age_group.h"
+#include "models/secir/age_group.h"
 #include "memilio/epidemiology/uncertain_matrix.h"
 #include "memilio/epidemiology/dynamic_npis.h"
 #include "memilio/utils/parameter_set.h"

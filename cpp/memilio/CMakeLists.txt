@@ -44,6 +44,8 @@ add_library(memilio
     mobility/graph_simulation.cpp
     mobility/graph.h
     mobility/graph.cpp
+    utils/analyze_result.h
+    utils/analyze_result.cpp
     utils/visitor.h
     utils/uncertain_value.h
     utils/uncertain_value.cpp

@@ -23,8 +23,8 @@
 #include "memilio/compartments/compartmentalmodel.h"
 #include "memilio/compartments/simulation.h"
 #include "memilio/epidemiology/populations.h"
-#include "secir/infection_state.h"
-#include "secir/secir_params.h"
+#include "models/secir/infection_state.h"
+#include "models/secir/secir_params.h"
 #include "memilio/math/smoother.h"
 #include "memilio/math/eigen_util.h"
 

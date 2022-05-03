@@ -22,7 +22,7 @@
 #include "secir/secir.h"
 #include "memilio/math/adapt_rk.h"
 #include "secir/parameter_space.h"
-#include "secir/analyze_result.h"
+#include "memilio/utils/analyze_result.h"
 #include <distributions_helpers.h>
 #include <gtest/gtest.h>
 

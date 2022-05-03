@@ -20,6 +20,7 @@
 #include "abm/abm.h"
 #include "abm/household.h"
 #include <cstdio>
+#include "memilio/utils/analyze_result.h"
 /**
  * Determine the infection state of a person at the beginning of the simulation.
  * The infection states are chosen randomly. They are distributed according to the probabilites set in the example.
@@ -416,8 +417,8 @@ int main()
     create_assign_locations(world);
 
     auto t0         = mio::TimePoint(0);
-    auto t_lockdown = mio::TimePoint(0) + mio::days(20);
-    auto tmax       = mio::TimePoint(0) + mio::days(60);
+    auto t_lockdown = mio::TimePoint(0) + mio::days(2);
+    auto tmax       = mio::TimePoint(0) + mio::days(3); // 60
 
     // During the lockdown, 60% of people work from home and schools are closed for 90% of students.
     // Social events are very rare.
@@ -457,4 +458,28 @@ int main()
         }
     }
     fclose(f_abm);
+    
+   
+   
+   f_abm = fopen("abm2.txt", "w");
+   const std::vector<mio::TimePoint> tps{mio::TimePoint(0) + mio::days(1), mio::TimePoint(0) + mio::days(2)};
+   mio::TimeSeries<double> test_series = mio::interpolate_simulation_result(sim.get_result(), tps);
+   
+   fprintf(f_abm, "# t S E C I I_s I_c R_C R_I D\n");
+   for (auto i = 0; i < test_series.get_num_time_points(); ++i) {
+       fprintf(f_abm, "%f ", test_series.get_time(i));
+       auto v = test_series.get_value(i);
+       for (auto j = 0; j < v.size(); ++j) {
+           fprintf(f_abm, "%f", v[j]);
+           if (j < v.size() - 1) {
+               fprintf(f_abm, " ");
+           }
+       }
+       if (i < test_series.get_num_time_points() - 1) {
+           fprintf(f_abm, "\n");
+       }
+   }
+   fclose(f_abm);
+    // change back to 60 and 20 (from 3 and 2)
+    
 }
