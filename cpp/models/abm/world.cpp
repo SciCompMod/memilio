@@ -121,7 +121,7 @@ void World::migration(TimePoint t, TimeSpan dt)
     // check if a person makes a trip
     size_t num_trips = m_trip_list.num_trips();
     if (num_trips != 0) {
-        while (m_trip_list.get_next_trip_time() < t + dt && m_trip_list.get_current_index() < num_trips) {
+        while (m_trip_list.get_current_index() < num_trips && m_trip_list.get_next_trip_time() < t + dt) {
             auto& trip   = m_trip_list.get_next_trip();
             auto& person = m_persons[trip.person_id];
             if (!person->is_in_quarantine() && person->get_location_id() == trip.migration_origin) {
