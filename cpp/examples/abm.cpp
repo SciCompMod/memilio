@@ -457,4 +457,37 @@ int main()
         }
     }
     fclose(f_abm);
+
+
+    auto f_abm_loc = fopen("abmloc.txt", "w");
+
+    auto results = sim.get_result_per_location();
+
+    for (auto it=results.begin(); it!=results.end(); ++it){
+
+        fprintf(f_abm_loc,"%d\n",it->first);
+        for (auto i = 0; i < it->second.get_num_time_points(); ++i) {
+        fprintf(f_abm, "%f ", it->second.get_time(i));
+        auto v = it->second.get_value(i);
+        for (auto j = 0; j < v.size(); ++j) {
+            fprintf(f_abm, "%f", v[j]);
+            if (j < v.size() - 1) {
+                fprintf(f_abm, " ");
+            }
+        }
+        if (i < it->second.get_num_time_points() - 1) {
+            fprintf(f_abm, "\n");
+        }
+    }
+
+
+
+    }
+
+
+
+            fclose(f_abm);
+
+    
+        
 }

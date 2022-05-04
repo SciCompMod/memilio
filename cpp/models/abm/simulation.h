@@ -58,6 +58,15 @@ public:
         return m_result;
     }
 
+    /**
+     * get the populations per location and per infection state
+     * @return the result of the simulation.
+     */
+    const std::map<unsigned, TimeSeries<double>>& get_result_per_location() const
+    {
+        return results_per_location;
+    }
+
 private:
     void store_result_at(TimePoint t);
 
@@ -65,6 +74,8 @@ private:
     TimeSeries<double> m_result;
     TimePoint m_t;
     TimeSpan m_dt;
+    std::map<unsigned, TimeSeries<double>> results_per_location;
+
 };
 
 } // namespace mio

@@ -18,6 +18,8 @@
 * limitations under the License.
 */
 #include "abm/simulation.h"
+#include "memilio/utils/time_series.h"
+
 
 namespace mio
 {
@@ -28,6 +30,12 @@ AbmSimulation::AbmSimulation(TimePoint t, World&& world)
     , m_t(t)
     , m_dt(hours(1))
 {
+
+     for (auto&& locations : m_world.get_locations()) 
+        for (auto& location : locations)
+                results_per_location.insert( std::map< unsigned, 
+                TimeSeries<double> >::value_type ( location.get_index(), TimeSeries<double>(Eigen::Index(InfectionState::Count) ) ) 
+                );
     store_result_at(t);
 }
 
@@ -49,6 +57,8 @@ void AbmSimulation::store_result_at(TimePoint t)
     for (auto&& locations : m_world.get_locations()) {
         for (auto& location : locations){
             m_result.get_last_value() += location.get_subpopulations().cast<double>();
+            results_per_location.at(location.get_index()).add_time_point(t.days());
+            results_per_location.at(location.get_index()).get_last_value()=location.get_subpopulations().cast<double>();
         }
     }
 }
