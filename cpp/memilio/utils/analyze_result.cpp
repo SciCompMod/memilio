@@ -1,7 +1,7 @@
 /* 
 * Copyright (C) 2020-2021 German Aerospace Center (DLR-SC)
 *
-* Authors: Daniel Abele
+* Authors: Daniel Abele, David Kerkmann, Sascha Korf
 *
 * Contact: Martin J. Kuehn <Martin.Kuehn@DLR.de>
 *
@@ -18,52 +18,75 @@
 * limitations under the License.
 */
 #include "memilio/utils/analyze_result.h"
-
+#include "memilio/math/interpolation.h"
 #include <algorithm>
 #include <cassert>
 
 namespace mio
 {
 
-/**
- * TODO: extrapolate first and last point
- */
-TimeSeries<double> interpolate_simulation_result(const TimeSeries<double>& simulation_result, const std::vector<TimePoint> interpolation_times)
+TimeSeries<double> interpolate_simulation_result_days(const TimeSeries<double>& simulation_result)
+{
+    const auto t0 = simulation_result.get_time(0);
+    const auto t_max = simulation_result.get_last_time();
+    const auto day0 = static_cast<int>(ceil(t0));
+    const auto day_max = static_cast<int>(floor(t_max));
+    
+    int add_t0{};
+    if (day0 != t0) {
+        add_t0 = 1;
+    }
+    int add_tmax{};
+    if (day_max != t_max) {
+        add_tmax = 1;
+    }
+    
+    std::vector<mio::TimePoint> tps;
+    //tps.reserve(day_max - day0 + add_t0 + add_tmax);
+    
+    if (add_t0 == 1) {
+        tps.push_back(mio::TimePoint(t0));
+    }
+    for (int i = day0; i < day_max; ++i) {
+        tps.push_back(mio::TimePoint(i));
+    }
+    if (add_tmax == 1) {
+        tps.push_back(mio::TimePoint(t_max));
+    }
+    
+    std::cout << add_t0 << add_tmax << tps.size() << std::endl;
+    
+    return interpolate_simulation_result(simulation_result, tps);
+}
+
+
+TimeSeries<double> interpolate_simulation_result(const TimeSeries<double>& simulation_result, const std::vector<TimePoint>& interpolation_times)
 {
     assert(simulation_result.get_num_time_points() > 0 && "TimeSeries must not be empty.");
-
-    //const auto t0      = simulation_result.get_time(0);
-    //const auto tmax    = simulation_result.get_last_time();
-    //const auto day0    = static_cast<int>(floor(t0));
-    //const auto day_max = static_cast<int>(ceil(tmax));
-      
-    //auto day = day0;
+    
+    if ((int)interpolation_times.size() == 0) {
+        std::cout << "Warning: Vector of interpolation times is empty. Returning empty TimeSeries.";
+    }
+    
     TimeSeries<double> interpolated(simulation_result.get_num_elements());
-    //interpolated.reserve(interpolation_times.size());
-    //interpolated.add_time_point(interpolation_times[0].days(), simulation_result.get_value(0));
-    //day++;
+    interpolated.reserve(interpolation_times.size());
 
-    //interpolate between pair of time points that lie on either side of each integer day
-    for (int i = 0; i < simulation_result.get_num_time_points() - 1;) {
-        int j = 0;
+    //interpolate between pair of time points that lie on either side of each interpolation point
+    int pointer_interp = 0;
+    for (int pointer_sim = 0; pointer_sim < simulation_result.get_num_time_points() - 1 && pointer_interp < (int)interpolation_times.size();) {
         //only go to next pair of time points if no time point is added.
         //otherwise check the same time points again
-        //in case there is more than one day between the two time points
-        if (simulation_result.get_time(i) < interpolation_times[j].days() && simulation_result.get_time(i + 1) >= interpolation_times[j].days() ) {
-            auto weight = (interpolation_times[j].days() - simulation_result.get_time(i)) /
-                          (simulation_result.get_time(i + 1) - simulation_result.get_time(i));
-            interpolated.add_time_point(interpolation_times[j].days(), simulation_result[i] +
-                                                 (simulation_result[i + 1] - simulation_result[i]) * weight);
-            ++j;
+        //in case there is more than one interpolation point between the two time points
+        if (simulation_result.get_time(pointer_sim) < interpolation_times[pointer_interp].days() && simulation_result.get_time(pointer_sim + 1) >= interpolation_times[pointer_interp].days() )
+        {
+            interpolated.add_time_point(interpolation_times[pointer_interp].days(),
+                                        linear_interpolation(interpolation_times[pointer_interp].days(), simulation_result.get_time(pointer_sim), simulation_result.get_time(pointer_sim + 1), simulation_result[pointer_sim], simulation_result[pointer_sim + 1]));
+            ++pointer_interp;
         }
         else {
-            ++i;
+            ++pointer_sim;
         }
     }
-
-    //if (day_max > tmax) {
-    //    interpolated.add_time_point(day, simulation_result.get_last_value());
-    //}
 
     return interpolated;
 }

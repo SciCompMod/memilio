@@ -38,7 +38,15 @@ namespace mio
  * @param interpolations_times vector of time points that represent the evaluation of interpolation
  * @return interpolated time series
  */
-TimeSeries<double> interpolate_simulation_result(const TimeSeries<double>& simulation_result, const std::vector<TimePoint> interpolation_times);
+TimeSeries<double> interpolate_simulation_result_days(const TimeSeries<double>& simulation_result);
+
+/**
+ * @brief Interpolation of simulation results at given interpolation time points through linear interpolation of adjacent simulation values.
+ * @param[in] simulation_result TimeSeries of finished simulation.
+ * @param[in] interpolation_times std::vector of time points at which simulation results are interpolated.
+ * @param[out] interpolated Interpolated TimeSeries of finished simulation at given interpolation points.
+ */
+TimeSeries<double> interpolate_simulation_result(const TimeSeries<double>& simulation_result, const std::vector<TimePoint>& interpolation_times);
 
 /**
  * helper template, type returned by overload interpolate_simulation_result(T t)

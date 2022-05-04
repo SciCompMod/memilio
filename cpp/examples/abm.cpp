@@ -462,7 +462,7 @@ int main()
    
    
    f_abm = fopen("abm2.txt", "w");
-   const std::vector<mio::TimePoint> tps{mio::TimePoint(0) + mio::days(1), mio::TimePoint(0) + mio::days(2)};
+   const std::vector<mio::TimePoint> tps{mio::TimePoint(0) + mio::hours(12) + mio::seconds(8), mio::TimePoint(0) + mio::hours(26) + mio::seconds(75)};
    mio::TimeSeries<double> test_series = mio::interpolate_simulation_result(sim.get_result(), tps);
    
    fprintf(f_abm, "# t S E C I I_s I_c R_C R_I D\n");
@@ -482,4 +482,46 @@ int main()
    fclose(f_abm);
     // change back to 60 and 20 (from 3 and 2)
     
+    
+    f_abm = fopen("abm3.txt", "w");
+    test_series = mio::interpolate_simulation_result_days(sim.get_result());
+    
+    fprintf(f_abm, "# t S E C I I_s I_c R_C R_I D\n");
+    for (auto i = 0; i < test_series.get_num_time_points(); ++i) {
+        fprintf(f_abm, "%f ", test_series.get_time(i));
+        auto v = test_series.get_value(i);
+        for (auto j = 0; j < v.size(); ++j) {
+            fprintf(f_abm, "%f", v[j]);
+            if (j < v.size() - 1) {
+                fprintf(f_abm, " ");
+            }
+        }
+        if (i < test_series.get_num_time_points() - 1) {
+            fprintf(f_abm, "\n");
+        }
+    }
+    fclose(f_abm);
+    
+    
+    mio::TimeSeries<double> sim_res = sim.get_result();
+    sim_res.remove_time_point(0);
+    sim_res.remove_last_time_point();
+    f_abm = fopen("abm4.txt", "w");
+    test_series = mio::interpolate_simulation_result_days(sim_res);
+    
+    fprintf(f_abm, "# t S E C I I_s I_c R_C R_I D\n");
+    for (auto i = 0; i < test_series.get_num_time_points(); ++i) {
+        fprintf(f_abm, "%f ", test_series.get_time(i));
+        auto v = test_series.get_value(i);
+        for (auto j = 0; j < v.size(); ++j) {
+            fprintf(f_abm, "%f", v[j]);
+            if (j < v.size() - 1) {
+                fprintf(f_abm, " ");
+            }
+        }
+        if (i < test_series.get_num_time_points() - 1) {
+            fprintf(f_abm, "\n");
+        }
+    }
+    fclose(f_abm);
 }
