@@ -29,38 +29,45 @@ TimeSeries<double> interpolate_simulation_result_days(const TimeSeries<double>& 
 {
     const auto t0 = simulation_result.get_time(0);
     const auto t_max = simulation_result.get_last_time();
-    const auto day0 = static_cast<int>(ceil(t0));
-    const auto day_max = static_cast<int>(floor(t_max));
+    const auto day0 = std::ceil(t0);
+    const auto day_max = std::floor(t_max);
+    
+    auto tol = 1e-10;
     
     int add_t0{};
-    if (day0 != t0) {
+    if (t0 + tol > day0) {
         add_t0 = 1;
     }
-    int add_tmax{};
-    if (day_max != t_max) {
-        add_tmax = 1;
+    int add_t1{};
+    if (t_max + tol > day_max + 1) {
+        add_t1 = 1;
     }
     
     std::vector<mio::TimePoint> tps;
     //tps.reserve(day_max - day0 + add_t0 + add_tmax);
     
     if (add_t0 == 1) {
-        tps.push_back(mio::TimePoint(t0));
+        tps.push_back(mio::TimePoint(0) + mio::days(t0));
     }
-    for (int i = day0; i < day_max; ++i) {
-        tps.push_back(mio::TimePoint(i));
+    for (int i = day0; i <= day_max; ++i) {
+        tps.push_back(mio::TimePoint(0) + mio::days(i));
     }
     if (add_tmax == 1) {
-        tps.push_back(mio::TimePoint(t_max));
+        tps.push_back(mio::TimePoint(0) + mio::days(t_max));
     }
     
     std::cout << add_t0 << add_tmax << tps.size() << std::endl;
+    std::cout << tps[1].days() << std::endl;
     
     return interpolate_simulation_result(simulation_result, tps);
 }
 
 
-TimeSeries<double> interpolate_simulation_result(const TimeSeries<double>& simulation_result, const std::vector<TimePoint>& interpolation_times)
+TimeSeries<double> interpolate_simulation_result(const TimeSeries<double>& simulation_result, const std::vector<TimePoint>& interpolation_times = {
+    
+    
+    
+})
 {
     assert(simulation_result.get_num_time_points() > 0 && "TimeSeries must not be empty.");
     

@@ -52,8 +52,8 @@ if (MEMILIO_HAS_JSONCPP)
 endif()
 if (MEMILIO_HAS_JSONCPP AND MEMILIO_HAS_HDF5)        
     set(TESTSOURCES ${TESTSOURCES}
-        test_save_parameters.cpp
-        test_save_results.cpp
+        #test_save_parameters.cpp
+        #test_save_results.cpp
     )
 endif()
 
