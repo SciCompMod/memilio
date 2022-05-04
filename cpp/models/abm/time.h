@@ -312,6 +312,15 @@ inline TimeSpan days(int days)
     return TimeSpan(days * 24 * 60 * 60);
 }
 
+/**
+ * create a TimeSpan with a specified number of days.
+ * @param seconds number of days in the time span.
+ */
+inline TimeSpan days(double days)
+{
+    return TimeSpan((int)((days * 24 * 60 * 60)));
+}
+
 } // namespace mio
 
 #endif
