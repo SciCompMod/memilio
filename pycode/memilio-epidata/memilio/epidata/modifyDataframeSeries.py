@@ -155,3 +155,45 @@ def impute_and_reduce_df(df_old, group_by_cols, mod_cols, impute='forward', movi
         df_new.index = (range(len(df_new)))
 
     return df_new
+
+def split_column_based_on_values(
+        df_to_split, column_to_split, column_vals_name, groupby_list, new_column_labels, compute_cumsum):
+    """! Splits a column in a dataframe into separate columns. For each unique value that appears in a selected column,
+    all corresponding values in another column are transfered to a new column.
+
+    @param df_to_split global pandas dataframe
+    @param column_to_split identifier of the column for which separate values will define separate dataframes 
+    @param column_vals_name The name of the original column which will be split into separate columns named according to new_column_labels.
+    @param groupby_list The name of the original columns with which data of new_column_labels can be joined.
+    @param new_column_labels New labels for resulting columns. There have to be the same amount of names and unique values as in groupby_list.
+    @param compute_cumsum Computes cumsum in new generated columns
+    @return a dataframe with the new splitted columns
+    """
+    column_identifiers = df_to_split[column_to_split].unique()
+    i = 2
+    while len(column_identifiers) != len(new_column_labels):
+        new_column_labels.append(new_column_labels[-1]+'_'+str(i))
+        i+=1
+
+    # create empty copy of the df_to_split
+    df_joined = pd.DataFrame(
+        columns=df_to_split.columns).drop(
+        columns=[column_to_split, column_vals_name])
+
+    for i in range(0, len(column_identifiers)):
+        df_reduced = df_to_split[df_to_split[column_to_split] == column_identifiers[i]].rename(
+            columns={column_vals_name: new_column_labels[i]}).drop(columns=column_to_split)
+        df_reduced = df_reduced.groupby(
+            groupby_list).agg({new_column_labels[i]: sum})
+        if compute_cumsum:
+            # compute cummulative sum over level index of ID_County and level
+            # index of Age_RKI
+            df_reduced = df_reduced.groupby(level=[groupby_list.index(
+                dd.EngEng['idCounty']), groupby_list.index(dd.EngEng['ageRKI'])]).cumsum()
+        df_reduced.reset_index()
+        # joins new generated column to dataframe
+        df_joined = df_reduced.reset_index().join(
+            df_joined.set_index(groupby_list),
+            on=groupby_list, how='outer')
+
+    return new_column_labels, df_joined

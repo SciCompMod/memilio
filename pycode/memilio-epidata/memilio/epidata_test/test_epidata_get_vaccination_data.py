@@ -17,7 +17,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 ######################################################################
-from itertools import groupby
 import unittest
 from unittest.mock import patch, call
 from pyfakefs import fake_filesystem_unittest
@@ -54,7 +53,8 @@ class TestGetVaccinationData(fake_filesystem_unittest.TestCase):
             ('2020-12-27', str(county), '18-59', 3, 222),
             ('2020-12-27', str(county), '60+', 1, 22),
             ('2020-12-27', str(county), '60+', 2, 332),
-            ('2020-12-27', str(county), '60+', 3, 76)
+            ('2020-12-27', str(county), '60+', 3, 76),
+            ('2020-12-27', str(county), '18-59', 4, 1)
         ]
         df_to_append = pd.DataFrame(
             vacc_data, columns=col_names_vacc_data)
@@ -82,7 +82,8 @@ class TestGetVaccinationData(fake_filesystem_unittest.TestCase):
             ('2020-12-27', str(counties[i]), '04-10', 3, 40),
             ('2020-12-27', str(counties[i]), '11-17', 3, 40),
             ('2020-12-27', str(counties[i]), '18-55', 3, 6),
-            ('2020-12-27', str(counties[i]), '56+', 3, 57)
+            ('2020-12-27', str(counties[i]), '56+', 3, 57),
+            ('2020-12-27', str(counties[i]), '18-59', 4, 1)
         ]
         df_to_append = pd.DataFrame(
             vacc_data_altern, columns=col_names_vacc_data)
@@ -131,7 +132,7 @@ class TestGetVaccinationData(fake_filesystem_unittest.TestCase):
     def test_get_standard_vaccination_sanitize_0(
             self, mockv):
         gvd.get_vaccination_data(out_folder=self.path, sanitize_data=0)
-    
+
     @patch('memilio.epidata.getVaccinationData.pd.read_csv',
            return_value=df_vacc_data_altern)
     def test_sanity_checks(self, mockv):
@@ -201,146 +202,6 @@ class TestGetVaccinationData(fake_filesystem_unittest.TestCase):
             "Error in reading csv while downloading vaccination data.")
         mock_print.assert_has_calls([expected_call])
 
-    def test_split_column_based_on_values(self):
-        col_names_vacc_data = [
-            'Impfdatum', 'LandkreisId_Impfort', 'Altersgruppe', 'Impfschutz',
-            'Anzahl']
-
-        vacc_data = [
-            ('2020-12-27', '1001', '05-11', 1, 3),
-            ('2020-12-27', '1001', '05-11', 2, 2),
-            ('2020-12-27', '1001', '05-11', 3, 1),
-            ('2020-12-27', '1001', '12-17', 1, 10),
-            ('2020-12-27', '1001', '12-17', 2, 15),
-            ('2020-12-27', '1001', '12-17', 3, 72),
-            ('2020-12-27', '1001', '18-59', 1, 2),
-            ('2020-12-27', '1001', '18-59', 2, 3),
-            ('2020-12-27', '1001', '18-59', 3, 222),
-            ('2020-12-27', '1001', '60+', 1, 22),
-            ('2020-12-27', '1001', '60+', 2, 332),
-            ('2020-12-27', '1001', '60+', 3, 76)
-        ]
-        df_to_split = pd.DataFrame(
-            vacc_data, columns=col_names_vacc_data)
-
-        groupby_list = ['Impfdatum', 'LandkreisId_Impfort', 'Altersgruppe']
-        column_ident = 'Impfschutz'
-        column_vals_name = 'Anzahl'
-        new_col_labels = ['Vacc_partially', 'Vacc_completed', 'Vacc_refreshed']
-        df_split = gvd.split_column_based_on_values(
-            df_to_split, column_ident, column_vals_name, groupby_list, new_col_labels, compute_cumsum=False)
-
-        new_column_names1 = [
-            'Impfdatum',
-            'LandkreisId_Impfort',
-            'Altersgruppe',
-            'Vacc_partially']
-        new_column_names2 = [
-            'Impfdatum',
-            'LandkreisId_Impfort',
-            'Altersgruppe',
-            'Vacc_completed']
-        new_column_names3 = [
-            'Impfdatum',
-            'LandkreisId_Impfort',
-            'Altersgruppe',
-            'Vacc_refreshed']
-        new_column_names = []
-        new_column_names.append(new_column_names1)
-        new_column_names.append(new_column_names2)
-        new_column_names.append(new_column_names3)
-
-        indent_unique = df_to_split[column_ident].unique()
-        number_unique_idents_df = []
-        for i in range(0, len(indent_unique)):
-            number_unique_idents_df.append(
-                len(df_to_split[df_to_split[column_ident] == indent_unique[i]]))
-
-        self.assertEqual(
-            len(df_split),
-            3, 'Did not divide dataframe in three separate ones.')
-        for i in range(0, len(new_col_labels)):
-            self.assertEqual(
-                number_unique_idents_df[i],
-                len(df_split[i]),
-                'Length of Dataframe is wrong.')
-            column_names_i = df_split[i].columns
-            for j in range(0, len(column_names_i)):
-                self.assertEqual(
-                    new_column_names[i][j],
-                    column_names_i[j],
-                    'Column names do not match.')
-
-    def test_split_column_based_on_values_ident_length_wrong(self):
-        col_names_vacc_data = [
-            'Impfdatum', 'LandkreisId_Impfort', 'Altersgruppe', 'Impfschutz',
-            'Anzahl']
-
-        vacc_data = [
-            ('2020-12-27', '1001', '05-11', 1, 3),
-            ('2020-12-27', '1001', '05-11', 2, 2),
-            ('2020-12-27', '1001', '05-11', 3, 1),
-            ('2020-12-27', '1001', '12-17', 1, 10),
-            ('2020-12-27', '1001', '12-17', 2, 15),
-            ('2020-12-27', '1001', '12-17', 3, 72),
-            ('2020-12-27', '1001', '18-59', 1, 2),
-            ('2020-12-27', '1001', '18-59', 2, 3),
-            ('2020-12-27', '1001', '18-59', 3, 222),
-            ('2020-12-27', '1001', '60+', 1, 22),
-            ('2020-12-27', '1001', '60+', 2, 332),
-            ('2020-12-27', '1001', '60+', 3, 76)
-        ]
-        df_to_split = pd.DataFrame(
-            vacc_data, columns=col_names_vacc_data)
-
-        groupby_list = ['Impfdatum', 'LandkreisId_Impfort', 'Altersgruppe']
-        column_ident = 'Impfschutz'
-        column_vals_name = 'Anzahl'
-        # wrong amount for data
-        new_col_labels = ['Vacc_partially', 'Vacc_completed']
-        df_split = gvd.split_column_based_on_values(
-            df_to_split, column_ident, column_vals_name, groupby_list, new_col_labels, compute_cumsum=False)
-
-        new_column_names1 = [
-            'Impfdatum',
-            'LandkreisId_Impfort',
-            'Altersgruppe',
-            'new_column_1']
-        new_column_names2 = [
-            'Impfdatum',
-            'LandkreisId_Impfort',
-            'Altersgruppe',
-            'new_column_2']
-        new_column_names3 = [
-            'Impfdatum',
-            'LandkreisId_Impfort',
-            'Altersgruppe',
-            'new_column_3']
-        new_column_names = []
-        new_column_names.append(new_column_names1)
-        new_column_names.append(new_column_names2)
-        new_column_names.append(new_column_names3)
-
-        indent_unique = df_to_split[column_ident].unique()
-        number_unique_idents_df = []
-        for i in range(0, len(indent_unique)):
-            number_unique_idents_df.append(
-                len(df_to_split[df_to_split[column_ident] == indent_unique[i]]))
-
-        self.assertEqual(
-            len(df_split),
-            3, 'Did not divide dataframe in three separate ones.')
-        for i in range(0, len(new_col_labels)):
-            self.assertEqual(
-                number_unique_idents_df[i],
-                len(df_split[i]),
-                'Length of Dataframe is wrong.')
-            column_names_i = df_split[i].columns
-            for j in range(0, len(column_names_i)):
-                self.assertEqual(
-                    new_column_names[i][j],
-                    column_names_i[j],
-                    'Column names do not match.')
 
     def test_interval_mapping(self):
         # testing refinement

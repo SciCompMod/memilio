@@ -168,6 +168,105 @@ class Test_modifyDataframeSeries(fake_filesystem_unittest.TestCase):
         # (1+ 1 + 3) / 3 = 1 + 2 / 3
         self.assertAlmostEqual(df[(df['Date'] == "2021-01-06") & (df['ID'] == 3.0)]['test_col3'].item(), 1 + 2 / 3)
 
+    def test_split_column_based_on_values(self):
+        col_names_vacc_data = [
+            'Impfdatum', 'LandkreisId_Impfort', 'Altersgruppe', 'Impfschutz',
+            'Anzahl']
+
+        vacc_data = [
+            ('2020-12-27', '1001', '05-11', 1, 3),
+            ('2020-12-27', '1001', '05-11', 2, 2),
+            ('2020-12-27', '1001', '05-11', 3, 1),
+            ('2020-12-27', '1001', '05-11', 4, 1),
+            ('2020-12-27', '1001', '12-17', 1, 10),
+            ('2020-12-27', '1001', '12-17', 2, 15),
+            ('2020-12-27', '1001', '12-17', 3, 72),
+            ('2020-12-27', '1001', '12-17', 4, 20),
+            ('2020-12-27', '1001', '18-59', 1, 2),
+            ('2020-12-27', '1001', '18-59', 2, 3),
+            ('2020-12-27', '1001', '18-59', 3, 222),
+            ('2020-12-27', '1001', '18-59', 4, 12),
+            ('2020-12-27', '1001', '60+', 1, 22),
+            ('2020-12-27', '1001', '60+', 2, 332),
+            ('2020-12-27', '1001', '60+', 3, 76),
+            ('2020-12-27', '1001', '60+', 4, 2)
+        ]
+        df_to_split = pd.DataFrame(
+            vacc_data, columns=col_names_vacc_data)
+
+        test_df = pd.DataFrame(
+            {'Vacc_partially': [3, 10, 2, 22],
+             'Vacc_completed': [2, 15, 3, 332],
+             'Vacc_refreshed': [1, 72, 222, 76],
+             'Vacc_refreshed_2': [1, 20, 12, 2]})
+
+        groupby_list = ['Impfdatum', 'LandkreisId_Impfort', 'Altersgruppe']
+        column_ident = 'Impfschutz'
+        column_vals_name = 'Anzahl'
+        new_col_labels = ['Vacc_partially', 'Vacc_completed', 'Vacc_refreshed', 'Vacc_refreshed_2']
+        test_labels = new_col_labels.copy()
+        returned_column_labels, df_split = mDfS.split_column_based_on_values(
+            df_to_split, column_ident, column_vals_name, groupby_list, new_col_labels, compute_cumsum=False)
+
+        self.assertEqual(test_labels, returned_column_labels)
+        pd.testing.assert_frame_equal(df_split[test_labels],test_df)
+        new_column_names = [
+            'Impfdatum', 'LandkreisId_Impfort', 'Altersgruppe',
+            'Vacc_partially', 'Vacc_completed', 'Vacc_refreshed',
+            'Vacc_refreshed_2']
+
+        for i in range(0, len(new_column_names)):
+            self.assertIn(df_split.columns[i], new_column_names)
+            self.assertIn(new_column_names[i], df_split.columns)
+
+    def test_split_column_based_on_values_ident_length_wrong(self):
+        col_names_vacc_data = [
+            'Impfdatum', 'LandkreisId_Impfort', 'Altersgruppe', 'Impfschutz',
+            'Anzahl']
+
+        vacc_data = [
+            ('2020-12-27', '1001', '05-11', 1, 3),
+            ('2020-12-27', '1001', '05-11', 2, 2),
+            ('2020-12-27', '1001', '05-11', 3, 1),
+            ('2020-12-27', '1001', '12-17', 1, 10),
+            ('2020-12-27', '1001', '12-17', 2, 15),
+            ('2020-12-27', '1001', '12-17', 3, 72),
+            ('2020-12-27', '1001', '18-59', 1, 2),
+            ('2020-12-27', '1001', '18-59', 2, 3),
+            ('2020-12-27', '1001', '18-59', 3, 222),
+            ('2020-12-27', '1001', '60+', 1, 22),
+            ('2020-12-27', '1001', '60+', 2, 332),
+            ('2020-12-27', '1001', '60+', 3, 76)
+        ]
+        df_to_split = pd.DataFrame(
+            vacc_data, columns=col_names_vacc_data)
+
+        test_df = pd.DataFrame(
+            {'Vacc_partially': [3, 10, 2, 22],
+             'Vacc_completed': [2, 15, 3, 332],
+             'Vacc_completed_2': [1, 72, 222, 76]})
+
+        groupby_list = ['Impfdatum', 'LandkreisId_Impfort', 'Altersgruppe']
+        column_ident = 'Impfschutz'
+        column_vals_name = 'Anzahl'
+        # wrong amount for data
+        new_col_labels = ['Vacc_partially', 'Vacc_completed']
+        test_labels = new_col_labels.copy()
+        returned_column_labels, df_split = mDfS.split_column_based_on_values(
+            df_to_split, column_ident, column_vals_name, groupby_list, new_col_labels, compute_cumsum=False)
+
+        new_column_names = [
+            'Impfdatum', 'LandkreisId_Impfort', 'Altersgruppe',
+            'Vacc_partially', 'Vacc_completed', 'Vacc_completed_2']
+
+        col_labels = ['Vacc_partially', 'Vacc_completed', 'Vacc_completed_2']
+
+        self.assertNotEqual(test_labels, returned_column_labels)
+        pd.testing.assert_frame_equal(df_split[col_labels],test_df)
+
+        for i in range(0, len(new_column_names)):
+            self.assertIn(df_split.columns[i], new_column_names)
+            self.assertIn(new_column_names[i], df_split.columns)
 
 if __name__ == '__main__':
     unittest.main()
