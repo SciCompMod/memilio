@@ -27,6 +27,11 @@
 namespace mio
 {
 
+struct reporting_setting {
+    bool report_statistics_per_location_type;
+    bool report_statistics_per_location;
+};
+
 /**
  * run the simulation in discrete steps, evolve the world and report results.
  */
@@ -67,14 +72,59 @@ public:
         return results_per_location;
     }
 
-
-     /**
+    /**
      * get the populations aggregated per location type and per infection state
      * @return the result of the simulation.
      */
     const std::map<unsigned, TimeSeries<double>>& get_result_per_location_type() const
     {
         return results_per_location_type;
+    }
+
+    /**
+     * switch off the reporting for every single location.
+     */
+    void switch_off_reporting_for_every_location()
+    {
+        report_setting.report_statistics_per_location = false;
+    }
+
+    /**
+     * switch on the reporting for every single location.
+     */
+    void switch_on_reporting_for_every_location()
+    {
+        report_setting.report_statistics_per_location = true;
+    }
+
+    /**
+     * switch on the reporting for every location type
+     */
+    void switch_on_reporting_for_every_location_type()
+    {
+        report_setting.report_statistics_per_location_type = true;
+    }
+
+    /**
+     * switch off the reporting for every single location.
+     */
+    void switch_off_reporting_for_every_location_type()
+    {
+        report_setting.report_statistics_per_location_type = false;
+    }
+
+    /**
+     * @return weather simulator stores and processess results per location
+     */
+    bool should_report_statistics_per_location(){
+        return report_setting.report_statistics_per_location;
+    }
+
+    /**
+     * @return weather simulator stores and processess results per location type
+     */
+    bool should_report_statistics_per_location_type(){
+        return report_setting.report_statistics_per_location_type;
     }
 
 private:
@@ -86,7 +136,7 @@ private:
     TimeSpan m_dt;
     std::map<unsigned, TimeSeries<double>> results_per_location;
     std::map<unsigned, TimeSeries<double>> results_per_location_type;
-
+    reporting_setting report_setting = {true,true};
 };
 
 } // namespace mio

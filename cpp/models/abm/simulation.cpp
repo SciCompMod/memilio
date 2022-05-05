@@ -21,8 +21,6 @@
 #include "memilio/utils/time_series.h"
 #include "abm/location.h"
 
-
-
 namespace mio
 {
 
@@ -59,17 +57,26 @@ void AbmSimulation::store_result_at(TimePoint t)
 {
     m_result.add_time_point(t.days());
     m_result.get_last_value().setZero();
-    for (int location = (int) mio::LocationType::Home; location < (int) mio::LocationType::Count;  location++){
-        results_per_location_type.at(location).add_time_point(t.days());
-        results_per_location_type.at(location).get_last_value().setZero();
-    }
+
+    if (should_report_statistics_per_location_type())
+        for (int location = (int)mio::LocationType::Home; location < (int)mio::LocationType::Count; location++) {
+            results_per_location_type.at(location).add_time_point(t.days());
+            results_per_location_type.at(location).get_last_value().setZero();
+        }
 
     for (auto&& locations : m_world.get_locations()) {
-        for (auto& location : locations){
+        for (auto& location : locations) {
             m_result.get_last_value() += location.get_subpopulations().cast<double>();
-            results_per_location.at(location.get_index()).add_time_point(t.days());
-            results_per_location.at(location.get_index()).get_last_value()=location.get_subpopulations().cast<double>();
-            results_per_location_type.at((int) location.get_type()).get_last_value()+=location.get_subpopulations().cast<double>();
+            if (should_report_statistics_per_location_type())
+                results_per_location_type.at((int)location.get_type()).get_last_value() +=
+                    location.get_subpopulations().cast<double>();
+
+            if (should_report_statistics_per_location()) {
+
+                results_per_location.at(location.get_index()).add_time_point(t.days());
+                results_per_location.at(location.get_index()).get_last_value() =
+                    location.get_subpopulations().cast<double>();
+            }
         }
     }
 }

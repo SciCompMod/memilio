@@ -426,7 +426,10 @@ int main()
     mio::set_school_closure(t_lockdown, 0.9, world.get_migration_parameters());
     mio::close_social_events(t_lockdown, 0.9, world.get_migration_parameters());
 
+
     auto sim = mio::AbmSimulation(t0, std::move(world));
+    sim.switch_on_reporting_for_every_location();
+    sim.switch_on_reporting_for_every_location_type();
 
     sim.advance(tmax);
 
