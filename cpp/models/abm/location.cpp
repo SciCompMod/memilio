@@ -27,6 +27,23 @@
 namespace mio
 {
 
+
+const char* location_type_to_string(mio::LocationType e){
+    switch (e)
+    {
+        case mio::LocationType::Home:   return "Home";
+        case mio::LocationType::School:   return "School";
+        case mio::LocationType::Work:   return "Work";
+        case mio::LocationType::SocialEvent:   return "SocialEvent";
+        case mio::LocationType::BasicsShop:   return "BasicsShop";
+        case mio::LocationType::Hospital:   return "Hospital";
+        case mio::LocationType::Car:   return "Car";
+        case mio::LocationType::ICU:  return "ICU";
+        case mio::LocationType::PublicTransport:   return "PublicTransport";
+        case mio::LocationType::TransportWithoutContact:  return "TransportWithoutContact";
+        default:   return "Not_known_node";
+    }}
+
 Location::Location(LocationType type, uint32_t index, uint32_t num_cells)
     : m_type(type)
     , m_index(index)

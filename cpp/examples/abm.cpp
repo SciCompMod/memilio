@@ -20,6 +20,7 @@
 #include "abm/abm.h"
 #include "abm/household.h"
 #include <cstdio>
+#include "abm/location.h"
 /**
  * Determine the infection state of a person at the beginning of the simulation.
  * The infection states are chosen randomly. They are distributed according to the probabilites set in the example.
@@ -463,31 +464,50 @@ int main()
 
     auto results = sim.get_result_per_location();
 
-    for (auto it=results.begin(); it!=results.end(); ++it){
-
-        fprintf(f_abm_loc,"%d\n",it->first);
+    for (auto it = results.begin(); it != results.end(); ++it) {
+        fprintf(f_abm_loc, "#location ID: %d\n", it->first);
         for (auto i = 0; i < it->second.get_num_time_points(); ++i) {
-        fprintf(f_abm, "%f ", it->second.get_time(i));
-        auto v = it->second.get_value(i);
-        for (auto j = 0; j < v.size(); ++j) {
-            fprintf(f_abm, "%f", v[j]);
-            if (j < v.size() - 1) {
-                fprintf(f_abm, " ");
+            fprintf(f_abm_loc, "%f ", it->second.get_time(i));
+            auto v = it->second.get_value(i);
+            for (auto j = 0; j < v.size(); ++j) {
+                fprintf(f_abm_loc, "%f", v[j]);
+                if (j < v.size() - 1) {
+                    fprintf(f_abm_loc, " ");
+                }
+            }
+            if (i < it->second.get_num_time_points() - 1) {
+                fprintf(f_abm_loc, "\n");
             }
         }
-        if (i < it->second.get_num_time_points() - 1) {
-            fprintf(f_abm, "\n");
+    }
+
+    fclose(f_abm_loc);
+
+    auto results_per_location_type = sim.get_result_per_location_type();
+
+    for (auto it = results_per_location_type.begin(); it != results_per_location_type.end(); ++it) {
+
+        char filepath[256];
+        snprintf(filepath, sizeof(filepath), "location_%s.txt", location_type_to_string((mio::LocationType)it->first));
+
+        auto f_abm_loc_type = fopen(filepath, "w");
+
+        fprintf(f_abm_loc_type, "# t S E C I I_s I_c R_C R_I D\n");
+
+        for (auto i = 0; i < it->second.get_num_time_points(); ++i) {
+            fprintf(f_abm_loc_type, "%f ", it->second.get_time(i));
+            auto v = it->second.get_value(i);
+            for (auto j = 0; j < v.size(); ++j) {
+                fprintf(f_abm_loc_type, "%f", v[j]);
+                if (j < v.size() - 1) {
+                    fprintf(f_abm_loc_type, " ");
+                }
+            }
+            if (i < it->second.get_num_time_points() - 1) {
+                fprintf(f_abm_loc_type, "\n");
+            }
         }
+
+        fclose(f_abm_loc_type);
     }
-
-
-
-    }
-
-
-
-            fclose(f_abm);
-
-    
-        
 }

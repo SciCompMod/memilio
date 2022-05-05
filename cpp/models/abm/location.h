@@ -32,6 +32,10 @@
 
 namespace mio
 {
+
+
+const char* location_type_to_string (mio::LocationType e);
+
 class Person;
 
 /**

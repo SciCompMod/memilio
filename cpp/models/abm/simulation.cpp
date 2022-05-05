@@ -19,6 +19,8 @@
 */
 #include "abm/simulation.h"
 #include "memilio/utils/time_series.h"
+#include "abm/location.h"
+
 
 
 namespace mio
@@ -31,11 +33,14 @@ AbmSimulation::AbmSimulation(TimePoint t, World&& world)
     , m_dt(hours(1))
 {
 
-     for (auto&& locations : m_world.get_locations()) 
+    for (auto&& locations : m_world.get_locations())
         for (auto& location : locations)
-                results_per_location.insert( std::map< unsigned, 
-                TimeSeries<double> >::value_type ( location.get_index(), TimeSeries<double>(Eigen::Index(InfectionState::Count) ) ) 
-                );
+            results_per_location.insert(std::map<unsigned, TimeSeries<double>>::value_type(
+                location.get_index(), TimeSeries<double>(Eigen::Index(InfectionState::Count))));
+
+    for (int location = (int)mio::LocationType::Home; location < (int)mio::LocationType::Count; location++)
+        results_per_location_type.insert(std::map<int, TimeSeries<double>>::value_type(
+            location, TimeSeries<double>(Eigen::Index(InfectionState::Count))));
     store_result_at(t);
 }
 
@@ -54,11 +59,17 @@ void AbmSimulation::store_result_at(TimePoint t)
 {
     m_result.add_time_point(t.days());
     m_result.get_last_value().setZero();
+    for (int location = (int) mio::LocationType::Home; location < (int) mio::LocationType::Count;  location++){
+        results_per_location_type.at(location).add_time_point(t.days());
+        results_per_location_type.at(location).get_last_value().setZero();
+    }
+
     for (auto&& locations : m_world.get_locations()) {
         for (auto& location : locations){
             m_result.get_last_value() += location.get_subpopulations().cast<double>();
             results_per_location.at(location.get_index()).add_time_point(t.days());
             results_per_location.at(location.get_index()).get_last_value()=location.get_subpopulations().cast<double>();
+            results_per_location_type.at((int) location.get_type()).get_last_value()+=location.get_subpopulations().cast<double>();
         }
     }
 }

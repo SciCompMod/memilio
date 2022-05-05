@@ -67,6 +67,16 @@ public:
         return results_per_location;
     }
 
+
+     /**
+     * get the populations aggregated per location type and per infection state
+     * @return the result of the simulation.
+     */
+    const std::map<unsigned, TimeSeries<double>>& get_result_per_location_type() const
+    {
+        return results_per_location_type;
+    }
+
 private:
     void store_result_at(TimePoint t);
 
@@ -75,6 +85,7 @@ private:
     TimePoint m_t;
     TimeSpan m_dt;
     std::map<unsigned, TimeSeries<double>> results_per_location;
+    std::map<unsigned, TimeSeries<double>> results_per_location_type;
 
 };
 
