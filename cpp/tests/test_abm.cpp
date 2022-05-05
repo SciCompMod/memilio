@@ -1418,7 +1418,7 @@ TEST(TestSimulation, detailed_report_works)
     auto sim = mio::AbmSimulation(mio::TimePoint(0), std::move(world));
 
     sim.advance(mio::TimePoint(0) + mio::hours(50));
-    int location_of_person        = p1.get_person_id();
+    int location_of_person        = p1.get_location_id().index;
     int infection_state_of_person = (int)p1.get_infection_state();
     int last_time_point           = 51;
 
@@ -1450,6 +1450,46 @@ TEST(TestSimulation, detailed_report_works)
                       0.0);
     }
 }
+
+
+TEST(TestSimulation, detailed_report_per_location_type_works)
+{
+    auto world     = mio::World();
+    auto location1 = world.add_location(mio::LocationType::School);
+    auto& p1       = world.add_person(location1, mio::InfectionState::Carrier, mio::AbmAgeGroup::Age5to14);
+    p1.set_assigned_location(location1);
+    auto sim = mio::AbmSimulation(mio::TimePoint(0), std::move(world));
+
+    sim.advance(mio::TimePoint(0) + mio::hours(50));
+    int location_type_of_person        = (int) p1.get_location_id().type;
+    int infection_state_of_person = (int)p1.get_infection_state();
+    int last_time_point           = 51;
+
+    
+    //All the infection states should be occupied with 0, but the infection state of the person should be 1.
+    for (int i = 0; i < (int)mio::InfectionState::Count; i++) {
+        if (i == infection_state_of_person)
+
+            ASSERT_EQ(sim.get_result_per_location_type().at(location_type_of_person).get_value(last_time_point - 1)[i], 1.0);
+
+        else
+            ASSERT_EQ(sim.get_result_per_location_type().at(location_type_of_person).get_value(last_time_point - 1)[i], 0.0);
+    }
+
+    //All the othe types of location should be occupied with 0, but the location type of the person should be 1.
+
+
+    for (int i = 0; i < (int)sim.get_result_per_location_type().size(); i++) {
+        if (i == location_type_of_person)
+            ASSERT_EQ(sim.get_result_per_location_type().at(i).get_value(last_time_point - 1)[infection_state_of_person],
+                      1.0);
+
+        else
+            ASSERT_EQ(sim.get_result_per_location_type().at(i).get_value(last_time_point - 1)[infection_state_of_person],
+                      0.0);
+    }
+}
+
 
 TEST(TestDiscreteDistribution, generate)
 {
