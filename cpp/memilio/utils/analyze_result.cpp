@@ -25,78 +25,67 @@
 namespace mio
 {
 
-TimeSeries<double> interpolate_simulation_result_days(const TimeSeries<double>& simulation_result)
+TimeSeries<double> interpolate_simulation_result_days(const TimeSeries<double>& simulation_result, const double abs_tol)
 {
     const auto t0 = simulation_result.get_time(0);
     const auto t_max = simulation_result.get_last_time();
-    const auto day0 = std::ceil(t0);
-    const auto day_max = std::floor(t_max);
+    // add another day if the first time point is equal to day_0 up to absolute tolerance tol
+    const auto day0 = (t0 - abs_tol < std::ceil(t0) - 1) ? std::floor(t0) : std::ceil(t0);
+    // add another day if the last time point is equal to day_max up to absolute tolerance tol
+    const auto day_max = (t_max + abs_tol > std::floor(t_max) + 1) ? std::ceil(t_max) : std::floor(t_max);
     
-    auto tol = 1e-10;
+    std::vector<double> tps(day_max - day0 + 1);
+    std::iota(tps.begin(), tps.end(), day0);
     
-    int add_t0{};
-    if (t0 + tol > day0) {
-        add_t0 = 1;
-    }
-    int add_t1{};
-    if (t_max + tol > day_max + 1) {
-        add_t1 = 1;
-    }
-    
-    std::vector<mio::TimePoint> tps;
-    //tps.reserve(day_max - day0 + add_t0 + add_tmax);
-    
-    if (add_t0 == 1) {
-        tps.push_back(mio::TimePoint(0) + mio::days(t0));
-    }
-    for (int i = day0; i <= day_max; ++i) {
-        tps.push_back(mio::TimePoint(0) + mio::days(i));
-    }
-    if (add_tmax == 1) {
-        tps.push_back(mio::TimePoint(0) + mio::days(t_max));
-    }
-    
-    std::cout << add_t0 << add_tmax << tps.size() << std::endl;
-    std::cout << tps[1].days() << std::endl;
-    
-    return interpolate_simulation_result(simulation_result, tps);
+    return interpolate_simulation_result(simulation_result, tps, abs_tol);
 }
 
 
-TimeSeries<double> interpolate_simulation_result(const TimeSeries<double>& simulation_result, const std::vector<TimePoint>& interpolation_times = {
-    
-    
-    
-})
+TimeSeries<double> interpolate_simulation_result(const TimeSeries<double>& simulation_result, const std::vector<double>& interpolation_times, const double abs_tol)
 {
     assert(simulation_result.get_num_time_points() > 0 && "TimeSeries must not be empty.");
+    
+    assert((std::min(interpolation_times) + abs_tol >= simulation_result.get_time(0) && std::max(interpolation_times) - abs_tol <= simulation_result.get_last_time()) && "Interpolation times have lie between simulation times (up to given tolerance).");
+    unused(abs_tol);
     
     if ((int)interpolation_times.size() == 0) {
         std::cout << "Warning: Vector of interpolation times is empty. Returning empty TimeSeries.";
     }
     
     TimeSeries<double> interpolated(simulation_result.get_num_elements());
-    interpolated.reserve(interpolation_times.size());
 
+    int pointer_interp{};
+    // add first time point of interpolation times in case it equals the first time point of simulation (up to tolerance)
+    // this is necessary even if the tolerance is 0 due to the way the comparison in the loop is implemented (< and >=)
+    if (simulation_result.get_time(0) >= interpolation_times[0]) {
+        interpolated.add_time_point(interpolation_times[0], simulation_result[0]);
+        ++pointer_interp;
+    }
+    
     //interpolate between pair of time points that lie on either side of each interpolation point
-    int pointer_interp = 0;
     for (int pointer_sim = 0; pointer_sim < simulation_result.get_num_time_points() - 1 && pointer_interp < (int)interpolation_times.size();) {
         //only go to next pair of time points if no time point is added.
         //otherwise check the same time points again
         //in case there is more than one interpolation point between the two time points
-        if (simulation_result.get_time(pointer_sim) < interpolation_times[pointer_interp].days() && simulation_result.get_time(pointer_sim + 1) >= interpolation_times[pointer_interp].days() )
+        if (simulation_result.get_time(pointer_sim) < interpolation_times[pointer_interp] && simulation_result.get_time(pointer_sim + 1) >= interpolation_times[pointer_interp] )
         {
-            interpolated.add_time_point(interpolation_times[pointer_interp].days(),
-                                        linear_interpolation(interpolation_times[pointer_interp].days(), simulation_result.get_time(pointer_sim), simulation_result.get_time(pointer_sim + 1), simulation_result[pointer_sim], simulation_result[pointer_sim + 1]));
+            interpolated.add_time_point(interpolation_times[pointer_interp],
+                                        linear_interpolation(interpolation_times[pointer_interp], simulation_result.get_time(pointer_sim), simulation_result.get_time(pointer_sim + 1), simulation_result[pointer_sim], simulation_result[pointer_sim + 1]));
             ++pointer_interp;
         }
         else {
             ++pointer_sim;
         }
     }
-
+    
+    // add last time point of interpolation times in case it equals the first time point of simulation (up to tolerance)
+    if (simulation_result.get_last_time() < interpolation_times[pointer_interp]) {
+        interpolated.add_time_point(interpolation_times[pointer_interp], simulation_result.get_last_value());
+    }
+    
     return interpolated;
 }
+
 
 std::vector<std::vector<TimeSeries<double>>>
 sum_nodes(const std::vector<std::vector<TimeSeries<double>>>& ensemble_result)

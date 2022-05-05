@@ -462,7 +462,7 @@ int main()
    
    
    f_abm = fopen("abm2.txt", "w");
-   const std::vector<mio::TimePoint> tps{mio::TimePoint(0) + mio::hours(12) + mio::seconds(8), mio::TimePoint(0) + mio::hours(26) + mio::seconds(75)};
+   const std::vector<double> tps{0.501, 1.2345};
    mio::TimeSeries<double> test_series = mio::interpolate_simulation_result(sim.get_result(), tps);
    
    fprintf(f_abm, "# t S E C I I_s I_c R_C R_I D\n");
