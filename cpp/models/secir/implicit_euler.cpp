@@ -32,8 +32,8 @@ bool ImplicitEulerIntegratorCore::step(const DerivFunction& /*f*/, Eigen::Ref<co
     double dummy_R3 = 0.5 / ((params.get<IncubationTime>()[AgeGroup(0)]) -
                              (params.get<SerialInterval>()[AgeGroup(0)])); // R3 = 1/(2(TINC-SI))
 
-    double dummy_C = 1. / (1. + dt * ((1. - params.get<AsymptoticCasesPerInfectious>()[AgeGroup(0)]) * dummy_R3 +
-                                      params.get<AsymptoticCasesPerInfectious>()[AgeGroup(0)] /
+    double dummy_C = 1. / (1. + dt * ((1. - params.get<AsymptomaticCasesPerInfectious>()[AgeGroup(0)]) * dummy_R3 +
+                                      params.get<AsymptomaticCasesPerInfectious>()[AgeGroup(0)] /
                                           params.get<InfectiousTimeAsymptomatic>()[AgeGroup(0)]));
 
     double dummy_I = 1. / (1. + dt * ((1 - params.get<HospitalizedCasesPerInfectious>()[AgeGroup(0)]) /
@@ -64,7 +64,7 @@ bool ImplicitEulerIntegratorCore::step(const DerivFunction& /*f*/, Eigen::Ref<co
         y_temp_I = yt_tilde[(size_t)InfectionState::Infected];
 
         double dummy_S = cont_freq_eff * divN * params.get<InfectionProbabilityFromContact>()[AgeGroup(0)] *
-                         (y_temp_C + params.get<RiskOfInfectionFromSympomatic>()[AgeGroup(0)] * y_temp_I);
+                         (y_temp_C + params.get<RiskOfInfectionFromSymptomatic>()[AgeGroup(0)] * y_temp_I);
 
         yt_tilde[(size_t)InfectionState::Susceptible] =
             yt_eval[(size_t)InfectionState::Susceptible] / (1. + dt * dummy_S);
@@ -82,7 +82,7 @@ bool ImplicitEulerIntegratorCore::step(const DerivFunction& /*f*/, Eigen::Ref<co
         // I (use new value for C)
         yt_tilde[(size_t)InfectionState::Infected] =
             dummy_I * (yt_eval[(size_t)InfectionState::Infected] +
-                       dt * (1 - params.get<AsymptoticCasesPerInfectious>()[AgeGroup(0)]) * dummy_R3 *
+                       dt * (1 - params.get<AsymptomaticCasesPerInfectious>()[AgeGroup(0)]) * dummy_R3 *
                            yt_tilde[(size_t)InfectionState::Carrier]);
 
     } while (std::fabs(yt_tilde[(size_t)InfectionState::Carrier] - y_temp_C) > m_abs_tol &&
@@ -103,7 +103,7 @@ bool ImplicitEulerIntegratorCore::step(const DerivFunction& /*f*/, Eigen::Ref<co
     // R (use new values for C, I, H, U)
     yt_tilde[(size_t)InfectionState::Recovered] =
         yt_eval[(size_t)InfectionState::Recovered] +
-        dt * (params.get<AsymptoticCasesPerInfectious>()[AgeGroup(0)] /
+        dt * (params.get<AsymptomaticCasesPerInfectious>()[AgeGroup(0)] /
                   params.get<InfectiousTimeAsymptomatic>()[AgeGroup(0)] * yt_tilde[(size_t)InfectionState::Carrier] +
               (1 - params.get<HospitalizedCasesPerInfectious>()[AgeGroup(0)]) /
                   params.get<InfectiousTimeMild>()[AgeGroup(0)] * yt_tilde[(size_t)InfectionState::Infected] +

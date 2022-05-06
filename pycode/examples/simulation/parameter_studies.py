@@ -59,8 +59,8 @@ def parameter_study():
 
         model.parameters.InfectionProbabilityFromContact[group].set_distribution(
             mio.ParameterDistributionUniform(0.1, 0.2))
-        model.parameters.AsymptoticCasesPerInfectious[group] = 0.09
-        model.parameters.RiskOfInfectionFromSympomatic[group] = 0.25
+        model.parameters.AsymptomaticCasesPerInfectious[group] = 0.09
+        model.parameters.RiskOfInfectionFromSymptomatic[group] = 0.25
         model.parameters.HospitalizedCasesPerInfectious[group] = 0.2
         model.parameters.ICUCasesPerHospitalized[group] = 0.25
         model.parameters.DeathsPerICU[group] = 0.3
