@@ -198,7 +198,7 @@ class Test_modifyDataframeSeries(fake_filesystem_unittest.TestCase):
         extracted_df = mDfS.extract_subframe_based_on_dates(
             self.df_dates, date(2022, 1, 3), date(2022, 1, 4))
         pd.testing.assert_frame_equal(extracted_df, self.df_dates_result)
-        # check that input frame is unchanged
+        # check that input frame is not manipulated in the function
         pd.testing.assert_frame_equal(self.df_dates, test_df)
         # test with start and end value not in dataframe
         extracted_df = mDfS.extract_subframe_based_on_dates(

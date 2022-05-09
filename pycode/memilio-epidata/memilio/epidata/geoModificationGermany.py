@@ -170,11 +170,13 @@ def get_countyid_to_name():
 
 
 def insert_names_of_counties(
-    df, county_id_col = dd.EngEng["idCounty"], merge_berlin=True):
+        df, county_id_col=dd.EngEng["idCounty"], merge_berlin=True):
     """! Adds a column with names of counties given a dataframe with state ids
 
     @param df dataframe with county ids and missing county names
     @param county_id_col column name of the column containing the county ids
+    @param merge_berlin [Default: True] Defines whether the different districts
+        are listed separately or combined as one entity 'Berlin'.
     @return dataframe df with column of state names corresponding to county ids
     """
     county_id_map = get_county_names_and_ids(

@@ -36,6 +36,14 @@ class Test_geoModificationGermany(fake_filesystem_unittest.TestCase):
     merge_berlin_ids = [
         '11001', '11002', '11003', '11004', '11005', '11006', '11007', '11008',
         '11009', '11010', '11011', '11012']
+    state_data = {
+        'ID_State': [1, 2, 2, 4, 3, 2],
+        'test_col': [1, 2, 3, 4, 5, 6]}
+    state_df_with_names = pd.DataFrame({
+        'ID_State': [1, 2, 2, 4, 3, 2],
+        'State': ['Schleswig-Holstein', 'Hamburg', 'Hamburg', 'Bremen',
+                  'Niedersachsen', 'Hamburg'],
+        'test_col': [1, 2, 3, 4, 5, 6]})
     merge_berlin_names = [
         'Berlin Mitte', 'Berlin Friedrichshain-Kreuzberg', 'Berlin Pankow',
         'Berlin Charlottenburg-Wilmersdorf', 'Berlin Spandau',
@@ -43,6 +51,14 @@ class Test_geoModificationGermany(fake_filesystem_unittest.TestCase):
         'Berlin Neukölln', 'Berlin Treptow-Köpenick',
         'Berlin Marzahn-Hellersdorf', 'Berlin Lichtenberg',
         'Berlin Reinickendorf']
+    county_data = {
+        'ID_County': [11000, 5314, 5382, 6635, 16063],
+        'test_col': list(range(5))}
+    county_df_with_names = pd.DataFrame({
+        'ID_County': [11000, 5314, 5382, 6635, 16063],
+        'County': ['Berlin', 'Bonn, Stadt', 'Rhein-Sieg-Kreis',
+                   'Waldeck-Frankenberg', 'Wartburgkreis'],
+        'test_col': list(range(5))})
     countytostate_string = [
         '1001: 1', '11000: 11', '5362: 5', '3452: 3', '1054: 1',
         '16077: 16']
@@ -147,6 +163,18 @@ class Test_geoModificationGermany(fake_filesystem_unittest.TestCase):
     eisenach_merged_ids_list = [2000, 1001, 16063]
     eisenach_merged_list = [
         'Hamburg, Freie und Hansestadt', 'Flensburg, Stadt', 'Wartburgkreis']
+    eisenach_unmerged_data = {
+        'ID_County': 4*eisenach_unmerged_ids_list,
+        'County': 4*eisenach_unmerged_list,
+        'labels': 2*(4*['a']+4*['b']),
+        'Date': 8*["2022-03-01"]+8*["2022-03-02"],
+        'numbers': range(16)}
+    eisenach_merged_df = pd.DataFrame({
+        'ID_County': 4*eisenach_merged_ids_list,
+        'County': 4*eisenach_merged_list,
+        'labels': 2*(3*['a']+3*['b']),
+        'Date': 6*["2022-03-01"]+6*["2022-03-02"],
+        'numbers': [0, 3, 3, 4, 7, 11, 8, 11, 19, 12, 15, 27]})
 
     def setUp(self):
         self.setUpPyfakefs()
@@ -184,19 +212,11 @@ class Test_geoModificationGermany(fake_filesystem_unittest.TestCase):
         self.assertEqual(statenamesandids, teststatenamesandids)
 
     def test_insert_names_of_states(self):
-
-        test_data = {
-            'ID_State': [1, 2, 2, 4, 3, 2],
-            'test_col': [1, 2, 3, 4, 5, 6]}
-        result_data = {
-            'ID_State': [1, 2, 2, 4, 3, 2],
-            'State': ['Schleswig-Holstein', 'Hamburg', 'Hamburg',
-                'Bremen', 'Niedersachsen', 'Hamburg'],
-            'test_col': [1, 2, 3, 4, 5, 6]}
-        test_df = pd.DataFrame(test_data)
+        test_df = pd.DataFrame(self.state_data)
         result_df = geoger.insert_names_of_states(test_df)
-        pd.testing.assert_frame_equal(test_df, pd.DataFrame(test_data))
-        pd.testing.assert_frame_equal(result_df, pd.DataFrame(result_data))
+        # the test dataframe should be unchanged as it is the input of the function
+        pd.testing.assert_frame_equal(test_df, pd.DataFrame(self.state_data))
+        pd.testing.assert_frame_equal(result_df, self.state_df_with_names)
 
     def test_get_county_ids(self):
 
@@ -270,19 +290,11 @@ class Test_geoModificationGermany(fake_filesystem_unittest.TestCase):
         self.assertIn(zfilltest, countynamesandids)
 
     def test_insert_county_names(self):
-
-        test_data = {
-            'ID_County': [11000, 5314, 5382, 6635, 16063],
-            'test_col': list(range(5))}
-        result_data = {
-            'ID_County': [11000, 5314, 5382, 6635, 16063],
-            'County': ['Berlin', 'Bonn, Stadt', 'Rhein-Sieg-Kreis',
-                'Waldeck-Frankenberg', 'Wartburgkreis'],
-            'test_col': list(range(5))}
-        test_df = pd.DataFrame(test_data)
+        test_df = pd.DataFrame(self.county_data)
         result_df = geoger.insert_names_of_counties(test_df)
-        pd.testing.assert_frame_equal(test_df, pd.DataFrame(test_data))
-        pd.testing.assert_frame_equal(result_df, pd.DataFrame(result_data))
+        # the test dataframe should be unchanged as it is the input of the function
+        pd.testing.assert_frame_equal(test_df, pd.DataFrame(self.county_data))
+        pd.testing.assert_frame_equal(result_df, self.county_df_with_names)
 
     @patch('builtins.print')
     def test_check_for_all_counties(self, mock_print):
@@ -528,24 +540,14 @@ class Test_geoModificationGermany(fake_filesystem_unittest.TestCase):
             in str(regiontocounty))
 
     def test_merge_df_counties(self):
-        test_data = {
-            'ID_County': 4*self.eisenach_unmerged_ids_list,
-            'County': 4*self.eisenach_unmerged_list,
-            'labels': 2*(4*['a']+4*['b']),
-            'Date': 8*["2022-03-01"]+8*["2022-03-02"],
-            'numbers': range(16)}
-        test_df = pd.DataFrame(test_data)
-        ex_result_df = pd.DataFrame({
-            'ID_County': 4*self.eisenach_merged_ids_list,
-            'County': 4*self.eisenach_merged_list,
-            'labels': 2*(3*['a']+3*['b']),
-            'Date': 6*["2022-03-01"]+6*["2022-03-02"],
-            'numbers': [0,3,3,4,7,11,8,11,19,12,15,27]})
+        test_df = pd.DataFrame(self.eisenach_unmerged_data)
         group_columns = ['Date', 'labels']
         result_df = geoger.merge_df_counties(
             test_df, 16063, [16063, 16056], group_columns, group_columns)
-        pd.testing.assert_frame_equal(result_df, ex_result_df)
-        pd.testing.assert_frame_equal(test_df, pd.DataFrame(test_data))
+        pd.testing.assert_frame_equal(result_df, self.eisenach_merged_df)
+        # the test dataframe should be unchanged as it is the input of the function
+        pd.testing.assert_frame_equal(
+            test_df, pd.DataFrame(self.eisenach_unmerged_data))
 
 
 if __name__ == '__main__':

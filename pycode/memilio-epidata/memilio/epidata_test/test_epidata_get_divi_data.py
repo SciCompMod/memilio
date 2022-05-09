@@ -37,27 +37,15 @@ class TestGetDiviData(fake_filesystem_unittest.TestCase):
     path = '/home/DiviData'
 
     here = os.path.dirname(os.path.abspath(__file__))
-    test_data_path = os.path.join(here, "test_data")
-    test_data_file = os.path.join(test_data_path, "TestSetFullDIVIData.json")
+    test_data_file = os.path.join(
+        here, "test_data", "TestSetFullDIVIData.json")
 
     df_test = pd.read_json(test_data_file)
 
-    df_result = pd.DataFrame({
-        'Date':
-        ['2021-09-08', '2021-09-08', '2021-09-08', '2021-09-08', '2021-09-08',
-         '2021-09-08', '2021-09-08', '2021-09-08', '2021-09-08', '2021-09-08',
-         '2021-09-08', '2021-09-08', '2021-09-08', '2021-09-08', '2021-09-08',
-         '2021-09-08'],
-        'ICU':
-        [16, 52, 111, 7, 432, 126, 74, 175, 208, 33, 79, 16, 11, 27, 5, 15],
-        'ICU_ventilated':
-        [13, 34, 63, 5, 220, 53, 38, 79, 111, 15, 53, 8, 7, 13, 2, 9],
-        'ID_State': [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16],
-        'State':
-        ['Schleswig-Holstein', 'Hamburg', 'Niedersachsen', 'Bremen',
-         'Nordrhein-Westfalen', 'Hessen', 'Rheinland-Pfalz',
-         'Baden-Württemberg', 'Bayern', 'Saarland', 'Berlin', 'Brandenburg',
-         'Mecklenburg-Vorpommern', 'Sachsen', 'Sachsen-Anhalt', 'Thüringen']})
+    df_test_error = pd.DataFrame(
+        {'dates': ['2021-10-30', '2021-11-01'],
+         'numbers': [542, 22],
+         'strings': ['one', 'two']})
 
     def setUp(self):
         self.setUpPyfakefs()
@@ -76,13 +64,6 @@ class TestGetDiviData(fake_filesystem_unittest.TestCase):
                 'Information: Data has been written to',
                 os.path.join(directory, 'germany_divi'+text+'.json'))]
         return gdd_calls
-
-    def test_extracted_state_subframe(self):
-        df_states = gdd.get_divi_data(out_folder=self.path)[2]
-        # test if only dates from 08-09-2021 are returned
-        df_state_testdate = mDfS.extract_subframe_based_on_dates(
-            df_states, date(2021, 9, 8), date(2021, 9, 8))
-        pd.testing.assert_frame_equal(self.df_result, df_state_testdate)
 
     @patch('memilio.epidata.getDIVIData.pd.read_json')
     @patch('memilio.epidata.getDataIntoPandasDataFrame.loadCsv')
@@ -241,7 +222,7 @@ class TestGetDiviData(fake_filesystem_unittest.TestCase):
             6)
 
     @patch('memilio.epidata.getDIVIData.pd.read_json',
-           return_value=df_result.copy())
+           return_value=df_test_error)
     def test_divi_data_sanity_checks(self, mockrjson3):
 
         # first test

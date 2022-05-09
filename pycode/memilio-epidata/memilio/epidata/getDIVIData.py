@@ -127,9 +127,6 @@ def get_divi_data(read_data=dd.defaultDict['read_data'],
     df = modifyDataframeSeries.extract_subframe_based_on_dates(
         df, start_date, end_date)
 
-    df = geoger.insert_names_of_states(df)
-    df = geoger.insert_names_of_counties(df)
-
     # remove leading zeros for ID_County (if not yet done)
     df['ID_County'] = df['ID_County'].astype(int)
     # add missing dates (and compute moving average)
@@ -141,16 +138,13 @@ def get_divi_data(read_data=dd.defaultDict['read_data'],
             impute='forward', moving_average=moving_average)
 
     # add names etc for empty frames (counties where no ICU beds are available)
-    countyid_to_name = geoger.get_countyid_to_name()
-    stateid_to_name = geoger.get_stateid_to_name()
     countyid_to_stateid = geoger.get_countyid_to_stateid_map()
     for id in df.loc[df.isnull().any(axis=1), dd.EngEng['idCounty']].unique():
         stateid = countyid_to_stateid[id]
-        df.loc[df[dd.EngEng['idCounty']] == id,
-               [dd.EngEng['idState'],
-                dd.EngEng['state'],
-                dd.EngEng['county']]] = [stateid, stateid_to_name[stateid],
-                                         countyid_to_name[id]]
+        df.loc[df[dd.EngEng['idCounty']] == id, dd.EngEng['idState']] = stateid
+
+    df = geoger.insert_names_of_states(df)
+    df = geoger.insert_names_of_counties(df)
 
     # write data for counties to file
     df_counties = df[[dd.EngEng["idCounty"],
@@ -191,7 +185,7 @@ def get_divi_data(read_data=dd.defaultDict['read_data'],
     return(df_raw, df_counties, df_states, df_ger)
 
 
-def divi_data_sanity_checks(df = pd.DataFrame()):
+def divi_data_sanity_checks(df=pd.DataFrame()):
     """! Checks the sanity of the divi_data dataframe
 
     Checks if type of the given data is a dataframe
