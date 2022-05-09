@@ -35,6 +35,7 @@ Location::Location(LocationType type, uint32_t index, uint32_t num_cells)
     , m_testing_scheme()
     , m_cells(std::vector<Cell>(num_cells))
 {
+    set_default_capacity(type);
 }
 
 InfectionState Location::interact(const Person& person, TimeSpan dt,
@@ -90,7 +91,7 @@ InfectionState Location::interact(const Person& person, TimeSpan dt,
     }
 }
 
-void Location::begin_step(TimeSpan /*dt*/, const GlobalInfectionParameters& global_params)
+void Location::begin_step(TimeSpan /*dt*/, const GlobalInfectionParameters& global_params, bool generalized)
 {
     //cache for next step so it stays constant during the step while subpopulations change
     //otherwise we would have to cache all state changes during a step which uses more memory
@@ -100,10 +101,12 @@ void Location::begin_step(TimeSpan /*dt*/, const GlobalInfectionParameters& glob
     else if (m_cells.empty()) {
         auto num_carriers              = get_subpopulation(InfectionState::Carrier);
         auto num_infected              = get_subpopulation(InfectionState::Infected);
+        auto rel_risk_loc              = compute_rel_risk(generalized);
         m_cached_exposure_rate.array() = std::min(m_parameters.get<MaximumContacts>(), double(m_num_persons)) /
                                          m_num_persons *
                                          (global_params.get<SusceptibleToExposedByCarrier>().array() * num_carriers +
-                                          global_params.get<SusceptibleToExposedByInfected>().array() * num_infected);
+                                          global_params.get<SusceptibleToExposedByInfected>().array() * num_infected) *
+                                         rel_risk_loc;
     }
     else {
         for (auto& cell : m_cells) {
@@ -111,10 +114,12 @@ void Location::begin_step(TimeSpan /*dt*/, const GlobalInfectionParameters& glob
                 cell.cached_exposure_rate = {{mio::AbmAgeGroup::Count, mio::VaccinationState::Count}, 0.};
             }
             else {
+                auto rel_risk_loc = compute_rel_risk(generalized);
                 cell.cached_exposure_rate.array() =
                     std::min(m_parameters.get<MaximumContacts>(), double(cell.num_people)) / cell.num_people *
                     (global_params.get<SusceptibleToExposedByCarrier>().array() * cell.num_carriers +
-                     global_params.get<SusceptibleToExposedByInfected>().array() * cell.num_infected);
+                     global_params.get<SusceptibleToExposedByInfected>().array() * cell.num_infected) *
+                    rel_risk_loc;
             }
         }
     }
@@ -194,6 +199,75 @@ int Location::get_subpopulation(InfectionState s) const
 Eigen::Ref<const Eigen::VectorXi> Location::get_subpopulations() const
 {
     return Eigen::Map<const Eigen::VectorXi>(m_subpopulations.data(), m_subpopulations.size());
+}
+
+void Location::set_default_capacity(LocationType type)
+{
+    if (type == LocationType::Home) {
+        m_capacity.persons = 5;
+        m_capacity.volume  = 104;
+    }
+    else if (type == LocationType::School) {
+        m_capacity.persons = 600;
+        m_capacity.volume  = 150;
+    }
+    else if (type == LocationType::Work) {
+        m_capacity.persons = 10;
+        m_capacity.volume  = 518;
+    }
+    else if (type == LocationType::SocialEvent) {
+        m_capacity.persons = 100;
+        m_capacity.volume  = 150;
+    }
+    else if (type == LocationType::BasicsShop) {
+        m_capacity.persons = 50;
+        m_capacity.volume  = 2000;
+    }
+    else if (type == LocationType::Hospital) {
+        m_capacity.persons = 4;
+        m_capacity.volume  = 100;
+    }
+    else if (type == LocationType::ICU) {
+        m_capacity.persons = 3;
+        m_capacity.volume  = 100;
+    }
+    else if (type == LocationType::Car) {
+        m_capacity.persons = 5;
+        m_capacity.volume  = 4;
+    }
+    else if (type == LocationType::PublicTransport) {
+        m_capacity.persons = 150;
+        m_capacity.volume  = 75;
+    }
+    else {
+        m_capacity.persons = 0;
+        m_capacity.volume  = 0;
+    }
+}
+
+int Location::get_capacity(bool use_volume)
+{
+    if (use_volume) {
+        if (m_capacity.volume > 0) {
+            return m_capacity.volume;
+        }
+        else {
+            mio::log_warning("Volume capacity not set but called. Using capacity in person number.");
+            return m_capacity.persons;
+        }
+    }
+    else {
+        return m_capacity.persons;
+    }
+}
+
+double Location::compute_rel_risk(bool generalized)
+{
+    double rel_risk_loc = 1.0;
+    if (generalized) {
+        rel_risk_loc = (m_capacity.volume * m_num_persons) / (8.0 * m_capacity.persons * m_capacity.persons);
+    }
+    return rel_risk_loc;
 }
 
 } // namespace mio

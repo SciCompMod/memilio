@@ -35,6 +35,14 @@ namespace mio
 class Person;
 
 /**
+ * 
+ */
+struct Capacity {
+    int volume;
+    int persons;
+};
+
+/**
  * LocationId identifies a Location uniquely. It consists of the LocationType of the Location and an Index.
  * The index corresponds to the index into the structure m_locations from world, where all Locations are saved.
  */
@@ -144,7 +152,7 @@ public:
      * @param dt the duration of the simulation step
      * @param global_params global infection parameters
      */
-    void begin_step(TimeSpan dt, const GlobalInfectionParameters& global_params);
+    void begin_step(TimeSpan dt, const GlobalInfectionParameters& global_params, bool generalized = false);
 
     /** 
      * number of persons at this location in one infection state.
@@ -187,6 +195,24 @@ public:
         return m_cells;
     }
 
+    /**
+ * Set the default capacity object
+ * @param type the type of the location
+ */
+    void set_default_capacity(LocationType type);
+
+    /**
+ * @param use_volume if true returns the capacity in volume
+ * @return the capacity in volume or persons
+ */
+    int get_capacity(bool use_volume = true);
+
+    /**
+ * @param generalized if true considers the capacity of the location
+ * @return the relative risk factor for the location
+ */
+    double compute_rel_risk(bool generalized = false);
+
 private:
     void change_subpopulation(InfectionState s, int delta);
 
@@ -194,6 +220,7 @@ private:
     LocationType m_type;
     uint32_t m_index;
     int m_num_persons = 0;
+    Capacity m_capacity;
     std::array<int, size_t(InfectionState::Count)> m_subpopulations;
     LocalInfectionParameters m_parameters;
     CustomIndexArray<double, AbmAgeGroup, mio::VaccinationState> m_cached_exposure_rate;
