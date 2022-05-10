@@ -102,9 +102,9 @@ def run_secir_groups_simulation():
 
         model.parameters.RelativeCarrierInfectability[AgeGroup(i)] = 0.67
         model.parameters.InfectionProbabilityFromContact[AgeGroup(i)] = 1.0
-        model.parameters.AsymptoticCasesPerInfectious[AgeGroup(
+        model.parameters.AsymptomaticCasesPerInfectious[AgeGroup(
             i)] = 0.09  # 0.01-0.16
-        model.parameters.RiskOfInfectionFromSympomatic[AgeGroup(
+        model.parameters.RiskOfInfectionFromSymptomatic[AgeGroup(
             i)] = 0.25  # 0.05-0.5
         model.parameters.HospitalizedCasesPerInfectious[AgeGroup(
             i)] = 0.2  # 0.1-0.35
@@ -112,7 +112,7 @@ def run_secir_groups_simulation():
             i)] = 0.25  # 0.15-0.4
         model.parameters.DeathsPerICU[AgeGroup(i)] = 0.3  # 0.15-0.77
         # twice the value of RiskOfInfectionFromSymptomatic
-        model.parameters.MaxRiskOfInfectionFromSympomatic[AgeGroup(i)] = 0.5
+        model.parameters.MaxRiskOfInfectionFromSymptomatic[AgeGroup(i)] = 0.5
 
     model.parameters.StartDay = (
         date(start_year, start_month, start_day) - date(start_year, 1, 1)).days

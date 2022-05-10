@@ -84,8 +84,8 @@ int main()
 
     model.parameters.get<mio::InfectionProbabilityFromContact>()[(mio::AgeGroup)0] = inf_prob;
     model.parameters.get<mio::RelativeCarrierInfectability>()[(mio::AgeGroup)0]    = carr_infec;
-    model.parameters.get<mio::AsymptoticCasesPerInfectious>()[(mio::AgeGroup)0]    = alpha;
-    model.parameters.get<mio::RiskOfInfectionFromSympomatic>()[(mio::AgeGroup)0]   = beta;
+    model.parameters.get<mio::AsymptomaticCasesPerInfectious>()[(mio::AgeGroup)0]    = alpha;
+    model.parameters.get<mio::RiskOfInfectionFromSymptomatic>()[(mio::AgeGroup)0]   = beta;
     model.parameters.get<mio::HospitalizedCasesPerInfectious>()[(mio::AgeGroup)0]  = rho;
     model.parameters.get<mio::ICUCasesPerHospitalized>()[(mio::AgeGroup)0]         = theta;
     model.parameters.get<mio::DeathsPerICU>()[(mio::AgeGroup)0]                    = delta;

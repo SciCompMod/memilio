@@ -183,15 +183,15 @@ std::vector<Model> ensemble_params_percentile(const std::vector<std::vector<Mode
                 });
             param_percentil(
                 node, [i](auto&& model) -> auto& {
-                    return model.parameters.template get<RiskOfInfectionFromSympomatic>()[i];
+                    return model.parameters.template get<RiskOfInfectionFromSymptomatic>()[i];
                 });
             param_percentil(
                 node, [i](auto&& model) -> auto& {
-                    return model.parameters.template get<MaxRiskOfInfectionFromSympomatic>()[i];
+                    return model.parameters.template get<MaxRiskOfInfectionFromSymptomatic>()[i];
                 });
             param_percentil(
                 node, [i](auto&& model) -> auto& {
-                    return model.parameters.template get<AsymptoticCasesPerInfectious>()[i];
+                    return model.parameters.template get<AsymptomaticCasesPerInfectious>()[i];
                 });
             param_percentil(
                 node, [i](auto&& model) -> auto& {
