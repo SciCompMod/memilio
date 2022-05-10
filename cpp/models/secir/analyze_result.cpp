@@ -80,8 +80,8 @@ TimeSeries<double> interpolate_simulation_result(const TimeSeries<double>& simul
         }
     }
     
-    // add last time point of interpolation times in case it equals the first time point of simulation (up to tolerance)
-    if (simulation_result.get_last_time() < interpolation_times[pointer_interp]) {
+    // add last time point of interpolation times in case it equals the last time point of simulation (up to tolerance (which is already checked for))
+    if (simulation_result.get_last_time() < interpolation_times[pointer_interp] && pointer_interp < (int)interpolation_times.size()) {
         interpolated.add_time_point(interpolation_times[pointer_interp], simulation_result.get_last_value());
     }
     
