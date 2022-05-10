@@ -12,7 +12,7 @@ set(TESTSOURCES
   test_numericalIntegration.cpp
   test_smoother.cpp
   test_damping.cpp
-  #test_secir.cpp
+  test_secir.cpp
   test_implicit_euler.cpp
   test_mobility.cpp
   test_date.cpp
@@ -25,7 +25,7 @@ set(TESTSOURCES
   test_uncertain.cpp
   test_time_series.cpp
   test_abm.cpp
-  #test_analyze_result.cpp
+  test_analyze_result.cpp
   test_contact_matrix.cpp
   test_type_safe.cpp
   test_custom_index_array.cpp

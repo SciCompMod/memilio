@@ -26,7 +26,7 @@
 
 #include "secir/secir.h"
 #include "secir/secir_result_io.h"
-#include "memilio/utils/analyze_result.h"
+#include "secir/analyze_result.h"
 #include "secir/parameter_studies.h"
 #include "memilio/math/eigen_util.h"
 #include "memilio/mobility/graph.h"

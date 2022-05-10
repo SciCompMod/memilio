@@ -20,7 +20,7 @@
 #include "abm/abm.h"
 #include "abm/household.h"
 #include <cstdio>
-#include "memilio/utils/analyze_result.h"
+
 /**
  * Determine the infection state of a person at the beginning of the simulation.
  * The infection states are chosen randomly. They are distributed according to the probabilites set in the example.
@@ -459,7 +459,7 @@ int main()
     }
     fclose(f_abm);
     
-   
+   /**
    
    f_abm = fopen("abm2.txt", "w");
    const std::vector<double> tps{0.501, 1.2345};
@@ -524,4 +524,6 @@ int main()
         }
     }
     fclose(f_abm);
+    
+    */
 }

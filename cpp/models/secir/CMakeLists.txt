@@ -1,5 +1,7 @@
 add_library(secir
     age_group.h
+    analyze_result.h
+    analyze_result.cpp
     infection_state.h
     implicit_euler.h
     implicit_euler.cpp
