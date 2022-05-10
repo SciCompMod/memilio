@@ -36,27 +36,51 @@ class AbmSimulation
 
 public:
     /**
-     * create a simulation.
+     * Create a simulation.
      * @param t the starting time of the simulation
      * @param world the world to simulate
      */
     AbmSimulation(TimePoint t, World&& world);
 
+    /**
+     * Create a simulation with an empty world.
+     * World needs to be filled later.
+     * @see Simulation::get_world
+     * @param t the starting time of the simulation.
+     */
+    AbmSimulation(TimePoint t)
+        : AbmSimulation(t, World())
+    {}
+
     /** 
-     * run the simulation from the current time to tmax.
+     * Run the simulation from the current time to tmax.
      * @param tmax time to stop
      */
     void advance(TimePoint tmax);
 
     /**
-     * get the result of the simulation.
-     * sum over all locations of the number of persons in an infection state.
+     * Get the result of the simulation.
+     * Sum over all locations of the number of persons in an infection state.
      * @return the result of the simulation.
      */
     const TimeSeries<double>& get_result() const
     {
         return m_result;
     }
+
+    /**
+     * Get the World that this simulation evolves.
+     * @{
+     */
+    World& get_world()
+    {
+        return m_world;
+    }
+    const World& get_world() const 
+    {
+        return m_world;
+    }
+    /**@}*/
 
 private:
     void store_result_at(TimePoint t);

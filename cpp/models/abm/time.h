@@ -266,7 +266,7 @@ public:
     /**
      * TimeSpan difference between two time points.
      */
-    TimeSpan operator-(const TimePoint& p2)
+    TimeSpan operator-(const TimePoint& p2) const
     {
         return TimeSpan{m_seconds - p2.seconds()};
     }
