@@ -157,12 +157,12 @@ size_t flatten_index(MultiIndex const& indices, MultiIndex const& dimensions)
  * @tparam Typ the type stored in the array
  * @tparam Tags Types that tag the custom Index types, must be unique.
  */
-template <class T, class... Tags>
+template <class Typ, class... Tags>
 class CustomIndexArray
 {
 public:
 
-    using Type              = T;
+    using Type              = Typ;
     using Index             = ::mio::Index<Tags...>;
     using InternalArrayType = Eigen::Array<Type, Eigen::Dynamic, 1>;
 
