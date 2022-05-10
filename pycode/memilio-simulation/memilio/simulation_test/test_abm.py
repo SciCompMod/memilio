@@ -78,9 +78,7 @@ class TestAbm(unittest.TestCase):
         for type in abm.LocationType.values():
             world.add_location(type)
         home_id = abm.LocationId(0, abm.LocationType.Home)
-        home = world.locations[home_id.type][home_id.index]
         social_event_id = abm.LocationId(0, abm.LocationType.SocialEvent)
-        social_event = world.locations[social_event_id.type][social_event_id.index]
         work_id = abm.LocationId(0, abm.LocationType.Work)
         p1 = world.add_person(
             home_id, abm.InfectionState.Infected, abm.AgeGroup.Age0to4)
@@ -91,6 +89,7 @@ class TestAbm(unittest.TestCase):
             p2.set_assigned_location(abm.LocationId(0, type))
 
         #parameters so that the infected person doesn't randomly change state and gets tested reliably
+        social_event = world.locations[social_event_id.type][social_event_id.index]
         social_event.testing_scheme = abm.TestingScheme(abm.days(1), 1.0)
         world.testing_parameters.AntigenTest = abm.TestParameters(1, 1)
         world.infection_parameters.InfectedToSevere[abm.AgeIndex(

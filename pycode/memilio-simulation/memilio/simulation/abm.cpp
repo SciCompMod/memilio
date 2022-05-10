@@ -96,10 +96,7 @@ PYBIND11_MODULE(_simulation_abm, m)
         .def(py::self < py::self)
         .def(py::self <= py::self)
         .def(py::self > py::self)
-        .def(py::self <= py::self)
-        .def_static("Help", []() {
-            py::print("Hello!!!");
-        });
+        .def(py::self <= py::self);
 
     m.def("seconds", &mio::seconds);
     m.def("minutes", &mio::minutes);
@@ -112,7 +109,7 @@ PYBIND11_MODULE(_simulation_abm, m)
         .def_property_readonly("days", &mio::TimePoint::days)
         .def_property_readonly("hours", &mio::TimePoint::hours)
         .def_property_readonly("day_of_week", &mio::TimePoint::day_of_week)
-        .def_property_readonly("hours_of_day", &mio::TimePoint::hour_of_day)
+        .def_property_readonly("hour_of_day", &mio::TimePoint::hour_of_day)
         .def_property_readonly("time_since_midnight", &mio::TimePoint::time_since_midnight)
         .def(py::self == py::self)
         .def(py::self != py::self)

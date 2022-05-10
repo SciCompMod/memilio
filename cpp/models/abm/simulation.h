@@ -36,14 +36,14 @@ class AbmSimulation
 
 public:
     /**
-     * create a simulation.
+     * Create a simulation.
      * @param t the starting time of the simulation
      * @param world the world to simulate
      */
     AbmSimulation(TimePoint t, World&& world);
 
     /**
-     * create a simulation with an empty world.
+     * Create a simulation with an empty world.
      * World needs to be filled later.
      * @see Simulation::get_world
      * @param t the starting time of the simulation.
@@ -60,7 +60,7 @@ public:
 
     /**
      * Get the result of the simulation.
-     * sum over all locations of the number of persons in an infection state.
+     * Sum over all locations of the number of persons in an infection state.
      * @return the result of the simulation.
      */
     const TimeSeries<double>& get_result() const
