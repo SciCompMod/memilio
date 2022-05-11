@@ -32,6 +32,8 @@
 
 namespace mio
 {
+namespace abm
+{
 class Person;
 
 /**
@@ -60,18 +62,18 @@ struct Cell {
     uint32_t num_people;
     uint32_t num_carriers;
     uint32_t num_infected;
-    CustomIndexArray<double, AbmAgeGroup, mio::VaccinationState> cached_exposure_rate;
+    CustomIndexArray<double, AgeGroup, VaccinationState> cached_exposure_rate;
 
     Cell()
         : num_people(0)
         , num_carriers(0)
         , num_infected(0)
-        , cached_exposure_rate({{mio::AbmAgeGroup::Count, mio::VaccinationState::Count}, 0.})
+        , cached_exposure_rate({{AgeGroup::Count, VaccinationState::Count}, 0.})
     {
     }
 
     Cell(uint32_t num_p, uint32_t num_c, uint32_t num_i,
-         CustomIndexArray<double, AbmAgeGroup, mio::VaccinationState> cached_exposure_rate_new)
+         CustomIndexArray<double, AgeGroup, VaccinationState> cached_exposure_rate_new)
         : num_people(num_p)
         , num_carriers(num_c)
         , num_infected(num_i)
@@ -196,10 +198,12 @@ private:
     int m_num_persons = 0;
     std::array<int, size_t(InfectionState::Count)> m_subpopulations;
     LocalInfectionParameters m_parameters;
-    CustomIndexArray<double, AbmAgeGroup, mio::VaccinationState> m_cached_exposure_rate;
+    CustomIndexArray<double, AgeGroup, VaccinationState> m_cached_exposure_rate;
     TestingScheme m_testing_scheme;
     std::vector<Cell> m_cells;
 };
+
+} // namespace abm
 } // namespace mio
 
 #endif
