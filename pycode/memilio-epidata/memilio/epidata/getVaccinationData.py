@@ -461,9 +461,15 @@ def extrapolate_age_groups(
         df_data_ageinf_county_cs = df_data_ageinf_county_cs.append(
             total_county_df)
 
-        # test if number of vaccinations in current county are equal in old and new dataframe
-        if df_data_ageinf_county_cs[df_data_ageinf_county_cs['Date'] == '2022-05-10'][vacc_column_names].sum() - vacc_df[vacc_df['Date'] == '2022-05-10'][vacc_column_names].sum() > 1e-5:
-            print("Error in transformation...")
+        # test if number of vaccinations in current county are equal in old and new dataframe for random chosen date
+        for vacc in vacc_column_names:
+            if total_county_df[total_county_df['Date'] == '2022-05-10'][vacc].sum() - vacc_df[vacc_df['Date'] == '2022-05-10'][vacc].sum() > 1e-5:
+                print(
+                    "Error in transformation..." + vacc +
+                    total_county_df
+                    [total_county_df['Date'] == '2022-05-10']
+                    [vacc].sum() -
+                    vacc_df[vacc_df['Date'] == '2022-05-10'][vacc].sum())
 
     return df_data_ageinf_county_cs
 
@@ -927,7 +933,7 @@ def get_vaccination_data(read_data=dd.defaultDict['read_data'],
     # provided in RKI infection tables: 0-4, 5-14, 15-34, 35-59, 60-79, 80+)
 
     if extrapolate_agegroups:
-        extrapolate_age_groups(
+        df_data_ageinf_county_cs = extrapolate_age_groups(
             df_data_agevacc_county_cs, population_all_ages,
             unique_age_groups_old, unique_age_groups_new, vacc_column_names,
             age_old_to_all_ages_indices, min_all_ages,
@@ -955,8 +961,7 @@ def get_vaccination_data(read_data=dd.defaultDict['read_data'],
 
     timestamp_1 = time.perf_counter()
     print("Time needed for age extrapolation: " +
-          str(int(timestamp_1 - timestamp_2)) + " sec")
-    print("Total time: "+ str(int(timestamp_1-start_time)) + " sec")
+          str(int(timestamp_1 - timestamp_2)) + " sec.\n", "Total time: "+ str(int(timestamp_1-start_time)) + " sec")
 
     # make plot of relative numbers of original and extrapolated age resolution
     if make_plot:

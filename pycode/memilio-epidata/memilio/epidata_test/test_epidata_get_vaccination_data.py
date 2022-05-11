@@ -268,5 +268,47 @@ class TestGetVaccinationData(fake_filesystem_unittest.TestCase):
                 self.assertEqual(test_val[1], calculated_val[1])
                 self.assertAlmostEqual(test_val[0], calculated_val[0])
 
+    def test_sanitizing_based_on_regions(self):
+        to_county_map={0:[1001,1002,2001],1:[6000],2:[6005,6006]}
+        age_groups = ['0-1','2-3','4-10','11+']
+        data = pd.DataFrame({
+            'Date':['2022-05-11'for i in range(0,24)],
+             'ID_State':sorted(4*[1,1,2,6,6,6]),
+             'ID_County':sorted(4*[1001,1002,2001,6000,6005,6006]),
+             'Age_RKI':6*age_groups,
+             'vacc_1':[0,0,0,0, 2,5,7,9, 2,4,6,8, 4,4,4,4, 1,6,1,2, 0,0,5,17],
+             'vacc_2':[0,1,0,2, 1,4,3,2, 1,1,6,4, 4,4,4,1, 2,1,2,0, 0,5,4,0]
+             })
+        population = pd.DataFrame({
+            'ID_County': [1001, 1002, 2001, 6000, 6005, 6006],
+            '0-1': [100, 200, 150, 200, 100, 100],
+            '2-3': [400, 200, 300, 150, 150, 400],
+            '4-10': [2000, 3000, 2000, 5000, 1000, 2800],
+            '11+': [30000, 20000, 35000, 100000, 0, 20000]
+        })
+        test_1 = data[data['Age_RKI'] ==
+                      '0-1'].drop(['vacc_1', 'vacc_2'], axis=1)
+        test_1['vacc_1'] = [4/4.5, 8/4.5, 6/4.5, 4.0, 0.5, 0.5]
+        test_1['vacc_2'] = [2/4.5, 4/4.5, 3/4.5, 4.0, 1.0, 1.0]
+
+        test_2 = data[data['Age_RKI'] ==
+                      '2-3'].drop(['vacc_1', 'vacc_2'], axis=1)
+        test_2['vacc_1'] = [4.0, 2.0, 3.0, 4.0, 9/5.5, 6*4/5.5]
+        test_2['vacc_2'] = [8/3, 8/6, 2.0, 4.0, 9/5.5, 6*4/5.5]
+
+        test_3 = data[data['Age_RKI'] ==
+                      '4-10'].drop(['vacc_1', 'vacc_2'], axis=1)
+        test_3['vacc_1'] = [26/7, 39/7, 26/7, 4.0, 6/3.8, 6*2.8/3.8]
+        test_3['vacc_2'] = [18/7, 27/7, 18/7 ,4.0, 6/3.8, 6*2.8/3.8]
+
+        test_4 = data[data['Age_RKI'] ==
+                      '11+'].drop(['vacc_1', 'vacc_2'], axis=1)
+        test_4['vacc_1'] = [17*3/8.5, 17*2/8.5, 17*3.5/8.5, 4.0, 0.0, 19.0]
+        test_4['vacc_2'] = [8*3/8.5, 8*2/8.5, 8*3.5/8.5, 1.0, 0.0, 0.0]
+        returndata = gvd.sanitizing_based_on_regions(to_county_map,data,age_groups,['vacc_1', 'vacc_2'],population)
+        pd.testing.assert_frame_equal(returndata[returndata['Age_RKI']=='0-1'], test_1)
+        pd.testing.assert_frame_equal(returndata[returndata['Age_RKI']=='2-3'], test_2)
+        pd.testing.assert_frame_equal(returndata[returndata['Age_RKI']=='4-10'], test_3)
+        pd.testing.assert_frame_equal(returndata[returndata['Age_RKI']=='11+'], test_4)
 if __name__ == '__main__':
     unittest.main()
