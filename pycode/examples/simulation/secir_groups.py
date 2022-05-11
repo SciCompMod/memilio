@@ -25,9 +25,10 @@ import pandas as pd
 import matplotlib.pyplot as plt
 from datetime import datetime, date
 import os
+import argparse
 
 
-def run_secir_groups_simulation():
+def run_secir_groups_simulation(show_plot = True):
     """
     Runs the c++ secir model using mulitple age groups 
     and plots the results
@@ -200,11 +201,17 @@ def run_secir_groups_simulation():
     fig.suptitle('SECIR simulation results by compartment (entire population)')
     fig.savefig('Secir_all_parts.pdf')
 
-    plt.show()
-    plt.close()
+    if show_plot:
+        plt.show()
+        plt.close()
 
     # return data
 
 
 if __name__ == "__main__":
-    run_secir_groups_simulation()
+    arg_parser = argparse.ArgumentParser(
+        'secir_groups', 
+        description = 'Simple example demonstrating the setup and simulation of the SECIR model with multiple age groups.')
+    arg_parser.add_argument('-p', '--show_plot', action='store_const', const=True, default=False)
+    args = arg_parser.parse_args()
+    run_secir_groups_simulation(**args.__dict__)

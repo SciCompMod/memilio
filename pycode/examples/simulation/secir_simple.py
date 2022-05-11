@@ -1,7 +1,7 @@
 #############################################################################
 # Copyright (C) 2020-2021 German Aerospace Center (DLR-SC)
 #
-# Authors: Martin J. Kuehn, Wadim Koslow
+# Authors: Martin J. Kuehn, Wadim Koslow, Daniel Abele
 #
 # Contact: Martin J. Kuehn <Martin.Kuehn@DLR.de>
 #
@@ -24,9 +24,10 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 from datetime import datetime, date
+import argparse
 
 
-def run_secir_simulation():
+def run_secir_simulation(show_plot = True):
     """
     Runs the c++ secir model using one age group 
     and plots the results
@@ -136,9 +137,15 @@ def run_secir_simulation():
     fig.tight_layout
     fig.savefig('Secir_simple.pdf')
 
-    plt.show()
-    plt.close()
+    if show_plot:
+        plt.show()
+        plt.close()
 
 
 if __name__ == "__main__":
-    run_secir_simulation()
+    arg_parser = argparse.ArgumentParser(
+        'secir_simple', 
+        description = 'Simple example demonstrating the setup and simulation of the SECIR model.')
+    arg_parser.add_argument('-p', '--show_plot', action='store_const', const=True, default=False)
+    args = arg_parser.parse_args()
+    run_secir_simulation(**args.__dict__)

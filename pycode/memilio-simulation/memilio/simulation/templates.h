@@ -283,8 +283,8 @@ void bind_SecirModelGraph(pybind11::module& m, std::string const& name)
     using G = mio::Graph<Model, mio::MigrationParameters>;
     pybind11::class_<G>(m, name.c_str())
         .def(pybind11::init<>())
-        .def("add_node", &G::template add_node<const Model&>, pybind11::return_value_policy::reference_internal)
-        .def("add_edge", &G::template add_edge<const mio::MigrationParameters&>,
+        .def("add_node", &G::template add_node<const Model&>, py::arg("id"), py::arg("model"), pybind11::return_value_policy::reference_internal)
+        .def("add_edge", &G::template add_edge<const mio::MigrationParameters&>, py::arg("start_node_idx"), py::arg("end_node_idx"), py::arg("migration_parameters"),
              pybind11::return_value_policy::reference_internal)
         .def("add_edge", &G::template add_edge<const Eigen::VectorXd&>, pybind11::return_value_policy::reference_internal)
         .def_property_readonly("num_nodes",
@@ -323,7 +323,7 @@ void bind_MigrationGraph(pybind11::module& m, std::string const& name)
             },
             pybind11::arg("id"), pybind11::arg("model"), pybind11::arg("t0") = 0.0, pybind11::arg("dt") = 0.1,
             pybind11::return_value_policy::reference_internal)
-        .def("add_edge", &G::template add_edge<const mio::MigrationEdge&>, pybind11::return_value_policy::reference_internal)
+        .def("add_edge", &G::template add_edge<const mio::MigrationParameters&>, pybind11::return_value_policy::reference_internal)
         .def("add_edge", &G::template add_edge<const Eigen::VectorXd&>, pybind11::return_value_policy::reference_internal)
         .def_property_readonly("num_nodes",
                                [](const G& self) {
