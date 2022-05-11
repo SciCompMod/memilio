@@ -256,7 +256,7 @@ public:
     }
 
     /**
-     * equality comparison.
+     * Equality comparison.
      * @{
      */
     bool operator==(const CustomIndexArray& other) const
@@ -438,7 +438,7 @@ private:
         using const_iterator = Iterator<Type const>;
 
         /**
-         * @brief Slice represents a slice into the CustomIndexarray
+         * @brief Constructs a slice into the CustomIndexarray
          * @param dimensions the dimensions of the CustomIndexArray
          * @param start_iter An iterator to the first element of the data
          * @param idx_sequence_ A sequence of indices into the slice
@@ -506,7 +506,7 @@ private:
         friend bool operator!= (const Slice& a, const Slice& b) { return !(a==b); }
 
         /**
-         * @brief slice creates a subslice from the current slice
+         * @brief Creates a subslice from the current slice
          * @tparam The Tag corresponding to the dimension of the slice
          * @param idx_seq An index sequence, consisting of the first index,
          *                the number of indices and a stride
@@ -519,7 +519,7 @@ private:
         }
 
         /**
-         * @brief slice creates a subslice from the current slice
+         * @brief Creates a subslice from the current slice
          * @tparam The Tag corresponding to the dimension of the slice
          * @param idx_seq An index sequence, consisting of the first index,
          *                the number of indices and a stride
@@ -566,7 +566,7 @@ public:
     using const_iterator    = Iterator<Type const>;
 
     /**
-     * @brief begin returns a start iterator for the elements
+     * @brief Get a start iterator for the elements
      * @return random access iterator
      */
     iterator begin()
@@ -575,7 +575,7 @@ public:
     }
 
     /**
-     * @brief begin returns a start iterator for the elements
+     * @brief Get a start iterator for the elements
      * @return random access iterator
      */
     const_iterator begin() const
@@ -584,7 +584,7 @@ public:
     }
 
     /**
-     * @brief begin returns an end iterator for the elements
+     * @brief Get an end iterator for the elements
      * @return random access iterator
      */
     iterator end()
@@ -593,7 +593,7 @@ public:
     }
 
     /**
-     * @brief begin returns an end iterator for the elements
+     * @brief Get an end iterator for the elements
      * @return random access iterator
      */
     const_iterator end() const
@@ -602,7 +602,7 @@ public:
     }
 
     /**
-     * @brief slice creates a slice into the multidimensional array.
+     * @brief Creates a slice into the multidimensional array.
      * Selects a sequence of indices of one dimension.
      * @tparam The Tag corresponding to the dimension of the slice
      * @param idx_seq An index sequence, consisting of the first index,
@@ -623,7 +623,7 @@ public:
     /**@}*/
 
     /**
-     * @brief creates a slice into the multidimensional array.
+     * @brief Creates a slice into the multidimensional array.
      * Selects a single index of one dimension.
      * @tparam The Tag corresponding to the dimension of the slice
      * @param idx index to be selected for the slice.
