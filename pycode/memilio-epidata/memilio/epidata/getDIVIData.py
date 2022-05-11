@@ -33,50 +33,16 @@ data explanation:
 - ICU_ventilated is the number of ventilated covid patients in reporting hospitals
 - free_ICU is the number of free ICUs in reporting hospitals
 - occupied_ICU is the number of occupied ICUs in in reporting hospitals
-
-ID_County and ID_State is defined by the "Amtlicher Gemeindeschlüssel (AGS)"
-which is also used in the RKI data as ID_County and ID_State
-https://de.wikipedia.org/wiki/Liste_der_Landkreise_in_Deutschland.
-
-Specific features about the data:
-The column "faelle_covid_im_bundesland" exits only in the data from the first day (24.4)
-The column ICU does not exist for the 24.4.
-ICU_ventilated does not exist for the 24.4. and 25.4.
 """
 
 import os
-import bisect
-from datetime import timedelta, date, datetime
+from datetime import date
 import pandas as pd
 
 from memilio.epidata import getDataIntoPandasDataFrame as gd
 from memilio.epidata import defaultDict as dd
 from memilio.epidata import geoModificationGermany as geoger
 from memilio.epidata import modifyDataframeSeries
-
-
-def extract_subframe_based_on_dates(df, start_date, end_date):
-    """! Removes all data with date lower than start date or higher than end date.
-
-    Returns the Dataframe with only dates between start date and end date.
-    Resets the Index of the Dataframe.
-
-    @param df The dataframe which has to be edited
-    @param start_date Date of first date in dataframe
-    @param end_date Date of last date in dataframe
-    """
-
-    upperdate = datetime.strftime(end_date, '%Y-%m-%d')
-    lowerdate = datetime.strftime(start_date, '%Y-%m-%d')
-
-    # Removes dates higher than end_date
-    df = df[df[dd.EngEng['date']] <= upperdate]
-    # Removes dates lower than start_date
-    df = df[df[dd.EngEng['date']] >= lowerdate]
-
-    df.reset_index(drop=True, inplace=True)
-
-    return df
 
 
 def get_divi_data(read_data=dd.defaultDict['read_data'],
@@ -94,11 +60,10 @@ def get_divi_data(read_data=dd.defaultDict['read_data'],
     If the given start_date is earlier, it is changed to this date and a warning is printed.
     If it does not already exist, the folder Germany is generated in the given out_folder.
     If read_data == True and the file "FullData_DIVI.json" exists, the data is read form this file
-    and stored in a pandas dataframe.
-    Otherwise the program is stopped.
+    and stored in a pandas dataframe. If read_data = True and the file does not exist the program is stopped.
 
-    The dataframe is written to the file filename = "FullData_DIVI".
-    Than the columns are renamed to English and the state and county names are added.
+    The downloaded dataframe is written to the file "FullData_DIVI".
+    After that, the columns are renamed to English and the state and county names are added.
     Afterwards, three kinds of structuring of the data are done.
     We obtain the chronological sequence of ICU and ICU_ventilated
     stored in the files "county_divi".json", "state_divi.json" and "germany_divi.json"
@@ -132,47 +97,35 @@ def get_divi_data(read_data=dd.defaultDict['read_data'],
         file_in = os.path.join(directory, filename + ".json")
 
         try:
-            df = pd.read_json(file_in)
+            df_raw = pd.read_json(file_in)
         except ValueError:
-            raise FileNotFoundError("Error: The file: " + file_in + \
-                                  " does not exist. Call program without" \
-                                  " -r flag to get it.")
+            raise FileNotFoundError("Error: The file: " + file_in +
+                                    " does not exist. Call program without"
+                                    " -r flag to get it.")
     else:
         try:
-            df = gd.loadCsv(
+            df_raw = gd.loadCsv(
                 'zeitreihe-tagesdaten',
                 apiUrl='https://diviexchange.blob.core.windows.net/%24web/',
                 extension='.csv')
         except Exception as err:
-            raise FileNotFoundError("Error: " \
-                                    "Download link for Divi data has changed.") \
-                  from err
+            raise FileNotFoundError(
+                "Error: Download link for Divi data has changed.") from err
 
-    if not df.empty:
+    if not df_raw.empty:
         if not no_raw:
-            gd.write_dataframe(df, directory, filename, file_format)
+            gd.write_dataframe(df_raw, directory, filename, file_format)
     else:
         raise gd.DataError("Something went wrong, dataframe is empty.")
-    df_raw = df.copy()
+    df = df_raw.copy()
     divi_data_sanity_checks(df_raw)
     df.rename(columns={'date': dd.EngEng['date']}, inplace=True)
     df.rename(dd.GerEng, axis=1, inplace=True)
 
-    df[dd.EngEng['date']] = pd.to_datetime(df[dd.EngEng['date']], format='%Y-%m-%d %H:%M:%S')
-    df = extract_subframe_based_on_dates(df, start_date, end_date)
-
-    # insert names of states
-    df.insert(loc=0, column=dd.EngEng["idState"], value=df[dd.EngEng["state"]])
-    for item in geoger.get_state_names_and_ids():
-        df.loc[df[dd.EngEng["idState"]] == item[1],
-               [dd.EngEng["state"]]] = item[0]
-
-    # insert names of counties
-    df.insert(loc=3, column=dd.EngEng["county"],
-              value=df[dd.EngEng["idCounty"]])
-    for item in geoger.get_county_names_and_ids():
-        df.loc[df[dd.EngEng["idCounty"]] == item[1],
-               [dd.EngEng["county"]]] = item[0]
+    df[dd.EngEng['date']] = pd.to_datetime(
+        df[dd.EngEng['date']], format='%Y-%m-%d %H:%M:%S')
+    df = modifyDataframeSeries.extract_subframe_based_on_dates(
+        df, start_date, end_date)
 
     # remove leading zeros for ID_County (if not yet done)
     df['ID_County'] = df['ID_County'].astype(int)
@@ -185,16 +138,13 @@ def get_divi_data(read_data=dd.defaultDict['read_data'],
             impute='forward', moving_average=moving_average)
 
     # add names etc for empty frames (counties where no ICU beds are available)
-    countyid_to_name = geoger.get_countyid_to_name()
-    stateid_to_name = geoger.get_stateid_to_name()
     countyid_to_stateid = geoger.get_countyid_to_stateid_map()
     for id in df.loc[df.isnull().any(axis=1), dd.EngEng['idCounty']].unique():
         stateid = countyid_to_stateid[id]
-        df.loc[df[dd.EngEng['idCounty']] == id,
-               [dd.EngEng['idState'],
-                dd.EngEng['state'],
-                dd.EngEng['county']]] = [stateid, stateid_to_name[stateid],
-                                         countyid_to_name[id]]
+        df.loc[df[dd.EngEng['idCounty']] == id, dd.EngEng['idState']] = stateid
+
+    df = geoger.insert_names_of_states(df)
+    df = geoger.insert_names_of_counties(df)
 
     # write data for counties to file
     df_counties = df[[dd.EngEng["idCounty"],
@@ -235,7 +185,7 @@ def get_divi_data(read_data=dd.defaultDict['read_data'],
     return(df_raw, df_counties, df_states, df_ger)
 
 
-def divi_data_sanity_checks(df = pd.DataFrame()):
+def divi_data_sanity_checks(df=pd.DataFrame()):
     """! Checks the sanity of the divi_data dataframe
 
     Checks if type of the given data is a dataframe
@@ -259,10 +209,12 @@ def divi_data_sanity_checks(df = pd.DataFrame()):
     for name in test_strings:
         if(name not in actual_strings_list):
             raise gd.DataError("Error: Data categories have changed.")
-    # check if size of dataframe is expectable
-    # Size of dataframe on 2021-12-20 is 240407
-    # check if less dates or far more are given
-    if (len(df.index) < 200000) or (len(df.index) > 500000):
+    # check if size of dataframe is not unusal
+    # data colletion starts at 24.04.2020
+    num_dates = (date.today() - date(2020, 4, 24)).days
+    min_num_data = 390*num_dates  # not all 400 counties report every day
+    max_num_data = 400*num_dates
+    if (len(df) < min_num_data) or (len(df) > max_num_data):
         raise gd.DataError("Error: unexpected length of dataframe.")
 
 

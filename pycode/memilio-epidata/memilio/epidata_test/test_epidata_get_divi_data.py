@@ -1,7 +1,7 @@
 #############################################################################
 # Copyright (C) 2020-2021 German Aerospace Center (DLR-SC)
 #
-# Authors:
+# Authors: Patrick Lenz, Annette Lutz
 #
 # Contact: Martin J. Kuehn <Martin.Kuehn@DLR.de>
 #
@@ -18,17 +18,15 @@
 # limitations under the License.
 #############################################################################
 import unittest
-from pandas.core.indexes.base import Index
 from pyfakefs import fake_filesystem_unittest
-from freezegun import freeze_time
-from datetime import date, datetime, time, timedelta
+from datetime import date
 
 import os
 import pandas as pd
 
 from memilio.epidata import getDIVIData as gdd
 from memilio.epidata import getDataIntoPandasDataFrame as gd
-from memilio.epidata import defaultDict as dd
+from memilio.epidata import modifyDataframeSeries as mDfS
 from unittest.mock import patch, call
 
 
@@ -38,23 +36,16 @@ class TestGetDiviData(fake_filesystem_unittest.TestCase):
 
     path = '/home/DiviData'
 
-    test_df = pd.DataFrame(
-        {
-            'Date':
-            ['2021-09-08', '2021-09-08', '2021-09-08', '2021-09-08', '2021-09-08',
-             '2021-09-08', '2021-09-08', '2021-09-08', '2021-09-08', '2021-09-08',
-             '2021-09-08', '2021-09-08', '2021-09-08', '2021-09-08', '2021-09-08',
-             '2021-09-08'],
-            'ICU':
-            [16, 52, 111, 7, 432, 126, 74, 175, 208, 33, 79, 16, 11, 27, 5, 15],
-            'ICU_ventilated':
-            [13, 34, 63, 5, 220, 53, 38, 79, 111, 15, 53, 8, 7, 13, 2, 9],
-            'ID_State': [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16],
-            'State':
-            ['Schleswig-Holstein', 'Hamburg', 'Niedersachsen', 'Bremen',
-                'Nordrhein-Westfalen', 'Hessen', 'Rheinland-Pfalz',
-                'Baden-Württemberg', 'Bayern', 'Saarland', 'Berlin', 'Brandenburg',
-                'Mecklenburg-Vorpommern', 'Sachsen', 'Sachsen-Anhalt', 'Thüringen']})
+    here = os.path.dirname(os.path.abspath(__file__))
+    test_data_file = os.path.join(
+        here, "test_data", "TestSetFullDIVIData.json")
+
+    df_test = pd.read_json(test_data_file)
+
+    df_test_error = pd.DataFrame(
+        {'dates': ['2021-10-30', '2021-11-01'],
+         'numbers': [542, 22],
+         'strings': ['one', 'two']})
 
     def setUp(self):
         self.setUpPyfakefs()
@@ -73,15 +64,6 @@ class TestGetDiviData(fake_filesystem_unittest.TestCase):
                 'Information: Data has been written to',
                 os.path.join(directory, 'germany_divi'+text+'.json'))]
         return gdd_calls
-
-    def test_extract_subframe_based_on_dates(self):
-        (df_raw, df_counties, df_states, df_ger) = gdd.get_divi_data(
-            out_folder=self.path)
-        # test if only dates from 08-09-2021 are returned
-        df_state_testdate = gdd.extract_subframe_based_on_dates(
-            df_states, date(2021, 9, 8),
-            date(2021, 9, 8))
-        pd.testing.assert_frame_equal(self.test_df, df_state_testdate)
 
     @patch('memilio.epidata.getDIVIData.pd.read_json')
     @patch('memilio.epidata.getDataIntoPandasDataFrame.loadCsv')
@@ -114,8 +96,11 @@ class TestGetDiviData(fake_filesystem_unittest.TestCase):
         error_message = "Something went wrong, dataframe is empty."
         self.assertEqual(str(error.exception), error_message)
 
+    @patch('memilio.epidata.getDIVIData.divi_data_sanity_checks')
+    @patch('memilio.epidata.getDIVIData.gd.loadCsv')
     @patch('builtins.print')
-    def test_det_divi_data_prints(self, mock_print):
+    def test_get_divi_data_prints(self, mock_print, mock_csv, mock_san):
+        mock_csv.return_value = self.df_test
         # case with start_date before 2020-04-24
         gdd.get_divi_data(out_folder=self.path, start_date=date(2020, 1, 1))
         expected_call = [
@@ -124,22 +109,120 @@ class TestGetDiviData(fake_filesystem_unittest.TestCase):
         gdd_calls = self.gdd_calls(text='')
         expected_calls = expected_call + gdd_calls
         mock_print.assert_has_calls(expected_calls)
+        mock_san.assert_has_calls([call(self.df_test)])
 
+    @patch('memilio.epidata.getDIVIData.divi_data_sanity_checks')
+    @patch('memilio.epidata.getDIVIData.gd.loadCsv')
     @patch('builtins.print')
-    def test_gdd_ma(self, mock_print):
+    def test_get_divi_data(self, mock_print, mock_csv, mock_san):
+        mock_csv.return_value = self.df_test
+        # test case with standard parameters
+        (df, df_county, df_states, df_ger) = gdd.get_divi_data(out_folder=self.path)
+        mock_san.assert_has_calls([call(self.df_test)])
+        pd.testing.assert_frame_equal(df, self.df_test)
+        self.assertEqual(
+            df_ger[df_ger["Date"] == "2021-05-29"]["ICU"].item(), 8)
+        self.assertEqual(
+            df_ger[df_ger["Date"] == "2021-05-29"]
+            ["ICU_ventilated"].item(),
+            2)
+        self.assertEqual(
+            df_states
+            [(df_states["Date"] == "2021-05-29") &
+             (df_states["ID_State"] == 3)]["ICU"].item(),
+            6)
+        self.assertEqual(
+            df_states
+            [(df_states["Date"] == "2021-05-29") & (df_states["ID_State"] == 3)]
+            ["ICU_ventilated"].item(),
+            2)
+        self.assertEqual(
+            df_county
+            [(df_county["Date"] == "2021-05-29") &
+             (df_county["ID_County"] == 3151)]["ICU"].item(),
+            5)
+        self.assertEqual(
+            df_county
+            [(df_county["Date"] == "2021-05-29") &
+             (df_county["ID_County"] == 3151)]["ICU_ventilated"].item(),
+            2)
+
+    @patch('memilio.epidata.getDIVIData.divi_data_sanity_checks')
+    @patch('memilio.epidata.getDIVIData.gd.loadCsv')
+    @patch('builtins.print')
+    def test_gdd_ma(self, mock_print, mock_csv, mock_san):
+        mock_csv.return_value = self.df_test
         # test case with moving average
-        gdd.get_divi_data(out_folder=self.path, moving_average=3)
-        expected_calls = self.gdd_calls('_ma3')
-        mock_print.assert_has_calls(expected_calls)
+        (df, df_county, df_states, df_ger) = gdd.get_divi_data(
+            out_folder=self.path, moving_average=3)
+        mock_san.assert_has_calls([call(self.df_test)])
+        pd.testing.assert_frame_equal(df, self.df_test)
+        self.assertAlmostEqual(
+            df_ger[df_ger["Date"] == "2021-05-27"]["ICU"].item(), 143+(1/3.0))
+        self.assertAlmostEqual(
+            df_ger[df_ger["Date"] == "2021-05-27"]
+            ["ICU_ventilated"].item(),
+            108+(2/3.0))
+        self.assertAlmostEqual(
+            df_states
+            [(df_states["Date"] == "2021-05-27") &
+             (df_states["ID_State"] == 3)]["ICU"].item(),
+            16+(1/3.0))
+        self.assertAlmostEqual(
+            df_states
+            [(df_states["Date"] == "2021-05-27") & (df_states["ID_State"] == 3)]
+            ["ICU_ventilated"].item(),
+            10+(2/3.0))
+        self.assertAlmostEqual(
+            df_county
+            [(df_county["Date"] == "2021-05-27") &
+             (df_county["ID_County"] == 1001)]["ICU"].item(),
+            18+(1/3.0))
+        self.assertAlmostEqual(
+            df_county
+            [(df_county["Date"] == "2021-05-27") &
+             (df_county["ID_County"] == 1001)]["ICU_ventilated"].item(),
+            13+(1/3.0))
 
+    @patch('memilio.epidata.getDIVIData.divi_data_sanity_checks')
+    @patch('memilio.epidata.getDIVIData.gd.loadCsv')
     @patch('builtins.print')
-    def test_gdd_all_dates(self, mock_print):
+    def test_gdd_all_dates(self, mock_print, mock_csv, mock_san):
+        mock_csv.return_value = self.df_test
         # test case with impute dates is True
-        gdd.get_divi_data(out_folder=self.path, impute_dates=True)
-        expected_calls = self.gdd_calls(text='_all_dates')
-        mock_print.assert_has_calls(expected_calls)
+        (df, df_county, df_states, df_ger) = gdd.get_divi_data(
+            out_folder=self.path, impute_dates=True)
+        mock_san.assert_has_calls([call(self.df_test)])
+        pd.testing.assert_frame_equal(df, self.df_test)
+        self.assertEqual(
+            df_ger[df_ger["Date"] == "2021-05-26"]["ICU"].item(), 119)
+        self.assertEqual(
+            df_ger[df_ger["Date"] == "2021-05-26"]
+            ["ICU_ventilated"].item(),
+            95)
+        self.assertEqual(
+            df_states
+            [(df_states["Date"] == "2021-05-27") &
+             (df_states["ID_State"] == 3)]["ICU"].item(),
+            20)
+        self.assertEqual(
+            df_states
+            [(df_states["Date"] == "2021-05-27") & (df_states["ID_State"] == 1)]
+            ["ICU_ventilated"].item(),
+            9)
+        self.assertEqual(
+            df_county
+            [(df_county["Date"] == "2021-05-27") &
+             (df_county["ID_County"] == 3151)]["ICU"].item(),
+            0)
+        self.assertEqual(
+            df_county
+            [(df_county["Date"] == "2021-05-27") &
+             (df_county["ID_County"] == 1051)]["ICU_ventilated"].item(),
+            6)
 
-    @patch('memilio.epidata.getDIVIData.pd.read_json', return_value=test_df.copy())
+    @patch('memilio.epidata.getDIVIData.pd.read_json',
+           return_value=df_test_error)
     def test_divi_data_sanity_checks(self, mockrjson3):
 
         # first test
