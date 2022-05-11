@@ -1,7 +1,7 @@
 /* 
 * Copyright (C) 2020-2021 German Aerospace Center (DLR-SC)
 *
-* Authors: Daniel Abele
+* Authors: Daniel Abele, David Kerkmann, Sascha Korf
 *
 * Contact: Martin J. Kuehn <Martin.Kuehn@DLR.de>
 *
@@ -41,7 +41,6 @@ TimeSeries<double> interpolate_simulation_result_days(const TimeSeries<double>& 
     
     return interpolate_simulation_result(simulation_result, tps, abs_tol);
 }
-
 
 TimeSeries<double> interpolate_simulation_result(const TimeSeries<double>& simulation_result, const std::vector<double>& interpolation_times, const double abs_tol)
 {
