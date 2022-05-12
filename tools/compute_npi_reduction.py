@@ -20,7 +20,7 @@
 """
 @file cumpute_npi_reduction.py
 
-@brief Computes the overall reduction in contacts by enforcing a NPI
+@brief Computes the overall reduction in contacts by enforcing a NPI.
 """
 
 import sys
@@ -30,8 +30,13 @@ import pandas as pd
 from memilio.epidata import defaultDict as dd
 
 
-# attempts to find a given county by name or ID and returns both if successful
 def find_county(county):
+    """"! Attempts to find a given county by name or ID and returns both if successful.
+
+    @param county Name or ID of county.
+    @return Name and ID of county.
+    """
+
     if county == 'Germany':
         return county, 0
     else:
@@ -48,17 +53,28 @@ def find_county(county):
     return county, county_id
 
 
-# returns data path
 def get_data_path():
-    # path and read only works if repo is called 'memilio'
+    """"! Returns data path of memilio repository. Currently only works if repository is called 'memilio'.
+
+    @return Data path of memilio repository.
+    """
+
     data_path = os.getcwd().split('memilio')[0] + 'memilio/data/'
     #print("My current directory is : " + data_path)
     return data_path
 
 
-# compute current population across age groups from given county
 def compute_population(county_id, filename):
-    #TODO: Find correct file and adapt to that file format
+    """"! Computes current population across age groups from given county.
+
+    @param county_id ID of county.
+    @param filename Name of file which has the age-resolved data.
+    @return Array containing the population for each age group in the given county.
+    """
+
+    # TODO: We currently don't have age-resolved data for each county.
+    #       Once we have this data, find correct file and adapt extraction to that file format.
+
     data_path = get_data_path()
 
     df = pd.read_json(data_path + '/Germany/' + filename)
@@ -92,8 +108,14 @@ def compute_population(county_id, filename):
     return population
 
 
-# computes base contacts for a given population
 def compute_base_contacts(population, use_minimum):
+    """"! Computes base contacts for a given population.
+
+    @param population Array containing the population for each age group.
+    @param use_minimum Boolean if the minimum contact matrix should be used. If false, minimum contacts are set to 0.
+    @return Arrays containing the total amount of contacts for each age group at baseline and at minimum contact state.
+    """
+
     data_path = get_data_path()
 
     # names for contact location data files
@@ -123,32 +145,43 @@ def compute_base_contacts(population, use_minimum):
     return contacts_total_base, contacts_total_min
 
 
-# applies given NPI and computes medium reduction of contacts
 def apply_NPI(NPI, contacts_total_base, contacts_total_min):
-    # TODO: read in NPI somehow
+    """"! Applies given NPI and computes mean reduction of contacts for a given number of contacts.
+
+    @param NPI NPI that represents minimum and maximum contact reductions. For now, this is not used but hardcoded.
+    @param contacts_total_base Array containing the total amount of contacts for each age group at baseline.
+    @param contacts_total_min Array containing the total amount of contacts for each age group at minimum contact state. 
+    @return Factor of mean reduction in contacts between 0 and 1. 1: 100% reduction, 0: 0% reduction.
+    """
+
+    # TODO: think about how to read in NPI. For now, it is hardcoded.
+
     # define intervals of contact reduction for different levels
     reduc_factors_min = np.array([[0.5, 0.3, 0.6, 0.6], [0.0, 0.25, 0.25, 0.25]])
     reduc_factors_max = np.array([[0.7, 0.5, 0.8, 0.8], [0.0, 0.35, 0.35, 0.35]])
-    #reduc_factors_min = np.array([[1.0, 1.0, 1.0, 1.0], [0.0, 0.0, 0.0, 0.0]])
-    #reduc_factors_max = np.array([[1.0, 1.0, 1.0, 1.0], [0.0, 0.0, 0.0, 0.0]])
     reduc_factors_mean = (reduc_factors_min + reduc_factors_max)/2
 
     # compute total reduction factor for each level
     # these are the factors for baseline; the factors for minimum contacts are [1 - this value]
     reduc_factors_mean_total = np.prod(1 - reduc_factors_mean, 0)
-    #print(reduc_factors_mean_total)
 
     # compute total mean reduction in contacts (that is 1/2*min + 1/2*max)
     contacts_total_reduced_mean = reduc_factors_mean_total*contacts_total_base + (1-reduc_factors_mean_total)*contacts_total_min
-    #print(contacts_total_reduced_mean)
 
     reduc_total = 1 - np.sum(contacts_total_reduced_mean) / np.sum(contacts_total_base)
     return reduc_total
 
 
-# function that computes the reduction from a NPI
-# if minimum contact pattern > 0 is used; if false, minimum = 0
 def compute_npi_reduction(NPI = 0, county = 'Germany', filename = 'cases_all_county_age.json', use_minimum = False):
+    """"! Main function that computes the reduction from a NPI in a given county and prints the result.
+
+    @param NPI NPI that represents minimum and maximum contact reductions. For now, this is not used but hardcoded.
+    @param county [Default: Germany] County in which the NPI is applied. 
+    @param filename [Default: 'cases_all_county_age.json'] Name of file which has the age-resolved data.
+    @use_minimum [Default: False] Boolean if the minimum contact matrix should be used. If false, minimum contacts are set to 0.
+    @return Factor of mean reduction in contacts between 0 and 1. 1: 100% reduction, 0: 0% reduction.
+    """
+
     # TODO: Find correct file, adapt 'compute_population' to it.
     county, county_id = find_county(county)
     
