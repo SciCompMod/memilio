@@ -21,14 +21,14 @@
 #include "ide_seir/ide_seir.h"
 #include "memilio/math/eigen.h"
 #include "memilio/utils/time_series.h"
-
-#include <vector>
-#include <iostream>
+#include "memilio/epidemiology/uncertain_matrix.h"
 
 int main()
 {
-    /*  Note that the initial values as well as all other parameters are randomly chosen for this example and are not intend to depict the real world.
-    *   This example has only the purpose to show how the IDE model can be applied. 
+    /**
+    * Note: the initial values as well as all other parameters are randomly chosen for this example and are not 
+    * intend to depict the real world.
+    * This example has the purpose to show how the IDE SEIR model can be applied. 
     */
 
     using Vec = mio::TimeSeries<double>::Vector;
@@ -38,8 +38,10 @@ int main()
     double dt = 0.1;
     mio::TimeSeries<double> result(1);
 
-    /*  construct initial TimeSeries with initial times and related quantity of Susceptibles. 
-    *   The TimeSeries should satisfy the conditions of the IDEmodel. Accordingly, the first time point is set to -15.
+    /**
+    * Construction of the initial TimeSeries with point of times and the corresponding number of susceptibles.  
+    * The smallest time should be small enough. See the documentation of the IdeSeirModel constructor for 
+    * detailed information. Initial data are chosen randomly.
     */
     result.add_time_point<Eigen::VectorXd>(-15.0, Vec::Constant(1, N * 0.95));
     while (result.get_last_time() < 0) {
@@ -47,17 +49,22 @@ int main()
                               Vec::Constant(1, (double)result.get_last_value()[0] + result.get_last_time()));
     }
 
-    // initialize model
-    mio::iseir::IdeModel model(std::move(result), dt, N);
+    // Initialize model.
+    mio::iseir::IdeSeirModel model(std::move(result), dt, N);
 
+    // Set working parameters.
     model.m_parameters.set<mio::iseir::LatencyTime>(3.3);
     model.m_parameters.set<mio::iseir::InfectiousTime>(8.2);
     model.m_parameters.set<mio::iseir::TransmissionRisk>(0.015);
-    model.m_parameters.get<mio::iseir::ContactFrequency>() = mio::iseir::ContactFrequency::get_default();
+    mio::UncertainContactMatrix contact_matrix = mio::iseir::ContactFrequency::get_default();
+    // Add damping.
+    contact_matrix[0].add_damping(0.7, mio::SimulationTime(10.));
+    model.m_parameters.get<mio::iseir::ContactFrequency>() = contact_matrix;
 
-    //carry out simulation
+    // Carry out simulation.
     model.simulate(tmax);
-    // calculate values for compartments EIR as well
+    // Calculate values for compartments EIR.
     model.calculate_EIR();
+    //Print results.
     model.print_result(true);
 }

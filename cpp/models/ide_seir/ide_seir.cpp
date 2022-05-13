@@ -19,23 +19,24 @@
 */
 
 #include "ide_seir/ide_seir.h"
-#include "memilio/epidemiology/contact_matrix.h"
 #include "memilio/utils/logging.h"
+#include "ide_seir/parameters.h"
+
 #include <iostream>
 
 /* TODO 
     Test schreiben
-    parameters in struct
-    statt effective contact, contacts+ transmission prob*/
+    beschreibungen und kommentare rewriten
+    */
 
 namespace mio
 {
 namespace iseir
 {
-    using Pa  = SeirIdeParameters;
+    using Pa  = IdeSeirParameters;
     using Vec = TimeSeries<double>::Vector;
 
-    IdeModel::IdeModel(TimeSeries<double>&& init, double dt_init, int N_init, Pa Parameterset_init)
+    IdeSeirModel::IdeSeirModel(TimeSeries<double>&& init, double dt_init, int N_init, Pa Parameterset_init)
         : m_parameters{Parameterset_init}
         , m_result{std::move(init)}
         , m_dt{dt_init}
@@ -43,7 +44,7 @@ namespace iseir
     {
     }
 
-    double IdeModel::generalized_beta_distribution(double tau, double p, double q) const
+    double IdeSeirModel::generalized_beta_distribution(double tau, double p, double q) const
     {
         if ((m_parameters.get<LatencyTime>() < tau) &&
             (m_parameters.get<InfectiousTime>() + m_parameters.get<LatencyTime>() > tau)) {
@@ -54,13 +55,13 @@ namespace iseir
         return 0.0;
     }
 
-    double IdeModel::central_difference_quotient(TimeSeries<double> const& ts_ide, iSeirInfType compartment,
-                                                 Eigen::Index idx) const
+    double IdeSeirModel::central_difference_quotient(TimeSeries<double> const& ts_ide, iSeirInfType compartment,
+                                                     Eigen::Index idx) const
     {
         return (ts_ide[idx + 1][Eigen::Index(compartment)] - ts_ide[idx - 1][Eigen::Index(compartment)]) / (2 * m_dt);
     }
 
-    double IdeModel::num_integration_inner_integral(Eigen::Index idx) const
+    double IdeSeirModel::num_integration_inner_integral(Eigen::Index idx) const
     {
         double res     = 0.5 * (generalized_beta_distribution(m_result.get_time(idx) - m_result.get_time(idx - m_k)) *
                                 central_difference_quotient(m_result, iSeirInfType::S, m_k) +
@@ -75,7 +76,7 @@ namespace iseir
         return res;
     }
 
-    TimeSeries<double> const& IdeModel::simulate(int t_max)
+    TimeSeries<double> const& IdeSeirModel::simulate(int t_max)
     {
 
         m_l = (int)std::floor(m_parameters.get<LatencyTime>() / m_dt);
@@ -90,7 +91,7 @@ namespace iseir
             m_result.add_time_point(m_result.get_last_time() + m_dt);
             Eigen::Index idx = m_result.get_num_time_points();
 
-            // R0t = effective contactfrequency at time t * timeinfectious
+            // R0t is the effective reproduction number at time t
             auto R0t1 = m_parameters.get<ContactFrequency>().get_cont_freq_mat().get_matrix_at(
                             m_result.get_time(idx - 2))(0, 0) *
                         m_parameters.get<TransmissionRisk>() * m_parameters.get<InfectiousTime>();
@@ -106,7 +107,7 @@ namespace iseir
         return m_result;
     }
 
-    TimeSeries<double> const& IdeModel::calculate_EIR()
+    TimeSeries<double> const& IdeSeirModel::calculate_EIR()
     {
         Eigen::Index num_points = m_result.get_num_time_points();
         double S, E, I, R;
@@ -120,7 +121,7 @@ namespace iseir
         return m_result_SEIR;
     }
 
-    void IdeModel::print_result(bool calculated_SEIR) const
+    void IdeSeirModel::print_result(bool calculated_SEIR) const
     {
         if (calculated_SEIR) {
             std::cout << "time  |  S  |  E  |  I  |  R" << std::endl;
@@ -140,5 +141,6 @@ namespace iseir
             }
         }
     }
+
 } // namespace iseir
 } // namespace mio

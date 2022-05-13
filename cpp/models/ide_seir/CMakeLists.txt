@@ -1,6 +1,7 @@
 add_library(ide_seir
     ide_seir.h
     ide_seir.cpp
+    parameters.h
 )
 target_link_libraries(ide_seir PUBLIC memilio)
 target_include_directories(ide_seir PUBLIC
