@@ -25,6 +25,8 @@
 
 namespace mio
 {
+namespace abm
+{
 
 TripList::TripList()
     : m_trips({})
@@ -52,4 +54,5 @@ void TripList::add_trip(Trip trip)
     });
 }
 
+} // namespace abm
 } // namespace mio
