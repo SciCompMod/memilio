@@ -56,10 +56,11 @@ int main()
     model.m_parameters.set<mio::iseir::LatencyTime>(3.3);
     model.m_parameters.set<mio::iseir::InfectiousTime>(8.2);
     model.m_parameters.set<mio::iseir::TransmissionRisk>(0.015);
-    mio::UncertainContactMatrix contact_matrix = mio::iseir::ContactFrequency::get_default();
+    mio::ContactMatrixGroup contact_matrix = mio::ContactMatrixGroup(1, 1);
+    contact_matrix[0]                      = mio::ContactMatrix(Eigen::MatrixXd::Constant(1, 1, 10.));
     // Add damping.
     contact_matrix[0].add_damping(0.7, mio::SimulationTime(10.));
-    model.m_parameters.get<mio::iseir::ContactFrequency>() = contact_matrix;
+    model.m_parameters.get<mio::iseir::ContactFrequency>() = mio::UncertainContactMatrix(contact_matrix);
 
     // Carry out simulation.
     model.simulate(tmax);
