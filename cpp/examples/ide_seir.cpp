@@ -18,7 +18,7 @@
 * limitations under the License.
 */
 
-#include "seir_ide/seir_ide.h"
+#include "ide_seir/ide_seir.h"
 #include "memilio/math/eigen.h"
 #include "memilio/utils/time_series.h"
 

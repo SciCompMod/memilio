@@ -18,7 +18,7 @@
 * limitations under the License.
 */
 
-#include "seir_ide/seir_ide.h"
+#include "ide_seir/ide_seir.h"
 #include "memilio/epidemiology/contact_matrix.h"
 #include "memilio/utils/logging.h"
 #include <iostream>

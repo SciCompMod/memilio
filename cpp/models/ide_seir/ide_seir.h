@@ -18,8 +18,8 @@
 * limitations under the License.
 */
 
-#ifndef SEIR_IDE_H
-#define SEIR_IDE_H
+#ifndef IDE_SEIR_H
+#define IDE_SEIR_H
 
 #include "memilio/math/eigen.h"
 #include "memilio/utils/time_series.h"
