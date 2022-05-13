@@ -44,20 +44,18 @@ int main()
     result.add_time_point<Eigen::VectorXd>(-15.0, Vec::Constant(1, N * 0.95));
     while (result.get_last_time() < 0) {
         result.add_time_point(result.get_last_time() + dt,
-                              Vec::Constant(1, (double)result.get_last_value()[0] + result.get_last_time() / 10.0));
+                              Vec::Constant(1, (double)result.get_last_value()[0] + result.get_last_time()));
     }
 
     // initialize model
-    mio::IdeModel model(std::move(result), dt, N);
+    mio::iseir::IdeModel model(std::move(result), dt, N);
 
-    // set contact matrix as well as dampings; Note: use effective contacts (quantity of Contacts * probability of infection in case of contact)
-    // values randomly chosen here as well (here such that initial reproduction number equals 1)
-    mio::ContactMatrix& contact_matrix = model.get_contact_matrix();
-    contact_matrix =
-        mio::ContactMatrix(Eigen::MatrixXd::Constant(1, 1, 1 / 8.2), Eigen::MatrixXd::Constant(1, 1, 0.5 / 8.2));
-    contact_matrix.add_damping(0.7, mio::SimulationTime(3.0));
+    model.m_parameters.set<mio::iseir::LatencyTime>(3.3);
+    model.m_parameters.set<mio::iseir::InfectiousTime>(8.2);
+    model.m_parameters.set<mio::iseir::TransmissionRisk>(0.015);
+    model.m_parameters.get<mio::iseir::ContactFrequency>() = mio::iseir::ContactFrequency::get_default();
 
-    // carry out simulation
+    //carry out simulation
     model.simulate(tmax);
     // calculate values for compartments EIR as well
     model.calculate_EIR();
