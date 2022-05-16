@@ -52,16 +52,6 @@ decltype(auto) pybind_pickle_class(py::module &m, const char* name)
     return pickle_class;
 }
 
-// bind an index for a single tag
-template <class Tag> 
-void bind_Index(pybind11::module& m, std::string const& name)
-{
-    pybind11::class_<mio::Index<Tag>> c(m, name.c_str());
-    c.def(pybind11::init<size_t>(), pybind11::arg("value"));
-    c.def(pybind11::self == pybind11::self);
-    c.def(pybind11::self != pybind11:: self);
-}
-
 // helper function for implicitly casting from pybind11::tuple to Index in Python.
 // This extracts an Index from a pybind11::tuple of Indices from the correct position,
 // given the corresponding Index type
