@@ -94,63 +94,6 @@ std::string pretty_name()
     return o.str();
 }
 
-template <class C>
-void bind_templated_members_CustomIndexArray(pybind11::class_<C>&)
-{
-}
-
-template <class C, class T, class... Ts>
-void bind_templated_members_CustomIndexArray(pybind11::class_<C>& c)
-{
-    std::string tname = pretty_name<T>();
-    c.def(("size_" + tname).c_str(), &C::template size<T>);
-
-    // recursively bind the member for each type
-    bind_templated_members_CustomIndexArray<C, Ts...>(c);
-}
-
-template <class Type, class... Tags>
-void bind_CustomIndexArray(pybind11::module& m, std::string const& name)
-{
-    using C     = typename mio::CustomIndexArray<Type, Tags...>;
-    using Index = typename mio::CustomIndexArray<Type, Tags...>::Index;
-    pybind11::class_<C> c(m, name.c_str());
-    c.def(pybind11::init([](Index const& sizes, Type const& val) {
-         return C(sizes, val);
-     }))
-        .def(pybind11::init([](Index const& sizes) {
-            return C(sizes);
-        }))
-        .def("numel", &C::numel)
-        .def(
-            "__getitem__", [](const C& self, Index const& idx) -> auto& { return self[idx]; },
-            pybind11::return_value_policy::reference_internal)
-        .def(
-            "__getitem__", [](const C& self, std::tuple<mio::Index<Tags>...> idx) -> auto& { //python natively handles multi-indices as tuples
-                return self[{std::get<mio::Index<Tags>>(idx)...}];
-            }, pybind11::return_value_policy::reference_internal)
-        .def("__setitem__",
-             [](C& self, Index const& idx, double value) {
-                 self[idx] = value;
-             })
-        .def("__setitem__",
-             [](C& self, std::tuple<mio::Index<Tags>...> idx, double value) {
-                 self[{std::get<mio::Index<Tags>>(idx)...}] = value;
-             })
-        .def(
-            "__iter__",
-            [](const C& s) {
-                return pybind11::make_iterator(s.begin(), s.end());
-            },
-            pybind11::keep_alive<0, 1>())
-        .def("get_flat_index", &C::get_flat_index);
-
-    // Not supported in Python yet: Slicing
-
-    // bind all templated members for types in Tags...
-    bind_templated_members_CustomIndexArray<C, Tags...>(c);
-}
-
 template <class ParameterSet>
 auto bind_ParameterSet(pybind11::module& m, std::string const& name)
 {
