@@ -515,7 +515,7 @@ mio::IOResult<void> set_edges(const fs::path& data_dir,
 {
     //migration between nodes
     BOOST_OUTCOME_TRY(migration_data_commuter,
-                      mio::read_mobility_plain((data_dir / "mobility" / "commuter_migration_scaled.txt").string()));
+                      mio::read_mobility_plain((data_dir / "mobility" / "commuter_mobility_scaled.txt").string()));
     BOOST_OUTCOME_TRY(migration_data_twitter,
                       mio::read_mobility_plain((data_dir / "mobility" / "twitter_scaled_1252.txt").string()));
     if (size_t(migration_data_commuter.rows()) != params_graph.nodes().size() ||
