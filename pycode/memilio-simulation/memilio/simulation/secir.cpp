@@ -20,6 +20,7 @@
 
 #include "templates.h"
 #include "compartments/simulation.h"
+#include "compartments/compartmentalmodel.h"
 #include "epidemiology/populations.h"
 #include "secir/secir.h"
 #include "secir/parameter_studies.h"
