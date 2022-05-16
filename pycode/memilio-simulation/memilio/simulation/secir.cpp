@@ -19,6 +19,7 @@
 */
 
 #include "templates.h"
+#include "compartments/simulation.h"
 #include "secir/secir.h"
 #include "secir/parameter_studies.h"
 #include "secir/analyze_result.h"
