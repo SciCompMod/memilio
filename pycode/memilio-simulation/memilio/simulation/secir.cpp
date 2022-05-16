@@ -23,6 +23,7 @@
 #include "compartments/compartmentalmodel.h"
 #include "epidemiology/populations.h"
 #include "utils/custom_index_array.h"
+#include "utils/parameter_set.h"
 #include "secir/secir.h"
 #include "secir/parameter_studies.h"
 #include "secir/analyze_result.h"

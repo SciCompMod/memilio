@@ -20,6 +20,7 @@
 
 #include "templates.h"
 #include "utils/custom_index_array.h"
+#include "utils/parameter_set.h"
 #include "abm/abm.h"
 #include "pybind11/attr.h"
 #include "pybind11/cast.h"

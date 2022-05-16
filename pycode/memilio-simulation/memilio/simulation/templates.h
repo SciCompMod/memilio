@@ -94,24 +94,6 @@ std::string pretty_name()
     return o.str();
 }
 
-template <class ParameterSet>
-auto bind_ParameterSet(pybind11::module& m, std::string const& name)
-{
-    pybind11::class_<ParameterSet> c(m, name.c_str());
-    mio::foreach_tag<ParameterSet>([&c](auto t) {
-        using Tag = decltype(t);
-
-        //CAUTION: This requires ParameterTag::name() to be unique within the ParameterSet
-        c.def_property(
-            Tag::name().c_str(), [](const ParameterSet& self) -> auto& { return self.template get<Tag>(); },
-            [](ParameterSet& self, typename Tag::Type const& v) {
-                self.template get<Tag>() = v;
-            },
-            pybind11::return_value_policy::reference_internal);
-    });
-    return c;
-}
-
 template <typename Model>
 void bind_SecirModelNode(pybind11::module& m, std::string const& name)
 {
