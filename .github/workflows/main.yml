@@ -199,7 +199,7 @@ jobs:
         with:
           package: epidata
 
-  dowload-data:
+  download-data:
     if: github.event.pull_request.draft == false
     needs: build-py-epidata
     runs-on: ubuntu-latest
