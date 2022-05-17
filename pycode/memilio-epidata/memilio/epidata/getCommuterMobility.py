@@ -301,8 +301,8 @@ def get_commuter_data(setup_dict='',
         'abs_tol': tolerated undetected people
         'rel_tol': relative Tolerance to undetected people
 
-    @return df_commuter_migration DataFrame of commuter migration.
-        df_commuter_migration[i][j]= number of commuters from county with county-id i to county with county-id j
+    @return df_commuter_migration_scaled DataFrame of commuter migration.
+        df_commuter_migration_scaled[i][j]= number of commuters from county with county-id i to county with county-id j
     In commuter migration files is a cumulative value per county for number of commuters from whole Germany given.
     The printed errors are refering to the absolute and relative errors from included numbers per county in DataFrame and
     this cumulative values.
