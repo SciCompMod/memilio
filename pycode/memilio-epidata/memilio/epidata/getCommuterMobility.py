@@ -127,7 +127,7 @@ def assign_geographical_entities(countykey_list, govkey_list):
     state_gov_table.append(state_govlist_loc)
 
     return countykey2govkey, countykey2localnumlist, gov_county_table, state_gov_table
-    
+
 
 def get_distance(coordinates_from, coordinates_to):
     """! Calculates the distance between two coordinates
@@ -140,21 +140,16 @@ def get_distance(coordinates_from, coordinates_to):
     return np.sqrt(dist_x**2 + dist_y**2)
 
 
-def get_distances_counties(
+def get_counties_center_coordinates(
         path_geojson,
-        file_format=dd.defaultDict['file_format'],
-        out_folder=dd.defaultDict['out_folder'],
-        save_file=False):
-    """! Computes distances between counties based on a geojson file of germany.
-    The distances are calculated from the center of each county.
+        out_folder=dd.defaultDict['out_folder']):
+    """! Computes centers of counties based on a geojson file of germany.
 
     In the case of multipolygons, we choose the largest polygon and take its center.
 
     Keyword arguments:
     @param path_geojson geojson file which should contain the geodata for all counties in germany
-    @param file_format File format which is used for writing the data. Default defined in defaultDict.
     @param out_folder Path to folder where data is written in folder out_folder/Germany.
-    @param save_file Decide whether to save the distances in a file
 
     @return distances array which maps the distance of a county to all others
     """
@@ -178,7 +173,7 @@ def get_distances_counties(
     # List is sorted in ascending order of regional county keys.
     centers_counties = np.zeros((len_features, 2))
 
-    # iterate over all regional counties and calc center.
+    # iterate over all regional counties and calculate their center.
     for i in range(0, len_features):
         features = file.features[i]
 
@@ -186,53 +181,70 @@ def get_distances_counties(
         if countykey_list[i] != features.properties["RS"]:
             raise ValueError(
                 'Regional county keys are not the same or sorted differently')
-                
-        # Special cases are multipolygons. Here we calc the largest polygon and take his center.
+
+        # Special cases are multipolygons. Here we calculate the largest polygon and take his center.
         if features['geometry']['type'] == 'MultiPolygon':
             area_polygon = 0.
             for j in features['geometry']['coordinates']:
 
                 features['geometry']['coordinates']
-                # cast coordinates to polygons and calc center points
+                # cast coordinates to polygons and calculate center points
                 poly = geometry.Polygon(j[0])
                 if area_polygon < poly.area:
                     area_polygon = poly.area
                     centers_counties[i][0] = poly.centroid.x
                     centers_counties[i][1] = poly.centroid.y
         else:
-            # cast coordinates to polygons and calc center points
+            # cast coordinates to polygons and calculate center points
             poly = geometry.Polygon(features['geometry']['coordinates'][0])
             centers_counties[i][0] = poly.centroid.x
             centers_counties[i][1] = poly.centroid.y
 
+        directory = os.path.join(out_folder, 'Germany/')
+        gd.check_dir(directory)
+        df_centers_counties = pd.DataFrame(
+            data=centers_counties)
+        df_centers_counties.index = countykey_list
+        gd.check_dir(os.path.join(directory.split('pydata')[0], 'mobility'))
+        df_centers_counties.to_csv(
+            directory.split('pydata')[
+                0] + 'mobility/county_centers_dim' + str(len_features) + '.txt',
+            sep=' ', index=False, header=False)
+
+    return None
+
+
+def get_distances_from_centers(path_centers_coordinates):
+    """! Computes the distances between all counties based on the center points.
+
+    By using center points, distances between counties can be significantly larger than they actually are.
+
+    Keyword arguments:
+    @param path_centers path to .txt file which should contain the center coordinates for all counties in germany
+    """
+
+    center_coordinates = np.loadtxt(path_centers_coordinates, float)
+    num_counties = center_coordinates.shape[0]
+
+    if num_counties == 400:
+        countykey_list = geoger.get_county_ids(merge_eisenach=True, zfill=True)
+    else:
+        countykey_list = geoger.get_county_ids(merge_eisenach=False, zfill=True)
+
     # calculate distances between counties
-    distances = np.zeros((len_features, len_features))
-    for lk1 in range(0, len_features):
+    distances = np.zeros((num_counties, num_counties))
+    for lk1 in range(0, num_counties):
         id_lk1 = countykey_list[lk1]
-        lk1_coor = [centers_counties[lk1][0], centers_counties[lk1][1]]
-        for lk2 in range(0, len_features):
+        lk1_coor = [center_coordinates[lk1][0], center_coordinates[lk1][1]]
+        for lk2 in range(0, num_counties):
             id_lk2 = countykey_list[lk2]
 
             # distance to itself
             if id_lk1 == id_lk2:
                 distances[lk1][lk2] = 0.
             else:
-                lk2_coor = [centers_counties[lk2][0], centers_counties[lk2][1]]
+                lk2_coor = [center_coordinates[lk2][0], center_coordinates[lk2][1]]
                 distances[lk1][lk2] = get_distance(lk1_coor, lk2_coor)
-
-    if save_file:
-        directory = os.path.join(out_folder, 'Germany/')
-        gd.check_dir(directory)
-        df_commuter_distances = pd.DataFrame(
-            data=distances, columns=countykey_list)
-        df_commuter_distances.index = countykey_list
-        filename = 'distances_counties_dim' + str(len(countykey_list))
-        gd.write_dataframe(df_commuter_distances,
-                           directory, filename, file_format)
-        gd.check_dir(os.path.join(directory.split('pydata')[0], 'mobility'))
-        df_commuter_distances.to_csv(
-            directory.split('pydata')[0] + 'mobility/county_distances_dim' + str(distances.shape[0]) +'.txt',
-            sep=' ', index=False, header=False)
 
     return distances
 
@@ -242,23 +254,18 @@ def get_scaled_commuter_mobility(commuter_mobility):
     Agency of Work data. The Scaling is as presented in https://www.medrxiv.org/content/10.1101/2020.12.18.20248509v1.full.pdf
 
     The Scaling is still a very heuristic approach and based on the distances between the counties.
-    In order to calculate the distances, the center points of the counties are used. 
-    By using center points, distances between counties can be significantly larger than they actually are.
     
     Keyword arguments:
     @param commuter_mobility DataFrame of commuter migration patterns based on the Federal Agency of Work data without any scaling
 
     @return commuter_mobility Array of scaled commuter migration.
         commuter_mobility[i][j] = scaled number of commuters from county with county-id i to county with county-id j
-
     """
 
     dim_data = commuter_mobility.shape[0]
 
-    if dim_data == 401:
-        distances_counties = np.loadtxt('data\mobility\county_distances_dim401.txt', float)
-    else:
-        distances_counties = np.loadtxt('data\mobility\county_distances_dim400.txt', float)
+    path_centers = 'data\mobility\county_centers_dim' + str(dim_data) + '.txt'
+    distances_counties = get_distances_from_centers(path_centers)
 
     # Distances and commuter_mobility should have the same size
     if dim_data != distances_counties.shape[0]:
@@ -267,7 +274,7 @@ def get_scaled_commuter_mobility(commuter_mobility):
 
     for i in range(0, dim_data):
         for j in range(0, dim_data):
-            
+
             # Commuting between 100-200km happens two/three times a week -> Scale with 1/2
             if distances_counties[i][j] > 1 and distances_counties[i][j] < 2:
                 commuter_mobility[i][j] *= 0.5
@@ -319,7 +326,7 @@ def get_commuter_data(setup_dict='',
 
     # get population data for all countys (TODO: better to provide a corresponding method for the following lines in getPopulationData itself)
     # This is not very nice either to have the same file with either Eisenach merged or not...
-    
+
     population = gPd.get_population_data(
         out_folder=out_folder, merge_eisenach=False, read_data=read_data)
 
@@ -600,14 +607,16 @@ def get_commuter_data(setup_dict='',
         '_20' + files[0].split('-20')[1][0: 2] + '.txt', sep=' ', index=False,
         header=False)
 
-    commuter_migration_scaled = get_scaled_commuter_mobility(mat_commuter_migration)
+    commuter_migration_scaled = get_scaled_commuter_mobility(
+        mat_commuter_migration)
 
     df_commuter_migration_scaled = pd.DataFrame(
         data=commuter_migration_scaled, columns=countykey_list)
     df_commuter_migration_scaled.index = countykey_list
     filename = 'commuter_mobility_scaled_20' + files[0].split(
         '-20')[1][0:2] + '_dim' + str(mat_commuter_migration.shape[0])
-    gd.write_dataframe(df_commuter_migration_scaled, directory, filename, file_format)
+    gd.write_dataframe(df_commuter_migration_scaled,
+                       directory, filename, file_format)
     gd.check_dir(os.path.join(directory.split('pydata')[0], 'mobility'))
     df_commuter_migration_scaled.to_csv(
         directory.split('pydata')[0] + 'mobility/commuter_mobility_scaled' +
