@@ -56,7 +56,8 @@ class TestGetVaccinationData(fake_filesystem_unittest.TestCase):
             ('2020-12-27', str(county), '18-59', 3, 222),
             ('2020-12-27', str(county), '60+', 1, 22),
             ('2020-12-27', str(county), '60+', 2, 332),
-            ('2020-12-27', str(county), '60+', 3, 76)
+            ('2020-12-27', str(county), '60+', 3, 76),
+            ('2020-12-27', str(county), '60+', 4, 1)
         ]
         df_to_append = pd.DataFrame(
             vacc_data, columns=col_names_vacc_data)
@@ -76,7 +77,8 @@ class TestGetVaccinationData(fake_filesystem_unittest.TestCase):
             ('2020-12-27', str(counties[i]), '18-55', 2, i),
             ('2020-12-27', str(counties[i]), '56+', 1, i),
             ('2020-12-27', str(counties[i]), '56+', 2, i),
-            ('2020-12-27', str(counties[i]), '56+', 3, i)
+            ('2020-12-27', str(counties[i]), '56+', 3, i),
+            ('2020-12-27', str(counties[i]), '56+', 4, i)
         ]
         df_to_append = pd.DataFrame(
             vacc_data_altern, columns=col_names_vacc_data)
