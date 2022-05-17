@@ -24,24 +24,24 @@ The result of the simulation is for each time step the count of persons in each 
 An example can also be found at examples/abm.cpp
 ```
     //setup the infection parameters
-    mio::GlobalInfectionParameters params;
+    mio::abm::GlobalInfectionParameters params;
     params.incubation_period = 4.7;
     //...
 
     //create the world with some nodes and persons
-    mio::World world = mio::World(params);
-    mio::Location& home = world.add_location(mio::LocationType::Home);
-    mio::Location& school = world.add_location(mio::LocationType::School);
-    mio::Location& work = world.add_location(mio::LocationType::Work);
-    mio::Person& p1 = world.add_person(home, mio::InfectionState::Susceptible);
-    mio::Person& p2 = world.add_person(home, mio::InfectionState::Susceptible);
-    mio::Person& p3 = world.add_person(home, mio::InfectionState::Carrier);
-    mio::Person& p4 = world.add_person(home, mio::InfectionState::Susceptible);
+    mio::abm::World world = mio::abm::World(params);
+    mio::abm::Location& home = world.add_location(mio::abm::LocationType::Home);
+    mio::abm::Location& school = world.add_location(mio::abm::LocationType::School);
+    mio::abm::Location& work = world.add_location(mio::abm::LocationType::Work);
+    mio::abm::Person& p1 = world.add_person(home, mio::abm::InfectionState::Susceptible);
+    mio::abm::Person& p2 = world.add_person(home, mio::abm::InfectionState::Susceptible);
+    mio::abm::Person& p3 = world.add_person(home, mio::abm::InfectionState::Carrier);
+    mio::abm::Person& p4 = world.add_person(home, mio::abm::InfectionState::Susceptible);
 
     //setup the simulation
     double t0   = 0;
     double tmax = 100;
-    mio::AbmSimulation sim  = mio::AbmSimulation(t0, std::move(world));
+    mio::abm::Simulation sim  = mio::abm::Simulation(t0, std::move(world));
 
     sim.advance(tmax);
 

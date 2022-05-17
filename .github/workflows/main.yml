@@ -304,7 +304,6 @@ jobs:
         run: |
           mkdir -p public
           cp ci_index/main_index.html public/index.html
-          cp ci_index/branch_index.html public/index.html
       - name: Prepare documentation
         run: |
           mkdir -p public/documentation
@@ -312,7 +311,7 @@ jobs:
       - name: Prepare pylint reports
         run: |
           mkdir -p public/pylint
-          cp pycode/build_pylint/pylint.html public/pylint/
+          cp pycode/build_pylint/pylint.html public/pylint/index.html
       - name: Prepare coverage reports
         run: |
           mkdir -p public/coverage

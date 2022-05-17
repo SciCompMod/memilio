@@ -182,7 +182,7 @@ def get_case_data(read_data=dd.defaultDict['read_data'],
                         "dataframe is empty for csv and geojson!")
             # drop columns that do not exist in data from github
             df = df.drop(["Altersgruppe2", "Datenstand", "OBJECTID",
-                          "Bundesland", "Landkreis"], 1)
+                          "Bundesland", "Landkreis"], axis=1)
     df = df.convert_dtypes()
 
     # output data to not always download it
@@ -237,7 +237,7 @@ def get_case_data(read_data=dd.defaultDict['read_data'],
 
     # get rid of unnecessary columns
     df = df.drop(['NeuerFall', 'NeuerTodesfall', 'NeuGenesen',
-                 "IstErkrankungsbeginn", "Meldedatum", "Refdatum"], 1)
+                  "IstErkrankungsbeginn", "Meldedatum", "Refdatum"], axis=1)
 
     print("Available columns:", df.columns)
 

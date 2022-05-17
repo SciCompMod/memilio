@@ -14,6 +14,7 @@
 #include "pybind11/operators.h"
 #include "pybind11/eigen.h"
 #include "pybind11/functional.h"
+#include <type_traits>
 
 namespace pymio
 {
@@ -57,6 +58,8 @@ void bind_Index(pybind11::module& m, std::string const& name)
 {
     pybind11::class_<mio::Index<Tag>> c(m, name.c_str());
     c.def(pybind11::init<size_t>(), pybind11::arg("value"));
+    c.def(pybind11::self == pybind11::self);
+    c.def(pybind11::self != pybind11:: self);
 }
 
 // helper function for implicitly casting from pybind11::tuple to Index in Python.
@@ -122,9 +125,17 @@ void bind_CustomIndexArray(pybind11::module& m, std::string const& name)
         .def(
             "__getitem__", [](const C& self, Index const& idx) -> auto& { return self[idx]; },
             pybind11::return_value_policy::reference_internal)
+        .def(
+            "__getitem__", [](const C& self, std::tuple<mio::Index<Tags>...> idx) -> auto& { //python natively handles multi-indices as tuples
+                return self[{std::get<mio::Index<Tags>>(idx)...}];
+            }, pybind11::return_value_policy::reference_internal)
         .def("__setitem__",
              [](C& self, Index const& idx, double value) {
                  self[idx] = value;
+             })
+        .def("__setitem__",
+             [](C& self, std::tuple<mio::Index<Tags>...> idx, double value) {
+                 self[{std::get<mio::Index<Tags>>(idx)...}] = value;
              })
         .def(
             "__iter__",
@@ -183,7 +194,7 @@ void bind_Population(pybind11::module& m, std::string const& name)
 }
 
 template <class ParameterSet>
-void bind_ParameterSet(pybind11::module& m, std::string const& name)
+auto bind_ParameterSet(pybind11::module& m, std::string const& name)
 {
     pybind11::class_<ParameterSet> c(m, name.c_str());
     mio::foreach_tag<ParameterSet>([&c](auto t) {
@@ -197,6 +208,7 @@ void bind_ParameterSet(pybind11::module& m, std::string const& name)
             },
             pybind11::return_value_policy::reference_internal);
     });
+    return c;
 }
 
 /*
@@ -271,8 +283,8 @@ void bind_SecirModelGraph(pybind11::module& m, std::string const& name)
     using G = mio::Graph<Model, mio::MigrationParameters>;
     pybind11::class_<G>(m, name.c_str())
         .def(pybind11::init<>())
-        .def("add_node", &G::template add_node<const Model&>, pybind11::return_value_policy::reference_internal)
-        .def("add_edge", &G::template add_edge<const mio::MigrationParameters&>,
+        .def("add_node", &G::template add_node<const Model&>, py::arg("id"), py::arg("model"), pybind11::return_value_policy::reference_internal)
+        .def("add_edge", &G::template add_edge<const mio::MigrationParameters&>, py::arg("start_node_idx"), py::arg("end_node_idx"), py::arg("migration_parameters"),
              pybind11::return_value_policy::reference_internal)
         .def("add_edge", &G::template add_edge<const Eigen::VectorXd&>, pybind11::return_value_policy::reference_internal)
         .def_property_readonly("num_nodes",
@@ -311,7 +323,7 @@ void bind_MigrationGraph(pybind11::module& m, std::string const& name)
             },
             pybind11::arg("id"), pybind11::arg("model"), pybind11::arg("t0") = 0.0, pybind11::arg("dt") = 0.1,
             pybind11::return_value_policy::reference_internal)
-        .def("add_edge", &G::template add_edge<const mio::MigrationEdge&>, pybind11::return_value_policy::reference_internal)
+        .def("add_edge", &G::template add_edge<const mio::MigrationParameters&>, pybind11::return_value_policy::reference_internal)
         .def("add_edge", &G::template add_edge<const Eigen::VectorXd&>, pybind11::return_value_policy::reference_internal)
         .def_property_readonly("num_nodes",
                                [](const G& self) {
@@ -566,6 +578,74 @@ void bind_damping_expression_group_members(DampingExpressionGroupClass& cl)
         .def("get_matrix_at", [](const DampingExpressionGroup& self, double t) {
             return self.get_matrix_at(t);
         });
+}
+
+template <class Range>
+auto bind_Range(py::module& m, const std::string& class_name)
+{
+    //bindings for iterator for the range
+    struct Iterator {
+        typename Range::Iterators iter_pair;
+    };
+    py::class_<Iterator>(m, (std::string("_Iter") + class_name).c_str())
+        .def(
+            "__next__", [](Iterator& self) -> auto&& {
+                if (self.iter_pair.first != self.iter_pair.second) {
+                    auto&& ref = *self.iter_pair.first;
+                    ++self.iter_pair.first;
+                    return ref;
+                }
+                throw py::stop_iteration();
+            },
+            py::return_value_policy::reference_internal);
+
+    //bindings for the range itself
+    py::class_<Range>(m, class_name.c_str())
+        .def(
+            "__iter__",
+            [](Range& self) {
+                return Iterator{{self.begin(), self.end()}};
+            },
+            py::keep_alive<1, 0>{}) //keep alive the Range as long as there is an iterator
+        .def(
+            "__getitem__", [](Range& self, size_t idx) -> auto&& { return self[idx]; },
+            py::return_value_policy::reference_internal)
+        .def("__len__", &Range::size);
+}
+
+//bind an enum class that can be iterated over
+//requires the class to have a member `Count`
+//adds a static `values` method to the enum class that returns an iterable list of the values
+template<class E, class... Args>
+auto iterable_enum(pybind11::module& m, const std::string& name, Args&&... args)
+{
+    using T = std::underlying_type_t<E>;
+
+    struct Values
+    {
+    };
+    pybind11::class_<Values>(m, (name + "Values").c_str(), std::forward<Args>(args)...)
+        .def("__iter__", [](Values& /*self*/) {
+            return E(0);
+        })
+        .def("__len__", [](Values& /*self*/) {
+            return E::Count;
+        });
+
+    auto enum_class = pybind11::enum_<E>(m, name.c_str(), std::forward<Args>(args)...);
+    enum_class.def_static("values", [](){
+        return Values{};
+    });
+    enum_class.def("__next__", [](E& self) {
+        if (self < E::Count) {
+            auto current = self;
+            self = E(T(self) + T(1));
+            return current;
+        } else {
+            throw pybind11::stop_iteration();
+        }
+    });
+    return enum_class;
 }
 
 } // namespace pymio

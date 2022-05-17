@@ -364,7 +364,7 @@ namespace details
                 t_icu_to_dead[county].push_back(
                     static_cast<int>(model[county].parameters.get<mio::ICUToDeathTime>()[(mio::AgeGroup)group]));
 
-                mu_C_R[county].push_back(model[county].parameters.get<mio::AsymptoticCasesPerInfectious>()[(mio::AgeGroup)group]);
+                mu_C_R[county].push_back(model[county].parameters.get<mio::AsymptomaticCasesPerInfectious>()[(mio::AgeGroup)group]);
                 mu_I_H[county].push_back(
                     model[county].parameters.get<mio::HospitalizedCasesPerInfectious>()[(mio::AgeGroup)group]);
                 mu_H_U[county].push_back(model[county].parameters.get<mio::ICUCasesPerHospitalized>()[(mio::AgeGroup)group]);

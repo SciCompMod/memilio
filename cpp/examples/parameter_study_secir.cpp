@@ -140,8 +140,8 @@ int main()
 
         params.get<mio::InfectionProbabilityFromContact>()[i] = inf_prob;
         params.get<mio::RelativeCarrierInfectability>()[i]    = carr_infec;
-        params.get<mio::AsymptoticCasesPerInfectious>()[i]    = alpha;
-        params.get<mio::RiskOfInfectionFromSympomatic>()[i]   = beta;
+        params.get<mio::AsymptomaticCasesPerInfectious>()[i]    = alpha;
+        params.get<mio::RiskOfInfectionFromSymptomatic>()[i]   = beta;
         params.get<mio::HospitalizedCasesPerInfectious>()[i]  = rho;
         params.get<mio::ICUCasesPerHospitalized>()[i]         = theta;
         params.get<mio::DeathsPerICU>()[i]                    = delta;
