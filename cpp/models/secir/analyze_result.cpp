@@ -36,7 +36,7 @@ TimeSeries<double> interpolate_simulation_result_days(const TimeSeries<double>& 
     const auto day_max = (t_max + abs_tol > std::floor(t_max) + 1) ? std::ceil(t_max) : std::floor(t_max);
     
     // create interpolation_times vector with all days between day0 and day_max
-    std::vector<double> tps(day_max - day0 + 1);
+    std::vector<double> tps(static_cast<int>(day_max) - static_cast<int>(day0) + 1);
     std::iota(tps.begin(), tps.end(), day0);
     
     return interpolate_simulation_result(simulation_result, tps, abs_tol);
@@ -80,7 +80,7 @@ TimeSeries<double> interpolate_simulation_result(const TimeSeries<double>& simul
     }
     
     // add last time point of interpolation times in case it equals the last time point of simulation (up to tolerance (which is already checked for))
-    if (simulation_result.get_last_time() < interpolation_times[pointer_interp] && pointer_interp < (int)interpolation_times.size()) {
+    if (pointer_interp < (int)interpolation_times.size() && simulation_result.get_last_time() < interpolation_times[pointer_interp]) {
         interpolated.add_time_point(interpolation_times[pointer_interp], simulation_result.get_last_value());
     }
     
