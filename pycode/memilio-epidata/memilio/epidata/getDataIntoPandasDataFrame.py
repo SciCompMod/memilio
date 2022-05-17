@@ -150,13 +150,14 @@ def cli(what):
     The string is the message that should be printed when working on the specific package.
     The further list, contains all special command line arguments which are needed for this package.
 
-    If the key is nor part of the dictionary the program is stopped.
+    If the key is not part of the dictionary the program is stopped.
 
-    Three default arguments are added to the parser:
-    - read-from-disk, Default = False
-    - file-format, Default = json_timeasstring, choices = ['json', 'hdf5', 'json_timeasstring']
-    - out_path Default defined in default dict
+    The following default arguments are added to the parser:
+    - read-from-disk
+    - file-format, choices = ['json', 'hdf5', 'json_timeasstring']
+    - out_path
     - no_raw
+    The default values are defined in default dict.
 
     Depending on what following parser can be added:
     - start_date

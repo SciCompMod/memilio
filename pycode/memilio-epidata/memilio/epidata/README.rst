@@ -136,8 +136,8 @@ reporting hospitals differs from day to day and is given in FullData_DIVI.
 ============== ==========  =================================== =================
 Source         Folder      Files                               Data description
 ============== ==========  =================================== =================
-RKI-C          Germany     cases_infected                      Numbers of infected over time for whole Germany
-RKI-C          Germany     cases_deaths                        Numbers of deaths over time for whole Germany
+RKI-C          Germany     cases_infected                      numbers of infected over time for whole Germany
+RKI-C          Germany     cases_deaths                        numbers of deaths over time for whole Germany
 RKI-C          Germany     cases_all_germany                   infected, deaths, recovered over time for whole Germany
 RKI-C          Germany     cases_infected_state                infected over time for different states (Bundesländer)
 RKI-C          Germany     cases_all_state                     infected, deaths, recovered over time for different states (Bundesländer)
@@ -175,24 +175,24 @@ RKI-Estimation Germany     cases_all_state_gender_estimated    infected, deaths,
 RKI-Estimation Germany     cases_all_county_age_estimated      infected, deaths, recovered, recovered_estimated, deaths_estimated over time for different age ranges and counties
 RKI-Estimation Germany     cases_all_county_gender_estimated   infected, deaths, recovered, recovered_estimated, deaths_estimated over time for different genders and counties
 
-P              Germany     county_current_population[_dim401]  Einwohnerzahl for different age groups from the 2011 census, extrapolated to the current level [with Wartburgkreis and Eisenach separated]
-P              Germany     county_population[_dim401]          Einwohnerzahl for different age groups from the 2011 census [with Wartburgkreis and Eisenach separated]
-P              Germany     migration                           Unchanged migration data
-P              Germany     reg_key                             Unchangenged regional keys from excel table
-P              Germany     zensus                              Unchanged Zensus data
+P              Germany     county_current_population[_dim401]  population for different age groups from the 2011 census, extrapolated to the current level [with Wartburgkreis and Eisenach separated]
+P              Germany     county_population[_dim401]          population for different age groups from the 2011 census [with Wartburgkreis and Eisenach separated]
+P              Germany     migration                           unchanged migration data
+P              Germany     reg_key                             unchanged regional keys from excel table
+P              Germany     zensus                              unchanged zensus data
 
-JH             .           FullData_JohnHopkins                Data as downloaded from github
-JH             .           all_provincestate                   Time-cumsum of confirmed, recovered, death for states or provinces if they where given
-JH             .           all_countries                       Time-cumsum of confirmed, recovered, death for every country
-JH             Germany     whole_country_Germany_jh            Time-cumsum of confirmed, recovered, death for Germany
-JH             Spain       whole_country_Spain_jh              Time-cumsum of confirmed, recovered, death for Spain
-JH             France      whole_country_France_jh             Time-cumsum of confirmed, recovered, death for France
-JH             Italy       whole_country_Italy_jh              Time-cumsum of confirmed, recovered, death for Italy
-JH             SouthKorea  whole_country_SouthKorea_jh         Time-cumsum of confirmed, recovered, death for SouthKorea
-JH             China       whole_country_China_jh              Time-cumsum of confirmed, recovered, death for China
-JH             US          whole_country_US_jh                 Time-cumsum of confirmed, recovered, death for US
+JH             .           FullData_JohnHopkins                data as downloaded from github
+JH             .           all_provincestate                   time-cumsum of confirmed, recovered, death for states or provinces if they where given
+JH             .           all_countries                       time-cumsum of confirmed, recovered, death for every country
+JH             Germany     whole_country_Germany_jh            time-cumsum of confirmed, recovered, death for Germany
+JH             Spain       whole_country_Spain_jh              time-cumsum of confirmed, recovered, death for Spain
+JH             France      whole_country_France_jh             time-cumsum of confirmed, recovered, death for France
+JH             Italy       whole_country_Italy_jh              time-cumsum of confirmed, recovered, death for Italy
+JH             SouthKorea  whole_country_SouthKorea_jh         time-cumsum of confirmed, recovered, death for SouthKorea
+JH             China       whole_country_China_jh              time-cumsum of confirmed, recovered, death for China
+JH             US          whole_country_US_jh                 time-cumsum of confirmed, recovered, death for US
 
-DIVI           Germany     FullData_DIVI                       Full data as downloaded from archive with columns ['County', 'State', 'anzahl_meldebereiche', 'reporting_hospitals', 'occupied_ICU', 'free_ICU', 'ID_State', 'Date', 'ICU', 'ICU_ventilated', 'faelle_covid_aktuell_im_bundesland', 'ID_County']
+DIVI           Germany     FullData_DIVI                       full data as downloaded from archive with columns ['County', 'State', 'anzahl_meldebereiche', 'reporting_hospitals', 'occupied_ICU', 'free_ICU', 'ID_State', 'Date', 'ICU', 'ICU_ventilated', 'faelle_covid_aktuell_im_bundesland', 'ID_County']
 DIVI           Germany     county_divi                         ICU, ICU_ventilated over time for different counties (Landkreise) with columns ['County', 'ID_County', 'ICU', 'ICU_ventilated', 'Date']
 DIVI           Germany     state_divi                          ICU, ICU_ventilated over time for different states (Bundesländer) with columns ['Date', 'ICU', 'ICU_ventilated', 'ID_State', 'State']
 DIVI           Germany     germany_divi                        ICU, ICU_ventilated over time for whole Germany with columns ['Date', 'ICU', 'ICU_ventilated']

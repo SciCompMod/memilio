@@ -59,7 +59,7 @@ Required python packages:
 Running the scripts
 -------------------
 
-To run the scripts use the setup.py and everything is installed (see Installation) and useable via the following entry points.
+After installation the scripts can be run via the following entry points.
   - getcasedata (get case data from rki, see Results: RKI-C)
   - getpopuldata (get population data, see Results: P)
   - getjhdata (get case data from john hopkins university, see Results: JH)
