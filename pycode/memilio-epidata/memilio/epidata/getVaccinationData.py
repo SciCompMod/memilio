@@ -168,20 +168,17 @@ def sanitizing_based_on_regions(df, to_county_map, age_groups, column_names, age
 
         for region, counties_list in to_county_map.items():
             vacc_sums = df_age.loc[df_age['ID_County'].isin(
-                counties_list)][column_names].sum()
+                counties_list)].groupby('Date')[column_names].sum()
 
-            agepop = pd.merge(
-                df_age.loc[df_age['ID_County'].isin(counties_list)]
-                ['ID_County'],
-                age_population.loc
-                [age_population['ID_County'].isin(counties_list)]
-                [['ID_County', age]])[age]
+            vacc_sums=pd.concat([vacc_sums]*len(counties_list), ignore_index=True)
 
-            age_sum = age_population.loc[age_population['ID_County'].isin(counties_list)][age].sum()
+            population_ratios = pd.merge(df_age.loc[df_age['ID_County'].isin(counties_list)]['ID_County'],
+                age_population.loc[age_population['ID_County'].isin(counties_list)][['ID_County', age]])[age]/\
+                age_population.loc[age_population['ID_County'].isin(counties_list)][age].sum()
 
-            for i in range(len(column_names)):
+            for column in column_names:
                 df_age.loc[df_age['ID_County'].isin(
-                    counties_list), column_names[i]] = vacc_sums[i]*agepop.values/age_sum
+                    counties_list), column] = vacc_sums[column].values*population_ratios.values
 
         df_total = df_total.append(df_age)
         
