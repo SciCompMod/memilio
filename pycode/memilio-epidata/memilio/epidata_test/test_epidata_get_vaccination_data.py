@@ -105,24 +105,6 @@ class TestGetVaccinationData(fake_filesystem_unittest.TestCase):
 
     @patch('memilio.epidata.getVaccinationData.download_vaccination_data',
            return_value=df_vacc_data)
-    def test_get_standard_vaccination_data_no_errors_with_plots(
-            self, mockv):
-        gvd.get_vaccination_data(out_folder=self.path)
-
-    @patch('memilio.epidata.getVaccinationData.download_vaccination_data',
-           return_value=df_vacc_data)
-    def test_get_standard_vaccination_sanitize_1(
-            self, mockv):
-        gvd.get_vaccination_data(out_folder=self.path, sanitize_data=1)
-
-    @patch('memilio.epidata.getVaccinationData.download_vaccination_data',
-           return_value=df_vacc_data)
-    def test_get_standard_vaccination_sanitize_2(
-            self, mockv):
-        gvd.get_vaccination_data(out_folder=self.path, sanitize_data=2)
-
-    @patch('memilio.epidata.getVaccinationData.download_vaccination_data',
-           return_value=df_vacc_data)
     def test_get_standard_vaccination_sanitize_3(
             self, mockv):
         gvd.get_vaccination_data(out_folder=self.path, sanitize_data=3)
@@ -175,13 +157,13 @@ class TestGetVaccinationData(fake_filesystem_unittest.TestCase):
         df = pd.DataFrame(
             {'Altersgruppe': ['05-11', '12-17', '18-59', '60+'],
              'b': [4, 5, 6, 7]})
-        gvd.sanity_checks
+        gvd.sanity_checks(df)
 
         # test actual agegroups with unknown
         df = pd.DataFrame(
             {'Altersgruppe': ['05-11', '12-17', '18-59', '60+', 'u'],
              'b': [4, 5, 6, 7, 8]})
-        gvd.sanity_checks
+        gvd.sanity_checks(df)
 
         # test uniqueness
         df = pd.DataFrame({
@@ -189,7 +171,7 @@ class TestGetVaccinationData(fake_filesystem_unittest.TestCase):
             ['05-11', '60+', '12-17', '05-11', 'u', '12-17',
              '18-59', '18-59', '60+', 'u', 'u', 'u', 'u'],
             'b': [1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 1, 2, 3]})
-        gvd.sanity_checks
+        gvd.sanity_checks(df)
 
 
     @patch('builtins.print')
@@ -305,10 +287,19 @@ class TestGetVaccinationData(fake_filesystem_unittest.TestCase):
                       '11+'].drop(['vacc_1', 'vacc_2'], axis=1)
         test_4['vacc_1'] = [17*3/8.5, 17*2/8.5, 17*3.5/8.5, 4.0, 0.0, 19.0]
         test_4['vacc_2'] = [8*3/8.5, 8*2/8.5, 8*3.5/8.5, 1.0, 0.0, 0.0]
-        returndata = gvd.sanitizing_based_on_regions(to_county_map,data,age_groups,['vacc_1', 'vacc_2'],population)
-        pd.testing.assert_frame_equal(returndata[returndata['Age_RKI']=='0-1'], test_1)
-        pd.testing.assert_frame_equal(returndata[returndata['Age_RKI']=='2-3'], test_2)
-        pd.testing.assert_frame_equal(returndata[returndata['Age_RKI']=='4-10'], test_3)
-        pd.testing.assert_frame_equal(returndata[returndata['Age_RKI']=='11+'], test_4)
+        returndata = gvd.sanitizing_based_on_regions(data, to_county_map, age_groups, [
+                                                     'vacc_1', 'vacc_2'], population)
+        pd.testing.assert_frame_equal(
+            returndata[returndata['Age_RKI'] == '0-1'],
+            test_1, check_dtype=False)
+        pd.testing.assert_frame_equal(
+            returndata[returndata['Age_RKI'] == '2-3'],
+            test_2, check_dtype=False)
+        pd.testing.assert_frame_equal(
+            returndata[returndata['Age_RKI'] == '4-10'],
+            test_3, check_dtype=False)
+        pd.testing.assert_frame_equal(
+            returndata[returndata['Age_RKI'] == '11+'],
+            test_4, check_dtype=False)
 if __name__ == '__main__':
     unittest.main()

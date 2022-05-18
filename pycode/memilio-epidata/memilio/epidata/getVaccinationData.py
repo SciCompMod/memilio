@@ -63,10 +63,10 @@ def sanity_checks(df):
     actual_agegroups = df['Altersgruppe'].unique()
 
     if 'u' in actual_agegroups:
-        u = 1
+        undefined_age = 1
     else:
-        u = 0
-    if len(actual_agegroups) != 4 + u:
+        undefined_age = 0
+    if len(actual_agegroups) != 4 + undefined_age:
             raise gd.DataError("Number of agegroups has changed. Please report this as an issue.")
 
     agegroups = ['05-11', '12-17', '18-59', '60+']
@@ -159,49 +159,34 @@ def compute_vaccination_ratios(
     return df_vacc_ratios
 
 
-def sanitizing_based_on_regions(to_county_map, df, age_groups, column_names, age_population):
+def sanitizing_based_on_regions(df, to_county_map, age_groups, column_names, age_population):
+    
+    df_total=pd.DataFrame()
 
-    vacc_ratio_regions = pd.DataFrame(np.zeros(
-        (len(to_county_map) * len(age_groups), 2+len(column_names))),
-        columns=['RegionID', dd.EngEng['ageRKI']] +
-        [col + '_ratio' for col in column_names])
-    vacc_ratio_regions_idx = 0
+    for age in age_groups:
+        df_age = df[df[dd.EngEng['ageRKI']]==age].copy()
 
-    # region is either a federal state or an intermediate region
-    for region, counties_list in to_county_map.items():
+        for region, counties_list in to_county_map.items():
+            vacc_sums = df_age.loc[df_age['ID_County'].isin(
+                counties_list)][column_names].sum()
 
-        # extract information on all counties of the region
-        df_region = df[
-            df[dd.EngEng['idCounty']].isin(
-                counties_list)].copy()
+            agepop = pd.merge(
+                df_age.loc[df_age['ID_County'].isin(counties_list)]
+                ['ID_County'],
+                age_population.loc
+                [age_population['ID_County'].isin(counties_list)]
+                [['ID_County', age]])[age]
 
-        # sum over all counties of the region
-        vacc_sums = df_region.groupby(
-            [dd.EngEng['date'], dd.EngEng['ageRKI']]).agg(
-            {col: sum for col in column_names}).reset_index()
+            age_sum = age_population.loc[age_population['ID_County'].isin(counties_list)][age].sum()
 
-        for age in age_groups:
-            # compute age-dependent vaccination ratio for region
-            vacc_sums_ratios = (vacc_sums.loc[vacc_sums[
-                dd.EngEng['ageRKI']] == age, column_names] / age_population[
-                age_population[dd.EngEng['idCounty']].isin(
-                    counties_list)][age].sum()).values
+            for i in range(len(column_names)):
+                df_age.loc[df_age['ID_County'].isin(
+                    counties_list), column_names[i]] = vacc_sums[i]*agepop.values/age_sum
 
-            #  store condensed information for output
-            vacc_ratio_regions.iloc[vacc_ratio_regions_idx] = \
-                [region, age] + list(np.round(vacc_sums_ratios[-1, :], 4))
-            vacc_ratio_regions_idx += 1
+        df_total = df_total.append(df_age)
+        
+    return df_total
 
-            for county in counties_list:
-                age_population_county = age_population.loc[
-                    age_population[dd.EngEng['idCounty']] == county,
-                    age].sum()
-                df.loc[(df[
-                    dd.EngEng['idCounty']] == county) & (
-                    df[dd.EngEng['ageRKI']] == age),
-                    column_names] = \
-                    age_population_county * vacc_sums_ratios
-    return df
 
 def sanitizing_based_on_mobility(df, age_groups, column_names, age_population, neighbors_mobility):
     
@@ -808,7 +793,7 @@ def get_vaccination_data(read_data=dd.defaultDict['read_data'],
                 merge_eisenach=True)
 
         df_data_agevacc_county_cs = sanitizing_based_on_regions(
-            to_county_map, df_data_agevacc_county_cs, unique_age_groups_old,
+            df_data_agevacc_county_cs, to_county_map, unique_age_groups_old,
             vacc_column_names, population_old_ages)
 
     elif sanitize_data == 3:
