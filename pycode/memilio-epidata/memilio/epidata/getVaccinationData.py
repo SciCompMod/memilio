@@ -427,7 +427,8 @@ def get_vaccination_data(read_data=dd.defaultDict['read_data'],
     vacc_column_names = [
         dd.EngEng['vaccPartial'],
         dd.EngEng['vaccComplete'],
-        dd.EngEng['vaccRefresh']]
+        dd.EngEng['vaccRefresh'],
+        'Vacc_refreshed_2']
     df_data_array = split_column_based_on_values(
         df_data, "Impfschutz", "Number", vacc_column_names)
 
@@ -533,7 +534,7 @@ def get_vaccination_data(read_data=dd.defaultDict['read_data'],
                 merge_eisenach=False)
 
         vacc_ratio_regions = pd.DataFrame(np.zeros(
-            (len(to_county_map) * len(unique_age_groups_old), 5)),
+            (len(to_county_map) * len(unique_age_groups_old), 6)),
             columns=['RegionID', dd.EngEng['ageRKI']] +
             [col + '_ratio' for col in vacc_column_names])
         vacc_ratio_regions_idx = 0

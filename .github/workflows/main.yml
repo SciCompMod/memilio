@@ -199,7 +199,7 @@ jobs:
         with:
           package: epidata
 
-  dowload-data:
+  download-data:
     if: github.event.pull_request.draft == false
     needs: build-py-epidata
     runs-on: ubuntu-latest
@@ -231,6 +231,8 @@ jobs:
           getpopuldata -o data_dl
           getjhdata -o data_dl
           getdividata -o data_dl
+          getcommutermobility -o data_dl
+          getvaccinationdata -o data_dl
       - name: Upload Data
         uses: actions/upload-artifact@v2
         with:
