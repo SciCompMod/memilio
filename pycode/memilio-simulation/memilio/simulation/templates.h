@@ -9,7 +9,10 @@
 #include "memilio/mobility/mobility.h"
 #include "pickle_serializer.h"
 
+#include "pybind11/cast.h"
+#include "pybind11/detail/common.h"
 #include "pybind11/pybind11.h"
+#include "pybind11/pytypes.h"
 #include "pybind11/stl.h"
 #include "pybind11/operators.h"
 #include "pybind11/eigen.h"
@@ -21,10 +24,10 @@ namespace pymio
 
 //bind class and add pickling based on memilio serialization framework
 template <class T, class ... Args>
-decltype(auto) pybind_pickle_class(py::module &m, const char* name)
+decltype(auto) pybind_pickle_class(pybind11::module &m, const char* name)
 {
-    decltype(auto) pickle_class = py::class_<T, Args...>(m, name);
-    pickle_class.def(py::pickle(
+    decltype(auto) pickle_class = pybind11::class_<T, Args...>(m, name);
+    pickle_class.def(pybind11::pickle(
              [](const T &object) { // __getstate__
                 auto tuple = mio::serialize_pickle(object);
                 if (tuple)
@@ -36,7 +39,7 @@ decltype(auto) pybind_pickle_class(py::module &m, const char* name)
                     throw std::runtime_error(tuple.error().formatted_message());
                 }
             },
-            [](const py::tuple t) { // __setstate__
+            [](const pybind11::tuple t) { // __setstate__
 
                 auto object = mio::deserialize_pickle(t,mio::Tag<T>{});
                 if (object)
@@ -124,6 +127,105 @@ void bind_templated_members_CustomIndexArray(pybind11::class_<C>& c)
     bind_templated_members_CustomIndexArray<C, Ts...>(c);
 }
 
+template<class T, class Obj>
+boost::optional<T> cast_if_not_none(Obj&& obj)
+{
+    if (obj.is_none()) {
+        return {};
+    } else {
+        return obj.template cast<T>();
+    }
+}
+
+template<class Index>
+struct Slice
+{
+    boost::optional<Index> start;
+    boost::optional<Index> stop;
+    boost::optional<Index> step;
+};
+
+//convert an index expression into a slice.
+//the expression is either a python slice expression (i.e. `start:stop:step`)
+//or a single index.
+template <class Tag>
+Slice<mio::Index<Tag>> make_slice(const pybind11::object& obj)
+{
+    if (pybind11::isinstance<pybind11::slice>(obj)) {
+        //convert a python slice expression
+        auto slice = obj.cast<pybind11::slice>();
+        return {cast_if_not_none<mio::Index<Tag>>(slice.attr("start")),
+                cast_if_not_none<mio::Index<Tag>>(slice.attr("stop")),
+                cast_if_not_none<mio::Index<Tag>>(slice.attr("step"))};
+    }
+    else {
+        //make a slice from a single index, i.e. `i:i+1:1`
+        auto idx = obj.cast<mio::Index<Tag>>();
+        return {idx, idx + mio::Index<Tag>{1}, mio::Index<Tag>{1}};
+    }
+}
+
+//recursively slices an array along each dimension
+//I: index of current dimension
+//C: original array
+//S: slice of previous dimensions
+//T / Ts: category tags of the remaining dimensions of the array
+template <class C, class S>
+auto get_slice_of_array(C& /*self*/, S& slice, const pybind11::tuple& /*tup*/)
+{
+    //base case of recursion, no more dimensions, slice finished
+    return slice;
+}
+template <class C, class S, class T, class... Ts>
+auto get_slice_of_array(C& self, S& slice, const pybind11::tuple& tup)
+{
+    //normal case of recursion
+    //slice along dimension I, identified by tag T
+    const auto I = C::Index::size - sizeof...(Ts) - 1;
+    auto c_slice = make_slice<T>(tup[I]);
+    auto size    = mio::get<I>(self.size());
+    auto start   = get_optional_value_or(c_slice.start, mio::Index<T>(0));
+    auto stop    = get_optional_value_or(c_slice.stop, size);
+    auto step    = get_optional_value_or(c_slice.step, mio::Index<T>(1));
+    if (start >= size) {
+        throw pybind11::index_error("Out of range.");
+    }
+    stop   = std::min(std::max(stop, start), size); //python slicing just ignores everything beyond the end of the array
+    auto n = (size_t(stop) - size_t(start)) / size_t(step);
+    auto array_slice = slice.template slice<T>({size_t(start), n, size_t(step)});
+    return get_slice_of_array<C, decltype(array_slice), Ts...>(self, array_slice, tup);
+}
+
+//bind slicing for one dimensional arrays
+//accepts single slice as indices
+template<class C, class... Ts>
+void bind_slicing_operations_CustomIndexArray(pybind11::class_<C>& c) 
+{
+    static_assert(sizeof...(Ts) == C::Index::size, "");
+    c.def("__setitem__", [](C& self, pybind11::object indices, const typename C::value_type& value) {
+        auto index_tuple = self.size().size == 1 ? pybind11::make_tuple(indices) : indices.cast<pybind11::tuple>();
+        if (index_tuple.size() != self.size().size) {
+            throw pybind11::index_error("Invalid number of dimensions.");
+        }
+        get_slice_of_array<C, C, Ts...>(self, self, index_tuple) = value;
+    });
+    //TODO: set slice from (numpy) array
+    //TODO: __getitem__
+}
+
+// //bind slicing for one dimensional arrays
+// //accepts tuple of slices as indices
+// template<class C, class T, class... Ts>
+// std::enable_if_t<(sizeof...(Ts) > 0)> bind_slicing_operations_CustomIndexArray(pybind11::class_<C>& c) 
+// {    
+//     c.def("__setitem__", [](C& self, pybind11::tuple tup, const typename C::value_type& value) {
+//         if (tup.size() != self.size().size) {
+//             throw pybind11::index_error("Invalid number of dimensions.");
+//         }
+//         get_slice_of_array<0, C, C, T, Ts...>(self, self, tup) = value;
+//     });
+// }
+
 template <class Type, class... Tags>
 void bind_CustomIndexArray(pybind11::module& m, std::string const& name)
 {
@@ -160,9 +262,10 @@ void bind_CustomIndexArray(pybind11::module& m, std::string const& name)
             pybind11::keep_alive<0, 1>())
         .def("get_flat_index", &C::get_flat_index);
 
-    // Not supported in Python yet: Slicing
+    // slicing of arrays
+    bind_slicing_operations_CustomIndexArray<C, Tags...>(c);
 
-    // bind all templated members for types in Tags...
+    // bind all members of CustomIndexArray that work on a single parameter
     bind_templated_members_CustomIndexArray<C, Tags...>(c);
 }
 
@@ -298,8 +401,8 @@ void bind_SecirModelGraph(pybind11::module& m, std::string const& name)
     using G = mio::Graph<Model, mio::MigrationParameters>;
     pybind11::class_<G>(m, name.c_str())
         .def(pybind11::init<>())
-        .def("add_node", &G::template add_node<const Model&>, py::arg("id"), py::arg("model"), pybind11::return_value_policy::reference_internal)
-        .def("add_edge", &G::template add_edge<const mio::MigrationParameters&>, py::arg("start_node_idx"), py::arg("end_node_idx"), py::arg("migration_parameters"),
+        .def("add_node", &G::template add_node<const Model&>, pybind11::arg("id"), pybind11::arg("model"), pybind11::return_value_policy::reference_internal)
+        .def("add_edge", &G::template add_edge<const mio::MigrationParameters&>, pybind11::arg("start_node_idx"), pybind11::arg("end_node_idx"), pybind11::arg("migration_parameters"),
              pybind11::return_value_policy::reference_internal)
         .def("add_edge", &G::template add_edge<const Eigen::VectorXd&>, pybind11::return_value_policy::reference_internal)
         .def_property_readonly("num_nodes",
@@ -596,13 +699,13 @@ void bind_damping_expression_group_members(DampingExpressionGroupClass& cl)
 }
 
 template <class Range>
-auto bind_Range(py::module& m, const std::string& class_name)
+auto bind_Range(pybind11::module& m, const std::string& class_name)
 {
     //bindings for iterator for the range
     struct Iterator {
         typename Range::Iterators iter_pair;
     };
-    py::class_<Iterator>(m, (std::string("_Iter") + class_name).c_str())
+    pybind11::class_<Iterator>(m, (std::string("_Iter") + class_name).c_str())
         .def(
             "__next__", [](Iterator& self) -> auto&& {
                 if (self.iter_pair.first != self.iter_pair.second) {
@@ -610,21 +713,21 @@ auto bind_Range(py::module& m, const std::string& class_name)
                     ++self.iter_pair.first;
                     return ref;
                 }
-                throw py::stop_iteration();
+                throw pybind11::stop_iteration();
             },
-            py::return_value_policy::reference_internal);
+            pybind11::return_value_policy::reference_internal);
 
     //bindings for the range itself
-    py::class_<Range>(m, class_name.c_str())
+    pybind11::class_<Range>(m, class_name.c_str())
         .def(
             "__iter__",
             [](Range& self) {
                 return Iterator{{self.begin(), self.end()}};
             },
-            py::keep_alive<1, 0>{}) //keep alive the Range as long as there is an iterator
+            pybind11::keep_alive<1, 0>{}) //keep alive the Range as long as there is an iterator
         .def(
             "__getitem__", [](Range& self, size_t idx) -> auto&& { return self[idx]; },
-            py::return_value_policy::reference_internal)
+            pybind11::return_value_policy::reference_internal)
         .def("__len__", &Range::size);
 }
 
