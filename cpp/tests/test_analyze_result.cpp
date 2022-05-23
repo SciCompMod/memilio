@@ -18,7 +18,7 @@
 * limitations under the License.
 */
 #include "memilio/compartments/simulation.h"
-#include "models/secir/analyze_result.h"
+#include "secir/analyze_result.h"
 #include "matchers.h"
 #include "gtest/gtest.h"
 #include "gmock/gmock.h"
