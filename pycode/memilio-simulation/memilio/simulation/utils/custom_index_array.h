@@ -1,7 +1,7 @@
 #ifndef PYMIO_CUSTOM_INDEX_ARRAY_H
 #define PYMIO_CUSTOM_INDEX_ARRAY_H
 
-#include "../templates.h"
+#include "../pybind_util.h"
 #include "memilio/utils/index.h"
 #include "memilio/utils/custom_index_array.h"
 

@@ -19,6 +19,7 @@
 */
 
 #include "templates.h"
+#include "pybind_util.h"
 #include "memilio/utils/date.h"
 #include "memilio/utils/time_series.h"
 #include "memilio/utils/parameter_distributions.h"

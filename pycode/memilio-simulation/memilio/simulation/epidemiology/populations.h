@@ -1,7 +1,7 @@
 #ifndef PYMIO_POPULATIONS_H
 #define PYMIO_POPULATIONS_H
 
-#include "templates.h"
+#include "../pybind_util.h"
 #include "memilio/utils/custom_index_array.h"
 #include "memilio/epidemiology/populations.h"
 

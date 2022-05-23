@@ -8,6 +8,7 @@
 #include "memilio/compartments/simulation.h"
 #include "memilio/mobility/mobility.h"
 #include "pickle_serializer.h"
+#include "pybind_util.h"
 
 #include "pybind11/pybind11.h"
 #include "pybind11/stl.h"
@@ -18,50 +19,6 @@
 
 namespace pymio
 {
-
-//bind class and add pickling based on memilio serialization framework
-template <class T, class ... Args>
-decltype(auto) pybind_pickle_class(py::module &m, const char* name)
-{
-    decltype(auto) pickle_class = py::class_<T, Args...>(m, name);
-    pickle_class.def(py::pickle(
-             [](const T &object) { // __getstate__
-                auto tuple = mio::serialize_pickle(object);
-                if (tuple)
-                {
-                    return std::move(tuple).value();
-                }
-                else
-                {
-                    throw std::runtime_error(tuple.error().formatted_message());
-                }
-            },
-            [](const py::tuple t) { // __setstate__
-
-                auto object = mio::deserialize_pickle(t,mio::Tag<T>{});
-                if (object)
-                {
-                    return std::move(object).value();
-                }
-                else
-                {
-                    throw std::runtime_error(object.error().formatted_message());
-                }
-            }
-    ));
-    return pickle_class;
-}
-
-// the following functions help bind class template realizations
-//https://stackoverflow.com/questions/64552878/how-can-i-automatically-bind-templated-member-functions-of-variadic-class-templa
-template <typename T>
-std::string pretty_name()
-{
-    std::ostringstream o;
-    o << typeid(T).name();
-    return o.str();
-}
-
 template <class Simulation>
 void bind_MigrationGraph(pybind11::module& m, std::string const& name)
 {
@@ -98,42 +55,6 @@ void bind_MigrationGraph(pybind11::module& m, std::string const& name)
             "get_out_edge",
             [](const G& self, size_t node_idx, size_t edge_idx) -> auto& { return self.out_edges(node_idx)[edge_idx]; },
             pybind11::return_value_policy::reference_internal);
-}
-
-/**
- * bind a constructor that has variable number of matrix shape arguments.
- * same number of arguments as the constructor of Shape.
- * @tparam C instance of pybind class_
- * @tparam ArgTuples tuples of string and some other type.
- * @param cl class_ that the constructor is defined for.
- * @param arg_tuples tuples that define additional arguments before the shape arguments.
- *                   tuples (s, t) where s is a string, the name of the argument, and t
- *                   is a value of Type T, where T is the type of the argument.
- */
-template <class C, class... ArgTuples,
-          class = std::enable_if_t<(std::is_same<typename C::type::Shape, mio::SquareMatrixShape>::value ||
-                                    std::is_same<typename C::type::Shape, mio::ColumnVectorShape>::value),
-                                   void>>
-void bind_shape_constructor(C& cl, ArgTuples... arg_tuples)
-{
-    cl.def(pybind11::init<Eigen::Index, std::tuple_element_t<1, ArgTuples>...>(),
-           pybind11::arg(std::get<0>(arg_tuples))..., pybind11::arg("size"));
-}
-
-/**
- * binds a property that returns the shape of matrix valued object.
- * @tparam C instance of pybind class_.
- * @param cl class that the property is added to.
- */
-template <class C>
-void bind_shape_property(C& cl)
-{
-    cl.def_property_readonly("shape", [](typename C::type& self) {
-        auto tup = pybind11::tuple(2);
-        tup[0]   = self.get_shape().rows();
-        tup[1]   = self.get_shape().cols();
-        return tup;
-    });
 }
 
 /**
@@ -310,74 +231,6 @@ void bind_damping_expression_group_members(DampingExpressionGroupClass& cl)
         .def("get_matrix_at", [](const DampingExpressionGroup& self, double t) {
             return self.get_matrix_at(t);
         });
-}
-
-template <class Range>
-auto bind_Range(py::module& m, const std::string& class_name)
-{
-    //bindings for iterator for the range
-    struct Iterator {
-        typename Range::Iterators iter_pair;
-    };
-    py::class_<Iterator>(m, (std::string("_Iter") + class_name).c_str())
-        .def(
-            "__next__", [](Iterator& self) -> auto&& {
-                if (self.iter_pair.first != self.iter_pair.second) {
-                    auto&& ref = *self.iter_pair.first;
-                    ++self.iter_pair.first;
-                    return ref;
-                }
-                throw py::stop_iteration();
-            },
-            py::return_value_policy::reference_internal);
-
-    //bindings for the range itself
-    py::class_<Range>(m, class_name.c_str())
-        .def(
-            "__iter__",
-            [](Range& self) {
-                return Iterator{{self.begin(), self.end()}};
-            },
-            py::keep_alive<1, 0>{}) //keep alive the Range as long as there is an iterator
-        .def(
-            "__getitem__", [](Range& self, size_t idx) -> auto&& { return self[idx]; },
-            py::return_value_policy::reference_internal)
-        .def("__len__", &Range::size);
-}
-
-//bind an enum class that can be iterated over
-//requires the class to have a member `Count`
-//adds a static `values` method to the enum class that returns an iterable list of the values
-template<class E, class... Args>
-auto iterable_enum(pybind11::module& m, const std::string& name, Args&&... args)
-{
-    using T = std::underlying_type_t<E>;
-
-    struct Values
-    {
-    };
-    pybind11::class_<Values>(m, (name + "Values").c_str(), std::forward<Args>(args)...)
-        .def("__iter__", [](Values& /*self*/) {
-            return E(0);
-        })
-        .def("__len__", [](Values& /*self*/) {
-            return E::Count;
-        });
-
-    auto enum_class = pybind11::enum_<E>(m, name.c_str(), std::forward<Args>(args)...);
-    enum_class.def_static("values", [](){
-        return Values{};
-    });
-    enum_class.def("__next__", [](E& self) {
-        if (self < E::Count) {
-            auto current = self;
-            self = E(T(self) + T(1));
-            return current;
-        } else {
-            throw pybind11::stop_iteration();
-        }
-    });
-    return enum_class;
 }
 
 } // namespace pymio

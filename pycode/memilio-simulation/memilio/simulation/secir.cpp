@@ -19,6 +19,7 @@
 */
 
 #include "templates.h"
+#include "pybind_util.h"
 #include "compartments/simulation.h"
 #include "compartments/compartmentalmodel.h"
 #include "epidemiology/populations.h"

@@ -19,6 +19,7 @@
 */
 
 #include "templates.h"
+#include "pybind_util.h"
 #include "utils/custom_index_array.h"
 #include "utils/parameter_set.h"
 #include "utils/index.h"
