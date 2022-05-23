@@ -30,10 +30,9 @@ class Test_AnalyzeResult(unittest.TestCase):
         ts.add_time_point(0.5, np.r_[1.0])
         ts.add_time_point(1.5, np.r_[2.0])
         interpolated = secir.interpolate_simulation_result(ts)
-        self.assertEqual(interpolated.get_num_time_points(), 3)
+        self.assertEqual(interpolated.get_num_time_points(), 2)
         self.assertEqual(interpolated.get_time(0), 0.0)
         self.assertEqual(interpolated.get_time(1), 1.0)
-        self.assertEqual(interpolated.get_time(2), 2.0)
 
     def test_ensemble(self):
         ts = mio.TimeSeries(1)
