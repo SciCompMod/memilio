@@ -36,7 +36,7 @@ TEST(TestInterpolateTimeSeries, timePointsAreLinSpaced)
     ts.add_time_point(3.901, zeros);
     ts.add_time_point(4.5, zeros);
 
-    auto interpolated = mio::interpolate_simulation_result_days(ts);
+    auto interpolated = mio::interpolate_simulation_result(ts);
 
     ASSERT_THAT(interpolated.get_times(), ElementsAreLinspace(0.0, 4.0, 5));
 }
@@ -52,7 +52,7 @@ TEST(TestInterpolateTimeSeries, timeSeriesCanBeginAtAnyDay)
     ts.add_time_point(-2.7, zeros);
     ts.add_time_point(-2.5, zeros);
 
-    auto interpolated = mio::interpolate_simulation_result_days(ts);
+    auto interpolated = mio::interpolate_simulation_result(ts);
 
     ASSERT_THAT(interpolated.get_times(), ElementsAreLinspace(-5.0, -3.0, 3));
 }
@@ -69,7 +69,7 @@ TEST(TestInterpolateTimeSeries, simpleValues)
     ts.add_time_point(4.5, Vec::Constant(1, 0.6));
     ts.add_time_point(5.5, Vec::Constant(1, 0.7));
 
-    auto interpolated = mio::interpolate_simulation_result_days(ts);
+    auto interpolated = mio::interpolate_simulation_result(ts);
 
     ASSERT_THAT(interpolated.get_times(), ElementsAreLinspace(0.0, 5.0, 6));
     ASSERT_THAT(interpolated,
@@ -86,7 +86,7 @@ TEST(TestInterpolateTimeSeries, aFewMoreComplexValues)
     ts.add_time_point(1.5, (Vec(2) << 3.0, 10.0).finished());
     ts.add_time_point(2.1, (Vec(2) << 5.0, 3.0).finished());
 
-    auto interpolated = mio::interpolate_simulation_result_days(ts);
+    auto interpolated = mio::interpolate_simulation_result(ts);
 
     ASSERT_THAT(interpolated.get_times(), ElementsAreLinspace(0.0, 2.0, 3));
     ASSERT_THAT(interpolated,
@@ -105,7 +105,7 @@ TEST(TestInterpolateTimeSeries, timePointsCanMatchDayExactly)
     ts.add_time_point(2.1, Vec::Constant(1, 3.0));
     ts.add_time_point(3.0, Vec::Constant(1, 4.0));
 
-    auto interpolated = mio::interpolate_simulation_result_days(ts);
+    auto interpolated = mio::interpolate_simulation_result(ts);
 
     ASSERT_THAT(interpolated.get_times(), ElementsAreLinspace(0.0, 3.0, 4));
     ASSERT_THAT(interpolated[1], MatrixNear(Vec::Constant(1, 2.0)));
@@ -120,7 +120,7 @@ TEST(TestInterpolateTimeSeries, timePointsCanHaveDefaultTolerance)
     ts.add_time_point(1.0, zeros);
     ts.add_time_point(2.0 - 1e-15, zeros);
 
-    auto interpolated = mio::interpolate_simulation_result_days(ts);
+    auto interpolated = mio::interpolate_simulation_result(ts);
 
     ASSERT_THAT(interpolated.get_times(), ElementsAreLinspace(0.0, 2.0, 3));
 }
@@ -134,7 +134,7 @@ TEST(TestInterpolateTimeSeries, timePointsCanHaveGivenTolerance)
     ts.add_time_point(1.0, zeros);
     ts.add_time_point(2.0 - 1e-3, zeros); // within tolerance
 
-    auto interpolated = mio::interpolate_simulation_result_days(ts, tol);
+    auto interpolated = mio::interpolate_simulation_result(ts, tol);
 
     ASSERT_THAT(interpolated.get_times(), ElementsAreLinspace(1.0, 2.0, 2));
 }

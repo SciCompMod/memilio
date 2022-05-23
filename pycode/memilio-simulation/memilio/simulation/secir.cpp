@@ -122,9 +122,9 @@ std::string pretty_name<mio::AgeGroup>()
 PYBIND11_MODULE(_simulation_secir, m)
 {
     // https://github.com/pybind/pybind11/issues/1153
-    m.def("interpolate_simulation_result_days", static_cast<mio::TimeSeries<double>
+    m.def("interpolate_simulation_result", static_cast<mio::TimeSeries<double>
           (*)(const mio::TimeSeries<double>&, const double)>
-          (&mio::interpolate_simulation_result_days));
+          (&mio::interpolate_simulation_result));
 
     m.def("interpolate_simulation_result", static_cast<mio::TimeSeries<double>
           (*)(const mio::TimeSeries<double>&, const std::vector<double>&, const double)>

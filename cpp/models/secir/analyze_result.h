@@ -40,7 +40,7 @@ namespace mio
  * @param abs_tol  absolute tolerance given for doubles t0 and tmax to account for small deviations from whole days.
  * @return interpolated time series
  */
-TimeSeries<double> interpolate_simulation_result_days(const TimeSeries<double>& simulation_result, const double abs_tol = 1e-14);
+TimeSeries<double> interpolate_simulation_result(const TimeSeries<double>& simulation_result, const double abs_tol = 1e-14);
 
 /**
  * @brief interpolate time series with freely chosen time points that lie in between the time points of the given time series up to a given tolerance.
@@ -56,11 +56,11 @@ TimeSeries<double> interpolate_simulation_result(const TimeSeries<double>& simul
  * helper template, type returned by overload interpolate_simulation_result_days(T t)
  */
 template <class T>
-using InterpolateResultT = std::decay_t<decltype(interpolate_simulation_result_days(std::declval<T>()))>;
+using InterpolateResultT = std::decay_t<decltype(interpolate_simulation_result(std::declval<T>()))>;
 
 /**
  * @brief Interpolates results of all runs with evenly spaced, integer time points that represent whole days.
- * @see interpolate_simulation_result_days
+ * @see interpolate_simulation_result
  * @param ensemble_result result of multiple simulations (single TimeSeries or Graph)
  * @return interpolated time series, one (or as many as nodes in the graph) per result in the ensemble
  */
@@ -70,7 +70,7 @@ std::vector<InterpolateResultT<T>> interpolate_ensemble_results(const std::vecto
     std::vector<InterpolateResultT<T>> interpolated;
     interpolated.reserve(ensemble_results.size());
     std::transform(ensemble_results.begin(), ensemble_results.end(), std::back_inserter(interpolated), [](auto& run) {
-        return interpolate_simulation_result_days(run);
+        return interpolate_simulation_result(run);
     });
     return interpolated;
 }
@@ -115,7 +115,7 @@ interpolate_simulation_result(const Graph<SimulationNode<Simulation>, MigrationE
     interpolated.reserve(graph_result.nodes().size());
     std::transform(graph_result.nodes().begin(), graph_result.nodes().end(), std::back_inserter(interpolated),
                    [](auto& n) {
-                       return interpolate_simulation_result_days(n.property.get_result());
+                       return interpolate_simulation_result(n.property.get_result());
                    });
     return interpolated;
 }

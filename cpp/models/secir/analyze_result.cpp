@@ -26,7 +26,7 @@
 namespace mio
 {
 
-TimeSeries<double> interpolate_simulation_result_days(const TimeSeries<double>& simulation_result, const double abs_tol)
+TimeSeries<double> interpolate_simulation_result(const TimeSeries<double>& simulation_result, const double abs_tol)
 {
     const auto t0 = simulation_result.get_time(0);
     const auto t_max = simulation_result.get_last_time();

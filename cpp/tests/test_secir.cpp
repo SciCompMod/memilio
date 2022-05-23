@@ -668,13 +668,13 @@ TEST(TestSecir, testModelConstraints)
         }
     }
 
-    mio::TimeSeries<double> secihurd_interp = mio::interpolate_simulation_result_days(secihurd);
+    mio::TimeSeries<double> secihurd_interp = mio::interpolate_simulation_result(secihurd);
 
     model.parameters.set<mio::StartDay>(100);
     model.parameters.set<mio::Seasonality>(0.5);
 
     mio::TimeSeries<double> secihurd_season        = simulate(t0, tmax, dt, model);
-    mio::TimeSeries<double> secihurd_season_interp = mio::interpolate_simulation_result_days(secihurd_season);
+    mio::TimeSeries<double> secihurd_season_interp = mio::interpolate_simulation_result(secihurd_season);
 
     for (Eigen::Index i = 0; i < secihurd_interp.get_num_time_points(); i++) {
         EXPECT_LE(secihurd_season_interp.get_value(i)[3], secihurd_interp.get_value(i)[3]) << " at row " << i;
@@ -683,7 +683,7 @@ TEST(TestSecir, testModelConstraints)
     model.parameters.set<mio::StartDay>(280);
 
     mio::TimeSeries<double> secihurd_season2        = simulate(t0, tmax, dt, model);
-    mio::TimeSeries<double> secihurd_season2_interp = mio::interpolate_simulation_result_days(secihurd_season2);
+    mio::TimeSeries<double> secihurd_season2_interp = mio::interpolate_simulation_result(secihurd_season2);
 
     for (Eigen::Index i = 0; i < secihurd_interp.get_num_time_points(); i++) {
         EXPECT_GE(secihurd_season2_interp.get_value(i)[3], secihurd_interp.get_value(i)[3]) << " at row " << i;
