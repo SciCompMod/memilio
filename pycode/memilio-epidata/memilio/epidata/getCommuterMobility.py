@@ -152,7 +152,7 @@ def get_counties_center_coordinates(
 
     Keyword arguments:
     @param path_geojson geojson file which should contain the geodata for all counties in germany
-    @param out_folder Path to folder where data is written in folder out_folder/Germany.
+    @param out_folder Path to folder where data is saved
     """
 
     with open(path_geojson) as f:
