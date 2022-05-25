@@ -602,7 +602,11 @@ def get_commuter_data(setup_dict='',
         '_20' + files[0].split('-20')[1][0: 2] + '.txt', sep=' ', index=False,
         header=False)
 
-
+    # Short end for cases where no center coordinates are given.
+    # this is especially important for 'test_epidata_get_vaccination_data'
+    if isinstance(center_coordinates, str):
+        return df_commuter_migration
+        
     commuter_migration_scaled = scale_commuter_mobility(
         mat_commuter_migration, center_coordinates)
 
