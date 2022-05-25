@@ -752,8 +752,15 @@ def main():
                   'path': path}
 
     memilio_path = up(up(up(up(up(__file__)))))
-    center_coordinates = pd.read_json(os.path.join(
-        memilio_path, 'data', 'mobility' , 'county_centers_dim400.json'))
+    path_json = os.path.join(
+            memilio_path, 'data', 'mobility' , 'county_centers_dim400.json')
+    
+    if os.path.isfile(path_json):
+        center_coordinates = pd.read_json(path_json)
+    else:
+        center_coordinates = ""
+        
+
 
     get_neighbors_mobility(1001, abs_tol=0, rel_tol=0, tol_comb='or',
                            merge_eisenach=True, out_folder=dd.defaultDict['out_folder'],
