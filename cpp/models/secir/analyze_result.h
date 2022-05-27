@@ -53,7 +53,7 @@ TimeSeries<double> interpolate_simulation_result(const TimeSeries<double>& simul
 TimeSeries<double> interpolate_simulation_result(const TimeSeries<double>& simulation_result, const std::vector<double>& interpolation_times, const double abs_tol = 1e-14);
 
 /**
- * helper template, type returned by overload interpolate_simulation_result_days(T t)
+ * helper template, type returned by overload interpolate_simulation_result(T t)
  */
 template <class T>
 using InterpolateResultT = std::decay_t<decltype(interpolate_simulation_result(std::declval<T>()))>;

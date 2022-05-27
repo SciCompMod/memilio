@@ -37,7 +37,7 @@ template<typename X, typename V>
 auto linear_interpolation(const X& x_eval, const X& x_1, const X& x_2, const V& y1, const V& y2)
 {
     auto weight = (x_eval - x_1) / (x_2 - x_1);
-    return (1-weight)*y1 + weight*y2;
+    return y1 + weight * (y2 - y1);
 }
 
 } // namespace mio

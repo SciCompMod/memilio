@@ -55,33 +55,33 @@ TimeSeries<double> interpolate_simulation_result(const TimeSeries<double>& simul
     
     TimeSeries<double> interpolated(simulation_result.get_num_elements());
 
-    int pointer_interp{};
+    size_t interp_idx = 0;
     // add first time point of interpolation times in case it equals the first time point of simulation (up to tolerance)
     // this is necessary even if the tolerance is 0 due to the way the comparison in the loop is implemented (< and >=)
     if (simulation_result.get_time(0) >= interpolation_times[0]) {
         interpolated.add_time_point(interpolation_times[0], simulation_result[0]);
-        ++pointer_interp;
+        ++interp_idx;
     }
     
     //interpolate between pair of time points that lie on either side of each interpolation point
-    for (int pointer_sim = 0; pointer_sim < simulation_result.get_num_time_points() - 1 && pointer_interp < (int)interpolation_times.size();) {
+    for (Eigen::Index sim_idx = 0; sim_idx < simulation_result.get_num_time_points() - 1 && interp_idx < interpolation_times.size();) {
         //only go to next pair of time points if no time point is added.
         //otherwise check the same time points again
         //in case there is more than one interpolation point between the two time points
-        if (simulation_result.get_time(pointer_sim) < interpolation_times[pointer_interp] && simulation_result.get_time(pointer_sim + 1) >= interpolation_times[pointer_interp] )
+        if (simulation_result.get_time(sim_idx) < interpolation_times[interp_idx] && simulation_result.get_time(sim_idx + 1) >= interpolation_times[interp_idx] )
         {
-            interpolated.add_time_point(interpolation_times[pointer_interp],
-                                        linear_interpolation(interpolation_times[pointer_interp], simulation_result.get_time(pointer_sim), simulation_result.get_time(pointer_sim + 1), simulation_result[pointer_sim], simulation_result[pointer_sim + 1]));
-            ++pointer_interp;
+            interpolated.add_time_point(interpolation_times[interp_idx],
+                                        linear_interpolation(interpolation_times[interp_idx], simulation_result.get_time(sim_idx), simulation_result.get_time(sim_idx + 1), simulation_result[sim_idx], simulation_result[sim_idx + 1]));
+            ++interp_idx;
         }
         else {
-            ++pointer_sim;
+            ++sim_idx;
         }
     }
     
     // add last time point of interpolation times in case it equals the last time point of simulation (up to tolerance (which is already checked for))
-    if (pointer_interp < (int)interpolation_times.size() && simulation_result.get_last_time() < interpolation_times[pointer_interp]) {
-        interpolated.add_time_point(interpolation_times[pointer_interp], simulation_result.get_last_value());
+    if (interp_idx < interpolation_times.size() && simulation_result.get_last_time() < interpolation_times[interp_idx]) {
+        interpolated.add_time_point(interpolation_times[interp_idx], simulation_result.get_last_value());
     }
     
     return interpolated;
