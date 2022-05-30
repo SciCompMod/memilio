@@ -159,14 +159,14 @@ def impute_and_reduce_df(df_old, group_by_cols, mod_cols, impute='forward', movi
 def split_column_based_on_values(
         df_to_split, column_to_split, column_vals_name, groupby_list, new_column_labels, compute_cumsum):
     """! Splits a column in a dataframe into separate columns. For each unique value that appears in a selected column,
-    all corresponding values in another column are transfered to a new column.
+    all corresponding values in another column are transfered to a new column. If required, cumulative sum is calculated in new generated columns.
 
     @param df_to_split global pandas dataframe
     @param column_to_split identifier of the column for which separate values will define separate dataframes 
     @param column_vals_name The name of the original column which will be split into separate columns named according to new_column_labels.
     @param groupby_list The name of the original columns with which data of new_column_labels can be joined.
     @param new_column_labels New labels for resulting columns. There have to be the same amount of names and unique values as in groupby_list.
-    @param compute_cumsum Computes cumsum in new generated columns
+    @param compute_cumsum Computes cumulative sum in new generated columns
     @return a dataframe with the new splitted columns
     """
     column_identifiers = sorted(df_to_split[column_to_split].unique())
@@ -190,11 +190,9 @@ def split_column_based_on_values(
             # index of Age_RKI
             df_reduced = df_reduced.groupby(level=[groupby_list.index(
                 dd.EngEng['idCounty']), groupby_list.index(dd.EngEng['ageRKI'])]).cumsum()
-        df_reduced.reset_index()
         # joins new generated column to dataframe
         df_joined = df_reduced.reset_index().join(
             df_joined.set_index(groupby_list),
             on=groupby_list, how='outer')
-    groupby_list.append('1')
 
     return new_column_labels, df_joined
