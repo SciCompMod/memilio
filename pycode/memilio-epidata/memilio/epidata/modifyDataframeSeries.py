@@ -170,7 +170,7 @@ def split_column_based_on_values(
     @return a dataframe with the new splitted columns
     """
     column_identifiers = sorted(df_to_split[column_to_split].unique())
-    i = len(new_column_labels)-1
+    i = 2
     while len(column_identifiers) > len(new_column_labels):
         new_column_labels.append(new_column_labels[-1]+'_'+str(i))
         i+=1
