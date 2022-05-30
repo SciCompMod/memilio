@@ -52,8 +52,8 @@ class Test_defaultDict(unittest.TestCase):
         date(2020, 4, 24): 'start_date',
         'json_timeasstring': 'file_format'
     }
-    test_values_notin_dd = ('no_raw', 'impute_dates', 'split_berlin', 
-                            'update_data', 'make_plot')
+    test_values_notin_dd = ('no_raw', 'impute_dates', 'split_berlin',
+                            'make_plot')
 
     def test_invert_dict(self):
         inv_county = dd.invert_dict(dd.County)

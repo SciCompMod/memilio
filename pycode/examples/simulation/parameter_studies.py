@@ -21,7 +21,7 @@
 import numpy as np
 import memilio.simulation as mio
 import memilio.simulation.secir as secir
-
+import argparse
 
 def parameter_study():
     # setup basic parameters
@@ -59,8 +59,8 @@ def parameter_study():
 
         model.parameters.InfectionProbabilityFromContact[group].set_distribution(
             mio.ParameterDistributionUniform(0.1, 0.2))
-        model.parameters.AsymptoticCasesPerInfectious[group] = 0.09
-        model.parameters.RiskOfInfectionFromSympomatic[group] = 0.25
+        model.parameters.AsymptomaticCasesPerInfectious[group] = 0.09
+        model.parameters.RiskOfInfectionFromSymptomatic[group] = 0.25
         model.parameters.HospitalizedCasesPerInfectious[group] = 0.2
         model.parameters.ICUCasesPerHospitalized[group] = 0.25
         model.parameters.DeathsPerICU[group] = 0.3
@@ -79,12 +79,10 @@ def parameter_study():
         mio.Damping(np.ones((num_groups, num_groups))*0.7, 30.0))
     print(model.parameters.ContactPatterns.cont_freq_mat[1].baseline)
     # process the result of one run
-    parameter_study.c = 0
 
     def handle_result(graph):
-
         group = secir.AgeGroup(0)
-        print("run {} with infection rate {:.2G}".format(parameter_study.c, graph.get_node(
+        print("run {} with infection rate {:.2G}".format(handle_result.c, graph.get_node(
             0).property.model.parameters.InfectionProbabilityFromContact[group].value))
         print("compartments at t = {}:".format(
             graph.get_node(0).property.result.get_time(0)))
@@ -92,7 +90,8 @@ def parameter_study():
         print("compartments at t = {}:".format(
             graph.get_node(0).property.result.get_last_time()))
         print(graph.get_node(0).property.result.get_last_value())
-        parameter_study.c += 1
+        handle_result.c += 1
+    handle_result.c = 0
 
     # study the effect of different infection rates
 
@@ -107,6 +106,9 @@ def parameter_study():
     study = secir.ParameterStudy(graph, t0=1, tmax=10, dt=0.5, num_runs=3)
     study.run(handle_result)
 
-
 if __name__ == "__main__":
+    arg_parser = argparse.ArgumentParser(
+        'parameter_studies', 
+        description = 'Example demonstrating ensemble runs of a SECIR model.')
+    args = arg_parser.parse_args()
     parameter_study()

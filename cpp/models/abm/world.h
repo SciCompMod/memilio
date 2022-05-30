@@ -36,6 +36,8 @@
 
 namespace mio
 {
+namespace abm
+{
 
 /**
  * The world of the simulation.
@@ -94,7 +96,7 @@ public:
      * @param state initial infection state of the person
      * @return reference to the newly created person
      */
-    Person& add_person(LocationId id, InfectionState infection_state, AbmAgeGroup age = AbmAgeGroup::Age15to34);
+    Person& add_person(LocationId id, InfectionState infection_state, AgeGroup age = AgeGroup::Age15to34);
 
     /**
      * Sets the current infection state of the person.
@@ -152,9 +154,9 @@ public:
     /** 
      *get migration parameters
      */
-    AbmMigrationParameters& get_migration_parameters();
+    MigrationParameters& get_migration_parameters();
 
-    const AbmMigrationParameters& get_migration_parameters() const;
+    const MigrationParameters& get_migration_parameters() const;
 
     /** 
      *get global infection parameters
@@ -182,6 +184,7 @@ public:
      * the migration rules regarding hospitalization/ICU/quarantine are always used
      */
     void use_migration_rules(bool param);
+    bool use_migration_rules() const;
 
 private:
     void interaction(TimePoint t, TimeSpan dt);
@@ -190,12 +193,13 @@ private:
     std::vector<std::unique_ptr<Person>> m_persons;
     std::vector<std::vector<Location>> m_locations;
     GlobalInfectionParameters m_infection_parameters;
-    AbmMigrationParameters m_migration_parameters;
+    MigrationParameters m_migration_parameters;
     GlobalTestingParameters m_testing_parameters;
     TripList m_trip_list;
     bool m_use_migration_rules;
 };
 
+} // namespace abm
 } // namespace mio
 
 #endif

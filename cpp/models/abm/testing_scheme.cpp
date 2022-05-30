@@ -26,6 +26,8 @@
 
 namespace mio
 {
+namespace abm
+{
 
 TestingScheme::TestingScheme(TimeSpan interval, double probability)
     : m_time_interval(interval)
@@ -49,4 +51,5 @@ bool TestingScheme::run_scheme(Person& person, const GlobalTestingParameters& pa
     return true;
 }
 
+} // namespace abm
 } // namespace mio

@@ -130,7 +130,7 @@ PYBIND11_MODULE(_simulation_secir, m)
     m.def("ensemble_mean", &mio::ensemble_mean);
     m.def("ensemble_percentile", &mio::ensemble_percentile);
 
-    py::enum_<mio::InfectionState>(m, "InfectionState")
+    pymio::iterable_enum<mio::InfectionState>(m, "InfectionState")
         .value("Susceptible", mio::InfectionState::Susceptible)
         .value("Exposed", mio::InfectionState::Exposed)
         .value("Carrier", mio::InfectionState::Carrier)
@@ -138,9 +138,7 @@ PYBIND11_MODULE(_simulation_secir, m)
         .value("Hospitalized", mio::InfectionState::Hospitalized)
         .value("ICU", mio::InfectionState::ICU)
         .value("Recovered", mio::InfectionState::Recovered)
-        .value("Dead", mio::InfectionState::Dead)
-        .value("Count", mio::InfectionState::Count)
-        .export_values();
+        .value("Dead", mio::InfectionState::Dead);
 
     pymio::bind_Index<mio::InfectionState>(m, "Index_InfectionState");
     pymio::bind_Index<mio::AgeGroup>(m, "Index_AgeGroup");

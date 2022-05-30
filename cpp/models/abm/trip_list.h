@@ -31,6 +31,8 @@
 
 namespace mio
 {
+namespace abm
+{
 
 /**
  * A trip describes a migration from one location to another location.
@@ -62,27 +64,27 @@ class TripList
 {
 public:
     /**
-     * construct Migration data
+     * Construct empty trip list.
      */
     TripList();
 
     /*
-     * returns the next trip
+     * Get the next trip.
      */
     const Trip& get_next_trip() const;
 
     /*
-     * returns the time at which the next trip will happen
+     * Get the time at which the next trip will happen.
      */
     TimePoint get_next_trip_time() const;
 
     /**
-     * add a trip to migration data
+     * Add a trip to migration data.
      */
     void add_trip(Trip trip);
 
     /*
-     * increases m_current_index by one
+     * Increment the current index to select the next trip.
      */
     void increase_index()
     {
@@ -90,7 +92,7 @@ public:
     }
 
     /* 
-     * returns the length of the TripList
+     * Get the length of the TripList.
      */
     size_t num_trips() const
     {
@@ -98,7 +100,7 @@ public:
     }
 
     /* 
-     * returns currents index
+     * Get the current index.
      */
     uint32_t get_current_index() const
     {
@@ -109,6 +111,8 @@ private:
     std::vector<Trip> m_trips;
     uint32_t m_current_index;
 };
+
+} // namespace abm
 } // namespace mio
 
 #endif
