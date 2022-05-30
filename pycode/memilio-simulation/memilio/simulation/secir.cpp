@@ -18,7 +18,6 @@
 * limitations under the License.
 */
 
-#include "templates.h"
 #include "pybind_util.h"
 #include "compartments/simulation.h"
 #include "compartments/compartmentalmodel.h"
@@ -27,6 +26,7 @@
 #include "utils/parameter_set.h"
 #include "utils/index.h"
 #include "mobility/graph_simulation.h"
+#include "mobility/mobility.h"
 #include "secir/secir.h"
 #include "secir/parameter_studies.h"
 #include "secir/analyze_result.h"

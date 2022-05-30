@@ -1,24 +1,14 @@
-#ifndef PYMIO_TEMPLATES_H
-#define PYMIO_TEMPLATES_H
+#ifndef PYMIO_MOBILITY_H
+#define PYMIO_MOBILITY_H
 
-#include "memilio/utils/parameter_set.h"
-#include "memilio/utils/custom_index_array.h"
-#include "memilio/epidemiology/populations.h"
-#include "memilio/epidemiology/contact_matrix.h"
-#include "memilio/compartments/simulation.h"
 #include "memilio/mobility/mobility.h"
-#include "pickle_serializer.h"
-#include "pybind_util.h"
+#include "memilio/mobility/graph.h"
 
 #include "pybind11/pybind11.h"
-#include "pybind11/stl.h"
-#include "pybind11/operators.h"
-#include "pybind11/eigen.h"
-#include "pybind11/functional.h"
-#include <type_traits>
 
 namespace pymio
 {
+
 template <class Simulation>
 void bind_MigrationGraph(pybind11::module& m, std::string const& name)
 {
@@ -59,4 +49,4 @@ void bind_MigrationGraph(pybind11::module& m, std::string const& name)
 
 } // namespace pymio
 
-#endif //PYMIO_TEMPLATES_H
+#endif //PYMIO_MOBILITY_H

@@ -1,6 +1,7 @@
 #ifndef PYMIO_PYBIND_UTIL_H
 #define PYMIO_PYBIND_UTIL_H
 
+#include "memilio/math/matrix_shape.h"
 #include "pickle_serializer.h"
 
 #include "pybind11/pybind11.h"
