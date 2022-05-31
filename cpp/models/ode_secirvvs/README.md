@@ -2,7 +2,7 @@
 
 This model extends the basic SECIR model by adding variants of COVID-19 and vaccinations. 
 
-Vaccinations are modelled by adding compartments for partially and fully vaccinated persons. Persons that are recover from the disease are treated as fully vaccinated from that time forward. Vaccinated persons are added on every day of simulation, see parameters `DailyFirstVaccination` and `DailyFullVaccination`. Vaccinated persons are less likely to develop symptoms. E.g., the probability to develop symptoms when carrying the virus is the base probability from the SECIR model multiplied with the `InfectedFactorPartiallyImmune` parameter.
+Vaccinations are modelled by adding compartments for partially and fully vaccinated persons. Persons that are recover from the disease are treated as fully vaccinated from that time forward. Vaccinated persons are added on every day of simulation, see parameters `DailyFirstVaccination` and `DailyFullVaccination`. Vaccinated persons are less likely to develop symptoms. E.g., the probability to develop symptoms when carrying the virus is the base probability from the SECIR model multiplied with the `InfectedFactorPartialImmunity` parameter.
 
 The ratio of variants changes over time, which affects the average transmissiblity of the disease. Infectiousness of different variants can be set in the parameters.
 

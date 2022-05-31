@@ -63,10 +63,10 @@ namespace osecirvvs
         for (size_t node = 0; node < num_nodes; node++) {
             for (auto i = AgeGroup(0); i < AgeGroup(num_groups); i++) {
                 //Population
-                for (size_t compart = 0; compart < (size_t)InfectionState::Count; ++compart) {
+                for (auto compart = Index<InfectionState>(0); compart < InfectionState::Count; ++compart) {
                     param_percentil(
                         node, [ compart, i ](auto&& model) -> auto& {
-                            return model.populations[{i, (InfectionState)compart}];
+                            return model.populations[{i, compart}];
                         });
                 }
                 // times
@@ -97,6 +97,10 @@ namespace osecirvvs
                 //probs
                 param_percentil(
                     node, [i](auto&& model) -> auto& {
+                        return model.parameters.template get<InfectionProbabilityFromContact>()[i];
+                    });
+                param_percentil(
+                    node, [i](auto&& model) -> auto& {
                         return model.parameters.template get<RelativeCarrierInfectability>()[i];
                     });
                 param_percentil(
@@ -121,12 +125,48 @@ namespace osecirvvs
                     });
                 param_percentil(
                     node, [i](auto&& model) -> auto& { return model.parameters.template get<DeathsPerICU>()[i]; });
+                //vaccinations
+                param_percentil(
+                    node, [i](auto&& model) -> auto& { return model.parameters.template get<ExposedFactorPartialImmunity>()[i]; });
+                param_percentil(
+                    node, [i](auto&& model) -> auto& { return model.parameters.template get<ExposedFactorImprovedImmunity>()[i]; });
+                param_percentil(
+                    node, [i](auto&& model) -> auto& { return model.parameters.template get<InfectedFactorPartialImmunity>()[i]; });
+                param_percentil(
+                    node, [i](auto&& model) -> auto& { return model.parameters.template get<InfectedFactorImprovedImmunity>()[i]; });
+                param_percentil(
+                    node, [i](auto&& model) -> auto& { return model.parameters.template get<HospitalizedFactorPartialImmunity>()[i]; });
+                param_percentil(
+                    node, [i](auto&& model) -> auto& { return model.parameters.template get<HospitalizedFactorImprovedImmunity>()[i]; });
+                param_percentil(
+                    node, [i](auto&& model) -> auto& { return model.parameters.template get<InfectiousTimeFactorImmune>()[i]; });
+                param_percentil(
+                    node, [i](auto&& model) -> auto& { return model.parameters.template get<VaccinationGap>()[i]; });
+                param_percentil(
+                    node, [i](auto&& model) -> auto& { return model.parameters.template get<DaysUntilEffective>()[i]; });
+                param_percentil(
+                    node, [i](auto&& model) -> auto& { return model.parameters.template get<DaysUntilEffectiveFull>()[i]; });
+                for (auto day = SimulationDay(0);
+                     day < get<1>(ensemble_params[0][0].parameters.template get<DailyFirstVaccination>().size());
+                     ++day) {
+                    param_percentil(
+                        node, [i, day](auto&& model) -> auto& { return model.parameters.template get<DailyFirstVaccination>()[{i, day}]; });
+                    param_percentil(
+                        node, [i, day](auto&& model) -> auto& { return model.parameters.template get<DailyFullVaccination>()[{i, day}]; });                    
+                }
+                //virus variants
+                param_percentil(
+                    node, [i](auto&& model) -> auto& { return model.parameters.template get<BaseInfectiousnessB161>()[i]; });
+                param_percentil(
+                    node, [i](auto&& model) -> auto& { return model.parameters.template get<BaseInfectiousnessB117>()[i]; });
             }
             // group independent params
             param_percentil(
                 node, [](auto&& model) -> auto& { return model.parameters.template get<Seasonality>(); });
             param_percentil(
                 node, [](auto&& model) -> auto& { return model.parameters.template get<TestAndTraceCapacity>(); });
+            param_percentil(
+                node, [](auto&& model) -> auto& { return model.parameters.template get<ICUCapacity>(); });
 
             for (size_t run = 0; run < num_runs; run++) {
 

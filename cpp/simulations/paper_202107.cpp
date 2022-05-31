@@ -212,15 +212,15 @@ mio::IOResult<void> set_covid_parameters(mio::osecirvvs::Parameters& params, boo
                                       prob_hosp_icu_max);
     array_assign_uniform_distribution(params.get<mio::osecirvvs::DeathsPerICU>(), prob_icu_dead_min, prob_icu_dead_max);
 
-    array_assign_uniform_distribution(params.get<mio::osecirvvs::ExposedFactorPartiallyImmune>(), reduc_vacc_exp_min, reduc_vacc_exp_max);
-    array_assign_uniform_distribution(params.get<mio::osecirvvs::ExposedFactorFullyImmune>(), reduc_immune_exp_min,
+    array_assign_uniform_distribution(params.get<mio::osecirvvs::ExposedFactorPartialImmunity>(), reduc_vacc_exp_min, reduc_vacc_exp_max);
+    array_assign_uniform_distribution(params.get<mio::osecirvvs::ExposedFactorImprovedImmunity>(), reduc_immune_exp_min,
                                       reduc_immune_exp_max);
-    array_assign_uniform_distribution(params.get<mio::osecirvvs::InfectedFactorPartiallyImmune>(), reduc_vacc_inf_min, reduc_vacc_inf_max);
-    array_assign_uniform_distribution(params.get<mio::osecirvvs::InfectedFactorFullyImmune>(), reduc_immune_inf_min,
+    array_assign_uniform_distribution(params.get<mio::osecirvvs::InfectedFactorPartialImmunity>(), reduc_vacc_inf_min, reduc_vacc_inf_max);
+    array_assign_uniform_distribution(params.get<mio::osecirvvs::InfectedFactorImprovedImmunity>(), reduc_immune_inf_min,
                                       reduc_immune_inf_max);
-    array_assign_uniform_distribution(params.get<mio::osecirvvs::HospitalizedFactorPartiallyImmune>(), reduc_vacc_hosp_min,
+    array_assign_uniform_distribution(params.get<mio::osecirvvs::HospitalizedFactorPartialImmunity>(), reduc_vacc_hosp_min,
                                       reduc_vacc_hosp_max);
-    array_assign_uniform_distribution(params.get<mio::osecirvvs::HospitalizedFactorFullyImmune>(), reduc_immune_hosp_min,
+    array_assign_uniform_distribution(params.get<mio::osecirvvs::HospitalizedFactorImprovedImmunity>(), reduc_immune_hosp_min,
                                       reduc_immune_hosp_max);
     array_assign_uniform_distribution(params.get<mio::osecirvvs::InfectiousTimeFactorImmune>(), reduc_mild_rec_time,
                                       reduc_mild_rec_time);
@@ -495,15 +495,15 @@ void set_synthetic_population_data(std::vector<mio::osecirvvs::Model>& counties)
         nb_exp_t0 = (double)((county_idx % 10 + 1) * 3);
 
         for (mio::AgeGroup i = 0; i < counties[county_idx].parameters.get_num_groups(); i++) {
-            counties[county_idx].populations[{i, mio::osecirvvs::InfectionState::Exposed}]      = nb_exp_t0;
-            counties[county_idx].populations[{i, mio::osecirvvs::InfectionState::Carrier}]      = nb_car_t0;
-            counties[county_idx].populations[{i, mio::osecirvvs::InfectionState::Infected}]     = nb_inf_t0;
-            counties[county_idx].populations[{i, mio::osecirvvs::InfectionState::Hospitalized}] = nb_hosp_t0;
-            counties[county_idx].populations[{i, mio::osecirvvs::InfectionState::ICU}]          = nb_icu_t0;
+            counties[county_idx].populations[{i, mio::osecirvvs::InfectionState::ExposedNaive}]      = nb_exp_t0;
+            counties[county_idx].populations[{i, mio::osecirvvs::InfectionState::CarrierNaive}]      = nb_car_t0;
+            counties[county_idx].populations[{i, mio::osecirvvs::InfectionState::InfectedNaive}]     = nb_inf_t0;
+            counties[county_idx].populations[{i, mio::osecirvvs::InfectionState::HospitalizedNaive}] = nb_hosp_t0;
+            counties[county_idx].populations[{i, mio::osecirvvs::InfectionState::ICUNaive}]          = nb_icu_t0;
             counties[county_idx].populations[{i, mio::osecirvvs::InfectionState::Recovered}]    = nb_rec_t0;
             counties[county_idx].populations[{i, mio::osecirvvs::InfectionState::Dead}]         = nb_dead_t0;
             counties[county_idx].populations.set_difference_from_group_total<mio::AgeGroup>(
-                {i, mio::osecirvvs::InfectionState::Susceptible}, nb_total_t0);
+                {i, mio::osecirvvs::InfectionState::SusceptibleNaive}, nb_total_t0);
         }
     }
 }
@@ -594,18 +594,18 @@ mio::IOResult<void> set_edges(const fs::path& data_dir,
         return mio::failure(mio::StatusCode::InvalidValue, "Migration matrices not the correct size.");
     }
 
-    auto migrating_compartments = {mio::osecirvvs::InfectionState::Susceptible,
-                                   mio::osecirvvs::InfectionState::Exposed,
-                                   mio::osecirvvs::InfectionState::Carrier,
-                                   mio::osecirvvs::InfectionState::Infected,
+    auto migrating_compartments = {mio::osecirvvs::InfectionState::SusceptibleNaive,
+                                   mio::osecirvvs::InfectionState::ExposedNaive,
+                                   mio::osecirvvs::InfectionState::CarrierNaive,
+                                   mio::osecirvvs::InfectionState::InfectedNaive,
                                    mio::osecirvvs::InfectionState::Recovered,
-                                   mio::osecirvvs::InfectionState::SusceptiblePartiallyImmune,
-                                   mio::osecirvvs::InfectionState::ExposedPartiallyImmune,
-                                   mio::osecirvvs::InfectionState::CarrierPartiallyImmune,
-                                   mio::osecirvvs::InfectionState::InfectedPartiallyImmune,
-                                   mio::osecirvvs::InfectionState::ExposedFullyImmune,
-                                   mio::osecirvvs::InfectionState::CarrierFullyImmune,
-                                   mio::osecirvvs::InfectionState::InfectedFullyImmune};
+                                   mio::osecirvvs::InfectionState::SusceptiblePartialImmunity,
+                                   mio::osecirvvs::InfectionState::ExposedPartialImmunity,
+                                   mio::osecirvvs::InfectionState::CarrierPartialImmunity,
+                                   mio::osecirvvs::InfectionState::InfectedPartialImmunity,
+                                   mio::osecirvvs::InfectionState::ExposedImprovedImmunity,
+                                   mio::osecirvvs::InfectionState::CarrierImprovedImmunity,
+                                   mio::osecirvvs::InfectionState::InfectedImprovedImmunity};
     for (size_t county_idx_i = 0; county_idx_i < params_graph.nodes().size(); ++county_idx_i) {
         for (size_t county_idx_j = 0; county_idx_j < params_graph.nodes().size(); ++county_idx_j) {
             auto& populations = params_graph.nodes()[county_idx_i].property.populations;

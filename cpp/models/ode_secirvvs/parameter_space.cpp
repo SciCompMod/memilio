@@ -34,20 +34,20 @@ namespace osecirvvs
         for (auto i = AgeGroup(0); i < model.parameters.get_num_groups(); i++) {
             double group_total = model.populations.get_group_total(i);
 
-            model.populations[{i, InfectionState::Exposed}].draw_sample();
-            model.populations[{i, InfectionState::Carrier}].draw_sample();
-            model.populations[{i, InfectionState::Infected}].draw_sample();
-            model.populations[{i, InfectionState::Hospitalized}].draw_sample();
-            model.populations[{i, InfectionState::ICU}].draw_sample();
+            model.populations[{i, InfectionState::ExposedNaive}].draw_sample();
+            model.populations[{i, InfectionState::CarrierNaive}].draw_sample();
+            model.populations[{i, InfectionState::InfectedNaive}].draw_sample();
+            model.populations[{i, InfectionState::HospitalizedNaive}].draw_sample();
+            model.populations[{i, InfectionState::ICUNaive}].draw_sample();
             model.populations[{i, InfectionState::Recovered}].draw_sample();
 
             // no sampling for dead and total numbers
             // [...]
 
-            model.populations[{i, InfectionState::Susceptible}] = 0;
+            model.populations[{i, InfectionState::SusceptibleNaive}] = 0;
             double group_total_dummy                             = model.populations.get_group_total(i);
             if (group_total_dummy < group_total) {
-                model.populations.set_difference_from_group_total<AgeGroup>({i, InfectionState::Susceptible},
+                model.populations.set_difference_from_group_total<AgeGroup>({i, InfectionState::SusceptibleNaive},
                                                                             group_total);
             }
             else {
@@ -57,7 +57,7 @@ namespace osecirvvs
                 assert(std::abs(group_total - model.populations.get_group_total(i)) < 1e-10);
             }
 
-            model.populations.set_difference_from_group_total<AgeGroup>({i, InfectionState::Susceptible},
+            model.populations.set_difference_from_group_total<AgeGroup>({i, InfectionState::SusceptibleNaive},
                                                                         model.populations.get_group_total(i));
         }
     }
@@ -75,12 +75,12 @@ namespace osecirvvs
         model.parameters.get<RiskOfInfectionFromSympomatic>()[AgeGroup(0)].draw_sample();
         model.parameters.get<MaxRiskOfInfectionFromSympomatic>()[AgeGroup(0)].draw_sample();
 
-        model.parameters.get<ExposedFactorPartiallyImmune>()[AgeGroup(0)].draw_sample();
-        model.parameters.get<ExposedFactorFullyImmune>()[AgeGroup(0)].draw_sample();
-        model.parameters.get<InfectedFactorPartiallyImmune>()[AgeGroup(0)].draw_sample();
-        model.parameters.get<InfectedFactorFullyImmune>()[AgeGroup(0)].draw_sample();
-        model.parameters.get<HospitalizedFactorPartiallyImmune>()[AgeGroup(0)].draw_sample();
-        model.parameters.get<HospitalizedFactorFullyImmune>()[AgeGroup(0)].draw_sample();
+        model.parameters.get<ExposedFactorPartialImmunity>()[AgeGroup(0)].draw_sample();
+        model.parameters.get<ExposedFactorImprovedImmunity>()[AgeGroup(0)].draw_sample();
+        model.parameters.get<InfectedFactorPartialImmunity>()[AgeGroup(0)].draw_sample();
+        model.parameters.get<InfectedFactorImprovedImmunity>()[AgeGroup(0)].draw_sample();
+        model.parameters.get<HospitalizedFactorPartialImmunity>()[AgeGroup(0)].draw_sample();
+        model.parameters.get<HospitalizedFactorImprovedImmunity>()[AgeGroup(0)].draw_sample();
         model.parameters.get<InfectiousTimeFactorImmune>()[AgeGroup(0)].draw_sample();
 
         for (auto i = AgeGroup(0); i < model.parameters.get_num_groups(); i++) {
@@ -97,12 +97,12 @@ namespace osecirvvs
             model.parameters.get<MaxRiskOfInfectionFromSympomatic>()[i] =
                 model.parameters.get<MaxRiskOfInfectionFromSympomatic>()[AgeGroup(0)];
 
-            model.parameters.get<ExposedFactorPartiallyImmune>()[i]     = model.parameters.get<ExposedFactorPartiallyImmune>()[AgeGroup(0)];
-            model.parameters.get<ExposedFactorFullyImmune>()[i]   = model.parameters.get<ExposedFactorFullyImmune>()[AgeGroup(0)];
-            model.parameters.get<InfectedFactorPartiallyImmune>()[i]     = model.parameters.get<InfectedFactorPartiallyImmune>()[AgeGroup(0)];
-            model.parameters.get<InfectedFactorFullyImmune>()[i]   = model.parameters.get<InfectedFactorFullyImmune>()[AgeGroup(0)];
-            model.parameters.get<HospitalizedFactorPartiallyImmune>()[i]    = model.parameters.get<HospitalizedFactorPartiallyImmune>()[AgeGroup(0)];
-            model.parameters.get<HospitalizedFactorFullyImmune>()[i]  = model.parameters.get<HospitalizedFactorFullyImmune>()[AgeGroup(0)];
+            model.parameters.get<ExposedFactorPartialImmunity>()[i]     = model.parameters.get<ExposedFactorPartialImmunity>()[AgeGroup(0)];
+            model.parameters.get<ExposedFactorImprovedImmunity>()[i]   = model.parameters.get<ExposedFactorImprovedImmunity>()[AgeGroup(0)];
+            model.parameters.get<InfectedFactorPartialImmunity>()[i]     = model.parameters.get<InfectedFactorPartialImmunity>()[AgeGroup(0)];
+            model.parameters.get<InfectedFactorImprovedImmunity>()[i]   = model.parameters.get<InfectedFactorImprovedImmunity>()[AgeGroup(0)];
+            model.parameters.get<HospitalizedFactorPartialImmunity>()[i]    = model.parameters.get<HospitalizedFactorPartialImmunity>()[AgeGroup(0)];
+            model.parameters.get<HospitalizedFactorImprovedImmunity>()[i]  = model.parameters.get<HospitalizedFactorImprovedImmunity>()[AgeGroup(0)];
             model.parameters.get<InfectiousTimeFactorImmune>()[i] = model.parameters.get<InfectiousTimeFactorImmune>()[AgeGroup(0)];
 
             //age dependent
