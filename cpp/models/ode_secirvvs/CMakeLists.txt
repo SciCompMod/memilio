@@ -1,7 +1,7 @@
 add_library(ode_secirvvs
-    infection_state.h
     analyze_result.h
     analyze_result.cpp
+    infection_state.h
     parameter_space.h
     parameter_space.cpp
     parameters.h
