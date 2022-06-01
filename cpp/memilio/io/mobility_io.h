@@ -125,7 +125,7 @@ IOResult<void> write_graph(const Graph<Model, MigrationParameters>& graph, const
 
 /**
  * @brief reads graph json files and returns a simulation graph.
- * See write_graph for information of expected files.
+ * See write_graph() for information of expected files.
  * @tparam the type of the simulation model.
  * @param directory directory from where graph should be read.
  */
