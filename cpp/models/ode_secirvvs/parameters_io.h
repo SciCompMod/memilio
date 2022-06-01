@@ -17,8 +17,8 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
-#ifndef SECIRV_PARAMETERS_IO_H
-#define SECIRV_PARAMETERS_IO_H
+#ifndef ODESECIRVVS_PARAMETERS_IO_H
+#define ODESECIRVVS_PARAMETERS_IO_H
 
 #include "memilio/config.h"
 #include "memilio/io/epi_data.h"
@@ -1165,4 +1165,4 @@ namespace osecirvvs
 
 #endif // MEMILIO_HAS_JSONCPP
 
-#endif // SECIRV_PARAMETERS_IO_H
+#endif // ODESECIRVVS_PARAMETERS_IO_H

@@ -17,8 +17,8 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
-#ifndef MEMILIO_SECIR_VACC_ANALYZE_RESULT_H
-#define MEMILIO_SECIR_VACC_ANALYZE_RESULT_H
+#ifndef ODESECIRVVS_ANALYZE_RESULT_H
+#define ODESECIRVVS_ANALYZE_RESULT_H
 
 #include "ode_secirvvs/model.h"
 #include "memilio/data/analyze_result.h"
@@ -184,4 +184,4 @@ namespace osecirvvs
 } // namespace osecirvvs
 } // namespace mio
 
-#endif //MEMILIO_SECIR_VACC_ANALYZE_RESULT_H
+#endif //ODESECIRVVS

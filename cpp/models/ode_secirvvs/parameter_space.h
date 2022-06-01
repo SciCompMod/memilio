@@ -17,8 +17,8 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
-#ifndef PARAMETER_SPACE_H
-#define PARAMETER_SPACE_H
+#ifndef ODESECIRVVS_PARAMETER_SPACE_H
+#define ODESECIRVVS_PARAMETER_SPACE_H
 
 #include "memilio/mobility/mobility.h"
 #include "memilio/utils/memory.h"
@@ -59,4 +59,4 @@ namespace osecirvvs
 } // namespace osecirvvs
 } // namespace mio
 
-#endif // PARAMETER_SPACE_H
+#endif // ODESECIRVVS_PARAMETER_SPACE_H

@@ -17,8 +17,8 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
-#ifndef SECIR_H
-#define SECIR_H
+#ifndef ODESECIRVVS_MODEL_H
+#define ODESECIRVVS_MODEL_H
 
 #include "memilio/compartments/compartmentalmodel.h"
 #include "memilio/compartments/simulation.h"
@@ -799,4 +799,4 @@ namespace osecirvvs
 } // namespace osecirvvs
 } // namespace mio
 
-#endif
+#endif //ODESECIRVVS_MODEL_H
