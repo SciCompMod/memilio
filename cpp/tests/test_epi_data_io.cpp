@@ -59,7 +59,7 @@ TEST(TestEpiDataIo, read_rki) {
     ASSERT_EQ(rki_data[0].age_group, mio::AgeGroup(5));
     ASSERT_EQ(rki_data[0].date, mio::Date(2021, 12, 1));
     ASSERT_EQ(rki_data[0].num_confirmed, 1);
-    ASSERT_EQ(rki_data[0].num_deceased, 2);
+    ASSERT_EQ(rki_data[0].num_deaths, 2);
     ASSERT_EQ(rki_data[0].num_recovered, 3);
     ASSERT_EQ(rki_data[0].county_id, mio::regions::de::CountyId(1001));
     ASSERT_EQ(rki_data[0].state_id, boost::none);
@@ -67,7 +67,7 @@ TEST(TestEpiDataIo, read_rki) {
     ASSERT_EQ(rki_data[1].age_group, mio::AgeGroup(0));
     ASSERT_EQ(rki_data[1].date, mio::Date(2021, 12, 2));
     ASSERT_EQ(rki_data[1].num_confirmed, 3);
-    ASSERT_EQ(rki_data[1].num_deceased, 4);
+    ASSERT_EQ(rki_data[1].num_deaths, 4);
     ASSERT_EQ(rki_data[1].num_recovered, 5);
     ASSERT_EQ(rki_data[1].county_id, mio::regions::de::CountyId(1001));
     ASSERT_EQ(rki_data[1].state_id, boost::none);
@@ -212,10 +212,10 @@ TEST(TestEpiData, vaccination_data)
     ASSERT_EQ(vacc_data[0].date, mio::Date(2021, 12, 1));
     ASSERT_EQ(vacc_data[0].age_group, mio::AgeGroup(1));
     ASSERT_EQ(vacc_data[0].county_id, mio::regions::de::CountyId(1011));
-    ASSERT_EQ(vacc_data[0].num_full, 23.05); 
+    ASSERT_EQ(vacc_data[0].num_vaccinations_completed, 23.05); 
 
     ASSERT_EQ(vacc_data[1].date, mio::Date(2021, 12, 2));
     ASSERT_EQ(vacc_data[1].age_group, mio::AgeGroup(5));
     ASSERT_EQ(vacc_data[1].county_id, mio::regions::de::CountyId(1012));
-    ASSERT_EQ(vacc_data[1].num_full, 12.0); 
+    ASSERT_EQ(vacc_data[1].num_vaccinations_completed, 12.0); 
 }

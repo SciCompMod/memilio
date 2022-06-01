@@ -58,12 +58,12 @@ namespace mio
 namespace details
 {
     template<class EpiDataEntry>
-    int get_region_id(const EpiDataEntry& rki_entry)
+    int get_region_id(const EpiDataEntry& entry)
     {
-        return rki_entry.state_id ? rki_entry.state_id->get() : (rki_entry.county_id ? rki_entry.county_id->get() : 0);
+        return entry.state_id ? entry.state_id->get() : (entry.county_id ? entry.county_id->get() : 0);
     }
 
-    //used to compare RkiEntry to integer ids
+    //used to compare ConfirmedCasesDataEntry to integer ids
     int get_region_id(int id)
     {
         return id;
@@ -198,7 +198,7 @@ namespace details
                 // -R10 - R6 - R7
                 if (date_df ==
                     offset_date_by_days(date, -t_icu_to_dead[age] - t_inf_to_hosp[age] - t_hosp_to_icu[age])) {
-                    num_death[age] += region_entry.num_deceased;
+                    num_death[age] += region_entry.num_deaths;
                 }
                 if (read_icu) {
                     // -R6 - R7 - R7
@@ -226,18 +226,18 @@ namespace details
             auto& num_death = vnum_death[region_idx];
             auto& num_icu   = vnum_icu[region_idx];
 
-            for (size_t i = 0; i < StringRkiAgeGroup::age_group_names.size(); i++) {
+            for (size_t i = 0; i < ConfirmedCasesDataEntry::age_group_names.size(); i++) {
                 auto try_fix_constraints = [region, i](double& value, double error, auto str) {
                     if (value < error) {
                         //this should probably return a failure
                         //but the algorithm is not robust enough to avoid large negative values and there are tests that rely on it
                         log_error("{:s} for age group {:s} is {:.4f} for region {:d}, exceeds expected negative value.",
-                                  str, StringRkiAgeGroup::age_group_names[i], value, region);
+                                  str, ConfirmedCasesDataEntry::age_group_names[i], value, region);
                         value = 0.0;
                     }
                     else if (value < 0) {
                         log_info("{:s} for age group {:s} is {:.4f} for region {:d}, automatically corrected", str,
-                                 StringRkiAgeGroup::age_group_names[i], value, region);
+                                 ConfirmedCasesDataEntry::age_group_names[i], value, region);
                         value = 0.0;
                     }
                 };
@@ -379,7 +379,7 @@ namespace details
         BOOST_OUTCOME_TRY(population_data, mio::read_population_data(path));
 
         std::vector<std::vector<double>> vnum_population(
-            vregion.size(), std::vector<double>(StringRkiAgeGroup::age_group_names.size(), 0.0));
+            vregion.size(), std::vector<double>(ConfirmedCasesDataEntry::age_group_names.size(), 0.0));
 
         for (auto&& entry : population_data) {
             auto it = std::find_if(vregion.begin(), vregion.end(), [&entry](auto r) {

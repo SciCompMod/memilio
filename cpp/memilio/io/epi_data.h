@@ -66,98 +66,77 @@ public:
 };
 
 /**
- * Age group that serializes into an RKI age string.
- */
-class StringRkiAgeGroup : public AgeGroup
-{
-public:
-    using AgeGroup::AgeGroup;
-
-    StringRkiAgeGroup(const AgeGroup& other)
-        : AgeGroup(other)
-    {
-    }
-
-    static const std::array<const char*, 6> age_group_names;
-
-    template <class IoContext>
-    static IOResult<StringRkiAgeGroup> deserialize(IoContext& io)
-    {
-        auto str = mio::deserialize(io, Tag<std::string>{});
-        return apply(
-            io,
-            [](auto&& str_) -> IOResult<StringRkiAgeGroup> {
-                auto it = std::find(age_group_names.begin(), age_group_names.end(), str_);
-                if (it != age_group_names.end()) {
-                    return success(size_t(it - age_group_names.begin()));
-                } else if (str_ == "unknown") {
-                    return success(size_t(age_group_names.size()));
-                }
-                return failure(StatusCode::InvalidValue, "Invalid age group.");
-            },
-            str);
-    }
-};
-
-/**
- * Represents the entries of an RKI data file.
+ * Represents the entries of a confirmed cases data file, e.g., from RKI.
  * Number of confirmed, recovered and deceased in a region on a specific date.
  * Region can be a county, a state, or a country. If it is a country, both
  * state_id and county_id will be empty.
  */
-class RkiEntry
+class ConfirmedCasesDataEntry
 {
 public:
+    static const std::array<const char*, 6> age_group_names;
+
     double num_confirmed;
     double num_recovered;
-    double num_deceased;
+    double num_deaths;
     Date date;
     AgeGroup age_group;
     boost::optional<regions::de::StateId> state_id;
     boost::optional<regions::de::CountyId> county_id;
 
-    template <class IoContext>
-    static IOResult<RkiEntry> deserialize(IoContext& io)
+    template <class IOContext>
+    static IOResult<ConfirmedCasesDataEntry> deserialize(IOContext& io)
     {
-        auto obj           = io.expect_object("RkiEntry");
+        auto obj           = io.expect_object("ConfirmedCasesDataEntry");
         auto num_confirmed = obj.expect_element("Confirmed", Tag<double>{});
-        auto num_deceased  = obj.expect_element("Deaths", Tag<double>{});
         auto num_recovered = obj.expect_element("Recovered", Tag<double>{});
+        auto num_deaths    = obj.expect_element("Deaths", Tag<double>{});
         auto date          = obj.expect_element("Date", Tag<StringDate>{});
-        auto age_group     = obj.expect_element("Age_RKI", Tag<StringRkiAgeGroup>{});
+        auto age_group_str = obj.expect_element("Age_RKI", Tag<std::string>{});
         auto state_id      = obj.expect_optional("ID_State", Tag<regions::de::StateId>{});
         auto county_id     = obj.expect_optional("ID_County", Tag<regions::de::CountyId>{});
         return apply(
             io,
-            [](auto&& nc, auto&& nr, auto&& nd, auto&& d, auto&& a, auto&& sid, auto&& cid) {
-                return RkiEntry{nc, nr, nd, d, a, sid, cid};
+            [](auto&& nc, auto&& nr, auto&& nd, auto&& d, auto&& a_str, auto&& sid, auto&& cid) -> IOResult<ConfirmedCasesDataEntry>{
+                auto a = AgeGroup(0);
+                auto it = std::find(age_group_names.begin(), age_group_names.end(), a_str);
+                if (it != age_group_names.end()) {
+                    a = AgeGroup(size_t(it - age_group_names.begin()));
+                }
+                else if (a_str == "unknown") {
+                    a = AgeGroup(age_group_names.size());
+                }
+                else {
+                    return failure(StatusCode::InvalidValue, "Invalid confirmed cases data age group.");
+                }
+                return success(ConfirmedCasesDataEntry{nc, nr, nd, d, a, sid, cid});
             },
-            num_confirmed, num_recovered, num_deceased, date, age_group, state_id, county_id);
+            num_confirmed, num_recovered, num_deaths, date, age_group_str, state_id, county_id);
     }
 };
 
 /**
- * Read list of RkiEntry from json.
- * @param jsvalue json value, must be an array of objects, objects must match RkiEntry.
+ * Read list of ConfirmedCasesDataEntry from json.
+ * @param jsvalue json value, must be an array of objects, objects must match ConfirmedCasesDataEntry.
  * @return list of entries; entries of unknown age group are omitted.
  */
-inline IOResult<std::vector<RkiEntry>> deserialize_rki_data(const Json::Value& jsvalue)
+inline IOResult<std::vector<ConfirmedCasesDataEntry>> deserialize_rki_data(const Json::Value& jsvalue)
 {
-    BOOST_OUTCOME_TRY(rki_data, deserialize_json(jsvalue, Tag<std::vector<RkiEntry>>{}));
-    //filter unknown age group
+    BOOST_OUTCOME_TRY(rki_data, deserialize_json(jsvalue, Tag<std::vector<ConfirmedCasesDataEntry>>{}));
+    //filter entries with unknown age group
     auto it = std::remove_if(rki_data.begin(), rki_data.end(), [](auto&& rki_entry) {
-        return rki_entry.age_group >= AgeGroup(StringRkiAgeGroup::age_group_names.size());
+        return rki_entry.age_group >= AgeGroup(ConfirmedCasesDataEntry::age_group_names.size());
     });
     rki_data.erase(it, rki_data.end());
     return success(std::move(rki_data));
 }
 
 /**
- * Read list of RkiEntry from a json file.
- * @param filename name of the json file. File content must be an array of objects, objects must match RkiEntry.
+ * Read list of ConfirmedCasesDataEntry from a json file.
+ * @param filename name of the json file. File content must be an array of objects, objects must match ConfirmedCasesDataEntry.
  * @return list of entries; entries of unknown age group are omitted.
  */
-inline IOResult<std::vector<RkiEntry>> read_rki_data(const std::string& filename)
+inline IOResult<std::vector<ConfirmedCasesDataEntry>> read_rki_data(const std::string& filename)
 {
     BOOST_OUTCOME_TRY(jsvalue, read_json(filename));
     return deserialize_rki_data(jsvalue);
@@ -180,7 +159,7 @@ public:
     template <class IoContext>
     static IOResult<DiviEntry> deserialize(IoContext& io)
     {
-        auto obj       = io.expect_object("RkiEntry");
+        auto obj       = io.expect_object("DiviEntry");
         auto num_icu   = obj.expect_element("ICU", Tag<double>{});
         auto date      = obj.expect_element("Date", Tag<StringDate>{});
         auto state_id  = obj.expect_optional("ID_State", Tag<regions::de::StateId>{});
@@ -245,7 +224,7 @@ public:
     template <class IoContext>
     static IOResult<PopulationDataEntry> deserialize(IoContext& io)
     {
-        auto obj       = io.expect_object("RkiEntry");
+        auto obj       = io.expect_object("PopulationDataEntry");
         auto state_id  = obj.expect_optional("ID_State", Tag<regions::de::StateId>{});
         auto county_id = obj.expect_optional("ID_County", Tag<regions::de::CountyId>{});
         std::vector<IOResult<double>> age_groups;
@@ -270,7 +249,8 @@ namespace details
                                                        std::vector<bool>& carry_over)
     {
         std::array<double, 6> param_ranges = {5., 10., 20., 25., 20., 20.};
-        static_assert(param_ranges.size() == StringRkiAgeGroup::age_group_names.size(), "RKI age group mismatch.");
+        static_assert(param_ranges.size() == ConfirmedCasesDataEntry::age_group_names.size(),
+                      "Number of RKI age groups does not match number of age ranges.");
 
         //counter for parameter age groups
         size_t counter = 0;
@@ -327,15 +307,16 @@ namespace details
         get_rki_age_interpolation_coefficients(age_ranges, coefficients, carry_over);
 
         std::vector<PopulationDataEntry> interpolated{population_data};
-        for (auto entry_idx = size_t(0); entry_idx < population_data.size(); ++entry_idx) {
-            interpolated[entry_idx].population =
-                CustomIndexArray<double, AgeGroup>(AgeGroup(StringRkiAgeGroup::age_group_names.size()), 0.0);
+        for (auto region_entry_idx = size_t(0); region_entry_idx < population_data.size(); ++region_entry_idx) {
+            interpolated[region_entry_idx].population =
+                CustomIndexArray<double, AgeGroup>(AgeGroup(ConfirmedCasesDataEntry::age_group_names.size()), 0.0);
 
             size_t interpolated_age_idx = 0;
             for (size_t age_idx = 0; age_idx < coefficients.size(); age_idx++) {
                 for (size_t coeff_idx = 0; coeff_idx < coefficients[age_idx].size(); coeff_idx++) {
-                    interpolated[entry_idx].population[AgeGroup(interpolated_age_idx)] +=
-                        coefficients[age_idx][coeff_idx] * population_data[entry_idx].population[AgeGroup(age_idx)];
+                    interpolated[region_entry_idx].population[AgeGroup(interpolated_age_idx)] +=
+                        coefficients[age_idx][coeff_idx] *
+                        population_data[region_entry_idx].population[AgeGroup(age_idx)];
                     if (coeff_idx < coefficients[age_idx].size() - 1 || !carry_over[age_idx]) {
                         interpolated_age_idx++;
                     }
@@ -372,38 +353,11 @@ inline IOResult<std::vector<PopulationDataEntry>> read_population_data(const std
 }
 
 /**
- * @brief returns a vector with the ids of all german counties
+ * @brief returns a vector with the ids of all German counties.
  * @param path directory to population data
  * @return list of county ids.
  */
 IOResult<std::vector<int>> get_county_ids(const std::string& path);
-
-/**
- * Represents an age group string in vaccination data.
- */
-class StringVaccinationDataAgeGroup : public AgeGroup
-{
-public:
-    using AgeGroup::AgeGroup;
-
-    static const std::array<const char*, 6> age_group_names;   
-
-    template <class IoContext>
-    static IOResult<StringVaccinationDataAgeGroup> deserialize(IoContext& io)
-    {
-        auto str = mio::deserialize(io, Tag<std::string>{});
-        return apply(
-            io,
-            [](auto&& str_) -> IOResult<StringVaccinationDataAgeGroup> {
-                auto it = std::find(age_group_names.begin(), age_group_names.end(), str_);
-                if (it != age_group_names.end()) {
-                    return success(size_t(it - age_group_names.begin()));
-                }
-                return failure(StatusCode::InvalidValue, "Invalid age group.");
-            },
-            str);
-    }
-};
 
 /**
  * Represents an entry in a vaccination data file.
@@ -411,7 +365,9 @@ public:
 class VaccinationDataEntry
 {
 public:
-    double num_full;
+    static const std::array<const char*, 6> age_group_names;
+
+    double num_vaccinations_completed;
     Date date;
     AgeGroup age_group;
     boost::optional<regions::de::StateId> state_id;
@@ -420,15 +376,26 @@ public:
     template<class IoContext>
     static IOResult<VaccinationDataEntry> deserialize(IoContext& io)
     {
-        auto obj = io.expect_object("VaccinationDataEntry");
-        auto num_full = obj.expect_element("Vacc_completed", Tag<double>{});
-        auto date = obj.expect_element("Date", Tag<StringDate>{});
-        auto age_group = obj.expect_element("Age_RKI", Tag<StringVaccinationDataAgeGroup>{});
-        auto state_id = obj.expect_optional("ID_County", Tag<regions::de::StateId>{});
-        auto county_id = obj.expect_optional("ID_County", Tag<regions::de::CountyId>{});
-        return mio::apply(io, [](auto nf, auto d, auto a, auto sid, auto cid) {
-            return VaccinationDataEntry{nf, d, a, sid, cid};
-        }, num_full, date, age_group, state_id, county_id);
+        auto obj                        = io.expect_object("VaccinationDataEntry");
+        auto num_vaccinations_completed = obj.expect_element("Vacc_completed", Tag<double>{});
+        auto date                       = obj.expect_element("Date", Tag<StringDate>{});
+        auto age_group_str              = obj.expect_element("Age_RKI", Tag<std::string>{});
+        auto state_id                   = obj.expect_optional("ID_County", Tag<regions::de::StateId>{});
+        auto county_id                  = obj.expect_optional("ID_County", Tag<regions::de::CountyId>{});
+        return mio::apply(
+            io,
+            [](auto nf, auto d, auto&& a_str, auto sid, auto cid) -> IOResult<VaccinationDataEntry> {
+                auto it = std::find(age_group_names.begin(), age_group_names.end(), a_str);
+                auto a  = AgeGroup(0);
+                if (it != age_group_names.end()) {
+                    a = AgeGroup(size_t(it - age_group_names.begin()));
+                }
+                else {
+                    return failure(StatusCode::InvalidValue, "Invalid vaccination data age group.");
+                }
+                return success(VaccinationDataEntry{nf, d, a, sid, cid});
+            },
+            num_vaccinations_completed, date, age_group_str, state_id, county_id);
     }
 };
 

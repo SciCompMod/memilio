@@ -69,7 +69,7 @@ namespace osecirvvs
             const std::vector<double>& scaling_factor_inf);
 
         IOResult<void> read_rki_data(
-            const std::vector<RkiEntry>& rki_data, std::vector<int> const& vregion, Date date,
+            const std::vector<ConfirmedCasesDataEntry>& rki_data, std::vector<int> const& vregion, Date date,
             std::vector<std::vector<double>>& num_exp, std::vector<std::vector<double>>& num_car,
             std::vector<std::vector<double>>& num_inf, std::vector<std::vector<double>>& num_hosp,
             std::vector<std::vector<double>>& num_icu, std::vector<std::vector<double>>& num_death,
@@ -93,7 +93,7 @@ namespace osecirvvs
         * @see mio::read_rki_data
         * @{
         */
-        IOResult<void> read_rki_data_confirmed_to_recovered(const std::vector<RkiEntry>& rki_data,
+        IOResult<void> read_rki_data_confirmed_to_recovered(const std::vector<ConfirmedCasesDataEntry>& rki_data,
                                                             std::vector<int> const& vregion, Date date,
                                                             std::vector<std::vector<double>>& vnum_rec,
                                                             double delay = 14.);
@@ -117,7 +117,7 @@ namespace osecirvvs
         {
             auto num_age_groups = (size_t)model[0].parameters.get_num_groups();
             assert(scaling_factor_inf.size() == num_age_groups);
-            assert(StringRkiAgeGroup::age_group_names.size() == num_age_groups);
+            assert(ConfirmedCasesDataEntry::age_group_names.size() == num_age_groups);
 
             BOOST_OUTCOME_TRY(rki_data, mio::read_rki_data(path));
 
@@ -477,7 +477,7 @@ namespace osecirvvs
         {
             BOOST_OUTCOME_TRY(num_population, read_population_data(path, vregion));
 
-            auto num_age_groups = StringRkiAgeGroup::age_group_names.size();
+            auto num_age_groups = ConfirmedCasesDataEntry::age_group_names.size();
             std::vector<std::vector<double>> num_rec(model.size(), std::vector<double>(num_age_groups, 0.0));
 
             BOOST_OUTCOME_TRY(read_rki_data_confirmed_to_recovered(path_rki, vregion, date, num_rec, 14.));
@@ -632,7 +632,7 @@ namespace osecirvvs
     {
         auto num_age_groups = (size_t)model[0].parameters.get_num_groups();
         assert(scaling_factor_inf.size() == num_age_groups);
-        assert(num_age_groups == StringRkiAgeGroup::age_group_names.size());
+        assert(num_age_groups == ConfirmedCasesDataEntry::age_group_names.size());
         assert(model.size() == region.size());
 
         BOOST_OUTCOME_TRY(rki_data, read_rki_data(path_join(data_dir, "cases_all_county_age_ma7.json")));

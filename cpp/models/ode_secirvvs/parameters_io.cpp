@@ -85,7 +85,7 @@ namespace osecirvvs
         }
 
         IOResult<void> read_rki_data(
-            const std::vector<RkiEntry>& rki_data, std::vector<int> const& vregion, Date date,
+            const std::vector<ConfirmedCasesDataEntry>& rki_data, std::vector<int> const& vregion, Date date,
             std::vector<std::vector<double>>& vnum_exp, std::vector<std::vector<double>>& vnum_car,
             std::vector<std::vector<double>>& vnum_inf, std::vector<std::vector<double>>& vnum_hosp,
             std::vector<std::vector<double>>& vnum_icu, std::vector<std::vector<double>>& vnum_death,
@@ -203,7 +203,7 @@ namespace osecirvvs
                     // -R10 - R6 - R7 // - T_I^H - T_H^U - T_U^D
                     if (entry.date ==
                         offset_date_by_days(date, -t_inf_to_hosp[age] - t_hosp_to_icu[age] - t_icu_to_dead[age])) {
-                        num_death[age] += entry.num_deceased;
+                        num_death[age] += entry.num_deaths;
                         if (read_icu) {
                             num_icu[age] -=
                                 mu_I_H[age] * mu_H_U[age] * mu_U_D[age] * scaling_factor_inf[age] * entry.num_confirmed;
@@ -231,7 +231,7 @@ namespace osecirvvs
                 auto& num_death = vnum_death[region_idx];
                 auto& num_icu   = vnum_icu[region_idx];
 
-                size_t num_groups = StringRkiAgeGroup::age_group_names.size();
+                size_t num_groups = ConfirmedCasesDataEntry::age_group_names.size();
                 for (size_t i = 0; i < num_groups; i++) {
                     // subtract infected confirmed cases which are not yet recovered
                     // and remove dark figure scaling factor
@@ -248,13 +248,13 @@ namespace osecirvvs
                             // values and there are tests that rely on it
                             log_error("{:s} for age group {:s} is {:.4f} for region {:d}, "
                                       "exceeds expected negative value.",
-                                      str, StringRkiAgeGroup::age_group_names[i], value, region);
+                                      str, ConfirmedCasesDataEntry::age_group_names[i], value, region);
                             value = 0.0;
                         }
                         else if (value < 0) {
                             log_info("{:s} for age group {:s} is {:.4f} for region {:d}, "
                                      "automatically corrected",
-                                     str, StringRkiAgeGroup::age_group_names[i], value, region);
+                                     str, ConfirmedCasesDataEntry::age_group_names[i], value, region);
                             value = 0.0;
                         }
                     };
@@ -280,7 +280,7 @@ namespace osecirvvs
             return read_rki_data_confirmed_to_recovered(rki_data, vregion, date, vnum_rec, delay);
         }
 
-        IOResult<void> read_rki_data_confirmed_to_recovered(const std::vector<RkiEntry>& rki_data,
+        IOResult<void> read_rki_data_confirmed_to_recovered(const std::vector<ConfirmedCasesDataEntry>& rki_data,
                                                             std::vector<int> const& vregion, Date date,
                                                             std::vector<std::vector<double>>& vnum_rec, double delay)
         {
@@ -321,7 +321,7 @@ namespace osecirvvs
                 auto region   = vregion[region_idx];
                 auto& num_rec = vnum_rec[region_idx];
 
-                size_t num_groups = StringRkiAgeGroup::age_group_names.size();
+                size_t num_groups = ConfirmedCasesDataEntry::age_group_names.size();
                 for (size_t i = 0; i < num_groups; i++) {
                     auto try_fix_constraints = [region, i](double& value, double error, auto str) {
                         if (value < error) {
@@ -330,13 +330,13 @@ namespace osecirvvs
                             // values and there are tests that rely on it
                             log_error("{:s} for age group {:s} is {:.4f} for region {:d}, "
                                       "exceeds expected negative value.",
-                                      str, StringRkiAgeGroup::age_group_names[i], value, region);
+                                      str, ConfirmedCasesDataEntry::age_group_names[i], value, region);
                             value = 0.0;
                         }
                         else if (value < 0) {
                             log_info("{:s} for age group {:s} is {:.4f} for region {:d}, "
                                      "automatically corrected",
-                                     str, StringRkiAgeGroup::age_group_names[i], value, region);
+                                     str, ConfirmedCasesDataEntry::age_group_names[i], value, region);
                             value = 0.0;
                         }
                     };
@@ -395,7 +395,7 @@ namespace osecirvvs
         read_population_data(const std::vector<PopulationDataEntry>& population_data, const std::vector<int>& vregion)
         {
             std::vector<std::vector<double>> vnum_population(
-                vregion.size(), std::vector<double>(StringRkiAgeGroup::age_group_names.size(), 0.0));
+                vregion.size(), std::vector<double>(ConfirmedCasesDataEntry::age_group_names.size(), 0.0));
 
             for (auto&& entry : population_data) {
                 auto it = std::find_if(vregion.begin(), vregion.end(), [&entry](auto r) {
@@ -486,7 +486,7 @@ namespace osecirvvs
                             // Option 1: considered offset_first_date is available in input data frame
                             if (date_df == offset_first_date) {
                                 model[region_idx].parameters.template get<DailyFirstVaccination>()[{age, SimulationDay(d)}] =
-                                    vacc_data_entry.num_full;
+                                    vacc_data_entry.num_vaccinations_completed;
                             }
                         }
                         else { // offset_first_date > max_date
@@ -498,11 +498,11 @@ namespace osecirvvs
                             days_plus = get_offset_in_days(offset_first_date, max_date);
                             if (date_df == offset_date_by_days(max_date, -1)) {
                                 model[region_idx].parameters.template get<DailyFirstVaccination>()[{age, SimulationDay(d)}] -=
-                                    (days_plus - 1) * vacc_data_entry.num_full;
+                                    (days_plus - 1) * vacc_data_entry.num_vaccinations_completed;
                             }
                             else if (date_df == max_date) {
                                 model[region_idx].parameters.template get<DailyFirstVaccination>()[{age, SimulationDay(d)}] +=
-                                    days_plus * vacc_data_entry.num_full;
+                                    days_plus * vacc_data_entry.num_vaccinations_completed;
                             }
                         }
 
@@ -516,7 +516,7 @@ namespace osecirvvs
                             // Option 1: considered offset_full_date is available in input data frame
                             if (date_df == offset_full_date) {
                                 model[region_idx].parameters.template get<DailyFullVaccination>()[{age, SimulationDay(d)}] =
-                                    vacc_data_entry.num_full;
+                                    vacc_data_entry.num_vaccinations_completed;
                             }
                         }
                         else { // offset_full_date > max_full_date
@@ -524,11 +524,11 @@ namespace osecirvvs
                             days_plus = get_offset_in_days(offset_full_date, max_date);
                             if (date_df == offset_date_by_days(max_full_date, -1)) {
                                 model[region_idx].parameters.template get<DailyFullVaccination>()[{age, SimulationDay(d)}] -=
-                                    (days_plus - 1) * vacc_data_entry.num_full;
+                                    (days_plus - 1) * vacc_data_entry.num_vaccinations_completed;
                             }
                             else if (date_df == max_full_date) {
                                 model[region_idx].parameters.template get<DailyFullVaccination>()[{age, SimulationDay(d)}] +=
-                                    days_plus * vacc_data_entry.num_full;
+                                    days_plus * vacc_data_entry.num_vaccinations_completed;
                             }
                         }
                     }
