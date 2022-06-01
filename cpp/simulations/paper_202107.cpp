@@ -914,7 +914,7 @@ mio::IOResult<void> run(RunMode mode, const fs::path& data_dir, const fs::path& 
     auto run_idx            = size_t(0);
     parameter_study.run(
         [&](auto&& graph) {
-            return draw_sample(graph, num_days_sim, high);
+            return draw_sample(graph, high);
         },
         [&](auto results_graph) {
             ensemble_results.push_back(mio::interpolate_simulation_result(results_graph));

@@ -143,9 +143,9 @@ namespace osecirvvs
                 param_percentil(
                     node, [i](auto&& model) -> auto& { return model.parameters.template get<VaccinationGap>()[i]; });
                 param_percentil(
-                    node, [i](auto&& model) -> auto& { return model.parameters.template get<DaysUntilEffective>()[i]; });
+                    node, [i](auto&& model) -> auto& { return model.parameters.template get<DaysUntilEffectivePartialImmunity>()[i]; });
                 param_percentil(
-                    node, [i](auto&& model) -> auto& { return model.parameters.template get<DaysUntilEffectiveFull>()[i]; });
+                    node, [i](auto&& model) -> auto& { return model.parameters.template get<DaysUntilEffectiveImprovedImmunity>()[i]; });
                 for (auto day = SimulationDay(0);
                      day < get<1>(ensemble_params[0][0].parameters.template get<DailyFirstVaccination>().size());
                      ++day) {

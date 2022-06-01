@@ -54,7 +54,7 @@ namespace osecirvvs
     */
     void draw_sample(Model& model);
 
-    Graph<Model, MigrationParameters> draw_sample(Graph<Model, MigrationParameters>& graph, double tmax, bool high);
+    Graph<Model, MigrationParameters> draw_sample(Graph<Model, MigrationParameters>& graph, bool high);
 
 } // namespace osecirvvs
 } // namespace mio

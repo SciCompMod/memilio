@@ -24,6 +24,7 @@
 #include "memilio/utils/uncertain_value.h"
 #include "memilio/math/adapt_rk.h"
 #include "memilio/epidemiology/age_group.h"
+#include "memilio/epidemiology/simulation_day.h"
 #include "memilio/epidemiology/uncertain_matrix.h"
 #include "memilio/epidemiology/dynamic_npis.h"
 #include "memilio/utils/parameter_set.h"
@@ -99,6 +100,51 @@ struct ICUCapacity {
 };
 
 /**
+ * @brief capacity to test and trace contacts of infected for quarantine per day.
+ */
+struct TestAndTraceCapacity {
+    using Type = UncertainValue;
+    static Type get_default(AgeGroup)
+    {
+        return Type(std::numeric_limits<double>::max());
+    }
+    static std::string name()
+    {
+        return "TestAndTraceCapacity";
+    }
+};
+
+/**
+ * @brief the contact patterns within the society are modelled using an UncertainContactMatrix
+ */
+struct ContactPatterns {
+    using Type = UncertainContactMatrix;
+    static Type get_default(AgeGroup size)
+    {
+        return Type(1, static_cast<Eigen::Index>((size_t)size));
+    }
+    static std::string name()
+    {
+        return "ContactPatterns";
+    }
+};
+
+/**
+ * @brief the NPIs that are enacted if certain infection thresholds are exceeded.
+ */
+struct DynamicNPIsInfected {
+    using Type = DynamicNPIs;
+    static Type get_default(AgeGroup /*size*/)
+    {
+        return {};
+    }
+    static std::string name()
+    {
+        return "DynamicNPIsInfected";
+    }
+};
+
+/**
 * @brief the incubation time in the SECIR model
 * @param tinc incubation time in day unit
 */
@@ -127,6 +173,22 @@ struct InfectiousTimeMild {
     static std::string name()
     {
         return "InfectiousTimeMild";
+    }
+};
+
+/**
+ * @brief the infectious time for asymptomatic cases in the SECIR model
+ *        in day unit
+ */
+struct InfectiousTimeAsymptomatic {
+    using Type = CustomIndexArray<UncertainValue, AgeGroup>;
+    static Type get_default(AgeGroup size)
+    {
+        return Type(size, 1.);
+    }
+    static std::string name()
+    {
+        return "InfectiousTimeAsymptomatic";
     }
 };
 
@@ -206,22 +268,6 @@ struct ICUToHomeTime {
     static std::string name()
     {
         return "ICUToHomeTime";
-    }
-};
-
-/**
- * @brief the infectious time for asymptomatic cases in the SECIR model
- *        in day unit
- */
-struct InfectiousTimeAsymptomatic {
-    using Type = CustomIndexArray<UncertainValue, AgeGroup>;
-    static Type get_default(AgeGroup size)
-    {
-        return Type(size, 1.);
-    }
-    static std::string name()
-    {
-        return "InfectiousTimeAsymptomatic";
     }
 };
 
@@ -362,162 +408,6 @@ struct DeathsPerICU {
 };
 
 /**
- * @brief the contact patterns within the society are modelled using an UncertainContactMatrix
- */
-struct ContactPatterns {
-    using Type = UncertainContactMatrix;
-    static Type get_default(AgeGroup size)
-    {
-        return Type(1, static_cast<Eigen::Index>((size_t)size));
-    }
-    static std::string name()
-    {
-        return "ContactPatterns";
-    }
-};
-
-/**
- * @brief the NPIs that are enacted if certain infection thresholds are exceeded.
- */
-struct DynamicNPIsInfected {
-    using Type = DynamicNPIs;
-    static Type get_default(AgeGroup /*size*/)
-    {
-        return {};
-    }
-    static std::string name()
-    {
-        return "DynamicNPIsInfected";
-    }
-};
-
-/**
- * @brief capacity to test and trace contacts of infected for quarantine per day.
- */
-struct TestAndTraceCapacity {
-    using Type = UncertainValue;
-    static Type get_default(AgeGroup)
-    {
-        return Type(std::numeric_limits<double>::max());
-    }
-    static std::string name()
-    {
-        return "TestAndTraceCapacity";
-    }
-};
-
-/**
- * @brief ...
- */
-struct BaseInfectiousnessB117 {
-    using Type = CustomIndexArray<double, AgeGroup>;
-    static Type get_default(AgeGroup size)
-    {
-        return Type(size, 0.0);
-    }
-    static std::string name()
-    {
-        return "BaseInfectiousnessB117";
-    }
-};
-
-struct BaseInfectiousnessB161 {
-    using Type = CustomIndexArray<double, AgeGroup>;
-    static Type get_default(AgeGroup size)
-    {
-        return Type(size, 0.0);
-    }
-    static std::string name()
-    {
-        return "BaseInfectiousnessB161";
-    }
-};
-
-struct ExposedFactorPartialImmunity {
-    using Type = CustomIndexArray<UncertainValue, AgeGroup>;
-    static Type get_default(AgeGroup size)
-    {
-        return Type(size, 0.0);
-    }
-    static std::string name()
-    {
-        return "ExposedFactorPartialImmunity";
-    }
-};
-
-struct ExposedFactorImprovedImmunity {
-    using Type = CustomIndexArray<UncertainValue, AgeGroup>;
-    static Type get_default(AgeGroup size)
-    {
-        return Type(size, 0.0);
-    }
-    static std::string name()
-    {
-        return "ExposedFactorImprovedImmunity";
-    }
-};
-
-struct InfectedFactorPartialImmunity {
-    using Type = CustomIndexArray<UncertainValue, AgeGroup>;
-    static Type get_default(AgeGroup size)
-    {
-        return Type(size, 0.0);
-    }
-    static std::string name()
-    {
-        return "InfectedFactorPartialImmunity";
-    }
-};
-
-struct InfectedFactorImprovedImmunity {
-    using Type = CustomIndexArray<UncertainValue, AgeGroup>;
-    static Type get_default(AgeGroup size)
-    {
-        return Type(size, 0.0);
-    }
-    static std::string name()
-    {
-        return "InfectedFactorImprovedImmunity";
-    }
-};
-
-struct HospitalizedFactorPartialImmunity {
-    using Type = CustomIndexArray<UncertainValue, AgeGroup>;
-    static Type get_default(AgeGroup size)
-    {
-        return Type(size, 0.0);
-    }
-    static std::string name()
-    {
-        return "HospitalizedFactorPartialImmunity";
-    }
-};
-
-struct HospitalizedFactorImprovedImmunity {
-    using Type = CustomIndexArray<UncertainValue, AgeGroup>;
-    static Type get_default(AgeGroup size)
-    {
-        return Type(size, 0.0);
-    }
-    static std::string name()
-    {
-        return "HospitalizedFactorImprovedImmunity";
-    }
-};
-
-struct InfectiousTimeFactorImmune {
-    using Type = CustomIndexArray<UncertainValue, AgeGroup>;
-    static Type get_default(AgeGroup size)
-    {
-        return Type(size, 0.5);
-    }
-    static std::string name()
-    {
-        return "InfectiousTimeFactorImmune";
-    }
-};
-
-/**
  * @brief Time in days between first and second vaccine dose.
  */
 struct VaccinationGap {
@@ -535,7 +425,7 @@ struct VaccinationGap {
 /**
  * @brief Time in days until first vaccine dose takes full effect.
  */
-struct DaysUntilEffective {
+struct DaysUntilEffectivePartialImmunity {
     using Type = CustomIndexArray<UncertainValue, AgeGroup>;
     static Type get_default(AgeGroup size)
     {
@@ -543,14 +433,14 @@ struct DaysUntilEffective {
     }
     static std::string name()
     {
-        return "DaysUntilEffective";
+        return "DaysUntilEffectivePartialImmunity";
     }
 };
 
 /**
  * @brief Time in days until second vaccine dose takes full effect.
  */
-struct DaysUntilEffectiveFull {
+struct DaysUntilEffectiveImprovedImmunity {
     using Type = CustomIndexArray<UncertainValue, AgeGroup>;
     static Type get_default(AgeGroup size)
     {
@@ -558,17 +448,8 @@ struct DaysUntilEffectiveFull {
     }
     static std::string name()
     {
-        return "DaysUntilEffectiveFull";
+        return "DaysUntilEffectiveImprovedImmunity";
     }
-};
-
-/**
-* Represents the simulation time as an integer index.
-*/
-class SimulationDay : public Index<SimulationDay>
-{
-public:
-    using Index<SimulationDay>::Index;
 };
 
 /**
@@ -587,8 +468,8 @@ struct DailyFirstVaccination {
 };
 
 /**
-    * @brief Total number of full vaccinations up to the given day.
-    */
+* @brief Total number of full vaccinations up to the given day.
+*/
 struct DailyFullVaccination {
     using Type = CustomIndexArray<double, AgeGroup, SimulationDay>;
     static Type get_default(AgeGroup size)
@@ -602,17 +483,137 @@ struct DailyFullVaccination {
 };
 
 /**
- * @brief ...
+ * @brief Factor to reduce infection risk for persons with partial immunity.
  */
-struct DynamicInfectionFromContact {
-    using Type = CustomIndexArray<std::vector<double>, AgeGroup>;
+struct ExposedFactorPartialImmunity {
+    using Type = CustomIndexArray<UncertainValue, AgeGroup>;
     static Type get_default(AgeGroup size)
     {
-        return Type(size);
+        return Type(size, 0.0);
     }
     static std::string name()
     {
-        return "DynamicInfectionFromContact";
+        return "ExposedFactorPartialImmunity";
+    }
+};
+
+/**
+ * @brief Factor to reduce infection risk for persons with improved immunity.
+ */
+struct ExposedFactorImprovedImmunity {
+    using Type = CustomIndexArray<UncertainValue, AgeGroup>;
+    static Type get_default(AgeGroup size)
+    {
+        return Type(size, 0.0);
+    }
+    static std::string name()
+    {
+        return "ExposedFactorImprovedImmunity";
+    }
+};
+
+/**
+ * @brief Factor to reduce risk of developing symptoms for persons with partial immunity.
+ */
+struct InfectedFactorPartialImmunity {
+    using Type = CustomIndexArray<UncertainValue, AgeGroup>;
+    static Type get_default(AgeGroup size)
+    {
+        return Type(size, 0.0);
+    }
+    static std::string name()
+    {
+        return "InfectedFactorPartialImmunity";
+    }
+};
+
+/**
+ * @brief Factor to reduce risk of developing symptoms for persons with improved immunity.
+ */
+struct InfectedFactorImprovedImmunity {
+    using Type = CustomIndexArray<UncertainValue, AgeGroup>;
+    static Type get_default(AgeGroup size)
+    {
+        return Type(size, 0.0);
+    }
+    static std::string name()
+    {
+        return "InfectedFactorImprovedImmunity";
+    }
+};
+
+/**
+ * @brief Factor to reduce risk of hospitalization for persons with partial immunity.
+ */
+struct HospitalizedFactorPartialImmunity {
+    using Type = CustomIndexArray<UncertainValue, AgeGroup>;
+    static Type get_default(AgeGroup size)
+    {
+        return Type(size, 0.0);
+    }
+    static std::string name()
+    {
+        return "HospitalizedFactorPartialImmunity";
+    }
+};
+
+/**
+ * @brief Factor to reduce risk of hospitalization for persons with improved immunity.
+ */
+struct HospitalizedFactorImprovedImmunity {
+    using Type = CustomIndexArray<UncertainValue, AgeGroup>;
+    static Type get_default(AgeGroup size)
+    {
+        return Type(size, 0.0);
+    }
+    static std::string name()
+    {
+        return "HospitalizedFactorImprovedImmunity";
+    }
+};
+
+/**
+ * @brief Factor to reduce infectious time of persons with partial or improved immunity.
+ */
+struct InfectiousTimeFactorImmune {
+    using Type = CustomIndexArray<UncertainValue, AgeGroup>;
+    static Type get_default(AgeGroup size)
+    {
+        return Type(size, 0.5);
+    }
+    static std::string name()
+    {
+        return "InfectiousTimeFactorImmune";
+    }
+};
+
+/**
+ * @brief Infectiousness of variant B117.
+ */
+struct BaseInfectiousnessB117 {
+    using Type = CustomIndexArray<double, AgeGroup>;
+    static Type get_default(AgeGroup size)
+    {
+        return Type(size, 0.0);
+    }
+    static std::string name()
+    {
+        return "BaseInfectiousnessB117";
+    }
+};
+
+/**
+ * @brief Infectiousness of variant B161.
+ */
+struct BaseInfectiousnessB161 {
+    using Type = CustomIndexArray<double, AgeGroup>;
+    static Type get_default(AgeGroup size)
+    {
+        return Type(size, 0.0);
+    }
+    static std::string name()
+    {
+        return "BaseInfectiousnessB161";
     }
 };
 
@@ -622,14 +623,14 @@ using ParametersBase =
                  HospitalizedToHomeTime, HomeToHospitalizedTime, HospitalizedToICUTime, ICUToHomeTime, ICUToDeathTime,
                  InfectionProbabilityFromContact, RelativeCarrierInfectability, AsymptoticCasesPerInfectious,
                  RiskOfInfectionFromSympomatic, MaxRiskOfInfectionFromSympomatic, HospitalizedCasesPerInfectious,
-                 ICUCasesPerHospitalized, DeathsPerICU, VaccinationGap, DaysUntilEffective, DaysUntilEffectiveFull,
-                 BaseInfectiousnessB117, BaseInfectiousnessB161, DailyFullVaccination, DailyFirstVaccination,
-                 DynamicInfectionFromContact, ExposedFactorPartialImmunity, ExposedFactorImprovedImmunity,
-                 InfectedFactorPartialImmunity, InfectedFactorImprovedImmunity, HospitalizedFactorPartialImmunity,
-                 HospitalizedFactorImprovedImmunity, InfectiousTimeFactorImmune>;
+                 ICUCasesPerHospitalized, DeathsPerICU, VaccinationGap, DaysUntilEffectivePartialImmunity,
+                 DaysUntilEffectiveImprovedImmunity, DailyFullVaccination, DailyFirstVaccination,
+                 ExposedFactorPartialImmunity, ExposedFactorImprovedImmunity, InfectedFactorPartialImmunity,
+                 InfectedFactorImprovedImmunity, HospitalizedFactorPartialImmunity, HospitalizedFactorImprovedImmunity,
+                 InfectiousTimeFactorImmune, BaseInfectiousnessB117, BaseInfectiousnessB161>;
 
 /**
- * @brief Parameters of an age-resolved SECIR/SECIHURD model.
+ * @brief Parameters of an age-resolved SECIR/SECIHURD model with paths for partial and improved immunity through vaccination.
  */
 class Parameters : public ParametersBase
 {

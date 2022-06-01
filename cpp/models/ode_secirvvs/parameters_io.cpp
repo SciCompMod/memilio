@@ -423,8 +423,8 @@ namespace osecirvvs
 
             auto num_groups = model[0].parameters.get_num_groups();
 
-            auto days_until_effective1 = (int)(double)model[0].parameters.get<DaysUntilEffective>()[AgeGroup(0)];
-            auto days_until_effective2 = (int)(double)model[0].parameters.get<DaysUntilEffectiveFull>()[AgeGroup(0)];
+            auto days_until_effective1 = (int)(double)model[0].parameters.get<DaysUntilEffectivePartialImmunity>()[AgeGroup(0)];
+            auto days_until_effective2 = (int)(double)model[0].parameters.get<DaysUntilEffectiveImprovedImmunity>()[AgeGroup(0)];
             auto vaccination_distance  = (int)(double)model[0].parameters.get<VaccinationGap>()[AgeGroup(0)];
 
             // iterate over regions (e.g., counties)

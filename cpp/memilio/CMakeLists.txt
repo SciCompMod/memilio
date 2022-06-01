@@ -18,6 +18,7 @@ add_library(memilio
     epidemiology/dynamic_npis.cpp
     epidemiology/regions.h
     epidemiology/regions.cpp
+    epidemiology/simulation_day.h
     epidemiology/holiday_data_de.ipp
     compartments/compartmentalmodel.h
     compartments/simulation.h

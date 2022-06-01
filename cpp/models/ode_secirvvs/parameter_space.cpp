@@ -128,7 +128,7 @@ namespace osecirvvs
         model.apply_constraints();
     }
 
-    Graph<Model, MigrationParameters> draw_sample(Graph<Model, MigrationParameters>& graph, double tmax, bool high)
+    Graph<Model, MigrationParameters> draw_sample(Graph<Model, MigrationParameters>& graph, bool high)
     {
         Graph<Model, MigrationParameters> sampled_graph;
 
@@ -148,21 +148,12 @@ namespace osecirvvs
             delta_fac = 1.4;
         }
 
-        //dynamic share of virus variants 
+        //infectiousness of virus variants is not sampled independently but depend on base infectiousness
         for (auto i = AgeGroup(0); i < shared_params_model.parameters.get_num_groups(); ++i) {
             shared_params_model.parameters.template get<BaseInfectiousnessB117>()[i] =
                 shared_params_model.parameters.template get<InfectionProbabilityFromContact>()[i];
             shared_params_model.parameters.template get<BaseInfectiousnessB161>()[i] =
                 shared_params_model.parameters.template get<InfectionProbabilityFromContact>()[i] * delta_fac;
-            shared_params_model.parameters.template get<DynamicInfectionFromContact>()[i] = {};
-            for (size_t t = 0; t < (size_t)tmax; ++t) {
-                double share_new_variant = std::min(1.0, pow(2, (double)t / 7) / 100.0);
-                double new_transmission =
-                    (1 - share_new_variant) * shared_params_model.parameters.template get<BaseInfectiousnessB117>()[(AgeGroup)i] +
-                    share_new_variant * shared_params_model.parameters.template get<BaseInfectiousnessB161>()[(AgeGroup)i];
-                shared_params_model.parameters.template get<DynamicInfectionFromContact>()[i].push_back(
-                    new_transmission);
-            }
         }
 
         for (auto& params_node : graph.nodes()) {
