@@ -152,6 +152,8 @@ def get_case_data(read_data=dd.defaultDict['read_data'],
             # ArcGIS public data item ID:
             itemId = '66876b81065340a4a48710b062319336_0'
             try:
+                # if this file is encoded with utf-8 German umlauts are not displayed correctly because they take two bytes
+                # utf_8_sig can identify those bytes as one sign and display it correctly
                 df = gd.loadCsv(targetFileName=itemId, encoding='utf_8_sig')
             except FileNotFoundError:
                 pass
@@ -160,6 +162,7 @@ def get_case_data(read_data=dd.defaultDict['read_data'],
             if not complete:
                 print("Note: Case data is still incomplete. Trying a thrid source.")
                 try:
+                    # If the data on github is not available we download the case data from rki from covid-19 datahub
                     df = gd.loadCsv(apiUrl="https://npgeo-de.maps.arcgis.com/sharing/rest/content/items/",
                         targetFileName="f10774f1c63e40168479a1feb6c7ca74/data", extension = "", encoding='utf_8_sig')
                     df.rename(columns={'FID': "OBJECTID"}, inplace=True)
