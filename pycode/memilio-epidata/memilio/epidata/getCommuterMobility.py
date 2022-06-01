@@ -443,10 +443,10 @@ def get_commuter_data(setup_dict='',
         '-20')[1][0:2] + '_dim' + str(mat_commuter_migration.shape[0])
     gd.write_dataframe(df_commuter_migration, directory, filename, file_format)
     gd.check_dir(os.path.join(directory.split('pydata')[0], 'mobility'))
-    df_commuter_migration.to_csv(
-        directory.split('pydata')[0] + 'mobility/commuter_migration_scaled' +
-        '_20' + files[0].split('-20')[1][0: 2] + '.txt', sep=' ', index=False,
-        header=False)
+    gd.write_dataframe(
+        df_commuter_migration, directory.split('pydata')[0] + 'mobility/',
+        'commuter_migration_scaled_20' + files[0].split('-20')[1][0: 2],
+        'csv', {'sep': ' ', 'index': False, 'header': False})
 
     return df_commuter_migration
 
