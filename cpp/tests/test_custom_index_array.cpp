@@ -85,6 +85,20 @@ TEST(CustomIndexArray, ConstantInitialization)
     }
 }
 
+TEST(CustomIndexArray, RangeInitialization)
+{
+    using ArrayType = mio::CustomIndexArray<double, Dim1, Dim2>;
+
+    std::vector<double> values = { 0.1, 0.2, 0.3, 0.4, 0.5, 0.6 };
+    ArrayType array({mio::Index<Dim1>(2), mio::Index<Dim2>(3)}, values.begin(), values.end());
+    ASSERT_DOUBLE_EQ((array[{mio::Index<Dim1>(0), mio::Index<Dim2>(0)}]), 0.1);
+    ASSERT_DOUBLE_EQ((array[{mio::Index<Dim1>(0), mio::Index<Dim2>(1)}]), 0.2);
+    ASSERT_DOUBLE_EQ((array[{mio::Index<Dim1>(0), mio::Index<Dim2>(2)}]), 0.3);
+    ASSERT_DOUBLE_EQ((array[{mio::Index<Dim1>(1), mio::Index<Dim2>(0)}]), 0.4);
+    ASSERT_DOUBLE_EQ((array[{mio::Index<Dim1>(1), mio::Index<Dim2>(1)}]), 0.5);
+    ASSERT_DOUBLE_EQ((array[{mio::Index<Dim1>(1), mio::Index<Dim2>(2)}]), 0.6);
+}
+
 TEST(CustomIndexArray, forEach)
 {
     using ArrayType = mio::CustomIndexArray<int, Dim1, Dim2>;
