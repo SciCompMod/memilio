@@ -127,7 +127,7 @@ namespace osecirvvs
         model.apply_constraints();
     }
 
-    Graph<Model, MigrationParameters> draw_sample(Graph<Model, MigrationParameters>& graph, bool high)
+    Graph<Model, MigrationParameters> draw_sample(Graph<Model, MigrationParameters>& graph, bool variant_high)
     {
         Graph<Model, MigrationParameters> sampled_graph;
 
@@ -140,7 +140,7 @@ namespace osecirvvs
         shared_dynamic_npis.draw_sample();
 
         double delta_fac;
-        if (high) {
+        if (variant_high) {
             delta_fac = 1.6;
         }
         else {
@@ -184,6 +184,7 @@ namespace osecirvvs
         for (auto& edge : graph.edges()) {
             auto edge_params = edge.property;
             //no dynamic NPIs
+            //TODO: add switch to optionally enable dynamic NPIs to edges
             sampled_graph.add_edge(edge.start_node_idx, edge.end_node_idx, edge_params);
         }
 

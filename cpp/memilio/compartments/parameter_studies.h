@@ -107,7 +107,7 @@ public:
 
     /*
      * @brief Carry out all simulations in the parameter study.
-     * Convinience function for a few number of runs, but uses a lot of memory.
+     * Convenience function for a few number of runs, but uses a lot of memory.
      * @return vector of results of each run.
      */
     template <class SampleGraphFunction>

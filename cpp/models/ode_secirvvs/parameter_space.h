@@ -54,7 +54,14 @@ namespace osecirvvs
     */
     void draw_sample(Model& model);
 
-    Graph<Model, MigrationParameters> draw_sample(Graph<Model, MigrationParameters>& graph, bool high);
+    /**
+    * Draws samples for each model node in a graph.
+    * Some parameters are shared between nodes and only sampled once.
+    * @param graph Graph to be sampled.
+    * @param variant_high If true, use high value for infectiousness of variant.
+    * @return Graph with nodes and edges from the input graph sampled.
+    */
+    Graph<Model, MigrationParameters> draw_sample(Graph<Model, MigrationParameters>& graph, bool variant_high);
 
 } // namespace osecirvvs
 } // namespace mio
