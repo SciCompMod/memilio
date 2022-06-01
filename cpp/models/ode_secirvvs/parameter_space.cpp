@@ -18,7 +18,9 @@
 * limitations under the License.
 */
 #include "ode_secirvvs/parameter_space.h"
+#include "memilio/utils/logging.h"
 #include "memilio/utils/parameter_distributions.h"
+#include "ode_secirvvs/infection_state.h"
 #include "ode_secirvvs/model.h"
 
 namespace mio
@@ -34,31 +36,28 @@ namespace osecirvvs
         for (auto i = AgeGroup(0); i < model.parameters.get_num_groups(); i++) {
             double group_total = model.populations.get_group_total(i);
 
-            model.populations[{i, InfectionState::ExposedNaive}].draw_sample();
-            model.populations[{i, InfectionState::CarrierNaive}].draw_sample();
-            model.populations[{i, InfectionState::InfectedNaive}].draw_sample();
-            model.populations[{i, InfectionState::HospitalizedNaive}].draw_sample();
-            model.populations[{i, InfectionState::ICUNaive}].draw_sample();
-            model.populations[{i, InfectionState::Recovered}].draw_sample();
+            //sample (most) initial compartments
+            for (auto inf_state = Index<InfectionState>(0); inf_state < InfectionState::Count; ++inf_state) {
+                if (inf_state != InfectionState::SusceptibleNaive && inf_state != InfectionState::Dead &&
+                    inf_state != InfectionState::TotalInfections) {
+                    model.populations[{i, inf_state}].draw_sample();
+                }
+            }
 
-            // no sampling for dead and total numbers
-            // [...]
-
+            //set susceptibles so the total number stays the same as before sampling.
+            //if the new total without susceptibles is already bigger than the previous total
+            //subtract the overflow from recovered, susceptibles will then be approximately zero.
             model.populations[{i, InfectionState::SusceptibleNaive}] = 0;
-            double group_total_dummy                             = model.populations.get_group_total(i);
-            if (group_total_dummy < group_total) {
-                model.populations.set_difference_from_group_total<AgeGroup>({i, InfectionState::SusceptibleNaive},
-                                                                            group_total);
+            double diff = model.populations.get_group_total(i) - group_total;
+            if (diff > 0) {
+                model.populations[{i, InfectionState::Recovered}] -= diff;
+                if (model.populations[{i, InfectionState::Recovered}] < 0.0) {
+                    log_error("Negative Compartment after sampling.");
+                }
+                assert(std::abs(group_total - model.populations.get_group_total(i)) < 1e-10 && "Sanity check.");
             }
-            else {
-                double diff = group_total_dummy - group_total;
-                model.populations[{i, InfectionState::Recovered}] =
-                    model.populations[{i, InfectionState::Recovered}] - diff;
-                assert(std::abs(group_total - model.populations.get_group_total(i)) < 1e-10);
-            }
-
             model.populations.set_difference_from_group_total<AgeGroup>({i, InfectionState::SusceptibleNaive},
-                                                                        model.populations.get_group_total(i));
+                                                                        group_total);
         }
     }
 
