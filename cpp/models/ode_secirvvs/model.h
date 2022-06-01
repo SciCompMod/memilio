@@ -35,8 +35,6 @@ namespace osecirvvs
     class Model : public CompartmentalModel<InfectionState, Populations<AgeGroup, InfectionState>, Parameters>
     {
         using Base = CompartmentalModel<InfectionState, mio::Populations<AgeGroup, InfectionState>, Parameters>;
-        using Pa   = Base::ParameterSet;
-        using Po   = Base::Populations;
 
     public:
         Model(const Populations& pop, const ParameterSet& params)
@@ -45,7 +43,7 @@ namespace osecirvvs
         }
 
         Model(int num_agegroups)
-            : Model(Po({AgeGroup(num_agegroups), InfectionState::Count}), Pa(AgeGroup(num_agegroups)))
+            : Model(Populations({AgeGroup(num_agegroups), InfectionState::Count}), ParameterSet(AgeGroup(num_agegroups)))
         {
         }
 
