@@ -17,8 +17,8 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
-#ifndef SECIR_PARAMS_H
-#define SECIR_PARAMS_H
+#ifndef ODESECIRVVS_PARAMETERS_H
+#define ODESECIRVVS_PARAMETERS_H
 
 #include "memilio/math/eigen.h"
 #include "memilio/utils/uncertain_value.h"
@@ -920,4 +920,4 @@ private:
 } // namespace osecirvvs
 } // namespace mio
 
-#endif // SECIR_H
+#endif // ODESECIRVVS_PARAMETERS_H
