@@ -442,7 +442,7 @@ void MigrationEdge::apply_migration(double t, double dt, SimulationNode<Sim>& no
 
             //the lower-order return calculation may in rare cases produce negative compartments,
             //especially at the beginning of the simulation.
-            //fix by transferring the extraneous returns to the biggest compartment of the age group. 
+            //fix by subtracting the supernumerous returns from the biggest compartment of the age group. 
             Eigen::VectorXd remaining_after_return = (node_to.get_result().get_last_value() - m_migrated[i]).eval();
             for (Eigen::Index j = 0; j < node_to.get_result().get_last_value().size(); ++j) {
                 if (remaining_after_return(j) < 0) {                    
