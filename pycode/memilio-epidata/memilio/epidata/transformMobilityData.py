@@ -85,7 +85,7 @@ def createFederalStatesMobility(directory, mobility_file):
 
         mobility_matrix_states = pd.DataFrame(mobility_matrix_states)
         gd.write_dataframe(
-            mobility_matrix_states, directory, mobility_file + '_states', 'csv',
+            mobility_matrix_states, directory, mobility_file + '_states', 'txt',
             param_dict={'sep': ' ', 'header': None, 'index': False})
         return mobility_matrix_states
 
@@ -105,7 +105,7 @@ def updateMobility2022(directory, mobility_file):
     mobility_matrix = getMobilityFromFile(directory, mobility_file)
 
     if (len(mobility_matrix.index) == 401) and (len(mobility_matrix.columns) == 401):
-        gd.write_dataframe(mobility_matrix, directory, mobility_file + '_dim401', 'csv',
+        gd.write_dataframe(mobility_matrix, directory, mobility_file + '_dim401', 'txt',
             param_dict={'sep': ' ', 'header': None, 'index': False})
         # merge eisenach
         ids400 = geoger.get_county_ids()
@@ -119,7 +119,7 @@ def updateMobility2022(directory, mobility_file):
         mobility_matrix_new.iloc[:, idx_wartburg_new] += mobility_matrix.iloc[indices,
                                                                               idx_eisenach_old].values
 
-        gd.write_dataframe(mobility_matrix_new, directory, mobility_file, 'csv',
+        gd.write_dataframe(mobility_matrix_new, directory, mobility_file, 'txt',
             param_dict={'sep': ' ', 'header': None, 'index': False})
 
         return mobility_matrix_new

@@ -85,9 +85,13 @@ def loadCsv(
     @param targetFileName -- file name which should be downloaded, for ArcGIS it should be public data item ID (string)
     @param apiUrl -- API URL (string, default
               'https://opendata.arcgis.com/datasets/')
-    @param extension -- Data format extension (string, default 'csv')
-    @param encoding -- CSV Encoding format (string, default None)
-    return dataframe
+    @param extension -- Data format extension (string, default '.csv')
+    @param param_dict -- Defines the parameter for read_csv:
+            "sep": Delimiter to use (string, default ',')
+            "header": Row to use for column labels (Use None if there is no header) (int, default 0)
+            "encoding": Encoding to use for UTF when reading (string, default None)
+            "dtype": Data type for data or column (dict of column -> type, default None)
+    @return dataframe 
     """
 
     url = apiUrl + targetFileName + extension
@@ -301,23 +305,23 @@ def write_dataframe(df, directory, file_prefix, file_type, param_dict={}):
     - json
     - json_timeasstring [Default]
     - hdf5
-    - csv
+    - txt
     The file_type defines the file format and thus also the file ending.
-    The file format can be json, hdf5 or csv.
+    The file format can be json, hdf5 or txt.
     For this option the column Date is converted from datetime to string.
 
     @param df pandas dataframe (pandas DataFrame)
     @param directory directory where to safe (string)
     @param file_prefix filename without ending (string)
     @param file_type defines ending (string)
-    @param param_dict defines parameters for to_csv (dictionary)
+    @param param_dict defines parameters for to_csv/txt(dictionary)
 
     """
 
     outForm = {'json': [".json", {"orient": "records"}],
                'json_timeasstring': [".json", {"orient": "records"}],
                'hdf5': [".h5", {"key": "data"}],
-               'csv': [".txt", param_dict]}
+               'txt': [".txt", param_dict]}
 
     try:
         outFormEnd = outForm[file_type][0]
@@ -325,7 +329,7 @@ def write_dataframe(df, directory, file_prefix, file_type, param_dict={}):
     except KeyError:
         raise ValueError(
             "Error: The file format: " + file_type +
-            " does not exist. Use json, json_timeasstring, hdf5 or csv.")
+            " does not exist. Use json, json_timeasstring, hdf5 or txt.")
 
     out_path = os.path.join(directory, file_prefix + outFormEnd)
 
@@ -338,7 +342,7 @@ def write_dataframe(df, directory, file_prefix, file_type, param_dict={}):
         df.to_json(out_path, **outFormSpec)
     elif file_type == "hdf5":
         df.to_hdf(out_path, **outFormSpec)
-    elif file_type == "csv":
+    elif file_type == "txt":
         df.to_csv(out_path, **outFormSpec)
 
     print("Information: Data has been written to", out_path)

@@ -446,7 +446,7 @@ def get_commuter_data(setup_dict='',
     gd.write_dataframe(
         df_commuter_migration, directory.split('pydata')[0] + 'mobility/',
         'commuter_migration_scaled_20' + files[0].split('-20')[1][0: 2],
-        'csv', {'sep': ' ', 'index': False, 'header': False})
+        'txt', {'sep': ' ', 'index': False, 'header': False})
 
     return df_commuter_migration
 
