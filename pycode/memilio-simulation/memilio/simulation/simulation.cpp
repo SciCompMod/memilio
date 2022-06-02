@@ -22,6 +22,7 @@
 #include "epidemiology/damping.h"
 #include "epidemiology/contact_matrix.h"
 #include "utils/date.h"
+#include "utils/time_series.h"
 #include "memilio/mobility/mobility.h"
 #include "memilio/utils/date.h"
 #include "memilio/utils/time_series.h"
@@ -41,55 +42,8 @@ PYBIND11_MODULE(_simulation, m)
 
     auto dampings_class = py::class_<mio::SquareDampings>(m, "Dampings");
     pymio::bind_dampings_members(dampings_class);
-
-    py::class_<mio::TimeSeries<double>>(m, "TimeSeries")
-        .def(py::init<Eigen::Index>(), py::arg("num_elements"))
-        .def("get_num_time_points", &mio::TimeSeries<double>::get_num_time_points)
-        .def("get_num_elements", &mio::TimeSeries<double>::get_num_elements)
-        .def("get_time", py::overload_cast<Eigen::Index>(&mio::TimeSeries<double>::get_time), py::arg("index"))
-        .def("get_last_time", py::overload_cast<>(&mio::TimeSeries<double>::get_last_time))
-        .def("get_value", py::overload_cast<Eigen::Index>(&mio::TimeSeries<double>::get_value), py::arg("index"))
-        .def("get_last_value", py::overload_cast<>(&mio::TimeSeries<double>::get_last_value))
-        .def("__len__", &mio::TimeSeries<double>::get_num_time_points)
-        .def(
-            "__getitem__",
-            [](mio::TimeSeries<double>& self, Eigen::Index i) {
-                if (i >= 0 && i < self.get_num_time_points()) {
-                    return self[i];
-                }
-                else {
-                    throw pybind11::index_error("Index out of range."); //needs to throw exception for iterable
-                }
-            },
-            py::is_operator(), py::arg("index"))
-        .def(
-            "__setitem__",
-            [](mio::TimeSeries<double>& self, Eigen::Index i, Eigen::Ref<const mio::TimeSeries<double>::Vector> expr) {
-                if (i >= 0 && i < self.get_num_time_points()) {
-                    self[i] = expr;
-                }
-                else {
-                    throw pybind11::index_error("Index out of range."); //needs to throw exception for iterable
-                }
-            },
-            py::is_operator(), py::arg("index"), py::arg("v"))
-        .def("add_time_point",
-             [](mio::TimeSeries<double>& self) {
-                 return self.add_time_point();
-             })
-        .def("add_time_point",
-             [](mio::TimeSeries<double>& self, double t) {
-                 return self.add_time_point(t);
-             })
-        .def("add_time_point",
-             [](mio::TimeSeries<double>& self, double t, Eigen::Ref<const mio::TimeSeries<double>::Vector> expr) {
-                 return self.add_time_point(t, expr);
-             })
-        .def("as_ndarray", [](mio::TimeSeries<double>& self) {
-            auto m = Eigen::Map<mio::TimeSeries<double>::Matrix>(self.data(), self.get_num_rows(),
-                                                                 self.get_num_time_points());
-            return Eigen::Ref<mio::TimeSeries<double>::Matrix>(m);
-        });
+    
+    pymio::bind_time_series(m, "TimeSeries");
 
     py::class_<mio::ParameterDistribution>(m, "ParameterDistribution")
         .def_property("lower_bound", &mio::ParameterDistribution::get_lower_bound,

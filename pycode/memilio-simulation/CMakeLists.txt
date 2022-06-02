@@ -41,6 +41,7 @@ install(TARGETS _simulation_abm LIBRARY DESTINATION memilio)
 pybind11_add_module(_simulation MODULE
     memilio/simulation/simulation.cpp
     memilio/simulation/utils/date.cpp
+    memilio/simulation/utils/time_series.cpp
 )
 target_link_libraries(_simulation PRIVATE memilio)
 target_include_directories(_simulation PRIVATE memilio/simulation)
