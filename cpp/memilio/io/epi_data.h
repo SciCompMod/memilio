@@ -120,15 +120,15 @@ public:
  * @param jsvalue json value, must be an array of objects, objects must match ConfirmedCasesDataEntry.
  * @return list of entries; entries of unknown age group are omitted.
  */
-inline IOResult<std::vector<ConfirmedCasesDataEntry>> deserialize_rki_data(const Json::Value& jsvalue)
+inline IOResult<std::vector<ConfirmedCasesDataEntry>> deserialize_confirmed_cases_data(const Json::Value& jsvalue)
 {
-    BOOST_OUTCOME_TRY(rki_data, deserialize_json(jsvalue, Tag<std::vector<ConfirmedCasesDataEntry>>{}));
+    BOOST_OUTCOME_TRY(cases_data, deserialize_json(jsvalue, Tag<std::vector<ConfirmedCasesDataEntry>>{}));
     //filter entries with unknown age group
-    auto it = std::remove_if(rki_data.begin(), rki_data.end(), [](auto&& rki_entry) {
+    auto it = std::remove_if(cases_data.begin(), cases_data.end(), [](auto&& rki_entry) {
         return rki_entry.age_group >= AgeGroup(ConfirmedCasesDataEntry::age_group_names.size());
     });
-    rki_data.erase(it, rki_data.end());
-    return success(std::move(rki_data));
+    cases_data.erase(it, cases_data.end());
+    return success(std::move(cases_data));
 }
 
 /**
@@ -139,7 +139,7 @@ inline IOResult<std::vector<ConfirmedCasesDataEntry>> deserialize_rki_data(const
 inline IOResult<std::vector<ConfirmedCasesDataEntry>> read_confirmed_cases_data(const std::string& filename)
 {
     BOOST_OUTCOME_TRY(jsvalue, read_json(filename));
-    return deserialize_rki_data(jsvalue);
+    return deserialize_confirmed_cases_data(jsvalue);
 }
 
 /**

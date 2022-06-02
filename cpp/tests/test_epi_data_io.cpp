@@ -18,10 +18,12 @@
 * limitations under the License.
 */
 
+#include "abm/state.h"
 #include "memilio/epidemiology/age_group.h"
 #include "memilio/epidemiology/regions.h"
 #include "memilio/io/epi_data.h"
 #include "matchers.h"
+#include "memilio/io/io.h"
 #include "memilio/io/mobility_io.h"
 #include "test_data_dir.h"
 #include "gtest/gtest.h"
@@ -51,7 +53,7 @@ TEST(TestEpiDataIo, read_rki) {
     js[2]["Recovered"] = 5;
     js[2]["Age_RKI"] = "unknown";
 
-    auto result = mio::deserialize_rki_data(js);
+    auto result = mio::deserialize_confirmed_cases_data(js);
     ASSERT_THAT(print_wrap(result), IsSuccess());
     auto rki_data = result.value();
     ASSERT_EQ(rki_data.size(), 2);
@@ -71,6 +73,20 @@ TEST(TestEpiDataIo, read_rki) {
     ASSERT_EQ(rki_data[1].num_recovered, 5);
     ASSERT_EQ(rki_data[1].county_id, mio::regions::de::CountyId(1001));
     ASSERT_EQ(rki_data[1].state_id, boost::none);
+}
+
+TEST(TestEpiDataIo, read_rki_error_age) 
+{
+    Json::Value js(Json::arrayValue);
+    js[0]["ID_County"] = 1001;
+    js[0]["Date"] = "2021-12-01";
+    js[0]["Confirmed"] = 1;
+    js[0]["Deaths"] = 2;
+    js[0]["Recovered"] = 3;
+    js[0]["Age_RKI"] = "A01-A05"; //error
+
+    auto result = mio::deserialize_confirmed_cases_data(js);
+    ASSERT_THAT(print_wrap(result), IsFailure(mio::StatusCode::InvalidValue));
 }
 
 TEST(TestEpiDataIo, read_divi)
@@ -153,6 +169,26 @@ TEST(TestEpiDataIo, read_population)
         testing::DoubleEq(0.8 * 110.0)));
 }
 
+TEST(TestEpiDataIo, read_population_error_age)
+{
+    Json::Value js(Json::arrayValue);
+    js[0]["ID_County"] = 1001;
+    js[0]["< 4 years"] = 10; //error
+    js[0][mio::PopulationDataEntry::age_group_names[1]] = 10;
+    js[0][mio::PopulationDataEntry::age_group_names[2]] = 10;
+    js[0][mio::PopulationDataEntry::age_group_names[3]] = 10;
+    js[0][mio::PopulationDataEntry::age_group_names[4]] = 10;
+    js[0][mio::PopulationDataEntry::age_group_names[5]] = 10;
+    js[0][mio::PopulationDataEntry::age_group_names[6]] = 10;
+    js[0][mio::PopulationDataEntry::age_group_names[7]] = 10;
+    js[0][mio::PopulationDataEntry::age_group_names[8]] = 10;
+    js[0][mio::PopulationDataEntry::age_group_names[9]] = 10;
+    js[0][mio::PopulationDataEntry::age_group_names[10]] = 10;
+
+    auto r = mio::deserialize_population_data(js);
+    ASSERT_THAT(print_wrap(r), IsFailure(mio::StatusCode::KeyNotFound));
+}
+
 TEST(TestEpiDataIo, get_county_ids)
 {
     std::vector<int> true_ids = {
@@ -218,4 +254,21 @@ TEST(TestEpiData, vaccination_data)
     ASSERT_EQ(vacc_data[1].age_group, mio::AgeGroup(5));
     ASSERT_EQ(vacc_data[1].county_id, mio::regions::de::CountyId(1012));
     ASSERT_EQ(vacc_data[1].num_vaccinations_completed, 12.0); 
+}
+
+TEST(TestEpiData, vaccination_data_error_age)
+{
+    auto js = Json::Value(Json::arrayValue);
+    js[0]["Date"] = "2021-12-01";
+    js[0]["ID_County"] = 1011;
+    js[0]["Vacc_completed"] = 23.05;
+    js[0]["Age_RKI"] = "5-15"; //error
+
+    js[1]["Date"] = "2021-12-02";
+    js[1]["ID_County"] = 1012;
+    js[1]["Vacc_completed"] = 12.0;
+    js[1]["Age_RKI"] = "80-99";
+
+    auto r = mio::deserialize_vaccination_data(js);
+    ASSERT_THAT(print_wrap(r), IsFailure(mio::StatusCode::InvalidValue));
 }

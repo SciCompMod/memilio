@@ -142,6 +142,17 @@ MATCHER(IsSuccess, std::string(negation ? "isn't" : "is") + " successful. ")
 }
 
 /**
+ * gmock matcher for IOResult.
+ * The matcher succeeds if the IOResult represents failure with the specified status code.
+ * @return matcher that checks an IOResult
+ */
+MATCHER_P(IsFailure, status_code, std::string(negation ? "isn't" : "is") + " failure. ")
+{
+    mio::unused(result_listener);
+    return arg.error().code() == status_code;
+}
+
+/**
  * gmock matcher that checks whether the elements of a container are linearly spaced.
  * @param b minimum value
  * @param e maximum value
