@@ -24,6 +24,7 @@
 #include "utils/date.h"
 #include "utils/time_series.h"
 #include "utils/parameter_distributions.h"
+#include "utils/uncertain_value.h"
 #include "memilio/mobility/mobility.h"
 #include "memilio/utils/date.h"
 #include "memilio/utils/uncertain_value.h"
@@ -48,31 +49,7 @@ PYBIND11_MODULE(_simulation, m)
     pymio::bind_parameter_distribution_normal(m, "ParameterDistributionNormal");
     pymio::bind_parameter_distribution_uniform(m, "ParameterDistributionUniform");
 
-    pymio::pybind_pickle_class<mio::UncertainValue>(m, "UncertainValue")
-        .def(py::init<ScalarType>(), py::arg("value") = 0.0)
-        .def_property(
-            "value",
-            [](mio::UncertainValue& self) {
-                return ScalarType(self);
-            },
-            [](mio::UncertainValue& self, ScalarType v) {
-                self = v;
-            })
-        .def("set_distribution", //a property would be nicer but getter and setter use a different type
-             &mio::UncertainValue::set_distribution)
-        .def(
-            "get_distribution",
-            [](const mio::UncertainValue& self) {
-                return self.get_distribution().get();
-            },
-            py::return_value_policy::reference_internal)
-        .def(
-            "get_distribution",
-            [](mio::UncertainValue& self) {
-                return self.get_distribution().get();
-            },
-            py::return_value_policy::reference_internal)
-        .def("draw_sample", &mio::UncertainValue::draw_sample);
+    pymio::bind_uncertain_value(m, "UncertainValue");
 
     auto contact_matrix_class = py::class_<mio::ContactMatrix>(m, "ContactMatrix");
     pymio::bind_damping_expression_members(contact_matrix_class);
