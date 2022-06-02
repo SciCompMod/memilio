@@ -42,6 +42,7 @@ pybind11_add_module(_simulation MODULE
     memilio/simulation/simulation.cpp
     memilio/simulation/utils/date.cpp
     memilio/simulation/utils/time_series.cpp
+    memilio/simulation/utils/parameter_distributions.cpp
 )
 target_link_libraries(_simulation PRIVATE memilio)
 target_include_directories(_simulation PRIVATE memilio/simulation)

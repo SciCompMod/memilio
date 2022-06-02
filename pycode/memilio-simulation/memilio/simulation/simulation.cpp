@@ -23,10 +23,9 @@
 #include "epidemiology/contact_matrix.h"
 #include "utils/date.h"
 #include "utils/time_series.h"
+#include "utils/parameter_distributions.h"
 #include "memilio/mobility/mobility.h"
 #include "memilio/utils/date.h"
-#include "memilio/utils/time_series.h"
-#include "memilio/utils/parameter_distributions.h"
 #include "memilio/utils/uncertain_value.h"
 #include "memilio/epidemiology/regions.h"
 #include "memilio/epidemiology/uncertain_matrix.h"
@@ -45,26 +44,9 @@ PYBIND11_MODULE(_simulation, m)
     
     pymio::bind_time_series(m, "TimeSeries");
 
-    py::class_<mio::ParameterDistribution>(m, "ParameterDistribution")
-        .def_property("lower_bound", &mio::ParameterDistribution::get_lower_bound,
-                      &mio::ParameterDistribution::set_lower_bound)
-        .def_property("upper_bound", &mio::ParameterDistribution::get_upper_bound,
-                      &mio::ParameterDistribution::set_upper_bound)
-        .def("add_predefined_sample", &mio::ParameterDistribution::add_predefined_sample)
-        .def("remove_predefined_samples", &mio::ParameterDistribution::remove_predefined_samples)
-        .def("get_sample", &mio::ParameterDistribution::get_sample);
-
-    pymio::pybind_pickle_class<mio::ParameterDistributionNormal, mio::ParameterDistribution>(m, "ParameterDistributionNormal")
-        .def(py::init<double, double, double, double>(), py::arg("lb"), py::arg("ub"), py::arg("mean"),
-             py::arg("std_dev"))
-        .def(py::init<double, double, double>(), py::arg("lb"), py::arg("ub"), py::arg("mean"))
-        .def_property("mean", &mio::ParameterDistributionNormal::get_mean, &mio::ParameterDistributionNormal::set_mean)
-        .def_property("standard_dev", &mio::ParameterDistributionNormal::get_standard_dev,
-                      &mio::ParameterDistributionNormal::set_standard_dev);
-
-    pymio::pybind_pickle_class<mio::ParameterDistributionUniform, mio::ParameterDistribution>(m, "ParameterDistributionUniform")
-        .def(py::init<>())
-        .def(py::init<double, double>(), py::arg("lb"), py::arg("ub"));
+    pymio::bind_parameter_distribution(m, "ParameterDistribution");
+    pymio::bind_parameter_distribution_normal(m, "ParameterDistributionNormal");
+    pymio::bind_parameter_distribution_uniform(m, "ParameterDistributionUniform");
 
     pymio::pybind_pickle_class<mio::UncertainValue>(m, "UncertainValue")
         .def(py::init<ScalarType>(), py::arg("value") = 0.0)

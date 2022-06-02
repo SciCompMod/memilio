@@ -17,16 +17,20 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
-#ifndef PYMIO_DATE_H
-#define PYMIO_DATE_H
+#ifndef PYMIO_PARAMETER_DISTRIBUTIONS_H
+#define PYMIO_PARAMETER_DISTRIBUTIONS_H
 
 #include "pybind11/pybind11.h"
 
 namespace pymio
 {
 
-void bind_date(pybind11::module& m, std::string const& name);
+void bind_parameter_distribution(pybind11::module& m, std::string const& name);
+
+void bind_parameter_distribution_normal(pybind11::module& m, std::string const& name);
+
+void bind_parameter_distribution_uniform(pybind11::module& m, std::string const& name);
 
 } // namespace pymio
 
-#endif //PYMIO_DATE_H
+#endif //PYMIO_PARAMETER_DISTRIBUTIONS_H
