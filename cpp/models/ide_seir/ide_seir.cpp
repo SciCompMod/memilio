@@ -24,11 +24,6 @@
 
 #include <iostream>
 
-/* TODO 
-    Test schreiben
-    beschreibungen und kommentare rewriten
-    */
-
 namespace mio
 {
 namespace iseir
@@ -124,17 +119,17 @@ namespace iseir
     void IdeSeirModel::print_result(bool calculated_SEIR) const
     {
         if (calculated_SEIR) {
-            std::cout << "time  |  S  |  E  |  I  |  R" << std::endl;
+            std::cout << "# time  |  S  |  E  |  I  |  R" << std::endl;
             Eigen::Index num_points = m_result_SEIR.get_num_time_points();
             for (Eigen::Index i = 0; i < num_points; ++i) {
-                std::cout << m_result_SEIR.get_time(i) << "  |  " << m_result_SEIR[i][Eigen::Index(iSeirInfType::S)]
-                          << "  |  " << m_result_SEIR[i][Eigen::Index(iSeirInfType::E)] << "  |  "
-                          << m_result_SEIR[i][Eigen::Index(iSeirInfType::I)] << "  |  "
-                          << m_result_SEIR[i][Eigen::Index(iSeirInfType::R)] << std::endl;
+                printf(" %.9f %.9f %.9f %.9f %.9f\n", m_result_SEIR.get_time(i),
+                       m_result_SEIR[i][Eigen::Index(iSeirInfType::S)], m_result_SEIR[i][Eigen::Index(iSeirInfType::E)],
+                       m_result_SEIR[i][Eigen::Index(iSeirInfType::I)],
+                       m_result_SEIR[i][Eigen::Index(iSeirInfType::R)]);
             }
         }
         else {
-            std::cout << "time  |  number of susceptibles" << std::endl;
+            std::cout << "# time  |  number of susceptibles" << std::endl;
             Eigen::Index num_points = m_result.get_num_time_points();
             for (Eigen::Index i = 0; i < num_points; ++i) {
                 std::cout << m_result.get_time(i) << "  |  " << m_result[i][Eigen::Index(iSeirInfType::S)] << std::endl;
