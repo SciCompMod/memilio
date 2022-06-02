@@ -35,11 +35,12 @@ pybind11_add_module(_simulation_abm MODULE
     memilio/simulation/abm.cpp
 )
 target_link_libraries(_simulation_abm PRIVATE memilio abm)
-target_include_directories(_simulation_abm PRIVATE memilio/abm)
+target_include_directories(_simulation_abm PRIVATE memilio/simulation)
 install(TARGETS _simulation_abm LIBRARY DESTINATION memilio)
 
 pybind11_add_module(_simulation MODULE
     memilio/simulation/simulation.cpp
+    memilio/simulation/utils/date.cpp
 )
 target_link_libraries(_simulation PRIVATE memilio)
 target_include_directories(_simulation PRIVATE memilio/simulation)

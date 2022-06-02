@@ -21,6 +21,7 @@
 #include "pybind_util.h"
 #include "epidemiology/damping.h"
 #include "epidemiology/contact_matrix.h"
+#include "utils/date.h"
 #include "memilio/mobility/mobility.h"
 #include "memilio/utils/date.h"
 #include "memilio/utils/time_series.h"
@@ -33,13 +34,7 @@ namespace py = pybind11;
 
 PYBIND11_MODULE(_simulation, m)
 {
-    pymio::pybind_pickle_class<mio::Date>(m, "Date")
-        .def(py::init<int, int, int>(), py::arg("year"), py::arg("month"), py::arg("day"))
-        .def_readwrite("year", &mio::Date::year)
-        .def_readwrite("month", &mio::Date::month)
-        .def_readwrite("day", &mio::Date::day)
-        .def(py::self == py::self)
-        .def(py::self != py::self);
+    pymio::bind_date(m, "Date");
 
     auto damping_class = py::class_<mio::SquareDamping>(m, "Damping");
     pymio::bind_damping_members(damping_class);
