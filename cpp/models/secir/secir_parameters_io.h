@@ -32,6 +32,7 @@
 #include "memilio/io/io.h"
 #include "memilio/io/json_serializer.h"
 #include "memilio/io/result_io.h"
+#include "memilio/io/epi_data.h"
 #include "memilio/utils/date.h"
 
 namespace mio
@@ -59,20 +60,18 @@ namespace details
      * @param t_* vector average time it takes to get from one compartement to another for each age group
      * @param mu_* vector probabilities to get from one compartement to another for each age group
      */
-    IOResult<void> read_rki_data(std::string const& path, std::vector<int> const& region, Date date,
-                       std::vector<std::vector<double>>& num_exp, std::vector<std::vector<double>>& num_car,
-                       std::vector<std::vector<double>>& num_inf, std::vector<std::vector<double>>& num_hosp,
-                       std::vector<std::vector<double>>& num_icu, std::vector<std::vector<double>>& num_death,
-                       std::vector<std::vector<double>>& num_rec, const std::vector<std::vector<int>>& t_car_to_rec,
-                       const std::vector<std::vector<int>>& t_car_to_inf,
-                       const std::vector<std::vector<int>>& t_exp_to_car,
-                       const std::vector<std::vector<int>>& t_inf_to_rec,
-                       const std::vector<std::vector<int>>& t_inf_to_hosp,
-                       const std::vector<std::vector<int>>& t_hosp_to_rec,
-                       const std::vector<std::vector<int>>& t_hosp_to_icu,
-                       const std::vector<std::vector<int>>& t_icu_to_dead,
-                       const std::vector<std::vector<double>>& mu_C_R, const std::vector<std::vector<double>>& mu_I_H,
-                       const std::vector<std::vector<double>>& mu_H_U, const std::vector<double>& scaling_factor_inf);
+    IOResult<void> read_rki_data(
+        std::string const& path, std::vector<int> const& vregion, Date date, std::vector<std::vector<double>>& vnum_exp,
+        std::vector<std::vector<double>>& vnum_car, std::vector<std::vector<double>>& vnum_inf,
+        std::vector<std::vector<double>>& vnum_hosp, std::vector<std::vector<double>>& vnum_icu,
+        std::vector<std::vector<double>>& vnum_death, std::vector<std::vector<double>>& vnum_rec,
+        const std::vector<std::vector<int>>& vt_car_to_rec, const std::vector<std::vector<int>>& vt_car_to_inf,
+        const std::vector<std::vector<int>>& vt_exp_to_car, const std::vector<std::vector<int>>& vt_inf_to_rec,
+        const std::vector<std::vector<int>>& vt_inf_to_hosp, const std::vector<std::vector<int>>& vt_hosp_to_rec,
+        const std::vector<std::vector<int>>& vt_hosp_to_icu, const std::vector<std::vector<int>>& vt_icu_to_dead,
+        const std::vector<std::vector<int>>& vt_icu_to_rec, const std::vector<std::vector<double>>& vmu_C_R,
+        const std::vector<std::vector<double>>& vmu_I_H, const std::vector<std::vector<double>>& vmu_H_U,
+        const std::vector<std::vector<double>>& vmu_U_D, const std::vector<double>& scaling_factor_inf);
 
     /**
      * @brief sets populations data from RKI into a SecirModel
@@ -149,9 +148,6 @@ IOResult<void> extrapolate_rki_results(std::vector<Model>& model, const std::str
                                        const std::vector<double>& scaling_factor_inf, double scaling_factor_icu,
                                        int num_days)
 {
-    std::vector<double> age_ranges = {5., 10., 20., 25., 20., 20.};
-    assert(scaling_factor_inf.size() == age_ranges.size());
-
     std::vector<std::vector<int>> t_car_to_rec{model.size()}; // R9
     std::vector<std::vector<int>> t_car_to_inf{model.size()}; // R3
     std::vector<std::vector<int>> t_exp_to_car{model.size()}; // R2
@@ -160,16 +156,18 @@ IOResult<void> extrapolate_rki_results(std::vector<Model>& model, const std::str
     std::vector<std::vector<int>> t_hosp_to_rec{model.size()}; // R5
     std::vector<std::vector<int>> t_hosp_to_icu{model.size()}; // R7
     std::vector<std::vector<int>> t_icu_to_dead{model.size()}; // R10
+    std::vector<std::vector<int>> t_icu_to_rec{model.size()};
 
     std::vector<std::vector<double>> mu_C_R{model.size()};
     std::vector<std::vector<double>> mu_I_H{model.size()};
     std::vector<std::vector<double>> mu_H_U{model.size()};
+    std::vector<std::vector<double>> mu_U_D{model.size()};
 
     std::vector<double> sum_mu_I_U(region.size(), 0);
     std::vector<std::vector<double>> mu_I_U{model.size()};
 
     for (size_t county = 0; county < model.size(); county++) {
-        for (size_t group = 0; group < age_ranges.size(); group++) {
+        for (size_t group = 0; group < ConfirmedCasesDataEntry::age_group_names.size(); group++) {
 
             t_car_to_inf[county].push_back(
                 static_cast<int>(2 * (model[county].parameters.template get<IncubationTime>()[AgeGroup(group)] -
@@ -187,11 +185,15 @@ IOResult<void> extrapolate_rki_results(std::vector<Model>& model, const std::str
                 static_cast<int>(model[county].parameters.template get<HospitalizedToHomeTime>()[AgeGroup(group)]));
             t_hosp_to_icu[county].push_back(
                 static_cast<int>(model[county].parameters.template get<HospitalizedToICUTime>()[AgeGroup(group)]));
-            t_icu_to_dead[county].push_back(static_cast<int>(model[county].parameters.template get<ICUToDeathTime>()[AgeGroup(group)]));
+            t_icu_to_dead[county].push_back(
+                static_cast<int>(model[county].parameters.template get<ICUToDeathTime>()[AgeGroup(group)]));
+            t_icu_to_rec[county].push_back(
+                static_cast<int>(model[county].parameters.template get<ICUToHomeTime>()[(AgeGroup)group]));
 
             mu_C_R[county].push_back(model[county].parameters.template get<AsymptoticCasesPerInfectious>()[AgeGroup(group)]);
             mu_I_H[county].push_back(model[county].parameters.template get<HospitalizedCasesPerInfectious>()[AgeGroup(group)]);
             mu_H_U[county].push_back(model[county].parameters.template get<ICUCasesPerHospitalized>()[AgeGroup(group)]);
+            mu_U_D[county].push_back(model[county].parameters.template get<DeathsPerICU>()[(AgeGroup)group]);
 
             sum_mu_I_U[county] += model[county].parameters.template get<ICUCasesPerHospitalized>()[AgeGroup(group)] *
                                   model[county].parameters.template get<HospitalizedCasesPerInfectious>()[AgeGroup(group)];
@@ -201,29 +203,30 @@ IOResult<void> extrapolate_rki_results(std::vector<Model>& model, const std::str
     }
 
     std::vector<TimeSeries<double>> rki_data(
-        region.size(), TimeSeries<double>::zero(num_days, (size_t)InfectionState::Count * age_ranges.size()));
+        region.size(), TimeSeries<double>::zero(num_days, (size_t)InfectionState::Count * ConfirmedCasesDataEntry::age_group_names.size()));
 
     for (size_t j = 0; j < static_cast<size_t>(num_days); j++) {
-        std::vector<std::vector<double>> num_inf(model.size(), std::vector<double>(age_ranges.size(), 0.0));
-        std::vector<std::vector<double>> num_death(model.size(), std::vector<double>(age_ranges.size(), 0.0));
-        std::vector<std::vector<double>> num_rec(model.size(), std::vector<double>(age_ranges.size(), 0.0));
-        std::vector<std::vector<double>> num_exp(model.size(), std::vector<double>(age_ranges.size(), 0.0));
-        std::vector<std::vector<double>> num_car(model.size(), std::vector<double>(age_ranges.size(), 0.0));
-        std::vector<std::vector<double>> num_hosp(model.size(), std::vector<double>(age_ranges.size(), 0.0));
-        std::vector<std::vector<double>> dummy_icu(model.size(), std::vector<double>(age_ranges.size(), 0.0));
+        std::vector<std::vector<double>> num_inf(model.size(), std::vector<double>(ConfirmedCasesDataEntry::age_group_names.size(), 0.0));
+        std::vector<std::vector<double>> num_death(model.size(), std::vector<double>(ConfirmedCasesDataEntry::age_group_names.size(), 0.0));
+        std::vector<std::vector<double>> num_rec(model.size(), std::vector<double>(ConfirmedCasesDataEntry::age_group_names.size(), 0.0));
+        std::vector<std::vector<double>> num_exp(model.size(), std::vector<double>(ConfirmedCasesDataEntry::age_group_names.size(), 0.0));
+        std::vector<std::vector<double>> num_car(model.size(), std::vector<double>(ConfirmedCasesDataEntry::age_group_names.size(), 0.0));
+        std::vector<std::vector<double>> num_hosp(model.size(), std::vector<double>(ConfirmedCasesDataEntry::age_group_names.size(), 0.0));
+        std::vector<std::vector<double>> dummy_icu(model.size(), std::vector<double>(ConfirmedCasesDataEntry::age_group_names.size(), 0.0));
         std::vector<double> num_icu(model.size(), 0.0);
 
-        BOOST_OUTCOME_TRY(details::read_rki_data(
-            path_join(data_dir, "cases_all_county_age_ma7.json"), region, date, num_exp, num_car, num_inf, num_hosp,
-            dummy_icu, num_death, num_rec, t_car_to_rec, t_car_to_inf, t_exp_to_car, t_inf_to_rec, t_inf_to_hosp,
-            t_hosp_to_rec, t_hosp_to_icu, t_icu_to_dead, mu_C_R, mu_I_H, mu_H_U, scaling_factor_inf));
+        BOOST_OUTCOME_TRY(details::read_rki_data(path_join(data_dir, "cases_all_county_age_ma7.json"), region, date,
+                                                 num_exp, num_car, num_inf, num_hosp, dummy_icu, num_death, num_rec,
+                                                 t_car_to_rec, t_car_to_inf, t_exp_to_car, t_inf_to_rec, t_inf_to_hosp,
+                                                 t_hosp_to_rec, t_hosp_to_icu, t_icu_to_dead, t_icu_to_rec, mu_C_R,
+                                                 mu_I_H, mu_H_U, mu_U_D, scaling_factor_inf));
         BOOST_OUTCOME_TRY(details::read_divi_data(path_join(data_dir, "county_divi.json"), region, date, num_icu));
         BOOST_OUTCOME_TRY(num_population, 
             details::read_population_data(path_join(data_dir, "county_current_population.json"), region));
 
         for (size_t i = 0; i < region.size(); i++) {
-            for (size_t age = 0; age < age_ranges.size(); age++) {
-                rki_data[i][j]((size_t)InfectionState::Exposed + (size_t)mio::InfectionState::Count * age) =
+            for (size_t age = 0; age < ConfirmedCasesDataEntry::age_group_names.size(); age++) {
+                rki_data[i][j]((size_t)InfectionState::Exposed + (size_t)InfectionState::Count * age) =
                     num_exp[i][age];
                 rki_data[i][j]((size_t)InfectionState::Carrier + (size_t)InfectionState::Count * age) = num_car[i][age];
                 rki_data[i][j]((size_t)InfectionState::Infected + (size_t)InfectionState::Count * age) =
@@ -246,7 +249,7 @@ IOResult<void> extrapolate_rki_results(std::vector<Model>& model, const std::str
     auto num_groups = (int)(size_t)model[0].parameters.get_num_groups();
     BOOST_OUTCOME_TRY(save_result(rki_data, region, num_groups, path_join(results_dir, "Results_rki.h5")));
 
-    auto rki_data_sum = mio::sum_nodes(std::vector<std::vector<TimeSeries<double>>>{rki_data});
+    auto rki_data_sum = sum_nodes(std::vector<std::vector<TimeSeries<double>>>{rki_data});
     BOOST_OUTCOME_TRY(save_result({rki_data_sum[0][0]}, {0}, num_groups, path_join(results_dir, "Results_rki_sum.h5")));
 
     return success();

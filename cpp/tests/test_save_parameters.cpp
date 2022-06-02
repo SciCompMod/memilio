@@ -430,10 +430,10 @@ TEST(TestSaveParameters, ReadPopulationDataRKIAges)
     auto read_result = mio::read_population_data_germany(model, date, scaling_factor_inf, scaling_factor_icu, path);
     ASSERT_THAT(print_wrap(read_result), IsSuccess());
 
-    std::vector<double> sus   = {3444023.09, 7666389.350, 18801939.83, 29522450.59, 16317865.95, 6059469.35};
-    std::vector<double> exp   = {389.843, 1417.37, 6171.74, 8765.6, 3554.5, 2573.89};
-    std::vector<double> car   = {389.443, 1412.86, 6077.14, 8554.77, 3437.57, 2462.09};
-    std::vector<double> inf   = {297.924, 811.551, 2270.16, 1442.03, 0, 0};
+    std::vector<double> sus   = {3443857.42, 7665093.95, 18792870.93, 29503629.76, 16307262.45, 6049150.54};
+    std::vector<double> exp   = {433.015, 1771.61, 8856.33, 14757.62, 7222.86, 6626.07};
+    std::vector<double> car   = {434.444, 1772.14, 8724.49, 14386.90, 6995.14, 6307.14};
+    std::vector<double> inf   = {375.429, 1393.43, 6007.14, 8438.71, 3377.57, 2421.57};
     std::vector<double> hosp  = {39.9614, 303.191, 1934.84, 3621.2, 1793.39, 1557.03};
     std::vector<double> icu   = {47.6813, 190.725, 429.132, 762.901, 1192.03, 1716.53};
     std::vector<double> rec   = {23557.7, 78946.3, 398585.142, 487273.71, 178660.14, 96021.9};
@@ -474,10 +474,10 @@ TEST(TestSaveParameters, ReadPopulationDataStateAllAges)
         mio::read_population_data_state(model, date, state, scaling_factor_inf, scaling_factor_icu, path);
     ASSERT_THAT(print_wrap(read_result), IsSuccess());
 
-    std::vector<double> sus   = {116695.3, 283933, 622945.61, 1042462.09, 606578.8, 212990};
-    std::vector<double> exp   = {7.64286, 23.7143, 103.243, 134.486, 43, 38};
-    std::vector<double> car   = {7, 20.4286, 99.4143, 126.971, 41.6429, 36.4286};
-    std::vector<double> inf   = {5.59286, 11.0429, 37.7571, 22.6629, 0.0785714, 0};
+    std::vector<double> sus   = {116692.2, 283912.8, 622795.86, 1042178.3, 606450.7, 212836.9};
+    std::vector<double> exp   = {8.57143, 30.5357, 149.388, 228.809, 87.1429, 99.2857};
+    std::vector<double> car   = {7.77778, 26.0714, 143.061, 217.143, 84.8571, 92.1429};
+    std::vector<double> inf   = {7.00000, 18.7143, 97.7143, 122.000, 40.8571, 36.1429};
     std::vector<double> hosp  = {0.707143, 3.92857, 30.6429, 50.5371, 20.35, 19.9886};
     std::vector<double> icu   = {0.274725, 1.0989, 2.47253, 4.3956, 6.86813, 9.89011};
     std::vector<double> rec   = {393.143, 1216.14, 5467.86, 6543.57, 2281.29, 1045.71};
@@ -519,10 +519,10 @@ TEST(TestSaveParameters, ReadPopulationDataCountyAllAges)
         mio::read_population_data_county(model, date, county, scaling_factor_inf, scaling_factor_icu, path);
     ASSERT_THAT(print_wrap(read_result), IsSuccess());
 
-    std::vector<double> sus   = {10284.4, 19086.2, 73805.3, 82522.6, 43731.9, 15620.2};
-    std::vector<double> exp   = {0.571429, 3.8, 14.8286, 12.9429, 2.21429, 1.85714};
-    std::vector<double> car   = {0.557143, 3.51429, 15.3857, 12.6571, 2.28571, 1.94286};
-    std::vector<double> inf   = {0.291429, 1.93714, 5.79714, 2.45714, 0, 0};
+    std::vector<double> sus   = {10284.13, 19082.86, 73783.12, 82494.81, 43725.08, 15612.70};
+    std::vector<double> exp   = {0.571429, 4.82143, 20.8163, 22.1429, 4.57143, 4.64286};
+    std::vector<double> car   = {0.557143, 4.46429, 22.0408, 20.7143, 4.28571, 4.64286};
+    std::vector<double> inf   = {0.42857, 3.285714, 15.2857, 13.0000, 2.42857, 2.00000};
     std::vector<double> hosp  = {0.0942857, 0.691429, 4.90286, 5.34286, 1.41429, 2.45143};
     std::vector<double> icu   = {0.0769231, 0.307692, 0.692308, 1.23077, 1.92308, 2.76923};
     std::vector<double> rec   = {35, 108.571, 640.143, 573.429, 180.429, 75.5714};
@@ -571,10 +571,10 @@ TEST(TestSaveParameters, ExtrapolateRKI)
     auto& file_results = read_result.value();
     auto results       = file_results[0].get_groups();
 
-    std::vector<double> sus   = {10284.4, 19086.2, 73805.3, 82522.6, 43731.9, 15620.2};
-    std::vector<double> exp   = {0.571429, 3.8, 14.8286, 12.9429, 2.21429, 1.85714};
-    std::vector<double> car   = {0.557143, 3.51429, 15.3857, 12.6571, 2.28571, 1.94286};
-    std::vector<double> inf   = {0.291429, 1.93714, 5.79714, 2.45714, 0, 0};
+    std::vector<double> sus   = {10284.1, 19082.9, 73783.1, 82494.8, 43725.1, 15612.7};
+    std::vector<double> exp   = {0.571429, 4.82143, 20.8163, 22.1429, 4.57143, 4.64286};
+    std::vector<double> car   = {0.557143, 4.46429, 22.0408, 20.7143, 4.28571, 4.64286};
+    std::vector<double> inf   = {0.428571, 3.28571, 15.2857, 13.0000, 2.42857, 2.00000};
     std::vector<double> hosp  = {0.0942857, 0.691429, 4.90286, 5.34286, 1.41429, 2.45143};
     std::vector<double> icu   = {0.0769231, 0.307692, 0.692308, 1.23077, 1.92308, 2.76923};
     std::vector<double> rec   = {35, 108.571, 640.143, 573.429, 180.429, 75.5714};

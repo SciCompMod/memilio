@@ -136,7 +136,7 @@ inline IOResult<std::vector<ConfirmedCasesDataEntry>> deserialize_rki_data(const
  * @param filename name of the json file. File content must be an array of objects, objects must match ConfirmedCasesDataEntry.
  * @return list of entries; entries of unknown age group are omitted.
  */
-inline IOResult<std::vector<ConfirmedCasesDataEntry>> read_rki_data(const std::string& filename)
+inline IOResult<std::vector<ConfirmedCasesDataEntry>> read_confirmed_cases_data(const std::string& filename)
 {
     BOOST_OUTCOME_TRY(jsvalue, read_json(filename));
     return deserialize_rki_data(jsvalue);

@@ -1,7 +1,7 @@
 /* 
 * Copyright (C) 2020-2022 German Aerospace Center (DLR-SC)
 *
-* Authors: Wadim Koslow, Daniel Abele
+* Authors: Wadim Koslow, Daniel Abele, Martin J. Kühn
 *
 * Contact: Martin J. Kuehn <Martin.Kuehn@DLR.de>
 *
@@ -20,6 +20,7 @@
 
 #include "ode_secirvvs/parameters_io.h"
 #include "memilio/epidemiology/regions.h"
+#include "memilio/io/io.h"
 
 #ifdef MEMILIO_HAS_JSONCPP
 
@@ -50,20 +51,16 @@ namespace osecirvvs
 {
     namespace details
     {
+        //gets the county or state id of the entry if available, 0 (for whole country) otherwise
+        //used for comparisons of entry to integer region id
         template <class EpiDataEntry>
         int get_region_id(const EpiDataEntry& rki_entry)
         {
-            return rki_entry.state_id ? rki_entry.state_id->get()
-                                      : (rki_entry.county_id ? rki_entry.county_id->get() : 0);
+            return rki_entry.county_id ? rki_entry.county_id->get()
+                                       : (rki_entry.state_id ? rki_entry.state_id->get() : 0);
         }
 
-        //used to compare epi data entries to integer region ids
-        int get_region_id(int id)
-        {
-            return id;
-        }
-
-        IOResult<void> read_rki_data(
+        IOResult<void> read_confirmed_cases_data(
             std::string const& path, std::vector<int> const& vregion, Date date,
             std::vector<std::vector<double>>& vnum_exp, std::vector<std::vector<double>>& vnum_car,
             std::vector<std::vector<double>>& vnum_inf, std::vector<std::vector<double>>& vnum_hosp,
@@ -77,14 +74,14 @@ namespace osecirvvs
             const std::vector<std::vector<double>>& vmu_H_U, const std::vector<std::vector<double>>& vmu_U_D,
             const std::vector<double>& scaling_factor_inf)
         {
-            BOOST_OUTCOME_TRY(rki_data, mio::read_rki_data(path));
-            return read_rki_data(rki_data, vregion, date, vnum_exp, vnum_car, vnum_inf, vnum_hosp, vnum_icu, vnum_death,
+            BOOST_OUTCOME_TRY(rki_data, mio::read_confirmed_cases_data(path));
+            return read_confirmed_cases_data(rki_data, vregion, date, vnum_exp, vnum_car, vnum_inf, vnum_hosp, vnum_icu, vnum_death,
                                  vnum_rec, vt_car_to_rec, vt_car_to_inf, vt_exp_to_car, vt_inf_to_rec, vt_inf_to_hosp,
                                  vt_hosp_to_rec, vt_hosp_to_icu, vt_icu_to_dead, vt_icu_to_rec, vmu_C_R, vmu_I_H,
                                  vmu_H_U, vmu_U_D, scaling_factor_inf);
         }
 
-        IOResult<void> read_rki_data(
+        IOResult<void> read_confirmed_cases_data(
             const std::vector<ConfirmedCasesDataEntry>& rki_data, std::vector<int> const& vregion, Date date,
             std::vector<std::vector<double>>& vnum_exp, std::vector<std::vector<double>>& vnum_car,
             std::vector<std::vector<double>>& vnum_inf, std::vector<std::vector<double>>& vnum_hosp,
@@ -105,7 +102,7 @@ namespace osecirvvs
                 log_error("RKI data file is empty.");
                 return failure(StatusCode::InvalidValue, "RKI data is empty.");
             }
-            auto&& max_date = max_date_entry->date;
+            auto max_date = max_date_entry->date;
             if (max_date < date) {
                 log_error("Specified date does not exist in RKI data");
                 return failure(StatusCode::OutOfRange, "RKI data does not contain specified date.");
@@ -272,15 +269,15 @@ namespace osecirvvs
             return success();
         }
 
-        IOResult<void> read_rki_data_confirmed_to_recovered(std::string const& path, std::vector<int> const& vregion,
+        IOResult<void> read_confirmed_cases_data_fix_recovered(std::string const& path, std::vector<int> const& vregion,
                                                             Date date, std::vector<std::vector<double>>& vnum_rec,
                                                             double delay)
         {
-            BOOST_OUTCOME_TRY(rki_data, mio::read_rki_data(path));
-            return read_rki_data_confirmed_to_recovered(rki_data, vregion, date, vnum_rec, delay);
+            BOOST_OUTCOME_TRY(rki_data, mio::read_confirmed_cases_data(path));
+            return read_confirmed_cases_data_fix_recovered(rki_data, vregion, date, vnum_rec, delay);
         }
 
-        IOResult<void> read_rki_data_confirmed_to_recovered(const std::vector<ConfirmedCasesDataEntry>& rki_data,
+        IOResult<void> read_confirmed_cases_data_fix_recovered(const std::vector<ConfirmedCasesDataEntry>& rki_data,
                                                             std::vector<int> const& vregion, Date date,
                                                             std::vector<std::vector<double>>& vnum_rec, double delay)
         {
@@ -291,7 +288,7 @@ namespace osecirvvs
                 log_error("RKI data is empty.");
                 return failure(StatusCode::InvalidValue, "RKI data is empty.");
             }
-            auto&& max_date = max_date_entry->date;
+            auto max_date = max_date_entry->date;
             if (max_date < date) {
                 log_error("Specified date does not exist in RKI data");
                 return failure(StatusCode::OutOfRange, "RKI data does not contain specified date.");
@@ -397,18 +394,25 @@ namespace osecirvvs
             std::vector<std::vector<double>> vnum_population(
                 vregion.size(), std::vector<double>(ConfirmedCasesDataEntry::age_group_names.size(), 0.0));
 
-            for (auto&& entry : population_data) {
-                auto it = std::find_if(vregion.begin(), vregion.end(), [&entry](auto r) {
+            for (auto&& county_entry : population_data) {
+                //accumulate population of states or country from population of counties
+                if (!county_entry.county_id)
+                {
+                    return failure(StatusCode::InvalidFileFormat, "File with county population expected.");
+                }
+                //find region that this county belongs to
+                //all counties belong to the country (id = 0)
+                auto it = std::find_if(vregion.begin(), vregion.end(), [&county_entry](auto r) {
                     return r == 0 ||
-                           (entry.county_id &&
-                            regions::de::StateId(r) == regions::de::get_state_id(*entry.county_id)) ||
-                           (entry.county_id && regions::de::CountyId(r) == *entry.county_id);
+                           (county_entry.county_id &&
+                            regions::de::StateId(r) == regions::de::get_state_id(*county_entry.county_id)) ||
+                           (county_entry.county_id && regions::de::CountyId(r) == *county_entry.county_id);
                 });
                 if (it != vregion.end()) {
                     auto region_idx      = size_t(it - vregion.begin());
                     auto& num_population = vnum_population[region_idx];
                     for (size_t age = 0; age < num_population.size(); age++) {
-                        num_population[age] += entry.population[AgeGroup(age)];
+                        num_population[age] += county_entry.population[AgeGroup(age)];
                     }
                 }
             }
@@ -447,7 +451,7 @@ namespace osecirvvs
             if (max_date_entry == vacc_data.end()) {
                 return failure(StatusCode::InvalidFileFormat, "Vaccination data file is empty.");
             }
-            auto& max_date = max_date_entry->date;
+            auto max_date = max_date_entry->date;
             auto max_full_date =
                 offset_date_by_days(max_date, days_until_effective1 - days_until_effective2 - vaccination_distance);
 

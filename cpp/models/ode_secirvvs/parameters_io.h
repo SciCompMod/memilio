@@ -1,7 +1,7 @@
 /* 
 * Copyright (C) 2020-2022 German Aerospace Center (DLR-SC)
 *
-* Authors: Wadim Koslow, Daniel Abele
+* Authors: Wadim Koslow, Daniel Abele, Martin J. Kühn
 *
 * Contact: Martin J. Kuehn <Martin.Kuehn@DLR.de>
 *
@@ -44,17 +44,18 @@ namespace osecirvvs
     namespace details
     {
         /**
-        * @brief reads populations data from RKI
-        * @param path Path to RKI file
+        * @brief Reads subpopulations of infection states from transformed RKI cases file.
+        * @param path Path to transformed RKI cases file.
         * @param vregion vector of keys of the region of interest     
         * @param date Date for which the arrays are initialized
         * @param num_* output vector for number of people in the corresponding compartement
-        * @param t_* vector average time it takes to get from one compartement to another for each age group
-        * @param mu_* vector probabilities to get from one compartement to another for each age group
-        * @see mio::read_rki_data
+        * @param t_* average time it takes to get from one compartement to another (vector with one element per age group)
+        * @param mu_* probabilities to get from one compartement to another (vector with one element per age group)
+        * @param scaling_factor_inf Factor for scaling the confirmed cases to account for estimated undetected cases.
+        * @see mio::read_confirmed_cases_data
         * @{
         */
-        IOResult<void> read_rki_data(
+        IOResult<void> read_confirmed_cases_data(
             std::string const& path, std::vector<int> const& vregion, Date date,
             std::vector<std::vector<double>>& num_exp, std::vector<std::vector<double>>& num_car,
             std::vector<std::vector<double>>& num_inf, std::vector<std::vector<double>>& num_hosp,
@@ -68,7 +69,7 @@ namespace osecirvvs
             const std::vector<std::vector<double>>& mu_H_U, const std::vector<std::vector<double>>& mu_U_D,
             const std::vector<double>& scaling_factor_inf);
 
-        IOResult<void> read_rki_data(
+        IOResult<void> read_confirmed_cases_data(
             const std::vector<ConfirmedCasesDataEntry>& rki_data, std::vector<int> const& vregion, Date date,
             std::vector<std::vector<double>>& num_exp, std::vector<std::vector<double>>& num_car,
             std::vector<std::vector<double>>& num_inf, std::vector<std::vector<double>>& num_hosp,
@@ -84,8 +85,8 @@ namespace osecirvvs
         /**@}*/
 
         /**
-        * @brief reads confirmed cases data and translates data of day t0-delay to recovered compartment,
-        * @param path Path to RKI file
+        * @brief Reads confirmed cases data and translates data of day t0-delay to recovered compartment,
+        * @param path Path to RKI confirmed cases file.
         * @param vregion vector of keys of the region of interest     
         * @param date Date for which the arrays are initialized
         * @param num_rec output vector for number of people in the compartement recovered
@@ -93,33 +94,34 @@ namespace osecirvvs
         * @see mio::read_rki_data
         * @{
         */
-        IOResult<void> read_rki_data_confirmed_to_recovered(const std::vector<ConfirmedCasesDataEntry>& rki_data,
-                                                            std::vector<int> const& vregion, Date date,
-                                                            std::vector<std::vector<double>>& vnum_rec,
-                                                            double delay = 14.);
-        IOResult<void> read_rki_data_confirmed_to_recovered(std::string const& path, std::vector<int> const& vregion,
-                                                            Date date, std::vector<std::vector<double>>& vnum_rec,
-                                                            double delay = 14.);
+        IOResult<void> read_confirmed_cases_data_fix_recovered(const std::vector<ConfirmedCasesDataEntry>& rki_data,
+                                                               std::vector<int> const& vregion, Date date,
+                                                               std::vector<std::vector<double>>& vnum_rec,
+                                                               double delay = 14.);
+        IOResult<void> read_confirmed_cases_data_fix_recovered(std::string const& path, std::vector<int> const& vregion,
+                                                               Date date, std::vector<std::vector<double>>& vnum_rec,
+                                                               double delay = 14.);
         /**@}*/
 
         /**
-        * @brief sets populations data from RKI into a Model
+        * @brief sets populations data from a transformed RKI cases file into a Model.
         * @param model vector of objects in which the data is set
-        * @param path Path to RKI file
+        * @param path Path to transformed RKI cases file
         * @param region vector of keys of the region of interest
         * @param date Date for which the arrays are initialized
         * @param scaling_factor_inf factors by which to scale the confirmed cases of
         * rki data
         */
         template <class Model>
-        IOResult<void> set_rki_data(std::vector<Model>& model, const std::string& path, std::vector<int> const& region,
-                                    Date date, const std::vector<double>& scaling_factor_inf)
+        IOResult<void> set_confirmed_cases_data(std::vector<Model>& model, const std::string& path,
+                                                std::vector<int> const& region, Date date,
+                                                const std::vector<double>& scaling_factor_inf)
         {
-            auto num_age_groups = (size_t)model[0].parameters.get_num_groups();
-            assert(scaling_factor_inf.size() == num_age_groups);
+            auto num_age_groups = (size_t)model[0].parameters.get_num_groups();            
+            assert(scaling_factor_inf.size() == num_age_groups); //TODO: allow vector or scalar valued scaling factors
             assert(ConfirmedCasesDataEntry::age_group_names.size() == num_age_groups);
 
-            BOOST_OUTCOME_TRY(rki_data, mio::read_rki_data(path));
+            BOOST_OUTCOME_TRY(rki_data, mio::read_confirmed_cases_data(path));
 
             std::vector<std::vector<int>> t_car_to_rec{model.size()}; // R9
             std::vector<std::vector<int>> t_car_to_inf{model.size()}; // R3
@@ -187,7 +189,7 @@ namespace osecirvvs
                 }
             }
 
-            BOOST_OUTCOME_TRY(read_rki_data(rki_data, region, date, num_exp, num_car, num_inf, num_hosp, num_icu,
+            BOOST_OUTCOME_TRY(read_confirmed_cases_data(rki_data, region, date, num_exp, num_car, num_inf, num_hosp, num_icu,
                                             num_death, num_rec, t_car_to_rec, t_car_to_inf, t_exp_to_car, t_inf_to_rec,
                                             t_inf_to_hosp, t_hosp_to_rec, t_hosp_to_icu, t_icu_to_dead, t_icu_to_rec,
                                             mu_C_R, mu_I_H, mu_H_U, mu_U_D, scaling_factor_inf));
@@ -259,29 +261,34 @@ namespace osecirvvs
                     t_icu_to_rec[county].push_back(
                         static_cast<int>(model[county].parameters.template get<ICUToHomeTime>()[(AgeGroup)group]));
 
-                    double reduc_vacc_exp  = model[county].parameters.template get<ExposedFactorPartialImmunity>()[(AgeGroup)group];
-                    double reduc_vacc_inf  = model[county].parameters.template get<InfectedFactorPartialImmunity>()[(AgeGroup)group];
-                    double reduc_vacc_hosp = model[county].parameters.template get<HospitalizedFactorPartialImmunity>()[(AgeGroup)group];
-                    double reduc_vacc_icu  = model[county].parameters.template get<HospitalizedFactorPartialImmunity>()[(AgeGroup)group];
-                    double reduc_vacc_dead = model[county].parameters.template get<HospitalizedFactorPartialImmunity>()[(AgeGroup)group];
+                    double exp_fac_part_immune =
+                        model[county].parameters.template get<ExposedFactorPartialImmunity>()[(AgeGroup)group];
+                    double inf_fac_part_immune =
+                        model[county].parameters.template get<InfectedFactorPartialImmunity>()[(AgeGroup)group];
+                    double hosp_fac_part_immune =
+                        model[county].parameters.template get<HospitalizedFactorPartialImmunity>()[(AgeGroup)group];
+                    double icu_fac_part_immune =
+                        model[county].parameters.template get<HospitalizedFactorPartialImmunity>()[(AgeGroup)group];
+                    double death_fac_part_immune =
+                        model[county].parameters.template get<HospitalizedFactorPartialImmunity>()[(AgeGroup)group];
                     mu_C_R[county].push_back(
                         (1 -
-                         reduc_vacc_inf / reduc_vacc_exp *
+                         inf_fac_part_immune / exp_fac_part_immune *
                              (1 -
                               model[county].parameters.template get<AsymptoticCasesPerInfectious>()[(AgeGroup)group])));
                     mu_I_H[county].push_back(
-                        reduc_vacc_hosp / reduc_vacc_inf *
+                        hosp_fac_part_immune / inf_fac_part_immune *
                         model[county].parameters.template get<HospitalizedCasesPerInfectious>()[(AgeGroup)group]);
                     // transfer from H to U, D unchanged.
                     mu_H_U[county].push_back(
-                        reduc_vacc_icu / reduc_vacc_hosp *
+                        icu_fac_part_immune / hosp_fac_part_immune *
                         model[county].parameters.template get<ICUCasesPerHospitalized>()[(AgeGroup)group]);
-                    mu_U_D[county].push_back(reduc_vacc_dead / reduc_vacc_icu *
+                    mu_U_D[county].push_back(death_fac_part_immune / icu_fac_part_immune *
                                              model[county].parameters.template get<DeathsPerICU>()[(AgeGroup)group]);
                 }
             }
 
-            BOOST_OUTCOME_TRY(read_rki_data(rki_data, region, date, num_exp, num_car, num_inf, num_hosp, num_icu,
+            BOOST_OUTCOME_TRY(read_confirmed_cases_data(rki_data, region, date, num_exp, num_car, num_inf, num_hosp, num_icu,
                                             num_death, num_rec, t_car_to_rec, t_car_to_inf, t_exp_to_car, t_inf_to_rec,
                                             t_inf_to_hosp, t_hosp_to_rec, t_hosp_to_icu, t_icu_to_dead, t_icu_to_rec,
                                             mu_C_R, mu_I_H, mu_H_U, mu_U_D, scaling_factor_inf));
@@ -380,7 +387,7 @@ namespace osecirvvs
                 }
             }
 
-            BOOST_OUTCOME_TRY(read_rki_data(rki_data, region, date, num_exp, num_car, num_inf, num_hosp, num_icu,
+            BOOST_OUTCOME_TRY(read_confirmed_cases_data(rki_data, region, date, num_exp, num_car, num_inf, num_hosp, num_icu,
                                             num_death, num_rec, t_car_to_rec, t_car_to_inf, t_exp_to_car, t_inf_to_rec,
                                             t_inf_to_hosp, t_hosp_to_rec, t_hosp_to_icu, t_icu_to_dead, t_icu_to_rec,
                                             mu_C_R, mu_I_H, mu_H_U, mu_U_D, scaling_factor_inf));
@@ -407,7 +414,7 @@ namespace osecirvvs
 
         /**
         * @brief reads number of ICU patients from DIVI register into Parameters
-        * @param path Path to DIVI file
+        * @param path Path to transformed DIVI file
         * @param vregion Keys of the region of interest
         * @param date Date for which the arrays are initialized
         * @param vnum_icu number of ICU patients
@@ -423,7 +430,7 @@ namespace osecirvvs
         /**
         * @brief sets populations data from DIVI register into Model
         * @param model vector of objects in which the data is set
-        * @param path Path to DIVI file
+        * @param path Path to transformed DIVI file
         * @param vregion vector of keys of the regions of interest
         * @param date Date for which the arrays are initialized
         * @param scaling_factor_icu factor by which to scale the icu cases of divi data
@@ -459,8 +466,8 @@ namespace osecirvvs
         }
 
         /**
-        * @brief reads population data from census data
-        * @param path Path to RKI file
+        * @brief reads population data from census data.
+        * @param path Path to population data file.
         * @param vregion vector of keys of the regions of interest
         * @see mio::read_population_data
         * @{
@@ -480,7 +487,7 @@ namespace osecirvvs
             auto num_age_groups = ConfirmedCasesDataEntry::age_group_names.size();
             std::vector<std::vector<double>> num_rec(model.size(), std::vector<double>(num_age_groups, 0.0));
 
-            BOOST_OUTCOME_TRY(read_rki_data_confirmed_to_recovered(path_rki, vregion, date, num_rec, 14.));
+            BOOST_OUTCOME_TRY(read_confirmed_cases_data_fix_recovered(path_rki, vregion, date, num_rec, 14.));
 
             for (size_t region = 0; region < vregion.size(); region++) {
                 if (std::accumulate(num_population[region].begin(), num_population[region].end(), 0.0) > 0) {
@@ -614,20 +621,20 @@ namespace osecirvvs
     * @brief Exports the time series of extrapolated real data according to
     *   the extrapolation / approximation method used to initialize the model from
     *   real world data.
-        (This is the vector-valued functionality of set_rki_data())
+        (This is the vector-valued functionality of set_confirmed_cases_data())
     * @param model vector of objects in which the data is set
-    * @param data_dir Path to RKI files
+    * @param data_dir Path to transformed RKI cases files
     * @param results_dir Path to result files
-    * @param date Start date of the time series to be exported.
+    * @param start_date Start date of the time series to be exported.
     * @param region vector of keys of the region of interest
-    * @param scaling_factor_inf factors by which to scale the confirmed cases of rki data
-    * @param scaling_factor_icu factors by which to scale the intensive care data
+    * @param scaling_factor_inf Factor for scaling the confirmed cases to account for an estimated number of undetected cases.
+    * @param scaling_factor_icu Factor for scaling the reported ICU cases to account for possibly unreported ICU cases.
     * @param num_days Number of days for which the time series is exported.
     */
     template <class Model>
     IOResult<void> export_input_data_county_timeseries(std::vector<Model>& model, const std::string& data_dir,
                                                        const std::string& results_dir, std::vector<int> const& region,
-                                                       Date date, const std::vector<double>& scaling_factor_inf,
+                                                       Date start_date, const std::vector<double>& scaling_factor_inf,
                                                        double scaling_factor_icu, int num_days)
     {
         auto num_age_groups = (size_t)model[0].parameters.get_num_groups();
@@ -635,7 +642,7 @@ namespace osecirvvs
         assert(num_age_groups == ConfirmedCasesDataEntry::age_group_names.size());
         assert(model.size() == region.size());
 
-        BOOST_OUTCOME_TRY(rki_data, read_rki_data(path_join(data_dir, "cases_all_county_age_ma7.json")));
+        BOOST_OUTCOME_TRY(rki_data, read_confirmed_cases_data(path_join(data_dir, "cases_all_county_age_ma7.json")));
         BOOST_OUTCOME_TRY(population_data, read_population_data(path_join(data_dir, "county_current_population.json")));
         BOOST_OUTCOME_TRY(divi_data, read_divi_data(path_join(data_dir, "county_divi_ma7.json")));
 
@@ -778,7 +785,6 @@ namespace osecirvvs
                 mu_U_D_pv[county].push_back(reduc_vacc_dead / reduc_vacc_icu *
                                             model[county].parameters.template get<DeathsPerICU>()[(AgeGroup)group]);
 
-                /* begin: NOT in set_rki_data() */
                 sum_mu_I_U_pv[county] +=
                     reduc_vacc_icu / reduc_vacc_hosp *
                     model[county].parameters.template get<ICUCasesPerHospitalized>()[AgeGroup(group)] *
@@ -789,7 +795,6 @@ namespace osecirvvs
                     model[county].parameters.template get<ICUCasesPerHospitalized>()[AgeGroup(group)] *
                     reduc_vacc_hosp / reduc_vacc_inf *
                     model[county].parameters.template get<HospitalizedCasesPerInfectious>()[AgeGroup(group)]);
-                /* end: NOT in set_rki_data() */
             }
         }
 
@@ -861,7 +866,6 @@ namespace osecirvvs
                 mu_U_D_fv[county].push_back(reduc_immune_dead / reduc_immune_icu *
                                             model[county].parameters.template get<DeathsPerICU>()[(AgeGroup)group]);
 
-                /* begin: NOT in set_rki_data() */
                 sum_mu_I_U_fv[county] +=
                     reduc_immune_icu / reduc_immune_hosp *
                     model[county].parameters.template get<ICUCasesPerHospitalized>()[AgeGroup(group)] *
@@ -872,17 +876,14 @@ namespace osecirvvs
                     model[county].parameters.template get<ICUCasesPerHospitalized>()[AgeGroup(group)] *
                     reduc_immune_hosp / reduc_immune_inf *
                     model[county].parameters.template get<HospitalizedCasesPerInfectious>()[AgeGroup(group)]);
-                /* end: NOT in set_rki_data() */
             }
         }
-        // TODO: Restart here!
-        /* begin: similar functionality in set_rki_data(), here only for vector of TimeSeries */
-        /* object and with additions for read_divi and read_population... */
         std::vector<TimeSeries<double>> extrapolated_rki(
-            model.size(), TimeSeries<double>::zero(num_days, (size_t)InfectionState::Count * num_age_groups));
+            model.size(), TimeSeries<double>::zero(num_days + 1, (size_t)InfectionState::Count * num_age_groups));
 
-        for (size_t day = 0; day < static_cast<size_t>(num_days); day++) {
-
+        for (size_t day = 0; day <= static_cast<size_t>(num_days); day++) {
+            auto date = offset_date_by_days(start_date, day);
+            
             // unvaccinated
             std::vector<std::vector<double>> num_exp_uv(model.size(), std::vector<double>(num_age_groups, 0.0));
             std::vector<std::vector<double>> num_car_uv(model.size(), std::vector<double>(num_age_groups, 0.0));
@@ -891,7 +892,7 @@ namespace osecirvvs
             std::vector<std::vector<double>> num_hosp_uv(model.size(), std::vector<double>(num_age_groups, 0.0));
             std::vector<std::vector<double>> num_death_uv(model.size(), std::vector<double>(num_age_groups, 0.0));
             std::vector<std::vector<double>> dummy_icu(model.size(), std::vector<double>(num_age_groups, 0.0));
-            BOOST_OUTCOME_TRY(details::read_rki_data(
+            BOOST_OUTCOME_TRY(details::read_confirmed_cases_data(
                 rki_data, region, date, num_exp_uv, num_car_uv, num_inf_uv, num_hosp_uv, dummy_icu, num_death_uv,
                 num_rec_uv, t_car_to_rec_uv, t_car_to_inf_uv, t_exp_to_car_uv, t_inf_to_rec_uv, t_inf_to_hosp_uv,
                 t_hosp_to_rec_uv, t_hosp_to_icu_uv, t_icu_to_dead_uv, t_icu_to_rec_uv, mu_C_R_uv, mu_I_H_uv, mu_H_U_uv,
@@ -908,7 +909,7 @@ namespace osecirvvs
                 dummy_death[county] = std::vector<double>(num_age_groups, 0.0);
                 dummy_icu[county]   = std::vector<double>(num_age_groups, 0.0);
             }
-            BOOST_OUTCOME_TRY(details::read_rki_data(
+            BOOST_OUTCOME_TRY(details::read_confirmed_cases_data(
                 rki_data, region, date, num_exp_pv, num_car_pv, num_inf_pv, num_hosp_pv, dummy_icu, dummy_death,
                 dummy_rec, t_car_to_rec_pv, t_car_to_inf_pv, t_exp_to_car_pv, t_inf_to_rec_pv, t_inf_to_hosp_pv,
                 t_hosp_to_rec_pv, t_hosp_to_icu_pv, t_icu_to_dead_pv, t_icu_to_rec_pv, mu_C_R_pv, mu_I_H_pv, mu_H_U_pv,
@@ -924,7 +925,7 @@ namespace osecirvvs
                 dummy_death[county] = std::vector<double>(num_age_groups, 0.0);
                 dummy_icu[county]   = std::vector<double>(num_age_groups, 0.0);
             }
-            BOOST_OUTCOME_TRY(details::read_rki_data(
+            BOOST_OUTCOME_TRY(details::read_confirmed_cases_data(
                 rki_data, region, date, num_exp_fv, num_car_fv, num_inf_fv, num_hosp_fv, dummy_icu, dummy_death,
                 dummy_rec, t_car_to_rec_fv, t_car_to_inf_fv, t_exp_to_car_fv, t_inf_to_rec_fv, t_inf_to_hosp_fv,
                 t_hosp_to_rec_fv, t_hosp_to_icu_fv, t_icu_to_dead_fv, t_icu_to_rec_fv, mu_C_R_fv, mu_I_H_fv, mu_H_U_fv,
@@ -946,7 +947,7 @@ namespace osecirvvs
             BOOST_OUTCOME_TRY(num_population, details::read_population_data(population_data, region));
 
             std::vector<std::vector<double>> num_rec(model.size(), std::vector<double>(num_age_groups, 0.0));
-            BOOST_OUTCOME_TRY(details::read_rki_data_confirmed_to_recovered(rki_data, region, date, num_rec, 14.));
+            BOOST_OUTCOME_TRY(details::read_confirmed_cases_data_fix_recovered(rki_data, region, date, num_rec, 14.));
 
             for (size_t county = 0; county < region.size(); county++) {
                 if (std::accumulate(num_population[county].begin(), num_population[county].end(), 0.0) > 0) {
@@ -1113,7 +1114,6 @@ namespace osecirvvs
                 }
             }
             log_info("extrapolated real data for date: {}-{}-{}", date.day, date.month, date.year);
-            date = offset_date_by_days(date, 1);
         }
         /* end: similar functionality in set_rki_data(), here only for vector of TimeSeries */
         auto num_groups = (int)(size_t)model[0].parameters.get_num_groups();
@@ -1128,34 +1128,50 @@ namespace osecirvvs
 
 #endif //MEMILIO_HAS_HDF5
 
+    /**
+    * Reads compartments for German counties at a specified date from data files.
+    * Estimates all compartments from available data using the model parameters, so the 
+    * model parameters must be set before calling this function.
+    * Uses data files that contain centered 7-day moving average.
+    * @param model Vector of SECIRVVS models, one per county.
+    * @param date Date for which the data should be read.
+    * @param county Ids of the counties.
+    * @param scaling_factor_inf Factor of confirmed cases to account for undetected cases in each county.
+    * @param scaling_factor_icu Factor of ICU cases to account for underreporting.
+    * @param dir Directory that contains the data files.
+    * @param num_days Number of days to be simulated; required to load data for vaccinations during the simulation.
+    * @param export_time_series If true, reads data for each day of simulation and writes it in the same directory as the input files.
+    */
     template <class Model>
     IOResult<void> read_input_data_county(std::vector<Model>& model, Date date, const std::vector<int>& county,
                                           const std::vector<double>& scaling_factor_inf, double scaling_factor_icu,
-                                          const std::string& dir, int num_days)
+                                          const std::string& dir, int num_days, bool export_time_series = false)
     {
         BOOST_OUTCOME_TRY(details::set_vaccination_data(model, path_join(dir, "all_county_ageinf_vacc_ma7.json"), date,
                                                         county, num_days));
 
-        // TODO: set_divi_data and set_rki_data to be merged! Possibly also with set_population_data.
-        // set_divi_data and a potential set_divi_data_vaccmodel only need a different ModelType (InfectionState vs InfectionState)
+        // TODO: Reuse more code, e.g., set_divi_data (in secir) and a set_divi_data (here) only need a different ModelType.
+        // TODO: add option to set ICU data from confirmed cases if DIVI or other data is not available.
         if (date > Date(2020, 4, 23)) {
             BOOST_OUTCOME_TRY(details::set_divi_data(model, path_join(dir, "county_divi_ma7.json"), county, date,
                                                      scaling_factor_icu));
         }
         else {
             log_warning("No DIVI data available for this date");
-        }
+        }        
 
-        BOOST_OUTCOME_TRY(details::set_rki_data(model, path_join(dir, "cases_all_county_age_ma7.json"), county, date,
-                                                scaling_factor_inf));
+        BOOST_OUTCOME_TRY(details::set_confirmed_cases_data(model, path_join(dir, "cases_all_county_age_ma7.json"),
+                                                            county, date, scaling_factor_inf));
         BOOST_OUTCOME_TRY(details::set_population_data(model, path_join(dir, "county_current_population.json"),
                                                        path_join(dir, "cases_all_county_age_ma7.json"), county, date));
 
-        // Use only if extrapolated real data is needed for comparison. EXPENSIVE !
-        // Run time equals run time of the previous functions times the num_days !
-        // (This only represents the vectorization of the previous function over all simulation days...)
-        // BOOST_OUTCOME_TRY(export_input_data_county_timeseries(model, dir, dir, county, date, scaling_factor_inf,
-        //                                                       scaling_factor_icu, num_days));
+        if (export_time_series) {
+            // Use only if extrapolated real data is needed for comparison. EXPENSIVE !
+            // Run time equals run time of the previous functions times the num_days !
+            // (This only represents the vectorization of the previous function over all simulation days...)
+            BOOST_OUTCOME_TRY(export_input_data_county_timeseries(model, dir, dir, county, date, scaling_factor_inf,
+                                                                  scaling_factor_icu, num_days));
+        }
 
         return success();
     }
