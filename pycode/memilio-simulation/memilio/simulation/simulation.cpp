@@ -22,6 +22,7 @@
 #include "epidemiology/damping.h"
 #include "epidemiology/contact_matrix.h"
 #include "epidemiology/damping_sampling.h"
+#include "mobility/mobility.h"
 #include "utils/date.h"
 #include "utils/time_series.h"
 #include "utils/parameter_distributions.h"
@@ -111,48 +112,10 @@ PYBIND11_MODULE(_simulation, m)
     auto migration_coeff_group_class = py::class_<mio::MigrationCoefficientGroup>(m, "MigrationCoefficientGroup");
     pymio::bind_damping_expression_group_members(migration_coeff_group_class);
 
-    py::class_<mio::MigrationParameters>(m, "MigrationParameters")
-        .def(py::init<const Eigen::VectorXd&>(), py::arg("coeffs"))
-        .def(py::init<const mio::MigrationCoefficientGroup&>(), py::arg("coeffs"))
-        .def_property(
-            "coefficients", py::overload_cast<>(&mio::MigrationParameters::get_coefficients),
-            [](mio::MigrationParameters& self, const mio::MigrationCoefficientGroup& v) {
-                self.get_coefficients() = v;
-            },
-            py::return_value_policy::reference_internal);
-
-    py::class_<mio::Edge<mio::MigrationParameters>>(m, "MigrationParameterEdge")
-        .def_property_readonly("start_node_idx",
-                               [](const mio::Edge<mio::MigrationParameters>& self) {
-                                   return self.start_node_idx;
-                               })
-        .def_property_readonly("end_node_idx",
-                               [](const mio::Edge<mio::MigrationParameters>& self) {
-                                   return self.end_node_idx;
-                               })
-        .def_property_readonly(
-            "property", [](const mio::Edge<mio::MigrationEdge>& self) -> auto& { return self.property; },
-            py::return_value_policy::reference_internal);
-
-    py::class_<mio::MigrationEdge>(m, "Migration")
-        .def(py::init<const Eigen::VectorXd&>(), py::arg("coeffs"))
-        .def(py::init<const mio::MigrationParameters&>(), py::arg("params"))
-        .def_property_readonly(
-            "parameters", [](const mio::MigrationEdge& self) -> auto& { return self.get_parameters(); },
-            py::return_value_policy::reference_internal);
-
-    py::class_<mio::Edge<mio::MigrationEdge>>(m, "MigrationEdge")
-        .def_property_readonly("start_node_idx",
-                               [](const mio::Edge<mio::MigrationEdge>& self) {
-                                   return self.start_node_idx;
-                               })
-        .def_property_readonly("end_node_idx",
-                               [](const mio::Edge<mio::MigrationEdge>& self) {
-                                   return self.end_node_idx;
-                               })
-        .def_property_readonly(
-            "property", [](const mio::Edge<mio::MigrationEdge>& self) -> auto& { return self.property; },
-            py::return_value_policy::reference_internal);
+    pymio::bind_migration_parameters(m, "MigrationParameters");
+    pymio::bind_migration_parameter_edge(m, "MigrationParameterEdge");
+    pymio::bind_migration(m, "Migration");
+    pymio::bind_migration_edge(m, "MigrationEdge");
 
     m.def(
         "get_state_id_de",

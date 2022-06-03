@@ -47,6 +47,14 @@ void bind_MigrationGraph(pybind11::module& m, std::string const& name)
             pybind11::return_value_policy::reference_internal);
 }
 
+void bind_migration_parameters(pybind11::module& m, std::string const& name);
+
+void bind_migration_parameter_edge(pybind11::module& m, std::string const& name);
+
+void bind_migration(pybind11::module& m, std::string const& name);
+
+void bind_migration_edge(pybind11::module& m, std::string const& name);
+
 } // namespace pymio
 
 #endif //PYMIO_MOBILITY_H

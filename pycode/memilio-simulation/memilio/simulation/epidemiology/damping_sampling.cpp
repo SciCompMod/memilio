@@ -23,6 +23,8 @@
 #include "memilio/epidemiology/damping.h"
 #include "memilio/utils/uncertain_value.h"
 
+#include "pybind11/eigen.h"
+
 namespace pymio
 {
 

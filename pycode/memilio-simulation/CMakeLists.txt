@@ -41,6 +41,7 @@ install(TARGETS _simulation_abm LIBRARY DESTINATION memilio)
 pybind11_add_module(_simulation MODULE
     memilio/simulation/simulation.cpp
     memilio/simulation/epidemiology/damping_sampling.cpp
+    memilio/simulation/mobility/mobility.cpp
     memilio/simulation/utils/date.cpp
     memilio/simulation/utils/time_series.cpp
     memilio/simulation/utils/parameter_distributions.cpp
