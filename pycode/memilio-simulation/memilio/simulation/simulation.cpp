@@ -21,6 +21,7 @@
 #include "pybind_util.h"
 #include "epidemiology/damping.h"
 #include "epidemiology/contact_matrix.h"
+#include "epidemiology/damping_sampling.h"
 #include "utils/date.h"
 #include "utils/time_series.h"
 #include "utils/parameter_distributions.h"
@@ -59,48 +60,7 @@ PYBIND11_MODULE(_simulation, m)
     pymio::bind_damping_expression_group_members(contact_matrix_group_class);
     contact_matrix_group_class.def_property_readonly("num_groups", &mio::ContactMatrixGroup::get_num_groups);
 
-    pymio::pybind_pickle_class<mio::DampingSampling>(m, "DampingSampling")
-        .def(py::init([](const mio::UncertainValue& value, int level, int type, double time,
-                         const std::vector<size_t>& matrices, const Eigen::Ref<const Eigen::VectorXd>& groups) {
-                 return mio::DampingSampling(value, mio::DampingLevel(level), mio::DampingType(type),
-                                             mio::SimulationTime(time), matrices, groups);
-             }),
-             py::arg("value"), py::arg("level"), py::arg("type"), py::arg("time"), py::arg("matrix_indices"),
-             py::arg("group_weights"))
-        .def_property("value", py::overload_cast<>(&mio::DampingSampling::get_value), &mio::DampingSampling::set_value,
-                      py::return_value_policy::reference_internal)
-        .def_property(
-            "level",
-            [](const mio::DampingSampling& self) {
-                return int(self.get_level());
-            },
-            [](mio::DampingSampling& self, int lvl) {
-                self.set_level(mio::DampingLevel(lvl));
-            })
-        .def_property(
-            "type",
-            [](const mio::DampingSampling& self) {
-                return int(self.get_type());
-            },
-            [](mio::DampingSampling& self, int typ) {
-                self.set_type(mio::DampingType(typ));
-            })
-        .def_property(
-            "time",
-            [](const mio::DampingSampling& self) {
-                return double(self.get_time());
-            },
-            [](mio::DampingSampling& self, double t) {
-                self.set_time(mio::SimulationTime(t));
-            })
-        .def_property("matrix_indices", &mio::DampingSampling::get_matrix_indices,
-                      &mio::DampingSampling::set_matrix_indices)
-        .def_property(
-            "group_weights", &mio::DampingSampling::get_group_weights,
-            [](mio::DampingSampling& self, const Eigen::Ref<const Eigen::VectorXd>& v) {
-                self.set_group_weights(v);
-            },
-            py::return_value_policy::reference_internal);
+    pymio::bind_damping_sampling(m, "DampingSampling");
 
     py::class_<mio::UncertainContactMatrix>(m, "UncertainContactMatrix")
         .def(py::init<>())
