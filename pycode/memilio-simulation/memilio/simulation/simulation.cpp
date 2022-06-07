@@ -25,13 +25,13 @@
 #include "epidemiology/uncertain_matrix.h"
 #include "mobility/mobility.h"
 #include "utils/date.h"
+#include "utils/logging.h"
 #include "utils/time_series.h"
 #include "utils/parameter_distributions.h"
 #include "utils/uncertain_value.h"
 
 #include "memilio/mobility/mobility.h"
 #include "memilio/utils/date.h"
-#include "memilio/utils/logging.h"
 #include "memilio/epidemiology/regions.h"
 #include "memilio/epidemiology/contact_matrix.h"
 
@@ -99,15 +99,7 @@ PYBIND11_MODULE(_simulation, m)
         pybind11::arg("state_id"), pybind11::arg("start_date") = mio::Date(std::numeric_limits<int>::min(), 1, 1),
         pybind11::arg("end_date") = mio::Date(std::numeric_limits<int>::max(), 1, 1));
 
-    pybind11::enum_<mio::LogLevel>(m, "LogLevel")
-        .value("Off", mio::LogLevel::off)
-        .value("Critical", mio::LogLevel::critical)
-        .value("Error", mio::LogLevel::err)
-        .value("Warning", mio::LogLevel::warn)
-        .value("Info", mio::LogLevel::info)
-        .value("Debug", mio::LogLevel::debug)
-        .value("Trace", mio::LogLevel::trace);
-    m.def("set_log_level", &mio::set_log_level);
+    pymio::bind_logging(m, "LogLevel");
 
     m.attr("__version__") = "dev";
 }

@@ -44,6 +44,7 @@ pybind11_add_module(_simulation MODULE
     memilio/simulation/epidemiology/uncertain_matrix.cpp
     memilio/simulation/mobility/mobility.cpp
     memilio/simulation/utils/date.cpp
+    memilio/simulation/utils/logging.cpp
     memilio/simulation/utils/time_series.cpp
     memilio/simulation/utils/parameter_distributions.cpp
     memilio/simulation/utils/uncertain_value.cpp
