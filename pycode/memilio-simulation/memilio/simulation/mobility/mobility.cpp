@@ -18,7 +18,6 @@
 * limitations under the License.
 */
 #include "mobility/mobility.h"
-#include "memilio/mobility/graph.h"
 
 #include "pybind11/eigen.h"
 
