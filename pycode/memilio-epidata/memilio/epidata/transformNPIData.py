@@ -181,22 +181,56 @@ def flatten_hierarch_clustering(corr_mat, cluster_hierarch, weights):
 
 def validate(df_npis_old, df_npis, df_infec_rki, countyID, npiCode,
              start_npi_cols, npi_incid_start, start_date_validation,
-             end_date_validation):
-    dummy_old = df_npis_old[(df_npis_old[dd.EngEng['idCounty']] == countyID) & (df_npis_old[dd.EngEng['npiCode']] == npiCode)
-                            ].iloc[:, :list(df_npis_old.columns).index(end_date_validation.strftime('d%Y%m%d'))+1].values[0][start_npi_cols:]
+             end_date_validation, fine_resolution):
+    if npiCode == 'M01a_150':
+        x = 15  # TODO
+
+    if fine_resolution == 1:
+        npiCodes = [npiCode + code
+                    for code in [''] + ['_' + str(i) for i in range(1, 6)]]
+    else:
+        npiCodes = [npiCode]
+    for npiCode in npiCodes:
+        dummy_old_rows = df_npis_old[(df_npis_old[dd.EngEng['idCounty']] == countyID) & (df_npis_old[dd.EngEng['npiCode']].isin(
+            npiCodes))].iloc[:, :list(df_npis_old.columns).index(end_date_validation.strftime('d%Y%m%d'))+1]
+    dummy_old = np.zeros(
+        (dummy_old_rows.shape[1]-start_npi_cols, dummy_old_rows.shape[0]))
+    for i in range(dummy_old.shape[1]):
+        dummy_old[:, i] = dummy_old_rows.values[i][start_npi_cols:]
+
     dummy_new = df_npis.loc[(df_npis[dd.EngEng['idCounty']] == countyID) & (
-        df_npis[dd.EngEng['date']] <= end_date_validation), npiCode].values
+        df_npis[dd.EngEng['date']] <= end_date_validation), npiCodes[0]].values
     incid = df_infec_rki[(df_infec_rki[dd.EngEng['idCounty']] == countyID) &
                          (df_infec_rki[dd.EngEng['date']] <=
                              end_date_validation) &
                          (df_infec_rki[dd.EngEng['date']] >=
                              start_date_validation)]['Incidence'].values
-    npi_index = np.where(dummy_old >= 1)[0]
-    incid_index = np.where(incid >= npi_incid_start[npiCode])[0]
+
+    if fine_resolution == 1:
+        for col in range(dummy_old.shape[1]):
+            npi_index = np.where(dummy_old[:, col] >= 1)[0]
+            incid_index = np.where(incid >= npi_incid_start[npiCodes[col]])[0]
+            active_index = np.sort(
+                list(set(npi_index).intersection(incid_index)))
+            nonactive_index = np.sort(
+                list(set(npi_index).difference(active_index)))
+
+            # deactivate values based on incidence before taking
+            # the maximum over NPI group
+            dummy_old[list(nonactive_index)] = 0
+
+        # the intermediate step is necessary since the array has a 2nd dimension
+        # of size zero if we directly set dummy_old = dummy_old.max(axis=1)
+        dummy_old[:, 0] = dummy_old.max(axis=1)
+        dummy_old = dummy_old[:, 0:1]
+
+    npi_index = np.where(dummy_old[:, 0] >= 1)[0]
+    incid_index = np.where(incid >= npi_incid_start[npiCodes[0]])[0]
     active_index = np.sort(
         list(set(npi_index).intersection(incid_index)))
     nonactive_index = np.sort(
         list(set(npi_index).difference(active_index)))
+
     valdiff = 0
     for i in range(1, 6):
         # these values >=1 are set to 1
@@ -207,7 +241,7 @@ def validate(df_npis_old, df_npis, df_infec_rki, countyID, npiCode,
             np.where(dummy_old[list(nonactive_index)] == i)[0])
     # -99 always set to 0
     valdiff += 99*len(np.where(dummy_old == -99)[0])
-    return [abs(dummy_old-dummy_new).sum(), valdiff, dummy_old, dummy_new]
+    return [abs(dummy_old[:, 0]-dummy_new).sum(), valdiff, dummy_old, dummy_new]
 
 
 def print_manual_download(filename, url):
@@ -431,11 +465,9 @@ def transform_npi_data(fine_resolution=2,
             # create hash table from parental or main code/main category
             # to list of subcodes/subcategories
             maincode_to_npicodes_map = dict()
-            npicodes_to_maincode_map = dict()
             major_code = npi_codes[0]
             maincode_to_npicodes_map[major_code] = []
             for code in npi_codes:
-                npicodes_to_maincode_map[code] = major_code
                 if major_code in code:
                     maincode_to_npicodes_map[major_code].append(code)
                 else:
@@ -493,7 +525,7 @@ def transform_npi_data(fine_resolution=2,
             sys.exit('Error. Other counties than that of Eisenach were removed.')
         # remove rows for Eisenach
         df_npis_old = df_npis_old[df_npis_old[dd.EngEng['idCounty']].isin(
-            unique_geo_entities)]
+            unique_geo_entities)].reset_index(drop=True).drop(columns='index')
 
         start_npi_cols = list(
             df_npis_old.columns).index(
@@ -740,18 +772,31 @@ def transform_npi_data(fine_resolution=2,
                     'M01a_010', 'M01a_150', 'M05_120', 'M01a_010',
                         'M18_030', 'M01b_020', 'M02b_035', 'M16_050']:
                     for subcode in [''] + ['_'+str(i) for i in range(1, 6)]:
-                        [a, b, c, d] = validate(df_npis_old, df_npis,
-                                                df_infec_rki, countyID, npiCode + subcode,
-                                                start_npi_cols, npi_incid_start,
-                                                start_date_validation, end_date_validation)
+                        [
+                            a, b, oldf, newf] = validate(
+                            df_npis_old, df_npis, df_infec_rki, countyID,
+                            npiCode + subcode, start_npi_cols, npi_incid_start,
+                            start_date_validation, end_date_validation,
+                            fine_resolution)
                         if(a != b):
                             print('Error in NPI activation computation')
 
-            x = 15
         elif fine_resolution == 1:
-            # replace more detailed code names X_Y with major code X
-            df_npis_old[dd.EngEng['npiCode']] = df_npis_old[dd.EngEng[
-                'npiCode']].replace(npicodes_to_maincode_map)
+            start_date_validation = datetime(2020, 3, 1)
+            end_date_validation = datetime(2022, 2, 15)
+
+            for countyID in [5315, 1001, 9162, 16071, 11000, 1060, 5566]:
+                for npiCode in [
+                    'M01a_010', 'M01a_150', 'M05_120', 'M01a_010',
+                        'M18_030', 'M01b_020', 'M02b_035', 'M16_050']:
+                    [a, b, oldf, newf] = validate(df_npis_old, df_npis,
+                                                  df_infec_rki, countyID, npiCode, start_npi_cols,
+                                                  npi_incid_start, start_date_validation,
+                                                  end_date_validation, fine_resolution)
+                    if(a != b):
+                        print('Error in NPI activation computation')
+                    else:
+                        print(a == b, a, b)
 
             # Cologne for M01a_010 and all dates (no changes)
             dummy_old = df_npis_old[(df_npis_old[dd.EngEng['idCounty']] == 5315) & (
@@ -1122,7 +1167,7 @@ def main():
     """! Main program entry."""
 
     # arg_dict = gd.cli("testing")
-    transform_npi_data(fine_resolution=2, read_data=False, make_plot=True)
+    transform_npi_data(fine_resolution=1, read_data=False, make_plot=True)
 
 
 if __name__ == "__main__":
