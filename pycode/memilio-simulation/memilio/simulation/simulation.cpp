@@ -35,7 +35,7 @@
 #include "memilio/epidemiology/regions.h"
 #include "memilio/epidemiology/contact_matrix.h"
 
-using namespace pybind11;
+namespace py = pybind11;
 
 PYBIND11_MODULE(_simulation, m)
 {

@@ -5,13 +5,15 @@
 
 #include "pybind11/pybind11.h"
 
+namespace py = pybind11;
+
 namespace pymio
 {
 
 template <class ParameterSet>
-auto bind_ParameterSet(pybind11::module& m, std::string const& name)
+auto bind_ParameterSet(py::module& m, std::string const& name)
 {
-    pybind11::class_<ParameterSet> c(m, name.c_str());
+    py::class_<ParameterSet> c(m, name.c_str());
     mio::foreach_tag<ParameterSet>([&c](auto t) {
         using Tag = decltype(t);
 
@@ -21,7 +23,7 @@ auto bind_ParameterSet(pybind11::module& m, std::string const& name)
             [](ParameterSet& self, typename Tag::Type const& v) {
                 self.template get<Tag>() = v;
             },
-            pybind11::return_value_policy::reference_internal);
+            py::return_value_policy::reference_internal);
     });
     return c;
 }

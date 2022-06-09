@@ -34,7 +34,7 @@
 #include "pybind11/stl_bind.h"
 #include <vector>
 
-using namespace pybind11;
+namespace py = pybind11;
 
 namespace
 {
@@ -56,36 +56,36 @@ filter_graph_results(std::vector<mio::Graph<mio::SimulationNode<Sim>, mio::Migra
  * @brief bind ParameterStudy for any model
  */
 template <class Simulation>
-void bind_ParameterStudy(pybind11::module& m, std::string const& name)
+void bind_ParameterStudy(py::module& m, std::string const& name)
 {
-    pybind11::class_<mio::ParameterStudy<Simulation>>(m, name.c_str())
-        .def(pybind11::init<const typename Simulation::Model&, double, double, size_t>(), pybind11::arg("model"), pybind11::arg("t0"),
-             pybind11::arg("tmax"), pybind11::arg("num_runs"))
-        .def(pybind11::init<const typename Simulation::Model&, double, double, double, size_t>(), pybind11::arg("model"),
-             pybind11::arg("t0"), pybind11::arg("tmax"), pybind11::arg("dev_rel"), pybind11::arg("num_runs"))
-        .def(pybind11::init<const mio::Graph<typename Simulation::Model, mio::MigrationParameters>&, double, double, double,
+    py::class_<mio::ParameterStudy<Simulation>>(m, name.c_str())
+        .def(py::init<const typename Simulation::Model&, double, double, size_t>(), py::arg("model"), py::arg("t0"),
+             py::arg("tmax"), py::arg("num_runs"))
+        .def(py::init<const typename Simulation::Model&, double, double, double, size_t>(), py::arg("model"),
+             py::arg("t0"), py::arg("tmax"), py::arg("dev_rel"), py::arg("num_runs"))
+        .def(py::init<const mio::Graph<typename Simulation::Model, mio::MigrationParameters>&, double, double, double,
                       size_t>(),
-             pybind11::arg("model_graph"), pybind11::arg("t0"), pybind11::arg("tmax"), pybind11::arg("dt"), pybind11::arg("num_runs"))
+             py::arg("model_graph"), py::arg("t0"), py::arg("tmax"), py::arg("dt"), py::arg("num_runs"))
         .def_property("num_runs", &mio::ParameterStudy<Simulation>::get_num_runs,
                       &mio::ParameterStudy<Simulation>::set_num_runs)
         .def_property("tmax", &mio::ParameterStudy<Simulation>::get_tmax, &mio::ParameterStudy<Simulation>::set_tmax)
         .def_property("t0", &mio::ParameterStudy<Simulation>::get_t0, &mio::ParameterStudy<Simulation>::set_t0)
-        .def_property_readonly("model", pybind11::overload_cast<>(&mio::ParameterStudy<Simulation>::get_model),
-                               pybind11::return_value_policy::reference_internal)
-        .def_property_readonly("model", pybind11::overload_cast<>(&mio::ParameterStudy<Simulation>::get_model, pybind11::const_),
-                               pybind11::return_value_policy::reference_internal)
+        .def_property_readonly("model", py::overload_cast<>(&mio::ParameterStudy<Simulation>::get_model),
+                               py::return_value_policy::reference_internal)
+        .def_property_readonly("model", py::overload_cast<>(&mio::ParameterStudy<Simulation>::get_model, py::const_),
+                               py::return_value_policy::reference_internal)
         .def_property_readonly("secir_model_graph",
-                               pybind11::overload_cast<>(&mio::ParameterStudy<Simulation>::get_secir_model_graph),
-                               pybind11::return_value_policy::reference_internal)
+                               py::overload_cast<>(&mio::ParameterStudy<Simulation>::get_secir_model_graph),
+                               py::return_value_policy::reference_internal)
         .def_property_readonly("secir_model_graph",
-                               pybind11::overload_cast<>(&mio::ParameterStudy<Simulation>::get_secir_model_graph, pybind11::const_),
-                               pybind11::return_value_policy::reference_internal)
+                               py::overload_cast<>(&mio::ParameterStudy<Simulation>::get_secir_model_graph, py::const_),
+                               py::return_value_policy::reference_internal)
         .def(
             "run",
             [](mio::ParameterStudy<Simulation>& self, std::function<void(mio::Graph<mio::SimulationNode<Simulation>, mio::MigrationEdge>)> handle_result) {
                 self.run([&handle_result](auto&& g) { handle_result(std::move(g)); });
             },
-            pybind11::arg("handle_result_func"))
+            py::arg("handle_result_func"))
         .def("run",
              [](mio::ParameterStudy<Simulation>& self) { //default argument doesn't seem to work with functions
                  return self.run();
@@ -97,7 +97,7 @@ void bind_ParameterStudy(pybind11::module& m, std::string const& name)
                     handle_result(std::move(r.nodes()[0].property.get_simulation()));
                 });
             },
-            pybind11::arg("handle_result_func"))
+            py::arg("handle_result_func"))
         .def("run_single", [](mio::ParameterStudy<Simulation>& self) {
             return filter_graph_results(self.run());
         });
@@ -151,7 +151,7 @@ PYBIND11_MODULE(_simulation_secir, m)
     pymio::bind_Index<mio::InfectionState>(m, "Index_InfectionState");
     pymio::bind_Index<mio::AgeGroup>(m, "Index_AgeGroup");
 
-    pybind11::class_<mio::AgeGroup, mio::Index<mio::AgeGroup>>(m, "AgeGroup").def(pybind11::init<size_t>());
+    py::class_<mio::AgeGroup, mio::Index<mio::AgeGroup>>(m, "AgeGroup").def(py::init<size_t>());
 
     pymio::bind_MultiIndex<mio::AgeGroup, mio::InfectionState>(m, "Index_Agegroup_InfectionState");
     pymio::bind_CustomIndexArray<mio::UncertainValue, mio::AgeGroup, mio::InfectionState>(m, "SecirPopulationArray");
@@ -159,8 +159,8 @@ PYBIND11_MODULE(_simulation_secir, m)
 
     pymio::bind_ParameterSet<mio::SecirParamsBase>(m, "SecirParamsBase");
 
-    pybind11::class_<mio::SecirParams, mio::SecirParamsBase>(m, "SecirParams")
-        .def(pybind11::init<mio::AgeGroup>())
+    py::class_<mio::SecirParams, mio::SecirParamsBase>(m, "SecirParams")
+        .def(py::init<mio::AgeGroup>())
         .def("check_constraints", &mio::SecirParams::check_constraints)
         .def("apply_constraints", &mio::SecirParams::apply_constraints);
 
@@ -168,14 +168,14 @@ PYBIND11_MODULE(_simulation_secir, m)
 
     using SecirPopulations = mio::Populations<mio::AgeGroup, mio::InfectionState>;
     pymio::bind_CompartmentalModel<SecirPopulations, mio::SecirParams>(m, "SecirModelBase");
-    pybind11::class_<mio::SecirModel, mio::CompartmentalModel<SecirPopulations, mio::SecirParams>>(m, "SecirModel")
-        .def(pybind11::init<int>(), pybind11::arg("num_agegroups"));
+    py::class_<mio::SecirModel, mio::CompartmentalModel<SecirPopulations, mio::SecirParams>>(m, "SecirModel")
+        .def(py::init<int>(), py::arg("num_agegroups"));
 
     pymio::bind_Simulation<mio::SecirSimulation<>>(m, "SecirSimulation");
 
     m.def("simulate", [](double t0, double tmax, double dt, const mio::SecirModel& model) { return mio::simulate(t0, tmax, dt, model); },
-          "Simulates a SecirModel1 from t0 to tmax.", pybind11::arg("t0"), pybind11::arg("tmax"), pybind11::arg("dt"),
-          pybind11::arg("model"));
+          "Simulates a SecirModel1 from t0 to tmax.", py::arg("t0"), py::arg("tmax"), py::arg("dt"),
+          py::arg("model"));
 
     pymio::bind_ModelNode<mio::SecirModel>(m, "SecirModelNode");
     pymio::bind_SimulationNode<mio::SecirSimulation<>>(m, "SecirSimulationNode");
@@ -186,16 +186,16 @@ PYBIND11_MODULE(_simulation_secir, m)
     //normally, std::vector is bound to any python iterable, but this doesn't work for move-only elements
     //Bound the vector as a custom type that serves as output of ParameterStudy::run and input to
     //interpolate_ensemble_results
-    pybind11::bind_vector<std::vector<MigrationGraph>>(m, "EnsembleGraphResults");
+    py::bind_vector<std::vector<MigrationGraph>>(m, "EnsembleGraphResults");
     bind_ParameterStudy<mio::SecirSimulation<>>(m, "ParameterStudy");
 
-    m.def("set_params_distributions_normal", &mio::set_params_distributions_normal, pybind11::arg("model"), pybind11::arg("t0"),
-          pybind11::arg("tmax"), pybind11::arg("dev_rel"));
+    m.def("set_params_distributions_normal", &mio::set_params_distributions_normal, py::arg("model"), py::arg("t0"),
+          py::arg("tmax"), py::arg("dev_rel"));
 
-    m.def("draw_sample", &mio::draw_sample, pybind11::arg("model"));
+    m.def("draw_sample", &mio::draw_sample, py::arg("model"));
 
     m.def("interpolate_simulation_result",
-          pybind11::overload_cast<const MigrationGraph&>(&mio::interpolate_simulation_result<Simulation>));
+          py::overload_cast<const MigrationGraph&>(&mio::interpolate_simulation_result<Simulation>));
 
     m.def("interpolate_ensemble_results", &mio::interpolate_ensemble_results<MigrationGraph>);
 

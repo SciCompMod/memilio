@@ -6,15 +6,17 @@
 
 #include "pybind11/pybind11.h"
 
+namespace py = pybind11;
+
 namespace pymio
 {
 
 //bind class and add pickling based on memilio serialization framework
 template <class T, class ... Args>
-decltype(auto) pybind_pickle_class(pybind11::module &m, const char* name)
+decltype(auto) pybind_pickle_class(py::module &m, const char* name)
 {
-    decltype(auto) pickle_class = pybind11::class_<T, Args...>(m, name);
-    pickle_class.def(pybind11::pickle(
+    decltype(auto) pickle_class = py::class_<T, Args...>(m, name);
+    pickle_class.def(py::pickle(
              [](const T &object) { // __getstate__
                 auto tuple = mio::serialize_pickle(object);
                 if (tuple)
@@ -26,7 +28,7 @@ decltype(auto) pybind_pickle_class(pybind11::module &m, const char* name)
                     throw std::runtime_error(tuple.error().formatted_message());
                 }
             },
-            [](const pybind11::tuple t) { // __setstate__
+            [](const py::tuple t) { // __setstate__
 
                 auto object = mio::deserialize_pickle(t,mio::Tag<T>{});
                 if (object)
@@ -68,8 +70,8 @@ template <class C, class... ArgTuples,
                                    void>>
 void bind_shape_constructor(C& cl, ArgTuples... arg_tuples)
 {
-    cl.def(pybind11::init<Eigen::Index, std::tuple_element_t<1, ArgTuples>...>(),
-           pybind11::arg(std::get<0>(arg_tuples))..., pybind11::arg("size"));
+    cl.def(py::init<Eigen::Index, std::tuple_element_t<1, ArgTuples>...>(),
+           py::arg(std::get<0>(arg_tuples))..., py::arg("size"));
 }
 
 /**
@@ -81,7 +83,7 @@ template <class C>
 void bind_shape_property(C& cl)
 {
     cl.def_property_readonly("shape", [](typename C::type& self) {
-        auto tup = pybind11::tuple(2);
+        auto tup = py::tuple(2);
         tup[0]   = self.get_shape().rows();
         tup[1]   = self.get_shape().cols();
         return tup;
@@ -89,13 +91,13 @@ void bind_shape_property(C& cl)
 }
 
 template <class Range>
-auto bind_Range(pybind11::module& m, const std::string& class_name)
+auto bind_Range(py::module& m, const std::string& class_name)
 {
     //bindings for iterator for the range
     struct Iterator {
         typename Range::Iterators iter_pair;
     };
-    pybind11::class_<Iterator>(m, (std::string("_Iter") + class_name).c_str())
+    py::class_<Iterator>(m, (std::string("_Iter") + class_name).c_str())
         .def(
             "__next__", [](Iterator& self) -> auto&& {
                 if (self.iter_pair.first != self.iter_pair.second) {
@@ -103,21 +105,21 @@ auto bind_Range(pybind11::module& m, const std::string& class_name)
                     ++self.iter_pair.first;
                     return ref;
                 }
-                throw pybind11::stop_iteration();
+                throw py::stop_iteration();
             },
-            pybind11::return_value_policy::reference_internal);
+            py::return_value_policy::reference_internal);
 
     //bindings for the range itself
-    pybind11::class_<Range>(m, class_name.c_str())
+    py::class_<Range>(m, class_name.c_str())
         .def(
             "__iter__",
             [](Range& self) {
                 return Iterator{{self.begin(), self.end()}};
             },
-            pybind11::keep_alive<1, 0>{}) //keep alive the Range as long as there is an iterator
+            py::keep_alive<1, 0>{}) //keep alive the Range as long as there is an iterator
         .def(
             "__getitem__", [](Range& self, size_t idx) -> auto&& { return self[idx]; },
-            pybind11::return_value_policy::reference_internal)
+            py::return_value_policy::reference_internal)
         .def("__len__", &Range::size);
 }
 
@@ -125,14 +127,14 @@ auto bind_Range(pybind11::module& m, const std::string& class_name)
 //requires the class to have a member `Count`
 //adds a static `values` method to the enum class that returns an iterable list of the values
 template<class E, class... Args>
-auto iterable_enum(pybind11::module& m, const std::string& name, Args&&... args)
+auto iterable_enum(py::module& m, const std::string& name, Args&&... args)
 {
     using T = std::underlying_type_t<E>;
 
     struct Values
     {
     };
-    pybind11::class_<Values>(m, (name + "Values").c_str(), std::forward<Args>(args)...)
+    py::class_<Values>(m, (name + "Values").c_str(), std::forward<Args>(args)...)
         .def("__iter__", [](Values& /*self*/) {
             return E(0);
         })
@@ -140,7 +142,7 @@ auto iterable_enum(pybind11::module& m, const std::string& name, Args&&... args)
             return E::Count;
         });
 
-    auto enum_class = pybind11::enum_<E>(m, name.c_str(), std::forward<Args>(args)...);
+    auto enum_class = py::enum_<E>(m, name.c_str(), std::forward<Args>(args)...);
     enum_class.def_static("values", [](){
         return Values{};
     });
@@ -150,7 +152,7 @@ auto iterable_enum(pybind11::module& m, const std::string& name, Args&&... args)
             self = E(T(self) + T(1));
             return current;
         } else {
-            throw pybind11::stop_iteration();
+            throw py::stop_iteration();
         }
     });
     return enum_class;

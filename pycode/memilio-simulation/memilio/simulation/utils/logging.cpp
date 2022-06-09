@@ -23,9 +23,9 @@
 namespace pymio
 {
 
-void bind_logging(pybind11::module& m, std::string const& name)
+void bind_logging(py::module& m, std::string const& name)
 {
-    pybind11::enum_<mio::LogLevel>(m, name.c_str())
+    py::enum_<mio::LogLevel>(m, name.c_str())
         .value("Off", mio::LogLevel::off)
         .value("Critical", mio::LogLevel::critical)
         .value("Error", mio::LogLevel::err)

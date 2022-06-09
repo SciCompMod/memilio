@@ -22,10 +22,12 @@
 
 #include "pybind11/pybind11.h"
 
+namespace py = pybind11;
+
 namespace pymio
 {
 
-void bind_damping_sampling(pybind11::module& m, std::string const& name);
+void bind_damping_sampling(py::module& m, std::string const& name);
 
 } // namespace pymio
 
